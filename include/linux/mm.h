@@ -1703,6 +1703,8 @@ extern void pagefault_out_of_memory(void);
 
 extern void show_free_areas(unsigned int flags, nodemask_t *nodemask);
 
+void shmem_set_file(struct vm_area_struct *vma, struct file *file);
+
 #ifdef CONFIG_MMU
 extern bool can_do_mlock(void);
 #else
