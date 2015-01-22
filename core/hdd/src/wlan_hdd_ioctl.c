@@ -5080,6 +5080,18 @@ static int drv_cmd_set_dfs_scan_mode(hdd_adapter_t *adapter,
 		  "%s: Received Command to Set DFS Scan Mode = %d",
 		  __func__, dfsScanMode);
 
+	/* When DFS scanning is disabled, the DFS channels need to be
+	 * removed from the operation of device.
+	 */
+	ret = wlan_hdd_disable_dfs_chan_scan(hdd_ctx, adapter,
+			(dfsScanMode == CFG_ROAMING_DFS_CHANNEL_DISABLED));
+	if (ret < 0) {
+		/* Some conditions prevented it from disabling DFS channels */
+		hddLog(LOGE,
+		       FL("disable/enable DFS channel request was denied"));
+		goto exit;
+	}
+
 	hdd_ctx->config->allowDFSChannelRoam = dfsScanMode;
 	sme_update_dfs_scan_mode(hdd_ctx->hHal, adapter->sessionId,
 				 dfsScanMode);
