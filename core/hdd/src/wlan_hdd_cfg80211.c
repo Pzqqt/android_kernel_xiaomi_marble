@@ -2513,60 +2513,25 @@ static bool wlan_hdd_check_dfs_channel_for_adapter(hdd_context_t *hdd_ctx,
 }
 
 /**
- *  __wlan_hdd_cfg80211_disable_dfs_chan_scan() - DFS channel configuration
- *  @wiphy:          corestack handler
- *  @wdev:           wireless device
- *  @data:           data
- *  @data_len:       data length
- *  Return:         success(0) or reason code for failure
+ * wlan_hdd_disable_dfs_chan_scan() - disable/enable DFS channels
+ * @hdd_ctx: HDD context within host driver
+ * @adapter: Adapter pointer
+ * @no_dfs_flag: If TRUE, DFS channels cannot be used for scanning
+ *
+ * Loops through devices to see who is operating on DFS channels
+ * and then disables/enables DFS channels by calling SME API.
+ * Fails the disable request if any device is active on a DFS channel.
+ *
+ * Return: 0 or other error codes.
  */
-static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
-						     struct wireless_dev *wdev,
-						     const void *data,
-						     int data_len)
+
+int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
+				   hdd_adapter_t *adapter,
+				   uint32_t no_dfs_flag)
 {
-	struct net_device *dev = wdev->netdev;
-	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tHalHandle h_hal = WLAN_HDD_GET_HAL_CTX(adapter);
-	hdd_context_t *hdd_ctx  = wiphy_priv(wiphy);
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX + 1];
 	CDF_STATUS status;
 	int ret_val = -EPERM;
-	uint32_t no_dfs_flag = 0;
-
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
-		hdd_err("Command not allowed in FTM mode");
-		return -EPERM;
-	}
-
-	if (wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("HDD context is not valid"));
-		return -EINVAL;
-	}
-
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX,
-		      data, data_len,
-		      wlan_hdd_set_no_dfs_flag_config_policy)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("invalid attr"));
-		return -EINVAL;
-	}
-
-	if (!tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG]) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("attr dfs flag failed"));
-		return -EINVAL;
-	}
-
-	no_dfs_flag = nla_get_u32(
-		tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG]);
-
-	hddLog(CDF_TRACE_LEVEL_INFO, FL(" DFS flag = %d"),
-	       no_dfs_flag);
-
-	if (no_dfs_flag > 1) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("invalid value of dfs flag"));
-		return -EINVAL;
-	}
 
 	if (no_dfs_flag == hdd_ctx->config->enableDFSChnlScan) {
 		if (no_dfs_flag) {
@@ -2613,7 +2578,61 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 		       FL(" the DFS flag has not changed"));
 		ret_val = 0;
 	}
+	return ret_val;
+}
 
+/**
+ *  __wlan_hdd_cfg80211_disable_dfs_chan_scan() - DFS channel configuration
+ *  @wiphy:          corestack handler
+ *  @wdev:           wireless device
+ *  @data:           data
+ *  @data_len:       data length
+ *  Return:         success(0) or reason code for failure
+ */
+static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
+						     struct wireless_dev *wdev,
+						     const void *data,
+						     int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx  = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX + 1];
+	int ret_val;
+	uint32_t no_dfs_flag = 0;
+
+	ENTER();
+	ret_val = wlan_hdd_validate_context(hdd_ctx);
+
+	if (ret_val) {
+		hdd_err("HDD context is not valid");
+		return ret_val;
+	}
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG_MAX,
+		      data, data_len,
+		      wlan_hdd_set_no_dfs_flag_config_policy)) {
+		hdd_err("invalid attr");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG]) {
+		hdd_err("attr dfs flag failed");
+		return -EINVAL;
+	}
+
+	no_dfs_flag = nla_get_u32(
+		tb[QCA_WLAN_VENDOR_ATTR_SET_NO_DFS_FLAG]);
+
+	hddLog(LOG1, FL(" DFS flag = %d"), no_dfs_flag);
+
+	if (no_dfs_flag > 1) {
+		hddLog(LOGE, FL("invalid value of dfs flag"));
+		return -EINVAL;
+	}
+
+	ret_val = wlan_hdd_disable_dfs_chan_scan(hdd_ctx, adapter,
+						 no_dfs_flag);
 	return ret_val;
 }
 

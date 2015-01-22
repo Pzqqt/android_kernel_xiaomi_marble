@@ -2275,5 +2275,9 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter);
 
 enum cds_con_mode wlan_hdd_convert_nl_iftype_to_hdd_type(
 					enum nl80211_iftype type);
-#endif
 
+int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
+				   hdd_adapter_t *adapter,
+				   uint32_t no_dfs_flag);
+
+#endif
