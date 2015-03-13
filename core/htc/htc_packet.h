@@ -149,6 +149,7 @@ typedef struct _HTC_PACKET {
 		(p)->Endpoint = (ep);			      \
 		(p)->PktInfo.AsTx.Tag = (tag);		      \
 		(p)->PktInfo.AsTx.Flags = 0;		      \
+		(p)->PktInfo.AsTx.SendFlags = 0;	      \
 	}
 
 #define SET_HTC_PACKET_NET_BUF_CONTEXT(p,nb) \
