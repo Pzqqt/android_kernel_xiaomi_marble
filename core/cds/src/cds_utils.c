@@ -387,6 +387,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	tfm = cds_crypto_alloc_cipher("aes", 0, CRYPTO_ALG_ASYNC);
 	if (IS_ERR(tfm)) {
 		ret = PTR_ERR(tfm);
+		tfm = NULL;
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: crypto_alloc_cipher failed (%d)", __func__, ret);
 		goto err_tfm;
@@ -497,6 +498,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	tfm = cds_crypto_alloc_cipher("aes", 0, CRYPTO_ALG_ASYNC);
 	if (IS_ERR(tfm)) {
 		ret = PTR_ERR(tfm);
+		tfm = NULL;
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_alloc_cipher failed (%d)", ret);
 		goto err_tfm;
