@@ -655,8 +655,7 @@ CDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime)
 	if (LINUX_TIMER_COOKIE != timer->platformInfo.cookie) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot start uninitialized timer", __func__);
-		if (LINUX_INVALID_TIMER_COOKIE != timer->platformInfo.cookie)
-			CDF_ASSERT(0);
+		CDF_ASSERT(0);
 
 		return CDF_STATUS_E_INVAL;
 	}
@@ -738,8 +737,7 @@ CDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer)
 	if (LINUX_TIMER_COOKIE != timer->platformInfo.cookie) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot stop uninitialized timer", __func__);
-		if (LINUX_INVALID_TIMER_COOKIE != timer->platformInfo.cookie)
-			CDF_ASSERT(0);
+		CDF_ASSERT(0);
 
 		return CDF_STATUS_E_INVAL;
 	}
