@@ -206,7 +206,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * lead to a crash.
 	 */
 	if (pHddCtx->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: LOGP in Progress. Ignore!!!", __func__);
 		goto drop_pkt;
 	}
