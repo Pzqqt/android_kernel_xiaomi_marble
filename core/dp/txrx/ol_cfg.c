@@ -56,6 +56,20 @@ void ol_tx_set_flow_control_parameters(struct txrx_pdev_cfg_t *cfg_ctx,
 }
 #endif
 
+#if CFG_TGT_DEFAULT_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK
+static inline
+uint8_t ol_defrag_timeout_check(void)
+{
+	return 1;
+}
+#else
+static inline
+uint8_t ol_defrag_timeout_check(void)
+{
+	return 0;
+}
+#endif
+
 /* FIX THIS -
  * For now, all these configuration parameters are hardcoded.
  * Many of these should actually be determined dynamically instead.
@@ -79,9 +93,7 @@ ol_pdev_handle ol_pdev_cfg_attach(cdf_device_t osdev,
 	cfg_ctx->tx_download_size = 16;
 	/* temporarily diabled PN check for Riva/Pronto */
 	cfg_ctx->rx_pn_check = 1;
-#if CFG_TGT_DEFAULT_RX_SKIP_DEFRAG_TIMEOUT_DUP_DETECTION_CHECK
-	cfg_ctx->defrag_timeout_check = 1;
-#endif
+	cfg_ctx->defrag_timeout_check = ol_defrag_timeout_check();
 	cfg_ctx->max_peer_id = 511;
 	cfg_ctx->max_vdev = CFG_TGT_NUM_VDEV;
 	cfg_ctx->pn_rx_fwd_check = 1;
