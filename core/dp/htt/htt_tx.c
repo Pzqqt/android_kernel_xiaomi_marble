@@ -252,8 +252,6 @@ static inline void htt_tx_desc_get_size(struct htt_pdev_t *pdev)
 		+ (ol_cfg_netbuf_frags_max(pdev->ctrl_pdev) + 1) * 8
 		   /* 2x uint32_t */
 		+ 4; /* uint32_t fragmentation list terminator */
-	if (pdev->tx_descs.size < sizeof(uint32_t *))
-		pdev->tx_descs.size = sizeof(uint32_t *);
 }
 
 /**
@@ -320,6 +318,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	uint16_t num_page, num_desc_per_page;
 
 	htt_tx_desc_get_size(pdev);
+
 	/*
 	 * Make sure tx_descs.size is a multiple of 4-bytes.
 	 * It should be, but round up just to be sure.
