@@ -400,7 +400,7 @@ void ol_rx_defrag_waitlist_remove(struct ol_txrx_peer_t *peer, unsigned tid)
 
 		rx_reorder->defrag_waitlist_elem.tqe_next = NULL;
 		rx_reorder->defrag_waitlist_elem.tqe_prev = NULL;
-	} else {
+	} else if (rx_reorder->defrag_waitlist_elem.tqe_next != NULL) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_FATAL_ERR,
 				"waitlist->tqe_prv = NULL\n");
 		CDF_ASSERT(0);
