@@ -224,6 +224,7 @@ typedef struct sAniProbeRspStruct {
  * @maxTxPower: max tx power
  * @atimIePresent: Peer Atim Info
  * @peerAtimWindowLength: peer ATIM Window length
+ * @nss: Return the number of spatial streams supported
  *
  * This structure contains parameter required for
  * add sta request of upper layer.
@@ -320,6 +321,7 @@ typedef struct {
 	uint8_t atimIePresent;
 	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
+	uint32_t nss;
 } tAddStaParams, *tpAddStaParams;
 
 /**

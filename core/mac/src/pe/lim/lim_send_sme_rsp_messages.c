@@ -168,6 +168,55 @@ lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 
 
 /**
+ * lim_get_max_rate_flags() - Get rate flags
+ * @mac_ctx: Pointer to global MAC structure
+ * @sta_ds: Pointer to station ds structure
+ *
+ * This function is called to get the rate flags for a connection
+ * from the station ds structure depending on the ht and the vht
+ * channel width supported.
+ *
+ * Return: Returns the populated rate_flags
+ */
+uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds)
+{
+	uint32_t rate_flags = 0;
+
+	if (sta_ds == NULL) {
+		lim_log(mac_ctx, LOGE, FL("sta_ds is NULL"));
+		return rate_flags;
+	}
+
+	if (!sta_ds->mlmStaContext.htCapability &&
+	    !sta_ds->mlmStaContext.vhtCapability) {
+		rate_flags |= eHAL_TX_RATE_LEGACY;
+	} else {
+		if (sta_ds->mlmStaContext.vhtCapability) {
+			if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ ==
+				sta_ds->vhtSupportedChannelWidthSet) {
+				rate_flags |= eHAL_TX_RATE_VHT80;
+			} else if (WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ ==
+					sta_ds->vhtSupportedChannelWidthSet) {
+				if (sta_ds->htSupportedChannelWidthSet)
+					rate_flags |= eHAL_TX_RATE_VHT40;
+				else
+					rate_flags |= eHAL_TX_RATE_VHT20;
+			}
+		} else if (sta_ds->mlmStaContext.htCapability) {
+			if (sta_ds->htSupportedChannelWidthSet)
+				rate_flags |= eHAL_TX_RATE_HT40;
+			else
+				rate_flags |= eHAL_TX_RATE_HT20;
+		}
+	}
+
+	if (sta_ds->htShortGI20Mhz || sta_ds->htShortGI40Mhz)
+		rate_flags |= eHAL_TX_RATE_SGI;
+
+	return rate_flags;
+}
+
+/**
  * lim_send_sme_join_reassoc_rsp_after_resume() - Send Response to SME
  * @mac_ctx          Pointer to Global MAC structure
  * @status           Resume link status
@@ -430,6 +479,9 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 				sme_join_rsp->tdls_chan_swit_prohibited =
 				   session_entry->tdls_chan_swit_prohibited;
 #endif
+				sme_join_rsp->nss = sta_ds->nss;
+				sme_join_rsp->max_rate_flags =
+					lim_get_max_rate_flags(mac_ctx, sta_ds);
 			}
 		}
 		sme_join_rsp->beaconLength = 0;

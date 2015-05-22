@@ -6398,6 +6398,9 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 			roam_info.ucastSig = (uint8_t) join_rsp->ucastSig;
 			roam_info.bcastSig = (uint8_t) join_rsp->bcastSig;
 			roam_info.timingMeasCap = join_rsp->timingMeasCap;
+			roam_info.chan_info.nss = join_rsp->nss;
+			roam_info.chan_info.rate_flags =
+				join_rsp->max_rate_flags;
 #ifdef FEATURE_WLAN_TDLS
 			roam_info.tdls_prohibited = join_rsp->tdls_prohibited;
 			roam_info.tdls_chan_swit_prohibited =

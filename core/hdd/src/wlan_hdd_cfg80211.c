@@ -4250,6 +4250,197 @@ static int wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	return ret;
 }
 
+static const struct
+nla_policy
+qca_wlan_vendor_attr_policy[QCA_WLAN_VENDOR_ATTR_MAX+1] = {
+	[QCA_WLAN_VENDOR_ATTR_MAC_ADDR] = { .type = NLA_UNSPEC },
+};
+
+/**
+ * __wlan_hdd_cfg80211_get_link_properties() - Get link properties
+ * @wiphy: WIPHY structure pointer
+ * @wdev: Wireless device structure pointer
+ * @data: Pointer to the data received
+ * @data_len: Length of the data received
+ *
+ * This function is used to get link properties like nss, rate flags and
+ * operating frequency for the active connection with the given peer.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
+						   struct wireless_dev *wdev,
+						   const void *data,
+						   int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_station_ctx_t *hdd_sta_ctx;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX+1];
+	uint8_t peer_mac[CDF_MAC_ADDR_SIZE];
+	uint32_t sta_id;
+	struct sk_buff *reply_skb;
+	uint32_t rate_flags = 0;
+	uint8_t nss;
+	uint8_t final_rate_flags = 0;
+	uint32_t freq;
+
+	ENTER();
+
+	if (CDF_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	if (0 != wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_MAX, data, data_len,
+		      qca_wlan_vendor_attr_policy)) {
+		hddLog(CDF_TRACE_LEVEL_ERROR, FL("Invalid attribute"));
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]) {
+		hddLog(CDF_TRACE_LEVEL_ERROR,
+		       FL("Attribute peerMac not provided for mode=%d"),
+		       adapter->device_mode);
+		return -EINVAL;
+	}
+
+	cdf_mem_copy(peer_mac, nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
+		     CDF_MAC_ADDR_SIZE);
+	hddLog(CDF_TRACE_LEVEL_INFO,
+	       FL("peerMac="MAC_ADDRESS_STR" for device_mode:%d"),
+	       MAC_ADDR_ARRAY(peer_mac), adapter->device_mode);
+
+	if (adapter->device_mode == WLAN_HDD_INFRA_STATION ||
+	    adapter->device_mode == WLAN_HDD_P2P_CLIENT) {
+		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		if ((hdd_sta_ctx->conn_info.connState !=
+			eConnectionState_Associated) ||
+		    !cdf_mem_compare(hdd_sta_ctx->conn_info.bssId.bytes,
+			peer_mac, CDF_MAC_ADDR_SIZE)) {
+			hddLog(CDF_TRACE_LEVEL_ERROR,
+			       FL("Not Associated to mac "MAC_ADDRESS_STR),
+			       MAC_ADDR_ARRAY(peer_mac));
+			return -EINVAL;
+		}
+
+		nss  = hdd_sta_ctx->conn_info.nss;
+		freq = cds_chan_to_freq(
+				hdd_sta_ctx->conn_info.operationChannel);
+		rate_flags = hdd_sta_ctx->conn_info.rate_flags;
+	} else if (adapter->device_mode == WLAN_HDD_P2P_GO ||
+		   adapter->device_mode == WLAN_HDD_SOFTAP) {
+
+		for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
+			if (adapter->aStaInfo[sta_id].isUsed &&
+			    !cdf_is_macaddr_broadcast(
+				&adapter->aStaInfo[sta_id].macAddrSTA) &&
+			    cdf_mem_compare(
+				&adapter->aStaInfo[sta_id].macAddrSTA.bytes,
+				peer_mac, CDF_MAC_ADDR_SIZE))
+				break;
+		}
+
+		if (WLAN_MAX_STA_COUNT == sta_id) {
+			hddLog(CDF_TRACE_LEVEL_ERROR,
+			       FL("No active peer with mac="MAC_ADDRESS_STR),
+			       MAC_ADDR_ARRAY(peer_mac));
+			return -EINVAL;
+		}
+
+		nss = adapter->aStaInfo[sta_id].nss;
+		freq = cds_chan_to_freq(
+			(WLAN_HDD_GET_AP_CTX_PTR(adapter))->operatingChannel);
+		rate_flags = adapter->aStaInfo[sta_id].rate_flags;
+	} else {
+		hddLog(CDF_TRACE_LEVEL_ERROR,
+		       FL("Not Associated! with mac "MAC_ADDRESS_STR),
+		       MAC_ADDR_ARRAY(peer_mac));
+		return -EINVAL;
+	}
+
+	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
+		if (rate_flags & eHAL_TX_RATE_VHT80) {
+			final_rate_flags |= RATE_INFO_FLAGS_VHT_MCS;
+			final_rate_flags |= RATE_INFO_FLAGS_80_MHZ_WIDTH;
+		} else if (rate_flags & eHAL_TX_RATE_VHT40) {
+			final_rate_flags |= RATE_INFO_FLAGS_VHT_MCS;
+			final_rate_flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
+		} else if (rate_flags & eHAL_TX_RATE_VHT20) {
+			final_rate_flags |= RATE_INFO_FLAGS_VHT_MCS;
+		} else if (rate_flags &
+				(eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
+			final_rate_flags |= RATE_INFO_FLAGS_MCS;
+			if (rate_flags & eHAL_TX_RATE_HT40)
+				final_rate_flags |=
+					RATE_INFO_FLAGS_40_MHZ_WIDTH;
+		}
+
+		if (rate_flags & eHAL_TX_RATE_SGI) {
+			if (!(final_rate_flags & RATE_INFO_FLAGS_VHT_MCS))
+				final_rate_flags |= RATE_INFO_FLAGS_MCS;
+			final_rate_flags |= RATE_INFO_FLAGS_SHORT_GI;
+		}
+	}
+
+	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
+			sizeof(u8) + sizeof(u8) + sizeof(u32) + NLMSG_HDRLEN);
+
+	if (NULL == reply_skb) {
+		hddLog(CDF_TRACE_LEVEL_ERROR,
+		       FL("getLinkProperties: skb alloc failed"));
+		return -EINVAL;
+	}
+
+	if (nla_put_u8(reply_skb,
+		QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_NSS,
+		nss) ||
+	    nla_put_u8(reply_skb,
+		QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_RATE_FLAGS,
+		final_rate_flags) ||
+	    nla_put_u32(reply_skb,
+		QCA_WLAN_VENDOR_ATTR_LINK_PROPERTIES_FREQ,
+		freq)) {
+		hddLog(CDF_TRACE_LEVEL_ERROR, FL("nla_put failed"));
+		kfree_skb(reply_skb);
+		return -EINVAL;
+	}
+
+	return cfg80211_vendor_cmd_reply(reply_skb);
+}
+
+/**
+ * wlan_hdd_cfg80211_get_link_properties() - Wrapper function to get link
+ * properties.
+ * @wiphy: WIPHY structure pointer
+ * @wdev: Wireless device structure pointer
+ * @data: Pointer to the data received
+ * @data_len: Length of the data received
+ *
+ * This function is used to get link properties like nss, rate flags and
+ * operating frequency for the active connection with the given peer.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
+						 struct wireless_dev *wdev,
+						 const void *data,
+						 int data_len)
+{
+	int ret = 0;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_get_link_properties(wiphy,
+			wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -4662,6 +4853,14 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 				 WIPHY_VENDOR_CMD_NEED_NETDEV |
 				 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_dcc_update_ndl
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_LINK_PROPERTIES,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+			 WIPHY_VENDOR_CMD_NEED_NETDEV |
+			 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_get_link_properties
 	},
 };
 

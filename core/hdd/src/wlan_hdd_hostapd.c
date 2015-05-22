@@ -1232,6 +1232,19 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		}
 
+		staId =
+		   pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.staId;
+		if (CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			pHostapdAdapter->aStaInfo[staId].nss =
+				pSapEvent->sapevt.
+				sapStationAssocReassocCompleteEvent.
+				chan_info.nss;
+			pHostapdAdapter->aStaInfo[staId].rate_flags =
+				pSapEvent->sapevt.
+				sapStationAssocReassocCompleteEvent.
+				chan_info.rate_flags;
+		}
+
 		if (hdd_ipa_is_enabled(pHddCtx)) {
 			status = hdd_ipa_wlan_evt(pHostapdAdapter,
 					pSapEvent->sapevt.

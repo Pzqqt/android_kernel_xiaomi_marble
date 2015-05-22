@@ -1929,6 +1929,9 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 			(session_entry->maxTxPower << 16);
 		assoc_ind->chan_info.reg_info_2 =
 			(session_entry->maxTxPower << 8);
+		assoc_ind->chan_info.nss = sta_ds->nss;
+		assoc_ind->chan_info.rate_flags =
+			lim_get_max_rate_flags(mac_ctx, sta_ds);
 		/* updates VHT information in assoc indication */
 		lim_fill_assoc_ind_vht_info(mac_ctx, session_entry, assoc_req,
 			assoc_ind);

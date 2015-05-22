@@ -61,6 +61,7 @@ extern tSirRetStatus sch_beacon_edca_process(tpAniSirGlobal pMac,
  * @mac_ctx: Pointer to Global MAC structure
  * @sta_ds: Station Descriptor in DPH
  * @assoc_rsp: Pointer to Association Response Structure
+ * @session_entry : PE session Entry
  *
  * This function is called to Update the HT capabilities in
  * Station Descriptor (dph) Details from
@@ -69,20 +70,27 @@ extern tSirRetStatus sch_beacon_edca_process(tpAniSirGlobal pMac,
  * Return: None
  */
 static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
-	tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp)
+		tpDphHashNode sta_ds, tpSirAssocRsp assoc_rsp,
+		tpPESession session_entry)
 {
 	uint16_t highest_rxrate = 0;
 	tDot11fIEHTCaps *ht_caps;
+	uint32_t shortgi_20mhz_support;
+	uint32_t shortgi_40mhz_support;
 
 	ht_caps = &assoc_rsp->HTCaps;
 	sta_ds->mlmStaContext.htCapability = assoc_rsp->HTCaps.present;
 	if (assoc_rsp->HTCaps.present) {
 		sta_ds->htGreenfield =
 			(uint8_t) ht_caps->greenField;
-		sta_ds->htSupportedChannelWidthSet =
-			(uint8_t) (ht_caps->supportedChannelWidthSet ?
-		assoc_rsp->HTInfo.recommendedTxWidthSet :
-		ht_caps->supportedChannelWidthSet);
+		if (session_entry->htSupportedChannelWidthSet) {
+			sta_ds->htSupportedChannelWidthSet =
+				(uint8_t) (ht_caps->supportedChannelWidthSet ?
+				assoc_rsp->HTInfo.recommendedTxWidthSet :
+				ht_caps->supportedChannelWidthSet);
+		} else
+			sta_ds->htSupportedChannelWidthSet =
+				eHT_CHANNEL_WIDTH_20MHZ;
 		sta_ds->htLsigTXOPProtection =
 			(uint8_t) ht_caps->lsigTXOPProtection;
 		sta_ds->htMIMOPSState =
@@ -92,10 +100,6 @@ static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
 		sta_ds->htAMpduDensity = ht_caps->mpduDensity;
 		sta_ds->htDsssCckRate40MHzSupport =
 			(uint8_t) ht_caps->dsssCckMode40MHz;
-		sta_ds->htShortGI20Mhz =
-			(uint8_t) ht_caps->shortGI20MHz;
-		sta_ds->htShortGI40Mhz =
-			(uint8_t) ht_caps->shortGI40MHz;
 		sta_ds->htMaxRxAMpduFactor =
 			ht_caps->maxRxAMPDUFactor;
 		lim_fill_rx_highest_supported_rate(mac_ctx, &highest_rxrate,
@@ -115,6 +119,39 @@ static void lim_update_stads_htcap(tpAniSirGlobal mac_ctx,
 		 * For now, it is IMMEDIATE BA only on ALL TID's
 		 */
 		sta_ds->baPolicyFlag = 0xFF;
+
+		/* Check if we have support for gShortGI20Mhz and
+		 * gShortGI40Mhz from ini file
+		 */
+		if (eSIR_SUCCESS == wlan_cfg_get_int(mac_ctx,
+						WNI_CFG_SHORT_GI_20MHZ,
+						&shortgi_20mhz_support)) {
+			if (true == shortgi_20mhz_support)
+				sta_ds->htShortGI20Mhz =
+				      (uint8_t)assoc_rsp->HTCaps.shortGI20MHz;
+			else
+				sta_ds->htShortGI20Mhz = false;
+		} else {
+			lim_log(mac_ctx, LOGE,
+				FL("could not retrieve shortGI 20Mhz CFG, setting value to default"));
+			sta_ds->htShortGI20Mhz =
+				WNI_CFG_SHORT_GI_20MHZ_STADEF;
+		}
+
+		if (eSIR_SUCCESS == wlan_cfg_get_int(mac_ctx,
+						WNI_CFG_SHORT_GI_40MHZ,
+						&shortgi_40mhz_support)) {
+			if (true == shortgi_40mhz_support)
+				sta_ds->htShortGI40Mhz =
+				      (uint8_t)assoc_rsp->HTCaps.shortGI40MHz;
+			else
+				sta_ds->htShortGI40Mhz = false;
+		} else {
+			lim_log(mac_ctx, LOGE,
+				FL("could not retrieve shortGI 40Mhz CFG,setting value to default"));
+			sta_ds->htShortGI40Mhz =
+				WNI_CFG_SHORT_GI_40MHZ_STADEF;
+		}
 	}
 }
 
@@ -150,7 +187,8 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 
 	/* Update HT Capabilites only when the self mode supports HT */
 	if (IS_DOT11_MODE_HT(session_entry->dot11mode))
-		lim_update_stads_htcap(mac_ctx, sta_ds, assoc_rsp);
+		lim_update_stads_htcap(mac_ctx, sta_ds, assoc_rsp,
+				       session_entry);
 
 #ifdef WLAN_FEATURE_11AC
 	if (assoc_rsp->VHTCaps.present)
