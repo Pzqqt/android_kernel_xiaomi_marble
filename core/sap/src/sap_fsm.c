@@ -2665,6 +2665,8 @@ CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 			csr_roaminfo->chan_info.reg_info_1;
 		chaninfo->reg_info_2 =
 			csr_roaminfo->chan_info.reg_info_2;
+		chaninfo->nss = csr_roaminfo->chan_info.nss;
+		chaninfo->rate_flags = csr_roaminfo->chan_info.rate_flags;
 
 		reassoc_complete->wmmEnabled = csr_roaminfo->wmmEnabledSta;
 		reassoc_complete->status = (eSapStatus) context;

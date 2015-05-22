@@ -388,6 +388,11 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 
 			pHddStaCtx->conn_info.proxyARPService =
 				pRoamInfo->u.pConnectedProfile->proxyARPService;
+
+			pHddStaCtx->conn_info.nss = pRoamInfo->chan_info.nss;
+
+			pHddStaCtx->conn_info.rate_flags =
+				pRoamInfo->chan_info.rate_flags;
 		}
 	}
 	/* save the connected BssType */

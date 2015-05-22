@@ -108,6 +108,8 @@ typedef enum {
  * @proxyARPService: proxy arp service
  * @ptk_installed: ptk installed state
  * @gtk_installed: gtk installed state
+ * @nss: number of spatial streams negotiated
+ * @rate_flags: rate flags for current connection
  */
 typedef struct connection_info_s {
 	eConnectionState connState;
@@ -126,6 +128,8 @@ typedef struct connection_info_s {
 	uint8_t proxyARPService;
 	bool ptk_installed;
 	bool gtk_installed;
+	uint8_t nss;
+	uint32_t rate_flags;
 } connection_info_t;
 
 /* Forward declarations */

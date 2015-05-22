@@ -3502,9 +3502,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	uint8_t peer_id;
 	CDF_STATUS status;
 	int32_t ret;
-#ifdef WLAN_FEATURE_11W
 	struct wma_txrx_node *iface = NULL;
-#endif /* WLAN_FEATURE_11W */
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
 
@@ -3535,6 +3533,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		goto send_rsp;
 	}
 
+	iface = &wma->interfaces[vdev->vdev_id];
 	peer = ol_txrx_find_peer_by_addr_and_vdev(pdev,
 						  vdev,
 						  add_sta->staMac, &peer_id);
@@ -3633,7 +3632,6 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		 * per STA for SAP case
 		 * We will isolate the ifaces based on vdevid
 		 */
-		iface = &wma->interfaces[vdev->vdev_id];
 		iface->rmfEnabled = add_sta->rmfEnabled;
 		/*
 		 * when 802.11w PMF is enabled for hw encr/decr
@@ -3669,6 +3667,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	ol_txrx_peer_state_update(pdev, add_sta->staMac, state);
 
 	add_sta->staIdx = ol_txrx_local_peer_id(peer);
+	add_sta->nss    = iface->nss;
 	add_sta->status = CDF_STATUS_SUCCESS;
 send_rsp:
 	/* Do not send add stat resp when peer assoc cnf is enabled */
@@ -4042,6 +4041,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		wma_set_ppsconfig(params->smesessionId,
 				  WMA_VHT_PPS_DELIM_CRC_FAIL, 1);
 	iface->aid = params->assocId;
+	params->nss = iface->nss;
 out:
 	/* Do not send add stat resp when peer assoc cnf is enabled */
 	if (peer_assoc_cnf)

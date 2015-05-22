@@ -444,6 +444,7 @@ uint8_t lim_build_p2p_ie(tpAniSirGlobal pMac, uint8_t *ie, uint8_t *data,
 bool lim_is_noa_insert_reqd(tpAniSirGlobal pMac);
 bool lim_isconnected_on_dfs_channel(uint8_t currentChannel);
 uint8_t lim_get_current_operating_channel(tpAniSirGlobal pMac);
+uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds);
 
 #ifdef WLAN_FEATURE_11AC
 bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac,

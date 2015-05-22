@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -238,6 +238,8 @@ typedef struct sDphHashNode {
 	/* key installed for this STA or not in the firmware */
 	uint8_t is_key_installed;
 	uint8_t is_disassoc_deauth_in_progress;
+
+	uint8_t nss;
 	/*
 	 * When a station with already an existing dph entry tries to
 	 * associate again, the old dph entry will be zeroed out except
