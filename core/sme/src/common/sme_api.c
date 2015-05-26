@@ -546,29 +546,37 @@ tSmeCmd *sme_get_command_buffer(tpAniSirGlobal pMac)
 				csr_ll_next(&pMac->sme.smeCmdPendingList, pEntry,
 					    LL_ACCESS_NOLOCK);
 		}
-		/* Increment static variable so that it prints
-		 * pending command only once
-		 */
-		sme_command_queue_full++;
-
 		csr_ll_unlock(&pMac->sme.smeCmdPendingList);
 
+		idx = 1;
 		/* There may be some more command in CSR's own pending queue */
 		csr_ll_lock(&pMac->roam.roamCmdPendingList);
 		pEntry =
 			csr_ll_peek_head(&pMac->roam.roamCmdPendingList,
 					 LL_ACCESS_NOLOCK);
-		while (pEntry) {
+		while (pEntry  && !sme_command_queue_full) {
 			pTempCmd = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-			sms_log(pMac, LOGE,
-				"Out of command buffer.... CSR pending command #%d (0x%X)",
-				idx++, pTempCmd->command);
+			/* Print only 1st five commands from CSR pending queue */
+			if (idx <= 5)
+				sms_log(pMac, LOGE,
+					"Out of command buffer.... "
+					"CSR roamCmdPendingList command #%d (0x%X)",
+					idx, pTempCmd->command);
+			idx++;
 			dump_csr_command_info(pMac, pTempCmd);
 			pEntry =
 				csr_ll_next(&pMac->roam.roamCmdPendingList, pEntry,
 					    LL_ACCESS_NOLOCK);
 		}
+
+		/* Increment static variable so that it prints
+		 * pending command only once
+		 */
+		sme_command_queue_full++;
 		csr_ll_unlock(&pMac->roam.roamCmdPendingList);
+
+		/* panic with out-of-command */
+		CDF_BUG(0);
 	}
 
 	/* memset to zero */
