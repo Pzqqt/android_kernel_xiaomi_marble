@@ -1202,6 +1202,18 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 				FL("Populate HT IEs in Assoc Response"));
 			populate_dot11f_ht_caps(mac_ctx, pe_session,
 				&frm.HTCaps);
+			/*
+			 * Check the STA capability and
+			 * update the HTCaps accordingly
+			 */
+			frm.HTCaps.supportedChannelWidthSet = (
+				sta->htSupportedChannelWidthSet <
+				     pe_session->htSupportedChannelWidthSet) ?
+				      sta->htSupportedChannelWidthSet :
+				       pe_session->htSupportedChannelWidthSet;
+			if (!frm.HTCaps.supportedChannelWidthSet)
+				frm.HTCaps.shortGI40MHz = 0;
+
 			populate_dot11f_ht_info(mac_ctx, &frm.HTInfo,
 				pe_session);
 		}
