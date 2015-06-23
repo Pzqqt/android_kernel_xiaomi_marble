@@ -347,6 +347,16 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			return NETDEV_TX_OK;
 		}
 	} else {
+		if (eConnectionState_Associated !=
+		    pHddStaCtx->conn_info.connState) {
+			CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+				FL("Tx frame in not associated state in %d context"),
+				pAdapter->device_mode);
+			++pAdapter->stats.tx_dropped;
+			++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
+			kfree_skb(skb);
+			return NETDEV_TX_OK;
+		}
 		STAId = pHddStaCtx->conn_info.staId[0];
 	}
 
