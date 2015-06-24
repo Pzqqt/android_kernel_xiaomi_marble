@@ -1287,6 +1287,14 @@ typedef enum {
 #define CFG_CDF_TRACE_ENABLE_SAP_NAME     "cdf_trace_enable_sap"
 #define CFG_CDF_TRACE_ENABLE_HDD_SAP_NAME "cdf_trace_enable_hdd_sap"
 #define CFG_CDF_TRACE_ENABLE_BMI_NAME     "cdf_trace_enable_bmi"
+#define CFG_CDF_TRACE_ENABLE_CFG_NAME     "cdf_trace_enable_cfg"
+#define CFG_CDF_TRACE_ENABLE_EPPING       "cdf_trace_enable_epping"
+#define CFG_CDF_TRACE_ENABLE_CDF_DEVICES  "cdf_trace_enable_cdf_devices"
+#define CFG_CDF_TRACE_ENABLE_TXRX_NAME    "cfd_trace_enable_txrx"
+#define CFG_CDF_TRACE_ENABLE_HTC_NAME     "cdf_trace_enable_htc"
+#define CFG_CDF_TRACE_ENABLE_HIF_NAME     "cdf_trace_enable_hif"
+#define CFG_CDR_TRACE_ENABLE_HDD_SAP_DATA_NAME   "cdf_trace_enable_hdd_sap_data"
+#define CFG_CDF_TRACE_ENABLE_HDD_DATA_NAME       "cdf_trace_enable_hdd_data"
 
 #define CFG_CDF_TRACE_ENABLE_MIN          (0)
 #define CFG_CDF_TRACE_ENABLE_MAX          (0xff)
@@ -2992,6 +3000,14 @@ struct hdd_config {
 	uint16_t cdf_trace_enable_sap;
 	uint16_t cdf_trace_enable_hdd_sap;
 	uint16_t cdf_trace_enable_bmi;
+	uint16_t cdf_trace_enable_cfg;
+	uint16_t cfd_trace_enable_txrx;
+	uint16_t cdf_trace_enable_htc;
+	uint16_t cdf_trace_enable_hif;
+	uint16_t cdf_trace_enable_hdd_sap_data;
+	uint16_t cdf_trace_enable_hdd_data;
+	uint16_t cdf_trace_enable_epping;
+	uint16_t cdf_trace_enable_cdf_devices;
 
 	uint16_t nTeleBcnTransListenInterval;
 	uint16_t nTeleBcnMaxListenInterval;

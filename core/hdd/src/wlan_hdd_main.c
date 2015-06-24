@@ -4864,6 +4864,23 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 			     hdd_ctx->config->cdf_trace_enable_hdd_sap);
 	hdd_cdf_trace_enable(CDF_MODULE_ID_BMI,
 				hdd_ctx->config->cdf_trace_enable_bmi);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_CFG,
+				hdd_ctx->config->cdf_trace_enable_cfg);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_EPPING,
+				hdd_ctx->config->cdf_trace_enable_epping);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_CDF_DEVICE,
+				hdd_ctx->config->cdf_trace_enable_cdf_devices);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_TXRX,
+				hdd_ctx->config->cfd_trace_enable_txrx);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_HTC,
+				hdd_ctx->config->cdf_trace_enable_htc);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_HIF,
+				hdd_ctx->config->cdf_trace_enable_hif);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD_SAP_DATA,
+				hdd_ctx->config->cdf_trace_enable_hdd_sap_data);
+	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD_DATA,
+				hdd_ctx->config->cdf_trace_enable_hdd_data);
+
 	hdd_cfg_print(hdd_ctx);
 
 	if (CDF_FTM_MODE == hdd_get_conparam())
