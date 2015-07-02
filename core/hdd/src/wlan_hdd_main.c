@@ -4309,6 +4309,17 @@ static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
 	return ret_val;
 }
 
+/**
+ * hdd_cnss_request_bus_bandwidth() - Function to control bus bandwidth
+ * @hdd_ctx - handle to hdd context
+ * @tx_packets - transmit packet count
+ * @rx_packets - receive packet count
+ *
+ * The function controls the bus bandwidth and dynamic control of
+ * tcp delayed ack configuration
+ *
+ * Returns: None
+ */
 #ifdef MSM_PLATFORM
 void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 			const uint64_t tx_packets, const uint64_t rx_packets)
@@ -4335,11 +4346,8 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 							next_vote_level;
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
-		hddLog(QDF_TRACE_LEVEL_DEBUG,
-		       FL(
-			  "trigger level %d, tx_packets: %lld, rx_packets: %lld"
-			 ),
-		       next_vote_level, tx_packets, rx_packets);
+		hdd_debug("trigger level %d, tx_packets: %lld, rx_packets: %lld",
+			 next_vote_level, tx_packets, rx_packets);
 		hdd_ctx->cur_vote_level = next_vote_level;
 		cnss_request_bus_bandwidth(next_vote_level);
 	}
@@ -4357,11 +4365,16 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 								next_rx_level;
 
 	if (hdd_ctx->cur_rx_level != next_rx_level) {
-		hddLog(QDF_TRACE_LEVEL_DEBUG,
-		       FL("TCP DELACK trigger level %d, average_rx: %llu"),
+		hdd_debug("TCP DELACK trigger level %d, average_rx: %llu",
 		       next_rx_level, temp_rx);
 		hdd_ctx->cur_rx_level = next_rx_level;
-		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_TP_IND,
+		/* Send throughput indication only if it is enabled.
+		 * Disabling tcp_del_ack will revert the tcp stack behavior
+		 * to default delayed ack. Note that this will disable the
+		 * dynamic delayed ack mechanism across the system
+		 */
+		if (hdd_ctx->config->enable_tcp_delack)
+			wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_TP_IND,
 					    &next_rx_level,
 					    sizeof(next_rx_level));
 	}

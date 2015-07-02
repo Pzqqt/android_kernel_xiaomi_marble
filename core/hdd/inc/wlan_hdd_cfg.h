@@ -2264,6 +2264,17 @@ typedef enum {
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MIN     (0)
 #define CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MAX     (10000)
 
+/*
+ * Dynamic configuration of tcp delack is enabled by default.
+ * User can set gTcpDelAckEnable flag to 0 in the INI file to disable dynamic
+ * reconfiguration of tcp delack. This does not disable the update of receive
+ * histogram
+ */
+#define CFG_ENABLE_TCP_DELACK                      "gTcpDelAckEnable"
+#define CFG_ENABLE_TCP_DELACK_DEFAULT              (1)
+#define CFG_ENABLE_TCP_DELACK_MIN                  (0)
+#define CFG_ENABLE_TCP_DELACK_MAX                  (1)
+
 #define CFG_TCP_DELACK_THRESHOLD_HIGH              "gTcpDelAckThresholdHigh"
 #define CFG_TCP_DELACK_THRESHOLD_HIGH_DEFAULT      (500)
 #define CFG_TCP_DELACK_THRESHOLD_HIGH_MIN          (0)
@@ -3392,6 +3403,7 @@ struct hdd_config {
 	uint32_t busBandwidthMediumThreshold;
 	uint32_t busBandwidthLowThreshold;
 	uint32_t busBandwidthComputeInterval;
+	uint32_t enable_tcp_delack;
 	uint32_t tcpDelackThresholdHigh;
 	uint32_t tcpDelackThresholdLow;
 	uint32_t tcp_tx_high_tput_thres;

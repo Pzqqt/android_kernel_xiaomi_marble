@@ -3030,12 +3030,21 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_DEFAULT,
 		     CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MIN,
 		     CFG_BUS_BANDWIDTH_COMPUTE_INTERVAL_MAX),
+
+	REG_VARIABLE(CFG_ENABLE_TCP_DELACK, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_tcp_delack,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_TCP_DELACK_DEFAULT,
+		     CFG_ENABLE_TCP_DELACK_MIN,
+		     CFG_ENABLE_TCP_DELACK_MAX),
+
 	REG_VARIABLE(CFG_TCP_DELACK_THRESHOLD_HIGH, WLAN_PARAM_Integer,
 		     struct hdd_config, tcpDelackThresholdHigh,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_TCP_DELACK_THRESHOLD_HIGH_DEFAULT,
 		     CFG_TCP_DELACK_THRESHOLD_HIGH_MIN,
 		     CFG_TCP_DELACK_THRESHOLD_HIGH_MAX),
+
 	REG_VARIABLE(CFG_TCP_DELACK_THRESHOLD_LOW, WLAN_PARAM_Integer,
 		     struct hdd_config, tcpDelackThresholdLow,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -5098,6 +5107,10 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gbusBandwidthComputeInterval] Value = [%u] ",
 		  pHddCtx->config->busBandwidthComputeInterval);
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [%s] Value = [%u] ",
+		  CFG_ENABLE_TCP_DELACK,
+		  pHddCtx->config->enable_tcp_delack);
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gTcpDelAckThresholdHigh] Value = [%u] ",
 		  pHddCtx->config->tcpDelackThresholdHigh);
