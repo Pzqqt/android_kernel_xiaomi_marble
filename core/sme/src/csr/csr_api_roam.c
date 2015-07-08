@@ -12084,7 +12084,7 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 		 (pIes->WPA.unicast_cipher_count == 1))
 		&& ((NULL != &(pIes->WPA.unicast_ciphers[0]))
 		    && !memcmp(&(pIes->WPA.unicast_ciphers[0]),
-			       "\x00\x0f\xac\x02", 4)))) {
+			       "\x00\x50\xf2\x02", 4)))) {
 		sms_log(pMac, LOGW,
 			" No channel bonding in TKIP mode ");
 		return PHY_SINGLE_CHANNEL_CENTERED;
