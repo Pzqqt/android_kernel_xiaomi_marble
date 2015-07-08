@@ -1794,14 +1794,14 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 
 	memset(&params, 0, sizeof(tSirAppType2Params));
 
-	ret = sscanf(arg, "%17s %16s %x %x %x %u %u %u %u %u %u %u %u %u %u",
+	ret = sscanf(arg, "%17s %16s %x %x %x %u %u %hu %hu %u %u %u %u %u %u",
 		     mac_addr, rc4_key, (unsigned int *)&params.ip_id,
 		     (unsigned int *)&params.ip_device_ip,
 		     (unsigned int *)&params.ip_server_ip,
 		     (unsigned int *)&params.tcp_seq,
 		     (unsigned int *)&params.tcp_ack_seq,
-		     (unsigned int *)&params.tcp_src_port,
-		     (unsigned int *)&params.tcp_dst_port,
+		     (uint16_t *)&params.tcp_src_port,
+		     (uint16_t *)&params.tcp_dst_port,
 		     (unsigned int *)&params.keepalive_init,
 		     (unsigned int *)&params.keepalive_min,
 		     (unsigned int *)&params.keepalive_max,
