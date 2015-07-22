@@ -2159,15 +2159,13 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 				(temp_rate_set.rate[j] & 0x7F))
 				continue;
 
-#ifdef FEATURE_WLAN_NON_INTEGRATED_SOC
-			if ((b_rateindex > HAL_NUM_11B_RATES) ||
-			    (a_rateindex > HAL_NUM_11A_RATES)) {
+			if ((b_rateindex > SIR_NUM_11B_RATES) ||
+			    (a_rateindex > SIR_NUM_11A_RATES)) {
 				lim_log(mac_ctx, LOGE,
 					FL("Invalid number of rates (11b->%d, 11a->%d)"),
 					b_rateindex, a_rateindex);
 				return eSIR_FAILURE;
 			}
-#endif
 			if (sirIsArate(temp_rate_set2.rate[i] & 0x7f)) {
 				is_a_rate = 1;
 				if (a_rateindex < SIR_NUM_11A_RATES)
