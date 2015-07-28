@@ -6167,6 +6167,7 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		pWlanHostapdDev->ieee80211_ptr = &pHostapdAdapter->wdev;
 		pHostapdAdapter->wdev.wiphy = pHddCtx->wiphy;
 		pHostapdAdapter->wdev.netdev = pWlanHostapdDev;
+		hdd_set_tso_flags(pHddCtx, pWlanHostapdDev);
 		init_completion(&pHostapdAdapter->tx_action_cnf_event);
 		init_completion(&pHostapdAdapter->cancel_rem_on_chan_var);
 		init_completion(&pHostapdAdapter->rem_on_chan_ready_event);

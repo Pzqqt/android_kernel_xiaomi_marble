@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -230,15 +230,16 @@ ol_tx_desc_alloc_wrapper(struct ol_txrx_pdev_t *pdev,
 void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
 	cdf_spin_lock_bh(&pdev->tx_mutex);
-#if defined(FEATURE_TSO)
+
 	if (tx_desc->pkt_type == ol_tx_frm_tso) {
-		if (cdf_unlikely(tx_desc->tso_desc == NULL))
+		if (cdf_unlikely(tx_desc->tso_desc == NULL)) {
 			cdf_print("%s %d TSO desc is NULL!\n",
 				 __func__, __LINE__);
-		else
+			cdf_assert(0);
+		} else {
 			ol_tso_free_segment(pdev, tx_desc->tso_desc);
+		}
 	}
-#endif
 	ol_tx_desc_reset_pkt_type(tx_desc);
 	ol_tx_desc_reset_timestamp(tx_desc);
 

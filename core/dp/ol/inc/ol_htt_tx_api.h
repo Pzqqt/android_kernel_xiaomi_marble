@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -608,11 +608,9 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 	local_word1 = 0;
 
-#if defined(FEATURE_TSO)
 	if (tso_info->is_tso)
 		HTT_TX_DESC_FRM_LEN_SET(local_word1, tso_info->total_len);
 	else
-#endif
 		HTT_TX_DESC_FRM_LEN_SET(local_word1, cdf_nbuf_len(msdu));
 
 	HTT_TX_DESC_FRM_ID_SET(local_word1, msdu_id);

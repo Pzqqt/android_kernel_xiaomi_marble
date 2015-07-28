@@ -1526,4 +1526,30 @@ phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width);
 uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 			uint8_t bw_offset);
 void hdd_update_config(hdd_context_t *hdd_ctx);
+
+#ifdef FEATURE_TSO
+/**
+ * hdd_set_tso_flags() - enable TSO flags in the network device
+ * @hdd_ctx: HDD context
+ * @wlan_dev: network device structure
+ *
+ * This function enables the TSO related feature flags in the
+ * given network device.
+ *
+ * Return: none
+ */
+static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
+	 struct net_device *wlan_dev)
+{
+	if (hdd_ctx->config->tso_enable) {
+		hdd_info("TSO Enabled");
+		wlan_dev->features |=
+			 NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
+			 NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_SG;
+	}
+}
+#else
+static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
+	 struct net_device *wlan_dev){}
+#endif /* FEATURE_TSO */
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

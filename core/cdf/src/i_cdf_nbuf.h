@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1008,12 +1008,16 @@ uint32_t __cdf_nbuf_get_tso_info(cdf_device_t osdev, struct sk_buff *skb,
 
 uint32_t __cdf_nbuf_get_tso_num_seg(struct sk_buff *skb);
 
-static inline uint8_t __cdf_nbuf_is_tso(struct sk_buff *skb)
+static inline bool __cdf_nbuf_is_tso(struct sk_buff *skb)
 {
 	return skb_is_gso(skb);
 }
 
-struct sk_buff *__cdf_nbuf_inc_users(struct sk_buff *skb);
+static inline void __cdf_nbuf_inc_users(struct sk_buff *skb)
+{
+	atomic_inc(&skb->users);
+	return;
+}
 #endif /* TSO */
 
 /**

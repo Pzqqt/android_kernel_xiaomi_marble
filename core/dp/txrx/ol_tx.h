@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,4 +89,5 @@ static inline void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	return;
 }
 #endif
+
 #endif /* _OL_TX__H_ */

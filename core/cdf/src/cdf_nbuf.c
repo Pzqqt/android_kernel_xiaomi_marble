@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,20 +35,17 @@
 #include <linux/version.h>
 #include <linux/skbuff.h>
 #include <linux/module.h>
+#if defined(FEATURE_TSO)
+#include <linux/tcp.h>
+#include <linux/if_vlan.h>
+#include <linux/ip.h>
+#endif /* FEATURE_TSO */
 #include <cdf_types.h>
 #include <cdf_nbuf.h>
 #include <cdf_memory.h>
 #include <cdf_trace.h>
 #include <cdf_status.h>
 #include <cdf_lock.h>
-
-#if defined(FEATURE_TSO)
-#include <net/ipv6.h>
-#include <linux/ipv6.h>
-#include <linux/tcp.h>
-#include <linux/if_vlan.h>
-#include <linux/ip.h>
-#endif /* FEATURE_TSO */
 
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[NBUF_TX_PKT_STATE_MAX];
@@ -837,7 +834,7 @@ uint32_t __cdf_nbuf_get_tso_info(cdf_device_t osdev, struct sk_buff *skb,
 	curr_seg = tso_info->tso_seg_list;
 
 	/* length of the first chunk of data in the skb */
-	skb_proc = skb_frag_len = skb->len - skb->data_len;
+	skb_proc = skb_frag_len = skb_headlen(skb);
 
 	/* the 0th tso segment's 0th fragment always contains the EIT header */
 	/* update the remaining skb fragment length and TSO segment length */
@@ -1006,12 +1003,6 @@ uint32_t __cdf_nbuf_get_tso_num_seg(struct sk_buff *skb)
 			break;
 	}
 	return num_segs;
-}
-
-struct sk_buff *__cdf_nbuf_inc_users(struct sk_buff *skb)
-{
-	atomic_inc(&skb->users);
-	return skb;
 }
 
 #endif /* FEATURE_TSO */

@@ -80,36 +80,59 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		}							\
 	} while (0)
 
-#define ol_tx_prepare_tso(vdev, msdu, msdu_info) \
-	do { \
-		msdu_info.tso_info.curr_seg = NULL; \
-		if (cdf_nbuf_is_tso(msdu)) { \
-			int num_seg = cdf_nbuf_get_tso_num_seg(msdu); \
-			msdu_info.tso_info.tso_seg_list = NULL; \
-		    msdu_info.tso_info.num_segs = num_seg; \
-			while (num_seg) { \
-				struct cdf_tso_seg_elem_t *tso_seg = \
-					ol_tso_alloc_segment(vdev->pdev); \
-				if (tso_seg) { \
-					tso_seg->next = \
-						msdu_info.tso_info.tso_seg_list; \
-					msdu_info.tso_info.tso_seg_list \
-						= tso_seg; \
-					num_seg--; \
-				} else {\
-					cdf_print("TSO seg alloc failed!\n"); \
-				} \
-			} \
-			cdf_nbuf_get_tso_info(vdev->pdev->osdev, \
-				msdu, &msdu_info.tso_info); \
-			msdu_info.tso_info.curr_seg = \
-				msdu_info.tso_info.tso_seg_list; \
-		    num_seg = msdu_info.tso_info.num_segs; \
-		} else { \
-			msdu_info.tso_info.is_tso = 0; \
-			msdu_info.tso_info.num_segs = 1; \
-		} \
-	} while (0)
+#if defined(FEATURE_TSO)
+/**
+ * ol_tx_prepare_tso() - Given a jumbo msdu, prepare the TSO
+ * related information in the msdu_info meta data
+ * @vdev: virtual device handle
+ * @msdu: network buffer
+ * @msdu_info: meta data associated with the msdu
+ *
+ * Return: 0 - success, >0 - error
+ */
+static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
+	 cdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info)
+{
+	msdu_info->tso_info.curr_seg = NULL;
+	if (cdf_nbuf_is_tso(msdu)) {
+		int num_seg = cdf_nbuf_get_tso_num_seg(msdu);
+		msdu_info->tso_info.tso_seg_list = NULL;
+		msdu_info->tso_info.num_segs = num_seg;
+		while (num_seg) {
+			struct cdf_tso_seg_elem_t *tso_seg =
+				ol_tso_alloc_segment(vdev->pdev);
+			if (tso_seg) {
+				tso_seg->next =
+					msdu_info->tso_info.tso_seg_list;
+				msdu_info->tso_info.tso_seg_list
+					= tso_seg;
+				num_seg--;
+			} else {
+				struct cdf_tso_seg_elem_t *next_seg;
+				struct cdf_tso_seg_elem_t *free_seg =
+					msdu_info->tso_info.tso_seg_list;
+				cdf_print("TSO seg alloc failed!\n");
+				while (free_seg) {
+					next_seg = free_seg->next;
+					ol_tso_free_segment(vdev->pdev,
+						 free_seg);
+					free_seg = next_seg;
+				}
+				return 1;
+			}
+		}
+		cdf_nbuf_get_tso_info(vdev->pdev->osdev,
+			msdu, &(msdu_info->tso_info));
+		msdu_info->tso_info.curr_seg =
+			msdu_info->tso_info.tso_seg_list;
+		num_seg = msdu_info->tso_info.num_segs;
+	} else {
+		msdu_info->tso_info.is_tso = 0;
+		msdu_info->tso_info.num_segs = 1;
+	}
+	return 0;
+}
+#endif
 
 /**
  * ol_tx_send_data_frame() - send data frame
@@ -246,7 +269,13 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
-		ol_tx_prepare_tso(vdev, msdu, msdu_info);
+		if (cdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
+			cdf_print("ol_tx_prepare_tso failed\n");
+			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
+				 tx.dropped.host_reject, msdu);
+			return msdu;
+		}
+
 		segments = msdu_info.tso_info.num_segs;
 
 		/*
@@ -508,7 +537,13 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
-		ol_tx_prepare_tso(vdev, msdu, msdu_info);
+		if (cdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
+			cdf_print("ol_tx_prepare_tso failed\n");
+			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
+				 tx.dropped.host_reject, msdu);
+			return msdu;
+		}
+
 		segments = msdu_info.tso_info.num_segs;
 
 		/*

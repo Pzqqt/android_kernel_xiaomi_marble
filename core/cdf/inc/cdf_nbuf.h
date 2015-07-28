@@ -940,9 +940,9 @@ static inline int cdf_nbuf_dec_num_frags(cdf_nbuf_t buf)
  * cdf_nbuf_is_tso() - is the network buffer a jumbo packet?
  * @buf: Network buffer
  *
- * Return: 1 - this is a jumbo packet 0 - not a jumbo packet
+ * Return: true - jumbo packet false - not a jumbo packet
  */
-static inline uint8_t cdf_nbuf_is_tso(cdf_nbuf_t nbuf)
+static inline bool cdf_nbuf_is_tso(cdf_nbuf_t nbuf)
 {
 	return __cdf_nbuf_is_tso(nbuf);
 }
@@ -992,9 +992,9 @@ static inline uint32_t cdf_nbuf_get_tso_num_seg(cdf_nbuf_t nbuf)
  *
  * Return: the network buffer
  */
-static inline cdf_nbuf_t cdf_nbuf_inc_users(cdf_nbuf_t nbuf)
+static inline void cdf_nbuf_inc_users(cdf_nbuf_t nbuf)
 {
-	return __cdf_nbuf_inc_users(nbuf);
+	__cdf_nbuf_inc_users(nbuf);
 }
 #endif /*TSO*/
 

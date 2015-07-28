@@ -1913,14 +1913,8 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 				NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM;
 		pWlanDev->features |= NETIF_F_RXCSUM;
 
-#if defined(FEATURE_TSO)
-		if (hdd_ctx->config->tso_enable) {
-			hddLog(CDF_TRACE_LEVEL_INFO, FL("TSO Enabled\n"));
-			pWlanDev->features |=
-				 NETIF_F_IP_CSUM | NETIF_F_IPV6_CSUM |
-				 NETIF_F_TSO | NETIF_F_TSO6 | NETIF_F_SG;
-		}
-#endif
+		hdd_set_tso_flags(hdd_ctx, pWlanDev);
+
 		hdd_set_station_ops(adapter->dev);
 
 		pWlanDev->destructor = free_netdev;

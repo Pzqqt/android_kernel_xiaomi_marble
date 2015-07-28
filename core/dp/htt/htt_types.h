@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -175,16 +175,7 @@ struct ipa_uc_rx_ring_elem_t {
 
 #if defined(HELIUMPLUS_PADDR64)
 struct msdu_ext_desc_t {
-#if defined(FEATURE_TSO)
 	struct cdf_tso_flags_t tso_flags;
-#else
-	u_int32_t tso_flag0;
-	u_int32_t tso_flag1;
-	u_int32_t tso_flag2;
-	u_int32_t tso_flag3;
-	u_int32_t tso_flag4;
-	u_int32_t tso_flag5;
-#endif
 	u_int32_t frag_ptr0;
 	u_int32_t frag_len0;
 	u_int32_t frag_ptr1;

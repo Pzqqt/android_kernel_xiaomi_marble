@@ -916,7 +916,9 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 
 	/* Thermal Mitigation */
 	ol_tx_throttle_init(pdev);
+
 	ol_tso_seg_list_init(pdev, desc_pool_size);
+
 	ol_tx_register_flow_control(pdev);
 	htt_pkt_log_init(pdev, osc);
 
@@ -2405,6 +2407,12 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 		}
 	}
 }
+#else
+void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
+{
+	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	 "TSO is not supported\n");
+}
 #endif
 
 /**
@@ -2927,12 +2935,7 @@ void ol_txrx_display_stats(uint16_t value)
 		ol_txrx_stats_display(pdev);
 		break;
 	case WLAN_TXRX_TSO_STATS:
-#if defined(FEATURE_TSO) && defined(FEATURE_TSO_DEBUG)
 		ol_txrx_stats_display_tso(pdev);
-#else
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
-					"%s: TSO not supported", __func__);
-#endif
 		break;
 	case WLAN_DUMP_TX_FLOW_POOL_INFO:
 		ol_tx_dump_flow_pool_info();

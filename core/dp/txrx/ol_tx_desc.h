@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -163,6 +163,9 @@ struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev);
 
 void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	 struct cdf_tso_seg_elem_t *tso_seg);
+#else
+#define ol_tso_alloc_segment(pdev) /*no-op*/
+#define ol_tso_free_segment(pdev, tso_seg) /*no-op*/
 #endif
 
 /**
