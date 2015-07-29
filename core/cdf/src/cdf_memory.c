@@ -195,9 +195,9 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	uint32_t new_size;
 	int flags = GFP_KERNEL;
 
-	if (size > (1024 * 1024)) {
+	if (size > (1024 * 1024) || size == 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: called with arg > 1024K; passed in %zu !!!",
+			  "%s: called with invalid arg; passed in %zu !!!",
 			  __func__, size);
 		return NULL;
 	}
@@ -327,9 +327,9 @@ void *cdf_mem_malloc(size_t size)
 #ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
 	void *pmem;
 #endif
-	if (size > (1024 * 1024)) {
+	if (size > (1024 * 1024) || size == 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: called with arg > 1024K; passed in %zu !!",
+			  "%s: called with invalid arg; passed in %zu !!",
 			  __func__, size);
 		return NULL;
 	}

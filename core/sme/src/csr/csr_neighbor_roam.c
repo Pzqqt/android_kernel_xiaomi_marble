@@ -2763,15 +2763,21 @@ CDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 	pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels =
 		pMac->roam.configParam.neighborRoamConfig.neighborScanChanList.
 		numChannels;
-
-	pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
+	if (pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels != 0) {
+		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList =
 		cdf_mem_malloc(pMac->roam.configParam.neighborRoamConfig.
-			       neighborScanChanList.numChannels);
-
-	if (NULL == pNeighborRoamInfo->cfgParams.channelInfo.ChannelList) {
-		sms_log(pMac, LOGE,
+				neighborScanChanList.numChannels);
+		if (NULL ==
+			pNeighborRoamInfo->cfgParams.channelInfo.ChannelList) {
+			sms_log(pMac, LOGE,
 			FL("Memory Allocation for CFG Channel List failed"));
-		return CDF_STATUS_E_NOMEM;
+			return CDF_STATUS_E_NOMEM;
+		}
+	} else {
+		pNeighborRoamInfo->cfgParams.channelInfo.ChannelList = NULL;
+		sms_log(pMac, LOGE,
+			FL("invalid neighbor roam channel list: %u"),
+			pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels);
 	}
 
 	/* Update the roam global structure from CFG */
