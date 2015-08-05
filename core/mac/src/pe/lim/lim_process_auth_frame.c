@@ -190,7 +190,7 @@ lim_process_auth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		   "Frame Received: BSSID: " MAC_ADDRESS_STR " (RSSI %d)"),
 		psessionEntry->peSessionId, GET_LIM_SYSTEM_ROLE(psessionEntry),
 		psessionEntry->limMlmState, MAC_ADDR_ARRAY(pHdr->bssId),
-		(uint) abs((int8_t) WMA_GET_RX_RSSI_DB(pRxPacketInfo)));
+		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo)));
 
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 
@@ -1775,7 +1775,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	lim_log(pMac, LOG1,
 		FL("Auth Frame Received: BSSID " MAC_ADDRESS_STR " (RSSI %d)"),
 		MAC_ADDR_ARRAY(pHdr->bssId),
-		(uint) abs((int8_t) WMA_GET_RX_RSSI_DB(pBd)));
+		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(pBd)));
 
 	/* Auth frame has come on a new BSS, however, we need to find the session
 	 * from where the auth-req was sent to the new AP

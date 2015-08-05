@@ -129,7 +129,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		FL("Probe Resp Frame Received: BSSID "
 		MAC_ADDRESS_STR " (RSSI %d)"),
 		MAC_ADDR_ARRAY(header->bssId),
-		(uint) abs((int8_t)WMA_GET_RX_RSSI_DB(rx_Packet_info)));
+		(uint) abs((int8_t)WMA_GET_RX_RSSI_NORMALIZED(rx_Packet_info)));
 	/* Get pointer to Probe Response frame body */
 	body = WMA_GET_RX_MPDU_DATA(rx_Packet_info);
 		/* Enforce Mandatory IEs */
@@ -349,7 +349,8 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 		  FL("Probe Resp Frame Received: BSSID "
 		  MAC_ADDRESS_STR " (RSSI %d)"),
 		  MAC_ADDR_ARRAY(header->bssId),
-		  (uint) abs((int8_t)WMA_GET_RX_RSSI_DB(rx_packet_info)));
+		  (uint) abs((int8_t)WMA_GET_RX_RSSI_NORMALIZED(
+					rx_packet_info)));
 	/*
 	 * Get pointer to Probe Response frame body
 	 */

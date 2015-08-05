@@ -611,7 +611,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		"and mlmstate: %d RSSI %d from " MAC_ADDRESS_STR), subtype,
 		session_entry->peSessionId, GET_LIM_SYSTEM_ROLE(session_entry),
 		session_entry->limMlmState,
-		(uint) abs((int8_t) WMA_GET_RX_RSSI_DB(rx_pkt_info)),
+		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)),
 		MAC_ADDR_ARRAY(hdr->sa));
 
 	beacon = cdf_mem_malloc(sizeof(tSchBeaconStruct));

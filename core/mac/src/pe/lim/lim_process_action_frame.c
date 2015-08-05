@@ -1895,7 +1895,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		case SIR_MAC_WNM_BSS_TM_RESPONSE:
 		case SIR_MAC_WNM_NOTIF_REQUEST:
 		case SIR_MAC_WNM_NOTIF_RESPONSE:
-			rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			/* Forward to the SME to HDD to wpa_supplicant */
 			lim_send_sme_mgmt_frame_ind(mac_ctx,
@@ -2056,7 +2056,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-			rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 				  ("Public Action TDLS Discovery RSP .."));
 			lim_send_sme_mgmt_frame_ind(mac_ctx,

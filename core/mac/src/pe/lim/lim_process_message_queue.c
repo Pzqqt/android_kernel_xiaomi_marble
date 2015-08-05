@@ -352,7 +352,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 		result->ap[i].capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
 		result->ap[i].channel = WMA_GET_RX_CH(rx_pkt_info);
-		result->ap[i].rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+		result->ap[i].rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 		result->ap[i].rtt = 0;
 		result->ap[i].rtt_sd = 0;
 		result->ap[i].ieLength = ie_len;
@@ -403,7 +403,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	result->ap.capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
 	result->ap.channel = WMA_GET_RX_CH(rx_pkt_info);
-	result->ap.rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+	result->ap.rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 	result->ap.rtt = 0;
 	result->ap.rtt_sd = 0;
 	result->ap.ieLength = ie_len;

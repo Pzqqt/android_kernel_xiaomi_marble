@@ -2853,6 +2853,14 @@ enum dot11p_mode {
 #define CFG_ENABLE_LFR_SUBNET_MAX          (1)
 #define CFG_ENABLE_LFR_SUBNET_DEFAULT      (1)
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
+/* Option to report rssi in cfg80211_inform_bss_frame()
+ * 0 = use rssi value based on noise floor = -96 dBm
+ * 1 = use rssi value based on actual noise floor in hardware
+ */
+#define CFG_INFORM_BSS_RSSI_RAW_NAME               "gInformBssRssiRaw"
+#define CFG_INFORM_BSS_RSSI_RAW_MIN                (0)
+#define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
+#define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
 
 /*---------------------------------------------------------------------------
    Type declarations
@@ -3441,6 +3449,7 @@ struct hdd_config {
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
+	uint8_t inform_bss_rssi_raw;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
@@ -3530,7 +3539,7 @@ typedef enum {
 typedef struct tREG_TABLE_ENTRY {
 
 	char *RegName;          /* variable name in the qcom_cfg.ini file */
-	WLAN_PARAMETER_TYPE RegType;    /* variable type in the hdd_config_t structure */
+	WLAN_PARAMETER_TYPE RegType;    /* variable type in hdd_config struct */
 	unsigned long Flags;    /* Specify optional parms and if RangeCheck is performed */
 	unsigned short VarOffset;       /* offset to field from the base address of the structure */
 	unsigned short VarSize; /* size (in bytes) of the field */
