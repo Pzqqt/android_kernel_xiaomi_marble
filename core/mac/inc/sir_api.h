@@ -625,8 +625,8 @@ typedef struct sSirBssDescription {
 	uint16_t beaconInterval;
 	uint16_t capabilityInfo;
 	tSirNwType nwType;      /* Indicates 11a/b/g */
-	uint8_t reserved_padding0;
 	int8_t rssi;
+	int8_t rssi_raw;
 	int8_t sinr;
 	/* channelId what peer sent in beacon/probersp. */
 	uint8_t channelId;

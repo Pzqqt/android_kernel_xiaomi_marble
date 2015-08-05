@@ -2506,7 +2506,6 @@ bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 	tListElem *pEntry;
 	tCsrScanResult *scan_entry;
 	bool fRC = false;
-	int8_t scan_entry_rssi = 0;
 
 	/*
 	 * Walk through all the chained BssDescriptions. If we find a chained
@@ -2526,17 +2525,24 @@ bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 		if (csr_is_duplicate_bss_description(pMac,
 			&scan_entry->Result.BssDescriptor,
 			bss_dscp, pIes, fForced)) {
-			/*
-			 * Following is mathematically a = (aX + b(100-X))/100
-			 * where:
-			 * a = bss_dscp->rssi, b = scan_entry_rssi
-			 * and X = CSR_SCAN_RESULT_RSSI_WEIGHT
-			 */
-			scan_entry_rssi = scan_entry->Result.BssDescriptor.rssi;
-			bss_dscp->rssi = (int8_t) ((((int32_t) bss_dscp->rssi *
-						CSR_SCAN_RESULT_RSSI_WEIGHT) +
-				((int32_t) scan_entry_rssi *
-				 (100 - CSR_SCAN_RESULT_RSSI_WEIGHT))) / 100);
+			int32_t rssi_new, rssi_old;
+
+			rssi_new = (int32_t) bss_dscp->rssi;
+			rssi_old = (int32_t) scan_entry->
+					Result.BssDescriptor.rssi;
+			rssi_new = ((rssi_new * CSR_SCAN_RESULT_RSSI_WEIGHT) +
+				rssi_old *
+				(100 - CSR_SCAN_RESULT_RSSI_WEIGHT)) / 100;
+			bss_dscp->rssi = (int8_t) rssi_new;
+
+			rssi_new = (int32_t) bss_dscp->rssi_raw;
+			rssi_old = (int32_t) scan_entry->
+					Result.BssDescriptor.rssi_raw;
+			rssi_new = ((rssi_new * CSR_SCAN_RESULT_RSSI_WEIGHT) +
+				rssi_old *
+				(100 - CSR_SCAN_RESULT_RSSI_WEIGHT)) / 100;
+			bss_dscp->rssi_raw = (int8_t) rssi_new;
+
 			/* Remove the old entry from the list */
 			if (csr_ll_remove_entry
 				    (&pMac->scan.scanResultList, pEntry,

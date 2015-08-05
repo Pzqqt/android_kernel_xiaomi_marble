@@ -7307,6 +7307,7 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 #ifdef CONFIG_CNSS
 	struct timespec ts;
 #endif
+	struct hdd_config *cfg_param;
 
 	ENTER();
 
@@ -7315,6 +7316,7 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	if (0 != status)
 		return NULL;
 
+	cfg_param = pHddCtx->config;
 	mgmt = kzalloc((sizeof(struct ieee80211_mgmt) + ie_length), GFP_KERNEL);
 	if (!mgmt) {
 		hddLog(LOGE, FL("memory allocation failed"));
@@ -7408,8 +7410,15 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 		return NULL;
 	}
 
+	/* Based on .ini configuration, raw rssi can be reported for bss.
+	 * Raw rssi is typically used for estimating power.
+	 */
+
+	rssi = (cfg_param->inform_bss_rssi_raw) ? bss_desc->rssi_raw :
+			bss_desc->rssi;
+
 	/* Supplicant takes the signal strength in terms of mBm(100*dBm) */
-	rssi = (CDF_MIN((bss_desc->rssi + bss_desc->sinr), 0)) * 100;
+	rssi = CDF_MIN(rssi, 0) * 100;
 
 	hddLog(LOG1, FL("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d"),
 	       MAC_ADDR_ARRAY(mgmt->bssid), chan->center_freq,

@@ -42,8 +42,29 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include "cdf_types.h"
-/*
+/**
  * Rx Packet Struct
+ * Buffer for the packet received from WMA has pointers to 802.11
+ * frame fields and additional information based on the type of frame.
+ * @channel: Channel number
+ * @snr: Signal to noise ratio
+ * @rssi: Received signal strength indicator, normalized to -96 dBm as
+ *        normal noise floor by adding -96 to snr. All the configured
+ *        thresholds in the driver assume that noise floor is -96 dBm.
+ * @timestamp: System timestamp when frame was received. Set to jiffies.
+ * @mpdu_hdr_ptr: Pointer to beginning of 802.11 MPDU
+ * @mpdu_data_ptr: Pointer to beginning of payload
+ * @mpdu_len: Length of 802.11 MPDU
+ * @mpdu_hdr_len: Length of 802.11 MPDU header
+ * @mpdu_data_len: Length of 802.11 MPDU payload
+ * @offloadScanLearn: Bit set to 1 for beacons received during roaming scan
+ * @roamCandidateInd: Bit set to 1 when roaming candidate is found by fw
+ * @scan: Bit set to 1 if packet received during scanning
+ * @scan_src: Source of scan
+ * @dpuFeedback: DPU feedback for frame
+ * @sessionId: PE session
+ * @tsf_delta: Delta between tsf in frame and local value of tsf
+ * @rssi_raw: rssi based on actual noise floor in hardware.
  */
 typedef struct {
 	uint8_t channel;
@@ -62,6 +83,7 @@ typedef struct {
 	uint8_t dpuFeedback;
 	uint8_t sessionId;
 	uint32_t tsf_delta;
+	uint32_t rssi_raw;
 } t_packetmeta, *tp_packetmeta;
 
 /* implementation specific cds packet type */

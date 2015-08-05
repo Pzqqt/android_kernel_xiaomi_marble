@@ -123,9 +123,14 @@
 
 #define WMA_GET_RX_RFBAND(pRxMeta) 0
 
-#define WMA_MAX_TXPOWER_INVALID		127
-#define WMA_GET_RX_RSSI_DB(pRxMeta) \
-	(((t_packetmeta *)pRxMeta)->rssi)
+#define WMA_MAX_TXPOWER_INVALID        127
+/* rssi value normalized to noise floor of -96 dBm */
+#define WMA_GET_RX_RSSI_NORMALIZED(pRxMeta) \
+		       (((t_packetmeta *)pRxMeta)->rssi)
+
+/* raw rssi based on actual noise floor in hardware */
+#define WMA_GET_RX_RSSI_RAW(pRxMeta) \
+		       (((t_packetmeta *)pRxMeta)->rssi_raw)
 
 /* WMA Messages */
 #define WMA_MSG_TYPES_BEGIN            SIR_HAL_MSG_TYPES_BEGIN

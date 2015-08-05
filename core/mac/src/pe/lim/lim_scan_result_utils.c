@@ -177,10 +177,15 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	sir_dump_buf(pMac, SIR_LIM_MODULE_ID, LOG4,
 		(uint8_t *) pRxPacketInfo, 36);
 
-	pBssDescr->rssi = (int8_t) WMA_GET_RX_RSSI_DB(pRxPacketInfo);
+	pBssDescr->rssi = (int8_t) WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo);
+	pBssDescr->rssi_raw = (int8_t) WMA_GET_RX_RSSI_RAW(pRxPacketInfo);
 
 	/* SINR no longer reported by HW */
 	pBssDescr->sinr = 0;
+	lim_log(pMac, LOG3,
+		FL(MAC_ADDRESS_STR " rssi: normalized = %d, absolute = %d"),
+		MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
+		pBssDescr->rssi_raw);
 
 	pBssDescr->nReceivedTime = (uint32_t) cdf_mc_timer_get_system_ticks();
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);

@@ -3191,10 +3191,21 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	 */
 	rx_pkt->pkt_meta.channel = hdr->channel;
 	rx_pkt->pkt_meta.scan_src = hdr->flags;
-	/*Get the absolute rssi value from the current rssi value
-	 *the sinr value is hardcoded into 0 in the core stack*/
-	rx_pkt->pkt_meta.rssi = hdr->snr + WMA_TGT_NOISE_FLOOR_DBM;
+
+	/*
+	 * Get the rssi value from the current snr value
+	 * using standard noise floor of -96.
+	 */
+	rx_pkt->pkt_meta.rssi = hdr->snr + WMA_NOISE_FLOOR_DBM_DEFAULT;
 	rx_pkt->pkt_meta.snr = hdr->snr;
+
+	/* If absolute rssi is available from firmware, use it */
+	if (hdr->rssi != 0)
+		rx_pkt->pkt_meta.rssi_raw = hdr->rssi;
+	else
+		rx_pkt->pkt_meta.rssi_raw = rx_pkt->pkt_meta.rssi;
+
+
 	/*
 	 * FIXME: Assigning the local timestamp as hw timestamp is not
 	 * available. Need to see if pe/lim really uses this data.
@@ -3253,6 +3264,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	cdf_mem_copy(wh, param_tlvs->bufp, hdr->buf_len);
 #endif
 
+	WMA_LOGD(
+		FL("BSSID: "MAC_ADDRESS_STR" snr = %d, rssi = %d, rssi_raw = %d"),
+			MAC_ADDR_ARRAY(wh->i_addr3),
+			hdr->snr, rx_pkt->pkt_meta.rssi,
+			rx_pkt->pkt_meta.rssi_raw);
 	if (!wma_handle->mgmt_rx) {
 		WMA_LOGE("Not registered for Mgmt rx, dropping the frame");
 		cds_pkt_return_packet(rx_pkt);
