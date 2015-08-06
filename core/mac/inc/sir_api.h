@@ -655,7 +655,8 @@ typedef struct sSirBssDescription {
 
 	/* whether it is from a probe rsp */
 	uint8_t fProbeRsp;
-	uint8_t reservedPadding1;
+	/* Actual channel the beacon/probe response was received on */
+	uint8_t rx_channel;
 	uint8_t reservedPadding2;
 	uint8_t reservedPadding3;
 	uint32_t WscIeLen;
