@@ -165,6 +165,8 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	}
 
 	pBssDescr->channelIdSelf = pBssDescr->channelId;
+	pBssDescr->rx_channel = rxChannel;
+
 	/* set the network type in bss description */
 	channelNum = pBssDescr->channelId;
 	pBssDescr->nwType =

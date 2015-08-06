@@ -2525,23 +2525,30 @@ bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 		if (csr_is_duplicate_bss_description(pMac,
 			&scan_entry->Result.BssDescriptor,
 			bss_dscp, pIes, fForced)) {
-			int32_t rssi_new, rssi_old;
+			if (bss_dscp->rx_channel == bss_dscp->channelId) {
+				/*
+				 * Update rssi values only if beacon is
+				 * received on the same channel that was
+				 * sent on.
+				 */
+				int32_t rssi_new, rssi_old;
+				const int32_t weight =
+						CSR_SCAN_RESULT_RSSI_WEIGHT;
 
-			rssi_new = (int32_t) bss_dscp->rssi;
-			rssi_old = (int32_t) scan_entry->
-					Result.BssDescriptor.rssi;
-			rssi_new = ((rssi_new * CSR_SCAN_RESULT_RSSI_WEIGHT) +
-				rssi_old *
-				(100 - CSR_SCAN_RESULT_RSSI_WEIGHT)) / 100;
-			bss_dscp->rssi = (int8_t) rssi_new;
+				rssi_new = (int32_t) bss_dscp->rssi;
+				rssi_old = (int32_t) scan_entry->
+						Result.BssDescriptor.rssi;
+				rssi_new = ((rssi_new * weight) +
+					     rssi_old * (100 - weight)) / 100;
+				bss_dscp->rssi = (int8_t) rssi_new;
 
-			rssi_new = (int32_t) bss_dscp->rssi_raw;
-			rssi_old = (int32_t) scan_entry->
-					Result.BssDescriptor.rssi_raw;
-			rssi_new = ((rssi_new * CSR_SCAN_RESULT_RSSI_WEIGHT) +
-				rssi_old *
-				(100 - CSR_SCAN_RESULT_RSSI_WEIGHT)) / 100;
-			bss_dscp->rssi_raw = (int8_t) rssi_new;
+				rssi_new = (int32_t) bss_dscp->rssi_raw;
+				rssi_old = (int32_t) scan_entry->
+						Result.BssDescriptor.rssi_raw;
+				rssi_new = ((rssi_new * weight) +
+					     rssi_old * (100 - weight)) / 100;
+				bss_dscp->rssi_raw = (int8_t) rssi_new;
+			}
 
 			/* Remove the old entry from the list */
 			if (csr_ll_remove_entry
