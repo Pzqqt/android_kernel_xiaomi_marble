@@ -126,6 +126,13 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 							     pdev->rx_ring.
 							     listnode_offset);
 			if (hash_entry->netbuf) {
+#ifdef DEBUG_DMA_DONE
+				cdf_nbuf_unmap(pdev->osdev, hash_entry->netbuf,
+					       CDF_DMA_BIDIRECTIONAL);
+#else
+				cdf_nbuf_unmap(pdev->osdev, hash_entry->netbuf,
+					       CDF_DMA_FROM_DEVICE);
+#endif
 				cdf_nbuf_free(hash_entry->netbuf);
 				hash_entry->paddr = 0;
 			}
