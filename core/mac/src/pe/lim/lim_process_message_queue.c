@@ -804,8 +804,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(pMac, LOG1,
-				FL
-					("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
+				FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
 				fc.protVer, fc.type, fc.subType,
 				WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
 			lim_print_mac_addr(pMac, pHdr->bssId, LOG1);
@@ -813,31 +812,28 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 			if (lim_process_auth_frame_no_session
 				    (pMac, pRxPacketInfo,
 				    limMsg->bodyptr) == eSIR_SUCCESS) {
-				lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT,
-					     pRxPacketInfo, limMsg->bodyptr);
-				return;
+				goto end;
 			}
 		}
 #endif
+		/* Public action frame can be received from non-assoc stations*/
 		if ((fc.subType != SIR_MAC_MGMT_PROBE_RSP) &&
 		    (fc.subType != SIR_MAC_MGMT_BEACON) &&
 		    (fc.subType != SIR_MAC_MGMT_PROBE_REQ)
-		    && (fc.subType != SIR_MAC_MGMT_ACTION)      /* Public action frame can be received from non-associated stations. */
-		    ) {
+		    && (fc.subType != SIR_MAC_MGMT_ACTION)) {
 
-			if ((psessionEntry =
-				     pe_find_session_by_peer_sta(pMac, pHdr->sa,
-								 &sessionId)) == NULL) {
-				lim_log(pMac, LOG1,
-					FL
-						("session does not exist for given bssId"));
-				lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT,
-					     pRxPacketInfo, limMsg->bodyptr);
-				return;
-			} else
-				lim_log(pMac, LOG1,
-					"SessionId:%d Session Exist for given Bssid",
+			psessionEntry = pe_find_session_by_peer_sta(pMac,
+						pHdr->sa, &sessionId);
+			if (psessionEntry == NULL) {
+				lim_log(pMac, LOG3,
+					FL("session does not exist for bssId"));
+				lim_print_mac_addr(pMac, pHdr->sa, LOG3);
+				goto end;
+			} else {
+				lim_log(pMac, LOG3,
+					"SessionId:%d exists for given Bssid",
 					psessionEntry->peSessionId);
+			}
 		}
 		/*  For p2p resp frames search for valid session with DA as */
 		/*  BSSID will be SA and session will be present with DA only */
@@ -850,9 +846,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 	/* Check if frame is registered by HDD */
 	if (lim_check_mgmt_registered_frames(pMac, pRxPacketInfo, psessionEntry)) {
 		lim_log(pMac, LOG1, FL("Received frame is passed to SME"));
-		lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
-			     limMsg->bodyptr);
-		return;
+		goto end;
 	}
 
 	if (fc.protVer != SIR_MAC_PROTOCOL_VERSION) {   /* Received Frame with non-zero Protocol Version */
@@ -864,7 +858,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 #ifdef WLAN_DEBUG
 		pMac->lim.numProtErr++;
 #endif
-		return;
+		goto end;
 	}
 
 /* Chance of crashing : to be done BT-AMP ........happens when broadcast probe req is received */

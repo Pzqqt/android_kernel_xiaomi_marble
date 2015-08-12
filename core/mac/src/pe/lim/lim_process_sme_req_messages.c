@@ -2476,6 +2476,9 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		switch (psessionEntry->limSmeState) {
 		case eLIM_SME_ASSOCIATED_STATE:
 		case eLIM_SME_LINK_EST_STATE:
+			lim_log(pMac, LOG1,
+				FL("Rcvd SME_DISASSOC_REQ in limSmeState: %d "),
+				psessionEntry->limSmeState);
 			psessionEntry->limPrevSmeState =
 				psessionEntry->limSmeState;
 			psessionEntry->limSmeState = eLIM_SME_WT_DISASSOC_STATE;
@@ -2483,13 +2486,9 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			/* Delete all TDLS peers connected before leaving BSS */
 			lim_delete_tdls_peers(pMac, psessionEntry);
 #endif
-			MTRACE(mac_trace
-				       (pMac, TRACE_CODE_SME_STATE,
-				       psessionEntry->peSessionId,
-				       psessionEntry->limSmeState));
-			lim_log(pMac, LOG1,
-				FL("Rcvd SME_DISASSOC_REQ while in limSmeState: %d "),
-				psessionEntry->limSmeState);
+			MTRACE(mac_trace(pMac, TRACE_CODE_SME_STATE,
+				psessionEntry->peSessionId,
+				psessionEntry->limSmeState));
 			break;
 
 		case eLIM_SME_WT_DEAUTH_STATE:

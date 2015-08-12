@@ -1874,7 +1874,6 @@ static void
 lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	tLimMlmDisassocReq *mlm_disassoc_req;
-	tpPESession session;
 
 	if (msg_buf == NULL) {
 		lim_log(mac_ctx, LOGE,
@@ -1887,15 +1886,6 @@ lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		FL("Process disassoc req, sessionID %d from: "MAC_ADDRESS_STR),
 		mlm_disassoc_req->sessionId,
 		MAC_ADDR_ARRAY(mlm_disassoc_req->peerMacAddr));
-
-	session = pe_find_session_by_session_id(mac_ctx,
-				mlm_disassoc_req->sessionId);
-	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("session does not exist for given sessionId %d"),
-			mlm_disassoc_req->sessionId);
-		return;
-	}
 
 	lim_process_mlm_disassoc_req_ntf(mac_ctx, CDF_STATUS_SUCCESS,
 					 (uint32_t *) msg_buf);

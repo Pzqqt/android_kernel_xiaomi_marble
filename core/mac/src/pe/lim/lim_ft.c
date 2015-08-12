@@ -370,35 +370,28 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 	    psessionEntry->ftPEContext.pFTPreAuthReq) {
 		/* Only 11r assoc has FT IEs */
 		if (psessionEntry->ftPEContext.pFTPreAuthReq->ft_ies == NULL) {
-			PELOGE(lim_log(pMac, LOGE,
-				       "%s: FTIEs for Auth Req Seq 1 is absent",
-				       __func__);
-			       )
+			lim_log(pMac, LOGE,
+				FL("FTIEs for Auth Req Seq 1 is absent"));
 			goto preauth_fail;
 		}
 	}
 
 	if (status != CDF_STATUS_SUCCESS) {
-		PELOGE(lim_log(pMac, LOGE,
-			       "%s: Change channel not successful for FT pre-auth",
-			       __func__);
-		       )
+		lim_log(pMac, LOGE,
+			FL(" Change channel not successful for FT pre-auth"));
 		goto preauth_fail;
 	}
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-		PELOGE(lim_log
-			       (pMac, LOGE, FL("psessionEntry is not in STA mode"));
-		       )
+		lim_log(pMac, LOGE, FL("psessionEntry is not in STA mode"));
 #endif
 		return;
 	}
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-	PELOG2(lim_log(pMac, LOG2, "Entered wait auth2 state for FT"
-		       " (old session %p)", psessionEntry);
-	       )
+	lim_log(pMac, LOG2, "Entered wait auth2 state for FT (old session %p)",
+				 psessionEntry);
 #endif
 	if (psessionEntry->is11Rconnection) {
 		/* Now we are on the right channel and need to send out Auth1 and
@@ -423,15 +416,15 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 	if (TX_SUCCESS !=
 	    tx_timer_activate(&pMac->lim.limTimers.gLimFTPreAuthRspTimer)) {
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-		PELOGE(lim_log(pMac, LOGE, FL("FT Auth Rsp Timer Start Failed"));)
+		lim_log(pMac, LOGE, FL("FT Auth Rsp Timer Start Failed"));
 #endif
+		goto preauth_fail;
 	}
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_ACTIVATE, psessionEntry->peSessionId,
-		       eLIM_FT_PREAUTH_RSP_TIMER));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TIMER_ACTIVATE,
+		psessionEntry->peSessionId, eLIM_FT_PREAUTH_RSP_TIMER));
 
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-	PELOG1(lim_log(pMac, LOG1, FL("FT Auth Rsp Timer Started"));)
+	lim_log(pMac, LOG1, FL("FT Auth Rsp Timer Started"));
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_ROAM_AUTH_START_EVENT,
@@ -439,8 +432,8 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 #endif
 
 	lim_send_auth_mgmt_frame(pMac, &authFrame,
-				 psessionEntry->ftPEContext.pFTPreAuthReq->
-				 preAuthbssId, LIM_NO_WEP_IN_FC, psessionEntry);
+		 psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
+		 LIM_NO_WEP_IN_FC, psessionEntry);
 
 	return;
 
