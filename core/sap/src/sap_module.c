@@ -143,7 +143,6 @@ wlansap_open(void *p_cds_gctx) {
 #endif
 	}
 
-	cdf_mem_zero(pSapCtx, sizeof(tSapContext));
 
 	/*------------------------------------------------------------------------
 	    Clean up SAP control block, initialize all values
@@ -526,9 +525,6 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 	 * from HDD
 	 */
 	psap_ctx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
-	cdf_mem_copy(psap_ctx->csr_roamProfile.BSSIDs.bssid,
-			psap_ctx->self_mac_addr,
-			sizeof(struct cdf_mac_addr));
 
 	/*
 	 * Save a copy to SAP context
