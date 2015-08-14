@@ -926,8 +926,7 @@ CDF_STATUS cds_sched_close(void *p_cds_context)
 	set_bit(RX_SHUTDOWN_EVENT_MASK, &gp_cds_sched_context->ol_rx_event_flag);
 	set_bit(RX_POST_EVENT_MASK, &gp_cds_sched_context->ol_rx_event_flag);
 	wake_up_interruptible(&gp_cds_sched_context->ol_rx_wait_queue);
-	wait_for_completion_interruptible
-		(&gp_cds_sched_context->ol_rx_shutdown);
+	wait_for_completion(&gp_cds_sched_context->ol_rx_shutdown);
 	gp_cds_sched_context->ol_rx_thread = NULL;
 	cds_drop_rxpkt_by_staid(gp_cds_sched_context, WLAN_MAX_STA_COUNT);
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
