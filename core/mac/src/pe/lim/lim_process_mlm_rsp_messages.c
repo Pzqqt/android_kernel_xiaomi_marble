@@ -2181,46 +2181,43 @@ void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		lim_log(pMac, LOGE, FL("Encountered NULL Pointer"));
 		goto end;
 	}
-	if (CDF_STATUS_SUCCESS == pDelStaParams->status) {
-		pStaDs =
-			dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
-					   &psessionEntry->dph.dphHashTable);
-		if (pStaDs == NULL) {
-			/* TODO: any response to be sent out here ? */
-			lim_log(pMac, LOGE, FL("DPH Entry for STA %X missing."),
+	lim_log(pMac, LOG1, FL("Del STA RSP received. Status:%d AssocID:%d"),
+			pDelStaParams->status, pDelStaParams->assocId);
+
+	if (CDF_STATUS_SUCCESS != pDelStaParams->status)
+		lim_log(pMac, LOGE, FL(
+			"Del STA failed! Status:%d, proceeding with Del BSS"),
+			pDelStaParams->status);
+
+	pStaDs = dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
+			&psessionEntry->dph.dphHashTable);
+	if (pStaDs == NULL) {
+		lim_log(pMac, LOGE, FL("DPH Entry for STA %X missing."),
 				pDelStaParams->assocId);
-			statusCode = eSIR_SME_REFUSED;
-			goto end;
-		}
-		if (eLIM_MLM_WT_DEL_STA_RSP_STATE != psessionEntry->limMlmState) {
-			/* TODO: any response to be sent out here ? */
-			lim_log(pMac, LOGE,
-				FL
-					("Received unexpected WMA_DELETE_STA_RSP in state %s"),
-				lim_mlm_state_str(psessionEntry->limMlmState));
-			statusCode = eSIR_SME_REFUSED;
-			goto end;
-		}
-		PELOG1(lim_log
-			       (pMac, LOG1, FL("STA AssocID %d MAC "), pStaDs->assocId);
-		       lim_print_mac_addr(pMac, pStaDs->staAddr, LOG1);
-		       )
-		lim_log(pMac, LOGW,
-			FL("DEL_STA_RSP received for assocID: %X"),
-			pDelStaParams->assocId);
-		/* we must complete all cleanup related to delSta before calling limDelBSS. */
-		if (0 != limMsgQ->bodyptr) {
-			cdf_mem_free(pDelStaParams);
-			limMsgQ->bodyptr = NULL;
-		}
-		statusCode =
-			(tSirResultCodes) lim_del_bss(pMac, pStaDs, 0, psessionEntry);
-		return;
-	} else {
-		lim_log(pMac, LOGE, FL("DEL_STA failed for sta Id %d"),
-			pDelStaParams->staIdx);
 		statusCode = eSIR_SME_REFUSED;
+		goto end;
 	}
+	if (eLIM_MLM_WT_DEL_STA_RSP_STATE != psessionEntry->limMlmState) {
+		lim_log(pMac, LOGE, FL(
+			"Received unexpected WDA_DELETE_STA_RSP in state %s"),
+			lim_mlm_state_str(psessionEntry->limMlmState));
+		statusCode = eSIR_SME_REFUSED;
+		goto end;
+	}
+	lim_log(pMac, LOG1, FL("STA AssocID %d MAC "), pStaDs->assocId);
+	lim_print_mac_addr(pMac, pStaDs->staAddr, LOG1);
+	/*
+	 * we must complete all cleanup related to delSta before
+	 * calling limDelBSS.
+	 */
+	if (0 != limMsgQ->bodyptr) {
+		cdf_mem_free(pDelStaParams);
+		limMsgQ->bodyptr = NULL;
+	}
+	/* Proceed to do DelBSS even if DelSta resulted in failure */
+	statusCode = (tSirResultCodes)lim_del_bss(pMac, pStaDs, 0,
+			psessionEntry);
+	return;
 end:
 	if (0 != limMsgQ->bodyptr) {
 		cdf_mem_free(pDelStaParams);
