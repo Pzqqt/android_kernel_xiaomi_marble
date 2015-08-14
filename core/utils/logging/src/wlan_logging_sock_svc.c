@@ -235,7 +235,7 @@ static int wlan_queue_logmsg_for_app(void)
 		/* print every 64th drop count */
 		if (cds_is_multicast_logging() &&
 				(!(gwlan_logging.drop_count % 0x40))) {
-			pr_err
+			pr_info
 				("%s: drop_count = %u index = %d filled_length = %d\n",
 				__func__, gwlan_logging.drop_count,
 				gwlan_logging.pcur_node->index,
