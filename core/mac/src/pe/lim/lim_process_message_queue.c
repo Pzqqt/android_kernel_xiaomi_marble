@@ -287,7 +287,14 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 #ifdef FEATURE_OEM_DATA_SUPPORT
 		    (limMsg->type != WMA_START_OEM_DATA_RSP) &&
 #endif
-		    (limMsg->type != WMA_ADD_TS_RSP)) {
+		    (limMsg->type != WMA_ADD_TS_RSP) &&
+		    /* Allow processing of RX frames while awaiting reception
+		     * of ADD TS response over the air. This logic particularly
+		     * handles the case when host sends ADD BA request to FW
+		     * after ADD TS request is sent over the air and
+		     * ADD TS response received over the air */
+		    !(limMsg->type == SIR_BB_XPORT_MGMT_MSG &&
+			pMac->lim.gLimAddtsSent)) {
 			PELOG1(lim_log
 			       (pMac, LOG1,
 			       FL
@@ -1890,7 +1897,8 @@ void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 
 			if ((lim_is_system_in_scan_state(pMac))
 			    || (true != GET_LIM_PROCESS_DEFD_MESGS(pMac))
-			    || (pMac->lim.gLimSystemInScanLearnMode))
+			    || (pMac->lim.gLimSystemInScanLearnMode)
+			    ||  pMac->lim.gLimAddtsSent)
 				break;
 		}
 	}
