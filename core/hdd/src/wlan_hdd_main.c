@@ -2081,6 +2081,11 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 		if (!rc) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       FL("HDD Wait for Action Confirmation Failed!!"));
+			/*
+			 * Inform tx status as FAILURE to upper layer and free
+			 * cfgState->buf
+			 */
+			 hdd_send_action_cnf(adapter, false);
 		}
 	}
 	return;
