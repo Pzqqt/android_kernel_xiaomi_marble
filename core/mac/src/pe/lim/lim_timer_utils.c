@@ -60,7 +60,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 {
 	uint32_t cfgValue;
 	/* Create Channel Switch Timer */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimChannelSwitchTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimChannelSwitchTimer,
 			    "CHANNEL SWITCH TIMER",
 			    lim_channel_switch_timer_handler, 0,
 			    LIM_CHANNEL_SWITCH_TIMER_TICKS,
@@ -72,7 +72,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	 * This is used on the STA to go and shut-off Tx/Rx "after" the
 	 * specified quiteInterval
 	 */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimQuietTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimQuietTimer,
 			    "QUIET TIMER", lim_quiet_timer_handler,
 			    SIR_LIM_QUIET_TIMEOUT, LIM_QUIET_TIMER_TICKS,
 			    0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -84,7 +84,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	 * timer, gLimQuietBssTimer, trigger and put the STA to sleep for the
 	 * specified gLimQuietDuration
 	 */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimQuietBssTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimQuietBssTimer,
 			    "QUIET BSS TIMER", lim_quiet_bss_timer_handler,
 			    SIR_LIM_QUIET_BSS_TIMEOUT, LIM_QUIET_BSS_TIMER_TICK,
 			    0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -98,7 +98,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 			FL("could not retrieve JoinFailureTimeout value"));
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	/* Create Join failure timer and activate it later */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimJoinFailureTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimJoinFailureTimer,
 			    "JOIN FAILURE TIMEOUT",
 			    lim_timer_handler, SIR_LIM_JOIN_FAIL_TIMEOUT,
 			    cfgValue, 0,
@@ -110,7 +110,8 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 		return false;
 	}
 	/* Send unicast probe req frame every 200 ms */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimPeriodicJoinProbeReqTimer,
+	if (tx_timer_create(pMac,
+			    &pMac->lim.limTimers.gLimPeriodicJoinProbeReqTimer,
 			    "Periodic Join Probe Request Timer",
 			    lim_timer_handler,
 			    SIR_LIM_PERIODIC_JOIN_PROBE_REQ_TIMEOUT,
@@ -128,7 +129,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	/* Create Association failure timer and activate it later */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimAssocFailureTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimAssocFailureTimer,
 			    "ASSOC FAILURE TIMEOUT",
 			    lim_assoc_failure_timer_handler, LIM_ASSOC,
 			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -143,8 +144,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	/* Create Association failure timer and activate it later */
-	if (tx_timer_create
-		    (&pMac->lim.limTimers.gLimReassocFailureTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimReassocFailureTimer,
 		    "REASSOC FAILURE TIMEOUT", lim_assoc_failure_timer_handler,
 		    LIM_REASSOC, cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
 		lim_log(pMac, LOGP,
@@ -160,7 +160,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 
 	/* Create Addts response timer and activate it later */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimAddtsRspTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimAddtsRspTimer,
 			    "ADDTS RSP TIMEOUT",
 			    lim_addts_response_timer_handler,
 			    SIR_LIM_ADDTS_RSP_TIMEOUT,
@@ -177,7 +177,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	/* Create Auth failure timer and activate it later */
-	if (tx_timer_create(&pMac->lim.limTimers.gLimAuthFailureTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimAuthFailureTimer,
 			    "AUTH FAILURE TIMEOUT",
 			    lim_timer_handler,
 			    SIR_LIM_AUTH_FAIL_TIMEOUT,
@@ -193,7 +193,7 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 
 	/* Change timer to reactivate it in future */
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(&pMac->lim.limTimers.gLimProbeAfterHBTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimProbeAfterHBTimer,
 			    "Probe after Heartbeat TIMEOUT",
 			    lim_timer_handler,
 			    SIR_LIM_PROBE_HB_FAILURE_TIMEOUT,
@@ -238,10 +238,11 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	cfgValue1 = cfgValue / 2;
 	/* Create periodic probe request timer and activate them later */
 	if (cfgValue1 >= 1
-	    && (tx_timer_create(&pMac->lim.limTimers.gLimPeriodicProbeReqTimer,
-		"Periodic Probe Request Timer", lim_timer_handler,
-		SIR_LIM_PERIODIC_PROBE_REQ_TIMEOUT, cfgValue1, 0,
-		TX_NO_ACTIVATE) != TX_SUCCESS)) {
+	    && (tx_timer_create(pMac,
+			&pMac->lim.limTimers.gLimPeriodicProbeReqTimer,
+			"Periodic Probe Request Timer", lim_timer_handler,
+			SIR_LIM_PERIODIC_PROBE_REQ_TIMEOUT, cfgValue1, 0,
+			TX_NO_ACTIVATE) != TX_SUCCESS)) {
 		lim_log(pMac, LOGP,
 			FL("could not create periodic probe timer"));
 		goto err_timer;
@@ -262,7 +263,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	cfgValue = SYS_MS_TO_TICKS(LIM_HASH_MISS_TIMER_MS);
 
-	if (tx_timer_create(
+	if (tx_timer_create(pMac,
 		&pMac->lim.limTimers.gLimSendDisassocFrameThresholdTimer,
 		"Disassoc throttle TIMEOUT",
 		lim_send_disassoc_frame_threshold_handler,
@@ -282,7 +283,8 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	for (i = 0; i < (pMac->lim.maxStation + 1); i++) {
-		if (tx_timer_create(&pMac->lim.limTimers.gpLimCnfWaitTimer[i],
+		if (tx_timer_create(pMac,
+				    &pMac->lim.limTimers.gpLimCnfWaitTimer[i],
 				    "CNF_MISS_TIMEOUT",
 				    lim_cnf_wait_tmer_handler,
 				    (uint32_t) i, cfgValue,
@@ -315,7 +317,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 			FL("could not retrieve OLBD detect timeout value"));
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(&pMac->lim.limTimers.gLimUpdateOlbcCacheTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimUpdateOlbcCacheTimer,
 			    "OLBC UPDATE CACHE TIMEOUT",
 			    lim_update_olbc_cache_timer_handler,
 			    SIR_LIM_UPDATE_OLBC_CACHEL_TIMEOUT, cfgValue,
@@ -330,7 +332,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	 */
 	cfgValue = 1000;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(&pMac->lim.limTimers.gLimFTPreAuthRspTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimFTPreAuthRspTimer,
 			    "FT PREAUTH RSP TIMEOUT",
 			    lim_timer_handler, SIR_LIM_FT_PREAUTH_RSP_TIMEOUT,
 			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -340,7 +342,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 #endif
 	cfgValue = 1000;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(&pMac->lim.limTimers.gLimRemainOnChannelTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimRemainOnChannelTimer,
 			    "FT PREAUTH RSP TIMEOUT",
 			    lim_timer_handler, SIR_LIM_REMAIN_CHN_TIMEOUT,
 			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -350,7 +352,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	cfgValue = 1000;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(&pMac->lim.limTimers.gLimDisassocAckTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimDisassocAckTimer,
 			    "DISASSOC ACK TIMEOUT",
 			    lim_timer_handler, SIR_LIM_DISASSOC_ACK_TIMEOUT,
 			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -360,7 +362,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	cfgValue = 1000;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(&pMac->lim.limTimers.gLimDeauthAckTimer,
+	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimDeauthAckTimer,
 			    "DISASSOC ACK TIMEOUT",
 			    lim_timer_handler, SIR_LIM_DEAUTH_ACK_TIMEOUT,
 			    cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -375,7 +377,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 	 */
 	cfgValue = LIM_INSERT_SINGLESHOTNOA_TIMEOUT_VALUE;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(
+	if (tx_timer_create(pMac,
 		&pMac->lim.limTimers.gLimP2pSingleShotNoaInsertTimer,
 		"Single Shot NOA Insert timeout", lim_timer_handler,
 		SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT, cfgValue, 0,
@@ -387,7 +389,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 
 	cfgValue = ACTIVE_TO_PASSIVE_CONVERISON_TIMEOUT;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
-	if (tx_timer_create(
+	if (tx_timer_create(pMac,
 		&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer,
 		"ACTIVE TO PASSIVE CHANNEL", lim_timer_handler,
 		SIR_LIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE, cfgValue, 0,
