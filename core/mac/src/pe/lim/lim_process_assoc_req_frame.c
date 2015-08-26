@@ -1461,7 +1461,7 @@ sendIndToSme:
 	if (WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STAMIN > retryInterval) {
 		retryInterval = WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STADEF;
 	}
-	if (tx_timer_create(&pStaDs->pmfSaQueryTimer, "PMF SA Query timer",
+	if (tx_timer_create(pMac, &pStaDs->pmfSaQueryTimer, "PMF SA Query timer",
 			    lim_pmf_sa_query_timer_handler, timerId.value,
 			    SYS_MS_TO_TICKS((retryInterval * 1024) / 1000),
 			    0, TX_NO_ACTIVATE) != TX_SUCCESS) {

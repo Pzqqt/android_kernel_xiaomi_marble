@@ -4932,10 +4932,10 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	for (authNodeIdx = 0; authNodeIdx < pPreAuthTimerTable->numEntry;
 	     authNodeIdx++, pAuthNode++) {
-		if (tx_timer_create
-			    (&pAuthNode->timer, "AUTH RESPONSE TIMEOUT",
-			    lim_auth_response_timer_handler, authNodeIdx, cfgValue, 0,
-			    TX_NO_ACTIVATE) != TX_SUCCESS) {
+		if (tx_timer_create(pMac, &pAuthNode->timer,
+			"AUTH RESPONSE TIMEOUT",
+			lim_auth_response_timer_handler, authNodeIdx,
+			cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
 			/* Cannot create timer.  Log error. */
 			lim_log(pMac, LOGP,
 				FL("Cannot create Auth Rsp timer of Index :%d."),
