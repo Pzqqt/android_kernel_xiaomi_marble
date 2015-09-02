@@ -1181,7 +1181,7 @@ int ce_per_engine_service(struct ol_softc *scn, unsigned int CE_id)
 	/* Clear force_break flag and re-initialize receive_count to 0 */
 
 	/* NAPI: scn variables- thread/multi-processing safety? */
-	scn->receive_count = 0;
+	CE_state->receive_count = 0;
 	CE_state->force_break = 0;
 more_completions:
 	if (CE_state->recv_cb) {
@@ -1221,8 +1221,8 @@ more_completions:
 					HOST_IS_COPY_COMPLETE_MASK);
 				if (Q_TARGET_ACCESS_END(scn) < 0)
 					HIF_ERROR("<--[premature rc=%d]\n",
-						  scn->receive_count);
-				return scn->receive_count;
+						  CE_state->receive_count);
+				return CE_state->receive_count;
 			}
 			cdf_spin_lock(&scn->target_lock);
 		}
@@ -1360,8 +1360,8 @@ more_watermarks:
 	cdf_atomic_set(&CE_state->rx_pending, 0);
 
 	if (Q_TARGET_ACCESS_END(scn) < 0)
-		HIF_ERROR("<--[premature rc=%d]\n", scn->receive_count);
-	return scn->receive_count;
+		HIF_ERROR("<--[premature rc=%d]\n", CE_state->receive_count);
+	return CE_state->receive_count;
 }
 
 /*
