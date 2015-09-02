@@ -1087,6 +1087,7 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 	sme_ft_reset(WLAN_HDD_GET_HAL_CTX(pAdapter), pAdapter->sessionId);
 #endif
 	if (eCSR_ROAM_IBSS_LEAVE == roamStatus) {
+		uint8_t i;
 		sta_id = IBSS_BROADCAST_STAID;
 		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
 		if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
@@ -1096,19 +1097,42 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 			status = CDF_STATUS_E_FAILURE;
 		}
 		pHddCtx->sta_to_adapter[sta_id] = NULL;
+		/* Clear all the peer sta register with TL. */
+		for (i = 0; i < MAX_IBSS_PEERS; i++) {
+			if (0 == pHddStaCtx->conn_info.staId[i])
+				continue;
+			sta_id = pHddStaCtx->conn_info.staId[i];
+			hddLog(LOG1, FL("Deregister StaID %d"), sta_id);
+			vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
+			if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
+				hddLog(LOGE,
+					FL("hdd_roamDeregisterSTA() failed to for staID %d. Status= %d [0x%x]"),
+					sta_id, status, status);
+				status = CDF_STATUS_E_FAILURE;
+			}
+			/* set the staid and peer mac as 0, all other
+			 * reset are done in hdd_connRemoveConnectInfo.
+			 */
+			pHddStaCtx->conn_info.staId[i] = 0;
+			cdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[i],
+				sizeof(struct cdf_mac_addr));
+			if (sta_id < (WLAN_MAX_STA_COUNT + 3))
+				pHddCtx->sta_to_adapter[sta_id] = NULL;
+		}
+	} else {
+		sta_id = pHddStaCtx->conn_info.staId[0];
+		/* We should clear all sta register with TL,
+		 * for now, only one.
+		 */
+		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
+		if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
+			hddLog(LOGE,
+				FL("hdd_roam_deregister_sta() failed to for staID %d. Status= %d [0x%x]"),
+				sta_id, status, status);
+			status = CDF_STATUS_E_FAILURE;
+		}
+		pHddCtx->sta_to_adapter[sta_id] = NULL;
 	}
-	sta_id = pHddStaCtx->conn_info.staId[0];
-
-	/* We should clear all sta register with TL, for now, only one. */
-	vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
-	if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
-		hddLog(LOGE,
-			"hdd_roam_deregister_sta() failed to for staID %d. Status= %d [0x%x]",
-			 sta_id, status, status);
-		status = CDF_STATUS_E_FAILURE;
-	}
-
-	pHddCtx->sta_to_adapter[sta_id] = NULL;
 	/* Clear saved connection information in HDD */
 	hdd_conn_remove_connect_info(pHddStaCtx);
 	hddLog(LOG1, FL("Set HDD connState to eConnectionState_NotConnected"));
