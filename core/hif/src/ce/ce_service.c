@@ -1610,6 +1610,17 @@ bool ce_check_rx_pending(struct ol_softc *scn, int ce_id)
 	else
 		return false;
 }
+
+/**
+ * ce_enable_msi(): write the msi configuration to the target
+ * @scn: hif context
+ * @CE_id: which copy engine will be configured for msi interupts
+ * @msi_addr_lo: Hardware will write to this address to generate an interrupt
+ * @msi_addr_hi: Hardware will write to this address to generate an interrupt
+ * @msi_data: Hardware will write this data to generate an interrupt
+ *
+ * should be done in the initialization sequence so no locking would be needed
+ */
 void ce_enable_msi(struct ol_softc *scn, unsigned int CE_id,
 				   uint32_t msi_addr_lo, uint32_t msi_addr_hi,
 				   uint32_t msi_data)
@@ -1620,11 +1631,9 @@ void ce_enable_msi(struct ol_softc *scn, unsigned int CE_id,
 	u_int32_t ctrl_addr;
 	uint32_t tmp;
 
-	adf_os_spin_lock(&scn->target_lock);
 	CE_state = scn->ce_id_to_state[CE_id];
 	if (!CE_state) {
 		HIF_ERROR("%s: error - CE_state = NULL", __func__);
-		adf_os_spin_unlock(&scn->target_lock);
 		return;
 	}
 	targid = TARGID(sc);
@@ -1635,7 +1644,6 @@ void ce_enable_msi(struct ol_softc *scn, unsigned int CE_id,
 	tmp = CE_CTRL_REGISTER1_GET(scn, ctrl_addr);
 	tmp |= (1 << CE_MSI_ENABLE_BIT);
 	CE_CTRL_REGISTER1_SET(scn, ctrl_addr, tmp);
-	adf_os_spin_unlock(&scn->target_lock);
 #endif
 }
 
