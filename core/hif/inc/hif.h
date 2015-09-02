@@ -292,8 +292,6 @@ struct ol_softc {
 	 */
 	cdf_spinlock_t target_lock;
 	unsigned int ce_count;  /* Number of Copy Engines supported */
-	bool force_break;	/* Flag to indicate whether to
-				 * break out the DPC context */
 	unsigned int receive_count;	/* count Num Of Receive Buffers
 					 * handled for one interrupt
 					 * DPC routine */

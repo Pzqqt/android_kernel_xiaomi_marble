@@ -1182,7 +1182,7 @@ int ce_per_engine_service(struct ol_softc *scn, unsigned int CE_id)
 
 	/* NAPI: scn variables- thread/multi-processing safety? */
 	scn->receive_count = 0;
-	scn->force_break = 0;
+	CE_state->force_break = 0;
 more_completions:
 	if (CE_state->recv_cb) {
 
@@ -1215,7 +1215,7 @@ more_completions:
 			/* Break the receive processes by
 			 * force if force_break set up
 			 */
-			if (cdf_unlikely(scn->force_break)) {
+			if (cdf_unlikely(CE_state->force_break)) {
 				cdf_atomic_set(&CE_state->rx_pending, 1);
 				CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
 					HOST_IS_COPY_COMPLETE_MASK);
