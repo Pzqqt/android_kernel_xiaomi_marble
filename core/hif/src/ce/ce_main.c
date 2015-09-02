@@ -113,6 +113,9 @@ static unsigned int roundup_pwr2(unsigned int n)
  * rings or it may be called twice for separate source and destination
  * initialization. It may be that only one side or the other is
  * initialized by software/firmware.
+ *
+ * This should be called durring the initialization sequence before
+ * interupts are enabled, so we don't have to worry about thread safety.
  */
 struct CE_handle *ce_init(struct ol_softc *scn,
 			  unsigned int CE_id, struct CE_attr *attr)
@@ -126,41 +129,25 @@ struct CE_handle *ce_init(struct ol_softc *scn,
 
 	CDF_ASSERT(CE_id < scn->ce_count);
 	ctrl_addr = CE_BASE_ADDRESS(CE_id);
-	cdf_spin_lock(&scn->target_lock);
 	CE_state = scn->ce_id_to_state[CE_id];
 
 	if (!CE_state) {
-		cdf_spin_unlock(&scn->target_lock);
 		CE_state =
 		    (struct CE_state *)cdf_mem_malloc(sizeof(*CE_state));
 		if (!CE_state) {
 			HIF_ERROR("%s: CE_state has no mem", __func__);
 			return NULL;
-		} else
-			malloc_CE_state = true;
-		cdf_mem_zero(CE_state, sizeof(*CE_state));
-		cdf_spin_lock(&scn->target_lock);
-		if (!scn->ce_id_to_state[CE_id]) { /* re-check under lock */
-			scn->ce_id_to_state[CE_id] = CE_state;
-
-			CE_state->id = CE_id;
-			CE_state->ctrl_addr = ctrl_addr;
-			CE_state->state = CE_RUNNING;
-			CE_state->attr_flags = attr->flags;
-		} else {
-			/*
-			 * We released target_lock in order to allocate
-			 * CE state, but someone else beat us to it.
-			 * Continue, using that CE_state
-			 * (and free the one we allocated).
-			 */
-			cdf_mem_free(CE_state);
-			malloc_CE_state = false;
-			CE_state = scn->ce_id_to_state[CE_id];
 		}
+		malloc_CE_state = true;
+		cdf_mem_zero(CE_state, sizeof(*CE_state));
+		scn->ce_id_to_state[CE_id] = CE_state;
+
+		CE_state->id = CE_id;
+		CE_state->ctrl_addr = ctrl_addr;
+		CE_state->state = CE_RUNNING;
+		CE_state->attr_flags = attr->flags;
 	}
 	CE_state->scn = scn;
-	cdf_spin_unlock(&scn->target_lock);
 
 	cdf_atomic_init(&CE_state->rx_pending);
 	if (attr == NULL) {
@@ -200,9 +187,7 @@ struct CE_handle *ce_init(struct ol_softc *scn,
 				HIF_ERROR("%s: src ring has no mem", __func__);
 				if (malloc_CE_state) {
 					/* allocated CE_state locally */
-					cdf_spin_lock(&scn->target_lock);
 					scn->ce_id_to_state[CE_id] = NULL;
-					cdf_spin_unlock(&scn->target_lock);
 					cdf_mem_free(CE_state);
 					malloc_CE_state = false;
 				}
@@ -344,9 +329,7 @@ struct CE_handle *ce_init(struct ol_softc *scn,
 				}
 				if (malloc_CE_state) {
 					/* allocated CE_state locally */
-					cdf_spin_lock(&scn->target_lock);
 					scn->ce_id_to_state[CE_id] = NULL;
-					cdf_spin_unlock(&scn->target_lock);
 					cdf_mem_free(CE_state);
 					malloc_CE_state = false;
 				}
