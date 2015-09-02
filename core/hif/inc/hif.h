@@ -292,9 +292,6 @@ struct ol_softc {
 	 */
 	cdf_spinlock_t target_lock;
 	unsigned int ce_count;  /* Number of Copy Engines supported */
-	unsigned int receive_count;	/* count Num Of Receive Buffers
-					 * handled for one interrupt
-					 * DPC routine */
 	struct CE_state *ce_id_to_state[CE_COUNT_MAX];  /* CE id to CE_state */
 #ifdef FEATURE_NAPI
 	struct qca_napi_data napi_data;

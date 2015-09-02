@@ -773,9 +773,9 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 
 		/* Set up force_break flag if num of receices reaches
 		 * MAX_NUM_OF_RECEIVES */
-		scn->receive_count++;
+		ce_state->receive_count++;
 		if (cdf_unlikely(hif_max_num_receives_reached(
-				scn->receive_count))) {
+				ce_state->receive_count))) {
 			ce_state->force_break = 1;
 			break;
 		}
