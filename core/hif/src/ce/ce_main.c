@@ -729,6 +729,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 	struct HIF_CE_pipe_info *pipe_info =
 		(struct HIF_CE_pipe_info *)ce_context;
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
+	struct CE_state *ce_state = (struct CE_state *) copyeng;
 	struct ol_softc *scn = hif_state->scn;
 	struct HIF_CE_completion_state *compl_state;
 	struct HIF_CE_completion_state *compl_queue_head, *compl_queue_tail;
@@ -780,7 +781,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		scn->receive_count++;
 		if (cdf_unlikely(hif_max_num_receives_reached(
 				scn->receive_count))) {
-			scn->force_break = 1;
+			ce_state->force_break = 1;
 			break;
 		}
 	} while (ce_completed_recv_next(copyeng, &ce_context, &transfer_context,
