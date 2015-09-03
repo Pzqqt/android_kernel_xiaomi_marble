@@ -500,8 +500,11 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 
 		/* get actual packet length */
 		frag_len = cdf_nbuf_get_frag_len(msdu, 1);
-		shadow_src_desc->nbytes = frag_len > ce_state->download_len ?
-			ce_state->download_len : frag_len;
+
+		/* only read download_len once */
+		shadow_src_desc->nbytes =  ce_state->download_len;
+		if (shadow_src_desc->nbytes > frag_len)
+			shadow_src_desc->nbytes = frag_len;
 
 		/*  Data packet is a byte stream, so disable byte swap */
 		shadow_src_desc->byte_swap = 0;
@@ -1569,9 +1572,7 @@ void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
 
 	cdf_assert_always(ce_state);
 
-	cdf_spin_lock_bh(&sc->target_lock);
 	ce_state->download_len = pkt_download_len;
-	cdf_spin_unlock_bh(&sc->target_lock);
 
 	cdf_print("%s CE %d Pkt download length %d\n", __func__,
 		  ce_state->id, ce_state->download_len);
