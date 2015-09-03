@@ -1505,6 +1505,20 @@ void ce_enable_any_copy_compl_intr(struct ol_softc *scn)
 	cdf_spin_unlock(&scn->target_lock);
 }
 
+/**
+ * ce_send_cb_register(): register completion handler
+ * @copyeng: CE_state representing the ce we are adding the behavior to
+ * @fn_ptr: callback that the ce should use when processing tx completions
+ * @disable_interrupts: if the interupts should be enabled or not.
+ *
+ * Caller should guarantee that no transactions are in progress before
+ * switching the callback function.
+ *
+ * Registers the send context before the fn pointer so that if the cb is valid
+ * the context should be valid.
+ *
+ * Beware that currently this function will enable completion interrupts.
+ */
 void
 ce_send_cb_register(struct CE_handle *copyeng,
 		    ce_send_cb fn_ptr,
@@ -1516,13 +1530,23 @@ ce_send_cb_register(struct CE_handle *copyeng,
 		pr_err("%s: Error CE state = NULL\n", __func__);
 		return;
 	}
-	cdf_spin_lock(&CE_state->scn->target_lock);
-	CE_state->send_cb = fn_ptr;
 	CE_state->send_context = ce_send_context;
+	CE_state->send_cb = fn_ptr;
 	ce_per_engine_handler_adjust(CE_state, disable_interrupts);
-	cdf_spin_unlock(&CE_state->scn->target_lock);
 }
 
+/**
+ * ce_recv_cb_register(): register completion handler
+ * @copyeng: CE_state representing the ce we are adding the behavior to
+ * @fn_ptr: callback that the ce should use when processing rx completions
+ * @disable_interrupts: if the interupts should be enabled or not.
+ *
+ * Registers the send context before the fn pointer so that if the cb is valid
+ * the context should be valid.
+ *
+ * Caller should guarantee that no transactions are in progress before
+ * switching the callback function.
+ */
 void
 ce_recv_cb_register(struct CE_handle *copyeng,
 		    CE_recv_cb fn_ptr,
@@ -1534,27 +1558,31 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 		pr_err("%s: ERROR CE state = NULL\n", __func__);
 		return;
 	}
-	cdf_spin_lock(&CE_state->scn->target_lock);
-	CE_state->recv_cb = fn_ptr;
 	CE_state->recv_context = CE_recv_context;
+	CE_state->recv_cb = fn_ptr;
 	ce_per_engine_handler_adjust(CE_state, disable_interrupts);
-	cdf_spin_unlock(&CE_state->scn->target_lock);
 }
 
+/**
+ * ce_watermark_cb_register(): register completion handler
+ * @copyeng: CE_state representing the ce we are adding the behavior to
+ * @fn_ptr: callback that the ce should use when processing watermark events
+ *
+ * Caller should guarantee that no watermark events are being processed before
+ * switching the callback function.
+ */
 void
 ce_watermark_cb_register(struct CE_handle *copyeng,
 			 CE_watermark_cb fn_ptr, void *CE_wm_context)
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 
-	cdf_spin_lock(&CE_state->scn->target_lock);
 	CE_state->watermark_cb = fn_ptr;
 	CE_state->wm_context = CE_wm_context;
 	ce_per_engine_handler_adjust(CE_state, 0);
 	if (fn_ptr) {
 		CE_state->misc_cbs = 1;
 	}
-	cdf_spin_unlock(&CE_state->scn->target_lock);
 }
 
 #ifdef WLAN_FEATURE_FASTPATH
