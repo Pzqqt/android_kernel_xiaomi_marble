@@ -607,10 +607,8 @@ ce_send_watermarks_set(struct CE_handle *copyeng,
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
 	struct ol_softc *scn = CE_state->scn;
 
-	cdf_spin_lock(&scn->target_lock);
 	CE_SRC_RING_LOWMARK_SET(scn, ctrl_addr, low_alert_nentries);
 	CE_SRC_RING_HIGHMARK_SET(scn, ctrl_addr, high_alert_nentries);
-	cdf_spin_unlock(&scn->target_lock);
 }
 
 void
@@ -622,12 +620,10 @@ ce_recv_watermarks_set(struct CE_handle *copyeng,
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
 	struct ol_softc *scn = CE_state->scn;
 
-	cdf_spin_lock(&scn->target_lock);
 	CE_DEST_RING_LOWMARK_SET(scn, ctrl_addr,
 				low_alert_nentries);
 	CE_DEST_RING_HIGHMARK_SET(scn, ctrl_addr,
 				high_alert_nentries);
-	cdf_spin_unlock(&scn->target_lock);
 }
 
 unsigned int ce_send_entries_avail(struct CE_handle *copyeng)
