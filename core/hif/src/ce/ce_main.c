@@ -458,6 +458,11 @@ error_no_dma_mem:
  * @ce_hdl: Cope engine handle
  * Using an assert, this function makes sure that,
  * the TX CE has been processed completely.
+ *
+ * This is called while dismantling CE structures. No other thread
+ * should be using these structures while dismantling is occuring
+ * therfore no locking is needed.
+ *
  * Return: none
  */
 void
@@ -471,10 +476,8 @@ ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 	if (sc->fastpath_mode_on && (ce_state->id == CE_HTT_H2T_MSG)) {
 		HIF_INFO("%s %d Fastpath mode ON, Cleaning up HTT Tx CE\n",
 			  __func__, __LINE__);
-		cdf_spin_lock_bh(&sc->target_lock);
 		sw_index = src_ring->sw_index;
 		write_index = src_ring->sw_index;
-		cdf_spin_unlock_bh(&sc->target_lock);
 
 		/* At this point Tx CE should be clean */
 		cdf_assert_always(sw_index == write_index);
