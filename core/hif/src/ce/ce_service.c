@@ -1490,21 +1490,6 @@ void ce_enable_any_copy_compl_intr_nolock(struct ol_softc *scn)
 	A_TARGET_ACCESS_END(scn);
 }
 
-void ce_disable_any_copy_compl_intr(struct ol_softc *scn)
-{
-	cdf_spin_lock(&scn->target_lock);
-	ce_disable_any_copy_compl_intr_nolock(scn);
-	cdf_spin_unlock(&scn->target_lock);
-}
-
-/*Re-enable the copy compl interrupt if it has not been disabled before.*/
-void ce_enable_any_copy_compl_intr(struct ol_softc *scn)
-{
-	cdf_spin_lock(&scn->target_lock);
-	ce_enable_any_copy_compl_intr_nolock(scn);
-	cdf_spin_unlock(&scn->target_lock);
-}
-
 /**
  * ce_send_cb_register(): register completion handler
  * @copyeng: CE_state representing the ce we are adding the behavior to

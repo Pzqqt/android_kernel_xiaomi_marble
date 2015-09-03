@@ -376,8 +376,6 @@ int ce_per_engine_service(struct ol_softc *scn, unsigned int CE_id);
 void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int CE_id);
 
 /*===================CE cmpl interrupt Enable/Disable =======================*/
-void ce_disable_any_copy_compl_intr(struct ol_softc *scn);
-void ce_enable_any_copy_compl_intr(struct ol_softc *scn);
 void ce_disable_any_copy_compl_intr_nolock(struct ol_softc *scn);
 void ce_enable_any_copy_compl_intr_nolock(struct ol_softc *scn);
 
