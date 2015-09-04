@@ -141,6 +141,7 @@ struct CE_handle *ce_init(struct ol_softc *scn,
 		malloc_CE_state = true;
 		cdf_mem_zero(CE_state, sizeof(*CE_state));
 		scn->ce_id_to_state[CE_id] = CE_state;
+		cdf_spinlock_init(&CE_state->ce_index_lock);
 
 		CE_state->id = CE_id;
 		CE_state->ctrl_addr = ctrl_addr;

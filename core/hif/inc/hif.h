@@ -290,7 +290,6 @@ struct ol_softc {
 	 * Guard changes to Target HW state and to software
 	 * structures that track hardware state.
 	 */
-	cdf_spinlock_t target_lock;
 	unsigned int ce_count;  /* Number of Copy Engines supported */
 	struct CE_state *ce_id_to_state[CE_COUNT_MAX];  /* CE id to CE_state */
 #ifdef FEATURE_NAPI
