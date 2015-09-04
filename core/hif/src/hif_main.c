@@ -535,7 +535,6 @@ CDF_STATUS hif_open(void)
 	cdf_atomic_init(&scn->link_suspended);
 	cdf_atomic_init(&scn->tasklet_from_intr);
 	init_waitqueue_head(&scn->aps_osdev.event_queue);
-	cdf_spinlock_init(&scn->target_lock);
 	scn->linkstate_vote = 0;
 	return status;
 }

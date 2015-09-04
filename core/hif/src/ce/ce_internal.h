@@ -129,6 +129,8 @@ struct CE_state {
 	struct CE_ring_state *src_ring;
 	struct CE_ring_state *dest_ring;
 	atomic_t rx_pending;
+
+	cdf_spinlock_t ce_index_lock;
 	bool force_break;	/* Flag to indicate whether to
 				 * break out the DPC context */
 
