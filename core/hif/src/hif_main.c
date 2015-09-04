@@ -788,8 +788,6 @@ void hif_crash_shutdown(void *hif_ctx)
 		return;
 	}
 
-	cdf_spin_lock_irqsave(&scn->target_lock);
-
 	hif_crash_shutdown_dump_ce_register(hif_ctx);
 
 	if (ol_copy_ramdump(scn))
@@ -798,7 +796,6 @@ void hif_crash_shutdown(void *hif_ctx)
 	HIF_INFO_MED("%s: RAM dump collecting completed!", __func__);
 
 out:
-	cdf_spin_unlock_irqrestore(&scn->target_lock);
 	return;
 }
 #else
