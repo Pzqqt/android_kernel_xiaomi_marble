@@ -44,6 +44,9 @@
 				WMI_SCAN_EVENT_DEQUEUED)
 /* default value */
 #define DEFAULT_INFRA_STA_KEEP_ALIVE_PERIOD  20
+#define DEFAULT_STA_SA_QUERY_MAX_RETRIES_COUNT       (5)
+#define DEFAULT_STA_SA_QUERY_RETRY_INTERVAL    (200)
+
 /* pdev vdev and peer stats*/
 #define FW_PDEV_STATS_SET 0x1
 #define FW_VDEV_STATS_SET 0x2
@@ -569,6 +572,8 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 					   uint8_t *cmd_param_info,
 					   uint32_t len);
 
+void wma_set_sta_sa_query_param(tp_wma_handle wma,
+				  uint8_t vdev_id);
 
 void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 				   uint32_t method, uint32_t timeperiod,

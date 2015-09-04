@@ -3258,6 +3258,9 @@ static inline void wma_update_target_services(tp_wma_handle wh,
 	if (WMI_SERVICE_IS_ENABLED
 		    (wh->wmi_service_bitmap, WMI_SERVICE_BEACON_OFFLOAD))
 		cfg->beacon_offload = true;
+	if (WMI_SERVICE_IS_ENABLED
+		    (wh->wmi_service_bitmap, WMI_SERVICE_STA_PMF_OFFLOAD))
+		cfg->pmf_offload = true;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	/* Enable Roam Offload */
 	cfg->en_roam_offload = WMI_SERVICE_IS_ENABLED(wh->wmi_service_bitmap,
@@ -3385,6 +3388,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	struct wma_tgt_cfg tgt_cfg;
 	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 
+	cdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 	tgt_cfg.reg_domain = wma_handle->reg_cap.eeprom_rd;
 	tgt_cfg.eeprom_rd_ext = wma_handle->reg_cap.eeprom_rd_ext;
 

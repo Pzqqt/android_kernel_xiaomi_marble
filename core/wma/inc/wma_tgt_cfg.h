@@ -56,6 +56,7 @@ struct wma_tgt_services {
 	bool pno_offload;
 #endif /* FEATURE_WLAN_SCAN_PNO */
 	bool beacon_offload;
+	bool pmf_offload;
 	uint32_t lte_coex_ant_share;
 #ifdef FEATURE_WLAN_TDLS
 	bool en_tdls;

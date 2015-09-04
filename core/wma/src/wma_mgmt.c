@@ -419,6 +419,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		break;
 
 	case WMI_PEER_STA_KICKOUT_REASON_INACTIVITY:
+	/* Handle SA query kickout is same as inactivity kickout */
+	case WMI_PEER_STA_KICKOUT_REASON_SA_QUERY_TIMEOUT:
 	default:
 		break;
 	}
@@ -592,6 +594,69 @@ void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 	WMA_LOGD("%s:vdev_id:%d min_inactive_time: %u max_inactive_time: %u"
 		 " max_unresponsive_time: %u", __func__, vdev_id,
 		 min_inactive_time, max_inactive_time, max_unresponsive_time);
+}
+
+/**
+ * wma_set_sta_sa_query_param() - set sta sa query parameters
+ * @wma: wma handle
+ * @vdev_id: vdev id
+
+ * This function sets sta query related parameters in fw.
+ *
+ * Return: none
+ */
+
+void wma_set_sta_sa_query_param(tp_wma_handle wma,
+				  uint8_t vdev_id)
+{
+	struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+	uint32_t max_retries, retry_interval;
+	wmi_buf_t buf;
+	WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param *cmd;
+	int len;
+
+	WMA_LOGD(FL("Enter:"));
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
+		return;
+	}
+
+	cmd = (WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param));
+
+	if (wlan_cfg_get_int
+		    (mac, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
+		    &max_retries) != eSIR_SUCCESS) {
+		max_retries = DEFAULT_STA_SA_QUERY_MAX_RETRIES_COUNT;
+		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_MAX_RETRIES"));
+	}
+	if (wlan_cfg_get_int
+		    (mac, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
+		    &retry_interval) != eSIR_SUCCESS) {
+		retry_interval = DEFAULT_STA_SA_QUERY_RETRY_INTERVAL;
+		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL"));
+	}
+
+	cmd->vdev_id = vdev_id;
+	cmd->sa_query_max_retry_count = max_retries;
+	cmd->sa_query_retry_interval = retry_interval;
+
+	WMA_LOGD(FL("STA sa query: vdev_id:%d interval:%u retry count:%d"),
+		 vdev_id, retry_interval, max_retries);
+
+	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				 WMI_PMF_OFFLOAD_SET_SA_QUERY_CMDID)) {
+		WMA_LOGE(FL("Failed to offload STA SA Query"));
+		cdf_nbuf_free(buf);
+	}
+
+	WMA_LOGD(FL("Exit :"));
+	return;
 }
 
 /**
@@ -2915,6 +2980,56 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 }
 
 /**
+ * wma_process_bip() - process mmie in rmf frame
+ * @wma_handle: wma handle
+ * @iface: txrx node
+ * @wh: 80211 frame
+ * @wbuf: Buffer
+ *
+ * Return: 0 for success or error code
+ */
+
+static
+int wma_process_bip(tp_wma_handle wma_handle,
+	struct wma_txrx_node *iface,
+	struct ieee80211_frame *wh,
+	cdf_nbuf_t wbuf
+)
+{
+	uint16_t key_id;
+	uint8_t *efrm;
+
+	efrm = cdf_nbuf_data(wbuf) + cdf_nbuf_len(wbuf);
+	key_id = (uint16_t)*(efrm - cds_get_mmie_size() + 2);
+
+	if (!((key_id == WMA_IGTK_KEY_INDEX_4)
+	     || (key_id == WMA_IGTK_KEY_INDEX_5))) {
+		WMA_LOGE(FL("Invalid KeyID(%d) dropping the frame"), key_id);
+		return -EINVAL;
+	}
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				WMI_SERVICE_STA_PMF_OFFLOAD)) {
+		/*
+		 * if 11w offload is enabled then mmie validation is performed
+		 * in firmware, host just need to trim the mmie.
+		 */
+		cdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
+	} else {
+		if (cds_is_mmie_valid(iface->key.key,
+			iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
+			(uint8_t *) wh, efrm)) {
+			WMA_LOGE(FL("Protected BC/MC frame MMIE validation successful"));
+			/* Remove MMIE */
+			cdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
+		} else {
+			WMA_LOGE(FL("BC/MC MIC error or MMIE not present, dropping the frame"));
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
+
+/**
  * wma_process_rmf_frame() - process rmf frame
  * @wma_handle: wma handle
  * @iface: txrx node
@@ -2931,8 +3046,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 	cds_pkt_t *rx_pkt,
 	cdf_nbuf_t wbuf)
 {
-	uint8_t *efrm, *orig_hdr;
-	uint16_t key_id;
+	uint8_t *orig_hdr;
 	uint8_t *ccmp;
 
 	if ((wh)->i_fc[1] & IEEE80211_FC1_WEP) {
@@ -2979,29 +3093,10 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 	} else {
 		if (IEEE80211_IS_BROADCAST(wh->i_addr1) ||
 		    IEEE80211_IS_MULTICAST(wh->i_addr1)) {
-			efrm = cdf_nbuf_data(wbuf) +
-					cdf_nbuf_len(wbuf);
-
-			key_id = (uint16_t)*(efrm - cds_get_mmie_size() + 2);
-			if (!((key_id == WMA_IGTK_KEY_INDEX_4)
-			     || (key_id == WMA_IGTK_KEY_INDEX_5))) {
-				WMA_LOGE("Invalid KeyID(%d) dropping the frame", key_id);
-				cds_pkt_return_packet(rx_pkt);
-				return -EINVAL;
-			}
-
-			if (cds_is_mmie_valid(iface->key.key,
-				iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
-				(uint8_t *) wh, efrm)) {
-				WMA_LOGE("Protected BC/MC frame MMIE validation successful");
-				/* Remove MMIE */
-				cdf_nbuf_trim_tail(wbuf,
-					cds_get_mmie_size());
-			} else {
-				WMA_LOGE("BC/MC MIC error or MMIE not present, dropping the frame");
-				cds_pkt_return_packet(rx_pkt);
-				return -EINVAL;
-			}
+			if (0 != wma_process_bip(wma_handle, iface, wh, wbuf)) {
+					cds_pkt_return_packet(rx_pkt);
+					return -EINVAL;
+				}
 		} else {
 			WMA_LOGE("Rx unprotected unicast mgmt frame");
 			rx_pkt->pkt_meta.dpuFeedback =

@@ -1762,6 +1762,13 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 				       self_sta_req->session_id,
 				       SIR_KEEP_ALIVE_NULL_PKT,
 				       cfg_val, NULL, NULL, NULL);
+
+		/* offload STA SA query related params to fwr */
+		if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+			WMI_SERVICE_STA_PMF_OFFLOAD)) {
+			wma_set_sta_sa_query_param(wma_handle,
+						   self_sta_req->session_id);
+		}
 		break;
 	}
 
