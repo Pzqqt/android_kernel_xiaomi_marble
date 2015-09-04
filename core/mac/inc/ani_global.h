@@ -1021,6 +1021,7 @@ typedef struct sAniSirGlobal {
 	void *readyToSuspendContext;
 	uint8_t lteCoexAntShare;
 	uint8_t beacon_offload;
+	bool pmf_offload;
 	uint32_t fEnableDebugLog;
 	uint16_t mgmtSeqNum;
 	bool enable5gEBT;

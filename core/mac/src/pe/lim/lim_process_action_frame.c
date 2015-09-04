@@ -1534,6 +1534,14 @@ static void __lim_process_sa_query_request_action_frame(tpAniSirGlobal pMac,
 	if (pHdr->fc.wep == 0)
 		return;
 
+	/* 11w offload is enabled then firmware should not fwd this frame */
+	if (pMac->pmf_offload) {
+		lim_log(pMac, LOGE,
+			FL("11w offload is enabled, SA Query request is not expected ")
+			);
+		return;
+	}
+
 	/*Extract 11w trsansId from SA query request action frame
 	   In SA query response action frame we will send same transId
 	   In SA query request action frame:

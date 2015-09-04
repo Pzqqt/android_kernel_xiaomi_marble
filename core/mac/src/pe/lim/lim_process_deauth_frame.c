@@ -138,6 +138,18 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			       (pMac, LOGE,
 			       FL("received an unprotected deauth from AP"));
 		       )
+
+		/*
+		 * When 11w offload is enabled then
+		 * firmware should not fwd this frame
+		 */
+		if (LIM_IS_STA_ROLE(psessionEntry) && pMac->pmf_offload) {
+			lim_log(pMac, LOGE,
+				FL("11w offload is enable,unprotected deauth is not expected")
+				);
+			return;
+		}
+
 		/* If the frame received is unprotected, forward it to the supplicant to initiate */
 		/* an SA query */
 		frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);

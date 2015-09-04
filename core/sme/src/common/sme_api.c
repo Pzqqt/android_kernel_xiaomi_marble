@@ -14870,6 +14870,9 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 
 	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
 	mac_ctx->beacon_offload = cfg->beacon_offload;
+	mac_ctx->pmf_offload = cfg->pmf_offload;
+	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		FL("mac_ctx->pmf_offload: %d"), mac_ctx->pmf_offload);
 
 	return;
 }
