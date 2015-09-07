@@ -1765,6 +1765,9 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 #endif
 	hdd_resume_wlan();
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
+			 NO_SESSION, pHddCtx->isWiphySuspended));
 	spin_lock(&pHddCtx->schedScan_lock);
 	pHddCtx->isWiphySuspended = false;
 	if (true != pHddCtx->isSchedScanUpdatePending) {
@@ -2026,7 +2029,9 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 	pHddCtx->is_ol_rx_thread_suspended = true;
 #endif
-
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
+			 NO_SESSION, pHddCtx->isWiphySuspended));
 	pHddCtx->isWiphySuspended = true;
 
 #ifdef CONFIG_CNSS
@@ -2306,6 +2311,9 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return -ENOENT;
 	}
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
+			 pAdapter->sessionId, pAdapter->device_mode));
 	wlan_hdd_get_class_astats(pAdapter);
 	*dbm = pAdapter->hdd_stats.ClassA_stat.max_pwr;
 

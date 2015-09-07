@@ -9730,6 +9730,9 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 
 	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_DEL_PMKSA,
+			 pAdapter->sessionId, 0));
 	/* Delete the PMKID CSR cache */
 	if (CDF_STATUS_SUCCESS !=
 	    sme_roam_del_pmkid_from_cache(halHandle,
@@ -10126,6 +10129,9 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	hddLog(LOGE, "acl policy: = %d no acl entries = %d", params->acl_policy,
 		params->n_acl_entries);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_SET_MAC_ACL,
+			 pAdapter->sessionId, pAdapter->device_mode));
 	if (WLAN_HDD_SOFTAP == pAdapter->device_mode) {
 		pConfig = &pAdapter->sessionCtx.ap.sapConfig;
 
@@ -10309,6 +10315,9 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_TESTMODE,
+			 NO_SESSION, nla_get_u32(tb[WLAN_HDD_TM_ATTR_CMD])));
 	switch (nla_get_u32(tb[WLAN_HDD_TM_ATTR_CMD])) {
 #ifdef FEATURE_WLAN_LPHB
 	/* Low Power Heartbeat configuration request */

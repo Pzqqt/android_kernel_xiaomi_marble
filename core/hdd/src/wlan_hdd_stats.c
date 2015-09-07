@@ -2447,6 +2447,10 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	wlan_hdd_get_snr(pAdapter, &snr);
 	wlan_hdd_get_rssi(pAdapter, &rssi);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_DUMP_SURVEY,
+			 pAdapter->sessionId, pAdapter->device_mode));
+
 	sme_get_operation_channel(halHandle, &channel, pAdapter->sessionId);
 	hdd_wlan_get_freq(channel, &freq);
 
