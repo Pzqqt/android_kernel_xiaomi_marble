@@ -3806,6 +3806,9 @@ CDF_STATUS sme_roam_deauth_sta(tHalHandle hHal, uint8_t sessionId,
 		return status;
 	}
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_MSG_DEAUTH_STA,
+			 sessionId, pDelStaParams->reason_code));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
@@ -4074,6 +4077,10 @@ CDF_STATUS sme_roam_del_pmkid_from_cache(tHalHandle hHal, uint8_t sessionId,
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_ROAM_DEL_PMKIDCACHE,
+			 sessionId, flush_cache));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
@@ -6020,6 +6027,9 @@ CDF_STATUS sme_set_preferred_network_list(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	CDF_STATUS status;
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_PREF_NET_LIST,
+			 sessionId, request->ucNetworksCount));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		sme_set_ps_preferred_network_list(hHal, request, sessionId,
@@ -9713,6 +9723,10 @@ CDF_STATUS sme_send_tdls_link_establish_params(tHalHandle hHal,
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_TDLS_LINK_ESTABLISH_PARAM,
+			 sessionId,
+			 tdlsLinkEstablishParams->isOffChannelSupported));
 	status = sme_acquire_global_lock(&pMac->sme);
 
 	if (CDF_IS_STATUS_SUCCESS(status)) {
@@ -9748,6 +9762,9 @@ CDF_STATUS sme_send_tdls_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 	tCsrTdlsSendMgmt sendTdlsReq = { {0} };
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_TDLS_SEND_MGMT_FRAME,
+			 sessionId, statusCode));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		cdf_mem_copy(sendTdlsReq.peerMac, peerMac, sizeof(tSirMacAddr));
@@ -9788,6 +9805,9 @@ CDF_STATUS sme_change_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			  "%s :pstaParams is NULL", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_TDLS_CHANGE_PEER_STA,
+			 sessionId, pstaParams->capability));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_tdls_change_peer_sta(hHal, sessionId, peerMac,
@@ -9813,6 +9833,9 @@ CDF_STATUS sme_add_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_TDLS_ADD_PEER_STA,
+			 sessionId, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_tdls_add_peer_sta(hHal, sessionId, peerMac);
@@ -9837,6 +9860,9 @@ CDF_STATUS sme_delete_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_TDLS_DEL_PEER_STA,
+			 sessionId, 0));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		status = csr_tdls_del_peer_sta(hHal, sessionId, peerMac);
@@ -10095,6 +10121,9 @@ CDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 	tdls_chan_switch_params *chan_switch_params = NULL;
 	cds_msg_t cds_message;
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_TDLS_CHAN_SWITCH_REQ,
+			 NO_SESSION, ch_switch_params->tdls_off_channel));
 	status = sme_acquire_global_lock(&mac->sme);
 	if (CDF_STATUS_SUCCESS != status)
 		return status;
@@ -10574,6 +10603,9 @@ CDF_STATUS sme_lphb_config_req
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	cds_msg_t cds_message;
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
+			 TRACE_CODE_SME_RX_HDD_LPHB_CONFIG_REQ,
+			 NO_SESSION, lphdReq->cmd));
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_STATUS_SUCCESS == status) {
 		if ((LPHB_SET_EN_PARAMS_INDID == lphdReq->cmd) &&

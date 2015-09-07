@@ -2073,6 +2073,9 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START,
+			 pAdapter->sessionId, pAdapter->device_mode));
 	/*
 	 * The current umac is unable to handle the SCAN_PREEMPT and SCAN_DEQUEUED
 	 * so its necessary to terminate the existing scan which is already issued
@@ -2382,6 +2385,9 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	pPnoRequest->enable = 0;        /* Disable PNO */
 	pPnoRequest->ucNetworksCount = 0;
 
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP,
+			 pAdapter->sessionId, pAdapter->device_mode));
 	status = sme_set_preferred_network_list(hHal, pPnoRequest,
 						pAdapter->sessionId,
 						NULL, pAdapter);
