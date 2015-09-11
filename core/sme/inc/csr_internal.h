@@ -645,6 +645,12 @@ typedef struct tagCsrConfig {
 	uint8_t is_sta_connection_in_5gz_enabled;
 	struct roam_ext_params roam_params;
 	bool sendDeauthBeforeCon;
+#ifdef FEATURE_WLAN_SCAN_PNO
+	bool pno_channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	uint32_t channel_prediction_full_scan;
+#endif
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

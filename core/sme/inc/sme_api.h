@@ -84,6 +84,8 @@
 
 /* Macro to indicate invalid no of tspecs */
 #define INVALID_TSPEC 100
+#define SME_CONFIG_TO_ROAM_CONFIG 1
+#define ROAM_CONFIG_TO_SME_CONFIG 2
 
 /*--------------------------------------------------------------------------
   Type declarations
@@ -122,6 +124,12 @@ typedef struct _smeConfigParams {
 	bool policy_manager_enabled;
 	uint32_t fine_time_meas_cap;
 	uint32_t dual_mac_feature_disable;
+#ifdef FEATURE_WLAN_SCAN_PNO
+	bool pno_channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	uint32_t channel_prediction_full_scan;
+#endif
 } tSmeConfigParams, *tpSmeConfigParams;
 
 #ifdef FEATURE_WLAN_TDLS
@@ -225,6 +233,16 @@ CDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		void *pContext);
 CDF_STATUS sme_update_roam_params(tHalHandle hHal, uint8_t session_id,
 		struct roam_ext_params roam_params_src, int update_param);
+#ifdef FEATURE_WLAN_SCAN_PNO
+void sme_update_roam_pno_channel_prediction_config(
+		tHalHandle hal, tpSmeConfigParams sme_config,
+		uint8_t copy_from_to);
+#else
+static inline void sme_update_roam_pno_channel_prediction_config(
+		tHalHandle hal, tpSmeConfigParams sme_config,
+		uint8_t copy_from_to)
+{}
+#endif
 CDF_STATUS sme_update_config(tHalHandle hHal,
 		tpSmeConfigParams pSmeConfigParams);
 

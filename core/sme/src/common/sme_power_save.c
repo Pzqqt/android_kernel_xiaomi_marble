@@ -744,7 +744,36 @@ sme_prepare_probe_req_template(tpAniSirGlobal mac_ctx,
 	*pus_len = payload + sizeof(tSirMacMgmtHdr);
 	return eSIR_SUCCESS;
 } /* End sme_prepare_probe_req_template. */
-
+/**
+ * sme_set_pno_channel_prediction() - Prepare PNO buffer
+ * @request_buf:        Buffer to be filled up to send to WMA
+ * @mac_ctx:            MAC context
+ *
+ * Fill up the PNO buffer with the channel prediction configuration
+ * parameters and send them to WMA
+ *
+ * Return: None
+ **/
+void sme_set_pno_channel_prediction(tpSirPNOScanReq request_buf,
+		tpAniSirGlobal mac_ctx)
+{
+	request_buf->pno_channel_prediction =
+		mac_ctx->roam.configParam.pno_channel_prediction;
+	request_buf->top_k_num_of_channels =
+		mac_ctx->roam.configParam.top_k_num_of_channels;
+	request_buf->stationary_thresh =
+		mac_ctx->roam.configParam.stationary_thresh;
+	request_buf->channel_prediction_full_scan =
+		mac_ctx->roam.configParam.channel_prediction_full_scan;
+	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+			FL("channel_prediction: %d, top_k_num_of_channels: %d"),
+			request_buf->pno_channel_prediction,
+			request_buf->top_k_num_of_channels);
+	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+			FL("stationary_thresh: %d, ch_predict_full_scan: %d"),
+			request_buf->stationary_thresh,
+			request_buf->channel_prediction_full_scan);
+}
 CDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 		tpSirPNOScanReq request,
 		uint8_t session_id,
@@ -877,7 +906,7 @@ CDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 
 		request_buf->sessionId = session_id;
 	}
-
+	sme_set_pno_channel_prediction(request_buf, mac_ctx);
 	msg.type = WMA_SET_PNO_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;

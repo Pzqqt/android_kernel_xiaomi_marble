@@ -3425,7 +3425,37 @@ send_resp:
 }
 
 #ifdef FEATURE_WLAN_SCAN_PNO
-
+/**
+ * wma_set_pno_channel_prediction() - Set PNO configuration
+ * @buf_ptr:      Buffer passed by upper layers
+ * @pno:          Buffer to be sent to the firmware
+ *
+ * Copy the PNO Channel prediction configuration parameters
+ * passed by the upper layers to a WMI format TLV and send it
+ * down to the firmware.
+ *
+ * Return: None
+ */
+void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
+		tpSirPNOScanReq pno)
+{
+	nlo_channel_prediction_cfg *channel_prediction_cfg =
+		(nlo_channel_prediction_cfg *) buf_ptr;
+	WMITLV_SET_HDR(&channel_prediction_cfg->tlv_header,
+			WMITLV_TAG_ARRAY_BYTE,
+			WMITLV_GET_STRUCT_TLVLEN(nlo_channel_prediction_cfg));
+	channel_prediction_cfg->enable = pno->pno_channel_prediction;
+	channel_prediction_cfg->top_k_num = pno->top_k_num_of_channels;
+	channel_prediction_cfg->stationary_threshold = pno->stationary_thresh;
+	channel_prediction_cfg->full_scan_period_ms =
+		pno->channel_prediction_full_scan;
+	buf_ptr += sizeof(nlo_channel_prediction_cfg);
+	WMA_LOGD("enable: %d, top_k_num: %d, stat_thresh: %d, full_scan: %d",
+			channel_prediction_cfg->enable,
+			channel_prediction_cfg->top_k_num,
+			channel_prediction_cfg->stationary_threshold,
+			channel_prediction_cfg->full_scan_period_ms);
+}
 /**
  * wma_pno_start() - PNO start request
  * @wma: wma handle
@@ -3447,13 +3477,19 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 
 	WMA_LOGD("PNO Start");
 
-	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + /* TLV place holder for array of structures nlo_configured_parameters(nlo_list) */
-	      WMI_TLV_HDR_SIZE; /* TLV place holder for array of uint32_t channel_list */
+	/*
+	 * TLV place holder for array nlo_configured_parameters(nlo_list)
+	 * TLV place holder for array of uint32_t channel_list
+	 * TLV place holder for chnnl prediction cfg
+	 */
+	len = sizeof(*cmd) +
+		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE;
 
 	len += sizeof(uint32_t) * CDF_MIN(pno->aNetworks[0].ucChannelCount,
 					  WMI_NLO_MAX_CHAN);
 	len += sizeof(nlo_configured_parameters) *
 	       CDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
+	len += sizeof(nlo_channel_prediction_cfg);
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
@@ -3540,7 +3576,11 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 		WMA_LOGD("Ch[%d]: %d MHz", i, channel_list[i]);
 	}
 	buf_ptr += cmd->num_of_channels * sizeof(uint32_t);
-
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+			sizeof(nlo_channel_prediction_cfg));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	wma_set_pno_channel_prediction(buf_ptr, pno);
+	buf_ptr += WMI_TLV_HDR_SIZE;
 	/* TODO: Discrete firmware doesn't have command/option to configure
 	 * App IE which comes from wpa_supplicant as of part PNO start request.
 	 */
@@ -3585,8 +3625,12 @@ CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 
 	WMA_LOGD("PNO Stop");
 
-	len += WMI_TLV_HDR_SIZE + /* TLV place holder for array of structures nlo_configured_parameters(nlo_list) */
-	       WMI_TLV_HDR_SIZE;  /* TLV place holder for array of uint32_t channel_list */
+	/*
+	 * TLV place holder for array of structures nlo_configured_parameters
+	 * TLV place holder for array of uint32_t channel_list
+	 * TLV place holder for chnl prediction cfg
+	 */
+	len += WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE;
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
@@ -3610,6 +3654,10 @@ CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, 0);
 	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				   WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
@@ -6198,6 +6246,8 @@ CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 	len += sizeof(nlo_configured_parameters) *
 				CDF_MIN(req->num_networks, WMI_NLO_MAX_SSIDS);
+	len += WMI_TLV_HDR_SIZE; /* TLV for channel_list */
+	len += WMI_TLV_HDR_SIZE; /* TLV for channel prediction cfg*/
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
@@ -6260,6 +6310,13 @@ CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		WMA_LOGD("Auth bit field (%u)",
 				nlo_list[i].auth_type.auth_type);
 	}
+
+	buf_ptr += cmd->no_of_ssids * sizeof(nlo_configured_parameters);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				   WMI_NETWORK_LIST_OFFLOAD_CONFIG_CMDID);
 	if (ret) {

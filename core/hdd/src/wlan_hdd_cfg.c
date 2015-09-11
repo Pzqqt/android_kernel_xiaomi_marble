@@ -3465,6 +3465,36 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_DUAL_MAC_FEATURE_DISABLE_DEFAULT,
 		     CFG_DUAL_MAC_FEATURE_DISABLE_MIN,
 		     CFG_DUAL_MAC_FEATURE_DISABLE_MAX),
+#ifdef FEATURE_WLAN_SCAN_PNO
+	REG_VARIABLE(CFG_PNO_CHANNEL_PREDICTION_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, pno_channel_prediction,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PNO_CHANNEL_PREDICTION_DEFAULT,
+		     CFG_PNO_CHANNEL_PREDICTION_MIN,
+		     CFG_PNO_CHANNEL_PREDICTION_MAX),
+
+	REG_VARIABLE(CFG_TOP_K_NUM_OF_CHANNELS_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, top_k_num_of_channels,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TOP_K_NUM_OF_CHANNELS_DEFAULT,
+		     CFG_TOP_K_NUM_OF_CHANNELS_MIN,
+		     CFG_TOP_K_NUM_OF_CHANNELS_MAX),
+
+	REG_VARIABLE(CFG_STATIONARY_THRESHOLD_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, stationary_thresh,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_STATIONARY_THRESHOLD_DEFAULT,
+		     CFG_STATIONARY_THRESHOLD_MIN,
+		     CFG_STATIONARY_THRESHOLD_MAX),
+
+	REG_VARIABLE(CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME,
+		     WLAN_PARAM_Integer,
+		     struct hdd_config, channel_prediction_full_scan,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_DEFAULT,
+		     CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MIN,
+		     CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MAX),
+#endif
 
 	REG_VARIABLE(CFG_TX_CHAIN_MASK_CCK, WLAN_PARAM_Integer,
 		     struct hdd_config, tx_chain_mask_cck,
@@ -5006,6 +5036,20 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [%s] value = [%u]",
 		  CFG_DUAL_MAC_FEATURE_DISABLE,
 		  pHddCtx->config->dual_mac_feature_disable);
+#ifdef FEATURE_WLAN_SCAN_PNO
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+			CFG_PNO_CHANNEL_PREDICTION_NAME,
+			pHddCtx->config->pno_channel_prediction);
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+			CFG_TOP_K_NUM_OF_CHANNELS_NAME,
+			pHddCtx->config->top_k_num_of_channels);
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+			CFG_STATIONARY_THRESHOLD_NAME,
+			pHddCtx->config->stationary_thresh);
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+			CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME,
+			pHddCtx->config->channel_prediction_full_scan);
+#endif
 }
 
 
@@ -6088,7 +6132,31 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	}
 	return fStatus;
 }
-
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * hdd_set_pno_channel_prediction_config() - Set PNO configuration
+ * @sme_config:         Config params from SME Context
+ * @hdd_ctx:            Config params from HDD Context
+ *
+ * Copy the PNO Channel prediction feature configuration parameters
+ * from HDD context to SME context.
+ *
+ * Return: None
+ */
+void hdd_set_pno_channel_prediction_config(
+		tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx)
+{
+	sme_config->dual_mac_feature_disable =
+		hdd_ctx->config->dual_mac_feature_disable;
+	sme_config->pno_channel_prediction =
+		hdd_ctx->config->pno_channel_prediction;
+	sme_config->top_k_num_of_channels =
+		hdd_ctx->config->top_k_num_of_channels;
+	sme_config->stationary_thresh = hdd_ctx->config->stationary_thresh;
+	sme_config->channel_prediction_full_scan =
+		hdd_ctx->config->channel_prediction_full_scan;
+}
+#endif
 /**
  * hdd_set_sme_config() -initializes the sme configuration parameters
  *
@@ -6392,9 +6460,7 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	/* Update 802.11p config */
 	smeConfig->csrConfig.enable_dot11p =
 		(pHddCtx->config->dot11p_mode != WLAN_HDD_11P_DISABLED);
-
-	smeConfig->dual_mac_feature_disable =
-		pHddCtx->config->dual_mac_feature_disable;
+	hdd_set_pno_channel_prediction_config(smeConfig, pHddCtx);
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
