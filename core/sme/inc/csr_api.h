@@ -1263,6 +1263,12 @@ typedef struct tagCsrConfigParam {
 	/* 802.11p enable */
 	bool enable_dot11p;
 	uint8_t max_scan_count;
+#ifdef FEATURE_WLAN_SCAN_PNO
+	bool pno_channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	uint32_t channel_prediction_full_scan;
+#endif
 } tCsrConfigParam;
 
 /* Tush */

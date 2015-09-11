@@ -2654,6 +2654,51 @@ enum dot11p_mode {
 #define CFG_ROAM_SCAN_HI_RSSI_UB_MIN               (-76)
 #define CFG_ROAM_SCAN_HI_RSSI_UB_MAX               (-30)
 #define CFG_ROAM_SCAN_HI_RSSI_UB_DEFAULT           (-45)
+/*
+ * gPNOChannelPrediction will allow user to enable/disable the
+ * PNO channel prediction feature.
+ * In current PNO implementation, scan is always done until all configured
+ * channels are scanned. If we can determine DUT is stationary based on
+ * scanning a subset of channels, we may cancel the remaining channels.
+ * Hence, we can save additional power consumption.
+ */
+#define CFG_PNO_CHANNEL_PREDICTION_NAME      "gPNOChannelPrediction"
+#define CFG_PNO_CHANNEL_PREDICTION_MIN       (0)
+#define CFG_PNO_CHANNEL_PREDICTION_MAX       (1)
+#define CFG_PNO_CHANNEL_PREDICTION_DEFAULT   (0)
+/*
+ * The top K number of channels are used for tanimoto distance
+ * calculation. These are the top channels on which the probability
+ * of finding the AP's is extremely high. This number is intended
+ * for tweaking the internal algorithm for experiments. This should
+ * not be changed externally.
+ */
+#define CFG_TOP_K_NUM_OF_CHANNELS_NAME      "gTopKNumOfChannels"
+#define CFG_TOP_K_NUM_OF_CHANNELS_MIN       (1)
+#define CFG_TOP_K_NUM_OF_CHANNELS_MAX       (5)
+#define CFG_TOP_K_NUM_OF_CHANNELS_DEFAULT   (3)
+/*
+ * This is the threshold value to determine that the STA is
+ * stationary. If the tanimoto distance is less than this
+ * value, then the device is considered to be stationary.
+ * This parameter is intended to tweak the internal algorithm
+ * for experiments. This should not be changed externally.
+ */
+#define CFG_STATIONARY_THRESHOLD_NAME      "gStationaryThreshold"
+#define CFG_STATIONARY_THRESHOLD_MIN       (0)
+#define CFG_STATIONARY_THRESHOLD_MAX       (100)
+#define CFG_STATIONARY_THRESHOLD_DEFAULT   (10)
+/*
+ * The following parameter is the periodic timer upon which
+ * a full scan needs to be triggered when PNO channel prediction
+ * feature is enabled. This parameter is intended to tweak the
+ * internal algortihm for experiments. This should not be changed
+ * externally.
+ */
+#define CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME      "gChPredictionFullScanMs"
+#define CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MIN       (30000)
+#define CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MAX       (0x7fffffff)
+#define CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_DEFAULT   (60000)
 
 /*---------------------------------------------------------------------------
    Type declarations
@@ -3213,6 +3258,12 @@ struct hdd_config {
 	bool     tx_chain_mask_cck;
 	uint8_t  tx_chain_mask_1ss;
 	uint16_t  self_gen_frm_pwr;
+#ifdef FEATURE_WLAN_SCAN_PNO
+	bool pno_channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	uint32_t channel_prediction_full_scan;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
@@ -3347,5 +3398,13 @@ CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
 void hdd_cfg_print(hdd_context_t *pHddCtx);
 
 CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss);
+#ifdef FEATURE_WLAN_SCAN_PNO
+void hdd_set_pno_channel_prediction_config(
+	tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx);
+#else
+static inline void hdd_set_pno_channel_prediction_config(
+	tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx)
+{}
+#endif
 
 #endif

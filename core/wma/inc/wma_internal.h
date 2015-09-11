@@ -263,16 +263,23 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno);
 CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id);
 
 void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno);
-
+void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
+		tpSirPNOScanReq pno);
+void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId);
+#else
+static inline void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
+		void *pno)
+{
+	WMA_LOGD("PNO Channel Prediction feature not supported");
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC, 0);
+}
+#endif
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm);
 
 CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm);
 
 void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm);
-#endif
-
-void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId);
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD

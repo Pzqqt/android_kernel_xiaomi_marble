@@ -1347,6 +1347,8 @@ CDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams
 	pMac->fine_time_meas_cap = pSmeConfigParams->fine_time_meas_cap;
 	pMac->dual_mac_feature_disable =
 				pSmeConfigParams->dual_mac_feature_disable;
+	sme_update_roam_pno_channel_prediction_config(pMac, pSmeConfigParams,
+			SME_CONFIG_TO_ROAM_CONFIG);
 
 	return status;
 }
@@ -4188,6 +4190,8 @@ CDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 		pParam->enable5gEBT = pMac->enable5gEBT;
 		pParam->f_sta_miracast_mcc_rest_time_val =
 			pMac->f_sta_miracast_mcc_rest_time_val;
+		sme_update_roam_pno_channel_prediction_config(pMac, pParam,
+				ROAM_CONFIG_TO_SME_CONFIG);
 		sme_release_global_lock(&pMac->sme);
 	}
 
@@ -6722,6 +6726,43 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
 #endif
 
 #ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * sme_update_roam_pno_channel_prediction_config() - Update PNO config
+ * @sme_config:      config from SME context
+ * @hal:             Global Hal handle
+ * @copy_from_to:    Used to specify the source and destination
+ *
+ * Copy the PNO channel prediction configuration parameters from
+ * SME context to MAC context or vice-versa
+ *
+ * Return: None
+ */
+void sme_update_roam_pno_channel_prediction_config(
+		tHalHandle hal, tpSmeConfigParams sme_config,
+		uint8_t copy_from_to)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	if (copy_from_to == SME_CONFIG_TO_ROAM_CONFIG) {
+		mac_ctx->roam.configParam.pno_channel_prediction =
+			sme_config->pno_channel_prediction;
+		mac_ctx->roam.configParam.top_k_num_of_channels =
+			sme_config->top_k_num_of_channels;
+		mac_ctx->roam.configParam.stationary_thresh =
+			sme_config->stationary_thresh;
+		mac_ctx->roam.configParam.channel_prediction_full_scan =
+			sme_config->channel_prediction_full_scan;
+	} else if (copy_from_to == ROAM_CONFIG_TO_SME_CONFIG) {
+		sme_config->pno_channel_prediction =
+			mac_ctx->roam.configParam.pno_channel_prediction;
+		sme_config->top_k_num_of_channels =
+			mac_ctx->roam.configParam.top_k_num_of_channels;
+		sme_config->stationary_thresh =
+			mac_ctx->roam.configParam.stationary_thresh;
+		sme_config->channel_prediction_full_scan =
+			mac_ctx->roam.configParam.channel_prediction_full_scan;
+	}
+
+}
 /******************************************************************************
 *
 * Name: sme_preferred_network_found_ind

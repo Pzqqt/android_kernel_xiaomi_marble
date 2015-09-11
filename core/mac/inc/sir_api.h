@@ -2715,6 +2715,12 @@ typedef struct sSirPNOScanReq {
 	uint8_t p24GProbeTemplate[SIR_PNO_MAX_PB_REQ_SIZE];
 	uint16_t us5GProbeTemplateLen;
 	uint8_t p5GProbeTemplate[SIR_PNO_MAX_PB_REQ_SIZE];
+#ifdef FEATURE_WLAN_SCAN_PNO
+	bool pno_channel_prediction;
+	uint8_t top_k_num_of_channels;
+	uint8_t stationary_thresh;
+	uint32_t channel_prediction_full_scan;
+#endif
 } tSirPNOScanReq, *tpSirPNOScanReq;
 
 /* Preferred Network Found Indication */
