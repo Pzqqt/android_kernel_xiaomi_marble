@@ -206,9 +206,7 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 
 	if (REMAIN_ON_CHANNEL_REQUEST == pRemainChanCtx->rem_on_chan_request) {
 		if (cfgState->buf) {
-			hddLog(LOGP,
-			       "%s: We need to receive yet an ack from one of tx packet",
-			       __func__);
+			hdd_info("We need to receive yet an ack from one of tx packet");
 		}
 		cfg80211_remain_on_channel_expired(
 			pRemainChanCtx->dev->

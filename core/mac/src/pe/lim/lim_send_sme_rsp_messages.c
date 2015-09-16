@@ -700,9 +700,6 @@ lim_send_sme_scan_rsp(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 		uint8_t smesessionId, uint16_t smetranscationId,
 		uint32_t scan_id)
 {
-	lim_log(pMac, LOG1,
-		FL("Sending message SME_SCAN_RSP reasonCode %s scanId %d"),
-		lim_result_code_str(resultCode), scan_id);
 	lim_post_sme_scan_rsp_message(pMac, resultCode, smesessionId,
 				smetranscationId, scan_id);
 }

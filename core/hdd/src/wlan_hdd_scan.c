@@ -1386,7 +1386,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	qdf_mem_zero(&scan_req, sizeof(scan_req));
 
-	hddLog(LOG1, "scan request for ssid = %d", request->n_ssids);
 	scan_req.timestamp = qdf_mc_timer_get_system_ticks();
 
 	/* Even though supplicant doesn't provide any SSIDs, n_ssids is

@@ -315,7 +315,6 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 		dfs_ch_list->timeStamp[chan_num] =
 					qdf_mc_timer_get_system_time();
 	} else {
-		lim_log(mac_ctx, LOG1, FL("Channel %d is Active"), chan_num);
 		return;
 	}
 
@@ -2309,7 +2308,6 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 	}
 
 	mlm_scan_req = mac_ctx->lim.gpLimMlmScanReq;
-	lim_log(mac_ctx, LOG1, FL("Scanning : Periodic scanning"));
 	mac_ctx->lim.probeCounter++;
 	/* Periodic channel timer timed out to send probe request. */
 	channel_num = lim_get_current_scan_channel(mac_ctx);
