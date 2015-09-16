@@ -831,7 +831,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	if (!pHddCtx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_WARN,
 			  FL("pHddCtx is NULL"));
 		return;
 	}
