@@ -258,9 +258,6 @@ static void nl_srv_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 		return;
 	}
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "NLINK: Received NL msg type [%d]", type);
-
 	/* turn type into dispatch table offset */
 	type -= WLAN_NL_MSG_BASE;
 
