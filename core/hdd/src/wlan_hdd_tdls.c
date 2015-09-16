@@ -2962,6 +2962,7 @@ void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
 	wlan_hdd_tdls_set_peer_link_status(curr_peer,
 					   eTDLS_LINK_TEARING,
 					   eTDLS_LINK_UNSPECIFIED);
+	hdd_info("Teardown reason %d", reason);
 	cfg80211_tdls_oper_request(pAdapter->dev,
 				   curr_peer->peerMac,
 				   NL80211_TDLS_TEARDOWN, reason, GFP_KERNEL);
@@ -4614,7 +4615,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 		return -ENOTSUPP;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: unsupported event", __func__);
+			  "%s: unsupported event %d", __func__, oper);
 		return -ENOTSUPP;
 	}
 	EXIT();
