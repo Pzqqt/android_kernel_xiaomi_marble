@@ -860,6 +860,7 @@ static void hdd_mcbc_filter_modification(hdd_context_t *pHddCtx,
 		 * of Broadcast BIT
 		 */
 		*pMcBcFilter &= ~(HDD_MCASTBCASTFILTER_FILTER_ALL_BROADCAST);
+		hdd_info("ARP offload is enabled");
 	}
 #ifdef WLAN_NS_OFFLOAD
 	if (pHddCtx->config->fhostNSOffload) {
@@ -868,6 +869,7 @@ static void hdd_mcbc_filter_modification(hdd_context_t *pHddCtx,
 		 * disable Multicast filtering, Anding with the negation
 		 * of Multicast BIT
 		 */
+		hdd_info("NS offload is enabled");
 		*pMcBcFilter &= ~(HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST);
 	}
 #endif
