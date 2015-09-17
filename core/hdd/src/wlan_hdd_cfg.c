@@ -2541,6 +2541,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_PNO_SCAN_TIMER_REPEAT_VALUE_DEFAULT,
 		     CFG_PNO_SCAN_TIMER_REPEAT_VALUE_MIN,
 		     CFG_PNO_SCAN_TIMER_REPEAT_VALUE_MAX),
+
+	REG_VARIABLE(CFG_PNO_SLOW_SCAN_MULTIPLIER, WLAN_PARAM_Integer,
+		     struct hdd_config, pno_slow_scan_multiplier,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_PNO_SLOW_SCAN_MULTIPLIER_DEFAULT,
+		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MIN,
+		     CFG_PNO_SLOW_SCAN_MULTIPLIER_MAX),
 #endif
 	REG_VARIABLE(CFG_AMSDU_SUPPORT_IN_AMPDU_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, isAmsduSupportInAMPDU,
@@ -4602,6 +4609,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [configPNOScanTimerRepeatValue] Value = [%u] ",
 		  pHddCtx->config->configPNOScanTimerRepeatValue);
+	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [gPNOSlowScanMultiplier] Value = [%u] ",
+		  pHddCtx->config->pno_slow_scan_multiplier);
 #endif
 #ifdef FEATURE_WLAN_TDLS
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,

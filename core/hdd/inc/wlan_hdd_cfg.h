@@ -1783,9 +1783,14 @@ typedef enum {
 #define CFG_PNO_SCAN_SUPPORT_DEFAULT                 (1)
 
 #define CFG_PNO_SCAN_TIMER_REPEAT_VALUE              "gPNOScanTimerRepeatValue"
-#define CFG_PNO_SCAN_TIMER_REPEAT_VALUE_DEFAULT      (6)
+#define CFG_PNO_SCAN_TIMER_REPEAT_VALUE_DEFAULT      (30)
 #define CFG_PNO_SCAN_TIMER_REPEAT_VALUE_MIN          (0)
 #define CFG_PNO_SCAN_TIMER_REPEAT_VALUE_MAX          (0xffffffff)
+
+#define CFG_PNO_SLOW_SCAN_MULTIPLIER                 "gPNOSlowScanMultiplier"
+#define CFG_PNO_SLOW_SCAN_MULTIPLIER_DEFAULT         (6)
+#define CFG_PNO_SLOW_SCAN_MULTIPLIER_MIN             (0)
+#define CFG_PNO_SLOW_SCAN_MULTIPLIER_MAX             (30)
 #endif
 
 #define CFG_AMSDU_SUPPORT_IN_AMPDU_NAME                "gAmsduSupportInAMPDU"
@@ -3127,6 +3132,7 @@ struct hdd_config {
 #ifdef FEATURE_WLAN_SCAN_PNO
 	bool configPNOScanSupport;
 	uint32_t configPNOScanTimerRepeatValue;
+	uint32_t pno_slow_scan_multiplier;
 #endif
 	uint8_t isAmsduSupportInAMPDU;
 	uint8_t nSelect5GHzMargin;
