@@ -2715,7 +2715,6 @@ typedef struct sAniIbssRouteTable {
 #define SIR_PNO_MAX_NETW_CHANNELS  26
 #define SIR_PNO_MAX_NETW_CHANNELS_EX  60
 #define SIR_PNO_MAX_SUPP_NETWORKS  16
-#define SIR_PNO_MAX_SCAN_TIMERS    10
 
 /*
  * size based of dot11 declaration without extra IEs as we will not carry those
@@ -2743,23 +2742,30 @@ typedef struct {
 	int32_t rssiThreshold;
 } tSirNetworkType;
 
-typedef struct {
-	uint32_t uTimerValue;
-	uint32_t uTimerRepeat;
-} tSirScanTimer;
-
-typedef struct {
-	uint8_t ucScanTimersCount;
-	tSirScanTimer aTimerValues[SIR_PNO_MAX_SCAN_TIMERS];
-} tSirScanTimersType;
-
+/**
+ * struct sSirPNOScanReq - PNO Scan request structure
+ * @enable: flag to enable or disable
+ * @modePNO: PNO Mode
+ * @ucNetworksCount: Number of networks
+ * @aNetworks: Preferred network list
+ * @sessionId: Session identifier
+ * @fast_scan_period: Fast Scan period
+ * @slow_scan_period: Slow scan period
+ * @fast_scan_max_cycles: Fast scan max cycles
+ * @us24GProbeTemplateLen: 2.4G probe template length
+ * @p24GProbeTemplate: 2.4G probe template
+ * @us5GProbeTemplateLen: 5G probe template length
+ * @p5GProbeTemplate: 5G probe template
+ */
 typedef struct sSirPNOScanReq {
 	uint8_t enable;
 	eSirPNOMode modePNO;
 	uint8_t ucNetworksCount;
 	tSirNetworkType aNetworks[SIR_PNO_MAX_SUPP_NETWORKS];
-	tSirScanTimersType scanTimers;
 	uint8_t sessionId;
+	uint32_t fast_scan_period;
+	uint32_t slow_scan_period;
+	uint8_t fast_scan_max_cycles;
 
 	uint32_t        active_min_time;
 	uint32_t        active_max_time;

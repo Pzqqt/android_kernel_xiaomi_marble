@@ -3536,13 +3536,12 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	cmd->passive_dwell_time = pno->passive_max_time;
 
 	/* Copy scan interval */
-	if (pno->scanTimers.ucScanTimersCount) {
-		cmd->fast_scan_period =
-			WMA_SEC_TO_MSEC(pno->scanTimers.aTimerValues[0].
-					uTimerValue);
-		cmd->slow_scan_period = cmd->fast_scan_period;
-		WMA_LOGD("Scan period : %d msec", cmd->slow_scan_period);
-	}
+	cmd->fast_scan_period = pno->fast_scan_period;
+	cmd->slow_scan_period = pno->slow_scan_period;
+	cmd->fast_scan_max_cycles = pno->fast_scan_max_cycles;
+	WMA_LOGD("fast_scan_period: %d msec slow_scan_period: %d msec",
+			cmd->fast_scan_period, cmd->slow_scan_period);
+	WMA_LOGD("fast_scan_max_cycles: %d", cmd->fast_scan_max_cycles);
 
 	buf_ptr += sizeof(wmi_nlo_config_cmd_fixed_param);
 

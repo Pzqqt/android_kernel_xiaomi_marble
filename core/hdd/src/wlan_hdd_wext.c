@@ -9256,55 +9256,6 @@ static int __iw_set_pno(struct net_device *dev,
 		ptr += offset;
 	} /* For ucNetworkCount */
 
-	params = sscanf(ptr, "%hhu %n",
-			  &(request.scanTimers.ucScanTimersCount), &offset);
-
-	/* Read the scan timers */
-	if ((1 == params) && (request.scanTimers.ucScanTimersCount > 0)) {
-		ptr += offset;
-
-		hdd_notice("Scan timer count %d offset %d",
-			  request.scanTimers.ucScanTimersCount, offset);
-
-		if (SIR_PNO_MAX_SCAN_TIMERS <
-		    request.scanTimers.ucScanTimersCount) {
-			hdd_err("Incorrect cmd - too many scan timers");
-			return -EINVAL;
-		}
-
-		for (i = 0; i < request.scanTimers.ucScanTimersCount; i++) {
-			params = sscanf(ptr, "%u %u %n",
-					  &(request.scanTimers.
-					    aTimerValues[i].uTimerValue),
-					  &(request.scanTimers.
-					    aTimerValues[i].uTimerRepeat),
-					  &offset);
-
-			if (2 != params) {
-				hdd_err("Incorrect cmd - diff params then expected %d",
-					  params);
-				return -EINVAL;
-			}
-
-			hdd_notice("PNO Timer value %d Timer repeat %d offset %d",
-				  request.scanTimers.aTimerValues[i].
-				  uTimerValue,
-				  request.scanTimers.aTimerValues[i].
-				  uTimerRepeat, offset);
-
-			ptr += offset;
-		}
-
-	} else {
-		hdd_notice("No scan timers provided param count %d scan timers %d",
-			  params, request.scanTimers.ucScanTimersCount);
-
-		/* Scan timers defaults to 5 minutes */
-		request.scanTimers.ucScanTimersCount = 1;
-		request.scanTimers.aTimerValues[0].uTimerValue = 60;
-		request.scanTimers.aTimerValues[0].uTimerRepeat = 0;
-	}
-
 	params = sscanf(ptr, "%hhu %n", &(mode), &offset);
 
 	request.modePNO = mode;
