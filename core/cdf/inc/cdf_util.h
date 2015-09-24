@@ -189,7 +189,7 @@ CDF_INLINE_FN bool cdf_is_macaddr_group(struct cdf_mac_addr *pMacAddr)
  * @pMacAddr: Pointer to the cdf MacAddress to check
  *
  * Return:  true if the input MacAddress is a broadcast address
- *	flase if the input MacAddress is not a broadcast address
+ *	false if the input MacAddress is not a broadcast address
  */
 CDF_INLINE_FN bool cdf_is_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
 {

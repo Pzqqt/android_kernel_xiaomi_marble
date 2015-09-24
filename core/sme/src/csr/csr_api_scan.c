@@ -4856,8 +4856,7 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 	uint32_t minChnTime;    /* in units of milliseconds */
 	uint32_t maxChnTime;    /* in units of milliseconds */
 	uint32_t i;
-	uint8_t selfMacAddr[CDF_MAC_ADDR_SIZE];
-	uint8_t *pSelfMac = NULL;
+	struct cdf_mac_addr selfmac;
 
 	msgLen = (uint16_t) (sizeof(tSirSmeScanReq) -
 		 sizeof(pMsg->channelList.channelNumber) +
@@ -4904,8 +4903,8 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 	pMsg->bssType = csr_translate_bsstype_to_mac_type(pScanReq->BSSType);
 
 	if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		pSelfMac = (uint8_t *)
-			&pMac->roam.roamSession[sessionId].selfMacAddr;
+		cdf_copy_macaddr(&selfmac,
+			&pMac->roam.roamSession[sessionId].selfMacAddr);
 	} else {
 		/*
 		 * Since we don't have session for the scanning, we find a valid
@@ -4913,16 +4912,15 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		 */
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 			if (CSR_IS_SESSION_VALID(pMac, i)) {
-				pSelfMac = (uint8_t *)
-					&pMac->roam.roamSession[i].selfMacAddr;
+				cdf_copy_macaddr(&selfmac,
+					&pMac->roam.roamSession[i].selfMacAddr);
 				break;
 			}
 		}
 		if (CSR_ROAM_SESSION_MAX == i) {
 			uint32_t len = CDF_MAC_ADDR_SIZE;
-			pSelfMac = selfMacAddr;
 			status = wlan_cfg_get_str(pMac, WNI_CFG_STA_ID,
-						  pSelfMac, &len);
+						  selfmac.bytes, &len);
 			if (!CDF_IS_STATUS_SUCCESS(status)
 			    || (len < CDF_MAC_ADDR_SIZE)) {
 				sms_log(pMac, LOGE,
@@ -4934,16 +4932,13 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 			}
 		}
 	}
-	cdf_mem_copy((uint8_t *) pMsg->selfMacAddr,
-		     pSelfMac, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->selfMacAddr, &selfmac);
 
-	/* sir_copy_mac_addr */
-	cdf_mem_copy(pMsg->bssId, &pScanReq->bssid, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->bssId, &pScanReq->bssid);
 	if (cdf_is_macaddr_zero(&pScanReq->bssid))
-		cdf_mem_set(pMsg->bssId, sizeof(tSirMacAddr), 0xff);
+		cdf_set_macaddr_broadcast(&pMsg->bssId);
 	else
-		cdf_mem_copy(pMsg->bssId, pScanReq->bssid.bytes,
-				CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->bssId, &pScanReq->bssid);
 	minChnTime = pScanReq->minChnTime;
 	maxChnTime = pScanReq->maxChnTime;
 

@@ -745,9 +745,9 @@ typedef struct sSirSmeScanReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssId;
 	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
-	tSirMacAddr selfMacAddr;        /* Added For BT-AMP Support */
+	struct cdf_mac_addr selfMacAddr;        /* Added For BT-AMP Support */
 	tSirBssType bssType;
 	uint8_t dot11mode;
 	tSirScanType scanType;

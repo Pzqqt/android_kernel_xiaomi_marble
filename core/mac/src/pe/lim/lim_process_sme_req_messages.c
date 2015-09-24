@@ -1279,8 +1279,7 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
 
-	cdf_mem_copy((uint8_t *) pScanOffloadReq->bssId.bytes,
-		     (uint8_t *) pScanReq->bssId, CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&pScanOffloadReq->bssId, &pScanReq->bssId);
 
 	if (pScanReq->numSsid > SIR_SCAN_MAX_NUM_SSID) {
 		lim_log(pMac, LOGE,
@@ -1299,8 +1298,7 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	}
 
 	pScanOffloadReq->hiddenSsid = pScanReq->hiddenSsid;
-	cdf_mem_copy((uint8_t *) pScanOffloadReq->selfMacAddr.bytes,
-		     (uint8_t *) pScanReq->selfMacAddr, CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&pScanOffloadReq->selfMacAddr, &pScanReq->selfMacAddr);
 	pScanOffloadReq->bssType = pScanReq->bssType;
 	pScanOffloadReq->dot11mode = pScanReq->dot11mode;
 	pScanOffloadReq->scanType = pScanReq->scanType;
@@ -1424,7 +1422,8 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
 	 * copy the Self MAC address from SmeReq to the globalplace,
 	 * used for sending probe req
 	 */
-	sir_copy_mac_addr(mac_ctx->lim.gSelfMacAddr, scan_req->selfMacAddr);
+	sir_copy_mac_addr(mac_ctx->lim.gSelfMacAddr,
+			  scan_req->selfMacAddr.bytes);
 	valid_req = lim_is_sme_scan_req_valid(mac_ctx, scan_req);
 
 	if (!valid_req || mac_ctx->lim.scan_disabled) {
