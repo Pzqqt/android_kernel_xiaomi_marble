@@ -248,6 +248,7 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_LINK_PROPERTIES: get link properties
  * @QCA_NL80211_VENDOR_SUBCMD_TRIGGER_SCAN: venodr scan command
  * @QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE: vendor scan complete
+ * @QCA_NL80211_VENDOR_SUBCMD_OTA_TEST: enable OTA test
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -357,6 +358,10 @@ enum qca_nl80211_vendor_subcmds {
 	/* Vendor scan commands */
 	QCA_NL80211_VENDOR_SUBCMD_TRIGGER_SCAN = 106,
 	QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE = 107,
+
+	/* OTA test subcommand */
+	QCA_NL80211_VENDOR_SUBCMD_OTA_TEST = 108,
+
 };
 
 /**
@@ -2170,6 +2175,23 @@ enum drv_dbs_capability {
 	DRV_DBS_CAPABILITY_DISABLED, /* not supported or disabled */
 	DRV_DBS_CAPABILITY_1X1,
 	DRV_DBS_CAPABILITY_2X2,
+};
+
+/**
+ * enum qca_vendor_attr_ota_test - Enable OTA test
+ * @QCA_WLAN_VENDOR_ATTR_OTA_TEST_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_OTA_TEST_ENABLE: enable OTA test
+ * @QCA_WLAN_VENDOR_ATTR_OTA_TEST_AFTER_LAST: after last
+ * @QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX: max
+ */
+enum qca_vendor_attr_ota_test {
+	QCA_WLAN_VENDOR_ATTR_OTA_TEST_INVALID,
+	/* 8-bit unsigned value to indicate if OTA test is enabled */
+	QCA_WLAN_VENDOR_ATTR_OTA_TEST_ENABLE,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_OTA_TEST_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX =
+	QCA_WLAN_VENDOR_ATTR_OTA_TEST_AFTER_LAST - 1
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
