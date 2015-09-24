@@ -7720,8 +7720,8 @@ CDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t dB)
    \- return CDF_STATUS
 
    -------------------------------------------------------------------------------*/
-CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, tSirMacAddr pBssid,
-				tSirMacAddr pSelfMacAddress, int8_t dB)
+CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct cdf_mac_addr pBssid,
+				struct cdf_mac_addr pSelfMacAddress, int8_t dB)
 {
 	cds_msg_t msg;
 	tpMaxTxPowerParams pMaxTxParams = NULL;
@@ -7736,9 +7736,8 @@ CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, tSirMacAddr pBssid,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(pMaxTxParams->bssId, pBssid, CDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(pMaxTxParams->selfStaMacAddr, pSelfMacAddress,
-		     CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&pMaxTxParams->bssId, &pBssid);
+	cdf_copy_macaddr(&pMaxTxParams->selfStaMacAddr, &pSelfMacAddress);
 	pMaxTxParams->power = dB;
 
 	msg.type = WMA_SET_MAX_TX_POWER_REQ;
@@ -7806,7 +7805,8 @@ CDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
    \- return CDF_STATUS
    ---------------------------------------------------------------------------*/
 CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
-			    tSirMacAddr pBSSId, tCDF_CON_MODE dev_mode, int dBm)
+			    struct cdf_mac_addr pBSSId,
+			    tCDF_CON_MODE dev_mode, int dBm)
 {
 	cds_msg_t msg;
 	tpMaxTxPowerParams pTxParams = NULL;
@@ -7830,7 +7830,7 @@ CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(pTxParams->bssId, pBSSId, CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&pTxParams->bssId, &pBSSId);
 	pTxParams->power = power;       /* unit is dBm */
 	pTxParams->dev_mode = dev_mode;
 	msg.type = WMA_SET_TX_POWER_REQ;

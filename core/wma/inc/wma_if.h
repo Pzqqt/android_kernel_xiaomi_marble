@@ -1148,8 +1148,8 @@ typedef struct sControlTxParams {
  * Request Type = SIR_HAL_SET_MAX_TX_POWER_REQ
  */
 typedef struct sMaxTxPowerParams {
-	tSirMacAddr bssId;
-	tSirMacAddr selfStaMacAddr;
+	struct cdf_mac_addr bssId;
+	struct cdf_mac_addr selfStaMacAddr;
 	/* In request,
 	 * power == MaxTx power to be used.
 	 * In response,

@@ -2185,8 +2185,8 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
 	tHalHandle hHal = NULL;
-	tSirMacAddr bssid = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	tSirMacAddr selfMac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+	struct cdf_mac_addr bssid = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct cdf_mac_addr selfMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	int status;
 
 	ENTER();

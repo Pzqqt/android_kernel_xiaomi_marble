@@ -5080,10 +5080,9 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 	case WE_SET_TX_POWER:
 	{
-		tSirMacAddr bssid;
+		struct cdf_mac_addr bssid;
 
-		cdf_mem_copy(bssid, pHddStaCtx->conn_info.bssId.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
 		if (sme_set_tx_power
 			    (hHal, pAdapter->sessionId, bssid,
 			    pAdapter->device_mode,
@@ -5096,16 +5095,14 @@ static int __iw_setint_getnone(struct net_device *dev,
 	}
 	case WE_SET_MAX_TX_POWER:
 	{
-		tSirMacAddr bssid;
-		tSirMacAddr selfMac;
+		struct cdf_mac_addr bssid;
+		struct cdf_mac_addr selfMac;
 
 		hddLog(CDF_TRACE_LEVEL_INFO,
 		       "%s: Setting maximum tx power %d dBm", __func__,
 		       set_value);
-		cdf_mem_copy(bssid, pHddStaCtx->conn_info.bssId.bytes,
-			     CDF_MAC_ADDR_SIZE);
-		cdf_mem_copy(selfMac, pHddStaCtx->conn_info.bssId.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
+		cdf_copy_macaddr(&selfMac, &pHddStaCtx->conn_info.bssId);
 
 		if (sme_set_max_tx_power(hHal, bssid, selfMac, set_value)
 		    != CDF_STATUS_SUCCESS) {

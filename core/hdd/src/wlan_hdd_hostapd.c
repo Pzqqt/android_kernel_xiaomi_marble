@@ -3242,9 +3242,9 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 	int *value = (int *)extra;
 	int set_value;
-	tSirMacAddr bssid = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	tSirMacAddr selfMac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	int ret;
+	struct cdf_mac_addr bssid = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct cdf_mac_addr selfMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	ENTER();
 
@@ -3257,10 +3257,8 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 		return ret;
 
 	/* Assign correct slef MAC address */
-	cdf_mem_copy(bssid, pHostapdAdapter->macAddressCurrent.bytes,
-		     CDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(selfMac, pHostapdAdapter->macAddressCurrent.bytes,
-		     CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
+	cdf_copy_macaddr(&selfMac, &pHostapdAdapter->macAddressCurrent);
 
 	set_value = value[0];
 	if (CDF_STATUS_SUCCESS !=
@@ -3296,7 +3294,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	int *value = (int *)extra;
 	int set_value;
-	tSirMacAddr bssid;
+	struct cdf_mac_addr bssid;
 	int ret;
 
 	ENTER();
@@ -3309,8 +3307,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	if (NULL == value)
 		return -ENOMEM;
 
-	cdf_mem_copy(bssid, pHostapdAdapter->macAddressCurrent.bytes,
-		     CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
 
 	set_value = value[0];
 	if (CDF_STATUS_SUCCESS !=

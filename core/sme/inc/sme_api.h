@@ -553,11 +553,11 @@ CDF_STATUS sme_get_gtk_offload(tHalHandle hal_ctx,
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 uint16_t sme_chn_to_freq(uint8_t chanNum);
 bool sme_is_channel_valid(tHalHandle hHal, uint8_t channel);
-CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, tSirMacAddr pBssid,
-		tSirMacAddr pSelfMacAddress, int8_t dB);
+CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct cdf_mac_addr pBssid,
+		struct cdf_mac_addr pSelfMacAddress, int8_t dB);
 CDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t db);
 CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
-		tSirMacAddr pBSSId,
+		struct cdf_mac_addr bssid,
 		tCDF_CON_MODE dev_mode, int power);
 CDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
 CDF_STATUS sme_hide_ssid(tHalHandle hHal, uint8_t sessionId,

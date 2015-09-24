@@ -4982,8 +4982,8 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 	CDF_STATUS cdf_status;
 	CDF_STATUS smeStatus;
 	uint8_t *value = command;
-	tSirMacAddr bssid = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
-	tSirMacAddr selfMac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
+	struct cdf_mac_addr bssid = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct cdf_mac_addr selfMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	hdd_adapter_list_node_t *pAdapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
 
@@ -5001,21 +5001,19 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 	       && CDF_STATUS_SUCCESS == cdf_status) {
 		adapter = pAdapterNode->pAdapter;
 		/* Assign correct self MAC address */
-		cdf_mem_copy(bssid,
-			     adapter->macAddressCurrent.bytes,
-			     CDF_MAC_ADDR_SIZE);
-		cdf_mem_copy(selfMac,
-			     adapter->macAddressCurrent.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&bssid,
+				 &adapter->macAddressCurrent);
+		cdf_copy_macaddr(&selfMac,
+				 &adapter->macAddressCurrent);
 
 		hddLog(CDF_TRACE_LEVEL_INFO,
 		       "Device mode %d max tx power %d selfMac: " MAC_ADDRESS_STR " bssId: " MAC_ADDRESS_STR " ",
 		       adapter->device_mode, txPower,
-		       MAC_ADDR_ARRAY(selfMac),
-		       MAC_ADDR_ARRAY(bssid));
+		       MAC_ADDR_ARRAY(selfMac.bytes),
+		       MAC_ADDR_ARRAY(bssid.bytes));
 
-		smeStatus = sme_set_max_tx_power((tHalHandle)(hdd_ctx->hHal),
-						  bssid, selfMac, txPower);
+		smeStatus = sme_set_max_tx_power(hdd_ctx->hHal,
+						 bssid, selfMac, txPower);
 		if (CDF_STATUS_SUCCESS != status) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s:Set max tx power failed",
