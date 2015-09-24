@@ -507,7 +507,7 @@ CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
 		       (cmd->num_bssid * sizeof(wmi_mac_addr)));
 	bssid = (wmi_mac_addr *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(scan_req->bssId, bssid);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(scan_req->bssId.bytes, bssid);
 	buf_ptr += WMI_TLV_HDR_SIZE + (cmd->num_bssid * sizeof(wmi_mac_addr));
 
 	cmd->ie_len = scan_req->uIEFieldLen;

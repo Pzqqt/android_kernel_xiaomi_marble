@@ -1279,8 +1279,8 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
 
-	cdf_mem_copy((uint8_t *) pScanOffloadReq->bssId,
-		     (uint8_t *) pScanReq->bssId, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) pScanOffloadReq->bssId.bytes,
+		     (uint8_t *) pScanReq->bssId, CDF_MAC_ADDR_SIZE);
 
 	if (pScanReq->numSsid > SIR_SCAN_MAX_NUM_SSID) {
 		lim_log(pMac, LOGE,
@@ -1299,8 +1299,8 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	}
 
 	pScanOffloadReq->hiddenSsid = pScanReq->hiddenSsid;
-	cdf_mem_copy((uint8_t *) pScanOffloadReq->selfMacAddr,
-		     (uint8_t *) pScanReq->selfMacAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) pScanOffloadReq->selfMacAddr.bytes,
+		     (uint8_t *) pScanReq->selfMacAddr, CDF_MAC_ADDR_SIZE);
 	pScanOffloadReq->bssType = pScanReq->bssType;
 	pScanOffloadReq->dot11mode = pScanReq->dot11mode;
 	pScanOffloadReq->scanType = pScanReq->scanType;

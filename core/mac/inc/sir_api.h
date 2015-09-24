@@ -3497,11 +3497,11 @@ typedef struct sAniHandoffReq {
 
 typedef struct sSirScanOffloadReq {
 	uint8_t sessionId;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssId;
 	uint8_t numSsid;
 	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
 	uint8_t hiddenSsid;
-	tSirMacAddr selfMacAddr;
+	struct cdf_mac_addr selfMacAddr;
 	tSirBssType bssType;
 	uint8_t dot11mode;
 	tSirScanType scanType;
