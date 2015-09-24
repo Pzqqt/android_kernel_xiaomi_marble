@@ -9965,7 +9965,8 @@ void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal pMac, tCsrRoamSession *pSes
 }
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
-CDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac, tSirMacAddr *bssId)
+static CDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac,
+				struct cdf_mac_addr *bssId)
 {
 	tpSirResetAPCapsChange pMsg;
 	uint16_t len;
@@ -9982,7 +9983,7 @@ CDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac, tSirMacAddr *bssI
 		cdf_mem_set(pMsg, sizeof(tSirResetAPCapsChange), 0);
 		pMsg->messageType = eWNI_SME_RESET_AP_CAPS_CHANGED;
 		pMsg->length = len;
-		cdf_mem_copy(pMsg->bssId, bssId, sizeof(tSirMacAddr));
+		cdf_mem_copy(pMsg->bssId, bssId->bytes, CDF_MAC_ADDR_SIZE);
 		sms_log(pMac, LOG1,
 			FL("CSR reset caps change for Bssid= " MAC_ADDRESS_STR),
 			MAC_ADDR_ARRAY(pMsg->bssId));
@@ -10588,7 +10589,7 @@ csr_roam_chk_lnk_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOGW,
 			FL("CSR handling eSIR_SME_AP_CAPS_CHANGED"));
 		status = csr_roam_get_session_id_from_bssid(mac_ctx,
-				(struct cdf_mac_addr *)pApNewCaps->bssId, &sessionId);
+					&pApNewCaps->bssId, &sessionId);
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			break;
 		if (eCSR_ROAMING_STATE_JOINED ==

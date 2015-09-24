@@ -1587,8 +1587,8 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 		len = sizeof(tSirMacCapabilityInfo) + sizeof(tSirMacAddr) + sizeof(uint8_t) + 3 * sizeof(uint8_t) + /* reserved fields */
 		      pBeacon->ssId.length + 1;
 
-		cdf_mem_copy(apNewCaps.bssId,
-			     psessionEntry->bssId, sizeof(tSirMacAddr));
+		cdf_mem_copy(apNewCaps.bssId.bytes,
+			     psessionEntry->bssId, CDF_MAC_ADDR_SIZE);
 		if (newChannel != psessionEntry->currentOperChannel) {
 			PELOGE(lim_log
 				       (pMac, LOGE,
