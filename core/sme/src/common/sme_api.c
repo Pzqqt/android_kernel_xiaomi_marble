@@ -5239,11 +5239,10 @@ CDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		pMsg->msgType = WMA_DHCP_START_IND;
 		pMsg->msgLen = (uint16_t) sizeof(tAniDHCPInd);
 		pMsg->device_mode = device_mode;
-		cdf_mem_copy(pMsg->adapterMacAddr, macAddr,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(pMsg->peerMacAddr,
-			     pSession->connectedProfile.bssid.bytes,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pMsg->adapterMacAddr.bytes, macAddr,
+			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->peerMacAddr,
+				 &pSession->connectedProfile.bssid);
 
 		cds_message.type = WMA_DHCP_START_IND;
 		cds_message.bodyptr = pMsg;
@@ -5311,11 +5310,10 @@ CDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		pMsg->msgType = WMA_DHCP_STOP_IND;
 		pMsg->msgLen = (uint16_t) sizeof(tAniDHCPInd);
 		pMsg->device_mode = device_mode;
-		cdf_mem_copy(pMsg->adapterMacAddr, macAddr,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(pMsg->peerMacAddr,
-			     pSession->connectedProfile.bssid.bytes,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pMsg->adapterMacAddr.bytes, macAddr,
+			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->peerMacAddr,
+				 &pSession->connectedProfile.bssid);
 
 		cds_message.type = WMA_DHCP_STOP_IND;
 		cds_message.bodyptr = pMsg;
