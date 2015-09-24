@@ -101,8 +101,8 @@ static CDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	msg.bodyval = 0;
 
 	cdf_mem_copy((uint8_t *) pScanOffloadReq->selfMacAddr,
-		     (uint8_t *) pRemOnChnReq->selfMacAddr,
-		     sizeof(tSirMacAddr));
+		     (uint8_t *) pRemOnChnReq->selfMacAddr.bytes,
+		     CDF_MAC_ADDR_SIZE);
 
 	cdf_mem_copy((uint8_t *) pScanOffloadReq->bssId,
 		     (uint8_t *) bssid, sizeof(tSirMacAddr));
@@ -347,7 +347,7 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, CDF_STATUS status, uint32_t *dat
 	/* delete the session */
 	if ((psessionEntry = pe_find_session_by_bssid(pMac,
 						      MsgRemainonChannel->
-						      selfMacAddr,
+						      selfMacAddr.bytes,
 						      &sessionId)) != NULL) {
 		if (LIM_IS_P2P_DEVICE_ROLE(psessionEntry)) {
 			pe_delete_session(pMac, psessionEntry);
