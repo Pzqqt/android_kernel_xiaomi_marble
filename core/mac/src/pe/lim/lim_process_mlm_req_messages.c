@@ -386,9 +386,8 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 	cdf_mem_set((uint8_t *) (start_oem_data_req), reqlen, 0);
 
 	/* Now copy over the information to the OEM DATA REQ to HAL */
-	cdf_mem_copy(start_oem_data_req->selfMacAddr,
-		     mac_ctx->lim.gpLimMlmOemDataReq->selfMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&start_oem_data_req->selfMacAddr,
+			 &mac_ctx->lim.gpLimMlmOemDataReq->selfMacAddr);
 
 	cdf_mem_copy(start_oem_data_req->oemDataReq,
 		     mac_ctx->lim.gpLimMlmOemDataReq->oemDataReq,

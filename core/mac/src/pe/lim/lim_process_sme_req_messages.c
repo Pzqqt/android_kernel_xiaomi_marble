@@ -1503,8 +1503,8 @@ static void __lim_process_sme_oem_data_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	/* Initialize this buffer */
 	cdf_mem_set(pMlmOemDataReq, (sizeof(tLimMlmOemDataReq)), 0);
 
-	cdf_mem_copy(pMlmOemDataReq->selfMacAddr, pOemDataReq->selfMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMlmOemDataReq->selfMacAddr,
+			 &pOemDataReq->selfMacAddr);
 	cdf_mem_copy(pMlmOemDataReq->oemDataReq, pOemDataReq->oemDataReq,
 		     OEM_DATA_REQ_SIZE);
 
