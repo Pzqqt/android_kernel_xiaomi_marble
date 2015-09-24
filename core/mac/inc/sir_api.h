@@ -509,7 +509,7 @@ typedef enum eSirNwType {
 
 /* / Definition for new iBss peer info */
 typedef struct sSirNewIbssPeerInfo {
-	tSirMacAddr peerAddr;
+	struct cdf_mac_addr peerAddr;
 	uint16_t aid;
 } tSirNewIbssPeerInfo, *tpSirNewIbssPeerInfo;
 
