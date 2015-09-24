@@ -4735,7 +4735,8 @@ __lim_process_sme_reset_ap_caps_change(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	pResetCapsChange = (tpSirResetAPCapsChange) pMsgBuf;
 	psessionEntry =
-		pe_find_session_by_bssid(pMac, pResetCapsChange->bssId, &sessionId);
+		pe_find_session_by_bssid(pMac, pResetCapsChange->bssId.bytes,
+					 &sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
 			FL("Session does not exist for given BSSID"));

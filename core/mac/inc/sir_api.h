@@ -3463,7 +3463,7 @@ typedef struct sSirActiveModeSetBcnFilterReq {
 typedef struct sSirResetAPCapsChange {
 	uint16_t messageType;
 	uint16_t length;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssId;
 } tSirResetAPCapsChange, *tpSirResetAPCapsChange;
 
 /* / Definition for Candidate found indication from FW */
