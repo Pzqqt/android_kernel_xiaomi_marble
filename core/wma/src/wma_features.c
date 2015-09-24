@@ -782,7 +782,8 @@ CDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma_find_vdev_by_addr(wma_handle, ta_dhcp_ind->adapterMacAddr,
+	if (!wma_find_vdev_by_addr(wma_handle,
+				   ta_dhcp_ind->adapterMacAddr.bytes,
 				   &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev id for DHCP indication",
 			 __func__);
@@ -796,7 +797,7 @@ CDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 		 ta_dhcp_ind->msgType == WMA_DHCP_START_IND ?
 		 "WMA_DHCP_START_IND" : "WMA_DHCP_STOP_IND",
 		 ta_dhcp_ind->device_mode,
-		 MAC_ADDR_ARRAY(ta_dhcp_ind->peerMacAddr));
+		 MAC_ADDR_ARRAY(ta_dhcp_ind->peerMacAddr.bytes));
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
@@ -818,7 +819,7 @@ CDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 		peer_set_param_fp->param_value = 1;
 	else
 		peer_set_param_fp->param_value = 0;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(ta_dhcp_ind->peerMacAddr,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(ta_dhcp_ind->peerMacAddr.bytes,
 				   &peer_set_param_fp->peer_macaddr);
 
 	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,

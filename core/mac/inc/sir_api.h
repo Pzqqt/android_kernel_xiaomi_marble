@@ -1800,13 +1800,20 @@ typedef struct sAniGenericChangeCountryCodeReq {
 	uint16_t domain_index;
 } tAniGenericChangeCountryCodeReq, *tpAniGenericChangeCountryCodeReq;
 
+/**
+ * struct sAniDHCPStopInd - DHCP Stop indication message
+ * @msgType: message type is same as the request type
+ * @msgLen: length of the entire request
+ * @device_mode: Mode of the device(ex:STA, AP)
+ * @adapterMacAddr: MAC address of the adapter
+ * @peerMacAddr: MAC address of the connected peer
+ */
 typedef struct sAniDHCPStopInd {
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint8_t device_mode;    /* Mode of the device(ex:STA, AP) */
-	tSirMacAddr adapterMacAddr;     /* MAC address of the adapter */
-	tSirMacAddr peerMacAddr;        /* MAC address of the connected peer */
-
+	uint16_t msgType;
+	uint16_t msgLen;
+	uint8_t device_mode;
+	struct cdf_mac_addr adapterMacAddr;
+	struct cdf_mac_addr peerMacAddr;
 } tAniDHCPInd, *tpAniDHCPInd;
 
 typedef enum eTxRateInfo {
