@@ -1679,17 +1679,19 @@ typedef struct sAniTrafStrmMetrics {
 	uint8_t RoamingCount;
 	uint16_t RoamingDly;
 } tAniTrafStrmMetrics, *tpAniTrafStrmMetrics;
+
 typedef struct sAniGetTsmStatsReq {
 	/* Common for all types are requests */
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t staId;
 	uint8_t tid;            /* traffic id */
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssId;
 	void *tsmStatsCallback;
 	void *pDevContext;      /* device context */
 	void *p_cds_context;    /* cds context */
 } tAniGetTsmStatsReq, *tpAniGetTsmStatsReq;
+
 typedef struct sAniGetTsmStatsRsp {
 	/* Common for all types are responses */
 	uint16_t msgType;       /*
