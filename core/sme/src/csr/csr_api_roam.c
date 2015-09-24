@@ -10460,7 +10460,8 @@ csr_roam_diag_joined_new_bss(tpAniSirGlobal mac_ctx,
 		return;
 	pIbssLog->eventId = WLAN_IBSS_EVENT_COALESCING;
 	if (pNewBss) {
-		cdf_mem_copy(pIbssLog->bssid, pNewBss->bssId, 6);
+		cdf_mem_copy(pIbssLog->bssid, pNewBss->bssId.bytes,
+				CDF_MAC_ADDR_SIZE);
 		if (pNewBss->ssId.length)
 			cdf_mem_copy(pIbssLog->ssid, pNewBss->ssId.ssId,
 				     pNewBss->ssId.length);
