@@ -3354,8 +3354,7 @@ void lim_process_tkip_counter_measures(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			sizeof(struct sSirSmeTkipCntrMeasReq));
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				tkipCntrMeasReq.bssId,
-				&sessionId);
+				tkipCntrMeasReq.bssId.bytes, &sessionId);
 	if (NULL == psessionEntry) {
 		lim_log(pMac, LOGE,
 			FL("session does not exist for given BSSID "));

@@ -3061,6 +3061,33 @@ CDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 	return status;
 }
 
+static CDF_STATUS
+csr_send_mb_tkip_counter_measures_req_msg(tpAniSirGlobal pMac,
+					  uint32_t sessionId, bool bEnable,
+					  struct cdf_mac_addr *bssId)
+{
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	tSirSmeTkipCntrMeasReq *pMsg;
+	do {
+		pMsg = cdf_mem_malloc(sizeof(tSirSmeTkipCntrMeasReq));
+		if (NULL == pMsg)
+			status = CDF_STATUS_E_NOMEM;
+		else
+			status = CDF_STATUS_SUCCESS;
+		if (!CDF_IS_STATUS_SUCCESS(status))
+			break;
+		cdf_mem_set(pMsg, sizeof(tSirSmeTkipCntrMeasReq), 0);
+		pMsg->messageType = eWNI_SME_TKIP_CNTR_MEAS_REQ;
+		pMsg->length = sizeof(tSirSmeTkipCntrMeasReq);
+		pMsg->sessionId = sessionId;
+		pMsg->transactionId = 0;
+		cdf_copy_macaddr(&pMsg->bssId, bssId);
+		pMsg->bEnable = bEnable;
+		status = cds_send_mb_message_to_mac(pMsg);
+	} while (0);
+	return status;
+}
+
 CDF_STATUS
 csr_roam_issue_tkip_counter_measures(tpAniSirGlobal pMac, uint32_t sessionId,
 				     bool bEnable)
@@ -3086,7 +3113,7 @@ csr_roam_issue_tkip_counter_measures(tpAniSirGlobal pMac, uint32_t sessionId,
 		", Enable = %d", MAC_ADDR_ARRAY(bssId.bytes), bEnable);
 	status =
 		csr_send_mb_tkip_counter_measures_req_msg(pMac, sessionId,
-							bEnable, bssId.bytes);
+							bEnable, &bssId);
 	return status;
 }
 
@@ -14153,32 +14180,6 @@ CDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		pMsg->doNotSendOverTheAir = CSR_DONT_SEND_DISASSOC_OVER_THE_AIR;
 	}
 	return cds_send_mb_message_to_mac(pMsg);
-}
-
-CDF_STATUS csr_send_mb_tkip_counter_measures_req_msg(tpAniSirGlobal pMac,
-						     uint32_t sessionId, bool bEnable,
-						     tSirMacAddr bssId)
-{
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	tSirSmeTkipCntrMeasReq *pMsg;
-	do {
-		pMsg = cdf_mem_malloc(sizeof(tSirSmeTkipCntrMeasReq));
-		if (NULL == pMsg)
-			status = CDF_STATUS_E_NOMEM;
-		else
-			status = CDF_STATUS_SUCCESS;
-		if (!CDF_IS_STATUS_SUCCESS(status))
-			break;
-		cdf_mem_set(pMsg, sizeof(tSirSmeTkipCntrMeasReq), 0);
-		pMsg->messageType = eWNI_SME_TKIP_CNTR_MEAS_REQ;
-		pMsg->length = sizeof(tSirSmeTkipCntrMeasReq);
-		pMsg->sessionId = sessionId;
-		pMsg->transactionId = 0;
-		cdf_mem_copy(pMsg->bssId, bssId, sizeof(tSirMacAddr));
-		pMsg->bEnable = bEnable;
-		status = cds_send_mb_message_to_mac(pMsg);
-	} while (0);
-	return status;
 }
 
 CDF_STATUS

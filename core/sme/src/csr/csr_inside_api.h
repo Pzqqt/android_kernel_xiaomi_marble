@@ -956,10 +956,6 @@ CDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 CDF_STATUS csr_roam_issue_tkip_counter_measures(tpAniSirGlobal pMac,
 						uint32_t sessionId, bool bEnable);
 
-CDF_STATUS csr_send_mb_tkip_counter_measures_req_msg(tpAniSirGlobal pMac,
-						     uint32_t sessinId, bool bEnable,
-						     tSirMacAddr bssId);
-
 /* ---------------------------------------------------------------------------
     \fn csr_roam_get_associated_stas
     \brief csr function that HDD calls to get list of associated stations based on module ID
