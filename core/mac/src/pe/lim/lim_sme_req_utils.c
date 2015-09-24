@@ -698,7 +698,8 @@ uint8_t lim_is_sme_scan_req_valid(tpAniSirGlobal pMac, tpSirSmeScanReq pScanReq)
 		lim_log(pMac, LOGE, FL("Invalid BSS Type"));
 		valid = false;
 	}
-	if (lim_is_group_addr(pScanReq->bssId) && !lim_is_addr_bc(pScanReq->bssId)) {
+	if (cdf_is_macaddr_group(&pScanReq->bssId) &&
+		!cdf_is_macaddr_broadcast(&pScanReq->bssId)) {
 		valid = false;
 		lim_log(pMac, LOGE,
 			FL("BSSID is group addr and is not Broadcast Addr"));
