@@ -4535,10 +4535,11 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, tPowerdBm txPower,
 		return eSIR_FAILURE;
 	}
 	pMaxTxParams->power = txPower;
-	cdf_mem_copy(pMaxTxParams->bssId, pSessionEntry->bssId,
-		     sizeof(tSirMacAddr));
-	cdf_mem_copy(pMaxTxParams->selfStaMacAddr, pSessionEntry->selfMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(pMaxTxParams->selfStaMacAddr.bytes,
+			pSessionEntry->selfMacAddr,
+			CDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;
 	msgQ.bodyptr = pMaxTxParams;

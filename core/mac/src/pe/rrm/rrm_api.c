@@ -165,10 +165,11 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, tPowerdBm txPower,
 	}
 	/* Allocated memory for pMaxTxParams...will be freed in other module */
 	pMaxTxParams->power = txPower;
-	cdf_mem_copy(pMaxTxParams->bssId, pSessionEntry->bssId,
-		     sizeof(tSirMacAddr));
-	cdf_mem_copy(pMaxTxParams->selfStaMacAddr, pSessionEntry->selfMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(pMaxTxParams->selfStaMacAddr.bytes,
+			pSessionEntry->selfMacAddr,
+			CDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;
 	msgQ.reserved = 0;
@@ -213,9 +214,8 @@ tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ)
 	tpMaxTxPowerParams pMaxTxParams = (tpMaxTxPowerParams) limMsgQ->bodyptr;
 	tpPESession pSessionEntry;
 	uint8_t sessionId, i;
-	tSirMacAddr bssid = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
-	if (cdf_mem_compare(bssid, pMaxTxParams->bssId, sizeof(tSirMacAddr))) {
+	if (cdf_is_macaddr_broadcast(&pMaxTxParams->bssId)) {
 		for (i = 0; i < pMac->lim.maxBssId; i++) {
 			if ((pMac->lim.gpSession[i].valid == true)) {
 				pSessionEntry = &pMac->lim.gpSession[i];
@@ -225,8 +225,9 @@ tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ)
 		}
 	} else {
 		if ((pSessionEntry =
-			     pe_find_session_by_bssid(pMac, pMaxTxParams->bssId,
-						      &sessionId)) == NULL) {
+			     pe_find_session_by_bssid(pMac,
+						pMaxTxParams->bssId.bytes,
+						&sessionId)) == NULL) {
 			PELOGE(lim_log
 				       (pMac, LOGE, FL("Unable to find session:"));
 			       )
