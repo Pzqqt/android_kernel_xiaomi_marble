@@ -52,6 +52,7 @@
 #include "wlan_hdd_assoc.h"
 #include "wlan_hdd_wext.h"
 #include "sme_api.h"
+#include "sme_power_save_api.h"
 #include "wlan_hdd_p2p.h"
 #include "wlan_hdd_cfg80211.h"
 #include "wlan_hdd_hostapd.h"
@@ -4441,6 +4442,121 @@ static int wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	return ret;
 }
 
+static const struct
+nla_policy
+qca_wlan_vendor_ota_test_policy
+[QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX + 1] = {
+	[QCA_WLAN_VENDOR_ATTR_OTA_TEST_ENABLE] = {.type = NLA_U8 },
+};
+
+/**
+ * __wlan_hdd_cfg80211_set_ota_test () - enable/disable OTA test
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	hdd_context_t *hdd_ctx  = wiphy_priv(wiphy);
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX + 1];
+	uint8_t ota_enable = 0;
+	CDF_STATUS status;
+	uint32_t current_roam_state;
+
+	if (CDF_FTM_MODE == hdd_get_conparam()) {
+		hdd_err("Command not allowed in FTM mode");
+		return -EPERM;
+	}
+
+	if (0 != wlan_hdd_validate_context(hdd_ctx))
+		return -EINVAL;
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX,
+		      data, data_len,
+		      qca_wlan_vendor_ota_test_policy)) {
+		hdd_err("invalid attr");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_OTA_TEST_ENABLE]) {
+		hdd_err("attr ota test failed");
+		return -EINVAL;
+	}
+
+	ota_enable = nla_get_u8(
+		tb[QCA_WLAN_VENDOR_ATTR_OTA_TEST_ENABLE]);
+
+	hdd_info(" OTA test enable = %d", ota_enable);
+	if (ota_enable != 1) {
+		hdd_err("Invalid value, only enable test mode is supported!");
+		return -EINVAL;
+	}
+
+	current_roam_state =
+			sme_get_current_roam_state(hal, adapter->sessionId);
+	status = sme_stop_roaming(hal, adapter->sessionId,
+					eCsrHddIssued);
+	if (status != CDF_STATUS_SUCCESS) {
+		hdd_err("Enable/Disable roaming failed");
+		return -EINVAL;
+	}
+
+	status = sme_ps_enable_disable(hal, adapter->sessionId,
+					SME_PS_DISABLE);
+	if (status != CDF_STATUS_SUCCESS) {
+		hdd_err("Enable/Disable power save failed");
+		/* restore previous roaming setting */
+		if (current_roam_state == eCSR_ROAMING_STATE_JOINING ||
+			 current_roam_state == eCSR_ROAMING_STATE_JOINED)
+			status = sme_start_roaming(hal, adapter->sessionId,
+						eCsrHddIssued);
+		else if (current_roam_state == eCSR_ROAMING_STATE_STOP ||
+			 current_roam_state == eCSR_ROAMING_STATE_IDLE)
+			status = sme_stop_roaming(hal, adapter->sessionId,
+						eCsrHddIssued);
+
+		if (status != CDF_STATUS_SUCCESS)
+			hdd_err("Restoring roaming state failed");
+
+		return -EINVAL;
+	}
+
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_set_ota_test () - Enable or disable OTA test
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
+					struct wireless_dev *wdev,
+					const void *data,
+					int data_len)
+{
+	int ret = 0;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_set_ota_test(wiphy, wdev, data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -4861,6 +4977,13 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 			 WIPHY_VENDOR_CMD_NEED_NETDEV |
 			 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_get_link_properties
+	},
+	{
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_OTA_TEST,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+				 WIPHY_VENDOR_CMD_NEED_NETDEV |
+				 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_ota_test
 	},
 };
 
