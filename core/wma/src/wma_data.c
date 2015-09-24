@@ -2922,9 +2922,8 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 	mic_err_ind->length = sizeof(*mic_err_ind);
 	mic_err_ind->sessionId = vdev_id;
-	cdf_mem_copy(mic_err_ind->bssId,
-		     (struct cdf_mac_addr *) wma->interfaces[vdev_id].bssid,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&mic_err_ind->bssId,
+		     (struct cdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
 	cdf_mem_copy(mic_err_ind->info.taMacAddr,
 		     (struct cdf_mac_addr *) peer_mac_addr,
 			sizeof(tSirMacAddr));

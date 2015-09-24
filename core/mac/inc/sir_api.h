@@ -1441,7 +1441,7 @@ typedef struct sSirSmeMicFailureInd {
 	uint16_t messageType;   /* eWNI_SME_MIC_FAILURE_IND */
 	uint16_t length;
 	uint8_t sessionId;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssId;
 	tSirMicFailureInfo info;
 } tSirSmeMicFailureInd, *tpSirSmeMicFailureInd;
 
