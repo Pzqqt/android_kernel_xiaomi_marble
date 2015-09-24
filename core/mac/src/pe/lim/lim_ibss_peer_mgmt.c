@@ -1179,7 +1179,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 		  sizeof(uint8_t) + pBeacon->ssId.length + 1;
 
 	cdf_mem_set((void *)&newBssInfo, sizeof(newBssInfo), 0);
-	cdf_mem_copy(newBssInfo.bssId, pHdr->bssId, sizeof(tSirMacAddr));
+	cdf_mem_copy(newBssInfo.bssId.bytes, pHdr->bssId, CDF_MAC_ADDR_SIZE);
 	newBssInfo.channelNumber = (tSirMacChanNum) pAddBss->currentOperChannel;
 	cdf_mem_copy((uint8_t *) &newBssInfo.ssId,
 		     (uint8_t *) &pBeacon->ssId, pBeacon->ssId.length + 1);
