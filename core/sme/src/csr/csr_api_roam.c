@@ -9979,17 +9979,18 @@ static CDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac,
 		status = CDF_STATUS_E_NOMEM;
 	else
 		status = CDF_STATUS_SUCCESS;
+
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		cdf_mem_set(pMsg, sizeof(tSirResetAPCapsChange), 0);
 		pMsg->messageType = eWNI_SME_RESET_AP_CAPS_CHANGED;
 		pMsg->length = len;
-		cdf_mem_copy(pMsg->bssId, bssId->bytes, CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->bssId, bssId);
 		sms_log(pMac, LOG1,
 			FL("CSR reset caps change for Bssid= " MAC_ADDRESS_STR),
-			MAC_ADDR_ARRAY(pMsg->bssId));
+			MAC_ADDR_ARRAY(pMsg->bssId.bytes));
 		status = cds_send_mb_message_to_mac(pMsg);
 	} else {
-		sms_log(pMac, LOGE, FL("Memory allocation failed\n"));
+		sms_log(pMac, LOGE, FL("Memory allocation failed"));
 	}
 	return status;
 }
