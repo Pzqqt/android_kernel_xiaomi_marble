@@ -370,7 +370,7 @@ typedef struct sSirRemainOnChnReq {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;
-	tSirMacAddr selfMacAddr;
+	struct cdf_mac_addr selfMacAddr;
 	uint8_t chnNum;
 	uint8_t phyMode;
 	uint32_t duration;
