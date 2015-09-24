@@ -1208,7 +1208,7 @@ typedef struct sSirSmeTkipCntrMeasReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr bssId;      /* Peer BSSID */
+	struct cdf_mac_addr bssId; /* Peer BSSID */
 	bool bEnable;           /* Start/stop countermeasures */
 } cdf_packed tSirSmeTkipCntrMeasReq, *tpSirSmeTkipCntrMeasReq;
 
