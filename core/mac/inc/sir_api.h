@@ -1135,7 +1135,7 @@ typedef struct sSirSmeNewBssInfo {
 
 typedef struct sSirSmeApNewCaps {
 	uint16_t capabilityInfo;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssId;
 	uint8_t channelId;
 	uint8_t reserved[3];
 	tSirMacSSid ssId;
