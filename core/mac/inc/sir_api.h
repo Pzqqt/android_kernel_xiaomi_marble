@@ -1171,7 +1171,7 @@ typedef struct sSirSmeWmStatusChangeNtf {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	tSirSmeStatusChangeCode statusChangeCode;
-	tSirMacAddr bssId;      /* Self BSSID */
+	struct cdf_mac_addr bssid;      /* Self BSSID */
 	union {
 		uint16_t deAuthReasonCode;      /* eSIR_SME_DEAUTH_FROM_PEER */
 		/* eSIR_SME_DISASSOC_FROM_PEER */
