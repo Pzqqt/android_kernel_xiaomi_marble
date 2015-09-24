@@ -10437,7 +10437,7 @@ csr_roam_chk_lnk_mic_fail_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 
 	cdf_mem_set(&roam_info, sizeof(roam_info), 0);
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-				(struct cdf_mac_addr *) pMicInd->bssId, &sessionId);
+				&pMicInd->bssId, &sessionId);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		cdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
 		roam_info.u.pMICFailureInfo = &pMicInd->info;
