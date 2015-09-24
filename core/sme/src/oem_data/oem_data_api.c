@@ -38,6 +38,7 @@
 #include "cds_mq.h"
 #include "sme_inside.h"
 #include "sms_debug.h"
+#include "cdf_util.h"
 
 #include "csr_support.h"
 
@@ -222,8 +223,7 @@ CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 	cdf_mem_set(pMsg, msgLen, 0);
 	pMsg->messageType = eWNI_SME_OEM_DATA_REQ;
 	pMsg->messageLen = msgLen;
-	cdf_mem_copy(pMsg->selfMacAddr, pSession->selfMacAddr.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
 	cdf_mem_copy(pMsg->oemDataReq, pOemDataReq->oemDataReq,
 		     OEM_DATA_REQ_SIZE);
 	sms_log(pMac, LOGW, "OEM_DATA: sending message to pe%s", __func__);

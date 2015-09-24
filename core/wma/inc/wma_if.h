@@ -674,7 +674,7 @@ typedef struct {
  * @oemDataReq: OEM Data request
  */
 typedef struct {
-	tSirMacAddr selfMacAddr;
+	struct cdf_mac_addr selfMacAddr;
 	CDF_STATUS status;
 	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
 } tStartOemDataReq, *tpStartOemDataReq;
