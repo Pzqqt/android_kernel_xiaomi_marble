@@ -16043,7 +16043,7 @@ CDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 	pMsg->msgLen = (uint16_t) sizeof(tAniGetTsmStatsReq);
 	pMsg->staId = staId;
 	pMsg->tid = tid;
-	cdf_mem_copy(pMsg->bssId, bssId.bytes, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->bssId, &bssId);
 	pMsg->tsmStatsCallback = callback;
 	pMsg->pDevContext = pContext;
 	pMsg->p_cds_context = p_cds_context;
