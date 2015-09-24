@@ -84,8 +84,6 @@ static CDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	tSirScanOffloadReq *pScanOffloadReq;
 	tSirMsgQ msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
-	uint8_t bssid[CDF_MAC_ADDR_SIZE] =
-	{ 0xff, 0xff, 0xff, 0xff, 0xff, 0xff };
 
 	pScanOffloadReq = cdf_mem_malloc(sizeof(tSirScanOffloadReq));
 	if (NULL == pScanOffloadReq) {
@@ -100,12 +98,10 @@ static CDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
 
-	cdf_mem_copy((uint8_t *) pScanOffloadReq->selfMacAddr,
-		     (uint8_t *) pRemOnChnReq->selfMacAddr.bytes,
-		     CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&pScanOffloadReq->selfMacAddr,
+			 &pRemOnChnReq->selfMacAddr);
 
-	cdf_mem_copy((uint8_t *) pScanOffloadReq->bssId,
-		     (uint8_t *) bssid, sizeof(tSirMacAddr));
+	cdf_set_macaddr_broadcast(&pScanOffloadReq->bssId);
 	pScanOffloadReq->scanType = eSIR_PASSIVE_SCAN;
 	pScanOffloadReq->p2pScanType = P2P_SCAN_TYPE_LISTEN;
 	pScanOffloadReq->minChannelTime = pRemOnChnReq->duration;
