@@ -3831,10 +3831,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 
 	switch (roamStatus) {
 	case eCSR_ROAM_SESSION_OPENED:
-		if (pAdapter != NULL) {
-			set_bit(SME_SESSION_OPENED, &pAdapter->event_flags);
-			complete(&pAdapter->session_open_comp_var);
-		}
+		set_bit(SME_SESSION_OPENED, &pAdapter->event_flags);
+		complete(&pAdapter->session_open_comp_var);
 		break;
 
 #if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
