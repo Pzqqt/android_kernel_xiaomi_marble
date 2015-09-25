@@ -77,10 +77,11 @@ typedef struct sAniSirCfg {
 	uint8_t gCfgStatus;
 
 	tCfgCtl *gCfgEntry;
+
+	uint8_t *gCfgSBuf;
+	uint32_t *gCfgIBuf;
 	uint32_t *gCfgIBufMin;
 	uint32_t *gCfgIBufMax;
-	uint32_t *gCfgIBuf;
-	uint8_t *gCfgSBuf;
 
 	uint16_t gCfgMaxIBufSize;
 	uint16_t gCfgMaxSBufSize;
