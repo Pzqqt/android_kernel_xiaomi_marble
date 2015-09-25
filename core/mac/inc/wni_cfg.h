@@ -1549,8 +1549,6 @@ enum {
 #define WNI_CFG_TDLS_WMM_MODE_ENABLED_STADEF    0
 
 #define CFG_PARAM_MAX_NUM        286
-#define CFG_STA_IBUF_MAX_SIZE    234
-#define CFG_STA_SBUF_MAX_SIZE    3199
 
 #define CFG_STA_MAGIC_DWORD    0xbeefbeef
 

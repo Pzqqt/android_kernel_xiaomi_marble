@@ -1886,12 +1886,6 @@ static void proc_dnld_rsp(tpAniSirGlobal pMac, uint16_t length, uint32_t *pParam
 	pParam++;
 	length -= 4;
 
-	/* Verify message length */
-	{
-		pMac->cfg.gCfgMaxIBufSize = CFG_STA_IBUF_MAX_SIZE;
-		pMac->cfg.gCfgMaxSBufSize = CFG_STA_SBUF_MAX_SIZE;
-	}
-
 	/* Parse the Cfg header */
 	pHdr = (tpCfgBinHdr) pParam;
 	pParam += (sizeof(tCfgBinHdr) >> 2);
@@ -2554,7 +2548,7 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 			uint8_t maxSavedLen;
 			if ((pMac->cfg.gCfgEntry[i].control & CFG_CTL_VALID) == 0)
 				continue;
-			if (index >= CFG_STA_SBUF_MAX_SIZE)
+			if (index >= pMac->cfg.gCfgMaxSBufSize)
 				continue;
 
 			pDstTest = &pMac->cfg.gCfgSBuf[index];

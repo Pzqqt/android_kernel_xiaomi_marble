@@ -46,10 +46,6 @@
 /* Static Variables */
 /* ---------------------------------------------------------------------- */
 static tCfgCtl __g_cfg_entry[CFG_PARAM_MAX_NUM];
-static uint32_t __g_cfg_i_buf_min[CFG_STA_IBUF_MAX_SIZE];
-static uint32_t __g_cfg_i_buf_max[CFG_STA_IBUF_MAX_SIZE];
-static uint32_t __g_cfg_i_buf[CFG_STA_IBUF_MAX_SIZE];
-static uint8_t __g_cfg_s_buf[CFG_STA_SBUF_MAX_SIZE];
 static uint8_t __g_s_buffer[CFG_MAX_STR_LEN];
 static uint32_t __g_param_list[WNI_CFG_MAX_PARAM_NUM +
 			     WNI_CFG_GET_PER_STA_STAT_RSP_NUM];
@@ -104,10 +100,11 @@ uint32_t cfg_need_reload(tpAniSirGlobal pMac, uint16_t cfgId)
 tSirRetStatus cfg_init(tpAniSirGlobal pMac)
 {
 	uint16_t i = 0;
-	pMac->cfg.gCfgIBufMin = __g_cfg_i_buf_min;
-	pMac->cfg.gCfgIBufMax = __g_cfg_i_buf_max;
-	pMac->cfg.gCfgIBuf = __g_cfg_i_buf;
-	pMac->cfg.gCfgSBuf = __g_cfg_s_buf;
+	uint16_t combined_buff_size = 0;
+	uint32_t    max_i_count = 0;
+	uint32_t    max_s_count = 0;
+	cfgstatic_string *str_cfg;
+
 	pMac->cfg.gSBuffer = __g_s_buffer;
 	pMac->cfg.gCfgEntry = __g_cfg_entry;
 	pMac->cfg.gParamList = __g_param_list;
@@ -119,12 +116,60 @@ tSirRetStatus cfg_init(tpAniSirGlobal pMac)
 			cfg_static[i].pStrData = NULL;
 		}
 	}
+
+	for (i = 0; i < CFG_PARAM_MAX_NUM ; i++) {
+		if (cfg_static[i].control & CFG_CTL_INT) {
+			max_i_count++;
+		} else {
+			str_cfg = (cfgstatic_string *)cfg_static[i].pStrData;
+			if (str_cfg == NULL) {
+				cfg_log(pMac, LOGE,
+					FL("pStrCfg is NULL for CfigID : %d"),
+					i);
+				continue;
+			}
+			/* + 2 to include len field and max len field */
+			max_s_count += str_cfg->maxLen + 2;
+		}
+	}
+
+	pMac->cfg.gCfgMaxIBufSize = max_i_count;
+	pMac->cfg.gCfgMaxSBufSize = max_s_count;
+
+	/* Allocate a combined memory */
+	combined_buff_size = max_s_count + (3 * sizeof(uint32_t) * max_i_count);
+
+	cfg_log(pMac, LOGE, FL("Size of cfg I buffer:%d  S buffer: %d"),
+		max_i_count, max_s_count);
+
+	cfg_log(pMac, LOGE, FL("Allocation for cfg buffers: %d bytes"),
+		combined_buff_size);
+
+	if (combined_buff_size > 4 * PAGE_SIZE) {
+		cfg_log(pMac, LOGE, FL("Mem alloc request too big"));
+		return eSIR_MEM_ALLOC_FAILED;
+	}
+	/* at this point pMac->cfg.gCfgSBuf starts */
+	pMac->cfg.gCfgSBuf = cdf_mem_malloc(combined_buff_size);
+	if (NULL == pMac->cfg.gCfgSBuf) {
+		cfg_log(pMac, LOGE,
+			FL("Failed to allocate memory for cfg array"));
+		return eSIR_MEM_ALLOC_FAILED;
+	}
+	/* at offset max_s_count, pMac->cfg.gCfgIBuf starts */
+	pMac->cfg.gCfgIBuf = (uint32_t *)&pMac->cfg.gCfgSBuf[max_s_count];
+	/* after max_i_count integers, pMac->cfg.gCfgIBufMin starts */
+	pMac->cfg.gCfgIBufMin = &pMac->cfg.gCfgIBuf[max_i_count];
+	/* after max_i_count integers, pMac->cfg.gCfgIBufMax starts */
+	pMac->cfg.gCfgIBufMax = &pMac->cfg.gCfgIBufMin[max_i_count];
+
 	return (eSIR_SUCCESS);
 }
 
 /* ---------------------------------------------------------------------- */
 void cfg_de_init(tpAniSirGlobal pMac)
 {
+	cdf_mem_free(pMac->cfg.gCfgSBuf);
 	pMac->cfg.gCfgIBufMin = NULL;
 	pMac->cfg.gCfgIBufMax = NULL;
 	pMac->cfg.gCfgIBuf = NULL;
@@ -176,7 +221,7 @@ tSirRetStatus cfg_check_valid(tpAniSirGlobal pMac, uint16_t cfgId,
 
 	*index = control & CFG_BUF_INDX_MASK;
 
-	if (*index >= CFG_STA_SBUF_MAX_SIZE) {
+	if (*index >= pMac->cfg.gCfgMaxSBufSize) {
 		PELOGE(cfg_log(pMac, LOGE, FL("cfg index out of bounds %d"),
 					*index);)
 		return eSIR_CFG_INVALID_ID;
