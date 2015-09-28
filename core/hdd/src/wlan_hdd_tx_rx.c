@@ -142,32 +142,6 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 					 WLAN_WAKE_ALL_NETIF_QUEUE,
 					 WLAN_DATA_FLOW_CONTROL);
 	}
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-	else if (false == tx_resume) {      /* Pause TX  */
-		hddLog(LOG1, FL("Disabling queues"));
-		wlan_hdd_netif_queue_control(pAdapter,
-					WLAN_STOP_ALL_NETIF_QUEUE,
-					WLAN_DATA_FLOW_CONTROL);
-		if (CDF_TIMER_STATE_STOPPED ==
-		    cdf_mc_timer_get_current_state(&pAdapter->
-						   tx_flow_control_timer)) {
-			CDF_STATUS status;
-			status =
-				cdf_mc_timer_start(&pAdapter->tx_flow_control_timer,
-						   WLAN_HDD_TX_FLOW_CONTROL_OS_Q_BLOCK_TIME);
-			if (!CDF_IS_STATUS_SUCCESS(status))
-				CDF_TRACE(CDF_MODULE_ID_HDD,
-					  CDF_TRACE_LEVEL_ERROR,
-					  "%s: Failed to start tx_flow_control_timer",
-					  __func__);
-			else
-				pAdapter->hdd_stats.hddTxRxStats.txflow_timer_cnt++;
-		}
-		pAdapter->hdd_stats.hddTxRxStats.txflow_pause_cnt++;
-		pAdapter->hdd_stats.hddTxRxStats.is_txflow_paused = true;
-	}
-#endif
-
 	return;
 }
 

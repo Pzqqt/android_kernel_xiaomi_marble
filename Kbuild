@@ -164,15 +164,6 @@ ifeq ($(CONFIG_ROME_IF),usb)
 	CONFIG_ATH_11AC_TXCOMPACT := 0
 endif
 
-#Enable per vdev Tx desc pool
-ifeq ($(CONFIG_ROME_IF),pci)
-	CONFIG_PER_VDEV_TX_DESC_POOL := 0
-endif
-ifeq ($(CONFIG_ROME_IF),usb)
-	CONFIG_PER_VDEV_TX_DESC_POOL := 1
-endif
-
-
 #Enable OS specific IRQ abstraction
 CONFIG_ATH_SUPPORT_SHARED_IRQ := 1
 
@@ -1070,11 +1061,6 @@ endif
 #Enable 11AC TX
 ifeq ($(CONFIG_ATH_11AC_TXCOMPACT), 1)
 CDEFINES += -DATH_11AC_TXCOMPACT
-endif
-
-#Enable per vdev Tx desc pool
-ifeq ($(CONFIG_PER_VDEV_TX_DESC_POOL), 1)
-CDEFINES += -DCONFIG_PER_VDEV_TX_DESC_POOL
 endif
 
 #Enable OS specific IRQ abstraction
