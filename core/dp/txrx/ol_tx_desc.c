@@ -122,9 +122,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 
 	cdf_spin_lock_bh(&pdev->tx_mutex);
 	if (pdev->tx_desc.freelist) {
-		pdev->tx_desc.num_free--;
-		tx_desc = &pdev->tx_desc.freelist->tx_desc;
-		pdev->tx_desc.freelist = pdev->tx_desc.freelist->next;
+		tx_desc = ol_tx_get_desc_global_pool(pdev);
 		ol_tx_desc_sanity_checks(pdev, tx_desc);
 		ol_tx_desc_compute_delay(tx_desc);
 	}
@@ -175,9 +173,8 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	if (pool) {
 		cdf_spin_lock_bh(&pool->flow_pool_lock);
 		if (pool->avail_desc) {
-			tx_desc = &pool->freelist->tx_desc;
-			pool->freelist = pool->freelist->next;
-			if (cdf_unlikely(--pool->avail_desc < pool->stop_th)) {
+			tx_desc = ol_tx_get_desc_flow_pool(pool);
+			if (cdf_unlikely(pool->avail_desc < pool->stop_th)) {
 				pool->status = FLOW_POOL_ACTIVE_PAUSED;
 				cdf_spin_unlock_bh(&pool->flow_pool_lock);
 				/* pause network queues */
@@ -253,10 +250,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_pkt_type(tx_desc);
 	ol_tx_desc_reset_timestamp(tx_desc);
 
-	((union ol_tx_desc_list_elem_t *)tx_desc)->next =
-		pdev->tx_desc.freelist;
-	pdev->tx_desc.freelist = (union ol_tx_desc_list_elem_t *)tx_desc;
-	pdev->tx_desc.num_free++;
+	ol_tx_put_desc_global_pool(pdev, tx_desc);
 #if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	if ((cdf_atomic_read(&tx_desc->vdev->os_q_paused)) &&
@@ -298,10 +292,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_timestamp(tx_desc);
 
 	cdf_spin_lock_bh(&pool->flow_pool_lock);
-	((union ol_tx_desc_list_elem_t *)tx_desc)->next =
-				pool->freelist;
-	pool->freelist = (union ol_tx_desc_list_elem_t *)tx_desc;
-	pool->avail_desc++;
+	ol_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
 	case FLOW_POOL_ACTIVE_PAUSED:
 		if (pool->avail_desc > pool->start_th) {

@@ -51,11 +51,8 @@
 #include <ol_tx.h>
 #include <ol_cfg.h>
 
-#define TX_FLOW_START_TH 25
-#define TX_FLOW_STOP_TH 10
 #define INVALID_FLOW_ID 0xFF
 #define MAX_INVALID_BIN 3
-
 
 #ifdef QCA_LL_TX_FLOW_GLOBAL_MGMT_POOL
 #define TX_FLOW_MGMT_POOL_ID	0xEF
@@ -232,9 +229,7 @@ static int ol_tx_move_desc_n(struct ol_tx_flow_pool_t *src_pool,
 	/* Take descriptors from source pool and put it in temp_list */
 	cdf_spin_lock_bh(&src_pool->flow_pool_lock);
 	for (i = 0; i < desc_move_count; i++) {
-		tx_desc = &src_pool->freelist->tx_desc;
-		src_pool->freelist = src_pool->freelist->next;
-		src_pool->avail_desc--;
+		tx_desc = ol_tx_get_desc_flow_pool(src_pool);
 		((union ol_tx_desc_list_elem_t *)tx_desc)->next = temp_list;
 		temp_list = (union ol_tx_desc_list_elem_t *)tx_desc;
 
@@ -250,11 +245,7 @@ static int ol_tx_move_desc_n(struct ol_tx_flow_pool_t *src_pool,
 			break;
 		tx_desc = &temp_list->tx_desc;
 		temp_list = temp_list->next;
-		tx_desc->pool = dst_pool;
-		((union ol_tx_desc_list_elem_t *)tx_desc)->next =
-							dst_pool->freelist;
-		dst_pool->freelist = (union ol_tx_desc_list_elem_t *)tx_desc;
-		dst_pool->avail_desc++;
+		ol_tx_put_desc_flow_pool(dst_pool, tx_desc);
 		count++;
 	}
 	cdf_spin_unlock_bh(&dst_pool->flow_pool_lock);
@@ -264,11 +255,7 @@ static int ol_tx_move_desc_n(struct ol_tx_flow_pool_t *src_pool,
 	while (temp_list) {
 		tx_desc = &temp_list->tx_desc;
 		temp_list = temp_list->next;
-		tx_desc->pool = src_pool;
-		((union ol_tx_desc_list_elem_t *)tx_desc)->next =
-							src_pool->freelist;
-		src_pool->freelist = (union ol_tx_desc_list_elem_t *)tx_desc;
-		src_pool->avail_desc++;
+		ol_tx_put_desc_flow_pool(src_pool, tx_desc);
 	}
 	cdf_spin_unlock_bh(&src_pool->flow_pool_lock);
 
@@ -370,9 +357,7 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 		size = pdev->tx_desc.num_free;
 
 	for (i = 0; i < size; i++) {
-		pdev->tx_desc.num_free--;
-		tx_desc = &pdev->tx_desc.freelist->tx_desc;
-		pdev->tx_desc.freelist = pdev->tx_desc.freelist->next;
+		tx_desc = ol_tx_get_desc_global_pool(pdev);
 		tx_desc->pool = pool;
 		((union ol_tx_desc_list_elem_t *)tx_desc)->next = temp_list;
 		temp_list = (union ol_tx_desc_list_elem_t *)tx_desc;
@@ -458,12 +443,7 @@ int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
 		tx_desc = &temp_list->tx_desc;
 		temp_list = temp_list->next;
 
-		((union ol_tx_desc_list_elem_t *)tx_desc)->next =
-			pdev->tx_desc.freelist;
-		pdev->tx_desc.freelist =
-			 (union ol_tx_desc_list_elem_t *)tx_desc;
-		pdev->tx_desc.num_free++;
-
+		ol_tx_put_desc_global_pool(pdev, tx_desc);
 	}
 	cdf_spin_unlock_bh(&pdev->tx_mutex);
 

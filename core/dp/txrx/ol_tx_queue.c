@@ -219,7 +219,7 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
 	struct ol_txrx_vdev_t *vdev = NULL, *tmp;
 
 	TAILQ_FOREACH_SAFE(vdev, &pdev->vdev_list, vdev_list_elem, tmp) {
-		ol_txrx_vdev_pause(vdev, reason);
+		ol_txrx_vdev_unpause(vdev, reason);
 	}
 
 }
@@ -357,6 +357,7 @@ void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev, int level)
 
 	/* Reset the phase */
 	pdev->tx_throttle.current_throttle_phase = THROTTLE_PHASE_OFF;
+	ol_txrx_thermal_unpause(pdev);
 
 	/* Start with the new time */
 	ms = pdev->tx_throttle.
