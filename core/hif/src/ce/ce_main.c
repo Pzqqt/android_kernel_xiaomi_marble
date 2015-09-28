@@ -719,6 +719,33 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 			&toeplitz_hash_result) == CDF_STATUS_SUCCESS);
 }
 
+/**
+ * hif_ce_do_recv(): send message from copy engine to upper layers
+ * @msg_callbacks: structure containing callback and callback context
+ * @netbuff: skb containing message
+ * @nbytes: number of bytes in the message
+ * @pipe_info: used for the pipe_number info
+ *
+ * Checks the packet length, configures the lenght in the netbuff,
+ * and calls the upper layer callback.
+ *
+ * return: None
+ */
+static inline void hif_ce_do_recv(struct hif_msg_callbacks *msg_callbacks,
+		cdf_nbuf_t netbuf, int nbytes,
+		struct HIF_CE_pipe_info *pipe_info) {
+	if (nbytes <= pipe_info->buf_sz) {
+		cdf_nbuf_set_pktlen(netbuf, nbytes);
+		msg_callbacks->
+			rxCompletionHandler(msg_callbacks->Context,
+					netbuf, pipe_info->pipe_num);
+	} else {
+		HIF_ERROR("%s: Invalid Rx msg buf:%p nbytes:%d",
+				__func__, netbuf, nbytes);
+		cdf_nbuf_free(netbuf);
+	}
+}
+
 /* Called by lower (CE) layer when data is received from the Target. */
 void
 hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
@@ -731,50 +758,18 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
 	struct CE_state *ce_state = (struct CE_state *) copyeng;
 	struct ol_softc *scn = hif_state->scn;
-	struct HIF_CE_completion_state *compl_state;
-	struct HIF_CE_completion_state *compl_queue_head, *compl_queue_tail;
+	struct hif_msg_callbacks *msg_callbacks =
+		&hif_state->msg_callbacks_current;
 
-	compl_queue_head = compl_queue_tail = NULL;
 	do {
-		cdf_spin_lock(&pipe_info->completion_freeq_lock);
-		compl_state = pipe_info->completion_freeq_head;
-		ASSERT(compl_state != NULL);
-		pipe_info->completion_freeq_head = compl_state->next;
-		cdf_spin_unlock(&pipe_info->completion_freeq_lock);
-
-		compl_state->next = NULL;
-		compl_state->send_or_recv = HIF_CE_COMPLETE_RECV;
-		compl_state->copyeng = copyeng;
-		compl_state->ce_context = ce_context;
-		compl_state->transfer_context = transfer_context;
-		compl_state->data = CE_data;
-		compl_state->nbytes = nbytes;
-		compl_state->transfer_id = transfer_id;
-		compl_state->flags = flags;
-
-		/* Enqueue at end of local queue */
-		if (compl_queue_tail) {
-			compl_queue_tail->next = compl_state;
-		} else {
-			compl_queue_head = compl_state;
-		}
-		compl_queue_tail = compl_state;
-
 		cdf_nbuf_unmap_single(scn->cdf_dev,
 				      (cdf_nbuf_t) transfer_context,
 				      CDF_DMA_FROM_DEVICE);
 
-		/*
-		 * EV #112693 - [Peregrine][ES1][WB342][Win8x86][Performance]
-		 * BSoD_0x133 occurred in VHT80 UDP_DL
-		 * Break out DPC by force if number of loops in
-		 * hif_pci_ce_recv_data reaches MAX_NUM_OF_RECEIVES to avoid
-		 * spending too long time in DPC for each interrupt handling.
-		 * Schedule another DPC to avoid data loss if we had taken
-		 * force-break action before apply to Windows OS only
-		 * currently, Linux/MAC os can expand to their platform
-		 * if necessary
-		 */
+		atomic_inc(&pipe_info->recv_bufs_needed);
+		hif_post_recv_buffers_for_pipe(pipe_info);
+		hif_ce_do_recv(msg_callbacks, transfer_context, nbytes,
+			pipe_info);
 
 		/* Set up force_break flag if num of receices reaches
 		 * MAX_NUM_OF_RECEIVES */
@@ -787,23 +782,6 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 	} while (ce_completed_recv_next(copyeng, &ce_context, &transfer_context,
 					&CE_data, &nbytes, &transfer_id,
 					&flags) == CDF_STATUS_SUCCESS);
-
-	cdf_spin_lock(&hif_state->completion_pendingq_lock);
-
-	/* Enqueue the local completion queue on the
-	 * per-device completion queue */
-	if (hif_state->completion_pendingq_head) {
-		hif_state->completion_pendingq_tail->next = compl_queue_head;
-		hif_state->completion_pendingq_tail = compl_queue_tail;
-		cdf_spin_unlock(&hif_state->completion_pendingq_lock);
-	} else {
-		hif_state->completion_pendingq_head = compl_queue_head;
-		hif_state->completion_pendingq_tail = compl_queue_tail;
-		cdf_spin_unlock(&hif_state->completion_pendingq_lock);
-
-		/* Alert the recv completion service thread */
-		hif_completion_thread(hif_state);
-	}
 }
 
 /* TBDXXX: Set CE High Watermark; invoke txResourceAvailHandler in response */
