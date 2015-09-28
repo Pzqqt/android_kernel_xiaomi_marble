@@ -692,87 +692,31 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 	struct HIF_CE_pipe_info *pipe_info =
 		(struct HIF_CE_pipe_info *)ce_context;
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
-	struct HIF_CE_completion_state *compl_state;
-	struct HIF_CE_completion_state *compl_queue_head, *compl_queue_tail;
 	unsigned int sw_idx = sw_index, hw_idx = hw_index;
+	struct hif_msg_callbacks *msg_callbacks =
+		&hif_state->msg_callbacks_current;
 
-	compl_queue_head = compl_queue_tail = NULL;
 	do {
 		/*
-		 * For the send completion of an item in sendlist, just increment
-		 * num_sends_allowed. The upper layer callback will be triggered
-		 * when last fragment is done with send.
+		 * The upper layer callback will be triggered
+		 * when last fragment is complteted.
 		 */
-		if (transfer_context == CE_SENDLIST_ITEM_CTXT) {
-			cdf_spin_lock(&pipe_info->completion_freeq_lock);
-			pipe_info->num_sends_allowed++;
-			cdf_spin_unlock(&pipe_info->completion_freeq_lock);
-			continue;
+		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
+
+			msg_callbacks->txCompletionHandler(
+					msg_callbacks->Context,
+					transfer_context, transfer_id,
+					toeplitz_hash_result);
 		}
 
 		cdf_spin_lock(&pipe_info->completion_freeq_lock);
-		compl_state = pipe_info->completion_freeq_head;
-		if (!compl_state) {
-			cdf_spin_unlock(&pipe_info->completion_freeq_lock);
-			HIF_ERROR("%s: ce_id:%d num_allowed:%d pipe_info:%p",
-					 __func__, pipe_info->pipe_num,
-					 pipe_info->num_sends_allowed,
-					 pipe_info);
-			ASSERT(0);
-			break;
-		}
-		pipe_info->completion_freeq_head = compl_state->next;
+		pipe_info->num_sends_allowed++;
 		cdf_spin_unlock(&pipe_info->completion_freeq_lock);
-
-		compl_state->next = NULL;
-		compl_state->send_or_recv = HIF_CE_COMPLETE_SEND;
-		compl_state->copyeng = copyeng;
-		compl_state->ce_context = ce_context;
-		compl_state->transfer_context = transfer_context;
-		compl_state->data = CE_data;
-		compl_state->nbytes = nbytes;
-		compl_state->transfer_id = transfer_id;
-		compl_state->flags = 0;
-		compl_state->toeplitz_hash_result = toeplitz_hash_result;
-
-		/* Enqueue at end of local queue */
-		if (compl_queue_tail) {
-			compl_queue_tail->next = compl_state;
-		} else {
-			compl_queue_head = compl_state;
-		}
-		compl_queue_tail = compl_state;
 	} while (ce_completed_send_next(copyeng,
 			&ce_context, &transfer_context,
 			&CE_data, &nbytes, &transfer_id,
 			&sw_idx, &hw_idx,
 			&toeplitz_hash_result) == CDF_STATUS_SUCCESS);
-
-	if (compl_queue_head == NULL) {
-		/*
-		 * If only some of the items within a sendlist have completed,
-		 * don't invoke completion processing until the entire sendlist
-		 * has been sent.
-		 */
-		return;
-	}
-
-	cdf_spin_lock(&hif_state->completion_pendingq_lock);
-
-	/* Enqueue the local completion queue on the
-	 * per-device completion queue */
-	if (hif_state->completion_pendingq_head) {
-		hif_state->completion_pendingq_tail->next = compl_queue_head;
-		hif_state->completion_pendingq_tail = compl_queue_tail;
-		cdf_spin_unlock(&hif_state->completion_pendingq_lock);
-	} else {
-		hif_state->completion_pendingq_head = compl_queue_head;
-		hif_state->completion_pendingq_tail = compl_queue_tail;
-		cdf_spin_unlock(&hif_state->completion_pendingq_lock);
-
-		/* Alert the send completion service thread */
-		hif_completion_thread(hif_state);
-	}
 }
 
 /* Called by lower (CE) layer when data is received from the Target. */
