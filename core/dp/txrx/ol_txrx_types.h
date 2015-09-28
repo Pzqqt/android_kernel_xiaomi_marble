@@ -162,9 +162,6 @@ struct ol_tx_desc_t {
 	   after tx complete */
 	uint8_t orig_l2_hdr_bytes;
 #endif
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-	struct ol_txrx_vdev_t *vdev;
-#endif
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 	struct ol_tx_flow_pool_t *pool;
 #endif
@@ -852,10 +849,6 @@ struct ol_txrx_vdev_t {
 	cdf_spinlock_t flow_control_lock;
 	ol_txrx_tx_flow_control_fp osif_flow_control_cb;
 	void *osif_fc_ctx;
-
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-	cdf_atomic_t tx_desc_count;
-#endif
 	uint16_t wait_on_peer_id;
 	cdf_event_t wait_delete_comp;
 #if defined(FEATURE_TSO)

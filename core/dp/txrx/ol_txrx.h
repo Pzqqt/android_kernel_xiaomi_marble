@@ -39,10 +39,6 @@ void ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
 #define OL_TX_AVG_FRM_BYTES 1000
 #endif
 
-#ifdef CONFIG_PER_VDEV_TX_DESC_POOL
-#define TXRX_HL_TX_FLOW_CTRL_VDEV_LOW_WATER_MARK 400
-#endif
-
 /**
  * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id
  * @vdev_id: vdev_id

@@ -127,14 +127,6 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 		ol_tx_desc_compute_delay(tx_desc);
 	}
 	cdf_spin_unlock_bh(&pdev->tx_mutex);
-	if (!tx_desc)
-		return NULL;
-
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-	tx_desc->vdev = vdev;
-	cdf_atomic_inc(&vdev->tx_desc_count);
-#endif
-
 	return tx_desc;
 }
 
@@ -251,19 +243,6 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_timestamp(tx_desc);
 
 	ol_tx_put_desc_global_pool(pdev, tx_desc);
-#if defined(CONFIG_PER_VDEV_TX_DESC_POOL)
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-	if ((cdf_atomic_read(&tx_desc->vdev->os_q_paused)) &&
-	    (cdf_atomic_read(&tx_desc->vdev->tx_desc_count) <
-	     TXRX_HL_TX_FLOW_CTRL_VDEV_LOW_WATER_MARK)) {
-		/* wakeup netif_queue */
-		cdf_atomic_set(&tx_desc->vdev->os_q_paused, 0);
-		ol_txrx_flow_control_cb(tx_desc->vdev, true);
-	}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-	cdf_atomic_dec(&tx_desc->vdev->tx_desc_count);
-	tx_desc->vdev = NULL;
-#endif
 	cdf_spin_unlock_bh(&pdev->tx_mutex);
 }
 
