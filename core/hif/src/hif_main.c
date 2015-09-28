@@ -194,6 +194,19 @@ bool hif_target_forced_awake(struct ol_softc *scn)
 	return awake && forced_awake;
 }
 
+
+static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
+{
+	struct hif_msg_callbacks *msg_callbacks =
+		&hif_state->msg_callbacks_current;
+
+	if (!msg_callbacks->fwEventHandler)
+		return;
+
+	msg_callbacks->fwEventHandler(msg_callbacks->Context,
+			CDF_STATUS_E_FAILURE);
+}
+
 /**
  * hif_fw_interrupt_handler(): FW interrupt handler
  *
@@ -224,9 +237,7 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 		A_TARGET_ACCESS_END_RET(scn);
 
 		if (hif_state->started) {
-			/* Alert the Host-side service thread */
-			atomic_set(&hif_state->fw_event_pending, 1);
-			hif_completion_thread(hif_state);
+			hif_fw_event_handler(hif_state);
 		} else {
 			/*
 			 * Probable Target failure before we're prepared
