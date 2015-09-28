@@ -668,7 +668,6 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 				    struct wma_tgt_services *cfg)
 {
 	struct hdd_config *config = hdd_ctx->config;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hdd_ctx->hHal);
 
 	/* Set up UAPSD */
 	config->apUapsdEnabled &= cfg->uapsd;
@@ -690,7 +689,6 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 	if (cfg->pno_offload)
 		config->PnoOffload = true;
 #endif
-	pMac->lteCoexAntShare = cfg->lte_coex_ant_share;
 #ifdef FEATURE_WLAN_TDLS
 	config->fEnableTDLSSupport &= cfg->en_tdls;
 	config->fEnableTDLSOffChannel &= cfg->en_tdls_offchan;
@@ -701,10 +699,10 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 		config->fEnableTDLSSleepSta = false;
 	}
 #endif
-	pMac->beacon_offload = cfg->beacon_offload;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	config->isRoamOffloadEnabled &= cfg->en_roam_offload;
 #endif
+	sme_update_tgt_services(hdd_ctx->hHal, cfg);
 
 }
 

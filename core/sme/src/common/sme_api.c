@@ -14705,3 +14705,21 @@ CDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 	return status;
 }
 
+/**
+ * sme_update_tgt_services() - update the target services config.
+ * @hal: HAL pointer.
+ * @cfg: wma_tgt_services parameters.
+ *
+ * update the target services config.
+ *
+ * Return: None.
+ */
+void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	mac_ctx->lteCoexAntShare = cfg->lte_coex_ant_share;
+	mac_ctx->beacon_offload = cfg->beacon_offload;
+
+	return;
+}

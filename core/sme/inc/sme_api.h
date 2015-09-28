@@ -46,6 +46,7 @@
 #include "p2p_api.h"
 #include "cds_regdomain.h"
 #include "sme_internal.h"
+#include "wma_tgt_cfg.h"
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 #include "oem_data_api.h"
@@ -1045,4 +1046,5 @@ CDF_STATUS sme_register_for_dcc_stats_event(tHalHandle hHal, void *context,
 void sme_add_set_thermal_level_callback(tHalHandle hal,
 		sme_set_thermal_level_callback callback);
 
+void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg);
 #endif /* #if !defined( __SME_API_H ) */
