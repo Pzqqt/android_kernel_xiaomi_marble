@@ -165,8 +165,84 @@ void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	 struct cdf_tso_seg_elem_t *tso_seg);
 #endif
 
+/**
+ * ol_tx_get_desc_global_pool() - get descriptor from global pool
+ * @pdev: pdev handler
+ *
+ * Caller needs to take lock and do sanity checks.
+ *
+ * Return: tx descriptor
+ */
+static inline
+struct ol_tx_desc_t *ol_tx_get_desc_global_pool(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_tx_desc_t *tx_desc = &pdev->tx_desc.freelist->tx_desc;
+	pdev->tx_desc.freelist = pdev->tx_desc.freelist->next;
+	pdev->tx_desc.num_free--;
+	return tx_desc;
+}
+
+/**
+ * ol_tx_put_desc_global_pool() - put descriptor to global pool freelist
+ * @pdev: pdev handle
+ * @tx_desc: tx descriptor
+ *
+ * Caller needs to take lock and do sanity checks.
+ *
+ * Return: none
+ */
+static inline
+void ol_tx_put_desc_global_pool(struct ol_txrx_pdev_t *pdev,
+			struct ol_tx_desc_t *tx_desc)
+{
+	((union ol_tx_desc_list_elem_t *)tx_desc)->next =
+					pdev->tx_desc.freelist;
+	pdev->tx_desc.freelist =
+			 (union ol_tx_desc_list_elem_t *)tx_desc;
+	pdev->tx_desc.num_free++;
+	return;
+}
+
+
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool);
+/**
+ * ol_tx_get_desc_flow_pool() - get descriptor from flow pool
+ * @pool: flow pool
+ *
+ * Caller needs to take lock and do sanity checks.
+ *
+ * Return: tx descriptor
+ */
+static inline
+struct ol_tx_desc_t *ol_tx_get_desc_flow_pool(struct ol_tx_flow_pool_t *pool)
+{
+	struct ol_tx_desc_t *tx_desc = &pool->freelist->tx_desc;
+	pool->freelist = pool->freelist->next;
+	pool->avail_desc--;
+	return tx_desc;
+}
+
+/**
+ * ol_tx_put_desc_flow_pool() - put descriptor to flow pool freelist
+ * @pool: flow pool
+ * @tx_desc: tx descriptor
+ *
+ * Caller needs to take lock and do sanity checks.
+ *
+ * Return: none
+ */
+static inline
+void ol_tx_put_desc_flow_pool(struct ol_tx_flow_pool_t *pool,
+			struct ol_tx_desc_t *tx_desc)
+{
+	tx_desc->pool = pool;
+	((union ol_tx_desc_list_elem_t *)tx_desc)->next = pool->freelist;
+	pool->freelist = (union ol_tx_desc_list_elem_t *)tx_desc;
+	pool->avail_desc++;
+	return;
+}
+
 #else
 static inline int ol_tx_free_invalid_flow_pool(void *pool)
 {

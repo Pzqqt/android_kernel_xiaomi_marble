@@ -116,7 +116,11 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_WLAN_NAPI_DEBUG := n
 
 	# Flag to enable FW based TX Flow control
-	CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
+	ifeq ($(CONFIG_CNSS_EOS),y)
+		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := y
+	else
+		CONFIG_WLAN_TX_FLOW_CONTROL_V2 := n
+	endif
 
 	# Flag to enable LRO (Large Receive Offload)
 	ifeq ($(CONFIG_CNSS_EOS), y)

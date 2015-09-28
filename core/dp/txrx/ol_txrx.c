@@ -272,7 +272,6 @@ setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
  *
  * Return: none
  */
-inline
 void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
@@ -281,6 +280,8 @@ void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 		return;
 	}
 	pdev->num_msdu_desc = num_msdu_desc + TX_FLOW_MGMT_POOL_SIZE;
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global pool size: %d = %d + %d\n",
+		pdev->num_msdu_desc, num_msdu_desc, TX_FLOW_MGMT_POOL_SIZE);
 	return;
 }
 
