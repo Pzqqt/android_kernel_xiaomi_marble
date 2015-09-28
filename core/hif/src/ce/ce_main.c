@@ -784,109 +784,38 @@ hif_post_init(struct ol_softc *scn, void *unused,
 
 }
 
-static void hif_pci_free_complete_state(struct HIF_CE_pipe_info *pipe_info)
-{
-    struct HIF_CE_completion_state_list *tmp_list;
-
-    while (pipe_info->completion_space_list) {
-        tmp_list = pipe_info->completion_space_list;
-        pipe_info->completion_space_list = tmp_list->next;
-        cdf_mem_free(tmp_list);
-    }
-}
-
-static int hif_alloc_complete_state_list(
-	struct HIF_CE_pipe_info *pipe_info,
-	int completions_needed)
-{
-	struct HIF_CE_completion_state *compl_state;
-	struct HIF_CE_completion_state_list *tmp_list;
-	int i;
-	int idx;
-	int num_list;
-	int allocated_node;
-	int num_in_batch;
-	size_t len;
-
-	allocated_node = 0;
-	num_list = (completions_needed + HIF_CE_COMPLETE_STATE_NUM -1);
-	num_list /= HIF_CE_COMPLETE_STATE_NUM;
-	for (idx = 0; idx < num_list; idx++) {
-		if (completions_needed - allocated_node >=
-			HIF_CE_COMPLETE_STATE_NUM)
-			num_in_batch = HIF_CE_COMPLETE_STATE_NUM;
-		else
-			num_in_batch = completions_needed - allocated_node;
-		if (num_in_batch <= 0)
-			break;
-		len = num_in_batch * sizeof(struct HIF_CE_completion_state) +
-			    sizeof(struct HIF_CE_completion_state_list);
-		/* Allocate structures to track pending send/recv completions */
-		tmp_list =
-			(struct HIF_CE_completion_state_list *)
-			cdf_mem_malloc(len);
-		if (!tmp_list) {
-			HIF_ERROR("%s: compl_state has no mem", __func__);
-			hif_pci_free_complete_state(pipe_info);
-			return -1;
-		}
-		cdf_mem_zero(tmp_list, len);
-		compl_state = (struct HIF_CE_completion_state *)
-		((uint8_t *)tmp_list +
-			 sizeof(struct HIF_CE_completion_state_list));
-		for (i = 0; i < num_in_batch; i++) {
-			compl_state->send_or_recv = HIF_CE_COMPLETE_FREE;
-			compl_state->next = NULL;
-			if (pipe_info->completion_freeq_head)
-				pipe_info->completion_freeq_tail->next =
-					compl_state;
-			else
-				pipe_info->completion_freeq_head =
-					compl_state;
-			pipe_info->completion_freeq_tail = compl_state;
-			compl_state++;
-			allocated_node++;
-		}
-		if (pipe_info->completion_space_list == NULL) {
-			pipe_info->completion_space_list = tmp_list;
-			tmp_list->next = NULL;
-		} else {
-			tmp_list->next =
-				pipe_info->completion_space_list;
-			pipe_info->completion_space_list = tmp_list;
-		}
-	}
-	cdf_spinlock_init(&pipe_info->completion_freeq_lock);
-	return 0;
-}
 int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 {
 	struct CE_handle *ce_diag = hif_state->ce_diag;
 	int pipe_num;
 	struct ol_softc *scn = hif_state->scn;
+	struct hif_msg_callbacks *hif_msg_callbacks =
+		&hif_state->msg_callbacks_current;
 
 	/* daemonize("hif_compl_thread"); */
-
-	cdf_spinlock_init(&hif_state->completion_pendingq_lock);
-	hif_state->completion_pendingq_head =
-		hif_state->completion_pendingq_tail = NULL;
 
 	if (scn->ce_count == 0) {
 		HIF_ERROR("%s: Invalid ce_count\n", __func__);
 		return -EINVAL;
 	}
+
+	if (!hif_msg_callbacks ||
+			!hif_msg_callbacks->rxCompletionHandler ||
+			!hif_msg_callbacks->txCompletionHandler) {
+		HIF_ERROR("%s: no completion handler registered", __func__);
+		return -EFAULT;
+	}
+
 	A_TARGET_ACCESS_LIKELY(scn);
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct CE_attr attr;
 		struct HIF_CE_pipe_info *pipe_info;
-		int completions_needed;
 
 		pipe_info = &hif_state->pipe_info[pipe_num];
 		if (pipe_info->ce_hdl == ce_diag) {
 			continue;       /* Handle Diagnostic CE specially */
 		}
 		attr = host_ce_config[pipe_num];
-		completions_needed = 0;
 		if (attr.src_nentries) {
 			/* pipe used to send to target */
 			HIF_INFO_MED("%s: pipe_num:%d pipe_info:0x%p",
@@ -894,7 +823,6 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 			ce_send_cb_register(pipe_info->ce_hdl,
 					    hif_pci_ce_send_done, pipe_info,
 					    attr.flags & CE_ATTR_DISABLE_INTR);
-			completions_needed += attr.src_nentries;
 			pipe_info->num_sends_allowed = attr.src_nentries - 1;
 		}
 		if (attr.dest_nentries) {
@@ -902,187 +830,9 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 			ce_recv_cb_register(pipe_info->ce_hdl,
 					    hif_pci_ce_recv_data, pipe_info,
 					    attr.flags & CE_ATTR_DISABLE_INTR);
-			completions_needed += attr.dest_nentries;
-		}
-
-		pipe_info->completion_freeq_head =
-			pipe_info->completion_freeq_tail = NULL;
-		if (completions_needed > 0) {
-			int ret;
-
-			ret = hif_alloc_complete_state_list(pipe_info,
-				completions_needed);
-			if (ret != 0) {
-				HIF_ERROR("%s: ce_id = %d, no mem",
-					  __func__, pipe_info->pipe_num);
-				return ret;
-			}
 		}
 	}
 	A_TARGET_ACCESS_UNLIKELY(scn);
-	return 0;
-}
-
-void hif_completion_thread_shutdown(struct HIF_CE_state *hif_state)
-{
-	struct HIF_CE_completion_state *compl_state;
-	struct HIF_CE_pipe_info *pipe_info;
-	struct ol_softc *scn = hif_state->scn;
-	int pipe_num;
-
-	/*
-	 * Drop pending completions.  These have already been
-	 * reported by the CE layer to us but we have not yet
-	 * passed them upstack.
-	 */
-	while ((compl_state = hif_state->completion_pendingq_head) != NULL) {
-		cdf_nbuf_t netbuf;
-
-		netbuf = (cdf_nbuf_t) compl_state->transfer_context;
-		cdf_nbuf_free(netbuf);
-
-		hif_state->completion_pendingq_head = compl_state->next;
-
-		/*
-		 * NB: Don't bother to place compl_state on pipe's free queue,
-		 * because we'll free underlying memory for the free queues
-		 * in a moment anyway.
-		 */
-	}
-
-	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
-		pipe_info = &hif_state->pipe_info[pipe_num];
-		hif_pci_free_complete_state(pipe_info);
-		cdf_spinlock_destroy(&pipe_info->completion_freeq_lock);
-	}
-
-	/* hif_state->compl_thread = NULL; */
-	/* complete_and_exit(&hif_state->compl_thread_done, 0); */
-}
-
-/*
- * This thread provides a context in which send/recv completions
- * are handled.
- *
- * Note: HIF installs callback functions with the CE layer.
- * Those functions are called directly (e.g. in interrupt context).
- * Upper layers (e.g. HTC) have installed callbacks with HIF which
- * expect to be called in a thread context. This is where that
- * conversion occurs.
- *
- * TBDXXX: Currently we use just one thread for all pipes.
- * This might be sufficient or we might need multiple threads.
- */
-int
-/* hif_completion_thread(void *hif_dev) */
-hif_completion_thread(struct HIF_CE_state *hif_state)
-{
-	struct hif_msg_callbacks *msg_callbacks =
-		&hif_state->msg_callbacks_current;
-	struct HIF_CE_completion_state *compl_state;
-
-	/* Allow only one instance of the thread to execute at a time to
-	 * prevent out of order processing of messages - this is bad for higher
-	 * layer code
-	 */
-	if (!cdf_atomic_dec_and_test(&hif_state->hif_thread_idle)) {
-		/* We were not the lucky one */
-		cdf_atomic_inc(&hif_state->hif_thread_idle);
-		return 0;
-	}
-
-	if (!msg_callbacks->fwEventHandler
-	    || !msg_callbacks->txCompletionHandler
-	    || !msg_callbacks->rxCompletionHandler) {
-		return 0;
-	}
-	while (atomic_read(&hif_state->fw_event_pending) > 0) {
-		/*
-		 * Clear pending state before handling, in case there's
-		 * another while we process the first.
-		 */
-		atomic_set(&hif_state->fw_event_pending, 0);
-		msg_callbacks->fwEventHandler(msg_callbacks->Context,
-					      CDF_STATUS_E_FAILURE);
-	}
-
-	if (hif_state->scn->target_status == OL_TRGET_STATUS_RESET)
-		return 0;
-
-	for (;; ) {
-		struct HIF_CE_pipe_info *pipe_info;
-		int send_done = 0;
-
-		cdf_spin_lock(&hif_state->completion_pendingq_lock);
-
-		if (!hif_state->completion_pendingq_head) {
-			/* We are atomically sure that
-			 * there is no pending work */
-			cdf_atomic_inc(&hif_state->hif_thread_idle);
-			cdf_spin_unlock(&hif_state->completion_pendingq_lock);
-			break;  /* All pending completions are handled */
-		}
-
-		/* Dequeue the first unprocessed but completed transfer */
-		compl_state = hif_state->completion_pendingq_head;
-		hif_state->completion_pendingq_head = compl_state->next;
-		cdf_spin_unlock(&hif_state->completion_pendingq_lock);
-
-		pipe_info = (struct HIF_CE_pipe_info *)compl_state->ce_context;
-		if (compl_state->send_or_recv == HIF_CE_COMPLETE_SEND) {
-			msg_callbacks->txCompletionHandler(msg_callbacks->
-				   Context,
-				   compl_state->
-				   transfer_context,
-				   compl_state->
-				   transfer_id,
-				   compl_state->toeplitz_hash_result);
-			send_done = 1;
-		} else {
-			/* compl_state->send_or_recv == HIF_CE_COMPLETE_RECV */
-			cdf_nbuf_t netbuf;
-			unsigned int nbytes;
-
-			atomic_inc(&pipe_info->recv_bufs_needed);
-			hif_post_recv_buffers(hif_state->scn);
-
-			netbuf = (cdf_nbuf_t) compl_state->transfer_context;
-			nbytes = compl_state->nbytes;
-			/*
-			 * To see the following debug output,
-			 * enable the HIF_PCI_DEBUG flag in
-			 * the debug module declaration in this source file
-			 */
-			HIF_DBG("%s: netbuf=%p, nbytes=%d",
-				__func__, netbuf, nbytes);
-			if (nbytes <= pipe_info->buf_sz) {
-				cdf_nbuf_set_pktlen(netbuf, nbytes);
-				msg_callbacks->
-				rxCompletionHandler(msg_callbacks->Context,
-						    netbuf,
-						    pipe_info->pipe_num);
-			} else {
-				HIF_ERROR(
-					"%s: Invalid Rx msg buf:%p nbytes:%d",
-					 __func__, netbuf, nbytes);
-				cdf_nbuf_free(netbuf);
-			}
-		}
-
-		/* Recycle completion state back to the pipe it came from. */
-		compl_state->next = NULL;
-		compl_state->send_or_recv = HIF_CE_COMPLETE_FREE;
-		cdf_spin_lock(&pipe_info->completion_freeq_lock);
-		if (pipe_info->completion_freeq_head) {
-			pipe_info->completion_freeq_tail->next = compl_state;
-		} else {
-			pipe_info->completion_freeq_head = compl_state;
-		}
-		pipe_info->completion_freeq_tail = compl_state;
-		pipe_info->num_sends_allowed += send_done;
-		cdf_spin_unlock(&pipe_info->completion_freeq_lock);
-	}
-
 	return 0;
 }
 
@@ -1300,10 +1050,10 @@ CDF_STATUS hif_start(struct ol_softc *scn)
 {
 	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 
+	hif_msg_callbacks_install(scn);
+
 	if (hif_completion_thread_startup(hif_state))
 		return CDF_STATUS_E_FAILURE;
-
-	hif_msg_callbacks_install(scn);
 
 	/* Post buffers once to start things off. */
 	(void)hif_post_recv_buffers(scn);
@@ -1449,13 +1199,6 @@ void hif_stop(struct ol_softc *scn)
 	int pipe_num;
 
 	scn->hif_init_done = false;
-	if (hif_state->started) {
-		/* sync shutdown */
-		hif_completion_thread_shutdown(hif_state);
-		hif_completion_thread(hif_state);
-	} else {
-		hif_completion_thread_shutdown(hif_state);
-	}
 
 	/*
 	 * At this point, asynchronous threads are stopped,
@@ -2133,9 +1876,6 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	scn->soc_version = soc_info.version;
 
 	cdf_spinlock_init(&hif_state->keep_awake_lock);
-
-	cdf_atomic_init(&hif_state->hif_thread_idle);
-	cdf_atomic_inc(&hif_state->hif_thread_idle);
 
 	hif_state->keep_awake_count = 0;
 

@@ -55,33 +55,12 @@ enum ce_id_type {
 	CE_ID_11,
 	CE_ID_MAX
 };
-struct HIF_CE_completion_state {
-	struct HIF_CE_completion_state *next;
-	int send_or_recv;
-	struct CE_handle *copyeng;
-	void *ce_context;
-	void *transfer_context;
-	cdf_dma_addr_t data;
-	unsigned int nbytes;
-	unsigned int transfer_id;
-	unsigned int flags;
-	uint32_t toeplitz_hash_result;
-};
-
-/* compl_state.send_or_recv */
-#define HIF_CE_COMPLETE_FREE 0
-#define HIF_CE_COMPLETE_SEND 1
-#define HIF_CE_COMPLETE_RECV 2
 
 enum ol_ath_hif_pkt_ecodes {
 	HIF_PIPE_NO_RESOURCE = 0
 };
 
 struct HIF_CE_state;
-#define HIF_CE_COMPLETE_STATE_NUM 18 /* 56 * 18 + 4/8 = 1012/1016 bytes */
-struct HIF_CE_completion_state_list {
-	struct HIF_CE_completion_state_list *next;
-};
 
 /* Per-pipe state. */
 struct HIF_CE_pipe_info {
@@ -102,9 +81,7 @@ struct HIF_CE_pipe_info {
 	cdf_spinlock_t completion_freeq_lock;
 	/* Limit the number of outstanding send requests. */
 	int num_sends_allowed;
-	struct HIF_CE_completion_state_list *completion_space_list;
-	struct HIF_CE_completion_state *completion_freeq_head;
-	struct HIF_CE_completion_state *completion_freeq_tail;
+
 	/* adding three counts for debugging ring buffer errors */
 	uint32_t nbuf_alloc_err_count;
 	uint32_t nbuf_dma_err_count;
@@ -139,16 +116,6 @@ struct HIF_CE_state {
 	cdf_softirq_timer_t sleep_timer;
 	bool sleep_timer_init;
 	unsigned long sleep_ticks;
-	cdf_spinlock_t completion_pendingq_lock;
-	/* Queue of send/recv completions that need to be processed */
-	struct HIF_CE_completion_state *completion_pendingq_head;
-	struct HIF_CE_completion_state *completion_pendingq_tail;
-	atomic_t fw_event_pending;
-	cdf_atomic_t hif_thread_idle;
-
-	/* wait_queue_head_t service_waitq; */
-	/* struct task_struct *compl_thread; */
-	/* struct completion compl_thread_done; */
 
 	/* Per-pipe state. */
 	struct HIF_CE_pipe_info pipe_info[CE_COUNT_MAX];
