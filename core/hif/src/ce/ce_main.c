@@ -685,6 +685,9 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		 * when last fragment is complteted.
 		 */
 		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
+			if (hif_state->scn->target_status
+					== OL_TRGET_STATUS_RESET)
+				return;
 
 			msg_callbacks->txCompletionHandler(
 					msg_callbacks->Context,
@@ -751,8 +754,11 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 
 		atomic_inc(&pipe_info->recv_bufs_needed);
 		hif_post_recv_buffers_for_pipe(pipe_info);
-		hif_ce_do_recv(msg_callbacks, transfer_context, nbytes,
-			pipe_info);
+		if (hif_state->scn->target_status == OL_TRGET_STATUS_RESET)
+			return;
+
+		hif_ce_do_recv(msg_callbacks, transfer_context,
+				nbytes, pipe_info);
 
 		/* Set up force_break flag if num of receices reaches
 		 * MAX_NUM_OF_RECEIVES */
