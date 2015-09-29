@@ -3517,6 +3517,29 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_SELF_GEN_FRM_PWR_MIN,
 		     CFG_SELF_GEN_FRM_PWR_MAX),
 
+	REG_VARIABLE(CFG_EARLY_STOP_SCAN_ENABLE, WLAN_PARAM_Integer,
+		     struct hdd_config, early_stop_scan_enable,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT,
+		     CFG_EARLY_STOP_SCAN_ENABLE_MIN,
+		     CFG_EARLY_STOP_SCAN_ENABLE_MAX),
+
+	REG_VARIABLE(CFG_EARLY_STOP_SCAN_MIN_THRESHOLD,
+		     WLAN_PARAM_SignedInteger, struct hdd_config,
+		     early_stop_scan_min_threshold,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT,
+		     CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN,
+		     CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX),
+
+	REG_VARIABLE(CFG_EARLY_STOP_SCAN_MAX_THRESHOLD,
+		     WLAN_PARAM_SignedInteger, struct hdd_config,
+		     early_stop_scan_max_threshold,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT,
+		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN,
+		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX),
+
 };
 
 
@@ -5050,6 +5073,16 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 			CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_NAME,
 			pHddCtx->config->channel_prediction_full_scan);
 #endif
+	hddLog(LOGE, "Name = [%s] Value = [%d]",
+		  CFG_EARLY_STOP_SCAN_ENABLE,
+		  pHddCtx->config->early_stop_scan_enable);
+	hddLog(LOGE, "Name = [%s] Value = [%d]",
+		CFG_EARLY_STOP_SCAN_MIN_THRESHOLD,
+		pHddCtx->config->early_stop_scan_min_threshold);
+	hddLog(LOGE, "Name = [%s] Value = [%d]",
+		CFG_EARLY_STOP_SCAN_MAX_THRESHOLD,
+		pHddCtx->config->early_stop_scan_max_threshold);
+
 }
 
 
@@ -6462,6 +6495,12 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		(pHddCtx->config->dot11p_mode != WLAN_HDD_11P_DISABLED);
 	hdd_set_pno_channel_prediction_config(smeConfig, pHddCtx);
 
+	smeConfig->early_stop_scan_enable =
+		pHddCtx->config->early_stop_scan_enable;
+	smeConfig->early_stop_scan_min_threshold =
+		pHddCtx->config->early_stop_scan_min_threshold;
+	smeConfig->early_stop_scan_max_threshold =
+		pHddCtx->config->early_stop_scan_max_threshold;
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, "sme_update_config() return failure %d",

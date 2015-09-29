@@ -1349,6 +1349,12 @@ CDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams
 				pSmeConfigParams->dual_mac_feature_disable;
 	sme_update_roam_pno_channel_prediction_config(pMac, pSmeConfigParams,
 			SME_CONFIG_TO_ROAM_CONFIG);
+	pMac->roam.configParam.early_stop_scan_enable =
+		pSmeConfigParams->early_stop_scan_enable;
+	pMac->roam.configParam.early_stop_scan_min_threshold =
+		pSmeConfigParams->early_stop_scan_min_threshold;
+	pMac->roam.configParam.early_stop_scan_max_threshold =
+		pSmeConfigParams->early_stop_scan_max_threshold;
 
 	return status;
 }
@@ -4192,6 +4198,12 @@ CDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 			pMac->f_sta_miracast_mcc_rest_time_val;
 		sme_update_roam_pno_channel_prediction_config(pMac, pParam,
 				ROAM_CONFIG_TO_SME_CONFIG);
+		pParam->early_stop_scan_enable =
+			pMac->roam.configParam.early_stop_scan_enable;
+		pParam->early_stop_scan_min_threshold =
+			pMac->roam.configParam.early_stop_scan_min_threshold;
+		pParam->early_stop_scan_max_threshold =
+			pMac->roam.configParam.early_stop_scan_max_threshold;
 		sme_release_global_lock(&pMac->sme);
 	}
 

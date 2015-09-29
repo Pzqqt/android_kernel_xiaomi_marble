@@ -2900,6 +2900,9 @@ typedef struct sSirRoamOffloadScanReq {
 	uint32_t hi_rssi_scan_rssi_delta;
 	uint32_t hi_rssi_scan_delay;
 	int32_t hi_rssi_scan_rssi_ub;
+	uint8_t early_stop_scan_enable;
+	int8_t early_stop_scan_min_threshold;
+	int8_t early_stop_scan_max_threshold;
 } tSirRoamOffloadScanReq, *tpSirRoamOffloadScanReq;
 
 typedef struct sSirRoamOffloadScanRsp {
