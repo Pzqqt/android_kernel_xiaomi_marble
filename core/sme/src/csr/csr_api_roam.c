@@ -474,6 +474,121 @@ static tPowerdBm csr_find_channel_pwr(tChannelListWithPower *
 	CDF_ASSERT(0);
 	return 0;
 }
+/**
+ * csr_roam_sort_channel_for_early_stop() - Sort the channels
+ * @chan_list:      Original channel list from the upper layers
+ * @num_channel:    Number of original channels
+ *
+ * For Early stop scan feature, the channel list should be in an order,
+ * where-in there is a maximum chance to detect an AP in the initial
+ * channels in the list so that the scanning can be stopped early as the
+ * feature demands.
+ * Below fixed greedy channel list has been provided
+ * based on most of the enterprise wifi installations across the globe.
+ *
+ * Identify all the greedy channels within the channel list from user space.
+ * Identify all the non-greedy channels in the user space channel list.
+ * Merge greedy channels followed by non-greedy channels back into the
+ * chan_list.
+ *
+ * Return: None
+ */
+void csr_roam_sort_channel_for_early_stop(tSirUpdateChanList *chan_list,
+		uint8_t num_channel)
+{
+	tSirUpdateChanList *chan_list_greedy, *chan_list_non_greedy;
+	uint8_t i, j;
+	static const uint8_t fixed_greedy_chan_list[] = {1, 6, 11, 36, 48, 40,
+		44, 10, 2, 9, 149, 157, 161, 3, 4, 8, 153, 165, 7, 5, 136, 140,
+		52, 116, 56, 104, 64, 60, 100, 120, 13, 14, 112, 132, 151, 155};
+	uint8_t num_fixed_greedy_chan;
+	uint8_t num_greedy_chan = 0;
+	uint8_t num_non_greedy_chan = 0;
+	uint8_t match_found = false;
+	uint32_t buf_size;
+
+	buf_size = sizeof(tSirUpdateChanList) +
+		(sizeof(tSirUpdateChanParam) * num_channel);
+	chan_list_greedy = cdf_mem_malloc(buf_size);
+	chan_list_non_greedy = cdf_mem_malloc(buf_size);
+	if (!chan_list_greedy || !chan_list_non_greedy) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "Failed to allocate memory for tSirUpdateChanList");
+		return;
+	}
+	cdf_mem_zero(chan_list_greedy, buf_size);
+	cdf_mem_zero(chan_list_non_greedy, buf_size);
+	/*
+	 * fixed_greedy_chan_list is an evaluated channel list based on most of
+	 * the enterprise wifi deployments and the order of the channels
+	 * determines the highest possibility of finding an AP.
+	 * chan_list is the channel list provided by upper layers based on the
+	 * regulatory domain.
+	 */
+	num_fixed_greedy_chan = sizeof(fixed_greedy_chan_list)/sizeof(uint8_t);
+	/*
+	 * Browse through the chan_list and put all the non-greedy channels
+	 * into a seperate list by name chan_list_non_greedy
+	 */
+	for (i = 0; i < num_channel; i++) {
+		for (j = 0; j < num_fixed_greedy_chan; j++) {
+			if (chan_list->chanParam[i].chanId ==
+					fixed_greedy_chan_list[j]) {
+				match_found = true;
+				break;
+			}
+		}
+		if (!match_found) {
+			cdf_mem_copy(
+			  &chan_list_non_greedy->chanParam[num_non_greedy_chan],
+			  &chan_list->chanParam[i],
+			  sizeof(tSirUpdateChanParam));
+			num_non_greedy_chan++;
+		} else {
+			match_found = false;
+		}
+	}
+	/*
+	 * Browse through the fixed_greedy_chan_list and put all the greedy
+	 * channels in the chan_list into a seperate list by name
+	 * chan_list_greedy
+	 */
+	for (i = 0; i < num_fixed_greedy_chan; i++) {
+		for (j = 0; j < num_channel; j++) {
+			if (fixed_greedy_chan_list[i] ==
+					chan_list->chanParam[j].chanId) {
+				cdf_mem_copy(
+				  &chan_list_greedy->chanParam[num_greedy_chan],
+				  &chan_list->chanParam[j],
+				  sizeof(tSirUpdateChanParam));
+				num_greedy_chan++;
+				break;
+			}
+		}
+	}
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_DEBUG,
+		"greedy=%d, non-greedy=%d, tot=%d",
+		num_greedy_chan, num_non_greedy_chan, num_channel);
+	if ((num_greedy_chan + num_non_greedy_chan) != num_channel) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			"incorrect sorting of channels");
+		goto scan_list_sort_error;
+	}
+	/* Copy the Greedy channels first */
+	i = 0;
+	cdf_mem_copy(&chan_list->chanParam[i],
+		&chan_list_greedy->chanParam[i],
+		num_greedy_chan * sizeof(tSirUpdateChanParam));
+	/* Copy the remaining Non Greedy channels */
+	i = num_greedy_chan;
+	j = 0;
+	cdf_mem_copy(&chan_list->chanParam[i],
+		&chan_list_non_greedy->chanParam[j],
+		num_non_greedy_chan * sizeof(tSirUpdateChanParam));
+scan_list_sort_error:
+	cdf_mem_free(chan_list_greedy);
+	cdf_mem_free(chan_list_non_greedy);
+}
 
 CDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 {
@@ -532,6 +647,11 @@ CDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			else
 				pChanList->chanParam[num_channel].dfsSet =
 					true;
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+				"channel:%d, pwr=%d, DFS=%d\n",
+				pChanList->chanParam[num_channel].chanId,
+				pChanList->chanParam[num_channel].pwr,
+				pChanList->chanParam[num_channel].dfsSet);
 			num_channel++;
 		}
 	}
@@ -550,6 +670,11 @@ CDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 			}
 		}
 	}
+	if (pMac->roam.configParam.early_stop_scan_enable)
+		csr_roam_sort_channel_for_early_stop(pChanList, num_channel);
+	else
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			FL("Early Stop Scan Feature not supported"));
 
 	msg.type = WMA_UPDATE_CHAN_LIST_REQ;
 	msg.reserved = 0;
@@ -1869,6 +1994,13 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->sendDeauthBeforeCon;
 
 		pMac->enable_dot11p = pParam->enable_dot11p;
+		pMac->roam.configParam.early_stop_scan_enable =
+			pParam->early_stop_scan_enable;
+		pMac->roam.configParam.early_stop_scan_min_threshold =
+			pParam->early_stop_scan_min_threshold;
+		pMac->roam.configParam.early_stop_scan_max_threshold =
+			pParam->early_stop_scan_max_threshold;
+
 	}
 
 	return status;
@@ -16773,6 +16905,17 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 		session);
 	req_buf->allowDFSChannelRoam =
 	mac_ctx->roam.configParam.allowDFSChannelRoam;
+	req_buf->early_stop_scan_enable =
+		mac_ctx->roam.configParam.early_stop_scan_enable;
+	req_buf->early_stop_scan_min_threshold =
+		mac_ctx->roam.configParam.early_stop_scan_min_threshold;
+	req_buf->early_stop_scan_max_threshold =
+		mac_ctx->roam.configParam.early_stop_scan_max_threshold;
+	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+		  FL("EarlyStopFeature Enable=%d, MinThresh=%d, MaxThresh=%d"),
+		  req_buf->early_stop_scan_enable,
+		  req_buf->early_stop_scan_min_threshold,
+		  req_buf->early_stop_scan_max_threshold);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	req_buf->RoamOffloadEnabled = csr_roamIsRoamOffloadEnabled(mac_ctx);
 	req_buf->RoamKeyMgmtOffloadEnabled = session->RoamKeyMgmtOffloadEnabled;

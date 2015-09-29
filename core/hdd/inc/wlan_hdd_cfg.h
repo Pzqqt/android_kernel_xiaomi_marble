@@ -2700,6 +2700,37 @@ enum dot11p_mode {
 #define CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_MAX       (0x7fffffff)
 #define CFG_CHANNEL_PREDICTION_FULL_SCAN_MS_DEFAULT   (60000)
 
+/*
+ * Early stop scan is a feature for roaming to stop the scans at
+ * an early stage as soon as we find a better AP to roam. This
+ * would make the roaming happen quickly.
+ */
+#define CFG_EARLY_STOP_SCAN_ENABLE           "gEnableEarlyStopScan"
+#define CFG_EARLY_STOP_SCAN_ENABLE_MIN       (0)
+#define CFG_EARLY_STOP_SCAN_ENABLE_MAX       (1)
+#define CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT   (0)
+/*
+ * Early stop scan minimum threshold is the minimum threshold
+ * at which the candidate AP should be to be qualified as a
+ * potential roam candidate and good enough to stop the roaming scan
+ */
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD           "gEarlyStopScanMinThreshold"
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN       (-60)
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX       (-40)
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT   (-45)
+/*
+ * Early stop scan maximum threshold is the maximum threshold
+ * to be considered for stopping the scan. The algorithm starts
+ * with a scan on the greedy channel list with the minimum threshold
+ * and steps up the threshold by 20% for each further channel.
+ * It can step up on each channel but cannot exceed the maximum
+ * threshold.
+ */
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD           "gEarlyStopScanMaxThreshold"
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN       (-80)
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX       (-70)
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-78)
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3264,6 +3295,9 @@ struct hdd_config {
 	uint8_t stationary_thresh;
 	uint32_t channel_prediction_full_scan;
 #endif
+	bool early_stop_scan_enable;
+	int8_t early_stop_scan_min_threshold;
+	int8_t early_stop_scan_max_threshold;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))

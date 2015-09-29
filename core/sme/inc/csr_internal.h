@@ -651,6 +651,9 @@ typedef struct tagCsrConfig {
 	uint8_t stationary_thresh;
 	uint32_t channel_prediction_full_scan;
 #endif
+	bool early_stop_scan_enable;
+	int8_t early_stop_scan_min_threshold;
+	int8_t early_stop_scan_max_threshold;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

@@ -1122,6 +1122,7 @@ CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	uint8_t *buf_ptr;
 	wmi_roam_scan_rssi_threshold_fixed_param *rssi_threshold_fp;
 	wmi_roam_scan_extended_threshold_param *ext_thresholds = NULL;
+	wmi_roam_earlystop_rssi_thres_param *early_stop_thresholds = NULL;
 	struct roam_ext_params *roam_params;
 	int32_t good_rssi_threshold;
 	uint32_t hirssi_scan_max_count;
@@ -1139,6 +1140,8 @@ CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	len = sizeof(wmi_roam_scan_rssi_threshold_fixed_param);
 	len += WMI_TLV_HDR_SIZE; /* TLV for ext_thresholds*/
 	len += sizeof(wmi_roam_scan_extended_threshold_param);
+	len += WMI_TLV_HDR_SIZE;
+	len += sizeof(wmi_roam_earlystop_rssi_thres_param);
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
@@ -1209,6 +1212,27 @@ CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 		WMITLV_TAG_STRUC_wmi_roam_scan_extended_threshold_param,
 		WMITLV_GET_STRUCT_TLVLEN
 		(wmi_roam_scan_extended_threshold_param));
+	buf_ptr += sizeof(wmi_roam_scan_extended_threshold_param);
+	WMITLV_SET_HDR(buf_ptr,
+			WMITLV_TAG_ARRAY_STRUC,
+			sizeof(wmi_roam_earlystop_rssi_thres_param));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	early_stop_thresholds = (wmi_roam_earlystop_rssi_thres_param *) buf_ptr;
+	early_stop_thresholds->roam_earlystop_thres_min =
+		roam_req->early_stop_scan_min_threshold -
+		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	early_stop_thresholds->roam_earlystop_thres_max =
+		roam_req->early_stop_scan_max_threshold -
+		WMA_NOISE_FLOOR_DBM_DEFAULT;
+	WMITLV_SET_HDR(&early_stop_thresholds->tlv_header,
+		WMITLV_TAG_STRUC_wmi_roam_earlystop_rssi_thres_param,
+		WMITLV_GET_STRUCT_TLVLEN
+		(wmi_roam_earlystop_rssi_thres_param));
+	WMA_LOGD("early_stop_thresholds en=%d, min=%d, max=%d",
+		roam_req->early_stop_scan_enable,
+		early_stop_thresholds->roam_earlystop_thres_min,
+		early_stop_thresholds->roam_earlystop_thres_max);
+
 	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
 				      len, WMI_ROAM_SCAN_RSSI_THRESHOLD);
 	if (status != EOK) {
