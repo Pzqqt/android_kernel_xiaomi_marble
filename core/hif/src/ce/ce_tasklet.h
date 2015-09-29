@@ -27,6 +27,7 @@
 
 #ifndef __CE_TASKLET_H__
 #define __CE_TASKLET_H__
+#include "ce_main.h"
 void init_tasklet_workers(void);
 void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 void ce_tasklet_kill(struct HIF_CE_state *hif_ce_state);
