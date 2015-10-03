@@ -342,7 +342,7 @@ static struct net_device_ops epping_drv_ops = {
 
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     tCDF_CON_MODE device_mode)
+				     enum tCDF_ADAPTER_MODE device_mode)
 {
 	struct net_device *dev;
 	epping_adapter_t *pAdapter;

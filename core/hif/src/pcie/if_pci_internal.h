@@ -97,7 +97,7 @@
 { \
 	ol_txrx_pdev_handle pdev_txrx_handle; \
 	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX); \
-	if (cds_get_conparam() != CDF_FTM_MODE && \
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE && \
 	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam())) { \
 		ol_pl_sethandle(&pdev_txrx_handle->pl_dev, ol_sc); \
 		if (pktlogmod_init(ol_sc)) \

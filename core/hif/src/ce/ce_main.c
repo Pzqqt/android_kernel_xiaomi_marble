@@ -1806,17 +1806,13 @@ static int hif_wlan_enable(void)
 	cfg.num_shadow_reg_cfg = shadow_cfg_sz / sizeof(struct shadow_reg_cfg);
 	cfg.shadow_reg_cfg = (struct icnss_shadow_reg_cfg *) target_shadow_reg_cfg;
 
-	switch (con_mode) {
-	case CDF_FTM_MODE:
+	if (CDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-		break;
-	case CDF_EPPING_MODE:
+	else if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
 		mode = ICNSS_EPPING;
-		break;
-	default:
+	else
 		mode = ICNSS_MISSION;
-		break;
-	}
+
 	return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
 }
 

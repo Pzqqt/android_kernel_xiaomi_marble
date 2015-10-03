@@ -1619,7 +1619,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	static const uint8_t ipv6_router_solicitation[]
 			= {0x33, 0x33, 0x00, 0x00, 0x00, 0x02};
 
-	if (CDF_FTM_MODE == hdd_get_conparam())
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
 	ENTER();
@@ -2117,12 +2117,6 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 		hdd_unregister_hostapd(adapter, rtnl_held);
 
-		/* set con_mode to STA only when no SAP concurrency mode */
-		if (!
-		    (cds_get_concurrency_mode() &
-		     (CDF_SAP_MASK | CDF_P2P_GO_MASK)))
-			hdd_set_conparam(0);
-
 		break;
 	}
 
@@ -2343,8 +2337,6 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 					   WLAN_NETIF_TX_DISABLE_N_CARRIER,
 					   WLAN_CONTROL_PATH);
 
-		hdd_set_conparam(1);
-
 		break;
 	}
 	case WLAN_HDD_FTM:
@@ -2431,7 +2423,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		cds_check_and_restart_sap_with_non_dfs_acs(hdd_ctx);
 	}
 
-	if ((cds_get_conparam() != CDF_FTM_MODE)
+	if ((cds_get_conparam() != CDF_GLOBAL_FTM_MODE)
 	    && (!hdd_ctx->config->enable2x2)) {
 #define HDD_DTIM_1CHAIN_RX_ID 0x5
 #define HDD_SMPS_PARAM_VALUE_S 29
@@ -2477,7 +2469,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 #undef HDD_SMPS_PARAM_VALUE_S
 	}
 
-	if (CDF_FTM_MODE != cds_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
 		ret = wma_cli_set_command(adapter->sessionId,
 					  WMI_PDEV_PARAM_HYST_EN,
 					  hdd_ctx->config->enableMemDeepSleep,
@@ -2494,7 +2486,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 #ifdef CONFIG_FW_LOGS_BASED_ON_INI
 
 	/* Enable FW logs based on INI configuration */
-	if ((CDF_FTM_MODE != cds_get_conparam()) &&
+	if ((CDF_GLOBAL_FTM_MODE != cds_get_conparam()) &&
 	    (hdd_ctx->config->enablefwlog)) {
 		uint8_t count = 0;
 		uint32_t value = 0;
@@ -3389,7 +3381,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_unregister_wext_all_adapters(hdd_ctx);
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(CDF_TRACE_LEVEL_INFO, FL("FTM MODE"));
 #if  defined(QCA_WIFI_FTM)
 		if (hdd_ftm_stop(hdd_ctx)) {
@@ -4877,7 +4869,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	hdd_cfg_print(hdd_ctx);
 
-	if (CDF_FTM_MODE == hdd_get_conparam())
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto ftm_processing;
 
 	hdd_ctx->isLogpInProgress = false;
@@ -5028,7 +5020,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 #endif /* QCA_PKT_PROTO_TRACE */
 
 ftm_processing:
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		if (CDF_STATUS_SUCCESS != wlan_hdd_ftm_open(hdd_ctx)) {
 			hddLog(CDF_TRACE_LEVEL_FATAL,
 			       FL("wlan_hdd_ftm_open Failed"));
@@ -5250,13 +5242,11 @@ ftm_processing:
 	if (cds_is_multicast_logging())
 		wlan_logging_set_log_level();
 
-	if (CDF_SAP_MODE != hdd_get_conparam()) {
-		/*
-		 * Action frame registered in one adapter which will
-		 * applicable to all interfaces
-		 */
-		wlan_hdd_cfg80211_register_frames(adapter);
-	}
+	/*
+	 * Action frame registered in one adapter which will
+	 * applicable to all interfaces
+	 */
+	wlan_hdd_cfg80211_register_frames(adapter);
 
 	mutex_init(&hdd_ctx->sap_lock);
 
@@ -5485,7 +5475,7 @@ err_cds_close:
 
 err_cds_open:
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 #if  defined(QCA_WIFI_FTM)
 err_free_ftm_open:
 		wlan_hdd_ftm_close(hdd_ctx);
@@ -5876,7 +5866,7 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 	int ret = 0;
 	struct wlan_status_data data;
 
-	if (CDF_FTM_MODE == hdd_get_conparam())
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
 	memset(&data, 0, sizeof(struct wlan_status_data));
@@ -5908,7 +5898,7 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 		return;
 #endif
 
-	if (CDF_FTM_MODE == hdd_get_conparam())
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
 	memset(&data, 0, sizeof(struct wlan_version_data));
@@ -6297,6 +6287,11 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 		return;
 	}
 
+	if (WLAN_HDD_SOFTAP != ap_adapter->device_mode) {
+		hdd_err("SoftAp role has not been enabled");
+		return;
+	}
+
 	hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
@@ -6611,11 +6606,11 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
  *
  * This is the driver exit point (invoked when module is unloaded using rmmod)
  *
- * Return: tCDF_CON_MODE
+ * Return: enum tCDF_GLOBAL_CON_MODE
  */
-tCDF_CON_MODE hdd_get_conparam(void)
+enum tCDF_GLOBAL_CON_MODE hdd_get_conparam(void)
 {
-	return (tCDF_CON_MODE) curr_con_mode;
+	return (enum tCDF_GLOBAL_CON_MODE) curr_con_mode;
 }
 
 void hdd_set_conparam(uint32_t con_param)

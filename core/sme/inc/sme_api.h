@@ -233,7 +233,8 @@ CDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		void *pContext, uint8_t *pSelfMacAddr,
 		uint8_t *pbSessionId, uint32_t type,
 		uint32_t subType);
-void sme_set_curr_device_mode(tHalHandle hHal, tCDF_CON_MODE currDeviceMode);
+void sme_set_curr_device_mode(tHalHandle hHal,
+		enum tCDF_ADAPTER_MODE currDeviceMode);
 CDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		csr_roamSessionCloseCallback callback,
 		void *pContext);
@@ -558,7 +559,7 @@ CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct cdf_mac_addr pBssid,
 CDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t db);
 CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 		struct cdf_mac_addr bssid,
-		tCDF_CON_MODE dev_mode, int power);
+		enum tCDF_ADAPTER_MODE dev_mode, int power);
 CDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
 CDF_STATUS sme_hide_ssid(tHalHandle hHal, uint8_t sessionId,
 		uint8_t ssidHidden);

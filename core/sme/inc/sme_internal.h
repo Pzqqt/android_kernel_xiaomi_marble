@@ -148,7 +148,7 @@ typedef struct tagSmeStruct {
 	tDblLinkList smeCmdActiveList;
 	tDblLinkList smeCmdPendingList;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
-	tCDF_CON_MODE currDeviceMode;
+	enum tCDF_ADAPTER_MODE currDeviceMode;
 #ifdef FEATURE_WLAN_LPHB
 	void (*pLphbIndCb)(void *pHddCtx, tSirLPHBInd *indParam);
 #endif /* FEATURE_WLAN_LPHB */

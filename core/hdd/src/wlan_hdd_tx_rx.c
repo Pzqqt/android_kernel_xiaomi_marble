@@ -305,7 +305,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif /* QCA_PKT_PROTO_TRACE */
 
 #ifdef QCA_WIFI_FTM
-	if (hdd_get_conparam() == CDF_FTM_MODE) {
+	if (hdd_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 		kfree_skb(skb);
 		return NETDEV_TX_OK;
 	}

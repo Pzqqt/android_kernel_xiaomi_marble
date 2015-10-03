@@ -655,7 +655,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	struct mgmt_frm_reg_info *pLimMgmtRegistration = NULL;
 
-	if (CDF_FTM_MODE != cds_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
 		cdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
 		while (cdf_list_remove_front(
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,

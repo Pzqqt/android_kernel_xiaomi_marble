@@ -586,7 +586,7 @@ typedef struct sSirSmeStartBssReq {
 	uint32_t dtimPeriod;
 	uint8_t wps_state;
 	uint8_t isCoalesingInIBSSAllowed;       /* Coalesing on/off knob */
-	tCDF_CON_MODE bssPersona;
+	enum tCDF_ADAPTER_MODE bssPersona;
 
 	uint8_t txLdpcIniFeatureEnabled;
 
@@ -914,7 +914,7 @@ typedef struct sSirSmeJoinReq {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	tCDF_CON_MODE staPersona;       /* Persona */
+	enum tCDF_ADAPTER_MODE staPersona;       /* Persona */
 	ePhyChanBondState cbMode;       /* Pass CB mode value in Join. */
 
 	/*This contains the UAPSD Flag for all 4 AC
@@ -3695,7 +3695,7 @@ typedef struct {
 typedef struct sSirRateUpdateInd {
 	uint8_t nss;            /* 0: 1x1, 1: 2x2 */
 	struct cdf_mac_addr bssid;
-	tCDF_CON_MODE dev_mode;
+	enum tCDF_ADAPTER_MODE dev_mode;
 	int32_t bcastDataRate;  /* bcast rate unit Mbpsx10, -1:not used */
 	/*
 	 * 0 implies RA, positive value implies fixed rate, -1 implies ignore

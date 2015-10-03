@@ -465,9 +465,10 @@ struct cds_conc_connection_info {
 
 bool cds_is_connection_in_progress(hdd_context_t *hdd_ctx);
 void cds_dump_concurrency_info(hdd_context_t *pHddCtx);
-void cds_set_concurrency_mode(hdd_context_t *pHddCtx, tCDF_CON_MODE mode);
+void cds_set_concurrency_mode(hdd_context_t *hdd_ctx,
+			     enum tCDF_ADAPTER_MODE mode);
 void cds_clear_concurrency_mode(hdd_context_t *pHddCtx,
-				     tCDF_CON_MODE mode);
+			       enum tCDF_ADAPTER_MODE mode);
 uint32_t cds_get_connection_count(hdd_context_t *hdd_ctx);
 /**
  * cds_is_sta_connection_pending() - This function will check if sta connection
@@ -659,12 +660,14 @@ static inline void cds_check_and_restart_sap_with_non_dfs_acs(
 
 }
 #endif /* FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE */
-void cds_incr_active_session(hdd_context_t *pHddCtx, tCDF_CON_MODE mode,
+void cds_incr_active_session(hdd_context_t *pHddCtx,
+				enum tCDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
-void cds_decr_active_session(hdd_context_t *pHddCtx, tCDF_CON_MODE mode,
+void cds_decr_active_session(hdd_context_t *pHddCtx,
+				enum tCDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
 void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
-		tCDF_CON_MODE mode,
+		enum tCDF_ADAPTER_MODE mode,
 		uint8_t session_id);
 CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx);
 CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
@@ -769,11 +772,11 @@ void cds_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t scan_config,
 		uint32_t fw_mode_config);
 bool cds_map_concurrency_mode(hdd_context_t *hdd_ctx,
-		tCDF_CON_MODE *old_mode, enum cds_con_mode *new_mode);
+		enum tCDF_ADAPTER_MODE *old_mode, enum cds_con_mode *new_mode);
 CDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile, uint8_t *channel);
 
-tCDF_CON_MODE cds_get_conparam(void);
+enum tCDF_GLOBAL_CON_MODE cds_get_conparam(void);
 bool cds_concurrent_open_sessions_running(void);
 bool cds_max_concurrent_connections_reached(void);
 void cds_clear_concurrent_session_count(void);

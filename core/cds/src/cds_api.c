@@ -1548,7 +1548,7 @@ CDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
  *
  * Return: WMI vdev type
  */
-CDF_STATUS cds_get_vdev_types(tCDF_CON_MODE mode, uint32_t *type,
+CDF_STATUS cds_get_vdev_types(enum tCDF_ADAPTER_MODE mode, uint32_t *type,
 			      uint32_t *sub_type)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;

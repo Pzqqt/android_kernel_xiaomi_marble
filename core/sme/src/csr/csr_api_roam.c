@@ -263,7 +263,8 @@ void csr_roam_remove_entry_from_pe_stats_req_list(tpAniSirGlobal pMac,
 tListElem *csr_roam_find_in_pe_stats_req_list(tpAniSirGlobal pMac, uint32_t statsMask);
 CDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac);
 static uint32_t csr_find_ibss_session(tpAniSirGlobal pMac);
-static uint32_t csr_find_session_by_type(tpAniSirGlobal, tCDF_CON_MODE);
+static uint32_t csr_find_session_by_type(tpAniSirGlobal,
+					enum tCDF_ADAPTER_MODE);
 static bool csr_is_conn_allow_2g_band(tpAniSirGlobal pMac, uint32_t chnl);
 static bool csr_is_conn_allow_5g_band(tpAniSirGlobal pMac, uint32_t chnl);
 static CDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac, uint32_t sessionId,
@@ -4162,8 +4163,11 @@ CDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* Make sure we have the domain info for the BSS we try to connect to. */
 	/* Do we need to worry about sequence for OSs that are not Windows?? */
 	if (pBssDesc) {
-		if (csr_learn_11dcountry_information(pMac, pBssDesc, pIes, true)) {
-				csr_apply_country_information(pMac);
+		if ((CDF_SAP_MODE !=
+			csr_get_session_persona(pMac, sessionId)) &&
+			csr_learn_11dcountry_information(
+					pMac, pBssDesc, pIes, true)) {
+			csr_apply_country_information(pMac);
 		}
 		if ((csr_is11d_supported(pMac)) && pIes) {
 			if (!pIes->Country.present) {
@@ -18545,7 +18549,7 @@ void csr_init_operating_classes(tHalHandle hHal)
  * Return: session id for give session type.
  **/
 static uint32_t
-csr_find_session_by_type(tpAniSirGlobal mac_ctx, tCDF_CON_MODE type)
+csr_find_session_by_type(tpAniSirGlobal mac_ctx, enum tCDF_ADAPTER_MODE type)
 {
 	uint32_t i, session_id = CSR_SESSION_ID_INVALID;
 	tCsrRoamSession *session_ptr;

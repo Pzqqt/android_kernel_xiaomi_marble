@@ -652,7 +652,7 @@ void hif_pktlogmod_exit(void *hif_ctx)
 {
 	struct ol_softc *scn = hif_ctx;
 
-	if (scn && cds_get_conparam() != CDF_FTM_MODE &&
+	if (scn && cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
 	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam()) && scn->pkt_log_init) {
 		pktlogmod_exit(scn);
 		scn->pkt_log_init = false;
@@ -684,17 +684,12 @@ void hif_wlan_disable(void)
 	enum icnss_driver_mode mode;
 	uint32_t con_mode = cds_get_conparam();
 
-	switch (con_mode) {
-	case CDF_FTM_MODE:
+	if (CDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-		break;
-	case CDF_EPPING_MODE:
+	else if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
 		mode = ICNSS_EPPING;
-		break;
-	default:
+	else
 		mode = ICNSS_MISSION;
-		break;
-	}
 
 	icnss_wlan_disable(mode);
 }

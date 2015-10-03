@@ -451,7 +451,7 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
 {
 	tCsrRoamSession *session = NULL;
 	uint8_t i = 0;
-	tCDF_CON_MODE persona;
+	enum tCDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
@@ -855,7 +855,7 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 {
 	uint32_t i;
 	tCsrRoamSession *pSession = NULL;
-	tCDF_CON_MODE persona;
+	enum tCDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (CSR_IS_SESSION_VALID(pMac, i)
@@ -1888,10 +1888,10 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
  */
 CDF_STATUS
 csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
-			      tCDF_CON_MODE cur_bss_persona)
+			      enum tCDF_ADAPTER_MODE cur_bss_persona)
 {
 	uint32_t sessionid = 0;
-	tCDF_CON_MODE bss_persona;
+	enum tCDF_ADAPTER_MODE bss_persona;
 	eCsrConnectState connect_state, temp;
 	tCsrRoamSession *roam_session;
 
@@ -2096,10 +2096,11 @@ uint16_t csr_calculate_mcc_beacon_interval(tpAniSirGlobal pMac, uint16_t sta_bi,
 	return go_fbi;
 }
 
-CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
-					    uint16_t *beaconInterval,
-					    uint32_t cursessionId,
-					    tCDF_CON_MODE currBssPersona)
+CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
+					uint8_t channelId,
+					uint16_t *beaconInterval,
+					uint32_t cursessionId,
+					enum tCDF_ADAPTER_MODE currBssPersona)
 {
 	uint32_t sessionId = 0;
 	uint16_t new_beaconInterval = 0;
@@ -5716,4 +5717,25 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 	}
 
 	return true;
+}
+
+/**
+ * csr_get_session_persona() - get persona of a session
+ * @pmac: pointer to global MAC context
+ * @session_id: session id
+ *
+ * This function is to return the persona of a session
+ *
+ * Reture: enum tCDF_ADAPTER_MODE persona
+ */
+enum tCDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
+						uint32_t session_id)
+{
+	tCsrRoamSession *session = NULL;
+
+	session = CSR_GET_SESSION(pmac, session_id);
+	if (NULL == session || NULL == session->pCurRoamProfile)
+		return CDF_MAX_NO_OF_MODE;
+
+	return session->pCurRoamProfile->csrPersona;
 }
