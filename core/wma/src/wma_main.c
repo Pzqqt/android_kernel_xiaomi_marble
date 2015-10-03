@@ -1558,7 +1558,7 @@ CDF_STATUS wma_open(void *cds_context,
 
 	cdf_mem_zero(wma_handle, sizeof(t_wma_handle));
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_init(&wma_handle->pno_wake_lock, "wlan_pno_wl");
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -1645,7 +1645,7 @@ CDF_STATUS wma_open(void *cds_context,
 		goto err_wmi_handle;
 	}
 #if defined(QCA_WIFI_FTM)
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 
@@ -1951,7 +1951,7 @@ err_wmi_handle:
 
 err_wma_handle:
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -2676,7 +2676,7 @@ CDF_STATUS wma_start(void *cds_ctx)
 	 * Tx mgmt attach requires TXRX context which is not created
 	 * in FTM mode. So skip the TX mgmt attach.
 	 */
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		goto end;
 #endif /* QCA_WIFI_FTM */
 
@@ -2779,7 +2779,7 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	 * Tx mgmt detach requires TXRX context which is not created
 	 * in FTM mode. So skip the TX mgmt detach.
 	 */
-	if (cds_get_conparam() == CDF_FTM_MODE) {
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 		cdf_status = CDF_STATUS_SUCCESS;
 		goto end;
 	}
@@ -3044,7 +3044,7 @@ CDF_STATUS wma_close(void *cds_ctx)
 		wma_handle->saved_wmi_init_cmd.buf = NULL;
 	}
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -3083,7 +3083,7 @@ CDF_STATUS wma_close(void *cds_ctx)
 
 #if defined(QCA_WIFI_FTM)
 	/* Detach UTF and unregister the handler */
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		wma_utf_detach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 

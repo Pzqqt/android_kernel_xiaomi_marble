@@ -266,7 +266,7 @@ typedef enum {
 #define cdf_snprint       __cdf_snprint
 
 /**
- * typedef enum tCDF_CON_MODE - Concurrency role.
+ * enum tCDF_ADAPTER_MODE - adapter role.
  *
  * @CDF_STA_MODE: STA mode
  * @CDF_SAP_MODE: SAP mode
@@ -282,18 +282,35 @@ typedef enum {
  * These are generic IDs that identify the various roles
  * in the software system
  */
-typedef enum {
+enum tCDF_ADAPTER_MODE {
 	CDF_STA_MODE = 0,
 	CDF_SAP_MODE = 1,
 	CDF_P2P_CLIENT_MODE,
 	CDF_P2P_GO_MODE,
-	CDF_FTM_MODE = 5,
+	CDF_FTM_MODE,
 	CDF_IBSS_MODE,
 	CDF_P2P_DEVICE_MODE,
 	CDF_EPPING_MODE,
 	CDF_OCB_MODE,
 	CDF_MAX_NO_OF_MODE
-} tCDF_CON_MODE;
+};
+
+/**
+ * enum tCDF_GLOBAL_CON_MODE - global config mode when
+ * driver is loaded.
+ *
+ * @CDF_GLOBAL_MISSION_MODE: mission mode (STA, SAP...)
+ * @CDF_GLOBAL_FTM_MODE: FTM mode
+ * @CDF_GLOBAL_EPPING_MODE: EPPING mode
+ * @CDF_GLOBAL_MAX_MODE: Max place holder
+ */
+enum tCDF_GLOBAL_CON_MODE {
+	CDF_GLOBAL_MISSION_MODE,
+	CDF_GLOBAL_FTM_MODE = 5,
+	CDF_GLOBAL_EPPING_MODE = 8,
+	CDF_GLOBAL_MAX_MODE
+};
+
 
 #ifdef WLAN_OPEN_P2P_INTERFACE
 /* This should match with WLAN_MAX_INTERFACES */

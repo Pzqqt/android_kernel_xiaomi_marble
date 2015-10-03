@@ -3232,13 +3232,14 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 /**
  * cds_set_concurrency_mode() - To set concurrency mode
  * @hdd_ctx: HDD context
- * @mode: Concurrency mode
+ * @mode: adapter mode
  *
  * This routine is called to set the concurrency mode
  *
  * Return: NONE
  */
-void cds_set_concurrency_mode(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
+void cds_set_concurrency_mode(hdd_context_t *hdd_ctx,
+				enum tCDF_ADAPTER_MODE mode)
 {
 	switch (mode) {
 	case CDF_STA_MODE:
@@ -3260,14 +3261,14 @@ void cds_set_concurrency_mode(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
 /**
  * cds_clear_concurrency_mode() - To clear concurrency mode
  * @hdd_ctx: HDD context
- * @mode: Concurrency mode
+ * @mode: adapter mode
  *
  * This routine is called to clear the concurrency mode
  *
  * Return: NONE
  */
 void cds_clear_concurrency_mode(hdd_context_t *hdd_ctx,
-				     tCDF_CON_MODE mode)
+				     enum tCDF_ADAPTER_MODE mode)
 {
 	switch (mode) {
 	case CDF_STA_MODE:
@@ -3289,7 +3290,7 @@ void cds_clear_concurrency_mode(hdd_context_t *hdd_ctx,
 /**
  * cds_soc_set_pcl() - Sets PCL to FW
  * @hdd_ctx: HDD context
- * @mode: Connection mode
+ * @mode: adapter mode
  *
  * Fetches the PCL and sends the PCL to SME
  * module which in turn will send the WMI
@@ -3297,7 +3298,7 @@ void cds_clear_concurrency_mode(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
+static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, enum tCDF_ADAPTER_MODE mode)
 {
 	CDF_STATUS status;
 	enum cds_con_mode con_mode;
@@ -3344,7 +3345,7 @@ static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
 /**
  * cds_incr_active_session() - increments the number of active sessions
  * @hdd_ctx:	HDD Context
- * @mode:	Device mode
+ * @mode:	Adapter mode
  * @session_id: session ID for the connection session
  *
  * This function increments the number of active sessions maintained per device
@@ -3353,8 +3354,9 @@ static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
  *
  * Return: None
  */
-void cds_incr_active_session(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode,
-				  uint8_t session_id)
+void cds_incr_active_session(hdd_context_t *hdd_ctx,
+			     enum tCDF_ADAPTER_MODE mode,
+			     uint8_t session_id)
 {
 	/*
 	 * Need to aquire mutex as entire functionality in this function
@@ -3460,7 +3462,7 @@ static void cds_set_pcl_for_existing_combo(hdd_context_t *hdd_ctx,
 		enum cds_con_mode mode)
 {
 	struct cds_conc_connection_info info;
-	tCDF_CON_MODE pcl_mode;
+	enum tCDF_ADAPTER_MODE pcl_mode;
 
 	switch (mode) {
 	case CDS_STA_MODE:
@@ -3499,7 +3501,7 @@ static void cds_set_pcl_for_existing_combo(hdd_context_t *hdd_ctx,
 /**
  * cds_decr_session_set_pcl() - Decrement session count and set PCL
  * @hdd_ctx: HDD context
- * @mode: Connection mode
+ * @mode: Adapter mode
  * @session_id: Session id
  *
  * Decrements the active session count and sets the PCL if a STA connection
@@ -3508,7 +3510,7 @@ static void cds_set_pcl_for_existing_combo(hdd_context_t *hdd_ctx,
  * Return: None
  */
 void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
-						tCDF_CON_MODE mode,
+						enum tCDF_ADAPTER_MODE mode,
 						uint8_t session_id)
 {
 	CDF_STATUS cdf_status;
@@ -3549,8 +3551,8 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
 
 /**
  * cds_decr_active_session() - decrements the number of active sessions
- * @hdd_ctx:	HDD Context
- * @mode:	Device mode
+ * @hdd_ctx: HDD Context
+ * @mode: Adapter mode
  * @session_id: session ID for the connection session
  *
  * This function decrements the number of active sessions maintained per device
@@ -3559,7 +3561,8 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-void cds_decr_active_session(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode,
+void cds_decr_active_session(hdd_context_t *hdd_ctx,
+				enum tCDF_ADAPTER_MODE mode,
 				  uint8_t session_id)
 {
 	/*
@@ -4306,7 +4309,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 /**
  * cds_map_concurrency_mode() - to map concurrency mode between sme and hdd
  * @hdd_ctx: hdd context
- * @old_mode: sme provided concurrency mode
+ * @old_mode: sme provided adapter mode
  * @new_mode: hdd provided concurrency mode
  *
  * This routine will map concurrency mode between sme and hdd
@@ -4314,7 +4317,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
  * Return: true or false
  */
 bool cds_map_concurrency_mode(hdd_context_t *hdd_ctx,
-	tCDF_CON_MODE *old_mode, enum cds_con_mode *new_mode)
+	enum tCDF_ADAPTER_MODE *old_mode, enum cds_con_mode *new_mode)
 {
 	bool status = true;
 
@@ -5719,7 +5722,7 @@ static int __cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		cds_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -6773,7 +6776,7 @@ CDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter)
 
 	cds_info("UPDATE Beacon Params");
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
+	if (WLAN_HDD_SOFTAP == pHostapdAdapter->device_mode) {
 		hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 		if (NULL == hHal) {
 			cds_err("Hal ctx is null");
@@ -7277,11 +7280,11 @@ enum cds_con_mode cds_convert_device_mode_to_hdd_type(
  * Return the connection mode parameter set by insmod or set during statically
  * linked driver
  *
- * Return: tCDF_CON_MODE
+ * Return: enum tCDF_GLOBAL_CON_MODE
  */
-tCDF_CON_MODE cds_get_conparam(void)
+enum tCDF_GLOBAL_CON_MODE cds_get_conparam(void)
 {
-	tCDF_CON_MODE con_mode;
+	enum tCDF_GLOBAL_CON_MODE con_mode;
 	con_mode = hdd_get_conparam();
 	return con_mode;
 }

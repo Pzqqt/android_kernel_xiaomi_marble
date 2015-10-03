@@ -346,7 +346,7 @@ typedef struct tagCsrRoamStartBssParams {
 	uint8_t ApUapsdEnable;
 	uint8_t ssidHidden;
 	uint8_t wps_state;
-	tCDF_CON_MODE bssPersona;
+	enum tCDF_ADAPTER_MODE bssPersona;
 	uint16_t nRSNIELength;  /* If 0, pRSNIE is ignored. */
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
@@ -429,7 +429,7 @@ typedef struct tagWmStatusChangeCmd {
 typedef struct tagAddStaForSessionCmd {
 	/* Session self mac addr */
 	tSirMacAddr selfMacAddr;
-	tCDF_CON_MODE currDeviceMode;
+	enum tCDF_ADAPTER_MODE currDeviceMode;
 	uint32_t type;
 	uint32_t subType;
 	uint8_t sessionId;
@@ -1405,4 +1405,6 @@ CDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
 
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
+enum tCDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
+						uint32_t session_id);
 #endif

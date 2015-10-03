@@ -81,7 +81,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 		break;
 	case ATH_FIRMWARE_FILE:
 #ifdef QCA_WIFI_FTM
-		if (cds_get_conparam() == CDF_FTM_MODE) {
+		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 			hash = fw_hash.utf;
 			break;
 		}
@@ -173,7 +173,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 			break;
 		}
 #ifdef QCA_WIFI_FTM
-		if (cds_get_conparam() == CDF_FTM_MODE) {
+		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 #if defined(CONFIG_CNSS)
 			filename = scn->fw_files.utf_file;
 #else
@@ -201,7 +201,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		return 0;
 	case ATH_BOARD_DATA_FILE:
 #ifdef QCA_WIFI_FTM
-		if (cds_get_conparam() == CDF_FTM_MODE) {
+		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 #if defined(CONFIG_CNSS)
 			filename = scn->fw_files.utf_board_data;
 #else
@@ -225,7 +225,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 #endif
 		break;
 	case ATH_SETUP_FILE:
-		if (cds_get_conparam() != CDF_FTM_MODE &&
+		if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
 		    !WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
 #ifdef CONFIG_CNSS
 			BMI_INFO("%s: no Setup file defined", __func__);

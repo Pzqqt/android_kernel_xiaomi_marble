@@ -90,7 +90,7 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 			    void *pModuleContext);
 
-CDF_STATUS cds_get_vdev_types(tCDF_CON_MODE mode, uint32_t *type,
+CDF_STATUS cds_get_vdev_types(enum tCDF_ADAPTER_MODE mode, uint32_t *type,
 			      uint32_t *subType);
 
 void cds_flush_work(void *work);

@@ -408,7 +408,7 @@ typedef struct tagCsrScanResultFilter {
 	 */
 	uint8_t scan_filter_for_roam;
 	struct sCsrChannel_ pcl_channels;
-	tCDF_CON_MODE csrPersona;
+	enum tCDF_ADAPTER_MODE csrPersona;
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
@@ -951,7 +951,7 @@ typedef struct tagCsrRoamProfile {
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsrMobilityDomainInfo MDID;
 #endif
-	tCDF_CON_MODE csrPersona;
+	enum tCDF_ADAPTER_MODE csrPersona;
 	uint8_t disableDFSChSwitch;
 	/* addIe params */
 	tSirAddIeParams addIeParams;

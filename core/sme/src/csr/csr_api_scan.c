@@ -3559,9 +3559,6 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 	tDot11fBeaconIEs *pIesLocal = pIes;
 	bool useVoting = false;
 
-	if (CDF_SAP_MODE == cds_get_conparam())
-		return CDF_STATUS_SUCCESS;
-
 	if ((NULL == pSirBssDesc) && (NULL == pIes))
 		useVoting = true;
 

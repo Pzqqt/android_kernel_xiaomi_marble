@@ -530,14 +530,23 @@ typedef struct beacon_data_s {
 	int dtim_period;
 } beacon_data_t;
 
-/* MAINTAIN 1 - 1 CORRESPONDENCE WITH tCDF_CON_MODE */
+/**
+ * enum device_mode: Maintain one to one correspondence with tCDF_ADAPTER_MODE
+ * @WLAN_HDD_INFRA_STATION: station mode
+ * @WLAN_HDD_SOFTAP: sap mode
+ * @WLAN_HDD_P2P_CLIENT: p2p client mode
+ * @WLAN_HDD_P2P_GO: p2p go mode
+ * @WLAN_HDD_FTM: ftm mode
+ * @WLAN_HDD_IBSS: ibss mode
+ * @WLAN_HDD_P2P_DEVICE: p2p device mode
+ * @WLAN_HDD_OCB: ocb mode
+ */
 typedef enum device_mode {
 	WLAN_HDD_INFRA_STATION,
 	WLAN_HDD_SOFTAP,
 	WLAN_HDD_P2P_CLIENT,
 	WLAN_HDD_P2P_GO,
-	/* Mode 5 is reserved for FTM */
-	WLAN_HDD_FTM = 5,
+	WLAN_HDD_FTM,
 	WLAN_HDD_IBSS,
 	WLAN_HDD_P2P_DEVICE,
 	WLAN_HDD_OCB
@@ -1388,7 +1397,7 @@ void wlan_hdd_release_intf_addr(hdd_context_t *pHddCtx, uint8_t *releaseAddr);
 uint8_t hdd_get_operating_channel(hdd_context_t *pHddCtx, device_mode_t mode);
 
 void hdd_set_conparam(uint32_t con_param);
-tCDF_CON_MODE hdd_get_conparam(void);
+enum tCDF_GLOBAL_CON_MODE hdd_get_conparam(void);
 
 void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
 			eCsrAbortReason reason);

@@ -2550,7 +2550,7 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 	if (!msg_buffer)
 		return CDF_STATUS_E_INVAL;
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 		WMA_LOGE("FTM command issued in non-FTM mode");
 		cdf_mem_free(msg_buffer->data);
 		cdf_mem_free(msg_buffer);

@@ -6137,7 +6137,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -6275,7 +6275,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		goto exit;
 	}
 #if  defined(QCA_WIFI_FTM) && defined(LINUX_QCMBR)
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		if (SIOCIOCTLTX99 == cmd) {
 			ret = wlan_hdd_qcmbr_unified_ioctl(adapter, ifr);
 			goto exit;

@@ -526,9 +526,7 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 	 */
 	psap_ctx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
 
-	/*
-	 * Save a copy to SAP context
-	 */
+	/* Save a copy to SAP context */
 	cdf_mem_copy(psap_ctx->csr_roamProfile.BSSIDs.bssid,
 		pconfig->self_macaddr.bytes, CDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(psap_ctx->self_mac_addr,
@@ -540,11 +538,11 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 			"%s: Invalid MAC context from pvosGCtx", __func__);
 	} else {
 		/*
-		* If concurrent session is running that is already associated
-		* then we just follow that sessions country info (whether
-		* present or not doesn't maater as we have to follow whatever
-		* STA session does)
-		*/
+		 * If concurrent session is running that is already associated
+		 * then we just follow that sessions country info (whether
+		 * present or not doesn't maater as we have to follow whatever
+		 * STA session does)
+		 */
 		if ((0 == sme_get_concurrent_operation_channel(h_hal)) &&
 			pconfig->ieee80211d) {
 			/* Setting the region/country  information */
@@ -660,106 +658,102 @@ CDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 	    Sanity check
 	    Extract SAP control block
 	   ------------------------------------------------------------------------*/
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
 
+	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+		  "wlansap_start_bss: sapContext=%p", pSapCtx);
+
+	if (NULL == pSapCtx) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
-			  "wlansap_start_bss: sapContext=%p", pSapCtx);
-
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		pSapCtx->sapsMachine = eSAP_DISCONNECTED;
-
-		/* Channel selection is auto or configured */
-		pSapCtx->channel = pConfig->channel;
-		pSapCtx->ch_params.ch_width = pConfig->ch_params.ch_width;
-		pSapCtx->ch_params.center_freq_seg0 =
-			pConfig->ch_params.center_freq_seg0;
-		pSapCtx->ch_params.center_freq_seg1 =
-			pConfig->ch_params.center_freq_seg1;
-		pSapCtx->ch_params.sec_ch_offset =
-			pConfig->ch_params.sec_ch_offset;
-		pSapCtx->ch_width_orig = pConfig->ch_width_orig;
-#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-		pSapCtx->cc_switch_mode = pConfig->cc_switch_mode;
-#endif
-		pSapCtx->pUsrContext = pUsrContext;
-		pSapCtx->enableOverLapCh = pConfig->enOverLapCh;
-		pSapCtx->acs_cfg = &pConfig->acs_cfg;
-		/* Set the BSSID to your "self MAC Addr" read the mac address from Configuation ITEM received from HDD */
-		pSapCtx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
-		cdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
-			     pSapCtx->self_mac_addr, sizeof(struct cdf_mac_addr));
-
-		/* Save a copy to SAP context */
-		cdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
-			     pConfig->self_macaddr.bytes, CDF_MAC_ADDR_SIZE);
-		cdf_mem_copy(pSapCtx->self_mac_addr,
-			     pConfig->self_macaddr.bytes, CDF_MAC_ADDR_SIZE);
-
-		/* copy the configuration items to csrProfile */
-		sapconvert_to_csr_profile(pConfig, eCSR_BSS_TYPE_INFRA_AP,
-				       &pSapCtx->csr_roamProfile);
-		hHal = (tHalHandle) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Invalid MAC context from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		} else {
-			/* If concurrent session is running that is already associated */
-			/* then we just follow that sessions country info (whether */
-			/* present or not doesn't maater as we have to follow whatever */
-			/* STA session does) */
-			if ((0 == sme_get_concurrent_operation_channel(hHal)) &&
-			    pConfig->ieee80211d) {
-				/* Setting the region/country  information */
-				sme_set_reg_info(hHal, pConfig->countryCode);
-				sme_apply_channel_power_info_to_fw(hHal);
-			}
-		}
-
-		pmac = PMAC_STRUCT(hHal);
-		if (NULL == pmac) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Invalid MAC context from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		/*
-		 * Copy the DFS Test Mode setting to pmac for
-		 * access in lower layers
-		 */
-		pmac->sap.SapDfsInfo.disable_dfs_ch_switch =
-					pConfig->disableDFSChSwitch;
-
-		/* Copy MAC filtering settings to sap context */
-		pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
-		cdf_mem_copy(pSapCtx->acceptMacList, pConfig->accept_mac,
-			     sizeof(pConfig->accept_mac));
-		pSapCtx->nAcceptMac = pConfig->num_accept_mac;
-		sap_sort_mac_list(pSapCtx->acceptMacList, pSapCtx->nAcceptMac);
-		cdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
-			     sizeof(pConfig->deny_mac));
-		pSapCtx->nDenyMac = pConfig->num_deny_mac;
-		sap_sort_mac_list(pSapCtx->denyMacList, pSapCtx->nDenyMac);
-		/* Fill in the event structure for FSM */
-		sapEvent.event = eSAP_HDD_START_INFRA_BSS;
-		sapEvent.params = 0;    /* pSapPhysLinkCreate */
-
-		/* Store the HDD callback in SAP context */
-		pSapCtx->pfnSapEventCallback = pSapEventCallback;
-
-		/* Handle event */
-		cdf_status = sap_fsm(pSapCtx, &sapEvent);
-	} else {
-		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-			  "SoftAp role has not been enabled");
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
 	}
+	pSapCtx->sapsMachine = eSAP_DISCONNECTED;
+
+	/* Channel selection is auto or configured */
+	pSapCtx->channel = pConfig->channel;
+	pSapCtx->ch_params.ch_width = pConfig->ch_params.ch_width;
+	pSapCtx->ch_params.center_freq_seg0 =
+		pConfig->ch_params.center_freq_seg0;
+	pSapCtx->ch_params.center_freq_seg1 =
+		pConfig->ch_params.center_freq_seg1;
+	pSapCtx->ch_params.sec_ch_offset =
+		pConfig->ch_params.sec_ch_offset;
+	pSapCtx->ch_width_orig = pConfig->ch_width_orig;
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+	pSapCtx->cc_switch_mode = pConfig->cc_switch_mode;
+#endif
+	pSapCtx->pUsrContext = pUsrContext;
+	pSapCtx->enableOverLapCh = pConfig->enOverLapCh;
+	pSapCtx->acs_cfg = &pConfig->acs_cfg;
+	/* Set the BSSID to your "self MAC Addr" read the mac address
+		from Configuation ITEM received from HDD */
+	pSapCtx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
+	cdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
+		     pSapCtx->self_mac_addr, sizeof(struct cdf_mac_addr));
+
+	/* Save a copy to SAP context */
+	cdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
+		     pConfig->self_macaddr.bytes, CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(pSapCtx->self_mac_addr,
+		     pConfig->self_macaddr.bytes, CDF_MAC_ADDR_SIZE);
+
+	/* copy the configuration items to csrProfile */
+	sapconvert_to_csr_profile(pConfig, eCSR_BSS_TYPE_INFRA_AP,
+			       &pSapCtx->csr_roamProfile);
+	hHal = (tHalHandle) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == hHal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: Invalid MAC context from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	} else {
+		/* If concurrent session is running that is already associated
+		 * then we just follow that sessions country info (whether
+		 * present or not doesn't maater as we have to follow whatever
+		 * STA session does) */
+		if ((0 == sme_get_concurrent_operation_channel(hHal)) &&
+		    pConfig->ieee80211d) {
+			/* Setting the region/country  information */
+			sme_set_reg_info(hHal, pConfig->countryCode);
+			sme_apply_channel_power_info_to_fw(hHal);
+		}
+	}
+
+	pmac = PMAC_STRUCT(hHal);
+	if (NULL == pmac) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: Invalid MAC context from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	/*
+	 * Copy the DFS Test Mode setting to pmac for
+	 * access in lower layers
+	 */
+	pmac->sap.SapDfsInfo.disable_dfs_ch_switch =
+				pConfig->disableDFSChSwitch;
+
+	/* Copy MAC filtering settings to sap context */
+	pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
+	cdf_mem_copy(pSapCtx->acceptMacList, pConfig->accept_mac,
+		     sizeof(pConfig->accept_mac));
+	pSapCtx->nAcceptMac = pConfig->num_accept_mac;
+	sap_sort_mac_list(pSapCtx->acceptMacList, pSapCtx->nAcceptMac);
+	cdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
+		     sizeof(pConfig->deny_mac));
+	pSapCtx->nDenyMac = pConfig->num_deny_mac;
+	sap_sort_mac_list(pSapCtx->denyMacList, pSapCtx->nDenyMac);
+	/* Fill in the event structure for FSM */
+	sapEvent.event = eSAP_HDD_START_INFRA_BSS;
+	sapEvent.params = 0;    /* pSapPhysLinkCreate */
+
+	/* Store the HDD callback in SAP context */
+	pSapCtx->pfnSapEventCallback = pSapEventCallback;
+
+	/* Handle event */
+	cdf_status = sap_fsm(pSapCtx, &sapEvent);
 
 	return cdf_status;
 } /* wlansap_start_bss */
@@ -787,35 +781,29 @@ CDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_set_mac_acl");
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		/* Copy MAC filtering settings to sap context */
-		pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
-
-		if (eSAP_DENY_UNLESS_ACCEPTED == pSapCtx->eSapMacAddrAclMode) {
-			cdf_mem_copy(pSapCtx->acceptMacList,
-				     pConfig->accept_mac,
-				     sizeof(pConfig->accept_mac));
-			pSapCtx->nAcceptMac = pConfig->num_accept_mac;
-			sap_sort_mac_list(pSapCtx->acceptMacList,
-				       pSapCtx->nAcceptMac);
-		} else if (eSAP_ACCEPT_UNLESS_DENIED ==
-			   pSapCtx->eSapMacAddrAclMode) {
-			cdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
-				     sizeof(pConfig->deny_mac));
-			pSapCtx->nDenyMac = pConfig->num_deny_mac;
-			sap_sort_mac_list(pSapCtx->denyMacList, pSapCtx->nDenyMac);
-		}
-	} else {
-		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-			  "%s : SoftAp role has not been enabled", __func__);
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
 		return CDF_STATUS_E_FAULT;
+	}
+	/* Copy MAC filtering settings to sap context */
+	pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
+
+	if (eSAP_DENY_UNLESS_ACCEPTED == pSapCtx->eSapMacAddrAclMode) {
+		cdf_mem_copy(pSapCtx->acceptMacList,
+			     pConfig->accept_mac,
+			     sizeof(pConfig->accept_mac));
+		pSapCtx->nAcceptMac = pConfig->num_accept_mac;
+		sap_sort_mac_list(pSapCtx->acceptMacList,
+			       pSapCtx->nAcceptMac);
+	} else if (eSAP_ACCEPT_UNLESS_DENIED ==
+		   pSapCtx->eSapMacAddrAclMode) {
+		cdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
+			     sizeof(pConfig->deny_mac));
+		pSapCtx->nDenyMac = pConfig->num_deny_mac;
+		sap_sort_mac_list(pSapCtx->denyMacList, pSapCtx->nDenyMac);
 	}
 
 	return cdf_status;
@@ -1727,31 +1715,27 @@ CDF_STATUS wlansap_set_key_sta(void *pCtx, tCsrRoamSetKey *pSetKeyInfo)
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 	uint32_t roamId = 0xFF;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid HAL pointer from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		cdf_ret_status =
-			sme_roam_set_key(hHal, pSapCtx->sessionId, pSetKeyInfo,
-					 &roamId);
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == hHal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid HAL pointer from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	cdf_ret_status =
+		sme_roam_set_key(hHal, pSapCtx->sessionId, pSetKeyInfo,
+				 &roamId);
 
-		if (cdf_ret_status == CDF_STATUS_SUCCESS) {
-			cdf_status = CDF_STATUS_SUCCESS;
-		} else {
-			cdf_status = CDF_STATUS_E_FAULT;
-		}
-	} else
+	if (cdf_ret_status == CDF_STATUS_SUCCESS)
+		cdf_status = CDF_STATUS_SUCCESS;
+	else
 		cdf_status = CDF_STATUS_E_FAULT;
 
 	return cdf_status;
@@ -1775,15 +1759,6 @@ wlan_sap_getstation_ie_information
 	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
 	ptSapContext sap_ctx = NULL;
 	uint32_t ie_len = 0;
-	tCDF_CON_MODE mode;
-
-	mode = cds_get_conparam();
-	if (CDF_SAP_MODE != mode) {
-		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-			"%d: called in wrong mode ",
-			mode);
-		return CDF_STATUS_E_FAULT;
-	}
 
 	sap_ctx = CDS_GET_SAP_CB(ctx);
 	if (NULL == sap_ctx) {
@@ -1831,44 +1806,41 @@ CDF_STATUS wlansap_set_wps_ie(void *pCtx, tSap_WPSIE *pSap_WPSIe)
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
 		  "%s, %d", __func__, __LINE__);
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid HAL pointer from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == hHal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid HAL pointer from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		if (sap_acquire_global_lock(pSapCtx) == CDF_STATUS_SUCCESS) {
-			if (pSap_WPSIe->sapWPSIECode == eSAP_WPS_BEACON_IE) {
-				cdf_mem_copy(&pSapCtx->APWPSIEs.SirWPSBeaconIE,
-					     &pSap_WPSIe->sapwpsie.
-					     sapWPSBeaconIE,
-					     sizeof(tSap_WPSBeaconIE));
-			} else if (pSap_WPSIe->sapWPSIECode ==
-				   eSAP_WPS_PROBE_RSP_IE) {
-				cdf_mem_copy(&pSapCtx->APWPSIEs.
-					     SirWPSProbeRspIE,
-					     &pSap_WPSIe->sapwpsie.
-					     sapWPSProbeRspIE,
-					     sizeof(tSap_WPSProbeRspIE));
-			} else {
-				sap_release_global_lock(pSapCtx);
-				return CDF_STATUS_E_FAULT;
-			}
+	if (sap_acquire_global_lock(pSapCtx) == CDF_STATUS_SUCCESS) {
+		if (pSap_WPSIe->sapWPSIECode == eSAP_WPS_BEACON_IE) {
+			cdf_mem_copy(&pSapCtx->APWPSIEs.SirWPSBeaconIE,
+				     &pSap_WPSIe->sapwpsie.
+				     sapWPSBeaconIE,
+				     sizeof(tSap_WPSBeaconIE));
+		} else if (pSap_WPSIe->sapWPSIECode ==
+			   eSAP_WPS_PROBE_RSP_IE) {
+			cdf_mem_copy(&pSapCtx->APWPSIEs.
+				     SirWPSProbeRspIE,
+				     &pSap_WPSIe->sapwpsie.
+				     sapWPSProbeRspIE,
+				     sizeof(tSap_WPSProbeRspIE));
+		} else {
 			sap_release_global_lock(pSapCtx);
-			return CDF_STATUS_SUCCESS;
-		} else
 			return CDF_STATUS_E_FAULT;
+		}
+		sap_release_global_lock(pSapCtx);
+		return CDF_STATUS_SUCCESS;
 	} else
 		return CDF_STATUS_E_FAULT;
 }
@@ -1894,34 +1866,30 @@ CDF_STATUS wlansap_update_wps_ie(void *pCtx)
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 		  "%s, %d", __func__, __LINE__);
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid HAL pointer from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-
-		cdf_ret_status =
-			sme_roam_update_apwpsie(hHal, pSapCtx->sessionId,
-						&pSapCtx->APWPSIEs);
-
-		if (cdf_ret_status == CDF_STATUS_SUCCESS) {
-			cdf_status = CDF_STATUS_SUCCESS;
-		} else {
-			cdf_status = CDF_STATUS_E_FAULT;
-		}
-
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
 	}
+
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == hHal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid HAL pointer from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+
+	cdf_ret_status =
+		sme_roam_update_apwpsie(hHal, pSapCtx->sessionId,
+					&pSapCtx->APWPSIEs);
+
+	if (cdf_ret_status == CDF_STATUS_SUCCESS)
+		cdf_status = CDF_STATUS_SUCCESS;
+	else
+		cdf_status = CDF_STATUS_E_FAULT;
 
 	return cdf_status;
 }
@@ -1947,37 +1915,33 @@ CDF_STATUS wlansap_get_wps_state(void *pCtx, bool *bWPSState)
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
 		  "%s, %d", __func__, __LINE__);
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == hHal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid HAL pointer from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid HAL pointer from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
+	if (sap_acquire_global_lock(pSapCtx) == CDF_STATUS_SUCCESS) {
+		if (pSapCtx->APWPSIEs.SirWPSProbeRspIE.
+		    FieldPresent &
+		    SIR_WPS_PROBRSP_SELECTEDREGISTRA_PRESENT)
+			*bWPSState = true;
+		else
+			*bWPSState = false;
 
-		if (sap_acquire_global_lock(pSapCtx) == CDF_STATUS_SUCCESS) {
-			if (pSapCtx->APWPSIEs.SirWPSProbeRspIE.
-			    FieldPresent &
-			    SIR_WPS_PROBRSP_SELECTEDREGISTRA_PRESENT)
-				*bWPSState = true;
-			else
-				*bWPSState = false;
+		sap_release_global_lock(pSapCtx);
 
-			sap_release_global_lock(pSapCtx);
-
-			return CDF_STATUS_SUCCESS;
-		} else
-			return CDF_STATUS_E_FAULT;
+		return CDF_STATUS_SUCCESS;
 	} else
 		return CDF_STATUS_E_FAULT;
 
@@ -2025,37 +1989,34 @@ CDF_STATUS wlansap_set_wparsn_ies
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid HAL pointer from p_cds_gctx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-
-		pSapCtx->APWPARSNIEs.length = (uint16_t) WPARSNIEsLen;
-		cdf_mem_copy(pSapCtx->APWPARSNIEs.rsnIEdata, pWPARSNIEs,
-			     WPARSNIEsLen);
-
-		cdf_ret_status =
-			sme_roam_update_apwparsni_es(hHal, pSapCtx->sessionId,
-						     &pSapCtx->APWPARSNIEs);
-
-		if (cdf_ret_status == CDF_STATUS_SUCCESS) {
-			return CDF_STATUS_SUCCESS;
-		} else {
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
 	}
+
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (NULL == hHal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid HAL pointer from p_cds_gctx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+
+	pSapCtx->APWPARSNIEs.length = (uint16_t) WPARSNIEsLen;
+	cdf_mem_copy(pSapCtx->APWPARSNIEs.rsnIEdata, pWPARSNIEs,
+		     WPARSNIEsLen);
+
+	cdf_ret_status =
+		sme_roam_update_apwparsni_es(hHal, pSapCtx->sessionId,
+					     &pSapCtx->APWPARSNIEs);
+
+	if (cdf_ret_status == CDF_STATUS_SUCCESS)
+		return CDF_STATUS_SUCCESS;
+	else
+		return CDF_STATUS_E_FAULT;
 
 	return CDF_STATUS_E_FAULT;
 }
@@ -2080,29 +2041,27 @@ CDF_STATUS wlansap_send_action(void *pCtx, const uint8_t *pBuf,
 	void *hHal = NULL;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
-				  __func__, hHal, pSapCtx->isSapSessionOpen);
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
+			  __func__, hHal, pSapCtx->isSapSessionOpen);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		cdf_ret_status =
-			sme_send_action(hHal, pSapCtx->sessionId, pBuf, len, 0,
-			0, channel_freq);
+	cdf_ret_status =
+		sme_send_action(hHal, pSapCtx->sessionId, pBuf, len, 0,
+		0, channel_freq);
 
-		if (CDF_STATUS_SUCCESS == cdf_ret_status) {
-			return CDF_STATUS_SUCCESS;
-		}
+	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
+		return CDF_STATUS_SUCCESS;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -2136,29 +2095,27 @@ CDF_STATUS wlansap_remain_on_channel(void *pCtx,
 	void *hHal = NULL;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
-				  __func__, hHal, pSapCtx->isSapSessionOpen);
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
+			  __func__, hHal, pSapCtx->isSapSessionOpen);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		cdf_ret_status = sme_remain_on_channel(hHal, pSapCtx->sessionId,
-					channel, duration, callback, pContext,
-					true, scan_id);
+	cdf_ret_status = sme_remain_on_channel(hHal, pSapCtx->sessionId,
+				channel, duration, callback, pContext,
+				true, scan_id);
 
-		if (CDF_STATUS_SUCCESS == cdf_ret_status) {
-			return CDF_STATUS_SUCCESS;
-		}
+	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
+		return CDF_STATUS_SUCCESS;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -2185,30 +2142,28 @@ CDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 	void *hHal = NULL;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if ((NULL == hHal) ||
-			(eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
-				  __func__, hHal, pSapCtx->isSapSessionOpen);
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if ((NULL == hHal) ||
+		(eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
+			  __func__, hHal, pSapCtx->isSapSessionOpen);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		cdf_ret_status =
-			sme_cancel_remain_on_channel(hHal, pSapCtx->sessionId,
-			scan_id);
+	cdf_ret_status =
+		sme_cancel_remain_on_channel(hHal, pSapCtx->sessionId,
+		scan_id);
 
-		if (CDF_STATUS_SUCCESS == cdf_ret_status) {
-			return CDF_STATUS_SUCCESS;
-		}
+	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
+		return CDF_STATUS_SUCCESS;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -2238,29 +2193,27 @@ CDF_STATUS wlansap_register_mgmt_frame
 	void *hHal = NULL;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
-				  __func__, hHal, pSapCtx->isSapSessionOpen);
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
+			  __func__, hHal, pSapCtx->isSapSessionOpen);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		cdf_ret_status = sme_register_mgmt_frame(hHal, pSapCtx->sessionId,
-							 frameType, matchData,
-							 matchLen);
+	cdf_ret_status = sme_register_mgmt_frame(hHal, pSapCtx->sessionId,
+						 frameType, matchData,
+						 matchLen);
 
-		if (CDF_STATUS_SUCCESS == cdf_ret_status) {
-			return CDF_STATUS_SUCCESS;
-		}
+	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
+		return CDF_STATUS_SUCCESS;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -2290,29 +2243,27 @@ CDF_STATUS wlansap_de_register_mgmt_frame
 	void *hHal = NULL;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 
-	if (CDF_SAP_MODE == cds_get_conparam()) {
-		pSapCtx = CDS_GET_SAP_CB(pCtx);
-		if (NULL == pSapCtx) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Invalid SAP pointer from pCtx",
-				  __func__);
-			return CDF_STATUS_E_FAULT;
-		}
-		hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
-		if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-				  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
-				  __func__, hHal, pSapCtx->isSapSessionOpen);
-			return CDF_STATUS_E_FAULT;
-		}
+	pSapCtx = CDS_GET_SAP_CB(pCtx);
+	if (NULL == pSapCtx) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Invalid SAP pointer from pCtx",
+			  __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+	hHal = CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if ((NULL == hHal) || (eSAP_TRUE != pSapCtx->isSapSessionOpen)) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			  "%s: HAL pointer (%p) NULL OR SME session is not open (%d)",
+			  __func__, hHal, pSapCtx->isSapSessionOpen);
+		return CDF_STATUS_E_FAULT;
+	}
 
-		cdf_ret_status =
-			sme_deregister_mgmt_frame(hHal, pSapCtx->sessionId, frameType,
-						  matchData, matchLen);
+	cdf_ret_status =
+		sme_deregister_mgmt_frame(hHal, pSapCtx->sessionId, frameType,
+					  matchData, matchLen);
 
-		if (CDF_STATUS_SUCCESS == cdf_ret_status) {
-			return CDF_STATUS_SUCCESS;
-		}
+	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
+		return CDF_STATUS_SUCCESS;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,

@@ -3297,7 +3297,7 @@ CDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 	tp_wma_handle wma_handle;
 
 #ifdef QCA_WIFI_FTM
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		return CDF_STATUS_SUCCESS;
 #endif
 

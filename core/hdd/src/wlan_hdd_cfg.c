@@ -6516,9 +6516,7 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.fFirstScanOnly2GChnl =
 		pConfig->enableFirstScan2GOnly;
 
-	/* FIXME 11d config is hardcoded */
-	if (CDF_SAP_MODE != hdd_get_conparam())
-		smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
+	smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
 
 	hdd_set_power_save_offload_config(pHddCtx);
 

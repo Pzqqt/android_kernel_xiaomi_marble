@@ -7822,8 +7822,8 @@ CDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
    \- return CDF_STATUS
    ---------------------------------------------------------------------------*/
 CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
-			    struct cdf_mac_addr pBSSId,
-			    tCDF_CON_MODE dev_mode, int dBm)
+			   struct cdf_mac_addr pBSSId,
+			   enum tCDF_ADAPTER_MODE dev_mode, int dBm)
 {
 	cds_msg_t msg;
 	tpMaxTxPowerParams pTxParams = NULL;
@@ -10428,7 +10428,8 @@ ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value)
    \param currDeviceMode - Current operating device mode.
    --------------------------------------------------------------------------*/
 
-void sme_set_curr_device_mode(tHalHandle hHal, tCDF_CON_MODE currDeviceMode)
+void sme_set_curr_device_mode(tHalHandle hHal,
+				enum tCDF_ADAPTER_MODE currDeviceMode)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	pMac->sme.currDeviceMode = currDeviceMode;

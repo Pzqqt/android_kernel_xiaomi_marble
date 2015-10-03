@@ -548,7 +548,7 @@ int memdump_init(void)
 		return -EINVAL;
 	}
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Not initializing memdump in FTM mode"));
 		return -EINVAL;
 	}
@@ -602,7 +602,7 @@ void memdump_deinit(void)
 		return;
 	}
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Not deinitializing memdump in FTM mode"));
 		return;
 	}

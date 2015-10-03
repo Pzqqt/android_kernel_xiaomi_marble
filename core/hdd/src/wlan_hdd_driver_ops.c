@@ -316,7 +316,7 @@ static void wlan_hdd_shutdown(void)
 	/* this is for cases, where shutdown invoked from CNSS */
 	cds_set_logp_in_progress(true);
 
-	if (cds_get_conparam() != CDF_FTM_MODE &&
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
 	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
 		hif_pktlogmod_exit(hif_ctx);
 
