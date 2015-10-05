@@ -347,8 +347,9 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			return NETDEV_TX_OK;
 		}
 	} else {
-		if (eConnectionState_Associated !=
-		    pHddStaCtx->conn_info.connState) {
+		if (WLAN_HDD_OCB != pAdapter->device_mode &&
+			eConnectionState_Associated !=
+				pHddStaCtx->conn_info.connState) {
 			CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
 				FL("Tx frame in not associated state in %d context"),
 				pAdapter->device_mode);
