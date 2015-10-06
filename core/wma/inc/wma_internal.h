@@ -463,7 +463,37 @@ bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef QCA_IBSS_SUPPORT
 bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+#else
+/**
+ * wma_is_vdev_in_ibss_mode(): dummy function
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return false since no vdev can be in ibss mode without ibss support
+ */
+static inline
+bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+{
+	return false;
+}
 #endif
+
+/**
+ * wma_is_vdev_in_beaconning_mode() - check if vdev is in a beaconning mode
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Helper function to know whether given vdev id
+ * is in a beaconning mode or not.
+ *
+ * Return: True if vdev needs to beacon.
+ */
+static inline
+bool wma_is_vdev_in_beaconning_mode(tp_wma_handle wma, uint8_t vdev_id)
+{
+	return wma_is_vdev_in_ap_mode(wma, vdev_id) ||
+		wma_is_vdev_in_ibss_mode(wma, vdev_id);
+}
 
 /**
  * wma_find_bssid_by_vdev_id() - Get the BSS ID corresponding to the vdev ID

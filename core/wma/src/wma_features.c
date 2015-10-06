@@ -3391,12 +3391,7 @@ void wma_register_wow_default_patterns(WMA_HANDLE handle, uint8_t vdev_id)
 	iface = &wma->interfaces[vdev_id];
 
 	if (iface->ptrn_match_enable) {
-		if (wma_is_vdev_in_ap_mode(wma, vdev_id)
-#ifdef QCA_IBSS_SUPPORT
-			||
-			wma_is_vdev_in_ibss_mode(wma, vdev_id)
-#endif
-			) {
+		if (wma_is_vdev_in_beaconning_mode(wma, vdev_id)) {
 			/* Configure SAP/GO/IBSS mode default wow patterns */
 			WMA_LOGI("Config SAP specific default wow patterns vdev_id %d",
 				 vdev_id);
@@ -3985,10 +3980,7 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 	 *  4) Is Extscan in progress in any one of vdev ?
 	 */
 	for (i = 0; i < wma->max_bssid; i++) {
-		if ((wma_is_vdev_in_ap_mode(wma, i)
-#ifdef QCA_IBSS_SUPPORT
-		     || wma_is_vdev_in_ibss_mode(wma, i)
-#endif /* QCA_IBSS_SUPPORT */
+		if ((wma_is_vdev_in_beaconning_mode(wma, i)
 		     ) && wma->interfaces[i].vdev_up &&
 		    WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 					   WMI_SERVICE_BEACON_OFFLOAD)) {
