@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -152,7 +152,6 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 	return false;
 }
 #endif /* QCA_IBSS_SUPPORT */
-
 
 /**
  * wma_find_vdev_by_bssid() - Get the corresponding vdev_id from BSSID
@@ -1078,13 +1077,11 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	wmi_unified_peer_flush_tids_send(wma->wmi_handle, bssid,
 					 peer_tid_bitmap, vdev_id);
 
-#if defined(QCA_IBSS_SUPPORT)
 	if ((peer) && (wma_is_vdev_in_ibss_mode(wma, vdev_id))) {
 		WMA_LOGD("%s: bssid %pM peer->mac_addr %pM", __func__,
 			 bssid, peer->mac_addr.raw);
 		peer_addr = peer->mac_addr.raw;
 	}
-#endif /* QCA_IBSS_SUPPORT */
 
 	wmi_unified_peer_delete_send(wma->wmi_handle, peer_addr, vdev_id);
 #undef PEER_ALL_TID_BITMASK
@@ -1179,7 +1176,6 @@ CDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 	WMA_LOGE("%s: Created peer with peer_addr %pM vdev_id %d, peer_count - %d",
 		__func__, peer_addr, vdev_id, wma->interfaces[vdev_id].peer_count);
 
-#ifdef QCA_IBSS_SUPPORT
 	/* for each remote ibss peer, clear its keys */
 	if (wma_is_vdev_in_ibss_mode(wma, vdev_id) &&
 	    !cdf_mem_compare(peer_addr, vdev->mac_addr.raw,
@@ -1196,7 +1192,6 @@ CDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 
 		wma_set_stakey(wma, &key_info);
 	}
-#endif /* QCA_IBSS_SUPPORT */
 
 	return CDF_STATUS_SUCCESS;
 err:
@@ -1289,7 +1284,22 @@ static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 	wma_remove_peer(wma, wma->interfaces[vdev_id].bssid, vdev_id, peer,
 			false);
 }
-
+#else
+/**
+ * wma_delete_all_ibss_peers(): dummy function for when ibss is not supported
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * This function send peer delete command to fw for all
+ * peers in peer_list  and remove ref count for peer id
+ * peer will actually remove from list after receving
+ * unmap event from firmware.
+ *
+ * Return: none
+ */
+static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
+{
+}
 #endif /* QCA_IBSS_SUPPORT */
 
 /**
@@ -1404,6 +1414,20 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	else
 		WMA_LOGA("IBSS BSS peer created with mac %pM",
 			 vdev->mac_addr.raw);
+}
+#else
+/**
+ * wma_recreate_ibss_vdev_and_bss_peer() - dummy function
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Dummy for when IBSS not supported
+ *
+ * Return: none
+ */
+static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
+						uint8_t vdev_id)
+{
 }
 #endif /* QCA_IBSS_SUPPORT */
 
@@ -1568,11 +1592,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			status = -EINVAL;
 			goto free_req_msg;
 		}
-#ifdef QCA_IBSS_SUPPORT
 		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
 			wma_delete_all_ibss_peers(wma, resp_event->vdev_id);
 		else
-#endif /* QCA_IBSS_SUPPORT */
 		{
 			if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
 				wma_delete_all_ap_remote_peers(wma,
@@ -1619,12 +1641,12 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			cdf_mem_free(bcn);
 			wma->interfaces[resp_event->vdev_id].beacon = NULL;
 		}
-#ifdef QCA_IBSS_SUPPORT
+
 		/* recreate ibss vdev and bss peer for scan purpose */
 		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
 			wma_recreate_ibss_vdev_and_bss_peer(wma,
 						resp_event->vdev_id);
-#endif /* QCA_IBSS_SUPPORT */
+
 		/* Timeout status means its WMA generated DEL BSS REQ when ADD
 		 * BSS REQ was timed out to stop the VDEV in this case no need
 		 * to send response to UMAC
@@ -2472,11 +2494,9 @@ void wma_vdev_resp_timer(void *data)
 			cdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
-#ifdef QCA_IBSS_SUPPORT
 		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
 			wma_delete_all_ibss_peers(wma, tgt_req->vdev_id);
 		else
-#endif /* QCA_IBSS_SUPPORT */
 		{
 			if (wma_is_vdev_in_ap_mode(wma, tgt_req->vdev_id)) {
 				wma_delete_all_ap_remote_peers(wma,
@@ -2522,12 +2542,12 @@ void wma_vdev_resp_timer(void *data)
 			cdf_mem_free(bcn);
 			wma->interfaces[tgt_req->vdev_id].beacon = NULL;
 		}
-#ifdef QCA_IBSS_SUPPORT
+
 		/* recreate ibss vdev and bss peer for scan purpose */
 		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
 			wma_recreate_ibss_vdev_and_bss_peer(wma,
 							    tgt_req->vdev_id);
-#endif /* QCA_IBSS_SUPPORT */
+
 		params->status = CDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_DELETE_BSS_REQ timedout", __func__);
 		wma_send_msg(wma, WMA_DELETE_BSS_RSP, (void *)params, 0);
@@ -4221,19 +4241,16 @@ void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 
 	if (wma_is_vdev_in_ap_mode(wma, add_sta->smesessionId))
 		oper_mode = BSS_OPERATIONAL_MODE_AP;
-#ifdef QCA_IBSS_SUPPORT
 	else if (wma_is_vdev_in_ibss_mode(wma, add_sta->smesessionId))
 		oper_mode = BSS_OPERATIONAL_MODE_IBSS;
-#endif
 
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
 		wma_add_sta_req_sta_mode(wma, add_sta);
 		break;
 
-#ifdef QCA_IBSS_SUPPORT
-	case BSS_OPERATIONAL_MODE_IBSS: /* IBSS should share the same code as AP mode */
-#endif
+	/* IBSS should share the same code as AP mode */
+	case BSS_OPERATIONAL_MODE_IBSS:
 	case BSS_OPERATIONAL_MODE_AP:
 		hif_vote_link_up();
 		wma_add_sta_req_ap_mode(wma, add_sta);
@@ -4263,21 +4280,17 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 
 	if (wma_is_vdev_in_ap_mode(wma, smesession_id))
 		oper_mode = BSS_OPERATIONAL_MODE_AP;
-#ifdef QCA_IBSS_SUPPORT
 	if (wma_is_vdev_in_ibss_mode(wma, smesession_id)) {
 		oper_mode = BSS_OPERATIONAL_MODE_IBSS;
 		WMA_LOGD("%s: to delete sta for IBSS mode", __func__);
 	}
-#endif
 
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
 		wma_delete_sta_req_sta_mode(wma, del_sta);
 		break;
 
-#ifdef QCA_IBSS_SUPPORT
 	case BSS_OPERATIONAL_MODE_IBSS: /* IBSS shares AP code */
-#endif
 	case BSS_OPERATIONAL_MODE_AP:
 		hif_vote_link_down();
 		wma_delete_sta_req_ap_mode(wma, del_sta);
@@ -4353,15 +4366,13 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		WMA_LOGE("%s:Unable to get TXRX context", __func__);
 		goto out;
 	}
-#ifdef QCA_IBSS_SUPPORT
 	if (wma_is_vdev_in_ibss_mode(wma, params->smesessionId))
 		/* in rome ibss case, self mac is used to create the bss peer */
 		peer = ol_txrx_find_peer_by_addr(pdev,
 			wma->interfaces[params->smesessionId].addr,
 			&peer_id);
 	else
-#endif
-	peer = ol_txrx_find_peer_by_addr(pdev, params->bssid, &peer_id);
+		peer = ol_txrx_find_peer_by_addr(pdev, params->bssid, &peer_id);
 
 	if (!peer) {
 		WMA_LOGP("%s: Failed to find peer %pM", __func__,

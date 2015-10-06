@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -954,9 +954,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	 * be the new peer address
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, params->smesessionId))
-#ifdef QCA_IBSS_SUPPORT
 	    || (wma_is_vdev_in_ibss_mode(wma, params->smesessionId))
-#endif /* QCA_IBSS_SUPPORT */
 #ifdef FEATURE_WLAN_TDLS
 	    || (STA_ENTRY_TDLS_PEER == params->staType)
 #endif /* FEATURE_WLAN_TDLS */
