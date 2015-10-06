@@ -4875,8 +4875,8 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		wma_wow_exit(wma_handle, (tpSirHalWowlExitParams) msg->bodyptr);
 		break;
 	case WMA_WLAN_SUSPEND_IND:
-		wma_suspend_req(wma_handle,
-				(tpSirWlanSuspendParam) msg->bodyptr);
+		wma_update_conn_state(wma_handle, msg->bodyval);
+		wma_suspend_req(wma_handle);
 		break;
 	case WMA_8023_MULTICAST_LIST_REQ:
 		wma_process_mcbc_set_filter_req(wma_handle,

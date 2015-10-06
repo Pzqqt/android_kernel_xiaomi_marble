@@ -736,7 +736,6 @@ struct wma_wow {
 	bool deauth_enable;
 	bool disassoc_enable;
 	bool bmiss_enable;
-	bool gtk_pdev_enable;
 	bool gtk_err_enable[WMA_MAX_SUPPORTED_BSS];
 #ifdef FEATURE_WLAN_LPHB
 	/* currently supports only vdev 0.

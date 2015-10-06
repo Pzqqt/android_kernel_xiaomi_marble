@@ -2663,12 +2663,6 @@ typedef struct sSirNoAParam {
 	uint8_t psSelection;
 } tSirNoAParam, *tpSirNoAParam;
 
-typedef struct sSirWlanSuspendParam {
-	uint8_t configuredMcstBcstFilterSetting;
-	uint8_t sessionId;
-	uint8_t connectedState;
-} tSirWlanSuspendParam, *tpSirWlanSuspendParam;
-
 typedef struct sSirWlanResumeParam {
 	uint8_t configuredMcstBcstFilterSetting;
 } tSirWlanResumeParam, *tpSirWlanResumeParam;

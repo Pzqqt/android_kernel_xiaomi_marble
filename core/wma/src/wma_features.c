@@ -3901,122 +3901,172 @@ CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 }
 
 /**
- * wma_suspend_req() -  Handles suspend indication request received from umac.
+ * wma_update_conn_state(): synchronize wma & hdd
  * @wma: wma handle
- * @info: suspend params
+ * @conn_state: boolean array to populate
+ * @len: validation parameter
  *
- * Return: CDF status
+ * populate interfaces conn_state with true if the interface
+ * is a connected client and wow will configure a pattern.
  */
-CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
+void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask)
 {
-	struct wma_txrx_node *iface;
-	bool connected = false, pno_in_progress = false;
-	uint8_t i;
-	bool extscan_in_progress = false;
-
-	wma->no_of_suspend_ind++;
-
-	if (info->sessionId > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id (%d)", info->sessionId);
-		cdf_mem_free(info);
-		return CDF_STATUS_E_INVAL;
-	}
-
-	iface = &wma->interfaces[info->sessionId];
-	if (!iface) {
-		WMA_LOGD("vdev %d node is not found", info->sessionId);
-		cdf_mem_free(info);
-		return CDF_STATUS_SUCCESS;
-	}
-
-	if (!wma->wow.magic_ptrn_enable && !iface->ptrn_match_enable) {
-		cdf_mem_free(info);
-
-		if (wma->no_of_suspend_ind == wma_get_vdev_count(wma)) {
-			WMA_LOGD("Both magic and pattern byte match are disabled");
-			wma->no_of_suspend_ind = 0;
-			goto send_ready_to_suspend;
-		}
-
-		return CDF_STATUS_SUCCESS;
-	}
-
-	iface->conn_state = (info->connectedState) ? true : false;
-
-	/*
-	 * Once WOW is enabled in FW, host can't send anymore
-	 * data to fw. umac sends suspend indication on each
-	 * vdev during platform suspend. WMA has to wait until
-	 * suspend indication received on last vdev before
-	 * enabling wow in fw.
-	 */
-	if (wma->no_of_suspend_ind < wma_get_vdev_count(wma)) {
-		cdf_mem_free(info);
-		return CDF_STATUS_SUCCESS;
-	}
-
-	wma->no_of_suspend_ind = 0;
-	wma->wow.gtk_pdev_enable = 0;
-	/*
-	 * Enable WOW if any one of the condition meets,
-	 *  1) Is any one of vdev in beaconning mode (in AP mode) ?
-	 *  2) Is any one of vdev in connected state (in STA mode) ?
-	 *  3) Is PNO in progress in any one of vdev ?
-	 *  4) Is Extscan in progress in any one of vdev ?
-	 */
+	int i;
 	for (i = 0; i < wma->max_bssid; i++) {
-		if ((wma_is_vdev_in_beaconning_mode(wma, i)
-		     ) && wma->interfaces[i].vdev_up &&
-		    WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-					   WMI_SERVICE_BEACON_OFFLOAD)) {
-			WMA_LOGD("vdev %d is in beaconning mode, enabling wow",
-				 i);
-			goto enable_wow;
-		}
+		if (conn_mask & (1 << i))
+			wma->interfaces[i].conn_state = true;
+		else
+			wma->interfaces[i].conn_state = false;
 	}
+
+	if (wma->wow.magic_ptrn_enable)
+		return;
+
 	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].conn_state) {
-			connected = true;
-			break;
-		}
+		if (!wma->interfaces[i].ptrn_match_enable)
+			wma->interfaces[i].conn_state = false;
+	}
+}
+
+/**
+ * wma_is_beaconning_vdev_up(): check if a beaconning vdev is up
+ * @wma: wma handle
+ *
+ * Return TRUE if beaconning vdev is up
+ */
+static inline
+bool wma_is_beaconning_vdev_up(tp_wma_handle wma)
+{
+	int i;
+	for (i = 0; i < wma->max_bssid; i++) {
+		if (wma_is_vdev_in_beaconning_mode(wma, i)
+				&& wma->interfaces[i].vdev_up)
+			return true;
+	}
+	return false;
+}
+
+/**
+ * wma_support_wow_for_beaconing: wow query for beaconning
+ * @wma: wma handle
+ *
+ * Need to configure wow to enable beaconning offload when
+ * a beaconing vdev is up and beaonning offload is configured.
+ *
+ * Return: true if we need to enable wow for beaconning offload
+ */
+static inline
+bool wma_support_wow_for_beaconing(tp_wma_handle wma)
+{
+	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+				WMI_SERVICE_BEACON_OFFLOAD)) {
+		if (wma_is_beaconning_vdev_up(wma))
+			return true;
+	}
+	return false;
+}
+
 #ifdef FEATURE_WLAN_SCAN_PNO
-		if (wma->interfaces[i].pno_in_progress) {
-			WMA_LOGD("PNO is in progress, enabling wow");
-			pno_in_progress = true;
-			break;
-		}
-#endif /* FEATURE_WLAN_SCAN_PNO */
-#ifdef FEATURE_WLAN_EXTSCAN
-		if (wma->interfaces[i].extscan_in_progress) {
-			WMA_LOGD("Extscan is in progress, enabling wow");
-			extscan_in_progress = true;
-			break;
-		}
+/**
+ * wma_is_pnoscan_in_progress(): check if a pnoscan is in progress
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool wma_is_pnoscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return wma->interfaces[vdev_id].pno_in_progress;
+}
+#else
+/**
+ * wma_is_pnoscan_in_progress(): dummy
+ *
+ * Return: False since no pnoscan can be in progress
+ * when feature flag is not defined.
+ */
+bool wma_is_pnoscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return FALSE;
+}
 #endif
-	}
-	for (i = 0; i < wma->max_bssid; i++) {
-		wma->wow.gtk_pdev_enable |= wma->wow.gtk_err_enable[i];
-		WMA_LOGD("VDEV_ID:%d, gtk_err_enable[%d]:%d, gtk_pdev_enable:%d", i,
-			i, wma->wow.gtk_err_enable[i], wma->wow.gtk_pdev_enable);
+
+#ifdef FEATURE_WLAN_EXTSCAN
+static inline
+/**
+ * wma_is_extscan_in_progress(): check if an extscan is in progress
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: TRUE/FALSvE
+ */
+bool wma_is_extscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return wma->interfaces[vdev_id].extscan_in_progress;
+}
+#else
+/**
+ * wma_is_extscan_in_progress(): dummy
+ *
+ * Return: False since no extscan can be in progress
+ * when feature flag is not defined.
+ */
+bool wma_is_extscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return false;
+}
+#endif
+
+/**
+ * wma_is_wow_applicable(): should enable wow
+ * @wma: wma handle
+ *
+ *  Enable WOW if any one of the condition meets,
+ *  1) Is any one of vdev in beaconning mode (in AP mode) ?
+ *  2) Is any one of vdev in connected state (in STA mode) ?
+ *  3) Is PNO in progress in any one of vdev ?
+ *  4) Is Extscan in progress in any one of vdev ?
+ *
+ * Return: true if wma needs to configure wow.
+ */
+bool wma_is_wow_applicable(tp_wma_handle wma)
+{
+	int vdev_id;
+	if (wma_support_wow_for_beaconing(wma)) {
+		WMA_LOGD("vdev is in beaconning mode, enabling wow");
+		return true;
 	}
 
-	if (!connected && !pno_in_progress && !extscan_in_progress) {
-		WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
-		cdf_mem_free(info);
-		goto send_ready_to_suspend;
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		if (wma->interfaces[vdev_id].conn_state) {
+			WMA_LOGD("STA is connected, enabling wow");
+			return true;
+		} else if (wma_is_pnoscan_in_progress(wma, vdev_id)) {
+			WMA_LOGD("PNO is in progress, enabling wow");
+			return true;
+		} else if (wma_is_extscan_in_progress(wma, vdev_id)) {
+			WMA_LOGD("EXT is in progress, enabling wow");
+			return true;
+		}
 	}
 
-enable_wow:
-	WMA_LOGE("WOW Suspend");
+	WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
+	return true;
+}
 
-	/*
-	 * At this point, suspend indication is received on
-	 * last vdev. It's the time to enable wow in fw.
-	 */
 #ifdef FEATURE_WLAN_LPHB
-	/* LPHB cache, if any item was enabled, should be
-	 * applied.
-	 */
+/**
+ * wma_apply_lphb(): apply cached LPHB settings
+ * @wma: wma handle
+ *
+ * LPHB cache, if any item was enabled, should be
+ * applied.
+ */
+static inline
+void wma_apply_lphb(tp_wma_handle wma)
+{
+	int i;
 	WMA_LOGD("%s: checking LPHB cache", __func__);
 	for (i = 0; i < 2; i++) {
 		if (wma->wow.lphb_cache[i].params.lphbEnableReq.enable) {
@@ -4026,14 +4076,28 @@ enable_wow:
 					       false);
 		}
 	}
+}
+#else
+void wma_apply_lphb(tp_wma_handle wma) {}
 #endif /* FEATURE_WLAN_LPHB */
 
-	wma->wow.wow_enable = true;
-	wma->wow.wow_enable_cmd_sent = false;
+/**
+ * wma_suspend_req() -  Handles suspend indication request received from umac.
+ * @wma: wma handle
+ * @info: suspend params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wma_suspend_req(tp_wma_handle wma)
+{
+	if (wma_is_wow_applicable(wma)) {
+		WMA_LOGE("WOW Suspend");
+		wma_apply_lphb(wma);
 
-	cdf_mem_free(info);
+		wma->wow.wow_enable = true;
+		wma->wow.wow_enable_cmd_sent = false;
+	}
 
-send_ready_to_suspend:
 	/* Set the Suspend DTIM Parameters */
 	wma_set_suspend_dtim(wma);
 	wma_send_status_to_suspend_ind(wma, true);

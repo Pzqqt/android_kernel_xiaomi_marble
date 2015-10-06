@@ -993,7 +993,8 @@ CDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 
 CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
 
-CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info);
+CDF_STATUS wma_suspend_req(tp_wma_handle wma);
+void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
 
