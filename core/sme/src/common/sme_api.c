@@ -6448,7 +6448,7 @@ CDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
 
    --------------------------------------------------------------------------- */
 CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
-				     tpSirWlanSuspendParam wlanSuspendParam,
+				     uint32_t conn_state_mask,
 				     csr_readyToSuspendCallback callback,
 				     void *callback_context)
 {
@@ -6467,7 +6467,7 @@ CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = wlanSuspendParam;
+		cds_message.bodyval = conn_state_mask;
 		cds_message.type = WMA_WLAN_SUSPEND_IND;
 		cdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {

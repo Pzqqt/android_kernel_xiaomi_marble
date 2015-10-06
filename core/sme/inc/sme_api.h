@@ -461,7 +461,7 @@ CDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
 		tpSirWlanSetRxpFilters wlanRxpFilterParam);
 CDF_STATUS sme_ConfigureAppsCpuWakeupState(tHalHandle hHal, bool isAppsAwake);
 CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
-		tpSirWlanSuspendParam wlanSuspendParam,
+		uint32_t conn_state_mask,
 		csr_readyToSuspendCallback,
 		void *callbackContext);
 CDF_STATUS sme_configure_resume_req(tHalHandle hHal,

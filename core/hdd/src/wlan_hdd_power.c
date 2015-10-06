@@ -511,15 +511,18 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 
 	hdd_conf_gtk_offload(pAdapter, fenable);
 
-	/* Configure ARP/NS offload during cfg80211 suspend/resume only
-	 * if active mode offload is disabled
+	/* Configure ARP/NS offload during cfg80211 suspend/resume and
+	 * Enable MC address filtering during cfg80211 suspend
+	 * only if active mode offload is disabled
 	 */
 	if (!pHddCtx->config->active_mode_offload) {
+		hdd_info("configuring unconfigured active mode offloads");
 		hdd_conf_arp_offload(pAdapter, fenable);
+		wlan_hdd_set_mc_addr_list(pAdapter, fenable);
+
 		if (pHddCtx->config->fhostNSOffload)
 			hdd_conf_ns_offload(pAdapter, fenable);
 	}
-	EXIT();
 	EXIT();
 	return;
 }
@@ -967,6 +970,23 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 #endif
 
 /**
+ * hdd_update_mcastbcast_filter(): cache multi and broadcast filter for suspend
+ * @hdd_ctx: hdd context
+ *
+ * Cache the configured filter to be used in suspend resume.
+ */
+static void hdd_update_mcastbcast_filter(hdd_context_t *hdd_ctx)
+{
+	if (false == hdd_ctx->sus_res_mcastbcast_filter_valid) {
+		hdd_ctx->sus_res_mcastbcast_filter =
+			hdd_ctx->configuredMcastBcastFilter;
+		hdd_ctx->sus_res_mcastbcast_filter_valid = true;
+		hdd_info("configuredMCastBcastFilter saved = %d",
+			hdd_ctx->configuredMcastBcastFilter);
+	}
+}
+
+/**
  * hdd_conf_suspend_ind() - Send Suspend notification
  * @pHddCtx: HDD Global context
  * @pAdapter: adapter being suspended
@@ -975,69 +995,26 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
  *
  * Return: None.
  */
-static void hdd_conf_suspend_ind(hdd_context_t *pHddCtx,
-				 hdd_adapter_t *pAdapter,
+static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
+				uint32_t conn_state_mask,
 				 void (*callback)(void *callbackContext,
 						  bool suspended),
 				 void *callbackContext)
 {
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
-	tpSirWlanSuspendParam wlanSuspendParam =
-		cdf_mem_malloc(sizeof(tSirWlanSuspendParam));
 
-	if (false == pHddCtx->sus_res_mcastbcast_filter_valid) {
-		pHddCtx->sus_res_mcastbcast_filter =
-			pHddCtx->configuredMcastBcastFilter;
-		pHddCtx->sus_res_mcastbcast_filter_valid = true;
-		hddLog(CDF_TRACE_LEVEL_INFO, "offload: hdd_conf_suspend_ind");
-		hddLog(CDF_TRACE_LEVEL_INFO,
-		       "configuredMCastBcastFilter saved = %d",
-		       pHddCtx->configuredMcastBcastFilter);
+	hdd_info("%s: send wlan suspend indication", __func__);
 
-	}
-
-	if (NULL == wlanSuspendParam) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       "%s: cdf_mem_alloc failed ", __func__);
-		return;
-	}
-
-	hddLog(CDF_TRACE_LEVEL_INFO,
-	       "%s: send wlan suspend indication", __func__);
-
-	/* Configure supported OffLoads */
-	hdd_conf_hostoffload(pAdapter, true);
-	wlanSuspendParam->configuredMcstBcstFilterSetting =
-		pHddCtx->configuredMcastBcastFilter;
-
-	/* Enable MC address filtering during cfg80211 suspend if active mode
-	 * mode offload is disabled in INI
-	 */
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_info("enable mc address filtering");
-		wlan_hdd_set_mc_addr_list(pAdapter, true);
-	}
-
-	if ((eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState) ||
-	    (eConnectionState_IbssConnected ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState))
-		wlanSuspendParam->connectedState = true;
-	else
-		wlanSuspendParam->connectedState = false;
-
-	wlanSuspendParam->sessionId = pAdapter->sessionId;
 	cdf_ret_status =
-		sme_configure_suspend_ind(pHddCtx->hHal, wlanSuspendParam,
+		sme_configure_suspend_ind(pHddCtx->hHal, conn_state_mask,
 					  callback, callbackContext);
+
 	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
 		pHddCtx->hdd_mcastbcast_filter_set = true;
 	} else {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_suspend_ind returned failure %d"),
 		       cdf_ret_status);
-
-		cdf_mem_free(wlanSuspendParam);
 	}
 }
 
@@ -1077,14 +1054,27 @@ static void hdd_conf_resume_ind(hdd_adapter_t *pAdapter)
 	       "offload: in hdd_conf_resume_ind, restoring configuredMcastBcastFilter");
 	hddLog(CDF_TRACE_LEVEL_INFO, "configuredMcastBcastFilter = %d",
 	       pHddCtx->configuredMcastBcastFilter);
+}
 
-	/* Disable MC address filtering during cfg80211 suspend if active mode
-	 * mode offload is disabled in INI
-	 */
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_info("disable mc address filtering");
-		wlan_hdd_set_mc_addr_list(pAdapter, false);
-	}
+/**
+ * hdd_update_conn_state_mask(): record info needed by wma_suspend_req
+ * @adapter: adapter to get info from
+ * @conn_state_mask: mask of connection info
+ *
+ * currently only need to send connection info.
+ */
+static void
+hdd_update_conn_state_mask(hdd_adapter_t *adapter, uint32_t *conn_state_mask)
+{
+
+	eConnectionState connState;
+	hdd_station_ctx_t *sta_ctx;
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	connState = sta_ctx->conn_info.connState;
+
+	if (connState == eConnectionState_Associated ||
+			connState == eConnectionState_IbssConnected)
+		*conn_state_mask |= (1 << adapter->sessionId);
 }
 
 /**
@@ -1103,9 +1093,9 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 	CDF_STATUS status;
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
+	uint32_t conn_state_mask = 0;
 
-	hddLog(CDF_TRACE_LEVEL_INFO, "%s: WLAN being suspended by OS",
-	       __func__);
+	hdd_info("%s: WLAN being suspended by OS", __func__);
 
 	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
@@ -1120,6 +1110,8 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 		return;
 	}
 
+	hdd_update_mcastbcast_filter(pHddCtx);
+
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
@@ -1129,19 +1121,18 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 		wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_TX_DISABLE,
 					   WLAN_CONTROL_PATH);
 
-		/* Send suspend notification down to firmware.
-		 *
-		 * N.B.: Keep this suspend indication at the end
-		 * (before processing next adaptor). This indication
-		 * is considered as trigger point to start WOW (if wow
-		 * is enabled).
-		 */
-		hdd_conf_suspend_ind(pHddCtx, pAdapter, callback,
-				     callbackContext);
+		/* Configure supported OffLoads */
+		hdd_conf_hostoffload(pAdapter, true);
+
+		hdd_update_conn_state_mask(pAdapter, &conn_state_mask);
 
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
+
 		pAdapterNode = pNext;
 	}
+
+	hdd_send_suspend_ind(pHddCtx, conn_state_mask, callback,
+			callbackContext);
 
 	pHddCtx->hdd_wlan_suspended = true;
 
