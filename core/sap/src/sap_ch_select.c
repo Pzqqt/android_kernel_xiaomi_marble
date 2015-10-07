@@ -210,6 +210,11 @@ sapAcsChannelInfo acs_ht80_channels[] = {
 	{149, SAP_ACS_WEIGHT_MAX},
 };
 
+sapAcsChannelInfo acs_vht160_channels[] = {
+	{36, SAP_ACS_WEIGHT_MAX},
+	{100, SAP_ACS_WEIGHT_MAX},
+};
+
 sapAcsChannelInfo acs_ht40_channels24_g[] = {
 	{1, SAP_ACS_WEIGHT_MAX},
 	{2, SAP_ACS_WEIGHT_MAX},
@@ -805,8 +810,21 @@ void sap_update_rssi_bsscount(tSapSpectChInfo *pSpectCh, int32_t offset,
 			break;
 		case -4:
 		case 4:
-			rsssi_effect =
-			    SAP_24GHZ_FOURTH_OVERLAP_CHAN_RSSI_EFFECT_PRIMARY;
+			rsssi_effect = sap_24g ?
+			    SAP_24GHZ_FOURTH_OVERLAP_CHAN_RSSI_EFFECT_PRIMARY :
+			    SAP_SUBBAND4_RSSI_EFFECT_PRIMARY;
+			break;
+		case -5:
+		case 5:
+			rsssi_effect = SAP_SUBBAND5_RSSI_EFFECT_PRIMARY;
+			break;
+		case -6:
+		case 6:
+			rsssi_effect = SAP_SUBBAND6_RSSI_EFFECT_PRIMARY;
+			break;
+		case -7:
+		case 7:
+			rsssi_effect = SAP_SUBBAND7_RSSI_EFFECT_PRIMARY;
 			break;
 		default:
 			rsssi_effect = 0;
@@ -840,7 +858,8 @@ void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
 			      uint16_t *channelWidth,
 			      uint16_t *secondaryChannelOffset,
 			      uint16_t *vhtSupport,
-			      uint16_t *centerFreq)
+			      uint16_t *centerFreq,
+			      uint16_t *centerFreq_2)
 {
 	if (NULL == pBeaconStruct) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -850,21 +869,60 @@ void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
 
 	if (pBeaconStruct->HTCaps.present && pBeaconStruct->HTInfo.present) {
 		*channelWidth = pBeaconStruct->HTCaps.supportedChannelWidthSet;
-		*secondaryChannelOffset = pBeaconStruct->HTInfo.
-						secondaryChannelOffset;
+		*secondaryChannelOffset =
+			pBeaconStruct->HTInfo.secondaryChannelOffset;
+		if (!pBeaconStruct->VHTOperation.present)
+			return;
+		*vhtSupport = pBeaconStruct->VHTOperation.present;
+		if (pBeaconStruct->VHTOperation.chanWidth) {
+			*centerFreq =
+				pBeaconStruct->VHTOperation.chanCenterFreqSeg1;
+			*centerFreq_2 =
+				pBeaconStruct->VHTOperation.chanCenterFreqSeg2;
+			 /*
+			  * LHS follows tSirMacHTChannelWidth, while RHS follows
+			  * WNI_CFG_VHT_CHANNEL_WIDTH_X format hence following
+			  * adjustment
+			  */
+			*channelWidth =
+				pBeaconStruct->VHTOperation.chanWidth + 1;
 
-		if (pBeaconStruct->VHTOperation.present) {
-			*vhtSupport = pBeaconStruct->VHTOperation.present;
-			if (pBeaconStruct->VHTOperation.chanWidth >
-			    WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ) {
-				*channelWidth = eHT_CHANNEL_WIDTH_80MHZ;
-				*centerFreq = pBeaconStruct->VHTOperation.
-							chanCenterFreqSeg1;
-			}
 		}
 	}
 }
 
+/**
+ * sap_update_rssi_bsscount_vht_5G() - updates bss count and rssi effect.
+ *
+ * @pSpectCh:     Channel Information
+ * @offset:       Channel Offset
+ * @num_ch:       no.of channels
+ *
+ * sap_update_rssi_bsscount_vht_5G updates bss count and rssi effect based
+ * on the channel offset.
+ *
+ * Return: None.
+ */
+
+void sap_update_rssi_bsscount_vht_5G(tSapSpectChInfo *spect_ch, int32_t offset,
+			      uint16_t num_ch)
+{
+	int32_t ch_offset;
+	uint16_t i, cnt;
+
+	if (!offset)
+		return;
+	if (offset > 0)
+		cnt = num_ch;
+	else
+		cnt = num_ch + 1;
+	for (i = 0; i < cnt; i++) {
+		ch_offset = offset + i;
+		if (ch_offset == 0)
+			continue;
+		sap_update_rssi_bsscount(spect_ch, ch_offset, false);
+	}
+}
 /**
  * sap_interference_rssi_count_5G() - sap_interference_rssi_count
  *                                    considers the Adjacent channel rssi and
@@ -884,8 +942,12 @@ void sap_upd_chan_spec_params(tSirProbeRespBeacon *pBeaconStruct,
 void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 				 uint16_t chan_width,
 				 uint16_t sec_chan_offset,
-				 uint16_t center_freq, uint8_t channel_id)
+				 uint16_t center_freq,
+				 uint16_t center_freq_2,
+				 uint8_t channel_id)
 {
+	uint16_t num_ch;
+	int32_t offset = 0;
 	if (NULL == spect_ch) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("spect_ch is NULL"));
@@ -900,6 +962,7 @@ void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 	 * chan_width == 0, HT20
 	 * chan_width == 1, HT40
 	 * chan_width == 2, VHT80
+	 * chan_width == 3, VHT160
 	 */
 
 	switch (spect_ch->channelWidth) {
@@ -908,36 +971,49 @@ void sap_interference_rssi_count_5G(tSapSpectChInfo *spect_ch,
 		/* Above the Primary Channel */
 		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
 			sap_update_rssi_bsscount(spect_ch, 1, false);
-			break;
+			return;
 
 		/* Below the Primary channel */
 		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
 			sap_update_rssi_bsscount(spect_ch, -1, false);
-			break;
+			return;
+		}
+		return;
+	case eHT_CHANNEL_WIDTH_80MHZ:   /* VHT80 */
+		num_ch = 3;
+		if ((center_freq - channel_id) == 6) {
+			offset = 1;
+		} else if ((center_freq - channel_id) == 2) {
+			offset = -1;
+		} else if ((center_freq - channel_id) == -2) {
+			offset = -2;
+		} else if ((center_freq - channel_id) == -6) {
+			offset = -3;
 		}
 		break;
-	case eHT_CHANNEL_WIDTH_80MHZ:   /* VHT80 */
-		if ((center_freq - channel_id) == 6) {
-			sap_update_rssi_bsscount(spect_ch, 1, false);
-			sap_update_rssi_bsscount(spect_ch, 2, false);
-			sap_update_rssi_bsscount(spect_ch, 3, false);
-		} else if ((center_freq - channel_id) == 2) {
-			sap_update_rssi_bsscount(spect_ch, -1, false);
-			sap_update_rssi_bsscount(spect_ch, 1, false);
-			sap_update_rssi_bsscount(spect_ch, 2, false);
-		} else if ((center_freq - channel_id) == -2) {
-			sap_update_rssi_bsscount(spect_ch, -2, false);
-			sap_update_rssi_bsscount(spect_ch, -1, false);
-			sap_update_rssi_bsscount(spect_ch, 1, false);
-		} else if ((center_freq - channel_id) == -6) {
-			sap_update_rssi_bsscount(spect_ch, -1, false);
-			sap_update_rssi_bsscount(spect_ch, -2, false);
-			sap_update_rssi_bsscount(spect_ch, -3, false);
-		}
+	case eHT_CHANNEL_WIDTH_160MHZ:   /* VHT160 */
+		num_ch = 7;
+		if ((center_freq - channel_id) == 14)
+			offset = 1;
+		else if ((center_freq - channel_id) == 10)
+			offset = -1;
+		else if ((center_freq - channel_id) == 6)
+			offset = -2;
+		else if ((center_freq - channel_id) == 2)
+			offset = -3;
+		else if ((center_freq - channel_id) == -2)
+			offset = -4;
+		else if ((center_freq - channel_id) == -6)
+			offset = -5;
+		else if ((center_freq - channel_id) == -10)
+			offset = -6;
+		else if ((center_freq - channel_id) == -14)
+			offset = -7;
 		break;
 	default:
-		break;
+		return;
 	}
+	sap_update_rssi_bsscount_vht_5G(spect_ch, offset, num_ch);
 }
 
 /**
@@ -1111,6 +1187,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	uint16_t channelWidth;
 	uint16_t secondaryChannelOffset;
 	uint16_t centerFreq;
+	uint16_t centerFreq_2 = 0;
 	uint16_t vhtSupport;
 	uint32_t ieLen = 0;
 	tSirProbeRespBeacon *pBeaconStruct;
@@ -1149,12 +1226,13 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				    sizeof(tSirProbeRespBeacon), 0);
 
 			if ((sir_parse_beacon_ie
-				     (pMac, pBeaconStruct,
-				     (uint8_t *) (pScanResult->BssDescriptor.ieFields),
-				     ieLen)) == eSIR_SUCCESS) {
+				     (pMac, pBeaconStruct, (uint8_t *)
+				      (pScanResult->BssDescriptor.ieFields),
+				      ieLen)) == eSIR_SUCCESS) {
 				sap_upd_chan_spec_params(pBeaconStruct,
 					&channelWidth, &secondaryChannelOffset,
-					&vhtSupport, &centerFreq);
+					&vhtSupport, &centerFreq,
+					&centerFreq_2);
 			}
 		}
 		/* Processing for each tCsrScanResultInfo in the tCsrScanResult DLink list */
@@ -1188,7 +1266,9 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				case eCSR_DOT11_MODE_11a:
 					sap_interference_rssi_count_5G(
 					    pSpectCh, channelWidth,
-					    secondaryChannelOffset, centerFreq,
+					    secondaryChannelOffset,
+					    centerFreq,
+					    centerFreq_2,
 					    channel_id);
 					break;
 
@@ -1199,7 +1279,9 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				case eCSR_DOT11_MODE_abg:
 					sap_interference_rssi_count_5G(
 					    pSpectCh, channelWidth,
-					    secondaryChannelOffset, centerFreq,
+					    secondaryChannelOffset,
+					    centerFreq,
+					    centerFreq_2,
 					    channel_id);
 					sap_interference_rssi_count(pSpectCh);
 					break;
@@ -1417,6 +1499,143 @@ void sap_sort_chl_weight_ht80(tSapChSelSpectInfo *pSpectInfoParams)
 	for (j = 0; j < pSpectInfoParams->numSpectChans; j++) {
 		if (CHANNEL_165 == pSpectInfo[j].chNum) {
 			pSpectInfo[j].weight = SAP_ACS_WEIGHT_MAX * 4;
+			break;
+		}
+	}
+
+	pSpectInfo = pSpectInfoParams->pSpectCh;
+	for (j = 0; j < (pSpectInfoParams->numSpectChans); j++) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+			FL("Channel=%d Weight= %d rssi=%d bssCount=%d"),
+			pSpectInfo->chNum, pSpectInfo->weight,
+			pSpectInfo->rssiAgr, pSpectInfo->bssCount);
+		pSpectInfo++;
+	}
+}
+
+/**
+ * sap_sort_chl_weight_vht160() - to sort the channels with the least weight
+ * @pSpectInfoParams: Pointer to the tSapChSelSpectInfo structure
+ *
+ * Funtion to sort the channels with the least weight first for VHT160 channels
+ *
+ * Return: none
+ */
+void sap_sort_chl_weight_vht160(tSapChSelSpectInfo *pSpectInfoParams)
+{
+	uint8_t i, j, n, idx;
+	tSapSpectChInfo *pSpectInfo;
+	uint8_t minIdx;
+
+	pSpectInfo = pSpectInfoParams->pSpectCh;
+	/* for each VHT160 channel, calculate the combined weight of the
+	   8 20MHz weight */
+	for (i = 0; i < ARRAY_SIZE(acs_vht160_channels); i++) {
+		for (j = 0; j < pSpectInfoParams->numSpectChans; j++) {
+			if (pSpectInfo[j].chNum ==
+					acs_vht160_channels[i].chStartNum)
+				break;
+		}
+		if (j == pSpectInfoParams->numSpectChans)
+			continue;
+
+		if (!(((pSpectInfo[j].chNum + 4) == pSpectInfo[j + 1].chNum) &&
+			((pSpectInfo[j].chNum + 8) ==
+				 pSpectInfo[j + 2].chNum) &&
+			((pSpectInfo[j].chNum + 12) ==
+				 pSpectInfo[j + 3].chNum) &&
+			((pSpectInfo[j].chNum + 16) ==
+				 pSpectInfo[j + 4].chNum) &&
+			((pSpectInfo[j].chNum + 20) ==
+				 pSpectInfo[j + 5].chNum) &&
+			((pSpectInfo[j].chNum + 24) ==
+				 pSpectInfo[j + 6].chNum) &&
+			((pSpectInfo[j].chNum + 28) ==
+				 pSpectInfo[j + 7].chNum))) {
+			/*
+			 * some channels does not exist in pSectInfo array,
+			 * skip this channel and those in the same VHT160 width
+			 */
+			pSpectInfo[j].weight = SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 4) ==
+					pSpectInfo[j + 1].chNum)
+				pSpectInfo[j + 1].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 8) ==
+					pSpectInfo[j + 2].chNum)
+				pSpectInfo[j + 2].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 12) ==
+					pSpectInfo[j + 3].chNum)
+				pSpectInfo[j + 3].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 16) ==
+					pSpectInfo[j + 4].chNum)
+				pSpectInfo[j + 4].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 20) ==
+					pSpectInfo[j + 5].chNum)
+				pSpectInfo[j + 5].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 24) ==
+					pSpectInfo[j + 6].chNum)
+				pSpectInfo[j + 6].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			if ((pSpectInfo[j].chNum + 28) ==
+					pSpectInfo[j + 7].chNum)
+				pSpectInfo[j + 7].weight =
+					SAP_ACS_WEIGHT_MAX * 8;
+			continue;
+		}
+		/*found the channel, add the 7 adjacent channels' weight */
+		acs_vht160_channels[i].weight = pSpectInfo[j].weight +
+			pSpectInfo[j + 1].weight + pSpectInfo[j + 2].weight +
+			pSpectInfo[j + 3].weight + pSpectInfo[j + 4].weight +
+			pSpectInfo[j + 5].weight + pSpectInfo[j + 6].weight +
+			pSpectInfo[j + 7].weight;
+
+		/* find best channel among 8 channels as the primary channel */
+		if ((pSpectInfo[j].weight + pSpectInfo[j + 1].weight +
+			pSpectInfo[j + 2].weight + pSpectInfo[j + 3].weight) >
+			(pSpectInfo[j + 4].weight + pSpectInfo[j + 5].weight +
+			pSpectInfo[j + 6].weight + pSpectInfo[j + 7].weight))
+			idx = 4;
+		else
+			idx = 0;
+		/* find best channel among 4 channels as the primary channel */
+		if ((pSpectInfo[j + idx].weight +
+					pSpectInfo[j + idx + 1].weight) <
+			(pSpectInfo[j + idx + 2].weight +
+			 pSpectInfo[j + idx + 3].weight)) {
+			/* lower 2 channels are better choice */
+			if (pSpectInfo[j + idx].weight <
+					pSpectInfo[j + idx + 1].weight)
+				minIdx = 0 + idx;
+			else
+				minIdx = 1 + idx;
+		} else if (pSpectInfo[j + idx + 2].weight <=
+				pSpectInfo[j + idx + 3].weight) {
+			/* upper 2 channels are better choice */
+			minIdx = 2 + idx;
+		} else {
+			minIdx = 3 + idx;
+		}
+
+		/*
+		 * set all 8 channels to max value first, then reset the
+		 * best channel as the selected primary channel, update its
+		 * weightage with the combined weight value
+		 */
+		for (n = 0; n < 8; n++)
+			pSpectInfo[j + n].weight = SAP_ACS_WEIGHT_MAX * 8;
+
+		pSpectInfo[j + minIdx].weight = acs_vht160_channels[i].weight;
+	}
+
+	pSpectInfo = pSpectInfoParams->pSpectCh;
+	for (j = 0; j < pSpectInfoParams->numSpectChans; j++) {
+		if (CHANNEL_165 == pSpectInfo[j].chNum) {
+			pSpectInfo[j].weight = SAP_ACS_WEIGHT_MAX * 8;
 			break;
 		}
 	}
@@ -1657,9 +1876,13 @@ void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 		break;
 
 	case CH_WIDTH_80MHZ:
+	case CH_WIDTH_80P80MHZ:
 		sap_sort_chl_weight_ht80(pSpectInfoParams);
 		break;
 
+	case CH_WIDTH_160MHZ:
+		sap_sort_chl_weight_vht160(pSpectInfoParams);
+		break;
 	case CH_WIDTH_20MHZ:
 	default:
 		/* Sorting the channels as per weights as 20MHz channels */
