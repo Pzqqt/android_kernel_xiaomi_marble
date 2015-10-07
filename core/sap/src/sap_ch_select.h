@@ -68,9 +68,20 @@
 #define SAP_CHANNEL_NOT_SELECTED (0)
 
 #define SOFTAP_HT20_CHANNELWIDTH 0
-#define SAP_SUBBAND1_RSSI_EFFECT_PRIMARY  (-20) /* In HT40/VHT80, Effect of primary Channel RSSi on Subband1 */
-#define SAP_SUBBAND2_RSSI_EFFECT_PRIMARY  (-30) /* In VHT80, Effect of primary Channel RSSI on Subband2 */
-#define SAP_SUBBAND3_RSSI_EFFECT_PRIMARY  (-40) /* In VHT80, Effect of Primary Channel RSSI on Subband3 */
+/* In HT40/VHT80, Effect of primary Channel RSSi on Subband1 */
+#define SAP_SUBBAND1_RSSI_EFFECT_PRIMARY  (-20)
+/* In VHT80, Effect of primary Channel RSSI on Subband2 */
+#define SAP_SUBBAND2_RSSI_EFFECT_PRIMARY  (-30)
+/* In VHT80, Effect of Primary Channel RSSI on Subband3 */
+#define SAP_SUBBAND3_RSSI_EFFECT_PRIMARY  (-40)
+/* In VHT80, Effect of Primary Channel RSSI on Subband4 */
+#define SAP_SUBBAND4_RSSI_EFFECT_PRIMARY  (-50)
+/* In VHT80, Effect of Primary Channel RSSI on Subband5 */
+#define SAP_SUBBAND5_RSSI_EFFECT_PRIMARY  (-60)
+/* In VHT80, Effect of Primary Channel RSSI on Subband6 */
+#define SAP_SUBBAND6_RSSI_EFFECT_PRIMARY  (-70)
+/* In VHT80, Effect of Primary Channel RSSI on Subband7 */
+#define SAP_SUBBAND7_RSSI_EFFECT_PRIMARY  (-80)
 
 #define SAP_24GHZ_FIRST_OVERLAP_CHAN_RSSI_EFFECT_PRIMARY      (-10)     /* In 2.4GHZ, Effect of Primary  Channel RSSI on First Overlapping Channel */
 #define SAP_24GHZ_SEC_OVERLAP_CHAN_RSSI_EFFECT_PRIMARY        (-20)     /* In 2.4GHZ, Effect of Primary  Channel RSSI on Second Overlapping Channel */
