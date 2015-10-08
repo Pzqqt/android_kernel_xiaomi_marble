@@ -1309,9 +1309,7 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					(const u8 *)&pSapEvent->sapevt.
 					sapStationAssocReassocCompleteEvent.ies[0];
 				staInfo.assoc_req_ies_len = iesLen;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 31))
 				staInfo.filled |= STATION_INFO_ASSOC_REQ_IES;
-#endif
 				cfg80211_new_sta(dev,
 						 (const u8 *)&pSapEvent->sapevt.
 						 sapStationAssocReassocCompleteEvent.
@@ -6384,10 +6382,6 @@ static int wlan_hdd_set_channel(struct wiphy *wiphy,
 					smeConfig.csrConfig.
 						channelBondingMode5GHz =
 					eCSR_INI_SINGLE_CHANNEL_CENTERED;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-				sap_config->ch_width_orig =
-						eHT_CHANNEL_WIDTH_20MHZ;
-#endif
 				sap_config->sec_ch = 0;
 				break;
 
@@ -6637,19 +6631,6 @@ static void wlan_hdd_add_extra_ie(hdd_adapter_t *pHostapdAdapter,
 	return;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-/**
- * wlan_hdd_cfg80211_alloc_new_beacon() - alloc beacon in ap mode
- * @pAdapter: Pointer to hostapd adapter
- * @ppBeacon: Pointer to pointer to beacon data
- * @params: Pointer to beacon parameters
- *
- * Return: 0 for success non-zero for failure
- */
-int wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
-				       beacon_data_t **ppBeacon,
-				       struct beacon_parameters *params)
-#else
 /**
  * wlan_hdd_cfg80211_alloc_new_beacon() - alloc beacon in ap mode
  * @pAdapter: Pointer to hostapd adapter
@@ -6663,7 +6644,6 @@ int wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
 				       beacon_data_t **ppBeacon,
 				       struct cfg80211_beacon_data *params,
 				       int dtim_period)
-#endif
 {
 	int size;
 	beacon_data_t *beacon = NULL;
@@ -6727,17 +6707,10 @@ int wlan_hdd_cfg80211_alloc_new_beacon(hdd_adapter_t *pAdapter,
 		       FL("Mem allocation for beacon failed"));
 		return -ENOMEM;
 	}
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-	if (params->dtim_period)
-		beacon->dtim_period = params->dtim_period;
-	else if (old)
-		beacon->dtim_period = old->dtim_period;
-#else
 	if (dtim_period)
 		beacon->dtim_period = dtim_period;
 	else if (old)
 		beacon->dtim_period = old->dtim_period;
-#endif
 	/* -----------------------------------------------
 	 * | head | tail | proberesp_ies | assocresp_ies |
 	 * -----------------------------------------------
@@ -7223,17 +7196,6 @@ setup_acs_overrides:
 	return 0;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-/**
- * wlan_hdd_cfg80211_start_bss() - start bss
- * @pHostapdAdapter: Pointer to hostapd adapter
- * @params: Pointer to start bss beacon parameters
- *
- * Return: 0 for success non-zero for failure
- */
-static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
-				       struct beacon_parameters *params)
-#else
 /**
  * wlan_hdd_cfg80211_start_bss() - start bss
  * @pHostapdAdapter: Pointer to hostapd adapter
@@ -7248,7 +7210,6 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 				       struct cfg80211_beacon_data *params,
 				       const u8 *ssid, size_t ssid_len,
 				       enum nl80211_hidden_ssid hidden_ssid)
-#endif
 {
 	tsap_Config_t *pConfig;
 	beacon_data_t *pBeacon = NULL;
@@ -7507,33 +7468,6 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	pConfig->SSIDinfo.ssidHidden = false;
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-	if (params->ssid != NULL) {
-		cdf_mem_copy(pConfig->SSIDinfo.ssid.ssId, params->ssid,
-			     params->ssid_len);
-		pConfig->SSIDinfo.ssid.length = params->ssid_len;
-
-		switch (params->hidden_ssid) {
-		case NL80211_HIDDEN_SSID_NOT_IN_USE:
-			hddLog(LOG1, "HIDDEN_SSID_NOT_IN_USE");
-			pConfig->SSIDinfo.ssidHidden = eHIDDEN_SSID_NOT_IN_USE;
-			break;
-		case NL80211_HIDDEN_SSID_ZERO_LEN:
-			hddLog(LOG1, "HIDDEN_SSID_ZERO_LEN");
-			pConfig->SSIDinfo.ssidHidden = eHIDDEN_SSID_ZERO_LEN;
-			break;
-		case NL80211_HIDDEN_SSID_ZERO_CONTENTS:
-			hddLog(LOG1, "HIDDEN_SSID_ZERO_CONTENTS");
-			pConfig->SSIDinfo.ssidHidden =
-				eHIDDEN_SSID_ZERO_CONTENTS;
-			break;
-		default:
-			hddLog(LOGE, "Wrong hidden_ssid param %d",
-			       params->hidden_ssid);
-			break;
-		}
-	}
-#else
 	if (ssid != NULL) {
 		cdf_mem_copy(pConfig->SSIDinfo.ssid.ssId, ssid, ssid_len);
 		pConfig->SSIDinfo.ssid.length = ssid_len;
@@ -7557,7 +7491,6 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			break;
 		}
 	}
-#endif
 
 	cdf_mem_copy(pConfig->self_macaddr.bytes,
 		     pHostapdAdapter->macAddressCurrent.bytes,
@@ -7652,16 +7585,6 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		pConfig->SapHw_mode == eCSR_DOT11_MODE_11b))
 		sme_config.csrConfig.WMMSupportMode = eCsrRoamWmmNoQos;
 	sme_update_config(pHddCtx->hHal, &sme_config);
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-	/* Linux kernel < 3.8 does not support ch width param. So for
-	 * 11AC get from ch width from ini file only if ht40 is enabled
-	 * VHT80 depends on HT40 config.
-	 */
-	if (pConfig->SapHw_mode == eCSR_DOT11_MODE_11ac)
-		if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_40)
-			pConfig->ch_width_orig = iniConfig->vhtChannelWidth;
-#endif
 
 	if (pConfig->ch_width_orig == NL80211_CHAN_WIDTH_80P80) {
 		if (pHddCtx->isVHT80Allowed == false)
@@ -7827,209 +7750,6 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	return 0;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-/**
- * __wlan_hdd_cfg80211_add_beacon() - add beacon in soft ap mode
- * @wiphy: Pointer to wiphy structure
- * @dev: Pointer to net_device structure
- * @params: Pointer to add beacon parameters
- *
- * Return: 0 for success non-zero for failure
- */
-static int __wlan_hdd_cfg80211_add_beacon(struct wiphy *wiphy,
-					struct net_device *dev,
-					struct beacon_parameters *params)
-{
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx;
-	int status;
-
-	ENTER();
-
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
-		return -EINVAL;
-	}
-
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_ADD_BEACON,
-			 pAdapter->sessionId, params->interval));
-	hddLog(LOG2, FL("Device mode %s(%d)"),
-		hdd_device_mode_to_string(pAdapter->device_mode),
-		pAdapter->device_mode);
-
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status)
-		return status;
-
-	if (!cds_allow_concurrency(pHddCtx,
-				cds_convert_device_mode_to_hdd_type(
-				pAdapter->device_mode), 0, HDD_20_MHZ)) {
-		hddLog(LOGE,
-			FL("This concurrency combination is not allowed"));
-		return -EINVAL;
-	}
-
-	if ((pAdapter->device_mode == WLAN_HDD_SOFTAP) ||
-	    (pAdapter->device_mode == WLAN_HDD_P2P_GO)) {
-		beacon_data_t *old, *new;
-
-		old = pAdapter->sessionCtx.ap.beacon;
-
-		if (old) {
-			hddLog(LOGW,
-				FL("already beacon info added to session(%d)"),
-				pAdapter->sessionId);
-			return -EALREADY;
-		}
-
-		status =
-			wlan_hdd_cfg80211_alloc_new_beacon(pAdapter,
-							   &new, params);
-		if (status != CDF_STATUS_SUCCESS) {
-			hddLog(LOGE,
-				FL("Error!!! Allocating the new beacon"));
-			return -EINVAL;
-		}
-
-		pAdapter->sessionCtx.ap.beacon = new;
-
-		status = wlan_hdd_cfg80211_start_bss(pAdapter, params);
-		if (0 != status) {
-			pAdapter->sessionCtx.ap.beacon = NULL;
-			kfree(new);
-		}
-	}
-
-	EXIT();
-	return status;
-}
-
-/**
- * wlan_hdd_cfg80211_add_beacon() - add beacon in sap mode
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to netdev
- * @param: Pointer to beacon parameters
- *
- * Return: zero for success non-zero for failure
- */
-int wlan_hdd_cfg80211_add_beacon(struct wiphy *wiphy,
-				struct net_device *dev,
-				struct beacon_parameters *params)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_add_beacon(wiphy, dev, params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-/**
- * __wlan_hdd_cfg80211_set_beacon() - set beacon in soft ap mode
- * @wiphy: Pointer to wiphy structure
- * @dev: Pointer to net_device structure
- * @params: Pointer to set beacon parameters
- *
- * Return: 0 for success non-zero for failure
- */
-static int __wlan_hdd_cfg80211_set_beacon(struct wiphy *wiphy,
-					struct net_device *dev,
-					struct beacon_parameters *params)
-{
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	hdd_context_t *pHddCtx;
-	int status;
-
-	ENTER();
-
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
-		hddLog(LOGE, FL("Command not allowed in FTM mode"));
-		return -EINVAL;
-	}
-
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
-			 TRACE_CODE_HDD_CFG80211_SET_BEACON,
-			 pAdapter->sessionId, pHddStaCtx->conn_info.authType));
-	hddLog(LOG1, FL("Device_mode %s(%d)"),
-		hdd_device_mode_to_string(pAdapter->device_mode),
-		pAdapter->device_mode);
-
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	status = wlan_hdd_validate_context(pHddCtx);
-
-	if (0 != status)
-		return status;
-
-	if ((pAdapter->device_mode == WLAN_HDD_SOFTAP) ||
-	    (pAdapter->device_mode == WLAN_HDD_P2P_GO)) {
-		beacon_data_t *old, *new;
-
-		old = pAdapter->sessionCtx.ap.beacon;
-
-		if (!old) {
-			hddLog(LOGE,
-				FL("session(%d) old and new heads points to NULL"),
-				pAdapter->sessionId);
-			return -ENOENT;
-		}
-
-		status =
-			wlan_hdd_cfg80211_alloc_new_beacon(pAdapter,
-							   &new, params);
-
-		if (status != CDF_STATUS_SUCCESS) {
-			hddLog(LOGE,
-				FL("Error!!! Allocating the new beacon"));
-			return -EINVAL;
-		}
-
-		pAdapter->sessionCtx.ap.beacon = new;
-		status = wlan_hdd_cfg80211_start_bss(pAdapter, params);
-	}
-
-	EXIT();
-	return status;
-}
-
-/**
- * wlan_hdd_cfg80211_set_beacon() - set beacon in sap mode
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to netdev
- * @param: Pointer to beacon parameters
- *
- * Return: zero for success non-zero for failure
- */
-int wlan_hdd_cfg80211_set_beacon(struct wiphy *wiphy,
-				struct net_device *dev,
-				struct beacon_parameters *params)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_set_beacon(wiphy, dev, params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-
-#endif /* (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)) */
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-/**
- * __wlan_hdd_cfg80211_del_beacon() - stop soft ap
- * @wiphy: Pointer to wiphy structure
- * @dev: Pointer to net_device structure
- *
- * Return: 0 for success non-zero for failure
- */
-static int __wlan_hdd_cfg80211_del_beacon(struct wiphy *wiphy,
-					struct net_device *dev)
-#else
 /**
  * __wlan_hdd_cfg80211_stop_ap() - stop soft ap
  * @wiphy: Pointer to wiphy structure
@@ -8039,7 +7759,6 @@ static int __wlan_hdd_cfg80211_del_beacon(struct wiphy *wiphy,
  */
 static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 					struct net_device *dev)
-#endif
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = NULL;
@@ -8209,7 +7928,6 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	return ret;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 /**
  * wlan_hdd_get_channel_bw() - get channel bandwidth
  * @width: input channel width in nl80211_chan_width value
@@ -8245,28 +7963,7 @@ static enum hw_mode_bandwidth wlan_hdd_get_channel_bw(
 
 	return ch_bw;
 }
-#endif
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0)) && !defined(WITH_BACKPORTS)
-/**
- * wlan_hdd_cfg80211_del_beacon() - delete beacon in sap mode
- * @wiphy: Pointer to wiphy
- * @dev: Pointer to netdev
- *
- * Return: zero for success non-zero for failure
- */
-int wlan_hdd_cfg80211_del_beacon(struct wiphy *wiphy,
-				struct net_device *dev)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_cfg80211_del_beacon(wiphy, dev);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-#else
 /**
  * wlan_hdd_cfg80211_stop_ap() - stop sap
  * @wiphy: Pointer to wiphy
@@ -8285,9 +7982,7 @@ int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	return ret;
 }
-#endif
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 3, 0))
 /**
  * __wlan_hdd_cfg80211_start_ap() - start soft ap mode
  * @wiphy: Pointer to wiphy structure
@@ -8331,14 +8026,10 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	       hdd_device_mode_to_string(pAdapter->device_mode),
 	       pAdapter->device_mode);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 	channel_width = wlan_hdd_get_channel_bw(params->chandef.width);
 	channel = ieee80211_frequency_to_channel(
 				params->chandef.chan->center_freq);
-#else
-	channel_width = HW_MODE_20_MHZ;
-	channel = 0;
-#endif
+
 	/* check if concurrency is allowed */
 	if (!cds_allow_concurrency(pHddCtx,
 				cds_convert_device_mode_to_hdd_type(
@@ -8374,9 +8065,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	    || (pAdapter->device_mode == WLAN_HDD_P2P_GO)
 	    ) {
 		beacon_data_t *old, *new;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 		enum nl80211_channel_type channel_type;
-#endif
 
 		old = pAdapter->sessionCtx.ap.beacon;
 
@@ -8419,10 +8108,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			pAdapter->sessionCtx.ap.sapConfig.authType =
 				eSAP_AUTO_SWITCH;
 		}
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 		pAdapter->sessionCtx.ap.sapConfig.ch_width_orig =
 						params->chandef.width;
-#endif
 		status =
 			wlan_hdd_cfg80211_start_bss(pAdapter,
 				&params->beacon,
@@ -8539,5 +8226,3 @@ int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 
 	return ret;
 }
-
-#endif /* (LINUX_VERSION_CODE > KERNEL_VERSION(3, 3, 0)) */

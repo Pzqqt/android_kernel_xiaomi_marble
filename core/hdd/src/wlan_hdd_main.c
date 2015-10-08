@@ -1731,11 +1731,7 @@ static struct net_device_ops wlan_drv_ops = {
 	.ndo_set_mac_address = hdd_set_mac_address,
 	.ndo_select_queue = hdd_select_queue,
 #ifdef WLAN_FEATURE_PACKET_FILTERING
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 1, 0))
 	.ndo_set_rx_mode = hdd_set_multicast_list,
-#else
-	.ndo_set_multicast_list = hdd_set_multicast_list,
-#endif /* LINUX_VERSION_CODE */
 #endif
 };
 
@@ -2254,10 +2250,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 		if (WLAN_HDD_P2P_CLIENT == session_type)
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_CLIENT;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0))
 		else if (WLAN_HDD_P2P_DEVICE == session_type)
 			adapter->wdev.iftype = NL80211_IFTYPE_P2P_DEVICE;
-#endif
 		else
 			adapter->wdev.iftype = NL80211_IFTYPE_STATION;
 

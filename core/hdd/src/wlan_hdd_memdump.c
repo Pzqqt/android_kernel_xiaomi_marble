@@ -368,7 +368,6 @@ static struct proc_dir_entry *proc_file, *proc_dir;
  *
  * Return: void pointer to hdd_context
  */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)) || defined(WITH_BACKPORTS)
 static void *memdump_get_file_data(struct file *file)
 {
 	void *hdd_ctx;
@@ -376,15 +375,6 @@ static void *memdump_get_file_data(struct file *file)
 	hdd_ctx = PDE_DATA(file_inode(file));
 	return hdd_ctx;
 }
-#else
-static void *memdump_get_file_data(struct file *file)
-{
-	void *hdd_ctx;
-
-	hdd_ctx = PDE(file->f_path.dentry->d_inode)->data;
-	return hdd_ctx;
-}
-#endif
 
 /**
  * memdump_read() - perform read operation in memory dump proc file

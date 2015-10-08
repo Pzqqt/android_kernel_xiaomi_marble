@@ -2073,9 +2073,7 @@ defined(FEATURE_WLAN_LFR)
 			}
 			if (!hddDisconInProgress) {
 				cfg80211_put_bss(
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
 					pHddCtx->wiphy,
-#endif
 					bss);
 
 				/*
@@ -2426,9 +2424,7 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 					     GFP_KERNEL);
 #endif
 			cfg80211_put_bss(
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
 				pHddCtx->wiphy,
-#endif
 				bss);
 		}
 
@@ -2589,9 +2585,7 @@ static CDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
 		return CDF_STATUS_E_FAILURE;
 	}
 	cfg80211_put_bss(
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
 		WLAN_HDD_GET_CTX(pAdapter)->wiphy,
-#endif
 		bss);
 
 	return CDF_STATUS_SUCCESS;
@@ -4086,7 +4080,7 @@ defined(FEATURE_WLAN_LFR))
 		hdd_send_ft_event(pAdapter);
 		break;
 #endif
-#if defined(FEATURE_WLAN_LFR) && (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
+#ifdef FEATURE_WLAN_LFR
 	case eCSR_ROAM_PMK_NOTIFY:
 		if (eCSR_AUTH_TYPE_RSN == pHddStaCtx->conn_info.authType ||
 			eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==

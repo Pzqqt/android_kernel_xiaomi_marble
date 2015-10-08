@@ -928,14 +928,12 @@ int hif_enable_pci(struct hif_pci_softc *sc,
 	/* FIXME: temp. commenting out assign_resource
 	 * call for dev_attach to work on 2.6.38 kernel
 	 */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0) && \
-    !defined(__LINUX_ARM_ARCH__)
+#if (!defined(__LINUX_ARM_ARCH__))
 	if (pci_assign_resource(pdev, BAR_NUM)) {
 		HIF_ERROR("%s: pci_assign_resource error", __func__);
 		return -EIO;
 	}
 #endif
-
 	if (pci_enable_device(pdev)) {
 		HIF_ERROR("%s: pci_enable_device error",
 			   __func__);

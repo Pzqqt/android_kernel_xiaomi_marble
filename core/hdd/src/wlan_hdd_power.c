@@ -2176,9 +2176,7 @@ int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 					   struct wireless_dev *wdev,
-#endif
 					   enum nl80211_tx_power_setting type,
 					   int dbm)
 {
@@ -2249,18 +2247,14 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  enum nl80211_tx_power_setting type,
 				  int dbm)
 {
 	int ret;
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_txpower(wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 					      wdev,
-#endif
 					      type, dbm);
 	cds_ssr_unprotect(__func__);
 
@@ -2276,9 +2270,7 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  int *dbm)
 {
 
@@ -2328,18 +2320,14 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
  * Return: 0 for success, error number on failure.
  */
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0) || defined(WITH_BACKPORTS)
 					 struct wireless_dev *wdev,
-#endif
 					 int *dbm)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_get_txpower(wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0) || defined(WITH_BACKPORTS)
 						wdev,
-#endif
 						dbm);
 	cds_ssr_unprotect(__func__);
 

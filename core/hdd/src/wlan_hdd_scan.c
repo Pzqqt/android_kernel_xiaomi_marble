@@ -1223,15 +1223,10 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
  * Return: 0 for success, non zero for failure
  */
 static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				    struct net_device *dev,
-#endif
 				    struct cfg80211_scan_request *request,
 				    uint8_t source)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	struct net_device *dev = request->wdev->netdev;
-#endif
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -1328,9 +1323,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	 * (return -EBUSY)
 	 */
 	status = wlan_hdd_tdls_scan_callback(pAdapter, wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-						dev,
-#endif
 					request);
 	if (status <= 0) {
 		if (!status)
@@ -1598,17 +1590,11 @@ free_mem:
  * Return: 0 for success, non zero for failure
  */
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-			   struct net_device *dev,
-#endif
 			   struct cfg80211_scan_request *request)
 {
 	int ret;
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_scan(wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				       dev,
-#endif
 				request, NL_SCAN);
 	cds_ssr_unprotect(__func__);
 	return ret;
@@ -2199,12 +2185,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		/*Copying list of valid channel into request */
 		memcpy(pPnoRequest->aNetworks[i].aChannels, valid_ch, num_ch);
 		pPnoRequest->aNetworks[i].ucChannelCount = num_ch;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 		pPnoRequest->aNetworks[i].rssiThreshold =
 			request->match_sets[i].rssi_thold;
-#else
-		pPnoRequest->aNetworks[i].rssiThreshold = 0;    /* Default value */
-#endif
 	}
 
 	for (i = 0; i < request->n_ssids; i++) {

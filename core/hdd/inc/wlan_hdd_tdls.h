@@ -101,9 +101,6 @@ typedef struct {
  */
 typedef struct {
 	struct wiphy *wiphy;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-	struct net_device *dev;
-#endif
 	struct cfg80211_scan_request *scan_request;
 	int magic;
 	int attempt;
@@ -486,15 +483,9 @@ hddTdlsPeer_t *wlan_hdd_tdls_is_progress(hdd_context_t *pHddCtx,
 
 int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
 				    struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				    struct net_device *dev,
-#endif
 				    struct cfg80211_scan_request *request);
 
 int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				struct net_device *dev,
-#endif
 				struct cfg80211_scan_request *request);
 
 void wlan_hdd_tdls_scan_done_callback(hdd_adapter_t *pAdapter);

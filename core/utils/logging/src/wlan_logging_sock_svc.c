@@ -528,10 +528,6 @@ static int wlan_logging_thread(void *Arg)
 
 	set_user_nice(current, -2);
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-	daemonize("wlan_logging_thread");
-#endif
-
 	while (!gwlan_logging.exit) {
 		ret_wait_status =
 			wait_event_interruptible(gwlan_logging.wait_queue,

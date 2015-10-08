@@ -2250,9 +2250,6 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 struct wiphy *wlan_hdd_cfg80211_wiphy_alloc(int priv_size);
 
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-			   struct net_device *dev,
-#endif
 			   struct cfg80211_scan_request *request);
 
 int wlan_hdd_cfg80211_init(struct device *dev,
@@ -2265,13 +2262,8 @@ void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_cfg80211_deregister_frames(hdd_adapter_t *pAdapter);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
 void hdd_reg_notifier(struct wiphy *wiphy,
 				 struct regulatory_request *request);
-#else
-int hdd_reg_notifier(struct wiphy *wiphy,
-				struct regulatory_request *request);
-#endif
 
 extern void hdd_conn_set_connection_state(hdd_adapter_t *pAdapter,
 					  eConnectionState connState);
