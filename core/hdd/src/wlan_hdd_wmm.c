@@ -54,6 +54,7 @@
 #include <linux/if_vlan.h>
 #include <linux/ip.h>
 #include <linux/semaphore.h>
+#include <linux/ipv6.h>
 #include <wlan_hdd_tx_rx.h>
 #include <wlan_hdd_wmm.h>
 #include <wlan_hdd_ether.h>
@@ -1548,29 +1549,27 @@ CDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter)
 
 /**
  * hdd_wmm_classify_pkt() - Function which will classify an OS packet
- * into a WMM AC based on either 802.1Q or DSCP
+ * into a WMM AC based on DSCP
  *
- * @pAdapter: [in]  adapter upon which the packet is being transmitted
- * @skb: [in] the actual OS packet (sk_buff) being transmitted
- * @pAcType: [out] WMM AC type of the OS packet
- * @pUserPri: [out] User Priority of the OS packet
+ * @adapter: adapter upon which the packet is being transmitted
+ * @skb: pointer to network buffer
+ * @user_pri: user priority of the OS packet
+ * @is_eapol: eapol packet flag
  *
  * Return: None
  */
 static
-void hdd_wmm_classify_pkt(hdd_adapter_t *pAdapter,
+void hdd_wmm_classify_pkt(hdd_adapter_t *adapter,
 			  struct sk_buff *skb,
-			  sme_ac_enum_type *pAcType,
-			  sme_QosWmmUpType *pUserPri,
+			  sme_QosWmmUpType *user_pri,
 			  bool *is_eapol)
 {
-	unsigned char *pPkt;
-	union generic_ethhdr *pHdr;
-	struct iphdr *pIpHdr;
-	unsigned char tos;
 	unsigned char dscp;
-	sme_QosWmmUpType userPri;
-	sme_ac_enum_type acType;
+	unsigned char tos;
+	union generic_ethhdr *eth_hdr;
+	struct iphdr *ip_hdr;
+	struct ipv6hdr *ipv6hdr;
+	unsigned char *pkt;
 
 	/* this code is executed for every packet therefore
 	 * all debug code is kept conditional
@@ -1581,157 +1580,117 @@ void hdd_wmm_classify_pkt(hdd_adapter_t *pAdapter,
 		  "%s: Entered", __func__);
 #endif /* HDD_WMM_DEBUG */
 
-	pPkt = skb->data;
-	pHdr = (union generic_ethhdr *)pPkt;
+	pkt = skb->data;
+	eth_hdr = (union generic_ethhdr *)pkt;
 
 #ifdef HDD_WMM_DEBUG
 	CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
-		  "%s: proto/length is 0x%04x", __func__, pHdr->eth_II.h_proto);
+		  "%s: proto is 0x%04x", __func__, skb->protocol);
 #endif /* HDD_WMM_DEBUG */
 
-	if (HDD_WMM_CLASSIFICATION_DSCP ==
-	    (WLAN_HDD_GET_CTX(pAdapter))->config->PktClassificationBasis) {
-		if (pHdr->eth_II.h_proto == htons(ETH_P_IP)) {
-			/* case 1: Ethernet II IP packet */
-			pIpHdr = (struct iphdr *)&pPkt[sizeof(pHdr->eth_II)];
-			tos = pIpHdr->tos;
+	if (eth_hdr->eth_II.h_proto == htons(ETH_P_IP)) {
+		/* case 1: Ethernet II IP packet */
+		ip_hdr = (struct iphdr *)&pkt[sizeof(eth_hdr->eth_II)];
+		tos = ip_hdr->tos;
 #ifdef HDD_WMM_DEBUG
-			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
-				  "%s: Ethernet II IP Packet, tos is %d",
-				  __func__, tos);
+		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+				"%s: Ethernet II IP Packet, tos is %d",
+				__func__, tos);
 #endif /* HDD_WMM_DEBUG */
 
-		} else if ((ntohs(pHdr->eth_II.h_proto) < WLAN_MIN_PROTO) &&
-			   (pHdr->eth_8023.h_snap.dsap == WLAN_SNAP_DSAP) &&
-			   (pHdr->eth_8023.h_snap.ssap == WLAN_SNAP_SSAP) &&
-			   (pHdr->eth_8023.h_snap.ctrl == WLAN_SNAP_CTRL) &&
-			   (pHdr->eth_8023.h_proto == htons(ETH_P_IP))) {
-			/* case 2: 802.3 LLC/SNAP IP packet */
-			pIpHdr = (struct iphdr *)&pPkt[sizeof(pHdr->eth_8023)];
-			tos = pIpHdr->tos;
+	} else if (eth_hdr->eth_II.h_proto == htons(ETH_P_IPV6)) {
+		ipv6hdr = ipv6_hdr(skb);
+		tos = ntohs(*(const __be16 *)ipv6hdr) >> 4;
 #ifdef HDD_WMM_DEBUG
-			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
-				  "%s: 802.3 LLC/SNAP IP Packet, tos is %d",
-				  __func__, tos);
+		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+				"%s: Ethernet II IPv6 Packet, tos is %d",
+				__func__, tos);
 #endif /* HDD_WMM_DEBUG */
-		} else if (pHdr->eth_II.h_proto == htons(ETH_P_8021Q)) {
-			/* VLAN tagged */
+	} else if ((ntohs(eth_hdr->eth_II.h_proto) < WLAN_MIN_PROTO) &&
+		  (eth_hdr->eth_8023.h_snap.dsap == WLAN_SNAP_DSAP) &&
+		  (eth_hdr->eth_8023.h_snap.ssap == WLAN_SNAP_SSAP) &&
+		  (eth_hdr->eth_8023.h_snap.ctrl == WLAN_SNAP_CTRL) &&
+		  (eth_hdr->eth_8023.h_proto == htons(ETH_P_IP))) {
+		/* case 2: 802.3 LLC/SNAP IP packet */
+		ip_hdr = (struct iphdr *)&pkt[sizeof(eth_hdr->eth_8023)];
+		tos = ip_hdr->tos;
+#ifdef HDD_WMM_DEBUG
+		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+				"%s: 802.3 LLC/SNAP IP Packet, tos is %d",
+				__func__, tos);
+#endif /* HDD_WMM_DEBUG */
+	} else if (eth_hdr->eth_II.h_proto == htons(ETH_P_8021Q)) {
+		/* VLAN tagged */
 
-			if (pHdr->eth_IIv.h_vlan_encapsulated_proto ==
-			    htons(ETH_P_IP)) {
-				/* case 3: Ethernet II vlan-tagged IP packet */
-				pIpHdr =
-					(struct iphdr *)
-					&pPkt[sizeof(pHdr->eth_IIv)];
-				tos = pIpHdr->tos;
+		if (eth_hdr->eth_IIv.h_vlan_encapsulated_proto ==
+			htons(ETH_P_IP)) {
+			/* case 3: Ethernet II vlan-tagged IP packet */
+			ip_hdr =
+				(struct iphdr *)
+				&pkt[sizeof(eth_hdr->eth_IIv)];
+			tos = ip_hdr->tos;
 #ifdef HDD_WMM_DEBUG
-				CDF_TRACE(CDF_MODULE_ID_HDD,
-					  WMM_TRACE_LEVEL_INFO_LOW,
-					  "%s: Ethernet II VLAN tagged IP Packet, tos is %d",
-					  __func__, tos);
+			CDF_TRACE(CDF_MODULE_ID_HDD,
+				WMM_TRACE_LEVEL_INFO_LOW,
+				"%s: Ethernet II VLAN tagged IP Packet, tos is %d",
+				__func__, tos);
 #endif /* HDD_WMM_DEBUG */
-			} else
-			if ((ntohs(pHdr->eth_IIv.h_vlan_encapsulated_proto)
-			     < WLAN_MIN_PROTO)
-			    && (pHdr->eth_8023v.h_snap.dsap ==
-				WLAN_SNAP_DSAP)
-			    && (pHdr->eth_8023v.h_snap.ssap ==
-				WLAN_SNAP_SSAP)
-			    && (pHdr->eth_8023v.h_snap.ctrl ==
-				WLAN_SNAP_CTRL)
-			    && (pHdr->eth_8023v.h_proto ==
-				htons(ETH_P_IP))) {
-				/* case 4: 802.3 LLC/SNAP vlan-tagged IP packet */
-				pIpHdr =
-					(struct iphdr *)
-					&pPkt[sizeof(pHdr->eth_8023v)];
-				tos = pIpHdr->tos;
+		} else
+		if ((ntohs(eth_hdr->eth_IIv.h_vlan_encapsulated_proto)
+			< WLAN_MIN_PROTO)
+		    && (eth_hdr->eth_8023v.h_snap.dsap ==
+			WLAN_SNAP_DSAP)
+			&& (eth_hdr->eth_8023v.h_snap.ssap ==
+			WLAN_SNAP_SSAP)
+			&& (eth_hdr->eth_8023v.h_snap.ctrl ==
+			WLAN_SNAP_CTRL)
+			&& (eth_hdr->eth_8023v.h_proto ==
+			htons(ETH_P_IP))) {
+			/* case 4: 802.3 LLC/SNAP vlan-tagged IP packet */
+			ip_hdr =
+				(struct iphdr *)
+				&pkt[sizeof(eth_hdr->eth_8023v)];
+			tos = ip_hdr->tos;
 #ifdef HDD_WMM_DEBUG
-				CDF_TRACE(CDF_MODULE_ID_HDD,
-					  WMM_TRACE_LEVEL_INFO_LOW,
-					  "%s: 802.3 LLC/SNAP VLAN tagged IP Packet, tos is %d",
-					  __func__, tos);
+			CDF_TRACE(CDF_MODULE_ID_HDD,
+				WMM_TRACE_LEVEL_INFO_LOW,
+				"%s: 802.3 LLC/SNAP VLAN tagged IP Packet, tos is %d",
+				__func__, tos);
 #endif /* HDD_WMM_DEBUG */
-			} else {
-				/* default */
-#ifdef HDD_WMM_DEBUG
-				CDF_TRACE(CDF_MODULE_ID_HDD,
-					  WMM_TRACE_LEVEL_WARN,
-					  "%s: VLAN tagged Unhandled Protocol, using default tos",
-					  __func__);
-#endif /* HDD_WMM_DEBUG */
-				tos = 0;
-			}
 		} else {
 			/* default */
 #ifdef HDD_WMM_DEBUG
-			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_WARN,
-				  "%s: Unhandled Protocol, using default tos",
-				  __func__);
+			CDF_TRACE(CDF_MODULE_ID_HDD,
+				WMM_TRACE_LEVEL_WARN,
+				"%s: VLAN tagged Unhandled Protocol, using default tos",
+				__func__);
 #endif /* HDD_WMM_DEBUG */
-			/* Give the highest priority to 802.1x packet */
-			if (pHdr->eth_II.h_proto ==
-			    htons(HDD_ETHERTYPE_802_1_X)) {
-				tos = 0xC0;
-				*is_eapol = true;
-			} else
-				tos = 0;
-		}
-
-		dscp = (tos >> 2) & 0x3f;
-		userPri = pAdapter->hddWmmDscpToUpMap[dscp];
-
-#ifdef HDD_WMM_DEBUG
-		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
-			  "%s: tos is %d, dscp is %d, up is %d",
-			  __func__, tos, dscp, userPri);
-#endif /* HDD_WMM_DEBUG */
-
-	} else if (HDD_WMM_CLASSIFICATION_802_1Q ==
-		   (WLAN_HDD_GET_CTX(pAdapter))->config->
-		   PktClassificationBasis) {
-		if (pHdr->eth_IIv.h_vlan_proto == htons(ETH_P_8021Q)) {
-			/* VLAN tagged */
-			userPri = (ntohs(pHdr->eth_IIv.h_vlan_TCI) >> 13) & 0x7;
-#ifdef HDD_WMM_DEBUG
-			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
-				  "%s: Tagged frame, UP is %d",
-				  __func__, userPri);
-#endif /* HDD_WMM_DEBUG */
-		} else {
-			/* not VLAN tagged, use default */
-#ifdef HDD_WMM_DEBUG
-			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_WARN,
-				  "%s: Untagged frame, using default UP",
-				  __func__);
-#endif /* HDD_WMM_DEBUG */
-			/* Give the highest priority to 802.1x packet */
-			if (pHdr->eth_II.h_proto ==
-			    htons(HDD_ETHERTYPE_802_1_X)) {
-				userPri = SME_QOS_WMM_UP_VO;
-				*is_eapol = true;
-			} else
-				userPri = SME_QOS_WMM_UP_BE;
+			tos = 0;
 		}
 	} else {
 		/* default */
 #ifdef HDD_WMM_DEBUG
-		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
-			  "%s: Unknown classification scheme, using default UP",
-			  __func__);
+		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_WARN,
+			"%s: Unhandled Protocol, using default tos",
+			__func__);
 #endif /* HDD_WMM_DEBUG */
-		userPri = SME_QOS_WMM_UP_BE;
+		/* Give the highest priority to 802.1x packet */
+		if (eth_hdr->eth_II.h_proto ==
+			htons(HDD_ETHERTYPE_802_1_X)) {
+			tos = 0xC0;
+			*is_eapol = true;
+		} else
+			tos = 0;
 	}
 
-	acType = hdd_wmm_up_to_ac_map[userPri];
+	dscp = (tos >> 2) & 0x3f;
+	*user_pri = adapter->hddWmmDscpToUpMap[dscp];
 
 #ifdef HDD_WMM_DEBUG
 	CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
-		  "%s: UP is %d, AC is %d", __func__, userPri, acType);
+		"%s: tos is %d, dscp is %d, up is %d",
+		__func__, tos, dscp, *user_pri);
 #endif /* HDD_WMM_DEBUG */
-
-	*pUserPri = userPri;
-	*pAcType = acType;
 
 	return;
 }
@@ -1780,25 +1739,21 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
 
 )
 {
-	sme_ac_enum_type ac;
 	sme_QosWmmUpType up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
-	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_adapter_t *adapter = (hdd_adapter_t *) netdev_priv(dev);
+	hdd_context_t *hddctx = WLAN_HDD_GET_CTX(adapter);
 	bool is_eapol = false;
 	int status = 0;
-	status = wlan_hdd_validate_context(pHddCtx);
+	status = wlan_hdd_validate_context(hddctx);
 
 	if (status != 0) {
 		skb->priority = SME_QOS_WMM_UP_BE;
 		return HDD_LINUX_AC_BE;
 	}
 
-	if (HDD_WMM_USER_MODE_NO_QOS != pHddCtx->config->WmmMode) {
-		/* Get the user priority from IP header & corresponding AC */
-		hdd_wmm_classify_pkt(pAdapter, skb, &ac, &up, &is_eapol);
-	}
-
+	/* Get the user priority from IP header */
+	hdd_wmm_classify_pkt(adapter, skb, &up, &is_eapol);
 	skb->priority = up;
 	queueIndex = hdd_get_queue_index(skb->priority, is_eapol);
 
@@ -1816,7 +1771,6 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
  */
 uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 {
-	sme_ac_enum_type ac;
 	sme_QosWmmUpType up = SME_QOS_WMM_UP_BE;
 	uint16_t queueIndex;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -1830,15 +1784,11 @@ uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 		return HDD_LINUX_AC_BE;
 	}
 
-	/* if we don't want QoS or the AP doesn't support Qos */
-	/* All traffic will get equal opportuniy to transmit data frames. */
-	if (hdd_wmm_is_active(pAdapter)) {
-		/* Get the user priority from IP header & corresponding AC */
-		hdd_wmm_classify_pkt(pAdapter, skb, &ac, &up, &is_eapol);
-	}
-
+	/* Get the user priority from IP header */
+	hdd_wmm_classify_pkt(pAdapter, skb, &up, &is_eapol);
 	skb->priority = up;
 	queueIndex = hdd_get_queue_index(skb->priority, is_eapol);
+
 	return queueIndex;
 }
 

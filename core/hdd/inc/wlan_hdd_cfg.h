@@ -684,11 +684,6 @@ typedef enum {
 #define CFG_ROAM_SCAN_OFFLOAD_ENABLED_MAX                   (1)
 #define CFG_ROAM_SCAN_OFFLOAD_ENABLED_DEFAULT               (1)
 
-#define CFG_QOS_WMM_PKT_CLASSIFY_BASIS_NAME                "PktClassificationBasis"     /* DSCP or 802.1Q */
-#define CFG_QOS_WMM_PKT_CLASSIFY_BASIS_MIN                  (0)
-#define CFG_QOS_WMM_PKT_CLASSIFY_BASIS_MAX                  (1)
-#define CFG_QOS_WMM_PKT_CLASSIFY_BASIS_DEFAULT              (0) /* DSCP */
-
 /* default TSPEC parameters for AC_VO */
 #define CFG_QOS_WMM_INFRA_DIR_AC_VO_NAME                   "InfraDirAcVo"
 #define CFG_QOS_WMM_INFRA_DIR_AC_VO_MIN                     (0)
@@ -2918,7 +2913,6 @@ struct hdd_config {
 	bool isOkcIniFeatureEnabled;
 #endif
 	bool isRoamOffloadScanEnabled;
-	hdd_wmm_classification_t PktClassificationBasis;        /* DSCP or 802.1Q */
 	bool bImplicitQosEnabled;
 
 	/* default TSPEC parameters for AC_VO */

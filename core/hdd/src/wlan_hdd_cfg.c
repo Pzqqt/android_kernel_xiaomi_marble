@@ -1095,12 +1095,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ROAM_SCAN_OFFLOAD_ENABLED_MIN,
 			     CFG_ROAM_SCAN_OFFLOAD_ENABLED_MAX,
 			     cb_notify_update_roam_scan_offload_enabled, 0),
-	REG_VARIABLE(CFG_QOS_WMM_PKT_CLASSIFY_BASIS_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, PktClassificationBasis,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_QOS_WMM_PKT_CLASSIFY_BASIS_DEFAULT,
-		     CFG_QOS_WMM_PKT_CLASSIFY_BASIS_MIN,
-		     CFG_QOS_WMM_PKT_CLASSIFY_BASIS_MAX),
 
 	REG_VARIABLE(CFG_QOS_WMM_INFRA_DIR_AC_VO_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, InfraDirAcVo,
@@ -4472,9 +4466,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [UapsdMask] Value = [0x%x] ",
 		  pHddCtx->config->UapsdMask);
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
-		  "Name = [PktClassificationBasis] Value = [%u] ",
-		  pHddCtx->config->PktClassificationBasis);
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [ImplicitQosIsEnabled] Value = [%u]",
 		  (int)pHddCtx->config->bImplicitQosEnabled);
