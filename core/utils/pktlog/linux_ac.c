@@ -152,11 +152,7 @@ int pktlog_alloc_buf(struct ol_softc *scn)
 	for (vaddr = (unsigned long)(pl_info->buf);
 	     vaddr < ((unsigned long)(pl_info->buf) + (page_cnt * PAGE_SIZE));
 	     vaddr += PAGE_SIZE) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
 		vpg = vmalloc_to_page((const void *)vaddr);
-#else
-		vpg = virt_to_page(pktlog_virt_to_logical((void *)vaddr));
-#endif
 		SetPageReserved(vpg);
 	}
 
@@ -188,11 +184,7 @@ void pktlog_release_buf(struct ol_softc *scn)
 	for (vaddr = (unsigned long)(pl_info->buf);
 	     vaddr < (unsigned long)(pl_info->buf) + (page_cnt * PAGE_SIZE);
 	     vaddr += PAGE_SIZE) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 25))
 		vpg = vmalloc_to_page((const void *)vaddr);
-#else
-		vpg = virt_to_page(pktlog_virt_to_logical((void *)vaddr));
-#endif
 		ClearPageReserved(vpg);
 	}
 
@@ -321,12 +313,6 @@ static int pktlog_sysctl_register(struct ol_softc *scn)
 		proc_name = PKTLOG_PROC_SYSTEM;
 	}
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 31))
-#define set_ctl_name(a, b)      /* nothing */
-#else
-#define set_ctl_name(a, b)      pl_info_lnx->sysctls[a].ctl_name = b
-#endif
-
 	/*
 	 * Setup the sysctl table for creating the following sysctl entries:
 	 * /proc/sys/PKTLOG_PROC_DIR/<adapter>/enable for enabling/disabling
@@ -334,50 +320,44 @@ static int pktlog_sysctl_register(struct ol_softc *scn)
 	 * /proc/sys/PKTLOG_PROC_DIR/<adapter>/size for changing the buffer size
 	 */
 	memset(pl_info_lnx->sysctls, 0, sizeof(pl_info_lnx->sysctls));
-	set_ctl_name(0, CTL_AUTO);
 	pl_info_lnx->sysctls[0].procname = PKTLOG_PROC_DIR;
 	pl_info_lnx->sysctls[0].mode = PKTLOG_PROCSYS_DIR_PERM;
 	pl_info_lnx->sysctls[0].child = &pl_info_lnx->sysctls[2];
+
 	/* [1] is NULL terminator */
-	set_ctl_name(2, CTL_AUTO);
 	pl_info_lnx->sysctls[2].procname = proc_name;
 	pl_info_lnx->sysctls[2].mode = PKTLOG_PROCSYS_DIR_PERM;
 	pl_info_lnx->sysctls[2].child = &pl_info_lnx->sysctls[4];
+
 	/* [3] is NULL terminator */
-	set_ctl_name(4, CTL_AUTO);
 	pl_info_lnx->sysctls[4].procname = "enable";
 	pl_info_lnx->sysctls[4].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[4].proc_handler = ath_sysctl_pktlog_enable;
 	pl_info_lnx->sysctls[4].extra1 = scn;
 
-	set_ctl_name(5, CTL_AUTO);
 	pl_info_lnx->sysctls[5].procname = "size";
 	pl_info_lnx->sysctls[5].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[5].proc_handler = ath_sysctl_pktlog_size;
 	pl_info_lnx->sysctls[5].extra1 = scn;
 
-	set_ctl_name(6, CTL_AUTO);
 	pl_info_lnx->sysctls[6].procname = "options";
 	pl_info_lnx->sysctls[6].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[6].proc_handler = proc_dointvec;
 	pl_info_lnx->sysctls[6].data = &pl_info_lnx->info.options;
 	pl_info_lnx->sysctls[6].maxlen = sizeof(pl_info_lnx->info.options);
 
-	set_ctl_name(7, CTL_AUTO);
 	pl_info_lnx->sysctls[7].procname = "sack_thr";
 	pl_info_lnx->sysctls[7].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[7].proc_handler = proc_dointvec;
 	pl_info_lnx->sysctls[7].data = &pl_info_lnx->info.sack_thr;
 	pl_info_lnx->sysctls[7].maxlen = sizeof(pl_info_lnx->info.sack_thr);
 
-	set_ctl_name(8, CTL_AUTO);
 	pl_info_lnx->sysctls[8].procname = "tail_length";
 	pl_info_lnx->sysctls[8].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[8].proc_handler = proc_dointvec;
 	pl_info_lnx->sysctls[8].data = &pl_info_lnx->info.tail_length;
 	pl_info_lnx->sysctls[8].maxlen = sizeof(pl_info_lnx->info.tail_length);
 
-	set_ctl_name(9, CTL_AUTO);
 	pl_info_lnx->sysctls[9].procname = "thruput_thresh";
 	pl_info_lnx->sysctls[9].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[9].proc_handler = proc_dointvec;
@@ -385,7 +365,6 @@ static int pktlog_sysctl_register(struct ol_softc *scn)
 	pl_info_lnx->sysctls[9].maxlen =
 		sizeof(pl_info_lnx->info.thruput_thresh);
 
-	set_ctl_name(10, CTL_AUTO);
 	pl_info_lnx->sysctls[10].procname = "phyerr_thresh";
 	pl_info_lnx->sysctls[10].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[10].proc_handler = proc_dointvec;
@@ -393,14 +372,12 @@ static int pktlog_sysctl_register(struct ol_softc *scn)
 	pl_info_lnx->sysctls[10].maxlen =
 		sizeof(pl_info_lnx->info.phyerr_thresh);
 
-	set_ctl_name(11, CTL_AUTO);
 	pl_info_lnx->sysctls[11].procname = "per_thresh";
 	pl_info_lnx->sysctls[11].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[11].proc_handler = proc_dointvec;
 	pl_info_lnx->sysctls[11].data = &pl_info_lnx->info.per_thresh;
 	pl_info_lnx->sysctls[11].maxlen = sizeof(pl_info_lnx->info.per_thresh);
 
-	set_ctl_name(12, CTL_AUTO);
 	pl_info_lnx->sysctls[12].procname = "trigger_interval";
 	pl_info_lnx->sysctls[12].mode = PKTLOG_PROCSYS_PERM;
 	pl_info_lnx->sysctls[12].proc_handler = proc_dointvec;
@@ -411,13 +388,9 @@ static int pktlog_sysctl_register(struct ol_softc *scn)
 
 	/* and register everything */
 	/* register_sysctl_table changed from 2.6.21 onwards */
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 20))
 	pl_info_lnx->sysctl_header =
 		register_sysctl_table(pl_info_lnx->sysctls);
-#else
-	pl_info_lnx->sysctl_header =
-		register_sysctl_table(pl_info_lnx->sysctls, 1);
-#endif
+
 	if (!pl_info_lnx->sysctl_header) {
 		printk("%s: failed to register sysctls!\n", proc_name);
 		return -1;
@@ -468,7 +441,6 @@ static int pktlog_attach(struct ol_softc *scn)
 	pl_info_lnx->proc_entry = NULL;
 	pl_info_lnx->sysctl_header = NULL;
 
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 	proc_entry = proc_create_data(proc_name, PKTLOG_PROC_PERM,
 				      g_pktlog_pde, &pktlog_fops,
 				      &pl_info_lnx->info);
@@ -478,22 +450,6 @@ static int pktlog_attach(struct ol_softc *scn)
 		       __func__, proc_name);
 		goto attach_fail1;
 	}
-#else
-	proc_entry = create_proc_entry(proc_name, PKTLOG_PROC_PERM,
-				       g_pktlog_pde);
-
-	if (proc_entry == NULL) {
-		printk(PKTLOG_TAG "%s: create_proc_entry failed for %s\n",
-		       __func__, proc_name);
-		goto attach_fail1;
-	}
-
-	proc_entry->data = &pl_info_lnx->info;
-#if LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31)
-	proc_entry->owner = THIS_MODULE;
-#endif
-	proc_entry->proc_fops = &pktlog_fops;
-#endif
 
 	pl_info_lnx->proc_entry = proc_entry;
 
@@ -867,14 +823,8 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	int rem_len;
 	int start_offset, end_offset;
 	int fold_offset, ppos_data, cur_rd_offset;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 	struct ath_pktlog_info *pl_info = (struct ath_pktlog_info *)
 					  PDE_DATA(file->f_dentry->d_inode);
-#else
-	struct proc_dir_entry *proc_entry = PDE(file->f_dentry->d_inode);
-	struct ath_pktlog_info *pl_info = (struct ath_pktlog_info *)
-					  proc_entry->data;
-#endif
 	struct ath_pktlog_buf *log_buf = pl_info->buf;
 
 	if (log_buf == NULL)
@@ -985,51 +935,6 @@ rd_done:
 #define VMALLOC_VMADDR(x) ((unsigned long)(x))
 #endif
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(2, 6, 31))
-/* Convert a kernel virtual address to a kernel logical address */
-static volatile void *pktlog_virt_to_logical(volatile void *addr)
-{
-	pgd_t *pgd;
-	pmd_t *pmd;
-	pte_t *ptep, pte;
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 15) || \
-	(defined(__i386__) && LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 11)))
-	pud_t *pud;
-#endif
-	unsigned long vaddr, ret = 0UL;
-
-	vaddr = VMALLOC_VMADDR((unsigned long)addr);
-
-	pgd = pgd_offset_k(vaddr);
-
-	if (!pgd_none(*pgd)) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 15) || \
-	(defined(__i386__) && LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 11)))
-		pud = pud_offset(pgd, vaddr);
-		pmd = pmd_offset(pud, vaddr);
-#else
-		pmd = pmd_offset(pgd, vaddr);
-#endif
-
-		if (!pmd_none(*pmd)) {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 5, 0)
-			ptep = pte_offset_map(pmd, vaddr);
-#else
-			ptep = pte_offset(pmd, vaddr);
-#endif
-			pte = *ptep;
-
-			if (pte_present(pte)) {
-				ret = (unsigned long)
-				      page_address(pte_page(pte));
-				ret |= (vaddr & (PAGE_SIZE - 1));
-			}
-		}
-	}
-	return (volatile void *)ret;
-}
-#endif
-
 /* vma operations for mapping vmalloced area to user space */
 static void pktlog_vopen(struct vm_area_struct *vma)
 {
@@ -1041,7 +946,6 @@ static void pktlog_vclose(struct vm_area_struct *vma)
 	PKTLOG_MOD_DEC_USE_COUNT;
 }
 
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 25)
 int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 {
 	unsigned long address = (unsigned long)vmf->virtual_address;
@@ -1056,62 +960,16 @@ int pktlog_fault(struct vm_area_struct *vma, struct vm_fault *vmf)
 	vmf->page = virt_to_page((void *)address);
 	return VM_FAULT_MINOR;
 }
-#else
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
-struct page *pktlog_vmmap(struct vm_area_struct *vma, unsigned long addr,
-			  int *type)
-#else
-struct page *pktlog_vmmap(struct vm_area_struct *vma, unsigned long addr,
-			  int write_access)
-#endif
-{
-	unsigned long offset, vaddr;
-	struct proc_dir_entry *proc_entry;
-	struct ath_pktlog_info *pl_info =
-		proc_entry = PDE(vma->vm_file->f_dentry->d_inode);
-	pl_info = (struct ath_pktlog_info *)proc_entry->data;
-
-	offset = addr - vma->vm_start + (vma->vm_pgoff << PAGE_SHIFT);
-	vaddr = (unsigned long)pktlog_virt_to_logical((void *)(pl_info->buf) +
-						      offset);
-
-	if (vaddr == 0UL) {
-		printk(PKTLOG_TAG "%s: page fault out of range\n", __func__);
-		return ((struct page *)0UL);
-	}
-
-	/* increment the usage count of the page */
-	get_page(virt_to_page((void *)vaddr));
-
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(2, 6, 0)
-	if (type)
-		*type = VM_FAULT_MINOR;
-#endif
-
-	return virt_to_page((void *)vaddr);
-}
-#endif /* LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 25) */
-
 static struct vm_operations_struct pktlog_vmops = {
 	open:  pktlog_vopen,
 	close:pktlog_vclose,
-#if LINUX_VERSION_CODE > KERNEL_VERSION(2, 6, 25)
 	fault:pktlog_fault,
-#else
-	nopage:pktlog_vmmap,
-#endif
 };
 
 static int pktlog_mmap(struct file *file, struct vm_area_struct *vma)
 {
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 	struct ath_pktlog_info *pl_info = (struct ath_pktlog_info *)
 					  PDE_DATA(file->f_dentry->d_inode);
-#else
-	struct proc_dir_entry *proc_entry = PDE(file->f_dentry->d_inode);
-	struct ath_pktlog_info *pl_info = (struct ath_pktlog_info *)
-					  proc_entry->data;
-#endif
 
 	if (vma->vm_pgoff != 0) {
 		/* Entire buffer should be mapped */

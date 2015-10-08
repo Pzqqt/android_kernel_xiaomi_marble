@@ -342,10 +342,6 @@ static int cds_mc_thread(void *Arg)
 	}
 	set_user_nice(current, -2);
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-	daemonize("MC_Thread");
-#endif
-
 	/* Ack back to the context from which the main controller thread
 	 * has been created
 	 */

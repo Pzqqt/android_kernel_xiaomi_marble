@@ -836,15 +836,9 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	ret = wlan_hdd_mgmt_tx(NULL, &adapter->wdev, &params, &cookie);
 #else
 	ret = wlan_hdd_mgmt_tx(NULL,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 			       &(adapter->wdev),
-#else
-			       adapter->dev,
-#endif
 			       &chan, 0,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-			       NL80211_CHAN_HT20, 1,
-#endif
+
 			       dwell_time, frame, frame_len, 1, 1, &cookie);
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0) */
 

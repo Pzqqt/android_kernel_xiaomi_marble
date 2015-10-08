@@ -155,14 +155,10 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work);
 #endif
 
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  int *dbm);
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  enum nl80211_tx_power_setting type,
 				  int dbm);
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,

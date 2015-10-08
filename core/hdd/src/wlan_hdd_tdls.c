@@ -419,9 +419,6 @@ static void wlan_hdd_tdls_schedule_scan(struct work_struct *work)
 	scan_ctx->attempt++;
 
 	wlan_hdd_cfg80211_scan(scan_ctx->wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-			       scan_ctx->dev,
-#endif
 			       scan_ctx->scan_request);
 }
 
@@ -2559,9 +2556,6 @@ void wlan_hdd_tdls_pre_setup(struct work_struct *work)
  */
 int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
 				    struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				    struct net_device *dev,
-#endif
 				    struct cfg80211_scan_request *request)
 {
 	tdls_scan_context_t *scan_ctx;
@@ -2574,9 +2568,6 @@ int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
 	scan_ctx = &pHddCtx->tdls_scan_ctxt;
 
 	scan_ctx->wiphy = wiphy;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-	scan_ctx->dev = dev;
-#endif
 
 	scan_ctx->scan_request = request;
 	EXIT();
@@ -2595,18 +2586,11 @@ int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
  */
 static void wlan_hdd_tdls_scan_init_work(hdd_context_t *pHddCtx,
 					 struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-					 struct net_device *dev,
-#endif
 					 struct cfg80211_scan_request *request,
 					 unsigned long delay)
 {
 	if (TDLS_CTX_MAGIC != pHddCtx->tdls_scan_ctxt.magic) {
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-		wlan_hdd_tdls_copy_scan_context(pHddCtx, wiphy, dev, request);
-#else
 		wlan_hdd_tdls_copy_scan_context(pHddCtx, wiphy, request);
-#endif
 		pHddCtx->tdls_scan_ctxt.attempt = 0;
 		pHddCtx->tdls_scan_ctxt.magic = TDLS_CTX_MAGIC;
 	}
@@ -2625,9 +2609,6 @@ static void wlan_hdd_tdls_scan_init_work(hdd_context_t *pHddCtx,
  *         1 = caller can continue to scan
  */
 int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				struct net_device *dev,
-#endif
 				struct cfg80211_scan_request *request)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -2682,9 +2663,6 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 				  pHddCtx->tdls_scan_ctxt.attempt, delay);
 
 			wlan_hdd_tdls_scan_init_work(pHddCtx, wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-						     dev,
-#endif
 						     request,
 						     msecs_to_jiffies(delay));
 			/* scan should not continue */
@@ -2784,9 +2762,6 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 				  wlan_hdd_tdls_connected_peers(pAdapter), delay);
 
 			wlan_hdd_tdls_scan_init_work(pHddCtx, wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-						     dev,
-#endif
 						     request,
 						     msecs_to_jiffies(delay));
 			/* scan should not continue */

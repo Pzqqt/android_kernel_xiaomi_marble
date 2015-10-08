@@ -363,7 +363,6 @@ static const struct ieee80211_txrx_stypes
 	},
 };
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
 /* Interface limits and combinations registered by the driver */
 
 /* STA ( + STA ) combination */
@@ -577,7 +576,6 @@ static struct ieee80211_iface_combination
 		.beacon_int_infra_match = true,
 	},
 };
-#endif /* (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)) */
 
 static struct cfg80211_ops wlan_hdd_cfg80211_ops;
 
@@ -1107,9 +1105,7 @@ static int __is_driver_dfs_capable(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 4, 0))
 	dfs_capability = !!(wiphy->flags & WIPHY_FLAG_DFS_OFFLOAD);
-#endif
 
 	temp_skbuff = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(u32) +
 							  NLMSG_HDRLEN);
@@ -5130,15 +5126,14 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 
 	wiphy->mgmt_stypes = wlan_hdd_txrx_stypes;
 
-	/* This will disable updating of NL channels from passive to
-	 * active if a beacon is received on passive channel. */
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 	wiphy->regulatory_flags |= REGULATORY_DISABLE_BEACON_HINTS;
+	wiphy->regulatory_flags |= REGULATORY_COUNTRY_IE_IGNORE;
 #else
 	wiphy->flags |= WIPHY_FLAG_DISABLE_BEACON_HINTS;
+	wiphy->country_ie_pref |= NL80211_COUNTRY_IE_IGNORE_CORE;
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
 	wiphy->flags |= WIPHY_FLAG_HAVE_AP_SME
 			| WIPHY_FLAG_AP_PROBE_RESP_OFFLOAD
 			| WIPHY_FLAG_HAS_REMAIN_ON_CHANNEL
@@ -5146,13 +5141,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 			| WIPHY_FLAG_4ADDR_STATION
 #endif
 			| WIPHY_FLAG_OFFCHAN_TX;
-
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
-	wiphy->regulatory_flags = REGULATORY_COUNTRY_IE_IGNORE;
-#else
-	wiphy->country_ie_pref = NL80211_COUNTRY_IE_IGNORE_CORE;
-#endif
-#endif
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
 	wiphy->wowlan = &wowlan_support_cfg80211_init;
@@ -5221,7 +5209,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				 | BIT(NL80211_IFTYPE_AP);
 
 	if (pCfg->advertiseConcurrentOperation) {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
 		if (pCfg->enableMCC) {
 			int i;
 			for (i = 0; i < ARRAY_SIZE(wlan_hdd_iface_combination);
@@ -5234,7 +5221,6 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 		wiphy->n_iface_combinations =
 			ARRAY_SIZE(wlan_hdd_iface_combination);
 		wiphy->iface_combinations = wlan_hdd_iface_combination;
-#endif
 	}
 
 	/* Before registering we need to update the ht capabilitied based
@@ -5309,11 +5295,9 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 				ARRAY_SIZE(wlan_hdd_cfg80211_vendor_events);
 	}
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 4, 0))
 	if (pCfg->enableDFSMasterCap) {
 		wiphy->flags |= WIPHY_FLAG_DFS_OFFLOAD;
 	}
-#endif
 
 	wiphy->max_ap_assoc_sta = pCfg->maxNumberOfPeers;
 
@@ -7371,9 +7355,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
 				hdd_info("NULL returned by cfg80211_inform_bss_frame");
 			} else {
 				cfg80211_put_bss(
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
 					wiphy,
-#endif
 					bss_status);
 			}
 		} else {
@@ -7400,7 +7382,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
 	return 0;
 }
 
-#if defined(FEATURE_WLAN_LFR) && (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
+#ifdef FEATURE_WLAN_LFR
 /**
  * wlan_hdd_cfg80211_pmksa_candidate_notify() - notify a new PMSKA candidate
  * @pAdapter: Pointer to adapter
@@ -9160,11 +9142,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return status;
 
 	if (NULL !=
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 		params->chandef.chan)
-#else
-		params->channel)
-#endif
 	{
 		uint32_t numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 		uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
@@ -9173,16 +9151,10 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 
 		/* Get channel number */
 		channelNum = ieee80211_frequency_to_channel(
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0))
 			params->
 			chandef.
 			chan->
 			center_freq);
-#else
-			params->
-			channel->
-			center_freq);
-#endif
 
 		if (0 != sme_cfg_get_str(hHal, WNI_CFG_VALID_CHANNEL_LIST,
 					 validChan, &numChans)) {
@@ -9604,7 +9576,6 @@ static int wlan_hdd_set_default_mgmt_key(struct wiphy *wiphy,
 	return ret;
 }
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0))
 /**
  * __wlan_hdd_set_txq_params() - dummy implementation of set tx queue params
  * @wiphy: Pointer to wiphy
@@ -9620,21 +9591,6 @@ static int __wlan_hdd_set_txq_params(struct wiphy *wiphy,
 	ENTER();
 	return 0;
 }
-#else
-/**
- * __wlan_hdd_set_txq_params() - dummy implementation of set tx queue params
- * @wiphy: Pointer to wiphy
- * @params: Pointer to tx queue parameters
- *
- * Return: 0
- */
-static int __wlan_hdd_set_txq_params(struct wiphy *wiphy,
-				   struct ieee80211_txq_params *params)
-{
-	ENTER();
-	return 0;
-}
-#endif /* LINUX_VERSION_CODE */
 
 /**
  * wlan_hdd_set_txq_params() - SSR wrapper for wlan_hdd_set_txq_params
@@ -9644,7 +9600,6 @@ static int __wlan_hdd_set_txq_params(struct wiphy *wiphy,
  *
  * Return: 0 on success, error number on failure
  */
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 4, 0)) || defined(WITH_BACKPORTS)
 static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 				   struct net_device *dev,
 				   struct ieee80211_txq_params *params)
@@ -9657,19 +9612,6 @@ static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
 
 	return ret;
 }
-#else
-static int wlan_hdd_set_txq_params(struct wiphy *wiphy,
-				   struct ieee80211_txq_params *params)
-{
-	int ret;
-
-	cds_ssr_protect(__func__);
-	ret = __wlan_hdd_set_txq_params(wiphy, params);
-	cds_ssr_unprotect(__func__);
-
-	return ret;
-}
-#endif /* LINUX_VERSION_CODE */
 
 /**
  * __wlan_hdd_cfg80211_del_station() - delete station v2
@@ -11114,15 +11056,9 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.del_virtual_intf = wlan_hdd_del_virtual_intf,
 	.change_virtual_intf = wlan_hdd_cfg80211_change_iface,
 	.change_station = wlan_hdd_change_station,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-	.add_beacon = wlan_hdd_cfg80211_add_beacon,
-	.del_beacon = wlan_hdd_cfg80211_del_beacon,
-	.set_beacon = wlan_hdd_cfg80211_set_beacon,
-#else
 	.start_ap = wlan_hdd_cfg80211_start_ap,
 	.change_beacon = wlan_hdd_cfg80211_change_beacon,
 	.stop_ap = wlan_hdd_cfg80211_stop_ap,
-#endif
 	.change_bss = wlan_hdd_cfg80211_change_bss,
 	.add_key = wlan_hdd_cfg80211_add_key,
 	.get_key = wlan_hdd_cfg80211_get_key,

@@ -99,29 +99,13 @@ CDF_STATUS hdd_set_sap_ht2040_mode(hdd_adapter_t *pHostapdAdapter,
 				   uint8_t channel_type);
 #endif
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-int wlan_hdd_cfg80211_add_beacon(struct wiphy *wiphy,
-				 struct net_device *dev,
-				 struct beacon_parameters *params);
 
-int wlan_hdd_cfg80211_set_beacon(struct wiphy *wiphy,
-				 struct net_device *dev,
-				 struct beacon_parameters *params);
-#endif
-
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 4, 0))
-int wlan_hdd_cfg80211_del_beacon(struct wiphy *wiphy,
-				 struct net_device *dev);
-#else
 int wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			      struct net_device *dev);
-#endif
 
-#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 3, 0))
 int wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 			       struct net_device *dev,
 			       struct cfg80211_ap_settings *params);
-#endif
 
 int wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 				    struct net_device *dev,
