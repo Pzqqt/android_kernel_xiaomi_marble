@@ -747,7 +747,11 @@ enum channel_width cds_get_max_channel_bw(uint32_t chan_num)
 static int cds_bw20_ch_index_to_bw40_ch_index(int k)
 {
 	int m = -1;
-	if (k >= RF_CHAN_1 && k <= RF_CHAN_14) {
+	if (k >= RF_CHAN_1 && k <= RF_CHAN_13) {
+		/*
+		 * Channel bonding is not valid for channel 14,
+		 * Hence don't consider it
+		 */
 		m = k - RF_CHAN_1 + RF_CHAN_BOND_3;
 		if (m > RF_CHAN_BOND_11)
 			m = RF_CHAN_BOND_11;
