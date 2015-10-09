@@ -3752,9 +3752,10 @@ static bool wma_is_extscan_in_progress(tp_wma_handle wma)
 CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 {
 	struct wma_txrx_node *iface;
-	bool connected = false, pno_in_progress = false;
+	bool pno_in_progress = false;
 	uint8_t i, vdev_id = 0;
 	bool extscan_in_progress = false, pno_matched = false;
+	bool enable_wow = false;
 
 	wma->no_of_suspend_ind++;
 
@@ -3816,17 +3817,16 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 					   WMI_SERVICE_BEACON_OFFLOAD)) {
 			WMA_LOGD("vdev %d is in beaconning mode, enabling wow",
 				 i);
-			goto enable_wow;
+			enable_wow = true;
 		}
 	}
 	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].conn_state) {
-			connected = true;
-			break;
-		}
+		if (wma->interfaces[i].conn_state)
+			enable_wow = true;
 #ifdef FEATURE_WLAN_SCAN_PNO
 		if (wma->interfaces[i].pno_in_progress) {
 			WMA_LOGD("PNO is in progress, enabling wow");
+			enable_wow = true;
 			pno_in_progress = true;
 			vdev_id = i;
 			if (wma->interfaces[i].nlo_match_evt_received)
@@ -3836,6 +3836,8 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 #endif /* FEATURE_WLAN_SCAN_PNO */
 	}
 	extscan_in_progress = wma_is_extscan_in_progress(wma);
+	if (extscan_in_progress)
+		enable_wow = true;
 
 	for (i = 0; i < wma->max_bssid; i++) {
 		wma->wow.gtk_pdev_enable |= wma->wow.gtk_err_enable[i];
@@ -3843,13 +3845,12 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 			i, wma->wow.gtk_err_enable[i], wma->wow.gtk_pdev_enable);
 	}
 
-	if (!connected && !pno_in_progress && !extscan_in_progress) {
+	if (!enable_wow) {
 		WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
 		cdf_mem_free(info);
 		goto send_ready_to_suspend;
 	}
 
-enable_wow:
 	WMA_LOGE("WOW Suspend");
 
 	/*
