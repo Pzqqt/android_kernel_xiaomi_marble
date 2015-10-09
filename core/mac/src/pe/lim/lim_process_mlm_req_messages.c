@@ -1569,6 +1569,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	tpPESession session;
 	extern bool send_disassoc_frame;
 	tLimMlmStates mlm_state;
+	tSirSmeDisassocRsp *sme_disassoc_rsp;
 
 	if (CDF_STATUS_SUCCESS != suspend_status)
 		lim_log(mac_ctx, LOGE, FL("Suspend Status is not success %X"),
@@ -1605,10 +1606,39 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			lim_print_mac_addr(mac_ctx,
 				mlm_disassocreq->peerMacAddr, LOGW);
 
-			/* Prepare and Send LIM_MLM_DISASSOC_CNF */
-			mlm_disassoccnf.resultCode =
-				eSIR_SME_INVALID_PARAMETERS;
-			goto end;
+			/*
+			 * Disassociation response due to host triggered
+			 * disassociation
+			 */
+			sme_disassoc_rsp =
+				cdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
+			if (NULL == sme_disassoc_rsp) {
+				lim_log(mac_ctx, LOGP,
+					FL("memory allocation failed for disassoc rsp"));
+				return;
+			}
+
+			lim_log(mac_ctx, LOG1,
+				FL("send disassoc rsp with ret code %d for" MAC_ADDRESS_STR),
+				eSIR_SME_DEAUTH_STATUS,
+				MAC_ADDR_ARRAY(mlm_disassocreq->peerMacAddr));
+
+			sme_disassoc_rsp->messageType = eWNI_SME_DISASSOC_RSP;
+			sme_disassoc_rsp->length = sizeof(tSirSmeDisassocRsp);
+			sme_disassoc_rsp->sessionId =
+					mlm_disassocreq->sessionId;
+			sme_disassoc_rsp->transactionId = 0;
+			sme_disassoc_rsp->statusCode = eSIR_SME_DEAUTH_STATUS;
+
+			cdf_mem_copy(sme_disassoc_rsp->peerMacAddr,
+				mlm_disassocreq->peerMacAddr,
+				sizeof(tSirMacAddr));
+			msg = (uint32_t *)sme_disassoc_rsp;
+
+			lim_send_sme_disassoc_deauth_ntf(mac_ctx,
+					CDF_STATUS_SUCCESS, msg);
+			return;
+
 		}
 		break;
 	case eLIM_STA_IN_IBSS_ROLE:
@@ -1909,6 +1939,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	tLimMlmDeauthReq *mlm_deauth_req;
 	tLimMlmDeauthCnf mlm_deauth_cnf;
 	tpPESession session;
+	tSirSmeDeauthRsp *sme_deauth_rsp;
 
 	if (CDF_STATUS_SUCCESS != suspend_status)
 		lim_log(mac_ctx, LOGE, FL("Suspend Status is not success %X"),
@@ -1955,10 +1986,42 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 					MAC_ADDR_ARRAY(
 						mlm_deauth_req->peerMacAddr),
 					MAC_ADDR_ARRAY(curr_bssId));
-				/* Prepare and Send LIM_MLM_DEAUTH_CNF */
-				mlm_deauth_cnf.resultCode =
-					eSIR_SME_INVALID_PARAMETERS;
-				goto end;
+				/*
+				 * Deauthentication response to host triggered
+				 * deauthentication
+				 */
+				sme_deauth_rsp =
+				    cdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
+				if (NULL == sme_deauth_rsp) {
+					lim_log(mac_ctx, LOGP,
+						FL("memory allocation failed for deauth rsp"));
+					return;
+				}
+
+				lim_log(mac_ctx, LOG1,
+					FL("send deauth rsp with ret code %d for" MAC_ADDRESS_STR),
+					eSIR_SME_DEAUTH_STATUS,
+					MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+
+				sme_deauth_rsp->messageType =
+						eWNI_SME_DEAUTH_RSP;
+				sme_deauth_rsp->length =
+						sizeof(tSirSmeDeauthRsp);
+				sme_deauth_rsp->statusCode =
+						eSIR_SME_DEAUTH_STATUS;
+				sme_deauth_rsp->sessionId =
+						mlm_deauth_req->sessionId;
+				sme_deauth_rsp->transactionId = 0;
+
+				cdf_mem_copy(sme_deauth_rsp->peerMacAddr,
+						mlm_deauth_req->peerMacAddr,
+						sizeof(tSirMacAddr));
+
+				msg_buf = (uint32_t *)sme_deauth_rsp;
+
+				lim_send_sme_disassoc_deauth_ntf(mac_ctx,
+						CDF_STATUS_SUCCESS, msg_buf);
+				return;
 			}
 
 			if ((session->limMlmState ==
