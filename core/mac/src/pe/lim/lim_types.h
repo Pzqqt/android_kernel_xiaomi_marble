@@ -854,6 +854,8 @@ void lim_process_rx_scan_event(tpAniSirGlobal mac, void *buf);
 
 int lim_process_remain_on_chnl_req(tpAniSirGlobal pMac, uint32_t *pMsg);
 void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, CDF_STATUS status, uint32_t *data);
+void lim_send_sme_disassoc_deauth_ntf(tpAniSirGlobal mac_ctx,
+				CDF_STATUS status, uint32_t *ctx);
 
 /* / Bit value data structure */
 typedef enum sHalBitVal         /* For Bit operations */

@@ -2741,6 +2741,18 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 				MAC_ADDR_ARRAY(smeDisassocCnf.peerMacAddr));
 			return;
 		}
+
+		if ((pStaDs->mlmStaContext.mlmState ==
+				eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
+			(pStaDs->mlmStaContext.mlmState ==
+				eLIM_MLM_WT_DEL_STA_RSP_STATE)) {
+			lim_log(pMac, LOGE,
+				FL("No need of cleanup for addr:" MAC_ADDRESS_STR "as MLM state is %d"),
+				MAC_ADDR_ARRAY(smeDisassocCnf.peerMacAddr),
+				pStaDs->mlmStaContext.mlmState);
+			return;
+		}
+
 #if defined WLAN_FEATURE_VOWIFI_11R
 		/* Delete FT session if there exists one */
 		lim_ft_cleanup_pre_auth_info(pMac, psessionEntry);
