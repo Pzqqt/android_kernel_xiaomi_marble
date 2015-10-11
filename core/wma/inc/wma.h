@@ -187,9 +187,6 @@
 #define WMA_ROAM_BEACON_WEIGHT_DEFAULT       (14)
 #define WMA_ROAM_OPP_SCAN_PERIOD_DEFAULT     (120000)
 #define WMA_ROAM_OPP_SCAN_AGING_PERIOD_DEFAULT (WMA_ROAM_OPP_SCAN_PERIOD_DEFAULT * 5)
-#define WMA_ROAM_PREAUTH_SCAN_TIME           (50)
-#define WMA_ROAM_PREAUTH_REST_TIME           (0)
-#define WMA_ROAM_PREAUTH_MAX_SCAN_TIME       (10000)
 #define WMA_ROAM_BMISS_FIRST_BCNT_DEFAULT    (10)
 #define WMA_ROAM_BMISS_FINAL_BCNT_DEFAULT    (10)
 #define WMA_ROAM_BMISS_FIRST_BCNT_DEFAULT_P2P (15)
@@ -470,23 +467,6 @@ enum wma_tdls_peer_reason {
 };
 #endif /* FEATURE_WLAN_TDLS */
 
-
-/**
- * enum t_wma_roam_preauth_chan_state_t - Roaming preauth channel state
- * @WMA_ROAM_PREAUTH_CHAN_NONE: no preauth in progress
- * @WMA_ROAM_PREAUTH_CHAN_REQUESTED: preaduth channel requested
- * @WMA_ROAM_PREAUTH_ON_CHAN: preauth on channel
- * @WMA_ROAM_PREAUTH_CHAN_CANCEL_REQUESTED: preauth channel cancel requested
- * @WMA_ROAM_PREAUTH_CHAN_COMPLETED: preauth completed
- */
-typedef enum {
-	WMA_ROAM_PREAUTH_CHAN_NONE,
-	WMA_ROAM_PREAUTH_CHAN_REQUESTED,
-	WMA_ROAM_PREAUTH_ON_CHAN,
-	WMA_ROAM_PREAUTH_CHAN_CANCEL_REQUESTED,
-	WMA_ROAM_PREAUTH_CHAN_COMPLETED
-} t_wma_roam_preauth_chan_state_t;
-
 /**
  * struct wma_mem_chunk - memory chunks
  * @vaddr: virtual address
@@ -526,6 +506,7 @@ struct scan_param {
 	uint32_t scan_id;
 	uint32_t scan_requestor_id;
 	tSirP2pScanType p2p_scan_type;
+	uint32_t chan_freq;
 };
 
 /**
@@ -1131,10 +1112,6 @@ struct wmi_init_cmd {
  * @pGetRssiReq: get RSSI request
  * @thermal_mgmt_info: Thermal mitigation related info
  * @roam_offload_enabled: is roam offload enable/disable
- * @roam_preauth_scan_state: roam preauth scan state
- * @roam_preauth_scan_id: roam preauth scan id
- * @roam_preauth_chanfreq: roam preauth channel frequency
- * @roam_preauth_chan_context: roam preauth chan context
  * @ol_ini_info: store ini status of arp offload, ns offload
  * @ssdp: ssdp flag
  * @ibss_started: is IBSS started or not
@@ -1281,10 +1258,6 @@ typedef struct {
 	void *pGetRssiReq;
 	t_thermal_mgmt thermal_mgmt_info;
 	bool roam_offload_enabled;
-	t_wma_roam_preauth_chan_state_t roam_preauth_scan_state;
-	uint32_t roam_preauth_scan_id;
-	uint16_t roam_preauth_chanfreq;
-	void *roam_preauth_chan_context;
 	/* Here ol_ini_info is used to store ini
 	 * status of arp offload, ns offload
 	 * and others. Currently 1st bit is used

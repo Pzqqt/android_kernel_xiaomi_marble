@@ -2727,8 +2727,6 @@ void wma_vdev_resp_timer(void *data)
 		params->status = CDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_SWITCH_CHANNEL_REQ timedout", __func__);
 		wma_send_msg(wma, WMA_SWITCH_CHANNEL_RSP, (void *)params, 0);
-		wma->roam_preauth_chan_context = NULL;
-		wma->roam_preauth_scan_id = -1;
 	} else if (tgt_req->msg_type == WMA_DELETE_BSS_REQ) {
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) tgt_req->user_data;

@@ -1023,7 +1023,7 @@ end:
  * @return CDF_STATUS_SUCCESS or CDF_STATUS_E_FAILURE
  */
 CDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
-	uint8_t SessionId, uint32_t scan_id)
+	uint8_t SessionId, uint32_t scan_id, uint32_t scan_requestor_id)
 {
 	tSirMsgQ msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
@@ -1038,6 +1038,7 @@ CDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 
 	pAbortScanParams->SessionId = SessionId;
 	pAbortScanParams->scan_id = scan_id;
+	pAbortScanParams->scan_requestor_id = scan_requestor_id;
 	msg.type = WMA_STOP_SCAN_OFFLOAD_REQ;
 	msg.bodyptr = pAbortScanParams;
 	msg.bodyval = 0;
@@ -1055,30 +1056,29 @@ CDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 }
 
 /**
- * lim_process_abort_scan_ind()
+ * lim_process_abort_scan_ind() - abort the scan which is presently being run
  *
- ***FUNCTION:
- * This function is called from HDD to abort the scan which is presently being run
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session_id: PE session
+ * @scan_id: Scan ID from the scan request
+ * @scan_requesor_id: Entity requesting the scan
  *
- *
- ***NOTE:
- *
- * @param  pMac      Pointer to Global MAC structure
- * @param  *pMsgBuf  A pointer to the SME message buffer
- * @return None
+ * @return: None
  */
 void lim_process_abort_scan_ind(tpAniSirGlobal mac_ctx,
-	uint8_t session_id, uint32_t scan_id)
+	uint8_t session_id, uint32_t scan_id, uint32_t scan_requestor_id)
 {
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
-	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_SCAN_ABORT_IND_EVENT, NULL, 0, 0);
+	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_SCAN_ABORT_IND_EVENT,
+		NULL, 0, 0);
 #endif
 
-	lim_log(mac_ctx, LOG2, FL("Processing AbortScan Ind scan_id %d"),
-				 scan_id);
+	lim_log(mac_ctx, LOG2, FL("scan_id %d, scan_requestor_id 0x%x"),
+				 scan_id, scan_requestor_id);
 
-	/* send stop scan cmd to fw if scan offload is enabled. */
-	lim_send_stop_scan_offload_req(mac_ctx, session_id, scan_id);
+	/* send stop scan cmd to firmware */
+	lim_send_stop_scan_offload_req(mac_ctx, session_id, scan_id,
+		scan_requestor_id);
 	return;
 }
 
@@ -1324,7 +1324,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			session_id = req_msg->sessionId;
 			scan_id = req_msg->scan_id;
 			lim_process_abort_scan_ind(mac_ctx, session_id,
-				scan_id);
+				scan_id, USER_SCAN_REQUESTOR_ID);
 			cdf_mem_free((void *)msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
@@ -1386,8 +1386,8 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 	case eWNI_SME_ABORT_REMAIN_ON_CHAN_IND:
 		p2p_msg = (tSirMbMsgP2p *) msg->bodyptr;
-		lim_abort_remain_on_chan(mac_ctx, p2p_msg->sessionId,
-			p2p_msg->scan_id);
+		lim_process_abort_scan_ind(mac_ctx, p2p_msg->sessionId,
+			p2p_msg->scan_id, ROC_SCAN_REQUESTOR_ID);
 		cdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;

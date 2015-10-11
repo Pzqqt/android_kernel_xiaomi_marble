@@ -47,6 +47,7 @@
 #include <lim_session.h>
 #include <lim_admit_control.h>
 #include "wmm_apsd.h"
+#include "wma.h"
 
 extern void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 				     tLimMlmSetKeysReq *pMlmSetKeysReq,
@@ -208,43 +209,6 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	cdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext), 0);
 }
 
-/*------------------------------------------------------------------
- *
- * This is the handler after suspending the link.
- * We suspend the link and then now proceed to switch channel.
- *
- *------------------------------------------------------------------*/
-void static
-lim_ft_pre_auth_suspend_link_handler(tpAniSirGlobal pMac, CDF_STATUS status,
-				     uint32_t *data)
-{
-	tpPESession psessionEntry = (tpPESession) data;
-
-	/* The link is suspended of not */
-	if (NULL == psessionEntry ||
-	    NULL == psessionEntry->ftPEContext.pFTPreAuthReq ||
-	    status != CDF_STATUS_SUCCESS) {
-		PELOGE(lim_log(pMac, LOGE,
-			       FL("preAuth error, status = %d"), status);
-		       )
-		lim_post_ft_pre_auth_rsp(pMac, eSIR_FAILURE, NULL, 0,
-					 psessionEntry);
-		return;
-	}
-
-	/* Suspended, now move to a different channel.
-	 * Perform some sanity check before proceeding
-	 */
-	if (psessionEntry->ftPEContext.pFTPreAuthReq) {
-		lim_change_channel_with_callback(pMac,
-						 psessionEntry->ftPEContext.
-						 pFTPreAuthReq->preAuthchannelNum,
-						 lim_perform_ft_pre_auth, NULL,
-						 psessionEntry);
-		return;
-	}
-}
-
 /*
  * lim_process_ft_pre_auth_req() - process ft pre auth req
  *
@@ -338,8 +302,8 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		lim_log(mac_ctx, LOG2,
 			FL("Performing pre-auth on diff channel(session %p)"),
 			session);
-	lim_ft_pre_auth_suspend_link_handler(mac_ctx, CDF_STATUS_SUCCESS,
-			(uint32_t *)session);
+		lim_send_preauth_scan_offload(mac_ctx, session->peSessionId,
+				session->ftPEContext.pFTPreAuthReq);
 	} else {
 		lim_log(mac_ctx, LOG2,
 			FL("Performing pre-auth on same channel (session %p)"),
@@ -1111,10 +1075,8 @@ tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
  * Resume Link Call Back
  *------------------------------------------------------------------*/
 void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac, CDF_STATUS status,
-				    uint32_t *data)
+				    tpPESession psessionEntry)
 {
-	tpPESession psessionEntry = (tpPESession) data;
-
 	if (NULL == psessionEntry ||
 	    NULL == psessionEntry->ftPEContext.pFTPreAuthReq)
 		return;
@@ -1138,22 +1100,6 @@ void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac, CDF_STATUS status,
 				 psessionEntry->ftPEContext.saved_auth_rsp,
 				 psessionEntry->ftPEContext.saved_auth_rsp_length,
 				 psessionEntry);
-}
-
-/*------------------------------------------------------------------
- * Resume Link Call Back
- *------------------------------------------------------------------*/
-void lim_perform_post_ft_pre_auth_and_channel_change(tpAniSirGlobal pMac,
-						     CDF_STATUS status,
-						     uint32_t *data,
-						     tpPESession psessionEntry)
-{
-	/* Set the resume channel to Any valid channel (invalid)
-	 * This will instruct HAL to set it to any previous valid channel.
-	 */
-	pe_set_resume_channel(pMac, 0, 0);
-	lim_ft_process_pre_auth_result(pMac, CDF_STATUS_SUCCESS,
-			(uint32_t *) psessionEntry);
 }
 
 /*
@@ -1348,10 +1294,9 @@ send_rsp:
 	if (psessionEntry->currentOperChannel !=
 	    psessionEntry->ftPEContext.pFTPreAuthReq->preAuthchannelNum) {
 		/* Need to move to the original AP channel */
-		lim_change_channel_with_callback(pMac,
-						 psessionEntry->currentOperChannel,
-						 lim_perform_post_ft_pre_auth_and_channel_change,
-						 NULL, psessionEntry);
+		lim_process_abort_scan_ind(pMac, psessionEntry->peSessionId,
+			psessionEntry->ftPEContext.pFTPreAuthReq->scan_id,
+			PREAUTH_REQUESTOR_ID);
 	} else {
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		PELOGE(lim_log(pMac, LOG1,
@@ -1360,8 +1305,7 @@ send_rsp:
 			       preAuthchannelNum);
 		       )
 #endif
-		lim_ft_process_pre_auth_result(pMac, status,
-					       (uint32_t *) psessionEntry);
+		lim_ft_process_pre_auth_result(pMac, status, psessionEntry);
 	}
 }
 
@@ -2019,6 +1963,137 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 #endif
 
 	return eSIR_SUCCESS;
+}
+/**
+ * lim_send_preauth_scan_offload() - Send scan command to handle preauth.
+ *
+ * @mac_ctx: Pointer to Global MAC structure
+ * @session_id: pe session id
+ * @ft_preauth_req: Preauth request with parameters
+ *
+ * Builds a single channel scan request and sends it to WMA.
+ * Scan dwell time is the time allocated to go to preauth candidate
+ * channel for auth frame exchange.
+ *
+ * Return: Status of sending message to WMA.
+ */
+CDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
+			uint8_t session_id,
+			tSirFTPreAuthReq *ft_preauth_req)
+{
+	tSirScanOffloadReq *scan_offload_req;
+	tSirRetStatus rc = eSIR_SUCCESS;
+	tSirMsgQ msg;
+
+	scan_offload_req = cdf_mem_malloc(sizeof(tSirScanOffloadReq));
+	if (NULL == scan_offload_req) {
+		lim_log(mac_ctx, LOGE,
+			FL("Memory allocation failed for pScanOffloadReq"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cdf_mem_zero(scan_offload_req, sizeof(tSirScanOffloadReq));
+
+	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
+	msg.bodyptr = scan_offload_req;
+	msg.bodyval = 0;
+
+	cdf_mem_copy((uint8_t *) &scan_offload_req->selfMacAddr.bytes,
+		     (uint8_t *) ft_preauth_req->self_mac_addr,
+		     sizeof(tSirMacAddr));
+
+	cdf_mem_copy((uint8_t *) &scan_offload_req->bssId.bytes,
+		     (uint8_t *) ft_preauth_req->currbssId,
+		     sizeof(tSirMacAddr));
+	scan_offload_req->scanType = eSIR_PASSIVE_SCAN;
+	/*
+	 * P2P_SCAN_TYPE_LISTEN tells firmware to allow mgt frames to/from
+	 * mac address that is not of connected AP.
+	 */
+	scan_offload_req->p2pScanType = P2P_SCAN_TYPE_LISTEN;
+	scan_offload_req->restTime = 0;
+	scan_offload_req->minChannelTime = LIM_FT_PREAUTH_SCAN_TIME;
+	scan_offload_req->maxChannelTime = LIM_FT_PREAUTH_SCAN_TIME;
+	scan_offload_req->sessionId = session_id;
+	scan_offload_req->channelList.numChannels = 1;
+	scan_offload_req->channelList.channelNumber[0] =
+		ft_preauth_req->preAuthchannelNum;
+	wma_get_scan_id(&ft_preauth_req->scan_id);
+	scan_offload_req->scan_id = ft_preauth_req->scan_id;
+	scan_offload_req->scan_requestor_id = PREAUTH_REQUESTOR_ID;
+
+	lim_log(mac_ctx, LOG1,
+		FL("Scan request: duration %u, session %hu, chan %hu"),
+		scan_offload_req->maxChannelTime, session_id,
+		ft_preauth_req->preAuthchannelNum);
+
+	rc = wma_post_ctrl_msg(mac_ctx, &msg);
+	if (rc != eSIR_SUCCESS) {
+		lim_log(mac_ctx, LOGE, FL("START_SCAN_OFFLOAD failed %u"), rc);
+		cdf_mem_free(scan_offload_req);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+
+/**
+ * lim_preauth_scan_event_handler() - Process firmware preauth scan events
+ *
+ * @mac_ctx:Pointer to global MAC structure
+ * @event: Scan event
+ * @session_id: session entry
+ * @scan_id: scan id from WMA scan event.
+ *
+ * If scan event signifies failure or successful completion, operation
+ * is complete.
+ * If scan event signifies that STA is on foreign channel, send auth frame
+ *
+ * Return: void
+ */
+
+void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
+				tSirScanEventType event,
+				uint8_t session_id,
+				uint32_t scan_id)
+{
+	tpPESession session_entry;
+
+	session_entry = pe_find_session_by_session_id(mac_ctx, session_id);
+	if (session_entry == NULL) {
+		lim_log(mac_ctx, LOGE,
+			FL("SessionId:%d Session Does not exist"), session_id);
+		return;
+	}
+
+	switch (event) {
+	case SCAN_EVENT_START_FAILED:
+		/* Scan command is rejected by firmware */
+		lim_log(mac_ctx, LOGE, FL("Failed to start preauth scan"));
+		lim_post_ft_pre_auth_rsp(mac_ctx, eSIR_FAILURE, NULL, 0,
+					 session_entry);
+		return;
+
+	case SCAN_EVENT_COMPLETED:
+		/*
+		 * Scan either completed succesfully or or got terminated
+		 * after successful auth, or timed out. Either way, STA
+		 * is back to home channel. Data traffic can continue.
+		 */
+		lim_ft_process_pre_auth_result(mac_ctx, CDF_STATUS_SUCCESS,
+			session_entry);
+		break;
+
+	case SCAN_EVENT_FOREIGN_CHANNEL:
+		/* Sta is on candidate channel. Send auth */
+		lim_perform_ft_pre_auth(mac_ctx, CDF_STATUS_SUCCESS, NULL,
+					session_entry);
+		break;
+	default:
+		/* Don't print message for scan events that are ignored */
+		break;
+	}
 }
 
 #endif /* WLAN_FEATURE_VOWIFI_11R */

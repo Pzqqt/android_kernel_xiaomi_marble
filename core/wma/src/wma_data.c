@@ -2753,8 +2753,8 @@ CDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	if (tx_flag & HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME)
 		use_6mbps = 1;
 
-	if (wma_handle->roam_preauth_scan_state == WMA_ROAM_PREAUTH_ON_CHAN) {
-		chanfreq = wma_handle->roam_preauth_chanfreq;
+	if (wma_handle->interfaces[vdev_id].scan_info.chan_freq != 0) {
+		chanfreq = wma_handle->interfaces[vdev_id].scan_info.chan_freq;
 		WMA_LOGI("%s: Preauth frame on channel %d", __func__, chanfreq);
 	} else if (pFc->subType == SIR_MAC_MGMT_PROBE_RSP) {
 		chanfreq = wma_handle->interfaces[vdev_id].mhz;

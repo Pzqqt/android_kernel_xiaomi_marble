@@ -17717,6 +17717,8 @@ csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
 		     sizeof(tSirMacAddr));
 	cdf_mem_copy((void *)&pftPreAuthReq->preAuthbssId,
 		     (void *)pBssDescription->bssId, sizeof(tSirMacAddr));
+	cdf_mem_copy((void *)&pftPreAuthReq->self_mac_addr,
+		     (void *)&pSession->selfMacAddr.bytes, sizeof(tSirMacAddr));
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	if (csr_roam_is11r_assoc(pMac, sessionId) &&

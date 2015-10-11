@@ -1269,11 +1269,14 @@ typedef struct tdls_chan_switch_params_struct {
 
 /**
  * struct tAbortScanParams - Abort scan parameters
- * @SessionId: session id
+ * @SessionId: PE session id
+ * @scan_id: Scan ID used for original scan request
+ * @scan_requestor_id: Scan requesting entity
  */
 typedef struct sAbortScanParams {
 	uint8_t SessionId;
 	uint32_t scan_id;
+	uint32_t scan_requestor_id;
 } tAbortScanParams, *tpAbortScanParams;
 
 /**

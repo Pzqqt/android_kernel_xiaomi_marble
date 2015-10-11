@@ -1266,6 +1266,7 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 
 	pScanOffloadReq->sessionId = pScanReq->sessionId;
 	pScanOffloadReq->scan_id = pScanReq->scan_id;
+	pScanOffloadReq->scan_requestor_id = USER_SCAN_REQUESTOR_ID;
 
 	if (pScanOffloadReq->sessionId >= pMac->lim.maxBssId)
 		lim_log(pMac, LOGE, FL("Invalid pe sessionID : %d"),

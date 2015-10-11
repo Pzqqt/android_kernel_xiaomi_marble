@@ -43,6 +43,9 @@
    ------------------------------------------------------------------------*/
 #define MAX_FTIE_SIZE             384   /* Max size limited to 384, on acct. of IW custom events */
 
+/* Time to dwell on preauth channel during roaming, in milliseconds */
+#define LIM_FT_PREAUTH_SCAN_TIME 50
+
 /*--------------------------------------------------------------------------
    Type declarations
    ------------------------------------------------------------------------*/
@@ -61,6 +64,8 @@ typedef struct sSirFTPreAuthReq {
 	/* BSSID currently associated to suspend the link */
 	tSirMacAddr currbssId;
 	tSirMacAddr preAuthbssId;       /* BSSID to preauth to */
+	tSirMacAddr self_mac_addr;
+	uint32_t scan_id;
 	uint16_t ft_ies_length;
 	uint8_t ft_ies[MAX_FTIE_SIZE];
 	tpSirBssDescription pbssDescription;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -62,6 +62,12 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 				    tpPESession psessionEntry);
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
+void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
+				tSirScanEventType event,
+				uint8_t session_id,
+				uint32_t scan_id);
+tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
+					tpPESession psessionEntry);
 
 bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
 tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
@@ -75,6 +81,8 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		uint8_t updateEntry,
 		tpPESession pftSessionEntry,
 		tpSirBssDescription bssDescription);
+CDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
+		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
 #endif /* __LIMFT_H__ */
 
 #endif /* WLAN_FEATURE_VOWIFI_11R */

@@ -241,8 +241,7 @@ CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		cmd->scan_id = scan_req->scan_id;
 	}
 	cmd->scan_priority = WMI_SCAN_PRIORITY_LOW;
-	cmd->scan_req_id = WMA_HOST_SCAN_REQUESTOR_ID_PREFIX |
-			   WMA_DEFAULT_SCAN_REQUESTER_ID;
+	cmd->scan_req_id = scan_req->scan_requestor_id;
 
 	/* Set the scan events which the driver is intereseted to receive */
 	/* TODO: handle all the other flags also */
@@ -562,8 +561,7 @@ CDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 		       WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_stop_scan_cmd_fixed_param));
 	cmd->vdev_id = abort_scan_req->SessionId;
-	cmd->requestor = WMA_HOST_SCAN_REQUESTOR_ID_PREFIX |
-			WMA_DEFAULT_SCAN_REQUESTER_ID;
+	cmd->requestor = abort_scan_req->scan_requestor_id;
 	cmd->scan_id = abort_scan_req->scan_id;
 	/* stop the scan with the corresponding scan_id */
 	cmd->req_type = WMI_SCAN_STOP_ONE;
@@ -626,15 +624,6 @@ CDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 
 	/* Save current scan info */
 	cmd = (wmi_start_scan_cmd_fixed_param *) wmi_buf_data(buf);
-	if (msg_type == WMA_CHNL_SWITCH_REQ) {
-		/* Adjust parameters for channel switch scan */
-		cmd->min_rest_time = WMA_ROAM_PREAUTH_REST_TIME;
-		cmd->max_rest_time = WMA_ROAM_PREAUTH_REST_TIME;
-		cmd->max_scan_time = WMA_ROAM_PREAUTH_MAX_SCAN_TIME;
-		cmd->scan_priority = WMI_SCAN_PRIORITY_HIGH;
-		cmd->scan_id = scan_req->scan_id;
-		wma_handle->roam_preauth_scan_id = cmd->scan_id;
-	}
 	if (scan_req->p2pScanType == P2P_SCAN_TYPE_LISTEN)
 		wma_set_p2p_scan_info(wma_handle, cmd->scan_id,
 			 cmd->vdev_id, P2P_SCAN_TYPE_LISTEN);
@@ -680,6 +669,7 @@ error:
 		scan_event->sessionId = scan_req->sessionId;
 		scan_event->p2pScanType = scan_req->p2pScanType;
 		scan_event->scanId = scan_req->scan_id;
+		scan_event->requestor = scan_req->scan_requestor_id;
 		wma_send_msg(wma_handle, WMA_RX_SCAN_EVENT, (void *)scan_event,
 			     0);
 	}
@@ -725,8 +715,10 @@ CDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 		cdf_status = CDF_STATUS_E_FAILURE;
 		goto error;
 	}
-	WMA_LOGE("scan_id %x, vdev_id %x",
-		 abort_scan_req->scan_id, abort_scan_req->SessionId);
+	WMA_LOGE("scan_id 0x%x, scan_requestor_id 0x%x, vdev_id %d",
+		 abort_scan_req->scan_id,
+		 abort_scan_req->scan_requestor_id,
+		 abort_scan_req->SessionId);
 	WMA_LOGI("WMA --> WMI_STOP_SCAN_CMDID");
 
 	return CDF_STATUS_SUCCESS;
@@ -2429,197 +2421,6 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 	return cdf_status;
 }
 
-/**
- * wma_roam_preauth_chan_set() - set preauth channel
- * @wma_handle: wma handle
- * @params: switch channel params
- * @vdev_id: vdev id
- *
- * Send a single channel passive scan request
- * to handle set_channel operation for preauth
- *
- * Return: CDF atatus
- */
-CDF_STATUS wma_roam_preauth_chan_set(tp_wma_handle wma_handle,
-				     tpSwitchChannelParams params,
-				     uint8_t vdev_id)
-{
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
-	tSirScanOffloadReq scan_req;
-	uint8_t bssid[IEEE80211_ADDR_LEN] = {
-					0xff, 0xff, 0xff, 0xff, 0xff, 0xff};
-
-	WMA_LOGI("%s: channel %d", __func__, params->channelNumber);
-
-	/* Check for prior operation in progress */
-	if (wma_handle->roam_preauth_chan_context != NULL) {
-		cdf_status = CDF_STATUS_E_FAILURE;
-		WMA_LOGE("%s: Rejected request. Previous operation in progress",
-			 __func__);
-		goto send_resp;
-	}
-	wma_handle->roam_preauth_chan_context = params;
-
-	/* Prepare a dummy scan request and get the
-	 * wmi_start_scan_cmd_fixed_param structure filled properly
-	 */
-	cdf_mem_zero(&scan_req, sizeof(scan_req));
-	cdf_copy_macaddr((struct cdf_mac_addr *) &scan_req.bssId,
-			 (struct cdf_mac_addr *) bssid);
-	cdf_copy_macaddr((struct cdf_mac_addr *) &scan_req.selfMacAddr,
-			 (struct cdf_mac_addr *) &params->selfStaMacAddr);
-	scan_req.channelList.numChannels = 1;
-	scan_req.channelList.channelNumber[0] = params->channelNumber;
-	scan_req.numSsid = 0;
-	scan_req.minChannelTime = WMA_ROAM_PREAUTH_SCAN_TIME;
-	scan_req.maxChannelTime = WMA_ROAM_PREAUTH_SCAN_TIME;
-	scan_req.scanType = eSIR_PASSIVE_SCAN;
-	scan_req.p2pScanType = P2P_SCAN_TYPE_LISTEN;
-	scan_req.sessionId = vdev_id;
-	wma_get_scan_id(&scan_req.scan_id);
-	wma_handle->roam_preauth_chanfreq =
-		cds_chan_to_freq(params->channelNumber);
-
-	/* set the state in advance before calling wma_start_scan and be ready
-	 * to handle scan events from firmware. Otherwise print statments
-	 * in wma_start_can create a race condition.
-	 */
-	wma_handle->roam_preauth_scan_state = WMA_ROAM_PREAUTH_CHAN_REQUESTED;
-	cdf_status = wma_start_scan(wma_handle, &scan_req, WMA_CHNL_SWITCH_REQ);
-
-	if (cdf_status == CDF_STATUS_SUCCESS)
-		return cdf_status;
-	wma_handle->roam_preauth_scan_state = WMA_ROAM_PREAUTH_CHAN_NONE;
-	/* Failed operation. Safely clear context */
-	wma_handle->roam_preauth_chan_context = NULL;
-
-send_resp:
-	WMA_LOGI("%s: sending WMA_SWITCH_CHANNEL_RSP, status = 0x%x",
-		 __func__, cdf_status);
-	params->chainMask = wma_handle->pdevconfig.txchainmask;
-	params->smpsMode = SMPS_MODE_DISABLED;
-	params->status = cdf_status;
-	wma_send_msg(wma_handle, WMA_SWITCH_CHANNEL_RSP, (void *)params, 0);
-	return cdf_status;
-}
-
-/**
- * wma_roam_preauth_chan_cancel() - cancel preauth scan
- * @wma_handle: wma handle
- * @params: switch channel parameters
- * @vdev_id: vdev id
- *
- * Return: CDF status
- */
-CDF_STATUS wma_roam_preauth_chan_cancel(tp_wma_handle wma_handle,
-					tpSwitchChannelParams params,
-					uint8_t vdev_id)
-{
-	tAbortScanParams abort_scan_req;
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
-
-	WMA_LOGI("%s: channel %d", __func__, params->channelNumber);
-	/* Check for prior operation in progress */
-	if (wma_handle->roam_preauth_chan_context != NULL) {
-		cdf_status = CDF_STATUS_E_FAILURE;
-		WMA_LOGE("%s: Rejected request. Previous operation in progress",
-			 __func__);
-		goto send_resp;
-	}
-	wma_handle->roam_preauth_chan_context = params;
-
-	abort_scan_req.SessionId = vdev_id;
-	wma_handle->roam_preauth_scan_state =
-		WMA_ROAM_PREAUTH_CHAN_CANCEL_REQUESTED;
-	cdf_status = wma_stop_scan(wma_handle, &abort_scan_req);
-	if (cdf_status == CDF_STATUS_SUCCESS)
-		return cdf_status;
-	/* Failed operation. Safely clear context */
-	wma_handle->roam_preauth_chan_context = NULL;
-
-send_resp:
-	WMA_LOGI("%s: sending WMA_SWITCH_CHANNEL_RSP, status = 0x%x",
-		 __func__, cdf_status);
-	params->chainMask = wma_handle->pdevconfig.txchainmask;
-	params->smpsMode = SMPS_MODE_DISABLED;
-	params->status = cdf_status;
-	wma_send_msg(wma_handle, WMA_SWITCH_CHANNEL_RSP, (void *)params, 0);
-	return cdf_status;
-}
-
-/**
- * wma_roam_preauth_scan_event_handler() - preauth scan event handler
- * @wma_handle: wma handle
- * @vdev_id: vdev id
- * @wmi_event: event data
- *
- * This function handles preauth scan event and send appropriate
- * message to upper layers.
- *
- * Return: none
- */
-void wma_roam_preauth_scan_event_handler(tp_wma_handle wma_handle,
-					 uint8_t vdev_id,
-					 wmi_scan_event_fixed_param *
-					 wmi_event)
-{
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
-	tSwitchChannelParams *params;
-
-	WMA_LOGI("%s: preauth_scan_state %d, event 0x%x, reason 0x%x",
-		 __func__, wma_handle->roam_preauth_scan_state,
-		 wmi_event->event, wmi_event->reason);
-	switch (wma_handle->roam_preauth_scan_state) {
-	case WMA_ROAM_PREAUTH_CHAN_REQUESTED:
-		if (wmi_event->event & WMI_SCAN_EVENT_FOREIGN_CHANNEL) {
-			/* complete set_chan request */
-			wma_handle->roam_preauth_scan_state =
-				WMA_ROAM_PREAUTH_ON_CHAN;
-			cdf_status = CDF_STATUS_SUCCESS;
-		} else if (wmi_event->event & WMI_SCAN_FINISH_EVENTS) {
-			/* Failed to get preauth channel or finished (unlikely) */
-			wma_handle->roam_preauth_scan_state =
-				WMA_ROAM_PREAUTH_CHAN_NONE;
-			cdf_status = CDF_STATUS_E_FAILURE;
-		} else
-			return;
-		break;
-	case WMA_ROAM_PREAUTH_CHAN_CANCEL_REQUESTED:
-		/* Completed or cancelled, complete set_chan cancel request */
-		wma_handle->roam_preauth_scan_state =
-			WMA_ROAM_PREAUTH_CHAN_NONE;
-		break;
-
-	case WMA_ROAM_PREAUTH_ON_CHAN:
-		if ((wmi_event->event & WMI_SCAN_EVENT_BSS_CHANNEL) ||
-		    (wmi_event->event & WMI_SCAN_FINISH_EVENTS))
-			wma_handle->roam_preauth_scan_state =
-				WMA_ROAM_PREAUTH_CHAN_COMPLETED;
-
-		/* There is no WMA request to complete. Next set channel request will
-		 * look at this state and complete it.
-		 */
-		break;
-	default:
-		WMA_LOGE("%s: unhandled event 0x%x, reason 0x%x",
-			 __func__, wmi_event->event, wmi_event->reason);
-		return;
-	}
-
-	params = (tpSwitchChannelParams) wma_handle->roam_preauth_chan_context;
-	if (params) {
-		WMA_LOGI("%s: sending WMA_SWITCH_CHANNEL_RSP, status = 0x%x",
-			 __func__, cdf_status);
-		params->chainMask = wma_handle->pdevconfig.txchainmask;
-		params->smpsMode = SMPS_MODE_DISABLED;
-		params->status = cdf_status;
-		wma_send_msg(wma_handle, WMA_SWITCH_CHANNEL_RSP, (void *)params,
-			     0);
-		wma_handle->roam_preauth_chan_context = NULL;
-	}
-
-}
-
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 
 /**
@@ -3455,56 +3256,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	peer = ol_txrx_find_peer_by_addr(pdev, intr[vdev_id].bssid, &peer_id);
 
-	/*
-	 * Roam offload feature is currently supported
-	 * only in STA mode. Other modes still require
-	 * to issue a Vdev Start/Vdev Restart for
-	 * channel change.
-	 */
-	if (((wma->interfaces[vdev_id].type == WMI_VDEV_TYPE_STA) &&
-	     (wma->interfaces[vdev_id].sub_type == 0)) &&
-	    !wma->interfaces[vdev_id].is_channel_switch) {
-
-		if (peer && (peer->state == ol_txrx_peer_state_conn ||
-			     peer->state == ol_txrx_peer_state_auth)) {
-			/* Trying to change channel while connected
-			 * should not invoke VDEV_START.
-			 * Instead, use start scan command in passive
-			 * mode to park station on that channel
-			 */
-			WMA_LOGI("%s: calling set_scan, state 0x%x",
-				 __func__, wma->roam_preauth_scan_state);
-			if (wma->roam_preauth_scan_state ==
-			    WMA_ROAM_PREAUTH_CHAN_NONE) {
-				/* Is channel change required?
-				 */
-				if (cds_chan_to_freq(params->channelNumber) !=
-				    wma->interfaces[vdev_id].mhz) {
-					status = wma_roam_preauth_chan_set(wma,
-									   params,
-									   vdev_id);
-					/* response will be asynchronous */
-					return;
-				}
-			} else if (wma->roam_preauth_scan_state ==
-				   WMA_ROAM_PREAUTH_CHAN_REQUESTED ||
-				   wma->roam_preauth_scan_state ==
-				   WMA_ROAM_PREAUTH_ON_CHAN) {
-				status =
-					wma_roam_preauth_chan_cancel(wma, params,
-								     vdev_id);
-				/* response will be asynchronous */
-				return;
-			} else if (wma->roam_preauth_scan_state ==
-				   WMA_ROAM_PREAUTH_CHAN_COMPLETED) {
-				/* Already back on home channel. Complete the request */
-				wma->roam_preauth_scan_state =
-					WMA_ROAM_PREAUTH_CHAN_NONE;
-				status = CDF_STATUS_SUCCESS;
-			}
-			goto send_resp;
-		}
-	}
 	cdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
 	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
@@ -6812,28 +6563,6 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 	vdev_id = wmi_event->vdev_id;
 	scan_id = wma_handle->interfaces[vdev_id].scan_info.scan_id;
 
-	if (wma_handle->roam_preauth_scan_id == wmi_event->scan_id) {
-		/* This is the scan requested by roam preauth set_channel operation */
-
-		if (wmi_event->event & WMI_SCAN_FINISH_EVENTS) {
-			WMA_LOGE("roam scan complete: scan_id 0x%x, vdev_id %d",
-				 wmi_event->scan_id, vdev_id);
-			/*wma_reset_scan_info(wma_handle, vdev_id);*/
-		}
-
-		vdev_id = wmi_event->vdev_id;
-		if (vdev_id >= wma_handle->max_bssid) {
-			WMA_LOGE("%s:Invalid vdev_id %d wmi_event %p", __func__,
-					 vdev_id, wmi_event);
-			return -EFAULT;
-		}
-
-		wma_roam_preauth_scan_event_handler(wma_handle,
-						 vdev_id, wmi_event);
-		return 0;
-
-	}
-
 	scan_event = (tSirScanOffloadEvent *) cdf_mem_malloc
 			     (sizeof(tSirScanOffloadEvent));
 	if (!scan_event) {
@@ -6843,12 +6572,12 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 
 	scan_event->event = wmi_event->event;
 
-	WMA_LOGI("WMA <-- wmi_scan_event : event %u, scan_id %u, "
-		 "freq %u, reason %u",
-		 wmi_event->event, wmi_event->scan_id,
+	WMA_LOGI("scan event %u, id 0x%x, requestor 0x%x, freq %u, reason %u",
+		 wmi_event->event, wmi_event->scan_id, wmi_event->requestor,
 		 wmi_event->channel_freq, wmi_event->reason);
 
 	scan_event->scanId = wmi_event->scan_id;
+	scan_event->requestor = wmi_event->requestor;
 	scan_event->chanFreq = wmi_event->channel_freq;
 
 	if (scan_event->scanId ==
@@ -6890,10 +6619,10 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 		break;
 	}
 
-	/* Stop the scan completion timeout if the event is WMI_SCAN_EVENT_COMPLETED */
+	/* Stop scan completion timeout if event is WMI_SCAN_EVENT_COMPLETED */
 	if (scan_event->event == (tSirScanEventType) WMI_SCAN_EVENT_COMPLETED) {
-		WMA_LOGE(" scan complete - scan_id 0x%x, vdev_id %d",
-			 wmi_event->scan_id, vdev_id);
+		WMA_LOGE("scan complete:scan_id 0x%x, requestor 0x%x, vdev %d",
+			 wmi_event->scan_id, wmi_event->requestor, vdev_id);
 	}
 
 	wma_send_msg(wma_handle, WMA_RX_SCAN_EVENT, (void *)scan_event, 0);
@@ -6916,14 +6645,16 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	cds_msg_t cds_msg;
 	tSirSmeCandidateFoundInd *candidate_ind;
+	struct scan_param *params;
 
+	params = &wma->interfaces[vdev_id].scan_info;
 	/* abort existing scans from GUI, but not roaming preauth scan */
-	if (wma->interfaces[vdev_id].scan_info.scan_id != 0 &&
-	    (wma->interfaces[vdev_id].scan_info.scan_id &
-	     WMA_HOST_ROAM_SCAN_REQID_PREFIX) !=
-		WMA_HOST_ROAM_SCAN_REQID_PREFIX) {
+	if (params->scan_id != 0 && params->chan_freq == 0 &&
+	    params->scan_requestor_id == USER_SCAN_REQUESTOR_ID) {
 		tAbortScanParams abortScan;
 		abortScan.SessionId = vdev_id;
+		abortScan.scan_id = params->scan_id;
+		abortScan.scan_requestor_id = params->scan_requestor_id;
 		wma_stop_scan(wma, &abortScan);
 	}
 

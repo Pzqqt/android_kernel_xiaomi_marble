@@ -110,6 +110,7 @@ static CDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	pScanOffloadReq->channelList.numChannels = 1;
 	pScanOffloadReq->channelList.channelNumber[0] = pRemOnChnReq->chnNum;
 	pScanOffloadReq->scan_id = pRemOnChnReq->scan_id;
+	pScanOffloadReq->scan_requestor_id = ROC_SCAN_REQUESTOR_ID;
 
 	lim_log(pMac, LOG1,
 		FL("Req-rem-on-channel: duration %u, session %hu, chan %hu"),
@@ -746,7 +747,8 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 void lim_abort_remain_on_chan(tpAniSirGlobal pMac, uint8_t sessionId,
 	uint32_t scan_id)
 {
-	lim_process_abort_scan_ind(pMac, sessionId, scan_id);
+	lim_process_abort_scan_ind(pMac, sessionId, scan_id,
+		ROC_SCAN_REQUESTOR_ID);
 }
 
 /* Power Save Related Functions */
@@ -787,3 +789,4 @@ tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgB
 
 	return eSIR_SUCCESS;
 } /*** end __limProcessSmeGoNegReq() ***/
+

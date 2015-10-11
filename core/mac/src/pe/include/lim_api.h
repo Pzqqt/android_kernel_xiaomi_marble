@@ -231,19 +231,8 @@ void pe_free_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
    --------------------------------------------------------------------------*/
 void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, CDF_STATUS status, uint32_t *data);
 
-/*--------------------------------------------------------------------------
-
-   \brief lim_process_abort_scan_ind() - function for sending abort scan indication.
-
-   LIM calls this function for sending abort scan indication.
-
-   \param pMac - Pointer to Global MAC structure
-
-   \return  void
-
-   --------------------------------------------------------------------------*/
 void lim_process_abort_scan_ind(tpAniSirGlobal pMac, uint8_t sessionId,
-	uint32_t scan_id);
+	uint32_t scan_id, uint32_t scan_requestor_id);
 
 void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

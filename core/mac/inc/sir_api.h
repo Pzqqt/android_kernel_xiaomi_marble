@@ -3537,6 +3537,23 @@ typedef struct sAniHandoffReq {
 	uint8_t handoff_src;
 } tAniHandoffReq, *tpAniHandoffReq;
 
+/*
+ * @scan_id:
+ * @scan_requestor_id:
+ *     Scan id and scan requestor id are used by firmware to track each scan
+ *     request. A new scan id is generated for each request. Requestor id
+ *     shows the purpose of scan.
+ *
+ * @USER_SCAN_REQUESTOR_ID: Normal scan request from supplicant to HDD/SME.
+ * @ROC_SCAN_REQUESTOR_ID: Remain on channel usage for P2P action frames.
+ * @PREAUTH_REQUESTOR_ID: Used by LIM for preauth operation.
+ *
+ */
+
+#define USER_SCAN_REQUESTOR_ID  0xA000
+#define ROC_SCAN_REQUESTOR_ID   0xB000
+#define PREAUTH_REQUESTOR_ID    0xC000
+
 typedef struct sSirScanOffloadReq {
 	uint8_t sessionId;
 	struct cdf_mac_addr bssId;
@@ -3550,6 +3567,7 @@ typedef struct sSirScanOffloadReq {
 	uint32_t minChannelTime;
 	uint32_t maxChannelTime;
 	uint32_t scan_id;
+	uint32_t scan_requestor_id;
 	/* in units of milliseconds, ignored when not connected */
 	uint32_t restTime;
 	tSirP2pScanType p2pScanType;

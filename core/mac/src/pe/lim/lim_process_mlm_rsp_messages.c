@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4165,13 +4165,14 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 	tSirScanOffloadEvent *pScanEvent = (tSirScanOffloadEvent *) buf;
 
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
-		  "scan_id = %u", pScanEvent->scanId);
+		  "scan_id = %u, scan_requestor_id 0x%x", pScanEvent->scanId,
+		  pScanEvent->requestor);
 	switch (pScanEvent->event) {
 	case SCAN_EVENT_STARTED:
 		break;
 	case SCAN_EVENT_START_FAILED:
 	case SCAN_EVENT_COMPLETED:
-		if (P2P_SCAN_TYPE_LISTEN == pScanEvent->p2pScanType) {
+		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			lim_send_sme_roc_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
 					 CDF_STATUS_SUCCESS,
 					 pScanEvent->sessionId,
@@ -4190,12 +4191,16 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 					pMac->lim.mgmtFrameSessionId, 0);
 				pMac->lim.mgmtFrameSessionId = 0xff;
 			}
+		} else if (PREAUTH_REQUESTOR_ID == pScanEvent->requestor) {
+			lim_preauth_scan_event_handler(pMac, pScanEvent->event,
+					 pScanEvent->sessionId,
+					 pScanEvent->scanId);
 		} else {
 			lim_send_scan_offload_complete(pMac, pScanEvent);
 		}
 		break;
 	case SCAN_EVENT_FOREIGN_CHANNEL:
-		if (P2P_SCAN_TYPE_LISTEN == pScanEvent->p2pScanType) {
+		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			/*Send Ready on channel indication to SME */
 			if (pMac->lim.gpLimRemainOnChanReq) {
 				lim_send_sme_roc_rsp(pMac,
@@ -4207,6 +4212,10 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 				lim_log(pMac, LOGE,
 					FL("gpLimRemainOnChanReq is NULL"));
 			}
+		} else if (PREAUTH_REQUESTOR_ID == pScanEvent->requestor) {
+			lim_preauth_scan_event_handler(pMac, pScanEvent->event,
+					pScanEvent->sessionId,
+					pScanEvent->scanId);
 		}
 		break;
 	case SCAN_EVENT_BSS_CHANNEL:
