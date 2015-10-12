@@ -1631,6 +1631,28 @@ enum uapsd_peer_param_enabled_ac {
 };
 
 /**
+ * enum profile_id_t - Firmware profiling index
+ * @PROF_CPU_IDLE: cpu idle profile
+ * @PROF_PPDU_PROC: ppdu processing profile
+ * @PROF_PPDU_POST: ppdu post profile
+ * @PROF_HTT_TX_INPUT: htt tx input profile
+ * @PROF_MSDU_ENQ: msdu enqueue profile
+ * @PROF_PPDU_POST_HAL: ppdu post profile
+ * @PROF_COMPUTE_TX_TIME: tx time profile
+ * @PROF_MAX_ID: max profile index
+ */
+enum profile_id_t {
+	PROF_CPU_IDLE,
+	PROF_PPDU_PROC,
+	PROF_PPDU_POST,
+	PROF_HTT_TX_INPUT,
+	PROF_MSDU_ENQ,
+	PROF_PPDU_POST_HAL,
+	PROF_COMPUTE_TX_TIME,
+	PROF_MAX_ID,
+};
+
+/**
  * struct p2p_ie - P2P IE structural definition.
  * @p2p_id: p2p id
  * @p2p_len: p2p length

@@ -213,6 +213,8 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_SET_CTS_CBW                        84
 #define WE_DUMP_STATS                         85
 #define WE_CLEAR_STATS                        86
+/* Private sub ioctl for starting/stopping the profiling */
+#define WE_START_FW_PROFILE                      87
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -314,6 +316,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_OEM_DATA_CAP  13
 #endif
 #define WE_GET_SNR           14
+#define WE_LIST_FW_PROFILE      15
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_NONE   (SIOCIWFIRSTPRIV + 6)
@@ -328,6 +331,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_DUMP_PCIE_LOG           16
 #endif
 #define WE_GET_RECOVERY_STAT       17
+#define WE_GET_FW_PROFILE_DATA        18
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_VAR_INT_GET_NONE   (SIOCIWFIRSTPRIV + 7)
@@ -424,6 +428,9 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #endif
 #define WE_DUMP_DP_TRACE_LEVEL    3
 #define DUMP_DP_TRACE       0
+/* Private sub ioctl for enabling and setting histogram interval of profiling */
+#define WE_ENABLE_FW_PROFILE    4
+#define WE_SET_FW_PROFILE_HIST_INTVL    5
 
 /* (SIOCIWFIRSTPRIV + 29) is currently unused */
 
@@ -643,6 +650,41 @@ void hdd_wlan_get_stats(hdd_adapter_t *pAdapter, uint16_t *length,
 
 	len += hdd_napi_stats(buffer + len, buf_len - len,
 			   NULL, hdd_napi_get_all());
+
+	*length = len + 1;
+}
+
+/**
+ * hdd_wlan_list_fw_profile() - Get fw profiling points
+ * @length:   Size of the data copied
+ * @buffer:   Pointer to char buffer.
+ * @buf_len:  Length of the char buffer.
+ *
+ * This function called when the "iwpriv wlan0 listProfile" command is given.
+ * It is used to get the supported profiling points in FW.
+ *
+ * Return - none
+ */
+void hdd_wlan_list_fw_profile(uint16_t *length,
+			char *buffer, uint16_t buf_len)
+{
+	uint32_t len = 0;
+
+	len = scnprintf(buffer, buf_len,
+		    "PROF_CPU_IDLE: %u\n"
+		    "PROF_PPDU_PROC: %u\n"
+		    "PROF_PPDU_POST: %u\n"
+		    "PROF_HTT_TX_INPUT: %u\n"
+		    "PROF_MSDU_ENQ: %u\n"
+		    "PROF_PPDU_POST_HAL: %u\n"
+		    "PROF_COMPUTE_TX_TIME: %u\n",
+		    PROF_CPU_IDLE,
+		    PROF_PPDU_PROC,
+		    PROF_PPDU_POST,
+		    PROF_HTT_TX_INPUT,
+		    PROF_MSDU_ENQ,
+		    PROF_PPDU_POST_HAL,
+		    PROF_COMPUTE_TX_TIME);
 
 	*length = len + 1;
 }
@@ -6072,6 +6114,14 @@ static int __iw_setint_getnone(struct net_device *dev,
 		sme_set_scan_disable(WLAN_HDD_GET_HAL_CTX(pAdapter), set_value);
 		break;
 	}
+	case WE_START_FW_PROFILE:
+	{
+		hddLog(LOG1, "WE_START_FW_PROFILE %d", set_value);
+		ret = wma_cli_set_command(pAdapter->sessionId,
+					WMI_WLAN_PROFILE_TRIGGER_CMDID,
+					set_value, DBG_CMD);
+		break;
+	}
 	default:
 	{
 		hddLog(LOGE, "%s: Invalid sub command %d", __func__,
@@ -6896,6 +6946,11 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 
+	case WE_LIST_FW_PROFILE:
+		hdd_wlan_list_fw_profile(&(wrqu->data.length),
+					extra, WE_MAX_STR_LEN);
+		break;
+
 	/* The case prints the current state of the HDD, SME, CSR, PE,
 	 * TL it can be extended for WDI Global State as well.  And
 	 * currently it only checks P2P_CLIENT adapter.  P2P_DEVICE
@@ -7408,6 +7463,12 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		sme_get_recovery_stats(hal);
 		break;
 	}
+
+	case WE_GET_FW_PROFILE_DATA:
+		ret = wma_cli_set_command(pAdapter->sessionId,
+				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+				0, DBG_CMD);
+		break;
 
 	case WE_SET_REASSOC_TRIGGER:
 	{
@@ -9431,6 +9492,20 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 					   value[1], value[2], GEN_CMD);
 		break;
 #endif
+	case WE_ENABLE_FW_PROFILE:
+		hddLog(LOGE, "WE_ENABLE_FW_PROFILE: %d %d",
+		       value[1], value[2]);
+		ret = wma_cli_set2_command(pAdapter->sessionId,
+				 WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+					value[1], value[2], DBG_CMD);
+		break;
+	case WE_SET_FW_PROFILE_HIST_INTVL:
+		hddLog(LOGE, "WE_SET_FW_PROFILE_HIST_INTVL: %d %d",
+		       value[1], value[2]);
+		ret = wma_cli_set2_command(pAdapter->sessionId,
+					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+					value[1], value[2], DBG_CMD);
+		break;
 	case WE_SET_DUAL_MAC_FW_MODE_CONFIG:
 		hdd_debug("Ioctl to set dual fw mode config");
 		if (hdd_ctx->config->dual_mac_feature_disable) {
@@ -9986,6 +10061,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0, "clearStats"},
 
+	{WE_START_FW_PROFILE,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0, "startProfile"},
+
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
@@ -10322,6 +10401,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getStats"},
+	{WE_LIST_FW_PROFILE,
+	 0,
+	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
+	 "listProfile"},
 	{WE_GET_STATES,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
@@ -10388,12 +10471,17 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 0,
 	 "getRecoverStat"},
-	{
-		WE_SET_REASSOC_TRIGGER,
-		0,
-		0,
-		"reassoc"
-	},
+
+	{WE_GET_FW_PROFILE_DATA,
+	 0,
+	 0,
+	 "getProfileData"},
+
+	{WE_SET_REASSOC_TRIGGER,
+	0,
+	0,
+	"reassoc"},
+
 	{WE_DUMP_AGC_START,
 	 0,
 	 0,
@@ -10608,6 +10696,14 @@ static const struct iw_priv_args we_private_args[] = {
 	 0, "crash_inject"}
 	,
 #endif
+	{WE_ENABLE_FW_PROFILE,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "enableProfile"}
+	,
+	{WE_SET_FW_PROFILE_HIST_INTVL,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+	 0, "set_hist_intvl"}
+	,
 	{WE_SET_DUAL_MAC_FW_MODE_CONFIG,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
 	 0, "set_fw_mode_cfg"}

@@ -868,6 +868,12 @@ int32_t wmi_unified_pdev_green_ap_ps_enable_cmd(wmi_unified_t wmi_handle,
 						uint32_t value);
 #endif
 
+int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
+				       uint32_t len);
+
+int32_t wmi_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
+				uint32_t cmd, uint32_t value1, uint32_t value2);
+
 void wma_wow_tx_complete(void *wma);
 
 int wmi_unified_nat_keepalive_enable(tp_wma_handle wma, uint8_t vdev_id);
