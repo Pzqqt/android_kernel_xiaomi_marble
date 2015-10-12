@@ -1660,61 +1660,65 @@ static void lim_fill_assoc_ind_wapi_info(tpAniSirGlobal mac_ctx,
  * Return: None
  */
 static void lim_fill_assoc_ind_vht_info(tpAniSirGlobal mac_ctx,
-	tpPESession session_entry, tpSirAssocReq assoc_req,
-	tpLimMlmAssocInd assoc_ind)
+					tpPESession session_entry,
+					tpSirAssocReq assoc_req,
+					tpLimMlmAssocInd assoc_ind)
 {
 	uint8_t chan;
 
 	if (session_entry->limRFBand == SIR_BAND_2_4_GHZ) {
-		if (session_entry->vhtCapability
-			&& assoc_req->VHTCaps.present)
+		if (session_entry->vhtCapability && assoc_req->VHTCaps.present)
 			assoc_ind->chan_info.info = MODE_11AC_VHT20;
 		else if (session_entry->htCapability
-				&& assoc_req->HTCaps.present)
+			    && assoc_req->HTCaps.present)
 			assoc_ind->chan_info.info = MODE_11NG_HT20;
 		else
 			assoc_ind->chan_info.info = MODE_11G;
-	} else {
-		if (session_entry->vhtCapability
-			&& assoc_req->VHTCaps.present) {
-			if ((session_entry->ch_width > CH_WIDTH_40MHZ)
-				&& assoc_req->HTCaps.supportedChannelWidthSet) {
-				chan = session_entry->ch_center_freq_seg0;
-				assoc_ind->chan_info.band_center_freq1 =
-					cds_chan_to_freq(chan);
-				assoc_ind->chan_info.info = MODE_11AC_VHT80;
-			} else if ((session_entry->ch_width == CH_WIDTH_40MHZ)
-				&& assoc_req->HTCaps.supportedChannelWidthSet) {
-				assoc_ind->chan_info.info = MODE_11AC_VHT40;
-				if (session_entry->htSecondaryChannelOffset ==
-					PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-					assoc_ind->chan_info.band_center_freq1
-						+= 10;
-				else
-					assoc_ind->chan_info.band_center_freq1
-						-= 10;
-			} else {
-				assoc_ind->chan_info.info = MODE_11AC_VHT20;
-			}
-		} else if (session_entry->htCapability
-				&& assoc_req->HTCaps.present) {
-			if ((session_entry->ch_width == CH_WIDTH_40MHZ)
-			&& assoc_req->HTCaps.supportedChannelWidthSet) {
-				assoc_ind->chan_info.info = MODE_11NA_HT40;
-				if (session_entry->htSecondaryChannelOffset ==
-					PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
-					assoc_ind->chan_info.band_center_freq1
-						+= 10;
-				else
-					assoc_ind->chan_info.band_center_freq1
-						-= 10;
-			} else {
-				assoc_ind->chan_info.info = MODE_11NA_HT20;
-			}
-		} else {
-			assoc_ind->chan_info.info = MODE_11A;
-		}
+		return;
 	}
+
+	if (session_entry->vhtCapability && assoc_req->VHTCaps.present) {
+		if ((session_entry->ch_width > CH_WIDTH_40MHZ)
+		    && assoc_req->HTCaps.supportedChannelWidthSet) {
+			chan = session_entry->ch_center_freq_seg0;
+			assoc_ind->chan_info.band_center_freq1 =
+				cds_chan_to_freq(chan);
+			assoc_ind->chan_info.info = MODE_11AC_VHT80;
+			return;
+		}
+
+		if ((session_entry->ch_width == CH_WIDTH_40MHZ)
+			&& assoc_req->HTCaps.supportedChannelWidthSet) {
+			assoc_ind->chan_info.info = MODE_11AC_VHT40;
+			if (session_entry->htSecondaryChannelOffset ==
+			    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
+				assoc_ind->chan_info.band_center_freq1 += 10;
+			else
+				assoc_ind->chan_info.band_center_freq1 -= 10;
+			return;
+		}
+
+		assoc_ind->chan_info.info = MODE_11AC_VHT20;
+		return;
+	}
+
+	if (session_entry->htCapability && assoc_req->HTCaps.present) {
+		if ((session_entry->ch_width == CH_WIDTH_40MHZ)
+		    && assoc_req->HTCaps.supportedChannelWidthSet) {
+			assoc_ind->chan_info.info = MODE_11NA_HT40;
+			if (session_entry->htSecondaryChannelOffset ==
+			    PHY_DOUBLE_CHANNEL_LOW_PRIMARY)
+				assoc_ind->chan_info.band_center_freq1 += 10;
+			else
+				assoc_ind->chan_info.band_center_freq1 -= 10;
+			return;
+		}
+
+		assoc_ind->chan_info.info = MODE_11NA_HT20;
+		return;
+	}
+
+	assoc_ind->chan_info.info = MODE_11A;
 	return;
 }
 
