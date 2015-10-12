@@ -1025,6 +1025,137 @@ int32_t wmi_unified_pdev_green_ap_ps_enable_cmd(wmi_unified_t wmi_handle,
 }
 #endif /* FEATURE_GREEN_AP */
 
+/**
+ * wmi_unified_fw_profiling_cmd() - send FW profiling cmd to WLAN FW
+ * @wma: wma handle
+ * @cmd: Profiling command index
+ * @value1: parameter1 value
+ * @value2: parameter2 value
+ *
+ * Return: 0 for success else error code
+ */
+int32_t wmi_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
+			uint32_t cmd, uint32_t value1, uint32_t value2)
+{
+	wmi_buf_t buf;
+	int32_t len = 0;
+	int ret;
+	wmi_wlan_profile_trigger_cmd_fixed_param *prof_trig_cmd;
+	wmi_wlan_profile_set_hist_intvl_cmd_fixed_param *hist_intvl_cmd;
+	wmi_wlan_profile_enable_profile_id_cmd_fixed_param *profile_enable_cmd;
+	wmi_wlan_profile_get_prof_data_cmd_fixed_param *profile_getdata_cmd;
+
+	switch (cmd) {
+	case WMI_WLAN_PROFILE_TRIGGER_CMDID:
+		len = sizeof(wmi_wlan_profile_trigger_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		prof_trig_cmd =
+			(wmi_wlan_profile_trigger_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&prof_trig_cmd->tlv_header,
+			      WMITLV_TAG_STRUC_wmi_wlan_profile_trigger_cmd_fixed_param,
+			      WMITLV_GET_STRUCT_TLVLEN
+			      (wmi_wlan_profile_trigger_cmd_fixed_param));
+		prof_trig_cmd->enable = value1;
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_TRIGGER_CMDID);
+		if (ret) {
+			WMA_LOGE("PROFILE_TRIGGER cmd Failed with value %d",
+					value1);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	case WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID:
+		len = sizeof(wmi_wlan_profile_get_prof_data_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		profile_getdata_cmd =
+			(wmi_wlan_profile_get_prof_data_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&profile_getdata_cmd->tlv_header,
+			      WMITLV_TAG_STRUC_wmi_wlan_profile_get_prof_data_cmd_fixed_param,
+			      WMITLV_GET_STRUCT_TLVLEN
+			      (wmi_wlan_profile_get_prof_data_cmd_fixed_param));
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID);
+		if (ret) {
+			WMA_LOGE("PROFILE_DATA cmd Failed for id %d value %d",
+					value1, value2);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	case WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID:
+		len = sizeof(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		hist_intvl_cmd =
+			(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&hist_intvl_cmd->tlv_header,
+			      WMITLV_TAG_STRUC_wmi_wlan_profile_set_hist_intvl_cmd_fixed_param,
+			      WMITLV_GET_STRUCT_TLVLEN
+			      (wmi_wlan_profile_set_hist_intvl_cmd_fixed_param));
+		hist_intvl_cmd->profile_id = value1;
+		hist_intvl_cmd->value = value2;
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID);
+		if (ret) {
+			WMA_LOGE("HIST_INTVL cmd Failed for id %d value %d",
+					value1, value2);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	case WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID:
+		len =
+		sizeof(wmi_wlan_profile_enable_profile_id_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		profile_enable_cmd =
+			(wmi_wlan_profile_enable_profile_id_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&profile_enable_cmd->tlv_header,
+			      WMITLV_TAG_STRUC_wmi_wlan_profile_enable_profile_id_cmd_fixed_param,
+			      WMITLV_GET_STRUCT_TLVLEN
+			      (wmi_wlan_profile_enable_profile_id_cmd_fixed_param));
+		profile_enable_cmd->profile_id = value1;
+		profile_enable_cmd->enable = value2;
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID);
+		if (ret) {
+			WMA_LOGE("enable cmd Failed for id %d value %d",
+					value1, value2);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	default:
+		WMA_LOGD("%s: invalid profiling command", __func__);
+		break;
+	}
+
+	return 0;
+}
+
 #ifdef FEATURE_WLAN_LPHB
 /**
  * wma_lphb_handler() - send LPHB indication to SME

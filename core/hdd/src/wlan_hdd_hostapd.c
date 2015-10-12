@@ -2032,29 +2032,36 @@ static iw_softap_get_ini_cfg(struct net_device *dev,
 	return ret;
 }
 
+/**
+ * iw_softap_set_two_ints_getnone() - Generic "set two integer" ioctl handler
+ * @dev: device upon which the ioctl was received
+ * @info: ioctl request information
+ * @wrqu: ioctl request data
+ * @extra: ioctl extra data
+ *
+ * Return: 0 on success, non-zero on error
+ */
 static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 					    struct iw_request_info *info,
 					    union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	hdd_context_t *pHddCtx;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	int ret;
 	int *value = (int *)extra;
 	int sub_cmd = value[0];
-	int ret = 0;
+	hdd_context_t *hdd_ctx;
 
-	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	ret = wlan_hdd_validate_context(pHddCtx);
-	if (ret != 0) {
-		hddLog(LOGE, FL("HDD context is not valid!"));
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
 		goto out;
-	}
 
 	switch (sub_cmd) {
 #ifdef DEBUG
 	case QCSAP_IOCTL_SET_FW_CRASH_INJECT:
 		hddLog(LOGE, "WE_SET_FW_CRASH_INJECT: %d %d",
 		       value[1], value[2]);
-		ret = wma_cli_set2_command(pAdapter->sessionId,
+		ret = wma_cli_set2_command(adapter->sessionId,
 					   GEN_PARAM_CRASH_INJECT,
 					   value[1], value[2],
 					   GEN_CMD);
@@ -2066,6 +2073,19 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		if (value[1] == DUMP_DP_TRACE)
 			cdf_dp_trace_dump_all(value[2]);
 		break;
+	case QCSAP_ENABLE_FW_PROFILE:
+		hddLog(LOG1, "QCSAP_ENABLE_FW_PROFILE: %d %d",
+		       value[1], value[2]);
+		ret = wma_cli_set2_command(adapter->sessionId,
+				 WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+					value[1], value[2], DBG_CMD);
+		break;
+	case QCSAP_SET_FW_PROFILE_HIST_INTVL:
+		hddLog(LOG1, "QCSAP_SET_FW_PROFILE_HIST_INTVL: %d %d",
+		       value[1], value[2]);
+		ret = wma_cli_set2_command(adapter->sessionId,
+					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+					value[1], value[2], DBG_CMD);
 	default:
 		hddLog(LOGE, FL("Invalid IOCTL command %d"), sub_cmd);
 		break;
@@ -2793,6 +2813,12 @@ static __iw_softap_setparam(struct net_device *dev,
 		}
 		break;
 	}
+	case QCSAP_START_FW_PROFILING:
+		hddLog(LOG1, "QCSAP_START_FW_PROFILING %d", set_value);
+		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
+					WMI_WLAN_PROFILE_TRIGGER_CMDID,
+					set_value, DBG_CMD);
+		break;
 	default:
 		hddLog(LOGE, FL("Invalid setparam command %d value %d"),
 		       sub_cmd, set_value);
@@ -3007,6 +3033,12 @@ static __iw_softap_getparam(struct net_device *dev,
 		ret = wlan_hdd_get_temperature(pHostapdAdapter, value);
 		break;
 	}
+	case QCSAP_GET_FW_PROFILE_DATA:
+		hddLog(LOG1, "QCSAP_GET_FW_PROFILE_DATA");
+		ret = wma_cli_set_command(pHostapdAdapter->sessionId,
+				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+				0, DBG_CMD);
+		break;
 	default:
 		hddLog(LOGE, FL("Invalid getparam command %d"), sub_cmd);
 		ret = -EINVAL;
@@ -3415,31 +3447,44 @@ static iw_softap_disassoc_sta(struct net_device *dev,
 	return ret;
 }
 
+/**
+ * iw_get_char_setnone() - Generic "get char" private ioctl handler
+ * @dev: device upon which the ioctl was received
+ * @info: ioctl request information
+ * @wrqu: ioctl request data
+ * @extra: ioctl extra data
+ *
+ * Return: 0 on success, non-zero on error
+ */
 static int __iw_get_char_setnone(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	CDF_STATUS status;
+	int ret;
 	int sub_cmd = wrqu->data.flags;
 	hdd_context_t *hdd_ctx;
 
 	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	status = wlan_hdd_validate_context(hdd_ctx);
-	if (status != 0)
-		return status;
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
 
 	switch (sub_cmd) {
 	case QCSAP_GET_STATS:
 		hdd_wlan_get_stats(adapter, &(wrqu->data.length),
 					extra, WE_MAX_STR_LEN);
 		break;
+	case QCSAP_LIST_FW_PROFILE:
+		hdd_wlan_list_fw_profile(&(wrqu->data.length),
+					extra, WE_MAX_STR_LEN);
+		break;
 	}
 
 	EXIT();
-	return status;
+	return ret;
 }
 
 static int iw_get_char_setnone(struct net_device *dev,
@@ -5465,6 +5510,10 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		0, "clearStats"
 	}, {
+		QCSAP_START_FW_PROFILING,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "startProfile"
+	}, {
 		QCSAP_IOCTL_GETPARAM, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getparam"
 	}, {
@@ -5530,6 +5579,9 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_GET_TEMP_CMD, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "get_temp"
 	}, {
+		QCSAP_GET_FW_PROFILE_DATA, 0,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "getProfileData"
+	}, {
 		QCSAP_IOCTL_GET_STAWPAIE,
 		IW_PRIV_TYPE_BYTE | IW_PRIV_SIZE_FIXED | 1, 0,
 		"get_staWPAIE"
@@ -5570,6 +5622,10 @@ static const struct iw_priv_args hostapd_private_args[] = {
 	, {
 		QCSAP_GET_STATS, 0,
 		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN, "getStats"
+	}
+	, {
+		QCSAP_LIST_FW_PROFILE, 0,
+		IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN, "listProfile"
 	}
 	, {
 		QCSAP_IOCTL_PRIV_GET_SOFTAP_LINK_SPEED,
@@ -5677,6 +5733,17 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		0, "dump_dp_trace"
 	}
 	,
+	{
+		QCSAP_ENABLE_FW_PROFILE,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+		0, "enableProfile"
+	}
+	,
+	{
+		QCSAP_SET_FW_PROFILE_HIST_INTVL,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 2,
+		0, "set_hist_intvl"
+	}
 };
 
 static const iw_handler hostapd_private[] = {

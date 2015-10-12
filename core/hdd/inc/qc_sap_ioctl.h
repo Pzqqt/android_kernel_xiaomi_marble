@@ -147,6 +147,7 @@ typedef struct {
 /* Private ioctls and their sub-ioctls */
 #define QCSAP_PRIV_GET_CHAR_SET_NONE   (SIOCIWFIRSTPRIV + 13)
 #define QCSAP_GET_STATS 1
+#define QCSAP_LIST_FW_PROFILE 2
 #define QCSAP_IOCTL_CLR_STATS         (SIOCIWFIRSTPRIV+14)
 
 #define QCSAP_IOCTL_PRIV_SET_THREE_INT_GET_NONE (SIOCIWFIRSTPRIV+15)
@@ -171,6 +172,8 @@ typedef struct {
 #define QCSAP_IOCTL_SET_FW_CRASH_INJECT 1
 #endif
 #define QCSAP_IOCTL_DUMP_DP_TRACE_LEVEL 2
+#define QCSAP_ENABLE_FW_PROFILE          3
+#define QCSAP_SET_FW_PROFILE_HIST_INTVL  4
 
 #define MAX_VAR_ARGS         7
 #define QCSAP_IOCTL_PRIV_GET_SOFTAP_LINK_SPEED (SIOCIWFIRSTPRIV + 31)
@@ -237,6 +240,8 @@ enum {
 	QCASAP_DUMP_STATS,
 	QCASAP_CLEAR_STATS,
 	QCASAP_SET_RADAR_DBG,
+	QCSAP_GET_FW_PROFILE_DATA,
+	QCSAP_START_FW_PROFILING
 };
 
 int iw_softap_get_channel_list(struct net_device *dev,

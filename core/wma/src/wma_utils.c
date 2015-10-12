@@ -381,6 +381,78 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 }
 #endif /* WLAN_FEATURE_STATS_EXT */
 
+/**
+ * wma_profile_data_report_event_handler() - fw profiling handler
+ * @handle:     wma handle
+ * @event_buf:  event buffer received from fw
+ * @len:        length of data
+ *
+ * Return: 0 for success or error code
+ */
+int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
+				uint32_t len)
+{
+	WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *param_buf;
+	wmi_wlan_profile_ctx_t *profile_ctx;
+	wmi_wlan_profile_t *profile_data;
+	uint32_t i = 0;
+	uint32_t entries;
+	uint8_t *buf_ptr;
+	param_buf = (WMI_WLAN_PROFILE_DATA_EVENTID_param_tlvs *) event_buf;
+
+	if (!param_buf) {
+		WMA_LOGE("%s: Invalid profile data event buf", __func__);
+		return -EINVAL;
+	}
+	profile_ctx = param_buf->profile_ctx;
+	buf_ptr = (uint8_t *)profile_ctx;
+	buf_ptr = buf_ptr + sizeof(wmi_wlan_profile_ctx_t) + WMI_TLV_HDR_SIZE;
+	profile_data = (wmi_wlan_profile_t *) buf_ptr;
+	entries = profile_ctx->bin_count;
+	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+				"Profile data stats\n");
+	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		"TOT: %d\n"
+		"tx_msdu_cnt: %d\n"
+		"tx_mpdu_cnt: %d\n"
+		"tx_ppdu_cnt: %d\n"
+		"rx_msdu_cnt: %d\n"
+		"rx_mpdu_cnt: %d\n"
+		"bin_count: %d\n",
+		profile_ctx->tot,
+		profile_ctx->tx_msdu_cnt,
+		profile_ctx->tx_mpdu_cnt,
+		profile_ctx->tx_ppdu_cnt,
+		profile_ctx->rx_msdu_cnt,
+		profile_ctx->rx_mpdu_cnt,
+		profile_ctx->bin_count);
+
+	for (i = 0; i < entries; i++) {
+		if (i == WMI_WLAN_PROFILE_MAX_BIN_CNT)
+			break;
+		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			"Profile ID: %d\n"
+			"Profile Count: %d\n"
+			"Profile TOT: %d\n"
+			"Profile Min: %d\n"
+			"Profile Max: %d\n"
+			"Profile hist_intvl: %d\n"
+			"Profile hist[0]: %d\n"
+			"Profile hist[1]: %d\n"
+			"Profile hist[2]: %d\n",
+			profile_data[i].id,
+			profile_data[i].cnt,
+			profile_data[i].tot,
+			profile_data[i].min,
+			profile_data[i].max,
+			profile_data[i].hist_intvl,
+			profile_data[i].hist[0],
+			profile_data[i].hist[1],
+			profile_data[i].hist[2]);
+	}
+
+	return 0;
+}
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 

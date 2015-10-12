@@ -955,6 +955,52 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				WMA_LOGE("dbglog_report_enable failed ret %d",
 					 ret);
 			break;
+		case WMI_WLAN_PROFILE_TRIGGER_CMDID:
+			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+					 WMI_WLAN_PROFILE_TRIGGER_CMDID,
+					 privcmd->param_value, 0);
+			if (ret)
+				WMA_LOGE("Profile cmd failed for %d ret %d",
+					WMI_WLAN_PROFILE_TRIGGER_CMDID, ret);
+			break;
+		case WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID:
+			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+				  WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+				  privcmd->param_value,
+				  privcmd->param_sec_value);
+			if (ret)
+				WMA_LOGE("Profile cmd failed for %d ret %d",
+				   WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
+				   ret);
+			break;
+		case WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID:
+			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+					 WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+					 privcmd->param_value,
+					 privcmd->param_sec_value);
+			if (ret)
+				WMA_LOGE("Profile cmd failed for %d ret %d",
+					WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
+					ret);
+			break;
+		case WMI_WLAN_PROFILE_LIST_PROFILE_ID_CMDID:
+			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+					 WMI_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
+					 0, 0);
+			if (ret)
+				WMA_LOGE("Profile cmd failed for %d ret %d",
+					WMI_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
+					ret);
+			break;
+		case WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID:
+			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+					WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+					0, 0);
+			if (ret)
+				WMA_LOGE("Profile cmd failed for %d ret %d",
+				   WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
+				   ret);
+			break;
 #ifdef FEATURE_GREEN_AP
 		case WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID:
 			/* Set the Green AP */
@@ -1640,6 +1686,10 @@ CDF_STATUS wma_open(void *cds_context,
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_DEBUG_PRINT_EVENTID,
 					   wma_unified_debug_print_event_handler);
+	/* Register profiling event Handler */
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					WMI_WLAN_PROFILE_DATA_EVENTID,
+					wma_profile_data_report_event_handler);
 
 	wma_handle->tgt_cfg_update_cb = tgt_cfg_cb;
 	wma_handle->dfs_radar_indication_cb = radar_ind_cb;
