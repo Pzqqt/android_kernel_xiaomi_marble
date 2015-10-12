@@ -3568,7 +3568,15 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	uint32_t conn_index;
 	enum cds_conc_next_action upgrade = CDS_NOP;
 	uint8_t mac = 0;
+#ifdef QCA_WIFI_3_0_EMU
+	hdd_context_t *hdd_ctx;
 
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return upgrade;
+	}
+#endif
 	if (wma_is_hw_dbs_capable() == false) {
 		cds_err("driver isn't dbs capable, no further action needed");
 		return upgrade;
@@ -3590,8 +3598,9 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 		}
 	}
 #ifdef QCA_WIFI_3_0_EMU
-	/* For emulation only: if we have a connection on 2.4, stay in DBS */
-	if (CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan))
+	/* For M2M emulation only: if we have a connection on 2.4, stay in DBS */
+	if (hdd_ctx->config->enable_m2m_limitation &&
+		CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan))
 		goto done;
 #endif
 	/* Let's request for single MAC mode */
@@ -4683,6 +4692,15 @@ bool cds_disallow_mcc(uint8_t channel)
 bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
 {
 	bool status = true;
+#ifdef QCA_WIFI_3_0_EMU
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+#endif
 
 	if ((num_connections == 2) &&
 		(conc_connection_list[0].chan != conc_connection_list[1].chan)
@@ -4712,7 +4730,8 @@ bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
 #ifndef QCA_WIFI_3_0_EMU
 	}
 #else
-	} else if ((num_connections == 1) &&
+	} else if (hdd_ctx->config->enable_m2m_limitation &&
+		(num_connections == 1) &&
 		(conc_connection_list[0].chan != channel)) {
 		if (((CDS_IS_CHANNEL_24GHZ(channel)) &&
 			(CDS_IS_CHANNEL_24GHZ
@@ -5487,10 +5506,11 @@ CDF_STATUS cds_current_connections_update(uint32_t session_id,
 	case 0:
 		next_action = CDS_NOP;
 #ifdef QCA_WIFI_3_0_EMU
-		/* For emulation only: if it is a connection on 2.4,
+		/* For M2M emulation only: if it is a connection on 2.4,
 		 * request DBS
 		 */
-		if (CDS_IS_CHANNEL_24GHZ(channel))
+		if (hdd_ctx->config->enable_m2m_limitation &&
+			CDS_IS_CHANNEL_24GHZ(channel))
 			next_action = CDS_DBS;
 #endif
 		break;

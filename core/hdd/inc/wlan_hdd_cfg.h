@@ -2861,6 +2861,20 @@ enum dot11p_mode {
 #define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
 #define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
 
+#ifdef QCA_WIFI_3_0_EMU
+/*
+ * On M2M emulation platform we have a fixed mapping between macs, hence
+ * vdev transition & MCC support is not possible on this platform. But MPR
+ * platform doesn't have these limitations. This config allows at runtime
+ * enable/disable vdev transition & MCC support depending on the platform
+ * it is running on
+ */
+#define CFG_ENABLE_M2M_LIMITATION              "gEnableM2MLimitation"
+#define CFG_ENABLE_M2M_LIMITATION_MIN          (0)
+#define CFG_ENABLE_M2M_LIMITATION_MAX          (1)
+#define CFG_ENABLE_M2M_LIMITATION_DEFAULT      (1)
+#endif /* QCA_WIFI_3_0_EMU */
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3448,6 +3462,9 @@ struct hdd_config {
 	bool enable_lfr_subnet_detection;
 #endif
 	uint8_t inform_bss_rssi_raw;
+#ifdef QCA_WIFI_3_0_EMU
+	bool enable_m2m_limitation;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
