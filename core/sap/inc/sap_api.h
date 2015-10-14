@@ -790,8 +790,7 @@ typedef struct sap_SoftapStats_s {
 	uint32_t pktCounterRssi[MAX_NUM_RSSI];
 #endif
 } tSap_SoftapStats, *tpSap_SoftapStats;
-/* Channel/Frequency table */
-extern const tRfChannelProps rf_channels[NUM_RF_CHANNELS];
+
 #ifdef FEATURE_WLAN_CH_AVOID
 /* Store channel safety information */
 typedef struct {

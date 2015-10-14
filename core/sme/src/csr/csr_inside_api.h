@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,7 +104,6 @@
 
 #define CSR_MAX_BSSID_COUNT     ((CSR_ACTIVE_LIST_CMD_TIMEOUT_VALUE/4000) * 3)
 #define CSR_CUSTOM_CONC_GO_BI    100
-#define MIN_11P_CHANNEL (rf_channels[MIN_5_9GHZ_CHANNEL].channelNum)
 
 typedef enum {
 	eCsrNextScanNothing,
@@ -196,7 +195,6 @@ typedef struct {
 						(eCsrForcedDisassocMICFailure == \
 						  (pCommand)->u.roamCmd.roamReason)))
 
-extern const tRfChannelProps rf_channels[NUM_RF_CHANNELS];
 eCsrRoamState csr_roam_state_change(tpAniSirGlobal pMac,
 				    eCsrRoamState NewRoamState, uint8_t sessionId);
 CDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);

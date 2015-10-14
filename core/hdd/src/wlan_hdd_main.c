@@ -4603,7 +4603,7 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 		is_unsafe = 0;
 		for (channel_loop = 0;
 		     channel_loop < unsafe_channel_count; channel_loop++) {
-			if (rf_channels[i].channelNum ==
+			if (CDS_CHANNEL_NUM(i) ==
 			    hdd_ctxt->unsafe_channel_list[channel_loop]) {
 				is_unsafe = 1;
 				break;
@@ -4611,7 +4611,7 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 		}
 		if (!is_unsafe) {
 			safe_channels[safe_channel_count] =
-				rf_channels[i].channelNum;
+			  CDS_CHANNEL_NUM(i);
 			hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
 			       FL("safe channel %d"),
 			       safe_channels[safe_channel_count]);
@@ -4773,7 +4773,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 		for (channel_loop = MIN_20MHZ_RF_CHANNEL; channel_loop <=
 					MAX_20MHZ_RF_CHANNEL; channel_loop++) {
-			if (rf_channels[channel_loop].targetFreq >=
+			if (CDS_CHANNEL_FREQ(channel_loop) >=
 						ch_avoid_indi->avoid_freq_range[
 						range_loop].start_freq) {
 				start_channel_idx = channel_loop;
@@ -4782,11 +4782,11 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		}
 		for (channel_loop = MIN_20MHZ_RF_CHANNEL; channel_loop <=
 					MAX_20MHZ_RF_CHANNEL; channel_loop++) {
-			if (rf_channels[channel_loop].targetFreq >=
+			if (CDS_CHANNEL_FREQ(channel_loop) >=
 						ch_avoid_indi->avoid_freq_range[
 						range_loop].end_freq) {
 				end_channel_idx = channel_loop;
-				if (rf_channels[channel_loop].targetFreq >
+				if (CDS_CHANNEL_FREQ(channel_loop) >
 						ch_avoid_indi->avoid_freq_range[
 						range_loop].end_freq)
 					end_channel_idx--;
@@ -4801,8 +4801,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		for (channel_loop = start_channel_idx; channel_loop <=
 					end_channel_idx; channel_loop++) {
 			hdd_ctxt->unsafe_channel_list[
-					hdd_ctxt->unsafe_channel_count++] =
-					rf_channels[channel_loop].channelNum;
+				hdd_ctxt->unsafe_channel_count++] =
+				CDS_CHANNEL_FREQ(channel_loop);
 			if (hdd_ctxt->unsafe_channel_count >=
 							NUM_20MHZ_RF_CHANNELS) {
 				hddLog(LOGW, FL("LTECoex unsafe ch list full"));

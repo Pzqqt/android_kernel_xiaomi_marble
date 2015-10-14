@@ -3058,13 +3058,13 @@ CDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 		if ((CDS_IS_CHANNEL_24GHZ(pChannelSet->firstChannel)) &&
 		    ((pChannelSet->firstChannel +
 		      (pChannelSet->numChannels - 1)) <=
-		     CDS_MAX_24GHz_CHANNEL_NUMBER)) {
+		     CDS_MAX_24GHZ_CHANNEL_NUMBER)) {
 			pChannelSet->interChannelOffset = 1;
 			f2GHzInfoFound = true;
 		} else if ((CDS_IS_CHANNEL_5GHZ(pChannelSet->firstChannel))
 		    && ((pChannelSet->firstChannel +
 		      ((pChannelSet->numChannels - 1) * 4)) <=
-		     CDS_MAX_5GHz_CHANNEL_NUMBER)) {
+		     CDS_MAX_5GHZ_CHANNEL_NUMBER)) {
 			pChannelSet->interChannelOffset = 4;
 			f2GHzInfoFound = false;
 		} else {
@@ -5184,7 +5184,7 @@ csr_issue_user_scan(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 		j = 0;
 		for (i = 0; i < len; i++) {
 			new_ch_info.ChannelList[j++] = ch_lst[i];
-			if (CDS_MAX_24GHz_CHANNEL_NUMBER >= ch_lst[i])
+			if (CDS_MAX_24GHZ_CHANNEL_NUMBER >= ch_lst[i])
 				new_ch_info.ChannelList[j++] = ch_lst[i];
 		}
 		if (NULL !=
@@ -5256,7 +5256,8 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 		 * that is the only way to find p2p peers.
 		 * This can happen only if band is set to 5Ghz mode.
 		 */
-		if (src_req->ChannelInfo.ChannelList[index] < MIN_11P_CHANNEL &&
+		if (src_req->ChannelInfo.ChannelList[index] <
+		    CDS_MIN_11P_CHANNEL &&
 			((csr_roam_is_valid_channel(mac_ctx,
 			src_req->ChannelInfo.ChannelList[index])) ||
 			((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
@@ -5341,7 +5342,7 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 		 * Don't allow DSRC channel when IBSS concurrent connection
 		 * is up
 		 */
-		if (valid_chnl_list[i] >= MIN_11P_CHANNEL)
+		if (valid_chnl_list[i] >= CDS_MIN_11P_CHANNEL)
 			continue;
 		if (CDS_IS_CHANNEL_5GHZ(ibss_channel) &&
 			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
@@ -5455,7 +5456,7 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 							ChannelInfo.
 							ChannelList[index]);
 				if (src_req->ChannelInfo.ChannelList[index] <
-						MIN_11P_CHANNEL &&
+						CDS_MIN_11P_CHANNEL &&
 					((CHANNEL_STATE_ENABLE ==
 						channel_state) ||
 					((CHANNEL_STATE_DFS == channel_state) &&
@@ -5486,7 +5487,7 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 			for (index = 0; index < src_req->ChannelInfo.
 					numOfChannels; index++) {
 				if (src_req->ChannelInfo.ChannelList[index] <
-						MIN_11P_CHANNEL) {
+						CDS_MIN_11P_CHANNEL) {
 					dst_req->ChannelInfo.
 						ChannelList[new_index] =
 						src_req->ChannelInfo.

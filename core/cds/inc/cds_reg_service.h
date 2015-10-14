@@ -41,6 +41,36 @@
 #define CDS_COUNTRY_CODE_LEN  2
 #define CDS_MAC_ADDRESS_LEN   6
 
+#define CDS_CHANNEL_STATE(enum) reg_channels[enum].enabled
+#define CDS_CHANNEL_NUM(enum) chan_mapping[enum].chan_num
+#define CDS_CHANNEL_FREQ(enum) chan_mapping[enum].center_freq
+#define CDS_IS_DFS_CH(chan_num) (cds_get_channel_state((chan_num)) == \
+				CHANNEL_STATE_DFS)
+
+#define CDS_IS_PASSIVE_OR_DISABLE_CH(chan_num) \
+	(cds_get_channel_state(chan_num) != CHANNEL_STATE_ENABLE)
+
+#define CDS_MIN_24GHZ_CHANNEL_NUMBER			\
+	chan_mapping[MIN_24GHZ_CHANNEL].chan_num
+#define CDS_MAX_24GHZ_CHANNEL_NUMBER			\
+	chan_mapping[MAX_24GHZ_CHANNEL].chan_num
+#define CDS_MIN_5GHZ_CHANNEL_NUMBER  chan_mapping[MIN_5GHZ_CHANNEL].chan_num
+#define CDS_MAX_5GHZ_CHANNEL_NUMBER  chan_mapping[MAX_5GHZ_CHANNEL].chan_num
+
+#define CDS_IS_CHANNEL_5GHZ(chan_num) \
+	((chan_num >= CDS_MIN_5GHZ_CHANNEL_NUMBER) && \
+	 (chan_num <= CDS_MAX_5GHZ_CHANNEL_NUMBER))
+
+#define CDS_IS_CHANNEL_24GHZ(chan_num) \
+	((chan_num >= CDS_MIN_24GHZ_CHANNEL_NUMBER) && \
+	 (chan_num <= CDS_MAX_24GHZ_CHANNEL_NUMBER))
+
+#define CDS_IS_SAME_BAND_CHANNELS(ch1, ch2) \
+	(ch1 && ch2 && \
+	(CDS_IS_CHANNEL_5GHZ(ch1) == CDS_IS_CHANNEL_5GHZ(ch2)))
+
+#define CDS_MIN_11P_CHANNEL chan_mapping[MIN_59GHZ_CHANNEL].chan_num
+
 typedef enum {
 	REGDOMAIN_FCC,
 	REGDOMAIN_ETSI,
@@ -50,7 +80,6 @@ typedef enum {
 } v_REGDOMAIN_t;
 
 typedef enum {
-	/* 2.4GHz Band */
 	RF_CHAN_1 = 0,
 	RF_CHAN_2,
 	RF_CHAN_3,
@@ -66,7 +95,6 @@ typedef enum {
 	RF_CHAN_13,
 	RF_CHAN_14,
 
-	/* 4.9GHz Band */
 	RF_CHAN_240,
 	RF_CHAN_244,
 	RF_CHAN_248,
@@ -75,7 +103,6 @@ typedef enum {
 	RF_CHAN_212,
 	RF_CHAN_216,
 
-	/* 5GHz Low & Mid U-NII Band */
 	RF_CHAN_36,
 	RF_CHAN_40,
 	RF_CHAN_44,
@@ -85,7 +112,6 @@ typedef enum {
 	RF_CHAN_60,
 	RF_CHAN_64,
 
-	/* 5GHz Mid Band - ETSI & FCC */
 	RF_CHAN_100,
 	RF_CHAN_104,
 	RF_CHAN_108,
@@ -97,17 +123,14 @@ typedef enum {
 	RF_CHAN_132,
 	RF_CHAN_136,
 	RF_CHAN_140,
-
 	RF_CHAN_144,
 
-	/* 5GHz High U-NII Band */
 	RF_CHAN_149,
 	RF_CHAN_153,
 	RF_CHAN_157,
 	RF_CHAN_161,
 	RF_CHAN_165,
 
-	/* 802.11p */
 	RF_CHAN_170,
 	RF_CHAN_171,
 	RF_CHAN_172,
@@ -134,19 +157,19 @@ typedef enum {
 	RF_CHAN_BOND_9,
 	RF_CHAN_BOND_10,
 	RF_CHAN_BOND_11,
-	RF_CHAN_BOND_242,       /* 4.9GHz Band */
+	RF_CHAN_BOND_242,
 	RF_CHAN_BOND_246,
 	RF_CHAN_BOND_250,
 	RF_CHAN_BOND_210,
 	RF_CHAN_BOND_214,
-	RF_CHAN_BOND_38,        /* 5GHz Low & Mid U-NII Band */
+	RF_CHAN_BOND_38,
 	RF_CHAN_BOND_42,
 	RF_CHAN_BOND_46,
 	RF_CHAN_BOND_50,
 	RF_CHAN_BOND_54,
 	RF_CHAN_BOND_58,
 	RF_CHAN_BOND_62,
-	RF_CHAN_BOND_102,       /* 5GHz Mid Band - ETSI & FCC */
+	RF_CHAN_BOND_102,
 	RF_CHAN_BOND_106,
 	RF_CHAN_BOND_110,
 	RF_CHAN_BOND_114,
@@ -156,21 +179,19 @@ typedef enum {
 	RF_CHAN_BOND_130,
 	RF_CHAN_BOND_134,
 	RF_CHAN_BOND_138,
-
 	RF_CHAN_BOND_142,
-
-	RF_CHAN_BOND_151,       /* 5GHz High U-NII Band */
+	RF_CHAN_BOND_151,
 	RF_CHAN_BOND_155,
 	RF_CHAN_BOND_159,
 	RF_CHAN_BOND_163,
 
 	NUM_RF_CHANNELS,
 
-	MIN_2_4GHZ_CHANNEL = RF_CHAN_1,
-	MAX_2_4GHZ_CHANNEL = RF_CHAN_14,
-	NUM_24GHZ_CHANNELS = (MAX_2_4GHZ_CHANNEL - MIN_2_4GHZ_CHANNEL + 1),
+	MIN_24GHZ_CHANNEL = RF_CHAN_1,
+	MAX_24GHZ_CHANNEL = RF_CHAN_14,
+	NUM_24GHZ_CHANNELS = (MAX_24GHZ_CHANNEL - MIN_24GHZ_CHANNEL + 1),
 
-	MIN_5GHZ_CHANNEL = RF_CHAN_240,
+	MIN_5GHZ_CHANNEL = RF_CHAN_36,
 	MAX_5GHZ_CHANNEL = RF_CHAN_184,
 	NUM_5GHZ_CHANNELS = (MAX_5GHZ_CHANNEL - MIN_5GHZ_CHANNEL + 1),
 
@@ -184,8 +205,8 @@ typedef enum {
 	NUM_40MHZ_RF_CHANNELS =
 		(MAX_40MHZ_RF_CHANNEL - MIN_40MHZ_RF_CHANNEL + 1),
 
-	MIN_5_9GHZ_CHANNEL = RF_CHAN_170,
-	MAX_5_9GHZ_CHANNEL = RF_CHAN_184,
+	MIN_59GHZ_CHANNEL = RF_CHAN_170,
+	MAX_59GHZ_CHANNEL = RF_CHAN_184,
 
 	INVALID_RF_CHANNEL = 0xBAD,
 	RF_CHANNEL_INVALID_MAX_FIELD = 0x7FFFFFFF
@@ -200,16 +221,16 @@ typedef enum {
 
 typedef int8_t tPowerdBm;
 
-typedef struct {
+struct regulatory_channel {
 	uint32_t enabled:4;
 	uint32_t flags:28;
-	tPowerdBm pwrLimit;
-} sRegulatoryChannel;
+	tPowerdBm pwr_limit;
+};
 
-typedef struct {
-	uint16_t targetFreq;
-	uint16_t channelNum;
-} tRfChannelProps;
+struct chan_map {
+	uint16_t center_freq;
+	uint16_t chan_num;
+};
 
 typedef struct {
 	uint8_t chanId;
@@ -272,6 +293,8 @@ enum channel_width {
  */
 typedef uint8_t country_code_t[CDS_COUNTRY_CODE_LEN + 1];
 
+extern struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
+extern const struct chan_map chan_mapping[NUM_RF_CHANNELS];
 
 CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
 						const country_code_t countryCode,
@@ -280,44 +303,22 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
 CDF_STATUS cds_read_default_country(country_code_t default_country);
 
 CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower
-					   *pChannels20MHz,
-					   uint8_t *pNum20MHzChannelsFound,
+					   *base_channels,
+					   uint8_t *num_base_channels,
 					   tChannelListWithPower
 					   *pChannels40MHz,
-					   uint8_t *pNum40MHzChannelsFound);
+					   uint8_t *);
 
-CDF_STATUS cds_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId);
+CDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
 
-CHANNEL_STATE cds_get_channel_state(uint32_t rfChannel);
+CHANNEL_STATE cds_get_channel_state(uint32_t chan_num);
 
 CDF_STATUS cds_regulatory_init(void);
 CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
 CDF_STATUS cds_set_dfs_region(uint8_t dfs_region);
 bool cds_is_dsrc_channel(uint16_t);
 CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
-					   enum channel_width ch_width);
+					   enum channel_width chan_width);
 enum channel_width cds_get_max_channel_bw(uint32_t chan_num);
-
-
-#define CDS_IS_DFS_CH(channel) (cds_get_channel_state((channel)) == \
-				CHANNEL_STATE_DFS)
-
-#define CDS_IS_PASSIVE_OR_DISABLE_CH(channel) \
-    (cds_get_channel_state((channel)) != CHANNEL_STATE_ENABLE)
-
-#define CDS_MAX_24GHz_CHANNEL_NUMBER \
-    (rf_channels[MAX_2_4GHZ_CHANNEL].channelNum)
-#define CDS_MIN_5GHz_CHANNEL_NUMBER  (rf_channels[RF_CHAN_36].channelNum)
-#define CDS_MAX_5GHz_CHANNEL_NUMBER  (rf_channels[MAX_5GHZ_CHANNEL].channelNum)
-
-#define CDS_IS_CHANNEL_5GHZ(chnNum) \
-	(((chnNum) >= CDS_MIN_5GHz_CHANNEL_NUMBER) && ((chnNum) <= CDS_MAX_5GHz_CHANNEL_NUMBER))
-
-#define CDS_IS_CHANNEL_24GHZ(chnNum) \
-	(((chnNum) > 0) && ((chnNum) <= CDS_MAX_24GHz_CHANNEL_NUMBER))
-
-#define CDS_IS_SAME_BAND_CHANNELS(ch1, ch2) \
-	(ch1 && ch2 && \
-	(CDS_IS_CHANNEL_5GHZ(ch1) == CDS_IS_CHANNEL_5GHZ(ch2)))
 
 #endif /* __CDS_REG_SERVICE_H */

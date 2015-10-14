@@ -706,7 +706,7 @@ CDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 
 	for (i = 0; i < pScan->base_channels.numChannels; i++) {
 		/* Scan is not performed on DSRC channels*/
-		if (pScan->base_channels.channelList[i] >= MIN_11P_CHANNEL)
+		if (pScan->base_channels.channelList[i] >= CDS_MIN_11P_CHANNEL)
 			continue;
 		if (pScan->fcc_constraint) {
 			if (pScan->base_channels.channelList[i] == 12)

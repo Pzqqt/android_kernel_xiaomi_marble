@@ -4184,8 +4184,8 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 	for (loop_count = band_start_ch; loop_count <= band_end_ch;
 	     loop_count++) {
 		/* go to next channel if rf_channel is out of range */
-		if ((start_ch_num > rf_channels[loop_count].channelNum) ||
-		    (end_ch_num < rf_channels[loop_count].channelNum))
+		if ((start_ch_num > CDS_CHANNEL_NUM(loop_count)) ||
+		    (end_ch_num < CDS_CHANNEL_NUM(loop_count)))
 			continue;
 		/*
 		 * go to next channel if none of these condition pass
@@ -4193,22 +4193,22 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 		 * - DFS scan disable but chan in CHANNEL_STATE_ENABLE
 		 */
 		if (!(((eSAP_TRUE == mac_ctx->scan.fEnableDFSChnlScan) &&
-		     (reg_channels[loop_count].enabled)) ||
+		      CDS_CHANNEL_STATE(loop_count)) ||
 		    ((eSAP_FALSE == mac_ctx->scan.fEnableDFSChnlScan) &&
 		     (CHANNEL_STATE_ENABLE ==
-		      reg_channels[loop_count].enabled))))
+		      CDS_CHANNEL_STATE(loop_count)))))
 			continue;
 
 #ifdef FEATURE_WLAN_CH_AVOID
 		for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
 			if ((safe_channels[i].channelNumber ==
-			     rf_channels[loop_count].channelNum)) {
+			     CDS_CHANNEL_NUM(loop_count))) {
 				/* Check if channel is safe */
 				if (true == safe_channels[i].isSafe) {
 #endif
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 		uint8_t ch;
-		ch = rf_channels[loop_count].channelNum;
+		ch = CDS_CHANNEL_NUM(loop_count);
 		if ((sap_ctx->acs_cfg->skip_scan_status ==
 			eSAP_DO_PAR_ACS_SCAN)) {
 		    if ((ch >= sap_ctx->acs_cfg->skip_scan_range1_stch &&
@@ -4216,7 +4216,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 			(ch >= sap_ctx->acs_cfg->skip_scan_range2_stch &&
 			 ch <= sap_ctx->acs_cfg->skip_scan_range2_endch)) {
 			list[ch_count] =
-				rf_channels[loop_count].channelNum;
+				CDS_CHANNEL_NUM(loop_count);
 			ch_count++;
 			CDF_TRACE(CDF_MODULE_ID_SAP,
 				CDF_TRACE_LEVEL_INFO,
@@ -4230,7 +4230,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 		    }
 		} else {
 			list[ch_count] =
-				rf_channels[loop_count].channelNum;
+				CDS_CHANNEL_NUM(loop_count);
 			ch_count++;
 			CDF_TRACE(CDF_MODULE_ID_SAP,
 				CDF_TRACE_LEVEL_INFO,
@@ -4238,7 +4238,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 				ch_count, ch);
 		}
 #else
-		list[ch_count] = rf_channels[loop_count].channelNum;
+		list[ch_count] = CDS_CHANNEL_NUM(loop_count);
 		ch_count++;
 #endif
 #ifdef FEATURE_WLAN_CH_AVOID
@@ -4306,10 +4306,10 @@ static CDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
 	}
 
 	for (i = RF_CHAN_36; i <= RF_CHAN_165; i++) {
-		if (reg_channels[i].enabled == CHANNEL_STATE_ENABLE ||
-		    reg_channels[i].enabled == CHANNEL_STATE_DFS) {
+		if (CDS_CHANNEL_STATE(i) == CHANNEL_STATE_ENABLE ||
+		    CDS_CHANNEL_STATE(i) == CHANNEL_STATE_DFS) {
 			sapContext->SapAllChnlList.channelList[count].channel =
-				rf_channels[i].channelNum;
+				CDS_CHANNEL_NUM(i);
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_LOW,
 				  "%s[%d] CHANNEL = %d", __func__, __LINE__,
 				  sapContext->SapAllChnlList.channelList[count].
@@ -4601,12 +4601,12 @@ CDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
 	}
 
 	for (i = RF_CHAN_36; i <= RF_CHAN_165; i++) {
-		if (reg_channels[i].enabled == CHANNEL_STATE_DFS) {
+		if (CDS_CHANNEL_STATE(i) == CHANNEL_STATE_DFS) {
 			/* if dfs nol is not found, initialize it */
 			if (!bFound) {
 				pMac->sap.SapDfsInfo.sapDfsChannelNolList[count]
 				.dfs_channel_number =
-					rf_channels[i].channelNum;
+					CDS_CHANNEL_NUM(i);
 
 				CDF_TRACE(CDF_MODULE_ID_SAP,
 					  CDF_TRACE_LEVEL_INFO_LOW,
