@@ -187,10 +187,13 @@ int athdiag_procfs_init(void *scn)
  */
 void athdiag_procfs_remove(void)
 {
-	remove_proc_entry(PROCFS_NAME, proc_dir);
-	HIF_DBG("/proc/%s/%s removed", PROCFS_DIR, PROCFS_NAME);
-	remove_proc_entry(PROCFS_DIR, NULL);
-	HIF_DBG("/proc/%s removed", PROCFS_DIR);
+	if (proc_dir != NULL) {
+		remove_proc_entry(PROCFS_NAME, proc_dir);
+		HIF_DBG("/proc/%s/%s removed", PROCFS_DIR, PROCFS_NAME);
+		remove_proc_entry(PROCFS_DIR, NULL);
+		HIF_DBG("/proc/%s removed", PROCFS_DIR);
+		proc_dir = NULL;
+	}
 }
 #else
 int athdiag_procfs_init(void *scn)
