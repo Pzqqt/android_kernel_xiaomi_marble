@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -301,24 +301,6 @@ typedef struct {
 	uint8_t pwrlvl;
 } COMMON_MODE_POWER;
 
-typedef enum {
-	COUNTRY_CODE_SET_BY_CORE,
-	COUNTRY_CODE_SET_BY_DRIVER,
-	COUNTRY_CODE_SET_BY_USER
-} COUNTRY_CODE_SOURCE;
-
-struct regulatory {
-	uint32_t reg_domain;
-	uint32_t eeprom_rd_ext;
-	uint16_t country_code;
-	uint8_t alpha2[3];
-	uint8_t dfs_region;
-	uint8_t ctl_2g;
-	uint8_t ctl_5g;
-	const void *regpair;
-	COUNTRY_CODE_SOURCE cc_src;
-	uint32_t reg_flags;
-};
 /* Multi-Device RegDomain Support */
 typedef struct ath_hal_reg_dmn_tables {
 	/* regDomainPairs: Map of 8-bit regdomain values to unitary reg domain */

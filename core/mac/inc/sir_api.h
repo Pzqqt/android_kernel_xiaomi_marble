@@ -1823,11 +1823,9 @@ struct ani_roc_req {
 
 /* generic country code change request MSG structure */
 typedef struct sAniGenericChangeCountryCodeReq {
-	/* Common for all types are requests */
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t countryCode[WNI_CFG_COUNTRY_CODE_LEN];  /* 3 char country code */
-	uint16_t domain_index;
 } tAniGenericChangeCountryCodeReq, *tpAniGenericChangeCountryCodeReq;
 
 /**

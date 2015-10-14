@@ -5042,8 +5042,7 @@ CDF_STATUS sme_change_country_code(tHalHandle hHal,
 
    -----------------------------------------------------------------------------*/
 CDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
-					   uint8_t *pCountry,
-					   v_REGDOMAIN_t reg_domain)
+					   uint8_t *pCountry)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -5072,8 +5071,7 @@ CDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 		pMsg->msgLen =
 			(uint16_t) sizeof(tAniGenericChangeCountryCodeReq);
 		cdf_mem_copy(pMsg->countryCode, pCountry, 2);
-		pMsg->domain_index = reg_domain;
-		pMsg->countryCode[2] = ' '; /* For ASCII space */
+		pMsg->countryCode[2] = ' ';
 
 		msg.type = eWNI_SME_GENERIC_CHANGE_COUNTRY_CODE;
 		msg.bodyptr = pMsg;
@@ -7051,7 +7049,7 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 }
 
 /**
- * sme_handle_change_country_code_by_user() - handles country ch req
+ * sme_handle_generic_change_country_code() - handles country ch req
  * @mac_ctx:    mac global context
  * @msg:        request msg packet
  *
@@ -7063,17 +7061,18 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
  * Return: status of operation
  */
 CDF_STATUS
-sme_handle_change_country_code_by_user(tpAniSirGlobal mac_ctx,
-				       tAniGenericChangeCountryCodeReq *msg)
+sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
+				       void *pMsgBuf)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	v_REGDOMAIN_t reg_domain_id;
+	v_REGDOMAIN_t reg_domain_id = 0;
 	bool is_11d_country = false;
 	bool supplicant_priority =
 		mac_ctx->roam.configParam.fSupplicantCountryCodeHasPriority;
+	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
 
 	sms_log(mac_ctx, LOG1, FL(" called"));
-	reg_domain_id = (v_REGDOMAIN_t) msg->domain_index;
+
 	if (memcmp(msg->countryCode, mac_ctx->scan.countryCode11d,
 		   CDS_COUNTRY_CODE_LEN) == 0) {
 		is_11d_country = true;
@@ -7106,6 +7105,7 @@ sme_handle_change_country_code_by_user(tpAniSirGlobal mac_ctx,
 
 		return CDF_STATUS_E_FAILURE;
 	}
+
 	/* if Supplicant country code has priority, disable 11d */
 	if (!is_11d_country && supplicant_priority)
 		mac_ctx->roam.configParam.Is11dSupportEnabled = false;
@@ -7162,64 +7162,6 @@ sme_handle_change_country_code_by_user(tpAniSirGlobal mac_ctx,
 	return CDF_STATUS_SUCCESS;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn sme_handle_change_country_code_by_core
-
-    \brief Update Country code in the driver if set by kernel as world
-
-    If 11D is enabled, we update the country code after every scan & notify kernel.
-    This is to make sure kernel & driver are in sync in case of CC found in
-    driver but not in kernel database
-
-    \param pMac - The handle returned by mac_open.
-    \param pMsg - Carrying new CC set in kernel
-
-    \return CDF_STATUS
-
-   -------------------------------------------------------------------------------*/
-CDF_STATUS sme_handle_change_country_code_by_core(tpAniSirGlobal pMac,
-						  tAniGenericChangeCountryCodeReq *
-						  pMsg)
-{
-	CDF_STATUS status;
-
-	sms_log(pMac, LOG1, FL(" called"));
-
-	/* this is to make sure kernel & driver are in sync in case of CC found in */
-	/* driver but not in kernel database */
-	if (('0' == pMsg->countryCode[0]) && ('0' == pMsg->countryCode[1])) {
-		sms_log(pMac, LOGW,
-			FL
-				("Setting countryCode11d & countryCodeCurrent to world CC"));
-		cdf_mem_copy(pMac->scan.countryCode11d, pMsg->countryCode,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-		cdf_mem_copy(pMac->scan.countryCodeCurrent, pMsg->countryCode,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-	}
-
-	status = wma_set_reg_domain(pMac, REGDOMAIN_WORLD);
-
-	if (status != CDF_STATUS_SUCCESS) {
-		sms_log(pMac, LOGE, FL("  fail to set regId"));
-		return status;
-	} else {
-		status = csr_get_channel_and_power_list(pMac);
-		if (status != CDF_STATUS_SUCCESS) {
-			sms_log(pMac, LOGE, FL("  fail to get Channels "));
-		} else {
-			csr_apply_channel_and_power_list(pMac);
-		}
-	}
-	/* Country code  Changed, Purge Only scan result
-	 * which does not have channel number belong to 11d
-	 * channel list
-	 */
-	csr_scan_filter_results(pMac);
-	sms_log(pMac, LOG1, FL(" returned"));
-	return CDF_STATUS_SUCCESS;
-}
-
 static bool
 sme_search_in_base_ch_lst(tpAniSirGlobal mac_ctx, uint8_t curr_ch)
 {
@@ -7271,42 +7213,6 @@ void sme_disconnect_connected_sessions(tpAniSirGlobal mac_ctx)
 					    eCSR_DISCONNECT_REASON_UNSPECIFIED);
 		}
 	}
-}
-
-/* ---------------------------------------------------------------------------
-
-    \fn sme_handle_generic_change_country_code
-
-    \brief Change Country code, Reg Domain and channel list
-
-    If Supplicant country code is priority than 11d is disabled.
-    If 11D is enabled, we update the country code after every scan.
-    Hence when Supplicant country code is priority, we don't need 11D info.
-    Country code from kernel is set as current country code.
-
-    \param pMac - The handle returned by mac_open.
-    \param pMsgBuf - message buffer
-
-    \return CDF_STATUS
-
-   -------------------------------------------------------------------------------*/
-CDF_STATUS sme_handle_generic_change_country_code(tpAniSirGlobal pMac,
-						  void *pMsgBuf)
-{
-	tAniGenericChangeCountryCodeReq *pMsg;
-	v_REGDOMAIN_t reg_domain_id;
-
-	sms_log(pMac, LOG1, FL(" called"));
-	pMsg = (tAniGenericChangeCountryCodeReq *) pMsgBuf;
-	reg_domain_id = (v_REGDOMAIN_t) pMsg->domain_index;
-
-	if (REGDOMAIN_COUNT == reg_domain_id) {
-		sme_handle_change_country_code_by_core(pMac, pMsg);
-	} else {
-		sme_handle_change_country_code_by_user(pMac, pMsg);
-	}
-	sms_log(pMac, LOG1, FL(" returned"));
-	return CDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
