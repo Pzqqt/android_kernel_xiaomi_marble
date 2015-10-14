@@ -1014,7 +1014,15 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 		goto end;
 	}
 
-	if (id >= WMI_EVT_GRP_START_ID(WMI_GRP_START)) {
+	if ((id >= WMI_EVT_GRP_START_ID(WMI_GRP_START)) &&
+		/* WMI_SERVICE_READY_EXT_EVENTID is supposed to be part of the
+		 * WMI_GRP_START group. Since the group is out of space, FW
+		 * has accomodated this in WMI_GRP_VDEV.
+		 * WMI_SERVICE_READY_EXT_EVENTID does not have any specific
+		 * event handler registered. So, we do not want to go through
+		 * the WMI registered event handler path for this event.
+		 */
+		(id != WMI_SERVICE_READY_EXT_EVENTID)) {
 		uint32_t idx = 0;
 
 		idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
