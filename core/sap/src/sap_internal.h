@@ -76,7 +76,7 @@ extern "C" {
 #define SAP_CHAN_PREFERRED_INDOOR  1
 #define SAP_CHAN_PREFERRED_OUTDOOR 2
 
-extern const sRegulatoryChannel *reg_channels;
+extern const sRegulatoryChannel reg_channels[NUM_RF_CHANNELS];
 
 /*----------------------------------------------------------------------------
  *  Typedefs

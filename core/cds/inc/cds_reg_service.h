@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -207,10 +207,6 @@ typedef struct {
 } sRegulatoryChannel;
 
 typedef struct {
-	sRegulatoryChannel channels[NUM_RF_CHANNELS];
-} sRegulatoryDomain;
-
-typedef struct {
 	uint16_t targetFreq;
 	uint16_t channelNum;
 } tRfChannelProps;
@@ -219,6 +215,27 @@ typedef struct {
 	uint8_t chanId;
 	tPowerdBm pwr;
 } tChannelListWithPower;
+
+typedef enum {
+	COUNTRY_CODE_SET_BY_CORE,
+	COUNTRY_CODE_SET_BY_DRIVER,
+	COUNTRY_CODE_SET_BY_USER
+} COUNTRY_CODE_SOURCE;
+
+
+struct regulatory {
+	uint32_t reg_domain;
+	uint32_t eeprom_rd_ext;
+	uint16_t country_code;
+	uint8_t alpha2[3];
+	uint8_t def_country[3];
+	uint8_t dfs_region;
+	uint8_t ctl_2g;
+	uint8_t ctl_5g;
+	const void *regpair;
+	COUNTRY_CODE_SOURCE cc_src;
+	uint32_t reg_flags;
+};
 
 typedef enum {
 	COUNTRY_INIT,
@@ -255,11 +272,6 @@ enum channel_width {
  */
 typedef uint8_t country_code_t[CDS_COUNTRY_CODE_LEN + 1];
 
-typedef struct {
-	sRegulatoryDomain regDomains[REGDOMAIN_COUNT];
-	country_code_t default_country;
-} t_reg_table;
-
 
 CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
 						const country_code_t countryCode,
@@ -277,6 +289,15 @@ CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower
 CDF_STATUS cds_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId);
 
 CHANNEL_STATE cds_get_channel_state(uint32_t rfChannel);
+
+CDF_STATUS cds_regulatory_init(void);
+CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
+CDF_STATUS cds_set_dfs_region(uint8_t dfs_region);
+bool cds_is_dsrc_channel(uint16_t);
+CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
+					   enum channel_width ch_width);
+enum channel_width cds_get_max_channel_bw(uint32_t chan_num);
+
 
 #define CDS_IS_DFS_CH(channel) (cds_get_channel_state((channel)) == \
 				CHANNEL_STATE_DFS)
@@ -298,13 +319,5 @@ CHANNEL_STATE cds_get_channel_state(uint32_t rfChannel);
 #define CDS_IS_SAME_BAND_CHANNELS(ch1, ch2) \
 	(ch1 && ch2 && \
 	(CDS_IS_CHANNEL_5GHZ(ch1) == CDS_IS_CHANNEL_5GHZ(ch2)))
-
-CDF_STATUS cds_regulatory_init(void);
-CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
-CDF_STATUS cds_set_dfs_region(uint8_t dfs_region);
-bool cds_is_dsrc_channel(uint16_t);
-CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
-					   enum channel_width ch_width);
-enum channel_width cds_get_max_channel_bw(uint32_t chan_num);
 
 #endif /* __CDS_REG_SERVICE_H */

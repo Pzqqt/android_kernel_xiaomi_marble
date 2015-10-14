@@ -404,9 +404,7 @@ CDF_STATUS sme_change_country_code(tHalHandle hHal,
 		tAniBool countryFromUserSpace,
 		tAniBool sendRegHint);
 CDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
-		uint8_t *pCountry,
-		v_REGDOMAIN_t reg_domain);
-
+					   uint8_t *pCountry);
 CDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
