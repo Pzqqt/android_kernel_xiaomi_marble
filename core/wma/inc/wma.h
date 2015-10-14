@@ -57,6 +57,7 @@
 #ifndef QCA_WIFI_3_0_EMU
 
 #define WMA_READY_EVENTID_TIMEOUT          2000
+#define WMA_SERVICE_READY_EXT_TIMEOUT      2000
 #define WMA_TGT_SUSPEND_COMPLETE_TIMEOUT   6000
 #define WMA_WAKE_LOCK_TIMEOUT              1000
 #define WMA_MAX_RESUME_RETRY               1000
@@ -66,6 +67,7 @@
 #else
 
 #define WMA_READY_EVENTID_TIMEOUT          200000
+#define WMA_SERVICE_READY_EXT_TIMEOUT      200000
 #define WMA_TGT_SUSPEND_COMPLETE_TIMEOUT   300000
 #define WMA_WAKE_LOCK_TIMEOUT              1000
 #define WMA_MAX_RESUME_RETRY               1000
@@ -1348,9 +1350,18 @@ typedef struct {
 	} wmi_desc_pool;
 	uint8_t max_scan;
 	struct wmi_init_cmd saved_wmi_init_cmd;
-	cdf_event_t service_ready_ext_evt;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
+	/* Going with a timer instead of wait event because on receiving the
+	 * service ready event, we will be waiting on the MC thread for the
+	 * service extended ready event which is also processed in MC thread.
+	 * This leads to MC thread being stuck. Alternative was to process
+	 * these events in tasklet/workqueue context. But, this leads to
+	 * race conditions when the events are processed in two different
+	 * context. So, processing ready event and extended ready event in
+	 * the serialized MC thread context with a timer.
+	 */
+	cdf_mc_timer_t service_ready_ext_timer;
 } t_wma_handle, *tp_wma_handle;
 
 /**

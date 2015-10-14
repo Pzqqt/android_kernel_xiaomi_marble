@@ -79,7 +79,6 @@
 #include "cds_concurrency.h"
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
-#define WMA_SERVICE_READY_EXT_TIMEOUT 2000 /* 2 seconds */
 
 static uint32_t g_fw_wlan_feat_caps;
 
@@ -92,6 +91,38 @@ static uint32_t g_fw_wlan_feat_caps;
 uint8_t wma_get_fw_wlan_feat_caps(uint8_t featEnumValue)
 {
 	return (g_fw_wlan_feat_caps & (1 << featEnumValue)) ? true : false;
+}
+
+/**
+ * wma_service_ready_ext_evt_timeout() - Service ready extended event timeout
+ * @data: Timeout handler data
+ *
+ * This function is called when the FW fails to send WMI_SERVICE_READY_EXT_EVENT
+ * message
+ *
+ * Return: None
+ */
+static void wma_service_ready_ext_evt_timeout(void *data)
+{
+	tp_wma_handle wma_handle;
+
+	WMA_LOGA("%s: Timeout waiting for WMI_SERVICE_READY_EXT_EVENT",
+			__func__);
+
+	wma_handle = (tp_wma_handle) data;
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: Invalid WMA handle", __func__);
+		goto end;
+	}
+
+	if (wma_handle->saved_wmi_init_cmd.buf) {
+		wmi_buf_free(wma_handle->saved_wmi_init_cmd.buf);
+		wma_handle->saved_wmi_init_cmd.buf = NULL;
+	}
+end:
+	/* Panic so that we can debug why FW is not responding */
+	CDF_BUG(0);
 }
 
 /**
@@ -1702,6 +1733,16 @@ CDF_STATUS wma_open(void *cds_context,
 		WMA_LOGP("%s: wma_ready_event initialization failed", __func__);
 		goto err_event_init;
 	}
+
+	cdf_status = cdf_mc_timer_init(&wma_handle->service_ready_ext_timer,
+					CDF_TIMER_TYPE_SW,
+					wma_service_ready_ext_evt_timeout,
+					wma_handle);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		WMA_LOGE("Failed to initialize service ready ext timeout");
+		goto err_event_init;
+	}
+
 	cdf_status = cdf_event_init(&wma_handle->target_suspend);
 	if (cdf_status != CDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: target suspend event initialization failed",
@@ -2711,12 +2752,6 @@ CDF_STATUS wma_start(void *cds_ctx)
 		goto end;
 	}
 
-	cdf_status = cdf_event_init(&wma_handle->service_ready_ext_evt);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
-		WMA_LOGE("Unable to init service_ready_ext_evt");
-		goto end;
-	}
-
 end:
 	WMA_LOGD("%s: Exit", __func__);
 	return cdf_status;
@@ -2784,12 +2819,6 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	cdf_status = wma_tx_detach(wma_handle);
 	if (cdf_status != CDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: Failed to deregister tx management", __func__);
-		goto end;
-	}
-
-	cdf_status = cdf_event_destroy(&wma_handle->service_ready_ext_evt);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to destroy service_ready_ext_evt");
 		goto end;
 	}
 
@@ -3031,6 +3060,11 @@ CDF_STATUS wma_close(void *cds_ctx)
 
 	/* close the cdf events */
 	cdf_event_destroy(&wma_handle->wma_ready_event);
+	cdf_status = cdf_mc_timer_destroy(&wma_handle->service_ready_ext_timer);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+		WMA_LOGP("%s: Failed to destroy service ready ext event timer",
+			__func__);
+
 	cdf_event_destroy(&wma_handle->target_suspend);
 	cdf_event_destroy(&wma_handle->wma_resume_event);
 	cdf_event_destroy(&wma_handle->recovery_event);
@@ -3593,13 +3627,17 @@ void wma_dump_dbs_hw_mode(tp_wma_handle wma_handle)
 /**
  * wma_init_scan_fw_mode_config() - Initialize scan/fw mode config
  * @wma_handle: WMA handle
+ * @scan_config: Scam mode configuration
+ * @fw_config: FW mode configuration
  *
  * Enables all the valid bits of concurrent_scan_config_bits and
  * fw_mode_config_bits.
  *
  * Return: None
  */
-void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle)
+void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle,
+				uint32_t scan_config,
+				uint32_t fw_config)
 {
 	tpAniSirGlobal mac = cds_get_context(CDF_MODULE_ID_PE);
 
@@ -3627,28 +3665,24 @@ void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle)
 		goto done;
 	}
 
-	/* The input from FW team is that, by default all the
-	 * bits of concurrent_scan_config_bits and
-	 * FW_mode_config_bits will be enabled. So,
-	 * enabling all the bits here. Adding this API so that
-	 * in the future/variant chipsets, when not all bits are
-	 * enabled, FW can send the initial configuration of the above
-	 * two parameters using the service ready event and they
-	 * can be initialized here.
-	 */
-	/* Initialize concurrent_scan_config_bits */
+	/* Initialize concurrent_scan_config_bits with default FW value */
 	WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_SET(
-			wma_handle->dual_mac_cfg.cur_scan_config, 1);
+			wma_handle->dual_mac_cfg.cur_scan_config,
+			WMI_DBS_CONC_SCAN_CFG_DBS_SCAN_GET(scan_config));
 	WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_SET(
-			wma_handle->dual_mac_cfg.cur_scan_config, 1);
+			wma_handle->dual_mac_cfg.cur_scan_config,
+			WMI_DBS_CONC_SCAN_CFG_AGILE_SCAN_GET(scan_config));
 	WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_SET(
-			wma_handle->dual_mac_cfg.cur_scan_config, 1);
+			wma_handle->dual_mac_cfg.cur_scan_config,
+			WMI_DBS_CONC_SCAN_CFG_AGILE_DFS_SCAN_GET(scan_config));
 
-	/* Initialize FW_mode_config_bits */
+	/* Initialize fw_mode_config_bits with default FW value */
 	WMI_DBS_FW_MODE_CFG_DBS_SET(
-			wma_handle->dual_mac_cfg.cur_fw_mode_config, 1);
+			wma_handle->dual_mac_cfg.cur_fw_mode_config,
+			WMI_DBS_FW_MODE_CFG_DBS_GET(fw_config));
 	WMI_DBS_FW_MODE_CFG_AGILE_DFS_SET(
-			wma_handle->dual_mac_cfg.cur_fw_mode_config, 1);
+			wma_handle->dual_mac_cfg.cur_fw_mode_config,
+			WMI_DBS_FW_MODE_CFG_AGILE_DFS_GET(fw_config));
 done:
 	/* Initialize the previous scan/fw mode config */
 	wma_handle->dual_mac_cfg.prev_scan_config =
@@ -3680,6 +3714,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	wmi_service_ready_event_fixed_param *ev;
 	int status;
 	uint32_t *ev_wlan_dbs_hw_mode_list;
+	CDF_STATUS ret;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -3713,7 +3748,13 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 
 	wma_dump_dbs_hw_mode(wma_handle);
 
-	wma_init_scan_fw_mode_config(wma_handle);
+	/* Initializes the fw_mode and scan_config to zero.
+	 * If ext service ready event is present it will set
+	 * the actual values of these two params.
+	 * This is to ensure that no garbage values would be
+	 * present in the absence of ext service ready event.
+	 */
+	wma_init_scan_fw_mode_config(wma_handle, 0, 0);
 
 	wma_handle->phy_capability = ev->phy_capability;
 	wma_handle->max_frag_entry = ev->max_frag_entry;
@@ -3872,13 +3913,40 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		return;
 	}
 
-	WMA_LOGA("WMA --> WMI_INIT_CMDID");
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-			WMI_INIT_CMDID);
-	if (status != EOK) {
-		WMA_LOGE("Failed to send WMI_INIT_CMDID command");
-		wmi_buf_free(buf);
-		return;
+	/* A host, which supports WMI_SERVICE_READY_EXT_EVENTID, would need to
+	 * check the WMI_SERVICE_READY message for an "extension" flag, and if
+	 * this flag is set, then hold off on sending the WMI_INIT message until
+	 * WMI_SERVICE_READY_EXT_EVENTID is received.
+	 */
+	if (!WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				WMI_SERVICE_EXT_MSG)) {
+		/* No service extended message support.
+		 * Send INIT command immediately
+		 */
+		WMA_LOGA("WMA --> WMI_INIT_CMDID");
+		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				WMI_INIT_CMDID);
+		if (status != EOK) {
+			WMA_LOGE("Failed to send WMI_INIT_CMDID command");
+			wmi_buf_free(buf);
+			return;
+		}
+	} else {
+		/* Need to save and send the WMI INIT command only after
+		 * processing service ready extended event
+		 */
+		wma_handle->saved_wmi_init_cmd.buf = buf;
+		wma_handle->saved_wmi_init_cmd.buf_len = len;
+		/* The saved 'buf' will be freed after sending INIT command or
+		 * in other cases as required
+		 */
+		ret = cdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
+				WMA_SERVICE_READY_EXT_TIMEOUT);
+		if (!CDF_IS_STATUS_SUCCESS(ret))
+			WMA_LOGP("Failed to start the service ready ext timer");
+
+		WMA_LOGA("%s: WMA waiting for WMI_SERVICE_READY_EXT_EVENTID",
+				__func__);
 	}
 }
 
@@ -3923,9 +3991,13 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 		return;
 	}
 
-	ret = cdf_event_set(&wma_handle->service_ready_ext_evt);
-	if (CDF_STATUS_SUCCESS != ret) {
-		WMA_LOGP("Failed to set service_ready_ext_evt");
+	WMA_LOGA("%s: Defaults: scan config:%x FW mode config:%x",
+			__func__, ev->default_conc_scan_config_bits,
+			ev->default_fw_config_bits);
+
+	ret = cdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
+	if (!CDF_IS_STATUS_SUCCESS(ret)) {
+		WMA_LOGP("Failed to stop the service ready ext timer");
 		return;
 	}
 
@@ -3944,6 +4016,9 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 	}
 	wma_handle->saved_wmi_init_cmd.buf = NULL;
 
+	wma_init_scan_fw_mode_config(wma_handle,
+				ev->default_conc_scan_config_bits,
+				ev->default_fw_config_bits);
 }
 
 /**
