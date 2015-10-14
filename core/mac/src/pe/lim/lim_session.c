@@ -539,6 +539,11 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 				tx_timer_deactivate(timer_ptr);
 	}
 
+	if (LIM_IS_AP_ROLE(session)) {
+		cdf_mc_timer_stop(&session->protection_fields_reset_timer);
+		cdf_mc_timer_destroy(&session->protection_fields_reset_timer);
+	}
+
 #if defined (WLAN_FEATURE_VOWIFI_11R)
 	/* Delete FT related information */
 	lim_ft_cleanup(mac_ctx, session);
@@ -664,12 +669,6 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	if (session->limRmfEnabled)
 		cdf_mc_timer_destroy(&session->pmfComebackTimer);
 #endif
-
-	if (LIM_IS_AP_ROLE(session)) {
-		cdf_mc_timer_stop(&session->protection_fields_reset_timer);
-		cdf_mc_timer_destroy(&session->protection_fields_reset_timer);
-	}
-
 	session->valid = false;
 
 	if (LIM_IS_AP_ROLE(session))
