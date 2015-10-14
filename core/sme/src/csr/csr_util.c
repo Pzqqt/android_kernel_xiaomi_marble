@@ -97,7 +97,6 @@ uint8_t csr_wapi_oui[][CSR_WAPI_OUI_SIZE] = {
 uint8_t csr_wme_info_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 uint8_t csr_wme_parm_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 
-
 /* ////////////////////////////////////////////////////////////////////// */
 
 /**
@@ -5535,9 +5534,8 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 	int i;
 
 	for (i = 0; i < NUM_RF_CHANNELS; i++) {
-		if (rf_channels[i].channelNum == chanNum) {
-			return rf_channels[i].targetFreq;
-		}
+		if (CDS_CHANNEL_NUM(i) == chanNum)
+			return CDS_CHANNEL_FREQ(i);
 	}
 
 	return 0;

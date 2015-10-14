@@ -3629,10 +3629,10 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 	       curBand, bandStartChannel, bandEndChannel);
 
 	for (i = bandStartChannel; i <= bandEndChannel; i++) {
-		if ((CHANNEL_STATE_ENABLE == reg_channels[i].enabled) ||
-		    (CHANNEL_STATE_DFS == reg_channels[i].enabled)) {
+		if ((CHANNEL_STATE_ENABLE == CDS_CHANNEL_STATE(i)) ||
+		    (CHANNEL_STATE_DFS == CDS_CHANNEL_STATE(i))) {
 			channel_list->channels[num_channels] =
-				rf_channels[i].channelNum;
+				CDS_CHANNEL_NUM(i);
 			num_channels++;
 		}
 	}

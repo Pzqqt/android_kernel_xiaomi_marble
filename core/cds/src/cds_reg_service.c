@@ -42,20 +42,12 @@
 
 #define WORLD_SKU_MASK          0x00F0
 #define WORLD_SKU_PREFIX        0x0060
-#define MAX_COUNTRY_COUNT       300
+#define REG_WAIT_TIME           50
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 #define IEEE80211_CHAN_PASSIVE_SCAN IEEE80211_CHAN_NO_IR
 #define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
 #endif
-
-/* true if init happens thru init time driver hint */
-static bool init_by_driver = false;
-/* true if init happens thru init time  callback from regulatory core.
-   this should be set to true during driver reload */
-static bool init_by_reg_core = false;
-
-#define REG_WAIT_TIME   50
 
 #define REG_RULE_2412_2462    REG_RULE(2412-10, 2462+10, 40, 0, 20, 0)
 
@@ -131,7 +123,7 @@ static const struct ieee80211_regdomain cds_world_regdom_67_68_6A_6C = {
 	}
 };
 
-const tRfChannelProps rf_channels[NUM_RF_CHANNELS] = {
+const struct chan_map chan_mapping[NUM_RF_CHANNELS] = {
 	{2412, 1},
 	{2417, 2},
 	{2422, 3},
@@ -231,7 +223,10 @@ const tRfChannelProps rf_channels[NUM_RF_CHANNELS] = {
 	{5815, 163},
 };
 
-sRegulatoryChannel reg_channels[NUM_RF_CHANNELS];
+static bool init_by_driver;
+static bool init_by_reg_core;
+
+struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
 
 /**
  * cds_is_wwr_sku() - is regdomain world sku
@@ -400,17 +395,17 @@ CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower *
 		for (i = 0; i <= RF_CHAN_14; i++) {
 			if (reg_channels[i].enabled) {
 				base_channels[count].chanId =
-					rf_channels[i].channelNum;
+					chan_mapping[i].chan_num;
 				base_channels[count++].pwr =
-					reg_channels[i].pwrLimit;
+					reg_channels[i].pwr_limit;
 			}
 		}
 		for (i = RF_CHAN_36; i <= RF_CHAN_184; i++) {
 			if (reg_channels[i].enabled) {
 				base_channels[count].chanId =
-					rf_channels[i].channelNum;
+					chan_mapping[i].chan_num;
 				base_channels[count++].pwr =
-					reg_channels[i].pwrLimit;
+					reg_channels[i].pwr_limit;
 			}
 		}
 		*num_base_channels = count;
@@ -422,18 +417,18 @@ CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower *
 		for (i = RF_CHAN_BOND_3; i <= RF_CHAN_BOND_11; i++) {
 			if (reg_channels[i].enabled) {
 				channels_40mhz[count].chanId =
-					rf_channels[i].channelNum;
+					chan_mapping[i].chan_num;
 				channels_40mhz[count++].pwr =
-					reg_channels[i].pwrLimit;
+					reg_channels[i].pwr_limit;
 			}
 		}
 
 		for (i = RF_CHAN_BOND_38; i <= RF_CHAN_BOND_163; i++) {
 			if (reg_channels[i].enabled) {
 				channels_40mhz[count].chanId =
-					rf_channels[i].channelNum;
+					chan_mapping[i].chan_num;
 				channels_40mhz[count++].pwr =
-					reg_channels[i].pwrLimit;
+					reg_channels[i].pwr_limit;
 			}
 		}
 		*num_40mhz_channels = count;
@@ -482,7 +477,7 @@ static eRfChannels cds_get_channel_enum(uint32_t chan_num)
 	uint32_t loop;
 
 	for (loop = 0; loop <= RF_CHAN_184; loop++)
-		if (rf_channels[loop].channelNum == chan_num)
+		if (chan_mapping[loop].chan_num == chan_num)
 			return loop;
 
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
@@ -494,7 +489,7 @@ static eRfChannels cds_get_channel_enum(uint32_t chan_num)
 
 /**
  * cds_get_channel_state() - get the channel state
- * @channel_num: channel number
+ * @chan_num: channel number
  *
  * Return: CHANNEL_STATE
  */
@@ -795,9 +790,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx;
 	const struct ieee80211_reg_rule *reg_rule;
 	struct ieee80211_channel *chan;
-	sRegulatoryChannel *temp_chan_k;
-	sRegulatoryChannel *temp_chan_n;
-	sRegulatoryChannel *temp_chan;
+	struct regulatory_channel *temp_chan_k, *temp_chan_n, *temp_chan;
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (NULL == hdd_ctx) {
@@ -927,7 +920,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 						IEEE80211_CHAN_PASSIVE_SCAN;
 #endif
 				temp_chan_k->enabled = CHANNEL_STATE_DFS;
-				temp_chan_k->pwrLimit =
+				temp_chan_k->pwr_limit =
 					chan->max_power;
 				temp_chan_k->flags = chan->flags;
 
@@ -940,7 +933,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 					} else {
 						temp_chan_n->enabled =
 							CHANNEL_STATE_DFS;
-						temp_chan_n->pwrLimit =
+						temp_chan_n->pwr_limit =
 							 chan->max_power-3;
 					}
 					temp_chan_n->flags = chan->flags;
@@ -950,7 +943,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 					hdd_ctx->isVHT80Allowed = 1;
 			} else {
 				temp_chan_k->enabled = CHANNEL_STATE_ENABLE;
-				temp_chan_k->pwrLimit = chan->max_power;
+				temp_chan_k->pwr_limit = chan->max_power;
 				temp_chan_k->flags = chan->flags;
 				if (n != -1) {
 					if ((chan->flags &
@@ -961,7 +954,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 					} else {
 						temp_chan_n->enabled =
 							CHANNEL_STATE_ENABLE;
-						temp_chan_n->pwrLimit =
+						temp_chan_n->pwr_limit =
 							chan->max_power - 3;
 					}
 					temp_chan_n->flags = chan->flags;
