@@ -1221,6 +1221,10 @@ A_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket)
 {
 	HTC_PACKET_QUEUE queue;
 
+	if (HTCHandle == NULL || pPacket == NULL) {
+		return A_ERROR;
+	}
+
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
 			("+-htc_send_pkt: Enter endPointId: %d, buffer: %p, length: %d \n",
 			 pPacket->Endpoint, pPacket->pBuffer,
