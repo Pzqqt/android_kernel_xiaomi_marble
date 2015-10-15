@@ -276,10 +276,11 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 	uint32_t lim11hEnable;
 
-	tPowerdBm maxTxPower;   /* MIN (Regulatory and local power constraint) */
+	int8_t maxTxPower;   /* MIN (Regulatory and local power constraint) */
 	enum tCDF_ADAPTER_MODE pePersona;
+
 #if defined WLAN_FEATURE_VOWIFI
-	tPowerdBm txMgmtPower;
+	int8_t txMgmtPower;
 #endif
 
 #ifdef WLAN_FEATURE_VOWIFI_11R

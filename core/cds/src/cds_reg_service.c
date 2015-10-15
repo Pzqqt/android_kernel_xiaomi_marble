@@ -211,23 +211,9 @@ const struct chan_map chan_mapping[NUM_RF_CHANNELS] = {
 	{5815, 163},
 };
 
+struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
 static bool init_by_driver;
 static bool init_by_reg_core;
-
-struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
-
-/**
- * cds_is_wwr_sku() - is regdomain world sku
- * @regd: integer regulatory domain
- *
- * Return: bool
- */
-static inline bool cds_is_wwr_sku(u16 regd)
-{
-	return ((regd & COUNTRY_ERD_FLAG) != COUNTRY_ERD_FLAG) &&
-	       (((regd & WORLD_SKU_MASK) == WORLD_SKU_PREFIX) ||
-		(regd == WORLD));
-}
 
 /**
  * cds_is_world_regdomain() - whether world regdomain
@@ -235,9 +221,14 @@ static inline bool cds_is_wwr_sku(u16 regd)
  *
  * Return: bool
  */
-bool cds_is_world_regdomain(uint32_t regd)
+bool cds_is_world_regdomain(uint32_t reg_domain)
 {
-	return cds_is_wwr_sku(regd & ~WORLDWIDE_ROAMING_FLAG);
+	uint32_t temp_regd = reg_domain & ~WORLDWIDE_ROAMING_FLAG;
+
+	return ((temp_regd & COUNTRY_ERD_FLAG) != COUNTRY_ERD_FLAG) &&
+		(((temp_regd & WORLD_SKU_MASK) == WORLD_SKU_PREFIX) ||
+		 (temp_regd == WORLD));
+
 }
 
 
@@ -368,11 +359,11 @@ static void cds_update_regulatory_info(hdd_context_t *hdd_ctx)
  *
  * Return: CDF_STATUS_SUCCESS
  */
-CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower *
-					   base_channels,
+CDF_STATUS cds_get_channel_list_with_power(struct channel_power
+					   *base_channels,
 					   uint8_t *num_base_channels,
-					   tChannelListWithPower *
-					   channels_40mhz,
+					   struct channel_power
+					   *channels_40mhz,
 					   uint8_t *num_40mhz_channels)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
@@ -381,18 +372,18 @@ CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower *
 	if (base_channels && num_base_channels) {
 		count = 0;
 		for (i = 0; i <= RF_CHAN_14; i++) {
-			if (reg_channels[i].enabled) {
-				base_channels[count].chanId =
+			if (reg_channels[i].state) {
+				base_channels[count].chan_num =
 					chan_mapping[i].chan_num;
-				base_channels[count++].pwr =
+				base_channels[count++].power =
 					reg_channels[i].pwr_limit;
 			}
 		}
 		for (i = RF_CHAN_36; i <= RF_CHAN_184; i++) {
-			if (reg_channels[i].enabled) {
-				base_channels[count].chanId =
+			if (reg_channels[i].state) {
+				base_channels[count].chan_num =
 					chan_mapping[i].chan_num;
-				base_channels[count++].pwr =
+				base_channels[count++].power =
 					reg_channels[i].pwr_limit;
 			}
 		}
@@ -403,19 +394,19 @@ CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower *
 		count = 0;
 
 		for (i = RF_CHAN_BOND_3; i <= RF_CHAN_BOND_11; i++) {
-			if (reg_channels[i].enabled) {
-				channels_40mhz[count].chanId =
+			if (reg_channels[i].state) {
+				channels_40mhz[count].chan_num =
 					chan_mapping[i].chan_num;
-				channels_40mhz[count++].pwr =
+				channels_40mhz[count++].power =
 					reg_channels[i].pwr_limit;
 			}
 		}
 
 		for (i = RF_CHAN_BOND_38; i <= RF_CHAN_BOND_163; i++) {
-			if (reg_channels[i].enabled) {
-				channels_40mhz[count].chanId =
+			if (reg_channels[i].state) {
+				channels_40mhz[count].chan_num =
 					chan_mapping[i].chan_num;
-				channels_40mhz[count++].pwr =
+				channels_40mhz[count++].power =
 					reg_channels[i].pwr_limit;
 			}
 		}
@@ -431,7 +422,7 @@ CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower *
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_read_default_country(country_code_t default_country)
+CDF_STATUS cds_read_default_country(uint8_t *default_country)
 {
 	hdd_context_t *hdd_ctx;
 
@@ -444,7 +435,7 @@ CDF_STATUS cds_read_default_country(country_code_t default_country)
 
 	memcpy(default_country,
 	       hdd_ctx->reg.def_country,
-	       sizeof(country_code_t));
+	       CDS_COUNTRY_CODE_LEN + 1);
 
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
 		  "default country is %c%c\n",
@@ -460,7 +451,7 @@ CDF_STATUS cds_read_default_country(country_code_t default_country)
  *
  * Return: enum for the channel
  */
-static eRfChannels cds_get_channel_enum(uint32_t chan_num)
+static enum channel_enum cds_get_channel_enum(uint32_t chan_num)
 {
 	uint32_t loop;
 
@@ -479,17 +470,17 @@ static eRfChannels cds_get_channel_enum(uint32_t chan_num)
  * cds_get_channel_state() - get the channel state
  * @chan_num: channel number
  *
- * Return: CHANNEL_STATE
+ * Return: channel state
  */
-CHANNEL_STATE cds_get_channel_state(uint32_t chan_num)
+enum channel_state cds_get_channel_state(uint32_t chan_num)
 {
-	eRfChannels chan_enum;
+	enum channel_enum chan_enum;
 
 	chan_enum = cds_get_channel_enum(chan_num);
 	if (INVALID_RF_CHANNEL == chan_enum)
 		return CHANNEL_STATE_INVALID;
 	else
-		return reg_channels[chan_enum].enabled;
+		return reg_channels[chan_enum].state;
 }
 
 
@@ -497,19 +488,19 @@ CHANNEL_STATE cds_get_channel_state(uint32_t chan_num)
  * cds_get_bonded_channel_state() - get the bonded channel state
  * @channel_num: channel number
  *
- * Return: CHANNEL_STATE
+ * Return: channel state
  */
-CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
+enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
 					   enum channel_width ch_width)
 {
-	eRfChannels chan_enum;
+	enum channel_enum chan_enum;
 	bool bw_enabled = false;
 
 	chan_enum = cds_get_channel_enum(chan_num);
 	if (INVALID_RF_CHANNEL == chan_enum)
 		return CHANNEL_STATE_INVALID;
 
-	if (reg_channels[chan_enum].enabled) {
+	if (reg_channels[chan_enum].state) {
 		if (CHAN_WIDTH_5MHZ == ch_width)
 			bw_enabled = 1;
 		else if (CHAN_WIDTH_10MHZ == ch_width)
@@ -530,7 +521,7 @@ CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
 	}
 
 	if (bw_enabled)
-		return reg_channels[chan_enum].enabled;
+		return reg_channels[chan_enum].state;
 	else
 		return CHANNEL_STATE_DISABLE;
 }
@@ -543,13 +534,13 @@ CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
  */
 enum channel_width cds_get_max_channel_bw(uint32_t chan_num)
 {
-	eRfChannels chan_enum;
+	enum channel_enum chan_enum;
 	enum channel_width chan_bw = CHAN_WIDTH_0MHZ;
 
 	chan_enum = cds_get_channel_enum(chan_num);
 
 	if ((INVALID_RF_CHANNEL != chan_enum) &&
-	    (CHANNEL_STATE_DISABLE != reg_channels[chan_enum].enabled)) {
+	    (CHANNEL_STATE_DISABLE != reg_channels[chan_enum].state)) {
 
 		if (!(reg_channels[chan_enum].flags &
 		      IEEE80211_CHAN_NO_160MHZ))
@@ -673,9 +664,8 @@ CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region)
  *         CDF_STATUS_E_EMPTY country table empty
  */
 CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
-						const country_code_t
-						country_code,
-						v_CountryInfoSource_t source)
+						const uint8_t *country_alpha2,
+						enum country_src source)
 {
 	hdd_context_t *hdd_ctx = NULL;
 	struct wiphy *wiphy = NULL;
@@ -688,10 +678,10 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 
 	*reg_domain_ptr = 0;
 
-	if (COUNTRY_QUERY == source)
+	if (SOURCE_QUERY == source)
 		return CDF_STATUS_SUCCESS;
 
-	if (NULL == country_code) {
+	if (NULL == country_alpha2) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Country code array is NULL"));
 		return CDF_STATUS_E_FAULT;
@@ -713,16 +703,16 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 
 	wiphy = hdd_ctx->wiphy;
 
-	if ((COUNTRY_INIT == source) && (false == init_by_reg_core)) {
+	if ((SOURCE_DRIVER == source) && (false == init_by_reg_core)) {
 		init_by_driver = true;
-		if (('0' != country_code[0]) || ('0' != country_code[1])) {
+		if (('0' != country_alpha2[0]) || ('0' != country_alpha2[1])) {
 			INIT_COMPLETION(hdd_ctx->reg_init);
-			regulatory_hint(wiphy, country_code);
+			regulatory_hint(wiphy, country_alpha2);
 			wait_for_completion_timeout(&hdd_ctx->reg_init,
 					       msecs_to_jiffies(REG_WAIT_TIME));
 		}
-	} else if (COUNTRY_IE == source || COUNTRY_USER == source) {
-		regulatory_hint_user(country_code,
+	} else if (SOURCE_11D == source || SOURCE_USERSPACE == source) {
+		regulatory_hint_user(country_alpha2,
 				     NL80211_USER_REG_HINT_USER);
 	}
 
@@ -858,11 +848,11 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 			}
 
 			if (chan->flags & IEEE80211_CHAN_DISABLED) {
-				temp_chan_k->enabled =
+				temp_chan_k->state =
 					CHANNEL_STATE_DISABLE;
 				temp_chan_k->flags = chan->flags;
 				if (n != -1) {
-					temp_chan_n->enabled =
+					temp_chan_n->state =
 						CHANNEL_STATE_DISABLE;
 					temp_chan_n->flags = chan->flags;
 				}
@@ -881,7 +871,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 					chan->flags |=
 						IEEE80211_CHAN_PASSIVE_SCAN;
 #endif
-				temp_chan_k->enabled = CHANNEL_STATE_DFS;
+				temp_chan_k->state = CHANNEL_STATE_DFS;
 				temp_chan_k->pwr_limit =
 					chan->max_power;
 				temp_chan_k->flags = chan->flags;
@@ -890,10 +880,10 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 					if ((chan->flags &
 					     IEEE80211_CHAN_NO_HT40) ==
 					    IEEE80211_CHAN_NO_HT40) {
-						temp_chan_n->enabled =
+						temp_chan_n->state =
 							CHANNEL_STATE_DISABLE;
 					} else {
-						temp_chan_n->enabled =
+						temp_chan_n->state =
 							CHANNEL_STATE_DFS;
 						temp_chan_n->pwr_limit =
 							 chan->max_power-3;
@@ -904,17 +894,17 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 				     IEEE80211_CHAN_NO_80MHZ) == 0)
 					hdd_ctx->isVHT80Allowed = 1;
 			} else {
-				temp_chan_k->enabled = CHANNEL_STATE_ENABLE;
+				temp_chan_k->state = CHANNEL_STATE_ENABLE;
 				temp_chan_k->pwr_limit = chan->max_power;
 				temp_chan_k->flags = chan->flags;
 				if (n != -1) {
 					if ((chan->flags &
 					     IEEE80211_CHAN_NO_HT40) ==
 					    IEEE80211_CHAN_NO_HT40) {
-						temp_chan_n->enabled =
+						temp_chan_n->state =
 							CHANNEL_STATE_DISABLE;
 					} else {
-						temp_chan_n->enabled =
+						temp_chan_n->state =
 							CHANNEL_STATE_ENABLE;
 						temp_chan_n->pwr_limit =
 							chan->max_power - 3;
@@ -931,7 +921,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 	if (0 == (hdd_ctx->reg.eeprom_rd_ext &
 		  (1 << WHAL_REG_EXT_FCC_CH_144))) {
 		temp_chan = &(reg_channels[RF_CHAN_144]);
-		temp_chan->enabled =
+		temp_chan->state =
 			CHANNEL_STATE_DISABLE;
 	}
 
@@ -1038,7 +1028,7 @@ void __hdd_reg_notifier(struct wiphy *wiphy,
 		}
 
 		if (NL80211_REGDOM_SET_BY_CORE == request->initiator) {
-			hdd_ctx->reg.cc_src = COUNTRY_CODE_SET_BY_CORE;
+			hdd_ctx->reg.cc_src = SOURCE_CORE;
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 			if (wiphy->regulatory_flags & REGULATORY_CUSTOM_REG)
 #else
@@ -1046,9 +1036,9 @@ void __hdd_reg_notifier(struct wiphy *wiphy,
 #endif
 				reset = true;
 		} else if (NL80211_REGDOM_SET_BY_DRIVER == request->initiator)
-			hdd_ctx->reg.cc_src = COUNTRY_CODE_SET_BY_DRIVER;
+			hdd_ctx->reg.cc_src = SOURCE_DRIVER;
 		else {
-			hdd_ctx->reg.cc_src = COUNTRY_CODE_SET_BY_USER;
+			hdd_ctx->reg.cc_src = SOURCE_USERSPACE;
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)) && !defined(WITH_BACKPORTS)
 			if ((request->alpha2[0] == '0') &&
 			    (request->alpha2[1] == '0') &&
@@ -1138,7 +1128,7 @@ CDF_STATUS cds_regulatory_init(void)
 		return CDF_STATUS_E_FAULT;
 	}
 
-	reg_info->cc_src = COUNTRY_CODE_SET_BY_DRIVER;
+	reg_info->cc_src = SOURCE_DRIVER;
 
 	ret_val = cds_fill_some_regulatory_info(reg_info);
 	if (ret_val) {

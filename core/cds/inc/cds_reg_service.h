@@ -39,23 +39,21 @@
 #include "cdf_status.h"
 
 #define CDS_COUNTRY_CODE_LEN  2
-#define CDS_MAC_ADDRESS_LEN   6
+#define CDS_MAC_ADDRESS_LEN 6
 
-#define CDS_CHANNEL_STATE(enum) reg_channels[enum].enabled
-#define CDS_CHANNEL_NUM(enum) chan_mapping[enum].chan_num
-#define CDS_CHANNEL_FREQ(enum) chan_mapping[enum].center_freq
+#define CDS_CHANNEL_STATE(chan_enum) reg_channels[chan_enum].state
+#define CDS_CHANNEL_NUM(chan_enum) chan_mapping[chan_enum].chan_num
+#define CDS_CHANNEL_FREQ(chan_enum) chan_mapping[chan_enum].center_freq
 #define CDS_IS_DFS_CH(chan_num) (cds_get_channel_state((chan_num)) == \
 				CHANNEL_STATE_DFS)
 
 #define CDS_IS_PASSIVE_OR_DISABLE_CH(chan_num) \
 	(cds_get_channel_state(chan_num) != CHANNEL_STATE_ENABLE)
 
-#define CDS_MIN_24GHZ_CHANNEL_NUMBER			\
-	chan_mapping[MIN_24GHZ_CHANNEL].chan_num
-#define CDS_MAX_24GHZ_CHANNEL_NUMBER			\
-	chan_mapping[MAX_24GHZ_CHANNEL].chan_num
-#define CDS_MIN_5GHZ_CHANNEL_NUMBER  chan_mapping[MIN_5GHZ_CHANNEL].chan_num
-#define CDS_MAX_5GHZ_CHANNEL_NUMBER  chan_mapping[MAX_5GHZ_CHANNEL].chan_num
+#define CDS_MIN_24GHZ_CHANNEL_NUMBER chan_mapping[MIN_24GHZ_CHANNEL].chan_num
+#define CDS_MAX_24GHZ_CHANNEL_NUMBER chan_mapping[MAX_24GHZ_CHANNEL].chan_num
+#define CDS_MIN_5GHZ_CHANNEL_NUMBER chan_mapping[MIN_5GHZ_CHANNEL].chan_num
+#define CDS_MAX_5GHZ_CHANNEL_NUMBER chan_mapping[MAX_5GHZ_CHANNEL].chan_num
 
 #define CDS_IS_CHANNEL_5GHZ(chan_num) \
 	((chan_num >= CDS_MIN_5GHZ_CHANNEL_NUMBER) && \
@@ -65,9 +63,9 @@
 	((chan_num >= CDS_MIN_24GHZ_CHANNEL_NUMBER) && \
 	 (chan_num <= CDS_MAX_24GHZ_CHANNEL_NUMBER))
 
-#define CDS_IS_SAME_BAND_CHANNELS(ch1, ch2) \
-	(ch1 && ch2 && \
-	(CDS_IS_CHANNEL_5GHZ(ch1) == CDS_IS_CHANNEL_5GHZ(ch2)))
+#define CDS_IS_SAME_BAND_CHANNELS(chan_num1, chan_num2) \
+	(chan_num1 && chan_num2 && \
+	(CDS_IS_CHANNEL_5GHZ(chan_num1) == CDS_IS_CHANNEL_5GHZ(chan_num2)))
 
 #define CDS_MIN_11P_CHANNEL chan_mapping[MIN_59GHZ_CHANNEL].chan_num
 
@@ -79,7 +77,7 @@ typedef enum {
 	REGDOMAIN_COUNT
 } v_REGDOMAIN_t;
 
-typedef enum {
+enum channel_enum {
 	RF_CHAN_1 = 0,
 	RF_CHAN_2,
 	RF_CHAN_3,
@@ -197,61 +195,103 @@ typedef enum {
 
 	INVALID_RF_CHANNEL = 0xBAD,
 	RF_CHANNEL_INVALID_MAX_FIELD = 0x7FFFFFFF
-} eRfChannels;
+};
 
-typedef enum {
+/**
+ * enum channel_state: channel state
+ *
+ * @CHANNEL_STATE_DISABLE: channel disabled
+ * @CHANNEL_STATE_ENABLE: tx/rx enabled
+ * @CHANNEL_STATE_DFS: rx enabled, tx DFS
+ * @CHANNEL_STATE_INVALID: not a valid channel
+ */
+enum channel_state {
 	CHANNEL_STATE_DISABLE,
 	CHANNEL_STATE_ENABLE,
 	CHANNEL_STATE_DFS,
 	CHANNEL_STATE_INVALID
-} CHANNEL_STATE;
-
-typedef int8_t tPowerdBm;
-
-struct regulatory_channel {
-	uint32_t enabled:4;
-	uint32_t flags:28;
-	tPowerdBm pwr_limit;
 };
 
+/**
+ * struct regulatory_channel: regulatory channel
+ *
+ * @state: channel state
+ * @flags: channel flags
+ * @pwr_limit: channel tx power limit
+ */
+struct regulatory_channel {
+	uint32_t state:4;
+	uint32_t flags:28;
+	int8_t pwr_limit;
+};
+
+/**
+ * struct chan_map: channel mapping
+ *
+ * @center_freq: channel center freq
+ * @chan_num: channel number
+ */
 struct chan_map {
 	uint16_t center_freq;
 	uint16_t chan_num;
 };
 
-typedef struct {
-	uint8_t chanId;
-	tPowerdBm pwr;
-} tChannelListWithPower;
+/**
+ * struct channel_power: channel power
+ *
+ * @chan_num: channel number
+ * @power: tx power
+ */
+struct channel_power {
+	uint8_t chan_num;
+	int8_t power;
+};
 
-typedef enum {
-	COUNTRY_CODE_SET_BY_CORE,
-	COUNTRY_CODE_SET_BY_DRIVER,
-	COUNTRY_CODE_SET_BY_USER
-} COUNTRY_CODE_SOURCE;
+/**
+ * enum country_src: country source
+ *
+ * @SOURCE_QUERY: source query
+ * @SOURCE_CORE: source regulatory core
+ * @SOURCE_DRIVER: source driver
+ * @SOURCE_USERSPACE: source userspace
+ * @SOURCE_11D: source 11D
+ */
+enum country_src {
+	SOURCE_QUERY,
+	SOURCE_CORE,
+	SOURCE_DRIVER,
+	SOURCE_USERSPACE,
+	SOURCE_11D
+};
 
-
+/**
+ * struct regulatory: regulatory information
+ *
+ * @reg_domain: regulatory domain pair
+ * @eeprom_rd_ext: eeprom value
+ * @country_code: current country in integer
+ * @alpha2: current alpha2
+ * @def_country: default country alpha2
+ * @def_region: DFS region
+ * @ctl_2g: 2G CTL value
+ * @ctl_5g: 5G CTL value
+ * @reg_pair: pointer to regulatory pair
+ * @cc_src: country code src
+ * @reg_flags: kernel regulatory flags
+ */
 struct regulatory {
 	uint32_t reg_domain;
 	uint32_t eeprom_rd_ext;
 	uint16_t country_code;
-	uint8_t alpha2[3];
-	uint8_t def_country[3];
+	uint8_t alpha2[CDS_COUNTRY_CODE_LEN + 1];
+	uint8_t def_country[CDS_COUNTRY_CODE_LEN + 1];
 	uint8_t dfs_region;
 	uint8_t ctl_2g;
 	uint8_t ctl_5g;
 	const void *regpair;
-	COUNTRY_CODE_SOURCE cc_src;
+	enum country_src cc_src;
 	uint32_t reg_flags;
 };
-
-typedef enum {
-	COUNTRY_INIT,
-	COUNTRY_IE,
-	COUNTRY_USER,
-	COUNTRY_QUERY,
-	COUNTRY_MAX = COUNTRY_QUERY
-} v_CountryInfoSource_t;
 
 /**
  * enum chan_width: channel width
@@ -274,37 +314,32 @@ enum channel_width {
 	CHAN_WIDTH_160MHZ
 };
 
-/**
- * @country_code_t : typedef for country code. One extra
- * char for holding null character
- */
-typedef uint8_t country_code_t[CDS_COUNTRY_CODE_LEN + 1];
 
 extern struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
 extern const struct chan_map chan_mapping[NUM_RF_CHANNELS];
 
 CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
-						const country_code_t countryCode,
-						v_CountryInfoSource_t source);
+						const uint8_t *country_alpha2,
+						enum country_src source);
 
-CDF_STATUS cds_read_default_country(country_code_t default_country);
+CDF_STATUS cds_read_default_country(uint8_t *default_country);
 
-CDF_STATUS cds_get_channel_list_with_power(tChannelListWithPower
+CDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   *base_channels,
 					   uint8_t *num_base_channels,
-					   tChannelListWithPower
-					   *pChannels40MHz,
-					   uint8_t *);
+					   struct channel_power
+					   *channel_40mhz,
+					   uint8_t *num_channels_40mhz);
 
 CDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
 
-CHANNEL_STATE cds_get_channel_state(uint32_t chan_num);
+enum channel_state cds_get_channel_state(uint32_t chan_num);
 
 CDF_STATUS cds_regulatory_init(void);
 CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
 CDF_STATUS cds_set_dfs_region(uint8_t dfs_region);
 bool cds_is_dsrc_channel(uint16_t);
-CHANNEL_STATE cds_get_bonded_channel_state(uint32_t chan_num,
+enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
 					   enum channel_width chan_width);
 enum channel_width cds_get_max_channel_bw(uint32_t chan_num);
 

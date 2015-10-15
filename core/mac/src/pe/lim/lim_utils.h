@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -95,9 +95,9 @@ void lim_print_msg_name(tpAniSirGlobal pMac, uint16_t logLevel, uint32_t msgType
 
 #if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
 extern tSirRetStatus lim_send_set_max_tx_power_req(tpAniSirGlobal pMac,
-		tPowerdBm txPower,
+		int8_t txPower,
 		tpPESession pSessionEntry);
-extern uint8_t lim_get_max_tx_power(tPowerdBm regMax, tPowerdBm apTxPower,
+extern uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 		uint8_t iniTxPower);
 #endif
 uint8_t lim_is_addr_bc(tSirMacAddr);

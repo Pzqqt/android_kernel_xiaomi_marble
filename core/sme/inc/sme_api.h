@@ -192,7 +192,7 @@ typedef enum {
   ------------------------------------------------------------------------*/
 CDF_STATUS sme_open(tHalHandle hHal);
 CDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
-		COUNTRY_CODE_SOURCE cc_src);
+		enum country_src cc_src);
 CDF_STATUS sme_close(tHalHandle hHal);
 CDF_STATUS sme_start(tHalHandle hHal);
 CDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType);

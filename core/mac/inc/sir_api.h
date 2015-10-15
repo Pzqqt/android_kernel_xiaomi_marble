@@ -2042,7 +2042,7 @@ typedef struct sSirPlmReq {
 	uint16_t measDuration;  /* in TU's,STA goes off-ch */
 	/* no of times the STA should cycle through PLM ch list */
 	uint8_t burstLen;
-	tPowerdBm desiredTxPwr; /* desired tx power */
+	int8_t desiredTxPwr; /* desired tx power */
 	struct cdf_mac_addr mac_addr;    /* MC dest addr */
 	/* no of channels */
 	uint8_t plmNumCh;

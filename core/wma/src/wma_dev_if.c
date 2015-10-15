@@ -2704,7 +2704,7 @@ static void
 wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 			tSirMacBeaconInterval beaconInterval,
 			uint8_t dtimPeriod, uint8_t shortSlotTimeSupported,
-			uint8_t llbCoexist, tPowerdBm maxTxPower)
+			uint8_t llbCoexist, int8_t maxTxPower)
 {
 	int ret;
 	uint32_t slot_time;
@@ -2773,7 +2773,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	struct wma_target_req *msg;
 	uint8_t vdev_id, peer_id;
 	CDF_STATUS status;
-	tPowerdBm maxTxPower;
+	int8_t maxTxPower;
 #ifdef WLAN_FEATURE_11W
 	int ret = 0;
 #endif /* WLAN_FEATURE_11W */
@@ -3831,7 +3831,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	ol_txrx_peer_handle peer;
 	struct wma_txrx_node *iface;
-	tPowerdBm maxTxPower;
+	int8_t maxTxPower;
 	int ret = 0;
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;

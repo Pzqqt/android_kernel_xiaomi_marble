@@ -2738,7 +2738,7 @@ void lim_switch_primary_channel(tpAniSirGlobal pMac, uint8_t newChannel,
 		return;
 	}
 	lim_send_switch_chnl_params(pMac, newChannel, 0, 0, CH_WIDTH_20MHZ,
-				    (tPowerdBm) localPwrConstraint,
+				    localPwrConstraint,
 				    psessionEntry->peSessionId, false);
 #endif
 	return;
@@ -4975,7 +4975,7 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 		lim_send_switch_chnl_params(pMac, (uint8_t) pHTInfo->primaryChannel,
 					    center_freq, 0,
 					    psessionEntry->htRecommendedTxWidthSet,
-					    (tPowerdBm) localPwrConstraint,
+					    (int8_t)localPwrConstraint,
 					    psessionEntry->peSessionId,
 					    true);
 #endif

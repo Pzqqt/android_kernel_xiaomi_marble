@@ -3204,7 +3204,7 @@ static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
 		     Index < pMac->scan.base_channels.numChannels;
 		     Index++) {
 			p11dLog->TxPwr[Index] = CDF_MIN(
-				pMac->scan.defaultPowerTable[Index].pwr,
+				pMac->scan.defaultPowerTable[Index].power,
 				pMac->roam.configParam.nTxPowerCap);
 		}
 	}
@@ -3271,7 +3271,7 @@ void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode)
 
 	if (!CDF_IS_STATUS_SUCCESS(csr_get_regulatory_domain_for_country(pMac,
 						pCountryCode, NULL,
-						COUNTRY_QUERY))) {
+						SOURCE_QUERY))) {
 		pCountryCode[0] = '0';
 		pCountryCode[1] = '0';
 	}
@@ -3367,8 +3367,8 @@ CDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
 	if (pCountry) {
 
 		status = csr_get_regulatory_domain_for_country(pMac, pCountry,
-							       &domainId,
-							       COUNTRY_USER);
+							     &domainId,
+							     SOURCE_USERSPACE);
 		if (CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_copy(pMac->scan.countryCodeCurrent,
 				     pCountry,
@@ -3384,7 +3384,7 @@ CDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
 /* Upon return, *pNumChn has the number of channels assigned. */
 void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 				uint32_t *num_ch,
-				tChannelListWithPower *chn_pwr_info)
+				struct channel_power *chn_pwr_info)
 {
 	tListElem *entry;
 	uint32_t chn_idx = 0, idx;
@@ -3396,10 +3396,10 @@ void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 		ch_set = GET_BASE_ADDR(entry, tCsrChannelPowerInfo, link);
 		for (idx = 0; (idx < ch_set->numChannels)
 				&& (chn_idx < *num_ch); idx++) {
-			chn_pwr_info[chn_idx].chanId =
+			chn_pwr_info[chn_idx].chan_num =
 				(uint8_t) (ch_set->firstChannel
 				 + (idx * ch_set->interChannelOffset));
-			chn_pwr_info[chn_idx++].pwr = ch_set->txPower;
+			chn_pwr_info[chn_idx++].power = ch_set->txPower;
 		}
 		entry = csr_ll_next(list, entry, LL_ACCESS_LOCK);
 	}
@@ -3412,7 +3412,7 @@ void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 {
 	host_log_802_11d_pkt_type *p11dLog;
-	tChannelListWithPower chnPwrInfo[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	struct channel_power chnPwrInfo[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t nChnInfo = WNI_CFG_VALID_CHANNEL_LIST_LEN, nTmp;
 
 	WLAN_HOST_DIAG_LOG_ALLOC(p11dLog, host_log_802_11d_pkt_type,
@@ -3442,9 +3442,9 @@ void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 		     nChnInfo < WNI_CFG_VALID_CHANNEL_LIST_LEN;
 		     nChnInfo++) {
 			if (p11dLog->Channels[nTmp] ==
-			    chnPwrInfo[nChnInfo].chanId) {
+			    chnPwrInfo[nChnInfo].chan_num) {
 				p11dLog->TxPwr[nTmp] =
-					chnPwrInfo[nChnInfo].pwr;
+					chnPwrInfo[nChnInfo].power;
 				break;
 			}
 		}
@@ -3476,7 +3476,7 @@ void csr_apply_country_information(tpAniSirGlobal pMac)
 	    || 0 == pMac->scan.channelOf11dInfo)
 		return;
 	status = csr_get_regulatory_domain_for_country(pMac,
-			pMac->scan.countryCode11d, &domainId, COUNTRY_QUERY);
+			pMac->scan.countryCode11d, &domainId, SOURCE_QUERY);
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		return;
 	/* Check whether we need to enforce default domain */
@@ -3522,7 +3522,7 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		    WNI_CFG_VALID_CHANNEL_LIST_LEN, 0);
 	ch_info_start = chan_info;
 	for (idx = 0; idx < max_ch_idx; idx++) {
-		ch = pMac->scan.defaultPowerTable[idx].chanId;
+		ch = pMac->scan.defaultPowerTable[idx].chan_num;
 		tmp_bool =  (fill_5f && CDS_IS_CHANNEL_5GHZ(ch))
 			|| (!fill_5f && CDS_IS_CHANNEL_24GHZ(ch));
 		if (!tmp_bool)
@@ -3534,10 +3534,10 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		}
 
 		chan_info->firstChanNum =
-			pMac->scan.defaultPowerTable[idx].chanId;
+			pMac->scan.defaultPowerTable[idx].chan_num;
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
-			CDF_MIN(pMac->scan.defaultPowerTable[idx].pwr,
+			CDF_MIN(pMac->scan.defaultPowerTable[idx].power,
 				pMac->roam.configParam.nTxPowerCap);
 		chan_info++;
 		count++;
@@ -3598,7 +3598,7 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 			goto free_ie;
 		status = csr_get_regulatory_domain_for_country(pMac,
 				pIesLocal->Country.country, &domainId,
-				COUNTRY_QUERY);
+				SOURCE_QUERY);
 		if (CDF_IS_STATUS_SUCCESS(status)
 		    && (domainId == REGDOMAIN_WORLD))
 			goto free_ie;
@@ -3610,7 +3610,7 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 		pCountryCodeSelected = pMac->scan.countryCodeElected;
 
 	status = csr_get_regulatory_domain_for_country(pMac,
-				pCountryCodeSelected, &domainId, COUNTRY_IE);
+				pCountryCodeSelected, &domainId, SOURCE_11D);
 	if (status != CDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE, FL("fail to get regId %d"), domainId);
 		fRet = false;
@@ -5400,8 +5400,9 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	uint32_t len = sizeof(mac_ctx->roam.validChannelList);
 	uint32_t index = 0;
 	uint32_t new_index = 0;
-	CHANNEL_STATE channel_state;
+	enum channel_state channel_state;
 	uint8_t ibss_channel = 0;
+
 	bool skip_dfs_chnl =
 			mac_ctx->roam.configParam.initial_scan_no_dfs_chnl ||
 				!mac_ctx->scan.fEnableDFSChnlScan;

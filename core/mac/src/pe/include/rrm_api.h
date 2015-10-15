@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -45,8 +45,8 @@
 #define RRM_BCN_RPT_NO_BSS_INFO    0
 #define RRM_BCN_RPT_MIN_RPT        1
 
-uint8_t rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac, tPowerdBm regMax,
-				    tPowerdBm apTxPower);
+uint8_t rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac, int8_t regMax,
+				    int8_t apTxPower);
 
 extern tSirRetStatus rrm_initialize(tpAniSirGlobal pMac);
 
@@ -75,14 +75,14 @@ extern tSirRetStatus rrm_process_neighbor_report_response(tpAniSirGlobal pMac,
 extern void rrm_process_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
 
 extern tSirRetStatus rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac,
-						   tPowerdBm txPower,
+						   int8_t txPower,
 						   tpPESession pSessionEntry);
 
-extern tPowerdBm rrm_get_mgmt_tx_power(tpAniSirGlobal pMac,
+extern int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac,
 				       tpPESession pSessionEntry);
 
 extern void rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac,
-				    tPowerdBm txPower, tpPESession pSessionEntry);
+				    int8_t txPower, tpPESession pSessionEntry);
 
 extern tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac,
 				      tpPESession pSessionEntry);

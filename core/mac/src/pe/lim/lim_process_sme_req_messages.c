@@ -1516,7 +1516,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	tpPESession session = NULL;
 	uint8_t sme_session_id;
 	uint16_t sme_transaction_id;
-	tPowerdBm local_power_constraint = 0, reg_max = 0;
+	int8_t local_power_constraint = 0, reg_max = 0;
 	uint16_t ie_len;
 	uint8_t *vendor_ie;
 	tSirBssDescription bss_desc;
@@ -2030,7 +2030,7 @@ end:
 }
 
 #if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
-uint8_t lim_get_max_tx_power(tPowerdBm regMax, tPowerdBm apTxPower,
+uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 			     uint8_t iniTxPower)
 {
 	uint8_t maxTxPower = 0;
@@ -2071,7 +2071,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	uint8_t session_id;
 	uint8_t sme_session_id;
 	uint16_t transaction_id;
-	tPowerdBm local_pwr_constraint = 0, reg_max = 0;
+	int8_t local_pwr_constraint = 0, reg_max = 0;
 	uint32_t tele_bcn_en = 0;
 	uint16_t size;
 
@@ -4437,7 +4437,7 @@ void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
  * @return None
  */
 tSirRetStatus
-lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, tPowerdBm txPower,
+lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 			      tpPESession pSessionEntry)
 {
 	tpMaxTxPowerParams pMaxTxParams = NULL;
@@ -5038,7 +5038,7 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 	tpSirChanChangeRequest ch_change_req;
 	tpPESession session_entry;
 	uint8_t session_id;      /* PE session_id */
-	tPowerdBm max_tx_pwr;
+	int8_t max_tx_pwr;
 	uint32_t val = 0;
 
 	if (msg_buf == NULL) {

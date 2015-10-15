@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -572,19 +572,22 @@ tSirRetStatus wlan_cfg_get_str_len(tpAniSirGlobal pMac, uint16_t cfgId,
 
 } /*** end wlan_cfg_get_str_len() ***/
 
-/*-------------------------------------------------------------
-   \fn     cfg_get_dot11d_transmit_power
-   \brief  This function returns the regulatory max transmit power
-   \param  pMac
-   \return tPowerdBm - Power
- \-------------------------------------------------------------*/
-static tPowerdBm
+/**
+ * cfg_get_dot11d_transmit_power() - regulatory max transmit power
+ * @pMac: pointer to mac data
+ * @cfgId: configuration ID
+ * @cfgLength: configuration length
+ * @channel: channel number
+ *
+ * Return:  int8_t - power
+ */
+static int8_t
 cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
 			      uint32_t cfgLength, uint8_t channel)
 {
 	uint8_t *pCountryInfo = NULL;
 	uint8_t count = 0;
-	tPowerdBm maxTxPwr = WMA_MAX_TXPOWER_INVALID;
+	int8_t maxTxPwr = WMA_MAX_TXPOWER_INVALID;
 
 	/* At least one element is present */
 	if (cfgLength < sizeof(tSirMacChanInfo)) {
@@ -644,11 +647,12 @@ error:
    \param  channel
    \param  rfBand
    -----------------------------------------------------------------------*/
-tPowerdBm cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac, uint8_t channel)
+int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
+					     uint8_t channel)
 {
 	uint32_t cfgLength = 0;
 	uint16_t cfgId = 0;
-	tPowerdBm maxTxPwr;
+	int8_t maxTxPwr;
 	eRfBandMode rfBand = eRF_BAND_UNKNOWN;
 
 	if ((channel >= SIR_11A_CHANNEL_BEGIN) &&

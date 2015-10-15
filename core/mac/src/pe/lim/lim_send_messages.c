@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -220,7 +220,7 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint8_t ch_center_freq_seg0,
 					  uint8_t ch_center_freq_seg1,
 					  phy_ch_width ch_width,
-					  tPowerdBm maxTxPower,
+					  int8_t maxTxPower,
 					  uint8_t peSessionId,
 					  uint8_t is_restart)
 #endif
