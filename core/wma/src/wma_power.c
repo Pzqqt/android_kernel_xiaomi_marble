@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -490,7 +490,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	uint8_t vdev_id;
 	int ret = -1;
 	void *pdev;
-	tPowerdBm prev_max_power;
+	int8_t prev_max_power;
 
 	pdev = wma_find_vdev_by_addr(wma_handle, tx_pwr_params->bssId.bytes,
 				     &vdev_id);

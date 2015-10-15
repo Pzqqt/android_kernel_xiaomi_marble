@@ -396,7 +396,7 @@ CDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 				      uint32_t *pNumChan);
 void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result);
 
-tPowerdBm csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
+int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
 
 /* To free the last roaming profile */
 void csr_free_roam_profile(tpAniSirGlobal pMac, uint32_t sessionId);
@@ -584,7 +584,7 @@ CDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry);
 CDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal pMac,
 						 uint8_t *pCountry,
 						 v_REGDOMAIN_t *pDomainId,
-						 v_CountryInfoSource_t source);
+						 enum country_src source);
 
 /* some support functions */
 bool csr_is11d_supported(tpAniSirGlobal pMac);

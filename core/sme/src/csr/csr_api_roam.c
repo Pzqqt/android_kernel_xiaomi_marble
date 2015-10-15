@@ -341,7 +341,7 @@ CDF_STATUS csr_init_chan_list(tpAniSirGlobal mac, uint8_t *alpha2)
 {
 	CDF_STATUS status;
 	v_REGDOMAIN_t reg_id;
-	v_CountryInfoSource_t source = COUNTRY_INIT;
+	enum country_src source = SOURCE_DRIVER;
 
 	mac->scan.countryCodeDefault[0] = alpha2[0];
 	mac->scan.countryCodeDefault[1] = alpha2[1];
@@ -388,7 +388,7 @@ CDF_STATUS csr_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode)
 
 	cntryCodeLength = WNI_CFG_COUNTRY_CODE_LEN;
 	status = csr_get_regulatory_domain_for_country(pMac, apCntryCode, &regId,
-						       COUNTRY_USER);
+						       SOURCE_USERSPACE);
 	if (status != CDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE,
 			FL("  fail to get regId for country Code %.2s"),
@@ -436,7 +436,7 @@ CDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam)
 			pMac->scan.base_channels.channelList[index];
 		pParam->Csr11dinfo.ChnPower[index].numChannels = 1;
 		pParam->Csr11dinfo.ChnPower[index].maxtxPower =
-			pMac->scan.defaultPowerTable[index].pwr;
+			pMac->scan.defaultPowerTable[index].power;
 	}
 	pParam->Csr11dinfo.Channels.numChannels =
 		pMac->scan.base_channels.numChannels;
@@ -462,7 +462,7 @@ CDF_STATUS csr_close(tpAniSirGlobal pMac)
 	return status;
 }
 
-static tPowerdBm csr_find_channel_pwr(tChannelListWithPower *
+static int8_t csr_find_channel_pwr(struct channel_power *
 					     pdefaultPowerTable,
 					     uint8_t ChannelNum)
 {
@@ -470,8 +470,8 @@ static tPowerdBm csr_find_channel_pwr(tChannelListWithPower *
 	/* TODO: if defaultPowerTable is guaranteed to be in ascending */
 	/* order of channel numbers, we can employ binary search */
 	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
-		if (pdefaultPowerTable[i].chanId == ChannelNum)
-			return pdefaultPowerTable[i].pwr;
+		if (pdefaultPowerTable[i].chan_num == ChannelNum)
+			return pdefaultPowerTable[i].power;
 	}
 	/* could not find the channel list in default list */
 	/* this should not have occured */
@@ -2521,7 +2521,7 @@ CDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal pMac)
 		/* structure -- this will be used as the scan list */
 		for (Index = 0; Index < num20MHzChannelsFound; Index++) {
 			pMac->scan.base_channels.channelList[Index] =
-				pMac->scan.defaultPowerTable[Index].chanId;
+				pMac->scan.defaultPowerTable[Index].chan_num;
 		}
 		pMac->scan.base_channels.numChannels =
 			num20MHzChannelsFound;
@@ -2530,7 +2530,8 @@ CDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal pMac)
 		}
 		for (Index = 0; Index < num40MHzChannelsFound; Index++) {
 			pMac->scan.base40MHzChannels.channelList[Index] =
-				pMac->scan.defaultPowerTable40MHz[Index].chanId;
+				pMac->scan.defaultPowerTable40MHz[Index].
+				chan_num;
 		}
 		pMac->scan.base40MHzChannels.numChannels =
 			num40MHzChannelsFound;
@@ -11868,11 +11869,11 @@ CDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 	return CDF_STATUS_SUCCESS;
 }
 
-tPowerdBm csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel)
+int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel)
 {
 	uint32_t cfgLength = 0;
 	uint16_t cfgId = 0;
-	tPowerdBm maxTxPwr = 0;
+	int8_t maxTxPwr = 0;
 	uint8_t *pCountryInfo = NULL;
 	CDF_STATUS status;
 	uint8_t count = 0;

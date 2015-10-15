@@ -5012,7 +5012,7 @@ tSirRetStatus lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
 							tSirAssocReq *assoc,
 							tpPESession psessionEntry)
 {
-	tPowerdBm localMaxTxPower;
+	int8_t localMaxTxPower;
 	uint32_t localPwrConstraint;
 
 	localMaxTxPower =
@@ -5026,7 +5026,7 @@ tSirRetStatus lim_is_dot11h_power_capabilities_in_range(tpAniSirGlobal pMac,
 			FL("Unable to get Local Power Constraint from cfg"));
 		return eSIR_FAILURE;
 	}
-	localMaxTxPower -= (tPowerdBm) localPwrConstraint;
+	localMaxTxPower -= (int8_t) localPwrConstraint;
 
 	/**
 	 *  The min Tx Power of the associating station should not be greater than (regulatory

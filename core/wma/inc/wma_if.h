@@ -317,7 +317,7 @@ typedef struct {
 	uint16_t ht_caps;
 	uint32_t vht_caps;
 	tSirNwType nwType;
-	tPowerdBm maxTxPower;
+	int8_t maxTxPower;
 	uint8_t atimIePresent;
 	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
@@ -487,8 +487,8 @@ typedef struct {
 	uint8_t respReqd;
 	uint8_t sessionId;
 #if defined WLAN_FEATURE_VOWIFI
-	tPowerdBm txMgmtPower;
-	tPowerdBm maxTxPower;
+	int8_t txMgmtPower;
+	int8_t maxTxPower;
 #endif /* WLAN_FEATURE_VOWIFI */
 
 #if defined WLAN_FEATURE_VOWIFI_11R
@@ -615,7 +615,7 @@ typedef struct {
 	CDF_STATUS status;
 #if defined WLAN_FEATURE_VOWIFI
 	uint32_t startTSF[2];
-	tPowerdBm txMgmtPower;
+	int8_t txMgmtPower;
 #endif /* WLAN_FEATURE_VOWIFI */
 } tStartScanParams, *tpStartScanParams;
 
@@ -900,8 +900,8 @@ typedef struct {
 #endif /* WLAN_FEATURE_VOWIFI  */
 	uint8_t peSessionId;
 #if defined WLAN_FEATURE_VOWIFI
-	tPowerdBm txMgmtPower;
-	tPowerdBm maxTxPower;
+	int8_t txMgmtPower;
+	int8_t maxTxPower;
 #endif /* WLAN_FEATURE_VOWIFI */
 	tSirMacAddr selfStaMacAddr;
 	/* the request has power constraints, this should be applied only to
@@ -1162,7 +1162,7 @@ typedef struct sMaxTxPowerParams {
 	 * In response,
 	 * power == tx power used for management frames.
 	 */
-	tPowerdBm power;
+	int8_t power;
 	enum tCDF_ADAPTER_MODE dev_mode;
 } tMaxTxPowerParams, *tpMaxTxPowerParams;
 
@@ -1173,7 +1173,7 @@ typedef struct sMaxTxPowerParams {
  */
 typedef struct sMaxTxPowerPerBandParams {
 	eCsrBand bandInfo;
-	tPowerdBm power;
+	int8_t power;
 } tMaxTxPowerPerBandParams, *tpMaxTxPowerPerBandParams;
 
 /**

@@ -692,8 +692,8 @@ typedef struct tagCsrScanStruct {
 	uint8_t scanResultCfgAgingTime;
 	tSirScanType curScanType;
 	tCsrChannel channels11d;
-	tChannelListWithPower defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	tChannelListWithPower
+	struct channel_power defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	struct channel_power
 			defaultPowerTable40MHz[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numChannelsDefault;
 	tCsrChannel base_channels;  /* The channel base to work on */

@@ -5242,7 +5242,7 @@ struct wiphy *wlan_hdd_cfg80211_wiphy_alloc(int priv_size)
 int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 {
 	int i, j;
-	CHANNEL_STATE channelEnabledState;
+	enum channel_state channelEnabledState;
 
 	ENTER();
 

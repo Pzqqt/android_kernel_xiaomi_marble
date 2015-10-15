@@ -844,8 +844,8 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 			 tpPESession pftSessionEntry, tpPESession psessionEntry)
 {
 	uint8_t currentBssUapsd;
-	tPowerdBm localPowerConstraint;
-	tPowerdBm regMax;
+	int8_t localPowerConstraint;
+	int8_t regMax;
 	tSchBeaconStruct *pBeaconStruct;
 	uint32_t selfDot11Mode;
 	ePhyChanBondState cbEnabledMode;

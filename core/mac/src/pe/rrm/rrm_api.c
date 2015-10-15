@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,7 +55,7 @@
 
 uint8_t
 rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac,
-			    tPowerdBm regMax, tPowerdBm apTxPower)
+			    int8_t regMax, int8_t apTxPower)
 {
 	uint8_t maxTxPower = 0;
 	uint8_t txPower = CDF_MIN(regMax, (apTxPower));
@@ -88,7 +88,7 @@ rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac,
  * @return None
  */
 void
-rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac, tPowerdBm txPower,
+rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac, int8_t txPower,
 			tpPESession pSessionEntry)
 {
 	lim_log(pMac, LOG3, "Cache Mgmt Tx Power = %d", txPower);
@@ -115,7 +115,7 @@ rrm_cache_mgmt_tx_power(tpAniSirGlobal pMac, tPowerdBm txPower,
  * @param pSessionEntry session entry.
  * @return txPower
  */
-tPowerdBm rrm_get_mgmt_tx_power(tpAniSirGlobal pMac, tpPESession pSessionEntry)
+int8_t rrm_get_mgmt_tx_power(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 {
 	lim_log(pMac, LOG3, "RrmGetMgmtTxPower called");
 
@@ -145,7 +145,7 @@ tPowerdBm rrm_get_mgmt_tx_power(tpAniSirGlobal pMac, tpPESession pSessionEntry)
  * @return None
  */
 tSirRetStatus
-rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, tPowerdBm txPower,
+rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 			      tpPESession pSessionEntry)
 {
 	tpMaxTxPowerParams pMaxTxParams;
@@ -288,8 +288,7 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
 
 	if ((LinkReport.txPower != (uint8_t) (pSessionEntry->maxTxPower)) &&
 	    (eSIR_SUCCESS == rrm_send_set_max_tx_power_req(pMac,
-							   (tPowerdBm) (LinkReport.
-									txPower),
+							   LinkReport.txPower,
 							   pSessionEntry))) {
 		PELOGW(lim_log
 			       (pMac, LOGW,
@@ -299,8 +298,8 @@ rrm_process_link_measurement_request(tpAniSirGlobal pMac,
 			       pSessionEntry->maxTxPower, LinkReport.txPower,
 			       pLinkReq->MaxTxPower.maxTxPower);
 		       )
-		pSessionEntry->maxTxPower =
-			(tPowerdBm) (LinkReport.txPower);
+			pSessionEntry->maxTxPower =
+			LinkReport.txPower;
 	}
 
 	LinkReport.dialogToken = pLinkReq->DialogToken.token;

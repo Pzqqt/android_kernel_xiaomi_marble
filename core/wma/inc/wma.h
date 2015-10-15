@@ -903,8 +903,8 @@ struct wma_txrx_node {
 	uint8_t nss;
 	bool is_channel_switch;
 	uint16_t pause_bitmap;
-	tPowerdBm tx_power;
-	tPowerdBm max_tx_power;
+	int8_t tx_power;
+	int8_t max_tx_power;
 	uint32_t nwType;
 #if defined WLAN_FEATURE_VOWIFI_11R
 	void *staKeyParams;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -101,8 +101,8 @@ tSirRetStatus wlan_cfg_get_str_max_len(tpAniSirGlobal, uint16_t, uint32_t *);
 tSirRetStatus wlan_cfg_get_str_len(tpAniSirGlobal, uint16_t, uint32_t *);
 
 /* / Get the regulatory tx power on given channel */
-tPowerdBm cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
-						uint8_t channel);
+int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
+					     uint8_t channel);
 
 /* / Dump CFG data to memory */
 void cfgDump(uint32_t *);

@@ -1106,11 +1106,11 @@ CDF_STATUS sme_open(tHalHandle hHal)
  * sme_init_chan_list, triggers channel setup based on country code.
  */
 CDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
-			      COUNTRY_CODE_SOURCE cc_src)
+			      enum country_src cc_src)
 {
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 
-	if ((cc_src == COUNTRY_CODE_SET_BY_USER) &&
+	if ((cc_src == SOURCE_USERSPACE) &&
 	    (pmac->roam.configParam.fSupplicantCountryCodeHasPriority)) {
 		pmac->roam.configParam.Is11dSupportEnabled = false;
 	}
@@ -6945,7 +6945,7 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 	tAniChangeCountryCodeReq *pMsg;
 	v_REGDOMAIN_t domainIdIoctl;
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
-	static country_code_t default_country;
+	static uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
 	pMsg = (tAniChangeCountryCodeReq *) pMsgBuf;
 
 	/*
@@ -7008,7 +7008,8 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 	status = csr_get_regulatory_domain_for_country(pMac,
 						       pMac->scan.countryCodeCurrent,
 						       (v_REGDOMAIN_t *) &
-						       domainIdIoctl, COUNTRY_QUERY);
+						       domainIdIoctl,
+						       SOURCE_QUERY);
 	if (status != CDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE, FL("  fail to get regId %d"), domainIdIoctl);
 		return status;
@@ -7096,12 +7097,12 @@ sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
 		    && (mac_ctx->scan.countryCode11d[1] == 0))
 			status = csr_get_regulatory_domain_for_country(mac_ctx,
 					"00", (v_REGDOMAIN_t *) &reg_domain_id,
-					COUNTRY_IE);
+					SOURCE_11D);
 		else
 			status = csr_get_regulatory_domain_for_country(mac_ctx,
 					mac_ctx->scan.countryCode11d,
 					(v_REGDOMAIN_t *) &reg_domain_id,
-					COUNTRY_IE);
+					SOURCE_11D);
 
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -11535,12 +11536,12 @@ CDF_STATUS sme_get_reg_info(tHalHandle hHal, uint8_t chanId,
 		return status;
 
 	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
-		if (pMac->scan.defaultPowerTable[i].chanId == chanId) {
+		if (pMac->scan.defaultPowerTable[i].chan_num == chanId) {
 			SME_SET_CHANNEL_REG_POWER(*regInfo1,
-				pMac->scan.defaultPowerTable[i].pwr);
+				pMac->scan.defaultPowerTable[i].power);
 
 			SME_SET_CHANNEL_MAX_TX_POWER(*regInfo2,
-				pMac->scan.defaultPowerTable[i].pwr);
+				pMac->scan.defaultPowerTable[i].power);
 			found = true;
 			break;
 		}

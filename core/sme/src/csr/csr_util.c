@@ -5285,7 +5285,7 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp)
 tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId)
 {
 	tSirScanType scanType = eSIR_PASSIVE_SCAN;
-	CHANNEL_STATE channelEnabledType;
+	enum channel_state channelEnabledType;
 
 	channelEnabledType = cds_get_channel_state(chnId);
 	if (CHANNEL_STATE_ENABLE == channelEnabledType) {
@@ -5395,13 +5395,14 @@ eCsrCfgDot11Mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile *pProf
 	return cfgDot11Mode;
 }
 
-CDF_STATUS csr_get_regulatory_domain_for_country
-	(tpAniSirGlobal pMac,
-	uint8_t *pCountry,
-	v_REGDOMAIN_t *pDomainId, v_CountryInfoSource_t source) {
+CDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal pMac,
+						 uint8_t *pCountry,
+						 v_REGDOMAIN_t *pDomainId,
+						 enum country_src source)
+{
 	CDF_STATUS status = CDF_STATUS_E_INVAL;
 	CDF_STATUS cdf_status;
-	country_code_t countryCode;
+	uint8_t countryCode[CDS_COUNTRY_CODE_LEN + 1];
 	v_REGDOMAIN_t domainId;
 
 	if (pCountry) {

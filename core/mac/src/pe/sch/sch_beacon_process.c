@@ -716,7 +716,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 					     uint8_t *rx_pkt_info,
 					     tpPESession session)
 {
-	tPowerdBm localRRMConstraint = 0;
+	int8_t localRRMConstraint = 0;
 	uint8_t bssIdx = 0;
 	tUpdateBeaconParams beaconParams;
 	uint8_t sendProbeReq = false;
@@ -724,7 +724,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr pMh = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 #endif
 #if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
-	tPowerdBm regMax = 0, maxTxPower = 0;
+	int8_t regMax = 0, maxTxPower = 0;
 #endif
 	cdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -792,7 +792,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 
 #if defined FEATURE_WLAN_ESE
 	if (session->isESEconnection) {
-		tPowerdBm localESEConstraint = 0;
+		int8_t localESEConstraint = 0;
 		if (bcn->eseTxPwr.present) {
 			localESEConstraint = bcn->eseTxPwr.power_limit;
 			maxTxPower = lim_get_max_tx_power(maxTxPower,

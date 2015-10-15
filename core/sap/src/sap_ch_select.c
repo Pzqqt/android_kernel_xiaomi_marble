@@ -2016,7 +2016,7 @@ uint8_t sap_select_channel(tHalHandle halHandle, ptSapContext pSapCtx,
 			if ((safe_channels[i].channelNumber >= startChannelNum)
 			    && (safe_channels[i].channelNumber <=
 				endChannelNum)) {
-				CHANNEL_STATE channel_type =
+				enum channel_state channel_type =
 					cds_get_channel_state(safe_channels[i].
 						channelNumber);
 

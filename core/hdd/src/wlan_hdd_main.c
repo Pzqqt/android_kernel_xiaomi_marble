@@ -4706,7 +4706,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	hdd_context_t *hdd_ctxt;
 	tSirChAvoidIndType *ch_avoid_indi;
 	uint8_t range_loop;
-	eRfChannels channel_loop, start_channel_idx = INVALID_RF_CHANNEL,
+	enum channel_enum channel_loop, start_channel_idx = INVALID_RF_CHANNEL,
 					end_channel_idx = INVALID_RF_CHANNEL;
 	uint16_t start_channel;
 	uint16_t end_channel;

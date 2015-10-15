@@ -2899,7 +2899,7 @@ void lim_complete_mlm_scan(tpAniSirGlobal mac_ctx, tSirResultCodes ret_code)
  */
 void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 		     uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
-		     phy_ch_width ch_width, tPowerdBm max_tx_power,
+		     phy_ch_width ch_width, int8_t max_tx_power,
 		     uint8_t pe_session_id)
 {
 #if !defined WLAN_FEATURE_VOWIFI
@@ -2927,7 +2927,7 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 	/* Send WMA_CHNL_SWITCH_IND to HAL */
 	lim_send_switch_chnl_params(mac_ctx, channel, ch_center_freq_seg0,
 				    ch_center_freq_seg1, ch_width,
-				    (tPowerdBm) localPwrConstraint,
+				    (int8_t)localPwrConstraint,
 				    pe_session_id, false);
 #endif
 }
