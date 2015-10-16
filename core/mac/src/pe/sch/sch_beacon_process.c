@@ -538,7 +538,9 @@ sch_bcn_process_sta_bt_amp_sta_ibss(tpAniSirGlobal mac_ctx,
 	pStaDs = dph_lookup_hash_entry(mac_ctx, pMh->sa, &aid,
 			&session->dph.dphHashTable);
 	if ((NULL == pStaDs) ||
-			(WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode))
+	  (WNI_CFG_CHANNEL_BONDING_MODE_DISABLE == cb_mode) ||
+	  ((NULL != pStaDs) &&
+	   (STA_INVALID_IDX == pStaDs->staIndex)))
 		return;
 
 	if (session->vhtCapability && bcn->OperatingMode.present) {
