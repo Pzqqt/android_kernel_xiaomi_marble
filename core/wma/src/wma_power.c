@@ -2252,3 +2252,62 @@ void wma_set_resume_dtim(tp_wma_handle wma)
 	}
 }
 
+/**
+ * wma_set_tx_power_scale() - set tx power scale
+ * @vdev_id: vdev id
+ * @value: value
+ *
+ * Return: CDF_STATUS_SUCCESS for success or error code.
+ */
+CDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
+{
+	int ret = CDF_STATUS_SUCCESS;
+	tp_wma_handle wma_handle =
+			(tp_wma_handle)cds_get_context(CDF_MODULE_ID_WMA);
+	if (NULL == wma_handle) {
+		WMA_LOGE("%s: wma_handle is NULL", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
+		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle, vdev_id,
+				WMI_VDEV_PARAM_TXPOWER_SCALE, value);
+	if (ret != 0)
+		WMA_LOGE("Set tx power scale failed");
+
+	return ret;
+}
+
+/**
+ * wma_set_tx_power_scale_decr_db() - decrease power by DB value
+ * @vdev_id: vdev id
+ * @value: value
+ *
+ * Return: CDF_STATUS_SUCCESS for success or error code.
+ */
+CDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
+{
+	int ret = CDF_STATUS_SUCCESS;
+	tp_wma_handle wma_handle =
+			(tp_wma_handle)cds_get_context(CDF_MODULE_ID_WMA);
+	if (NULL == wma_handle) {
+		WMA_LOGE("%s: wma_handle is NULL", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
+		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle, vdev_id,
+				WMI_VDEV_PARAM_TXPOWER_SCALE_DECR_DB, value);
+	if (ret != 0)
+		WMA_LOGE("Decrease tx power value failed");
+
+	return ret;
+}
