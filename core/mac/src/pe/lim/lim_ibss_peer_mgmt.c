@@ -246,6 +246,8 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 			pStaDs->htGreenfield = pPeerNode->htGreenfield;
 			pStaDs->htSupportedChannelWidthSet =
 				pPeerNode->htSupportedChannelWidthSet;
+			pStaDs->htSecondaryChannelOffset =
+				pPeerNode->htSecondaryChannelOffset;
 			pStaDs->htMIMOPSState = pPeerNode->htMIMOPSState;
 			pStaDs->htMaxAmsduLength = pPeerNode->htMaxAmsduLength;
 			pStaDs->htAMpduDensity = pPeerNode->htAMpduDensity;
