@@ -625,6 +625,27 @@ static const struct wiphy_wowlan_support wowlan_support_cfg80211_init = {
 		QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_FEATURES_SUPPORTED
 
 /**
+ * hdd_add_channel_switch_support()- Adds Channel Switch flag if supported
+ * @flags: Pointer to the flags to Add channel switch flag.
+ *
+ * This Function adds Channel Switch support flag, if channel switch is
+ * supported by kernel.
+ * Return: void.
+ */
+#ifdef CHANNEL_SWITCH_SUPPORTED
+static inline void hdd_add_channel_switch_support(uint32_t *flags)
+{
+	flags |= WIPHY_FLAG_HAS_CHANNEL_SWITCH;
+	return;
+}
+#else
+static inline void hdd_add_channel_switch_support(uint32_t *flags)
+{
+	return;
+}
+#endif
+
+/**
  * __wlan_hdd_cfg80211_get_tdls_capabilities() - Provide TDLS Capabilites.
  * @wiphy:    WIPHY structure pointer
  * @wdev:     Wireless device structure pointer
@@ -4955,6 +4976,8 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #ifdef QCA_HT_2040_COEX
 	wiphy->features |= NL80211_FEATURE_AP_MODE_CHAN_WIDTH_CHANGE;
 #endif
+
+	hdd_add_channel_switch_support(&wiphy->flags);
 
 	EXIT();
 	return 0;
@@ -10551,6 +10574,72 @@ wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 }
 #endif
 
+#ifdef CHANNEL_SWITCH_SUPPORTED
+/**
+ * __wlan_hdd_cfg80211_channel_switch()- function to switch
+ * channel in SAP/GO
+ * @wiphy:  wiphy pointer
+ * @dev: dev pointer.
+ * @csa_params: Change channel params
+ *
+ * This function is called to switch channel in SAP/GO
+ *
+ * Return: 0 if success else return non zero
+ */
+static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
+				struct net_device *dev,
+				struct cfg80211_csa_settings *csa_params)
+{
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_context_t *hdd_ctx;
+	uint8_t channel;
+	uint16_t freq;
+	int ret;
+
+	hddLog(LOG1, FL("Set Freq %d"),
+		  csa_params->chandef.chan->center_freq);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+
+	if (0 != ret)
+		return ret;
+
+	if ((WLAN_HDD_P2P_GO != adapter->device_mode) &&
+		(WLAN_HDD_SOFTAP != adapter->device_mode))
+		return -ENOTSUPP;
+
+	freq = csa_params->chandef.chan->center_freq;
+	channel = cds_freq_to_chan(freq);
+
+	ret = hdd_softap_set_channel_change(dev, channel);
+	return ret;
+}
+
+/**
+ * wlan_hdd_cfg80211_channel_switch()- function to switch
+ * channel in SAP/GO
+ * @wiphy:  wiphy pointer
+ * @dev: dev pointer.
+ * @csa_params: Change channel params
+ *
+ * This function is called to switch channel in SAP/GO
+ *
+ * Return: 0 if success else return non zero
+ */
+static int wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
+				struct net_device *dev,
+				struct cfg80211_csa_settings *csa_params)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_channel_switch(wiphy, dev, csa_params);
+	cds_ssr_unprotect(__func__);
+	return ret;
+}
+#endif
+
 /**
  * wlan_hdd_convert_nl_iftype_to_hdd_type() - provides the type
  * translation from NL to policy manager type
@@ -10708,4 +10797,7 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.set_ap_chanwidth = wlan_hdd_cfg80211_set_ap_channel_width,
 #endif
 	.dump_survey = wlan_hdd_cfg80211_dump_survey,
+#ifdef CHANNEL_SWITCH_SUPPORTED
+	.channel_switch = wlan_hdd_cfg80211_channel_switch,
+#endif
 };

@@ -215,6 +215,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_CLEAR_STATS                        86
 /* Private sub ioctl for starting/stopping the profiling */
 #define WE_START_FW_PROFILE                      87
+#define WE_SET_CHANNEL                        88
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_NONE_GET_INT    (SIOCIWFIRSTPRIV + 1)
@@ -4938,6 +4939,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int set_value = value[1];
 	int ret;
 	int enable_pbm, enable_mp;
+	CDF_STATUS status;
 
 	INIT_COMPLETION(pWextState->completion_var);
 	memset(&smeConfig, 0x00, sizeof(smeConfig));
@@ -6122,6 +6124,31 @@ static int __iw_setint_getnone(struct net_device *dev,
 					set_value, DBG_CMD);
 		break;
 	}
+	case WE_SET_CHANNEL:
+	{
+		hddLog(LOG1, "Set Channel %d Session ID %d mode %d", set_value,
+				  pAdapter->sessionId, pAdapter->device_mode);
+
+		if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
+		   (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode)) {
+
+			status = sme_ext_change_channel(hHal,
+				   set_value, pAdapter->sessionId);
+			if (status != CDF_STATUS_SUCCESS) {
+				hddLog(LOGE,
+				  FL("Error in change channel status %d"),
+				  status);
+				ret = -EINVAL;
+			}
+		} else {
+			hddLog(LOGE,
+			  FL("change channel not supported for device mode %d"),
+			  pAdapter->device_mode);
+			ret = -EINVAL;
+		}
+		break;
+	}
+
 	default:
 	{
 		hddLog(LOGE, "%s: Invalid sub command %d", __func__,
@@ -10064,6 +10091,10 @@ static const struct iw_priv_args we_private_args[] = {
 	{WE_START_FW_PROFILE,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0, "startProfile"},
+
+	{WE_SET_CHANNEL,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0, "setChanChange" },
 
 	{WLAN_PRIV_SET_NONE_GET_INT,
 	 0,

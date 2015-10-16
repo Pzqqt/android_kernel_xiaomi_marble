@@ -1693,6 +1693,16 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		if (!pHddCtx->config->force_sap_acs)
 			wlan_hdd_cfg80211_acs_ch_select_evt(pHostapdAdapter);
 		return CDF_STATUS_SUCCESS;
+	case eSAP_ECSA_CHANGE_CHAN_IND:
+		hddLog(LOG1,
+		  FL("Channel change indication from peer for channel %d"),
+				pSapEvent->sapevt.sap_chan_cng_ind.new_chan);
+		if (hdd_softap_set_channel_change(dev,
+			 pSapEvent->sapevt.sap_chan_cng_ind.new_chan))
+			return CDF_STATUS_E_FAILURE;
+		else
+			return CDF_STATUS_SUCCESS;
+
 	default:
 		hddLog(LOG1, "SAP message is not handled");
 		goto stopbss;
@@ -1883,7 +1893,6 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
  *
  * Return: 0 for success, non zero for failure
  */
-static
 int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 {
 	CDF_STATUS status;
@@ -1900,7 +1909,6 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 	ret = wlan_hdd_validate_context(pHddCtx);
 	if (ret) {
 		hddLog(LOGE, FL("invalid HDD context"));
-		ret = -EBUSY;
 		return ret;
 	}
 
@@ -2251,9 +2259,10 @@ static __iw_softap_setparam(struct net_device *dev,
 		break;
 
 	case QCSAP_PARAM_SET_CHANNEL_CHANGE:
-		if (WLAN_HDD_SOFTAP == pHostapdAdapter->device_mode) {
+		if ((WLAN_HDD_SOFTAP == pHostapdAdapter->device_mode) ||
+		   (WLAN_HDD_P2P_GO == pHostapdAdapter->device_mode)) {
 			hddLog(LOG1,
-			       "SET SAP Channel Change to new channel= %d",
+			       "SET Channel Change to new channel= %d",
 			       set_value);
 			ret = hdd_softap_set_channel_change(dev, set_value);
 		} else {
