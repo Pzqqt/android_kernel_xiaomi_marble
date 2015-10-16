@@ -57,6 +57,9 @@ CDF_STATUS hdd_unregister_hostapd(hdd_adapter_t *pAdapter, bool rtnl_held);
 eCsrAuthType
 hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4]);
 
+int hdd_softap_set_channel_change(struct net_device *dev,
+					  int target_channel);
+
 eCsrEncryptionType
 hdd_translate_rsn_to_csr_encryption_type(uint8_t cipher_suite[4]);
 

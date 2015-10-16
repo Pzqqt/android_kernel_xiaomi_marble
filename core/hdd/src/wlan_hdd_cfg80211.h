@@ -101,6 +101,11 @@
 #define MAX_CHANNEL (NUM_24GHZ_CHANNELS + NUM_5GHZ_CHANNELS)
 #define MAX_SCAN_SSID 10
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 12, 0)) \
+	|| defined(BACKPORTED_CHANNEL_SWITCH_PRESENT)
+#define CHANNEL_SWITCH_SUPPORTED
+#endif
+
 /**
  * typedef struct qcom_ie_age - age ie
  *
