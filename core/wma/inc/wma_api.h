@@ -235,4 +235,6 @@ static inline CDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
 	return CDF_STATUS_E_NOSUPPORT;
 }
 #endif
+CDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
+CDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 #endif

@@ -138,6 +138,8 @@
 
 #define HDD_CHANNEL_14 14
 
+#define MAX_TXPOWER_SCALE 4
+
 static const u32 hdd_cipher_suites[] = {
 	WLAN_CIPHER_SUITE_WEP40,
 	WLAN_CIPHER_SUITE_WEP104,
@@ -4604,6 +4606,161 @@ static int wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	return ret;
 }
 
+/**
+ * __wlan_hdd_cfg80211_txpower_scale () - txpower scaling
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = NULL;
+	int ret = 0;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX + 1];
+	uint8_t scale_value;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX,
+		      data, data_len, NULL)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE]) {
+		hdd_err("attr tx power scale failed");
+		return -EINVAL;
+	}
+
+	scale_value = nla_get_u8(tb
+		    [QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE]);
+
+	if (scale_value > MAX_TXPOWER_SCALE) {
+		hdd_err("Invalid tx power scale level");
+		return -EINVAL;
+	}
+
+	ret = wma_set_tx_power_scale(adapter->sessionId, scale_value);
+
+	if (ret != 0) {
+		hdd_err("Set tx power scale failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_txpower_scale () - txpower scaling
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	int ret = 0;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_txpower_scale(wiphy, wdev,
+						data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
+ * __wlan_hdd_cfg80211_txpower_scale_decr_db () - txpower scaling
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int __wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
+	struct net_device *dev = wdev->netdev;
+	hdd_adapter_t *adapter = NULL;
+	int ret = 0;
+	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX + 1];
+	uint8_t scale_value;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret)
+		return ret;
+
+	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX,
+		      data, data_len, NULL)) {
+		hdd_err("Invalid ATTR");
+		return -EINVAL;
+	}
+
+	if (!tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB]) {
+		hdd_err("attr tx power decrease db value failed");
+		return -EINVAL;
+	}
+
+	scale_value = nla_get_u8(tb
+		    [QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB]);
+
+	ret = wma_set_tx_power_scale_decr_db(adapter->sessionId, scale_value);
+
+	if (ret != 0) {
+		hdd_err("Set tx power decrease db failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * wlan_hdd_cfg80211_txpower_scale_decr_db () - txpower scaling
+ * @wiphy: Pointer to wireless phy
+ * @wdev: Pointer to wireless device
+ * @data: Pointer to data
+ * @data_len: Data length
+ *
+ * Return: 0 on success, negative errno on failure
+ */
+static int wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
+						struct wireless_dev *wdev,
+						const void *data,
+						int data_len)
+{
+	int ret = 0;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_cfg80211_txpower_scale_decr_db(wiphy, wdev,
+						data, data_len);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	{
 		.info.vendor_id = QCA_NL80211_VENDOR_ID,
@@ -5042,6 +5199,22 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 		.doit = wlan_hdd_cfg80211_set_gateway_params
 	},
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
+	{
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+				 WIPHY_VENDOR_CMD_NEED_NETDEV |
+				 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_txpower_scale
+	},
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd =
+			QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+				 WIPHY_VENDOR_CMD_NEED_NETDEV |
+				 WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_txpower_scale_decr_db
+	},
 };
 
 /*

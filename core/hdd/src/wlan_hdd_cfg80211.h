@@ -250,6 +250,8 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE: vendor scan complete
  * @QCA_NL80211_VENDOR_SUBCMD_OTA_TEST: enable OTA test
  * @QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG: set gateway parameters
+ * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE: set tx power by percentage
+ * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB: reduce tx power by DB
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -364,6 +366,10 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* OTA test subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_OTA_TEST = 108,
+	/* Tx power scaling subcommands */
+	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE = 109,
+	/* Tx power scaling in db subcommands */
+	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB = 115,
 
 };
 
@@ -2217,6 +2223,39 @@ enum qca_vendor_attr_ota_test {
 	QCA_WLAN_VENDOR_ATTR_OTA_TEST_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_OTA_TEST_MAX =
 	QCA_WLAN_VENDOR_ATTR_OTA_TEST_AFTER_LAST - 1
+};
+
+/** enum qca_vendor_attr_txpower_scale - vendor sub commands index
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE: scaling value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_AFTER_LAST: last value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX: max value
+ */
+enum qca_vendor_attr_txpower_scale {
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_INVALID,
+	/* 8-bit unsigned value to indicate the scaling of tx power */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX =
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_AFTER_LAST - 1
+};
+
+/**
+ * enum qca_vendor_attr_txpower_scale_decr_db - vendor sub commands index
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB: scaling value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST: last value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX: max value
+ */
+enum qca_vendor_attr_txpower_scale_decr_db {
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_INVALID,
+	/* 8-bit unsigned value to indicate the scaling of tx power */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX =
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST - 1
 };
 
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
