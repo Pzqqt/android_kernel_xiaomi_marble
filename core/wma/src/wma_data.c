@@ -1668,11 +1668,14 @@ CDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 	ol_txrx_pdev_handle txrx_pdev =
 		(ol_txrx_pdev_handle) (cds_handle->pdev_txrx_ctx);
 
-	/* Deregister with TxRx for Tx Mgmt completion call back */
-	for (frame_index = 0; frame_index < FRAME_INDEX_MAX; frame_index++)
-		ol_txrx_mgmt_tx_cb_set(txrx_pdev, frame_index, NULL, NULL,
-				       txrx_pdev);
-
+	if (txrx_pdev) {
+		/* Deregister with TxRx for Tx Mgmt completion call back */
+		for (frame_index = 0; frame_index < FRAME_INDEX_MAX;
+							frame_index++) {
+			ol_txrx_mgmt_tx_cb_set(txrx_pdev, frame_index, NULL,
+						NULL, txrx_pdev);
+		}
+	}
 	/* Destroy Tx Frame Complete event */
 	cdf_event_destroy(&wma_handle->tx_frm_download_comp_event);
 
