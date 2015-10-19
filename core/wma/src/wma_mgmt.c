@@ -1995,7 +1995,10 @@ CDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 		goto fail;
 
 	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
-	ol_txrx_set_wmm_param(pdev, ol_tx_wmm_param);
+	if (pdev)
+		ol_txrx_set_wmm_param(pdev, ol_tx_wmm_param);
+	else
+		CDF_ASSERT(0);
 
 	return CDF_STATUS_SUCCESS;
 
