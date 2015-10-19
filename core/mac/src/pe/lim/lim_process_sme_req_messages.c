@@ -64,6 +64,7 @@
 #if defined WLAN_FEATURE_VOWIFI_11R
 #include <lim_ft.h>
 #endif
+#include "cds_regdomain_common.h"
 
 /*
  * This overhead is time for sending NOA start to host in case of GO/sending
@@ -113,6 +114,10 @@ static void lim_process_modify_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 static void lim_process_update_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
 extern void pe_register_wma_handle(tpAniSirGlobal pMac);
+
+static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
+						uint32_t *msg);
+
 
 /**
  * lim_process_set_hw_mode() - Send set HW mode command to WMA
@@ -4988,6 +4993,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 	case eWNI_SME_SET_IE_REQ:
 		lim_process_set_ie_req(pMac, pMsgBuf);
 		break;
+	case eWNI_SME_EXT_CHANGE_CHANNEL:
+		lim_process_ext_change_channel(pMac, pMsgBuf);
+		break;
 	default:
 		cdf_mem_free((void *)pMsg->bodyptr);
 		pMsg->bodyptr = NULL;
@@ -5465,6 +5473,58 @@ end:
 }
 
 /**
+ * send_extended_chan_switch_action_frame()- function to send ECSA
+ * action frame for each sta connected to SAP/GO and AP in case of
+ * STA .
+ * @mac_ctx: pointer to global mac structure
+ * @new_channel: new channel to switch to.
+ * @ch_bandwidth: BW of channel to calculate op_class
+ * @session_entry: pe session
+ *
+ * This function is called to send ECSA frame for STA/CLI and SAP/GO.
+ *
+ * Return: void
+ */
+
+static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
+				uint16_t new_channel, uint8_t ch_bandwidth,
+						tpPESession session_entry)
+{
+	uint16_t op_class;
+	uint8_t switch_mode = 0, i;
+	tpDphHashNode psta;
+
+
+	op_class = cds_regdm_get_opclass_from_channel(
+				mac_ctx->scan.countryCodeCurrent,
+				new_channel,
+				ch_bandwidth);
+
+	if (LIM_IS_AP_ROLE(session_entry) &&
+		(mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false))
+		switch_mode = 1;
+
+	if (LIM_IS_AP_ROLE(session_entry)) {
+		for (i = 0; i < mac_ctx->lim.maxStation; i++) {
+			psta =
+			  session_entry->dph.dphHashTable.pDphNodeArray + i;
+			if (psta && psta->added)
+				lim_send_extended_chan_switch_action_frame(
+					mac_ctx,
+					psta->staAddr,
+					switch_mode, op_class, new_channel,
+					LIM_MAX_CSA_IE_UPDATES, session_entry);
+		}
+	} else if (LIM_IS_STA_ROLE(session_entry)) {
+		lim_send_extended_chan_switch_action_frame(mac_ctx,
+					session_entry->bssId,
+					switch_mode, op_class, new_channel,
+					LIM_MAX_CSA_IE_UPDATES, session_entry);
+	}
+
+}
+
+/**
  * lim_process_sme_dfs_csa_ie_request() - process sme dfs csa ie req
  *
  * @mac_ctx: Pointer to Global MAC structure
@@ -5595,7 +5655,53 @@ skip_vht:
 	lim_send_beacon_ind(mac_ctx, session_entry);
 	lim_log(mac_ctx, LOG1, FL("Updated CSA IE, IE COUNT = %d"),
 		       session_entry->gLimChannelSwitch.switchCount);
+	/* Send ECSA Action frame after updating the beacon */
+	send_extended_chan_switch_action_frame(mac_ctx,
+		session_entry->gLimChannelSwitch.primaryChannel,
+		session_entry->gLimChannelSwitch.ch_width,
+					   session_entry);
 	session_entry->gLimChannelSwitch.switchCount--;
+}
+
+/**
+ * lim_process_ext_change_channel()- function to send ECSA
+ * action frame for STA/CLI .
+ * @mac_ctx: pointer to global mac structure
+ * @msg: params from sme for new channel.
+ *
+ * This function is called to send ECSA frame for STA/CLI.
+ *
+ * Return: void
+ */
+
+static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
+							uint32_t *msg)
+{
+	struct sir_sme_ext_cng_chan_req *ext_chng_channel =
+				(struct sir_sme_ext_cng_chan_req *) msg;
+	tpPESession session_entry = NULL;
+
+	if (NULL == msg) {
+		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
+		return;
+	}
+	session_entry =
+		pe_find_session_by_sme_session_id(mac_ctx,
+						ext_chng_channel->session_id);
+	if (NULL == session_entry) {
+		lim_log(mac_ctx, LOGE,
+			FL("Session not found for given session %d"),
+			ext_chng_channel->session_id);
+		return;
+	}
+	if (LIM_IS_AP_ROLE(session_entry)) {
+		lim_log(mac_ctx, LOGE,
+			FL("not an STA/CLI session"));
+		return;
+	}
+	send_extended_chan_switch_action_frame(mac_ctx,
+			ext_chng_channel->new_channel,
+				0, session_entry);
 }
 
 /**

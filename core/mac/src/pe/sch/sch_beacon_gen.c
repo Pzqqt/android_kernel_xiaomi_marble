@@ -573,6 +573,15 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal pMac,
 
 	}
 
+	/* EXT Channel Switch Announcement CHNL_EXTENDED_SWITCH_ANN_EID*/
+	if (beacon2->ext_chan_switch_ann.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+			SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID);
+		cdf_mem_copy((void *)&prb_rsp->ext_chan_switch_ann,
+			(void *)&beacon2->ext_chan_switch_ann,
+			sizeof(beacon2->ext_chan_switch_ann));
+	}
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (beacon2->QComVendorIE.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,

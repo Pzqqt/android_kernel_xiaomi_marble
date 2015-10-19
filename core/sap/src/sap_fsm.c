@@ -2814,7 +2814,14 @@ CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		sap_ap_event.sapevt.sapDfsNolInfo.pDfsList = (void *)
 			(&mac_ctx->sap.SapDfsInfo.sapDfsChannelNolList[0]);
 		break;
-
+	case eSAP_ECSA_CHANGE_CHAN_IND:
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+				"In %s, SAP event callback event = %s",
+				__func__, "eSAP_ECSA_CHANGE_CHAN_IND");
+		sap_ap_event.sapHddEventCode = eSAP_ECSA_CHANGE_CHAN_IND;
+		sap_ap_event.sapevt.sap_chan_cng_ind.new_chan =
+					   csr_roaminfo->target_channel;
+		break;
 	default:
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("SAP Unknown callback event = %d"),

@@ -56,7 +56,7 @@
 #include "rrm_api.h"
 #endif
 #include "lim_session_utils.h"
-
+#include "cds_concurrency.h"
 #include "wma_types.h"
 
 
@@ -337,6 +337,110 @@ static void __lim_process_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 	cdf_mem_free(chnl_switch_frame);
 	return;
 }
+
+/**
+ * lim_process_ext_channel_switch_action_frame()- Process ECSA Action
+ * Frames.
+ * @mac_ctx: pointer to global mac structure
+ * @rx_packet_info: rx packet meta information
+ * @session_entry: Session entry.
+ *
+ * This function is called when ECSA action frame is received.
+ *
+ * Return: void
+ */
+static void
+lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
+		uint8_t *rx_packet_info, tpPESession session_entry)
+{
+
+	tpSirMacMgmtHdr         hdr;
+	uint8_t                 *body;
+	tDot11fext_channel_switch_action_frame *ext_channel_switch_frame;
+	uint32_t                frame_len;
+	uint32_t                status;
+	uint8_t                 target_channel;
+
+	hdr = WMA_GET_RX_MAC_HEADER(rx_packet_info);
+	body = WMA_GET_RX_MPDU_DATA(rx_packet_info);
+	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_packet_info);
+
+	lim_log(mac_ctx, LOG1, FL("Received EXT Channel switch action frame"));
+
+	ext_channel_switch_frame =
+		 cdf_mem_malloc(sizeof(*ext_channel_switch_frame));
+	if (NULL == ext_channel_switch_frame) {
+		lim_log(mac_ctx, LOGE, FL("AllocateMemory failed"));
+		return;
+	}
+
+	/* Unpack channel switch frame */
+	status = dot11f_unpack_ext_channel_switch_action_frame(mac_ctx,
+			body, frame_len, ext_channel_switch_frame);
+
+	if (DOT11F_FAILED(status)) {
+
+		lim_log(mac_ctx, LOGE,
+			FL("Failed to parse CHANSW action frame (0x%08x, len %d):"),
+			status, frame_len);
+		cdf_mem_free(ext_channel_switch_frame);
+		return;
+	} else if (DOT11F_WARNED(status)) {
+
+		lim_log(mac_ctx, LOGW,
+		  FL("There were warnings while unpacking CHANSW Request (0x%08x, %d bytes):"),
+		  status, frame_len);
+	}
+
+	target_channel =
+	 ext_channel_switch_frame->ext_chan_switch_ann_action.new_channel;
+
+	/* Free ext_channel_switch_frame here as its no longer needed */
+	cdf_mem_free(ext_channel_switch_frame);
+	/*
+	 * Now, validate if channel change is required for the passed
+	 * channel and if is valid in the current regulatory domain,
+	 * and no concurrent session is running.
+	 */
+	if (!((session_entry->currentOperChannel != target_channel) &&
+	 ((cds_get_channel_state(target_channel)
+				== CHANNEL_STATE_ENABLE) ||
+	 (cds_get_channel_state(target_channel) == CHANNEL_STATE_DFS &&
+	 !cds_concurrent_open_sessions_running())))) {
+		lim_log(mac_ctx, LOGE, FL("Channel %d is not valid"),
+							target_channel);
+		return;
+	}
+
+	if (eLIM_AP_ROLE == session_entry->limSystemRole) {
+
+		struct sir_sme_ext_cng_chan_ind *ext_cng_chan_ind;
+		tSirMsgQ mmh_msg;
+
+		ext_cng_chan_ind = cdf_mem_malloc(sizeof(*ext_cng_chan_ind));
+		if (NULL == ext_cng_chan_ind) {
+			lim_log(mac_ctx, LOGP,
+			  FL("AllocateMemory failed for ext_cng_chan_ind"));
+			return;
+		}
+
+		cdf_mem_zero(ext_cng_chan_ind,
+			sizeof(*ext_cng_chan_ind));
+		ext_cng_chan_ind->session_id =
+					session_entry->smeSessionId;
+
+		/* No need to extract op mode as BW will be decided in
+		 *  in SAP FSM depending on previous BW.
+		 */
+		ext_cng_chan_ind->new_channel = target_channel;
+
+		mmh_msg.type = eWNI_SME_EXT_CHANGE_CHANNEL_IND;
+		mmh_msg.bodyptr = ext_cng_chan_ind;
+		mmh_msg.bodyval = 0;
+		lim_sys_process_mmh_msg_api(mac_ctx, &mmh_msg, ePROT);
+	}
+	return;
+} /*** end lim_process_ext_channel_switch_action_frame() ***/
 
 #ifdef WLAN_FEATURE_11AC
 /**
@@ -1943,7 +2047,10 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 				WMA_GET_RX_CH(rx_pkt_info), session, rssi);
 		break;
 #endif
-
+		case SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID:
+			lim_process_ext_channel_switch_action_frame(mac_ctx,
+							rx_pkt_info, session);
+			break;
 		default:
 			lim_log(mac_ctx, LOGE,
 				FL("Unhandled public action frame -- %x "),

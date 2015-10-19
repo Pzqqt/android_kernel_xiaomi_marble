@@ -1056,6 +1056,8 @@ void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode);
 void csr_clear_votes_for_country_info(tpAniSirGlobal pMac);
 
 #endif
+CDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx,
+				uint32_t channel, uint8_t session_id);
 
 #ifdef QCA_HT_2040_COEX
 CDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,

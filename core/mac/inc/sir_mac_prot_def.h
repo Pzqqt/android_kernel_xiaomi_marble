@@ -214,6 +214,8 @@
 
 /* Public Action for 20/40 BSS Coexistence */
 #define SIR_MAC_ACTION_2040_BSS_COEXISTENCE     0
+#define SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID    4
+
 
 #ifdef WLAN_FEATURE_11W
 /* 11w SA query request/response action frame category code */
@@ -355,6 +357,10 @@
 #define SIR_MAC_EXTENDED_RATE_EID      50
 #define SIR_MAC_EXTENDED_RATE_EID_MIN      0
 #define SIR_MAC_EXTENDED_RATE_EID_MAX      255
+#define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID 60
+#define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID_MIN    0
+#define SIR_MAC_CHNL_EXTENDED_SWITCH_ANN_EID_MAX    255
+
 /* reserved       51-69 */
 #define SIR_MAC_RM_ENABLED_CAPABILITY_EID      70
 #define SIR_MAC_RM_ENABLED_CAPABILITY_EID_MIN  5

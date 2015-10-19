@@ -1919,6 +1919,48 @@ CDF_STATUS dfs_msg_processor(tpAniSirGlobal pMac, uint16_t msgType, void *pMsgBu
 	return status;
 }
 
+/**
+ * sme_extended_change_channel_ind()- function to indicate ECSA
+ * action frame is received in lim to SAP
+ * @mac_ctx:  pointer to global mac structure
+ * @msg_buf: contain new channel and session id.
+ *
+ * This function is called to post ECSA action frame
+ * receive event to SAP.
+ *
+ * Return: success if msg indicated to SAP else return failure
+ */
+static CDF_STATUS sme_extended_change_channel_ind(tpAniSirGlobal mac_ctx,
+						void *msg_buf)
+{
+	struct sir_sme_ext_cng_chan_ind *ext_chan_ind;
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	uint32_t session_id = 0;
+	tCsrRoamInfo roamInfo = {0};
+	eRoamCmdStatus roam_status;
+	eCsrRoamResult roam_result;
+
+
+	ext_chan_ind = msg_buf;
+	if (NULL == ext_chan_ind) {
+		sms_log(mac_ctx, LOGE,
+			FL("pMsg is NULL for eWNI_SME_EXT_CHANGE_CHANNEL_IND"));
+		return CDF_STATUS_E_FAILURE;
+	}
+	session_id = ext_chan_ind->session_id;
+	roamInfo.target_channel = ext_chan_ind->new_channel;
+	roam_status = eCSR_ROAM_EXT_CHG_CHNL_IND;
+	roam_result = eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND;
+	sms_log(mac_ctx, LOG1,
+		FL("sapdfs: Received eWNI_SME_EXT_CHANGE_CHANNEL_IND for session id [%d]"),
+		session_id);
+
+	/* Indicate Ext Channel Change event to SAP */
+	csr_roam_call_callback(mac_ctx, session_id, &roamInfo, 0,
+					roam_status, roam_result);
+	return status;
+}
+
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 /*------------------------------------------------------------------
  *
@@ -2681,6 +2723,10 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 			pMac->sme.set_thermal_level_cb(pMac->hHdd,
 								pMsg->bodyval);
 		break;
+	case eWNI_SME_EXT_CHANGE_CHANNEL_IND:
+		 status = sme_extended_change_channel_ind(pMac, pMsg->bodyptr);
+		 cdf_mem_free(pMsg->bodyptr);
+		 break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -8075,6 +8121,45 @@ CDF_STATUS sme_update_roam_scan_home_away_time(tHalHandle hHal,
 				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
 				      REASON_HOME_AWAY_TIME_CHANGED);
 	}
+	return status;
+}
+
+/**
+ * sme_ext_change_channel()- function to post send ECSA
+ * action frame to csr.
+ * @hHal: Hal context
+ * @channel: new channel to switch
+ * @session_id: senssion it should be sent on.
+ *
+ * This function is called to post ECSA frame to csr.
+ *
+ * Return: success if msg is sent else return failure
+ */
+CDF_STATUS sme_ext_change_channel(tHalHandle h_hal, uint32_t channel,
+						uint8_t session_id)
+{
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac_ctx  = PMAC_STRUCT(h_hal);
+	uint8_t channel_state;
+
+	sms_log(mac_ctx, LOGE, FL(" Set Channel %d "), channel);
+	channel_state =
+		cds_get_channel_state(channel);
+
+	if (CHANNEL_STATE_DISABLE == channel_state) {
+		sms_log(mac_ctx, LOGE, FL(" Invalid channel %d "), channel);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	status = sme_acquire_global_lock(&mac_ctx->sme);
+
+	if (CDF_STATUS_SUCCESS == status) {
+		/* update the channel list to the firmware */
+		status = csr_send_ext_change_channel(mac_ctx,
+						channel, session_id);
+		sme_release_global_lock(&mac_ctx->sme);
+	}
+
 	return status;
 }
 

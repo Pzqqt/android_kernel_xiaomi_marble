@@ -946,6 +946,8 @@ CDF_STATUS sme_set_led_flashing(tHalHandle hHal, uint8_t type,
 CDF_STATUS sme_handle_dfs_chan_scan(tHalHandle hHal, uint8_t dfs_flag);
 CDF_STATUS sme_set_mas(uint32_t val);
 CDF_STATUS sme_set_miracast(tHalHandle hal, uint8_t filter_type);
+CDF_STATUS sme_ext_change_channel(tHalHandle hHal, uint32_t channel,
+					  uint8_t session_id);
 
 CDF_STATUS sme_configure_modulated_dtim(tHalHandle hal, uint8_t session_id,
 				      uint32_t modulated_dtim);
