@@ -7029,6 +7029,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 	struct wma_dfs_radar_indication *radar_event;
 	struct wma_dfs_radar_ind wma_radar_event;
 	tpAniSirGlobal pmac = NULL;
+	bool indication_status;
 
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (wma == NULL) {
@@ -7069,12 +7070,21 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 	    (pmac->sap.SapDfsInfo.disable_dfs_ch_switch == true)) {
 		wma->dfs_ic->last_radar_found_chan = ichan->ic_ieee;
 		/* Indicate the radar event to HDD to stop the netif Tx queues */
-		wma_radar_event.ieee_chan_number = ichan->ic_ieee;
 		wma_radar_event.chan_freq = ichan->ic_freq;
 		wma_radar_event.dfs_radar_status = WMA_DFS_RADAR_FOUND;
-		wma->dfs_radar_indication_cb(hdd_ctx, &wma_radar_event);
+		indication_status =
+			wma->dfs_radar_indication_cb(hdd_ctx, &wma_radar_event);
+		if (indication_status == false) {
+			WMA_LOGE("%s:Application triggered channel switch in progress!.. drop radar event indiaction to SAP",
+				__func__);
+			cdf_mem_free(radar_event);
+			cdf_spin_unlock_bh(&ic->chan_lock);
+			return 0;
+		}
+
 		WMA_LOGE("%s:DFS- RADAR INDICATED TO HDD", __func__);
 
+		wma_radar_event.ieee_chan_number = ichan->ic_ieee;
 		/*
 		 * Indicate to the radar event to SAP to
 		 * select a new channel and set CSA IE

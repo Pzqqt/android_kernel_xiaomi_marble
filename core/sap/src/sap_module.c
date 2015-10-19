@@ -1520,6 +1520,9 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 			 * request was issued.
 			 */
 			pMac->sap.SapDfsInfo.sap_radar_found_status = true;
+			pMac->sap.SapDfsInfo.cac_state =
+					eSAP_DFS_DO_NOT_SKIP_CAC;
+			sap_cac_reset_notify(hHal);
 
 			/*
 			 * Post the eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START

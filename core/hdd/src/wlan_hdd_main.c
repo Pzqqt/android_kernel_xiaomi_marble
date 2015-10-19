@@ -1227,9 +1227,9 @@ void hdd_update_tgt_cfg(void *context, void *param)
  * Actions: Stop the netif Tx queues,Indicate Radar present
  * in HDD context for future usage.
  *
- * Return: None
+ * Return: true to allow radar indication to host else false
  */
-void hdd_dfs_indicate_radar(void *context, void *param)
+bool hdd_dfs_indicate_radar(void *context, void *param)
 {
 	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
 	struct wma_dfs_radar_ind *hdd_radar_event =
@@ -1238,17 +1238,23 @@ void hdd_dfs_indicate_radar(void *context, void *param)
 	hdd_adapter_t *adapter;
 	CDF_STATUS status;
 
-	if (hdd_ctx == NULL)
-		return;
-
-	if (hdd_radar_event == NULL)
-		return;
-
-	if (hdd_ctx->config->disableDFSChSwitch)
-		return;
+	if (!hdd_ctx || !hdd_radar_event ||
+		 hdd_ctx->config->disableDFSChSwitch)
+		return true;
 
 	if (true == hdd_radar_event->dfs_radar_status) {
+		mutex_lock(&hdd_ctx->dfs_lock);
+		if (hdd_ctx->dfs_radar_found) {
+			/*
+			 * Application already triggered channel switch
+			 * on current channel, so return here.
+			 */
+			mutex_unlock(&hdd_ctx->dfs_lock);
+			return false;
+		}
+
 		hdd_ctx->dfs_radar_found = true;
+		mutex_unlock(&hdd_ctx->dfs_lock);
 
 		status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 		while (NULL != adapterNode && CDF_STATUS_SUCCESS == status) {
@@ -1265,6 +1271,8 @@ void hdd_dfs_indicate_radar(void *context, void *param)
 			adapterNode = pNext;
 		}
 	}
+
+	return true;
 }
 #endif
 
@@ -4771,7 +4779,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	 */
 	mutex_init(&hdd_ctx->tdls_lock);
 #endif
-
+	mutex_init(&hdd_ctx->dfs_lock);
 	/* store target type and target version info in hdd ctx */
 	hdd_ctx->target_type = ((struct ol_softc *)hif_sc)->target_type;
 	hdd_init_offloaded_packets_ctx(hdd_ctx);
