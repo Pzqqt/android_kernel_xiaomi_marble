@@ -585,7 +585,7 @@ typedef void (*wma_tgt_cfg_cb)(void *context, void *param);
  * to stop accepting data Tx packets from netif as radar is
  * found on the current operating channel
  */
-typedef void (*wma_dfs_radar_indication_cb)(void *context, void *param);
+typedef bool (*wma_dfs_radar_indication_cb)(void *context, void *param);
 
 /**
  * struct wma_cli_set_cmd_t - set command parameters

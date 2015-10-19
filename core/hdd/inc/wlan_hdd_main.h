@@ -1346,6 +1346,12 @@ struct hdd_context_s {
 
 	uint16_t hdd_txrx_hist_idx;
 	struct hdd_tx_rx_histogram hdd_txrx_hist[NUM_TX_RX_HISTOGRAM];
+	/*
+	 * Dfs lock used to syncronize on sap channel switch during
+	 * radar found indication and application triggered channel
+	 * switch.
+	 */
+	struct mutex dfs_lock;
 };
 
 /*---------------------------------------------------------------------------

@@ -955,7 +955,10 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			}
 		}
 
+		mutex_lock(&pHddCtx->dfs_lock);
 		pHddCtx->dfs_radar_found = false;
+		mutex_unlock(&pHddCtx->dfs_lock);
+
 		wlansap_get_dfs_ignore_cac(pHddCtx->hHal, &ignoreCAC);
 
 		/* DFS requirement: DO NOT transmit during CAC. */
@@ -1062,6 +1065,10 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		} else {
 			hdd_info("Sent CAC start to user space");
 		}
+
+		mutex_lock(&pHddCtx->dfs_lock);
+		pHddCtx->dfs_radar_found = false;
+		mutex_unlock(&pHddCtx->dfs_lock);
 		break;
 	case eSAP_DFS_CAC_INTERRUPTED:
 		/*
@@ -1927,7 +1934,9 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 		}
 	}
 
+	mutex_lock(&pHddCtx->dfs_lock);
 	if (pHddCtx->dfs_radar_found == true) {
+		mutex_unlock(&pHddCtx->dfs_lock);
 		hddLog(LOGE, FL("Channel switch in progress!!"));
 		return -EBUSY;
 	}
@@ -1941,7 +1950,7 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 	 * post eSAP_START_BSS_EVENT success event to HDD.
 	 */
 	pHddCtx->dfs_radar_found = true;
-
+	mutex_unlock(&pHddCtx->dfs_lock);
 	/*
 	 * Post the Channel Change request to SAP.
 	 */
@@ -1964,8 +1973,9 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 		 * radar found flag and also restart the netif
 		 * queues.
 		 */
-
+		mutex_lock(&pHddCtx->dfs_lock);
 		pHddCtx->dfs_radar_found = false;
+		mutex_unlock(&pHddCtx->dfs_lock);
 
 		ret = -EINVAL;
 	}
