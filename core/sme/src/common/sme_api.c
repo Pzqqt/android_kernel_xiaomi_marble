@@ -1590,23 +1590,19 @@ void sme_process_ready_to_suspend(tHalHandle hHal,
 }
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-/*--------------------------------------------------------------------------
 
-   \fn - sme_process_ready_to_ext_wo_w
-   \brief - On getting ready to Ext WoW indication, this function calls
-	    callback registered (HDD callbacks) with SME to inform
-	    ready to ExtWoW indication.
-
-   \param hHal - Handle returned by mac_open.
-	  pReadyToExtWoW - Parameter received along with ready to Ext WoW
-			   indication from WMA.
-
-   \return None
-
-   \sa
-
-   --------------------------------------------------------------------------*/
-void sme_process_ready_to_ext_wo_w(tHalHandle hHal,
+/**
+ * sme_process_ready_to_ext_wow() - inform ready to ExtWoW indication.
+ * @hHal - Handle returned by mac_open.
+ * @pReadyToExtWoW - Parameter received along with ready to Ext WoW
+ *		     indication from WMA.
+ *
+ * On getting ready to Ext WoW indication, this function calls callback
+ * registered (HDD callback)with SME to inform ready to ExtWoW indication.
+ *
+ * Return: None
+ */
+void sme_process_ready_to_ext_wow(tHalHandle hHal,
 				   tpSirReadyToExtWoWInd pReadyToExtWoW)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -2509,7 +2505,7 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 	case eWNI_SME_READY_TO_EXTWOW_IND:
 		if (pMsg->bodyptr) {
-			sme_process_ready_to_ext_wo_w(pMac, pMsg->bodyptr);
+			sme_process_ready_to_ext_wow(pMac, pMsg->bodyptr);
 			cdf_mem_free(pMsg->bodyptr);
 		} else {
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
@@ -6619,23 +6615,17 @@ CDF_STATUS sme_configure_resume_req(tHalHandle hHal,
 }
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-/* ---------------------------------------------------------------------------
-
-   \fn    sme_configure_ext_wo_w
-
-   \brief
-    SME will pass this request to lower mac to configure Extr WoW
-
-   \param
-
-    hHal - The handle returned by mac_open.
-
-    wlanExtParams- Depicts the wlan Ext params
-
-   \return CDF_STATUS
-
-   --------------------------------------------------------------------------- */
-CDF_STATUS sme_configure_ext_wo_w(tHalHandle hHal,
+/**
+ * sme_configure_ext_wow() - configure Extr WoW
+ * @hHal - The handle returned by mac_open.
+ * @wlanExtParams - Depicts the wlan Ext params.
+ * @callback - ext_wow callback to be registered.
+ * @callback_context - ext_wow callback context
+ *
+ * SME will pass this request to lower mac to configure Extr WoW
+ * Return: CDF_STATUS
+ */
+CDF_STATUS sme_configure_ext_wow(tHalHandle hHal,
 				  tpSirExtWoWParams wlanExtParams,
 				  csr_readyToExtWoWCallback callback,
 				  void *callback_context)
