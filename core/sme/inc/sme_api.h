@@ -498,7 +498,7 @@ CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 CDF_STATUS sme_configure_resume_req(tHalHandle hHal,
 		tpSirWlanResumeParam wlanResumeParam);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-CDF_STATUS sme_configure_ext_wo_w(tHalHandle hHal,
+CDF_STATUS sme_configure_ext_wow(tHalHandle hHal,
 		tpSirExtWoWParams wlanExtParams,
 		csr_readyToSuspendCallback callback,
 		void *callbackContext);

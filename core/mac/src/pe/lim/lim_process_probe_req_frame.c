@@ -113,25 +113,16 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, uint8_t *addr,
 }
 
 /**
- * lim_remove_timeout_pb_csessions
+ * lim_remove_timeout_pbc_sessions() - remove pbc probe req entries.
+ * @pMac - Pointer to Global MAC structure
+ * @pbc - The beginning entry in WPS PBC probe request link list
  *
- ***FUNCTION:
- * This function is called to remove the WPS PBC probe request entires from specific entry to end.
+ * This function is called to remove the WPS PBC probe request entries from
+ * specific entry to end.
  *
- ***LOGIC:
- *
- *
- ***ASSUMPTIONS:
- *
- *
- ***NOTE:
- *
- * @param  pMac   Pointer to Global MAC structure
- * @param  pbc    The beginning entry in WPS PBC probe request link list
- *
- * @return None
+ * Return - None
  */
-static void lim_remove_timeout_pb_csessions(tpAniSirGlobal pMac,
+static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal pMac,
 					    tSirWPSPBCSession *pbc)
 {
 	tSirWPSPBCSession *prev;
@@ -267,7 +258,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 	while (pbc) {
 		if (curTime > pbc->timestamp + SIR_WPS_PBC_WALK_TIME) {
 			prev->next = NULL;
-			lim_remove_timeout_pb_csessions(pMac, pbc);
+			lim_remove_timeout_pbc_sessions(pMac, pbc);
 			break;
 		}
 		prev = pbc;
@@ -298,7 +289,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 void lim_wpspbc_close(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 
-	lim_remove_timeout_pb_csessions(pMac, psessionEntry->pAPWPSPBCSession);
+	lim_remove_timeout_pbc_sessions(pMac, psessionEntry->pAPWPSPBCSession);
 
 }
 

@@ -1602,12 +1602,12 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 
 	INIT_COMPLETION(hdd_ctx->ready_to_extwow);
 
-	cdf_ret_status = sme_configure_ext_wo_w(hHal, &params,
+	cdf_ret_status = sme_configure_ext_wow(hHal, &params,
 						&wlan_hdd_ready_to_extwow,
 						hdd_ctx);
 	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("sme_configure_ext_wo_w returned failure %d"),
+		       FL("sme_configure_ext_wow returned failure %d"),
 		       cdf_ret_status);
 		return -EPERM;
 	}
