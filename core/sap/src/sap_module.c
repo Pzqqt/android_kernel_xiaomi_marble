@@ -2179,7 +2179,7 @@ CDF_STATUS wlansap_de_register_mgmt_frame
    SIDE EFFECTS
    ============================================================================*/
 CDF_STATUS
-wlansap_channel_change_request(void *pSapCtx, uint8_t targetChannel)
+wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 {
 	ptSapContext sapContext = NULL;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
@@ -2205,7 +2205,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t targetChannel)
 	}
 	mac_ctx = PMAC_STRUCT(hHal);
 	phy_mode = sapContext->csr_roamProfile.phyMode;
-	sapContext->csr_roamProfile.ChannelInfo.ChannelList[0] = targetChannel;
+	sapContext->csr_roamProfile.ChannelInfo.ChannelList[0] = target_channel;
 	/*
 	 * We are getting channel bonding mode from sapDfsInfor structure
 	 * because we've implemented channel width fallback mechanism for DFS
@@ -2214,8 +2214,12 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t targetChannel)
 	cb_mode = mac_ctx->sap.SapDfsInfo.new_cbMode;
 	vht_channel_width = mac_ctx->sap.SapDfsInfo.new_chanWidth;
 	ch_params.ch_width = vht_channel_width;
-	sme_set_ch_params(hHal, phy_mode, targetChannel, 0, &ch_params);
+	sme_set_ch_params(hHal, phy_mode, target_channel, 0, &ch_params);
 	sapContext->ch_params.ch_width = vht_channel_width;
+	/* Update the channel as this will be used to
+	 * send event to supplicant
+	 */
+	sapContext->channel = target_channel;
 	sapContext->csr_roamProfile.ch_params.ch_width = vht_channel_width;
 	cdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
 				cb_mode, &sapContext->csr_roamProfile);

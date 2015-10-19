@@ -528,6 +528,7 @@ typedef enum {
 
 	/* Channel sw update notification */
 	eCSR_ROAM_DFS_CHAN_SW_NOTIFY,
+	eCSR_ROAM_EXT_CHG_CHNL_IND,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */
@@ -636,6 +637,7 @@ typedef enum {
 	eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE,
 	eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS,
 	eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_FAILURE,
+	eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND,
 } eCsrRoamResult;
 
 /*----------------------------------------------------------------------------
@@ -1374,6 +1376,7 @@ typedef struct tagCsrRoamInfo {
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
 #endif
 	tSirSmeChanInfo chan_info;
+	uint8_t target_channel;
 } tCsrRoamInfo;
 
 typedef struct tagCsrFreqScanInfo {
@@ -1400,6 +1403,7 @@ typedef struct sSirSmeAssocIndToUpperLayerCnf {
 	/* Timing and fine Timing measurement capability clubbed together */
 	uint8_t timingMeasCap;
 	tSirSmeChanInfo chan_info;
+	uint8_t target_channel;
 } tSirSmeAssocIndToUpperLayerCnf, *tpSirSmeAssocIndToUpperLayerCnf;
 
 typedef struct tagCsrSummaryStatsInfo {

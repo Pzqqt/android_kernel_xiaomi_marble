@@ -496,6 +496,10 @@ tSirRetStatus lim_send_channel_switch_mgmt_frame(tpAniSirGlobal, tSirMacAddr,
 						 uint8_t, uint8_t, uint8_t,
 						 tpPESession);
 
+tSirRetStatus lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
+	tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
+	uint8_t new_channel, uint8_t count, tpPESession session_entry);
+
 #ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 						     tSirMacAddr peer, uint8_t nMode,

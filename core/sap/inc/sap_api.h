@@ -187,6 +187,7 @@ typedef enum {
 	eSAP_ACS_SCAN_SUCCESS_EVENT,
 #endif
 	eSAP_ACS_CHANNEL_SELECTED,
+	eSAP_ECSA_CHANGE_CHAN_IND,
 } eSapHddEvent;
 
 typedef enum {
@@ -407,6 +408,15 @@ struct sap_ch_selected_s {
 struct sap_roc_ready_ind_s {
 	uint32_t scan_id;
 };
+
+/**
+ * struct sap_ch_change_ind - channel change indication
+ * @new_chan: channel to change
+ */
+struct sap_ch_change_ind {
+	uint16_t new_chan;
+};
+
 /*
  * This struct will be filled in and passed to tpWLAN_SAPEventCB that is
  * provided during wlansap_start_bss call The event id corresponding to
@@ -450,7 +460,7 @@ typedef struct sap_Event_s {
 		tSap_DfsNolInfo sapDfsNolInfo;
 		struct sap_ch_selected_s sap_ch_selected;
 		struct sap_roc_ready_ind_s sap_roc_ind;
-
+		struct sap_ch_change_ind sap_chan_cng_ind;
 	} sapevt;
 } tSap_Event, *tpSap_Event;
 

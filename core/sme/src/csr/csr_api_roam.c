@@ -18345,6 +18345,36 @@ csr_roam_update_add_ies(tpAniSirGlobal pMac,
 }
 
 /**
+ * csr_send_ext_change_channel()- function to post send ECSA
+ * action frame to lim.
+ * @mac_ctx: pointer to global mac structure
+ * @channel: new channel to switch
+ * @session_id: senssion it should be sent on.
+ *
+ * This function is called to post ECSA frame to lim.
+ *
+ * Return: success if msg posted to LIM else return failure
+ */
+CDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx, uint32_t channel,
+					uint8_t session_id)
+{
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	struct sir_sme_ext_cng_chan_req *msg;
+
+	msg = cdf_mem_malloc(sizeof(*msg));
+	if (NULL == msg)
+		return CDF_STATUS_E_NOMEM;
+
+	cdf_mem_zero(msg, sizeof(*msg));
+	msg->message_type = eWNI_SME_EXT_CHANGE_CHANNEL;
+	msg->length = sizeof(*msg);
+	msg->new_channel = channel;
+	msg->session_id = session_id;
+	status = cds_send_mb_message_to_mac(msg);
+	return status;
+}
+
+/**
  * csr_roam_send_chan_sw_ie_request() - Request to transmit CSA IE
  * @mac_ctx:        Global MAC context
  * @bssid:          BSSID

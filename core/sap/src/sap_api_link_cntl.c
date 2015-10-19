@@ -974,6 +974,10 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received set channel response"));
 		break;
+	case eCSR_ROAM_EXT_CHG_CHNL_IND:
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
+				FL("Received set channel Indication"));
+		break;
 	default:
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("CSR roam_status not handled roam_status = %s (%d)\n"),
@@ -1197,6 +1201,12 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		 */
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
 		/* Inform cfg80211 and hostapd that BSS is not alive anymore */
+		break;
+	case eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND:
+		cdf_status = sap_signal_hdd_event(sap_ctx, csr_roam_info,
+				   eSAP_ECSA_CHANGE_CHAN_IND, NULL);
+		if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+			cdf_ret_status = CDF_STATUS_E_FAILURE;
 		break;
 	default:
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
