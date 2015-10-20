@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -52,8 +52,7 @@ typedef struct {
 extern void __cdf_defer_func(struct work_struct *work);
 
 static inline CDF_STATUS
-__cdf_init_work(cdf_handle_t hdl,
-		__cdf_work_t *work, cdf_defer_fn_t func, void *arg)
+__cdf_init_work(__cdf_work_t *work, cdf_defer_fn_t func, void *arg)
 {
 	/*Initilize func and argument in work struct */
 	work->fn = func;
@@ -66,15 +65,9 @@ __cdf_init_work(cdf_handle_t hdl,
 	return CDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS __cdf_sched_work(cdf_handle_t hdl, __cdf_work_t *work)
+static inline CDF_STATUS __cdf_schedule_work(__cdf_work_t *work)
 {
 	schedule_work(&work->work);
-	return CDF_STATUS_SUCCESS;
-}
-
-static inline CDF_STATUS
-__cdf_disable_work(cdf_handle_t hdl, __cdf_work_t *work)
-{
 	return CDF_STATUS_SUCCESS;
 }
 

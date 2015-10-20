@@ -6595,7 +6595,6 @@ void cds_force_sap_on_scc(eCsrRoamResult roam_result)
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-
 /**
  * cds_check_sta_ap_concurrent_ch_intf() - Restart SAP in STA-AP case
  * @data: Pointer to STA adapter
@@ -6677,10 +6676,10 @@ void cds_check_concurrent_intf_and_restart_sap(hdd_station_ctx_t *hdd_sta_ctx,
 				operationChannel)
 #endif
 	   ) {
-		cdf_create_work(0, &hdd_ctx->sta_ap_intf_check_work,
+		cdf_create_work(&hdd_ctx->sta_ap_intf_check_work,
 				cds_check_sta_ap_concurrent_ch_intf,
 				(void *)adapter);
-		cdf_sched_work(0, &hdd_ctx->sta_ap_intf_check_work);
+		cdf_schedule_work(&hdd_ctx->sta_ap_intf_check_work);
 		cds_info("Checking for Concurrent Change interference");
 	}
 }
