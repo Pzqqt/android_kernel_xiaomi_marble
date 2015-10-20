@@ -7692,19 +7692,25 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		if (apps_args[0] == 0) {
 			hddLog(LOGE,
 				FL("set hw mode for single mac\n"));
-			cds_soc_set_hw_mode(hdd_ctx, HW_MODE_SS_2x2,
+			cds_soc_set_hw_mode(hdd_ctx,
+					pAdapter->sessionId,
+					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
 					HW_MODE_SS_0x0, HW_MODE_BW_NONE,
 					HW_MODE_DBS_NONE,
-					HW_MODE_AGILE_DFS_NONE);
+					HW_MODE_AGILE_DFS_NONE,
+					CDS_UPDATE_REASON_UT);
 		} else if (apps_args[0] == 1) {
 			hddLog(LOGE,
 				FL("set hw mode for dual mac\n"));
-			cds_soc_set_hw_mode(hdd_ctx, HW_MODE_SS_1x1,
+			cds_soc_set_hw_mode(hdd_ctx,
+					pAdapter->sessionId,
+					HW_MODE_SS_1x1,
 					HW_MODE_80_MHZ,
 					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
 					HW_MODE_DBS,
-					HW_MODE_AGILE_DFS_NONE);
+					HW_MODE_AGILE_DFS_NONE,
+					CDS_UPDATE_REASON_UT);
 		}
 	}
 	break;
@@ -7714,8 +7720,9 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		enum cds_conc_next_action action;
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_query_action> is called\n"));
-		action = cds_current_connections_update(hdd_ctx,
-				apps_args[0]);
+		action = cds_current_connections_update(pAdapter->sessionId,
+						apps_args[0],
+						CDS_UPDATE_REASON_UT);
 		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
 	}
 	break;

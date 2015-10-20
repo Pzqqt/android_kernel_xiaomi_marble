@@ -95,6 +95,28 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 /* This should not be greater than MAX_NUMBER_OF_CONC_CONNECTIONS */
 #define MAX_VDEV_SUPPORTED                        4
 
+/**
+ * enum cds_conn_update_reason: Reason for conc connection update
+ * @CDS_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
+ * @CDS_UPDATE_REASON_JOIN_IBSS: Join IBSS
+ * @CDS_UPDATE_REASON_UT: Unit test related
+ * @CDS_UPDATE_REASON_START_AP: Start AP
+ * @CDS_UPDATE_REASON_NORMAL_STA: Connection to Normal STA
+ * @CDS_UPDATE_REASON_HIDDEN_STA: Connection to Hidden STA
+ * @CDS_UPDATE_REASON_OPPORTUNISTIC: Opportunistic HW mode update
+ * @CDS_UPDATE_REASON_NSS_UPDATE: NSS update
+ */
+enum cds_conn_update_reason {
+	CDS_UPDATE_REASON_SET_OPER_CHAN,
+	CDS_UPDATE_REASON_JOIN_IBSS,
+	CDS_UPDATE_REASON_UT,
+	CDS_UPDATE_REASON_START_AP,
+	CDS_UPDATE_REASON_NORMAL_STA,
+	CDS_UPDATE_REASON_HIDDEN_STA,
+	CDS_UPDATE_REASON_OPPORTUNISTIC,
+	CDS_UPDATE_REASON_NSS_UPDATE,
+};
+
 typedef enum {
 	eSIR_EXTSCAN_INVALID,
 	eSIR_EXTSCAN_START_RSP,
@@ -397,10 +419,14 @@ typedef struct sSirSmeReadyReq {
  * struct sir_hw_mode - Format of set HW mode
  * @hw_mode_index: Index of HW mode to be set
  * @set_hw_mode_cb: HDD set HW mode callback
+ * @reason: Reason for HW mode change
+ * @session_id: Session id
  */
 struct sir_hw_mode {
 	uint32_t hw_mode_index;
 	void *set_hw_mode_cb;
+	enum cds_conn_update_reason reason;
+	uint32_t session_id;
 };
 
 /**

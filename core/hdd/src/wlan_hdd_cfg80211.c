@@ -4107,7 +4107,8 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 						const void *data,
 						int data_len)
 {
-
+	struct net_device *ndev = wdev->netdev;
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	int ret = 0;
 	enum cds_con_mode intf_mode;
@@ -4165,8 +4166,9 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 		if (!CDF_IS_STATUS_SUCCESS(ret))
 			hdd_err("clearing event failed");
 
-		ret = cds_current_connections_update(hdd_ctx,
-				channel_hint);
+		ret = cds_current_connections_update(adapter->sessionId,
+					channel_hint,
+					CDS_UPDATE_REASON_SET_OPER_CHAN);
 		if (CDF_STATUS_E_FAILURE == ret) {
 			/* return in the failure case */
 			hdd_err("ERROR: connections update failed!!");
@@ -8807,8 +8809,9 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			hdd_err("ERR: clear event failed");
 
-		status = cds_current_connections_update(pHddCtx,
-								channelNum);
+		status = cds_current_connections_update(pAdapter->sessionId,
+						channelNum,
+						CDS_UPDATE_REASON_JOIN_IBSS);
 		if (CDF_STATUS_E_FAILURE == status) {
 			hdd_err("ERROR: connections update failed!!");
 			return -EINVAL;

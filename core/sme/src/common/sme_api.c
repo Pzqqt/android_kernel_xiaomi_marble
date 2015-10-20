@@ -156,7 +156,10 @@ static CDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	bool found;
 	hw_mode_cb callback = NULL;
 	struct sir_set_hw_mode_resp *param;
+	enum cds_conn_update_reason reason;
+	tSmeCmd *saved_cmd;
 
+	sms_log(mac, LOG1, FL("%s"), __func__);
 	param = (struct sir_set_hw_mode_resp *)msg;
 	if (!param) {
 		sms_log(mac, LOGE, FL("HW mode resp param is NULL"));
@@ -184,10 +187,48 @@ static CDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	}
 
 	callback = command->u.set_hw_mode_cmd.set_hw_mode_cb;
+	reason = command->u.set_hw_mode_cmd.reason;
 	if (callback) {
 		if (!param) {
 			sms_log(mac, LOGE,
 			    FL("Callback failed since HW mode params is NULL"));
+		} else if (reason == CDS_UPDATE_REASON_HIDDEN_STA) {
+			/* In the case of hidden SSID, connection update
+			 * (set hw mode) is done after the scan with reason
+			 * code eCsrScanForSsid completes. The connect/failure
+			 * needs to be handled after the response of set hw
+			 * mode
+			 */
+			saved_cmd = (tSmeCmd *)mac->sme.saved_scan_cmd;
+			if (!saved_cmd) {
+				sms_log(mac, LOGP,
+					FL("saved cmd is NULL, Check this"));
+				goto end;
+			}
+			if (param->status == SET_HW_MODE_STATUS_OK) {
+				sms_log(mac, LOG1,
+					FL("search for ssid success"));
+				csr_scan_handle_search_for_ssid(mac,
+					saved_cmd);
+			} else {
+				sms_log(mac, LOG1,
+					FL("search for ssid failure"));
+				csr_scan_handle_search_for_ssid_failure(mac,
+					saved_cmd);
+			}
+			if (saved_cmd->u.roamCmd.pRoamBssEntry)
+				cdf_mem_free(
+					saved_cmd->u.roamCmd.pRoamBssEntry);
+			if (saved_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList)
+				cdf_mem_free(saved_cmd->u.scanCmd.u.
+						scanRequest.SSIDs.SSIDList);
+			if (saved_cmd->u.scanCmd.pToRoamProfile)
+				cdf_mem_free(saved_cmd->u.scanCmd.
+						pToRoamProfile);
+			if (saved_cmd) {
+				cdf_mem_free(saved_cmd);
+				saved_cmd = NULL;
+			}
 		} else {
 			sms_log(mac, LOGE,
 			      FL("Calling HDD callback for HW mode response"));
@@ -200,6 +241,7 @@ static CDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 		sms_log(mac, LOGE, FL("Callback does not exist"));
 	}
 
+end:
 	found = csr_ll_remove_entry(&mac->sme.smeCmdActiveList, entry,
 			LL_ACCESS_LOCK);
 	if (found) {
@@ -14391,6 +14433,8 @@ CDF_STATUS sme_soc_set_hw_mode(tHalHandle hal,
 	cmd->command = e_sme_command_set_hw_mode;
 	cmd->u.set_hw_mode_cmd.hw_mode_index = msg.hw_mode_index;
 	cmd->u.set_hw_mode_cmd.set_hw_mode_cb = msg.set_hw_mode_cb;
+	cmd->u.set_hw_mode_cmd.reason = msg.reason;
+	cmd->u.set_hw_mode_cmd.session_id = msg.session_id;
 
 	sms_log(mac, LOG1, FL("Queuing e_sme_command_set_hw_mode to CSR"));
 	csr_queue_sme_command(mac, cmd, false);
