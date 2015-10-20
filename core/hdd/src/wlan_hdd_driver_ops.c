@@ -228,8 +228,10 @@ static void wlan_hdd_shutdown(void)
 		hddLog(LOGE,
 			FL("Host is not ready for SSR, attempting anyway"));
 
-	if (!WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+	if (!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+		hif_disable_isr(hif_ctx);
 		hdd_wlan_shutdown();
+	}
 
 	hif_disable(hif_ctx, HIF_DISABLE_TYPE_SHUTDOWN);
 	hif_close(hif_ctx);
