@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -888,11 +888,10 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 			ack_work->sub_type = 0;
 			ack_work->status = status;
 
-			cdf_create_work(0, &ack_work->ack_cmp_work,
+			cdf_create_work(&ack_work->ack_cmp_work,
 					wma_data_tx_ack_work_handler,
 					ack_work);
-			/* Schedule the Work */
-			cdf_sched_work(0, &ack_work->ack_cmp_work);
+			cdf_schedule_work(&ack_work->ack_cmp_work);
 		}
 	}
 
@@ -1564,12 +1563,11 @@ wma_mgmt_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 				ack_work->sub_type = pFc->subType;
 				ack_work->status = status;
 
-				cdf_create_work(0, &ack_work->ack_cmp_work,
+				cdf_create_work(&ack_work->ack_cmp_work,
 						wma_mgmt_tx_ack_work_handler,
 						ack_work);
 
-				/* Schedule the Work */
-				cdf_sched_work(0, &ack_work->ack_cmp_work);
+				cdf_schedule_work(&ack_work->ack_cmp_work);
 			}
 		}
 	}
