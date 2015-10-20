@@ -123,6 +123,7 @@ typedef enum {
 	eCsrNext11dScan2Success,
 	eCsrNext11dScanComplete,
 	eCsrNexteScanForSsidFailure,
+	eCsrNextCheckAllowConc,
 
 } eCsrScanCompleteNextCommand;
 
@@ -1060,6 +1061,10 @@ void csr_clear_votes_for_country_info(tpAniSirGlobal pMac);
 CDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,
 			       ePhyChanBondState cbMode, bool obssEnabled);
 #endif
+CDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal mac,
+		tSmeCmd *command);
+CDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal mac,
+		tSmeCmd *command);
 tSirBssDescription*
 csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  tSirBssDescription *bss_descr);

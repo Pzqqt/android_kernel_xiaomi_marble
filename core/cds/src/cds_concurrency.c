@@ -2377,12 +2377,14 @@ static void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 /**
  * cds_soc_set_hw_mode() - Set HW mode command to SME
  * @hdd_ctx: HDD context
+ * @session_id: Session ID
  * @mac0_ss: MAC0 spatial stream configuration
  * @mac0_bw: MAC0 bandwidth configuration
  * @mac1_ss: MAC1 spatial stream configuration
  * @mac1_bw: MAC1 bandwidth configuration
  * @dbs: HW DBS capability
  * @dfs: HW Agile DFS capability
+ * @reason: Reason for connection update
  *
  * Sends the set hw mode to the SME module which will pass on
  * this message to WMA layer
@@ -2403,12 +2405,14 @@ static void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
  * Return: Success if the message made it down to the next layer
  */
 CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
+		uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
-		enum hw_mode_agile_dfs_capab dfs)
+		enum hw_mode_agile_dfs_capab dfs,
+		enum cds_conn_update_reason reason)
 {
 	int8_t hw_mode_index;
 	struct sir_hw_mode msg;
@@ -2428,6 +2432,8 @@ CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
 
 	msg.hw_mode_index = hw_mode_index;
 	msg.set_hw_mode_cb = (void *)cds_soc_set_hw_mode_cb;
+	msg.reason = reason;
+	msg.session_id = session_id;
 
 	cds_info("set hw mode to sme: hw_mode_index: %d",
 		msg.hw_mode_index);
@@ -3625,7 +3631,12 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 	action = cds_need_opportunistic_upgrade(hdd_ctx);
 	if (action) {
 		/* lets call for action */
-		cds_next_actions(hdd_ctx, action);
+		/* session id is being used only
+		 * in hidden ssid case for now.
+		 * So, session id 0 is ok here.
+		 */
+		cds_next_actions(hdd_ctx, 0, action,
+				CDS_UPDATE_REASON_OPPORTUNISTIC);
 	}
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 
@@ -5240,8 +5251,9 @@ CDF_STATUS cds_mode_switch_mcc_to_dbs(hdd_context_t *hdd_ctx)
  * cds_current_connections_update() - initiates actions
  * needed on current connections once channel has been decided
  * for the new connection
- * @hdd_ctx:	HDD Context
+ * @session_id: Session id
  * @channel: Channel on which new connection will be
+ * @reason: Reason for which connection update is required
  *
  * This function initiates initiates actions
  * needed on current connections once channel has been decided
@@ -5249,16 +5261,23 @@ CDF_STATUS cds_mode_switch_mcc_to_dbs(hdd_context_t *hdd_ctx)
  *
  * Return: CDF_STATUS enum
  */
-CDF_STATUS cds_current_connections_update(
-				hdd_context_t *hdd_ctx,
-				uint8_t channel)
+CDF_STATUS cds_current_connections_update(uint32_t session_id,
+				uint8_t channel,
+				enum cds_conn_update_reason reason)
 {
 	enum cds_conc_next_action next_action = CDS_NOP;
 	uint32_t num_connections = 0;
 	enum cds_one_connection_mode second_index = 0;
 	enum cds_two_connection_mode third_index = 0;
 	enum cds_band band;
+	hdd_context_t *hdd_ctx;
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("Invalid HDD context");
+		return CDF_STATUS_E_FAILURE;
+	}
 
 	if (wma_is_hw_dbs_capable() == false) {
 		cds_err("driver isn't dbs capable, no further action needed");
@@ -5315,12 +5334,14 @@ CDF_STATUS cds_current_connections_update(
 	}
 
 	if (CDS_NOP != next_action)
-		status = cds_next_actions(hdd_ctx, next_action);
+		status = cds_next_actions(hdd_ctx, session_id,
+						next_action, reason);
 	else
 		status = CDF_STATUS_E_NOSUPPORT;
 
-	cds_debug("index2=%d index3=%d next_action=%d, band=%d status=%d",
-		second_index, third_index, next_action, band, status);
+	cds_debug("index2=%d index3=%d next_action=%d, band=%d status=%d reason=%d session_id=%d",
+		second_index, third_index, next_action, band, status,
+		reason, session_id);
 
 done:
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
@@ -5437,7 +5458,9 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 		break;
 	}
 	if (!wait)
-		cds_next_actions(hdd_ctx, next_action);
+		cds_next_actions(hdd_ctx, vdev_id,
+				next_action,
+				CDS_UPDATE_REASON_NSS_UPDATE);
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 	return;
 }
@@ -5450,6 +5473,8 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
  * @new_nss: the new nss value
  * @next_action: next action to happen at policy mgr after
  *		beacon update
+ * @reason: Reason for connection update
+ * @session_id: Session id
  *
  * This function initiates initiates actions
  * needed on current connections once channel has been decided
@@ -5458,7 +5483,9 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
  * Return: CDF_STATUS enum
  */
 CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
-				uint8_t  new_nss, uint8_t next_action)
+				uint8_t  new_nss, uint8_t next_action,
+				enum cds_conn_update_reason reason,
+				uint32_t session_id)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t index = 0, count = 0;
@@ -5518,7 +5545,8 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
 		index++;
 	}
 	if (!CDF_IS_STATUS_SUCCESS(status))
-		status = cds_next_actions(hdd_ctx, next_action);
+		status = cds_next_actions(hdd_ctx, session_id,
+						next_action, reason);
 
 	return status;
 }
@@ -5528,7 +5556,9 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
  * connections once channel has been decided for the new
  * connection
  * @hdd_ctx:	HDD Context
+ * @session_id: Session id
  * @action: action to be executed
+ * @reason: Reason for connection update
  *
  * This function initiates initiates actions
  * needed on current connections once channel has been decided
@@ -5537,7 +5567,9 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
  * Return: CDF_STATUS enum
  */
 CDF_STATUS cds_next_actions(hdd_context_t *hdd_ctx,
-				enum cds_conc_next_action action)
+				uint32_t session_id,
+				enum cds_conc_next_action action,
+				enum cds_conn_update_reason reason)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	struct sir_hw_mode_params hw_mode;
@@ -5574,14 +5606,17 @@ CDF_STATUS cds_next_actions(hdd_context_t *hdd_ctx,
 		* update the beacon template & notify FW. Once FW confirms
 		*  beacon updated, send down the HW mode change req
 		*/
-		status = cds_complete_action(hdd_ctx, 1, CDS_DBS);
+		status = cds_complete_action(hdd_ctx, 1, CDS_DBS, reason,
+						session_id);
 		break;
 	case CDS_DBS:
-		status = cds_soc_set_hw_mode(hdd_ctx, HW_MODE_SS_1x1,
+		status = cds_soc_set_hw_mode(hdd_ctx, session_id,
+						HW_MODE_SS_1x1,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_1x1, HW_MODE_40_MHZ,
 						HW_MODE_DBS,
-						HW_MODE_AGILE_DFS_NONE);
+						HW_MODE_AGILE_DFS_NONE,
+						reason);
 		break;
 	case CDS_MCC_UPGRADE:
 		/*
@@ -5589,14 +5624,17 @@ CDF_STATUS cds_next_actions(hdd_context_t *hdd_ctx,
 		* intially. If yes, update the beacon template & notify FW.
 		* Once FW confirms beacon updated, send the HW mode change req
 		*/
-		status = cds_complete_action(hdd_ctx, 0, CDS_MCC);
+		status = cds_complete_action(hdd_ctx, 0, CDS_MCC, reason,
+						session_id);
 		break;
 	case CDS_MCC:
-		status = cds_soc_set_hw_mode(hdd_ctx, HW_MODE_SS_2x2,
+		status = cds_soc_set_hw_mode(hdd_ctx, session_id,
+						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
 						HW_MODE_DBS_NONE,
-						HW_MODE_AGILE_DFS_NONE);
+						HW_MODE_AGILE_DFS_NONE,
+						reason);
 		break;
 	default:
 		/* err msg */
@@ -6118,29 +6156,72 @@ CDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
 }
 
 /**
- * cds_handle_conc_multiport() - to handle multiport concurrency
+ * cds_search_and_check_for_session_conc() - Checks if concurrecy is allowed
+ * @session_id: Session id
+ * @roam_profile: Pointer to the roam profile
+ *
+ * Searches and gets the channel number from the scan results and checks if
+ * concurrency is allowed for the given session ID
+ *
+ * Non zero channel number if concurrency is allowed, zero otherwise
+ */
+uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
+		tCsrRoamProfile *roam_profile)
+{
+	uint8_t channel = 0;
+	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
+	hdd_adapter_t *adapter;
+	bool ret;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("Invalid HDD context");
+		return channel;
+	}
+
+	adapter = hdd_get_adapter_by_vdev(hdd_ctx, session_id);
+	if (!adapter) {
+		cds_err("Invalid HDD adapter");
+		return channel;
+	}
+
+	status = cds_get_channel_from_scan_result(adapter,
+			roam_profile, &channel);
+	if ((CDF_STATUS_SUCCESS != status) || (channel == 0)) {
+		cds_err("%s error %d %d",
+			__func__, status, channel);
+		return 0;
+	}
+
+	/* Take care of 160MHz and 80+80Mhz later */
+	ret = cds_allow_concurrency(hdd_ctx,
+		cds_convert_device_mode_to_hdd_type(
+			adapter->device_mode),
+		channel, HW_MODE_20_MHZ);
+	if (false == ret) {
+		cds_err("Connection failed due to conc check fail");
+		return 0;
+	}
+
+	return channel;
+}
+
+/**
+ * cds_check_for_session_conc() - Check if concurrency is allowed for a session
  * @session_id: Session ID
  * @channel: Channel number
  *
- * This routine will handle STA side concurrency when policy manager
- * is enabled.
+ * Checks if connection is allowed for a given session_id
  *
- * Return: true or false
+ * True if the concurrency is allowed, false otherwise
  */
-bool cds_handle_conc_multiport(uint8_t session_id,
+bool cds_check_for_session_conc(uint8_t session_id,
 		uint8_t channel)
 {
-	bool ret = true;
-	CDF_STATUS status;
-	p_cds_contextType cds_context;
-	hdd_adapter_t *adapter;
 	hdd_context_t *hdd_ctx;
-
-	cds_context = cds_get_global_context();
-	if (!cds_context) {
-		cds_err("Invalid CDS context");
-		return false;
-	}
+	hdd_adapter_t *adapter;
+	bool ret;
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -6158,6 +6239,7 @@ bool cds_handle_conc_multiport(uint8_t session_id,
 		cds_err("Invalid channel number 0");
 		return false;
 	}
+
 	/* Take care of 160MHz and 80+80Mhz later */
 	ret = cds_allow_concurrency(hdd_ctx,
 		cds_convert_device_mode_to_hdd_type(
@@ -6165,6 +6247,36 @@ bool cds_handle_conc_multiport(uint8_t session_id,
 		channel, HW_MODE_20_MHZ);
 	if (false == ret) {
 		cds_err("Connection failed due to conc check fail");
+		return 0;
+	}
+
+	return true;
+}
+
+/**
+ * cds_handle_conc_multiport() - to handle multiport concurrency
+ * @session_id: Session ID
+ * @channel: Channel number
+ *
+ * This routine will handle STA side concurrency when policy manager
+ * is enabled.
+ *
+ * Return: true or false
+ */
+bool cds_handle_conc_multiport(uint8_t session_id,
+		uint8_t channel)
+{
+	CDF_STATUS status;
+	p_cds_contextType cds_context;
+
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		cds_err("Invalid CDS context");
+		return false;
+	}
+
+	if (!cds_check_for_session_conc(session_id, channel)) {
+		cds_err("Conc not allowed for the session %d", session_id);
 		return false;
 	}
 
@@ -6172,7 +6284,9 @@ bool cds_handle_conc_multiport(uint8_t session_id,
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		cds_err("clearing event failed");
 
-	status = cds_current_connections_update(hdd_ctx, channel);
+	status = cds_current_connections_update(session_id,
+			channel,
+			CDS_UPDATE_REASON_NORMAL_STA);
 	if (CDF_STATUS_E_FAILURE == status) {
 		cds_err("connections update failed");
 		return false;

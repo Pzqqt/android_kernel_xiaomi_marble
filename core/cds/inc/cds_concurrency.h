@@ -600,6 +600,9 @@ static inline bool cds_handle_conc_rule2(hdd_context_t *hdd_ctx,
 		return true;
 }
 #endif /* FEATURE_WLAN_CH_AVOID */
+uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
+		tCsrRoamProfile * roam_profile);
+bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel);
 bool cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
@@ -681,8 +684,9 @@ CDF_STATUS cds_update_connection_info(hdd_context_t *hdd_ctx,
 					   uint32_t vdev_id);
 CDF_STATUS cds_decr_connection_count(hdd_context_t *hdd_ctx,
 					  uint32_t vdev_id);
-CDF_STATUS cds_current_connections_update(
-				hdd_context_t *hdd_ctx, uint8_t channel);
+CDF_STATUS cds_current_connections_update(uint32_t session_id,
+				uint8_t channel,
+				enum cds_conn_update_reason);
 #ifdef MPC_UT_FRAMEWORK
 CDF_STATUS cds_incr_connection_count_utfw(hdd_context_t *hdd_ctx,
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
@@ -738,16 +742,20 @@ enum cds_con_mode cds_convert_device_mode_to_hdd_type(
 				device_mode_t device_mode);
 uint32_t cds_get_connection_count(hdd_context_t *hdd_ctx);
 CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
+		uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
-		enum hw_mode_agile_dfs_capab dfs);
+		enum hw_mode_agile_dfs_capab dfs,
+		enum cds_conn_update_reason reason);
 enum cds_conc_next_action cds_need_opportunistic_upgrade(
 		hdd_context_t *hdd_ctx);
 CDF_STATUS cds_next_actions(
-		hdd_context_t *hdd_ctx, enum cds_conc_next_action action);
+		hdd_context_t *hdd_ctx, uint32_t session_id,
+		enum cds_conc_next_action action,
+		enum cds_conn_update_reason reason);
 void cds_set_dual_mac_scan_config(hdd_context_t *hdd_ctx,
 		uint8_t dbs_val,
 		uint8_t dbs_plus_agile_scan_val,

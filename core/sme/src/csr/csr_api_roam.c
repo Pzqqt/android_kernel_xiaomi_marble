@@ -453,6 +453,10 @@ CDF_STATUS csr_close(tpAniSirGlobal pMac)
 	csr_ll_close(&pMac->roam.statsClientReqList);
 	csr_ll_close(&pMac->roam.peStatsReqList);
 	csr_ll_close(&pMac->roam.roamCmdPendingList);
+	if (pMac->sme.saved_scan_cmd) {
+		cdf_mem_free(pMac->sme.saved_scan_cmd);
+		pMac->sme.saved_scan_cmd = NULL;
+	}
 	/* DeInit Globals */
 	csr_roam_de_init_globals(pMac);
 	return status;
@@ -18818,11 +18822,25 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 		goto fail;
 	}
 
+	/* For hidden SSID case, if there is any scan command pending
+	 * it needs to be cleared before issuing set HW mode
+	 */
+	if (command->u.set_hw_mode_cmd.reason == CDS_UPDATE_REASON_HIDDEN_STA) {
+		sms_log(mac, LOGE, FL("clear any pending scan command"));
+		status = csr_scan_abort_mac_scan_not_for_connect(mac,
+				command->u.set_hw_mode_cmd.session_id);
+		if (!CDF_IS_STATUS_SUCCESS(status)) {
+			sms_log(mac, LOGE, FL("Failed to clear scan cmd"));
+			goto fail;
+		}
+	}
+
 	cdf_mem_set(cmd, len, 0);
 
 	cmd->messageType = eWNI_SME_SET_HW_MODE_REQ;
 	cmd->length = len;
 	cmd->set_hw.hw_mode_index = command->u.set_hw_mode_cmd.hw_mode_index;
+	cmd->set_hw.reason = command->u.set_hw_mode_cmd.reason;
 	/*
 	 * Below callback and context info are not needed for PE as of now.
 	 * Storing the passed value in the same s_sir_set_hw_mode format.

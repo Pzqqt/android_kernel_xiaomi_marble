@@ -8241,7 +8241,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			hdd_err("ERR: clear event failed");
 
-		status = cds_current_connections_update(pHddCtx, channel);
+		status = cds_current_connections_update(pAdapter->sessionId,
+				channel,
+				CDS_UPDATE_REASON_START_AP);
 		if (CDF_STATUS_E_FAILURE == status) {
 			hdd_err("ERROR: connections update failed!!");
 			return -EINVAL;

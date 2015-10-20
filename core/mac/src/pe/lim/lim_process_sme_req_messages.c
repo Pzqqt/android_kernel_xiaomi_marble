@@ -156,6 +156,7 @@ static CDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 	cdf_mem_zero(req_msg, len);
 
 	req_msg->hw_mode_index = buf->set_hw.hw_mode_index;
+	req_msg->reason = buf->set_hw.reason;
 	/* Other parameters are not needed for WMA */
 
 	cds_message.bodyptr = req_msg;
