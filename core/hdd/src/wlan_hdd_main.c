@@ -2967,7 +2967,10 @@ CDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 
 			/* Indicate disconnect event to supplicant if associated previously */
 			if (eConnectionState_Associated == connState ||
-			    eConnectionState_IbssConnected == connState) {
+			    eConnectionState_IbssConnected == connState ||
+			    eConnectionState_NotConnected == connState ||
+			    eConnectionState_IbssDisconnected == connState ||
+			    eConnectionState_Disconnecting == connState) {
 				union iwreq_data wrqu;
 				memset(&wrqu, '\0', sizeof(wrqu));
 				wrqu.ap_addr.sa_family = ARPHRD_ETHER;

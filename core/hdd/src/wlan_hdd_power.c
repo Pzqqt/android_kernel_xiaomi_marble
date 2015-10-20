@@ -1380,8 +1380,6 @@ CDF_STATUS hdd_wlan_shutdown(void)
 		CDF_ASSERT(0);
 	}
 
-	hif_disable_isr(((cds_context_type *) p_cds_context)->pHIFContext);
-
 	hddLog(CDF_TRACE_LEVEL_INFO, "%s: Flush Queues", __func__);
 	/* Clean up message queues of TX, RX and MC thread */
 	cds_sched_flush_mc_mqs(cds_sched_context);
