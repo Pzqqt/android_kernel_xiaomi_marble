@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -184,6 +184,7 @@ typedef struct _HTC_TARGET {
 	A_UINT32 ce_send_cnt;
 	A_UINT32 TX_comp_cnt;
 	A_UINT8 MaxMsgsPerHTCBundle;
+	cdf_work_t queue_kicker;
 } HTC_TARGET;
 
 #define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
@@ -245,6 +246,8 @@ void htc_process_credit_rpt(HTC_TARGET *target,
 			    int NumEntries, HTC_ENDPOINT_ID FromEndpoint);
 void htc_fw_event_handler(void *context, CDF_STATUS status);
 void htc_send_complete_check_cleanup(void *context);
+void htc_runtime_pm_init(HTC_TARGET *target);
+void htc_kick_queues(void *context);
 
 void htc_credit_record(htc_credit_exchange_type type, uint32_t tx_credit,
 		       uint32_t htc_tx_queue_depth);

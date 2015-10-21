@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,6 +34,7 @@
 #include "epping_main.h"
 #include "hif_io32.h"
 #include "cds_concurrency.h"
+#include <cds_api.h>
 
 #ifdef DEBUG
 static ATH_DEBUG_MASK_DESCRIPTION g_htc_debug_description[] = {
@@ -214,6 +215,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
 
 	A_MEMZERO(target, sizeof(HTC_TARGET));
 
+	htc_runtime_pm_init(target);
 	cdf_spinlock_init(&target->HTCLock);
 	cdf_spinlock_init(&target->HTCRxLock);
 	cdf_spinlock_init(&target->HTCTxLock);
@@ -681,7 +683,60 @@ void htc_stop(HTC_HANDLE HTCHandle)
 
 	reset_endpoint_states(target);
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_stop \n"));
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_stop\n"));
+}
+
+/**
+ * htc_runtime_pm_init(): runtime pm related intialization
+ *
+ * need to initialize a work item.
+ */
+void htc_runtime_pm_init(HTC_TARGET *target)
+{
+	cdf_create_work(&target->queue_kicker, htc_kick_queues, target);
+}
+
+/**
+ * htc_runtime_suspend(): ensure htc is ready to suspend
+ *
+ * htc is ready to suspend if there are no pending pactets
+ * in the txrx queues.
+ *
+ * Return: 0 on success or -EBUSY if there are queued packets.
+ */
+int htc_runtime_suspend(void)
+{
+	ol_txrx_pdev_handle txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+
+	if (txrx_pdev == NULL) {
+		HTC_ERROR("%s: txrx context null", __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+
+	if (ol_txrx_get_tx_pending(txrx_pdev))
+		return -EBUSY;
+	else
+		return 0;
+}
+
+/**
+ * htc_runtime_resume(): resume htc
+ *
+ * The htc message queue needs to be kicked off after
+ * a runtime resume.  Otherwise messages would get stuck.
+ *
+ * Return: 0 for success;
+ */
+int htc_runtime_resume(void)
+{
+	HTC_HANDLE htc_ctx = cds_get_context(CDF_MODULE_ID_HTC);
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_ctx);
+
+	if (target == NULL)
+		return 0;
+
+	cdf_schedule_work(&target->queue_kicker);
+	return 0;
 }
 
 void htc_dump_credit_states(HTC_HANDLE HTCHandle)

@@ -1669,6 +1669,35 @@ void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID)
 	htc_try_send(target, pEndpoint, NULL);
 }
 
+/**
+ * htc_kick_queues(): resumes tx transactions of suspended endpoints
+ * @context: pointer to the htc target context
+ *
+ * Iterates throught the enpoints and provides a context to empty queues
+ * int the hif layer when they are stalled due to runtime suspend.
+ *
+ * Return: none
+ */
+void htc_kick_queues(void *context)
+{
+	int i;
+	HTC_TARGET *target = (HTC_TARGET *)context;
+	HTC_ENDPOINT *endpoint = NULL;
+
+	for (i = 0; i < ENDPOINT_MAX; i++) {
+		endpoint = &target->endpoint[i];
+
+		if (endpoint->service_id == 0)
+			continue;
+
+		if (endpoint->EpCallBacks.ep_resume_tx_queue)
+			endpoint->EpCallBacks.ep_resume_tx_queue(
+					endpoint->EpCallBacks.pContext);
+
+		htc_try_send(target, endpoint, NULL);
+	}
+}
+
 /* flush endpoint TX queue */
 void htc_flush_endpoint_tx(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,
 			   HTC_TX_TAG Tag)

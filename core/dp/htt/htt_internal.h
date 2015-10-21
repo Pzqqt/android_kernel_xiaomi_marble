@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -413,6 +413,7 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 
 #endif
 
+void htt_tx_resume_handler(void *);
 #ifdef ATH_11AC_TXCOMPACT
 #define HTT_TX_SCHED htt_tx_sched
 #else
