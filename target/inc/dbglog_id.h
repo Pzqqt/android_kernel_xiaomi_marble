@@ -123,7 +123,21 @@ extern "C" {
 #define WMI_DBGID_DCS_PARAM_CMD                      49
 #define WMI_SEND_EVENT_WRONG_TLV                     50
 #define WMI_SEND_EVENT_NO_TLV_DEF                    51
-#define WMI_DBGID_DEFINITION_END                     52
+#define WMI_RECV_CMD_WRONG_TLV                              52
+#define WMI_CHECK_TLV_PARAM_GET_NUM_TLVS_ERROR              53
+#define WMI_CHECK_TLV_PARAM_TLV_LEN_EXCEEDED_BUF_LEN        54
+#define WMI_CHECK_TLV_PARAM_NONEXISTING_TAG_ORDER           55
+#define WMI_CHECK_TLV_PARAM_WRONG_TAG_ORDER                 56
+#define WMI_CHECK_TLV_PARAM_INVALID_TLV_DEF_ARRAY_SIZE      57
+#define WMI_CHECK_TLV_PARAM_INVALID_TLV_DEF_VARIED_SIZE     58
+#define WMI_CHECK_TLV_PARAM_WRONG_TLV_LENGTH                59
+#define WMI_CHECK_TLV_PARAM_UNALIGNED_TLV_LEN               60
+#define WMI_CHECK_TLV_PARAM_WRONG_INNER_TLV_LEN             61
+#define WMI_CHECK_TLV_PARAM_UNSUPPORTED_ARRAY_TAG           62
+#define WMI_CHECK_TLV_PARAM_EXCEEDED_MAX_TLVs               63
+#define WMI_CHECK_TLV_PARAM_CMD_BUF_ALLOC_FAILED            64
+#define WMI_CHECK_TLV_PARAM_TLV_INFO                        65
+#define WMI_DBGID_DEFINITION_END                            66
 
 /*  PM Message definition*/
 #define PS_STA_DEFINITION_START                     0
@@ -872,7 +886,9 @@ extern "C" {
 #define SWBMISS_ENABLED                 1
 #define SWBMISS_DISABLED                2
 #define SWBMISS_UPDATE_BEACON_RSSI      3
-#define SWBMISS_DBGID_DEFINITION_END    4
+#define SWBMISS_CHECK_RSSI_OUTLIER      4
+#define SWBMISS_TIMER_SET               5
+#define SWBMISS_DBGID_DEFINITION_END    6
 
 /* WLAN module DBGIDS */
 #define ROAM_DBGID_DEFINITION_START 0
