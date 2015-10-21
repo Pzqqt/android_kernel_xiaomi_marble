@@ -3951,8 +3951,10 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		next_vote_level = CNSS_BUS_WIDTH_HIGH;
 	else if (total > hdd_ctx->config->busBandwidthMediumThreshold)
 		next_vote_level = CNSS_BUS_WIDTH_MEDIUM;
-	else
+	else if (total > hdd_ctx->config->busBandwidthLowThreshold)
 		next_vote_level = CNSS_BUS_WIDTH_LOW;
+	else
+		next_vote_level = CNSS_BUS_WIDTH_NONE;
 
 	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_vote_level
 							   = next_vote_level;
