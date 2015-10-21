@@ -1437,7 +1437,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
  */
 QDF_STATUS
 wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
-					phy_ch_width target_bw)
+				    enum ch_width target_bw)
 {
 
 	ptSapContext sapContext = NULL;
@@ -2246,7 +2246,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
-	chan_params_t ch_params;
+	struct ch_params_s ch_params;
 	sapContext = (ptSapContext) pSapCtx;
 
 	if (NULL == sapContext) {

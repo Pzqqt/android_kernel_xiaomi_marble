@@ -7776,7 +7776,7 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 {
 	uint8_t iniDot11Mode = (WLAN_HDD_GET_CTX(pAdapter))->config->dot11Mode;
 	eHddDot11Mode hddDot11Mode = iniDot11Mode;
-	chan_params_t ch_params;
+	struct ch_params_s ch_params;
 	ch_params.ch_width =
 			(WLAN_HDD_GET_CTX(pAdapter))->config->vhtChannelWidth;
 
@@ -11166,7 +11166,7 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	uint8_t channel;
 	uint16_t freq;
 	int ret;
-	phy_ch_width ch_width;
+	enum ch_width ch_width;
 
 	hddLog(LOG1, FL("Set Freq %d"),
 		  csa_params->chandef.chan->center_freq);

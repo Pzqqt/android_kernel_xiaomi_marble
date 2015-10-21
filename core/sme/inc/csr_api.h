@@ -876,7 +876,7 @@ typedef struct tagCsrRoamProfile {
 	eCsrCBChoice CBMode;
 	tCsrChannelInfo ChannelInfo;
 	uint8_t operationChannel;
-	chan_params_t ch_params;
+	struct ch_params_s ch_params;
 	/* If this is 0, SME will fill in for caller. */
 	uint16_t beaconInterval;
 	/*

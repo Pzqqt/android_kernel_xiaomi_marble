@@ -2727,7 +2727,7 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 					uint8_t newChannel,
 					uint8_t ch_center_freq_seg0,
 					uint8_t ch_center_freq_seg1,
-					phy_ch_width ch_width)
+					enum ch_width ch_width)
 {
 	uint8_t subband = 0;
 

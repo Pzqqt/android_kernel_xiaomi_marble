@@ -6022,7 +6022,7 @@ static int drv_cmd_set_channel_switch(hdd_adapter_t *adapter,
 	int status;
 	uint32_t chan_number = 0, chan_bw = 0;
 	uint8_t *value = command;
-	phy_ch_width width;
+	enum ch_width width;
 
 	if ((adapter->device_mode != WLAN_HDD_P2P_GO) &&
 		(adapter->device_mode != WLAN_HDD_SOFTAP)) {

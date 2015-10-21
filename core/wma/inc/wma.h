@@ -1493,7 +1493,7 @@ struct wma_vdev_start_req {
 	uint32_t beacon_intval;
 	uint32_t dtim_period;
 	int32_t max_txpow;
-	phy_ch_width chan_width;
+	enum ch_width chan_width;
 	bool is_dfs;
 	uint8_t vdev_id;
 	uint8_t chan;

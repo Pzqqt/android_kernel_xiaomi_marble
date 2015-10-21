@@ -890,7 +890,7 @@ static inline void sap_event_init(ptWLAN_SAPEvent sapEvent)
  */
 bool
 sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
-					  phy_ch_width ch_width,
+					  enum ch_width ch_width,
 					  uint8_t NOL_channel,
 					  tSapTxLeakInfo **pTarget_chnl_mtrx)
 {
@@ -955,7 +955,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
 
 QDF_STATUS
 sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
-		phy_ch_width ch_width,
+		enum ch_width ch_width,
 		tSapDfsNolInfo *nol,
 		uint8_t temp_ch_lst_sz,
 		uint8_t *temp_ch_lst)
@@ -1069,7 +1069,7 @@ static void sap_set_bitmap(chan_bonding_bitmap *pBitmap, uint8_t channel)
  * Return: number of channels found
  */
 static uint8_t sap_populate_available_channels(chan_bonding_bitmap *bitmap,
-		phy_ch_width ch_width,
+		enum ch_width ch_width,
 		uint8_t *avail_chnl)
 {
 	uint8_t i = 0;
@@ -1246,7 +1246,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 	uint8_t channelID;
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
 	tpAniSirGlobal pMac;
-	phy_ch_width ch_width;
+	enum ch_width ch_width;
 	uint8_t   *tmp_ch_lst = NULL;
 	uint8_t   dfs_region;
 

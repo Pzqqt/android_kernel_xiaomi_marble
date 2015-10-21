@@ -207,7 +207,7 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
 					  uint8_t ch_center_freq_seg1,
-					  phy_ch_width ch_width,
+					  enum ch_width ch_width,
 					  int8_t maxTxPower,
 					  uint8_t peSessionId,
 					  uint8_t is_restart)

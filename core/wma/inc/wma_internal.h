@@ -891,7 +891,7 @@ QDF_STATUS wma_process_lphb_conf_req(tp_wma_handle wma_handle,
 QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 				tAniDHCPInd *ta_dhcp_ind);
 
-WLAN_PHY_MODE wma_chan_to_mode(u8 chan, phy_ch_width chan_width,
+WLAN_PHY_MODE wma_chan_to_mode(u8 chan, enum ch_width chan_width,
 				      u8 vht_capable, u8 dot11_mode);
 
 QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed);

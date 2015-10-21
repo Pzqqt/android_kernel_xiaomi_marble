@@ -10150,7 +10150,7 @@ QDF_STATUS sme_check_ch_in_band(tpAniSirGlobal mac_ctx, uint8_t start_ch,
 }
 
 void sme_set_160bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
-		chan_params_t *ch_params)
+		struct ch_params_s *ch_params)
 {
 	uint8_t start_ch = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -10173,7 +10173,7 @@ void sme_set_160bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
 }
 
 void sme_set_80bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
-		chan_params_t *ch_params)
+		struct ch_params_s *ch_params)
 {
 	uint8_t start_ch = 0;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -10208,7 +10208,7 @@ void sme_set_80bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
 }
 
 void sme_set_40bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
-		chan_params_t *ch_params, uint8_t is_11ac_mode)
+		struct ch_params_s *ch_params, uint8_t is_11ac_mode)
 {
 	uint8_t tmp;
 	uint8_t center_freq = 0;
@@ -10246,7 +10246,8 @@ void sme_set_40bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
  * SME API to determine the channel bonding mode
  */
 QDF_STATUS sme_set_ch_params(tHalHandle hHal, eCsrPhyMode eCsrPhyMode,
-		uint8_t channel, uint8_t ht_sec_ch, chan_params_t *ch_params)
+			     uint8_t channel, uint8_t ht_sec_ch,
+			     struct ch_params_s *ch_params)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hHal);
 	int is_11ac_mode = CSR_IS_PHY_MODE_11ac(eCsrPhyMode);
@@ -11894,8 +11895,9 @@ QDF_STATUS sme_set_mas(uint32_t val)
  * Return: QDF_STATUS
  */
 QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
-	struct qdf_mac_addr bssid, chan_params_t *ch_params,
-	tCsrRoamProfile *profile)
+				       struct qdf_mac_addr bssid,
+				       struct ch_params_s *ch_params,
+				       tCsrRoamProfile *profile)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -12004,7 +12006,7 @@ QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal, struct qdf_mac_addr bssid,
  */
 QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 				uint8_t targetChannel, uint8_t csaIeReqd,
-				chan_params_t *ch_params)
+				struct ch_params_s *ch_params)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);

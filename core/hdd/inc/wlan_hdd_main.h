@@ -1344,7 +1344,7 @@ struct hdd_context_s {
    -------------------------------------------------------------------------*/
 int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
 				uint32_t chan_number,
-				phy_ch_width chan_bw);
+				enum ch_width chan_bw);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void wlan_hdd_check_sta_ap_concurrent_ch_intf(void *sta_pAdapter);
 #endif
@@ -1530,7 +1530,7 @@ const char *hdd_get_fwpath(void);
 void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind);
 hdd_adapter_t *hdd_get_adapter_by_sme_session_id(hdd_context_t *hdd_ctx,
 						uint32_t sme_session_id);
-phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width);
+enum ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width);
 uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 			uint8_t bw_offset);
 void hdd_update_config(hdd_context_t *hdd_ctx);

@@ -557,7 +557,7 @@ void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
  *
  * Return: none
  */
-void cds_set_wma_dfs_region(struct regulatory *reg)
+void cds_set_wma_dfs_region(uint8_t dfs_region)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
@@ -566,8 +566,8 @@ void cds_set_wma_dfs_region(struct regulatory *reg)
 		return;
 	}
 
-	qdf_print("%s: dfs_region: %d", __func__, reg->dfs_region);
-	wma_set_dfs_region(wma, reg->dfs_region);
+	qdf_print("%s: dfs_region: %d", __func__, dfs_region);
+	wma_set_dfs_region(wma, dfs_region);
 }
 
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)

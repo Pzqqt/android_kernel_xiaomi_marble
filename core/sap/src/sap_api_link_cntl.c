@@ -238,7 +238,7 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
 							uint32_t sec_ch)
 {
 	uint32_t channel = sap_ctx->acs_cfg->pri_ch;
-	chan_params_t ch_params = {0};
+	struct ch_params_s ch_params = {0};
 
 	ch_params.ch_width = sap_ctx->acs_cfg->ch_width;
 	sme_set_ch_params(hal, sap_ctx->csr_roamProfile.phyMode, channel,

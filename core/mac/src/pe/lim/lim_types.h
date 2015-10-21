@@ -552,7 +552,7 @@ uint32_t lim_defer_msg(tpAniSirGlobal, tSirMsgQ *);
 /* / Function that Switches the Channel and sets the CB Mode */
 void lim_set_channel(tpAniSirGlobal pMac, uint8_t channel,
 		uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
-		phy_ch_width ch_width, int8_t maxTxPower,
+		enum ch_width ch_width, int8_t maxTxPower,
 		uint8_t peSessionId);
 
 

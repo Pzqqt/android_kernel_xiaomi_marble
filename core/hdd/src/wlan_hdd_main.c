@@ -106,6 +106,7 @@
 #include "wlan_hdd_green_ap.h"
 #include "platform_icnss.h"
 #include "bmi.h"
+#include <wlan_hdd_regulatory.h>
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -245,7 +246,7 @@ const char *hdd_device_mode_to_string(uint8_t device_mode)
  */
 int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
 		uint32_t chan_number,
-		phy_ch_width chan_bw)
+		enum ch_width chan_bw)
 {
 	uint8_t chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN, i;
@@ -432,7 +433,7 @@ static int curr_con_mode;
  * Return: Converted channel width. In case of non matching NL channel width,
  * CH_WIDTH_MAX will be returned.
  */
-phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
+enum ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 {
 	switch (ch_width) {
 	case NL80211_CHAN_WIDTH_20_NOHT:
@@ -4163,10 +4164,10 @@ bool hdd_is_5g_supported(hdd_context_t *hdd_ctx)
 	return true;
 }
 
-static QDF_STATUS wlan_hdd_regulatory_init(hdd_context_t *hdd_ctx)
+static int hdd_wiphy_init(hdd_context_t *hdd_ctx)
 {
 	struct wiphy *wiphy;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int ret_val;
 
 	wiphy = hdd_ctx->wiphy;
 
@@ -4174,11 +4175,10 @@ static QDF_STATUS wlan_hdd_regulatory_init(hdd_context_t *hdd_ctx)
 	 * The channel information in
 	 * wiphy needs to be initialized before wiphy registration
 	 */
-	status = cds_regulatory_init();
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("cds_init_wiphy failed"));
-		return status;
+	ret_val = hdd_regulatory_init(hdd_ctx, wiphy);
+	if (ret_val) {
+		hdd_alert("regulatory init failed");
+		return ret_val;
 	}
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 11, 0))
@@ -4200,12 +4200,11 @@ static QDF_STATUS wlan_hdd_regulatory_init(hdd_context_t *hdd_ctx)
 #endif
 
 	/* registration of wiphy dev with cfg80211 */
-	if (0 > wlan_hdd_cfg80211_register(wiphy)) {
-		hddLog(QDF_TRACE_LEVEL_ERROR, FL("wiphy register failed"));
-		status = QDF_STATUS_E_FAILURE;
-	}
+	ret_val = wlan_hdd_cfg80211_register(wiphy);
+	if (0 > ret_val)
+		hdd_err("wiphy registration failed");
 
-	return status;
+	return ret_val;
 }
 
 #ifdef MSM_PLATFORM
@@ -5468,6 +5467,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	tSirTxPowerLimit hddtxlimit;
 	bool rtnl_held;
 	tSirRetStatus hal_status;
+	int ret_val;
 
 	ENTER();
 
@@ -5516,11 +5516,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	ol_txrx_register_pause_cb(wlan_hdd_txrx_pause_cb);
 
-	status = wlan_hdd_regulatory_init(hdd_ctx);
+	ret_val = hdd_wiphy_init(hdd_ctx);
 
-	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       FL("Failed to init channel list"));
+	if (ret_val) {
+		hdd_alert("failed to initialize wiphy");
 		goto err_cds_close;
 	}
 
@@ -5553,6 +5552,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		       "%s: WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS failed %d",
 		       __func__, ret);
 	}
+
+	hdd_program_country_code(hdd_ctx);
 
 	status = hdd_set_sme_chan_list(hdd_ctx);
 	if (status != QDF_STATUS_SUCCESS) {

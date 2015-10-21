@@ -313,7 +313,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	tLimOperatingModeInfo gLimOperatingMode;
 	uint8_t vhtCapabilityPresentInBeacon;
 	uint8_t ch_center_freq_seg0;
-	phy_ch_width ch_width;
+	enum ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
 	uint8_t txBFIniFeatureEnabled;
 	uint8_t txbf_csn_value;

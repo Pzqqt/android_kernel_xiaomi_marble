@@ -212,7 +212,7 @@ typedef struct sSapContext {
 	uint8_t *channelList;
 	tSapChannelListInfo SapChnlList;
 	uint16_t ch_width_orig;
-	chan_params_t ch_params;
+	struct ch_params_s ch_params;
 
 	/* session to scan */
 	bool isScanSessionOpen;

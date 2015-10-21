@@ -1070,13 +1070,47 @@ enum CountryCode {
 	CTRY_BELGIUM2 = 5002    /* Belgium/Cisco implementation */
 };
 
+
+/**
+ * enum ch_width - channel width
+ * @CH_WIDTH_20MHZ: channel width 20 MHz
+ * @CH_WIDTH_40MHZ: channel width 40 MHz
+ * @CH_WIDTH_80MHZ: channel width 80MHz
+ * @CH_WIDTH_160MHZ: channel width 160 MHz
+ * @CH_WIDTH_80P80MHZ: channel width 160MHz(80+80)
+ */
+enum ch_width {
+	CH_WIDTH_20MHZ = 0,
+	CH_WIDTH_40MHZ = 1,
+	CH_WIDTH_80MHZ = 2,
+	CH_WIDTH_160MHZ = 3,
+	CH_WIDTH_80P80MHZ = 4,
+	CH_WIDTH_MAX
+};
+
+/**
+ * struct ch_params_s
+ *
+ * @ch_width: channel width
+ * @sec_ch_offset: secondary channel offset
+ * @center_freq_seg0: center freq for segment 0
+ * @center_freq_seg1: center freq for segment 1
+ */
+struct ch_params_s {
+	enum ch_width ch_width;
+	uint8_t sec_ch_offset;
+	uint8_t center_freq_seg0;
+	uint8_t center_freq_seg1;
+};
+
+
 int32_t cds_fill_some_regulatory_info(struct regulatory *reg);
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg);
 int32_t cds_get_country_from_alpha2(uint8_t *alpha2);
 void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
 				  uint32_t modeSelect);
-void cds_set_wma_dfs_region(struct regulatory *reg);
+void cds_set_wma_dfs_region(uint8_t dfs_region);
 void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
-		chan_params_t *ch_params);
+		       struct ch_params_s *ch_params);
 
 #endif /* REGULATORY_H */
