@@ -333,7 +333,7 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 	 */
 	status = A_OK;
 	pEntry++;
-	pEntry->ServiceID = WMI_CONTROL_SVC;
+	pEntry->service_id = WMI_CONTROL_SVC;
 	pEntry->CreditAllocation = credits;
 
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
@@ -360,23 +360,23 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 		 * BE and BK services to stress the bus so that the total credits
 		 * are equally distributed to BE and BK services.
 		 */
-		pEntry->ServiceID = WMI_DATA_BE_SVC;
+		pEntry->service_id = WMI_DATA_BE_SVC;
 		pEntry->CreditAllocation = (credits >> 1);
 
 		pEntry++;
-		pEntry->ServiceID = WMI_DATA_BK_SVC;
+		pEntry->service_id = WMI_DATA_BK_SVC;
 		pEntry->CreditAllocation = (credits >> 1);
 	}
 
 	if (A_SUCCESS(status)) {
 		int i;
 		for (i = 0; i < HTC_MAX_SERVICE_ALLOC_ENTRIES; i++) {
-			if (target->ServiceTxAllocTable[i].ServiceID != 0) {
+			if (target->ServiceTxAllocTable[i].service_id != 0) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
-						("HTC Service Index : %d TX : 0x%2.2X : alloc:%d \n",
+						("HTC Service Index : %d TX : 0x%2.2X : alloc:%d\n",
 						 i,
 						 target->ServiceTxAllocTable[i].
-						 ServiceID,
+						 service_id,
 						 target->ServiceTxAllocTable[i].
 						 CreditAllocation));
 			}
@@ -386,13 +386,13 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 	return status;
 }
 
-A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 ServiceID)
+A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 service_id)
 {
 	A_UINT8 allocation = 0;
 	int i;
 
 	for (i = 0; i < HTC_MAX_SERVICE_ALLOC_ENTRIES; i++) {
-		if (target->ServiceTxAllocTable[i].ServiceID == ServiceID) {
+		if (target->ServiceTxAllocTable[i].service_id == service_id) {
 			allocation =
 				target->ServiceTxAllocTable[i].CreditAllocation;
 		}
@@ -400,8 +400,8 @@ A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 ServiceID)
 
 	if (0 == allocation) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_INIT,
-				("HTC Service TX : 0x%2.2X : allocation is zero! \n",
-				 ServiceID));
+			("HTC Service TX : 0x%2.2X : allocation is zero!\n",
+				 service_id));
 	}
 
 	return allocation;
@@ -490,7 +490,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 		connect.EpCallbacks.EpTxComplete = htc_control_tx_complete;
 		connect.EpCallbacks.EpRecv = htc_control_rx_complete;
 		connect.MaxSendQueueDepth = NUM_CONTROL_TX_BUFFERS;
-		connect.ServiceID = HTC_CTRL_RSVD_SVC;
+		connect.service_id = HTC_CTRL_RSVD_SVC;
 
 		/* connect fake service */
 		status = htc_connect_service((HTC_HANDLE) target,
@@ -517,7 +517,7 @@ static void reset_endpoint_states(HTC_TARGET *target)
 
 	for (i = ENDPOINT_0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
-		pEndpoint->ServiceID = 0;
+		pEndpoint->service_id = 0;
 		pEndpoint->MaxMsgLength = 0;
 		pEndpoint->MaxTxQueueDepth = 0;
 		pEndpoint->Id = i;
@@ -692,23 +692,23 @@ void htc_dump_credit_states(HTC_HANDLE HTCHandle)
 
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
-		if (0 == pEndpoint->ServiceID) {
+		if (0 == pEndpoint->service_id)
 			continue;
-		}
+
 		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
-				("--- EP : %d  ServiceID: 0x%X    --------------\n",
-				 pEndpoint->Id, pEndpoint->ServiceID));
+			("--- EP : %d  service_id: 0x%X    --------------\n",
+				 pEndpoint->Id, pEndpoint->service_id));
 		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
-				(" TxCredits          : %d \n",
+				(" TxCredits          : %d\n",
 				 pEndpoint->TxCredits));
 		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
-				(" TxCreditSize       : %d \n",
+				(" TxCreditSize       : %d\n",
 				 pEndpoint->TxCreditSize));
 		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
-				(" TxCreditsPerMaxMsg : %d \n",
+				(" TxCreditsPerMaxMsg : %d\n",
 				 pEndpoint->TxCreditsPerMaxMsg));
 		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
-				(" TxQueueDepth       : %d \n",
+				(" TxQueueDepth       : %d\n",
 				 HTC_PACKET_QUEUE_DEPTH(&pEndpoint->TxQueue)));
 		AR_DEBUG_PRINTF(ATH_DEBUG_ANY,
 				("----------------------------------------------------\n"));

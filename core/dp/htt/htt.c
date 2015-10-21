@@ -424,7 +424,7 @@ int htt_htc_attach(struct htt_pdev_t *pdev)
 #endif
 
 	/* connect to control service */
-	connect.ServiceID = HTT_DATA_MSG_SVC;
+	connect.service_id = HTT_DATA_MSG_SVC;
 
 	status = htc_connect_service(pdev->htc_pdev, &connect, &response);
 

@@ -163,7 +163,7 @@ typedef struct _HTC_EP_CALLBACKS {
 
 /* service connection information */
 typedef struct _HTC_SERVICE_CONNECT_REQ {
-	HTC_SERVICE_ID ServiceID;               /* service ID to connect to */
+	HTC_SERVICE_ID service_id;               /* service ID to connect to */
 	A_UINT16 ConnectionFlags;               /* connection flags, see htc protocol definition */
 	A_UINT8 *pMetaData;             /* ptr to optional service-specific meta-data */
 	A_UINT8 MetaDataLength;         /* optional meta data length */
@@ -189,7 +189,7 @@ typedef struct _HTC_SERVICE_CONNECT_RESP {
 typedef struct _HTC_ENDPOINT_CREDIT_DIST {
 	struct _HTC_ENDPOINT_CREDIT_DIST *pNext;
 	struct _HTC_ENDPOINT_CREDIT_DIST *pPrev;
-	HTC_SERVICE_ID ServiceID;               /* Service ID (set by HTC) */
+	HTC_SERVICE_ID service_id;               /* Service ID (set by HTC) */
 	HTC_ENDPOINT_ID Endpoint;               /* endpoint for this distribution struct (set by HTC) */
 	A_UINT32 DistFlags;             /* distribution flags, distribution function can
 	                                   set default activity using SET_EP_ACTIVE() macro */
