@@ -3245,15 +3245,20 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		WMA_LOGE("Credits:%d; Pending_Cmds: %d",
 			 wmi_get_host_credits(wma->wmi_handle),
 			 wmi_get_pending_cmds(wma->wmi_handle));
+		if (!cds_is_logp_in_progress()) {
 #ifdef CONFIG_CNSS
-		if (pMac->sme.enableSelfRecovery) {
-			cds_trigger_recovery();
-		} else {
-			CDF_BUG(0);
-		}
+			if (pMac->sme.enableSelfRecovery) {
+				cds_trigger_recovery();
+			} else {
+				CDF_BUG(0);
+			}
 #else
-		CDF_BUG(0);
+			CDF_BUG(0);
 #endif /* CONFIG_CNSS */
+		} else {
+			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
+		}
+
 		wmi_set_target_suspend(wma->wmi_handle, false);
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -5924,10 +5929,14 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 		WMA_LOGE("Failed to get ACK from firmware for pdev suspend");
 		wmi_set_target_suspend(wma_handle->wmi_handle, false);
 #ifdef CONFIG_CNSS
-		if (pmac->sme.enableSelfRecovery) {
-			cds_trigger_recovery();
+		if (!cds_is_logp_in_progress()) {
+			if (pmac->sme.enableSelfRecovery) {
+				cds_trigger_recovery();
+			} else {
+				CDF_BUG(0);
+			}
 		} else {
-			CDF_BUG(0);
+			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
 		}
 #endif
 		return -EFAULT;
