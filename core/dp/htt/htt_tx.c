@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -624,6 +624,24 @@ int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
 	return 0;               /* success */
 
 }
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * htt_tx_resume_handler() - resume callback for the htt endpoint
+ * @context: a pointer to the htt context
+ *
+ * runs htt_tx_sched.
+ */
+void htt_tx_resume_handler(void *context)
+{
+	struct htt_pdev_t *pdev =  (struct htt_pdev_t *) context;
+
+	htt_tx_sched(pdev);
+}
+#else
+void
+htt_tx_resume_handler(void *context) { }
+#endif
 
 cdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
