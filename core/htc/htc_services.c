@@ -267,7 +267,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			break;
 		}
 
-		pEndpoint = &target->EndPoint[assignedEndpoint];
+		pEndpoint = &target->endpoint[assignedEndpoint];
 		pEndpoint->Id = assignedEndpoint;
 		if (pEndpoint->ServiceID != 0) {
 			/* endpoint already in use! */

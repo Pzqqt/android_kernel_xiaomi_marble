@@ -123,15 +123,15 @@ typedef struct _HTC_ENDPOINT {
 	int TxCreditSize;               /* size in bytes of each credit (set by HTC) */
 	int TxCreditsPerMaxMsg;         /* credits required per max message (precalculated) */
 #ifdef HTC_EP_STAT_PROFILING
-	HTC_ENDPOINT_STATS EndPointStats;               /* endpoint statistics */
+	HTC_ENDPOINT_STATS endpoint_stats;     /* endpoint statistics */
 #endif
 	A_BOOL TxCreditFlowEnabled;
 } HTC_ENDPOINT;
 
 #ifdef HTC_EP_STAT_PROFILING
-#define INC_HTC_EP_STAT(p,stat,count) (p)->EndPointStats.stat += (count);
+#define INC_HTC_EP_STAT(p, stat, count) ((p)->endpoint_stats.stat += (count))
 #else
-#define INC_HTC_EP_STAT(p,stat,count)
+#define INC_HTC_EP_STAT(p, stat, count)
 #endif
 
 typedef struct {
@@ -150,7 +150,7 @@ enum ol_ath_htc_pkt_ecodes {
 /* our HTC target state */
 typedef struct _HTC_TARGET {
 	struct ol_softc *hif_dev;
-	HTC_ENDPOINT EndPoint[ENDPOINT_MAX];
+	HTC_ENDPOINT endpoint[ENDPOINT_MAX];
 	cdf_spinlock_t HTCLock;
 	cdf_spinlock_t HTCRxLock;
 	cdf_spinlock_t HTCTxLock;
