@@ -257,7 +257,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
 		target->hif_dev = ol_sc;
 
 		/* Get HIF default pipe for HTC message exchange */
-		pEndpoint = &target->EndPoint[ENDPOINT_0];
+		pEndpoint = &target->endpoint[ENDPOINT_0];
 
 		hif_post_init(target->hif_dev, target, &htcCallbacks);
 		hif_get_default_pipe(target->hif_dev, &pEndpoint->UL_PipeID,
@@ -516,7 +516,7 @@ static void reset_endpoint_states(HTC_TARGET *target)
 	int i;
 
 	for (i = ENDPOINT_0; i < ENDPOINT_MAX; i++) {
-		pEndpoint = &target->EndPoint[i];
+		pEndpoint = &target->endpoint[i];
 		pEndpoint->ServiceID = 0;
 		pEndpoint->MaxMsgLength = 0;
 		pEndpoint->MaxTxQueueDepth = 0;
@@ -616,7 +616,7 @@ void htc_flush_surprise_remove(HTC_HANDLE HTCHandle)
 
 	/* cleanup endpoints */
 	for (i = 0; i < ENDPOINT_MAX; i++) {
-		pEndpoint = &target->EndPoint[i];
+		pEndpoint = &target->endpoint[i];
 		htc_flush_rx_hold_queue(target, pEndpoint);
 		htc_flush_endpoint_tx(target, pEndpoint, HTC_TX_PACKET_TAG_ALL);
 	}
@@ -652,7 +652,7 @@ void htc_stop(HTC_HANDLE HTCHandle)
 
 	/* cleanup endpoints */
 	for (i = 0; i < ENDPOINT_MAX; i++) {
-		pEndpoint = &target->EndPoint[i];
+		pEndpoint = &target->endpoint[i];
 		htc_flush_rx_hold_queue(target, pEndpoint);
 		htc_flush_endpoint_tx(target, pEndpoint, HTC_TX_PACKET_TAG_ALL);
 		if (pEndpoint->ul_is_polled) {
@@ -691,7 +691,7 @@ void htc_dump_credit_states(HTC_HANDLE HTCHandle)
 	int i;
 
 	for (i = 0; i < ENDPOINT_MAX; i++) {
-		pEndpoint = &target->EndPoint[i];
+		pEndpoint = &target->endpoint[i];
 		if (0 == pEndpoint->ServiceID) {
 			continue;
 		}
@@ -749,13 +749,13 @@ A_BOOL htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
 	if (sample) {
 		A_ASSERT(pStats != NULL);
 		/* return the stats to the caller */
-		A_MEMCPY(pStats, &target->EndPoint[Endpoint].EndPointStats,
+		A_MEMCPY(pStats, &target->endpoint[Endpoint].endpoint_stats,
 			 sizeof(HTC_ENDPOINT_STATS));
 	}
 
 	if (clearStats) {
 		/* reset stats */
-		A_MEMZERO(&target->EndPoint[Endpoint].EndPointStats,
+		A_MEMZERO(&target->endpoint[Endpoint].endpoint_stats,
 			  sizeof(HTC_ENDPOINT_STATS));
 	}
 

@@ -121,7 +121,7 @@ void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credits
 	*credits = 0;
 	LOCK_HTC_TX(target);
 	for (i = 0; i < ENDPOINT_MAX; i++) {
-		pEndpoint = &target->EndPoint[i];
+		pEndpoint = &target->endpoint[i];
 		if (pEndpoint->ServiceID == WMI_CONTROL_SVC) {
 			*credits = pEndpoint->TxCredits;
 			break;
@@ -185,7 +185,7 @@ static void do_send_completion(HTC_ENDPOINT *pEndpoint,
 
 static void send_packet_completion(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
-	HTC_ENDPOINT *pEndpoint = &target->EndPoint[pPacket->Endpoint];
+	HTC_ENDPOINT *pEndpoint = &target->endpoint[pPacket->Endpoint];
 	HTC_PACKET_QUEUE container;
 
 	restore_tx_packet(target, pPacket);
@@ -1034,7 +1034,7 @@ static A_UINT16 htc_send_pkts_sched_check(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID 
 	}
 
 	for (eid = ENDPOINT_2; eid <= ENDPOINT_5; eid++) {
-		pEndpoint = &target->EndPoint[eid];
+		pEndpoint = &target->endpoint[eid];
 		pTxQueue = &pEndpoint->TxQueue;
 
 		if (HTC_QUEUE_EMPTY(pTxQueue)) {
@@ -1068,7 +1068,7 @@ static A_STATUS htc_send_pkts_sched_queue(HTC_TARGET *target,
 	HTC_PACKET *pPacket;
 	int goodPkts;
 
-	pEndpoint = &target->EndPoint[eid];
+	pEndpoint = &target->endpoint[eid];
 	pTxQueue = &pEndpoint->TxQueue;
 
 	LOCK_HTC_TX(target);
@@ -1133,7 +1133,7 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 	}
 
 	AR_DEBUG_ASSERT(pPacket->Endpoint < ENDPOINT_MAX);
-	pEndpoint = &target->EndPoint[pPacket->Endpoint];
+	pEndpoint = &target->endpoint[pPacket->Endpoint];
 
 	if (!pEndpoint->ServiceID) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("%s ServiceID is invalid\n",
@@ -1246,7 +1246,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, cdf_nbuf_t netbuf, int Epid,
 	int tx_resources;
 	uint32_t data_attr = 0;
 
-	pEndpoint = &target->EndPoint[Epid];
+	pEndpoint = &target->endpoint[Epid];
 
 	tx_resources =
 		hif_get_free_queue_number(target->hif_dev, pEndpoint->UL_PipeID);
@@ -1320,7 +1320,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 
 	if (pPacket) {
 		AR_DEBUG_ASSERT(pPacket->Endpoint < ENDPOINT_MAX);
-		pEndpoint = &target->EndPoint[pPacket->Endpoint];
+		pEndpoint = &target->endpoint[pPacket->Endpoint];
 
 		/* add HTC_FRAME_HDR in the initial fragment */
 		netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
@@ -1372,7 +1372,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 #endif
 	} else {
 		LOCK_HTC_TX(target);
-		pEndpoint = &target->EndPoint[1];
+		pEndpoint = &target->endpoint[1];
 	}
 
 	/* increment tx processing count on entry */
@@ -1597,7 +1597,7 @@ CDF_STATUS htc_tx_completion_handler(void *Context,
 	A_UINT16 resourcesMax;
 #endif
 
-	pEndpoint = &target->EndPoint[EpID];
+	pEndpoint = &target->endpoint[EpID];
 	target->TX_comp_cnt++;
 
 	do {
@@ -1647,7 +1647,7 @@ void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID)
 	HTC_ENDPOINT *pEndpoint = NULL;
 
 	for (i = 0; i < ENDPOINT_MAX; i++) {
-		pEndpoint = &target->EndPoint[i];
+		pEndpoint = &target->endpoint[i];
 		if (pEndpoint->ServiceID != 0) {
 			if (pEndpoint->UL_PipeID == pipeID) {
 				break;
@@ -1693,7 +1693,7 @@ void htc_flush_endpoint(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint,
 			HTC_TX_TAG Tag)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
-	HTC_ENDPOINT *pEndpoint = &target->EndPoint[Endpoint];
+	HTC_ENDPOINT *pEndpoint = &target->endpoint[Endpoint];
 
 	if (pEndpoint->ServiceID == 0) {
 		AR_DEBUG_ASSERT(false);
@@ -1743,7 +1743,7 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 
 		rpt_credits = HTC_GET_FIELD(pRpt, HTC_CREDIT_REPORT, CREDITS);
 
-		pEndpoint = &target->EndPoint[rpt_ep_id];
+		pEndpoint = &target->endpoint[rpt_ep_id];
 #if DEBUG_CREDIT
 		if (ep_debug_mask & (1 << pEndpoint->Id)) {
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
@@ -1787,7 +1787,7 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 			target->avail_tx_credits += rpt_credits;
 
 			for (epid_idx = 0; epid_idx < DATA_EP_SIZE; epid_idx++) {
-				pEndpoint = &target->EndPoint[eid[epid_idx]];
+				pEndpoint = &target->endpoint[eid[epid_idx]];
 				if (HTC_PACKET_QUEUE_DEPTH(&pEndpoint->TxQueue)) {
 					break;
 				}

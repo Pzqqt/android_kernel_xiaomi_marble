@@ -1168,7 +1168,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 			 * htt_h2t_rx_ring_cfg_msg_ll() have already been
 			 * freed in htt_htc_misc_pkt_pool_free() in
 			 * wlantl_close(), so do not free them here again
-			 * by checking whether it's the EndPoint
+			 * by checking whether it's the endpoint
 			 * which they are queued in.
 			 */
 			if (id == hif_state->scn->htc_endpoint)
