@@ -57,14 +57,14 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 	A_UINT8 rsp_msg_status, rsp_msg_end_id, rsp_msg_serv_meta_len;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
-			("+htc_connect_service, target:%p SvcID:0x%X \n", target,
-			 pConnectReq->ServiceID));
+			("+htc_connect_service, target:%p SvcID:0x%X\n", target,
+			 pConnectReq->service_id));
 
 	do {
 
-		AR_DEBUG_ASSERT(pConnectReq->ServiceID != 0);
+		AR_DEBUG_ASSERT(pConnectReq->service_id != 0);
 
-		if (HTC_CTRL_RSVD_SVC == pConnectReq->ServiceID) {
+		if (HTC_CTRL_RSVD_SVC == pConnectReq->service_id) {
 			/* special case for pseudo control service */
 			assignedEndpoint = ENDPOINT_0;
 			maxMsgSize = HTC_MAX_CONTROL_MESSAGE_LENGTH;
@@ -72,13 +72,13 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 		} else {
 
-			txAlloc =
-				htc_get_credit_allocation(target,
-							  pConnectReq->ServiceID);
+			txAlloc = htc_get_credit_allocation(target,
+					pConnectReq->service_id);
+
 			if (!txAlloc) {
 				AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 						("Service %d does not allocate target credits!\n",
-						 pConnectReq->ServiceID));
+						 pConnectReq->service_id));
 			}
 
 			/* allocate a packet to send to the target */
@@ -117,7 +117,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			HTC_SET_FIELD(pConnectMsg, HTC_CONNECT_SERVICE_MSG,
 				      MESSAGEID, HTC_MSG_CONNECT_SERVICE_ID);
 			HTC_SET_FIELD(pConnectMsg, HTC_CONNECT_SERVICE_MSG,
-				      SERVICE_ID, pConnectReq->ServiceID);
+				      SERVICE_ID, pConnectReq->service_id);
 			HTC_SET_FIELD(pConnectMsg, HTC_CONNECT_SERVICE_MSG,
 				      CONNECTIONFLAGS, conn_flags);
 
@@ -133,7 +133,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 #else
 			/* Only enable credit for WMI service */
 			if (!htc_credit_flow
-			    && pConnectReq->ServiceID != WMI_CONTROL_SVC) {
+			    && pConnectReq->service_id != WMI_CONTROL_SVC) {
 				disableCreditFlowCtrl = true;
 			}
 #endif
@@ -269,7 +269,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 		pEndpoint = &target->endpoint[assignedEndpoint];
 		pEndpoint->Id = assignedEndpoint;
-		if (pEndpoint->ServiceID != 0) {
+		if (pEndpoint->service_id != 0) {
 			/* endpoint already in use! */
 			AR_DEBUG_ASSERT(false);
 			break;
@@ -280,7 +280,8 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 		pConnectResp->MaxMsgLength = maxMsgSize;
 
 		/* setup the endpoint */
-		pEndpoint->ServiceID = pConnectReq->ServiceID;  /* this marks the endpoint in use */
+		/* service_id marks the endpoint in use */
+		pEndpoint->service_id = pConnectReq->service_id;
 		pEndpoint->MaxTxQueueDepth = pConnectReq->MaxSendQueueDepth;
 		pEndpoint->MaxMsgLength = maxMsgSize;
 		pEndpoint->TxCredits = txAlloc;
@@ -300,7 +301,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 		pEndpoint->EpCallBacks = pConnectReq->EpCallbacks;
 
 		status = hif_map_service_to_pipe(target->hif_dev,
-						 pEndpoint->ServiceID,
+						 pEndpoint->service_id,
 						 &pEndpoint->UL_PipeID,
 						 &pEndpoint->DL_PipeID,
 						 &pEndpoint->ul_is_polled,
@@ -321,14 +322,14 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_SETUP,
 				("HTC Service:0x%4.4X, ULpipe:%d DLpipe:%d id:%d Ready\n",
-				 pEndpoint->ServiceID, pEndpoint->UL_PipeID,
+				 pEndpoint->service_id, pEndpoint->UL_PipeID,
 				 pEndpoint->DL_PipeID, pEndpoint->Id));
 
 		if (disableCreditFlowCtrl && pEndpoint->TxCreditFlowEnabled) {
 			pEndpoint->TxCreditFlowEnabled = false;
 			AR_DEBUG_PRINTF(ATH_DEBUG_WARN,
 					("HTC Service:0x%4.4X ep:%d TX flow control disabled\n",
-					 pEndpoint->ServiceID,
+					 pEndpoint->service_id,
 					 assignedEndpoint));
 		}
 

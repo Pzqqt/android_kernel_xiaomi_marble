@@ -96,8 +96,12 @@ typedef struct {
 
 typedef struct _HTC_ENDPOINT {
 	HTC_ENDPOINT_ID Id;
-	HTC_SERVICE_ID ServiceID;               /* service ID this endpoint is bound to
-	                                           non-zero value means this endpoint is in use */
+
+	/* service ID this endpoint is bound to
+	 * non-zero value means this endpoint is in use
+	 */
+	HTC_SERVICE_ID service_id;
+
 	HTC_EP_CALLBACKS EpCallBacks;           /* callbacks associated with this endpoint */
 	HTC_PACKET_QUEUE TxQueue;               /* HTC frame buffer TX queue */
 	int MaxTxQueueDepth;            /* max depth of the TX queue before we need to
@@ -135,7 +139,7 @@ typedef struct _HTC_ENDPOINT {
 #endif
 
 typedef struct {
-	A_UINT16 ServiceID;
+	A_UINT16 service_id;
 	A_UINT8 CreditAllocation;
 } HTC_SERVICE_TX_CREDIT_ALLOCATION;
 
@@ -233,7 +237,7 @@ void htc_recv_init(HTC_TARGET *target);
 A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);
 void htc_free_control_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket);
 HTC_PACKET *htc_alloc_control_tx_packet(HTC_TARGET *target);
-A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 ServiceID);
+A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 service_id);
 void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID);
 void htc_control_rx_complete(void *Context, HTC_PACKET *pPacket);
 void htc_process_credit_rpt(HTC_TARGET *target,

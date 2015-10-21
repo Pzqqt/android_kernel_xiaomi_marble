@@ -122,7 +122,7 @@ void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credits
 	LOCK_HTC_TX(target);
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
-		if (pEndpoint->ServiceID == WMI_CONTROL_SVC) {
+		if (pEndpoint->service_id == WMI_CONTROL_SVC) {
 			*credits = pEndpoint->TxCredits;
 			break;
 		}
@@ -689,7 +689,7 @@ void get_htc_send_packets_credit_based(HTC_TARGET *target,
 				/* tell the target we need credits ASAP! */
 				sendFlags |= HTC_FLAGS_NEED_CREDIT_UPDATE;
 
-				if (pEndpoint->ServiceID == WMI_CONTROL_SVC) {
+				if (pEndpoint->service_id == WMI_CONTROL_SVC) {
 					LOCK_HTC_CREDIT(target);
 					htc_credit_record(HTC_REQUEST_CREDIT,
 							  pEndpoint->TxCredits,
@@ -1135,8 +1135,8 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 	AR_DEBUG_ASSERT(pPacket->Endpoint < ENDPOINT_MAX);
 	pEndpoint = &target->endpoint[pPacket->Endpoint];
 
-	if (!pEndpoint->ServiceID) {
-		AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("%s ServiceID is invalid\n",
+	if (!pEndpoint->service_id) {
+		AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("%s service_id is invalid\n",
 								__func__));
 		return A_EINVAL;
 	}
@@ -1648,7 +1648,7 @@ void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID)
 
 	for (i = 0; i < ENDPOINT_MAX; i++) {
 		pEndpoint = &target->endpoint[i];
-		if (pEndpoint->ServiceID != 0) {
+		if (pEndpoint->service_id != 0) {
 			if (pEndpoint->UL_PipeID == pipeID) {
 				break;
 			}
@@ -1695,7 +1695,7 @@ void htc_flush_endpoint(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint,
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_ENDPOINT *pEndpoint = &target->endpoint[Endpoint];
 
-	if (pEndpoint->ServiceID == 0) {
+	if (pEndpoint->service_id == 0) {
 		AR_DEBUG_ASSERT(false);
 		/* not in use.. */
 		return;
@@ -1809,7 +1809,7 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 #else
 		pEndpoint->TxCredits += rpt_credits;
 
-		if (pEndpoint->ServiceID == WMI_CONTROL_SVC) {
+		if (pEndpoint->service_id == WMI_CONTROL_SVC) {
 			LOCK_HTC_CREDIT(target);
 			htc_credit_record(HTC_PROCESS_CREDIT_REPORT,
 					  pEndpoint->TxCredits,
@@ -1824,7 +1824,7 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 #ifdef ATH_11AC_TXCOMPACT
 			htc_try_send(target, pEndpoint, NULL);
 #else
-			if (pEndpoint->ServiceID == HTT_DATA_MSG_SVC) {
+			if (pEndpoint->service_id == HTT_DATA_MSG_SVC) {
 				htc_send_data_pkt(target, NULL, 0);
 			} else {
 				htc_try_send(target, pEndpoint, NULL);

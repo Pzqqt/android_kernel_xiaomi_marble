@@ -1300,7 +1300,7 @@ wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 		wmi_htc_tx_complete /* ar6000_tx_queue_full */;
 
 	/* connect to control service */
-	connect.ServiceID = WMI_CONTROL_SVC;
+	connect.service_id = WMI_CONTROL_SVC;
 
 	if ((status =
 		     htc_connect_service(htc_handle, &connect, &response)) != EOK) {
