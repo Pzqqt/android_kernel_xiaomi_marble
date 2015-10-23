@@ -17959,6 +17959,10 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 		pMac->roam.roamSession[sessionId].connectedProfile.AuthType;
 
 	pSession->ftSmeContext.addMDIE = false;
+
+	/* Done with it, init it. */
+	pSession->ftSmeContext.psavedFTPreAuthRsp = NULL;
+
 	if (csr_roam_is11r_assoc(pMac, pFTPreAuthRsp->smeSessionId) &&
 	    (conn_Auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
 		uint16_t ft_ies_length;
@@ -17991,8 +17995,6 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 			pSession->ftSmeContext.addMDIE = true;
 		}
 	}
-	/* Done with it, init it. */
-	pSession->ftSmeContext.psavedFTPreAuthRsp = NULL;
 }
 #endif
 
