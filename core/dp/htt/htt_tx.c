@@ -48,6 +48,7 @@
 #include <ol_cfg.h>             /* ol_cfg_netbuf_frags_max, etc. */
 #include <ol_htt_tx_api.h>      /* HTT_TX_DESC_VADDR_OFFSET */
 #include <ol_txrx_htt_api.h>    /* ol_tx_msdu_id_storage */
+#include <ol_txrx_internal.h>
 #include <htt_internal.h>
 
 /* IPA Micro controler TX data packet HTT Header Preset */
@@ -65,25 +66,42 @@
  */
 #define HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT 0x07C04001
 
+#if HTT_PADDR64
+#define HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(frag_filed_ptr)                       \
+do {                                                                           \
+	frag_filed_ptr++;                                                      \
+	/* frags_desc_ptr.hi */                                                \
+	*frag_filed_ptr = 0;                                                   \
+} while (0)
+#else
+#define HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(frag_filed_ptr) {}
+#endif
+
 /*--- setup / tear-down functions -------------------------------------------*/
 
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
 uint32_t *g_dbg_htt_desc_end_addr, *g_dbg_htt_desc_start_addr;
 #endif
 
-int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
+static cdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
+				char *target_vaddr);
+
+#ifdef HELIUMPLUS
+/**
+ * htt_tx_desc_get_size() - get tx descripotrs size
+ * @pdev:	htt device instance pointer
+ *
+ * This function will get HTT TX descriptor size and fragment descriptor size
+ *
+ * Return: None
+ */
+static void htt_tx_desc_get_size(struct htt_pdev_t *pdev)
 {
-	int i, pool_size;
-	uint32_t **p;
-	cdf_dma_addr_t pool_paddr;
-
-#if defined(HELIUMPLUS_PADDR64)
 	pdev->tx_descs.size = sizeof(struct htt_host_tx_desc_t);
-
 	if (HTT_WIFI_IP_VERSION(pdev->wifi_ip_ver.major, 0x2)) {
 		/*
-		* sizeof MSDU_EXT/Fragmentation descriptor.
-		*/
+		 * sizeof MSDU_EXT/Fragmentation descriptor.
+		 */
 		pdev->frag_descs.size = sizeof(struct msdu_ext_desc_t);
 	} else {
 		/*
@@ -96,7 +114,130 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 			(ol_cfg_netbuf_frags_max(pdev->ctrl_pdev)+1) * 8
 			+ 4;
 	}
-#else /* ! defined(HELIUMPLUS_PADDR64) */
+}
+
+/**
+ * htt_tx_frag_desc_field_update() - Update fragment descriptor field
+ * @pdev:	htt device instance pointer
+ * @fptr:	Fragment descriptor field pointer
+ * @index:	Descriptor index to find page and offset
+ * @desc_v_ptr:	descriptor virtual pointot to find offset
+ *
+ * This function will update fragment descriptor field with actual fragment
+ * descriptor stating physical pointer
+ *
+ * Return: None
+ */
+static void htt_tx_frag_desc_field_update(struct htt_pdev_t *pdev,
+		uint32_t *fptr, unsigned int index,
+		struct htt_tx_msdu_desc_t *desc_v_ptr)
+{
+	unsigned int target_page;
+	unsigned int offset;
+	struct cdf_mem_dma_page_t *dma_page;
+
+	target_page = index / pdev->frag_descs.desc_pages.num_element_per_page;
+	offset = index % pdev->frag_descs.desc_pages.num_element_per_page;
+	dma_page = &pdev->frag_descs.desc_pages.dma_pages[target_page];
+	*fptr = (uint32_t)(dma_page->page_p_addr +
+		offset * pdev->frag_descs.size);
+	HTT_TX_DESC_FRAG_FIELD_HI_UPDATE(fptr);
+	return;
+}
+
+/**
+ * htt_tx_frag_desc_attach() - Attach fragment descriptor
+ * @pdev:		htt device instance pointer
+ * @desc_pool_elems:	Number of fragment descriptor
+ *
+ * This function will allocate fragment descriptor
+ *
+ * Return: 0 success
+ */
+static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
+	uint16_t desc_pool_elems)
+{
+	pdev->frag_descs.pool_elems = desc_pool_elems;
+	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->frag_descs.desc_pages,
+		pdev->frag_descs.size, desc_pool_elems,
+		cdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
+	if ((0 == pdev->frag_descs.desc_pages.num_pages) ||
+		(NULL == pdev->frag_descs.desc_pages.dma_pages)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"FRAG descriptor alloc fail");
+		return -ENOBUFS;
+	}
+	return 0;
+}
+
+/**
+ * htt_tx_frag_desc_detach() - Detach fragment descriptor
+ * @pdev:		htt device instance pointer
+ *
+ * This function will free fragment descriptor
+ *
+ * Return: None
+ */
+static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev)
+{
+	cdf_mem_multi_pages_free(pdev->osdev, &pdev->frag_descs.desc_pages,
+		cdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
+}
+
+/**
+ * htt_tx_frag_alloc() - Allocate single fragment descriptor from the pool
+ * @pdev:		htt device instance pointer
+ * @index:		Descriptor index
+ * @frag_paddr_lo:	Fragment descriptor physical address
+ * @frag_ptr:		Fragment descriptor virtual address
+ *
+ * This function will free fragment descriptor
+ *
+ * Return: None
+ */
+int htt_tx_frag_alloc(htt_pdev_handle pdev,
+	u_int16_t index, u_int32_t *frag_paddr_lo, void **frag_ptr)
+{
+	uint16_t frag_page_index;
+	uint16_t frag_elem_index;
+	struct cdf_mem_dma_page_t *dma_page;
+
+	/** Index should never be 0, since its used by the hardware
+	    to terminate the link. */
+	if (index >= pdev->tx_descs.pool_elems) {
+		*frag_ptr = NULL;
+		return 1;
+	}
+
+	frag_page_index = index /
+		pdev->frag_descs.desc_pages.num_element_per_page;
+	frag_elem_index = index %
+		pdev->frag_descs.desc_pages.num_element_per_page;
+	dma_page = &pdev->frag_descs.desc_pages.dma_pages[frag_page_index];
+
+	*frag_ptr = dma_page->page_v_addr_start +
+		frag_elem_index * pdev->frag_descs.size;
+	if (((char *)(*frag_ptr) < dma_page->page_v_addr_start) ||
+		((char *)(*frag_ptr) > dma_page->page_v_addr_end)) {
+		*frag_ptr = NULL;
+		return 1;
+	}
+
+	*frag_paddr_lo = dma_page->page_p_addr +
+		frag_elem_index * pdev->frag_descs.size;
+	return 0;
+}
+#else
+/**
+ * htt_tx_desc_get_size() - get tx descripotrs size
+ * @pdev:	htt device instance pointer
+ *
+ * This function will get HTT TX descriptor size and fragment descriptor size
+ *
+ * Return: None
+ */
+static inline void htt_tx_desc_get_size(struct htt_pdev_t *pdev)
+{
 	/*
 	 * Start with the size of the base struct
 	 * that actually gets downloaded.
@@ -111,10 +252,74 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 		+ (ol_cfg_netbuf_frags_max(pdev->ctrl_pdev) + 1) * 8
 		   /* 2x uint32_t */
 		+ 4; /* uint32_t fragmentation list terminator */
-
 	if (pdev->tx_descs.size < sizeof(uint32_t *))
 		pdev->tx_descs.size = sizeof(uint32_t *);
-#endif /* defined(HELIUMPLUS_PADDR64) */
+}
+
+/**
+ * htt_tx_frag_desc_field_update() - Update fragment descriptor field
+ * @pdev:	htt device instance pointer
+ * @fptr:	Fragment descriptor field pointer
+ * @index:	Descriptor index to find page and offset
+ * @desc_v_ptr:	descriptor virtual pointot to find offset
+ *
+ * This function will update fragment descriptor field with actual fragment
+ * descriptor stating physical pointer
+ *
+ * Return: None
+ */
+static void htt_tx_frag_desc_field_update(struct htt_pdev_t *pdev,
+		uint32_t *fptr, unsigned int index,
+		struct htt_tx_msdu_desc_t *desc_v_ptr)
+{
+	*fptr = (uint32_t)htt_tx_get_paddr(pdev, (char *)desc_v_ptr) +
+		HTT_TX_DESC_LEN;
+}
+
+/**
+ * htt_tx_frag_desc_attach() - Attach fragment descriptor
+ * @pdev:	htt device instance pointer
+ * @desc_pool_elems:	Number of fragment descriptor
+ *
+ * This function will allocate fragment descriptor
+ *
+ * Return: 0 success
+ */
+static inline int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
+	int desc_pool_elems)
+{
+	return 0;
+}
+
+/**
+ * htt_tx_frag_desc_detach() - Detach fragment descriptor
+ * @pdev:		htt device instance pointer
+ *
+ * This function will free fragment descriptor
+ *
+ * Return: None
+ */
+static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev) {}
+#endif /* HELIUMPLUS */
+
+/**
+ * htt_tx_attach() - Attach HTT device instance
+ * @pdev:		htt device instance pointer
+ * @desc_pool_elems:	Number of TX descriptors
+ *
+ * This function will allocate HTT TX resources
+ *
+ * Return: 0 Success
+ */
+int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
+{
+	int i, i_int, pool_size;
+	uint32_t **p;
+	struct cdf_mem_dma_page_t *page_info;
+	uint32_t num_link = 0;
+	uint16_t num_page, num_desc_per_page;
+
+	htt_tx_desc_get_size(pdev);
 	/*
 	 * Make sure tx_descs.size is a multiple of 4-bytes.
 	 * It should be, but round up just to be sure.
@@ -123,94 +328,120 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 
 	pdev->tx_descs.pool_elems = desc_pool_elems;
 	pdev->tx_descs.alloc_cnt = 0;
-
 	pool_size = pdev->tx_descs.pool_elems * pdev->tx_descs.size;
-
-	pdev->tx_descs.pool_vaddr =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev, pool_size,
-			&pool_paddr,
-			cdf_get_dma_mem_context((&pdev->tx_descs), memctx));
-
-	pdev->tx_descs.pool_paddr = pool_paddr;
-
-	if (!pdev->tx_descs.pool_vaddr)
-		return -ENOBUFS;       /* failure */
-
-	cdf_print("%s:htt_desc_start:0x%p htt_desc_end:0x%p\n", __func__,
-		  pdev->tx_descs.pool_vaddr,
-		  (uint32_t *) (pdev->tx_descs.pool_vaddr + pool_size));
-
-#if defined(HELIUMPLUS_PADDR64)
-	pdev->frag_descs.pool_elems = desc_pool_elems;
-	/*
-	 * Allocate space for MSDU extension descriptor
-	 * H/W expects this in contiguous memory
-	 */
-	pool_size = pdev->frag_descs.pool_elems * pdev->frag_descs.size;
-
-	pdev->frag_descs.pool_vaddr = cdf_os_mem_alloc_consistent(
-		pdev->osdev, pool_size, &pool_paddr,
-		cdf_get_dma_mem_context((&pdev->frag_descs), memctx));
-
-	if (!pdev->frag_descs.pool_vaddr)
-		return -ENOBUFS; /* failure */
-
-	pdev->frag_descs.pool_paddr = pool_paddr;
-
-	cdf_print("%s:MSDU Ext.Table Start:0x%p MSDU Ext.Table End:0x%p\n",
-		  __func__, pdev->frag_descs.pool_vaddr,
-		  (u_int32_t *) (pdev->frag_descs.pool_vaddr + pool_size));
-#endif /* defined(HELIUMPLUS_PADDR64) */
-
-#ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-	g_dbg_htt_desc_end_addr = (uint32_t *)
-				  (pdev->tx_descs.pool_vaddr + pool_size);
-	g_dbg_htt_desc_start_addr = (uint32_t *) pdev->tx_descs.pool_vaddr;
-#endif
+	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_descs.desc_pages,
+		pdev->tx_descs.size, pdev->tx_descs.pool_elems,
+		cdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
+	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
+		(NULL == pdev->tx_descs.desc_pages.dma_pages)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"HTT desc alloc fail");
+		goto out_fail;
+	}
+	num_page = pdev->tx_descs.desc_pages.num_pages;
+	num_desc_per_page = pdev->tx_descs.desc_pages.num_element_per_page;
 
 	/* link tx descriptors into a freelist */
-	pdev->tx_descs.freelist = (uint32_t *) pdev->tx_descs.pool_vaddr;
+	page_info = pdev->tx_descs.desc_pages.dma_pages;
+	pdev->tx_descs.freelist = (uint32_t *)page_info->page_v_addr_start;
 	p = (uint32_t **) pdev->tx_descs.freelist;
-	for (i = 0; i < desc_pool_elems - 1; i++) {
-		*p = (uint32_t *) (((char *)p) + pdev->tx_descs.size);
-		p = (uint32_t **) *p;
+	for (i = 0; i < num_page; i++) {
+		for (i_int = 0; i_int < num_desc_per_page; i_int++) {
+			if (i_int == (num_desc_per_page - 1)) {
+				/*
+				 * Last element on this page,
+				 * should pint next page */
+				if (!page_info->page_v_addr_start) {
+					TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+						"over flow num link %d\n",
+						num_link);
+					goto free_htt_desc;
+				}
+				page_info++;
+				*p = (uint32_t *)page_info->page_v_addr_start;
+			} else {
+				*p = (uint32_t *)
+					(((char *) p) + pdev->tx_descs.size);
+			}
+			num_link++;
+			p = (uint32_t **) *p;
+			/* Last link established exit */
+			if (num_link == (pdev->tx_descs.pool_elems - 1))
+				break;
+		}
 	}
 	*p = NULL;
 
-	return 0;               /* success */
+	if (htt_tx_frag_desc_attach(pdev, desc_pool_elems)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"HTT Frag descriptor alloc fail");
+		goto free_htt_desc;
+	}
+
+	/* success */
+	return 0;
+
+free_htt_desc:
+	cdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
+		cdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
+out_fail:
+	return -ENOBUFS;
 }
 
 void htt_tx_detach(struct htt_pdev_t *pdev)
 {
-	if (pdev) {
-		cdf_os_mem_free_consistent(
-			pdev->osdev,
-			/* pool_size */
-			pdev->tx_descs.pool_elems * pdev->tx_descs.size,
-			pdev->tx_descs.pool_vaddr,
-			pdev->tx_descs.pool_paddr,
-			cdf_get_dma_mem_context((&pdev->tx_descs), memctx));
-#if defined(HELIUMPLUS_PADDR64)
-		cdf_os_mem_free_consistent(
-			pdev->osdev,
-			/* pool_size */
-			pdev->frag_descs.pool_elems *
-			pdev->frag_descs.size,
-			pdev->frag_descs.pool_vaddr,
-			pdev->frag_descs.pool_paddr,
-			cdf_get_dma_mem_context((&pdev->frag_descs), memctx));
-#endif /* defined(HELIUMPLUS_PADDR64) */
+	if (!pdev) {
+		cdf_print("htt tx detach invalid instance");
+		return;
 	}
+
+	htt_tx_frag_desc_detach(pdev);
+	cdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
+		cdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
+}
+
+/**
+ * htt_tx_get_paddr() - get physical address for htt desc
+ *
+ * Get HTT descriptor physical address from virtaul address
+ * Find page first and find offset
+ *
+ * Return: Physical address of descriptor
+ */
+static cdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
+				char *target_vaddr)
+{
+	uint16_t i;
+	struct cdf_mem_dma_page_t *page_info = NULL;
+	uint64_t offset;
+
+	for (i = 0; i < pdev->tx_descs.desc_pages.num_pages; i++) {
+		page_info = pdev->tx_descs.desc_pages.dma_pages + i;
+		if (!page_info->page_v_addr_start) {
+			cdf_assert(0);
+			return 0;
+		}
+		if ((target_vaddr >= page_info->page_v_addr_start) &&
+			(target_vaddr <= page_info->page_v_addr_end))
+			break;
+	}
+
+	if (!page_info) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "invalid page_info");
+		return 0;
+	}
+
+	offset = (uint64_t)(target_vaddr - page_info->page_v_addr_start);
+	return page_info->page_p_addr + offset;
 }
 
 /*--- descriptor allocation functions ---------------------------------------*/
 
-void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo)
+void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo,
+			uint16_t index)
 {
 	struct htt_host_tx_desc_t *htt_host_tx_desc;    /* includes HTC hdr */
 	struct htt_tx_msdu_desc_t *htt_tx_desc; /* doesn't include  HTC hdr */
-	uint16_t index;
 	uint32_t *fragmentation_descr_field_ptr;
 
 	htt_host_tx_desc = (struct htt_host_tx_desc_t *)pdev->tx_descs.freelist;
@@ -234,44 +465,20 @@ void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo)
 	fragmentation_descr_field_ptr = (uint32_t *)
 		((uint32_t *) htt_tx_desc) +
 		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
-
-	index = ((char *)htt_host_tx_desc -
-		 (char *)(((struct htt_host_tx_desc_t *)
-			   pdev->tx_descs.pool_vaddr))) /
-		pdev->tx_descs.size;
 	/*
 	 * The fragmentation descriptor is allocated from consistent
 	 * memory. Therefore, we can use the address directly rather
 	 * than having to map it from a virtual/CPU address to a
 	 * physical/bus address.
 	 */
-#if defined(HELIUMPLUS_PADDR64)
-#if HTT_PADDR64
-	/* this is: frags_desc_ptr.lo */
-	*fragmentation_descr_field_ptr = (uint32_t)
-		(pdev->frag_descs.pool_paddr +
-		 (pdev->frag_descs.size * index));
-	fragmentation_descr_field_ptr++;
-	/* frags_desc_ptr.hi */
-	*fragmentation_descr_field_ptr = 0;
-#else /* ! HTT_PADDR64 */
-	*fragmentation_descr_field_ptr = (uint32_t)
-		(pdev->frag_descs.pool_paddr +
-		 (pdev->frag_descs.size * index));
-	cdf_print("%s %d: i %d frag_paddr 0x%x\n",
-		  __func__, __LINE__, index,
-		  (*fragmentation_descr_field_ptr));
-#endif /* HTT_PADDR64 */
-#else /* !HELIUMPLUS_PADDR64 */
-	*fragmentation_descr_field_ptr =
-		HTT_TX_DESC_PADDR(pdev, htt_tx_desc) + HTT_TX_DESC_LEN;
-#endif /* HELIUMPLUS_PADDR64 */
+	htt_tx_frag_desc_field_update(pdev, fragmentation_descr_field_ptr,
+		index, htt_tx_desc);
 
 	/*
 	 * Include the headroom for the HTC frame header when specifying the
 	 * physical address for the HTT tx descriptor.
 	 */
-	*paddr_lo = (uint32_t) HTT_TX_DESC_PADDR(pdev, htt_host_tx_desc);
+	*paddr_lo = (uint32_t)htt_tx_get_paddr(pdev, (char *)htt_host_tx_desc);
 	/*
 	 * The allocated tx descriptor space includes headroom for a
 	 * HTC frame header.  Hide this headroom, so that we don't have
@@ -312,31 +519,12 @@ void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 		*fragmentation_descr_field_ptr = frag_desc_paddr_lo;
 #else
 		*fragmentation_descr_field_ptr =
-			HTT_TX_DESC_PADDR(pdev, htt_tx_desc) + HTT_TX_DESC_LEN;
+			htt_tx_get_paddr(pdev, htt_tx_desc) + HTT_TX_DESC_LEN;
 #endif
 	} else {
 		*fragmentation_descr_field_ptr = paddr;
 	}
 }
-
-#if defined(HELIUMPLUS_PADDR64)
-void *
-htt_tx_frag_alloc(htt_pdev_handle pdev,
-		  u_int16_t index,
-		  u_int32_t *frag_paddr_lo)
-{
-	/** Index should never be 0, since its used by the hardware
-	    to terminate the link. */
-	if (index >= pdev->tx_descs.pool_elems)
-		return NULL;
-
-	*frag_paddr_lo = (uint32_t)
-		(pdev->frag_descs.pool_paddr + (pdev->frag_descs.size * index));
-
-	return ((char *) pdev->frag_descs.pool_vaddr) +
-		(pdev->frag_descs.size * index);
-}
-#endif /* defined(HELIUMPLUS_PADDR64) */
 
 /* PUT THESE AS INLINE IN ol_htt_tx_api.h */
 

@@ -375,6 +375,154 @@ void cdf_mem_free(void *ptr)
 #endif
 
 /**
+ * cdf_mem_multi_pages_alloc() - allocate large size of kernel memory
+ * @osdev:		OS device handle pointer
+ * @pages:		Multi page information storage
+ * @element_size:	Each element size
+ * @element_num:	Total number of elements should be allocated
+ * @memctxt:		Memory context
+ * @cacheable:		Coherent memory or cacheable memory
+ *
+ * This function will allocate large size of memory over multiple pages.
+ * Large size of contiguous memory allocation will fail frequentely, then
+ * instead of allocate large memory by one shot, allocate through multiple, non
+ * contiguous memory and combine pages when actual usage
+ *
+ * Return: None
+ */
+void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
+				struct cdf_mem_multi_page_t *pages,
+				size_t element_size,
+				uint16_t element_num,
+				cdf_dma_context_t memctxt,
+				bool cacheable)
+{
+	uint16_t page_idx;
+	struct cdf_mem_dma_page_t *dma_pages;
+	void **cacheable_pages = NULL;
+	uint16_t i;
+
+	pages->num_element_per_page = PAGE_SIZE / element_size;
+	if (!pages->num_element_per_page) {
+		cdf_print("Invalid page %d or element size %d",
+			(int)PAGE_SIZE, (int)element_size);
+		goto out_fail;
+	}
+
+	pages->num_pages = element_num / pages->num_element_per_page;
+	if (element_num % pages->num_element_per_page)
+		pages->num_pages++;
+
+	if (cacheable) {
+		/* Pages information storage */
+		pages->cacheable_pages = cdf_mem_malloc(
+			pages->num_pages * sizeof(pages->cacheable_pages));
+		if (!pages->cacheable_pages) {
+			cdf_print("Cacheable page storage alloc fail");
+			goto out_fail;
+		}
+
+		cacheable_pages = pages->cacheable_pages;
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
+			cacheable_pages[page_idx] = cdf_mem_malloc(PAGE_SIZE);
+			if (!cacheable_pages[page_idx]) {
+				cdf_print("cacheable page alloc fail, pi %d",
+					page_idx);
+				goto page_alloc_fail;
+			}
+		}
+		pages->dma_pages = NULL;
+	} else {
+		pages->dma_pages = cdf_mem_malloc(
+			pages->num_pages * sizeof(struct cdf_mem_dma_page_t));
+		if (!pages->dma_pages) {
+			cdf_print("dmaable page storage alloc fail");
+			goto out_fail;
+		}
+
+		dma_pages = pages->dma_pages;
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
+			dma_pages->page_v_addr_start =
+				cdf_os_mem_alloc_consistent(osdev, PAGE_SIZE,
+					&dma_pages->page_p_addr, memctxt);
+			if (!dma_pages->page_v_addr_start) {
+				cdf_print("dmaable page alloc fail pi %d",
+					page_idx);
+				goto page_alloc_fail;
+			}
+			dma_pages->page_v_addr_end =
+				dma_pages->page_v_addr_start + PAGE_SIZE;
+			dma_pages++;
+		}
+		pages->cacheable_pages = NULL;
+	}
+	return;
+
+page_alloc_fail:
+	if (cacheable) {
+		for (i = 0; i < page_idx; i++)
+			cdf_mem_free(pages->cacheable_pages[i]);
+		cdf_mem_free(pages->cacheable_pages);
+	} else {
+		dma_pages = pages->dma_pages;
+		for (i = 0; i < page_idx; i++) {
+			cdf_os_mem_free_consistent(osdev, PAGE_SIZE,
+				dma_pages->page_v_addr_start,
+				dma_pages->page_p_addr, memctxt);
+			dma_pages++;
+		}
+		cdf_mem_free(pages->dma_pages);
+	}
+
+out_fail:
+	pages->cacheable_pages = NULL;
+	pages->dma_pages = NULL;
+	pages->num_pages = 0;
+	return;
+}
+
+/**
+ * cdf_mem_multi_pages_free() - free large size of kernel memory
+ * @osdev:	OS device handle pointer
+ * @pages:	Multi page information storage
+ * @memctxt:	Memory context
+ * @cacheable:	Coherent memory or cacheable memory
+ *
+ * This function will free large size of memory over multiple pages.
+ *
+ * Return: None
+ */
+void cdf_mem_multi_pages_free(cdf_device_t osdev,
+				struct cdf_mem_multi_page_t *pages,
+				cdf_dma_context_t memctxt,
+				bool cacheable)
+{
+	unsigned int page_idx;
+	struct cdf_mem_dma_page_t *dma_pages;
+
+	if (cacheable) {
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++)
+			cdf_mem_free(pages->cacheable_pages[page_idx]);
+		cdf_mem_free(pages->cacheable_pages);
+	} else {
+		dma_pages = pages->dma_pages;
+		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
+			cdf_os_mem_free_consistent(osdev, PAGE_SIZE,
+				dma_pages->page_v_addr_start,
+				dma_pages->page_p_addr, memctxt);
+			dma_pages++;
+		}
+		cdf_mem_free(pages->dma_pages);
+	}
+
+	pages->cacheable_pages = NULL;
+	pages->dma_pages = NULL;
+	pages->num_pages = 0;
+	return;
+}
+
+
+/**
  * cdf_mem_set() - set (fill) memory with a specified byte value.
  * @pMemory:    Pointer to memory that will be set
  * @numBytes:   Number of bytes to be set
@@ -629,3 +777,4 @@ cdf_os_mem_dma_sync_single_for_device(cdf_device_t osdev,
 {
 	dma_sync_single_for_device(osdev->dev, bus_addr,  size, direction);
 }
+

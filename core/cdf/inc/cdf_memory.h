@@ -37,6 +37,32 @@
 /* Include Files */
 #include <cdf_types.h>
 
+/**
+ * struct cdf_mem_dma_page_t - Allocated dmaable page
+ * @page_v_addr_start: Page start virtual address
+ * @page_v_addr_end: Page end virtual address
+ * @page_p_addr: Page start physical address
+ */
+struct cdf_mem_dma_page_t {
+	char *page_v_addr_start;
+	char *page_v_addr_end;
+	cdf_dma_addr_t page_p_addr;
+};
+
+/**
+ * struct cdf_mem_multi_page_t - multiple page allocation information storage
+ * @num_element_per_page: Number of element in single page
+ * @num_pages: Number of allocation needed pages
+ * @dma_pages: page information storage in case of coherent memory
+ * @cacheable_pages: page information storage in case of cacheable memory
+ */
+struct cdf_mem_multi_page_t {
+	uint16_t num_element_per_page;
+	uint16_t num_pages;
+	struct cdf_mem_dma_page_t *dma_pages;
+	void **cacheable_pages;
+};
+
 /* Preprocessor definitions and constants */
 
 #ifdef MEMORY_DEBUG
@@ -222,4 +248,15 @@ static inline int32_t cdf_str_len(const char *str)
 	return strlen(str);
 }
 
+void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
+				struct cdf_mem_multi_page_t *pages,
+				size_t element_size,
+				uint16_t element_num,
+				cdf_dma_context_t memctxt,
+				bool cacheable);
+
+void cdf_mem_multi_pages_free(cdf_device_t osdev,
+				struct cdf_mem_multi_page_t *pages,
+				cdf_dma_context_t memctxt,
+				bool cacheable);
 #endif /* __CDF_MEMORY_H */

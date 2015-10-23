@@ -107,6 +107,14 @@ CDF_INLINE_FN int cdf_status_to_os_return(CDF_STATUS status)
 	 __cdf_container_of(ptr, type, member)
 
 /**
+ * cdf_is_pwr2 - test input value is power of 2 integer
+ *
+ * @value: input integer
+ *
+ */
+#define CDF_IS_PWR2(value) (((value) ^ ((value)-1)) == ((value) << 1) - 1)
+
+/**
  * cdf_is_macaddr_equal() - compare two CDF MacAddress
  * @pMacAddr1: Pointer to one cdf MacAddress to compare
  * @pMacAddr2: Pointer to the other cdf MacAddress to compare
@@ -320,6 +328,28 @@ CDF_INLINE_FN uint8_t *cdf_get_u32(uint8_t *ptr, uint32_t *pValue)
 		   (uint32_t) (*(ptr + 1) << 8) | (uint32_t) (*(ptr)));
 #endif
 	return ptr + 4;
+}
+
+/**
+ * cdf_get_pwr2() - get next power of 2 integer from input value
+ * @value: input value to find next power of 2 integer
+ *
+ * Get next power of 2 integer from input value
+ *
+ * Return: Power of 2 integer
+ */
+CDF_INLINE_FN int cdf_get_pwr2(int value)
+{
+	int log2;
+	if (CDF_IS_PWR2(value))
+		return value;
+
+	log2 = 0;
+	while (value) {
+		value >>= 1;
+		log2++;
+	}
+	return 1 << log2;
 }
 
 #endif /*_CDF_UTIL_H*/

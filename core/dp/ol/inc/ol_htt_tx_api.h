@@ -357,7 +357,8 @@ uint16_t htt_tx_compl_desc_id(void *iterator, int num);
  * @param[OUT] paddr_lo - physical address of the HTT descriptor
  * @return success -> descriptor handle, -OR- failure -> NULL
  */
-void *htt_tx_desc_alloc(htt_pdev_handle htt_pdev, uint32_t *paddr_lo);
+void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo,
+			uint16_t index);
 
 /**
  * @brief Free a HTT abstract tx descriptor.
@@ -368,17 +369,26 @@ void *htt_tx_desc_alloc(htt_pdev_handle htt_pdev, uint32_t *paddr_lo);
 void htt_tx_desc_free(htt_pdev_handle htt_pdev, void *htt_tx_desc);
 
 #if defined(HELIUMPLUS_PADDR64)
-/* TODO: oka: use kernel-doc format */
 /**
- * @brief Free a HTT abstract tx descriptor.
+ * @brief Allocate TX frag descriptor
+ * @details
+ *  Allocate TX frag descriptor
  *
- * @param htt_pdev - handle to the HTT instance that made the allocation
- * @param htt_tx_desc - the descriptor to free
+ * @param pdev - handle to the HTT instance that made the allocation
+ * @param index - tx descriptor index
+ * @param frag_paddr_lo - fragment descriptor physical address lower 32bits
+ * @param frag_ptr - fragment descriptor hlos pointe
+ * @return success 0
  */
-void *
-htt_tx_frag_alloc(htt_pdev_handle pdev,
-		  u_int16_t index,
-		  u_int32_t *frag_paddr_lo);
+int htt_tx_frag_alloc(htt_pdev_handle pdev,
+	u_int16_t index, u_int32_t *frag_paddr_lo, void **frag_ptr);
+#else
+static inline int htt_tx_frag_alloc(htt_pdev_handle pdev,
+	u_int16_t index, u_int32_t *frag_paddr_lo, void **frag_ptr)
+{
+	*frag_ptr = NULL;
+	return 0;
+}
 #endif /* defined(HELIUMPLUS_PADDR64) */
 /**
  * @brief Discard all tx frames in the process of being downloaded.

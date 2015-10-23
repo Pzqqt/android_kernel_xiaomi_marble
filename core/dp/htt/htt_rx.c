@@ -149,20 +149,6 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 	pdev->rx_ring.hash_table = NULL;
 }
 
-static int ceil_pwr2(int value)
-{
-	int log2;
-	if (IS_PWR2(value))
-		return value;
-
-	log2 = 0;
-	while (value) {
-		value >>= 1;
-		log2++;
-	}
-	return 1 << log2;
-}
-
 static bool
 htt_rx_msdu_first_msdu_flag_ll(htt_pdev_handle pdev, void *msdu_desc)
 {
@@ -206,7 +192,7 @@ static int htt_rx_ring_size(struct htt_pdev_t *pdev)
 	else if (size > HTT_RX_RING_SIZE_MAX)
 		size = HTT_RX_RING_SIZE_MAX;
 
-	size = ceil_pwr2(size);
+	size = cdf_get_pwr2(size);
 	return size;
 }
 
@@ -2064,7 +2050,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 {
 	int i, j;
 
-	HTT_ASSERT2(IS_PWR2(RX_NUM_HASH_BUCKETS));
+	HTT_ASSERT2(CDF_IS_PWR2(RX_NUM_HASH_BUCKETS));
 
 	pdev->rx_ring.hash_table =
 		cdf_mem_malloc(RX_NUM_HASH_BUCKETS *
@@ -2150,7 +2136,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	uint32_t ring_elem_size = sizeof(uint32_t);
 #endif /* HTT_PADDR64 */
 	pdev->rx_ring.size = htt_rx_ring_size(pdev);
-	HTT_ASSERT2(IS_PWR2(pdev->rx_ring.size));
+	HTT_ASSERT2(CDF_IS_PWR2(pdev->rx_ring.size));
 	pdev->rx_ring.size_mask = pdev->rx_ring.size - 1;
 
 	/*

@@ -154,10 +154,12 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 
 	/** Bank specific data structure.*/
 #if HTT_PADDR64
-	bank_cfg->bank_base_address[0].lo = pdev->frag_descs.pool_paddr;
+	bank_cfg->bank_base_address[0].lo =
+		pdev->frag_descs.desc_pages.dma_pages->page_p_addr;
 	bank_cfg->bank_base_address[0].hi = 0;
 #else /* ! HTT_PADDR64 */
-	bank_cfg->bank_base_address[0] = pdev->frag_descs.pool_paddr;
+	bank_cfg->bank_base_address[0] =
+		pdev->frag_descs.desc_pages.dma_pages->page_p_addr;
 #endif /* HTT_PADDR64 */
 	/* Logical Min index */
 	HTT_H2T_FRAG_DESC_BANK_MIN_IDX_SET(bank_cfg->bank_info[0], 0);
