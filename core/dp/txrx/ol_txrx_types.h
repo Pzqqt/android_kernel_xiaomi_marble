@@ -33,6 +33,7 @@
 #define _OL_TXRX_TYPES__H_
 
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <cdf_memory.h>
 #include <cds_queue.h>          /* TAILQ */
 #include <a_types.h>            /* A_UINT8 */
 #include <htt.h>                /* htt_sec_type, htt_pkt_type, etc. */
@@ -131,15 +132,10 @@ enum ol_tx_frm_type {
 struct ol_tx_desc_t {
 	cdf_nbuf_t netbuf;
 	void *htt_tx_desc;
-#ifdef WLAN_FEATURE_FASTPATH
 	uint16_t id;
-#endif /* WLAN_FEATURE_FASTPATH */
 	uint32_t htt_tx_desc_paddr;
-#if defined(HELIUMPLUS_PADDR64)
 	void *htt_frag_desc; /* struct msdu_ext_desc_t * */
 	uint32_t htt_frag_desc_paddr;
-#endif /* defined(HELIUMPLUS_PADDR64) */
-	uint32_t index;
 	cdf_atomic_t ref_cnt;
 	enum htt_tx_status status;
 
@@ -565,13 +561,17 @@ struct ol_txrx_pdev_t {
 	struct {
 		uint16_t pool_size;
 		uint16_t num_free;
-		union ol_tx_desc_list_elem_t *array;
 		union ol_tx_desc_list_elem_t *freelist;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 		uint8_t num_invalid_bin;
 		cdf_spinlock_t flow_pool_list_lock;
 		TAILQ_HEAD(flow_pool_list_t, ol_tx_flow_pool_t) flow_pool_list;
 #endif
+		uint32_t page_size;
+		uint16_t desc_reserved_size;
+		uint8_t page_divider;
+		uint32_t offset_filter;
+		struct cdf_mem_multi_page_t desc_pages;
 	} tx_desc;
 
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2)
@@ -761,7 +761,6 @@ struct ol_txrx_pdev_t {
 	struct {
 		uint16_t pool_size;
 		uint16_t num_free;
-		struct cdf_tso_seg_elem_t *array;
 		struct cdf_tso_seg_elem_t *freelist;
 		/* tso mutex */
 		OL_TX_MUTEX_TYPE tso_mutex;

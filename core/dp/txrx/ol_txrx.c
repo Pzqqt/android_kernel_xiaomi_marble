@@ -258,27 +258,9 @@ setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
 
 }
 
-/**
- * init_txdesc_id() initialize Tx desc with id
- *
- * @pdev: handle OL pdev
- * @desc_num: Tx descriptor number
- *
- * Return: void
- */
-static inline void
-init_txdesc_id(struct ol_txrx_pdev_t *pdev, int desc_num)
-{
-	pdev->tx_desc.array[desc_num].tx_desc.id = desc_num;
-	cdf_atomic_init(&pdev->tx_desc.array[desc_num].tx_desc.ref_cnt);
-}
 #else  /* not WLAN_FEATURE_FASTPATH */
 static inline void
 setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
-{
-}
-static inline void
-init_txdesc_id(struct ol_txrx_pdev_t *pdev, int desc_num)
 {
 }
 #endif /* WLAN_FEATURE_FASTPATH */
@@ -391,14 +373,20 @@ fail0:
 int
 ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 {
-	int i;
+	uint16_t i;
+	uint16_t fail_idx = 0;
 	int ret = 0;
 	uint16_t desc_pool_size;
 	struct ol_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
 
+	uint16_t desc_element_size = sizeof(union ol_tx_desc_list_elem_t);
+	union ol_tx_desc_list_elem_t *c_element;
+	unsigned int sig_bit;
+	uint16_t desc_per_page;
+
 	if (!osc) {
 		ret = -EINVAL;
-		goto fail0;
+		goto ol_attach_fail;
 	}
 
 	/*
@@ -428,7 +416,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 
 	ret = htt_attach(pdev->htt_pdev, desc_pool_size);
 	if (ret)
-		goto fail0;
+		goto ol_attach_fail;
 
 	/* Update CE's pkt download length */
 	ce_pkt_dl_len_set((void *)osc, htt_pkt_dl_len_get(pdev->htt_pdev));
@@ -436,15 +424,32 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	/* Attach micro controller data path offload resource */
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
 		if (htt_ipa_uc_attach(pdev->htt_pdev))
-			goto fail1;
+			goto uc_attach_fail;
 
-	pdev->tx_desc.array =
-		cdf_mem_malloc(desc_pool_size *
-			       sizeof(union ol_tx_desc_list_elem_t));
-	if (!pdev->tx_desc.array)
-		goto fail2;
-	cdf_mem_set(pdev->tx_desc.array,
-		    desc_pool_size * sizeof(union ol_tx_desc_list_elem_t), 0);
+	/* Calculate single element reserved size power of 2 */
+	pdev->tx_desc.desc_reserved_size = cdf_get_pwr2(desc_element_size);
+	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_desc.desc_pages,
+		pdev->tx_desc.desc_reserved_size, desc_pool_size, 0, true);
+	if ((0 == pdev->tx_desc.desc_pages.num_pages) ||
+		(NULL == pdev->tx_desc.desc_pages.cacheable_pages)) {
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			"Page alloc fail");
+		goto page_alloc_fail;
+	}
+	desc_per_page = pdev->tx_desc.desc_pages.num_element_per_page;
+	pdev->tx_desc.offset_filter = desc_per_page - 1;
+	/* Calculate page divider to find page number */
+	sig_bit = 0;
+	while (desc_per_page) {
+		sig_bit++;
+		desc_per_page = desc_per_page >> 1;
+	}
+	pdev->tx_desc.page_divider = (sig_bit - 1);
+	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		"page_divider 0x%x, offset_filter 0x%x num elem %d, ol desc num page %d, ol desc per page %d",
+		pdev->tx_desc.page_divider, pdev->tx_desc.offset_filter,
+		desc_pool_size, pdev->tx_desc.desc_pages.num_pages,
+		pdev->tx_desc.desc_pages.num_element_per_page);
 
 	/*
 	 * Each SW tx desc (used only within the tx datapath SW) has a
@@ -453,79 +458,74 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	 * desc now, to avoid doing it during time-critical transmit.
 	 */
 	pdev->tx_desc.pool_size = desc_pool_size;
+	pdev->tx_desc.freelist =
+		(union ol_tx_desc_list_elem_t *)
+		(*pdev->tx_desc.desc_pages.cacheable_pages);
+	c_element = pdev->tx_desc.freelist;
 	for (i = 0; i < desc_pool_size; i++) {
 		void *htt_tx_desc;
-#if defined(HELIUMPLUS_PADDR64)
-		void *htt_frag_desc;
-		uint32_t frag_paddr_lo;
-#endif /* defined(HELIUMPLUS_PADDR64) */
+		void *htt_frag_desc = NULL;
+		uint32_t frag_paddr_lo = 0;
 		uint32_t paddr_lo;
 
-		htt_tx_desc = htt_tx_desc_alloc(pdev->htt_pdev, &paddr_lo);
+		if (i == (desc_pool_size - 1))
+			c_element->next = NULL;
+		else
+			c_element->next = (union ol_tx_desc_list_elem_t *)
+				ol_tx_desc_find(pdev, i + 1);
+
+		htt_tx_desc = htt_tx_desc_alloc(pdev->htt_pdev, &paddr_lo, i);
 		if (!htt_tx_desc) {
 			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 				  "%s: failed to alloc HTT tx desc (%d of %d)",
 				__func__, i, desc_pool_size);
-			while (--i >= 0) {
-				htt_tx_desc_free(pdev->htt_pdev,
-						 pdev->tx_desc.array[i].
-						 tx_desc.htt_tx_desc);
-			}
-			goto fail3;
+			fail_idx = i;
+			goto desc_alloc_fail;
 		}
-		pdev->tx_desc.array[i].tx_desc.htt_tx_desc = htt_tx_desc;
-		pdev->tx_desc.array[i].tx_desc.htt_tx_desc_paddr = paddr_lo;
 
-#if defined(HELIUMPLUS_PADDR64)
-		htt_frag_desc = htt_tx_frag_alloc(pdev->htt_pdev, i,
-						  &frag_paddr_lo);
-		if (!htt_frag_desc) {
-			cdf_print("%s: failed to alloc HTT frag dsc (%d/%d)\n",
-				  __func__, i, desc_pool_size);
+		c_element->tx_desc.htt_tx_desc = htt_tx_desc;
+		c_element->tx_desc.htt_tx_desc_paddr = paddr_lo;
+		ret = htt_tx_frag_alloc(pdev->htt_pdev,
+			i, &frag_paddr_lo, &htt_frag_desc);
+		if (ret) {
+			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+				"%s: failed to alloc HTT frag dsc (%d/%d)",
+				__func__, i, desc_pool_size);
 			/* Is there a leak here, is this handling correct? */
-			goto fail3;
+			fail_idx = i;
+			goto desc_alloc_fail;
 		}
-		/* Initialize the first 6 words (TSO flags)
-		   of the frag descriptor */
-		memset(htt_frag_desc, 0, 6*sizeof(uint32_t));
-
-		pdev->tx_desc.array[i].tx_desc.htt_frag_desc = htt_frag_desc;
-#if defined(HELIUMPLUS_DEBUG)
-		cdf_print("%s:%d %d %p\n", __func__, __LINE__,
-			i, pdev->tx_desc.array[i].tx_desc.htt_frag_desc);
-#endif /* HELIUMPLUS_DEBUG */
-		pdev->tx_desc.array[i].tx_desc.htt_frag_desc_paddr =
-			frag_paddr_lo;
-#if defined(HELIUMPLUS_DEBUG)
-		cdf_print("%s:%d - %d FRAG VA 0x%p FRAG PA 0x%x\n",
+		if (!ret && htt_frag_desc) {
+			/* Initialize the first 6 words (TSO flags)
+			   of the frag descriptor */
+			memset(htt_frag_desc, 0, 6 * sizeof(uint32_t));
+			c_element->tx_desc.htt_frag_desc = htt_frag_desc;
+			c_element->tx_desc.htt_frag_desc_paddr = frag_paddr_lo;
+		}
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+			"%s:%d - %d FRAG VA 0x%p FRAG PA 0x%x",
 			__func__, __LINE__, i,
-			pdev->tx_desc.array[i].tx_desc.htt_frag_desc,
-			pdev->tx_desc.array[i].tx_desc.htt_frag_desc_paddr);
-#endif /* HELIUMPLUS_DEBUG */
-#endif /* defined(HELIUMPLUS_PADDR64) */
-
-		pdev->tx_desc.array[i].tx_desc.index = i;
+			c_element->tx_desc.htt_frag_desc,
+			c_element->tx_desc.htt_frag_desc_paddr);
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
-		pdev->tx_desc.array[i].tx_desc.pkt_type = 0xff;
+		c_element->tx_desc.pkt_type = 0xff;
 #ifdef QCA_COMPUTE_TX_DELAY
-		pdev->tx_desc.array[i].tx_desc.entry_timestamp_ticks =
+		c_element->tx_desc.entry_timestamp_ticks =
 			0xffffffff;
 #endif
 #endif
-		init_txdesc_id(pdev, i);
+		c_element->tx_desc.id = i;
+		cdf_atomic_init(&c_element->tx_desc.ref_cnt);
+		c_element = c_element->next;
+		fail_idx = i;
 	}
 
 	/* link SW tx descs into a freelist */
 	pdev->tx_desc.num_free = desc_pool_size;
-	pdev->tx_desc.freelist = &pdev->tx_desc.array[0];
 	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 		   "%s first tx_desc:0x%p Last tx desc:0x%p\n", __func__,
 		   (uint32_t *) pdev->tx_desc.freelist,
 		   (uint32_t *) (pdev->tx_desc.freelist + desc_pool_size));
-	for (i = 0; i < desc_pool_size - 1; i++)
-		pdev->tx_desc.array[i].next = &pdev->tx_desc.array[i + 1];
-
-	pdev->tx_desc.array[i].next = NULL;
 
 	/* check what format of frames are expected to be delivered by the OS */
 	pdev->frame_format = ol_cfg_frame_type(pdev->ctrl_pdev);
@@ -540,7 +540,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "%s Invalid standard frame type: %d",
 			  __func__, pdev->frame_format);
-		goto fail4;
+		goto control_init_fail;
 	}
 
 	/* setup the global rx defrag waitlist */
@@ -608,7 +608,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			  "Invalid std frame type; [en/de]cap: f:%x t:%x r:%x",
 			  pdev->frame_format,
 			  pdev->target_tx_tran_caps, pdev->target_rx_tran_caps);
-		goto fail4;
+		goto control_init_fail;
 	}
 #endif
 
@@ -658,7 +658,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %s", __func__, TRACESTR01);
 #undef TRACESTR01
-				goto fail4;
+				goto control_init_fail;
 			}
 		} else {
 			/* PN check done on target */
@@ -686,10 +686,10 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	OL_TXRX_PEER_STATS_MUTEX_INIT(pdev);
 
 	if (OL_RX_REORDER_TRACE_ATTACH(pdev) != A_OK)
-		goto fail5;
+		goto reorder_trace_attach_fail;
 
 	if (OL_RX_PN_TRACE_ATTACH(pdev) != A_OK)
-		goto fail6;
+		goto pn_trace_attach_fail;
 
 #ifdef PERE_IP_HDR_ALIGNMENT_WAR
 	pdev->host_80211_enable = ol_scn_host_80211_enable_get(pdev->ctrl_pdev);
@@ -791,45 +791,39 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	}
 #endif /* QCA_COMPUTE_TX_DELAY */
 
-#ifdef QCA_SUPPORT_TX_THROTTLE
 	/* Thermal Mitigation */
 	ol_tx_throttle_init(pdev);
-#endif
-
-
-#if defined(FEATURE_TSO)
 	ol_tso_seg_list_init(pdev, desc_pool_size);
-#endif
-
 	ol_tx_register_flow_control(pdev);
 
 	return 0;            /* success */
 
-fail6:
+pn_trace_attach_fail:
 	OL_RX_REORDER_TRACE_DETACH(pdev);
 
-fail5:
+reorder_trace_attach_fail:
 	cdf_spinlock_destroy(&pdev->tx_mutex);
 	cdf_spinlock_destroy(&pdev->peer_ref_mutex);
 	cdf_spinlock_destroy(&pdev->rx.mutex);
 	cdf_spinlock_destroy(&pdev->last_real_peer_mutex);
 	OL_TXRX_PEER_STATS_MUTEX_DESTROY(pdev);
 
-fail4:
-	for (i = 0; i < desc_pool_size; i++)
+control_init_fail:
+desc_alloc_fail:
+	for (i = 0; i < fail_idx; i++)
 		htt_tx_desc_free(pdev->htt_pdev,
-				 pdev->tx_desc.array[i].tx_desc.htt_tx_desc);
+			(ol_tx_desc_find(pdev, i))->htt_tx_desc);
 
-fail3:
-	cdf_mem_free(pdev->tx_desc.array);
+	cdf_mem_multi_pages_free(pdev->osdev,
+		&pdev->tx_desc.desc_pages, 0, true);
 
-fail2:
+page_alloc_fail:
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))
 		htt_ipa_uc_detach(pdev->htt_pdev);
-fail1:
+uc_attach_fail:
 	htt_detach(pdev->htt_pdev);
 
-fail0:
+ol_attach_fail:
 	return ret;            /* fail */
 }
 
@@ -841,6 +835,7 @@ A_STATUS ol_txrx_pdev_attach_target(ol_txrx_pdev_handle pdev)
 void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 {
 	int i;
+
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "NULL pdev passed to %s\n", __func__);
@@ -863,7 +858,7 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 	cdf_softirq_timer_free(&pdev->tx_throttle.tx_timer);
 #endif
 #endif
-
+	ol_tso_seg_list_deinit(pdev);
 	ol_tx_deregister_flow_control(pdev);
 
 	if (force) {
@@ -889,7 +884,9 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 
 	for (i = 0; i < pdev->tx_desc.pool_size; i++) {
 		void *htt_tx_desc;
+		struct ol_tx_desc_t *tx_desc;
 
+		tx_desc = ol_tx_desc_find(pdev, i);
 		/*
 		 * Confirm that each tx descriptor is "empty", i.e. it has
 		 * no tx frame attached.
@@ -897,18 +894,19 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		 * been given to the target to transmit, for which the
 		 * target has never provided a response.
 		 */
-		if (cdf_atomic_read(&pdev->tx_desc.array[i].tx_desc.ref_cnt)) {
+		if (cdf_atomic_read(&tx_desc->ref_cnt)) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
 				   "Warning: freeing tx frame (no compltn)\n");
 			ol_tx_desc_frame_free_nonstd(pdev,
-						     &pdev->tx_desc.array[i].
 						     tx_desc, 1);
 		}
-		htt_tx_desc = pdev->tx_desc.array[i].tx_desc.htt_tx_desc;
+		htt_tx_desc = tx_desc->htt_tx_desc;
 		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
 	}
 
-	cdf_mem_free(pdev->tx_desc.array);
+	cdf_mem_multi_pages_free(pdev->osdev,
+		&pdev->tx_desc.desc_pages, 0, true);
+	pdev->tx_desc.freelist = NULL;
 
 	/* Detach micro controller data path offload resource */
 	if (ol_cfg_ipa_uc_offload_enabled(pdev->ctrl_pdev))

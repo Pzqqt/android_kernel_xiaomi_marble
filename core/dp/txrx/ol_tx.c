@@ -1159,7 +1159,7 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 	int                     i;
 
 	cdf_print("OL TX Descriptor 0x%p msdu_id %d\n",
-		 tx_desc, tx_desc->index);
+		 tx_desc, tx_desc->id);
 	cdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%x\n",
 		 tx_desc->htt_tx_desc, tx_desc->htt_tx_desc_paddr);
 	cdf_print("%s %d: Fragment Descriptor 0x%p\n",
@@ -1329,35 +1329,34 @@ cdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
 void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 {
 	int i;
-	pdev->tso_seg_pool.pool_size = num_seg;
-	pdev->tso_seg_pool.num_free = num_seg;
+	struct cdf_tso_seg_elem_t *c_element;
 
-	pdev->tso_seg_pool.array = NULL;
-	pdev->tso_seg_pool.array = cdf_mem_malloc(num_seg *
-		 sizeof(struct cdf_tso_seg_elem_t));
-	if (!pdev->tso_seg_pool.array) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			 "%s Could not allocate TSO array!\n", __func__);
-		return;
+	c_element = cdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
+	pdev->tso_seg_pool.freelist = c_element;
+	for (i = 0; i < (num_seg - 1); i++) {
+		c_element->next =
+			cdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
+		c_element = c_element->next;
+		c_element->next = NULL;
 	}
-
-	pdev->tso_seg_pool.freelist = &pdev->tso_seg_pool.array[0];
-
-	for (i = 0; i < (num_seg - 1); i++)
-		pdev->tso_seg_pool.array[i].next =
-			 &pdev->tso_seg_pool.array[i + 1];
-
-	pdev->tso_seg_pool.array[i].next = NULL;
-
+	pdev->tso_seg_pool.pool_size = num_seg;
 	cdf_spinlock_init(&pdev->tso_seg_pool.tso_mutex);
 }
 
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 {
+	int i;
+	struct cdf_tso_seg_elem_t *c_element;
+	struct cdf_tso_seg_elem_t *temp;
+
 	cdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
-	if (pdev->tso_seg_pool.array) {
-		cdf_mem_free(pdev->tso_seg_pool.array);
-		pdev->tso_seg_pool.array = NULL;
+	c_element = pdev->tso_seg_pool.freelist;
+	for (i = 0; i < pdev->tso_seg_pool.pool_size; i++) {
+		temp = c_element->next;
+		cdf_mem_free(c_element);
+		c_element = temp;
+		if (!c_element)
+			break;
 	}
 
 	pdev->tso_seg_pool.freelist = NULL;

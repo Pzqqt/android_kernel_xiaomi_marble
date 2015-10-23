@@ -73,8 +73,16 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
  * @param tx_desc_id - the ID of the descriptor in question
  * @return the descriptor object that has the specified ID
  */
-struct ol_tx_desc_t *ol_tx_desc_find(struct ol_txrx_pdev_t *pdev,
-				     uint16_t tx_desc_id);
+static inline struct ol_tx_desc_t *ol_tx_desc_find(
+			struct ol_txrx_pdev_t *pdev, uint16_t tx_desc_id)
+{
+	void **td_base = (void **)pdev->tx_desc.desc_pages.cacheable_pages;
+
+	return &((union ol_tx_desc_list_elem_t *)
+		(td_base[tx_desc_id >> pdev->tx_desc.page_divider] +
+		(pdev->tx_desc.desc_reserved_size *
+		(tx_desc_id & pdev->tx_desc.offset_filter))))->tx_desc;
+}
 
 /**
  * @brief Free a list of tx descriptors and the tx frames they refer to.
@@ -125,10 +133,8 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 static inline uint16_t
 ol_tx_desc_id(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
-	TXRX_ASSERT2(((union ol_tx_desc_list_elem_t *)tx_desc -
-		      pdev->tx_desc.array) < pdev->tx_desc.pool_size);
-	return (uint16_t)
-	       ((union ol_tx_desc_list_elem_t *)tx_desc - pdev->tx_desc.array);
+	TXRX_ASSERT2(tx_desc->id < pdev->tx_desc.pool_size);
+	return tx_desc->id;
 }
 
 /*

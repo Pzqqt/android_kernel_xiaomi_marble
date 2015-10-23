@@ -127,7 +127,6 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 		pdev->tx_desc.freelist = pdev->tx_desc.freelist->next;
 		ol_tx_desc_sanity_checks(pdev, tx_desc);
 		ol_tx_desc_compute_delay(tx_desc);
-
 	}
 	cdf_spin_unlock_bh(&pdev->tx_mutex);
 	if (!tx_desc)
@@ -230,13 +229,6 @@ ol_tx_desc_alloc_wrapper(struct ol_txrx_pdev_t *pdev,
 }
 #endif
 #endif
-
-/* TBD: make this inline in the .h file? */
-struct ol_tx_desc_t *ol_tx_desc_find(struct ol_txrx_pdev_t *pdev,
-				     uint16_t tx_desc_id)
-{
-	return &pdev->tx_desc.array[tx_desc_id].tx_desc;
-}
 
 #ifndef QCA_LL_TX_FLOW_CONTROL_V2
 /**
@@ -537,7 +529,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		 */
 #if defined(HELIUMPLUS_DEBUG)
 		cdf_print("%s %d: Frag Descriptor Reset [%d] to 0x%x\n",
-			  __func__, __LINE__, tx_desc->index,
+			  __func__, __LINE__, tx_desc->id,
 			  frag_desc_paddr_lo);
 #endif /* HELIUMPLUS_DEBUG */
 #endif /* HELIUMPLUS_PADDR64 */
@@ -591,8 +583,6 @@ struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 		pdev->tso_seg_pool.freelist = pdev->tso_seg_pool.freelist->next;
 	}
 	cdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
-	if (!tso_seg)
-		return NULL;
 
 	return tso_seg;
 }

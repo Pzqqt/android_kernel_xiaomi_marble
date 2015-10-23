@@ -78,5 +78,15 @@ void ol_txrx_mgmt_tx_complete(void *ctxt, cdf_nbuf_t netbuf, int err);
 #if defined(FEATURE_TSO)
 void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg);
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev);
+#else
+static inline void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev,
+	uint32_t num_seg)
+{
+	return;
+}
+static inline void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
+{
+	return;
+}
 #endif
 #endif /* _OL_TX__H_ */
