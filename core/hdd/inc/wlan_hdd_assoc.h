@@ -106,6 +106,8 @@ typedef enum {
  * @uIsAuthenticated: Remembers authenticated state
  * @dot11Mode: dot11Mode
  * @proxyARPService: proxy arp service
+ * @ptk_installed: ptk installed state
+ * @gtk_installed: gtk installed state
  */
 typedef struct connection_info_s {
 	eConnectionState connState;
@@ -122,6 +124,8 @@ typedef struct connection_info_s {
 	uint8_t uIsAuthenticated;
 	uint32_t dot11Mode;
 	uint8_t proxyARPService;
+	bool ptk_installed;
+	bool gtk_installed;
 } connection_info_t;
 
 /* Forward declarations */
