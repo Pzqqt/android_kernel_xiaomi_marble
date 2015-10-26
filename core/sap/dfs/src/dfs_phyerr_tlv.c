@@ -228,6 +228,7 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 	 *   Set pulse duration to 20 us
 	 */
 
+	cdf_spin_lock_bh(&dfs->ic->chan_lock);
 	freq = ieee80211_chan2freq(dfs->ic, dfs->ic->ic_curchan);
 	freq_centre = dfs->ic->ic_curchan->ic_vhtop_ch_freq_seg1;
 
@@ -238,6 +239,7 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 		rsu->pulse_duration = 20;
 	}
 
+	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 }
 
 static void
@@ -435,13 +437,16 @@ static int tlv_calc_freq_info(struct ath_dfs *dfs, struct rx_radar_status *rs)
 		DFS_PRINTK("%s: dfs->ic=%p, that or curchan is null?",
 			   __func__, dfs->ic);
 		return 0;
-		/*
-		 * For now, the only 11ac channel with freq1/freq2 setup is
-		 * VHT80.
-		 *
-		 * XXX should have a flag macro to check this!
-		 */
-	} else if (IEEE80211_IS_CHAN_11AC_VHT80(dfs->ic->ic_curchan)) {
+	}
+
+	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	/*
+	 * For now, the only 11ac channel with freq1/freq2 setup is
+	 * VHT80.
+	 *
+	 * XXX should have a flag macro to check this!
+	 */
+	if (IEEE80211_IS_CHAN_11AC_VHT80(dfs->ic->ic_curchan)) {
 		/* 11AC, so cfreq1/cfreq2 are setup */
 
 		/*
@@ -477,6 +482,7 @@ static int tlv_calc_freq_info(struct ath_dfs *dfs, struct rx_radar_status *rs)
 		chan_centre += (chan_offset / 2);
 	}
 
+	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	/*
 	 * XXX half/quarter rate support!
 	 */

@@ -140,13 +140,17 @@ int dfs_process_radarevent(struct ath_dfs *dfs, struct ieee80211_channel *chan)
 		return 0;
 	}
 	pl = dfs->pulses;
+	cdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (!(IEEE80211_IS_CHAN_DFS(dfs->ic->ic_curchan))) {
+		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
 			    "%s: radar event on non-DFS chan", __func__);
 		dfs_reset_radarq(dfs);
 		dfs_reset_alldelaylines(dfs);
 		return 0;
 	}
+
+	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 #ifndef ATH_DFS_RADAR_DETECTION_ONLY
 	/* TEST : Simulate radar bang, make sure we add the channel to NOL (bug 29968) */
 	if (dfs->dfs_bangradar) {
@@ -781,11 +785,15 @@ dfsfound:
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS1,
 			    "Primary channel freq = %u flags=0x%x",
 			    chan->ic_freq, chan->ic_flagext);
+		cdf_spin_lock_bh(&dfs->ic->chan_lock);
 		if ((dfs->ic->ic_curchan->ic_freq != thischan->ic_freq)) {
+			cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 			DFS_DPRINTK(dfs, ATH_DEBUG_DFS1,
 				    "Ext channel freq = %u flags=0x%x",
 				    thischan->ic_freq, thischan->ic_flagext);
 		}
+
+		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		dfs->dfs_phyerr_freq_min = 0x7fffffff;
 		dfs->dfs_phyerr_freq_max = 0;
 		dfs->dfs_phyerr_w53_counter = 0;
