@@ -1732,17 +1732,17 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 
 	radar_event = param_tlvs->fixed_param;
 
-	cdf_mutex_acquire(&ic->chan_lock);
+	cdf_spin_lock_bh(&ic->chan_lock);
 	chan = ic->ic_curchan;
 	if (CHANNEL_STATE_DFS != cds_get_channel_state(chan->ic_ieee)) {
 		WMA_LOGE
 			("%s: Invalid DFS Phyerror event. Channel=%d is Non-DFS",
 			__func__, chan->ic_ieee);
-		cdf_mutex_release(&ic->chan_lock);
+		cdf_spin_unlock_bh(&ic->chan_lock);
 		return 0;
 	}
 
-	cdf_mutex_release(&ic->chan_lock);
+	cdf_spin_unlock_bh(&ic->chan_lock);
 	dfs->ath_dfs_stats.total_phy_errors++;
 
 	if (dfs->dfs_caps.ath_chip_is_bb_tlv) {
@@ -6625,7 +6625,7 @@ struct ieee80211com *wma_dfs_attach(struct ieee80211com *dfs_ic)
 	 * and shared DFS code
 	 */
 	dfs_ic->ic_dfs_notify_radar = ieee80211_mark_dfs;
-	cdf_mutex_init(&dfs_ic->chan_lock);
+	cdf_spinlock_init(&dfs_ic->chan_lock);
 	/* Initializes DFS Data Structures and queues */
 	dfs_attach(dfs_ic);
 
@@ -6642,7 +6642,7 @@ void wma_dfs_detach(struct ieee80211com *dfs_ic)
 {
 	dfs_detach(dfs_ic);
 
-	cdf_mutex_destroy(&dfs_ic->chan_lock);
+	cdf_spinlock_destroy(&dfs_ic->chan_lock);
 	if (NULL != dfs_ic->ic_curchan) {
 		OS_FREE(dfs_ic->ic_curchan);
 		dfs_ic->ic_curchan = NULL;
@@ -6757,14 +6757,18 @@ struct ieee80211_channel *wma_dfs_configure_channel(struct ieee80211com *dfs_ic,
 		WMA_LOGE("%s: DFS ic is Invalid", __func__);
 		return NULL;
 	}
-	dfs_ic->ic_curchan = (struct ieee80211_channel *)os_malloc(NULL,
+
+	if (!dfs_ic->ic_curchan) {
+		dfs_ic->ic_curchan = (struct ieee80211_channel *)os_malloc(NULL,
 					sizeof(struct ieee80211_channel),
 								   GFP_ATOMIC);
-	if (dfs_ic->ic_curchan == NULL) {
-		WMA_LOGE("%s: allocation of dfs_ic->ic_curchan failed %zu",
-			 __func__, sizeof(struct ieee80211_channel));
-		return NULL;
+		if (dfs_ic->ic_curchan == NULL) {
+			WMA_LOGE("%s: allocation of dfs_ic->ic_curchan failed %zu",
+				 __func__, sizeof(struct ieee80211_channel));
+			return NULL;
+		}
 	}
+
 	OS_MEMZERO(dfs_ic->ic_curchan, sizeof(struct ieee80211_channel));
 
 	dfs_ic->ic_curchan->ic_ieee = req->chan;
@@ -6916,6 +6920,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 	 * But, when DFS test mode is enabled, allow multiple dfs
 	 * radar events to be posted on the same channel.
 	 */
+	cdf_spin_lock_bh(&ic->chan_lock);
 	if ((ichan->ic_ieee != (wma->dfs_ic->last_radar_found_chan)) ||
 	    (pmac->sap.SapDfsInfo.disable_dfs_ch_switch == true)) {
 		wma->dfs_ic->last_radar_found_chan = ichan->ic_ieee;
@@ -6937,6 +6942,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 		wma_send_msg(wma, WMA_DFS_RADAR_IND, (void *)radar_event, 0);
 		WMA_LOGE("%s:DFS- WMA_DFS_RADAR_IND Message Posted", __func__);
 	}
+	cdf_spin_unlock_bh(&ic->chan_lock);
 
 	return 0;
 }

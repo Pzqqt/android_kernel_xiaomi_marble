@@ -232,7 +232,7 @@ typedef struct ieee80211com {
 	uint8_t vdev_id;
 	uint8_t last_radar_found_chan;
 	int32_t dfs_pri_multiplier;
-	cdf_mutex_t chan_lock;
+	cdf_spinlock_t chan_lock;
 } IEEE80211COM, *PIEEE80211COM;
 
 /**

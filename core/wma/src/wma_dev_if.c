@@ -2050,17 +2050,13 @@ CDF_STATUS wma_vdev_start(tp_wma_handle wma,
 				return CDF_STATUS_E_FAILURE;
 			}
 
-			cdf_mutex_acquire(&wma->dfs_ic->chan_lock);
-			if (wma->dfs_ic->ic_curchan) {
-				OS_FREE(wma->dfs_ic->ic_curchan);
-				wma->dfs_ic->ic_curchan = NULL;
-			}
+			cdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
 
 			/* provide the current channel to DFS */
 			wma->dfs_ic->ic_curchan =
 				wma_dfs_configure_channel(wma->dfs_ic, chan,
 							  chanmode, req);
-			cdf_mutex_release(&wma->dfs_ic->chan_lock);
+			cdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
 
 			wma_unified_dfs_phyerr_filter_offload_enable(wma);
 			dfs->disable_dfs_ch_switch =

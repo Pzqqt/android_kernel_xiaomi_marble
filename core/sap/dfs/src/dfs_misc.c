@@ -107,7 +107,9 @@ dfs_get_pri_margin(struct ath_dfs *dfs, int is_extchan_detect,
 	else
 		pri_margin = DFS_DEFAULT_PRI_MARGIN;
 
+	cdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (IS_CHAN_HT40(dfs->ic->ic_curchan)) {
+		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		ext_chan_busy = dfs->ic->ic_get_ext_busy(dfs->ic);
 		if (ext_chan_busy >= 0) {
 			dfs->dfs_rinfo.ext_chan_busy_ts =
@@ -131,6 +133,8 @@ dfs_get_pri_margin(struct ath_dfs *dfs, int is_extchan_detect,
 			adjust_pri_per_chan_busy(ext_chan_busy, pri_margin);
 
 		pri_margin -= adjust_pri;
+	} else {
+		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	}
 	return pri_margin;
 }
@@ -146,7 +150,9 @@ int dfs_get_filter_threshold(struct ath_dfs *dfs, struct dfs_filter *rf,
 
 	thresh = rf->rf_threshold;
 
+	cdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (IS_CHAN_HT40(dfs->ic->ic_curchan)) {
+		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		ext_chan_busy = dfs->ic->ic_get_ext_busy(dfs->ic);
 		if (ext_chan_busy >= 0) {
 			dfs->dfs_rinfo.ext_chan_busy_ts =
@@ -179,6 +185,8 @@ int dfs_get_filter_threshold(struct ath_dfs *dfs, struct dfs_filter *rf,
 			    rf->rf_pulseid, ext_chan_busy, adjust_thresh);
 
 		thresh += adjust_thresh;
+	} else {
+		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	}
 	return thresh;
 }
