@@ -766,6 +766,12 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
+	if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
+		cdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
+		wma->dfs_ic->disable_phy_err_processing = false;
+		cdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
+	}
+
 	if (resp_event->status == CDF_STATUS_SUCCESS) {
 		wma->interfaces[resp_event->vdev_id].tx_streams =
 			resp_event->cfgd_tx_streams;
@@ -2051,6 +2057,8 @@ CDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			}
 
 			cdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
+			if (isRestart)
+				wma->dfs_ic->disable_phy_err_processing = true;
 
 			/* provide the current channel to DFS */
 			wma->dfs_ic->ic_curchan =

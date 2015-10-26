@@ -1734,6 +1734,13 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 
 	cdf_spin_lock_bh(&ic->chan_lock);
 	chan = ic->ic_curchan;
+	if (ic->disable_phy_err_processing) {
+		WMA_LOGD("%s: radar indication done,drop phyerror event",
+			__func__);
+		cdf_spin_unlock_bh(&ic->chan_lock);
+		return 0;
+	}
+
 	if (CHANNEL_STATE_DFS != cds_get_channel_state(chan->ic_ieee)) {
 		WMA_LOGE
 			("%s: Invalid DFS Phyerror event. Channel=%d is Non-DFS",
@@ -6921,6 +6928,9 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 	 * radar events to be posted on the same channel.
 	 */
 	cdf_spin_lock_bh(&ic->chan_lock);
+	if (!pmac->sap.SapDfsInfo.disable_dfs_ch_switch)
+		wma->dfs_ic->disable_phy_err_processing = true;
+
 	if ((ichan->ic_ieee != (wma->dfs_ic->last_radar_found_chan)) ||
 	    (pmac->sap.SapDfsInfo.disable_dfs_ch_switch == true)) {
 		wma->dfs_ic->last_radar_found_chan = ichan->ic_ieee;
