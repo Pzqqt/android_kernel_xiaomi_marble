@@ -4325,6 +4325,7 @@ CDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 		pParam->max_intf_count = pMac->sme.max_intf_count;
 		pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
+		pParam->pnoOffload = pMac->pnoOffload;
 		pParam->f_prefer_non_dfs_on_radar =
 						pMac->f_prefer_non_dfs_on_radar;
 		pParam->policy_manager_enabled = pMac->policy_manager_enabled;
