@@ -571,6 +571,18 @@ void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 		}
 	}
 }
+/**
+ * htt_rx_dbg_rxbuf_deinit() - deinit debug rx buff list
+ * @pdev: pdev handle
+ *
+ * Return: none
+ */
+static inline
+void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
+{
+	if (pdev->rx_buff_list)
+		cdf_mem_free(pdev->rx_buff_list);
+}
 #else
 static inline
 void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
@@ -587,6 +599,11 @@ void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
 static inline
 void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
 				cdf_nbuf_t netbuf)
+{
+	return;
+}
+static inline
+void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 {
 	return;
 }
