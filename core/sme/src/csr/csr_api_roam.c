@@ -18051,8 +18051,6 @@ bool csr_roam_is_sta_mode(tpAniSirGlobal pMac, uint32_t sessionId)
 		if (pSession->pCurRoamProfile->csrPersona == CDF_STA_MODE) {
 			return true;
 		} else {
-			sms_log(pMac, LOGE, FL(" %s: pCurRoamProfile is NULL\n"),
-				__func__);
 			return false;
 		}
 	}
