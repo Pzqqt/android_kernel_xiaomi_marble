@@ -5265,8 +5265,6 @@ ftm_processing:
 
 	mutex_init(&hdd_ctx->sap_lock);
 
-	hdd_ctx->isLoadInProgress = false;
-
 #if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
 	if (rtnl_lock_enable == true) {
 		rtnl_lock_enable = false;
@@ -5288,8 +5286,6 @@ ftm_processing:
 	cdf_wake_lock_init(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
 
 	hdd_hostapd_channel_wakelock_init(hdd_ctx);
-
-	cds_set_load_unload_in_progress(false);
 
 	hdd_set_idle_ps_config(hdd_ctx, true);
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -5435,7 +5431,8 @@ ftm_processing:
 	}
 
 	hif_enable_power_gating(hif_sc);
-
+	hdd_ctx->isLoadInProgress = false;
+	cds_set_load_unload_in_progress(false);
 	complete(&wlan_start_comp);
 	goto success;
 
