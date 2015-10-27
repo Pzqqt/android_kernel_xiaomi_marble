@@ -1905,7 +1905,8 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 			}
 			break;
 		case CDF_IBSS_MODE:
-			if ((bss_persona == CDF_IBSS_MODE) && (connect_state !=
+			if ((bss_persona == CDF_IBSS_MODE) &&
+				(connect_state ==
 					eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED)) {
 				CDF_TRACE(CDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
@@ -2231,6 +2232,7 @@ CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channel
 				break;
 
 			case CDF_SAP_MODE:
+			case CDF_IBSS_MODE:
 				break;
 
 			case CDF_P2P_GO_MODE:

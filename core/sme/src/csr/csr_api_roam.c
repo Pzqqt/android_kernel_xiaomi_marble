@@ -5811,6 +5811,7 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 		csr_roam_call_callback(mac_ctx, session_id, NULL,
 			cmd->u.roamCmd.roamId, eCSR_ROAM_IBSS_LEAVE,
 			eCSR_ROAM_RESULT_IBSS_STOP);
+		session->connectState = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
 		break;
 	case eCsrForcedDisassocMICFailure:
 		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_IDLE,

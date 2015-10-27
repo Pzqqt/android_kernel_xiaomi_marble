@@ -510,7 +510,7 @@ static struct ieee80211_iface_combination
 	/* ADHOC */
 	{
 		.limits = wlan_hdd_adhoc_iface_limit,
-		.num_different_channels = 1,
+		.num_different_channels = 2,
 		.max_interfaces = 2,
 		.n_limits = ARRAY_SIZE(wlan_hdd_adhoc_iface_limit),
 	},
@@ -5857,7 +5857,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 	if ((pAdapter->device_mode == WLAN_HDD_INFRA_STATION) ||
 	    (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) ||
-	    (pAdapter->device_mode == WLAN_HDD_P2P_DEVICE)) {
+	    (pAdapter->device_mode == WLAN_HDD_P2P_DEVICE) ||
+	    (pAdapter->device_mode == WLAN_HDD_IBSS)) {
 		hdd_wext_state_t *pWextState =
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 

@@ -814,8 +814,8 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
 			pHddStaCtx->conn_info.connState) {
-		cds_incr_active_session(pHddCtx, pAdapter->device_mode,
-						pAdapter->sessionId);
+		cds_update_connection_info(pHddCtx,
+				pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pHddStaCtx->conn_info.bssId.bytes,
 		       ETH_ALEN);
 		pr_info("wlan: new IBSS connection to " MAC_ADDRESS_STR "\n",
@@ -2427,7 +2427,14 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 				pHddCtx->wiphy,
 				bss);
 		}
-
+		if (eCSR_ROAM_RESULT_IBSS_STARTED == roamResult) {
+			cds_incr_active_session(pHddCtx, pAdapter->device_mode,
+					pAdapter->sessionId);
+		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roamResult ||
+				eCSR_ROAM_RESULT_IBSS_COALESCED == roamResult) {
+			cds_update_connection_info(pHddCtx,
+					pAdapter->sessionId);
+		}
 		break;
 	}
 
