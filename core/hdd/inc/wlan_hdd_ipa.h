@@ -56,6 +56,9 @@ void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason);
 bool hdd_ipa_is_enabled(hdd_context_t *pHddCtx);
 bool hdd_ipa_uc_is_enabled(hdd_context_t *pHddCtx);
 int hdd_ipa_send_mcc_scc_msg(hdd_context_t *pHddCtx, bool mcc_mode);
+int hdd_ipa_uc_ssr_reinit(void);
+int hdd_ipa_uc_ssr_deinit(void);
+void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx);
 #else
 static inline CDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 {
@@ -131,12 +134,6 @@ static inline bool hdd_ipa_uc_is_enabled(hdd_context_t *pHddCtx)
 {
 	return false;
 }
-#endif /* IPA_OFFLOAD */
-
-#ifdef IPA_UC_OFFLOAD
-int hdd_ipa_uc_ssr_reinit(void);
-int hdd_ipa_uc_ssr_deinit(void);
-#else
 static inline int hdd_ipa_uc_ssr_reinit(void)
 {
 	return false;
@@ -145,6 +142,10 @@ static inline int hdd_ipa_uc_ssr_reinit(void)
 static inline int hdd_ipa_uc_ssr_deinit(void)
 {
 	return false;
+}
+static inline void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
+{
+	return;
 }
 #endif
 

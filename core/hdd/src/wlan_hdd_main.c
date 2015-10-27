@@ -5672,6 +5672,8 @@ static void hdd_driver_exit(void)
 		hddLog(CDF_TRACE_LEVEL_FATAL,
 		       FL("module exit called before probe"));
 	} else {
+		/* Check IPA HW Pipe shutdown */
+		hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
 #ifdef QCA_PKT_PROTO_TRACE
 		cds_pkt_proto_trace_close();
 #endif /* QCA_PKT_PROTO_TRACE */
