@@ -223,3 +223,14 @@ CDF_STATUS cdf_list_peek_next(cdf_list_t *pList, cdf_list_node_t *pNode,
 
 	return CDF_STATUS_SUCCESS;
 }
+
+/**
+ * cdf_list_empty() - check if the list is empty
+ * @list: pointer to the list
+ *
+ * Return: true if the list is empty and false otherwise.
+ */
+bool cdf_list_empty(cdf_list_t *list)
+{
+	return list_empty(&list->anchor);
+}

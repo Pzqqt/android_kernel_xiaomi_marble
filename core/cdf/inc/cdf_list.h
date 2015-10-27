@@ -107,4 +107,6 @@ CDF_STATUS cdf_list_peek_next(cdf_list_t *p_list, cdf_list_node_t *p_node,
 CDF_STATUS cdf_list_remove_node(cdf_list_t *p_list,
 				cdf_list_node_t *p_node_to_remove);
 
+bool cdf_list_empty(cdf_list_t *list);
+
 #endif /* __CDF_LIST_H */
