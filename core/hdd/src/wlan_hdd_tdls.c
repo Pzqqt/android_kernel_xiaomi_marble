@@ -4015,6 +4015,14 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 				MAC_ADDR_ARRAY(peer));
 		return -EINVAL;
 	}
+
+	/* validate if off channel is DFS channel */
+	if (CDS_IS_DFS_CH(chan)) {
+		hdd_err("Resetting TDLS off-channel from %d to %d",
+		       chan, CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT);
+		chan = CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT;
+	}
+
 	if (0 != wlan_hdd_tdls_set_extctrl_param(pAdapter, peer,
 						 chan, max_latency,
 						 op_class, min_bandwidth)) {
@@ -4264,6 +4272,16 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 					opClassForPrefOffChan =
 						pTdlsPeer->
 						op_class_for_pref_off_chan;
+
+				if (CDS_IS_DFS_CH(smeTdlsPeerStateParams.
+					peerCap.prefOffChanNum)) {
+					hdd_err("Resetting TDLS off-channel from %d to %d",
+					       smeTdlsPeerStateParams.peerCap.
+						prefOffChanNum,
+					       CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT);
+					smeTdlsPeerStateParams.peerCap.prefOffChanNum =
+						CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_DEFAULT;
+				}
 
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
