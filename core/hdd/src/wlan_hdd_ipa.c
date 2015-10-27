@@ -973,7 +973,9 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	p_cds_contextType cds_ctx = hdd_ipa->hdd_ctx->pcds_context;
 
 	/* ACTIVATE TX PIPE */
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Enable TX PIPE", __func__);
+	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			"%s: Enable TX PIPE(tx_pipe_handle=%d)",
+			__func__, hdd_ipa->tx_pipe_handle);
 	result = ipa_enable_wdi_pipe(hdd_ipa->tx_pipe_handle);
 	if (result) {
 		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
@@ -991,7 +993,9 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, true, true);
 
 	/* ACTIVATE RX PIPE */
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Enable RX PIPE", __func__);
+	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			"%s: Enable RX PIPE(rx_pipe_handle=%d)",
+			__func__, hdd_ipa->rx_pipe_handle);
 	result = ipa_enable_wdi_pipe(hdd_ipa->rx_pipe_handle);
 	if (result) {
 		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
@@ -1068,32 +1072,39 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 {
 	hdd_ipa->activated_fw_pipe = 0;
 	hdd_ipa->resource_loading = true;
+
 	/* If RM feature enabled
 	 * Request PROD Resource first
 	 * PROD resource may return sync or async manners */
-	if ((hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx)) &&
-	    (!ipa_rm_request_resource(IPA_RM_RESOURCE_WLAN_PROD))) {
-		/* RM PROD request sync return
-		 * enable pipe immediately */
-		if (hdd_ipa_uc_enable_pipes(hdd_ipa)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
-				    "%s: IPA WDI Pipes activate fail",
-				    __func__);
-			hdd_ipa->resource_loading = false;
-			return -EBUSY;
+	if (hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx)) {
+		if (!ipa_rm_request_resource(IPA_RM_RESOURCE_WLAN_PROD)) {
+			/* RM PROD request sync return
+			 * enable pipe immediately
+			 */
+			if (hdd_ipa_uc_enable_pipes(hdd_ipa)) {
+				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+					"%s: IPA WDI Pipe activation failed",
+					__func__);
+				hdd_ipa->resource_loading = false;
+				return -EBUSY;
+			}
 		}
 	} else {
 		/* RM Disabled
-		 * Just enabled all the PIPEs */
+		 * Just enabled all the PIPEs
+		 */
 		if (hdd_ipa_uc_enable_pipes(hdd_ipa)) {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
-				    "%s: IPA WDI Pipes activate fail",
+				    "%s: IPA WDI Pipe activation failed",
 				    __func__);
 			hdd_ipa->resource_loading = false;
 			return -EBUSY;
 		}
 		hdd_ipa->resource_loading = false;
 	}
+
+	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			"%s: IPA WDI Pipes activated successfully", __func__);
 	return 0;
 }
 
@@ -3520,11 +3531,10 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			(!hdd_ipa->sta_connected)) {
 			/* Enable IPA UC TX PIPE when STA connected */
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
-			if (!ret) {
+			if (ret) {
+				cdf_mutex_release(&hdd_ipa->event_lock);
 				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 					"handle 1st con ret %d", ret);
-			} else {
-				cdf_mutex_release(&hdd_ipa->event_lock);
 				hdd_ipa_uc_offload_enable_disable(adapter,
 					SIR_STA_RX_DATA_OFFLOAD, 0);
 				goto end;
@@ -3672,8 +3682,6 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			cdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
-		hdd_ipa->sap_num_connected_sta++;
-		hdd_ipa->pending_cons_req = false;
 		cdf_mutex_release(&hdd_ipa->event_lock);
 
 		meta.msg_type = type;
@@ -3712,7 +3720,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		cdf_mutex_acquire(&hdd_ipa->event_lock);
 		/* Enable IPA UC Data PIPEs when first STA connected */
-		if ((1 == hdd_ipa->sap_num_connected_sta)
+		if ((0 == hdd_ipa->sap_num_connected_sta)
 			&& (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)
 			|| !hdd_ipa->sta_connected)) {
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
@@ -3724,6 +3732,10 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				return ret;
 			}
 		}
+
+		hdd_ipa->sap_num_connected_sta++;
+		hdd_ipa->pending_cons_req = false;
+
 		cdf_mutex_release(&hdd_ipa->event_lock);
 
 		return ret;
