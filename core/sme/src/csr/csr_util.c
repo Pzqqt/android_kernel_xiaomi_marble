@@ -4371,12 +4371,6 @@ bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
 		 || eCSR_BSS_TYPE_IBSS == bssType);
 }
 
-bool csr_is_bss_type_wds(eCsrRoamBssType bssType)
-{
-	return (bool)
-		(eCSR_BSS_TYPE_WDS_STA == bssType
-		 || eCSR_BSS_TYPE_WDS_AP == bssType);
-}
 
 bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
 				tSirBssDescription *pSirBssDesc)
@@ -4389,10 +4383,8 @@ bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
 			break;
 
 		case eCSR_BSS_TYPE_INFRASTRUCTURE:
-		case eCSR_BSS_TYPE_WDS_STA:
 			if (!csr_is_infra_bss_desc(pSirBssDesc))
 				fMatch = false;
-
 			break;
 
 		case eCSR_BSS_TYPE_IBSS:
@@ -4401,8 +4393,6 @@ bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
 				fMatch = false;
 
 			break;
-
-		case eCSR_BSS_TYPE_WDS_AP:      /* For WDS AP, no need to match anything */
 		default:
 			fMatch = false;
 			break;
@@ -5316,12 +5306,6 @@ tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 	case eCSR_BSS_TYPE_IBSS:
 	case eCSR_BSS_TYPE_START_IBSS:
 		ret = eSIR_IBSS_MODE;
-		break;
-	case eCSR_BSS_TYPE_WDS_AP:
-		ret = eSIR_BTAMP_AP_MODE;
-		break;
-	case eCSR_BSS_TYPE_WDS_STA:
-		ret = eSIR_BTAMP_STA_MODE;
 		break;
 	case eCSR_BSS_TYPE_INFRA_AP:
 		ret = eSIR_INFRA_AP_MODE;

@@ -2466,14 +2466,6 @@ CDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 					eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
 	}
-	if (CSR_IS_WDS_AP(pRoamInfo->u.pConnectedProfile)) {
-		cdf_sleep(100);
-		pMac->roam.roamSession[sessionId].connectState =
-			eCSR_ASSOC_STATE_TYPE_WDS_CONNECTED;
-		status = csr_roam_call_callback(pMac, sessionId, pRoamInfo, 0,
-				eCSR_ROAM_WDS_IND,
-				eCSR_ROAM_RESULT_WDS_ASSOCIATION_IND);
-	}
 	return status;
 }
 
@@ -4945,9 +4937,7 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 	 * mode we need to send out a directed probe
 	 */
 	if ((eSIR_PASSIVE_SCAN != scanType)
-	    && (eCSR_SCAN_P2P_DISCOVERY !=
-		pScanReq->requestType)
-	    && (eCSR_BSS_TYPE_WDS_STA != pScanReq->BSSType)
+	    && (eCSR_SCAN_P2P_DISCOVERY != pScanReq->requestType)
 	    && (false == pMac->scan.fEnableBypass11d)) {
 		scanType = pMac->scan.curScanType;
 		if (eSIR_PASSIVE_SCAN == pMac->scan.curScanType) {
@@ -6003,10 +5993,6 @@ CDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	tCsrSSIDs *ssids = NULL;
 
 	sms_log(mac_ctx, LOG2, FL("called"));
-
-	/* For WDS, we use the index 0. There must be at least one in there */
-	if (CSR_IS_WDS_STA(profile) && num_ssid)
-		num_ssid = 1;
 
 	if (!(mac_ctx->scan.fScanEnable) && (num_ssid != 1)) {
 		sms_log(mac_ctx, LOGE,

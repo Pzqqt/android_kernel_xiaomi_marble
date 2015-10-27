@@ -311,7 +311,6 @@ bool csr_is_security_match(tHalHandle hHal, tCsrAuthList *authType,
 		eCsrEncryptionType *negotiatedMCCipher);
 bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
-bool csr_is_bss_type_wds(eCsrRoamBssType bssType);
 /*
  * ppIes can be NULL. If caller want to get the *ppIes allocated by
  * this function, pass in *ppIes = NULL. Caller needs to free the memory
