@@ -1928,7 +1928,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #ifdef WLAN_FEATURE_LPSS
 	if (!pAdapter->rssi_send) {
 		pAdapter->rssi_send = true;
-		wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 1);
+		if (pHddCtx->isUnloadInProgress != true)
+			wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 1);
 	}
 #endif
 
