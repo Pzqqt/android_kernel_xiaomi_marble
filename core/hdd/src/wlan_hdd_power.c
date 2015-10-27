@@ -70,7 +70,7 @@
 #include "sme_power_save_api.h"
 
 /* Preprocessor definitions and constants */
-#define HDD_SSR_BRING_UP_TIME 15000
+#define HDD_SSR_BRING_UP_TIME 30000
 
 /* Type declarations */
 
