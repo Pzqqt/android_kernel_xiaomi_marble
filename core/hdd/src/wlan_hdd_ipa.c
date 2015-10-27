@@ -397,6 +397,7 @@ struct hdd_ipa_priv {
 	struct ipa_uc_stas_map assoc_stas_map[WLAN_MAX_STA_COUNT];
 	cdf_list_t pending_event;
 	cdf_mutex_t event_lock;
+	bool ipa_pipes_down;
 	uint32_t ipa_tx_packets_diff;
 	uint32_t ipa_rx_packets_diff;
 	uint32_t ipa_p_tx_packets;
@@ -1005,7 +1006,7 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 		return result;
 	}
 	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, true, false);
-
+	hdd_ipa->ipa_pipes_down = false;
 	return 0;
 }
 
@@ -1018,6 +1019,8 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 static int hdd_ipa_uc_disable_pipes(struct hdd_ipa_priv *hdd_ipa)
 {
 	int result;
+
+	hdd_ipa->ipa_pipes_down = true;
 
 	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Disable RX PIPE", __func__);
 	result = ipa_suspend_wdi_pipe(hdd_ipa->rx_pipe_handle);
@@ -1754,7 +1757,37 @@ static CDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	return CDF_STATUS_SUCCESS;
 }
 
-#ifdef IPA_UC_OFFLOAD
+/**
+ * hdd_ipa_uc_force_pipe_shutdown() - Force shutdown IPA pipe
+ * @hdd_ctx: hdd main context
+ *
+ * Force shutdown IPA pipe
+ * Independent of FW pipe status, IPA pipe shutdonw progress
+ * in case, any STA does not leave properly, IPA HW pipe should cleaned up
+ * independent from FW pipe status
+ *
+ * Return: NONE
+ */
+void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
+{
+	struct hdd_ipa_priv *hdd_ipa;
+
+	if (!hdd_ipa_is_enabled(hdd_ctx) || !hdd_ctx->hdd_ipa)
+		return;
+
+	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
+	if (false == hdd_ipa->ipa_pipes_down) {
+		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+				"IPA pipes are not down yet, force shutdown");
+		hdd_ipa_uc_disable_pipes(hdd_ipa);
+	} else {
+		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+				"IPA pipes are down, do nothing");
+	}
+
+	return;
+}
+
 /**
  * hdd_ipa_uc_ssr_deinit() - handle ipa deinit for SSR
  *
@@ -1763,6 +1796,7 @@ static CDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
  *
  * Return: 0 - Success
  */
+#ifdef IPA_UC_OFFLOAD
 int hdd_ipa_uc_ssr_deinit(void)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -1798,6 +1832,13 @@ int hdd_ipa_uc_ssr_deinit(void)
 	 */
 	return 0;
 }
+#else
+int hdd_ipa_uc_ssr_deinit(void)
+{
+	return 0;
+}
+#endif
+
 
 /**
  * hdd_ipa_uc_ssr_reinit() - handle ipa reinit after SSR
@@ -1807,6 +1848,7 @@ int hdd_ipa_uc_ssr_deinit(void)
  *
  * Return: 0 - Success
  */
+#ifdef IPA_UC_OFFLOAD
 int hdd_ipa_uc_ssr_reinit(void)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -1819,6 +1861,11 @@ int hdd_ipa_uc_ssr_reinit(void)
 	 * and initialization. This is a placeholder func if IPA has to resume
 	 * operations without driver reload.
 	 */
+	return 0;
+}
+#else
+int hdd_ipa_uc_ssr_reinit(void)
+{
 	return 0;
 }
 #endif
@@ -3813,7 +3860,7 @@ CDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 		hdd_ipa->resource_loading = false;
 		hdd_ipa->resource_unloading = false;
 		hdd_ipa->sta_connected = 0;
-
+		hdd_ipa->ipa_pipes_down = true;
 		/* Setup IPA sys_pipe for MCC */
 		if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
 			ret = hdd_ipa_setup_sys_pipe(hdd_ipa);
