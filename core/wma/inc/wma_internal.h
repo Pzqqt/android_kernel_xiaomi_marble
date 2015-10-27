@@ -104,6 +104,8 @@
 #define LINK_RATE_VHT           0x3
 
 #define MAX_ENTRY_HOLD_REQ_QUEUE 2
+#define MAX_ENTRY_VDEV_RESP_QUEUE 10
+
 /**
  * struct index_data_rate_type - non vht data rate type
  * @beacon_rate_index: Beacon rate index

@@ -1239,7 +1239,7 @@ typedef struct {
 	uint32_t scan_id;
 	struct wma_txrx_node *interfaces;
 	pdev_cli_config_t pdevconfig;
-	struct list_head vdev_resp_queue;
+	cdf_list_t vdev_resp_queue;
 	cdf_spinlock_t vdev_respq_lock;
 	cdf_list_t wma_hold_req_queue;
 	cdf_spinlock_t wma_hold_req_q_lock;

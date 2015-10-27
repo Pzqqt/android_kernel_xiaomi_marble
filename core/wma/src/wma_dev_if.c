@@ -337,14 +337,13 @@ static struct wma_target_req *wma_find_req(tp_wma_handle wma,
 			cdf_list_peek_next(&wma->wma_hold_req_queue, node1,
 					   &node2));
 
+	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	if (!found) {
-		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGE(FL("target request not found for vdev_id %d type %d"),
 			 vdev_id, type);
 		return NULL;
 	}
 
-	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	WMA_LOGD(FL("target request found for vdev id: %d type %d"),
 		 vdev_id, type);
 
@@ -362,28 +361,48 @@ static struct wma_target_req *wma_find_req(tp_wma_handle wma,
 static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
 						uint8_t vdev_id, uint8_t type)
 {
-	struct wma_target_req *req_msg = NULL, *tmp;
+	struct wma_target_req *req_msg = NULL;
 	bool found = false;
+	cdf_list_node_t *node1 = NULL, *node2 = NULL;
+	CDF_STATUS status;
 
 	cdf_spin_lock_bh(&wma->vdev_respq_lock);
-	list_for_each_entry_safe(req_msg, tmp, &wma->vdev_resp_queue, node) {
+	if (CDF_STATUS_SUCCESS != cdf_list_peek_front(&wma->vdev_resp_queue,
+						      &node2)) {
+		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		WMA_LOGE(FL("unable to get target req from vdev resp queue"));
+		return NULL;
+	}
+
+	do {
+		node1 = node2;
+		req_msg = cdf_container_of(node1, struct wma_target_req, node);
 		if (req_msg->vdev_id != vdev_id)
 			continue;
 		if (req_msg->type != type)
 			continue;
 
 		found = true;
-		list_del(&req_msg->node);
+		status = cdf_list_remove_node(&wma->vdev_resp_queue, node1);
+		if (CDF_STATUS_SUCCESS != status) {
+			cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+			WMA_LOGD(FL("Failed to target req for vdev_id %d type %d"),
+				 vdev_id, type);
+			return NULL;
+		}
 		break;
-	}
+	} while (CDF_STATUS_SUCCESS  ==
+			cdf_list_peek_next(&wma->vdev_resp_queue,
+					   node1, &node2));
+
 	cdf_spin_unlock_bh(&wma->vdev_respq_lock);
 	if (!found) {
-		WMA_LOGP("%s: target request not found for vdev_id %d type %d",
-			 __func__, vdev_id, type);
+		WMA_LOGP(FL("target request not found for vdev_id %d type %d"),
+			 vdev_id, type);
 		return NULL;
 	}
-	WMA_LOGD("%s: target request found for vdev id: %d type %d msg %d",
-		 __func__, vdev_id, type, req_msg->msg_type);
+	WMA_LOGD(FL("target request found for vdev id: %d type %d msg %d"),
+		 vdev_id, type, req_msg->msg_type);
 	return req_msg;
 }
 
@@ -2619,6 +2638,7 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 					 void *params, uint32_t timeout)
 {
 	struct wma_target_req *req;
+	CDF_STATUS status;
 
 	req = cdf_mem_malloc(sizeof(*req));
 	if (!req) {
@@ -2636,7 +2656,15 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 			  wma_vdev_resp_timer, req);
 	cdf_mc_timer_start(&req->event_timeout, timeout);
 	cdf_spin_lock_bh(&wma->vdev_respq_lock);
-	list_add_tail(&req->node, &wma->vdev_resp_queue);
+	status = cdf_list_insert_back(&wma->vdev_resp_queue, &req->node);
+	if (CDF_STATUS_SUCCESS != status) {
+		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		WMA_LOGE(FL("Failed add request in queue for vdev_id %d type %d"),
+			 vdev_id, type);
+		cdf_mem_free(req);
+		return NULL;
+	}
+
 	cdf_spin_unlock_bh(&wma->vdev_respq_lock);
 	return req;
 }

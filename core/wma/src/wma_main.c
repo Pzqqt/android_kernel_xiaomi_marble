@@ -1687,7 +1687,8 @@ CDF_STATUS wma_open(void *cds_context,
 		goto err_event_init;
 	}
 
-	INIT_LIST_HEAD(&wma_handle->vdev_resp_queue);
+	cdf_list_init(&wma_handle->vdev_resp_queue,
+		      MAX_ENTRY_VDEV_RESP_QUEUE);
 	cdf_spinlock_init(&wma_handle->vdev_respq_lock);
 	cdf_list_init(&wma_handle->wma_hold_req_queue,
 		      MAX_ENTRY_HOLD_REQ_QUEUE);
@@ -2769,7 +2770,7 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 
 	do {
 		node1 = node2;
-		req_msg = (struct wma_target_req *)node1;
+		req_msg = cdf_container_of(node1, struct wma_target_req, node);
 		status = cdf_list_remove_node(&wma->wma_hold_req_queue, node1);
 		if (CDF_STATUS_SUCCESS != status) {
 			cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
@@ -2795,13 +2796,29 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
  */
 static void wma_cleanup_vdev_resp(tp_wma_handle wma)
 {
-	struct wma_target_req *msg, *tmp;
+	struct wma_target_req *req_msg = NULL;
+	cdf_list_node_t *node1 = NULL;
+	CDF_STATUS status;
 
 	cdf_spin_lock_bh(&wma->vdev_respq_lock);
-	list_for_each_entry_safe(msg, tmp, &wma->vdev_resp_queue, node) {
-		list_del(&msg->node);
-		cdf_mc_timer_destroy(&msg->event_timeout);
-		cdf_mem_free(msg);
+	if (cdf_list_empty(&wma->vdev_resp_queue)) {
+		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		WMA_LOGI(FL("request queue maybe empty"));
+		return;
+	}
+
+	while (CDF_STATUS_SUCCESS != cdf_list_peek_front(&wma->vdev_resp_queue,
+						      &node1)) {
+		req_msg = cdf_container_of(node1, struct wma_target_req, node);
+		status = cdf_list_remove_node(&wma->vdev_resp_queue, node1);
+		if (CDF_STATUS_SUCCESS != status) {
+			cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+			WMA_LOGE(FL("Failed to remove request for vdev_id %d type %d"),
+				 req_msg->vdev_id, req_msg->type);
+			return;
+		}
+		cdf_mc_timer_destroy(&req_msg->event_timeout);
+		cdf_mem_free(req_msg);
 	}
 	cdf_spin_unlock_bh(&wma->vdev_respq_lock);
 }
