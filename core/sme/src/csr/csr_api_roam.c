@@ -4152,8 +4152,7 @@ CDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
 			pBssConfig->uPowerLimit);
 	/* CB */
 
-	if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_WDS_AP(pProfile)
-	    || CSR_IS_IBSS(pProfile)) {
+	if (CSR_IS_INFRA_AP(pProfile) || CSR_IS_IBSS(pProfile)) {
 		channel = pProfile->operationChannel;
 	} else {
 		if (pBssDesc) {
@@ -4214,7 +4213,6 @@ CDF_STATUS csr_roam_stop_network(tpAniSirGlobal pMac, uint32_t sessionId,
 		pSession->bssParams.cbMode = pBssConfig->cbMode;
 		/* For IBSS, we need to prepare some more information */
 		if (csr_is_bss_type_ibss(pProfile->BSSType) ||
-				CSR_IS_WDS(pProfile) ||
 				CSR_IS_INFRA_AP(pProfile))
 			csr_roam_prepare_bss_params(pMac, sessionId, pProfile,
 				pBssDesc, pBssConfig, pIes);
@@ -4249,7 +4247,7 @@ CDF_STATUS csr_roam_stop_network(tpAniSirGlobal pMac, uint32_t sessionId,
 				status = csr_roam_set_bss_config_cfg(pMac,
 						sessionId, pProfile, pBssDesc,
 						pBssConfig, pIes, false);
-		} else if (pBssDesc || CSR_IS_WDS_AP(pProfile) ||
+		} else if (pBssDesc ||
 					CSR_IS_INFRA_AP(pProfile)) {
 			/*
 			 * Neither in IBSS nor in Infra. We can go ahead and set
@@ -4326,10 +4324,6 @@ eCsrJoinState csr_roam_join(tpAniSirGlobal pMac, uint32_t sessionId,
 		return eCsrStopRoaming;
 	}
 
-	if (CSR_IS_WDS_STA(pProfile) &&
-		!CDF_IS_STATUS_SUCCESS(csr_roam_start_wds(pMac, sessionId,
-				pProfile, pBssDesc)))
-		return eCsrStopRoaming;
 	if (!pIesLocal &&
 		!CDF_IS_STATUS_SUCCESS(csr_get_parsed_bss_description_ies(pMac,
 				pBssDesc, &pIesLocal))) {
@@ -4560,7 +4554,6 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 	/*
 	 * We have something to roam, tell HDD when it is infra.
 	 * For IBSS, the indication goes back to HDD via eCSR_ROAM_IBSS_IND
-	 * For WDS, the indication is eCSR_ROAM_WDS_IND
 	 */
 	if (CSR_IS_INFRASTRUCTURE(profile)) {
 		if (roam_info_ptr && session->bRefAssocStartCnt) {
@@ -4685,8 +4678,7 @@ static void csr_roam_join_handle_profile(tpAniSirGlobal mac_ctx,
 			*roam_state = eCsrStopRoaming;
 		}
 		return;
-	} else if ((CSR_IS_WDS_AP(profile)) ||
-			(CSR_IS_INFRA_AP(profile))) {
+	} else if (CSR_IS_INFRA_AP(profile)) {
 		/* Attempt to start this WDS... */
 		csr_roam_assign_default_param(mac_ctx, cmd);
 		/* For AP WDS, we dont have any BSSDescription */
@@ -5772,16 +5764,6 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 #endif
 		csr_roam_completion(mac_ctx, session_id, NULL, cmd,
 			eCSR_ROAM_RESULT_FAILURE, false);
-#ifdef FEATURE_WLAN_BTAMP_UT_RF
-		/*
-		 * For WDS STA. To fix the issue where the WDS AP side may
-		 * be too busy by BT activity and not able to receive
-		 * WLAN traffic. Retry the join
-		 */
-		if (CSR_IS_WDS_STA(profile))
-			csr_roam_start_join_retry_timer(mac_ctx, session_id,
-				CSR_JOIN_RETRY_TIMEOUT_PERIOD);
-#endif
 		break;
 	case eCsrHddIssuedReassocToSameAP:
 	case eCsrSmeIssuedReassocToSameAP:
@@ -5937,119 +5919,90 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED;
 	else
 		session->connectState = eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED;
-	if (!CSR_IS_WDS_STA(profile)) {
-		csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
+	csr_roam_state_change(mac_ctx, eCSR_ROAMING_STATE_JOINED,
 			session_id);
-		bss_desc = &start_bss_rsp->bssDescription;
-		if (!CDF_IS_STATUS_SUCCESS
-			(csr_get_parsed_bss_description_ies(mac_ctx, bss_desc,
-							    &ies_ptr))) {
-			sms_log(mac_ctx, LOGW, FL("cannot parse IBSS IEs"));
-			roam_info.pBssDesc = bss_desc;
-			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
-				cmd->u.roamCmd.roamId, eCSR_ROAM_IBSS_IND,
-				eCSR_ROAM_RESULT_IBSS_START_FAILED);
-			return;
-		}
-		if (!CSR_IS_INFRA_AP(profile)) {
-			scan_res =
-				csr_scan_append_bss_description(mac_ctx,
-						bss_desc, ies_ptr, false,
-						session_id);
-		}
-		csr_roam_save_connected_bss_desc(mac_ctx, session_id, bss_desc);
-		csr_roam_free_connect_profile(mac_ctx,
-				&session->connectedProfile);
-		csr_roam_free_connected_info(mac_ctx,
-				&session->connectedInfo);
-		if (bss_desc) {
-			csr_roam_save_connected_infomation(mac_ctx, session_id,
-					profile, bss_desc, ies_ptr);
-			cdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
-				sizeof(struct cdf_mac_addr));
-		}
-		/* We are done with the IEs so free it */
-		cdf_mem_free(ies_ptr);
-#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-		WLAN_HOST_DIAG_LOG_ALLOC(ibss_log,
-			host_log_ibss_pkt_type, LOG_WLAN_IBSS_C);
-		if (ibss_log) {
-			if (CSR_INVALID_SCANRESULT_HANDLE ==
-					cmd->u.roamCmd.hBSSList) {
-				/*
-				 * We start the IBSS (didn't find any
-				 * matched IBSS out there)
-				 */
-				ibss_log->eventId =
-					WLAN_IBSS_EVENT_START_IBSS_RSP;
-			} else {
-				ibss_log->eventId =
-					WLAN_IBSS_EVENT_JOIN_IBSS_RSP;
-			}
-			if (bss_desc) {
-				cdf_mem_copy(ibss_log->bssid,
-					bss_desc->bssId, 6);
-				ibss_log->operatingChannel =
-					bss_desc->channelId;
-			}
-			if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int(
-						mac_ctx,
-						WNI_CFG_BEACON_INTERVAL,
-						&bi)))
-				/* U8 is not enough for BI */
-				ibss_log->beaconInterval = (uint8_t) bi;
-			WLAN_HOST_DIAG_LOG_REPORT(ibss_log);
-		}
-#endif
-		/*
-		 * Only set context for non-WDS_STA. We don't even need it for
-		 * WDS_AP. But since the encryption.
-		 * is WPA2-PSK so it won't matter.
-		 */
-		if (CSR_IS_ENC_TYPE_STATIC(profile->negotiatedUCEncryptionType)
-				&& session->pCurRoamProfile
-				&& !CSR_IS_INFRA_AP(session->pCurRoamProfile)) {
-			/*
-			 * Issue the set Context request to LIM to establish
-			 * the Broadcast STA context for the Ibss. In Rome IBSS
-			 * case, dummy key installation will break proper BSS
-			 * key installation, so skip it.
-			 */
-			if (!CSR_IS_IBSS(session->pCurRoamProfile)) {
-				/* NO keys. these key parameters don't matter */
-				csr_roam_issue_set_context_req(mac_ctx,
-					session_id,
-					profile->negotiatedMCEncryptionType,
-					bss_desc, &bcast_mac, false,
-					false, eSIR_TX_RX, 0, 0, NULL, 0);
-			}
-
-		}
-	} else {
-		/*
-		 * Keep the state to eCSR_ROAMING_STATE_JOINING.
-		 * Need to send join_req.
-		 */
-		if (cmd->u.roamCmd.pRoamBssEntry) {
-			scan_res = GET_BASE_ADDR(cmd->u.roamCmd.
-					pRoamBssEntry, tCsrScanResult, Link);
-			if (scan_res) {
-				bss_desc = &scan_res->Result.BssDescriptor;
-				ies_ptr = (tDot11fBeaconIEs *)
-					(scan_res->Result.pvIes);
-				/* Set the roaming substate to join attempt */
-				csr_roam_substate_change(mac_ctx,
-					eCSR_ROAM_SUBSTATE_JOIN_REQ,
+	bss_desc = &start_bss_rsp->bssDescription;
+	if (!CDF_IS_STATUS_SUCCESS
+		(csr_get_parsed_bss_description_ies(mac_ctx, bss_desc,
+						    &ies_ptr))) {
+		sms_log(mac_ctx, LOGW, FL("cannot parse IBSS IEs"));
+		roam_info.pBssDesc = bss_desc;
+		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
+			cmd->u.roamCmd.roamId, eCSR_ROAM_IBSS_IND,
+			eCSR_ROAM_RESULT_IBSS_START_FAILED);
+		return;
+	}
+	if (!CSR_IS_INFRA_AP(profile)) {
+		scan_res =
+			csr_scan_append_bss_description(mac_ctx,
+					bss_desc, ies_ptr, false,
 					session_id);
-				status = csr_send_join_req_msg(mac_ctx,
-						session_id, bss_desc,
-						profile, ies_ptr,
-						eWNI_SME_JOIN_REQ);
-			}
+	}
+	csr_roam_save_connected_bss_desc(mac_ctx, session_id, bss_desc);
+	csr_roam_free_connect_profile(mac_ctx,
+			&session->connectedProfile);
+	csr_roam_free_connected_info(mac_ctx,
+			&session->connectedInfo);
+	if (bss_desc) {
+		csr_roam_save_connected_infomation(mac_ctx, session_id,
+				profile, bss_desc, ies_ptr);
+		cdf_mem_copy(&roam_info.bssid, &bss_desc->bssId,
+			sizeof(struct cdf_mac_addr));
+	}
+	/* We are done with the IEs so free it */
+	cdf_mem_free(ies_ptr);
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+	WLAN_HOST_DIAG_LOG_ALLOC(ibss_log,
+		host_log_ibss_pkt_type, LOG_WLAN_IBSS_C);
+	if (ibss_log) {
+		if (CSR_INVALID_SCANRESULT_HANDLE ==
+				cmd->u.roamCmd.hBSSList) {
+			/*
+			 * We start the IBSS (didn't find any
+			 * matched IBSS out there)
+			 */
+			ibss_log->eventId =
+				WLAN_IBSS_EVENT_START_IBSS_RSP;
 		} else {
-			sms_log(mac_ctx, LOGE,
-				"StartBSS for WDS station with no BssDesc");
-			CDF_ASSERT(0);
+			ibss_log->eventId =
+				WLAN_IBSS_EVENT_JOIN_IBSS_RSP;
+		}
+		if (bss_desc) {
+			cdf_mem_copy(ibss_log->bssid,
+				bss_desc->bssId, 6);
+			ibss_log->operatingChannel =
+				bss_desc->channelId;
+		}
+		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_int(
+					mac_ctx,
+					WNI_CFG_BEACON_INTERVAL,
+					&bi)))
+			/* U8 is not enough for BI */
+			ibss_log->beaconInterval = (uint8_t) bi;
+		WLAN_HOST_DIAG_LOG_REPORT(ibss_log);
+	}
+#endif
+	/*
+	 * Only set context for non-WDS_STA. We don't even need it for
+	 * WDS_AP. But since the encryption.
+	 * is WPA2-PSK so it won't matter.
+	 */
+	if (CSR_IS_ENC_TYPE_STATIC(profile->negotiatedUCEncryptionType)
+			&& session->pCurRoamProfile
+			&& !CSR_IS_INFRA_AP(session->pCurRoamProfile)) {
+		/*
+		 * Issue the set Context request to LIM to establish
+		 * the Broadcast STA context for the Ibss. In Rome IBSS
+		 * case, dummy key installation will break proper BSS
+		 * key installation, so skip it.
+		 */
+		if (!CSR_IS_IBSS(session->pCurRoamProfile)) {
+			/* NO keys. these key parameters don't matter */
+			csr_roam_issue_set_context_req(mac_ctx,
+				session_id,
+				profile->negotiatedMCEncryptionType,
+				bss_desc, &bcast_mac, false,
+				false, eSIR_TX_RX, 0, 0, NULL, 0);
 		}
 	}
 	/*
@@ -6061,10 +6014,6 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 	if (!CSR_IS_JOIN_TO_IBSS(profile)) {
 		roam_status = eCSR_ROAM_IBSS_IND;
 		roam_result = eCSR_ROAM_RESULT_IBSS_STARTED;
-		if (CSR_IS_WDS(profile)) {
-			roam_status = eCSR_ROAM_WDS_IND;
-			roam_result = eCSR_ROAM_RESULT_WDS_STARTED;
-		}
 		if (CSR_IS_INFRA_AP(profile)) {
 			roam_status = eCSR_ROAM_INFRA_IND;
 			roam_result = eCSR_ROAM_RESULT_INFRA_STARTED;
@@ -6099,16 +6048,6 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 				roam_status, roam_result);
 	}
 
-
-	if (CSR_IS_WDS_STA(profile)) {
-		/* need to send stop BSS because we fail to send join_req */
-		csr_roam_issue_disassociate_cmd(mac_ctx, session_id,
-				eCSR_DISCONNECT_REASON_UNSPECIFIED);
-		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
-				cmd->u.roamCmd.roamId,
-				eCSR_ROAM_WDS_IND,
-				eCSR_ROAM_RESULT_WDS_STOPPED);
-	}
 }
 
 /**
@@ -6595,10 +6534,6 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 #endif
 		roam_status = eCSR_ROAM_IBSS_IND;
 		roam_result = eCSR_ROAM_RESULT_IBSS_STARTED;
-		if (CSR_IS_WDS(profile)) {
-			roam_status = eCSR_ROAM_WDS_IND;
-			roam_result = eCSR_ROAM_RESULT_WDS_STARTED;
-		}
 		if (CSR_IS_INFRA_AP(profile)) {
 			roam_status = eCSR_ROAM_INFRA_IND;
 			roam_result = eCSR_ROAM_RESULT_INFRA_START_FAILED;
@@ -6681,24 +6616,14 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 				eCSR_ROAM_RESULT_ASSOCIATED, true);
 		break;
 	case eCsrReassocFailure:
+		/*
+		* Currently Reassoc failure is handled through eCsrJoinFailure
+		* Need to revisit for eCsrReassocFailure handling
+		*/
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 		sme_qos_csr_event_ind(mac_ctx, (uint8_t) session_id,
 				SME_QOS_CSR_REASSOC_FAILURE, NULL);
 #endif
-	case eCsrJoinWdsFailure:
-		sms_log(mac_ctx, LOGW, FL("failed to join WDS"));
-		csr_free_connect_bss_desc(mac_ctx, session_id);
-		csr_roam_free_connect_profile(mac_ctx,
-			&session->connectedProfile);
-		csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
-		cdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
-		roam_info.pBssDesc = cmd->u.roamCmd.pLastRoamBss;
-		roam_info.statusCode = session->joinFailStatusCode.statusCode;
-		roam_info.reasonCode = session->joinFailStatusCode.reasonCode;
-		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
-			cmd->u.roamCmd.roamId, eCSR_ROAM_WDS_IND,
-			eCSR_ROAM_RESULT_WDS_NOT_ASSOCIATED);
-		/* Need to issue stop_bss */
 		break;
 	case eCsrJoinFailure:
 	case eCsrNothingToJoin:
@@ -7269,8 +7194,7 @@ CDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 		pScanFilter->bWPSAssociation = 0;
 		pScanFilter->bOSENAssociation = 0;
 	}
-	if ((pProfile && CSR_IS_WDS_AP(pProfile)) || (pProfile
-				&& CSR_IS_INFRA_AP(pProfile))) {
+	if (pProfile && CSR_IS_INFRA_AP(pProfile)) {
 		/* This can be started right away */
 		status = csr_roam_issue_connect(pMac, sessionId, pProfile, NULL,
 				 eCsrHddIssued, roamId, false, false);
@@ -7605,26 +7529,6 @@ CDF_STATUS csr_roam_process_disassoc_deauth(tpAniSirGlobal pMac, tSmeCmd *pComma
 						      eCSR_ROAM_SUBSTATE_DEAUTH_REQ);
 		}
 		fComplete = (!CDF_IS_STATUS_SUCCESS(status));
-	} else if (csr_is_conn_state_wds(pMac, sessionId)) {
-		if (CSR_IS_WDS_AP
-			    (&pMac->roam.roamSession[sessionId].connectedProfile)) {
-			status =
-				csr_roam_issue_stop_bss(pMac, sessionId,
-							eCSR_ROAM_SUBSTATE_STOP_BSS_REQ);
-			fComplete = (!CDF_IS_STATUS_SUCCESS(status));
-		}
-		/* This has to be WDS station */
-		else if (csr_is_conn_state_connected_wds(pMac, sessionId)) {
-			/* This has to be WDS station */
-			pCommand->u.roamCmd.fStopWds = true;
-			if (fDisassoc) {
-				status =
-					csr_roam_issue_disassociate(pMac, sessionId,
-								    eCSR_ROAM_SUBSTATE_DISCONNECT_CONTINUE_ROAMING,
-								    fMICFailure);
-				fComplete = (!CDF_IS_STATUS_SUCCESS(status));
-			}
-		}
 	} else {
 		/* we got a dis-assoc request while not connected to any peer */
 		/* just complete the command */
@@ -7791,7 +7695,6 @@ CDF_STATUS csr_roam_disconnect_internal(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* Only issue disconnect when necessary */
 	if (csr_is_conn_state_connected(pMac, sessionId)
 	    || csr_is_bss_type_ibss(pSession->connectedProfile.BSSType)
-	    || csr_is_bss_type_wds(pSession->connectedProfile.BSSType)
 	    || csr_is_roam_command_waiting_for_session(pMac, sessionId)) {
 		sms_log(pMac, LOG2, FL("called"));
 		status = csr_roam_issue_disassociate_cmd(pMac, sessionId,
@@ -8074,17 +7977,7 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 		is_dis_pending = is_disconnect_pending(pMac, session_ptr->sessionId);
 		if (pCommand && (session_ptr->join_bssid_count <
 				CSR_MAX_BSSID_COUNT) && !is_dis_pending) {
-			if (CSR_IS_WDS_STA(&pCommand->u.roamCmd.roamProfile)) {
-				pCommand->u.roamCmd.fStopWds = true;
-				session_ptr->connectedProfile.BSSType =
-					eCSR_BSS_TYPE_WDS_STA;
-				csr_roam_reissue_roam_command(pMac);
-			} else if (CSR_IS_WDS(&pCommand->u.roamCmd.roamProfile)) {
-				session_ptr->join_bssid_count = 0;
-				csr_roam_complete(pMac, eCsrNothingToJoin, NULL);
-			} else {
-				csr_roam(pMac, pCommand);
-			}
+			csr_roam(pMac, pCommand);
 		} else {
 			/* ****************************************************
 			 * When the upper layers issue a connect command, there
@@ -8199,20 +8092,11 @@ void csr_roam_reissue_roam_command(tpAniSirGlobal pMac)
 	roamInfo.pBssDesc = pCommand->u.roamCmd.pLastRoamBss;
 	roamInfo.statusCode = pSession->joinFailStatusCode.statusCode;
 	roamInfo.reasonCode = pSession->joinFailStatusCode.reasonCode;
-	if (CSR_IS_WDS(&pSession->connectedProfile)) {
-		pSession->connectState = eCSR_ASSOC_STATE_TYPE_WDS_DISCONNECTED;
-		csr_roam_call_callback(pMac, sessionId, &roamInfo,
-				       pCommand->u.roamCmd.roamId,
-				       eCSR_ROAM_WDS_IND,
-				       eCSR_ROAM_RESULT_WDS_DISASSOCIATED);
-	} else if (CSR_IS_INFRA_AP(&pSession->connectedProfile)) {
-		pSession->connectState =
-			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED;
-		csr_roam_call_callback(pMac, sessionId, &roamInfo,
-				       pCommand->u.roamCmd.roamId,
-				       eCSR_ROAM_INFRA_IND,
-				       eCSR_ROAM_RESULT_INFRA_DISASSOCIATED);
-	}
+	pSession->connectState = eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED;
+	csr_roam_call_callback(pMac, sessionId, &roamInfo,
+			       pCommand->u.roamCmd.roamId,
+			       eCSR_ROAM_INFRA_IND,
+			       eCSR_ROAM_RESULT_INFRA_DISASSOCIATED);
 
 	if (!CDF_IS_STATUS_SUCCESS(csr_roam_issue_stop_bss(pMac, sessionId,
 					eCSR_ROAM_SUBSTATE_STOP_BSS_REQ))) {
@@ -8467,7 +8351,6 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 		bss_desc = &scan_result->Result.BssDescriptor;
 	}
 	if (csr_is_bss_type_ibss(cmd->u.roamCmd.roamProfile.BSSType)
-	    || CSR_IS_WDS(&cmd->u.roamCmd.roamProfile)
 	    || CSR_IS_INFRA_AP(&cmd->u.roamCmd.roamProfile)) {
 		if (!CDF_IS_STATUS_SUCCESS(csr_roam_issue_start_bss(mac_ctx,
 						session_id, &session->bssParams,
@@ -9223,12 +9106,6 @@ void csr_roam_joined_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 						       eCSR_ROAM_INFRA_IND,
 						       eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
 		}
-		if (CSR_IS_WDS_AP(pRoamInfo->u.pConnectedProfile)) {
-			cdf_sleep(100);
-			pMac->roam.roamSession[sessionId].connectState = eCSR_ASSOC_STATE_TYPE_WDS_CONNECTED;           /* Sta */
-			status = csr_roam_call_callback(pMac, sessionId, pRoamInfo, 0, eCSR_ROAM_WDS_IND, eCSR_ROAM_RESULT_WDS_ASSOCIATION_IND);           /* Sta */
-		}
-
 	}
 	break;
 	default:
@@ -9669,15 +9546,7 @@ csr_roam_prepare_filter_from_profile(tpAniSirGlobal mac_ctx,
 	}
 
 	if (profile->SSIDs.numOfSSIDs) {
-		if (!CSR_IS_WDS_STA(profile)) {
-			scan_fltr->SSIDs.numOfSSIDs = profile->SSIDs.numOfSSIDs;
-		} else {
-			/*
-			 * For WDS station we always use idx 1 for self SSID.
-			 * Index 0 for peer's SSID that we want to join
-			 */
-			scan_fltr->SSIDs.numOfSSIDs = 1;
-		}
+		scan_fltr->SSIDs.numOfSSIDs = profile->SSIDs.numOfSSIDs;
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
 			FL("No of Allowed List:%d"),
 			roam_params->num_ssid_allowed_list);
@@ -10083,10 +9952,6 @@ csr_roam_chk_lnk_assoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	cdf_mem_copy(&roam_info_ptr->chan_info,
 		     &pAssocInd->chan_info,
 		     sizeof(tSirSmeChanInfo));
-	if (CSR_IS_WDS_AP(roam_info_ptr->u.pConnectedProfile))
-		status = csr_roam_call_callback(mac_ctx, sessionId,
-					roam_info_ptr, 0, eCSR_ROAM_WDS_IND,
-					eCSR_ROAM_RESULT_WDS_ASSOCIATION_IND);
 	if (CSR_IS_INFRA_AP(roam_info_ptr->u.pConnectedProfile)) {
 		if (session->pCurRoamProfile &&
 		    CSR_IS_ENC_TYPE_STATIC(
@@ -10115,10 +9980,7 @@ csr_roam_chk_lnk_assoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	 * send a message to CSR itself just to avoid the EAPOL frames going
 	 * OTA before association response
 	 */
-	if (CSR_IS_WDS_AP(roam_info_ptr->u.pConnectedProfile)) {
-		status = csr_send_assoc_ind_to_upper_layer_cnf_msg(mac_ctx,
-						pAssocInd, status, sessionId);
-	} else if (CSR_IS_INFRA_AP(roam_info_ptr->u.pConnectedProfile)
+	if (CSR_IS_INFRA_AP(roam_info_ptr->u.pConnectedProfile)
 	    && (roam_info_ptr->statusCode != eSIR_SME_ASSOC_REFUSED)) {
 		roam_info_ptr->fReassocReq = pAssocInd->reassocReq;
 		status = csr_send_assoc_ind_to_upper_layer_cnf_msg(mac_ctx,
@@ -11668,15 +11530,6 @@ void csr_roam_process_wm_status_change_command(tpAniSirGlobal pMac,
 			pCommand->u.wmStatusChangeCmd.Type);
 		break;
 	}
-	/* For WDS, we want to stop BSS as well when it is indicated that it is disconnected. */
-	if (CSR_IS_CONN_WDS(&pSession->connectedProfile)) {
-		if (!CDF_IS_STATUS_SUCCESS
-			    (csr_roam_issue_stop_bss_cmd(pMac, pCommand->sessionId, true))) {
-			/* This is not good */
-			sms_log(pMac, LOGE,
-				FL("  failed to issue stopBSS command"));
-		}
-	}
 	/* Lost Link just triggers a roaming sequence.  We can complte the Lost Link */
 	/* command here since there is nothing else to do. */
 	csr_roam_wm_status_change_complete(pMac);
@@ -11854,7 +11707,7 @@ csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 	 * If the global setting for dot11Mode is set to auto/abg, we overwrite
 	 * the setting in the profile.
 	 */
-	if (((!CSR_IS_INFRA_AP(profile) && !CSR_IS_WDS(profile))
+	if ((!CSR_IS_INFRA_AP(profile)
 	    && ((eCSR_CFG_DOT11_MODE_AUTO == curr_mode)
 	    || (eCSR_CFG_DOT11_MODE_ABG == curr_mode)))
 	    || (eCSR_CFG_DOT11_MODE_AUTO == cfg_dot11_mode)
@@ -12741,37 +12594,21 @@ static void csr_roam_prepare_bss_params(tpAniSirGlobal pMac, uint32_t sessionId,
 	if (pBssDesc) {
 		csr_roam_get_bss_start_parms_from_bss_desc(pMac, pBssDesc, pIes,
 							   &pSession->bssParams);
-		/* Since csr_roam_get_bss_start_parms_from_bss_desc fills in the bssid for pSession->bssParams */
-		/* The following code has to be do after that. */
-		/* For WDS station, use selfMac as the self BSSID */
-		if (CSR_IS_WDS_STA(pProfile)) {
-			cdf_mem_copy(&pSession->bssParams.bssid,
-				     &pSession->selfMacAddr,
-				     sizeof(struct cdf_mac_addr));
-		}
 	} else {
 		csr_roam_get_bss_start_parms(pMac, pProfile, &pSession->bssParams);
 		/* Use the first SSID */
-		if (pProfile->SSIDs.numOfSSIDs) {
+		if (pProfile->SSIDs.numOfSSIDs)
 			cdf_mem_copy(&pSession->bssParams.ssId,
 				     pProfile->SSIDs.SSIDList,
 				     sizeof(tSirMacSSid));
-		}
-		/* For WDS station, use selfMac as the self BSSID */
-		if (CSR_IS_WDS_STA(pProfile)) {
-			cdf_mem_copy(&pSession->bssParams.bssid,
-				     &pSession->selfMacAddr,
-				     sizeof(struct cdf_mac_addr));
-		}
-		/* Use the first BSSID */
-		else if (pProfile->BSSIDs.numOfBSSIDs) {
+		if (pProfile->BSSIDs.numOfBSSIDs)
+			/* Use the first BSSID */
 			cdf_mem_copy(&pSession->bssParams.bssid,
 				     pProfile->BSSIDs.bssid,
 				     sizeof(struct cdf_mac_addr));
-		} else {
+		else
 			cdf_mem_set(&pSession->bssParams.bssid,
 				    sizeof(struct cdf_mac_addr), 0);
-		}
 	}
 	Channel = pSession->bssParams.operationChn;
 	/* Set operating channel in pProfile which will be used */
@@ -14165,8 +14002,7 @@ CDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	pMsg->sessionId = sessionId;
 	pMsg->transactionId = 0;
 	if ((pSession->pCurRoamProfile != NULL)
-		&& ((CSR_IS_INFRA_AP(pSession->pCurRoamProfile))
-		|| (CSR_IS_WDS_AP(pSession->pCurRoamProfile)))) {
+		&& (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
 		cdf_mem_copy(&pMsg->bssId,
 			     &pSession->selfMacAddr,
 			     sizeof(tSirMacAddr));
@@ -14372,8 +14208,7 @@ CDF_STATUS csr_send_mb_deauth_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	pMsg->transactionId = 0;
 
 	if ((pSession->pCurRoamProfile != NULL)
-	     && ((CSR_IS_INFRA_AP(pSession->pCurRoamProfile))
-	     || (CSR_IS_WDS_AP(pSession->pCurRoamProfile)))) {
+	     && (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
 		cdf_mem_copy(&pMsg->bssId,
 			     &pSession->selfMacAddr,
 			     sizeof(tSirMacAddr));
@@ -14792,18 +14627,9 @@ CDF_STATUS csr_send_mb_stop_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId)
 	pMsg->length = sizeof(tSirSmeStopBssReq);
 	pMsg->transactionId = 0;
 	pMsg->reasonCode = 0;
-	/*
-	 * if BSSType is WDS sta, use selfmacAddr as bssid,
-	 * else use bssid in connectedProfile
-	 */
-	if (CSR_IS_CONN_WDS_STA(&pSession->connectedProfile))
-		cdf_mem_copy(&pMsg->bssId,
-			     &pSession->selfMacAddr.bytes,
-			     sizeof(tSirMacAddr));
-	else
-		cdf_mem_copy(&pMsg->bssId,
-			     &pSession->connectedProfile.bssid.bytes,
-			     sizeof(tSirMacAddr));
+	cdf_mem_copy(&pMsg->bssId,
+		     &pSession->connectedProfile.bssid.bytes,
+		     sizeof(tSirMacAddr));
 	return cds_send_mb_message_to_mac(pMsg);
 }
 

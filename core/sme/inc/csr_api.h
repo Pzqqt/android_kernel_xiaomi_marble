@@ -166,8 +166,6 @@ typedef enum {
 	eCSR_BSS_TYPE_INFRA_AP,   /* SoftAP AP */
 	eCSR_BSS_TYPE_IBSS,       /* IBSS network we'll NOT start */
 	eCSR_BSS_TYPE_START_IBSS, /* IBSS network we'll start if no partners */
-	eCSR_BSS_TYPE_WDS_AP,     /* BT-AMP AP */
-	eCSR_BSS_TYPE_WDS_STA,    /* BT-AMP station */
 	eCSR_BSS_TYPE_ANY,        /* any BSS type (IBSS or Infrastructure).*/
 } eCsrRoamBssType;
 
@@ -475,8 +473,6 @@ typedef enum {
 	eCSR_ROAM_GEN_INFO,
 	eCSR_ROAM_SET_KEY_COMPLETE,
 	eCSR_ROAM_IBSS_LEAVE,   /* IBSS indications. */
-	/* BSS in WDS mode status indication */
-	eCSR_ROAM_WDS_IND,
 	/* BSS in SoftAP mode status indication */
 	eCSR_ROAM_INFRA_IND,
 	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND,
@@ -588,20 +584,6 @@ typedef enum {
 #ifdef FEATURE_WLAN_WAPI
 	eCSR_ROAM_RESULT_NEW_WAPI_BSS,
 #endif /* FEATURE_WLAN_WAPI */
-	/* WDS started successfully */
-	eCSR_ROAM_RESULT_WDS_STARTED,
-	/* WDS start failed */
-	eCSR_ROAM_RESULT_WDS_START_FAILED,
-	/* WDS stopped */
-	eCSR_ROAM_RESULT_WDS_STOPPED,
-	/* WDS joined successfully in STA mode */
-	eCSR_ROAM_RESULT_WDS_ASSOCIATED,
-	/* A station joined WDS AP */
-	eCSR_ROAM_RESULT_WDS_ASSOCIATION_IND,
-	/* WDS join failed in STA mode */
-	eCSR_ROAM_RESULT_WDS_NOT_ASSOCIATED,
-	/* WDS disassociated */
-	eCSR_ROAM_RESULT_WDS_DISASSOCIATED,
 	/* INFRA started successfully */
 	eCSR_ROAM_RESULT_INFRA_STARTED,
 	/* INFRA start failed */
@@ -896,12 +878,6 @@ typedef struct tagCsrRoamModifyProfileFields {
 } tCsrRoamModifyProfileFields;
 
 typedef struct tagCsrRoamProfile {
-	/*
-	 * For eCSR_BSS_TYPE_WDS_AP. There must be one SSID in SSIDs.
-	 * For eCSR_BSS_TYPE_WDS_STA. There must be two SSIDs.
-	 * Index 0 is the SSID of the WDS-AP that we need to join.
-	 * Index 1 is the SSID for self BSS.
-	 */
 	tCsrSSIDs SSIDs;
 	tCsrBSSIDs BSSIDs;
 	/* this is bit mask of all the needed phy mode defined in eCsrPhyMode */
@@ -1603,20 +1579,10 @@ typedef CDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 					 (pProfile)->BSSType)
 #define CSR_IS_ANY_BSS_TYPE(pProfile) (eCSR_BSS_TYPE_ANY == \
 				       (pProfile)->BSSType)
-#define CSR_IS_WDS_AP(pProfile)   (eCSR_BSS_TYPE_WDS_AP == (pProfile)->BSSType)
-#define CSR_IS_WDS_STA(pProfile)  (eCSR_BSS_TYPE_WDS_STA == (pProfile)->BSSType)
-#define CSR_IS_WDS(pProfile)      (CSR_IS_WDS_AP(pProfile) || \
-				   CSR_IS_WDS_STA(pProfile))
 #define CSR_IS_INFRA_AP(pProfile) (eCSR_BSS_TYPE_INFRA_AP ==  \
 				   (pProfile)->BSSType)
 #define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
 					 (pProfile)->BSSType)
-#define CSR_IS_CONN_WDS_AP(pProfile)    (eCSR_BSS_TYPE_WDS_AP == \
-					 (pProfile)->BSSType)
-#define CSR_IS_CONN_WDS_STA(pProfile)   (eCSR_BSS_TYPE_WDS_STA == \
-					 (pProfile)->BSSType)
-#define CSR_IS_CONN_WDS(pProfile)	(CSR_IS_WDS_AP(pProfile) || \
-					 CSR_IS_WDS_STA(pProfile))
 #define CSR_IS_CLOSE_SESSION_COMMAND(pCommand) \
 	((pCommand)->command == eSmeCommandDelStaSession)
 

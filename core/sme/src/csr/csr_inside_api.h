@@ -137,7 +137,6 @@ typedef enum {
 	eCsrStartBssFailure,
 	eCsrSilentlyStopRoaming,
 	eCsrSilentlyStopRoamingSaveState,
-	eCsrJoinWdsFailure,
 	eCsrJoinFailureDueToConcurrency,
 
 } eCsrRoamCompleteResult;
