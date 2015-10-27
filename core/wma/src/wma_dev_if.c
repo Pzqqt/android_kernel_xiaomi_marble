@@ -2924,8 +2924,13 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	tSetBssKeyParams key_info;
 	struct sir_hw_mode_params hw_mode = {0};
 
-	WMA_LOGD("%s: add_bss->sessionId = %d", __func__, add_bss->sessionId);
-	vdev_id = add_bss->sessionId;
+	vdev = wma_find_vdev_by_addr(wma, add_bss->selfMacAddr, &vdev_id);
+	if (!vdev) {
+		WMA_LOGE("%s: vdev not found for vdev id %d.",
+				__func__, vdev_id);
+		goto send_fail_resp;
+	}
+	WMA_LOGD("%s: add_bss->sessionId = %d", __func__, vdev_id);
 	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
@@ -2933,13 +2938,6 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 	wma_set_bss_rate_flags(&wma->interfaces[vdev_id], add_bss);
-
-	vdev = wma_find_vdev_by_id(wma, vdev_id);
-	if (!vdev) {
-		WMA_LOGE("%s: vdev not found for vdev id %d.",
-			 __func__, vdev_id);
-		goto send_fail_resp;
-	}
 
 	/* only change vdev type to ibss during 1st time join_ibss handling */
 

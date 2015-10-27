@@ -1817,10 +1817,10 @@ next_action_two_connection_table[CDS_MAX_ONE_CONNECTION_MODE][CDS_MAX_BAND] = {
 	[CDS_SAP_24_2x2] = {CDS_NOP,             CDS_DBS_DOWNGRADE},
 	[CDS_SAP_5_1x1] = {CDS_DBS,             CDS_NOP},
 	[CDS_SAP_5_2x2] = {CDS_DBS_DOWNGRADE,   CDS_NOP},
-	[CDS_IBSS_24_1x1] = {CDS_NOP,             CDS_NOP},
-	[CDS_IBSS_24_2x2] = {CDS_NOP,             CDS_NOP},
-	[CDS_IBSS_5_1x1] = {CDS_NOP,             CDS_NOP},
-	[CDS_IBSS_5_2x2] = {CDS_NOP,             CDS_NOP},
+	[CDS_IBSS_24_1x1] = {CDS_NOP,             CDS_DBS},
+	[CDS_IBSS_24_2x2] = {CDS_NOP,             CDS_DBS_DOWNGRADE},
+	[CDS_IBSS_5_1x1] = {CDS_DBS,            CDS_NOP},
+	[CDS_IBSS_5_2x2] = {CDS_DBS_DOWNGRADE,  CDS_NOP},
 };
 
 /**
@@ -3351,11 +3351,17 @@ static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
 void cds_incr_active_session(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode,
 				  uint8_t session_id)
 {
+	/*
+	 * Need to aquire mutex as entire functionality in this function
+	 * is in critical section
+	 */
+	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	switch (mode) {
 	case CDF_STA_MODE:
 	case CDF_P2P_CLIENT_MODE:
 	case CDF_P2P_GO_MODE:
 	case CDF_SAP_MODE:
+	case CDF_IBSS_MODE:
 		hdd_ctx->no_of_active_sessions[mode]++;
 		break;
 	default:
@@ -3368,7 +3374,6 @@ void cds_incr_active_session(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode,
 	 * Let us set the PCL to the FW before updating the connection
 	 * info structure about the new connection.
 	 */
-	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	if (mode == CDF_STA_MODE) {
 		/* Set PCL of STA to the FW */
 		cds_soc_set_pcl(hdd_ctx, mode);
@@ -3503,7 +3508,6 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
 {
 	CDF_STATUS cdf_status;
 
-	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	cds_decr_active_session(hdd_ctx, mode, session_id);
 	/*
 	 * After the removal of this connection, we need to check if
@@ -3519,6 +3523,7 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
 	 * given to the FW. After setting the PCL, we need to restore
 	 * the entry that we have saved before.
 	 */
+	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	cds_set_pcl_for_existing_combo(hdd_ctx, CDS_STA_MODE);
 	/* do we need to change the HW mode */
 	if (cds_need_opportunistic_upgrade(hdd_ctx)) {
@@ -3552,11 +3557,17 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
 void cds_decr_active_session(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode,
 				  uint8_t session_id)
 {
+	/*
+	 * Need to aquire mutex as entire functionality in this function
+	 * is in critical section
+	 */
+	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	switch (mode) {
 	case CDF_STA_MODE:
 	case CDF_P2P_CLIENT_MODE:
 	case CDF_P2P_GO_MODE:
 	case CDF_SAP_MODE:
+	case CDF_IBSS_MODE:
 		if (hdd_ctx->no_of_active_sessions[mode])
 			hdd_ctx->no_of_active_sessions[mode]--;
 		break;
@@ -3566,6 +3577,7 @@ void cds_decr_active_session(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode,
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
 	cds_decr_connection_count(hdd_ctx, session_id);
+	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 }
 
 /**
