@@ -5300,6 +5300,12 @@ static int drv_cmd_tdls_off_channel(hdd_adapter_t *adapter,
 	if (ret != 1)
 		return -EINVAL;
 
+	if (CDS_IS_DFS_CH(set_value)) {
+		hdd_err("DFS channel %d is passed for hdd_set_tdls_offchannel",
+		    set_value);
+		return -EINVAL;
+	}
+
 	hddLog(LOG1, FL("Tdls offchannel num: %d"), set_value);
 
 	ret = hdd_set_tdls_offchannel(hdd_ctx, set_value);
