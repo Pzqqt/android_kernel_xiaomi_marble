@@ -261,7 +261,6 @@ CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 }
 #endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 static void hdd_get_band_helper(hdd_context_t *hdd_ctx, int *pBand)
 {
 	eCsrBand band = -1;
@@ -521,9 +520,6 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 	return 0;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_ESE FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /**
  * hdd_reassoc() - perform a userspace-directed reassoc
  * @adapter:	Adapter upon which the command was received
@@ -696,9 +692,6 @@ static int hdd_parse_reassoc(hdd_adapter_t *adapter, const char *command)
 	return ret;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_ESE FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /**
  * hdd_sendactionframe() - send a userspace-supplied action frame
  * @adapter:	Adapter upon which the command was received
@@ -974,9 +967,6 @@ hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command)
 	return ret;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_ESE FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /**
  * hdd_parse_channellist() - HDD Parse channel list
  * @pValue:		Pointer to input channel list
@@ -1272,7 +1262,6 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
 
 	return ret;
 }
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_LFR */
 
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 /**
@@ -6093,15 +6082,10 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"GETROAMSCANPERIOD",         drv_cmd_get_roam_scan_period},
 	{"SETROAMSCANREFRESHPERIOD",  drv_cmd_set_roam_scan_refresh_period},
 	{"GETROAMSCANREFRESHPERIOD",  drv_cmd_get_roam_scan_refresh_period},
-#ifdef FEATURE_WLAN_LFR
 	{"SETROAMMODE",               drv_cmd_set_roam_mode},
 	{"GETROAMMODE",               drv_cmd_get_roam_mode},
-#endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	{"SETROAMDELTA",              drv_cmd_set_roam_delta},
 	{"GETROAMDELTA",              drv_cmd_get_roam_delta},
-#endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	{"GETBAND",                   drv_cmd_get_band},
 	{"SETROAMSCANCHANNELS",       drv_cmd_set_roam_scan_channels},
 	{"GETROAMSCANCHANNELS",       drv_cmd_get_roam_scan_channels},
@@ -6129,10 +6113,7 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"GETOPPORTUNISTICRSSIDIFF",  drv_cmd_get_opportunistic_rssi_diff},
 	{"SETROAMRESCANRSSIDIFF",     drv_cmd_set_roam_rescan_rssi_diff},
 	{"GETROAMRESCANRSSIDIFF",     drv_cmd_get_roam_rescan_rssi_diff},
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_LFR */
-#ifdef FEATURE_WLAN_LFR
 	{"SETFASTROAM",               drv_cmd_set_fast_roam},
-#endif
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	{"SETFASTTRANSITION",         drv_cmd_set_fast_transition},
 	{"FASTREASSOC",               drv_cmd_fast_reassoc},

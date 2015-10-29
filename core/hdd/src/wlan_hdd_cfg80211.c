@@ -5346,18 +5346,13 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	wiphy->wowlan.pattern_max_len = WOWL_PTRN_MAX_SIZE;
 #endif
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
-	if (pCfg->isFastTransitionEnabled
-#ifdef FEATURE_WLAN_LFR
-	    || pCfg->isFastRoamIniFeatureEnabled
-#endif
+	if (pCfg->isFastTransitionEnabled || pCfg->isFastRoamIniFeatureEnabled
 #ifdef FEATURE_WLAN_ESE
 	    || pCfg->isEseIniFeatureEnabled
 #endif
 	    ) {
 		wiphy->flags |= WIPHY_FLAG_SUPPORTS_FW_ROAM;
 	}
-#endif
 #ifdef FEATURE_WLAN_TDLS
 	wiphy->flags |= WIPHY_FLAG_SUPPORTS_TDLS
 			| WIPHY_FLAG_TDLS_EXTERNAL_SETUP;
@@ -7571,7 +7566,6 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
 	return 0;
 }
 
-#ifdef FEATURE_WLAN_LFR
 /**
  * wlan_hdd_cfg80211_pmksa_candidate_notify() - notify a new PMSKA candidate
  * @pAdapter: Pointer to adapter
@@ -7609,7 +7603,6 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
 #endif /* FEATURE_WLAN_OKC */
 	return 0;
 }
-#endif /* FEATURE_WLAN_LFR */
 
 #ifdef FEATURE_WLAN_LFR_METRICS
 /**
@@ -8862,9 +8855,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 			return -ECONNREFUSED;
 		}
 	}
-#if defined(FEATURE_WLAN_LFR)
 	wlan_hdd_disable_roaming(pAdapter);
-#endif
 
 	/*Try disconnecting if already in connected state */
 	status = wlan_hdd_try_disconnect(pAdapter);
@@ -10119,7 +10110,6 @@ static int wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 	return ret;
 }
 
-#ifdef FEATURE_WLAN_LFR
 /**
  * __wlan_hdd_cfg80211_set_pmksa() - set pmksa
  * @wiphy: Pointer to wiphy
@@ -10347,7 +10337,6 @@ static int wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 
 	return ret;
 }
-#endif
 
 #if defined(WLAN_FEATURE_VOWIFI_11R) && defined(KERNEL_SUPPORT_11R_CFG80211)
 /**
@@ -11291,11 +11280,9 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.set_power_mgmt = wlan_hdd_cfg80211_set_power_mgmt,
 	.del_station = wlan_hdd_cfg80211_del_station,
 	.add_station = wlan_hdd_cfg80211_add_station,
-#ifdef FEATURE_WLAN_LFR
 	.set_pmksa = wlan_hdd_cfg80211_set_pmksa,
 	.del_pmksa = wlan_hdd_cfg80211_del_pmksa,
 	.flush_pmksa = wlan_hdd_cfg80211_flush_pmksa,
-#endif
 #if defined(WLAN_FEATURE_VOWIFI_11R) && defined(KERNEL_SUPPORT_11R_CFG80211)
 	.update_ft_ies = wlan_hdd_cfg80211_update_ft_ies,
 #endif
