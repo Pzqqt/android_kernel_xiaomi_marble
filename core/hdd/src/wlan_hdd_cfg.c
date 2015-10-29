@@ -149,7 +149,6 @@ cb_notify_set_fw_rssi_monitoring(hdd_context_t *pHddCtx, unsigned long notifyId)
 					     fEnableFwRssiMonitoring);
 }
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 static void cb_notify_set_opportunistic_scan_threshold_diff(hdd_context_t *pHddCtx,
 							    unsigned long notifyId)
 {
@@ -274,8 +273,6 @@ cb_notify_set_dfs_scan_mode(hdd_context_t *pHddCtx, unsigned long notifyId)
 	sme_update_dfs_scan_mode(pHddCtx->hHal, 0,
 				 pHddCtx->config->allowDFSChannelRoam);
 }
-
-#endif
 
 static void cb_notify_set_enable_ssr(hdd_context_t *pHddCtx,
 				     unsigned long notifyId)
@@ -1350,7 +1347,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_FT_RESOURCE_REQ_MAX),
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME,
 			     WLAN_PARAM_Integer,
 			     struct hdd_config, nNeighborScanPeriod,
@@ -1538,8 +1534,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ROAM_SCAN_HI_RSSI_UB_MAX,
 			     cb_notify_set_roam_scan_hi_rssi_scan_params,
 			     eCSR_HI_RSSI_SCAN_RSSI_UB_ID),
-
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 
 	REG_VARIABLE(CFG_QOS_WMM_BURST_SIZE_DEFN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, burstSizeDefinition,
@@ -4755,7 +4749,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->fFTResourceReqSupported);
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [nNeighborLookupRssiThreshold] Value = [%u] ",
 		  pHddCtx->config->nNeighborLookupRssiThreshold);
@@ -4810,7 +4803,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [nhi_rssi_scan_rssi_ub] Value = [%u] ",
 		  pHddCtx->config->nhi_rssi_scan_rssi_ub);
-#endif
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [burstSizeDefinition] Value = [0x%x] ",
 		  pHddCtx->config->burstSizeDefinition);
@@ -6525,7 +6517,6 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		/* Disable roaming in concurrency if roam scan offload is disabled */
 		smeConfig->csrConfig.bFastRoamInConIniFeatureEnabled = 0;
 	}
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	smeConfig->csrConfig.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		pConfig->nNeighborLookupRssiThreshold;
 	smeConfig->csrConfig.neighborRoamConfig.delay_before_vdev_stop =
@@ -6566,7 +6557,6 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pConfig->nhi_rssi_scan_delay;
 	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_rssi_ub =
 		pConfig->nhi_rssi_scan_rssi_ub;
-#endif
 	smeConfig->csrConfig.addTSWhenACMIsOff = pConfig->AddTSWhenACMIsOff;
 	smeConfig->csrConfig.fValidateList = pConfig->fValidateScanList;
 	smeConfig->csrConfig.allowDFSChannelRoam = pConfig->allowDFSChannelRoam;

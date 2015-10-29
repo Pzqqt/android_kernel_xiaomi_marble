@@ -5969,7 +5969,6 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SET_AP_WPS_P2P_IE",         drv_cmd_dummy},
 	{"BTCOEXSCAN",                drv_cmd_dummy},
 	{"RXFILTER",                  drv_cmd_dummy},
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	{"SETROAMTRIGGER",            drv_cmd_set_roam_trigger},
 	{"GETROAMTRIGGER",            drv_cmd_get_roam_trigger},
 	{"SETROAMSCANPERIOD",         drv_cmd_set_roam_scan_period},
@@ -5979,7 +5978,6 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 #ifdef FEATURE_WLAN_LFR
 	{"SETROAMMODE",               drv_cmd_set_roam_mode},
 	{"GETROAMMODE",               drv_cmd_get_roam_mode},
-#endif
 #endif
 #if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	{"SETROAMDELTA",              drv_cmd_set_roam_delta},
