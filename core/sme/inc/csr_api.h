@@ -814,7 +814,6 @@ typedef enum {
 	eCSR_HDD
 } eCsrStatsRequesterType;
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 /**
  * enum csr_hi_rssi_scan_id - Parameter ids for hi rssi scan feature
  *
@@ -829,7 +828,6 @@ enum csr_hi_rssi_scan_id {
 	eCSR_HI_RSSI_SCAN_DELAY_ID,
 	eCSR_HI_RSSI_SCAN_RSSI_UB_ID
 };
-#endif
 
 typedef struct tagPmkidCandidateInfo {
 	struct cdf_mac_addr BSSID;

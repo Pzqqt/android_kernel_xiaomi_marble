@@ -884,7 +884,6 @@ typedef enum {
 #define CFG_BCN_EARLY_TERM_WAKE_MAX                  (255)
 #define CFG_BCN_EARLY_TERM_WAKE_DEFAULT              (3)
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME             "gNeighborScanTimerPeriod"
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN              (3)
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX              (300)
@@ -964,7 +963,6 @@ typedef enum {
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MIN                 (0)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MAX                 (16)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_DEFAULT             (14)
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 
 #define CFG_QOS_WMM_BURST_SIZE_DEFN_NAME                        "burstSizeDefinition"
 #define CFG_QOS_WMM_BURST_SIZE_DEFN_MIN                         (0)
@@ -2907,7 +2905,6 @@ struct hdd_config {
 	bool fFTResourceReqSupported;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	uint16_t nNeighborScanPeriod;
 	uint8_t nNeighborLookupRssiThreshold;
 	uint8_t delay_before_vdev_stop;
@@ -2926,7 +2923,6 @@ struct hdd_config {
 	uint32_t nhi_rssi_scan_rssi_delta;
 	uint32_t nhi_rssi_scan_delay;
 	int32_t nhi_rssi_scan_rssi_ub;
-#endif
 
 	/* Additional Handoff params */
 	uint32_t nRoamingTime;
