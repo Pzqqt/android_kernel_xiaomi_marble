@@ -828,9 +828,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		cds_decr_session_set_pcl(
 						pAdapter->device_mode,
 						pAdapter->sessionId);
-#if defined(FEATURE_WLAN_LFR)
 		wlan_hdd_enable_roaming(pAdapter);
-#endif
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(pHddCtx, true);
@@ -1715,10 +1713,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
 	uint8_t reqRsnIe[DOT11F_IE_RSN_MAX_LEN];
 	uint32_t reqRsnLength = DOT11F_IE_RSN_MAX_LEN;
-#if  defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR) || \
-defined(WLAN_FEATURE_VOWIFI_11R)
 	int ft_carrier_on = false;
-#endif
 	bool hddDisconInProgress = false;
 	unsigned long rc;
 
@@ -1781,49 +1776,38 @@ defined(WLAN_FEATURE_VOWIFI_11R)
 		 * will come to know that the device is getting
 		 * activated properly.
 		 */
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-defined(FEATURE_WLAN_LFR)
 		if (pHddStaCtx->ft_carrier_on == false) {
-#endif
-		/*
-		 * Enable Linkup Event Servicing which allows the net device
-		 * notifier to set the linkup event variable.
-		 */
-		pAdapter->isLinkUpSvcNeeded = true;
+			/*
+			 * Enable Linkup Event Servicing which allows the net
+			 * device notifier to set the linkup event variable.
+			 */
+			pAdapter->isLinkUpSvcNeeded = true;
 
-		/*
-		 * Enable Linkup Event Servicing which allows the net device
-		 * notifier to set the linkup event variable.
-		 */
-		pAdapter->isLinkUpSvcNeeded = true;
+			/* Switch on the Carrier to activate the device */
+			wlan_hdd_netif_queue_control(pAdapter,
+						WLAN_NETIF_CARRIER_ON,
+						WLAN_CONTROL_PATH);
 
-		/* Switch on the Carrier to activate the device */
-		wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_CARRIER_ON,
-					   WLAN_CONTROL_PATH);
+			/*
+			 * Wait for the Link to up to ensure all the queues
+			 * are set properly by the kernel.
+			 */
+			rc = wait_for_completion_timeout(
+					&pAdapter->linkup_event_var,
+					msecs_to_jiffies(ASSOC_LINKUP_TIMEOUT)
+					);
+			if (!rc)
+				hdd_warn("Warning:ASSOC_LINKUP_TIMEOUT");
 
-		/*
-		 * Wait for the Link to up to ensure all the queues are set
-		 * properly by the kernel.
-		 */
-		rc = wait_for_completion_timeout(&pAdapter->
-						 linkup_event_var,
-						 msecs_to_jiffies
-						 (ASSOC_LINKUP_TIMEOUT));
-		if (!rc)
-			hddLog(LOGW, FL("Warning:ASSOC_LINKUP_TIMEOUT"));
-
-		/*
-		 * Disable Linkup Event Servicing - no more service required
-		 * from the net device notifier call.
-		 */
-		pAdapter->isLinkUpSvcNeeded = false;
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-defined(FEATURE_WLAN_LFR)
-	} else {
-		pHddStaCtx->ft_carrier_on = false;
-		ft_carrier_on = true;
-	}
-#endif
+			/*
+			 * Disable Linkup Event Servicing - no more service
+			 * required from the net device notifier call.
+			 */
+			pAdapter->isLinkUpSvcNeeded = false;
+		} else {
+			pHddStaCtx->ft_carrier_on = false;
+			ft_carrier_on = true;
+		}
 		if ((WLAN_MAX_STA_COUNT + 3) > pRoamInfo->staId)
 			pHddCtx->sta_to_adapter[pRoamInfo->staId] = pAdapter;
 		else
@@ -2059,17 +2043,13 @@ defined(FEATURE_WLAN_LFR)
 							    &rspRsnLength,
 							    rspRsnIe);
 				if (!hddDisconInProgress) {
-#if  defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 					if (ft_carrier_on)
 						hdd_send_re_assoc_event(dev,
 									pAdapter,
 									pRoamInfo,
 									reqRsnIe,
 									reqRsnLength);
-					else
-#endif /* FEATURE_WLAN_ESE */
-
-					{
+					else {
 						hddLog(LOG1,
 						       FL("sending connect indication to nl80211:for bssid "
 						       MAC_ADDRESS_STR
@@ -3883,8 +3863,6 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		complete(&pAdapter->session_open_comp_var);
 		break;
 
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-defined(FEATURE_WLAN_LFR)
 	/*
 	 * We did pre-auth,then we attempted a 11r or ese reassoc.
 	 * reassoc failed due to failure, timeout, reject from ap
@@ -3925,72 +3903,32 @@ defined(FEATURE_WLAN_LFR)
 		 * doing disassoc at this time. This saves 30-60 msec
 		 * after reassoc.
 		 */
-	{
 		hddLog(LOG1, FL("Disabling queues"));
-		wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_TX_DISABLE,
-					   WLAN_CONTROL_PATH);
-		status =
-			hdd_roam_deregister_sta(pAdapter,
-						pHddStaCtx->conn_info.
-						staId[0]);
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
-			hddLog(LOGW,
-				FL
-				("hdd_roam_deregister_sta() failed to for staID %d. Status=%d [0x%x]"),
-				pHddStaCtx->conn_info.staId[0],
-				status, status);
+		wlan_hdd_netif_queue_control(pAdapter,
+				WLAN_NETIF_TX_DISABLE,
+				WLAN_CONTROL_PATH);
+		status = hdd_roam_deregister_sta(pAdapter,
+					pHddStaCtx->conn_info.staId[0]);
+		if (!CDF_IS_STATUS_SUCCESS(status))
 			cdf_ret_status = CDF_STATUS_E_FAILURE;
-		}
-	}
 		pHddStaCtx->ft_carrier_on = true;
 		pHddStaCtx->hdd_ReassocScenario = true;
 		hddLog(LOG1,
 		       FL("hdd_ReassocScenario set to: %d, due to eCSR_ROAM_FT_START, session: %d"),
 		       pHddStaCtx->hdd_ReassocScenario, pAdapter->sessionId);
 		break;
-#endif
 
 	case eCSR_ROAM_SHOULD_ROAM:
-		/* Dont need to do anything */
-	{
-		hdd_station_ctx_t *pHddStaCtx =
-			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		/* notify apps that we can't pass traffic anymore */
 		hddLog(LOG1, FL("Disabling queues"));
 		wlan_hdd_netif_queue_control(pAdapter,
 					   WLAN_NETIF_TX_DISABLE,
 					   WLAN_CONTROL_PATH);
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-defined(FEATURE_WLAN_LFR)
 		if (pHddStaCtx->ft_carrier_on == false) {
-#endif
 			wlan_hdd_netif_queue_control(pAdapter,
 					   WLAN_NETIF_CARRIER_OFF,
 					   WLAN_CONTROL_PATH);
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-defined(FEATURE_WLAN_LFR)
-	}
-#endif
-
-#if  !(defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-defined(FEATURE_WLAN_LFR))
-		/*
-		 * We should clear all sta register with TL, for now, only one.
-		 */
-		status =
-			hdd_roam_deregister_sta(pAdapter,
-						pHddStaCtx->conn_info.
-						staId[0]);
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
-			hddLog(LOGW,
-				FL
-				("hdd_roam_deregister_sta() failed to for staID %d. Status=%d [0x%x]"),
-				pHddStaCtx->conn_info.staId[0],
-				status, status);
-			cdf_ret_status = CDF_STATUS_E_FAILURE;
 		}
-#endif
-	}
 		break;
 	case eCSR_ROAM_LOSTLINK:
 		if (roamResult == eCSR_ROAM_RESULT_LOSTLINK) {
@@ -4117,7 +4055,6 @@ defined(FEATURE_WLAN_LFR))
 		hdd_send_ft_event(pAdapter);
 		break;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	case eCSR_ROAM_PMK_NOTIFY:
 		if (eCSR_AUTH_TYPE_RSN == pHddStaCtx->conn_info.authType ||
 			eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==
@@ -4128,7 +4065,6 @@ defined(FEATURE_WLAN_LFR))
 						pAdapter, pRoamInfo, 1, false);
 		}
 		break;
-#endif
 
 #ifdef FEATURE_WLAN_LFR_METRICS
 	case eCSR_ROAM_PREAUTH_INIT_NOTIFY:

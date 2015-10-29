@@ -723,10 +723,6 @@ CDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 	return CDF_STATUS_SUCCESS;
 }
 
-#if defined(WLAN_FEATURE_VOWIFI_11R) ||\
-	defined(FEATURE_WLAN_ESE) ||\
-	defined(FEATURE_WLAN_LFR)
-
 #define INTF_MACADDR_MASK       0x7
 
 /**
@@ -1390,7 +1386,6 @@ bool hdd_dfs_indicate_radar(void *context, void *param)
 
 	return true;
 }
-#endif
 
 /**
  * hdd_is_valid_mac_address() - validate MAC address
@@ -6032,7 +6027,6 @@ int wlan_hdd_gen_wlan_version_pack(struct wlan_version_data *data,
 }
 #endif
 
-#if defined(FEATURE_WLAN_LFR)
 /**
  * wlan_hdd_disable_roaming() - disable roaming on all STAs except the input one
  * @adapter:	HDD adapter pointer
@@ -6138,7 +6132,6 @@ void wlan_hdd_enable_roaming(hdd_adapter_t *adapter)
 		}
 	}
 }
-#endif
 
 void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 {

@@ -45,7 +45,6 @@
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 static void
 cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
@@ -95,7 +94,6 @@ cb_notify_set_roam_scan_home_away_time(hdd_context_t *pHddCtx, unsigned long not
 					    pHddCtx->config->nRoamScanHomeAwayTime,
 					    true);
 }
-#endif
 
 #ifdef FEATURE_WLAN_OKC
 static void
@@ -106,7 +104,6 @@ cb_notify_set_okc_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyId
 }
 #endif
 
-#ifdef FEATURE_WLAN_LFR
 static void
 notify_is_fast_roam_ini_feature_enabled(hdd_context_t *pHddCtx,
 					unsigned long notifyId)
@@ -126,7 +123,6 @@ notify_is_mawc_ini_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyI
 	sme_update_is_mawc_ini_feature_enabled(pHddCtx->hHal,
 					       pHddCtx->config->MAWCEnabled);
 }
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 static void
@@ -1018,7 +1014,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     cb_notify_set_ese_feature_enabled, 0),
 #endif /* FEATURE_WLAN_ESE */
 
-#ifdef FEATURE_WLAN_LFR
 	/* flag to turn ON/OFF Legacy Fast Roaming */
 	REG_DYNAMIC_VARIABLE(CFG_LFR_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isFastRoamIniFeatureEnabled,
@@ -1040,9 +1035,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_LFR_MAWC_FEATURE_ENABLED_MAX,
 			     notify_is_mawc_ini_feature_enabled, 0),
 
-#endif /* FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	/* flag to turn ON/OFF 11r and ESE FastTransition */
 	REG_DYNAMIC_VARIABLE(CFG_FAST_TRANSITION_ENABLED_NAME,
 			     WLAN_PARAM_Integer,
@@ -1073,7 +1065,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ENABLE_WES_MODE_NAME_MIN,
 			     CFG_ENABLE_WES_MODE_NAME_MAX,
 			     cb_notify_set_wes_mode, 0),
-#endif
 #ifdef FEATURE_WLAN_OKC
 	REG_DYNAMIC_VARIABLE(CFG_OKC_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isOkcIniFeatureEnabled,
@@ -1920,7 +1911,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_LINK_SPEED_RSSI_LOW_MAX,
 			     NULL, 0),
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	REG_DYNAMIC_VARIABLE(CFG_ROAM_PREFER_5GHZ, WLAN_PARAM_Integer,
 			     struct hdd_config, nRoamPrefer5GHz,
 			     VAR_FLAGS_OPTIONAL |
@@ -1956,8 +1946,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
 			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX,
 			     cb_notify_set_roam_scan_home_away_time, 0),
-
-#endif
 
 	REG_VARIABLE(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_NAME,
 		     WLAN_PARAM_Integer,
@@ -4646,22 +4634,18 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [gTxPowerCap] Value = [%u] dBm ",
 		  pHddCtx->config->nTxPowerCap);
 #endif
-#ifdef FEATURE_WLAN_LFR
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [FastRoamEnabled] Value = [%u] ",
 		  pHddCtx->config->isFastRoamIniFeatureEnabled);
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [MAWCEnabled] Value = [%u] ",
 		  pHddCtx->config->MAWCEnabled);
-#endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [RoamRssiDiff] Value = [%u] ",
 		  pHddCtx->config->RoamRssiDiff);
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [isWESModeEnabled] Value = [%u] ",
 		  pHddCtx->config->isWESModeEnabled);
-#endif
 #ifdef FEATURE_WLAN_OKC
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [OkcEnabled] Value = [%u] ",
@@ -6520,14 +6504,12 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.fEnableBypass11d = pConfig->enableBypass11d;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	smeConfig->csrConfig.nRoamPrefer5GHz = pConfig->nRoamPrefer5GHz;
 	smeConfig->csrConfig.nRoamIntraBand = pConfig->nRoamIntraBand;
 	smeConfig->csrConfig.nProbes = pConfig->nProbes;
 
 	smeConfig->csrConfig.nRoamScanHomeAwayTime =
 		pConfig->nRoamScanHomeAwayTime;
-#endif
 	smeConfig->csrConfig.fFirstScanOnly2GChnl =
 		pConfig->enableFirstScan2GOnly;
 
@@ -6539,11 +6521,9 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.csr11rConfig.IsFTResourceReqSupported =
 		pConfig->fFTResourceReqSupported;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	smeConfig->csrConfig.isFastRoamIniFeatureEnabled =
 		pConfig->isFastRoamIniFeatureEnabled;
 	smeConfig->csrConfig.MAWCEnabled = pConfig->MAWCEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	smeConfig->csrConfig.isEseIniFeatureEnabled =
 		pConfig->isEseIniFeatureEnabled;
@@ -6551,12 +6531,10 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pConfig->isFastTransitionEnabled = true;
 	}
 #endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	smeConfig->csrConfig.isFastTransitionEnabled =
 		pConfig->isFastTransitionEnabled;
 	smeConfig->csrConfig.RoamRssiDiff = pConfig->RoamRssiDiff;
 	smeConfig->csrConfig.isWESModeEnabled = pConfig->isWESModeEnabled;
-#endif
 	smeConfig->csrConfig.isRoamOffloadScanEnabled =
 		pConfig->isRoamOffloadScanEnabled;
 	smeConfig->csrConfig.bFastRoamInConIniFeatureEnabled =

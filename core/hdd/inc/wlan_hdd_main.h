@@ -646,9 +646,7 @@ struct hdd_station_ctx {
 
 	roaming_info_t roam_info;
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	int ft_carrier_on;
-#endif
 
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
 	tSirGtkOffloadParams gtkOffloadReqParams;
@@ -1483,10 +1481,8 @@ static inline bool hdd_is_memdump_supported(void)
 
 void hdd_update_macaddr(struct hdd_config *config,
 			struct cdf_mac_addr hw_macaddr);
-#if defined(FEATURE_WLAN_LFR)
 void wlan_hdd_disable_roaming(hdd_adapter_t *pAdapter);
 void wlan_hdd_enable_roaming(hdd_adapter_t *pAdapter);
-#endif
 
 CDF_STATUS hdd_post_cds_enable_config(hdd_context_t *pHddCtx);
 

@@ -245,7 +245,6 @@ typedef enum {
 #define CFG_RSSI_CATEGORY_GAP_MAX              (100)
 #define CFG_RSSI_CATEGORY_GAP_DEFAULT          (5)
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 #define CFG_ROAM_PREFER_5GHZ                   "gRoamPrefer5GHz"
 #define CFG_ROAM_PREFER_5GHZ_MIN              (0)
 #define CFG_ROAM_PREFER_5GHZ_MAX              (1)
@@ -259,7 +258,6 @@ typedef enum {
 #define CFG_ROAM_INTRA_BAND_MIN               (0)
 #define CFG_ROAM_INTRA_BAND_MAX               (1)
 #define CFG_ROAM_INTRA_BAND_DEFAULT           (0)
-#endif
 
 #define CFG_SHORT_PREAMBLE_NAME                "gShortPreamble"
 #define CFG_SHORT_PREAMBLE_MIN                 WNI_CFG_SHORT_PREAMBLE_STAMIN
@@ -633,7 +631,6 @@ typedef enum {
 #define CFG_ESE_FEATURE_ENABLED_DEFAULT                     (0) /* disabled */
 #endif /* FEATURE_WLAN_ESE */
 
-#ifdef FEATURE_WLAN_LFR
 #define CFG_LFR_FEATURE_ENABLED_NAME                       "FastRoamEnabled"
 #define CFG_LFR_FEATURE_ENABLED_MIN                         (0)
 #define CFG_LFR_FEATURE_ENABLED_MAX                         (1)
@@ -643,9 +640,7 @@ typedef enum {
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MIN                    (0)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MAX                    (1)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT                (0) /* disabled */
-#endif /* FEATURE_WLAN_LFR */
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /* This flag will control fasttransition in case of 11r and ese. */
 /* Basically with this the whole neighbor roam, pre-auth, reassoc */
 /* can be turned ON/OFF. */
@@ -684,8 +679,6 @@ typedef enum {
 #define CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX                    (300)
 #define CFG_ROAM_SCAN_HOME_AWAY_TIME_DEFAULT                (CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN)
 /* disabled by default */
-
-#endif /* (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR) */
 
 #ifdef FEATURE_WLAN_OKC
 #define CFG_OKC_FEATURE_ENABLED_NAME                       "OkcEnabled"
@@ -3027,19 +3020,15 @@ struct hdd_config {
 	uint32_t InfraUapsdBeSuspIntv;
 	uint32_t InfraUapsdBkSrvIntv;
 	uint32_t InfraUapsdBkSuspIntv;
-#ifdef FEATURE_WLAN_LFR
 	bool isFastRoamIniFeatureEnabled;
 	bool MAWCEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint32_t InfraInactivityInterval;
 	bool isEseIniFeatureEnabled;
 #endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	bool isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
 #ifdef FEATURE_WLAN_OKC
 	bool isOkcIniFeatureEnabled;
 #endif
@@ -3148,12 +3137,10 @@ struct hdd_config {
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
 	int32_t linkSpeedRssiLow;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	bool nRoamPrefer5GHz;
 	bool nRoamIntraBand;
 	uint8_t nProbes;
 	uint16_t nRoamScanHomeAwayTime;
-#endif
 	uint8_t enableMCC;
 	uint8_t allowMCCGODiffBI;
 	bool isP2pDeviceAddrAdministrated;
