@@ -300,6 +300,28 @@ enum cds_one_connection_mode {
  *			MCC using 2x2@5 Ghz
  * @CDS_P2P_GO_SAP_DBS_1x1: P2P GO & SAP connection on DBS using
  *			1x1
+ * @CDS_P2P_CLI_SAP_SCC_24_1x1: CLI & SAP connection on SCC using
+ *			1x1@2.4 Ghz
+ * @CDS_P2P_CLI_SAP_SCC_24_2x2: CLI & SAP connection on SCC using
+ *			2x2@2.4 Ghz
+ * @CDS_P2P_CLI_SAP_MCC_24_1x1: CLI & SAP connection on MCC using
+ *			1x1@2.4 Ghz
+ * @CDS_P2P_CLI_SAP_MCC_24_2x2: CLI & SAP connection on MCC using
+ *			2x2@2.4 Ghz
+ * @CDS_P2P_CLI_SAP_SCC_5_1x1: CLI & SAP connection on SCC using
+ *			1x1@5 Ghz
+ * @CDS_P2P_CLI_SAP_SCC_5_2x2: CLI & SAP connection on SCC using
+ *			2x2@5 Ghz
+ * @CDS_P2P_CLI_SAP_MCC_5_1x1: CLI & SAP connection on MCC using
+ *			1x1@5 Ghz
+ * @CDS_P2P_CLI_SAP_MCC_5_2x2: CLI & SAP connection on MCC using
+ *			2x2@5 Ghz
+ * @CDS_P2P_STA_SAP_MCC_24_5_1x1: CLI and SAP connecting on MCC
+ *			in 2.4 and 5GHz 1x1
+ * @CDS_P2P_STA_SAP_MCC_24_5_2x2: CLI and SAP connecting on MCC
+			in 2.4 and 5GHz 2x2
+ * @CDS_P2P_CLI_SAP_DBS_1x1,: CLI & SAP connection on DBS using 1x1
+
  * @CDS_MAX_TWO_CONNECTION_MODE: Max place holder
  *
  * These are generic IDs that identify the various roles
@@ -361,6 +383,17 @@ enum cds_two_connection_mode {
 	CDS_P2P_GO_SAP_MCC_24_5_1x1,
 	CDS_P2P_GO_SAP_MCC_24_5_2x2,
 	CDS_P2P_GO_SAP_DBS_1x1,
+	CDS_P2P_CLI_SAP_SCC_24_1x1,
+	CDS_P2P_CLI_SAP_SCC_24_2x2,
+	CDS_P2P_CLI_SAP_MCC_24_1x1,
+	CDS_P2P_CLI_SAP_MCC_24_2x2,
+	CDS_P2P_CLI_SAP_SCC_5_1x1,
+	CDS_P2P_CLI_SAP_SCC_5_2x2,
+	CDS_P2P_CLI_SAP_MCC_5_1x1,
+	CDS_P2P_CLI_SAP_MCC_5_2x2,
+	CDS_P2P_CLI_SAP_MCC_24_5_1x1,
+	CDS_P2P_CLI_SAP_MCC_24_5_2x2,
+	CDS_P2P_CLI_SAP_DBS_1x1,
 
 	CDS_MAX_TWO_CONNECTION_MODE
 };
