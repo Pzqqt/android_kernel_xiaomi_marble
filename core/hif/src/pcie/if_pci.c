@@ -882,6 +882,8 @@ CDF_STATUS hif_bus_open(struct ol_softc *ol_sc, enum ath_hal_bus_type bus_type)
 	sc->ol_sc = ol_sc;
 	ol_sc->bus_type = bus_type;
 
+	cdf_spinlock_init(&ol_sc->irq_lock);
+
 	return CDF_STATUS_SUCCESS;
 }
 
