@@ -3551,7 +3551,6 @@ static void lim_process_switch_channel_join_req(
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,
 			 session_entry->peSessionId,
 			 mac_ctx->lim.gLimMlmState));
-		session_entry->pLimMlmJoinReq = NULL;
 		goto error;
 	}
 	/* include additional IE if there is */
