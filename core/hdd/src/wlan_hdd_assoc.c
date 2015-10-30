@@ -3172,13 +3172,22 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 								pRoamInfo->
 								peerMac.bytes,
 								true);
-				if (NULL != curr_peer
-				    && TDLS_IS_CONNECTED(curr_peer)) {
+				if (NULL != curr_peer) {
+				    hdd_info("Current status for peer " MAC_ADDRESS_STR " is %d",
+				    MAC_ADDR_ARRAY(pRoamInfo->peerMac.bytes),
+					    curr_peer->link_status);
+				    if (TDLS_IS_CONNECTED(curr_peer)) {
 					hdd_roam_deregister_tdlssta
 						(pAdapter,
 						pRoamInfo->staId);
 					wlan_hdd_tdls_decrement_peer_count
 						(pAdapter);
+				    } else if (eTDLS_LINK_CONNECTING ==
+					    curr_peer->link_status) {
+					hdd_roam_deregister_tdlssta
+						(pAdapter,
+						pRoamInfo->staId);
+				    }
 				}
 				wlan_hdd_tdls_reset_peer(pAdapter,
 							 pRoamInfo->
