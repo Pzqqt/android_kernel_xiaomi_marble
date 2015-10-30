@@ -95,37 +95,6 @@ const struct chan_map chan_mapping[NUM_RF_CHANNELS] = {
 	{5910, 182},
 	{5915, 183},
 	{5920, 184},
-	{2422, 3},
-	{2427, 4},
-	{2432, 5},
-	{2437, 6},
-	{2442, 7},
-	{2447, 8},
-	{2452, 9},
-	{2457, 10},
-	{2462, 11},
-	{5190, 38},
-	{5210, 42},
-	{5230, 46},
-	{5250, 50},
-	{5270, 54},
-	{5290, 58},
-	{5310, 62},
-	{5510, 102},
-	{5530, 106},
-	{5550, 110},
-	{5570, 114},
-	{5590, 118},
-	{5610, 122},
-	{5630, 126},
-	{5650, 130},
-	{5670, 134},
-	{5690, 138},
-	{5710, 142},
-	{5755, 151},
-	{5775, 155},
-	{5795, 159},
-	{5815, 163},
 };
 
 struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
@@ -136,17 +105,12 @@ uint8_t dfs_region;
  * cds_get_channel_list_with_power() - retrieve channel list with power
  * @base_channels: base channels
  * @num_base_channels: number of base channels
- * @channels_40mhz: 40 MHz channels
- * @num_40mhz_channels: number of 40 Mhz channels
  *
  * Return: QDF_STATUS_SUCCESS
  */
 QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   *base_channels,
-					   uint8_t *num_base_channels,
-					   struct channel_power
-					   *channels_40mhz,
-					   uint8_t *num_40mhz_channels)
+					   uint8_t *num_base_channels)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i, count;
@@ -170,29 +134,6 @@ QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 			}
 		}
 		*num_base_channels = count;
-	}
-
-	if (channels_40mhz && num_40mhz_channels) {
-		count = 0;
-
-		for (i = RF_CHAN_BOND_3; i <= RF_CHAN_BOND_11; i++) {
-			if (reg_channels[i].state) {
-				channels_40mhz[count].chan_num =
-					chan_mapping[i].chan_num;
-				channels_40mhz[count++].power =
-					reg_channels[i].pwr_limit;
-			}
-		}
-
-		for (i = RF_CHAN_BOND_38; i <= RF_CHAN_BOND_163; i++) {
-			if (reg_channels[i].state) {
-				channels_40mhz[count].chan_num =
-					chan_mapping[i].chan_num;
-				channels_40mhz[count++].power =
-					reg_channels[i].pwr_limit;
-			}
-		}
-		*num_40mhz_channels = count;
 	}
 
 	return status;

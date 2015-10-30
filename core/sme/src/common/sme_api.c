@@ -7271,11 +7271,6 @@ sme_search_in_base_ch_lst(tpAniSirGlobal mac_ctx, uint8_t curr_ch)
 			return true;
 	}
 
-	ch_lst_info = &mac_ctx->scan.base40MHzChannels;
-	for (i = 0; i < ch_lst_info->numChannels; i++) {
-		if (ch_lst_info->channelList[i] == curr_ch)
-			return true;
-	}
 	return false;
 }
 /**
@@ -10208,11 +10203,12 @@ void sme_set_80bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
 }
 
 void sme_set_40bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
-		struct ch_params_s *ch_params, uint8_t is_11ac_mode)
+			 struct ch_params_s *ch_params, uint8_t is_11ac_mode)
 {
 	uint8_t tmp;
 	uint8_t center_freq = 0;
-	bool valid_40Mhz_ch = true;
+	uint8_t start_ch = 0;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (channel == 165) {
 		ch_params->ch_width = CH_WIDTH_20MHZ;
@@ -10232,13 +10228,39 @@ void sme_set_40bw_params(tpAniSirGlobal mac_ctx, uint8_t channel,
 				(ch_params->ch_width == CH_WIDTH_40MHZ))) {
 		ch_params->ch_width = CH_WIDTH_40MHZ;
 		ch_params->center_freq_seg0 = center_freq;
-		valid_40Mhz_ch = csr_roam_is_valid40_mhz_channel(mac_ctx,
-				ch_params->center_freq_seg0);
-	}
-	if (!valid_40Mhz_ch) {
-		ch_params->ch_width = CH_WIDTH_20MHZ;
-		ch_params->center_freq_seg0 = 0;
-		ch_params->sec_ch_offset = PHY_SINGLE_CHANNEL_CENTERED;
+
+		if (channel <= 40)
+			start_ch = 36;
+		else if (channel <= 48)
+			start_ch = 44;
+		else if (channel <= 56)
+			start_ch = 52;
+		else if (channel <= 64)
+			start_ch = 60;
+		else if (channel <= 104)
+			start_ch = 100;
+		else if (channel <= 112)
+			start_ch = 108;
+		else if (channel <= 120)
+			start_ch = 116;
+		else if (channel <= 128)
+			start_ch = 124;
+		else if (channel <= 136)
+			start_ch = 132;
+		else if (channel <= 144)
+			start_ch = 140;
+		else if (channel <= 153)
+			start_ch = 149;
+		else if (channel <= 161)
+			start_ch = 157;
+
+		status = sme_check_ch_in_band(mac_ctx, start_ch, 2);
+
+		if (QDF_STATUS_SUCCESS != status) {
+			ch_params->ch_width = CH_WIDTH_20MHZ;
+			ch_params->center_freq_seg0 = 0;
+			ch_params->sec_ch_offset = PHY_SINGLE_CHANNEL_CENTERED;
+		}
 	}
 }
 

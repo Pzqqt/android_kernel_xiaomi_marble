@@ -690,11 +690,8 @@ typedef struct tagCsrScanStruct {
 	tSirScanType curScanType;
 	tCsrChannel channels11d;
 	struct channel_power defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	struct channel_power
-			defaultPowerTable40MHz[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numChannelsDefault;
 	tCsrChannel base_channels;  /* The channel base to work on */
-	tCsrChannel base40MHzChannels;  /* center channels for 40MHz channels */
 	tDblLinkList channelPowerInfoList24;
 	tDblLinkList channelPowerInfoList5G;
 	uint32_t nLastAgeTimeOut;
@@ -980,7 +977,6 @@ typedef struct tagCsrRoamStruct {
 	tCsrConfig configParam;
 	uint32_t numChannelsEeprom;     /* total channels of eeprom */
 	tCsrChannel baseChannels;  /* The channel base to work on */
-	tCsrChannel base40MHzChannels;  /* center channels for 40MHz channels */
 	eCsrRoamState curState[CSR_ROAM_SESSION_MAX];
 	eCsrRoamSubState curSubState[CSR_ROAM_SESSION_MAX];
 	/*

@@ -277,37 +277,6 @@ static void hdd_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
 #endif
 
 /**
- * hdd_bw20_ch_index_to_() - convert 20 mhhz channel index to 40 mhz index
- * @k: 20 mhz channel index
- *
- * Return: void
- */
-static int hdd_bw20_ch_index_to_bw40_ch_index(int k)
-{
-	int m = -1;
-
-	if (k >= RF_CHAN_1 && k <= RF_CHAN_14) {
-		m = k - RF_CHAN_1 + RF_CHAN_BOND_3;
-		if (m > RF_CHAN_BOND_11)
-			m = RF_CHAN_BOND_11;
-	} else if (k >= RF_CHAN_36 && k <= RF_CHAN_64) {
-		m = k - RF_CHAN_36 + RF_CHAN_BOND_38;
-		if (m > RF_CHAN_BOND_62)
-			m = RF_CHAN_BOND_62;
-	} else if (k >= RF_CHAN_100 && k <= RF_CHAN_144) {
-		m = k - RF_CHAN_100 + RF_CHAN_BOND_102;
-		if (m > RF_CHAN_BOND_142)
-			m = RF_CHAN_BOND_142;
-	} else if (k >= RF_CHAN_149 && k <= RF_CHAN_165) {
-		m = k - RF_CHAN_149 + RF_CHAN_BOND_151;
-		if (m > RF_CHAN_BOND_163)
-			m = RF_CHAN_BOND_163;
-	}
-
-	return m;
-}
-
-/**
  * is_wiphy_custom_regulatory() - is custom regulatory defined
  * @wiphy: wiphy
  *
@@ -381,9 +350,9 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 					bool reset)
 {
 	int i, j, m;
-	int k = 0, n = 0;
+	int k = 0;
 	struct ieee80211_channel *chan;
-	struct regulatory_channel *temp_chan_k, *temp_chan_n, *temp_chan;
+	struct regulatory_channel *temp_chan_k, *temp_chan;
 	uint8_t band_capability;
 
 	band_capability = hdd_ctx->config->nBandCapability;
@@ -416,11 +385,9 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 
 			k = m + j;
-			n = hdd_bw20_ch_index_to_bw40_ch_index(k);
 
 			chan = &(wiphy->bands[i]->channels[j]);
 			temp_chan_k = &(reg_channels[k]);
-			temp_chan_n = &(reg_channels[n]);
 
 			if (!reset)
 				hdd_modify_wiphy(wiphy, chan);
@@ -429,11 +396,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 				temp_chan_k->state =
 					CHANNEL_STATE_DISABLE;
 				temp_chan_k->flags = chan->flags;
-				if (n != -1) {
-					temp_chan_n->state =
-						CHANNEL_STATE_DISABLE;
-					temp_chan_n->flags = chan->flags;
-				}
+
 			} else if (chan->flags &
 				   (IEEE80211_CHAN_RADAR |
 				    IEEE80211_CHAN_PASSIVE_SCAN |
@@ -448,20 +411,6 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 					chan->max_power;
 				temp_chan_k->flags = chan->flags;
 
-				if (n != -1) {
-					if ((chan->flags &
-					     IEEE80211_CHAN_NO_HT40) ==
-					    IEEE80211_CHAN_NO_HT40) {
-						temp_chan_n->state =
-							CHANNEL_STATE_DISABLE;
-					} else {
-						temp_chan_n->state =
-							CHANNEL_STATE_DFS;
-						temp_chan_n->pwr_limit =
-							 chan->max_power-3;
-					}
-					temp_chan_n->flags = chan->flags;
-				}
 				if ((chan->flags &
 				     IEEE80211_CHAN_NO_80MHZ) == 0)
 					hdd_ctx->isVHT80Allowed = 1;
@@ -469,20 +418,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 				temp_chan_k->state = CHANNEL_STATE_ENABLE;
 				temp_chan_k->pwr_limit = chan->max_power;
 				temp_chan_k->flags = chan->flags;
-				if (n != -1) {
-					if ((chan->flags &
-					     IEEE80211_CHAN_NO_HT40) ==
-					    IEEE80211_CHAN_NO_HT40) {
-						temp_chan_n->state =
-							CHANNEL_STATE_DISABLE;
-					} else {
-						temp_chan_n->state =
-							CHANNEL_STATE_ENABLE;
-						temp_chan_n->pwr_limit =
-							chan->max_power - 3;
-					}
-					temp_chan_n->flags = chan->flags;
-				}
+
 				if ((chan->flags &
 				     IEEE80211_CHAN_NO_80MHZ) == 0)
 					hdd_ctx->isVHT80Allowed = 1;

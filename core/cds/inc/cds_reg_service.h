@@ -137,39 +137,6 @@ enum channel_enum {
 	RF_CHAN_183,
 	RF_CHAN_184,
 
-	/* CHANNEL BONDED CHANNELS */
-	RF_CHAN_BOND_3,
-	RF_CHAN_BOND_4,
-	RF_CHAN_BOND_5,
-	RF_CHAN_BOND_6,
-	RF_CHAN_BOND_7,
-	RF_CHAN_BOND_8,
-	RF_CHAN_BOND_9,
-	RF_CHAN_BOND_10,
-	RF_CHAN_BOND_11,
-	RF_CHAN_BOND_38,
-	RF_CHAN_BOND_42,
-	RF_CHAN_BOND_46,
-	RF_CHAN_BOND_50,
-	RF_CHAN_BOND_54,
-	RF_CHAN_BOND_58,
-	RF_CHAN_BOND_62,
-	RF_CHAN_BOND_102,
-	RF_CHAN_BOND_106,
-	RF_CHAN_BOND_110,
-	RF_CHAN_BOND_114,
-	RF_CHAN_BOND_118,
-	RF_CHAN_BOND_122,
-	RF_CHAN_BOND_126,
-	RF_CHAN_BOND_130,
-	RF_CHAN_BOND_134,
-	RF_CHAN_BOND_138,
-	RF_CHAN_BOND_142,
-	RF_CHAN_BOND_151,
-	RF_CHAN_BOND_155,
-	RF_CHAN_BOND_159,
-	RF_CHAN_BOND_163,
-
 	NUM_RF_CHANNELS,
 
 	MIN_24GHZ_CHANNEL = RF_CHAN_1,
@@ -184,11 +151,6 @@ enum channel_enum {
 	MAX_20MHZ_RF_CHANNEL = RF_CHAN_184,
 	NUM_20MHZ_RF_CHANNELS =
 		(MAX_20MHZ_RF_CHANNEL - MIN_20MHZ_RF_CHANNEL + 1),
-
-	MIN_40MHZ_RF_CHANNEL = RF_CHAN_BOND_3,
-	MAX_40MHZ_RF_CHANNEL = RF_CHAN_BOND_163,
-	NUM_40MHZ_RF_CHANNELS =
-		(MAX_40MHZ_RF_CHANNEL - MIN_40MHZ_RF_CHANNEL + 1),
 
 	MIN_59GHZ_CHANNEL = RF_CHAN_170,
 	MAX_59GHZ_CHANNEL = RF_CHAN_184,
@@ -323,10 +285,7 @@ QDF_STATUS cds_read_default_country(uint8_t *default_country);
 
 QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   *base_channels,
-					   uint8_t *num_base_channels,
-					   struct channel_power
-					   *channel_40mhz,
-					   uint8_t *num_channels_40mhz);
+					   uint8_t *num_base_channels);
 
 enum channel_state cds_get_channel_state(uint32_t chan_num);
 QDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
