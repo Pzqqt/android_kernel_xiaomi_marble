@@ -1821,6 +1821,14 @@ uint16_t hdd_wmm_select_queue(struct net_device *dev, struct sk_buff *skb)
 	uint16_t queueIndex;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	bool is_eapol = false;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	int status;
+
+	status = wlan_hdd_validate_context(hdd_ctx);
+	if (status != 0) {
+		skb->priority = SME_QOS_WMM_UP_BE;
+		return HDD_LINUX_AC_BE;
+	}
 
 	/* if we don't want QoS or the AP doesn't support Qos */
 	/* All traffic will get equal opportuniy to transmit data frames. */
