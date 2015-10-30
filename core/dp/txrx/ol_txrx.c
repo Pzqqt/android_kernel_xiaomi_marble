@@ -3112,6 +3112,18 @@ CDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
 #endif
 
 #if defined(FEATURE_LRO)
+/**
+ * ol_txrx_lro_flush_handler() - LRO flush handler
+ * @context: dev handle
+ * @rxpkt: rx data
+ * @staid: station id
+ *
+ * This function handles an LRO flush indication.
+ * If the rx thread is enabled, it will be invoked by the rx
+ * thread else it will be called in the tasklet context
+ *
+ * Return: none
+ */
 void ol_txrx_lro_flush_handler(void *context,
 	 void *rxpkt,
 	 uint16_t staid)
@@ -3132,6 +3144,15 @@ void ol_txrx_lro_flush_handler(void *context,
 			 "%s: lro_flush_cb NULL", __func__);
 }
 
+/**
+ * ol_txrx_lro_flush() - LRO flush callback
+ * @data: opaque data pointer
+ *
+ * This is the callback registered with CE to trigger
+ * an LRO flush
+ *
+ * Return: none
+ */
 void ol_txrx_lro_flush(void *data)
 {
 	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
@@ -3151,7 +3172,8 @@ void ol_txrx_lro_flush(void *data)
 			return;
 		}
 
-		pkt->callback = (cds_ol_rx_thread_cb) ol_txrx_lro_flush_handler;
+		pkt->callback =
+			 (cds_ol_rx_thread_cb) ol_txrx_lro_flush_handler;
 		pkt->context = pdev;
 		pkt->Rxpkt = NULL;
 		pkt->staId = 0;
@@ -3159,6 +3181,16 @@ void ol_txrx_lro_flush(void *data)
 	}
 }
 
+/**
+ * ol_register_lro_flush_cb() - register the LRO flush callback
+ * @handler: callback function
+ * @data: opaque data pointer to be passed back
+ *
+ * Store the LRO flush callback provided and in turn
+ * register OL's LRO flush handler with CE
+ *
+ * Return: none
+ */
 void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 {
 	struct ol_softc *hif_device =
@@ -3169,5 +3201,26 @@ void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 	pdev->lro_info.lro_data = data;
 
 	ce_lro_flush_cb_register(hif_device, ol_txrx_lro_flush, pdev);
+}
+
+/**
+ * ol_deregister_lro_flush_cb() - deregister the LRO flush
+ * callback
+ *
+ * Remove the LRO flush callback provided and in turn
+ * deregister OL's LRO flush handler with CE
+ *
+ * Return: none
+ */
+void ol_deregister_lro_flush_cb(void)
+{
+	struct ol_softc *hif_device =
+		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+
+	ce_lro_flush_cb_deregister(hif_device);
+
+	pdev->lro_info.lro_flush_cb = NULL;
+	pdev->lro_info.lro_data = NULL;
 }
 #endif /* FEATURE_LRO */

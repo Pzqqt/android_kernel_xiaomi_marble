@@ -2584,10 +2584,65 @@ u32 shadow_dst_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
 }
 #endif
 
+#if defined(FEATURE_LRO)
+/**
+ * ce_lro_flush_cb_register() - register the LRO flush
+ * callback
+ * @scn: HIF context
+ * @handler: callback function
+ * @data: opaque data pointer to be passed back
+ *
+ * Store the LRO flush callback provided
+ *
+ * Return: none
+ */
 void ce_lro_flush_cb_register(struct ol_softc *scn,
 	 void (handler)(void *), void *data)
 {
-	struct CE_state *ce_state = scn->ce_id_to_state[CE_HTT_T2H_MSG];
-	ce_state->lro_flush_cb = handler;
-	ce_state->lro_data = data;
+	uint8_t ul, dl;
+	int ul_polled, dl_polled;
+
+	CDF_ASSERT(scn != NULL);
+
+	if (CDF_STATUS_SUCCESS !=
+		 hif_map_service_to_pipe(scn, HTT_DATA_MSG_SVC,
+			 &ul, &dl, &ul_polled, &dl_polled)) {
+		printk("%s cannot map service to pipe\n", __FUNCTION__);
+		return;
+	} else {
+		struct CE_state *ce_state;
+		ce_state = scn->ce_id_to_state[dl];
+		ce_state->lro_flush_cb = handler;
+		ce_state->lro_data = data;
+	}
 }
+
+/**
+ * ce_lro_flush_cb_deregister() - deregister the LRO flush
+ * callback
+ * @scn: HIF context
+ *
+ * Remove the LRO flush callback
+ *
+ * Return: none
+ */
+void ce_lro_flush_cb_deregister(struct ol_softc *scn)
+{
+	uint8_t ul, dl;
+	int ul_polled, dl_polled;
+
+	CDF_ASSERT(scn != NULL);
+
+	if (CDF_STATUS_SUCCESS !=
+		 hif_map_service_to_pipe(scn, HTT_DATA_MSG_SVC,
+			 &ul, &dl, &ul_polled, &dl_polled)) {
+		printk("%s cannot map service to pipe\n", __FUNCTION__);
+		return;
+	} else {
+		struct CE_state *ce_state;
+		ce_state = scn->ce_id_to_state[dl];
+		ce_state->lro_flush_cb = NULL;
+		ce_state->lro_data = NULL;
+	}
+}
+#endif

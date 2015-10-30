@@ -279,5 +279,6 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 
 #if defined(FEATURE_LRO)
 void ol_register_lro_flush_cb(void (handler)(void *), void *data);
+void ol_deregister_lro_flush_cb(void);
 #endif
 #endif /* _OL_TXRX_OSIF_API__H_ */
