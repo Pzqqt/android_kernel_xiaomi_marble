@@ -4898,6 +4898,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int enable_pbm, enable_mp;
 
 	INIT_COMPLETION(pWextState->completion_var);
+	memset(&smeConfig, 0x00, sizeof(smeConfig));
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4910,7 +4911,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if ((ENABLE_11D == set_value)
 		    || (DISABLE_11D == set_value)) {
 
-			memset(&smeConfig, 0x00, sizeof(smeConfig));
 			sme_get_config_param(hHal, &smeConfig);
 			smeConfig.csrConfig.Is11dSupportEnabled =
 				(bool) set_value;
@@ -5401,7 +5401,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 							      nChannelBondingMode5GHz)))
 			chwidth = true;
 
-		memset(&smeConfig, 0x00, sizeof(smeConfig));
 		sme_get_config_param(hHal, &smeConfig);
 		switch (set_value) {
 		case eHT_CHANNEL_WIDTH_20MHZ:
@@ -7000,7 +6999,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			adapter_num++;
 		}
 
-		if (pMac) {
+		if (hHal) {
 			/* Printing Lim State starting with global lim states */
 			buf =
 				scnprintf(extra + len, WE_MAX_STR_LEN - len,
