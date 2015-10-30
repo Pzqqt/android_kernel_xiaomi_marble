@@ -1786,6 +1786,13 @@ uint16_t hdd_hostapd_select_queue(struct net_device *dev, struct sk_buff *skb
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	bool is_eapol = false;
+	int status = 0;
+	status = wlan_hdd_validate_context(pHddCtx);
+
+	if (status != 0) {
+		skb->priority = SME_QOS_WMM_UP_BE;
+		return HDD_LINUX_AC_BE;
+	}
 
 	if (HDD_WMM_USER_MODE_NO_QOS != pHddCtx->config->WmmMode) {
 		/* Get the user priority from IP header & corresponding AC */
