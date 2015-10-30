@@ -1208,13 +1208,13 @@ static void restore_custom_reg_settings(struct wiphy *wiphy)
 #endif
 
 /**
- * hdd_reg_notifier() - regulatory notifier
+ * __hdd_reg_notifier() - regulatory notifier
  * @wiphy: wiphy
  * @request: regulatory request
  *
  * Return: void or int
  */
-void hdd_reg_notifier(struct wiphy *wiphy,
+void __hdd_reg_notifier(struct wiphy *wiphy,
 		      struct regulatory_request *request)
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
@@ -1357,6 +1357,21 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 	}
 
 	return;
+}
+
+/**
+ * hdd_reg_notifier() - regulatory notifier
+ * @wiphy: wiphy
+ * @request: regulatory request
+ *
+ * Return: void or int
+ */
+void hdd_reg_notifier(struct wiphy *wiphy,
+		      struct regulatory_request *request)
+{
+	cds_ssr_protect(__func__);
+	__hdd_reg_notifier(wiphy, request);
+	cds_ssr_unprotect(__func__);
 }
 
 /**
