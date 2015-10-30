@@ -214,8 +214,7 @@ static void ce_tasklet(unsigned long data)
 
 	ce_per_engine_service(scn, tasklet_entry->ce_id);
 
-	if (tasklet_entry->ce_id == CE_HTT_T2H_MSG &&
-			 CE_state->lro_flush_cb != NULL) {
+	if (CE_state->lro_flush_cb != NULL) {
 		CE_state->lro_flush_cb(CE_state->lro_data);
 	}
 

@@ -38,6 +38,7 @@
 #include <hif_debug.h>
 #include <hif_io32.h>
 #include <ce_api.h>
+#include <ce_internal.h>
 
 enum napi_decision_vector {
 	HIF_NAPI_NOEVENT = 0,
@@ -399,6 +400,7 @@ int hif_napi_poll(struct napi_struct *napi, int budget)
 	int    cpu = smp_processor_id();
 	struct ol_softc      *hif;
 	struct qca_napi_info *napi_info;
+	struct CE_state *ce_state;
 
 	NAPI_DEBUG("%s -->(.., budget=%d)\n", budget);
 
@@ -413,6 +415,12 @@ int hif_napi_poll(struct napi_struct *napi, int budget)
 		__func__, rc);
 	napi_info->stats[cpu].napi_workdone += rc;
 	normalized = (rc / napi_info->scale);
+
+	ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
+	if (ce_state->lro_flush_cb != NULL) {
+		ce_state->lro_flush_cb(ce_state->lro_data);
+	}
+
 	/* do not return 0, if there was some work done,
 	   even if it is below the scale   */
 	if (rc)

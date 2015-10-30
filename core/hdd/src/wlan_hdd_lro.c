@@ -138,14 +138,7 @@ static void hdd_lro_desc_info_init(struct hdd_lro_s *hdd_info)
  */
 static void hdd_lro_desc_pool_deinit(struct hdd_lro_desc_pool *lro_desc_pool)
 {
-
-	if (lro_desc_pool->lro_desc_array) {
-		cdf_mem_free(lro_desc_pool->lro_desc_array);
-		lro_desc_pool->lro_desc_array = NULL;
-	}
-
 	INIT_LIST_HEAD(&lro_desc_pool->lro_free_list_head);
-
 	cdf_spinlock_destroy(&lro_desc_pool->lro_pool_lock);
 }
 
@@ -161,19 +154,10 @@ static void hdd_lro_desc_pool_deinit(struct hdd_lro_desc_pool *lro_desc_pool)
  */
 static void hdd_lro_desc_info_deinit(struct hdd_lro_s *hdd_info)
 {
-	int i;
 	struct hdd_lro_desc_info *desc_info = &hdd_info->lro_desc_info;
 
-	cdf_mem_free(hdd_info->lro_mgr->lro_arr);
-	hdd_info->lro_mgr->lro_arr = NULL;
 	hdd_lro_desc_pool_deinit(&desc_info->lro_desc_pool);
-	/* Free the a list of LRO desc for each entry of the hash table */
-	for (i = 0; i < LRO_DESC_TABLE_SZ; i++)
-		INIT_LIST_HEAD(&desc_info->lro_hash_table[i].lro_desc_list);
-
 	cdf_spinlock_destroy(&desc_info->lro_hash_lock);
-	cdf_mem_free(desc_info->lro_hash_table);
-	desc_info->lro_hash_table = NULL;
 }
 
 /**
@@ -605,9 +589,18 @@ void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 		 NL80211_IFTYPE_STATION != adapter->wdev.iftype)
 		return;
 
-	hdd_lro_desc_info_deinit(&adapter->lro_info);
-	cdf_mem_free(adapter->lro_info.lro_mgr);
-	adapter->lro_info.lro_mgr = NULL;
+	/* Deregister the flush callback */
+	ol_deregister_lro_flush_cb();
+
+	if (adapter->lro_info.lro_mgr) {
+		hdd_lro_desc_info_deinit(&adapter->lro_info);
+		cdf_mem_free(adapter->lro_info.lro_mgr);
+		adapter->lro_info.lro_mgr = NULL;
+		adapter->lro_info.lro_desc_info.
+			lro_desc_pool.lro_desc_array = NULL;
+		adapter->lro_info.lro_desc_info.
+			lro_hash_table = NULL;
+	}
 	return;
 }
 
