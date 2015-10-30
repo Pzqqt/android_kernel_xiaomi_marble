@@ -1192,15 +1192,23 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
 {
 	hdd_adapter_t *adapter = container_of(work,
 					      hdd_adapter_t, scan_block_work);
-	struct cfg80211_scan_request *request = adapter->request;
+	struct cfg80211_scan_request *request;
+	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
+		hddLog(LOGE,
+			"%s: HDD adapter context is invalid", __func__);
+		return;
+	}
 
-	request->n_ssids = 0;
-	request->n_channels = 0;
+	request = adapter->request;
+	if (request) {
+		request->n_ssids = 0;
+		request->n_channels = 0;
 
-	hddLog(LOGE,
-		FL("##In DFS Master mode. Scan aborted. Null result sent"));
-	cfg80211_scan_done(request, true);
-	adapter->request = NULL;
+		hddLog(LOGE,
+		   FL("##In DFS Master mode. Scan aborted. Null result sent"));
+		cfg80211_scan_done(request, true);
+		adapter->request = NULL;
+	}
 }
 
 /**
