@@ -17922,6 +17922,9 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 			pSession->ftSmeContext.reassoc_ft_ies = NULL;
 		}
 
+		if (!ft_ies_length)
+			return;
+
 		pSession->ftSmeContext.reassoc_ft_ies =
 			cdf_mem_malloc(ft_ies_length);
 		if (NULL == pSession->ftSmeContext.reassoc_ft_ies) {
