@@ -1607,6 +1607,9 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	static const uint8_t ipv6_router_solicitation[]
 			= {0x33, 0x33, 0x00, 0x00, 0x00, 0x02};
 
+	if (CDF_FTM_MODE == hdd_get_conparam())
+		return;
+
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
 		hdd_err("hdd_ctx is not valid");
