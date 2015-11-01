@@ -2359,19 +2359,23 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		cdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 	}
-
-	pe_session->assocReq = cdf_mem_malloc(ft_ies_length);
-	if (NULL == pe_session->assocReq) {
-		lim_log(mac_ctx, LOGE, FL("Failed to alloc memory"));
-		pe_session->assocReqLen = 0;
+	if (ft_ies_length) {
+		pe_session->assocReq = cdf_mem_malloc(ft_ies_length);
+		if (NULL == pe_session->assocReq) {
+			lim_log(mac_ctx,
+				LOGE, FL("Failed to alloc memory for FT IEs"));
+			pe_session->assocReqLen = 0;
+		} else {
+			/*
+			 * Store the FT IEs. This is sent to csr/hdd in
+			 * join cnf response.
+			 */
+			cdf_mem_copy(pe_session->assocReq,
+				ft_sme_context->reassoc_ft_ies, ft_ies_length);
+			pe_session->assocReqLen = ft_ies_length;
+		}
 	} else {
-		/*
-		 * Store the Assoc request. This is sent to csr/hdd in
-		 * join cnf response.
-		 */
-		cdf_mem_copy(pe_session->assocReq,
-			     ft_sme_context->reassoc_ft_ies, (ft_ies_length));
-		pe_session->assocReqLen = (ft_ies_length);
+		lim_log(mac_ctx, LOG1, FL("FT IEs not present"));
 	}
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -2692,10 +2696,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 
 	psessionEntry->assocReq = cdf_mem_malloc(nPayload);
 	if (NULL == psessionEntry->assocReq) {
-		PELOGE(lim_log
-			       (pMac, LOGE,
-			       FL("Unable to allocate memory to store assoc request"));
-		       )
+		lim_log(pMac, LOGE, FL("Unable to allocate mem for assoc req"));
 	} else {
 		/* Store the Assoc request. This is sent to csr/hdd in join cnf response. */
 		cdf_mem_copy(psessionEntry->assocReq,

@@ -347,20 +347,24 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 	if (assoc_rsp->ricPresent) {
 		session_entry->RICDataLen =
 			assoc_rsp->num_RICData * sizeof(tDot11fIERICDataDesc);
-		session_entry->ricData =
-			cdf_mem_malloc(session_entry->RICDataLen);
-		if (NULL == session_entry->ricData) {
-			lim_log(mac_ctx, LOGE,
-				FL("Assoc res/RIC: Unable to allocate memory"));
-			session_entry->RICDataLen = 0;
+		if (session_entry->RICDataLen) {
+			session_entry->ricData =
+				cdf_mem_malloc(session_entry->RICDataLen);
+			if (NULL == session_entry->ricData) {
+				lim_log(mac_ctx, LOGE,
+					FL("No memory for RIC data"));
+				session_entry->RICDataLen = 0;
+			} else {
+				cdf_mem_copy(session_entry->ricData,
+					&assoc_rsp->RICData[0],
+					session_entry->RICDataLen);
+			}
 		} else {
-			cdf_mem_copy(session_entry->ricData,
-				&assoc_rsp->RICData[0],
-				session_entry->RICDataLen);
+			lim_log(mac_ctx, LOGE, FL("RIC data not present"));
 		}
 	} else {
 		lim_log(mac_ctx, LOG1,
-			FL("Ric is not present,Set RICDataLen & RicData to 0"));
+				FL("Ric is not present"));
 		session_entry->RICDataLen = 0;
 		session_entry->ricData = NULL;
 	}
@@ -389,25 +393,29 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 		session_entry->tspecIes = NULL;
 	}
 	if (assoc_rsp->tspecPresent) {
+		lim_log(mac_ctx, LOG1, FL("Tspec EID present in assoc rsp"));
 		session_entry->tspecLen =
 			assoc_rsp->num_tspecs * sizeof(tDot11fIEWMMTSPEC);
-		session_entry->tspecIes =
-			cdf_mem_malloc(session_entry->tspecLen);
-		if (NULL == session_entry->tspecIes) {
-			lim_log(mac_ctx, LOGE,
-				FL("Assoc Rsp/Tspec:Fail to allocate memory"));
-			session_entry->tspecLen = 0;
+		if (session_entry->tspecLen) {
+			session_entry->tspecIes =
+				cdf_mem_malloc(session_entry->tspecLen);
+			if (NULL == session_entry->tspecIes) {
+				lim_log(mac_ctx, LOGE,
+					FL("Tspec IE:Fail to allocate memory"));
+				session_entry->tspecLen = 0;
+			} else {
+				cdf_mem_copy(session_entry->tspecIes,
+						&assoc_rsp->TSPECInfo[0],
+						session_entry->tspecLen);
+			}
 		} else {
-			cdf_mem_copy(session_entry->tspecIes,
-				&assoc_rsp->TSPECInfo[0],
-				session_entry->tspecLen);
+			lim_log(mac_ctx, LOGE, FL("TSPEC has Zero length"));
 		}
-		lim_log(mac_ctx, LOG1, FL(" Tspec EID present in assoc rsp "));
 	} else {
 		session_entry->tspecLen = 0;
 		session_entry->tspecIes = NULL;
 		lim_log(mac_ctx, LOG1,
-			FL(" Tspec EID *NOT* present in assoc rsp "));
+			FL("Tspec EID *NOT* present in assoc rsp"));
 	}
 	return;
 }
