@@ -680,6 +680,8 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 	case -EBUSY:
 		ret = wait_for_completion_interruptible(&tresult.completion);
 		if (!ret && !tresult.err) {
+			for (i = 0; i < outlen; i++)
+				output[i] = hash_result[i];
 			INIT_COMPLETION(tresult.completion);
 			break;
 		} else {
