@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -121,113 +121,6 @@ static int dot11p_validate_qos_params(struct sir_qos_params qos_params[])
 	return 0;
 }
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0)) || \
-				 defined(FEATURE_STATICALLY_ADD_11P_CHANNELS)
-/*
- * If FEATURE_STATICALLY_ADD_11P_CHANNELS
- * is defined, IEEE80211_CHAN_NO_10MHZ,
- * and IEEE80211_CHAN_NO_20MHZ won't
- * be defined.
- */
-#define IEEE80211_CHAN_NO_20MHZ	(1<<11)
-#define IEEE80211_CHAN_NO_10MHZ	(1<<12)
-#endif
-
-#ifdef FEATURE_STATICALLY_ADD_11P_CHANNELS
-
-#define DOT11P_TX_PWR_MAX	30
-#define DOT11P_TX_ANTENNA_MAX	6
-#define NUM_DOT11P_CHANNELS	10
-/**
- * struct chan_info - information for the channel
- * @center_freq: center frequency
- * @max_bandwidth: maximum bandwidth of the channel in MHz
- */
-struct chan_info {
-	uint32_t center_freq;
-	uint32_t max_bandwidth;
-};
-
-struct chan_info valid_dot11p_channels[NUM_DOT11P_CHANNELS] = {
-	{5860, 10},
-	{5870, 10},
-	{5880, 10},
-	{5890, 10},
-	{5900, 10},
-	{5910, 10},
-	{5920, 10},
-	{5875, 20},
-	{5905, 20},
-	{5852, 5}
-};
-
-/**
- * dot11p_validate_channel_static_channels() - validate a DSRC channel
- * @center_freq: the channel's center frequency
- * @bandwidth: the channel's bandwidth
- * @tx_power: transmit power
- * @reg_power: (output) the max tx power from the regulatory domain
- * @antenna_max: (output) the max antenna gain from the regulatory domain
- *
- * This function of the function checks the channel parameters against a
- * hardcoded list of valid channels based on the FCC rules.
- *
- * Return: 0 if the channel is valid, error code otherwise.
- */
-static int dot11p_validate_channel_static_channels(struct wiphy *wiphy,
-	uint32_t channel_freq, uint32_t bandwidth, uint32_t tx_power,
-	uint8_t *reg_power, uint8_t *antenna_max)
-{
-	int i;
-
-	for (i = 0; i < NUM_DOT11P_CHANNELS; i++) {
-		if (channel_freq == valid_dot11p_channels[i].center_freq) {
-			if (reg_power)
-				*reg_power = DOT11P_TX_PWR_MAX;
-			if (antenna_max)
-				*antenna_max = DOT11P_TX_ANTENNA_MAX;
-
-			if (bandwidth == 0)
-				bandwidth =
-					valid_dot11p_channels[i].max_bandwidth;
-			else if (bandwidth >
-				 valid_dot11p_channels[i].max_bandwidth)
-				return -EINVAL;
-
-			if (bandwidth != 5 && bandwidth != 10 &&
-			    bandwidth != 20)
-				return -EINVAL;
-			if (tx_power > DOT11P_TX_PWR_MAX)
-				return -EINVAL;
-
-			return 0;
-		}
-	}
-
-	return -EINVAL;
-}
-#else
-/**
- * dot11p_validate_channel_static_channels() - validate a DSRC channel
- * @center_freq: the channel's center frequency
- * @bandwidth: the channel's bandwidth
- * @tx_power: transmit power
- * @reg_power: (output) the max tx power from the regulatory domain
- * @antenna_max: (output) the max antenna gain from the regulatory domain
- *
- * This function of the function checks the channel parameters against a
- * hardcoded list of valid channels based on the FCC rules.
- *
- * Return: 0 if the channel is valid, error code otherwise.
- */
-static int dot11p_validate_channel_static_channels(struct wiphy *wiphy,
-	uint32_t channel_freq, uint32_t bandwidth, uint32_t tx_power,
-	uint8_t *reg_power, uint8_t *antenna_max)
-{
-	return -EINVAL;
-}
-#endif /* FEATURE_STATICALLY_ADD_11P_CHANNELS */
-
 /**
  * dot11p_validate_channel() - validates a DSRC channel
  * @center_freq: the channel's center frequency
@@ -304,8 +197,7 @@ static int dot11p_validate_channel(struct wiphy *wiphy,
 		}
 	}
 
-	return dot11p_validate_channel_static_channels(wiphy, channel_freq,
-		bandwidth, tx_power, reg_power, antenna_max);
+	return -EINVAL;
 }
 
 /**

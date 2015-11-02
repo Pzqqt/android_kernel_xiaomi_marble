@@ -754,25 +754,12 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
  */
 bool cds_is_dsrc_channel(uint16_t center_freq)
 {
-	switch (center_freq) {
-	case 5852:
-	case 5860:
-	case 5870:
-	case 5880:
-	case 5890:
-	case 5900:
-	case 5910:
-	case 5920:
-	case 5875:
-	case 5905:
+	if (center_freq >= 5852 &&
+	    center_freq <= 5920)
 		return 1;
-	}
+
 	return 0;
 }
-
-#ifdef FEATURE_STATICALLY_ADD_11P_CHANNELS
-#define DEFAULT_11P_POWER (30)
-#endif
 
 /**
  * cds_process_regulatory_data() - process regulatory data
@@ -886,15 +873,6 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 				}
 			}
 
-#ifdef FEATURE_STATICALLY_ADD_11P_CHANNELS
-			if (is_dsrc_channel(chan->center_freq)) {
-				temp_chan_k->enabled =
-					CHANNEL_STATE_ENABLE;
-				temp_chan_k->pwrLimit =
-					DEFAULT_11P_POWER;
-				temp_chan_k->flags = chan->flags;
-			} else
-#endif
 			if (chan->flags & IEEE80211_CHAN_DISABLED) {
 				temp_chan_k->enabled =
 					CHANNEL_STATE_DISABLE;

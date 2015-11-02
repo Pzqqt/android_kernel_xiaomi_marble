@@ -217,7 +217,6 @@ static struct ieee80211_channel hdd_channels_5_ghz[] = {
 	HDD5GHZCHAN(5785, 157, 0),
 	HDD5GHZCHAN(5805, 161, 0),
 	HDD5GHZCHAN(5825, 165, 0),
-#ifndef FEATURE_STATICALLY_ADD_11P_CHANNELS
 	HDD5GHZCHAN(5852, 170, 0),
 	HDD5GHZCHAN(5855, 171, 0),
 	HDD5GHZCHAN(5860, 172, 0),
@@ -233,7 +232,6 @@ static struct ieee80211_channel hdd_channels_5_ghz[] = {
 	HDD5GHZCHAN(5910, 182, 0),
 	HDD5GHZCHAN(5915, 183, 0),
 	HDD5GHZCHAN(5920, 184, 0),
-#endif
 };
 
 static struct ieee80211_rate g_mode_rates[] = {
