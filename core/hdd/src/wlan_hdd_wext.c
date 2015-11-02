@@ -9362,6 +9362,12 @@ static int __iw_set_band_config(struct net_device *dev,
 
 	ENTER();
 
+	if (!capable(CAP_NET_ADMIN)) {
+		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			FL("permission check failed"));
+		return -EPERM;
+	}
+
 	return hdd_set_band(dev, value[0]);
 }
 
