@@ -5572,6 +5572,7 @@ CDF_STATUS csr_roam_offload_send_synch_cnf(tpAniSirGlobal pMac, uint8_t sessionI
 			false;
 		return CDF_STATUS_E_FAILURE;
 	}
+	csr_roaming_report_diag_event(pMac, NULL, eCSR_REASON_ROAM_SYNCH_CNF);
 	pSession->roamOffloadSynchParams.bRoamSynchInProgress = false;
 	return CDF_STATUS_SUCCESS;
 }
@@ -18377,6 +18378,52 @@ csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 
 	return status;
 }
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+/**
+ * csr_roaming_report_diag_event() - Diag events for LFR3
+ * @mac_ctx:              MAC context
+ * @roam_synch_ind_ptr:   Roam Synch Indication Pointer
+ * @reason:               Reason for this event to happen
+ *
+ * The major events in the host for LFR3 roaming such as
+ * roam synch indication, roam synch completion and
+ * roam synch handoff fail will be indicated to the
+ * diag framework using this API.
+ *
+ * Return: None
+ */
+void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
+		roam_offload_synch_ind *roam_synch_ind_ptr,
+		eCsrDiagWlanStatusEventReason reason)
+{
+	WLAN_HOST_DIAG_EVENT_DEF(roam_connection,
+		host_event_wlan_status_payload_type);
+	cdf_mem_set(&roam_connection,
+		sizeof(host_event_wlan_status_payload_type), 0);
+	switch (reason) {
+	case eCSR_REASON_ROAM_SYNCH_IND:
+		roam_connection.eventId = eCSR_WLAN_STATUS_CONNECT;
+		if (roam_synch_ind_ptr) {
+			roam_connection.rssi = roam_synch_ind_ptr->rssi;
+			roam_connection.channel =
+				cds_freq_to_chan(roam_synch_ind_ptr->chan_freq);
+		}
+		break;
+	case eCSR_REASON_ROAM_SYNCH_CNF:
+		roam_connection.eventId = eCSR_WLAN_STATUS_CONNECT;
+		break;
+	case eCSR_REASON_ROAM_HO_FAIL:
+		roam_connection.eventId = eCSR_WLAN_STATUS_DISCONNECT;
+		break;
+	default:
+		sms_log(mac_ctx, LOGE,
+			FL("LFR3: Unsupported reason %d"), reason);
+		return;
+	}
+	roam_connection.reason = reason;
+	WLAN_HOST_DIAG_EVENT_REPORT(&roam_connection, EVENT_WLAN_STATUS);
+}
+#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /*----------------------------------------------------------------------------
@@ -18405,6 +18452,9 @@ void csr_process_roam_offload_synch_ind(tHalHandle hHal,
 				"fail to save roam offload AP to scan cache");
 		goto err_synch_rsp;
 	}
+
+	csr_roaming_report_diag_event(pMac, roam_synch_ind_ptr,
+		eCSR_REASON_ROAM_SYNCH_IND);
 	session_ptr->roamOffloadSynchParams.rssi = roam_synch_ind_ptr->rssi;
 	session_ptr->roamOffloadSynchParams.roamReason =
 		roam_synch_ind_ptr->roamReason;
@@ -18489,6 +18539,8 @@ void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 		return;
 	}
 	csr_roam_synch_clean_up(pMac, sessionId);
+	csr_roaming_report_diag_event(pMac, NULL,
+			eCSR_REASON_ROAM_HO_FAIL);
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 		  "LFR3:Issue Disconnect on session %d", sessionId);
 	csr_roam_disconnect(pMac, sessionId, eCSR_DISCONNECT_REASON_UNSPECIFIED);

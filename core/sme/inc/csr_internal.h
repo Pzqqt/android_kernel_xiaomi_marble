@@ -265,6 +265,9 @@ typedef enum {
 	eCSR_REASON_DISASSOC,
 	eCSR_REASON_DEAUTH,
 	eCSR_REASON_HANDOFF,
+	eCSR_REASON_ROAM_SYNCH_IND,
+	eCSR_REASON_ROAM_SYNCH_CNF,
+	eCSR_REASON_ROAM_HO_FAIL,
 
 } eCsrDiagWlanStatusEventReason;
 
@@ -1363,7 +1366,16 @@ csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 CDF_STATUS
 csr_roam_update_add_ies(tpAniSirGlobal pMac,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
-
+#ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
+void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
+		roam_offload_synch_ind *roam_synch_ind_ptr,
+		eCsrDiagWlanStatusEventReason reason);
+#else
+static inline void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
+		roam_offload_synch_ind *roam_synch_ind_ptr,
+		eCsrDiagWlanStatusEventReason reason)
+{}
+#endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void csr_process_roam_offload_synch_ind(tHalHandle hHal,
 		roam_offload_synch_ind * roam_synch_ind_ptr);
