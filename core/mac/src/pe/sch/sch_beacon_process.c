@@ -739,6 +739,14 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 	    || LIM_IS_IBSS_ROLE(session)) {
 		/* Channel Switch information element updated */
 		if (bcn->channelSwitchPresent) {
+			/*
+			 * on receiving channel switch announcement from AP,
+			 * delete all TDLS peers before leaving BSS and proceed
+			 * for channel switch
+			 */
+			if (LIM_IS_STA_ROLE(session))
+				lim_delete_tdls_peers(mac_ctx, session);
+
 			lim_update_channel_switch(mac_ctx, bcn, session);
 		} else if (session->gLimSpecMgmt.dot11hChanSwState ==
 				eLIM_11H_CHANSW_RUNNING) {

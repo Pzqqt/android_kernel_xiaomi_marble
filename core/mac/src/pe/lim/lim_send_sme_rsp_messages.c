@@ -1984,6 +1984,12 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	}
 
 	if (LIM_IS_STA_ROLE(session_entry)) {
+		/*
+		 * on receiving channel switch announcement from AP, delete all
+		 * TDLS peers before leaving BSS and proceed for channel switch
+		 */
+		lim_delete_tdls_peers(mac_ctx, session_entry);
+
 		session_entry->gLimChannelSwitch.switchMode =
 			csa_params->switchmode;
 		/* timer already started by firmware, switch immediately */
