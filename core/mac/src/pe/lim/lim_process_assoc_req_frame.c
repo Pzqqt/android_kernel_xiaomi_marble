@@ -288,8 +288,9 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			MAC_ADDRESS_STR), psessionEntry->peSessionId,
 			subType, GET_LIM_SYSTEM_ROLE(psessionEntry),
 			MAC_ADDR_ARRAY(pHdr->sa));
-		} else {
-			/*
+		} else if (!pStaDs->rmfEnabled) {
+			/* Do this only for non PMF case.
+			 *
 			 * STA might have missed the assoc response,
 			 * so it is sending assoc request frame again.
 			 */
