@@ -7883,6 +7883,12 @@ static int iw_hdd_set_var_ints_getnone(struct net_device *dev,
 	int apps_args[MAX_VAR_ARGS] = {0};
 	int ret, num_args;
 
+	if (!capable(CAP_NET_ADMIN)) {
+		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			FL("permission check failed"));
+		return -EPERM;
+	}
+
 	/* Helper function to get iwreq_data with compat handling. */
 	if (hdd_priv_get_data(&u_priv_wrqu.data, wrqu))
 		return -EINVAL;
