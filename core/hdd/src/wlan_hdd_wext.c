@@ -6121,6 +6121,12 @@ static int __iw_setchar_getnone(struct net_device *dev,
 #endif /* WLAN_FEATURE_VOWIFI */
 	struct iw_point s_priv_data;
 
+	if (!capable(CAP_NET_ADMIN)) {
+		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		FL("permission check failed"));
+		return -EPERM;
+	}
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
