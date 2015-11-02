@@ -2797,6 +2797,11 @@ CDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		return CDF_STATUS_E_FAILURE;
 	}
 
+	if (!wma->num_dbs_hw_modes) {
+		WMA_LOGE("%s: No dbs hw modes available", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
 	param = wma->hw_mode.hw_mode_list[idx];
 
 	hw_mode->mac0_tx_ss = WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(param);
