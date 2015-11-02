@@ -4254,6 +4254,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 
 	ENTER();
 
+	if (!capable(CAP_NET_ADMIN)) {
+		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			FL("permission check failed"));
+		return -EPERM;
+	}
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
