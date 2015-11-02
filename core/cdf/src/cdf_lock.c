@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,6 +46,7 @@
 #include "i_host_diag_core_event.h"
 #include "cds_api.h"
 #include "ani_global.h"
+#include "hif.h"
 
 /* Preprocessor Definitions and Constants */
 #define LINUX_LOCK_COOKIE 0x12345678
@@ -488,4 +489,159 @@ CDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock)
 	wake_lock_destroy(pLock);
 #endif
 	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_runtime_pm_get() - do a get opperation on the device
+ *
+ * A get opperation will prevent a runtime suspend untill a
+ * corresponding put is done.  This api should be used when sending
+ * data.
+ *
+ * CONTRARY TO THE REGULAR RUNTIME PM, WHEN THE BUS IS SUSPENDED,
+ * THIS API WILL ONLY REQUEST THE RESUME AND NOT TO A GET!!!
+ *
+ * return: success if the bus is up and a get has been issued
+ *   otherwise an error code.
+ */
+CDF_STATUS cdf_runtime_pm_get(void)
+{
+	void *ol_sc;
+	int ret;
+
+	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (ol_sc == NULL) {
+		CDF_ASSERT(0);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+				"%s: HIF context is null!", __func__);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	ret = hif_pm_runtime_get(ol_sc);
+
+	if (ret)
+		return CDF_STATUS_E_FAILURE;
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_runtime_pm_put() - do a put opperation on the device
+ *
+ * A put opperation will allow a runtime suspend after a corresponding
+ * get was done.  This api should be used when sending data.
+ *
+ * This api will return a failure if the hif module hasn't been initialized
+ *
+ * return: CDF_STATUS_SUCCESS if the put is performed
+ */
+CDF_STATUS cdf_runtime_pm_put(void)
+{
+	void *ol_sc;
+	int ret;
+
+	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (ol_sc == NULL) {
+		CDF_ASSERT(0);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+				"%s: HIF context is null!", __func__);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	ret = hif_pm_runtime_put(ol_sc);
+
+	if (ret)
+		return CDF_STATUS_E_FAILURE;
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_runtime_pm_prevent_suspend() - prevent a runtime bus suspend
+ * @lock: an opaque context for tracking
+ *
+ * The lock can only be acquired once per lock context and is tracked.
+ *
+ * return: CDF_STATUS_SUCCESS or failure code.
+ */
+CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock)
+{
+	void *ol_sc;
+	int ret;
+
+	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (ol_sc == NULL) {
+		CDF_ASSERT(0);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+				"%s: HIF context is null!", __func__);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	ret = hif_pm_runtime_prevent_suspend(ol_sc, lock);
+
+	if (ret)
+		return CDF_STATUS_E_FAILURE;
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_runtime_pm_prevent_suspend() - prevent a runtime bus suspend
+ * @lock: an opaque context for tracking
+ *
+ * The lock can only be acquired once per lock context and is tracked.
+ *
+ * return: CDF_STATUS_SUCCESS or failure code.
+ */
+CDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock)
+{
+	void *ol_sc;
+	int ret;
+
+	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (ol_sc == NULL) {
+		CDF_ASSERT(0);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+				"%s: HIF context is null!", __func__);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	ret = hif_pm_runtime_allow_suspend(ol_sc, lock);
+
+	if (ret)
+		return CDF_STATUS_E_FAILURE;
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_runtime_lock_init() - initialize runtime lock
+ * @name: name of the runtime lock
+ *
+ * Initialize a runtime pm lock.  This lock can be used
+ * to prevent the runtime pm system from putting the bus
+ * to sleep.
+ *
+ * Return: runtime_pm_lock_t
+ */
+cdf_runtime_lock_t cdf_runtime_lock_init(const char *name)
+{
+	return hif_runtime_lock_init(name);
+}
+
+/**
+ * cdf_runtime_lock_deinit() - deinitialize runtime pm lock
+ * @lock: the lock to deinitialize
+ *
+ * Ensures the lock is released. Frees the runtime lock.
+ *
+ * Return: void
+ */
+void cdf_runtime_lock_deinit(cdf_runtime_lock_t lock)
+{
+	hif_runtime_lock_deinit(lock);
 }
