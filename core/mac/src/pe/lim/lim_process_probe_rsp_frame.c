@@ -211,6 +211,13 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		}
 		if (LIM_IS_STA_ROLE(session_entry)) {
 			if (probe_rsp->channelSwitchPresent) {
+				/*
+				 * on receiving channel switch announcement
+				 * from AP, delete all TDLS peers before
+				 * leaving BSS and proceed for channel switch
+				 */
+				lim_delete_tdls_peers(mac_ctx, session_entry);
+
 				lim_update_channel_switch(mac_ctx,
 					probe_rsp,
 					session_entry);

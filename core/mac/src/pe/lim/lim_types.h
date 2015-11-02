@@ -539,14 +539,20 @@ void lim_send_sme_tdls_delete_all_peer_ind(tpAniSirGlobal pMac,
 					   tpPESession psessionEntry);
 void lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac, tpPESession psessionEntry,
 				     uint32_t txCompleteStatus);
-tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal pMac,
-				    tpPESession psessionEntry);
+tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
+				    tpPESession session_entry);
 CDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
 tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 					   tSirMacAddr peerMac, uint16_t reason,
 					   uint8_t responder,
 					   tpPESession psessionEntry,
 					   uint8_t *addIe, uint16_t addIeLen);
+#else
+static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
+						tpPESession session_entry)
+{
+	return eSIR_SUCCESS;
+}
 #endif
 
 /* Algorithms & Link Monitoring related functions */
