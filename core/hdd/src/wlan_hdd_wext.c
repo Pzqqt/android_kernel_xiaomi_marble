@@ -8654,6 +8654,12 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct pkt_filter_cfg *request = NULL;
 
+	if (!capable(CAP_NET_ADMIN)) {
+		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			FL("permission check failed"));
+		return -EPERM;
+	}
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
