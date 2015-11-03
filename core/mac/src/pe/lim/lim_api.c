@@ -644,11 +644,10 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 
 void lim_cleanup(tpAniSirGlobal pMac)
 {
-	void *p_cds_gctx;
-	CDF_STATUS retStatus;
-
-	/*Before destroying the list making sure all the nodes have been deleted
-	 *Which should be the normal case, but a memory leak has been reported
+	/*
+	 * Before destroying the list making sure all the nodes have been
+	 * deleted Which should be the normal case, but a memory leak has been
+	 * reported
 	 */
 
 	struct mgmt_frm_reg_info *pLimMgmtRegistration = NULL;
@@ -708,15 +707,6 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	/* Now, finally reset the deferred message queue pointers */
 	lim_reset_deferred_msg_q(pMac);
 
-	p_cds_gctx = cds_get_global_context();
-	retStatus = wma_de_register_mgmt_frm_client(p_cds_gctx);
-
-	if (retStatus != CDF_STATUS_SUCCESS)
-		PELOGE(lim_log
-			(pMac, LOGE,
-			FL
-			("DeRegistering the PE Handle with wma has failed bailing out..."));
-		)
 #if defined WLAN_FEATURE_VOWIFI
 	rrm_cleanup(pMac);
 #endif
