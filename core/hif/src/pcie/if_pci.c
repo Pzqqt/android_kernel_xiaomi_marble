@@ -992,16 +992,7 @@ static inline void hif_runtime_pm_debugfs_remove(struct hif_pci_softc *sc)
 }
 #endif
 
-/**
- * hif_pm_runtime_lock_timeout_fn() - callback the runtime lock timeout
- * @data: calback data that is the pci context
- *
- * if runtime locks are aquired with a timeout, this function releases
- * the locks when the latest runtime lock expires.
- *
- * dummy implementation until lock acquisition is implemented.
- */
-void hif_pm_runtime_lock_timeout_fn(unsigned long data) {}
+static void hif_pm_runtime_lock_timeout_fn(unsigned long data);
 
 /**
  * hif_pm_runtime_start(): start the runtime pm
@@ -2564,3 +2555,460 @@ int hif_get_target_type(struct ol_softc *ol_sc, struct device *dev,
 	return hif_get_device_type(id->device, revision_id,
 			hif_type, target_type);
 }
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * hif_pm_runtime_get() - do a get opperation on the device
+ *
+ * A get opperation will prevent a runtime suspend untill a
+ * corresponding put is done.  This api should be used when sending
+ * data.
+ *
+ * CONTRARY TO THE REGULAR RUNTIME PM, WHEN THE BUS IS SUSPENDED,
+ * THIS API WILL ONLY REQUEST THE RESUME AND NOT TO A GET!!!
+ *
+ * return: success if the bus is up and a get has been issued
+ *   otherwise an error code.
+ */
+int hif_pm_runtime_get(void *hif_ctx)
+{
+	struct ol_softc *scn = hif_ctx;
+	struct hif_pci_softc *sc;
+	int ret;
+	int pm_state;
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not do runtime get, scn is null",
+				__func__);
+		return -EFAULT;
+	}
+	sc = scn->hif_sc;
+
+	pm_state = cdf_atomic_read(&sc->pm_state);
+
+	if (pm_state  == HIF_PM_RUNTIME_STATE_ON ||
+			pm_state == HIF_PM_RUNTIME_STATE_NONE) {
+		sc->pm_stats.runtime_get++;
+		ret = __hif_pm_runtime_get(sc->dev);
+
+		/* Get can return 1 if the device is already active, just return
+		 * success in that case
+		 */
+		if (ret > 0)
+			ret = 0;
+
+		if (ret)
+			hif_pm_runtime_put(hif_ctx);
+
+		if (ret && ret != -EINPROGRESS) {
+			sc->pm_stats.runtime_get_err++;
+			HIF_ERROR("%s: Runtime Get PM Error in pm_state:%d ret: %d",
+				__func__, cdf_atomic_read(&sc->pm_state), ret);
+		}
+
+		return ret;
+	}
+
+	sc->pm_stats.request_resume++;
+	sc->pm_stats.last_resume_caller = (void *)_RET_IP_;
+	ret = hif_pm_request_resume(sc->dev);
+
+	return -EAGAIN;
+}
+
+/**
+ * hif_pm_runtime_put() - do a put opperation on the device
+ *
+ * A put opperation will allow a runtime suspend after a corresponding
+ * get was done.  This api should be used when sending data.
+ *
+ * This api will return a failure if runtime pm is stopped
+ * This api will return failure if it would decrement the usage count below 0.
+ *
+ * return: CDF_STATUS_SUCCESS if the put is performed
+ */
+int hif_pm_runtime_put(void *hif_ctx)
+{
+	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
+	struct hif_pci_softc *sc;
+	int pm_state, usage_count;
+	unsigned long flags;
+	char *error = NULL;
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not do runtime put, scn is null",
+				__func__);
+		return -EFAULT;
+	}
+	sc = scn->hif_sc;
+
+	usage_count = atomic_read(&sc->dev->power.usage_count);
+
+	if (usage_count == 1) {
+		pm_state = cdf_atomic_read(&sc->pm_state);
+
+		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
+			error = "Ignoring unexpected put when runtime pm is disabled";
+
+	} else if (usage_count == 0) {
+		error = "PUT Without a Get Operation";
+	}
+
+	if (error) {
+		spin_lock_irqsave(&sc->runtime_lock, flags);
+		hif_pci_runtime_pm_warn(sc, error);
+		spin_unlock_irqrestore(&sc->runtime_lock, flags);
+		return -EINVAL;
+	}
+
+	sc->pm_stats.runtime_put++;
+
+	hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_pm_runtime_put_auto(sc->dev);
+
+	return 0;
+}
+
+
+/**
+ * __hif_pm_runtime_prevent_suspend() - prevent runtime suspend for a protocol reason
+ * @hif_sc: pci context
+ * @lock: runtime_pm lock being acquired
+ *
+ * Return 0 if successful.
+ */
+static int __hif_pm_runtime_prevent_suspend(struct hif_pci_softc
+		*hif_sc, struct hif_pm_runtime_lock *lock)
+{
+	int ret = 0;
+
+	/*
+	 * We shouldn't be setting context->timeout to zero here when
+	 * context is active as we will have a case where Timeout API's
+	 * for the same context called back to back.
+	 * eg: echo "1=T:10:T:20" > /d/cnss_runtime_pm
+	 * Set context->timeout to zero in hif_pm_runtime_prevent_suspend
+	 * API to ensure the timeout version is no more active and
+	 * list entry of this context will be deleted during allow suspend.
+	 */
+	if (lock->active)
+		return 0;
+
+	ret = __hif_pm_runtime_get(hif_sc->dev);
+
+	/**
+	 * The ret can be -EINPROGRESS, if Runtime status is RPM_RESUMING or
+	 * RPM_SUSPENDING. Any other negative value is an error.
+	 * We shouldn't be do runtime_put here as in later point allow
+	 * suspend gets called with the the context and there the usage count
+	 * is decremented, so suspend will be prevented.
+	 */
+
+	if (ret < 0 && ret != -EINPROGRESS) {
+		hif_sc->pm_stats.runtime_get_err++;
+		hif_pci_runtime_pm_warn(hif_sc,
+				"Prevent Suspend Runtime PM Error");
+	}
+
+	hif_sc->prevent_suspend_cnt++;
+
+	lock->active = true;
+
+	list_add_tail(&lock->list, &hif_sc->prevent_suspend_list);
+
+	hif_sc->pm_stats.prevent_suspend++;
+
+	HIF_ERROR("%s: in pm_state:%d ret: %d", __func__,
+			cdf_atomic_read(&hif_sc->pm_state), ret);
+
+	return ret;
+}
+
+static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
+		struct hif_pm_runtime_lock *lock)
+{
+	int ret = 0;
+	int usage_count;
+
+	if (hif_sc->prevent_suspend_cnt == 0)
+		return ret;
+
+	if (!lock->active)
+		return ret;
+
+	usage_count = atomic_read(&hif_sc->dev->power.usage_count);
+
+	/*
+	 * During Driver unload, platform driver increments the usage
+	 * count to prevent any runtime suspend getting called.
+	 * So during driver load in HIF_PM_RUNTIME_STATE_NONE state the
+	 * usage_count should be one. Ideally this shouldn't happen as
+	 * context->active should be active for allow suspend to happen
+	 * Handling this case here to prevent any failures.
+	 */
+	if ((cdf_atomic_read(&hif_sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE
+				&& usage_count == 1) || usage_count == 0) {
+		hif_pci_runtime_pm_warn(hif_sc,
+				"Allow without a prevent suspend");
+		return -EINVAL;
+	}
+
+	list_del(&lock->list);
+
+	hif_sc->prevent_suspend_cnt--;
+
+	lock->active = false;
+	lock->timeout = 0;
+
+	hif_pm_runtime_mark_last_busy(hif_sc->dev);
+	ret = hif_pm_runtime_put_auto(hif_sc->dev);
+
+	HIF_ERROR("%s: in pm_state:%d ret: %d", __func__,
+			cdf_atomic_read(&hif_sc->pm_state), ret);
+
+	hif_sc->pm_stats.allow_suspend++;
+	return ret;
+}
+
+/**
+ * hif_pm_runtime_lock_timeout_fn() - callback the runtime lock timeout
+ * @data: calback data that is the pci context
+ *
+ * if runtime locks are aquired with a timeout, this function releases
+ * the locks when the last runtime lock expires.
+ *
+ * dummy implementation until lock acquisition is implemented.
+ */
+static void hif_pm_runtime_lock_timeout_fn(unsigned long data)
+{
+	struct hif_pci_softc *hif_sc = (struct hif_pci_softc *)data;
+	unsigned long flags;
+	unsigned long timer_expires;
+	struct hif_pm_runtime_lock *context, *temp;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+
+	timer_expires = hif_sc->runtime_timer_expires;
+
+	/* Make sure we are not called too early, this should take care of
+	 * following case
+	 *
+	 * CPU0                         CPU1 (timeout function)
+	 * ----                         ----------------------
+	 * spin_lock_irq
+	 *                              timeout function called
+	 *
+	 * mod_timer()
+	 *
+	 * spin_unlock_irq
+	 *                              spin_lock_irq
+	 */
+	if (timer_expires > 0 && !time_after(timer_expires, jiffies)) {
+		hif_sc->runtime_timer_expires = 0;
+		list_for_each_entry_safe(context, temp,
+				&hif_sc->prevent_suspend_list, list) {
+			if (context->timeout) {
+				__hif_pm_runtime_allow_suspend(hif_sc, context);
+				hif_sc->pm_stats.allow_suspend_timeout++;
+			}
+		}
+	}
+
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+}
+
+int hif_pm_runtime_prevent_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *data)
+{
+	struct ol_softc *sc = (struct ol_softc *)ol_sc;
+	struct hif_pci_softc *hif_sc = sc->hif_sc;
+	struct hif_pm_runtime_lock *context = data;
+	unsigned long flags;
+
+	if (!sc->enable_runtime_pm)
+		return 0;
+
+	if (!context)
+		return -EINVAL;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+	context->timeout = 0;
+	__hif_pm_runtime_prevent_suspend(hif_sc, context);
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+
+	return 0;
+}
+
+int hif_pm_runtime_allow_suspend(void *ol_sc, struct hif_pm_runtime_lock *data)
+{
+	struct ol_softc *sc = (struct ol_softc *)ol_sc;
+	struct hif_pci_softc *hif_sc = sc->hif_sc;
+	struct hif_pm_runtime_lock *context = data;
+
+	unsigned long flags;
+
+	if (!sc->enable_runtime_pm)
+		return 0;
+
+	if (!context)
+		return -EINVAL;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+
+	__hif_pm_runtime_allow_suspend(hif_sc, context);
+
+	/* The list can be empty as well in cases where
+	 * we have one context in the list and the allow
+	 * suspend came before the timer expires and we delete
+	 * context above from the list.
+	 * When list is empty prevent_suspend count will be zero.
+	 */
+	if (hif_sc->prevent_suspend_cnt == 0 &&
+			hif_sc->runtime_timer_expires > 0) {
+		del_timer(&hif_sc->runtime_timer);
+		hif_sc->runtime_timer_expires = 0;
+	}
+
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+
+	return 0;
+}
+
+/**
+ * hif_pm_runtime_prevent_suspend_timeout() - Prevent runtime suspend timeout
+ * @ol_sc: HIF context
+ * @lock: which lock is being acquired
+ * @delay: Timeout in milliseconds
+ *
+ * Prevent runtime suspend with a timeout after which runtime suspend would be
+ * allowed. This API uses a single timer to allow the suspend and timer is
+ * modified if the timeout is changed before timer fires.
+ * If the timeout is less than autosuspend_delay then use mark_last_busy instead
+ * of starting the timer.
+ *
+ * It is wise to try not to use this API and correct the design if possible.
+ *
+ * Return: 0 on success and negative error code on failure
+ */
+int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
+		struct hif_pm_runtime_lock *lock, unsigned int delay)
+{
+	struct ol_softc *sc = (struct ol_softc *)ol_sc;
+	struct hif_pci_softc *hif_sc = sc->hif_sc;
+	int ret = 0;
+	unsigned long expires;
+	unsigned long flags;
+	struct hif_pm_runtime_lock *context = lock;
+
+	if (cds_is_load_unload_in_progress()) {
+		HIF_ERROR("%s: Load/unload in progress, ignore!",
+				__func__);
+		return -EINVAL;
+	}
+
+	if (cds_is_logp_in_progress()) {
+		HIF_ERROR("%s: LOGP in progress, ignore!", __func__);
+		return -EINVAL;
+	}
+
+	if (!sc->enable_runtime_pm)
+		return 0;
+
+	if (!context)
+		return -EINVAL;
+
+	/*
+	 * Don't use internal timer if the timeout is less than auto suspend
+	 * delay.
+	 */
+	if (delay <= hif_sc->dev->power.autosuspend_delay) {
+		hif_pm_request_resume(hif_sc->dev);
+		hif_pm_runtime_mark_last_busy(hif_sc->dev);
+		return ret;
+	}
+
+	expires = jiffies + msecs_to_jiffies(delay);
+	expires += !expires;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+
+	context->timeout = delay;
+	ret = __hif_pm_runtime_prevent_suspend(hif_sc, context);
+	hif_sc->pm_stats.prevent_suspend_timeout++;
+
+	/* Modify the timer only if new timeout is after already configured
+	 * timeout
+	 */
+	if (time_after(expires, hif_sc->runtime_timer_expires)) {
+		mod_timer(&hif_sc->runtime_timer, expires);
+		hif_sc->runtime_timer_expires = expires;
+	}
+
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+
+	HIF_ERROR("%s: pm_state: %d delay: %dms ret: %d\n", __func__,
+			cdf_atomic_read(&hif_sc->pm_state), delay, ret);
+
+	return ret;
+}
+
+/**
+ * hif_runtime_lock_init() - API to initialize Runtime PM context
+ * @name: Context name
+ *
+ * This API initalizes the Runtime PM context of the caller and
+ * return the pointer.
+ *
+ * Return: void *
+ */
+struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name)
+{
+	struct hif_pm_runtime_lock *context;
+
+	context = cdf_mem_malloc(sizeof(*context));
+	if (!context) {
+		HIF_ERROR("%s: No memory for Runtime PM wakelock context\n",
+				__func__);
+		return NULL;
+	}
+
+	context->name = name ? name : "Default";
+	return context;
+}
+
+/**
+ * hif_runtime_lock_deinit() - This API frees the runtime pm ctx
+ * @data: Runtime PM context
+ *
+ * Return: void
+ */
+void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *data)
+{
+	unsigned long flags;
+	struct hif_pm_runtime_lock *context = data;
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_pci_softc *sc;
+
+	if (!scn)
+		return;
+
+	sc = scn->hif_sc;
+
+	if (!sc)
+		return;
+
+	if (!context)
+		return;
+
+	/*
+	 * Ensure to delete the context list entry and reduce the usage count
+	 * before freeing the context if context is active.
+	 */
+	spin_lock_irqsave(&sc->runtime_lock, flags);
+	__hif_pm_runtime_allow_suspend(sc, context);
+	spin_unlock_irqrestore(&sc->runtime_lock, flags);
+
+	cdf_mem_free(context);
+}
+
+#endif /* FEATURE_RUNTIME_PM */

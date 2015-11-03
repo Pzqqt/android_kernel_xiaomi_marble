@@ -173,4 +173,59 @@ void hif_pci_cancel_deferred_target_sleep(struct ol_softc *scn);
 #endif
 
 #define HIF_CE_DRAIN_WAIT_CNT          20
+
+
+#ifdef FEATURE_RUNTIME_PM
+#include <linux/pm_runtime.h>
+
+#ifdef WLAN_OPEN_SOURCE
+static inline int hif_pm_request_resume(struct device *dev)
+{
+	return pm_request_resume(dev);
+}
+static inline int __hif_pm_runtime_get(struct device *dev)
+{
+	return pm_runtime_get(dev);
+}
+
+static inline int hif_pm_runtime_put_auto(struct device *dev)
+{
+	return pm_runtime_put_autosuspend(dev);
+}
+
+static inline void hif_pm_runtime_mark_last_busy(struct device *dev)
+{
+	pm_runtime_mark_last_busy(dev);
+}
+
+static inline int hif_pm_runtime_resume(struct device *dev)
+{
+	return pm_runtime_resume(dev);
+}
+#else
+static inline int hif_pm_request_resume(struct device *dev)
+{
+	return cnss_pm_runtime_request(dev, CNSS_PM_REQUEST_RESUME);
+}
+
+static inline int __hif_pm_runtime_get(struct device *dev)
+{
+	return cnss_pm_runtime_request(dev, CNSS_PM_RUNTIME_GET);
+}
+
+static inline int hif_pm_runtime_put_auto(struct device *dev)
+{
+	return cnss_pm_runtime_request(dev, CNSS_PM_RUNTIME_PUT_AUTO);
+}
+
+static inline void hif_pm_runtime_mark_last_busy(struct device *dev)
+{
+	cnss_pm_runtime_request(dev, CNSS_PM_RUNTIME_MARK_LAST_BUSY);
+}
+static inline int hif_pm_runtime_resume(struct device *dev)
+{
+	return cnss_pm_runtime_request(dev, CNSS_PM_RUNTIME_RESUME);
+}
+#endif /* WLAN_OPEN_SOURCE */
+#endif /* FEATURE_RUNTIME_PM */
 #endif /* __ATH_PCI_H__ */

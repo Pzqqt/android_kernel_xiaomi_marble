@@ -642,6 +642,47 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev, void *bdev,
 	enum hif_enable_type type);
 void hif_disable(void *hif_ctx, enum hif_disable_type type);
 void hif_enable_power_gating(void *hif_ctx);
+
+#ifdef FEATURE_RUNTIME_PM
+struct hif_pm_runtime_lock;
+int hif_pm_runtime_get(void *hif_ctx);
+int hif_pm_runtime_put(void *hif_ctx);
+struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name);
+void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock);
+int hif_pm_runtime_prevent_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock);
+int hif_pm_runtime_allow_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock);
+int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
+		struct hif_pm_runtime_lock *lock, unsigned int delay);
+#else
+struct hif_pm_runtime_lock {
+	const char *name;
+};
+static inline int hif_pm_runtime_get(void *hif_ctx)
+{ return 0; }
+static inline int hif_pm_runtime_put(void *hif_ctx)
+{ return 0; }
+static inline struct hif_pm_runtime_lock *hif_runtime_lock_init(
+		const char *name)
+{ return NULL; }
+static inline void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock)
+{}
+
+static inline int hif_pm_runtime_prevent_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock)
+{ return 0; }
+static inline int hif_pm_runtime_allow_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock)
+{ return 0; }
+static inline int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
+		struct hif_pm_runtime_lock *lock, unsigned int delay)
+{ return 0; }
+#endif
+
+void hif_runtime_pm_set_state_inprogress(void);
+void hif_runtime_pm_set_state_on(void);
+
 void hif_enable_power_management(void *hif_ctx);
 int hif_bus_resume(void);
 int hif_bus_suspend(void);
