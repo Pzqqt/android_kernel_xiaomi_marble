@@ -13976,6 +13976,11 @@ CDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		else
 			csr_join_req->isOSENConnection = false;
 
+		/* Fill rrm config parameters */
+		cdf_mem_copy(&csr_join_req->rrm_config,
+			     &pMac->rrm.rrmSmeContext.rrmConfig,
+			     sizeof(struct rrm_config_param));
+
 		pAP_capabilityInfo =
 			(tSirMacCapabilityInfo *)
 				&pBssDescription->capabilityInfo;

@@ -5492,6 +5492,7 @@ tSirRetStatus populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 				     tpPESession psessionEntry)
 {
 	tpRRMCaps pRrmCaps;
+	uint8_t *bytes;
 
 	pRrmCaps = rrm_get_capabilities(pMac, psessionEntry);
 
@@ -5526,6 +5527,10 @@ tSirRetStatus populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 	pDot11f->fine_time_meas_rpt = pRrmCaps->fine_time_meas_rpt;
 	pDot11f->lci_capability = pRrmCaps->lci_capability;
 	pDot11f->reserved = pRrmCaps->reserved;
+
+	bytes = (uint8_t *) pDot11f + 1; /* ignore present field */
+	lim_log(pMac, LOG1, FL("RRM Enabled Cap IE: %02x %02x %02x %02x %02x"),
+			   bytes[0], bytes[1], bytes[2], bytes[3], bytes[4]);
 
 	pDot11f->present = 1;
 	return eSIR_SUCCESS;

@@ -56,12 +56,10 @@
 #include "lim_api.h"
 #include "wmm_apsd.h"
 #include "sir_mac_prot_def.h"
+#include "rrm_api.h"
 
 #include "sap_api.h"
 
-#if defined WLAN_FEATURE_VOWIFI
-#include "rrm_api.h"
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 #include <lim_ft.h>
@@ -1575,23 +1573,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 
 	lim_log(mac_ctx, LOG1, FL("Received SME_JOIN_REQ"));
-#ifdef WLAN_FEATURE_VOWIFI
-	/*
-	 * Need to read the CFG here itself as this is
-	 * used in limExtractAPCapability() below.
-	 * This CFG is actually read in rrm_update_config()
-	 * which is called later. Because this is not
-	 * read, RRM related path before calling rrm_update_config()
-	 * is not getting executed causing issues
-	 * like not honoring power constraint on 1st association
-	 * after driver loading.
-	 */
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_RRM_ENABLED, &val) !=
-			eSIR_SUCCESS)
-		lim_log(mac_ctx, LOGP, FL("cfg get rrm enabled failed"));
-	mac_ctx->rrm.rrmPEContext.rrmEnable = (val) ? 1 : 0;
-	val = 0;
-#endif /* WLAN_FEATURE_VOWIFI */
 
 	/*
 	 * Expect Join request in idle state.
@@ -1624,9 +1605,16 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			goto end;
 		}
 
+		/*
+		 * Update the capability here itself as this is used in
+		 * lim_extract_ap_capability() below. If not updated issues
+		 * like not honoring power constraint on 1st association after
+		 * driver loading might occur.
+		 */
+		lim_update_rrm_capability(mac_ctx, sme_join_req);
+
 		bss_desc = sme_join_req->bssDescription;
 		/* check for the existence of start BSS session  */
-
 		session = pe_find_session_by_bssid(mac_ctx, bss_desc.bssId,
 				&session_id);
 
@@ -4497,10 +4485,10 @@ void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		rrm_process_neighbor_report_req(pMac, pMsg->bodyptr);
 		break;
 	case eWNI_SME_BEACON_REPORT_RESP_XMIT_IND:
-	{
 		rrm_process_beacon_report_xmit(pMac, pMsg->bodyptr);
-	}
-	break;
+		break;
+	default:
+		lim_log(pMac, LOGE, FL("Invalid msg type:%d"), pMsg->type);
 	}
 #endif
 }

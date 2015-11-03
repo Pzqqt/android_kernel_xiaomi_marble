@@ -95,7 +95,7 @@ typedef void (*hdd_ftm_msg_processor)(void *);
 typedef struct _smeConfigParams {
 	tCsrConfigParam csrConfig;
 #if defined WLAN_FEATURE_VOWIFI
-	tRrmConfigParam rrmConfig;
+	struct rrm_config_param rrmConfig;
 #endif
 #if defined FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;

@@ -46,11 +46,6 @@
 /*--------------------------------------------------------------------------
   Type declarations
   ------------------------------------------------------------------------*/
-typedef struct sRrmConfigParam {
-	uint8_t rrmEnabled;
-	uint8_t maxRandnInterval;
-} tRrmConfigParam, *tpRrmConfigParam;
-
 typedef struct sRrmNeighborReportDesc {
 	tListElem List;
 	tSirNeighborBssDescription *pNeighborBssDescription;
@@ -88,7 +83,7 @@ typedef struct sRrmSMEContext {
 	uint16_t randnIntvl;
 	uint16_t duration[SIR_ESE_MAX_MEAS_IE_REQS];
 	uint8_t measMode[SIR_ESE_MAX_MEAS_IE_REQS];
-	tRrmConfigParam rrmConfig;
+	struct rrm_config_param rrmConfig;
 	cdf_mc_timer_t IterMeasTimer;
 	tDblLinkList neighborReportCache;
 	tRrmNeighborRequestControlInfo neighborReqControlInfo;

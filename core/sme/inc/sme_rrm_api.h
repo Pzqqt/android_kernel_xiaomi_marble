@@ -52,7 +52,7 @@ CDF_STATUS rrm_close(tpAniSirGlobal pMac);
 CDF_STATUS rrm_ready(tpAniSirGlobal pMac);
 CDF_STATUS rrm_open(tpAniSirGlobal pMac);
 CDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
-		tpRrmConfigParam pRrmConfig);
+		struct rrm_config_param *rrm_config);
 CDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac,
 		uint8_t sessionId, tpRrmNeighborReq pNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);

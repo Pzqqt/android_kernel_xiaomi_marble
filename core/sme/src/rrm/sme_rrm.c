@@ -906,7 +906,7 @@ CDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 	pSmeRrmContext->regClass = pBeaconReq->channelInfo.regulatoryClass;
 	pSmeRrmContext->randnIntvl =
 		CDF_MAX(pBeaconReq->randomizationInterval,
-			pSmeRrmContext->rrmConfig.maxRandnInterval);
+			pSmeRrmContext->rrmConfig.max_randn_interval);
 	pSmeRrmContext->currentIndex = 0;
 	pSmeRrmContext->msgSource = pBeaconReq->msgSource;
 	cdf_mem_copy((uint8_t *) &pSmeRrmContext->measMode,
@@ -1357,7 +1357,7 @@ CDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 	CDF_STATUS cdf_ret_status = CDF_STATUS_SUCCESS;
 
-	pSmeRrmContext->rrmConfig.maxRandnInterval = 50;        /* ms */
+	pSmeRrmContext->rrmConfig.max_randn_interval = 50;        /* ms */
 
 	cdf_status = cdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
 				       CDF_TIMER_TYPE_SW,
@@ -1491,10 +1491,10 @@ CDF_STATUS rrm_ready(tpAniSirGlobal pMac)
 
    ---------------------------------------------------------------------------*/
 CDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
-					   tpRrmConfigParam pRrmConfig)
+					   struct rrm_config_param *rrm_config)
 {
-	cdf_mem_copy(&pMac->rrm.rrmSmeContext.rrmConfig, pRrmConfig,
-		     sizeof(tRrmConfigParam));
+	cdf_mem_copy(&pMac->rrm.rrmSmeContext.rrmConfig, rrm_config,
+		     sizeof(struct rrm_config_param));
 
 	return CDF_STATUS_SUCCESS;
 }
