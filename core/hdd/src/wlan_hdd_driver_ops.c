@@ -247,6 +247,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	if (ret)
 		goto err_hif_close;
 
+	hif_enable_power_management(hif_ctx);
 
 	if (reinit) {
 		cds_set_recovery_in_progress(false);
