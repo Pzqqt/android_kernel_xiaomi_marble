@@ -240,6 +240,8 @@ typedef struct sDphHashNode {
 	uint8_t is_disassoc_deauth_in_progress;
 
 	uint8_t nss;
+	int8_t del_sta_ctx_rssi;
+
 	/*
 	 * When a station with already an existing dph entry tries to
 	 * associate again, the old dph entry will be zeroed out except

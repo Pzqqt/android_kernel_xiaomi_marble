@@ -92,6 +92,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 		cdf_mem_free(msg);
 		return;
 	}
+	stads->del_sta_ctx_rssi = msg->rssi;
 
 	/* check and see if same staId. This is to avoid the scenario
 	 * where we're trying to delete a staId we just added.

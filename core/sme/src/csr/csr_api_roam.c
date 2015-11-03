@@ -11336,6 +11336,7 @@ CDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 				sizeof(tSirMacAddr));
 		roamInfo.staId = (uint8_t) pDeauthIndMsg->staId;
 		roamInfo.reasonCode = pDeauthIndMsg->reasonCode;
+		roamInfo.rxRssi = pDeauthIndMsg->rssi;
 	}
 	sms_log(pMac, LOGW, FL("roamInfo.staId (%d)"), roamInfo.staId);
 

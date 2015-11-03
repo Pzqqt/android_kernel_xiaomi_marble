@@ -1125,6 +1125,9 @@ lim_send_sme_deauth_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	pSirSmeDeauthInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
 	pSirSmeDeauthInd->staId = pStaDs->staIndex;
+	if (eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON ==
+		pStaDs->mlmStaContext.disassocReason)
+		pSirSmeDeauthInd->rssi = pStaDs->del_sta_ctx_rssi;
 
 	mmhMsg.type = eWNI_SME_DEAUTH_IND;
 	mmhMsg.bodyptr = pSirSmeDeauthInd;
