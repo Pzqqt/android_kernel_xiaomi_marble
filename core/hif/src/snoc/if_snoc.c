@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -112,6 +112,33 @@ void hif_disable_isr(void *hif_ctx)
 void dump_ce_debug_register(struct ol_softc *scn)
 {
 	return;
+}
+
+/**
+ * hif_runtime_pm_set_state_inprogress() - dummy function
+ *
+ * currently runtime pm only supported in pci
+ */
+void hif_runtime_pm_set_state_inprogress(void)
+{
+}
+
+/**
+ * hif_runtime_pm_set_state_on() - dummy function
+ *
+ * currently runtime pm only supported in pci
+ */
+void hif_runtime_pm_set_state_on(void)
+{
+}
+
+/**
+ * hif_runtime_pm_set_state_suspended() - dummy function
+ *
+ * currently runtime pm only supported in pci
+ */
+void hif_runtime_pm_set_state_on(void)
+{
 }
 
 /**
