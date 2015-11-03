@@ -1713,8 +1713,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session);
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
-	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
+	if (mac_ctx->rrm.rrmPEContext.rrmEnable)
 		populate_dot11f_rrm_ie(mac_ctx, &frm->RRMEnabledCap,
 			pe_session);
 #endif
@@ -2091,10 +2090,8 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session);
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
-	    SIR_MAC_GET_RRM(pe_session->limReassocBssCaps)) {
+	if (mac_ctx->rrm.rrmPEContext.rrmEnable)
 		populate_dot11f_rrm_ie(mac_ctx, &frm.RRMEnabledCap, pe_session);
-	}
 #endif
 
 	/*
@@ -2563,10 +2560,8 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 				       &frm.ExtSuppRates, psessionEntry);
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (pMac->rrm.rrmPEContext.rrmEnable &&
-	    SIR_MAC_GET_RRM(psessionEntry->limReassocBssCaps)) {
+	if (pMac->rrm.rrmPEContext.rrmEnable)
 		populate_dot11f_rrm_ie(pMac, &frm.RRMEnabledCap, psessionEntry);
-	}
 #endif
 	/* The join request *should* contain zero or one of the WPA and RSN */
 	/* IEs.  The payload send along with the request is a */
