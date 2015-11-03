@@ -3049,6 +3049,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -ENOMEM;
 	}
 
+	if (cds_is_load_unload_in_progress()) {
+		WMA_LOGE("Load/Unload in progress");
+		return -EINVAL;
+	}
+
 	cdf_mem_zero(rx_pkt, sizeof(*rx_pkt));
 
 	/*
