@@ -8434,8 +8434,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 				     union iwreq_data *wrqu, char *extra)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tpKeepAliveRequest pRequest = (tpKeepAliveRequest) extra;
-	tSirKeepAliveReq keepaliveRequest;
+	tpSirKeepAliveReq request = (tpSirKeepAliveReq) extra;
 	hdd_context_t *hdd_ctx;
 	int ret;
 
@@ -8444,61 +8443,51 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (pRequest->timePeriod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
-		hddLog(LOGE, FL("Value of timePeriod %d exceed Max limit %d"),
-			pRequest->timePeriod,
+	if (wrqu->data.length != sizeof(*request)) {
+		hdd_err("Invalid length %d", wrqu->data.length);
+		return -EINVAL;
+	}
+
+	if (request->timePeriod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
+		hdd_err("Value of timePeriod %d exceed Max limit %d",
+			request->timePeriod,
 			WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX);
 		return -EINVAL;
 	}
 
 	/* Debug display of request components. */
-	hddLog(CDF_TRACE_LEVEL_INFO,
-	       "%s: Set Keep Alive Request : TimePeriod %d size %zu",
-	       __func__, pRequest->timePeriod, sizeof(tKeepAliveRequest));
+	hdd_info("Set Keep Alive Request : TimePeriod %d size %zu",
+		request->timePeriod, sizeof(tSirKeepAliveReq));
 
-	switch (pRequest->packetType) {
+	switch (request->packetType) {
 	case WLAN_KEEP_ALIVE_NULL_PKT:
-		hddLog(CDF_TRACE_LEVEL_WARN, "%s: Keep Alive Request: Tx NULL",
-		       __func__);
+		hdd_info("Keep Alive Request: Tx NULL");
 		break;
 
 	case WLAN_KEEP_ALIVE_UNSOLICIT_ARP_RSP:
-		hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
-		       "%s: Keep Alive Request: Tx UnSolicited ARP RSP",
-		       __func__);
+		hdd_info("Keep Alive Request: Tx UnSolicited ARP RSP");
 
-		hddLog(CDF_TRACE_LEVEL_WARN, "  Host IP address: %d.%d.%d.%d",
-		       pRequest->hostIpv4Addr[0], pRequest->hostIpv4Addr[1],
-		       pRequest->hostIpv4Addr[2], pRequest->hostIpv4Addr[3]);
+		hdd_info("Host IP address: %d.%d.%d.%d",
+		       request->hostIpv4Addr[0], request->hostIpv4Addr[1],
+		       request->hostIpv4Addr[2], request->hostIpv4Addr[3]);
 
-		hddLog(CDF_TRACE_LEVEL_WARN, "  Dest IP address: %d.%d.%d.%d",
-		       pRequest->destIpv4Addr[0], pRequest->destIpv4Addr[1],
-		       pRequest->destIpv4Addr[2], pRequest->destIpv4Addr[3]);
+		hdd_info("Dest IP address: %d.%d.%d.%d",
+		       request->destIpv4Addr[0], request->destIpv4Addr[1],
+		       request->destIpv4Addr[2], request->destIpv4Addr[3]);
 
-		hddLog(CDF_TRACE_LEVEL_WARN,
-		       "  Dest MAC address: %d:%d:%d:%d:%d:%d",
-		       pRequest->destMacAddr[0], pRequest->destMacAddr[1],
-		       pRequest->destMacAddr[2], pRequest->destMacAddr[3],
-		       pRequest->destMacAddr[4], pRequest->destMacAddr[5]);
+		hdd_info("Dest MAC address: %d:%d:%d:%d:%d:%d",
+		       request->destMacAddr[0], request->destMacAddr[1],
+		       request->destMacAddr[2], request->destMacAddr[3],
+		       request->destMacAddr[4], request->destMacAddr[5]);
 		break;
 	}
 
-	/* Execute keep alive request. The reason that we can copy the
-	 * request information from the ioctl structure to the SME
-	 * structure is that they are laid out exactly the same.
-	 * Otherwise, each piece of information would have to be
-	 * copied individually.
-	 */
-	memcpy(&keepaliveRequest, pRequest, wrqu->data.length);
-
-	hddLog(CDF_TRACE_LEVEL_ERROR, "set Keep: TP before SME %d",
-	       keepaliveRequest.timePeriod);
+	hdd_info("Keep alive period  %d", request->timePeriod);
 
 	if (CDF_STATUS_SUCCESS !=
 	    sme_set_keep_alive(WLAN_HDD_GET_HAL_CTX(pAdapter),
-			       pAdapter->sessionId, &keepaliveRequest)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       "%s: Failure to execute Keep Alive", __func__);
+		pAdapter->sessionId, request)) {
+		hdd_err("Failure to execute Keep Alive");
 		return -EINVAL;
 	}
 
@@ -10559,7 +10548,7 @@ static const struct iw_priv_args we_private_args[] = {
 
 	{
 		WLAN_SET_KEEPALIVE_PARAMS,
-		IW_PRIV_TYPE_BYTE | WE_MAX_STR_LEN,
+		sizeof(tSirKeepAliveReq) | IW_PRIV_SIZE_FIXED,
 		0,
 		"setKeepAlive"
 	}
