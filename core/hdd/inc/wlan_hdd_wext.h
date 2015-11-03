@@ -283,16 +283,6 @@ typedef struct ccp_freq_chan_map_s {
 #define WLAN_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
 #define WLAN_KEEP_ALIVE_NULL_PKT              1
 
-/* Offload request. */
-typedef struct {
-	uint8_t packetType;
-	uint32_t timePeriod;
-	uint8_t hostIpv4Addr[4];
-	uint8_t destIpv4Addr[4];
-	uint8_t destMacAddr[ETH_ALEN];
-	uint8_t bssIdx;
-} tKeepAliveRequest, *tpKeepAliveRequest;
-
 #define wlan_hdd_get_wps_ie_ptr(ie, ie_len) \
 	wlan_hdd_get_vendor_oui_ie_ptr(WPS_OUI_TYPE, WPS_OUI_TYPE_SIZE, ie, ie_len)
 
