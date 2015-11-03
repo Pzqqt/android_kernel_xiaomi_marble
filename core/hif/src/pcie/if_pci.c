@@ -1832,6 +1832,64 @@ int hif_bus_resume(void)
 		return hif_bus_resume_link_up();
 }
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * __hif_runtime_pm_set_state(): utility function
+ * @state: state to set
+ *
+ * indexes into the runtime pm state and sets it.
+ */
+static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
+{
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_pci_softc *sc;
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: HIF_CTX not initialized",
+		       __func__);
+		return;
+	}
+
+	sc = scn->hif_sc;
+	cdf_atomic_set(&sc->pm_state, state);
+
+}
+#else
+static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
+{
+}
+#endif
+
+/**
+ * hif_runtime_pm_set_state_inprogress(): adjust runtime pm state
+ *
+ * Notify hif that a runtime pm opperation has started
+ */
+void hif_runtime_pm_set_state_inprogress(void)
+{
+	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_INPROGRESS);
+}
+
+/**
+ * hif_runtime_pm_set_state_on():  adjust runtime pm state
+ *
+ * Notify hif that a the runtime pm state should be on
+ */
+void hif_runtime_pm_set_state_on(void)
+{
+	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_ON);
+}
+
+/**
+ * hif_runtime_pm_set_state_suspended():  adjust runtime pm state
+ *
+ * Notify hif that a runtime suspend attempt has been completed successfully
+ */
+void hif_runtime_pm_set_state_suspended(void)
+{
+	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_SUSPENDED);
+}
+
 void hif_disable_isr(void *ol_sc)
 {
 	struct ol_softc *scn = (struct ol_softc *)ol_sc;
