@@ -2056,20 +2056,28 @@ bool csr_neighbor_roam_is_ssid_and_security_match(tpAniSirGlobal pMac,
 			pIes->SSID.ssid,
 			pIes->SSID.num_ssid, true);
 	if (true == fMatch) {
+#ifdef WLAN_FEATURE_11W
 		/*
-		 * for now we are sending NULL for all PMF related filter
-		 * parameters during roam to the neighbor AP because
-		 * so far 80211W spec doesn't specify anything about
-		 * roaming scenario.
+		 * We are sending current connected APs profile setting
+		 * if other AP doesn't have the same PMF setting as currently
+		 * connected AP then we will have some issues in roaming.
 		 *
-		 * Once roaming scenario is defined, we should re-visit
-		 * this section and remove this comment.
+		 * Make sure all the APs have same PMF settings to avoid
+		 * any corner cases.
 		 */
+		fMatch = csr_is_security_match(pMac, &authType,
+				&uCEncryptionType, &mCEncryptionType,
+				&pCurProfile->MFPEnabled,
+				&pCurProfile->MFPRequired,
+				&pCurProfile->MFPCapable,
+				pBssDesc, pIes, NULL, NULL, NULL);
+#else
 		fMatch = csr_is_security_match(pMac, &authType,
 				&uCEncryptionType,
 				&mCEncryptionType, NULL,
 				NULL, NULL, pBssDesc,
 				pIes, NULL, NULL, NULL);
+#endif
 		return fMatch;
 	} else {
 		return fMatch;

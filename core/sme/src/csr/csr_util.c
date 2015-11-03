@@ -4867,9 +4867,18 @@ bool csr_match_connected_bss_security(tpAniSirGlobal pMac,
 	authList.numEntries = 1;
 	authList.authType[0] = pProfile->AuthType;
 
+#ifdef WLAN_FEATURE_11W
+	return csr_is_security_match(pMac, &authList, &ucEncryptionList,
+					&mcEncryptionList,
+					&pProfile->MFPEnabled,
+					&pProfile->MFPRequired,
+					&pProfile->MFPCapable,
+					pBssDesc, pIes, NULL, NULL, NULL);
+#else
 	return csr_is_security_match(pMac, &authList, &ucEncryptionList,
 				      &mcEncryptionList, NULL, NULL, NULL,
 				      pBssDesc, pIes, NULL, NULL, NULL);
+#endif
 
 }
 

@@ -975,6 +975,11 @@ CDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal pMac,
 				connected_prof->eseCckmInfo.krk_plumbed;
 		}
 #endif
+#ifdef WLAN_FEATURE_11W
+		pProfile->MFPEnabled = connected_prof->MFPEnabled;
+		pProfile->MFPRequired = connected_prof->MFPRequired;
+		pProfile->MFPCapable = connected_prof->MFPCapable;
+#endif
 	}
 	return status;
 }
@@ -6931,6 +6936,11 @@ CDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 		pDstProfile->MDID.mobilityDomain =
 			pSrcProfile->MDID.mobilityDomain;
 	}
+#endif
+#ifdef WLAN_FEATURE_11W
+	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
+	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
+	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 #endif
 
 end:
@@ -13261,6 +13271,11 @@ csr_roam_remove_connected_bss_from_scan_cache(tpAniSirGlobal pMac,
 	pScanFilter->bOSENAssociation = false;
 	pScanFilter->countryCode[0] = 0;
 	pScanFilter->phyMode = eCSR_DOT11_MODE_AUTO;
+#ifdef WLAN_FEATURE_11W
+	pScanFilter->MFPEnabled = pConnProfile->MFPEnabled;
+	pScanFilter->MFPRequired = pConnProfile->MFPRequired;
+	pScanFilter->MFPCapable = pConnProfile->MFPCapable;
+#endif
 	csr_ll_lock(&pMac->scan.scanResultList);
 	pEntry = csr_ll_peek_head(&pMac->scan.scanResultList, LL_ACCESS_NOLOCK);
 	while (pEntry) {
