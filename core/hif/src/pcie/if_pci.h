@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -50,6 +50,54 @@ struct hif_tasklet_entry {
 	uint8_t id;        /* 0 - 9: maps to CE, 10: fw */
 	void *hif_handler; /* struct hif_pci_softc */
 };
+
+/**
+ * enum hif_pm_runtime_state - Driver States for Runtime Power Management
+ * HIF_PM_RUNTIME_STATE_NONE: runtime pm is off
+ * HIF_PM_RUNTIME_STATE_ON: runtime pm is active and link is active
+ * HIF_PM_RUNTIME_STATE_INPROGRESS: a runtime suspend or resume is in progress
+ * HIF_PM_RUNTIME_STATE_SUSPENDED: the driver is runtime suspended
+ */
+enum hif_pm_runtime_state {
+	HIF_PM_RUNTIME_STATE_NONE,
+	HIF_PM_RUNTIME_STATE_ON,
+	HIF_PM_RUNTIME_STATE_INPROGRESS,
+	HIF_PM_RUNTIME_STATE_SUSPENDED,
+};
+
+#ifdef FEATURE_RUNTIME_PM
+
+/**
+ * struct hif_pm_runtime_lock - data structure for preventing runtime suspend
+ * @list - global list of runtime locks
+ * @active - true if this lock is preventing suspend
+ * @name - character string for tracking this lock
+ */
+struct hif_pm_runtime_lock {
+	struct list_head list;
+	bool active;
+	uint32_t timeout;
+	const char *name;
+};
+
+/* Debugging stats for Runtime PM */
+struct hif_pci_pm_stats {
+	u32 suspended;
+	u32 suspend_err;
+	u32 resumed;
+	u32 runtime_get;
+	u32 runtime_put;
+	u32 request_resume;
+	u32 allow_suspend;
+	u32 prevent_suspend;
+	u32 prevent_suspend_timeout;
+	u32 allow_suspend_timeout;
+	u32 runtime_get_err;
+	void *last_resume_caller;
+	unsigned long suspend_jiffies;
+};
+#endif
+
 struct hif_pci_softc {
 	void __iomem *mem;      /* PCI address. */
 	/* For efficiency, should be first in struct */
@@ -69,6 +117,19 @@ struct hif_pci_softc {
 	cdf_dma_addr_t soc_pcie_bar0;
 	struct hif_tasklet_entry tasklet_entries[HIF_MAX_TASKLET_NUM];
 	bool pci_enabled;
+#ifdef FEATURE_RUNTIME_PM
+	atomic_t pm_state;
+	uint32_t prevent_suspend_cnt;
+	struct hif_pci_pm_stats pm_stats;
+	struct work_struct pm_work;
+	spinlock_t runtime_lock;
+	struct timer_list runtime_timer;
+	struct list_head prevent_suspend_list;
+	unsigned long runtime_timer_expires;
+#ifdef WLAN_OPEN_SOURCE
+	struct dentry *pm_dentry;
+#endif
+#endif
 };
 
 bool hif_pci_targ_is_present(struct ol_softc *scn, void *__iomem *mem);

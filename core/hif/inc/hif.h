@@ -642,6 +642,7 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev, void *bdev,
 	enum hif_enable_type type);
 void hif_disable(void *hif_ctx, enum hif_disable_type type);
 void hif_enable_power_gating(void *hif_ctx);
+void hif_enable_power_management(void *hif_ctx);
 int hif_bus_resume(void);
 int hif_bus_suspend(void);
 void hif_vote_link_down(void);
