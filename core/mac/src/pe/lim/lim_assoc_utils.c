@@ -2484,8 +2484,17 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 			add_sta_params->htLdpcCapable = 0;
 			add_sta_params->vhtLdpcCapable = 0;
 		} else {
-			add_sta_params->htLdpcCapable = sta_ds->htLdpcCapable;
-			add_sta_params->vhtLdpcCapable = sta_ds->vhtLdpcCapable;
+			if (session_entry->txLdpcIniFeatureEnabled & 0x1)
+				add_sta_params->htLdpcCapable =
+						sta_ds->htLdpcCapable;
+			else
+				add_sta_params->htLdpcCapable = 0;
+
+			if (session_entry->txLdpcIniFeatureEnabled & 0x2)
+				add_sta_params->vhtLdpcCapable =
+						sta_ds->vhtLdpcCapable;
+			else
+				add_sta_params->vhtLdpcCapable = 0;
 		}
 	} else if (STA_ENTRY_SELF == sta_ds->staType) {
 		/* For Self STA get the LDPC capability from config.ini */
@@ -2624,6 +2633,12 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 			       "p2pCapableSta: %d"),
 		add_sta_params->htLdpcCapable, add_sta_params->vhtLdpcCapable,
 		add_sta_params->p2pCapableSta);
+
+	if (!add_sta_params->htLdpcCapable)
+		add_sta_params->ht_caps &= ~(1 << SIR_MAC_HT_CAP_ADVCODING_S);
+	if (!add_sta_params->vhtLdpcCapable)
+		add_sta_params->vht_caps &=
+			~(1 << SIR_MAC_VHT_CAP_LDPC_CODING_CAP);
 
 	/*
 	 * we need to defer the message until we get the
@@ -4134,8 +4149,12 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			pAddBssParams->staContext.htLdpcCapable = 0;
 			pAddBssParams->staContext.vhtLdpcCapable = 0;
 		} else {
-			pAddBssParams->staContext.htLdpcCapable =
-				(uint8_t) pAssocRsp->HTCaps.advCodingCap;
+			if (psessionEntry->txLdpcIniFeatureEnabled & 0x1)
+				pAddBssParams->staContext.htLdpcCapable =
+				    (uint8_t) pAssocRsp->HTCaps.advCodingCap;
+			else
+				pAddBssParams->staContext.htLdpcCapable = 0;
+
 			if (pAssocRsp->VHTCaps.present)
 				vht_caps = &pAssocRsp->VHTCaps;
 			else if (pAssocRsp->vendor2_ie.VHTCaps.present) {
@@ -4143,9 +4162,12 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				lim_log(pMac, LOG1, FL(
 					"VHT Caps is in vendor Specfic IE"));
 			}
-			if (vht_caps != NULL)
+			if (vht_caps != NULL &&
+				(psessionEntry->txLdpcIniFeatureEnabled & 0x2))
 				pAddBssParams->staContext.vhtLdpcCapable =
 					(uint8_t) vht_caps->ldpcCodingCap;
+			else
+				pAddBssParams->staContext.vhtLdpcCapable = 0;
 		}
 
 		if (pBeaconStruct->HTInfo.present)
@@ -4252,6 +4274,13 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	MTRACE(mac_trace
 		       (pMac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
 		       psessionEntry->limMlmState));
+
+	if (!pAddBssParams->staContext.htLdpcCapable)
+		pAddBssParams->staContext.ht_caps &=
+			~(1 << SIR_MAC_HT_CAP_ADVCODING_S);
+	if (!pAddBssParams->staContext.vhtLdpcCapable)
+		pAddBssParams->staContext.vht_caps &=
+			~(1 << SIR_MAC_VHT_CAP_LDPC_CODING_CAP);
 
 	lim_log(pMac, LOG2, FL("staContext wmmEnabled: %d encryptType: %d "
 			       "p2pCapableSta: %d"),
@@ -4658,9 +4687,13 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			pAddBssParams->staContext.htLdpcCapable = 0;
 			pAddBssParams->staContext.vhtLdpcCapable = 0;
 		} else {
-			pAddBssParams->staContext.htLdpcCapable =
-				(uint8_t) pBeaconStruct->HTCaps.
-				advCodingCap;
+			if (psessionEntry->txLdpcIniFeatureEnabled & 0x1)
+				pAddBssParams->staContext.htLdpcCapable =
+					(uint8_t) pBeaconStruct->HTCaps.
+						advCodingCap;
+			else
+				pAddBssParams->staContext.htLdpcCapable = 0;
+
 			if (pBeaconStruct->VHTCaps.present)
 				vht_caps = &pBeaconStruct->VHTCaps;
 			else if (pBeaconStruct->vendor2_ie.VHTCaps.present) {
@@ -4669,9 +4702,12 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 				lim_log(pMac, LOG1, FL(
 					"VHT Caps are in vendor Specfic IE"));
 			}
-			if (vht_caps != NULL)
+			if (vht_caps != NULL &&
+				(psessionEntry->txLdpcIniFeatureEnabled & 0x2))
 				pAddBssParams->staContext.vhtLdpcCapable =
 					(uint8_t) vht_caps->ldpcCodingCap;
+			else
+				pAddBssParams->staContext.vhtLdpcCapable = 0;
 		}
 
 		if (pBeaconStruct->HTInfo.present)
