@@ -278,6 +278,14 @@ typedef enum eSirResultCodes {
 	eSIR_DONOT_USE_RESULT_CODE = SIR_MAX_ENUM_SIZE
 } tSirResultCodes;
 
+#define RMENABLEDCAP_MAX_LEN 5
+
+struct rrm_config_param {
+	uint8_t rrm_enabled;
+	uint8_t max_randn_interval;
+	uint8_t rm_capability[RMENABLEDCAP_MAX_LEN];
+};
+
 /* each station added has a rate mode which specifies the sta attributes */
 typedef enum eStaRateMode {
 	eSTA_TAURUS = 0,
@@ -973,6 +981,7 @@ typedef struct sSirSmeJoinReq {
 	tAniBool isWMEenabled;
 	tAniBool isQosEnabled;
 	tAniBool isOSENConnection;
+	struct rrm_config_param rrm_config;
 	tAniBool spectrumMgtIndicator;
 	tSirMacPowerCapInfo powerCap;
 	tSirSupChnl supportedChannels;

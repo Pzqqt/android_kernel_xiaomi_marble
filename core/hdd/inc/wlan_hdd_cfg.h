@@ -818,6 +818,18 @@ typedef enum {
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_MIN             (10)
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_MAX             (100)
 #define CFG_RRM_MEAS_RANDOMIZATION_INTVL_DEFAULT         (100)
+
+/**
+ * This INI is used to configure RM enabled capabilities IE.
+ * Using this INI, we can set/unset any of the bits in 5 bytes
+ * (last 4bytes are reserved). Bit details are updated as per
+ * Draft version of 11mc spec. (Draft P802.11REVmc_D4.2)
+ *
+ * Bitwise details are defined as bit mask in rrmGlobal.h
+ * Comma is used as a separator for each byte.
+ */
+#define CFG_RM_CAPABILITY_NAME            "rm_capability"
+#define CFG_RM_CAPABILITY_DEFAULT         "73,00,6D,00,04"
 #endif
 
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME                 "ImplicitQosIsEnabled"
@@ -2808,6 +2820,8 @@ struct hdd_config {
 	uint8_t nInChanMeasMaxDuration;
 	uint8_t nOutChanMeasMaxDuration;
 	uint16_t nRrmRandnIntvl;
+	/* length includes separator */
+	char rm_capability[3 * DOT11F_IE_RRMENABLEDCAP_MAX_LEN];
 #endif
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
@@ -3442,6 +3456,9 @@ void hdd_dfs_indicate_radar(void *context, void *param);
 
 CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
 				  uint8_t intArrayMaxLen);
+CDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
+				uint8_t *len, uint8_t int_array_max_len);
+
 void hdd_cfg_print(hdd_context_t *pHddCtx);
 
 CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss);

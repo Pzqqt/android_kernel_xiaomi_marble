@@ -1333,6 +1333,11 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_RRM_MEAS_RANDOMIZATION_INTVL_DEFAULT,
 		     CFG_RRM_MEAS_RANDOMIZATION_INTVL_MIN,
 		     CFG_RRM_MEAS_RANDOMIZATION_INTVL_MAX),
+
+	REG_VARIABLE_STRING(CFG_RM_CAPABILITY_NAME, WLAN_PARAM_String,
+			    struct hdd_config, rm_capability,
+			    VAR_FLAGS_OPTIONAL,
+			    (void *) CFG_RM_CAPABILITY_DEFAULT),
 #endif
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
@@ -5403,40 +5408,85 @@ static void hdd_set_fine_time_meas_cap(hdd_context_t *hdd_ctx,
 }
 
 /**
- * hdd_string_to_u8_array() - scan the string and convert to u8 array
- * @str: the pointer to the string
- * @intArray: the pointer of buffer to store the u8 value
- * @len: size of the buffer
+ * hdd_convert_string_to_u8_array() - used to convert string into u8 array
+ * @str: String to be converted
+ * @hex_array: Array where converted value is stored
+ * @len: Length of the populated array
+ * @array_max_len: Maximum length of the array
+ * @to_hex: true, if conversion required for hex string
  *
- * Return: CDF_STATUS_SUCCESS if the conversion is done,
- *      otherwise CDF_STATUS_E_INVAL
+ * This API is called to convert string (each byte separated by
+ * a comma) into an u8 array
+ *
+ * Return: CDF_STATUS
  */
-CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
-				  uint8_t intArrayMaxLen)
+
+static CDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
+			       uint8_t *len, uint8_t array_max_len, bool to_hex)
 {
-	char *s = str;
+	char *format, *s = str;
 
-	if (str == NULL || intArray == NULL || len == NULL) {
+	if (str == NULL || array == NULL || len == NULL)
 		return CDF_STATUS_E_INVAL;
-	}
-	*len = 0;
 
-	while ((s != NULL) && (*len < intArrayMaxLen)) {
+	format = (to_hex) ? "%02x" : "%d";
+
+	*len = 0;
+	while ((s != NULL) && (*len < array_max_len)) {
 		int val;
-		/* Increment length only if sscanf succesfully extracted one element.
-		 * Any other return value means error. Ignore it.
-		 */
-		if (sscanf(s, "%d", &val) == 1) {
-			intArray[*len] = (uint8_t) val;
+		/* Increment length only if sscanf successfully extracted
+		 * one element. Any other return value means error.
+		 * Ignore it. */
+		if (sscanf(s, format, &val) == 1) {
+			array[*len] = (uint8_t) val;
 			*len += 1;
 		}
+
 		s = strpbrk(s, ",");
 		if (s)
 			s++;
 	}
 
 	return CDF_STATUS_SUCCESS;
+}
 
+/**
+ * hdd_hex_string_to_u8_array() - used to convert hex string into u8 array
+ * @str: Hexadecimal string
+ * @hex_array: Array where converted value is stored
+ * @len: Length of the populated array
+ * @array_max_len: Maximum length of the array
+ *
+ * This API is called to convert hexadecimal string (each byte separated by
+ * a comma) into an u8 array
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
+				      uint8_t *len, uint8_t array_max_len)
+{
+	return hdd_convert_string_to_array(str, hex_array, len,
+					   array_max_len, true);
+}
+
+/**
+ * hdd_string_to_u8_array() - used to convert decimal string into u8 array
+ * @str: Decimal string
+ * @hex_array: Array where converted value is stored
+ * @len: Length of the populated array
+ * @array_max_len: Maximum length of the array
+ *
+ * This API is called to convert decimal string (each byte separated by
+ * a comma) into an u8 array
+ *
+ * Return: CDF_STATUS
+ */
+
+CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
+				  uint8_t *len, uint8_t array_max_len)
+{
+	return hdd_convert_string_to_array(str, array, len,
+					   array_max_len, false);
 }
 
 /**
@@ -5636,31 +5686,6 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	}
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (sme_cfg_set_int
-		    (pHddCtx->hHal, WNI_CFG_RRM_ENABLED, pConfig->fRrmEnable)
-		    == CDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_RRM_ENABLE to CFG");
-	}
-
-	if (sme_cfg_set_int
-		    (pHddCtx->hHal, WNI_CFG_RRM_OPERATING_CHAN_MAX,
-		    pConfig->nInChanMeasMaxDuration) == CDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_RRM_OPERATING_CHAN_MAX to CFG");
-	}
-
-	if (sme_cfg_set_int
-		    (pHddCtx->hHal, WNI_CFG_RRM_NON_OPERATING_CHAN_MAX,
-		    pConfig->nOutChanMeasMaxDuration) ==
-		    CDF_STATUS_E_FAILURE) {
-		fStatus = false;
-		hddLog(LOGE,
-		       "Could not pass on WNI_CFG_RRM_OUT_CHAN_MAX to CFG");
-	}
-
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_MCAST_BCAST_FILTER_SETTING,
 		    pConfig->mcastBcastFilterSetting) == CDF_STATUS_E_FAILURE)
@@ -6215,6 +6240,7 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSmeConfigParams *smeConfig;
+	uint8_t rrm_capab_len;
 
 	struct hdd_config *pConfig = pHddCtx->config;
 
@@ -6299,8 +6325,11 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.WMMSupportMode = pConfig->WmmMode;
 
 #if defined WLAN_FEATURE_VOWIFI
-	smeConfig->rrmConfig.rrmEnabled = pConfig->fRrmEnable;
-	smeConfig->rrmConfig.maxRandnInterval = pConfig->nRrmRandnIntvl;
+	smeConfig->rrmConfig.rrm_enabled = pConfig->fRrmEnable;
+	smeConfig->rrmConfig.max_randn_interval = pConfig->nRrmRandnIntvl;
+	hdd_hex_string_to_u8_array(pConfig->rm_capability,
+			smeConfig->rrmConfig.rm_capability, &rrm_capab_len,
+			DOT11F_IE_RRMENABLEDCAP_MAX_LEN);
 #endif
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.

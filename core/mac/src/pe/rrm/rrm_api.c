@@ -1336,57 +1336,6 @@ tpRRMCaps rrm_get_capabilities(tpAniSirGlobal pMac, tpPESession pSessionEntry)
 
 /* -------------------------------------------------------------------- */
 /**
- * rrm_update_config
- *
- * FUNCTION:
- * Update the configuration. This is called from lim_update_config.
- *
- * LOGIC:
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param pSessionEntry
- * @return pointer to tRRMCaps
- */
-void rrm_update_config(tpAniSirGlobal pMac, tpPESession pSessionEntry)
-{
-	uint32_t val;
-	tpRRMCaps pRRMCaps = &pMac->rrm.rrmPEContext.rrmEnabledCaps;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_RRM_ENABLED, &val) != eSIR_SUCCESS) {
-		lim_log(pMac, LOGP, FL("cfg get rrm enabled failed"));
-		return;
-	}
-	pMac->rrm.rrmPEContext.rrmEnable = (val) ? 1 : 0;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_RRM_OPERATING_CHAN_MAX, &val) !=
-	    eSIR_SUCCESS) {
-		lim_log(pMac, LOGP,
-			FL
-				("cfg get rrm operating channel max measurement duration failed"));
-		return;
-	}
-	pRRMCaps->operatingChanMax = (uint8_t) val;
-
-	if (wlan_cfg_get_int(pMac, WNI_CFG_RRM_NON_OPERATING_CHAN_MAX, &val) !=
-	    eSIR_SUCCESS) {
-		lim_log(pMac, LOGP,
-			FL
-				("cfg get rrm non-operating channel max measurement duration failed"));
-		return;
-	}
-	pRRMCaps->nonOperatingChanMax = (uint8_t) val;
-
-	lim_log(pMac, LOG1,
-		"RRM enabled = %d  OperatingChanMax = %d  NonOperatingMax = %d",
-		pMac->rrm.rrmPEContext.rrmEnable,
-		pRRMCaps->operatingChanMax, pRRMCaps->nonOperatingChanMax);
-}
-
-/* -------------------------------------------------------------------- */
-/**
  * rrm_initialize
  *
  * FUNCTION:
@@ -1488,8 +1437,30 @@ void rrm_process_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 	case eWNI_SME_BEACON_REPORT_RESP_XMIT_IND:
 		rrm_process_beacon_report_xmit(pMac, pMsg->bodyptr);
 		break;
+	default:
+		lim_log(pMac, LOGE, FL("Invalid msg type:%d"), pMsg->type);
 	}
 
+}
+
+/**
+ * lim_update_rrm_capability() - Update PE context's rrm capability
+ * @mac_ctx: Global pointer to MAC context
+ * @join_req: Pointer to SME join request.
+ *
+ * Update PE context's rrm capability based on SME join request.
+ *
+ * Return: None
+ */
+void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
+			       tpSirSmeJoinReq join_req)
+{
+	mac_ctx->rrm.rrmPEContext.rrmEnable = join_req->rrm_config.rrm_enabled;
+	cdf_mem_copy(&mac_ctx->rrm.rrmPEContext.rrmEnabledCaps,
+		     &join_req->rrm_config.rm_capability,
+		     RMENABLEDCAP_MAX_LEN);
+
+	return;
 }
 
 #endif
