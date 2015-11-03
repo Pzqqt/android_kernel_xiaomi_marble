@@ -2949,13 +2949,9 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	}
 	if (val)
 		selfCaps.apsd = 1;
-	if (wlan_cfg_get_int(pMac, WNI_CFG_RRM_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
-			  "Failed to get WNI_CFG_RRM_ENABLED");
-		return CDF_STATUS_E_FAILURE;
-	}
-	if (val)
-		selfCaps.rrm = 1;
+
+	selfCaps.rrm = pMac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
+
 	if (wlan_cfg_get_int(pMac, WNI_CFG_BLOCK_ACK_ENABLED, &val) !=
 	    eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
