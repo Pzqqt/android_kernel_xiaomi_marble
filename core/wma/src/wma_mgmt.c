@@ -1110,7 +1110,18 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
 	cmd->peer_nss = peer_nss;
-
+	/*
+	 * Because of DBS a vdev may come up in any of the two MACs with
+	 * different capabilities. STBC capab should be fetched for given
+	 * hard_mode->MAC_id combo. It is planned that firmware should provide
+	 * these dev capabilities. But for now number of tx streams can be used
+	 * to identify if Tx STBC needs to be disabled.
+	 */
+	if (intr->tx_streams < 2) {
+		cmd->peer_vht_caps &= ~(1 << SIR_MAC_VHT_CAP_TXSTBC);
+		WMA_LOGD("Num tx_streams: %d, Disabled txSTBC",
+			 intr->tx_streams);
+	}
 	WMA_LOGD("peer_nss %d peer_ht_rates.num_rates %d ", cmd->peer_nss,
 		 peer_ht_rates.num_rates);
 
