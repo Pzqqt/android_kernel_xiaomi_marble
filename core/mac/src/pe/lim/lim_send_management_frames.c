@@ -1903,6 +1903,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (pe_session->assocReq != NULL) {
 		cdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
+		pe_session->assocReqLen = 0;
 	}
 
 	if (add_ie_len) {
@@ -2312,6 +2313,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (pe_session->assocReq != NULL) {
 		cdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
+		pe_session->assocReqLen = 0;
 	}
 
 	if (add_ie_len) {
@@ -2376,6 +2378,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	} else {
 		lim_log(mac_ctx, LOG1, FL("FT IEs not present"));
+		pe_session->assocReqLen = 0;
 	}
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -2686,6 +2689,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	if (psessionEntry->assocReq != NULL) {
 		cdf_mem_free(psessionEntry->assocReq);
 		psessionEntry->assocReq = NULL;
+		psessionEntry->assocReqLen = 0;
 	}
 
 	if (nAddIELen) {
