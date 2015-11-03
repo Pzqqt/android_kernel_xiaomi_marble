@@ -2253,8 +2253,15 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 	if (htCaps->present) {
 		pStaDs->mlmStaContext.htCapability = 1;
 		pStaDs->htGreenfield = htCaps->greenField;
+		/*
+		 * pStaDs->htSupportedChannelWidthSet should have the base
+		 * channel capability. The htSupportedChannelWidthSet of the
+		 * TDLS link on base channel should be less than or equal to
+		 * channel width of STA-AP link. So take this setting from the
+		 * psessionEntry.
+		 */
 		pStaDs->htSupportedChannelWidthSet =
-			htCaps->supportedChannelWidthSet;
+			psessionEntry->htSupportedChannelWidthSet;
 		pStaDs->htMIMOPSState = htCaps->mimoPowerSave;
 		pStaDs->htMaxAmsduLength = htCaps->maximalAMSDUsize;
 		pStaDs->htAMpduDensity = htCaps->mpduDensity;
