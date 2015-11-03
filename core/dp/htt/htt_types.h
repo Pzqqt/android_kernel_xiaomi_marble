@@ -357,6 +357,10 @@ struct htt_pdev_t {
 
 	struct htt_ipa_uc_tx_resource_t ipa_uc_tx_rsc;
 	struct htt_ipa_uc_rx_resource_t ipa_uc_rx_rsc;
+#ifdef DEBUG_RX_RING_BUFFER
+	struct rx_buf_debug *rx_buff_list;
+	int rx_buff_index;
+#endif
 };
 
 #define HTT_EPID_GET(_htt_pdev_hdl)  \
