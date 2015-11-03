@@ -125,6 +125,14 @@ struct htt_host_rx_desc_base {
 	(HTT_RX_STD_DESC_RESERVATION >> 2)
 
 #define HTT_RX_DESC_ALIGN_MASK 7        /* 8-byte alignment */
+#ifdef DEBUG_RX_RING_BUFFER
+#define HTT_RX_RING_BUFF_DBG_LIST          1024
+struct rx_buf_debug {
+	uint32_t paddr;
+	void     *vaddr;
+	bool     in_use;
+};
+#endif
 static inline struct htt_host_rx_desc_base *htt_rx_desc(cdf_nbuf_t msdu)
 {
 	return (struct htt_host_rx_desc_base *)
@@ -497,4 +505,90 @@ static inline int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	return 0;
 }
 #endif /* IPA_OFFLOAD */
+#ifdef DEBUG_RX_RING_BUFFER
+/**
+ * htt_rx_dbg_rxbuf_init() - init debug rx buff list
+ * @pdev: pdev handle
+ *
+ * Return: none
+ */
+static inline
+void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
+{
+	pdev->rx_buff_list = cdf_mem_malloc(
+				 HTT_RX_RING_BUFF_DBG_LIST *
+				 sizeof(struct rx_buf_debug));
+	if (!pdev->rx_buff_list) {
+		cdf_print("HTT: debug RX buffer allocation failed\n");
+		CDF_ASSERT(0);
+	}
+}
+/**
+ * htt_rx_dbg_rxbuf_set() - set element of rx buff list
+ * @pdev: pdev handle
+ * @paddr: physical address of netbuf
+ * @rx_netbuf: received netbuf
+ *
+ * Return: none
+ */
+static inline
+void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
+				uint32_t paddr,
+				cdf_nbuf_t rx_netbuf)
+{
+	if (pdev->rx_buff_list) {
+		pdev->rx_buff_list[pdev->rx_buff_index].paddr =
+					paddr;
+		pdev->rx_buff_list[pdev->rx_buff_index].in_use =
+					true;
+		pdev->rx_buff_list[pdev->rx_buff_index].vaddr =
+					rx_netbuf;
+		NBUF_MAP_ID(rx_netbuf) = pdev->rx_buff_index;
+		if (++pdev->rx_buff_index ==
+				HTT_RX_RING_BUFF_DBG_LIST)
+			pdev->rx_buff_index = 0;
+	}
+}
+/**
+ * htt_rx_dbg_rxbuf_set() - reset element of rx buff list
+ * @pdev: pdev handle
+ * @netbuf: rx sk_buff
+ * Return: none
+ */
+static inline
+void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
+				cdf_nbuf_t netbuf)
+{
+	uint32_t index;
+
+	if (pdev->rx_buff_list) {
+		index = NBUF_MAP_ID(netbuf);
+		if (index < HTT_RX_RING_BUFF_DBG_LIST) {
+			pdev->rx_buff_list[index].in_use =
+						false;
+			pdev->rx_buff_list[index].paddr = 0;
+			pdev->rx_buff_list[index].vaddr = NULL;
+		}
+	}
+}
+#else
+static inline
+void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
+{
+	return;
+}
+static inline
+void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
+				uint32_t paddr,
+				cdf_nbuf_t rx_netbuf)
+{
+	return;
+}
+static inline
+void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
+				cdf_nbuf_t netbuf)
+{
+	return;
+}
+#endif
 #endif /* _HTT_INTERNAL__H_ */

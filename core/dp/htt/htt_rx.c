@@ -311,6 +311,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 				cdf_nbuf_free(rx_netbuf);
 				goto fail;
 			}
+			htt_rx_dbg_rxbuf_set(pdev, paddr, rx_netbuf);
 		} else {
 			pdev->rx_ring.buf.netbufs_ring[idx] = rx_netbuf;
 		}
@@ -2031,6 +2032,7 @@ cdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr)
 			else
 				cdf_mem_free(hash_entry);
 
+			htt_rx_dbg_rxbuf_reset(pdev, netbuf);
 			break;
 		}
 	}
@@ -2232,6 +2234,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	pdev->rx_ring.rx_reset = 0;
 	pdev->rx_ring.htt_rx_restore = 0;
 #endif
+	htt_rx_dbg_rxbuf_init(pdev);
 	htt_rx_ring_fill_n(pdev, pdev->rx_ring.fill_level);
 
 	if (pdev->cfg.is_full_reorder_offload) {

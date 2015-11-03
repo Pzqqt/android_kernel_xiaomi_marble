@@ -102,6 +102,9 @@ struct cvg_nbuf_cb {
 	 * provided by the OS.
 	 */
 	uint32_t mapped_paddr_lo[CVG_NBUF_MAX_OS_FRAGS];
+#ifdef DEBUG_RX_RING_BUFFER
+	uint32_t map_index;
+#endif
 
 	/* store extra tx fragments provided by the driver */
 	struct {
@@ -137,6 +140,10 @@ wordstream_flags:CVG_NBUF_MAX_EXTRA_FRAGS + 1;
 	unsigned char tx_htt2_reserved:7;
 #endif /* QCA_TX_HTT2_SUPPORT */
 };
+#ifdef DEBUG_RX_RING_BUFFER
+#define NBUF_MAP_ID(skb) \
+	(((struct cvg_nbuf_cb *)((skb)->cb))->map_index)
+#endif
 #define NBUF_OWNER_ID(skb) \
 	(((struct cvg_nbuf_cb *)((skb)->cb))->owner_id)
 #define NBUF_OWNER_PRIV_DATA(skb) \
