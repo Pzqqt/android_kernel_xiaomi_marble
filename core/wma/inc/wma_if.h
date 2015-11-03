@@ -592,6 +592,7 @@ typedef enum eSmpsModeValue {
  * @bssId: mac address
  * @addr2: mac address
  * @reasonCode: reason code
+ * @rssi: rssi value during disconnection
  */
 typedef struct {
 	uint16_t assocId;
@@ -599,6 +600,7 @@ typedef struct {
 	tSirMacAddr bssId;
 	tSirMacAddr addr2;
 	uint16_t reasonCode;
+	int8_t rssi;
 } tDeleteStaContext, *tpDeleteStaContext;
 
 /**

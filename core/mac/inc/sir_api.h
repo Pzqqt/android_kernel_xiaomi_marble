@@ -1398,6 +1398,7 @@ typedef struct sSirSmeDeauthInd {
 
 	uint16_t staId;
 	uint32_t reasonCode;
+	int8_t rssi;
 } tSirSmeDeauthInd, *tpSirSmeDeauthInd;
 
 /* / Definition for stop BSS request message */
