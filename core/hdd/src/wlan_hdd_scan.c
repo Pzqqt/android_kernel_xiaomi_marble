@@ -1107,6 +1107,10 @@ static CDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	uint32_t scan_time;
 	uint32_t size = 0;
 
+	ret = wlan_hdd_validate_context(hddctx);
+	if (0 != ret)
+		return CDF_STATUS_E_INVAL;
+
 	hddLog(CDF_TRACE_LEVEL_INFO,
 		"%s called with hal = %p, pContext = %p, ID = %d, status = %d",
 		__func__, halHandle, pContext, (int)scanId, (int)status);
