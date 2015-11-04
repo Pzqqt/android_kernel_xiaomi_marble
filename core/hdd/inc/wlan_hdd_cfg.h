@@ -2641,7 +2641,7 @@ enum dot11p_mode {
 #define CFG_ROAM_SCAN_HI_RSSI_DELTA_NAME           "gRoamScanHiRssiDelta"
 #define CFG_ROAM_SCAN_HI_RSSI_DELTA_MIN            (0)
 #define CFG_ROAM_SCAN_HI_RSSI_DELTA_MAX            (16)
-#define CFG_ROAM_SCAN_HI_RSSI_DELTA_DEFAULT        (0)
+#define CFG_ROAM_SCAN_HI_RSSI_DELTA_DEFAULT        (10)
 
 /* Delay between consecutive scans in milliseconds */
 #define CFG_ROAM_SCAN_HI_RSSI_DELAY_NAME            "gRoamScanHiRssiDelay"
