@@ -620,41 +620,17 @@ err_adapter_open_failure:
  * @hdd_ctx: pointer to HDD context
  *
  * This function stops the following modules
- * 1. MAC
- * 2. WMA
+ * WMA
  *
  * Return: 0 on success, non-zero on failure
  */
 static int wlan_ftm_stop(hdd_context_t *hdd_ctx)
 {
-	CDF_STATUS cdf_status;
-
 	if (hdd_ctx->ftm.ftm_state != WLAN_FTM_STARTED) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
-			  "%s:Ftm has not started. Please start the ftm. ",
-			  __func__);
+		hddLog(LOGP, FL("FTM has not started. No need to stop"));
 		return -EPERM;
 	}
-
-	{
-		/*  STOP MAC only */
-		void *hHal;
-		hHal = cds_get_context(CDF_MODULE_ID_SME);
-		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-				  "%s: NULL hHal", __func__);
-		} else {
-			cdf_status =
-				mac_stop(hHal, HAL_STOP_TYPE_SYS_DEEP_SLEEP);
-			if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-				CDF_TRACE(CDF_MODULE_ID_CDF,
-					  CDF_TRACE_LEVEL_ERROR,
-					  "%s: Failed to stop SYS", __func__);
-				CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
-			}
-		}
-		wma_stop(hdd_ctx->pcds_context, HAL_STOP_TYPE_RF_KILL);
-	}
+	wma_stop(hdd_ctx->pcds_context, HAL_STOP_TYPE_RF_KILL);
 	return 0;
 }
 
