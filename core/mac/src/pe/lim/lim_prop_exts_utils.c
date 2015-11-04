@@ -103,7 +103,8 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	if (sir_parse_beacon_ie(mac_ctx, beacon_struct, p_ie,
 		(uint32_t) ie_len) == eSIR_SUCCESS) {
 		if (beacon_struct->wmeInfoPresent
-		    || beacon_struct->wmeEdcaPresent)
+		    || beacon_struct->wmeEdcaPresent
+		    || beacon_struct->HTCaps.present)
 			LIM_BSS_CAPS_SET(WME, *qos_cap);
 		if (LIM_BSS_CAPS_GET(WME, *qos_cap)
 		    && beacon_struct->wsmCapablePresent)
