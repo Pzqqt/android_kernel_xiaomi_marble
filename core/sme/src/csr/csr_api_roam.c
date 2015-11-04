@@ -17062,6 +17062,7 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 	struct roam_ext_params *roam_params_dst;
 	struct roam_ext_params *roam_params_src;
 	uint8_t i;
+	uint8_t op_channel;
 
 	if (NULL == session) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
@@ -17188,14 +17189,33 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 			roam_params_dst->bssid_favored_factor[i]);
 	}
 
+	op_channel = session->connectedProfile.operationChannel;
 	req_buf->hi_rssi_scan_max_count =
 		roam_info->cfgParams.hi_rssi_scan_max_count;
-	req_buf->hi_rssi_scan_rssi_delta =
-		roam_info->cfgParams.hi_rssi_scan_rssi_delta;
 	req_buf->hi_rssi_scan_delay =
 		roam_info->cfgParams.hi_rssi_scan_delay;
 	req_buf->hi_rssi_scan_rssi_ub =
 		roam_info->cfgParams.hi_rssi_scan_rssi_ub;
+	/*
+	 * If the current operation channel is 5G frequency band, then
+	 * there is no need to enable the HI_RSSI feature. This feature
+	 * is useful only if we are connected to a 2.4 GHz AP and we wish
+	 * to connect to a better 5GHz AP is available.
+	 */
+	if (CDS_IS_CHANNEL_5GHZ(op_channel)) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+			"Disabling HI_RSSI feature as connected AP is 5GHz");
+		req_buf->hi_rssi_scan_rssi_delta = 0;
+	} else {
+		req_buf->hi_rssi_scan_rssi_delta =
+			roam_info->cfgParams.hi_rssi_scan_rssi_delta;
+	}
+	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+		"hi_rssi:delta=%d, max_count=%d, delay=%d, ub=%d",
+			req_buf->hi_rssi_scan_rssi_delta,
+			req_buf->hi_rssi_scan_max_count,
+			req_buf->hi_rssi_scan_delay,
+			req_buf->hi_rssi_scan_rssi_ub);
 
 	msg.type = WMA_ROAM_SCAN_OFFLOAD_REQ;
 	msg.reserved = 0;
