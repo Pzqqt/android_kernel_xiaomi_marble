@@ -662,13 +662,6 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 		add_bss->nss = 1;
 	}
 	add_bss->smpsMode = host_map_smps_mode(resp_event->smps_mode);
-	if (WMA_DEFAULT_HW_MODE_INDEX == wma->new_hw_mode_index) {
-		WMA_LOGE("%s: Invalid index to update for vdev_id %d",
-			 __func__, resp_event->vdev_id);
-	} else {
-		wma_update_intf_hw_mode_params(resp_event->vdev_id,
-				resp_event->mac_id, wma->new_hw_mode_index);
-	}
 send_fail_resp:
 	WMA_LOGD("%s: Sending add bss rsp to umac(vdev %d status %d)",
 		 __func__, resp_event->vdev_id, add_bss->status);
