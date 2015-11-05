@@ -418,6 +418,7 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 							("HTC Rx Ctrl still processing\n"));
 					status = CDF_STATUS_E_FAILURE;
+					CDF_BUG(false);
 					break;
 				}
 
@@ -427,6 +428,9 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 					    HTC_MAX_CONTROL_MESSAGE_LENGTH);
 				A_MEMCPY(target->CtrlResponseBuffer, netdata,
 					 target->CtrlResponseLength);
+
+				/* Requester will clear this flag */
+				target->CtrlResponseProcessing = true;
 				UNLOCK_HTC_RX(target);
 
 				cdf_semaphore_release(target->osdev,
