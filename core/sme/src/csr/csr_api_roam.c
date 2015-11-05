@@ -7246,7 +7246,8 @@ CDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		/* check if set hw mode needs to be done */
 		if ((pMac->policy_manager_enabled) &&
-			(pScanFilter->csrPersona == CDF_STA_MODE)) {
+			((pScanFilter->csrPersona == CDF_STA_MODE) ||
+			 (pScanFilter->csrPersona == CDF_P2P_CLIENT_MODE))) {
 			csr_get_bssdescr_from_scan_handle(hBSSList,
 					&first_ap_profile);
 			if (!cds_handle_conc_multiport(sessionId,
