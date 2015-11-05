@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -917,7 +917,6 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	tSirMsgQ msg;
 	tpAddTsParams pAddTsParam;
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	tpPESession psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGP,
@@ -925,7 +924,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 			sessionId);
 		return eSIR_FAILURE;
 	}
-#endif
+
 	pAddTsParam = cdf_mem_malloc(sizeof(tAddTsParams));
 	if (NULL == pAddTsParam) {
 		PELOGW(lim_log(pMac, LOGW, FL("AllocateMemory() failed"));)

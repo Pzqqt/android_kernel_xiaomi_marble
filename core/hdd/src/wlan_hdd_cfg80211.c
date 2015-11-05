@@ -2975,6 +2975,10 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		return -EINVAL;
 	}
 
+	if (!hdd_ctx_ptr->config->isRoamOffloadEnabled ||
+			!roam_info_ptr->roamSynchInProgress)
+		return 0;
+
 	skb = cfg80211_vendor_event_alloc(hdd_ctx_ptr->wiphy,
 			NULL,
 			ETH_ALEN + req_rsn_len + rsp_rsn_len +
@@ -3032,7 +3036,7 @@ nla_put_failure:
 	kfree_skb(skb);
 	return -EINVAL;
 }
-#endif
+#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 
 static const struct nla_policy
 wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {
