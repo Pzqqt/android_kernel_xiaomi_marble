@@ -2253,9 +2253,17 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
-				uint8_t *req_rsn_ie, uint32_t req_rsn_length,
-				uint8_t *rsp_rsn_ie, uint32_t rsp_rsn_length,
-				tCsrRoamInfo *roam_info_ptr);
+		uint8_t *req_rsn_ie, uint32_t req_rsn_length, uint8_t
+		*rsp_rsn_ie, uint32_t rsp_rsn_length, tCsrRoamInfo
+		*roam_info_ptr);
+#else
+static inline int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr,
+		uint8_t *bssid, uint8_t *req_rsn_ie, uint32_t req_rsn_length,
+		uint8_t *rsp_rsn_ie, uint32_t rsp_rsn_length, tCsrRoamInfo
+		*roam_info_ptr)
+{
+	return 0;
+}
 #endif
 
 int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter);

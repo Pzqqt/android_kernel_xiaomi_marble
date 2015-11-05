@@ -1429,12 +1429,9 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			final_req_ie, (ssid_ie_len + reqRsnLength),
 			rspRsnIe, rspRsnLength, GFP_KERNEL);
 
-	if (pHddCtx->config->isRoamOffloadEnabled &&
-		pCsrRoamInfo->roamSynchInProgress)
-		wlan_hdd_send_roam_auth_event(pHddCtx,
-				pCsrRoamInfo->bssid.bytes,
-				reqRsnIe, reqRsnLength, rspRsnIe,
-				rspRsnLength, pCsrRoamInfo);
+	wlan_hdd_send_roam_auth_event(pHddCtx, pCsrRoamInfo->bssid.bytes,
+			reqRsnIe, reqRsnLength, rspRsnIe, rspRsnLength,
+			pCsrRoamInfo);
 done:
 	sme_roam_free_connect_profile(hal_handle, &roam_profile);
 	if (final_req_ie)
@@ -1945,15 +1942,14 @@ defined(FEATURE_WLAN_LFR)
 								pFTAssocRsp,
 								assocRsplen,
 								GFP_KERNEL);
-						if (pRoamInfo->roamSynchInProgress)
-							wlan_hdd_send_roam_auth_event(
-							 pHddCtx,
-							 pRoamInfo->bssid.bytes,
-							 pFTAssocReq,
-							 assocReqlen,
-							 pFTAssocRsp,
-							 assocRsplen,
-							 pRoamInfo);
+						wlan_hdd_send_roam_auth_event(
+								pHddCtx,
+								pRoamInfo->bssid.bytes,
+								pFTAssocReq,
+								assocReqlen,
+								pFTAssocRsp,
+								assocRsplen,
+								pRoamInfo);
 					}
 					if (sme_get_ftptk_state
 						    (WLAN_HDD_GET_HAL_CTX(pAdapter),
