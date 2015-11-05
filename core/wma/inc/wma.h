@@ -1900,7 +1900,7 @@ A_UINT32 e_csr_encryption_type_to_rsn_cipherset(eCsrEncryptionType encr);
 int ol_if_dfs_attach(struct ieee80211com *ic, void *ptr, void *radar_info);
 uint64_t ol_if_get_tsf64(struct ieee80211com *ic);
 int ol_if_dfs_disable(struct ieee80211com *ic);
-struct ieee80211_channel *ieee80211_find_channel(struct ieee80211com *ic,
+struct dfs_ieee80211_channel *ieee80211_find_channel(struct ieee80211com *ic,
 						 int freq, uint32_t flags);
 int ol_if_dfs_enable(struct ieee80211com *ic, int *is_fastclk, void *pe);
 uint32_t ieee80211_ieee2mhz(uint32_t chan, uint32_t flags);
@@ -1910,9 +1910,9 @@ int ol_if_dfs_get_mib_cycle_counts_pct(struct ieee80211com *ic,
 				       uint32_t *txf_pcnt);
 uint16_t ol_if_dfs_usenol(struct ieee80211com *ic);
 void ieee80211_mark_dfs(struct ieee80211com *ic,
-			struct ieee80211_channel *ichan);
+			struct dfs_ieee80211_channel *ichan);
 int wma_dfs_indicate_radar(struct ieee80211com *ic,
-			   struct ieee80211_channel *ichan);
+			   struct dfs_ieee80211_channel *ichan);
 uint16_t dfs_usenol(struct ieee80211com *ic);
 
 CDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,

@@ -85,7 +85,7 @@ uint32_t dfs_debug_level = ATH_DEBUG_DFS;
  * both the primary and extension.
  */
 static void
-dfs_channel_mark_radar(struct ath_dfs *dfs, struct ieee80211_channel *chan)
+dfs_channel_mark_radar(struct ath_dfs *dfs, struct dfs_ieee80211_channel *chan)
 {
 	struct ieee80211_channel_list chan_info;
 	int i;
@@ -535,7 +535,7 @@ int dfs_radar_enable(struct ieee80211com *ic,
 	/* uint32_t                        rfilt; */
 	struct ath_dfs *dfs;
 	struct dfs_state *rs_pri, *rs_ext;
-	struct ieee80211_channel *chan = ic->ic_curchan, *ext_ch = NULL;
+	struct dfs_ieee80211_channel *chan = ic->ic_curchan, *ext_ch = NULL;
 	is_ext_ch = IEEE80211_IS_CHAN_11N_HT40(ic->ic_curchan);
 	dfs = (struct ath_dfs *)ic->ic_dfs;
 	rs_pri = NULL;

@@ -149,7 +149,7 @@ void dfs_set_nol(struct ath_dfs *dfs, struct dfsreq_nolelem *dfs_nol, int nchan)
 {
 #define TIME_IN_MS 1000
 	uint32_t nol_time_left_ms;
-	struct ieee80211_channel chan;
+	struct dfs_ieee80211_channel chan;
 	int i;
 
 	if (dfs == NULL) {
@@ -177,7 +177,7 @@ void dfs_set_nol(struct ath_dfs *dfs, struct dfsreq_nolelem *dfs_nol, int nchan)
 }
 
 void
-dfs_nol_addchan(struct ath_dfs *dfs, struct ieee80211_channel *chan,
+dfs_nol_addchan(struct ath_dfs *dfs, struct dfs_ieee80211_channel *chan,
 		uint32_t dfs_nol_timeout)
 {
 #define TIME_IN_MS 1000

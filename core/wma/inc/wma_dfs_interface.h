@@ -49,8 +49,6 @@
 #define IEEE80211_CHAN_DYN              0x00000400
 /* GFSK channel (FHSS PHY) */
 #define IEEE80211_CHAN_GFSK             0x00000800
-/* Radar found on channel */
-#define IEEE80211_CHAN_RADAR            0x00001000
 /* 11a static turbo channel only */
 #define IEEE80211_CHAN_STURBO           0x00002000
 /* Half rate channel */
@@ -75,9 +73,9 @@
 #define IEEE80211_CHAN_VHT80            0x00800000
 
 /* token for ``any channel'' */
-#define IEEE80211_CHAN_ANY      (-1)
-#define IEEE80211_CHAN_ANYC \
-	((struct ieee80211_channel *) IEEE80211_CHAN_ANY)
+#define DFS_IEEE80211_CHAN_ANY      (-1)
+#define DFS_IEEE80211_CHAN_ANYC \
+	((struct dfs_ieee80211_channel *) DFS_IEEE80211_CHAN_ANY)
 
 #define IEEE80211_IS_CHAN_11N_HT40MINUS(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_HT40MINUS) != 0)
@@ -102,7 +100,7 @@
 #define IEE80211_MAX_20M_SUB_CH 8
 
 /**
- * struct ieee80211_channel - channel info
+ * struct dfs_ieee80211_channel - channel info
  * @ic_freq: frequency in MHz
  * @ic_flags: channel flags
  * @ic_flagext: flags extension
@@ -116,7 +114,7 @@
  * @ic_vhtop_ch_freq_seg2: Channel Center frequency applicable
  * @ic_pri_freq_center_freq_mhz_separation: separation b/w pri and center freq
  */
-struct ieee80211_channel {
+struct dfs_ieee80211_channel {
 	uint32_t ic_freq;
 	uint32_t ic_flags;
 	uint8_t ic_flagext;
@@ -138,7 +136,7 @@ struct ieee80211_channel {
  */
 struct ieee80211_channel_list {
 	int cl_nchans;
-	struct ieee80211_channel *cl_channels[IEE80211_MAX_20M_SUB_CH];
+	struct dfs_ieee80211_channel *cl_channels[IEE80211_MAX_20M_SUB_CH];
 };
 
 /**
@@ -157,8 +155,8 @@ struct ieee80211_dfs_state {
 	os_timer_t nol_timer;
 	os_timer_t cac_timer;
 	int cureps;
-	const struct ieee80211_channel *lastchan;
-	struct ieee80211_channel *newchan;
+	const struct dfs_ieee80211_channel *lastchan;
+	struct dfs_ieee80211_channel *newchan;
 	int cac_timeout_override;
 	uint8_t enable : 1, cac_timer_running : 1, ignore_dfs : 1, ignore_cac : 1;
 };
@@ -180,13 +178,13 @@ typedef struct ieee80211com {
 	void (*ic_get_ext_chan_info)(struct ieee80211com *ic,
 				     struct ieee80211_channel_list *chan);
 	enum ieee80211_opmode ic_opmode;
-	struct ieee80211_channel *(*ic_find_channel)(struct ieee80211com *ic,
-						     int freq, uint32_t flags);
+	struct dfs_ieee80211_channel *(*ic_find_channel)
+			(struct ieee80211com *ic, int freq, uint32_t flags);
 	uint64_t (*ic_get_TSF64)(struct ieee80211com *ic);
 	unsigned int (*ic_ieee2mhz)(u_int chan, u_int flags);
-	struct ieee80211_channel ic_channels[IEEE80211_CHAN_MAX + 1];
+	struct dfs_ieee80211_channel ic_channels[IEEE80211_CHAN_MAX + 1];
 	int ic_nchans;
-	struct ieee80211_channel *ic_curchan;
+	struct dfs_ieee80211_channel *ic_curchan;
 	uint8_t ic_isdfsregdomain;
 	int (*ic_get_dfsdomain)(struct ieee80211com *);
 	uint16_t (*ic_dfs_usenol)(struct ieee80211com *ic);
@@ -222,9 +220,9 @@ typedef struct ieee80211com {
 	void (*ic_dfs_clist_update)(struct ieee80211com *ic, int cmd,
 				    struct dfs_nol_chan_entry *, int nentries);
 	void (*ic_dfs_notify_radar)(struct ieee80211com *ic,
-				    struct ieee80211_channel *chan);
+				    struct dfs_ieee80211_channel *chan);
 	void (*ic_dfs_unmark_radar)(struct ieee80211com *ic,
-				    struct ieee80211_channel *chan);
+				    struct dfs_ieee80211_channel *chan);
 	int (*ic_dfs_control)(struct ieee80211com *ic,
 			      u_int id, void *indata, uint32_t insize,
 			      void *outdata, uint32_t *outsize);
@@ -244,10 +242,12 @@ typedef struct ieee80211com {
  * Return: freqency in MHz
  */
 static INLINE u_int
-ieee80211_chan2freq(struct ieee80211com *ic, const struct ieee80211_channel *c)
+ieee80211_chan2freq(struct ieee80211com *ic,
+			const struct dfs_ieee80211_channel *c)
 {
 	if (c == NULL) {
 		return 0;
 	}
-	return (c == IEEE80211_CHAN_ANYC ? IEEE80211_CHAN_ANY : c->ic_freq);
+	return (c == DFS_IEEE80211_CHAN_ANYC) ?
+			DFS_IEEE80211_CHAN_ANY : c->ic_freq;
 }
