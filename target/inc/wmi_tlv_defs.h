@@ -600,6 +600,8 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_ap_ps_egap_param_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_ap_ps_egap_info_event_fixed_param,
 	WMITLV_TAG_STRUC_WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param,
+	WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_complete_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -837,7 +839,8 @@ typedef enum {
 	OP(WMI_EXTSCAN_CONFIGURE_MAWC_CMDID) \
 	OP(WMI_WOW_HOSTWAKEUP_GPIO_PIN_PATTERN_CONFIG_CMDID) \
 	OP(WMI_AP_PS_EGAP_PARAM_CMDID) \
-	OP(WMI_PMF_OFFLOAD_SET_SA_QUERY_CMDID)
+	OP(WMI_PMF_OFFLOAD_SET_SA_QUERY_CMDID) \
+	OP(WMI_TRANSFER_DATA_TO_FLASH_CMDID)
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
  * Otherwise, these WMI TLV Functions will be process them.
@@ -952,7 +955,8 @@ typedef enum {
 	OP(WMI_MGMT_TX_COMPLETION_EVENTID) \
 	OP(WMI_MAWC_ENABLE_SENSOR_EVENTID) \
 	OP(WMI_PEER_ASSOC_CONF_EVENTID) \
-	OP(WMI_AP_PS_EGAP_INFO_EVENTID)
+	OP(WMI_AP_PS_EGAP_INFO_EVENTID) \
+	OP(WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID)
 
 /* TLV definitions of WMI commands */
 
@@ -2186,6 +2190,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_SET_ANTENNA_DIVERSITY_CMDID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_lro_info_cmd_fixed_param, wmi_lro_info_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_LRO_CONFIG_CMDID);
 
+#define WMITLV_TABLE_WMI_TRANSFER_DATA_TO_FLASH_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_cmd_fixed_param, wmi_transfer_data_to_flash_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_TRANSFER_DATA_TO_FLASH_CMDID);
 
 /* MAWC sensor report indication cmd */
 #define WMITLV_TABLE_WMI_MAWC_SENSOR_REPORT_IND_CMDID(id, op, buf, len) \
@@ -2615,6 +2623,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID);
 #define WMITLV_TABLE_WMI_RSSI_BREACH_EVENTID(id, op, buf, len)\
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_rssi_breach_event_fixed_param, wmi_rssi_breach_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_RSSI_BREACH_EVENTID);
+
+#define WMITLV_TABLE_WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID(id, op, buf, len)\
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_complete_event_fixed_param, wmi_transfer_data_to_flash_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID);
 
 /* Diagnostics Event */
 #define WMITLV_TABLE_WMI_DIAG_EVENTID(id,op,buf,len) \
