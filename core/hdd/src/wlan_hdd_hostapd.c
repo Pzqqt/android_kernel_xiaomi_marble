@@ -3517,6 +3517,11 @@ static int wlan_hdd_set_force_acs_ch_range(struct net_device *dev,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int *value = (int *)extra;
 
+	if (!capable(CAP_NET_ADMIN)) {
+		hddLog(LOGE, FL("permission check failed"));
+		return -EPERM;
+	}
+
 	if (wlan_hdd_validate_operation_channel(adapter, value[0]) !=
 					 CDF_STATUS_SUCCESS ||
 		wlan_hdd_validate_operation_channel(adapter, value[1]) !=
