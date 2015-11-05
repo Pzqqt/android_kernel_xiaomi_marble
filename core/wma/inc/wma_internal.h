@@ -1062,11 +1062,12 @@ void wma_dfs_detach(struct ieee80211com *dfs_ic);
 
 void wma_dfs_configure(struct ieee80211com *ic);
 
-struct ieee80211_channel *wma_dfs_configure_channel(struct ieee80211com *dfs_ic,
-						    wmi_channel *chan,
-						    WLAN_PHY_MODE chanmode,
-						    struct wma_vdev_start_req
-						    *req);
+struct dfs_ieee80211_channel *wma_dfs_configure_channel(
+						struct ieee80211com *dfs_ic,
+						wmi_channel *chan,
+						WLAN_PHY_MODE chanmode,
+						struct wma_vdev_start_req
+						*req);
 void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef REMOVE_PKT_LOG

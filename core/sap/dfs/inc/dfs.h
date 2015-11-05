@@ -409,7 +409,7 @@ struct dfs_filtertype {
 };
 
 struct dfs_state {
-	struct ieee80211_channel rs_chan;       /* Channel info */
+	struct dfs_ieee80211_channel rs_chan;       /* Channel info */
 	uint8_t rs_chanindex;   /* Channel index in radar structure */
 	uint32_t rs_numradarevents;     /* Number of radar events */
 
@@ -728,10 +728,11 @@ int dfs_set_thresholds(struct ieee80211com *ic,
 		       const uint32_t threshtype, const uint32_t value);
 
 /* PHY error and radar event handling */
-int dfs_process_radarevent(struct ath_dfs *dfs, struct ieee80211_channel *chan);
+int dfs_process_radarevent(struct ath_dfs *dfs,
+				struct dfs_ieee80211_channel *chan);
 
 /* Non occupancy (NOL) handling prototypes */
-void dfs_nol_addchan(struct ath_dfs *dfs, struct ieee80211_channel *chan,
+void dfs_nol_addchan(struct ath_dfs *dfs, struct dfs_ieee80211_channel *chan,
 		     uint32_t dfs_nol_timeout);
 void dfs_get_nol(struct ath_dfs *dfs, struct dfsreq_nolelem *dfs_nol,
 		 int *nchan);
@@ -803,7 +804,7 @@ int dfs_get_filter_threshold(struct ath_dfs *dfs, struct dfs_filter *rf,
 /* Commenting out since all the ar functions are obsolete and
  * the function definition has been removed as part of dfs_ar.c
  * void dfs_process_ar_event(struct ath_dfs *dfs,
- *	struct ieee80211_channel *chan);
+ *	struct dfs_ieee80211_channel *chan);
  */
 /* Commenting out since all the ar functions are obsolete and
  * the function definition has been removed as part of dfs_ar.c
@@ -819,6 +820,6 @@ void dfs_reset_ar(struct ath_dfs *dfs);
  * void        dfs_reset_arq(struct ath_dfs *dfs);
  */
 
-struct ieee80211_channel *ieee80211_get_extchan(struct ieee80211com *ic);
+struct dfs_ieee80211_channel *ieee80211_get_extchan(struct ieee80211com *ic);
 
 #endif /* _DFS_H_ */

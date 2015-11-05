@@ -474,7 +474,7 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		   uint64_t r_fulltsf, bool enable_log)
 {
 	struct ath_dfs *dfs = (struct ath_dfs *)ic->ic_dfs;
-	struct ieee80211_channel *chan = ic->ic_curchan;
+	struct dfs_ieee80211_channel *chan = ic->ic_curchan;
 	struct dfs_event *event;
 	struct dfs_phy_err e;
 	int empty;

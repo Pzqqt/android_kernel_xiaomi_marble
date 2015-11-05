@@ -104,12 +104,12 @@ int ol_if_dfs_disable(struct ieee80211com *ic)
  * This verifies that found channels have not been
  * excluded because of 11d.
  *
- * Return: returns ieee80211_channel or NULL for error
+ * Return: returns dfs_ieee80211_channel or NULL for error
  */
-struct ieee80211_channel *ieee80211_find_channel(struct ieee80211com *ic,
+struct dfs_ieee80211_channel *ieee80211_find_channel(struct ieee80211com *ic,
 						 int freq, uint32_t flags)
 {
-	struct ieee80211_channel *c;
+	struct dfs_ieee80211_channel *c;
 	int i;
 
 	flags &= IEEE80211_CHAN_ALLTURBO;
@@ -238,7 +238,7 @@ uint16_t ol_if_dfs_usenol(struct ieee80211com *ic)
  * Return: none
  */
 void
-ieee80211_mark_dfs(struct ieee80211com *ic, struct ieee80211_channel *ichan)
+ieee80211_mark_dfs(struct ieee80211com *ic, struct dfs_ieee80211_channel *ichan)
 {
 	int status;
 	status = wma_dfs_indicate_radar(ic, ichan);

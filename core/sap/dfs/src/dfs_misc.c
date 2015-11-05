@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2015 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -205,7 +205,7 @@ uint32_t dfs_round(int32_t val)
 		return (ival + 1);
 }
 
-struct ieee80211_channel *ieee80211_get_extchan(struct ieee80211com *ic)
+struct dfs_ieee80211_channel *ieee80211_get_extchan(struct ieee80211com *ic)
 {
 	int chan_offset = 0;
 	if (IEEE80211_IS_CHAN_HT40PLUS_CAPABLE(ic->ic_curchan)) {
@@ -228,7 +228,7 @@ struct dfs_state *dfs_getchanstate(struct ath_dfs *dfs, uint8_t *index,
 {
 	struct dfs_state *rs = NULL;
 	int i;
-	struct ieee80211_channel *cmp_ch;
+	struct dfs_ieee80211_channel *cmp_ch;
 
 	if (dfs == NULL) {
 		printk("%s[%d]: sc_dfs is NULL\n", __func__, __LINE__);

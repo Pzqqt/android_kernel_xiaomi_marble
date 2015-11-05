@@ -112,7 +112,8 @@ static inline uint8_t dfs_process_pulse_dur(struct ath_dfs *dfs, uint8_t re_dur)
  * and ext channels as being unavailable.  This should be fixed for 802.11ac
  * or we'll quickly run out of valid channels to use.
  */
-int dfs_process_radarevent(struct ath_dfs *dfs, struct ieee80211_channel *chan)
+int dfs_process_radarevent(struct ath_dfs *dfs,
+				struct dfs_ieee80211_channel *chan)
 {
 /* commenting for now to validate radar indication msg to SAP */
 /* #if 0 */
@@ -124,7 +125,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs, struct ieee80211_channel *chan)
 	int events_processed = 0;
 	uint32_t tabledepth, index;
 	uint64_t deltafull_ts = 0, this_ts, deltaT;
-	struct ieee80211_channel *thischan;
+	struct dfs_ieee80211_channel *thischan;
 	struct dfs_pulseline *pl;
 	static uint32_t test_ts = 0;
 	static uint32_t diff_ts = 0;

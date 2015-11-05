@@ -1694,7 +1694,7 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 	struct ieee80211com *ic;
 	struct ath_dfs *dfs;
 	struct dfs_event *event;
-	struct ieee80211_channel *chan;
+	struct dfs_ieee80211_channel *chan;
 	int empty;
 	int do_check_chirp = 0;
 	int is_hw_chirp = 0;
@@ -6752,13 +6752,14 @@ void wma_dfs_configure(struct ieee80211com *ic)
  * Also,configure the DFS radar filters for
  * matching the DFS phyerrors.
  *
- * Return: ieee80211 channel / NULL for error
+ * Return: dfs_ieee80211_channel / NULL for error
  */
-struct ieee80211_channel *wma_dfs_configure_channel(struct ieee80211com *dfs_ic,
-						    wmi_channel *chan,
-						    WLAN_PHY_MODE chanmode,
-						    struct wma_vdev_start_req
-						    *req)
+struct dfs_ieee80211_channel *wma_dfs_configure_channel(
+						struct ieee80211com *dfs_ic,
+						wmi_channel *chan,
+						WLAN_PHY_MODE chanmode,
+						struct wma_vdev_start_req
+						*req)
 {
 	if (dfs_ic == NULL) {
 		WMA_LOGE("%s: DFS ic is Invalid", __func__);
@@ -6766,17 +6767,19 @@ struct ieee80211_channel *wma_dfs_configure_channel(struct ieee80211com *dfs_ic,
 	}
 
 	if (!dfs_ic->ic_curchan) {
-		dfs_ic->ic_curchan = (struct ieee80211_channel *)os_malloc(NULL,
-					sizeof(struct ieee80211_channel),
-								   GFP_ATOMIC);
+		dfs_ic->ic_curchan = (struct dfs_ieee80211_channel *)os_malloc(
+					NULL,
+					sizeof(struct dfs_ieee80211_channel),
+					GFP_ATOMIC);
 		if (dfs_ic->ic_curchan == NULL) {
-			WMA_LOGE("%s: allocation of dfs_ic->ic_curchan failed %zu",
-				 __func__, sizeof(struct ieee80211_channel));
+			WMA_LOGE(
+			    "%s: allocation of dfs_ic->ic_curchan failed %zu",
+			    __func__, sizeof(struct dfs_ieee80211_channel));
 			return NULL;
 		}
 	}
 
-	OS_MEMZERO(dfs_ic->ic_curchan, sizeof(struct ieee80211_channel));
+	OS_MEMZERO(dfs_ic->ic_curchan, sizeof(struct dfs_ieee80211_channel));
 
 	dfs_ic->ic_curchan->ic_ieee = req->chan;
 	dfs_ic->ic_curchan->ic_freq = chan->mhz;
@@ -6853,7 +6856,7 @@ void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region)
  *
  * Return: return number of channels
  */
-int wma_get_channels(struct ieee80211_channel *ichan,
+int wma_get_channels(struct dfs_ieee80211_channel *ichan,
 		     struct wma_dfs_radar_channel_list *chan_list)
 {
 	uint8_t center_chan = cds_freq_to_chan(ichan->ic_vhtop_ch_freq_seg1);
@@ -6888,7 +6891,7 @@ int wma_get_channels(struct ieee80211_channel *ichan,
  * Return: 0 for success or error code
  */
 int wma_dfs_indicate_radar(struct ieee80211com *ic,
-			   struct ieee80211_channel *ichan)
+			   struct dfs_ieee80211_channel *ichan)
 {
 	tp_wma_handle wma;
 	void *hdd_ctx;
