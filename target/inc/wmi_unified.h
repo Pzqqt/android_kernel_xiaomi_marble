@@ -2951,6 +2951,11 @@ typedef enum {
 	WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
 	/* Enable/Disable CTS2Self for P2P GO when Non-P2P Client is connected*/
 	WMI_PDEV_PARAM_CTS2SELF_FOR_P2P_GO_CONFIG,
+	/* TX power backoff in dB: tx power -= param value
+	 * Host passes values(DB) to Halphy, Halphy reduces the power table by
+	 * the values. Safety check will happen in Halphy
+	 */
+	WMI_PDEV_PARAM_TXPOWER_DECR_DB,
 } WMI_PDEV_PARAM;
 
 typedef enum {
@@ -4486,6 +4491,21 @@ typedef enum {
 	 * to increase the detectability of SAP in MCC mode
 	 */
 	WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE,
+
+	/* This parameter indicates the power backoff in percentage
+	 * currently supports 100%, 50%, 25%, 12.5%, and minimum
+	 * Host passes 0, 1, 2, 3, 4 to Firmware
+	 * 0 --> 100% --> no changes, 1 --> 50% --> -3dB,
+	 * 2 --> 25% --> -6dB, 3 --> 12.5% --> -9dB, 4 --> minimum --> -32dB
+	 */
+	WMI_VDEV_PARAM_TXPOWER_SCALE,
+
+	/* TX power backoff in dB: tx power -= param value
+	 * Host passes values(DB) to Halphy, Halphy reduces the power table
+	 * by the values.  Safety check will happen in Halphy.
+	 */
+	WMI_VDEV_PARAM_TXPOWER_SCALE_DECR_DB,
+
 } WMI_VDEV_PARAM;
 
 /* Length of ATIM Window in TU */
