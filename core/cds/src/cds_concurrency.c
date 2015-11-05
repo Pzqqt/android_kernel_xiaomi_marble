@@ -73,7 +73,7 @@ static struct cds_conc_connection_info
 		((MAX_NUMBER_OF_CONC_CONNECTIONS > index) && \
 			(conc_connection_list[index].in_use))
 
-#define CDS_MAX_CON_STRING_LEN   50
+#define CDS_MAX_CON_STRING_LEN   100
 /**
  * first_connection_pcl_table - table which provides PCL for the
  * very first connection in the system
@@ -2708,62 +2708,49 @@ static uint32_t cds_dump_current_concurrency_three_connection(
  */
 static void cds_dump_dbs_concurrency(char *cc_mode, uint32_t length)
 {
+	char buf[4] = {0};
+	uint8_t mac = 0;
+
 	strlcat(cc_mode, " DBS", length);
 	if (conc_connection_list[0].mac ==
 		conc_connection_list[1].mac) {
 		if (conc_connection_list[0].chan ==
-			conc_connection_list[1].chan) {
-			if (0 == conc_connection_list[0].mac)
-				strlcat(cc_mode, " with SCC on mac0",
-					length);
-			else
-				strlcat(cc_mode, " with SCC on mac1",
-					length);
-		} else {
-			if (0 == conc_connection_list[0].mac)
-				strlcat(cc_mode, " with MCC on mac0",
-					length);
-			else
-				strlcat(cc_mode, " with MCC on mac1",
-					length);
-		}
+			conc_connection_list[1].chan)
+			strlcat(cc_mode,
+				" with SCC for 1st two connections on mac ",
+				length);
+		else
+			strlcat(cc_mode,
+				" with MCC for 1st two connections on mac ",
+				length);
+		mac = conc_connection_list[0].mac;
 	}
 	if (conc_connection_list[0].mac == conc_connection_list[2].mac) {
 		if (conc_connection_list[0].chan ==
-			conc_connection_list[2].chan) {
-			if (0 == conc_connection_list[0].mac)
-				strlcat(cc_mode, " with SCC on mac0",
-					length);
-			else
-				strlcat(cc_mode, " with SCC on mac1",
-					length);
-		} else {
-			if (0 == conc_connection_list[0].mac)
-				strlcat(cc_mode, " with MCC on mac0",
-					length);
-			else
-				strlcat(cc_mode, " with MCC on mac1",
-					length);
-		}
+			conc_connection_list[2].chan)
+			strlcat(cc_mode,
+				" with SCC for 1st & 3rd connections on mac ",
+				length);
+		else
+			strlcat(cc_mode,
+				" with MCC for 1st & 3rd connections on mac ",
+				length);
+		mac = conc_connection_list[0].mac;
 	}
 	if (conc_connection_list[1].mac == conc_connection_list[2].mac) {
 		if (conc_connection_list[1].chan ==
-			conc_connection_list[2].chan) {
-			if (0 == conc_connection_list[1].mac)
-				strlcat(cc_mode, " with SCC on mac0",
-					length);
-			else
-				strlcat(cc_mode, " with SCC on mac1",
-					length);
-		} else {
-			if (0 == conc_connection_list[1].mac)
-				strlcat(cc_mode, " with MCC on mac0",
-					length);
-			else
-				strlcat(cc_mode, " with MCC on mac1",
-					length);
-		}
+			conc_connection_list[2].chan)
+			strlcat(cc_mode,
+				" with SCC for 2nd & 3rd connections on mac ",
+				length);
+		else
+			strlcat(cc_mode,
+				" with MCC for 2nd & 3rd connections on mac ",
+				length);
+		mac = conc_connection_list[1].mac;
 	}
+	snprintf(buf, sizeof(buf), "%d ", mac);
+	strlcat(cc_mode, buf, length);
 }
 
 /**
@@ -3836,6 +3823,13 @@ CDF_STATUS cds_incr_connection_count(hdd_context_t *hdd_ctx,
 			wma_conn_table_entry->tx_streams,
 			wma_conn_table_entry->rx_streams,
 			wma_conn_table_entry->nss, vdev_id, true);
+	cds_info("Add at idx:%d vdev %d tx ss=%d rx ss=%d chainmask=%d mac=%d",
+		conn_index, vdev_id,
+		wma_conn_table_entry->tx_streams,
+		wma_conn_table_entry->rx_streams,
+		wma_conn_table_entry->chain_mask,
+		wma_conn_table_entry->mac_id);
+
 	return CDF_STATUS_SUCCESS;
 }
 
