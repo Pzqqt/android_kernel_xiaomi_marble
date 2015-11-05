@@ -6223,6 +6223,7 @@ typedef struct {
 
 } wmi_roam_event_fixed_param;
 
+/* roam_reason: bits 0-3 */
 #define WMI_ROAM_REASON_BETTER_AP 0x1 /** found a better AP */
 #define WMI_ROAM_REASON_BMISS     0x2 /** beacon miss detected */
 #define WMI_ROAM_REASON_DEAUTH    0x2 /** deauth/disassoc received */
@@ -6232,18 +6233,28 @@ typedef struct {
 	                                   WMI_ROAM_AP_PROFILE, found during scan
 	                                   triggered upon FINAL_BMISS **/
 #define WMI_ROAM_REASON_HO_FAILED  0x5  /** LFR3.0 roaming failed, indicate the disconnection to host */
+/* reserved up through 0xF */
 
-/*
- * These will be used in WMI_ROAM_SYNCH_EVENTID for passing the subnet change
- * info. Once roaming happens, firmware checks if subnet has changed and
- * populates roam_reason field in WMI_ROAM_SYNCH_EVENTID using the definitions
- * below.
- */
+/* subnet status: bits 4-5 */
 typedef enum {
 	WMI_ROAM_SUBNET_CHANGE_STATUS_UNKNOWN = 0,
 	WMI_ROAM_SUBNET_CHANGE_STATUS_UNCHANGED,
 	WMI_ROAM_SUBNET_CHANGE_STATUS_CHANGED,
 } wmi_roam_subnet_change_status;
+
+#define WMI_ROAM_SUBNET_CHANGE_STATUS_MASK      0x30
+#define WMI_ROAM_SUBNET_CHANGE_STATUS_SHIFT     4
+
+#define WMI_SET_ROAM_SUBNET_CHANGE_STATUS(roam_reason, status) \
+	do { \
+		(roam_reason) |= \
+			(((status) << WMI_ROAM_SUBNET_CHANGE_STATUS_SHIFT) & \
+			WMI_ROAM_SUBNET_CHANGE_STATUS_MASK); \
+	} while (0)
+
+#define WMI_GET_ROAM_SUBNET_CHANGE_STATUS(roam_reason) \
+	(((roam_reason) & WMI_ROAM_SUBNET_CHANGE_STATUS_MASK) >> \
+	WMI_ROAM_SUBNET_CHANGE_STATUS_SHIFT)
 
 /**whenever RIC request information change, host driver should pass all ric related information to firmware (now only support tsepc)
  * Once, 11r roaming happens, firmware can generate RIC request in reassoc request based on these informations
@@ -9591,8 +9602,9 @@ typedef struct {
 	/** auth_status: connected or authorized */
 	A_UINT32 auth_status;
 	/*
-	 *  roam_reason: whether roaming went to a new subnet;
-	 *  see WMI_ROAM_SUBNET_CHANGE_STATUS_XXX
+	 * roam_reason:
+	 * bits 0-3 for roam reason   see WMI_ROAM_REASON_XXX
+	 * bits 4-5 for subnet status see WMI_ROAM_SUBNET_CHANGE_STATUS_XXX.
 	 */
 	A_UINT32 roam_reason;
 	/** associated AP's rssi calculated by FW when reason code is WMI_ROAM_REASON_LOW_RSSI. not valid if roam_reason is BMISS */
