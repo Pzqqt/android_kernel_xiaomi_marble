@@ -58,7 +58,7 @@
 #include "lim_session_utils.h"
 #include "cds_concurrency.h"
 #include "wma_types.h"
-
+#include "wma.h"
 
 #define BA_DEFAULT_TX_BUFFER_SIZE 64
 
@@ -466,6 +466,8 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	uint16_t aid;
 	uint8_t oper_mode;
 	uint8_t cb_mode;
+	uint8_t ch_bw = 0;
+	uint8_t skip_opmode_update = false;
 
 	mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
@@ -514,7 +516,16 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 	} else {
 		oper_mode = eHT_CHANNEL_WIDTH_20MHZ;
 	}
-	if (oper_mode != operating_mode_frm->OperatingMode.chanWidth) {
+
+	if ((oper_mode == eHT_CHANNEL_WIDTH_80MHZ) &&
+			(operating_mode_frm->OperatingMode.chanWidth >
+				eHT_CHANNEL_WIDTH_80MHZ))
+		skip_opmode_update = true;
+
+	if (!skip_opmode_update && (oper_mode !=
+		operating_mode_frm->OperatingMode.chanWidth)) {
+		uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
+
 		lim_log(mac_ctx, LOGE,
 			FL(" received Chanwidth %d, staIdx = %d"),
 			(operating_mode_frm->OperatingMode.chanWidth),
@@ -525,34 +536,38 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 			mac_hdr->sa[0], mac_hdr->sa[1], mac_hdr->sa[2],
 			mac_hdr->sa[3], mac_hdr->sa[4], mac_hdr->sa[5]);
 
-		if (operating_mode_frm->OperatingMode.chanWidth ==
-				eHT_CHANNEL_WIDTH_160MHZ) {
+		if (operating_mode_frm->OperatingMode.chanWidth >=
+				eHT_CHANNEL_WIDTH_160MHZ
+				&& (fw_vht_ch_wd >= eHT_CHANNEL_WIDTH_160MHZ)) {
 			sta_ptr->vhtSupportedChannelWidthSet =
 				WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
 			sta_ptr->htSupportedChannelWidthSet =
 				eHT_CHANNEL_WIDTH_40MHZ;
-		} else if (operating_mode_frm->OperatingMode.chanWidth ==
+			ch_bw = eHT_CHANNEL_WIDTH_160MHZ;
+		} else if (operating_mode_frm->OperatingMode.chanWidth >=
 				eHT_CHANNEL_WIDTH_80MHZ) {
 			sta_ptr->vhtSupportedChannelWidthSet =
 				WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
 			sta_ptr->htSupportedChannelWidthSet =
 				eHT_CHANNEL_WIDTH_40MHZ;
+			ch_bw = eHT_CHANNEL_WIDTH_80MHZ;
 		} else if (operating_mode_frm->OperatingMode.chanWidth ==
 				eHT_CHANNEL_WIDTH_40MHZ) {
 			sta_ptr->vhtSupportedChannelWidthSet =
 				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 			sta_ptr->htSupportedChannelWidthSet =
 				eHT_CHANNEL_WIDTH_40MHZ;
+			ch_bw = eHT_CHANNEL_WIDTH_40MHZ;
 		} else if (operating_mode_frm->OperatingMode.chanWidth ==
 				eHT_CHANNEL_WIDTH_20MHZ) {
 			sta_ptr->vhtSupportedChannelWidthSet =
 				WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 			sta_ptr->htSupportedChannelWidthSet =
 				eHT_CHANNEL_WIDTH_20MHZ;
+			ch_bw = eHT_CHANNEL_WIDTH_20MHZ;
 		}
-		lim_check_vht_op_mode_change(mac_ctx, session,
-			operating_mode_frm->OperatingMode.chanWidth,
-			sta_ptr->staIndex, mac_hdr->sa);
+		lim_check_vht_op_mode_change(mac_ctx, session, ch_bw,
+					     sta_ptr->staIndex, mac_hdr->sa);
 	}
 
 	if (sta_ptr->vhtSupportedRxNss !=

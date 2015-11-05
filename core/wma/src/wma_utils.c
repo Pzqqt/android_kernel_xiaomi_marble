@@ -70,6 +70,8 @@
 #include "wma_internal.h"
 #include "cds_concurrency.h"
 
+#include "linux/ieee80211.h"
+
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
 static struct index_data_rate_type supported_mcs_rate_nss1[] = {
@@ -3603,4 +3605,27 @@ bool wma_is_scan_simultaneous_capable(void)
 		return true;
 
 	return false;
+}
+
+/**
+ * wma_get_vht_ch_width - return vht channel width
+ *
+ * Return: return vht channel width
+ */
+uint32_t wma_get_vht_ch_width(void)
+{
+	uint32_t fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
+	tp_wma_handle wm_hdl = cds_get_context(CDF_MODULE_ID_WMA);
+
+	if (NULL == wm_hdl)
+		return fw_ch_wd;
+
+	if (wm_hdl->vht_cap_info &
+	    IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ)
+		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
+	else if (wm_hdl->vht_cap_info &
+		 IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ)
+		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
+
+	return fw_ch_wd;
 }
