@@ -47,9 +47,9 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include <cds_get_bin.h>
 #include "hif_debug.h"
 #include "epping_main.h"
+#include "cds_concurrency.h"
 
 void hif_dump_target_memory(struct ol_softc *scn, void *ramdump_base,
 			    uint32_t address, uint32_t size)

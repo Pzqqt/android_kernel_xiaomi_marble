@@ -76,6 +76,7 @@
 #include "wma_internal.h"
 
 #include "wma_ocb.h"
+#include "cds_concurrency.h"
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 #define WMA_SERVICE_READY_EXT_TIMEOUT 2000 /* 2 seconds */

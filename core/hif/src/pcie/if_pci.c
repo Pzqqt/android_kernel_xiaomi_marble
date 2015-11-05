@@ -68,6 +68,7 @@
 #include "if_pci_internal.h"
 #include "icnss_stub.h"
 #include "ce_tasklet.h"
+#include "cds_concurrency.h"
 
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000

@@ -49,7 +49,6 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include <cds_get_bin.h>
 #include "epping_main.h"
 #include "hif_debug.h"
 #include "ce_internal.h"
@@ -62,6 +61,7 @@
 #include <soc/qcom/icnss.h>
 #endif
 #include "qwlan_version.h"
+#include "cds_concurrency.h"
 
 #define CE_POLL_TIMEOUT 10      /* ms */
 

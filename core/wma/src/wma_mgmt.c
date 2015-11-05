@@ -68,6 +68,7 @@
 #include "ol_fw.h"
 #include "dfs.h"
 #include "wma_internal.h"
+#include "cds_concurrency.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL

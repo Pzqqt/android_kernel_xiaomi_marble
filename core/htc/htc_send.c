@@ -29,7 +29,6 @@
 #include "htc_internal.h"
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <cdf_memory.h>         /* cdf_mem_malloc */
-#include <cds_get_bin.h>
 #include "epping_main.h"
 
 /* #define USB_HIF_SINGLE_PIPE_DATA_SCHED */

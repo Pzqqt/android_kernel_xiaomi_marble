@@ -604,7 +604,6 @@ CDS_INC := 	-I$(WLAN_ROOT)/$(CDS_INC_DIR) \
 		-I$(WLAN_ROOT)/$(CDS_SRC_DIR)
 
 CDS_OBJS :=	$(CDS_SRC_DIR)/cds_api.o \
-		$(CDS_SRC_DIR)/cds_get_bin.o \
 		$(CDS_SRC_DIR)/cds_reg_service.o \
 		$(CDS_SRC_DIR)/cds_mq.o \
 		$(CDS_SRC_DIR)/cds_packet.o \

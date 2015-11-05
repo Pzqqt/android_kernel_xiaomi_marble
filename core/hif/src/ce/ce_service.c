@@ -37,10 +37,10 @@
 #include "ce_reg.h"
 #include "cdf_lock.h"
 #include "regtable.h"
-#include <cds_get_bin.h>
 #include "epping_main.h"
 #include "hif_main.h"
 #include "hif_debug.h"
+#include "cds_concurrency.h"
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0

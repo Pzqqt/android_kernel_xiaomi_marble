@@ -38,7 +38,6 @@
 #include <cdf_status.h>
 #include <cdf_memory.h>
 #include <cdf_list.h>
-#include <cds_get_bin.h>
 #include <cdf_trace.h>
 #include <cdf_event.h>
 #include <cdf_lock.h>
