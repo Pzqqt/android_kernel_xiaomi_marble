@@ -74,61 +74,61 @@
 
 /* MCS Based rate table */
 /* HT MCS parameters with Nss = 1 */
-static struct index_data_rate_type supported_mcs_rate_nss1[] = {
-	/* MCS  L20   L40   S20  S40 */
-	{0, {65, 135, 72, 150} },
-	{1, {130, 270, 144, 300} },
-	{2, {195, 405, 217, 450} },
-	{3, {260, 540, 289, 600} },
-	{4, {390, 810, 433, 900} },
-	{5, {520, 1080, 578, 1200} },
-	{6, {585, 1215, 650, 1350} },
-	{7, {650, 1350, 722, 1500} }
+static struct index_data_rate_type mcs_nss1[] = {
+	/* MCS L20  S20   L40   S40 */
+	{0,  {65,  72},  {135,  150 } },
+	{1,  {130, 144}, {270,  300 } },
+	{2,  {195, 217}, {405,  450 } },
+	{3,  {260, 289}, {540,  600 } },
+	{4,  {390, 433}, {815,  900 } },
+	{5,  {520, 578}, {1080, 1200} },
+	{6,  {585, 650}, {1215, 1350} },
+	{7,  {650, 722}, {1350, 1500} }
 };
 
 /* HT MCS parameters with Nss = 2 */
-static struct index_data_rate_type supported_mcs_rate_nss2[] = {
-	/* MCS  L20    L40   S20   S40 */
-	{0, {130, 270, 144, 300} },
-	{1, {260, 540, 289, 600} },
-	{2, {390, 810, 433, 900} },
-	{3, {520, 1080, 578, 1200} },
-	{4, {780, 1620, 867, 1800} },
-	{5, {1040, 2160, 1156, 2400} },
-	{6, {1170, 2430, 1300, 2700} },
-	{7, {1300, 2700, 1444, 3000} }
+static struct index_data_rate_type mcs_nss2[] = {
+	/* MCS L20  S20    L40   S40 */
+	{0,  {130,  144},  {270,  300 } },
+	{1,  {260,  289},  {540,  600 } },
+	{2,  {390,  433},  {810,  900 } },
+	{3,  {520,  578},  {1080, 1200} },
+	{4,  {780,  867},  {1620, 1800} },
+	{5,  {1040, 1156}, {2160, 2400} },
+	{6,  {1170, 1300}, {2430, 2700} },
+	{7,  {1300, 1440}, {2700, 3000} }
 };
 
 #ifdef WLAN_FEATURE_11AC
 /* MCS Based VHT rate table */
 /* MCS parameters with Nss = 1*/
-static struct index_vht_data_rate_type supported_vht_mcs_rate_nss1[] = {
-	/* MCS  L80    S80     L40   S40    L20   S40 */
-	{0, {293, 325}, {135, 150}, {65, 72} },
-	{1, {585, 650}, {270, 300}, {130, 144} },
-	{2, {878, 975}, {405, 450}, {195, 217} },
-	{3, {1170, 1300}, {540, 600}, {260, 289} },
-	{4, {1755, 1950}, {810, 900}, {390, 433} },
-	{5, {2340, 2600}, {1080, 1200}, {520, 578} },
-	{6, {2633, 2925}, {1215, 1350}, {585, 650} },
-	{7, {2925, 3250}, {1350, 1500}, {650, 722} },
-	{8, {3510, 3900}, {1620, 1800}, {780, 867} },
-	{9, {3900, 4333}, {1800, 2000}, {780, 867} }
+static struct index_vht_data_rate_type vht_mcs_nss1[] = {
+	/* MCS L20  S20    L40   S40    L80   S80 */
+	{0,  {65,   72 }, {135,  150},  {293,  325} },
+	{1,  {130,  144}, {270,  300},  {585,  650} },
+	{2,  {195,  217}, {405,  450},  {878,  975} },
+	{3,  {260,  289}, {540,  600},  {1170, 1300} },
+	{4,  {390,  433}, {810,  900},  {1755, 1950} },
+	{5,  {520,  578}, {1080, 1200}, {2340, 2600} },
+	{6,  {585,  650}, {1215, 1350}, {2633, 2925} },
+	{7,  {650,  722}, {1350, 1500}, {2925, 3250} },
+	{8,  {780,  867}, {1620, 1800}, {3510, 3900} },
+	{9,  {865,  960}, {1800, 2000}, {3900, 4333} }
 };
 
 /*MCS parameters with Nss = 2*/
-static struct index_vht_data_rate_type supported_vht_mcs_rate_nss2[] = {
-	/* MCS  L80    S80     L40   S40    L20   S40 */
-	{0, {585, 650}, {270, 300}, {130, 144} },
-	{1, {1170, 1300}, {540, 600}, {260, 289} },
-	{2, {1755, 1950}, {810, 900}, {390, 433} },
-	{3, {2340, 2600}, {1080, 1200}, {520, 578} },
-	{4, {3510, 3900}, {1620, 1800}, {780, 867} },
-	{5, {4680, 5200}, {2160, 2400}, {1040, 1156} },
-	{6, {5265, 5850}, {2430, 2700}, {1170, 1300} },
-	{7, {5850, 6500}, {2700, 3000}, {1300, 1444} },
-	{8, {7020, 7800}, {3240, 3600}, {1560, 1733} },
-	{9, {7800, 8667}, {3600, 4000}, {1560, 1733} }
+static struct index_vht_data_rate_type vht_mcs_nss2[] = {
+	/* MCS L20  S20    L40    S40    L80    S80 */
+	{0,  {130,  144},  {270,  300},  { 585,  650} },
+	{1,  {260,  289},  {540,  600},  {1170, 1300} },
+	{2,  {390,  433},  {810,  900},  {1755, 1950} },
+	{3,  {520,  578},  {1080, 1200}, {2340, 2600} },
+	{4,  {780,  867},  {1620, 1800}, {3510, 3900} },
+	{5,  {1040, 1156}, {2160, 2400}, {4680, 5200} },
+	{6,  {1170, 1300}, {2430, 2700}, {5265, 5850} },
+	{7,  {1300, 1444}, {2700, 3000}, {5850, 6500} },
+	{8,  {1560, 1733}, {3240, 3600}, {7020, 7800} },
+	{9,  {1730, 1920}, {3600, 4000}, {7800, 8667} }
 };
 #endif /* WLAN_FEATURE_11AC */
 
@@ -160,6 +160,45 @@ void wma_swap_bytes(void *pv, uint32_t n)
 #endif /* BIG_ENDIAN_HOST */
 
 /**
+ * wma_mcs_rate_match() - find the match mcs rate
+ * @match_rate:	the rate to look up
+ * @is_sgi:	return if the SGI rate is found
+ * @nss:	the nss in use
+ * @nss1_rate:	the nss1 rate
+ * @nss1_srate:	the nss1 SGI rate
+ * @nss2_rate:	the nss2 rate
+ * @nss2_srate:	the nss2 SGI rate
+ *
+ * This is a helper function to find the match of the tx_rate
+ * in terms of the nss1/nss2 rate with non-SGI/SGI.
+ *
+ * Return: the found rate or 0 otherwise
+ */
+static inline uint16_t wma_mcs_rate_match(uint16_t match_rate, bool *is_sgi,
+					  uint8_t nss, uint16_t nss1_rate,
+					  uint16_t nss1_srate,
+					  uint16_t nss2_rate,
+					  uint16_t nss2_srate)
+{
+	WMA_LOGD("%s match_rate: %d, %d %d %d %d",
+		__func__, match_rate, nss1_rate, nss1_srate, nss2_rate,
+		nss2_srate);
+
+	if (match_rate == nss1_rate) {
+		return nss1_rate;
+	} else if (match_rate == nss1_srate) {
+		*is_sgi = true;
+		return nss1_srate;
+	} else if (nss == 2 && match_rate == nss2_rate)
+		return nss2_rate;
+	else if (nss == 2 && match_rate == nss2_srate) {
+		*is_sgi = true;
+		return nss2_srate;
+	} else
+		return 0;
+}
+
+/**
  * wma_get_mcs_idx() - get mcs index
  * @maxRate: max rate
  * @rate_flags: rate flags
@@ -171,130 +210,93 @@ void wma_swap_bytes(void *pv, uint32_t n)
 static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 			       uint8_t nss, uint8_t *mcsRateFlag)
 {
-	uint8_t rateFlag = 0, curIdx = 0;
-	uint16_t curRate;
-	bool found = false;
-#ifdef WLAN_FEATURE_11AC
-	struct index_vht_data_rate_type *supported_vht_mcs_rate;
-#endif /* WLAN_FEATURE_11AC */
-	struct index_data_rate_type *supported_mcs_rate;
+	uint8_t  index = 0;
+	uint16_t match_rate;
+	bool is_sgi = false;
 
-	WMA_LOGD("%s rate:%d rate_flgs:%d", __func__, maxRate, rate_flags);
-#ifdef WLAN_FEATURE_11AC
-	supported_vht_mcs_rate = (struct index_vht_data_rate_type *)
-				 ((nss == 1) ? &supported_vht_mcs_rate_nss1 :
-				  &supported_vht_mcs_rate_nss2);
-#endif /* WLAN_FEATURE_11AC */
-	supported_mcs_rate = (struct index_data_rate_type *)
-			     ((nss == 1) ? &supported_mcs_rate_nss1 : &supported_mcs_rate_nss2);
+	WMA_LOGD("%s rate:%d rate_flgs: 0x%x, nss: %d",
+		 __func__, maxRate, rate_flags, nss);
 
 	*mcsRateFlag = rate_flags;
 	*mcsRateFlag &= ~eHAL_TX_RATE_SGI;
 #ifdef WLAN_FEATURE_11AC
-	if (rate_flags &
-	    (eHAL_TX_RATE_VHT20 | eHAL_TX_RATE_VHT40 | eHAL_TX_RATE_VHT80)) {
-
+	for (index = 0; index < MAX_VHT_MCS_IDX; index++) {
 		if (rate_flags & eHAL_TX_RATE_VHT80) {
-			for (curIdx = 0; curIdx < MAX_VHT_MCS_IDX; curIdx++) {
-				rateFlag = 0;
-				if (curIdx >= 7) {
-					if (rate_flags & eHAL_TX_RATE_SGI)
-						rateFlag |= 0x1;
-				}
-
-				curRate = supported_vht_mcs_rate[curIdx].supported_VHT80_rate[rateFlag];
-				if (curRate == maxRate) {
-					found = true;
-					break;
-				}
+			/* check for vht80 nss1/2 rate set */
+			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+					vht_mcs_nss1[index].ht80_rate[0],
+					vht_mcs_nss1[index].ht80_rate[1],
+					vht_mcs_nss2[index].ht80_rate[0],
+					vht_mcs_nss2[index].ht80_rate[1]);
+			if (match_rate)
+				goto rate_found;
+		}
+		if ((rate_flags & eHAL_TX_RATE_VHT40) |
+		    (rate_flags & eHAL_TX_RATE_VHT80)) {
+			/* check for vht40 nss1/2 rate set */
+			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+					vht_mcs_nss1[index].ht40_rate[0],
+					vht_mcs_nss1[index].ht40_rate[1],
+					vht_mcs_nss2[index].ht40_rate[0],
+					vht_mcs_nss2[index].ht40_rate[1]);
+			if (match_rate) {
+				*mcsRateFlag &= ~eHAL_TX_RATE_VHT80;
+				goto rate_found;
 			}
 		}
-
-		if ((found == false) &&
-		    ((rate_flags & eHAL_TX_RATE_VHT80) ||
-		     (rate_flags & eHAL_TX_RATE_VHT40))) {
-			for (curIdx = 0; curIdx < MAX_VHT_MCS_IDX; curIdx++) {
-				rateFlag = 0;
-				if (curIdx >= 7) {
-					if (rate_flags & eHAL_TX_RATE_SGI)
-						rateFlag |= 0x1;
-				}
-
-				curRate = supported_vht_mcs_rate[curIdx].supported_VHT40_rate[rateFlag];
-				if (curRate == maxRate) {
-					found = true;
-					*mcsRateFlag &= ~eHAL_TX_RATE_VHT80;
-					break;
-				}
-			}
-		}
-
-		if ((found == false) &&
-		    ((rate_flags & eHAL_TX_RATE_VHT80) ||
-		     (rate_flags & eHAL_TX_RATE_VHT40) ||
-		     (rate_flags & eHAL_TX_RATE_VHT20))) {
-			for (curIdx = 0; curIdx < MAX_VHT_MCS_IDX; curIdx++) {
-				rateFlag = 0;
-				if (curIdx >= 7) {
-					if (rate_flags & eHAL_TX_RATE_SGI)
-						rateFlag |= 0x1;
-				}
-
-				curRate = supported_vht_mcs_rate[curIdx].supported_VHT20_rate[rateFlag];
-				if (curRate == maxRate) {
-					found = true;
-					*mcsRateFlag &=
-						~(eHAL_TX_RATE_VHT80 |
-						  eHAL_TX_RATE_VHT40);
-					break;
-				}
+		if ((rate_flags & eHAL_TX_RATE_VHT20) |
+		    (rate_flags & eHAL_TX_RATE_VHT40) |
+		    (rate_flags & eHAL_TX_RATE_VHT80)) {
+			/* check for vht20 nss1/2 rate set */
+			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+					vht_mcs_nss1[index].ht20_rate[0],
+					vht_mcs_nss1[index].ht20_rate[1],
+					vht_mcs_nss2[index].ht20_rate[0],
+					vht_mcs_nss2[index].ht20_rate[1]);
+			if (match_rate) {
+				*mcsRateFlag &= ~(eHAL_TX_RATE_VHT80 |
+						eHAL_TX_RATE_VHT40);
+				goto rate_found;
 			}
 		}
 	}
 #endif /* WLAN_FEATURE_11AC */
-	if ((found == false) &&
-	    (rate_flags & (eHAL_TX_RATE_HT40 | eHAL_TX_RATE_HT20))) {
+	for (index = 0; index < MAX_HT_MCS_IDX; index++) {
 		if (rate_flags & eHAL_TX_RATE_HT40) {
-			rateFlag = 0x1;
-
-			for (curIdx = 0; curIdx < MAX_HT_MCS_IDX; curIdx++) {
-				if (curIdx == 7) {
-					if (rate_flags & eHAL_TX_RATE_SGI)
-						rateFlag |= 0x2;
-				}
-
-				curRate = supported_mcs_rate[curIdx].supported_rate[rateFlag];
-				if (curRate == maxRate) {
-					found = true;
-					*mcsRateFlag = eHAL_TX_RATE_HT40;
-					break;
-				}
+			/* check for ht40 nss1/2 rate set */
+			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+					mcs_nss1[index].ht40_rate[0],
+					mcs_nss1[index].ht40_rate[1],
+					mcs_nss2[index].ht40_rate[0],
+					mcs_nss2[index].ht40_rate[1]);
+			if (match_rate) {
+				*mcsRateFlag = eHAL_TX_RATE_HT40;
+				goto rate_found;
 			}
 		}
-
-		if (found == false) {
-			rateFlag = 0;
-			for (curIdx = 0; curIdx < MAX_HT_MCS_IDX; curIdx++) {
-				if (curIdx == 7) {
-					if (rate_flags & eHAL_TX_RATE_SGI)
-						rateFlag |= 0x2;
-				}
-
-				curRate = supported_mcs_rate[curIdx].supported_rate[rateFlag];
-				if (curRate == maxRate) {
-					found = true;
-					*mcsRateFlag = eHAL_TX_RATE_HT20;
-					break;
-				}
+		if (rate_flags & eHAL_TX_RATE_HT20) {
+			/* check for ht20 nss1/2 rate set */
+			match_rate = wma_mcs_rate_match(maxRate, &is_sgi, nss,
+					mcs_nss1[index].ht20_rate[0],
+					mcs_nss1[index].ht20_rate[1],
+					mcs_nss2[index].ht20_rate[0],
+					mcs_nss2[index].ht20_rate[1]);
+			if (match_rate) {
+				*mcsRateFlag = eHAL_TX_RATE_HT20;
+				goto rate_found;
 			}
 		}
 	}
 
-	/*SGI rates are used by firmware only for MCS >= 7 */
-	if (found && (curIdx >= 7))
+rate_found:
+	/* set SGI flag only if this is SGI rate */
+	if (match_rate && is_sgi == true)
 		*mcsRateFlag |= eHAL_TX_RATE_SGI;
 
-	return  found ? curIdx : INVALID_MCS_IDX;
+	WMA_LOGD("%s - match_rate: %d index: %d rate_flag: 0x%x is_sgi: %d",
+		 __func__, match_rate, index, *mcsRateFlag, is_sgi);
+
+	return match_rate ? index : INVALID_MCS_IDX;
 }
 
 /**

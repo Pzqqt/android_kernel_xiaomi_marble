@@ -1779,13 +1779,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			pAdapter->hdd_stats.ClassA_stat.mcs_index = 0;
 		}
 	}
-#ifdef LINKSPEED_DEBUG_ENABLED
-	pr_info("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d\n",
-		sinfo->signal, pCfg->reportMaxLinkSpeed, myRate,
-		(int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
-		(int)pCfg->linkSpeedRssiLow, (int)rate_flags,
-		(int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
-#endif /* LINKSPEED_DEBUG_ENABLED */
+
+	hdd_info("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d",
+		 sinfo->signal, pCfg->reportMaxLinkSpeed, myRate,
+		 (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
+		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags,
+		 (int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
 
 	if (eHDD_LINK_SPEED_REPORT_ACTUAL != pCfg->reportMaxLinkSpeed) {
 		/* we do not want to necessarily report the current speed */
@@ -2118,6 +2117,13 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #endif /* LINKSPEED_DEBUG_ENABLED */
 		}
 	}
+
+	if (rate_flags & eHAL_TX_RATE_LEGACY)
+		hdd_info("Reporting legacy rate %d", sinfo->txrate.legacy);
+	else
+		hdd_info("Reporting MCS rate %d flags 0x%x",
+			 sinfo->txrate.mcs, sinfo->txrate.flags);
+
 	sinfo->filled |= STATION_INFO_TX_BITRATE;
 
 	sinfo->tx_bytes = pAdapter->stats.tx_bytes;
