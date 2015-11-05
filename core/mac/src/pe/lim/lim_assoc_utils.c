@@ -4033,11 +4033,14 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				lim_log(pMac, LOG1, FL(
 					"VHT Op IE is in vendor Specfic IE"));
 			}
-			if ((vht_oper != NULL) &&
-					pAddBssParams->staContext.vhtCapable &&
-					vht_oper->chanWidth)
-				pAddBssParams->staContext.ch_width =
-					vht_oper->chanWidth + 1;
+			/*
+			 * in limExtractApCapability function intersection of FW
+			 * advertised channel width and AP advertised channel
+			 * width has been taken into account for calculating
+			 * psessionEntry->ch_width
+			 */
+			pAddBssParams->staContext.ch_width =
+					psessionEntry->ch_width;
 
 			lim_log(pMac, LOGE, FL(
 					"StaCtx: vhtCap %d ChBW %d TxBF %d"),
@@ -4480,13 +4483,19 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		if ((vht_oper != NULL) &&
 			vht_oper->chanWidth &&
 			chanWidthSupp) {
-			pAddBssParams->ch_width =
-				vht_oper->chanWidth + 1;
 			pAddBssParams->ch_center_freq_seg0 =
 				vht_oper->chanCenterFreqSeg1;
 			pAddBssParams->ch_center_freq_seg1 =
 				vht_oper->chanCenterFreqSeg2;
 		}
+		/*
+		 * in limExtractApCapability function intersection of FW
+		 * advertised channel width and AP advertised channel width has
+		 * been taken into account for calculating
+		 * psessionEntry->ch_width
+		 */
+		pAddBssParams->ch_width =
+			psessionEntry->ch_width;
 		pAddBssParams->staContext.maxAmpduSize =
 			SIR_MAC_GET_VHT_MAX_AMPDU_EXPO(
 					pAddBssParams->staContext.vht_caps);

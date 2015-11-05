@@ -588,4 +588,5 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 		uint8_t *addn_ie, uint16_t *addn_ielen, tDot11fIEExtCap *dst);
 void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src);
 
+uint8_t lim_get_80Mhz_center_channel(uint8_t primary_channel);
 #endif /* __LIM_UTILS_H */

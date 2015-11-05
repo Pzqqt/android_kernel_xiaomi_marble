@@ -55,6 +55,8 @@
 #include "lim_ft_defs.h"
 #endif
 #include "lim_session.h"
+#include "wma.h"
+
 #define LIM_GET_NOISE_MAX_TRY 5
 /**
  * lim_extract_ap_capability() - extract AP's HCF/WME/WSM capability
@@ -140,6 +142,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		} else {
 			session->vhtCapabilityPresentInBeacon = 0;
 		}
+
 		if (session->vhtCapabilityPresentInBeacon == 1 &&
 		    session->txBFIniFeatureEnabled == 0) {
 			cfg_set_status = cfg_set_int(mac_ctx,
@@ -159,12 +162,28 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				session->txBFIniFeatureEnabled = 0;
 		} else if (session->vhtCapabilityPresentInBeacon == 1 &&
 			   beacon_struct->VHTOperation.chanWidth) {
-			session->ch_center_freq_seg0 =
-				beacon_struct->VHTOperation.chanCenterFreqSeg1;
-			session->ch_center_freq_seg1 =
-				beacon_struct->VHTOperation.chanCenterFreqSeg2;
-			session->ch_width =
-				beacon_struct->VHTOperation.chanWidth + 1;
+			/* If VHT is supported min 80 MHz support is must */
+			uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
+			uint32_t vht_ch_wd = CDF_MIN(fw_vht_ch_wd,
+					beacon_struct->VHTOperation.chanWidth);
+			if (vht_ch_wd == beacon_struct->VHTOperation.chanWidth
+			    || vht_ch_wd >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) {
+				/*
+				 * This block covers 2 cases:
+				 * 1) AP and STA both have same vht capab
+				 * 2) AP is 160 (80+80), we are 160 only
+				 */
+				session->ch_center_freq_seg0 =
+				 beacon_struct->VHTOperation.chanCenterFreqSeg1;
+				session->ch_center_freq_seg1 =
+				 beacon_struct->VHTOperation.chanCenterFreqSeg2;
+			} else {
+				/* when AP was 160 but we were 80 only */
+				session->ch_center_freq_seg0 =
+					lim_get_80Mhz_center_channel(
+						beacon_struct->channelNumber);
+			}
+			session->ch_width = vht_ch_wd + 1;
 			if (CH_WIDTH_80MHZ < session->ch_width) {
 				session->enable_su_tx_bformer = 0;
 				session->nss = 1;
