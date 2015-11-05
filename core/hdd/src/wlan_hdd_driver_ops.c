@@ -46,6 +46,7 @@
 #include "wlan_logging_sock_svc.h"
 #include "wma_api.h"
 #include "wlan_hdd_napi.h"
+#include "cds_concurrency.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)

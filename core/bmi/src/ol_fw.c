@@ -42,6 +42,7 @@
 
 #include "i_bmi.h"
 #include "qwlan_version.h"
+#include "cds_concurrency.h"
 
 #ifdef FEATURE_SECURE_FIRMWARE
 static struct hash_fw fw_hash;

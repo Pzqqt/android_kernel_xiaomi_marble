@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,7 +29,6 @@
 #include "htc_internal.h"
 #include "cds_api.h"
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cds_get_bin.h>
 #include "epping_main.h"
 
 #ifdef DEBUG

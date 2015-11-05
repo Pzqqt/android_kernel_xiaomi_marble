@@ -47,6 +47,7 @@
 #include "sme_api.h"
 #include "csr_neighbor_roam.h"
 #include "mac_trace.h"
+#include "cds_concurrency.h"
 
 #define WLAN_FEATURE_NEIGHBOR_ROAMING_DEBUG 1
 #ifdef WLAN_FEATURE_NEIGHBOR_ROAMING_DEBUG

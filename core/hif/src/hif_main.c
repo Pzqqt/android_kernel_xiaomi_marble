@@ -51,7 +51,6 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
-#include <cds_get_bin.h>
 #include "epping_main.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
@@ -64,6 +63,8 @@
 #ifndef REMOVE_PKT_LOG
 #include "pktlog_ac.h"
 #endif
+
+#include "cds_concurrency.h"
 
 #define AGC_DUMP         1
 #define CHANINFO_DUMP    2

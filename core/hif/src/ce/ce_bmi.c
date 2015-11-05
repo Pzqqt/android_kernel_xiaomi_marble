@@ -49,7 +49,6 @@
 #else
 #include "cnss_stub.h"
 #endif
-#include <cds_get_bin.h>
 #include "epping_main.h"
 #include "hif_debug.h"
 

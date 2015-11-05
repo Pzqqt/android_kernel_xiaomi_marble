@@ -31,9 +31,9 @@
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <cdf_types.h>          /* cdf_print */
 #include <hif.h>
-#include <cds_get_bin.h>
 #include "epping_main.h"
 #include "hif_io32.h"
+#include "cds_concurrency.h"
 
 #ifdef DEBUG
 static ATH_DEBUG_MASK_DESCRIPTION g_htc_debug_description[] = {

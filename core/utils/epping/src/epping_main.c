@@ -53,6 +53,7 @@
 #include "hif.h"
 #include "epping_main.h"
 #include "epping_internal.h"
+#include "cds_concurrency.h"
 
 #ifdef TIMER_MANAGER
 #define TIMER_MANAGER_STR " +TIMER_MANAGER"

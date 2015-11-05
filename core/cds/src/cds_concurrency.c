@@ -7234,3 +7234,155 @@ enum cds_con_mode cds_convert_device_mode_to_hdd_type(
 	}
 	return mode;
 }
+
+/**
+ * cds_get_conparam() - Get the connection mode parameters
+ *
+ * Return the connection mode parameter set by insmod or set during statically
+ * linked driver
+ *
+ * Return: tCDF_CON_MODE
+ */
+tCDF_CON_MODE cds_get_conparam(void)
+{
+	tCDF_CON_MODE con_mode;
+	con_mode = hdd_get_conparam();
+	return con_mode;
+}
+
+/**
+ * cds_concurrent_open_sessions_running() - Checks for concurrent open session
+ *
+ * Checks if more than one open session is running for all the allowed modes
+ * in the driver
+ *
+ * Return: True if more than one open session exists, False otherwise
+ */
+bool cds_concurrent_open_sessions_running(void)
+{
+	uint8_t i = 0;
+	uint8_t j = 0;
+	hdd_context_t *pHddCtx;
+
+	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (NULL != pHddCtx) {
+		for (i = 0; i < CDF_MAX_NO_OF_MODE; i++)
+			j += pHddCtx->no_of_open_sessions[i];
+	}
+
+	return j > 1;
+}
+
+#ifdef WLAN_FEATURE_MBSSID
+/**
+ * cds_concurrent_beaconing_sessions_running() - Checks for concurrent beaconing
+ * entities
+ *
+ * Checks if multiple beaconing sessions are running i.e., if SAP or GO or IBSS
+ * are beaconing together
+ *
+ * Return: True if multiple entities are beaconing together, False otherwise
+ */
+bool cds_concurrent_beaconing_sessions_running(void)
+{
+	uint8_t i = 0;
+	hdd_context_t *pHddCtx;
+
+	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (NULL != pHddCtx) {
+		i = pHddCtx->no_of_open_sessions[CDF_SAP_MODE] +
+			pHddCtx->no_of_open_sessions[CDF_P2P_GO_MODE] +
+			pHddCtx->no_of_open_sessions[CDF_IBSS_MODE];
+	}
+	return i > 1;
+}
+#endif
+
+/**
+ * cds_max_concurrent_connections_reached() - Check if max conccurrency is
+ * reached
+ *
+ * Checks for presence of concurrency where more than one connection exists
+ *
+ * Return: True if the max concurrency is reached, False otherwise
+ *
+ * Example:
+ *    STA + STA (wlan0 and wlan1 are connected) - returns true
+ *    STA + STA (wlan0 connected and wlan1 disconnected) - returns false
+ *    DUT with P2P-GO + P2P-CLIENT connection) - returns true
+ *
+ */
+bool cds_max_concurrent_connections_reached(void)
+{
+	uint8_t i = 0, j = 0;
+	hdd_context_t *pHddCtx;
+
+	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (NULL != pHddCtx) {
+		for (i = 0; i < CDF_MAX_NO_OF_MODE; i++)
+			j += pHddCtx->no_of_active_sessions[i];
+		return j >
+			(pHddCtx->config->
+			 gMaxConcurrentActiveSessions - 1);
+	}
+
+	return false;
+}
+
+/**
+ * cds_clear_concurrent_session_count() - Clear active session count
+ *
+ * Clears the active session count for all modes
+ *
+ * Return: None
+ */
+void cds_clear_concurrent_session_count(void)
+{
+	uint8_t i = 0;
+	hdd_context_t *pHddCtx;
+
+	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (NULL != pHddCtx) {
+		for (i = 0; i < CDF_MAX_NO_OF_MODE; i++)
+			pHddCtx->no_of_active_sessions[i] = 0;
+	}
+}
+
+/**
+ * cds_is_multiple_active_sta_sessions() - Check for multiple STA connections
+ *
+ * Checks if multiple active STA connection are in the driver
+ *
+ * Return: True if multiple STA sessions are present, False otherwise
+ *
+ */
+bool cds_is_multiple_active_sta_sessions(void)
+{
+	hdd_context_t *pHddCtx;
+	uint8_t j = 0;
+
+	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (NULL != pHddCtx)
+		j = pHddCtx->no_of_active_sessions[CDF_STA_MODE];
+
+	return j > 1;
+}
+
+/**
+ * cds_is_sta_active_connection_exists() - Check if a STA connection is active
+ *
+ * Checks if there is atleast one active STA connection in the driver
+ *
+ * Return: True if an active STA session is present, False otherwise
+ */
+bool cds_is_sta_active_connection_exists(void)
+{
+	hdd_context_t *pHddCtx;
+	uint8_t j = 0;
+
+	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (NULL != pHddCtx)
+		j = pHddCtx->no_of_active_sessions[CDF_STA_MODE];
+
+	return j ? true : false;
+}
