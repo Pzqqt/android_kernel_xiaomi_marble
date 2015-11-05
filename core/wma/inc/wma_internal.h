@@ -111,27 +111,29 @@
 
 /**
  * struct index_data_rate_type - non vht data rate type
- * @beacon_rate_index: Beacon rate index
- * @supported_rate: Supported rate table
+ * @mcs_index: mcs rate index
+ * @ht20_rate: HT20 supported rate table
+ * @ht40_rate: HT40 supported rate table
  */
 struct index_data_rate_type {
-	uint8_t beacon_rate_index;
-	uint16_t supported_rate[4];
+	uint8_t  mcs_index;
+	uint16_t ht20_rate[2];
+	uint16_t ht40_rate[2];
 };
 
 #ifdef WLAN_FEATURE_11AC
 /**
  * struct index_vht_data_rate_type - vht data rate type
- * @beacon_rate_index: Beacon rate index
- * @supported_VHT80_rate: VHT80 rate
- * @supported_VHT40_rate: VHT40 rate
- * @supported_VHT20_rate: VHT20 rate
+ * @mcs_index: mcs rate index
+ * @ht20_rate: VHT20 supported rate table
+ * @ht40_rate: VHT40 supported rate table
+ * @ht80_rate: VHT80 supported rate table
  */
 struct index_vht_data_rate_type {
-	uint8_t beacon_rate_index;
-	uint16_t supported_VHT80_rate[2];
-	uint16_t supported_VHT40_rate[2];
-	uint16_t supported_VHT20_rate[2];
+	uint8_t mcs_index;
+	uint16_t ht20_rate[2];
+	uint16_t ht40_rate[2];
+	uint16_t ht80_rate[2];
 };
 #endif
 
