@@ -2949,6 +2949,8 @@ typedef enum {
 	WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK,
 	/* Set tx chain mask for 1SS stream */
 	WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS,
+	/* Enable/Disable CTS2Self for P2P GO when Non-P2P Client is connected*/
+	WMI_PDEV_PARAM_CTS2SELF_FOR_P2P_GO_CONFIG,
 } WMI_PDEV_PARAM;
 
 typedef enum {
