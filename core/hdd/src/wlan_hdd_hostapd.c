@@ -604,6 +604,21 @@ static void hdd_issue_stored_joinreq(hdd_adapter_t *sta_adapter,
 	}
 }
 
+#ifdef WLAN_FEATURE_MBSSID
+static eCsrPhyMode
+hdd_sap_get_phymode(hdd_adapter_t *hostapd_adapter)
+{
+	return wlansap_get_phymode(WLAN_HDD_GET_SAP_CTX_PTR(hostapd_adapter));
+}
+#else
+static eCsrPhyMode
+hdd_sap_get_phymode(hdd_adapter_t *hostapd_adapter)
+{
+	return wlansap_get_phymode(
+		(WLAN_HDD_GET_CTX(hostapd_adapter))->pcds_context);
+}
+#endif
+
 /**
  * hdd_chan_change_notify() - Function to notify hostapd about channel change
  * @hostapd_adapter	hostapd adapter
@@ -641,7 +656,7 @@ CDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	phy_mode = sme_get_phy_mode(hal);
+	phy_mode = hdd_sap_get_phymode(hostapd_adapter);
 
 	if (oper_chan <= 14)
 		cb_mode = sme_get_cb_phy_state_from_cb_ini_value(
@@ -668,6 +683,9 @@ CDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
 		channel_type = NL80211_CHAN_NO_HT;
 		break;
 	}
+
+	hdd_info("%s: phy_mode %d cb_mode %d chann_type %d oper_chan %d",
+		__func__, phy_mode, cb_mode, channel_type, oper_chan);
 
 	cfg80211_chandef_create(&chandef, chan, channel_type);
 
