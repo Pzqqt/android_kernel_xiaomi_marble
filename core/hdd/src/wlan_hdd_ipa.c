@@ -2444,12 +2444,6 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			 */
 			fw_desc = (uint8_t)skb->cb[1];
 
-			if (fw_desc & FW_RX_DESC_DISCARD_M) {
-				HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-				hdd_ipa->ipa_rx_discard++;
-				cdf_nbuf_free(skb);
-				break;
-			}
 
 			if (fw_desc & FW_RX_DESC_FORWARD_M) {
 				HDD_IPA_LOG(
@@ -2473,6 +2467,14 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 					}
 				}
 			}
+
+			if (fw_desc & FW_RX_DESC_DISCARD_M) {
+				HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
+				hdd_ipa->ipa_rx_discard++;
+				cdf_nbuf_free(skb);
+				break;
+			}
+
 		} else {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
 				"Intra-BSS FWD is disabled-skip forward to Tx");
