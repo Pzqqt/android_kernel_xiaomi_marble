@@ -4562,9 +4562,8 @@ __iw_softap_setwpsie(struct net_device *dev,
 		switch (wps_genie[0]) {
 		case DOT11F_EID_WPA:
 			if (wps_genie[1] < 2 + 4) {
-				qdf_mem_free(pSap_WPSIe);
-				kfree(fwps_genie);
-				return -EINVAL;
+				ret = -EINVAL;
+				goto exit;
 			} else if (memcmp(&wps_genie[2],
 				   "\x00\x50\xf2\x04", 4) == 0) {
 				hddLog(LOG1, FL("Set WPS BEACON IE(len %d)"),
@@ -4674,6 +4673,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSBeaconIE.UUID_E)) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSBeaconIE.
@@ -4705,9 +4710,8 @@ __iw_softap_setwpsie(struct net_device *dev,
 						       "UNKNOWN TLV in WPS IE(%x)",
 						       (*pos << 8 |
 							*(pos + 1)));
-						qdf_mem_free(pSap_WPSIe);
-						kfree(fwps_genie);
-						return -EINVAL;
+						ret = -EINVAL;
+						goto exit;
 					}
 				}
 			} else {
@@ -4718,9 +4722,8 @@ __iw_softap_setwpsie(struct net_device *dev,
 
 		default:
 			hddLog(LOGE, FL("Set UNKNOWN IE %X"), wps_genie[0]);
-			qdf_mem_free(pSap_WPSIe);
-			kfree(fwps_genie);
-			return 0;
+			ret = -EINVAL;
+			goto exit;
 		}
 	} else if (wps_genie[0] == eQC_WPS_PROBE_RSP_IE) {
 		pSap_WPSIe->sapWPSIECode = eSAP_WPS_PROBE_RSP_IE;
@@ -4728,9 +4731,8 @@ __iw_softap_setwpsie(struct net_device *dev,
 		switch (wps_genie[0]) {
 		case DOT11F_EID_WPA:
 			if (wps_genie[1] < 2 + 4) {
-				qdf_mem_free(pSap_WPSIe);
-				kfree(fwps_genie);
-				return -EINVAL;
+				ret = -EINVAL;
+				goto exit;
 			} else if (memcmp(&wps_genie[2], "\x00\x50\xf2\x04", 4)
 				   == 0) {
 				hddLog(LOG1, FL("Set WPS PROBE RSP IE(len %d)"),
@@ -4857,6 +4859,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						(sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSProbeRspIE.UUID_E))) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
@@ -4873,6 +4881,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						(sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSProbeRspIE.Manufacture.name))) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.
 						Manufacture.num_name =
@@ -4893,6 +4907,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						(sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSProbeRspIE.ModelName.text))) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.ModelName.
 						num_text = length;
@@ -4911,6 +4931,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						(sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSProbeRspIE.ModelNumber.text))) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.
 						ModelNumber.num_text =
@@ -4930,6 +4956,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						(sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSProbeRspIE.SerialNumber.text))) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.
 						SerialNumber.num_text =
@@ -4988,6 +5020,12 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
+						if (length >
+						(sizeof(pSap_WPSIe->sapwpsie.
+						sapWPSProbeRspIE.DeviceName.text))) {
+							ret = -EINVAL;
+							goto exit;
+						}
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.DeviceName.
 						num_text = length;
@@ -5050,6 +5088,8 @@ __iw_softap_setwpsie(struct net_device *dev,
 #else
 	qdf_ret_status = wlansap_set_wps_ie(p_cds_context, pSap_WPSIe);
 #endif
+	if (qdf_ret_status != QDF_STATUS_SUCCESS)
+		ret = -EINVAL;
 	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 	if (pHostapdState->bCommit && WPSIeType == eQC_WPS_PROBE_RSP_IE) {
 #ifdef WLAN_FEATURE_MBSSID
@@ -5058,11 +5098,11 @@ __iw_softap_setwpsie(struct net_device *dev,
 		wlansap_update_wps_ie(p_cds_context);
 #endif
 	}
-
+exit:
 	qdf_mem_free(pSap_WPSIe);
 	kfree(fwps_genie);
 	EXIT();
-	return qdf_ret_status;
+	return ret;
 }
 
 static int iw_softap_setwpsie(struct net_device *dev,
