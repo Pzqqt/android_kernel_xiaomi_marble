@@ -4038,14 +4038,18 @@ error:
 				cdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 				mac_ctx->sme.saved_scan_cmd = NULL;
 			}
-		} else if (CDF_STATUS_E_NOSUPPORT == ret) {
-			sms_log(mac_ctx, LOGE, FL("conn update not supported"));
+		} else if ((CDF_STATUS_E_NOSUPPORT == ret) ||
+			(CDF_STATUS_E_ALREADY == ret)) {
+			sms_log(mac_ctx, LOGE, FL("conn update ret %d"), ret);
 			csr_scan_handle_search_for_ssid(mac_ctx, pCommand);
 			if (mac_ctx->sme.saved_scan_cmd) {
 				cdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 				mac_ctx->sme.saved_scan_cmd = NULL;
 			}
 		}
+		/* Else: Set hw mode was issued and the saved connect would
+		 * be issued after set hw mode response
+		 */
 		break;
 	default:
 		break;
