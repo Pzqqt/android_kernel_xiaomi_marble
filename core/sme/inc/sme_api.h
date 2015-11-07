@@ -615,7 +615,6 @@ CDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal, uint8_t sessionId,
 #endif /* FEATURE_WLAN_ESE */
 CDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
 		bool fEnableFwRssiMonitoring);
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 CDF_STATUS sme_set_roam_rescan_rssi_diff(tHalHandle hHal,
 		uint8_t sessionId,
 		const uint8_t nRoamRescanRssiDiff);
@@ -665,7 +664,6 @@ uint8_t sme_get_roam_bmiss_final_bcnt(tHalHandle hHal);
 CDF_STATUS sme_set_roam_beacon_rssi_weight(tHalHandle hHal, uint8_t sessionId,
 		const uint8_t nRoamBeaconRssiWeight);
 uint8_t sme_get_roam_beacon_rssi_weight(tHalHandle hHal);
-#endif
 #if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
 		defined(FEATURE_WLAN_LFR)
 uint8_t sme_get_roam_rssi_diff(tHalHandle hHal);

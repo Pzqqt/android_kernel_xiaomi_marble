@@ -35,7 +35,6 @@
 #ifndef CSR_NEIGHBOR_ROAM_H
 #define CSR_NEIGHBOR_ROAM_H
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "sme_api.h"
 
 #define ROAM_AP_AGE_LIMIT_MS                     10000
@@ -307,5 +306,4 @@ CDF_STATUS csr_roam_offload_send_synch_cnf(tpAniSirGlobal pMac,
 CDF_STATUS csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 		roam_offload_synch_ind *roam_synch_ind_ptr, uint8_t sessionId);
 #endif
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 #endif /* CSR_NEIGHBOR_ROAM_H */
