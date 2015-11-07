@@ -18103,6 +18103,7 @@ csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 	pModifyAddIEInd->modifyIE.ieIDLen = pModifyIE->ieIDLen;
 	pModifyAddIEInd->modifyIE.pIEBuffer = pLocalBuffer;
 	pModifyAddIEInd->modifyIE.ieBufferlength = pModifyIE->ieBufferlength;
+	pModifyAddIEInd->modifyIE.oui_length = pModifyIE->oui_length;
 
 	pModifyAddIEInd->updateType = updateType;
 

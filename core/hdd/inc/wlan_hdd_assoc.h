@@ -52,6 +52,9 @@
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
 
+/* Timeout in ms for peer info request commpletion */
+#define IBSS_PEER_INFO_REQ_TIMOEUT 1000
+
 /* Type Declarations */
 /**
  * typedef eConnectionState - Connection states

@@ -303,6 +303,8 @@
 #define WMA_DHCP_START_IND              SIR_HAL_DHCP_START_IND
 #define WMA_DHCP_STOP_IND               SIR_HAL_DHCP_STOP_IND
 
+#define WMA_TX_FAIL_MONITOR_IND         SIR_HAL_TX_FAIL_MONITOR_IND
+
 #define WMA_HIDDEN_SSID_VDEV_RESTART    SIR_HAL_HIDE_SSID_VDEV_RESTART
 
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
@@ -358,6 +360,14 @@
 
 #define WMA_INIT_THERMAL_INFO_CMD   SIR_HAL_INIT_THERMAL_INFO_CMD
 #define WMA_SET_THERMAL_LEVEL       SIR_HAL_SET_THERMAL_LEVEL
+#define WMA_RMC_ENABLE_IND          SIR_HAL_RMC_ENABLE_IND
+#define WMA_RMC_DISABLE_IND         SIR_HAL_RMC_DISABLE_IND
+#define WMA_RMC_ACTION_PERIOD_IND   SIR_HAL_RMC_ACTION_PERIOD_IND
+
+/* IBSS peer info related message */
+#define WMA_GET_IBSS_PEER_INFO_REQ  SIR_HAL_IBSS_PEER_INFO_REQ
+
+#define WMA_IBSS_CESIUM_ENABLE_IND  SIR_HAL_IBSS_CESIUM_ENABLE_IND
 
 #ifdef FEATURE_WLAN_TDLS
 #define WMA_UPDATE_FW_TDLS_STATE          SIR_HAL_UPDATE_FW_TDLS_STATE
@@ -583,6 +593,8 @@ typedef void (*pWMATxRxCompFunc)(void *pContext, void *pData,
 /* parameter 1 - global pMac pointer */
 /* parameter 2 - txComplete status : 1- success, 0 - failure. */
 typedef QDF_STATUS (*pWMAAckFnTxComp)(tpAniSirGlobal, uint32_t);
+
+typedef void (*wma_txFailIndCallback)(uint8_t *, uint8_t);
 
 /* generic callback for updating parameters from target to UMAC */
 typedef void (*wma_tgt_cfg_cb)(void *context, void *param);

@@ -146,6 +146,8 @@ static int wlan_hdd_inited;
  */
 DEFINE_SPINLOCK(hdd_context_lock);
 
+#define WLAN_NLINK_CESIUM 30
+
 static qdf_wake_lock_t wlan_wake_lock;
 
 #define WOW_MAX_FILTER_LISTS 1
@@ -1619,6 +1621,45 @@ static void hdd_uninit(struct net_device *dev)
 	cds_ssr_unprotect(__func__);
 }
 
+static int hdd_open_cesium_nl_sock(void)
+{
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
+	struct netlink_kernel_cfg cfg = {
+		.groups = WLAN_NLINK_MCAST_GRP_ID,
+		.input = NULL
+	};
+#endif
+	int ret = 0;
+
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
+	cesium_nl_srv_sock = netlink_kernel_create(&init_net, WLAN_NLINK_CESIUM,
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 7, 0))
+						   THIS_MODULE,
+#endif
+						   &cfg);
+#else
+	cesium_nl_srv_sock = netlink_kernel_create(&init_net, WLAN_NLINK_CESIUM,
+						   WLAN_NLINK_MCAST_GRP_ID,
+						   NULL, NULL, THIS_MODULE);
+#endif
+
+	if (cesium_nl_srv_sock == NULL) {
+		hddLog(QDF_TRACE_LEVEL_ERROR,
+		       FL("NLINK:  cesium netlink_kernel_create failed"));
+		ret = -ECONNREFUSED;
+	}
+
+	return ret;
+}
+
+static void hdd_close_cesium_nl_sock(void)
+{
+	if (NULL != cesium_nl_srv_sock) {
+		netlink_kernel_release(cesium_nl_srv_sock);
+		cesium_nl_srv_sock = NULL;
+	}
+}
+
 /**
  * __hdd_set_mac_address() - set the user specified mac address
  * @dev:	Pointer to the net device.
@@ -1889,6 +1930,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		init_completion(&adapter->tdls_mgmt_comp);
 		init_completion(&adapter->tdls_link_establish_req_comp);
 #endif
+		init_completion(&adapter->ibss_peer_info_comp);
 		init_completion(&adapter->change_country_code);
 
 
@@ -3832,6 +3874,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_close_all_adapters(hdd_ctx, false);
 
+	hdd_close_cesium_nl_sock();
+
 	hdd_ipa_cleanup(hdd_ctx);
 
 	/* Free up RoC request queue and flush workqueue */
@@ -5680,6 +5724,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		goto err_nl_srv;
 	}
 
+	if (hdd_open_cesium_nl_sock() < 0) {
+		hdd_alert("hdd_open_cesium_nl_sock failed");
+		goto err_nl_srv;
+	}
+
 	/*
 	 * Action frame registered in one adapter which will
 	 * applicable to all interfaces
@@ -5831,6 +5880,8 @@ err_nl_srv:
 		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
 	}
+
+	hdd_close_cesium_nl_sock();
 
 err_close_adapter:
 	hdd_release_rtnl_lock();

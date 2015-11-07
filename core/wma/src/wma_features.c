@@ -4324,6 +4324,325 @@ QDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 }
 
 /**
+ * wma_process_cesium_enable_ind() - enables cesium functionality in target
+ * @wma: wma handle
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_process_cesium_enable_ind(tp_wma_handle wma)
+{
+	QDF_STATUS ret;
+	int32_t vdev_id;
+
+	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
+	if (vdev_id < 0) {
+		WMA_LOGE("%s: IBSS vdev does not exist could not enable cesium",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Send enable cesium command to target */
+	WMA_LOGE("Enable cesium in target for vdevId %d ", vdev_id);
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				 WMI_VDEV_PARAM_ENABLE_RMC, 1);
+	if (ret) {
+		WMA_LOGE("Enable cesium failed for vdevId %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_process_get_peer_info_req() - sends get peer info cmd to target
+ * @wma: wma handle
+ * @preq: get peer info request
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_process_get_peer_info_req
+	(tp_wma_handle wma, tSirIbssGetPeerInfoReqParams *pReq)
+{
+	int32_t ret;
+	uint8_t *p;
+	uint16_t len;
+	wmi_buf_t buf;
+	int32_t vdev_id;
+	ol_txrx_pdev_handle pdev;
+	struct ol_txrx_peer_t *peer;
+	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	wmi_peer_info_req_cmd_fixed_param *p_get_peer_info_cmd;
+	uint8_t bcast_mac[IEEE80211_ADDR_LEN] = { 0xff, 0xff, 0xff,
+						  0xff, 0xff, 0xff };
+
+	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
+	if (vdev_id < 0) {
+		WMA_LOGE("%s: IBSS vdev does not exist could not get peer info",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (NULL == pdev) {
+		WMA_LOGE("%s: Failed to get pdev context", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (0xFF == pReq->staIdx) {
+		/*get info for all peers */
+		qdf_mem_copy(peer_mac, bcast_mac, IEEE80211_ADDR_LEN);
+	} else {
+		/*get info for a single peer */
+		peer = ol_txrx_peer_find_by_local_id(pdev, pReq->staIdx);
+		if (!peer) {
+			WMA_LOGE("%s: Failed to get peer handle using peer id %d",
+				__func__, pReq->staIdx);
+			return QDF_STATUS_E_FAILURE;
+		}
+		WMA_LOGE("%s: staIdx %d peer mac: 0x%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x",
+			__func__, pReq->staIdx, peer->mac_addr.raw[0],
+			peer->mac_addr.raw[1], peer->mac_addr.raw[2],
+			peer->mac_addr.raw[3], peer->mac_addr.raw[4],
+			peer->mac_addr.raw[5]);
+		qdf_mem_copy(peer_mac, peer->mac_addr.raw, IEEE80211_ADDR_LEN);
+	}
+
+	len = sizeof(wmi_peer_info_req_cmd_fixed_param);
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p = (uint8_t *) wmi_buf_data(buf);
+	qdf_mem_zero(p, len);
+	p_get_peer_info_cmd = (wmi_peer_info_req_cmd_fixed_param *) p;
+
+	WMITLV_SET_HDR(&p_get_peer_info_cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_info_req_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_peer_info_req_cmd_fixed_param));
+
+	p_get_peer_info_cmd->vdev_id = vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_mac,
+				   &p_get_peer_info_cmd->peer_mac_address);
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				   WMI_PEER_INFO_REQ_CMDID);
+
+	WMA_LOGE("IBSS get peer info cmd sent len: %d, vdev %d"
+		 " command id: %d, status: %d", len,
+		 p_get_peer_info_cmd->vdev_id, WMI_PEER_INFO_REQ_CMDID, ret);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_process_tx_fail_monitor_ind() - sends tx fail monitor cmd to target
+ * @wma: wma handle
+ * @pReq: tx fail monitor command params
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_process_tx_fail_monitor_ind
+	(tp_wma_handle wma, tAniTXFailMonitorInd *pReq)
+{
+	QDF_STATUS ret;
+	int32_t vdev_id;
+
+	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
+	if (vdev_id < 0) {
+		WMA_LOGE("%s: IBSS vdev does not exist could not send fast tx fail"
+			" monitor indication message to target", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	/* Send enable cesium command to target */
+	WMA_LOGE("send fast tx fail monitor ind cmd target for vdevId %d val %d",
+		vdev_id, pReq->tx_fail_count);
+
+	if (0 == pReq->tx_fail_count) {
+		wma->hddTxFailCb = NULL;
+	} else {
+		wma->hddTxFailCb = pReq->txFailIndCallback;
+	}
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+				 WMI_VDEV_PARAM_SET_IBSS_TX_FAIL_CNT_THR,
+				 pReq->tx_fail_count);
+	if (ret) {
+		WMA_LOGE("tx fail monitor failed for vdevId %d", vdev_id);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_process_rmc_enable_ind() - enables RMC functionality in target
+ * @wma: wma handle
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma)
+{
+	int ret;
+	uint8_t *p;
+	uint16_t len;
+	wmi_buf_t buf;
+	int32_t vdev_id;
+	wmi_rmc_set_mode_cmd_fixed_param *p_rmc_enable_cmd;
+
+	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
+	if (vdev_id < 0) {
+		WMA_LOGE("%s: IBSS vdev does not exist could not enable RMC",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len = sizeof(wmi_rmc_set_mode_cmd_fixed_param);
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p = (uint8_t *) wmi_buf_data(buf);
+	qdf_mem_zero(p, len);
+	p_rmc_enable_cmd = (wmi_rmc_set_mode_cmd_fixed_param *) p;
+
+	WMITLV_SET_HDR(&p_rmc_enable_cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_rmc_set_mode_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_rmc_set_mode_cmd_fixed_param));
+
+	p_rmc_enable_cmd->vdev_id = vdev_id;
+	p_rmc_enable_cmd->enable_rmc = WMI_RMC_MODE_ENABLED;
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				   WMI_RMC_SET_MODE_CMDID);
+
+	WMA_LOGE("Enable RMC cmd sent len: %d, vdev %d" " command id: %d,"
+		 " status: %d", len, p_rmc_enable_cmd->vdev_id,
+		 WMI_RMC_SET_MODE_CMDID, ret);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_process_rmc_disable_ind() - disables rmc functionality in target
+ * @wma: wma handle
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma)
+{
+	int ret;
+	uint8_t *p;
+	uint16_t len;
+	wmi_buf_t buf;
+	int32_t vdev_id;
+	wmi_rmc_set_mode_cmd_fixed_param *p_rmc_disable_cmd;
+
+	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
+	if (vdev_id < 0) {
+		WMA_LOGE("%s: IBSS vdev does not exist could not disable RMC",
+			 __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len = sizeof(wmi_rmc_set_mode_cmd_fixed_param);
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p = (uint8_t *) wmi_buf_data(buf);
+	qdf_mem_zero(p, len);
+	p_rmc_disable_cmd = (wmi_rmc_set_mode_cmd_fixed_param *) p;
+
+	WMITLV_SET_HDR(&p_rmc_disable_cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_rmc_set_mode_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_rmc_set_mode_cmd_fixed_param));
+
+	p_rmc_disable_cmd->vdev_id = vdev_id;
+	p_rmc_disable_cmd->enable_rmc = WMI_RMC_MODE_DISABLED;
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				   WMI_RMC_SET_MODE_CMDID);
+
+	WMA_LOGE("Disable RMC cmd sent len: %d, vdev %d" " command id: %d,"
+		 " status: %d", len, p_rmc_disable_cmd->vdev_id,
+		 WMI_RMC_SET_MODE_CMDID, ret);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_process_rmc_action_period_ind() - sends RMC action period to target
+ * @wma: wma handle
+ *
+ * Return: QDF status
+ */
+QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma)
+{
+	int ret;
+	uint8_t *p;
+	uint16_t len;
+	uint32_t val;
+	wmi_buf_t buf;
+	int32_t vdev_id;
+	wmi_rmc_set_action_period_cmd_fixed_param *p_rmc_cmd;
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (NULL == mac) {
+		WMA_LOGE("%s: MAC mac does not exist", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	vdev_id = wma_find_vdev_by_type(wma, WMI_VDEV_TYPE_IBSS);
+	if (vdev_id < 0) {
+		WMA_LOGE("%s: IBSS vdev does not exist could not send"
+			 " RMC action period to target", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	len = sizeof(wmi_rmc_set_action_period_cmd_fixed_param);
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s %d: No WMI resource!", __func__, __LINE__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	p = (uint8_t *) wmi_buf_data(buf);
+	qdf_mem_zero(p, len);
+	p_rmc_cmd = (wmi_rmc_set_action_period_cmd_fixed_param *) p;
+
+	WMITLV_SET_HDR(&p_rmc_cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_rmc_set_action_period_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_rmc_set_action_period_cmd_fixed_param));
+
+	if (wlan_cfg_get_int(mac, WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY, &val)
+	    != eSIR_SUCCESS) {
+		WMA_LOGE("Failed to get value for RMC action period using default");
+		val = WNI_CFG_RMC_ACTION_PERIOD_FREQUENCY_STADEF;
+	}
+
+	p_rmc_cmd->vdev_id = vdev_id;
+	p_rmc_cmd->periodicity_msec = val;
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				   WMI_RMC_SET_ACTION_PERIOD_CMDID);
+
+	WMA_LOGE("RMC action period %d cmd sent len: %d, vdev %d"
+		 " command id: %d, status: %d", p_rmc_cmd->periodicity_msec,
+		 len, p_rmc_cmd->vdev_id, WMI_RMC_SET_ACTION_PERIOD_CMDID, ret);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * wma_process_add_periodic_tx_ptrn_ind - add periodic tx ptrn
  * @handle: wma handle
  * @pAddPeriodicTxPtrnParams: tx ptrn params

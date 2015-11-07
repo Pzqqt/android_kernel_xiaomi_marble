@@ -1977,6 +1977,152 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 }
 
 /**
+ * wma_ibss_peer_info_event_handler() - IBSS peer info event handler
+ * @handle: wma handle
+ * @data: event data
+ * @len: length of data
+ *
+ * This function handles IBSS peer info event from FW.
+ *
+ * Return: 0 for success or error code
+ */
+int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
+					    uint32_t len)
+{
+	cds_msg_t cds_msg;
+	wmi_peer_info *peer_info;
+	ol_txrx_pdev_handle pdev;
+	struct ol_txrx_peer_t *peer;
+	tSirIbssPeerInfoParams *pSmeRsp;
+	uint32_t count, num_peers, status;
+	tSirIbssGetPeerInfoRspParams *pRsp;
+	WMI_PEER_INFO_EVENTID_param_tlvs *param_tlvs;
+	wmi_peer_info_event_fixed_param *fix_param;
+	uint8_t peer_mac[IEEE80211_ADDR_LEN], staIdx;
+
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (NULL == pdev) {
+		WMA_LOGE("%s: could not get pdev context", __func__);
+		return 0;
+	}
+
+	param_tlvs = (WMI_PEER_INFO_EVENTID_param_tlvs *) data;
+	fix_param = param_tlvs->fixed_param;
+	peer_info = param_tlvs->peer_info;
+	num_peers = fix_param->num_peers;
+	status = 0;
+
+	WMA_LOGE("%s: num_peers %d", __func__, num_peers);
+
+	pRsp = qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoRspParams));
+	if (NULL == pRsp) {
+		WMA_LOGE("%s: could not allocate memory for ibss peer info rsp len %zu",
+			__func__, sizeof(tSirIbssGetPeerInfoRspParams));
+		return 0;
+	}
+
+	/*sanity check */
+	if ((num_peers > 32) || (NULL == peer_info)) {
+		WMA_LOGE("%s: Invalid event data from target num_peers %d peer_info %p",
+			__func__, num_peers, peer_info);
+		status = 1;
+		goto send_response;
+	}
+
+	for (count = 0; count < num_peers; count++) {
+		pSmeRsp = &pRsp->ibssPeerInfoRspParams.peerInfoParams[count];
+
+		WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_info->peer_mac_address,
+					   peer_mac);
+		peer = ol_txrx_find_peer_by_addr(pdev, peer_mac, &staIdx);
+		if (NULL == peer) {
+			WMA_LOGE("%s: peer 0x:%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x does not"
+				" exist could not populate response", __func__,
+				peer_mac[0], peer_mac[1], peer_mac[2],
+				peer_mac[3], peer_mac[4], peer_mac[5]);
+
+			pSmeRsp->staIdx = 0xff; /*fill invalid staIdx */
+			peer_info++;
+			continue;
+		}
+		pSmeRsp->staIdx = staIdx;
+		pSmeRsp->mcsIndex = 0;
+		pSmeRsp->rssi = peer_info->rssi + WMA_TGT_NOISE_FLOOR_DBM;
+		pSmeRsp->txRate = peer_info->data_rate;
+		pSmeRsp->txRateFlags = 0;
+
+		WMA_LOGE("%s: peer 0x:%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x staIdx %d "
+			"rssi %d txRate %d", __func__, peer_mac[0], peer_mac[1],
+			peer_mac[2], peer_mac[3], peer_mac[4], peer_mac[5],
+			staIdx, pSmeRsp->rssi, pSmeRsp->txRate);
+
+		peer_info++;
+	}
+
+send_response:
+	/* message header */
+	pRsp->mesgType = eWNI_SME_IBSS_PEER_INFO_RSP;
+	pRsp->mesgLen = sizeof(tSirIbssGetPeerInfoRspParams);
+	pRsp->ibssPeerInfoRspParams.status = status;
+	pRsp->ibssPeerInfoRspParams.numPeers = num_peers;
+
+	/* cds message wrapper */
+	cds_msg.type = eWNI_SME_IBSS_PEER_INFO_RSP;
+	cds_msg.bodyptr = (void *)pRsp;
+	cds_msg.bodyval = 0;
+
+	if (QDF_STATUS_SUCCESS !=
+	    cds_mq_post_message(CDS_MQ_ID_SME, (cds_msg_t *) &cds_msg)) {
+		WMA_LOGE("%s: could not post peer info rsp msg to SME",
+			 __func__);
+		/* free the mem and return */
+		qdf_mem_free((void *)pRsp);
+	}
+
+	return 0;
+}
+
+/**
+ * wma_fast_tx_fail_event_handler() -tx failure event handler
+ * @handle: wma handle
+ * @data: event data
+ * @len: data length
+ *
+ * Handle fast tx failure indication event from FW
+ *
+ * Return: 0 for success or error code.
+ */
+int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
+					  uint32_t len)
+{
+	uint8_t tx_fail_cnt;
+	uint8_t peer_mac[IEEE80211_ADDR_LEN];
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	WMI_PEER_TX_FAIL_CNT_THR_EVENTID_param_tlvs *param_tlvs;
+	wmi_peer_tx_fail_cnt_thr_event_fixed_param *fix_param;
+
+	param_tlvs = (WMI_PEER_TX_FAIL_CNT_THR_EVENTID_param_tlvs *) data;
+	fix_param = param_tlvs->fixed_param;
+
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&fix_param->peer_mac_address, peer_mac);
+	WMA_LOGE("%s: received fast tx failure event for peer"
+		 "  0x:%2x:0x%2x:0x%2x:0x%2x:0x%2x:0x%2x seq No %d", __func__,
+		 peer_mac[0], peer_mac[1], peer_mac[2], peer_mac[3],
+		 peer_mac[4], peer_mac[5], fix_param->seq_no);
+
+	tx_fail_cnt = fix_param->seq_no;
+
+	/*call HDD callback */
+	if (NULL != wma->hddTxFailCb) {
+		wma->hddTxFailCb(peer_mac, tx_fail_cnt);
+	} else {
+		WMA_LOGE("%s: HDD callback is %p", __func__, wma->hddTxFailCb);
+	}
+
+	return 0;
+}
+
+/**
  * wma_decap_to_8023() - Decapsulate to 802.3 format
  * @msdu: skb buffer
  * @info: decapsulate info

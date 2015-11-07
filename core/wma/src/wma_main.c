@@ -2695,6 +2695,34 @@ QDF_STATUS wma_start(void *cds_ctx)
 		goto end;
 #endif /* QCA_WIFI_FTM */
 
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_RMC)) {
+
+		WMA_LOGD("FW supports cesium network, registering event handlers");
+
+		status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
+							   WMI_PEER_INFO_EVENTID,
+							   wma_ibss_peer_info_event_handler,
+							   WMA_RX_SERIALIZER_CTX);
+		if (status) {
+			WMA_LOGE("Failed to register ibss peer info event cb");
+			qdf_status = QDF_STATUS_E_FAILURE;
+			goto end;
+		}
+
+		status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
+							   WMI_PEER_TX_FAIL_CNT_THR_EVENTID,
+							   wma_fast_tx_fail_event_handler,
+							   WMA_RX_SERIALIZER_CTX);
+		if (status) {
+			WMA_LOGE("Failed to register peer fast tx failure event cb");
+			qdf_status = QDF_STATUS_E_FAILURE;
+			goto end;
+		}
+	} else {
+		WMA_LOGE("Target does not support cesium network");
+	}
+
 	qdf_status = wma_tx_attach(wma_handle);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: Failed to register tx management", __func__);
@@ -4860,6 +4888,30 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		qdf_mem_free(msg->bodyptr);
 		break;
 
+	case WMA_IBSS_CESIUM_ENABLE_IND:
+		wma_process_cesium_enable_ind(wma_handle);
+		break;
+	case WMA_GET_IBSS_PEER_INFO_REQ:
+		wma_process_get_peer_info_req(wma_handle,
+					      (tSirIbssGetPeerInfoReqParams *)
+					      msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_TX_FAIL_MONITOR_IND:
+		wma_process_tx_fail_monitor_ind(wma_handle,
+				(tAniTXFailMonitorInd *) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
+
+	case WMA_RMC_ENABLE_IND:
+		wma_process_rmc_enable_ind(wma_handle);
+		break;
+	case WMA_RMC_DISABLE_IND:
+		wma_process_rmc_disable_ind(wma_handle);
+		break;
+	case WMA_RMC_ACTION_PERIOD_IND:
+		wma_process_rmc_action_period_ind(wma_handle);
+		break;
 	case WMA_INIT_THERMAL_INFO_CMD:
 		wma_process_init_thermal_info(wma_handle,
 					      (t_thermal_mgmt *) msg->bodyptr);

@@ -106,7 +106,10 @@ static void lim_update_add_ie_buffer(tpAniSirGlobal pMac,
 				     uint8_t **pDstData_buff,
 				     uint16_t *pDstDataLen,
 				     uint8_t *pSrcData_buff, uint16_t srcDataLen);
-
+static bool lim_update_ibss_prop_add_ies(tpAniSirGlobal pMac,
+					 uint8_t **pDstData_buff,
+					 uint16_t *pDstDataLen,
+					 tSirModifyIE *pModifyIE);
 static void lim_process_modify_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
 
 static void lim_process_update_add_ies(tpAniSirGlobal pMac, uint32_t *pMsg);
@@ -5177,6 +5180,44 @@ lim_update_add_ie_buffer(tpAniSirGlobal pMac,
 
 }
 
+/**
+ * lim_update_ibss_prop_add_ies() - update IBSS prop IE
+ * @pMac          : Pointer to Global MAC structure
+ * @pDstData_buff : A pointer to pointer of  dst buffer
+ * @pDstDataLen  :  A pointer to pointer of  dst buffer length
+ * @pModifyIE    :  A pointer to tSirModifyIE
+ *
+ * This function replaces previous ibss prop_ie with new ibss prop_ie.
+ *
+ * Return:
+ *  True or false depending upon whether IE is updated or not
+ */
+static bool
+lim_update_ibss_prop_add_ies(tpAniSirGlobal pMac, uint8_t **pDstData_buff,
+			     uint16_t *pDstDataLen, tSirModifyIE *pModifyIE)
+{
+	int32_t  oui_length;
+	uint8_t  *ibss_ie = NULL;
+
+	ibss_ie = pModifyIE->pIEBuffer;
+	oui_length = pModifyIE->oui_length;
+
+	if ((0 == oui_length) || (NULL == ibss_ie)) {
+		PELOGE(lim_log(pMac, LOGE,
+			FL("Invalid set IBSS vendor IE command length %d "),
+			oui_length);)
+		return false;
+	}
+
+	lim_update_add_ie_buffer(pMac,
+				 pDstData_buff,
+				 pDstDataLen,
+				 pModifyIE->pIEBuffer,
+				 pModifyIE->ieBufferlength);
+
+	return true;
+}
+
 /*
 * lim_process_modify_add_ies() - process modify additional IE req.
 *
@@ -5228,6 +5269,12 @@ static void lim_process_modify_add_ies(tpAniSirGlobal mac_ctx,
 	switch (modify_add_ies->updateType) {
 	case eUPDATE_IE_PROBE_RESP:
 		/* Probe resp */
+		if (LIM_IS_IBSS_ROLE(session_entry)) {
+			lim_update_ibss_prop_add_ies(mac_ctx,
+				&add_ie_params->probeRespData_buff,
+				&add_ie_params->probeRespDataLen,
+				&modify_add_ies->modifyIE);
+		}
 		break;
 	case eUPDATE_IE_ASSOC_RESP:
 		/* assoc resp IE */
@@ -5241,6 +5288,12 @@ static void lim_process_modify_add_ies(tpAniSirGlobal mac_ctx,
 		break;
 	case eUPDATE_IE_PROBE_BCN:
 		/*probe beacon IE */
+		if (LIM_IS_IBSS_ROLE(session_entry)) {
+			ret = lim_update_ibss_prop_add_ies(mac_ctx,
+				&add_ie_params->probeRespBCNData_buff,
+				&add_ie_params->probeRespBCNDataLen,
+				&modify_add_ies->modifyIE);
+		}
 		if (ret == true && modify_add_ies->modifyIE.notify) {
 			lim_handle_param_update(mac_ctx,
 					modify_add_ies->updateType);

@@ -2092,6 +2092,28 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
+QDF_STATUS sme_ibss_peer_info_response_handleer(tHalHandle hHal,
+						tpSirIbssGetPeerInfoRspParams
+						pIbssPeerInfoParams)
+{
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+
+	if (NULL == pMac) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
+			  "%s: pMac is null", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	if (pMac->sme.peerInfoParams.peerInfoCbk == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  "%s: HDD callback is null", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+	pMac->sme.peerInfoParams.peerInfoCbk(pMac->sme.peerInfoParams.pUserData,
+					     &pIbssPeerInfoParams->
+					     ibssPeerInfoRspParams);
+	return QDF_STATUS_SUCCESS;
+}
+
 /**
  * sme_process_fw_mem_dump_rsp - process fw memory dump response from WMA
  *
@@ -2457,7 +2479,17 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		qdf_mem_free(pMsg->bodyptr);
 		break;
 #endif /* FEATURE_WLAN_LPHB */
-
+	case eWNI_SME_IBSS_PEER_INFO_RSP:
+		if (pMsg->bodyptr) {
+			sme_ibss_peer_info_response_handleer(pMac,
+							     pMsg->
+							     bodyptr);
+			qdf_mem_free(pMsg->bodyptr);
+		} else {
+			sms_log(pMac, LOGE, FL("Empty message for %d"),
+				pMsg->type);
+		}
+		break;
 	case eWNI_SME_READY_TO_SUSPEND_IND:
 		if (pMsg->bodyptr) {
 			sme_process_ready_to_suspend(pMac, pMsg->bodyptr);
@@ -5329,6 +5361,60 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 			status = QDF_STATUS_E_FAILURE;
 		}
 
+		sme_release_global_lock(&pMac->sme);
+	}
+	return status;
+}
+
+/*---------------------------------------------------------------------------
+
+    \fn sme_TXFailMonitorStopInd
+
+    \brief API to signal the FW to start monitoring TX failures
+
+    \return QDF_STATUS  SUCCESS.
+
+			FAILURE or RESOURCES  The API finished and failed.
+   --------------------------------------------------------------------------*/
+QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal, uint8_t tx_fail_count,
+					      void *txFailIndCallback)
+{
+	QDF_STATUS status;
+	QDF_STATUS qdf_status;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	cds_msg_t cds_message;
+	tAniTXFailMonitorInd *pMsg;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		pMsg = (tAniTXFailMonitorInd *)
+		       qdf_mem_malloc(sizeof(tAniTXFailMonitorInd));
+		if (NULL == pMsg) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Failed to allocate memory", __func__);
+			sme_release_global_lock(&pMac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+
+		pMsg->msgType = WMA_TX_FAIL_MONITOR_IND;
+		pMsg->msgLen = (uint16_t) sizeof(tAniTXFailMonitorInd);
+
+		/* tx_fail_count = 0 should disable the Monitoring in FW */
+		pMsg->tx_fail_count = tx_fail_count;
+		pMsg->txFailIndCallback = txFailIndCallback;
+
+		cds_message.type = WMA_TX_FAIL_MONITOR_IND;
+		cds_message.bodyptr = pMsg;
+		cds_message.reserved = 0;
+
+		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Post TX Fail monitor Start MSG fail",
+				  __func__);
+			qdf_mem_free(pMsg);
+			status = QDF_STATUS_E_FAILURE;
+		}
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;
@@ -10640,6 +10726,185 @@ sme_del_periodic_tx_ptrn(tHalHandle hal,
 		qdf_mem_free(req_msg);
 	}
 	sme_release_global_lock(&mac->sme);
+	return status;
+}
+
+/**
+  * sme_enable_rmc() - enables RMC
+  * @hHal : Pointer to global HAL handle
+  * @sessionId : Session ID
+  *
+  * Return: QDF_STATUS
+  */
+QDF_STATUS sme_enable_rmc(tHalHandle hHal, uint32_t sessionId)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	cds_msg_t cds_message;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	sms_log(pMac, LOG1, FL("enable RMC"));
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		cds_message.bodyptr = NULL;
+		cds_message.type = WMA_RMC_ENABLE_IND;
+		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: failed to post message to WMA",
+				  __func__);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&pMac->sme);
+	}
+	return status;
+}
+
+/**
+  * sme_disable_rmc() - disables RMC
+  * @hHal : Pointer to global HAL handle
+  * @sessionId : Session ID
+  *
+  * Return: QDF_STATUS
+  */
+QDF_STATUS sme_disable_rmc(tHalHandle hHal, uint32_t sessionId)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	cds_msg_t cds_message;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+
+	sms_log(pMac, LOG1, FL("disable RMC"));
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		cds_message.bodyptr = NULL;
+		cds_message.type = WMA_RMC_DISABLE_IND;
+		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: failed to post message to WMA",
+				  __func__);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&pMac->sme);
+	}
+	return status;
+}
+
+/**
+  * sme_send_rmc_action_period() - sends RMC action period param to target
+  * @hHal : Pointer to global HAL handle
+  * @sessionId : Session ID
+  *
+  * Return: QDF_STATUS
+  */
+QDF_STATUS sme_send_rmc_action_period(tHalHandle hHal, uint32_t sessionId)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	cds_msg_t cds_message;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		cds_message.bodyptr = NULL;
+		cds_message.type = WMA_RMC_ACTION_PERIOD_IND;
+		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: failed to post message to WMA",
+				  __func__);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&pMac->sme);
+	}
+
+	return status;
+}
+
+/**
+  * sme_request_ibss_peer_info() -  request ibss peer info
+  * @hHal : Pointer to global HAL handle
+  * @pUserData : Pointer to user data
+  * @peerInfoCbk : Peer info callback
+  * @allPeerInfoReqd : All peer info required or not
+  * @staIdx : sta index
+  *
+  * Return:  QDF_STATUS
+  */
+QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
+				      pIbssPeerInfoCb peerInfoCbk,
+				      bool allPeerInfoReqd, uint8_t staIdx)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	cds_msg_t cds_message;
+	tSirIbssGetPeerInfoReqParams *pIbssInfoReqParams;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		pMac->sme.peerInfoParams.peerInfoCbk = peerInfoCbk;
+		pMac->sme.peerInfoParams.pUserData = pUserData;
+
+		pIbssInfoReqParams = (tSirIbssGetPeerInfoReqParams *)
+				     qdf_mem_malloc(sizeof(tSirIbssGetPeerInfoReqParams));
+		if (NULL == pIbssInfoReqParams) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Not able to allocate memory for dhcp start",
+				  __func__);
+			sme_release_global_lock(&pMac->sme);
+			return QDF_STATUS_E_NOMEM;
+		}
+		pIbssInfoReqParams->allPeerInfoReqd = allPeerInfoReqd;
+		pIbssInfoReqParams->staIdx = staIdx;
+
+		cds_message.type = WMA_GET_IBSS_PEER_INFO_REQ;
+		cds_message.bodyptr = pIbssInfoReqParams;
+		cds_message.reserved = 0;
+
+		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		if (QDF_STATUS_SUCCESS != qdf_status) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: Post WMA_GET_IBSS_PEER_INFO_REQ MSG failed",
+				  __func__);
+			qdf_mem_free(pIbssInfoReqParams);
+			qdf_status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&pMac->sme);
+	}
+
+	return qdf_status;
+}
+
+/* ---------------------------------------------------------------------------
+    \fn sme_send_cesium_enable_ind
+    \brief  Used to send proprietary cesium enable indication to fw
+    \param  hHal
+    \param  sessionId
+   \- return QDF_STATUS
+    -------------------------------------------------------------------------*/
+QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	cds_msg_t cds_message;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_STATUS_SUCCESS == status) {
+		cds_message.bodyptr = NULL;
+		cds_message.type = WMA_IBSS_CESIUM_ENABLE_IND;
+		qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				  "%s: failed to post message to WMA",
+				  __func__);
+			status = QDF_STATUS_E_FAILURE;
+		}
+		sme_release_global_lock(&pMac->sme);
+	}
+
 	return status;
 }
 

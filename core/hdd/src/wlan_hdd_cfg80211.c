@@ -9546,6 +9546,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	int status;
 	QDF_STATUS hal_status;
 	unsigned long rc;
+	tSirUpdateIE updateIE;
 
 	ENTER();
 
@@ -9578,6 +9579,22 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		       FL("BSS Type is not set to IBSS"));
 		return -EINVAL;
 	}
+	/* Clearing add IE of beacon */
+	qdf_mem_copy(updateIE.bssid.bytes, pAdapter->macAddressCurrent.bytes,
+		     sizeof(tSirMacAddr));
+	updateIE.smeSessionId = pAdapter->sessionId;
+	updateIE.ieBufferlength = 0;
+	updateIE.pAdditionIEBuffer = NULL;
+	updateIE.append = true;
+	updateIE.notify = true;
+	if (sme_update_add_ie(WLAN_HDD_GET_HAL_CTX(pAdapter),
+			      &updateIE,
+			      eUPDATE_IE_PROBE_BCN) == QDF_STATUS_E_FAILURE) {
+		hddLog(LOGE, FL("Could not pass on PROBE_RSP_BCN data to PE"));
+	}
+
+	/* Reset WNI_CFG_PROBE_RSP Flags */
+	wlan_hdd_reset_prob_rspies(pAdapter);
 
 	/* Issue Disconnect request */
 	INIT_COMPLETION(pAdapter->disconnect_comp_var);

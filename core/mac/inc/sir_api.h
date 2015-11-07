@@ -1770,6 +1770,13 @@ typedef struct sAniDHCPStopInd {
 	struct qdf_mac_addr peerMacAddr;
 } tAniDHCPInd, *tpAniDHCPInd;
 
+typedef struct sAniTXFailMonitorInd {
+	uint16_t msgType;       /* message type is same as the request type */
+	uint16_t msgLen;        /* length of the entire request */
+	uint8_t tx_fail_count;
+	void *txFailIndCallback;
+} tAniTXFailMonitorInd, *tpAniTXFailMonitorInd;
+
 typedef enum eTxRateInfo {
 	eHAL_TX_RATE_LEGACY = 0x1,      /* Legacy rates */
 	eHAL_TX_RATE_HT20 = 0x2,        /* HT20 rates */
@@ -3683,6 +3690,41 @@ typedef struct sSirDelPeriodicTxPtrn {
 	uint8_t ucPtrnId;       /* Pattern ID */
 } tSirDelPeriodicTxPtrn, *tpSirDelPeriodicTxPtrn;
 
+/*---------------------------------------------------------------------------
+* tSirIbssGetPeerInfoReqParams
+*--------------------------------------------------------------------------*/
+typedef struct {
+	bool allPeerInfoReqd;   /* If set, all IBSS peers stats are reported */
+	uint8_t staIdx;         /* If allPeerInfoReqd is not set, only stats */
+	/* of peer with staIdx is reported */
+} tSirIbssGetPeerInfoReqParams, *tpSirIbssGetPeerInfoReqParams;
+
+/*---------------------------------------------------------------------------
+* tSirIbssGetPeerInfoParams
+*--------------------------------------------------------------------------*/
+typedef struct {
+	uint8_t staIdx;         /* StaIdx */
+	uint32_t txRate;        /* Tx Rate */
+	uint32_t mcsIndex;      /* MCS Index */
+	uint32_t txRateFlags;   /* TxRate Flags */
+	int8_t rssi;            /* RSSI */
+} tSirIbssPeerInfoParams;
+
+typedef struct {
+	uint32_t status;
+	uint8_t numPeers;
+	tSirIbssPeerInfoParams peerInfoParams[32];
+} tSirPeerInfoRspParams, *tpSirIbssPeerInfoRspParams;
+
+/*---------------------------------------------------------------------------
+* tSirIbssGetPeerInfoRspParams
+*--------------------------------------------------------------------------*/
+typedef struct {
+	uint16_t mesgType;
+	uint16_t mesgLen;
+	tSirPeerInfoRspParams ibssPeerInfoRspParams;
+} tSirIbssGetPeerInfoRspParams, *tpSirIbssGetPeerInfoRspParams;
+
 typedef struct {
 	uint16_t mesgType;
 	uint16_t mesgLen;
@@ -3817,6 +3859,7 @@ typedef struct sSirModifyIE {
 	uint8_t ieIDLen;        /*ie length as per spec */
 	uint16_t ieBufferlength;
 	uint8_t *pIEBuffer;
+	int32_t oui_length;
 
 } tSirModifyIE, *tpSirModifyIE;
 

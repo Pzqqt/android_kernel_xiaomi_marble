@@ -383,6 +383,8 @@ static const t_probeTime_dwellTime
 	{28, 8}                 /* 10 SSID */
 };
 
+typedef void (*txFailIndCallback)(uint8_t *peer_mac, uint8_t seqNo);
+
 /**
  * enum t_wma_drv_type - wma driver type
  * @WMA_DRIVER_TYPE_PRODUCTION: production driver type
@@ -1265,7 +1267,7 @@ typedef struct {
 	uint8_t ibss_started;
 	tSetBssKeyParams ibsskey_info;
 	struct ieee80211com *dfs_ic;
-
+	txFailIndCallback hddTxFailCb;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	qdf_wake_lock_t pno_wake_lock;
 #endif
@@ -1292,6 +1294,8 @@ typedef struct {
 	uint8_t staMaxLIModDtim;
 	uint8_t staModDtim;
 	uint8_t staDynamicDtim;
+	uint8_t enable_mhf_offload;
+	unsigned long last_mhf_entries_timestamp;
 	int32_t dfs_pri_multiplier;
 	uint32_t hw_bd_id;
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];

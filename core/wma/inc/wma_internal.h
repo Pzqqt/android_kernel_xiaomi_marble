@@ -101,6 +101,9 @@
 #define WMI_MAX_HOST_CREDITS 2
 #define WMI_WOW_REQUIRED_CREDITS 1
 
+#define WMI_MAX_MHF_ENTRIES 32
+
+
 #define MAX_HT_MCS_IDX 8
 #define MAX_VHT_MCS_IDX 10
 #define INVALID_MCS_IDX 255
@@ -795,6 +798,12 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 					uint32_t len);
 
+int wma_ibss_peer_info_event_handler(void *handle, uint8_t *data,
+					    uint32_t len);
+
+int wma_fast_tx_fail_event_handler(void *handle, uint8_t *data,
+					  uint32_t len);
+
 /*
  * wma_utils.c functions declarations
  */
@@ -1016,6 +1025,20 @@ QDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
 QDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 				     tpSirHostOffloadReq pHostOffloadParams,
 				     bool bArpOnly);
+
+QDF_STATUS wma_process_cesium_enable_ind(tp_wma_handle wma);
+
+QDF_STATUS wma_process_get_peer_info_req
+	(tp_wma_handle wma, tSirIbssGetPeerInfoReqParams *pReq);
+
+QDF_STATUS wma_process_tx_fail_monitor_ind
+	(tp_wma_handle wma, tAniTXFailMonitorInd *pReq);
+
+QDF_STATUS wma_process_rmc_enable_ind(tp_wma_handle wma);
+
+QDF_STATUS wma_process_rmc_disable_ind(tp_wma_handle wma);
+
+QDF_STATUS wma_process_rmc_action_period_ind(tp_wma_handle wma);
 
 QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirAddPeriodicTxPtrn *

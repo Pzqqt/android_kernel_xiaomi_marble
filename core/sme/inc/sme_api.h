@@ -421,6 +421,9 @@ QDF_STATUS sme_change_country_code(tHalHandle hHal,
 		tAniBool sendRegHint);
 QDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 					   uint8_t *pCountry);
+QDF_STATUS sme_tx_fail_monitor_start_stop_ind(tHalHandle hHal,
+		uint8_t tx_fail_count,
+		void *txFailIndCallback);
 QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
@@ -716,6 +719,13 @@ QDF_STATUS sme_send_rate_update_ind(tHalHandle hHal,
 QDF_STATUS sme_roam_del_pmkid_from_cache(tHalHandle hHal, uint8_t sessionId,
 		const uint8_t *pBSSId, bool flush_cache);
 void sme_get_command_q_status(tHalHandle hHal);
+
+QDF_STATUS sme_enable_rmc(tHalHandle hHal, uint32_t sessionId);
+QDF_STATUS sme_disable_rmc(tHalHandle hHal, uint32_t sessionId);
+QDF_STATUS sme_send_rmc_action_period(tHalHandle hHal, uint32_t sessionId);
+QDF_STATUS sme_request_ibss_peer_info(tHalHandle hHal, void *pUserData,
+	pIbssPeerInfoCb peerInfoCbk, bool allPeerInfoReqd, uint8_t staIdx);
+QDF_STATUS sme_send_cesium_enable_ind(tHalHandle hHal, uint32_t sessionId);
 
 /*
  * SME API to enable/disable idle mode powersave
