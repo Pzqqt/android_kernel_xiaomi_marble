@@ -609,9 +609,9 @@ void hif_send_complete_check(struct ol_softc *scn, uint8_t PipeID,
 void hif_cancel_deferred_target_sleep(struct ol_softc *scn);
 void hif_get_default_pipe(struct ol_softc *scn, uint8_t *ULPipe,
 			  uint8_t *DLPipe);
-int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t ServiceId,
-			    uint8_t *ULPipe, uint8_t *DLPipe,
-			    int *ul_is_polled, int *dl_is_polled);
+int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t svc_id,
+			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
+			int *dl_is_polled);
 uint16_t hif_get_free_queue_number(struct ol_softc *scn, uint8_t PipeID);
 void *hif_get_targetdef(struct ol_softc *scn);
 void hi_fsuspendwow(struct ol_softc *scn);

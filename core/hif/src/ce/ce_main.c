@@ -1219,84 +1219,6 @@ hif_get_default_pipe(struct ol_softc *scn, uint8_t *ULPipe, uint8_t *DLPipe)
 		ULPipe, DLPipe, &ul_is_polled, &dl_is_polled);
 }
 
-/* TBDXXX - temporary mapping while we have too few CE's */
-int
-hif_map_service_to_pipe(struct ol_softc *scn, uint16_t ServiceId,
-			uint8_t *ULPipe, uint8_t *DLPipe, int *ul_is_polled,
-			int *dl_is_polled)
-{
-	int status = CDF_STATUS_SUCCESS;
-
-	*dl_is_polled = 0;  /* polling for received messages not supported */
-	switch (ServiceId) {
-	case HTT_DATA_MSG_SVC:
-		/*
-		 * Host->target HTT gets its own pipe, so it can be polled
-		 * while other pipes are interrupt driven.
-		 */
-		*ULPipe = 4;
-		/*
-		 * Use the same target->host pipe for HTC ctrl,
-		 * HTC raw streams, and HTT.
-		 */
-		*DLPipe = 1;
-		break;
-
-	case HTC_CTRL_RSVD_SVC:
-		*ULPipe = 0;
-		*DLPipe = 2;
-		break;
-
-	case HTC_RAW_STREAMS_SVC:
-		/*
-		 * Note: HTC_RAW_STREAMS_SVC is currently unused, and
-		 * HTC_CTRL_RSVD_SVC could share the same pipe as the
-		 * WMI services.  So, if another CE is needed, change
-		 * this to *ULPipe = 3, which frees up CE 0.
-		 */
-		/**ULPipe = 3; */
-		*ULPipe = 0;
-		*DLPipe = 2;
-		break;
-
-	case WMI_DATA_BK_SVC:
-		/*
-		 * To avoid some confusions, better to introduce new EP-ping
-		 * service instead of using existed services. Until the main
-		 * framework support this, keep this design.
-		 */
-		if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
-			*ULPipe = 4;
-			*DLPipe = 1;
-			break;
-		}
-	case WMI_DATA_BE_SVC:
-	case WMI_DATA_VI_SVC:
-	case WMI_DATA_VO_SVC:
-
-	case WMI_CONTROL_SVC:
-		*ULPipe = 3;
-		*DLPipe = 2;
-		break;
-
-	case WDI_IPA_TX_SVC:
-		*ULPipe = 5;
-		break;
-
-	/* pipe 5 unused   */
-	/* pipe 6 reserved */
-	/* pipe 7 reserved */
-
-	default:
-		status = CDF_STATUS_E_INVAL;
-		break;
-	}
-	*ul_is_polled =
-		(host_ce_config[*ULPipe].flags & CE_ATTR_DISABLE_INTR) != 0;
-
-	return status;
-}
-
 /**
  * hif_dump_pipe_debug_count() - Log error count
  * @scn: ol_softc pointer.
@@ -2646,3 +2568,62 @@ void ce_lro_flush_cb_deregister(struct ol_softc *scn)
 	}
 }
 #endif
+
+/**
+ * hif_map_service_to_pipe() - returns  the ce ids pertaining to
+ * this service
+ * @scn: ol_softc pointer.
+ * @svc_id: Service ID for which the mapping is needed.
+ * @ul_pipe: address of the container in which ul pipe is returned.
+ * @dl_pipe: address of the container in which dl pipe is returned.
+ * @ul_is_polled: address of the container in which a bool
+ *			indicating if the UL CE for this service
+ *			is polled is returned.
+ * @dl_is_polled: address of the container in which a bool
+ *			indicating if the DL CE for this service
+ *			is polled is returned.
+ *
+ * Return: Indicates whether this operation was successful.
+ */
+
+int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t svc_id,
+			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
+			int *dl_is_polled)
+{
+	int status = CDF_STATUS_SUCCESS;
+
+	unsigned int i;
+	struct service_to_pipe element;
+
+	struct service_to_pipe *tgt_svc_map_to_use;
+	size_t sz_tgt_svc_map_to_use;
+
+	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+		tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
+		sz_tgt_svc_map_to_use =
+			sizeof(target_service_to_ce_map_wlan_epping);
+	} else {
+		tgt_svc_map_to_use = target_service_to_ce_map_wlan;
+		sz_tgt_svc_map_to_use = sizeof(target_service_to_ce_map_wlan);
+	}
+
+	*dl_is_polled = 0;  /* polling for received messages not supported */
+
+	for (i = 0; i < (sz_tgt_svc_map_to_use/sizeof(element)); i++) {
+
+		memcpy(&element, &tgt_svc_map_to_use[i], sizeof(element));
+		if (element.service_id == svc_id) {
+
+			if (element.pipedir == PIPEDIR_OUT)
+				*ul_pipe = element.pipenum;
+
+			else if (element.pipedir == PIPEDIR_IN)
+				*dl_pipe = element.pipenum;
+		}
+	}
+
+	*ul_is_polled =
+		(host_ce_config[*ul_pipe].flags & CE_ATTR_DISABLE_INTR) != 0;
+
+	return status;
+}
