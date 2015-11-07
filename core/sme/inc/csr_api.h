@@ -1035,7 +1035,6 @@ typedef struct tagCsr11rConfigParams {
 } tCsr11rConfigParams;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 typedef struct tagCsrNeighborRoamConfigParams {
 
 	uint32_t nNeighborScanTimerPeriod;
@@ -1057,7 +1056,6 @@ typedef struct tagCsrNeighborRoamConfigParams {
 	uint32_t nhi_rssi_scan_delay;
 	int32_t nhi_rssi_scan_rssi_ub;
 } tCsrNeighborRoamConfigParams;
-#endif
 
 typedef struct tagCsrConfigParam {
 	uint32_t FragmentationThreshold;
@@ -1158,9 +1156,7 @@ typedef struct tagCsrConfigParam {
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
 #endif
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tCsrNeighborRoamConfigParams neighborRoamConfig;
-#endif
 	/*
 	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for that AC
 	 * This is mandated by WMM-AC certification

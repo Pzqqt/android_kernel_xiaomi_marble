@@ -34,7 +34,6 @@
 	transitions and Legacy roaming for Android platform.
    ========================================================================== */
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "wma_types.h"
 #include "cds_mq.h"
 #include "csr_inside_api.h"
@@ -1121,7 +1120,7 @@ DEQ_PREAUTH:
 	csr_dequeue_roam_command(mac_ctx, eCsrPerformPreauth);
 	return preauth_processed;
 }
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
+#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -3046,7 +3045,7 @@ bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal pMac, uint8_t sessi
 	return false;
 }
 
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(WLAN_FEATURE_NEIGHBOR_ROAMING)
+#if defined(WLAN_FEATURE_VOWIFI_11R)
 /* ---------------------------------------------------------------------------
 
     \fn csr_neighbor_roam_is11r_assoc
@@ -3553,4 +3552,3 @@ CDF_STATUS csr_neighbor_roam_start_lfr_scan(tpAniSirGlobal pMac, uint8_t session
 
 	return CDF_STATUS_SUCCESS;
 }
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */

@@ -8610,7 +8610,6 @@ CDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
 	return cdf_ret_status;
 }
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 /* ---------------------------------------------------------------------------
     \fn     sme_set_roam_opportunistic_scan_threshold_diff
     \brief  Update Opportunistic Scan threshold diff
@@ -9424,7 +9423,6 @@ uint16_t sme_get_neighbor_scan_period(tHalHandle hHal, uint8_t sessionId)
 	       neighborScanPeriod;
 }
 
-#endif
 
 #if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 

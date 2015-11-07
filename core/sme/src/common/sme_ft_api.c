@@ -561,14 +561,12 @@ void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
  *------------------------------------------------------------------------*/
 void sme_preauth_reassoc_intvl_timer_callback(void *context)
 {
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tFTRoamCallbackUsrCtx *pUsrCtx = (tFTRoamCallbackUsrCtx *) context;
 
 	if (pUsrCtx) {
 		csr_neighbor_roam_request_handoff(pUsrCtx->pMac,
 						  pUsrCtx->sessionId);
 	}
-#endif
 	return;
 }
 

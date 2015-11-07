@@ -47,9 +47,7 @@
 #include "csr_internal.h"
 #include "cds_reg_service.h"
 #include "mac_trace.h"
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "csr_neighbor_roam.h"
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 #include "cds_regdomain_common.h"
 #include "cds_utils.h"
 #include "sir_types.h"
@@ -712,10 +710,8 @@ CDF_STATUS csr_start(tpAniSirGlobal pMac)
 
 		pMac->roam.sPendingCommands = 0;
 		csr_scan_enable(pMac);
-#if   defined WLAN_FEATURE_NEIGHBOR_ROAMING
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++)
 			status = csr_neighbor_roam_init(pMac, i);
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 		pMac->roam.tlStatsReqInfo.numClient = 0;
 		pMac->roam.tlStatsReqInfo.periodicity = 0;
 		pMac->roam.tlStatsReqInfo.timerRunning = false;
@@ -747,10 +743,8 @@ CDF_STATUS csr_stop(tpAniSirGlobal pMac, tHalStopType stopType)
 	pMac->scan.fRestartIdleScan = false;
 	csr_ll_purge(&pMac->roam.roamCmdPendingList, true);
 
-#if   defined WLAN_FEATURE_NEIGHBOR_ROAMING
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		csr_neighbor_roam_close(pMac, sessionId);
-#endif
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++)
 		if (CSR_IS_SESSION_VALID(pMac, sessionId))
 			csr_scan_flush_result(pMac);
@@ -1272,7 +1266,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	pMac->roam.configParam.csr11rConfig.IsFTResourceReqSupported = 0;
 #endif
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	pMac->roam.configParam.neighborRoamConfig.nMaxNeighborRetries = 3;
 	pMac->roam.configParam.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		120;
@@ -1296,7 +1289,6 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.neighborRoamConfig.nRoamBmissFirstBcnt = 10;
 	pMac->roam.configParam.neighborRoamConfig.nRoamBmissFinalBcnt = 10;
 	pMac->roam.configParam.neighborRoamConfig.nRoamBeaconRssiWeight = 14;
-#endif
 #ifdef WLAN_FEATURE_11AC
 	pMac->roam.configParam.nVhtChannelWidth =
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
@@ -1888,7 +1880,6 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.isEseIniFeatureEnabled =
 			pParam->isEseIniFeatureEnabled;
 #endif
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 		cdf_mem_copy(&pMac->roam.configParam.neighborRoamConfig,
 			     &pParam->neighborRoamConfig,
 			     sizeof(tCsrNeighborRoamConfigParams));
@@ -1944,7 +1935,6 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		sms_log(pMac, LOG1, "nRoamBeaconRssiWeight = %d",
 			pMac->roam.configParam.neighborRoamConfig.
 			nRoamBeaconRssiWeight);
-#endif
 		pMac->roam.configParam.addTSWhenACMIsOff =
 			pParam->addTSWhenACMIsOff;
 		pMac->scan.fValidateList = pParam->fValidateList;
@@ -2087,11 +2077,9 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->fEnableMCCMode = cfg_params->fenableMCCMode;
 	pParam->fAllowMCCGODiffBI = cfg_params->fAllowMCCGODiffBI;
 	pParam->scanCfgAgingTime = pMac->scan.scanResultCfgAgingTime;
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	cdf_mem_copy(&pParam->neighborRoamConfig,
 		     &cfg_params->neighborRoamConfig,
 		     sizeof(tCsrNeighborRoamConfigParams));
-#endif
 #ifdef WLAN_FEATURE_11AC
 	pParam->nVhtChannelWidth = cfg_params->nVhtChannelWidth;
 	pParam->enableTxBF = cfg_params->txBFEnable;
@@ -2124,7 +2112,6 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #ifdef FEATURE_WLAN_ESE
 	pParam->isEseIniFeatureEnabled = cfg_params->isEseIniFeatureEnabled;
 #endif
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	cdf_mem_copy(&pParam->neighborRoamConfig,
 		     &cfg_params->neighborRoamConfig,
 		     sizeof(tCsrNeighborRoamConfigParams));
@@ -2138,7 +2125,6 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 			cfg_params->neighborRoamConfig.
 			neighborScanChanList.channelList[i]);
 	}
-#endif
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	pParam->cc_switch_mode = cfg_params->cc_switch_mode;
@@ -2908,11 +2894,7 @@ CDF_STATUS csr_roam_call_callback(tpAniSirGlobal pMac, uint32_t sessionId,
 /* Returns whether handoff is currently in progress or not */
 bool csr_roam_is_handoff_in_progress(tpAniSirGlobal pMac, uint8_t sessionId)
 {
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	return csr_neighbor_roam_is_handoff_in_progress(pMac, sessionId);
-#else
-	return false;
-#endif
 }
 
 CDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
@@ -5451,22 +5433,14 @@ static CDF_STATUS csr_roam_save_security_rsp_ie(tpAniSirGlobal pMac,
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
 {
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	return csr_neighbor_roam_is11r_assoc(pMac, sessionId);
-#else
-	return false;
-#endif
 }
 #endif
 #ifdef FEATURE_WLAN_ESE
 /* Returns whether the current association is a ESE assoc or not */
 bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
 {
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	return csr_neighbor_roam_is_ese_assoc(pMac, sessionId);
-#else
-	return false;
-#endif
 }
 #endif
 #ifdef FEATURE_WLAN_LFR
@@ -5720,7 +5694,6 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 			&session->joinFailStatusCode.bssId,
 			sizeof(struct cdf_mac_addr));
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 		/*
 		 * If Join fails while Handoff is in progress, indicate
 		 * disassociated event to supplicant to reconnect
@@ -5729,7 +5702,6 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 			csr_neighbor_roam_indicate_connect(mac_ctx,
 				(uint8_t)session_id, CDF_STATUS_E_FAILURE);
 		}
-#endif
 		if (session->bRefAssocStartCnt > 0) {
 			session->bRefAssocStartCnt--;
 			if (eCsrJoinFailureDueToConcurrency == res)
@@ -7997,7 +7969,6 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGW,
 			"SmeJoinReq failed with statusCode= 0x%08X [%d]",
 			pSmeJoinRsp->statusCode, pSmeJoinRsp->statusCode);
-#if   defined WLAN_FEATURE_NEIGHBOR_ROAMING
 		/* If Join fails while Handoff is in progress, indicate disassociated event to supplicant to reconnect */
 		if (csr_roam_is_handoff_in_progress(pMac, pSmeJoinRsp->sessionId)) {
 			csr_roam_call_callback(pMac, pSmeJoinRsp->sessionId, NULL,
@@ -8008,7 +7979,6 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 							   pSmeJoinRsp->sessionId,
 							   CDF_STATUS_E_FAILURE);
 		}
-#endif
 		/*
 		 * if userspace has issued disconnection,
 		 * driver should not continue connecting
@@ -8523,18 +8493,17 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
 			  FL("CSR SmeReassocReq Successful"));
 		result = eCsrReassocSuccess;
-		/* Defeaturize this part later if needed */
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
-		/* Since the neighbor roam algorithm uses reassoc req for handoff instead of join,
-		 * we need the response contents while processing the result in csr_roam_process_results() */
+		/*
+		 * Since the neighbor roam algorithm uses reassoc req for
+		 * handoff instead of join, we need the response contents while
+		 * processing the result in csr_roam_process_results()
+		 */
 		if (csr_roam_is_handoff_in_progress(pMac, pSmeJoinRsp->sessionId)) {
 			/* Need to dig more on indicating events to SME QoS module */
 			sme_qos_csr_event_ind(pMac, pSmeJoinRsp->sessionId,
 					      SME_QOS_CSR_HANDOFF_COMPLETE, NULL);
 			csr_roam_complete(pMac, result, pSmeJoinRsp);
-		} else
-#endif
-		{
+		} else {
 			csr_roam_complete(pMac, result, NULL);
 		}
 	}
@@ -8758,13 +8727,11 @@ csr_check_profile_in_scan_cache(tpAniSirGlobal mac_ctx,
 void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 						   tSirSmeDisassocRsp *pSmeRsp)
 {
-#if defined WLAN_FEATURE_NEIGHBOR_ROAMING
 	tScanResultHandle hBSSList;
 	tCsrRoamInfo roamInfo;
 	tCsrScanResultFilter *pScanFilter = NULL;
 	uint32_t roamId = 0;
 	tCsrRoamProfile *pCurRoamProfile = NULL;
-#endif
 	CDF_STATUS status;
 	uint32_t sessionId;
 	tCsrRoamSession *pSession;
@@ -8806,7 +8773,6 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 			  FL("CSR SmeDisassocReq due to HO on session %d"),
 			  sessionId);
 		pNeighborRoamInfo = &pMac->roam.neighborRoamInfo[sessionId];
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 		/*
 		 * First ensure if the roam profile is in the scan cache.
 		 * If not, post a reassoc failure and disconnect.
@@ -8866,9 +8832,8 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 		}
 
 POST_ROAM_FAILURE:
-	csr_post_roam_failure(pMac, sessionId, &roamInfo,
+		csr_post_roam_failure(pMac, sessionId, &roamInfo,
 			      pScanFilter, pCurRoamProfile);
-#endif
 	} /* else if ( CSR_IS_ROAM_SUBSTATE_DISASSOC_HO( pMac ) ) */
 	else if (CSR_IS_ROAM_SUBSTATE_REASSOC_FAIL(pMac, sessionId)) {
 		/* Disassoc due to Reassoc failure falls into this codepath */
@@ -15231,32 +15196,32 @@ static uint32_t csr_find_ibss_session(tpAniSirGlobal pMac)
 
 static void csr_roam_link_up(tpAniSirGlobal pMac, struct cdf_mac_addr bssid)
 {
-	/* Update the current BSS info in ho control block based on connected
-	   profile info from pmac global structure                              */
+	uint32_t sessionId = 0;
+
+	/*
+	 * Update the current BSS info in ho control block based on connected
+	 * profile info from pmac global structure
+	 */
 
 	sms_log(pMac, LOGW,
 		" csr_roam_link_up: WLAN link UP with AP= " MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(bssid.bytes));
-	/* Check for user misconfig of RSSI trigger threshold                  */
+	/* Check for user misconfig of RSSI trigger threshold */
 	pMac->roam.configParam.vccRssiThreshold =
 		(0 == pMac->roam.configParam.vccRssiThreshold) ?
-		CSR_VCC_RSSI_THRESHOLD : pMac->roam.configParam.vccRssiThreshold;
+		CSR_VCC_RSSI_THRESHOLD :
+		pMac->roam.configParam.vccRssiThreshold;
 	pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_POOR_IND;
-	/* Check for user misconfig of UL MAC Loss trigger threshold           */
+	/* Check for user misconfig of UL MAC Loss trigger threshold */
 	pMac->roam.configParam.vccUlMacLossThreshold =
 		(0 == pMac->roam.configParam.vccUlMacLossThreshold) ?
 		CSR_VCC_UL_MAC_LOSS_THRESHOLD : pMac->roam.configParam.
 		vccUlMacLossThreshold;
-#if   defined WLAN_FEATURE_NEIGHBOR_ROAMING
-	{
-		uint32_t sessionId = 0;
-		/* Indicate the neighbor roal algorithm about the connect indication */
-		csr_roam_get_session_id_from_bssid(pMac, &bssid,
-						   &sessionId);
-		csr_neighbor_roam_indicate_connect(pMac, sessionId,
-						   CDF_STATUS_SUCCESS);
-	}
-#endif
+	/* Indicate the neighbor roal algorithm about the connect indication */
+	csr_roam_get_session_id_from_bssid(pMac, &bssid,
+					   &sessionId);
+	csr_neighbor_roam_indicate_connect(pMac, sessionId,
+					   CDF_STATUS_SUCCESS);
 }
 
 static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId)
@@ -15290,10 +15255,8 @@ static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId)
 	/* deregister the clients requesting stats from PE/TL & also stop the corresponding timers */
 	csr_roam_dereg_statistics_req(pMac);
 	pMac->roam.vccLinkQuality = eCSR_ROAM_LINK_QUAL_POOR_IND;
-#if   defined WLAN_FEATURE_NEIGHBOR_ROAMING
 	/* Indicate the neighbor roal algorithm about the disconnect indication */
 	csr_neighbor_roam_indicate_disconnect(pMac, sessionId);
-#endif
 
 	/* Remove this code once SLM_Sessionization is supported */
 	/* BMPS_WORKAROUND_NOT_NEEDED */
@@ -17744,10 +17707,9 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
 		return;
 	}
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
-	status =
-		csr_neighbor_roam_preauth_rsp_handler(pMac, pFTPreAuthRsp->smeSessionId,
-						      pFTPreAuthRsp->status);
+	status = csr_neighbor_roam_preauth_rsp_handler(pMac,
+				pFTPreAuthRsp->smeSessionId,
+				pFTPreAuthRsp->status);
 	if (status != CDF_STATUS_SUCCESS) {
 		/*
 		 * Bail out if pre-auth was not even processed.
@@ -17757,7 +17719,6 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 			status, sessionId);
 		return;
 	}
-#endif
 
 	/* The below function calls/timers should be invoked only if the pre-auth is successful */
 	if (CDF_STATUS_SUCCESS != (CDF_STATUS) pFTPreAuthRsp->status)

@@ -40,9 +40,7 @@
 #include "csr_support.h"
 #include "cds_reg_service.h"
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "csr_neighbor_roam.h"
-#endif
 
 #include "sir_types.h"
 
@@ -464,7 +462,6 @@ typedef struct tagCsr11rConfig {
 } tCsr11rConfig;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 typedef struct tagCsrNeighborRoamConfig {
 	uint32_t nNeighborScanTimerPeriod;
 	uint8_t nNeighborLookupRssiThreshold;
@@ -485,7 +482,6 @@ typedef struct tagCsrNeighborRoamConfig {
 	uint32_t nhi_rssi_scan_delay;
 	int32_t nhi_rssi_scan_rssi_ub;
 } tCsrNeighborRoamConfig;
-#endif
 
 typedef struct tagCsrConfig {
 	uint32_t agingCount;
@@ -591,9 +587,7 @@ typedef struct tagCsrConfig {
 	uint16_t nRoamScanHomeAwayTime;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tCsrNeighborRoamConfig neighborRoamConfig;
-#endif
 
 	/*
 	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for
@@ -1022,9 +1016,7 @@ typedef struct tagCsrRoamStruct {
 	tCsrTimerInfo WaitForKeyTimerInfo;
 	tCsrRoamSession *roamSession;
 	uint32_t transactionId;  /* Current transaction ID for internal use. */
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tCsrNeighborRoamControlInfo neighborRoamInfo[CSR_ROAM_SESSION_MAX];
-#endif
 #ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
 #endif
