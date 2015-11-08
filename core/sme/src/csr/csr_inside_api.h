@@ -88,9 +88,7 @@
 #define CSR_BSS_CAP_VALUE_VHT    2
 #define CSR_BSS_CAP_VALUE_WMM   1
 #define CSR_BSS_CAP_VALUE_UAPSD 1
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 #define CSR_BSS_CAP_VALUE_5GHZ  2
-#endif
 #define CSR_DEFAULT_ROAMING_TIME 10     /* 10 seconds */
 
 #define CSR_ROAMING_DFS_CHANNEL_DISABLED           (0)
@@ -1027,7 +1025,6 @@ CDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal pMac, uint32_t sessionId,
 				    tpSirBssDescription pBssDescription,
 				    eCsrRoamReason reason, bool fImmediate);
 CDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason);
-#ifdef FEATURE_WLAN_LFR
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 						uint8_t sessionId);
@@ -1035,7 +1032,6 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 					       uint8_t sessionId,
 					       tCsrScanResult *pResult,
 					       tDot11fBeaconIEs *pIes);
-#endif
 
 CDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 						uint32_t sessionId,

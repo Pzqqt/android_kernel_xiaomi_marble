@@ -1467,13 +1467,11 @@ static uint32_t csr_get_bss_cap_value(tpAniSirGlobal pMac,
 				      tDot11fBeaconIEs *pIes)
 {
 	uint32_t ret = CSR_BSS_CAP_VALUE_NONE;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	if (CSR_IS_ROAM_PREFER_5GHZ(pMac) || CSR_IS_SELECT_5G_PREFERRED(pMac)) {
 		if ((pBssDesc) && CDS_IS_CHANNEL_5GHZ(pBssDesc->channelId)) {
 			ret += CSR_BSS_CAP_VALUE_5GHZ;
 		}
 	}
-#endif
 	/*
 	 * if strict select 5GHz is non-zero then ignore the capability checking
 	 */
@@ -1579,7 +1577,6 @@ static bool csr_is_better_bss(tpAniSirGlobal mac_ctx,
 	return ret;
 }
 
-#ifdef FEATURE_WLAN_LFR
 /* Add the channel to the occupiedChannels array */
 static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 					      tCsrScanResult *pResult,
@@ -1611,17 +1608,14 @@ static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 				CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN;
 	}
 }
-#endif
 
 /* Put the BSS into the scan result list */
 /* pIes can not be NULL */
 static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 				tDot11fBeaconIEs *pIes, uint32_t sessionId)
 {
-#ifdef FEATURE_WLAN_LFR
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
-#endif
 
 	struct cdf_mac_addr bssid;
 	uint8_t channel_id = pResult->Result.BssDescriptor.channelId;
@@ -1635,7 +1629,6 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 				&pResult->Result.BssDescriptor, pIes);
 	csr_ll_insert_tail(&pMac->scan.scanResultList, &pResult->Link,
 			   LL_ACCESS_LOCK);
-#ifdef FEATURE_WLAN_LFR
 	if (0 == pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels) {
 		/*
 		 * Build the occupied channel list, only if
@@ -1644,7 +1637,6 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 		csr_scan_add_to_occupied_channels(pMac, pResult, sessionId,
 				&pMac->scan.occupiedChannels[sessionId], pIes);
 	}
-#endif
 }
 
 static void
@@ -5260,7 +5252,6 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 							ChannelList
 							[index])))
 			) {
-#ifdef FEATURE_WLAN_LFR
 				sms_log(mac_ctx, LOG2,
 					FL(" reqType= %s (%d), numOfChannels=%d, ignoring DFS channel %d"),
 					sme_request_type_to_string(
@@ -5269,7 +5260,6 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 					src_req->ChannelInfo.numOfChannels,
 					src_req->ChannelInfo.ChannelList
 						[index]);
-#endif
 				continue;
 			}
 
@@ -5663,9 +5653,7 @@ static void csr_sta_ap_conc_timer_handler(void *pv)
 
 	if ((num_chn > numchan_combinedconc) &&
 		((csr_is_sta_session_connected(mac_ctx) &&
-#ifdef FEATURE_WLAN_LFR
 		(csr_is_concurrent_infra_connected(mac_ctx)) &&
-#endif
 		(scan_cmd->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
 		(csr_is_p2p_session_connected(mac_ctx)))) {
 			cdf_mem_set(&scan_req, sizeof(tCsrScanRequest), 0);
@@ -6953,7 +6941,6 @@ CDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
-#ifdef FEATURE_WLAN_LFR
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	tListElem *pEntry = NULL;
@@ -7006,7 +6993,6 @@ void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 	} /* while */
 	csr_ll_unlock(&pMac->scan.scanResultList);
 }
-#endif
 
 CDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 					       uint32_t sessionId,

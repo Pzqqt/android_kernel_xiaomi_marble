@@ -8011,7 +8011,6 @@ void sme_reset_power_values_for5_g(tHalHandle hHal)
 	csr_apply_power2_current(pMac);    /* Store the channel+power info in the global place: Cfg */
 }
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /* ---------------------------------------------------------------------------
     \fn sme_update_roam_prefer5_g_hz
     \brief  enable/disable Roam prefer 5G runtime option
@@ -8380,9 +8379,7 @@ CDF_STATUS sme_set_roam_scan_control(tHalHandle hHal, uint8_t sessionId,
 	}
 	return status;
 }
-#endif /* (WLAN_FEATURE_VOWIFI_11R) || (FEATURE_WLAN_ESE) || (FEATURE_WLAN_LFR) */
 
-#ifdef FEATURE_WLAN_LFR
 /*--------------------------------------------------------------------------
    \brief sme_update_is_fast_roam_ini_feature_enabled() - enable/disable LFR
 	support at runtime
@@ -8532,7 +8529,6 @@ CDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 
 	return status;
 }
-#endif /* FEATURE_WLAN_LFR */
 
 #ifdef FEATURE_WLAN_ESE
 /*--------------------------------------------------------------------------
@@ -9424,7 +9420,6 @@ uint16_t sme_get_neighbor_scan_period(tHalHandle hHal, uint8_t sessionId)
 }
 
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 
 /*--------------------------------------------------------------------------
    \brief sme_get_roam_rssi_diff() - get Roam rssi diff
@@ -9670,7 +9665,6 @@ bool sme_get_roam_scan_control(tHalHandle hHal)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	return pMac->roam.configParam.nRoamScanControl;
 }
-#endif
 
 /*--------------------------------------------------------------------------
    \brief sme_get_is_lfr_feature_enabled() - get LFR feature enabled or not
@@ -9682,12 +9676,8 @@ bool sme_get_roam_scan_control(tHalHandle hHal)
    --------------------------------------------------------------------------*/
 bool sme_get_is_lfr_feature_enabled(tHalHandle hHal)
 {
-#ifdef FEATURE_WLAN_LFR
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	return pMac->roam.configParam.isFastRoamIniFeatureEnabled;
-#else
-	return false;
-#endif
 }
 
 /*--------------------------------------------------------------------------
