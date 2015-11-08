@@ -1336,7 +1336,6 @@ CDF_STATUS csr_flush_roam_scan_roam_channel_list(tpAniSirGlobal pMac,
 }
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /*
    This function flushes the roam scan cache
  */
@@ -1390,7 +1389,6 @@ CDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 	return status;
 }
 
-#endif
 
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 /*
@@ -1853,7 +1851,6 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pMac->roam.configParam.csr11rConfig.
 			IsFTResourceReqSupported);
 #endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		pMac->roam.configParam.isFastTransitionEnabled =
 			pParam->isFastTransitionEnabled;
 		pMac->roam.configParam.RoamRssiDiff = pParam->RoamRssiDiff;
@@ -1865,16 +1862,13 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.nProbes = pParam->nProbes;
 		pMac->roam.configParam.nRoamScanHomeAwayTime =
 			pParam->nRoamScanHomeAwayTime;
-#endif
 		pMac->roam.configParam.isRoamOffloadScanEnabled =
 			pParam->isRoamOffloadScanEnabled;
 		pMac->roam.configParam.bFastRoamInConIniFeatureEnabled =
 			pParam->bFastRoamInConIniFeatureEnabled;
-#ifdef FEATURE_WLAN_LFR
 		pMac->roam.configParam.isFastRoamIniFeatureEnabled =
 			pParam->isFastRoamIniFeatureEnabled;
 		pMac->roam.configParam.MAWCEnabled = pParam->MAWCEnabled;
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 		pMac->roam.configParam.isEseIniFeatureEnabled =
@@ -2093,7 +2087,6 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	cdf_mem_copy(&cfg_params->csr11rConfig, &pParam->csr11rConfig,
 		     sizeof(tCsr11rConfigParams));
 #endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
 	pParam->nRoamPrefer5GHz = cfg_params->nRoamPrefer5GHz;
@@ -2101,14 +2094,11 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->isWESModeEnabled = cfg_params->isWESModeEnabled;
 	pParam->nProbes = cfg_params->nProbes;
 	pParam->nRoamScanHomeAwayTime = cfg_params->nRoamScanHomeAwayTime;
-#endif
 	pParam->isRoamOffloadScanEnabled = cfg_params->isRoamOffloadScanEnabled;
 	pParam->bFastRoamInConIniFeatureEnabled =
 		cfg_params->bFastRoamInConIniFeatureEnabled;
-#ifdef FEATURE_WLAN_LFR
 	pParam->isFastRoamIniFeatureEnabled =
 		cfg_params->isFastRoamIniFeatureEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	pParam->isEseIniFeatureEnabled = cfg_params->isEseIniFeatureEnabled;
 #endif
@@ -5443,7 +5433,6 @@ bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
 	return csr_neighbor_roam_is_ese_assoc(pMac, sessionId);
 }
 #endif
-#ifdef FEATURE_WLAN_LFR
 /* Returns whether "Legacy Fast Roaming" is currently enabled...or not */
 bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal pMac, uint32_t sessionId)
 {
@@ -5488,7 +5477,6 @@ bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal pMac)
 {
 	return pMac->roam.configParam.isRoamOffloadScanEnabled;
 }
-#endif
 
 #if defined(FEATURE_WLAN_ESE)
 bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac)
@@ -8449,19 +8437,16 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 								session_id);
 		} else
 #endif
-#ifdef FEATURE_WLAN_LFR
 		if (csr_roam_is_handoff_in_progress(mac_ctx, session_id)
 		   && csr_roam_is_fast_roam_enabled(mac_ctx, session_id)) {
 			/* Now serialize the reassoc command. */
 			status = csr_roam_issue_reassociate_cmd(mac_ctx,
 								session_id);
-		} else
-#endif
-		{
-		/*
-		 * else we are not connected and attempting to Join. Issue the
-		 * Join request.
-		 */
+		} else {
+			/*
+			 * else we are not connected and attempting to Join.
+			 * Issue the Join request.
+			 */
 			status = csr_roam_issue_join(mac_ctx, session_id,
 						    bss_desc,
 						    (tDot11fBeaconIEs *)
@@ -8514,8 +8499,6 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 			"CSR SmeReassocReq failed with statusCode= 0x%08X [%d]",
 			pSmeJoinRsp->statusCode, pSmeJoinRsp->statusCode);
 		result = eCsrReassocFailure;
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 		if ((eSIR_SME_FT_REASSOC_TIMEOUT_FAILURE ==
 		     pSmeJoinRsp->statusCode)
 		    || (eSIR_SME_FT_REASSOC_FAILURE ==
@@ -8544,7 +8527,6 @@ static void csr_roam_roaming_state_reassoc_rsp_processor(tpAniSirGlobal pMac,
 				return;
 			}
 		}
-#endif
 		/* In the event that the Reassociation fails, then we need to Disassociate the current association and keep */
 		/* roaming.  Note that we will attempt to Join the AP instead of a Reassoc since we may have attempted a */
 		/* 'Reassoc to self', which AP's that don't support Reassoc will force a Disassoc. */
@@ -10045,12 +10027,10 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							mac_ctx, sessionId);
 #endif
-#ifdef FEATURE_WLAN_LFR
 	if (csr_roam_is_fast_roam_enabled(mac_ctx, sessionId) &&
 	    (csr_neighbor_roam_state_preauth_done(mac_ctx, sessionId)))
 		csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							mac_ctx, sessionId);
-#endif
 	session = CSR_GET_SESSION(mac_ctx, sessionId);
 	if (!session) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found"), sessionId);
@@ -10131,12 +10111,10 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							mac_ctx, sessionId);
 #endif
-#ifdef FEATURE_WLAN_LFR
 	if (csr_roam_is_fast_roam_enabled(mac_ctx, sessionId) &&
 	    (csr_neighbor_roam_state_preauth_done(mac_ctx, sessionId)))
 		csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							mac_ctx, sessionId);
-#endif
 	session = CSR_GET_SESSION(mac_ctx, sessionId);
 	if (!session) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found"), sessionId);
@@ -11115,7 +11093,6 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 						curSubState[pInfo->sessionId]));
 
 	if (CSR_IS_WAIT_FOR_KEY(pMac, pInfo->sessionId)) {
-#ifdef FEATURE_WLAN_LFR
 		if (csr_neighbor_roam_is_handoff_in_progress(pMac, pInfo->sessionId)) {
 			/*
 			 * Enable heartbeat timer when hand-off is in progress
@@ -11128,7 +11105,6 @@ void csr_roam_wait_for_key_time_out_handler(void *pv)
 			cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
 					pMac->roam.configParam.HeartbeatThresh24);
 		}
-#endif
 		sms_log(pMac, LOGE, " SME pre-auth state timeout. ");
 
 		/* Change the substate so command queue is unblocked. */
@@ -11160,23 +11136,19 @@ CDF_STATUS csr_roam_start_wait_for_key_timer(tpAniSirGlobal pMac, uint32_t inter
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[pMac->roam.WaitForKeyTimerInfo.
 					     sessionId];
-#ifdef FEATURE_WLAN_LFR
 	if (csr_neighbor_roam_is_handoff_in_progress(pMac,
-						     pMac->roam.WaitForKeyTimerInfo.
-						     sessionId)) {
+				     pMac->roam.WaitForKeyTimerInfo.
+				     sessionId)) {
 		/* Disable heartbeat timer when hand-off is in progress */
 		sms_log(pMac, LOG2,
 			FL("disabling HB timer in state=%s sub-state=%s"),
-			mac_trace_get_neighbour_roam_state(pNeighborRoamInfo->
-							   neighborRoamState),
-			mac_trace_getcsr_roam_sub_state(pMac->roam.
-							curSubState[pMac->roam.
-								    WaitForKeyTimerInfo.
-								    sessionId]
-							));
+			mac_trace_get_neighbour_roam_state(
+				pNeighborRoamInfo->neighborRoamState),
+			mac_trace_getcsr_roam_sub_state(
+				pMac->roam.curSubState[pMac->roam.
+					WaitForKeyTimerInfo.sessionId]));
 		cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD, 0);
 	}
-#endif
 	sms_log(pMac, LOG1, " csrScanStartWaitForKeyTimer");
 	status = cdf_mc_timer_start(&pMac->roam.hTimerWaitForKey,
 				    interval / CDF_MC_TIMER_TO_MS_UNIT);
@@ -11198,7 +11170,6 @@ CDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac)
 						curSubState[pMac->roam.
 							    WaitForKeyTimerInfo.
 							    sessionId]));
-#ifdef FEATURE_WLAN_LFR
 	if (csr_neighbor_roam_is_handoff_in_progress(pMac,
 						     pMac->roam.WaitForKeyTimerInfo.
 						     sessionId)) {
@@ -11212,7 +11183,6 @@ CDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac)
 		cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
 				pMac->roam.configParam.HeartbeatThresh24);
 	}
-#endif
 	return cdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
 }
 
@@ -13764,23 +13734,16 @@ CDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			}
 		}
 #endif /* FEATURE_WLAN_ESE */
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 		if (ese_config
-#ifdef FEATURE_WLAN_LFR
-		    || csr_roam_is_fast_roam_enabled(pMac, sessionId)
-#endif
-		    ) {
+		    || csr_roam_is_fast_roam_enabled(pMac, sessionId)) {
 			csr_join_req->isFastTransitionEnabled = true;
 		} else {
 			csr_join_req->isFastTransitionEnabled = false;
 		}
-#endif
-#ifdef FEATURE_WLAN_LFR
 		if (csr_roam_is_fast_roam_enabled(pMac, sessionId))
 			csr_join_req->isFastRoamIniFeatureEnabled = true;
 		else
 			csr_join_req->isFastRoamIniFeatureEnabled = false;
-#endif
 
 		csr_join_req->txLdpcIniFeatureEnabled =
 			(uint8_t) pMac->roam.configParam.txLdpcEnable;
@@ -17696,9 +17659,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-#if defined(FEATURE_WLAN_LFR) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_ESE_UPLOAD)
 	tCsrRoamInfo roamInfo;
-#endif
 	eCsrAuthType conn_Auth_type;
 	uint32_t sessionId = pFTPreAuthRsp->smeSessionId;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -17772,7 +17733,6 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 	}
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
-#ifdef FEATURE_WLAN_LFR
 	/* If Legacy Fast Roaming is enabled, signal the supplicant */
 	/* So he can send us a PMK-ID for this candidate AP. */
 	if (csr_roam_is_fast_roam_enabled(pMac, pFTPreAuthRsp->smeSessionId)) {
@@ -17783,7 +17743,6 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 		csr_roam_call_callback(pMac, pFTPreAuthRsp->smeSessionId,
 				       &roamInfo, 0, eCSR_ROAM_PMK_NOTIFY, 0);
 	}
-#endif
 
 	/* If its an Open Auth, FT IEs are not provided by supplicant */
 	/* Hence populate them here */

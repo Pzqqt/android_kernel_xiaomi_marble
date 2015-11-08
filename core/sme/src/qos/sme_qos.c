@@ -987,13 +987,11 @@ CDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 			sme_qos_process_preauth_success_ind(pMac, sessionId,
 							    pEvent_info);
 		break;
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	case SME_QOS_CSR_SET_KEY_SUCCESS_IND:
 		status =
 			sme_qos_process_set_key_success_ind(pMac, sessionId,
 							    pEvent_info);
 		break;
-#endif
 #endif
 	default:
 		/* Err msg */
@@ -2879,7 +2877,6 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /* This is a dummy function now. But the purpose of me adding this was to
  * delay the TSPEC processing till SET_KEY completes. This function can be
  * used to do any SME_QOS processing after the SET_KEY. As of now, it is
@@ -2894,7 +2891,6 @@ CDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return CDF_STATUS_SUCCESS;
 }
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**

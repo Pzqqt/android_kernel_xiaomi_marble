@@ -264,8 +264,6 @@ CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 		void *pMsgBuf);
 #endif /* FEATURE_WLAN_TDLS */
 
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		 defined(FEATURE_WLAN_LFR)
 CDF_STATUS csr_flush_cfg_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 		uint8_t sessionId);
 CDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
@@ -273,7 +271,6 @@ CDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 		const uint8_t numChannels);
 CDF_STATUS csr_update_bg_scan_config_ini_channel_list(tpAniSirGlobal pMac,
 		uint8_t sessionId, eCsrBand eBand);
-#endif
 
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 CDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,

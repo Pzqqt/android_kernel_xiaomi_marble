@@ -3748,16 +3748,13 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	do {
 		if (!csr_is_profile_rsn(pProfile))
 			break;
-#ifdef FEATURE_WLAN_LFR
 		if (csr_roam_is_fast_roam_enabled(pMac, sessionId)) {
 			/* If "Legacy Fast Roaming" is enabled ALWAYS rebuild the RSN IE from */
 			/* scratch. So it contains the current PMK-IDs */
 			cbRsnIe =
 				csr_construct_rsn_ie(pMac, sessionId, pProfile,
 						     pSirBssDesc, pIes, pRsnIe);
-		} else
-#endif
-		if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
+		} else if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
 			/* If you have one started away, re-use it. */
 			if (SIR_MAC_WPA_IE_MAX_LENGTH >=
 			    pProfile->nRSNReqIELength) {
@@ -5589,7 +5586,6 @@ void csr_disconnect_all_active_sessions(tpAniSirGlobal pMac)
 	}
 }
 
-#ifdef FEATURE_WLAN_LFR
 bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 				    int numChannels, uint8_t channel)
 {
@@ -5649,7 +5645,6 @@ CDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 
 	return CDF_STATUS_SUCCESS;
 }
-#endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
  * csr_diag_event_report() - send PE diag event

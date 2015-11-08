@@ -93,19 +93,14 @@ typedef struct _smeConfigParams {
 #if defined WLAN_FEATURE_VOWIFI
 	struct rrm_config_param rrmConfig;
 #endif
-#if defined FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
 	uint8_t MAWCEnabled;
-#endif
 #if defined FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
 	uint8_t isAmsduSupportInAMPDU;
 	bool pnoOffload;
 	uint8_t fEnableDebugLog;
@@ -572,8 +567,6 @@ CDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel,
 void sme_feature_caps_exchange(tHalHandle hHal);
 void sme_disable_feature_capablity(uint8_t feature_index);
 void sme_reset_power_values_for5_g(tHalHandle hHal);
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 CDF_STATUS sme_update_roam_prefer5_g_hz(tHalHandle hHal, bool nRoamPrefer5GHz);
 CDF_STATUS sme_set_roam_intra_band(tHalHandle hHal, const bool nRoamIntraBand);
 CDF_STATUS sme_update_roam_scan_n_probes(tHalHandle hHal, uint8_t sessionId,
@@ -594,9 +587,7 @@ CDF_STATUS sme_update_wes_mode(tHalHandle hHal, bool isWESModeEnabled,
 		uint8_t sessionId);
 CDF_STATUS sme_set_roam_scan_control(tHalHandle hHal, uint8_t sessionId,
 		bool roamScanControl);
-#endif /* (WLAN_FEATURE_VOWIFI_11R)||(FEATURE_WLAN_ESE)||(FEATURE_WLAN_LFR) */
 
-#ifdef FEATURE_WLAN_LFR
 CDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(tHalHandle hHal,
 		uint8_t sessionId,
 		const bool
@@ -608,7 +599,6 @@ CDF_STATUS sme_start_roaming(tHalHandle hHal, uint8_t sessionId,
 		uint8_t reason);
 CDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 		bool bFastRoamInConIniFeatureEnabled);
-#endif /* FEATURE_WLAN_LFR */
 #ifdef FEATURE_WLAN_ESE
 CDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal, uint8_t sessionId,
 		const bool isEseIniFeatureEnabled);
@@ -664,8 +654,6 @@ uint8_t sme_get_roam_bmiss_final_bcnt(tHalHandle hHal);
 CDF_STATUS sme_set_roam_beacon_rssi_weight(tHalHandle hHal, uint8_t sessionId,
 		const uint8_t nRoamBeaconRssiWeight);
 uint8_t sme_get_roam_beacon_rssi_weight(tHalHandle hHal);
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 uint8_t sme_get_roam_rssi_diff(tHalHandle hHal);
 CDF_STATUS sme_change_roam_scan_channel_list(tHalHandle hHal, uint8_t sessionId,
 		uint8_t *pChannelList,
@@ -683,7 +671,6 @@ bool sme_get_wes_mode(tHalHandle hHal);
 bool sme_get_roam_scan_control(tHalHandle hHal);
 bool sme_get_is_lfr_feature_enabled(tHalHandle hHal);
 bool sme_get_is_ft_feature_enabled(tHalHandle hHal);
-#endif
 CDF_STATUS sme_update_roam_scan_offload_enabled(tHalHandle hHal,
 		bool nRoamScanOffloadEnabled);
 uint8_t sme_is_feature_supported_by_fw(uint8_t featEnumValue);

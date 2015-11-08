@@ -486,9 +486,7 @@ typedef enum {
 	/* this mean error happens before assoc_start/roam_start is called. */
 	eCSR_ROAM_SESSION_OPENED,
 	eCSR_ROAM_FT_REASSOC_FAILED,
-#ifdef FEATURE_WLAN_LFR
 	eCSR_ROAM_PMK_NOTIFY,
-#endif
 	/*
 	 * Following 4 enums are used by FEATURE_WLAN_LFR_METRICS
 	 * but they are needed for compilation even when
@@ -1146,16 +1144,11 @@ typedef struct tagCsrConfigParam {
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
 	uint8_t MAWCEnabled;
-#endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
 	tCsrNeighborRoamConfigParams neighborRoamConfig;
 	/*
 	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for that AC
@@ -1204,8 +1197,6 @@ typedef struct tagCsrConfigParam {
 	 * To enable/disable scanning only 2.4Ghz channels on first scan
 	 */
 	bool fFirstScanOnly2GChnl;
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
 	bool nRoamPrefer5GHz;
 	bool nRoamIntraBand;
 	uint8_t nProbes;
@@ -1213,7 +1204,6 @@ typedef struct tagCsrConfigParam {
 
 	bool isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
-#endif
 	uint8_t scanCfgAgingTime;
 	uint8_t enableTxLdpc;
 	uint8_t isAmsduSupportInAMPDU;

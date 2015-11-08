@@ -126,7 +126,6 @@ typedef struct sCsr11rAssocNeighborInfo {
 } tCsr11rAssocNeighborInfo, *tpCsr11rAssocNeighborInfo;
 #endif /* WLAN_FEATURE_VOWIFI_11R */
 
-#ifdef FEATURE_WLAN_LFR
 typedef enum {
 	eFirstEmptyScan = 1,
 	eSecondEmptyScan,
@@ -140,7 +139,6 @@ typedef enum {
 	DEFAULT_SCAN = 0,
 	SPLIT_SCAN_OCCUPIED_LIST = 1,
 } eNeighborRoamScanMode;
-#endif
 
 /* Complete control information for neighbor roam algorithm */
 typedef struct sCsrNeighborRoamControlInfo {
@@ -164,7 +162,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	bool isVOAdmitted;
 	uint16_t MinQBssLoadRequired;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	/*
 	 * Previous connected profile.
 	 * If the new profile does not match previous we re-initialize
@@ -175,7 +172,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	uint8_t uOsRequestedHandoff;
 	/* handoff related info came with upper layer's req for reassoc */
 	tCsrHandoffRequest handoffReqInfo;
-#endif
 	uint8_t currentRoamBmissFirstBcnt;
 	uint8_t currentRoamBmissFinalBcnt;
 	uint8_t currentRoamBeaconRssiWeight;

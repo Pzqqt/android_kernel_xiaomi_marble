@@ -77,8 +77,6 @@
 	  (((pMac)->roam.configParam.roam_params.is_5g_pref_enabled) ? \
 	   true : false) \
 	)
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	 defined(FEATURE_WLAN_LFR)
 #define CSR_IS_ROAM_PREFER_5GHZ(pMac)	\
 	( \
 	  (((pMac)->roam.configParam.nRoamPrefer5GHz) ? true : false) \
@@ -87,7 +85,6 @@
 	( \
 	  (((pMac)->roam.configParam.nRoamIntraBand) ? true : false) \
 	)
-#endif
 #define CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(pMac) \
 	( \
 	  (((pMac)->roam.configParam.bFastRoamInConIniFeatureEnabled) ? \
@@ -566,17 +563,13 @@ typedef struct tagCsrConfig {
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsr11rConfig csr11rConfig;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
 	uint8_t MAWCEnabled;
 	uint8_t isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) \
-	|| defined(FEATURE_WLAN_LFR)
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool nRoamPrefer5GHz;
@@ -585,7 +578,6 @@ typedef struct tagCsrConfig {
 	bool nRoamScanControl;
 	uint8_t nProbes;
 	uint16_t nRoamScanHomeAwayTime;
-#endif
 
 	tCsrNeighborRoamConfig neighborRoamConfig;
 
@@ -1017,17 +1009,12 @@ typedef struct tagCsrRoamStruct {
 	tCsrRoamSession *roamSession;
 	uint32_t transactionId;  /* Current transaction ID for internal use. */
 	tCsrNeighborRoamControlInfo neighborRoamInfo[CSR_ROAM_SESSION_MAX];
-#ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) \
-	|| defined(FEATURE_WLAN_LFR)
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
 	uint32_t deauthRspStatus;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t *pReassocResp;          /* reassociation response from new AP */
@@ -1326,7 +1313,6 @@ bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 /* Remove this code once SLM_Sessionization is supported */
 void csr_disconnect_all_active_sessions(tpAniSirGlobal pMac);
 
-#ifdef FEATURE_WLAN_LFR
 /* Returns whether "Legacy Fast Roaming" is enabled...or not */
 bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal pMac, uint32_t sessionId);
 bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal pMac);
@@ -1339,7 +1325,6 @@ CDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
 CDF_STATUS csr_handoff_request(tpAniSirGlobal pMac, uint8_t sessionId,
 		tCsrHandoffRequest *pHandoffInfo);
 bool csr_roam_is_sta_mode(tpAniSirGlobal pMac, uint32_t sessionId);
-#endif
 
 /* Post Channel Change Indication */
 CDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
