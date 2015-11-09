@@ -95,7 +95,7 @@ static inline int __cdf_status_to_os_return(CDF_STATUS status)
 			pr_err("Assertion failed! %s:%s %s:%d\n",   \
 			       # expr, __func__, __FILE__, __LINE__);      \
 			dump_stack();					   \
-			panic("Take care of the assert first\n");	   \
+			BUG_ON(1);	   \
 		}     \
 } while (0)
 
