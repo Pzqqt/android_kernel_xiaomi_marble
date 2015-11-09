@@ -355,6 +355,10 @@ void cdf_trace_display(void)
 	}
 }
 
+#define ROW_SIZE 16
+/* Buffer size = data bytes(2 hex chars plus space) + NULL */
+#define BUFFER_SIZE ((ROW_SIZE * 3) + 1)
+
 /**
  * cdf_trace_hex_dump() - externally called hex dump function
  * @module : Module identifier a member of the CDF_MODULE_ID enumeration that
@@ -372,35 +376,23 @@ void cdf_trace_display(void)
 void cdf_trace_hex_dump(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 			void *data, int buf_len)
 {
-	char *buf = (char *)data;
-	int i;
+	const u8 *ptr = data;
+	int i, linelen, remaining = buf_len;
+	unsigned char linebuf[BUFFER_SIZE];
 
 	if (!(g_cdf_trace_info[module].moduleTraceLevel &
-	      CDF_TRACE_LEVEL_TO_MODULE_BITMASK(level)))
+		CDF_TRACE_LEVEL_TO_MODULE_BITMASK(level)))
 		return;
 
-	for (i = 0; (i + 15) < buf_len; i += 16) {
-		cdf_trace_msg(module, level,
-			      "%02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x %02x",
-			      buf[i],
-			      buf[i + 1],
-			      buf[i + 2],
-			      buf[i + 3],
-			      buf[i + 4],
-			      buf[i + 5],
-			      buf[i + 6],
-			      buf[i + 7],
-			      buf[i + 8],
-			      buf[i + 9],
-			      buf[i + 10],
-			      buf[i + 11],
-			      buf[i + 12],
-			      buf[i + 13], buf[i + 14], buf[i + 15]);
-	}
+	for (i = 0; i < buf_len; i += ROW_SIZE) {
+		linelen = min(remaining, ROW_SIZE);
+		remaining -= ROW_SIZE;
 
-	/* Dump the bytes in the last line */
-	for (; i < buf_len; i++)
-		cdf_trace_msg(module, level, "%02x ", buf[i]);
+		hex_dump_to_buffer(ptr + i, linelen, ROW_SIZE, 1,
+				linebuf, sizeof(linebuf), false);
+
+		cdf_trace_msg(module, level, "%.8x: %s", i, linebuf);
+	}
 }
 
 #endif
