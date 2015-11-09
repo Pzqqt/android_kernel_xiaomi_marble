@@ -129,33 +129,33 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	CDF_STATUS status;
 
 	if (cdf_unlikely(!pdev)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:Invalid sta id", __func__);
 		return skb;
 	}
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 	if (!peer) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:Invalid peer", __func__);
 		return skb;
 	}
 
 	if (peer->state < ol_txrx_peer_state_conn) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: station to be yet registered..dropping pkt", __func__);
 		return skb;
 	}
 
 	status = cdf_nbuf_map_single(cdf_ctx, skb, CDF_DMA_TO_DEVICE);
 	if (cdf_unlikely(status != CDF_STATUS_SUCCESS)) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;
 	}
@@ -171,7 +171,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	cdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_LL(peer->vdev, skb);
 	if (ret) {
-		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: Failed to tx", __func__);
 		cdf_nbuf_unmap_single(cdf_ctx, ret, CDF_DMA_TO_DEVICE);
 		return ret;
