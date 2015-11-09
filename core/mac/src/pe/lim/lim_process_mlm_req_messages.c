@@ -896,10 +896,7 @@ void lim_post_join_set_link_state_callback(tpAniSirGlobal mac,
 	 */
 	session_entry->channelChangeReasonCode =
 			 LIM_SWITCH_CHANNEL_JOIN;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || \
-	 defined(FEATURE_WLAN_LFR)
 	session_entry->pLimMlmReassocRetryReq = NULL;
-#endif
 	lim_log(mac, LOGE,
 		FL("[lim_process_mlm_join_req]: suspend link success(%d) "
 		"on sessionid: %d setting channel to: %d with ch_width :%d "

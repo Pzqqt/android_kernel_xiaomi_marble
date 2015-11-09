@@ -1806,15 +1806,11 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #ifdef FEATURE_WLAN_ESE
 		session->isESEconnection = sme_join_req->isESEconnection;
 #endif
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 		session->isFastTransitionEnabled =
 			sme_join_req->isFastTransitionEnabled;
-#endif
 
-#ifdef FEATURE_WLAN_LFR
 		session->isFastRoamIniFeatureEnabled =
 			sme_join_req->isFastRoamIniFeatureEnabled;
-#endif
 		session->txLdpcIniFeatureEnabled =
 			sme_join_req->txLdpcIniFeatureEnabled;
 
@@ -2127,8 +2123,6 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 	 */
 
 	if (session_entry->limSmeState != eLIM_SME_LINK_EST_STATE) {
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 		if (session_entry->limSmeState == eLIM_SME_WT_REASSOC_STATE) {
 			/*
 			 * May be from 11r FT pre-auth. So lets check it
@@ -2155,7 +2149,6 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 					session_entry);
 			return;
 		}
-#endif
 		/*
 		 * Should not have received eWNI_SME_REASSOC_REQ
 		 */

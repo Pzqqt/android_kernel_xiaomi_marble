@@ -117,9 +117,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	tpSirSmeJoinReq pLimJoinReq;    /* handle to sme join req */
 	tpSirSmeJoinReq pLimReAssocReq; /* handle to sme reassoc req */
 	tpLimMlmJoinReq pLimMlmJoinReq; /* handle to MLM join Req */
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	void *pLimMlmReassocRetryReq;   /* keep reasoc req for retry */
-#endif
 	void *pLimMlmReassocReq;        /* handle to MLM reassoc Req */
 	uint16_t channelChangeReasonCode;
 	uint8_t dot11mode;
@@ -291,12 +289,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	tAniBool isESEconnection;
 	tEsePEContext eseContext;
 #endif
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	tAniBool isFastTransitionEnabled;
-#endif
-#ifdef FEATURE_WLAN_LFR
 	tAniBool isFastRoamIniFeatureEnabled;
-#endif
 	tSirNoAParam p2pNoA;
 	tSirP2PNoaAttr p2pGoPsUpdate;
 	uint32_t defaultAuthFailureTimeout;

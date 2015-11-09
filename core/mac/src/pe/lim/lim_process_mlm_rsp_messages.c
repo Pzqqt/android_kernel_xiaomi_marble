@@ -2730,7 +2730,6 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 			eSIR_MAC_UNSPEC_FAILURE_STATUS;
 		goto end;
 	}
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	pMac->lim.pSessionEntry = psessionEntry;
 	if (NULL == pMac->lim.pSessionEntry->pLimMlmReassocRetryReq) {
 		/* Take a copy of reassoc request for retrying */
@@ -2748,7 +2747,6 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 			     sizeof(tLimMlmReassocReq));
 	}
 	pMac->lim.reAssocRetryAttempt = 0;
-#endif
 	lim_send_reassoc_req_with_ft_ies_mgmt_frame(pMac,
 						    psessionEntry->
 						    pLimMlmReassocReq,
@@ -2955,11 +2953,8 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		goto end;
 	}
 	if (eLIM_MLM_WT_ADD_BSS_RSP_REASSOC_STATE == session_entry->limMlmState
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		|| (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
-		session_entry->limMlmState)
-#endif
-	) {
+		session_entry->limMlmState)) {
 		msg_type = LIM_MLM_REASSOC_CNF;
 		sub_type = LIM_REASSOC;
 		/*
@@ -2987,7 +2982,6 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 #endif
 
 	if (CDF_STATUS_SUCCESS == add_bss_params->status) {
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 			session_entry->limMlmState) {
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
@@ -2999,7 +2993,6 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 				session_entry);
 			goto end;
 		}
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 		/* Set MLME state */
 		session_entry->limMlmState = eLIM_MLM_WT_ADD_STA_RSP_STATE;

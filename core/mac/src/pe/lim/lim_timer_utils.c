@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -565,7 +565,6 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 	tpAniSirGlobal mac_ctx = (tpAniSirGlobal) mac_global;
 	tpPESession session = NULL;
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	session = mac_ctx->lim.pSessionEntry;
 	if (LIM_REASSOC == param && NULL != session
 	    && session->limMlmState == eLIM_MLM_WT_FT_REASSOC_RSP_STATE) {
@@ -589,7 +588,6 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 			}
 		}
 	}
-#endif
 	/* Prepare and post message to LIM Message Queue */
 	msg.type = SIR_LIM_ASSOC_FAIL_TIMEOUT;
 	msg.bodyval = (uint32_t) param;

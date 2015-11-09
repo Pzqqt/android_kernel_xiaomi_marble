@@ -192,11 +192,9 @@ void lim_handle_add_bss_in_re_assoc_context(tpAniSirGlobal pMac, tpDphHashNode p
 void lim_fill_rx_highest_supported_rate(tpAniSirGlobal pMac,
 					uint16_t *rxHighestRate,
 					uint8_t *pSupportedMCSSet);
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
 				      tLimMlmReassocReq *pMlmReassocReq,
 				      tpPESession psessionEntry);
-#endif
 #ifdef WLAN_FEATURE_11W
 void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 					     uint8_t *frame, uint32_t frameLen,

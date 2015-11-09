@@ -59,9 +59,7 @@ typedef enum {
 #define LIM_RRM_BIT_MASK                          0x1000
 #define LIM_SHORT_PREAMBLE_BIT_MASK               0x0020
 #define LIM_IMMEDIATE_BLOCK_ACK_MASK              0x8000
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 #define LIM_MAX_REASSOC_RETRY_LIMIT            2
-#endif
 
 /* classifier ID is coded as 0-3: tsid, 4-5:direction */
 #define LIM_MAKE_CLSID(tsid, dir) (((tsid) & 0x0F) | (((dir) & 0x03) << 4))

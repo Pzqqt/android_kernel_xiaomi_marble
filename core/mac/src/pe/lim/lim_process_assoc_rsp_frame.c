@@ -648,10 +648,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		((subtype == LIM_REASSOC) &&
 		 !session_entry->bRoamSynchInProgress &&
 		((session_entry->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE)
-#if defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		&& (session_entry->limMlmState !=
 		eLIM_MLM_WT_FT_REASSOC_RSP_STATE)
-#endif
 		))) {
 		/* Received unexpected Re/Association Response frame */
 
@@ -818,7 +816,6 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	else
 	{
 		/* Stop Reassociation failure timer */
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		mac_ctx->lim.reAssocRetryAttempt = 0;
 		if ((NULL != mac_ctx->lim.pSessionEntry)
 		    && (NULL !=
@@ -828,7 +825,6 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq =
 				NULL;
 		}
-#endif
 		lim_deactivate_and_change_timer(mac_ctx,
 			eLIM_REASSOC_FAIL_TIMER);
 	}
@@ -973,7 +969,6 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				session_entry, false);
 			goto assocReject;
 		}
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		if ((session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
 			session_entry->bRoamSynchInProgress) {
@@ -1003,7 +998,6 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			cdf_mem_free(beacon);
 			return;
 		}
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 		/*
 		 * If we're re-associating to the same BSS,

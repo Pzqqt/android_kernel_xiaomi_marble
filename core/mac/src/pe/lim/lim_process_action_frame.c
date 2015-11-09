@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1952,8 +1952,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		}
 		break;
 #endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 	case SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY:
 		vendor_specific = (tpSirMacVendorSpecificFrameHdr) action_hdr;
 		mac_hdr = NULL;
@@ -1999,8 +1997,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 				GET_LIM_SYSTEM_ROLE(session));
 		}
 	break;
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE ||
-		                   FEATURE_WLAN_LFR */
 	case SIR_MAC_ACTION_PUBLIC_USAGE:
 		switch (action_hdr->actionID) {
 		case SIR_MAC_ACTION_VENDOR_SPECIFIC:

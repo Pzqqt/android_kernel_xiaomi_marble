@@ -362,15 +362,12 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 		 * receive Auth2
 		 */
 		authFrame.authAlgoNumber = eSIR_FT_AUTH;
-	}
-#if defined FEATURE_WLAN_ESE || defined FEATURE_WLAN_LFR
-	else {
+	} else {
 		/* Will need to make isESEconnection a enum may be for further
 		 * improvements to this to match this algorithm number
 		 */
 		authFrame.authAlgoNumber = eSIR_OPEN_SYSTEM;
 	}
-#endif
 	authFrame.authTransactionSeqNumber = SIR_MAC_AUTH_FRAME_1;
 	authFrame.authStatusCode = 0;
 
@@ -825,9 +822,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	}
 
 	/* Retrieve the session that has already been created and update the entry */
-#if defined WLAN_FEATURE_VOWIFI_11R_DEBUG || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	lim_print_mac_addr(pMac, pbssDescription->bssId, LOG1);
-#endif
 	pftSessionEntry->limWmeEnabled = psessionEntry->limWmeEnabled;
 	pftSessionEntry->limQosEnabled = psessionEntry->limQosEnabled;
 	pftSessionEntry->limWsmEnabled = psessionEntry->limWsmEnabled;
@@ -930,9 +925,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	sir_copy_mac_addr(pftSessionEntry->limReAssocbssId,
 			  pbssDescription->bssId);
 	sir_copy_mac_addr(pftSessionEntry->prev_ap_bssid, psessionEntry->bssId);
-#if defined WLAN_FEATURE_VOWIFI_11R_DEBUG || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	lim_print_mac_addr(pMac, pftSessionEntry->limReAssocbssId, LOG1);
-#endif
 
 	/* Store beaconInterval */
 	pftSessionEntry->beaconParams.beaconInterval =
@@ -982,15 +975,11 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->is_ese_version_ie_present =
 		pBeaconStruct->is_ese_ver_ie_present;
 #endif
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	pftSessionEntry->isFastTransitionEnabled =
 		psessionEntry->isFastTransitionEnabled;
-#endif
 
-#ifdef FEATURE_WLAN_LFR
 	pftSessionEntry->isFastRoamIniFeatureEnabled =
 		psessionEntry->isFastRoamIniFeatureEnabled;
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	pftSessionEntry->maxTxPower =

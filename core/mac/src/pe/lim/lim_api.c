@@ -301,10 +301,8 @@ static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
 	cdf_mem_set(pMac->lim.protStaCache,
 		    sizeof(tCacheParams) * LIM_PROT_STA_CACHE_SIZE, 0);
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	pMac->lim.pSessionEntry = NULL;
 	pMac->lim.reAssocRetryAttempt = 0;
-#endif
 
 }
 

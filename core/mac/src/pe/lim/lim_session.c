@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -310,12 +310,8 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 #ifdef FEATURE_WLAN_ESE
 	session_ptr->isESEconnection = false;
 #endif
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	session_ptr->isFastTransitionEnabled = false;
-#endif
-#ifdef FEATURE_WLAN_LFR
 	session_ptr->isFastRoamIniFeatureEnabled = false;
-#endif
 	*sessionId = i;
 	session_ptr->gLimPhyMode = WNI_CFG_PHY_MODE_11G;
 	/* Initialize CB mode variables when session is created */
@@ -640,12 +636,10 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		cdf_mem_free(session->limAssocResponseData);
 		session->limAssocResponseData = NULL;
 	}
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	if (NULL != session->pLimMlmReassocRetryReq) {
 		cdf_mem_free(session->pLimMlmReassocRetryReq);
 		session->pLimMlmReassocRetryReq = NULL;
 	}
-#endif
 	if (NULL != session->pLimMlmReassocReq) {
 		cdf_mem_free(session->pLimMlmReassocReq);
 		session->pLimMlmReassocReq = NULL;

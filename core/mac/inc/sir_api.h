@@ -269,11 +269,8 @@ typedef enum eSirResultCodes {
 	eSIR_SME_STOP_BSS_FAILURE,
 	eSIR_SME_WOWL_ENTER_REQ_FAILED,
 	eSIR_SME_WOWL_EXIT_REQ_FAILED,
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
 	eSIR_SME_FT_REASSOC_TIMEOUT_FAILURE,
 	eSIR_SME_FT_REASSOC_FAILURE,
-#endif
 	eSIR_SME_SEND_ACTION_FAIL,
 	eSIR_SME_DEAUTH_STATUS,
 	eSIR_PNO_SCAN_SUCCESS,
@@ -1000,12 +997,8 @@ typedef struct sSirSmeJoinReq {
 	tESETspecInfo eseTspecInfo;
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	tAniBool isFastTransitionEnabled;
-#endif
-#ifdef FEATURE_WLAN_LFR
 	tAniBool isFastRoamIniFeatureEnabled;
-#endif
 
 	uint8_t txLdpcIniFeatureEnabled;
 	tSirHTConfig htConfig;
@@ -2055,7 +2048,6 @@ typedef struct sSirPlmReq {
 } tSirPlmReq, *tpSirPlmReq;
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 
 #define SIR_QOS_NUM_AC_MAX 4
 
@@ -2087,7 +2079,6 @@ typedef struct sSirAggrQosRsp {
 	tSirAggrQosRspInfo aggrInfo;
 } tSirAggrQosRsp, *tpSirAggrQosRsp;
 
-#endif /*WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE */
 
 typedef struct sSirQosMapSet {
 	uint8_t present;

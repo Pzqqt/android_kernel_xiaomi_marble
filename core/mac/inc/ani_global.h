@@ -829,10 +829,8 @@ typedef struct sAniSirLim {
 	cdf_list_t gLimMgmtFrameRegistratinQueue;
 	uint32_t mgmtFrameSessionId;
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	tpPESession pSessionEntry;
 	uint8_t reAssocRetryAttempt;
-#endif
 	tLimDisassocDeauthCnfReq limDisassocDeauthCnfReq;
 	uint8_t deferredMsgCnt;
 	tSirDFSChannelList dfschannelList;

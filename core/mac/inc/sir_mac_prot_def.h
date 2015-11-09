@@ -1952,13 +1952,11 @@ typedef struct sSirMacActionFrameHdr {
 	uint8_t actionID;
 } cdf_packed tSirMacActionFrameHdr, *tpSirMacActionFrameHdr;
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 typedef struct sSirMacVendorSpecificFrameHdr {
 	uint8_t category;
 	uint8_t Oui[4];
 } cdf_packed tSirMacVendorSpecificFrameHdr,
 *tpSirMacVendorSpecificFrameHdr;
-#endif
 
 typedef struct sSirMacVendorSpecificPublicActionFrameHdr {
 	uint8_t category;

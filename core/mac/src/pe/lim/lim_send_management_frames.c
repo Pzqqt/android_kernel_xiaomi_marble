@@ -1977,7 +1977,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	return;
 }
 
-#if defined WLAN_FEATURE_VOWIFI_11R || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 /**
  * lim_send_reassoc_req_with_ft_ies_mgmt_frame() - Send Reassoc Req with FTIEs.
  *
@@ -2011,9 +2010,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t *body;
 	uint16_t add_ie_len;
 	uint8_t *add_ie;
-#if defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	uint8_t *wps_ie = NULL;
-#endif
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
 	bool vht_enabled = false;
@@ -2116,7 +2113,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * at the end of the pack routine for 11r.
 	 * This should ideally! be fixed.
 	 */
-#if defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	/*
 	 * The join request *should* contain zero or one of the WPA and RSN
 	 * IEs.  The payload send along with the request is a
@@ -2176,7 +2172,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 #endif
 	}
 #endif /* FEATURE_WLAN_ESE */
-#endif /* FEATURE_WLAN_ESE || FEATURE_WLAN_LFR */
 
 	/* include WME EDCA IE as well */
 	if (wme_enabled) {
@@ -2297,9 +2292,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* Paranoia: */
 	cdf_mem_set(frame, bytes + ft_ies_length, 0);
 
-#if defined WLAN_FEATURE_VOWIFI_11R_DEBUG || defined FEATURE_WLAN_ESE || defined(FEATURE_WLAN_LFR)
 	lim_print_mac_addr(mac_ctx, pe_session->limReAssocbssId, LOG1);
-#endif
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_REASSOC_REQ, pe_session->limReAssocbssId,
@@ -2477,7 +2470,6 @@ end:
 			     (uint32_t *) &mlmReassocCnf);
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 void
 lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
@@ -3022,13 +3014,10 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if ((SIR_BAND_5_GHZ == lim_get_rf_band(session->currentOperChannel))
 	    || (session->pePersona == CDF_P2P_CLIENT_MODE)
 	    || (session->pePersona == CDF_P2P_GO_MODE)
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	    || ((NULL != session->ftPEContext.pFTPreAuthReq) &&
 		(SIR_BAND_5_GHZ ==
 		 lim_get_rf_band(session->ftPEContext.pFTPreAuthReq->
-				 preAuthchannelNum)))
-#endif
-	    )
+				 preAuthchannelNum))))
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 
@@ -3099,9 +3088,7 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 #ifdef FEATURE_WLAN_ESE
 		(psessionEntry->isESEconnection) ||
 #endif
-#ifdef FEATURE_WLAN_LFR
 		(psessionEntry->isFastRoamIniFeatureEnabled) ||
-#endif
 		(psessionEntry->is11Rconnection))) {
 		PELOGE(lim_log(pMac, LOGE,
 			FL("FT Preauth Session (%p,%d) Cleanup Deauth reason %d Trigger = %d"),
@@ -3115,17 +3102,13 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 #ifdef FEATURE_WLAN_ESE
 			" isESE %d"
 #endif
-#ifdef FEATURE_WLAN_LFR
 			" isLFR %d"
-#endif
 			" is11r %d, Deauth reason %d Trigger = %d"),
 			psessionEntry->limSystemRole,
 #ifdef FEATURE_WLAN_ESE
 			psessionEntry->isESEconnection,
 #endif
-#ifdef FEATURE_WLAN_LFR
 			psessionEntry->isFastRoamIniFeatureEnabled,
-#endif
 			psessionEntry->is11Rconnection,
 			pMlmDeauthReq->reasonCode,
 			pMlmDeauthReq->deauthTrigger););
@@ -3209,9 +3192,7 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 #ifdef FEATURE_WLAN_ESE
 			    (pe_session->isESEconnection) ||
 #endif
-#ifdef FEATURE_WLAN_LFR
 			    (pe_session->isFastRoamIniFeatureEnabled) ||
-#endif
 			    (pe_session->is11Rconnection)) &&
 			    (disassoc_req->reasonCode !=
 				eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
@@ -3229,17 +3210,13 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 #ifdef FEATURE_WLAN_ESE
 				" isESE %d"
 #endif
-#ifdef FEATURE_WLAN_LFR
 				" isLFR %d"
-#endif
 				" is11r %d reason %d"),
 				GET_LIM_SYSTEM_ROLE(pe_session),
 #ifdef FEATURE_WLAN_ESE
 				pe_session->isESEconnection,
 #endif
-#ifdef FEATURE_WLAN_LFR
 				pe_session->isFastRoamIniFeatureEnabled,
-#endif
 				pe_session->is11Rconnection,
 				disassoc_req->reasonCode);
 		}
