@@ -26,6 +26,9 @@
  *
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 /* Include Files */
 #include <wlan_hdd_main.h>
 #include <wlan_hdd_misc.h>
@@ -120,7 +123,7 @@ static int hdd_wlan_green_ap_enable(hdd_adapter_t *adapter,
 {
 	int ret;
 
-	hddLog(LOG1, FL("Set Green-AP val: %d"), enable);
+	hdd_notice("Set Green-AP val: %d", enable);
 
 	ret = wma_cli_set_command(adapter->sessionId,
 				  WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID,
@@ -146,8 +149,8 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 	if (green_ap == NULL)
 		return;
 
-	hddLog(LOG1, FL("Green-AP event: %d, state: %d, num_nodes: %d"),
-	       event, green_ap->ps_state, green_ap->num_nodes);
+	hdd_notice("Green-AP event: %d, state: %d, num_nodes: %d",
+		   event, green_ap->ps_state, green_ap->num_nodes);
 
 	/* handle the green ap ps event */
 	switch (event) {
@@ -174,13 +177,13 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		break;
 
 	default:
-		hddLog(LOGE, FL("invalid event %d"), event);
+		hdd_err("invalid event %d", event);
 		break;
 	}
 
 	/* Confirm that power save is enabled before doing state transitions */
 	if (!green_ap->ps_enable) {
-		hddLog(CDF_TRACE_LEVEL_INFO, FL("Green-AP is disabled"));
+		hdd_notice("Green-AP is disabled");
 		hdd_wlan_green_ap_update(hdd_ctx,
 					 GREEN_AP_PS_IDLE_STATE,
 					 GREEN_AP_PS_WAIT_EVENT);
@@ -189,7 +192,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 
 	adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
 	if (adapter == NULL) {
-		hddLog(LOGE, FL("Green-AP no SAP adapter"));
+		hdd_err("Green-AP no SAP adapter");
 		goto done;
 	}
 
@@ -236,7 +239,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 	case GREEN_AP_PS_ON_STATE:
 		if (green_ap->num_nodes) {
 			if (hdd_wlan_green_ap_enable(adapter, 0)) {
-				hddLog(LOGE, FL("FAILED TO SET GREEN-AP mode"));
+				hdd_err("FAILED TO SET GREEN-AP mode");
 				goto done;
 			}
 			hdd_wlan_green_ap_update(hdd_ctx,
@@ -251,7 +254,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 						 GREEN_AP_PS_ON_EVENT);
 
 			if (hdd_wlan_green_ap_enable(adapter, 0)) {
-				hddLog(LOGE, FL("FAILED TO SET GREEN-AP mode"));
+				hdd_err("FAILED TO SET GREEN-AP mode");
 				goto done;
 			}
 
@@ -261,7 +264,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		break;
 
 	default:
-		hddLog(LOGE, FL("invalid state %d"), green_ap->ps_state);
+		hdd_err("invalid state %d", green_ap->ps_state);
 		hdd_wlan_green_ap_update(hdd_ctx, GREEN_AP_PS_OFF_STATE,
 					 GREEN_AP_PS_WAIT_EVENT);
 		break;
@@ -283,7 +286,7 @@ static void hdd_wlan_green_ap_timer_fn(void *ctx)
 	struct hdd_green_ap_ctx *green_ap;
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return;
 	}
 
@@ -307,7 +310,7 @@ static CDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 
 	green_ap = cdf_mem_malloc(sizeof(*green_ap));
 	if (!green_ap) {
-		hddLog(LOGP, FL("Memory allocation for Green-AP failed!"));
+		hdd_alert("Memory allocation for Green-AP failed!");
 		status = CDF_STATUS_E_NOMEM;
 		goto error;
 	}
@@ -344,7 +347,7 @@ static CDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 	ENTER();
 
 	if (green_ap == NULL) {
-		hddLog(LOG1, FL("Green-AP is not enabled"));
+		hdd_notice("Green-AP is not enabled");
 		status = CDF_STATUS_E_NOSUPPORT;
 		goto done;
 	}
@@ -356,7 +359,7 @@ static CDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 
 	/* Destroy the Green AP timer */
 	if (!CDF_IS_STATUS_SUCCESS(cdf_mc_timer_destroy(&green_ap->ps_timer)))
-		hddLog(LOG1, FL("Cannot deallocate Green-AP's timer"));
+		hdd_notice("Cannot deallocate Green-AP's timer");
 
 	/* release memory */
 	cdf_mem_zero(green_ap, sizeof(*green_ap));
@@ -378,7 +381,7 @@ done:
 void hdd_wlan_green_ap_init(struct hdd_context_s *hdd_ctx)
 {
 	if (!CDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_attach(hdd_ctx)))
-		hddLog(LOGE, FL("Failed to allocate Green-AP resource"));
+		hdd_err("Failed to allocate Green-AP resource");
 }
 
 /**
@@ -390,7 +393,7 @@ void hdd_wlan_green_ap_init(struct hdd_context_s *hdd_ctx)
 void hdd_wlan_green_ap_deinit(struct hdd_context_s *hdd_ctx)
 {
 	if (!CDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_deattach(hdd_ctx)))
-		hddLog(LOGE, FL("Cannot deallocate Green-AP resource"));
+		hdd_err("Cannot deallocate Green-AP resource");
 }
 
 /**
@@ -408,10 +411,9 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
 	} else {
 		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
-		hddLog(LOG1,
-		       "Green-AP: is disabled, due to sta_concurrency: %d, enable2x2: %d, enableGreenAP: %d",
-		       CDF_STA_MASK & hdd_ctx->concurrency_mode,
-		       cfg->enable2x2, cfg->enableGreenAP);
+		hdd_notice("Green-AP: is disabled, due to sta_concurrency: %d, enable2x2: %d, enableGreenAP: %d",
+			   CDF_STA_MASK & hdd_ctx->concurrency_mode,
+			   cfg->enable2x2, cfg->enableGreenAP);
 	}
 }
 
