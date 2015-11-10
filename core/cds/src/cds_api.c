@@ -827,6 +827,13 @@ CDF_STATUS cds_close(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS cdf_status;
 
+	cdf_status = wma_wmi_work_close(cds_context);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		 "%s: Failed to close wma_wmi_work", __func__);
+		CDF_ASSERT(0);
+	}
+
 	if (gp_cds_context->htc_ctx) {
 		htc_stop(gp_cds_context->htc_ctx);
 		htc_destroy(gp_cds_context->htc_ctx);
@@ -1532,6 +1539,13 @@ CDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
 				  "%s: Failed to close wma!", __func__);
 			CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
 		}
+	}
+
+	cdf_status = wma_wmi_work_close(cds_context);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		"%s: Failed to close wma_wmi_work!", __func__);
+		CDF_ASSERT(0);
 	}
 
 	if (gp_cds_context->htc_ctx) {
