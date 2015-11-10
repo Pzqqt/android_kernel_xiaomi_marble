@@ -577,6 +577,13 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			break;
 		}
 
+		/*
+		 * For HTT messages without a response from fw,
+		 *   do the runtime put here.
+		 * otherwise runtime put will be done when the fw response comes
+		 */
+		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT)
+			hif_pm_runtime_put(target->hif_dev);
 	}
 	if (cdf_unlikely(A_FAILED(status))) {
 #if defined(HIF_USB)
