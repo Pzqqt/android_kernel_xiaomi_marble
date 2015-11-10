@@ -800,7 +800,7 @@ int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params)
  *
  * Return: none
  */
-static void wma_data_tx_ack_work_handler(struct work_struct *ack_work)
+static void wma_data_tx_ack_work_handler(void *ack_work)
 {
 	struct wma_tx_ack_work_ctx *work;
 	tp_wma_handle wma_handle;
@@ -811,7 +811,8 @@ static void wma_data_tx_ack_work_handler(struct work_struct *ack_work)
 		return;
 	}
 
-	work = container_of(ack_work, struct wma_tx_ack_work_ctx, ack_cmp_work);
+	work = (struct wma_tx_ack_work_ctx *)ack_work;
+
 	wma_handle = work->wma_handle;
 	ack_cb = wma_handle->umac_data_ota_ack_cb;
 
@@ -883,19 +884,15 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 		ack_work = cdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
 		wma_handle->ack_work_ctx = ack_work;
 		if (ack_work) {
-#ifdef CONFIG_CNSS
-			cnss_init_work(&ack_work->ack_cmp_work,
-				       wma_data_tx_ack_work_handler);
-#else
-			INIT_WORK(&ack_work->ack_cmp_work,
-				  wma_data_tx_ack_work_handler);
-#endif /* CONFIG_CNSS */
 			ack_work->wma_handle = wma_handle;
 			ack_work->sub_type = 0;
 			ack_work->status = status;
 
-			/* Schedue the Work */
-			schedule_work(&ack_work->ack_cmp_work);
+			cdf_create_work(0, &ack_work->ack_cmp_work,
+					wma_data_tx_ack_work_handler,
+					ack_work);
+			/* Schedule the Work */
+			cdf_sched_work(0, &ack_work->ack_cmp_work);
 		}
 	}
 
@@ -1478,7 +1475,7 @@ CDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
  *
  * Return: none
  */
-static void wma_mgmt_tx_ack_work_handler(struct work_struct *ack_work)
+static void wma_mgmt_tx_ack_work_handler(void *ack_work)
 {
 	struct wma_tx_ack_work_ctx *work;
 	tp_wma_handle wma_handle;
@@ -1489,7 +1486,8 @@ static void wma_mgmt_tx_ack_work_handler(struct work_struct *ack_work)
 		return;
 	}
 
-	work = container_of(ack_work, struct wma_tx_ack_work_ctx, ack_cmp_work);
+	work = (struct wma_tx_ack_work_ctx *)ack_work;
+
 	wma_handle = work->wma_handle;
 	ack_cb = wma_handle->umac_ota_ack_cb[work->sub_type];
 
@@ -1561,19 +1559,16 @@ wma_mgmt_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 				cdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
 
 			if (ack_work) {
-#ifdef CONFIG_CNSS
-				cnss_init_work(&ack_work->ack_cmp_work,
-					       wma_mgmt_tx_ack_work_handler);
-#else
-				INIT_WORK(&ack_work->ack_cmp_work,
-					  wma_mgmt_tx_ack_work_handler);
-#endif /* CONFIG_CNSS */
 				ack_work->wma_handle = wma_handle;
 				ack_work->sub_type = pFc->subType;
 				ack_work->status = status;
 
-				/* Schedue the Work */
-				schedule_work(&ack_work->ack_cmp_work);
+				cdf_create_work(0, &ack_work->ack_cmp_work,
+						wma_mgmt_tx_ack_work_handler,
+						ack_work);
+
+				/* Schedule the Work */
+				cdf_sched_work(0, &ack_work->ack_cmp_work);
 			}
 		}
 	}
