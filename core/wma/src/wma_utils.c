@@ -2925,6 +2925,7 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				    uint32_t cfgd_hw_mode_index)
 {
 	tp_wma_handle wma;
+	uint32_t param;
 
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma) {
@@ -2937,17 +2938,23 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 		return;
 	}
 
+	if (cfgd_hw_mode_index > wma->num_dbs_hw_modes) {
+		WMA_LOGE("%s: Invalid index", __func__);
+		return;
+	}
+
+	param = wma->hw_mode.hw_mode_list[cfgd_hw_mode_index];
 	wma->interfaces[vdev_id].mac_id = mac_id;
 	if (mac_id == 0) {
 		wma->interfaces[vdev_id].tx_streams =
-			WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(cfgd_hw_mode_index);
+			WMI_DBS_HW_MODE_MAC0_TX_STREAMS_GET(param);
 		wma->interfaces[vdev_id].rx_streams =
-			WMI_DBS_HW_MODE_MAC0_RX_STREAMS_GET(cfgd_hw_mode_index);
+			WMI_DBS_HW_MODE_MAC0_RX_STREAMS_GET(param);
 	} else {
 		wma->interfaces[vdev_id].tx_streams =
-			WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(cfgd_hw_mode_index);
+			WMI_DBS_HW_MODE_MAC1_TX_STREAMS_GET(param);
 		wma->interfaces[vdev_id].rx_streams =
-			WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(cfgd_hw_mode_index);
+			WMI_DBS_HW_MODE_MAC1_RX_STREAMS_GET(param);
 	}
 }
 
