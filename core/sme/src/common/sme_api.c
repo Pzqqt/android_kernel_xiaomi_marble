@@ -14703,6 +14703,47 @@ CDF_STATUS sme_soc_set_dual_mac_config(tHalHandle hal,
 	return CDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/**
+ * sme_gateway_param_update() - to update gateway parameters with WMA
+ * @Hal: hal handle
+ * @gw_params: request parameters from HDD
+ *
+ * Return: CDF_STATUS
+ *
+ * This routine will update gateway parameters to WMA
+ */
+CDF_STATUS sme_gateway_param_update(tHalHandle Hal,
+			      struct gateway_param_update_req *gw_params)
+{
+	CDF_STATUS cdf_status;
+	cds_msg_t cds_message;
+	struct gateway_param_update_req *request_buf;
+
+	request_buf = cdf_mem_malloc(sizeof(*request_buf));
+	if (NULL == request_buf) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			FL("Not able to allocate memory for gw param update request"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	*request_buf = *gw_params;
+
+	cds_message.type = WMA_GW_PARAM_UPDATE_REQ;
+	cds_message.reserved = 0;
+	cds_message.bodyptr = request_buf;
+	cdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			FL("Not able to post WMA_GW_PARAM_UPDATE_REQ message to HAL"));
+		cdf_mem_free(request_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+
 /**
  * sme_set_peer_authorized() - call peer authorized callback
  * @peer_addr: peer mac address
