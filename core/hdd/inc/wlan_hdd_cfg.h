@@ -2181,6 +2181,18 @@ typedef enum {
 #define CFG_TCP_DELACK_THRESHOLD_LOW_DEFAULT       (1000)
 #define CFG_TCP_DELACK_THRESHOLD_LOW_MIN           (0)
 #define CFG_TCP_DELACK_THRESHOLD_LOW_MAX           (10000)
+
+/* TCP_TX_HIGH_TPUT_THRESHOLD specifies the threshold of packets transmitted
+ * over a period of 100 ms beyond which TCP can be considered to have a high
+ * TX throughput requirement. The driver uses this condition to tweak TCP TX
+ * specific parameters (via cnss-daemon).
+ * default  - 500
+ */
+#define CFG_TCP_TX_HIGH_TPUT_THRESHOLD_NAME         "gTcpTxHighTputThreshold"
+#define CFG_TCP_TX_HIGH_TPUT_THRESHOLD_DEFAULT      (500)
+#define CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MIN          (0)
+#define CFG_TCP_TX_HIGH_TPUT_THRESHOLD_MAX          (16000)
+
 #endif /* MSM_PLATFORM */
 
 #ifdef WLAN_FEATURE_11W
@@ -3172,6 +3184,7 @@ struct hdd_config {
 	uint32_t busBandwidthComputeInterval;
 	uint32_t tcpDelackThresholdHigh;
 	uint32_t tcpDelackThresholdLow;
+	uint32_t tcp_tx_high_tput_thres;
 #endif /* MSM_PLATFORM */
 
 	/* FW debug log parameters */

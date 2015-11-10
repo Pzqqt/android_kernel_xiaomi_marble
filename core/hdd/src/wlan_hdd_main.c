@@ -3942,14 +3942,17 @@ static CDF_STATUS wlan_hdd_regulatory_init(hdd_context_t *hdd_ctx)
 
 #ifdef MSM_PLATFORM
 void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
-				    uint64_t tx_packets, uint64_t rx_packets)
+			const uint64_t tx_packets, const uint64_t rx_packets)
 {
 #ifdef CONFIG_CNSS
 	uint64_t total = tx_packets + rx_packets;
+	uint64_t temp_rx = 0;
+	uint64_t temp_tx = 0;
 	enum cnss_bus_width_type next_vote_level = CNSS_BUS_WIDTH_NONE;
+	enum wlan_tp_level next_rx_level = WLAN_SVC_TP_NONE;
+	enum wlan_tp_level next_tx_level = WLAN_SVC_TP_NONE;
 
-	uint64_t temp_rx = (rx_packets + hdd_ctx->prev_rx) / 2;
-	enum cnss_bus_width_type next_rx_level = CNSS_BUS_WIDTH_NONE;
+
 	if (total > hdd_ctx->config->busBandwidthHighThreshold)
 		next_vote_level = CNSS_BUS_WIDTH_HIGH;
 	else if (total > hdd_ctx->config->busBandwidthMediumThreshold)
@@ -3959,8 +3962,8 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 	else
 		next_vote_level = CNSS_BUS_WIDTH_NONE;
 
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_vote_level
-							   = next_vote_level;
+	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_vote_level =
+							next_vote_level;
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
 		hddLog(CDF_TRACE_LEVEL_DEBUG,
@@ -3971,14 +3974,18 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 		hdd_ctx->cur_vote_level = next_vote_level;
 		cnss_request_bus_bandwidth(next_vote_level);
 	}
+
+	/* fine-tuning parameters for RX Flows */
+	temp_rx = (rx_packets + hdd_ctx->prev_rx) / 2;
+
 	hdd_ctx->prev_rx = rx_packets;
 	if (temp_rx > hdd_ctx->config->tcpDelackThresholdHigh)
-		next_rx_level = CNSS_BUS_WIDTH_HIGH;
+		next_rx_level = WLAN_SVC_TP_HIGH;
 	else
-		next_rx_level = CNSS_BUS_WIDTH_LOW;
+		next_rx_level = WLAN_SVC_TP_LOW;
 
-	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_rx_level
-								= next_rx_level;
+	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_rx_level =
+								next_rx_level;
 
 	if (hdd_ctx->cur_rx_level != next_rx_level) {
 		hddLog(CDF_TRACE_LEVEL_DEBUG,
@@ -3990,6 +3997,25 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 					    sizeof(next_rx_level));
 	}
 
+	/* fine-tuning parameters for TX Flows */
+	temp_tx = (tx_packets + hdd_ctx->prev_tx) / 2;
+	hdd_ctx->prev_tx = tx_packets;
+	if (temp_tx > hdd_ctx->config->tcp_tx_high_tput_thres)
+		next_tx_level = WLAN_SVC_TP_HIGH;
+	else
+		next_tx_level = WLAN_SVC_TP_LOW;
+
+	 if (hdd_ctx->cur_tx_level != next_tx_level) {
+		hdd_debug("change TCP TX trigger level %d, average_tx: %llu",
+				next_tx_level, temp_tx);
+		hdd_ctx->cur_tx_level = next_tx_level;
+		wlan_hdd_send_svc_nlink_msg(WLAN_SVC_WLAN_TP_TX_IND,
+				&next_tx_level,
+				sizeof(next_tx_level));
+	}
+
+	hdd_ctx->hdd_txrx_hist[hdd_ctx->hdd_txrx_hist_idx].next_tx_level =
+								next_tx_level;
 	hdd_ctx->hdd_txrx_hist_idx++;
 	hdd_ctx->hdd_txrx_hist_idx &= NUM_TX_RX_HISTOGRAM_MASK;
 #endif
@@ -4097,18 +4123,19 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 		hdd_ctx->config->tcpDelackThresholdLow);
 #endif
 
-	hddLog(CDF_TRACE_LEVEL_ERROR, "index, total_rx, interval_rx,"
-		"total_tx, interval_tx, next_vote_level, next_rx_level");
+	hddLog(CDF_TRACE_LEVEL_ERROR,
+		"index, total_rx, interval_rx, total_tx, interval_tx, next_vote_level, next_rx_level, next_tx_level");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
-			"%d: %llu, %llu, %llu, %llu, %d, %d",
+			"%d: %llu, %llu, %llu, %llu, %d, %d, %d",
 			i, hdd_ctx->hdd_txrx_hist[i].total_rx,
 			hdd_ctx->hdd_txrx_hist[i].interval_rx,
 			hdd_ctx->hdd_txrx_hist[i].total_tx,
 			hdd_ctx->hdd_txrx_hist[i].interval_tx,
 			hdd_ctx->hdd_txrx_hist[i].next_vote_level,
-			hdd_ctx->hdd_txrx_hist[i].next_rx_level);
+			hdd_ctx->hdd_txrx_hist[i].next_rx_level,
+			hdd_ctx->hdd_txrx_hist[i].next_tx_level);
 	}
 	return;
 }
@@ -6158,6 +6185,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 	case WLAN_SVC_DFS_RADAR_DETECT_IND:
 	case WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND:
 	case WLAN_SVC_WLAN_TP_IND:
+	case WLAN_SVC_WLAN_TP_TX_IND:
 		ani_hdr->length = len;
 		nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + len));
 		nl_data = (char *)ani_hdr + sizeof(tAniMsgHdr);

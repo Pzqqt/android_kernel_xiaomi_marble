@@ -317,6 +317,26 @@ extern spinlock_t hdd_context_lock;
 #define NUM_TX_RX_HISTOGRAM 1024
 #define NUM_TX_RX_HISTOGRAM_MASK (NUM_TX_RX_HISTOGRAM - 1)
 
+/**
+ * struct hdd_tx_rx_histogram - structure to keep track of tx and rx packets
+ *				received over 100ms intervals
+ * @interval_rx:	# of rx packets received in the last 100ms interval
+ * @interval_tx:	# of tx packets received in the last 100ms interval
+ * @total_rx:		# of total rx packets received on interface
+ * @total_tx:		# of total tx packets received on interface
+ * @next_vote_level:	cnss_bus_width_type voting level (high or low)
+ *			determined on the basis of total tx and rx packets
+ *			received in the last 100ms interval
+ * @next_rx_level:	cnss_bus_width_type voting level (high or low)
+ *			determined on the basis of rx packets received in the
+ *			last 100ms interval
+ * @next_tx_level:	cnss_bus_width_type voting level (high or low)
+ *			determined on the basis of tx packets received in the
+ *			last 100ms interval
+ *
+ * The structure keeps track of throughput requirements of wlan driver in 100ms
+ * intervals for later analysis.
+ */
 struct hdd_tx_rx_histogram {
 	uint64_t interval_rx;
 	uint64_t interval_tx;
@@ -324,6 +344,7 @@ struct hdd_tx_rx_histogram {
 	uint64_t total_tx;
 	uint32_t next_vote_level;
 	uint32_t next_rx_level;
+	uint32_t next_tx_level;
 };
 
 typedef struct hdd_tx_rx_stats_s {
@@ -1215,6 +1236,8 @@ struct hdd_context_s {
 	spinlock_t bus_bw_lock;
 	int cur_rx_level;
 	uint64_t prev_rx;
+	int cur_tx_level;
+	uint64_t prev_tx;
 #endif
 	/* VHT80 allowed */
 	bool isVHT80Allowed;

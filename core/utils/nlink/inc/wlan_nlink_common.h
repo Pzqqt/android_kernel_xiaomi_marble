@@ -79,7 +79,7 @@
 #define WLAN_SVC_WLAN_VERSION_IND   0x107
 #define WLAN_SVC_DFS_ALL_CHANNEL_UNAVAIL_IND 0x108
 #define WLAN_SVC_WLAN_TP_IND        0x109
-
+#define WLAN_SVC_WLAN_TP_TX_IND     0x10B
 #define WLAN_SVC_MAX_SSID_LEN    32
 #define WLAN_SVC_MAX_BSSID_LEN   6
 #define WLAN_SVC_MAX_STR_LEN     16
@@ -134,6 +134,26 @@ struct wlan_version_data {
 struct wlan_dfs_info {
 	uint16_t channel;
 	uint8_t country_code[WLAN_SVC_COUNTRY_CODE_LEN];
+};
+
+/**
+ * enum wlan_tp_level - indicates wlan throughput level
+ * @WLAN_SVC_TP_NONE:	 used for initialization
+ * @WLAN_SVC_TP_LOW:	 used to identify low throughput level
+ * @WLAN_SVC_TP_MEDIUM:	 used to identify medium throughput level
+ * @WLAN_SVC_TP_HIGH:	 used to identify high throughput level
+ *
+ * The different throughput levels are determined on the basis of # of tx and
+ * rx packets and other threshold values. For example, if the # of total
+ * packets sent or received by the driver is greater than 500 in the last 100ms
+ * , the driver has a high throughput requirement. The driver may tweak certain
+ * system parameters based on the throughput level.
+ */
+enum wlan_tp_level {
+	WLAN_SVC_TP_NONE,
+	WLAN_SVC_TP_LOW,
+	WLAN_SVC_TP_MEDIUM,
+	WLAN_SVC_TP_HIGH,
 };
 
 #endif /* WLAN_NLINK_COMMON_H__ */
