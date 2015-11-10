@@ -3640,6 +3640,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MIN,
 		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX),
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	REG_VARIABLE(CFG_ENABLE_LFR_SUBNET_DETECTION, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_lfr_subnet_detection,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_LFR_SUBNET_DEFAULT,
+		     CFG_ENABLE_LFR_SUBNET_MIN,
+		     CFG_ENABLE_LFR_SUBNET_MAX),
+#endif
 };
 
 
@@ -5193,6 +5201,12 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_HT_MPDU_DENSITY_NAME,
 		pHddCtx->config->ht_mpdu_density);
 
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	hddLog(LOGE, "Name = [%s] Value = [%d]",
+		CFG_ENABLE_LFR_SUBNET_DETECTION,
+		pHddCtx->config->enable_lfr_subnet_detection);
+#endif
 }
 
 

@@ -2818,6 +2818,21 @@ enum dot11p_mode {
 #define CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX       (-30)
 #define CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT   (-30)
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/*
+ * Enable IP subnet detection during legacy fast roming version 3.
+ * Legacy fast roaming could roam across IP subnets without host
+ * processors' knowledge. This feature enables firmware to wake up
+ * the host processor if it successfully determines change in the IP subnet.
+ * Change in IP subnet could potentially cause disruption in IP connnectivity
+ * if IP address is not refreshed.
+ */
+#define CFG_ENABLE_LFR_SUBNET_DETECTION    "gLFRSubnetDetectionEnable"
+#define CFG_ENABLE_LFR_SUBNET_MIN          (0)
+#define CFG_ENABLE_LFR_SUBNET_MAX          (1)
+#define CFG_ENABLE_LFR_SUBNET_DEFAULT      (1)
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3400,6 +3415,9 @@ struct hdd_config {
 	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
 	uint8_t ht_mpdu_density;
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	bool enable_lfr_subnet_detection;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
