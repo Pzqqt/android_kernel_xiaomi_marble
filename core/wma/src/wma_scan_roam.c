@@ -6969,3 +6969,64 @@ CDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 	return CDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/**
+ * wma_set_gateway_params() - set gateway parameters
+ * @wma: WMA handle
+ * @req: gateway parameter update request structure
+ *
+ * This function reads the incoming @req and fill in the destination
+ * WMI structure and sends down the gateway configs down to the firmware
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+					struct gateway_param_update_req *req)
+{
+	wmi_roam_subnet_change_config_fixed_param *cmd;
+	wmi_buf_t buf;
+	int ret;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_roam_subnet_change_config_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_roam_subnet_change_config_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_roam_subnet_change_config_fixed_param));
+
+	cmd->vdev_id = req->session_id;
+	cdf_mem_copy(&cmd->inet_gw_ip_v4_addr, req->ipv4_addr,
+		CDF_IPV4_ADDR_SIZE);
+	cdf_mem_copy(&cmd->inet_gw_ip_v6_addr, req->ipv6_addr,
+		CDF_IPV6_ADDR_SIZE);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(req->gw_mac_addr.bytes,
+		&cmd->inet_gw_mac_addr);
+	cmd->max_retries = req->max_retries;
+	cmd->timeout = req->timeout;
+	cmd->num_skip_subnet_change_detection_bssid_list = 0;
+	cmd->flag = 0;
+	if (req->ipv4_addr_type)
+		WMI_SET_ROAM_SUBNET_CHANGE_FLAG_IP4_ENABLED(cmd->flag);
+
+	if (req->ipv6_addr_type)
+		WMI_SET_ROAM_SUBNET_CHANGE_FLAG_IP6_ENABLED(cmd->flag);
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				WMI_ROAM_SUBNET_CHANGE_CONFIG_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("Failed to send gw config parameter to fw, ret: %d",
+			ret);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+
