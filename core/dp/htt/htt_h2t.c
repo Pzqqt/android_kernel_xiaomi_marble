@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -417,7 +417,7 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 			       cdf_nbuf_data(msg),
 			       cdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -439,6 +439,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 	struct htt_htc_pkt *pkt;
 	cdf_nbuf_t msg;
 	uint32_t *msg_word;
+	uint16_t htc_tag = 1;
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
@@ -451,6 +452,9 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 			  stats_type_upload_mask, stats_type_reset_mask);
 		return -EINVAL;      /* failure */
 	}
+
+	if (stats_type_reset_mask)
+		htc_tag = HTC_TX_PACKET_TAG_RUNTIME_PUT;
 
 	/* show that this is not a tx frame download
 	 * (not required, but helpful)
@@ -503,7 +507,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 			       cdf_nbuf_data(msg),
 			       cdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       htc_tag); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -559,7 +563,7 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 			       cdf_nbuf_data(msg),
 			       cdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -626,7 +630,7 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 			       cdf_nbuf_data(msg),
 			       cdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -733,7 +737,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 			       cdf_nbuf_data(msg),
 			       cdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
