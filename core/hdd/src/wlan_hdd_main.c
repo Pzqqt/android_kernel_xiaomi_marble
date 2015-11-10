@@ -1812,6 +1812,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 
 		pWlanDev->destructor = free_netdev;
 		pWlanDev->ieee80211_ptr = &adapter->wdev;
+		pWlanDev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 		adapter->wdev.wiphy = hdd_ctx->wiphy;
 		adapter->wdev.netdev = pWlanDev;
 		/* set pWlanDev's parent to underlying device */
