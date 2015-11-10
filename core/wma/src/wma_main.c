@@ -2757,19 +2757,18 @@ end:
 static void wma_cleanup_hold_req(tp_wma_handle wma)
 {
 	struct wma_target_req *req_msg = NULL;
-	cdf_list_node_t *node1 = NULL, *node2 = NULL;
+	cdf_list_node_t *node1 = NULL;
 	CDF_STATUS status;
 
 	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
-	if (CDF_STATUS_SUCCESS != cdf_list_peek_front(&wma->wma_hold_req_queue,
-						      &node2)) {
+	if (cdf_list_empty(&wma->wma_hold_req_queue)) {
 		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
-		WMA_LOGI(FL("request queue maybe empty"));
+		WMA_LOGI(FL("request queue is empty"));
 		return;
 	}
 
-	do {
-		node1 = node2;
+	while (CDF_STATUS_SUCCESS !=
+			cdf_list_peek_front(&wma->wma_hold_req_queue, &node1)) {
 		req_msg = cdf_container_of(node1, struct wma_target_req, node);
 		status = cdf_list_remove_node(&wma->wma_hold_req_queue, node1);
 		if (CDF_STATUS_SUCCESS != status) {
@@ -2777,14 +2776,10 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 			WMA_LOGE(FL("Failed to remove request for vdev_id %d type %d"),
 				 req_msg->vdev_id, req_msg->type);
 			return;
-		} else {
-			cdf_mc_timer_destroy(&req_msg->event_timeout);
-			cdf_mem_free(req_msg);
 		}
-	} while (CDF_STATUS_SUCCESS  ==
-			cdf_list_peek_next(&wma->wma_hold_req_queue, node1,
-					   &node2));
-
+		cdf_mc_timer_destroy(&req_msg->event_timeout);
+		cdf_mem_free(req_msg);
+	}
 	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 }
 
