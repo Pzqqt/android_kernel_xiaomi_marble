@@ -87,6 +87,8 @@
 
 #include "wlan_hdd_ocb.h"
 
+#include "wlan_hdd_subnet_detect.h"
+
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
 #define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
@@ -1064,6 +1066,12 @@ static const struct nl80211_vendor_cmd_info wlan_hdd_cfg80211_vendor_events[] = 
 		.vendor_id = QCA_NL80211_VENDOR_ID,
 		.subcmd = QCA_NL80211_VENDOR_SUBCMD_DCC_STATS_EVENT
 	},
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	[QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG_INDEX] = {
+		.vendor_id = QCA_NL80211_VENDOR_ID,
+		.subcmd = QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG
+	},
+#endif /*FEATURE_LFR_SUBNET_DETECTION */
 };
 
 /**
@@ -4982,6 +4990,16 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 				 WIPHY_VENDOR_CMD_NEED_RUNNING,
 		.doit = wlan_hdd_cfg80211_set_ota_test
 	},
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	{
+		.info.vendor_id = QCA_NL80211_VENDOR_ID,
+		.info.subcmd = QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG,
+		.flags = WIPHY_VENDOR_CMD_NEED_WDEV |
+				WIPHY_VENDOR_CMD_NEED_NETDEV |
+				WIPHY_VENDOR_CMD_NEED_RUNNING,
+		.doit = wlan_hdd_cfg80211_set_gateway_params
+	},
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
 };
 
 /*
