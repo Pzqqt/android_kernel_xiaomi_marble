@@ -353,6 +353,7 @@ struct cdf_mac_addr {
 #define CDF_MAC_ADDR_ZERO_INITIALIZER { { 0, 0, 0, 0, 0, 0 } }
 
 #define CDF_IPV4_ADDR_SIZE (4)
+#define CDF_IPV6_ADDR_SIZE (16)
 
 /**
  * struct cdf_tso_frag_t - fragments of a single TCP segment

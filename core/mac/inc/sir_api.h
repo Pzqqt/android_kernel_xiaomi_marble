@@ -5395,6 +5395,33 @@ enum powersave_mode {
 	PS_QPOWER_DEEPSLEEP = 4,
 	PS_DUTY_CYCLING_QPOWER = 5
 };
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/**
+ * struct gateway_param_update_req - gateway parameter update request
+ * @request_id: request id
+ * @session_id: session id
+ * @max_retries: Max ARP/NS retry attempts
+ * @timeout: Retry interval
+ * @ipv4_addr_type: on ipv4 network
+ * @ipv6_addr_type: on ipv6 network
+ * @gw_mac_addr: gateway mac addr
+ * @ipv4_addr: ipv4 addr
+ * @ipv6_addr: ipv6 addr
+ */
+struct gateway_param_update_req {
+	uint32_t     request_id;
+	uint32_t     session_id;
+	uint32_t     max_retries;
+	uint32_t     timeout;
+	uint32_t     ipv4_addr_type;
+	uint32_t     ipv6_addr_type;
+	struct cdf_mac_addr  gw_mac_addr;
+	uint8_t      ipv4_addr[CDF_IPV4_ADDR_SIZE];
+	uint8_t      ipv6_addr[CDF_IPV6_ADDR_SIZE];
+};
+#else
+struct gateway_param_update_req;
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
 
 /**
  * struct sir_sme_ext_change_chan_req - channel change request

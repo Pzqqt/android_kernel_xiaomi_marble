@@ -447,6 +447,7 @@
 #define WMA_SET_IE_INFO                       SIR_HAL_SET_IE_INFO
 
 #define WMA_LRO_CONFIG_CMD                    SIR_HAL_LRO_CONFIG_CMD
+#define WMA_GW_PARAM_UPDATE_REQ              SIR_HAL_GATEWAY_PARAM_UPDATE_REQ
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40

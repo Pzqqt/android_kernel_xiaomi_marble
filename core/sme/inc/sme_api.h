@@ -1075,4 +1075,9 @@ sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 }
 #endif
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+CDF_STATUS sme_gateway_param_update(tHalHandle hHal,
+				struct gateway_param_update_req *request);
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */
