@@ -2008,6 +2008,17 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
 uint32_t wma_get_vht_ch_width(void);
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+					struct gateway_param_update_req *req);
+#else
+static inline CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+					struct gateway_param_update_req *req)
+{
+	return CDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+
 #if defined(FEATURE_LRO)
 CDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	 struct wma_lro_config_cmd_t *wma_lro_cmd);

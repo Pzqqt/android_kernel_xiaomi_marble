@@ -107,4 +107,8 @@ config WLAN_FEATURE_RX_WAKELOCK
 	bool "Enable RX wake lock feature"
 	default n
 
+config FEATURE_LFR_SUBNET_DETECTION
+	bool "Enable LFR Subnet Change Detection"
+	default n
+
 endif # QCA_CLD_WLAN

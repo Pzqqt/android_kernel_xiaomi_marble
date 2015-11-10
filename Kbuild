@@ -130,6 +130,9 @@ ifeq ($(KERNEL_BUILD), 0)
 			CONFIG_WLAN_LRO := n
 		endif
 	endif
+
+	# Flag to enable LFR Subnet Detection
+	CONFIG_LFR_SUBNET_DETECTION := y
 endif
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -336,6 +339,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_memdump.o
+endif
+
+ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
+HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_subnet_detect.o
 endif
 
 ########### HOST DIAG LOG ###########
@@ -1315,6 +1322,10 @@ endif
 
 ifeq ($(CONFIG_STATICALLY_ADD_11P_CHANNELS),y)
 CDEFINES += -DFEATURE_STATICALLY_ADD_11P_CHANNELS
+endif
+
+ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
+CDEFINES += -DFEATURE_LFR_SUBNET_DETECTION
 endif
 
 KBUILD_CPPFLAGS += $(CDEFINES)
