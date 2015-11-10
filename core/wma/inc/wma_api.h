@@ -90,6 +90,8 @@ CDF_STATUS wma_close(void *cds_context);
 
 CDF_STATUS wma_wmi_service_close(void *cds_context);
 
+CDF_STATUS wma_wmi_work_close(void *cds_context);
+
 void wma_rx_ready_event(WMA_HANDLE handle, void *ev);
 
 void wma_rx_service_ready_event(WMA_HANDLE handle, void *ev);

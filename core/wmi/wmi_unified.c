@@ -1128,6 +1128,36 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	}
 }
 
+/**
+ * wmi_unified_remove_work() - detach for WMI work
+ * @wmi_handle: handle to WMI
+ *
+ * A function that does not fully detach WMI, but just remove work
+ * queue items associated with it. This is used to make sure that
+ * before any other processing code that may destroy related contexts
+ * (HTC, etc), work queue processing on WMI has already been stopped.
+ *
+ * Return: None
+ */
+void
+wmi_unified_remove_work(struct wmi_unified *wmi_handle)
+{
+	wmi_buf_t buf;
+
+	CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_INFO,
+		"Enter: %s", __func__);
+	cds_flush_work(&wmi_handle->rx_event_work);
+	cdf_spin_lock_bh(&wmi_handle->eventq_lock);
+	buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
+	while (buf) {
+		cdf_nbuf_free(buf);
+		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
+	}
+	cdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+		"Done: %s", __func__);
+}
+
 void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 {
 	struct wmi_unified *wmi_handle = (struct wmi_unified *)ctx;
