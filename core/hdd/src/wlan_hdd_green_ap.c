@@ -409,6 +409,30 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_config *cfg = hdd_ctx->config;
 
+	/* check if the firmware and ini are both enabled the egap,
+	 * and also the feature_flag enable, then we enable the egap
+	 */
+	if (hdd_ctx->green_ap_ctx->egap_support && cfg->enable_egap &&
+	    cfg->egap_feature_flag) {
+		hddLog(LOG1,
+		       FL("Set EGAP - enabled: %d, flag: %x, inact_time: %d, wait_time: %d"),
+			  cfg->enable_egap,
+			  cfg->egap_feature_flag,
+			  cfg->egap_inact_time,
+			  cfg->egap_wait_time);
+		if (!sme_send_egap_conf_params(cfg->enable_egap,
+					       cfg->egap_inact_time,
+					       cfg->egap_wait_time,
+					       cfg->egap_feature_flag)) {
+			/* EGAP is enabled, disable host GAP */
+			hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
+			goto exit;
+		}
+		/* fall through, if send_egap_conf_params() failed,
+		 * then check host GAP and enable it accordingly
+		 */
+	}
+
 	if (!(CDF_STA_MASK & hdd_ctx->concurrency_mode) &&
 	    cfg->enable2x2 && cfg->enableGreenAP) {
 		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
@@ -418,6 +442,8 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 			   CDF_STA_MASK & hdd_ctx->concurrency_mode,
 			   cfg->enable2x2, cfg->enableGreenAP);
 	}
+exit:
+	return;
 }
 
 /**
