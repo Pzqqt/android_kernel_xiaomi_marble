@@ -122,7 +122,7 @@ extern int hdd_hostapd_stop(struct net_device *dev);
 #define MEMORY_DEBUG_STR ""
 #endif
 
-#define DISABLE_KRAIT_IDLE_PS_VAL	200
+#define DISABLE_KRAIT_IDLE_PS_VAL	1
 /* the Android framework expects this param even though we don't use it */
 #define BUF_LEN 20
 static char fwpath_buffer[BUF_LEN];
