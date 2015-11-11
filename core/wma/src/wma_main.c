@@ -1766,6 +1766,13 @@ CDF_STATUS wma_open(void *cds_context,
 		goto err_event_init;
 	}
 
+	cdf_status = cdf_event_init(&wma_handle->runtime_suspend);
+	if (cdf_status != CDF_STATUS_SUCCESS) {
+		WMA_LOGP("%s: runtime_suspend event initialization failed",
+			 __func__);
+		goto err_event_init;
+	}
+
 	cdf_status = cdf_event_init(&wma_handle->recovery_event);
 	if (cdf_status != CDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: recovery event initialization failed", __func__);
@@ -3083,6 +3090,7 @@ CDF_STATUS wma_close(void *cds_ctx)
 
 	cdf_event_destroy(&wma_handle->target_suspend);
 	cdf_event_destroy(&wma_handle->wma_resume_event);
+	cdf_event_destroy(&wma_handle->runtime_suspend);
 	cdf_event_destroy(&wma_handle->recovery_event);
 	wma_cleanup_vdev_resp(wma_handle);
 	wma_cleanup_hold_req(wma_handle);
@@ -4874,9 +4882,19 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_WOWL_EXIT_REQ:
 		wma_wow_exit(wma_handle, (tpSirHalWowlExitParams) msg->bodyptr);
 		break;
+
+	case WMA_RUNTIME_PM_SUSPEND_IND:
+		wma_calculate_and_update_conn_state(wma_handle);
+		wma_suspend_req(wma_handle, CDF_RUNTIME_SUSPEND);
+		break;
+
+	case WMA_RUNTIME_PM_RESUME_IND:
+		wma_resume_req(wma_handle, CDF_RUNTIME_SUSPEND);
+		break;
+
 	case WMA_WLAN_SUSPEND_IND:
 		wma_update_conn_state(wma_handle, msg->bodyval);
-		wma_suspend_req(wma_handle);
+		wma_suspend_req(wma_handle, CDF_SYSTEM_SUSPEND);
 		break;
 	case WMA_8023_MULTICAST_LIST_REQ:
 		wma_process_mcbc_set_filter_req(wma_handle,
@@ -5015,7 +5033,7 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		cdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_WLAN_RESUME_REQ:
-		wma_resume_req(wma_handle);
+		wma_resume_req(wma_handle, CDF_SYSTEM_SUSPEND);
 		break;
 
 #ifdef WLAN_FEATURE_STATS_EXT

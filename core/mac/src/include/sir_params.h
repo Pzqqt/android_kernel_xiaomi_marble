@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -580,6 +580,10 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_ENABLE_UAPSD_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 237)
 #define SIR_HAL_DISABLE_UAPSD_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 238)
 #define SIR_HAL_GATEWAY_PARAM_UPDATE_REQ    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 239)
+
+#define SIR_HAL_RUNTIME_PM_SUSPEND_IND	(SIR_HAL_ITC_MSG_TYPES_BEGIN + 308)
+#define SIR_HAL_RUNTIME_PM_RESUME_IND	(SIR_HAL_ITC_MSG_TYPES_BEGIN + 309)
+
 #define SIR_HAL_SET_EPNO_LIST_REQ          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 313)
 #define SIR_HAL_SET_PASSPOINT_LIST_REQ     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 316)
 #define SIR_HAL_RESET_PASSPOINT_LIST_REQ   (SIR_HAL_ITC_MSG_TYPES_BEGIN + 317)

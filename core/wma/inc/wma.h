@@ -1197,6 +1197,7 @@ typedef struct {
 	cdf_event_t wma_ready_event;
 	cdf_event_t wma_resume_event;
 	cdf_event_t target_suspend;
+	cdf_event_t runtime_suspend;
 	cdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;

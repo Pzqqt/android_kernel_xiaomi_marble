@@ -3632,17 +3632,20 @@ error:
 /**
  * wma_resume_req() - clear configured wow patterns in fw
  * @wma: wma handle
+ * @type: type of suspend
  *
  * Return: CDF status
  */
-CDF_STATUS wma_resume_req(tp_wma_handle wma)
+CDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type)
 {
-	wma->no_of_resume_ind++;
+	if (type == CDF_SYSTEM_SUSPEND) {
+		wma->no_of_resume_ind++;
 
-	if (wma->no_of_resume_ind < wma_get_vdev_count(wma))
-		return CDF_STATUS_SUCCESS;
+		if (wma->no_of_resume_ind < wma_get_vdev_count(wma))
+			return CDF_STATUS_SUCCESS;
 
-	wma->no_of_resume_ind = 0;
+		wma->no_of_resume_ind = 0;
+	}
 
 	/* Reset the DTIM Parameters */
 	wma_set_resume_dtim(wma);
@@ -3885,6 +3888,23 @@ CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 	cdf_mem_free(info);
 
 	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_calculate_and_update_conn_state(): calculate each interfaces conn state
+ * @wma: validated wma handle
+ *
+ * Identifies any vdev that is up and not in ap mode as connected.
+ * stores this in the interfaces conn_state varible.
+ */
+void wma_calculate_and_update_conn_state(tp_wma_handle wma)
+{
+	int i;
+	for (i = 0; i < wma->max_bssid; i++) {
+		wma->interfaces[i].conn_state =
+			!!(wma->interfaces[i].vdev_up &&
+					!wma_is_vdev_in_ap_mode(wma, i));
+	}
 }
 
 /**
@@ -4131,14 +4151,26 @@ void wma_apply_lphb(tp_wma_handle wma)
 void wma_apply_lphb(tp_wma_handle wma) {}
 #endif /* FEATURE_WLAN_LPHB */
 
+static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
+		enum cdf_suspend_type type)
+{
+	if (type == CDF_SYSTEM_SUSPEND)
+		wma_send_status_to_suspend_ind(wma, true);
+	else if (type == CDF_RUNTIME_SUSPEND)
+		cdf_event_set(&wma->runtime_suspend);
+}
+
 /**
  * wma_suspend_req() -  Handles suspend indication request received from umac.
  * @wma: wma handle
- * @info: suspend params
+ * @type: type of suspend
+ *
+ * The type controlls how we notify the indicator that the indication has
+ * been processed
  *
  * Return: CDF status
  */
-CDF_STATUS wma_suspend_req(tp_wma_handle wma)
+CDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type)
 {
 	if (wma_is_wow_applicable(wma)) {
 		WMA_LOGE("WOW Suspend");
@@ -4152,7 +4184,8 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma)
 
 	/* Set the Suspend DTIM Parameters */
 	wma_set_suspend_dtim(wma);
-	wma_send_status_to_suspend_ind(wma, true);
+
+	wma_notify_suspend_req_procesed(wma, type);
 
 	/* to handle race between hif_pci_suspend and
 	 * unpause/pause tx handler
@@ -4333,7 +4366,7 @@ bool static wma_is_nan_enabled(tp_wma_handle wma)
  *
  * Return: true is wow mode is needed else false
  */
-int wma_is_wow_mode_selected(WMA_HANDLE handle)
+bool wma_is_wow_mode_selected(WMA_HANDLE handle)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
@@ -6256,6 +6289,118 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 }
 
 /**
+ * wma_post_runtime_resume_msg() - post the resume request
+ * @handle: validated wma handle
+ *
+ * request the MC thread unpaus the vdev and set resume dtim
+ *
+ * Return: cdf status of the mq post
+ */
+static CDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
+{
+	cds_msg_t resume_msg;
+
+	resume_msg.bodyptr = NULL;
+	resume_msg.type    = WMA_RUNTIME_PM_RESUME_IND;
+	return cds_mq_post_message(CDF_MODULE_ID_WMA, &resume_msg);
+}
+
+/**
+ * wma_post_runtime_suspend_msg() - post the suspend request
+ * @handle: validated wma handle
+ *
+ * Requests for offloads to be configured for runtime suspend
+ * on the MC thread
+ *
+ * Return CDF_STATUS_E_AGAIN in case of timeout or CDF_STATUS_SUCCESS
+ */
+static CDF_STATUS wma_post_runtime_suspend_msg(WMA_HANDLE handle)
+{
+	cds_msg_t cds_msg;
+	CDF_STATUS cdf_status;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	cdf_event_reset(&wma->runtime_suspend);
+
+	cds_msg.bodyptr = NULL;
+	cds_msg.type    = WMA_RUNTIME_PM_SUSPEND_IND;
+	cdf_status = cds_mq_post_message(CDF_MODULE_ID_WMA, &cds_msg);
+
+	if (cdf_status != CDF_STATUS_SUCCESS)
+		goto failure;
+
+	if (cdf_wait_single_event(&wma->runtime_suspend,
+			WMA_TGT_SUSPEND_COMPLETE_TIMEOUT) !=
+			CDF_STATUS_SUCCESS) {
+		WMA_LOGE("Failed to get runtime suspend event");
+		goto failure;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+failure:
+	return CDF_STATUS_E_AGAIN;
+}
+
+/**
+ * __wma_bus_suspend(): handles bus suspend for wma
+ * @type: is this suspend part of runtime suspend or system suspend?
+ *
+ * Bails if a scan is in progress.
+ * Calls the appropriate handlers based on configuration and event.
+ *
+ * Return: 0 for success or error code
+ */
+static int __wma_bus_suspend(enum cdf_suspend_type type)
+{
+	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
+	if (NULL == handle) {
+		WMA_LOGE("%s: wma context is NULL", __func__);
+		return -EFAULT;
+	}
+
+	if (wma_check_scan_in_progress(handle)) {
+		WMA_LOGE("%s: Scan in progress. Aborting suspend", __func__);
+		return -EBUSY;
+	}
+
+	if (type == CDF_RUNTIME_SUSPEND) {
+		CDF_STATUS status = wma_post_runtime_suspend_msg(handle);
+		if (status)
+			return cdf_status_to_os_return(status);
+	}
+
+	if (type == CDF_SYSTEM_SUSPEND)
+		WMA_LOGE("%s: wow mode selected %d", __func__,
+				wma_is_wow_mode_selected(handle));
+
+	if (wma_is_wow_mode_selected(handle)) {
+		CDF_STATUS status = wma_enable_wow_in_fw(handle);
+		return cdf_status_to_os_return(status);
+	}
+
+	return wma_suspend_target(handle, 0);
+}
+
+/**
+ * wma_runtime_suspend() - handles runtime suspend request from hdd
+ *
+ * Calls the appropriate handler based on configuration and event.
+ * Last busy marking should prevent race conditions between processing
+ * of asyncronous fw events and the running of runtime suspend.
+ * (eg. last busy marking should guarantee that any auth requests have
+ * been processed)
+ * Events comming from the host are not protected, but aren't expected
+ * to be an issue.
+ *
+ * Return: 0 for success or error code
+ */
+int wma_runtime_suspend(void)
+{
+	return __wma_bus_suspend(CDF_RUNTIME_SUSPEND);
+}
+
+/**
  * wma_bus_suspend() - handles bus suspend request from hdd
  *
  * Calls the appropriate handler based on configuration and event
@@ -6264,24 +6409,52 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
  */
 int wma_bus_suspend(void)
 {
+
+	return __wma_bus_suspend(CDF_RUNTIME_SUSPEND);
+}
+
+/**
+ * __wma_bus_resume() - bus resume for wma
+ *
+ * does the part of the bus resume common to bus and system suspend
+ *
+ * Return: os error code.
+ */
+int __wma_bus_resume(WMA_HANDLE handle)
+{
+	bool wow_mode = wma_is_wow_mode_selected(handle);
+	CDF_STATUS status;
+
+	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
+
+	if (!wow_mode)
+		return wma_resume_target(handle);
+
+	status = wma_disable_wow_in_fw(handle);
+	return cdf_status_to_os_return(status);
+}
+
+/**
+ * wma_runtime_resume() - do the runtime resume operation for wma
+ *
+ * Return: os error code.
+ */
+int wma_runtime_resume(void)
+{
+	int ret;
+	CDF_STATUS status;
 	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
 	}
 
-	WMA_LOGE("%s: wow mode selected %d", __func__,
-	       wma_is_wow_mode_selected(handle));
+	ret = __wma_bus_resume(handle);
+	if (ret)
+		return ret;
 
-	if (wma_check_scan_in_progress(handle)) {
-		WMA_LOGE("%s: Scan in progress. Aborting suspend", __func__);
-		return -EBUSY;
-	}
-
-	if (wma_is_wow_mode_selected(handle))
-		return cdf_status_to_os_return(wma_enable_wow_in_fw(handle));
-
-	return wma_suspend_target(handle, 0);
+	status = wma_post_runtime_resume_msg(handle);
+	return cdf_status_to_os_return(status);
 }
 
 /**
@@ -6295,19 +6468,12 @@ int wma_bus_suspend(void)
 int wma_bus_resume(void)
 {
 	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
-	int wow_mode;
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
 	}
 
-	wow_mode = wma_is_wow_mode_selected(handle);
-	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
-
-	if (!wow_mode)
-		return wma_resume_target(handle);
-
-	return cdf_status_to_os_return(wma_disable_wow_in_fw(handle));
+	return __wma_bus_resume(handle);
 }
 
 /**

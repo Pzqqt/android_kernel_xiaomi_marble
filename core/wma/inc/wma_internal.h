@@ -981,7 +981,7 @@ static inline int wma_get_wow_bus_suspend(tp_wma_handle wma)
 	return cdf_atomic_read(&wma->is_wow_bus_suspended);
 }
 
-CDF_STATUS wma_resume_req(tp_wma_handle wma);
+CDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type);
 
 CDF_STATUS wma_wow_add_pattern(tp_wma_handle wma,
 			struct wow_add_pattern *ptrn);
@@ -993,7 +993,9 @@ CDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 
 CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
 
-CDF_STATUS wma_suspend_req(tp_wma_handle wma);
+CDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type);
+void wma_calculate_and_update_conn_state(tp_wma_handle wma);
+void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
