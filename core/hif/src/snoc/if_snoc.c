@@ -47,7 +47,7 @@
  * This is duplicated here because CONFIG_CNSS can be defined
  * even though it is not used for the snoc bus.
  */
-void hif_bus_prevent_linkdown(bool flag)
+void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse ignored",
 			(flag ? "disable" : "enable"));
