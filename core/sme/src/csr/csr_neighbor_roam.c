@@ -48,12 +48,7 @@
 #include "mac_trace.h"
 #include "cds_concurrency.h"
 
-#define WLAN_FEATURE_NEIGHBOR_ROAMING_DEBUG 1
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING_DEBUG
 #define NEIGHBOR_ROAM_DEBUG sms_log
-#else
-#define NEIGHBOR_ROAM_DEBUG(x ...)
-#endif
 
 static void csr_neighbor_roam_reset_channel_info(tpCsrNeighborRoamChannelInfo
 						 rChInfo);
