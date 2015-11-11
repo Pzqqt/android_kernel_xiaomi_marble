@@ -43,6 +43,7 @@
 #include "cds_sched.h"
 #include "osdep.h"
 #include "hif.h"
+#include "htc.h"
 #include "epping_main.h"
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_power.h"
@@ -524,6 +525,120 @@ static int wlan_hdd_bus_resume(void)
 	return ret;
 }
 
+#ifdef FEATURE_RUNTIME_PM
+
+/**
+ * __wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
+ *
+ * Each layer is responsible for its own suspend actions.  wma_runtime_suspend
+ * takes care of the parts of the 802.11 suspend that we want to do for runtime
+ * suspend.
+ *
+ * Return: 0 or errno
+ */
+static int __wlan_hdd_runtime_suspend(void)
+{
+	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	int status = wlan_hdd_validate_context(hdd_ctx);
+
+	if (0 != status)
+		return status;
+
+	if (!hif_can_suspend_link()) {
+		hdd_err("Runtime PM not supported for link up suspend");
+		return -EINVAL;
+	}
+
+	hif_runtime_pm_set_state_inprogress();
+	status = htc_runtime_suspend();
+	if (status)
+		goto set_state;
+
+	status = wma_runtime_suspend();
+	if (status)
+		goto resume_htc;
+
+	status = hif_runtime_suspend();
+	if (status)
+		goto resume_wma;
+
+	status = cnss_auto_suspend();
+	if (status)
+		goto resume_hif;
+
+	hif_runtime_pm_set_state_suspended();
+	return status;
+
+resume_hif:
+	CDF_BUG(!hif_runtime_resume());
+resume_wma:
+	CDF_BUG(!wma_runtime_resume());
+resume_htc:
+	CDF_BUG(!htc_runtime_resume());
+set_state:
+	hif_runtime_pm_set_state_on();
+	return status;
+}
+
+
+/**
+ * wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
+ *
+ * This function is called by the platform driver to suspend the
+ * wlan bus separately from system suspend
+ *
+ * Return: 0 or errno
+ */
+static int wlan_hdd_runtime_suspend(void)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_runtime_suspend();
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+/**
+ * __wlan_hdd_runtime_resume() - resume the wlan bus from runtime suspend
+ *
+ * Sets the runtime pm state and coordinates resume between hif wma and
+ * ol_txrx.
+ *
+ * Return: success since failure is a bug
+ */
+static int __wlan_hdd_runtime_resume(void)
+{
+	hif_runtime_pm_set_state_inprogress();
+	CDF_BUG(!cnss_auto_resume());
+	CDF_BUG(!hif_runtime_resume());
+	CDF_BUG(!wma_runtime_resume());
+	CDF_BUG(!htc_runtime_resume());
+	hif_runtime_pm_set_state_on();
+	return 0;
+}
+
+/**
+ * wlan_hdd_runtime_resume() - resume the wlan bus from runtime suspend
+ *
+ * This function is called by the platform driver to resume the
+ * wlan bus separately from system suspend
+ *
+ * Return: success since failure is a bug
+ */
+static int wlan_hdd_runtime_resume(void)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __wlan_hdd_runtime_resume();
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+#endif
+
 #ifdef HIF_PCI
 /**
  * wlan_hdd_pci_probe() - probe callback for pci platform driver
@@ -618,6 +733,32 @@ static int wlan_hdd_pci_resume(struct pci_dev *pdev)
 {
 	return wlan_hdd_bus_resume();
 }
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * wlan_hdd_pci_runtime_suspend() - wlan_hdd_pci_suspend
+ * @pdev: pdev
+ * @state: state
+ *
+ * Return: success or errno
+ */
+static int wlan_hdd_pci_runtime_suspend(struct pci_dev *pdev)
+{
+	return wlan_hdd_runtime_suspend();
+}
+
+/**
+ * wlan_hdd_pci_runtime_resume() - runtime resume callback to register with pci
+ * @pdev: pci device id
+ *
+ * Return: success or errno
+ */
+static int wlan_hdd_pci_runtime_resume(struct pci_dev *pdev)
+{
+	return wlan_hdd_runtime_resume();
+}
+#endif
+
 #else
 /**
  * wlan_hdd_snoc_probe() - wlan_hdd_snoc_probe
@@ -709,6 +850,14 @@ static struct pci_device_id wlan_hdd_pci_id_table[] = {
 };
 
 #ifdef CONFIG_CNSS
+
+#ifdef FEATURE_RUNTIME_PM
+struct cnss_wlan_runtime_ops runtime_pm_ops = {
+	.runtime_suspend = wlan_hdd_pci_runtime_suspend,
+	.runtime_resume = wlan_hdd_pci_runtime_resume,
+};
+#endif
+
 struct cnss_wlan_driver wlan_drv_ops = {
 	.name       = "wlan_hdd_pci",
 	.id_table   = wlan_hdd_pci_id_table,
@@ -722,6 +871,9 @@ struct cnss_wlan_driver wlan_drv_ops = {
 	.suspend    = wlan_hdd_pci_suspend,
 	.resume     = wlan_hdd_pci_resume,
 #endif /* ATH_BUS_PM */
+#ifdef FEATURE_RUNTIME_PM
+	.runtime_ops = &runtime_pm_ops,
+#endif
 };
 #else
 MODULE_DEVICE_TABLE(pci, wlan_hdd_pci_id_table);
@@ -734,6 +886,7 @@ struct pci_driver wlan_drv_ops = {
 	.suspend    = wlan_hdd_pci_suspend,
 	.resume     = wlan_hdd_pci_resume,
 #endif /* ATH_BUS_PM */
+
 };
 #endif /* CONFIG_CNSS */
 #else
