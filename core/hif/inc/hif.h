@@ -694,6 +694,13 @@ bool hif_can_suspend_link(void);
 void hif_runtime_pm_set_state_inprogress(void);
 void hif_runtime_pm_set_state_on(void);
 void hif_runtime_pm_set_state_suspended(void);
+
+#ifdef FEATURE_RUNTIME_PM
+void hif_log_runtime_suspend_success(void);
+void hif_log_runtime_suspend_failure(void);
+void hif_log_runtime_resume_success(void);
+#endif
+
 int dump_ce_register(struct ol_softc *scn);
 int ol_copy_ramdump(struct ol_softc *scn);
 void hif_pktlogmod_exit(void *hif_ctx);

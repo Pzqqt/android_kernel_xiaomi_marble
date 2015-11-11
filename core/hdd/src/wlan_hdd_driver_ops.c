@@ -541,11 +541,14 @@ static int __wlan_hdd_runtime_suspend(void)
 	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
-	if (0 != status)
+	if (0 != status) {
+		hif_log_runtime_suspend_failure();
 		return status;
+	}
 
 	if (!hif_can_suspend_link()) {
 		hdd_err("Runtime PM not supported for link up suspend");
+		hif_log_runtime_suspend_failure();
 		return -EINVAL;
 	}
 
@@ -567,6 +570,7 @@ static int __wlan_hdd_runtime_suspend(void)
 		goto resume_hif;
 
 	hif_runtime_pm_set_state_suspended();
+	hif_log_runtime_suspend_success();
 	return status;
 
 resume_hif:
@@ -576,6 +580,7 @@ resume_wma:
 resume_htc:
 	CDF_BUG(!htc_runtime_resume());
 set_state:
+	hif_log_runtime_suspend_failure();
 	hif_runtime_pm_set_state_on();
 	return status;
 }
@@ -615,6 +620,7 @@ static int __wlan_hdd_runtime_resume(void)
 	CDF_BUG(!hif_runtime_resume());
 	CDF_BUG(!wma_runtime_resume());
 	CDF_BUG(!htc_runtime_resume());
+	hif_log_runtime_resume_success();
 	hif_runtime_pm_set_state_on();
 	return 0;
 }
