@@ -1797,9 +1797,10 @@ static int hif_bus_resume_link_down(void)
 
 /**
  * hif_bus_suspend(): prepare hif for suspend
+ *
  * chose suspend type based on link suspend voting.
  *
- * Return: linux status
+ * Return: 0 for success and non-zero error code for failure
  */
 int hif_bus_suspend(void)
 {
@@ -1810,10 +1811,11 @@ int hif_bus_suspend(void)
 }
 
 /**
- * hif_bus_suspend(): prepare hif for suspend
+ * hif_bus_resume(): prepare hif for resume
+ *
  * chose suspend type based on link suspend voting.
  *
- * Return: linux status
+ * Return: 0 for success and non-zero error code for failure
  */
 int hif_bus_resume(void)
 {
@@ -1879,6 +1881,26 @@ void hif_runtime_pm_set_state_on(void)
 void hif_runtime_pm_set_state_suspended(void)
 {
 	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_SUSPENDED);
+}
+
+/**
+ * hif_runtime_suspend() - do the bus suspend part of a runtime suspend
+ *
+ * Return: 0 for success and non-zero error code for failure
+ */
+int hif_runtime_suspend(void)
+{
+	return hif_bus_suspend();
+}
+
+/**
+ * hif_runtime_resume() - do the bus resume part of a runtime resume
+ *
+ *  Return: 0 for success and non-zero error code for failure
+ */
+int hif_runtime_resume(void)
+{
+	return hif_bus_resume();
 }
 
 void hif_disable_isr(void *ol_sc)
