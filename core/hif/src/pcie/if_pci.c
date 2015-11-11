@@ -1883,6 +1883,67 @@ void hif_runtime_pm_set_state_suspended(void)
 	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_SUSPENDED);
 }
 
+
+#ifdef FEATURE_RUNTIME_PM
+static inline struct hif_pci_softc *get_sc(void)
+{
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not disable ASPM scn is null",
+		       __func__);
+		return NULL;
+	}
+
+	return scn->hif_sc;
+}
+
+/**
+ * hif_log_runtime_suspend_success() - log a successful runtime suspend
+ */
+void hif_log_runtime_suspend_success(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+	if (sc == NULL)
+		return;
+
+	sc->pm_stats.suspended++;
+	sc->pm_stats.suspend_jiffies = jiffies;
+}
+
+/**
+ * hif_log_runtime_suspend_failure() - log a failed runtime suspend
+ *
+ * log a failed runtime suspend
+ * mark last busy to prevent immediate runtime suspend
+ */
+void hif_log_runtime_suspend_failure(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+	if (sc == NULL)
+		return;
+
+	sc->pm_stats.suspend_err++;
+	hif_pm_runtime_mark_last_busy(sc->dev);
+}
+
+/**
+ * hif_log_runtime_resume_success() - log a successful runtime resume
+ *
+ * log a successfull runtime resume
+ * mark last busy to prevent immediate runtime suspend
+ */
+void hif_log_runtime_resume_success(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+	if (sc == NULL)
+		return;
+
+	sc->pm_stats.resumed++;
+	hif_pm_runtime_mark_last_busy(sc->dev);
+}
+#endif
+
 /**
  * hif_runtime_suspend() - do the bus suspend part of a runtime suspend
  *
