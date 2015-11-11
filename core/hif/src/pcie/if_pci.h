@@ -126,6 +126,7 @@ struct hif_pci_softc {
 	struct timer_list runtime_timer;
 	struct list_head prevent_suspend_list;
 	unsigned long runtime_timer_expires;
+	struct hif_pm_runtime_lock *prevent_linkdown_lock;
 #ifdef WLAN_OPEN_SOURCE
 	struct dentry *pm_dentry;
 #endif

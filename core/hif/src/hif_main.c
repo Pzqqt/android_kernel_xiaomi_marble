@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -292,7 +292,7 @@ void hif_vote_link_down(void)
 
 	scn->linkstate_vote--;
 	if (scn->linkstate_vote == 0)
-		hif_bus_prevent_linkdown(false);
+		hif_bus_prevent_linkdown(scn, false);
 }
 
 /**
@@ -313,7 +313,7 @@ void hif_vote_link_up(void)
 
 	scn->linkstate_vote++;
 	if (scn->linkstate_vote == 1)
-		hif_bus_prevent_linkdown(true);
+		hif_bus_prevent_linkdown(scn, true);
 }
 
 /**

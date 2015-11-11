@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -131,6 +131,6 @@ CDF_STATUS hif_bus_open(struct ol_softc *ol_sc,
 CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, enum hif_enable_type type);
 void hif_disable_bus(void *bdev);
-void hif_bus_prevent_linkdown(bool flag);
+void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag);
 
 #endif /* __HIF_MAIN_H__ */

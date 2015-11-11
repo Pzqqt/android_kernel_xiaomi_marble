@@ -1068,6 +1068,8 @@ static void hif_pm_runtime_open(struct hif_pci_softc *sc)
 	spin_lock_init(&sc->runtime_lock);
 
 	cdf_atomic_init(&sc->pm_state);
+	sc->prevent_linkdown_lock =
+		hif_runtime_lock_init("linkdown suspend disabled");
 	cdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
 	INIT_LIST_HEAD(&sc->prevent_suspend_list);
 }
@@ -1621,6 +1623,30 @@ void hif_disable_bus(void *bdev)
 #define OL_ATH_PCI_PM_CONTROL 0x44
 
 #ifdef CONFIG_CNSS
+
+#ifdef RUNTIME_PM
+/**
+ * hif_runtime_prevent_linkdown() - prevent or allow a runtime pm from occuring
+ * @scn: hif context
+ * @flag: prevent linkdown if true otherwise allow
+ *
+ * this api should only be called as part of bus prevent linkdown
+ */
+static void hif_runtime_prevent_linkdown(struct ol_softc *scn, bool flag)
+{
+	struct hif_pci_softc *sc = scn->hif_sc;
+
+	if (flag)
+		hif_pm_runtime_prevent_suspend(scn, sc->prevent_linkdown_lock);
+	else
+		hif_pm_runtime_allow_suspend(scn, sc->prevent_linkdown_lock);
+}
+#else
+static void hif_runtime_prevent_linkdown(struct ol_softc *scn, bool flag)
+{
+}
+#endif
+
 /**
  * hif_bus_prevent_linkdown(): allow or permit linkdown
  * @flag: true prevents linkdown, false allows
@@ -1630,10 +1656,11 @@ void hif_disable_bus(void *bdev)
  *
  * Return: n/a
  */
-void hif_bus_prevent_linkdown(bool flag)
+void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse",
 			(flag ? "disable" : "enable"));
+	hif_runtime_prevent_linkdown(scn, flag);
 	cnss_wlan_pm_control(flag);
 }
 #endif
