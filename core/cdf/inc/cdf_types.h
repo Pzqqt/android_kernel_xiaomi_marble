@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -507,5 +507,15 @@ struct cdf_tso_info_t {
  * Mask for packet offset in the CE descriptor.
  */
 #define CDF_CE_TX_PKT_OFFSET_BIT_M	0x0fff0000
+
+/**
+ * enum cdf_suspend_type - type of suspend
+ * CDF_SYSTEM_SUSPEND: System suspend triggered wlan suspend
+ * CDF_RUNTIME_SUSPEND: Runtime pm inactivity timer triggered wlan suspend
+ */
+enum cdf_suspend_type {
+	CDF_SYSTEM_SUSPEND,
+	CDF_RUNTIME_SUSPEND
+};
 
 #endif /* if !defined __CDF_TYPES_H */
