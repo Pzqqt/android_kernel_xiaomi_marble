@@ -113,7 +113,8 @@ int hif_napi_create(struct ol_softc   *hif,
 		   napid->netdev.napi_list.prev, napid->netdev.napi_list.next);
 
 	/* It is OK to change the state variable below without protection
-	   as there should be no-one around yet */
+	 * as there should be no-one around yet
+	 */
 	napid->ce_map |= (0x01 << pipe_id);
 	HIF_INFO("%s: NAPI id %d created for pipe %d\n", __func__,
 		 napii->id, pipe_id);
@@ -162,6 +163,7 @@ int hif_napi_destroy(struct ol_softc *hif,
 	} else {
 		struct qca_napi_data *napid;
 		struct qca_napi_info *napii;
+
 		napid = &(hif->napi_data);
 		napii = &(napid->napis[ce]);
 
@@ -193,8 +195,9 @@ int hif_napi_destroy(struct ol_softc *hif,
 			HIF_INFO("%s: NAPI %d destroyed\n", __func__, id);
 
 			/* if there are no active instances and
-			   if they are all destroyed,
-			   set the whole structure to uninitialized state */
+			 * if they are all destroyed,
+			 * set the whole structure to uninitialized state
+			 */
 			if (napid->ce_map == 0) {
 				/* hif->napi_data.state = 0; */
 				memset(napid,
@@ -258,6 +261,7 @@ int hif_napi_event(struct ol_softc *hif, enum qca_napi_event event, void *data)
 	case NAPI_EVT_INI_FILE:
 	case NAPI_EVT_CMD_STATE: {
 		int on = (data != ((void *)0));
+
 		HIF_INFO("%s: received evnt: CONF %s; v = %d (state=0x%0x)\n",
 			 __func__,
 			 (event == NAPI_EVT_INI_FILE)?".ini file":"cmd",
@@ -328,9 +332,10 @@ int hif_napi_event(struct ol_softc *hif, enum qca_napi_event event, void *data)
  *
  * Return: bool
  */
-inline int hif_napi_enabled(struct ol_softc *hif, int ce)
+int hif_napi_enabled(struct ol_softc *hif, int ce)
 {
 	int rc;
+
 	if (-1 == ce)
 		rc = ((hif->napi_data.state == ENABLE_NAPI_MASK));
 	else
@@ -350,7 +355,6 @@ inline int hif_napi_enabled(struct ol_softc *hif, int ce)
 inline void hif_napi_enable_irq(struct ol_softc *hif, int id)
 {
 	ce_irq_enable(hif, NAPI_ID2PIPE(id));
-	return;
 }
 
 
@@ -396,7 +400,8 @@ int hif_napi_schedule(struct ol_softc *scn, int ce_id)
  */
 int hif_napi_poll(struct napi_struct *napi, int budget)
 {
-	int rc, normalized, bucket;
+	int    rc = 0; /* default: no work done, also takes care of error */
+	int    normalized, bucket;
 	int    cpu = smp_processor_id();
 	struct ol_softc      *hif;
 	struct qca_napi_info *napi_info;
@@ -409,27 +414,32 @@ int hif_napi_poll(struct napi_struct *napi, int budget)
 	napi_info->stats[cpu].napi_polls++;
 
 	hif = (struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
-	CDF_ASSERT(hif != NULL);
-	rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
-	HIF_INFO_HI("%s: ce_per_engine_service reports %d msgs processed",
-		__func__, rc);
+	if (unlikely(NULL == hif))
+		CDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
+	else {
+		rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
+		HIF_INFO_HI("%s: ce_per_engine_service processed %d msgs",
+			    __func__, rc);
+	}
 	napi_info->stats[cpu].napi_workdone += rc;
 	normalized = (rc / napi_info->scale);
 
-	ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
-	if (ce_state->lro_flush_cb != NULL) {
-		ce_state->lro_flush_cb(ce_state->lro_data);
+	if (NULL != hif) {
+		ce_state = hif->ce_id_to_state[NAPI_ID2PIPE(napi_info->id)];
+		if (ce_state->lro_flush_cb != NULL) {
+			ce_state->lro_flush_cb(ce_state->lro_data);
+		}
 	}
 
 	/* do not return 0, if there was some work done,
-	   even if it is below the scale   */
+	 * even if it is below the scale
+	 */
 	if (rc)
 		normalized++;
 	bucket   = (normalized / QCA_NAPI_DEF_SCALE);
 	napi_info->stats[cpu].napi_budget_uses[bucket]++;
 
-	/* if ce_per engine reports 0, then we should make sure
-	   poll is terminated */
+	/* if ce_per engine reports 0, then poll should be terminated */
 	if (0 == rc)
 		NAPI_DEBUG("%s:%d: nothing processed by CE. Completing NAPI\n",
 			   __func__, __LINE__);
@@ -438,10 +448,12 @@ int hif_napi_poll(struct napi_struct *napi, int budget)
 		napi_info->stats[cpu].napi_completes++;
 		/* enable interrupts */
 		napi_complete(napi);
-		hif_napi_enable_irq(hif, napi_info->id);
+		if (NULL != hif) {
+			hif_napi_enable_irq(hif, napi_info->id);
 
-		/* support suspend/resume */
-		cdf_atomic_dec(&(hif->active_tasklet_cnt));
+			/* support suspend/resume */
+			cdf_atomic_dec(&(hif->active_tasklet_cnt));
+		}
 
 		NAPI_DEBUG("%s:%d: napi_complete + enabling the interrupts\n",
 			   __func__, __LINE__);

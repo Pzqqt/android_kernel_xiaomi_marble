@@ -5361,9 +5361,10 @@ static int drv_cmd_get_rssi(hdd_adapter_t *adapter,
 			    uint8_t command_len,
 			    hdd_priv_data_t *priv_data)
 {
-	int ret;
+	int ret = 0;
 	int8_t rssi = 0;
 	char extra[32];
+
 	uint8_t len = 0;
 
 	wlan_hdd_get_rssi(adapter, &rssi);
@@ -5484,13 +5485,15 @@ int hdd_napi_stats(char   *buf,
 
 	NAPI_DEBUG("-->\n");
 
+	if (NULL == napid)
+		return n;
 	if (NULL == indp) {
 		from = 0;
-		to = sizeof(uint32_t) * CE_COUNT_MAX;
+		to = CE_COUNT_MAX;
 	} else {
 		if (0 > kstrtoint(indp, 10, &to)) {
 			from = 0;
-			to = sizeof(uint32_t) * CE_COUNT_MAX;
+			to = CE_COUNT_MAX;
 		} else
 			from = to;
 	}
@@ -5534,9 +5537,10 @@ static void napi_set_scale(uint8_t sc)
 	struct qca_napi_data *napi_data;
 
 	napi_data = hdd_napi_get_all();
-	for (i = 0; i < sizeof(uint32_t)*8; i++)
-		if (napi_data->ce_map & (0x01 << i))
-			napi_data->napis[i].scale = sc;
+	if (likely(NULL != napi_data))
+	    for (i = 0; i < CE_COUNT_MAX; i++)
+		    if (napi_data->ce_map & (0x01 << i))
+			    napi_data->napis[i].scale = sc;
 
 	return;
 }
@@ -5557,7 +5561,7 @@ static void napi_set_scale(uint8_t sc)
  * NAPI STATS [<n>] : get the stats for a given NAPI instance
  * NAPI SCALE <n>   : set the scale factor
  *
- * Return: 0: success; 0>: failure
+ * Return: 0: success; !0: failure
  */
 static int drv_cmd_napi(hdd_adapter_t *adapter,
 			hdd_context_t *hdd_ctx,
@@ -5632,12 +5636,14 @@ static int drv_cmd_napi(hdd_adapter_t *adapter,
 			struct qca_napi_data *napi_data;
 
 			napi_data = hdd_napi_get_all();
+			if (unlikely(NULL == napi_data))
+				goto status_end;
 			n += scnprintf(reply+n, MAX_USER_COMMAND_SIZE - n,
 				       "NAPI state: 0x%08x map: 0x%08x\n",
 				       napi_data->state,
 				       napi_data->ce_map);
 
-			for (i = 0; i < sizeof(uint32_t)*8; i++)
+			for (i = 0; i < CE_COUNT_MAX; i++)
 				if (napi_data->ce_map & (0x01 << i)) {
 					n += scnprintf(
 						reply + n,
@@ -5647,6 +5653,7 @@ static int drv_cmd_napi(hdd_adapter_t *adapter,
 						napi_data->napis[i].id,
 						napi_data->napis[i].scale);
 				}
+		status_end:
 			hdd_info("wlan: STATUS DATA:\n%s", reply);
 			if (copy_to_user(priv_data->buf, reply,
 					 CDF_MIN(n, priv_data->total_len)))
@@ -5656,10 +5663,11 @@ static int drv_cmd_napi(hdd_adapter_t *adapter,
 			struct qca_napi_data *napi_data;
 
 			napi_data = hdd_napi_get_all();
-			n = hdd_napi_stats(reply, MAX_USER_COMMAND_SIZE,
-					   aux, napi_data);
-			NAPI_DEBUG("STATS: returns %d\n", n);
-
+			if (NULL != napi_data) {
+				n = hdd_napi_stats(reply, MAX_USER_COMMAND_SIZE,
+						   aux, napi_data);
+				NAPI_DEBUG("STATS: returns %d\n", n);
+			}
 			if (n > 0) {
 				if (copy_to_user(priv_data->buf, reply,
 						 CDF_MIN(priv_data->total_len,

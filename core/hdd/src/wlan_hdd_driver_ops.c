@@ -113,7 +113,8 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		if (status <= 0) {
 			hdd_err("NAPI creation error, rc: 0x%x, reinit = %d",
 			status, reinit);
-			return -EFAULT;
+			ret = -EFAULT;
+			goto end;
 		}
 	}
 
