@@ -85,7 +85,11 @@ typedef void __iomem *A_target_id_t;
 #define TARGET_TYPE_ADRASTEA     16
 
 struct CE_state;
+#ifdef QCA_WIFI_3_0_ADRASTEA
+#define CE_COUNT_MAX 12
+#else
 #define CE_COUNT_MAX 8
+#endif
 
 /* These numbers are selected so that the product is close to current
    higher limit of packets HIF services at one shot (1000) */
