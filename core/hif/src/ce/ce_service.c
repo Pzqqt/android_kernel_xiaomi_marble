@@ -1509,6 +1509,10 @@ ce_send_cb_register(struct CE_handle *copyeng,
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 
+	if (CE_state == NULL) {
+		pr_err("%s: Error CE state = NULL\n", __func__);
+		return;
+	}
 	cdf_spin_lock(&CE_state->scn->target_lock);
 	CE_state->send_cb = fn_ptr;
 	CE_state->send_context = ce_send_context;
@@ -1523,6 +1527,10 @@ ce_recv_cb_register(struct CE_handle *copyeng,
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 
+	if (CE_state == NULL) {
+		pr_err("%s: ERROR CE state = NULL\n", __func__);
+		return;
+	}
 	cdf_spin_lock(&CE_state->scn->target_lock);
 	CE_state->recv_cb = fn_ptr;
 	CE_state->recv_context = CE_recv_context;

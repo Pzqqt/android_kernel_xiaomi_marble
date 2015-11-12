@@ -92,6 +92,12 @@ static struct CE_attr host_ce_config_wlan[] = {
 	/* ce_diag, the Diagnostic Window */
 	{ /* CE7 */ (CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,
 		2, DIAG_TRANSFER_LIMIT, 2, NULL,},
+	/* Target to uMC */
+	{ /* CE8 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	/*The following CEs are not being used yet */
+	{ /* CE9 */ CE_ATTR_FLAGS, 0, 0,  0, 0, NULL,},
+	{ /* CE10 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
+	{ /* CE11 */ CE_ATTR_FLAGS, 0, 0, 0, 0, NULL,},
 };
 
 static struct CE_pipe_config target_ce_config_wlan[] = {
@@ -116,7 +122,11 @@ static struct CE_pipe_config target_ce_config_wlan[] = {
 	{ /* CE7 */ 7, PIPEDIR_INOUT_H2H, 0, 0,
 		(CE_ATTR_FLAGS | CE_ATTR_DISABLE_INTR), 0,},
 	/* CE8 used only by IPA */
-	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,}
+	{ /* CE8 */ 8, PIPEDIR_IN, 32, 2048, CE_ATTR_FLAGS, 0,},
+	/*The following CEs are not being used yet*/
+	{ /* CE9 */ 9, PIPEDIR_IN,  0, 0, CE_ATTR_FLAGS, 0,},
+	{ /* CE10 */ 9, PIPEDIR_IN,  0, 0, CE_ATTR_FLAGS, 0,},
+	{ /* CE11 */ 9, PIPEDIR_IN,  0, 0, CE_ATTR_FLAGS, 0,},
 };
 
 static struct CE_attr host_ce_config_wlan_epping_poll[] = {
