@@ -323,7 +323,7 @@ int icnss_get_soc_info(struct icnss_soc_info *info)
 */
 static int icnss_get_irq_num(int ce_id)
 {
-	if (ce_id <= ICNSS_MAX_IRQ_REGISTRATIONS && ce_id >= 0)
+	if (ce_id < CE_COUNT_MAX && ce_id >= 0)
 		return ce_id + 100;
 
 	pr_err("icnss: No irq registered for CE id %d\n", ce_id);
@@ -333,7 +333,7 @@ static int icnss_get_irq_num(int ce_id)
 int icnss_get_ce_id(int irq)
 {
 	int ce_id = irq - 100;
-	if (ce_id <= ICNSS_MAX_IRQ_REGISTRATIONS && ce_id >= 0)
+	if (ce_id < CE_COUNT_MAX && ce_id >= 0)
 		return ce_id;
 
 	pr_err("icnss: No matching CE id for irq %d\n", irq);

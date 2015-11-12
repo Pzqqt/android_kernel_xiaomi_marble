@@ -170,7 +170,7 @@ void init_tasklet_workers(void)
  */
 static inline void ce_schedule_tasklet(struct ce_tasklet_entry *tasklet_entry)
 {
-	if (work_initialized && (tasklet_entry->ce_id <= CE_ID_MAX))
+	if (work_initialized && (tasklet_entry->ce_id < CE_ID_MAX))
 		schedule_work(&tasklet_workers[tasklet_entry->ce_id].work);
 	else
 		HIF_ERROR("%s: work_initialized = %d, ce_id = %d",
@@ -285,16 +285,19 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 	struct ce_tasklet_entry *tasklet_entry = context;
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
 	struct ol_softc *scn = hif_ce_state->scn;
-	int ce_id = icnss_get_ce_id(irq);
 	uint32_t host_status;
-
+	int ce_id = icnss_get_ce_id(irq);
 
 	if (tasklet_entry->ce_id != ce_id) {
 		HIF_ERROR("%s: ce_id (expect %d, received %d) does not match",
 			  __func__, tasklet_entry->ce_id, ce_id);
 		return IRQ_NONE;
 	}
-
+	if (unlikely(ce_id >= CE_COUNT_MAX)) {
+		HIF_ERROR("%s: ce_id=%d > CE_COUNT_MAX=%d",
+			  __func__, tasklet_entry->ce_id, CE_COUNT_MAX);
+		return IRQ_NONE;
+	}
 #ifndef HIF_PCI
 	disable_irq_nosync(irq);
 #endif

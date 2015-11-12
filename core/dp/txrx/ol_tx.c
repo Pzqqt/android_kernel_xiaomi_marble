@@ -133,6 +133,11 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
+	if (cdf_unlikely(!cdf_ctx)) {
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s:cdf_ctx is null", __func__);
+		return skb;
+	}
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
