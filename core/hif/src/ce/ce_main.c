@@ -77,6 +77,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 
 
 static int hif_post_recv_buffers(struct ol_softc *scn);
+static void hif_config_rri_on_ddr(struct ol_softc *scn);
 
 static void ce_poll_timeout(void *arg)
 {
@@ -2244,6 +2245,8 @@ int hif_config_ce(hif_handle_t hif_hdl)
 #endif
 #endif
 
+	hif_config_rri_on_ddr(scn);
+
 	/* During CE initializtion */
 	scn->ce_count = HOST_CE_COUNT;
 	A_TARGET_ACCESS_LIKELY(scn);
@@ -2471,7 +2474,7 @@ u32 shadow_sr_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
 		addr = SHADOW_VALUE7;
 		break;
 	default:
-		printk("invalid CE ctrl_addr\n");
+		HIF_ERROR("invalid CE ctrl_addr\n");
 		CDF_ASSERT(0);
 
 	}
@@ -2497,7 +2500,7 @@ u32 shadow_dst_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
 		addr = SHADOW_VALUE20;
 		break;
 	default:
-		printk("invalid CE ctrl_addr\n");
+		HIF_ERROR("invalid CE ctrl_addr\n");
 		CDF_ASSERT(0);
 	}
 
@@ -2627,3 +2630,146 @@ int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t svc_id,
 
 	return status;
 }
+
+#ifdef SHADOW_REG_DEBUG
+inline uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr)
+{
+	uint32_t read_from_hw, srri_from_ddr = 0;
+
+	read_from_hw = A_TARGET_READ(scn, CE_ctrl_addr + CURRENT_SRRI_ADDRESS);
+
+	srri_from_ddr = SRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr));
+
+	if (read_from_hw != srri_from_ddr) {
+		HIF_ERROR("error: read from ddr = %d actual read from register = %d, CE_MISC_INT_STATUS_GET = 0x%x\n",
+		       srri_from_ddr, read_from_hw,
+		       CE_MISC_INT_STATUS_GET(scn, CE_ctrl_addr));
+		CDF_ASSERT(0);
+	}
+	return srri_from_ddr;
+}
+
+
+inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr)
+{
+	uint32_t read_from_hw, drri_from_ddr = 0;
+
+	read_from_hw = A_TARGET_READ(scn, CE_ctrl_addr + CURRENT_DRRI_ADDRESS);
+
+	drri_from_ddr = DRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr));
+
+	if (read_from_hw != drri_from_ddr) {
+		HIF_ERROR("error: read from ddr = %d actual read from register = %d, CE_MISC_INT_STATUS_GET = 0x%x\n",
+		       drri_from_ddr, read_from_hw,
+		       CE_MISC_INT_STATUS_GET(scn, CE_ctrl_addr));
+		CDF_ASSERT(0);
+	}
+	return drri_from_ddr;
+}
+
+#endif
+
+/**
+ * hif_get_src_ring_read_index(): Called to get the SRRI
+ *
+ * @scn: ol_softc pointer
+ * @CE_ctrl_addr: base address of the CE whose RRI is to be read
+ *
+ * This function returns the SRRI to the caller. For CEs that
+ * dont have interrupts enabled, we look at the DDR based SRRI
+ *
+ * Return: SRRI
+ */
+inline unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr)
+{
+	struct CE_attr attr;
+
+	attr = host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
+	if (attr.flags & CE_ATTR_DISABLE_INTR)
+		return CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
+	else
+		return A_TARGET_READ(scn,
+				(CE_ctrl_addr) + CURRENT_SRRI_ADDRESS);
+}
+
+/**
+ * hif_get_dst_ring_read_index(): Called to get the DRRI
+ *
+ * @scn: ol_softc pointer
+ * @CE_ctrl_addr: base address of the CE whose RRI is to be read
+ *
+ * This function returns the DRRI to the caller. For CEs that
+ * dont have interrupts enabled, we look at the DDR based DRRI
+ *
+ * Return: DRRI
+ */
+inline unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr)
+{
+	struct CE_attr attr;
+
+	attr = host_ce_config[COPY_ENGINE_ID(CE_ctrl_addr)];
+
+	if (attr.flags & CE_ATTR_DISABLE_INTR)
+		return CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr);
+	else
+		return A_TARGET_READ(scn,
+				(CE_ctrl_addr) + CURRENT_DRRI_ADDRESS);
+}
+
+#ifdef ADRASTEA_RRI_ON_DDR
+/**
+ * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
+ *
+ * @scn: ol_softc pointer
+ *
+ * This function allocates non cached memory on ddr and sends
+ * the physical address of this memory to the CE hardware. The
+ * hardware updates the RRI on this particular location.
+ *
+ * Return: None
+ */
+static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
+{
+	unsigned int i;
+	cdf_dma_addr_t paddr_rri_on_ddr;
+	uint32_t high_paddr, low_paddr;
+	scn->vaddr_rri_on_ddr =
+		(uint32_t *)cdf_os_mem_alloc_consistent(scn->cdf_dev,
+		(CE_COUNT*sizeof(uint32_t)), &paddr_rri_on_ddr, 0);
+
+	low_paddr  = BITS0_TO_31(paddr_rri_on_ddr);
+	high_paddr = BITS32_TO_35(paddr_rri_on_ddr);
+
+	HIF_ERROR("%s using srri and drri from DDR\n", __func__);
+
+	WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, low_paddr);
+	WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, high_paddr);
+
+	for (i = 0; i < CE_COUNT; i++)
+		CE_IDX_UPD_EN_SET(scn, CE_BASE_ADDRESS(i));
+
+	cdf_mem_zero(scn->vaddr_rri_on_ddr, CE_COUNT*sizeof(uint32_t));
+
+	return;
+}
+#else
+
+/**
+ * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
+ *
+ * @scn: ol_softc pointer
+ *
+ * This is a dummy implementation for platforms that don't
+ * support this functionality.
+ *
+ * Return: None
+ */
+static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
+{
+	return;
+}
+#endif

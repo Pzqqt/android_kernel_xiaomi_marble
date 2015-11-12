@@ -28,6 +28,9 @@
 #ifndef __CE_REG_H__
 #define __CE_REG_H__
 
+#define COPY_ENGINE_ID(COPY_ENGINE_BASE_ADDRESS) ((COPY_ENGINE_BASE_ADDRESS \
+		- CE0_BASE_ADDRESS)/(CE1_BASE_ADDRESS - CE0_BASE_ADDRESS))
+
 #define DST_WR_INDEX_ADDRESS    (scn->target_ce_def->d_DST_WR_INDEX_ADDRESS)
 #define SRC_WATERMARK_ADDRESS   (scn->target_ce_def->d_SRC_WATERMARK_ADDRESS)
 #define SRC_WATERMARK_LOW_MASK  (scn->target_ce_def->d_SRC_WATERMARK_LOW_MASK)
@@ -102,10 +105,10 @@
 #define CE_WRAPPER_BASE_ADDRESS (scn->target_ce_def->d_CE_WRAPPER_BASE_ADDRESS)
 #define CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS \
 	(scn->target_ce_def->d_CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS)
-#define CE_WRAPPER_INDEX_BASE_LOW \
-	(scn->target_ce_def->d_CE_WRAPPER_INDEX_BASE_LOW)
-#define CE_WRAPPER_INDEX_BASE_HIGH \
-	(scn->target_ce_def->d_CE_WRAPPER_INDEX_BASE_HIGH)
+#define CE_DDR_ADDRESS_FOR_RRI_LOW \
+	(scn->target_ce_def->d_CE_DDR_ADDRESS_FOR_RRI_LOW)
+#define CE_DDR_ADDRESS_FOR_RRI_HIGH \
+	(scn->target_ce_def->d_CE_DDR_ADDRESS_FOR_RRI_HIGH)
 #define HOST_IE_COPY_COMPLETE_MASK \
 	(scn->target_ce_def->d_HOST_IE_COPY_COMPLETE_MASK)
 #define SR_BA_ADDRESS             (scn->target_ce_def->d_SR_BA_ADDRESS)
@@ -143,6 +146,7 @@
 #define CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB  \
 	(scn->target_ce_def->d_CE_WRAPPER_INTERRUPT_SUMMARY_HOST_MSI_LSB)
 #define CE_CTRL1_DMAX_LENGTH_LSB  (scn->target_ce_def->d_CE_CTRL1_DMAX_LENGTH_LSB)
+#define CE_CTRL1_IDX_UPD_EN  (scn->target_ce_def->d_CE_CTRL1_IDX_UPD_EN_MASK)
 #define CE_CTRL1_SRC_RING_BYTE_SWAP_EN_MASK \
 	(scn->target_ce_def->d_CE_CTRL1_SRC_RING_BYTE_SWAP_EN_MASK)
 #define CE_CTRL1_DST_RING_BYTE_SWAP_EN_MASK \
@@ -243,8 +247,52 @@
 #define CE_DEBUG_SEL_GET(x) (((x) & CE_DEBUG_SEL_MASK) >> CE_DEBUG_SEL_LSB)
 #define CE_DEBUG_SEL_SET(x) (((x) << CE_DEBUG_SEL_LSB) & CE_DEBUG_SEL_MASK)
 
+uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr);
+uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr);
+
+#define BITS0_TO_31(val) ((uint32_t)((uint64_t)(paddr_rri_on_ddr)\
+				     & (uint64_t)(0xFFFFFFFF)))
+#define BITS32_TO_35(val) ((uint32_t)(((uint64_t)(paddr_rri_on_ddr)\
+				     & (uint64_t)(0xF00000000))>>32))
+
+#define VADDR_FOR_CE(scn, CE_ctrl_addr)\
+	((uint32_t *)((uint64_t)(scn->vaddr_rri_on_ddr) + \
+	COPY_ENGINE_ID(CE_ctrl_addr)*sizeof(uint32_t)))
+
+#define SRRI_FROM_DDR_ADDR(addr) ((*(addr)) & 0xFFFF)
+#define DRRI_FROM_DDR_ADDR(addr) (((*(addr))>>16) & 0xFFFF)
+
+#ifdef SHADOW_REG_DEBUG
+#define CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
+	DEBUG_CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr)
+#define CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
+	DEBUG_CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)
+#else
+#define CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
+	SRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr))
+#define CE_DEST_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
+	DRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr))
+#endif
+
+
+unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr);
+unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
+		uint32_t CE_ctrl_addr);
+
+#ifdef ADRASTEA_RRI_ON_DDR
+#define CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
+	hif_get_src_ring_read_index(scn, CE_ctrl_addr)
+#define CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
+	hif_get_dst_ring_read_index(scn, CE_ctrl_addr)
+#else
 #define CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr) \
 	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_SRRI_ADDRESS)
+#define CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
+	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_DRRI_ADDRESS)
+#endif
 
 #define CE_SRC_RING_BASE_ADDR_SET(scn, CE_ctrl_addr, addr) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + SR_BA_ADDRESS, (addr))
@@ -263,6 +311,11 @@
 	   (A_TARGET_READ(scn, (CE_ctrl_addr) + \
 	   CE_CTRL1_ADDRESS) & ~CE_CTRL1_DMAX_LENGTH_MASK) | \
 	   CE_CTRL1_DMAX_LENGTH_SET(n))
+
+#define CE_IDX_UPD_EN_SET(scn, CE_ctrl_addr)  \
+	A_TARGET_WRITE(scn, (CE_ctrl_addr) + CE_CTRL1_ADDRESS, \
+	(A_TARGET_READ(scn, (CE_ctrl_addr) + CE_CTRL1_ADDRESS) \
+	| CE_CTRL1_IDX_UPD_EN))
 
 #define CE_CMD_REGISTER_GET(scn, CE_ctrl_addr) \
 	A_TARGET_READ(scn, (CE_ctrl_addr) + CE_CMD_REGISTER)
@@ -299,8 +352,6 @@
 		       & ~CE_CTRL1_DST_RING_BYTE_SWAP_EN_MASK) | \
 		       CE_CTRL1_DST_RING_BYTE_SWAP_EN_SET(n))
 
-#define CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)	\
-	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_DRRI_ADDRESS)
 
 #define CE_DEST_RING_BASE_ADDR_SET(scn, CE_ctrl_addr, addr) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + DR_BA_ADDRESS, (addr))
@@ -384,14 +435,6 @@
 #define CE_ENGINE_INT_STATUS_CLEAR(scn, CE_ctrl_addr, mask) \
 	A_TARGET_WRITE(scn, (CE_ctrl_addr) + HOST_IS_ADDRESS, (mask))
 
-#define CE_WRAPPER_INDEX_BASE_LOW_SET(scn, n) \
-	A_TARGET_WRITE(scn, \
-	   CE_WRAPPER_INDEX_BASE_LOW + CE_WRAPPER_BASE_ADDRESS, n)
-
-#define CE_WRAPPER_INDEX_BASE_HIGH_SET(scn, n) \
-	A_TARGET_WRITE(scn, \
-	   CE_WRAPPER_INDEX_BASE_HIGH + CE_WRAPPER_BASE_ADDRESS, n)
-
 #define CE_WATERMARK_MASK (HOST_IS_SRC_RING_LOW_WATERMARK_MASK  | \
 			   HOST_IS_SRC_RING_HIGH_WATERMARK_MASK | \
 			   HOST_IS_DST_RING_LOW_WATERMARK_MASK  | \
@@ -424,6 +467,24 @@
 		A_TARGET_READ(scn, CE_WRAPPER_BASE_ADDRESS + \
 		CE_WRAPPER_INTERRUPT_SUMMARY_ADDRESS))
 
+#define READ_CE_DDR_ADDRESS_FOR_RRI_LOW(scn) \
+	(A_TARGET_READ(scn, \
+		       CE_WRAPPER_BASE_ADDRESS + CE_DDR_ADDRESS_FOR_RRI_LOW))
+
+#define READ_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn) \
+	(A_TARGET_READ(scn, \
+		       CE_WRAPPER_BASE_ADDRESS + CE_DDR_ADDRESS_FOR_RRI_HIGH))
+
+#define WRITE_CE_DDR_ADDRESS_FOR_RRI_LOW(scn, val) \
+	(A_TARGET_WRITE(scn, \
+			CE_WRAPPER_BASE_ADDRESS + CE_DDR_ADDRESS_FOR_RRI_LOW, \
+			val))
+
+#define WRITE_CE_DDR_ADDRESS_FOR_RRI_HIGH(scn, val) \
+	(A_TARGET_WRITE(scn, \
+			CE_WRAPPER_BASE_ADDRESS + CE_DDR_ADDRESS_FOR_RRI_HIGH, \
+			val))
+
 /*Macro to increment CE packet errors*/
 #define OL_ATH_CE_PKT_ERROR_COUNT_INCR(_scn, _ce_ecode) \
 	do { if (_ce_ecode == CE_RING_DELTA_FAIL) \
@@ -441,9 +502,6 @@
 #ifdef ADRASTEA_SHADOW_REGISTERS
 
 #define NUM_SHADOW_REGISTERS 24
-
-#define COPY_ENGINE_ID(COPY_ENGINE_BASE_ADDRESS) ((COPY_ENGINE_BASE_ADDRESS \
-		- CE0_BASE_ADDRESS)/(CE1_BASE_ADDRESS - CE0_BASE_ADDRESS))
 
 u32 shadow_sr_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr);
 u32 shadow_dst_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr);

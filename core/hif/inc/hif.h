@@ -314,6 +314,7 @@ struct ol_softc {
 	cdf_spinlock_t irq_lock;
 	uint32_t ce_irq_summary;
 #endif
+	uint32_t *vaddr_rri_on_ddr;
 };
 
 typedef enum {
