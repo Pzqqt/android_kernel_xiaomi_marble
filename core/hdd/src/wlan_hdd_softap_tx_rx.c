@@ -288,7 +288,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		/* Check if the buffer has enough header room */
 		skb = skb_unshare(skb, GFP_ATOMIC);
 		if (!skb)
-			goto drop_pkt;
+			goto drop_pkt_accounting;
 
 		if (skb_headroom(skb) < dev->hard_header_len) {
 			struct sk_buff *tmp;
@@ -296,7 +296,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			skb = skb_realloc_headroom(tmp, dev->hard_header_len);
 			dev_kfree_skb(tmp);
 			if (!skb)
-				goto drop_pkt;
+				goto drop_pkt_accounting;
 		}
 #if defined (IPA_OFFLOAD)
 	}
@@ -357,10 +357,11 @@ drop_pkt:
 		DPTRACE(cdf_dp_trace(skb, CDF_DP_TRACE_DROP_PACKET_RECORD,
 				(uint8_t *)&skb->data[CDF_DP_TRACE_RECORD_SIZE],
 				(cdf_nbuf_len(skb)-CDF_DP_TRACE_RECORD_SIZE)));
+	kfree_skb(skb);
 
+drop_pkt_accounting:
 	++pAdapter->stats.tx_dropped;
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
-	kfree_skb(skb);
 
 	return NETDEV_TX_OK;
 }
