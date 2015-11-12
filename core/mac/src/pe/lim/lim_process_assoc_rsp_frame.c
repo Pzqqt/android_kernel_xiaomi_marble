@@ -795,7 +795,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 	if (assoc_rsp->statusCode != eSIR_MAC_SUCCESS_STATUS
 #ifdef WLAN_FEATURE_11W
-		&& assoc_rsp->statusCode != eSIR_MAC_TRY_AGAIN_LATER
+		&& (session_entry->limRmfEnabled ||
+			assoc_rsp->statusCode != eSIR_MAC_TRY_AGAIN_LATER)
 #endif
 	    ) {
 		/*
@@ -838,7 +839,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	 * lim_process_mlm_assoc_req
 	 */
 #ifdef WLAN_FEATURE_11W
-	if (assoc_rsp->statusCode == eSIR_MAC_TRY_AGAIN_LATER) {
+	if (session_entry->limRmfEnabled &&
+		assoc_rsp->statusCode == eSIR_MAC_TRY_AGAIN_LATER) {
 		if (assoc_rsp->TimeoutInterval.present &&
 		(assoc_rsp->TimeoutInterval.timeoutType ==
 			SIR_MAC_TI_TYPE_ASSOC_COMEBACK)) {
