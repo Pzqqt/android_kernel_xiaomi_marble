@@ -907,6 +907,28 @@ CDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 		request_buf->sessionId = session_id;
 	}
 	sme_set_pno_channel_prediction(request_buf, mac_ctx);
+
+	if (csr_is_p2p_session_connected(mac_ctx)) {
+		/* if AP-STA concurrency is active */
+		request_buf->active_max_time =
+			mac_ctx->roam.configParam.nActiveMaxChnTimeConc;
+		request_buf->active_min_time =
+			mac_ctx->roam.configParam.nActiveMinChnTimeConc;
+		request_buf->passive_max_time =
+			mac_ctx->roam.configParam.nPassiveMaxChnTimeConc;
+		request_buf->passive_min_time =
+			mac_ctx->roam.configParam.nPassiveMinChnTimeConc;
+	} else {
+		request_buf->active_max_time =
+			mac_ctx->roam.configParam.nActiveMaxChnTime;
+		request_buf->active_min_time =
+			mac_ctx->roam.configParam.nActiveMinChnTime;
+		request_buf->passive_max_time =
+			mac_ctx->roam.configParam.nPassiveMaxChnTime;
+		request_buf->passive_min_time =
+			mac_ctx->roam.configParam.nPassiveMinChnTime;
+	}
+
 	msg.type = WMA_SET_PNO_REQ;
 	msg.reserved = 0;
 	msg.bodyptr = request_buf;

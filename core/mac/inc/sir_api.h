@@ -2746,6 +2746,11 @@ typedef struct sSirPNOScanReq {
 	tSirScanTimersType scanTimers;
 	uint8_t sessionId;
 
+	uint32_t        active_min_time;
+	uint32_t        active_max_time;
+	uint32_t        passive_min_time;
+	uint32_t        passive_max_time;
+
 	uint16_t us24GProbeTemplateLen;
 	uint8_t p24GProbeTemplate[SIR_PNO_MAX_PB_REQ_SIZE];
 	uint16_t us5GProbeTemplateLen;
