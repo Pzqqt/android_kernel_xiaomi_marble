@@ -4207,7 +4207,7 @@ static void __lim_process_sme_hide_ssid(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	pUpdateParams = (tpSirUpdateParams) pMsgBuf;
 
-	psessionEntry = pe_find_session_by_session_id(pMac,
+	psessionEntry = pe_find_session_by_sme_session_id(pMac,
 				pUpdateParams->sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGW,
