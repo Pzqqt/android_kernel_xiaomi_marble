@@ -162,7 +162,7 @@ typedef struct _HTC_TARGET {
 	HTC_PACKET_QUEUE ControlBufferTXFreeList;
 	A_UINT8 CtrlResponseBuffer[HTC_MAX_CONTROL_MESSAGE_LENGTH];
 	int CtrlResponseLength;
-	cdf_semaphore_t CtrlResponseValid;
+	cdf_event_t ctrl_response_valid;
 	A_BOOL CtrlResponseProcessing;
 	int TotalTransmitCredits;
 	HTC_SERVICE_TX_CREDIT_ALLOCATION

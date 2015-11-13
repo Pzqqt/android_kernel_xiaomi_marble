@@ -31,6 +31,9 @@
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include "epping_main.h"
 
+/* HTC Control message receive timeout msec */
+#define HTC_CONTROL_RX_TIMEOUT     3000
+
 #ifdef DEBUG
 void debug_dump_bytes(A_UCHAR *buffer, A_UINT16 length, char *pDescription)
 {
@@ -433,9 +436,7 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 				target->CtrlResponseProcessing = true;
 				UNLOCK_HTC_RX(target);
 
-				cdf_semaphore_release(target->osdev,
-						      &target->
-						      CtrlResponseValid);
+				cdf_event_set(&target->ctrl_response_valid);
 				break;
 			case HTC_MSG_SEND_SUSPEND_COMPLETE:
 				wow_nack = 0;
@@ -599,9 +600,8 @@ void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint)
 
 void htc_recv_init(HTC_TARGET *target)
 {
-	/* Initialize CtrlResponseValid to block */
-	cdf_semaphore_init(&target->CtrlResponseValid);
-	cdf_semaphore_acquire(target->osdev, &target->CtrlResponseValid);
+	/* Initialize ctrl_response_valid to block */
+	cdf_event_init(&target->ctrl_response_valid);
 }
 
 /* polling routine to wait for a control packet to be received */
@@ -612,7 +612,10 @@ A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+HTCWaitCtrlMessageRecv\n"));
 
 	/* Wait for BMI request/response transaction to complete */
-	while (cdf_semaphore_acquire(target->osdev, &target->CtrlResponseValid)) {
+	if (cdf_wait_single_event(&target->ctrl_response_valid,
+		cdf_system_msecs_to_ticks(HTC_CONTROL_RX_TIMEOUT))) {
+		CDF_BUG(0);
+		return A_ERROR;
 	}
 
 	LOCK_HTC_RX(target);
