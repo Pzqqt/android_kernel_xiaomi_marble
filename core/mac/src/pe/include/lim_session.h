@@ -594,7 +594,6 @@ tpPESession pe_find_session_by_sta_id(tpAniSirGlobal pMac, uint8_t staid,
 void pe_delete_session(tpAniSirGlobal pMac, tpPESession psessionEntry);
 
 
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 /**
  * pe_find_session_by_sme_session_id() - looks up the PE session for given sme
  * session id
@@ -607,6 +606,5 @@ void pe_delete_session(tpAniSirGlobal pMac, tpPESession psessionEntry);
  */
 tpPESession pe_find_session_by_sme_session_id(tpAniSirGlobal mac_ctx,
 					      uint8_t sme_session_id);
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 uint8_t pe_get_active_session_count(tpAniSirGlobal mac_ctx);
 #endif /* #if !defined( __LIM_SESSION_H ) */
