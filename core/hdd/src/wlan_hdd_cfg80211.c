@@ -3012,7 +3012,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 			ETH_ALEN + req_rsn_len + rsp_rsn_len +
 			sizeof(uint8_t) + SIR_REPLAY_CTR_LEN +
 			SIR_KCK_KEY_LEN + SIR_KCK_KEY_LEN +
-			(7 * NLMSG_HDRLEN),
+			sizeof(uint8_t) + (8 * NLMSG_HDRLEN),
 			QCA_NL80211_VENDOR_SUBCMD_KEY_MGMT_ROAM_AUTH_INDEX,
 			GFP_KERNEL);
 
@@ -3052,6 +3052,24 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		hddLog(CDF_TRACE_LEVEL_DEBUG, FL("No Auth Params TLV's"));
 		if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AUTHORIZED,
 					false)) {
+			hddLog(CDF_TRACE_LEVEL_ERROR, FL("nla put fail"));
+			goto nla_put_failure;
+		}
+	}
+
+	hddLog(CDF_TRACE_LEVEL_DEBUG, FL("Subnet Change Status = %d"),
+		roam_info_ptr->subnet_change_status);
+
+	/*
+	 * Add subnet change status if subnet has changed
+	 * 0 = unchanged
+	 * 1 = changed
+	 * 2 = unknown
+	 */
+	if (roam_info_ptr->subnet_change_status) {
+		if (nla_put_u8(skb,
+				QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_SUBNET_STATUS,
+				roam_info_ptr->subnet_change_status)) {
 			hddLog(CDF_TRACE_LEVEL_ERROR, FL("nla put fail"));
 			goto nla_put_failure;
 		}

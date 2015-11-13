@@ -1202,6 +1202,13 @@ typedef struct tagCsrRoamStruct {
 			(eCsrLostLink2 == (pCommand)->u.roamCmd.roamReason) || \
 			(eCsrLostLink3 == (pCommand)->u.roamCmd.roamReason))
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/* bit-4 and bit-5 indicate the subnet status */
+#define CSR_GET_SUBNET_STATUS(roam_reason) (((roam_reason) & 0x30) >> 4)
+#else
+#define CSR_GET_SUBNET_STATUS(roam_reason) (0)
+#endif
+
 CDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal pMac);
 CDF_STATUS csrScanFilter11dResult(tpAniSirGlobal pMac);
 
