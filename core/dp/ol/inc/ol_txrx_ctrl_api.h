@@ -1090,119 +1090,115 @@ void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val);
 
 
 #ifdef IPA_OFFLOAD
-/**
- * @brief Client request resource information
- * @details
- *  OL client will reuqest IPA UC related resource information
- *  Resource information will be distributted to IPA module
- *  All of the required resources should be pre-allocated
- *
- * @param pdev - handle to the HTT instance
- * @param ce_sr_base_paddr - copy engine source ring base physical address
- * @param ce_sr_ring_size - copy engine source ring size
- * @param ce_reg_paddr - copy engine register physical address
- * @param tx_comp_ring_base_paddr - tx comp ring base physical address
- * @param tx_comp_ring_size - tx comp ring size
- * @param tx_num_alloc_buffer - number of allocated tx buffer
- * @param rx_rdy_ring_base_paddr - rx ready ring base physical address
- * @param rx_rdy_ring_size - rx ready ring size
- * @param rx_proc_done_idx_paddr - rx process done index physical address
- */
 void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    uint32_t *ce_sr_base_paddr,
+			    cdf_dma_addr_t *ce_sr_base_paddr,
 			    uint32_t *ce_sr_ring_size,
 			    cdf_dma_addr_t *ce_reg_paddr,
-			    uint32_t *tx_comp_ring_base_paddr,
+			    cdf_dma_addr_t *tx_comp_ring_base_paddr,
 			    uint32_t *tx_comp_ring_size,
 			    uint32_t *tx_num_alloc_buffer,
-			    uint32_t *rx_rdy_ring_base_paddr,
+			    cdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			    uint32_t *rx_rdy_ring_size,
-			    uint32_t *rx_proc_done_idx_paddr);
+			    cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			    void **rx_proc_done_idx_vaddr,
+			    cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			    uint32_t *rx2_rdy_ring_size,
+			    cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			    void **rx2_proc_done_idx_vaddr);
 
-/**
- * @brief Client set IPA UC doorbell register
- * @details
- *  IPA UC let know doorbell register physical address
- *  WLAN firmware will use this physical address to notify IPA UC
- *
- * @param pdev - handle to the HTT instance
- * @param ipa_uc_tx_doorbell_paddr - tx comp doorbell physical address
- * @param ipa_uc_rx_doorbell_paddr - rx ready doorbell physical address
- */
+
 void
 ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  uint32_t ipa_tx_uc_doorbell_paddr,
-				  uint32_t ipa_rx_uc_doorbell_paddr);
+				  cdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+				  cdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
 
-/**
- * @brief Client notify IPA UC data path active or not
- *
- * @param pdev - handle to the HTT instance
- * @param uc_active - UC data path is active or not
- * @param is_tx - UC TX is active or not
- */
 void
 ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev, bool uc_active, bool is_tx);
 
-/**
- * @brief Offload data path activation notificaiton
- * @details
- *  Firmware notification handler for offload datapath activity
- *
- * @param pdev - handle to the HTT instance
- * @param op_code - activated for tx or rx data patrh
- */
 void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg);
 
-/**
- * @brief callback function registration
- * @details
- *  OSIF layer callback function registration API
- *  OSIF layer will register firmware offload datapath activity
- *  notification callback
- *
- * @param pdev - handle to the HTT instance
- * @param ipa_uc_op_cb_type - callback function pointer should be registered
- * @param osif_dev - osif instance pointer
- */
 void ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
 				   void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
 							     void *osif_ctxt),
 				   void *osif_dev);
 
-/**
- * @brief query uc data path stats
- * @details
- *  Query uc data path stats from firmware
- *
- * @param pdev - handle to the HTT instance
- */
 void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev);
 #else
+/**
+ * ol_txrx_ipa_uc_get_resource() - Client request resource information
+ * @pdev: handle to the HTT instance
+ * @ce_sr_base_paddr: copy engine source ring base physical address
+ * @ce_sr_ring_size: copy engine source ring size
+ * @ce_reg_paddr: copy engine register physical address
+ * @tx_comp_ring_base_paddr: tx comp ring base physical address
+ * @tx_comp_ring_size: tx comp ring size
+ * @tx_num_alloc_buffer: number of allocated tx buffer
+ * @rx_rdy_ring_base_paddr: rx ready ring base physical address
+ * @rx_rdy_ring_size: rx ready ring size
+ * @rx_proc_done_idx_paddr: rx process done index physical address
+ * @rx_proc_done_idx_vaddr: rx process done index virtual address
+ * @rx2_rdy_ring_base_paddr: rx done ring base physical address
+ * @rx2_rdy_ring_size: rx done ring size
+ * @rx2_proc_done_idx_paddr: rx done index physical address
+ * @rx2_proc_done_idx_vaddr: rx done index virtual address
+ *
+ *  OL client will reuqest IPA UC related resource information
+ *  Resource information will be distributted to IPA module
+ *  All of the required resources should be pre-allocated
+ *
+ * Return: none
+ */
 static inline void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    uint32_t *ce_sr_base_paddr,
+			    cdf_dma_addr_t *ce_sr_base_paddr,
 			    uint32_t *ce_sr_ring_size,
 			    cdf_dma_addr_t *ce_reg_paddr,
-			    uint32_t *tx_comp_ring_base_paddr,
+			    cdf_dma_addr_t *tx_comp_ring_base_paddr,
 			    uint32_t *tx_comp_ring_size,
 			    uint32_t *tx_num_alloc_buffer,
-			    uint32_t *rx_rdy_ring_base_paddr,
+			    cdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			    uint32_t *rx_rdy_ring_size,
-			    uint32_t *rx_proc_done_idx_paddr)
+			    cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			    void **rx_proc_done_idx_vaddr,
+			    cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			    uint32_t *rx2_rdy_ring_size,
+			    cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			    void **rx2_proc_done_idx_vaddr)
 {
 	return;
 }
 
+/**
+ * ol_txrx_ipa_uc_set_doorbell_paddr() - Client set IPA UC doorbell register
+ * @pdev: handle to the HTT instance
+ * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
+ * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
+ *
+ *  IPA UC let know doorbell register physical address
+ *  WLAN firmware will use this physical address to notify IPA UC
+ *
+ * Return: none
+ */
 static inline void
 ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  uint32_t ipa_tx_uc_doorbell_paddr,
-				  uint32_t ipa_rx_uc_doorbell_paddr)
+				  cdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+				  cdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
 	return;
 }
 
+/**
+ * ol_txrx_ipa_uc_set_active() - Client notify IPA UC data path active or not
+ * @pdev: handle to the HTT instance
+ * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
+ * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
+ *
+ *  IPA UC let know doorbell register physical address
+ *  WLAN firmware will use this physical address to notify IPA UC
+ *
+ * Return: none
+ */
 static inline void
 ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev,
 	bool uc_active, bool is_tx)
@@ -1210,12 +1206,27 @@ ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev,
 	return;
 }
 
+/**
+ * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
+ * @pdev: handle to the HTT instance
+ * @op_msg: op response message from firmware
+ *
+ * Return: none
+ */
 static inline void
 ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 {
 	return;
 }
 
+/**
+ * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
+ * @pdev: handle to the HTT instance
+ * @op_cb: handler function pointer
+ * @osif_dev: register client context
+ *
+ * Return: none
+ */
 static inline void
 ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
 				   void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
@@ -1225,6 +1236,12 @@ ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
 	return;
 }
 
+/**
+ * ol_txrx_ipa_uc_get_stat() - Get firmware wdi status
+ * @pdev: handle to the HTT instance
+ *
+ * Return: none
+ */
 static inline void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev)
 {
 	return;

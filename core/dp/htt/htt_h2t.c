@@ -641,6 +641,13 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 }
 
 #ifdef IPA_OFFLOAD
+/**
+ * htt_h2t_ipa_uc_rsc_cfg_msg() - Send WDI IPA config message to firmware
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ *         A_NO_MEMORY No memory fail
+ */
 int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
@@ -649,7 +656,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
-		return A_NO_MEMORY;
+		return -A_NO_MEMORY;
 
 	/* show that this is not a tx frame download
 	 * (not required, but helpful)
@@ -663,7 +670,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 			     false);
 	if (!msg) {
 		htt_htc_pkt_free(pdev, pkt);
-		return A_NO_MEMORY;
+		return -A_NO_MEMORY;
 	}
 	/* set the length of the message */
 	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_CFG_SZ);
@@ -756,7 +763,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_RING2_RD_IDX_ADDR_LO_SET(*msg_word,
-		(unsigned int)pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr);
+		(unsigned int)pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr);
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_RING2_RD_IDX_ADDR_HI_SET(*msg_word,
@@ -765,14 +772,11 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_RING2_WR_IDX_ADDR_LO_SET(*msg_word,
-		(unsigned int)pdev->ipa_uc_rx_rsc.rx2_rdy_idx_paddr);
+		(unsigned int)pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr);
 	msg_word++;
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_RX_RING2_WR_IDX_ADDR_HI_SET(*msg_word,
 		0);
-
-	cdf_trace_hex_dump(CDF_MODULE_ID_HTT, CDF_TRACE_LEVEL_FATAL,
-		(void *)cdf_nbuf_data(msg), 40);
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
@@ -788,6 +792,15 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	return A_OK;
 }
 
+/**
+ * htt_h2t_ipa_uc_set_active() - Propagate WDI path enable/disable to firmware
+ * @pdev: handle to the HTT instance
+ * @uc_active: WDI UC path enable or not
+ * @is_tx: TX path or RX path
+ *
+ * Return: 0 success
+ *         A_NO_MEMORY No memory fail
+ */
 int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 			      bool uc_active, bool is_tx)
 {
@@ -798,7 +811,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
-		return A_NO_MEMORY;
+		return -A_NO_MEMORY;
 
 	/* show that this is not a tx frame download
 	 * (not required, but helpful)
@@ -813,7 +826,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 			     false);
 	if (!msg) {
 		htt_htc_pkt_free(pdev, pkt);
-		return A_NO_MEMORY;
+		return -A_NO_MEMORY;
 	}
 	/* set the length of the message */
 	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_OP_REQUEST_SZ);
@@ -851,6 +864,13 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 	return A_OK;
 }
 
+/**
+ * htt_h2t_ipa_uc_get_stats() - WDI UC state query request to firmware
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ *         A_NO_MEMORY No memory fail
+ */
 int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
@@ -859,7 +879,7 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
-		return A_NO_MEMORY;
+		return -A_NO_MEMORY;
 
 	/* show that this is not a tx frame download
 	 * (not required, but helpful)
@@ -874,7 +894,7 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 			     false);
 	if (!msg) {
 		htt_htc_pkt_free(pdev, pkt);
-		return A_NO_MEMORY;
+		return -A_NO_MEMORY;
 	}
 	/* set the length of the message */
 	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_OP_REQUEST_SZ);

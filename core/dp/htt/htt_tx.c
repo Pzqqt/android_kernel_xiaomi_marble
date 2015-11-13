@@ -833,6 +833,16 @@ void htt_tx_desc_display(void *tx_desc)
 #endif
 
 #ifdef IPA_OFFLOAD
+/**
+ * htt_tx_ipa_uc_attach() - attach htt ipa uc tx resource
+ * @pdev: htt context
+ * @uc_tx_buf_sz: single tx buffer size
+ * @uc_tx_buf_cnt: total tx buffer count
+ * @uc_tx_partition_base: tx buffer partition start
+ *
+ * Return: 0 success
+ *         ENOBUFS No memory fail
+ */
 int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			 unsigned int uc_tx_buf_sz,
 			 unsigned int uc_tx_buf_cnt,
@@ -840,7 +850,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 {
 	unsigned int tx_buffer_count;
 	cdf_nbuf_t buffer_vaddr;
-	uint32_t buffer_paddr;
+	cdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
 	int return_code = 0;
@@ -929,6 +939,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 		/* chanreq, peerid */
 		*header_ptr = 0xFFFFFFFF;
+		header_ptr++;
 
 		/* FRAG Header */
 		/* 6 words TSO header */

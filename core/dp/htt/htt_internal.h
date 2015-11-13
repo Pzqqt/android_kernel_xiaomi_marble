@@ -480,6 +480,15 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev);
 
 int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev);
 #else
+/**
+ * htt_tx_ipa_uc_attach() - attach htt ipa uc tx resource
+ * @pdev: htt context
+ * @uc_tx_buf_sz: single tx buffer size
+ * @uc_tx_buf_cnt: total tx buffer count
+ * @uc_tx_partition_base: tx buffer partition start
+ *
+ * Return: 0 success
+ */
 static inline int
 htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 		     unsigned int uc_tx_buf_sz,
@@ -489,6 +498,13 @@ htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	return 0;
 }
 
+/**
+ * htt_rx_ipa_uc_attach() - attach htt ipa uc rx resource
+ * @pdev: htt context
+ * @rx_ind_ring_size: rx ring size
+ *
+ * Return: 0 success
+ */
 static inline int
 htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev, unsigned int rx_ind_ring_size)
 {

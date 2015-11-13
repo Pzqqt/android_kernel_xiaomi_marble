@@ -2288,14 +2288,16 @@ fail1:
 }
 
 #ifdef IPA_OFFLOAD
+/**
+ * htt_rx_ipa_uc_attach() - attach htt ipa uc rx resource
+ * @pdev: htt context
+ * @rx_ind_ring_size: rx ring size
+ *
+ * Return: 0 success
+ */
 int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			 unsigned int rx_ind_ring_elements)
 {
-	/* Allocate RX indication ring */
-	/* RX IND ring element
-	 *   4bytes: pointer
-	 *   2bytes: VDEV ID
-	 *   2bytes: length */
 	pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr =
 		cdf_os_mem_alloc_consistent(
 			pdev->osdev,
@@ -2339,16 +2341,11 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	}
 	cdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr, 4);
 
-	/* Allocate RX2 indication ring */
-	/* RX2 IND ring element
-	 *   4bytes: pointer
-	 *   2bytes: VDEV ID
-	 *   2bytes: length */
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr =
 		cdf_os_mem_alloc_consistent(
 			pdev->osdev,
 			rx_ind_ring_elements *
-			sizeof(struct ipa_uc_rx_ring_elem_t),
+			sizeof(cdf_dma_addr_t),
 			&pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
 			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx2_ind_ring_base),
@@ -2360,7 +2357,7 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 	/* RX indication ring size, by bytes */
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_size =
-		rx_ind_ring_elements * sizeof(struct ipa_uc_rx_ring_elem_t);
+		rx_ind_ring_elements * sizeof(cdf_dma_addr_t);
 	cdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
 		pdev->ipa_uc_rx_rsc.rx2_ind_ring_size);
 
@@ -2432,7 +2429,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 			rx_ipa_prc_done_idx.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr,
 			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ipa_prc_done_idx),
+						 rx2_ipa_prc_done_idx),
 						memctx));
 	}
 	return 0;

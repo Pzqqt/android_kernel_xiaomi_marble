@@ -700,7 +700,7 @@ void htc_disable_aspm(void);
 
 #ifdef IPA_OFFLOAD
 void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
-			     uint32_t *ce_sr_base_paddr,
+			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr);
 #else
