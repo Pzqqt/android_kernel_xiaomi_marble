@@ -228,5 +228,7 @@ static inline int hif_pm_runtime_resume(struct device *dev)
 	return cnss_pm_runtime_request(dev, CNSS_PM_RUNTIME_RESUME);
 }
 #endif /* WLAN_OPEN_SOURCE */
+#else
+static inline void hif_pm_runtime_mark_last_busy(struct device *dev) { }
 #endif /* FEATURE_RUNTIME_PM */
 #endif /* __ATH_PCI_H__ */

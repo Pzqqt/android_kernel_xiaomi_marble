@@ -755,6 +755,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		&hif_state->msg_callbacks_current;
 
 	do {
+		hif_pm_runtime_mark_last_busy(scn->hif_sc->dev);
 		cdf_nbuf_unmap_single(scn->cdf_dev,
 				      (cdf_nbuf_t) transfer_context,
 				      CDF_DMA_FROM_DEVICE);
