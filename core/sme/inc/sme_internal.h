@@ -143,7 +143,8 @@ typedef struct tagSmeStruct {
 	eSmeState state;
 	cdf_mutex_t lkSmeGlobalLock;
 	uint32_t totalSmeCmd;
-	void *pSmeCmdBufAddr;
+	/* following pointer contains array of pointers for tSmeCmd* */
+	void **pSmeCmdBufAddr;
 	tDblLinkList smeCmdActiveList;
 	tDblLinkList smeCmdPendingList;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */

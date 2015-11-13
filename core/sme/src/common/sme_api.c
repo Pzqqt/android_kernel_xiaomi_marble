@@ -286,6 +286,27 @@ static CDF_STATUS sme_process_hw_mode_trans_ind(tpAniSirGlobal mac,
 	return CDF_STATUS_SUCCESS;
 }
 
+/**
+ * free_sme_cmds() - This function frees memory allocated for SME commands
+ * @mac_ctx:      Pointer to Global MAC structure
+ *
+ * This function frees memory allocated for SME commands
+ *
+ * @Return: void
+ */
+static void free_sme_cmds(tpAniSirGlobal mac_ctx)
+{
+	uint32_t idx;
+	if (NULL == mac_ctx->sme.pSmeCmdBufAddr)
+		return;
+
+	for (idx = 0; idx < mac_ctx->sme.totalSmeCmd; idx++)
+		cdf_mem_free(mac_ctx->sme.pSmeCmdBufAddr[idx]);
+
+	cdf_mem_free(mac_ctx->sme.pSmeCmdBufAddr);
+	mac_ctx->sme.pSmeCmdBufAddr = NULL;
+}
+
 static CDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 {
 	CDF_STATUS status;
@@ -293,6 +314,7 @@ static CDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	uint32_t cmd_idx;
 	CDF_STATUS cdf_status;
 	cdf_mc_timer_t *cmdTimeoutTimer = NULL;
+	uint32_t sme_cmd_ptr_ary_sz;
 
 	pMac->sme.totalSmeCmd = SME_TOTAL_COMMAND;
 
@@ -316,19 +338,36 @@ static CDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		goto end;
 
-	pCmd = cdf_mem_malloc(sizeof(tSmeCmd) * pMac->sme.totalSmeCmd);
-	if (NULL == pCmd)
+	/* following pointer contains array of pointers for tSmeCmd* */
+	sme_cmd_ptr_ary_sz = sizeof(void *) * pMac->sme.totalSmeCmd;
+	pMac->sme.pSmeCmdBufAddr = cdf_mem_malloc(sme_cmd_ptr_ary_sz);
+	if (NULL == pMac->sme.pSmeCmdBufAddr) {
 		status = CDF_STATUS_E_NOMEM;
-	else {
-		status = CDF_STATUS_SUCCESS;
+		goto end;
+	}
 
-		cdf_mem_set(pCmd, sizeof(tSmeCmd) * pMac->sme.totalSmeCmd, 0);
-		pMac->sme.pSmeCmdBufAddr = pCmd;
-
-		for (cmd_idx = 0; cmd_idx < pMac->sme.totalSmeCmd; cmd_idx++) {
-			csr_ll_insert_tail(&pMac->sme.smeCmdFreeList,
-					   &pCmd[cmd_idx].Link, LL_ACCESS_LOCK);
+	status = CDF_STATUS_SUCCESS;
+	cdf_mem_set(pMac->sme.pSmeCmdBufAddr, sme_cmd_ptr_ary_sz, 0);
+	for (cmd_idx = 0; cmd_idx < pMac->sme.totalSmeCmd; cmd_idx++) {
+		/*
+		 * Since total size of all commands together can be huge chunk
+		 * of memory, allocate SME cmd individually. These SME CMDs are
+		 * moved between pending and active queues. And these freeing of
+		 * these queues just manipulates the list but does not actually
+		 * frees SME CMD pointers. Hence store each SME CMD address in
+		 * the array, sme.pSmeCmdBufAddr. This will later facilitate
+		 * freeing up of all SME CMDs with just a for loop.
+		 */
+		pMac->sme.pSmeCmdBufAddr[cmd_idx] =
+						cdf_mem_malloc(sizeof(tSmeCmd));
+		if (NULL == pMac->sme.pSmeCmdBufAddr[cmd_idx]) {
+			status = CDF_STATUS_E_NOMEM;
+			free_sme_cmds(pMac);
+			goto end;
 		}
+		pCmd = (tSmeCmd *)pMac->sme.pSmeCmdBufAddr[cmd_idx];
+		csr_ll_insert_tail(&pMac->sme.smeCmdFreeList,
+				&pCmd->Link, LL_ACCESS_LOCK);
 	}
 
 	/* This timer is only to debug the active list command timeout */
@@ -449,10 +488,7 @@ static CDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 		goto done;
 	}
 
-	if (NULL != pMac->sme.pSmeCmdBufAddr) {
-		cdf_mem_free(pMac->sme.pSmeCmdBufAddr);
-		pMac->sme.pSmeCmdBufAddr = NULL;
-	}
+	free_sme_cmds(pMac);
 
 	status = cdf_mutex_release(&pMac->sme.lkSmeGlobalLock);
 	if (status != CDF_STATUS_SUCCESS) {
