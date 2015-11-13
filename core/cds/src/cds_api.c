@@ -1807,7 +1807,7 @@ void cds_set_ring_log_level(uint32_t ring_id, uint32_t log_level)
 	} else if (ring_id == RING_ID_PER_PACKET_STATS) {
 		p_cds_context->packet_stats_log_level = log_val;
 		return;
-	} else if (ring_id == RIND_ID_DRIVER_DEBUG) {
+	} else if (ring_id == RING_ID_DRIVER_DEBUG) {
 		p_cds_context->driver_debug_log_level = log_val;
 		return;
 	} else if (ring_id == RING_ID_FIRMWARE_DEBUG) {
@@ -1841,7 +1841,7 @@ enum wifi_driver_log_level cds_get_ring_log_level(uint32_t ring_id)
 		return p_cds_context->connectivity_log_level;
 	else if (ring_id == RING_ID_PER_PACKET_STATS)
 		return p_cds_context->packet_stats_log_level;
-	else if (ring_id == RIND_ID_DRIVER_DEBUG)
+	else if (ring_id == RING_ID_DRIVER_DEBUG)
 		return p_cds_context->driver_debug_log_level;
 	else if (ring_id == RING_ID_FIRMWARE_DEBUG)
 		return p_cds_context->fw_debug_log_level;
