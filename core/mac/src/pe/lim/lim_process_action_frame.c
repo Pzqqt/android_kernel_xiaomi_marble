@@ -2130,6 +2130,23 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		}
 		break;
 #endif
+	case SIR_MAC_ACTION_FST: {
+		tpSirMacMgmtHdr     hdr;
+		uint32_t            frame_len;
+
+		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+
+		lim_log(mac_ctx, LOG1, FL("Received FST MGMT action frame"));
+		/* Forward to the SME to HDD */
+		lim_send_sme_mgmt_frame_ind(mac_ctx, hdr->fc.subType,
+					    (uint8_t *)hdr,
+					    frame_len + sizeof(tSirMacMgmtHdr),
+					    session->smeSessionId,
+					    WMA_GET_RX_CH(rx_pkt_info),
+					    session, 0);
+		break;
+	}
 	default:
 		lim_log(mac_ctx, LOGE,
 			FL("Action category %d not handled"),

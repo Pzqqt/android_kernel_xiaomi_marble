@@ -141,6 +141,7 @@
 #define SIR_MAC_ACTION_MHF            14
 #define SIR_MAC_SELF_PROTECTED        15
 #define SIR_MAC_ACTION_WME            17
+#define SIR_MAC_ACTION_FST            18
 #define SIR_MAC_ACTION_VHT            21
 
 /* QoS management action codes */
