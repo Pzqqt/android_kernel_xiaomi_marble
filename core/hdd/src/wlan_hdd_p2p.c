@@ -2124,6 +2124,7 @@ struct net_device *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy, char *name,
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_scaninfo_t *scan_info = NULL;
 	int ret;
+	uint8_t session_type;
 
 	ENTER();
 
@@ -2141,15 +2142,18 @@ struct net_device *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy, char *name,
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_ADD_VIRTUAL_INTF, NO_SESSION, type));
 	/*
-	 * Allow addition multiple interface for WLAN_HDD_P2P_CLIENT and
-	 * WLAN_HDD_SOFTAP session type.
+	 * Allow addition multiple interfaces for WLAN_HDD_P2P_GO,
+	 * WLAN_HDD_SOFTAP, WLAN_HDD_P2P_CLIENT and WLAN_HDD_INFRA_STATION
+	 * session type.
 	 */
-	if ((hdd_get_adapter(pHddCtx, wlan_hdd_get_session_type(type)) != NULL)
+	session_type = wlan_hdd_get_session_type(type);
+	if ((hdd_get_adapter(pHddCtx, session_type) != NULL)
 #ifdef WLAN_FEATURE_MBSSID
-	    && WLAN_HDD_SOFTAP != wlan_hdd_get_session_type(type)
+	    && WLAN_HDD_SOFTAP != session_type
+	    && WLAN_HDD_P2P_GO != session_type
 #endif
-	    && WLAN_HDD_P2P_CLIENT != wlan_hdd_get_session_type(type)
-	    && WLAN_HDD_INFRA_STATION != wlan_hdd_get_session_type(type)) {
+	    && WLAN_HDD_P2P_CLIENT != session_type
+	    && WLAN_HDD_INFRA_STATION != session_type) {
 		hddLog(LOGE,
 		       "%s: Interface type %d already exists. "
 		       "Two interfaces of same type are not supported currently.",
