@@ -1654,15 +1654,23 @@ void ce_enable_msi(struct ol_softc *scn, unsigned int CE_id,
 }
 
 #ifdef IPA_OFFLOAD
-/*
+/**
+ * ce_ipa_get_resource() - get uc resource on copyengine
+ * @ce: copyengine context
+ * @ce_sr_base_paddr: copyengine source ring base physical address
+ * @ce_sr_ring_size: copyengine source ring size
+ * @ce_reg_paddr: copyengine register physical address
+ *
  * Copy engine should release resource to micro controller
  * Micro controller needs
-   - Copy engine source descriptor base address
-   - Copy engine source descriptor size
-   - PCI BAR address to access copy engine regiser
+ *  - Copy engine source descriptor base address
+ *  - Copy engine source descriptor size
+ *  - PCI BAR address to access copy engine regiser
+ *
+ * Return: None
  */
 void ce_ipa_get_resource(struct CE_handle *ce,
-			 uint32_t *ce_sr_base_paddr,
+			 cdf_dma_addr_t *ce_sr_base_paddr,
 			 uint32_t *ce_sr_ring_size,
 			 cdf_dma_addr_t *ce_reg_paddr)
 {
@@ -1690,8 +1698,9 @@ void ce_ipa_get_resource(struct CE_handle *ce,
 	/* Get BAR address */
 	hif_read_phy_mem_base(CE_state->scn, &phy_mem_base);
 
-	*ce_sr_base_paddr = (uint32_t) CE_state->src_ring->base_addr_CE_space;
-	*ce_sr_ring_size = (uint32_t) CE_state->src_ring->nentries;
+	*ce_sr_base_paddr = CE_state->src_ring->base_addr_CE_space;
+	*ce_sr_ring_size = (uint32_t) (CE_state->src_ring->nentries *
+		sizeof(struct CE_src_desc));
 	*ce_reg_paddr = phy_mem_base + CE_BASE_ADDRESS(CE_state->id) +
 			SR_WR_INDEX_ADDRESS;
 	return;

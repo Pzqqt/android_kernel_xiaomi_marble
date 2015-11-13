@@ -430,20 +430,28 @@ struct ce_sendlist {
 #define ATH_ISR_NOTMINE  0x0002  /* for shared IRQ's */
 
 #ifdef IPA_OFFLOAD
-/*
- * Copy engine should release resource to micro controller
- * Micro controller needs
-   - Copy engine source descriptor base address
-   - Copy engine source descriptor size
-   - PCI BAR address to access copy engine regiser
- */
 void ce_ipa_get_resource(struct CE_handle *ce,
-			 uint32_t *ce_sr_base_paddr,
+			 cdf_dma_addr_t *ce_sr_base_paddr,
 			 uint32_t *ce_sr_ring_size,
 			 cdf_dma_addr_t *ce_reg_paddr);
 #else
+/**
+ * ce_ipa_get_resource() - get uc resource on copyengine
+ * @ce: copyengine context
+ * @ce_sr_base_paddr: copyengine source ring base physical address
+ * @ce_sr_ring_size: copyengine source ring size
+ * @ce_reg_paddr: copyengine register physical address
+ *
+ * Copy engine should release resource to micro controller
+ * Micro controller needs
+ *  - Copy engine source descriptor base address
+ *  - Copy engine source descriptor size
+ *  - PCI BAR address to access copy engine regiser
+ *
+ * Return: None
+ */
 static inline void ce_ipa_get_resource(struct CE_handle *ce,
-			 uint32_t *ce_sr_base_paddr,
+			 cdf_dma_addr_t *ce_sr_base_paddr,
 			 uint32_t *ce_sr_ring_size,
 			 cdf_dma_addr_t *ce_reg_paddr)
 {

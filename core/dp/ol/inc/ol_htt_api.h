@@ -214,111 +214,98 @@ void htt_display(htt_pdev_handle pdev, int indent);
 #define htt_rx_reorder_log_print(pdev)
 
 #ifdef IPA_OFFLOAD
-/**
- * @brief send IPA UC resource config message to firmware with HTT message
- * @details
- *  send IPA UC resource config message to firmware with HTT message
- *
- * @param pdev - handle to the HTT instance
- */
 int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev);
 
-/**
- * @brief Client request resource information
- * @details
- *  OL client will reuqest IPA UC related resource information
- *  Resource information will be distributted to IPA module
- *  All of the required resources should be pre-allocated
- *
- * @param pdev - handle to the HTT instance
- * @param ce_sr_base_paddr - copy engine source ring base physical address
- * @param ce_sr_ring_size - copy engine source ring size
- * @param ce_reg_paddr - copy engine register physical address
- * @param tx_comp_ring_base_paddr - tx comp ring base physical address
- * @param tx_comp_ring_size - tx comp ring size
- * @param tx_num_alloc_buffer - number of allocated tx buffer
- * @param rx_rdy_ring_base_paddr - rx ready ring base physical address
- * @param rx_rdy_ring_size - rx ready ring size
- * @param rx_proc_done_idx_paddr - rx process done index physical address
- */
 int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			uint32_t *ce_sr_base_paddr,
+			cdf_dma_addr_t *ce_sr_base_paddr,
 			uint32_t *ce_sr_ring_size,
 			cdf_dma_addr_t *ce_reg_paddr,
-			uint32_t *tx_comp_ring_base_paddr,
+			cdf_dma_addr_t *tx_comp_ring_base_paddr,
 			uint32_t *tx_comp_ring_size,
 			uint32_t *tx_num_alloc_buffer,
-			uint32_t *rx_rdy_ring_base_paddr,
+			cdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			uint32_t *rx_rdy_ring_size,
-			uint32_t *rx_proc_done_idx_paddr);
+			cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			void **rx_proc_done_idx_vaddr,
+			cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			uint32_t *rx2_rdy_ring_size,
+			cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			void **rx2_proc_done_idx_vaddr);
 
-/**
- * @brief Client set IPA UC doorbell register
- * @details
- *  IPA UC let know doorbell register physical address
- *  WLAN firmware will use this physical address to notify IPA UC
- *
- * @param pdev - handle to the HTT instance
- * @param ipa_uc_tx_doorbell_paddr - tx comp doorbell physical address
- * @param ipa_uc_rx_doorbell_paddr - rx ready doorbell physical address
- */
 int
 htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
-			      uint32_t ipa_uc_tx_doorbell_paddr,
-			      uint32_t ipa_uc_rx_doorbell_paddr);
+			      cdf_dma_addr_t ipa_uc_tx_doorbell_paddr,
+			      cdf_dma_addr_t ipa_uc_rx_doorbell_paddr);
 
-/**
- * @brief Client notify IPA UC data path active or not
- *
- * @param pdev - handle to the HTT instance
- * @param uc_active - UC data path is active or not
- * @param is_tx - UC TX is active or not
- */
 int
 htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev, bool uc_active, bool is_tx);
 
-/**
- * @brief query uc data path stats
- *
- * @param pdev - handle to the HTT instance
- */
 int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev);
 
-/**
- * @brief Attach IPA UC data path
- *
- * @param pdev - handle to the HTT instance
- */
 int htt_ipa_uc_attach(struct htt_pdev_t *pdev);
 
-/**
- * @brief detach IPA UC data path
- *
- * @param pdev - handle to the HTT instance
- */
 void htt_ipa_uc_detach(struct htt_pdev_t *pdev);
 #else
+/**
+ * htt_h2t_ipa_uc_rsc_cfg_msg() - Send WDI IPA config message to firmware
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ */
 static inline int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 {
 	return 0;
 }
 
+/**
+ * htt_ipa_uc_get_resource() - Get uc resource from htt and lower layer
+ * @pdev: handle to the HTT instance
+ * @ce_sr_base_paddr: copy engine source ring base physical address
+ * @ce_sr_ring_size: copy engine source ring size
+ * @ce_reg_paddr: copy engine register physical address
+ * @tx_comp_ring_base_paddr: tx comp ring base physical address
+ * @tx_comp_ring_size: tx comp ring size
+ * @tx_num_alloc_buffer: number of allocated tx buffer
+ * @rx_rdy_ring_base_paddr: rx ready ring base physical address
+ * @rx_rdy_ring_size: rx ready ring size
+ * @rx_proc_done_idx_paddr: rx process done index physical address
+ * @rx_proc_done_idx_vaddr: rx process done index virtual address
+ * @rx2_rdy_ring_base_paddr: rx done ring base physical address
+ * @rx2_rdy_ring_size: rx done ring size
+ * @rx2_proc_done_idx_paddr: rx done index physical address
+ * @rx2_proc_done_idx_vaddr: rx done index virtual address
+ *
+ * Return: 0 success
+ */
 static inline int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			uint32_t *ce_sr_base_paddr,
+			cdf_dma_addr_t *ce_sr_base_paddr,
 			uint32_t *ce_sr_ring_size,
 			cdf_dma_addr_t *ce_reg_paddr,
-			uint32_t *tx_comp_ring_base_paddr,
+			cdf_dma_addr_t *tx_comp_ring_base_paddr,
 			uint32_t *tx_comp_ring_size,
 			uint32_t *tx_num_alloc_buffer,
-			uint32_t *rx_rdy_ring_base_paddr,
+			cdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			uint32_t *rx_rdy_ring_size,
-			uint32_t *rx_proc_done_idx_paddr)
+			cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			void **rx_proc_done_idx_vaddr,
+			cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			uint32_t *rx2_rdy_ring_size,
+			cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			void **rx2_proc_done_idx_vaddr)
 {
 	return 0;
 }
 
+/**
+ * htt_ipa_uc_set_doorbell_paddr() - Propagate IPA doorbell address
+ * @pdev: handle to the HTT instance
+ * @ipa_uc_tx_doorbell_paddr: TX doorbell base physical address
+ * @ipa_uc_rx_doorbell_paddr: RX doorbell base physical address
+ *
+ * Return: 0 success
+ */
 static inline int
 htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
 			      uint32_t ipa_uc_tx_doorbell_paddr,
@@ -327,6 +314,14 @@ htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
 	return 0;
 }
 
+/**
+ * htt_h2t_ipa_uc_set_active() - Propagate WDI path enable/disable to firmware
+ * @pdev: handle to the HTT instance
+ * @uc_active: WDI UC path enable or not
+ * @is_tx: TX path or RX path
+ *
+ * Return: 0 success
+ */
 static inline int
 htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev, bool uc_active,
 	bool is_tx)
@@ -334,16 +329,34 @@ htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev, bool uc_active,
 	return 0;
 }
 
+/**
+ * htt_h2t_ipa_uc_get_stats() - WDI UC state query request to firmware
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ */
 static inline int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 {
 	return 0;
 }
 
+/**
+ * htt_ipa_uc_attach() - Allocate UC data path resources
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ */
 static inline int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
 {
 	return 0;
 }
 
+/**
+ * htt_ipa_uc_attach() - Remove UC data path resources
+ * @pdev: handle to the HTT instance
+ *
+ * Return: 0 success
+ */
 static inline void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
 	return;

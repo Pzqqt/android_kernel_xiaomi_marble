@@ -2585,17 +2585,46 @@ inline void ol_txrx_flow_control_cb(ol_txrx_vdev_handle vdev,
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 #ifdef IPA_OFFLOAD
+/**
+ * ol_txrx_ipa_uc_get_resource() - Client request resource information
+ * @pdev: handle to the HTT instance
+ * @ce_sr_base_paddr: copy engine source ring base physical address
+ * @ce_sr_ring_size: copy engine source ring size
+ * @ce_reg_paddr: copy engine register physical address
+ * @tx_comp_ring_base_paddr: tx comp ring base physical address
+ * @tx_comp_ring_size: tx comp ring size
+ * @tx_num_alloc_buffer: number of allocated tx buffer
+ * @rx_rdy_ring_base_paddr: rx ready ring base physical address
+ * @rx_rdy_ring_size: rx ready ring size
+ * @rx_proc_done_idx_paddr: rx process done index physical address
+ * @rx_proc_done_idx_vaddr: rx process done index virtual address
+ * @rx2_rdy_ring_base_paddr: rx done ring base physical address
+ * @rx2_rdy_ring_size: rx done ring size
+ * @rx2_proc_done_idx_paddr: rx done index physical address
+ * @rx2_proc_done_idx_vaddr: rx done index virtual address
+ *
+ *  OL client will reuqest IPA UC related resource information
+ *  Resource information will be distributted to IPA module
+ *  All of the required resources should be pre-allocated
+ *
+ * Return: none
+ */
 void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    uint32_t *ce_sr_base_paddr,
+			    cdf_dma_addr_t *ce_sr_base_paddr,
 			    uint32_t *ce_sr_ring_size,
 			    cdf_dma_addr_t *ce_reg_paddr,
-			    uint32_t *tx_comp_ring_base_paddr,
+			    cdf_dma_addr_t *tx_comp_ring_base_paddr,
 			    uint32_t *tx_comp_ring_size,
 			    uint32_t *tx_num_alloc_buffer,
-			    uint32_t *rx_rdy_ring_base_paddr,
+			    cdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			    uint32_t *rx_rdy_ring_size,
-			    uint32_t *rx_proc_done_idx_paddr)
+			    cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			    void **rx_proc_done_idx_vaddr,
+			    cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			    uint32_t *rx2_rdy_ring_size,
+			    cdf_dma_addr_t *rx2_proc_done_idx2_paddr,
+			    void **rx2_proc_done_idx2_vaddr)
 {
 	htt_ipa_uc_get_resource(pdev->htt_pdev,
 				ce_sr_base_paddr,
@@ -2605,19 +2634,45 @@ ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
 				tx_comp_ring_size,
 				tx_num_alloc_buffer,
 				rx_rdy_ring_base_paddr,
-				rx_rdy_ring_size, rx_proc_done_idx_paddr);
+				rx_rdy_ring_size, rx_proc_done_idx_paddr,
+				rx_proc_done_idx_vaddr,
+				rx2_rdy_ring_base_paddr,
+				rx2_rdy_ring_size, rx2_proc_done_idx2_paddr,
+				rx2_proc_done_idx2_vaddr);
 }
 
+/**
+ * ol_txrx_ipa_uc_set_doorbell_paddr() - Client set IPA UC doorbell register
+ * @pdev: handle to the HTT instance
+ * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
+ * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
+ *
+ *  IPA UC let know doorbell register physical address
+ *  WLAN firmware will use this physical address to notify IPA UC
+ *
+ * Return: none
+ */
 void
 ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  uint32_t ipa_tx_uc_doorbell_paddr,
-				  uint32_t ipa_rx_uc_doorbell_paddr)
+				  cdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+				  cdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
 	htt_ipa_uc_set_doorbell_paddr(pdev->htt_pdev,
 				      ipa_tx_uc_doorbell_paddr,
 				      ipa_rx_uc_doorbell_paddr);
 }
 
+/**
+ * ol_txrx_ipa_uc_set_active() - Client notify IPA UC data path active or not
+ * @pdev: handle to the HTT instance
+ * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
+ * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
+ *
+ *  IPA UC let know doorbell register physical address
+ *  WLAN firmware will use this physical address to notify IPA UC
+ *
+ * Return: none
+ */
 void
 ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev, bool uc_active, bool is_tx)
 {
@@ -2651,7 +2706,13 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 			      "%s: ipa_uc_op_cb NULL", __func__);
 }
 
-
+/**
+ * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
+ * @pdev: handle to the HTT instance
+ * @op_msg: op response message from firmware
+ *
+ * Return: none
+ */
 void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 {
 	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
@@ -2674,6 +2735,14 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 	cds_indicate_rxpkt(sched_ctx, pkt);
 }
 
+/**
+ * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
+ * @pdev: handle to the HTT instance
+ * @op_cb: handler function pointer
+ * @osif_dev: register client context
+ *
+ * Return: none
+ */
 void ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
 				   ipa_uc_op_cb_type op_cb, void *osif_dev)
 {
@@ -2681,6 +2750,12 @@ void ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
 	pdev->osif_dev = osif_dev;
 }
 
+/**
+ * ol_txrx_ipa_uc_get_stat() - Get firmware wdi status
+ * @pdev: handle to the HTT instance
+ *
+ * Return: none
+ */
 void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev)
 {
 	htt_h2t_ipa_uc_get_stats(pdev->htt_pdev);

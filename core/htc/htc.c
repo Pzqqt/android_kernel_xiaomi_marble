@@ -801,8 +801,17 @@ void htc_cancel_deferred_target_sleep(void *context)
 }
 
 #ifdef IPA_OFFLOAD
+/**
+ * htc_ipa_get_ce_resource() - get uc resource on lower layer
+ * @htc_handle: htc context
+ * @ce_sr_base_paddr: copyengine source ring base physical address
+ * @ce_sr_ring_size: copyengine source ring size
+ * @ce_reg_paddr: copyengine register physical address
+ *
+ * Return: None
+ */
 void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
-			     uint32_t *ce_sr_base_paddr,
+			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr)
 {

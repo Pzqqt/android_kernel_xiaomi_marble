@@ -535,18 +535,26 @@ void hif_enable_fastpath(struct ol_softc *hif_dev);
 #endif
 
 #ifdef IPA_OFFLOAD
-/*
- * IPA micro controller data path offload feature enabled,
- * HIF should release copy engine related resource information to IPA UC
- * IPA UC will access hardware resource with released information
- */
 void hif_ipa_get_ce_resource(struct ol_softc *scn,
-			     uint32_t *ce_sr_base_paddr,
+			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr);
 #else
+/**
+ * hif_ipa_get_ce_resource() - get uc resource on hif
+ * @scn: bus context
+ * @ce_sr_base_paddr: copyengine source ring base physical address
+ * @ce_sr_ring_size: copyengine source ring size
+ * @ce_reg_paddr: copyengine register physical address
+ *
+ * IPA micro controller data path offload feature enabled,
+ * HIF should release copy engine related resource information to IPA UC
+ * IPA UC will access hardware resource with released information
+ *
+ * Return: None
+ */
 static inline void hif_ipa_get_ce_resource(struct ol_softc *scn,
-			     uint32_t *ce_sr_base_paddr,
+			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr)
 {

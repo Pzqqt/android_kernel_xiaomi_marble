@@ -137,8 +137,17 @@ struct htt_ipa_uc_tx_resource_t {
 	uint32_t alloc_tx_buf_cnt;
 };
 
-/* Micro controller datapath offload
- * WLAN RX resources */
+/**
+ * struct htt_ipa_uc_rx_resource_t
+ * @rx_rdy_idx_paddr: rx ready index physical address
+ * @rx_ind_ring_base: rx indication ring base memory info
+ * @rx_ipa_prc_done_idx: rx process done index memory info
+ * @rx_ind_ring_size: rx process done ring size
+ * @rx2_rdy_idx_paddr: rx process done index physical address
+ * @rx2_ind_ring_base: rx process done indication ring base memory info
+ * @rx2_ipa_prc_done_idx: rx process done index memory info
+ * @rx2_ind_ring_size: rx process done ring size
+ */
 struct htt_ipa_uc_rx_resource_t {
 	cdf_dma_addr_t rx_rdy_idx_paddr;
 	struct uc_shared_mem_t rx_ind_ring_base;
@@ -152,10 +161,16 @@ struct htt_ipa_uc_rx_resource_t {
 	uint32_t rx2_ind_ring_size;
 };
 
+/**
+ * struct ipa_uc_rx_ring_elem_t
+ * @rx_packet_paddr: rx packet physical address
+ * @vdev_id: virtual interface id
+ * @rx_packet_leng: packet length
+ */
 struct ipa_uc_rx_ring_elem_t {
-	uint32_t rx_packet_paddr;
-	uint16_t vdev_id;
-	uint16_t rx_packet_leng;
+	cdf_dma_addr_t rx_packet_paddr;
+	uint32_t vdev_id;
+	uint32_t rx_packet_leng;
 };
 
 #if defined(HELIUMPLUS_PADDR64)
