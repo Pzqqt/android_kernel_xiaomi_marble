@@ -2723,25 +2723,25 @@ enum dot11p_mode {
 #define CFG_EARLY_STOP_SCAN_ENABLE_DEFAULT   (0)
 /*
  * Early stop scan minimum threshold is the minimum threshold
+ * to be considered for stopping the scan. The algorithm starts
+ * with a scan on the greedy channel list with the maximum threshold
+ * and steps down the threshold by 20% for each further channel.
+ * It can step down on each channel but cannot go lower than the minimum
+ * threshold.
+ */
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD           "gEarlyStopScanMinThreshold"
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN       (-80)
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX       (-70)
+#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT   (-78)
+/*
+ * Early stop scan maximum threshold is the maximum threshold
  * at which the candidate AP should be to be qualified as a
  * potential roam candidate and good enough to stop the roaming scan
  */
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD           "gEarlyStopScanMinThreshold"
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MIN       (-60)
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_MAX       (-40)
-#define CFG_EARLY_STOP_SCAN_MIN_THRESHOLD_DEFAULT   (-45)
-/*
- * Early stop scan maximum threshold is the maximum threshold
- * to be considered for stopping the scan. The algorithm starts
- * with a scan on the greedy channel list with the minimum threshold
- * and steps up the threshold by 20% for each further channel.
- * It can step up on each channel but cannot exceed the maximum
- * threshold.
- */
 #define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD           "gEarlyStopScanMaxThreshold"
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN       (-80)
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX       (-70)
-#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-78)
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN       (-60)
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX       (-40)
+#define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-45)
 
 /*---------------------------------------------------------------------------
    Type declarations
