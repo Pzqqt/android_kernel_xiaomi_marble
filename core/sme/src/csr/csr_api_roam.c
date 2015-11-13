@@ -6440,6 +6440,9 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 					FL
 					("LFR3: Copy KCK, KEK and Replay Ctr"));
 			}
+
+			roam_info.subnet_change_status =
+				CSR_GET_SUBNET_STATUS(roam_offload_params->roamReason);
 #endif
 			csr_roam_call_callback(mac_ctx, session_id, &roam_info,
 				cmd->u.roamCmd.roamId,

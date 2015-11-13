@@ -1351,6 +1351,7 @@ typedef struct tagCsrRoamInfo {
 	uint8_t kck[SIR_KCK_KEY_LEN];
 	uint8_t kek[SIR_KEK_KEY_LEN];
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
+	uint8_t subnet_change_status;
 #endif
 	tSirSmeChanInfo chan_info;
 	uint8_t target_channel;
