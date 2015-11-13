@@ -67,40 +67,6 @@
 /* Maximum number of cds message queue get wrapper failures to cause panic */
 #define CDS_WRAPPER_MAX_FAIL_COUNT (CDS_CORE_MAX_MESSAGES * 3)
 
-#ifdef IPA_OFFLOAD
-#define CDS_IPA_CE_SR_BASE_PADDR                                               \
-	(&((hdd_context_t *)(gp_cds_context->pHDDContext))->ce_sr_base_paddr)
-#define CDS_IPA_CE_RING_SIZE                                                   \
-	(&((hdd_context_t *)(gp_cds_context->pHDDContext))->ce_sr_ring_size)
-#define CDS_IPA_CE_REG_PADDR                                                   \
-	(&((hdd_context_t *)(gp_cds_context->pHDDContext))->ce_reg_paddr)
-#define CDS_IPA_TX_COMP_BASE_PADDR                                             \
-	(&((hdd_context_t *)                                                   \
-		(gp_cds_context->pHDDContext))->tx_comp_ring_base_paddr)
-#define CDS_IPA_TX_COMP_RING_SIZE                                              \
-	(&((hdd_context_t *)(gp_cds_context->pHDDContext))->tx_comp_ring_size)
-#define CDS_IPA_TX_NUM_BUFF                                                    \
-	(&((hdd_context_t *)(gp_cds_context->pHDDContext))->tx_num_alloc_buffer)
-#define CDS_IPA_RX_RDY_RING_BASE_PADDR                                         \
-	(&((hdd_context_t *)                                                   \
-		(gp_cds_context->pHDDContext))->rx_rdy_ring_base_paddr)
-#define CDS_IPA_RX_RDY_RING_SIZE                                               \
-	(&((hdd_context_t *)(gp_cds_context->pHDDContext))->rx_rdy_ring_size)
-#define CDS_IPA_RX_PROC_DONE_IDX_PADDR                                         \
-	(&((hdd_context_t *)                                                   \
-		(gp_cds_context->pHDDContext))->rx_proc_done_idx_paddr)
-#else
-#define CDS_IPA_CE_SR_BASE_PADDR       (NULL)
-#define CDS_IPA_CE_RING_SIZE           (NULL)
-#define CDS_IPA_CE_REG_PADDR           (NULL)
-#define CDS_IPA_TX_COMP_BASE_PADDR     (NULL)
-#define CDS_IPA_TX_COMP_RING_SIZE      (NULL)
-#define CDS_IPA_TX_NUM_BUFF            (NULL)
-#define CDS_IPA_RX_RDY_RING_BASE_PADDR (NULL)
-#define CDS_IPA_RX_RDY_RING_SIZE       (NULL)
-#define CDS_IPA_RX_PROC_DONE_IDX_PADDR (NULL)
-#endif /* IPA_OFFLOAD */
-
 /* Data definitions */
 static cds_context_type g_cds_context;
 static p_cds_contextType gp_cds_context;
@@ -492,17 +458,6 @@ CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize)
 		CDF_ASSERT(0);
 		goto err_sme_close;
 	}
-
-	ol_txrx_ipa_uc_get_resource(gp_cds_context->pdev_txrx_ctx,
-				CDS_IPA_CE_SR_BASE_PADDR,
-				CDS_IPA_CE_RING_SIZE,
-				CDS_IPA_CE_REG_PADDR,
-				CDS_IPA_TX_COMP_BASE_PADDR,
-				CDS_IPA_TX_COMP_RING_SIZE,
-				CDS_IPA_TX_NUM_BUFF,
-				CDS_IPA_RX_RDY_RING_BASE_PADDR,
-				CDS_IPA_RX_RDY_RING_SIZE,
-				CDS_IPA_RX_PROC_DONE_IDX_PADDR);
 
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
