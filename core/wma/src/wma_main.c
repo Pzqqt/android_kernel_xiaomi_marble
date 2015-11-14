@@ -1665,6 +1665,9 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->qdf_dev = qdf_dev;
 	wma_handle->max_scan = mac_params->max_scan;
 
+	wma_handle->wma_runtime_resume_lock =
+		qdf_runtime_lock_init("wma_runtime_resume");
+
 	/* initialize default target config */
 	wma_set_default_tgt_config(wma_handle);
 
@@ -2075,6 +2078,8 @@ err_wma_handle:
 #endif /* FEATURE_WLAN_EXTSCAN */
 		qdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
 	}
+
+	qdf_runtime_lock_deinit(wma_handle->wma_runtime_resume_lock);
 	cds_free_context(cds_context, QDF_MODULE_ID_WMA, wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
