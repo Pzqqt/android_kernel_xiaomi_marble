@@ -1028,6 +1028,10 @@ sme_process_cmd:
 		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 		csr_process_set_dual_mac_config(pMac, pCommand);
 		break;
+	case e_sme_command_set_antenna_mode:
+		csr_ll_unlock(&pMac->sme.smeCmdActiveList);
+		csr_process_set_antenna_mode(pMac, pCommand);
+		break;
 	default:
 		/* something is wrong */
 		/* remove it from the active list */
@@ -2210,6 +2214,75 @@ static QDF_STATUS sme_process_dual_mac_config_resp(tpAniSirGlobal mac,
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * sme_process_antenna_mode_resp() - Process set antenna mode
+ * response
+ * @mac: Global MAC pointer
+ * @msg: antenna mode response
+ *
+ * Processes the antenna mode response and invokes the HDD
+ * callback to process further
+ */
+static QDF_STATUS sme_process_antenna_mode_resp(tpAniSirGlobal mac,
+		uint8_t *msg)
+{
+	tListElem *entry;
+	tSmeCmd *command;
+	bool found;
+	antenna_mode_cb callback;
+	struct sir_antenna_mode_resp *param;
+
+	param = (struct sir_antenna_mode_resp *)msg;
+	if (!param) {
+		sms_log(mac, LOGE, FL("set antenna mode resp is NULL"));
+		/* Not returning. Need to check if active command list
+		 * needs to be freed
+		 */
+	}
+
+	entry = csr_ll_peek_head(&mac->sme.smeCmdActiveList,
+			LL_ACCESS_LOCK);
+	if (!entry) {
+		sms_log(mac, LOGE, FL("No cmd found in active list"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	command = GET_BASE_ADDR(entry, tSmeCmd, Link);
+	if (!command) {
+		sms_log(mac, LOGE, FL("Base address is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (e_sme_command_set_antenna_mode != command->command) {
+		sms_log(mac, LOGE, FL("Command mismatch!"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	callback =
+		command->u.set_antenna_mode_cmd.set_antenna_mode_resp;
+	if (callback) {
+		if (!param) {
+			sms_log(mac, LOGE,
+				FL("Set antenna mode call back is NULL"));
+		} else {
+			sms_log(mac, LOG1,
+				FL("HDD callback for set antenna mode"));
+			callback(param->status);
+		}
+	} else {
+		sms_log(mac, LOGE, FL("Callback does not exist"));
+	}
+
+	found = csr_ll_remove_entry(&mac->sme.smeCmdActiveList, entry,
+			LL_ACCESS_LOCK);
+	if (found)
+		/* Now put this command back on the available command list */
+		sme_release_command(mac, command);
+
+	sme_process_pending_queue(mac);
+	return QDF_STATUS_SUCCESS;
+}
+
 /*--------------------------------------------------------------------------
 
    \brief sme_process_msg() - The main message processor for SME.
@@ -2756,6 +2829,16 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		 status = sme_extended_change_channel_ind(pMac, pMsg->bodyptr);
 		 qdf_mem_free(pMsg->bodyptr);
 		 break;
+	case eWNI_SME_SET_ANTENNA_MODE_RESP:
+		if (pMsg->bodyptr) {
+			status = sme_process_antenna_mode_resp(pMac,
+					pMsg->bodyptr);
+			qdf_mem_free(pMsg->bodyptr);
+		} else {
+			sms_log(pMac, LOGE, FL("Empty message for %d"),
+					pMsg->type);
+		}
+		break;
 	default:
 
 		if ((pMsg->type >= eWNI_SME_MSG_TYPES_BEGIN)
@@ -14940,6 +15023,55 @@ QDF_STATUS sme_gateway_param_update(tHalHandle Hal,
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
+
+/**
+ * sme_soc_set_antenna_mode() - set antenna mode
+ * @hal: Handle returned by macOpen
+ * @msg: Structure containing the antenna mode parameters
+ *
+ * Send the command to CSR to send
+ * WMI_SOC_SET_ANTENNA_MODE_CMDID to FW
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_soc_set_antenna_mode(tHalHandle hal,
+				struct sir_antenna_mode_param *msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tSmeCmd *cmd;
+
+	if (NULL == msg) {
+		sms_log(mac, LOGE, FL("antenna mode mesg is NULL"));
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	status = sme_acquire_global_lock(&mac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sms_log(mac, LOGE, FL("Failed to acquire lock"));
+		return QDF_STATUS_E_RESOURCES;
+	}
+
+	cmd = sme_get_command_buffer(mac);
+	if (!cmd) {
+		sme_release_global_lock(&mac->sme);
+		sms_log(mac, LOGE, FL("Get command buffer failed"));
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	cmd->command = e_sme_command_set_antenna_mode;
+	cmd->u.set_antenna_mode_cmd = *msg;
+
+	sms_log(mac, LOG1,
+		FL("Queuing e_sme_command_set_antenna_mode to CSR: %d %d"),
+		cmd->u.set_antenna_mode_cmd.num_rx_chains,
+		cmd->u.set_antenna_mode_cmd.num_tx_chains);
+
+	csr_queue_sme_command(mac, cmd, false);
+	sme_release_global_lock(&mac->sme);
+
+	return QDF_STATUS_SUCCESS;
+}
 
 /**
  * sme_set_peer_authorized() - call peer authorized callback

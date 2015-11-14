@@ -189,6 +189,58 @@ static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
 }
 
 /**
+ * lim_process_antenna_mode_resp() - Process set antenna mode
+ * response
+ * @mac: Global MAC pointer
+ * @body: Set antenna mode response in sir_antenna_mode_resp
+ * format
+ *
+ * Process the set antenna mode response and post the message
+ * to SME to process this further and release the active
+ * command list
+ *
+ * Return: None
+ */
+static void lim_process_set_antenna_resp(tpAniSirGlobal mac, void *body)
+{
+	struct sir_antenna_mode_resp *resp, *param;
+	bool fail_resp = false;
+	tSirMsgQ msg;
+
+	resp = (struct sir_antenna_mode_resp *)body;
+	if (!resp) {
+		lim_log(mac, LOGE, FL("Set antenna mode resp is NULL"));
+		fail_resp = true;
+		/* Not returning here. If possible, let us proceed
+		 * and send fail response to SME
+		 */
+	}
+
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param) {
+		lim_log(mac, LOGE, FL("Fail to allocate memory"));
+		/* Memory allocation for param failed.
+		 * Cannot send fail status back to SME
+		 */
+		return;
+	}
+
+	if (fail_resp) {
+		lim_log(mac, LOGE, FL("Send fail status to SME"));
+		param->status = SET_ANTENNA_MODE_STATUS_ECANCELED;
+	} else {
+		param->status = resp->status;
+	}
+
+	msg.type = eWNI_SME_SET_ANTENNA_MODE_RESP;
+	msg.bodyptr = param;
+	msg.bodyval = 0;
+	lim_log(mac, LOG1, FL("Send eWNI_SME_SET_ANTENNA_MODE_RESP to SME"));
+	lim_sys_process_mmh_msg_api(mac, &msg, ePROT);
+	return;
+}
+
+/**
  * lim_process_hw_mode_trans_ind() - Process set HW mode transition indication
  * @mac: Global MAC pointer
  * @body: Set HW mode response in sir_hw_mode_trans_ind format
@@ -1491,6 +1543,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_RESET_AP_CAPS_CHANGED:
 	case eWNI_SME_SET_HW_MODE_REQ:
 	case eWNI_SME_SET_DUAL_MAC_CFG_REQ:
+	case eWNI_SME_SET_ANTENNA_MODE_REQ:
 		/* These messages are from HDD. Need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, true);
 		break;
@@ -2008,6 +2061,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_HT40_OBSS_SCAN_IND:
 		lim_process_sme_obss_scan_ind(mac_ctx, msg);
 		qdf_mem_free(msg->bodyptr);
+		break;
+	case SIR_HAL_SOC_ANTENNA_MODE_RESP:
+		lim_process_set_antenna_resp(mac_ctx, msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	default:

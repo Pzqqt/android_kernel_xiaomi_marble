@@ -18842,6 +18842,75 @@ fail:
 }
 
 /**
+ * csr_process_set_antenna_mode() - Set antenna mode command to
+ * PE
+ * @mac: Global MAC pointer
+ * @command: Command received from SME
+ *
+ * Posts the set dual mac config command to PE.
+ *
+ * Return: None
+ */
+void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command)
+{
+	uint32_t len;
+	struct sir_set_antenna_mode *cmd;
+	QDF_STATUS status;
+	tSirMsgQ msg;
+	struct sir_antenna_mode_resp *param;
+
+	/* Setting MAC configuration is for the entire system.
+	 * So, no need to check session
+	 */
+
+	if (!command) {
+		sms_log(mac, LOGE, FL("Set antenna mode param is NULL"));
+		goto fail;
+	}
+
+	len = sizeof(*cmd);
+	cmd = qdf_mem_malloc(len);
+	if (!cmd) {
+		sms_log(mac, LOGE, FL("Memory allocation failed"));
+		goto fail;
+	}
+
+	cmd->message_type = eWNI_SME_SET_ANTENNA_MODE_REQ;
+	cmd->length = len;
+	cmd->set_antenna_mode = command->u.set_antenna_mode_cmd;
+
+	sms_log(mac, LOG1,
+		FL("Posting eWNI_SME_SET_ANTENNA_MODE_REQ to PE: %d %d"),
+		cmd->set_antenna_mode.num_rx_chains,
+		cmd->set_antenna_mode.num_tx_chains);
+
+	status = cds_send_mb_message_to_mac(cmd);
+	if (QDF_STATUS_SUCCESS != status) {
+		sms_log(mac, LOGE, FL("Posting to PE failed"));
+		/*
+		 * cds_send_mb_message_to_mac would've released the mem
+		 * allocated by cmd.
+		 */
+		goto fail;
+	}
+
+	return;
+fail:
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param) {
+		sms_log(mac, LOGE,
+			FL("Malloc fail: Fail to send response to SME"));
+		return;
+	}
+	sms_log(mac, LOGE, FL("Sending set dual mac fail response to SME"));
+	param->status = SET_ANTENNA_MODE_STATUS_ECANCELED;
+	msg.type = eWNI_SME_SET_ANTENNA_MODE_RESP;
+	msg.bodyptr = param;
+	msg.bodyval = 0;
+	sys_process_mmh_msg(mac, &msg);
+}
+
+/**
  * csr_process_nss_update_req() - Update nss command to PE
  * @mac: Globacl MAC pointer
  * @command: Command received from SME

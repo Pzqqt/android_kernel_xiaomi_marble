@@ -267,6 +267,72 @@ fail:
 }
 
 /**
+ * lim_process_set_antenna_mode_req() - Set antenna mode command
+ * to WMA
+ * @mac: Global MAC pointer
+ * @msg: Message containing the antenna mode parameter
+ *
+ * Send the set antenna mode command to WMA
+ *
+ * Return: QDF_STATUS_SUCCESS if message posting is successful
+ */
+static QDF_STATUS lim_process_set_antenna_mode_req(tpAniSirGlobal mac,
+		uint32_t *msg)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	cds_msg_t cds_message;
+	struct sir_antenna_mode_param *req_msg;
+	struct sir_set_antenna_mode *buf;
+	tSirMsgQ resp_msg;
+	struct sir_antenna_mode_resp *param;
+
+	buf = (struct sir_set_antenna_mode *) msg;
+	if (!buf) {
+		lim_log(mac, LOGE, FL("Set antenna mode is NULL"));
+		/* To free the active command list */
+		goto fail;
+	}
+
+	req_msg = qdf_mem_malloc(sizeof(*req_msg));
+	if (!req_msg) {
+		lim_log(mac, LOGE, FL("qdf_mem_malloc failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	req_msg->num_rx_chains = buf->set_antenna_mode.num_rx_chains;
+	req_msg->num_tx_chains = buf->set_antenna_mode.num_tx_chains;
+
+	cds_message.bodyptr = req_msg;
+	cds_message.type    = SIR_HAL_SOC_ANTENNA_MODE_REQ;
+
+	lim_log(mac, LOG1,
+		FL("Post SIR_HAL_SOC_ANTENNA_MODE_REQ to WMA: %d %d"),
+		req_msg->num_rx_chains,
+		req_msg->num_tx_chains);
+	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		lim_log(mac, LOGE,
+				FL("vos_mq_post_message failed!(err=%d)"),
+				status);
+		qdf_mem_free(req_msg);
+		goto fail;
+	}
+	return status;
+fail:
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param) {
+		lim_log(mac, LOGE, FL("antenna mode resp failed"));
+		return QDF_STATUS_E_NOMEM;
+	}
+	param->status = SET_ANTENNA_MODE_STATUS_ECANCELED;
+	resp_msg.type = eWNI_SME_SET_ANTENNA_MODE_RESP;
+	resp_msg.bodyptr = param;
+	resp_msg.bodyval = 0;
+	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * __lim_fresh_scan_reqd() - determine if a fresh scan request must be issued.
  * @mac_ctx: Pointer to Global MAC structure
  * @return_fresh_results: Trigger fresh scan.
@@ -4908,6 +4974,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
 		lim_process_ext_change_channel(pMac, pMsgBuf);
+		break;
+	case eWNI_SME_SET_ANTENNA_MODE_REQ:
+		lim_process_set_antenna_mode_req(pMac, pMsgBuf);
 		break;
 	default:
 		qdf_mem_free((void *)pMsg->bodyptr);

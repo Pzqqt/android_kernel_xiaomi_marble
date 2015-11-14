@@ -5221,6 +5221,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			(struct vdev_ie_info *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case SIR_HAL_SOC_ANTENNA_MODE_REQ:
+		wma_send_pdev_set_antenna_mode(wma_handle,
+			(struct sir_antenna_mode_param *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	case WMA_LRO_CONFIG_CMD:
 		wma_lro_config_cmd(wma_handle,
 			(struct wma_lro_config_cmd_t *)msg->bodyptr);
@@ -5391,6 +5396,86 @@ QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 				__func__);
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_send_pdev_set_antenna_mode() - Set antenna mode to FW
+ * @wma_handle: WMA handle
+ * @msg: Antenna mode parameters
+ *
+ * Send WMI_PDEV_SET_ANTENNA_MODE_CMDID to FW requesting to
+ * modify the number of TX/RX chains from host
+ *
+ * Return: QDF_STATUS. 0 on success.
+ */
+QDF_STATUS wma_send_pdev_set_antenna_mode(tp_wma_handle wma_handle,
+		struct sir_antenna_mode_param *msg)
+{
+	wmi_pdev_set_antenna_mode_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint32_t len;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct sir_antenna_mode_resp *param;
+
+	if (!wma_handle) {
+		WMA_LOGE("%s: WMA handle is NULL. Cannot issue command",
+				__func__);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	if (!msg) {
+		WMA_LOGE("%s: Set antenna mode param is NULL", __func__);
+		return QDF_STATUS_E_NULL_VALUE;
+	}
+
+	len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		status = QDF_STATUS_E_NOMEM;
+		goto resp;
+	}
+
+	cmd = (wmi_pdev_set_antenna_mode_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_pdev_set_antenna_mode_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_pdev_set_antenna_mode_cmd_fixed_param));
+
+	cmd->pdev_id = WMI_PDEV_ID_SOC;
+	/* Bits 0-15 is num of RX chains 16-31 is num of TX chains */
+	cmd->num_txrx_chains = msg->num_rx_chains;
+	cmd->num_txrx_chains |= (msg->num_tx_chains << 16);
+
+	WMA_LOGI("%s: Num of chains TX: %d RX: %d txrx_chains: 0x%x",
+		 __func__, msg->num_tx_chains,
+		 msg->num_rx_chains, cmd->num_txrx_chains);
+
+	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				 WMI_PDEV_SET_ANTENNA_MODE_CMDID)) {
+		WMA_LOGE("%s: Failed to send WMI_PDEV_SET_ANTENNA_MODE_CMDID",
+				__func__);
+		wmi_buf_free(buf);
+		status = QDF_STATUS_E_FAILURE;
+		goto resp;
+	}
+	status = QDF_STATUS_SUCCESS;
+
+resp:
+	param = qdf_mem_malloc(sizeof(*param));
+	if (!param) {
+		WMA_LOGE("%s: Memory allocation failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	param->status = (status) ?
+		SET_ANTENNA_MODE_STATUS_ECANCELED :
+		SET_ANTENNA_MODE_STATUS_OK;
+	WMA_LOGE("%s: Send antenna mode resp to LIM status: %d",
+		 __func__, param->status);
+	wma_send_msg(wma_handle, SIR_HAL_SOC_ANTENNA_MODE_RESP,
+			(void *) param, 0);
+	return status;
 }
 
 /**
