@@ -1202,7 +1202,6 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	tpAniSirGlobal mac_ctx = PMAC_STRUCT(WLAN_HDD_GET_HAL_CTX(adapter));
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_MAX + 1];
 	struct sir_ocb_timing_advert *timing_advert;
 	int rc = -EINVAL;
@@ -1256,7 +1255,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_START_TIMING_ADVERT_REPEAT_RATE]);
 
 	timing_advert->template_length =
-		sch_gen_timing_advert_frame(mac_ctx,
+		sme_ocb_gen_timing_advert_frame(hdd_ctx->hHal,
 			*(tSirMacAddr *)&adapter->macAddressCurrent.bytes,
 			&timing_advert->template_value,
 			&timing_advert->timestamp_offset,

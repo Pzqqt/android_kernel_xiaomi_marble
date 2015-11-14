@@ -58,6 +58,7 @@
 #include "cfg_api.h"
 #include "sme_power_save_api.h"
 #include "wma.h"
+#include "sch_api.h"
 
 extern tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
@@ -10935,6 +10936,29 @@ end:
 	return status;
 }
 
+/**
+ * sme_ocb_gen_timing_advert_frame() - generate TA frame and populate the buffer
+ * @hal_handle: reference to the HAL
+ * @self_addr: the self MAC address
+ * @buf: the buffer that will contain the frame
+ * @timestamp_offset: return for the offset of the timestamp field
+ * @time_value_offset: return for the time_value field in the TA IE
+ *
+ * Return: the length of the buffer.
+ */
+int sme_ocb_gen_timing_advert_frame(tHalHandle hal_handle,
+				    tSirMacAddr self_addr, uint8_t **buf,
+				    uint32_t *timestamp_offset,
+				    uint32_t *time_value_offset)
+{
+	int template_length;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_handle);
+
+	template_length = sch_gen_timing_advert_frame(mac_ctx, self_addr, buf,
+						  timestamp_offset,
+						  time_value_offset);
+	return template_length;
+}
 /**
  * sme_ocb_get_tsf_timer() - Get the TSF timer value
  * @hHal: reference to the HAL
