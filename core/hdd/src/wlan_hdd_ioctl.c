@@ -7011,6 +7011,264 @@ static int drv_cmd_rx_filter_add(hdd_adapter_t *adapter,
 	return hdd_driver_rxfilter_comand_handler(command, adapter, true);
 }
 
+/**
+ * hdd_parse_setantennamode_command() - HDD Parse SETANTENNAMODE
+ * command
+ * @value: Pointer to SETANTENNAMODE command
+ * @mode: Pointer to antenna mode
+ * @reason: Pointer to reason for set antenna mode
+ *
+ * This function parses the SETANTENNAMODE command passed in the format
+ * SETANTENNAMODE<space>mode
+ *
+ * Return: 0 for success non-zero for failure
+ */
+static int hdd_parse_setantennamode_command(const uint8_t *value)
+{
+	const uint8_t *in_ptr = value;
+	int tmp, v;
+	char arg1[32];
+
+	in_ptr = strnchr(value, strlen(value), SPACE_ASCII_VALUE);
+
+	/* no argument after the command */
+	if (NULL == in_ptr) {
+		hddLog(LOGE, FL("No argument after the command"));
+		return -EINVAL;
+	}
+
+	/* no space after the command */
+	if (SPACE_ASCII_VALUE != *in_ptr) {
+		hddLog(LOGE, FL("No space after the command"));
+		return -EINVAL;
+	}
+
+	/* remove empty spaces */
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
+
+	/* no argument followed by spaces */
+	if ('\0' == *in_ptr) {
+		hddLog(LOGE, FL("No argument followed by spaces"));
+		return -EINVAL;
+	}
+
+	/* get the argument i.e. antenna mode */
+	v = sscanf(in_ptr, "%31s ", arg1);
+	if (1 != v) {
+		hddLog(LOGE, FL("argument retrieval from cmd string failed"));
+		return -EINVAL;
+	}
+
+	v = kstrtos32(arg1, 10, &tmp);
+	if (v < 0) {
+		hddLog(LOGE, FL("argument string to int conversion failed"));
+		return -EINVAL;
+	}
+
+	return tmp;
+}
+
+/**
+ * hdd_is_supported_chain_mask_2x2() - Verify if supported chain
+ * mask is 2x2 mode
+ * @hdd_ctx: Pointer to hdd contex
+ *
+ * Return: true if supported chain mask 2x2 else false
+ */
+static bool hdd_is_supported_chain_mask_2x2(hdd_context_t *hdd_ctx)
+{
+	/*
+	 * Revisit and the update logic to determine the number
+	 * of TX/RX chains supported in the system when
+	 * antenna sharing per band chain mask support is
+	 * brought in
+	 */
+	return (hdd_ctx->config->enable2x2 == 0x01) ? true : false;
+}
+
+/**
+ * hdd_is_supported_chain_mask_1x1() - Verify if the supported
+ * chain mask is 1x1
+ * @hdd_ctx: Pointer to hdd contex
+ *
+ * Return: true if supported chain mask 1x1 else false
+ */
+static bool hdd_is_supported_chain_mask_1x1(hdd_context_t *hdd_ctx)
+{
+	/*
+	 * Revisit and update the logic to determine the number
+	 * of TX/RX chains supported in the system when
+	 * antenna sharing per band chain mask support is
+	 * brought in
+	 */
+	return (!hdd_ctx->config->enable2x2) ? true : false;
+}
+
+/**
+ * drv_cmd_set_antenna_mode() - SET ANTENNA MODE driver command
+ * handler
+ * @adapter: Pointer to network adapter
+ * @hdd_ctx: Pointer to hdd context
+ * @command: Pointer to input command
+ * @command_len: Command length
+ * @priv_data: Pointer to private data in command
+ */
+static int drv_cmd_set_antenna_mode(hdd_adapter_t *adapter,
+				hdd_context_t *hdd_ctx,
+				uint8_t *command,
+				uint8_t command_len,
+				hdd_priv_data_t *priv_data)
+{
+	struct sir_antenna_mode_param params;
+	QDF_STATUS status;
+	int ret = 0;
+	int mode;
+	uint8_t *value = command;
+	uint8_t smps_mode;
+	uint8_t smps_enable;
+
+	if (((1 << QDF_STA_MODE) != hdd_ctx->concurrency_mode) ||
+	    (hdd_ctx->no_of_active_sessions[QDF_STA_MODE] > 1)) {
+		hdd_err("Operation invalid in non sta or concurrent mode");
+		ret = -EPERM;
+		goto exit;
+	}
+
+	mode = hdd_parse_setantennamode_command(value);
+	if (mode < 0) {
+		hdd_err("Invalid SETANTENNA command");
+		ret = mode;
+		goto exit;
+	}
+
+	hdd_info("Processing antenna mode switch to: %d", mode);
+
+	if (hdd_ctx->current_antenna_mode == mode) {
+		hdd_err("System already in the requested mode");
+		ret = 0;
+		goto exit;
+	}
+
+	if ((HDD_ANTENNA_MODE_2X2 == mode) &&
+	    (!hdd_is_supported_chain_mask_2x2(hdd_ctx))) {
+		hdd_err("System does not support 2x2 mode");
+		ret = -EPERM;
+		goto exit;
+	}
+
+	if ((HDD_ANTENNA_MODE_1X1 == mode) &&
+	    hdd_is_supported_chain_mask_1x1(hdd_ctx)) {
+		hdd_err("System only supports 1x1 mode");
+		ret = 0;
+		goto exit;
+	}
+
+	switch (mode) {
+	case HDD_ANTENNA_MODE_1X1:
+		params.num_rx_chains = 1;
+		params.num_tx_chains = 1;
+		break;
+	case HDD_ANTENNA_MODE_2X2:
+		params.num_rx_chains = 2;
+		params.num_tx_chains = 2;
+		break;
+	default:
+		hdd_err("unsupported antenna mode");
+		ret = -EINVAL;
+		goto exit;
+	}
+
+	params.set_antenna_mode_resp =
+	    (void *)wlan_hdd_soc_set_antenna_mode_cb;
+	hdd_info("Set antenna mode rx chains: %d tx chains: %d",
+		 params.num_rx_chains,
+		 params.num_tx_chains);
+
+
+	INIT_COMPLETION(hdd_ctx->set_antenna_mode_cmpl);
+	status = sme_soc_set_antenna_mode(hdd_ctx->hHal, &params);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("set antenna mode failed status : %d", status);
+		ret = -EFAULT;
+		goto exit;
+	}
+
+	ret = wait_for_completion_timeout(
+		&hdd_ctx->set_antenna_mode_cmpl,
+		msecs_to_jiffies(WLAN_WAIT_TIME_ANTENNA_MODE_REQ));
+	if (!ret) {
+		ret = -EFAULT;
+		hdd_err("send set antenna mode timed out");
+		goto exit;
+	}
+
+	/* Update SME SMPS config */
+	if (HDD_ANTENNA_MODE_1X1 == mode) {
+		smps_enable = true;
+		smps_mode = HDD_SMPS_MODE_STATIC;
+	} else {
+		smps_enable = false;
+		smps_mode = HDD_SMPS_MODE_DISABLED;
+	}
+
+	hdd_info("Update SME SMPS enable: %d mode: %d",
+		 smps_enable, smps_mode);
+	status = sme_update_mimo_power_save(
+		hdd_ctx->hHal, smps_enable, smps_mode, false);
+	if (QDF_STATUS_SUCCESS != status) {
+		hdd_err("Update SMPS config failed enable: %d mode: %d status: %d",
+			smps_enable, smps_mode, status);
+		ret = -EFAULT;
+		goto exit;
+	}
+
+	hdd_info("Successfully switched to mode: %d x %d", mode, mode);
+	ret = 0;
+	hdd_ctx->current_antenna_mode = mode;
+
+exit:
+	hdd_info("Set antenna status: %d current mode: %d",
+		 ret, hdd_ctx->current_antenna_mode);
+	return ret;
+
+}
+
+/**
+ * drv_cmd_get_antenna_mode() - GET ANTENNA MODE driver command
+ * handler
+ * @adapter: Pointer to hdd adapter
+ * @hdd_ctx: Pointer to hdd context
+ * @command: Pointer to input command
+ * @command_len: length of the command
+ * @priv_data: private data coming with the driver command
+ *
+ * Return: 0 for success non-zero for failure
+ */
+static inline int drv_cmd_get_antenna_mode(hdd_adapter_t *adapter,
+					   hdd_context_t *hdd_ctx,
+					   uint8_t *command,
+					   uint8_t command_len,
+					   hdd_priv_data_t *priv_data)
+{
+	uint32_t antenna_mode = 0;
+	char extra[32];
+	uint8_t len = 0;
+
+	antenna_mode = hdd_ctx->current_antenna_mode;
+	len = scnprintf(extra, sizeof(extra), "%s %d", command,
+			antenna_mode);
+	len = QDF_MIN(priv_data->total_len, len + 1);
+	if (copy_to_user(priv_data->buf, &extra, len)) {
+		hdd_err("Failed to copy data to user buffer");
+		return -EFAULT;
+	}
+
+	hdd_info("Get antenna mode: %d", antenna_mode);
+
+	return 0;
+}
+
 /*
  * dummy (no-op) hdd driver command handler
  */
@@ -7323,6 +7581,8 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"RXFILTER-ADD",              drv_cmd_rx_filter_add},
 	{"SET_FCC_CHANNEL",           drv_cmd_set_fcc_channel},
 	{"CHANNEL_SWITCH",            drv_cmd_set_channel_switch},
+	{"SETANTENNAMODE",            drv_cmd_set_antenna_mode},
+	{"GETANTENNAMODE",            drv_cmd_get_antenna_mode},
 };
 
 /**

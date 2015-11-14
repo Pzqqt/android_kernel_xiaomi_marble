@@ -1328,6 +1328,13 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->fine_time_meas_cap_target = cfg->fine_time_measurement_cap;
 	hdd_info(FL("fine_time_meas_cap: 0x%x"),
 		hdd_ctx->config->fine_time_meas_cap);
+
+	hdd_ctx->current_antenna_mode =
+		(hdd_ctx->config->enable2x2 == 0x01) ?
+		HDD_ANTENNA_MODE_2X2 : HDD_ANTENNA_MODE_1X1;
+	hdd_info("Init current antenna mode: %d",
+		 hdd_ctx->current_antenna_mode);
+
 }
 
 /**
