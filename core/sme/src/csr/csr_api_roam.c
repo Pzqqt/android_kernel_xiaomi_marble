@@ -18602,6 +18602,7 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 	uint8_t j = 0, idx = 0, class = 0;
 	bool found = false;
 	uint8_t num_channels = channel_info->numChannels;
+	uint8_t ch_bandwidth;
 
 	sms_log(mac_ctx, LOG1,
 		FL("Num of %s channels,  %d"),
@@ -18609,23 +18610,28 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 
 	for (idx = 0; idx < num_channels
 		&& *i < (SIR_MAC_MAX_SUPP_OPER_CLASSES - 1); idx++) {
-		class = cds_regdm_get_opclass_from_channel(
-				mac_ctx->scan.countryCodeCurrent,
-				channel_info->channelList[idx],
-				BWALL);
-		sms_log(mac_ctx, LOG4, FL("for chan %d, op class: %d"),
-			channel_info->channelList[idx], class);
+		for (ch_bandwidth = BW20; ch_bandwidth < BWALL;
+			ch_bandwidth++) {
+			class = cds_regdm_get_opclass_from_channel(
+					mac_ctx->scan.countryCodeCurrent,
+					channel_info->channelList[idx],
+					ch_bandwidth);
+			sms_log(mac_ctx, LOG4, FL("for chan %d, op class: %d"),
+				channel_info->channelList[idx], class);
 
-		found = false;
-		for (j = 0; j < SIR_MAC_MAX_SUPP_OPER_CLASSES - 1; j++) {
-			if (op_classes[j] == class) {
-				found = true;
-				break;
+			found = false;
+			for (j = 0; j < SIR_MAC_MAX_SUPP_OPER_CLASSES - 1;
+				j++) {
+				if (op_classes[j] == class) {
+					found = true;
+					break;
+				}
 			}
-		}
-		if (!found) {
-			op_classes[*i] = class;
-			*i = *i + 1;
+
+			if (!found) {
+				op_classes[*i] = class;
+				*i = *i + 1;
+			}
 		}
 	}
 }

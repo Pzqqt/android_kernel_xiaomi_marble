@@ -109,6 +109,7 @@ typedef struct sSirProbeRespBeacon {
 	tDot11fIEChanSwitchAnn channelSwitchIE;
 	tDot11fIEsec_chan_offset_ele sec_chan_offset;
 	tDot11fIEext_chan_switch_ann ext_chan_switch;
+	tDot11fIESuppOperatingClasses supp_operating_classes;
 	tSirMacAddr bssid;
 	tDot11fIEQuiet quietIE;
 	tDot11fIEHTCaps HTCaps;
@@ -124,6 +125,7 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t ssidPresent;
 	uint8_t suppRatesPresent;
 	uint8_t extendedRatesPresent;
+	uint8_t supp_operating_class_present;
 	uint8_t cfPresent;
 	uint8_t dsParamsPresent;
 	uint8_t timPresent;
@@ -961,5 +963,7 @@ populate_dot11f_avoid_channel_ie(tpAniSirGlobal mac_ctx,
 
 tSirRetStatus populate_dot11f_timing_advert_frame(tpAniSirGlobal pMac,
 	tDot11fTimingAdvertisementFrame *frame);
+void populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
+	tDot11fIESuppOperatingClasses *dot_11_ptr, tpPESession session_entry);
 
 #endif /* __PARSE_H__ */

@@ -293,6 +293,8 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 				&bcn_2->ext_chan_switch_ann,
 				session);
 
+	populate_dot11_supp_operating_classes(mac_ctx,
+		&bcn_2->SuppOperatingClasses, session);
 	populate_dot11f_country(mac_ctx, &bcn_2->Country, session);
 	if (bcn_1->Capabilities.qos)
 		populate_dot11f_edca_param_set(mac_ctx, &bcn_2->EDCAParamSet,
@@ -580,6 +582,15 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal pMac,
 		cdf_mem_copy((void *)&prb_rsp->ext_chan_switch_ann,
 			(void *)&beacon2->ext_chan_switch_ann,
 			sizeof(beacon2->ext_chan_switch_ann));
+	}
+
+	/* Supported operating class */
+	if (beacon2->SuppOperatingClasses.present) {
+		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
+					SIR_MAC_OPERATING_CLASS_EID);
+		cdf_mem_copy((void *)&prb_rsp->SuppOperatingClasses,
+				(void *)&beacon2->SuppOperatingClasses,
+				sizeof(beacon2->SuppOperatingClasses));
 	}
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
