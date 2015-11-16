@@ -136,7 +136,6 @@
 #endif
 
 #define HDD_CHANNEL_14 14
-#define CONNECTION_UPDATE_TIMEOUT 500
 
 static const u32 hdd_cipher_suites[] = {
 	WLAN_CIPHER_SUITE_WEP40,
@@ -4133,17 +4132,10 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	enum cds_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	uint32_t channel_hint;
-	p_cds_contextType p_cds_context;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
-
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		hdd_err("Invalid CDS context");
-		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_MAX,
 		      data, data_len, NULL)) {
@@ -4180,8 +4172,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	}
 
 	if (hdd_ctx->config->policy_manager_enabled) {
-		ret = cdf_event_reset(
-				&p_cds_context->connection_update_done_evt);
+		ret = cdf_reset_connection_update();
 		if (!CDF_IS_STATUS_SUCCESS(ret))
 			hdd_err("clearing event failed");
 
@@ -4201,9 +4192,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 			 * For any other return value it should be a pass
 			 * through
 			 */
-			ret = cdf_wait_single_event(
-				&p_cds_context->connection_update_done_evt,
-				CONNECTION_UPDATE_TIMEOUT);
+			ret = cdf_wait_for_connection_update();
 			if (!CDF_IS_STATUS_SUCCESS(ret)) {
 				hdd_err("ERROR: cdf wait for event failed!!");
 				return -EINVAL;
@@ -8745,15 +8734,8 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct cdf_mac_addr bssid;
 	u8 channelNum = 0;
-	p_cds_contextType p_cds_context;
 
 	ENTER();
-
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		hdd_err("Invalid CDS context");
-		return -EINVAL;
-	}
 
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
@@ -8823,8 +8805,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return -ECONNREFUSED;
 	}
 	if (pHddCtx->config->policy_manager_enabled) {
-		status = cdf_event_reset(
-				&p_cds_context->connection_update_done_evt);
+		status = cdf_reset_connection_update();
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			hdd_err("ERR: clear event failed");
 
@@ -8837,9 +8818,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		}
 
 		if (CDF_STATUS_SUCCESS == status) {
-			status = cdf_wait_single_event(
-				    &p_cds_context->connection_update_done_evt,
-				    CONNECTION_UPDATE_TIMEOUT);
+			status = cdf_wait_for_connection_update();
 			if (!CDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("ERROR: cdf wait for event failed!!");
 				return -EINVAL;
