@@ -2591,16 +2591,8 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		goto sendDisassoc;
 	} /* end switch (pMac->lim.gLimSystemRole) */
 
-	if (smeDisassocReq.reasonCode == eLIM_LINK_MONITORING_DISASSOC) {
-		/* / Disassociation is triggered by Link Monitoring */
-		lim_log(pMac, LOG1,
-			FL("Sending Disasscoc with reason Link Monitoring"));
-		disassocTrigger = eLIM_LINK_MONITORING_DISASSOC;
-		reasonCode = eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
-	} else {
-		disassocTrigger = eLIM_HOST_DISASSOC;
-		reasonCode = smeDisassocReq.reasonCode;
-	}
+	disassocTrigger = eLIM_HOST_DISASSOC;
+	reasonCode = smeDisassocReq.reasonCode;
 
 	if (smeDisassocReq.doNotSendOverTheAir) {
 		lim_log(pMac, LOG1, FL("do not send dissoc over the air"));

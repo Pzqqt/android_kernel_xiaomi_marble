@@ -127,6 +127,9 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 			cdf_mem_free(msg);
 			return;
 		} else {
+			lim_send_disassoc_mgmt_frame(mac_ctx,
+				eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON,
+				stads->staAddr, session_entry, false);
 			lim_trigger_sta_deletion(mac_ctx, stads, session_entry);
 		}
 	} else {
@@ -252,101 +255,51 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 }
 
 /**
- * lim_trigger_sta_deletion()
+ * lim_trigger_sta_deletion() -
+ *          This function is called to trigger STA context deletion.
  *
- ***FUNCTION:
- * This function is called to trigger STA context deletion
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- * NA
- *
- * @param  pMac   - Pointer to global MAC structure
- * @param  pStaDs - Pointer to internal STA Datastructure
+ * @param  mac_ctx   - Pointer to global MAC structure
+ * @param  sta_ds - Pointer to internal STA Datastructure
+ * @session_entry: PE session entry
+
  * @return None
  */
 void
-lim_trigger_sta_deletion(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
-			 tpPESession psessionEntry)
+lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
+			 tpPESession session_entry)
 {
-	tSirSmeDeauthReq *pSmeDeauthReq;
-	uint8_t *pBuf;
-	uint8_t *pLen;
-	uint16_t msgLength = 0;
+	tLimMlmDisassocInd mlm_disassoc_ind;
 
-	if (!pStaDs) {
-		PELOGW(lim_log
-			       (pMac, LOGW, FL("Skip STA deletion (invalid STA)"));
-		       )
-		return;
-	}
-	/**
-	 * MAC based Authentication was used. Trigger
-	 * Deauthentication frame to peer since it will
-	 * take care of disassociation as well.
-	 */
-
-	pSmeDeauthReq = cdf_mem_malloc(sizeof(tSirSmeDeauthReq));
-	if (NULL == pSmeDeauthReq) {
-		lim_log(pMac, LOGP,
-			FL("AllocateMemory failed for eWNI_SME_DEAUTH_REQ "));
+	if (!sta_ds) {
+		lim_log(mac_ctx, LOGW, FL("Skip STA deletion (invalid STA)"));
 		return;
 	}
 
-	pBuf = (uint8_t *) &pSmeDeauthReq->messageType;
+	if ((sta_ds->mlmStaContext.mlmState == eLIM_MLM_WT_DEL_STA_RSP_STATE) ||
+		(sta_ds->mlmStaContext.mlmState ==
+			eLIM_MLM_WT_DEL_BSS_RSP_STATE)) {
+		/* Already in the process of deleting context for the peer */
+		lim_log(mac_ctx, LOGE,
+			FL("Deletion is in progress for peer:%pM"),
+			sta_ds->staAddr);
+		return;
+	}
 
-	/* messageType */
-	lim_copy_u16((uint8_t *) pBuf, eWNI_SME_DISASSOC_REQ);
-	pBuf += sizeof(uint16_t);
-	msgLength += sizeof(uint16_t);
+	sta_ds->mlmStaContext.disassocReason =
+		eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
+	sta_ds->mlmStaContext.cleanupTrigger = eLIM_LINK_MONITORING_DISASSOC;
+	cdf_mem_copy(&mlm_disassoc_ind.peerMacAddr, sta_ds->staAddr,
+		sizeof(tSirMacAddr));
+	mlm_disassoc_ind.reasonCode =
+		eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
+	mlm_disassoc_ind.disassocTrigger = eLIM_LINK_MONITORING_DISASSOC;
 
-	/* length */
-	pLen = pBuf;
-	pBuf += sizeof(uint16_t);
-	msgLength += sizeof(uint16_t);
-
-	/* sessionId */
-	*pBuf = psessionEntry->smeSessionId;
-	pBuf++;
-	msgLength++;
-
-	/* transactionId */
-	lim_copy_u16((uint8_t *) pBuf, psessionEntry->transactionId);
-	pBuf += sizeof(uint16_t);
-	msgLength += sizeof(uint16_t);
-
-	/* bssId */
-	cdf_mem_copy(pBuf, psessionEntry->bssId, sizeof(tSirMacAddr));
-	pBuf += sizeof(tSirMacAddr);
-	msgLength += sizeof(tSirMacAddr);
-
-	/* peerMacAddr */
-	cdf_mem_copy(pBuf, pStaDs->staAddr, sizeof(tSirMacAddr));
-	pBuf += sizeof(tSirMacAddr);
-	msgLength += sizeof(tSirMacAddr);
-
-	/* reasonCode */
-	lim_copy_u16((uint8_t *) pBuf, (uint16_t) eLIM_LINK_MONITORING_DISASSOC);
-	pBuf += sizeof(uint16_t);
-	msgLength += sizeof(uint16_t);
-
-	/* Do not send disassoc OTA */
-	/* pBuf[0] = 1 means do not send the disassoc frame over the air */
-	/* pBuf[0] = 0 means send the disassoc frame over the air */
-	pBuf[0] = 0;
-	pBuf += sizeof(uint8_t);
-	msgLength += sizeof(uint8_t);
-
-	/* Fill in length */
-	lim_copy_u16((uint8_t *) pLen, msgLength);
-
-	lim_post_sme_message(pMac, eWNI_SME_DISASSOC_REQ,
-			     (uint32_t *) pSmeDeauthReq);
-	cdf_mem_free(pSmeDeauthReq);
-
+	/* Update PE session Id */
+	mlm_disassoc_ind.sessionId = session_entry->peSessionId;
+	lim_post_sme_message(mac_ctx, LIM_MLM_DISASSOC_IND,
+			(uint32_t *) &mlm_disassoc_ind);
+	/* Issue Disassoc Indication to SME */
+	lim_send_sme_disassoc_ind(mac_ctx, sta_ds, session_entry);
 } /*** end lim_trigger_st_adeletion() ***/
 
 /**
