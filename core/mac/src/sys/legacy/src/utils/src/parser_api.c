@@ -275,6 +275,48 @@ populate_dot11f_chan_switch_ann(tpAniSirGlobal pMac,
 	pDot11f->present = 1;
 }
 
+/**
+ * populate_dot11_supp_operating_classes() - Function to populate supported
+ *                      operating class IE
+ * @mac_ptr:            Pointer to PMAC structure
+ * @dot_11_ptr:         Operating class element
+ * @session_entry:      PE session entry
+ *
+ * Return: None
+ */
+void
+populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
+				tDot11fIESuppOperatingClasses *dot_11_ptr,
+				tpPESession session_entry)
+{
+	uint8_t ch_bandwidth;
+
+	if (session_entry->vhtTxChannelWidthSet == eHT_CHANNEL_WIDTH_80MHZ) {
+		ch_bandwidth = BW80;
+	} else {
+		switch (session_entry->htSecondaryChannelOffset) {
+		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
+			ch_bandwidth = BW40_HIGH_PRIMARY;
+			break;
+		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+			ch_bandwidth = BW40_LOW_PRIMARY;
+			break;
+		default:
+			ch_bandwidth = BW20;
+			break;
+		}
+	}
+
+	cds_regdm_get_curr_opclasses(&dot_11_ptr->num_classes,
+					&dot_11_ptr->classes[1]);
+	dot_11_ptr->classes[0] = cds_regdm_get_opclass_from_channel(
+					mac_ptr->scan.countryCodeCurrent,
+					session_entry->currentOperChannel,
+					ch_bandwidth);
+	dot_11_ptr->num_classes++;
+	dot_11_ptr->present = 1;
+}
+
 void
 populate_dot11f_chan_switch_wrapper(tpAniSirGlobal pMac,
 				    tDot11fIEChannelSwitchWrapper *pDot11f,
@@ -2293,6 +2335,13 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 			     sizeof(tDot11fIEext_chan_switch_ann));
 	}
 
+	if (pr->SuppOperatingClasses.present) {
+		pProbeResp->supp_operating_class_present = 1;
+		cdf_mem_copy(&pProbeResp->supp_operating_classes,
+			&pr->SuppOperatingClasses,
+			sizeof(tDot11fIESuppOperatingClasses));
+	}
+
 	if (pr->sec_chan_offset_ele.present) {
 		pProbeResp->sec_chan_offset_present = 1;
 		cdf_mem_copy(&pProbeResp->sec_chan_offset,
@@ -3482,6 +3531,13 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 		cdf_mem_copy(&pBeaconStruct->channelSwitchIE,
 			     &pBies->ChanSwitchAnn,
 			     sizeof(pBeaconStruct->channelSwitchIE));
+	}
+
+	if (pBies->SuppOperatingClasses.present) {
+		pBeaconStruct->supp_operating_class_present = 1;
+		cdf_mem_copy(&pBeaconStruct->supp_operating_classes,
+			&pBies->SuppOperatingClasses,
+			sizeof(tDot11fIESuppOperatingClasses));
 	}
 
 	if (pBies->ext_chan_switch_ann.present) {
