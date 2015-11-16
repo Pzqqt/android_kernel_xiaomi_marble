@@ -45,7 +45,11 @@ endif
 # Build wlan.ko as $(WLAN_CHIPSET)_wlan.ko
 ###########################################################
 # This is set once per LOCAL_PATH, not per (kernel) module
-KBUILD_OPTIONS := WLAN_ROOT=../$(WLAN_BLD_DIR)/qcacld-new
+ifeq ($(WLAN_PROPRIETARY),1)
+	KBUILD_OPTIONS := WLAN_ROOT=../$(WLAN_BLD_DIR)/qcacld-new
+else
+	KBUILD_OPTIONS := WLAN_ROOT=../$(WLAN_BLD_DIR)/qcacld-3.0
+endif # WLAN_PROPRIETARY
 # We are actually building wlan.ko here, as per the
 # requirement we are specifying <chipset>_wlan.ko as LOCAL_MODULE.
 # This means we need to rename the module to <chipset>_wlan.ko
@@ -55,7 +59,11 @@ KBUILD_OPTIONS += BOARD_PLATFORM=$(TARGET_BOARD_PLATFORM)
 KBUILD_OPTIONS += $(WLAN_SELECT)
 
 include $(CLEAR_VARS)
-LOCAL_MODULE              := $(WLAN_CHIPSET)_wlan.ko
+ifeq ($(WLAN_PROPRIETARY),1)
+	LOCAL_MODULE              := proprietary_$(WLAN_CHIPSET)_wlan.ko
+else
+	LOCAL_MODULE              := $(WLAN_CHIPSET)_wlan.ko
+endif # WLAN_PROPRIETARY
 LOCAL_MODULE_KBUILD_NAME  := wlan.ko
 LOCAL_MODULE_TAGS         := debug
 LOCAL_MODULE_DEBUG_ENABLE := true
