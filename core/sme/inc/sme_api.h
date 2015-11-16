@@ -1053,4 +1053,7 @@ void sme_add_set_thermal_level_callback(tHalHandle hal,
 		sme_set_thermal_level_callback callback);
 
 void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg);
+bool sme_validate_sap_channel_switch(tHalHandle hal,
+		uint16_t sap_ch, eCsrPhyMode sap_phy_mode,
+		uint8_t cc_switch_mode, uint8_t session_id);
 #endif /* #if !defined( __SME_API_H ) */

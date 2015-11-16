@@ -13862,6 +13862,48 @@ CDF_STATUS sme_handle_dfs_chan_scan(tHalHandle h_hal, uint8_t dfs_flag)
 	return status;
 }
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * sme_validate_sap_channel_switch() - validate target channel switch w.r.t
+ *      concurreny rules set to avoid channel interference.
+ * @hal - Hal context
+ * @sap_ch - channel to switch
+ * @sap_phy_mode - phy mode of SAP
+ * @cc_switch_mode - concurreny switch mode
+ * @session_id - sme session id.
+ *
+ * Return: true if there is no channel interference else return false
+ */
+bool sme_validate_sap_channel_switch(tHalHandle hal,
+	uint16_t sap_ch, eCsrPhyMode sap_phy_mode, uint8_t cc_switch_mode,
+	uint8_t session_id)
+{
+	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	tCsrRoamSession *session = CSR_GET_SESSION(mac, session_id);
+	uint16_t intf_channel = 0;
+
+	if (!session)
+		return false;
+
+	session->ch_switch_in_progress = true;
+	status = sme_acquire_global_lock(&mac->sme);
+	if (CDF_IS_STATUS_SUCCESS(status)) {
+		intf_channel = csr_check_concurrent_channel_overlap(mac, sap_ch,
+						sap_phy_mode,
+						cc_switch_mode);
+		sme_release_global_lock(&mac->sme);
+	} else {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+				FL("sme_acquire_global_lock error!"));
+		session->ch_switch_in_progress = false;
+		return false;
+	}
+
+	session->ch_switch_in_progress = false;
+	return (intf_channel == 0) ? true : false;
+}
+#endif
 
 /**
  * sme_configure_stats_avg_factor() - function to config avg. stats factor

@@ -599,6 +599,33 @@ void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width)
 }
 
 /**
+ * wlan_sap_validate_channel_switch() - validate target channel switch w.r.t
+ *      concurreny rules set to avoid channel interference.
+ * @hal - Hal context
+ * @sap_ch - channel to switch
+ * @sap_context - sap session context
+ *
+ * Return: true if there is no channel interference else return false
+ */
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+static bool wlan_sap_validate_channel_switch(tHalHandle hal, uint16_t sap_ch,
+		ptSapContext sap_context)
+{
+	return sme_validate_sap_channel_switch(
+			hHal,
+			sap_ch,
+			sap_context->csr_roamProfile.phyMode,
+			sap_context->cc_switch_mode,
+			sap_context->sessionId);
+}
+#else
+static inline bool wlan_sap_validate_channel_switch(tHalHandle hal,
+		uint16_t sap_ch, ptSapContext sap_context)
+{
+	return true;
+}
+#endif
+/**
  * wlansap_start_bss() - start BSS
  * @pCtx: Pointer to the global cds context; a handle to SAP's control block
  *        can be extracted from its context. When MBSSID feature is enabled,
@@ -1399,6 +1426,8 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 	tWLAN_SAPEvent sapEvent;
 	tpAniSirGlobal pMac = NULL;
 	void *hHal = NULL;
+	bool valid;
+	tSmeConfigParams *sme_config;
 
 	sapContext = CDS_GET_SAP_CB(p_cds_gctx);
 	if (NULL == sapContext) {
@@ -1426,12 +1455,45 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 			CHANNEL_STATE_DFS &&
 		!cds_concurrent_open_sessions_running()))) {
 		/*
+		 * validate target channel switch w.r.t various concurrency
+		 * rules set.
+		 */
+		valid = wlan_sap_validate_channel_switch(hHal, targetChannel,
+				sapContext);
+		if (!valid) {
+			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+					FL("Channel switch to %u is not allowed due to concurrent channel interference"),
+					targetChannel);
+			return CDF_STATUS_E_FAULT;
+		}
+		/*
 		 * Post a CSA IE request to SAP state machine with
 		 * target channel information and also CSA IE required
 		 * flag set in sapContext only, if SAP is in eSAP_STARTED
 		 * state.
 		 */
 		if (eSAP_STARTED == sapContext->sapsMachine) {
+			/*
+			 * currently OBSS scan is done in hostapd, so to avoid
+			 * SAP coming up in HT40 on channel switch we are
+			 * disabling channel bonding in 2.4Ghz.
+			 */
+			if (targetChannel <= RF_CHAN_14) {
+				sme_config =
+					cdf_mem_malloc(sizeof(*sme_config));
+				if (!sme_config) {
+					CDF_TRACE(CDF_MODULE_ID_SAP,
+						CDF_TRACE_LEVEL_ERROR,
+						FL("memory allocation failed for sme_config"));
+					return CDF_STATUS_E_NOMEM;
+				}
+				sme_get_config_param(pMac, sme_config);
+				sme_config->csrConfig.channelBondingMode24GHz =
+					eCSR_INI_SINGLE_CHANNEL_CENTERED;
+				sme_update_config(pMac, sme_config);
+				cdf_mem_free(sme_config);
+			}
+
 			/*
 			 * Copy the requested target channel
 			 * to sap context.
