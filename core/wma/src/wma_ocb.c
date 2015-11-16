@@ -343,8 +343,9 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 			       WMITLV_TAG_STRUC_wmi_ocb_channel,
 			       WMITLV_GET_STRUCT_TLVLEN(wmi_ocb_channel));
 		ocb_chan->bandwidth = config->channels[i].bandwidth;
-		WMI_CHAR_ARRAY_TO_MAC_ADDR(config->channels[i].mac_address,
-					   &ocb_chan->mac_address);
+		WMI_CHAR_ARRAY_TO_MAC_ADDR(
+					config->channels[i].mac_address.bytes,
+					&ocb_chan->mac_address);
 		buf_ptr += sizeof(*ocb_chan);
 	}
 
