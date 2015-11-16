@@ -94,7 +94,6 @@
 
 #define SAP_24GHZ_CH_COUNT (14)
 #define ACS_SCAN_EXPIRY_TIMEOUT_S 4
-#define CONNECTION_UPDATE_TIMEOUT 500
 
 #define DUMP_DP_TRACE       0
 
@@ -8184,15 +8183,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	tSirWifiChannelWidth channel_width;
 	int status;
 	uint8_t channel;
-	p_cds_contextType p_cds_context;
 
 	ENTER();
-
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		hdd_err("Invalid CDS context");
-		return -EINVAL;
-	}
 
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
@@ -8237,8 +8229,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	if (pHddCtx->config->policy_manager_enabled) {
-		status = cdf_event_reset(
-				&p_cds_context->connection_update_done_evt);
+		status = cdf_reset_connection_update();
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			hdd_err("ERR: clear event failed");
 
@@ -8251,9 +8242,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 
 		if (CDF_STATUS_SUCCESS == status) {
-			status = cdf_wait_single_event(
-				    &p_cds_context->connection_update_done_evt,
-				    CONNECTION_UPDATE_TIMEOUT);
+			status = cdf_wait_for_connection_update();
 			if (!CDF_IS_STATUS_SUCCESS(status)) {
 				hdd_err("ERROR: cdf wait for event failed!!");
 				return -EINVAL;

@@ -41,6 +41,7 @@
 #define MAX_NUMBER_OF_CONC_CONNECTIONS 3
 #define MAX_NUM_CHAN    128
 #define DBS_OPPORTUNISTIC_TIME    10
+#define CONNECTION_UPDATE_TIMEOUT 500
 
 /**
  * enum cds_chain_mode - Chain Mask tx & rx combination.
@@ -786,4 +787,9 @@ static inline bool cds_concurrent_beaconing_sessions_running(void)
 	return true;
 }
 #endif
+
+CDF_STATUS cdf_wait_for_connection_update(void);
+CDF_STATUS cdf_reset_connection_update(void);
+CDF_STATUS cdf_set_connection_update(void);
+CDF_STATUS cdf_init_connection_update(void);
 #endif /* __CDS_CONCURRENCY_H */

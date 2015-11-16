@@ -2269,13 +2269,6 @@ static void cds_soc_set_hw_mode_cb(uint32_t status,
 	CDF_STATUS ret;
 	struct sir_hw_mode_params hw_mode;
 	uint32_t i;
-	p_cds_contextType cds_context;
-
-	cds_context = cds_get_global_context();
-	if (!cds_context) {
-		cds_err("Invalid CDS context");
-		return;
-	}
 
 	if (status != SET_HW_MODE_STATUS_OK) {
 		cds_err("Set HW mode failed with status %d", status);
@@ -2312,7 +2305,7 @@ static void cds_soc_set_hw_mode_cb(uint32_t status,
 			vdev_mac_map,
 			hw_mode);
 
-	ret = cdf_event_set(&cds_context->connection_update_done_evt);
+	ret = cdf_set_connection_update();
 	if (!CDF_IS_STATUS_SUCCESS(ret))
 		cds_err("ERROR: set connection_update_done event failed");
 
@@ -3641,15 +3634,8 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx)
 {
 	CDF_STATUS status;
-	p_cds_contextType p_cds_context;
 
 	cds_debug("Initializing the policy manager");
-
-	p_cds_context = cds_get_global_context();
-	if (!p_cds_context) {
-		cds_err("Invalid CDS context");
-		return CDF_STATUS_E_FAILURE;
-	}
 
 	/* init conc_connection_list */
 	cdf_mem_zero(conc_connection_list, sizeof(conc_connection_list));
@@ -3672,7 +3658,7 @@ CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx)
 		return status;
 	}
 
-	status = cdf_event_init(&p_cds_context->connection_update_done_evt);
+	status = cdf_init_connection_update();
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		cds_err("connection_update_done_evt init failed");
 		return status;
@@ -6261,20 +6247,13 @@ bool cds_handle_conc_multiport(uint8_t session_id,
 		uint8_t channel)
 {
 	CDF_STATUS status;
-	p_cds_contextType cds_context;
-
-	cds_context = cds_get_global_context();
-	if (!cds_context) {
-		cds_err("Invalid CDS context");
-		return false;
-	}
 
 	if (!cds_check_for_session_conc(session_id, channel)) {
 		cds_err("Conc not allowed for the session %d", session_id);
 		return false;
 	}
 
-	status = cdf_event_reset(&cds_context->connection_update_done_evt);
+	status = cdf_reset_connection_update();
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		cds_err("clearing event failed");
 
@@ -6290,8 +6269,7 @@ bool cds_handle_conc_multiport(uint8_t session_id,
 	 * will return success only in case if DBS update is required.
 	 */
 	if (CDF_STATUS_SUCCESS == status) {
-		status = cdf_wait_single_event(
-			    &cds_context->connection_update_done_evt, 500);
+		status = cdf_wait_for_connection_update();
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cds_err("wait for event failed");
 			return false;
@@ -7385,4 +7363,119 @@ bool cds_is_sta_active_connection_exists(void)
 		j = pHddCtx->no_of_active_sessions[CDF_STA_MODE];
 
 	return j ? true : false;
+}
+
+/**
+ * cdf_wait_for_connection_update() - Wait for hw mode command to get processed
+ *
+ * Waits for CONNECTION_UPDATE_TIMEOUT duration until the set hw mode
+ * response sets the event connection_update_done_evt
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS cdf_wait_for_connection_update(void)
+{
+	CDF_STATUS status;
+	p_cds_contextType cds_context;
+
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		cds_err("Invalid CDS context");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	status = cdf_wait_single_event(
+			&cds_context->connection_update_done_evt,
+			CONNECTION_UPDATE_TIMEOUT);
+
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("wait for event failed");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_reset_connection_update() - Reset connection update event
+ *
+ * Resets the concurrent connection update event
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS cdf_reset_connection_update(void)
+{
+	CDF_STATUS status;
+	p_cds_contextType cds_context;
+
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		cds_err("Invalid CDS context");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	status = cdf_event_reset(&cds_context->connection_update_done_evt);
+
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("clear event failed");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_set_connection_update() - Set connection update event
+ *
+ * Sets the concurrent connection update event
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS cdf_set_connection_update(void)
+{
+	CDF_STATUS status;
+	p_cds_contextType cds_context;
+
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		cds_err("Invalid CDS context");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	status = cdf_event_set(&cds_context->connection_update_done_evt);
+
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("set event failed");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * cdf_init_connection_update() - Initialize connection update event
+ *
+ * Initializes the concurrent connection update event
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS cdf_init_connection_update(void)
+{
+	CDF_STATUS status;
+	p_cds_contextType cds_context;
+
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		cds_err("Invalid CDS context");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	status = cdf_event_init(&cds_context->connection_update_done_evt);
+
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("init event failed");
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
 }
