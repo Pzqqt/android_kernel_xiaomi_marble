@@ -1897,6 +1897,8 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 	int ret = 0;
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
 	hdd_context_t *pHddCtx = NULL;
+	hdd_adapter_t *sta_adapter;
+	hdd_station_ctx_t *sta_ctx;
 
 #ifndef WLAN_FEATURE_MBSSID
 	v_CONTEXT_t p_cds_context =
@@ -1908,6 +1910,21 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 	if (ret) {
 		hddLog(LOGE, FL("invalid HDD context"));
 		return ret;
+	}
+
+	sta_adapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
+	/*
+	 * conc_custom_rule1:
+	 * Force SCC for SAP + STA
+	 * if STA is already connected then we shouldn't allow
+	 * channel switch in SAP interface.
+	 */
+	if (sta_adapter && pHddCtx->config->conc_custom_rule1) {
+		sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter);
+		if (hdd_conn_is_connected(sta_ctx)) {
+			hdd_err("Channel switch not allowed after STA connection with conc_custom_rule1 enabled");
+			return -EBUSY;
+		}
 	}
 
 	if (pHddCtx->dfs_radar_found == true) {

@@ -990,6 +990,7 @@ typedef struct tagCsrRoamSession {
 	/* This count represents the number of bssid's we try to join. */
 	uint8_t join_bssid_count;
 	struct csr_roam_stored_profile stored_roam_profile;
+	bool ch_switch_in_progress;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {
