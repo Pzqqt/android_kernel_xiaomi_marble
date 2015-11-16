@@ -1711,30 +1711,15 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		 */
 		stads->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 
+		lim_send_disassoc_mgmt_frame(mac_ctx,
+			mlm_disassocreq->reasonCode,
+			mlm_disassocreq->peerMacAddr, session, true);
 		/*
-		 * If the reason for disassociation is inactivity of STA, then
-		 * dont wait for acknowledgement
+		 * Abort Tx so that data frames won't be sent to the AP
+		 * after sending Disassoc.
 		 */
-		if ((mlm_disassocreq->reasonCode ==
-		    eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON) &&
-		    LIM_IS_AP_ROLE(session)) {
-			lim_send_disassoc_mgmt_frame(mac_ctx,
-				mlm_disassocreq->reasonCode,
-				mlm_disassocreq->peerMacAddr, session, false);
-
-			/* Send Disassoc CNF and receive path cleanup */
-			lim_send_disassoc_cnf(mac_ctx);
-		} else {
-			lim_send_disassoc_mgmt_frame(mac_ctx,
-				mlm_disassocreq->reasonCode,
-				mlm_disassocreq->peerMacAddr, session, true);
-			/*
-			 * Abort Tx so that data frames won't be sent to the AP
-			 * after sending Disassoc.
-			 */
-			if (LIM_IS_STA_ROLE(session))
-				wma_tx_abort(session->smeSessionId);
-		}
+		if (LIM_IS_STA_ROLE(session))
+			wma_tx_abort(session->smeSessionId);
 	} else {
 		/* Disassoc frame is not sent OTA */
 		send_disassoc_frame = 1;
