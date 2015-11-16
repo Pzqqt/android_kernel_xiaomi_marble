@@ -1014,6 +1014,9 @@ static void hdd_get_rssi_cb(int8_t rssi, uint32_t staId, void *pContext)
 	/* copy over the rssi */
 	pAdapter->rssi = rssi;
 
+	if (pAdapter->rssi > 0)
+		pAdapter->rssi = 0;
+
 	/* notify the caller */
 	complete(&pStatsContext->completion);
 
