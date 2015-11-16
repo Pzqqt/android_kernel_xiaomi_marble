@@ -568,7 +568,7 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac, uint8_t nChannelNum,
 {
 	tSirRetStatus nSirStatus;
 	uint32_t nRates = 0;
-	uint8_t rates[WNI_CFG_EXTENDED_OPERATIONAL_RATE_SET_LEN];
+	uint8_t rates[SIR_MAC_RATESET_EID_MAX];
 
 	/* Use the ext rates present in session entry whenever nChannelNum is set to OPERATIONAL
 	   else use the ext supported rate set from CFG, which is fixed and does not change dynamically and is used for
