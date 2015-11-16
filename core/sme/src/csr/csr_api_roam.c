@@ -7250,9 +7250,17 @@ CDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 			 (pScanFilter->csrPersona == CDF_P2P_CLIENT_MODE))) {
 			csr_get_bssdescr_from_scan_handle(hBSSList,
 					&first_ap_profile);
-			if (!cds_handle_conc_multiport(sessionId,
-						first_ap_profile.channelId)) {
-				sms_log(pMac, LOG1, FL("conc multiport error"));
+			status = cds_handle_conc_multiport(sessionId,
+						first_ap_profile.channelId);
+			if ((CDF_IS_STATUS_SUCCESS(status)) &&
+				(!csr_wait_for_connection_update(pMac, true))) {
+					sms_log(pMac, LOG1,
+						FL("conn update error"));
+					csr_scan_result_purge(pMac, hBSSList);
+					fCallCallback = true;
+					goto error;
+			} else if (status == CDF_STATUS_E_FAILURE) {
+				sms_log(pMac, LOG1, FL("conn update error"));
 				csr_scan_result_purge(pMac, hBSSList);
 				fCallCallback = true;
 				goto error;

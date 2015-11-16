@@ -6241,16 +6241,16 @@ bool cds_check_for_session_conc(uint8_t session_id,
  * This routine will handle STA side concurrency when policy manager
  * is enabled.
  *
- * Return: true or false
+ * Return: CDF_STATUS
  */
-bool cds_handle_conc_multiport(uint8_t session_id,
+CDF_STATUS cds_handle_conc_multiport(uint8_t session_id,
 		uint8_t channel)
 {
 	CDF_STATUS status;
 
 	if (!cds_check_for_session_conc(session_id, channel)) {
 		cds_err("Conc not allowed for the session %d", session_id);
-		return false;
+		return CDF_STATUS_E_FAILURE;
 	}
 
 	status = cdf_reset_connection_update();
@@ -6262,20 +6262,10 @@ bool cds_handle_conc_multiport(uint8_t session_id,
 			CDS_UPDATE_REASON_NORMAL_STA);
 	if (CDF_STATUS_E_FAILURE == status) {
 		cds_err("connections update failed");
-		return false;
+		return status;
 	}
-	/*
-	 * wait only if status is successful. connection update API
-	 * will return success only in case if DBS update is required.
-	 */
-	if (CDF_STATUS_SUCCESS == status) {
-		status = cdf_wait_for_connection_update();
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
-			cds_err("wait for event failed");
-			return false;
-		}
-	}
-	return true;
+
+	return status;
 }
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
