@@ -5197,7 +5197,7 @@ typedef void (*dcc_stats_event_callback_t)(void *hdd_ctx, uint32_t vdev_id,
 struct sir_ocb_config_channel {
 	uint32_t chan_freq;
 	uint32_t bandwidth;
-	tSirMacAddr mac_address;
+	struct cdf_mac_addr mac_address;
 	struct sir_qos_params qos_params[MAX_NUM_AC];
 	uint32_t max_pwr;
 	uint32_t min_pwr;

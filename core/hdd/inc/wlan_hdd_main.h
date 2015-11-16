@@ -1002,7 +1002,7 @@ struct hdd_adapter_s {
 	struct sir_dcc_update_ndl_response dcc_update_ndl_resp;
 
 	/* MAC addresses used for OCB interfaces */
-	tSirMacAddr ocb_mac_address[CDF_MAX_CONCURRENCY_PERSONA];
+	struct cdf_mac_addr ocb_mac_address[CDF_MAX_CONCURRENCY_PERSONA];
 	int ocb_mac_addr_count;
 
 	/* BITMAP indicating pause reason */
