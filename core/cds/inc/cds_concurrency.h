@@ -604,7 +604,7 @@ static inline bool cds_handle_conc_rule2(hdd_context_t *hdd_ctx,
 uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
 		tCsrRoamProfile * roam_profile);
 bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel);
-bool cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
+CDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 void cds_force_sap_on_scc(hdd_context_t *hdd_ctx, eCsrRoamResult roam_result);

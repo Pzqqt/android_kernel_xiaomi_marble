@@ -41,6 +41,7 @@
 #include "sme_qos_internal.h"
 #include "wma_types.h"
 #include "cds_utils.h"
+#include "cds_concurrency.h"
 
 
 uint8_t csr_wpa_oui[][CSR_WPA_OUI_SIZE] = {
@@ -5624,3 +5625,45 @@ void csr_diag_event_report(tpAniSirGlobal pmac, uint16_t event_type,
 	return;
 }
 #endif
+
+/**
+ * csr_wait_for_connection_update() - Wait for hw mode update
+ * @mac: Pointer to the MAC context
+ * @do_release_reacquire_lock: Indicates whether release and
+ * re-acquisition of SME global lock is required.
+ *
+ * Waits for CONNECTION_UPDATE_TIMEOUT time so that the
+ * hw mode update can get processed.
+ *
+ * Return: True if the wait was successful, false otherwise
+ */
+bool csr_wait_for_connection_update(tpAniSirGlobal mac,
+		bool do_release_reacquire_lock)
+{
+	CDF_STATUS status, ret;
+
+	if (do_release_reacquire_lock == true) {
+		ret = sme_release_global_lock(&mac->sme);
+		if (!CDF_IS_STATUS_SUCCESS(ret)) {
+			cds_err("lock release fail %d", ret);
+			return false;
+		}
+	}
+
+	status = cdf_wait_for_connection_update();
+
+	if (do_release_reacquire_lock == true) {
+		ret = sme_acquire_global_lock(&mac->sme);
+		if (!CDF_IS_STATUS_SUCCESS(ret)) {
+			cds_err("lock acquire fail %d", ret);
+			return false;
+		}
+	}
+
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("wait for event failed");
+		return false;
+	}
+
+	return true;
+}

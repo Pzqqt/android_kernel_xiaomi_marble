@@ -1409,4 +1409,6 @@ CDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
 		tSirBssDescription *pSirBssDescription,
 		uint32_t scan_id, uint32_t flags);
 
+bool csr_wait_for_connection_update(tpAniSirGlobal mac,
+		bool do_release_reacquire_lock);
 #endif
