@@ -4660,11 +4660,25 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 				cds_err("No IBSS, we have concurrent connections already");
 				goto done;
 			}
+#ifndef QCA_WIFI_3_0_EMU
 			if (CDS_STA_MODE != conc_connection_list[0].mode) {
 				/* err msg */
-				cds_err("No IBSS, we have a non STA connection");
+				cds_err("No IBSS, we've a non-STA connection");
 				goto done;
 			}
+#else
+			if (CDS_STA_MODE != conc_connection_list[0].mode &&
+				CDS_SAP_MODE != conc_connection_list[0].mode) {
+				/* err msg */
+				cds_err("No IBSS, we've a non-STA/SAP conn");
+				goto done;
+			}
+#endif
+			/*
+			 * This logic protects STA and IBSS to come up on same
+			 * band. If requirement changes then this condition
+			 * needs to be removed
+			 */
 			if (channel &&
 				(conc_connection_list[0].chan != channel) &&
 				CDS_IS_SAME_BAND_CHANNELS(
