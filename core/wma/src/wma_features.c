@@ -4551,7 +4551,7 @@ CDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 	int i;
 
 	if (mcbc_param->ulMulticastAddrCnt <= 0) {
-		WMA_LOGE("Number of multicast addresses is 0");
+		WMA_LOGW("Number of multicast addresses is 0");
 		return CDF_STATUS_E_FAILURE;
 	}
 

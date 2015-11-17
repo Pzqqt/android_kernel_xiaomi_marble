@@ -2452,9 +2452,7 @@ static void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 					eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 		/* Issue MLM join confirm with timeout reason code */
 		lim_log(mac_ctx, LOGE,
-			FL("In state eLIM_MLM_WT_JOIN_BEACON_STATE."));
-		lim_log(mac_ctx, LOGE,
-			FL("Join Failure Timeout occurred for session %d with BSS "
+			FL("Join Failure Timeout, In eLIM_MLM_WT_JOIN_BEACON_STATE session:%d "
 			   MAC_ADDRESS_STR),
 			session->peSessionId, MAC_ADDR_ARRAY(session->bssId));
 

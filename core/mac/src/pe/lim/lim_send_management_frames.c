@@ -3159,7 +3159,7 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 			    (pe_session->is11Rconnection)) &&
 			    (disassoc_req->reasonCode !=
 				eSIR_MAC_DISASSOC_DUE_TO_FTHANDOFF_REASON)) {
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("FT Preauth Session (%p,%d) Clean up"),
 				pe_session, pe_session->peSessionId);
 

@@ -3060,11 +3060,7 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 				ol_txrx_ll_set_tx_pause_q_depth(
 					adapter->sessionId,
 					hdd_ctx->config->TxFlowMaxQueueDepth);
-				/* Temporary set log level as error
-				 * TX Flow control feature settled down,
-				 * will lower log level
-				 */
-				cds_err("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
+				cds_info("MODE %d,CH %d,LWM %d,HWM %d,TXQDEP %d",
 				    adapter->device_mode,
 				    targetChannel,
 				    adapter->tx_flow_low_watermark,
@@ -3090,7 +3086,7 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 						adapter->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
-					cds_err("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					cds_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					       hdd_device_mode_to_string(
 							adapter->device_mode),
 					       adapter->device_mode,
@@ -3116,12 +3112,7 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 						preAdapterContext->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
-					/*
-					 * Temporary set log level as error
-					 * TX Flow control feature settled down,
-					 * will lower log level
-					 */
-					cds_err("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					cds_info("SCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					       hdd_device_mode_to_string(
 						preAdapterContext->device_mode
 							  ),
@@ -3171,12 +3162,7 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 						adapter5->sessionId,
 						hdd_ctx->config->
 						TxHbwFlowMaxQueueDepth);
-					/*
-					 * Temporary set log level as error
-					 * TX Flow control feature settled down,
-					 * will lower log level
-					 */
-					cds_err("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					cds_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 					    hdd_device_mode_to_string(
 						    adapter5->device_mode),
 					    adapter5->device_mode,
@@ -3204,12 +3190,7 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 						adapter2_4->sessionId,
 						hdd_ctx->config->
 						TxLbwFlowMaxQueueDepth);
-					/*
-					 * Temporary set log level as error
-					 * TX Flow control feature settled down,
-					 * will lower log level
-					 */
-					cds_err("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
+					cds_info("MCC: MODE %s(%d), CH %d, LWM %d, HWM %d, TXQDEP %d",
 						hdd_device_mode_to_string(
 						    adapter2_4->device_mode),
 						adapter2_4->device_mode,

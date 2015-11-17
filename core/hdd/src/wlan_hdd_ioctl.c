@@ -5762,7 +5762,7 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 					adapter->mc_addr_list.addr[i],
 					sizeof(adapter->mc_addr_list.addr[i]));
 				filter->ulMulticastAddrCnt++;
-				hdd_err("%s RX filter : addr ="
+				hdd_info("%s RX filter : addr ="
 				    MAC_ADDRESS_STR,
 				    action ? "setting" : "clearing",
 				    MAC_ADDR_ARRAY(filter->multicastAddr[i]));
@@ -5772,7 +5772,7 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 		sme_8023_multicast_list(handle, adapter->sessionId, filter);
 		cdf_mem_free(filter);
 	} else {
-		hdd_err("mode %d mc_cnt %d",
+		hdd_info("mode %d mc_cnt %d",
 			adapter->device_mode, adapter->mc_addr_list.mc_cnt);
 	}
 

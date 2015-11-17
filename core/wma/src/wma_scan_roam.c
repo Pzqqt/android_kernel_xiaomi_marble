@@ -4926,7 +4926,7 @@ int wma_extscan_cached_results_event_handler(void *handle,
 			event->first_entry_index);
 	WMA_LOGI("num_entries_in_page %d", numap);
 	if (!src_hotlist || !src_rssi || !numap) {
-		WMA_LOGE("%s: Cached results empty, send 0 results", __func__);
+		WMA_LOGW("%s: Cached results empty, send 0 results", __func__);
 		goto noresults;
 	}
 	if (event->first_entry_index +
