@@ -9333,6 +9333,10 @@ uint32_t sme_get_lim_mlm_state(tHalHandle hHal)
 bool sme_is_lim_session_valid(tHalHandle hHal, uint8_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+
+	if (sessionId > pMac->lim.maxBssId)
+		return false;
+
 	return pMac->lim.gpSession[sessionId].valid;
 }
 
