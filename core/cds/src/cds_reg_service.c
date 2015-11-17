@@ -1005,11 +1005,8 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 			 && band_capability == eCSR_BAND_24)
 			continue;
 
-		if (wiphy->bands[i] == NULL) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-				  "error: wiphy->bands is NULL, i = %d", i);
+		if (wiphy->bands[i] == NULL)
 			continue;
-		}
 
 		if (i == 0)
 			m = 0;

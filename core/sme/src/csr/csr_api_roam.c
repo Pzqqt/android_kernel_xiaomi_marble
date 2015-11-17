@@ -13539,6 +13539,14 @@ CDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->ssId.length = 0;
 		cdf_mem_copy(&csr_join_req->selfMacAddr, &pSession->selfMacAddr,
 			     sizeof(tSirMacAddr));
+		sms_log(pMac, LOGE,
+			"Connecting to ssid:%.*s bssid: "
+			MAC_ADDRESS_STR" rssi: %d channel: %d country_code: %c%c",
+			pIes->SSID.num_ssid, pIes->SSID.ssid,
+			MAC_ADDR_ARRAY(pBssDescription->bssId),
+			pBssDescription->rssi, pBssDescription->channelId,
+			pMac->scan.countryCodeCurrent[0],
+			pMac->scan.countryCodeCurrent[1]);
 		/* bsstype */
 		dwTmp = csr_translate_bsstype_to_mac_type
 						(pProfile->BSSType);

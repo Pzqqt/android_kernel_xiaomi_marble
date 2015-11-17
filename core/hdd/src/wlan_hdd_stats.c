@@ -1458,9 +1458,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 		return -EINVAL;
 
 	if (!pAdapter->isLinkLayerStatsSet) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       "%s: isLinkLayerStatsSet : %d",
-		       __func__, pAdapter->isLinkLayerStatsSet);
+		hdd_warn("isLinkLayerStatsSet : %d", pAdapter->isLinkLayerStatsSet);
 		return -EINVAL;
 	}
 
@@ -2455,10 +2453,8 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	hdd_wlan_get_freq(channel, &freq);
 
 	for (i = 0; i < IEEE80211_NUM_BANDS; i++) {
-		if (NULL == wiphy->bands[i]) {
-			hddLog(LOG1, FL("wiphy->bands[i] is NULL, i = %d"), i);
+		if (NULL == wiphy->bands[i])
 			continue;
-		}
 
 		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
 			struct ieee80211_supported_band *band = wiphy->bands[i];

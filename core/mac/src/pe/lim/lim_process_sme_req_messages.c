@@ -1713,8 +1713,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				((uint8_t *)&bss_desc.ieFields), ie_len);
 
 		if (NULL != vendor_ie) {
-			lim_log(mac_ctx, LOGE,
-				FL("DUT is trying to connect to Cisco AP"));
+			lim_log(mac_ctx, LOG1, FL("Cisco vendor OUI present"));
 			session->isCiscoVendorAP = true;
 		} else {
 			session->isCiscoVendorAP = false;

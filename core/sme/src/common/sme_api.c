@@ -2485,7 +2485,7 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	/* channel avoid message arrived, send IND to client */
 	case eWNI_SME_CH_AVOID_IND:
 		if (pMac->sme.pChAvoidNotificationCb) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  FL("CH avoid notification"));
 			pMac->sme.pChAvoidNotificationCb(pMac->hHdd,
 							 pMsg->bodyptr);
@@ -7396,8 +7396,8 @@ CDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	}
 
 	if (pSession == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Unable to find " "the session Id: %d", __func__,
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+			  "%s: Unable to find the session Id: %d", __func__,
 			  sessionId);
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -12630,7 +12630,7 @@ CDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 	}
 
 	if (!pSession->QosMapSet.present) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 				FL("QOS Mapping IE not present"));
 		sme_release_global_lock(&pMac->sme);
 		return CDF_STATUS_E_FAILURE;

@@ -1651,7 +1651,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 			   ETH_ALEN)) ||
 			   (adapter->addr_filter_pattern && (!memcmp(ha->addr,
 			    &adapter->addr_filter_pattern, 1)))) {
-				hdd_err("MC/BC filtering Skip addr ="MAC_ADDRESS_STR,
+				hdd_info("MC/BC filtering Skip addr ="MAC_ADDRESS_STR,
 					MAC_ADDR_ARRAY(ha->addr));
 				adapter->mc_addr_list.mc_cnt--;
 				continue;
@@ -3349,7 +3349,7 @@ static void hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
 	if (ret)
 		hddLog(LOGE, FL("Failed to register IPv6 notifier"));
 	else
-		hddLog(LOGE, FL("Registered IPv6 notifier"));
+		hdd_info("Registered IPv6 notifier");
 
 	return;
 }
@@ -5423,7 +5423,7 @@ ftm_processing:
 	if (ret)
 		hddLog(LOGE, FL("Failed to register IPv4 notifier"));
 	else
-		hddLog(LOGE, FL("Registered IPv4 notifier"));
+		hdd_info("Registered IPv4 notifier");
 
 	wlan_hdd_dcc_register_for_dcc_stats_event(hdd_ctx);
 
