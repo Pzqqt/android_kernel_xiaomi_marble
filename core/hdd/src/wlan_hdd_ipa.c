@@ -1820,7 +1820,8 @@ int hdd_ipa_uc_ssr_deinit(void)
 	 * IPA submodule during SSR transient state. So deinit basic IPA
 	 * UC host side to be in sync with reloaded FW during SSR
 	 */
-	hdd_ipa_uc_disable_pipes(hdd_ipa);
+	if (!hdd_ipa->ipa_pipes_down)
+		hdd_ipa_uc_disable_pipes(hdd_ipa);
 
 	cdf_wake_lock_acquire(&hdd_ipa->ipa_lock);
 	for (idx = 0; idx < WLAN_MAX_STA_COUNT; idx++) {
