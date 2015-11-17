@@ -4256,9 +4256,10 @@ static void lim_handle_ht20protection_enabled(tpAniSirGlobal mac_ctx,
 	} else if (LIM_IS_AP_ROLE(session_entry) && !overlap) {
 		session_entry->gLimHt20Params.protectionEnabled = true;
 		if (eSIR_HT_OP_MODE_PURE == session_entry->htOperMode) {
-			 session_entry->htOperMode =
-				eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
-
+			if (session_entry->htSupportedChannelWidthSet !=
+					eHT_CHANNEL_WIDTH_20MHZ)
+				 session_entry->htOperMode =
+					eSIR_HT_OP_MODE_NO_LEGACY_20MHZ_HT;
 			lim_enable_ht_rifs_protection(mac_ctx, false,
 				overlap, beaconparams, session_entry);
 			lim_enable_ht_obss_protection(mac_ctx, false,
