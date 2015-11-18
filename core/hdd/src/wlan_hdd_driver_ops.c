@@ -314,6 +314,7 @@ static void wlan_hdd_remove(void)
 
 	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 
+	hif_disable_power_management(hif_ctx);
 	hif_pktlogmod_exit(hif_ctx);
 
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
