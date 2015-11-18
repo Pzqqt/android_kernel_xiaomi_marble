@@ -651,6 +651,15 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 		       WMITLV_GET_STRUCT_TLVLEN(WMI_STA_KEEPALVE_ARP_RESPONSE));
 
 	if (method == SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP) {
+		if ((NULL == hostv4addr) ||
+			(NULL == destv4addr) ||
+			(NULL == destmac)) {
+			WMA_LOGE("%s: received null pointer, hostv4addr:%p "
+			   "destv4addr:%p destmac:%p ", __func__,
+			   hostv4addr, destv4addr, destmac);
+			cdf_nbuf_free(buf);
+			return;
+		}
 		cmd->method = WMI_STA_KEEPALIVE_METHOD_UNSOLICITED_ARP_RESPONSE;
 		cdf_mem_copy(&arp_rsp->sender_prot_addr, hostv4addr,
 			     SIR_IPV4_ADDR_LEN);
