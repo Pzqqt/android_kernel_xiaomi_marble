@@ -2879,6 +2879,11 @@ static void cds_dump_legacy_concurrency(hdd_context_t *hdd_ctx,
 {
 	const char *cc_mode = "Standalone";
 
+	if ((sta_channel == 0) && (ap_channel == 0) && (p2p_channel == 0)) {
+		cds_err("IBSS standalone");
+		hdd_ctx->mcc_mode = 0;
+		return;
+	}
 	if (sta_channel > 0) {
 		if (ap_channel > 0) {
 			if (p2p_channel > 0) {
@@ -3027,7 +3032,6 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 			}
 			break;
 		case WLAN_HDD_IBSS:
-			return; /* skip printing station message below */
 		default:
 			break;
 		}
