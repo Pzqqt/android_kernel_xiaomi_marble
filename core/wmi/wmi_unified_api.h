@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -150,7 +150,24 @@ int wmi_get_pending_cmds(wmi_unified_t wmi_handle);
    WMI API to set target suspend state
  */
 
-void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val);
+void wmi_set_target_suspend(wmi_unified_t wmi_handle, bool val);
+
+#ifdef FEATURE_RUNTIME_PM
+void
+wmi_set_runtime_pm_inprogress(wmi_unified_t wmi_handle, bool val);
+bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle);
+#else
+static inline void
+wmi_set_runtime_pm_inprogress(wmi_unified_t wmi_handle, bool val)
+{
+	return;
+}
+static inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
+{
+	return false;
+}
+#endif
+
 
 /**
  * WMA Callback to process fw event.

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -766,6 +766,30 @@ static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
 }
 #endif
 
+/**
+ * wmi_is_runtime_pm_cmd() - check if a cmd is part of the suspend resume sequence
+ * @cmd: command to check
+ *
+ * Return: true if the command is part of the suspend resume sequence.
+ */
+bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
+{
+	switch (cmd_id) {
+	case WMI_WOW_ENABLE_CMDID:
+	case WMI_PDEV_SUSPEND_CMDID:
+	case WMI_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID:
+	case WMI_WOW_ADD_WAKE_PATTERN_CMDID:
+	case WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID:
+	case WMI_PDEV_RESUME_CMDID:
+	case WMI_WOW_DEL_WAKE_PATTERN_CMDID:
+	case WMI_D0_WOW_ENABLE_DISABLE_CMDID:
+		return true;
+
+	default:
+		return false;
+	}
+}
+
 /* WMI command API */
 int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 			 WMI_CMD_ID cmd_id)
@@ -773,8 +797,12 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	HTC_PACKET *pkt;
 	A_STATUS status;
 	struct ol_softc *scn;
+	uint16_t htc_tag = 0;
 
-	if (cdf_atomic_read(&wmi_handle->is_target_suspended) &&
+	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
+		if (wmi_is_runtime_pm_cmd(cmd_id))
+			htc_tag = HTC_TX_PACKET_TAG_AUTO_PM;
+	} else if (cdf_atomic_read(&wmi_handle->is_target_suspended) &&
 	    ((WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID != cmd_id) &&
 	     (WMI_PDEV_RESUME_CMDID != cmd_id))) {
 		pr_err("%s: Target is suspended  could not send WMI command\n",
@@ -830,7 +858,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 			       NULL,
 			       cdf_nbuf_data(buf), len + sizeof(WMI_CMD_HDR),
 	                       /* htt_host_data_dl_len(buf)+20 */
-			       wmi_handle->wmi_endpoint_id, 0 /*htc_tag */ );
+			       wmi_handle->wmi_endpoint_id, htc_tag);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(pkt, buf);
 
@@ -1160,6 +1188,21 @@ void wmi_rx_event_work(struct work_struct *work)
 
 /* WMI Initialization functions */
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * wmi_runtime_pm_init() - initialize runtime pm wmi variables
+ * @wmi_handle: wmi context
+ */
+void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
+{
+	cdf_atomic_init(&wmi_handle->runtime_pm_inprogress);
+}
+#else
+void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
+{
+}
+#endif
+
 void *wmi_unified_attach(ol_scn_t scn_handle,
 			 wma_process_fw_event_handler_cbk func)
 {
@@ -1176,6 +1219,7 @@ void *wmi_unified_attach(ol_scn_t scn_handle,
 	wmi_handle->scn_handle = scn_handle;
 	cdf_atomic_init(&wmi_handle->pending_cmds);
 	cdf_atomic_init(&wmi_handle->is_target_suspended);
+	wmi_runtime_pm_init(wmi_handle);
 	cdf_spinlock_init(&wmi_handle->eventq_lock);
 	cdf_nbuf_queue_init(&wmi_handle->event_queue);
 #ifdef CONFIG_CNSS
@@ -1335,3 +1379,14 @@ void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 	cdf_atomic_set(&wmi_handle->is_target_suspended, val);
 }
 
+#ifdef FEATURE_RUNTIME_PM
+void wmi_set_runtime_pm_inprogress(wmi_unified_t wmi_handle, A_BOOL val)
+{
+	cdf_atomic_set(&wmi_handle->runtime_pm_inprogress, val);
+}
+
+inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
+{
+	return cdf_atomic_read(&wmi_handle->runtime_pm_inprogress);
+}
+#endif

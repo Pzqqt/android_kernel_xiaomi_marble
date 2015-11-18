@@ -3654,6 +3654,8 @@ CDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type)
 	/* unpause the vdev if left paused and hif_pci_suspend fails */
 	wma_unpause_vdev(wma);
 
+	wmi_set_runtime_pm_inprogress(wma->wmi_handle, false);
+
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -4172,6 +4174,9 @@ static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
  */
 CDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type)
 {
+	if (type == CDF_RUNTIME_SUSPEND)
+		wmi_set_runtime_pm_inprogress(wma->wmi_handle, true);
+
 	if (wma_is_wow_applicable(wma)) {
 		WMA_LOGE("WOW Suspend");
 		wma_apply_lphb(wma);

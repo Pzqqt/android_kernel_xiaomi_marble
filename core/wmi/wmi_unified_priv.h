@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,6 +89,11 @@ struct wmi_unified {
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 	cdf_atomic_t is_target_suspended;
+
+#ifdef FEATURE_RUNTIME_PM
+	cdf_atomic_t runtime_pm_inprogress;
+#endif
+
 	int (*wma_process_fw_event_handler_cbk)(struct wmi_unified *wmi_handle,
 						wmi_buf_t evt_buf);
 };
