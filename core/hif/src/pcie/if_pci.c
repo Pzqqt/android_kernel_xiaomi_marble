@@ -1094,6 +1094,7 @@ static void hif_pm_runtime_close(struct hif_pci_softc *sc)
 static void hif_pm_runtime_close(struct hif_pci_softc *sc) {}
 static void hif_pm_runtime_open(struct hif_pci_softc *sc) {}
 static void hif_pm_runtime_start(struct hif_pci_softc *sc) {}
+static void hif_pm_runtime_stop(struct hif_pci_softc *sc) {}
 #endif
 
 /**
@@ -1117,6 +1118,28 @@ void hif_enable_power_management(void *hif_ctx)
 	pci_ctx = ((struct ol_softc *)hif_ctx)->hif_sc;
 
 	hif_pm_runtime_start(pci_ctx);
+}
+
+/**
+ * hif_disable_power_management(): disable power management
+ * @hif_ctx: hif context
+ *
+ * Currently disables runtime pm. Should be updated to behave
+ * if runtime pm is not started. Should be updated to take care
+ * of aspm and soc sleep for driver load.
+ */
+void hif_disable_power_management(void *hif_ctx)
+{
+	struct hif_pci_softc *pci_ctx;
+
+	if (hif_ctx == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+
+	pci_ctx = ((struct ol_softc *)hif_ctx)->hif_sc;
+
+	hif_pm_runtime_stop(pci_ctx);
 }
 
 #define ATH_PCI_PROBE_RETRY_MAX 3

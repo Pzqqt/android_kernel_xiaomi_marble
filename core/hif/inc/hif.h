@@ -684,6 +684,7 @@ void hif_runtime_pm_set_state_inprogress(void);
 void hif_runtime_pm_set_state_on(void);
 
 void hif_enable_power_management(void *hif_ctx);
+void hif_disable_power_management(void *hif_ctx);
 int hif_runtime_suspend(void);
 int hif_runtime_resume(void);
 int hif_bus_resume(void);
