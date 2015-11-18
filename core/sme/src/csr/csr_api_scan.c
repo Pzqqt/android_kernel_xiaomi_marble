@@ -1415,7 +1415,7 @@ static int csr_get_altered_rssi(tpAniSirGlobal mac_ctx, int rssi,
 	 * preferred score
 	 */
 	cdf_mem_zero(&fav_bssid.bytes, CDF_MAC_ADDR_SIZE);
-	if (roam_params->num_bssid_favored) {
+	if (bssid && roam_params->num_bssid_favored) {
 		for (i = 0; i < roam_params->num_bssid_favored; i++) {
 			cdf_mem_copy(fav_bssid.bytes,
 					&roam_params->bssid_favored[i],
@@ -7108,6 +7108,11 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	if (scan_cmd == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL("Scan Timeout: Scan command is NULL"));
+		return;
+	}
+	if (hal_ctx == NULL) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			FL("HAL Context is NULL"));
 		return;
 	}
 	mac_ctx = PMAC_STRUCT(hal_ctx);
