@@ -125,6 +125,24 @@ static inline void cdf_mdelay(int msecs)
 /* Check if _a atleast as recent as _b, if not later */
 #define cdf_system_time_after_eq(_a, _b)    __cdf_system_time_after_eq(_a, _b)
 
+/**
+ * enum cdf_timestamp_unit - what unit the cdf timestamp is in
+ * @KERNEL_LOG: boottime time in uS (micro seconds)
+ * @KERNEL_LOG: QTIME in (1/19200)S
+ *
+ * This enum is used to distinguish which timer source is used.
+ */
+enum cdf_timestamp_unit {
+	KERNEL_LOG,
+	QTIMER,
+};
+
+#ifdef QCA_WIFI_3_0_ADRASTEA
+#define CDF_LOG_TIMESTAMP_UNIT QTIMER
+#else
+#define CDF_LOG_TIMESTAMP_UNIT KERNEL_LOG
+#endif
+
 #ifdef QCA_WIFI_3_0_ADRASTEA
 /**
  * cdf_get_log_timestamp() - get time stamp for logging

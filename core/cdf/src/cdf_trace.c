@@ -43,6 +43,8 @@
 
 #define CDF_TRACE_BUFFER_SIZE (512)
 
+enum cdf_timestamp_unit cdf_log_timestamp_type = CDF_LOG_TIMESTAMP_UNIT;
+
 /* macro to map cdf trace levels into the bitmask */
 #define CDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
 
