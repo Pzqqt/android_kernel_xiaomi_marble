@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -61,10 +61,19 @@ typedef struct _HTC_TX_PACKET_INFO {
 	A_UINT32 Flags;         /* internal use */
 } HTC_TX_PACKET_INFO;
 
-#define HTC_TX_PACKET_TAG_ALL          0        /* a tag of zero is reserved and used to flush ALL packets */
-#define HTC_TX_PACKET_TAG_INTERNAL     1        /* internal tags start here */
-#define HTC_TX_PACKET_TAG_USER_DEFINED (HTC_TX_PACKET_TAG_INTERNAL + 9) /* user-defined tags start here */
-#define HTC_TX_PACKET_TAG_BUNDLED      HTC_TX_PACKET_TAG_USER_DEFINED + 1       /* indicate this is bundled TX packet */
+/**
+ * HTC_TX_PACKET_TAG_XXX - #defines for tagging packets for special handling
+ * HTC_TX_PACKET_TAG_ALL: zero is reserved and used to flush ALL packets
+ * HTC_TX_PACKET_TAG_INTERNAL: internal tags start here
+ * HTC_TX_PACKET_TAG_USER_DEFINED: user-defined tags start here
+ * HTC_TX_PACKET_TAG_BUNDLED: indicate this is a bundled tx packet
+ * HTC_TX_PACKET_TAG_AUTO_PM: indicate a power management wmi command
+ */
+#define HTC_TX_PACKET_TAG_ALL          0
+#define HTC_TX_PACKET_TAG_INTERNAL     1
+#define HTC_TX_PACKET_TAG_USER_DEFINED (HTC_TX_PACKET_TAG_INTERNAL + 9)
+#define HTC_TX_PACKET_TAG_BUNDLED      (HTC_TX_PACKET_TAG_USER_DEFINED + 1)
+#define HTC_TX_PACKET_TAG_AUTO_PM      (HTC_TX_PACKET_TAG_USER_DEFINED + 2)
 
 #define HTC_TX_PACKET_FLAG_FIXUP_NETBUF (1 << 0)
 

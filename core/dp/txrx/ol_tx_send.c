@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -504,6 +504,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		tx_desc->status = status;
 		netbuf = tx_desc->netbuf;
 
+		cdf_runtime_pm_put();
 		cdf_nbuf_trace_update(netbuf, trace_str);
 		/* Per SDU update of byte count */
 		byte_cnt += cdf_nbuf_len(netbuf);
