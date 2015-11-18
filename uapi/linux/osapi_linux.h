@@ -71,31 +71,12 @@
 #define A_MEMSET(addr, value, size)     memset((addr), (value), (size))
 #define A_MEMCMP(addr1, addr2, len)     memcmp((addr1), (addr2), (len))
 
-#if defined(ANDROID_ENV) && defined(CONFIG_ANDROID_LOGGER)
-extern unsigned int enablelogcat;
-extern int android_logger_lv(void *module, int mask);
-enum logidx { LOG_MAIN_IDX = 0 };
-extern int logger_write(const enum logidx idx,
-			const unsigned char prio,
-			const char __kernel *const tag,
-			const char __kernel *const fmt, ...);
-#define A_ANDROID_PRINTF(mask, module, tags, args ...) do {  \
-		if (enablelogcat) \
-			logger_write(LOG_MAIN_IDX, android_logger_lv(module, mask), tags, args); \
-		else \
-			printk(KERN_ALERT args); \
-} while (0)
-#ifdef DEBUG
-#define A_LOGGER_MODULE_NAME(x) # x
 #define A_LOGGER(mask, mod, args ...) \
-	A_ANDROID_PRINTF(mask, &GET_ATH_MODULE_DEBUG_VAR_NAME(mod), "ar6k_" A_LOGGER_MODULE_NAME(mod), args);
-#endif
-#define A_PRINTF(args ...) A_ANDROID_PRINTF(ATH_DEBUG_INFO, NULL, "ar6k_driver", args)
-#else
-#define A_LOGGER(mask, mod, args ...)    printk(args)
-#define A_PRINTF(args ...)               printk(args)
-#endif /* ANDROID */
-#define A_PRINTF_LOG(args ...)           printk(args)
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
+#define A_PRINTF(args ...) \
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
+#define A_PRINTF_LOG(args ...) \
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
 #define A_SNPRINTF(buf, len, args ...)   snprintf (buf, len, args)
 
 /*

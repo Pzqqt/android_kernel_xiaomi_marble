@@ -200,10 +200,6 @@ typedef bool (*cdf_irqlocked_func_t)(void *);
 /* Prototype of timer function */
 typedef void (*cdf_softirq_timer_func_t)(void *);
 
-#define cdf_print         __cdf_print
-#define cdf_vprint        __cdf_vprint
-#define cdf_snprint       __cdf_snprint
-
 #define cdf_offsetof(type, field) offsetof(type, field)
 
 /**
@@ -263,6 +259,11 @@ typedef enum {
 
 	CDF_MODULE_ID_MAX
 } CDF_MODULE_ID;
+
+#define cdf_print(args...) \
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
+#define cdf_vprint        __cdf_vprint
+#define cdf_snprint       __cdf_snprint
 
 /**
  * typedef enum tCDF_CON_MODE - Concurrency role.
