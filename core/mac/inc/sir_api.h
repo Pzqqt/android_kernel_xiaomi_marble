@@ -3676,7 +3676,7 @@ typedef struct sSirLinkSpeedInfo {
 
 typedef struct sSirAddPeriodicTxPtrn {
 	/* MAC Address for the adapter */
-	tSirMacAddr macAddress;
+	struct cdf_mac_addr mac_address;
 	uint8_t ucPtrnId;       /* Pattern ID */
 	uint16_t ucPtrnSize;    /* Pattern size */
 	uint32_t usPtrnIntervalMs;      /* In msec */

@@ -473,8 +473,8 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	addPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
 	addPeriodicTxPtrnParams->usPtrnIntervalMs = pattern_duration * 500;
 	addPeriodicTxPtrnParams->ucPtrnSize = pattern_len;
-	cdf_mem_copy(addPeriodicTxPtrnParams->macAddress,
-		     pAdapter->macAddressCurrent.bytes, 6);
+	cdf_copy_macaddr(&addPeriodicTxPtrnParams->mac_address,
+			 &pAdapter->macAddressCurrent);
 
 	/* Extract the pattern */
 	for (i = 0; i < addPeriodicTxPtrnParams->ucPtrnSize; i++) {
