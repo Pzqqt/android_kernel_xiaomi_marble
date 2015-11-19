@@ -833,7 +833,8 @@ tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 	}
 
 	pExcludeUnencryptParam->excludeUnencrypt = excludeUnenc;
-	sir_copy_mac_addr(pExcludeUnencryptParam->bssId, psessionEntry->bssId);
+	cdf_mem_copy(pExcludeUnencryptParam->bssid.bytes, psessionEntry->bssId,
+			CDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_EXCLUDE_UNENCRYPTED_IND;
 	msgQ.reserved = 0;
