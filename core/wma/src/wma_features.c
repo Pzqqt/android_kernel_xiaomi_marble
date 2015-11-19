@@ -5213,10 +5213,10 @@ CDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 		return CDF_STATUS_E_NOMEM;
 	}
 	if (!wma_find_vdev_by_addr(wma_handle,
-				   pDelPeriodicTxPtrnParams->macAddress,
+				   pDelPeriodicTxPtrnParams->mac_address.bytes,
 				   &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev id for %pM", __func__,
-			 pDelPeriodicTxPtrnParams->macAddress);
+			 pDelPeriodicTxPtrnParams->mac_address.bytes);
 		cdf_nbuf_free(wmi_buf);
 		return CDF_STATUS_E_INVAL;
 	}
