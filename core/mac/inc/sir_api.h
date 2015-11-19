@@ -3591,15 +3591,6 @@ typedef enum eSirAddonPsReq {
 	eSIR_ADDON_DISABLE_UAPSD
 } tSirAddonPsReq;
 
-/* Powersave Offload data */
-typedef struct sSirPsReqData {
-	/* BSSID */
-	tSirMacAddr bssId;
-
-	/* Additional Info */
-	tSirAddonPsReq addOnReq;
-} tSirPsReqData, *tpSirPsReqData;
-
 #ifdef FEATURE_WLAN_LPHB
 #define SIR_LPHB_FILTER_LEN   64
 
