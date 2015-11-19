@@ -2629,7 +2629,7 @@ CDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx)
 
 void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 {
-	uint8_t *bssid = NULL;
+	struct cdf_mac_addr *bssid = NULL;
 	tSirUpdateIE updateIE;
 	switch (pHostapdAdapter->device_mode) {
 	case WLAN_HDD_INFRA_STATION:
@@ -2637,14 +2637,14 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 	{
 		hdd_station_ctx_t *pHddStaCtx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pHostapdAdapter);
-		bssid = (uint8_t *) &pHddStaCtx->conn_info.bssId;
+		bssid = &pHddStaCtx->conn_info.bssId;
 		break;
 	}
 	case WLAN_HDD_SOFTAP:
 	case WLAN_HDD_P2P_GO:
 	case WLAN_HDD_IBSS:
 	{
-		bssid = pHostapdAdapter->macAddressCurrent.bytes;
+		bssid = &pHostapdAdapter->macAddressCurrent;
 		break;
 	}
 	case WLAN_HDD_FTM:
@@ -2660,7 +2660,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 		return;
 	}
 
-	cdf_mem_copy(updateIE.bssid, bssid, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&updateIE.bssid, bssid);
 	updateIE.smeSessionId = pHostapdAdapter->sessionId;
 	updateIE.ieBufferlength = 0;
 	updateIE.pAdditionIEBuffer = NULL;
@@ -2835,9 +2835,8 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 						     adapter->device_mode,
 							adapter->sessionId);
 
-			cdf_mem_copy(updateIE.bssid,
-				     adapter->macAddressCurrent.bytes,
-				     sizeof(tSirMacAddr));
+			cdf_copy_macaddr(&updateIE.bssid,
+					 &adapter->macAddressCurrent);
 			updateIE.smeSessionId = adapter->sessionId;
 			updateIE.ieBufferlength = 0;
 			updateIE.pAdditionIEBuffer = NULL;

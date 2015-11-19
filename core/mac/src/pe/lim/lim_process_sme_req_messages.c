@@ -5362,12 +5362,12 @@ static void lim_process_update_add_ies(tpAniSirGlobal mac_ctx,
 	update_ie = &update_add_ies->updateIE;
 	/* incoming message has smeSession, use BSSID to find PE session */
 	session_entry = pe_find_session_by_bssid(mac_ctx,
-			update_ie->bssid, &session_id);
+			update_ie->bssid.bytes, &session_id);
 
 	if (NULL == session_entry) {
 		lim_log(mac_ctx, LOGE, FL("Session not found for given bssid. "
 				       MAC_ADDRESS_STR),
-			MAC_ADDR_ARRAY(update_ie->bssid));
+			MAC_ADDR_ARRAY(update_ie->bssid.bytes));
 		goto end;
 	}
 	addn_ie = &session_entry->addIeParams;
