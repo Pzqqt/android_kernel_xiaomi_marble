@@ -586,16 +586,12 @@ CDF_STATUS wma_lphb_conf_udp_params(tp_wma_handle wma_handle,
 	ts_lphb_udp_param = &(lphb_conf_req->params.lphbUdpParamReq);
 	WMA_LOGI("%s: WMA --> WMI_HB_SET_UDP_PARAMS srv_ip=%d, dev_ip=%d, src_port=%d, "
 		"dst_port=%d, interval=%d, timeout=%d, session=%d, "
-		"gateway_mac=%2x:%2x:%2x:%2x:%2x:%2x", __func__,
+		"gateway_mac="MAC_ADDRESS_STR, __func__,
 		ts_lphb_udp_param->srv_ip, ts_lphb_udp_param->dev_ip,
 		ts_lphb_udp_param->src_port, ts_lphb_udp_param->dst_port,
 		ts_lphb_udp_param->interval, ts_lphb_udp_param->timeout,
-		ts_lphb_udp_param->session, ts_lphb_udp_param->gateway_mac[0],
-		ts_lphb_udp_param->gateway_mac[1],
-		ts_lphb_udp_param->gateway_mac[2],
-		ts_lphb_udp_param->gateway_mac[3],
-		ts_lphb_udp_param->gateway_mac[4],
-		ts_lphb_udp_param->gateway_mac[5]);
+		ts_lphb_udp_param->session,
+		MAC_ADDR_ARRAY(ts_lphb_udp_param->gateway_mac.bytes));
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
@@ -619,7 +615,7 @@ CDF_STATUS wma_lphb_conf_udp_params(tp_wma_handle wma_handle,
 	hb_udp_params_fp->interval = ts_lphb_udp_param->interval;
 	hb_udp_params_fp->timeout = ts_lphb_udp_param->timeout;
 	hb_udp_params_fp->session = ts_lphb_udp_param->session;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(ts_lphb_udp_param->gateway_mac,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(ts_lphb_udp_param->gateway_mac.bytes,
 				   &hb_udp_params_fp->gateway_mac);
 
 	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,

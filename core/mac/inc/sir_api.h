@@ -3645,7 +3645,7 @@ typedef struct sSirLPHBUdpParamStruct {
 	uint16_t interval;
 	uint16_t timeout;
 	uint8_t session;
-	tSirMacAddr gateway_mac;
+	struct cdf_mac_addr gateway_mac;
 } tSirLPHBUdpParamStruct;
 
 typedef struct sSirLPHBUdpFilterStruct {
