@@ -600,11 +600,12 @@ static int cds_mc_thread(void *Arg)
  */
 void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 {
-	struct cds_ol_rx_pkt *pkt, *tmp;
+	struct cds_ol_rx_pkt *pkt;
 
 	spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
-	list_for_each_entry_safe(pkt, tmp, &pSchedContext->cds_ol_rx_pkt_freeq,
-				 list) {
+	while (!list_empty(&pSchedContext->cds_ol_rx_pkt_freeq)) {
+		pkt = list_entry((&pSchedContext->cds_ol_rx_pkt_freeq)->next,
+			typeof(*pkt), list);
 		list_del(&pkt->list);
 		spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 		cdf_mem_free(pkt);
