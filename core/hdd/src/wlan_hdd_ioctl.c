@@ -2444,11 +2444,10 @@ int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 	rateUpdate.mcastDataRate24GHzTxFlag = 1;
 	rateUpdate.mcastDataRate5GHz = targetRate;
 	rateUpdate.bcastDataRate = -1;
-	memcpy(rateUpdate.bssid, pAdapter->macAddressCurrent.bytes,
-	       sizeof(rateUpdate.bssid));
+	cdf_copy_macaddr(&rateUpdate.bssid, &pAdapter->macAddressCurrent);
 	hddLog(LOG1,
 		FL("MC Target rate %d, mac = %pM, dev_mode %s(%d)"),
-		rateUpdate.mcastDataRate24GHz, rateUpdate.bssid,
+		rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 	status = sme_send_rate_update_ind(pHddCtx->hHal, &rateUpdate);

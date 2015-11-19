@@ -3717,7 +3717,7 @@ typedef struct {
 #endif
 typedef struct sSirRateUpdateInd {
 	uint8_t nss;            /* 0: 1x1, 1: 2x2 */
-	tSirMacAddr bssid;
+	struct cdf_mac_addr bssid;
 	tCDF_CON_MODE dev_mode;
 	int32_t bcastDataRate;  /* bcast rate unit Mbpsx10, -1:not used */
 	/*
