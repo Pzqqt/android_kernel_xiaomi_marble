@@ -6319,7 +6319,7 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 
 	tdls_event->sessionId = peer_event->vdev_id;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&peer_event->peer_macaddr,
-				   tdls_event->peerMac);
+				   tdls_event->peermac.bytes);
 
 	switch (peer_event->peer_status) {
 	case WMI_TDLS_SHOULD_DISCOVER:
@@ -6369,7 +6369,7 @@ int wma_tdls_event_handler(void *handle, uint8_t *event, uint32_t len)
 
 	WMA_LOGD("%s: sending msg to umac, messageType: 0x%x, "
 		 "for peer: %pM, reason: %d, smesessionId: %d",
-		 __func__, tdls_event->messageType, tdls_event->peerMac,
+		 __func__, tdls_event->messageType, tdls_event->peermac.bytes,
 		 tdls_event->peer_reason, tdls_event->sessionId);
 
 	wma_send_msg(wma, tdls_event->messageType, (void *)tdls_event, 0);

@@ -770,39 +770,36 @@ CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsLinkEstablish);
 		break;
 	case eWNI_SME_TDLS_SHOULD_DISCOVER:
-		cdf_mem_copy(&roamInfo.peerMac, tevent->peerMac,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_SHOULD_DISCOVER for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
-				__func__, MAC_ADDR_ARRAY(tevent->peerMac),
+				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 				tevent->peer_reason);
 		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_DISCOVER);
 		break;
 	case eWNI_SME_TDLS_SHOULD_TEARDOWN:
-		cdf_mem_copy(&roamInfo.peerMac, tevent->peerMac,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_SHOULD_TEARDOWN for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
-				__func__, MAC_ADDR_ARRAY(tevent->peerMac),
+				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 				tevent->peer_reason);
 		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_TEARDOWN);
 		break;
 	case eWNI_SME_TDLS_PEER_DISCONNECTED:
-		cdf_mem_copy(&roamInfo.peerMac, tevent->peerMac,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_PEER_DISCONNECTED for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
-				__func__, MAC_ADDR_ARRAY(tevent->peerMac),
+				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
 				tevent->peer_reason);
 		csr_roam_call_callback(pMac, tevent->sessionId, &roamInfo,
 				0, eCSR_ROAM_TDLS_STATUS_UPDATE,
