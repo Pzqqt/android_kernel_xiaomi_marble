@@ -3850,7 +3850,7 @@ typedef struct sSirModifyIEsInd {
 
 /* Message format for Update IE message sent to PE  */
 typedef struct sSirUpdateIE {
-	tSirMacAddr bssid;
+	struct cdf_mac_addr bssid;
 	uint16_t smeSessionId;
 	bool append;
 	bool notify;

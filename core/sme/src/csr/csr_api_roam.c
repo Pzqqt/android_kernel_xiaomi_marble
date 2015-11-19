@@ -18335,8 +18335,7 @@ csr_roam_update_add_ies(tpAniSirGlobal pMac,
 	pUpdateAddIEs->msgType = eWNI_SME_UPDATE_ADDITIONAL_IES;
 	pUpdateAddIEs->msgLen = sizeof(tSirUpdateIEsInd);
 
-	cdf_mem_copy(pUpdateAddIEs->updateIE.bssid, pUpdateIE->bssid,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pUpdateAddIEs->updateIE.bssid, &pUpdateIE->bssid);
 
 	pUpdateAddIEs->updateIE.smeSessionId = pUpdateIE->smeSessionId;
 	pUpdateAddIEs->updateIE.append = pUpdateIE->append;

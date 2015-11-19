@@ -6828,8 +6828,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 					      WLAN_EID_OVERLAP_BSS_SCAN_PARAM);
 	}
 #endif
-	cdf_mem_copy(updateIE.bssid, adapter->macAddressCurrent.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
 	updateIE.smeSessionId = adapter->sessionId;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
@@ -8168,8 +8167,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	cdf_mem_copy(updateIE.bssid, pAdapter->macAddressCurrent.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&updateIE.bssid, &pAdapter->macAddressCurrent);
 	updateIE.smeSessionId = pAdapter->sessionId;
 	updateIE.ieBufferlength = 0;
 	updateIE.pAdditionIEBuffer = NULL;
