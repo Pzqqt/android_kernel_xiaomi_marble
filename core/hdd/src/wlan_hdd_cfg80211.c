@@ -3679,9 +3679,8 @@ wlan_hdd_del_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		return -ENOMEM;
 	}
 
-	cdf_mem_copy(del_req->macAddress, adapter->macAddressCurrent.bytes,
-			CDF_MAC_ADDR_SIZE);
-	hddLog(LOG1, MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->macAddress));
+	cdf_copy_macaddr(&del_req->mac_address, &adapter->macAddressCurrent);
+	hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->mac_address.bytes));
 	del_req->ucPtrnId = pattern_id;
 	hddLog(LOG1, FL("Request Id: %u Pattern id: %d"),
 			 request_id, del_req->ucPtrnId);

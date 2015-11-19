@@ -405,8 +405,8 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		}
 		delPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
 		delPeriodicTxPtrnParams->ucPatternIdBitmap = 1 << pattern_idx;
-		cdf_mem_copy(delPeriodicTxPtrnParams->macAddress,
-			     pAdapter->macAddressCurrent.bytes, 6);
+		cdf_copy_macaddr(&delPeriodicTxPtrnParams->mac_address,
+				 &pAdapter->macAddressCurrent);
 
 		/* Delete pattern */
 		status = sme_del_periodic_tx_ptrn(pHddCtx->hHal,
