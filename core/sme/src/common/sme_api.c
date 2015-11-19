@@ -228,6 +228,7 @@ static CDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 			if (saved_cmd) {
 				cdf_mem_free(saved_cmd);
 				saved_cmd = NULL;
+				mac->sme.saved_scan_cmd = NULL;
 			}
 		} else {
 			sms_log(mac, LOGE,
