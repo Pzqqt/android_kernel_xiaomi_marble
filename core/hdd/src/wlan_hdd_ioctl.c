@@ -1510,11 +1510,11 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			if (ret < 0)
 				return CDF_STATUS_E_FAILURE;
 
-			pPlmRequest->macAddr[count] = content;
+			pPlmRequest->mac_addr.bytes[count] = content;
 		}
 
-		hddLog(CDF_TRACE_LEVEL_DEBUG, "MC addr " MAC_ADDRESS_STR,
-		       MAC_ADDR_ARRAY(pPlmRequest->macAddr));
+		hdd_debug("MC addr " MAC_ADDRESS_STR,
+		       MAC_ADDR_ARRAY(pPlmRequest->mac_addr.bytes));
 
 		cmdPtr = strpbrk(cmdPtr, " ");
 

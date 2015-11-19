@@ -3780,7 +3780,7 @@ CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
 	cmd->off_duration = plm->measDuration;
 	cmd->burst_cycle = plm->burstLen;
 	cmd->tx_power = plm->desiredTxPwr;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(plm->macAddr, &cmd->dest_mac);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(plm->mac_addr.bytes, &cmd->dest_mac);
 	cmd->num_chans = plm->plmNumCh;
 
 	buf_ptr += sizeof(wmi_vdev_plmreq_start_cmd_fixed_param);
