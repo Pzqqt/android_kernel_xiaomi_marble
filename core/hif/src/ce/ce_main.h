@@ -102,7 +102,6 @@ struct ce_tasklet_entry {
 	enum ce_id_type ce_id;
 	bool inited;
 	void *hif_ce_state;
-	bool from_irq;
 };
 
 struct HIF_CE_state {
