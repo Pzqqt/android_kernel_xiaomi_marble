@@ -557,8 +557,8 @@ typedef struct sSirSmeStartBssReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Added for BT-AMP Support */
 	uint16_t transactionId; /* Added for BT-AMP Support */
-	tSirMacAddr bssId;      /* Added for BT-AMP Support */
-	tSirMacAddr selfMacAddr;        /* Added for BT-AMP Support */
+	struct cdf_mac_addr bssid;      /* Added for BT-AMP Support */
+	struct cdf_mac_addr self_macaddr;        /* Added for BT-AMP Support */
 	uint16_t beaconInterval;        /* Added for BT-AMP Support */
 	uint8_t dot11mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

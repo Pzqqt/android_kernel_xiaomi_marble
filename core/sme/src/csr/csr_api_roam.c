@@ -14687,11 +14687,9 @@ CDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	pMsg->sessionId = sessionId;
 	pMsg->length = sizeof(tSirSmeStartBssReq);
 	pMsg->transactionId = 0;
-	cdf_mem_copy(pMsg->bssId, pParam->bssid.bytes, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
 	/* selfMacAddr */
-	cdf_mem_copy(pMsg->selfMacAddr,
-		     pSession->selfMacAddr.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->self_macaddr, &pSession->selfMacAddr);
 	/* beaconInterval */
 	if (pBssDesc && pBssDesc->beaconInterval)
 		wTmp = pBssDesc->beaconInterval;
