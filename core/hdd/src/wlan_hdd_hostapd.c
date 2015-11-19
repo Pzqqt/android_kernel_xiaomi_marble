@@ -2349,9 +2349,8 @@ static __iw_softap_setparam(struct net_device *dev,
 		struct hdd_config *pConfig = hdd_ctx->config;
 
 		hddLog(LOG1, "MC Target rate %d", set_value);
-		memcpy(rateUpdate.bssid,
-		       pHostapdAdapter->macAddressCurrent.bytes,
-		       sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&rateUpdate.bssid,
+				 &pHostapdAdapter->macAddressCurrent);
 		rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
 		rateUpdate.dev_mode = pHostapdAdapter->device_mode;
 		rateUpdate.mcastDataRate24GHz = set_value;

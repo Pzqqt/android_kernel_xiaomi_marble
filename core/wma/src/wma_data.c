@@ -1407,10 +1407,11 @@ CDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	struct wma_txrx_node *intr = wma->interfaces;
 
 	/* Get the vdev id */
-	pdev = wma_find_vdev_by_addr(wma, pRateUpdateParams->bssid, &vdev_id);
+	pdev = wma_find_vdev_by_addr(wma, pRateUpdateParams->bssid.bytes,
+					&vdev_id);
 	if (!pdev) {
 		WMA_LOGE("vdev handle is invalid for %pM",
-			 pRateUpdateParams->bssid);
+			 pRateUpdateParams->bssid.bytes);
 		cdf_mem_free(pRateUpdateParams);
 		return CDF_STATUS_E_INVAL;
 	}
@@ -1440,7 +1441,7 @@ CDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	WMA_LOGE("%s: dev_id = %d, dev_type = %d, dev_mode = %d, "
 		 "mac = %pM, config.shortgi = %d, rate_flags = 0x%x",
 		 __func__, vdev_id, intr[vdev_id].type,
-		 pRateUpdateParams->dev_mode, pRateUpdateParams->bssid,
+		 pRateUpdateParams->dev_mode, pRateUpdateParams->bssid.bytes,
 		 intr[vdev_id].config.shortgi, intr[vdev_id].rate_flags);
 	ret = wma_encode_mc_rate(short_gi, intr[vdev_id].config.chwidth,
 				 intr[vdev_id].chanmode, intr[vdev_id].mhz,
