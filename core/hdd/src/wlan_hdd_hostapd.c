@@ -5239,7 +5239,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	char *pLinkSpeed = (char *)extra;
 	uint32_t link_speed = 0;
 	int len = sizeof(uint32_t) + 1;
-	tSirMacAddr macAddress;
+	struct cdf_mac_addr macAddress;
 	char pmacAddress[MAC_ADDRESS_STR_LEN + 1];
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	int rc, valid, i;
@@ -5261,7 +5261,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 		}
 		pmacAddress[MAC_ADDRESS_STR_LEN] = '\0';
 
-		if (!mac_pton(pmacAddress, macAddress)) {
+		if (!mac_pton(pmacAddress, macAddress.bytes)) {
 			hddLog(LOGE, FL("String to Hex conversion Failed"));
 			return -EINVAL;
 		}
@@ -5275,8 +5275,8 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 			    (!cdf_is_macaddr_broadcast
 				  (&pHostapdAdapter->aStaInfo[i].macAddrSTA))) {
 				cdf_copy_macaddr(
-					(struct cdf_mac_addr *) macAddress,
-					 &pHostapdAdapter->aStaInfo[i].
+					&macAddress,
+					&pHostapdAdapter->aStaInfo[i].
 					 macAddrSTA);
 				status = CDF_STATUS_SUCCESS;
 				break;

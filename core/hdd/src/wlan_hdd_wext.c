@@ -1336,7 +1336,7 @@ hdd_get_link_speed_cb(tSirLinkSpeedInfo *pLinkSpeed, void *pContext)
  * otherwise a CDF_STATUS_E_* error.
  */
 CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
-					      tSirMacAddr macAddress) {
+					      struct cdf_mac_addr macAddress) {
 	CDF_STATUS status;
 	unsigned long rc;
 	struct linkspeedContext context;
@@ -1356,8 +1356,7 @@ CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 	context.pAdapter = pAdapter;
 	context.magic = LINK_CONTEXT_MAGIC;
 
-	cdf_mem_copy(linkspeed_req->peer_macaddr, macAddress,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&linkspeed_req->peer_macaddr, &macAddress);
 	status = sme_get_link_speed(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				    linkspeed_req,
 				    &context, hdd_get_link_speed_cb);
@@ -1426,10 +1425,9 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 		*link_speed = 0;
 	} else {
 		CDF_STATUS status;
-		tSirMacAddr bssid;
+		struct cdf_mac_addr bssid;
 
-		cdf_mem_copy(bssid, hdd_stactx->conn_info.bssId.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
 
 		status = wlan_hdd_get_linkspeed_for_peermac(sta_adapter, bssid);
 		if (!CDF_IS_STATUS_SUCCESS(status)) {

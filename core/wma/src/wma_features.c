@@ -959,12 +959,12 @@ CDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
 			       (wmi_peer_get_estimated_linkspeed_cmd_fixed_param));
 
 	/* Copy the peer macaddress to the wma buffer */
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(pLinkSpeed->peer_macaddr,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(pLinkSpeed->peer_macaddr.bytes,
 				   &cmd->peer_macaddr);
 
 	WMA_LOGD("%s: pLinkSpeed->peerMacAddr: %pM, "
 		 "peer_macaddr.mac_addr31to0: 0x%x, peer_macaddr.mac_addr47to32: 0x%x",
-		 __func__, pLinkSpeed->peer_macaddr,
+		 __func__, pLinkSpeed->peer_macaddr.bytes,
 		 cmd->peer_macaddr.mac_addr31to0,
 		 cmd->peer_macaddr.mac_addr47to32);
 

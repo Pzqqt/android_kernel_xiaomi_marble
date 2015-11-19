@@ -345,7 +345,7 @@ extern int hdd_priv_get_data(struct iw_point *p_priv_data,
 extern void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 
 extern CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
-						     tSirMacAddr macAddress);
+					     struct cdf_mac_addr mac_address);
 void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter);
 
 uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,

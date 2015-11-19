@@ -3670,7 +3670,7 @@ typedef struct sSirChAvoidUpdateReq {
 
 typedef struct sSirLinkSpeedInfo {
 	/* MAC Address for the peer */
-	tSirMacAddr peer_macaddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint32_t estLinkSpeed;  /* Linkspeed from firmware */
 } tSirLinkSpeedInfo, *tpSirLinkSpeedInfo;
 
