@@ -3625,7 +3625,7 @@ typedef struct sSirLPHBTcpParamStruct {
 	uint16_t dst_port;
 	uint16_t timeout;
 	uint8_t session;
-	tSirMacAddr gateway_mac;
+	struct cdf_mac_addr gateway_mac;
 	uint16_t timePeriodSec; /* in seconds */
 	uint32_t tcpSn;
 } tSirLPHBTcpParamStruct;
