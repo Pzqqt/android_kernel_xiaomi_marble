@@ -3453,7 +3453,7 @@ typedef struct sSirMgmtTxCompletionInd {
 
 typedef struct sSirTdlsEventnotify {
 	uint8_t sessionId;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 	uint16_t messageType;
 	uint32_t peer_reason;
 } tSirTdlsEventnotify;
