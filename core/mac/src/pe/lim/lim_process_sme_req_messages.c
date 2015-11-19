@@ -669,7 +669,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * If session is not existed, then create a new session
 		 */
 		session = pe_find_session_by_bssid(mac_ctx,
-				sme_start_bss_req->bssId, &session_id);
+				sme_start_bss_req->bssid.bytes, &session_id);
 		if (session != NULL) {
 			lim_log(mac_ctx, LOGW,
 				FL("Session Already exists for given BSSID"));
@@ -678,7 +678,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			goto free;
 		} else {
 			session = pe_create_session(mac_ctx,
-					sme_start_bss_req->bssId,
+					sme_start_bss_req->bssid.bytes,
 					&session_id, mac_ctx->lim.maxStation,
 					sme_start_bss_req->bssType);
 			if (session == NULL) {
@@ -726,7 +726,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			     sizeof(session->htConfig));
 
 		sir_copy_mac_addr(session->selfMacAddr,
-				  sme_start_bss_req->selfMacAddr);
+				  sme_start_bss_req->self_macaddr.bytes);
 
 		/* Copy SSID to session table */
 		cdf_mem_copy((uint8_t *) &session->ssId,
