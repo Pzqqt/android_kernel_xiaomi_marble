@@ -18268,8 +18268,7 @@ csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 	pModifyAddIEInd->msgType = eWNI_SME_MODIFY_ADDITIONAL_IES;
 	pModifyAddIEInd->msgLen = sizeof(tSirModifyIEsInd);
 
-	cdf_mem_copy(pModifyAddIEInd->modifyIE.bssid, pModifyIE->bssid,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pModifyAddIEInd->modifyIE.bssid, &pModifyIE->bssid);
 
 	pModifyAddIEInd->modifyIE.smeSessionId = pModifyIE->smeSessionId;
 	pModifyAddIEInd->modifyIE.notify = pModifyIE->notify;
