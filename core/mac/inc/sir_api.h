@@ -1048,7 +1048,7 @@ typedef struct sSirSmeProbereq {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t devicePasswdId;
 } tSirSmeProbeReq, *tpSirSmeProbeReq;
 
