@@ -3830,7 +3830,7 @@ typedef enum tUpdateIEsType {
 
 /* Modify particular IE in addition IE for prob resp Bcn */
 typedef struct sSirModifyIE {
-	tSirMacAddr bssid;
+	struct cdf_mac_addr bssid;
 	uint16_t smeSessionId;
 	bool notify;
 	uint8_t ieID;
