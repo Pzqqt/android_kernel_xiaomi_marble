@@ -3438,15 +3438,6 @@ typedef struct sSirTdlsDelAllPeerInd {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 } tSirTdlsDelAllPeerInd, *tpSirTdlsDelAllPeerInd;
-#ifdef FEATURE_WLAN_TDLS_DISAPPEAR_AP
-typedef struct sSirTdlsDisappearAPInd {
-	uint16_t messageType;
-	uint16_t length;
-	uint8_t sessionId;      /* Session ID */
-	uint16_t staId;
-	tSirMacAddr staAddr;
-} tSirTdlsDisappearAPInd, *tpSirTdlsDisappearAPInd;
-#endif
 typedef struct sSirMgmtTxCompletionInd {
 	uint16_t messageType;
 	uint16_t length;
