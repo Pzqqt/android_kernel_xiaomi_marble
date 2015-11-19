@@ -2021,7 +2021,7 @@ typedef struct sSirPlmReq {
 	/* no of times the STA should cycle through PLM ch list */
 	uint8_t burstLen;
 	tPowerdBm desiredTxPwr; /* desired tx power */
-	tSirMacAddr macAddr;    /* MC dest addr */
+	struct cdf_mac_addr mac_addr;    /* MC dest addr */
 	/* no of channels */
 	uint8_t plmNumCh;
 	/* channel numbers */
