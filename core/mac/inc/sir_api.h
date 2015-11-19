@@ -1908,7 +1908,7 @@ typedef struct sSirMacESETSMIE {
 } tSirMacESETSMIE;
 typedef struct sTSMStats {
 	uint8_t tid;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 	tTrafStrmMetrics tsmMetrics;
 } tTSMStats, *tpTSMStats;
 typedef struct sEseTSMContext {
