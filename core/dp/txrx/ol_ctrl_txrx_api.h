@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,24 +38,8 @@
 
 #include <ol_ctrl_api.h>            /* ol_vdev_handle */
 #include <ol_txrx_api.h>            /* ol_txrx_peer_handle, etc. */
+#include <ol_txrx_types.h>          /* OL_TXRX_MAC_ADDR_LEN */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
-
-enum ol_rx_err_type {
-	OL_RX_ERR_DEFRAG_MIC,
-	OL_RX_ERR_PN,
-	OL_RX_ERR_UNKNOWN_PEER,
-	OL_RX_ERR_MALFORMED,
-	OL_RX_ERR_TKIP_MIC,
-	OL_RX_ERR_DECRYPT,
-	OL_RX_ERR_MPDU_LENGTH,
-	OL_RX_ERR_ENCRYPT_REQUIRED,
-	OL_RX_ERR_DUP,
-	OL_RX_ERR_UNKNOWN,
-	OL_RX_ERR_FCS,
-	OL_RX_ERR_PRIVACY,
-	OL_RX_ERR_NONE_FRAG,
-	OL_RX_ERR_NONE = 0xFF
-};
 
 #ifdef SUPPORT_HOST_STATISTICS
 /** * @brief Update tx statistics
@@ -185,6 +169,5 @@ void ol_tx_paused_peer_data(ol_peer_handle peer, int has_tx_data);
 #define ol_ctrl_rx_addba_complete(pdev, peer_mac_addr, tid, failed) /* no-op */
 
 void ol_txrx_set_peer_authorized_event(struct ol_txrx_vdev_t *vdev);
-
 
 #endif /* _OL_CTRL_TXRX_API__H_ */

@@ -2050,4 +2050,7 @@ static inline CDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	return CDF_STATUS_SUCCESS;
 }
 #endif
+void
+wma_indicate_err(enum ol_rx_err_type err_type,
+	 struct ol_error_info *err_info);
 #endif

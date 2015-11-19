@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,9 +47,6 @@
 #include "ol_txrx_htt_api.h"
 #include "ol_htt_tx_api.h"
 #include "ol_htt_rx_api.h"
-#include <ol_ctrl_txrx_api.h>
-#include <ol_txrx_ctrl_api.h>
-
 
 /*
  * The target may allocate multiple IDs for a peer.
@@ -1008,4 +1005,50 @@ struct ol_txrx_peer_t {
 	uint16_t last_pkt_center_freq;
 };
 
+enum ol_rx_err_type {
+	OL_RX_ERR_DEFRAG_MIC,
+	OL_RX_ERR_PN,
+	OL_RX_ERR_UNKNOWN_PEER,
+	OL_RX_ERR_MALFORMED,
+	OL_RX_ERR_TKIP_MIC,
+	OL_RX_ERR_DECRYPT,
+	OL_RX_ERR_MPDU_LENGTH,
+	OL_RX_ERR_ENCRYPT_REQUIRED,
+	OL_RX_ERR_DUP,
+	OL_RX_ERR_UNKNOWN,
+	OL_RX_ERR_FCS,
+	OL_RX_ERR_PRIVACY,
+	OL_RX_ERR_NONE_FRAG,
+	OL_RX_ERR_NONE = 0xFF
+};
+
+/**
+ * ol_mic_error_info - carries the information associated with
+ * a MIC error
+ * @vdev_id: virtual device ID
+ * @key_id: Key ID
+ * @pn: packet number
+ * @sa: source address
+ * @da: destination address
+ * @ta: transmitter address
+ */
+struct ol_mic_error_info {
+	uint8_t vdev_id;
+	uint32_t key_id;
+	uint64_t pn;
+	uint8_t sa[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t da[OL_TXRX_MAC_ADDR_LEN];
+	uint8_t ta[OL_TXRX_MAC_ADDR_LEN];
+};
+
+/**
+ * ol_error_info - carries the information associated with an
+ * error indicated by the firmware
+ * @mic_err: MIC error information
+ */
+struct ol_error_info {
+	union {
+		struct ol_mic_error_info mic_err;
+	} u;
+};
 #endif /* _OL_TXRX_TYPES__H_ */

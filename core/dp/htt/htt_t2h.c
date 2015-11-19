@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,7 @@
  *      based on the HTT message type.
  *  2.  functions that provide the info elements from specific HTT messages.
  */
-
+#include <wma.h>
 #include <htc_api.h>            /* HTC_PACKET */
 #include <htt.h>                /* HTT_T2H_MSG_TYPE, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
@@ -49,6 +49,8 @@
 #include <wdi_event.h>
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_types.h>
+#include <ol_txrx_peer_find.h>
+
 /*--- target->host HTT message dispatch function ----------------------------*/
 
 #ifndef DEBUG_CREDIT
@@ -416,6 +418,55 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 					pool_numap_payload->flow_type,
 					pool_numap_payload->flow_pool_id);
 		break;
+	}
+
+	case HTT_T2H_MSG_TYPE_RX_OFLD_PKT_ERR:
+	{
+		switch (HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word)) {
+		case HTT_RX_OFLD_PKT_ERR_TYPE_MIC_ERR:
+		{
+			struct ol_error_info err_info;
+			struct ol_txrx_vdev_t *vdev;
+			struct ol_txrx_peer_t *peer;
+			uint16_t peer_id =
+				 HTT_RX_OFLD_PKT_ERR_MIC_ERR_PEER_ID_GET
+				(*(msg_word + 1));
+
+			peer = ol_txrx_peer_find_by_id(pdev->txrx_pdev,
+				 peer_id);
+			if (!peer) {
+				cdf_print("%s: invalid peer id %d\n",
+					 __func__, peer_id);
+				cdf_assert(0);
+				break;
+			}
+			vdev = peer->vdev;
+			err_info.u.mic_err.vdev_id = vdev->vdev_id;
+			err_info.u.mic_err.key_id =
+				HTT_RX_OFLD_PKT_ERR_MIC_ERR_KEYID_GET
+				(*(msg_word + 1));
+			cdf_mem_copy(err_info.u.mic_err.da,
+				 (uint8_t *)(msg_word + 2),
+				 OL_TXRX_MAC_ADDR_LEN);
+			cdf_mem_copy(err_info.u.mic_err.sa,
+				 (uint8_t *)(msg_word + 4),
+				 OL_TXRX_MAC_ADDR_LEN);
+			cdf_mem_copy(&err_info.u.mic_err.pn,
+				 (uint8_t *)(msg_word + 6), 6);
+			cdf_mem_copy(err_info.u.mic_err.ta,
+				 peer->mac_addr.raw, OL_TXRX_MAC_ADDR_LEN);
+
+			wma_indicate_err(OL_RX_ERR_TKIP_MIC, &err_info);
+			break;
+		}
+		default:
+		{
+			cdf_print("%s: unhandled error type %d\n",
+			 __func__,
+			 HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word));
+		break;
+		}
+		}
 	}
 
 	default:

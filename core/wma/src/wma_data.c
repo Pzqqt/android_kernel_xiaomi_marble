@@ -3077,3 +3077,86 @@ CDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	return CDF_STATUS_SUCCESS;
 }
 #endif
+
+/**
+ * wma_indicate_err() - indicate an error to the protocol stack
+ * @err_type: error type
+ * @err_info: information associated with the error
+ *
+ * This function indicates an error encountered in the data path
+ * to the protocol stack
+ *
+ * Return: none
+ */
+void
+wma_indicate_err(
+	enum ol_rx_err_type err_type,
+	struct ol_error_info *err_info)
+{
+	switch (err_type) {
+	case OL_RX_ERR_TKIP_MIC:
+	{
+		tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+		tpSirSmeMicFailureInd mic_err_ind;
+		cds_msg_t cds_msg;
+		uint8_t vdev_id;
+
+		if (NULL == wma) {
+			WMA_LOGE("%s: Failed to get wma context",
+				 __func__);
+			return;
+		}
+
+		mic_err_ind = cdf_mem_malloc(sizeof(*mic_err_ind));
+		if (!mic_err_ind) {
+			WMA_LOGE("%s: MIC indication mem alloc failed",
+					 __func__);
+			return;
+		}
+
+		cdf_mem_set((void *) mic_err_ind, 0,
+			 sizeof(*mic_err_ind));
+		mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
+		mic_err_ind->length = sizeof(*mic_err_ind);
+		vdev_id = err_info->u.mic_err.vdev_id;
+		cdf_copy_macaddr(&mic_err_ind->bssId,
+		     (struct cdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
+		WMA_LOGE("MIC error: BSSID:%02x:%02x:%02x:%02x:%02x:%02x\n",
+			 mic_err_ind->bssId.bytes[0], mic_err_ind->bssId.bytes[1],
+			 mic_err_ind->bssId.bytes[2], mic_err_ind->bssId.bytes[3],
+			 mic_err_ind->bssId.bytes[4], mic_err_ind->bssId.bytes[5]);
+		cdf_mem_copy(mic_err_ind->info.taMacAddr,
+			 (struct cdf_mac_addr *) err_info->u.mic_err.ta,
+			 sizeof(tSirMacAddr));
+		cdf_mem_copy(mic_err_ind->info.srcMacAddr,
+			 (struct cdf_mac_addr *) err_info->u.mic_err.sa,
+			 sizeof(tSirMacAddr));
+		cdf_mem_copy(mic_err_ind->info.dstMacAddr,
+			(struct cdf_mac_addr *) err_info->u.mic_err.da,
+			 sizeof(tSirMacAddr));
+		mic_err_ind->info.keyId = err_info->u.mic_err.key_id;
+		mic_err_ind->info.multicast =
+			 IEEE80211_IS_MULTICAST(err_info->u.mic_err.da);
+		cdf_mem_copy(mic_err_ind->info.TSC,
+			 (void *)&err_info->
+			 u.mic_err.pn, SIR_CIPHER_SEQ_CTR_SIZE);
+
+		cdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
+		cds_msg.type = eWNI_SME_MIC_FAILURE_IND;
+		cds_msg.bodyptr = (void *) mic_err_ind;
+		if (CDF_STATUS_SUCCESS !=
+			cds_mq_post_message(CDS_MQ_ID_SME,
+				 (cds_msg_t *) &cds_msg)) {
+			WMA_LOGE("%s: mic failure ind post to SME failed",
+					 __func__);
+			cdf_mem_free((void *)mic_err_ind);
+		}
+		break;
+	}
+	default:
+	{
+		WMA_LOGE("%s: unhandled ol error type %d", __func__, err_type);
+		break;
+	}
+	}
+}
