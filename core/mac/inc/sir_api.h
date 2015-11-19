@@ -3482,7 +3482,7 @@ typedef struct sSirSmeCandidateFoundInd {
 #ifdef WLAN_FEATURE_11W
 typedef struct sSirWlanExcludeUnencryptParam {
 	bool excludeUnencrypt;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 } tSirWlanExcludeUnencryptParam, *tpSirWlanExcludeUnencryptParam;
 #endif
 
