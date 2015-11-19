@@ -438,17 +438,14 @@ CDF_STATUS wma_lphb_conf_tcp_params(tp_wma_handle wma_handle,
 	}
 
 	ts_lphb_tcp_param = &(lphb_conf_req->params.lphbTcpParamReq);
-	WMA_LOGI("%s: WMA --> WMI_HB_SET_TCP_PARAMS srv_ip=%08x, dev_ip=%08x, src_port=%d, "
-		"dst_port=%d, timeout=%d, session=%d, gateway_mac=%02x:%02x:%02x:%02x:%02x:%02x, "
-		"timePeriodSec=%d, tcpSn=%d", __func__, ts_lphb_tcp_param->srv_ip,
+	WMA_LOGI("%s: WMA --> WMI_HB_SET_TCP_PARAMS srv_ip=%08x, "
+		"dev_ip=%08x, src_port=%d, dst_port=%d, timeout=%d, "
+		"session=%d, gateway_mac="MAC_ADDRESS_STR", timePeriodSec=%d, "
+		"tcpSn=%d", __func__, ts_lphb_tcp_param->srv_ip,
 		ts_lphb_tcp_param->dev_ip, ts_lphb_tcp_param->src_port,
 		ts_lphb_tcp_param->dst_port, ts_lphb_tcp_param->timeout,
-		ts_lphb_tcp_param->session, ts_lphb_tcp_param->gateway_mac[0],
-		ts_lphb_tcp_param->gateway_mac[1],
-		ts_lphb_tcp_param->gateway_mac[2],
-		ts_lphb_tcp_param->gateway_mac[3],
-		ts_lphb_tcp_param->gateway_mac[4],
-		ts_lphb_tcp_param->gateway_mac[5],
+		ts_lphb_tcp_param->session,
+		MAC_ADDR_ARRAY(ts_lphb_tcp_param->gateway_mac.bytes),
 		ts_lphb_tcp_param->timePeriodSec, ts_lphb_tcp_param->tcpSn);
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
@@ -474,7 +471,7 @@ CDF_STATUS wma_lphb_conf_tcp_params(tp_wma_handle wma_handle,
 	hb_tcp_params_fp->interval = ts_lphb_tcp_param->timePeriodSec;
 	hb_tcp_params_fp->timeout = ts_lphb_tcp_param->timeout;
 	hb_tcp_params_fp->session = ts_lphb_tcp_param->session;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(ts_lphb_tcp_param->gateway_mac,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(ts_lphb_tcp_param->gateway_mac.bytes,
 				   &hb_tcp_params_fp->gateway_mac);
 
 	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
