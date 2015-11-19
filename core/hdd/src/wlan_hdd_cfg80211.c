@@ -3559,14 +3559,14 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		hddLog(LOGE, FL("attr source mac address failed"));
 		goto fail;
 	}
-	nla_memcpy(add_req->macAddress, tb[PARAM_SRC_MAC_ADDR],
+	nla_memcpy(add_req->mac_address.bytes, tb[PARAM_SRC_MAC_ADDR],
 			CDF_MAC_ADDR_SIZE);
 	hddLog(LOG1, "input src mac address: "MAC_ADDRESS_STR,
-			MAC_ADDR_ARRAY(add_req->macAddress));
+			MAC_ADDR_ARRAY(add_req->mac_address.bytes));
 
-	if (memcmp(add_req->macAddress, adapter->macAddressCurrent.bytes,
-		CDF_MAC_ADDR_SIZE)) {
-		hddLog(LOGE, FL("input src mac address and connected ap bssid are different"));
+	if (!cdf_is_macaddr_equal(&add_req->mac_address,
+				  &adapter->macAddressCurrent)) {
+		hdd_err("input src mac address and connected ap bssid are different");
 		goto fail;
 	}
 
@@ -3596,7 +3596,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	len = 0;
 	cdf_mem_copy(&add_req->ucPattern[0], dst_addr.bytes, CDF_MAC_ADDR_SIZE);
 	len += CDF_MAC_ADDR_SIZE;
-	cdf_mem_copy(&add_req->ucPattern[len], add_req->macAddress,
+	cdf_mem_copy(&add_req->ucPattern[len], add_req->mac_address.bytes,
 			CDF_MAC_ADDR_SIZE);
 	len += CDF_MAC_ADDR_SIZE;
 	cdf_mem_copy(&add_req->ucPattern[len], &eth_type, 2);
