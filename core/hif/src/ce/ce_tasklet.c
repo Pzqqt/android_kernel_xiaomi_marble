@@ -203,9 +203,6 @@ static void ce_tasklet(unsigned long data)
 	struct ol_softc *scn = hif_ce_state->scn;
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
-	if (tasklet_entry->from_irq)
-		tasklet_entry->from_irq = false;
-
 	if (cdf_atomic_read(&scn->link_suspended)) {
 		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
 				__func__, tasklet_entry->ce_id);
@@ -306,10 +303,9 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 	cdf_atomic_inc(&scn->active_tasklet_cnt);
 	if (hif_napi_enabled(scn, ce_id))
 		hif_napi_schedule(scn, ce_id);
-	else {
-		tasklet_entry->from_irq = true;
+	else
 		tasklet_schedule(&tasklet_entry->intr_tq);
-	}
+
 	return IRQ_HANDLED;
 }
 
