@@ -35,8 +35,8 @@
 /*
  * default limit of 8 VAPs per device.
  */
-/* Rome PRD support 3 vdevs */
-#define CFG_TGT_NUM_VDEV                3
+/* Rome PRD support 4 vdevs */
+#define CFG_TGT_NUM_VDEV                4
 
 /*
  * We would need 1 AST entry per peer. Scale it by a factor of 2 to minimize hash collisions.
@@ -130,16 +130,16 @@
 #define CFG_TGT_DEFAULT_SCAN_MAX_REQS   0x4
 
 /* maximum number of VDEV that could use BMISS offload */
-#define CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV   0x2
+#define CFG_TGT_DEFAULT_BMISS_OFFLOAD_MAX_VDEV   0x3
 
 /* maximum number of VDEV offload Roaming to support */
-#define CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV   0x2
+#define CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_VDEV   0x3
 
 /* maximum number of AP profiles pushed to offload Roaming */
 #define CFG_TGT_DEFAULT_ROAM_OFFLOAD_MAX_PROFILES   0x8
 
 /* maximum number of VDEV offload GTK to support */
-#define CFG_TGT_DEFAULT_GTK_OFFLOAD_MAX_VDEV   0x2
+#define CFG_TGT_DEFAULT_GTK_OFFLOAD_MAX_VDEV   0x3
 
 /* default: mcast->ucast disabled if ATH_SUPPORT_MCAST2UCAST not defined */
 #ifndef ATH_SUPPORT_MCAST2UCAST
@@ -186,7 +186,7 @@
 /*
  * Maximum number of VDEV that beacon tx offload will support
  */
-#define CFG_TGT_DEFAULT_BEACON_TX_OFFLOAD_MAX_VDEV 2
+#define CFG_TGT_DEFAULT_BEACON_TX_OFFLOAD_MAX_VDEV 3
 
 /*
  * number of vdevs that can support tdls
