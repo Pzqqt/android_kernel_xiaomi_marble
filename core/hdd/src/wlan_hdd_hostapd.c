@@ -8270,7 +8270,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
-	tSirWifiChannelWidth channel_width;
+	enum hw_mode_bandwidth channel_width;
 	int status;
 	uint8_t channel;
 
