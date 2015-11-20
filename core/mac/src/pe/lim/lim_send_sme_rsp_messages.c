@@ -1182,8 +1182,8 @@ lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	pSirTdlsDelStaInd->sessionId = psessionEntry->smeSessionId;
 
 	/* peerMacAddr */
-	cdf_mem_copy(pSirTdlsDelStaInd->peerMac, pStaDs->staAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirTdlsDelStaInd->peermac.bytes, pStaDs->staAddr,
+		     CDF_MAC_ADDR_SIZE);
 
 	/* staId */
 	lim_copy_u16((uint8_t *) (&pSirTdlsDelStaInd->staId),

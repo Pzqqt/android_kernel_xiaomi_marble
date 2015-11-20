@@ -545,11 +545,11 @@ CDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	/* Using dialog as transactionId. This can be used to match response with request */
 	tdlsDelStaReq->transactionId = 0;
 
-	cdf_mem_copy(tdlsDelStaReq->bssid,
-		     pSession->pConnectBssDesc->bssId, sizeof(tSirMacAddr));
+	cdf_mem_copy(tdlsDelStaReq->bssid.bytes,
+		     pSession->pConnectBssDesc->bssId, CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(tdlsDelStaReq->peerMac,
-		     tdlsDelStaCmdInfo->peerMac, sizeof(tSirMacAddr));
+	cdf_mem_copy(tdlsDelStaReq->peermac.bytes,
+		     tdlsDelStaCmdInfo->peerMac, CDF_MAC_ADDR_SIZE);
 
 	/* Send the request to PE. */
 	sms_log(pMac, LOG1,
@@ -717,8 +717,7 @@ CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsAddPeer);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_RSP:
-		cdf_mem_copy(&roamInfo.peerMac, delStaRsp->peerMac,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac, &delStaRsp->peermac);
 		roamInfo.staId = delStaRsp->staId;
 		roamInfo.statusCode = delStaRsp->statusCode;
 		/*
@@ -733,9 +732,8 @@ CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsDelPeer);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_IND:
-		cdf_mem_copy(&roamInfo.peerMac,
-				pSirTdlsDelStaInd->peerMac,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac,
+				 &pSirTdlsDelStaInd->peermac);
 		roamInfo.staId = pSirTdlsDelStaInd->staId;
 		roamInfo.reasonCode = pSirTdlsDelStaInd->reasonCode;
 

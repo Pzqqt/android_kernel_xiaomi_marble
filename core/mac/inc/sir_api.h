@@ -3418,8 +3418,8 @@ typedef struct sSirTdlsDelStaReq {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	/* For multi-session, for PE to locate peSession ID */
-	tSirMacAddr bssid;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr bssid;
+	struct cdf_mac_addr peermac;
 } tSirTdlsDelStaReq, *tpSirSmeTdlsDelStaReq;
 /* TDLS Response struct PE-->SME */
 typedef struct sSirTdlsDelStaRsp {
@@ -3427,7 +3427,7 @@ typedef struct sSirTdlsDelStaRsp {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	tSirResultCodes statusCode;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 	uint16_t staId;
 } tSirTdlsDelStaRsp, *tpSirTdlsDelStaRsp;
 /* TDLS Delete Indication struct PE-->SME */
@@ -3435,7 +3435,7 @@ typedef struct sSirTdlsDelStaInd {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 	uint16_t staId;
 	uint16_t reasonCode;
 } tSirTdlsDelStaInd, *tpSirTdlsDelStaInd;
