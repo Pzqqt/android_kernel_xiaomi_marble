@@ -2576,6 +2576,24 @@ typedef struct {
 	A_UINT8 bufp[1];
 } wmi_single_phyerr_rx_event;
 
+/* PHY ERROR MASK 0 */
+/* bits 1:0 defined but not published */
+#define WMI_PHY_ERROR_MASK0_RADAR                           (1<<2 )
+/* bits 23:3 defined but not published */
+#define WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT                 (1<<24)
+/* bits 25:24 defined but not published */
+#define WMI_PHY_ERROR_MASK0_SPECTRAL_SCAN                   (1<<26)
+/* bits 31:27 defined but not published */
+
+/* PHY ERROR MASK 1
+ * bits 13:0 defined but not published
+ * bits 31:14 reserved
+ */
+
+/* PHY ERROR MASK 2
+ * bits 31:0 reserved
+ */
+
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_comb_phyerr_rx_hdr */
 	/** Phy error phy error count */
@@ -2584,6 +2602,10 @@ typedef struct {
 	A_UINT32 tsf_u32;
 	A_UINT32 buf_len;
 	A_UINT32 pmac_id;
+	A_UINT32 rsPhyErrMask0; /* see WMI_PHY_ERROR_MASK0 */
+	A_UINT32 rsPhyErrMask1; /* see WMI_PHY_ERROR_MASK1 */
+	A_UINT32 rsPhyErrMask2; /* see WMI_PHY_ERROR_MASK2 */
+
 	/* This TLV is followed by array of bytes:
 	 * // frame buffer - contains multiple payloads in the order:
 	 * // header - payload, header - payload...
