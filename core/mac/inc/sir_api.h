@@ -3351,9 +3351,9 @@ typedef struct sSirTdlsAddStaReq {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	/* For multi-session, for PE to locate peSession ID */
-	tSirMacAddr bssid;
+	struct cdf_mac_addr bssid;
 	eTdlsAddOper tdlsAddOper;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 	uint16_t capability;
 	uint8_t extn_capability[SIR_MAC_MAX_EXTN_CAP];
 	uint8_t supported_rates_length;
@@ -3371,7 +3371,7 @@ typedef struct sSirTdlsAddStaRsp {
 	uint16_t messageType;
 	uint16_t length;
 	tSirResultCodes statusCode;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t staId;
 	uint16_t staType;
