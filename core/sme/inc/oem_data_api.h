@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,7 +53,8 @@
 /* Structure for defining req sent to the PE */
 typedef struct tagOemDataReq {
 	uint8_t sessionId;
-	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
+	uint8_t data_len;
+	uint8_t *data;
 } tOemDataReq, tOemDataReqConfig;
 
 typedef struct tagOemDataRsp {

@@ -89,6 +89,7 @@ CDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal)
 
 		/* initialize all the variables to null */
 		cdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
+
 	} while (0);
 
 	return CDF_STATUS_SUCCESS;
@@ -108,8 +109,13 @@ void oem_data_release_oem_data_req_command(tpAniSirGlobal pMac,
 	/* First take this command out of the active list */
 	if (csr_ll_remove_entry
 		    (&pMac->sme.smeCmdActiveList, &pOemDataCmd->Link, LL_ACCESS_LOCK)) {
-		cdf_mem_set(&(pOemDataCmd->u.oemDataCmd), sizeof(tOemDataCmd),
-			    0);
+		if (pOemDataCmd->u.oemDataCmd.oemDataReq.data) {
+			cdf_mem_free(
+			    pOemDataCmd->u.oemDataCmd.oemDataReq.data);
+			pOemDataCmd->u.oemDataCmd.oemDataReq.data =
+			    NULL;
+		}
+		cdf_mem_zero(&(pOemDataCmd->u.oemDataCmd), sizeof(tOemDataCmd));
 
 		/* Now put this command back on the avilable command list */
 		sme_release_command(pMac, pOemDataCmd);
@@ -134,6 +140,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *pOemDataCmd = NULL;
+	tOemDataReq *cmd_req, *mac_req;
 
 	do {
 		if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
@@ -144,10 +151,25 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 		pMac->oemData.oemDataReqConfig.sessionId = sessionId;
 		pMac->oemData.oemDataReqID = *(pOemDataReqID);
 
-		cdf_mem_copy((void *)(pMac->oemData.oemDataReqConfig.
-				      oemDataReq),
-			     (void *)(oemDataReqConfig->oemDataReq),
-			     OEM_DATA_REQ_SIZE);
+		pMac->oemData.oemDataReqConfig.data_len =
+				oemDataReqConfig->data_len;
+
+		if (pMac->oemData.oemDataReqConfig.data) {
+			cdf_mem_free(pMac->oemData.oemDataReqConfig.data);
+			pMac->oemData.oemDataReqConfig.data = NULL;
+		}
+
+		pMac->oemData.oemDataReqConfig.data =
+			cdf_mem_malloc(pMac->oemData.oemDataReqConfig.data_len);
+		if (!pMac->oemData.oemDataReqConfig.data) {
+			sms_log(pMac, LOGE, FL("memory alloc failed"));
+			status = CDF_STATUS_E_NOMEM;
+			break;
+		}
+
+		cdf_mem_copy((void *)(pMac->oemData.oemDataReqConfig.data),
+			     (void *)(oemDataReqConfig->data),
+			     oemDataReqConfig->data_len);
 
 		pMac->oemData.oemDataReqActive = false;
 
@@ -159,13 +181,23 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 			pOemDataCmd->u.oemDataCmd.oemDataReqID =
 				pMac->oemData.oemDataReqID;
 
+
+			cmd_req = &(pOemDataCmd->u.oemDataCmd.oemDataReq);
+			mac_req = &(pMac->oemData.oemDataReqConfig);
 			/* set the oem data request */
-			pOemDataCmd->u.oemDataCmd.oemDataReq.sessionId =
-				pMac->oemData.oemDataReqConfig.sessionId;
-			cdf_mem_copy((void *)(pOemDataCmd->u.oemDataCmd.
-					      oemDataReq.oemDataReq),
-				     (void *)(pMac->oemData.oemDataReqConfig.
-					      oemDataReq), OEM_DATA_REQ_SIZE);
+			cmd_req->sessionId = mac_req->sessionId;
+			cmd_req->data_len =  mac_req->data_len;
+			cmd_req->data = cdf_mem_malloc(cmd_req->data_len);
+
+			if (!cmd_req->data) {
+				sms_log(pMac, LOGE, FL("memory alloc failed"));
+				status = CDF_STATUS_E_NOMEM;
+				break;
+			}
+
+			cdf_mem_copy((void *)(cmd_req->data),
+				     (void *)(mac_req->data),
+				     cmd_req->data_len);
 		} else {
 			status = CDF_STATUS_E_FAILURE;
 			break;
@@ -199,25 +231,36 @@ CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSirOemDataReq *pMsg;
-	uint16_t msgLen;
 	tCsrRoamSession *pSession =
 		CSR_GET_SESSION(pMac, pOemDataReq->sessionId);
+	uint16_t msgLen;
 
 	sms_log(pMac, LOGW, "OEM_DATA: entering Function %s", __func__);
 
-	msgLen = (uint16_t) (sizeof(tSirOemDataReq));
+	if (!pOemDataReq) {
+		sms_log(pMac, LOGE, FL("oem data req is NULL"));
+		return CDF_STATUS_E_INVAL;
+	}
 
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = cdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg) {
 		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
 		return CDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_set(pMsg, msgLen, 0);
+	pMsg->data = cdf_mem_malloc(pOemDataReq->data_len);
+	if (!pMsg->data) {
+		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
+		cdf_mem_free(pMsg);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	msgLen = (uint16_t) (sizeof(*pMsg) + pOemDataReq->data_len);
 	pMsg->messageType = eWNI_SME_OEM_DATA_REQ;
 	pMsg->messageLen = msgLen;
 	cdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
-	cdf_mem_copy(pMsg->oemDataReq, pOemDataReq->oemDataReq,
-		     OEM_DATA_REQ_SIZE);
+	pMsg->data_len = pOemDataReq->data_len;
+	cdf_mem_copy(pMsg->data, pOemDataReq->data,
+		     pOemDataReq->data_len);
 	sms_log(pMac, LOGW, "OEM_DATA: sending message to pe%s", __func__);
 	status = cds_send_mb_message_to_mac(pMsg);
 
@@ -290,6 +333,7 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
 	tSirOemDataRsp *pOemDataRsp = NULL;
+	tOemDataReq *req;
 
 	pMac = PMAC_STRUCT(hHal);
 
@@ -318,6 +362,9 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 					    &pCommand->Link, LL_ACCESS_LOCK)) {
 					cdf_mem_set(&(pCommand->u.oemDataCmd),
 						    sizeof(tOemDataCmd), 0);
+					req =
+					   &(pCommand->u.oemDataCmd.oemDataReq);
+					cdf_mem_free(req->data);
 					sme_release_command(pMac, pCommand);
 				}
 			}

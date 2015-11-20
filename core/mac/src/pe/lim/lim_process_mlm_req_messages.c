@@ -367,31 +367,36 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 	tpStartOemDataReq start_oem_data_req = NULL;
 	tSirRetStatus rc = eSIR_SUCCESS;
 	tpLimMlmOemDataRsp mlm_oem_data_rsp;
-	uint32_t reqlen = 0;
 
 	if (NULL == mac_ctx->lim.gpLimMlmOemDataReq) {
 		lim_log(mac_ctx, LOGE, FL("Null pointer"));
 		goto error;
 	}
 
-	reqlen = sizeof(tStartOemDataReq);
-
-	start_oem_data_req = cdf_mem_malloc(reqlen);
+	start_oem_data_req = cdf_mem_malloc(sizeof(*start_oem_data_req));
 	if (NULL == start_oem_data_req) {
 		lim_log(mac_ctx, LOGE, FL
 			("Could not allocate memory for start_oem_data_req"));
 		goto error;
 	}
 
-	cdf_mem_set((uint8_t *) (start_oem_data_req), reqlen, 0);
+	start_oem_data_req->data =
+		cdf_mem_malloc(mac_ctx->lim.gpLimMlmOemDataReq->data_len);
+	if (!start_oem_data_req->data) {
+		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
+		cdf_mem_free(start_oem_data_req);
+		goto error;
+	}
 
 	/* Now copy over the information to the OEM DATA REQ to HAL */
 	cdf_copy_macaddr(&start_oem_data_req->selfMacAddr,
 			 &mac_ctx->lim.gpLimMlmOemDataReq->selfMacAddr);
 
-	cdf_mem_copy(start_oem_data_req->oemDataReq,
-		     mac_ctx->lim.gpLimMlmOemDataReq->oemDataReq,
-		     OEM_DATA_REQ_SIZE);
+	start_oem_data_req->data_len =
+			mac_ctx->lim.gpLimMlmOemDataReq->data_len;
+	cdf_mem_copy(start_oem_data_req->data,
+		     mac_ctx->lim.gpLimMlmOemDataReq->data,
+		     mac_ctx->lim.gpLimMlmOemDataReq->data_len);
 
 	/* Create the message to be passed to HAL */
 	msg.type = WMA_START_OEM_DATA_REQ;
@@ -406,6 +411,7 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 		return;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
+	cdf_mem_free(start_oem_data_req->data);
 	cdf_mem_free(start_oem_data_req);
 	lim_log(mac_ctx, LOGE,
 		FL("OEM_DATA: posting WMA_START_OEM_DATA_REQ to HAL failed"));
@@ -424,6 +430,11 @@ error:
 	mlm_oem_data_rsp->target_rsp = false;
 
 	if (NULL != mac_ctx->lim.gpLimMlmOemDataReq) {
+		if (NULL != mac_ctx->lim.gpLimMlmOemDataReq->data) {
+			cdf_mem_free(
+				mac_ctx->lim.gpLimMlmOemDataReq->data);
+			mac_ctx->lim.gpLimMlmOemDataReq->data = NULL;
+		}
 		cdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
 		mac_ctx->lim.gpLimMlmOemDataReq = NULL;
 	}
@@ -789,6 +800,7 @@ static void lim_process_mlm_oem_data_req(tpAniSirGlobal mac_ctx,
 					 uint32_t *msg_buf)
 {
 	tLimMlmOemDataRsp *mlm_oem_data_rsp;
+	tLimMlmOemDataReq *data_req = (tLimMlmOemDataReq *) msg_buf;
 
 	if (((mac_ctx->lim.gLimMlmState == eLIM_MLM_IDLE_STATE) ||
 	     (mac_ctx->lim.gLimMlmState == eLIM_MLM_JOINED_STATE) ||
@@ -801,11 +813,19 @@ static void lim_process_mlm_oem_data_req(tpAniSirGlobal mac_ctx,
 		 * second OEM data request
 		 */
 		if (mac_ctx->lim.gpLimMlmOemDataReq) {
+			if (mac_ctx->lim.gpLimMlmOemDataReq->data) {
+				cdf_mem_free(
+				 mac_ctx->lim.gpLimMlmOemDataReq->data);
+				mac_ctx->lim.gpLimMlmOemDataReq->data =
+				 NULL;
+			}
 			cdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
 			mac_ctx->lim.gpLimMlmOemDataReq = NULL;
 		}
 
-		mac_ctx->lim.gpLimMlmOemDataReq = (tLimMlmOemDataReq *) msg_buf;
+		mac_ctx->lim.gpLimMlmOemDataReq = data_req;
+		mac_ctx->lim.gpLimMlmOemDataReq->data =
+			data_req->data;
 		mac_ctx->lim.gLimPrevMlmState = mac_ctx->lim.gLimMlmState;
 
 		lim_log(mac_ctx, LOG2, FL("Calling lim_send_hal_oem_data_req"));
