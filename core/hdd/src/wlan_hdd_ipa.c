@@ -83,6 +83,8 @@
 #define HDD_IPA_UC_STA_ENABLE_MASK         BIT(6)
 #define HDD_IPA_REAL_TIME_DEBUGGING        BIT(8)
 
+#define HDD_IPA_MAX_PENDING_EVENT_COUNT    20
+
 typedef enum {
 	HDD_IPA_UC_OPCODE_TX_SUSPEND = 0,
 	HDD_IPA_UC_OPCODE_TX_RESUME = 1,
@@ -3484,25 +3486,41 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx) &&
 		((hdd_ipa->resource_loading) ||
 		(hdd_ipa->resource_unloading))) {
-		struct ipa_uc_pending_event *pending_evet = NULL;
+		unsigned int pending_event_count;
+		struct ipa_uc_pending_event *pending_event = NULL;
 
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
-			"%s, RL/RUL inprogress", __func__);
-		pending_evet = (struct ipa_uc_pending_event *)cdf_mem_malloc(
-			sizeof(struct ipa_uc_pending_event));
-		if (!pending_evet) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
-				"Pending event memory alloc fail");
+		hdd_err("IPA resource %s inprogress",
+			hdd_ipa->resource_loading ? "load":"unload");
+
+		cdf_mutex_acquire(&hdd_ipa->event_lock);
+
+		cdf_list_size(&hdd_ipa->pending_event, &pending_event_count);
+		if (pending_event_count >= HDD_IPA_MAX_PENDING_EVENT_COUNT) {
+			hdd_notice("Reached max pending event count");
+			cdf_list_remove_front(&hdd_ipa->pending_event,
+				(cdf_list_node_t **)&pending_event);
+		} else {
+			pending_event =
+				(struct ipa_uc_pending_event *)cdf_mem_malloc(
+					sizeof(struct ipa_uc_pending_event));
+		}
+
+		if (!pending_event) {
+			hdd_err("Pending event memory alloc fail");
+			cdf_mutex_release(&hdd_ipa->event_lock);
 			return -ENOMEM;
 		}
-		pending_evet->adapter = adapter;
-		pending_evet->sta_id = sta_id;
-		pending_evet->type = type;
-		cdf_mem_copy(pending_evet->mac_addr,
+
+		pending_event->adapter = adapter;
+		pending_event->sta_id = sta_id;
+		pending_event->type = type;
+		cdf_mem_copy(pending_event->mac_addr,
 			mac_addr,
 			CDF_MAC_ADDR_SIZE);
 		cdf_list_insert_back(&hdd_ipa->pending_event,
-				&pending_evet->node);
+				&pending_event->node);
+
+		cdf_mutex_release(&hdd_ipa->event_lock);
 		return 0;
 	}
 
@@ -3912,6 +3930,24 @@ fail_setup_rm:
 }
 
 /**
+ * hdd_ipa_cleanup_pending_event() - Cleanup IPA pending event list
+ * @hdd_ipa: pointer to HDD IPA struct
+ *
+ * Return: none
+ */
+void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
+{
+	struct ipa_uc_pending_event *pending_event = NULL;
+
+	while (cdf_list_remove_front(&hdd_ipa->pending_event,
+		(cdf_list_node_t **)&pending_event) == CDF_STATUS_SUCCESS) {
+		cdf_mem_free(pending_event);
+	}
+
+	cdf_list_destroy(&hdd_ipa->pending_event);
+}
+
+/**
  * hdd_ipa_cleanup - IPA cleanup function
  * @hdd_ctx: HDD global context
  *
@@ -3991,7 +4027,7 @@ CDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 		ipa_disconnect_wdi_pipe(hdd_ipa->rx_pipe_handle);
 		cdf_mutex_destroy(&hdd_ipa->event_lock);
 		cdf_mutex_destroy(&hdd_ipa->ipa_lock);
-		cdf_list_destroy(&hdd_ipa->pending_event);
+		hdd_ipa_cleanup_pending_event(hdd_ipa);
 
 #ifdef WLAN_OPEN_SOURCE
 		for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
