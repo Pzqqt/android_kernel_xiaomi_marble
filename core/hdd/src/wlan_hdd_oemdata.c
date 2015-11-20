@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -374,7 +374,14 @@ static CDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 
 	cdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
 
-	cdf_mem_copy((&oemDataReqConfig)->oemDataReq, oemData, oemDataLen);
+	oemDataReqConfig.data = cdf_mem_malloc(oemDataLen);
+	if (!oemDataReqConfig.data) {
+		hddLog(LOGE, FL("malloc failed for data req buffer"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	oemDataReqConfig.data_len = oemDataLen;
+	cdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: calling sme_oem_data_req", __func__);
@@ -383,6 +390,10 @@ static CDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 				  pAdapter->sessionId,
 				  &oemDataReqConfig,
 				  &oemDataReqID);
+
+	cdf_mem_free(oemDataReqConfig.data);
+	oemDataReqConfig.data = NULL;
+
 	return status;
 }
 

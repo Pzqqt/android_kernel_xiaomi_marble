@@ -680,7 +680,8 @@ typedef struct {
 typedef struct {
 	struct cdf_mac_addr selfMacAddr;
 	CDF_STATUS status;
-	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
+	uint8_t data_len;
+	uint8_t *data;
 } tStartOemDataReq, *tpStartOemDataReq;
 
 /**

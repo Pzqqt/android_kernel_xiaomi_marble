@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1495,19 +1495,24 @@ static void __lim_process_sme_oem_data_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	pOemDataReq = (tpSirOemDataReq) pMsgBuf;
 
 	/* post the lim mlm message now */
-	pMlmOemDataReq = cdf_mem_malloc(sizeof(tLimMlmOemDataReq));
+	pMlmOemDataReq = cdf_mem_malloc(sizeof(*pMlmOemDataReq));
 	if (NULL == pMlmOemDataReq) {
 		lim_log(pMac, LOGP,
 			FL("AllocateMemory failed for mlmOemDataReq"));
 		return;
 	}
-	/* Initialize this buffer */
-	cdf_mem_set(pMlmOemDataReq, (sizeof(tLimMlmOemDataReq)), 0);
+	pMlmOemDataReq->data = cdf_mem_malloc(pOemDataReq->data_len);
+	if (!pMlmOemDataReq->data) {
+		lim_log(pMac, LOGP, FL("memory allocation failed"));
+		cdf_mem_free(pMlmOemDataReq);
+		return;
+	}
 
 	cdf_copy_macaddr(&pMlmOemDataReq->selfMacAddr,
 			 &pOemDataReq->selfMacAddr);
-	cdf_mem_copy(pMlmOemDataReq->oemDataReq, pOemDataReq->oemDataReq,
-		     OEM_DATA_REQ_SIZE);
+	pMlmOemDataReq->data_len = pOemDataReq->data_len;
+	cdf_mem_copy(pMlmOemDataReq->data, pOemDataReq->data,
+		     pOemDataReq->data_len);
 
 	/* Issue LIM_MLM_OEM_DATA_REQ to MLM */
 	lim_post_mlm_message(pMac, LIM_MLM_OEM_DATA_REQ,

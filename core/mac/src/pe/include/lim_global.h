@@ -307,7 +307,8 @@ struct tLimScanResultNode {
 /* OEM Data related structure definitions */
 typedef struct sLimMlmOemDataReq {
 	struct cdf_mac_addr selfMacAddr;
-	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
+	uint8_t data_len;
+	uint8_t *data;
 } tLimMlmOemDataReq, *tpLimMlmOemDataReq;
 
 typedef struct sLimMlmOemDataRsp {

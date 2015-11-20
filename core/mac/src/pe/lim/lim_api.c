@@ -260,6 +260,8 @@ static void __lim_init_vars(tpAniSirGlobal pMac)
 	pMac->lim.gScanInPowersave = 0;
 	pMac->lim.probeCounter = 0;
 	pMac->lim.maxProbe = 0;
+
+	pMac->lim.gpLimMlmOemDataReq = NULL;
 }
 
 static void __lim_init_assoc_vars(tpAniSirGlobal pMac)
@@ -818,6 +820,11 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 	pMac->lim.limTimers.gpLimCnfWaitTimer = NULL;
 
 	if (pMac->lim.gpLimMlmOemDataReq) {
+		if (pMac->lim.gpLimMlmOemDataReq->data) {
+			cdf_mem_free(
+				pMac->lim.gpLimMlmOemDataReq->data);
+			pMac->lim.gpLimMlmOemDataReq->data = NULL;
+		}
 		cdf_mem_free(pMac->lim.gpLimMlmOemDataReq);
 		pMac->lim.gpLimMlmOemDataReq = NULL;
 	}

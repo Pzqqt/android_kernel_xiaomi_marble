@@ -875,7 +875,8 @@ typedef struct sSirOemDataReq {
 	uint16_t messageType;   /* eWNI_SME_OEM_DATA_REQ */
 	uint16_t messageLen;
 	struct cdf_mac_addr selfMacAddr;
-	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
+	uint8_t data_len;
+	uint8_t *data;
 } tSirOemDataReq, *tpSirOemDataReq;
 
 typedef struct sSirOemDataRsp {
