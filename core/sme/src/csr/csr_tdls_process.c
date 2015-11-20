@@ -158,8 +158,8 @@ CDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 
 			tdlsAddStaCmd->sessionId = sessionId;
 
-			cdf_mem_copy(tdlsAddStaCmdInfo->peerMac,
-				     peerMac, sizeof(tSirMacAddr));
+			cdf_mem_copy(tdlsAddStaCmdInfo->peermac.bytes,
+				     peerMac, CDF_MAC_ADDR_SIZE);
 			tdlsAddStaCmdInfo->capability = pstaParams->capability;
 			tdlsAddStaCmdInfo->uapsdQueues =
 				pstaParams->uapsd_queues;
@@ -300,8 +300,8 @@ CDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsAddStaCmd->sessionId = sessionId;
 			tdlsAddStaCmdInfo->tdlsAddOper = TDLS_OPER_ADD;
 
-			cdf_mem_copy(tdlsAddStaCmdInfo->peerMac,
-				     peerMac, sizeof(tSirMacAddr));
+			cdf_mem_copy(tdlsAddStaCmdInfo->peermac.bytes,
+				     peerMac, CDF_MAC_ADDR_SIZE);
 
 			tdlsAddStaCmd->command = eSmeCommandTdlsAddPeer;
 			tdlsAddStaCmd->u.tdlsCmd.size =
@@ -336,8 +336,8 @@ CDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 
 			tdlsDelStaCmd->sessionId = sessionId;
 
-			cdf_mem_copy(tdlsDelStaCmdInfo->peerMac,
-				     peerMac, sizeof(tSirMacAddr));
+			cdf_mem_copy(tdlsDelStaCmdInfo->peermac.bytes,
+				     peerMac, CDF_MAC_ADDR_SIZE);
 
 			tdlsDelStaCmd->command = eSmeCommandTdlsDelPeer;
 			tdlsDelStaCmd->u.tdlsCmd.size =
@@ -475,11 +475,11 @@ CDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	/* Using dialog as transactionId. This can be used to match response with request */
 	tdlsAddStaReq->transactionId = 0;
 
-	cdf_mem_copy(tdlsAddStaReq->bssid,
-		     pSession->pConnectBssDesc->bssId, sizeof(tSirMacAddr));
+	cdf_mem_copy(tdlsAddStaReq->bssid.bytes,
+		     pSession->pConnectBssDesc->bssId, CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(tdlsAddStaReq->peerMac,
-		     tdlsAddStaCmdInfo->peerMac, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&tdlsAddStaReq->peermac,
+			 &tdlsAddStaCmdInfo->peermac);
 
 	tdlsAddStaReq->capability = tdlsAddStaCmdInfo->capability;
 	tdlsAddStaReq->uapsd_queues = tdlsAddStaCmdInfo->uapsdQueues;
@@ -548,13 +548,13 @@ CDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	cdf_mem_copy(tdlsDelStaReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(tdlsDelStaReq->peermac.bytes,
-		     tdlsDelStaCmdInfo->peerMac, CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&tdlsDelStaReq->peermac,
+			 &tdlsDelStaCmdInfo->peermac);
 
 	/* Send the request to PE. */
 	sms_log(pMac, LOG1,
 		"sending TDLS Del Sta " MAC_ADDRESS_STR " req to PE",
-		MAC_ADDR_ARRAY(tdlsDelStaCmdInfo->peerMac));
+		MAC_ADDR_ARRAY(tdlsDelStaCmdInfo->peermac.bytes));
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_DEL_STA_REQ,
 				   (void *)tdlsDelStaReq,
 				   sizeof(tSirTdlsDelStaReq));
@@ -695,8 +695,7 @@ CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsSendMgmt);
 		break;
 	case eWNI_SME_TDLS_ADD_STA_RSP:
-		cdf_mem_copy(&roamInfo.peerMac, addStaRsp->peerMac,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac, &addStaRsp->peermac);
 		roamInfo.staId = addStaRsp->staId;
 		roamInfo.ucastSig = addStaRsp->ucastSig;
 		roamInfo.bcastSig = addStaRsp->bcastSig;

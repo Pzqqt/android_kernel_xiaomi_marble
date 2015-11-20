@@ -2379,7 +2379,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 	tSirRetStatus status = eSIR_SUCCESS;
 	uint16_t aid = 0;
 
-	pStaDs = dph_lookup_hash_entry(pMac, pAddStaReq->peerMac, &aid,
+	pStaDs = dph_lookup_hash_entry(pMac, pAddStaReq->peermac.bytes, &aid,
 				       &psessionEntry->dph.dphHashTable);
 	if (NULL == pStaDs) {
 		aid = lim_assign_peer_idx(pMac, psessionEntry);
@@ -2388,7 +2388,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 			lim_log(pMac, LOGE,
 				FL("No more free AID for peer "
 				   MAC_ADDRESS_STR),
-				MAC_ADDR_ARRAY(pAddStaReq->peerMac));
+				MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 			return eSIR_FAILURE;
 		}
 
@@ -2396,7 +2396,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 		SET_PEER_AID_BITMAP(psessionEntry->peerAIDBitmap, aid);
 
 		lim_log(pMac, LOG1, FL("Aid = %d, for peer =" MAC_ADDRESS_STR),
-			aid, MAC_ADDR_ARRAY(pAddStaReq->peerMac));
+			aid, MAC_ADDR_ARRAY(pAddStaReq->peermac.bytes));
 		pStaDs =
 			dph_get_hash_entry(pMac, aid,
 					   &psessionEntry->dph.dphHashTable);
@@ -2408,8 +2408,8 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 						  psessionEntry);
 		}
 
-		pStaDs = dph_add_hash_entry(pMac, pAddStaReq->peerMac, aid,
-					    &psessionEntry->dph.dphHashTable);
+		pStaDs = dph_add_hash_entry(pMac, pAddStaReq->peermac.bytes,
+					 aid, &psessionEntry->dph.dphHashTable);
 
 		if (NULL == pStaDs) {
 			lim_log(pMac, LOGE, FL("add hash entry failed"));
@@ -2490,8 +2490,8 @@ static CDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 		addStaRsp->bcastSig = pStaDs->ucBcastSig;
 	}
 	if (peerMac) {
-		cdf_mem_copy(addStaRsp->peerMac,
-			     (uint8_t *) peerMac, sizeof(tSirMacAddr));
+		cdf_mem_copy(addStaRsp->peermac.bytes,
+			     (uint8_t *) peerMac, CDF_MAC_ADDR_SIZE);
 	}
 	if (updateSta)
 		addStaRsp->tdlsAddOper = TDLS_OPER_UPDATE;
@@ -2506,7 +2506,6 @@ static CDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 
 	return CDF_STATUS_SUCCESS;
-
 }
 
 /*
@@ -2921,7 +2920,8 @@ tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 
 	lim_log(pMac, LOG1, FL("TDLS Add STA Request Recieved"));
 	psessionEntry =
-		pe_find_session_by_bssid(pMac, pAddStaReq->bssid, &sessionId);
+		pe_find_session_by_bssid(pMac, pAddStaReq->bssid.bytes,
+					 &sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
 			FL(
@@ -2963,7 +2963,8 @@ tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 lim_tdls_add_sta_error:
 	lim_send_sme_tdls_add_sta_rsp(pMac,
-				      pAddStaReq->sessionId, pAddStaReq->peerMac,
+				      pAddStaReq->sessionId,
+				      pAddStaReq->peermac.bytes,
 				      (pAddStaReq->tdlsAddOper == TDLS_OPER_UPDATE),
 				      NULL, eSIR_FAILURE);
 
