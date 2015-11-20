@@ -1124,6 +1124,9 @@ typedef enum {
 	/* event to report completion of data storage into flash memory */
 	WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID,
 
+	/** event to report SCPC calibrated data to host */
+	WMI_PDEV_UTF_SCPC_EVENTID,
+
 	/* GPIO Event */
 	WMI_GPIO_INPUT_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_GPIO),
 	/** upload H_CV info WMI event
@@ -12303,6 +12306,26 @@ typedef struct {
 	/* Return status. 0 for success, non-zero otherwise */
 	A_UINT32 status;
 } wmi_transfer_data_to_flash_complete_event_fixed_param;
+
+/*
+ * This structure is used to report SCPC calibrated data to host.
+ */
+typedef struct {
+	/* TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_scpc_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* number of BDF patches. Each patch contains offset, length and data */
+	A_UINT32 num_patch;
+	/* This TLV is followed by another TLV of array of bytes
+	 * A_UINT8 data[];
+	 * This data array contains, for example
+	 * patch1 offset(byte3~0), patch1 data length(byte7~4),
+	 *  patch1 data(byte11~8)
+	 * patch2 offset(byte15~12), patch2 data length(byte19~16),
+	 *  patch2 data(byte47~20)
+	 */
+} wmi_scpc_event_fixed_param;
 
 /* ADD NEW DEFS HERE */
 
