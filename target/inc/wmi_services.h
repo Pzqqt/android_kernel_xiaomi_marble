@@ -129,6 +129,8 @@ typedef enum {
 	WMI_SERVICE_EGAP,
 	/* FW supports 11W PMF Offload for STA */
 	WMI_SERVICE_STA_PMF_OFFLOAD,
+	/* FW supports unified D0 and D3 wow */
+	WMI_SERVICE_UNIFIED_WOW_CAPABILITY,
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
