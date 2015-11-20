@@ -1550,7 +1550,10 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	       scan_req.requestType, scan_req.scanType,
 	       scan_req.minChnTime, scan_req.maxChnTime,
 	       scan_req.p2pSearch, scan_req.skipDfsChnlInP2pSearch);
-
+#if (LINUX_VERSION_CODE > KERNEL_VERSION(3, 7, 0))
+	if (request->flags & NL80211_SCAN_FLAG_FLUSH)
+		sme_scan_flush_result(WLAN_HDD_GET_HAL_CTX(pAdapter));
+#endif
 	status = sme_scan_request(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				pAdapter->sessionId, &scan_req,
 				&hdd_cfg80211_scan_done_callback, dev);
