@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1817,6 +1817,10 @@ CDF_STATUS wma_open(void *cds_context,
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_OEM_ERROR_REPORT_EVENTID,
 					   wma_oem_error_report_event_callback);
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_OEM_RESPONSE_EVENTID,
+					   wma_oem_data_response_handler);
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 	/*
 	 * Register appropriate DFS phyerr event handler for

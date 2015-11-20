@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -844,7 +844,7 @@ void lim_send_sme_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	pSirSmeOemDataRsp->length = msgLength;
 	pSirSmeOemDataRsp->messageType = eWNI_SME_OEM_DATA_RSP;
 #endif
-
+	pSirSmeOemDataRsp->target_rsp = pMlmOemDataRsp->target_rsp;
 	cdf_mem_copy(pSirSmeOemDataRsp->oemDataRsp, pMlmOemDataRsp->oemDataRsp,
 		     OEM_DATA_RSP_SIZE);
 
