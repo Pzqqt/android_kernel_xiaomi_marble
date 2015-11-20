@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -910,6 +910,9 @@ int wma_oem_measurement_report_event_callback(void *handle, uint8_t *datap,
 
 int wma_oem_error_report_event_callback(void *handle, uint8_t *datap,
 					uint32_t len);
+
+int wma_oem_data_response_handler(void *handle, uint8_t *datap,
+				  uint32_t len);
 #endif
 
 void wma_register_dfs_event_handler(tp_wma_handle wma_handle);

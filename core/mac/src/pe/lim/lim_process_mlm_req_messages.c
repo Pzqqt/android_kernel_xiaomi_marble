@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -421,6 +421,7 @@ error:
 			("memory allocation for mlm_oem_data_rsp"));
 		return;
 	}
+	mlm_oem_data_rsp->target_rsp = false;
 
 	if (NULL != mac_ctx->lim.gpLimMlmOemDataReq) {
 		cdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
@@ -822,6 +823,7 @@ static void lim_process_mlm_oem_data_req(tpAniSirGlobal mac_ctx,
 		/* Return Meas confirm with INVALID_PARAMETERS */
 		mlm_oem_data_rsp = cdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
 		if (mlm_oem_data_rsp != NULL) {
+			mlm_oem_data_rsp->target_rsp = false;
 			lim_post_sme_message(mac_ctx, LIM_MLM_OEM_DATA_CNF,
 					     (uint32_t *) mlm_oem_data_rsp);
 			cdf_mem_free(mlm_oem_data_rsp);
