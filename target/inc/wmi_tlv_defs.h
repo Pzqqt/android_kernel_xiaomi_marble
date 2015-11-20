@@ -602,6 +602,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param,
 	WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_complete_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_scpc_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -958,7 +959,8 @@ typedef enum {
 	OP(WMI_PEER_ASSOC_CONF_EVENTID) \
 	OP(WMI_AP_PS_EGAP_INFO_EVENTID) \
 	OP(WMI_TRANSFER_DATA_TO_FLASH_COMPLETE_EVENTID) \
-	OP(WMI_OEM_RESPONSE_EVENTID)
+	OP(WMI_OEM_RESPONSE_EVENTID) \
+	OP(WMI_PDEV_UTF_SCPC_EVENTID)
 
 /* TLV definitions of WMI commands */
 
@@ -2662,6 +2664,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_WLAN_PROFILE_DATA_EVENTID);
 #define WMITLV_TABLE_WMI_PDEV_UTF_EVENTID(id,op,buf,len) \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UTF_EVENTID);
+
+/* Update SCPC calibrated data Event */
+#define WMITLV_TABLE_WMI_PDEV_UTF_SCPC_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_scpc_event_fixed_param, wmi_scpc_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, data, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_UTF_SCPC_EVENTID);
 
 /* Debug print Event */
 #define WMITLV_TABLE_WMI_DEBUG_PRINT_EVENTID(id,op,buf,len) \
