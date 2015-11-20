@@ -6727,6 +6727,8 @@ typedef struct {
 #define WOW_DEFAULT_IOAC_SOCKET_PATTERN_SIZE_DWORD 8
 #define WOW_DEFAULT_IOAC_KEEP_ALIVE_PKT_REV_SIZE 32
 #define WOW_DEFAULT_IOAC_KEEP_ALIVE_PKT_REV_SIZE_DWORD 8
+#define WOW_DEFAULT_IOAC_SOCKET_PATTERN_ACKNAK_SIZE  128
+#define WOW_DEFAULT_IOAC_SOCKET_PATTERN_ACKNAK_SIZE_DWORD 32
 
 typedef enum pattern_type_e {
 	WOW_PATTERN_MIN = 0,
@@ -6909,6 +6911,11 @@ typedef struct ioac_sock_pattern_s {
 	A_UINT32 remote_port;
 	A_UINT32 pattern_len; /* units = bytes */
 	A_UINT32 pattern[WOW_DEFAULT_IOAC_SOCKET_PATTERN_SIZE_DWORD];
+	WMI_IPV6_ADDR local_ipv6;
+	WMI_IPV6_ADDR remote_ipv6;
+	A_UINT32 ack_nak_len;
+	A_UINT32 ackpkt[WOW_DEFAULT_IOAC_SOCKET_PATTERN_ACKNAK_SIZE_DWORD];
+	A_UINT32 nakpkt[WOW_DEFAULT_IOAC_SOCKET_PATTERN_ACKNAK_SIZE_DWORD];
 } WOW_IOAC_SOCK_PATTERN_T;
 
 typedef struct ioac_pkt_pattern_s {
@@ -6957,6 +6964,8 @@ typedef struct ioac_keepalive_s {
 	A_UINT32 recv_period_in_ms;
 	A_UINT32 rev_ka_size;
 	A_UINT32 rev_ka_data[WOW_DEFAULT_IOAC_KEEP_ALIVE_PKT_REV_SIZE_DWORD];
+	WMI_IPV6_ADDR local_ipv6;
+	WMI_IPV6_ADDR remote_ipv6;
 } WMI_WOW_IOAC_KEEPALIVE_T;
 
 typedef struct {
