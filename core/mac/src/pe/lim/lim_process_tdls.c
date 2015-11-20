@@ -2437,14 +2437,15 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 /*
  * Del STA, after Link is teardown or discovery response sent on direct link
  */
-static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac, tSirMacAddr peerMac,
+static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac,
+				      struct cdf_mac_addr peerMac,
 				      tpPESession psessionEntry)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
 	uint16_t peerIdx = 0;
 	tpDphHashNode pStaDs = NULL;
 
-	pStaDs = dph_lookup_hash_entry(pMac, peerMac, &peerIdx,
+	pStaDs = dph_lookup_hash_entry(pMac, peerMac.bytes, &peerIdx,
 				       &psessionEntry->dph.dphHashTable);
 
 	if (pStaDs) {
@@ -2874,7 +2875,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
  */
 static CDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 						uint8_t sessionId,
-						tSirMacAddr peerMac,
+						struct cdf_mac_addr peerMac,
 						tDphHashNode *pStaDs, uint8_t status)
 {
 	tSirMsgQ mmhMsg = { 0 };
@@ -2894,9 +2895,7 @@ static CDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 	} else
 		pDelSta->staId = STA_INVALID_IDX;
 
-	if (peerMac) {
-		cdf_mem_copy(pDelSta->peerMac, peerMac, sizeof(tSirMacAddr));
-	}
+	cdf_copy_macaddr(&pDelSta->peermac, &peerMac);
 
 	pDelSta->length = sizeof(tSirTdlsDelStaRsp);
 	pDelSta->messageType = eWNI_SME_TDLS_DEL_STA_RSP;
@@ -2985,7 +2984,8 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 
 	lim_log(pMac, LOG1, FL("TDLS Delete STA Request Recieved"));
 	psessionEntry =
-		pe_find_session_by_bssid(pMac, pDelStaReq->bssid, &sessionId);
+		pe_find_session_by_bssid(pMac, pDelStaReq->bssid.bytes,
+					 &sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
 			FL(
@@ -2993,7 +2993,7 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 			  ),
 			pDelStaReq->sessionId);
 		lim_send_sme_tdls_del_sta_rsp(pMac, pDelStaReq->sessionId,
-					      pDelStaReq->peerMac, NULL,
+					      pDelStaReq->peermac, NULL,
 					      eSIR_FAILURE);
 		return eSIR_FAILURE;
 	}
@@ -3019,13 +3019,13 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 		goto lim_tdls_del_sta_error;
 	}
 
-	pStaDs = lim_tdls_del_sta(pMac, pDelStaReq->peerMac, psessionEntry);
+	pStaDs = lim_tdls_del_sta(pMac, pDelStaReq->peermac, psessionEntry);
 
 	/* now send indication to SME-->HDD->TL to remove STA from TL */
 
 	if (pStaDs) {
 		lim_send_sme_tdls_del_sta_rsp(pMac, psessionEntry->smeSessionId,
-					      pDelStaReq->peerMac, pStaDs,
+					      pDelStaReq->peermac, pStaDs,
 					      eSIR_SUCCESS);
 		lim_release_peer_idx(pMac, pStaDs->assocId, psessionEntry);
 
@@ -3041,7 +3041,7 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 
 lim_tdls_del_sta_error:
 	lim_send_sme_tdls_del_sta_rsp(pMac, psessionEntry->smeSessionId,
-				      pDelStaReq->peerMac, NULL, eSIR_FAILURE);
+				      pDelStaReq->peermac, NULL, eSIR_FAILURE);
 
 	return eSIR_SUCCESS;
 }
