@@ -5899,8 +5899,8 @@ CDF_STATUS sme_set_gtk_offload(tHalHandle hHal,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(pGtkOffload->bssId, pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pGtkOffload->bssid,
+			 &pSession->connectedProfile.bssid);
 
 	*request_buf = *pGtkOffload;
 
@@ -5941,7 +5941,7 @@ CDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
 
 	if (NULL == pSession) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Session not found ", __func__);
+			  "%s: Session not found", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
 
@@ -5952,8 +5952,8 @@ CDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(request_buf->bssId, pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&request_buf->bssid,
+			 &pSession->connectedProfile.bssid);
 
 	msg.type = WMA_GTK_OFFLOAD_GETINFO_REQ;
 	msg.reserved = 0;

@@ -10297,7 +10297,8 @@ void wlan_hdd_cfg80211_update_replay_counter_callback(void *callbackContext,
 	}
 
 	/* Update replay counter to NL */
-	cfg80211_gtk_rekey_notify(pAdapter->dev, pGtkOffloadGetInfoRsp->bssId,
+	cfg80211_gtk_rekey_notify(pAdapter->dev,
+				  pGtkOffloadGetInfoRsp->bssid.bytes,
 				  tempReplayCounter, GFP_KERNEL);
 }
 
@@ -10351,8 +10352,8 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 	       NL80211_KCK_LEN);
 	memcpy(pHddStaCtx->gtkOffloadReqParams.aKEK, data->kek,
 	       NL80211_KEK_LEN);
-	memcpy(pHddStaCtx->gtkOffloadReqParams.bssId,
-	       &pHddStaCtx->conn_info.bssId, CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&pHddStaCtx->gtkOffloadReqParams.bssid,
+			 &pHddStaCtx->conn_info.bssId);
 	{
 		/* changing from big to little endian since driver
 		 * works on little endian format

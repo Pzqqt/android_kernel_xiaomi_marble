@@ -3090,8 +3090,24 @@ typedef struct {
 	uint8_t aKCK[16];       /* Key confirmation key */
 	uint8_t aKEK[16];       /* key encryption key */
 	uint64_t ullKeyReplayCounter;   /* replay counter */
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 } tSirGtkOffloadParams, *tpSirGtkOffloadParams;
+
+/*---------------------------------------------------------------------------
+* WMA_GTK_OFFLOAD_GETINFO_REQ
+*--------------------------------------------------------------------------*/
+typedef struct {
+	uint16_t mesgType;
+	uint16_t mesgLen;
+
+	uint32_t ulStatus;      /* success or failure */
+	uint64_t ullKeyReplayCounter;   /* current replay counter value */
+	uint32_t ulTotalRekeyCount;     /* total rekey attempts */
+	uint32_t ulGTKRekeyCount;       /* successful GTK rekeys */
+	uint32_t ulIGTKRekeyCount;      /* successful iGTK rekeys */
+	struct cdf_mac_addr bssid;
+} tSirGtkOffloadGetInfoRspParams, *tpSirGtkOffloadGetInfoRspParams;
+#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 /**
  * struct sir_wifi_start_log - Structure to store the params sent to start/
@@ -3272,22 +3288,6 @@ struct sir_hw_mode_trans_ind {
 struct sir_dual_mac_config_resp {
 	uint32_t status;
 };
-
-/*---------------------------------------------------------------------------
-* WMA_GTK_OFFLOAD_GETINFO_REQ
-*--------------------------------------------------------------------------*/
-typedef struct {
-	uint16_t mesgType;
-	uint16_t mesgLen;
-
-	uint32_t ulStatus;      /* success or failure */
-	uint64_t ullKeyReplayCounter;   /* current replay counter value */
-	uint32_t ulTotalRekeyCount;     /* total rekey attempts */
-	uint32_t ulGTKRekeyCount;       /* successful GTK rekeys */
-	uint32_t ulIGTKRekeyCount;      /* successful iGTK rekeys */
-	tSirMacAddr bssId;
-} tSirGtkOffloadGetInfoRspParams, *tpSirGtkOffloadGetInfoRspParams;
-#endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 #ifdef WLAN_WAKEUP_EVENTS
 /*---------------------------------------------------------------------------
