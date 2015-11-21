@@ -3026,8 +3026,8 @@ typedef struct sSirRcvPktFilterCfg {
 	eSirReceivePacketFilterType filterType;
 	uint32_t numFieldParams;
 	uint32_t coalesceTime;
-	tSirMacAddr selfMacAddr;
-	tSirMacAddr bssId;      /* Bssid of the connected AP */
+	struct cdf_mac_addr self_macaddr;
+	struct cdf_mac_addr bssid;      /* Bssid of the connected AP */
 	tSirRcvPktFilterFieldParams paramsData[SIR_MAX_NUM_TESTS_PER_FILTER];
 } tSirRcvPktFilterCfgType, *tpSirRcvPktFilterCfgType;
 
@@ -3046,7 +3046,7 @@ typedef struct sSirRcvFltPktMatchRsp {
 	/* Success or Failure */
 	uint32_t status;
 	tSirRcvFltPktMatchCnt filterMatchCnt[SIR_MAX_NUM_FILTERS];
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 } tSirRcvFltPktMatchRsp, *tpSirRcvFltPktMatchRsp;
 
 /* */
@@ -3055,8 +3055,8 @@ typedef struct sSirRcvFltPktMatchRsp {
 typedef struct sSirRcvFltPktClearParam {
 	uint32_t status;        /* only valid for response message */
 	uint8_t filterId;
-	tSirMacAddr selfMacAddr;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr self_macaddr;
+	struct cdf_mac_addr bssid;
 } tSirRcvFltPktClearParam, *tpSirRcvFltPktClearParam;
 
 /* */
@@ -3064,9 +3064,9 @@ typedef struct sSirRcvFltPktClearParam {
 /* */
 typedef struct sSirRcvFltMcAddrList {
 	uint32_t ulMulticastAddrCnt;
-	tSirMacAddr multicastAddr[SIR_MAX_NUM_MULTICAST_ADDRESS];
-	tSirMacAddr selfMacAddr;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr multicastAddr[SIR_MAX_NUM_MULTICAST_ADDRESS];
+	struct cdf_mac_addr self_macaddr;
+	struct cdf_mac_addr bssid;
 	uint8_t action;
 } tSirRcvFltMcAddrList, *tpSirRcvFltMcAddrList;
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
