@@ -3387,8 +3387,8 @@ typedef struct {
 	uint8_t isOffChannelSupported;
 	uint8_t isResponder;    /* Is Peer a responder. */
 	/* For multi-session, for PE to locate peSession ID */
-	tSirMacAddr bssid;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr bssid;
+	struct cdf_mac_addr peermac;
 	uint8_t supportedChannelsLen;
 	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supportedOperClassesLen;
@@ -3402,7 +3402,7 @@ typedef struct {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 } tSirTdlsLinkEstablishReqRsp, *tpSirTdlsLinkEstablishReqRsp;
 
 /* TDLS Request struct SME-->PE */

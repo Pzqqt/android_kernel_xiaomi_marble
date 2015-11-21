@@ -109,7 +109,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 					 uint8_t smesessionId);
 #ifdef FEATURE_WLAN_TDLS
 void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac, uint8_t sessionId,
-					      tSirMacAddr peerMac,
+					      struct cdf_mac_addr *peermac,
 					      tDphHashNode *pStaDs, uint8_t status);
 void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
 				    void *events);

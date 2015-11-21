@@ -2842,7 +2842,8 @@ lim_tdls_send_mgmt_error:
  * Send Response to Link Establish Request to SME
  */
 void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
-					      uint8_t sessionId, tSirMacAddr peerMac,
+					      uint8_t sessionId,
+					      struct cdf_mac_addr *peermac,
 					      tDphHashNode *pStaDs, uint8_t status)
 {
 	tSirMsgQ mmhMsg = { 0 };
@@ -2856,10 +2857,9 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 		return;
 	}
 	pTdlsLinkEstablishReqRsp->statusCode = status;
-	if (peerMac) {
-		cdf_mem_copy(pTdlsLinkEstablishReqRsp->peerMac, peerMac,
-			     sizeof(tSirMacAddr));
-	}
+	if (peermac)
+		cdf_copy_macaddr(&pTdlsLinkEstablishReqRsp->peermac, peermac);
+
 	pTdlsLinkEstablishReqRsp->sessionId = sessionId;
 	mmhMsg.type = eWNI_SME_TDLS_LINK_ESTABLISH_RSP;
 	mmhMsg.bodyptr = pTdlsLinkEstablishReqRsp;
@@ -3101,14 +3101,14 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 		  FL("Send Mgmt Recieved"));
 
-	session_entry = pe_find_session_by_bssid(mac_ctx, tdls_req->bssid,
+	session_entry = pe_find_session_by_bssid(mac_ctx, tdls_req->bssid.bytes,
 						 &session_id);
 	if (NULL == session_entry) {
 		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			  FL("PE Session does not exist for sme session_id %d"),
 			  tdls_req->sessionId);
 		lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
-			tdls_req->sessionId, tdls_req->peerMac, NULL,
+			tdls_req->sessionId, &tdls_req->peermac, NULL,
 			eSIR_FAILURE);
 		return eSIR_FAILURE;
 	}
@@ -3133,7 +3133,8 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 		goto lim_tdls_link_establish_error;
 	}
 
-	stads = dph_lookup_hash_entry(mac_ctx, tdls_req->peerMac, &peer_idx,
+	stads = dph_lookup_hash_entry(mac_ctx, tdls_req->peermac.bytes,
+				      &peer_idx,
 				      &session_entry->dph.dphHashTable);
 	if (NULL == stads) {
 		lim_log(mac_ctx, LOGE, FL("stads is NULL"));
@@ -3207,7 +3208,7 @@ send_tdls_establish_request:
 
 lim_tdls_link_establish_error:
 	lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
-		session_entry->smeSessionId, tdls_req->peerMac, NULL,
+		session_entry->smeSessionId, &tdls_req->peermac, NULL,
 		eSIR_FAILURE);
 
 	return eSIR_SUCCESS;
