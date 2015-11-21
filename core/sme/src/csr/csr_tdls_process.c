@@ -232,8 +232,8 @@ CDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 
 			tdlsLinkEstablishCmd->sessionId = sessionId;
 
-			cdf_mem_copy(tdlsLinkEstablishCmdInfo->peerMac,
-				     peerMac, sizeof(tSirMacAddr));
+			cdf_mem_copy(tdlsLinkEstablishCmdInfo->peermac.bytes,
+				     peerMac, CDF_MAC_ADDR_SIZE);
 			tdlsLinkEstablishCmdInfo->isBufSta =
 				tdlsLinkEstablishParams->isBufSta;
 			tdlsLinkEstablishCmdInfo->isResponder =
@@ -637,10 +637,10 @@ CDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tdlsLinkEstablishReq->sessionId = cmd->sessionId;
 	/* Using dialog as transactionId. This can be used to match response with request */
 	tdlsLinkEstablishReq->transactionId = 0;
-	cdf_mem_copy(tdlsLinkEstablishReq->peerMac,
-		     tdlsLinkEstablishCmdInfo->peerMac, sizeof(tSirMacAddr));
-	cdf_mem_copy(tdlsLinkEstablishReq->bssid,
-		     pSession->pConnectBssDesc->bssId, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&tdlsLinkEstablishReq->peermac,
+			 &tdlsLinkEstablishCmdInfo->peermac);
+	cdf_mem_copy(tdlsLinkEstablishReq->bssid.bytes,
+		     pSession->pConnectBssDesc->bssId, CDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(tdlsLinkEstablishReq->supportedChannels,
 		     tdlsLinkEstablishCmdInfo->supportedChannels,
 		     tdlsLinkEstablishCmdInfo->supportedChannelsLen);

@@ -105,7 +105,7 @@ typedef struct TdlsSendMgmtInfo {
 } tTdlsSendMgmtCmdInfo;
 
 typedef struct TdlsLinkEstablishInfo {
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peermac;
 	uint8_t uapsdQueues;
 	uint8_t maxSp;
 	uint8_t isBufSta;
