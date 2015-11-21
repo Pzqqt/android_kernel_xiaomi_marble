@@ -5757,14 +5757,14 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 		for (i = 0; i < adapter->mc_addr_list.mc_cnt; i++) {
 			if (!memcmp(adapter->mc_addr_list.addr[i],
 				&pattern, 1)) {
-				memcpy(filter->multicastAddr[i],
+				memcpy(filter->multicastAddr[i].bytes,
 					adapter->mc_addr_list.addr[i],
 					sizeof(adapter->mc_addr_list.addr[i]));
 				filter->ulMulticastAddrCnt++;
 				hdd_info("%s RX filter : addr ="
 				    MAC_ADDRESS_STR,
 				    action ? "setting" : "clearing",
-				    MAC_ADDR_ARRAY(filter->multicastAddr[i]));
+				    MAC_ADDR_ARRAY(filter->multicastAddr[i].bytes));
 			}
 		}
 		/* Set rx filter */

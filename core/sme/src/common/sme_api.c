@@ -7412,7 +7412,7 @@ CDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO, "%s: "
 		  "ulMulticastAddrCnt=%d, multicastAddr[0]=%p", __func__,
 		  pMulticastAddrs->ulMulticastAddrCnt,
-		  pMulticastAddrs->multicastAddr[0]);
+		  pMulticastAddrs->multicastAddr[0].bytes);
 
 	/*
 	   *Find the connected Infra / P2P_client connected session
@@ -7449,10 +7449,9 @@ CDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	cdf_mem_copy(request_buf, pMulticastAddrs,
 		     sizeof(tSirRcvFltMcAddrList));
 
-	cdf_mem_copy(request_buf->selfMacAddr, pSession->selfMacAddr.bytes,
-		     sizeof(tSirMacAddr));
-	cdf_mem_copy(request_buf->bssId, pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&request_buf->self_macaddr, &pSession->selfMacAddr);
+	cdf_copy_macaddr(&request_buf->bssid,
+			 &pSession->connectedProfile.bssid);
 
 	msg.type = WMA_8023_MULTICAST_LIST_REQ;
 	msg.reserved = 0;
@@ -7503,11 +7502,10 @@ CDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_copy(pRcvPktFilterCfg->selfMacAddr, pSession->selfMacAddr.bytes,
-		     sizeof(tSirMacAddr));
-	cdf_mem_copy(pRcvPktFilterCfg->bssId,
-		     pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pRcvPktFilterCfg->self_macaddr,
+			 &pSession->selfMacAddr);
+	cdf_copy_macaddr(&pRcvPktFilterCfg->bssid,
+			 &pSession->connectedProfile.bssid);
 	cdf_mem_copy(request_buf, pRcvPktFilterCfg, allocSize);
 
 	msg.type = WMA_RECEIVE_FILTER_SET_FILTER_REQ;
@@ -7578,6 +7576,12 @@ CDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO, "%s: filterId = %d",
 		  __func__, pRcvFltPktClearParam->filterId);
 
+	if (NULL == pSession) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Session Not found", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
 	request_buf = cdf_mem_malloc(sizeof(tSirRcvFltPktClearParam));
 	if (NULL == request_buf) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
@@ -7585,18 +7589,11 @@ CDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 			  "Clear Filter request", __func__);
 		return CDF_STATUS_E_NOMEM;
 	}
-	if (NULL == pSession) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Session Not find ", __func__);
-		cdf_mem_free(request_buf);
-		return CDF_STATUS_E_FAILURE;
-	}
 
-	cdf_mem_copy(pRcvFltPktClearParam->selfMacAddr,
-		     pSession->selfMacAddr.bytes,
-		     sizeof(tSirMacAddr));
-	cdf_mem_copy(pRcvFltPktClearParam->bssId,
-		     pSession->connectedProfile.bssid.bytes, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pRcvFltPktClearParam->self_macaddr,
+			 &pSession->selfMacAddr);
+	cdf_copy_macaddr(&pRcvFltPktClearParam->bssid,
+			 &pSession->connectedProfile.bssid);
 
 	cdf_mem_copy(request_buf, pRcvFltPktClearParam,
 		     sizeof(tSirRcvFltPktClearParam));

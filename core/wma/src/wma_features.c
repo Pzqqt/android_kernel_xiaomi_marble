@@ -4402,9 +4402,10 @@ int wma_process_receive_filter_set_filter_req(tp_wma_handle wma,
 	uint8_t vdev_id;
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma, rcv_filter_param->bssId, &vdev_id)) {
+	if (!wma_find_vdev_by_bssid(wma,
+		rcv_filter_param->bssid.bytes, &vdev_id)) {
 		WMA_LOGE("vdev handle is invalid for %pM",
-			rcv_filter_param->bssId);
+			rcv_filter_param->bssid.bytes);
 		return -EINVAL;
 	}
 
@@ -4428,8 +4429,10 @@ int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma,
 	uint8_t vdev_id;
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma, rcv_clear_param->bssId, &vdev_id)) {
-		WMA_LOGE("vdev handle is invalid for %pM", rcv_clear_param->bssId);
+	if (!wma_find_vdev_by_bssid(wma,
+				rcv_clear_param->bssid.bytes, &vdev_id)) {
+		WMA_LOGE("vdev handle is invalid for %pM",
+			 rcv_clear_param->bssid.bytes);
 		return -EINVAL;
 	}
 
@@ -4542,7 +4545,8 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
  * Return: 0 for success or error code
  */
 static int wma_add_clear_mcbc_filter(tp_wma_handle wma_handle, uint8_t vdev_id,
-				     tSirMacAddr multicastAddr, bool clearList)
+				     struct cdf_mac_addr multicast_addr,
+				     bool clearList)
 {
 	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -4564,7 +4568,7 @@ static int wma_add_clear_mcbc_filter(tp_wma_handle wma_handle, uint8_t vdev_id,
 	cmd->action =
 		(clearList ? WMI_MCAST_FILTER_DELETE : WMI_MCAST_FILTER_SET);
 	cmd->vdev_id = vdev_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(multicastAddr, &cmd->mcastbdcastaddr);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(multicast_addr.bytes, &cmd->mcastbdcastaddr);
 	err = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
 				   sizeof(*cmd),
 				   WMI_SET_MCASTBCAST_FILTER_CMDID);
@@ -4573,11 +4577,10 @@ static int wma_add_clear_mcbc_filter(tp_wma_handle wma_handle, uint8_t vdev_id,
 		cdf_mem_free(buf);
 		return -EIO;
 	}
-	WMA_LOGD("Action:%d; vdev_id:%d; clearList:%d\n",
+	WMA_LOGD("Action:%d; vdev_id:%d; clearList:%d",
 		 cmd->action, vdev_id, clearList);
-	WMA_LOGD("MCBC MAC Addr: %0x:%0x:%0x:%0x:%0x:%0x\n",
-		 multicastAddr[0], multicastAddr[1], multicastAddr[2],
-		 multicastAddr[3], multicastAddr[4], multicastAddr[5]);
+	WMA_LOGD("MCBC MAC Addr: "MAC_ADDRESS_STR,
+		 MAC_ADDR_ARRAY(multicast_addr.bytes));
 	return 0;
 }
 
@@ -4599,10 +4602,10 @@ CDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (!wma_find_vdev_by_addr
-		    (wma_handle, mcbc_param->selfMacAddr, &vdev_id)) {
+	if (!wma_find_vdev_by_addr(wma_handle,
+			mcbc_param->self_macaddr.bytes, &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev id for %pM", __func__,
-			 mcbc_param->bssId);
+			 mcbc_param->bssid.bytes);
 		return CDF_STATUS_E_FAILURE;
 	}
 	/* set mcbc_param->action to clear MCList and reset
