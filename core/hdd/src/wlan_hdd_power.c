@@ -135,9 +135,8 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 	} else {
 		if ((eConnectionState_Associated ==
 		     pHddStaCtx->conn_info.connState)
-		    && (0 ==
-			memcmp(&pHddStaCtx->gtkOffloadReqParams.bssId,
-			       &pHddStaCtx->conn_info.bssId, CDF_MAC_ADDR_SIZE))
+		    && (cdf_is_macaddr_equal(&pHddStaCtx->gtkOffloadReqParams.bssid,
+			       &pHddStaCtx->conn_info.bssId))
 		    && (GTK_OFFLOAD_ENABLE ==
 			pHddStaCtx->gtkOffloadReqParams.ulFlags)) {
 

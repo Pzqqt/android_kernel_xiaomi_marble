@@ -4675,7 +4675,7 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event,
 	cdf_mem_copy(&resp->ullKeyReplayCounter, &status->replay_counter,
 		     GTK_REPLAY_COUNTER_BYTES);
 
-	cdf_mem_copy(resp->bssId, bssid, IEEE80211_ADDR_LEN);
+	cdf_mem_copy(resp->bssid.bytes, bssid, IEEE80211_ADDR_LEN);
 
 #ifdef IGTK_OFFLOAD
 	/* TODO: Is the refresh count same for GTK and IGTK? */
@@ -4792,15 +4792,16 @@ CDF_STATUS wma_process_gtk_offload_req(tp_wma_handle wma,
 	WMA_LOGD("%s Enter", __func__);
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma, params->bssId, &vdev_id)) {
-		WMA_LOGE("vdev handle is invalid for %pM", params->bssId);
+	if (!wma_find_vdev_by_bssid(wma, params->bssid.bytes, &vdev_id)) {
+		WMA_LOGE("vdev handle is invalid for %pM", params->bssid.bytes);
 		status = CDF_STATUS_E_INVAL;
 		goto out;
 	}
 
 	/* Validate vdev id */
 	if (vdev_id >= wma->max_bssid) {
-		WMA_LOGE("invalid vdev_id %d for %pM", vdev_id, params->bssId);
+		WMA_LOGE("invalid vdev_id %d for %pM", vdev_id,
+			 params->bssid.bytes);
 		status = CDF_STATUS_E_INVAL;
 		goto out;
 	}
@@ -4845,8 +4846,8 @@ CDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
 	WMA_LOGD("%s Enter", __func__);
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma, params->bssId, &vdev_id)) {
-		WMA_LOGE("vdev handle is invalid for %pM", params->bssId);
+	if (!wma_find_vdev_by_bssid(wma, params->bssid.bytes, &vdev_id)) {
+		WMA_LOGE("vdev handle is invalid for %pM", params->bssid.bytes);
 		status = CDF_STATUS_E_INVAL;
 		goto out;
 	}
