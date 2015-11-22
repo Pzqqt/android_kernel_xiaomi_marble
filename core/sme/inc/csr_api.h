@@ -1274,6 +1274,7 @@ typedef struct tagCsrConfigParam {
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
+	int8_t first_scan_bucket_threshold;
 } tCsrConfigParam;
 
 /* Tush */

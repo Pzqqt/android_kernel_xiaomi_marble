@@ -1189,6 +1189,8 @@ void csr_assign_rssi_for_category(tpAniSirGlobal pMac, int8_t bestApRssi,
 				  uint8_t catOffset)
 {
 	int i;
+	sms_log(pMac, LOG2, FL("best AP RSSI:%d, cat offset:%d"),
+		bestApRssi, catOffset);
 	if (catOffset) {
 		pMac->roam.configParam.bCatRssiOffset = catOffset;
 		for (i = 0; i < CSR_NUM_RSSI_CAT; i++) {
@@ -1238,7 +1240,7 @@ static void init_config_param(tpAniSirGlobal pMac)
 		pMac->roam.configParam.BssPreferValue[i] = i;
 	}
 	csr_assign_rssi_for_category(pMac, CSR_BEST_RSSI_VALUE,
-				     CSR_DEFAULT_RSSI_DB_GAP);
+			CSR_DEFAULT_RSSI_DB_GAP);
 	pMac->roam.configParam.nRoamingTime = CSR_DEFAULT_ROAMING_TIME;
 	pMac->roam.configParam.fSupplicantCountryCodeHasPriority = false;
 	pMac->roam.configParam.nActiveMaxChnTime = CSR_ACTIVE_MAX_CHANNEL_TIME;
@@ -1821,8 +1823,11 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 				pParam->scanAgeTimeCPS;
 		}
 
-		csr_assign_rssi_for_category(pMac, CSR_BEST_RSSI_VALUE,
-					     pParam->bCatRssiOffset);
+		pMac->first_scan_bucket_threshold =
+			pParam->first_scan_bucket_threshold;
+		csr_assign_rssi_for_category(pMac,
+			pMac->first_scan_bucket_threshold,
+			pParam->bCatRssiOffset);
 		pMac->roam.configParam.nRoamingTime = pParam->nRoamingTime;
 		pMac->roam.configParam.fSupplicantCountryCodeHasPriority =
 			pParam->fSupplicantCountryCodeHasPriority;
@@ -2158,6 +2163,8 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->sendDeauthBeforeCon =
 		cfg_params->sendDeauthBeforeCon;
 	pParam->max_scan_count = pMac->scan.max_scan_count;
+	pParam->first_scan_bucket_threshold =
+		pMac->first_scan_bucket_threshold;
 	return CDF_STATUS_SUCCESS;
 }
 
