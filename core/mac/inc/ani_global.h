@@ -1043,6 +1043,7 @@ typedef struct sAniSirGlobal {
 	uint32_t dual_mac_feature_disable;
 
 	bool first_scan_done;
+	int8_t first_scan_bucket_threshold;
 } tAniSirGlobal;
 
 typedef enum {

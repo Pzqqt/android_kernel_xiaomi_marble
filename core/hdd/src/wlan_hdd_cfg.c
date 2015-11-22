@@ -3603,6 +3603,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MIN,
 		     CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX),
 
+	REG_VARIABLE(CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
+		     WLAN_PARAM_SignedInteger,
+		     struct hdd_config, first_scan_bucket_threshold,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT,
+		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MIN,
+		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX),
+
 };
 
 
@@ -5146,7 +5154,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hddLog(LOGE, "Name = [%s] Value = [%d]",
 		CFG_EARLY_STOP_SCAN_MAX_THRESHOLD,
 		pHddCtx->config->early_stop_scan_max_threshold);
-
+	hddLog(LOGE, "Name = [%s] Value = [%d]",
+		CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
+		pHddCtx->config->first_scan_bucket_threshold);
 }
 
 
@@ -6589,6 +6599,8 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pHddCtx->config->early_stop_scan_min_threshold;
 	smeConfig->early_stop_scan_max_threshold =
 		pHddCtx->config->early_stop_scan_max_threshold;
+	smeConfig->csrConfig.first_scan_bucket_threshold =
+		pHddCtx->config->first_scan_bucket_threshold;
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, "sme_update_config() return failure %d",

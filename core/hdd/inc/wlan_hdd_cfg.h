@@ -2758,6 +2758,19 @@ enum dot11p_mode {
 #define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_MAX       (-40)
 #define CFG_EARLY_STOP_SCAN_MAX_THRESHOLD_DEFAULT   (-45)
 
+/*
+ * This parameter will configure the first scan bucket
+ * threshold to the mentioned value and all the AP's which
+ * have RSSI under this threshold will fall under this
+ * bucket.
+ * This is a configuration item used to tweak and test the input
+ * for internal algorithm. It should not be modified externally.
+ */
+#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME      "gFirstScanBucketThreshold"
+#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_MIN       (-50)
+#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX       (-30)
+#define CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT   (-30)
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3335,6 +3348,7 @@ struct hdd_config {
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
+	int8_t first_scan_bucket_threshold;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
