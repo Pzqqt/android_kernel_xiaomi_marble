@@ -445,6 +445,7 @@ void cds_ssr_protect_init(void);
 void cds_ssr_protect(const char *caller_func);
 void cds_ssr_unprotect(const char *caller_func);
 bool cds_is_ssr_ready(const char *caller_func);
+int cds_get_gfp_flags(void);
 
 #define cds_wait_for_work_thread_completion(func) cds_is_ssr_ready(func)
 
