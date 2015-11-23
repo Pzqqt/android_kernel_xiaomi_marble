@@ -60,6 +60,14 @@
 #define BB_watchdog_ctrl_2       0x1a7c8
 #define BB_watchdog_status_B     0x1a7e0
 
+
+#define PHY_BB_CHN_TABLES_INTF_ADDR 0x19894
+#define PHY_BB_CHN_TABLES_INTF_DATA 0x19898
+
+#define PHY_BB_CHN1_TABLES_INTF_ADDR 0x1a894
+#define PHY_BB_CHN1_TABLES_INTF_DATA 0x1a898
+
+
 struct priv_ctrl_ctx {
 	uint32_t chaninfo_ctrl_orig;
 	uint32_t gain_min_offsets_orig;
@@ -253,6 +261,8 @@ void priv_dump_agc(struct ol_softc *scn)
 	int i, len = 30;        /* check this value for Rome and Peregrine */
 	uint32_t chain0, chain1, chain_mask, val;
 
+	A_TARGET_ACCESS_BEGIN(scn);
+
 	chain_mask =
 		get_target_reg_bits(scn->mem, BB_multichain_enable,
 				    MULTICHAIN_ENABLE_RX_CHAIN_MASK_MASK);
@@ -268,9 +278,11 @@ void priv_dump_agc(struct ol_softc *scn)
 	HIF_TRACE("%s: AGC history buffer dump: E", __func__);
 	if (chain0) {
 		for (i = 0; i < len; i++) {
-			val =
-				hif_read32_mb(scn->mem + BB_chaninfo_tab_b0 +
-					     i * 4);
+			hif_write32_mb(scn->mem +
+				PHY_BB_CHN_TABLES_INTF_ADDR,
+				BB_chaninfo_tab_b0 + i * 4);
+			val = hif_read32_mb(scn->mem +
+				PHY_BB_CHN_TABLES_INTF_DATA);
 			cdf_print("0x%x\t", val);
 			if (i % 4 == 0)
 				cdf_print("\n");
@@ -278,9 +290,11 @@ void priv_dump_agc(struct ol_softc *scn)
 	}
 	if (chain1) {
 		for (i = 0; i < len; i++) {
-			val =
-				hif_read32_mb(scn->mem + BB_chaninfo_tab_b1 +
-					     i * 4);
+			hif_write32_mb(scn->mem +
+				PHY_BB_CHN1_TABLES_INTF_ADDR,
+				BB_chaninfo_tab_b0 + i * 4);
+			val = hif_read32_mb(scn->mem +
+				PHY_BB_CHN1_TABLES_INTF_DATA);
 			cdf_print("0x%x\t", val);
 			if (i % 4 == 0)
 				cdf_print("\n");
@@ -290,6 +304,9 @@ void priv_dump_agc(struct ol_softc *scn)
 	/* restore original value */
 	hif_write32_mb(scn->mem + BB_gains_min_offsets,
 		      g_priv_dump_ctx.gain_min_offsets_orig);
+
+	A_TARGET_ACCESS_END(scn);
+
 	return;
 }
 
