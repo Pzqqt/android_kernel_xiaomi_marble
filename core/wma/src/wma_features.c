@@ -102,6 +102,10 @@ static const uint8_t arp_mask[] = {0xff, 0xff};
 static const uint8_t ns_ptrn[] = {0x86, 0xDD};
 static const uint8_t discvr_ptrn[] = {0xe0, 0x00, 0x00, 0xf8};
 static const uint8_t discvr_mask[] = {0xf0, 0x00, 0x00, 0xf8};
+static CDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
+					uint32_t vdev_id,
+					uint32_t bitmap,
+					bool enable);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
@@ -2464,6 +2468,8 @@ static const u8 *wma_wow_wake_reason_str(A_INT32 wake_reason)
 #endif
 	case WOW_REASON_RSSI_BREACH_EVENT:
 		return "WOW_REASON_RSSI_BREACH_EVENT";
+	case WOW_REASON_NLO_SCAN_COMPLETE:
+		return "WOW_REASON_NLO_SCAN_COMPLETE";
 	}
 	return "unknown";
 }
@@ -2674,11 +2680,37 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_NLOD);
 		node = &wma->interfaces[wake_info->vdev_id];
 		if (node) {
+			CDF_STATUS ret = CDF_STATUS_SUCCESS;
 			WMA_LOGD("NLO match happened");
 			node->nlo_match_evt_received = true;
 			cdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
 					WIFI_POWER_EVENT_WAKELOCK_PNO);
+			/* Configure pno scan complete wakeup */
+			ret = wma_add_wow_wakeup_event(wma, wake_info->vdev_id,
+					(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
+					true);
+			if (ret != CDF_STATUS_SUCCESS)
+				WMA_LOGE("Failed to configure pno scan complete wakeup");
+			else
+				WMA_LOGD("PNO scan complete wakeup is enabled in fw");
+		}
+		break;
+
+	case WOW_REASON_NLO_SCAN_COMPLETE:
+		{
+			WMI_NLO_SCAN_COMPLETE_EVENTID_param_tlvs param;
+
+			WMA_LOGD("Host woken up due to pno scan complete reason");
+
+			/* First 4-bytes of wow_packet_buffer is the length */
+			if (param_buf->wow_packet_buffer) {
+				param.fixed_param = (wmi_nlo_event *)
+					(param_buf->wow_packet_buffer + 4);
+				wma_nlo_scan_cmp_evt_handler(handle,
+					(u_int8_t *)&param, sizeof(param));
+			} else
+				WMA_LOGD("No wow_packet_buffer present");
 		}
 		break;
 #endif /* FEATURE_WLAN_SCAN_PNO */
