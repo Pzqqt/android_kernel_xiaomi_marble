@@ -501,6 +501,9 @@ fail:
  * @ctx: Pointer to hdd context
  * @pData: Pointer to ext scan result event
  *
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
+ *
  * Return: none
  */
 static void
@@ -510,6 +513,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 	hdd_context_t *pHddCtx = ctx;
 	struct sk_buff *skb = NULL;
 	uint32_t i, index;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -529,7 +533,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 		  pHddCtx->wiphy,
 		  NULL,
 		  EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
-		  index, GFP_KERNEL);
+		  index, flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -618,7 +622,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 			goto fail;
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	EXIT();
 	return;
 
@@ -633,6 +637,9 @@ fail:
  * @ctx: Pointer to hdd context
  * @pData: Pointer to signif wifi change event
  *
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
+ *
  * Return: none
  */
 static void
@@ -645,6 +652,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 	tSirWifiSignificantChange *ap_info;
 	int32_t *rssi;
 	uint32_t i, j;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -660,7 +668,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 		NULL,
 		EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
 		QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SIGNIFICANT_CHANGE_INDEX,
-		GFP_KERNEL);
+		flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -738,7 +746,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 			goto fail;
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	return;
 
 fail:
@@ -752,6 +760,9 @@ fail:
  * @ctx: Pointer to hdd context
  * @pData: Pointer to full scan result event
  *
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
+ *
  * Return: none
  */
 static void
@@ -764,6 +775,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 #ifdef CONFIG_CNSS
 	struct timespec ts;
 #endif
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -784,7 +796,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 		  NULL,
 		  EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
 		  QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_FULL_SCAN_RESULT_INDEX,
-		  GFP_KERNEL);
+		  flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -867,7 +879,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 			goto nla_put_failure;
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	EXIT();
 	return;
 
@@ -881,6 +893,9 @@ nla_put_failure:
  * @ctx: Pointer to hdd context
  * @pData: Pointer to scan results available indication param
  *
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
+ *
  * Return: none
  */
 static void
@@ -890,6 +905,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
 	struct sk_buff *skb = NULL;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -905,7 +921,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 		 NULL,
 		 EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
 		 QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SCAN_RESULTS_AVAILABLE_INDEX,
-		 GFP_KERNEL);
+		 flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -924,7 +940,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 		goto nla_put_failure;
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	EXIT();
 	return;
 
@@ -938,6 +954,9 @@ nla_put_failure:
  * @ctx: Pointer to hdd context
  * @pData: Pointer to scan event indication param
  *
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
+ *
  * Return: none
  */
 static void
@@ -947,6 +966,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
 	struct sk_buff *skb = NULL;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -962,7 +982,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 			NULL,
 			EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
 			QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_SCAN_EVENT_INDEX,
-			GFP_KERNEL);
+			flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -983,7 +1003,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 		goto nla_put_failure;
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	EXIT();
 	return;
 
@@ -999,6 +1019,8 @@ nla_put_failure:
  *
  * This function reads the matched network data and fills NL vendor attributes
  * and send it to upper layer.
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
  *
  * Return: 0 on success, error number otherwise
  */
@@ -1009,6 +1031,7 @@ wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
 	hdd_context_t *pHddCtx  = (hdd_context_t *)ctx;
 	struct sk_buff *skb     = NULL;
 	uint32_t len, i;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -1037,7 +1060,7 @@ wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
 		  NULL,
 		  EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
 		QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_NETWORK_FOUND_INDEX,
-		  GFP_KERNEL);
+		  flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -1095,7 +1118,7 @@ wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
 		nla_nest_end(skb, nla_aps);
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	return;
 
 fail:
@@ -1110,6 +1133,8 @@ fail:
  *
  * This function reads the match network %data and fill in the skb with
  * NL attributes and send up the NL event
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
  *
  * Return: none
  */
@@ -1120,8 +1145,8 @@ wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 	hdd_context_t *pHddCtx  = ctx;
 	struct sk_buff *skb     = NULL;
 	uint32_t len, i, num_matches = 1, more_data = 0;
-	struct nlattr *nla_aps;
-	struct nlattr *nla_bss;
+	struct nlattr *nla_aps, *nla_bss;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -1142,7 +1167,7 @@ wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 		  NULL,
 		  EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
 		  QCA_NL80211_VENDOR_SUBCMD_EXTSCAN_PNO_PASSPOINT_NETWORK_FOUND_INDEX,
-		  GFP_KERNEL);
+		  flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -1225,7 +1250,7 @@ wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 	}
 	nla_nest_end(skb, nla_aps);
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	return;
 
 fail:
@@ -1242,6 +1267,8 @@ fail:
  * This function will take an SSID match event that was generated by
  * firmware and will convert it into a cfg80211 vendor event which is
  * sent to userspace.
+ * This callback execute in atomic context and must not invoke any
+ * blocking calls.
  *
  * Return: none
  */
@@ -1252,6 +1279,7 @@ wlan_hdd_cfg80211_extscan_hotlist_ssid_match_ind(void *ctx,
 	hdd_context_t *hdd_ctx = ctx;
 	struct sk_buff *skb;
 	uint32_t i, index;
+	int flags = cds_get_gfp_flags();
 
 	ENTER();
 
@@ -1273,8 +1301,7 @@ wlan_hdd_cfg80211_extscan_hotlist_ssid_match_ind(void *ctx,
 	skb = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
 		NULL,
 		EXTSCAN_EVENT_BUF_SIZE + NLMSG_HDRLEN,
-		index,
-		GFP_KERNEL);
+		index, flags);
 
 	if (!skb) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
@@ -1367,7 +1394,7 @@ wlan_hdd_cfg80211_extscan_hotlist_ssid_match_ind(void *ctx,
 		}
 	}
 
-	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cfg80211_vendor_event(skb, flags);
 	return;
 
 fail:
