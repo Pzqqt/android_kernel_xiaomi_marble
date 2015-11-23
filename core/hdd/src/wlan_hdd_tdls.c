@@ -438,7 +438,7 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
 
 	hddLog(LOG1,
 		FL(
-		   "Setting tdls state and param in fw: vdev_id: %d, tdls_state: %d, notification_interval_ms: %d, tx_discovery_threshold: %d, tx_teardown_threshold: %d, rssi_teardown_threshold: %d, rssi_delta: %d, tdls_options: 0x%x, peer_traffic_ind_window: %d, peer_traffic_response_timeout: %d, puapsd_mask: 0x%x, puapsd_inactivity_time: %d, puapsd_rx_frame_threshold: %d"
+		   "Setting tdls state and param in fw: vdev_id: %d, tdls_state: %d, notification_interval_ms: %d, tx_discovery_threshold: %d, tx_teardown_threshold: %d, rssi_teardown_threshold: %d, rssi_delta: %d, tdls_options: 0x%x, peer_traffic_ind_window: %d, peer_traffic_response_timeout: %d, puapsd_mask: 0x%x, puapsd_inactivity_time: %d, puapsd_rx_frame_threshold: %d, teardown_notification_ms: %d"
 		),
 		info->vdev_id,
 		info->tdls_state,
@@ -452,7 +452,8 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
 		info->peer_traffic_response_timeout,
 		info->puapsd_mask,
 		info->puapsd_inactivity_time,
-		info->puapsd_rx_frame_threshold);
+		info->puapsd_rx_frame_threshold,
+		info->teardown_notification_ms);
 }
 
 
@@ -700,6 +701,8 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddCtx->config->fTDLSPuapsdInactivityTimer;
 	tInfo->puapsd_rx_frame_threshold =
 		pHddCtx->config->fTDLSRxFrameThreshold;
+	tInfo->teardown_notification_ms =
+		pHddCtx->config->tdls_idle_timeout;
 
 	dump_tdls_state_param_setting(tInfo);
 
@@ -799,6 +802,8 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 				pHddCtx->config->fTDLSPuapsdInactivityTimer;
 			tInfo->puapsd_rx_frame_threshold =
 				pHddCtx->config->fTDLSRxFrameThreshold;
+			tInfo->teardown_notification_ms =
+				pHddCtx->config->tdls_idle_timeout;
 
 			dump_tdls_state_param_setting(tInfo);
 
@@ -1634,36 +1639,10 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 		pHddCtx->config->fTDLSPuapsdInactivityTimer;
 	tdlsParams->puapsd_rx_frame_threshold =
 		pHddCtx->config->fTDLSRxFrameThreshold;
+	tdlsParams->teardown_notification_ms =
+		pHddCtx->config->tdls_idle_timeout;
 
-	hddLog(LOG1,
-		  "%s: Setting tdls state and param in fw: "
-		  "vdev_id: %d, "
-		  "tdls_state: %d, "
-		  "notification_interval_ms: %d, "
-		  "tx_discovery_threshold: %d, "
-		  "tx_teardown_threshold: %d, "
-		  "rssi_teardown_threshold: %d, "
-		  "rssi_delta: %d, "
-		  "tdls_options: 0x%x, "
-		  "peer_traffic_ind_window: %d, "
-		  "peer_traffic_response_timeout: %d, "
-		  "puapsd_mask: 0x%x, "
-		  "puapsd_inactivity_time: %d, "
-		  "puapsd_rx_frame_threshold: %d ",
-		  __func__,
-		  tdlsParams->vdev_id,
-		  tdlsParams->tdls_state,
-		  tdlsParams->notification_interval_ms,
-		  tdlsParams->tx_discovery_threshold,
-		  tdlsParams->tx_teardown_threshold,
-		  tdlsParams->rssi_teardown_threshold,
-		  tdlsParams->rssi_delta,
-		  tdlsParams->tdls_options,
-		  tdlsParams->peer_traffic_ind_window,
-		  tdlsParams->peer_traffic_response_timeout,
-		  tdlsParams->puapsd_mask,
-		  tdlsParams->puapsd_inactivity_time,
-		  tdlsParams->puapsd_rx_frame_threshold);
+	dump_tdls_state_param_setting(tdlsParams);
 
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tdlsParams, true);
 	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
@@ -1768,35 +1747,10 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 		hdd_ctx->config->fTDLSPuapsdInactivityTimer;
 	tdls_param->puapsd_rx_frame_threshold =
 		hdd_ctx->config->fTDLSRxFrameThreshold;
+	tdls_param->teardown_notification_ms =
+		hdd_ctx->config->tdls_idle_timeout;
 
-	hddLog(CDF_TRACE_LEVEL_DEBUG,
-		FL("Setting tdls state and param in fw: "
-		"vdev_id: %d, "
-		"tdls_state: %d, "
-		"notification_interval_ms: %d, "
-		"tx_discovery_threshold: %d, "
-		"tx_teardown_threshold: %d, "
-		"rssi_teardown_threshold: %d, "
-		"rssi_delta: %d, "
-		"tdls_options: 0x%x, "
-		"peer_traffic_ind_window: %d, "
-		"peer_traffic_response_timeout: %d, "
-		"puapsd_mask: 0x%x, "
-		"puapsd_inactivity_time: %d, "
-		"puapsd_rx_frame_threshold: %d "),
-		tdls_param->vdev_id,
-		tdls_param->tdls_state,
-		tdls_param->notification_interval_ms,
-		tdls_param->tx_discovery_threshold,
-		tdls_param->tx_teardown_threshold,
-		tdls_param->rssi_teardown_threshold,
-		tdls_param->rssi_delta,
-		tdls_param->tdls_options,
-		tdls_param->peer_traffic_ind_window,
-		tdls_param->peer_traffic_response_timeout,
-		tdls_param->puapsd_mask,
-		tdls_param->puapsd_inactivity_time,
-		tdls_param->puapsd_rx_frame_threshold);
+	dump_tdls_state_param_setting(tdls_param);
 
 	cdf_ret_status = sme_update_fw_tdls_state(hdd_ctx->hHal,
 					       tdls_param,

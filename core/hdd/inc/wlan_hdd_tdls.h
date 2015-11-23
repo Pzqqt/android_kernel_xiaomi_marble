@@ -394,6 +394,7 @@ typedef struct {
  * @puapsd_mask: puapsd mask
  * @puapsd_inactivity_time: puapsd inactivity time
  * @puapsd_rx_frame_threshold: puapsd rx frame threshold
+ * @teardown_notification_ms: tdls teardown notification interval
  */
 typedef struct {
 	uint32_t vdev_id;
@@ -409,6 +410,7 @@ typedef struct {
 	uint32_t puapsd_mask;
 	uint32_t puapsd_inactivity_time;
 	uint32_t puapsd_rx_frame_threshold;
+	uint32_t teardown_notification_ms;
 } tdlsInfo_t;
 
 int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter);

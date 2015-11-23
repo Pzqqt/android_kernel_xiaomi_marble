@@ -6509,6 +6509,8 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 	cmd->tdls_puapsd_inactivity_time_ms = wma_tdls->puapsd_inactivity_time;
 	cmd->tdls_puapsd_rx_frame_threshold =
 		wma_tdls->puapsd_rx_frame_threshold;
+	cmd->teardown_notification_ms =
+		wma_tdls->teardown_notification_ms;
 
 	WMA_LOGD("%s: tdls_mode: %d, state: %d, "
 		 "notification_interval_ms: %d, "
@@ -6521,7 +6523,8 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 		 "tdls_peer_traffic_response_timeout: %d, "
 		 "tdls_puapsd_mask: 0x%x, "
 		 "tdls_puapsd_inactivity_time: %d, "
-		 "tdls_puapsd_rx_frame_threshold: %d ",
+		 "tdls_puapsd_rx_frame_threshold: %d, "
+		 "teardown_notification_ms: %d",
 		 __func__, tdls_mode, cmd->state,
 		 cmd->notification_interval_ms,
 		 cmd->tx_discovery_threshold,
@@ -6533,7 +6536,8 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 		 cmd->tdls_peer_traffic_response_timeout_ms,
 		 cmd->tdls_puapsd_mask,
 		 cmd->tdls_puapsd_inactivity_time_ms,
-		 cmd->tdls_puapsd_rx_frame_threshold);
+		 cmd->tdls_puapsd_rx_frame_threshold,
+		 cmd->teardown_notification_ms);
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_TDLS_SET_STATE_CMDID)) {
