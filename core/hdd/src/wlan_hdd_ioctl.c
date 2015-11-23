@@ -6134,6 +6134,8 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 	uint8_t *command = NULL;
 	int ret = 0;
 
+	ENTER();
+
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
@@ -6176,7 +6178,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 exit:
 	if (command)
 		kfree(command);
-
+	EXIT();
 	return ret;
 }
 
@@ -6256,6 +6258,8 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	hdd_context_t *hdd_ctx;
 	int ret;
 
+	ENTER();
+
 	if (dev != adapter->dev) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 			  "%s: HDD adapter/dev inconsistency", __func__);
@@ -6280,12 +6284,8 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (ret) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s: invalid context", __func__);
-		ret = -EBUSY;
+	if (ret)
 		goto exit;
-	}
 
 	switch (cmd) {
 	case (SIOCDEVPRIVATE + 1):
@@ -6301,6 +6301,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		break;
 	}
 exit:
+	EXIT();
 	return ret;
 }
 

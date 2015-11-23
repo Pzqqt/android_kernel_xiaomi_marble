@@ -158,9 +158,10 @@ wlan_hdd_cfg80211_extscan_get_capabilities_rsp(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(hdd_ctx) || !data) {
-		hddLog(LOGE, FL("HDD context is invalid or data(%p) is null"),
-			data);
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+	if (!data) {
+		hddLog(LOGE, FL("data is null"));
 		return;
 	}
 
@@ -290,8 +291,10 @@ wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !data) {
-		hddLog(LOGE, FL("HDD ctx invalid or data(%p) is null"), data);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!data) {
+		hddLog(LOGE, FL("data is null"));
 		return;
 	}
 
@@ -479,6 +482,7 @@ wlan_hdd_cfg80211_extscan_cached_results_ind(void *ctx,
 		complete(&context->response_event);
 		spin_unlock(&context->context_lock);
 	}
+	EXIT();
 	return;
 
 fail:
@@ -509,8 +513,10 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !data) {
-		hddLog(LOGE, FL("HDD ctx invalid or data(%p) is null"), data);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!data) {
+		hddLog(LOGE, FL("data is null"));
 		return;
 	}
 
@@ -613,6 +619,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 	}
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	EXIT();
 	return;
 
 fail:
@@ -641,8 +648,10 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !pData) {
-		hddLog(LOGE, FL("HDD ctx invalid or pData(%p) is null"), pData);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!pData) {
+		hddLog(LOGE, FL("pData is null"));
 		return;
 	}
 
@@ -758,8 +767,10 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !pData) {
-		hddLog(LOGE, FL("HDD ctx invalid or pData(%p) is null"), pData);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!pData) {
+		hddLog(LOGE, FL("pData is null"));
 		return;
 	}
 
@@ -857,6 +868,7 @@ wlan_hdd_cfg80211_extscan_full_scan_result_event(void *ctx,
 	}
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	EXIT();
 	return;
 
 nla_put_failure:
@@ -881,8 +893,10 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !pData) {
-		hddLog(LOGE, FL("HDD ctx invalid or pData(%p) is null"), pData);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!pData) {
+		hddLog(LOGE, FL("pData is null"));
 		return;
 	}
 
@@ -911,6 +925,7 @@ wlan_hdd_cfg80211_extscan_scan_res_available_event(
 	}
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	EXIT();
 	return;
 
 nla_put_failure:
@@ -935,8 +950,10 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !pData) {
-		hddLog(LOGE, FL("HDD ctx invalid or pData(%p) is null"), pData);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!pData) {
+		hddLog(LOGE, FL("pData is null"));
 		return;
 	}
 
@@ -967,6 +984,7 @@ wlan_hdd_cfg80211_extscan_scan_progress_event(void *ctx,
 	}
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	EXIT();
 	return;
 
 nla_put_failure:
@@ -994,9 +1012,10 @@ wlan_hdd_cfg80211_extscan_epno_match_found(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !data) {
-		hddLog(LOGE, FL("HDD context is invalid or data(%p) is null"),
-			data);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!data) {
+		hddLog(LOGE, FL("data is null"));
 		return;
 	}
 
@@ -1106,9 +1125,10 @@ wlan_hdd_cfg80211_passpoint_match_found(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(pHddCtx) || !data) {
-		hddLog(LOGE, FL("HDD context is invalid or data(%p) is null"),
-			data);
+	if (wlan_hdd_validate_context(pHddCtx))
+		return;
+	if (!data) {
+		hddLog(LOGE, FL("data is null"));
 		return;
 	}
 
@@ -1235,10 +1255,10 @@ wlan_hdd_cfg80211_extscan_hotlist_ssid_match_ind(void *ctx,
 
 	ENTER();
 
-	if (wlan_hdd_validate_context(hdd_ctx) || !event) {
-		hddLog(LOGE,
-		       FL("HDD context is not valid or event(%p) is null"),
-		       event);
+	if (wlan_hdd_validate_context(hdd_ctx))
+		return;
+	if (!event) {
+		hddLog(LOGE, FL("event is null"));
 		return;
 	}
 
@@ -1411,10 +1431,10 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) ctx;
 
-	if (wlan_hdd_validate_context(pHddCtx)) {
-		hddLog(LOGE, FL("HDD ctx invalid received event: %d"), evType);
+	ENTER();
+
+	if (wlan_hdd_validate_context(pHddCtx))
 		return;
-	}
 
 	hddLog(LOG1, FL("Rcvd Event %d"), evType);
 
@@ -1489,6 +1509,7 @@ void wlan_hdd_cfg80211_extscan_callback(void *ctx, const uint16_t evType,
 		hddLog(LOGE, FL("Unknown event type %u"), evType);
 		break;
 	}
+	EXIT();
 }
 
 /*
@@ -1538,10 +1559,8 @@ static int wlan_hdd_send_ext_scan_capability(hdd_context_t *hdd_ctx)
 	uint32_t nl_buf_len;
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("hdd_context is invalid"));
+	if (0 != ret)
 		return ret;
-	}
 
 	data = &(ext_scan_context.capability_response);
 
@@ -1678,10 +1697,8 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != ret)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		      data, data_len, wlan_hdd_extscan_config_policy)) {
@@ -1731,7 +1748,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	ret = wlan_hdd_send_ext_scan_capability(pHddCtx);
 	if (ret)
 		hddLog(LOGE, FL("Failed to send ext scan capability to user space"));
-
+	EXIT();
 	return ret;
 fail:
 	cdf_mem_free(pReqMsg);
@@ -1814,10 +1831,8 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, PARAM_MAX, data, data_len,
 		wlan_hdd_extscan_config_policy)) {
@@ -1877,7 +1892,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 		retval = context->response_status;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -1964,10 +1979,8 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		      data, data_len, wlan_hdd_extscan_config_policy)) {
@@ -2092,7 +2105,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -2163,10 +2176,8 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		      data, data_len, wlan_hdd_extscan_config_policy)) {
@@ -2314,7 +2325,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -2447,10 +2458,8 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	}
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != ret)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		      data, data_len, wlan_hdd_extscan_config_policy)) {
@@ -2526,8 +2535,9 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 			kfree_skb(reply_skb);
 			return -EINVAL;
 		}
-
-		return cfg80211_vendor_cmd_reply(reply_skb);
+		ret = cfg80211_vendor_cmd_reply(reply_skb);
+		EXIT();
+		return ret;
 	}
 
 	hddLog(LOGE, FL("valid channels: buffer alloc fail"));
@@ -3113,10 +3123,8 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, PARAM_MAX, data, data_len,
 		wlan_hdd_extscan_config_policy)) {
@@ -3240,7 +3248,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -3325,10 +3333,8 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, PARAM_MAX, data, data_len,
 			wlan_hdd_extscan_config_policy)) {
@@ -3381,7 +3387,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -3454,10 +3460,8 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		      data, data_len, wlan_hdd_extscan_config_policy)) {
@@ -3512,7 +3516,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -3581,10 +3585,8 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	}
 
 	retval = wlan_hdd_validate_context(pHddCtx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX,
 		      data, data_len, wlan_hdd_extscan_config_policy)) {
@@ -3640,7 +3642,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 			retval = -EINVAL;
 		spin_unlock(&context->context_lock);
 	}
-
+	EXIT();
 	return retval;
 
 fail:
@@ -4247,10 +4249,8 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, PARAM_MAX,
 		      data, data_len,
@@ -4469,10 +4469,8 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 	}
 
 	retval = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != retval) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != retval)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb, PARAM_MAX,
 		      data, data_len,

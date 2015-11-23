@@ -1191,6 +1191,8 @@ CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 	unsigned long rc;
 	int valid;
 
+	ENTER();
+
 	if (NULL == pAdapter) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Invalid context, pAdapter", __func__);
@@ -1200,10 +1202,8 @@ CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	valid = wlan_hdd_validate_context(pHddCtx);
-	if (0 != valid) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != valid)
 		return CDF_STATUS_E_FAULT;
-	}
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
@@ -1248,7 +1248,7 @@ CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 	spin_unlock(&hdd_context_lock);
 
 	*snr = pAdapter->snr;
-
+	EXIT();
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -3564,6 +3564,8 @@ static int __iw_get_linkspeed(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	int rc, valid;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	valid = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != valid)
@@ -3584,6 +3586,7 @@ static int __iw_get_linkspeed(struct net_device *dev,
 		return -EIO;
 	}
 
+	EXIT();
 	/* a value is being successfully returned */
 	return 0;
 }
@@ -4941,6 +4944,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int enable_pbm, enable_mp;
 	CDF_STATUS status;
 
+	ENTER();
+
 	INIT_COMPLETION(pWextState->completion_var);
 	memset(&smeConfig, 0x00, sizeof(smeConfig));
 
@@ -6157,6 +6162,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 	}
 	}
+	EXIT();
 	return ret;
 }
 
@@ -6203,6 +6209,8 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		FL("permission check failed"));
 		return -EPERM;
 	}
+
+	ENTER();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -6301,6 +6309,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	}
 	}
 	kfree(pBuffer);
+	EXIT();
 	return ret;
 }
 
@@ -6336,6 +6345,8 @@ static int __iw_setnone_getint(struct net_device *dev,
 	int ret;
 	tSmeConfigParams smeConfig;
 	hdd_context_t *hdd_ctx;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -6812,7 +6823,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 		break;
 	}
 	}
-
+	EXIT();
 	return ret;
 }
 
@@ -6847,6 +6858,8 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	int sub_cmd = value[0];
 	int ret;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+
+	ENTER();
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -6892,6 +6905,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 		break;
 
 	}
+	EXIT();
 	return ret;
 }
 
@@ -6953,6 +6967,8 @@ static int __iw_get_char_setnone(struct net_device *dev,
 #ifdef WLAN_FEATURE_11W
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 #endif
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -7423,7 +7439,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		break;
 	}
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -7457,6 +7473,8 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	int ret;
 	int sub_cmd;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -7578,7 +7596,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 		break;
 	}
 	}
-
+	EXIT();
 	return ret;
 }
 
@@ -7619,6 +7637,8 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	int *apps_args = (int *) extra;
 	hdd_context_t *hdd_ctx;
 	int ret, num_args;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -7961,7 +7981,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	}
 	break;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -8061,6 +8081,8 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	struct iw_point s_priv_data;
 	hdd_context_t *hdd_ctx;
 	int ret;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -8196,6 +8218,7 @@ static int __iw_add_tspec(struct net_device *dev, struct iw_request_info *info,
 	}
 
 	*pStatus = hdd_wmm_addts(pAdapter, handle, &tSpec);
+	EXIT();
 	return 0;
 }
 
@@ -8231,6 +8254,8 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	uint32_t handle;
 	int ret;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -8257,6 +8282,7 @@ static int __iw_del_tspec(struct net_device *dev, struct iw_request_info *info,
 	}
 
 	*pStatus = hdd_wmm_delts(pAdapter, handle);
+	EXIT();
 	return 0;
 }
 
@@ -8292,6 +8318,8 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	uint32_t handle;
 	int ret;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -8310,6 +8338,7 @@ static int __iw_get_tspec(struct net_device *dev, struct iw_request_info *info,
 	}
 
 	*pStatus = hdd_wmm_checkts(pAdapter, handle);
+	EXIT();
 	return 0;
 }
 
@@ -8348,6 +8377,8 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 	hdd_context_t *hdd_ctx;
 	int ret;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -8376,7 +8407,7 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 	/* Pass the received FT IEs to SME */
 	sme_set_ft_ies(WLAN_HDD_GET_HAL_CTX(pAdapter), pAdapter->sessionId,
 			extra, wrqu->data.length);
-
+	EXIT();
 	return 0;
 }
 
@@ -8412,6 +8443,8 @@ static int __iw_set_host_offload(struct net_device *dev,
 	tSirHostOffloadReq offloadRequest;
 	hdd_context_t *hdd_ctx;
 	int ret;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -8491,7 +8524,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 		       "%s: Failure to execute host offload request", __func__);
 		return -EINVAL;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -8525,6 +8558,8 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 	tpSirKeepAliveReq request = (tpSirKeepAliveReq) extra;
 	hdd_context_t *hdd_ctx;
 	int ret;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -8578,7 +8613,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		hdd_err("Failure to execute Keep Alive");
 		return -EINVAL;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -8744,6 +8779,8 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 		return -EPERM;
 	}
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -8771,7 +8808,7 @@ static int __iw_set_packet_filter_params(struct net_device *dev,
 	ret = wlan_hdd_set_filter(hdd_ctx, request, adapter->sessionId);
 
 	kfree(request);
-
+	EXIT();
 	return ret;
 }
 

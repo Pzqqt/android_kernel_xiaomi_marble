@@ -65,6 +65,8 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 	uint8_t wow_pbm = 0;
 	int ret;
 
+	ENTER();
+
 	pAdapter = (hdd_adapter_t *)file->private_data;
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
@@ -145,7 +147,7 @@ static ssize_t __wcnss_wowenable_write(struct file *file,
 
 		return -EFAULT;
 	}
-
+	EXIT();
 	return count;
 }
 
@@ -193,6 +195,8 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 	char *pattern_buf;
 	char *pattern_mask;
 	int ret;
+
+	ENTER();
 
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
@@ -267,7 +271,7 @@ static ssize_t __wcnss_wowpattern_write(struct file *file,
 
 	hdd_add_wowl_ptrn_debugfs(pAdapter, pattern_idx, pattern_offset,
 				  pattern_buf, pattern_mask);
-
+	EXIT();
 	return count;
 }
 
@@ -320,6 +324,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	CDF_STATUS status;
 	int ret;
 
+	ENTER();
 
 	pAdapter = (hdd_adapter_t *)file->private_data;
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
@@ -493,6 +498,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	}
 	cdf_mem_free(cmd);
 	cdf_mem_free(addPeriodicTxPtrnParams);
+	EXIT();
 	return count;
 
 failure:
@@ -552,7 +558,7 @@ static int __wcnss_debugfs_open(struct inode *inode, struct file *file)
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
-
+	EXIT();
 	return 0;
 }
 

@@ -539,10 +539,8 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 	pHddCtx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	if (test_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags)) {
 #ifdef WLAN_FEATURE_MBSSID
@@ -2202,12 +2200,12 @@ static __iw_softap_setparam(struct net_device *dev,
 	v_CONTEXT_t p_cds_context;
 	hdd_context_t *hdd_ctx;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid ret:%d"), ret);
+	if (0 != ret)
 		return -EINVAL;
-	}
 
 	hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 	if (!hHal) {
@@ -2834,7 +2832,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		ret = -EINVAL;
 		break;
 	}
-
+	EXIT();
 	return ret;
 }
 
@@ -2864,6 +2862,8 @@ static __iw_softap_getparam(struct net_device *dev,
 	CDF_STATUS status;
 	int ret;
 	hdd_context_t *hdd_ctx;
+
+	ENTER();
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -3054,7 +3054,7 @@ static __iw_softap_getparam(struct net_device *dev,
 		break;
 
 	}
-
+	EXIT();
 	return ret;
 }
 
@@ -3176,6 +3176,8 @@ static __iw_softap_getchannel(struct net_device *dev,
 	int *value = (int *)extra;
 	int ret;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -3185,6 +3187,7 @@ static __iw_softap_getchannel(struct net_device *dev,
 	if (test_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags))
 		*value = (WLAN_HDD_GET_AP_CTX_PTR(
 					pHostapdAdapter))->operatingChannel;
+	EXIT();
 	return 0;
 }
 
@@ -3216,6 +3219,8 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	tSirMacAddr selfMac = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 	int ret;
 
+	ENTER();
+
 	if (NULL == value)
 		return -ENOMEM;
 
@@ -3236,7 +3241,7 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 		hddLog(LOGE, FL("Setting maximum tx power failed"));
 		return -EIO;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -3267,6 +3272,8 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	tSirMacAddr bssid;
 	int ret;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -3285,7 +3292,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 		hddLog(LOGE, FL("Setting tx power failed"));
 		return -EIO;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -3319,6 +3326,8 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	int ret;
 	/* maclist_index must be u32 to match userspace */
 	u32 maclist_index;
+
+	ENTER();
 
 	/*
 	 * NOTE WELL: this is a "get" ioctl but it uses an even ioctl
@@ -3377,6 +3386,7 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 		ret = -EFAULT;
 	}
 	kfree(buf);
+	EXIT();
 	return ret;
 }
 
@@ -3649,7 +3659,6 @@ int __iw_get_genie(struct net_device *dev,
 	}
 #endif
 
-	hddLog(LOG1, FL("getGEN_IE ioctl"));
 	/*
 	 * Actually retrieve the RSN IE from CSR.
 	 * (We previously sent it down in the CSR Roam Profile.)
@@ -3992,7 +4001,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 		       vstatus);
 		ret = -EINVAL;
 	}
-
+	EXIT();
 	return ret;
 }
 
@@ -4219,6 +4228,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 			fwrq->e = MHZ;
 		}
 	}
+	EXIT();
 	return 0;
 }
 
@@ -5000,6 +5010,8 @@ CDF_STATUS hdd_softap_get_sta_info(hdd_adapter_t *pAdapter, uint8_t *pBuf,
 	const char sta_info_header[] = "staId staAddress";
 	hdd_context_t *hdd_ctx;
 
+	ENTER();
+
 	if (NULL == pAdapter) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Adapter is NULL", __func__);
@@ -5036,6 +5048,7 @@ CDF_STATUS hdd_softap_get_sta_info(hdd_adapter_t *pAdapter, uint8_t *pBuf,
 			break;
 		}
 	}
+	EXIT();
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -5195,6 +5208,8 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	int rc, valid, i;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	valid = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != valid)
@@ -5254,7 +5269,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 		hddLog(LOGE, FL("Unable to encode link speed"));
 		return -EIO;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -7813,10 +7828,8 @@ static int __wlan_hdd_cfg80211_add_beacon(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	if (!cds_allow_concurrency(pHddCtx,
 				cds_convert_device_mode_to_hdd_type(
@@ -7916,10 +7929,8 @@ static int __wlan_hdd_cfg80211_set_beacon(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	if ((pAdapter->device_mode == WLAN_HDD_SOFTAP) ||
 	    (pAdapter->device_mode == WLAN_HDD_P2P_GO)) {
@@ -8022,10 +8033,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != ret)
 		return ret;
-	}
 
 	if (!(pAdapter->device_mode == WLAN_HDD_SOFTAP ||
 	      pAdapter->device_mode == WLAN_HDD_P2P_GO)) {
@@ -8283,10 +8292,8 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	hddLog(LOG2, FL("pAdapter = %p, Device mode %s(%d)"), pAdapter,
 	       hdd_device_mode_to_string(pAdapter->device_mode),
@@ -8450,10 +8457,8 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	if (!(pAdapter->device_mode == WLAN_HDD_SOFTAP ||
 	      pAdapter->device_mode == WLAN_HDD_P2P_GO)) {

@@ -845,6 +845,8 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	int ret;
 	int status = 0;
 
+	ENTER();
+
 	hddLog(LOG1, FL("Device_mode %s(%d)"),
 	       hdd_device_mode_to_string(pAdapter->device_mode),
 	       pAdapter->device_mode);
@@ -859,10 +861,8 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 #endif
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != ret)
 		return ret;
-	}
 	if (cds_is_connection_in_progress(
 		(hdd_context_t *) pAdapter->pHddCtx)) {
 		hddLog(LOGE, FL("Connection is in progress"));
@@ -950,6 +950,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		hdd_debug("scheduling delayed work: no connection/roc active");
 		schedule_delayed_work(&pHddCtx->roc_req_work, 0);
 	}
+	EXIT();
 	return 0;
 }
 
@@ -973,6 +974,8 @@ int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx;
 	int ret;
 
+	ENTER();
+
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -986,12 +989,14 @@ int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_REMAIN_ON_CHANNEL,
 			 pAdapter->sessionId, REMAIN_ON_CHANNEL_REQUEST));
-	return wlan_hdd_request_remain_on_channel(wiphy, dev, chan,
+	ret = wlan_hdd_request_remain_on_channel(wiphy, dev, chan,
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
 						  channel_type,
 #endif
 						  duration, cookie,
 						  REMAIN_ON_CHANNEL_REQUEST);
+	EXIT();
+	return ret;
 }
 
 int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
@@ -1163,7 +1168,7 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	cdf_list_node_t *tmp, *q;
 	hdd_roc_req_t *curr_roc_req;
 
-	hddLog(LOG1, "Cancel remain on channel");
+	ENTER();
 
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
@@ -1172,11 +1177,8 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is not valid", __func__);
+	if (0 != status)
 		return status;
-	}
 	cdf_spin_lock(&pHddCtx->hdd_roc_req_q_lock);
 	list_for_each_safe(tmp, q, &pHddCtx->hdd_roc_req_q.anchor) {
 		curr_roc_req = list_entry(tmp, hdd_roc_req_t, node);
@@ -1287,6 +1289,7 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		       __func__);
 	}
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
+	EXIT();
 	return 0;
 }
 
@@ -1355,6 +1358,8 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct net_device *dev,
 	hdd_adapter_t *goAdapter;
 	uint16_t current_freq;
 
+	ENTER();
+
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
@@ -1365,11 +1370,8 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct net_device *dev,
 			 pAdapter->device_mode));
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is not valid", __func__);
+	if (0 != status)
 		return status;
-	}
 
 	hddLog(LOG1, FL("Device_mode %s(%d) type: %d"),
 	       hdd_device_mode_to_string(pAdapter->device_mode),
@@ -1717,6 +1719,7 @@ err_rem_channel:
 		pAdapter->dev,
 #endif
 		*cookie, buf, len, false, GFP_KERNEL);
+	EXIT();
 	return 0;
 }
 
@@ -2134,10 +2137,8 @@ struct net_device *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy, char *name,
 	}
 
 	ret = wlan_hdd_validate_context(pHddCtx);
-	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != ret)
 		return ERR_PTR(ret);
-	}
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_ADD_VIRTUAL_INTF, NO_SESSION, type));
@@ -2278,11 +2279,8 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct net_device *dev)
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is not valid", __func__);
+	if (0 != status)
 		return status;
-	}
 
 	wlan_hdd_release_intf_addr(pHddCtx,
 				   pVirtAdapter->macAddressCurrent.bytes);

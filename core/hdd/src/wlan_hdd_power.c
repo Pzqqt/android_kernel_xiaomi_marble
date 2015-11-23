@@ -214,6 +214,8 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 	hdd_context_t *pHddCtx;
 	int status;
 
+	ENTER();
+
 	if ((pAdapter == NULL) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		hddLog(LOGE, FL("Adapter context is invalid %p"), pAdapter);
 		return -EINVAL;
@@ -224,14 +226,12 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 		pAdapter->device_mode == WLAN_HDD_P2P_CLIENT)) {
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
-		if (0 != status) {
-			hddLog(LOGE, FL("HDD context is invalid"));
+		if (0 != status)
 			return NOTIFY_DONE;
-		}
 
 		schedule_work(&pAdapter->ipv6NotifierWorkQueue);
 	}
-
+	EXIT();
 	return NOTIFY_DONE;
 }
 
@@ -436,14 +436,12 @@ void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	hdd_context_t *pHddCtx;
 	int status;
 
-	hddLog(LOG1, FL("Reconfiguring NS Offload"));
+	ENTER();
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is invalid"));
+	if (0 != status)
 		return;
-	}
 
 	if (!pHddCtx->config->active_mode_offload) {
 		hdd_err("Active mode offload is disabled");
@@ -460,6 +458,7 @@ void __hdd_ipv6_notifier_work_queue(struct work_struct *work)
 	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState))
 		if (pHddCtx->config->fhostNSOffload)
 			hdd_conf_ns_offload(pAdapter, true);
+	EXIT();
 }
 
 /**
@@ -488,6 +487,8 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work)
 void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 {
 	hdd_context_t *pHddCtx;
+
+	ENTER();
 
 	hdd_info("Configuring offloads with flag: %d", fenable);
 
@@ -519,6 +520,8 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 		if (pHddCtx->config->fhostNSOffload)
 			hdd_conf_ns_offload(pAdapter, fenable);
 	}
+	EXIT();
+	EXIT();
 	return;
 }
 #endif
@@ -603,6 +606,8 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 	hdd_context_t *pHddCtx;
 	int status;
 
+	ENTER();
+
 	if ((pAdapter == NULL) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		hddLog(LOGE, FL("Adapter context is invalid %p"), pAdapter);
 		return -EINVAL;
@@ -614,10 +619,8 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
-		if (0 != status) {
-			hddLog(LOGE, FL("HDD context is invalid"));
+		if (0 != status)
 			return NOTIFY_DONE;
-		}
 
 		if (!pHddCtx->config->fhostArpOffload) {
 			hddLog(LOG1,
@@ -640,7 +643,7 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 			schedule_work(&pAdapter->ipv4NotifierWorkQueue);
 		}
 	}
-
+	EXIT();
 	return NOTIFY_DONE;
 }
 
@@ -1743,10 +1746,8 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	}
 
 	result = wlan_hdd_validate_context(pHddCtx);
-	if (0 != result) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != result)
 		return result;
-	}
 #ifdef CONFIG_CNSS
 	cnss_request_bus_bandwidth(CNSS_BUS_WIDTH_MEDIUM);
 #endif
@@ -1803,7 +1804,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 			hddLog(LOG1,
 			       FL("cfg80211 scan result database updated"));
-
+			EXIT();
 			return result;
 		}
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
@@ -1811,6 +1812,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	}
 
 	hddLog(LOG1, FL("Failed to find Adapter"));
+	EXIT();
 	return result;
 }
 
@@ -1880,10 +1882,8 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 
 	rc = wlan_hdd_validate_context(pHddCtx);
-	if (0 != rc) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != rc)
 		return rc;
-	}
 
 	/* If RADAR detection is in progress (HDD), prevent suspend. The flag
 	 * "dfs_cac_block_tx" is set to true when RADAR is found and stay true
@@ -2108,10 +2108,8 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	if ((DRIVER_POWER_MODE_AUTO == !mode) &&
 	    (true == pHddCtx->hdd_wlan_suspended) &&
@@ -2203,10 +2201,8 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 			 NO_SESSION, type));
 
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	hHal = pHddCtx->hHal;
 
@@ -2300,7 +2296,6 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 
 	status = wlan_hdd_validate_context(pHddCtx);
 	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
 		*dbm = 0;
 		return status;
 	}
