@@ -1090,6 +1090,31 @@ uint8_t cds_is_load_unload_in_progress(void)
 }
 
 /**
+ * cds_is_unload_in_progress() - check if driver unload in
+ * progress
+ *
+ * Return: true if unload is going on else false
+ */
+uint8_t cds_is_unload_in_progress(void)
+{
+	hdd_context_t *hdd_ctx = NULL;
+	if (gp_cds_context == NULL) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "%s: global cds context is NULL", __func__);
+		return 0;
+	}
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+
+	if (hdd_ctx == NULL) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "%s: HDD context is NULL", __func__);
+		return 0;
+	}
+
+	return hdd_ctx->isUnloadInProgress;
+}
+
+/**
  * cds_set_load_unload_in_progress() - set load/unload in progress
  * @value: value to set
  *

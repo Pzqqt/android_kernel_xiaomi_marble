@@ -81,6 +81,8 @@ uint8_t cds_is_logp_in_progress(void);
 void cds_set_logp_in_progress(uint8_t value);
 
 uint8_t cds_is_load_unload_in_progress(void);
+uint8_t cds_is_unload_in_progress(void);
+
 void cds_set_load_unload_in_progress(uint8_t value);
 
 CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
