@@ -438,7 +438,7 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
 
 	hddLog(LOG1,
 		FL(
-		   "Setting tdls state and param in fw: vdev_id: %d, tdls_state: %d, notification_interval_ms: %d, tx_discovery_threshold: %d, tx_teardown_threshold: %d, rssi_teardown_threshold: %d, rssi_delta: %d, tdls_options: 0x%x, peer_traffic_ind_window: %d, peer_traffic_response_timeout: %d, puapsd_mask: 0x%x, puapsd_inactivity_time: %d, puapsd_rx_frame_threshold: %d, teardown_notification_ms: %d"
+		   "Setting tdls state and param in fw: vdev_id: %d, tdls_state: %d, notification_interval_ms: %d, tx_discovery_threshold: %d, tx_teardown_threshold: %d, rssi_teardown_threshold: %d, rssi_delta: %d, tdls_options: 0x%x, peer_traffic_ind_window: %d, peer_traffic_response_timeout: %d, puapsd_mask: 0x%x, puapsd_inactivity_time: %d, puapsd_rx_frame_threshold: %d, teardown_notification_ms: %d, tdls_peer_kickout_threshold: %d"
 		),
 		info->vdev_id,
 		info->tdls_state,
@@ -453,7 +453,8 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
 		info->puapsd_mask,
 		info->puapsd_inactivity_time,
 		info->puapsd_rx_frame_threshold,
-		info->teardown_notification_ms);
+		info->teardown_notification_ms,
+		info->tdls_peer_kickout_threshold);
 }
 
 
@@ -639,6 +640,8 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddCtx->tdls_mode = eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s TDLS Implicit trigger not enabled!", __func__);
+	} else if (true == pHddCtx->config->fTDLSExternalControl) {
+		pHddCtx->tdls_mode = eTDLS_SUPPORT_EXTERNAL_CONTROL;
 	} else {
 		pHddCtx->tdls_mode = eTDLS_SUPPORT_ENABLED;
 	}
@@ -703,7 +706,8 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddCtx->config->fTDLSRxFrameThreshold;
 	tInfo->teardown_notification_ms =
 		pHddCtx->config->tdls_idle_timeout;
-
+	tInfo->tdls_peer_kickout_threshold =
+		pHddCtx->config->tdls_peer_kickout_threshold;
 	dump_tdls_state_param_setting(tInfo);
 
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, true);
@@ -804,7 +808,8 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 				pHddCtx->config->fTDLSRxFrameThreshold;
 			tInfo->teardown_notification_ms =
 				pHddCtx->config->tdls_idle_timeout;
-
+			tInfo->tdls_peer_kickout_threshold =
+				pHddCtx->config->tdls_peer_kickout_threshold;
 			dump_tdls_state_param_setting(tInfo);
 
 			cdf_ret_status =
@@ -1356,7 +1361,8 @@ int wlan_hdd_tdls_increment_pkt_count(hdd_adapter_t *pAdapter,
 	hddTdlsPeer_t *curr_peer;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
-	if (eTDLS_SUPPORT_ENABLED != pHddCtx->tdls_mode)
+	if (eTDLS_SUPPORT_ENABLED != pHddCtx->tdls_mode &&
+	    eTDLS_SUPPORT_EXTERNAL_CONTROL != pHddCtx->tdls_mode)
 		return -EINVAL;
 
 	curr_peer = wlan_hdd_tdls_get_peer(pAdapter, mac);
@@ -1537,11 +1543,11 @@ void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 		pAdapter = pAdapterNode->pAdapter;
 		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 		if (NULL != pHddTdlsCtx) {
-			if (eTDLS_SUPPORT_ENABLED == tdls_mode)
+			if (eTDLS_SUPPORT_ENABLED == tdls_mode ||
+			    eTDLS_SUPPORT_EXTERNAL_CONTROL == tdls_mode)
 				wlan_hdd_tdls_implicit_enable(pHddTdlsCtx);
 			else if ((eTDLS_SUPPORT_DISABLED == tdls_mode) ||
-				 (eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY ==
-				  tdls_mode))
+				 (eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == tdls_mode))
 				wlan_hdd_tdls_implicit_disable(pHddTdlsCtx);
 		}
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
@@ -1592,7 +1598,8 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	}
 
 	/* copy the configuration only when given tdls mode is implicit trigger enable */
-	if (eTDLS_SUPPORT_ENABLED == req_tdls_mode) {
+	if (eTDLS_SUPPORT_ENABLED == req_tdls_mode ||
+	    eTDLS_SUPPORT_EXTERNAL_CONTROL == req_tdls_mode) {
 		memcpy(&pHddTdlsCtx->threshold_config, config,
 		       sizeof(tdls_config_params_t));
 	}
@@ -1641,6 +1648,8 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 		pHddCtx->config->fTDLSRxFrameThreshold;
 	tdlsParams->teardown_notification_ms =
 		pHddCtx->config->tdls_idle_timeout;
+	tdlsParams->tdls_peer_kickout_threshold =
+		pHddCtx->config->tdls_peer_kickout_threshold;
 
 	dump_tdls_state_param_setting(tdlsParams);
 
@@ -1695,15 +1704,14 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	if (tdls_prohibited) {
 		hdd_ctx->tdls_mode = eTDLS_SUPPORT_NOT_ENABLED;
 	} else {
-		if (false == hdd_ctx->config->fEnableTDLSImplicitTrigger) {
-			hdd_ctx->tdls_mode =
-				eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
-		} else {
+		if (false == hdd_ctx->config->fEnableTDLSImplicitTrigger)
+			hdd_ctx->tdls_mode = eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY;
+		else if (true == hdd_ctx->config->fTDLSExternalControl)
+			hdd_ctx->tdls_mode = eTDLS_SUPPORT_EXTERNAL_CONTROL;
+		else
 			hdd_ctx->tdls_mode = eTDLS_SUPPORT_ENABLED;
-		}
 	}
 	mutex_unlock(&hdd_ctx->tdls_lock);
-
 	tdls_param = cdf_mem_malloc(sizeof(*tdls_param));
 	if (!tdls_param) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
@@ -1749,6 +1757,8 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 		hdd_ctx->config->fTDLSRxFrameThreshold;
 	tdls_param->teardown_notification_ms =
 		hdd_ctx->config->tdls_idle_timeout;
+	tdls_param->tdls_peer_kickout_threshold =
+		hdd_ctx->config->tdls_peer_kickout_threshold;
 
 	dump_tdls_state_param_setting(tdls_param);
 
@@ -1815,6 +1825,38 @@ int wlan_hdd_tdls_set_extctrl_param(hdd_adapter_t *pAdapter, const uint8_t *mac,
 	curr_peer->pref_off_chan_num = (uint8_t) chan;
 
 	mutex_unlock(&pHddCtx->tdls_lock);
+	return 0;
+}
+
+/**
+ * wlan_hdd_tdls_update_peer_mac() - Update the peer mac information to firmware
+ * @adapter: hdd adapter to interface
+ * @mac: Mac address of the peer to be added
+ * @peerState: Current state of the peer
+ *
+ * This function updates TDLS peer state to firmware. Firmware will update
+ * connection table based on new peer state.
+ *
+ * Return:success (0) or failure (errno value)
+ */
+int wlan_hdd_tdls_update_peer_mac(hdd_adapter_t *adapter, const uint8_t *mac,
+				  uint32_t peer_state)
+{
+	tSmeTdlsPeerStateParams sme_tdls_peer_state_params = {0};
+	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+
+	sme_tdls_peer_state_params.vdevId = adapter->sessionId;
+	cdf_mem_copy(&sme_tdls_peer_state_params.peerMacAddr, mac,
+		     sizeof(sme_tdls_peer_state_params.peerMacAddr));
+	sme_tdls_peer_state_params.peerState = peer_state;
+	status = sme_update_tdls_peer_state(hdd_ctx->hHal,
+					    &sme_tdls_peer_state_params);
+	if (CDF_STATUS_SUCCESS != status) {
+		hddLog(LOGE, FL("sme_UpdateTdlsPeerState failed for "MAC_ADDRESS_STR),
+				MAC_ADDR_ARRAY(mac));
+		return -EPERM;
+	}
 	return 0;
 }
 
@@ -2124,13 +2166,13 @@ void wlan_hdd_tdls_connection_callback(hdd_adapter_t *pAdapter)
 		FL("update %d"),
 		pHddTdlsCtx->threshold_config.tx_period_t);
 
-	if (eTDLS_SUPPORT_ENABLED == pHddCtx->tdls_mode) {
+	if (eTDLS_SUPPORT_ENABLED == pHddCtx->tdls_mode ||
+	    eTDLS_SUPPORT_EXTERNAL_CONTROL == pHddCtx->tdls_mode) {
 		wlan_hdd_tdls_peer_reset_discovery_processed(pHddTdlsCtx);
 		pHddTdlsCtx->discovery_sent_cnt = 0;
-		wlan_hdd_tdls_check_power_save_prohibited(pHddTdlsCtx->
-							  pAdapter);
-
+		wlan_hdd_tdls_check_power_save_prohibited(pHddTdlsCtx->pAdapter);
 	}
+
 	mutex_unlock(&pHddCtx->tdls_lock);
 
 }
@@ -2418,6 +2460,15 @@ static void __wlan_hdd_tdls_pre_setup(struct work_struct *work)
 				  discovery_tries_n,
 				  MAC_ADDR_ARRAY(curr_peer->peerMac));
 			curr_peer->tdls_support = eTDLS_CAP_NOT_SUPPORTED;
+			/* Since TDLS discovery attempt reached the
+			 * maximum threshold, so we remove the peer
+			 * from the FW connection table.
+			 */
+			if (0 != wlan_hdd_tdls_update_peer_mac(pHddTdlsCtx->pAdapter,
+				curr_peer->peerMac, eSME_TDLS_PEER_REMOVE_MAC_ADDR))
+				hddLog(LOGE, FL("TDLS Peer mac update Failed "
+					   MAC_ADDRESS_STR),
+					   MAC_ADDR_ARRAY(curr_peer->peerMac));
 			goto done;
 		}
 	}
@@ -2648,6 +2699,7 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 	}
 	/* while tdls is up, first time scan */
 	else if (eTDLS_SUPPORT_ENABLED == pHddCtx->tdls_mode ||
+		 eTDLS_SUPPORT_EXTERNAL_CONTROL == pHddCtx->tdls_mode ||
 		 eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == pHddCtx->tdls_mode) {
 		/* disable implicit trigger logic & tdls operatoin */
 		wlan_hdd_tdls_set_mode(pHddCtx, eTDLS_SUPPORT_DISABLED, false);
@@ -2774,6 +2826,7 @@ void wlan_hdd_tdls_scan_done_callback(hdd_adapter_t *pAdapter)
 
 	/* if tdls was enabled before scan, re-enable tdls mode */
 	if (eTDLS_SUPPORT_ENABLED == pHddCtx->tdls_mode_last ||
+	    eTDLS_SUPPORT_EXTERNAL_CONTROL == pHddCtx->tdls_mode_last ||
 	    eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == pHddCtx->tdls_mode_last) {
 		hddLog(LOG1,
 			  ("%s: revert tdls mode %d"), __func__,
@@ -3978,6 +4031,15 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 			  "%s TDLS Add Force Peer Failed", __func__);
 		return -EINVAL;
 	}
+	/* Update the peer mac to firmware, so firmware
+	 * could update the connection table
+	 */
+	if (0 != wlan_hdd_tdls_update_peer_mac(pAdapter, peer,
+	    eSME_TDLS_PEER_ADD_MAC_ADDR)) {
+		hddLog(LOGE, FL("TDLS Peer mac update Failed " MAC_ADDRESS_STR),
+				MAC_ADDR_ARRAY(peer));
+		return -EINVAL;
+	}
 	if (0 != wlan_hdd_tdls_set_extctrl_param(pAdapter, peer,
 						 chan, max_latency,
 						 op_class, min_bandwidth)) {
@@ -4030,6 +4092,15 @@ int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 	if (0 != wlan_hdd_tdls_set_force_peer(pAdapter, peer, false)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s Failed", __func__);
+		return -EINVAL;
+	}
+	/* Update the peer mac to firmware, so firmware
+	 * could update the connection table
+	 */
+	if (0 != wlan_hdd_tdls_update_peer_mac(pAdapter, peer,
+	    eSME_TDLS_PEER_REMOVE_MAC_ADDR)) {
+		hddLog(LOGE, FL("TDLS Peer mac update Failed " MAC_ADDRESS_STR),
+				MAC_ADDR_ARRAY(peer));
 		return -EINVAL;
 	}
 	if (0 != wlan_hdd_set_callback(pTdlsPeer, NULL)) {
@@ -4547,8 +4618,9 @@ hddTdlsPeer_t *wlan_hdd_tdls_find_first_connected_peer(hdd_adapter_t *adapter)
 int hdd_set_tdls_offchannel(hdd_context_t *hdd_ctx, int offchannel)
 {
 	if ((true == hdd_ctx->config->fEnableTDLSOffChannel) &&
-		(eTDLS_SUPPORT_ENABLED == hdd_ctx->tdls_mode ||
-		eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
+	    (eTDLS_SUPPORT_ENABLED == hdd_ctx->tdls_mode ||
+	     eTDLS_SUPPORT_EXTERNAL_CONTROL == hdd_ctx->tdls_mode ||
+	     eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
 		if (offchannel < CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_MIN ||
 			offchannel > CFG_TDLS_PREFERRED_OFF_CHANNEL_NUM_MAX) {
 			hddLog(LOGE, FL("Invalid tdls off channel %u"),
@@ -4579,8 +4651,9 @@ int hdd_set_tdls_offchannel(hdd_context_t *hdd_ctx, int offchannel)
 int hdd_set_tdls_secoffchanneloffset(hdd_context_t *hdd_ctx, int offchanoffset)
 {
 	if ((true == hdd_ctx->config->fEnableTDLSOffChannel) &&
-		(eTDLS_SUPPORT_ENABLED == hdd_ctx->tdls_mode ||
-		eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
+	    (eTDLS_SUPPORT_ENABLED == hdd_ctx->tdls_mode ||
+	     eTDLS_SUPPORT_EXTERNAL_CONTROL == hdd_ctx->tdls_mode ||
+	     eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
 		hdd_ctx->tdls_channel_offset = 0;
 
 		switch (offchanoffset) {
@@ -4650,13 +4723,14 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	}
 	if ((true == hdd_ctx->config->fEnableTDLSOffChannel) &&
 		(eTDLS_SUPPORT_ENABLED == hdd_ctx->tdls_mode ||
-		eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
-		conn_peer = wlan_hdd_tdls_find_first_connected_peer(adapter);
-		if (NULL == conn_peer) {
+		 eTDLS_SUPPORT_EXTERNAL_CONTROL == hdd_ctx->tdls_mode ||
+		 eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY == hdd_ctx->tdls_mode)) {
+		 conn_peer = wlan_hdd_tdls_find_first_connected_peer(adapter);
+		 if (NULL == conn_peer) {
 			hddLog(LOGP,
 				FL("No TDLS Connected Peer"));
-			return -EPERM;
-		}
+		return -EPERM;
+	}
 	} else {
 		hddLog(LOGP,
 			FL("TDLS Connection not supported"));

@@ -156,10 +156,20 @@ typedef struct _smeTdlsPeerCapParams {
 	uint8_t opClassForPrefOffChan;
 } tSmeTdlsPeerCapParams;
 
+/**
+ * eSmeTdlsPeerState - tdls peer state
+ * @eSME_TDLS_PEER_STATE_PEERING: tdls connection in progress
+ * @eSME_TDLS_PEER_STATE_CONNECTED: tdls peer is connected
+ * @eSME_TDLS_PEER_STATE_TEARDOWN: tdls peer is tear down
+ * @eSME_TDLS_PEER_ADD_MAC_ADDR: add peer mac into connection table
+ * @eSME_TDLS_PEER_REMOVE_MAC_ADDR: remove peer mac from connection table
+ */
 typedef enum {
 	eSME_TDLS_PEER_STATE_PEERING,
 	eSME_TDLS_PEER_STATE_CONNECTED,
-	eSME_TDLS_PEER_STATE_TEARDOWN
+	eSME_TDLS_PEER_STATE_TEARDOWN,
+	eSME_TDLS_PEER_ADD_MAC_ADDR,
+	eSME_TDLS_PEER_REMOVE_MAC_ADDR,
 } eSmeTdlsPeerState;
 
 typedef struct _smeTdlsPeerStateParams {

@@ -1654,6 +1654,20 @@ typedef enum {
 #define CFG_TDLS_SCAN_ENABLE_MIN                   (0)
 #define CFG_TDLS_SCAN_ENABLE_MAX                   (1)
 #define CFG_TDLS_SCAN_ENABLE_DEFAULT               (0)
+
+/* TDLS peer kickout threshold to fw
+ *     Firmware will use this value to determine, when to send TDLS
+ *     peer kick out event to host.
+ *     E.g.
+ *        if peer kick out threshold is 10, then firmware will wait for 10
+ *        consecutive packet failures and then send TDLS kickout
+ *        notification to host driver
+ */
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD            "gTDLSPeerKickoutThreshold"
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD_MIN        (10)
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD_MAX        (5000)
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD_DEFAULT    (96)
+
 #endif
 
 /* Enable/Disable LPWR Image(cMEM uBSP) Transition */
@@ -3118,6 +3132,7 @@ struct hdd_config {
 	uint8_t fTDLSPrefOffChanNum;
 	uint8_t fTDLSPrefOffChanBandwidth;
 	uint8_t enable_tdls_scan;
+	uint32_t tdls_peer_kickout_threshold;
 #endif
 #ifdef WLAN_SOFTAP_VSTA_FEATURE
 	bool fEnableVSTASupport;

@@ -10020,6 +10020,14 @@ CDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 			WMA_TDLS_PEER_STATE_TEARDOWN;
 		break;
 
+	case eSME_TDLS_PEER_ADD_MAC_ADDR:
+		pTdlsPeerStateParams->peerState = WMA_TDLS_PEER_ADD_MAC_ADDR;
+		break;
+
+	case eSME_TDLS_PEER_REMOVE_MAC_ADDR:
+		pTdlsPeerStateParams->peerState = WMA_TDLS_PEER_REMOVE_MAC_ADDR;
+		break;
+
 	default:
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL("invalid peer state param (%d)"),
