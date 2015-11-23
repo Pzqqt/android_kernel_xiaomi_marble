@@ -1772,6 +1772,9 @@ static void hif_sleep_entry(void *arg)
 	if (scn->recovery)
 		return;
 
+	if (cds_is_unload_in_progress())
+		return;
+
 	cdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
 	if (hif_state->verified_awake == false) {
 		idle_ms = cdf_system_ticks_to_msecs(cdf_system_ticks()
