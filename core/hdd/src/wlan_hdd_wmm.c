@@ -248,72 +248,26 @@ static void hdd_wmm_disable_tl_uapsd(hdd_wmm_qos_context_t *pQosContext)
 	sme_ac_enum_type acType = pQosContext->acType;
 	hdd_wmm_ac_status_t *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 	CDF_STATUS status;
-	uint32_t service_interval;
-	uint32_t suspension_interval;
-	uint8_t uapsd_mask;
-	uint8_t active_tspec = INVALID_TSPEC;
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-	struct hdd_config *cfg = hdd_ctx->config;
 
 	/* have we previously enabled UAPSD? */
 	if (pAc->wmmAcUapsdInfoValid == true) {
-		uapsd_mask = cfg->UapsdMask;
-		/* Finding uapsd_mask as per AC */
-		uapsd_mask = uapsd_mask & (1 << (SME_AC_VO - acType));
+		status =
+			sme_disable_uapsd_for_ac((WLAN_HDD_GET_CTX(pAdapter))->
+						    pcds_context,
+						    (WLAN_HDD_GET_STATION_CTX_PTR
+							     (pAdapter))->conn_info.staId[0],
+						    acType, pAdapter->sessionId);
 
-		sme_qos_tspec_active(
-			(tpAniSirGlobal)WLAN_HDD_GET_HAL_CTX(pAdapter), acType,
-			pAdapter->sessionId, &active_tspec);
-
-		/* Call sme_enable_uapsd_for_ac only when static uapsd mask
-		 * is present and no active tspecs.
-		 */
-
-		if (uapsd_mask && !active_tspec) {
-			switch (acType) {
-			case SME_AC_VO:
-				service_interval = cfg->InfraUapsdVoSrvIntv;
-				suspension_interval = cfg->InfraUapsdVoSuspIntv;
-				break;
-			case SME_AC_VI:
-				service_interval = cfg->InfraUapsdViSrvIntv;
-				suspension_interval = cfg->InfraUapsdViSuspIntv;
-				break;
-			case SME_AC_BE:
-				service_interval = cfg->InfraUapsdBeSrvIntv;
-				suspension_interval = cfg->InfraUapsdBeSuspIntv;
-				break;
-			case SME_AC_BK:
-				service_interval = cfg->InfraUapsdBkSrvIntv;
-				suspension_interval = cfg->InfraUapsdBkSuspIntv;
-				break;
-			default:
-				return;
-			}
-
-			/* restore the UAPSD intervals configuration */
-			status = sme_enable_uapsd_for_ac(hdd_ctx->pcds_context,
-					(WLAN_HDD_GET_STATION_CTX_PTR
-					(pAdapter))->conn_info.staId[0],
-					acType,
-					pAc->wmmAcTspecInfo.ts_info.tid,
-					pAc->wmmAcTspecInfo.ts_info.up,
-					service_interval,
-					suspension_interval,
-					pAc->wmmAcTspecInfo.ts_info.direction,
-					pAc->wmmAcTspecInfo.ts_info.psb,
-					pAdapter->sessionId,
-					cfg->DelayedTriggerFrmInt);
-
-			if (!CDF_IS_STATUS_SUCCESS(status)) {
-				hdd_err("Failed to set U-APSD for AC=%d",
-					acType);
-			} else {
-				/* TL no longer has valid UAPSD info */
-				pAc->wmmAcUapsdInfoValid = false;
-				hdd_err("Disabled UAPSD in TL for AC=%d",
-					acType);
-			}
+		if (!CDF_IS_STATUS_SUCCESS(status)) {
+			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
+				  "%s: Failed to disable U-APSD for AC=%d",
+				  __func__, acType);
+		} else {
+			/* TL no longer has valid UAPSD info */
+			pAc->wmmAcUapsdInfoValid = false;
+			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
+				  "%s: Disabled UAPSD in TL for AC=%d",
+				  __func__, acType);
 		}
 	}
 }
