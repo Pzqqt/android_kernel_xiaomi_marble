@@ -3722,6 +3722,33 @@ CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 	return CDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_WLAN_EXTSCAN
+/**
+ * wma_is_extscan_in_progress(): check if extscan is in progress
+ * @wma: wma handle
+ *
+ * Return: true is extscan in progress, false otherwise.
+ */
+static bool wma_is_extscan_in_progress(tp_wma_handle wma)
+{
+	int i;
+
+	for (i = 0; i < wma->max_bssid; i++) {
+		if (wma->interfaces[i].extscan_in_progress) {
+			WMA_LOGD("Extscan is in progress, enabling wow");
+			return true;
+		}
+	}
+
+	return false;
+}
+#else
+static bool wma_is_extscan_in_progress(tp_wma_handle wma)
+{
+	return false;
+}
+#endif
+
 /**
  * wma_suspend_req() -  Handles suspend indication request received from umac.
  * @wma: wma handle
@@ -3814,14 +3841,9 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 			break;
 		}
 #endif /* FEATURE_WLAN_SCAN_PNO */
-#ifdef FEATURE_WLAN_EXTSCAN
-		if (wma->interfaces[i].extscan_in_progress) {
-			WMA_LOGD("Extscan is in progress, enabling wow");
-			extscan_in_progress = true;
-			break;
-		}
-#endif
 	}
+	extscan_in_progress = wma_is_extscan_in_progress(wma);
+
 	for (i = 0; i < wma->max_bssid; i++) {
 		wma->wow.gtk_pdev_enable |= wma->wow.gtk_err_enable[i];
 		WMA_LOGD("VDEV_ID:%d, gtk_err_enable[%d]:%d, gtk_pdev_enable:%d", i,
