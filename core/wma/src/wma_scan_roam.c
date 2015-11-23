@@ -4193,8 +4193,7 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 
 	/* Handle scan completion event only after NLO match event. */
 	if (!node || !node->nlo_match_evt_received) {
-
-		WMA_LOGD("NLO match not recieved skipping PNO complete ind for vdev %d",
+		WMA_LOGD("NLO match not received skip PNO complete ind for vdev %d",
 			nlo_event->vdev_id);
 		goto skip_pno_cmp_ind;
 	}
