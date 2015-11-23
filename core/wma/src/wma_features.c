@@ -102,10 +102,6 @@ static const uint8_t arp_mask[] = {0xff, 0xff};
 static const uint8_t ns_ptrn[] = {0x86, 0xDD};
 static const uint8_t discvr_ptrn[] = {0xe0, 0x00, 0x00, 0xf8};
 static const uint8_t discvr_mask[] = {0xf0, 0x00, 0x00, 0xf8};
-static CDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
-					uint32_t vdev_id,
-					uint32_t bitmap,
-					bool enable);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
@@ -2680,20 +2676,11 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_NLOD);
 		node = &wma->interfaces[wake_info->vdev_id];
 		if (node) {
-			CDF_STATUS ret = CDF_STATUS_SUCCESS;
 			WMA_LOGD("NLO match happened");
 			node->nlo_match_evt_received = true;
 			cdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
 					WIFI_POWER_EVENT_WAKELOCK_PNO);
-			/* Configure pno scan complete wakeup */
-			ret = wma_add_wow_wakeup_event(wma, wake_info->vdev_id,
-					(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
-					true);
-			if (ret != CDF_STATUS_SUCCESS)
-				WMA_LOGE("Failed to configure pno scan complete wakeup");
-			else
-				WMA_LOGD("PNO scan complete wakeup is enabled in fw");
 		}
 		break;
 
@@ -3746,8 +3733,8 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 {
 	struct wma_txrx_node *iface;
 	bool connected = false, pno_in_progress = false;
-	uint8_t i;
-	bool extscan_in_progress = false;
+	uint8_t i, vdev_id = 0;
+	bool extscan_in_progress = false, pno_matched = false;
 
 	wma->no_of_suspend_ind++;
 
@@ -3821,6 +3808,9 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 		if (wma->interfaces[i].pno_in_progress) {
 			WMA_LOGD("PNO is in progress, enabling wow");
 			pno_in_progress = true;
+			vdev_id = i;
+			if (wma->interfaces[i].nlo_match_evt_received)
+				pno_matched = true;
 			break;
 		}
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -3865,6 +3855,11 @@ enable_wow:
 		}
 	}
 #endif /* FEATURE_WLAN_LPHB */
+
+	if (pno_matched)
+		wma_enable_disable_wakeup_event(wma, vdev_id,
+				(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
+				pno_matched);
 
 	wma->wow.wow_enable = true;
 	wma->wow.wow_enable_cmd_sent = false;
