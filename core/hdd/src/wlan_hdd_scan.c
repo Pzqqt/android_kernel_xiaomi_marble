@@ -723,9 +723,6 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 	if (0 != ret)
 		return ret;
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO, "%s: enter !!!",
-		  __func__);
-
 	/* Block All Scan during DFS operation and send null scan result */
 	con_sap_adapter = hdd_get_con_sap_adapter(pAdapter, true);
 	if (con_sap_adapter) {
@@ -850,8 +847,6 @@ error:
 	if ((wrqu->data.flags & IW_SCAN_THIS_ESSID) && (scanReq->essid_len))
 		cdf_mem_free(scanRequest.SSIDs.SSIDList);
 	EXIT();
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO, "%s: exit !!!",
-		  __func__);
 	return status;
 }
 
@@ -950,9 +945,9 @@ static int __iw_get_scan(struct net_device *dev,
 
 	sme_scan_result_purge(hHal, pResult);
 
-	EXIT();
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: exit total %d BSS reported !!!", __func__, i);
+	EXIT();
 	return status;
 }
 
@@ -1266,10 +1261,8 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	cfg_param = pHddCtx->config;
 	pScanInfo = &pAdapter->scan_info;
@@ -2043,6 +2036,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	struct hdd_config *config = NULL;
 	uint32_t num_ignore_dfs_ch = 0;
 
+	ENTER();
+
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
@@ -2051,10 +2046,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != ret)
 		return ret;
-	}
 
 	config = pHddCtx->config;
 	hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -2294,6 +2287,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 error:
 	cdf_mem_free(pPnoRequest);
+	EXIT();
 	return ret;
 }
 

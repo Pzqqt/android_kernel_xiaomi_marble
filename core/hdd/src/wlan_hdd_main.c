@@ -404,8 +404,6 @@ static void hdd_cdf_trace_enable(CDF_MODULE_ID moduleId, uint32_t bitmask)
  */
 int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 {
-	ENTER();
-
 	if (NULL == hdd_ctx || NULL == hdd_ctx->config) {
 		hddLog(LOGE, FL("HDD context is Null"));
 		return -ENODEV;
@@ -1380,10 +1378,8 @@ static int __hdd_stop(struct net_device *dev)
 			 adapter->sessionId, adapter->device_mode));
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != ret)
 		return ret;
-	}
 
 	/* Nothing to be done if the interface is not opened */
 	if (false == test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags)) {
@@ -1608,11 +1604,11 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	if (CDF_FTM_MODE == hdd_get_conparam())
 		return;
 
+	ENTER();
+
 	status = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != status) {
-		hdd_err("hdd_ctx is not valid");
+	if (0 != status)
 		return;
-	}
 
 	if (dev->flags & IFF_ALLMULTI) {
 		hddLog(CDF_TRACE_LEVEL_INFO,
@@ -1669,6 +1665,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	} else {
 		hdd_info("skip mc filtering enable it during cfg80211 suspend");
 	}
+	EXIT();
 	return;
 }
 

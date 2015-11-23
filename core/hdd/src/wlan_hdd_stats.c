@@ -631,13 +631,13 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 	struct nlattr *peers;
 	int numRate;
 
+	ENTER();
+
 	pWifiPeerStat = pData;
 
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != status)
 		return;
-	}
 
 	hddLog(CDF_TRACE_LEVEL_INFO,
 	       "LL_STATS_PEER_ALL : numPeers %u, more data = %u",
@@ -779,6 +779,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 		nla_nest_end(vendor_event, peerInfo);
 	}
 	cfg80211_vendor_cmd_reply(vendor_event);
+	EXIT();
 	return;
 }
 
@@ -804,13 +805,13 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 	int status;
 	int i;
 
+	ENTER();
+
 	pWifiIfaceStat = pData;
 
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != status)
 		return;
-	}
 
 	/*
 	 * Allocate a size of 4096 for the interface stats comprising
@@ -931,6 +932,7 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 	}
 
 	cfg80211_vendor_cmd_reply(vendor_event);
+	EXIT();
 	return;
 }
 
@@ -958,12 +960,12 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 	struct sk_buff *vendor_event;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
+	ENTER();
+
 	pWifiRadioStat = pData;
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != status)
 		return;
-	}
 
 	hddLog(CDF_TRACE_LEVEL_INFO,
 	       "LL_STATS_RADIO"
@@ -1126,6 +1128,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 		nla_nest_end(vendor_event, chList);
 	}
 	cfg80211_vendor_cmd_reply(vendor_event);
+	EXIT();
 	return;
 }
 
@@ -1312,16 +1315,16 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 
+	ENTER();
+
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
 
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != status)
 		return -EINVAL;
-	}
 
 	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX,
 		      (struct nlattr *)data,
@@ -1376,7 +1379,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	}
 
 	pAdapter->isLinkLayerStatsSet = 1;
-
+	EXIT();
 	return 0;
 }
 
@@ -1443,16 +1446,16 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int status;
 
+	ENTER();
+
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
 
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != status)
 		return -EINVAL;
-	}
 
 	if (!pAdapter->isLinkLayerStatsSet) {
 		hddLog(CDF_TRACE_LEVEL_FATAL,
@@ -1517,7 +1520,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 			context->request_id, context->request_bitmap);
 		return -ETIMEDOUT;
 	}
-
+	EXIT();
 	return 0;
 }
 
@@ -1578,16 +1581,16 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 	int status;
 	struct sk_buff *temp_skbuff;
 
+	ENTER();
+
 	if (CDF_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
 
 	status = wlan_hdd_validate_context(pHddCtx);
-	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+	if (0 != status)
 		return -EINVAL;
-	}
 
 	if (!pAdapter->isLinkLayerStatsSet) {
 		hddLog(CDF_TRACE_LEVEL_FATAL,
@@ -1668,6 +1671,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 
 			return cfg80211_vendor_cmd_reply(temp_skbuff);
 		}
+		EXIT();
 		return -ENOMEM;
 	}
 
@@ -1925,10 +1929,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	wlan_hdd_get_rssi(pAdapter, &sinfo->signal);
 	sinfo->filled |= STATION_INFO_SIGNAL;
@@ -2415,10 +2417,8 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	status = wlan_hdd_validate_context(pHddCtx);
 
-	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+	if (0 != status)
 		return status;
-	}
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
@@ -2484,7 +2484,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 		pAdapter->survey_idx = 0;
 		return -ENONET;
 	}
-
+	EXIT();
 	return 0;
 }
 
