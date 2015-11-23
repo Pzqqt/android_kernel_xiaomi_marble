@@ -1784,6 +1784,7 @@ typedef enum {
  * @puapsd_mask: uapsd mask
  * @puapsd_inactivity_time: uapsd inactivity time
  * @puapsd_rx_frame_threshold: uapsd rx frame threshold
+ * @teardown_notification_ms: tdls teardown notification interval
  */
 typedef struct wma_tdls_params {
 	uint32_t vdev_id;
@@ -1799,6 +1800,7 @@ typedef struct wma_tdls_params {
 	uint32_t puapsd_mask;
 	uint32_t puapsd_inactivity_time;
 	uint32_t puapsd_rx_frame_threshold;
+	uint32_t teardown_notification_ms;
 } t_wma_tdls_params;
 
 /**
