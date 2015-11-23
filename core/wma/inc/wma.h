@@ -408,18 +408,21 @@ typedef enum {
 
 #ifdef FEATURE_WLAN_TDLS
 /**
- * enum t_wma_tdls_mode: TDLS mode
+ * enum t_wma_tdls_mode - TDLS mode
  * @WMA_TDLS_SUPPORT_NOT_ENABLED: tdls is disable
  * @WMA_TDLS_SUPPORT_DISABLED: suppress implicit trigger and not respond to peer
  * @WMA_TDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY: suppress implicit trigger,
  *                                          but respond to the peer
  * @WMA_TDLS_SUPPORT_ENABLED: implicit trigger
+ * @WMA_TDLS_SUPPORT_ACTIVE_EXTERNAL_CONTROL: External control means
+ *    implicit trigger but only to a peer mac configured by user space.
  */
 typedef enum {
 	WMA_TDLS_SUPPORT_NOT_ENABLED = 0,
 	WMA_TDLS_SUPPORT_DISABLED,
 	WMA_TDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY,
 	WMA_TDLS_SUPPORT_ENABLED,
+	WMA_TDLS_SUPPORT_ACTIVE_EXTERNAL_CONTROL,
 } t_wma_tdls_mode;
 
 /**
@@ -1785,6 +1788,8 @@ typedef enum {
  * @puapsd_inactivity_time: uapsd inactivity time
  * @puapsd_rx_frame_threshold: uapsd rx frame threshold
  * @teardown_notification_ms: tdls teardown notification interval
+ * @tdls_peer_kickout_threshold: tdls packet threshold for
+ *    peer kickout operation
  */
 typedef struct wma_tdls_params {
 	uint32_t vdev_id;
@@ -1801,6 +1806,7 @@ typedef struct wma_tdls_params {
 	uint32_t puapsd_inactivity_time;
 	uint32_t puapsd_rx_frame_threshold;
 	uint32_t teardown_notification_ms;
+	uint32_t tdls_peer_kickout_threshold;
 } t_wma_tdls_params;
 
 /**

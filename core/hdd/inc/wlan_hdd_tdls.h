@@ -134,12 +134,15 @@ typedef struct {
  * @eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY: suppress implicit trigger,
  *			but respond to the peer
  * @eTDLS_SUPPORT_ENABLED: implicit trigger
+ * @eTDLS_SUPPORT_EXTERNAL_CONTROL: External control means implicit
+ *     trigger but only to a peer mac configured by user space.
  */
 typedef enum {
 	eTDLS_SUPPORT_NOT_ENABLED = 0,
 	eTDLS_SUPPORT_DISABLED,
 	eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY,
 	eTDLS_SUPPORT_ENABLED,
+	eTDLS_SUPPORT_EXTERNAL_CONTROL,
 } eTDLSSupportMode;
 
 /**
@@ -395,6 +398,8 @@ typedef struct {
  * @puapsd_inactivity_time: puapsd inactivity time
  * @puapsd_rx_frame_threshold: puapsd rx frame threshold
  * @teardown_notification_ms: tdls teardown notification interval
+ * @tdls_peer_kickout_threshold: tdls packets threshold
+ *    for peer kickout operation
  */
 typedef struct {
 	uint32_t vdev_id;
@@ -411,6 +416,7 @@ typedef struct {
 	uint32_t puapsd_inactivity_time;
 	uint32_t puapsd_rx_frame_threshold;
 	uint32_t teardown_notification_ms;
+	uint32_t tdls_peer_kickout_threshold;
 } tdlsInfo_t;
 
 int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter);
@@ -524,6 +530,10 @@ int wlan_hdd_tdls_set_extctrl_param(hdd_adapter_t *pAdapter,
 				    uint32_t op_class, uint32_t min_bandwidth);
 int wlan_hdd_tdls_set_force_peer(hdd_adapter_t *pAdapter, const uint8_t *mac,
 				 bool forcePeer);
+
+int wlan_hdd_tdls_update_peer_mac(hdd_adapter_t *adapter,
+				const uint8_t *mac,
+				uint32_t peer_state);
 
 int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 					const uint8_t *peer);

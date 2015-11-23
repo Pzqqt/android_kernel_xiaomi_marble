@@ -617,11 +617,15 @@ struct ar6k_testmode_cmd_data {
  * @WMA_TDLS_PEER_STATE_PEERING: peer is making connection
  * @WMA_TDLS_PEER_STATE_CONNECTED: peer is connected
  * @WMA_TDLS_PEER_STATE_TEARDOWN: peer is teardown
+ * @WMA_TDLS_PEER_ADD_MAC_ADDR: add peer into connection table
+ * @WMA_TDLS_PEER_REMOVE_MAC_ADDR: remove peer from connection table
  */
 typedef enum {
 	WMA_TDLS_PEER_STATE_PEERING,
 	WMA_TDLS_PEER_STATE_CONNECTED,
 	WMA_TDLS_PEER_STATE_TEARDOWN,
+	WMA_TDLS_PEER_ADD_MAC_ADDR,
+	WMA_TDLS_PEER_REMOVE_MAC_ADDR,
 } WMA_TdlsPeerState;
 
 /**
