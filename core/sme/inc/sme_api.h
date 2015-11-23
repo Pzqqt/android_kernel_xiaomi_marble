@@ -83,8 +83,6 @@
 	reg_info_2 |= ((val & 0xff) << 8);   \
 } while (0)
 
-/* Macro to indicate invalid no of tspecs */
-#define INVALID_TSPEC 100
 #define SME_CONFIG_TO_ROAM_CONFIG 1
 #define ROAM_CONFIG_TO_SME_CONFIG 2
 

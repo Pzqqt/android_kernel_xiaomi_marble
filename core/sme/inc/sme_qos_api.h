@@ -251,7 +251,6 @@ CDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac_ctx,
 		uint32_t session_id);
 CDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal mac_ctx,
 		uint32_t session_id);
-bool sme_qos_tspec_active(tpAniSirGlobal pMac, sme_ac_enum_type ac,
-			  uint8_t sessionId, uint8_t *pActiveTspec);
+
 
 #endif /* #if !defined( __SME_QOSAPI_H ) */
