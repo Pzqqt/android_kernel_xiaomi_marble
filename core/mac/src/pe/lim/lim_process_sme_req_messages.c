@@ -4341,12 +4341,12 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 	pSetHT2040Mode = (tpSirSetHT2040Mode) pMsgBuf;
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				pSetHT2040Mode->bssId,
+				pSetHT2040Mode->bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOG1,
 			FL("Session does not exist for given BSSID "));
-		lim_print_mac_addr(pMac, pSetHT2040Mode->bssId, LOG1);
+		lim_print_mac_addr(pMac, pSetHT2040Mode->bssid.bytes, LOG1);
 		return;
 	}
 

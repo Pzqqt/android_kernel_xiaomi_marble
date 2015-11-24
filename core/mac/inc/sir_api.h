@@ -2473,7 +2473,7 @@ typedef struct sSirSetHT2040Mode {
 	uint16_t length;
 	uint8_t cbMode;
 	bool obssEnabled;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 	uint8_t sessionId;      /* Session ID */
 } tSirSetHT2040Mode, *tpSirSetHT2040Mode;
 #endif
