@@ -241,41 +241,6 @@ struct nbuf_rx_cb {
 	(((struct nbuf_rx_cb *)((skb)->cb))->tcp_win)
 #define NBUF_FLOW_ID_TOEPLITZ(skb)	\
 	(((struct nbuf_rx_cb *)((skb)->cb))->flow_id_toeplitz)
-
-/**
- * cdf_print_lro_info() - prints the LRO information
- * @skb : network buffer
- *
- * This function prints out the LRO related fields in the rx
- * descriptor
- *
- * Return: none
- */
-static inline void cdf_print_lro_info(struct sk_buff *skb)
-{
-	cdf_print("NBUF_LRO_ELIGIBLE 0x%x\n"
-		 "NBUF_TCP_PROTO 0x%x\n"
-		 "NBUF_TCP_PURE_ACK 0x%x\n"
-		 "NBUF_TCP_CHKSUM 0x%x\n"
-		 "NBUF_IPV6_PROTO 0x%x\n"
-		 "NBUF_IP_OFFSET 0x%x\n"
-		 "NBUF_TCP_OFFSET 0x%x\n"
-		 "NBUF_TCP_SEQ_NUM 0x%x\n"
-		 "NBUF_TCP_ACK_NUM 0x%x\n"
-		 "NBUF_TCP_WIN 0x%x\n"
-		 "NBUF_FLOW_ID_TOEPLITZ 0x%x\n",
-		 NBUF_LRO_ELIGIBLE(skb),
-		 NBUF_TCP_PROTO(skb),
-		 NBUF_TCP_PURE_ACK(skb),
-		 NBUF_TCP_CHKSUM(skb),
-		 NBUF_IPV6_PROTO(skb),
-		 NBUF_IP_OFFSET(skb),
-		 NBUF_TCP_OFFSET(skb),
-		 NBUF_TCP_SEQ_NUM(skb),
-		 NBUF_TCP_ACK_NUM(skb),
-		 NBUF_TCP_WIN(skb),
-		 NBUF_FLOW_ID_TOEPLITZ(skb));
-}
 #endif /* FEATURE_LRO */
 
 #define NBUF_SET_PACKET_STATE(skb, pkt_state) \
