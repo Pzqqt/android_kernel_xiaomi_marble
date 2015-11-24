@@ -664,8 +664,8 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	pSirSmeProbeReqInd->length = sizeof(tSirSmeProbeReq);
 	pSirSmeProbeReqInd->sessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_copy(pSirSmeProbeReqInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peerMacAddr,
 		     peerMacAddr, sizeof(tSirMacAddr));
 
