@@ -2569,7 +2569,7 @@ typedef struct sSirHostOffloadReq {
 #ifdef WLAN_NS_OFFLOAD
 	tSirNsOffloadReq nsOffloadInfo;
 #endif /* WLAN_NS_OFFLOAD */
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 } tSirHostOffloadReq, *tpSirHostOffloadReq;
 
 /* Packet Types. */
