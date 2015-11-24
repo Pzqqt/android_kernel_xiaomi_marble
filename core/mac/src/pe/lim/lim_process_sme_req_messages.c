@@ -3251,7 +3251,6 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	tSap_Event sap_event;
 	tpWLAN_SAPEventCB sap_event_cb = NULL;
 	uint8_t session_id = CSR_SESSION_ID_INVALID;
-	tSirMacAddr zero_mac = { 0, 0, 0, 0, 0, 0 };
 	tSap_GetWPSPBCSessionEvent *sap_get_wpspbc_event;
 
 	if (msg_buf == NULL) {
@@ -3269,7 +3268,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	 * Find PE session Entry
 	 */
 	session_entry = pe_find_session_by_bssid(mac_ctx,
-			get_wps_pbc_sessions_req.bssId, &session_id);
+			get_wps_pbc_sessions_req.bssid.bytes, &session_id);
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGE,
 			FL("session does not exist for given bssId"));
@@ -3289,8 +3288,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	sap_event.sapHddEventCode = eSAP_GET_WPSPBC_SESSION_EVENT;
 	sap_get_wpspbc_event->module = CDF_MODULE_ID_PE;
 
-	if (cdf_mem_compare(zero_mac, get_wps_pbc_sessions_req.pRemoveMac,
-				sizeof(tSirMacAddr))) {
+	if (cdf_is_macaddr_zero(&get_wps_pbc_sessions_req.remove_mac)) {
 		lim_get_wpspbc_sessions(mac_ctx,
 				sap_get_wpspbc_event->addr.bytes,
 				sap_get_wpspbc_event->UUID_E,
@@ -3298,7 +3296,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 				session_entry);
 	} else {
 		lim_remove_pbc_sessions(mac_ctx,
-				get_wps_pbc_sessions_req.pRemoveMac,
+				get_wps_pbc_sessions_req.remove_mac,
 				session_entry);
 		/* don't have to inform the HDD/Host */
 		return;
