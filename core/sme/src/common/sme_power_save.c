@@ -990,8 +990,7 @@ CDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(request->bssId, session->connectedProfile.bssid.bytes,
-			sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
 	cdf_mem_copy(request_buf, request, sizeof(tSirHostOffloadReq));
 
@@ -1033,8 +1032,7 @@ CDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_copy(request->bssId, session->connectedProfile.bssid.bytes,
-			sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
 	request_buf = cdf_mem_malloc(sizeof(*request_buf));
 	if (NULL == request_buf) {

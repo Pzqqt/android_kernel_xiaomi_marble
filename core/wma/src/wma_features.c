@@ -4910,15 +4910,15 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 	uint32_t count = 0, num_ns_ext_tuples = 0;
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma, pHostOffloadParams->bssId, &vdev_id)) {
+	if (!wma_find_vdev_by_bssid(wma, pHostOffloadParams->bssid.bytes,
+					&vdev_id)) {
 		WMA_LOGE("vdev handle is invalid for %pM",
-			 pHostOffloadParams->bssId);
+			 pHostOffloadParams->bssid.bytes);
 		cdf_mem_free(pHostOffloadParams);
 		return CDF_STATUS_E_INVAL;
 	}
 
 	if (!wma->interfaces[vdev_id].vdev_up) {
-
 		WMA_LOGE("vdev %d is not up skipping arp/ns offload", vdev_id);
 		cdf_mem_free(pHostOffloadParams);
 		return CDF_STATUS_E_FAILURE;
@@ -4926,7 +4926,6 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 
 	if (!bArpOnly)
 		count = pHostOffloadParams->num_ns_offload_count;
-
 
 	len = sizeof(WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param) + WMI_TLV_HDR_SIZE +       /* TLV place holder size for array of NS tuples */
 	      WMI_MAX_NS_OFFLOADS * sizeof(WMI_NS_OFFLOAD_TUPLE) + WMI_TLV_HDR_SIZE +   /* TLV place holder size for array of ARP tuples */
