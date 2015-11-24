@@ -500,6 +500,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_MAX_RX_AMPDU_FACTOR_MIN,
 		     CFG_MAX_RX_AMPDU_FACTOR_MAX),
 
+	REG_VARIABLE(CFG_HT_MPDU_DENSITY_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, ht_mpdu_density,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK ,
+		     CFG_HT_MPDU_DENSITY_DEFAULT,
+		     CFG_HT_MPDU_DENSITY_MIN,
+		     CFG_HT_MPDU_DENSITY_MAX),
+
 	REG_VARIABLE(CFG_FIXED_RATE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, TxRate,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK,
@@ -5182,6 +5189,10 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hddLog(LOGE, "Name = [%s] Value = [%d]",
 		CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
 		pHddCtx->config->first_scan_bucket_threshold);
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+		CFG_HT_MPDU_DENSITY_NAME,
+		pHddCtx->config->ht_mpdu_density);
+
 }
 
 
@@ -5607,6 +5618,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_HT_AMPDU_PARAMS_MAX_RX_AMPDU_FACTOR to CFG");
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_MPDU_DENSITY,
+			    pConfig->ht_mpdu_density) ==
+			CDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not pass on WNI_CFG_MPDU_DENSITY to CFG");
 	}
 
 	if (sme_cfg_set_int
