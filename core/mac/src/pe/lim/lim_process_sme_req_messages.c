@@ -4244,7 +4244,7 @@ static void __lim_process_sme_set_wparsni_es(tpAniSirGlobal pMac, uint32_t *pMsg
 			sizeof(struct sSirUpdateAPWPARSNIEsReq));
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				pUpdateAPWPARSNIEsReq->bssId,
+				pUpdateAPWPARSNIEsReq->bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGW,
