@@ -14206,12 +14206,10 @@ CDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,
 		pMsg->messageType = eWNI_SME_SET_HT_2040_MODE;
 		pMsg->length = len;
 
-		/* bssId */
-		cdf_mem_copy((tSirMacAddr *) pMsg->bssId,
-			     &pSession->selfMacAddr, sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		sms_log(pMac, LOG1,
 			FL("CSR Attempting to set HT20/40 mode for Bssid= "
-			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMsg->bssId));
+			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMsg->bssid.bytes));
 		pMsg->sessionId = sessionId;
 		sms_log(pMac, LOG1, FL("  session %d HT20/40 mode %d"),
 			sessionId, cbMode);
