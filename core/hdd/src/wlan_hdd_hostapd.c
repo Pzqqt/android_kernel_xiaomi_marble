@@ -1487,13 +1487,12 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			     WPSPBCProbeReq.probeReqIE,
 			     pHddApCtx->WPSPBCProbeReq.probeReqIELen);
 
-		cdf_mem_copy(pHddApCtx->WPSPBCProbeReq.peerMacAddr,
-			     pSapEvent->sapevt.sapPBCProbeReqEvent.
-			     WPSPBCProbeReq.peerMacAddr,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pHddApCtx->WPSPBCProbeReq.peer_macaddr,
+			     &pSapEvent->sapevt.sapPBCProbeReqEvent.
+			     WPSPBCProbeReq.peer_macaddr);
 		hddLog(LOG1, "WPS PBC probe req " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(pHddApCtx->WPSPBCProbeReq.
-				      peerMacAddr));
+				      peer_macaddr.bytes));
 		memset(&wreq, 0, sizeof(wreq));
 		wreq.data.length = strlen(message);             /* This is length of message */
 		wireless_send_event(dev, IWEVCUSTOM, &wreq,
@@ -3766,9 +3765,8 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 	cdf_mem_copy(&WPSPBCProbeReqIEs.probeReqIE,
 		     pHddApCtx->WPSPBCProbeReq.probeReqIE,
 		     WPSPBCProbeReqIEs.probeReqIELen);
-	cdf_mem_copy(&WPSPBCProbeReqIEs.macaddr,
-		     pHddApCtx->WPSPBCProbeReq.peerMacAddr,
-		     CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&WPSPBCProbeReqIEs.macaddr,
+			 &pHddApCtx->WPSPBCProbeReq.peer_macaddr);
 	if (copy_to_user(wrqu->data.pointer,
 			 (void *)&WPSPBCProbeReqIEs,
 			 sizeof(WPSPBCProbeReqIEs))) {
@@ -3776,8 +3774,8 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 		return -EFAULT;
 	}
 	wrqu->data.length = 12 + WPSPBCProbeReqIEs.probeReqIELen;
-	hddLog(LOG1, FL("Macaddress : " MAC_ADDRESS_STR),
-	       MAC_ADDR_ARRAY(WPSPBCProbeReqIEs.macaddr));
+	hdd_info("Macaddress : " MAC_ADDRESS_STR,
+	       MAC_ADDR_ARRAY(WPSPBCProbeReqIEs.macaddr.bytes));
 	up(&pHddApCtx->semWpsPBCOverlapInd);
 	EXIT();
 	return 0;

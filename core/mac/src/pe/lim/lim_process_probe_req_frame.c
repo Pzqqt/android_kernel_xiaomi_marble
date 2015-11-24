@@ -666,8 +666,8 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 
 	cdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, psessionEntry->bssId,
 		     CDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peerMacAddr,
-		     peerMacAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peer_macaddr.bytes,
+		     peerMacAddr, CDF_MAC_ADDR_SIZE);
 
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIELen =
