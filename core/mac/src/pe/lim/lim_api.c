@@ -1977,7 +1977,7 @@ void lim_roam_offload_synch_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 			roam_sync_ind_ptr->authStatus,
 			roam_sync_ind_ptr->roamedVdevId);
 	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
-			roam_sync_ind_ptr->bssId, 6);
+			roam_sync_ind_ptr->bssid.bytes, CDF_MAC_ADDR_SIZE);
 	session_ptr = pe_find_session_by_bss_idx(pMac,
 			roam_sync_ind_ptr->roamedVdevId);
 	if (session_ptr == NULL) {
