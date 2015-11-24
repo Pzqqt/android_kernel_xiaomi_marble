@@ -92,7 +92,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 		tSirTdlsAddStaReq * pAddStaReq, tpPESession psessionEntry);
 void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			       tDot11fIELinkIdentifier *linkIden,
-			       tSirMacAddr peerMac, uint8_t reqType);
+			       struct cdf_mac_addr peer_mac, uint8_t reqType);
 void populate_dot11f_tdls_ext_capability(tpAniSirGlobal pMac,
 					 tpPESession psessionEntry,
 					 tDot11fIEExtCap *extCapability);
@@ -343,8 +343,10 @@ CDF_STATUS lim_mgmt_tx_complete(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
  * This function can be used for bacst or unicast discovery request
  * We are not differentiating it here, it will all depnds on peer MAC address,
  */
-tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac, tSirMacAddr peer_mac,
-					  uint8_t dialog, tpPESession psessionEntry)
+tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
+					  struct cdf_mac_addr peer_mac,
+					  uint8_t dialog,
+					  tpPESession psessionEntry)
 {
 	tDot11fTDLSDisReq tdlsDisReq;
 	uint32_t status = 0;
@@ -504,7 +506,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac, tSirMacAddr peer_
 		FL("[TDLS] action %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR),
 		SIR_MAC_TDLS_DIS_REQ,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_REQ),
-		MAC_ADDR_ARRAY(peer_mac));
+		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
@@ -591,9 +593,11 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
  */
 
 static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
-						 tSirMacAddr peerMac, uint8_t dialog,
+						 struct cdf_mac_addr peer_mac,
+						 uint8_t dialog,
 						 tpPESession psessionEntry,
-						 uint8_t *addIe, uint16_t addIeLen)
+						 uint8_t *addIe,
+						 uint16_t addIeLen)
 {
 	tDot11fTDLSDisRsp tdlsDisRsp;
 	uint16_t caps = 0;
@@ -633,7 +637,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 
 	populate_dot11f_link_iden(pMac, psessionEntry,
 				  &tdlsDisRsp.LinkIdentifier,
-				  peerMac, TDLS_RESPONDER);
+				  peer_mac, TDLS_RESPONDER);
 
 	if (cfg_get_capability_info(pMac, &caps, psessionEntry)
 		!= eSIR_SUCCESS) {
@@ -735,7 +739,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	/* Make public Action Frame */
 
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
-				SIR_MAC_MGMT_ACTION, peerMac,
+				SIR_MAC_MGMT_ACTION, peer_mac.bytes,
 				psessionEntry->selfMacAddr);
 
 	{
@@ -775,7 +779,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 		FL("[TDLS] action %d (%s) -DIRECT-> OTA peer="MAC_ADDRESS_STR),
 		SIR_MAC_TDLS_DIS_RSP,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_DIS_RSP),
-		MAC_ADDR_ARRAY(peerMac));
+		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 	/*
@@ -810,7 +814,8 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
  * lim_send_tdls_setup_rsp_frame to populate the AID if device is 11ac capable.
  */
 static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mode,
-				       tSirMacAddr peerMac, tDot11fIEAID *Aid,
+				       struct cdf_mac_addr peerMac,
+				       tDot11fIEAID *Aid,
 				       tpPESession psessionEntry)
 {
 	if (((psessionEntry->currentOperChannel <= SIR_11B_CHANNEL_END) &&
@@ -823,7 +828,7 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mo
 			tpDphHashNode pStaDs;
 
 			pStaDs =
-				dph_lookup_hash_entry(pMac, peerMac, &aid,
+				dph_lookup_hash_entry(pMac, peerMac.bytes, &aid,
 						      &psessionEntry->dph.
 						      dphHashTable);
 			if (NULL != pStaDs) {
@@ -834,7 +839,7 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mo
 				lim_log(pMac, LOGE,
 					FL("pStaDs is NULL for "
 					   MAC_ADDRESS_STR),
-					MAC_ADDR_ARRAY(peerMac));
+					MAC_ADDR_ARRAY(peerMac.bytes));
 			}
 		}
 	} else {
@@ -848,9 +853,11 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mo
  */
 
 tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
-						 tSirMacAddr peerMac, uint8_t dialog,
+						 struct cdf_mac_addr peer_mac,
+						 uint8_t dialog,
 						 tpPESession psessionEntry,
-						 uint8_t *addIe, uint16_t addIeLen)
+						 uint8_t *addIe,
+						 uint16_t addIeLen)
 {
 	tDot11fTDLSSetupReq tdlsSetupReq;
 	uint16_t caps = 0;
@@ -882,7 +889,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	tdlsSetupReq.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(pMac, psessionEntry,
-				  &tdlsSetupReq.LinkIdentifier, peerMac,
+				  &tdlsSetupReq.LinkIdentifier, peer_mac,
 				  TDLS_INITIATOR);
 
 	if (cfg_get_capability_info(pMac, &caps, psessionEntry) != eSIR_SUCCESS) {
@@ -975,7 +982,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 					&tdlsSetupReq.VHTCaps, psessionEntry);
 
 	/* Populate AID */
-	populate_dotf_tdls_vht_aid(pMac, selfDot11Mode, peerMac,
+	populate_dotf_tdls_vht_aid(pMac, selfDot11Mode, peer_mac,
 				   &tdlsSetupReq.AID, psessionEntry);
 
 	/* Populate TDLS offchannel param only if offchannel is enabled
@@ -1099,7 +1106,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 		FL("[TDLS] action %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR),
 		SIR_MAC_TDLS_SETUP_REQ,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_REQ),
-		MAC_ADDR_ARRAY(peerMac));
+		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
@@ -1128,7 +1135,8 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
  */
 
 tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
-					   tSirMacAddr peerMac, uint16_t reason,
+					   struct cdf_mac_addr peer_mac,
+					   uint16_t reason,
 					   uint8_t responder,
 					   tpPESession psessionEntry,
 					   uint8_t *addIe, uint16_t addIeLen)
@@ -1162,7 +1170,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	teardown.Reason.code = reason;
 
 	populate_dot11f_link_iden(pMac, psessionEntry, &teardown.LinkIdentifier,
-				  peerMac,
+				  peer_mac,
 				  (responder ==
 				   true) ? TDLS_RESPONDER : TDLS_INITIATOR);
 
@@ -1300,7 +1308,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_TEARDOWN),
 		((reason == eSIR_MAC_TDLS_TEARDOWN_PEER_UNREACHABLE) ? "AP" :
 		    "DIRECT"),
-		MAC_ADDR_ARRAY(peerMac));
+		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
@@ -1321,14 +1329,13 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 
 	}
 	return eSIR_SUCCESS;
-
 }
 
 /*
  * Send Setup RSP frame on AP link.
  */
 static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
-						   tSirMacAddr peerMac,
+						   struct cdf_mac_addr peer_mac,
 						   uint8_t dialog,
 						   tpPESession psessionEntry,
 						   etdlsLinkSetupStatus setupStatus,
@@ -1373,7 +1380,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	tdlsSetupRsp.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(pMac, psessionEntry,
-				  &tdlsSetupRsp.LinkIdentifier, peerMac,
+				  &tdlsSetupRsp.LinkIdentifier, peer_mac,
 				  TDLS_RESPONDER);
 
 	if (cfg_get_capability_info(pMac, &caps, psessionEntry) != eSIR_SUCCESS) {
@@ -1456,7 +1463,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 					&tdlsSetupRsp.VHTCaps, psessionEntry);
 
 	/* Populate AID */
-	populate_dotf_tdls_vht_aid(pMac, selfDot11Mode, peerMac,
+	populate_dotf_tdls_vht_aid(pMac, selfDot11Mode, peer_mac,
 				   &tdlsSetupRsp.AID, psessionEntry);
 
 	/* Populate TDLS offchannel param only if offchannel is enabled
@@ -1579,7 +1586,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 		FL("[TDLS] action %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR),
 		SIR_MAC_TDLS_SETUP_RSP,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_RSP),
-		MAC_ADDR_ARRAY(peerMac));
+		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
@@ -1600,7 +1607,6 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	}
 
 	return eSIR_SUCCESS;
-
 }
 
 /*
@@ -1608,7 +1614,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
  */
 
 tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
-						 tSirMacAddr peerMac,
+						 struct cdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 uint32_t peerCapability,
 						 tpPESession psessionEntry,
@@ -1644,7 +1650,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	tdlsSetupCnf.DialogToken.token = dialog;
 
 	populate_dot11f_link_iden(pMac, psessionEntry,
-				  &tdlsSetupCnf.LinkIdentifier, peerMac,
+				  &tdlsSetupCnf.LinkIdentifier, peer_mac,
 				  TDLS_INITIATOR);
 	/*
 	 * TODO: we need to see if we have to support conditions where we have
@@ -1800,7 +1806,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 		FL("[TDLS] action %d (%s) -AP-> OTA peer="MAC_ADDRESS_STR),
 		SIR_MAC_TDLS_SETUP_CNF,
 		lim_trace_tdls_action_string(SIR_MAC_TDLS_SETUP_CNF),
-	       MAC_ADDR_ARRAY(peerMac));
+	       MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
@@ -2662,7 +2668,7 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 
 void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			       tDot11fIELinkIdentifier *linkIden,
-			       tSirMacAddr peerMac, uint8_t reqType)
+			       struct cdf_mac_addr peer_mac, uint8_t reqType)
 {
 	uint8_t *initStaAddr = NULL;
 	uint8_t *respStaAddr = NULL;
@@ -2672,13 +2678,13 @@ void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 	: ((respStaAddr = linkIden->InitStaAddr),
 	   (initStaAddr = linkIden->RespStaAddr));
 	cdf_mem_copy((uint8_t *) linkIden->bssid,
-		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
+		     (uint8_t *) psessionEntry->bssId, CDF_MAC_ADDR_SIZE);
 
 	cdf_mem_copy((uint8_t *) initStaAddr,
-		     psessionEntry->selfMacAddr, sizeof(tSirMacAddr));
+		     psessionEntry->selfMacAddr, CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peerMac,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
+		     CDF_MAC_ADDR_SIZE);
 
 	linkIden->present = 1;
 	return;
@@ -2738,7 +2744,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 
 	lim_log(mac_ctx, LOG1, FL("Send Mgmt Recieved"));
 	session_entry = pe_find_session_by_bssid(mac_ctx,
-						 send_req->bssid, &session_id);
+					 send_req->bssid.bytes, &session_id);
 	if (NULL == session_entry) {
 		lim_log(mac_ctx, LOGE,
 			FL("PE Session does not exist for given sme session_id %d"),
@@ -2770,14 +2776,14 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	case SIR_MAC_TDLS_DIS_REQ:
 		lim_log(mac_ctx, LOG1, FL("Transmit Discovery Request Frame"));
 		/* format TDLS discovery request frame and transmit it */
-		lim_send_tdls_dis_req_frame(mac_ctx, send_req->peerMac,
+		lim_send_tdls_dis_req_frame(mac_ctx, send_req->peer_mac,
 					    send_req->dialog, session_entry);
 		result_code = eSIR_SME_SUCCESS;
 		break;
 	case SIR_MAC_TDLS_DIS_RSP:
 		lim_log(mac_ctx, LOG1, FL("Transmit Discovery Response Frame"));
 		/* Send a response mgmt action frame */
-		lim_send_tdls_dis_rsp_frame(mac_ctx, send_req->peerMac,
+		lim_send_tdls_dis_rsp_frame(mac_ctx, send_req->peer_mac,
 			send_req->dialog, session_entry, &send_req->addIe[0],
 			(send_req->length - sizeof(tSirTdlsSendMgmtReq)));
 		result_code = eSIR_SME_SUCCESS;
@@ -2785,7 +2791,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	case SIR_MAC_TDLS_SETUP_REQ:
 		lim_log(mac_ctx, LOG1, FL("Transmit Setup Request Frame"));
 		lim_send_tdls_link_setup_req_frame(mac_ctx,
-			send_req->peerMac, send_req->dialog, session_entry,
+			send_req->peer_mac, send_req->dialog, session_entry,
 			&send_req->addIe[0],
 			(send_req->length - sizeof(tSirTdlsSendMgmtReq)));
 		result_code = eSIR_SME_SUCCESS;
@@ -2793,7 +2799,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	case SIR_MAC_TDLS_SETUP_RSP:
 		lim_log(mac_ctx, LOG1, FL("Transmit Setup Response Frame"));
 		lim_send_tdls_setup_rsp_frame(mac_ctx,
-			send_req->peerMac, send_req->dialog, session_entry,
+			send_req->peer_mac, send_req->dialog, session_entry,
 			send_req->statusCode, &send_req->addIe[0],
 			(send_req->length - sizeof(tSirTdlsSendMgmtReq)));
 		result_code = eSIR_SME_SUCCESS;
@@ -2801,7 +2807,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	case SIR_MAC_TDLS_SETUP_CNF:
 		lim_log(mac_ctx, LOG1, FL("Transmit Setup Confirm Frame"));
 		lim_send_tdls_link_setup_cnf_frame(mac_ctx,
-			send_req->peerMac, send_req->dialog,
+			send_req->peer_mac, send_req->dialog,
 			send_req->peerCapability, session_entry,
 			&send_req->addIe[0],
 			(send_req->length - sizeof(tSirTdlsSendMgmtReq)));
@@ -2810,7 +2816,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 	case SIR_MAC_TDLS_TEARDOWN:
 		lim_log(mac_ctx, LOG1, FL("Transmit Teardown Frame"));
 		lim_send_tdls_teardown_frame(mac_ctx,
-			send_req->peerMac, send_req->statusCode,
+			send_req->peer_mac, send_req->statusCode,
 			send_req->responder, session_entry,
 			&send_req->addIe[0],
 			(send_req->length - sizeof(tSirTdlsSendMgmtReq)));
