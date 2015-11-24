@@ -2463,7 +2463,7 @@ typedef struct sSirChangeBIParams {
 	uint16_t messageType;
 	uint16_t length;
 	uint16_t beaconInterval;        /* Beacon Interval */
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 	uint8_t sessionId;      /* Session ID */
 } tSirChangeBIParams, *tpSirChangeBIParams;
 

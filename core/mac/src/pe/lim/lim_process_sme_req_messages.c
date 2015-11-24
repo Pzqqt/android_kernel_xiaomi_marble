@@ -4276,7 +4276,7 @@ static void __lim_process_sme_change_bi(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	pChangeBIParams = (tpSirChangeBIParams) pMsgBuf;
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				pChangeBIParams->bssId,
+				pChangeBIParams->bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
