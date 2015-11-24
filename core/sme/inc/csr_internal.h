@@ -856,7 +856,7 @@ typedef struct tagCsrRoamOffloadSynchStruct {
 	uint8_t nss;            /* no of spatial streams */
 	uint16_t chainMask;     /* chainmask */
 	uint16_t smpsMode;      /* smps.mode */
-	tSirMacAddr bssid;      /* MAC address of roamed AP */
+	struct cdf_mac_addr bssid;      /* MAC address of roamed AP */
 	bool bRoamSynchInProgress;              /* a roam offload synch */
 	tCsrRoamOffloadAuthStatus authStatus;   /* auth status */
 	uint8_t kck[SIR_KCK_KEY_LEN];

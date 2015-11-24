@@ -2785,7 +2785,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	roam_synch_ind_ptr->rssi = synch_event->rssi;
 	roam_synch_ind_ptr->isBeacon = synch_event->is_beacon;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
-				   roam_synch_ind_ptr->bssId);
+				   roam_synch_ind_ptr->bssid.bytes);
 	roam_synch_ind_ptr->beaconProbeRespOffset =
 		sizeof(roam_offload_synch_ind);
 	bcn_probersp_ptr =

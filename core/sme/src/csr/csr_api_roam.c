@@ -18325,8 +18325,8 @@ void csr_process_roam_offload_synch_ind(tHalHandle hHal,
 		roam_synch_ind_ptr->roamReason;
 	session_ptr->roamOffloadSynchParams.roamedVdevId =
 		roam_synch_ind_ptr->roamedVdevId;
-	cdf_mem_copy(session_ptr->roamOffloadSynchParams.bssid,
-			roam_synch_ind_ptr->bssId, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&session_ptr->roamOffloadSynchParams.bssid,
+			&roam_synch_ind_ptr->bssid);
 	session_ptr->roamOffloadSynchParams.txMgmtPower =
 		roam_synch_ind_ptr->txMgmtPower;
 	session_ptr->roamOffloadSynchParams.authStatus =
