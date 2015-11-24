@@ -750,7 +750,7 @@ void cds_drop_rxpkt_by_staid(p_cds_sched_context pSchedContext, uint16_t staId)
 	}
 	spin_unlock_bh(&pSchedContext->ol_rx_queue_lock);
 
-	list_for_each_entry(pkt, &local_list, list) {
+	list_for_each_entry_safe(pkt, tmp, &local_list, list) {
 		list_del(&pkt->list);
 		buf = pkt->Rxpkt;
 		while (buf) {
