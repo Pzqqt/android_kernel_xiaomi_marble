@@ -14162,12 +14162,10 @@ CDF_STATUS csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessi
 		pMsg->messageType = eWNI_SME_CHNG_MCC_BEACON_INTERVAL;
 		pMsg->length = len;
 
-		/* bssId */
-		cdf_mem_copy((tSirMacAddr *) pMsg->bssId,
-			     &pSession->selfMacAddr, sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		sms_log(pMac, LOG1,
 			FL("CSR Attempting to change BI for Bssid= "
-			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMsg->bssId));
+			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMsg->bssid.bytes));
 		pMsg->sessionId = sessionId;
 		sms_log(pMac, LOG1, FL("  session %d BeaconInterval %d"),
 			sessionId,
