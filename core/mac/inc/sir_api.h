@@ -2478,7 +2478,7 @@ typedef struct sSirSetHT2040Mode {
 
 typedef struct sSirWPSPBCSession {
 	struct sSirWPSPBCSession *next;
-	tSirMacAddr addr;
+	struct cdf_mac_addr addr;
 	uint8_t uuid_e[SIR_WPS_UUID_LEN];
 	uint32_t timestamp;
 } tSirWPSPBCSession;

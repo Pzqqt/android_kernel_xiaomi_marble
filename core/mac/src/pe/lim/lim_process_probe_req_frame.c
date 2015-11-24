@@ -61,7 +61,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 /**
  * lim_get_wpspbc_sessions() - to get wps pbs sessions
  * @mac_ctx: Pointer to Global MAC structure
- * @addr: A pointer to probe request source MAC addresss
+ * @addr: probe request source MAC addresss
  * @uuid_e: A pointer to UUIDE element of WPS IE in WPS PBC probe request
  * @session: A pointer to station PE session
  *
@@ -71,7 +71,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
  * @return None
  */
 
-void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, uint8_t *addr,
+void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct cdf_mac_addr addr,
 		uint8_t *uuid_e, eWPSPBCOverlap *overlap,
 		tpPESession session)
 {
@@ -81,7 +81,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, uint8_t *addr,
 
 	cur_time = (uint32_t) (cdf_mc_timer_get_system_ticks() /
 						CDF_TICKS_PER_SECOND);
-	cdf_mem_set((uint8_t *) addr, sizeof(tSirMacAddr), 0);
+	cdf_zero_macaddr(&addr);
 	cdf_mem_set((uint8_t *) uuid_e, SIR_WPS_UUID_LEN, 0);
 	for (pbc = session->pAPWPSPBCSession; pbc; pbc = pbc->next) {
 		if (cur_time > pbc->timestamp + SIR_WPS_PBC_WALK_TIME)
@@ -89,8 +89,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, uint8_t *addr,
 		count++;
 		if (count > 1)
 			break;
-		cdf_mem_copy((uint8_t *) addr, (uint8_t *) pbc->addr,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&addr, &pbc->addr);
 		cdf_mem_copy((uint8_t *) uuid_e, (uint8_t *) pbc->uuid_e,
 				SIR_WPS_UUID_LEN);
 	}
@@ -105,8 +104,8 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, uint8_t *addr,
 		*overlap = eSAP_WPSPBC_ONE_WPSPBC_PROBE_REQ_IN120S;
 
 	lim_log(mac_ctx, LOGE, FL("overlap = %d"), *overlap);
-	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOGE, addr,
-			sizeof(tSirMacAddr));
+	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOGE, addr.bytes,
+			CDF_MAC_ADDR_SIZE);
 	sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOGE, uuid_e,
 			SIR_WPS_UUID_LEN);
 	return;
@@ -160,9 +159,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct cdf_mac_addr remove_mac,
 	prev = pbc = session_entry->pAPWPSPBCSession;
 
 	while (pbc) {
-		if (cdf_mem_compare((uint8_t *) pbc->addr,
-				    (uint8_t *) remove_mac.bytes,
-				    CDF_MAC_ADDR_SIZE)) {
+		if (cdf_is_macaddr_equal(&pbc->addr, &remove_mac)) {
 			prev->next = pbc->next;
 			if (pbc == session_entry->pAPWPSPBCSession)
 				session_entry->pAPWPSPBCSession = pbc->next;
@@ -224,8 +221,8 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 
 	while (pbc) {
 		if (cdf_mem_compare
-			    ((uint8_t *) pbc->addr, (uint8_t *) addr,
-			    sizeof(tSirMacAddr))
+			    ((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
+			    CDF_MAC_ADDR_SIZE)
 		    && cdf_mem_compare((uint8_t *) pbc->uuid_e,
 				       (uint8_t *) uuid_e, SIR_WPS_UUID_LEN)) {
 			if (prev)
@@ -246,8 +243,8 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 			       )
 			return;
 		}
-		cdf_mem_copy((uint8_t *) pbc->addr, (uint8_t *) addr,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
+			     CDF_MAC_ADDR_SIZE);
 
 		if (uuid_e)
 			cdf_mem_copy((uint8_t *) pbc->uuid_e,
