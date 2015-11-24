@@ -3183,9 +3183,8 @@ csr_roam_get_wps_session_overlap(tpAniSirGlobal pMac, uint32_t sessionId,
 		"CSR getting WPS Session Overlap for Bssid = " MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(bssId.bytes));
 
-	status =
-		csr_send_mb_get_wpspbc_sessions(pMac, sessionId, bssId.bytes, pUsrContext,
-						pfnSapEventCallback, pRemoveMac);
+	status = csr_send_mb_get_wpspbc_sessions(pMac, sessionId, bssId,
+				pUsrContext, pfnSapEventCallback, pRemoveMac);
 
 	return status;
 }
@@ -14056,9 +14055,9 @@ csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 
 CDF_STATUS
 csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
-				tSirMacAddr bssId, void *pUsrContext,
+				struct cdf_mac_addr bssid, void *pUsrContext,
 				void *pfnSapEventCallback,
-				struct cdf_mac_addr pRemoveMac)
+				struct cdf_mac_addr remove_mac)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSirSmeGetWPSPBCSessionsReq *pMsg;
@@ -14076,9 +14075,8 @@ csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
 		cdf_mem_copy(pMsg->pUsrContext, pUsrContext, sizeof(void *));
 		cdf_mem_copy(pMsg->pSapEventCallback, pfnSapEventCallback,
 			     sizeof(void *));
-		cdf_mem_copy(pMsg->bssId, bssId, sizeof(tSirMacAddr));
-		cdf_mem_copy(pMsg->pRemoveMac, pRemoveMac.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->bssid, &bssid);
+		cdf_copy_macaddr(&pMsg->remove_mac, &remove_mac);
 		pMsg->length = sizeof(struct sSirSmeGetWPSPBCSessionsReq);
 		status = cds_send_mb_message_to_mac(pMsg);
 	} while (0);

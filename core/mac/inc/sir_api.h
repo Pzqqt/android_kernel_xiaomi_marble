@@ -2488,9 +2488,9 @@ typedef struct sSirSmeGetWPSPBCSessionsReq {
 	uint16_t length;
 	void *pUsrContext;
 	void *pSapEventCallback;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 	/* MAC Address of STA in WPS Session to be removed */
-	tSirMacAddr pRemoveMac;
+	struct cdf_mac_addr remove_mac;
 } tSirSmeGetWPSPBCSessionsReq, *tpSirSmeGetWPSPBCSessionsReq;
 
 typedef struct sSirWPSPBCProbeReq {

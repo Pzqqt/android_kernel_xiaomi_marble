@@ -816,8 +816,9 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal pMac, uint8_t *addr, uint8_t *uuid_e
 			     eWPSPBCOverlap *overlap, tpPESession psessionEntry);
 void limWPSPBCTimeout(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_wpspbc_close(tpAniSirGlobal pMac, tpPESession psessionEntry);
-void lim_remove_pbc_sessions(tpAniSirGlobal pMac, tSirMacAddr pRemoveMac,
-			     tpPESession psessionEntry);
+void lim_remove_pbc_sessions(tpAniSirGlobal pMac,
+				struct cdf_mac_addr pRemoveMac,
+				tpPESession psessionEntry);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
 void

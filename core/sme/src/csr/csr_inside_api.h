@@ -992,8 +992,10 @@ CDF_STATUS csr_roam_get_wps_session_overlap(tpAniSirGlobal pMac, uint32_t sessio
 					    void *pfnSapEventCallback,
 					    struct cdf_mac_addr pRemoveMac);
 
-CDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
-					   tSirMacAddr bssId, void *pUsrContext,
+CDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
+					   uint32_t sessionId,
+					   struct cdf_mac_addr bssId,
+					   void *pUsrContext,
 					   void *pfnSapEventCallback,
 					   struct cdf_mac_addr pRemoveMac);
 
