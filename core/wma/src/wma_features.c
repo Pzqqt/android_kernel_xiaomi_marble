@@ -5185,8 +5185,8 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 			 * local MAC address rather than the tuple
 			 */
 			WMI_CHAR_ARRAY_TO_MAC_ADDR(pHostOffloadParams->
-						   nsOffloadInfo.selfMacAddr,
-						   &ns_tuple->target_mac);
+					nsOffloadInfo.self_macaddr.bytes,
+					&ns_tuple->target_mac);
 #endif /* WLAN_NS_OFFLOAD */
 			if ((ns_tuple->target_mac.mac_addr31to0 != 0) ||
 			    (ns_tuple->target_mac.mac_addr47to32 != 0)) {
@@ -5250,7 +5250,8 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 
 				/* target MAC is optional, check if it is valid, if this is not valid,
 				 * the target will use the known local MAC address rather than the tuple */
-				 WMI_CHAR_ARRAY_TO_MAC_ADDR(pHostOffloadParams->nsOffloadInfo.selfMacAddr,
+				 WMI_CHAR_ARRAY_TO_MAC_ADDR(
+					pHostOffloadParams->nsOffloadInfo.self_macaddr.bytes,
 					&ns_tuple->target_mac);
 #endif
 				if ((ns_tuple->target_mac.mac_addr31to0 != 0) ||
