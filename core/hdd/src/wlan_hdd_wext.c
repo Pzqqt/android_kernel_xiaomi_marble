@@ -8585,10 +8585,8 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		       request->destIpv4Addr[0], request->destIpv4Addr[1],
 		       request->destIpv4Addr[2], request->destIpv4Addr[3]);
 
-		hdd_info("Dest MAC address: %d:%d:%d:%d:%d:%d",
-		       request->destMacAddr[0], request->destMacAddr[1],
-		       request->destMacAddr[2], request->destMacAddr[3],
-		       request->destMacAddr[4], request->destMacAddr[5]);
+		hdd_info("Dest MAC address: "MAC_ADDRESS_STR,
+		       MAC_ADDR_ARRAY(request->dest_macaddr.bytes));
 		break;
 	}
 

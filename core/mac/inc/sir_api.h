@@ -2582,8 +2582,8 @@ typedef struct sSirKeepAliveReq {
 	uint32_t timePeriod;
 	tSirIpv4Addr hostIpv4Addr;
 	tSirIpv4Addr destIpv4Addr;
-	tSirMacAddr destMacAddr;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr dest_macaddr;
+	struct cdf_mac_addr bssid;
 	uint8_t sessionId;
 } tSirKeepAliveReq, *tpSirKeepAliveReq;
 
