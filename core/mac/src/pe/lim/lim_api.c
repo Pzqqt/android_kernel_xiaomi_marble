@@ -449,22 +449,24 @@ static tSirRetStatus __lim_init_config(tpAniSirGlobal pMac)
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &val1) !=
 	    eSIR_SUCCESS) {
-		PELOGE(lim_log
-			       (pMac, LOGE,
-			       FL("could not retrieve HT AMPDU Param CFG"));
-		       )
+		lim_log(pMac, LOGE, FL("could not retrieve HT AMPDU Param"));
 		return eSIR_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_RX_AMPDU_FACTOR, &val2) !=
 	    eSIR_SUCCESS) {
-		PELOGE(lim_log
-			       (pMac, LOGE, FL("could not retrieve AMPDU Factor CFG"));
-		       )
+		lim_log(pMac, LOGE, FL("could not retrieve AMPDU Factor CFG"));
 		return eSIR_FAILURE;
 	}
+	if (wlan_cfg_get_int(pMac, WNI_CFG_MPDU_DENSITY, &val3) !=
+	    eSIR_SUCCESS) {
+		lim_log(pMac, LOGE, FL("could not retrieve MPDU Density CFG"));
+		return eSIR_FAILURE;
+	}
+
 	val16 = (uint16_t) val1;
 	pAmpduParamInfo = (tSirMacHTParametersInfo *) &val16;
 	pAmpduParamInfo->maxRxAMPDUFactor = (uint8_t) val2;
+	pAmpduParamInfo->mpduDensity = (uint8_t)val3;
 	if (cfg_set_int
 		    (pMac, WNI_CFG_HT_AMPDU_PARAMS,
 		    *(uint8_t *) pAmpduParamInfo) != eSIR_SUCCESS) {

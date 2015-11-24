@@ -138,6 +138,21 @@
 #define CFG_MAX_RX_AMPDU_FACTOR_MAX            WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMAX
 #define CFG_MAX_RX_AMPDU_FACTOR_DEFAULT        WNI_CFG_MAX_RX_AMPDU_FACTOR_STADEF
 
+/* Configuration option for HT MPDU density (Table 8-125 802.11-2012)
+ * 0 for no restriction
+ * 1 for 1/4 micro sec
+ * 2 for 1/2 micro sec
+ * 3 for 1 micro sec
+ * 4 for 2 micro sec
+ * 5 for 4 micro sec
+ * 6 for 8 micro sec
+ * 7 for 16 micro sec
+ */
+#define CFG_HT_MPDU_DENSITY_NAME               "ght_mpdu_density"
+#define CFG_HT_MPDU_DENSITY_MIN                WNI_CFG_MPDU_DENSITY_STAMIN
+#define CFG_HT_MPDU_DENSITY_MAX                WNI_CFG_MPDU_DENSITY_STAMAX
+#define CFG_HT_MPDU_DENSITY_DEFAULT            WNI_CFG_MPDU_DENSITY_STADEF
+
 /* Configuration added to enable/disable CTS2SELF in */
 /* Adaptive RX drain feature */
 #define CFG_ENABLE_ADAPT_RX_DRAIN_NAME     "gEnableAdaptRxDrain"
@@ -3384,6 +3399,7 @@ struct hdd_config {
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
+	uint8_t ht_mpdu_density;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
