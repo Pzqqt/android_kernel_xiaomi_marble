@@ -2650,7 +2650,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t vdev_id;
-	tSirMacAddr wakee_mac_addr;
+	struct cdf_mac_addr wakee_mac_addr;
 	uint8_t identification_id[8];
 	uint8_t password[16];
 	uint32_t id_length;
@@ -2679,7 +2679,7 @@ typedef struct {
 	uint32_t keepalive_max; /* Maximum ping interval */
 	uint32_t keepalive_inc; /* Increment of ping interval */
 
-	tSirMacAddr gateway_mac;
+	struct cdf_mac_addr gateway_mac;
 	uint32_t tcp_tx_timeout_val;
 	uint32_t tcp_rx_timeout_val;
 } tSirAppType2Params, *tpSirAppType2Params;
