@@ -10336,7 +10336,7 @@ csr_roam_chk_lnk_pbs_probe_req_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	sms_log(mac_ctx, LOG1, FL("WPS PBC Probe request Indication from SME"));
 
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-			(struct cdf_mac_addr *)pProbeReqInd->bssId, &sessionId);
+			&pProbeReqInd->bssid, &sessionId);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		cdf_mem_set(&roam_info, sizeof(tCsrRoamInfo), 0);
 		roam_info.u.pWPSPBCProbeReq = &pProbeReqInd->WPSPBCProbeReq;

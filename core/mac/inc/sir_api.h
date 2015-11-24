@@ -2504,7 +2504,7 @@ typedef struct sSirSmeProbeReqInd {
 	uint16_t messageType;   /*  eWNI_SME_WPS_PBC_PROBE_REQ_IND */
 	uint16_t length;
 	uint8_t sessionId;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 } tSirSmeProbeReqInd, *tpSirSmeProbeReqInd;
 
