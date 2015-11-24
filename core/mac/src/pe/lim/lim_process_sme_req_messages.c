@@ -3290,7 +3290,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 
 	if (cdf_is_macaddr_zero(&get_wps_pbc_sessions_req.remove_mac)) {
 		lim_get_wpspbc_sessions(mac_ctx,
-				sap_get_wpspbc_event->addr.bytes,
+				sap_get_wpspbc_event->addr,
 				sap_get_wpspbc_event->UUID_E,
 				&sap_get_wpspbc_event->wpsPBCOverlap,
 				session_entry);
