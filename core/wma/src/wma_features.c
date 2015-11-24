@@ -5413,7 +5413,7 @@ int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
 			       (wmi_extwow_set_app_type1_params_cmd_fixed_param));
 
 	cmd->vdev_id = appType1Params->vdev_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType1Params->wakee_mac_addr,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType1Params->wakee_mac_addr.bytes,
 				   &cmd->wakee_mac);
 	cdf_mem_copy(cmd->ident, appType1Params->identification_id, 8);
 	cmd->ident_len = appType1Params->id_length;
@@ -5423,7 +5423,7 @@ int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
 	WMA_LOGD("%s: vdev_id %d wakee_mac_addr %pM "
 		 "identification_id %.8s id_length %u "
 		 "password %.16s pass_length %u",
-		 __func__, cmd->vdev_id, appType1Params->wakee_mac_addr,
+		 __func__, cmd->vdev_id, appType1Params->wakee_mac_addr.bytes,
 		 cmd->ident, cmd->ident_len, cmd->passwd, cmd->passwd_len);
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
@@ -5486,7 +5486,7 @@ int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 	cmd->keepalive_max = appType2Params->keepalive_max;
 	cmd->keepalive_inc = appType2Params->keepalive_inc;
 
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType2Params->gateway_mac,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType2Params->gateway_mac.bytes,
 				   &cmd->gateway_mac);
 	cmd->tcp_tx_timeout_val = appType2Params->tcp_tx_timeout_val;
 	cmd->tcp_rx_timeout_val = appType2Params->tcp_rx_timeout_val;
@@ -5498,7 +5498,7 @@ int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 		 "tcp_ack_seq %u keepalive_init %u keepalive_min %u "
 		 "keepalive_max %u keepalive_inc %u "
 		 "tcp_tx_timeout_val %u tcp_rx_timeout_val %u",
-		 __func__, cmd->vdev_id, appType2Params->gateway_mac,
+		 __func__, cmd->vdev_id, appType2Params->gateway_mac.bytes,
 		 cmd->rc4_key, cmd->rc4_key_len,
 		 cmd->ip_id, cmd->ip_device_ip, cmd->ip_server_ip,
 		 cmd->tcp_src_port, cmd->tcp_dst_port, cmd->tcp_seq,

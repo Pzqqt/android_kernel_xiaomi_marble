@@ -1723,7 +1723,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	char id[20], password[20];
 	tSirAppType1Params params;
-	int rc, i;
+	int rc;
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc) {
@@ -1739,9 +1739,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 
 	memset(&params, 0, sizeof(tSirAppType1Params));
 	params.vdev_id = adapter->sessionId;
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		params.wakee_mac_addr[i] =
-			adapter->macAddressCurrent.bytes[i];
+	cdf_copy_macaddr(&params.wakee_mac_addr, &adapter->macAddressCurrent);
 
 	params.id_length = strlen(id);
 	cdf_mem_copy(params.identification_id, id, params.id_length);
@@ -1750,7 +1748,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: %d %pM %.8s %u %.16s %u",
-		  __func__, params.vdev_id, params.wakee_mac_addr,
+		  __func__, params.vdev_id, params.wakee_mac_addr.bytes,
 		  params.identification_id, params.id_length,
 		  params.password, params.pass_length);
 
@@ -1782,7 +1780,7 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	char mac_addr[20], rc4_key[20];
-	unsigned int gateway_mac[6], i;
+	unsigned int gateway_mac[CDF_MAC_ADDR_SIZE];
 	tSirAppType2Params params;
 	int ret;
 
@@ -1831,8 +1829,8 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		params.gateway_mac[i] = (uint8_t) gateway_mac[i];
+	cdf_mem_copy(&params.gateway_mac.bytes, (uint8_t *) &gateway_mac,
+			CDF_MAC_ADDR_SIZE);
 
 	params.rc4_key_len = strlen(rc4_key);
 	cdf_mem_copy(params.rc4_key, rc4_key, params.rc4_key_len);
