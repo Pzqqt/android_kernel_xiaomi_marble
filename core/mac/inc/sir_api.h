@@ -2512,7 +2512,7 @@ typedef struct sSirUpdateAPWPARSNIEsReq {
 	uint16_t messageType;   /* eWNI_SME_SET_APWPARSNIEs_REQ */
 	uint16_t length;
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 	uint8_t sessionId;      /* Session ID */
 	tSirRSNie APWPARSNIEs;
 } tSirUpdateAPWPARSNIEsReq, *tpSirUpdateAPWPARSNIEsReq;

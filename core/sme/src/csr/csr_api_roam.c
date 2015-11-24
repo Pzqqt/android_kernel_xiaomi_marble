@@ -17604,8 +17604,7 @@ CDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac, uint32_t sessionId,
 		cdf_mem_set(pMsg, sizeof(tSirUpdateAPWPARSNIEsReq), 0);
 		pMsg->messageType = eWNI_SME_SET_APWPARSNIEs_REQ;
 		pMsg->transactionId = 0;
-		cdf_mem_copy(pMsg->bssId, &pSession->selfMacAddr,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		pMsg->sessionId = sessionId;
 		cdf_mem_copy(&pMsg->APWPARSNIEs, pAPSirRSNie,
 			     sizeof(tSirRSNie));
