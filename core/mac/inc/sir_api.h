@@ -3338,9 +3338,9 @@ typedef struct sSirTdlsSendMgmtReq {
 	uint8_t responder;
 	uint32_t peerCapability;
 	/* For multi-session, for PE to locate peSession ID */
-	tSirMacAddr bssid;
-	tSirMacAddr peerMac;
-	/* Variable lenght. Dont add any field after this. */
+	struct cdf_mac_addr bssid;
+	struct cdf_mac_addr peer_mac;
+	/* Variable length. Dont add any field after this. */
 	uint8_t addIe[1];
 } tSirTdlsSendMgmtReq, *tpSirSmeTdlsSendMgmtReq;
 

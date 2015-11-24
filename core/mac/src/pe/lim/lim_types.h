@@ -539,11 +539,6 @@ void lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac, tpPESession psessionEn
 tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry);
 CDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
-tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
-					   tSirMacAddr peerMac, uint16_t reason,
-					   uint8_t responder,
-					   tpPESession psessionEntry,
-					   uint8_t *addIe, uint16_t addIeLen);
 #else
 static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 						tpPESession session_entry)
