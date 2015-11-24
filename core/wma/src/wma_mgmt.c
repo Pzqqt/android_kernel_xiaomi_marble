@@ -2622,7 +2622,8 @@ void wma_set_keepalive_req(tp_wma_handle wma,
 			       keepalive->packetType,
 			       keepalive->timePeriod,
 			       keepalive->hostIpv4Addr,
-			       keepalive->destIpv4Addr, keepalive->destMacAddr);
+			       keepalive->destIpv4Addr,
+			       keepalive->dest_macaddr.bytes);
 
 	cdf_mem_free(keepalive);
 }

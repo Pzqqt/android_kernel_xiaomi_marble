@@ -6013,8 +6013,7 @@ CDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(request->bssId, pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
 	cdf_mem_copy(request_buf, request, sizeof(tSirKeepAliveReq));
 
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_LOW,
