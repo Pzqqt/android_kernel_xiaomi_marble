@@ -2880,8 +2880,8 @@ struct roam_ext_params {
 	uint8_t num_ssid_allowed_list;
 	uint8_t num_bssid_favored;
 	tSirMacSSid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
-	tSirMacAddr bssid_avoid_list[MAX_BSSID_AVOID_LIST];
-	tSirMacAddr bssid_favored[MAX_BSSID_FAVORED];
+	struct cdf_mac_addr bssid_avoid_list[MAX_BSSID_AVOID_LIST];
+	struct cdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
 	uint8_t bssid_favored_factor[MAX_BSSID_FAVORED];
 	int raise_rssi_thresh_5g;
 	int drop_rssi_thresh_5g;

@@ -2367,11 +2367,11 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				hddLog(LOGE, FL("attr mac address failed"));
 				goto fail;
 			}
-			nla_memcpy(roam_params.bssid_favored[i],
+			nla_memcpy(roam_params.bssid_favored[i].bytes,
 				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID],
-				sizeof(tSirMacAddr));
-			hddLog(CDF_TRACE_LEVEL_DEBUG, MAC_ADDRESS_STR,
-				MAC_ADDR_ARRAY(roam_params.bssid_favored[i]));
+				CDF_MAC_ADDR_SIZE);
+			hdd_debug(MAC_ADDRESS_STR,
+			    MAC_ADDR_ARRAY(roam_params.bssid_favored[i].bytes));
 			/* Parse and fetch preference factor*/
 			if (!tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_RSSI_MODIFIER]) {
 				hddLog(LOGE, FL("BSSID Preference score failed"));
@@ -2412,12 +2412,12 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 				hddLog(LOGE, FL("attr blacklist addr failed"));
 				goto fail;
 			}
-			nla_memcpy(roam_params.bssid_avoid_list[i],
+			nla_memcpy(roam_params.bssid_avoid_list[i].bytes,
 				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_BSSID],
-				sizeof(tSirMacAddr));
-			hddLog(CDF_TRACE_LEVEL_DEBUG, MAC_ADDRESS_STR,
+				CDF_MAC_ADDR_SIZE);
+			hdd_debug(MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(
-				roam_params.bssid_avoid_list[i]));
+				roam_params.bssid_avoid_list[i].bytes));
 			i++;
 		}
 		sme_update_roam_params(pHddCtx->hHal, session_id,

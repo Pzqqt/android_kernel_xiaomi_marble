@@ -1509,13 +1509,12 @@ CDF_STATUS sme_update_roam_params(tHalHandle hal,
 		break;
 	case REASON_ROAM_SET_BLACKLIST_BSSID:
 		cdf_mem_set(&roam_params_dst->bssid_avoid_list, 0,
-			sizeof(tSirMacAddr) * MAX_BSSID_AVOID_LIST);
+			CDF_MAC_ADDR_SIZE * MAX_BSSID_AVOID_LIST);
 		roam_params_dst->num_bssid_avoid_list =
 			roam_params_src.num_bssid_avoid_list;
 		for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
-			cdf_mem_copy(&roam_params_dst->bssid_avoid_list[i],
-				&roam_params_src.bssid_avoid_list[i],
-				sizeof(tSirMacAddr));
+			cdf_copy_macaddr(&roam_params_dst->bssid_avoid_list[i],
+					&roam_params_src.bssid_avoid_list[i]);
 		}
 		break;
 	case REASON_ROAM_GOOD_RSSI_CHANGED:
