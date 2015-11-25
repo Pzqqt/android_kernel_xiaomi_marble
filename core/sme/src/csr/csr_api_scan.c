@@ -2162,13 +2162,13 @@ void csr_scan_flush_bss_entry(tpAniSirGlobal pMac,
 	while (pEntry != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
 		if (cdf_mem_compare(pBssDesc->Result.BssDescriptor.bssId,
-			pCsaOffloadInd->bssId, sizeof(tSirMacAddr))) {
+			pCsaOffloadInd->bssid.bytes, CDF_MAC_ADDR_SIZE)) {
 			pFreeElem = pEntry;
 			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
 			csr_ll_remove_entry(pList, pFreeElem, LL_ACCESS_NOLOCK);
 			csr_free_scan_result_entry(pMac, pBssDesc);
 			sms_log(pMac, LOG1, FL("Removed BSS entry:%pM"),
-				pCsaOffloadInd->bssId);
+				pCsaOffloadInd->bssid.bytes);
 			continue;
 		}
 
