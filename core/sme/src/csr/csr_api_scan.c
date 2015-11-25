@@ -4082,6 +4082,7 @@ CDF_STATUS csr_get_active_scan_entry(tpAniSirGlobal mac_ctx,
 			LL_ACCESS_NOLOCK)) {
 		sms_log(mac_ctx, LOGE,
 			FL(" Active list Empty scanId: %d"), scan_id);
+		csr_ll_unlock(&mac_ctx->sme.smeScanCmdActiveList);
 		return CDF_STATUS_SUCCESS;
 	}
 	localentry = csr_ll_peek_head(&mac_ctx->sme.smeScanCmdActiveList,
