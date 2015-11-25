@@ -971,7 +971,7 @@ CDF_STATUS csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
 CDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 						   uint32_t sessionId,
 						   CDF_MODULE_ID modId,
-						   tSirMacAddr bssId,
+						   struct cdf_mac_addr bssId,
 						   void *pUsrContext,
 						   void *pfnSapEventCallback,
 						   uint8_t *pAssocStasBuf);

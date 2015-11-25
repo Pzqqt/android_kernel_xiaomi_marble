@@ -3201,7 +3201,7 @@ csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
 		MAC_ADDR_ARRAY(bssId.bytes));
 	status =
 		csr_send_mb_get_associated_stas_req_msg(pMac, sessionId, modId,
-							bssId.bytes,
+							bssId,
 							pUsrContext,
 							pfnSapEventCallback,
 							pAssocStasBuf);
@@ -10888,8 +10888,7 @@ csr_roam_chk_lnk_max_assoc_exceeded(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		FL("max assoc have been reached, new peer cannot be accepted"));
 	sessionId = pSmeMaxAssocInd->sessionId;
 	roam_info.sessionId = sessionId;
-	cdf_mem_copy(&roam_info.peerMac, pSmeMaxAssocInd->peerMac,
-		     sizeof(struct cdf_mac_addr));
+	cdf_copy_macaddr(&roam_info.peerMac, &pSmeMaxAssocInd->peer_mac);
 	csr_roam_call_callback(mac_ctx, sessionId, &roam_info, 0,
 			       eCSR_ROAM_INFRA_IND,
 			       eCSR_ROAM_RESULT_MAX_ASSOC_EXCEEDED);
@@ -14072,33 +14071,29 @@ CDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 
 CDF_STATUS
 csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
-					CDF_MODULE_ID modId, tSirMacAddr bssId,
-					void *pUsrContext, void *pfnSapEventCallback,
+					CDF_MODULE_ID modId,
+					struct cdf_mac_addr bssid,
+					void *pUsrContext,
+					void *pfnSapEventCallback,
 					uint8_t *pAssocStasBuf)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSirSmeGetAssocSTAsReq *pMsg;
-	do {
-		pMsg = cdf_mem_malloc(sizeof(tSirSmeGetAssocSTAsReq));
-		if (NULL == pMsg)
-			status = CDF_STATUS_E_NOMEM;
-		else
-			status = CDF_STATUS_SUCCESS;
-		if (!CDF_IS_STATUS_SUCCESS(status))
-			break;
-		cdf_mem_set(pMsg, sizeof(tSirSmeGetAssocSTAsReq), 0);
-		pMsg->messageType = eWNI_SME_GET_ASSOC_STAS_REQ;
-		cdf_mem_copy(pMsg->bssId, bssId, sizeof(tSirMacAddr));
-		pMsg->modId = modId;
-		cdf_mem_copy(pMsg->pUsrContext,
-				pUsrContext, sizeof(void *));
-		cdf_mem_copy(pMsg->pSapEventCallback,
-				pfnSapEventCallback, sizeof(void *));
-		cdf_mem_copy(pMsg->pAssocStasArray,
-				pAssocStasBuf, sizeof(void *));
-		pMsg->length = sizeof(struct sSirSmeGetAssocSTAsReq);
-		status = cds_send_mb_message_to_mac(pMsg);
-	} while (0);
+
+	pMsg = cdf_mem_malloc(sizeof(*pMsg));
+	if (NULL == pMsg)
+		return CDF_STATUS_E_NOMEM;
+
+	pMsg->messageType = eWNI_SME_GET_ASSOC_STAS_REQ;
+	cdf_copy_macaddr(&pMsg->bssid, &bssid);
+	pMsg->modId = modId;
+	cdf_mem_copy(pMsg->pUsrContext, pUsrContext, sizeof(void *));
+	cdf_mem_copy(pMsg->pSapEventCallback,
+			pfnSapEventCallback, sizeof(void *));
+	cdf_mem_copy(pMsg->pAssocStasArray, pAssocStasBuf, sizeof(void *));
+	pMsg->length = sizeof(*pMsg);
+	status = cds_send_mb_message_to_mac(pMsg);
+
 	return status;
 }
 
