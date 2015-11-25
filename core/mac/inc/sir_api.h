@@ -2125,7 +2125,7 @@ typedef struct sLimScanChnInfo {
 typedef struct sSirSmeGetAssocSTAsReq {
 	uint16_t messageType;   /* eWNI_SME_GET_ASSOC_STAS_REQ */
 	uint16_t length;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 	uint16_t modId;
 	void *pUsrContext;
 	void *pSapEventCallback;
@@ -2138,7 +2138,7 @@ typedef struct sSmeMaxAssocInd {
 	uint16_t mesgLen;
 	uint8_t sessionId;
 	/* the new peer that got rejected max assoc limit reached */
-	tSirMacAddr peerMac;
+	struct cdf_mac_addr peer_mac;
 } tSmeMaxAssocInd, *tpSmeMaxAssocInd;
 
 typedef struct sSmeCsaOffloadInd {

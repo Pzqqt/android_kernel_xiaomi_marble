@@ -3145,7 +3145,7 @@ void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
 	 * Find PE session Entry
 	 */
 	session_entry = pe_find_session_by_bssid(mac_ctx,
-			get_assoc_stas_req.bssId,
+			get_assoc_stas_req.bssid.bytes,
 			&session_id);
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGE,

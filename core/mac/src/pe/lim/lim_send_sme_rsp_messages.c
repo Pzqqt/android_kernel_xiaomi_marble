@@ -2305,8 +2305,8 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 		return;
 	}
 	cdf_mem_set((void *)pSmeMaxAssocInd, sizeof(tSmeMaxAssocInd), 0);
-	cdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peerMac,
-		     (uint8_t *) peerMacAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peer_mac.bytes,
+		     (uint8_t *) peerMacAddr, CDF_MAC_ADDR_SIZE);
 	pSmeMaxAssocInd->mesgType = eWNI_SME_MAX_ASSOC_EXCEEDED;
 	pSmeMaxAssocInd->mesgLen = sizeof(tSmeMaxAssocInd);
 	pSmeMaxAssocInd->sessionId = smesessionId;
