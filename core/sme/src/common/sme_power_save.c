@@ -248,7 +248,7 @@ CDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	hal_wowl_params = cdf_mem_malloc(sizeof(*hal_wowl_params));
 	if (NULL == hal_wowl_params) {
 		sms_log(mac_ctx, LOGP,
-			FL("Fail to allocate memory for Enter Wowl Request "));
+			FL("Fail to allocate memory for Enter Wowl Request"));
 		return  CDF_STATUS_E_NOMEM;
 	}
 	cdf_mem_set((uint8_t *) hal_wowl_params, sizeof(*hal_wowl_params), 0);
@@ -257,9 +257,8 @@ CDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	hal_wowl_params->ucMagicPktEnable = sme_wowl_params->ucMagicPktEnable;
 	hal_wowl_params->ucPatternFilteringEnable =
 		sme_wowl_params->ucPatternFilteringEnable;
-	cdf_mem_copy((uint8_t *) hal_wowl_params->magicPtrn,
-			(uint8_t *) sme_wowl_params->magicPtrn,
-			sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&hal_wowl_params->magic_ptrn,
+			 &sme_wowl_params->magic_ptrn);
 
 #ifdef WLAN_WAKEUP_EVENTS
 	hal_wowl_params->ucWoWEAPIDRequestEnable =
