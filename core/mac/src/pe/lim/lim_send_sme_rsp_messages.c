@@ -55,6 +55,8 @@
 #include "lim_session_utils.h"
 #include "lim_types.h"
 #include "sir_api.h"
+#include "cds_regdomain_common.h"
+#include "lim_send_messages.h"
 
 static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry, tSirResultCodes result_code,
@@ -2010,6 +2012,9 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	tpDphHashNode sta_ds = NULL;
 	uint8_t session_id;
 	uint16_t aid = 0;
+	uint16_t chan_space = 0;
+	int cb_mode = 0;
+
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
 
 	if (!csa_params) {
@@ -2052,10 +2057,13 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
 		session_entry->gLimChannelSwitch.ch_width = CH_WIDTH_20MHZ;
 
+		session_entry->gLimChannelSwitch.ch_center_freq_seg0 = 0;
+		session_entry->gLimChannelSwitch.ch_center_freq_seg1 = 0;
+		chnl_switch_info =
+			&session_entry->gLimWiderBWChannelSwitch;
+
 		if (session_entry->vhtCapability &&
 				session_entry->htSupportedChannelWidthSet) {
-			chnl_switch_info =
-				&session_entry->gLimWiderBWChannelSwitch;
 			if (csa_params->ies_present_flag & lim_wbw_ie_present) {
 				chnl_switch_info->newChanWidth =
 					csa_params->new_ch_width;
@@ -2067,8 +2075,103 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				   eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 				session_entry->gLimChannelSwitch.ch_width =
 					csa_params->new_ch_width + 1;
+			} else if (csa_params->ies_present_flag
+			    & lim_xcsa_ie_present) {
+				chan_space =
+					cds_regdm_get_chanwidth_from_opclass(
+					    mac_ctx->scan.countryCodeCurrent,
+					    csa_params->channel,
+					    csa_params->new_op_class);
+				session_entry->gLimChannelSwitch.state =
+				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+
+				if (chan_space == 80) {
+					chnl_switch_info->newChanWidth =
+								CH_WIDTH_80MHZ;
+				} else if (chan_space == 40) {
+					chnl_switch_info->newChanWidth =
+								CH_WIDTH_40MHZ;
+				} else {
+					chnl_switch_info->newChanWidth =
+								CH_WIDTH_20MHZ;
+					session_entry->gLimChannelSwitch.state =
+					    eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+				}
+
+				cb_mode = lim_select_cb_mode_for_sta(
+						session_entry,
+						csa_params->channel,
+						chan_space);
+
+				chnl_switch_info->newCenterChanFreq0 =
+				lim_get_center_channel(mac_ctx,
+					    csa_params->channel,
+					    cb_mode,
+					    chnl_switch_info->newChanWidth);
+				/*
+				* This is not applicable for 20/40/80 MHz.
+				* Only used when we support 80+80 MHz operation.
+				* In case of 80+80 MHz, this parameter indicates
+				* center channel frequency index of 80 MHz
+				* channel offrequency segment 1.
+				*/
+				chnl_switch_info->newCenterChanFreq1 = 0;
+
 			}
+			session_entry->gLimChannelSwitch.ch_center_freq_seg0 =
+				chnl_switch_info->newCenterChanFreq0;
+			session_entry->gLimChannelSwitch.ch_center_freq_seg1 =
+				chnl_switch_info->newCenterChanFreq1;
+			session_entry->gLimChannelSwitch.ch_width =
+				chnl_switch_info->newChanWidth;
+
 		} else if (session_entry->htSupportedChannelWidthSet) {
+			if (csa_params->ies_present_flag
+			    & lim_xcsa_ie_present) {
+				chan_space =
+					cds_regdm_get_chanwidth_from_opclass(
+					mac_ctx->scan.countryCodeCurrent,
+					csa_params->channel,
+					csa_params->new_op_class);
+				session_entry->gLimChannelSwitch.state =
+				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+				if (chan_space == 40) {
+					session_entry->
+					    gLimChannelSwitch.ch_width =
+								CH_WIDTH_40MHZ;
+					chnl_switch_info->newChanWidth =
+								CH_WIDTH_40MHZ;
+					cb_mode = lim_select_cb_mode_for_sta(
+							session_entry,
+							csa_params->channel,
+							chan_space);
+					if (cb_mode ==
+					    PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
+						session_entry->
+						    gLimChannelSwitch.
+						    ch_center_freq_seg0 =
+							csa_params->channel + 2;
+					} else if (cb_mode ==
+					    PHY_DOUBLE_CHANNEL_HIGH_PRIMARY) {
+						session_entry->
+						    gLimChannelSwitch.
+						    ch_center_freq_seg0 =
+							csa_params->channel - 2;
+					}
+
+				} else {
+					session_entry->
+					    gLimChannelSwitch.ch_width =
+								CH_WIDTH_20MHZ;
+					chnl_switch_info->newChanWidth =
+								CH_WIDTH_40MHZ;
+					session_entry->gLimChannelSwitch.state =
+					    eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+				}
+
+
+			}
+
 			if (csa_params->sec_chan_offset) {
 				session_entry->gLimChannelSwitch.ch_width =
 					CH_WIDTH_40MHZ;

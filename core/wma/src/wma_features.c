@@ -1492,6 +1492,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 						(&csa_event->xcsa_ie[0]);
 		csa_offload_event->channel = xcsa_ie->newchannel;
 		csa_offload_event->switchmode = xcsa_ie->switchmode;
+		csa_offload_event->new_op_class = xcsa_ie->newClass;
 	} else {
 		WMA_LOGE("CSA Event error: No CSA IE present");
 		cdf_mem_free(csa_offload_event);
