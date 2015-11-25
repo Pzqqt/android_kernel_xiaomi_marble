@@ -1394,6 +1394,133 @@ CDF_STATUS wlansap_deauth_sta(void *pCtx,
 	return cdf_status;
 }
 
+/**
+ * wlansap_update_bw80_cbmode() - fucntion to update channel bonding mode for
+ *                                VHT80 channel.
+ * @channel: target channel
+ * @sme_config: sme configuration context
+ *
+ * Return: none
+ */
+static inline void wlansap_update_bw80_cbmode(uint32_t channel,
+		tSmeConfigParams *sme_config)
+{
+	if (channel == 36 || channel == 52 || channel == 100 ||
+		channel == 116 || channel == 149 || channel == 132) {
+		sme_config->csrConfig.channelBondingMode5GHz =
+			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW;
+	} else if (channel == 40 || channel == 56 || channel == 104 ||
+			channel == 120 || channel == 153 || channel == 136) {
+		sme_config->csrConfig.channelBondingMode5GHz =
+			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW;
+	} else if (channel == 44 || channel == 60 || channel == 108 ||
+			channel == 124 || channel == 157 || channel == 140) {
+		sme_config->csrConfig.channelBondingMode5GHz =
+			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH;
+	} else if (channel == 48 || channel == 64 || channel == 112 ||
+		channel == 128 || channel == 144 || channel == 161) {
+		sme_config->csrConfig.channelBondingMode5GHz =
+			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH;
+	}
+}
+
+/**
+ * wlansap_update_csa_channel_params() - fucntion to populate channel width and
+ *                                        bonding modes.
+ * @sap_context: sap adapter context
+ * @channel: target channel
+ *
+ * Return: The CDF_STATUS code associated with performing the operation
+ */
+static CDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
+	uint32_t channel)
+{
+	void *hal;
+	tpAniSirGlobal mac_ctx;
+	tSmeConfigParams *sme_config;
+	uint8_t bw;
+
+	hal = CDS_GET_HAL_CB(sap_context->p_cds_gctx);
+	if (!hal) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid hal pointer from p_cds_gctx", __func__);
+		return CDF_STATUS_E_FAULT;
+	}
+
+	mac_ctx = PMAC_STRUCT(hal);
+
+	sme_config = cdf_mem_malloc(sizeof(*sme_config));
+	if (!sme_config) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			FL("memory allocation failed for sme_config"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	sme_get_config_param(mac_ctx, sme_config);
+	if (channel <= RF_CHAN_14) {
+		/*
+		 * currently OBSS scan is done in hostapd, so to avoid
+		 * SAP coming up in HT40 on channel switch we are
+		 * disabling channel bonding in 2.4Ghz.
+		 */
+		sme_config->csrConfig.channelBondingMode24GHz =
+			eCSR_INI_SINGLE_CHANNEL_CENTERED;
+		mac_ctx->sap.SapDfsInfo.new_cbMode = 0;
+		mac_ctx->sap.SapDfsInfo.new_chanWidth = 0;
+
+	} else {
+
+		if (sap_context->ch_width_orig >= CH_WIDTH_80MHZ)
+			bw = BW80;
+		else if (sap_context->ch_width_orig == CH_WIDTH_40MHZ)
+			bw = BW40_HIGH_PRIMARY;
+		else
+			bw = BW20;
+
+		for (; bw >= BW20; bw--) {
+			uint16_t op_class;
+
+			op_class = cds_regdm_get_opclass_from_channel(
+					mac_ctx->scan.countryCodeCurrent,
+					channel, bw);
+			if (!op_class)
+				continue;
+
+			if (bw == BW80) {
+				wlansap_update_bw80_cbmode(channel, sme_config);
+				mac_ctx->sap.SapDfsInfo.new_cbMode =
+				   sme_config->csrConfig.channelBondingMode5GHz;
+				mac_ctx->sap.SapDfsInfo.new_chanWidth =
+					CH_WIDTH_80MHZ;
+			} else if (bw == BW40_HIGH_PRIMARY) {
+				mac_ctx->sap.SapDfsInfo.new_chanWidth =
+					CH_WIDTH_40MHZ;
+				sme_config->csrConfig.channelBondingMode5GHz =
+				mac_ctx->sap.SapDfsInfo.new_cbMode =
+				   eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY;
+			} else if (bw == BW40_LOW_PRIMARY) {
+				mac_ctx->sap.SapDfsInfo.new_chanWidth =
+				   CH_WIDTH_40MHZ;
+				sme_config->csrConfig.channelBondingMode5GHz =
+				mac_ctx->sap.SapDfsInfo.new_cbMode =
+				   eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
+			} else {
+				mac_ctx->sap.SapDfsInfo.new_chanWidth =
+				   CH_WIDTH_20MHZ;
+				sme_config->csrConfig.channelBondingMode5GHz =
+				mac_ctx->sap.SapDfsInfo.new_cbMode =
+				   eCSR_INI_SINGLE_CHANNEL_CENTERED;
+			}
+			break;
+		}
+
+	}
+
+	sme_update_config(mac_ctx, sme_config);
+	cdf_mem_free(sme_config);
+	return CDF_STATUS_SUCCESS;
+}
+
 /*==========================================================================
    FUNCTION    wlansap_set_channel_change_with_csa
 
@@ -1427,7 +1554,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 	tpAniSirGlobal pMac = NULL;
 	void *hHal = NULL;
 	bool valid;
-	tSmeConfigParams *sme_config;
+	CDF_STATUS status;
 
 	sapContext = CDS_GET_SAP_CB(p_cds_gctx);
 	if (NULL == sapContext) {
@@ -1436,6 +1563,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 
 		return CDF_STATUS_E_FAULT;
 	}
+
 	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
 	if (NULL == hHal) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -1473,39 +1601,16 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 		 * state.
 		 */
 		if (eSAP_STARTED == sapContext->sapsMachine) {
-			/*
-			 * currently OBSS scan is done in hostapd, so to avoid
-			 * SAP coming up in HT40 on channel switch we are
-			 * disabling channel bonding in 2.4Ghz.
-			 */
-			if (targetChannel <= RF_CHAN_14) {
-				sme_config =
-					cdf_mem_malloc(sizeof(*sme_config));
-				if (!sme_config) {
-					CDF_TRACE(CDF_MODULE_ID_SAP,
-						CDF_TRACE_LEVEL_ERROR,
-						FL("memory allocation failed for sme_config"));
-					return CDF_STATUS_E_NOMEM;
-				}
-				sme_get_config_param(pMac, sme_config);
-				sme_config->csrConfig.channelBondingMode24GHz =
-					eCSR_INI_SINGLE_CHANNEL_CENTERED;
-				sme_update_config(pMac, sme_config);
-				cdf_mem_free(sme_config);
-			}
+			status = wlansap_update_csa_channel_params(sapContext,
+					targetChannel);
+			if (status != CDF_STATUS_SUCCESS)
+				return status;
 
 			/*
 			 * Copy the requested target channel
 			 * to sap context.
 			 */
 			pMac->sap.SapDfsInfo.target_channel = targetChannel;
-			/*
-			 * TODO: need to identify the allowed channel width and
-			 * bonding mode.
-			 */
-			pMac->sap.SapDfsInfo.new_chanWidth = 0;
-			pMac->sap.SapDfsInfo.new_cbMode = 0;
-
 			/*
 			 * Set the CSA IE required flag.
 			 */
