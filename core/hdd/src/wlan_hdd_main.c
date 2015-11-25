@@ -1326,6 +1326,9 @@ void hdd_update_tgt_cfg(void *context, void *param)
 #ifdef WLAN_FEATURE_11AC
 	hdd_update_tgt_vht_cap(hdd_ctx, &cfg->vht_cap);
 #endif /* #ifdef WLAN_FEATURE_11AC */
+	hdd_ctx->config->fine_time_meas_cap &= cfg->fine_time_measurement_cap;
+	hdd_info(FL("fine_time_meas_cap: 0x%x"),
+		hdd_ctx->config->fine_time_meas_cap);
 }
 
 /**

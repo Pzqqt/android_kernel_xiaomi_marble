@@ -3496,7 +3496,10 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
+	tgt_cfg.fine_time_measurement_cap =
+		wma_handle->fine_time_measurement_cap;
 	wma_setup_egap_support(&tgt_cfg, wma_handle);
+
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 }
 
@@ -3809,11 +3812,13 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 
 	wma_handle->target_fw_version = ev->fw_build_vers;
 	wma_handle->new_hw_mode_index = ev->default_dbs_hw_mode_index;
+	wma_handle->fine_time_measurement_cap = ev->wmi_fw_sub_feat_caps;
 
 	WMA_LOGD("%s: Firmware default hw mode index : %d",
 		 __func__, ev->default_dbs_hw_mode_index);
 	WMA_LOGE("%s: Firmware build version : %08x",
 		 __func__, ev->fw_build_vers);
+	WMA_LOGD(FL("FW fine time meas cap: 0x%x"), ev->wmi_fw_sub_feat_caps);
 
 	if (ev->hw_bd_id) {
 		wma_handle->hw_bd_id = ev->hw_bd_id;

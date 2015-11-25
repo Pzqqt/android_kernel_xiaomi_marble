@@ -1383,6 +1383,7 @@ typedef struct {
 		tpSirBssDescription  bss_desc_ptr);
 	cdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	cdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
+	uint32_t fine_time_measurement_cap;
 } t_wma_handle, *tp_wma_handle;
 
 /**
