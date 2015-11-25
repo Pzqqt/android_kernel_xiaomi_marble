@@ -2446,7 +2446,7 @@ typedef struct sSirUpdateAPWPSIEsReq {
 	uint16_t messageType;   /* eWNI_SME_UPDATE_APWPSIE_REQ */
 	uint16_t length;
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 	uint8_t sessionId;      /* Session ID */
 	tSirAPWPSIEs APWPSIEs;
 } tSirUpdateAPWPSIEsReq, *tpSirUpdateAPWPSIEsReq;

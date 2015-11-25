@@ -4106,7 +4106,7 @@ __lim_process_sme_update_apwpsi_es(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			sizeof(struct sSirUpdateAPWPSIEsReq));
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				pUpdateAPWPSIEsReq->bssId,
+				pUpdateAPWPSIEsReq->bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGW,

@@ -17603,26 +17603,23 @@ CDF_STATUS csr_roam_update_apwpsie(tpAniSirGlobal pMac, uint32_t sessionId,
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (NULL == pSession) {
 		sms_log(pMac, LOGE,
-			FL("  Session does not exist for session id %d"),
+			FL("Session does not exist for session id %d"),
 			sessionId);
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	do {
-		pMsg = cdf_mem_malloc(sizeof(tSirUpdateAPWPSIEsReq));
-		if (NULL == pMsg)
-			return CDF_STATUS_E_NOMEM;
-		cdf_mem_set(pMsg, sizeof(tSirUpdateAPWPSIEsReq), 0);
-		pMsg->messageType = eWNI_SME_UPDATE_APWPSIE_REQ;
-		pMsg->transactionId = 0;
-		cdf_mem_copy(pMsg->bssId, &pSession->selfMacAddr,
-				sizeof(tSirMacAddr));
-		pMsg->sessionId = sessionId;
-		cdf_mem_copy(&pMsg->APWPSIEs, pAPWPSIES,
-				sizeof(tSirAPWPSIEs));
-		pMsg->length = sizeof(struct sSirUpdateAPWPSIEsReq);
-		status = cds_send_mb_message_to_mac(pMsg);
-	} while (0);
+	pMsg = cdf_mem_malloc(sizeof(*pMsg));
+	if (NULL == pMsg)
+		return CDF_STATUS_E_NOMEM;
+
+	pMsg->messageType = eWNI_SME_UPDATE_APWPSIE_REQ;
+	pMsg->transactionId = 0;
+	cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+	pMsg->sessionId = sessionId;
+	cdf_mem_copy(&pMsg->APWPSIEs, pAPWPSIES, sizeof(tSirAPWPSIEs));
+	pMsg->length = sizeof(*pMsg);
+	status = cds_send_mb_message_to_mac(pMsg);
+
 	return status;
 }
 
