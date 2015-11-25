@@ -155,7 +155,6 @@ typedef struct _smeTdlsPeerCapParams {
 	uint8_t prefOffChanNum;
 	uint8_t prefOffChanBandwidth;
 	uint8_t opClassForPrefOffChan;
-	uint8_t opClassForPrefOffChanIsSet;
 } tSmeTdlsPeerCapParams;
 
 typedef enum {
@@ -184,6 +183,7 @@ typedef struct sme_tdls_chan_switch_params_struct {
 	uint8_t tdls_off_channel;      /* Target Off Channel */
 	uint8_t tdls_off_ch_mode;      /* TDLS Off Channel Mode */
 	uint8_t is_responder;          /* is peer responder or initiator */
+	uint8_t opclass;           /* tdls operating class */
 } sme_tdls_chan_switch_params;
 #endif /* FEATURE_WLAN_TDLS */
 
@@ -1056,4 +1056,16 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg);
 bool sme_validate_sap_channel_switch(tHalHandle hal,
 		uint16_t sap_ch, eCsrPhyMode sap_phy_mode,
 		uint8_t cc_switch_mode, uint8_t session_id);
+
+#ifdef FEATURE_WLAN_TDLS
+void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
+		uint8_t *opclass);
+#else
+static inline void
+sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
+		uint8_t *opclass)
+{
+}
+#endif
+
 #endif /* #if !defined( __SME_API_H ) */

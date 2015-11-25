@@ -228,6 +228,8 @@ typedef enum {
 } tdls_state_t;
 
 typedef int (*cfg80211_exttdls_callback)(const uint8_t *mac,
+					 uint32_t opclass,
+					 uint32_t channel,
 					 uint32_t state,
 					 int32_t reason, void *ctx);
 
@@ -531,10 +533,11 @@ int wlan_hdd_tdls_extctrl_config_peer(hdd_adapter_t *pAdapter,
 				      uint32_t op_class,
 				      uint32_t min_bandwidth);
 int wlan_hdd_tdls_get_status(hdd_adapter_t *pAdapter,
-			     const uint8_t *mac, int32_t *state,
+			     const uint8_t *mac, uint32_t *opclass,
+			     uint32_t *channel, uint32_t *state,
 			     int32_t *reason);
 void wlan_hdd_tdls_get_wifi_hal_state(hddTdlsPeer_t *curr_peer,
-				      int32_t *state, int32_t *reason);
+				      uint32_t *state, int32_t *reason);
 int wlan_hdd_set_callback(hddTdlsPeer_t *curr_peer,
 			  cfg80211_exttdls_callback callback);
 void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,

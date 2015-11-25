@@ -51,6 +51,40 @@ static void wlan_hdd_tdls_timers_destroy(tdlsCtx_t *pHddTdlsCtx);
 int wpa_tdls_is_allowed_force_peer(tdlsCtx_t *pHddTdlsCtx, u8 *mac);
 static void wlan_hdd_tdls_pre_setup(struct work_struct *work);
 
+/*
+ * wlan_hdd_tdls_determine_channel_opclass() - determine channel and opclass
+ * @hddctx: pointer to hdd context
+ * @adapter: pointer to adapter
+ * @curr_peer: pointer to current tdls peer
+ * @channel: pointer to channel
+ * @opclass: pointer to opclass
+ *
+ * Function determines the channel and operating class
+ *
+ * Return: None
+ */
+static void wlan_hdd_tdls_determine_channel_opclass(hdd_context_t *hddctx,
+			hdd_adapter_t *adapter, hddTdlsPeer_t *curr_peer,
+			uint32_t *channel, uint32_t *opclass)
+{
+	hdd_station_ctx_t *hdd_sta_ctx;
+
+	/*
+	 * If tdls offchannel is not enabled then we provide base channel
+	 * and in that case pass opclass as 0 since opclass is mainly needed
+	 * for offchannel cases.
+	 */
+	if (!(hddctx->config->fEnableTDLSOffChannel) ||
+		(hddctx->tdls_fw_off_chan_mode != ENABLE_CHANSWITCH)) {
+		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+		*channel = hdd_sta_ctx->conn_info.operationChannel;
+		*opclass = 0;
+	} else {
+		*channel = curr_peer->pref_off_chan_num;
+		*opclass = curr_peer->op_class_for_pref_off_chan;
+	}
+}
+
 /**
  * wlan_hdd_tdls_hash_key() - calculate tdls hash key given mac address
  * @mac: mac address
@@ -648,8 +682,12 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddTdlsCtx->threshold_config.rssi_teardown_threshold;
 	tInfo->rssi_delta = pHddTdlsCtx->threshold_config.rssi_delta;
 	tInfo->tdls_options = 0;
-	if (pHddCtx->config->fEnableTDLSOffChannel)
+
+	if (pHddCtx->config->fEnableTDLSOffChannel) {
 		tInfo->tdls_options |= ENA_TDLS_OFFCHAN;
+		pHddCtx->tdls_fw_off_chan_mode = ENABLE_CHANSWITCH;
+	}
+
 	if (pHddCtx->config->fEnableTDLSBufferSta)
 		tInfo->tdls_options |= ENA_TDLS_BUFFER_STA;
 	if (pHddCtx->config->fEnableTDLSSleepSta)
@@ -862,6 +900,9 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac)
 	cdf_mem_copy(peer->peerMac, mac, sizeof(peer->peerMac));
 	peer->pHddTdlsCtx = pHddTdlsCtx;
 	peer->pref_off_chan_num = pHddCtx->config->fTDLSPrefOffChanNum;
+	peer->op_class_for_pref_off_chan =
+		wlan_hdd_find_opclass(pHddCtx->hHal, peer->pref_off_chan_num,
+				pHddCtx->config->fTDLSPrefOffChanBandwidth);
 
 	list_add_tail(&peer->node, head);
 	mutex_unlock(&pHddCtx->tdls_lock);
@@ -905,7 +946,7 @@ void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
 					tTDLSLinkStatus status,
 					tTDLSLinkReason reason)
 {
-	int32_t state = 0;
+	uint32_t state = 0;
 	int32_t res = 0;
 	hdd_context_t *pHddCtx;
 	if (curr_peer == NULL) {
@@ -941,13 +982,19 @@ void wlan_hdd_tdls_set_peer_link_status(hddTdlsPeer_t *curr_peer,
 
 	mutex_unlock(&pHddCtx->tdls_lock);
 	if (curr_peer->isForcedPeer && curr_peer->state_change_notification) {
+		uint32_t opclass;
+		uint32_t channel;
+
+		hdd_adapter_t *adapter = curr_peer->pHddTdlsCtx->pAdapter;
 		curr_peer->reason = reason;
+
+		wlan_hdd_tdls_determine_channel_opclass(pHddCtx, adapter,
+					curr_peer, &channel, &opclass);
+
 		wlan_hdd_tdls_get_wifi_hal_state(curr_peer, &state, &res);
 		(*curr_peer->state_change_notification)(curr_peer->peerMac,
-							state,
-							res,
-							curr_peer->
-							pHddTdlsCtx->pAdapter);
+							opclass, channel,
+							state, res, adapter);
 	}
 	return;
 }
@@ -966,7 +1013,7 @@ void wlan_hdd_tdls_set_link_status(hdd_adapter_t *pAdapter,
 				   tTDLSLinkStatus linkStatus,
 				   tTDLSLinkReason reason)
 {
-	int32_t state = 0;
+	uint32_t state = 0;
 	int32_t res = 0;
 	hddTdlsPeer_t *curr_peer;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -994,13 +1041,18 @@ void wlan_hdd_tdls_set_link_status(hdd_adapter_t *pAdapter,
 	}
 	mutex_unlock(&pHddCtx->tdls_lock);
 	if (curr_peer->isForcedPeer && curr_peer->state_change_notification) {
+		uint32_t opclass;
+		uint32_t channel;
+		hdd_adapter_t *adapter = curr_peer->pHddTdlsCtx->pAdapter;
+
 		curr_peer->reason = reason;
+
+		wlan_hdd_tdls_determine_channel_opclass(pHddCtx, adapter,
+					curr_peer, &channel, &opclass);
+
 		wlan_hdd_tdls_get_wifi_hal_state(curr_peer, &state, &res);
-		(curr_peer->state_change_notification)(mac,
-						       state,
-						       res,
-						       curr_peer->pHddTdlsCtx->
-						       pAdapter);
+		(curr_peer->state_change_notification)(mac, opclass, channel,
+						       state, res, adapter);
 	}
 
 	return;
@@ -1808,11 +1860,6 @@ int wlan_hdd_tdls_set_extctrl_param(hdd_adapter_t *pAdapter, const uint8_t *mac,
 	curr_peer->op_class_for_pref_off_chan = (uint8_t) op_class;
 	curr_peer->pref_off_chan_num = (uint8_t) chan;
 
-	if (curr_peer->op_class_for_pref_off_chan)
-		curr_peer->op_class_for_pref_off_chan_is_set = 1;
-	else
-		curr_peer->op_class_for_pref_off_chan_is_set = 0;
-
 	mutex_unlock(&pHddCtx->tdls_lock);
 	return 0;
 }
@@ -1958,6 +2005,22 @@ int wlan_hdd_tdls_reset_peer(hdd_adapter_t *pAdapter, const uint8_t *mac)
 	if (curr_peer == NULL) {
 		hddLog(LOGE, FL("curr_peer is NULL"));
 		return -EINVAL;
+	}
+
+	/*
+	 * Reset preferred offchannel and opclass for offchannel as
+	 * per INI configuration only if peer is not forced one. For
+	 * forced peer, offchannel and opclass is set in HAL API at the
+	 * time of enabling TDLS for that specific peer and so do not overwrite
+	 * those set by user space.
+	 */
+	if (false == curr_peer->isForcedPeer) {
+		curr_peer->pref_off_chan_num =
+			pHddCtx->config->fTDLSPrefOffChanNum;
+		curr_peer->op_class_for_pref_off_chan =
+		    wlan_hdd_find_opclass(WLAN_HDD_GET_HAL_CTX(pAdapter),
+				curr_peer->pref_off_chan_num,
+				pHddCtx->config->fTDLSPrefOffChanBandwidth);
 	}
 
 	wlan_hdd_tdls_set_peer_link_status(curr_peer,
@@ -2854,9 +2917,24 @@ int wlan_hdd_set_callback(hddTdlsPeer_t *curr_peer,
  * Return: Void
  */
 void wlan_hdd_tdls_get_wifi_hal_state(hddTdlsPeer_t *curr_peer,
-				      int32_t *state, int32_t *reason)
+				      uint32_t *state, int32_t *reason)
 {
+	hdd_context_t *hddctx;
+	hdd_adapter_t *adapter;
+
+	if (!curr_peer) {
+		hdd_err("curr_peer is NULL");
+		return;
+	}
+
+	adapter = curr_peer->pHddTdlsCtx->pAdapter;
+	hddctx = WLAN_HDD_GET_CTX(adapter);
+
+	if (0 != (wlan_hdd_validate_context(hddctx)))
+		return;
+
 	*reason = curr_peer->reason;
+
 	switch (curr_peer->link_status) {
 	case eTDLS_LINK_IDLE:
 	case eTDLS_LINK_DISCOVERED:
@@ -2867,7 +2945,11 @@ void wlan_hdd_tdls_get_wifi_hal_state(hddTdlsPeer_t *curr_peer,
 		*state = QCA_WIFI_HAL_TDLS_ENABLED;
 		break;
 	case eTDLS_LINK_CONNECTED:
-		*state = QCA_WIFI_HAL_TDLS_ESTABLISHED;
+		if ((hddctx->config->fEnableTDLSOffChannel) &&
+			(hddctx->tdls_fw_off_chan_mode == ENABLE_CHANSWITCH))
+			*state = QCA_WIFI_HAL_TDLS_ESTABLISHED_OFF_CHANNEL;
+		else
+			*state = QCA_WIFI_HAL_TDLS_ESTABLISHED;
 		break;
 	case eTDLS_LINK_TEARING:
 		*state = QCA_WIFI_HAL_TDLS_DROPPED;
@@ -2885,32 +2967,38 @@ void wlan_hdd_tdls_get_wifi_hal_state(hddTdlsPeer_t *curr_peer,
  * Return: 0 if success; negative errno otherwise
  */
 int wlan_hdd_tdls_get_status(hdd_adapter_t *pAdapter,
-			     const uint8_t *mac, int32_t *state,
+			     const uint8_t *mac, uint32_t *opclass,
+			     uint32_t *channel, uint32_t *state,
 			     int32_t *reason)
 {
 	hddTdlsPeer_t *curr_peer;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
-	curr_peer = wlan_hdd_tdls_find_peer(pAdapter, mac, true);
+	if (0 != (wlan_hdd_validate_context(pHddCtx)))
+		return -EINVAL;
+
+	mutex_lock(&pHddCtx->tdls_lock);
+	curr_peer = wlan_hdd_tdls_find_peer(pAdapter, mac, false);
 	if (curr_peer == NULL) {
+		mutex_unlock(&pHddCtx->tdls_lock);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  FL("curr_peer is NULL"));
 		*state = QCA_WIFI_HAL_TDLS_DISABLED;
 		*reason = eTDLS_LINK_UNSPECIFIED;
-	} else {
-		if (pHddCtx->config->fTDLSExternalControl &&
-			(false == curr_peer->isForcedPeer)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-					FL("curr_peer is not Forced"));
-			*state = QCA_WIFI_HAL_TDLS_DISABLED;
-			*reason = eTDLS_LINK_UNSPECIFIED;
-		} else {
-			wlan_hdd_tdls_get_wifi_hal_state(curr_peer,
-								state, reason);
-		}
+		return -EINVAL;
 	}
+	if (pHddCtx->config->fTDLSExternalControl &&
+		(false == curr_peer->isForcedPeer)) {
+		hdd_err("curr_peer is not Forced");
+		*state = QCA_WIFI_HAL_TDLS_DISABLED;
+		*reason = eTDLS_LINK_UNSPECIFIED;
+	} else {
+		wlan_hdd_tdls_determine_channel_opclass(pHddCtx, pAdapter,
+					curr_peer, channel, opclass);
+		wlan_hdd_tdls_get_wifi_hal_state(curr_peer, state, reason);
+	}
+	mutex_unlock(&pHddCtx->tdls_lock);
 
-	wlan_hdd_tdls_get_wifi_hal_state(curr_peer, state, reason);
 	return 0;
 }
 
@@ -2919,12 +3007,12 @@ static const struct nla_policy
 	wlan_hdd_tdls_config_enable_policy[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MAX +
 					   1] = {
 	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MAC_ADDR] = {.type = NLA_UNSPEC},
-	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_CHANNEL] = {.type = NLA_S32},
+	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_CHANNEL] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_GLOBAL_OPERATING_CLASS] = {.type =
-								NLA_S32},
-	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MAX_LATENCY_MS] = {.type = NLA_S32},
+								NLA_U32},
+	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MAX_LATENCY_MS] = {.type = NLA_U32},
 	[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MIN_BANDWIDTH_KBPS] = {.type =
-								NLA_S32},
+								NLA_U32},
 };
 static const struct nla_policy
 	wlan_hdd_tdls_config_disable_policy[QCA_WLAN_VENDOR_ATTR_TDLS_DISABLE_MAX +
@@ -3003,7 +3091,8 @@ __wlan_hdd_cfg80211_exttdls_get_status(struct wiphy *wiphy,
 	       nla_data(tb[QCA_WLAN_VENDOR_ATTR_TDLS_GET_STATUS_MAC_ADDR]),
 	       sizeof(peer));
 	hddLog(CDF_TRACE_LEVEL_INFO, FL(MAC_ADDRESS_STR), MAC_ADDR_ARRAY(peer));
-	ret = wlan_hdd_tdls_get_status(pAdapter, peer, &state, &reason);
+	ret = wlan_hdd_tdls_get_status(pAdapter, peer, &global_operating_class,
+				&channel, &state, &reason);
 	if (0 != ret) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, FL("get status Failed"));
 		return -EINVAL;
@@ -3076,14 +3165,14 @@ int wlan_hdd_cfg80211_exttdls_get_status(struct wiphy *wiphy,
  * Return: 0 for success; negative errno otherwise
  */
 static int wlan_hdd_cfg80211_exttdls_callback(const uint8_t *mac,
+					      uint32_t global_operating_class,
+					      uint32_t channel,
 					      uint32_t state,
 					      int32_t reason, void *ctx)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) ctx;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct sk_buff *skb = NULL;
-	uint32_t global_operating_class = 0;
-	uint32_t channel = 0;
 
 	ENTER();
 
@@ -4171,21 +4260,15 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 				prefOffChanBandwidth =
 					pHddCtx->config->
 					fTDLSPrefOffChanBandwidth;
-				if (pTdlsPeer->
-				    op_class_for_pref_off_chan_is_set) {
-					smeTdlsPeerStateParams.peerCap.
-					opClassForPrefOffChanIsSet =
-						pTdlsPeer->
-						op_class_for_pref_off_chan_is_set;
-					smeTdlsPeerStateParams.peerCap.
+				smeTdlsPeerStateParams.peerCap.
 					opClassForPrefOffChan =
 						pTdlsPeer->
 						op_class_for_pref_off_chan;
-				}
+
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: Peer " MAC_ADDRESS_STR
-					  "vdevId: %d, peerState: %d, isPeerResponder: %d, uapsdQueues: 0x%x, maxSp: 0x%x, peerBuffStaSupport: %d, peerOffChanSupport: %d, peerCurrOperClass: %d, selfCurrOperClass: %d, peerChanLen: %d, peerOperClassLen: %d, prefOffChanNum: %d, prefOffChanBandwidth: %d, op_class_for_pref_off_chan_is_set: %d, op_class_for_pref_off_chan: %d",
+					  "vdevId: %d, peerState: %d, isPeerResponder: %d, uapsdQueues: 0x%x, maxSp: 0x%x, peerBuffStaSupport: %d, peerOffChanSupport: %d, peerCurrOperClass: %d, selfCurrOperClass: %d, peerChanLen: %d, peerOperClassLen: %d, prefOffChanNum: %d, prefOffChanBandwidth: %d, op_class_for_pref_off_chan: %d",
 					  __func__,
 					  MAC_ADDR_ARRAY(peer),
 					  smeTdlsPeerStateParams.vdevId,
@@ -4213,8 +4296,6 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 					  peerCap.prefOffChanNum,
 					  smeTdlsPeerStateParams.
 					  peerCap.prefOffChanBandwidth,
-					  pTdlsPeer->
-					  op_class_for_pref_off_chan_is_set,
 					  pTdlsPeer->
 					  op_class_for_pref_off_chan);
 
@@ -4596,6 +4677,7 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_tdls_chan_switch_params chan_switch_params;
+	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 
 	if (offchanmode < ENABLE_CHANSWITCH ||
 			offchanmode > DISABLE_CHANSWITCH) {
@@ -4626,46 +4708,24 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 			FL("TDLS Connection not supported"));
 		return -ENOTSUPP;
 	}
+
 	hddLog(LOG1,
-		FL("TDLS Channel Switch in swmode=%d"),
-		offchanmode);
+		FL("TDLS Channel Switch in swmode=%d tdls_off_channel %d offchanoffset %d"),
+		offchanmode, hdd_ctx->tdls_off_channel,
+		hdd_ctx->tdls_channel_offset);
 
 	switch (offchanmode) {
 	case ENABLE_CHANSWITCH:
-	case DISABLE_CHANSWITCH:
-		hddLog(LOG1,
-			FL(
-			  "change tdls off channel mode %d tdls_off_channel %d offchanoffset %d"
-			  ),
-			offchanmode, hdd_ctx->tdls_off_channel,
-			hdd_ctx->tdls_channel_offset);
-		if (hdd_ctx->tdls_off_channel && hdd_ctx->tdls_channel_offset) {
-			chan_switch_params.vdev_id = adapter->sessionId;
+		if (hdd_ctx->tdls_off_channel &&
+			hdd_ctx->tdls_channel_offset) {
 			chan_switch_params.tdls_off_channel =
 				hdd_ctx->tdls_off_channel;
 			chan_switch_params.tdls_off_ch_bw_offset =
 				hdd_ctx->tdls_channel_offset;
-			chan_switch_params.tdls_off_ch_mode = offchanmode;
-			chan_switch_params.is_responder =
-				conn_peer->is_responder;
-			cdf_mem_copy(&chan_switch_params.peer_mac_addr,
-				     &conn_peer->peerMac,
-				     sizeof(tSirMacAddr));
-			hddLog(LOG1,
-				FL("Peer " MAC_ADDRESS_STR
-				   " vdevId: %d, off channel: %d, offset: %d, mode: %d, is_responder: %d"
-				  ),
-				MAC_ADDR_ARRAY(chan_switch_params.
-						peer_mac_addr),
-				chan_switch_params.vdev_id,
-				chan_switch_params.tdls_off_channel,
-				chan_switch_params.tdls_off_ch_bw_offset,
-				chan_switch_params.tdls_off_ch_mode,
-				chan_switch_params.is_responder);
-
-			sme_send_tdls_chan_switch_req(
-				WLAN_HDD_GET_HAL_CTX(adapter),
-				&chan_switch_params);
+			chan_switch_params.opclass =
+			   wlan_hdd_find_opclass(WLAN_HDD_GET_HAL_CTX(adapter),
+					chan_switch_params.tdls_off_channel,
+					chan_switch_params.tdls_off_ch_bw_offset);
 		} else {
 			hddLog(LOGE,
 				FL(
@@ -4674,6 +4734,11 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 			return -EINVAL;
 		}
 		break;
+	case DISABLE_CHANSWITCH:
+		chan_switch_params.tdls_off_channel = 0;
+		chan_switch_params.tdls_off_ch_bw_offset = 0;
+		chan_switch_params.opclass = 0;
+		break;
 	default:
 		hddLog(LOGE,
 			FL(
@@ -4681,8 +4746,44 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 			  ),
 			offchanmode, hdd_ctx->tdls_off_channel,
 			hdd_ctx->tdls_channel_offset);
-		break;
+		return -EINVAL;
 	} /* end switch */
+
+	chan_switch_params.vdev_id = adapter->sessionId;
+	chan_switch_params.tdls_off_ch_mode = offchanmode;
+	chan_switch_params.is_responder =
+		conn_peer->is_responder;
+	cdf_mem_copy(&chan_switch_params.peer_mac_addr,
+		     &conn_peer->peerMac,
+		     sizeof(tSirMacAddr));
+	hdd_log(LOG1,
+		FL("Peer " MAC_ADDRESS_STR
+		   " vdevId: %d, off channel: %d, offset: %d, mode: %d, is_responder: %d"),
+		MAC_ADDR_ARRAY(chan_switch_params.peer_mac_addr),
+		chan_switch_params.vdev_id,
+		chan_switch_params.tdls_off_channel,
+		chan_switch_params.tdls_off_ch_bw_offset,
+		chan_switch_params.tdls_off_ch_mode,
+		chan_switch_params.is_responder);
+
+	status = sme_send_tdls_chan_switch_req(WLAN_HDD_GET_HAL_CTX(adapter),
+			&chan_switch_params);
+
+	if (status != CDF_STATUS_SUCCESS) {
+		hdd_log(LOG1,
+			FL("Failed to send channel switch request to sme"));
+		return -EINVAL;
+	}
+
+	hdd_ctx->tdls_fw_off_chan_mode = offchanmode;
+
+	if (ENABLE_CHANSWITCH == offchanmode) {
+		conn_peer->pref_off_chan_num =
+			chan_switch_params.tdls_off_channel;
+		conn_peer->op_class_for_pref_off_chan =
+			chan_switch_params.opclass;
+	}
+
 	return 0;
 }
 
