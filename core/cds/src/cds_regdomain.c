@@ -622,6 +622,50 @@ uint16_t cds_get_regdmn_5g(uint32_t reg_dmn)
 	return 0;
 }
 
+/**
+ * cds_regdm_get_chanwidth_from_opclass() - return chan width based on opclass
+ * @country: country name
+ * @channel: operating channel
+ * @opclass: operating class
+ *
+ * Given a value of country, channel and opclass this API will return value of
+ * channel width.
+ *
+ * Return: channel width
+ *
+ */
+uint16_t cds_regdm_get_chanwidth_from_opclass(uint8_t *country,
+					       uint8_t channel,
+					       uint8_t opclass)
+{
+	regdm_op_class_map_t *class;
+	uint16_t i;
+
+	if (true == cdf_mem_compare(country, "US", 2))
+		class = us_op_class;
+	else if (true == cdf_mem_compare(country, "EU", 2))
+		class = euro_op_class;
+	else if (true == cdf_mem_compare(country, "JP", 2))
+		class = japan_op_class;
+	else
+		class = global_op_class;
+
+	while (class->op_class) {
+		if (opclass == class->op_class) {
+			for (i = 0;
+			  (i < MAX_CHANNELS_PER_OPERATING_CLASS &&
+			   class->channels[i]);
+			   i++) {
+				if (channel == class->channels[i])
+					return class->ch_spacing;
+			}
+		}
+		class++;
+	}
+	return 0;
+}
+
+
 /*
  * Get operating class for a given channel
  */

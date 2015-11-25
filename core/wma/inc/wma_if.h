@@ -940,6 +940,7 @@ typedef struct CSAOffloadParams {
 	uint8_t switchmode;
 	uint8_t sec_chan_offset;
 	uint8_t new_ch_width;
+	uint8_t new_op_class;
 	uint8_t new_ch_freq_seg1;
 	uint8_t new_ch_freq_seg2;
 	uint32_t ies_present_flag;
