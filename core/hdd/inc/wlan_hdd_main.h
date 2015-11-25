@@ -1184,6 +1184,7 @@ struct hdd_context_s {
 	struct mutex tdls_lock;
 	uint8_t tdls_off_channel;
 	uint16_t tdls_channel_offset;
+	int32_t tdls_fw_off_chan_mode;
 #endif
 
 #ifdef IPA_OFFLOAD
@@ -1558,5 +1559,8 @@ void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *pHddCtx);
 void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx);
 void wlan_hdd_clear_netif_queue_history(hdd_context_t *hdd_ctx);
 const char *hdd_get_fwpath(void);
+
+uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
+			uint8_t bw_offset);
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

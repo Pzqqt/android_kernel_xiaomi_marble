@@ -86,6 +86,7 @@
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
+#include "cds_regdomain.h"
 
 #include "wlan_hdd_ocb.h"
 
@@ -358,6 +359,24 @@ static int con_mode;
  */
 static int curr_con_mode;
 #endif
+
+/* wlan_hdd_find_opclass() - Find operating class for a channel
+ * @hal: handler to HAL
+ * @channel: channel id
+ * @bw_offset: bandwidth offset
+ *
+ * Function invokes sme api to find the operating class
+ *
+ * Return: operating class
+ */
+uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
+				uint8_t bw_offset)
+{
+	uint8_t opclass = 0;
+
+	sme_get_opclass(hal, channel, bw_offset, &opclass);
+	return opclass;
+}
 
 /**
  * hdd_cdf_trace_enable() - configure initial CDF Trace enable

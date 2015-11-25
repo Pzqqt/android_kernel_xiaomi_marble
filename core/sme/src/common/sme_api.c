@@ -10045,49 +10045,9 @@ CDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 		peerStateParams->peerCap.prefOffChanNum;
 	peer_cap->prefOffChanBandwidth =
 		peerStateParams->peerCap.prefOffChanBandwidth;
+	peer_cap->opClassForPrefOffChan =
+		peerStateParams->peerCap.opClassForPrefOffChan;
 
-	if (peerStateParams->peerCap.opClassForPrefOffChanIsSet) {
-		peer_cap->opClassForPrefOffChan =
-			peerStateParams->peerCap.opClassForPrefOffChan;
-	} else {
-		/*
-		 * redgm opclass table contains opclass for 40MHz low
-		 * primary, 40MHz high primary and 20MHz. No support
-		 * for 80MHz yet. So first we will check if bit for
-		 * 40MHz is set and if so find matching opclass either
-		 * with low primary or high primary (a channel would
-		 * never be in both) and then search for opclass
-		 * matching 20MHz, else for any BW.
-		 */
-		if (peer_cap->prefOffChanBandwidth &
-				(1 << BW_40_OFFSET_BIT)) {
-			peer_cap->opClassForPrefOffChan =
-				cds_regdm_get_opclass_from_channel(
-						pMac->scan.countryCodeCurrent,
-						peer_cap->prefOffChanNum,
-						BW40_LOW_PRIMARY);
-			if (!peer_cap->opClassForPrefOffChan) {
-				peer_cap->opClassForPrefOffChan =
-					cds_regdm_get_opclass_from_channel(
-						pMac->scan.countryCodeCurrent,
-						peer_cap->prefOffChanNum,
-						BW40_HIGH_PRIMARY);
-			}
-		} else if (peer_cap->prefOffChanBandwidth &
-				(1 << BW_20_OFFSET_BIT)) {
-			peer_cap->opClassForPrefOffChan =
-				cds_regdm_get_opclass_from_channel(
-						pMac->scan.countryCodeCurrent,
-						peer_cap->prefOffChanNum,
-						BW20);
-		} else {
-			peer_cap->opClassForPrefOffChan =
-				cds_regdm_get_opclass_from_channel(
-						pMac->scan.countryCodeCurrent,
-						peer_cap->prefOffChanNum,
-						BWALL);
-		}
-	}
 	cds_message.type = WMA_UPDATE_TDLS_PEER_STATE;
 	cds_message.reserved = 0;
 	cds_message.bodyptr = pTdlsPeerStateParams;
@@ -10159,37 +10119,7 @@ CDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 	chan_switch_params->tdls_off_ch_bw_offset =
 		ch_switch_params->tdls_off_ch_bw_offset;
 	chan_switch_params->is_responder = ch_switch_params->is_responder;
-
-	switch (chan_switch_params->tdls_off_ch_bw_offset) {
-	case (1 << BW_20_OFFSET_BIT):
-		chan_switch_params->oper_class =
-		cds_regdm_get_opclass_from_channel(
-				mac->scan.countryCodeCurrent,
-				chan_switch_params->tdls_off_ch,
-				BW20);
-		break;
-	case (1 << BW_40_OFFSET_BIT):
-		chan_switch_params->oper_class =
-		cds_regdm_get_opclass_from_channel(
-				mac->scan.countryCodeCurrent,
-				chan_switch_params->tdls_off_ch,
-				BW40_LOW_PRIMARY);
-		if (!chan_switch_params->oper_class) {
-			chan_switch_params->oper_class =
-				cds_regdm_get_opclass_from_channel(
-					mac->scan.countryCodeCurrent,
-					chan_switch_params->tdls_off_ch,
-					BW40_HIGH_PRIMARY);
-		}
-		break;
-	default:
-		chan_switch_params->oper_class =
-			cds_regdm_get_opclass_from_channel(
-				mac->scan.countryCodeCurrent,
-				chan_switch_params->tdls_off_ch,
-				BWALL);
-		break;
-	} /* end switch */
+	chan_switch_params->oper_class = ch_switch_params->opclass;
 
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 		FL("Country Code=%s, Req offset=%d, Selected Operate Class=%d"),
@@ -14916,3 +14846,49 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 
 	return;
 }
+
+#ifdef FEATURE_WLAN_TDLS
+
+/**
+ * sme_get_opclass() - determine operating class
+ * @hal: Pointer to HAL
+ * @channel: channel id
+ * @bw_offset: bandwidth offset
+ * @opclass: pointer to operating class
+ *
+ * Function will determine operating class from regdm_get_opclass_from_channel
+ *
+ * Return: none
+ */
+void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
+		uint8_t *opclass)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
+	/* redgm opclass table contains opclass for 40MHz low primary,
+	 * 40MHz high primary and 20MHz. No support for 80MHz yet. So
+	 * first we will check if bit for 40MHz is set and if so find
+	 * matching opclass either with low primary or high primary
+	 * (a channel would never be in both) and then search for opclass
+	 * matching 20MHz, else for any BW.
+	 */
+	if (bw_offset & (1 << BW_40_OFFSET_BIT)) {
+		*opclass = cds_regdm_get_opclass_from_channel(
+				mac_ctx->scan.countryCodeCurrent,
+				channel, BW40_LOW_PRIMARY);
+		if (!(*opclass)) {
+			*opclass = cds_regdm_get_opclass_from_channel(
+					mac_ctx->scan.countryCodeCurrent,
+					channel, BW40_HIGH_PRIMARY);
+		}
+	} else if (bw_offset & (1 << BW_20_OFFSET_BIT)) {
+		*opclass = cds_regdm_get_opclass_from_channel(
+				mac_ctx->scan.countryCodeCurrent,
+				channel, BW20);
+	} else {
+		*opclass = cds_regdm_get_opclass_from_channel(
+				mac_ctx->scan.countryCodeCurrent,
+				channel, BWALL);
+	}
+}
+#endif
