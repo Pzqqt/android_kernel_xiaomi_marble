@@ -522,8 +522,8 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 	wowParams.ucMagicPktEnable = enable_mp;
 	wowParams.sessionId = pAdapter->sessionId;
 	if (enable_mp) {
-		cdf_copy_macaddr((struct cdf_mac_addr *) &(wowParams.magicPtrn),
-				 &(pAdapter->macAddressCurrent));
+		cdf_copy_macaddr(&wowParams.magic_ptrn,
+				 &pAdapter->macAddressCurrent);
 	}
 #ifdef WLAN_WAKEUP_EVENTS
 	wowParams.ucWoWEAPIDRequestEnable = true;
@@ -533,7 +533,7 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 	wowParams.ucWoWBSSConnLoss = true;
 #endif /* WLAN_WAKEUP_EVENTS */
 
-	/* Request to put Libra into WoWL */
+	/* Request to put FW into WoWL */
 	cdf_ret_status = sme_enter_wowl(hHal, hdd_wowl_callback, pAdapter,
 #ifdef WLAN_WAKEUP_EVENTS
 					hdd_wowl_wake_indication_callback,

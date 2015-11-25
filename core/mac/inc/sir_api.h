@@ -2189,7 +2189,7 @@ typedef struct sSirSmeWowlEnterParams {
 	uint8_t ucMagicPktEnable;
 
 	/* Magic pattern */
-	tSirMacAddr magicPtrn;
+	struct cdf_mac_addr magic_ptrn;
 
 	/* Enables/disables packet pattern filtering */
 	uint8_t ucPatternFilteringEnable;
@@ -2222,7 +2222,7 @@ typedef struct sSirSmeWowlEnterParams {
 	uint8_t ucWoWBSSConnLoss;
 #endif /* WLAN_WAKEUP_EVENTS */
 
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 } tSirSmeWowlEnterParams, *tpSirSmeWowlEnterParams;
 
 /* PE<->HAL: Enter WOWLAN parameters */
@@ -2233,7 +2233,7 @@ typedef struct sSirHalWowlEnterParams {
 	uint8_t ucMagicPktEnable;
 
 	/* Magic pattern */
-	tSirMacAddr magicPtrn;
+	struct cdf_mac_addr magic_ptrn;
 
 	/* Enables/disables packet pattern filtering in firmware.
 	   Enabling this flag enables broadcast pattern matching
