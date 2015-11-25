@@ -2212,13 +2212,13 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		cdf_mem_set(csa_offload_ind, sizeof(tSmeCsaOffloadInd), 0);
 		csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
 		csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
-		cdf_mem_copy(csa_offload_ind->bssId, session_entry->bssId,
-			sizeof(tSirMacAddr));
+		cdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
+				CDF_MAC_ADDR_SIZE);
 		mmh_msg.type = eWNI_SME_CSA_OFFLOAD_EVENT;
 		mmh_msg.bodyptr = csa_offload_ind;
 		mmh_msg.bodyval = 0;
 		lim_log(mac_ctx, LOG1,
-			FL("Sending eWNI_SME_CSA_OFFLOAD_EVENT to SME. "));
+			FL("Sending eWNI_SME_CSA_OFFLOAD_EVENT to SME."));
 		MTRACE(mac_trace_msg_tx
 			(mac_ctx, session_entry->peSessionId, mmh_msg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

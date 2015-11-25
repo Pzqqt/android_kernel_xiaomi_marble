@@ -2144,7 +2144,7 @@ typedef struct sSmeMaxAssocInd {
 typedef struct sSmeCsaOffloadInd {
 	uint16_t mesgType;      /* eWNI_SME_CSA_OFFLOAD_EVENT */
 	uint16_t mesgLen;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 } tSmeCsaOffloadInd, *tpSmeCsaOffloadInd;
 
 /* WOW related structures */
