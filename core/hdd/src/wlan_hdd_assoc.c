@@ -1368,6 +1368,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	unsigned int len = 0;
 	u8 *pFTAssocRsp = NULL;
 	uint8_t *rspRsnIe = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
+	uint8_t *assoc_req_ies = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
 	uint32_t rspRsnLength = 0;
 	struct ieee80211_channel *chan;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -1383,6 +1384,10 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		return;
 	}
 
+	if (!assoc_req_ies) {
+		hdd_err("Unable to allocate Assoc Req IE");
+		return;
+	}
 	if (pCsrRoamInfo == NULL) {
 		hddLog(LOGE, FL("Invalid CSR roam info"));
 		goto done;
@@ -1462,14 +1467,24 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			final_req_ie, (ssid_ie_len + reqRsnLength),
 			rspRsnIe, rspRsnLength, GFP_KERNEL);
 
+	cdf_mem_copy(assoc_req_ies,
+		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
+		pCsrRoamInfo->nAssocReqLength);
+
+	hdd_notice("ReAssoc Req IE dump");
+	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+		assoc_req_ies, pCsrRoamInfo->nAssocReqLength);
+
 	wlan_hdd_send_roam_auth_event(pHddCtx, pCsrRoamInfo->bssid.bytes,
-			reqRsnIe, reqRsnLength, rspRsnIe, rspRsnLength,
+			assoc_req_ies, pCsrRoamInfo->nAssocReqLength,
+			rspRsnIe, rspRsnLength,
 			pCsrRoamInfo);
 done:
 	sme_roam_free_connect_profile(hal_handle, &roam_profile);
 	if (final_req_ie)
 		kfree(final_req_ie);
 	kfree(rspRsnIe);
+	kfree(assoc_req_ies);
 }
 
 /**
@@ -1967,6 +1982,15 @@ defined(FEATURE_WLAN_LFR)
 						       "assocReqlen %d assocRsplen %d",
 						       assocReqlen,
 						       assocRsplen);
+
+						hdd_notice(
+							"Reassoc Req IE dump");
+						CDF_TRACE_HEX_DUMP(
+							CDF_MODULE_ID_HDD,
+							CDF_TRACE_LEVEL_DEBUG,
+							pFTAssocReq,
+							assocReqlen);
+
 						cfg80211_roamed(dev, chan,
 								pRoamInfo->
 								bssid.bytes,

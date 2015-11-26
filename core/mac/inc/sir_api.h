@@ -3941,6 +3941,8 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	uint16_t beaconProbeRespLength;
 	uint16_t reassocRespOffset;
 	uint16_t reassocRespLength;
+	uint16_t reassoc_req_offset;
+	uint16_t reassoc_req_length;
 	uint8_t isBeacon;
 	uint8_t roamedVdevId;
 	struct cdf_mac_addr bssid;

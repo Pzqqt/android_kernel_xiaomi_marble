@@ -3047,16 +3047,29 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 	if (roam_info_ptr->synchAuthStatus ==
 			CSR_ROAM_AUTH_STATUS_AUTHENTICATED) {
 		hddLog(CDF_TRACE_LEVEL_DEBUG, FL("Include Auth Params TLV's"));
-		if (nla_put_u8(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AUTHORIZED,
-			true) ||
-			nla_put(skb,
-				QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR,
-				SIR_REPLAY_CTR_LEN, roam_info_ptr->replay_ctr)
-			|| nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK,
-				SIR_KCK_KEY_LEN, roam_info_ptr->kck)
-			|| nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK,
-				SIR_KEK_KEY_LEN, roam_info_ptr->kek)) {
-			hddLog(CDF_TRACE_LEVEL_ERROR, FL("nla put fail"));
+		if (nla_put_u8(skb,
+			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AUTHORIZED, true)) {
+			hdd_err("nla put fail");
+			goto nla_put_failure;
+		}
+		/* if FT connection: dont send ROAM_AUTH_KEY_REPLAY_CTR */
+		if (roam_info_ptr->u.pConnectedProfile->AuthType !=
+			eCSR_AUTH_TYPE_FT_RSN &&
+		    roam_info_ptr->u.pConnectedProfile->AuthType !=
+			eCSR_AUTH_TYPE_FT_RSN_PSK &&
+		    nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR,
+			SIR_REPLAY_CTR_LEN, roam_info_ptr->replay_ctr)) {
+			hdd_err("non FT connection.");
+			hdd_err("failed to send replay counter.");
+			goto nla_put_failure;
+		}
+		if (nla_put(skb,
+			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK,
+			SIR_KCK_KEY_LEN, roam_info_ptr->kck) ||
+		    nla_put(skb,
+			QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK,
+			SIR_KEK_KEY_LEN, roam_info_ptr->kek)) {
+			hdd_err("nla put fail");
 			goto nla_put_failure;
 		}
 	} else {

@@ -2036,6 +2036,31 @@ void lim_roam_offload_synch_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 
 	/* Prepare the session right now with as much as possible */
 	lim_fill_ft_session(pMac, bss_desc_ptr, ft_session_ptr, session_ptr);
+
+	if (ft_session_ptr->assocReqLen) {
+		/*
+		 * For LFR3 the Assoc Request frame was sent by firmware, hence
+		 * pe session struct does not have corresponding IEs. Firmware
+		 * sends whole ASSOC req frame upto host in Roam Sync Event.
+		 * Copy this frame pe session's buffer, so that it can follow
+		 * LFR2 code path to send them to supplicant.
+		 */
+		ft_session_ptr->assocReqLen =
+			roam_sync_ind_ptr->reassoc_req_length
+			- SIR_MAC_HDR_LEN_3A - SIR_MAC_REASSOC_SSID_OFFSET;
+		ft_session_ptr->assocReq =
+			cdf_mem_malloc(ft_session_ptr->assocReqLen);
+		if (NULL == ft_session_ptr->assocReq) {
+			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+				"LFR3: Failed to alloc memory for Assoc Req");
+			return;
+		}
+		cdf_mem_copy(ft_session_ptr->assocReq,
+			     (uint8_t *)roam_sync_ind_ptr +
+			     roam_sync_ind_ptr->reassoc_req_offset +
+			     SIR_MAC_HDR_LEN_3A + SIR_MAC_REASSOC_SSID_OFFSET,
+			     ft_session_ptr->assocReqLen);
+	}
 	lim_ft_prepare_add_bss_req(pMac, false, ft_session_ptr, bss_desc_ptr);
 	mmh_msg.type =
 		roam_sync_ind_ptr->messageType;
