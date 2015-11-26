@@ -6007,8 +6007,8 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 				WLAN_IBSS_EVENT_JOIN_IBSS_RSP;
 		}
 		if (bss_desc) {
-			cdf_mem_copy(ibss_log->bssid,
-				bss_desc->bssId, 6);
+			cdf_mem_copy(ibss_log->bssid.bytes,
+				bss_desc->bssId, CDF_MAC_ADDR_SIZE);
 			ibss_log->operatingChannel =
 				bss_desc->channelId;
 		}
@@ -9061,8 +9061,7 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		roamInfo.staId = (uint8_t) pIbssPeerInd->staId;
 		roamInfo.ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
 		roamInfo.bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
-		cdf_mem_copy(&roamInfo.peerMac, pIbssPeerInd->peerAddr,
-			     sizeof(struct cdf_mac_addr));
+		cdf_copy_macaddr(&roamInfo.peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(pMac, pSmeRsp->sessionId, &roamInfo, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
 				       eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
@@ -10420,8 +10419,7 @@ csr_roam_diag_joined_new_bss(tpAniSirGlobal mac_ctx,
 		return;
 	pIbssLog->eventId = WLAN_IBSS_EVENT_COALESCING;
 	if (pNewBss) {
-		cdf_mem_copy(pIbssLog->bssid, pNewBss->bssId.bytes,
-				CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pIbssLog->bssid, &pNewBss->bssId);
 		if (pNewBss->ssId.length)
 			cdf_mem_copy(pIbssLog->ssid, pNewBss->ssId.ssId,
 				     pNewBss->ssId.length);
@@ -10610,7 +10608,8 @@ csr_roam_chk_lnk_ibss_new_peer_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 				 LOG_WLAN_IBSS_C);
 	if (pIbssLog) {
 		pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_JOIN;
-		cdf_mem_copy(pIbssLog->peerMacAddr, &pIbssPeerInd->peerAddr, 6);
+		cdf_copy_macaddr(&pIbssLog->peer_macaddr,
+				 &pIbssPeerInd->peer_addr);
 		WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
 	}
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
@@ -10632,8 +10631,7 @@ csr_roam_chk_lnk_ibss_new_peer_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		sms_log(mac_ctx, LOGW, FL("CSR: connected BSS is empty"));
 		goto callback_and_free;
 	}
-	cdf_mem_copy(&roam_info.peerMac, pIbssPeerInd->peerAddr,
-		     sizeof(struct cdf_mac_addr));
+	cdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
 	cdf_mem_copy(&roam_info.bssid, session->pConnectBssDesc->bssId,
 		     sizeof(struct cdf_mac_addr));
 	if (pIbssPeerInd->mesgLen > sizeof(tSmeIbssPeerInd)) {
@@ -10676,7 +10674,8 @@ csr_roam_chk_lnk_ibss_new_peer_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		/* NO keys. these key parameters don't matter */
 		csr_roam_issue_set_context_req(mac_ctx, sessionId,
 			session->connectedProfile.EncryptionType,
-			session->pConnectBssDesc, &(pIbssPeerInd->peerAddr),
+			session->pConnectBssDesc,
+			&pIbssPeerInd->peer_addr.bytes,
 			false, true, eSIR_TX_RX, 0, 0, NULL, 0);
 	}
 
@@ -10718,8 +10717,8 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(tpAniSirGlobal mac_ctx,
 		if (pIbssLog) {
 			pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_LEAVE;
 			if (pIbssPeerInd) {
-				cdf_mem_copy(pIbssLog->peerMacAddr,
-					     &pIbssPeerInd->peerAddr, 6);
+				cdf_copy_macaddr(&pIbssLog->peer_macaddr,
+						 &pIbssPeerInd->peer_addr);
 			}
 			WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
 		}
@@ -10729,8 +10728,7 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(tpAniSirGlobal mac_ctx,
 		roam_info.staId = (uint8_t) pIbssPeerInd->staId;
 		roam_info.ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
 		roam_info.bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
-		cdf_mem_copy(&roam_info.peerMac, pIbssPeerInd->peerAddr,
-			     sizeof(struct cdf_mac_addr));
+		cdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(mac_ctx, sessionId, &roam_info, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
 				       eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
@@ -12547,8 +12545,8 @@ CDF_STATUS csr_roam_issue_start_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 			if (pBssDesc) {
 				pIbssLog->eventId =
 					WLAN_IBSS_EVENT_JOIN_IBSS_REQ;
-				cdf_mem_copy(pIbssLog->bssid, pBssDesc->bssId,
-					     6);
+				cdf_mem_copy(pIbssLog->bssid.bytes,
+					pBssDesc->bssId, CDF_MAC_ADDR_SIZE);
 			} else {
 				pIbssLog->eventId =
 					WLAN_IBSS_EVENT_START_IBSS_REQ;

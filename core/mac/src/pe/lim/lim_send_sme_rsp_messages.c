@@ -1988,8 +1988,8 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 	cdf_mem_set((void *)pNewPeerInd, (sizeof(tSmeIbssPeerInd) + beaconLen),
 		    0);
 
-	cdf_mem_copy((uint8_t *) pNewPeerInd->peerAddr,
-		     peerMacAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
+		     peerMacAddr, CDF_MAC_ADDR_SIZE);
 	pNewPeerInd->staId = staIndex;
 	pNewPeerInd->ucastSig = ucastIdx;
 	pNewPeerInd->bcastSig = bcastIdx;
