@@ -98,8 +98,8 @@ typedef struct {
 	log_hdr_type hdr;
 	uint8_t eventId;
 	uint8_t channelSetting;
-	uint8_t bssid[HOST_LOG_MAX_BSSID_SIZE];
-	uint8_t peerMacAddr[HOST_LOG_MAX_BSSID_SIZE];
+	struct cdf_mac_addr bssid;
+	struct cdf_mac_addr peer_macaddr;
 	uint8_t ssid[HOST_LOG_MAX_SSID_SIZE];
 	uint8_t operatingChannel;
 	uint8_t beaconInterval;

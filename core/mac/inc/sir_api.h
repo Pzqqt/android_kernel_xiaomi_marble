@@ -2080,7 +2080,7 @@ typedef struct sSmeIbssPeerInd {
 	uint16_t mesgLen;
 	uint8_t sessionId;
 
-	tSirMacAddr peerAddr;
+	struct cdf_mac_addr peer_addr;
 	uint16_t staId;
 
 	/*
@@ -2099,7 +2099,7 @@ typedef struct sSmeIbssPeerInd {
 typedef struct sSirIbssPeerInactivityInd {
 	uint8_t bssIdx;
 	uint8_t staIdx;
-	tSirMacAddr peerAddr;
+	struct cdf_mac_addr peer_addr;
 } tSirIbssPeerInactivityInd, *tpSirIbssPeerInactivityInd;
 
 typedef struct sLimScanChn {

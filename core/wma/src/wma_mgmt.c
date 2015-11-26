@@ -341,7 +341,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		}
 
 		p_inactivity->staIdx = peer_id;
-		cdf_mem_copy(p_inactivity->peerAddr, macaddr,
+		cdf_mem_copy(p_inactivity->peer_addr.bytes, macaddr,
 			     IEEE80211_ADDR_LEN);
 		wma_send_msg(wma, WMA_IBSS_PEER_INACTIVITY_IND,
 			     (void *)p_inactivity, 0);
