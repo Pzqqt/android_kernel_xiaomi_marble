@@ -2728,6 +2728,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	wmi_roam_synch_event_fixed_param *synch_event = NULL;
 	uint8_t *bcn_probersp_ptr = NULL;
 	uint8_t *reassoc_rsp_ptr = NULL;
+	uint8_t *reassoc_req_ptr = NULL;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 	wmi_channel *chan = NULL;
 	wmi_key_material *key = NULL;
@@ -2759,7 +2760,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	}
 	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = true;
 	len = sizeof(roam_offload_synch_ind) +
-	      synch_event->bcn_probe_rsp_len + synch_event->reassoc_rsp_len;
+	      synch_event->bcn_probe_rsp_len + synch_event->reassoc_rsp_len +
+	      synch_event->reassoc_req_len;
 	roam_synch_ind_ptr =
 		(roam_offload_synch_ind *) cdf_mem_malloc(len);
 	if (!roam_synch_ind_ptr) {
@@ -2786,6 +2788,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	roam_synch_ind_ptr->isBeacon = synch_event->is_beacon;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&synch_event->bssid,
 				   roam_synch_ind_ptr->bssid.bytes);
+	/* Beacon/Probe Rsp data */
 	roam_synch_ind_ptr->beaconProbeRespOffset =
 		sizeof(roam_offload_synch_ind);
 	bcn_probersp_ptr =
@@ -2795,6 +2798,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		synch_event->bcn_probe_rsp_len;
 	cdf_mem_copy(bcn_probersp_ptr, param_buf->bcn_probe_rsp_frame,
 		     roam_synch_ind_ptr->beaconProbeRespLength);
+
+	/* ReAssoc Rsp data */
 	roam_synch_ind_ptr->reassocRespOffset =
 		sizeof(roam_offload_synch_ind) +
 		roam_synch_ind_ptr->beaconProbeRespLength;
@@ -2804,18 +2809,37 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	cdf_mem_copy(reassoc_rsp_ptr,
 		     param_buf->reassoc_rsp_frame,
 		     roam_synch_ind_ptr->reassocRespLength);
+
+	/* ReAssoc Req data */
+	roam_synch_ind_ptr->reassoc_req_offset =
+		sizeof(roam_offload_synch_ind) +
+		roam_synch_ind_ptr->beaconProbeRespLength +
+		roam_synch_ind_ptr->reassocRespLength;
+	roam_synch_ind_ptr->reassoc_req_length = synch_event->reassoc_req_len;
+	reassoc_req_ptr = (uint8_t *) roam_synch_ind_ptr +
+			  roam_synch_ind_ptr->reassoc_req_offset;
+	cdf_mem_copy(reassoc_req_ptr, param_buf->reassoc_req_frame,
+		     roam_synch_ind_ptr->reassoc_req_length);
+
 	chan = (wmi_channel *) param_buf->chan;
 	roam_synch_ind_ptr->chan_freq = chan->mhz;
 	key = (wmi_key_material *) param_buf->key;
 	if (key != NULL) {
-		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
-				   key->replay_counter, SIR_REPLAY_CTR_LEN);
 		cdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
 			     SIR_KCK_KEY_LEN);
 		cdf_mem_copy(roam_synch_ind_ptr->kek, key->kek,
 			     SIR_KEK_KEY_LEN);
 		cdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     key->replay_counter, SIR_REPLAY_CTR_LEN);
+		WMA_LOGD("%s: KCK dump", __func__);
+		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+				   key->kck, SIR_KCK_KEY_LEN);
+		WMA_LOGD("%s: KEK dump", __func__);
+		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+				   key->kek, SIR_KEK_KEY_LEN);
+		WMA_LOGD("%s: Key Replay Counter dump", __func__);
+		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+				   key->replay_counter, SIR_REPLAY_CTR_LEN);
 	}
 	wma_send_msg(wma, WMA_ROAM_OFFLOAD_SYNCH_IND,
 			(void *) roam_synch_ind_ptr, 0);
