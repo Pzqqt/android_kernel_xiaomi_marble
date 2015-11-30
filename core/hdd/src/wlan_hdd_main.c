@@ -123,7 +123,6 @@ extern int hdd_hostapd_stop(struct net_device *dev);
 #define MEMORY_DEBUG_STR ""
 #endif
 
-#define DISABLE_KRAIT_IDLE_PS_VAL	1
 /* the Android framework expects this param even though we don't use it */
 #define BUF_LEN 20
 static char fwpath_buffer[BUF_LEN];
@@ -3610,10 +3609,18 @@ void __hdd_wlan_exit(void)
 
 	cds_set_load_unload_in_progress(true);
 
+	/* Check IPA HW Pipe shutdown */
+	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
+
 #ifdef WLAN_FEATURE_LPSS
 	wlan_hdd_send_status_pkg(NULL, NULL, 0, 0);
 #endif
 
+	memdump_deinit();
+
+#ifdef QCA_PKT_PROTO_TRACE
+	cds_pkt_proto_trace_close();
+#endif
 	/* Do all the cleanup before deregistering the driver */
 	hdd_wlan_exit(hdd_ctx);
 	EXIT();
@@ -5449,9 +5456,13 @@ ftm_processing:
 	}
 
 	hif_enable_power_gating(hif_sc);
+
+	memdump_init();
+
 	hdd_ctx->isLoadInProgress = false;
 	cds_set_load_unload_in_progress(false);
 	complete(&wlan_start_comp);
+
 	goto success;
 
 err_nl_srv:
@@ -6379,18 +6390,6 @@ end:
 #endif
 
 /**
- * hdd_wlan_get_wake_lock_ptr(): get HDD's wake lock pointer
- *
- * This function returns the wake lock pointer to the caller
- *
- * Return: cdf_wake_lock_t
- */
-cdf_wake_lock_t *hdd_wlan_get_wake_lock_ptr(void)
-{
-	return &wlan_wake_lock;
-}
-
-/**
  * hdd_get_fw_version() - Get FW version
  * @hdd_ctx:     pointer to HDD context.
  * @major_spid:  FW version - major spid.
@@ -6440,85 +6439,52 @@ const char *hdd_get_fwpath(void)
 	return fwpath.string;
 }
 
-/*
- * In BMI Phase we are only sending small chunk (256 bytes) of the FW image at
- * a time, and wait for the completion interrupt to start the next transfer.
- * During this phase, the KRAIT is entering IDLE/StandAlone(SA) Power Save(PS).
- * The delay incurred for resuming from IDLE/SA PS is huge during driver load.
- * So prevent APPS IDLE/SA PS durint driver load for reducing interrupt latency.
- */
-
-#ifdef CONFIG_CNSS
-static inline void hdd_request_pm_qos(int val)
-{
-	cnss_request_pm_qos(val);
-}
-
-static inline void hdd_remove_pm_qos(void)
-{
-	cnss_remove_pm_qos();
-}
-#else
-static inline void hdd_request_pm_qos(int val)
-{
-}
-
-static inline void hdd_remove_pm_qos(void)
-{
-}
-#endif
-
 /**
- * hdd_driver_init() - Core Driver Init Function
+ * hdd_init() - Initialize Driver
  *
- * This is the driver entry point - called in different timeline depending
- * on whether the driver is statically or dynamically linked
+ * This function initilizes CDS global context with the help of cds_init. This
+ * has to be the first function called after probe to get a valid global
+ * context.
  *
- * Return: 0 for success, non zero for failure
+ * Return: 0 for success, errno on failure
  */
-static int hdd_driver_init(void)
+int hdd_init(void)
 {
-	CDF_STATUS status;
 	v_CONTEXT_t p_cds_context = NULL;
-	int ret_status = 0;
-	unsigned long rc;
+	int ret = 0;
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 	wlan_logging_sock_init_svc();
 #endif
+	p_cds_context = cds_init();
 
-	ENTER();
+	if (p_cds_context == NULL) {
+		hdd_alert("Failed to allocate CDS context");
+		ret = -ENOMEM;
+		goto err_out;
+	}
 
-	cdf_wake_lock_init(&wlan_wake_lock, "wlan");
-	hdd_prevent_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
-	/*
-	* The Krait is going to Idle/Stand Alone Power Save
-	* more aggressively which is resulting in the longer driver load time.
-	* The Fix is to not allow Krait to enter Idle Power Save during driver
-	* load.
-	*/
-	hdd_request_pm_qos(DISABLE_KRAIT_IDLE_PS_VAL);
-	cds_ssr_protect_init();
+	hdd_trace_init();
 
-	pr_info("%s: loading driver v%s\n", WLAN_MODULE_NAME,
-		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
+err_out:
+	return ret;
+}
 
-	do {
-		cdf_mc_timer_manager_init();
-		cdf_mem_init();
-		/* Allocate CDS global context */
-		status = cds_alloc_global_context(&p_cds_context);
+/**
+ * hdd_deinit() - Deinitialize Driver
+ *
+ * This function frees CDS global context with the help of cds_deinit. This
+ * has to be the last function call in remove callback to free the global
+ * context.
+ */
+void hdd_deinit(void)
+{
+	cds_deinit();
 
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
-			       FL("Failed to preOpen CDS"));
-			ret_status = -1;
-			break;
-		}
-
-		hdd_trace_init();
-
-		hdd_set_conparam((uint32_t) con_mode);
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+	wlan_logging_sock_deinit_svc();
+#endif
+}
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define HDD_WLAN_START_WAIT_TIME (3600 * 1000)
@@ -6526,54 +6492,64 @@ static int hdd_driver_init(void)
 #define HDD_WLAN_START_WAIT_TIME (CDS_WMA_TIMEOUT + 5000)
 #endif
 
-		init_completion(&wlan_start_comp);
-		ret_status = wlan_hdd_register_driver();
-		if (!ret_status) {
-			rc = wait_for_completion_timeout(
-				&wlan_start_comp,
-				msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
-			if (!rc) {
-				hddLog(LOGP,
-					FL("timed-out waiting for wlan_hdd_register_driver"));
-				ret_status = -1;
-			} else
-				ret_status = 0;
-		}
+/**
+ * __hdd_module_init - Module init helper
+ *
+ * Module init helper function used by both module and static driver.
+ *
+ * Return: 0 for success, errno on failure
+ */
+static int __hdd_module_init(void)
+{
+	int ret = 0;
+	unsigned long rc;
 
-		hdd_remove_pm_qos();
-		hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
+	pr_info("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
+		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
 
-		if (ret_status) {
-			hddLog(LOGP, FL("WLAN Driver Initialization failed"));
-			wlan_hdd_unregister_driver();
-			cds_free_global_context(&p_cds_context);
-			ret_status = -ENODEV;
-			break;
-		} else {
-			pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
-			memdump_init();
-			return 0;
-		}
+	cdf_wake_lock_init(&wlan_wake_lock, "wlan");
 
-	} while (0);
+	hdd_set_conparam((uint32_t) con_mode);
 
-	if (0 != ret_status) {
-		cdf_mc_timer_exit();
-		cdf_mem_exit();
-		cdf_wake_lock_destroy(&wlan_wake_lock);
+	init_completion(&wlan_start_comp);
 
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-		wlan_logging_sock_deinit_svc();
-#endif
-		memdump_deinit();
+	ret = wlan_hdd_register_driver();
+	if (ret) {
 		pr_err("%s: driver load failure\n", WLAN_MODULE_NAME);
-	} else {
-		pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
+		goto out;
 	}
 
-	EXIT();
+	rc = wait_for_completion_timeout(&wlan_start_comp,
+			msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
 
-	return ret_status;
+	if (!rc) {
+		hdd_alert("Timed-out waiting for wlan_hdd_register_driver");
+		goto out;
+	}
+
+	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
+
+	return 0;
+out:
+	cdf_wake_lock_destroy(&wlan_wake_lock);
+	return ret;
+}
+
+/**
+ * __hdd_module_exit - Module exit helper
+ *
+ * Module exit helper function used by both module and static driver.
+ */
+static void __hdd_module_exit(void)
+{
+	pr_info("%s: Unloading driver v%s\n", WLAN_MODULE_NAME,
+		QWLAN_VERSIONSTR);
+
+	wlan_hdd_unregister_driver();
+
+	cdf_wake_lock_destroy(&wlan_wake_lock);
+
+	return;
 }
 
 /**
@@ -6586,7 +6562,7 @@ static int hdd_driver_init(void)
 #ifdef MODULE
 static int __init hdd_module_init(void)
 {
-	return hdd_driver_init();
+	return __hdd_module_init();
 }
 #else /* #ifdef MODULE */
 static int __init hdd_module_init(void)
@@ -6597,60 +6573,6 @@ static int __init hdd_module_init(void)
 #endif /* #ifdef MODULE */
 
 /**
- * hdd_driver_exit() - Exit function
- *
- * This is the driver exit point (invoked when module is unloaded using rmmod
- * or con_mode was changed by userspace)
- *
- * Return: None
- */
-static void hdd_driver_exit(void)
-{
-	hdd_context_t *hdd_ctx = NULL;
-	int retry = 0;
-
-	pr_info("%s: unloading driver v%s\n", WLAN_MODULE_NAME,
-		QWLAN_VERSIONSTR);
-
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("module exit called before probe"));
-	} else {
-		/* Check IPA HW Pipe shutdown */
-		hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
-#ifdef QCA_PKT_PROTO_TRACE
-		cds_pkt_proto_trace_close();
-#endif /* QCA_PKT_PROTO_TRACE */
-		while (hdd_ctx->isLogpInProgress ||
-		       cds_is_logp_in_progress()) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
-			       FL(
-				  "SSR in Progress; block rmmod for 1 second!!!"
-				  ));
-			msleep(1000);
-
-			if (retry++ == HDD_MOD_EXIT_SSR_MAX_RETRIES) {
-				hddLog(CDF_TRACE_LEVEL_FATAL,
-				       FL("SSR never completed, fatal error"));
-				CDF_BUG(0);
-			}
-		}
-
-		rtnl_lock();
-		hdd_ctx->isUnloadInProgress = true;
-		cds_set_load_unload_in_progress(true);
-		rtnl_unlock();
-	}
-
-	cds_wait_for_work_thread_completion(__func__);
-	memdump_deinit();
-
-	wlan_hdd_unregister_driver();
-	return;
-}
-
-/**
  * hdd_module_exit() - Exit function
  *
  * This is the driver exit point (invoked when module is unloaded using rmmod)
@@ -6659,7 +6581,7 @@ static void hdd_driver_exit(void)
  */
 static void __exit hdd_module_exit(void)
 {
-	hdd_driver_exit();
+	__hdd_module_exit();
 }
 
 #ifdef MODULE
@@ -6668,6 +6590,7 @@ static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
 	return param_set_copystring(kmessage, kp);
 }
 #else /* #ifdef MODULE */
+
 /**
  * kickstart_driver() - driver entry point
  *
@@ -6681,21 +6604,24 @@ static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
  */
 static int kickstart_driver(void)
 {
-	int ret_status;
+	int ret = 0;
 
 	if (!wlan_hdd_inited) {
-		ret_status = hdd_driver_init();
-		wlan_hdd_inited = ret_status ? 0 : 1;
-		return ret_status;
+		ret = __hdd_module_init();
+		wlan_hdd_inited = ret ? 0 : 1;
+
+		return ret;
 	}
 
-	hdd_driver_exit();
+	__hdd_module_exit();
 
 	msleep(200);
 
-	ret_status = hdd_driver_init();
-	wlan_hdd_inited = ret_status ? 0 : 1;
-	return ret_status;
+	ret = __hdd_module_init();
+
+	wlan_hdd_inited = ret ? 0 : 1;
+
+	return ret;
 }
 
 /**

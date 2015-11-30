@@ -128,6 +128,7 @@ void epping_disable(void)
 	hif_reset_soc(cds_get_context(CDF_MODULE_ID_HIF));
 	htc_stop(cds_get_context(CDF_MODULE_ID_HTC));
 	epping_cookie_cleanup(pEpping_ctx);
+	htc_destroy(cds_get_context(CDF_MODULE_ID_HTC));
 }
 
 /**

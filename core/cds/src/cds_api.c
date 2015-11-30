@@ -80,70 +80,51 @@ static uint8_t cds_multicast_logging;
 void cds_sys_probe_thread_cback(void *pUserData);
 
 /**
- * cds_alloc_global_context() - allocate CDS global context
- * @p_cds_context: A pointer to where to store the CDS Context
+ * cds_init() - Initialize CDS
  *
- * cds_alloc_global_context() function allocates the CDS global Context,
- * but does not initialize all the members. This overal initialization will
- * happen at cds_open().
+ * This function allocates the resource required for CDS, but does not
+ * initialize all the members. This overall initialization will happen at
+ * cds_open().
  *
- * Return: CDF status
+ * Return: Global context on success and NULL on failure.
  */
-CDF_STATUS cds_alloc_global_context(v_CONTEXT_t *p_cds_context)
+v_CONTEXT_t cds_init(void)
 {
-	if (p_cds_context == NULL)
-		return CDF_STATUS_E_FAILURE;
+	cdf_mc_timer_manager_init();
+	cdf_mem_init();
 
-	/* allocate the CDS Context */
-	*p_cds_context = NULL;
 	gp_cds_context = &g_cds_context;
-
-	cdf_mem_zero(gp_cds_context, sizeof(cds_context_type));
-	*p_cds_context = gp_cds_context;
 
 	gp_cds_context->cdf_ctx = &g_cdf_ctx;
 	cdf_mem_zero(&g_cdf_ctx, sizeof(g_cdf_ctx));
 
-	/* initialize the spinlock */
 	cdf_trace_spin_lock_init();
-	/* it is the right time to initialize MTRACE structures */
+
 #if defined(TRACE_RECORD)
 	cdf_trace_init();
 #endif
-
 	cdf_dp_trace_init();
-	return CDF_STATUS_SUCCESS;
-} /* cds_alloc_global_context() */
+
+	cds_ssr_protect_init();
+
+	return gp_cds_context;
+}
 
 /**
- * cds_free_global_context() - free CDS global context
- * @p_cds_context: A pointer to where the CDS Context was stored
+ * cds_deinit() - Deinitialize CDS
  *
- * cds_free_global_context() function frees the CDS Context.
- *
- * Return: CDF status
+ * This function frees the CDS resources
  */
-CDF_STATUS cds_free_global_context(v_CONTEXT_t *p_cds_context)
+void cds_deinit(void)
 {
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
-		  "%s: De-allocating the CDS Context", __func__);
+	if (gp_cds_context == NULL)
+		return;
 
-	if ((p_cds_context == NULL) || (*p_cds_context == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: vOS Context is Null", __func__);
-		return CDF_STATUS_E_FAILURE;
-	}
-
-	if (gp_cds_context != *p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Context mismatch", __func__);
-		return CDF_STATUS_E_FAILURE;
-	}
 	gp_cds_context->cdf_ctx = NULL;
-	*p_cds_context = gp_cds_context = NULL;
+	gp_cds_context = NULL;
 
-	return CDF_STATUS_SUCCESS;
-} /* cds_free_global_context() */
+	return;
+}
 
 #ifdef WLAN_FEATURE_NAN
 /**

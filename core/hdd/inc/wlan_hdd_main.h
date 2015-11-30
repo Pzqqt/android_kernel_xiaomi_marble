@@ -1425,6 +1425,9 @@ static inline void hdd_stop_bus_bw_computer_timer(hdd_adapter_t *pAdapter)
 }
 #endif
 
+int hdd_init(void);
+void hdd_deinit(void);
+
 int hdd_wlan_startup(struct device *dev, void *hif_sc);
 void __hdd_wlan_exit(void);
 int hdd_wlan_notify_modem_power_state(int state);
@@ -1517,7 +1520,6 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter);
 static inline void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter) {}
 static inline void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter) {}
 #endif
-cdf_wake_lock_t *hdd_wlan_get_wake_lock_ptr(void);
 
 #ifdef QCA_CONFIG_SMP
 int wlan_hdd_get_cpu(void);
