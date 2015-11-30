@@ -3759,6 +3759,7 @@ lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac, tpDphHashNode pStaDs
 			mlmReassocCnf.resultCode =
 				eSIR_SME_RESOURCES_UNAVAILABLE;
 			mlmReassocCnf.protStatusCode = eSIR_SME_SUCCESS;
+			cdf_mem_free(beacon_struct);
 			goto error;
 		}
 		/*
