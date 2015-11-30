@@ -55,9 +55,8 @@
  */
 #define CDS_WMA_TIMEOUT  (15000)
 
-CDF_STATUS cds_alloc_global_context(v_CONTEXT_t *p_cds_context);
-
-CDF_STATUS cds_free_global_context(v_CONTEXT_t *p_cds_context);
+v_CONTEXT_t cds_init(void);
+void cds_deinit(void);
 
 CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context);
 
