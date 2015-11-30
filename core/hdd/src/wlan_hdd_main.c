@@ -2713,6 +2713,7 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	switch (adapter->device_mode) {
 	case WLAN_HDD_INFRA_STATION:
 	case WLAN_HDD_P2P_CLIENT:
+	case WLAN_HDD_IBSS:
 	case WLAN_HDD_P2P_DEVICE:
 		if (hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter)) ||
@@ -2756,9 +2757,7 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			hdd_abort_mac_scan(hdd_ctx, adapter->sessionId,
 					   eCSR_SCAN_ABORT_DEFAULT);
 		}
-
-		if (adapter->device_mode != WLAN_HDD_INFRA_STATION)
-			wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
+		wlan_hdd_cleanup_remain_on_channel_ctx(adapter);
 
 #ifdef WLAN_OPEN_SOURCE
 		cancel_work_sync(&adapter->ipv4NotifierWorkQueue);
