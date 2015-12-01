@@ -1691,7 +1691,7 @@ typedef enum {
 #define CFG_VHT_ENABLE_TXBF_IN_20MHZ_MAX           (1)
 #define CFG_VHT_ENABLE_TXBF_IN_20MHZ_DEFAULT       (0)
 
-#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER         "gEnableTxSUBeamfomer"
+#define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER         "gEnableTxSUBeamformer"
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MIN     (0)
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_MAX     (1)
 #define CFG_VHT_ENABLE_TX_SU_BEAM_FORMER_DEFAULT (0)
