@@ -844,7 +844,11 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 					    hif_pci_ce_recv_data, pipe_info,
 					    attr.flags & CE_ATTR_DISABLE_INTR);
 		}
+
+		if (attr.src_nentries)
+			cdf_spinlock_init(&pipe_info->completion_freeq_lock);
 	}
+
 	A_TARGET_ACCESS_UNLIKELY(scn);
 	return 0;
 }
