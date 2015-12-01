@@ -2769,7 +2769,7 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 {
 	tp_wma_handle wma_handle;
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
-
+	int i;
 	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -2816,6 +2816,13 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 #endif /* HIF_USB */
 	}
 
+	/* clean up ll-queue for all vdev */
+	for (i = 0; i < wma_handle->max_bssid; i++) {
+		if (wma_handle->interfaces[i].handle &&
+				wma_handle->interfaces[i].vdev_up) {
+			ol_txrx_vdev_flush(wma_handle->interfaces[i].handle);
+		}
+	}
 	cdf_status = wma_tx_detach(wma_handle);
 	if (cdf_status != CDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: Failed to deregister tx management", __func__);
