@@ -612,7 +612,7 @@ void cdf_trace_dump_all(void *pMac, uint8_t code, uint8_t session,
 		return;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
 		  "Total Records: %d, Head: %d, Tail: %d",
 		  g_cdf_trace_data.num, g_cdf_trace_data.head,
 		  g_cdf_trace_data.tail);

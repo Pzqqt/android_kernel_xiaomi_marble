@@ -50,7 +50,7 @@
 static void
 hdd_trace_dump(void *mac, tp_cdf_trace_record record, uint16_t index)
 {
-	hddLog(LOGE, "%04d    %012llu  S%d    %-14s  %-30s(0x%x) ",
+	hddLog(LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
 	       index, record->time, record->session,
 	       "HDD Event:", hdd_trace_event_string(record->code),
 	       record->data);
