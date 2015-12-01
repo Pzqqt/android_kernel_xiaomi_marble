@@ -2952,7 +2952,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 		return true;
 	}
 
-	vdev = wma_find_vdev_by_addr(cds_ctx, wh->i_addr2, &vdev_id);
+	vdev = wma_find_vdev_by_bssid(cds_ctx, wh->i_addr3, &vdev_id);
 	if (!vdev) {
 		WMA_LOGE("%s: Failed to find vdev", __func__);
 		return true;
@@ -3108,7 +3108,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			if (0 != wma_process_bip(wma_handle, iface, wh, wbuf)) {
 					cds_pkt_return_packet(rx_pkt);
 					return -EINVAL;
-				}
+			}
 		} else {
 			WMA_LOGE("Rx unprotected unicast mgmt frame");
 			rx_pkt->pkt_meta.dpuFeedback =
@@ -3134,7 +3134,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	WMI_MGMT_RX_EVENTID_param_tlvs *param_tlvs = NULL;
 	wmi_mgmt_rx_hdr *hdr = NULL;
 	struct wma_txrx_node *iface = NULL;
-	uint8_t vdev_id;
+	uint8_t vdev_id = WMA_INVALID_VDEV_ID;
 	cds_pkt_t *rx_pkt;
 	cdf_nbuf_t wbuf;
 	struct ieee80211_frame *wh;
@@ -3254,22 +3254,25 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	mgt_subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
-	iface = wma_find_vdev_by_addr(wma_handle, wh->i_addr3, &vdev_id);
-	rx_pkt->pkt_meta.sessionId = vdev_id;
-
 #ifdef WLAN_FEATURE_11W
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
 	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||
 	     mgt_subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
 	     mgt_subtype == IEEE80211_FC0_SUBTYPE_ACTION)) {
-		if (iface && iface->rmfEnabled) {
-			status = wma_process_rmf_frame(wma_handle,
-				iface, wh, rx_pkt, wbuf);
-			if (status != 0)
-				return status;
+		if (wma_find_vdev_by_bssid(
+			wma_handle, wh->i_addr3, &vdev_id)) {
+			iface = &(wma_handle->interfaces[vdev_id]);
+			if (iface->rmfEnabled) {
+				status = wma_process_rmf_frame(wma_handle,
+					iface, wh, rx_pkt, wbuf);
+				if (status != 0)
+					return status;
+			}
 		}
 	}
 #endif /* WLAN_FEATURE_11W */
+	rx_pkt->pkt_meta.sessionId =
+		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 	wma_handle->mgmt_rx(wma_handle, rx_pkt);
 	return 0;
 }
