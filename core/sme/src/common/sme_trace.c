@@ -206,12 +206,12 @@ static void sme_trace_dump(tpAniSirGlobal pMac, tp_cdf_trace_record pRecord,
 			   uint16_t recIndex)
 {
 	if (TRACE_CODE_SME_COMMAND == pRecord->code) {
-		sms_log(pMac, LOGE, "%04d %012llu S%d %-14s %-30s(0x%x)",
+		sms_log(pMac, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
 			recIndex, pRecord->time, pRecord->session,
 			"SME COMMAND:", sme_trace_get_command_string(pRecord->data),
 			pRecord->data);
 	} else {
-		sms_log(pMac, LOGE, "%04d %012llu S%d %-14s %-30s(0x%x)",
+		sms_log(pMac, LOG1, "%04d %012llu S%d %-14s %-30s(0x%x)",
 			recIndex, pRecord->time, pRecord->session, "RX HDD MSG:",
 			sme_trace_get_rx_msg_string(pRecord->code), pRecord->data);
 	}
