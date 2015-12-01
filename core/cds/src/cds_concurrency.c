@@ -164,7 +164,7 @@ second_connection_pcl_dbs_table[CDS_MAX_ONE_CONNECTION_MODE]
 	[CDS_STA_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_SAP_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_P2P_CLIENT_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
-	[CDS_P2P_GO_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
+	[CDS_P2P_GO_MODE] = {CDS_5G, CDS_5G, CDS_5G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
 
@@ -172,7 +172,7 @@ second_connection_pcl_dbs_table[CDS_MAX_ONE_CONNECTION_MODE]
 	[CDS_STA_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_SAP_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
 	[CDS_P2P_CLIENT_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
-	[CDS_P2P_GO_MODE] = {CDS_5G_SCC_CH, CDS_5G_SCC_CH, CDS_5G_SCC_CH},
+	[CDS_P2P_GO_MODE] = {CDS_5G, CDS_5G, CDS_5G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
 
@@ -181,7 +181,7 @@ second_connection_pcl_dbs_table[CDS_MAX_ONE_CONNECTION_MODE]
 	[CDS_SAP_MODE] = {CDS_SCC_CH_24G, CDS_SCC_CH_24G, CDS_SCC_CH_24G},
 	[CDS_P2P_CLIENT_MODE] = {
 			CDS_SCC_CH_24G, CDS_24G_SCC_CH, CDS_SCC_CH_24G},
-	[CDS_P2P_GO_MODE] = {CDS_SCC_CH_24G, CDS_SCC_CH_24G, CDS_SCC_CH_24G},
+	[CDS_P2P_GO_MODE] = {CDS_24G, CDS_24G, CDS_24G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
 
@@ -190,7 +190,7 @@ second_connection_pcl_dbs_table[CDS_MAX_ONE_CONNECTION_MODE]
 	[CDS_SAP_MODE] = {CDS_SCC_CH_24G, CDS_SCC_CH_24G, CDS_SCC_CH_24G},
 	[CDS_P2P_CLIENT_MODE] =	{
 			CDS_SCC_CH_24G, CDS_24G_SCC_CH, CDS_SCC_CH_24G},
-	[CDS_P2P_GO_MODE] = {CDS_SCC_CH_24G, CDS_SCC_CH_24G, CDS_SCC_CH_24G},
+	[CDS_P2P_GO_MODE] = {CDS_24G, CDS_24G, CDS_24G},
 	[CDS_IBSS_MODE] = {
 		CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE, CDS_MAX_PCL_TYPE} },
 
@@ -4714,6 +4714,22 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 		cds_err("No VHT160, we have one connection already");
 		goto done;
 	}
+
+	/* don't allow two P2P GO on same band */
+	if (channel && (mode == CDS_P2P_GO_MODE) && num_connections) {
+		index = 0;
+		count = cds_mode_specific_connection_count(hdd_ctx,
+						CDS_P2P_GO_MODE, list);
+		while (index < count) {
+			if (CDS_IS_SAME_BAND_CHANNELS(channel,
+				conc_connection_list[list[index]].chan)) {
+				cds_err("Don't allow P2P GO on same band");
+				goto done;
+			}
+			index++;
+		}
+	}
+
 	status = true;
 
 done:
