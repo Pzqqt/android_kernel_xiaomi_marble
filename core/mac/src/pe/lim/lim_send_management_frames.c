@@ -2358,6 +2358,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (NULL != pe_session->assocReq) {
 		cdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
+		pe_session->assocReqLen = 0;
 	}
 	if (ft_ies_length) {
 		pe_session->assocReq = cdf_mem_malloc(ft_ies_length);

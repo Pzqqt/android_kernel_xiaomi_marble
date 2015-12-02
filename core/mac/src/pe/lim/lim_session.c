@@ -601,16 +601,19 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	if (session->beacon != NULL) {
 		cdf_mem_free(session->beacon);
 		session->beacon = NULL;
+		session->bcnLen = 0;
 	}
 
 	if (session->assocReq != NULL) {
 		cdf_mem_free(session->assocReq);
 		session->assocReq = NULL;
+		session->assocReqLen = 0;
 	}
 
 	if (session->assocRsp != NULL) {
 		cdf_mem_free(session->assocRsp);
 		session->assocRsp = NULL;
+		session->assocRspLen = 0;
 	}
 
 	if (session->parsedAssocReq != NULL) {

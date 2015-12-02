@@ -161,6 +161,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		if (session_entry->beacon != NULL) {
 			cdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
+			session_entry->bcnLen = 0;
 		}
 		session_entry->bcnLen =
 			WMA_GET_RX_PAYLOAD_LEN(rx_Packet_info);
