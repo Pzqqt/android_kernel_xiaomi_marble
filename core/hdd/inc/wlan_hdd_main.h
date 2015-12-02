@@ -79,8 +79,6 @@
 /** Length of the TX queue for the netdev */
 #define HDD_NETDEV_TX_QUEUE_LEN (3000)
 
-/** Bytes to reserve in the headroom */
-#define LIBRA_HW_NEEDED_HEADROOM   128
 /** Hdd Tx Time out value */
 #ifdef LIBRA_LINUX_PC
 #define HDD_TX_TIMEOUT          (8000)

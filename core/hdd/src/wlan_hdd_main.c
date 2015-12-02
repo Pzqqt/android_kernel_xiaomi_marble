@@ -1815,7 +1815,6 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		cdf_mem_copy(adapter->macAddressCurrent.bytes, macAddr,
 			     sizeof(tSirMacAddr));
 		pWlanDev->watchdog_timeo = HDD_TX_TIMEOUT;
-		pWlanDev->hard_header_len += LIBRA_HW_NEEDED_HEADROOM;
 
 		if (hdd_ctx->config->enable_ip_tcp_udp_checksum_offload)
 			pWlanDev->features |=
