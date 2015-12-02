@@ -104,6 +104,7 @@ extern int hdd_hostapd_stop(struct net_device *dev);
 #include "wma.h"
 #include "cds_concurrency.h"
 #include "wlan_hdd_green_ap.h"
+#include "platform_icnss.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -4787,6 +4788,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		       WLAN_INI_FILE);
 		goto err_config;
 	}
+
+	icnss_set_fw_debug_mode(hdd_ctx->config->enablefwlog);
 
 	hdd_ctx->current_intf_count = 0;
 	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
