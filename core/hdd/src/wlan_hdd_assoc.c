@@ -817,9 +817,8 @@ static void hdd_send_association_event(struct net_device *dev,
 
 		pr_info("wlan: disconnected\n");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
-		cds_decr_session_set_pcl(
-						pAdapter->device_mode,
-						pAdapter->sessionId);
+		cds_decr_session_set_pcl(pAdapter->device_mode,
+					pAdapter->sessionId);
 		wlan_hdd_enable_roaming(pAdapter);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -1427,9 +1426,8 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * successful reassoc decrement the active session count here.
 	 */
 	if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo))
-		cds_decr_session_set_pcl(
-				pAdapter->device_mode,
-				pAdapter->sessionId);
+		cds_decr_session_set_pcl(pAdapter->device_mode,
+					pAdapter->sessionId);
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;

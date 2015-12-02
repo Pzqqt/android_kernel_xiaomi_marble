@@ -66,7 +66,6 @@
 #include "wlan_hdd_ipa.h"
 #include "cdp_txrx_flow_ctrl_legacy.h"
 
-#define CDS_MAX_FEATURE_SET   8
 static struct cds_conc_connection_info
 	conc_connection_list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 
@@ -5955,113 +5954,6 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 	}
 
 	return status;
-}
-
-/**
- * cds_cfg80211_get_concurrency_matrix() - to retrieve concurrency matrix
- * @wiphy: pointer phy adapter
- * @wdev: pointer to wireless device structure
- * @data: pointer to data buffer
- * @data_len: length of data
- *
- * This routine will give concurrency matrix
- *
- * Return: int status code
- */
-static int __cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
-					 struct wireless_dev *wdev,
-					 const void *data,
-					 int data_len)
-{
-	uint32_t feature_set_matrix[CDS_MAX_FEATURE_SET] = {0};
-	uint8_t i, feature_sets, max_feature_sets;
-	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_MAX + 1];
-	struct sk_buff *reply_skb;
-	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
-	int ret;
-
-	ENTER();
-
-	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		cds_err("Command not allowed in FTM mode");
-		return -EPERM;
-	}
-
-	ret = wlan_hdd_validate_context(hdd_ctx);
-	if (0 != ret) {
-		cds_err("HDD context is not valid");
-		return ret;
-	}
-
-	if (nla_parse(tb, QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_MAX,
-			data, data_len, NULL)) {
-		cds_err("Invalid ATTR");
-		return -EINVAL;
-	}
-
-	/* Parse and fetch max feature set */
-	if (!tb[QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_CONFIG_PARAM_SET_SIZE_MAX]) {
-		cds_err("Attr max feature set size failed");
-		return -EINVAL;
-	}
-	max_feature_sets = nla_get_u32(tb[
-		QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_CONFIG_PARAM_SET_SIZE_MAX]);
-	cds_info("Max feature set size (%d)", max_feature_sets);
-
-	/* Fill feature combination matrix */
-	feature_sets = 0;
-	feature_set_matrix[feature_sets++] = WIFI_FEATURE_INFRA |
-		WIFI_FEATURE_P2P;
-	/* Add more feature combinations here */
-
-	feature_sets = QDF_MIN(feature_sets, max_feature_sets);
-	cds_info("Number of feature sets (%d)", feature_sets);
-	cds_info("Feature set matrix");
-	for (i = 0; i < feature_sets; i++)
-		cds_info("[%d] 0x%02X", i, feature_set_matrix[i]);
-
-	reply_skb = cfg80211_vendor_cmd_alloc_reply_skb(wiphy, sizeof(u32) +
-			sizeof(u32) * feature_sets + NLMSG_HDRLEN);
-
-	if (reply_skb) {
-		if (nla_put_u32(reply_skb,
-			QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET_SIZE,
-			feature_sets) ||
-			nla_put(reply_skb,
-			      QCA_WLAN_VENDOR_ATTR_GET_CONCURRENCY_MATRIX_RESULTS_SET,
-			      sizeof(u32) * feature_sets,
-			      feature_set_matrix)) {
-			cds_err("nla put fail");
-			kfree_skb(reply_skb);
-			return -EINVAL;
-		}
-		return cfg80211_vendor_cmd_reply(reply_skb);
-	}
-	cds_err("Feature set matrix: buffer alloc fail");
-	return -ENOMEM;
-}
-
-/**
- * cds_cfg80211_get_concurrency_matrix() - get concurrency matrix
- * @wiphy:   pointer to wireless wiphy structure.
- * @wdev:    pointer to wireless_dev structure.
- * @data:    Pointer to the data to be passed via vendor interface
- * @data_len:Length of the data to be passed
- *
- * Return:   Return the Success or Failure code.
- */
-int
-cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
-					struct wireless_dev *wdev,
-					const void *data, int data_len)
-{
-	int ret = 0;
-
-	cds_ssr_protect(__func__);
-	ret = __cds_cfg80211_get_concurrency_matrix(wiphy, wdev, data,
-			data_len);
-	cds_ssr_unprotect(__func__);
-	return ret;
 }
 
 /**

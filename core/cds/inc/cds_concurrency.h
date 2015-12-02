@@ -499,10 +499,6 @@ bool cds_is_sta_connection_pending(void);
 void cds_change_sta_conn_pending_status(bool value);
 void cds_change_sap_restart_required_status(bool value);
 bool cds_set_connection_in_progress(bool value);
-int cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
-			struct wireless_dev *wdev,
-			const void *data,
-			int data_len);
 uint32_t cds_get_concurrency_mode(void);
 QDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 		hdd_station_ctx_t *hdd_sta_ctx);
