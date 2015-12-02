@@ -271,48 +271,53 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 				sme_join_rsp->beaconLength);
 			cdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
+			session_entry->bcnLen = 0;
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx, LOG1, FL("Beacon=%d"),
-				session_entry->bcnLen);
+				sme_join_rsp->beaconLength);
 #endif
 		}
 		if (session_entry->assocReq != NULL) {
 			sme_join_rsp->assocReqLength =
 				session_entry->assocReqLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen, session_entry->assocReq,
+				sme_join_rsp->beaconLength,
+				session_entry->assocReq,
 				sme_join_rsp->assocReqLength);
 			cdf_mem_free(session_entry->assocReq);
 			session_entry->assocReq = NULL;
+			session_entry->assocReqLen = 0;
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx,
 				LOG1, FL("AssocReq=%d"),
-				session_entry->assocReqLen);
+				sme_join_rsp->assocReqLength);
 #endif
 		}
 		if (session_entry->assocRsp != NULL) {
 			sme_join_rsp->assocRspLength =
 				session_entry->assocRspLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen +
-				session_entry->assocReqLen,
+				sme_join_rsp->beaconLength +
+				sme_join_rsp->assocReqLength,
 				session_entry->assocRsp,
 				sme_join_rsp->assocRspLength);
 			cdf_mem_free(session_entry->assocRsp);
 			session_entry->assocRsp = NULL;
+			session_entry->assocRspLen = 0;
 		}
 #ifdef WLAN_FEATURE_VOWIFI_11R
 		if (session_entry->ricData != NULL) {
 			sme_join_rsp->parsedRicRspLen =
 				session_entry->RICDataLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen +
-				session_entry->assocReqLen +
-				session_entry->assocRspLen,
+				sme_join_rsp->beaconLength +
+				sme_join_rsp->assocReqLength +
+				sme_join_rsp->assocRspLength,
 				session_entry->ricData,
 				sme_join_rsp->parsedRicRspLen);
 			cdf_mem_free(session_entry->ricData);
 			session_entry->ricData = NULL;
+			session_entry->RICDataLen = 0;
 			lim_log(mac_ctx, LOG1, FL("RicLength=%d"),
 				sme_join_rsp->parsedRicRspLen);
 		}
@@ -322,22 +327,23 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			sme_join_rsp->tspecIeLen =
 				session_entry->tspecLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen +
-				session_entry->assocReqLen +
-				session_entry->assocRspLen +
-				session_entry->RICDataLen,
+				sme_join_rsp->beaconLength +
+				sme_join_rsp->assocReqLength +
+				sme_join_rsp->assocRspLength +
+				sme_join_rsp->parsedRicRspLen,
 				session_entry->tspecIes,
 				sme_join_rsp->tspecIeLen);
 			cdf_mem_free(session_entry->tspecIes);
 			session_entry->tspecIes = NULL;
+			session_entry->tspecLen = 0;
 			lim_log(mac_ctx, LOG1, FL("ESE-TspecLen=%d"),
-				session_entry->tspecLen);
+				sme_join_rsp->tspecIeLen);
 		}
 #endif
 		sme_join_rsp->aid = session_entry->limAID;
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(mac_ctx, LOG1, FL("AssocRsp=%d"),
-			session_entry->assocRspLen);
+			sme_join_rsp->assocRspLength);
 #endif
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
@@ -367,25 +373,30 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 		if (session_entry->beacon != NULL) {
 			cdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
+			session_entry->bcnLen = 0;
 		}
 		if (session_entry->assocReq != NULL) {
 			cdf_mem_free(session_entry->assocReq);
 			session_entry->assocReq = NULL;
+			session_entry->assocReqLen = 0;
 		}
 		if (session_entry->assocRsp != NULL) {
 			cdf_mem_free(session_entry->assocRsp);
 			session_entry->assocRsp = NULL;
+			session_entry->assocRspLen = 0;
 		}
 #ifdef WLAN_FEATURE_VOWIFI_11R
 		if (session_entry->ricData != NULL) {
 			cdf_mem_free(session_entry->ricData);
 			session_entry->ricData = NULL;
+			session_entry->RICDataLen = 0;
 		}
 #endif
 #ifdef FEATURE_WLAN_ESE
 		if (session_entry->tspecIes != NULL) {
 			cdf_mem_free(session_entry->tspecIes);
 			session_entry->tspecIes = NULL;
+			session_entry->tspecLen = 0;
 		}
 #endif
 	}

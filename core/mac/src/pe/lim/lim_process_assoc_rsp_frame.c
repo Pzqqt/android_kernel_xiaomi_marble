@@ -381,6 +381,7 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 	if (session_entry->ricData != NULL) {
 		cdf_mem_free(session_entry->ricData);
 		session_entry->ricData = NULL;
+		session_entry->RICDataLen = 0;
 	}
 	if (assoc_rsp->ricPresent) {
 		session_entry->RICDataLen =
@@ -429,6 +430,7 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 	if (session_entry->tspecIes != NULL) {
 		cdf_mem_free(session_entry->tspecIes);
 		session_entry->tspecIes = NULL;
+		session_entry->tspecLen = 0;
 	}
 	if (assoc_rsp->tspecPresent) {
 		lim_log(mac_ctx, LOG1, FL("Tspec EID present in assoc rsp"));
@@ -745,6 +747,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			 "and setting NULL"));
 		cdf_mem_free(session_entry->assocRsp);
 		session_entry->assocRsp = NULL;
+		session_entry->assocRspLen = 0;
 	}
 
 	session_entry->assocRsp = cdf_mem_malloc(frame_len);

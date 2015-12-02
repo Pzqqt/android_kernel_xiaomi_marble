@@ -150,6 +150,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		if (session->beacon != NULL) {
 			cdf_mem_free(session->beacon);
 			session->beacon = NULL;
+			session->bcnLen = 0;
 		}
 		session->bcnLen = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 		session->beacon = cdf_mem_malloc(session->bcnLen);
