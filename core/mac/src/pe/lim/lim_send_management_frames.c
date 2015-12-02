@@ -1930,7 +1930,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    )
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (pe_session->pePersona == CDF_P2P_CLIENT_MODE)
+	if (pe_session->pePersona == CDF_P2P_CLIENT_MODE ||
+		pe_session->pePersona == CDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -2710,9 +2711,9 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	if (psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) {
+	if (psessionEntry->pePersona == CDF_P2P_CLIENT_MODE ||
+		psessionEntry->pePersona == CDF_STA_MODE)
 		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-	}
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOC_START_EVENT,
@@ -3015,9 +3016,9 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 
-	if (session->pePersona == CDF_P2P_CLIENT_MODE)
+	if (session->pePersona == CDF_P2P_CLIENT_MODE ||
+		session->pePersona == CDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 session->peSessionId, mac_hdr->fc.subType));
@@ -3345,10 +3346,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	if ((psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) ||
-	    (psessionEntry->pePersona == CDF_P2P_GO_MODE)) {
-		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-	}
+	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 	if (waitForAck) {
 		MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -3525,10 +3523,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	if ((psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) ||
-	    (psessionEntry->pePersona == CDF_P2P_GO_MODE)) {
-		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-	}
+	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 #ifdef FEATURE_WLAN_TDLS
 	pStaDs =
 		dph_lookup_hash_entry(pMac, peer, &aid,
