@@ -532,6 +532,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 		pEndpoint->ul_outstanding_cnt++;
 		UNLOCK_HTC_TX(target);
 
+		hif_send_complete_check(target->hif_dev, pEndpoint->UL_PipeID, false);
 		status = hif_send_head(target->hif_dev,
 				       pEndpoint->UL_PipeID, pEndpoint->Id,
 				       HTC_HDR_LENGTH + pPacket->ActualLength,

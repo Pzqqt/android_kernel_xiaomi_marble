@@ -2343,6 +2343,7 @@ inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
 
 #endif
 
+#ifdef ADRASTEA_RRI_ON_DDR
 /**
  * hif_get_src_ring_read_index(): Called to get the SRRI
  *
@@ -2392,7 +2393,6 @@ inline unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
 				(CE_ctrl_addr) + CURRENT_DRRI_ADDRESS);
 }
 
-#ifdef ADRASTEA_RRI_ON_DDR
 /**
  * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
  *
