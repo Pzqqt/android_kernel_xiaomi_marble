@@ -671,13 +671,16 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	/* increment a debug count */
 	pMac->lim.gLimNumRxCleanup++;
 #endif
-
-	if (psessionEntry->limSmeState == eLIM_SME_JOIN_FAILURE_STATE) {
-		retCode =
-			lim_del_bss(pMac, pStaDs, psessionEntry->bssIdx,
-				    psessionEntry);
-	} else
-		retCode = lim_del_sta(pMac, pStaDs, true, psessionEntry);
+	/* Do DEL BSS or DEL STA only if ADD BSS was success */
+	if (!psessionEntry->add_bss_failed) {
+		if (psessionEntry->limSmeState == eLIM_SME_JOIN_FAILURE_STATE) {
+			retCode =
+				lim_del_bss(pMac, pStaDs, psessionEntry->bssIdx,
+					    psessionEntry);
+		} else
+			retCode = lim_del_sta(pMac,
+					 pStaDs, true, psessionEntry);
+	}
 
 	return retCode;
 
