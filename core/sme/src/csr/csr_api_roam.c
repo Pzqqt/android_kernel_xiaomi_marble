@@ -7681,7 +7681,6 @@ CDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSmeCmd *pCommand;
-	bool fHighPriority = false;
 	do {
 		pCommand = csr_get_command_buffer(pMac);
 		if (!pCommand) {
@@ -7709,7 +7708,6 @@ CDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 			pCommand->u.roamCmd.roamReason = eCsrForcedDeauth;
 			break;
 		case eCSR_DISCONNECT_REASON_HANDOFF:
-			fHighPriority = true;
 			pCommand->u.roamCmd.roamReason =
 				eCsrSmeIssuedDisassocForHandoff;
 			break;
@@ -7735,7 +7733,7 @@ CDF_STATUS csr_roam_issue_disassociate_cmd(tpAniSirGlobal pMac, uint32_t session
 		default:
 			break;
 		}
-		status = csr_queue_sme_command(pMac, pCommand, fHighPriority);
+		status = csr_queue_sme_command(pMac, pCommand, true);
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				FL(" fail to send message status = %d"), status);
