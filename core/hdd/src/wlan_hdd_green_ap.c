@@ -80,6 +80,7 @@ enum hdd_green_ap_event {
  * @ps_state: Current state
  * @ps_event: Event to trigger when timer expires
  * @ps_timer: Event timer
+ * @egap_support: Enhanced Green AP support flag
  */
 struct hdd_green_ap_ctx {
 	uint8_t ps_enable;
@@ -91,6 +92,8 @@ struct hdd_green_ap_ctx {
 	enum hdd_green_ap_event ps_event;
 
 	cdf_mc_timer_t ps_timer;
+
+	bool egap_support;
 };
 
 /**
@@ -448,4 +451,19 @@ void hdd_wlan_green_ap_add_sta(struct hdd_context_s *hdd_ctx)
 void hdd_wlan_green_ap_del_sta(struct hdd_context_s *hdd_ctx)
 {
 	hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_DEL_STA_EVENT);
+}
+
+/**
+ * hdd_wlan_set_egap_support() - helper function to set egap support flag
+ * @hdd_ctx:   pointer to hdd context
+ * @param:     pointer to target configuration
+ *
+ * Return:     None
+ */
+void hdd_wlan_set_egap_support(hdd_context_t *hdd_ctx, void *param)
+{
+	struct wma_tgt_cfg *cfg = (struct wma_tgt_cfg *) param;
+
+	if (hdd_ctx && cfg)
+		hdd_ctx->green_ap_ctx->egap_support = cfg->egap_support;
 }

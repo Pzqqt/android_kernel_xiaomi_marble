@@ -1213,6 +1213,8 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	hdd_ctx->lpss_support = cfg->lpss_support;
 #endif
 
+	hdd_wlan_set_egap_support(hdd_ctx, cfg);
+
 	hdd_ctx->ap_arpns_support = cfg->ap_arpns_support;
 	hdd_update_tgt_services(hdd_ctx, &cfg->services);
 
@@ -4880,6 +4882,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	cds_set_connection_in_progress(hdd_ctx, false);
 
+	hdd_wlan_green_ap_init(hdd_ctx);
+
 	status = cds_open(&p_cds_context, 0);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
@@ -5296,7 +5300,6 @@ ftm_processing:
 		hddLog(LOGE, FL("Failed to init ACS Skip timer"));
 #endif
 
-	hdd_wlan_green_ap_init(hdd_ctx);
 	wlan_hdd_nan_init(hdd_ctx);
 	status = cds_init_policy_mgr(hdd_ctx);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {

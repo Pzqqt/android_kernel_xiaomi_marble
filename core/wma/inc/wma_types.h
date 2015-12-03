@@ -444,10 +444,11 @@
 #define WMA_DCC_GET_STATS_CMD                SIR_HAL_DCC_GET_STATS_CMD
 #define WMA_DCC_CLEAR_STATS_CMD              SIR_HAL_DCC_CLEAR_STATS_CMD
 #define WMA_DCC_UPDATE_NDL_CMD               SIR_HAL_DCC_UPDATE_NDL_CMD
-#define WMA_SET_IE_INFO                       SIR_HAL_SET_IE_INFO
+#define WMA_SET_IE_INFO                      SIR_HAL_SET_IE_INFO
 
-#define WMA_LRO_CONFIG_CMD                    SIR_HAL_LRO_CONFIG_CMD
+#define WMA_LRO_CONFIG_CMD                   SIR_HAL_LRO_CONFIG_CMD
 #define WMA_GW_PARAM_UPDATE_REQ              SIR_HAL_GATEWAY_PARAM_UPDATE_REQ
+#define WMA_SET_EGAP_CONF_PARAMS             SIR_HAL_SET_EGAP_CONF_PARAMS
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
