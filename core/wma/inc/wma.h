@@ -1083,6 +1083,7 @@ struct wmi_init_cmd {
  * @final_abi_vers: The final ABI version to be used for communicating
  * @target_fw_version: Target f/w build version
  * @lpss_support: LPSS feature is supported in target or not
+ * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
  * @wlan_init_status: wlan init status
  * @cdf_dev: cdf device
@@ -1211,6 +1212,9 @@ typedef struct {
 	uint8_t lpss_support;
 #endif
 	uint8_t ap_arpns_support;
+#ifdef FEATURE_GREEN_AP
+	bool egap_support;
+#endif
 	bool wmi_ready;
 	uint32_t wlan_init_status;
 	cdf_device_t cdf_dev;

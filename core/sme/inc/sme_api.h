@@ -1064,4 +1064,18 @@ CDF_STATUS sme_gateway_param_update(tHalHandle hHal,
 				struct gateway_param_update_req *request);
 #endif
 
+#ifdef FEATURE_GREEN_AP
+CDF_STATUS sme_send_egap_conf_params(uint32_t enable,
+				     uint32_t inactivity_time,
+				     uint32_t wait_time,
+				     uint32_t flags);
+#else
+static inline CDF_STATUS sme_send_egap_conf_params(uint32_t enable,
+						   uint32_t inactivity_time,
+						   uint32_t wait_time,
+						   uint32_t flags)
+{
+	return CDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif /* #if !defined( __SME_API_H ) */

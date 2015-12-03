@@ -3459,6 +3459,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
+	wma_setup_egap_support(&tgt_cfg, wma_handle);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 }
 
@@ -3893,6 +3894,9 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 			("Failed to register WMI_TBTTOFFSET_UPDATE_EVENTID callback");
 		return;
 	}
+
+	/* register the Enhanced Green AP event handler */
+	wma_register_egap_event_handle(wma_handle);
 
 	/* Initialize the log supported event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -5283,6 +5287,10 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_GW_PARAM_UPDATE_REQ:
 		wma_set_gateway_params(wma_handle,
 			(struct gateway_param_update_req *)msg->bodyptr);
+		break;
+	case WMA_SET_EGAP_CONF_PARAMS:
+		wma_send_egap_conf_params(wma_handle,
+			(struct egap_conf_params *)msg->bodyptr);
 		cdf_mem_free(msg->bodyptr);
 		break;
 	default:

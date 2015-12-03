@@ -147,6 +147,7 @@ struct wma_dfs_radar_ind {
  * @vht_cap: struct wma_tgt_vht_cap
  * @max_intf_count: max interface count
  * @lpss_support: lpass support
+ * @egap_support: enhanced green ap support
  */
 struct wma_tgt_cfg {
 	uint32_t target_fw_version;
@@ -164,5 +165,8 @@ struct wma_tgt_cfg {
 	uint8_t lpss_support;
 #endif
 	uint8_t ap_arpns_support;
+#ifdef FEATURE_GREEN_AP
+	bool egap_support;
+#endif
 };
 #endif /* WMA_TGT_CFG_H */

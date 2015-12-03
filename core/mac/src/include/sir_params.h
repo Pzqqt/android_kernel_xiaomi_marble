@@ -605,6 +605,8 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_LRO_CONFIG_CMD              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 335)
 
+#define SIR_HAL_SET_EGAP_CONF_PARAMS        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 336)
+
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
 /* CFG message types */

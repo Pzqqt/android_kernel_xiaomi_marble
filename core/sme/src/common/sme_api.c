@@ -14949,3 +14949,45 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 	}
 }
 #endif
+
+#ifdef FEATURE_GREEN_AP
+/**
+ * sme_send_egap_conf_params() - set the enhanced green ap configuration params
+ * @enable: enable/disable the enhanced green ap feature
+ * @inactivity_time: inactivity timeout value
+ * @wait_time: wait timeout value
+ * @flag: feature flag in bitmasp
+ *
+ * Return: Return CDF_STATUS, otherwise appropriate failure code
+ */
+CDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
+				     uint32_t wait_time, uint32_t flags)
+{
+	cds_msg_t message;
+	CDF_STATUS status;
+	struct egap_conf_params *egap_params;
+
+	egap_params = cdf_mem_malloc(sizeof(*egap_params));
+	if (NULL == egap_params) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+				"%s: fail to alloc egap_params", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	egap_params->enable = enable;
+	egap_params->inactivity_time = inactivity_time;
+	egap_params->wait_time = wait_time;
+	egap_params->flags = flags;
+
+	message.type = WMA_SET_EGAP_CONF_PARAMS;
+	message.bodyptr = egap_params;
+	status = cds_mq_post_message(CDF_MODULE_ID_WMA, &message);
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			"%s: Not able to post msg to WMA!", __func__);
+
+		cdf_mem_free(egap_params);
+	}
+	return status;
+}
+#endif
