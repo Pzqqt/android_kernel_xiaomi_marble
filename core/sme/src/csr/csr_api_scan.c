@@ -3925,10 +3925,6 @@ error:
 		cdf_mem_free(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList);
 	if (save_cmd->u.scanCmd.pToRoamProfile)
 		cdf_mem_free(save_cmd->u.scanCmd.pToRoamProfile);
-	if (save_cmd) {
-		cdf_mem_free(save_cmd);
-		save_cmd = NULL;
-	}
 
 	return CDF_STATUS_E_FAILURE;
 }
@@ -4019,11 +4015,11 @@ csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand,
 		}
 
 		status = csr_save_profile(mac_ctx, save_cmd, pCommand);
-		if (!CDF_IS_STATUS_SUCCESS(status) ||
-				!save_cmd) {
+		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			/* csr_save_profile should report error */
 			sms_log(mac_ctx, LOGE, FL("profile save failed %d"),
 					status);
+			cdf_mem_free(save_cmd);
 			return;
 		}
 
