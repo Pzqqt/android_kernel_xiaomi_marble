@@ -903,7 +903,7 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 		 */
 		A_TARGET_ACCESS_BEGIN_RET(scn);
 		src_ring->hw_index =
-			CE_SRC_RING_READ_IDX_GET(scn, ctrl_addr);
+			CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, ctrl_addr);
 		A_TARGET_ACCESS_END_RET(scn);
 	}
 	read_index = src_ring->hw_index;

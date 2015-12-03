@@ -264,6 +264,7 @@ uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
 #define SRRI_FROM_DDR_ADDR(addr) ((*(addr)) & 0xFFFF)
 #define DRRI_FROM_DDR_ADDR(addr) (((*(addr))>>16) & 0xFFFF)
 
+#ifdef ADRASTEA_RRI_ON_DDR
 #ifdef SHADOW_REG_DEBUG
 #define CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
 	DEBUG_CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr)
@@ -276,13 +277,11 @@ uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
 	DRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr))
 #endif
 
-
 unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
 		uint32_t CE_ctrl_addr);
 unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
 		uint32_t CE_ctrl_addr);
 
-#ifdef ADRASTEA_RRI_ON_DDR
 #define CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
 	hif_get_src_ring_read_index(scn, CE_ctrl_addr)
 #define CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
@@ -292,6 +291,15 @@ unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
 	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_SRRI_ADDRESS)
 #define CE_DEST_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
 	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_DRRI_ADDRESS)
+
+/**
+ * if RRI on DDR is not enabled, get idx from ddr defaults to
+ * using the register value & force wake must be used for
+ * non interrupt processing.
+ */
+#define CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, CE_ctrl_addr)\
+	A_TARGET_READ(scn, (CE_ctrl_addr) + CURRENT_SRRI_ADDRESS)
+
 #endif
 
 #define CE_SRC_RING_BASE_ADDR_SET(scn, CE_ctrl_addr, addr) \
