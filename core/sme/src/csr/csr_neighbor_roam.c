@@ -1039,6 +1039,7 @@ CDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 	} else {
 		tpCsrNeighborRoamBSSInfo neighbor_bss_node = NULL;
 		tListElem *entry;
+		bool is_dis_pending = false;
 
 		sms_log(mac_ctx, LOGE,
 			FL("Preauth failed retry number %d, status = 0x%x"),
@@ -1092,11 +1093,17 @@ CDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 				mac_ctx, neighbor_bss_node);
 		}
 NEXT_PREAUTH:
+		is_dis_pending = is_disconnect_pending(mac_ctx, session_id);
+		if (is_dis_pending) {
+			sms_log(mac_ctx, LOGE,
+				FL("Disconnect in progress, Abort preauth"));
+			goto ABORT_PREAUTH;
+		}
 		/* Issue preauth request for the same/next entry */
 		if (CDF_STATUS_SUCCESS == csr_neighbor_roam_issue_preauth_req(
 						mac_ctx, session_id))
 			goto DEQ_PREAUTH;
-
+ABORT_PREAUTH:
 		if (csr_roam_is_roam_offload_scan_enabled(mac_ctx)) {
 			if (neighbor_roam_info->uOsRequestedHandoff) {
 				neighbor_roam_info->uOsRequestedHandoff = 0;

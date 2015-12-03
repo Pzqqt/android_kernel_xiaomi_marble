@@ -1065,6 +1065,8 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  tSirBssDescription *bss_descr);
 void csr_release_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 			      eCsrScanStatus scanStatus);
+bool is_disconnect_pending(tpAniSirGlobal mac_ctx,
+				   uint8_t sessionid);
 void csr_scan_active_list_timeout_handle(void *userData);
 CDF_STATUS csr_prepare_disconnect_command(tpAniSirGlobal mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);
