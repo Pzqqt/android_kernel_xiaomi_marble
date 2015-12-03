@@ -36,6 +36,7 @@
 #include "cdf_nbuf.h"
 #include "cdf_trace.h"
 #include "cdf_lock.h"
+#include "cdf_mc_timer.h"
 
 #if defined(CONFIG_CNSS)
 #include <net/cnss.h>
@@ -66,6 +67,7 @@ struct s_cdf_mem_struct {
 #endif
 
 /* Preprocessor Definitions and Constants */
+#define CDF_GET_MEMORY_TIME_THRESHOLD 3000
 
 /* Type Declarations */
 
@@ -194,6 +196,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	void *memPtr = NULL;
 	uint32_t new_size;
 	int flags = GFP_KERNEL;
+	unsigned long  time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
@@ -217,8 +220,19 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		flags = GFP_ATOMIC;
 
 	new_size = size + sizeof(struct s_cdf_mem_struct) + 8;
-
+	time_before_kzalloc = cdf_mc_timer_get_system_time();
 	memStruct = (struct s_cdf_mem_struct *)kzalloc(new_size, flags);
+	/**
+	 * If time taken by kmalloc is greater than
+	 * CDF_GET_MEMORY_TIME_THRESHOLD msec
+	 */
+	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
+					  CDF_GET_MEMORY_TIME_THRESHOLD)
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			 "%s: kzalloc took %lu msec for size %zu called from %pS at line %d",
+			 __func__,
+			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
+			 size, (void *)_RET_IP_, lineNum);
 
 	if (memStruct != NULL) {
 		CDF_STATUS cdf_status;
@@ -327,6 +341,9 @@ void *cdf_mem_malloc(size_t size)
 #ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
 	void *pmem;
 #endif
+	void *memPtr = NULL;
+	unsigned long  time_before_kzalloc;
+
 	if (size > (1024 * 1024) || size == 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!",
@@ -346,8 +363,20 @@ void *cdf_mem_malloc(size_t size)
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
-
-	return kzalloc(size, flags);
+	time_before_kzalloc = cdf_mc_timer_get_system_time();
+	memPtr = kzalloc(size, flags);
+	/**
+	 * If time taken by kmalloc is greater than
+	 * CDF_GET_MEMORY_TIME_THRESHOLD msec
+	 */
+	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
+					   CDF_GET_MEMORY_TIME_THRESHOLD)
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			 "%s: kzalloc took %lu msec for size %zu called from %pS",
+			 __func__,
+			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
+			 size, (void *)_RET_IP_);
+	return memPtr;
 }
 
 /**
