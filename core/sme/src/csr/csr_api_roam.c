@@ -7955,7 +7955,7 @@ CDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 }
 
 
-static bool is_disconnect_pending(tpAniSirGlobal pmac,
+bool is_disconnect_pending(tpAniSirGlobal pmac,
 				uint8_t sessionid)
 {
 	tListElem *entry = NULL;
