@@ -3580,25 +3580,28 @@ static inline void hdd_disable_ftm(hdd_context_t *hdd_ctx) { }
 
 #ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
 /**
- * wlan_hdd_logging_sock_activate_svc() - Activate logging
+ * hdd_logging_sock_activate_svc() - Activate logging
  * @hdd_ctx: HDD context
  *
  * Activates the logging service
  *
  * Return: Zero in case of success, negative value otherwise
  */
-static int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
+static int hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
 {
-	if (hdd_ctx->config->wlanLoggingEnable) {
-		if (wlan_logging_sock_activate_svc(
-				hdd_ctx->config->wlanLoggingFEToConsole,
-				hdd_ctx->config->wlanLoggingNumBuf)) {
-			hdd_err("wlan_logging_sock_activate_svc failed");
-			return -EINVAL;
-		}
-	}
-	return 0;
+	int ret;
+	struct hdd_config *config = hdd_ctx->config;
+
+	if (!config->wlanLoggingEnable)
+		return 0;
+
+	ret = wlan_logging_sock_activate_svc(config->wlanLoggingFEToConsole,
+					     config->wlanLoggingNumBuf);
+	if (ret)
+		hdd_err("wlan_logging_sock_activate_svc failed: %d", ret);
+	return ret;
 }
+
 /**
  * wlan_hdd_logging_sock_deactivate_svc() - Deactivate logging
  * @hdd_ctx: HDD context
@@ -3607,7 +3610,7 @@ static int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
  *
  * Return: 0 on deactivating the logging service
  */
-static int wlan_hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
+static int hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
 {
 	if (hdd_ctx && hdd_ctx->config->wlanLoggingEnable)
 		return wlan_logging_sock_deactivate_svc();
@@ -3615,16 +3618,35 @@ static int wlan_hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
 	return 0;
 }
 #else
-static inline int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
+static inline int hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
 {
 	return 0;
 }
 
-static inline int wlan_hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
+static inline int hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
 {
 	return 0;
 }
 #endif
+
+/**
+ * hdd_free_context - Free HDD context
+ * @hdd_ctx:	HDD context to be freed.
+ *
+ * Free config and HDD context.
+ *
+ * Return: None
+ */
+static void hdd_free_context(hdd_context_t *hdd_ctx)
+{
+	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+		hdd_logging_sock_deactivate_svc(hdd_ctx);
+
+	cdf_mem_free(hdd_ctx->config);
+	hdd_ctx->config = NULL;
+
+	wiphy_free(hdd_ctx->wiphy);
+}
 
 /**
  * hdd_wlan_exit() - HDD WLAN exit function
@@ -3765,9 +3787,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_wlan_green_ap_deinit(hdd_ctx);
 
-	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam())
-		wlan_hdd_logging_sock_deactivate_svc(hdd_ctx);
-
 #ifdef WLAN_KD_READY_NOTIFIER
 	cnss_diag_notify_wlan_close();
 	ptt_sock_deactivate_svc();
@@ -3791,14 +3810,9 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 free_hdd_ctx:
 
-	/* Free up dynamically allocated members inside HDD Adapter */
-	if (hdd_ctx->config) {
-		kfree(hdd_ctx->config);
-		hdd_ctx->config = NULL;
-	}
-
 	wiphy_unregister(wiphy);
-	wiphy_free(wiphy);
+
+	hdd_free_context(hdd_ctx);
 }
 
 void __hdd_wlan_exit(void)
@@ -4967,185 +4981,37 @@ static CDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
 }
 
 /**
- * hdd_wlan_startup() - HDD init function
- * @dev:	Pointer to the underlying device
+ * hdd_override_ini_config - Override INI config
+ * @hdd_ctx: HDD context
  *
- * This is the driver startup code executed once a WLAN device has been detected
+ * Override INI config based on module parameter.
  *
- * Return:  0 for success, < 0 for failure
+ * Return: None
  */
-int hdd_wlan_startup(struct device *dev, void *hif_sc)
+static void hdd_override_ini_config(hdd_context_t *hdd_ctx)
 {
-	CDF_STATUS status;
-	hdd_adapter_t *adapter = NULL;
-#ifdef WLAN_OPEN_P2P_INTERFACE
-	hdd_adapter_t *pP2adapter = NULL;
-#endif
-	hdd_context_t *hdd_ctx = NULL;
-	v_CONTEXT_t p_cds_context = NULL;
-	int ret;
-	int i;
-	struct wiphy *wiphy;
-	unsigned long rc;
-	tSmeThermalParams thermalParam;
-	tSirTxPowerLimit *hddtxlimit;
-	uint8_t rtnl_lock_enable;
-	uint8_t reg_netdev_notifier_done = false;
-	hdd_adapter_t *dot11_adapter = NULL;
 
-	ENTER();
-
-	if (WLAN_IS_EPPING_ENABLED(con_mode)) {
-		ret = epping_enable(dev);
-		EXIT();
-		return ret;
+	if (0 == enable_dfs_chan_scan || 1 == enable_dfs_chan_scan) {
+		hdd_ctx->config->enableDFSChnlScan = enable_dfs_chan_scan;
+		hdd_notice("Module enable_dfs_chan_scan set to %d",
+			   enable_dfs_chan_scan);
 	}
-
-	/* cfg80211: wiphy allocation */
-	wiphy = wlan_hdd_cfg80211_wiphy_alloc(sizeof(hdd_context_t));
-
-	if (wiphy == NULL) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("cfg80211 init failed"));
-		return -EIO;
+	if (0 == enable_11d || 1 == enable_11d) {
+		hdd_ctx->config->Is11dSupportEnabled = enable_11d;
+		hdd_notice("Module enable_11d set to %d", enable_11d);
 	}
+}
 
-	hdd_ctx = wiphy_priv(wiphy);
-
-	/* Initialize the adapter context to zeros. */
-	cdf_mem_zero(hdd_ctx, sizeof(hdd_context_t));
-
-	hdd_ctx->wiphy = wiphy;
-	hdd_ctx->ioctl_scan_mode = eSIR_ACTIVE_SCAN;
-	cds_set_wakelock_logging(false);
-
-	/* Get cds context here bcoz cds_open requires it */
-	p_cds_context = cds_get_global_context();
-
-	if (p_cds_context == NULL) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("Failed cds_get_global_context"));
-		goto err_free_hdd_context;
-	}
-	/* Save the Global CDS context in adapter context for future. */
-	hdd_ctx->pcds_context = p_cds_context;
-
-	/* Save the adapter context in global context for future. */
-	((cds_context_type *) (p_cds_context))->pHDDContext = (void *)hdd_ctx;
-
-	hdd_ctx->parent_dev = dev;
-
-	hdd_init_ll_stats_ctx();
-
-	init_completion(&hdd_ctx->mc_sus_event_var);
-	init_completion(&hdd_ctx->ready_to_suspend);
-
-	cdf_spinlock_init(&hdd_ctx->sched_scan_lock);
-	cdf_spinlock_init(&hdd_ctx->connection_status_lock);
-
-	cdf_spinlock_init(&hdd_ctx->hdd_adapter_lock);
-	cdf_list_init(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
-
-	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
-
-#ifdef FEATURE_WLAN_TDLS
-	/*
-	 * tdls_lock is initialized before an hdd_open_adapter ( which is
-	 * invoked by other instances also) to protect the concurrent
-	 * access for the Adapters by TDLS module.
-	 */
-	mutex_init(&hdd_ctx->tdls_lock);
-#endif
-	mutex_init(&hdd_ctx->dfs_lock);
-	/* store target type and target version info in hdd ctx */
-	hdd_ctx->target_type = ((struct ol_softc *)hif_sc)->target_type;
-	hdd_init_offloaded_packets_ctx(hdd_ctx);
-	/* Load all config first as TL config is needed during cds_open */
-	hdd_ctx->config =
-		(struct hdd_config *) kmalloc(sizeof(struct hdd_config), GFP_KERNEL);
-	if (hdd_ctx->config == NULL) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("Failed kmalloc struct hdd_config"));
-		goto err_config;
-	}
-
-	cdf_mem_zero(hdd_ctx->config, sizeof(struct hdd_config));
-
-	/* Read and parse the qcom_cfg.ini file */
-	status = hdd_parse_config_ini(hdd_ctx);
-	if (CDF_STATUS_SUCCESS != status) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("error parsing %s"),
-		       WLAN_INI_FILE);
-		goto err_config;
-	}
-
-	icnss_set_fw_debug_mode(hdd_ctx->config->enablefwlog);
-
-	hdd_ctx->current_intf_count = 0;
-	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
-
-	/*
-	 * INI has been read, initialise the configuredMcastBcastFilter with
-	 * INI value as this will serve as the default value
-	 */
-	hdd_ctx->configuredMcastBcastFilter =
-		hdd_ctx->config->mcastBcastFilterSetting;
-	hddLog(CDF_TRACE_LEVEL_INFO,
-	       FL("Setting configuredMcastBcastFilter: %d"),
-	       hdd_ctx->config->mcastBcastFilterSetting);
-
-	if (false == hdd_is_5g_supported(hdd_ctx)) {
-		/* 5Ghz is not supported. */
-		if (1 != hdd_ctx->config->nBandCapability) {
-			hddLog(CDF_TRACE_LEVEL_INFO,
-			       FL(
-				  "Setting hdd_ctx->config->nBandCapability = 1"
-				 ));
-			hdd_ctx->config->nBandCapability = 1;
-		}
-	}
-
-	/*
-	 * cfg80211: Initialization  ...
-	 */
-	if (0 < wlan_hdd_cfg80211_init(dev, wiphy, hdd_ctx->config)) {
-		hddLog(LOGE,
-		       FL("wlan_hdd_cfg80211_init return failure"));
-		goto err_config;
-	}
-
-	hdd_enable_fastpath(hdd_ctx->config, hif_sc);
-	/*
-	 * Initialize struct for saving f/w log setting will be used
-	 * after ssr
-	 */
-	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enablefwlog;
-	hdd_ctx->fw_log_settings.dl_type = 0;
-	hdd_ctx->fw_log_settings.dl_report = 0;
-	hdd_ctx->fw_log_settings.dl_loglevel = 0;
-	hdd_ctx->fw_log_settings.index = 0;
-	for (i = 0; i < MAX_MOD_LOGLEVEL; i++) {
-		hdd_ctx->fw_log_settings.dl_mod_loglevel[i] = 0;
-	}
-
-	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
-		cds_set_multicast_logging(
-				hdd_ctx->config->multicast_host_fw_msgs);
-
-		if (wlan_hdd_logging_sock_activate_svc(hdd_ctx) < 0)
-			goto err_config;
-
-		/*
-		 * Update CDF trace levels based upon the code. The multicast
-		 * levels of the code need not be set when the logger thread
-		 * is not enabled.
-		 */
-		if (cds_is_multicast_logging())
-			wlan_logging_set_log_level();
-	}
-
-	/*
-	 * Update CDF trace levels based upon the cfg.ini
-	 */
+/**
+ * hdd_set_trace_level_for_each - Set trace level for each INI config
+ * @hdd_ctx - HDD context
+ *
+ * Set trace level for each module based on INI config.
+ *
+ * Return: None
+ */
+static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
+{
 	hdd_cdf_trace_enable(CDF_MODULE_ID_WMI,
 			     hdd_ctx->config->cdf_trace_enable_wdi);
 	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD,
@@ -5184,12 +5050,183 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				hdd_ctx->config->cdf_trace_enable_hdd_data);
 
 	hdd_cfg_print(hdd_ctx);
+}
+
+/**
+ * hdd_init_context - Alloc and initialize HDD context
+ * @dev:	Pointer to the underlying device
+ * @hif_sc:	HIF context
+ *
+ * Allocate and initialize HDD context. HDD context is allocated as part of
+ * wiphy allocation and then context is initialized.
+ *
+ * Return: HDD context on success and ERR_PTR on failure
+ */
+hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
+{
+	CDF_STATUS status;
+	int ret = 0;
+	hdd_context_t *hdd_ctx;
+	v_CONTEXT_t p_cds_context;
+
+	ENTER();
+
+	p_cds_context = cds_get_global_context();
+	if (p_cds_context == NULL) {
+		hdd_alert("Failed to get CDS global context");
+		ret = -EINVAL;
+		goto err_out;
+	}
+
+	hdd_ctx = hdd_cfg80211_wiphy_alloc(sizeof(hdd_context_t));
+
+	if (hdd_ctx == NULL) {
+		ret = -ENOMEM;
+		goto err_out;
+	}
+
+	hdd_ctx->pcds_context = p_cds_context;
+
+	hdd_ctx->config = cdf_mem_malloc(sizeof(struct hdd_config));
+	if (hdd_ctx->config == NULL) {
+		hdd_alert("Failed to alloc memory for HDD config!");
+		ret = -ENOMEM;
+		goto err_free_hdd_context;
+	}
+
+	/* Read and parse the qcom_cfg.ini file */
+	status = hdd_parse_config_ini(hdd_ctx);
+	if (CDF_STATUS_SUCCESS != status) {
+		hdd_alert("Error (status: %d) parsing INI file: %s", status,
+			  WLAN_INI_FILE);
+		ret = -EINVAL;
+		goto err_free_config;
+	}
+
+	((cds_context_type *) (p_cds_context))->pHDDContext = (void *)hdd_ctx;
+
+	hdd_ctx->parent_dev = dev;
+
+	hdd_ctx->ioctl_scan_mode = eSIR_ACTIVE_SCAN;
+
+	hdd_init_ll_stats_ctx();
+
+	init_completion(&hdd_ctx->mc_sus_event_var);
+	init_completion(&hdd_ctx->ready_to_suspend);
+
+	cdf_spinlock_init(&hdd_ctx->connection_status_lock);
+	cdf_spinlock_init(&hdd_ctx->sched_scan_lock);
+
+	cdf_spinlock_init(&hdd_ctx->hdd_adapter_lock);
+	cdf_list_init(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
+
+	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
+
+	hdd_tdls_pre_init(hdd_ctx);
+	mutex_init(&hdd_ctx->dfs_lock);
+
+	hdd_ctx->target_type = ((struct ol_softc *)hif_sc)->target_type;
+
+	hdd_init_offloaded_packets_ctx(hdd_ctx);
+
+	icnss_set_fw_debug_mode(hdd_ctx->config->enablefwlog);
+
+	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
+
+	hdd_ctx->configuredMcastBcastFilter =
+		hdd_ctx->config->mcastBcastFilterSetting;
+
+	hdd_notice("Setting configuredMcastBcastFilter: %d",
+		   hdd_ctx->config->mcastBcastFilterSetting);
+
+	hdd_override_ini_config(hdd_ctx);
+
+	ret = wlan_hdd_cfg80211_init(dev, hdd_ctx->wiphy, hdd_ctx->config);
+
+	if (ret) {
+		hdd_err("CFG80211 wiphy init failed: %d", ret);
+		goto err_free_config;
+	}
+
+	hdd_enable_fastpath(hdd_ctx->config, hif_sc);
+
+	/* Uses to enabled logging after SSR */
+	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enablefwlog;
+
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+		goto skip_multicast_logging;
+
+	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
+
+	ret = hdd_logging_sock_activate_svc(hdd_ctx);
+	if (ret)
+		goto err_free_config;
+
+	/*
+	 * Update CDF trace levels based upon the code. The multicast
+	 * levels of the code need not be set when the logger thread
+	 * is not enabled.
+	 */
+	if (cds_is_multicast_logging())
+		wlan_logging_set_log_level();
+
+skip_multicast_logging:
+	hdd_set_trace_level_for_each(hdd_ctx);
+
+	return hdd_ctx;
+
+err_free_config:
+	cdf_mem_free(hdd_ctx->config);
+
+err_free_hdd_context:
+	wiphy_free(hdd_ctx->wiphy);
+
+err_out:
+	return ERR_PTR(ret);
+}
+
+/**
+ * hdd_wlan_startup() - HDD init function
+ * @dev:	Pointer to the underlying device
+ *
+ * This is the driver startup code executed once a WLAN device has been detected
+ *
+ * Return:  0 for success, < 0 for failure
+ */
+int hdd_wlan_startup(struct device *dev, void *hif_sc)
+{
+	CDF_STATUS status;
+	hdd_adapter_t *adapter = NULL;
+#ifdef WLAN_OPEN_P2P_INTERFACE
+	hdd_adapter_t *pP2adapter = NULL;
+#endif
+	hdd_context_t *hdd_ctx = NULL;
+	int ret;
+	unsigned long rc;
+	tSmeThermalParams thermalParam;
+	tSirTxPowerLimit *hddtxlimit;
+	uint8_t rtnl_lock_enable;
+	uint8_t reg_netdev_notifier_done = false;
+	hdd_adapter_t *dot11_adapter = NULL;
+
+	ENTER();
+
+	if (WLAN_IS_EPPING_ENABLED(con_mode)) {
+		ret = epping_enable(dev);
+		EXIT();
+		return ret;
+	}
+
+	hdd_ctx = hdd_init_context(dev, hif_sc);
+
+	if (IS_ERR(hdd_ctx))
+		return PTR_ERR(hdd_ctx);
 
 	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		ret = hdd_enable_ftm(hdd_ctx);
 
 		if (ret)
-			goto err_config;
+			goto err_hdd_free_context;
 
 		goto success;
 	}
@@ -5200,13 +5237,13 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	hdd_wlan_green_ap_init(hdd_ctx);
 
-	status = cds_open(&p_cds_context, 0);
+	status = cds_open();
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
-		goto err_config;
+		goto err_hdd_free_context;
 	}
 
-	wlan_hdd_update_wiphy(wiphy, hdd_ctx->config);
+	wlan_hdd_update_wiphy(hdd_ctx->wiphy, hdd_ctx->config);
 
 	hdd_ctx->hHal = cds_get_context(CDF_MODULE_ID_SME);
 
@@ -5239,18 +5276,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	 * domain.
 	 */
 	hdd_set_dot11p_config(hdd_ctx);
-
-	if (0 == enable_dfs_chan_scan || 1 == enable_dfs_chan_scan) {
-		hdd_ctx->config->enableDFSChnlScan = enable_dfs_chan_scan;
-		hddLog(CDF_TRACE_LEVEL_INFO,
-		       FL("module enable_dfs_chan_scan set to %d"),
-		       enable_dfs_chan_scan);
-	}
-	if (0 == enable_11d || 1 == enable_11d) {
-		hdd_ctx->config->Is11dSupportEnabled = enable_11d;
-		hddLog(CDF_TRACE_LEVEL_INFO, FL("module enable_11d set to %d"),
-		       enable_11d);
-	}
 
 	/*
 	 * Note that the cds_pre_enable() sequence triggers the cfg download.
@@ -5739,37 +5764,25 @@ err_close_adapter:
 	hdd_close_all_adapters(hdd_ctx);
 
 err_cds_disable:
-	cds_disable(p_cds_context);
+	cds_disable(hdd_ctx->pcds_context);
 
 err_ipa_cleanup:
 	hdd_ipa_cleanup(hdd_ctx);
 
 err_wiphy_unregister:
-	wiphy_unregister(wiphy);
+	wiphy_unregister(hdd_ctx->wiphy);
 
 err_cds_close:
-	status = cds_sched_close(p_cds_context);
+	status = cds_sched_close(hdd_ctx->pcds_context);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL,
 		       FL("Failed to close CDS Scheduler"));
 		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(status));
 	}
-	cds_close(p_cds_context);
+	cds_close(hdd_ctx->pcds_context);
 
-	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam())
-		wlan_hdd_logging_sock_deactivate_svc(hdd_ctx);
-
-err_config:
-	kfree(hdd_ctx->config);
-	hdd_ctx->config = NULL;
-
-err_free_hdd_context:
-	/* wiphy_free() will free the HDD context so remove global reference */
-	if (p_cds_context)
-		((cds_context_type *) (p_cds_context))->pHDDContext = NULL;
-
-	wiphy_free(wiphy);
-	/* kfree(wdev) ; */
+err_hdd_free_context:
+	hdd_free_context(hdd_ctx);
 	CDF_BUG(1);
 
 	return -EIO;

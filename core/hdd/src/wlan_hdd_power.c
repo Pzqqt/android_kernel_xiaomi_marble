@@ -1438,7 +1438,7 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	hdd_set_conparam(0);
 
 	/* Re-open CDS, it is a re-open b'se control transport was never closed. */
-	cdf_status = cds_open(&p_cds_context, 0);
+	cdf_status = cds_open();
 	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: cds_open failed", __func__);
 		goto err_re_init;
