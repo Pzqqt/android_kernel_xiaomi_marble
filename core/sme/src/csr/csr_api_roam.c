@@ -3841,18 +3841,12 @@ static CDF_STATUS csr_get_rate_set(tpAniSirGlobal pMac,
 			}
 		}
 	}
-	if ((eCSR_CFG_DOT11_MODE_11G == cfgDot11Mode ||
-	    eCSR_CFG_DOT11_MODE_11N == cfgDot11Mode ||
-	    eCSR_CFG_DOT11_MODE_ABG == cfgDot11Mode
-#ifdef WLAN_FEATURE_11AC
-	    || eCSR_CFG_DOT11_MODE_11AC == cfgDot11Mode
-#endif
-	    ) && pIes->ExtSuppRates.present) {
-		/*
-		 * If there are extended rates in the beacon,
-		 * we will reflect those extended rates that we support in our
-		 * extended operational rate
-		 */
+	/*
+	 * If there are Extended Rates in the beacon, we will reflect the
+	 * extended rates that we support in our Extended Operational Rate
+	 * set.
+	 */
+	if (pIes->ExtSuppRates.present) {
 		pDstRate = pExRateSet->rate;
 		for (i = 0; i < pIes->ExtSuppRates.num_rates; i++) {
 			if (csr_rates_is_dot11_rate_supported(pMac,
