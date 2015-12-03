@@ -1546,12 +1546,19 @@ lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 			 * to SME
 			 */
 			lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry);
+			/* Cleanup if add bss failed */
+			if (session_entry->add_bss_failed) {
+				dph_delete_hash_entry(mac_ctx,
+					 sta_ds->staAddr, sta_ds->assocId,
+					 &session_entry->dph.dphHashTable);
+				goto error;
+			}
 			cdf_mem_free(session_entry->pLimJoinReq);
 			session_entry->pLimJoinReq = NULL;
 			return;
 		}
 	}
-
+error:
 	cdf_mem_free(session_entry->pLimJoinReq);
 	session_entry->pLimJoinReq = NULL;
 	/* Delete teh session if JOIN failure occurred. */
@@ -1624,9 +1631,17 @@ lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 			pStaDs->mlmStaContext.resultCode = resultCode;
 			pStaDs->mlmStaContext.protStatusCode = protStatusCode;
 			lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
+			/* Cleanup if add bss failed */
+			if (psessionEntry->add_bss_failed) {
+				dph_delete_hash_entry(pMac,
+					 pStaDs->staAddr, pStaDs->assocId,
+					 &psessionEntry->dph.dphHashTable);
+				goto error;
+			}
 			return;
 		}
 	}
+error:
 	/* Delete teh session if REASSOC failure occurred. */
 	if (resultCode != eSIR_SME_SUCCESS) {
 		if (NULL != psessionEntry) {
@@ -3056,6 +3071,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		else
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
+		session_entry->add_bss_failed = true;
 	}
 
 	if (mlm_assoc_cnf.resultCode != eSIR_SME_SUCCESS) {
