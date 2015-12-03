@@ -5208,30 +5208,33 @@ const struct wiphy_vendor_command hdd_wiphy_vendor_commands[] = {
 	},
 };
 
-/*
- * FUNCTION: wlan_hdd_cfg80211_wiphy_alloc
- * This function is called by hdd_wlan_startup()
- * during initialization.
- * This function is used to allocate wiphy structure.
+/**
+ * hdd_cfg80211_wiphy_alloc() - Allocate wiphy context
+ * @priv_size:         Size of the hdd context.
+ *
+ * Allocate wiphy context and hdd context.
+ *
+ * Return: hdd context on success and NULL on failure.
  */
-struct wiphy *wlan_hdd_cfg80211_wiphy_alloc(int priv_size)
+hdd_context_t *hdd_cfg80211_wiphy_alloc(int priv_size)
 {
 	struct wiphy *wiphy;
+	hdd_context_t *hdd_ctx;
+
 	ENTER();
 
-	/*
-	 *   Create wiphy device
-	 */
 	wiphy = wiphy_new(&wlan_hdd_cfg80211_ops, priv_size);
 
 	if (!wiphy) {
-		/* Print error and jump into err label and free the memory */
-		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: wiphy init failed",
-		       __func__);
+		hdd_err("wiphy init failed!\n");
 		return NULL;
 	}
 
-	return wiphy;
+	hdd_ctx = wiphy_priv(wiphy);
+
+	hdd_ctx->wiphy = wiphy;
+
+	return hdd_ctx;
 }
 
 /*

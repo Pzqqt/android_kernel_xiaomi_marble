@@ -152,8 +152,6 @@ static void cds_set_nan_enable(tMacOpenParameters *param,
 
 /**
  * cds_open() - open the CDS Module
- * @p_cds_context: A pointer to where the CDS Context was stored
- * @hddContextSize: Size of the HDD context to allocate.
  *
  * cds_open() function opens the CDS Scheduler
  * Upon successful initialization:
@@ -166,7 +164,7 @@ static void cds_set_nan_enable(tMacOpenParameters *param,
  *
  * Return: CDF status
  */
-CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize)
+CDF_STATUS cds_open(void)
 {
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
 	int iter = 0;
@@ -446,8 +444,6 @@ CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize)
 
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
-
-	*p_cds_context = gp_cds_context;
 
 	return CDF_STATUS_SUCCESS;
 
@@ -836,6 +832,9 @@ CDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	}
 
 	cds_deinit_log_completion();
+
+	gp_cds_context->pHDDContext = NULL;
+
 	return CDF_STATUS_SUCCESS;
 }
 

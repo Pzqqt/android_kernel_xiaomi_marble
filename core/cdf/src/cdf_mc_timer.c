@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -247,7 +247,6 @@ static void cdf_timer_clean(void);
  */
 void cdf_mc_timer_manager_init(void)
 {
-	/* Initalizing the list with maximum size of 60000 */
 	cdf_list_init(&cdf_timer_list, 1000);
 	cdf_spinlock_init(&cdf_timer_list_lock);
 	return;

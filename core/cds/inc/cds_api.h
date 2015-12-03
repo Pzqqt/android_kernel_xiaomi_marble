@@ -187,7 +187,7 @@ void cds_deinit(void);
 
 CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context);
 
-CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize);
+CDF_STATUS cds_open(void);
 
 CDF_STATUS cds_enable(v_CONTEXT_t cds_context);
 
