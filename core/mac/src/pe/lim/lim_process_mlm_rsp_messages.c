@@ -1722,6 +1722,8 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 			 */
 			mlm_assoc_cnf.resultCode =
 				eSIR_SME_JOIN_DEAUTH_FROM_AP_DURING_ADD_STA;
+			mlm_assoc_cnf.protStatusCode =
+					   eSIR_MAC_UNSPEC_FAILURE_STATUS;
 			session_entry->staId = add_sta_params->staIdx;
 			goto end;
 		}
@@ -1805,6 +1807,7 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 		else
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
+		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 	}
 end:
 	if (NULL != msg->bodyptr) {
@@ -3044,6 +3047,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 	} else {
 		lim_log(mac_ctx, LOGP, FL("SessionId:%d ADD_BSS failed!"),
 			session_entry->peSessionId);
+		mlm_assoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
 		/* Return Assoc confirm to SME with failure */
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 				session_entry->limMlmState)
