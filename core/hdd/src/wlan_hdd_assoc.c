@@ -2053,7 +2053,7 @@ defined(FEATURE_WLAN_LFR)
 						hddLog(LOG1,
 						       FL("sending connect indication to nl80211:for bssid "
 						       MAC_ADDRESS_STR
-						       " reason:%d and Status:%d"),
+						       " result:%d and Status:%d"),
 						       MAC_ADDR_ARRAY
 							       (pRoamInfo->bssid.bytes),
 						       roamResult, roamStatus);
@@ -2185,12 +2185,12 @@ defined(FEATURE_WLAN_LFR)
 			WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 		if (pRoamInfo)
 			pr_info("wlan: connection failed with " MAC_ADDRESS_STR
-				" reason:%d and Status:%d\n",
+				" result:%d and Status:%d\n",
 				MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes),
 				roamResult, roamStatus);
 		else
 			pr_info("wlan: connection failed with " MAC_ADDRESS_STR
-				" reason:%d and Status:%d\n",
+				" result:%d and Status:%d\n",
 				MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
 				roamResult, roamStatus);
 
@@ -2204,18 +2204,17 @@ defined(FEATURE_WLAN_LFR)
 				hddLog(LOGE,
 				       FL("send connect failure to nl80211: for bssid "
 				       MAC_ADDRESS_STR
-				       " reason:%d and Status:%d "),
+				       " result:%d and Status:%d reasoncode %d"),
 				       MAC_ADDR_ARRAY(pRoamInfo->bssid.bytes),
-				       roamResult, roamStatus);
+				       roamResult, roamStatus,
+				       pRoamInfo->reasonCode);
 			else
 				hddLog(LOGE,
 				       FL("connect failed: for bssid "
 				       MAC_ADDRESS_STR
-				       " reason:%d and Status:%d "),
+				       " result:%d and Status:%d "),
 				       MAC_ADDR_ARRAY(pWextState->req_bssId.bytes),
 				       roamResult, roamStatus);
-
-			hdd_clear_roam_profile_ie(pAdapter);
 
 			/* inform association failure event to nl80211 */
 			if (eCSR_ROAM_RESULT_ASSOC_FAIL_CON_CHANNEL ==
@@ -2237,12 +2236,22 @@ defined(FEATURE_WLAN_LFR)
 					eCsrAuthType authType =
 						pWextState->roamProfile.AuthType.
 						authType[0];
+					eCsrEncryptionType encryption_type =
+						pWextState->roamProfile.
+						EncryptionType.encryptionType[0];
 					bool isWep =
+						(((authType ==
+						eCSR_AUTH_TYPE_OPEN_SYSTEM) ||
 						(authType ==
-						 eCSR_AUTH_TYPE_OPEN_SYSTEM)
-						|| (authType ==
-						    eCSR_AUTH_TYPE_SHARED_KEY);
-
+						eCSR_AUTH_TYPE_SHARED_KEY)) &&
+						((encryption_type ==
+						eCSR_ENCRYPT_TYPE_WEP40) ||
+						(encryption_type ==
+						eCSR_ENCRYPT_TYPE_WEP104) ||
+						(encryption_type ==
+						eCSR_ENCRYPT_TYPE_WEP40_STATICKEY) ||
+						(encryption_type ==
+						eCSR_ENCRYPT_TYPE_WEP104_STATICKEY)));
 					/*
 					 * In case of OPEN-WEP or SHARED-WEP
 					 * authentication, send exact protocol
@@ -2253,7 +2262,9 @@ defined(FEATURE_WLAN_LFR)
 					cfg80211_connect_result(dev,
 						pRoamInfo->bssid.bytes, NULL, 0,
 						NULL, 0,
-						isWep ? pRoamInfo->reasonCode :
+						(isWep &&
+						 pRoamInfo->reasonCode) ?
+						pRoamInfo->reasonCode :
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL);
 				} else
@@ -2263,6 +2274,7 @@ defined(FEATURE_WLAN_LFR)
 						WLAN_STATUS_UNSPECIFIED_FAILURE,
 						GFP_KERNEL);
 			}
+			hdd_clear_roam_profile_ie(pAdapter);
 		}
 
 		if (pRoamInfo) {
