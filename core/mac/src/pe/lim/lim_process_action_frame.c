@@ -1784,7 +1784,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 						session);
 				break;
 			default:
-				lim_log(mac_ctx, LOGE,
+				lim_log(mac_ctx, LOG1,
 					FL("Qos action %d not handled"),
 					action_hdr->actionID);
 				break;
@@ -1821,7 +1821,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					mac_ctx, rx_pkt_info, session);
 			break;
 		default:
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("Spectrum mgmt action id %d not handled"),
 				action_hdr->actionID);
 			break;
@@ -1857,7 +1857,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			break;
 
 		default:
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("WME action %d not handled"),
 				action_hdr->actionID);
 			break;
@@ -1874,7 +1874,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 						session);
 			break;
 		default:
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("Action ID %d not handled in HT category"),
 				action_hdr->actionID);
 			break;
@@ -1884,7 +1884,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 	case SIR_MAC_ACTION_WNM:
 #ifdef WLAN_FEATURE_11W
 		if ((session->limRmfEnabled) && (mac_hdr_11w->fc.wep == 0)) {
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("Dropping unprot action %d frm (PMF on)"),
 				action_hdr->category);
 			break;
@@ -1911,7 +1911,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					session, rssi);
 			break;
 		default:
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("Action ID %d not handled in WNM category"),
 				action_hdr->actionID);
 			break;
@@ -1943,7 +1943,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 						session);
 				break;
 			default:
-				lim_log(mac_ctx, LOGE,
+				lim_log(mac_ctx, LOG1,
 					FL("Action ID %d not handled in RRM"),
 					action_hdr->actionID);
 				break;
@@ -1951,7 +1951,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			}
 		} else {
 			/* Else we will just ignore the RRM messages. */
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("RRM frm ignored, it is disabled in cfg"));
 		}
 		break;
@@ -1990,7 +1990,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 					WMA_GET_RX_CH(rx_pkt_info),
 					session, 0);
 		} else {
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("Dropping the vendor specific action frame"
 					"beacause of (WES Mode not enabled "
 					"(WESMODE = %d) or OUI mismatch "
@@ -2031,7 +2031,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 						WMA_GET_RX_CH(rx_pkt_info),
 						session, 0);
 			} else {
-				lim_log(mac_ctx, LOGE,
+				lim_log(mac_ctx, LOG1,
 					FL("Unhandled public action frame (Vendor specific). OUI %x %x %x %x"),
 					pub_action->Oui[0], pub_action->Oui[1],
 					pub_action->Oui[2], pub_action->Oui[3]);
@@ -2075,7 +2075,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 							rx_pkt_info, session);
 			break;
 		default:
-			lim_log(mac_ctx, LOGE,
+			lim_log(mac_ctx, LOG1,
 				FL("Unhandled public action frame -- %x "),
 				action_hdr->actionID);
 			break;
@@ -2148,7 +2148,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		break;
 	}
 	default:
-		lim_log(mac_ctx, LOGE,
+		lim_log(mac_ctx, LOG1,
 			FL("Action category %d not handled"),
 			action_hdr->category);
 		break;
@@ -2209,7 +2209,7 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 							    WMA_GET_RX_CH
 								    (pBd), NULL, 0);
 			} else {
-				lim_log(pMac, LOGE,
+				lim_log(pMac, LOG1,
 					FL
 						("Unhandled public action frame (Vendor specific). OUI %x %x %x %x"),
 					pActionHdr->Oui[0],
@@ -2221,7 +2221,7 @@ void lim_process_action_frame_no_session(tpAniSirGlobal pMac, uint8_t *pBd)
 		break;
 		default:
 			PELOGE(lim_log
-				       (pMac, LOGE,
+				       (pMac, LOG1,
 				       FL("Unhandled public action frame -- %x "),
 				       pActionHdr->actionID);
 			       )
