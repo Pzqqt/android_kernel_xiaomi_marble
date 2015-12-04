@@ -586,18 +586,9 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			pEndpoint->TxCredits +=
 				pPacket->PktInfo.AsTx.CreditsUsed;
 #endif
-		while (!HTC_QUEUE_EMPTY(pPktQueue)) {
-			if (status != A_NO_RESOURCE) {
-				AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-						("htc_issue_packets, failed pkt:0x%p status:%d \n",
-						 pPacket, status));
-			}
-			pPacket = htc_packet_dequeue(pPktQueue);
-			if (pPacket) {
-				pPacket->Status = status;
-				send_packet_completion(target, pPacket);
-			}
-		}
+		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+			("htc_issue_packets, failed pkt:0x%p status:%d",
+			 pPacket, status));
 	}
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-htc_issue_packets \n"));
@@ -997,7 +988,16 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 		UNLOCK_HTC_TX(target);
 
 		/* send what we can */
-		htc_issue_packets(target, pEndpoint, &sendQueue);
+		result = htc_issue_packets(target, pEndpoint, &sendQueue);
+		if (result) {
+			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
+				("htc_issue_packets, failed status:%d put it back to head of callersSendQueue",
+				 result));
+			HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(&pEndpoint->TxQueue,
+							  &sendQueue);
+			LOCK_HTC_TX(target);
+			break;
+		}
 
 		if (!IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) {
 			tx_resources =
