@@ -371,7 +371,7 @@ typedef struct sLimMlmPurgeStaInd {
 } tLimMlmPurgeStaInd, *tpLimMlmPurgeStaInd;
 
 typedef struct sLimMlmSetKeysCnf {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t resultCode;
 	uint16_t aid;
 	uint8_t sessionId;

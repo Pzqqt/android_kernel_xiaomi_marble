@@ -1568,13 +1568,11 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
  */
 void
 lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
-			     tSirMacAddr peerMacAddr, uint16_t aid,
+			     struct cdf_mac_addr peer_macaddr, uint16_t aid,
 			     tSirResultCodes resultCode,
 			     tpPESession psessionEntry, uint8_t smesessionId,
 			     uint16_t smetransactionId)
 {
-
-	uint8_t *pBuf;
 	tSirMsgQ mmhMsg;
 	tSirSmeSetContextRsp *pSirSmeSetContextRsp;
 
@@ -1592,10 +1590,7 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
 	pSirSmeSetContextRsp->length = sizeof(tSirSmeSetContextRsp);
 	pSirSmeSetContextRsp->statusCode = resultCode;
 
-	pBuf = pSirSmeSetContextRsp->peerMacAddr;
-
-	cdf_mem_copy(pBuf, (uint8_t *) peerMacAddr, sizeof(tSirMacAddr));
-	pBuf += sizeof(tSirMacAddr);
+	cdf_copy_macaddr(&pSirSmeSetContextRsp->peer_macaddr, &peer_macaddr);
 
 	/* Update SME session and transaction Id */
 	pSirSmeSetContextRsp->sessionId = smesessionId;

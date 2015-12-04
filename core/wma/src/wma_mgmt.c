@@ -1808,7 +1808,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
  */
 static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 				   tpSetBssKeyParams key_info,
-				   uint8_t *peerMacAddr)
+				   struct cdf_mac_addr peer_macaddr)
 {
 	struct wma_set_key_params key_params;
 	wmi_buf_t buf;
@@ -1818,7 +1818,6 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	ol_txrx_vdev_handle txrx_vdev;
 
 	WMA_LOGD("BSS key setup for peer");
-	ASSERT(NULL != peerMacAddr);
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
@@ -1833,7 +1832,8 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	key_params.unicast = false;
 	ASSERT(wlan_op_mode_ibss == txrx_vdev->opmode);
 
-	cdf_mem_copy(key_params.peer_mac, peerMacAddr, IEEE80211_ADDR_LEN);
+	cdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
+			IEEE80211_ADDR_LEN);
 
 	if (key_info->numKeys == 0 &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
@@ -1913,7 +1913,8 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		goto out;
 	}
 
-	peer = ol_txrx_find_peer_by_addr(txrx_pdev, key_info->peerMacAddr,
+	peer = ol_txrx_find_peer_by_addr(txrx_pdev,
+					 key_info->peer_macaddr.bytes,
 					 &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s:Invalid peer for key setting", __func__);
@@ -1954,7 +1955,8 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	key_params.unicast = true;
 	key_params.def_key_idx = key_info->defWEPIdx;
 	cdf_mem_copy((void *)key_params.peer_mac,
-		     (const void *)key_info->peerMacAddr, IEEE80211_ADDR_LEN);
+		     (const void *)key_info->peer_macaddr.bytes,
+		     IEEE80211_ADDR_LEN);
 	for (i = 0; i < num_keys; i++) {
 		if (key_params.key_type != eSIR_ED_NONE &&
 		    !key_info->key[i].keyLength)
@@ -2004,7 +2006,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	 */
 	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
 		wma_set_ibsskey_helper(wma_handle, &wma_handle->ibsskey_info,
-				       key_info->peerMacAddr);
+				       key_info->peer_macaddr);
 	}
 
 	/* TODO: Should we wait till we get HTT_T2H_MSG_TYPE_SEC_IND? */

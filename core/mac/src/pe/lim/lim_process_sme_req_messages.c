@@ -3003,19 +3003,19 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			"numKeys:%d is more than SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS"),
 					set_context_req->keyMaterial.numKeys);
 		lim_send_sme_set_context_rsp(mac_ctx,
-				set_context_req->peerMacAddr, 1,
+				set_context_req->peer_macaddr, 1,
 				eSIR_SME_INVALID_PARAMETERS, NULL,
 				sme_session_id, sme_transaction_id);
 		goto end;
 	}
 
 	session_entry = pe_find_session_by_bssid(mac_ctx,
-			set_context_req->bssId, &session_id);
+			set_context_req->bssid.bytes, &session_id);
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGW,
 			FL("Session does not exist for given BSSID"));
 		lim_send_sme_set_context_rsp(mac_ctx,
-				set_context_req->peerMacAddr, 1,
+				set_context_req->peer_macaddr, 1,
 				eSIR_SME_INVALID_PARAMETERS, NULL,
 				sme_session_id, sme_transaction_id);
 		goto end;
@@ -3048,9 +3048,8 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				"no.of keys exceeded max num of default keys limit"));
 			goto end;
 		}
-		cdf_mem_copy((uint8_t *) &mlm_set_key_req->peerMacAddr,
-			     (uint8_t *) &set_context_req->peerMacAddr,
-			     sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&mlm_set_key_req->peer_macaddr,
+				 &set_context_req->peer_macaddr);
 
 		cdf_mem_copy((uint8_t *) &mlm_set_key_req->key,
 			     (uint8_t *) &set_context_req->keyMaterial.key,
@@ -3098,7 +3097,7 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		lim_print_sme_state(mac_ctx, LOGE, session_entry->limSmeState);
 
 		lim_send_sme_set_context_rsp(mac_ctx,
-				set_context_req->peerMacAddr, 1,
+				set_context_req->peer_macaddr, 1,
 				eSIR_SME_UNEXPECTED_REQ_RESULT_CODE,
 				session_entry, sme_session_id,
 				sme_transaction_id);

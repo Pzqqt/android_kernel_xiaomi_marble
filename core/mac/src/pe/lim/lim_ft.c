@@ -1635,8 +1635,8 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			extSetStaKeyParam;
 
 		cdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
-		cdf_mem_copy(pMlmSetKeysReq->peerMacAddr, pKeyInfo->bssId,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pMlmSetKeysReq->peer_macaddr.bytes,
+				pKeyInfo->bssId, CDF_MAC_ADDR_SIZE);
 		pMlmSetKeysReq->sessionId = psessionEntry->peSessionId;
 		pMlmSetKeysReq->smesessionId = psessionEntry->smeSessionId;
 		pMlmSetKeysReq->edType = pKeyInfo->keyMaterial.edType;
@@ -1687,7 +1687,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			       MAC_ADDR_ARRAY(pKeyInfo->bssId));
 		       )
 
-		sir_copy_mac_addr(pAddBssParams->extSetStaKeyParam.peerMacAddr,
+		sir_copy_mac_addr(pAddBssParams->extSetStaKeyParam.peer_macaddr.bytes,
 				  pKeyInfo->bssId);
 
 		pAddBssParams->extSetStaKeyParam.sendRsp = false;
