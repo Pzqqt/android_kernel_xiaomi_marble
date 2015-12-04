@@ -2802,7 +2802,7 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	}
 
 	/* There's no need suspend target which is already down during SSR. */
-	if (!cds_is_logp_in_progress()) {
+	if (!cds_is_driver_recovering()) {
 #ifdef HIF_USB
 		/* Suspend the target and enable interrupt */
 		if (wma_suspend_target(wma_handle, 0))

@@ -2314,8 +2314,8 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 		return -ENODEV;
 	}
 
-	/* The return 0 is intentional when isLogpInProgress and
-	 * isLoadUnloadInProgress. We did observe a crash due to a return of
+	/* The return 0 is intentional when Recovery and Load/Unload in
+	 * progress. We did observe a crash due to a return of
 	 * failure in sched_scan_stop , especially for a case where the unload
 	 * of the happens at the same time. The function __cfg80211_stop_sched_scan
 	 * was clearing rdev->sched_scan_req only when the sched_scan_stop returns
@@ -2323,13 +2323,15 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	 * clean up of the second interface will have the dev pointer corresponding
 	 * to the first one leading to a crash.
 	 */
-	if (pHddCtx->isLogpInProgress) {
-		hddLog(LOGE, FL("LOGP in Progress. Ignore!!!"));
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return ret;
 	}
 
-	if ((pHddCtx->isLoadInProgress) || (pHddCtx->isUnloadInProgress)) {
-		hddLog(LOGE, FL("Unloading/Loading in Progress. Ignore!!!"));
+	if (cds_is_load_unload_in_progress()) {
+		hdd_err("Unload/Load in Progress, state: 0x%x.  Ignore!!!",
+			cds_get_driver_state());
 		return ret;
 	}
 

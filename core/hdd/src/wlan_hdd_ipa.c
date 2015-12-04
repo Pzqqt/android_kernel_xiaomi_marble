@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2454,7 +2454,7 @@ static void hdd_ipa_send_skb_to_network(cdf_nbuf_t skb,
 		return;
 	}
 
-	if (hdd_ipa->hdd_ctx->isUnloadInProgress) {
+	if (cds_is_driver_unloading()) {
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 		cdf_nbuf_free(skb);
 		return;
@@ -3745,7 +3745,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if ((!hdd_ipa->num_iface) &&
 			(HDD_IPA_UC_NUM_WDI_PIPE ==
 				hdd_ipa->activated_fw_pipe)) {
-			if (hdd_ipa->hdd_ctx->isUnloadInProgress) {
+			if (cds_is_driver_unloading()) {
 				/*
 				 * We disable WDI pipes directly here since
 				 * IPA_OPCODE_TX/RX_SUSPEND message will not be

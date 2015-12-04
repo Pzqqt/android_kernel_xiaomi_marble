@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1824,7 +1824,7 @@ hif_target_sleep_state_adjust(struct ol_softc *scn,
 					if (!sc->ol_sc->enable_self_recovery)
 						CDF_BUG(0);
 					scn->recovery = true;
-					cds_set_logp_in_progress(true);
+					cds_set_recovery_in_progress(true);
 					cnss_wlan_pci_link_down();
 					return -EACCES;
 				}

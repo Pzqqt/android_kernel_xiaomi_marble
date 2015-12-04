@@ -265,7 +265,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 		CDF_ASSERT(0);
 		return NOTIFY_DONE;
 	}
-	if (hdd_ctx->isLogpInProgress)
+	if (cds_is_driver_recovering())
 		return NOTIFY_DONE;
 
 	hddLog(CDF_TRACE_LEVEL_INFO, FL("%s New Net Device State = %lu"),
@@ -417,13 +417,15 @@ int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 		return -ENODEV;
 	}
 
-	if (hdd_ctx->isLogpInProgress) {
-		hddLog(LOGE, FL("LOGP in Progress. Ignore!!!"));
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return -EAGAIN;
 	}
 
-	if ((hdd_ctx->isLoadInProgress) || (hdd_ctx->isUnloadInProgress)) {
-		hddLog(LOGE, FL("Unloading/Loading in Progress. Ignore!!!"));
+	if (cds_is_load_unload_in_progress()) {
+		hdd_err("Unloading/Loading in Progress. Ignore!!!: 0x%x",
+			cds_get_driver_state());
 		return -EAGAIN;
 	}
 	return 0;
@@ -1189,7 +1191,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 		       FL("ini BandCapability not supported by the target"));
 	}
 
-	if (!cds_is_logp_in_progress()) {
+	if (!cds_is_driver_recovering()) {
 		hdd_ctx->reg.reg_domain = cfg->reg_domain;
 		hdd_ctx->reg.eeprom_rd_ext = cfg->eeprom_rd_ext;
 	}
@@ -3627,17 +3629,6 @@ void __hdd_wlan_exit(void)
 		return;
 	}
 
-	/* module exit should never proceed if SSR is not completed */
-	while (hdd_ctx->isLogpInProgress) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("SSR in Progress; block rmmod for 1 second!!!"));
-		msleep(1000);
-	}
-
-	hdd_ctx->isUnloadInProgress = true;
-
-	cds_set_load_unload_in_progress(true);
-
 	/* Check IPA HW Pipe shutdown */
 	hdd_ipa_uc_force_pipe_shutdown(hdd_ctx);
 
@@ -4786,11 +4777,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	cdf_mem_zero(hdd_ctx, sizeof(hdd_context_t));
 
 	hdd_ctx->wiphy = wiphy;
-	hdd_ctx->isLoadInProgress = true;
 	hdd_ctx->ioctl_scan_mode = eSIR_ACTIVE_SCAN;
 	cds_set_wakelock_logging(false);
-
-	cds_set_load_unload_in_progress(true);
 
 	/* Get cds context here bcoz cds_open requires it */
 	p_cds_context = cds_get_global_context();
@@ -4949,8 +4937,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		goto success;
 	}
 
-	hdd_ctx->isLogpInProgress = false;
-	cds_set_logp_in_progress(false);
+	cds_set_recovery_in_progress(false);
 
 	cds_set_connection_in_progress(false);
 
@@ -5538,8 +5525,6 @@ err_free_hdd_context:
 	return -EIO;
 
 success:
-	hdd_ctx->isLoadInProgress = false;
-	cds_set_load_unload_in_progress(false);
 	EXIT();
 	return 0;
 }

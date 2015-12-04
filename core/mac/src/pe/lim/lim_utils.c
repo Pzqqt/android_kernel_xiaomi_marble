@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -734,7 +734,7 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 	 * each STA associated per BSSId and deactivate/delete
 	 * the pmfSaQueryTimer for it
 	 */
-	if (cds_is_logp_in_progress()) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("SSR is detected, proceed to clean up pmfSaQueryTimer"));
 		for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;

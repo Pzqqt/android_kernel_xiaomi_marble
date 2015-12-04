@@ -878,8 +878,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	msg = NULL;
 	/*During the WLAN uninitialization,supplicant is stopped before the
 	   driver so not sending the status of the connection to supplicant */
-	if ((pHddCtx->isLoadInProgress != true) &&
-	    (pHddCtx->isUnloadInProgress != true)) {
+	if (cds_is_load_unload_in_progress()) {
 		wireless_send_event(dev, we_event, &wrqu, msg);
 #ifdef FEATURE_WLAN_ESE
 		if (eConnectionState_Associated ==
@@ -1068,8 +1067,7 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		 * before the driver so not sending the status of the
 		 * connection to supplicant.
 		 */
-		if ((pHddCtx->isLoadInProgress != true) &&
-		    (pHddCtx->isUnloadInProgress != true)) {
+		if (cds_is_load_unload_in_progress()) {
 #ifdef WLAN_FEATURE_P2P_DEBUG
 			if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
 				if (global_p2p_connection_status ==

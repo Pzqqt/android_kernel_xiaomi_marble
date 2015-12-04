@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -771,7 +771,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 
 	/* No need to post message during driver unlaod because MC thread is
 	   already shutdown */
-	if (!pHddCtx->isUnloadInProgress) {
+	if (!cds_is_driver_unloading()) {
 		tInfo = cdf_mem_malloc(sizeof(tdlsInfo_t));
 		if (NULL != tInfo) {
 			tInfo->vdev_id = pAdapter->sessionId;
@@ -3871,16 +3871,15 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			  "%s: Mgmt Tx Completion timed out TxCompletion %u",
 			  __func__, pAdapter->mgmtTxCompletionStatus);
 
-		if (pHddCtx->isLogpInProgress) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-				  "%s: LOGP in Progress. Ignore!!!", __func__);
+		if (cds_is_driver_recovering()) {
+			hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+				cds_get_driver_state());
 			return -EAGAIN;
 		}
 
-		if (pHddCtx->isUnloadInProgress) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Unloading/Loading in Progress. Ignore!!!",
-				  __func__);
+		if (cds_is_driver_unloading()) {
+			hdd_err("Unload in progress. State: 0x%x Ignore!!!",
+				cds_get_driver_state());
 			return -EAGAIN;
 		}
 

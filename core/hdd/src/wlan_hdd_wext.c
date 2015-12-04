@@ -1109,9 +1109,9 @@ CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 		       "%s: Invalid context, pAdapter", __func__);
 		return CDF_STATUS_E_FAULT;
 	}
-	if ((WLAN_HDD_GET_CTX(pAdapter))->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s:LOGP in Progress. Ignore!!!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			cds_get_driver_state());
 		/* return a cached value */
 		*rssi_value = pAdapter->rssi;
 		return CDF_STATUS_SUCCESS;
@@ -2248,9 +2248,9 @@ static int __iw_get_bitrate(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if ((WLAN_HDD_GET_CTX(pAdapter))->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
-			  "%s:LOGP in Progress. Ignore!!!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_alert("Recovery in Progress. State: 0x%x Ignore!!!",
+			  cds_get_driver_state());
 		return status;
 	}
 
@@ -3352,9 +3352,9 @@ CDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: pAdapter is NULL", __func__);
 		return CDF_STATUS_E_FAULT;
 	}
-	if ((WLAN_HDD_GET_CTX(pAdapter))->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s:LOGP in Progress. Ignore!!!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return CDF_STATUS_SUCCESS;
 	}
 

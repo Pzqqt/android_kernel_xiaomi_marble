@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -121,6 +121,8 @@ void cds_deinit(void)
 
 	gp_cds_context->cdf_ctx = NULL;
 	gp_cds_context = NULL;
+
+	cdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
 
 	cdf_mc_timer_exit();
 	cdf_mem_exit();
@@ -966,113 +968,67 @@ v_CONTEXT_t cds_get_global_context(void)
 } /* cds_get_global_context() */
 
 /**
- * cds_is_logp_in_progress() - check if ssr/self recovery is going on
+ * cds_get_driver_state() - Get current driver state
  *
- * Return: true if ssr/self recvoery is going on else false
+ * This API returns current driver state stored in global context.
+ *
+ * Return: Driver state enum
  */
-uint8_t cds_is_logp_in_progress(void)
+enum cds_driver_state cds_get_driver_state(void)
 {
 	if (gp_cds_context == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: global cds context is NULL", __func__);
-		return 1;
+
+		return CDS_DRIVER_STATE_UNINITIALIZED;
 	}
 
-	return gp_cds_context->isLogpInProgress;
+	return gp_cds_context->driver_state;
 }
 
 /**
- * cds_set_logp_in_progress() - set ssr/self recovery in progress
- * @value: value to set
+ * cds_set_driver_state() - Set current driver state
+ * @state:	Driver state to be set to.
  *
- * Return: none
+ * This API sets driver state to state. This API only sets the state and doesn't
+ * clear states, please make sure to use cds_clear_driver_state to clear any
+ * state if required.
+ *
+ * Return: None
  */
-void cds_set_logp_in_progress(uint8_t value)
+void cds_set_driver_state(enum cds_driver_state state)
 {
-	hdd_context_t *pHddCtx = NULL;
-
 	if (gp_cds_context == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
+			  "%s: global cds context is NULL: %x", __func__,
+			  state);
+
 		return;
 	}
-	gp_cds_context->isLogpInProgress = value;
 
-	/* HDD uses it's own context variable to check if SSR in progress,
-	 * instead of modifying all HDD APIs set the HDD context variable
-	 * here
-	 */
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
-	if (!pHddCtx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
-			  "%s: HDD context is Null", __func__);
+	gp_cds_context->driver_state |= state;
+}
+
+/**
+ * cds_clear_driver_state() - Clear current driver state
+ * @state:	Driver state to be cleared.
+ *
+ * This API clears driver state. This API only clears the state, please make
+ * sure to use cds_set_driver_state to set any new states.
+ *
+ * Return: None
+ */
+void cds_clear_driver_state(enum cds_driver_state state)
+{
+	if (gp_cds_context == NULL) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "%s: global cds context is NULL: %x", __func__,
+			  state);
+
 		return;
 	}
-	pHddCtx->isLogpInProgress = value;
-}
 
-/**
- * cds_is_load_unload_in_progress() - check if driver load/unload in progress
- *
- * Return: true if load/unload is going on else false
- */
-uint8_t cds_is_load_unload_in_progress(void)
-{
-	if (gp_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
-		return 0;
-	}
-
-	return gp_cds_context->isLoadUnloadInProgress;
-}
-
-/**
- * cds_is_unload_in_progress() - check if driver unload in
- * progress
- *
- * Return: true if unload is going on else false
- */
-uint8_t cds_is_unload_in_progress(void)
-{
-	hdd_context_t *hdd_ctx = NULL;
-	if (gp_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
-		return 0;
-	}
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
-
-	if (hdd_ctx == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is NULL", __func__);
-		return 0;
-	}
-
-	return hdd_ctx->isUnloadInProgress;
-}
-
-/**
- * cds_set_load_unload_in_progress() - set load/unload in progress
- * @value: value to set
- *
- * Return: none
- */
-void cds_set_load_unload_in_progress(uint8_t value)
-{
-	if (gp_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
-		return;
-	}
-	gp_cds_context->isLoadUnloadInProgress = value;
-
-#ifdef CONFIG_CNSS
-	if (value)
-		cnss_set_driver_status(CNSS_LOAD_UNLOAD);
-	else
-		cnss_set_driver_status(CNSS_INITIALIZED);
-#endif
+	gp_cds_context->driver_state &= ~state;
 }
 
 /**
@@ -1663,12 +1619,12 @@ void cds_trigger_recovery(void)
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"CRASH_INJECT command is timed out!");
  #ifdef CONFIG_CNSS
-		if (cds_is_logp_in_progress()) {
+		if (cds_is_driver_recovering()) {
 			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-				"LOGP is in progress, ignore!");
+				"Recovery is in progress, ignore!");
 			return;
 		}
-		cds_set_logp_in_progress(true);
+		cds_set_recovery_in_progress(true);
 		cnss_schedule_recovery_work();
  #endif
 

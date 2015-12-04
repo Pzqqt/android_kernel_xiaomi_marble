@@ -2112,15 +2112,15 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 {
 
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_station_ctx_t *pHddStaCtx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct statsContext context;
 	CDF_STATUS hstatus;
 	unsigned long rc;
 
-	if (hdd_ctx->isLogpInProgress) {
-		hddLog(LOGW, FL("LOGP in Progress. Ignore!!!"));
+	if (cds_is_driver_recovering()) {
+		hdd_warn("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return 0;
 	}
 

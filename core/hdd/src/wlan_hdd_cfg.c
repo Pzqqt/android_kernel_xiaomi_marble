@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -426,13 +426,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			    struct hdd_config, PowerUsageControl,
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_POWER_USAGE_DEFAULT),
-
-	REG_VARIABLE(CFG_ENABLE_LOGP_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fIsLogpEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_LOGP_DEFAULT,
-		     CFG_ENABLE_LOGP_MIN,
-		     CFG_ENABLE_LOGP_MAX),
 
 	REG_VARIABLE(CFG_ENABLE_IMPS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fIsImpsEnabled,
