@@ -1144,6 +1144,11 @@ typedef enum {
 	/* TDLS Event */
 	WMI_TDLS_PEER_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_TDLS),
 
+	/* STA SMPS Event */
+	/* force SMPS mode */
+	WMI_STA_SMPS_FORCE_MODE_COMPLETE_EVENTID =
+					WMI_EVT_GRP_START_ID(WMI_GRP_STA_SMPS),
+
 	/*location scan event */
 	/*report the firmware's capability of batch scan */
 	WMI_BATCH_SCAN_ENABLED_EVENTID =
@@ -12331,6 +12336,20 @@ typedef struct {
 	/* Return status. 0 for success, non-zero otherwise */
 	A_UINT32 status;
 } wmi_transfer_data_to_flash_complete_event_fixed_param;
+
+/*
+ * This structure is used to report SMPS force mode set complete to host.
+ */
+typedef struct {
+	/* TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_sta_smps_force_mode_complete_event_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* Unique id identifying the VDEV */
+	A_UINT32 vdev_id;
+	/* Return status. 0 for success, non-zero otherwise */
+	A_UINT32 status;
+} wmi_sta_smps_force_mode_complete_event_fixed_param;
 
 /*
  * This structure is used to report SCPC calibrated data to host.
