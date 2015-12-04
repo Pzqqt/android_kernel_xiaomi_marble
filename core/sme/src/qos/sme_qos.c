@@ -3472,7 +3472,7 @@ CDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	aggr_req->sessionId = session_id;
 	aggr_req->timeout = 0;
 	aggr_req->rspReqd = true;
-	cdf_mem_copy(&aggr_req->bssId[0],
+	cdf_mem_copy(&aggr_req->bssid.bytes[0],
 		     &session->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct cdf_mac_addr));
 

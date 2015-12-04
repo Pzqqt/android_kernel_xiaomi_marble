@@ -1850,8 +1850,8 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	psessionEntry =
-		pe_find_session_by_bssid(pMac, aggrQosReq->bssId, &sessionId);
+	psessionEntry = pe_find_session_by_bssid(pMac, aggrQosReq->bssid.bytes,
+						 &sessionId);
 
 	if (psessionEntry == NULL) {
 		PELOGE(lim_log
@@ -1874,7 +1874,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		return eSIR_FAILURE;
 	}
 
-	pSta = dph_lookup_hash_entry(pMac, aggrQosReq->bssId, &aid,
+	pSta = dph_lookup_hash_entry(pMac, aggrQosReq->bssid.bytes, &aid,
 				     &psessionEntry->dph.dphHashTable);
 	if (pSta == NULL) {
 		PELOGE(lim_log(pMac, LOGE,
