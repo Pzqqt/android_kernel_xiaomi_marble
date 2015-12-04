@@ -1584,24 +1584,6 @@ typedef struct sAniRxCtrs {
 	uint32_t aesDecryptErrUcast;
 } tAniRxCtrs, *tpAniRxCtrs;
 
-/* Get Radio Stats request structure */
-/* This structure shall be used for both Radio stats and Aggregate stats */
-/* A valid request must contain entire structure with/without valid fields. */
-/* Based on the request type, the valid fields will be checked. */
-typedef struct sAniGetStatsReq {
-	/* Common for all types are requests */
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint8_t sessionId;      /* Session ID */
-	uint16_t transactionId;
-	tSirMacAddr bssId;      /* BSSID */
-	/* only used for clear stats and per sta stats clear */
-	tAniStatSubTypes stat;  /* Clears the stats of the described types. */
-	uint32_t staId;         /* Per STA stats request must contain valid */
-	/* values */
-	tSirMacAddr macAddr;
-} tAniGetStatsReq, *tpAniGetStatsReq;
-
 /* *************************************************************** */
 
 /*******************PE Statistics*************************/
