@@ -351,11 +351,10 @@ CDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 		}
 	}
 
-	cdf_mem_copy(&msg->bssId[0],
-			&ftkey_info->peerMac.bytes[0], CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
 	msg->smeSessionId = session_id;
 	sms_log(mac_ctx, LOG1, "BSSID = " MAC_ADDRESS_STR,
-		MAC_ADDR_ARRAY(msg->bssId));
+		MAC_ADDR_ARRAY(msg->bssid.bytes));
 	status = cds_send_mb_message_to_mac(msg);
 
 	return status;

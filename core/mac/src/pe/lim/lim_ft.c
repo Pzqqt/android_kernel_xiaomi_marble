@@ -1608,13 +1608,14 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	pKeyInfo = (tSirFTUpdateKeyInfo *) pMsgBuf;
 
-	psessionEntry = pe_find_session_by_bssid(pMac, pKeyInfo->bssId, &sessionId);
+	psessionEntry = pe_find_session_by_bssid(pMac, pKeyInfo->bssid.bytes,
+						 &sessionId);
 	if (NULL == psessionEntry) {
 		PELOGE(lim_log(pMac, LOGE,
 			       "%s: Unable to find session for the following bssid",
 			       __func__);
 		       )
-		lim_print_mac_addr(pMac, pKeyInfo->bssId, LOGE);
+		lim_print_mac_addr(pMac, pKeyInfo->bssid.bytes, LOGE);
 		return false;
 	}
 
@@ -1635,8 +1636,8 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			extSetStaKeyParam;
 
 		cdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
-		cdf_mem_copy(pMlmSetKeysReq->peer_macaddr.bytes,
-				pKeyInfo->bssId, CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
+				 &pKeyInfo->bssid);
 		pMlmSetKeysReq->sessionId = psessionEntry->peSessionId;
 		pMlmSetKeysReq->smesessionId = psessionEntry->smeSessionId;
 		pMlmSetKeysReq->edType = pKeyInfo->keyMaterial.edType;
@@ -1684,11 +1685,10 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 		PELOG1(lim_log(pMac, LOG1,
 			       FL("BSSID = " MAC_ADDRESS_STR),
-			       MAC_ADDR_ARRAY(pKeyInfo->bssId));
-		       )
+			       MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));)
 
-		sir_copy_mac_addr(pAddBssParams->extSetStaKeyParam.peer_macaddr.bytes,
-				  pKeyInfo->bssId);
+		cdf_copy_macaddr(&pAddBssParams->extSetStaKeyParam.peer_macaddr,
+				 &pKeyInfo->bssid);
 
 		pAddBssParams->extSetStaKeyParam.sendRsp = false;
 
