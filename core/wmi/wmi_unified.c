@@ -104,6 +104,60 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 			cdf_get_log_timestamp();					\
 		g_wmi_rx_event_buf_idx++;					\
 }
+/* wmi_mgmt commands */
+#define WMI_MGMT_EVENT_DEBUG_MAX_ENTRY (256)
+
+uint32_t g_wmi_mgmt_command_buf_idx = 0;
+struct
+wmi_command_debug wmi_mgmt_command_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
+
+/* wmi_mgmt commands TX completed */
+uint32_t g_wmi_mgmt_command_tx_cmp_buf_idx = 0;
+struct wmi_command_debug
+wmi_mgmt_command_tx_cmp_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
+
+/* wmi_mgmt events when processed */
+uint32_t g_wmi_mgmt_event_buf_idx = 0;
+struct wmi_event_debug
+wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
+
+#define WMI_MGMT_COMMAND_RECORD(a, b) {					     \
+	if (WMI_MGMT_EVENT_DEBUG_MAX_ENTRY <=				     \
+		g_wmi_mgmt_command_buf_idx)				     \
+		g_wmi_mgmt_command_buf_idx = 0;				     \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].command = a; \
+	cdf_mem_copy(							     \
+		wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data,\
+		b, 16);							     \
+	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].time =	     \
+		cdf_get_log_timestamp();				     \
+	g_wmi_mgmt_command_buf_idx++;					     \
+}
+
+#define WMI_MGMT_COMMAND_TX_CMP_RECORD(a, b) {				     \
+	if (WMI_MGMT_EVENT_DEBUG_MAX_ENTRY <=				     \
+	    g_wmi_mgmt_command_tx_cmp_buf_idx)				     \
+		g_wmi_mgmt_command_tx_cmp_buf_idx = 0;			     \
+	wmi_mgmt_command_tx_cmp_log_buffer[g_wmi_mgmt_command_tx_cmp_buf_idx].\
+								command = a; \
+	cdf_mem_copy(wmi_mgmt_command_tx_cmp_log_buffer			     \
+		     [g_wmi_mgmt_command_tx_cmp_buf_idx].data, b, 16);	     \
+	wmi_mgmt_command_tx_cmp_log_buffer[g_wmi_mgmt_command_tx_cmp_buf_idx].\
+									time =\
+		cdf_get_log_timestamp();				      \
+	g_wmi_mgmt_command_tx_cmp_buf_idx++;				      \
+}
+
+#define WMI_MGMT_EVENT_RECORD(a, b) {					      \
+	if (WMI_MGMT_EVENT_DEBUG_MAX_ENTRY <= g_wmi_mgmt_event_buf_idx)       \
+		g_wmi_mgmt_event_buf_idx = 0;				      \
+	wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].event = a;	      \
+	cdf_mem_copy(wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].data,\
+		     b, 16);						      \
+	wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].time =	      \
+		cdf_get_log_timestamp();				      \
+	g_wmi_mgmt_event_buf_idx++;					      \
+}
 
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
@@ -780,7 +834,14 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 	cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/*Record 16 bytes of WMI cmd data - exclude TLV and WMI headers */
-	WMI_COMMAND_RECORD(cmd_id, ((uint32_t *) cdf_nbuf_data(buf) + 2));
+	if (cmd_id == WMI_MGMT_TX_SEND_CMDID) {
+		WMI_MGMT_COMMAND_RECORD(cmd_id,
+					((uint32_t *)cdf_nbuf_data(buf) + 2));
+	} else {
+		WMI_COMMAND_RECORD(cmd_id, ((uint32_t *) cdf_nbuf_data(buf) +
+					    2));
+	}
+
 	cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 
@@ -1037,7 +1098,11 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 		cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 		/* Exclude 4 bytes of TLV header */
-		WMI_EVENT_RECORD(id, ((uint8_t *) data + 4));
+		if (id == WMI_MGMT_TX_COMPLETION_EVENTID) {
+			WMI_MGMT_EVENT_RECORD(id, ((uint8_t *) data + 4));
+		} else {
+			WMI_EVENT_RECORD(id, ((uint8_t *) data + 4));
+		}
 		cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 		/* Call the WMI registered event handler */
@@ -1189,9 +1254,14 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/* Record 16 bytes of WMI cmd tx complete data
 	   - exclude TLV and WMI headers */
-	WMI_COMMAND_TX_CMP_RECORD(cmd_id,
-				  ((uint32_t *) cdf_nbuf_data(wmi_cmd_buf) +
-				   2));
+	if (cmd_id == WMI_MGMT_TX_SEND_CMDID) {
+		WMI_MGMT_COMMAND_TX_CMP_RECORD(cmd_id,
+				((uint32_t *) cdf_nbuf_data(wmi_cmd_buf) + 2));
+	} else {
+		WMI_COMMAND_TX_CMP_RECORD(cmd_id,
+				((uint32_t *) cdf_nbuf_data(wmi_cmd_buf) + 2));
+	}
+
 	cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 	cdf_nbuf_free(wmi_cmd_buf);
