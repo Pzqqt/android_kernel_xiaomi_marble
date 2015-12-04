@@ -624,6 +624,19 @@ extern "C" {
 #define AP_PS_DBGID_CLIENT_IN_PS_ACTIVE             28
 #define AP_PS_DBGID_CLIENT_IN_PS_NON_ACTIVE         29
 #define AP_PS_DBGID_CLIENT_IN_AWAKE                 30
+/* Enhanced Green AP DBGIDs */
+#define AP_PS_DBGID_EGAP_SET_PARAM                  31
+#define AP_PS_DBGID_EGAP_VDEV_START                 32
+#define AP_PS_DBGID_EGAP_VDEV_STOP                  33
+#define AP_PS_DBGID_EGAP_CONN_PEER                  34
+#define AP_PS_DBGID_EGAP_DELETE_PEER                35
+#define AP_PS_DBGID_EGAP_WAL_PEER_EVENT             36
+#define AP_PS_DBGID_EGAP_WAL_PDEV_EVENT             37
+#define AP_PS_DBGID_EGAP_NOTIF_STA_SLEEPING         38
+#define AP_PS_DBGID_EGAP_PROC_STA_SLEEPING          39
+#define AP_PS_DBGID_EGAP_PROC_STA_INACTIVITY        40
+#define AP_PS_DBGID_EGAP_CHANGE_CHAINMASK           41
+#define AP_PS_DBGID_EGAP_CHANGE_SM_STATE            42
 
 /* WLAN_MODULE_MGMT_TXRX Debugids*/
 #define MGMT_TXRX_DBGID_DEFINITION_START            0

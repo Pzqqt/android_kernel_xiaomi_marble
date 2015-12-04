@@ -603,6 +603,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_transfer_data_to_flash_complete_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_scpc_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_ap_ps_egap_info_chainmask_list,
 } WMITLV_TAG_ID;
 
 /*
