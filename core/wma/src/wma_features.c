@@ -3573,7 +3573,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		WMA_LOGE("Credits:%d; Pending_Cmds: %d",
 			 wmi_get_host_credits(wma->wmi_handle),
 			 wmi_get_pending_cmds(wma->wmi_handle));
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
@@ -3605,7 +3605,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 			 "cannot resume back", __func__, host_credits,
 			 wmi_pending_cmds);
 		htc_dump_counter_info(wma->htc_handle);
-		if (!cds_is_logp_in_progress())
+		if (!cds_is_driver_recovering())
 			CDF_BUG(0);
 		else
 			WMA_LOGE("%s: SSR in progress, ignore no credit issue",
@@ -4131,7 +4131,7 @@ static CDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 		WMA_LOGP("%s: Pending commands %d credits %d", __func__,
 			 wmi_get_pending_cmds(wma->wmi_handle),
 			 wmi_get_host_credits(wma->wmi_handle));
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
@@ -6285,7 +6285,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 		WMA_LOGE("Failed to get ACK from firmware for pdev suspend");
 		wmi_set_target_suspend(wma_handle->wmi_handle, false);
 #ifdef CONFIG_CNSS
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 			if (pmac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
@@ -6382,7 +6382,7 @@ int wma_resume_target(WMA_HANDLE handle)
 		WMA_LOGP("%s: Pending commands %d credits %d", __func__,
 			wmi_get_pending_cmds(wma->wmi_handle),
 			wmi_get_host_credits(wma->wmi_handle));
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();

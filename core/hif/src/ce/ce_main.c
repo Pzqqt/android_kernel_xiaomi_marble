@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1494,7 +1494,7 @@ static void hif_sleep_entry(void *arg)
 	if (scn->recovery)
 		return;
 
-	if (cds_is_unload_in_progress())
+	if (cds_is_driver_unloading())
 		return;
 
 	cdf_spin_lock_irqsave(&hif_state->keep_awake_lock);

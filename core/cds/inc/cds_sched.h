@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -257,7 +257,7 @@ typedef struct _cds_context_type {
 
 	cdf_event_t ProbeEvent;
 
-	volatile uint8_t isLogpInProgress;
+	uint32_t driver_state;
 
 	cdf_event_t wmaCompleteEvent;
 
@@ -280,8 +280,6 @@ typedef struct _cds_context_type {
 
 	/* Configuration handle used to get system configuration */
 	void *cfg_ctx;
-
-	volatile uint8_t isLoadUnloadInProgress;
 
 	bool is_wakelock_log_enabled;
 	uint32_t wakelock_log_level;

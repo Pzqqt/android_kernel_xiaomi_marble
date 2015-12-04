@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -896,7 +896,7 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 
 	wiphy = hdd_ctx->wiphy;
 
-	if (cds_is_logp_in_progress()) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "SSR in progress, return");
 		*reg_domain_ptr = temp_reg_domain;
@@ -1243,7 +1243,7 @@ void __hdd_reg_notifier(struct wiphy *wiphy,
 		return;
 	}
 
-	if (hdd_ctx->isUnloadInProgress || hdd_ctx->isLogpInProgress) {
+	if (cds_is_driver_unloading() || cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unloading or SSR in Progress, Ignore!!!",
 			  __func__);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -618,8 +618,8 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 	}
 	scn->target_status = OL_TRGET_STATUS_RESET;
 
-	if (cds_is_logp_in_progress()) {
-		BMI_ERR("%s: LOGP is in progress, ignore!\n", __func__);
+	if (cds_is_driver_recovering()) {
+		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);
 		return;
 	}
 
@@ -628,7 +628,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 		       __func__);
 		return;
 	}
-	cds_set_logp_in_progress(true);
+	cds_set_recovery_in_progress(true);
 
 #ifdef CONFIG_CNSS
 	ret = hif_check_fw_reg(scn);

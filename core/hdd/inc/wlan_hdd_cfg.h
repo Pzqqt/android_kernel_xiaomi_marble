@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -846,11 +846,6 @@ typedef enum {
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN                  (0)
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX                  (1)
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT              (1)
-
-#define CFG_ENABLE_LOGP_NAME                                "gEnableLogp"
-#define CFG_ENABLE_LOGP_MIN                                 (0)
-#define CFG_ENABLE_LOGP_MAX                                 (1)
-#define CFG_ENABLE_LOGP_DEFAULT                             (0)
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 #define CFG_FT_RESOURCE_REQ_NAME                        "gFTResourceReqSupported"
@@ -2880,7 +2875,6 @@ struct hdd_config {
 	bool fSupplicantCountryCodeHasPriority;
 	uint32_t HeartbeatThresh24;
 	char PowerUsageControl[4];
-	bool fIsLogpEnabled;
 	bool fIsImpsEnabled;
 	bool is_ps_enabled;
 	uint32_t nBmpsModListenInterval;

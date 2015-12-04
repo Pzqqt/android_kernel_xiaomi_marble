@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1137,12 +1137,6 @@ struct hdd_context_s {
 #ifdef QCA_CONFIG_SMP
 	bool is_ol_rx_thread_suspended;
 #endif
-
-	volatile bool isLogpInProgress;
-
-	bool isLoadInProgress;
-
-	bool isUnloadInProgress;
 
 	/* Track whether Mcast/Bcast Filter is enabled. */
 	bool hdd_mcastbcast_filter_set;

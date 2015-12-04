@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1115,9 +1115,9 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 		return;
 	}
 
-	if (pHddCtx->isLogpInProgress) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       "%s: Ignore suspend wlan, LOGP in progress!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore suspend!!!",
+			 cds_get_driver_state());
 		return;
 	}
 
@@ -1171,9 +1171,9 @@ static void hdd_resume_wlan(void)
 		return;
 	}
 
-	if (pHddCtx->isLogpInProgress) {
-		hddLog(CDF_TRACE_LEVEL_INFO,
-		       "%s: Ignore resume wlan, LOGP in progress!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_warn("Recovery in Progress. State: 0x%x Ignore resume!!!",
+			 cds_get_driver_state());
 		return;
 	}
 
@@ -1305,8 +1305,7 @@ CDF_STATUS hdd_wlan_shutdown(void)
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx->isLogpInProgress = true;
-	cds_set_logp_in_progress(true);
+	cds_set_recovery_in_progress(true);
 
 	cds_clear_concurrent_session_count();
 
@@ -1656,7 +1655,6 @@ err_re_init:
 	return -EPERM;
 
 success:
-	pHddCtx->isLogpInProgress = false;
 	return CDF_STATUS_SUCCESS;
 }
 

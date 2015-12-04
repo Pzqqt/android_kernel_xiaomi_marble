@@ -222,12 +222,12 @@ static int __hdd_hostapd_open(struct net_device *dev)
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
 
-	if (WLAN_HDD_GET_CTX(pAdapter)->isLoadInProgress ||
-		WLAN_HDD_GET_CTX(pAdapter)->isUnloadInProgress) {
-		hddLog(LOGE,
-		       FL("Driver load/unload in progress, ignore adapter open"));
+	if (cds_is_load_unload_in_progress()) {
+		hdd_err("Driver load/unload in progress, ignore, state: 0x%x",
+			cds_get_driver_state());
 		goto done;
 	}
+
 	/* Enable all Tx queues */
 	hddLog(LOG1, FL("Enabling queues"));
 	wlan_hdd_netif_queue_control(pAdapter,

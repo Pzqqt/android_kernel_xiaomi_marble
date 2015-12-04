@@ -1166,9 +1166,9 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 		       "%s: timeout waiting for remain on channel ready indication",
 		       __func__);
 
-		if (pHddCtx->isLogpInProgress) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-				  "%s: LOGP in Progress. Ignore!!!", __func__);
+		if (cds_is_driver_recovering()) {
+			hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+				 cds_get_driver_state());
 			return -EAGAIN;
 		}
 	}

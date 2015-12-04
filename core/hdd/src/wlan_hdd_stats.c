@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1753,7 +1753,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #ifdef WLAN_FEATURE_LPSS
 	if (!pAdapter->rssi_send) {
 		pAdapter->rssi_send = true;
-		if (pHddCtx->isUnloadInProgress != true)
+		if (cds_is_driver_unloading())
 			wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 1);
 	}
 #endif

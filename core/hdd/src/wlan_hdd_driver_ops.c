@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -73,7 +73,7 @@
 #define WLAN_HDD_UNREGISTER_DRIVER(wlan_drv_ops) \
 	icnss_unregister_driver(wlan_drv_ops)
 #endif /* HIF_PCI */
-#define DISABLE_KRAIT_IDLE_PS_VAL	200
+#define DISABLE_KRAIT_IDLE_PS_VAL	1
 
 /*
  * In BMI Phase we are only sending small chunk (256 bytes) of the FW image at
@@ -213,11 +213,14 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	*/
 	hdd_request_pm_qos(DISABLE_KRAIT_IDLE_PS_VAL);
 
-	if (!reinit) {
+	if (reinit) {
+		cds_set_recovery_in_progress(true);
+	} else {
 		ret = hdd_init();
 
 		if (ret)
 			goto out;
+		cds_set_load_in_progress(true);
 	}
 
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
@@ -242,8 +245,12 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		goto err_hif_close;
 
 
-	if (reinit)
-		cds_set_logp_in_progress(false);
+	if (reinit) {
+		cds_set_recovery_in_progress(false);
+	} else {
+		cds_set_load_in_progress(false);
+		cds_set_driver_loaded(true);
+	}
 
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos();
@@ -256,12 +263,23 @@ err_epping_close:
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
 		epping_close();
 err_hdd_deinit:
+	cds_set_load_in_progress(false);
 	hdd_deinit();
 out:
 	hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_DRIVER_INIT);
 	hdd_remove_pm_qos();
 	return ret;
 }
+
+#ifdef CONFIG_CNSS
+static inline void hdd_cnss_driver_unloading(void)
+{
+	cnss_set_driver_status(CNSS_LOAD_UNLOAD);
+}
+#else
+static inline void hdd_cnss_driver_unloading(void) { }
+#endif
+
 
 /**
  * wlan_hdd_remove() - wlan_hdd_remove
@@ -277,6 +295,17 @@ static void wlan_hdd_remove(void)
 
 	pr_info("%s: Removing driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR);
+
+	/* Wait for recovery to complete */
+	while (cds_is_driver_recovering()) {
+		hdd_alert("Recovery in progress; wait here!!!");
+		msleep(1000);
+	}
+
+	cds_set_driver_loaded(false);
+	cds_set_unload_in_progress(true);
+
+	hdd_cnss_driver_unloading();
 
 	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 
@@ -314,7 +343,7 @@ static void wlan_hdd_shutdown(void)
 		return;
 	}
 	/* this is for cases, where shutdown invoked from CNSS */
-	cds_set_logp_in_progress(true);
+	cds_set_recovery_in_progress(true);
 
 	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
 	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam()))

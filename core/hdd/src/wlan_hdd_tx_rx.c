@@ -312,9 +312,9 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitCalled;
-	if (cds_is_logp_in_progress()) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
-			"LOPG in progress, dropping the packet");
+			"Recovery in progress, dropping the packet");
 		++pAdapter->stats.tx_dropped;
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
 		kfree_skb(skb);
