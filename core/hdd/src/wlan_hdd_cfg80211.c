@@ -636,7 +636,7 @@ static const struct wiphy_wowlan_support wowlan_support_cfg80211_init = {
 #ifdef CHANNEL_SWITCH_SUPPORTED
 static inline void hdd_add_channel_switch_support(uint32_t *flags)
 {
-	flags |= WIPHY_FLAG_HAS_CHANNEL_SWITCH;
+	*flags |= WIPHY_FLAG_HAS_CHANNEL_SWITCH;
 	return;
 }
 #else
