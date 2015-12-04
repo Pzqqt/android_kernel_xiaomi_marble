@@ -2209,7 +2209,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t aid;
 	uint16_t sta_idx = 0;
 	uint32_t default_key_id = 0;
-	tSirMacAddr curr_bssid;
+	struct cdf_mac_addr curr_bssid;
 	tpDphHashNode sta_ds;
 	tLimMlmSetKeysReq *mlm_set_keys_req;
 	tLimMlmSetKeysCnf mlm_set_keys_cnf;
@@ -2236,8 +2236,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		   "AID [%d], ED Type [%d], # Keys [%d] & Peer MAC Addr - "),
 		mlm_set_keys_req->aid, mlm_set_keys_req->edType,
 		mlm_set_keys_req->numKeys);
-	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peerMacAddr, LOGW);
-	sir_copy_mac_addr(curr_bssid, session->bssId);
+	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peer_macaddr.bytes, LOGW);
+	cdf_mem_copy(curr_bssid.bytes, session->bssId, CDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
@@ -2247,13 +2247,15 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * check if TDLS is enabled.
 		 */
 #ifndef FEATURE_WLAN_TDLS
-		if ((!lim_is_addr_bc(mlm_set_keys_req->peerMacAddr)) &&
-		    (!cdf_mem_compare(mlm_set_keys_req->peerMacAddr,
-				      curr_bssid, sizeof(tSirMacAddr)))) {
+		if ((!cdf_is_macaddr_broadcast(
+				&mlm_set_keys_req->peer_macaddr)) &&
+		    (!cdf_is_macaddr_equal(&mlm_set_keys_req->peer_macaddr,
+					   &curr_bssid))) {
 			lim_log(mac_ctx, LOGW,
 				FL("Received MLM_SETKEYS_REQ with invalid BSSID"
 				MAC_ADDRESS_STR),
-				MAC_ADDR_ARRAY(mlm_set_keys_req->peerMacAddr));
+				MAC_ADDR_ARRAY(mlm_set_keys_req->
+						peer_macaddr.bytes));
 			/*
 			 * Prepare and Send LIM_MLM_SETKEYS_CNF with error code
 			 */
@@ -2280,7 +2282,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * mlm_set_keys_req->key.unicast = 0 -> Multicast/broadcast
 	 * mlm_set_keys_req->key.unicast - 1 -> Unicast keys are being set
 	 */
-	if (lim_is_addr_bc(mlm_set_keys_req->peerMacAddr)) {
+	if (cdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
 		lim_log(mac_ctx, LOG1, FL("Trying to set Group Keys...%d "),
 			mlm_set_keys_req->sessionId);
 		/*
@@ -2304,7 +2306,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * peer entity for which keys need to be set.
 		 */
 		sta_ds = dph_lookup_hash_entry(mac_ctx,
-				mlm_set_keys_req->peerMacAddr, &aid,
+				mlm_set_keys_req->peer_macaddr.bytes, &aid,
 				&session->dph.dphHashTable);
 		if ((sta_ds == NULL) ||
 		    ((sta_ds->mlmStaContext.mlmState !=
@@ -2317,7 +2319,8 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			lim_log(mac_ctx, LOG1,
 				FL("Invalid MLM_SETKEYS_REQ, Addr = "
 				   MAC_ADDRESS_STR),
-				MAC_ADDR_ARRAY(mlm_set_keys_req->peerMacAddr));
+				MAC_ADDR_ARRAY(mlm_set_keys_req->
+						peer_macaddr.bytes));
 			/* Prepare and Send LIM_MLM_SETKEYS_CNF */
 			mlm_set_keys_cnf.resultCode =
 				eSIR_SME_INVALID_PARAMETERS;
@@ -2352,7 +2355,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		FL("Trying to set keys for STA Index [%d], using default_key_id [%d]"),
 		sta_idx, default_key_id);
 
-	if (lim_is_addr_bc(mlm_set_keys_req->peerMacAddr)) {
+	if (cdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
 		session->limPrevMlmState = session->limMlmState;
 		session->limMlmState = eLIM_MLM_WT_SET_BSS_KEY_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,

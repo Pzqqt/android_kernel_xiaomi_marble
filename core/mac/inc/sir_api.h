@@ -1467,8 +1467,8 @@ typedef struct sSirSmeSetContextReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr peerMacAddr;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr peer_macaddr;
+	struct cdf_mac_addr bssid;      /* BSSID */
 	tSirKeyMaterial keyMaterial;
 } tSirSmeSetContextReq, *tpSirSmeSetContextReq;
 
@@ -1480,7 +1480,7 @@ typedef struct sSirSmeSetContextRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 } tSirSmeSetContextRsp, *tpSirSmeSetContextRsp;
 
 /* / Statistic definitions */

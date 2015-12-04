@@ -409,7 +409,7 @@ typedef struct tagSetKeyCmd {
 	eCsrEncryptionType encType;
 	eCsrAuthType authType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
-	tSirMacAddr peerMac;    /* Peer's MAC address. ALL 1's for group key */
+	struct cdf_mac_addr peermac;    /* Peer's MAC address. ALL 1's for group key */
 	uint8_t paeRole;        /* 0 for supplicant */
 	uint8_t keyId;          /* Kye index */
 	uint8_t keyLength;      /* Number of bytes containing the key in pKey */

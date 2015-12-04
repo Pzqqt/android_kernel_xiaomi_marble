@@ -373,7 +373,7 @@ typedef struct {
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
 	uint8_t singleTidRc;
 	uint8_t smesessionId;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	CDF_STATUS status;
 	uint8_t sessionId;
 	uint8_t sendRsp;
@@ -390,7 +390,7 @@ typedef struct {
  * @key: key data
  */
 typedef struct sLimMlmSetKeysReq {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint8_t sessionId;      /* Added For BT-AMP Support */
 	uint8_t smesessionId;   /* Added for drivers based on wmi interface */
 	uint16_t aid;

@@ -1190,7 +1190,7 @@ CDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 			 peer_addr);
 		cdf_mem_set(&key_info, sizeof(key_info), 0);
 		key_info.smesessionId = vdev_id;
-		cdf_mem_copy(key_info.peerMacAddr, peer_addr,
+		cdf_mem_copy(key_info.peer_macaddr.bytes, peer_addr,
 				IEEE80211_ADDR_LEN);
 		key_info.sendRsp = false;
 

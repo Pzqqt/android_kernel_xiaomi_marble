@@ -213,7 +213,8 @@ static CDF_STATUS csr_roam_free_connected_info(tpAniSirGlobal pMac,
 					       tCsrRoamConnectedInfo *
 					       pConnectedInfo);
 CDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
-					   tSirMacAddr peerMacAddr, uint8_t numKeys,
+					   struct cdf_mac_addr peer_macaddr,
+					    uint8_t numKeys,
 					   tAniEdType edType, bool fUnicast,
 					   tAniKeyDirection aniKeyDirection,
 					   uint8_t keyId, uint8_t keyLength,
@@ -9423,8 +9424,8 @@ static CDF_STATUS csr_roam_issue_set_key_command(tpAniSirGlobal pMac,
 		pCommand->u.setKeyCmd.roamId = roamId;
 		pCommand->u.setKeyCmd.encType = pSetKey->encType;
 		pCommand->u.setKeyCmd.keyDirection = pSetKey->keyDirection;
-		cdf_mem_copy(&pCommand->u.setKeyCmd.peerMac, &pSetKey->peerMac,
-			     sizeof(struct cdf_mac_addr));
+		cdf_copy_macaddr(&pCommand->u.setKeyCmd.peermac,
+				 &pSetKey->peerMac);
 		/* 0 for supplicant */
 		pCommand->u.setKeyCmd.paeRole = pSetKey->paeRole;
 		pCommand->u.setKeyCmd.keyId = pSetKey->keyId;
@@ -9463,7 +9464,7 @@ CDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 	tAniEdType edType =
 		csr_translate_encrypt_type_to_ed_type(pCommand->u.setKeyCmd.encType);
 	bool fUnicast =
-		(pCommand->u.setKeyCmd.peerMac[0] == 0xFF) ? false : true;
+		(pCommand->u.setKeyCmd.peermac.bytes[0] == 0xFF) ? false : true;
 	uint32_t sessionId = pCommand->sessionId;
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
@@ -9478,7 +9479,7 @@ CDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 	if (eSIR_ED_NONE != edType) {
 		cdf_mem_set(&setKeyEvent,
 			    sizeof(host_event_wlan_security_payload_type), 0);
-		if (*((uint8_t *) &pCommand->u.setKeyCmd.peerMac) & 0x01) {
+		if (cdf_is_macaddr_group(&pCommand->u.setKeyCmd.peermac)) {
 			setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_GTK_REQ;
 			setKeyEvent.encryptionModeMulticast =
 				(uint8_t) diag_enc_type_from_csr_type(pCommand->u.
@@ -9520,8 +9521,9 @@ CDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 #endif /* FEATURE_WLAN_DIAG_SUPPORT_CSR */
 	if (csr_is_set_key_allowed(pMac, sessionId)) {
 		status = csr_send_mb_set_context_req_msg(pMac, sessionId,
-							 (uint8_t *) &pCommand->u.
-							 setKeyCmd.peerMac, numKeys,
+							 pCommand->u.
+							 setKeyCmd.peermac,
+							 numKeys,
 							 edType, fUnicast,
 							 pCommand->u.setKeyCmd.
 							 keyDirection,
@@ -9546,8 +9548,8 @@ CDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 				       eCSR_ROAM_RESULT_FAILURE);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 		if (eSIR_ED_NONE != edType) {
-			if (*((uint8_t *) &pCommand->u.setKeyCmd.peerMac) &
-			    0x01) {
+			if (cdf_is_macaddr_group(
+					&pCommand->u.setKeyCmd.peermac)) {
 				setKeyEvent.eventId =
 					WLAN_SECURITY_EVENT_SET_GTK_RSP;
 			} else {
@@ -10748,7 +10750,7 @@ csr_roam_diag_set_ctx_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	cdf_mem_set(&setKeyEvent,
 		    sizeof(host_event_wlan_security_payload_type), 0);
-	if (pRsp->peerMacAddr[0] & 0x01)
+	if (cdf_is_macaddr_group(&pRsp->peer_macaddr))
 		setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_GTK_RSP;
 	else
 		setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_PTK_RSP;
@@ -10781,7 +10783,6 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	eCsrRoamResult result = eCSR_ROAM_RESULT_NONE;
 	tSirSmeSetContextRsp *pRsp = (tSirSmeSetContextRsp *) msg_ptr;
 	tListElem *entry;
-	tSirMacAddr Broadcastaddr = { 0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF };
 
 	cdf_mem_set(&roam_info, sizeof(roam_info), 0);
 	entry = csr_ll_peek_head(&mac_ctx->sme.smeCmdActiveList,
@@ -10818,14 +10819,12 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 					 session->connectedProfile.bssid);
 	}
 	if (eSIR_SME_SUCCESS == pRsp->statusCode) {
-		cdf_mem_copy(&roam_info.peerMac, &pRsp->peerMacAddr,
-			     sizeof(struct cdf_mac_addr));
+		cdf_copy_macaddr(&roam_info.peerMac, &pRsp->peer_macaddr);
 		/* Make sure we install the GTK before indicating to HDD as
 		 * authenticated. This is to prevent broadcast packets go out
 		 * after PTK and before GTK.
 		 */
-		if (cdf_mem_compare(&Broadcastaddr, pRsp->peerMacAddr,
-				    sizeof(tSirMacAddr))) {
+		if (cdf_is_macaddr_broadcast(&pRsp->peer_macaddr)) {
 			tpSirSetActiveModeSetBncFilterReq pMsg;
 			pMsg = cdf_mem_malloc(
 				    sizeof(tSirSetActiveModeSetBncFilterReq));
@@ -10841,9 +10840,10 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	} else {
 		result = eCSR_ROAM_RESULT_FAILURE;
 		sms_log(mac_ctx, LOGE,
-			FL("CSR: setkey command failed(%d) PeerMac "
+			FL("CSR: setkey command failed(err=%d) PeerMac "
 			MAC_ADDRESS_STR),
-			pRsp->statusCode, MAC_ADDR_ARRAY(pRsp->peerMacAddr));
+			pRsp->statusCode,
+			MAC_ADDR_ARRAY(pRsp->peer_macaddr.bytes));
 	}
 	csr_roam_call_callback(mac_ctx, sessionId, &roam_info,
 			       cmd->u.setKeyCmd.roamId,
@@ -14445,8 +14445,10 @@ CDF_STATUS csr_send_assoc_ind_to_upper_layer_cnf_msg(tpAniSirGlobal pMac,
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
-					   tSirMacAddr peerMacAddr, uint8_t numKeys,
+CDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac,
+					   uint32_t sessionId,
+					   struct cdf_mac_addr peer_macaddr,
+					   uint8_t numKeys,
 					   tAniEdType edType, bool fUnicast,
 					   tAniKeyDirection aniKeyDirection,
 					   uint8_t keyId, uint8_t keyLength,
@@ -14477,11 +14479,9 @@ CDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac, uint32_t session
 		pMsg->length = msgLen;
 		pMsg->sessionId = (uint8_t) sessionId;
 		pMsg->transactionId = 0;
-		cdf_mem_copy(pMsg->peerMacAddr, peerMacAddr,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(pMsg->bssId,
-			     pSession->connectedProfile.bssid.bytes,
-			     sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&pMsg->peer_macaddr, &peer_macaddr);
+		cdf_copy_macaddr(&pMsg->bssid,
+				 &pSession->connectedProfile.bssid);
 
 		/**
 		 * Set the pMsg->keyMaterial.length field

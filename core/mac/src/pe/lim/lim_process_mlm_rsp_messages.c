@@ -1482,14 +1482,14 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		if (LIM_IS_AP_ROLE(psessionEntry) ||
 			LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
 			sta_ds = dph_lookup_hash_entry(pMac,
-				pMlmSetKeysCnf->peerMacAddr,
+				pMlmSetKeysCnf->peer_macaddr.bytes,
 				&aid, &psessionEntry->dph.dphHashTable);
 			if (sta_ds != NULL)
 				sta_ds->is_key_installed = 1;
 		}
 	}
 	lim_send_sme_set_context_rsp(pMac,
-				     pMlmSetKeysCnf->peerMacAddr,
+				     pMlmSetKeysCnf->peer_macaddr,
 				     1,
 				     (tSirResultCodes) pMlmSetKeysCnf->resultCode,
 				     psessionEntry, psessionEntry->smeSessionId,
@@ -3270,9 +3270,8 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 			(tpLimMlmSetKeysReq) mac_ctx->lim.gpLimMlmSetKeysReq;
 		/* Prepare and Send LIM_MLM_SETKEYS_CNF */
 		if (NULL != lpLimMlmSetKeysReq) {
-			cdf_mem_copy((uint8_t *) &mlm_set_key_cnf.peerMacAddr,
-				(uint8_t *) lpLimMlmSetKeysReq->peerMacAddr,
-				sizeof(tSirMacAddr));
+			cdf_copy_macaddr(&mlm_set_key_cnf.peer_macaddr,
+					 &lpLimMlmSetKeysReq->peer_macaddr);
 			/*
 			 * Free the buffer cached for the global
 			 * mac_ctx->lim.gpLimMlmSetKeysReq
@@ -3359,9 +3358,8 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 
 	/* Prepare and Send LIM_MLM_SETKEYS_CNF */
 	if (NULL != set_key_req) {
-		cdf_mem_copy((uint8_t *) &set_key_cnf.peerMacAddr,
-			(uint8_t *) set_key_req->peerMacAddr,
-			sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&set_key_cnf.peer_macaddr,
+				 &set_key_req->peer_macaddr);
 		/*
 		 * Free the buffer cached for the
 		 * global mac_ctx->lim.gpLimMlmSetKeysReq

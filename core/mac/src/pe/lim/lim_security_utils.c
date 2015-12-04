@@ -775,15 +775,10 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal pMac,
 			       tLimMlmSetKeysCnf *mlmSetKeysCnf)
 {
 	/* Prepare and Send LIM_MLM_SETKEYS_CNF */
-	cdf_mem_copy((uint8_t *) &mlmSetKeysCnf->peerMacAddr,
-		     (uint8_t *) pMlmSetKeysReq->peerMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&mlmSetKeysCnf->peer_macaddr,
+			 &pMlmSetKeysReq->peer_macaddr);
 
-	cdf_mem_copy((uint8_t *) &mlmSetKeysCnf->peerMacAddr,
-		     (uint8_t *) pMlmSetKeysReq->peerMacAddr,
-		     sizeof(tSirMacAddr));
-
-	/* / Free up buffer allocated for mlmSetKeysReq */
+	/* Free up buffer allocated for mlmSetKeysReq */
 	cdf_mem_free(pMlmSetKeysReq);
 	pMac->lim.gpLimMlmSetKeysReq = NULL;
 
@@ -969,8 +964,8 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams->defWEPIdx = defWEPIdx;
 
 	pSetStaKeyParams->smesessionId = pMlmSetKeysReq->smesessionId;
-	cdf_mem_copy(pSetStaKeyParams->peerMacAddr,
-		     pMlmSetKeysReq->peerMacAddr, sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pSetStaKeyParams->peer_macaddr,
+			 &pMlmSetKeysReq->peer_macaddr);
 
 	if (sendRsp == true) {
 		/** Store the Previous MlmState*/
