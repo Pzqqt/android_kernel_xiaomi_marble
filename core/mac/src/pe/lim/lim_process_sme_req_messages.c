@@ -3881,7 +3881,7 @@ static void __lim_process_sme_delts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			     &smetransactionId);
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				pDeltsReq->bssId,
+				pDeltsReq->bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE, "Session Does not exist for given bssId");

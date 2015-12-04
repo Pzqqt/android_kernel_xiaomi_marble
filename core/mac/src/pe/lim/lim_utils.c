@@ -5209,7 +5209,7 @@ lim_validate_delts_req(tpAniSirGlobal mac_ctx, tpSirDeltsReq delts_req,
 					&psession_entry->dph.dphHashTable);
 		else
 			sta = dph_lookup_hash_entry(mac_ctx,
-						delts_req->macAddr,
+						delts_req->macaddr.bytes,
 						&associd,
 						&psession_entry->dph.
 							dphHashTable);

@@ -4075,7 +4075,7 @@ CDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 		cdf_mem_free(pMsg);
 		return CDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&pMsg->bssId[0],
+	cdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct cdf_mac_addr));
 

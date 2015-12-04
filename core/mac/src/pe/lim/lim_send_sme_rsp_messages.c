@@ -1783,8 +1783,7 @@ lim_send_sme_delts_rsp(tpAniSirGlobal pMac, tpSirDeltsReq delts, uint32_t status
 	if (psessionEntry != NULL) {
 
 		rsp->aid = delts->aid;
-		cdf_mem_copy((uint8_t *) &rsp->macAddr[0],
-			     (uint8_t *) &delts->macAddr[0], 6);
+		cdf_copy_macaddr(&rsp->macaddr, &delts->macaddr);
 		cdf_mem_copy((uint8_t *) &rsp->rsp, (uint8_t *) &delts->req,
 			     sizeof(tSirDeltsReqInfo));
 	}
