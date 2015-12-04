@@ -78,6 +78,99 @@ static int war1_allow_sleep;
 /* io32 write workaround */
 static int hif_ce_war1;
 
+#ifdef CONFIG_SLUB_DEBUG_ON
+
+/**
+ * struct hif_ce_event - structure for detailing a ce event
+ * @type: what the event was
+ * @time: when it happened
+ * @descriptor: descriptor enqueued or dequeued
+ * @memory: virtual address that was used
+ * @index: location of the descriptor in the ce ring;
+ */
+struct hif_ce_desc_event {
+	uint16_t index;
+	enum hif_ce_event_type type;
+	uint64_t time;
+	union ce_desc descriptor;
+	void *memory;
+};
+
+/* max history to record per copy engine */
+#define HIF_CE_HISTORY_MAX 512
+cdf_atomic_t hif_ce_desc_history_index[CE_COUNT_MAX];
+struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
+
+/**
+ * get_next_record_index() - get the next record index
+ * @table_index: atomic index variable to increment
+ * @array_size: array size of the circular buffer
+ *
+ * Increment the atomic index and reserve the value.
+ * Takes care of buffer wrap.
+ * Guaranteed to be thread safe as long as fewer than array_size contexts
+ * try to access the array.  If there are more than array_size contexts
+ * trying to access the array, full locking of the recording process would
+ * be needed to have sane logging.
+ */
+static int get_next_record_index(cdf_atomic_t *table_index, int array_size)
+{
+	int record_index = cdf_atomic_inc_return(table_index);
+	if (record_index == array_size)
+		cdf_atomic_sub(array_size, table_index);
+
+	while (record_index >= array_size)
+		record_index -= array_size;
+	return record_index;
+}
+
+/**
+ * hif_record_ce_desc_event() - record ce descriptor events
+ * @ce_id: which ce is the event occuring on
+ * @type: what happened
+ * @descriptor: pointer to the descriptor posted/completed
+ * @memory: virtual address of buffer related to the descriptor
+ * @index: index that the descriptor was/will be at.
+ */
+void hif_record_ce_desc_event(int ce_id, enum hif_ce_event_type type,
+		union ce_desc *descriptor, void *memory, int index)
+{
+	int record_index = get_next_record_index(
+			&hif_ce_desc_history_index[ce_id], HIF_CE_HISTORY_MAX);
+
+	struct hif_ce_desc_event *event =
+		&hif_ce_desc_history[ce_id][record_index];
+	event->type = type;
+	event->time = cds_get_monotonic_boottime();
+	event->descriptor = *descriptor;
+	event->memory = memory;
+	event->index = index;
+}
+
+/**
+ * ce_init_ce_desc_event_log() - initialize the ce event log
+ * @ce_id: copy engine id for which we are initializing the log
+ * @size: size of array to dedicate
+ *
+ * Currently the passed size is ignored in favor of a precompiled value.
+ */
+void ce_init_ce_desc_event_log(int ce_id, int size)
+{
+	cdf_atomic_init(&hif_ce_desc_history_index[ce_id]);
+}
+#else
+void hif_record_ce_desc_event(
+		int ce_id, enum hif_ce_event_type type,
+		union ce_desc *descriptor, void *memory,
+		int index)
+{
+}
+
+static inline void ce_init_ce_desc_event_log(int ce_id, int size)
+{
+}
+#endif
+
 /*
  * Support for Copy Engine hardware, which is mainly used for
  * communication between Host and Target over a PCIe interconnect.
@@ -194,6 +287,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 		return status;
 	}
 	{
+		enum hif_ce_event_type event_type = HIF_TX_GATHER_DESC_POST;
 		struct CE_src_desc *src_ring_base =
 			(struct CE_src_desc *)src_ring->base_addr_owner_space;
 		struct CE_src_desc *shadow_base =
@@ -237,9 +331,17 @@ ce_send_nolock(struct CE_handle *copyeng,
 
 		/* WORKAROUND */
 		if (!shadow_src_desc->gather) {
+			event_type = HIF_TX_DESC_POST;
 			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 						      write_index);
 		}
+
+		/* src_ring->write index hasn't been updated event though
+		 * the register has allready been written to.
+		 */
+		hif_record_ce_desc_event(CE_state->id, event_type,
+			(union ce_desc *) shadow_src_desc, per_transfer_context,
+			src_ring->write_index);
 
 		src_ring->write_index = write_index;
 		status = CDF_STATUS_SUCCESS;
@@ -574,6 +676,10 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 		dest_ring->per_transfer_context[write_index] =
 			per_recv_context;
 
+		hif_record_ce_desc_event(CE_state->id, HIF_RX_DESC_POST,
+				(union ce_desc *) dest_desc, per_recv_context,
+				write_index);
+
 		/* Update Destination Ring Write Index */
 		write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 		CE_DEST_RING_WRITE_IDX_SET(scn, ctrl_addr, write_index);
@@ -764,6 +870,11 @@ ce_completed_recv_next_nolock(struct CE_state *CE_state,
 		goto done;
 	}
 
+	hif_record_ce_desc_event(CE_state->id, HIF_RX_DESC_COMPLETION,
+			(union ce_desc *) dest_desc,
+			dest_ring->per_transfer_context[sw_index],
+			sw_index);
+
 	dest_desc->nbytes = 0;
 
 	/* Return data from completed destination descriptor */
@@ -925,6 +1036,11 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 		struct CE_src_desc *src_desc =
 			CE_SRC_RING_TO_DESC(src_ring_base, sw_index);
 #endif
+		hif_record_ce_desc_event(CE_state->id, HIF_TX_DESC_COMPLETION,
+				(union ce_desc *) shadow_src_desc,
+				src_ring->per_transfer_context[sw_index],
+				sw_index);
+
 		/* Return data from completed source descriptor */
 		*bufferp = HIF_CE_DESC_ADDR_TO_DMA(shadow_src_desc);
 		*nbytesp = shadow_src_desc->nbytes;

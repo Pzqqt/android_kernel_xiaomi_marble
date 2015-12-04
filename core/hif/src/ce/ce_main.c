@@ -166,6 +166,9 @@ struct CE_handle *ce_init(struct ol_softc *scn,
 	else
 		CE_state->src_sz_max = attr->src_sz_max;
 
+	ce_init_ce_desc_event_log(CE_id,
+			attr->src_nentries + attr->dest_nentries);
+
 	/* source ring setup */
 	nentries = attr->src_nentries;
 	if (nentries) {
