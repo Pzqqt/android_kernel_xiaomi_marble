@@ -1976,7 +1976,7 @@ typedef struct sSirAddtsReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 	uint32_t timeout;       /* in ms */
 	uint8_t rspReqd;
 	tSirAddtsReqInfo req;

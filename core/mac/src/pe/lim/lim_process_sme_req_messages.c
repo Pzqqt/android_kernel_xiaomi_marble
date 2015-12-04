@@ -3713,9 +3713,8 @@ static void __lim_process_sme_addts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	pSirAddts = (tpSirAddtsReq) pMsgBuf;
 
-	psessionEntry = pe_find_session_by_bssid(pMac,
-				pSirAddts->bssId,
-				&sessionId);
+	psessionEntry = pe_find_session_by_bssid(pMac, pSirAddts->bssid.bytes,
+						 &sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE, "Session Does not exist for given bssId");
 		return;
