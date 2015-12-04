@@ -1996,9 +1996,9 @@ typedef struct sSirDeltsReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 	uint16_t aid;           /* use 0 if macAddr is being specified */
-	tSirMacAddr macAddr;    /* only on AP to specify the STA */
+	struct cdf_mac_addr macaddr;    /* only on AP to specify the STA */
 	uint8_t rspReqd;
 	tSirDeltsReqInfo req;
 } tSirDeltsReq, *tpSirDeltsReq;
@@ -2010,7 +2010,7 @@ typedef struct sSirDeltsRsp {
 	uint16_t transactionId; /* sme transaction Id - for BT-AMP Support */
 	uint32_t rc;
 	uint16_t aid;           /* use 0 if macAddr is being specified */
-	tSirMacAddr macAddr;    /* only on AP to specify the STA */
+	struct cdf_mac_addr macaddr;    /* only on AP to specify the STA */
 	tSirDeltsReqInfo rsp;
 } tSirDeltsRsp, *tpSirDeltsRsp;
 
