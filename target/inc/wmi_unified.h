@@ -5077,6 +5077,9 @@ typedef enum {
  * send ehanced green ap status to host
  */
 typedef struct {
+	/* TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_ap_ps_egap_info_chainmask_list
+	 */
 	A_UINT32 tlv_header;
 	/** The param indicates a mac under dual-mac */
 	A_UINT32 mac_id;
