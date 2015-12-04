@@ -154,6 +154,26 @@ typedef struct cdf_packed {
 	tHddChannelInfo peer_chan_info;
 } tPeerStatusInfo;
 
+/**
+ * enum oem_capability_mask - mask field for userspace client capabilities
+ * @OEM_CAP_RM_FTMRR: FTM range report mask bit
+ * @OEM_CAP_RM_LCI: LCI capability mask bit
+ */
+enum oem_capability_mask {
+	OEM_CAP_RM_FTMRR = (1 << (0)),
+	OEM_CAP_RM_LCI = (1 << (1)),
+};
+
+/**
+ * struct oem_get_capability_rsp - capabilites set by userspace and target.
+ * @target_cap: target capabilities
+ * @client_capabilities: capabilities set by userspace via set request
+ */
+struct oem_get_capability_rsp {
+	t_iw_oem_data_cap target_cap;
+	struct sme_oem_capability cap;
+};
+
 void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
 					 uint8_t peerStatus,
 					 uint8_t peerTimingMeasCap,

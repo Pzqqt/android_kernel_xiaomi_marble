@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -74,6 +74,9 @@ static inline int __cdf_status_to_os_return(CDF_STATUS status)
 		return -EALREADY;
 	case CDF_STATUS_E_NOMEM:
 		return -ENOMEM;
+	case CDF_STATUS_E_FAILURE:
+	case CDF_STATUS_E_INVAL:
+		return -EINVAL;
 	default:
 		return -EPERM;
 	}

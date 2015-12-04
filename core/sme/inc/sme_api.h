@@ -187,6 +187,21 @@ typedef enum {
 	SME_BI_DIR = 2,
 } sme_tspec_dir_type;
 
+/**
+ * struct sme_oem_capability - OEM capability to be exchanged between host
+ *                             and userspace
+ * @ftm_rr: FTM range report capability bit
+ * @lci_capability: LCI capability bit
+ * @reserved1: reserved
+ * @reserved2: reserved
+ */
+struct sme_oem_capability {
+	uint32_t ftm_rr:1;
+	uint32_t lci_capability:1;
+	uint32_t reserved1:30;
+	uint32_t reserved2;
+};
+
 /*-------------------------------------------------------------------------
   Function declarations and documenation
   ------------------------------------------------------------------------*/
@@ -442,6 +457,10 @@ CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 		uint8_t sessionId,
 		tOemDataReqConfig *,
 		uint32_t *pOemDataReqID);
+CDF_STATUS sme_oem_update_capability(tHalHandle hHal,
+				     struct sme_oem_capability *cap);
+CDF_STATUS sme_oem_get_capability(tHalHandle hHal,
+				  struct sme_oem_capability *cap);
 #endif /*FEATURE_OEM_DATA_SUPPORT */
 CDF_STATUS sme_roam_update_apwpsie(tHalHandle, uint8_t sessionId,
 		tSirAPWPSIEs * pAPWPSIES);
