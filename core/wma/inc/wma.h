@@ -638,7 +638,6 @@ typedef struct {
  * @rxchainmask: rx chain mask
  * @txpow2g: tx power limit for 2GHz
  * @txpow5g: tx power limit for 5GHz
- * @pwrgating: enable/disable power gating sleep
  * @burst_enable: is burst enable/disable
  * @burst_dur: burst duration
  *
@@ -658,7 +657,6 @@ typedef struct {
 	uint32_t rxchainmask;
 	uint32_t txpow2g;
 	uint32_t txpow5g;
-	uint32_t pwrgating;
 	uint32_t burst_enable;
 	uint32_t burst_dur;
 } pdev_cli_config_t;

@@ -322,9 +322,6 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			ret = wma->pdevconfig.txpow5g;
 			break;
-		case WMI_PDEV_PARAM_POWER_GATING_SLEEP:
-			ret = wma->pdevconfig.pwrgating;
-			break;
 		case WMI_PDEV_PARAM_BURST_ENABLE:
 			ret = wma->pdevconfig.burst_enable;
 			break;
@@ -1360,9 +1357,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		case WMI_PDEV_PARAM_BURST_DUR:
 			wma->pdevconfig.burst_dur = privcmd->param_value;
-			break;
-		case WMI_PDEV_PARAM_POWER_GATING_SLEEP:
-			wma->pdevconfig.pwrgating = privcmd->param_value;
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT2G:
 			wma->pdevconfig.txpow2g = privcmd->param_value;
