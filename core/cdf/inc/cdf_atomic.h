@@ -102,6 +102,18 @@ static inline void cdf_atomic_add(int i, cdf_atomic_t *v)
 }
 
 /**
+ * cdf_atomic_sub() - Subtract a value from an atomic variable.
+ * @i: the amount by which to decrease the atomic counter
+ * @v: a pointer to an opaque atomic variable
+ *
+ * Return: none
+ */
+static inline void cdf_atomic_sub(int i, cdf_atomic_t *v)
+{
+	__cdf_atomic_sub(i, v);
+}
+
+/**
  * cdf_atomic_dec_and_test() - decrement an atomic variable and check if the
  *				new value is zero
  * @v: A pointer to an opaque atomic variable
