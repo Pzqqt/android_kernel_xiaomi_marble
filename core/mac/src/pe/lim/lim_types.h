@@ -423,9 +423,6 @@ void lim_init_mlm(tpAniSirGlobal);
 /* Function to cleanup MLM state machine */
 void lim_cleanup_mlm(tpAniSirGlobal);
 
-/* Function to cleanup LMM state machine */
-void lim_cleanup_lmm(tpAniSirGlobal);
-
 /* Management frame handling functions */
 void lim_process_beacon_frame(tpAniSirGlobal, uint8_t *, tpPESession);
 void lim_process_beacon_frame_no_session(tpAniSirGlobal, uint8_t *);

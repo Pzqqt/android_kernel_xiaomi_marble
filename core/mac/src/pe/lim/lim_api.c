@@ -670,7 +670,6 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	}
 
 	lim_cleanup_mlm(pMac);
-	lim_cleanup_lmm(pMac);
 
 	/* free up preAuth table */
 	if (pMac->lim.gLimPreAuthTimerTable.pTable != NULL) {
