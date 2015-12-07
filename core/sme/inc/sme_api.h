@@ -475,9 +475,7 @@ CDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
 CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 		uint8_t sessionId,
 		tOemDataReqConfig *,
-		uint32_t *pOemDataReqID,
-		oem_data_oem_data_reqCompleteCallback callback,
-		void *pContext);
+		uint32_t *pOemDataReqID);
 #endif /*FEATURE_OEM_DATA_SUPPORT */
 CDF_STATUS sme_roam_update_apwpsie(tHalHandle, uint8_t sessionId,
 		tSirAPWPSIEs * pAPWPSIES);
