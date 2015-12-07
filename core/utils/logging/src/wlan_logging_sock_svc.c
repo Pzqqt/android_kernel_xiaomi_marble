@@ -701,10 +701,10 @@ int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 		pr_err("%s: Could not Create LogMsg Thread Controller",
 		       __func__);
 		spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
-		vfree(gplog_msg);
-		gplog_msg = NULL;
 		gwlan_logging.pcur_node = NULL;
 		spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
+		vfree(gplog_msg);
+		gplog_msg = NULL;
 		return -ENOMEM;
 	}
 	wake_up_process(gwlan_logging.thread);
@@ -740,10 +740,10 @@ int wlan_logging_sock_deactivate_svc(void)
 	wait_for_completion(&gwlan_logging.shutdown_comp);
 
 	spin_lock_irqsave(&gwlan_logging.spin_lock, irq_flag);
-	vfree(gplog_msg);
-	gplog_msg = NULL;
 	gwlan_logging.pcur_node = NULL;
 	spin_unlock_irqrestore(&gwlan_logging.spin_lock, irq_flag);
+	vfree(gplog_msg);
+	gplog_msg = NULL;
 
 	pr_info("%s: Deactivate wlan_logging svc\n", __func__);
 
