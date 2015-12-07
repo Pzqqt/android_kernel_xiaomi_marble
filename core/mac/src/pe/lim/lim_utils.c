@@ -754,31 +754,6 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 } /*** end lim_cleanup_mlm() ***/
 
 /**
- * lim_cleanup_lmm()
- *
- ***FUNCTION:
- * This function is called to cleanup any resources
- * allocated by LMM sub-module.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac      Pointer to Global MAC structure
- * @return None
- */
-
-void lim_cleanup_lmm(tpAniSirGlobal pMac)
-{
-} /*** end lim_cleanup_lmm() ***/
-
-/**
  * lim_is_addr_bc()
  *
  ***FUNCTION:
