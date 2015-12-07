@@ -76,9 +76,7 @@ typedef CDF_STATUS (*oem_data_oem_data_reqCompleteCallback)(tHalHandle,
 		void *p2, uint32_t oemDataReqID, eOemDataReqStatus status);
 
 CDF_STATUS oem_data_oem_data_req(tHalHandle, uint8_t, tOemDataReqConfig *,
-		uint32_t *pOemDataReqID,
-		oem_data_oem_data_reqCompleteCallback callback,
-		void *pContext);
+				 uint32_t *pOemDataReqID);
 CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *);
 CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal);
 typedef void (*sme_send_oem_data_rsp_msg)(int length, uint8_t *oem_data_rsp);

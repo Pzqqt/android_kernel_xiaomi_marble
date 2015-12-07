@@ -5600,16 +5600,12 @@ CDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
     \brief a wrapper function for OEM DATA REQ
     \param sessionId - session id to be used.
     \param pOemDataReqId - pointer to an object to get back the request ID
-    \param callback - a callback function that is called upon finish
-    \param pContext - a pointer passed in for the callback
     \return CDF_STATUS
    ---------------------------------------------------------------------------*/
 CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 			    uint8_t sessionId,
 			    tOemDataReqConfig *pOemDataReqConfig,
-			    uint32_t *pOemDataReqID,
-			    oem_data_oem_data_reqCompleteCallback callback,
-			    void *pContext)
+			    uint32_t *pOemDataReqID)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -5629,8 +5625,8 @@ CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 
 			status =
 				oem_data_oem_data_req(hHal, sessionId,
-						      pOemDataReqConfig, pOemDataReqID,
-						      callback, pContext);
+						      pOemDataReqConfig,
+						      pOemDataReqID);
 
 			/* release the lock for the sme object */
 			sme_release_global_lock(&pMac->sme);

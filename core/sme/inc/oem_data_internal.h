@@ -59,8 +59,6 @@ typedef struct tagOemDataStruct {
 
 typedef struct tagOemDataCmd {
 	uint32_t oemDataReqID;
-	oem_data_oem_data_reqCompleteCallback callback;
-	void *pContext;
 	tOemDataReq oemDataReq;
 } tOemDataCmd;
 #endif /* __OEM_DATA_INTERNAL_H__ */
