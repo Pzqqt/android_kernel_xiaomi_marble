@@ -101,6 +101,7 @@ struct hif_ce_desc_event {
 cdf_atomic_t hif_ce_desc_history_index[CE_COUNT_MAX];
 struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
 
+
 /**
  * get_next_record_index() - get the next record index
  * @table_index: atomic index variable to increment
@@ -142,7 +143,10 @@ void hif_record_ce_desc_event(int ce_id, enum hif_ce_event_type type,
 		&hif_ce_desc_history[ce_id][record_index];
 	event->type = type;
 	event->time = cds_get_monotonic_boottime();
-	event->descriptor = *descriptor;
+	if (descriptor != NULL)
+		event->descriptor = *descriptor;
+	else
+		memset(&event->descriptor, 0, sizeof(union ce_desc));
 	event->memory = memory;
 	event->index = index;
 }
