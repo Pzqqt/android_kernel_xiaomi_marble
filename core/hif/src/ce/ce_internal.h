@@ -294,6 +294,10 @@ union ce_desc {
  * @HIF_TX_GATHER_DESC_POST: post gather desc. (no write index update)
  * @HIF_TX_DESC_POST: event recorded before updating write index of TX ring.
  * @HIF_TX_DESC_COMPLETION: event recorded before updating sw index of TX ring.
+ * @HIF_IRQ_EVENT: event recorded in the irq before scheduling the bh
+ * @HIF_CE_TASKLET_ENTRY: records the start of the ce_tasklet
+ * @HIF_CE_TASKLET_RESCHEDULE: records the rescheduling of the wlan_tasklet
+ * @HIF_CE_TASKLET_EXIT: records the exit of the wlan tasklet without reschedule
  */
 enum hif_ce_event_type {
 	HIF_RX_DESC_POST,
@@ -301,6 +305,10 @@ enum hif_ce_event_type {
 	HIF_TX_GATHER_DESC_POST,
 	HIF_TX_DESC_POST,
 	HIF_TX_DESC_COMPLETION,
+	HIF_IRQ_EVENT,
+	HIF_CE_TASKLET_ENTRY,
+	HIF_CE_TASKLET_RESCHEDULE,
+	HIF_CE_TASKLET_EXIT,
 };
 
 void ce_init_ce_desc_event_log(int ce_id, int size);
