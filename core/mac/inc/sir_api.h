@@ -71,7 +71,6 @@
 #define SIR_SCAN_NO_HIDDEN_SSID                      0
 #define SIR_SCAN_HIDDEN_SSID_PE_DECISION             1
 
-#define SIR_MAC_ADDR_LEN        6
 #define SIR_IPV4_ADDR_LEN       4
 
 typedef uint8_t tSirIpv4Addr[SIR_IPV4_ADDR_LEN];
@@ -2549,7 +2548,7 @@ typedef struct sSirUpdateAPWPARSNIEsReq {
 
 #ifdef WLAN_NS_OFFLOAD
 typedef struct sSirNsOffloadReq {
-	uint8_t srcIPv6Addr[16];
+	uint8_t srcIPv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	uint8_t selfIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][SIR_MAC_IPV6_ADDR_LEN];
 	uint8_t targetIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][SIR_MAC_IPV6_ADDR_LEN];
 	tSirMacAddr selfMacAddr;
@@ -2564,8 +2563,8 @@ typedef struct sSirHostOffloadReq {
 	uint8_t enableOrDisable;
 	uint32_t num_ns_offload_count;
 	union {
-		uint8_t hostIpv4Addr[4];
-		uint8_t hostIpv6Addr[16];
+		uint8_t hostIpv4Addr[SIR_IPV4_ADDR_LEN];
+		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	} params;
 #ifdef WLAN_NS_OFFLOAD
 	tSirNsOffloadReq nsOffloadInfo;
@@ -2976,8 +2975,6 @@ typedef struct sSirRoamOffloadScanRsp {
 /*---------------------------------------------------------------------------
    Packet Filtering Parameters
    ---------------------------------------------------------------------------*/
-#define    SIR_IPV4_ADDR_LEN                 4
-#define    SIR_MAC_ADDR_LEN                  6
 #define    SIR_MAX_FILTER_TEST_DATA_LEN       8
 #define    SIR_MAX_NUM_MULTICAST_ADDRESS    240
 #define    SIR_MAX_NUM_FILTERS               20

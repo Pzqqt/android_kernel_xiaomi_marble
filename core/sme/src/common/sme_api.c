@@ -63,8 +63,6 @@
 extern tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
 #define LOG_SIZE 256
-#define READ_MEMORY_DUMP_CMD     9
-#define TL_INIT_STATE            0
 
 static tSelfRecoveryStats g_self_recovery_stats;
 /* TxMB Functions */

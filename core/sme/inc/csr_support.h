@@ -224,10 +224,6 @@ typedef struct tagRoamingTimerInfo {
 	 ((pIes)->WMMParams.qosInfo & SME_QOS_AP_SUPPORTS_APSD)) || \
 	 ((pIes)->WMMInfoAp.present && (pIes)->WMMInfoAp.uapsd))
 
-/* This macro returns the total len needed of Tlv with with len bytes of data */
-#define GET_TLV_MSG_LEN(len) \
-	GET_ROUND_UP((sizeof(tCsrCfgMsgTlvHdr) + (len)), sizeof(uint32_t))
-
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
 		struct cdf_mac_addr *pBssId);
 bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,

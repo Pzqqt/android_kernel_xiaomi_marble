@@ -893,22 +893,6 @@ bool csr_is_ibss_started(tpAniSirGlobal pMac)
 	return fRc;
 }
 
-bool csr_is_btamp_started(tpAniSirGlobal pMac)
-{
-	uint32_t i;
-	bool fRc = false;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(pMac, i)
-		    && csr_is_conn_state_connected_wds(pMac, i)) {
-			fRc = true;
-			break;
-		}
-	}
-
-	return fRc;
-}
-
 bool csr_is_concurrent_session_running(tpAniSirGlobal pMac)
 {
 	uint32_t sessionId, noOfCocurrentSession = 0;
@@ -952,11 +936,6 @@ bool csr_is_infra_ap_started(tpAniSirGlobal pMac)
 
 	return fRc;
 
-}
-
-bool csr_is_btamp(tpAniSirGlobal pMac, uint32_t sessionId)
-{
-	return csr_is_conn_state_connected_wds(pMac, sessionId);
 }
 
 bool csr_is_conn_state_disconnected(tpAniSirGlobal pMac, uint32_t sessionId)
