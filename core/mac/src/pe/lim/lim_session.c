@@ -384,6 +384,15 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("cannot create or start protectionFieldsResetTimer\n"));
 	}
+
+	session_ptr->pmfComebackTimerInfo.pMac = pMac;
+	session_ptr->pmfComebackTimerInfo.sessionID = *sessionId;
+	status = cdf_mc_timer_init(&session_ptr->pmfComebackTimer,
+			CDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
+			(void *)&session_ptr->pmfComebackTimerInfo);
+	if (!CDF_IS_STATUS_SUCCESS(status))
+		lim_log(pMac, LOGE, FL("cannot init pmf comeback timer."));
+
 	return &pMac->lim.gpSession[i];
 }
 
@@ -665,9 +674,10 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		session->addIeParams.probeRespBCNDataLen = 0;
 	}
 #ifdef WLAN_FEATURE_11W
-	/* if PMF connection */
-	if (session->limRmfEnabled)
-		cdf_mc_timer_destroy(&session->pmfComebackTimer);
+	if (CDF_TIMER_STATE_RUNNING ==
+	    cdf_mc_timer_get_current_state(&session->pmfComebackTimer))
+		cdf_mc_timer_stop(&session->pmfComebackTimer);
+	cdf_mc_timer_destroy(&session->pmfComebackTimer);
 #endif
 	session->valid = false;
 

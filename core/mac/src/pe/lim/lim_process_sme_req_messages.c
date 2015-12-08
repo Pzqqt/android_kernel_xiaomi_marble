@@ -1829,26 +1829,10 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Record if management frames need to be protected */
 #ifdef WLAN_FEATURE_11W
-		if (eSIR_ED_AES_128_CMAC == sme_join_req->MgmtEncryptionType) {
-			CDF_STATUS cdf_status;
+		if (eSIR_ED_AES_128_CMAC == sme_join_req->MgmtEncryptionType)
 			session->limRmfEnabled = 1;
-			session->pmfComebackTimerInfo.pMac = mac_ctx;
-			session->pmfComebackTimerInfo.sessionID =
-				session_id;
-			cdf_status = cdf_mc_timer_init(
-					&session->pmfComebackTimer,
-					CDF_TIMER_TYPE_SW,
-					lim_pmf_comeback_timer_callback,
-					(void *)&session->pmfComebackTimerInfo);
-			if (CDF_STATUS_SUCCESS != cdf_status) {
-				lim_log(mac_ctx, LOGP,
-					FL("cannot init pmf comeback timer."));
-				ret_code = eSIR_LOGP_EXCEPTION;
-				goto end;
-			}
-		} else {
+		else
 			session->limRmfEnabled = 0;
-		}
 #endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
