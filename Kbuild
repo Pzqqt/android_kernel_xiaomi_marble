@@ -1266,6 +1266,11 @@ ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_FEATURE_RX_FULL_REORDER_OL
 endif
 
+# Enable athdiag procfs debug support for adrastea
+ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
+CDEFINES += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
+endif
+
 # NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
 ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CONFIG_HELIUMPLUS := y
