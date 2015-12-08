@@ -64,10 +64,6 @@
 #endif
 #define ASCII_SPACE_CHARACTER 0x20
 
-#define SUCCESS 1
-
-#define MAX_BA_WINDOW_SIZE_FOR_CISCO 25
-
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
    \brief deletes the complete lim dialogue token linked list.

@@ -34,20 +34,6 @@
 
 #ifdef FEATURE_WLAN_TDLS
 
-#define TDLS_SUB_DISCOVERY_PERIOD   100
-
-#define TDLS_MAX_DISCOVER_REQS_PER_TIMER 1
-
-#define TDLS_DISCOVERY_PERIOD       3600000
-
-#define TDLS_TX_STATS_PERIOD        3600000
-
-#define TDLS_IMPLICIT_TRIGGER_PKT_THRESHOLD     100
-
-#define TDLS_RX_IDLE_TIMEOUT        5000
-
-#define TDLS_RSSI_TRIGGER_HYSTERESIS 50
-
 /*
  * Before UpdateTimer expires, we want to timeout discovery response
  * should not be more than 2000.

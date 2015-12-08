@@ -89,8 +89,6 @@
 
 #define g_mode_rates_size (12)
 #define a_mode_rates_size (8)
-#define FREQ_BASE_80211G          (2407)
-#define FREQ_BAND_DIFF_80211G     (5)
 #define GET_IE_LEN_IN_BSS_DESC(lenInBss) (lenInBss + sizeof(lenInBss) - \
 					   ((uintptr_t)OFFSET_OF(tSirBssDescription, ieFields)))
 

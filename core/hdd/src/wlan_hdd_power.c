@@ -388,7 +388,8 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 			offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
 			offLoadRequest.enableOrDisable = SIR_OFFLOAD_ENABLE;
 			cdf_mem_copy(&offLoadRequest.nsOffloadInfo.selfMacAddr,
-				&pAdapter->macAddressCurrent.bytes, SIR_MAC_ADDR_LEN);
+					&pAdapter->macAddressCurrent.bytes,
+					CDF_MAC_ADDR_SIZE);
 			/* set number of ns offload address count */
 			offLoadRequest.num_ns_offload_count = count;
 			/* Configure the Firmware with this */

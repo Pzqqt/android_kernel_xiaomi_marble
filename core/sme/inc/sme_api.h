@@ -71,8 +71,6 @@
 
 #define SME_INVALID_COUNTRY_CODE "XX"
 
-#define SME_2_4_GHZ_MAX_FREQ    3000
-
 #define SME_SET_CHANNEL_REG_POWER(reg_info_1, val) do {	\
 	reg_info_1 &= 0xff00ffff;	      \
 	reg_info_1 |= ((val & 0xff) << 16);   \

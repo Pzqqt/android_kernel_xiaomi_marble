@@ -51,11 +51,6 @@
 /* define scan return criteria. LIM should use these define as well */
 #define CSR_SCAN_RETURN_AFTER_ALL_CHANNELS          (0)
 #define CSR_SCAN_RETURN_AFTER_FIRST_MATCH           (0x01)
-#define CSR_SCAN_RETURN_AFTER_5_BAND_11d_FOUND      (0x80)
-#define CSR_SCAN_RETURN_AFTER_24_BAND_11d_FOUND     (0x40)
-#define CSR_SCAN_RETURN_AFTER_EITHER_BAND_11d_FOUND \
-	(CSR_SCAN_RETURN_AFTER_5_BAND_11d_FOUND | \
-	 CSR_SCAN_RETURN_AFTER_24_BAND_11d_FOUND)
 #define CSR_NUM_RSSI_CAT        15
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
 
@@ -1243,8 +1238,6 @@ bool csr_is_concurrent_infra_connected(tpAniSirGlobal pMac);
 bool csr_is_concurrent_session_running(tpAniSirGlobal pMac);
 bool csr_is_infra_ap_started(tpAniSirGlobal pMac);
 bool csr_is_ibss_started(tpAniSirGlobal pMac);
-bool csr_is_btamp_started(tpAniSirGlobal pMac);
-bool csr_is_btamp(tpAniSirGlobal pMac, uint32_t sessionId);
 bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal pMac, uint32_t sessionId,
 		tSirBssDescription *pBssDesc);
 bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal pMac,

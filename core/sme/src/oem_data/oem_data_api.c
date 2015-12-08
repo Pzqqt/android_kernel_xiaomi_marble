@@ -369,12 +369,10 @@ CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal)
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
-			/* co-exist with IBSS or BT-AMP mode is not supported */
-			if (csr_is_conn_state_ibss(pMac, sessionId)
-			    || csr_is_btamp(pMac, sessionId)) {
-				/* co-exist with IBSS or BT-AMP mode is not supported */
+			/* co-exist with IBSS mode is not supported */
+			if (csr_is_conn_state_ibss(pMac, sessionId)) {
 				sms_log(pMac, LOGW,
-					"OEM DATA REQ is not allowed due to IBSS|BTAMP exist in session %d",
+					"OEM DATA REQ is not allowed due to IBSS exist in session %d",
 					sessionId);
 				status = CDF_STATUS_CSR_WRONG_STATE;
 				break;
