@@ -353,15 +353,15 @@ static int cds_mc_thread(void *Arg)
 	/* Get the Global CDS Context */
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Global CDS context is Null",
-		       __func__);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			  "%s: Global CDS context is Null", __func__);
 		return 0;
 	}
 
 	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
-		       __func__);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			  "%s: HDD context is Null", __func__);
 		return 0;
 	}
 
@@ -1143,7 +1143,7 @@ static void cds_print_external_threads(void)
 
 	while (i < MAX_SSR_PROTECT_LOG) {
 		if (!ssr_protect_log[i].free) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"PID %d is stuck at %s", ssr_protect_log[i].pid,
 			ssr_protect_log[i].func);
 		}
@@ -1186,7 +1186,7 @@ void cds_ssr_protect(const char *caller_func)
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
 
 	if (!status)
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 		"Could not track PID %d call %s: log is full",
 		current->pid, caller_func);
 }
@@ -1225,7 +1225,7 @@ void cds_ssr_unprotect(const char *caller_func)
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
 
 	if (!status)
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"Untracked call %s", caller_func);
 }
 
@@ -1259,7 +1259,7 @@ bool cds_is_ssr_ready(const char *caller_func)
 		return false;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
 		  "Allowing SSR for %s", caller_func);
 
 	return true;

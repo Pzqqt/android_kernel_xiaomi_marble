@@ -40,7 +40,6 @@
 #include "sme_api.h"
 #include "mac_init_api.h"
 #include "wlan_qct_sys.h"
-#include "wlan_hdd_misc.h"
 #include "i_cds_packet.h"
 #include "cds_reg_service.h"
 #include "wma_types.h"
@@ -1579,7 +1578,8 @@ CDF_STATUS cds_get_vdev_types(tCDF_CON_MODE mode, uint32_t *type,
 		*type = WMI_VDEV_TYPE_OCB;
 		break;
 	default:
-		hddLog(CDF_TRACE_LEVEL_ERROR, "Invalid device mode %d", mode);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "Invalid device mode %d", mode);
 		status = CDF_STATUS_E_INVAL;
 		break;
 	}
@@ -1707,7 +1707,7 @@ void cds_set_wakelock_logging(bool value)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"cds context is Invald");
 		return;
 	}
@@ -1728,7 +1728,7 @@ bool cds_is_wakelock_enabled(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"cds context is Invald");
 		return false;
 	}
@@ -1752,7 +1752,7 @@ void cds_set_ring_log_level(uint32_t ring_id, uint32_t log_level)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invald", __func__);
 		return;
 	}
@@ -1805,7 +1805,7 @@ enum wifi_driver_log_level cds_get_ring_log_level(uint32_t ring_id)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invald", __func__);
 		return WLAN_LOG_LEVEL_OFF;
 	}
@@ -1867,7 +1867,7 @@ void cds_init_log_completion(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return;
 	}
@@ -1896,7 +1896,7 @@ void cds_deinit_log_completion(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return;
 	}
@@ -1923,7 +1923,7 @@ CDF_STATUS cds_set_log_completion(uint32_t is_fatal,
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -1955,7 +1955,7 @@ void cds_get_log_completion(uint32_t *is_fatal,
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return;
 	}
@@ -1981,7 +1981,7 @@ bool cds_is_log_report_in_progress(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return true;
 	}
@@ -2011,13 +2011,13 @@ CDF_STATUS cds_flush_logs(uint32_t is_fatal,
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
 
 	if (cds_is_log_report_in_progress() == true) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: Bug report already in progress - dropping! type:%d, indicator=%d reason_code=%d",
 				__func__, is_fatal, indicator, reason_code);
 		return CDF_STATUS_E_FAILURE;
@@ -2025,18 +2025,18 @@ CDF_STATUS cds_flush_logs(uint32_t is_fatal,
 
 	status = cds_set_log_completion(is_fatal, indicator, reason_code);
 	if (CDF_STATUS_SUCCESS != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"%s: Failed to set log trigger params", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
 			"%s: Triggering bug report: type:%d, indicator=%d reason_code=%d",
 			__func__, is_fatal, indicator, reason_code);
 
 	ret = sme_send_flush_logs_cmd_to_fw(p_cds_context->pMACContext);
 	if (0 != ret) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: Failed to send flush FW log", __func__);
 		cds_init_log_completion();
 		return CDF_STATUS_E_FAILURE;
