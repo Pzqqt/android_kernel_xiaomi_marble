@@ -3795,6 +3795,24 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			cdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
+
+		/* Enable IPA UC Data PIPEs when first STA connected */
+		if ((0 == hdd_ipa->sap_num_connected_sta) &&
+		   (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) ||
+		   !hdd_ipa->sta_connected)) {
+			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
+			if (ret) {
+				cdf_mutex_release(&hdd_ipa->event_lock);
+				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+					    "%s: handle 1st con ret %d",
+					    adapter->dev->name, ret);
+				return ret;
+			}
+		}
+
+		hdd_ipa->sap_num_connected_sta++;
+		hdd_ipa->pending_cons_req = false;
+
 		cdf_mutex_release(&hdd_ipa->event_lock);
 
 		meta.msg_type = type;
@@ -3830,27 +3848,6 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			return ret;
 		}
 		hdd_ipa->stats.num_send_msg++;
-
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
-		/* Enable IPA UC Data PIPEs when first STA connected */
-		if ((0 == hdd_ipa->sap_num_connected_sta)
-			&& (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)
-			|| !hdd_ipa->sta_connected)) {
-			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
-			if (ret) {
-				cdf_mutex_release(&hdd_ipa->event_lock);
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
-					    "%s: handle 1st con ret %d",
-					    adapter->dev->name, ret);
-				return ret;
-			}
-		}
-
-		hdd_ipa->sap_num_connected_sta++;
-		hdd_ipa->pending_cons_req = false;
-
-		cdf_mutex_release(&hdd_ipa->event_lock);
-
 		return ret;
 
 	case WLAN_CLIENT_DISCONNECT:
