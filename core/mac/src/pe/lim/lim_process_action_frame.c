@@ -822,8 +822,6 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 		lim_send_sme_tsm_ie_ind(mac_ctx, session, addts.tsmIE.tsid,
 					addts.tsmIE.state,
 					addts.tsmIE.msmt_interval);
-#else
-		limActivateTSMStatsTimer(mac_ctx, session);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	}
 #endif
@@ -1099,8 +1097,6 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	lim_send_sme_tsm_ie_ind(mac_ctx, session, 0, 0, 0);
-#else
-	lim_deactivate_and_change_timer(mac_ctx, eLIM_TSM_TIMER);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 }

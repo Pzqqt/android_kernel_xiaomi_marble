@@ -1506,17 +1506,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		lim_process_sme_req_messages(mac_ctx, msg);
 		break;
 #ifdef FEATURE_WLAN_ESE
-	case SIR_LIM_ESE_TSM_TIMEOUT:
-#ifndef FEATURE_WLAN_ESE_UPLOAD
-		limProcessTsmTimeoutHandler(mac_ctx, msg);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
-		break;
 	case WMA_TSM_STATS_RSP:
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 		lim_send_sme_pe_ese_tsm_rsp(mac_ctx,
 			(tAniGetTsmStatsRsp *) msg->bodyptr);
-#else
-		limProcessHalEseTsmRsp(mac_ctx, msg);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 		break;
 #endif

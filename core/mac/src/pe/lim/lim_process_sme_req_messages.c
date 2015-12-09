@@ -3981,8 +3981,6 @@ static void __lim_process_sme_delts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 #ifdef FEATURE_WLAN_ESE
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
-#else
-	lim_deactivate_and_change_timer(pMac, eLIM_TSM_TIMER);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 
