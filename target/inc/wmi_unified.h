@@ -1985,7 +1985,28 @@ typedef struct {
 	 * @brief num_ocb_schedules - The supported number of OCB schedule segments
 	 */
 	A_UINT32 num_ocb_schedules;
+	/**
+	 * @brief specific configuration from host, such as per platform configuration
+	 */
+	#define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_S 0
+	#define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_M 0x1
+	A_UINT32 flag1;
 } wmi_resource_config;
+
+#define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
+	do { \
+		(word32) &= ~WMI_RSRC_CFG_FLAG_ ## flag ## _M; \
+		(word32) |= ((value) << WMI_RSRC_CFG_FLAG_ ## flag ## _S) & \
+		WMI_RSRC_CFG_FLAG_ ## flag ## _M; \
+	} while (0)
+#define WMI_RSRC_CFG_FLAG_GET(word32, flag) \
+		(((word32) & WMI_RSRC_CFG_FLAG_ ## flag ## _M) >> \
+		WMI_RSRC_CFG_FLAG_ ## flag ## _S)
+
+#define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), WOW_IGN_PCIE_RST, (value))
+#define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), WOW_IGN_PCIE_RST)
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -9689,6 +9710,8 @@ typedef struct {
 	A_UINT32 bcn_probe_rsp_len;
 	/** the length of reassoc rsp */
 	A_UINT32 reassoc_rsp_len;
+	/** the length of reassoc req */
+	A_UINT32 reassoc_req_len;
 	/**
 	 * TLV (tag length value ) parameters follows roam_synch_event
 	 * The TLV's are:
@@ -9698,6 +9721,7 @@ typedef struct {
 	 *     wmi_key_material key;
 	 *     A_UINT32 status; subnet changed status not being used
 	 *     currently. will pass the information using roam_status.
+	 *     A_UINT8 reassoc_req_frame[]; length identified by reassoc_req_len
 	 **/
 } wmi_roam_synch_event_fixed_param;
 
