@@ -333,6 +333,7 @@ typedef struct {
 	A_RATE probe_rix;
 	A_UINT8 num_valid_rates;
 	A_UINT8 rtscts_tpc;
+	A_UINT8 dd_profile;
 } RC_TX_RATE_SCHEDULE;
 
 #else

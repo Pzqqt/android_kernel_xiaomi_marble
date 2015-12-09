@@ -2288,7 +2288,8 @@ enum wmi_scan_event_type {
 	WMI_SCAN_EVENT_DEQUEUED = 0x10,         /* scan request got dequeued */
 	WMI_SCAN_EVENT_PREEMPTED = 0x20,                /* preempted by other high priority scan */
 	WMI_SCAN_EVENT_START_FAILED = 0x40,             /* scan start failed */
-	WMI_SCAN_EVENT_RESTARTED = 0x80,                /*scan restarted */
+	WMI_SCAN_EVENT_RESTARTED = 0x80,                /* scan restarted */
+	WMI_SCAN_EVENT_FOREIGN_CHANNEL_EXIT = 0x100,
 	WMI_SCAN_EVENT_MAX = 0x8000
 };
 
