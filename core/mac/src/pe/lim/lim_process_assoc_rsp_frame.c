@@ -501,8 +501,6 @@ static void lim_update_ese_tsm(tpAniSirGlobal mac_ctx,
 				session_entry, assoc_rsp->tsmIE.tsid,
 				assoc_rsp->tsmIE.state,
 				assoc_rsp->tsmIE.msmt_interval);
-#else
-			limActivateTSMStatsTimer(mac_ctx, session_entry);
 #endif
 			if (tsm_ctx->tsmInfo.state)
 				tsm_ctx->tsmMetrics.RoamingCount++;

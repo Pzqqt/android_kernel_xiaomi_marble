@@ -10801,8 +10801,6 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	    && session->connectedProfile.isESEAssoc) {
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 		csr_send_ese_adjacent_ap_rep_ind(mac_ctx, session);
-#else
-		csr_ese_send_adjacent_ap_rep_msg(mac_ctx, session);
 #endif
 		session->isPrevApInfoValid = false;
 	}
@@ -13565,16 +13563,6 @@ CDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 				cdf_mem_copy((void *)(wpaRsnIE),
 						pSession->suppCckmIeInfo.cckmIe,
 						ieLen);
-#else
-				ieLen = csrConstructEseCckmIe(pMac,
-						pSession,
-						pProfile,
-						pBssDescription,
-						pSession->
-						pWpaRsnReqIE,
-						pSession->
-						nWpaRsnReqIeLength,
-						(void *)(wpaRsnIE));
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 			} else
 				ieLen = 0;

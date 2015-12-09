@@ -4469,8 +4469,6 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	tpAniGetTsmStatsReq pStats = (tpAniGetTsmStatsReq) pTsmStatsMsg;
 	tpAniGetTsmStatsRsp pTsmRspParams = NULL;
-#else
-	tpTSMStats pStats = (tpTSMStats) pTsmStatsMsg;
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	int tid = pStats->tid;
 	/*
@@ -4506,8 +4504,6 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	pTsmRspParams->rc = eSIR_FAILURE;
 	pTsmRspParams->tsmStatsReq = pStats;
 	pTsmMetric = &pTsmRspParams->tsmMetrics;
-#else
-	pTsmMetric = (tpAniTrafStrmMetrics)&(pStats->tsmMetrics);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	/* populate pTsmMetric */
 	pTsmMetric->UplinkPktQueueDly = queue_delay_microsec;
@@ -4527,8 +4523,6 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	/* post this message to LIM/PE */
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	wma_send_msg(wma_handler, WMA_TSM_STATS_RSP, (void *)pTsmRspParams, 0);
-#else
-	wma_send_msg(wma_handler, WMA_TSM_STATS_RSP, (void *)pTsmStatsMsg, 0);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	return CDF_STATUS_SUCCESS;
 }

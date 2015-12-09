@@ -663,8 +663,6 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 #ifdef FEATURE_WLAN_ESE
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 		lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
-#else
-		lim_deactivate_and_change_timer(pMac, eLIM_TSM_TIMER);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 
