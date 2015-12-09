@@ -156,8 +156,9 @@
 
 #define WLAN_CHIP_VERSION   "WCNSS"
 
+#ifndef HDD_DISALLOW_LEGACY_HDDLOG
 #define hddLog(level, args ...) CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
-
+#endif
 #define hdd_log(level, args...) CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
 #define hdd_logfl(level, format, args...) hdd_log(level, FL(format), ## args)
 
