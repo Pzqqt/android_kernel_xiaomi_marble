@@ -315,759 +315,218 @@ typedef struct ath_hal_reg_dmn_tables {
 	uint16_t regDomainsCt;  /* Num reg domain entries */
 } HAL_REG_DMN_TABLES;
 
-/*
- * Country/Region Codes from MS WINNLS.H
- * Numbering from ISO 3166
- */
-/**     @brief country code definitions
- *        - country definition: CTRY_DEBUG
- *            - country string: DB
- *            - country ID: 0
- *        - country definition: CTRY_DEFAULT
- *            - country string: NA
- *            - country ID: 0
- *        - country definition: CTRY_ALBANIA
- *            - country string: AL
- *            - country ID: 8
- *        - country definition: CTRY_ALGERIA
- *            - country string: DZ
- *            - country ID: 12
- *        - country definition: CTRY_ARGENTINA
- *            - country string: AR
- *            - country ID: 32
- *        - country definition: CTRY_ARMENIA
- *            - country string: AM
- *            - country ID: 51
- *        - country definition: CTRY_AUSTRALIA
- *            - country string: AU
- *            - country ID: 36
- *        - country definition: CTRY_AUSTRALIA2
- *            - country string: AU2
- *            - country ID: 5000
- *        - country definition: CTRY_AUSTRIA
- *            - country string: AT
- *            - country ID: 40
- *        - country definition: CTRY_AZERBAIJAN
- *            - country string: AZ
- *            - country ID: 31
- *        - country definition: CTRY_BAHAMAS
- *            - country string: BS
- *            - country ID: 44
- *        - country definition: CTRY_BAHRAIN
- *            - country string: BH
- *            - country ID: 48
- *        - country definition: CTRY_BELARUS
- *            - country string: BY
- *            - country ID: 112
- *        - country definition: CTRY_BELGIUM
- *            - country string: BE
- *            - country ID: 56
- *        - country definition: CTRY_BELIZE
- *            - country string: BZ
- *            - country ID: 84
- *        - country definition: CTRY_BERMUDA
- *            - country string: BM
- *            - country ID: 60
- *        - country definition: CTRY_BOLIVIA
- *            - country string: BO
- *            - country ID: 68
- *        - country definition: CTRY_BOSNIA_HERZEGOWINA
- *            - country string: 70
- *            - country ID: BA
- *        - country definition: CTRY_BRAZIL
- *            - country string: BR
- *            - country ID: 76
- *        - country definition: CTRY_BRUNEI_DARUSSALAM
- *            - country string: BN
- *            - country ID: 96
- *        - country definition: CTRY_BULGARIA
- *            - country string: BG
- *            - country ID: 100
- *        - country definition: CTRY_CANADA
- *            - country string: CA
- *            - country ID: 124
- *        - country definition: CTRY_CANADA2
- *            - country string: CA2
- *            - country ID: 5001
- *        - country definition: CTRY_CHILE
- *            - country string: CL
- *            - country ID: 152
- *        - country definition: CTRY_CHINA
- *            - country string: CN
- *            - country ID: 152
- *        - country definition: CTRY_COLOMBIA
- *            - country string: CO
- *            - country ID: 170
- *        - country definition: CTRY_COSTA_RICA
- *            - country string: CR
- *            - country ID: 191
- *        - country definition: CTRY_CROATIA
- *            - country string: HR
- *            - country ID: 191
- *        - country definition: CTRY_CYPRUS
- *            - country string: CY
- *            - country ID: 196
- *        - country definition: CTRY_CZECH
- *            - country string: CZ
- *            - country ID: 203
- *        - country definition: CTRY_DENMARK
- *            - country string: DK
- *            - country ID: 208
- *        - country definition: CTRY_DOMINICAN_REPUBLIC
- *            - country string: DO
- *            - country ID: 214
- *        - country definition: CTRY_ECUADOR
- *            - country string: EC
- *            - country ID: 218
- *        - country definition: CTRY_EGYPT
- *            - country string: EG
- *            - country ID: 818
- *        - country definition: CTRY_EL_SALVADOR
- *            - country string: SV
- *            - country ID: 222
- *        - country definition: CTRY_ESTONIA
- *            - country string: EE
- *            - country ID: 233
- *        - country definition: CTRY_FAEROE_ISLANDS
- *            - country string: FO
- *            - country ID: 234
- *        - country definition: CTRY_FINLAND
- *            - country string: FI
- *            - country ID: 246
- *        - country definition: CTRY_FRANCE
- *            - country string: FR
- *            - country ID: 250
- *        - country definition: CTRY_FRANCE2
- *            - country string: F2
- *            - country ID: 255
- *        - country definition: CTRY_GEORGIA
- *            - country string: GE
- *            - country ID: 268
- *        - country definition: CTRY_GERMANY
- *            - country string: DE
- *            - country ID: 276
- *        - country definition: CTRY_GREECE
- *            - country string: GR
- *            - country ID: 300
- *        - country definition: CTRY_GUATEMALA
- *            - country string: GT
- *            - country ID: 320
- *        - country definition: CTRY_HONDURAS
- *            - country string: HN
- *            - country ID: 340
- *        - country definition: CTRY_HONG_KONG
- *            - country string: HK
- *            - country ID: 344
- *        - country definition: CTRY_HUNGARY
- *            - country string: HU
- *            - country ID: 348
- *        - country definition: CTRY_ICELAND
- *            - country string: IS
- *            - country ID: 352
- *        - country definition: CTRY_INDIA
- *            - country string: IN
- *            - country ID: 356
- *        - country definition: CTRY_INDONESIA
- *            - country string: ID
- *            - country ID: 360
- *        - country definition: CTRY_IRAN
- *            - country string: IR
- *            - country ID: 364
- *        - country definition: CTRY_IRAQ
- *            - country string: IQ
- *            - country ID: 368
- *        - country definition: CTRY_IRELAND
- *            - country string: IE
- *            - country ID: 372
- *        - country definition: CTRY_ISRAEL
- *            - country string: IL
- *            - country ID: 376
- *        - country definition: CTRY_ITALY
- *            - country string: IT
- *            - country ID: 380
- *        - country definition: CTRY_JAMAICA
- *            - country string: JM
- *            - country ID: 388
- *        - country definition: CTRY_JAPAN
- *            - country string: JP
- *            - country ID: 392
- *        - country definition: CTRY_JAPAN1
- *            - country string: JP1
- *            - country ID: 393
- *        - country definition: CTRY_JAPAN2
- *            - country string: JP2
- *            - country ID: 394
- *        - country definition: CTRY_JAPAN3
- *            - country string: JP3
- *            - country ID: 395
- *        - country definition: CTRY_JAPAN4
- *            - country string: JP4
- *            - country ID: 396
- *        - country definition: CTRY_JAPAN5
- *            - country string: JP5
- *            - country ID: 397
- *        - country definition: CTRY_JAPAN6
- *            - country string: JP6
- *            - country ID: 399
- *        - country definition: CTRY_JAPAN7
- *            - country string: JP7
- *            - country ID: 4007
- *        - country definition: CTRY_JAPAN8
- *            - country string: JP8
- *            - country ID: 4008
- *        - country definition: CTRY_JAPAN9
- *            - country string: JP9
- *            - country ID: 4009
- *        - country definition: CTRY_JAPAN10
- *            - country string: JP10
- *            - country ID: 4010
- *        - country definition: CTRY_JAPAN11
- *            - country string: JP11
- *            - country ID: 4011
- *        - country definition: CTRY_JAPAN12
- *            - country string: JP12
- *            - country ID: 4012
- *        - country definition: CTRY_JAPAN13
- *            - country string: JP13
- *            - country ID: 4013
- *        - country definition: CTRY_JAPAN14
- *            - country string: JP14
- *            - country ID: 4014
- *        - country definition: CTRY_JAPAN15
- *            - country string: JP15
- *            - country ID: 4015
- *        - country definition: CTRY_JAPAN16
- *            - country string: JP16
- *            - country ID: 4016
- *        - country definition: CTRY_JAPAN17
- *            - country string: JP17
- *            - country ID: 4017
- *        - country definition: CTRY_JAPAN18
- *            - country string: JP18
- *            - country ID: 4018
- *        - country definition: CTRY_JAPAN19
- *            - country string: JP19
- *            - country ID: 4019
- *        - country definition: CTRY_JAPAN20
- *            - country string: JP20
- *            - country ID: 4020
- *        - country definition: CTRY_JAPAN21
- *            - country string: JP21
- *            - country ID: 4021
- *        - country definition: CTRY_JAPAN22
- *            - country string: JP22
- *            - country ID: 4022
- *        - country definition: CTRY_JAPAN23
- *            - country string: JP23
- *            - country ID: 4023
- *        - country definition: CTRY_JAPAN24
- *            - country string: JP24
- *            - country ID: 4024
- *        - country definition: CTRY_JAPAN25
- *            - country string: JP25
- *            - country ID: 4025
- *        - country definition: CTRY_JAPAN26
- *            - country string: JP26
- *            - country ID: 4026
- *        - country definition: CTRY_JAPAN27
- *            - country string: JP27
- *            - country ID: 4027
- *        - country definition: CTRY_JAPAN28
- *            - country string: JP28
- *            - country ID: 4028
- *        - country definition: CTRY_JAPAN29
- *            - country string: JP29
- *            - country ID: 4029
- *        - country definition: CTRY_JAPAN30
- *            - country string: JP30
- *            - country ID: 4030
- *        - country definition: CTRY_JAPAN31
- *            - country string: JP31
- *            - country ID: 4031
- *        - country definition: CTRY_JAPAN32
- *            - country string: JP32
- *            - country ID: 4032
- *        - country definition: CTRY_JAPAN33
- *            - country string: JP33
- *            - country ID: 4033
- *        - country definition: CTRY_JAPAN34
- *            - country string: JP34
- *            - country ID: 4034
- *        - country definition: CTRY_JAPAN35
- *            - country string: JP35
- *            - country ID: 4035
- *        - country definition: CTRY_JAPAN36
- *            - country string: JP36
- *            - country ID: 4036
- *        - country definition: CTRY_JAPAN37
- *            - country string: JP37
- *            - country ID: 4037
- *        - country definition: CTRY_JAPAN38
- *            - country string: JP38
- *            - country ID: 4038
- *        - country definition: CTRY_JAPAN39
- *            - country string: JP39
- *            - country ID: 4039
- *        - country definition: CTRY_JAPAN40
- *            - country string: JP40
- *            - country ID: 4040
- *        - country definition: CTRY_JAPAN41
- *            - country string: JP41
- *            - country ID: 4041
- *        - country definition: CTRY_JAPAN42
- *            - country string: JP42
- *            - country ID: 4042
- *        - country definition: CTRY_JAPAN43
- *            - country string: JP43
- *            - country ID: 4043
- *        - country definition: CTRY_JAPAN44
- *            - country string: JP44
- *            - country ID: 4044
- *        - country definition: CTRY_JAPAN45
- *            - country string: JP45
- *            - country ID: 4045
- *        - country definition: CTRY_JAPAN46
- *            - country string: JP46
- *            - country ID: 4046
- *        - country definition: CTRY_JAPAN47
- *            - country string: JP47
- *            - country ID: 4047
- *        - country definition: CTRY_JAPAN48
- *            - country string: JP48
- *            - country ID: 4048
- *        - country definition: CTRY_JAPAN49
- *            - country string: JP49
- *            - country ID: 4049
- *        - country definition: CTRY_JAPAN50
- *            - country string: JP50
- *            - country ID: 4050
- *        - country definition: CTRY_JAPAN51
- *            - country string: JP51
- *            - country ID: 4051
- *        - country definition: CTRY_JAPAN52
- *            - country string: JP52
- *            - country ID: 4052
- *        - country definition: CTRY_JAPAN53
- *            - country string: JP53
- *            - country ID: 4053
- *        - country definition: CTRY_JAPAN54
- *            - country string: JP54
- *            - country ID: 4054
- *        - country definition: CTRY_JAPAN55
- *            - country string: JP55
- *            - country ID: 4055
- *        - country definition: CTRY_JAPAN56
- *            - country string: JP56
- *            - country ID: 4056
- *        - country definition: CTRY_JORDAN
- *            - country string: JO
- *            - country ID: 400
- *        - country definition: CTRY_KAZAKHSTAN
- *            - country string: KZ
- *            - country ID: 398
- *        - country definition: CTRY_KENYA
- *            - country string: KE
- *            - country ID: 404
- *        - country definition: CTRY_KOREA_NORTH
- *            - country string: KP
- *            - country ID: 408
- *        - country definition: CTRY_KOREA_ROC
- *            - country string: KR
- *            - country ID: 410
- *        - country definition: CTRY_KOREA_ROC2
- *            - country string: KR2
- *            - country ID: 411
- *        - country definition: CTRY_KOREA_ROC3
- *            - country string: KR3
- *            - country ID: 412
- *        - country definition: CTRY_KUWAIT
- *            - country string: KW
- *            - country ID: 414
- *        - country definition: CTRY_LATVIA
- *            - country string: LV
- *            - country ID: 428
- *        - country definition: CTRY_LEBANON
- *            - country string: LB
- *            - country ID: 422
- *        - country definition: CTRY_LIBYA
- *            - country string: LY
- *            - country ID: 434
- *        - country definition: CTRY_LIECHTENSTEIN
- *            - country string: LI
- *            - country ID: 438
- *        - country definition: CTRY_LITHUANIA
- *            - country string: LT
- *            - country ID: 440
- *        - country definition: CTRY_LUXEMBOURG
- *            - country string: LU
- *            - country ID: 442
- *        - country definition: CTRY_MACAU
- *            - country string: MO
- *            - country ID: 446
- *        - country definition: CTRY_MACEDONIA
- *            - country string: MK
- *            - country ID: 807
- *        - country definition: CTRY_MALAYSIA
- *            - country string: MY
- *            - country ID: 458
- *        - country definition: CTRY_MALTA
- *            - country string: MT
- *            - country ID: 470
- *        - country definition: CTRY_MAURITIUS
- *            - country string: MU
- *            - country ID: 480
- *        - country definition: CTRY_MEXICO
- *            - country string: MX
- *            - country ID: 484
- *        - country definition: CTRY_MONACO
- *            - country string: MC
- *            - country ID: 492
- *        - country definition: CTRY_MOROCCO
- *            - country string: MA
- *            - country ID: 504
- *        - country definition: CTRY_NETHERLANDS
- *            - country string: NL
- *            - country ID: 528
- *        - country definition: CTRY_NEW_ZEALAND
- *            - country string: NZ
- *            - country ID: 554
- *        - country definition: CTRY_NICARAGUA
- *            - country string: NI
- *            - country ID: 558
- *        - country definition: CTRY_NORWAY
- *            - country string: NO
- *            - country ID: 578
- *        - country definition: CTRY_OMAN
- *            - country string: OM
- *            - country ID: 512
- *        - country definition: CTRY_PAKISTAN
- *            - country string: PK
- *            - country ID: 586
- *        - country definition: CTRY_PANAMA
- *            - country string: PA
- *            - country ID: 591
- *        - country definition: CTRY_PARAGUAY
- *            - country string: PY
- *            - country ID: 600
- *        - country definition: CTRY_PERU
- *            - country string: PE
- *            - country ID: 604
- *        - country definition: CTRY_PHILIPPINES
- *            - country string: PH
- *            - country ID: 608
- *        - country definition: CTRY_POLAND
- *            - country string: PL
- *            - country ID: 616
- *        - country definition: CTRY_PORTUGAL
- *            - country string: PT
- *            - country ID: 620
- *        - country definition: CTRY_PUERTO_RICO
- *            - country string: PR
- *            - country ID: 630
- *        - country definition: CTRY_QATAR
- *            - country string: QA
- *            - country ID: 634
- *        - country definition: CTRY_ROMANIA
- *            - country string: RO
- *            - country ID: 642
- *        - country definition: CTRY_RUSSIA
- *            - country string: RU
- *            - country ID: 643
- *        - country definition: CTRY_SAUDI_ARABIA
- *            - country string: SA
- *            - country ID: 682
- *        - country definition: CTRY_SERBIA
- *            - country string: RS
- *            - country ID: 688
- *        - country definition: CTRY_MONTENEGRO
- *            - country string: ME
- *            - country ID: 499
- *        - country definition: CTRY_SINGAPORE
- *            - country string: SG
- *            - country ID: 702
- *        - country definition: CTRY_SLOVAKIA
- *            - country string: SK
- *            - country ID: 703
- *        - country definition: CTRY_SLOVENIA
- *            - country string: SI
- *            - country ID: 705
- *        - country definition: CTRY_SOUTH_AFRICA
- *            - country string: ZA
- *            - country ID: 710
- *        - country definition: CTRY_SPAIN
- *            - country string: ES
- *            - country ID: 724
- *        - country definition: CTRY_SRI_LANKA
- *            - country string: LK
- *            - country ID: 144
- *        - country definition: CTRY_SWEDEN
- *            - country string: SE
- *            - country ID: 752
- *        - country definition: CTRY_SWITZERLAND
- *            - country string: CH
- *            - country ID: 756
- *        - country definition: CTRY_SYRIA
- *            - country string: SY
- *            - country ID: 760
- *        - country definition: CTRY_TAIWAN
- *            - country string: TW
- *            - country ID: 158
- *        - country definition: CTRY_TANZANIA
- *            - country string: TZ
- *            - country ID: 834
- *        - country definition: CTRY_THAILAND
- *            - country string: TH
- *            - country ID: 764
- *        - country definition: CTRY_TRINIDAD_Y_TOBAGO
- *            - country string: TT
- *            - country ID: 780
- *        - country definition: CTRY_TUNISIA
- *            - country string: TN
- *            - country ID: 788
- *        - country definition: CTRY_TURKEY
- *            - country string: TR
- *            - country ID: 792
- *        - country definition: CTRY_UAE
- *            - country string: AE
- *            - country ID: 784
- *        - country definition: CTRY_UKRAINE
- *            - country string: UA
- *            - country ID: 804
- *        - country definition: CTRY_UNITED_KINGDOM
- *            - country string: GB
- *            - country ID: 826
- *        - country definition: CTRY_UNITED_STATES
- *            - country string: US
- *            - country ID: 840
- *        - country definition: CTRY_UNITED_STATES_FCC49
- *            - country string: US
- *            - country ID: 842
- *        - country definition: CTRY_URUGUAY
- *            - country string: UY
- *            - country ID: 858
- *        - country definition: CTRY_UZBEKISTAN
- *            - country string: UZ
- *            - country ID: 860
- *        - country definition: CTRY_VENEZUELA
- *            - country string: VE
- *            - country ID: 862
- *        - country definition: CTRY_VIET_NAM
- *            - country string: VN
- *            - country ID: 704
- *        - country definition: CTRY_YEMEN
- *            - country string: YE
- *            - country ID: 887
- *        - country definition: CTRY_ZIMBABWE
- *            - country string: ZW
- *            - country ID: 716
- */
 enum CountryCode {
-	CTRY_ALBANIA = 8,       /* Albania */
-	CTRY_ALGERIA = 12,      /* Algeria */
-	CTRY_ARGENTINA = 32,    /* Argentina */
-	CTRY_ARMENIA = 51,      /* Armenia */
-	CTRY_AUSTRALIA = 36,    /* Australia */
-	CTRY_AUSTRIA = 40,      /* Austria */
-	CTRY_AZERBAIJAN = 31,   /* Azerbaijan */
-	CTRY_BAHAMAS = 44,      /* Bahamas */
-	CTRY_BAHRAIN = 48,      /* Bahrain */
-	CTRY_BANGLADESH = 50,   /* Bangladesh */
-	CTRY_BARBADOS = 52,     /* Barbados */
-	CTRY_BELARUS = 112,     /* Belarus */
-	CTRY_BELGIUM = 56,      /* Belgium */
-	CTRY_BELIZE = 84,       /* Belize */
-	CTRY_BERMUDA = 60,      /* Berumuda */
-	CTRY_BOLIVIA = 68,      /* Bolivia */
-	CTRY_BOSNIA_HERZ = 70,  /* Bosnia and Herzegowina */
-	CTRY_BRAZIL = 76,       /* Brazil */
-	CTRY_BRUNEI_DARUSSALAM = 96,    /* Brunei Darussalam */
-	CTRY_BULGARIA = 100,    /* Bulgaria */
-	CTRY_CAMBODIA = 116,    /* Cambodia */
-	CTRY_CANADA = 124,      /* Canada */
-	CTRY_CHILE = 152,       /* Chile */
-	CTRY_CHINA = 156,       /* People's Republic of China */
-	CTRY_COLOMBIA = 170,    /* Colombia */
-	CTRY_COSTA_RICA = 188,  /* Costa Rica */
-	CTRY_CROATIA = 191,     /* Croatia */
+	CTRY_AFGHANISTAN = 4,
+	CTRY_ALBANIA = 8,
+	CTRY_ALGERIA = 12,
+	CTRY_AMERICAN_SAMOA = 16,
+	CTRY_ANGUILLA = 660,
+	CTRY_ARGENTINA = 32,
+	CTRY_ARGENTINA_AP = 5003,
+	CTRY_ARMENIA = 51,
+	CTRY_ARUBA = 533,
+	CTRY_AUSTRALIA = 36,
+	CTRY_AUSTRALIA_AP = 5000,
+	CTRY_AUSTRIA = 40,
+	CTRY_AZERBAIJAN = 31,
+	CTRY_BAHAMAS = 44,
+	CTRY_BAHRAIN = 48,
+	CTRY_BANGLADESH = 50,
+	CTRY_BARBADOS = 52,
+	CTRY_BELARUS = 112,
+	CTRY_BELGIUM = 56,
+	CTRY_BELIZE = 84,
+	CTRY_BERMUDA = 60,
+	CTRY_BHUTAN = 64,
+	CTRY_BOLIVIA = 68,
+	CTRY_BOSNIA_HERZ = 70,
+	CTRY_BRAZIL = 76,
+	CTRY_BRUNEI_DARUSSALAM = 96,
+	CTRY_BULGARIA = 100,
+	CTRY_BURKINA_FASO = 854,
+	CTRY_CAMBODIA = 116,
+	CTRY_CANADA = 124,
+	CTRY_CANADA_AP = 5001,
+	CTRY_CAYMAN_ISLANDS = 136,
+	CTRY_CENTRAL_AFRICA_REPUBLIC = 140,
+	CTRY_CHAD = 148,
+	CTRY_CHILE = 152,
+	CTRY_CHINA = 156,
+	CTRY_CHRISTMAS_ISLAND = 162,
+	CTRY_COLOMBIA = 170,
+	CTRY_COSTA_RICA = 188,
+	CTRY_COTE_DIVOIRE = 384,
+	CTRY_CROATIA = 191,
 	CTRY_CYPRUS = 196,
-	CTRY_CZECH = 203,       /* Czech Republic */
-	CTRY_DENMARK = 208,     /* Denmark */
-	CTRY_DOMINICAN_REPUBLIC = 214,  /* Dominican Republic */
-	CTRY_ECUADOR = 218,     /* Ecuador */
-	CTRY_EGYPT = 818,       /* Egypt */
-	CTRY_EL_SALVADOR = 222, /* El Salvador */
-	CTRY_ESTONIA = 233,     /* Estonia */
-	CTRY_FAEROE_ISLANDS = 234,      /* Faeroe Islands */
-	CTRY_FINLAND = 246,     /* Finland */
-	CTRY_FRANCE = 250,      /* France */
-	CTRY_GEORGIA = 268,     /* Georgia */
-	CTRY_GERMANY = 276,     /* Germany */
-	CTRY_GREECE = 300,      /* Greece */
-	CTRY_GREENLAND = 304,   /* Greenland */
-	CTRY_GRENADA = 308,     /* Grenada */
-	CTRY_GUAM = 316,        /* Guam */
-	CTRY_GUATEMALA = 320,   /* Guatemala */
-	CTRY_HAITI = 332,       /* Haiti */
-	CTRY_HONDURAS = 340,    /* Honduras */
-	CTRY_HONG_KONG = 344,   /* Hong Kong S.A.R., P.R.C. */
-	CTRY_HUNGARY = 348,     /* Hungary */
-	CTRY_ICELAND = 352,     /* Iceland */
-	CTRY_INDIA = 356,       /* India */
-	CTRY_INDONESIA = 360,   /* Indonesia */
-	CTRY_IRAN = 364,        /* Iran */
-	CTRY_IRAQ = 368,        /* Iraq */
-	CTRY_IRELAND = 372,     /* Ireland */
-	CTRY_ISRAEL = 376,      /* Israel */
-	CTRY_ITALY = 380,       /* Italy */
-	CTRY_JAMAICA = 388,     /* Jamaica */
-	CTRY_JAPAN = 392,       /* Japan */
-	CTRY_JORDAN = 400,      /* Jordan */
-	CTRY_KAZAKHSTAN = 398,  /* Kazakhstan */
-	CTRY_KENYA = 404,       /* Kenya */
-	CTRY_KOREA_NORTH = 408, /* North Korea */
-	CTRY_KOREA_ROC = 410,   /* South Korea */
-	CTRY_KOREA_ROC3 = 412,  /* South Korea */
-	CTRY_KUWAIT = 414,      /* Kuwait */
-	CTRY_LATVIA = 428,      /* Latvia */
-	CTRY_LEBANON = 422,     /* Lebanon */
-	CTRY_LIBYA = 434,       /* Libya */
-	CTRY_LIECHTENSTEIN = 438,       /* Liechtenstein */
-	CTRY_LITHUANIA = 440,   /* Lithuania */
-	CTRY_LUXEMBOURG = 442,  /* Luxembourg */
-	CTRY_MACAU = 446,       /* Macau SAR */
-	CTRY_MACEDONIA = 807,   /* the Former Yugoslav Republic of Macedonia */
-	CTRY_MALAYSIA = 458,    /* Malaysia */
-	CTRY_MALDIVES = 462,    /* Maldives */
-	CTRY_MALTA = 470,       /* Malta */
-	CTRY_MAURITIUS = 480,   /* Mauritius */
-	CTRY_MEXICO = 484,      /* Mexico */
-	CTRY_MONACO = 492,      /* Principality of Monaco */
-	CTRY_MOROCCO = 504,     /* Morocco */
-	CTRY_NEPAL = 524,       /* Nepal */
-	CTRY_NETHERLANDS = 528, /* Netherlands */
-	CTRY_NETHERLANDS_ANTILLES = 530,        /* Netherlands-Antilles */
-	CTRY_ARUBA = 533,       /* Aruba */
-	CTRY_NEW_ZEALAND = 554, /* New Zealand */
-	CTRY_NICARAGUA = 558,   /* Nicaragua */
-	CTRY_NORWAY = 578,      /* Norway */
-	CTRY_OMAN = 512,        /* Oman */
-	CTRY_PAKISTAN = 586,    /* Islamic Republic of Pakistan */
-	CTRY_PANAMA = 591,      /* Panama */
-	CTRY_PAPUA_NEW_GUINEA = 598,    /* Papua New Guinea */
-	CTRY_PARAGUAY = 600,    /* Paraguay */
-	CTRY_PERU = 604,        /* Peru */
-	CTRY_PHILIPPINES = 608, /* Republic of the Philippines */
-	CTRY_POLAND = 616,      /* Poland */
-	CTRY_PORTUGAL = 620,    /* Portugal */
-	CTRY_PUERTO_RICO = 630, /* Puerto Rico */
-	CTRY_QATAR = 634,       /* Qatar */
-	CTRY_ROMANIA = 642,     /* Romania */
-	CTRY_RUSSIA = 643,      /* Russia */
-	CTRY_RWANDA = 646,      /* Rwanda */
-	CTRY_SAUDI_ARABIA = 682,        /* Saudi Arabia */
-	CTRY_SERBIA = 688,      /* Republic of Serbia */
-	CTRY_MONTENEGRO = 499,  /* Montenegro */
-	CTRY_SINGAPORE = 702,   /* Singapore */
-	CTRY_SLOVAKIA = 703,    /* Slovak Republic */
-	CTRY_SLOVENIA = 705,    /* Slovenia */
-	CTRY_SOUTH_AFRICA = 710,        /* South Africa */
-	CTRY_SPAIN = 724,       /* Spain */
-	CTRY_SRI_LANKA = 144,   /* Sri Lanka */
-	CTRY_SWEDEN = 752,      /* Sweden */
-	CTRY_SWITZERLAND = 756, /* Switzerland */
-	CTRY_SYRIA = 760,       /* Syria */
-	CTRY_TAIWAN = 158,      /* Taiwan */
-	CTRY_TANZANIA = 834,    /* Tanzania */
-	CTRY_THAILAND = 764,    /* Thailand */
-	CTRY_TRINIDAD_Y_TOBAGO = 780,   /* Trinidad y Tobago */
-	CTRY_TUNISIA = 788,     /* Tunisia */
-	CTRY_TURKEY = 792,      /* Turkey */
-	CTRY_UAE = 784,         /* U.A.E. */
-	CTRY_UGANDA = 800,      /* Uganda */
-	CTRY_UKRAINE = 804,     /* Ukraine */
-	CTRY_UNITED_KINGDOM = 826,      /* United Kingdom */
-	CTRY_UNITED_STATES = 840,       /* United States */
-	CTRY_UNITED_STATES2 = 841,      /* United States for AP */
-	CTRY_UNITED_STATES_FCC49 = 842, /* United States (Public Safety) */
-	CTRY_URUGUAY = 858,     /* Uruguay */
-	CTRY_UZBEKISTAN = 860,  /* Uzbekistan */
-	CTRY_VENEZUELA = 862,   /* Venezuela */
-	CTRY_VIET_NAM = 704,    /* Viet Nam */
-	CTRY_YEMEN = 887,       /* Yemen */
-	CTRY_ZIMBABWE = 716,    /* Zimbabwe */
+	CTRY_CZECH = 203,
+	CTRY_DENMARK = 208,
+	CTRY_DOMINICA = 212,
+	CTRY_DOMINICAN_REPUBLIC = 214,
+	CTRY_ECUADOR = 218,
+	CTRY_EGYPT = 818,
+	CTRY_EL_SALVADOR = 222,
+	CTRY_ESTONIA = 233,
+	CTRY_ETHIOPIA = 231,
+	CTRY_FINLAND = 246,
+	CTRY_FRANCE = 250,
+	CTRY_FRENCH_GUIANA = 254,
+	CTRY_FRENCH_POLYNESIA = 258,
+	CTRY_GEORGIA = 268,
+	CTRY_GERMANY = 276,
+	CTRY_GHANA = 288,
+	CTRY_GREECE = 300,
+	CTRY_GREENLAND = 304,
+	CTRY_GRENADA = 308,
+	CTRY_GUADELOUPE = 312,
+	CTRY_GUAM = 316,
+	CTRY_GUATEMALA = 320,
+	CTRY_GUYANA = 328,
+	CTRY_HAITI = 332,
+	CTRY_HONDURAS = 340,
+	CTRY_HONG_KONG = 344,
+	CTRY_HUNGARY = 348,
+	CTRY_ICELAND = 352,
+	CTRY_INDIA = 356,
+	CTRY_INDONESIA = 360,
+	CTRY_IRAN = 364,
+	CTRY_IRELAND = 372,
+	CTRY_ISRAEL = 376,
+	CTRY_ITALY = 380,
+	CTRY_JAMAICA = 388,
+	CTRY_JORDAN = 400,
+	CTRY_KAZAKHSTAN = 398,
+	CTRY_KENYA = 404,
+	CTRY_KOREA_NORTH = 408,
+	CTRY_KOREA_ROC = 410,
+	CTRY_KOREA_ROC_AP = 412,
+	CTRY_KUWAIT = 414,
+	CTRY_LATVIA = 428,
+	CTRY_LEBANON = 422,
+	CTRY_LESOTHO = 426,
+	CTRY_LIBYA = 434,
+	CTRY_LIECHTENSTEIN = 438,
+	CTRY_LITHUANIA = 440,
+	CTRY_LUXEMBOURG = 442,
+	CTRY_MACAU = 446,
+	CTRY_MACEDONIA = 807,
+	CTRY_MALAWI = 454,
+	CTRY_MALAYSIA = 458,
+	CTRY_MALDIVES = 462,
+	CTRY_MALTA = 470,
+	CTRY_MARSHALL_ISLANDS = 584,
+	CTRY_MARTINIQUE = 474,
+	CTRY_MAURITANIA = 478,
+	CTRY_MAURITIUS = 480,
+	CTRY_MAYOTTE = 175,
+	CTRY_MEXICO = 484,
+	CTRY_MICRONESIA = 583,
+	CTRY_MOLDOVA = 498,
+	CTRY_MONACO = 492,
+	CTRY_MONGOLIA = 496,
+	CTRY_MONTENEGRO = 499,
+	CTRY_MOROCCO = 504,
+	CTRY_NEPAL = 524,
+	CTRY_NETHERLANDS = 528,
+	CTRY_NETHERLANDS_ANTILLES = 530,
+	CTRY_NEW_ZEALAND = 554,
+	CTRY_NIGERIA = 566,
+	CTRY_NORTHERN_MARIANA_ISLANDS = 580,
+	CTRY_NICARAGUA = 558,
+	CTRY_NORWAY = 578,
+	CTRY_OMAN = 512,
+	CTRY_PAKISTAN = 586,
+	CTRY_PALAU = 585,
+	CTRY_PANAMA = 591,
+	CTRY_PAPUA_NEW_GUINEA = 598,
+	CTRY_PARAGUAY = 600,
+	CTRY_PERU = 604,
+	CTRY_PHILIPPINES = 608,
+	CTRY_POLAND = 616,
+	CTRY_PORTUGAL = 620,
+	CTRY_PUERTO_RICO = 630,
+	CTRY_QATAR = 634,
+	CTRY_REUNION = 638,
+	CTRY_ROMANIA = 642,
+	CTRY_RUSSIA = 643,
+	CTRY_RWANDA = 646,
+	CTRY_SAINT_BARTHELEMY = 652,
+	CTRY_SAINT_KITTS_AND_NEVIS = 659,
+	CTRY_SAINT_LUCIA = 662,
+	CTRY_SAINT_MARTIN = 663,
+	CTRY_SAINT_PIERRE_AND_MIQUELON = 666,
+	CTRY_SAINT_VINCENT_AND_THE_GRENADIENS = 670,
+	CTRY_SAMOA = 882,
+	CTRY_SAUDI_ARABIA = 682,
+	CTRY_SENEGAL = 686,
+	CTRY_SERBIA = 688,
+	CTRY_SINGAPORE = 702,
+	CTRY_SLOVAKIA = 703,
+	CTRY_SLOVENIA = 705,
+	CTRY_SOUTH_AFRICA = 710,
+	CTRY_SPAIN = 724,
+	CTRY_SURINAME = 740,
+	CTRY_SRI_LANKA = 144,
+	CTRY_SWEDEN = 752,
+	CTRY_SWITZERLAND = 756,
+	CTRY_SYRIA = 760,
+	CTRY_TAIWAN = 158,
+	CTRY_TANZANIA = 834,
+	CTRY_THAILAND = 764,
+	CTRY_TOGO = 768,
+	CTRY_TRINIDAD_Y_TOBAGO = 780,
+	CTRY_TUNISIA = 788,
+	CTRY_TURKEY = 792,
+	CTRY_TURKS_AND_CAICOS = 796,
+	CTRY_UGANDA = 800,
+	CTRY_UKRAINE = 804,
+	CTRY_UAE = 784,
+	CTRY_UNITED_KINGDOM = 826,
+	CTRY_UNITED_STATES = 840,
+	CTRY_UNITED_STATES_AP = 841,
+	CTRY_UNITED_STATES_AP2 = 843,
+	CTRY_UNITED_STATES_PS = 842,
+	CTRY_URUGUAY = 858,
+	CTRY_UZBEKISTAN = 860,
+	CTRY_VANUATU = 548,
+	CTRY_VENEZUELA = 862,
+	CTRY_VIET_NAM = 704,
+	CTRY_VIRGIN_ISLANDS = 850,
+	CTRY_WALLIS_AND_FUTUNA = 876,
+	CTRY_YEMEN = 887,
+	CTRY_ZIMBABWE = 716,
+	CTRY_JAPAN7 = 4007,
+	CTRY_JAPAN8 = 4008,
+	CTRY_JAPAN9 = 4009,
+	CTRY_JAPAN10 = 4010,
+	CTRY_JAPAN11 = 4011,
+	CTRY_JAPAN12 = 4012,
+	CTRY_JAPAN13 = 4013,
+	CTRY_JAPAN14 = 4014,
+	CTRY_JAPAN15 = 4015,
+	CTRY_JAPAN25 = 4025,
+	CTRY_JAPAN26 = 4026,
+	CTRY_JAPAN27 = 4027,
+	CTRY_JAPAN28 = 4028,
+	CTRY_JAPAN29 = 4029,
+	CTRY_JAPAN34 = 4034,
+	CTRY_JAPAN35 = 4035,
+	CTRY_JAPAN36 = 4036,
+	CTRY_JAPAN37 = 4037,
+	CTRY_JAPAN38 = 4038,
+	CTRY_JAPAN39 = 4039,
+	CTRY_JAPAN40 = 4040,
+	CTRY_JAPAN41 = 4041,
+	CTRY_JAPAN42 = 4042,
+	CTRY_JAPAN43 = 4043,
+	CTRY_JAPAN44 = 4044,
+	CTRY_JAPAN45 = 4045,
+	CTRY_JAPAN46 = 4046,
+	CTRY_JAPAN47 = 4047,
+	CTRY_JAPAN48 = 4048,
+	CTRY_JAPAN49 = 4049,
+	CTRY_JAPAN55 = 4055,
+	CTRY_JAPAN56 = 4056,
 
-	/*
-	** Japan special codes.  Boy, do they have a lot
-	*/
-
-	CTRY_JAPAN1 = 393,      /* Japan (JP1) */
-	CTRY_JAPAN2 = 394,      /* Japan (JP0) */
-	CTRY_JAPAN3 = 395,      /* Japan (JP1-1) */
-	CTRY_JAPAN4 = 396,      /* Japan (JE1) */
-	CTRY_JAPAN5 = 397,      /* Japan (JE2) */
-	CTRY_JAPAN6 = 4006,     /* Japan (JP6) */
-	CTRY_JAPAN7 = 4007,     /* Japan (J7) */
-	CTRY_JAPAN8 = 4008,     /* Japan (J8) */
-	CTRY_JAPAN9 = 4009,     /* Japan (J9) */
-	CTRY_JAPAN10 = 4010,    /* Japan (J10) */
-	CTRY_JAPAN11 = 4011,    /* Japan (J11) */
-	CTRY_JAPAN12 = 4012,    /* Japan (J12) */
-	CTRY_JAPAN13 = 4013,    /* Japan (J13) */
-	CTRY_JAPAN14 = 4014,    /* Japan (J14) */
-	CTRY_JAPAN15 = 4015,    /* Japan (J15) */
-	CTRY_JAPAN16 = 4016,    /* Japan (J16) */
-	CTRY_JAPAN17 = 4017,    /* Japan (J17) */
-	CTRY_JAPAN18 = 4018,    /* Japan (J18) */
-	CTRY_JAPAN19 = 4019,    /* Japan (J19) */
-	CTRY_JAPAN20 = 4020,    /* Japan (J20) */
-	CTRY_JAPAN21 = 4021,    /* Japan (J21) */
-	CTRY_JAPAN22 = 4022,    /* Japan (J22) */
-	CTRY_JAPAN23 = 4023,    /* Japan (J23) */
-	CTRY_JAPAN24 = 4024,    /* Japan (J24) */
-	CTRY_JAPAN25 = 4025,    /* Japan (J25) */
-	CTRY_JAPAN26 = 4026,    /* Japan (J26) */
-	CTRY_JAPAN27 = 4027,    /* Japan (J27) */
-	CTRY_JAPAN28 = 4028,    /* Japan (J28) */
-	CTRY_JAPAN29 = 4029,    /* Japan (J29) */
-	CTRY_JAPAN30 = 4030,    /* Japan (J30) */
-	CTRY_JAPAN31 = 4031,    /* Japan (J31) */
-	CTRY_JAPAN32 = 4032,    /* Japan (J32) */
-	CTRY_JAPAN33 = 4033,    /* Japan (J33) */
-	CTRY_JAPAN34 = 4034,    /* Japan (J34) */
-	CTRY_JAPAN35 = 4035,    /* Japan (J35) */
-	CTRY_JAPAN36 = 4036,    /* Japan (J36) */
-	CTRY_JAPAN37 = 4037,    /* Japan (J37) */
-	CTRY_JAPAN38 = 4038,    /* Japan (J38) */
-	CTRY_JAPAN39 = 4039,    /* Japan (J39) */
-	CTRY_JAPAN40 = 4040,    /* Japan (J40) */
-	CTRY_JAPAN41 = 4041,    /* Japan (J41) */
-	CTRY_JAPAN42 = 4042,    /* Japan (J42) */
-	CTRY_JAPAN43 = 4043,    /* Japan (J43) */
-	CTRY_JAPAN44 = 4044,    /* Japan (J44) */
-	CTRY_JAPAN45 = 4045,    /* Japan (J45) */
-	CTRY_JAPAN46 = 4046,    /* Japan (J46) */
-	CTRY_JAPAN47 = 4047,    /* Japan (J47) */
-	CTRY_JAPAN48 = 4048,    /* Japan (J48) */
-	CTRY_JAPAN49 = 4049,    /* Japan (J49) */
-	CTRY_JAPAN50 = 4050,    /* Japan (J50) */
-	CTRY_JAPAN51 = 4051,    /* Japan (J51) */
-	CTRY_JAPAN52 = 4052,    /* Japan (J52) */
-	CTRY_JAPAN53 = 4053,    /* Japan (J53) */
-	CTRY_JAPAN54 = 4054,    /* Japan (J54) */
-	CTRY_JAPAN55 = 4055,    /* Japan (J55) */
-	CTRY_JAPAN56 = 4056,    /* Japan (J56) */
-	CTRY_JAPAN57 = 4057,    /* Japan (J57) */
-	CTRY_JAPAN58 = 4058,    /* Japan (J58) */
-	CTRY_JAPAN59 = 4059,    /* Japan (J59) */
-
-	/*
-	** "Special" codes for multiply defined countries, with the exception
-	** of Japan and US.
-	*/
-
-	CTRY_AUSTRALIA2 = 5000, /* Australia for AP only */
-	CTRY_CANADA2 = 5001,    /* Canada for AP only */
-	CTRY_BELGIUM2 = 5002    /* Belgium/Cisco implementation */
 };
 
 
