@@ -3815,6 +3815,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 			     sizeof(wma_handle->hw_bd_info));
 		WMA_LOGE("%s: Board version is unknown!", __func__);
 	}
+	wma_handle->dfs_ic->dfs_hw_bd_id = wma_handle->hw_bd_id;
 
 	/* TODO: Recheck below line to dump service ready event */
 	/* dbg_print_wmi_service_11ac(ev); */

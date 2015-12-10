@@ -77,8 +77,15 @@
 #define MKK       0x40
 #define ETSI      0x30
 
-/* Maximum Buffer length allowed for DFS phyerrors */
-#define DFS_MAX_BUF_LENGHT 4096
+/* Maximum Buffer length allowed for DFS-2 phyerrors */
+#define DFS_MAX_BUF_LENGTH 4096
+
+/*
+ * Maximum Buffer length allowed for DFS-3 phyerrors
+ * When 160MHz is supported the Max length of phyerrors
+ * is larger than the legacy phyerrors.
+ */
+#define DFS3_MAX_BUF_LENGTH 4436
 
 #define WMI_DEFAULT_NOISE_FLOOR_DBM (-96)
 
