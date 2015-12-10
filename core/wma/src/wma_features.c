@@ -2181,10 +2181,12 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	cdf_size_t n;
 	A_UINT64 tsf64 = 0;
 	int phy_err_code = 0;
+	A_UINT32 phy_err_mask = 0;
 	int error = 0;
 	tpAniSirGlobal mac_ctx =
 		(tpAniSirGlobal)cds_get_context(CDF_MODULE_ID_PE);
 	bool enable_log = false;
+	int max_dfs_buf_length = 0;
 
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: mac_ctx is NULL", __func__);
@@ -2211,10 +2213,19 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 			 __func__, sizeof(*pe_hdr), datalen);
 		return 0;
 	}
-	if (pe_hdr->buf_len > DFS_MAX_BUF_LENGHT) {
+	/*
+	 * The max buffer lenght is larger for DFS-3 than DFS-2.
+	 * So, accordingly use the correct max buffer size.
+	 */
+	if (wma->hw_bd_id != WMI_HWBD_QCA6174)
+		max_dfs_buf_length = DFS3_MAX_BUF_LENGTH;
+	else
+		max_dfs_buf_length = DFS_MAX_BUF_LENGTH;
+
+	if (pe_hdr->buf_len > max_dfs_buf_length) {
 		WMA_LOGE("%s: Received Invalid Phyerror event buffer length = %d"
 			"Maximum allowed buf length = %d", __func__,
-			pe_hdr->buf_len, DFS_MAX_BUF_LENGHT);
+			pe_hdr->buf_len, max_dfs_buf_length);
 
 		return 0;
 	}
@@ -2226,6 +2237,21 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	 */
 	tsf64 = pe_hdr->tsf_l32;
 	tsf64 |= (((uint64_t) pe_hdr->tsf_u32) << 32);
+
+	/*
+	 * Check the HW board ID to figure out
+	 * if DFS-3 is supported. In DFS-3
+	 * phyerror mask indicates the type of
+	 * phyerror, whereas in DFS-2 phyerrorcode
+	 * indicates the type of phyerror. If the
+	 * board is NOT WMI_HWBD_QCA6174, for now
+	 * assume that it supports DFS-3.
+	 */
+	if (wma->hw_bd_id != WMI_HWBD_QCA6174) {
+		phy_err_mask = pe_hdr->rsPhyErrMask0;
+		WMA_LOGD("%s: DFS-3 phyerror mask = 0x%x",
+			  __func__, phy_err_mask);
+	}
 
 	/*
 	 * Loop over the bufp, extracting out phyerrors
@@ -2271,14 +2297,30 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 			error = 1;
 			break;
 		}
-		phy_err_code = WMI_UNIFIED_PHYERRCODE_GET(&ev->hdr);
+		/*
+		 * If the board id is WMI_HWBD_QCA6174
+		 * then it supports only DFS-2. So, fetch
+		 * phyerror code in order to know the type
+		 * of phyerror.
+		 */
+		if (wma->hw_bd_id == WMI_HWBD_QCA6174) {
+			phy_err_code = WMI_UNIFIED_PHYERRCODE_GET(&ev->hdr);
+			WMA_LOGD("%s: DFS-2 phyerror code = 0x%x",
+				  __func__, phy_err_code);
+		}
 
 		/*
-		 * If the phyerror category matches,
+		 * phy_err_code is set for DFS-2 and phy_err_mask
+		 * is set for DFS-3. Checking both to support
+		 * compatability for older platforms.
+		 * If the phyerror or phyerrmask category matches,
 		 * pass radar events to the dfs pattern matching code.
 		 * Don't pass radar events with no buffer payload.
 		 */
-		if (phy_err_code == 0x5 || phy_err_code == 0x24) {
+		if (((phy_err_mask & WMI_PHY_ERROR_MASK0_RADAR) ||
+		     (phy_err_mask & WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) ||
+		    (phy_err_code == WMA_DFS2_PHYERROR_CODE ||
+		     phy_err_code == WMA_DFS2_FALSE_RADAR_EXT)) {
 			if (ev->hdr.buf_len > 0) {
 				/* Calling in to the DFS module to process the phyerr */
 				dfs_process_phyerr(ic, &ev->bufp[0],

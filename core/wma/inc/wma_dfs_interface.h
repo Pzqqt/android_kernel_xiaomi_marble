@@ -103,6 +103,9 @@
 /* In case of VHT160, we can have 8 20Mhz channels */
 #define IEE80211_MAX_20M_SUB_CH 8
 
+#define WMA_DFS2_PHYERROR_CODE    0x5
+#define WMA_DFS2_FALSE_RADAR_EXT  0x24
+
 /**
  * struct dfs_ieee80211_channel - channel info
  * @ic_freq: frequency in MHz
@@ -167,6 +170,19 @@ struct ieee80211_dfs_state {
 	int cac_timeout_override;
 	uint8_t enable : 1, cac_timer_running : 1, ignore_dfs : 1, ignore_cac : 1;
 };
+
+/**
+ * enum DFS_HWBD_ID - Board ID to differentiate between DFS-2 and DFS-3
+ * @DFS_HWBD_NONE: No hw board information/currently used for adreastea FPGA
+ * @DFS_HWBD_QCA6174: Rome(AR6320)
+ * @DFS_HWBD_QCA2582: Killer 1525
+ */
+typedef enum {
+	DFS_HWBD_NONE = 0,
+	DFS_HWBD_QCA6174 = 1,
+	DFS_HWBD_QCA2582 = 2,
+} DFS_HWBD_ID;
+
 
 /**
  * struct ieee80211com - per device structure
@@ -239,6 +255,7 @@ typedef struct ieee80211com {
 	int32_t dfs_pri_multiplier;
 	cdf_spinlock_t chan_lock;
 	bool disable_phy_err_processing;
+	DFS_HWBD_ID dfs_hw_bd_id;
 } IEEE80211COM, *PIEEE80211COM;
 
 /**
