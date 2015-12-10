@@ -283,10 +283,14 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		compl_msg =
 			(struct htt_mgmt_tx_compl_ind *)(msg_word + 1);
 
-		ol_tx_single_completion_handler(pdev->txrx_pdev,
-						compl_msg->status,
-						compl_msg->desc_id);
-		HTT_TX_SCHED(pdev);
+		if (!ol_tx_get_is_mgmt_over_wmi_enabled()) {
+			ol_tx_single_completion_handler(pdev->txrx_pdev,
+							compl_msg->status,
+							compl_msg->desc_id);
+			HTT_TX_SCHED(pdev);
+		} else {
+			cdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication\n");
+		}
 		break;
 	}
 	case HTT_T2H_MSG_TYPE_STATS_CONF:
