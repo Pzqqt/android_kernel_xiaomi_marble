@@ -1463,18 +1463,21 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 		goto err_cds_close;
 	}
 
-	/* Set the SME configuration parameters. */
-	cdf_status = hdd_set_sme_config(pHddCtx);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Failed hdd_set_sme_config",
-		       __func__);
+	cdf_status = cds_pre_enable(pHddCtx->pcds_context);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		hdd_alert("cds_pre_enable failed");
 		goto err_cds_close;
 	}
 
-	cdf_status = cds_pre_enable(pHddCtx->pcds_context);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: cds_pre_enable failed",
-		       __func__);
+	/*
+	 * Note that the cds_pre_enable() sequence triggers the cfg download.
+	 * The cfg download must occur before we update the SME config
+	 * since the SME config operation must access the cfg database.
+	 * Set the SME configuration parameters.
+	 */
+	cdf_status = hdd_set_sme_config(pHddCtx);
+	if (CDF_STATUS_SUCCESS != cdf_status) {
+		hdd_alert("Failed hdd_set_sme_config");
 		goto err_cds_close;
 	}
 
