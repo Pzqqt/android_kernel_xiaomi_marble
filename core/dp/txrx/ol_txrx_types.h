@@ -571,6 +571,7 @@ struct ol_txrx_pdev_t {
 		struct cdf_mem_multi_page_t desc_pages;
 	} tx_desc;
 
+	uint8_t is_mgmt_over_wmi_enabled;
 #if defined(QCA_LL_TX_FLOW_CONTROL_V2)
 	struct ol_txrx_pool_stats pool_stats;
 	uint32_t num_msdu_desc;

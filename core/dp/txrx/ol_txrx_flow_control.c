@@ -112,7 +112,8 @@ void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
 	cdf_spinlock_init(&pdev->tx_desc.flow_pool_list_lock);
 	TAILQ_INIT(&pdev->tx_desc.flow_pool_list);
 
-	ol_tx_register_global_mgmt_pool(pdev);
+	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
+		ol_tx_register_global_mgmt_pool(pdev);
 }
 
 /**
@@ -123,7 +124,8 @@ void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
  */
 void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
 {
-	ol_tx_deregister_global_mgmt_pool(pdev);
+	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
+		ol_tx_deregister_global_mgmt_pool(pdev);
 
 	cdf_spinlock_destroy(&pdev->tx_desc.flow_pool_list_lock);
 	if (!TAILQ_EMPTY(&pdev->tx_desc.flow_pool_list)) {

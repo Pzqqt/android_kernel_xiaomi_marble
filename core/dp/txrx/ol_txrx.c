@@ -76,6 +76,40 @@
 
 /*=== function definitions ===*/
 
+/**
+ * ol_tx_set_is_mgmt_over_wmi_enabled() - set flag to indicate that mgmt over
+ *                                        wmi is enabled or not.
+ * @value: 1 for enabled/ 0 for disable
+ *
+ * Return: None
+ */
+void ol_tx_set_is_mgmt_over_wmi_enabled(uint8_t value)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		cdf_print("%s: pdev is NULL\n", __func__);
+		return;
+	}
+	pdev->is_mgmt_over_wmi_enabled = value;
+	return;
+}
+
+/**
+ * ol_tx_get_is_mgmt_over_wmi_enabled() - get value of is_mgmt_over_wmi_enabled
+ *
+ * Return: is_mgmt_over_wmi_enabled
+ */
+uint8_t ol_tx_get_is_mgmt_over_wmi_enabled(void)
+{
+	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	if (!pdev) {
+		cdf_print("%s: pdev is NULL\n", __func__);
+		return 0;
+	}
+	return pdev->is_mgmt_over_wmi_enabled;
+}
+
+
 #ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
 ol_txrx_peer_handle
 ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
