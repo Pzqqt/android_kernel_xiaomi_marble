@@ -1544,6 +1544,8 @@ send_frame:
 		current_freq = 0;
 	}
 
+	INIT_COMPLETION(pAdapter->tx_action_cnf_event);
+
 	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
 	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
 	    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)

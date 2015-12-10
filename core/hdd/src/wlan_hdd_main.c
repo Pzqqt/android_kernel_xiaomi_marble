@@ -2057,7 +2057,6 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	if (NULL != cfgState->buf) {
 		unsigned long rc;
-		INIT_COMPLETION(adapter->tx_action_cnf_event);
 		rc = wait_for_completion_timeout(
 			&adapter->tx_action_cnf_event,
 			msecs_to_jiffies(ACTION_FRAME_TX_TIMEOUT));
