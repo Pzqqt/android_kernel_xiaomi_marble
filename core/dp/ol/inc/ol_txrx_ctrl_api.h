@@ -1261,6 +1261,9 @@ void ol_txrx_set_ocb_peer(struct ol_txrx_pdev_t *pdev,
 bool ol_txrx_get_ocb_peer(struct ol_txrx_pdev_t *pdev,
 			  struct ol_txrx_peer_t **peer);
 
+void ol_tx_set_is_mgmt_over_wmi_enabled(uint8_t value);
+uint8_t ol_tx_get_is_mgmt_over_wmi_enabled(void);
+
 /* TX FLOW Control related functions */
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 #define TX_FLOW_MGMT_POOL_ID	0xEF

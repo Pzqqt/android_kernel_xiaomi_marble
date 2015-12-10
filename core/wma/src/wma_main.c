@@ -3806,6 +3806,11 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	cdf_mem_copy(wma_handle->wmi_service_bitmap,
 		     param_buf->wmi_service_bitmap,
 		     sizeof(wma_handle->wmi_service_bitmap));
+
+	ol_tx_set_is_mgmt_over_wmi_enabled(
+		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				       WMI_SERVICE_MGMT_TX_WMI));
+
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_HOST_SWBA_EVENTID,
