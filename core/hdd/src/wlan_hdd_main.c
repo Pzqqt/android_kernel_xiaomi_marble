@@ -348,17 +348,9 @@ struct notifier_block hdd_netdev_notifier = {
 
 /* variable to hold the insmod parameters */
 static int con_mode;
-#ifndef MODULE
-/*
- * current con_mode - used only for statically linked driver
- * con_mode is changed by userspace to indicate a mode change which will
- * result in calling the module exit and init functions. The module
- * exit function will clean up based on the value of con_mode prior to it
- * being changed by userspace. So curr_con_mode records the current con_mode
- * for exit when con_mode becomes the next mode for init
- */
+
+/* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
-#endif
 
 /* wlan_hdd_find_opclass() - Find operating class for a channel
  * @hal: handler to HAL
@@ -6526,13 +6518,7 @@ static int hdd_driver_init(void)
 
 		hdd_trace_init();
 
-#ifndef MODULE
-		/*
-		 * For statically linked driver, call hdd_set_conparam to update
-		 * curr_con_mode
-		 */
 		hdd_set_conparam((uint32_t) con_mode);
-#endif
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define HDD_WLAN_START_WAIT_TIME (3600 * 1000)
@@ -6681,13 +6667,6 @@ static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
 {
 	return param_set_copystring(kmessage, kp);
 }
-
-#if !defined(QCA_WIFI_FTM)
-static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
-{
-	return param_set_int(kmessage, kp);
-}
-#endif
 #else /* #ifdef MODULE */
 /**
  * kickstart_driver() - driver entry point
@@ -6736,9 +6715,9 @@ static int fwpath_changed_handler(const char *kmessage, struct kernel_param *kp)
 	return ret;
 }
 
-#if !defined(QCA_WIFI_FTM)
+#ifdef QCA_WIFI_FTM
 /**
- * con_mode_handler() - handls module param con_mode change
+ * con_mode_handler() - Handles module param con_mode change
  *
  * Handler function for module param con_mode when it is changed by userspace
  * Dynamically linked - do nothing
@@ -6755,7 +6734,7 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
 		ret = kickstart_driver();
 	return ret;
 }
-#endif
+#endif /* QCA_WIFI_FTM */
 #endif /* #ifdef MODULE */
 
 /**
@@ -6767,21 +6746,13 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
  */
 tCDF_CON_MODE hdd_get_conparam(void)
 {
-#ifdef MODULE
-	return (tCDF_CON_MODE) con_mode;
-#else
 	return (tCDF_CON_MODE) curr_con_mode;
-#endif
 }
 
-void hdd_set_conparam(uint32_t newParam)
+void hdd_set_conparam(uint32_t con_param)
 {
-	con_mode = newParam;
-#ifndef MODULE
-	curr_con_mode = con_mode;
-#endif
+	curr_con_mode = con_param;
 }
-
 
 /* Register the module init/exit functions */
 module_init(hdd_module_init);
@@ -6791,11 +6762,11 @@ MODULE_LICENSE("Dual BSD/GPL");
 MODULE_AUTHOR("Qualcomm Atheros, Inc.");
 MODULE_DESCRIPTION("WLAN HOST DEVICE DRIVER");
 
-#if  defined(QCA_WIFI_FTM)
-module_param(con_mode, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
-#else
+#if !defined(MODULE) && defined(QCA_WIFI_FTM)
 module_param_call(con_mode, con_mode_handler, param_get_int, &con_mode,
 		  S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
+#else
+module_param(con_mode, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 #endif
 
 module_param_call(fwpath, fwpath_changed_handler, param_get_string, &fwpath,
