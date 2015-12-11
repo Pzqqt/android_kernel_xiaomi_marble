@@ -1385,7 +1385,7 @@ uint8_t *wlan_hdd_get_intf_addr(hdd_context_t *pHddCtx);
 void wlan_hdd_release_intf_addr(hdd_context_t *pHddCtx, uint8_t *releaseAddr);
 uint8_t hdd_get_operating_channel(hdd_context_t *pHddCtx, device_mode_t mode);
 
-void hdd_set_conparam(uint32_t newParam);
+void hdd_set_conparam(uint32_t con_param);
 tCDF_CON_MODE hdd_get_conparam(void);
 
 void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
