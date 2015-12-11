@@ -3654,6 +3654,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
+	hdd_station_ctx_t *hdd_sta_ctx;
 	u8 peerMac[CDF_MAC_ADDR_SIZE];
 	CDF_STATUS status;
 	int max_sta_failed = 0;
@@ -3688,6 +3689,21 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			  MAC_ADDRESS_STR " action %d declined.",
 			  __func__, MAC_ADDR_ARRAY(peer), action_code);
 		return -ENOTSUPP;
+	}
+
+	hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+
+	/*
+	 * STA should be connected and authenticated before sending
+	 * any TDLS frames
+	 */
+	if ((eConnectionState_Associated !=
+	     hdd_sta_ctx->conn_info.connState) ||
+	     (false == hdd_sta_ctx->conn_info.uIsAuthenticated)) {
+		hdd_err("STA is not connected or not authenticated. connState %u, uIsAuthenticated %u",
+			hdd_sta_ctx->conn_info.connState,
+			hdd_sta_ctx->conn_info.uIsAuthenticated);
+		return -EAGAIN;
 	}
 
 	/* If any concurrency is detected */
@@ -3835,6 +3851,18 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
+	if ((SIR_MAC_TDLS_DIS_REQ == action_code) ||
+	    (SIR_MAC_TDLS_DIS_RSP == action_code)) {
+		/* for DIS_REQ/DIS_RSP, supplicant does not consider the return
+		 * status. So no need to wait for tdls_mgmt_comp to
+		 * send ack status.
+		 */
+		hdd_info("tx done for frm %u", action_code);
+		return 0;
+	}
+	hdd_info("Wait for tdls_mgmt_comp. Timeout %u ms",
+		WAIT_TIME_TDLS_MGMT);
+
 	rc = wait_for_completion_timeout(&pAdapter->tdls_mgmt_comp,
 					 msecs_to_jiffies(WAIT_TIME_TDLS_MGMT));
 
@@ -3859,6 +3887,8 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 		pAdapter->mgmtTxCompletionStatus = false;
 		return -EINVAL;
 	}
+	hdd_info("Mgmt Tx Completion status %ld TxCompletion %u",
+		rc, pAdapter->mgmtTxCompletionStatus);
 
 	if (max_sta_failed) {
 		return max_sta_failed;
