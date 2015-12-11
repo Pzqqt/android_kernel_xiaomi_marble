@@ -146,8 +146,6 @@ static int wlan_hdd_inited;
 DEFINE_SPINLOCK(hdd_context_lock);
 
 static cdf_wake_lock_t wlan_wake_lock;
-/* set when SSR is needed after unload */
-static e_hdd_ssr_required is_ssr_required = HDD_SSR_NOT_REQUIRED;
 
 #define WOW_MAX_FILTER_LISTS 1
 #define WOW_MAX_FILTERS_PER_LIST 4
@@ -3051,20 +3049,6 @@ CDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 	return CDF_STATUS_SUCCESS;
 }
 
-bool hdd_is_ssr_required(void)
-{
-	return is_ssr_required == HDD_SSR_REQUIRED;
-}
-
-/* Once SSR is disabled then it cannot be set. */
-void hdd_set_ssr_required(e_hdd_ssr_required value)
-{
-	if (HDD_SSR_DISABLED == is_ssr_required)
-		return;
-
-	is_ssr_required = value;
-}
-
 CDF_STATUS hdd_get_front_adapter(hdd_context_t *hdd_ctx,
 				 hdd_adapter_list_node_t **padapterNode)
 {
@@ -3569,19 +3553,6 @@ free_hdd_ctx:
 
 	wiphy_unregister(wiphy);
 	wiphy_free(wiphy);
-	if (hdd_is_ssr_required()) {
-#ifdef MSM_PLATFORM
-#ifdef CONFIG_CNSS
-		/*
-		 * WDI timeout had happened during unload, so SSR is needed
-		 * here
-		 */
-		subsystem_restart("wcnss");
-#endif
-#endif
-		msleep(5000);
-	}
-	hdd_set_ssr_required(false);
 }
 
 void __hdd_wlan_exit(void)
@@ -5533,20 +5504,6 @@ err_free_hdd_context:
 	wiphy_free(wiphy);
 	/* kfree(wdev) ; */
 	CDF_BUG(1);
-
-	if (hdd_is_ssr_required()) {
-#ifdef MSM_PLATFORM
-#ifdef CONFIG_CNSS
-		/*
-		 * WDI timeout had happened during load, so SSR is needed
-		 * here
-		 */
-		subsystem_restart("wcnss");
-#endif
-#endif
-		msleep(5000);
-	}
-	hdd_set_ssr_required(false);
 
 	return -EIO;
 
