@@ -623,12 +623,6 @@ typedef struct hdd_cfg80211_state_s {
 	eP2PActionFrameState actionFrmState;
 } hdd_cfg80211_state_t;
 
-typedef enum {
-	HDD_SSR_NOT_REQUIRED,
-	HDD_SSR_REQUIRED,
-	HDD_SSR_DISABLED,
-} e_hdd_ssr_required;
-
 struct hdd_station_ctx {
 	/** Handle to the Wireless Extension State */
 	hdd_wext_state_t WextState;
@@ -1397,8 +1391,6 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter);
 void hdd_prevent_suspend(uint32_t reason);
 void hdd_allow_suspend(uint32_t reason);
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason);
-bool hdd_is_ssr_required(void);
-void hdd_set_ssr_required(e_hdd_ssr_required value);
 
 void wlan_hdd_cfg80211_update_wiphy_caps(struct wiphy *wiphy);
 CDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *pAdapter);
