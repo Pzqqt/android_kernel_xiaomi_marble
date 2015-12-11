@@ -1643,11 +1643,6 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 		/* check whether the parent vdev has no peers left */
 		if (TAILQ_EMPTY(&vdev->peer_list)) {
 			/*
-			 * Now that there are no references to the peer, we can
-			 * release the peer reference lock.
-			 */
-			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-			/*
 			 * Check if the parent vdev was waiting for its peers
 			 * to be deleted, in order for it to be deleted too.
 			 */
@@ -1656,6 +1651,12 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 					vdev->delete.callback;
 				void *vdev_delete_context =
 					vdev->delete.context;
+
+				/*
+				 * Now that there are no references to the peer,
+				 * we can release the peer reference lock.
+				 */
+				cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 
 				TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 					   "%s: deleting vdev object %p "
@@ -1672,9 +1673,12 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 				cdf_mem_free(vdev);
 				if (vdev_delete_cb)
 					vdev_delete_cb(vdev_delete_context);
+			} else {
+				cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			}
-		} else
+		} else {
 			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+		}
 
 		/*
 		 * 'array' is allocated in addba handler and is supposed to be
