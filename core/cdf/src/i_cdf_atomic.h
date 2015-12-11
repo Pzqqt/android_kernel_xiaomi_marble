@@ -40,7 +40,7 @@ static inline CDF_STATUS __cdf_atomic_init(__cdf_atomic_t *v)
 	return CDF_STATUS_SUCCESS;
 }
 
-static inline uint32_t __cdf_atomic_read(__cdf_atomic_t *v)
+static inline int32_t __cdf_atomic_read(__cdf_atomic_t *v)
 {
 	return atomic_read(v);
 }
@@ -72,7 +72,7 @@ static inline void __cdf_atomic_sub(int i, __cdf_atomic_t *v)
 	atomic_sub(i, v);
 }
 
-static inline uint32_t __cdf_atomic_dec_and_test(__cdf_atomic_t *v)
+static inline int32_t __cdf_atomic_dec_and_test(__cdf_atomic_t *v)
 {
 	return atomic_dec_and_test(v);
 }
@@ -82,7 +82,7 @@ static inline void __cdf_atomic_set(__cdf_atomic_t *v, int i)
 	atomic_set(v, i);
 }
 
-static inline uint32_t __cdf_atomic_inc_return(__cdf_atomic_t *v)
+static inline int32_t __cdf_atomic_inc_return(__cdf_atomic_t *v)
 {
 	return atomic_inc_return(v);
 }
