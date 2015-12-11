@@ -707,19 +707,6 @@ typedef struct sSirDFSChannelList {
 
 } tSirDFSChannelList, *tpSirDFSChannelList;
 
-#ifdef FEATURE_WLAN_ESE
-typedef struct sTspecInfo {
-	uint8_t valid;
-	tSirMacTspecIE tspec;
-} tTspecInfo;
-
-#define SIR_ESE_MAX_TSPEC_IES   4
-typedef struct sESETspecTspecInfo {
-	uint8_t numTspecs;
-	tTspecInfo tspec[SIR_ESE_MAX_TSPEC_IES];
-} tESETspecInfo;
-#endif
-
 /* / Two Background Scan mode */
 typedef enum eSirBackgroundScanMode {
 	eSIR_ROAMING_SCAN = 2,
@@ -885,6 +872,127 @@ typedef struct sSirOemDataRsp {
 } tSirOemDataRsp, *tpSirOemDataRsp;
 
 #endif /* FEATURE_OEM_DATA_SUPPORT */
+
+#ifdef FEATURE_WLAN_ESE
+typedef struct sTspecInfo {
+	uint8_t valid;
+	tSirMacTspecIE tspec;
+} tTspecInfo;
+
+#define SIR_ESE_MAX_TSPEC_IES   4
+typedef struct sESETspecTspecInfo {
+	uint8_t numTspecs;
+	tTspecInfo tspec[SIR_ESE_MAX_TSPEC_IES];
+} tESETspecInfo;
+
+typedef struct sSirTsmIE {
+	uint8_t tsid;
+	uint8_t state;
+	uint16_t msmt_interval;
+} tSirTsmIE, *tpSirTsmIE;
+typedef struct sSirSmeTsmIEInd {
+	tSirTsmIE tsmIe;
+	uint8_t sessionId;
+} tSirSmeTsmIEInd, *tpSirSmeTsmIEInd;
+typedef struct sAniTrafStrmMetrics {
+	uint16_t UplinkPktQueueDly;
+	uint16_t UplinkPktQueueDlyHist[4];
+	uint32_t UplinkPktTxDly;
+	uint16_t UplinkPktLoss;
+	uint16_t UplinkPktCount;
+	uint8_t RoamingCount;
+	uint16_t RoamingDly;
+} tAniTrafStrmMetrics, *tpAniTrafStrmMetrics;
+
+typedef struct sAniGetTsmStatsReq {
+	/* Common for all types are requests */
+	uint16_t msgType;       /* message type is same as the request type */
+	uint16_t msgLen;        /* length of the entire request */
+	uint8_t staId;
+	uint8_t tid;            /* traffic id */
+	struct qdf_mac_addr bssId;
+	void *tsmStatsCallback;
+	void *pDevContext;      /* device context */
+	void *p_cds_context;    /* cds context */
+} tAniGetTsmStatsReq, *tpAniGetTsmStatsReq;
+
+typedef struct sAniGetTsmStatsRsp {
+	/* Common for all types are responses */
+	uint16_t msgType;       /*
+				 * message type is same as
+				 * the request type
+				 */
+	uint16_t msgLen;        /*
+				 * length of the entire request,
+				 * includes the pStatsBuf length too
+				 */
+	uint8_t sessionId;
+	uint32_t rc;            /* success/failure */
+	uint32_t staId;         /*
+				 * Per STA stats request must
+				 * contain valid
+				 */
+	tAniTrafStrmMetrics tsmMetrics;
+	void *tsmStatsReq;      /* tsm stats request backup */
+} tAniGetTsmStatsRsp, *tpAniGetTsmStatsRsp;
+
+typedef struct sSirEseBcnReportBssInfo {
+	tBcnReportFields bcnReportFields;
+	uint8_t ieLen;
+	uint8_t *pBuf;
+} tSirEseBcnReportBssInfo, *tpSirEseBcnReportBssInfo;
+
+typedef struct sSirEseBcnReportRsp {
+	uint16_t measurementToken;
+	uint8_t flag;        /* Flag to report measurement done and more data */
+	uint8_t numBss;
+	tSirEseBcnReportBssInfo bcnRepBssInfo[SIR_BCN_REPORT_MAX_BSS_DESC];
+} tSirEseBcnReportRsp, *tpSirEseBcnReportRsp;
+
+#define TSRS_11AG_RATE_6MBPS   0xC
+#define TSRS_11B_RATE_5_5MBPS  0xB
+typedef struct sSirMacESETSRSIE {
+	uint8_t tsid;
+	uint8_t rates[8];
+} tSirMacESETSRSIE;
+typedef struct sSirMacESETSMIE {
+	uint8_t tsid;
+	uint8_t state;
+	uint16_t msmt_interval;
+} tSirMacESETSMIE;
+typedef struct sTSMStats {
+	uint8_t tid;
+	struct qdf_mac_addr bssid;
+	tTrafStrmMetrics tsmMetrics;
+} tTSMStats, *tpTSMStats;
+typedef struct sEseTSMContext {
+	uint8_t tid;
+	tSirMacESETSMIE tsmInfo;
+	tTrafStrmMetrics tsmMetrics;
+} tEseTSMContext, *tpEseTSMContext;
+typedef struct sEsePEContext {
+	tEseTSMContext tsm;
+} tEsePEContext, *tpEsePEContext;
+
+typedef struct sSirPlmReq {
+	uint16_t diag_token;    /* Dialog token */
+	uint16_t meas_token;    /* measurement token */
+	uint16_t numBursts;     /* total number of bursts */
+	uint16_t burstInt;      /* burst interval in seconds */
+	uint16_t measDuration;  /* in TU's,STA goes off-ch */
+	/* no of times the STA should cycle through PLM ch list */
+	uint8_t burstLen;
+	int8_t  desiredTxPwr; /* desired tx power */
+	struct qdf_mac_addr mac_addr;    /* MC dest addr */
+	/* no of channels */
+	uint8_t plmNumCh;
+	/* channel numbers */
+	uint8_t plmChList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t sessionId;
+	bool enable;
+} tSirPlmReq, *tpSirPlmReq;
+
+#endif /* FEATURE_WLAN_ESE */
 
 /* / Definition for response message to previously issued scan request */
 typedef struct sSirSmeScanRsp {
@@ -1644,73 +1752,6 @@ typedef struct sAniGetSnrReq {
 	int8_t snr;
 } tAniGetSnrReq, *tpAniGetSnrReq;
 
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_ESE_UPLOAD)
-typedef struct sSirTsmIE {
-	uint8_t tsid;
-	uint8_t state;
-	uint16_t msmt_interval;
-} tSirTsmIE, *tpSirTsmIE;
-typedef struct sSirSmeTsmIEInd {
-	tSirTsmIE tsmIe;
-	uint8_t sessionId;
-} tSirSmeTsmIEInd, *tpSirSmeTsmIEInd;
-typedef struct sAniTrafStrmMetrics {
-	uint16_t UplinkPktQueueDly;
-	uint16_t UplinkPktQueueDlyHist[4];
-	uint32_t UplinkPktTxDly;
-	uint16_t UplinkPktLoss;
-	uint16_t UplinkPktCount;
-	uint8_t RoamingCount;
-	uint16_t RoamingDly;
-} tAniTrafStrmMetrics, *tpAniTrafStrmMetrics;
-
-typedef struct sAniGetTsmStatsReq {
-	/* Common for all types are requests */
-	uint16_t msgType;       /* message type is same as the request type */
-	uint16_t msgLen;        /* length of the entire request */
-	uint8_t staId;
-	uint8_t tid;            /* traffic id */
-	struct qdf_mac_addr bssId;
-	void *tsmStatsCallback;
-	void *pDevContext;      /* device context */
-	void *p_cds_context;    /* cds context */
-} tAniGetTsmStatsReq, *tpAniGetTsmStatsReq;
-
-typedef struct sAniGetTsmStatsRsp {
-	/* Common for all types are responses */
-	uint16_t msgType;       /*
-				 * message type is same as
-				 * the request type
-				 */
-	uint16_t msgLen;        /*
-				 * length of the entire request,
-				 * includes the pStatsBuf length too
-				 */
-	uint8_t sessionId;
-	uint32_t rc;            /* success/failure */
-	uint32_t staId;         /*
-				 * Per STA stats request must
-				 * contain valid
-				 */
-	tAniTrafStrmMetrics tsmMetrics;
-	void *tsmStatsReq;      /* tsm stats request backup */
-} tAniGetTsmStatsRsp, *tpAniGetTsmStatsRsp;
-
-typedef struct sSirEseBcnReportBssInfo {
-	tBcnReportFields bcnReportFields;
-	uint8_t ieLen;
-	uint8_t *pBuf;
-} tSirEseBcnReportBssInfo, *tpSirEseBcnReportBssInfo;
-
-typedef struct sSirEseBcnReportRsp {
-	uint16_t measurementToken;
-	uint8_t flag;        /* Flag to report measurement done and more data */
-	uint8_t numBss;
-	tSirEseBcnReportBssInfo bcnRepBssInfo[SIR_BCN_REPORT_MAX_BSS_DESC];
-} tSirEseBcnReportRsp, *tpSirEseBcnReportRsp;
-
-#endif /* FEATURE_WLAN_ESE || FEATURE_WLAN_ESE_UPLOAD */
-
 /* Change country code request MSG structure */
 typedef struct sAniChangeCountryCodeReq {
 	/* Common for all types are requests */
@@ -1877,33 +1918,6 @@ typedef struct sSirTclasInfo {
 	} qdf_packed tclasParams;
 } qdf_packed tSirTclasInfo;
 
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_ESE_UPLOAD)
-#define TSRS_11AG_RATE_6MBPS   0xC
-#define TSRS_11B_RATE_5_5MBPS  0xB
-typedef struct sSirMacESETSRSIE {
-	uint8_t tsid;
-	uint8_t rates[8];
-} tSirMacESETSRSIE;
-typedef struct sSirMacESETSMIE {
-	uint8_t tsid;
-	uint8_t state;
-	uint16_t msmt_interval;
-} tSirMacESETSMIE;
-typedef struct sTSMStats {
-	uint8_t tid;
-	struct qdf_mac_addr bssid;
-	tTrafStrmMetrics tsmMetrics;
-} tTSMStats, *tpTSMStats;
-typedef struct sEseTSMContext {
-	uint8_t tid;
-	tSirMacESETSMIE tsmInfo;
-	tTrafStrmMetrics tsmMetrics;
-} tEseTSMContext, *tpEseTSMContext;
-typedef struct sEsePEContext {
-	tEseTSMContext tsm;
-} tEsePEContext, *tpEsePEContext;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
-
 typedef struct sSirAddtsReqInfo {
 	uint8_t dialogToken;
 	tSirMacTspecIE tspec;
@@ -1931,7 +1945,7 @@ typedef struct sSirAddtsRspInfo {
 	tSirTclasInfo tclasInfo[SIR_MAC_TCLASIE_MAXNUM];
 	uint8_t tclasProc;
 	tSirMacScheduleIE schedule;
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	tSirMacESETSMIE tsmIE;
 	uint8_t tsmPresent:1;
 #endif
@@ -1993,27 +2007,6 @@ typedef struct sSirDeltsRsp {
 	struct qdf_mac_addr macaddr;    /* only on AP to specify the STA */
 	tSirDeltsReqInfo rsp;
 } tSirDeltsRsp, *tpSirDeltsRsp;
-
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-typedef struct sSirPlmReq {
-	uint16_t diag_token;    /* Dialog token */
-	uint16_t meas_token;    /* measurement token */
-	uint16_t numBursts;     /* total number of bursts */
-	uint16_t burstInt;      /* burst interval in seconds */
-	uint16_t measDuration;  /* in TU's,STA goes off-ch */
-	/* no of times the STA should cycle through PLM ch list */
-	uint8_t burstLen;
-	int8_t desiredTxPwr; /* desired tx power */
-	struct qdf_mac_addr mac_addr;    /* MC dest addr */
-	/* no of channels */
-	uint8_t plmNumCh;
-	/* channel numbers */
-	uint8_t plmChList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	uint8_t sessionId;
-	bool enable;
-} tSirPlmReq, *tpSirPlmReq;
-#endif
-
 
 #define SIR_QOS_NUM_AC_MAX 4
 

@@ -281,7 +281,7 @@
 
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 #define WMA_SET_PLM_REQ             SIR_HAL_SET_PLM_REQ
 #endif
 

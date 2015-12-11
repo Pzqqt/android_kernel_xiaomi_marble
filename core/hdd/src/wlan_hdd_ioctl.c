@@ -41,7 +41,7 @@
 #include "wma.h"
 #include "wlan_hdd_napi.h"
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 #include <sme_api.h>
 #include <sir_api.h>
 #endif
@@ -64,10 +64,10 @@
  */
 #define WLAN_HDD_IBSS_MIN_OUI_DATA_LENGTH (3)
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 #define TID_MIN_VALUE 0
 #define TID_MAX_VALUE 15
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 /*
  * Maximum buffer size used for returning the data back to user space
@@ -128,7 +128,7 @@ typedef struct {
 static uint16_t cesium_pid;
 extern struct sock *cesium_nl_srv_sock;
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 				 const uint32_t staId, void *context)
 {
@@ -268,7 +268,7 @@ QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 	}
 	return vstatus;
 }
-#endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /*FEATURE_WLAN_ESE */
 
 /* Function header is left blank intentionally */
 static int hdd_parse_setrmcenable_command(uint8_t *pValue,
@@ -1600,7 +1600,7 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
 	return ret;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /**
  * hdd_parse_plm_cmd() - HDD Parse Plm command
  * @pValue:	Pointer to input data
@@ -2633,7 +2633,7 @@ done:
 	return ret;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /**
  * hdd_parse_ese_beacon_req() - Parse ese beacon request
  * @pValue:	Pointer to data
@@ -2794,9 +2794,7 @@ static int hdd_parse_ese_beacon_req(uint8_t *pValue,
 
 	return 0;
 }
-#endif /* defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD) */
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 /**
  * hdd_parse_get_cckm_ie() - HDD Parse and fetch the CCKM IE
  * @pValue:	Pointer to input data
@@ -2869,7 +2867,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 	*pCckmIeLen = i;
 	return 0;
 }
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 {
@@ -4738,116 +4736,6 @@ exit:
 	return ret;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
-			       hdd_context_t *hdd_ctx,
-			       uint8_t *command,
-			       uint8_t command_len,
-			       hdd_priv_data_t *priv_data)
-{
-	int ret = 0;
-	uint8_t *value = command;
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpSirPlmReq pPlmRequest = NULL;
-
-	pPlmRequest = qdf_mem_malloc(sizeof(tSirPlmReq));
-	if (NULL == pPlmRequest) {
-		ret = -ENOMEM;
-		goto exit;
-	}
-
-	status = hdd_parse_plm_cmd(value, pPlmRequest);
-	if (QDF_STATUS_SUCCESS != status) {
-		qdf_mem_free(pPlmRequest);
-		pPlmRequest = NULL;
-		ret = -EINVAL;
-		goto exit;
-	}
-	pPlmRequest->sessionId = adapter->sessionId;
-
-	status = sme_set_plm_request(hdd_ctx->hHal, pPlmRequest);
-	if (QDF_STATUS_SUCCESS != status) {
-		qdf_mem_free(pPlmRequest);
-		pPlmRequest = NULL;
-		ret = -EINVAL;
-		goto exit;
-	}
-
-exit:
-	return ret;
-}
-#endif
-
-#ifdef FEATURE_WLAN_ESE
-static int drv_cmd_set_ccx_mode(hdd_adapter_t *adapter,
-				hdd_context_t *hdd_ctx,
-				uint8_t *command,
-				uint8_t command_len,
-				hdd_priv_data_t *priv_data)
-{
-	int ret = 0;
-	uint8_t *value = command;
-	uint8_t eseMode = CFG_ESE_FEATURE_ENABLED_DEFAULT;
-
-	/*
-	 * Check if the features OKC/ESE/11R are supported simultaneously,
-	 * then this operation is not permitted (return FAILURE)
-	 */
-	if (sme_get_is_ese_feature_enabled(hdd_ctx->hHal) &&
-	    hdd_is_okc_mode_enabled(hdd_ctx) &&
-	    sme_get_is_ft_feature_enabled(hdd_ctx->hHal)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_WARN,
-			  "%s: OKC/ESE/11R are supported simultaneously hence this operation is not permitted!",
-			  __func__);
-		ret = -EPERM;
-		goto exit;
-	}
-
-	/* Move pointer to ahead of SETCCXMODE<delimiter> */
-	value = value + command_len + 1;
-
-	/* Convert the value from ascii to integer */
-	ret = kstrtou8(value, 10, &eseMode);
-	if (ret < 0) {
-		/*
-		 * If the input value is greater than max value of datatype,
-		 * then also kstrtou8 fails
-		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "%s: kstrtou8 failed range [%d - %d]",
-			  __func__, CFG_ESE_FEATURE_ENABLED_MIN,
-			  CFG_ESE_FEATURE_ENABLED_MAX);
-		ret = -EINVAL;
-		goto exit;
-	}
-
-	if ((eseMode < CFG_ESE_FEATURE_ENABLED_MIN) ||
-	    (eseMode > CFG_ESE_FEATURE_ENABLED_MAX)) {
-		QDF_TRACE(QDF_MODULE_ID_HDD,
-			  QDF_TRACE_LEVEL_ERROR,
-			  "Ese mode value %d is out of range (Min: %d Max: %d)",
-			  eseMode,
-			  CFG_ESE_FEATURE_ENABLED_MIN,
-			  CFG_ESE_FEATURE_ENABLED_MAX);
-		ret = -EINVAL;
-		goto exit;
-	}
-	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Received Command to change ese mode = %d",
-		  __func__, eseMode);
-
-	hdd_ctx->config->isEseIniFeatureEnabled = eseMode;
-	sme_update_is_ese_feature_enabled(hdd_ctx->hHal,
-					  adapter->sessionId,
-					  eseMode);
-
-exit:
-	return ret;
-}
-#endif
-
 static int drv_cmd_set_roam_scan_control(hdd_adapter_t *adapter,
 					 hdd_context_t *hdd_ctx,
 					 uint8_t *command,
@@ -5810,7 +5698,7 @@ exit:
 	return ret;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 static int drv_cmd_set_ccx_roam_scan_channels(hdd_adapter_t *adapter,
 					      hdd_context_t *hdd_ctx,
 					      uint8_t *command,
@@ -6079,7 +5967,7 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 exit:
 	return ret;
 }
-#endif /* #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD) */
+#endif /* FEATURE_WLAN_ESE */
 
 static int drv_cmd_set_mc_rate(hdd_adapter_t *adapter,
 			       hdd_context_t *hdd_ctx,
@@ -7526,12 +7414,6 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SETFASTROAM",               drv_cmd_set_fast_roam},
 	{"SETFASTTRANSITION",         drv_cmd_set_fast_transition},
 	{"FASTREASSOC",               drv_cmd_fast_reassoc},
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-	{"CCXPLMREQ",                 drv_cmd_ccx_plm_req},
-#endif
-#ifdef FEATURE_WLAN_ESE
-	{"SETCCXMODE",                drv_cmd_set_ccx_mode},
-#endif
 	{"SETROAMSCANCONTROL",        drv_cmd_set_roam_scan_control},
 #ifdef FEATURE_WLAN_OKC
 	{"SETOKCMODE",                drv_cmd_set_okc_mode},
@@ -7550,12 +7432,12 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"GETIBSSPEERINFO",           drv_cmd_get_ibss_peer_info},
 	{"SETRMCTXRATE",              drv_cmd_set_rmc_tx_rate},
 	{"SETIBSSTXFAILEVENT",        drv_cmd_set_ibss_tx_fail_event},
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	{"SETCCXROAMSCANCHANNELS",    drv_cmd_set_ccx_roam_scan_channels},
 	{"GETTSMSTATS",               drv_cmd_get_tsm_stats},
 	{"SETCCKMIE",                 drv_cmd_set_cckm_ie},
 	{"CCXBEACONREQ",  drv_cmd_ccx_beacon_req},
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 	{"SETMCRATE",                 drv_cmd_set_mc_rate},
 	{"MAXTXPOWER",                drv_cmd_max_tx_power},
 	{"SETDFSSCANMODE",            drv_cmd_set_dfs_scan_mode},

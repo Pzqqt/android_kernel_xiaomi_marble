@@ -92,7 +92,7 @@ QDF_STATUS sme_handle_generic_change_country_code(tpAniSirGlobal pMac,
 
 QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg);
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId);
 #endif
 
@@ -1264,93 +1264,6 @@ QDF_STATUS sme_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode)
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
-{
-	QDF_STATUS status;
-	bool ret = false;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	uint8_t ch_list[WNI_CFG_VALID_CHANNEL_LIST] = { 0 };
-	uint8_t count, valid_count = 0;
-	cds_msg_t msg;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, pPlmReq->sessionId);
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status))
-		return status;
-
-	if (!pSession) {
-		sms_log(pMac, LOGE, FL("session %d not found"),
-			pPlmReq->sessionId);
-		sme_release_global_lock(&pMac->sme);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!pSession->sessionActive) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Invalid Sessionid"));
-		sme_release_global_lock(&pMac->sme);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	if (!pPlmReq->enable)
-		goto send_plm_start;
-	/* validating channel numbers */
-	for (count = 0; count < pPlmReq->plmNumCh; count++) {
-		ret = csr_is_supported_channel(pMac, pPlmReq->plmChList[count]);
-		if (ret && pPlmReq->plmChList[count] > 14) {
-			if (CHANNEL_STATE_DFS == cds_get_channel_state(
-						pPlmReq->plmChList[count])) {
-				/* DFS channel is provided, no PLM bursts can be
-				 * transmitted. Ignoring these channels.
-				 */
-				QDF_TRACE(QDF_MODULE_ID_SME,
-					  QDF_TRACE_LEVEL_INFO,
-					  FL("DFS channel %d ignored for PLM"),
-					  pPlmReq->plmChList[count]);
-				continue;
-			}
-		} else if (!ret) {
-			/* Not supported, ignore the channel */
-			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-				  FL("Unsupported channel %d ignored for PLM"),
-				  pPlmReq->plmChList[count]);
-			continue;
-		}
-		ch_list[valid_count] = pPlmReq->plmChList[count];
-		valid_count++;
-	} /* End of for () */
-
-	/* Copying back the valid channel list to plm struct */
-	qdf_mem_set((void *)pPlmReq->plmChList,
-		    pPlmReq->plmNumCh, 0);
-	if (valid_count)
-		qdf_mem_copy(pPlmReq->plmChList, ch_list,
-			     valid_count);
-	/* All are invalid channels, FW need to send the PLM
-	 *  report with "incapable" bit set.
-	 */
-	pPlmReq->plmNumCh = valid_count;
-
-send_plm_start:
-	/* PLM START */
-	msg.type = WMA_SET_PLM_REQ;
-	msg.reserved = 0;
-	msg.bodyptr = pPlmReq;
-
-	if (!QDF_IS_STATUS_SUCCESS(cds_mq_post_message(QDF_MODULE_ID_WMA,
-						       &msg))) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
-			  FL("Not able to post WMA_SET_PLM_REQ to WMA"));
-		sme_release_global_lock(&pMac->sme);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	sme_release_global_lock(&pMac->sme);
-	return status;
-}
-#endif
-
 /**
  * sme_update_fine_time_measurement_capab() - Update the FTM capabitlies from
  * incoming val
@@ -1980,13 +1893,181 @@ static QDF_STATUS sme_extended_change_channel_ind(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-/*------------------------------------------------------------------
+/**
+ * sme_process_fw_mem_dump_rsp - process fw memory dump response from WMA
+ *
+ * @mac_ctx: pointer to MAC handle.
+ * @msg: pointer to received SME msg.
+ *
+ * This function process the received SME message and calls the corresponding
+ * callback which was already registered with SME.
+ *
+ * Return: None
+ */
+#ifdef WLAN_FEATURE_MEMDUMP
+static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+{
+	if (msg->bodyptr) {
+		if (mac_ctx->sme.fw_dump_callback)
+			mac_ctx->sme.fw_dump_callback(mac_ctx->hHdd,
+				(struct fw_dump_rsp *) msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+	}
+}
+#else
+static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
+{
+}
+#endif
+
+#ifdef FEATURE_WLAN_ESE
+/**
+ * sme_update_is_ese_feature_enabled() - enable/disable ESE support at runtime
+ * @hHal: HAL handle
+ * @sessionId: session id
+ * @isEseIniFeatureEnabled: ese ini enabled
+ *
+ * It is used at in the REG_DYNAMIC_VARIABLE macro definition of
+ * isEseIniFeatureEnabled. This is a synchronous call
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal,
+			uint8_t sessionId, const bool isEseIniFeatureEnabled)
+{
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+
+	if (pMac->roam.configParam.isEseIniFeatureEnabled ==
+	    isEseIniFeatureEnabled) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+			  "%s: ESE Mode is already enabled or disabled, nothing to do (returning) old(%d) new(%d)",
+			  __func__,
+			  pMac->roam.configParam.isEseIniFeatureEnabled,
+			  isEseIniFeatureEnabled);
+		return QDF_STATUS_SUCCESS;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+		  "%s: EseEnabled is changed from %d to %d", __func__,
+		  pMac->roam.configParam.isEseIniFeatureEnabled,
+		  isEseIniFeatureEnabled);
+	pMac->roam.configParam.isEseIniFeatureEnabled = isEseIniFeatureEnabled;
+	csr_neighbor_roam_update_ese_mode_enabled(pMac, sessionId,
+						  isEseIniFeatureEnabled);
+
+	if (true == isEseIniFeatureEnabled)
+		sme_update_fast_transition_enabled(hHal, true);
+
+	if (pMac->roam.configParam.isRoamOffloadScanEnabled)
+		csr_roam_offload_scan(pMac, sessionId,
+				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				      REASON_ESE_INI_CFG_CHANGED);
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * sme_set_plm_request() - set plm request
+ * @hHal: HAL handle
+ * @pPlmReq: Pointer to input plm request
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlmReq)
+{
+	QDF_STATUS status;
+	bool ret = false;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	uint8_t ch_list[WNI_CFG_VALID_CHANNEL_LIST] = { 0 };
+	uint8_t count, valid_count = 0;
+	cds_msg_t msg;
+	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, pPlmReq->sessionId);
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status))
+		return status;
+
+	if (!pSession) {
+		sms_log(pMac, LOGE, FL("session %d not found"),
+			pPlmReq->sessionId);
+		sme_release_global_lock(&pMac->sme);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!pSession->sessionActive) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Invalid Sessionid"));
+		sme_release_global_lock(&pMac->sme);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	if (!pPlmReq->enable)
+		goto send_plm_start;
+	/* validating channel numbers */
+	for (count = 0; count < pPlmReq->plmNumCh; count++) {
+		ret = csr_is_supported_channel(pMac, pPlmReq->plmChList[count]);
+		if (ret && pPlmReq->plmChList[count] > 14) {
+			if (CHANNEL_STATE_DFS == cds_get_channel_state(
+						pPlmReq->plmChList[count])) {
+				/* DFS channel is provided, no PLM bursts can be
+				 * transmitted. Ignoring these channels.
+				 */
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_INFO,
+					  FL("DFS channel %d ignored for PLM"),
+					  pPlmReq->plmChList[count]);
+				continue;
+			}
+		} else if (!ret) {
+			/* Not supported, ignore the channel */
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
+				  FL("Unsupported channel %d ignored for PLM"),
+				  pPlmReq->plmChList[count]);
+			continue;
+		}
+		ch_list[valid_count] = pPlmReq->plmChList[count];
+		valid_count++;
+	} /* End of for () */
+
+	/* Copying back the valid channel list to plm struct */
+	qdf_mem_set((void *)pPlmReq->plmChList,
+		    pPlmReq->plmNumCh, 0);
+	if (valid_count)
+		qdf_mem_copy(pPlmReq->plmChList, ch_list,
+			     valid_count);
+	/* All are invalid channels, FW need to send the PLM
+	 *  report with "incapable" bit set.
+	 */
+	pPlmReq->plmNumCh = valid_count;
+
+send_plm_start:
+	/* PLM START */
+	msg.type = WMA_SET_PLM_REQ;
+	msg.reserved = 0;
+	msg.bodyptr = pPlmReq;
+
+	if (!QDF_IS_STATUS_SUCCESS(cds_mq_post_message(QDF_MODULE_ID_WMA,
+						       &msg))) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			  FL("Not able to post WMA_SET_PLM_REQ to WMA"));
+		sme_release_global_lock(&pMac->sme);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	sme_release_global_lock(&pMac->sme);
+	return status;
+}
+
+/**
+ * sme_tsm_ie_ind() - sme tsm ie indication
+ * @hHal: HAL handle
+ * @pSmeTsmIeInd: Pointer to tsm ie indication
  *
  * Handle the tsm ie indication from  LIM and forward it to HDD.
  *
- *------------------------------------------------------------------*/
-QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
+ * Return: QDF_STATUS enumeration
+ */
+static QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -2001,16 +2082,18 @@ QDF_STATUS sme_tsm_ie_ind(tHalHandle hHal, tSirSmeTsmIEInd *pSmeTsmIeInd)
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn sme_set_cckm_ie
-    \brief  function to store the CCKM IE passed from supplicant and use
-    it while packing reassociation request
-    \param  hHal - HAL handle for device
-    \param  sessionId - Session Identifier
-    \param  pCckmIe - pointer to CCKM IE data
-    \param  pCckmIeLen - length of the CCKM IE
-   \- return Success or failure
-    -------------------------------------------------------------------------*/
+/**
+ * sme_set_cckm_ie() - set cckm ie
+ * @hHal: HAL handle
+ * @sessionId: session id
+ * @pCckmIe: Pointer to CCKM Ie
+ * @cckmIeLen: Length of @pCckmIe
+ *
+ * Function to store the CCKM IE passed from supplicant and use
+ * it while packing reassociation request.
+ *
+ * Return: QDF_STATUS enumeration
+ */
 QDF_STATUS sme_set_cckm_ie(tHalHandle hHal, uint8_t sessionId,
 			   uint8_t *pCckmIe, uint8_t cckmIeLen)
 {
@@ -2024,14 +2107,16 @@ QDF_STATUS sme_set_cckm_ie(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn sme_set_ese_beacon_request
-    \brief  function to set ESE beacon request parameters
-    \param  hHal       - HAL handle for device
-    \param  sessionId  - Session id
-    \param  pEseBcnReq - pointer to ESE beacon request
-   \- return Success or failure
-    -------------------------------------------------------------------------*/
+/**
+ * sme_set_ese_beacon_request() - set ese beacon request
+ * @hHal: HAL handle
+ * @sessionId: session id
+ * @pEseBcnReq: Ese beacon report
+ *
+ * function to set ESE beacon request parameters
+ *
+ * Return: QDF_STATUS enumeration
+ */
 QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 				      const tCsrEseBeaconReq *pEseBcnReq)
 {
@@ -2094,7 +2179,106 @@ QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 	return status;
 }
 
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+/**
+ * sme_get_tsm_stats() - SME get tsm stats
+ * @hHal: HAL handle
+ * @callback: SME sends back the requested stats using the callback
+ * @staId: The station ID for which the stats is requested for
+ * @bssId: bssid
+ * @pContext: user context to be passed back along with the callback
+ * @p_cds_context: CDS context
+ * @tid: Traffic id
+ *
+ * API register a callback to get TSM Stats.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
+			     tCsrTsmStatsCallback callback,
+			     uint8_t staId, struct qdf_mac_addr bssId,
+			     void *pContext, void *p_cds_context, uint8_t tid)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		status = csr_get_tsm_stats(pMac, callback,
+					   staId, bssId, pContext,
+					   p_cds_context, tid);
+		sme_release_global_lock(&pMac->sme);
+	}
+	return status;
+}
+
+/**
+ * sme_set_ese_roam_scan_channel_list() - To set ese roam scan channel list
+ * @hHal: pointer HAL handle returned by mac_open
+ * @sessionId: sme session id
+ * @pChannelList: Output channel list
+ * @numChannels: Output number of channels
+ *
+ * This routine is called to set ese roam scan channel list.
+ * This is a synchronous call
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
+					      uint8_t sessionId,
+					      uint8_t *pChannelList,
+					      uint8_t numChannels)
+{
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpCsrNeighborRoamControlInfo pNeighborRoamInfo
+		= &pMac->roam.neighborRoamInfo[sessionId];
+	tpCsrChannelInfo curchnl_list_info
+		= &pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
+	uint8_t oldChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
+	uint8_t newChannelList[128] = { 0 };
+	uint8_t i = 0, j = 0;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		if (pMac->roam.configParam.isRoamOffloadScanEnabled)
+			csr_roam_offload_scan(pMac, sessionId,
+					ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+					REASON_CHANNEL_LIST_CHANGED);
+		return status;
+	}
+	if (NULL != curchnl_list_info->ChannelList) {
+		for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
+			j += snprintf(oldChannelList + j,
+				sizeof(oldChannelList) - j, "%d",
+				curchnl_list_info->ChannelList[i]);
+		}
+	}
+	status = csr_create_roam_scan_channel_list(pMac, sessionId,
+				pChannelList, numChannels,
+				csr_get_current_band(hHal));
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		if (NULL != curchnl_list_info->ChannelList) {
+			j = 0;
+			for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
+				j += snprintf(newChannelList + j,
+					sizeof(newChannelList) - j, "%d",
+					curchnl_list_info->ChannelList[i]);
+			}
+		}
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+			"ESE roam scan chnl list successfully set to %s-old value is %s-roam state is %d",
+			newChannelList, oldChannelList,
+			pNeighborRoamInfo->neighborRoamState);
+	}
+	sme_release_global_lock(&pMac->sme);
+	if (pMac->roam.configParam.isRoamOffloadScanEnabled)
+		csr_roam_offload_scan(pMac, sessionId,
+				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
+				REASON_CHANNEL_LIST_CHANGED);
+	return status;
+}
+
+#endif /* FEATURE_WLAN_ESE */
 
 QDF_STATUS sme_ibss_peer_info_response_handleer(tHalHandle hHal,
 						tpSirIbssGetPeerInfoRspParams
@@ -2117,33 +2301,6 @@ QDF_STATUS sme_ibss_peer_info_response_handleer(tHalHandle hHal,
 					     ibssPeerInfoRspParams);
 	return QDF_STATUS_SUCCESS;
 }
-
-/**
- * sme_process_fw_mem_dump_rsp - process fw memory dump response from WMA
- *
- * @mac_ctx: pointer to MAC handle.
- * @msg: pointer to received SME msg.
- *
- * This function process the received SME message and calls the corresponding
- * callback which was already registered with SME.
- *
- * Return: None
- */
-#ifdef WLAN_FEATURE_MEMDUMP
-static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
-{
-	if (msg->bodyptr) {
-		if (mac_ctx->sme.fw_dump_callback)
-			mac_ctx->sme.fw_dump_callback(mac_ctx->hHdd,
-				(struct fw_dump_rsp *) msg->bodyptr);
-		qdf_mem_free(msg->bodyptr);
-	}
-}
-#else
-static void sme_process_fw_mem_dump_rsp(tpAniSirGlobal mac_ctx, cds_msg_t *msg)
-{
-}
-#endif
 
 /**
  * sme_process_dual_mac_config_resp() - Process set Dual mac config response
@@ -2517,7 +2674,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 		}
 		break;
 #endif
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_TSM_IE_IND:
 		if (pMsg->bodyptr) {
 			sme_tsm_ie_ind(pMac, pMsg->bodyptr);
@@ -2527,7 +2684,7 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 				pMsg->type);
 		}
 		break;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 	case eWNI_SME_ROAM_SCAN_OFFLOAD_RSP:
 		status = csr_roam_offload_scan_rsp_hdlr((void *)pMac,
 							pMsg->bodyptr);
@@ -4963,35 +5120,6 @@ QDF_STATUS sme_get_snr(tHalHandle hHal,
 	}
 	return status;
 }
-
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-/* ---------------------------------------------------------------------------
-    \fn sme_get_tsm_stats
-    \brief a wrapper function that client calls to register a callback to
-     get TSM Stats
-    \param callback - SME sends back the requested stats using the callback
-    \param staId - The station ID for which the stats is requested for
-    \param pContext - user context to be passed back along with the callback
-    \param p_cds_context - cds context
-    \return QDF_STATUS
-   ---------------------------------------------------------------------------*/
-QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
-			     tCsrTsmStatsCallback callback,
-			     uint8_t staId, struct qdf_mac_addr bssId,
-			     void *pContext, void *p_cds_context, uint8_t tid)
-{
-	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_get_tsm_stats(pMac, callback,
-					   staId, bssId, pContext, p_cds_context,
-					   tid);
-		sme_release_global_lock(&pMac->sme);
-	}
-	return status;
-}
-#endif
 
 /* ---------------------------------------------------------------------------
     \fn sme_get_statistics
@@ -8616,54 +8744,6 @@ QDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 	return status;
 }
 
-#ifdef FEATURE_WLAN_ESE
-/*--------------------------------------------------------------------------
-   \brief sme_update_is_ese_feature_enabled() - enable/disable ESE support at runtime
-   It is used at in the REG_DYNAMIC_VARIABLE macro definition of
-   isEseIniFeatureEnabled.
-   This is a synchronous call
-   \param hHal - The handle returned by mac_open.
-   \param sessionId - Session Identifier
-   \param isEseIniFeatureEnabled - flag to enable/disable
-   \return QDF_STATUS_SUCCESS - SME update isEseIniFeatureEnabled config
-	   successfully.
-	   Other status means SME is failed to update isEseIniFeatureEnabled.
-   \sa
-   --------------------------------------------------------------------------*/
-QDF_STATUS sme_update_is_ese_feature_enabled
-	(tHalHandle hHal, uint8_t sessionId, const bool isEseIniFeatureEnabled) {
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
-	if (pMac->roam.configParam.isEseIniFeatureEnabled ==
-	    isEseIniFeatureEnabled) {
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-			  "%s: ESE Mode is already enabled or disabled, nothing to do (returning) old(%d) new(%d)",
-			  __func__,
-			  pMac->roam.configParam.isEseIniFeatureEnabled,
-			  isEseIniFeatureEnabled);
-		return QDF_STATUS_SUCCESS;
-	}
-
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  "%s: EseEnabled is changed from %d to %d", __func__,
-		  pMac->roam.configParam.isEseIniFeatureEnabled,
-		  isEseIniFeatureEnabled);
-	pMac->roam.configParam.isEseIniFeatureEnabled = isEseIniFeatureEnabled;
-	csr_neighbor_roam_update_ese_mode_enabled(pMac, sessionId,
-						  isEseIniFeatureEnabled);
-
-	if (true == isEseIniFeatureEnabled) {
-		sme_update_fast_transition_enabled(hHal, true);
-	}
-	if (pMac->roam.configParam.isRoamOffloadScanEnabled) {
-		csr_roam_offload_scan(pMac, sessionId,
-				      ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				      REASON_ESE_INI_CFG_CHANGED);
-	}
-	return QDF_STATUS_SUCCESS;
-}
-#endif /* FEATURE_WLAN_ESE */
-
 /*--------------------------------------------------------------------------
    \brief sme_update_config_fw_rssi_monitoring() - enable/disable firmware RSSI
 	Monitoring at runtime
@@ -9595,75 +9675,6 @@ QDF_STATUS sme_change_roam_scan_channel_list(tHalHandle hHal, uint8_t sessionId,
 				REASON_CHANNEL_LIST_CHANGED);
 	return status;
 }
-
-#ifdef FEATURE_WLAN_ESE_UPLOAD
-/**
- * sme_set_ese_roam_scan_channel_list() - To set ese roam scan channel list
- * @hHal: pointer HAL handle returned by mac_open
- * @sessionId: sme session id
- * @pChannelList: Output channel list
- * @numChannels: Output number of channels
- *
- * This routine is called to set ese roam scan channel list.
- * This is a synchronous call
- *
- * Return: QDF_STATUS
- */
-QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
-					      uint8_t sessionId,
-					      uint8_t *pChannelList,
-					      uint8_t numChannels)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo
-		= &pMac->roam.neighborRoamInfo[sessionId];
-	tpCsrChannelInfo curchnl_list_info
-		= &pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo;
-	uint8_t oldChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN * 2] = { 0 };
-	uint8_t newChannelList[128] = { 0 };
-	uint8_t i = 0, j = 0;
-
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		if (pMac->roam.configParam.isRoamOffloadScanEnabled)
-			csr_roam_offload_scan(pMac, sessionId,
-					ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-					REASON_CHANNEL_LIST_CHANGED);
-		return status;
-	}
-	if (NULL != curchnl_list_info->ChannelList) {
-		for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
-			j += snprintf(oldChannelList + j,
-				sizeof(oldChannelList) - j, "%d",
-				curchnl_list_info->ChannelList[i]);
-		}
-	}
-	status = csr_create_roam_scan_channel_list(pMac, sessionId,
-				pChannelList, numChannels,
-				csr_get_current_band(hHal));
-	if (QDF_IS_STATUS_SUCCESS(status)) {
-		if (NULL != curchnl_list_info->ChannelList) {
-			j = 0;
-			for (i = 0; i < curchnl_list_info->numOfChannels; i++) {
-				j += snprintf(newChannelList + j,
-					sizeof(newChannelList) - j, "%d",
-					curchnl_list_info->ChannelList[i]);
-			}
-		}
-		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
-			"ESE roam scan chnl list successfully set to %s-old value is %s-roam state is %d",
-			newChannelList, oldChannelList,
-			pNeighborRoamInfo->neighborRoamState);
-	}
-	sme_release_global_lock(&pMac->sme);
-	if (pMac->roam.configParam.isRoamOffloadScanEnabled)
-		csr_roam_offload_scan(pMac, sessionId,
-				ROAM_SCAN_OFFLOAD_UPDATE_CFG,
-				REASON_CHANNEL_LIST_CHANGED);
-	return status;
-}
-#endif
 
 /**
  * sme_get_roam_scan_channel_list() - To get roam scan channel list

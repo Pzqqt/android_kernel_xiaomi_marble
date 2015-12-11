@@ -89,7 +89,7 @@ void lim_send_sme_stats_rsp(tpAniSirGlobal pMac, uint16_t msgtype, void *stats);
 
 void lim_send_sme_pe_statistics_rsp(tpAniSirGlobal pMac, uint16_t msgtype,
 				    void *stats);
-#ifdef FEATURE_WLAN_ESE_UPLOAD
+#ifdef FEATURE_WLAN_ESE
 void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac, tAniGetTsmStatsRsp *pStats);
 #endif
 

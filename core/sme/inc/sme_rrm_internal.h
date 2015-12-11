@@ -88,10 +88,10 @@ typedef struct sRrmSMEContext {
 	tDblLinkList neighborReportCache;
 	tRrmNeighborRequestControlInfo neighborReqControlInfo;
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	tCsrEseBeaconReq eseBcnReqInfo;
 	bool eseBcnReqInProgress;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 	tRrmMsgReqSource msgSource;
 } tRrmSMEContext, *tpRrmSMEContext;
 

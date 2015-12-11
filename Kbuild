@@ -145,10 +145,7 @@ WLAN_COMMON_ROOT ?= qca-wifi-host-cmn
 WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
-# To enable ESE upload, dependent config
-# CONFIG_QCOM_ESE must be enabled.
 CONFIG_QCOM_ESE := y
-CONFIG_QCOM_ESE_UPLOAD := y
 endif
 
 # Feature flags which are not (currently) configurable via Kconfig
@@ -434,12 +431,6 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_trace.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_utils.o
 
-ifeq ($(CONFIG_QCOM_ESE),y)
-ifneq ($(CONFIG_QCOM_ESE_UPLOAD),y)
-MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/limProcessEseFrame.o
-endif
-endif
-
 ifeq ($(CONFIG_QCOM_TDLS),y)
 MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_tdls.o
 endif
@@ -505,12 +496,6 @@ SME_CSR_OBJS := $(SME_SRC_DIR)/csr/csr_api_roam.o \
 		$(SME_SRC_DIR)/csr/csr_link_list.o \
 		$(SME_SRC_DIR)/csr/csr_neighbor_roam.o \
 		$(SME_SRC_DIR)/csr/csr_util.o
-
-ifeq ($(CONFIG_QCOM_ESE),y)
-ifneq ($(CONFIG_QCOM_ESE_UPLOAD),y)
-SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csrEse.o
-endif
-endif
 
 ifeq ($(CONFIG_QCOM_TDLS),y)
 SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csr_tdls_process.o
@@ -1012,9 +997,6 @@ ifeq ($(CONFIG_QCOM_ESE),y)
 CDEFINES += -DFEATURE_WLAN_ESE
 CDEFINES += -DQCA_COMPUTE_TX_DELAY
 CDEFINES += -DQCA_COMPUTE_TX_DELAY_PER_TID
-ifeq ($(CONFIG_QCOM_ESE_UPLOAD),y)
-CDEFINES += -DFEATURE_WLAN_ESE_UPLOAD
-endif
 endif
 
 #normally, TDLS negative behavior is not needed

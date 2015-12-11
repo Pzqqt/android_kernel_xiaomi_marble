@@ -1590,9 +1590,9 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_UPDATE_NOA:
 	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:
 	case eWNI_SME_GET_STATISTICS_REQ:
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
-#endif  /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif  /* FEATURE_WLAN_ESE */
 	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
 	/* These messages are from HDD.No need to respond to HDD */
@@ -1734,10 +1734,8 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 #ifdef FEATURE_WLAN_ESE
 	case WMA_TSM_STATS_RSP:
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 		lim_send_sme_pe_ese_tsm_rsp(mac_ctx,
 			(tAniGetTsmStatsRsp *) msg->bodyptr);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 		break;
 #endif
 	case WMA_ADD_TS_RSP:

@@ -467,7 +467,7 @@ uint8_t *mac_trace_get_wma_msg_string(uint16_t wma_msg)
 #ifndef REMOVE_PKT_LOG
 		CASE_RETURN_STRING(WMA_PKTLOG_ENABLE_REQ);
 #endif
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 		CASE_RETURN_STRING(WMA_SET_PLM_REQ);
 #endif
 		CASE_RETURN_STRING(WMA_CONFIG_PARAM_UPDATE_REQ);

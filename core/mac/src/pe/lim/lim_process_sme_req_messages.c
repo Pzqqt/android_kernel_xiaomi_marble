@@ -3962,9 +3962,7 @@ static void __lim_process_sme_delts_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		status = eSIR_FAILURE;
 	}
 #ifdef FEATURE_WLAN_ESE
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 	lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 
 	/* send an sme response back */
@@ -4052,15 +4050,14 @@ __lim_process_sme_get_statistics_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	return;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /**
-   *FUNCTION: __lim_process_sme_get_tsm_stats_request()
+ * __lim_process_sme_get_tsm_stats_request() - get tsm stats request
  *
- ***NOTE:
+ * @pMac: Pointer to Global MAC structure
+ * @pMsgBuf: A pointer to the SME message buffer
  *
- * @param  pMac      Pointer to Global MAC structure
- * @param  *pMsgBuf  A pointer to the SME message buffer
- * @return None
+ * Return: None
  */
 static void
 __lim_process_sme_get_tsm_stats_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
@@ -4080,7 +4077,7 @@ __lim_process_sme_get_tsm_stats_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		return;
 	}
 }
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 static void
 __lim_process_sme_update_apwpsi_es(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
@@ -4880,12 +4877,12 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		/* HAL consumes pMsgBuf. It will be freed there. Set bufConsumed to false. */
 		bufConsumed = false;
 		break;
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_REQ:
 		__lim_process_sme_get_tsm_stats_request(pMac, pMsgBuf);
 		bufConsumed = false;
 		break;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 	case eWNI_SME_GET_ASSOC_STAS_REQ:
 		lim_process_sme_get_assoc_sta_info(pMac, pMsgBuf);
 		break;

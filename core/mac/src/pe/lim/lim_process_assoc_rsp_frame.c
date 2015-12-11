@@ -484,12 +484,10 @@ static void lim_update_ese_tsm(tpAniSirGlobal mac_ctx,
 				assoc_rsp->TSPECInfo[cnt].user_priority;
 			qdf_mem_copy(&tsm_ctx->tsmInfo,
 				&assoc_rsp->tsmIE, sizeof(tSirMacESETSMIE));
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 			lim_send_sme_tsm_ie_ind(mac_ctx,
 				session_entry, assoc_rsp->tsmIE.tsid,
 				assoc_rsp->tsmIE.state,
 				assoc_rsp->tsmIE.msmt_interval);
-#endif
 			if (tsm_ctx->tsmInfo.state)
 				tsm_ctx->tsmMetrics.RoamingCount++;
 			break;

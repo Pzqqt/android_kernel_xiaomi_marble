@@ -231,10 +231,6 @@ static inline void sme_update_roam_pno_channel_prediction_config(
 QDF_STATUS sme_update_config(tHalHandle hHal,
 		tpSmeConfigParams pSmeConfigParams);
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlm);
-#endif
-
 QDF_STATUS sme_set11dinfo(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams);
 QDF_STATUS sme_get_soft_ap_domain(tHalHandle hHal,
 		v_REGDOMAIN_t *domainIdSoftAp);
@@ -337,7 +333,7 @@ QDF_STATUS sme_get_rssi(tHalHandle hHal,
 QDF_STATUS sme_get_snr(tHalHandle hHal,
 		tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId,
@@ -347,7 +343,8 @@ QDF_STATUS sme_set_cckm_ie(tHalHandle hHal,
 		uint8_t *pCckmIe, uint8_t cckmIeLen);
 QDF_STATUS sme_set_ese_beacon_request(tHalHandle hHal, const uint8_t sessionId,
 		const tCsrEseBeaconReq *pEseBcnReq);
-#endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+QDF_STATUS sme_set_plm_request(tHalHandle hHal, tpSirPlmReq pPlm);
+#endif /*FEATURE_WLAN_ESE */
 QDF_STATUS sme_cfg_set_int(tHalHandle hal, uint16_t cfg_id, uint32_t value);
 QDF_STATUS sme_cfg_set_str(tHalHandle hal, uint16_t cfg_id, uint8_t *str,
 		uint32_t length);
@@ -645,11 +642,9 @@ uint8_t sme_get_roam_rssi_diff(tHalHandle hHal);
 QDF_STATUS sme_change_roam_scan_channel_list(tHalHandle hHal, uint8_t sessionId,
 		uint8_t *pChannelList,
 		uint8_t numChannels);
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 QDF_STATUS sme_set_ese_roam_scan_channel_list(tHalHandle hHal,
 		uint8_t sessionId, uint8_t *pChannelList,
 		uint8_t numChannels);
-#endif
 QDF_STATUS sme_get_roam_scan_channel_list(tHalHandle hHal,
 		uint8_t *pChannelList, uint8_t *pNumChannels,
 		uint8_t sessionId);

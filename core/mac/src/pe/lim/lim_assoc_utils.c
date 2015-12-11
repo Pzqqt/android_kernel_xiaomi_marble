@@ -623,8 +623,6 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		lim_deactivate_and_change_timer(pMac, eLIM_JOIN_FAIL_TIMER);
 		pMac->lim.gLastBeaconDtimCount = 0;
 		pMac->lim.gLastBeaconDtimPeriod = 0;
-
-
 	}
 #ifdef WLAN_DEBUG
 	/* increment a debug count */
@@ -4992,7 +4990,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 }
 #endif
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /** -------------------------------------------------------------
    \fn     lim_send_sme_tsm_ie_ind
    \brief  Forwards the TSM IE information to SME.
@@ -5032,4 +5030,4 @@ void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 	return;
 }
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */

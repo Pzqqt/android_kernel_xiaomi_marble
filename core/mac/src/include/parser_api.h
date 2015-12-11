@@ -280,7 +280,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIEOBSSScanParameters obss_scanparams;
 } tSirAssocRsp, *tpSirAssocRsp;
 
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /* Structure to hold ESE Beacon report mandatory IEs */
 typedef struct sSirEseBcnReportMandatoryIe {
 	tSirMacSSid ssId;
@@ -301,7 +301,7 @@ typedef struct sSirEseBcnReportMandatoryIe {
 	uint8_t timPresent;
 	uint8_t rrmPresent;
 } tSirEseBcnReportMandatoryIe, *tpSirEseBcnReportMandatoryIe;
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 /**
  * struct s_ext_cap - holds bitfields of extended capability IE
@@ -456,13 +456,6 @@ tSirRetStatus
 sir_parse_beacon_ie(struct sAniSirGlobal *pMac,
 		tpSirProbeRespBeacon pBeaconStruct,
 		uint8_t *pPayload, uint32_t payloadLength);
-
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
-tSirRetStatus
-sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
-		uint8_t *pPayload, const uint32_t payloadLength,
-		uint8_t **outIeBuf, uint32_t *pOutIeLen);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 
 tSirRetStatus
 sir_convert_beacon_frame2_struct(struct sAniSirGlobal *pMac,
@@ -786,6 +779,11 @@ void populate_dot11_tsrsie(tpAniSirGlobal pMac,
 void populate_dot11f_re_assoc_tspec(tpAniSirGlobal pMac,
 				tDot11fReAssocRequest *pReassoc,
 				tpPESession psessionEntry);
+tSirRetStatus
+sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
+		uint8_t *pPayload, const uint32_t payloadLength,
+		uint8_t **outIeBuf, uint32_t *pOutIeLen);
+
 #endif
 
 void populate_dot11f_wmm_info_ap(tpAniSirGlobal pMac,

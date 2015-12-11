@@ -944,9 +944,7 @@ typedef struct tagCsrRoamSession {
 	uint8_t prevOpChannel;
 	uint16_t clientDissSecs;
 	uint32_t roamTS1;
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
 	tCsrEseCckmIe suppCckmIeInfo;
-#endif
 #endif
 	uint8_t bRefAssocStartCnt;      /* Tracking assoc start indication */
 	tSirHTConfig htConfig;
@@ -1225,13 +1223,6 @@ QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac, tCsrRssiCallback callback,
 		void *pContext, void *p_cds_context);
 QDF_STATUS csr_get_snr(tpAniSirGlobal pMac, tCsrSnrCallback callback,
 		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
-		tCsrTsmStatsCallback callback,
-		uint8_t staId,
-		struct qdf_mac_addr bssId,
-		void *pContext, void *p_cds_context, uint8_t tid);
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam);
 QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		tCsrConfigParam *pParam);
@@ -1293,6 +1284,11 @@ bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac);
 bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
+QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
+		tCsrTsmStatsCallback callback,
+		uint8_t staId,
+		struct qdf_mac_addr bssId,
+		void *pContext, void *p_cds_context, uint8_t tid);
 #endif
 
 /* Remove this code once SLM_Sessionization is supported */

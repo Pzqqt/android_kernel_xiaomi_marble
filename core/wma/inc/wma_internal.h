@@ -289,13 +289,6 @@ static inline void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC, 0);
 }
 #endif
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm);
-
-QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm);
-
-void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm);
-#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts);
@@ -1010,6 +1003,9 @@ void wma_start_oem_data_req(tp_wma_handle wma_handle,
 #ifdef FEATURE_WLAN_ESE
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 				     void *pTsmStatsMsg);
+QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm);
+QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm);
+void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm);
 #endif
 
 QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,

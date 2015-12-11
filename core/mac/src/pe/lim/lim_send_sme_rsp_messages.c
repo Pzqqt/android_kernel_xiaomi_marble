@@ -1907,23 +1907,20 @@ lim_send_sme_pe_statistics_rsp(tpAniSirGlobal pMac, uint16_t msgType, void *stat
 
 } /*** end lim_send_sme_pe_statistics_rsp() ***/
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /**
- * lim_send_sme_pe_ese_tsm_rsp()
+ * lim_send_sme_pe_ese_tsm_rsp() - send tsm response
+ * @pMac:   Pointer to global pMac structure
+ * @pStats: Pointer to TSM Stats
  *
- ***FUNCTION:
  * This function is called to send tsm stats response to HDD.
  * This function posts the result back to HDD. This is a response to
  * HDD's request to get tsm stats.
  *
- ***PARAMS:
- * @param pMac   - Pointer to global pMac structure
- * @param pStats - Pointer to TSM Stats
- *
- * @return none
+ * Return: None
  */
-
-void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac, tAniGetTsmStatsRsp *pStats)
+void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac,
+				 tAniGetTsmStatsRsp *pStats)
 {
 	tSirMsgQ mmhMsg;
 	uint8_t sessionId;
@@ -1940,9 +1937,8 @@ void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac, tAniGetTsmStatsRsp *pStats
 		pPeStats->sessionId = pPeSessionEntry->smeSessionId;
 	} else {
 		PELOGE(lim_log
-			       (pMac, LOGE, FL("Session not found for the Sta id(%d)"),
-			       pPeStats->staId);
-		       )
+		       (pMac, LOGE, FL("Session not found for the Sta id(%d)"),
+		       pPeStats->staId);)
 		return;
 	}
 
@@ -1961,7 +1957,7 @@ void lim_send_sme_pe_ese_tsm_rsp(tpAniSirGlobal pMac, tAniGetTsmStatsRsp *pStats
 	return;
 } /*** end lim_send_sme_pe_ese_tsm_rsp() ***/
 
-#endif /* FEATURE_WLAN_ESE) && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 void
 lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,

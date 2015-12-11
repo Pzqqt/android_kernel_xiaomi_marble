@@ -263,7 +263,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /**
  * sme_ese_send_beacon_req_scan_results () - Send beacon report
  * @mac_ctx  Pointer to mac context
@@ -409,7 +409,7 @@ static QDF_STATUS sme_ese_send_beacon_req_scan_results(
 	return status;
 }
 
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 /**
  * sme_rrm_send_scan_result() - to get scan result and send the beacon report
@@ -510,20 +510,20 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		 */
 		if (!measurementdone)
 			return status;
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
 					session_id, chan_list[0],
 					NULL, measurementdone, 0);
 		else
-#endif /*FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 			status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
 					NULL, measurementdone, 0);
 		return status;
 	}
 	scan_results = sme_scan_result_get_first(mac_ctx, result_handle);
 	if (NULL == scan_results && measurementdone) {
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource) {
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
 					session_id,
@@ -532,7 +532,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 					measurementdone,
 					0);
 		} else
-#endif /*FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 			status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
 						NULL, measurementdone, 0);
 	}
@@ -549,14 +549,14 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 		sms_log(mac_ctx, LOG1,
 			FL(" Number of BSS Desc with RRM Scan %d "),
 			counter);
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 		if (eRRM_MSG_SOURCE_ESE_UPLOAD == rrm_ctx->msgSource)
 			status = sme_ese_send_beacon_req_scan_results(mac_ctx,
 					session_id, chan_list[0],
 					scanresults_arr, measurementdone,
 					counter);
 		else
-#endif /*FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 			status = sme_rrm_send_beacon_report_xmit_ind(mac_ctx,
 					scanresults_arr, measurementdone,
 					counter);
@@ -623,7 +623,7 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
 					 ChannelList[pSmeRrmContext->currentIndex],
 					 true);
 		qdf_mem_free(pSmeRrmContext->channelList.ChannelList);
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 		pSmeRrmContext->eseBcnReqInProgress = false;
 #endif
 #if defined WLAN_VOWIFI_DEBUG
@@ -764,7 +764,7 @@ QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 			/* Advance the current index. */
 			sme_rrm_ctx->currentIndex++;
 			sme_rrm_issue_scan_req(mac_ctx);
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 			sme_rrm_ctx->eseBcnReqInProgress = false;
 #endif
 		} else {

@@ -3938,10 +3938,8 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	uint16_t packet_count = 0;
 	uint16_t packet_loss_count = 0;
 	tpAniTrafStrmMetrics pTsmMetric = NULL;
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 	tpAniGetTsmStatsReq pStats = (tpAniGetTsmStatsReq) pTsmStatsMsg;
 	tpAniGetTsmStatsRsp pTsmRspParams = NULL;
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 	int tid = pStats->tid;
 	/*
 	 * The number of histrogram bin report by data path api are different
@@ -3962,9 +3960,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	ol_tx_delay_hist(pdev, bin_values, tid);
 	ol_tx_packet_count(pdev, &packet_count, &packet_loss_count, tid);
 
-#ifdef FEATURE_WLAN_ESE_UPLOAD
-	pTsmRspParams =
-		(tpAniGetTsmStatsRsp) qdf_mem_malloc(sizeof(tAniGetTsmStatsRsp));
+	pTsmRspParams = qdf_mem_malloc(sizeof(*pTsmRspParams));
 	if (NULL == pTsmRspParams) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: QDF MEM Alloc Failure", __func__);
@@ -3976,7 +3972,6 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	pTsmRspParams->rc = eSIR_FAILURE;
 	pTsmRspParams->tsmStatsReq = pStats;
 	pTsmMetric = &pTsmRspParams->tsmMetrics;
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 	/* populate pTsmMetric */
 	pTsmMetric->UplinkPktQueueDly = queue_delay_microsec;
 	/* store only required number of bin values */
@@ -3993,9 +3988,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	 * being populated just before sending IAPP frame out
 	 */
 	/* post this message to LIM/PE */
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 	wma_send_msg(wma_handler, WMA_TSM_STATS_RSP, (void *)pTsmRspParams, 0);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 	return QDF_STATUS_SUCCESS;
 }
 

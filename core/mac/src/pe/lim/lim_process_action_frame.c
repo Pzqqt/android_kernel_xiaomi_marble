@@ -813,11 +813,9 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 			addts.tspec.tsinfo.traffic.userPrio;
 		qdf_mem_copy(&session->eseContext.tsm.tsmInfo,
 			     &addts.tsmIE, sizeof(tSirMacESETSMIE));
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 		lim_send_sme_tsm_ie_ind(mac_ctx, session, addts.tsmIE.tsid,
 					addts.tsmIE.state,
 					addts.tsmIE.msmt_interval);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 	}
 #endif
 	/*
@@ -1090,9 +1088,7 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 
 	lim_log(mac_ctx, LOG1, FL("DeleteTS succeeded"));
 #ifdef FEATURE_WLAN_ESE
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 	lim_send_sme_tsm_ie_ind(mac_ctx, session, 0, 0, 0);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 }
 

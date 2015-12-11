@@ -848,7 +848,7 @@ struct wma_txrx_node {
 	bool nlo_match_evt_received;
 	bool pno_in_progress;
 #endif
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	bool plm_in_progress;
 #endif
 	bool ptrn_match_enable;

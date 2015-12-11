@@ -323,15 +323,13 @@ typedef struct tagCsrEseCckmInfo {
 	uint8_t btk[SIR_BTK_KEY_LEN];
 #endif
 } tCsrEseCckmInfo;
-#endif
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 #define CSR_DOT11F_IE_RSN_MAX_LEN   (114)
 typedef struct tagCsrEseCckmIe {
 	uint8_t cckmIe[CSR_DOT11F_IE_RSN_MAX_LEN];
 	uint8_t cckmIeLen;
 } tCsrEseCckmIe;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 typedef struct sCsrChannel_ {
 	uint8_t numChannels;
@@ -481,12 +479,12 @@ typedef enum {
 
 	eCSR_ROAM_IBSS_PEER_INFO_COMPLETE,
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	eCSR_ROAM_TSM_IE_IND,
 	eCSR_ROAM_CCKM_PREAUTH_NOTIFY,
 	eCSR_ROAM_ESE_ADJ_AP_REPORT_IND,
 	eCSR_ROAM_ESE_BCN_REPORT_IND,
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 	/* Radar indication from lower layers */
 	eCSR_ROAM_DFS_RADAR_IND,
@@ -1291,12 +1289,10 @@ typedef struct tagCsrRoamInfo {
 	uint32_t dtimPeriod;
 #ifdef FEATURE_WLAN_ESE
 	bool isESEAssoc;
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 	tSirTsmIE tsmIe;
 	uint32_t timestamp[2];
 	uint16_t tsmRoamDelay;
 	tSirEseBcnReportRsp *pEseBcnReportRsp;
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 	void *pRemainCtx;
 	uint32_t roc_scan_id;
@@ -1506,7 +1502,7 @@ typedef struct tagCsrHandoffRequest {
 	uint8_t src;   /* To check if its a REASSOC or a FASTREASSOC IOCTL */
 } tCsrHandoffRequest;
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 typedef struct tagCsrEseBeaconReqParams {
 	uint16_t measurementToken;
 	uint8_t channel;
@@ -1518,7 +1514,7 @@ typedef struct tagCsrEseBeaconReq {
 	uint8_t numBcnReqIe;
 	tCsrEseBeaconReqParams bcnReq[SIR_ESE_MAX_MEAS_IE_REQS];
 } tCsrEseBeaconReq, *tpCsrEseBeaconReq;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 struct tagCsrDelStaParams {
 	struct qdf_mac_addr peerMacAddr;
@@ -1572,10 +1568,10 @@ typedef void (*csr_roamLinkQualityIndCallback)
 typedef void (*tCsrStatsCallback)(void *stats, void *pContext);
 typedef void (*tCsrRssiCallback)(int8_t rssi, uint32_t staId, void *pContext);
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 				     uint32_t staId, void *pContext);
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
 
 QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,

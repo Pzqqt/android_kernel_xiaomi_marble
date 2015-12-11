@@ -974,7 +974,7 @@ struct hdd_adapter_s {
 	bool survey_idx;
 
 	hdd_scaninfo_t scan_info;
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	tAniTrafStrmMetrics tsmStats;
 #endif
 	/* Flag to ensure PSB is configured through framework */

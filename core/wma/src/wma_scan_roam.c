@@ -2726,8 +2726,7 @@ void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno)
 	qdf_mem_free(pno);
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-
+#ifdef FEATURE_WLAN_ESE
 /**
  * wma_plm_start() - plm start request
  * @wma: wma handle

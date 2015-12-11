@@ -4697,7 +4697,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		wma_scan_cache_updated_ind(wma_handle, msg->bodyval);
 		break;
 #endif /* FEATURE_WLAN_SCAN_PNO */
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	case WMA_SET_PLM_REQ:
 		wma_config_plm(wma_handle, (tpSirPlmReq) msg->bodyptr);
 		break;

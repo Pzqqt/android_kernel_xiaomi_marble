@@ -166,7 +166,7 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 					     tpPESession psessionEntry);
 #endif
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval);
 #else
@@ -174,6 +174,6 @@ static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac,
 	tpPESession psessionEntry, uint8_t tid,
 	uint8_t state, uint16_t measInterval)
 {}
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 #endif /* __LIM_ASSOC_UTILS_H */

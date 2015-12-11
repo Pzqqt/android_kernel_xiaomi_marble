@@ -1363,31 +1363,7 @@ eCsrBand csr_get_current_band(tHalHandle hHal)
 	return pMac->roam.configParam.bandCapability;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-/*
-   This function flushes the roam scan cache
- */
-QDF_STATUS csr_flush_roam_scan_roam_channel_list(tpAniSirGlobal pMac,
-						 uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo
-		= &pMac->roam.neighborRoamInfo[sessionId];
-	/* Free up the memory first (if required) */
-	if (NULL !=
-	    pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-	    ChannelList) {
-		qdf_mem_free(pNeighborRoamInfo->roamChannelInfo.
-			     currentChannelListInfo.ChannelList);
-		pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-		ChannelList = NULL;
-		pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-		numOfChannels = 0;
-	}
-	return status;
-}
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
-
+#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /*
    This function flushes the roam scan cache
  */
@@ -1441,9 +1417,40 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 	return status;
 }
 
+#endif
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 /*
+   This function flushes the roam scan cache
+ */
+QDF_STATUS csr_flush_roam_scan_roam_channel_list(tpAniSirGlobal pMac,
+						 uint8_t sessionId)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tpCsrNeighborRoamControlInfo pNeighborRoamInfo
+		= &pMac->roam.neighborRoamInfo[sessionId];
+	/* Free up the memory first (if required) */
+	if (NULL !=
+	    pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
+	    ChannelList) {
+		qdf_mem_free(pNeighborRoamInfo->roamChannelInfo.
+			     currentChannelListInfo.ChannelList);
+		pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
+		ChannelList = NULL;
+		pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
+		numOfChannels = 0;
+	}
+	return status;
+}
+
+/**
+ * csr_create_roam_scan_channel_list() - create roam scan channel list
+ * @pMac: Global mac pointer
+ * @sessionId: session id
+ * @pChannelList: pointer to channel list
+ * @numChannels: number of channels
+ * @eBand: band enumeration
+ *
  * This function modifies the roam scan channel list as per AP neighbor
  * report; AP neighbor report may be empty or may include only other AP
  * channels; in any case, we merge the channel list with the learned occupied
@@ -1451,6 +1458,8 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
  * if the band is 2.4G, then make sure channel list contains only 2.4G
  * valid channels if the band is 5G, then make sure channel list contains
  * only 5G valid channels
+ *
+ * Return: QDF_STATUS enumeration
  */
 QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 					     uint8_t sessionId,
@@ -1554,7 +1563,296 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 	}
 	return status;
 }
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+
+/**
+ * csr_roam_is_ese_assoc() - is this ese association
+ * @mac_ctx: Global MAC context
+ * @session_id: session identifier
+ *
+ * Returns whether the current association is a ESE assoc or not.
+ *
+ * Return: true if ese association; false otherwise
+ */
+bool csr_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
+{
+#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
+	return csr_neighbor_roam_is_ese_assoc(mac_ctx, session_id);
+#else
+	return false;
+#endif
+}
+
+/**
+ * csr_neighbor_roam_is_ese_assoc() - Check the Association type
+ * @mac_ctx: Global MAC Context
+ * @session_id: Session ID on which the check should be done
+ *
+ * This function returns whether the current association
+ * is a ESE assoc or not
+ *
+ * Return: True if ESE association, false otherwise.
+ **/
+bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
+{
+	return mac_ctx->roam.neighborRoamInfo[session_id].isESEAssoc;
+}
+
+/**
+ * csr_roam_is_roam_offload_scan_enabled() - is roam offload enabled
+ * @mac_ctx: Global MAC context
+ *
+ * Returns whether "FW based BG scan" is currently enabled or not
+ *
+ * Return: true if roam offload scan enabled; false otherwise
+ */
+bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal pMac)
+{
+	return pMac->roam.configParam.isRoamOffloadScanEnabled;
+}
+
+/**
+ * csr_roam_is_ese_ini_feature_enabled() - is ese feature enabled
+ * @mac_ctx: Global MAC context
+ *
+ * Return: true if ese feature is enabled; false otherwise
+ */
+bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac)
+{
+	return pMac->roam.configParam.isEseIniFeatureEnabled;
+}
+
+/**
+ * csr_tsm_stats_rsp_processor() - tsm stats response processor
+ * @pMac: Global MAC context
+ * @pMsg: Message pointer
+ *
+ * Return: None
+ */
+void csr_tsm_stats_rsp_processor(tpAniSirGlobal pMac, void *pMsg)
+{
+	tAniGetTsmStatsRsp *pTsmStatsRsp = (tAniGetTsmStatsRsp *) pMsg;
+
+	if (NULL != pTsmStatsRsp) {
+		/*
+		 * Get roam Rssi request is backed up and passed back
+		 * to the response, Extract the request message
+		 * to fetch callback.
+		 */
+		tpAniGetTsmStatsReq reqBkp
+			= (tAniGetTsmStatsReq *) pTsmStatsRsp->tsmStatsReq;
+
+		if (NULL != reqBkp) {
+			if (NULL != reqBkp->tsmStatsCallback) {
+				((tCsrTsmStatsCallback)
+				 (reqBkp->tsmStatsCallback))(pTsmStatsRsp->
+							     tsmMetrics,
+							     pTsmStatsRsp->
+							     staId,
+							     reqBkp->
+							     pDevContext);
+				reqBkp->tsmStatsCallback = NULL;
+			}
+			qdf_mem_free(reqBkp);
+			pTsmStatsRsp->tsmStatsReq = NULL;
+		} else {
+			sms_log(pMac, LOGE, FL("reqBkp is NULL"));
+			if (NULL != reqBkp) {
+				qdf_mem_free(reqBkp);
+				pTsmStatsRsp->tsmStatsReq = NULL;
+			}
+		}
+	} else {
+		sms_log(pMac, LOGE, FL("pTsmStatsRsp is NULL"));
+	}
+	return;
+}
+
+/**
+ * csr_send_ese_adjacent_ap_rep_ind() - ese send adjacent ap report
+ * @pMac: Global MAC context
+ * @pSession: Session pointer
+ *
+ * Return: None
+ */
+void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal pMac,
+					tCsrRoamSession *pSession)
+{
+	uint32_t roamTS2 = 0;
+	tCsrRoamInfo roamInfo;
+	tpPESession pSessionEntry = NULL;
+	uint8_t sessionId = CSR_SESSION_ID_INVALID;
+
+	if (NULL == pSession) {
+		sms_log(pMac, LOGE, FL("pSession is NULL"));
+		return;
+	}
+
+	roamTS2 = qdf_mc_timer_get_system_time();
+	roamInfo.tsmRoamDelay = roamTS2 - pSession->roamTS1;
+	sms_log(pMac, LOG1, "Bssid(" MAC_ADDRESS_STR ") Roaming Delay(%u ms)",
+		MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes),
+		roamInfo.tsmRoamDelay);
+
+	pSessionEntry = pe_find_session_by_bssid(pMac,
+					 pSession->connectedProfile.bssid.bytes,
+					 &sessionId);
+	if (NULL == pSessionEntry) {
+		sms_log(pMac, LOGE, FL("session %d not found"), sessionId);
+		return;
+	}
+
+	pSessionEntry->eseContext.tsm.tsmMetrics.RoamingDly
+		= roamInfo.tsmRoamDelay;
+
+	csr_roam_call_callback(pMac, pSession->sessionId, &roamInfo,
+			       0, eCSR_ROAM_ESE_ADJ_AP_REPORT_IND, 0);
+}
+
+/**
+ * csr_get_tsm_stats() - get tsm stats
+ * @pMac: Global MAC context
+ * @callback: TSM stats callback
+ * @staId: Station id
+ * @bssId: bssid
+ * @pContext: pointer to context
+ * @p_cds_context: cds context
+ * @tid: traffic id
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
+			     tCsrTsmStatsCallback callback,
+			     uint8_t staId,
+			     struct qdf_mac_addr bssId,
+			     void *pContext, void *p_cds_context, uint8_t tid)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tAniGetTsmStatsReq *pMsg = NULL;
+	pMsg = qdf_mem_malloc(sizeof(tAniGetTsmStatsReq));
+	if (!pMsg) {
+		sms_log(pMac, LOGE,
+			"csr_get_tsm_stats: failed to allocate mem for req");
+		return QDF_STATUS_E_NOMEM;
+	}
+	/* need to initiate a stats request to PE */
+	pMsg->msgType = eWNI_SME_GET_TSM_STATS_REQ;
+	pMsg->msgLen = (uint16_t) sizeof(tAniGetTsmStatsReq);
+	pMsg->staId = staId;
+	pMsg->tid = tid;
+	qdf_copy_macaddr(&pMsg->bssId, &bssId);
+	pMsg->tsmStatsCallback = callback;
+	pMsg->pDevContext = pContext;
+	pMsg->p_cds_context = p_cds_context;
+	status = cds_send_mb_message_to_mac(pMsg);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		sms_log(pMac, LOG1,
+			" csr_get_tsm_stats: failed to send down the rssi req");
+		/* pMsg is freed by cds_send_mb_message_to_mac */
+		status = QDF_STATUS_E_FAILURE;
+	}
+	return status;
+}
+
+/**
+ * csr_fetch_ch_lst_from_received_list() - fetch channel list from received list
+ * and update req msg
+ * paramters
+ * @mac_ctx:            global mac ctx
+ * @roam_info:          roam info struct
+ * @curr_ch_lst_info:   current channel list info
+ * @req_buf:            out param, roam offload scan request packet
+ *
+ * Return: void
+ */
+static void
+csr_fetch_ch_lst_from_received_list(tpAniSirGlobal mac_ctx,
+				    tpCsrNeighborRoamControlInfo roam_info,
+				    tpCsrChannelInfo curr_ch_lst_info,
+				    tSirRoamOffloadScanReq *req_buf)
+{
+	uint8_t i = 0;
+	uint8_t num_channels = 0;
+	uint8_t *ch_lst = NULL;
+
+	if (curr_ch_lst_info->numOfChannels == 0)
+		return;
+
+	ch_lst = curr_ch_lst_info->ChannelList;
+	for (i = 0; i < curr_ch_lst_info->numOfChannels; i++) {
+		if (((mac_ctx->roam.configParam.allowDFSChannelRoam
+		      != CSR_ROAMING_DFS_CHANNEL_DISABLED) ||
+		     (!CDS_IS_DFS_CH(*ch_lst))) && *ch_lst) {
+			req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
+				*ch_lst;
+		}
+		ch_lst++;
+	}
+	req_buf->ConnectedNetwork.ChannelCount = num_channels;
+	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC_UPDATE;
+}
+
+/**
+ * csr_set_cckm_ie() - set CCKM IE
+ * @pMac: Global MAC context
+ * @sessionId: session identifier
+ * @pCckmIe: Pointer to input CCKM IE data
+ * @ccKmIeLen: Length of @pCckmIe
+ *
+ * This function stores the CCKM IE passed by the supplicant
+ * in a place holder data structure and this IE will be packed inside
+ * reassociation request
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS csr_set_cckm_ie(tpAniSirGlobal pMac, const uint8_t sessionId,
+			   const uint8_t *pCckmIe, const uint8_t ccKmIeLen)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
+	if (!pSession) {
+		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
+		return QDF_STATUS_E_FAILURE;
+	}
+	qdf_mem_copy(pSession->suppCckmIeInfo.cckmIe, pCckmIe, ccKmIeLen);
+	pSession->suppCckmIeInfo.cckmIeLen = ccKmIeLen;
+	return status;
+}
+
+/**
+ * csr_roam_read_tsf() - read TSF
+ * @pMac: Global MAC context
+ * @sessionId: session identifier
+ * @pTimestamp: output TSF timestamp
+ *
+ * This function reads the TSF; and also add the time elapsed since
+ * last beacon or probe response reception from the hand off AP to arrive at
+ * the latest TSF value.
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
+			     uint8_t sessionId)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	tCsrNeighborRoamBSSInfo handoffNode;
+	uint32_t timer_diff = 0;
+	uint32_t timeStamp[2];
+	tpSirBssDescription pBssDescription = NULL;
+	csr_neighbor_roam_get_handoff_ap_info(pMac, &handoffNode, sessionId);
+	pBssDescription = handoffNode.pBssDescription;
+	/* Get the time diff in milli seconds */
+	timer_diff = qdf_mc_timer_get_system_time() -
+				pBssDescription->scanSysTimeMsec;
+	/* Convert msec to micro sec timer */
+	timer_diff = (uint32_t) (timer_diff * SYSTEM_TIME_MSEC_TO_USEC);
+	timeStamp[0] = pBssDescription->timeStamp[0];
+	timeStamp[1] = pBssDescription->timeStamp[1];
+	update_cckmtsf(&(timeStamp[0]), &(timeStamp[1]), &timer_diff);
+	qdf_mem_copy(pTimestamp, (void *)&timeStamp[0], sizeof(uint32_t) * 2);
+	return status;
+}
+
+#endif /* FEATURE_WLAN_ESE */
 
 QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand)
 {
@@ -5587,13 +5885,6 @@ bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
 	return csr_neighbor_roam_is11r_assoc(pMac, sessionId);
 }
 
-#ifdef FEATURE_WLAN_ESE
-/* Returns whether the current association is a ESE assoc or not */
-bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
-{
-	return csr_neighbor_roam_is_ese_assoc(pMac, sessionId);
-}
-#endif
 /* Returns whether "Legacy Fast Roaming" is currently enabled...or not */
 bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal pMac, uint32_t sessionId)
 {
@@ -5615,36 +5906,6 @@ bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal pMac, uint32_t sessionId)
 			(!csr_is_concurrent_session_running(pMac));
 	}
 }
-
-#ifdef FEATURE_WLAN_ESE
-/**
- * csr_neighbor_roam_is_ese_assoc() - Check the Association type
- * @mac_ctx: Global MAC Context
- * @session_id: Session ID on which the check should be done
- *
- * This function returns whether the current association
- * is a ESE assoc or not
- *
- * Return: True if ESE association, false otherwise.
- **/
-bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
-{
-	return mac_ctx->roam.neighborRoamInfo[session_id].isESEAssoc;
-}
-#endif /* FEATURE_WLAN_ESE */
-
-/* Returns whether "FW based BG scan" is currently enabled...or not */
-bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal pMac)
-{
-	return pMac->roam.configParam.isRoamOffloadScanEnabled;
-}
-
-#if defined(FEATURE_WLAN_ESE)
-bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac)
-{
-	return pMac->roam.configParam.isEseIniFeatureEnabled;
-}
-#endif /*FEATURE_WLAN_ESE */
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 eCsrPhyMode csr_roamdot11mode_to_phymode(uint8_t dot11mode)
@@ -9902,77 +10163,6 @@ static void csr_update_snr(tpAniSirGlobal pMac, void *pMsg)
 	return;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-void csr_tsm_stats_rsp_processor(tpAniSirGlobal pMac, void *pMsg)
-{
-	tAniGetTsmStatsRsp *pTsmStatsRsp = (tAniGetTsmStatsRsp *) pMsg;
-
-	if (NULL != pTsmStatsRsp) {
-		/* Get roam Rssi request is backed up and passed back to the response,
-		   Extract the request message to fetch callback */
-		tpAniGetTsmStatsReq reqBkp
-			= (tAniGetTsmStatsReq *) pTsmStatsRsp->tsmStatsReq;
-
-		if (NULL != reqBkp) {
-			if (NULL != reqBkp->tsmStatsCallback) {
-				((tCsrTsmStatsCallback)
-				 (reqBkp->tsmStatsCallback))(pTsmStatsRsp->
-							     tsmMetrics,
-							     pTsmStatsRsp->
-							     staId,
-							     reqBkp->
-							     pDevContext);
-				reqBkp->tsmStatsCallback = NULL;
-			}
-			qdf_mem_free(reqBkp);
-			pTsmStatsRsp->tsmStatsReq = NULL;
-		} else {
-			sms_log(pMac, LOGE, FL("reqBkp is NULL"));
-			if (NULL != reqBkp) {
-				qdf_mem_free(reqBkp);
-				pTsmStatsRsp->tsmStatsReq = NULL;
-			}
-		}
-	} else {
-		sms_log(pMac, LOGE, FL("pTsmStatsRsp is NULL"));
-	}
-	return;
-}
-
-void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal pMac, tCsrRoamSession *pSession)
-{
-	uint32_t roamTS2 = 0;
-	tCsrRoamInfo roamInfo;
-	tpPESession pSessionEntry = NULL;
-	uint8_t sessionId = CSR_SESSION_ID_INVALID;
-
-	if (NULL == pSession) {
-		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return;
-	}
-
-	roamTS2 = qdf_mc_timer_get_system_time();
-	roamInfo.tsmRoamDelay = roamTS2 - pSession->roamTS1;
-	sms_log(pMac, LOG1, "Bssid(" MAC_ADDRESS_STR ") Roaming Delay(%u ms)",
-		MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes),
-		roamInfo.tsmRoamDelay);
-
-	pSessionEntry = pe_find_session_by_bssid(pMac,
-					 pSession->connectedProfile.bssid.bytes,
-					 &sessionId);
-	if (NULL == pSessionEntry) {
-		sms_log(pMac, LOGE, FL("session %d not found"), sessionId);
-		return;
-	}
-
-	pSessionEntry->eseContext.tsm.tsmMetrics.RoamingDly
-		= roamInfo.tsmRoamDelay;
-
-	csr_roam_call_callback(pMac, pSession->sessionId, &roamInfo,
-			       0, eCSR_ROAM_ESE_ADJ_AP_REPORT_IND, 0);
-}
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
-
 static QDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac,
 				struct qdf_mac_addr *bssId)
 {
@@ -10909,9 +11099,7 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (result == eCSR_ROAM_RESULT_AUTHENTICATED
 	    && session->isPrevApInfoValid
 	    && session->connectedProfile.isESEAssoc) {
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 		csr_send_ese_adjacent_ap_rep_ind(mac_ctx, session);
-#endif
 		session->isPrevApInfoValid = false;
 	}
 #endif
@@ -10990,12 +11178,12 @@ void csr_roam_check_for_link_status_change(tpAniSirGlobal pMac, tSirSmeRsp *pSir
 		sms_log(pMac, LOG2, FL("Stats rsp from PE"));
 		csr_roam_stats_rsp_processor(pMac, pSirMsg);
 		break;
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	case eWNI_SME_GET_TSM_STATS_RSP:
 		sms_log(pMac, LOG2, FL("TSM Stats rsp from PE"));
 		csr_tsm_stats_rsp_processor(pMac, pSirMsg);
 		break;
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 	case eWNI_SME_GET_RSSI_REQ:
 		sms_log(pMac, LOG2, FL("GetRssiReq from self"));
 		csr_update_rssi(pMac, pSirMsg);
@@ -13636,12 +13824,10 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			/* cckmIE */
 			if (csr_is_profile_ese(pProfile)) {
 				/* Insert the CCKM IE into the join request */
-#ifdef FEATURE_WLAN_ESE_UPLOAD
 				ieLen = pSession->suppCckmIeInfo.cckmIeLen;
 				qdf_mem_copy((void *)(wpaRsnIE),
 						pSession->suppCckmIeInfo.cckmIe,
 						ieLen);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
 			} else
 				ieLen = 0;
 			/*
@@ -15896,41 +16082,6 @@ QDF_STATUS csr_get_snr(tpAniSirGlobal pMac,
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
-			     tCsrTsmStatsCallback callback,
-			     uint8_t staId,
-			     struct qdf_mac_addr bssId,
-			     void *pContext, void *p_cds_context, uint8_t tid)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tAniGetTsmStatsReq *pMsg = NULL;
-	pMsg = qdf_mem_malloc(sizeof(tAniGetTsmStatsReq));
-	if (!pMsg) {
-		sms_log(pMac, LOGE,
-			"csr_get_tsm_stats: failed to allocate mem for req");
-		return QDF_STATUS_E_NOMEM;
-	}
-	/* need to initiate a stats request to PE */
-	pMsg->msgType = eWNI_SME_GET_TSM_STATS_REQ;
-	pMsg->msgLen = (uint16_t) sizeof(tAniGetTsmStatsReq);
-	pMsg->staId = staId;
-	pMsg->tid = tid;
-	qdf_copy_macaddr(&pMsg->bssId, &bssId);
-	pMsg->tsmStatsCallback = callback;
-	pMsg->pDevContext = pContext;
-	pMsg->p_cds_context = p_cds_context;
-	status = cds_send_mb_message_to_mac(pMsg);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOG1,
-			" csr_get_tsm_stats: failed to send down the rssi req");
-		/* pMsg is freed by cds_send_mb_message_to_mac */
-		status = QDF_STATUS_E_FAILURE;
-	}
-	return status;
-}
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
-
 /**
  * csr_deregister_client_request() - deregisters a get stats request
  * @mac_ctx:       mac global context
@@ -16518,46 +16669,6 @@ csr_fetch_ch_lst_from_occupied_lst(tpAniSirGlobal mac_ctx,
 			req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC_UPDATE;
 	}
 }
-
-#ifdef FEATURE_WLAN_ESE
-/**
- * csr_fetch_ch_lst_from_received_list() - fetch channel list from received list
- * and update req msg
- * paramters
- * @mac_ctx:            global mac ctx
- * @roam_info:          roam info struct
- * @curr_ch_lst_info:   current channel list info
- * @req_buf:            out param, roam offload scan request packet
- *
- * Return: void
- */
-static void
-csr_fetch_ch_lst_from_received_list(tpAniSirGlobal mac_ctx,
-				    tpCsrNeighborRoamControlInfo roam_info,
-				    tpCsrChannelInfo curr_ch_lst_info,
-				    tSirRoamOffloadScanReq *req_buf)
-{
-	uint8_t i = 0;
-	uint8_t num_channels = 0;
-	uint8_t *ch_lst = NULL;
-
-	if (curr_ch_lst_info->numOfChannels == 0)
-		return;
-
-	ch_lst = curr_ch_lst_info->ChannelList;
-	for (i = 0; i < curr_ch_lst_info->numOfChannels; i++) {
-		if (((mac_ctx->roam.configParam.allowDFSChannelRoam
-		      != CSR_ROAMING_DFS_CHANNEL_DISABLED) ||
-		     (!CDS_IS_DFS_CH(*ch_lst))) && *ch_lst) {
-			req_buf->ConnectedNetwork.ChannelCache[num_channels++] =
-				*ch_lst;
-		}
-		ch_lst++;
-	}
-	req_buf->ConnectedNetwork.ChannelCount = num_channels;
-	req_buf->ChannelCacheType = CHANNEL_LIST_DYNAMIC_UPDATE;
-}
-#endif
 
 /**
  * csr_fetch_valid_ch_lst() - fetch channel list from valid channel list and
@@ -17778,7 +17889,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 	pSession->ftSmeContext.psavedFTPreAuthRsp = pFTPreAuthRsp;
 	/* No need to notify qos module if this is a non 11r & ESE roam */
 	if (csr_roam_is11r_assoc(pMac, pFTPreAuthRsp->smeSessionId)
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 		 || csr_roam_is_ese_assoc(pMac, pFTPreAuthRsp->smeSessionId)
 #endif
 	) {
@@ -17806,7 +17917,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 				       eCSR_ROAM_FT_RESPONSE,
 				       eCSR_ROAM_RESULT_NONE);
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 	if (csr_roam_is_ese_assoc(pMac, pFTPreAuthRsp->smeSessionId)) {
 		/* read TSF */
 		csr_roam_read_tsf(pMac, (uint8_t *) roamInfo.timestamp,
@@ -17819,7 +17930,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 				       &roamInfo, 0, eCSR_ROAM_CCKM_PREAUTH_NOTIFY,
 				       0);
 	}
-#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 	/* If Legacy Fast Roaming is enabled, signal the supplicant */
 	/* So he can send us a PMK-ID for this candidate AP. */
@@ -17968,64 +18079,6 @@ QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac,
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-/* ---------------------------------------------------------------------------
-    \fn csr_set_cckm_ie
-    \brief  This function stores the CCKM IE passed by the supplicant
-    in a place holder data structure and this IE will be packed inside
-    reassociation request
-    \param  pMac - pMac global structure
-    \param  sessionId - Current session id
-    \param  pCckmIe - pointer to CCKM IE data
-    \param  ccKmIeLen - length of the CCKM IE
-   \- return Success or failure
-    -------------------------------------------------------------------------*/
-QDF_STATUS csr_set_cckm_ie(tpAniSirGlobal pMac, const uint8_t sessionId,
-			   const uint8_t *pCckmIe, const uint8_t ccKmIeLen)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-	if (!pSession) {
-		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-	qdf_mem_copy(pSession->suppCckmIeInfo.cckmIe, pCckmIe, ccKmIeLen);
-	pSession->suppCckmIeInfo.cckmIeLen = ccKmIeLen;
-	return status;
-}
-
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_read_tsf
-    \brief  This function reads the TSF; and also add the time elapsed since
-    last beacon or probe response reception from the hand off AP to arrive at
-    the latest TSF value.
-    \param  pMac - pMac global structure
-    \param  pTimestamp - output TSF timestamp
-   \- return Success or failure
-    -------------------------------------------------------------------------*/
-QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
-			     uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrNeighborRoamBSSInfo handoffNode;
-	uint32_t timer_diff = 0;
-	uint32_t timeStamp[2];
-	tpSirBssDescription pBssDescription = NULL;
-	csr_neighbor_roam_get_handoff_ap_info(pMac, &handoffNode, sessionId);
-	pBssDescription = handoffNode.pBssDescription;
-	/* Get the time diff in milli seconds */
-	timer_diff =
-		qdf_mc_timer_get_system_time() - pBssDescription->scanSysTimeMsec;
-	/* Convert msec to micro sec timer */
-	timer_diff = (uint32_t) (timer_diff * SYSTEM_TIME_MSEC_TO_USEC);
-	timeStamp[0] = pBssDescription->timeStamp[0];
-	timeStamp[1] = pBssDescription->timeStamp[1];
-	update_cckmtsf(&(timeStamp[0]), &(timeStamp[1]), &timer_diff);
-	qdf_mem_copy(pTimestamp, (void *)&timeStamp[0], sizeof(uint32_t) * 2);
-	return status;
-}
-#endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
-
 /**
  * csr_roam_channel_change_req() - Post channel change request to LIM
  * @pMac: mac context
@@ -18033,8 +18086,7 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
  * @ch_params: channel information
  * @profile: CSR profile
  *
- * This API is primarily used to post
- * Channel Change Req for SAP
+ * This API is primarily used to post Channel Change Req for SAP
  *
  * Return: QDF_STATUS
  */

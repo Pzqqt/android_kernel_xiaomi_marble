@@ -3110,7 +3110,7 @@ sir_convert_reassoc_req_frame2_struct(tpAniSirGlobal pMac,
 
 } /* End sir_convert_reassoc_req_frame2_struct. */
 
-#if defined(FEATURE_WLAN_ESE_UPLOAD)
+#ifdef FEATURE_WLAN_ESE
 tSirRetStatus
 sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 	uint8_t *pPayload, const uint32_t nPayload,
@@ -3409,7 +3409,7 @@ err_bcnrep:
 	return retStatus;
 }
 
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
+#endif /* FEATURE_WLAN_ESE */
 
 tSirRetStatus
 sir_parse_beacon_ie(tpAniSirGlobal pMac,
