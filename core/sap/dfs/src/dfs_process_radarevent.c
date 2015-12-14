@@ -127,27 +127,31 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 	uint64_t deltafull_ts = 0, this_ts, deltaT;
 	struct dfs_ieee80211_channel *thischan;
 	struct dfs_pulseline *pl;
-	static uint32_t test_ts = 0;
 	static uint32_t diff_ts = 0;
 	int ext_chan_event_flag = 0;
 #if 0
 	int pri_multiplier = 2;
 #endif
 	int i;
+	int seg_id = DFS_80P80_SEG0;
+	struct dfs_delayline *dl;
 
 	if (dfs == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: dfs is NULL", __func__, __LINE__);
 		return 0;
 	}
-	pl = dfs->pulses;
 	cdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (!(IEEE80211_IS_CHAN_DFS(dfs->ic->ic_curchan))) {
 		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
 			    "%s: radar event on non-DFS chan", __func__);
 		dfs_reset_radarq(dfs);
-		dfs_reset_alldelaylines(dfs);
+		dfs_reset_alldelaylines(dfs, DFS_80P80_SEG0);
+
+		if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+			dfs_reset_alldelaylines(dfs, DFS_80P80_SEG1);
+
 		return 0;
 	}
 
@@ -218,6 +222,12 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		}
 		events_processed++;
 		re = *event;
+		if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+			seg_id = re.radar_80p80_segid;
+		else
+			seg_id = DFS_80P80_SEG0;
+
+		pl = (seg_id == 0) ? dfs->pulses : dfs->pulses_ext_seg;
 
 		OS_MEMZERO(event, sizeof(struct dfs_event));
 		ATH_DFSEVENTQ_LOCK(dfs);
@@ -375,8 +385,13 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		pl->pl_elems[index].p_time = this_ts;
 		pl->pl_elems[index].p_dur = re.re_dur;
 		pl->pl_elems[index].p_rssi = re.re_rssi;
-		diff_ts = (uint32_t) this_ts - test_ts;
-		test_ts = (uint32_t) this_ts;
+		if (seg_id == 0) {
+			diff_ts = (uint32_t) this_ts - dfs->test_ts;
+			dfs->test_ts = (uint32_t) this_ts;
+		} else {
+			diff_ts = (u_int32_t)this_ts - dfs->test_ts_ext_seg;
+			dfs->test_ts_ext_seg = (u_int32_t)this_ts;
+		}
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS1,
 			    "ts%u %u %u diff %u pl->pl_lastelem.p_time=%llu",
 			    (uint32_t) this_ts, re.re_dur, re.re_rssi, diff_ts,
@@ -402,7 +417,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * harsh environments, but helps with false detects. */
 
 		if (diff_ts < 100) {
-			dfs_reset_alldelaylines(dfs);
+			dfs_reset_alldelaylines(dfs, seg_id);
 			dfs_reset_radarq(dfs);
 		}
 		found = 0;
@@ -512,23 +527,36 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			     p++) {
 				struct dfs_bin5radars *br;
 
-				br = &(dfs->dfs_b5radars[p]);
+				br = (seg_id == 0) ?
+					&(dfs->dfs_b5radars[p]) :
+					&(dfs->dfs_b5radars_ext_seg[p]);
+
 				if (dfs_bin5_check_pulse(dfs, &re, br)) {
-					/* This is a valid Bin5 pulse, check if it belongs to a burst */
+					/*
+					 * This is a valid Bin5 pulse,
+					 * check if it belongs to a burst
+					 */
 					re.re_dur =
-						dfs_retain_bin5_burst_pattern(dfs,
-									      diff_ts,
-									      re.
-									      re_dur);
-					/* Remember our computed duration for the next pulse in the burst (if needed) */
-					dfs->dfs_rinfo.dfs_bin5_chirp_ts =
-						this_ts;
-					dfs->dfs_rinfo.dfs_last_bin5_dur =
-						re.re_dur;
+					    dfs_retain_bin5_burst_pattern(dfs,
+						    diff_ts, re.re_dur, seg_id);
+					/*
+					 * Remember our computed duration for
+					 * the next pulse in the burst
+					 * (if needed)
+					 */
+					if (seg_id == 0)
+						dfs->dfs_rinfo.
+						    dfs_last_bin5_dur =
+								re.re_dur;
+					else
+						dfs->dfs_rinfo.
+						    dfs_last_bin5_dur_ext_seg =
+								re.re_dur;
 
 					if (dfs_bin5_addpulse
 						    (dfs, br, &re, this_ts)) {
-						found |= dfs_bin5_check(dfs);
+						found |= dfs_bin5_check(dfs,
+									seg_id);
 					}
 				} else {
 					DFS_DPRINTK(dfs,
@@ -607,19 +635,18 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			for (p = 0, found = 0;
 			     (p < ft->ft_numfilters) && (!found); p++) {
 				rf = &(ft->ft_filters[p]);
+				dl = (seg_id == 0) ? &rf->rf_dl :
+						     &rf->rf_dl_ext_seg;
 				if ((re.re_dur >= rf->rf_mindur)
 				    && (re.re_dur <= rf->rf_maxdur)) {
 					/* The above check is probably not necessary */
 					deltaT =
-						(this_ts <
-						 rf->rf_dl.
-						 dl_last_ts)
-						? (int64_t) ((DFS_TSF_WRAP -
-							      rf->rf_dl.
-							      dl_last_ts) +
-							     this_ts +
-							     1) : this_ts -
-						rf->rf_dl.dl_last_ts;
+						(this_ts < dl->dl_last_ts) ?
+						    (int64_t)
+						    ((DFS_TSF_WRAP -
+						      dl->dl_last_ts) +
+						     this_ts + 1) :
+						    this_ts - dl->dl_last_ts;
 
 					if ((deltaT < rf->rf_minpri)
 					    && (deltaT != 0)) {
@@ -663,8 +690,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 								 long)deltaT,
 								rf->rf_minpri);
 							/* But update the last time stamp */
-							rf->rf_dl.dl_last_ts =
-								this_ts;
+							dl->dl_last_ts =
+									this_ts;
 							continue;
 						}
 					} else {
@@ -702,13 +729,13 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 								 long)deltaT,
 								rf->rf_minpri);
 							/* But update the last time stamp */
-							rf->rf_dl.dl_last_ts =
-								this_ts;
+							dl->dl_last_ts =
+									this_ts;
 							continue;
 						}
 					}
 					dfs_add_pulse(dfs, rf, &re, deltaT,
-						      this_ts);
+						      this_ts, seg_id);
 
 					/* If this is an extension channel event, flag it for false alarm reduction */
 					if (re.re_chanindex ==
@@ -717,25 +744,23 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 					}
 					if (rf->rf_patterntype == 2) {
 						found =
-							dfs_staggered_check(dfs, rf,
-									    (uint32_t)
-									    deltaT,
-									    re.
-									    re_dur);
+							dfs_staggered_check(dfs,
+							    rf,
+							    (uint32_t)deltaT,
+							    re.re_dur, seg_id);
 					} else {
 						found =
 							dfs_bin_check(dfs, rf,
-								      (uint32_t)
-								      deltaT,
-								      re.re_dur,
-								      ext_chan_event_flag);
+							    (uint32_t)deltaT,
+							    re.re_dur,
+							    ext_chan_event_flag,
+							    seg_id);
 					}
 					if (dfs->
 					    dfs_debug_mask & ATH_DEBUG_DFS2) {
-						dfs_print_delayline(dfs,
-								    &rf->rf_dl);
+						dfs_print_delayline(dfs, dl);
 					}
-					rf->rf_dl.dl_last_ts = this_ts;
+					dl->dl_last_ts = this_ts;
 				}
 			}
 			ft->ft_last_ts = this_ts;
@@ -746,9 +771,10 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 					    ft->ft_mindur,
 					    rf != NULL ? rf->rf_pulseid : -1);
 				CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
-					"%s[%d]:### Found on channel minDur = %d,filterId = %d ###",
+					"%s[%d]:### Found on channel minDur = %d,filterId = %d  seg_id = %d ###",
 					__func__,__LINE__,ft->ft_mindur,
-					rf != NULL ? rf->rf_pulseid : -1);
+					rf != NULL ? rf->rf_pulseid : -1,
+					seg_id);
 			}
 			tabledepth++;
 		}
@@ -761,10 +787,21 @@ dfsfound:
 		/* Collect stats */
 		dfs->ath_dfs_stats.num_radar_detects++;
 		thischan = &rs->rs_chan;
+
+		/*
+		 * Since we support 80p80 mode, indicate the
+		 * segment on which the radar has been detected.
+		 * only if both segments are dfs in 80p80 mode
+		 * and the radar is found on ext the segment
+		 * ic_radar_found_segid is to 1, in all other
+		 * cases it is set to 0.
+		 */
+		dfs->ic->ic_curchan->ic_radar_found_segid = seg_id;
+
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-			  "%s[%d]: ### RADAR FOUND ON CHANNEL %d (%d MHz) ###",
-			  __func__, __LINE__, thischan->ic_ieee,
-			  thischan->ic_freq);
+		  "%s[%d]:### RADAR FOUND ON CHANNEL %d (%d MHz),seg_id=%d ###",
+		  __func__, __LINE__, thischan->ic_ieee,
+		  thischan->ic_freq, seg_id);
 		DFS_PRINTK("Radar found on channel %d (%d MHz)",
 			   thischan->ic_ieee, thischan->ic_freq);
 
@@ -775,7 +812,22 @@ dfsfound:
 		ath_hal_setrxfilter(ah, rfilt);
 #endif
 		dfs_reset_radarq(dfs);
-		dfs_reset_alldelaylines(dfs);
+
+		/*
+		 * For now reset both segments
+		 * until we have changes for us
+		 * to do sub-channel marking which
+		 * enables SAP to continue to use the 80
+		 * segment where radar was not detected
+		 * and as a result CAC can be avoided on
+		 * that segment. Currently we do not support
+		 * sub-channel marking.
+		 */
+		dfs_reset_alldelaylines(dfs, DFS_80P80_SEG0);
+
+		if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+			dfs_reset_alldelaylines(dfs, DFS_80P80_SEG1);
+
 		/* XXX Should we really enable again? Maybe not... */
 /* No reason to re-enable so far - Ajay*/
 #if 0

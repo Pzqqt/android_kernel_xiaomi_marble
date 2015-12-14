@@ -35,6 +35,16 @@
 #include "dfs_phyerr.h"
 #include "dfs_phyerr_tlv.h"
 
+/**
+ * enum RADAR_SUMMARY_VERSION - Radar summary report version
+ * @DFS_RADAR_SUMMARY_REPORT_VERSION_2: DFS-2 radar summary report
+ * @DFS_RADAR_SUMMARY_REPORT_VERSION_3: DFS-3 radar summary report
+ */
+typedef enum {
+DFS_RADAR_SUMMARY_REPORT_VERSION_2 = 1,
+DFS_RADAR_SUMMARY_REPORT_VERSION_3 = 2,
+} RADAR_SUMMARY_VERSION;
+
 /*
  * Parsed radar status
  */
@@ -48,6 +58,28 @@ struct rx_radar_status {
 	int delta_diff;
 	int sidx;
 	int freq_offset;        /* in KHz */
+	int agc_total_gain;
+	int agc_mb_gain;
+	/*Parsed only for DFS-3*/
+	int radar_subchan_mask;
+	RADAR_SUMMARY_VERSION rsu_version;
+	/*
+	 * The parameters below are present only in
+	 * DFS-3 radar summary report and need to be
+	 * parsed only for DFS-3.
+	 */
+	/* DFS-3 Only */
+	int pulse_height;
+	/* DFS-3 Only */
+	int triggering_agc_event;
+	/* DFS-3 Only */
+	int pulse_rssi;
+	/* DFS-3 Only */
+	int radar_fft_pri80_inband_power;
+	/* DFS-3 Only */
+	int radar_fft_ext80_inband_power;
+	/* DFS-3 Only */
+	int radar_80p80_segid;
 };
 
 struct rx_search_fft_report {
@@ -106,8 +138,21 @@ radar_summary_print(struct ath_dfs *dfs,
 		    struct rx_radar_status *rsu,
 		    bool enable_log)
 {
+	int is_chip_oversampling;
+
 	if (!enable_log)
 		return;
+
+	/*
+	 * Oversampling needs to be turned on for
+	 * older chipsets that support DFS-2.
+	 * it needs to be turned off for chips
+	 * that support DFS-3.
+	 */
+	if (dfs->ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)
+		is_chip_oversampling = 0;
+	else
+		is_chip_oversampling = PERE_IS_OVERSAMPLING(dfs);
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
 		  "\n ############ Radar Summary ############\n");
@@ -152,7 +197,7 @@ radar_summary_print(struct ath_dfs *dfs,
 		  "%s: frequency offset = %d.%d MHz (oversampling = %d)\n",
 		  __func__, (int) (rsu->freq_offset / 1000),
 		  (int) abs(rsu->freq_offset % 1000),
-		  PERE_IS_OVERSAMPLING(dfs));
+		  is_chip_oversampling);
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
 		  "\n ###################################\n");
@@ -168,50 +213,165 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 		    struct rx_radar_status *rsu)
 {
 	uint32_t rs[2];
+	uint32_t dfs3_rs[5];
 	int freq_centre, freq;
+	int is_chip_oversampling;
 
-	/* Drop out if we have < 2 DWORDs available */
-	if (len < sizeof(rs)) {
-		DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR |
-			    ATH_DEBUG_DFS_PHYERR_SUM,
-			    "%s: len (%zu) < expected (%zu)!",
-			    __func__, len, sizeof(rs));
+	/*
+	 * Drop out if we have < 2 DWORDs available for DFS-2
+	 * and drop out if we have < 5 DWORDS available for DFS-3
+	 */
+	if ((dfs->ic->dfs_hw_bd_id ==  DFS_HWBD_QCA6174) &&
+	    (len < sizeof(rs))) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		  "%s: DFS-2 radar summary len = (%zu) wrong, expected = (%zu)",
+		  __func__, len, sizeof(rs));
+	} else if ((dfs->ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) &&
+		(len < sizeof(dfs3_rs))) {
+		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		  "%s: DFS-3 radar summary len = (%zu) wrong, expected = (%zu)",
+		  __func__, len, sizeof(dfs3_rs));
 	}
 
 	/*
-	 * Since the TLVs may be unaligned for some reason
-	 * we take a private copy into aligned memory.
-	 * This enables us to use the HAL-like accessor macros
-	 * into the DWORDs to access sub-DWORD fields.
+	 * If the length of TLV is equal to
+	 * DFS3_RADAR_PULSE_SUMMARY_TLV_LENGTH
+	 * then it means the radar summary report
+	 * has 5 DWORDS and we need to parse the
+	 * report accordingly.
+	 * Else if the length is equal to
+	 * DFS2_RADAR_PULSE_SUMMARY_TLV_LENGTH then
+	 * it the radar summary report will have only
+	 * two DWORDS so we parse for only two DWORDS.
 	 */
-	OS_MEMCPY(rs, buf, sizeof(rs));
+	if (len == DFS3_RADAR_PULSE_SUMMARY_TLV_LENGTH) {
+		/*
+		 * Since the TLVs may be unaligned for some reason
+		 * we take a private copy into aligned memory.
+		 * This enables us to use the HAL-like accessor macros
+		 * into the DWORDs to access sub-DWORD fields.
+		 */
+		OS_MEMCPY(dfs3_rs, buf, sizeof(dfs3_rs));
 
-	DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR,
-		    "%s: two 32 bit values are: %08x %08x", __func__, rs[0],
-		    rs[1]);
-/* DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR, "%s (p=%p):", __func__, buf); */
+		/*
+		 * Oversampling is only needed to be
+		 * turned on for older chips that support
+		 * DFS-2. It needs to be turned off for chips
+		 * that support DFS-3.
+		 */
+		is_chip_oversampling = 0;
 
-	/* Populate the fields from the summary report */
-	rsu->tsf_offset =
-		MS(rs[RADAR_REPORT_PULSE_REG_2], RADAR_REPORT_PULSE_TSF_OFFSET);
-	rsu->pulse_duration =
-		MS(rs[RADAR_REPORT_PULSE_REG_2], RADAR_REPORT_PULSE_DUR);
-	rsu->is_chirp =
-		MS(rs[RADAR_REPORT_PULSE_REG_1], RADAR_REPORT_PULSE_IS_CHIRP);
-	rsu->sidx =
-		sign_extend_32(MS
-				       (rs[RADAR_REPORT_PULSE_REG_1],
-				       RADAR_REPORT_PULSE_SIDX), 10);
-	rsu->freq_offset =
-		calc_freq_offset(rsu->sidx, PERE_IS_OVERSAMPLING(dfs));
+		/*
+		 * populate the version of the radar summary report
+		 * based on the TLV length to differentiate between
+		 * DFS-2 and DFS-3 radar summary report.
+		 */
+		rsu->rsu_version = DFS_RADAR_SUMMARY_REPORT_VERSION_3;
 
-	/* These are only relevant if the pulse is a chirp */
-	rsu->delta_peak =
-		sign_extend_32(MS
-				       (rs[RADAR_REPORT_PULSE_REG_1],
-				       RADAR_REPORT_PULSE_DELTA_PEAK), 6);
-	rsu->delta_diff =
-		MS(rs[RADAR_REPORT_PULSE_REG_1], RADAR_REPORT_PULSE_DELTA_DIFF);
+		/* Populate the fields from the summary report */
+		rsu->tsf_offset = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_2],
+						RADAR_REPORT_PULSE_TSF_OFFSET);
+		rsu->pulse_duration = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_2],
+						RADAR_REPORT_PULSE_DUR);
+		rsu->is_chirp = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_1],
+						RADAR_REPORT_PULSE_IS_CHIRP);
+		rsu->sidx = sign_extend_32(MS(dfs3_rs[RADAR_REPORT_PULSE_REG_1],
+						RADAR_REPORT_PULSE_SIDX), 10);
+		rsu->freq_offset = calc_freq_offset(rsu->sidx,
+						is_chip_oversampling);
+		/* These are only relevant if the pulse is a chirp */
+		rsu->delta_peak = sign_extend_32(
+					MS(dfs3_rs[RADAR_REPORT_PULSE_REG_1],
+						RADAR_REPORT_PULSE_DELTA_PEAK),
+						6);
+		rsu->delta_diff = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_1],
+						RADAR_REPORT_PULSE_DELTA_DIFF);
+		/* For false detection Debug */
+		rsu->agc_total_gain = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_1],
+						RADAR_REPORT_AGC_TOTAL_GAIN);
+		rsu->agc_mb_gain = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_2],
+						RADAR_REPORT_PULSE_AGC_MB_GAIN);
+		/*
+		 * radar_subchan_mask will be used in the future to identify the
+		 * sub channel that encoutered radar pulses and block those
+		 * channels in NOL accordingly.
+		 */
+		rsu->radar_subchan_mask = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_2],
+					       RADAR_REPORT_PULSE_SUBCHAN_MASK);
+
+		rsu->pulse_height = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_3],
+						RADAR_REPORT_PULSE_HEIGHT);
+		rsu->triggering_agc_event =
+				MS(dfs3_rs[RADAR_REPORT_PULSE_REG_4],
+					RADAR_REPORT_TRIGGERING_AGC_EVENT);
+		rsu->pulse_rssi = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_4],
+						RADAR_REPORT_PULSE_RSSI);
+		rsu->radar_fft_pri80_inband_power =
+				MS(dfs3_rs[RADAR_REPORT_PULSE_REG_5],
+					RADAR_REPORT_FFT_PRI80_INBAND_POWER);
+		rsu->radar_fft_ext80_inband_power =
+				MS(dfs3_rs[RADAR_REPORT_PULSE_REG_5],
+					RADAR_REPORT_FFT_EXT80_INBAND_POWER);
+		rsu->radar_80p80_segid = MS(dfs3_rs[RADAR_REPORT_PULSE_REG_5],
+						RADAR_REPORT_80P80_SEGID);
+	} else {
+		/*
+		 * Since the TLVs may be unaligned for some reason
+		 * we take a private copy into aligned memory.
+		 * This enables us to use the HAL-like accessor macros
+		 * into the DWORDs to access sub-DWORD fields.
+		 */
+		OS_MEMCPY(rs, buf, sizeof(rs));
+
+		DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR,
+			"%s: two 32 bit values are: %08x %08x", __func__, rs[0],
+			rs[1]);
+		/*
+		 * DFS_DPRINTK(dfs, ATH_DEBUG_DFS_PHYERR,
+				"%s (p=%p):", __func__, buf);
+		 */
+
+		is_chip_oversampling = PERE_IS_OVERSAMPLING(dfs);
+		/*
+		 * populate the version of the radar summary report
+		 * based on the TLV length to differentiate between
+		 * DFS-2 and DFS-3 radar summary report.
+		 */
+		rsu->rsu_version = DFS_RADAR_SUMMARY_REPORT_VERSION_2;
+
+		/* Populate the fields from the summary report */
+		rsu->tsf_offset =
+			MS(rs[RADAR_REPORT_PULSE_REG_2],
+				RADAR_REPORT_PULSE_TSF_OFFSET);
+		rsu->pulse_duration =
+			MS(rs[RADAR_REPORT_PULSE_REG_2],
+				RADAR_REPORT_PULSE_DUR);
+		rsu->is_chirp =
+			MS(rs[RADAR_REPORT_PULSE_REG_1],
+				RADAR_REPORT_PULSE_IS_CHIRP);
+		rsu->sidx =
+			sign_extend_32(MS(rs[RADAR_REPORT_PULSE_REG_1],
+						RADAR_REPORT_PULSE_SIDX), 10);
+		rsu->freq_offset =
+			calc_freq_offset(rsu->sidx, is_chip_oversampling);
+
+		/* These are only relevant if the pulse is a chirp */
+		rsu->delta_peak =
+			sign_extend_32(MS(rs[RADAR_REPORT_PULSE_REG_1],
+					RADAR_REPORT_PULSE_DELTA_PEAK), 6);
+		rsu->delta_diff =
+			MS(rs[RADAR_REPORT_PULSE_REG_1],
+				RADAR_REPORT_PULSE_DELTA_DIFF);
+
+		/* For false detection Debug */
+		rsu->agc_total_gain =
+			MS(rs[RADAR_REPORT_PULSE_REG_1],
+				RADAR_REPORT_AGC_TOTAL_GAIN);
+		rsu->agc_mb_gain =
+			MS(rs[RADAR_REPORT_PULSE_REG_2],
+				RADAR_REPORT_PULSE_AGC_MB_GAIN);
+
+	}
 
 	/* WAR for FCC Type 4 */
 	/*
@@ -441,19 +601,21 @@ static int tlv_calc_freq_info(struct ath_dfs *dfs, struct rx_radar_status *rs)
 
 	cdf_spin_lock_bh(&dfs->ic->chan_lock);
 	/*
-	 * For now, the only 11ac channel with freq1/freq2 setup is
-	 * VHT80.
-	 *
-	 * XXX should have a flag macro to check this!
+	 * calculate the channel center frequency for
+	 * 160MHz and 80p80 MHz including the legacy
+	 * channel widths.
 	 */
-	if (IEEE80211_IS_CHAN_11AC_VHT80(dfs->ic->ic_curchan)) {
+	if (IEEE80211_IS_CHAN_11AC_VHT160(dfs->ic->ic_curchan)) {
+		chan_centre = dfs->ic->ic_curchan->ic_vhtop_ch_freq_seg1;
+	} else if (IEEE80211_IS_CHAN_11AC_VHT80P80(dfs->ic->ic_curchan)) {
+		if (rs->radar_80p80_segid == DFS_80P80_SEG0)
+			chan_centre =
+				dfs->ic->ic_curchan->ic_vhtop_ch_freq_seg1;
+		else
+			chan_centre =
+				dfs->ic->ic_curchan->ic_vhtop_ch_freq_seg2;
+	} else if (IEEE80211_IS_CHAN_11AC_VHT80(dfs->ic->ic_curchan)) {
 		/* 11AC, so cfreq1/cfreq2 are setup */
-
-		/*
-		 * XXX if it's 80+80 this won't work - need to use seg
-		 * appropriately!
-		 */
-
 		chan_centre = dfs->ic->ic_curchan->ic_vhtop_ch_freq_seg1;
 	} else {
 		/* HT20/HT40 */
@@ -505,6 +667,18 @@ tlv_calc_event_freq_pulse(struct ath_dfs *dfs, struct rx_radar_status *rs,
 {
 	int chan_width;
 	int chan_centre;
+	int is_chip_oversampling;
+
+	/*
+	 * Oversampling needs to be turned on for
+	 * older chipsets that support DFS-2.
+	 * it needs to be turned off for chips
+	 * that support DFS-3.
+	 */
+	if (dfs->ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)
+		is_chip_oversampling = 0;
+	else
+		is_chip_oversampling = PERE_IS_OVERSAMPLING(dfs);
 
 	/* Fetch the channel centre frequency in MHz */
 	chan_centre = tlv_calc_freq_info(dfs, rs);
@@ -517,7 +691,7 @@ tlv_calc_event_freq_pulse(struct ath_dfs *dfs, struct rx_radar_status *rs,
 	 * XXX this needs to take into account the core clock speed
 	 * XXX for half/quarter rate mode.
 	 */
-	if (PERE_IS_OVERSAMPLING(dfs))
+	if (is_chip_oversampling)
 		chan_width = (44000 * 2 / 128);
 	else
 		chan_width = (40000 * 2 / 128);
@@ -559,13 +733,25 @@ tlv_calc_event_freq_chirp(struct ath_dfs *dfs, struct rx_radar_status *rs,
 	int32_t total_bw;
 	int32_t chan_centre;
 	int32_t freq_1, freq_2;
+	int is_chip_oversampling;
+
+	/*
+	 * Oversampling needs to be turned on for
+	 * older chipsets that support DFS-2.
+	 * it needs to be turned off for chips
+	 * that support DFS-3.
+	 */
+	if (dfs->ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)
+		is_chip_oversampling = 0;
+	else
+		is_chip_oversampling = PERE_IS_OVERSAMPLING(dfs);
 
 	/*
 	 * KHz isn't enough resolution here!
 	 * So treat it as deci-hertz (10Hz) and convert back to KHz
 	 * later.
 	 */
-	if (PERE_IS_OVERSAMPLING(dfs))
+	if (is_chip_oversampling)
 		bin_resolution = (44000 * 100) / 128;
 	else
 		bin_resolution = (40000 * 100) / 128;
@@ -691,6 +877,13 @@ dfs_process_phyerr_bb_tlv(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 	e->is_ext = 0;
 	e->is_dc = 0;
 	e->is_early = 0;
+
+	/*
+	 * Copy the segment ID from the radar summary report
+	 * only when radar summary report version is DFS-3.
+	 */
+	if (rs.rsu_version == DFS_RADAR_SUMMARY_REPORT_VERSION_3)
+		e->radar_80p80_segid = rs.radar_80p80_segid;
 	/*
 	 * XXX TODO: add a "chirp detection enabled" capability or config
 	 * bit somewhere, in case for some reason the hardware chirp

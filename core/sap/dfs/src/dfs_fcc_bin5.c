@@ -176,7 +176,7 @@ int dfs_bin5_addpulse(struct ath_dfs *dfs, struct dfs_bin5radars *br,
  * properly, then signify that a bin5 radar was found
  */
 
-int dfs_bin5_check(struct ath_dfs *dfs)
+int dfs_bin5_check(struct ath_dfs *dfs, int seg_id)
 {
 	struct dfs_bin5radars *br;
 	int index[DFS_MAX_B5_SIZE];
@@ -191,7 +191,11 @@ int dfs_bin5_check(struct ath_dfs *dfs)
 		return 1;
 	}
 	for (n = 0; n < dfs->dfs_rinfo.rn_numbin5radars; n++) {
-		br = &(dfs->dfs_b5radars[n]);
+		if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+			br = (seg_id == 0) ? &(dfs->dfs_b5radars[n]) :
+						&(dfs->dfs_b5radars_ext_seg[n]);
+		else
+			br = &(dfs->dfs_b5radars[n]);
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS_BIN5,
 			    "Num elems = %d\n", br->br_numelems);
 
@@ -806,8 +810,17 @@ dfs_check_chirping(struct ath_dfs *dfs, void *buf,
 
 uint8_t
 dfs_retain_bin5_burst_pattern(struct ath_dfs *dfs, uint32_t diff_ts,
-			      uint8_t old_dur)
+			      uint8_t old_dur, int seg_id)
 {
+
+	u_int8_t dfs_last_bin5_dur;
+
+	if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+		dfs_last_bin5_dur = (seg_id == 0) ?
+				    dfs->dfs_rinfo.dfs_last_bin5_dur :
+				    dfs->dfs_rinfo.dfs_last_bin5_dur_ext_seg;
+	else
+		dfs_last_bin5_dur = dfs->dfs_rinfo.dfs_last_bin5_dur;
 
 	/*
 	 * Pulses may get split into 2 during chirping, this print is only
@@ -821,7 +834,7 @@ dfs_retain_bin5_burst_pattern(struct ath_dfs *dfs, uint32_t diff_ts,
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS_BIN5,
 			    "%s SPLIT pulse diffTs=%u dur=%d (old_dur=%d)\n",
 			    __func__, diff_ts,
-			    dfs->dfs_rinfo.dfs_last_bin5_dur, old_dur);
+			    dfs_last_bin5_dur, old_dur);
 	}
 	/*
 	 * Check if this is the 2nd or 3rd pulse in the same burst,
@@ -836,10 +849,9 @@ dfs_retain_bin5_burst_pattern(struct ath_dfs *dfs, uint32_t diff_ts,
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS_BIN5,
 			    "%s this pulse belongs to the same burst as before, give "
 			    "it same dur=%d (old_dur=%d)\n",
-			    __func__, dfs->dfs_rinfo.dfs_last_bin5_dur,
-			    old_dur);
+			    __func__, dfs_last_bin5_dur, old_dur);
 
-		return (dfs->dfs_rinfo.dfs_last_bin5_dur);
+		return dfs_last_bin5_dur;
 	}
 	/*
 	 * This pulse does not belong to this burst, return unchanged

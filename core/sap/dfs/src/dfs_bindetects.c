@@ -59,13 +59,18 @@
 
 int
 dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
-			   uint32_t dur, int ext_chan_flag)
+			   uint32_t dur, int ext_chan_flag, int seg_id)
 {
-	struct dfs_pulseline *pl = dfs->pulses;
+	struct dfs_pulseline *pl;
 	int i, n, refpri, primargin, numpulses = 0;
 	uint64_t start_ts, end_ts, event_ts, prev_event_ts, next_event_ts,
 		 window_start, window_end;
 	uint32_t index, next_index, deltadur;
+
+	if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+		pl = (seg_id == 0) ? dfs->pulses : dfs->pulses_ext_seg;
+	else
+		pl = dfs->pulses;
 
 	/* For fixed pattern types, rf->rf_patterntype=1 */
 	primargin =
@@ -151,12 +156,15 @@ dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 
 void
 dfs_add_pulse(struct ath_dfs *dfs, struct dfs_filter *rf, struct dfs_event *re,
-	      uint32_t deltaT, uint64_t this_ts)
+	      uint32_t deltaT, uint64_t this_ts, int seg_id)
 {
 	uint32_t index, n, window;
 	struct dfs_delayline *dl;
 
-	dl = &rf->rf_dl;
+	if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+		dl = (seg_id == 0) ? &rf->rf_dl : &rf->rf_dl_ext_seg;
+	else
+		dl = &rf->rf_dl;
 	/* Circular buffer of size 2^n */
 	index = (dl->dl_lastelem + 1) & DFS_MAX_DL_MASK;
 	/* if ((dl->dl_numelems+1) == DFS_MAX_DL_SIZE) */
@@ -197,7 +205,7 @@ dfs_add_pulse(struct ath_dfs *dfs, struct dfs_filter *rf, struct dfs_event *re,
 
 int
 dfs_bin_check(struct ath_dfs *dfs, struct dfs_filter *rf, uint32_t deltaT,
-	      uint32_t width, int ext_chan_flag)
+	      uint32_t width, int ext_chan_flag, int seg_id)
 {
 	uint32_t refpri, refdur, searchpri, deltapri, deltapri_2, deltapri_3,
 		 averagerefpri;
@@ -208,7 +216,11 @@ dfs_bin_check(struct ath_dfs *dfs, struct dfs_filter *rf, uint32_t deltaT,
 	int numpulses = 0;
 	int lowprichk = 3, pri_match = 0;
 
-	dl = &rf->rf_dl;
+	if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+		dl = (seg_id == 0) ? &rf->rf_dl : &rf->rf_dl_ext_seg;
+	else
+		dl = &rf->rf_dl;
+
 	if (dl->dl_numelems < (rf->rf_threshold - 1)) {
 		return 0;
 	}
@@ -226,7 +238,8 @@ dfs_bin_check(struct ath_dfs *dfs, struct dfs_filter *rf, uint32_t deltaT,
 
 	if (rf->rf_patterntype == 1) {
 		found =
-			dfs_bin_fixedpattern_check(dfs, rf, width, ext_chan_flag);
+			dfs_bin_fixedpattern_check(dfs, rf, width,
+							ext_chan_flag, seg_id);
 		if (found) {
 			dl->dl_numelems = 0;
 		}
@@ -330,7 +343,13 @@ dfs_bin_check(struct ath_dfs *dfs, struct dfs_filter *rf, uint32_t deltaT,
 			    "ext_flag=%d MATCH filter=%u numpulses=%u thresh=%u refdur=%d refpri=%d primargin=%d\n",
 			    ext_chan_flag, rf->rf_pulseid, numpulses,
 			    rf->rf_threshold, refdur, refpri, primargin);
-		dfs_print_delayline(dfs, &rf->rf_dl);
+
+		if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+			dfs_print_delayline(dfs,
+			    (seg_id == 0) ? &rf->rf_dl : &rf->rf_dl_ext_seg);
+		else
+			dfs_print_delayline(dfs, &rf->rf_dl);
+
 		dfs_print_filter(dfs, rf);
 	}
 	return found;
