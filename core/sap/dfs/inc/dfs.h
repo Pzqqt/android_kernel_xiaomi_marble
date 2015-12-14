@@ -98,6 +98,9 @@
 #define DFS_STATUS_SUCCESS 0
 #define DFS_STATUS_FAIL 1
 
+#define DFS_80P80_SEG0 0
+#define DFS_80P80_SEG1 1
+
 /*
  * Constants to use for chirping detection.
  *
@@ -114,6 +117,8 @@
 /* use 145 for osprey conversion is already done using dfs->dur_multiplier */
 #define MAX_BIN5_DUR  145
 #define MAX_BIN5_DUR_MICROSEC 105
+
+#define DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER 1000000
 
 #define DFS_MARGIN_EQUAL(a, b, margin) ((DFS_DIFF(a, b)) <= margin)
 #define DFS_MAX_STAGGERED_BURSTS 3
@@ -280,6 +285,7 @@ struct dfs_event {
 	uint32_t re_freq_lo;    /* Lower bounds of frequency, KHz */
 	uint32_t re_freq_hi;    /* Upper bounds of frequency, KHz */
 	int sidx;               /* Pulse Index as in radar summary report */
+	int radar_80p80_segid;  /* 80p80 segment ID as in radar sum report */
 	STAILQ_ENTRY(dfs_event) re_list;        /* List of radar events */
 } cdf_packed;
 #ifdef WIN32
@@ -355,6 +361,8 @@ struct dfs_delayline {
 struct dfs_filter {
 	/* Delay line of pulses for this filter */
 	struct dfs_delayline rf_dl;
+	/* Delay line of pulses for this filter in 80p80 */
+	struct dfs_delayline rf_dl_ext_seg;
 	/* Number of pulses in the filter */
 	uint32_t rf_numpulses;
 	/* min pri to be considered for this filter */
@@ -475,6 +483,7 @@ struct dfs_info {
 
 	uint64_t dfs_bin5_chirp_ts;
 	uint8_t dfs_last_bin5_dur;
+	uint8_t dfs_last_bin5_dur_ext_seg;
 } cdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_info)
@@ -574,6 +583,8 @@ struct ath_dfs {
 
 	struct dfs_info dfs_rinfo;      /* State vars for radar processing */
 	struct dfs_bin5radars *dfs_b5radars;    /* array of bin5 radar events */
+	/* array of bin5 radar events on extension segment in 80p80 */
+	struct dfs_bin5radars *dfs_b5radars_ext_seg;
 	int8_t **dfs_radartable;        /* map of radar durs to filter types */
 #ifndef ATH_DFS_RADAR_DETECTION_ONLY
 	struct dfs_nolelem *dfs_nol;    /* Non occupancy list for radar */
@@ -583,6 +594,7 @@ struct ath_dfs {
 	struct ath_dfs_phyerr_param dfs_defaultparams;
 	struct dfs_stats ath_dfs_stats; /* DFS related stats */
 	struct dfs_pulseline *pulses;   /* pulse history */
+	struct dfs_pulseline *pulses_ext_seg; /* pulse history ext 80p80 seg */
 	struct dfs_event *events;       /* Events structure */
 
 	uint32_t ath_radar_tasksched:1,       /* radar task is scheduled */
@@ -630,6 +642,8 @@ struct ath_dfs {
 	 * channel switch is disabled.
 	 */
 	int8_t     disable_dfs_ch_switch;
+	uint32_t  test_ts; /* to capture timestamps on primary segment */
+	uint32_t  test_ts_ext_seg; /* to capture timestamps on ext segment */
 };
 
 /* This should match the table from if_ath.c */
@@ -718,6 +732,11 @@ struct dfs_phy_err {
 	uint8_t rssi;           /* pulse RSSI */
 	uint8_t dur;            /* pulse duration, raw (not uS) */
 	int sidx;               /* Pulse Index as in radar summary report */
+	/*
+	 * Indicates segment ID on which the phyerror is received
+	 * when SAP is operating in 80p80 channel width.
+	 */
+	int radar_80p80_segid;
 };
 
 /* Attach, detach, handle ioctl prototypes */
@@ -746,14 +765,14 @@ int dfs_bin5_check_pulse(struct ath_dfs *dfs, struct dfs_event *re,
 			 struct dfs_bin5radars *br);
 int dfs_bin5_addpulse(struct ath_dfs *dfs, struct dfs_bin5radars *br,
 		      struct dfs_event *re, uint64_t thists);
-int dfs_bin5_check(struct ath_dfs *dfs);
+int dfs_bin5_check(struct ath_dfs *dfs, int seg_id);
 int dfs_check_chirping(struct ath_dfs *dfs, void *buf,
 		       uint16_t datalen, int is_ctl,
 		       int is_ext, int *slope, int *is_dc);
 uint8_t dfs_retain_bin5_burst_pattern(struct ath_dfs *dfs, uint32_t diff_ts,
-				      uint8_t old_dur);
+				      uint8_t old_dur, int seg_id);
 uint8_t dfs_retain_bin5_burst_pattern(struct ath_dfs *dfs, uint32_t diff_ts,
-				      uint8_t old_dur);
+				      uint8_t old_dur, int seg_id);
 int dfs_get_random_bin5_dur(struct ath_dfs *dfs, uint64_t tstamp);
 
 /* Debug prototypes */
@@ -773,26 +792,26 @@ struct dfs_state *dfs_getchanstate(struct ath_dfs *dfs, uint8_t *index,
 
 int dfs_init_radar_filters(struct ieee80211com *ic,
 			   struct ath_dfs_radar_tab_info *radar_info);
-void dfs_reset_alldelaylines(struct ath_dfs *dfs);
+void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id);
 void dfs_reset_delayline(struct dfs_delayline *dl);
-void dfs_reset_filter_delaylines(struct dfs_filtertype *dft);
 void dfs_reset_radarq(struct ath_dfs *dfs);
 
 /* Detection algorithm prototypes */
 void dfs_add_pulse(struct ath_dfs *dfs, struct dfs_filter *rf,
-		   struct dfs_event *re, uint32_t deltaT, uint64_t this_ts);
+		   struct dfs_event *re, uint32_t deltaT, uint64_t this_ts,
+		   int seg_id);
 
 int dfs_bin_fixedpattern_check(struct ath_dfs *dfs, struct dfs_filter *rf,
-			       uint32_t dur, int ext_chan_flag);
+			       uint32_t dur, int ext_chan_flag, int seg_id);
 int dfs_bin_check(struct ath_dfs *dfs, struct dfs_filter *rf,
-		  uint32_t deltaT, uint32_t dur, int ext_chan_flag);
+		  uint32_t deltaT, uint32_t dur, int ext_chan_flag, int seg_id);
 
 int dfs_bin_pri_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 		      struct dfs_delayline *dl, uint32_t score,
 		      uint32_t refpri, uint32_t refdur, int ext_chan_flag,
 		      int fundamentalpri);
 int dfs_staggered_check(struct ath_dfs *dfs, struct dfs_filter *rf,
-			uint32_t deltaT, uint32_t width);
+			uint32_t deltaT, uint32_t width, int seg_id);
 /* False detection reduction */
 int dfs_get_pri_margin(struct ath_dfs *dfs, int is_extchan_detect,
 		       int is_fixed_pattern);

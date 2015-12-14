@@ -66,6 +66,13 @@
 
 #define TAG_ID_SEARCH_FFT_REPORT        0xFB
 #define TAG_ID_RADAR_PULSE_SUMMARY      0xF8
+
+/* DFS-2 Radar pulse summary Length */
+#define DFS2_RADAR_PULSE_SUMMARY_TLV_LENGTH   8
+
+/* DFS-3 Radar pulse summary length */
+#define DFS3_RADAR_PULSE_SUMMARY_TLV_LENGTH   20
+
 /*
  * Radar pulse summary
  *
@@ -109,6 +116,37 @@
 
 #define         RADAR_REPORT_PULSE_DUR                  0x000000FF
 #define         RADAR_REPORT_PULSE_DUR_S                0
+
+/*
+ * These are the new TLV's in the DFS-3
+ * radar summary report. Three new DWORDS
+ * have been added to radar summary report
+ * as part of DFS-3 as defined below.
+ */
+
+#define RADAR_REPORT_PULSE_REG_3        0x02
+
+#define         RADAR_REPORT_PULSE_HEIGHT               0x000003FF
+#define         RADAR_REPORT_PULSE_HEIGHT_S             0
+
+#define RADAR_REPORT_PULSE_REG_4        0x03
+
+#define         RADAR_REPORT_TRIGGERING_AGC_EVENT       0xC0000000
+#define         RADAR_REPORT_TRIGGERING_AGC_EVENT_S     30
+
+#define         RADAR_REPORT_PULSE_RSSI                 0X3FFC0000
+#define         RADAR_REPORT_PULSE_RSSI_S               18
+
+#define RADAR_REPORT_PULSE_REG_5        0x04
+
+#define         RADAR_REPORT_FFT_PRI80_INBAND_POWER     0x1FFF8000
+#define         RADAR_REPORT_FFT_PRI80_INBAND_POWER_S   15
+
+#define         RADAR_REPORT_FFT_EXT80_INBAND_POWER     0x00007FFE
+#define         RADAR_REPORT_FFT_EXT80_INBAND_POWER_S   1
+
+#define         RADAR_REPORT_80P80_SEGID                0x00000001
+#define         RADAR_REPORT_80P80_SEGID_S              0
 
 #define SEARCH_FFT_REPORT_REG_1     0x00
 

@@ -300,6 +300,28 @@ int dfs_attach(struct ieee80211com *ic)
 		return 1;
 	}
 
+	/*
+	 * If the chip supports DFS-3 then allocate
+	 * memory for pulses for extension segment.
+	 */
+	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		dfs->pulses_ext_seg = (struct dfs_pulseline *)
+					os_malloc(NULL,
+						sizeof(struct dfs_pulseline),
+						GFP_ATOMIC);
+		if (dfs->pulses_ext_seg == NULL) {
+			OS_FREE(dfs->events);
+			dfs->events = NULL;
+			OS_FREE(dfs);
+			ic->ic_dfs = NULL;
+			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			    "%s[%d]: pulse buffer allocation failed",
+			    __func__, __LINE__);
+			return 1;
+		}
+		dfs->pulses_ext_seg->pl_lastelem = DFS_MAX_PULSE_BUFFER_MASK;
+	}
+
 	dfs->pulses->pl_lastelem = DFS_MAX_PULSE_BUFFER_MASK;
 
 	/* Allocate memory for radar filters */
@@ -351,6 +373,10 @@ int dfs_attach(struct ieee80211com *ic)
 	dfs->dfs_rinfo.dfs_bin5_chirp_ts = dfs->dfs_rinfo.ext_chan_busy_ts;
 	dfs->dfs_rinfo.dfs_last_bin5_dur = MAX_BIN5_DUR;
 	dfs->dfs_b5radars = NULL;
+	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		dfs->dfs_rinfo.dfs_last_bin5_dur_ext_seg = MAX_BIN5_DUR;
+		dfs->dfs_b5radars_ext_seg = NULL;
+	}
 
 	/*
 	 * If dfs_init_radar_filters() fails, we can abort here and
@@ -387,6 +413,11 @@ bad1:
 	if (dfs->pulses) {
 		OS_FREE(dfs->pulses);
 		dfs->pulses = NULL;
+	}
+	if (dfs->pulses_ext_seg &&
+	    ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		OS_FREE(dfs->pulses_ext_seg);
+		dfs->pulses_ext_seg = NULL;
 	}
 	if (dfs->events) {
 		OS_FREE(dfs->events);
@@ -446,14 +477,23 @@ void dfs_detach(struct ieee80211com *ic)
 	}
 #endif
 #endif
+
 	/* Return radar events to free q */
 	dfs_reset_radarq(dfs);
-	dfs_reset_alldelaylines(dfs);
+	dfs_reset_alldelaylines(dfs, DFS_80P80_SEG0);
+	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)
+		dfs_reset_alldelaylines(dfs, DFS_80P80_SEG1);
 
 	/* Free up pulse log */
 	if (dfs->pulses != NULL) {
 		OS_FREE(dfs->pulses);
 		dfs->pulses = NULL;
+	}
+
+	if (dfs->pulses_ext_seg != NULL &&
+	    ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		OS_FREE(dfs->pulses_ext_seg);
+		dfs->pulses_ext_seg = NULL;
 	}
 
 	for (n = 0; n < DFS_MAX_RADAR_TYPES; n++) {
@@ -480,6 +520,11 @@ void dfs_detach(struct ieee80211com *ic)
 	if (dfs->dfs_b5radars != NULL) {
 		OS_FREE(dfs->dfs_b5radars);
 		dfs->dfs_b5radars = NULL;
+	}
+	if (dfs->dfs_b5radars_ext_seg != NULL &&
+	    ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		OS_FREE(dfs->dfs_b5radars_ext_seg);
+		dfs->dfs_b5radars_ext_seg = NULL;
 	}
 
 /*      Commenting out since all the ar functions are obsolete and
@@ -582,7 +627,14 @@ int dfs_radar_enable(struct ieee80211com *ic,
 			if (is_ext_ch) {
 				ext_ch = ieee80211_get_extchan(ic);
 			}
-			dfs_reset_alldelaylines(dfs);
+			dfs_reset_alldelaylines(dfs, DFS_80P80_SEG0);
+			/*
+			 * Extension segment delaylines will be
+			 * enabled only when SAP operates in 80p80
+			 * and both the channels are DFS.
+			 */
+			if (chan->ic_80p80_both_dfs)
+				dfs_reset_alldelaylines(dfs, DFS_80P80_SEG1);
 
 			rs_pri = dfs_getchanstate(dfs, &index_pri, 0);
 			if (ext_ch) {
@@ -594,9 +646,17 @@ int dfs_radar_enable(struct ieee80211com *ic,
 
 				OS_MEMSET(&pe, '\0', sizeof(pe));
 
-				if (index_pri != dfs->dfs_curchan_radindex)
-					dfs_reset_alldelaylines(dfs);
-
+				if (index_pri != dfs->dfs_curchan_radindex) {
+					dfs_reset_alldelaylines(dfs,
+								DFS_80P80_SEG0);
+					/*
+					 * Reset only when ext segment is
+					 * present
+					 */
+					if (chan->ic_80p80_both_dfs)
+						dfs_reset_alldelaylines(dfs,
+								DFS_80P80_SEG1);
+				}
 				dfs->dfs_curchan_radindex = (int16_t) index_pri;
 				dfs->dfs_pri_multiplier_ini =
 					radar_info->dfs_pri_multiplier;

@@ -91,6 +91,12 @@
 #define IEEE80211_IS_CHAN_11AC_VHT80(_c) \
 	(((_c)->ic_flags & IEEE80211_CHAN_11AC_VHT80) == \
 	 IEEE80211_CHAN_11AC_VHT80)
+#define IEEE80211_IS_CHAN_11AC_VHT80P80(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_VHT80P80) == \
+	IEEE80211_CHAN_VHT80P80)
+#define IEEE80211_IS_CHAN_11AC_VHT160(_c) \
+	(((_c)->ic_flags & IEEE80211_CHAN_VHT160) == \
+	IEEE80211_CHAN_VHT160)
 #define CHANNEL_108G \
 	(IEEE80211_CHAN_2GHZ|IEEE80211_CHAN_OFDM|IEEE80211_CHAN_TURBO)
 
@@ -120,6 +126,8 @@
  * @ic_vhtop_ch_freq_seg1: channel center frequency
  * @ic_vhtop_ch_freq_seg2: Channel Center frequency applicable
  * @ic_pri_freq_center_freq_mhz_separation: separation b/w pri and center freq
+ * @ic_80p80_both_dfs: Flag indicating if both 80p80 segments are dfs
+ * @ic_radar_found_segid: Indicates seg ID on which radar is found in 80p80 mode
  */
 struct dfs_ieee80211_channel {
 	uint32_t ic_freq;
@@ -137,6 +145,7 @@ struct dfs_ieee80211_channel {
 	uint32_t ic_vhtop_ch_freq_seg2;
 	int ic_pri_freq_center_freq_mhz_separation;
 	bool ic_80p80_both_dfs;
+	int ic_radar_found_segid;
 };
 
 /**
