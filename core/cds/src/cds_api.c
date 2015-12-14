@@ -122,6 +122,9 @@ void cds_deinit(void)
 	gp_cds_context->cdf_ctx = NULL;
 	gp_cds_context = NULL;
 
+	cdf_mc_timer_exit();
+	cdf_mem_exit();
+
 	return;
 }
 
