@@ -912,9 +912,12 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			htc_dump(wma->htc_handle, WD_DUMP, false);
 			break;
 		case GEN_PARAM_CRASH_INJECT:
-			ret = wma_crash_inject(wma,
-					       privcmd->param_value,
-					       privcmd->param_sec_value);
+			if (QDF_GLOBAL_FTM_MODE  == cds_get_conparam())
+				WMA_LOGE("Crash inject not allowed in FTM mode");
+			else
+				ret = wma_crash_inject(wma,
+						privcmd->param_value,
+						privcmd->param_sec_value);
 			break;
 #ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
 		case GEN_PARAM_DUMP_PCIE_ACCESS_LOG:
