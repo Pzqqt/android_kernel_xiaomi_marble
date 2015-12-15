@@ -809,16 +809,30 @@ void lim_send_sme_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	/* get the pointer to the mlm message */
 	pMlmOemDataRsp = (tLimMlmOemDataRsp *) (pMsgBuf);
 
-	msgLength = sizeof(tSirOemDataRsp);
-
+	msgLength = sizeof(*pSirSmeOemDataRsp);
 	/* now allocate memory for the char buffer */
-	pSirSmeOemDataRsp = qdf_mem_malloc(msgLength);
+	pSirSmeOemDataRsp = qdf_mem_malloc(sizeof(*pSirSmeOemDataRsp));
 	if (NULL == pSirSmeOemDataRsp) {
 		lim_log(pMac, LOGP,
-			FL
-				("call to AllocateMemory failed for pSirSmeOemDataRsp"));
+			FL("malloc failed for pSirSmeOemDataRsp"));
+		qdf_mem_free(pMlmOemDataRsp->oem_data_rsp);
+		qdf_mem_free(pMlmOemDataRsp);
 		return;
 	}
+
+	if (pMlmOemDataRsp->rsp_len) {
+		pSirSmeOemDataRsp->oem_data_rsp =
+			qdf_mem_malloc(pMlmOemDataRsp->rsp_len);
+		if (!pSirSmeOemDataRsp->oem_data_rsp) {
+			lim_log(pMac, LOGE,
+				FL("malloc failed for oem_data_rsp"));
+			qdf_mem_free(pSirSmeOemDataRsp);
+			qdf_mem_free(pMlmOemDataRsp->oem_data_rsp);
+			qdf_mem_free(pMlmOemDataRsp);
+			return;
+		}
+	}
+
 #if defined (ANI_LITTLE_BYTE_ENDIAN)
 	sir_store_u16_n((uint8_t *) &pSirSmeOemDataRsp->length, msgLength);
 	sir_store_u16_n((uint8_t *) &pSirSmeOemDataRsp->messageType,
@@ -828,10 +842,14 @@ void lim_send_sme_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	pSirSmeOemDataRsp->messageType = eWNI_SME_OEM_DATA_RSP;
 #endif
 	pSirSmeOemDataRsp->target_rsp = pMlmOemDataRsp->target_rsp;
-	qdf_mem_copy(pSirSmeOemDataRsp->oemDataRsp, pMlmOemDataRsp->oemDataRsp,
-		     OEM_DATA_RSP_SIZE);
+	pSirSmeOemDataRsp->rsp_len = pMlmOemDataRsp->rsp_len;
+	if (pSirSmeOemDataRsp->rsp_len)
+		qdf_mem_copy(pSirSmeOemDataRsp->oem_data_rsp,
+			     pMlmOemDataRsp->oem_data_rsp,
+			     pSirSmeOemDataRsp->rsp_len);
 
 	/* Now free the memory from MLM Rsp Message */
+	qdf_mem_free(pMlmOemDataRsp->oem_data_rsp);
 	qdf_mem_free(pMlmOemDataRsp);
 
 	mmhMsg.type = eWNI_SME_OEM_DATA_RSP;

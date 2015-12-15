@@ -49,6 +49,7 @@
 
 /* message subtype for internal purpose */
 #define OEM_MESSAGE_SUBTYPE_INTERNAL   0xdeadbeef
+#define OEM_MESSAGE_SUBTYPE_LEN 4
 
 /* Structure for defining req sent to the PE */
 typedef struct tagOemDataReq {
@@ -58,7 +59,8 @@ typedef struct tagOemDataReq {
 } tOemDataReq, tOemDataReqConfig;
 
 typedef struct tagOemDataRsp {
-	uint8_t oemDataRsp[OEM_DATA_RSP_SIZE];
+	uint8_t rsp_len;
+	uint8_t *oem_data_rsp;
 } tOemDataRsp;
 
 typedef enum {

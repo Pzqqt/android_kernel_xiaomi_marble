@@ -305,7 +305,8 @@ typedef struct sLimMlmOemDataReq {
 
 typedef struct sLimMlmOemDataRsp {
 	bool target_rsp;
-	uint8_t oemDataRsp[OEM_DATA_RSP_SIZE];
+	uint32_t rsp_len;
+	uint8_t *oem_data_rsp;
 } tLimMlmOemDataRsp, *tpLimMlmOemDataRsp;
 #endif
 

@@ -351,12 +351,13 @@ QDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 				FL("received target oem data resp"));
 			if (pMac->oemData.oem_data_rsp_callback != NULL)
 				 pMac->oemData.oem_data_rsp_callback(
-					sizeof(tOemDataRsp),
-					&pOemDataRsp->oemDataRsp[0]);
+					pOemDataRsp->rsp_len,
+					pOemDataRsp->oem_data_rsp);
 		} else {
 			sms_log(pMac, LOG1,
 				FL("received internal oem data resp"));
 		}
+		qdf_mem_free(pOemDataRsp->oem_data_rsp);
 	} while (0);
 
 	return status;

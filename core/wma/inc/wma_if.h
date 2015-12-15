@@ -680,11 +680,14 @@ typedef struct {
 
 /**
  * struct tStartOemDataRsp - start OEM Data response
- * @oemDataRsp: OEM Data response
+ * @target_rsp: Indicates if the rsp is from Target or WMA generated.
+ * @rsp_len: oem data response length
+ * @oem_data_rsp: pointer to OEM Data response
  */
 typedef struct {
 	bool target_rsp;
-	uint8_t oemDataRsp[OEM_DATA_RSP_SIZE];
+	uint32_t rsp_len;
+	uint8_t *oem_data_rsp;
 } tStartOemDataRsp, *tpStartOemDataRsp;
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 

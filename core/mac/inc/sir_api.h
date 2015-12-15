@@ -916,7 +916,8 @@ typedef struct sSirOemDataRsp {
 	uint16_t messageType;
 	uint16_t length;
 	bool target_rsp;
-	uint8_t oemDataRsp[OEM_DATA_RSP_SIZE];
+	uint32_t rsp_len;
+	uint8_t *oem_data_rsp;
 } tSirOemDataRsp, *tpSirOemDataRsp;
 
 #endif /* FEATURE_OEM_DATA_SUPPORT */
