@@ -1403,19 +1403,19 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  "CE RING BASE: 0x%llx\n"
 			  "CE RING SIZE: %d\n"
 			  "CE REG ADDR : 0x%llx",
-			  hdd_ipa->ce_sr_base_paddr,
+			  (unsigned long long)hdd_ipa->ce_sr_base_paddr,
 			  hdd_ipa->ce_sr_ring_size,
-			  hdd_ipa->ce_reg_paddr);
+			  (unsigned long long)hdd_ipa->ce_reg_paddr);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST TX ====\n"
 			  "COMP RING BASE: 0x%llx\n"
 			  "COMP RING SIZE: %d\n"
 			  "NUM ALLOC BUF: %d\n"
 			  "COMP RING DBELL : 0x%llx",
-			  hdd_ipa->tx_comp_ring_base_paddr,
+			  (unsigned long long)hdd_ipa->tx_comp_ring_base_paddr,
 			  hdd_ipa->tx_comp_ring_size,
 			  hdd_ipa->tx_num_alloc_buffer,
-			  hdd_ipa->tx_comp_doorbell_paddr);
+			  (unsigned long long)hdd_ipa->tx_comp_doorbell_paddr);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST RX ====\n"
 			  "IND RING BASE: 0x%llx\n"
@@ -1425,13 +1425,13 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  "NUM EXCP PKT : %llu\n"
 			  "NUM TX BCMC : %llu\n"
 			  "NUM TX BCMC ERR : %llu",
-			  hdd_ipa->rx_rdy_ring_base_paddr,
+			  (unsigned long long)hdd_ipa->rx_rdy_ring_base_paddr,
 			  hdd_ipa->rx_rdy_ring_size,
-			  hdd_ipa->rx_ready_doorbell_paddr,
-			  hdd_ipa->rx_proc_done_idx_paddr,
+			  (unsigned long long)hdd_ipa->rx_ready_doorbell_paddr,
+			  (unsigned long long)hdd_ipa->rx_proc_done_idx_paddr,
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_bcmc,
-			  hdd_ipa->stats.num_tx_bcmc_err);
+			  (unsigned long long)hdd_ipa->stats.num_tx_bcmc_err);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CONTROL ====\n"
 			  "SAP NUM STAs: %d\n"

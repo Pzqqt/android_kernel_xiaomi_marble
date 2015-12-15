@@ -704,7 +704,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 					CDF_SAP_MODE)) &&
 				(session->connectState !=
 					eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
-				if (pSession->ch_switch_in_progress)
+				if (session->ch_switch_in_progress)
 					continue;
 
 				csr_handle_conc_chnl_overlap_for_sap_go(mac_ctx,

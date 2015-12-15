@@ -49,6 +49,11 @@
 #define IEEE80211_CHAN_NO_IBSS IEEE80211_CHAN_NO_IR
 #endif
 
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 16, 0))
+#define IEEE80211_CHAN_NO_20MHZ	(1<<11)
+#define IEEE80211_CHAN_NO_10MHZ	(1<<12)
+#endif
+
 static v_REGDOMAIN_t temp_reg_domain = REGDOMAIN_COUNT;
 
 /* true if init happens thru init time driver hint */
