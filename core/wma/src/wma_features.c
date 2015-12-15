@@ -7388,6 +7388,8 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 						struct wma_vdev_start_req
 						*req)
 {
+	uint8_t ext_channel;
+
 	if (dfs_ic == NULL) {
 		WMA_LOGE("%s: DFS ic is Invalid", __func__);
 		return NULL;
@@ -7420,23 +7422,57 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 	    (dfs_ic->ic_curchan->ic_ieee <= WMA_11A_CHANNEL_END)) {
 		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_5GHZ;
 	}
-	if (CH_WIDTH_80MHZ == req->chan_width) {
-		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_VHT80;
-	}
-	if (CH_WIDTH_40MHZ == req->chan_width) {
+
+	switch (req->chan_width) {
+	case CH_WIDTH_20MHZ:
+		dfs_ic->ic_curchan->ic_flags |=
+				(req->vht_capable ? IEEE80211_CHAN_VHT20 :
+							IEEE80211_CHAN_HT20);
+		break;
+	case CH_WIDTH_40MHZ:
 		if (req->chan < req->ch_center_freq_seg0)
-			dfs_ic->ic_curchan->ic_flags |= (req->vht_capable ?
+			dfs_ic->ic_curchan->ic_flags |=
+					(req->vht_capable ?
 					IEEE80211_CHAN_VHT40PLUS :
 					IEEE80211_CHAN_HT40PLUS);
 		else
-			dfs_ic->ic_curchan->ic_flags |= (req->vht_capable ?
+			dfs_ic->ic_curchan->ic_flags |=
+					(req->vht_capable ?
 					IEEE80211_CHAN_VHT40MINUS :
 					IEEE80211_CHAN_HT40MINUS);
-	} else if (CH_WIDTH_20MHZ == req->chan_width) {
+		break;
+	case CH_WIDTH_80MHZ:
+		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_VHT80;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		ext_channel = cds_freq_to_chan(chan->band_center_freq2);
 		dfs_ic->ic_curchan->ic_flags |=
-			(req->vht_capable ? IEEE80211_CHAN_VHT20 :
-						IEEE80211_CHAN_HT20);
+					IEEE80211_CHAN_VHT80P80;
+		dfs_ic->ic_curchan->ic_freq_ext =
+						chan->band_center_freq2;
+		dfs_ic->ic_curchan->ic_ieee_ext = ext_channel;
+
+		/* verify both the 80MHz are DFS bands or not */
+		if ((CHANNEL_STATE_DFS ==
+			cds_get_bonded_channel_state(req->chan ,
+						CH_WIDTH_80MHZ)) &&
+			(CHANNEL_STATE_DFS ==
+				cds_get_bonded_channel_state(
+					ext_channel - 6 ,
+					CH_WIDTH_80MHZ)))
+			dfs_ic->ic_curchan->ic_80p80_both_dfs = true;
+		break;
+	case CH_WIDTH_160MHZ:
+		dfs_ic->ic_curchan->ic_flags |=
+					IEEE80211_CHAN_VHT160;
+		break;
+	default:
+		WMA_LOGE(
+		    "%s: Recieved a wrong channel width %d",
+		    __func__, req->chan_width);
+		break;
 	}
+
 	dfs_ic->ic_curchan->ic_flagext |= IEEE80211_CHAN_DFS;
 
 	if (req->oper_mode == BSS_OPERATIONAL_MODE_AP) {
