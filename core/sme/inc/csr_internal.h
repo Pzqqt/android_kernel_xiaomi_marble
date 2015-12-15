@@ -68,6 +68,10 @@
 
 #define CSR_IS_SESSION_ANY(sessionId) (sessionId == SME_SESSION_ID_ANY)
 #define CSR_MAX_NUM_COUNTRY_CODE  100
+#define CSR_IS_DFS_CH_ROAM_ALLOWED(mac_ctx) \
+	( \
+	  (((mac_ctx)->roam.configParam.allowDFSChannelRoam) ? true : false) \
+	)
 #define CSR_IS_SELECT_5GHZ_MARGIN(pMac) \
 	( \
 	  (((pMac)->roam.configParam.nSelect5GHzMargin) ? true : false) \
