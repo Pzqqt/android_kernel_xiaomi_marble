@@ -1181,7 +1181,7 @@ ce_completed_send_next(struct CE_handle *copyeng,
  * within it .
  */
 
-void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int CE_id)
+void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int ce_id)
 {
 	void *CE_context;
 	void *transfer_context;
@@ -1190,9 +1190,11 @@ void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int CE_id)
 	unsigned int id;
 	unsigned int sw_idx, hw_idx;
 	uint32_t toeplitz_hash_result;
-	struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
+	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
 
 	A_TARGET_ACCESS_BEGIN(scn);
+	hif_record_ce_desc_event(ce_id, HIF_CE_REAP_ENTRY,
+			NULL, NULL, 0);
 
 	/* Since this function is called from both user context and
 	 * tasklet context the spinlock has to lock the bottom halves.
@@ -1220,7 +1222,7 @@ void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int CE_id)
 				  &nbytes, &id, &sw_idx, &hw_idx,
 				  &toeplitz_hash_result) ==
 				  CDF_STATUS_SUCCESS) {
-				if (CE_id != CE_HTT_H2T_MSG) {
+				if (ce_id != CE_HTT_H2T_MSG) {
 					cdf_spin_unlock_bh(
 						&CE_state->ce_index_lock);
 					CE_state->send_cb(
@@ -1247,6 +1249,9 @@ void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int CE_id)
 	}
 
 	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+
+	hif_record_ce_desc_event(ce_id, HIF_CE_REAP_EXIT,
+			NULL, NULL, 0);
 	A_TARGET_ACCESS_END(scn);
 }
 
