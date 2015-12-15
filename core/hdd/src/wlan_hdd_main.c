@@ -174,7 +174,6 @@ static const struct wiphy_wowlan_support wowlan_support_reg_init = {
 
 struct sock *cesium_nl_srv_sock;
 
-struct completion wlan_start_comp;
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 void wlan_hdd_auto_shutdown_cb(void);
 #endif
@@ -5079,7 +5078,6 @@ ftm_processing:
 		cds_set_load_unload_in_progress(false);
 		hdd_ctx->isLoadInProgress = false;
 		hddLog(LOGE, FL("FTM driver loaded"));
-		complete(&wlan_start_comp);
 		return CDF_STATUS_SUCCESS;
 	}
 #if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
@@ -5461,7 +5459,6 @@ ftm_processing:
 
 	hdd_ctx->isLoadInProgress = false;
 	cds_set_load_unload_in_progress(false);
-	complete(&wlan_start_comp);
 
 	goto success;
 
@@ -6502,7 +6499,6 @@ void hdd_deinit(void)
 static int __hdd_module_init(void)
 {
 	int ret = 0;
-	unsigned long rc;
 
 	pr_info("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
@@ -6511,19 +6507,9 @@ static int __hdd_module_init(void)
 
 	hdd_set_conparam((uint32_t) con_mode);
 
-	init_completion(&wlan_start_comp);
-
 	ret = wlan_hdd_register_driver();
 	if (ret) {
 		pr_err("%s: driver load failure\n", WLAN_MODULE_NAME);
-		goto out;
-	}
-
-	rc = wait_for_completion_timeout(&wlan_start_comp,
-			msecs_to_jiffies(HDD_WLAN_START_WAIT_TIME));
-
-	if (!rc) {
-		hdd_alert("Timed-out waiting for wlan_hdd_register_driver");
 		goto out;
 	}
 
