@@ -612,7 +612,7 @@ static bool wlan_sap_validate_channel_switch(tHalHandle hal, uint16_t sap_ch,
 		ptSapContext sap_context)
 {
 	return sme_validate_sap_channel_switch(
-			hHal,
+			hal,
 			sap_ch,
 			sap_context->csr_roamProfile.phyMode,
 			sap_context->cc_switch_mode,

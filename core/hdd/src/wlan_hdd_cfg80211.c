@@ -615,14 +615,6 @@ static const struct wiphy_wowlan_support wowlan_support_cfg80211_init = {
 };
 #endif
 
-#ifdef FEATURE_WLAN_TDLS
-
-/* TDLS capabilities params */
-#define PARAM_MAX_TDLS_SESSION \
-		QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_MAX_CONC_SESSIONS
-#define PARAM_TDLS_FEATURE_SUPPORT \
-		QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_FEATURES_SUPPORTED
-
 /**
  * hdd_add_channel_switch_support()- Adds Channel Switch flag if supported
  * @flags: Pointer to the flags to Add channel switch flag.
@@ -643,6 +635,14 @@ static inline void hdd_add_channel_switch_support(uint32_t *flags)
 	return;
 }
 #endif
+
+#ifdef FEATURE_WLAN_TDLS
+
+/* TDLS capabilities params */
+#define PARAM_MAX_TDLS_SESSION \
+		QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_MAX_CONC_SESSIONS
+#define PARAM_TDLS_FEATURE_SUPPORT \
+		QCA_WLAN_VENDOR_ATTR_TDLS_GET_CAPS_FEATURES_SUPPORTED
 
 /**
  * __wlan_hdd_cfg80211_get_tdls_capabilities() - Provide TDLS Capabilites.
