@@ -476,8 +476,84 @@ static tPowerdBm csr_find_channel_pwr(tChannelListWithPower *
 	CDF_ASSERT(0);
 	return 0;
 }
+
+/**
+ * csr_roam_arrange_ch_list() - Updates the channel list modified with greedy
+ * order for 5 Ghz preference and DFS channels.
+ * @mac_ctx: pointer to mac context.
+ * @chan_list:    channel list updated with greedy channel order.
+ * @num_channel:  Number of channels in list
+ *
+ * To allow Early Stop Roaming Scan feature to co-exist with 5G preference,
+ * this function moves 5G channels ahead of 2G channels. This function can
+ * also move 2G channels, ahead of DFS channel or vice versa. Order is
+ * maintained among same category channels
+ *
+ * Return: None
+ */
+void csr_roam_arrange_ch_list(tpAniSirGlobal mac_ctx,
+			tSirUpdateChanParam *chan_list, uint8_t num_channel)
+{
+	bool prefer_5g = CSR_IS_ROAM_PREFER_5GHZ(mac_ctx);
+	bool prefer_dfs = CSR_IS_DFS_CH_ROAM_ALLOWED(mac_ctx);
+	int i, j = 0;
+	tSirUpdateChanParam *tmp_list = NULL;
+
+	if (!prefer_5g)
+		return;
+
+	tmp_list = (tSirUpdateChanParam *)
+		cdf_mem_malloc(sizeof(tSirUpdateChanParam) * num_channel);
+	if (tmp_list == NULL) {
+		sms_log(mac_ctx, LOGE, FL("Memory allocation failed"));
+		return;
+	}
+
+	/* Fist copy Non-DFS 5g channels */
+	for (i = 0; i < num_channel; i++) {
+		if (CDS_IS_CHANNEL_5GHZ(chan_list[i].chanId) &&
+			!CDS_IS_DFS_CH(chan_list[i].chanId)) {
+			cdf_mem_copy(&tmp_list[j++],
+				&chan_list[i], sizeof(tSirUpdateChanParam));
+			chan_list[i].chanId = INVALID_CHANNEL_ID;
+		}
+	}
+	if (prefer_dfs) {
+		/* next copy DFS channels (remaining channels in 5G) */
+		for (i = 0; i < num_channel; i++) {
+			if (CDS_IS_CHANNEL_5GHZ(chan_list[i].chanId)) {
+				cdf_mem_copy(&tmp_list[j++], &chan_list[i],
+					sizeof(tSirUpdateChanParam));
+				chan_list[i].chanId = INVALID_CHANNEL_ID;
+			}
+		}
+	} else {
+		/* next copy 2G channels */
+		for (i = 0; i < num_channel; i++) {
+			if (CDS_IS_CHANNEL_24GHZ(chan_list[i].chanId)) {
+				cdf_mem_copy(&tmp_list[j++], &chan_list[i],
+					sizeof(tSirUpdateChanParam));
+				chan_list[i].chanId = INVALID_CHANNEL_ID;
+			}
+		}
+	}
+	/* copy rest of the channels in same order to tmp list */
+	for (i = 0; i < num_channel; i++) {
+		if (chan_list[i].chanId != INVALID_CHANNEL_ID) {
+			cdf_mem_copy(&tmp_list[j++], &chan_list[i],
+				sizeof(tSirUpdateChanParam));
+			chan_list[i].chanId = INVALID_CHANNEL_ID;
+		}
+	}
+	/* copy tmp list to original channel list buffer */
+	cdf_mem_copy(chan_list, tmp_list,
+				 sizeof(tSirUpdateChanParam) * num_channel);
+	cdf_mem_free(tmp_list);
+}
+
 /**
  * csr_roam_sort_channel_for_early_stop() - Sort the channels
+ * @mac_ctx:        mac global context
  * @chan_list:      Original channel list from the upper layers
  * @num_channel:    Number of original channels
  *
@@ -495,8 +571,8 @@ static tPowerdBm csr_find_channel_pwr(tChannelListWithPower *
  *
  * Return: None
  */
-void csr_roam_sort_channel_for_early_stop(tSirUpdateChanList *chan_list,
-		uint8_t num_channel)
+void csr_roam_sort_channel_for_early_stop(tpAniSirGlobal mac_ctx,
+			tSirUpdateChanList *chan_list, uint8_t num_channel)
 {
 	tSirUpdateChanList *chan_list_greedy, *chan_list_non_greedy;
 	uint8_t i, j;
@@ -587,6 +663,9 @@ void csr_roam_sort_channel_for_early_stop(tSirUpdateChanList *chan_list,
 	cdf_mem_copy(&chan_list->chanParam[i],
 		&chan_list_non_greedy->chanParam[j],
 		num_non_greedy_chan * sizeof(tSirUpdateChanParam));
+
+	/* Update channel list for 5g preference and allow DFS roam */
+	csr_roam_arrange_ch_list(mac_ctx, chan_list->chanParam, num_channel);
 scan_list_sort_error:
 	cdf_mem_free(chan_list_greedy);
 	cdf_mem_free(chan_list_non_greedy);
@@ -673,7 +752,8 @@ CDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac)
 		}
 	}
 	if (pMac->roam.configParam.early_stop_scan_enable)
-		csr_roam_sort_channel_for_early_stop(pChanList, num_channel);
+		csr_roam_sort_channel_for_early_stop(pMac, pChanList,
+						     num_channel);
 	else
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			FL("Early Stop Scan Feature not supported"));
@@ -726,7 +806,6 @@ CDF_STATUS csr_start(tpAniSirGlobal pMac)
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			  "Scan offload is enabled, update default chan list");
 		status = csr_update_channel_list(pMac);
-
 	} while (0);
 	return status;
 }
