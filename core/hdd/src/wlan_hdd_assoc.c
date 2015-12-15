@@ -3821,6 +3821,27 @@ hdd_indicate_ese_bcn_report_ind(const hdd_adapter_t *pAdapter,
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
 /**
+ * hdd_is_8021x_sha256_auth_type() - check authentication type to 8021x_sha256
+ * @pHddStaCtx:	Station Context
+ *
+ * API to check if the connection authentication type is 8021x_sha256.
+ *
+ * Return: bool
+ */
+#ifdef WLAN_FEATURE_11W
+static inline bool hdd_is_8021x_sha256_auth_type(hdd_station_ctx_t *pHddStaCtx)
+{
+	return eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==
+				pHddStaCtx->conn_info.authType;
+}
+#else
+static inline bool hdd_is_8021x_sha256_auth_type(hdd_station_ctx_t *pHddStaCtx)
+{
+	return false;
+}
+#endif
+
+/**
  * hdd_sme_roam_callback() - hdd sme roam callback
  * @pContext: pointer to adapter context
  * @pRoamInfo: pointer to roam info
@@ -4056,9 +4077,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		break;
 #endif
 	case eCSR_ROAM_PMK_NOTIFY:
-		if (eCSR_AUTH_TYPE_RSN == pHddStaCtx->conn_info.authType ||
-			eCSR_AUTH_TYPE_RSN_8021X_SHA256 ==
-					pHddStaCtx->conn_info.authType) {
+		if (eCSR_AUTH_TYPE_RSN == pHddStaCtx->conn_info.authType
+				|| hdd_is_8021x_sha256_auth_type(pHddStaCtx)) {
 			/* notify the supplicant of a new candidate */
 			cdf_ret_status =
 				wlan_hdd_cfg80211_pmksa_candidate_notify(
