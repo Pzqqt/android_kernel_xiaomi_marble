@@ -71,6 +71,10 @@
 #define IEEE80211_CHAN_VHT40MINUS       0x00400000
 /* VHT 80 channel */
 #define IEEE80211_CHAN_VHT80            0x00800000
+/* VHT 80+80 Channel */
+#define IEEE80211_CHAN_VHT80P80         0x01000000
+/* VHT 160 Channel */
+#define IEEE80211_CHAN_VHT160           0x02000000
 
 /* token for ``any channel'' */
 #define DFS_IEEE80211_CHAN_ANY      (-1)
@@ -116,9 +120,11 @@
  */
 struct dfs_ieee80211_channel {
 	uint32_t ic_freq;
+	uint32_t ic_freq_ext;
 	uint32_t ic_flags;
 	uint8_t ic_flagext;
 	uint8_t ic_ieee;
+	uint8_t ic_ieee_ext;
 	int8_t ic_maxregpower;
 	int8_t ic_maxpower;
 	int8_t ic_minpower;
@@ -127,6 +133,7 @@ struct dfs_ieee80211_channel {
 	uint32_t ic_vhtop_ch_freq_seg1;
 	uint32_t ic_vhtop_ch_freq_seg2;
 	int ic_pri_freq_center_freq_mhz_separation;
+	bool ic_80p80_both_dfs;
 };
 
 /**
