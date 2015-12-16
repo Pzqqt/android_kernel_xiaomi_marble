@@ -1396,11 +1396,12 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
 
 	scan_req = (tpSirSmeScanReq) msg_buf;
 	lim_log(mac_ctx, LOG1,
-		FL("SME SCAN REQ id %d numChan %d min %d max %d IELen %d first %d fresh %d unique %d type %d rsp %d"),
+		FL("SME SCAN REQ id %d numChan %d min %d max %d IELen %d first %d fresh %d unique %d type %s (%d) rsp %d"),
 		scan_req->scan_id, scan_req->channelList.numChannels,
 		scan_req->minChannelTime, scan_req->maxChannelTime,
 		scan_req->uIEFieldLen, scan_req->returnAfterFirstMatch,
 		scan_req->returnFreshResults, scan_req->returnUniqueResults,
+		lim_scan_type_to_string(scan_req->scanType),
 		scan_req->scanType, mac_ctx->lim.gLimRspReqd ? 1 : 0);
 	/*
 	 * Since scan req always requires a response, we will overwrite response

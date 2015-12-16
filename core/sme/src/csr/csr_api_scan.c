@@ -4861,11 +4861,15 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 			pScanReqParam->fUniqueResult, pScanReqParam->freshScan,
 			pScanReqParam->hiddenSsid);
 		sms_log(pMac, LOG1,
-			FL("scanType = %u BSSType = %u numOfSSIDs = %d"
-			   " numOfChannels = %d requestType = %d p2pSearch = %d\n"),
-			pScanReq->scanType, pScanReq->BSSType,
+			FL("scanType = %s (%u) BSSType = %s (%u) numOfSSIDs = %d"
+			   " numOfChannels = %d requestType = %s (%d) p2pSearch = %d\n"),
+			lim_scan_type_to_string(pScanReq->scanType),
+			pScanReq->scanType,
+			lim_bss_type_to_string(pScanReq->BSSType),
+			pScanReq->BSSType,
 			pScanReq->SSIDs.numOfSSIDs,
 			pScanReq->ChannelInfo.numOfChannels,
+			sme_request_type_to_string(pScanReq->requestType),
 			pScanReq->requestType, pScanReq->p2pSearch);
 		return CDF_STATUS_E_NOMEM;
 	}
@@ -5006,10 +5010,12 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 
 send_scan_req:
 	sms_log(pMac, LOG1,
-		FL("scanId %d domainIdCurrent %d scanType %d bssType %d requestType %d numChannels %d"),
-		pMsg->scan_id, pMac->scan.domainIdCurrent, pMsg->scanType,
-		pMsg->bssType, pScanReq->requestType,
-		pMsg->channelList.numChannels);
+		FL("scanId %d domainIdCurrent %d scanType %s (%d) bssType %s (%d) requestType %s (%d) numChannels %d"),
+		pMsg->scan_id, pMac->scan.domainIdCurrent,
+		lim_scan_type_to_string(pMsg->scanType), pMsg->scanType,
+		lim_bss_type_to_string(pMsg->bssType), pMsg->bssType,
+		sme_request_type_to_string(pScanReq->requestType),
+		pScanReq->requestType, pMsg->channelList.numChannels);
 
 	for (i = 0; i < pMsg->channelList.numChannels; i++) {
 		sms_log(pMac, LOG1, FL("channelNumber[%d]= %d"), i,
@@ -5256,7 +5262,9 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 			) {
 #ifdef FEATURE_WLAN_LFR
 				sms_log(mac_ctx, LOG2,
-					FL(" reqType=%d, numOfChannels=%d, ignoring DFS channel %d"),
+					FL(" reqType= %s (%d), numOfChannels=%d, ignoring DFS channel %d"),
+					sme_request_type_to_string(
+						src_req->requestType),
 					src_req->requestType,
 					src_req->ChannelInfo.numOfChannels,
 					src_req->ChannelInfo.ChannelList

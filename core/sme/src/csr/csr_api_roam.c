@@ -7143,7 +7143,8 @@ CDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 	/* Initialize the count before proceeding with the Join requests */
 	pSession->join_bssid_count = 0;
 	sms_log(pMac, LOG1,
-		FL("called  BSSType = %d authtype = %d  encryType = %d"),
+		FL("called  BSSType = %s (%d) authtype = %d  encryType = %d"),
+		lim_bss_type_to_string(pProfile->BSSType),
 		pProfile->BSSType, pProfile->AuthType.authType[0],
 		pProfile->EncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(pMac, sessionId);
@@ -7325,7 +7326,8 @@ csr_roam_reassoc(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		return CDF_STATUS_E_FAILURE;
 	}
 	sms_log(mac_ctx, LOG1,
-		FL("called  BSSType = %d authtype = %d  encryType = %d"),
+		FL("called  BSSType = %s (%d) authtype = %d  encryType = %d"),
+		lim_bss_type_to_string(profile->BSSType),
 		profile->BSSType, profile->AuthType.authType[0],
 		profile->EncryptionType.encryptionType[0]);
 	csr_roam_cancel_roaming(mac_ctx, session_id);

@@ -7158,3 +7158,40 @@ lim_get_80Mhz_center_channel(uint8_t primary_channel)
 
 	return INVALID_CHANNEL_ID;
 }
+
+/**
+ * lim_scan_type_to_string(): converts scan type enum to string.
+ * @scan_type: enum value of scan_type.
+ *
+ * Return: Printable string for scan_type
+ */
+const char *lim_scan_type_to_string(const uint8_t scan_type)
+{
+	switch (scan_type) {
+	CASE_RETURN_STRING(eSIR_PASSIVE_SCAN);
+	CASE_RETURN_STRING(eSIR_ACTIVE_SCAN);
+	CASE_RETURN_STRING(eSIR_BEACON_TABLE);
+	default:
+		return "Unknown scan_type";
+	}
+}
+
+/**
+ * lim_bss_type_to_string(): converts bss type enum to string.
+ * @bss_type: enum value of bss_type.
+ *
+ * Return: Printable string for bss_type
+ */
+const char *lim_bss_type_to_string(const uint16_t bss_type)
+{
+	switch (bss_type) {
+	CASE_RETURN_STRING(eSIR_INFRASTRUCTURE_MODE);
+	CASE_RETURN_STRING(eSIR_INFRA_AP_MODE);
+	CASE_RETURN_STRING(eSIR_IBSS_MODE);
+	CASE_RETURN_STRING(eSIR_BTAMP_STA_MODE);
+	CASE_RETURN_STRING(eSIR_BTAMP_AP_MODE);
+	CASE_RETURN_STRING(eSIR_AUTO_MODE);
+	default:
+		return "Unknown bss_type";
+	}
+}

@@ -819,6 +819,7 @@ CDF_STATUS sme_modify_add_ie(tHalHandle hHal,
 CDF_STATUS sme_update_add_ie(tHalHandle hHal,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 CDF_STATUS sme_update_connect_debug(tHalHandle hHal, uint32_t set_value);
+const char *sme_request_type_to_string(const uint8_t request_type);
 CDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 		bool disablefwd);
 uint32_t sme_get_channel_bonding_mode5_g(tHalHandle hHal);
