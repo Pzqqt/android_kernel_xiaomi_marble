@@ -3076,6 +3076,44 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 		/* / Receive path cleanup with dummy packet */
 		lim_ft_cleanup_pre_auth_info(pMac, psessionEntry);
 		lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
+#ifdef WLAN_FEATURE_VOWIFI_11R
+	if ((psessionEntry->limSystemRole == eLIM_STA_ROLE) &&
+		(
+#ifdef FEATURE_WLAN_ESE
+		(psessionEntry->isESEconnection) ||
+#endif
+#ifdef FEATURE_WLAN_LFR
+		(psessionEntry->isFastRoamIniFeatureEnabled) ||
+#endif
+		(psessionEntry->is11Rconnection))) {
+		PELOGE(lim_log(pMac, LOGE,
+			FL("FT Preauth Session (%p,%d) Cleanup Deauth reason %d Trigger = %d"),
+				psessionEntry, psessionEntry->peSessionId,
+				pMlmDeauthReq->reasonCode,
+				pMlmDeauthReq->deauthTrigger););
+		lim_ft_cleanup(pMac, psessionEntry);
+	} else {
+		PELOGE(lim_log(pMac, LOGE,
+			FL("No FT Preauth Session Cleanup in role %d"
+#ifdef FEATURE_WLAN_ESE
+			" isESE %d"
+#endif
+#ifdef FEATURE_WLAN_LFR
+			" isLFR %d"
+#endif
+			" is11r %d, Deauth reason %d Trigger = %d"),
+			psessionEntry->limSystemRole,
+#ifdef FEATURE_WLAN_ESE
+			psessionEntry->isESEconnection,
+#endif
+#ifdef FEATURE_WLAN_LFR
+			psessionEntry->isFastRoamIniFeatureEnabled,
+#endif
+			psessionEntry->is11Rconnection,
+			pMlmDeauthReq->reasonCode,
+			pMlmDeauthReq->deauthTrigger););
+	}
+#endif
 		/* / Free up buffer allocated for mlmDeauthReq */
 		cdf_mem_free(pMlmDeauthReq);
 		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
