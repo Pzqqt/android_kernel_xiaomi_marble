@@ -536,6 +536,12 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	uint16_t n;
 	TX_TIMER *timer_ptr;
 
+	if (!session || (session && !session->valid)) {
+		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+			  FL("session is not valid"));
+		return;
+	}
+
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 		FL("Trying to delete PE session %d Opmode %d BssIdx %d BSSID: "MAC_ADDRESS_STR),
 		session->peSessionId, session->operMode,
