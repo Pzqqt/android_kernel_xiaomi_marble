@@ -48,6 +48,7 @@
 
 #ifdef MEMORY_DEBUG
 #include <cdf_list.h>
+#include <linux/stacktrace.h>
 
 cdf_list_t cdf_mem_list;
 cdf_spinlock_t cdf_mem_list_lock;
@@ -57,11 +58,17 @@ static uint8_t WLAN_MEM_HEADER[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
 static uint8_t WLAN_MEM_TAIL[] = { 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
 					0x86, 0x87 };
 
+#define CDF_MEM_MAX_STACK_TRACE 16
+
 struct s_cdf_mem_struct {
 	cdf_list_node_t pNode;
 	char *fileName;
 	unsigned int lineNum;
 	unsigned int size;
+#ifdef WLAN_OPEN_SOURCE
+	unsigned long stack_trace[CDF_MEM_MAX_STACK_TRACE];
+	struct stack_trace trace;
+#endif
 	uint8_t header[8];
 };
 #endif
@@ -75,6 +82,51 @@ struct s_cdf_mem_struct {
 
 /* External Function implementation */
 #ifdef MEMORY_DEBUG
+#ifdef WLAN_OPEN_SOURCE
+/**
+ * cdf_mem_save_stack_trace() - Save stack trace of the caller
+ * @mem_struct: Pointer to the memory structure where to save the stack trace
+ *
+ * Return: None
+ */
+static inline void cdf_mem_save_stack_trace(struct s_cdf_mem_struct *mem_struct)
+{
+	struct stack_trace *trace = &mem_struct->trace;
+
+	trace->nr_entries = 0;
+	trace->max_entries = CDF_MEM_MAX_STACK_TRACE;
+	trace->entries = mem_struct->stack_trace;
+	trace->skip = 2;
+
+	save_stack_trace(trace);
+}
+
+/**
+ * cdf_mem_print_stack_trace() - Print saved stack trace
+ * @mem_struct: Pointer to the memory structure which has the saved stack trace
+ *              to be printed
+ *
+ * Return: None
+ */
+static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
+					     *mem_struct)
+{
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		  "Call stack for the source of leaked memory:");
+
+	print_stack_trace(&mem_struct->trace, 1);
+}
+#else
+static inline void cdf_mem_save_stack_trace(struct s_cdf_mem_struct *mem_struct)
+{
+
+}
+static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
+					     *mem_struct)
+{
+
+}
+#endif
 
 /**
  * cdf_mem_init() - initialize cdf memory debug functionality
@@ -144,6 +196,7 @@ void cdf_mem_clean(void)
 					mleak_cnt = 0;
 				}
 				mleak_cnt++;
+				cdf_mem_print_stack_trace(memStruct);
 				kfree((void *)memStruct);
 			}
 		} while (cdf_status == CDF_STATUS_SUCCESS);
@@ -240,6 +293,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		memStruct->fileName = fileName;
 		memStruct->lineNum = lineNum;
 		memStruct->size = size;
+		cdf_mem_save_stack_trace(memStruct);
 
 		cdf_mem_copy(&memStruct->header[0],
 			     &WLAN_MEM_HEADER[0], sizeof(WLAN_MEM_HEADER));
