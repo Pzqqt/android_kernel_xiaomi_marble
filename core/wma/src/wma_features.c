@@ -102,10 +102,6 @@ static const uint8_t arp_mask[] = {0xff, 0xff};
 static const uint8_t ns_ptrn[] = {0x86, 0xDD};
 static const uint8_t discvr_ptrn[] = {0xe0, 0x00, 0x00, 0xf8};
 static const uint8_t discvr_mask[] = {0xf0, 0x00, 0x00, 0xf8};
-static CDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
-					uint32_t vdev_id,
-					uint32_t bitmap,
-					bool enable);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
@@ -2850,20 +2846,11 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_NLOD);
 		node = &wma->interfaces[wake_info->vdev_id];
 		if (node) {
-			CDF_STATUS ret = CDF_STATUS_SUCCESS;
 			WMA_LOGD("NLO match happened");
 			node->nlo_match_evt_received = true;
 			cdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
 					WIFI_POWER_EVENT_WAKELOCK_PNO);
-			/* Configure pno scan complete wakeup */
-			ret = wma_add_wow_wakeup_event(wma, wake_info->vdev_id,
-					(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
-					true);
-			if (ret != CDF_STATUS_SUCCESS)
-				WMA_LOGE("Failed to configure pno scan complete wakeup");
-			else
-				WMA_LOGD("PNO scan complete wakeup is enabled in fw");
 		}
 		break;
 
@@ -3979,14 +3966,41 @@ bool wma_is_pnoscan_in_progress(tp_wma_handle wma, int vdev_id)
 {
 	return wma->interfaces[vdev_id].pno_in_progress;
 }
+
+/**
+ * wma_is_pnoscan_match_found(): check if a scan match was found
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool wma_is_pnoscan_match_found(tp_wma_handle wma, int vdev_id)
+{
+	return wma->interfaces[vdev_id].nlo_match_evt_received;
+}
 #else
 /**
  * wma_is_pnoscan_in_progress(): dummy
  *
- * Return: False since no pnoscan can be in progress
+ * Return: False since no pnoscan cannot be in progress
  * when feature flag is not defined.
  */
 bool wma_is_pnoscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return FALSE;
+}
+
+/**
+ * wma_is_pnoscan_match_found(): dummy
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: False since no pnoscan cannot occur
+ * when feature flag is not defined.
+ */
+static inline
+bool wma_is_pnoscan_match_found(tp_wma_handle wma, int vdev_id)
 {
 	return FALSE;
 }
@@ -4055,6 +4069,42 @@ bool wma_is_wow_applicable(tp_wma_handle wma)
 	return true;
 }
 
+/**
+ * wma_configure_dynamic_wake_events(): configure dyanmic wake events
+ * @wma: wma handle
+ *
+ * Some wake events need to be enabled dynamically.  Controll those here.
+ *
+ * Return: none
+ */
+void wma_configure_dynamic_wake_events(tp_wma_handle wma)
+{
+	int vdev_id;
+	int enable_mask;
+	int disable_mask;
+
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		enable_mask = 0;
+		disable_mask = 0;
+
+		if (wma_is_pnoscan_in_progress(wma, vdev_id)) {
+			if (wma_is_pnoscan_match_found(wma, vdev_id))
+				enable_mask |=
+					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
+			else
+				disable_mask |=
+					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
+		}
+
+		if (enable_mask != 0)
+			wma_enable_disable_wakeup_event(wma, vdev_id,
+					enable_mask, true);
+		if (disable_mask != 0)
+			wma_enable_disable_wakeup_event(wma, vdev_id,
+					disable_mask, false);
+	}
+}
+
 #ifdef FEATURE_WLAN_LPHB
 /**
  * wma_apply_lphb(): apply cached LPHB settings
@@ -4093,6 +4143,8 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma)
 	if (wma_is_wow_applicable(wma)) {
 		WMA_LOGE("WOW Suspend");
 		wma_apply_lphb(wma);
+
+		wma_configure_dynamic_wake_events(wma);
 
 		wma->wow.wow_enable = true;
 		wma->wow.wow_enable_cmd_sent = false;
