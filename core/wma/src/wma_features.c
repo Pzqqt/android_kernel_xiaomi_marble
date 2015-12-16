@@ -102,6 +102,10 @@ static const uint8_t arp_mask[] = {0xff, 0xff};
 static const uint8_t ns_ptrn[] = {0x86, 0xDD};
 static const uint8_t discvr_ptrn[] = {0xe0, 0x00, 0x00, 0xf8};
 static const uint8_t discvr_mask[] = {0xf0, 0x00, 0x00, 0xf8};
+static CDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
+					uint32_t vdev_id,
+					uint32_t bitmap,
+					bool enable);
 
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 /**
@@ -2846,11 +2850,20 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		wma_wow_wake_up_stats(wma, NULL, 0, WOW_REASON_NLOD);
 		node = &wma->interfaces[wake_info->vdev_id];
 		if (node) {
+			CDF_STATUS ret = CDF_STATUS_SUCCESS;
 			WMA_LOGD("NLO match happened");
 			node->nlo_match_evt_received = true;
 			cdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
 					WIFI_POWER_EVENT_WAKELOCK_PNO);
+			/* Configure pno scan complete wakeup */
+			ret = wma_add_wow_wakeup_event(wma, wake_info->vdev_id,
+					(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
+					true);
+			if (ret != CDF_STATUS_SUCCESS)
+				WMA_LOGE("Failed to configure pno scan complete wakeup");
+			else
+				WMA_LOGD("PNO scan complete wakeup is enabled in fw");
 		}
 		break;
 
@@ -3887,33 +3900,6 @@ CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 	return CDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_WLAN_EXTSCAN
-/**
- * wma_is_extscan_in_progress(): check if extscan is in progress
- * @wma: wma handle
- *
- * Return: true is extscan in progress, false otherwise.
- */
-static bool wma_is_extscan_in_progress(tp_wma_handle wma)
-{
-	int i;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].extscan_in_progress) {
-			WMA_LOGD("Extscan is in progress, enabling wow");
-			return true;
-		}
-	}
-
-	return false;
-}
-#else
-static bool wma_is_extscan_in_progress(tp_wma_handle wma)
-{
-	return false;
-}
-#endif
-
 /**
  * wma_suspend_req() -  Handles suspend indication request received from umac.
  * @wma: wma handle
@@ -3924,10 +3910,9 @@ static bool wma_is_extscan_in_progress(tp_wma_handle wma)
 CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 {
 	struct wma_txrx_node *iface;
-	bool pno_in_progress = false;
-	uint8_t i, vdev_id = 0;
-	bool extscan_in_progress = false, pno_matched = false;
-	bool enable_wow = false;
+	bool connected = false, pno_in_progress = false;
+	uint8_t i;
+	bool extscan_in_progress = false;
 
 	wma->no_of_suspend_ind++;
 
@@ -3986,40 +3971,42 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 					   WMI_SERVICE_BEACON_OFFLOAD)) {
 			WMA_LOGD("vdev %d is in beaconning mode, enabling wow",
 				 i);
-			enable_wow = true;
+			goto enable_wow;
 		}
 	}
 	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].conn_state)
-			enable_wow = true;
+		if (wma->interfaces[i].conn_state) {
+			connected = true;
+			break;
+		}
 #ifdef FEATURE_WLAN_SCAN_PNO
 		if (wma->interfaces[i].pno_in_progress) {
 			WMA_LOGD("PNO is in progress, enabling wow");
-			enable_wow = true;
 			pno_in_progress = true;
-			vdev_id = i;
-			if (wma->interfaces[i].nlo_match_evt_received)
-				pno_matched = true;
 			break;
 		}
 #endif /* FEATURE_WLAN_SCAN_PNO */
+#ifdef FEATURE_WLAN_EXTSCAN
+		if (wma->interfaces[i].extscan_in_progress) {
+			WMA_LOGD("Extscan is in progress, enabling wow");
+			extscan_in_progress = true;
+			break;
+		}
+#endif
 	}
-	extscan_in_progress = wma_is_extscan_in_progress(wma);
-	if (extscan_in_progress)
-		enable_wow = true;
-
 	for (i = 0; i < wma->max_bssid; i++) {
 		wma->wow.gtk_pdev_enable |= wma->wow.gtk_err_enable[i];
 		WMA_LOGD("VDEV_ID:%d, gtk_err_enable[%d]:%d, gtk_pdev_enable:%d", i,
 			i, wma->wow.gtk_err_enable[i], wma->wow.gtk_pdev_enable);
 	}
 
-	if (!enable_wow && !pno_in_progress && !extscan_in_progress) {
+	if (!connected && !pno_in_progress && !extscan_in_progress) {
 		WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
 		cdf_mem_free(info);
 		goto send_ready_to_suspend;
 	}
 
+enable_wow:
 	WMA_LOGE("WOW Suspend");
 
 	/*
@@ -4040,11 +4027,6 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 		}
 	}
 #endif /* FEATURE_WLAN_LPHB */
-
-	if (pno_matched)
-		wma_enable_disable_wakeup_event(wma, vdev_id,
-				(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
-				pno_matched);
 
 	wma->wow.wow_enable = true;
 	wma->wow.wow_enable_cmd_sent = false;
