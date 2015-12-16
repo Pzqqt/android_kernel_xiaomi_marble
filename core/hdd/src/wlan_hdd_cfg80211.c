@@ -185,13 +185,6 @@ static struct ieee80211_channel hdd_social_channels_2_4_ghz[] = {
 };
 
 static struct ieee80211_channel hdd_channels_5_ghz[] = {
-	HDD5GHZCHAN(4920, 240, 0),
-	HDD5GHZCHAN(4940, 244, 0),
-	HDD5GHZCHAN(4960, 248, 0),
-	HDD5GHZCHAN(4980, 252, 0),
-	HDD5GHZCHAN(5040, 208, 0),
-	HDD5GHZCHAN(5060, 212, 0),
-	HDD5GHZCHAN(5080, 216, 0),
 	HDD5GHZCHAN(5180, 36, 0),
 	HDD5GHZCHAN(5200, 40, 0),
 	HDD5GHZCHAN(5220, 44, 0),

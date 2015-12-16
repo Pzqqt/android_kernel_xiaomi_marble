@@ -138,13 +138,6 @@ const struct chan_map chan_mapping[NUM_RF_CHANNELS] = {
 	{2467, 12},
 	{2472, 13},
 	{2484, 14},
-	{4920, 240},
-	{4940, 244},
-	{4960, 248},
-	{4980, 252},
-	{5040, 208},
-	{5060, 212},
-	{5080, 216},
 	{5180, 36},
 	{5200, 40},
 	{5220, 44},
@@ -194,11 +187,6 @@ const struct chan_map chan_mapping[NUM_RF_CHANNELS] = {
 	{2452, 9},
 	{2457, 10},
 	{2462, 11},
-	{4930, 242},
-	{4950, 246},
-	{4970, 250},
-	{5050, 210},
-	{5070, 214},
 	{5190, 38},
 	{5210, 42},
 	{5230, 46},
@@ -597,10 +585,6 @@ static int cds_bw20_ch_index_to_bw40_ch_index(int k)
 		m = k - RF_CHAN_1 + RF_CHAN_BOND_3;
 		if (m > RF_CHAN_BOND_11)
 			m = RF_CHAN_BOND_11;
-	} else if (k >= RF_CHAN_240 && k <= RF_CHAN_216) {
-		m = k - RF_CHAN_240 + RF_CHAN_BOND_242;
-		if (m > RF_CHAN_BOND_214)
-			m = RF_CHAN_BOND_214;
 	} else if (k >= RF_CHAN_36 && k <= RF_CHAN_64) {
 		m = k - RF_CHAN_36 + RF_CHAN_BOND_38;
 		if (m > RF_CHAN_BOND_62)

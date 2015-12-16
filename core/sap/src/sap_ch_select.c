@@ -114,20 +114,6 @@ sapSafeChannelType safe_channels[NUM_20MHZ_RF_CHANNELS] = {
 	,                       /* RF_CHAN_13, */
 	{14, true}
 	,                       /* RF_CHAN_14, */
-	{240, true}
-	,                       /* RF_CHAN_240, */
-	{244, true}
-	,                       /* RF_CHAN_244, */
-	{248, true}
-	,                       /* RF_CHAN_248, */
-	{252, true}
-	,                       /* RF_CHAN_252, */
-	{208, true}
-	,                       /* RF_CHAN_208, */
-	{212, true}
-	,                       /* RF_CHAN_212, */
-	{216, true}
-	,                       /* RF_CHAN_216, */
 	{36, true}
 	,                       /* RF_CHAN_36, */
 	{40, true}
