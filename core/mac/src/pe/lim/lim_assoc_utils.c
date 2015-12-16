@@ -3382,6 +3382,7 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 	uint32_t *noa2_duration_from_beacon = NULL;
 	uint32_t noa;
 	uint32_t total_num_noa_desc = 0;
+	uint32_t selfStaDot11Mode = 0;
 
 	cdf_mem_copy(current_ssid.ssId,
 		     session_entry->ssId.ssId, session_entry->ssId.length);
@@ -3494,7 +3495,10 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 	lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
 			     (uint32_t *) &mlm_join_cnf);
 
-	if (beacon_probe_rsp->vendor2_ie.VHTCaps.present) {
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
+
+	if ((IS_DOT11_MODE_VHT(selfStaDot11Mode)) &&
+		beacon_probe_rsp->vendor2_ie.VHTCaps.present) {
 		session_entry->is_vendor_specific_vhtcaps = true;
 		session_entry->vendor_specific_vht_ie_type =
 			beacon_probe_rsp->vendor2_ie.type;
