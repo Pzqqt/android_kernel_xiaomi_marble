@@ -388,7 +388,8 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 	tSirMacRateSet *opr_rates = &start_bss_req->operationalRateSet;
 
 	PELOG1(lim_log(mac_ctx, LOG1,
-	       FL("Parsed START_BSS_REQ fields are bssType=%d, channelId=%d, SSID len=%d, rsnIE len=%d, nwType=%d, rateset len=%d"),
+	       FL("Parsed START_BSS_REQ fields are bssType=%s (%d), channelId=%d, SSID len=%d, rsnIE len=%d, nwType=%d, rateset len=%d"),
+	       lim_bss_type_to_string(start_bss_req->bssType),
 	       start_bss_req->bssType, start_bss_req->channelId,
 	       start_bss_req->ssId.length, start_bss_req->rsnIE.length,
 	       start_bss_req->nwType, opr_rates->numRates);)

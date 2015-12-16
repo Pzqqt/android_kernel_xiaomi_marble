@@ -5561,6 +5561,27 @@ bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 	return false;
 }
 
+/**
+ * sme_request_type_to_string(): converts scan request enum to string.
+ * @request_type: scan request type enum.
+ *
+ * Return: Printable string for request_type
+ */
+const char *sme_request_type_to_string(const uint8_t request_type)
+{
+	switch (request_type) {
+	CASE_RETURN_STRING(eCSR_SCAN_REQUEST_11D_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_REQUEST_FULL_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_IDLE_MODE_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_HO_PROBE_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_P2P_DISCOVERY);
+	CASE_RETURN_STRING(eCSR_SCAN_SOFTAP_CHANNEL_RANGE);
+	CASE_RETURN_STRING(eCSR_SCAN_P2P_FIND_PEER);
+	default:
+		return "Unknown Scan Request Type";
+	}
+}
+
 CDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 					 int numChannels, uint8_t channel)
 {

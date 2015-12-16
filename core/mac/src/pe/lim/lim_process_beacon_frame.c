@@ -238,9 +238,9 @@ lim_process_beacon_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo)
 		cdf_mem_free(pBeacon);
 	} /* end of (eLIM_MLM_WT_PROBE_RESP_STATE) || (eLIM_MLM_PASSIVE_SCAN_STATE) */
 	else {
-		lim_log(pMac, LOG1, FL("Rcvd Beacon in unexpected MLM state %d"),
+		lim_log(pMac, LOG1, FL("Rcvd Beacon in unexpected MLM state %s (%d)"),
+			lim_mlm_state_str(pMac->lim.gLimMlmState),
 			pMac->lim.gLimMlmState);
-		lim_print_mlm_state(pMac, LOG1, pMac->lim.gLimMlmState);
 #ifdef WLAN_DEBUG
 		pMac->lim.gLimUnexpBcnCnt++;
 #endif
