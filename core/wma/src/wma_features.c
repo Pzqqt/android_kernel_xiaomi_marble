@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3965,7 +3965,7 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 			i, wma->wow.gtk_err_enable[i], wma->wow.gtk_pdev_enable);
 	}
 
-	if (!enable_wow) {
+	if (!enable_wow && !pno_in_progress && !extscan_in_progress) {
 		WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
 		cdf_mem_free(info);
 		goto send_ready_to_suspend;
