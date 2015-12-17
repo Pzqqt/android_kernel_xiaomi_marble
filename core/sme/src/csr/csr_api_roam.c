@@ -1420,29 +1420,6 @@ QDF_STATUS csr_create_bg_scan_roam_channel_list(tpAniSirGlobal pMac,
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-/*
-   This function flushes the roam scan cache
- */
-QDF_STATUS csr_flush_roam_scan_roam_channel_list(tpAniSirGlobal pMac,
-						 uint8_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tpCsrNeighborRoamControlInfo pNeighborRoamInfo
-		= &pMac->roam.neighborRoamInfo[sessionId];
-	/* Free up the memory first (if required) */
-	if (NULL !=
-	    pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-	    ChannelList) {
-		qdf_mem_free(pNeighborRoamInfo->roamChannelInfo.
-			     currentChannelListInfo.ChannelList);
-		pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-		ChannelList = NULL;
-		pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
-		numOfChannels = 0;
-	}
-	return status;
-}
-
 /**
  * csr_create_roam_scan_channel_list() - create roam scan channel list
  * @pMac: Global mac pointer

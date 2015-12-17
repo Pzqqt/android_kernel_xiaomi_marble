@@ -2859,8 +2859,6 @@ void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 		CSR_NEIGHBOR_ROAM_INVALID_CHANNEL_INDEX;
 	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.
 	numOfChannels = 0;
-	pNeighborRoamInfo->roamChannelInfo.currentChannelListInfo.ChannelList =
-		NULL;
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 
 	/* Free the profile.. */
