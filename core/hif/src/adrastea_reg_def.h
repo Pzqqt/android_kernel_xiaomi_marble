@@ -1812,11 +1812,7 @@
 
 #define ADRASTEA_A_WIFI_APB_1_A_WFSS_CE_TARGET_HOST_DELTA	0x08
 #define ADRASTEA_A_SOC_PCIE_PCIE_SCRATCH_2			0x0013005C
-#ifdef QCA_WIFI_3_0_IHELIUM
-#define ADRASTEA_A_SOC_CORE_PCIE_INTR_ENABLE_GRP0_Q6_MASK        0xff
-#else
 #define ADRASTEA_A_SOC_CORE_PCIE_INTR_ENABLE_GRP0_Q6_MASK        0x0
-#endif /* QCA_WIFI_3_0_IHELIUM */
 /* end: Q6 iHelium emulation registers */
 
 struct targetdef_s adrastea_targetdef = {
