@@ -94,41 +94,41 @@ tSirRetStatus sch_get_p2p_ie_offset(uint8_t *pExtraIe, uint32_t extraIeLen,
  * @frm:           frame where additional IE is to be added
  * @max_bcn_size:  max beacon size
  * @num_bytes:     final size
+ * @addn_ie:       pointer to additional IE
+ * @addn_ielen:    lenght of additional IE
  *
  * Return: status of operation
  */
 tSirRetStatus
 sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
-		   uint8_t *frm, uint32_t max_bcn_size, uint32_t *num_bytes)
+		   uint8_t *frm, uint32_t max_bcn_size, uint32_t *num_bytes,
+		   uint8_t *addn_ie, uint16_t addn_ielen)
 {
 	tSirRetStatus status = eSIR_FAILURE;
-	uint32_t present, len;
 	uint8_t add_ie[WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN];
 	uint8_t *p2p_ie = NULL;
 	uint8_t noa_len = 0;
 	uint8_t noa_strm[SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN];
+	bool valid_ie;
 
-	present = (session->addIeParams.probeRespBCNDataLen != 0);
-	if (!present)
+	valid_ie = (addn_ielen <= WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN &&
+		    addn_ielen && ((addn_ielen + *num_bytes) <= max_bcn_size));
+
+	if (!valid_ie)
 		return status;
 
-	len = session->addIeParams.probeRespBCNDataLen;
-	if (!(len <= WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN && len &&
-	    ((len + *num_bytes) <= max_bcn_size)))
-		return status;
+	qdf_mem_copy(&add_ie[0], addn_ie, addn_ielen);
 
-	qdf_mem_copy(&add_ie[0], session->addIeParams.probeRespBCNData_buff,
-		     len);
-
-	p2p_ie = limGetP2pIEPtr(mac_ctx, &add_ie[0], len);
+	p2p_ie = limGetP2pIEPtr(mac_ctx, &add_ie[0], addn_ielen);
 	if ((p2p_ie != NULL) && !mac_ctx->beacon_offload) {
 		/* get NoA attribute stream P2P IE */
 		noa_len = lim_get_noa_attr_stream(mac_ctx, noa_strm, session);
 		if (noa_len) {
-			if ((noa_len + len) <=
+			if ((noa_len + addn_ielen) <=
 			    WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN) {
-				qdf_mem_copy(&add_ie[len], noa_strm, noa_len);
-				len += noa_len;
+				qdf_mem_copy(&add_ie[addn_ielen], noa_strm,
+					     noa_len);
+				addn_ielen += noa_len;
 				p2p_ie[1] += noa_len;
 			} else {
 				sch_log(mac_ctx, LOGE,
@@ -136,13 +136,13 @@ sch_append_addn_ie(tpAniSirGlobal mac_ctx, tpPESession session,
 			}
 		}
 	}
-	if (len <= WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN) {
-		qdf_mem_copy(frm, &add_ie[0], len);
-		*num_bytes = *num_bytes + len;
+	if (addn_ielen <= WNI_CFG_PROBE_RSP_BCN_ADDNIE_DATA_LEN) {
+		qdf_mem_copy(frm, &add_ie[0], addn_ielen);
+		*num_bytes = *num_bytes + addn_ielen;
 	} else {
 		sch_log(mac_ctx, LOGW,
 			FL("Not able to insert because of len constraint %d"),
-			len);
+			addn_ielen);
 	}
 	return status;
 }
@@ -176,6 +176,10 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	uint16_t p2p_ie_offset = 0;
 	tSirRetStatus status = eSIR_SUCCESS;
 	bool is_vht_enabled = false;
+	uint16_t addn_ielen = 0;
+	uint8_t *addn_ie = NULL;
+	tDot11fIEExtCap extracted_extcap;
+	bool extcap_present = true, addnie_present = false;
 
 	bcn_1 = qdf_mem_malloc(sizeof(tDot11fBeacon1));
 	if (NULL == bcn_1) {
@@ -474,6 +478,36 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 
 	}
 
+	addnie_present = (session->addIeParams.probeRespBCNDataLen != 0);
+	if (addnie_present) {
+		addn_ielen = session->addIeParams.probeRespBCNDataLen;
+		addn_ie = qdf_mem_malloc(addn_ielen);
+		if (!addn_ie) {
+			sch_log(mac_ctx, LOGE, FL("addn_ie malloc failed"));
+			qdf_mem_free(bcn_1);
+			qdf_mem_free(bcn_2);
+			qdf_mem_free(wsc_prb_res);
+			return eSIR_MEM_ALLOC_FAILED;
+		}
+		qdf_mem_copy(addn_ie,
+			session->addIeParams.probeRespBCNData_buff,
+			addn_ielen);
+
+		qdf_mem_zero((uint8_t *)&extracted_extcap,
+			     sizeof(tDot11fIEExtCap));
+		status = lim_strip_extcap_update_struct(mac_ctx, addn_ie,
+				&addn_ielen, &extracted_extcap);
+		if (eSIR_SUCCESS != status) {
+			extcap_present = false;
+			sch_log(mac_ctx, LOG1, FL("extcap not extracted"));
+		}
+		/* merge extcap IE */
+		if (extcap_present)
+			lim_merge_extcap_struct(&bcn_2->ExtCap,
+						&extracted_extcap);
+
+	}
+
 	n_status = dot11f_pack_beacon2(mac_ctx, bcn_2,
 				      session->pSchBeaconFrameEnd,
 				      SCH_MAX_BEACON_SIZE, &n_bytes);
@@ -484,6 +518,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		qdf_mem_free(bcn_1);
 		qdf_mem_free(bcn_2);
 		qdf_mem_free(wsc_prb_res);
+		qdf_mem_free(addn_ie);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(n_status)) {
 		sch_log(mac_ctx, LOGE,
@@ -493,10 +528,13 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 
 	extra_ie = session->pSchBeaconFrameEnd + n_bytes;
 	extra_ie_offset = n_bytes;
+
 	/* TODO: Append additional IE here. */
-	sch_append_addn_ie(mac_ctx, session,
-			   session->pSchBeaconFrameEnd + n_bytes,
-			   SCH_MAX_BEACON_SIZE, &n_bytes);
+	if (addn_ielen > 0)
+		sch_append_addn_ie(mac_ctx, session,
+			session->pSchBeaconFrameEnd + n_bytes,
+			SCH_MAX_BEACON_SIZE, &n_bytes, addn_ie, addn_ielen);
+
 	session->schBeaconOffsetEnd = (uint16_t) n_bytes;
 	extra_ie_len = n_bytes - extra_ie_offset;
 	/* Get the p2p Ie Offset */
@@ -515,6 +553,7 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	qdf_mem_free(bcn_1);
 	qdf_mem_free(bcn_2);
 	qdf_mem_free(wsc_prb_res);
+	qdf_mem_free(addn_ie);
 	return eSIR_SUCCESS;
 }
 

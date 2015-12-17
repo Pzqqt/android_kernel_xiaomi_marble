@@ -55,6 +55,7 @@
 #include "sch_sys_params.h"
 #include "lim_trace.h"
 #include "lim_types.h"
+#include "lim_utils.h"
 
 #include "wma_types.h"
 
@@ -381,16 +382,18 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	uint32_t nPayload, nBytes, nStatus;
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t addnIEPresent = false;
-	uint32_t addnIELen = 0;
 	uint8_t *addIE = NULL;
 	uint8_t *addIeWoP2pIe = NULL;
 	uint32_t addnIELenWoP2pIe = 0;
 	uint32_t retStatus;
+	tDot11fIEExtCap extracted_extcap;
+	bool extcap_present = true;
+	tDot11fProbeResponse *prb_rsp_frm;
+	tSirRetStatus status;
+	uint16_t addn_ielen = 0;
 
-	nStatus =
-		dot11f_get_packed_probe_response_size(pMac,
-						      &psessionEntry->probeRespFrame,
-						      &nPayload);
+	nStatus = dot11f_get_packed_probe_response_size(pMac,
+			&psessionEntry->probeRespFrame, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		sch_log(pMac, LOGE, FL("Failed to calculate the packed size f"
 				       "or a Probe Response (0x%08x)."),
@@ -435,30 +438,34 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 
 		/* Probe rsp IE available */
 		/*need to check the data length */
-		addIE =
-			qdf_mem_malloc(addnIELenWoP2pIe);
+		addIE = qdf_mem_malloc(addnIELenWoP2pIe);
 		if (NULL == addIE) {
 			sch_log(pMac, LOGE,
-				FL
-					("Unable to get WNI_CFG_PROBE_RSP_ADDNIE_DATA1 length"));
+				FL("Unable to get WNI_CFG_PROBE_RSP_ADDNIE_DATA1 length"));
 			qdf_mem_free(addIeWoP2pIe);
 			return eSIR_MEM_ALLOC_FAILED;
 		}
-		addnIELen = addnIELenWoP2pIe;
+		addn_ielen = addnIELenWoP2pIe;
 
-		if (addnIELen <= WNI_CFG_PROBE_RSP_ADDNIE_DATA1_LEN && addnIELen
-		    && (nBytes + addnIELen) <= SIR_MAX_PACKET_SIZE) {
+		if (addn_ielen <= WNI_CFG_PROBE_RSP_ADDNIE_DATA1_LEN &&
+		    addn_ielen && (nBytes + addn_ielen) <= SIR_MAX_PACKET_SIZE)
+			qdf_mem_copy(addIE, addIeWoP2pIe, addnIELenWoP2pIe);
 
-			qdf_mem_copy(addIE,
-				     addIeWoP2pIe,
-				     addnIELenWoP2pIe);
-		}
 		qdf_mem_free(addIeWoP2pIe);
+
+		qdf_mem_zero((uint8_t *)&extracted_extcap,
+			     sizeof(tDot11fIEExtCap));
+		status = lim_strip_extcap_update_struct(pMac, addIE,
+				&addn_ielen, &extracted_extcap);
+		if (eSIR_SUCCESS != status) {
+			extcap_present = false;
+			sch_log(pMac, LOG1, FL("extcap not extracted"));
+		}
 	}
 
 	if (addnIEPresent) {
-		if ((nBytes + addnIELen) <= SIR_MAX_PACKET_SIZE)
-			nBytes += addnIELen;
+		if ((nBytes + addn_ielen) <= SIR_MAX_PACKET_SIZE)
+			nBytes += addn_ielen;
 		else
 			addnIEPresent = false;  /* Dont include the IE. */
 	}
@@ -474,6 +481,12 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	pMacHdr = (tpSirMacMgmtHdr) pFrame2Hal;
 
 	sir_copy_mac_addr(pMacHdr->bssId, psessionEntry->bssId);
+
+	/* merge extcap IE */
+	prb_rsp_frm = &psessionEntry->probeRespFrame;
+	if (extcap_present)
+		lim_merge_extcap_struct(&prb_rsp_frm->ExtCap,
+					&extracted_extcap);
 
 	/* That done, pack the Probe Response: */
 	nStatus =
@@ -494,8 +507,8 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	}
 
 	if (addnIEPresent) {
-		qdf_mem_copy(&pFrame2Hal[nBytes - addnIELen],
-			     &addIE[0], addnIELen);
+		qdf_mem_copy(&pFrame2Hal[nBytes - addn_ielen],
+			     &addIE[0], addn_ielen);
 	}
 
 	/* free the allocated Memory */
