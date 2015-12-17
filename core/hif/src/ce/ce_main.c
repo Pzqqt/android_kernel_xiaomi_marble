@@ -1550,7 +1550,7 @@ int hif_set_hia(struct ol_softc *scn)
 
 	HIF_TRACE("%s: E", __func__);
 
-	if (IHELIUM_BU || ADRASTEA_BU)
+	if (ADRASTEA_BU)
 		return CDF_STATUS_SUCCESS;
 
 #ifdef QCA_WIFI_3_0
@@ -1816,13 +1816,6 @@ static int hif_wlan_enable(void)
 	return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
 }
 
-#if ((!defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)) || defined(CONFIG_ICNSS))
-static inline void cnss_pcie_notify_q6(void)
-{
-	return;
-}
-#endif
-
 /*
  * Called from PCI layer whenever a new PCI device is probed.
  * Initializes per-device HIF state and notifies the main
@@ -1860,11 +1853,6 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	if (ret) {
 		HIF_ERROR("%s: hif_wlan_enable error = %d", __func__, ret);
 		return CDF_STATUS_NOT_INITIALIZED;
-	}
-	if (IHELIUM_BU) {
-		cnss_pcie_notify_q6();
-		HIF_TRACE("%s: cnss_pcie_notify_q6 done, notice_send= %d",
-			  __func__, scn->notice_send);
 	}
 
 	scn->notice_send = true;

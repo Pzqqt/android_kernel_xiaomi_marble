@@ -118,10 +118,10 @@ typedef enum _ATH_BIN_FILE {
 	ATH_SETUP_FILE,
 } ATH_BIN_FILE;
 
-#if defined(QCA_WIFI_3_0_IHELIUM) || defined(QCA_WIFI_3_0_ADRASTEA)
-#define IHELIUM_NO_BMI 1
+#if defined(QCA_WIFI_3_0_ADRASTEA)
+#define NO_BMI 1
 #else
-#define IHELIUM_NO_BMI 0
+#define NO_BMI 0
 #endif
 
 CDF_STATUS bmi_execute(uint32_t address, uint32_t *param,

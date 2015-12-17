@@ -664,13 +664,6 @@ void hif_pktlogmod_exit(void *hif_ctx)
 }
 #endif
 
-#if ((!defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)) || defined(CONFIG_ICNSS))
-static inline void cnss_pcie_notify_q6(void)
-{
-	return;
-}
-#endif
-
 /**
  * hif_wlan_disable(): call the platform driver to disable wlan
  *
@@ -712,12 +705,6 @@ void hif_disable(void *hif_ctx, enum hif_disable_type type)
 
 	if (scn->aps_osdev.bdev)
 		hif_disable_bus(scn->aps_osdev.bdev);
-
-	if (IHELIUM_BU) {
-		cnss_pcie_notify_q6();
-		HIF_TRACE("%s: cnss_pcie_notify_q6 done, notice_send= %d",
-			  __func__, scn->notice_send);
-	}
 
 	hif_wlan_disable();
 

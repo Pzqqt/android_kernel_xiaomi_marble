@@ -112,7 +112,7 @@ CDF_STATUS bmi_done(struct ol_softc *scn)
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	hif_claim_device(scn, scn);
 
-	if (IHELIUM_NO_BMI)
+	if (NO_BMI)
 		return status;
 
 	status = bmi_done_local(scn);
@@ -175,7 +175,7 @@ CDF_STATUS bmi_download_firmware(struct ol_softc *scn)
 	uint32_t address;
 	int32_t ret;
 
-	if (IHELIUM_NO_BMI)
+	if (NO_BMI)
 		return CDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
 
 	if (!scn) {

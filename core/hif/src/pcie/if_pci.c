@@ -100,63 +100,18 @@ struct ce_irq_reg_table {
 	uint32_t irq_status;
 };
 
-#if !defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)
+#if !defined(QCA_WIFI_3_0_ADRASTEA)
 static inline void cnss_intr_notify_q6(void)
 {
 }
 #endif
 
-#if !defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)
+#if !defined(QCA_WIFI_3_0_ADRASTEA)
 static inline void *cnss_get_target_smem(void)
 {
 	return NULL;
 }
 #endif
-
-void hif_pci_route_target_interrupt(struct hif_pci_softc *sc)
-{
-	uint32_t target_cause0, target_cause1, target_cause2;
-	uint32_t *target_smem;
-	struct ol_softc *scn = sc->ol_sc;
-
-	target_smem = (uint32_t *)cnss_get_target_smem();
-	if (!target_smem)
-		return;
-
-	/* disable interrupts */
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_0_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_1_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_2_ADDRESS, 0);
-	/* read cause */
-	target_cause0 = hif_read32_mb(sc->mem +
-				      A_SOC_CORE_SCRATCH_3_ADDRESS);
-	target_cause1 = hif_read32_mb(sc->mem +
-				      A_SOC_CORE_SCRATCH_4_ADDRESS);
-	target_cause2 = hif_read32_mb(sc->mem +
-				      A_SOC_CORE_SCRATCH_5_ADDRESS);
-	/* clear cause registers */
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_3_ADDRESS, 0xffffffff);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_4_ADDRESS, 0xffffffff);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_5_ADDRESS, 0xffffffff);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_3_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_4_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_5_ADDRESS, 0);
-	/* copy cause value to Q6 */
-	*target_smem = target_cause0;
-	*(target_smem + 1) = target_cause1;
-	*(target_smem + 2) = target_cause2;
-	if (scn->notice_send)
-		cnss_intr_notify_q6();
-}
 
 #ifndef QCA_WIFI_3_0_ADRASTEA
 static inline void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
@@ -220,18 +175,6 @@ static irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
 		hif_write32_mb(sc->mem +
 			      (SOC_CORE_BASE_ADDRESS |
 			       PCIE_INTR_ENABLE_ADDRESS), 0);
-		if (IHELIUM_BU) {
-			if (!hif_read32_mb(sc->mem + PCIE_INTR_CAUSE_ADDRESS)) {
-				hif_pci_route_target_interrupt(sc);
-
-				hif_write32_mb(sc->mem +
-					       (SOC_CORE_BASE_ADDRESS |
-						PCIE_INTR_ENABLE_ADDRESS),
-					       HOST_GROUP0_MASK);
-
-				return IRQ_HANDLED;
-			}
-		}
 
 		hif_write32_mb(sc->mem +
 			      (SOC_CORE_BASE_ADDRESS | PCIE_INTR_CLR_ADDRESS),
@@ -850,7 +793,7 @@ static void wlan_tasklet(unsigned long data)
 	if (cdf_atomic_read(&scn->link_suspended))
 		goto end;
 
-	if (!IHELIUM_BU && !ADRASTEA_BU) {
+	if (!ADRASTEA_BU) {
 		(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, scn);
 		if (sc->ol_sc->target_status == OL_TRGET_STATUS_RESET)
 			goto end;

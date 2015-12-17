@@ -429,7 +429,7 @@ CDF_STATUS bmi_firmware_download(struct ol_softc *scn)
 {
 	CDF_STATUS status;
 
-	if (IHELIUM_NO_BMI)
+	if (NO_BMI)
 		return CDF_STATUS_SUCCESS;
 
 	status = bmi_init(scn);

@@ -73,12 +73,6 @@ bool hif_target_forced_awake(struct ol_softc *scn);
 #define MAX_NUM_OF_RECEIVES 1000
 #endif /* SLUB_DEBUG_ON / FEATURE_NAPI */
 
-#ifdef QCA_WIFI_3_0_IHELIUM
-#define IHELIUM_BU 1
-#else
-#define IHELIUM_BU 0
-#endif
-
 #ifdef QCA_WIFI_3_0_ADRASTEA
 #define ADRASTEA_BU 1
 #else
@@ -101,7 +95,7 @@ bool hif_target_forced_awake(struct ol_softc *scn);
 #define AR6320_FW_3_2  (0x32)
 #define ADRASTEA_DEVICE_ID (0xabcd)
 #define ADRASTEA_DEVICE_ID_P2_E12 (0x7021)
-#if (defined(QVIT) || defined (QCA_WIFI_3_0_IHELIUM))
+#if (defined(QVIT))
 #define QCA6180_DEVICE_ID (0xabcd)
 #else
 #define QCA6180_DEVICE_ID (0x041)
