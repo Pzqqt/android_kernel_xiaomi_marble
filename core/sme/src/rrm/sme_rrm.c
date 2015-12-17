@@ -1187,7 +1187,7 @@ QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac, void *pMsgBuf)
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 #ifdef FEATURE_WLAN_ESE
 		/* Clear the cache for ESE. */
-		if (csr_neighbor_roam_is_ese_assoc(pMac, sessionId)) {
+		if (csr_roam_is_ese_assoc(pMac, sessionId)) {
 			rrm_ll_purge_neighbor_cache(pMac,
 						    &pMac->rrm.rrmSmeContext.
 						    neighborReportCache);

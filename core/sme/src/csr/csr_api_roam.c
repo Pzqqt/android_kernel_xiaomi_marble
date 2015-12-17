@@ -1553,25 +1553,10 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 bool csr_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
 {
 #ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
-	return csr_neighbor_roam_is_ese_assoc(mac_ctx, session_id);
+	return mac_ctx->roam.neighborRoamInfo[session_id].isESEAssoc;
 #else
 	return false;
 #endif
-}
-
-/**
- * csr_neighbor_roam_is_ese_assoc() - Check the Association type
- * @mac_ctx: Global MAC Context
- * @session_id: Session ID on which the check should be done
- *
- * This function returns whether the current association
- * is a ESE assoc or not
- *
- * Return: True if ESE association, false otherwise.
- **/
-bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal mac_ctx, uint8_t session_id)
-{
-	return mac_ctx->roam.neighborRoamInfo[session_id].isESEAssoc;
 }
 
 /**
@@ -16804,7 +16789,7 @@ csr_create_roam_scan_offload_request(tpAniSirGlobal mac_ctx,
 	req_buf->MAWCEnabled = mac_ctx->roam.configParam.MAWCEnabled;
 #ifdef FEATURE_WLAN_ESE
 	req_buf->IsESEAssoc =
-		csr_neighbor_roam_is_ese_assoc(mac_ctx, session_id) &&
+		csr_roam_is_ese_assoc(mac_ctx, session_id) &&
 		((req_buf->ConnectedNetwork.authentication ==
 			eCSR_AUTH_TYPE_OPEN_SYSTEM)  ||
 		(csr_is_auth_type_ese(req_buf->

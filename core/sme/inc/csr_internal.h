@@ -1283,7 +1283,6 @@ bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 /* Returns whether the current association is a ESE assoc or not */
 bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_roam_is_ese_ini_feature_enabled(tpAniSirGlobal pMac);
-bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId,
