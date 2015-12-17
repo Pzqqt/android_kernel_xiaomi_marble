@@ -2026,6 +2026,8 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.nVhtChannelWidth =
 			pParam->nVhtChannelWidth;
 		pMac->roam.configParam.txBFEnable = pParam->enableTxBF;
+		pMac->roam.configParam.enable_txbf_sap_mode =
+			pParam->enable_txbf_sap_mode;
 		pMac->roam.configParam.txBFCsnValue = pParam->txBFCsnValue;
 		pMac->roam.configParam.enable2x2 = pParam->enable2x2;
 		pMac->roam.configParam.enableVhtFor24GHz =
@@ -2189,6 +2191,8 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 #ifdef WLAN_FEATURE_11AC
 	pParam->nVhtChannelWidth = cfg_params->nVhtChannelWidth;
 	pParam->enableTxBF = cfg_params->txBFEnable;
+	pParam->enable_txbf_sap_mode =
+		cfg_params->enable_txbf_sap_mode;
 	pParam->txBFCsnValue = cfg_params->txBFCsnValue;
 	pParam->enableMuBformee = cfg_params->txMuBformee;
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
@@ -14600,6 +14604,10 @@ CDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	pMsg->isCoalesingInIBSSAllowed = pMac->isCoalesingInIBSSAllowed;
 	pMsg->bssPersona = pParam->bssPersona;
 	pMsg->txLdpcIniFeatureEnabled = pMac->roam.configParam.txLdpcEnable;
+	pMsg->txbf_ini_enabled =
+		(uint8_t)pMac->roam.configParam.txBFEnable &&
+		(uint8_t)pMac->roam.configParam.enable_txbf_sap_mode;
+	pMsg->txbf_csn_val = (uint8_t)pMac->roam.configParam.txBFCsnValue;
 #ifdef WLAN_FEATURE_11W
 	pMsg->pmfCapable = pParam->mfpCapable;
 	pMsg->pmfRequired = pParam->mfpRequired;

@@ -610,6 +610,8 @@ typedef struct sSirSmeStartBssReq {
 	uint8_t center_freq_seg0;
 	uint8_t center_freq_seg1;
 	uint8_t sec_ch_offset;
+	bool txbf_ini_enabled;
+	uint8_t txbf_csn_val;
 
 	uint8_t privacy;
 	uint8_t apUapsdEnable;
