@@ -1739,6 +1739,15 @@ typedef enum {
 #define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX     (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STAMAX)
 #define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_DEFAULT (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STADEF)
 
+/*
+ * Enable / Disable Tx beamformee in SAP mode
+ * Default: Disable
+ */
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE         "gEnableTxBFeeSAP"
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE_MIN     (0)
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX     (1)
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT (0)
+
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED         "gTxBFCsnValue"
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MIN     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMIN)
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MAX     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMAX - 1)
@@ -3154,6 +3163,7 @@ struct hdd_config {
 	uint8_t vhtRxMCS;
 	uint8_t vhtTxMCS;
 	bool enableTxBF;
+	bool enable_txbf_sap_mode;
 	uint8_t txBFCsnValue;
 	bool enable_su_tx_bformer;
 	uint8_t vhtRxMCS2x2;

@@ -330,6 +330,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
 	uint8_t txBFIniFeatureEnabled;
+	uint8_t txbf_csn_value;
 	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;

@@ -601,6 +601,7 @@ typedef struct tagCsrConfig {
 #ifdef WLAN_FEATURE_11AC
 	uint32_t nVhtChannelWidth;
 	uint8_t txBFEnable;
+	uint8_t enable_txbf_sap_mode;
 	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;

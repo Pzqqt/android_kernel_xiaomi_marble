@@ -718,7 +718,6 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			  session->vhtCapability);
 		session->txLdpcIniFeatureEnabled =
 			sme_start_bss_req->txLdpcIniFeatureEnabled;
-
 		if (mac_ctx->roam.configParam.enable2x2)
 			session->nss = 2;
 		else
@@ -741,6 +740,12 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		case eSIR_INFRA_AP_MODE:
 			lim_configure_ap_start_bss_session(mac_ctx, session,
 				sme_start_bss_req);
+			if (session->pePersona == CDF_SAP_MODE) {
+				session->txBFIniFeatureEnabled =
+					sme_start_bss_req->txbf_ini_enabled;
+				session->txbf_csn_value =
+					sme_start_bss_req->txbf_csn_val;
+			}
 			break;
 		case eSIR_IBSS_MODE:
 			session->limSystemRole = eLIM_STA_IN_IBSS_ROLE;
@@ -1740,17 +1745,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
 				  "%s: txBFCsnValue=%d", __func__,
 				  sme_join_req->txBFCsnValue);
-			if (cfg_set_int(mac_ctx,
-				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-				sme_join_req->txBFCsnValue) != eSIR_SUCCESS) {
-				/*
-				 * Set Failed for CFG
-				 * CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED
-				 */
-				lim_log(mac_ctx, LOGP, FL("Set Fail CFG"));
-				ret_code = eSIR_LOGP_EXCEPTION;
-				goto end;
-			}
+			session->txbf_csn_value = sme_join_req->txBFCsnValue;
 		}
 #endif
 

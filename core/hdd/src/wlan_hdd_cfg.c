@@ -2427,6 +2427,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MIN,
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX),
 
+	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_SAP_MODE, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_txbf_sap_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT,
+		     CFG_VHT_ENABLE_TXBF_SAP_MODE_MIN,
+		     CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX),
+
 	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_IN_20MHZ, WLAN_PARAM_Integer,
 		     struct hdd_config, enableTxBFin20MHz,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -6485,6 +6492,8 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 #ifdef WLAN_FEATURE_11AC
 	smeConfig->csrConfig.nVhtChannelWidth = pConfig->vhtChannelWidth;
 	smeConfig->csrConfig.enableTxBF = pConfig->enableTxBF;
+	smeConfig->csrConfig.enable_txbf_sap_mode =
+		pConfig->enable_txbf_sap_mode;
 	smeConfig->csrConfig.txBFCsnValue = pConfig->txBFCsnValue;
 	smeConfig->csrConfig.enable2x2 = pConfig->enable2x2;
 	smeConfig->csrConfig.enableVhtFor24GHz = pConfig->enableVhtFor24GHzBand;
