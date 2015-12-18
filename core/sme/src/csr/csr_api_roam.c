@@ -11934,12 +11934,13 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 	if ((pIes->RSN.present && (pIes->RSN.pwise_cipher_suite_count == 1) &&
 		!memcmp(&(pIes->RSN.pwise_cipher_suites[0][0]),
 					"\x00\x0f\xac\x02", 4))
-		/* In Case WPA1 and TKIP is the only one cipher suite
-		 * in Unicast.
+		/* In Case only WPA1 is supported and TKIP is
+		 * the only one cipher suite in Unicast.
 		 */
-		|| (pIes->WPA.present && (pIes->WPA.unicast_cipher_count == 1)
-			&& !memcmp(&(pIes->WPA.unicast_ciphers[0][0]),
-					"\x00\x50\xf2\x02", 4))) {
+		|| (!pIes->RSN.present && (pIes->WPA.present &&
+			(pIes->WPA.unicast_cipher_count == 1) &&
+			!memcmp(&(pIes->WPA.unicast_ciphers[0][0]),
+					"\x00\x50\xf2\x02", 4)))) {
 		sms_log(pMac, LOGW,
 			" No channel bonding in TKIP mode ");
 		return PHY_SINGLE_CHANNEL_CENTERED;
