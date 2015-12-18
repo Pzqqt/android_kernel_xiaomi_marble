@@ -646,6 +646,7 @@ void hif_enable_power_gating(void *hif_ctx);
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
 int hif_pm_runtime_get(void *hif_ctx);
+void hif_pm_runtime_get_noresume(void *hif_ctx);
 int hif_pm_runtime_put(void *hif_ctx);
 struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name);
 void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock);
@@ -659,6 +660,10 @@ int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
 struct hif_pm_runtime_lock {
 	const char *name;
 };
+
+static inline void hif_pm_runtime_get_noresume(void *hif_ctx)
+{}
+
 static inline int hif_pm_runtime_get(void *hif_ctx)
 { return 0; }
 static inline int hif_pm_runtime_put(void *hif_ctx)

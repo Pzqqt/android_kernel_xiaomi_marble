@@ -548,6 +548,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		struct CE_src_desc *shadow_src_desc =
 			CE_SRC_RING_TO_DESC(shadow_base, write_index);
 
+		hif_pm_runtime_get_noresume(scn);
 		msdu = msdus[i];
 
 		/*
@@ -619,10 +620,15 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 	/* Write the final index to h/w one-shot */
 	if (i) {
 		src_ring->write_index = write_index;
-		/* Don't call WAR_XXX from here
-		 * Just call XXX instead, that has the reqd. intel
-		 */
-		war_ce_src_ring_write_idx_set(scn, ctrl_addr, write_index);
+
+		if (hif_pm_runtime_get(scn) == 0) {
+			/* Don't call WAR_XXX from here
+			 * Just call XXX instead, that has the reqd. intel
+			 */
+			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
+					write_index);
+			hif_pm_runtime_put(scn);
+		}
 	}
 
 	cdf_spin_unlock_bh(&ce_state->ce_index_lock);
