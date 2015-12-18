@@ -2004,6 +2004,41 @@ int hif_runtime_suspend(void)
 	return hif_bus_suspend();
 }
 
+#ifdef WLAN_FEATURE_FASTPATH
+/**
+ * hif_fastpath_resume() - resume fastpath for runtimepm
+ *
+ * ensure that the fastpath write index register is up to date
+ * since runtime pm may cause ce_send_fast to skip the register
+ * write.
+ */
+static void hif_fastpath_resume(void)
+{
+	struct ol_softc *scn =
+		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct CE_state *ce_state;
+
+	if (!scn)
+		return;
+
+	if (scn->fastpath_mode_on) {
+		if (Q_TARGET_ACCESS_BEGIN(scn)) {
+			ce_state = scn->ce_id_to_state[CE_HTT_H2T_MSG];
+			cdf_spin_lock_bh(&ce_state->ce_index_lock);
+
+			/*war_ce_src_ring_write_idx_set */
+			CE_SRC_RING_WRITE_IDX_SET(scn, ce_state->ctrl_addr,
+					ce_state->src_ring->write_index);
+			cdf_spin_unlock_bh(&ce_state->ce_index_lock);
+			Q_TARGET_ACCESS_END(scn);
+		}
+	}
+}
+#else
+static void hif_fastpath_resume(void) {}
+#endif
+
+
 /**
  * hif_runtime_resume() - do the bus resume part of a runtime resume
  *
@@ -2011,7 +2046,11 @@ int hif_runtime_suspend(void)
  */
 int hif_runtime_resume(void)
 {
-	return hif_bus_resume();
+	int status = hif_bus_resume();
+
+	hif_fastpath_resume();
+
+	return status;
 }
 
 void hif_disable_isr(void *ol_sc)
@@ -2690,6 +2729,23 @@ int hif_get_target_type(struct ol_softc *ol_sc, struct device *dev,
 }
 
 #ifdef FEATURE_RUNTIME_PM
+
+void hif_pm_runtime_get_noresume(void *hif_ctx)
+{
+	struct ol_softc *scn = hif_ctx;
+	struct hif_pci_softc *sc;
+
+	if (NULL == scn)
+		return;
+
+	sc = scn->hif_sc;
+	if (NULL == sc)
+		return;
+
+	sc->pm_stats.runtime_get++;
+	pm_runtime_get_noresume(sc->dev);
+}
+
 /**
  * hif_pm_runtime_get() - do a get opperation on the device
  *

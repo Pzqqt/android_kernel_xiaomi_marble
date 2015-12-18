@@ -779,6 +779,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 	} while (ce_completed_recv_next(copyeng, &ce_context, &transfer_context,
 					&CE_data, &nbytes, &transfer_id,
 					&flags) == CDF_STATUS_SUCCESS);
+
 }
 
 /* TBDXXX: Set CE High Watermark; invoke txResourceAvailHandler in response */

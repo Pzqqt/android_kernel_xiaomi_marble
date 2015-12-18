@@ -186,7 +186,6 @@ static int hif_runtime_resume(void)
 	return hif_bus_resume();
 }
 
-
 /**
  * hif_enable_power_gating(): enable HW power gating
  *
