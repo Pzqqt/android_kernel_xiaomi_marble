@@ -6556,13 +6556,15 @@ void cds_restart_softap(hdd_adapter_t *pHostapdAdapter)
 /**
  * cds_force_sap_on_scc() - Force SAP on SCC
  * @roam_result: Roam result
+ * @channel_id: STA channel id
  *
  * Restarts SAP on SCC if its operating channel is different from that of the
  * STA-AP interface
  *
  * Return: None
  */
-void cds_force_sap_on_scc(eCsrRoamResult roam_result)
+void cds_force_sap_on_scc(eCsrRoamResult roam_result,
+			 uint8_t channel_id)
 {
 	hdd_adapter_t *hostapd_adapter;
 	hdd_context_t *hdd_ctx;
@@ -6584,10 +6586,10 @@ void cds_force_sap_on_scc(eCsrRoamResult roam_result)
 		 * from AP channel.
 		 */
 		if (hostapd_adapter->sessionCtx.ap.operatingChannel !=
-				pRoamInfo->pBssDesc->channelId) {
+				channel_id) {
 			cds_err("Restart SAP: SAP channel-%d, STA channel-%d",
 				hostapd_adapter->sessionCtx.ap.operatingChannel,
-				pRoamInfo->pBssDesc->channelId);
+				channel_id);
 			cds_restart_softap(hostapd_adapter);
 		}
 	}

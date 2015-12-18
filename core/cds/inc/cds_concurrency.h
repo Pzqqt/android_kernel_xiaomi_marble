@@ -499,9 +499,11 @@ bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel);
 CDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
-void cds_force_sap_on_scc(eCsrRoamResult roam_result);
+void cds_force_sap_on_scc(eCsrRoamResult roam_result,
+		uint8_t channel_id);
 #else
-static inline void cds_force_sap_on_scc(eCsrRoamResult roam_result)
+static inline void cds_force_sap_on_scc(eCsrRoamResult roam_result,
+				uint8_t channel_id)
 {
 
 }
