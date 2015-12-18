@@ -657,6 +657,8 @@ struct hdd_station_ctx {
 
 	/* STA ctx debug variables */
 	int staDebugState;
+
+	uint8_t broadcast_ibss_staid;
 };
 
 #define BSS_STOP    0

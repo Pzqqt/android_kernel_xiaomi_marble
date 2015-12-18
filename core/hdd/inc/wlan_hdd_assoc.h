@@ -51,10 +51,6 @@
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
 
-/* In pronto case, IBSS owns the first peer for bss peer.
-   In Rome case, IBSS uses the 2nd peer as bss peer */
-#define IBSS_BROADCAST_STAID 1
-
 /* Type Declarations */
 /**
  * typedef eConnectionState - Connection states
