@@ -9320,6 +9320,7 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	int status;
 	CDF_STATUS hal_status;
+	unsigned long rc;
 
 	ENTER();
 
@@ -9364,6 +9365,18 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 		       hal_status);
 		return -EAGAIN;
 	}
+
+	/* wait for mc thread to cleanup and then return to upper stack
+	 * so by the time upper layer calls the change interface, we are
+	 * all set to proceed further
+	 */
+	rc = wait_for_completion_timeout(&pAdapter->disconnect_comp_var,
+			msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
+	if (!rc) {
+		hdd_err("Failed to disconnect, timed out");
+		return -ETIMEDOUT;
+	}
+
 	EXIT();
 	return 0;
 }
