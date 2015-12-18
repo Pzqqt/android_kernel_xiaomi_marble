@@ -2333,7 +2333,13 @@ defined(FEATURE_WLAN_LFR)
 					roamResult, pHddStaCtx))
 		return CDF_STATUS_E_FAILURE;
 
-	cds_force_sap_on_scc(roamResult);
+	if (NULL != pRoamInfo && NULL != pRoamInfo->pBssDesc) {
+		cds_force_sap_on_scc(roamResult,
+				pRoamInfo->pBssDesc->channelId);
+	} else {
+		hdd_err("pRoamInfo profile is not set properly");
+		return CDF_STATUS_E_FAILURE;
+	}
 
 	return CDF_STATUS_SUCCESS;
 }
