@@ -333,7 +333,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if ((STAId == HDD_WLAN_INVALID_STA_ID) &&
 		    (cdf_is_macaddr_broadcast(pDestMacAddress) ||
 		     cdf_is_macaddr_group(pDestMacAddress))) {
-			STAId = IBSS_BROADCAST_STAID;
+			STAId = pHddStaCtx->broadcast_ibss_staid;
 			CDF_TRACE(CDF_MODULE_ID_HDD_DATA,
 				  CDF_TRACE_LEVEL_INFO_LOW, "%s: BC/MC packet",
 				  __func__);

@@ -1093,12 +1093,11 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 #endif
 	if (eCSR_ROAM_IBSS_LEAVE == roamStatus) {
 		uint8_t i;
-		sta_id = IBSS_BROADCAST_STAID;
+		sta_id = pHddStaCtx->broadcast_ibss_staid;
 		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
 		if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
-			hddLog(LOGE,
-				FL("hdd_roam_deregister_sta() failed for staID %d Status=%d [0x%x]"),
-				sta_id, status, status);
+			hdd_err("hdd_roam_deregister_sta() failed for staID %d Status=%d [0x%x]",
+					sta_id, status, status);
 			status = CDF_STATUS_E_FAILURE;
 		}
 		pHddCtx->sta_to_adapter[sta_id] = NULL;
@@ -2346,6 +2345,8 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 	{
 		hdd_context_t *pHddCtx =
 			(hdd_context_t *) pAdapter->pHddCtx;
+		hdd_station_ctx_t *hdd_sta_ctx =
+			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 		struct cdf_mac_addr broadcastMacAddr =
 			CDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
@@ -2365,10 +2366,13 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 		/* notify wmm */
 		hdd_wmm_connect(pAdapter, pRoamInfo,
 				eCSR_BSS_TYPE_IBSS);
-		pHddCtx->sta_to_adapter[IBSS_BROADCAST_STAID] =
+
+		hdd_sta_ctx->broadcast_ibss_staid = pRoamInfo->staId;
+
+		pHddCtx->sta_to_adapter[pRoamInfo->staId] =
 			pAdapter;
 		hdd_roam_register_sta(pAdapter, pRoamInfo,
-				      IBSS_BROADCAST_STAID,
+				      pRoamInfo->staId,
 				      &broadcastMacAddr,
 				      pRoamInfo->pBssDesc);
 
@@ -2704,9 +2708,6 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 		}
 
 		pHddCtx->sta_to_adapter[pRoamInfo->staId] = pAdapter;
-
-		pHddCtx->sta_to_adapter[IBSS_BROADCAST_STAID] =
-			pAdapter;
 
 		/* Register the Station with TL for the new peer. */
 		cdf_status = hdd_roam_register_sta(pAdapter,
