@@ -225,6 +225,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	uint8_t smesessionId;
 	uint16_t smetransactionId;
 	uint8_t channelId;
+	uint8_t send_bcon_ind = false;
 
 	if (pMsgBuf == NULL) {
 		PELOGE(lim_log(pMac, LOGE, FL("Buffer is Pointing to NULL"));)
@@ -294,10 +295,25 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		 * request from upper layers to start the beacon transmission
 		 */
 
-		if (LIM_IS_IBSS_ROLE(psessionEntry) ||
-			(LIM_IS_AP_ROLE(psessionEntry) &&
-			(cds_get_channel_state(channelId) !=
-			 CHANNEL_STATE_DFS))) {
+		if (!(LIM_IS_IBSS_ROLE(psessionEntry) ||
+			(LIM_IS_AP_ROLE(psessionEntry))))
+				return;
+		if (psessionEntry->ch_width == CH_WIDTH_160MHZ) {
+			send_bcon_ind = false;
+		} else if (psessionEntry->ch_width == CH_WIDTH_80P80MHZ) {
+			if ((cds_get_channel_state(channelId) !=
+						CHANNEL_STATE_DFS) &&
+			    (cds_get_channel_state(psessionEntry->
+					ch_center_freq_seg1 -
+					SIR_80MHZ_START_CENTER_CH_DIFF) !=
+						CHANNEL_STATE_DFS))
+				send_bcon_ind = true;
+		} else {
+			if (cds_get_channel_state(channelId) !=
+							CHANNEL_STATE_DFS)
+				send_bcon_ind = true;
+		}
+		if (send_bcon_ind) {
 			/* Configure beacon and send beacons to HAL */
 			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 					FL("Start Beacon with ssid %s Ch %d"),

@@ -3845,6 +3845,7 @@ typedef struct sSirChAvoidIndType {
 #endif /* FEATURE_WLAN_CH_AVOID || FEATURE_WLAN_FORCE_SAP_SCC */
 
 #define SIR_DFS_MAX_20M_SUB_CH 8
+#define SIR_80MHZ_START_CENTER_CH_DIFF 6
 
 typedef struct sSirSmeDfsChannelList {
 	uint32_t nchannels;
