@@ -688,6 +688,7 @@ CDF_STATUS cds_decr_connection_count(hdd_context_t *hdd_ctx,
 CDF_STATUS cds_current_connections_update(uint32_t session_id,
 				uint8_t channel,
 				enum cds_conn_update_reason);
+bool cds_is_ibss_conn_exist(hdd_context_t *hdd_ctx, uint8_t *ibss_channel);
 #ifdef MPC_UT_FRAMEWORK
 CDF_STATUS cds_incr_connection_count_utfw(hdd_context_t *hdd_ctx,
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
