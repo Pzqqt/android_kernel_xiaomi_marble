@@ -694,9 +694,9 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
 			if (hif_state->scn->target_status
 					== OL_TRGET_STATUS_RESET)
-				return;
-
-			msg_callbacks->txCompletionHandler(
+				cdf_nbuf_free(transfer_context);
+			else
+				msg_callbacks->txCompletionHandler(
 					msg_callbacks->Context,
 					transfer_context, transfer_id,
 					toeplitz_hash_result);
@@ -762,9 +762,9 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		atomic_inc(&pipe_info->recv_bufs_needed);
 		hif_post_recv_buffers_for_pipe(pipe_info);
 		if (hif_state->scn->target_status == OL_TRGET_STATUS_RESET)
-			return;
-
-		hif_ce_do_recv(msg_callbacks, transfer_context,
+			cdf_nbuf_free(transfer_context);
+		else
+			hif_ce_do_recv(msg_callbacks, transfer_context,
 				nbytes, pipe_info);
 
 		/* Set up force_break flag if num of receices reaches
