@@ -5274,6 +5274,99 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 }
 
 /**
+ * csr_scan_filter_ibss_chnl_band() - filter all channels which matches IBSS
+ *                                    channel's band
+ * @mac_ctx: pointer to mac context
+ * @ibss_channel: Given IBSS channel
+ * @dst_req: destination scan request
+ *
+ * when ever IBSS connection already exist, STA should not scan the channels
+ * which fall under same band as IBSS channel's band. this routine will filter
+ * out those channels
+ *
+ * Return: true if success otherwise false for any failure
+ */
+static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
+			uint8_t ibss_channel, tCsrScanRequest *dst_req) {
+	uint8_t valid_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint8_t filtered_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint32_t filter_chnl_len = 0, i = 0;
+	uint32_t valid_chnl_len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+
+	if (ibss_channel == 0) {
+		sms_log(mac_ctx, LOG1,
+			FL("Nothing to filter as no IBSS session"));
+		return true;
+	}
+
+	if (!dst_req) {
+		sms_log(mac_ctx, LOGE,
+			FL("No valid scan requests"));
+		return false;
+	}
+	/*
+	 * In case of concurrent IBSS session exist, scan only
+	 * those channels which are not in IBSS channel's band.
+	 * In case if no-concurrent IBSS session exist then scan
+	 * full band
+	 */
+	if ((dst_req->ChannelInfo.numOfChannels == 0)) {
+		csr_get_cfg_valid_channels(mac_ctx, valid_chnl_list,
+				&valid_chnl_len);
+	} else {
+		valid_chnl_len = (WNI_CFG_VALID_CHANNEL_LIST_LEN >
+					dst_req->ChannelInfo.numOfChannels) ?
+					dst_req->ChannelInfo.numOfChannels :
+					WNI_CFG_VALID_CHANNEL_LIST_LEN;
+		cdf_mem_copy(valid_chnl_list, dst_req->ChannelInfo.ChannelList,
+				valid_chnl_len);
+	}
+	for (i = 0; i < valid_chnl_len; i++) {
+		/*
+		 * Don't allow DSRC channel when IBSS concurrent connection
+		 * is up
+		 */
+		if (valid_chnl_list[i] >= MIN_11P_CHANNEL)
+			continue;
+		if (CDS_IS_CHANNEL_5GHZ(ibss_channel) &&
+			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
+			filtered_chnl_list[filter_chnl_len] =
+					valid_chnl_list[i];
+			filter_chnl_len++;
+		} else if (CDS_IS_CHANNEL_24GHZ(ibss_channel) &&
+			CDS_IS_CHANNEL_5GHZ(valid_chnl_list[i])) {
+			filtered_chnl_list[filter_chnl_len] =
+					valid_chnl_list[i];
+			filter_chnl_len++;
+		}
+	}
+	if (filter_chnl_len == 0) {
+		sms_log(mac_ctx, LOGE,
+			FL("there no channels to scan due to IBSS session"));
+		return false;
+	}
+
+	if (dst_req->ChannelInfo.ChannelList) {
+		cdf_mem_free(dst_req->ChannelInfo.ChannelList);
+		dst_req->ChannelInfo.ChannelList = NULL;
+		dst_req->ChannelInfo.numOfChannels = 0;
+	}
+
+	dst_req->ChannelInfo.ChannelList =
+			cdf_mem_malloc(filter_chnl_len *
+				sizeof(*dst_req->ChannelInfo.ChannelList));
+	dst_req->ChannelInfo.numOfChannels = filter_chnl_len;
+	if (NULL == dst_req->ChannelInfo.ChannelList) {
+		sms_log(mac_ctx, LOGE,
+			FL("Memory allocation failed"));
+		return false;
+	}
+	cdf_mem_copy(dst_req->ChannelInfo.ChannelList, filtered_chnl_list,
+			filter_chnl_len);
+	return true;
+}
+
+/**
  * csr_scan_copy_request() - Function to copy scan request
  * @mac_ctx : pointer to Global Mac Structure
  * @dst_req: pointer to tCsrScanRequest
@@ -5292,6 +5385,7 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	uint32_t index = 0;
 	uint32_t new_index = 0;
 	CHANNEL_STATE channel_state;
+	uint8_t ibss_channel = 0;
 	bool skip_dfs_chnl =
 			mac_ctx->roam.configParam.initial_scan_no_dfs_chnl ||
 				!mac_ctx->scan.fEnableDFSChnlScan;
@@ -5389,6 +5483,26 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 				new_index;
 		}
 	} /* Allocate memory for Channel List */
+
+	/*
+	 * If IBSS concurrent connection exist, and if the scan
+	 * request comes from STA adapter then we need to filter
+	 * out IBSS channel's band otherwise it will cause issue
+	 * in IBSS+STA concurrency
+	 */
+	if (true == cds_is_ibss_conn_exist(mac_ctx->hHdd, &ibss_channel)) {
+		sms_log(mac_ctx, LOG1,
+			FL("Conc IBSS exist, channel list will be modified"));
+	}
+
+	if ((ibss_channel > 0) &&
+		(false == csr_scan_filter_ibss_chnl_band(mac_ctx,
+				ibss_channel, dst_req))) {
+		sms_log(mac_ctx, LOGE,
+			FL("Can't filter channels due to IBSS"));
+		goto complete;
+	}
+
 	if (src_req->SSIDs.numOfSSIDs == 0) {
 		dst_req->SSIDs.numOfSSIDs = 0;
 		dst_req->SSIDs.SSIDList = NULL;

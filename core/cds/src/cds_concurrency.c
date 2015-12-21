@@ -3245,6 +3245,7 @@ void cds_set_concurrency_mode(hdd_context_t *hdd_ctx, tCDF_CON_MODE mode)
 	case CDF_P2P_CLIENT_MODE:
 	case CDF_P2P_GO_MODE:
 	case CDF_SAP_MODE:
+	case CDF_IBSS_MODE:
 		hdd_ctx->concurrency_mode |= (1 << mode);
 		hdd_ctx->no_of_open_sessions[mode]++;
 		break;
@@ -4558,6 +4559,41 @@ bool cds_allow_new_home_channel(hdd_context_t *hdd_ctx,
 }
 
 /**
+ * cds_is_ibss_conn_exist() - to check if IBSS connection already present
+ * @hdd_ctx: pointer to hdd context
+ * @ibss_channel: pointer to ibss channel which needs to be filled
+ *
+ * this routine will check if IBSS connection already exist or no. If it
+ * exist then this routine will return true and fill the ibss_channel value.
+ *
+ * Return: true if ibss connection exist else false
+ */
+bool cds_is_ibss_conn_exist(hdd_context_t *hdd_ctx, uint8_t *ibss_channel)
+{
+	uint32_t count = 0, index = 0;
+	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	bool status = false;
+	if ((NULL == hdd_ctx) || (NULL == ibss_channel)) {
+		cds_err("Null pointer error");
+		return false;
+	}
+	count = cds_mode_specific_connection_count(hdd_ctx,
+			CDS_IBSS_MODE, list);
+	if (count == 0) {
+		/* No IBSS connection */
+		status = false;
+	} else if (count == 1) {
+		*ibss_channel = conc_connection_list[list[index]].chan;
+		status = true;
+	} else {
+		*ibss_channel = conc_connection_list[list[index]].chan;
+		cds_notice("Multiple IBSS connections, picking first one");
+		status = true;
+	}
+	return status;
+}
+
+/**
  * cds_allow_concurrency() - Check for allowed concurrency
  * combination
  *
@@ -4723,6 +4759,11 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 				cds_err("No IBSS + STA SCC/MCC, IBSS is on DFS channel");
 				goto done;
 			}
+			/*
+			 * This logic protects STA and IBSS to come up on same
+			 * band. If requirement changes then this condition
+			 * needs to be removed
+			 */
 			if ((conc_connection_list[0].chan != channel) &&
 				CDS_IS_SAME_BAND_CHANNELS(
 				conc_connection_list[0].chan, channel)) {
