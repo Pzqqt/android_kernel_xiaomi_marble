@@ -170,7 +170,7 @@ void hif_record_ce_desc_event(
 {
 }
 
-static inline void ce_init_ce_desc_event_log(int ce_id, int size)
+inline void ce_init_ce_desc_event_log(int ce_id, int size)
 {
 }
 #endif
