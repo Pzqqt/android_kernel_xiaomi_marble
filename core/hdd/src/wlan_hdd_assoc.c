@@ -36,6 +36,7 @@
 #include <ani_global.h>
 #include "dot11f.h"
 #include "wlan_hdd_power.h"
+#include "wlan_hdd_trace.h"
 #include <linux/ieee80211.h>
 #include <linux/wireless.h>
 #include <linux/etherdevice.h>
@@ -3851,6 +3852,9 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+
+	MTRACE(cdf_trace(CDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
+				pAdapter->sessionId, roamStatus));
 
 	switch (roamStatus) {
 	case eCSR_ROAM_SESSION_OPENED:
