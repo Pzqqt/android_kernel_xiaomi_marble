@@ -3771,7 +3771,6 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	wma_handle->num_rf_chains = ev->num_rf_chains;
 
 	wma_handle->target_fw_version = ev->fw_build_vers;
-	ol_tx_set_desc_global_pool_size(ev->num_msdu_desc);
 	wma_handle->new_hw_mode_index = ev->default_dbs_hw_mode_index;
 
 	WMA_LOGD("%s: Firmware default hw mode index : %d",
@@ -3805,6 +3804,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	ol_tx_set_is_mgmt_over_wmi_enabled(
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				       WMI_SERVICE_MGMT_TX_WMI));
+	ol_tx_set_desc_global_pool_size(ev->num_msdu_desc);
 
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,

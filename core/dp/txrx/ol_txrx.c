@@ -313,9 +313,11 @@ void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 		cdf_print("%s: pdev is NULL\n", __func__);
 		return;
 	}
-	pdev->num_msdu_desc = num_msdu_desc + TX_FLOW_MGMT_POOL_SIZE;
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global pool size: %d = %d + %d\n",
-		pdev->num_msdu_desc, num_msdu_desc, TX_FLOW_MGMT_POOL_SIZE);
+	pdev->num_msdu_desc = num_msdu_desc;
+	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
+		pdev->num_msdu_desc += TX_FLOW_MGMT_POOL_SIZE;
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global pool size: %d\n",
+		pdev->num_msdu_desc);
 	return;
 }
 
