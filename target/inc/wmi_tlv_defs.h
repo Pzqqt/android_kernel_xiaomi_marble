@@ -611,6 +611,9 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_bpf_vdev_stats_info_evt_fixed_param,
 	WMITLV_TAG_STRUC_wmi_bpf_set_vdev_instructions_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_bpf_del_vdev_instructions_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_vdev_delete_resp_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_peer_delete_resp_event_fixed_param,
+
 } WMITLV_TAG_ID;
 
 /*
@@ -976,7 +979,10 @@ typedef enum {
 	OP(WMI_PDEV_UTF_SCPC_EVENTID) \
 	OP(WMI_STA_SMPS_FORCE_MODE_COMPLETE_EVENTID) \
 	OP(WMI_BPF_CAPABILIY_INFO_EVENTID) \
-	OP(WMI_BPF_VDEV_STATS_INFO_EVENTID)
+	OP(WMI_BPF_VDEV_STATS_INFO_EVENTID) \
+	OP(WMI_VDEV_DELETE_RESP_EVENTID) \
+	OP(WMI_PEER_DELETE_RESP_EVENTID)
+
 
 /* TLV definitions of WMI commands */
 
@@ -2545,6 +2551,11 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_START_RESP_EVENTID);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_stopped_event_fixed_param, wmi_vdev_stopped_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_STOPPED_EVENTID);
 
+/* VDEV delete response Event */
+#define WMITLV_TABLE_WMI_VDEV_DELETE_RESP_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_delete_resp_event_fixed_param, wmi_vdev_delete_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_DELETE_RESP_EVENTID);
+
 /* VDEV Install Key Complete Event */
 #define WMITLV_TABLE_WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID(id,op,buf,len)					    \
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_install_key_complete_event_fixed_param, wmi_vdev_install_key_complete_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
@@ -2945,9 +2956,14 @@ WMITLV_CREATE_PARAM_STRUC(WMI_OFFLOAD_PROB_RESP_TX_STATUS_EVENTID);
 WMITLV_CREATE_PARAM_STRUC(WMI_HOST_AUTO_SHUTDOWN_EVENTID);
 
 /* peer state Event */
-#define WMITLV_TABLE_WMI_PEER_STATE_EVENTID(id,op,buf,len)				       \
-	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_peer_state_event_fixed_param, wmi_peer_state_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+#define WMITLV_TABLE_WMI_PEER_STATE_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_state_event_fixed_param, wmi_peer_state_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_PEER_STATE_EVENTID);
+
+/* peer delete response Event */
+#define WMITLV_TABLE_WMI_PEER_DELETE_RESP_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_peer_delete_resp_event_fixed_param, wmi_peer_delete_resp_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PEER_DELETE_RESP_EVENTID);
 
 /* peer assoc conf Event */
 #define WMITLV_TABLE_WMI_PEER_ASSOC_CONF_EVENTID(id, op, buf, len) \
