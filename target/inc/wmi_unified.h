@@ -782,8 +782,8 @@ typedef enum {
 	/*get batch scan result */
 	WMI_BATCH_SCAN_TRIGGER_RESULT_CMDID,
 	/* OEM related cmd */
-	WMI_OEM_REQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_OEM), /* DEPRECATED */
-	WMI_OEM_REQUEST_CMDID,
+	WMI_OEM_REQ_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_OEM),
+	WMI_OEM_REQUEST_CMDID, /* UNUSED */
 
 	/** Nan Request */
 	WMI_NAN_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_NAN),
@@ -12568,6 +12568,10 @@ typedef struct wmi_bpf_set_vdev_instructions_cmd_s {
 	A_UINT32 total_length;
 	A_UINT32 current_offset;
 	A_UINT32 current_length;
+	/*
+	 * The TLV follows:
+	 *    A_UINT8  buf_inst[]; //Variable length buffer for the instuctions
+	 */
 } wmi_bpf_set_vdev_instructions_cmd_fixed_param;
 
 #define BPF_FILTER_ID_ALL  0xFFFFFFFF
