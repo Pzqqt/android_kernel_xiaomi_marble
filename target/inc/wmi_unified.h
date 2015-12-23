@@ -231,6 +231,7 @@ typedef enum {
 	WMI_GRP_PKT_FILTER,
 	WMI_GRP_MAWC,
 	WMI_GRP_PMF_OFFLOAD,
+	WMI_GRP_BPF_OFFLOAD, /* Berkeley Packet Filter */
 } WMI_GRP_ID;
 
 #define WMI_CMD_GRP_START_ID(grp_id) (((grp_id) << 12) | 0x1)
@@ -869,6 +870,11 @@ typedef enum {
 	WMI_PMF_OFFLOAD_SET_SA_QUERY_CMDID =
 		WMI_CMD_GRP_START_ID(WMI_GRP_PMF_OFFLOAD),
 
+	/** WMI commands related to pkt filter (BPF) offload */
+	WMI_BPF_GET_CAPABILITY_CMDID = WMI_CMD_GRP_START_ID(WMI_GRP_BPF_OFFLOAD),
+	WMI_BPF_GET_VDEV_STATS_CMDID,
+	WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID,
+	WMI_BPF_DEL_VDEV_INSTRUCTIONS_CMDID,
 } WMI_CMD_ID;
 
 typedef enum {
@@ -1201,6 +1207,10 @@ typedef enum {
 	/** Motion Aided WiFi Connectivity (MAWC) events */
 	WMI_MAWC_ENABLE_SENSOR_EVENTID = WMI_EVT_GRP_START_ID(WMI_GRP_MAWC),
 
+	/** pkt filter (BPF) offload relevant events */
+	WMI_BPF_CAPABILIY_INFO_EVENTID =
+				WMI_EVT_GRP_START_ID(WMI_GRP_BPF_OFFLOAD),
+	WMI_BPF_VDEV_STATS_INFO_EVENTID,
 } WMI_EVT_ID;
 
 /* defines for OEM message sub-types */
@@ -6968,6 +6978,7 @@ typedef enum wake_reason_e {
 	WOW_REASON_REASSOC_REQ_RECV,
 	WOW_REASON_REASSOC_RES_RECV,
 	WOW_REASON_ACTION_FRAME_RECV,
+	WOW_REASON_BPF_ALLOW,
 	WOW_REASON_DEBUG_TEST = 0xFF,
 } WOW_WAKE_REASON_TYPE;
 
@@ -12518,6 +12529,53 @@ typedef struct {
 	 *  patch2 data(byte47~20)
 	 */
 } wmi_scpc_event_fixed_param;
+
+/* bpf interface structure */
+typedef struct wmi_bpf_get_capability_cmd_s {
+	A_UINT32 tlv_header;
+	A_UINT32 reserved;  /* reserved for future use - must be filled with 0x0 */
+} wmi_bpf_get_capability_cmd_fixed_param;
+
+typedef struct wmi_bpf_capability_info_evt_s {
+	A_UINT32 tlv_header;
+	A_UINT32 bpf_version; /* fw's implement version */
+	A_UINT32 max_bpf_filters; /* max filters that fw supports */
+	A_UINT32 max_bytes_for_bpf_inst; /* the maximum bytes that can be used as bpf instructions */
+} wmi_bpf_capability_info_evt_fixed_param;
+
+/* bit 0 of flags: report counters */
+#define WMI_BPF_GET_VDEV_STATS_FLAG_CTR_S  0
+#define WMI_BPF_GET_VDEV_STATS_FLAG_CTR_M  0x1
+typedef struct wmi_bpf_get_vdev_stats_cmd_s {
+	A_UINT32 tlv_header;
+	A_UINT32 flags;
+	A_UINT32 vdev_id;
+} wmi_bpf_get_vdev_stats_cmd_fixed_param;
+
+typedef struct wmi_bpf_vdev_stats_info_evt_s {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 num_filters;
+	A_UINT32 num_checked_pkts;
+	A_UINT32 num_dropped_pkts;
+	} wmi_bpf_vdev_stats_info_evt_fixed_param;
+
+typedef struct wmi_bpf_set_vdev_instructions_cmd_s {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 filter_id;
+	A_UINT32 bpf_version;  /* host bpf version */
+	A_UINT32 total_length;
+	A_UINT32 current_offset;
+	A_UINT32 current_length;
+} wmi_bpf_set_vdev_instructions_cmd_fixed_param;
+
+#define BPF_FILTER_ID_ALL  0xFFFFFFFF
+typedef struct wmi_bpf_del_vdev_instructions_cmd_s {
+	A_UINT32 tlv_header;
+	A_UINT32 vdev_id;
+	A_UINT32 filter_id;  /* BPF_FILTER_ID_ALL means delete all */
+} wmi_bpf_del_vdev_instructions_cmd_fixed_param;
 
 /* ADD NEW DEFS HERE */
 
