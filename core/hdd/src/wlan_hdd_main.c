@@ -3357,6 +3357,85 @@ static void hdd_wlan_register_ip6_notifier(hdd_context_t *hdd_ctx)
 }
 #endif
 
+#ifdef QCA_WIFI_FTM
+/**
+ * hdd_disable_ftm() - Disable FTM mode
+ * @hdd_ctx:	HDD context
+ *
+ * Helper function to disable FTM mode.
+ *
+ * Return: None.
+ */
+static void hdd_disable_ftm(hdd_context_t *hdd_ctx)
+{
+	hdd_notice("Disabling FTM mode");
+
+	if (hdd_ftm_stop(hdd_ctx)) {
+		hdd_alert("hdd_ftm_stop Failed!");
+		CDF_ASSERT(0);
+	}
+
+	hdd_ctx->ftm.ftm_state = WLAN_FTM_STOPPED;
+
+	wlan_hdd_ftm_close(hdd_ctx);
+
+	return;
+}
+
+/**
+ * hdd_enable_ftm() - Enable FTM mode
+ * @hdd_ctx:	HDD context
+ *
+ * Helper function to enable FTM mode.
+ *
+ * Return: 0 on success and errno on failure.
+ */
+int hdd_enable_ftm(hdd_context_t *hdd_ctx)
+{
+	int ret;
+
+	ret = wlan_hdd_ftm_open(hdd_ctx);
+	if (ret) {
+		hdd_alert("wlan_hdd_ftm_open Failed: %d", ret);
+		goto err_out;
+	}
+
+	ret = hdd_ftm_start(hdd_ctx);
+
+	if (ret) {
+		hdd_alert("hdd_ftm_start Failed: %d", ret);
+		goto err_ftm_close;
+	}
+
+	ret = wiphy_register(hdd_ctx->wiphy);
+	if (ret) {
+		hdd_alert("wiphy register failed: %d", ret);
+		goto err_ftm_stop;
+	}
+
+	hdd_err("FTM driver loaded");
+
+	return 0;
+
+err_ftm_stop:
+	hdd_ftm_stop(hdd_ctx);
+err_ftm_close:
+	wlan_hdd_ftm_close(hdd_ctx);
+err_out:
+	return ret;
+
+}
+#else
+int hdd_enable_ftm(hdd_context_t *hdd_ctx)
+{
+	hdd_err("Driver built without FTM feature enabled!");
+
+	return -ENOTSUPP;
+}
+
+static inline void hdd_disable_ftm(hdd_context_t *hdd_ctx) { }
+#endif
+
 /**
  * hdd_wlan_exit() - HDD WLAN exit function
  * @hdd_ctx:	Pointer to the HDD Context
@@ -3382,17 +3461,9 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	hdd_unregister_wext_all_adapters(hdd_ctx);
 
 	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		hddLog(CDF_TRACE_LEVEL_INFO, FL("FTM MODE"));
-#if  defined(QCA_WIFI_FTM)
-		if (hdd_ftm_stop(hdd_ctx)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
-			       FL("hdd_ftm_stop Failed"));
-			CDF_ASSERT(0);
-		}
-		hdd_ctx->ftm.ftm_state = WLAN_FTM_STOPPED;
-#endif
-		wlan_hdd_ftm_close(hdd_ctx);
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("FTM driver unloaded"));
+		hdd_disable_ftm(hdd_ctx);
+
+		hdd_alert("FTM driver unloaded");
 		goto free_hdd_ctx;
 	}
 
@@ -4869,8 +4940,14 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	hdd_cfg_print(hdd_ctx);
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
-		goto ftm_processing;
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+		ret = hdd_enable_ftm(hdd_ctx);
+
+		if (ret)
+			goto err_config;
+
+		goto success;
+	}
 
 	hdd_ctx->isLogpInProgress = false;
 	cds_set_logp_in_progress(false);
@@ -4882,7 +4959,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = cds_open(&p_cds_context, 0);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
-		goto err_cds_open;
+		goto err_config;
 	}
 
 	wlan_hdd_update_wiphy(wiphy, hdd_ctx->config);
@@ -5019,31 +5096,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	cds_pkt_proto_trace_init();
 #endif /* QCA_PKT_PROTO_TRACE */
 
-ftm_processing:
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-		if (CDF_STATUS_SUCCESS != wlan_hdd_ftm_open(hdd_ctx)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
-			       FL("wlan_hdd_ftm_open Failed"));
-			goto err_config;
-		}
-#if  defined(QCA_WIFI_FTM)
-		if (hdd_ftm_start(hdd_ctx)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
-			       FL("hdd_ftm_start Failed"));
-			goto err_free_ftm_open;
-		}
-#endif
-		/* registration of wiphy dev with cfg80211 */
-		if (0 > wlan_hdd_cfg80211_register(wiphy)) {
-			hddLog(LOGE, FL("wiphy register failed"));
-			goto err_free_ftm_open;
-		}
-
-		cds_set_load_unload_in_progress(false);
-		hdd_ctx->isLoadInProgress = false;
-		hddLog(LOGE, FL("FTM driver loaded"));
-		return CDF_STATUS_SUCCESS;
-	}
 #if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
 	rtnl_lock();
 	rtnl_lock_enable = true;
@@ -5418,9 +5470,6 @@ ftm_processing:
 
 	memdump_init();
 
-	hdd_ctx->isLoadInProgress = false;
-	cds_set_load_unload_in_progress(false);
-
 	goto success;
 
 err_nl_srv:
@@ -5473,15 +5522,6 @@ err_cds_close:
 	}
 	cds_close(p_cds_context);
 
-err_cds_open:
-
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
-#if  defined(QCA_WIFI_FTM)
-err_free_ftm_open:
-		wlan_hdd_ftm_close(hdd_ctx);
-#endif
-	}
-
 err_config:
 	kfree(hdd_ctx->config);
 	hdd_ctx->config = NULL;
@@ -5498,6 +5538,8 @@ err_free_hdd_context:
 	return -EIO;
 
 success:
+	hdd_ctx->isLoadInProgress = false;
+	cds_set_load_unload_in_progress(false);
 	EXIT();
 	return 0;
 }
