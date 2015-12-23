@@ -140,6 +140,7 @@ typedef enum {
 	WMI_SERVICE_ENTERPRISE_MESH,      /* Enterprise MESH Service Support */
 	WMI_SERVICE_RESTRT_CHNL_SUPPORT,  /* Restricted Channel Support */
 	WMI_SERVICE_BPF_OFFLOAD,          /* FW supports bpf offload */
+	WMI_SERVICE_SYNC_DELETE_CMDS,     /* FW sends response event for Peer, Vdev delete commands */
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
