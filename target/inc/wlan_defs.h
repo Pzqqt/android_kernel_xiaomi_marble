@@ -192,6 +192,9 @@ enum {
 	REGDMN_MODE_11AC_VHT40_2G    = 0x000400000, /* 2Ghz, VHT40 */
 	REGDMN_MODE_11AC_VHT80_2G    = 0x000800000, /* 2Ghz, VHT80 */
 	REGDMN_MODE_11AC_VHT160      = 0x001000000, /* 5Ghz, VHT160 */
+	REGDMN_MODE_11AC_VHT40_2GPLUS  = 0x002000000, /* 2Ghz, VHT40+ */
+	REGDMN_MODE_11AC_VHT40_2GMINUS = 0x004000000, /* 2Ghz, VHT40- */
+	REGDMN_MODE_11AC_VHT80_80      = 0x008000000, /* 5GHz, VHT80+80 */
 };
 
 #define REGDMN_MODE_ALL (0xFFFFFFFF)	/* REGDMN_MODE_ALL is defined out of the enum
@@ -408,8 +411,11 @@ typedef struct {
 	A_UINT32 size;
 } wlan_host_memory_chunk;
 
-#define NUM_UNITS_IS_NUM_VDEVS   0x1
-#define NUM_UNITS_IS_NUM_PEERS   0x2
+#define NUM_UNITS_IS_NUM_VDEVS        0x1
+#define NUM_UNITS_IS_NUM_PEERS        0x2
+#define NUM_UNITS_IS_NUM_ACTIVE_PEERS 0x4
+/* request host to allocate memory contiguously */
+#define REQ_TO_HOST_FOR_CONT_MEMORY   0x8
 
 /**
  * structure used by FW for requesting host memory
