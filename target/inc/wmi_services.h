@@ -139,6 +139,7 @@ typedef enum {
 	WMI_SERVICE_BSS_CHANNEL_INFO_64,  /* BSS channel info (freq, noise floor, 64-bit counters) event support */
 	WMI_SERVICE_ENTERPRISE_MESH,      /* Enterprise MESH Service Support */
 	WMI_SERVICE_RESTRT_CHNL_SUPPORT,  /* Restricted Channel Support */
+	WMI_SERVICE_BPF_OFFLOAD,          /* FW supports bpf offload */
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
