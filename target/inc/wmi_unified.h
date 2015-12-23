@@ -1990,7 +1990,59 @@ typedef struct {
 	 */
 	#define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_S 0
 	#define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_M 0x1
+
+	#define WMI_RSRC_CFG_FLAG_LTEU_SUPPORT_S 1
+	#define WMI_RSRC_CFG_FLAG_LTEU_SUPPORT_M 0x2
+
+	#define WMI_RSRC_CFG_FLAG_COEX_GPIO_SUPPORT_S 2
+	#define WMI_RSRC_CFG_FLAG_COEX_GPIO_SUPPORT_M 0x4
+
+	#define WMI_RSRC_CFG_FLAG_AUX_RADIO_SPECTRAL_INTF_S 3
+	#define WMI_RSRC_CFG_FLAG_AUX_RADIO_SPECTRAL_INTF_M 0x8
+
+	#define WMI_RSRC_CFG_FLAG_AUX_RADIO_CHAN_LOAD_INTF_S 4
+	#define WMI_RSRC_CFG_FLAG_AUX_RADIO_CHAN_LOAD_INTF_M 0x10
+
+	#define WMI_RSRC_CFG_FLAG_BSS_CHANNEL_INFO_64_S 5
+	#define WMI_RSRC_CFG_FLAG_BSS_CHANNEL_INFO_64_M 0x20
+
+	#define WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_S 6
+	#define WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_M 0x40
+
+	#define WMI_RSRC_CFG_FLAG_IPHR_PAD_CONFIG_ENABLE_S 7
+	#define WMI_RSRC_CFG_FLAG_IPHR_PAD_CONFIG_ENABLE_M 0x80
+
+	#define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_S 8
+	#define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_M 0x100
+
 	A_UINT32 flag1;
+
+	/** @brief smart_ant_cap - Smart Antenna capabilities information
+	* @details
+	*        1 - Smart antenna is enabled.
+	*        0 - Smart antenna is disabled.
+	* In future this can contain smart antenna specifc capabilities.
+	*/
+	A_UINT32 smart_ant_cap;
+
+	/**
+	* User can configure the buffers allocated for each AC (BE, BK, VI, VO)
+	* during init
+	*/
+	A_UINT32 BK_Minfree;
+	A_UINT32 BE_Minfree;
+	A_UINT32 VI_Minfree;
+	A_UINT32 VO_Minfree;
+
+	/**
+	* @brief alloc_frag_desc_for_data_pkt . Controls data packet fragment
+	* descriptor memory allocation.
+	*   1 - Allocate fragment descriptor memory for data packet in firmware.
+	*       If host wants to transmit data packet at its desired rate,
+	*       this field must be set.
+	*   0 - Don't allocate fragment descriptor for data packet.
+	*/
+	A_UINT32 alloc_frag_desc_for_data_pkt;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
@@ -2007,6 +2059,46 @@ typedef struct {
 		WMI_RSRC_CFG_FLAG_SET((word32), WOW_IGN_PCIE_RST, (value))
 #define WMI_RSRC_CFG_FLAG_WOW_IGN_PCIE_RST_GET(word32) \
 		WMI_RSRC_CFG_FLAG_GET((word32), WOW_IGN_PCIE_RST)
+
+#define WMI_RSRC_CFG_FLAG_LTEU_SUPPORT_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), LTEU_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_LTEU_SUPPORT_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), LTEU_SUPPORT)
+
+#define WMI_RSRC_CFG_FLAG_COEX_GPIO_SUPPORT_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), COEX_GPIO_SUPPORT, (value))
+#define WMI_RSRC_CFG_FLAG_COEX_GPIO_SUPPORT_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), COEX_GPIO_SUPPORT)
+
+#define WMI_RSRC_CFG_FLAG_AUX_RADIO_SPECTRAL_INTF_SET(word32, value) \
+	WMI_RSRC_CFG_FLAG_SET((word32), AUX_RADIO_SPECTRAL_INTF, (value))
+#define WMI_RSRC_CFG_FLAG_AUX_RADIO_SPECTRAL_INTF_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), AUX_RADIO_SPECTRAL_INTF)
+
+#define WMI_RSRC_CFG_FLAG_AUX_RADIO_CHAN_LOAD_INTF_SET(word32, value) \
+	WMI_RSRC_CFG_FLAG_SET((word32), AUX_RADIO_CHAN_LOAD_INTF, (value))
+#define WMI_RSRC_CFG_FLAG_AUX_RADIO_CHAN_LOAD_INTF_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), AUX_RADIO_CHAN_LOAD_INTF)
+
+#define WMI_RSRC_CFG_FLAG_BSS_CHANNEL_INFO_64_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), BSS_CHANNEL_INFO_64, (value))
+#define WMI_RSRC_CFG_FLAG_BSS_CHANNEL_INFO_64_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), BSS_CHANNEL_INFO_64)
+
+#define WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), ATF_CONFIG_ENABLE, (value))
+#define WMI_RSRC_CFG_FLAG_ATF_CONFIG_ENABLE_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), ATF_CONFIG_ENABLE)
+
+#define WMI_RSRC_CFG_FLAG_IPHR_PAD_CONFIG_ENABLE_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), IPHR_PAD_CONFIG_ENABLE, (value))
+#define WMI_RSRC_CFG_FLAG_IPHR_PAD_CONFIG_ENABLE_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), IPHR_PAD_CONFIG_ENABLE)
+
+#define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_SET(word32, value) \
+		WMI_RSRC_CFG_FLAG_SET((word32), QWRAP_MODE_ENABLE, (value))
+#define WMI_RSRC_CFG_FLAG_QWRAP_MODE_ENABLE_GET(word32) \
+		WMI_RSRC_CFG_FLAG_GET((word32), QWRAP_MODE_ENABLE)
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param */
@@ -7206,6 +7298,7 @@ typedef enum extend_wow_type_e {
 	EXTWOW_TYPE_APP_TYPE1,          /* extend wow type: only enable wakeup for app type1 */
 	EXTWOW_TYPE_APP_TYPE2,          /* extend wow type: only enable wakeup for app type2 */
 	EXTWOW_TYPE_APP_TYPE1_2,                /* extend wow type: enable wakeup for app type1&2 */
+	EXTWOW_TYPE_APP_PULSETEST,
 	EXTWOW_DISABLED = 255,
 } EXTWOW_TYPE;
 
@@ -7214,7 +7307,12 @@ typedef struct {
 	A_UINT32 vdev_id;
 	A_UINT32 type;
 	A_UINT32 wakeup_pin_num;
+	A_UINT32 swol_pulsetest_type;
+	A_UINT32 swol_pulsetest_application;
 } wmi_extwow_enable_cmd_fixed_param;
+
+#define SWOL_INDOOR_MAC_ADDRESS_INDEX_MAX 8
+#define SWOL_INDOOR_KEY_LEN 16
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals wmi_extwow_set_app_type1_params_cmd_fixed_param  */
@@ -7224,6 +7322,31 @@ typedef struct {
 	A_UINT8 passwd[16];
 	A_UINT32 ident_len;
 	A_UINT32 passwd_len;
+
+	/* indoor check parameters */
+	/* key for mac addresses specified in swol_indoor_key_mac
+	 * Big-endian hosts need to byte-swap the bytes within each 4-byte
+	 * segment of this array, so the bytes will return to their original
+	 * order when the entire WMI message contents are byte-swapped to
+	 * convert from big-endian to little-endian format.
+	 */
+	A_UINT8 swol_indoor_key[SWOL_INDOOR_MAC_ADDRESS_INDEX_MAX][SWOL_INDOOR_KEY_LEN];
+	/* key length for specified mac address index
+	 * Big-endian hosts need to byte-swap the bytes within each 4-byte
+	 * segment of this array, so the bytes will return to their original
+	 * order when the entire WMI message contents are byte-swapped to
+	 * convert from big-endian to little-endian format.
+	 */
+	A_UINT8 swol_indoor_key_len[SWOL_INDOOR_MAC_ADDRESS_INDEX_MAX];
+	/* mac address array allowed to wakeup host*/
+	wmi_mac_addr swol_indoor_key_mac[SWOL_INDOOR_MAC_ADDRESS_INDEX_MAX];
+	/* app mask for the mac addresses specified in swol_indoor_key_mac */
+	A_UINT32 swol_indoor_app_mask[SWOL_INDOOR_MAC_ADDRESS_INDEX_MAX];
+	A_UINT32 swol_indoor_waker_check; /* whether to do indoor waker check */
+	A_UINT32 swol_indoor_pw_check;    /* whether to check password */
+	A_UINT32 swol_indoor_pattern;     /* wakeup pattern */
+	A_UINT32 swol_indoor_exception;   /* wakeup when exception happens */
+	A_UINT32 swol_indoor_exception_app;
 } wmi_extwow_set_app_type1_params_cmd_fixed_param;
 
 typedef struct {
