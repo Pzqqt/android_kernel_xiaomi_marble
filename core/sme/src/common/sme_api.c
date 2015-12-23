@@ -4339,6 +4339,9 @@ CDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 			pMac->roam.configParam.early_stop_scan_min_threshold;
 		pParam->early_stop_scan_max_threshold =
 			pMac->roam.configParam.early_stop_scan_max_threshold;
+		cdf_mem_copy(&pParam->rrmConfig,
+			     &pMac->rrm.rrmSmeContext.rrmConfig,
+			     sizeof(pMac->rrm.rrmSmeContext.rrmConfig));
 		sme_release_global_lock(&pMac->sme);
 	}
 
