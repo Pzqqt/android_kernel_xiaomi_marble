@@ -2252,7 +2252,8 @@ WMITLV_CREATE_PARAM_STRUC(WMI_BPF_GET_VDEV_STATS_CMDID);
 
 /* bpf offload set vdev instructions cmd */
 #define WMITLV_TABLE_WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID(id, op, buf, len) \
-	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_bpf_set_vdev_instructions_cmd_fixed_param, wmi_bpf_set_vdev_instructions_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_bpf_set_vdev_instructions_cmd_fixed_param, wmi_bpf_set_vdev_instructions_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, buf_inst, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_BPF_SET_VDEV_INSTRUCTIONS_CMDID);
 
 /* bpf offload delete vdev instructions cmd */
