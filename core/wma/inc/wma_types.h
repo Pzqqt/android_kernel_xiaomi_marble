@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -285,7 +285,6 @@
 #define WMA_ROAM_SCAN_OFFLOAD_REQ   SIR_HAL_ROAM_SCAN_OFFLOAD_REQ
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define WMA_ROAM_OFFLOAD_SYNCH_CNF  SIR_HAL_ROAM_OFFLOAD_SYNCH_CNF
 #define WMA_ROAM_OFFLOAD_SYNCH_IND  SIR_HAL_ROAM_OFFLOAD_SYNCH_IND
 #define WMA_ROAM_OFFLOAD_SYNCH_FAIL SIR_HAL_ROAM_OFFLOAD_SYNCH_FAIL
 #endif
@@ -685,6 +684,12 @@ CDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
 				wma_mgmt_frame_rx_callback mgmt_rx_cb);
 
 CDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
-
+CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+			roam_offload_synch_ind *roam_synch_data,
+			tpSirBssDescription  bss_desc_ptr, uint8_t reason),
+		CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+			roam_offload_synch_ind *roam_synch_data,
+			tpSirBssDescription  bss_desc_ptr));
 
 #endif

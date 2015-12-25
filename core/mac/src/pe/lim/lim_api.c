@@ -1076,10 +1076,11 @@ CDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 /**
  * pe_register_wma_handle() - register management frame handler to WMA
  * @pMac: mac global ctx
+ * @ready_req: Ready request parameters
  *
  * Return: None
  */
-void pe_register_wma_handle(tpAniSirGlobal pMac)
+void pe_register_wma_handle(tpAniSirGlobal pMac, tSirSmeReadyReq *ready_req)
 {
 	void *p_cds_gctx;
 	CDF_STATUS retStatus;
@@ -1092,6 +1093,12 @@ void pe_register_wma_handle(tpAniSirGlobal pMac)
 		lim_log(pMac, LOGP,
 			FL("Registering the PE Handle with WMA has failed"));
 
+	retStatus = wma_register_roaming_callbacks(p_cds_gctx,
+			ready_req->csr_roam_synch_cb,
+			ready_req->pe_roam_synch_cb);
+	if (retStatus != CDF_STATUS_SUCCESS)
+		lim_log(pMac, LOGP,
+			FL("Registering roaming callbacks with WMA failed"));
 }
 
 /**
@@ -1791,15 +1798,54 @@ void lim_ps_offload_handle_missed_beacon_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg
 	return;
 }
 
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+/**
+ * lim_fill_join_rsp_ht_caps() - Fill the HT caps in join response
+ * @session: PE Session
+ * @join_rsp: Join response buffer to be filled up.
+ *
+ * Return: None
+ */
+void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
+{
+	tSirSmeHTProfile *ht_profile;
+	if (session == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Invalid Session"));
+		return;
+	}
+	if (join_rsp == NULL) {
+		lim_log(mac_ctx, LOGE, FL("Invalid Join Response"));
+		return;
+	}
+	if (session->cc_switch_mode !=
+			CDF_MCC_TO_SCC_SWITCH_DISABLE) {
+		ht_profile = &join_rsp->HTProfile;
+		ht_profile->htSupportedChannelWidthSet =
+			session->htSupportedChannelWidthSet;
+		ht_profile->htRecommendedTxWidthSet =
+			session->htRecommendedTxWidthSet;
+		ht_profile->htSecondaryChannelOffset =
+			session->htSecondaryChannelOffset;
+		ht_profile->dot11mode = session->dot11mode;
+		ht_profile->htCapability = session->htCapability;
+	}
+	ht_profile->vhtCapability = session->vhtCapability;
+	ht_profile->vhtTxChannelWidthSet =
+		session->vhtTxChannelWidthSet;
+	ht_profile->apCenterChan = session->ch_center_freq_seg0;
+	ht_profile->apChanWidth = session->ch_width;
+}
+#endif
+
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
-		roam_offload_synch_ind *roam_offload_synch_ind_ptr)
+		roam_offload_synch_ind *roam_offload_synch_ind_ptr,
+		tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t ie_len = 0;
 	tpSirProbeRespBeacon parsed_frm_ptr;
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *bcn_proberesp_ptr;
-	tSirBssDescription *bss_desc_ptr = NULL;
 
 	bcn_proberesp_ptr = (uint8_t *)roam_offload_synch_ind_ptr +
 		roam_offload_synch_ind_ptr->beaconProbeRespOffset;
@@ -1821,7 +1867,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
-		"LFR3: Beacon/Prb Rsp:");
+		"LFR3:Beacon/Prb Rsp:%d", roam_offload_synch_ind_ptr->isBeacon);
 	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 	bcn_proberesp_ptr, roam_offload_synch_ind_ptr->beaconProbeRespLength);
 	if (roam_offload_synch_ind_ptr->isBeacon) {
@@ -1856,20 +1902,6 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 		ie_len = roam_offload_synch_ind_ptr->beaconProbeRespLength -
 			(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
 	}
-	/*
-	 * Memory allocated below is freed up in csrProcessRoamOffloadSynchInd
-	 */
-	roam_offload_synch_ind_ptr->bss_desc_ptr =
-		cdf_mem_malloc(sizeof (tSirBssDescription) + ie_len);
-	bss_desc_ptr = roam_offload_synch_ind_ptr->bss_desc_ptr;
-	if (NULL == bss_desc_ptr) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-				"LFR3:Failed to allocate memory");
-		CDF_ASSERT(bss_desc_ptr != NULL);
-		return CDF_STATUS_E_NOMEM;
-	}
-	cdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription));
-
 	/*
 	 * Length of BSS desription is without length of
 	 * length itself and length of pointer
@@ -1955,129 +1987,159 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	cdf_mem_free(parsed_frm_ptr);
 	return CDF_STATUS_SUCCESS;
 }
-
-/**-----------------------------------------------------------------
-  * brief lim_roam_offload_synch_ind() - Handles Roam Synch Indication
-  * param pMac - global mac structure
-  * return - none
-  *-----------------------------------------------------------------
-  **/
-void lim_roam_offload_synch_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
+/**
+ * pe_roam_synch_callback() - PE level callback for roam synch propagation
+ * @mac_ctx: MAC Context
+ * @roam_sync_ind_ptr: Roam synch indication buffer pointer
+ * @bss_desc: BSS Descriptor pointer
+ *
+ * This is a PE level callback called from WMA to complete the roam synch
+ * propagation at PE level and also fill the BSS descriptor which will be
+ * helpful further to complete the roam synch propagation.
+ *
+ * Return: Success or Failure status
+ */
+CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+	roam_offload_synch_ind *roam_sync_ind_ptr,
+	tpSirBssDescription  bss_desc)
 {
 	tpPESession session_ptr;
 	tpPESession ft_session_ptr;
 	uint8_t session_id;
-	tSirMsgQ mmh_msg;
-	tSirBssDescription *bss_desc_ptr = NULL;
-	roam_offload_synch_ind *roam_sync_ind_ptr =
-		(roam_offload_synch_ind *)pMsg->bodyptr;
+	tpDphHashNode curr_sta_ds;
+	uint16_t aid;
+	tpAddBssParams add_bss_params;
+	uint8_t local_nss;
+	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 
 	if (!roam_sync_ind_ptr) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-				"LFR3:%s:roam_sync_ind_ptr is NULL", __func__);
-		return;
+		lim_log(mac_ctx, LOGE, FL("LFR3:roam_sync_ind_ptr is NULL"));
+		return status;
 	}
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-			"LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
-			"LFR3:%s:authStatus=%d, vdevId=%d", __func__,
-			roam_sync_ind_ptr->authStatus,
-			roam_sync_ind_ptr->roamedVdevId);
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
-			roam_sync_ind_ptr->bssid.bytes, CDF_MAC_ADDR_SIZE);
-	session_ptr = pe_find_session_by_bss_idx(pMac,
-			roam_sync_ind_ptr->roamedVdevId);
+	lim_log(mac_ctx, LOGE, FL("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND"));
+	lim_log(mac_ctx, CDF_TRACE_LEVEL_DEBUG, FL("LFR3:auth=%d, vdevId=%d"),
+		roam_sync_ind_ptr->authStatus, roam_sync_ind_ptr->roamedVdevId);
+	lim_print_mac_addr(mac_ctx, roam_sync_ind_ptr->bssid.bytes,
+			CDF_TRACE_LEVEL_DEBUG);
+	session_ptr = pe_find_session_by_sme_session_id(mac_ctx,
+				roam_sync_ind_ptr->roamedVdevId);
 	if (session_ptr == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-			"%s: LFR3:Unable to find session", __func__);
-		return;
+		lim_log(mac_ctx, LOGE, FL("LFR3:Unable to find session"));
+		return status;
 	}
-	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(session_ptr)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-				"session is not in STA mode");
-		return;
+		lim_log(mac_ctx, LOGE, FL("LFR3:session is not in STA mode"));
+		return status;
 	}
-	if (!CDF_IS_STATUS_SUCCESS(lim_roam_fill_bss_descr(pMac,
-					roam_sync_ind_ptr))) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-				"LFR3:%s:Failed to fill Bss Descr", __func__);
-		return;
+	status = lim_roam_fill_bss_descr(mac_ctx, roam_sync_ind_ptr, bss_desc);
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		lim_log(mac_ctx, LOGE, FL("LFR3:Failed to fill Bss Descr"));
+		return status;
 	}
-	bss_desc_ptr = roam_sync_ind_ptr->bss_desc_ptr;
-	ft_session_ptr = pe_create_session(pMac, bss_desc_ptr->bssId,
-				&session_id, pMac->lim.maxStation,
-				eSIR_INFRASTRUCTURE_MODE);
+	status = CDF_STATUS_E_FAILURE;
+	ft_session_ptr = pe_create_session(mac_ctx, bss_desc->bssId,
+			&session_id, mac_ctx->lim.maxStation,
+			eSIR_INFRASTRUCTURE_MODE);
 	if (ft_session_ptr == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-		"LFR3: Session Can't be created for new AP during Roam Synch");
-		lim_print_mac_addr(pMac, bss_desc_ptr->bssId, LOGE);
-		return;
+		lim_log(mac_ctx, LOGE, FL("LFR3:Cannot create PE Session"));
+		lim_print_mac_addr(mac_ctx, bss_desc->bssId, LOGE);
+		return status;
 	}
 	ft_session_ptr->peSessionId = session_id;
 	sir_copy_mac_addr(ft_session_ptr->selfMacAddr, session_ptr->selfMacAddr);
-	sir_copy_mac_addr(ft_session_ptr->limReAssocbssId, bss_desc_ptr->bssId);
+	sir_copy_mac_addr(ft_session_ptr->limReAssocbssId, bss_desc->bssId);
 	ft_session_ptr->bssType = eSIR_INFRASTRUCTURE_MODE;
-	/**
-	 * Set bRoamSynchInProgress here since this session is
-	 *specific to roam synch indication. This flag will
-	 *later be used to differentiate LFR3 with LFR2 in LIM
-	 **/
+	session_ptr->bRoamSynchInProgress = true;
 	ft_session_ptr->bRoamSynchInProgress = true;
+	ft_session_ptr->limSystemRole = eLIM_STA_ROLE;
+	sir_copy_mac_addr(session_ptr->limReAssocbssId, bss_desc->bssId);
+	ft_session_ptr->csaOffloadEnable = session_ptr->csaOffloadEnable;
 
-	if (ft_session_ptr->bssType == eSIR_INFRASTRUCTURE_MODE) {
-		ft_session_ptr->limSystemRole = eLIM_STA_ROLE;
-	} else {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-		"LFR3:Invalid bss type");
-		return;
+	lim_fill_ft_session(mac_ctx, bss_desc, ft_session_ptr, session_ptr);
+	lim_ft_prepare_add_bss_req(mac_ctx, false, ft_session_ptr, bss_desc);
+	roam_sync_ind_ptr->add_bss_params =
+		(tpAddBssParams) ft_session_ptr->ftPEContext.pAddBssReq;
+	add_bss_params = ft_session_ptr->ftPEContext.pAddBssReq;
+	lim_delete_tdls_peers(mac_ctx, session_ptr);
+	curr_sta_ds = dph_lookup_hash_entry(mac_ctx, session_ptr->bssId,
+			&aid, &session_ptr->dph.dphHashTable);
+	local_nss = curr_sta_ds->nss;
+	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
+	lim_cleanup_rx_path(mac_ctx, curr_sta_ds, session_ptr);
+	lim_delete_dph_hash_entry(mac_ctx, curr_sta_ds->staAddr,
+			aid, session_ptr);
+	pe_delete_session(mac_ctx, session_ptr);
+	session_ptr = NULL;
+	ft_session_ptr->nss = local_nss;
+	curr_sta_ds = dph_add_hash_entry(mac_ctx,
+			roam_sync_ind_ptr->bssid.bytes, DPH_STA_HASH_INDEX_PEER,
+			&ft_session_ptr->dph.dphHashTable);
+	if (curr_sta_ds == NULL) {
+		lim_log(mac_ctx, LOGE, FL("LFR3:failed to add hash entry for"));
+		lim_print_mac_addr(mac_ctx,
+				add_bss_params->staContext.staMac, LOGE);
+		ft_session_ptr->bRoamSynchInProgress = false;
+		return status;
 	}
+	ft_session_ptr->bssIdx = (uint8_t) add_bss_params->bssIdx;
+
+	curr_sta_ds->bssId = add_bss_params->bssIdx;
+	curr_sta_ds->staIndex =
+		add_bss_params->staContext.staIdx;
+	curr_sta_ds->ucUcastSig =
+		add_bss_params->staContext.ucUcastSig;
+	curr_sta_ds->ucBcastSig =
+		add_bss_params->staContext.ucBcastSig;
+	rrm_cache_mgmt_tx_power(mac_ctx,
+		add_bss_params->txMgmtPower, ft_session_ptr);
+	mac_ctx->roam.reassocRespLen = roam_sync_ind_ptr->reassocRespLength;
+	mac_ctx->roam.pReassocResp =
+		cdf_mem_malloc(mac_ctx->roam.reassocRespLen);
+	if (NULL == mac_ctx->roam.pReassocResp) {
+		lim_log(mac_ctx, LOGE, FL("LFR3:assoc resp mem alloc failed"));
+		ft_session_ptr->bRoamSynchInProgress = false;
+		return CDF_STATUS_E_NOMEM;
+	}
+	cdf_mem_copy(mac_ctx->roam.pReassocResp,
+			(uint8_t *)roam_sync_ind_ptr +
+			roam_sync_ind_ptr->reassocRespOffset,
+			mac_ctx->roam.reassocRespLen);
+
+	lim_log(mac_ctx, LOG1, FL("LFR3:the reassoc resp frame data:"));
+	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			mac_ctx->roam.pReassocResp,
+			mac_ctx->roam.reassocRespLen);
+	ft_session_ptr->bRoamSynchInProgress = true;
+	lim_process_assoc_rsp_frame(mac_ctx, mac_ctx->roam.pReassocResp,
+			LIM_REASSOC, ft_session_ptr);
+	roam_sync_ind_ptr->aid = ft_session_ptr->limAID;
+	curr_sta_ds->mlmStaContext.mlmState =
+		eLIM_MLM_LINK_ESTABLISHED_STATE;
+	curr_sta_ds->nss = local_nss;
+	ft_session_ptr->limMlmState = eLIM_MLM_LINK_ESTABLISHED_STATE;
+	lim_init_tdls_data(mac_ctx, ft_session_ptr);
+	roam_sync_ind_ptr->join_rsp->vht_channel_width =
+		ft_session_ptr->ch_width;
+	roam_sync_ind_ptr->join_rsp->staId = curr_sta_ds->staIndex;
+	roam_sync_ind_ptr->join_rsp->ucastSig = curr_sta_ds->ucUcastSig;
+	roam_sync_ind_ptr->join_rsp->bcastSig = curr_sta_ds->ucBcastSig;
+	roam_sync_ind_ptr->join_rsp->timingMeasCap = curr_sta_ds->timingMeasCap;
+	roam_sync_ind_ptr->join_rsp->nss = curr_sta_ds->nss;
+	roam_sync_ind_ptr->join_rsp->max_rate_flags =
+		lim_get_max_rate_flags(mac_ctx, curr_sta_ds);
+	roam_sync_ind_ptr->join_rsp->tdls_prohibited =
+		ft_session_ptr->tdls_prohibited;
+	roam_sync_ind_ptr->join_rsp->tdls_chan_swit_prohibited =
+		ft_session_ptr->tdls_chan_swit_prohibited;
+	roam_sync_ind_ptr->join_rsp->aid = ft_session_ptr->limAID;
+	lim_fill_join_rsp_ht_caps(ft_session_ptr, roam_sync_ind_ptr->join_rsp);
 	ft_session_ptr->limPrevSmeState = ft_session_ptr->limSmeState;
-	ft_session_ptr->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
-			"LFR3:%s:created session (%p) with id = %d",
-			__func__, ft_session_ptr, ft_session_ptr->peSessionId);
-	/* Update the ReAssoc BSSID of the current session */
-	sir_copy_mac_addr(session_ptr->limReAssocbssId, bss_desc_ptr->bssId);
-	lim_print_mac_addr(pMac, session_ptr->limReAssocbssId, LOG2);
-
-	/* Prepare the session right now with as much as possible */
-	lim_fill_ft_session(pMac, bss_desc_ptr, ft_session_ptr, session_ptr);
-
-	if (roam_sync_ind_ptr->reassoc_req_length) {
-		/*
-		 * For LFR3 the Assoc Request frame was sent by firmware, hence
-		 * pe session struct does not have corresponding IEs. Firmware
-		 * sends whole ASSOC req frame upto host in Roam Sync Event.
-		 * Copy this frame pe session's buffer, so that it can follow
-		 * LFR2 code path to send them to supplicant.
-		 */
-		ft_session_ptr->assocReqLen =
-			roam_sync_ind_ptr->reassoc_req_length
-			- SIR_MAC_HDR_LEN_3A - SIR_MAC_REASSOC_SSID_OFFSET;
-		ft_session_ptr->assocReq =
-			cdf_mem_malloc(ft_session_ptr->assocReqLen);
-		if (NULL == ft_session_ptr->assocReq) {
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
-				"LFR3: Failed to alloc memory for Assoc Req");
-			return;
-		}
-		cdf_mem_copy(ft_session_ptr->assocReq,
-			     (uint8_t *)roam_sync_ind_ptr +
-			     roam_sync_ind_ptr->reassoc_req_offset +
-			     SIR_MAC_HDR_LEN_3A + SIR_MAC_REASSOC_SSID_OFFSET,
-			     ft_session_ptr->assocReqLen);
-	}
-	lim_ft_prepare_add_bss_req(pMac, false, ft_session_ptr, bss_desc_ptr);
-	mmh_msg.type =
-		roam_sync_ind_ptr->messageType;
-	/* eWNI_SME_ROAM_OFFLOAD_SYNCH_IND */
-	mmh_msg.bodyptr = roam_sync_ind_ptr;
-	mmh_msg.bodyval = 0;
-
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
-		"LFR3:%s:sending eWNI_SME_ROAM_OFFLOAD_SYNCH_IND", __func__);
-	lim_sys_process_mmh_msg_api(pMac, &mmh_msg,  ePROT);
+	ft_session_ptr->limSmeState = eLIM_SME_LINK_EST_STATE;
+	ft_session_ptr->bRoamSynchInProgress = false;
+	if (mac_ctx->roam.pReassocResp)
+		cdf_mem_free(mac_ctx->roam.pReassocResp);
+	mac_ctx->roam.pReassocResp = NULL;
+	return CDF_STATUS_SUCCESS;
 }
 #endif
 

@@ -213,7 +213,6 @@ enum eWniMsgTypes {
 	eWNI_SME_SET_HT_2040_MODE,
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	eWNI_SME_ROAM_OFFLOAD_SYNCH_IND,        /* Roam Synch Indication from WMA to SME */
 	eWNI_SME_HO_FAIL_IND,   /* Hand Off Failure Ind from WMA to SME */
 #endif
 #ifdef WLAN_FEATURE_NAN

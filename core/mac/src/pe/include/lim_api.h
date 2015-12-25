@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -169,7 +169,9 @@ bool lim_is_deauth_diassoc_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info);
 bool lim_is_assoc_req_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info);
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void lim_roam_offload_synch_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
+CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
+	tpSirBssDescription  bss_desc_ptr);
 #endif
 #define limGetQosMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limQosEnabled)
 #define limGetWmeMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limWmeEnabled)
@@ -246,6 +248,13 @@ void lim_process_abort_scan_ind(tpAniSirGlobal pMac, uint8_t sessionId,
 	uint32_t scan_id);
 
 void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal, uint32_t, uint32_t *);
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp rsp);
+#else
+static inline void lim_fill_join_rsp_ht_caps(tpPESession session,
+	tpSirSmeJoinRsp rsp)
+{}
+#endif
 
 /************************************************************/
 #endif /* __LIM_API_H */

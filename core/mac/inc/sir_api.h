@@ -162,6 +162,9 @@ typedef enum {
 #define SIR_UAPSD_FLAG_ACBK     (1 << SIR_UAPSD_BITOFFSET_ACBK)
 #define SIR_UAPSD_FLAG_ACBE     (1 << SIR_UAPSD_BITOFFSET_ACBE)
 #define SIR_UAPSD_GET(ac, mask)      (((mask) & (SIR_UAPSD_FLAG_ ## ac)) >> SIR_UAPSD_BITOFFSET_ ## ac)
+
+#define ROAM_SYNCH_PROPAGATION 1
+#define ROAMING_TX_QUEUE_DISABLE 2
 #endif
 
 /**
@@ -423,6 +426,8 @@ typedef struct sSirSmeReadyReq {
 	uint16_t length;
 	uint16_t transactionId;
 	void *add_bssdescr_cb;
+	void *csr_roam_synch_cb;
+	void *pe_roam_synch_cb;
 } tSirSmeReadyReq, *tpSirSmeReadyReq;
 
 /**
@@ -3953,6 +3958,9 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	uint8_t kck[SIR_KCK_KEY_LEN];
 	uint8_t kek[SIR_KEK_KEY_LEN];
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
+	void *add_bss_params;
+	tpSirSmeJoinRsp join_rsp;
+	uint16_t aid;
 	tpSirBssDescription  bss_desc_ptr;
 } roam_offload_synch_ind;
 

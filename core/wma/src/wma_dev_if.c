@@ -1068,10 +1068,8 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 	wma->interfaces[vdev_id].peer_count--;
 	WMA_LOGE("%s: Removed peer with peer_addr %pM vdevid %d peer_count %d",
 		 __func__, bssid, vdev_id, wma->interfaces[vdev_id].peer_count);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (roam_synch_in_progress)
 		return;
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);
 	wmi_unified_peer_flush_tids_send(wma->wmi_handle, bssid,
@@ -1158,15 +1156,13 @@ CDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		goto err;
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (roam_synch_in_progress) {
 
-		WMA_LOGE("%s: Created peer with peer_addr %pM vdev_id %d,"
+		WMA_LOGE("%s: LFR3: Created peer with peer_addr %pM vdev_id %d,"
 			 "peer_count - %d", __func__, peer_addr, vdev_id,
 			 wma->interfaces[vdev_id].peer_count);
 		return CDF_STATUS_SUCCESS;
 	}
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	if (wmi_unified_peer_create_send(wma->wmi_handle, peer_addr,
 					 peer_type, vdev_id) < 0) {
 		WMA_LOGP("%s : Unable to create peer in Target", __func__);
@@ -3222,13 +3218,14 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 					 add_bss->bssId);
 				goto send_fail_resp;
 			}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-			if (iface->roam_synch_in_progress) {
+			if (wma_is_roam_synch_in_progress(wma, vdev_id)) {
 				add_bss->staContext.staIdx =
 					ol_txrx_local_peer_id(peer);
-				goto send_bss_resp;
+				WMA_LOGD("LFR3:%s: bssid %pM staIdx %d",
+					__func__, add_bss->bssId,
+					add_bss->staContext.staIdx);
+				return;
 			}
-#endif
 			msg = wma_fill_vdev_req(wma, vdev_id, WMA_ADD_BSS_REQ,
 						WMA_TARGET_REQ_TYPE_VDEV_START,
 						add_bss,
@@ -3900,7 +3897,6 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		status = CDF_STATUS_E_FAILURE;
 		goto out;
 	}
-
 	if (peer != NULL && peer->state == ol_txrx_peer_state_disc) {
 		/*
 		 * This is the case for reassociation.
@@ -3921,8 +3917,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 						  ol_txrx_peer_state_conn);
 		}
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (iface->roam_synch_in_progress) {
+		if (wma_is_roam_synch_in_progress(wma, params->smesessionId)) {
 			/* iface->nss = params->nss; */
 			/*In LFR2.0, the following operations are performed as
 			 * part of wmi_unified_send_peer_assoc. As we are
@@ -3933,9 +3928,11 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			cdf_atomic_set(&iface->bss_status,
 				       WMA_BSS_STATUS_STARTED);
 			iface->aid = params->assocId;
-			goto out;
+			WMA_LOGE("LFR3:statype %d vdev %d aid %d bssid %pM",
+					params->staType, params->smesessionId,
+					params->assocId, params->bssId);
+			return;
 		}
-#endif
 		wmi_unified_send_txbf(wma, params);
 
 		if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
@@ -4199,20 +4196,13 @@ static void wma_delete_sta_req_sta_mode(tp_wma_handle wma,
 	iface = &wma->interfaces[params->smesessionId];
 	iface->uapsd_cached_val = 0;
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	/* In case of LFR3.0 we need not send any
-	 * WMI commands to FW before SYNCH_CONFIRM */
-	if (iface->roam_synch_in_progress)
-		goto send_del_sta_rsp;
-#endif
+	if (wma_is_roam_synch_in_progress(wma, params->smesessionId))
+		return;
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType) {
 		wma_del_tdls_sta(wma, params);
 		return;
 	}
-#endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-send_del_sta_rsp:
 #endif
 	params->status = status;
 	if (params->respReqd) {
@@ -4288,6 +4278,8 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	switch (oper_mode) {
 	case BSS_OPERATIONAL_MODE_STA:
 		wma_delete_sta_req_sta_mode(wma, del_sta);
+		if (wma_is_roam_synch_in_progress(wma, smesession_id))
+			return;
 		break;
 
 	case BSS_OPERATIONAL_MODE_IBSS: /* IBSS shares AP code */
@@ -4405,15 +4397,13 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
 		wma->ibss_started = 0;
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (wma->interfaces[params->smesessionId].roam_synch_in_progress) {
+	if (wma_is_roam_synch_in_progress(wma, params->smesessionId)) {
 		roam_synch_in_progress = true;
 		WMA_LOGD("LFR3:%s: Setting vdev_up to FALSE for session %d",
 			__func__, params->smesessionId);
 		wma->interfaces[params->smesessionId].vdev_up = false;
 		goto detach_peer;
 	}
-#endif
 	msg = wma_fill_vdev_req(wma, params->smesessionId, WMA_DELETE_BSS_REQ,
 				WMA_TARGET_REQ_TYPE_VDEV_STOP, params,
 				WMA_VDEV_STOP_REQUEST_TIMEOUT);
@@ -4463,6 +4453,9 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 detach_peer:
 	wma_remove_peer(wma, params->bssid, params->smesessionId, peer,
 			roam_synch_in_progress);
+	if (wma_is_roam_synch_in_progress(wma, params->smesessionId))
+		return;
+
 out:
 	params->status = status;
 	wma_send_msg(wma, WMA_DELETE_BSS_RSP, (void *)params, 0);

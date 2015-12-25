@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -646,6 +646,10 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	 * releases those BDs
 	 */
 	pStaDs->valid = 0;
+	lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
+	/* Any roaming related changes should be above this line */
+	if (psessionEntry->bRoamSynchInProgress)
+		return eSIR_SUCCESS;
 	pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 
 	if (LIM_IS_STA_ROLE(psessionEntry) ||
@@ -660,11 +664,6 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		pMac->lim.gLastBeaconDtimCount = 0;
 		pMac->lim.gLastBeaconDtimPeriod = 0;
 
-#ifdef FEATURE_WLAN_ESE
-#ifdef FEATURE_WLAN_ESE_UPLOAD
-		lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
-#endif
 
 	}
 #ifdef WLAN_DEBUG

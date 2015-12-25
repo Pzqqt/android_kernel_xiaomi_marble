@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3272,6 +3272,8 @@ tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 			CLEAR_BIT(session_entry->peerAIDBitmap[i], aid);
 		}
 	}
+	if (session_entry->bRoamSynchInProgress)
+		return eSIR_SUCCESS;
 	lim_send_sme_tdls_delete_all_peer_ind(mac_ctx, session_entry);
 
 	return eSIR_SUCCESS;

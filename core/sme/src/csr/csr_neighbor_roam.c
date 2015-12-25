@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2480,7 +2480,7 @@ static void csr_neighbor_roam_info_ctx_init(
 		}
 		ngbr_roam_info->uOsRequestedHandoff = 0;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (session->roamOffloadSynchParams.bRoamSynchInProgress) {
+		if (session->roam_synch_in_progress) {
 			if (pMac->roam.pReassocResp != NULL) {
 				CDF_TRACE(CDF_MODULE_ID_SME,
 					CDF_TRACE_LEVEL_DEBUG,
@@ -2488,9 +2488,6 @@ static void csr_neighbor_roam_info_ctx_init(
 				cdf_mem_free(pMac->roam.pReassocResp);
 				pMac->roam.pReassocResp = NULL;
 			}
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
-				"LFR3:Send SynchCnf auth, authenticated");
-			csr_roam_offload_send_synch_cnf(pMac, session_id);
 		} else
 #endif
 			csr_roam_offload_scan(pMac, session_id,
@@ -2554,9 +2551,9 @@ CDF_STATUS csr_neighbor_roam_indicate_connect(
 		return CDF_STATUS_SUCCESS;
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session->roamOffloadSynchParams.bRoamSynchInProgress &&
+	if (session->roam_synch_in_progress &&
 		(eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
-		session->roamOffloadSynchParams.authStatus)) {
+		session->roam_synch_data->authStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
 			"LFR3:csr_neighbor_roam_indicate_connect");
 		msg = cdf_mem_malloc(sizeof(tSirSetActiveModeSetBncFilterReq));
@@ -2572,10 +2569,15 @@ CDF_STATUS csr_neighbor_roam_indicate_connect(
 		cdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
 		roamInfo.roamSynchInProgress =
-			session->roamOffloadSynchParams.bRoamSynchInProgress;
+			session->roam_synch_in_progress;
 		csr_roam_call_callback(pMac, session_id, &roamInfo, 0,
 			eCSR_ROAM_SET_KEY_COMPLETE,
 			eCSR_ROAM_RESULT_AUTHENTICATED);
+		csr_neighbor_roam_reset_init_state_control_info(pMac,
+			session_id);
+		csr_neighbor_roam_info_ctx_init(pMac, session_id);
+
+		return status;
 	}
 #endif
 

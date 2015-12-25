@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -847,7 +847,6 @@ typedef struct tagCsrRoamOffloadSynchStruct {
 	uint16_t chainMask;     /* chainmask */
 	uint16_t smpsMode;      /* smps.mode */
 	struct cdf_mac_addr bssid;      /* MAC address of roamed AP */
-	bool bRoamSynchInProgress;              /* a roam offload synch */
 	tCsrRoamOffloadAuthStatus authStatus;   /* auth status */
 	uint8_t kck[SIR_KCK_KEY_LEN];
 	uint8_t kek[SIR_KEK_KEY_LEN];
@@ -968,6 +967,7 @@ typedef struct tagCsrRoamSession {
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
 	size_t pmk_len;
 	uint8_t RoamKeyMgmtOffloadEnabled;
+	roam_offload_synch_ind *roam_synch_data;
 #endif
 #if defined WLAN_FEATURE_VOWIFI_11R
 	tftSMEContext ftSmeContext;
@@ -976,6 +976,7 @@ typedef struct tagCsrRoamSession {
 	uint8_t join_bssid_count;
 	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
+	bool roam_synch_in_progress;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {
@@ -1359,10 +1360,9 @@ static inline void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
 {}
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void csr_process_roam_offload_synch_ind(tHalHandle hHal,
-		roam_offload_synch_ind * roam_synch_ind_ptr);
 CDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
-		roam_offload_synch_ind *roam_synch_ind_ptr);
+		roam_offload_synch_ind *roam_synch_ind_ptr,
+		tpSirBssDescription  bss_desc_ptr);
 void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf);
 #endif
 bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,

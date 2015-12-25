@@ -730,8 +730,9 @@ static void hdd_send_association_event(struct net_device *dev,
 			return;
 		}
 
-		cds_incr_active_session(pAdapter->device_mode,
-						pAdapter->sessionId);
+		if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo))
+			cds_incr_active_session(pAdapter->device_mode,
+					pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
 		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
 
@@ -1415,7 +1416,10 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * active session count should still be the same and hence upon
 	 * successful reassoc decrement the active session count here.
 	 */
-	cds_decr_session_set_pcl(pAdapter->device_mode, pAdapter->sessionId);
+	if (!hdd_is_roam_sync_in_progress(pCsrRoamInfo))
+		cds_decr_session_set_pcl(
+				pAdapter->device_mode,
+				pAdapter->sessionId);
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
@@ -1485,18 +1489,17 @@ done:
 
 /**
  * hdd_is_roam_sync_in_progress()- Check if roam offloaded
+ * @roaminfo - Roaming Information
  *
  * Return: roam sync status if roaming offloaded else false
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-static inline bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
+bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
 {
-	return roaminfo->roamSynchInProgress;
-}
-#else
-static inline bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
-{
-	return false;
+	if (roaminfo)
+		return roaminfo->roamSynchInProgress;
+	else
+		return false;
 }
 #endif
 
@@ -1723,13 +1726,6 @@ defined(WLAN_FEATURE_VOWIFI_11R)
 		hdd_err("HDD context is NULL");
 		return CDF_STATUS_E_FAILURE;
 	}
-
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (pRoamInfo && pRoamInfo->roamSynchInProgress) {
-		/* change logging before release */
-		hddLog(LOG3, "LFR3:hdd_association_completion_handler");
-	}
-#endif
 
 	/* HDD has initiated disconnect, do not send connect result indication
 	 * to kernel as it will be handled by __cfg80211_disconnect.
@@ -1961,9 +1957,11 @@ defined(FEATURE_WLAN_LFR)
 						 * decrement the active session
 						 * count here.
 						 */
-						cds_decr_session_set_pcl
-							(pAdapter->device_mode,
-							pAdapter->sessionId);
+						if (!hdd_is_roam_sync_in_progress
+								(pRoamInfo))
+							cds_decr_session_set_pcl
+								(pAdapter->device_mode,
+								 pAdapter->sessionId);
 						hddLog(LOG1,
 						       FL("ft_carrier_on is %d, sending roamed indication"),
 						       ft_carrier_on);
