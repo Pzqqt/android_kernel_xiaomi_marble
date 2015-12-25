@@ -7102,7 +7102,8 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 CDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
-				roam_offload_synch_ind *roam_sync_ind_ptr)
+		roam_offload_synch_ind *roam_sync_ind_ptr,
+		tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t length = 0;
 	bool dup_bss;
@@ -7123,7 +7124,7 @@ CDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 
 	cdf_mem_zero(scan_res_ptr, sizeof(tCsrScanResult) + length);
 	cdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
-			roam_sync_ind_ptr->bss_desc_ptr,
+			bss_desc_ptr,
 			(sizeof(tSirBssDescription) + length));
 	ies_local_ptr = (tDot11fBeaconIEs *)(scan_res_ptr->Result.pvIes);
 	if (!ies_local_ptr &&

@@ -415,8 +415,18 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event, uint32_t len);
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void wma_process_roam_synch_complete(WMA_HANDLE handle,
-				     tSirSmeRoamOffloadSynchCnf *synchcnf);
+void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);
+static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
+		uint8_t vdev_id)
+{
+	return wma->interfaces[vdev_id].roam_synch_in_progress;
+}
+#else
+static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
+		uint8_t vdev_id)
+{
+	return false;
+}
 #endif
 
 /*

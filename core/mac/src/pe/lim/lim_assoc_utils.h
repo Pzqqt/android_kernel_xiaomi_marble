@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -207,6 +207,11 @@ void lim_send_sme_unprotected_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameT
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			     uint8_t tid, uint8_t state, uint16_t measInterval);
+#else
+static inline void lim_send_sme_tsm_ie_ind(tpAniSirGlobal pMac,
+	tpPESession psessionEntry, uint8_t tid,
+	uint8_t state, uint16_t measInterval)
+{}
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
 #endif /* __LIM_ASSOC_UTILS_H */

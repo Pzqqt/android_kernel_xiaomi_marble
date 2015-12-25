@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1367,6 +1367,12 @@ typedef struct {
 	 * the serialized MC thread context with a timer.
 	 */
 	cdf_mc_timer_t service_ready_ext_timer;
+	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr, uint8_t reason);
+	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr);
 } t_wma_handle, *tp_wma_handle;
 
 /**

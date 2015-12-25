@@ -3331,6 +3331,37 @@ CDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 }
 
 /**
+ * wma_register_roaming_callbacks() - Register roaming callbacks
+ * @cds_ctx: CDS Context
+ * @csr_roam_synch_cb: CSR roam synch callback routine pointer
+ * @pe_roam_synch_cb: PE roam synch callback routine pointer
+ *
+ * Register the SME and PE callback routines with WMA for
+ * handling roaming
+ *
+ * Return: Success or Failure Status
+ */
+CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr, uint8_t reason),
+	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr))
+{
+
+	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		WMA_LOGE("%s: Failed to get WMA context", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+	wma->csr_roam_synch_cb = csr_roam_synch_cb;
+	wma->pe_roam_synch_cb = pe_roam_synch_cb;
+	WMA_LOGD("Registered roam synch callbacks with WMA successfully");
+	return CDF_STATUS_SUCCESS;
+}
+/**
  * wma_register_mgmt_frm_client() - register management frame callback
  * @cds_ctx: cds context
  * @mgmt_frm_rx: management frame

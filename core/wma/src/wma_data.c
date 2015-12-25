@@ -1319,16 +1319,15 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 	}
 
 	if (params->state == eSIR_LINK_PREASSOC_STATE) {
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (wma->interfaces[vdev_id].roam_synch_in_progress) {
+		if (wma_is_roam_synch_in_progress(wma, vdev_id))
 			roam_synch_in_progress = true;
-		}
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 		status = wma_create_peer(wma, pdev, vdev, params->bssid,
 				WMI_PEER_TYPE_DEFAULT, vdev_id,
 				roam_synch_in_progress);
 		if (status != CDF_STATUS_SUCCESS)
-			params->status = false;
+			WMA_LOGE("%s: Unable to create peer", __func__);
+		if (roam_synch_in_progress)
+			return;
 	} else {
 		WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 			 __func__, vdev_id);

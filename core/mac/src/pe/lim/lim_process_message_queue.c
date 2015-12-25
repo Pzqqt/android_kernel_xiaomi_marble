@@ -1503,13 +1503,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		cdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	case WMA_ROAM_OFFLOAD_SYNCH_IND:
-		lim_roam_offload_synch_ind(mac_ctx, msg);
-		/* bodyPtr is freed after handling
-		 * eWNI_SME_ROAM_OFFLOAD_SYNCH_IND in sme_ProcessMsg */
-		break;
-#endif
 	case SIR_LIM_ADDTS_RSP_TIMEOUT:
 		lim_process_sme_req_messages(mac_ctx, msg);
 		break;

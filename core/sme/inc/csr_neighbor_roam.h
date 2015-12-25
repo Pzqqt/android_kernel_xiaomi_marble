@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -297,9 +297,10 @@ CDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 		const uint8_t sessionId);
 #endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-CDF_STATUS csr_roam_offload_send_synch_cnf(tpAniSirGlobal pMac,
-		uint8_t sessionId);
 CDF_STATUS csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 		roam_offload_synch_ind *roam_synch_ind_ptr, uint8_t sessionId);
+void csr_roam_synch_callback(tpAniSirGlobal mac,
+	roam_offload_synch_ind *roam_synch_data,
+	tpSirBssDescription  bss_desc_ptr, uint8_t reason);
 #endif
 #endif /* CSR_NEIGHBOR_ROAM_H */

@@ -1607,4 +1607,12 @@ CDF_STATUS csr_roam_issue_ft_roam_offload_synch(tHalHandle hHal,
 		uint32_t sessionId, tSirBssDescription *pBssDescription);
 #endif
 typedef void (*tCsrLinkStatusCallback)(uint8_t status, void *pContext);
+#ifdef FEATURE_WLAN_TDLS
+void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info, tpSirSmeJoinRsp join_rsp);
+#else
+static inline void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info,
+		tpSirSmeJoinRsp join_rsp)
+{}
+#endif
+
 #endif

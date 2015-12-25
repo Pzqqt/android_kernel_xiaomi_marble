@@ -1694,6 +1694,7 @@ CDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 		Msg.messageType = eWNI_SME_SYS_READY_IND;
 		Msg.length = sizeof(tSirSmeReadyReq);
 		Msg.add_bssdescr_cb = csr_scan_process_single_bssdescr;
+		Msg.csr_roam_synch_cb = csr_roam_synch_callback;
 
 
 		if (eSIR_FAILURE != u_mac_post_ctrl_msg(hHal, (tSirMbMsg *) &Msg)) {
@@ -2242,11 +2243,6 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	}
 	switch (pMsg->type) {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	case eWNI_SME_ROAM_OFFLOAD_SYNCH_IND:
-		csr_process_roam_offload_synch_ind(pMac,
-				(roam_offload_synch_ind *) pMsg->bodyptr);
-		cdf_mem_free(pMsg->bodyptr);
-		break;
 	case eWNI_SME_HO_FAIL_IND:
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("LFR3: Rcvd eWNI_SME_HO_FAIL_IND"));

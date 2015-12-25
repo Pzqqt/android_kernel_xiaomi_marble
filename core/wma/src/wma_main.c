@@ -5140,11 +5140,6 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		cdf_mem_free(msg->bodyptr);
 		break;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	case WMA_ROAM_OFFLOAD_SYNCH_CNF:
-		wma_process_roam_synch_complete(wma_handle,
-			(tSirSmeRoamOffloadSynchCnf *)msg->bodyptr);
-		cdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_ROAM_OFFLOAD_SYNCH_FAIL:
 		wma_process_roam_synch_fail(wma_handle,
 			(struct roam_offload_synch_fail *)msg->bodyptr);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -646,6 +646,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	if (((subtype == LIM_ASSOC) &&
 		(session_entry->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE)) ||
 		((subtype == LIM_REASSOC) &&
+		 !session_entry->bRoamSynchInProgress &&
 		((session_entry->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE)
 #if defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 		&& (session_entry->limMlmState !=
@@ -917,7 +918,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 #endif
 	if (!((session_entry->bssType == eSIR_BTAMP_STA_MODE) ||
 		((session_entry->bssType == eSIR_BTAMP_AP_MODE) &&
-		LIM_IS_BT_AMP_STA_ROLE(session_entry)))) {
+		LIM_IS_BT_AMP_STA_ROLE(session_entry)) ||
+		session_entry->bRoamSynchInProgress)) {
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_POSTASSOC_STATE,
 			session_entry->bssId,
@@ -972,8 +974,9 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			goto assocReject;
 		}
 #if defined(WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
-		if (session_entry->limMlmState ==
-		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) {
+		if ((session_entry->limMlmState ==
+		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
+			session_entry->bRoamSynchInProgress) {
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx, LOG1, FL("Sending self sta"));
 #endif
@@ -992,11 +995,11 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			lim_send_edca_params(mac_ctx,
 				session_entry->gLimEdcaParamsActive,
 				sta_ds->bssId);
+			lim_add_ft_sta_self(mac_ctx, (assoc_rsp->aid & 0x3FFF),
+				session_entry);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		}
 #endif
-			lim_add_ft_sta_self(mac_ctx, (assoc_rsp->aid & 0x3FFF),
-				session_entry);
 			cdf_mem_free(beacon);
 			return;
 		}

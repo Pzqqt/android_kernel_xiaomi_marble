@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3822,20 +3822,20 @@ CDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 				 csr_conn_info->nAssocRspLength));
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (!csr_session->roamOffloadSynchParams.bRoamSynchInProgress) {
+	if (!csr_session->roam_synch_in_progress) {
 #endif
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
-		ac_info = &qos_session->ac_info[ac];
-		sme_qos_find_matching_tspec(mac_ctx, sessionid, ac,
-			ac_info, ric_data_desc, &ric_rsplen);
-	}
+		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+			ac_info = &qos_session->ac_info[ac];
+			sme_qos_find_matching_tspec(mac_ctx, sessionid, ac,
+					ac_info, ric_data_desc, &ric_rsplen);
+		}
 
-	if (ric_rsplen) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
-			  FL("RIC Response still follows despite traversing "
-			  "through all ACs. Remaining len = %d"), ric_rsplen);
-		CDF_ASSERT(0);
-	}
+		if (ric_rsplen) {
+			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+				FL("RIC Resp still follows . Rem len = %d"),
+				ric_rsplen);
+			CDF_ASSERT(0);
+		}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	} else {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,

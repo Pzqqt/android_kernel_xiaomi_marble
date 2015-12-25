@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -813,11 +813,14 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	pAddBssParams->sessionId = pftSessionEntry->peSessionId;
 
 	/* Set a new state for MLME */
-
-	pftSessionEntry->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE;
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, pftSessionEntry->peSessionId,
-		       eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
+	if (!pftSessionEntry->bRoamSynchInProgress) {
+		pftSessionEntry->limMlmState =
+			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE;
+		MTRACE(mac_trace
+			(pMac, TRACE_CODE_MLM_STATE,
+			pftSessionEntry->peSessionId,
+			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
+	}
 	pAddBssParams->halPersona = (uint8_t) pftSessionEntry->pePersona;
 
 	pftSessionEntry->ftPEContext.pAddBssReq = pAddBssParams;
@@ -1040,13 +1043,14 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 		regMax, localPowerConstraint, pMac->roam.configParam.nTxPowerCap,
 		pftSessionEntry->maxTxPower);
 #endif
-
-	pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
-	pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_SME_STATE, pftSessionEntry->peSessionId,
-		       pftSessionEntry->limSmeState));
-
+	if (!psessionEntry->bRoamSynchInProgress) {
+		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
+		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
+		MTRACE(mac_trace(pMac,
+				TRACE_CODE_SME_STATE,
+				pftSessionEntry->peSessionId,
+				pftSessionEntry->limSmeState));
+	}
 	pftSessionEntry->encryptType = psessionEntry->encryptType;
 #ifdef WLAN_FEATURE_11W
 	pftSessionEntry->limRmfEnabled = psessionEntry->limRmfEnabled;
