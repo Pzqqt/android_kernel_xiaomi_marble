@@ -2777,16 +2777,20 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	if (cdf_unlikely(!pdev)) {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: Invalid context", __func__);
+		cdf_mem_free(rxpkt);
 		return;
 	}
 
-	if (pdev->ipa_uc_op_cb)
+	if (pdev->ipa_uc_op_cb) {
 		pdev->ipa_uc_op_cb(rxpkt, pdev->osif_dev);
-	else
+	} else {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: ipa_uc_op_cb NULL", __func__);
+		cdf_mem_free(rxpkt);
+	}
 }
 
+#ifdef QCA_CONFIG_SMP
 /**
  * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
  * @pdev: handle to the HTT instance
@@ -2815,6 +2819,20 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 	pkt->staId = 0;
 	cds_indicate_rxpkt(sched_ctx, pkt);
 }
+#else
+void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev,
+				uint8_t *op_msg)
+{
+	if (pdev->ipa_uc_op_cb) {
+		pdev->ipa_uc_op_cb(op_msg, pdev->osif_dev);
+	} else {
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		    "%s: IPA callback function is not registered", __func__);
+		cdf_mem_free(op_msg);
+		return;
+	}
+}
+#endif
 
 /**
  * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
