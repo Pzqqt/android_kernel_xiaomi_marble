@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -6875,7 +6875,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
-		cds_set_dual_mac_scan_config(hdd_ctx,
+		cds_set_dual_mac_scan_config(
 				value[1], value[2],
 				value[3]);
 		break;
@@ -7693,7 +7693,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_clist> is called\n"));
-		cds_incr_connection_count_utfw(hdd_ctx, apps_args[0],
+		cds_incr_connection_count_utfw(apps_args[0],
 			apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5], apps_args[6],
 			apps_args[7]);
@@ -7704,7 +7704,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_dlist> is called\n"));
-		cds_decr_connection_count_utfw(hdd_ctx, apps_args[0],
+		cds_decr_connection_count_utfw(apps_args[0],
 			apps_args[1]);
 	}
 	break;
@@ -7713,7 +7713,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_ulist> is called\n"));
-		cds_update_connection_info_utfw(hdd_ctx, apps_args[0],
+		cds_update_connection_info_utfw(apps_args[0],
 			apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5], apps_args[6],
 			apps_args[7]);
@@ -7745,7 +7745,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_pcl> is called\n"));
 
-		cds_get_pcl(hdd_ctx, apps_args[0],
+		cds_get_pcl(apps_args[0],
 				pcl, &pcl_len);
 		pr_info("PCL list for role[%d] is {", apps_args[0]);
 		for (i = 0 ; i < pcl_len; i++)
@@ -7761,7 +7761,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_cinfo> is called\n"));
-		conn_info = cds_get_conn_info(hdd_ctx, &len);
+		conn_info = cds_get_conn_info(&len);
 		pr_info("+-----------------------------+\n");
 		for (i = 0; i < len; i++) {
 			pr_info("|table_index[%d]\t\t|\n", i);
@@ -7787,7 +7787,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		if (apps_args[0] == 0) {
 			hddLog(LOGE,
 				FL("set hw mode for single mac\n"));
-			cds_soc_set_hw_mode(hdd_ctx,
+			cds_soc_set_hw_mode(
 					pAdapter->sessionId,
 					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
@@ -7798,7 +7798,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		} else if (apps_args[0] == 1) {
 			hddLog(LOGE,
 				FL("set hw mode for dual mac\n"));
-			cds_soc_set_hw_mode(hdd_ctx,
+			cds_soc_set_hw_mode(
 					pAdapter->sessionId,
 					HW_MODE_SS_1x1,
 					HW_MODE_80_MHZ,
@@ -7826,7 +7826,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		bool allow;
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_query_allow> is called\n"));
-		allow = cds_allow_concurrency(hdd_ctx,
+		allow = cds_allow_concurrency(
 				apps_args[0], apps_args[1], apps_args[2]);
 		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
@@ -9513,7 +9513,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d", value[1], value[2]);
-		cds_set_dual_mac_fw_mode_config(hdd_ctx,
+		cds_set_dual_mac_fw_mode_config(
 				value[1], value[2]);
 		break;
 	case WE_DUMP_DP_TRACE_LEVEL:

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2405,7 +2405,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	}
 
 	if (CDF_STATUS_SUCCESS == status) {
-		cds_set_concurrency_mode(hdd_ctx, session_type);
+		cds_set_concurrency_mode(session_type);
 
 		/* Initialize the WoWL service */
 		if (!hdd_init_wowl(adapter)) {
@@ -2420,7 +2420,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		hddLog(CDF_TRACE_LEVEL_DEBUG, FL("current_intf_count=%d"),
 		       hdd_ctx->current_intf_count);
 
-		cds_check_and_restart_sap_with_non_dfs_acs(hdd_ctx);
+		cds_check_and_restart_sap_with_non_dfs_acs();
 	}
 
 	if ((cds_get_conparam() != CDF_GLOBAL_FTM_MODE)
@@ -2588,7 +2588,7 @@ CDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	}
 	adapterNode = pCurrent;
 	if (CDF_STATUS_SUCCESS == status) {
-		cds_clear_concurrency_mode(hdd_ctx, adapter->device_mode);
+		cds_clear_concurrency_mode(adapter->device_mode);
 		hdd_cleanup_adapter(hdd_ctx, adapterNode->pAdapter, rtnl_held);
 
 		hdd_remove_adapter(hdd_ctx, adapterNode);
@@ -2787,7 +2787,7 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			cds_flush_work(&hdd_ctx->sap_start_work);
 			hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
 			       FL("Canceled the pending SAP restart work"));
-			cds_change_sap_restart_required_status(hdd_ctx, false);
+			cds_change_sap_restart_required_status(false);
 		}
 		/* Any softap specific cleanup here... */
 		if (adapter->device_mode == WLAN_HDD_P2P_GO)
@@ -2798,14 +2798,14 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		mutex_lock(&hdd_ctx->sap_lock);
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
 			CDF_STATUS status;
-			hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 			/* Stop Bss. */
 #ifdef WLAN_FEATURE_MBSSID
 			status = wlansap_stop_bss(
 					WLAN_HDD_GET_SAP_CTX_PTR(adapter));
 #else
-			status = wlansap_stop_bss(hdd_ctx->pcds_context);
+			status = wlansap_stop_bss(
+				(WLAN_HDD_GET_CTX(adapter))->pcds_context);
 #endif
 
 			if (CDF_IS_STATUS_SUCCESS(status)) {
@@ -2829,7 +2829,7 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				hddLog(LOGE, FL("failure in wlansap_stop_bss"));
 			}
 			clear_bit(SOFTAP_BSS_STARTED, &adapter->event_flags);
-			cds_decr_session_set_pcl(hdd_ctx,
+			cds_decr_session_set_pcl(
 						     adapter->device_mode,
 							adapter->sessionId);
 
@@ -2920,7 +2920,7 @@ CDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 		adapter->sessionCtx.station.hdd_ReassocScenario = false;
 
 		hdd_deinit_tx_rx(adapter);
-		cds_decr_session_set_pcl(hdd_ctx,
+		cds_decr_session_set_pcl(
 						adapter->device_mode,
 						adapter->sessionId);
 		if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
@@ -4875,7 +4875,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_ctx->isLogpInProgress = false;
 	cds_set_logp_in_progress(false);
 
-	cds_set_connection_in_progress(hdd_ctx, false);
+	cds_set_connection_in_progress(false);
 
 	hdd_wlan_green_ap_init(hdd_ctx);
 
@@ -5294,7 +5294,7 @@ ftm_processing:
 #endif
 
 	wlan_hdd_nan_init(hdd_ctx);
-	status = cds_init_policy_mgr(hdd_ctx);
+	status = cds_init_policy_mgr();
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Policy manager initialization failed");
 		goto err_nl_srv;
@@ -6252,7 +6252,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		cds_decr_session_set_pcl(hdd_ctx,
+		cds_decr_session_set_pcl(
 						ap_adapter->device_mode,
 						ap_adapter->sessionId);
 		hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
@@ -6328,7 +6328,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	}
 	hddLog(CDF_TRACE_LEVEL_INFO_HIGH, FL("SAP Start Success"));
 	set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-	cds_incr_active_session(hdd_ctx, ap_adapter->device_mode,
+	cds_incr_active_session(ap_adapter->device_mode,
 					ap_adapter->sessionId);
 	hostapd_state->bCommit = true;
 

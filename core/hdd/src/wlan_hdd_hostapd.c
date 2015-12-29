@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -556,7 +556,7 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 			hddLog(LOGE, FL("Deleting SAP/P2P link!!!!!!"));
 
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
-		cds_decr_session_set_pcl(pHddCtx,
+		cds_decr_session_set_pcl(
 					     pHostapdAdapter->device_mode,
 					     pHostapdAdapter->sessionId);
 	}
@@ -589,7 +589,7 @@ static void hdd_issue_stored_joinreq(hdd_adapter_t *sta_adapter,
 	}
 	hal_handle = WLAN_HDD_GET_HAL_CTX(sta_adapter);
 
-	if (true ==  cds_is_sta_connection_pending(hdd_ctx)) {
+	if (true ==  cds_is_sta_connection_pending()) {
 		MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 				TRACE_CODE_HDD_ISSUE_JOIN_REQ,
 				sta_adapter->sessionId, roam_id));
@@ -601,7 +601,7 @@ static void hdd_issue_stored_joinreq(hdd_adapter_t *sta_adapter,
 			hdd_conn_set_connection_state(sta_adapter,
 				eConnectionState_NotConnected);
 		}
-		cds_change_sta_conn_pending_status(hdd_ctx, false);
+		cds_change_sta_conn_pending_status(false);
 	}
 }
 
@@ -999,7 +999,7 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		wrqu.data.length = strlen(startBssEvent);
 		we_event = IWEVCUSTOM;
 		we_custom_event_generic = we_custom_start_event;
-		cds_dump_concurrency_info(pHddCtx);
+		cds_dump_concurrency_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 		break;          /* Event will be sent after Switch-Case stmt */
@@ -1792,7 +1792,7 @@ stopbss:
 		we_custom_event_generic = we_custom_event;
 		wireless_send_event(dev, we_event, &wrqu,
 				    (char *)we_custom_event_generic);
-		cds_dump_concurrency_info(pHddCtx);
+		cds_dump_concurrency_info();
 		/* Send SCC/MCC Switching event to IPA */
 		hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 	}
@@ -4976,7 +4976,7 @@ __iw_softap_stopbss(struct net_device *dev,
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
-		cds_decr_session_set_pcl(hdd_ctx,
+		cds_decr_session_set_pcl(
 					     pHostapdAdapter->device_mode,
 					     pHostapdAdapter->sessionId);
 	}
@@ -7237,7 +7237,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	uint16_t prev_rsn_length = 0;
 	ENTER();
 
-	if (cds_is_connection_in_progress(pHddCtx)) {
+	if (cds_is_connection_in_progress()) {
 		hdd_err("Can't start BSS: connection is in progress");
 		return -EINVAL;
 	}
@@ -7661,7 +7661,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		return 0;
 	}
 
-	if (!cds_allow_concurrency(pHddCtx,
+	if (!cds_allow_concurrency(
 				cds_convert_device_mode_to_hdd_type(
 				pHostapdAdapter->device_mode),
 				pConfig->channel, HW_MODE_20_MHZ)) {
@@ -7670,7 +7670,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		return -EINVAL;
 	}
 
-	if (!cds_set_connection_in_progress(pHddCtx, true)) {
+	if (!cds_set_connection_in_progress(true)) {
 		hdd_err("Can't start BSS: set connnection in progress failed");
 		return -EINVAL;
 	}
@@ -7693,7 +7693,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		pHostapdAdapter->dev);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
-		cds_set_connection_in_progress(pHddCtx, false);
+		cds_set_connection_in_progress(false);
 		hddLog(LOGE, FL("SAP Start Bss fail"));
 		return -EINVAL;
 	}
@@ -7708,7 +7708,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 			FL("ERROR: HDD cdf wait for single_event failed!!"));
-		cds_set_connection_in_progress(pHddCtx, false);
+		cds_set_connection_in_progress(false);
 		sme_get_command_q_status(hHal);
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
@@ -7722,7 +7722,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	set_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
 	/* Initialize WMM configuation */
 	hdd_wmm_init(pHostapdAdapter);
-	cds_incr_active_session(pHddCtx, pHostapdAdapter->device_mode,
+	cds_incr_active_session(pHostapdAdapter->device_mode,
 					 pHostapdAdapter->sessionId);
 #ifdef DHCP_SERVER_OFFLOAD
 	if (iniConfig->enableDHCPServerOffload)
@@ -7743,7 +7743,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	}
 #endif
 
-	cds_set_connection_in_progress(pHddCtx, false);
+	cds_set_connection_in_progress(false);
 	pHostapdState->bCommit = true;
 	EXIT();
 
@@ -7883,7 +7883,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pAdapter->event_flags);
 		/*BSS stopped, clear the active sessions for this device mode*/
-		cds_decr_session_set_pcl(pHddCtx,
+		cds_decr_session_set_pcl(
 						pAdapter->device_mode,
 						pAdapter->sessionId);
 		pAdapter->sessionCtx.ap.beacon = NULL;
@@ -8031,7 +8031,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 				params->chandef.chan->center_freq);
 
 	/* check if concurrency is allowed */
-	if (!cds_allow_concurrency(pHddCtx,
+	if (!cds_allow_concurrency(
 				cds_convert_device_mode_to_hdd_type(
 				pAdapter->device_mode),
 				channel,
