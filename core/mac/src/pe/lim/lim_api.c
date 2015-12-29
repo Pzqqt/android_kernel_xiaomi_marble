@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2037,7 +2037,7 @@ void lim_roam_offload_synch_ind(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 	/* Prepare the session right now with as much as possible */
 	lim_fill_ft_session(pMac, bss_desc_ptr, ft_session_ptr, session_ptr);
 
-	if (ft_session_ptr->assocReqLen) {
+	if (roam_sync_ind_ptr->reassoc_req_length) {
 		/*
 		 * For LFR3 the Assoc Request frame was sent by firmware, hence
 		 * pe session struct does not have corresponding IEs. Firmware
