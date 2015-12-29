@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -4661,7 +4661,7 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 		return -EBUSY;
 	}
 
-	if (cds_is_mcc_in_24G(pHddCtx))
+	if (cds_is_mcc_in_24G())
 		return cds_set_mas(adapter, filterType);
 
 exit:

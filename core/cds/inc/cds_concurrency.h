@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -463,139 +463,30 @@ struct cds_conc_connection_info {
 	bool          in_use;
 };
 
-bool cds_is_connection_in_progress(hdd_context_t *hdd_ctx);
-void cds_dump_concurrency_info(hdd_context_t *pHddCtx);
-void cds_set_concurrency_mode(hdd_context_t *hdd_ctx,
-			     enum tCDF_ADAPTER_MODE mode);
-void cds_clear_concurrency_mode(hdd_context_t *pHddCtx,
-			       enum tCDF_ADAPTER_MODE mode);
-uint32_t cds_get_connection_count(hdd_context_t *hdd_ctx);
-/**
- * cds_is_sta_connection_pending() - This function will check if sta connection
- *                                   is pending or not.
- * @hdd_ctx: pointer to hdd context
- *
- * This function will return the status of flag is_sta_connection_pending
- *
- * Return: true or false
- */
-static inline bool
-cds_is_sta_connection_pending(hdd_context_t *hdd_ctx)
-{
-	bool status;
-	spin_lock(&hdd_ctx->sta_update_info_lock);
-	status = hdd_ctx->is_sta_connection_pending;
-	spin_unlock(&hdd_ctx->sta_update_info_lock);
-	return status;
-}
-
-/**
- * cds_change_sta_conn_pending_status() - This function will change the value
- *                                        of is_sta_connection_pending
- * @hdd_ctx: pointer to hdd context
- * @value: value to set
- *
- * This function will change the value of is_sta_connection_pending
- *
- * Return: none
- */
-static inline void
-cds_change_sta_conn_pending_status(hdd_context_t *hdd_ctx,
-		bool value)
-{
-	spin_lock(&hdd_ctx->sta_update_info_lock);
-	hdd_ctx->is_sta_connection_pending = value;
-	spin_unlock(&hdd_ctx->sta_update_info_lock);
-}
-
-/**
- * cds_is_sap_restart_required() - This function will check if sap restart
- *                                 is pending or not.
- * @hdd_ctx: pointer to hdd context.
- *
- * This function will return the status of flag is_sap_restart_required.
- *
- * Return: true or false
- */
-static inline bool
-cds_is_sap_restart_required(hdd_context_t *hdd_ctx)
-{
-	bool status;
-	spin_lock(&hdd_ctx->sap_update_info_lock);
-	status = hdd_ctx->is_sap_restart_required;
-	spin_unlock(&hdd_ctx->sap_update_info_lock);
-	return status;
-}
-
-/**
- * cds_change_sap_restart_required_status() - This function will change the
- *                                            value of is_sap_restart_required
- * @hdd_ctx: pointer to hdd context
- * @value: value to set
- *
- * This function will change the value of is_sap_restart_required
- *
- * Return: none
- */
-static inline void
-cds_change_sap_restart_required_status(hdd_context_t *hdd_ctx,
-		bool value)
-{
-	spin_lock(&hdd_ctx->sap_update_info_lock);
-	hdd_ctx->is_sap_restart_required = value;
-	spin_unlock(&hdd_ctx->sap_update_info_lock);
-}
-
-/**
- * cds_set_connection_in_progress() - to set the connection in progress flag
- * @hdd_ctx: pointer to hdd context
- * @value: value to set
- *
- * This function will set the passed value to connection in progress flag.
- * If value is previously being set to true then no need to set it again.
- *
- * Return: true if value is being set correctly and false otherwise.
- */
-static inline bool
-cds_set_connection_in_progress(hdd_context_t *hdd_ctx,
-		bool value)
-{
-	bool status = true;
-	spin_lock(&hdd_ctx->connection_status_lock);
-	/*
-	 * if the value is set to true previously and if someone is
-	 * trying to make it true again then it could be some race
-	 * condition being triggered. Avoid this situation by returning
-	 * false
-	 */
-	if (hdd_ctx->connection_in_progress && value)
-		status = false;
-	else
-		hdd_ctx->connection_in_progress = value;
-	spin_unlock(&hdd_ctx->connection_status_lock);
-	return status;
-}
-
-
+bool cds_is_connection_in_progress(void);
+void cds_dump_concurrency_info(void);
+void cds_set_concurrency_mode(enum tCDF_ADAPTER_MODE mode);
+void cds_clear_concurrency_mode(enum tCDF_ADAPTER_MODE mode);
+uint32_t cds_get_connection_count(void);
+bool cds_is_sta_connection_pending(void);
+void cds_change_sta_conn_pending_status(bool value);
+void cds_change_sap_restart_required_status(bool value);
+bool cds_set_connection_in_progress(bool value);
 int cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 			struct wireless_dev *wdev,
 			const void *data,
 			int data_len);
 uint32_t cds_get_concurrency_mode(void);
-CDF_STATUS cds_check_and_restart_sap(hdd_context_t *hdd_ctx,
-		eCsrRoamResult roam_result,
+CDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 		hdd_station_ctx_t *hdd_sta_ctx);
-void cds_handle_conc_rule1(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *adapter,
+void cds_handle_conc_rule1(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile);
 #ifdef FEATURE_WLAN_CH_AVOID
-bool cds_handle_conc_rule2(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *adapter,
+bool cds_handle_conc_rule2(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile,
 		uint32_t *roam_id);
 #else
-static inline bool cds_handle_conc_rule2(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *adapter,
+static inline bool cds_handle_conc_rule2(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile,
 		uint32_t *roam_id)
 {
@@ -608,10 +499,9 @@ bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel);
 CDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
-void cds_force_sap_on_scc(hdd_context_t *hdd_ctx, eCsrRoamResult roam_result);
+void cds_force_sap_on_scc(eCsrRoamResult roam_result);
 #else
-static inline void cds_force_sap_on_scc(hdd_context_t *hdd_ctx,
-		eCsrRoamResult roam_result)
+static inline void cds_force_sap_on_scc(eCsrRoamResult roam_result)
 {
 
 }
@@ -619,19 +509,17 @@ static inline void cds_force_sap_on_scc(hdd_context_t *hdd_ctx,
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void cds_check_concurrent_intf_and_restart_sap(
-		hdd_context_t *hdd_ctx,
 		hdd_station_ctx_t *hdd_sta_ctx,
 		hdd_adapter_t *adapter);
 #else
 static inline void cds_check_concurrent_intf_and_restart_sap(
-		hdd_context_t *hdd_ctx,
 		hdd_station_ctx_t *hdd_sta_ctx,
 		hdd_adapter_t *adapter)
 {
 
 }
 #endif /* FEATURE_WLAN_MCC_TO_SCC_SWITCH */
-uint8_t cds_is_mcc_in_24G(hdd_context_t *hdd_ctx);
+uint8_t cds_is_mcc_in_24G(void);
 int32_t cds_set_mas(hdd_adapter_t *adapter, uint8_t mas_value);
 int cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		uint32_t set_value);
@@ -652,61 +540,47 @@ static inline void cds_restart_sap(hdd_adapter_t *ap_adapter)
 	*/
 
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
-void cds_check_and_restart_sap_with_non_dfs_acs(hdd_context_t *hdd_ctx);
+void cds_check_and_restart_sap_with_non_dfs_acs(void);
 #else
-static inline void cds_check_and_restart_sap_with_non_dfs_acs(
-							hdd_context_t *hdd_ctx)
+static inline void cds_check_and_restart_sap_with_non_dfs_acs(void)
 {
 
 }
 #endif /* FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE */
-void cds_incr_active_session(hdd_context_t *pHddCtx,
-				enum tCDF_ADAPTER_MODE mode,
+void cds_incr_active_session(enum tCDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
-void cds_decr_active_session(hdd_context_t *pHddCtx,
-				enum tCDF_ADAPTER_MODE mode,
+void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
-void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
-		enum tCDF_ADAPTER_MODE mode,
+void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
 		uint8_t session_id);
-CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx);
-CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
+CDF_STATUS cds_init_policy_mgr(void);
+CDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 				uint8_t *pcl_Channels, uint32_t *len);
-bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
+bool cds_allow_concurrency(enum cds_con_mode mode,
 				uint8_t channel, enum hw_mode_bandwidth bw);
-enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(
-				hdd_context_t *hdd_ctx);
-enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(
-				hdd_context_t *hdd_ctx);
-enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(
-				hdd_context_t *hdd_ctx);
-CDF_STATUS cds_mode_switch_dbs_to_mcc(hdd_context_t *hdd_ctx);
-CDF_STATUS cds_mode_switch_mcc_to_dbs(hdd_context_t *hdd_ctx);
-CDF_STATUS cds_incr_connection_count(hdd_context_t *hdd_ctx,
-					  uint32_t vdev_id);
-CDF_STATUS cds_update_connection_info(hdd_context_t *hdd_ctx,
-					   uint32_t vdev_id);
-CDF_STATUS cds_decr_connection_count(hdd_context_t *hdd_ctx,
-					  uint32_t vdev_id);
+enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(void);
+enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(void);
+enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(void);
+CDF_STATUS cds_incr_connection_count(uint32_t vdev_id);
+CDF_STATUS cds_update_connection_info(uint32_t vdev_id);
+CDF_STATUS cds_decr_connection_count(uint32_t vdev_id);
 CDF_STATUS cds_current_connections_update(uint32_t session_id,
 				uint8_t channel,
 				enum cds_conn_update_reason);
-bool cds_is_ibss_conn_exist(hdd_context_t *hdd_ctx, uint8_t *ibss_channel);
+bool cds_is_ibss_conn_exist(uint8_t *ibss_channel);
 #ifdef MPC_UT_FRAMEWORK
-CDF_STATUS cds_incr_connection_count_utfw(hdd_context_t *hdd_ctx,
+CDF_STATUS cds_incr_connection_count_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id);
-CDF_STATUS cds_update_connection_info_utfw(hdd_context_t *hdd_ctx,
+CDF_STATUS cds_update_connection_info_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id);
-CDF_STATUS cds_decr_connection_count_utfw(hdd_context_t *hdd_ctx,
+CDF_STATUS cds_decr_connection_count_utfw(
 		uint32_t del_all, uint32_t vdev_id);
-struct cds_conc_connection_info *cds_get_conn_info(hdd_context_t *hdd_ctx,
-	uint32_t *len);
-enum cds_pcl_type get_pcl_from_first_conn_table(
-		enum cds_con_mode type,
+struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len);
+enum cds_pcl_type get_pcl_from_first_conn_table(enum cds_con_mode type,
 		enum cds_conc_priority_mode sys_pref);
 enum cds_pcl_type get_pcl_from_second_conn_table(
 	enum cds_one_connection_mode idx, enum cds_con_mode type,
@@ -715,39 +589,33 @@ enum cds_pcl_type get_pcl_from_third_conn_table(
 	enum cds_two_connection_mode idx, enum cds_con_mode type,
 	enum cds_conc_priority_mode sys_pref, uint8_t dbs_capable);
 #else
-static inline CDF_STATUS cds_incr_connection_count_utfw(
-		hdd_context_t *hdd_ctx, uint32_t vdev_id,
+static inline CDF_STATUS cds_incr_connection_count_utfw(uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id)
 {
 	return CDF_STATUS_SUCCESS;
 }
-static inline CDF_STATUS cds_update_connection_info_utfw(
-		hdd_context_t *hdd_ctx, uint32_t vdev_id,
+static inline CDF_STATUS cds_update_connection_info_utfw(uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id)
 {
 	return CDF_STATUS_SUCCESS;
 }
-static inline CDF_STATUS cds_decr_connection_count_utfw(
-		hdd_context_t *hdd_ctx,
-		uint32_t del_all, uint32_t vdev_id)
+static inline CDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
+		uint32_t vdev_id)
 {
 	return CDF_STATUS_SUCCESS;
 }
-static inline struct cds_conc_connection_info *cds_get_conn_info(
-		hdd_context_t *hdd_ctx, uint32_t *len)
+static inline struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
 {
 	return NULL;
 }
 #endif
 enum cds_con_mode cds_convert_device_mode_to_hdd_type(
 				device_mode_t device_mode);
-uint32_t cds_get_connection_count(hdd_context_t *hdd_ctx);
-CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
-		uint32_t session_id,
+CDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
@@ -755,24 +623,20 @@ CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum cds_conn_update_reason reason);
-enum cds_conc_next_action cds_need_opportunistic_upgrade(
-		hdd_context_t *hdd_ctx);
-CDF_STATUS cds_next_actions(
-		hdd_context_t *hdd_ctx, uint32_t session_id,
+enum cds_conc_next_action cds_need_opportunistic_upgrade(void);
+CDF_STATUS cds_next_actions(uint32_t session_id,
 		enum cds_conc_next_action action,
 		enum cds_conn_update_reason reason);
-void cds_set_dual_mac_scan_config(hdd_context_t *hdd_ctx,
-		uint8_t dbs_val,
+void cds_set_dual_mac_scan_config(uint8_t dbs_val,
 		uint8_t dbs_plus_agile_scan_val,
 		uint8_t single_mac_scan_with_dbs_val);
-void cds_set_dual_mac_fw_mode_config(hdd_context_t *hdd_ctx,
-		uint8_t dbs,
+void cds_set_dual_mac_fw_mode_config(uint8_t dbs,
 		uint8_t dfs);
 void cds_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t scan_config,
 		uint32_t fw_mode_config);
-bool cds_map_concurrency_mode(hdd_context_t *hdd_ctx,
-		enum tCDF_ADAPTER_MODE *old_mode, enum cds_con_mode *new_mode);
+bool cds_map_concurrency_mode(enum tCDF_ADAPTER_MODE *old_mode,
+		enum cds_con_mode *new_mode);
 CDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile, uint8_t *channel);
 

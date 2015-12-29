@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1909,6 +1909,139 @@ next_action_three_connection_table[CDS_MAX_TWO_CONNECTION_MODE]
 };
 
 /**
+ * cds_is_sta_connection_pending() - This function will check if sta connection
+ *                                   is pending or not.
+ *
+ * This function will return the status of flag is_sta_connection_pending
+ *
+ * Return: true or false
+ */
+bool cds_is_sta_connection_pending(void)
+{
+	bool status;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+
+	spin_lock(&hdd_ctx->sta_update_info_lock);
+	status = hdd_ctx->is_sta_connection_pending;
+	spin_unlock(&hdd_ctx->sta_update_info_lock);
+	return status;
+}
+
+/**
+ * cds_change_sta_conn_pending_status() - This function will change the value
+ *                                        of is_sta_connection_pending
+ * @value: value to set
+ *
+ * This function will change the value of is_sta_connection_pending
+ *
+ * Return: none
+ */
+void cds_change_sta_conn_pending_status(bool value)
+{
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
+	spin_lock(&hdd_ctx->sta_update_info_lock);
+	hdd_ctx->is_sta_connection_pending = value;
+	spin_unlock(&hdd_ctx->sta_update_info_lock);
+}
+
+/**
+ * cds_is_sap_restart_required() - This function will check if sap restart
+ *                                 is pending or not.
+ *
+ * This function will return the status of flag is_sap_restart_required.
+ *
+ * Return: true or false
+ */
+static bool cds_is_sap_restart_required(void)
+{
+	bool status;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+
+	spin_lock(&hdd_ctx->sap_update_info_lock);
+	status = hdd_ctx->is_sap_restart_required;
+	spin_unlock(&hdd_ctx->sap_update_info_lock);
+	return status;
+}
+
+/**
+ * cds_change_sap_restart_required_status() - This function will change the
+ *                                            value of is_sap_restart_required
+ * @value: value to set
+ *
+ * This function will change the value of is_sap_restart_required
+ *
+ * Return: none
+ */
+void cds_change_sap_restart_required_status(bool value)
+{
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
+	spin_lock(&hdd_ctx->sap_update_info_lock);
+	hdd_ctx->is_sap_restart_required = value;
+	spin_unlock(&hdd_ctx->sap_update_info_lock);
+}
+
+/**
+ * cds_set_connection_in_progress() - to set the connection in progress flag
+ * @value: value to set
+ *
+ * This function will set the passed value to connection in progress flag.
+ * If value is previously being set to true then no need to set it again.
+ *
+ * Return: true if value is being set correctly and false otherwise.
+ */
+bool cds_set_connection_in_progress(bool value)
+{
+	bool status = true;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+
+	spin_lock(&hdd_ctx->connection_status_lock);
+	/*
+	 * if the value is set to true previously and if someone is
+	 * trying to make it true again then it could be some race
+	 * condition being triggered. Avoid this situation by returning
+	 * false
+	 */
+	if (hdd_ctx->connection_in_progress && value)
+		status = false;
+	else
+		hdd_ctx->connection_in_progress = value;
+	spin_unlock(&hdd_ctx->connection_status_lock);
+	return status;
+}
+
+/**
  * cds_update_conc_list() - Update the concurrent connection list
  * @conn_index: Connection index
  * @mode: Mode
@@ -1954,7 +2087,6 @@ static void cds_update_conc_list(uint32_t conn_index,
 /**
  * cds_mode_specific_connection_count() - provides the
  * count of connections of specific mode
- * @hdd_ctx:	HDD Context
  * @mode: type of connection
  * @list: To provide the indices on conc_connection_list
  *	(optional)
@@ -1963,9 +2095,8 @@ static void cds_update_conc_list(uint32_t conn_index,
  *
  * Return: connection count of specific type
  */
-static uint32_t cds_mode_specific_connection_count(hdd_context_t *hdd_ctx,
-						 enum cds_con_mode mode,
-						 uint32_t *list)
+static uint32_t cds_mode_specific_connection_count(enum cds_con_mode mode,
+						uint32_t *list)
 {
 	uint32_t conn_index = 0, count = 0;
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
@@ -1982,7 +2113,6 @@ static uint32_t cds_mode_specific_connection_count(hdd_context_t *hdd_ctx,
 
 /**
  * cds_store_and_del_conn_info() - Store and del a connection info
- * @hdd_ctx: HDD context
  * @mode: Mode whose entry has to be deleted
  * @info: Struture pointer where the connection info will be saved
  *
@@ -1992,9 +2122,8 @@ static uint32_t cds_mode_specific_connection_count(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-static void cds_store_and_del_conn_info(hdd_context_t *hdd_ctx,
-				      enum cds_con_mode mode,
-				      struct cds_conc_connection_info *info)
+static void cds_store_and_del_conn_info(enum cds_con_mode mode,
+				struct cds_conc_connection_info *info)
 {
 	uint32_t conn_index = 0;
 	bool found = false;
@@ -2016,7 +2145,7 @@ static void cds_store_and_del_conn_info(hdd_context_t *hdd_ctx,
 	*info = conc_connection_list[conn_index];
 
 	/* Deleting the STA entry */
-	cds_decr_connection_count(hdd_ctx, info->vdev_id);
+	cds_decr_connection_count(info->vdev_id);
 
 	cds_info("Stored %d (%d), deleted STA entry with vdev id %d, index %d",
 		info->vdev_id, info->mode, info->vdev_id, conn_index);
@@ -2026,7 +2155,6 @@ static void cds_store_and_del_conn_info(hdd_context_t *hdd_ctx,
 
 /**
  * cds_restore_deleted_conn_info() - Restore connection info
- * @hdd_ctx: HDD context
  * @info: Saved connection info that is to be restored
  *
  * Restores the connection info of STA that was saved before
@@ -2034,12 +2162,12 @@ static void cds_store_and_del_conn_info(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-static void cds_restore_deleted_conn_info(hdd_context_t *hdd_ctx,
+static void cds_restore_deleted_conn_info(
 					struct cds_conc_connection_info *info)
 {
 	uint32_t conn_index;
 
-	conn_index = cds_get_connection_count(hdd_ctx);
+	conn_index = cds_get_connection_count();
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= conn_index) {
 		cds_err("Failed to restore the deleted information %d/%d",
 			conn_index, MAX_NUMBER_OF_CONC_CONNECTIONS);
@@ -2131,7 +2259,6 @@ void cds_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 
 /**
  * cds_set_dual_mac_scan_config() - Set the dual MAC scan config
- * @hdd_ctx: HDD context
  * @dbs_val: Value of DBS bit
  * @dbs_plus_agile_scan_val: Value of DBS plus agile scan bit
  * @single_mac_scan_with_dbs_val: Value of Single MAC scan with DBS
@@ -2141,14 +2268,15 @@ void cds_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
  *
  * Return: None
  */
-void cds_set_dual_mac_scan_config(hdd_context_t *hdd_ctx,
-		uint8_t dbs_val,
+void cds_set_dual_mac_scan_config(uint8_t dbs_val,
 		uint8_t dbs_plus_agile_scan_val,
 		uint8_t single_mac_scan_with_dbs_val)
 {
 	struct sir_dual_mac_config cfg;
 	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
 
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -2193,7 +2321,6 @@ void cds_set_dual_mac_scan_config(hdd_context_t *hdd_ctx,
 
 /**
  * cds_set_dual_mac_fw_mode_config() - Set the dual mac FW mode config
- * @hdd_ctx: HDD context
  * @dbs: DBS bit
  * @dfs: Agile DFS bit
  *
@@ -2202,13 +2329,14 @@ void cds_set_dual_mac_scan_config(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-void cds_set_dual_mac_fw_mode_config(hdd_context_t *hdd_ctx,
-		uint8_t dbs,
+void cds_set_dual_mac_fw_mode_config(uint8_t dbs,
 		uint8_t dfs)
 {
 	struct sir_dual_mac_config cfg;
 	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
 
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -2369,7 +2497,6 @@ static void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
 
 /**
  * cds_soc_set_hw_mode() - Set HW mode command to SME
- * @hdd_ctx: HDD context
  * @session_id: Session ID
  * @mac0_ss: MAC0 spatial stream configuration
  * @mac0_bw: MAC0 bandwidth configuration
@@ -2397,8 +2524,7 @@ static void cds_hw_mode_transition_cb(uint32_t old_hw_mode_index,
  *
  * Return: Success if the message made it down to the next layer
  */
-CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
-		uint32_t session_id,
+CDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
@@ -2410,7 +2536,9 @@ CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
 	int8_t hw_mode_index;
 	struct sir_hw_mode msg;
 	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
 
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("Invalid HDD context");
 		return CDF_STATUS_E_FAILURE;
@@ -2448,7 +2576,7 @@ CDF_STATUS cds_soc_set_hw_mode(hdd_context_t *hdd_ctx,
  *
  * Return: true if connection is in progress else false
  */
-bool cds_is_connection_in_progress(hdd_context_t *hdd_ctx)
+bool cds_is_connection_in_progress(void)
 {
 	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
 	hdd_station_ctx_t *hdd_sta_ctx = NULL;
@@ -2456,6 +2584,13 @@ bool cds_is_connection_in_progress(hdd_context_t *hdd_ctx)
 	CDF_STATUS status = 0;
 	uint8_t sta_id = 0;
 	uint8_t *sta_mac = NULL;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
 
 	if (true == hdd_ctx->btCoexModeSet) {
 		cds_info("BTCoex Mode operation in progress");
@@ -2538,7 +2673,6 @@ end:
 /**
  * cds_dump_current_concurrency_one_connection() - To dump the
  * current concurrency info with one connection
- * @hdd_ctx: HDD context
  * @cc_mode: connection string
  * @length: Maximum size of the string
  *
@@ -2546,8 +2680,8 @@ end:
  *
  * Return: length of the string
  */
-static uint32_t cds_dump_current_concurrency_one_connection(
-			hdd_context_t *hdd_ctx, char *cc_mode, uint32_t length)
+static uint32_t cds_dump_current_concurrency_one_connection(char *cc_mode,
+			uint32_t length)
 {
 	uint32_t count = 0;
 
@@ -2583,7 +2717,6 @@ static uint32_t cds_dump_current_concurrency_one_connection(
 /**
  * cds_dump_current_concurrency_two_connection() - To dump the
  * current concurrency info with two connections
- * @hdd_ctx: HDD context
  * @cc_mode: connection string
  * @length: Maximum size of the string
  *
@@ -2591,39 +2724,39 @@ static uint32_t cds_dump_current_concurrency_one_connection(
  *
  * Return: length of the string
  */
-static uint32_t cds_dump_current_concurrency_two_connection(
-			hdd_context_t *hdd_ctx, char *cc_mode, uint32_t length)
+static uint32_t cds_dump_current_concurrency_two_connection(char *cc_mode,
+			uint32_t length)
 {
 	uint32_t count = 0;
 
 	switch (conc_connection_list[1].mode) {
 	case CDS_STA_MODE:
 		count = cds_dump_current_concurrency_one_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+STA",
 					length);
 		break;
 	case CDS_SAP_MODE:
 		count = cds_dump_current_concurrency_one_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+SAP",
 					length);
 		break;
 	case CDS_P2P_CLIENT_MODE:
 		count = cds_dump_current_concurrency_one_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+P2P CLI",
 					length);
 		break;
 	case CDS_P2P_GO_MODE:
 		count = cds_dump_current_concurrency_one_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+P2P GO",
 					length);
 		break;
 	case CDS_IBSS_MODE:
 		count = cds_dump_current_concurrency_one_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+IBSS",
 					length);
 		break;
@@ -2638,7 +2771,6 @@ static uint32_t cds_dump_current_concurrency_two_connection(
 /**
  * cds_dump_current_concurrency_three_connection() - To dump the
  * current concurrency info with three connections
- * @hdd_ctx: HDD context
  * @cc_mode: connection string
  * @length: Maximum size of the string
  *
@@ -2646,39 +2778,39 @@ static uint32_t cds_dump_current_concurrency_two_connection(
  *
  * Return: length of the string
  */
-static uint32_t cds_dump_current_concurrency_three_connection(
-			hdd_context_t *hdd_ctx, char *cc_mode, uint32_t length)
+static uint32_t cds_dump_current_concurrency_three_connection(char *cc_mode,
+			uint32_t length)
 {
 	uint32_t count = 0;
 
 	switch (conc_connection_list[2].mode) {
 	case CDS_STA_MODE:
 		count = cds_dump_current_concurrency_two_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+STA",
 					length);
 		break;
 	case CDS_SAP_MODE:
 		count = cds_dump_current_concurrency_two_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+SAP",
 					length);
 		break;
 	case CDS_P2P_CLIENT_MODE:
 		count = cds_dump_current_concurrency_two_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+P2P CLI",
 					length);
 		break;
 	case CDS_P2P_GO_MODE:
 		count = cds_dump_current_concurrency_two_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+P2P GO",
 					length);
 		break;
 	case CDS_IBSS_MODE:
 		count = cds_dump_current_concurrency_two_connection(
-				hdd_ctx, cc_mode, length);
+				cc_mode, length);
 		count += strlcat(cc_mode, "+IBSS",
 					length);
 		break;
@@ -2749,29 +2881,28 @@ static void cds_dump_dbs_concurrency(char *cc_mode, uint32_t length)
 /**
  * cds_dump_current_concurrency() - To dump the current
  * concurrency combination
- * @hdd_ctx: HDD context
  *
  * This routine is called to dump the concurrency info
  *
  * Return: None
  */
-static void cds_dump_current_concurrency(hdd_context_t *hdd_ctx)
+static void cds_dump_current_concurrency(void)
 {
 	uint32_t num_connections = 0;
 	char cc_mode[CDS_MAX_CON_STRING_LEN] = {0};
 	uint32_t count = 0;
 
-	num_connections = cds_get_connection_count(hdd_ctx);
+	num_connections = cds_get_connection_count();
 
 	switch (num_connections) {
 	case 1:
-		cds_dump_current_concurrency_one_connection(hdd_ctx, cc_mode,
+		cds_dump_current_concurrency_one_connection(cc_mode,
 					sizeof(cc_mode));
 		cds_err("%s Standalone", cc_mode);
 		break;
 	case 2:
 		count = cds_dump_current_concurrency_two_connection(
-			hdd_ctx, cc_mode, sizeof(cc_mode));
+			cc_mode, sizeof(cc_mode));
 		if (conc_connection_list[0].chan ==
 			conc_connection_list[1].chan) {
 			strlcat(cc_mode, " SCC", sizeof(cc_mode));
@@ -2784,7 +2915,7 @@ static void cds_dump_current_concurrency(hdd_context_t *hdd_ctx)
 		break;
 	case 3:
 		count = cds_dump_current_concurrency_three_connection(
-			hdd_ctx, cc_mode, sizeof(cc_mode));
+			cc_mode, sizeof(cc_mode));
 		if ((conc_connection_list[0].chan ==
 			conc_connection_list[1].chan) &&
 			(conc_connection_list[0].chan ==
@@ -2815,18 +2946,17 @@ static void cds_dump_current_concurrency(hdd_context_t *hdd_ctx)
 /**
  * cds_current_concurrency_is_scc() - To check the current
  * concurrency combination if it is doing SCC
- * @hdd_ctx: HDD context
  *
  * This routine is called to check if it is doing SCC
  *
  * Return: True - SCC, False - Otherwise
  */
-static bool cds_current_concurrency_is_scc(hdd_context_t *hdd_ctx)
+static bool cds_current_concurrency_is_scc(void)
 {
 	uint32_t num_connections = 0;
 	bool is_scc = false;
 
-	num_connections = cds_get_connection_count(hdd_ctx);
+	num_connections = cds_get_connection_count();
 
 	switch (num_connections) {
 	case 1:
@@ -2859,7 +2989,6 @@ static bool cds_current_concurrency_is_scc(hdd_context_t *hdd_ctx)
 /**
  * cds_dump_legacy_concurrency() - To dump the current
  * concurrency combination
- * @hdd_ctx: HDD context
  * @sta_channel: Channel STA connection has come up
  * @ap_channel: Channel SAP connection has come up
  * @p2p_channel: Channel P2P connection has come up
@@ -2872,12 +3001,19 @@ static bool cds_current_concurrency_is_scc(hdd_context_t *hdd_ctx)
  *
  * Return: None
  */
-static void cds_dump_legacy_concurrency(hdd_context_t *hdd_ctx,
+static void cds_dump_legacy_concurrency(
 		uint8_t sta_channel, uint8_t ap_channel, uint8_t p2p_channel,
 		struct cdf_mac_addr sta_bssid, struct cdf_mac_addr p2p_bssid,
 		struct cdf_mac_addr ap_bssid, const char *p2p_mode)
 {
 	const char *cc_mode = "Standalone";
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 
 	if ((sta_channel == 0) && (ap_channel == 0) && (p2p_channel == 0)) {
 		cds_err("IBSS standalone");
@@ -2941,13 +3077,12 @@ static void cds_dump_legacy_concurrency(hdd_context_t *hdd_ctx,
 
 /**
  * cds_dump_concurrency_info() - To dump concurrency info
- * @hdd_ctx: HDD context
  *
  * This routine is called to dump the concurrency info
  *
  * Return: None
  */
-void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
+void cds_dump_concurrency_info(void)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
 	CDF_STATUS status;
@@ -2960,7 +3095,7 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 	struct cdf_mac_addr apBssid = CDF_MAC_ADDR_ZERO_INITIALIZER;
 	uint8_t staChannel = 0, p2pChannel = 0, apChannel = 0;
 	const char *p2pMode = "DEV";
-
+	hdd_context_t *hdd_ctx;
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	uint8_t targetChannel = 0;
 	uint8_t preAdapterChannel = 0;
@@ -2970,6 +3105,12 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 	hdd_adapter_t *adapter2_4 = NULL;
 	hdd_adapter_t *adapter5 = NULL;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 
 	status = hdd_get_front_adapter(hdd_ctx, &adapterNode);
 	while (NULL != adapterNode && CDF_STATUS_SUCCESS == status) {
@@ -3217,13 +3358,13 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 		adapterNode = pNext;
 	}
 	if (hdd_ctx->config->policy_manager_enabled) {
-		cds_dump_current_concurrency(hdd_ctx);
-		hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc(hdd_ctx);
+		cds_dump_current_concurrency();
+		hdd_ctx->mcc_mode = !cds_current_concurrency_is_scc();
 	} else {
 		/* hdd_ctx->mcc_mode gets updated inside below function, which
 		 *  gets used by IPA
 		 */
-		cds_dump_legacy_concurrency(hdd_ctx,
+		cds_dump_legacy_concurrency(
 			staChannel, apChannel, p2pChannel,
 			staBssid, p2pBssid, apBssid, p2pMode);
 	}
@@ -3231,16 +3372,22 @@ void cds_dump_concurrency_info(hdd_context_t *hdd_ctx)
 
 /**
  * cds_set_concurrency_mode() - To set concurrency mode
- * @hdd_ctx: HDD context
  * @mode: adapter mode
  *
  * This routine is called to set the concurrency mode
  *
  * Return: NONE
  */
-void cds_set_concurrency_mode(hdd_context_t *hdd_ctx,
-				enum tCDF_ADAPTER_MODE mode)
+void cds_set_concurrency_mode(enum tCDF_ADAPTER_MODE mode)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
 	switch (mode) {
 	case CDF_STA_MODE:
 	case CDF_P2P_CLIENT_MODE:
@@ -3260,16 +3407,22 @@ void cds_set_concurrency_mode(hdd_context_t *hdd_ctx,
 
 /**
  * cds_clear_concurrency_mode() - To clear concurrency mode
- * @hdd_ctx: HDD context
  * @mode: adapter mode
  *
  * This routine is called to clear the concurrency mode
  *
  * Return: NONE
  */
-void cds_clear_concurrency_mode(hdd_context_t *hdd_ctx,
-				     enum tCDF_ADAPTER_MODE mode)
+void cds_clear_concurrency_mode(enum tCDF_ADAPTER_MODE mode)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
 	switch (mode) {
 	case CDF_STA_MODE:
 	case CDF_P2P_CLIENT_MODE:
@@ -3289,7 +3442,6 @@ void cds_clear_concurrency_mode(hdd_context_t *hdd_ctx,
 
 /**
  * cds_soc_set_pcl() - Sets PCL to FW
- * @hdd_ctx: HDD context
  * @mode: adapter mode
  *
  * Fetches the PCL and sends the PCL to SME
@@ -3298,11 +3450,18 @@ void cds_clear_concurrency_mode(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, enum tCDF_ADAPTER_MODE mode)
+static void cds_soc_set_pcl(enum tCDF_ADAPTER_MODE mode)
 {
 	CDF_STATUS status;
 	enum cds_con_mode con_mode;
 	struct sir_pcl_list pcl;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 	pcl.pcl_len = 0;
 
 	switch (mode) {
@@ -3328,7 +3487,7 @@ static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, enum tCDF_ADAPTER_MODE mode)
 
 	cds_debug("get pcl to set it to the FW");
 
-	status = cds_get_pcl(hdd_ctx, con_mode,
+	status = cds_get_pcl(con_mode,
 			pcl.pcl_list, &pcl.pcl_len);
 	if (status != CDF_STATUS_SUCCESS) {
 		cds_err("Unable to set PCL to FW, Get PCL failed");
@@ -3344,7 +3503,6 @@ static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, enum tCDF_ADAPTER_MODE mode)
 
 /**
  * cds_incr_active_session() - increments the number of active sessions
- * @hdd_ctx:	HDD Context
  * @mode:	Adapter mode
  * @session_id: session ID for the connection session
  *
@@ -3354,10 +3512,17 @@ static void cds_soc_set_pcl(hdd_context_t *hdd_ctx, enum tCDF_ADAPTER_MODE mode)
  *
  * Return: None
  */
-void cds_incr_active_session(hdd_context_t *hdd_ctx,
-			     enum tCDF_ADAPTER_MODE mode,
-			     uint8_t session_id)
+void cds_incr_active_session(enum tCDF_ADAPTER_MODE mode,
+				  uint8_t session_id)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
 	/*
 	 * Need to aquire mutex as entire functionality in this function
 	 * is in critical section
@@ -3383,25 +3548,23 @@ void cds_incr_active_session(hdd_context_t *hdd_ctx,
 	 */
 	if (mode == CDF_STA_MODE) {
 		/* Set PCL of STA to the FW */
-		cds_soc_set_pcl(hdd_ctx, mode);
+		cds_soc_set_pcl(mode);
 		cds_info("Set PCL of STA to FW");
 	}
-	cds_incr_connection_count(hdd_ctx, session_id);
+	cds_incr_connection_count(session_id);
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 }
 
 /**
  * cds_need_opportunistic_upgrade() - Tells us if we really
  * need an upgrade to 2x2
- * @hdd_ctx: HDD context
  *
  * This function returns if updrade to 2x2 is needed
  *
  * Return: CDS_NOP = upgrade is not needed, otherwise upgrade is
  * needed
  */
-enum cds_conc_next_action cds_need_opportunistic_upgrade(
-		hdd_context_t *hdd_ctx)
+enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 {
 	uint32_t conn_index;
 	enum cds_conc_next_action upgrade = CDS_NOP;
@@ -3451,15 +3614,13 @@ done:
 
 /**
  * cds_set_pcl_for_existing_combo() - Set PCL for existing connection
- * @hdd_ctx: HDD context
  * @mode: Connection mode of type 'cds_con_mode'
  *
  * Set the PCL for an existing connection
  *
  * Return: None
  */
-static void cds_set_pcl_for_existing_combo(hdd_context_t *hdd_ctx,
-		enum cds_con_mode mode)
+static void cds_set_pcl_for_existing_combo(enum cds_con_mode mode)
 {
 	struct cds_conc_connection_info info;
 	enum tCDF_ADAPTER_MODE pcl_mode;
@@ -3486,21 +3647,19 @@ static void cds_set_pcl_for_existing_combo(hdd_context_t *hdd_ctx,
 	};
 
 	if (cds_mode_specific_connection_count(
-				hdd_ctx, mode, NULL) > 0) {
+				mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
-		cds_store_and_del_conn_info(hdd_ctx, mode,
-				&info);
+		cds_store_and_del_conn_info(mode, &info);
 		/* Set the PCL to the FW since connection got updated */
-		cds_soc_set_pcl(hdd_ctx, pcl_mode);
+		cds_soc_set_pcl(pcl_mode);
 		cds_info("Set PCL to FW for mode:%d", mode);
 		/* Restore the connection info */
-		cds_restore_deleted_conn_info(hdd_ctx, &info);
+		cds_restore_deleted_conn_info(&info);
 	}
 }
 
 /**
  * cds_decr_session_set_pcl() - Decrement session count and set PCL
- * @hdd_ctx: HDD context
  * @mode: Adapter mode
  * @session_id: Session id
  *
@@ -3509,13 +3668,19 @@ static void cds_set_pcl_for_existing_combo(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
-						enum tCDF_ADAPTER_MODE mode,
+void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
 						uint8_t session_id)
 {
 	CDF_STATUS cdf_status;
+	hdd_context_t *hdd_ctx;
 
-	cds_decr_active_session(hdd_ctx, mode, session_id);
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
+	cds_decr_active_session(mode, session_id);
 	/*
 	 * After the removal of this connection, we need to check if
 	 * a STA connection still exists. The reason for this is that
@@ -3531,9 +3696,9 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
 	 * the entry that we have saved before.
 	 */
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
-	cds_set_pcl_for_existing_combo(hdd_ctx, CDS_STA_MODE);
+	cds_set_pcl_for_existing_combo(CDS_STA_MODE);
 	/* do we need to change the HW mode */
-	if (cds_need_opportunistic_upgrade(hdd_ctx)) {
+	if (cds_need_opportunistic_upgrade()) {
 		/* let's start the timer */
 		cdf_mc_timer_stop(&hdd_ctx->dbs_opportunistic_timer);
 		cdf_status = cdf_mc_timer_start(
@@ -3551,7 +3716,6 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
 
 /**
  * cds_decr_active_session() - decrements the number of active sessions
- * @hdd_ctx: HDD Context
  * @mode: Adapter mode
  * @session_id: session ID for the connection session
  *
@@ -3561,10 +3725,17 @@ void cds_decr_session_set_pcl(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-void cds_decr_active_session(hdd_context_t *hdd_ctx,
-				enum tCDF_ADAPTER_MODE mode,
+void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
 				  uint8_t session_id)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
 	/*
 	 * Need to aquire mutex as entire functionality in this function
 	 * is in critical section
@@ -3584,7 +3755,7 @@ void cds_decr_active_session(hdd_context_t *hdd_ctx,
 	}
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
-	cds_decr_connection_count(hdd_ctx, session_id);
+	cds_decr_connection_count(session_id);
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 }
 
@@ -3609,14 +3780,14 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	/* if we still need it */
-	action = cds_need_opportunistic_upgrade(hdd_ctx);
+	action = cds_need_opportunistic_upgrade();
 	if (action) {
 		/* lets call for action */
 		/* session id is being used only
 		 * in hidden ssid case for now.
 		 * So, session id 0 is ok here.
 		 */
-		cds_next_actions(hdd_ctx, 0, action,
+		cds_next_actions(0, action,
 				CDS_UPDATE_REASON_OPPORTUNISTIC);
 	}
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
@@ -3626,15 +3797,21 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 /**
  * cds_init_policy_mgr() - Initialize the policy manager
  * related data structures
- * @hdd_ctx:	HDD Context
  *
  * Initialize the policy manager related data structures
  *
  * Return: Success if the policy manager is initialized completely
  */
-CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx)
+CDF_STATUS cds_init_policy_mgr(void)
 {
 	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return CDF_STATUS_E_FAILURE;
+	}
 
 	cds_debug("Initializing the policy manager");
 
@@ -3671,7 +3848,6 @@ CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx)
 /**
  * cds_get_connection_for_vdev_id() - provides the
  * perticular connection with the requested vdev id
- * @hdd_ctx:	HDD Context
  * @vdev_id: vdev id of the connection
  *
  * This function provides the specific connection with the
@@ -3679,8 +3855,7 @@ CDF_STATUS cds_init_policy_mgr(hdd_context_t *hdd_ctx)
  *
  * Return: index in the connection table
  */
-uint32_t cds_get_connection_for_vdev_id(hdd_context_t *hdd_ctx,
-						uint32_t vdev_id)
+uint32_t cds_get_connection_for_vdev_id(uint32_t vdev_id)
 {
 	uint32_t conn_index = 0;
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
@@ -3697,14 +3872,13 @@ uint32_t cds_get_connection_for_vdev_id(hdd_context_t *hdd_ctx,
 /**
  * cds_get_connection_count() - provides the count of
  * current connections
- * @hdd_ctx:	HDD Context
  *
  *
  * This function provides the count of current connections
  *
  * Return: connection count
  */
-uint32_t cds_get_connection_count(hdd_context_t *hdd_ctx)
+uint32_t cds_get_connection_count(void)
 {
 	uint32_t conn_index, count = 0;
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
@@ -3769,7 +3943,7 @@ enum cds_con_mode cds_get_mode(uint8_t type, uint8_t subtype)
 /**
  * cds_incr_connection_count() - adds the new connection to
  * the current connections list
- * @hdd_ctx:	HDD Context
+ * @vdev_id: vdev id
  *
  *
  * This function adds the new connection to the current
@@ -3777,14 +3951,20 @@ enum cds_con_mode cds_get_mode(uint8_t type, uint8_t subtype)
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_incr_connection_count(hdd_context_t *hdd_ctx,
-					  uint32_t vdev_id)
+CDF_STATUS cds_incr_connection_count(uint32_t vdev_id)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t conn_index;
 	struct wma_txrx_node *wma_conn_table_entry;
+	hdd_context_t *hdd_ctx;
 
-	conn_index = cds_get_connection_count(hdd_ctx);
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
+
+	conn_index = cds_get_connection_count();
 	if (hdd_ctx->config->gMaxConcurrentActiveSessions < conn_index) {
 		/* err msg */
 		cds_err("exceeded max connection limit %d",
@@ -3823,7 +4003,7 @@ CDF_STATUS cds_incr_connection_count(hdd_context_t *hdd_ctx,
 /**
  * cds_update_connection_info() - updates the existing
  * connection in the current connections list
- * @hdd_ctx:	HDD Context
+ * @vdev_id: vdev id
  *
  *
  * This function adds the new connection to the current
@@ -3831,13 +4011,19 @@ CDF_STATUS cds_incr_connection_count(hdd_context_t *hdd_ctx,
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_update_connection_info(hdd_context_t *hdd_ctx,
-					   uint32_t vdev_id)
+CDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t conn_index = 0;
 	bool found = false;
 	struct wma_txrx_node *wma_conn_table_entry;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
 
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
@@ -3882,7 +4068,6 @@ CDF_STATUS cds_update_connection_info(hdd_context_t *hdd_ctx,
 /**
  * cds_decr_connection_count() - remove the old connection
  * from the current connections list
- * @hdd_ctx:	HDD Context
  * @vdev_id: vdev id of the old connection
  *
  *
@@ -3891,8 +4076,7 @@ CDF_STATUS cds_update_connection_info(hdd_context_t *hdd_ctx,
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_decr_connection_count(hdd_context_t *hdd_ctx,
-					  uint32_t vdev_id)
+CDF_STATUS cds_decr_connection_count(uint32_t vdev_id)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t conn_index = 0, next_conn_index = 0;
@@ -3945,7 +4129,6 @@ CDF_STATUS cds_decr_connection_count(hdd_context_t *hdd_ctx,
 /**
  * cds_get_connection_channels() - provides the channel(s)
  * on which current connection(s) is
- * @hdd_ctx:	HDD Context
  * @channels:	the channel(s) on which current connection(s) is
  * @len:	Number of channels
  * @order:	no order OR 2.4 Ghz channel followed by 5 Ghz
@@ -3957,18 +4140,11 @@ CDF_STATUS cds_decr_connection_count(hdd_context_t *hdd_ctx,
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_get_connection_channels(hdd_context_t *hdd_ctx,
-			uint8_t *channels, uint32_t *len, uint8_t order)
+CDF_STATUS cds_get_connection_channels(uint8_t *channels,
+			uint32_t *len, uint8_t order)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	uint32_t conn_index = 0, num_channels = 0;
-
-	if (NULL == hdd_ctx) {
-		/* err msg*/
-		cds_err("hdd_ctx is NULL");
-		status = CDF_STATUS_E_FAILURE;
-		return status;
-	}
 
 	if ((NULL == channels) || (NULL == len)) {
 		/* err msg*/
@@ -4031,7 +4207,6 @@ CDF_STATUS cds_get_connection_channels(hdd_context_t *hdd_ctx,
 /**
  * cds_update_with_safe_channel_list() - provides the safe
  * channel list
- * @hdd_ctx:	HDD Context
  * @pcl_channels: channel list
  * @len: length of the list
  *
@@ -4041,8 +4216,7 @@ CDF_STATUS cds_get_connection_channels(hdd_context_t *hdd_ctx,
  * Return: None
  */
 #ifdef CONFIG_CNSS
-void cds_update_with_safe_channel_list(hdd_context_t *hdd_ctx,
-			uint8_t *pcl_channels, uint32_t *len)
+void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len)
 {
 	uint16_t unsafe_channel_list[MAX_NUM_CHAN];
 	uint8_t current_channel_list[MAX_NUM_CHAN];
@@ -4090,8 +4264,7 @@ void cds_update_with_safe_channel_list(hdd_context_t *hdd_ctx,
 	return;
 }
 #else
-void cds_update_with_safe_channel_list(hdd_context_t *hdd_ctx,
-			uint8_t *pcl_channels, uint32_t *len)
+void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len)
 {
 	return;
 }
@@ -4110,8 +4283,7 @@ void cds_update_with_safe_channel_list(hdd_context_t *hdd_ctx,
  *
  * Return: Channel List
  */
-CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
-			enum cds_pcl_type pcl,
+CDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 			uint8_t *pcl_channels, uint32_t *len)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
@@ -4120,10 +4292,11 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 	uint8_t channel_list[MAX_NUM_CHAN] = {0};
 	uint8_t channel_list_24[MAX_NUM_CHAN] = {0};
 	uint8_t channel_list_5[MAX_NUM_CHAN] = {0};
+	hdd_context_t *hdd_ctx;
 
-	if (NULL == hdd_ctx) {
-		/* err msg*/
-		cds_err("hdd_ctx is NULL");
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
 		return status;
 	}
 
@@ -4186,7 +4359,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		break;
 	case CDS_SCC_CH:
 	case CDS_MCC_CH:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 0);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
@@ -4194,7 +4367,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		break;
 	case CDS_SCC_CH_24G:
 	case CDS_MCC_CH_24G:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 0);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
@@ -4205,7 +4378,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		break;
 	case CDS_SCC_CH_5G:
 	case CDS_MCC_CH_5G:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 0);
 		cdf_mem_copy(pcl_channels, channel_list,
 			num_channels);
@@ -4220,7 +4393,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		cdf_mem_copy(pcl_channels, channel_list_24,
 			chan_index_24);
 		*len = chan_index_24;
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 0);
 		cdf_mem_copy(&pcl_channels[chan_index_24],
 			channel_list, num_channels);
@@ -4232,7 +4405,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		cdf_mem_copy(pcl_channels, channel_list_5,
 			chan_index_5);
 		*len = chan_index_5;
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 0);
 		cdf_mem_copy(&pcl_channels[chan_index_5],
 			channel_list, num_channels);
@@ -4240,7 +4413,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		status = CDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_24_SCC_ON_5:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 1);
 		cdf_mem_copy(pcl_channels, channel_list,
 			num_channels);
@@ -4248,14 +4421,14 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		status = CDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_5_SCC_ON_24:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 2);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
 		status = CDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_24_SCC_ON_5_24G:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 1);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
@@ -4265,7 +4438,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		status = CDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_24_SCC_ON_5_5G:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 1);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
@@ -4275,7 +4448,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		status = CDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_5_SCC_ON_24_24G:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 2);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
@@ -4285,7 +4458,7 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 		status = CDF_STATUS_SUCCESS;
 		break;
 	case CDS_SCC_ON_5_SCC_ON_24_5G:
-		cds_get_connection_channels(hdd_ctx,
+		cds_get_connection_channels(
 			channel_list, &num_channels, 2);
 		cdf_mem_copy(pcl_channels, channel_list, num_channels);
 		*len = num_channels;
@@ -4301,14 +4474,13 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
 	}
 
 	/* check the channel avoidance list */
-	cds_update_with_safe_channel_list(hdd_ctx, pcl_channels, len);
+	cds_update_with_safe_channel_list(pcl_channels, len);
 
 	return status;
 }
 
 /**
  * cds_map_concurrency_mode() - to map concurrency mode between sme and hdd
- * @hdd_ctx: hdd context
  * @old_mode: sme provided adapter mode
  * @new_mode: hdd provided concurrency mode
  *
@@ -4316,15 +4488,10 @@ CDF_STATUS cds_get_channel_list(hdd_context_t *hdd_ctx,
  *
  * Return: true or false
  */
-bool cds_map_concurrency_mode(hdd_context_t *hdd_ctx,
-	enum tCDF_ADAPTER_MODE *old_mode, enum cds_con_mode *new_mode)
+bool cds_map_concurrency_mode(enum tCDF_ADAPTER_MODE *old_mode,
+	enum cds_con_mode *new_mode)
 {
 	bool status = true;
-
-	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
-		return false;
-	}
 
 	switch (*old_mode) {
 
@@ -4354,7 +4521,6 @@ bool cds_map_concurrency_mode(hdd_context_t *hdd_ctx,
 /**
  * cds_get_pcl() - provides the preferred channel list for
  * new connection
- * @hdd_ctx:	HDD Context
  * @mode:	Device mode
  * @pcl_channels: PCL channels
  * @len: lenght of the PCL
@@ -4366,7 +4532,7 @@ bool cds_map_concurrency_mode(hdd_context_t *hdd_ctx,
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
+CDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 			uint8_t *pcl_channels, uint32_t *len)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
@@ -4376,8 +4542,16 @@ CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 	enum cds_two_connection_mode third_index = 0;
 	enum cds_pcl_type pcl = CDS_NONE;
 	enum cds_conc_priority_mode conc_system_pref = 0;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
+
 	/* find the current connection state from conc_connection_list*/
-	num_connections = cds_get_connection_count(hdd_ctx);
+	num_connections = cds_get_connection_count();
 	cds_debug("connections:%d pref:%d requested mode:%d",
 		num_connections, hdd_ctx->config->conc_system_pref, mode);
 
@@ -4401,12 +4575,12 @@ CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 	switch (num_connections) {
 	case 0:
 		first_index =
-			cds_get_first_connection_pcl_table_index(hdd_ctx);
+			cds_get_first_connection_pcl_table_index();
 		pcl = first_connection_pcl_table[mode][first_index];
 		break;
 	case 1:
 		second_index =
-			cds_get_second_connection_pcl_table_index(hdd_ctx);
+			cds_get_second_connection_pcl_table_index();
 		if (CDS_MAX_ONE_CONNECTION_MODE == second_index) {
 			/* err msg */
 			cds_err("couldn't find index for 2nd connection pcl table");
@@ -4423,7 +4597,7 @@ CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 		break;
 	case 2:
 		third_index =
-			cds_get_third_connection_pcl_table_index(hdd_ctx);
+			cds_get_third_connection_pcl_table_index();
 		if (CDS_MAX_TWO_CONNECTION_MODE == third_index) {
 			/* err msg */
 			cds_err("couldn't find index for 3rd connection pcl table");
@@ -4451,7 +4625,7 @@ CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 	/* once the PCL enum is obtained find out the exact channel list with
 	 * help from sme_get_cfg_valid_channels
 	 */
-	status = cds_get_channel_list(hdd_ctx, pcl, pcl_channels, len);
+	status = cds_get_channel_list(pcl, pcl_channels, len);
 	if (status == CDF_STATUS_SUCCESS) {
 		uint32_t i;
 		cds_debug("pcl len:%d", *len);
@@ -4465,7 +4639,6 @@ CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 /**
  * cds_disallow_mcc() - Check for mcc
  *
- * @hdd_ctx:	HDD Context
  * @channel: channel on which new connection is coming up
  *
  * When a new connection is about to come up check if current
@@ -4474,7 +4647,7 @@ CDF_STATUS cds_get_pcl(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
  *
  * Return: True/False
  */
-bool cds_disallow_mcc(hdd_context_t *hdd_ctx, uint8_t channel)
+bool cds_disallow_mcc(uint8_t channel)
 {
 	uint32_t index = 0;
 	bool match = false;
@@ -4500,8 +4673,6 @@ bool cds_disallow_mcc(hdd_context_t *hdd_ctx, uint8_t channel)
 /**
  * cds_allow_new_home_channel() - Check for allowed number of
  * home channels
- *
- * @hdd_ctx:	HDD Context
  * @channel: channel on which new connection is coming up
  * @num_connections: number of current connections
  *
@@ -4511,8 +4682,7 @@ bool cds_disallow_mcc(hdd_context_t *hdd_ctx, uint8_t channel)
  *
  * Return: True/False
  */
-bool cds_allow_new_home_channel(hdd_context_t *hdd_ctx,
-			uint8_t channel, uint32_t num_connections)
+bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
 {
 	bool status = true;
 
@@ -4571,17 +4741,16 @@ bool cds_allow_new_home_channel(hdd_context_t *hdd_ctx,
  *
  * Return: true if ibss connection exist else false
  */
-bool cds_is_ibss_conn_exist(hdd_context_t *hdd_ctx, uint8_t *ibss_channel)
+bool cds_is_ibss_conn_exist(uint8_t *ibss_channel)
 {
 	uint32_t count = 0, index = 0;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	bool status = false;
-	if ((NULL == hdd_ctx) || (NULL == ibss_channel)) {
+	if (NULL == ibss_channel) {
 		cds_err("Null pointer error");
 		return false;
 	}
-	count = cds_mode_specific_connection_count(hdd_ctx,
-			CDS_IBSS_MODE, list);
+	count = cds_mode_specific_connection_count(CDS_IBSS_MODE, list);
 	if (count == 0) {
 		/* No IBSS connection */
 		status = false;
@@ -4599,8 +4768,6 @@ bool cds_is_ibss_conn_exist(hdd_context_t *hdd_ctx, uint8_t *ibss_channel)
 /**
  * cds_allow_concurrency() - Check for allowed concurrency
  * combination
- *
- * @hdd_ctx:	HDD Context
  * @mode:	new connection mode
  * @channel: channel on which new connection is coming up
  * @bw: Bandwidth requested by the connection (optional)
@@ -4611,16 +4778,23 @@ bool cds_is_ibss_conn_exist(hdd_context_t *hdd_ctx, uint8_t *ibss_channel)
  *
  * Return: True/False
  */
-bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
+bool cds_allow_concurrency(enum cds_con_mode mode,
 				uint8_t channel, enum hw_mode_bandwidth bw)
 {
 	uint32_t num_connections = 0, count = 0, index = 0;
 	bool status = false, match = false;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
 
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	/* find the current connection state from conc_connection_list*/
-	num_connections = cds_get_connection_count(hdd_ctx);
+	num_connections = cds_get_connection_count();
 
 	if (cds_max_concurrent_connections_reached()) {
 		cds_err("Reached max concurrent connections: %d",
@@ -4630,14 +4804,14 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 
 	if (channel) {
 		/* don't allow 3rd home channel on same MAC */
-		if (!cds_allow_new_home_channel(hdd_ctx, channel,
+		if (!cds_allow_new_home_channel(channel,
 			num_connections))
 				goto done;
 
 		/* don't allow MCC if SAP/GO on DFS channel or about to come up
 		* on DFS channel
 		*/
-		count = cds_mode_specific_connection_count(hdd_ctx,
+		count = cds_mode_specific_connection_count(
 				CDS_P2P_GO_MODE, list);
 		while (index < count) {
 			if ((CDS_IS_DFS_CH(
@@ -4653,7 +4827,7 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 		}
 
 		index = 0;
-		count = cds_mode_specific_connection_count(hdd_ctx,
+		count = cds_mode_specific_connection_count(
 				CDS_SAP_MODE, list);
 		while (index < count) {
 			if ((CDS_IS_DFS_CH(
@@ -4671,7 +4845,7 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 		index = 0;
 		if ((CDS_P2P_GO_MODE == mode) || (CDS_SAP_MODE == mode)) {
 			if (CDS_IS_DFS_CH(channel))
-				match = cds_disallow_mcc(hdd_ctx, channel);
+				match = cds_disallow_mcc(channel);
 		}
 		if (true == match) {
 			cds_err("No MCC, SAP/GO about to come up on DFS channel");
@@ -4681,10 +4855,10 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 
 	/* don't allow IBSS + STA MCC */
 	/* don't allow IBSS + STA SCC if IBSS is on DFS channel */
-	count = cds_mode_specific_connection_count(hdd_ctx,
+	count = cds_mode_specific_connection_count(
 			CDS_STA_MODE, list);
 	if ((CDS_IBSS_MODE == mode) &&
-		(cds_mode_specific_connection_count(hdd_ctx,
+		(cds_mode_specific_connection_count(
 		CDS_IBSS_MODE, list)) && count) {
 		/* err msg */
 		cds_err("No 2nd IBSS, we already have STA + IBSS");
@@ -4736,10 +4910,10 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 			goto done;
 		}
 	}
-	count = cds_mode_specific_connection_count(hdd_ctx,
+	count = cds_mode_specific_connection_count(
 			CDS_STA_MODE, list);
 	if ((CDS_STA_MODE == mode) &&
-		(cds_mode_specific_connection_count(hdd_ctx,
+		(cds_mode_specific_connection_count(
 		CDS_IBSS_MODE, list)) && count) {
 		/* err msg */
 		cds_err("No 2nd STA, we already have STA + IBSS");
@@ -4747,7 +4921,7 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 	}
 
 	if ((CDS_STA_MODE == mode) &&
-		(cds_mode_specific_connection_count(hdd_ctx,
+		(cds_mode_specific_connection_count(
 		CDS_IBSS_MODE, list))) {
 		if (wma_is_hw_dbs_capable() == true) {
 			if (num_connections > 1) {
@@ -4792,7 +4966,7 @@ bool cds_allow_concurrency(hdd_context_t *hdd_ctx, enum cds_con_mode mode,
 	/* don't allow two P2P GO on same band */
 	if (channel && (mode == CDS_P2P_GO_MODE) && num_connections) {
 		index = 0;
-		count = cds_mode_specific_connection_count(hdd_ctx,
+		count = cds_mode_specific_connection_count(
 						CDS_P2P_GO_MODE, list);
 		while (index < count) {
 			if (CDS_IS_SAME_BAND_CHANNELS(channel,
@@ -4815,16 +4989,22 @@ done:
  * cds_get_first_connection_pcl_table_index() - provides the
  * row index to firstConnectionPclTable to get to the correct
  * pcl
- * @hdd_ctx:	HDD Context
  *
  * This function provides the row index to
  * firstConnectionPclTable. The index is the preference config.
  *
  * Return: table index
  */
-enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(
-					hdd_context_t *hdd_ctx)
+enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(void)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return CDS_THROUGHPUT;
+	}
+
 	if (hdd_ctx->config->conc_system_pref >= CDS_MAX_CONC_PRIORITY_MODE)
 		return CDS_THROUGHPUT;
 	return hdd_ctx->config->conc_system_pref;
@@ -4834,7 +5014,6 @@ enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(
  * cds_get_second_connection_pcl_table_index() - provides the
  * row index to secondConnectionPclTable to get to the correct
  * pcl
- * @hdd_ctx:	HDD Context
  *
  * This function provides the row index to
  * secondConnectionPclTable. The index is derived based on
@@ -4843,8 +5022,7 @@ enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(
  *
  * Return: table index
  */
-enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(
-					hdd_context_t *hdd_ctx)
+enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(void)
 {
 	enum cds_one_connection_mode index = CDS_MAX_ONE_CONNECTION_MODE;
 
@@ -4921,7 +5099,6 @@ enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(
  * cds_get_third_connection_pcl_table_index() - provides the
  * row index to thirdConnectionPclTable to get to the correct
  * pcl
- * @hdd_ctx:	HDD Context
  *
  * This function provides the row index to
  * thirdConnectionPclTable. The index is derived based on
@@ -4930,8 +5107,7 @@ enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(
  *
  * Return: table index
  */
-enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(
-	hdd_context_t *hdd_ctx)
+enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(void)
 {
 	enum cds_one_connection_mode index = CDS_MAX_TWO_CONNECTION_MODE;
 
@@ -5265,40 +5441,6 @@ enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(
 }
 
 /**
- * cds_mode_switch_dbs_to_mcc() - initiates a mode switch
- * from DBS to MCC
- * @hdd_ctx:	HDD Context
- *
- * This function initiates a mode switch from DBS to MCC if any
- * change in concurrency scenario or some other external entity
- * (looking for range, thermal mitigation etc.) made an explicit
- * request. Notifies FW as well
- *
- * Return: CDF_STATUS enum
- */
-CDF_STATUS cds_mode_switch_dbs_to_mcc(hdd_context_t *hdd_ctx)
-{
-	return CDF_STATUS_SUCCESS;
-}
-
-/**
- * cds_mode_switch_mcc_to_dbs() - initiates a mode switch
- * from MCC to DBS
- * @hdd_ctx:	HDD Context
- *
- * This function initiates a mode switch from MCC to DBS if any
- * change in concurrency scenario or some other external entity
- * (powersave, thermal mitigation etc.) made an explicit
- * request. Notifies FW as well
- *
- * Return: CDF_STATUS enum
- */
-CDF_STATUS cds_mode_switch_mcc_to_dbs(hdd_context_t *hdd_ctx)
-{
-	return CDF_STATUS_SUCCESS;
-}
-
-/**
  * cds_current_connections_update() - initiates actions
  * needed on current connections once channel has been decided
  * for the new connection
@@ -5340,7 +5482,7 @@ CDF_STATUS cds_current_connections_update(uint32_t session_id,
 		band = CDS_BAND_5;
 
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
-	num_connections = cds_get_connection_count(hdd_ctx);
+	num_connections = cds_get_connection_count();
 
 	cds_debug("num_connections=%d channel=%d",
 		num_connections, channel);
@@ -5358,7 +5500,7 @@ CDF_STATUS cds_current_connections_update(uint32_t session_id,
 		break;
 	case 1:
 		second_index =
-			cds_get_second_connection_pcl_table_index(hdd_ctx);
+			cds_get_second_connection_pcl_table_index();
 		if (CDS_MAX_ONE_CONNECTION_MODE == second_index) {
 			/* err msg */
 			cds_err("couldn't find index for 2nd connection next action table");
@@ -5369,7 +5511,7 @@ CDF_STATUS cds_current_connections_update(uint32_t session_id,
 		break;
 	case 2:
 		third_index =
-			cds_get_third_connection_pcl_table_index(hdd_ctx);
+			cds_get_third_connection_pcl_table_index();
 		if (CDS_MAX_TWO_CONNECTION_MODE == third_index) {
 			/* err msg */
 			cds_err("couldn't find index for 3rd connection next action table");
@@ -5385,7 +5527,7 @@ CDF_STATUS cds_current_connections_update(uint32_t session_id,
 	}
 
 	if (CDS_NOP != next_action)
-		status = cds_next_actions(hdd_ctx, session_id,
+		status = cds_next_actions(session_id,
 						next_action, reason);
 	else
 		status = CDF_STATUS_E_NOSUPPORT;
@@ -5403,7 +5545,6 @@ done:
  * cds_wait_for_nss_update() - finds out if we need to wait
  * for all nss update to finish before requesting for HW mode
  * update
- * @hdd_ctx:	HDD Context
  * @action: next action to happen at policy mgr after
  *		beacon update
  *
@@ -5414,7 +5555,7 @@ done:
  * Return: boolean. True = wait for nss update, False = go ahead
  * with HW mode update
  */
-bool cds_wait_for_nss_update(hdd_context_t *hdd_ctx, uint8_t action)
+bool cds_wait_for_nss_update(uint8_t action)
 {
 	uint32_t conn_index = 0;
 	bool wait = false;
@@ -5487,7 +5628,7 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 	 * Check if we are ok to request for HW mode change now
 	 */
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
-	conn_index = cds_get_connection_for_vdev_id(hdd_ctx, vdev_id);
+	conn_index = cds_get_connection_for_vdev_id(vdev_id);
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS == conn_index) {
 		cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 		cds_err("connection not found for vdev %d", vdev_id);
@@ -5497,19 +5638,19 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 	case CDS_DBS:
 		conc_connection_list[conn_index].tx_spatial_stream = 1;
 		conc_connection_list[conn_index].rx_spatial_stream = 1;
-		wait = cds_wait_for_nss_update(hdd_ctx, next_action);
+		wait = cds_wait_for_nss_update(next_action);
 		break;
 	case CDS_MCC:
 		conc_connection_list[conn_index].tx_spatial_stream = 2;
 		conc_connection_list[conn_index].rx_spatial_stream = 2;
-		wait = cds_wait_for_nss_update(hdd_ctx, next_action);
+		wait = cds_wait_for_nss_update(next_action);
 		break;
 	default:
 		cds_err("unexpected action %d", next_action);
 		break;
 	}
 	if (!wait)
-		cds_next_actions(hdd_ctx, vdev_id,
+		cds_next_actions(vdev_id,
 				next_action,
 				CDS_UPDATE_REASON_NSS_UPDATE);
 	cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
@@ -5520,7 +5661,6 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
  * cds_complete_action() - initiates actions needed on
  * current connections once channel has been decided for the new
  * connection
- * @hdd_ctx:	HDD Context
  * @new_nss: the new nss value
  * @next_action: next action to happen at policy mgr after
  *		beacon update
@@ -5533,8 +5673,7 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
  *
  * Return: CDF_STATUS enum
  */
-CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
-				uint8_t  new_nss, uint8_t next_action,
+CDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 				enum cds_conn_update_reason reason,
 				uint32_t session_id)
 {
@@ -5542,6 +5681,13 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
 	uint32_t index = 0, count = 0;
 	uint32_t list[MAX_NUMBER_OF_CONC_CONNECTIONS];
 	uint32_t conn_index = 0;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
 
 	if (wma_is_hw_dbs_capable() == false) {
 		cds_err("driver isn't dbs capable, no further action needed");
@@ -5553,10 +5699,10 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
 	 * protection. So, not taking any lock inside cds_complete_action()
 	 * during conc_connection_list access.
 	 */
-	count = cds_mode_specific_connection_count(hdd_ctx,
+	count = cds_mode_specific_connection_count(
 			CDS_P2P_GO_MODE, list);
 	while (index < count) {
-		conn_index = cds_get_connection_for_vdev_id(hdd_ctx,
+		conn_index = cds_get_connection_for_vdev_id(
 				conc_connection_list[list[index]].vdev_id);
 		if (MAX_NUMBER_OF_CONC_CONNECTIONS == conn_index) {
 			cds_err("connection not found for vdev %d",
@@ -5579,7 +5725,7 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
 	}
 
 	index = 0;
-	count = cds_mode_specific_connection_count(hdd_ctx,
+	count = cds_mode_specific_connection_count(
 			CDS_SAP_MODE, list);
 	while (index < count) {
 		if (1 == conc_connection_list[list[index]].original_nss) {
@@ -5596,7 +5742,7 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
 		index++;
 	}
 	if (!CDF_IS_STATUS_SUCCESS(status))
-		status = cds_next_actions(hdd_ctx, session_id,
+		status = cds_next_actions(session_id,
 						next_action, reason);
 
 	return status;
@@ -5606,7 +5752,6 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
  * cds_next_actions() - initiates actions needed on current
  * connections once channel has been decided for the new
  * connection
- * @hdd_ctx:	HDD Context
  * @session_id: Session id
  * @action: action to be executed
  * @reason: Reason for connection update
@@ -5617,8 +5762,7 @@ CDF_STATUS cds_complete_action(hdd_context_t *hdd_ctx,
  *
  * Return: CDF_STATUS enum
  */
-CDF_STATUS cds_next_actions(hdd_context_t *hdd_ctx,
-				uint32_t session_id,
+CDF_STATUS cds_next_actions(uint32_t session_id,
 				enum cds_conc_next_action action,
 				enum cds_conn_update_reason reason)
 {
@@ -5657,11 +5801,11 @@ CDF_STATUS cds_next_actions(hdd_context_t *hdd_ctx,
 		* update the beacon template & notify FW. Once FW confirms
 		*  beacon updated, send down the HW mode change req
 		*/
-		status = cds_complete_action(hdd_ctx, 1, CDS_DBS, reason,
+		status = cds_complete_action(1, CDS_DBS, reason,
 						session_id);
 		break;
 	case CDS_DBS:
-		status = cds_soc_set_hw_mode(hdd_ctx, session_id,
+		status = cds_soc_set_hw_mode(session_id,
 						HW_MODE_SS_1x1,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_1x1, HW_MODE_40_MHZ,
@@ -5675,11 +5819,11 @@ CDF_STATUS cds_next_actions(hdd_context_t *hdd_ctx,
 		* intially. If yes, update the beacon template & notify FW.
 		* Once FW confirms beacon updated, send the HW mode change req
 		*/
-		status = cds_complete_action(hdd_ctx, 0, CDS_MCC, reason,
+		status = cds_complete_action(0, CDS_MCC, reason,
 						session_id);
 		break;
 	case CDS_MCC:
-		status = cds_soc_set_hw_mode(hdd_ctx, session_id,
+		status = cds_soc_set_hw_mode(session_id,
 						HW_MODE_SS_2x2,
 						HW_MODE_80_MHZ,
 						HW_MODE_SS_0x0, HW_MODE_BW_NONE,
@@ -5855,13 +5999,12 @@ static void cds_sap_restart_handle(struct work_struct *work)
 	}
 	wlan_hdd_start_sap(sap_adapter);
 
-	cds_change_sap_restart_required_status(hdd_ctx, false);
+	cds_change_sap_restart_required_status(false);
 	cds_ssr_unprotect(__func__);
 }
 
 /**
  * cds_check_and_restart_sap() - Check and restart sap if required
- * @hdd_ctx: pointer to HDD context
  * @roam_result: Roam result
  * @hdd_sta_ctx: HDD station context
  *
@@ -5869,16 +6012,22 @@ static void cds_sap_restart_handle(struct work_struct *work)
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_check_and_restart_sap(hdd_context_t *hdd_ctx,
-			eCsrRoamResult roam_result,
+CDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 			hdd_station_ctx_t *hdd_sta_ctx)
 {
 	hdd_adapter_t *sap_adapter = NULL;
 	hdd_ap_ctx_t *hdd_ap_ctx = NULL;
 	uint8_t default_sap_channel = 6;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return CDF_STATUS_E_FAILURE;
+	}
 
 	if (!(hdd_ctx->config->conc_custom_rule1 &&
-			(true == cds_is_sap_restart_required(hdd_ctx))))
+			(true == cds_is_sap_restart_required())))
 		return CDF_STATUS_SUCCESS;
 
 	sap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
@@ -5938,7 +6087,6 @@ CDF_STATUS cds_check_and_restart_sap(hdd_context_t *hdd_ctx,
 /**
  * cds_sta_sap_concur_handle() - This function will handle Station and sap
  * concurrency.
- * @hdd_ctx: pointer to hdd context.
  * @sta_adapter: pointer to station adapter.
  * @roam_profile: pointer to station's roam profile.
  *
@@ -5948,16 +6096,22 @@ CDF_STATUS cds_check_and_restart_sap(hdd_context_t *hdd_ctx,
  *
  * Return: true or false based on function's overall success.
  */
-static bool cds_sta_sap_concur_handle(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *sta_adapter,
+static bool cds_sta_sap_concur_handle(hdd_adapter_t *sta_adapter,
 		tCsrRoamProfile *roam_profile)
 {
-	hdd_adapter_t *ap_adapter = hdd_get_adapter(hdd_ctx,
-			WLAN_HDD_SOFTAP);
+	hdd_adapter_t *ap_adapter;
 	bool are_cc_channels_same = false;
 	tScanResultHandle scan_cache = NULL;
 	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
 
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return are_cc_channels_same;
+	}
+
+	ap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
 	if ((ap_adapter != NULL) &&
 		test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
 		status =
@@ -5985,7 +6139,7 @@ static bool cds_sta_sap_concur_handle(hdd_context_t *hdd_ctx,
 		if (false == are_cc_channels_same) {
 			cds_info("Stop AP due to mismatch with STA channel");
 			wlan_hdd_stop_sap(ap_adapter);
-			cds_change_sap_restart_required_status(hdd_ctx, true);
+			cds_change_sap_restart_required_status(true);
 			return false;
 		} else {
 			cds_info("sap channels are same");
@@ -5998,7 +6152,6 @@ static bool cds_sta_sap_concur_handle(hdd_context_t *hdd_ctx,
 /**
  * cds_sta_p2pgo_concur_handle() - This function will handle Station and GO
  * concurrency.
- * @hdd_ctx: pointer to hdd context.
  * @sta_adapter: pointer to station adapter.
  * @roam_profile: pointer to station's roam profile.
  * @roam_id: reference to roam_id variable being passed.
@@ -6010,20 +6163,25 @@ static bool cds_sta_sap_concur_handle(hdd_context_t *hdd_ctx,
  *
  * Return: true or false based on function's overall success.
  */
-static bool cds_sta_p2pgo_concur_handle(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *sta_adapter,
+static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 		tCsrRoamProfile *roam_profile,
 		uint32_t *roam_id)
 {
-	hdd_adapter_t *p2pgo_adapter = hdd_get_adapter(hdd_ctx,
-			WLAN_HDD_P2P_GO);
+	hdd_adapter_t *p2pgo_adapter;
 	bool are_cc_channels_same = false;
 	tScanResultHandle scan_cache = NULL;
 	uint32_t p2pgo_channel_num, freq;
 	tHddAvoidFreqList hdd_avoid_freq_list;
 	CDF_STATUS status;
 	bool ret;
+	hdd_context_t *hdd_ctx;
 
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return are_cc_channels_same;
+	}
+	p2pgo_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_P2P_GO);
 	if ((p2pgo_adapter != NULL) &&
 		test_bit(SOFTAP_BSS_STARTED, &p2pgo_adapter->event_flags)) {
 		status =
@@ -6039,7 +6197,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_context_t *hdd_ctx,
 		 * channel is different or STA channel is zero.
 		 */
 		if (false == are_cc_channels_same) {
-			if (true == cds_is_sta_connection_pending(hdd_ctx)) {
+			if (true == cds_is_sta_connection_pending()) {
 				MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 					TRACE_CODE_HDD_CLEAR_JOIN_REQ,
 					sta_adapter->sessionId, *roam_id));
@@ -6050,8 +6208,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_context_t *hdd_ctx,
 					cds_err("sme_clear_joinreq_param failed");
 					/* Not returning */
 				}
-				cds_change_sta_conn_pending_status(hdd_ctx,
-						false);
+				cds_change_sta_conn_pending_status(false);
 				cds_info("===>Clear pending join req");
 			}
 			MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
@@ -6068,7 +6225,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_context_t *hdd_ctx,
 				cds_err("sme_store_joinreq_param failed");
 				/* Not returning */
 			}
-			cds_change_sta_conn_pending_status(hdd_ctx, true);
+			cds_change_sta_conn_pending_status(true);
 			/*
 			 * fill frequency avoidance event and send it up, so
 			 * p2pgo stop event should get trigger from upper layer
@@ -6113,7 +6270,6 @@ static bool cds_sta_p2pgo_concur_handle(hdd_context_t *hdd_ctx,
 
 /**
  * cds_handle_conc_rule1() - Check if concurrency rule1 is enabled
- * @hdd_ctx: HDD context
  * @adapter: HDD adpater
  * @roam_profile: Profile for connection
  *
@@ -6123,11 +6279,17 @@ static bool cds_sta_p2pgo_concur_handle(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-void cds_handle_conc_rule1(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *adapter,
+void cds_handle_conc_rule1(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile)
 {
 	bool ret;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 
 	/*
 	 * Custom concurrency rule1: As per this rule if station is
@@ -6137,7 +6299,7 @@ void cds_handle_conc_rule1(hdd_context_t *hdd_ctx,
 	 */
 	if (hdd_ctx->config->conc_custom_rule1 &&
 			(WLAN_HDD_INFRA_STATION == adapter->device_mode)) {
-		ret = cds_sta_sap_concur_handle(hdd_ctx, adapter,
+		ret = cds_sta_sap_concur_handle(adapter,
 				roam_profile);
 		if (true != ret) {
 			cds_err("cds_sta_sap_concur_handle failed");
@@ -6149,7 +6311,6 @@ void cds_handle_conc_rule1(hdd_context_t *hdd_ctx,
 #ifdef FEATURE_WLAN_CH_AVOID
 /**
  * cds_handle_conc_rule2() - Check if concurrency rule2 is enabled
- * @hdd_ctx: HDD context
  * @adapter: HDD adpater
  * @roam_profile: Profile for connection
  *
@@ -6159,11 +6320,18 @@ void cds_handle_conc_rule1(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-bool cds_handle_conc_rule2(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *adapter,
+bool cds_handle_conc_rule2(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile,
 		uint32_t *roam_id)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return false;
+	}
+
 	/*
 	 * Custom concurrency rule2: As per this rule if station is
 	 * trying to connect to some AP in 5Ghz and P2PGO is already in
@@ -6171,7 +6339,7 @@ bool cds_handle_conc_rule2(hdd_context_t *hdd_ctx,
 	 */
 	if (hdd_ctx->config->conc_custom_rule2 &&
 		(WLAN_HDD_INFRA_STATION == adapter->device_mode)) {
-		if (false == cds_sta_p2pgo_concur_handle(hdd_ctx,
+		if (false == cds_sta_p2pgo_concur_handle(
 					adapter, roam_profile, roam_id)) {
 			cds_err("P2PGO-STA chnl diff, cache join req");
 			return false;
@@ -6246,7 +6414,7 @@ uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
 	}
 
 	/* Take care of 160MHz and 80+80Mhz later */
-	ret = cds_allow_concurrency(hdd_ctx,
+	ret = cds_allow_concurrency(
 		cds_convert_device_mode_to_hdd_type(
 			adapter->device_mode),
 		channel, HW_MODE_20_MHZ);
@@ -6267,8 +6435,7 @@ uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
  *
  * True if the concurrency is allowed, false otherwise
  */
-bool cds_check_for_session_conc(uint8_t session_id,
-		uint8_t channel)
+bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel)
 {
 	hdd_context_t *hdd_ctx;
 	hdd_adapter_t *adapter;
@@ -6292,7 +6459,7 @@ bool cds_check_for_session_conc(uint8_t session_id,
 	}
 
 	/* Take care of 160MHz and 80+80Mhz later */
-	ret = cds_allow_concurrency(hdd_ctx,
+	ret = cds_allow_concurrency(
 		cds_convert_device_mode_to_hdd_type(
 			adapter->device_mode),
 		channel, HW_MODE_20_MHZ);
@@ -6314,8 +6481,7 @@ bool cds_check_for_session_conc(uint8_t session_id,
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS cds_handle_conc_multiport(uint8_t session_id,
-		uint8_t channel)
+CDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel)
 {
 	CDF_STATUS status;
 
@@ -6344,15 +6510,20 @@ CDF_STATUS cds_handle_conc_multiport(uint8_t session_id,
  * cds_restart_softap() - restart SAP on STA channel to support
  * STA + SAP concurrency.
  *
- * @hdd_ctx: pointer to hdd context
  * @pHostapdAdapter: pointer to hdd adapter
  *
  * Return: None
  */
-void cds_restart_softap(hdd_context_t *hdd_ctx,
-		hdd_adapter_t *pHostapdAdapter)
+void cds_restart_softap(hdd_adapter_t *pHostapdAdapter)
 {
 	tHddAvoidFreqList hdd_avoid_freq_list;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 
 	/* generate vendor specific event */
 	cdf_mem_zero((void *)&hdd_avoid_freq_list, sizeof(tHddAvoidFreqList));
@@ -6368,7 +6539,6 @@ void cds_restart_softap(hdd_context_t *hdd_ctx,
 
 /**
  * cds_force_sap_on_scc() - Force SAP on SCC
- * @hdd_ctx: Pointer to HDD context
  * @roam_result: Roam result
  *
  * Restarts SAP on SCC if its operating channel is different from that of the
@@ -6376,9 +6546,16 @@ void cds_restart_softap(hdd_context_t *hdd_ctx,
  *
  * Return: None
  */
-void cds_force_sap_on_scc(hdd_context_t *hdd_ctx, eCsrRoamResult roam_result)
+void cds_force_sap_on_scc(eCsrRoamResult roam_result)
 {
 	hdd_adapter_t *hostapd_adapter;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 
 	if (!(eCSR_ROAM_RESULT_ASSOCIATED == roam_result &&
 		hdd_ctx->config->SapSccChanAvoidance)) {
@@ -6395,7 +6572,7 @@ void cds_force_sap_on_scc(hdd_context_t *hdd_ctx, eCsrRoamResult roam_result)
 			cds_err("Restart SAP: SAP channel-%d, STA channel-%d",
 				hostapd_adapter->sessionCtx.ap.operatingChannel,
 				pRoamInfo->pBssDesc->channelId);
-			cds_restart_softap(hdd_ctx, hostapd_adapter);
+			cds_restart_softap(hostapd_adapter);
 		}
 	}
 }
@@ -6459,15 +6636,22 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 }
 /**
  * cds_check_concurrent_intf_and_restart_sap() - Check concurrent change intf
- * @hdd_ctx: Pointer to HDD context
  * @hdd_sta_ctx: Pointer to HDD STA context
  *
  * Checks the concurrent change interface and restarts SAP
  * Return: None
  */
-void cds_check_concurrent_intf_and_restart_sap(hdd_context_t *hdd_ctx,
-		hdd_station_ctx_t *hdd_sta_ctx, hdd_adapter_t *adapter)
+void cds_check_concurrent_intf_and_restart_sap(hdd_station_ctx_t *hdd_sta_ctx,
+		hdd_adapter_t *adapter)
 {
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
+
 	if ((hdd_ctx->config->WlanMccToSccSwitchMode
 				!= CDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 			((0 == hdd_ctx->config->conc_custom_rule1) &&
@@ -6488,7 +6672,6 @@ void cds_check_concurrent_intf_and_restart_sap(hdd_context_t *hdd_ctx,
 
 /**
  * cds_is_mcc_in_24G() - Function to check for MCC in 2.4GHz
- * @hdd_ctx:    Pointer to HDD context
  *
  * This function is used to check for MCC operation in 2.4GHz band.
  * STA, P2P and SAP adapters are only considered.
@@ -6496,7 +6679,7 @@ void cds_check_concurrent_intf_and_restart_sap(hdd_context_t *hdd_ctx,
  * Return: Non zero value if MCC is detected in 2.4GHz band
  *
  */
-uint8_t cds_is_mcc_in_24G(hdd_context_t *hdd_ctx)
+uint8_t cds_is_mcc_in_24G(void)
 {
 	CDF_STATUS status;
 	hdd_adapter_t *hdd_adapter = NULL;
@@ -6507,6 +6690,13 @@ uint8_t cds_is_mcc_in_24G(hdd_context_t *hdd_ctx)
 	uint8_t ch1 = 0, ch2 = 0;
 	uint8_t channel = 0;
 	hdd_hostapd_state_t *hostapd_state;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return 1;
+	}
 
 	status =  hdd_get_front_adapter(hdd_ctx, &adapter_node);
 
@@ -7025,7 +7215,7 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		cds_decr_session_set_pcl(hdd_ctx,
+		cds_decr_session_set_pcl(
 			ap_adapter->device_mode, ap_adapter->sessionId);
 		cds_err("SAP Stop Success");
 
@@ -7060,7 +7250,7 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		}
 		cds_err("SAP Start Success");
 		set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		cds_incr_active_session(hdd_ctx, ap_adapter->device_mode,
+		cds_incr_active_session(ap_adapter->device_mode,
 					 ap_adapter->sessionId);
 		hostapd_state->bCommit = true;
 	}
@@ -7073,15 +7263,21 @@ end:
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 /**
  * cds_check_and_restart_sap_with_non_dfs_acs() - Restart SAP with non dfs acs
- * @hdd_ctx: HDD context
  *
  * Restarts SAP in non-DFS ACS mode when STA-AP mode DFS is not supported
  *
  * Return: None
  */
-void cds_check_and_restart_sap_with_non_dfs_acs(hdd_context_t *hdd_ctx)
+void cds_check_and_restart_sap_with_non_dfs_acs(void)
 {
 	hdd_adapter_t *ap_adapter;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return;
+	}
 
 	if (cds_get_concurrency_mode() != (CDF_STA_MASK | CDF_SAP_MASK)) {
 		cds_info("Concurrency mode is not SAP");
@@ -7106,13 +7302,20 @@ void cds_check_and_restart_sap_with_non_dfs_acs(hdd_context_t *hdd_ctx)
 }
 #endif
 #ifdef MPC_UT_FRAMEWORK
-CDF_STATUS cds_update_connection_info_utfw(hdd_context_t *hdd_ctx,
+CDF_STATUS cds_update_connection_info_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t conn_index = 0, found = 0;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
 
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
 	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
@@ -7141,16 +7344,23 @@ CDF_STATUS cds_update_connection_info_utfw(hdd_context_t *hdd_ctx,
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS cds_incr_connection_count_utfw(hdd_context_t *hdd_ctx,
+CDF_STATUS cds_incr_connection_count_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t conn_index = 0;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return status;
+	}
 
 	cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
-	conn_index = cds_get_connection_count(hdd_ctx);
+	conn_index = cds_get_connection_count();
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= conn_index) {
 		/* err msg */
 		cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
@@ -7169,28 +7379,34 @@ CDF_STATUS cds_incr_connection_count_utfw(hdd_context_t *hdd_ctx,
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS cds_decr_connection_count_utfw(hdd_context_t *hdd_ctx,
-	uint32_t del_all, uint32_t vdev_id)
+CDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
+	uint32_t vdev_id)
 {
 	CDF_STATUS status;
+	hdd_context_t *hdd_ctx;
+
+	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	if (!hdd_ctx) {
+		cds_err("HDD context is NULL");
+		return CDF_STATUS_E_FAILURE;
+	}
 
 	if (del_all) {
-		status = cds_init_policy_mgr(hdd_ctx);
+		status = cds_init_policy_mgr();
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cds_err("Policy manager initialization failed");
 			return CDF_STATUS_E_FAILURE;
 		}
 	} else {
 		cdf_mutex_acquire(&hdd_ctx->hdd_conc_list_lock);
-		cds_decr_connection_count(hdd_ctx, vdev_id);
+		cds_decr_connection_count(vdev_id);
 		cdf_mutex_release(&hdd_ctx->hdd_conc_list_lock);
 	}
 
 	return CDF_STATUS_SUCCESS;
 }
 
-struct cds_conc_connection_info *cds_get_conn_info(hdd_context_t *hdd_ctx,
-		uint32_t *len)
+struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
 {
 	struct cds_conc_connection_info *conn_ptr = &conc_connection_list[0];
 	*len = MAX_NUMBER_OF_CONC_CONNECTIONS;
@@ -7198,8 +7414,7 @@ struct cds_conc_connection_info *cds_get_conn_info(hdd_context_t *hdd_ctx,
 	return conn_ptr;
 }
 
-enum cds_pcl_type get_pcl_from_first_conn_table(
-		enum cds_con_mode type,
+enum cds_pcl_type get_pcl_from_first_conn_table(enum cds_con_mode type,
 		enum cds_conc_priority_mode sys_pref)
 {
 	if ((sys_pref >= CDS_MAX_CONC_PRIORITY_MODE) ||

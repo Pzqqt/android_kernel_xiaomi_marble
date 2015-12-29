@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -730,7 +730,7 @@ static void hdd_send_association_event(struct net_device *dev,
 			return;
 		}
 
-		cds_incr_active_session(pHddCtx, pAdapter->device_mode,
+		cds_incr_active_session(pAdapter->device_mode,
 						pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pCsrRoamInfo->pBssDesc->bssId,
 		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
@@ -815,8 +815,7 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 	} else if (eConnectionState_IbssConnected ==    /* IBss Associated */
 			pHddStaCtx->conn_info.connState) {
-		cds_update_connection_info(pHddCtx,
-				pAdapter->sessionId);
+		cds_update_connection_info(pAdapter->sessionId);
 		memcpy(wrqu.ap_addr.sa_data, pHddStaCtx->conn_info.bssId.bytes,
 		       ETH_ALEN);
 		pr_info("wlan: new IBSS connection to " MAC_ADDRESS_STR "\n",
@@ -826,7 +825,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		pr_info("wlan: disconnected\n");
 		memset(wrqu.ap_addr.sa_data, '\0', ETH_ALEN);
 		cds_decr_session_set_pcl(
-						pHddCtx, pAdapter->device_mode,
+						pAdapter->device_mode,
 						pAdapter->sessionId);
 #if defined(FEATURE_WLAN_LFR)
 		wlan_hdd_enable_roaming(pAdapter);
@@ -872,7 +871,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		hdd_stop_bus_bw_compute_timer(pAdapter);
 #endif
 	}
-	cds_dump_concurrency_info(pHddCtx);
+	cds_dump_concurrency_info();
 	/* Send SCC/MCC Switching event to IPA */
 	hdd_ipa_send_mcc_scc_msg(pHddCtx, pHddCtx->mcc_mode);
 
@@ -1419,7 +1418,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * successful reassoc decrement the active session count here.
 	 */
 	cds_decr_session_set_pcl(
-					pHddCtx, pAdapter->device_mode,
+					pAdapter->device_mode,
 					pAdapter->sessionId);
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
@@ -1772,7 +1771,7 @@ defined(WLAN_FEATURE_VOWIFI_11R)
 		/* Indicate 'connect' status to user space */
 		hdd_send_association_event(dev, pRoamInfo);
 
-		if (cds_is_mcc_in_24G(pHddCtx)) {
+		if (cds_is_mcc_in_24G()) {
 			if (pHddCtx->miracast_value)
 				cds_set_mas(pAdapter, pHddCtx->miracast_value);
 		}
@@ -1849,7 +1848,7 @@ defined(FEATURE_WLAN_LFR)
 		wlan_hdd_auto_shutdown_enable(pHddCtx, false);
 #endif
 
-		cds_check_concurrent_intf_and_restart_sap(pHddCtx,
+		cds_check_concurrent_intf_and_restart_sap(
 							  pHddStaCtx,
 							  pAdapter);
 
@@ -1967,8 +1966,7 @@ defined(FEATURE_WLAN_LFR)
 						 * count here.
 						 */
 						cds_decr_session_set_pcl
-							(pHddCtx,
-							pAdapter->device_mode,
+							(pAdapter->device_mode,
 							pAdapter->sessionId);
 						hddLog(LOG1,
 						       FL("ft_carrier_on is %d, sending roamed indication"),
@@ -2335,11 +2333,11 @@ defined(FEATURE_WLAN_LFR)
 					   WLAN_CONTROL_PATH);
 	}
 
-	if (CDF_STATUS_SUCCESS != cds_check_and_restart_sap(pHddCtx,
+	if (CDF_STATUS_SUCCESS != cds_check_and_restart_sap(
 					roamResult, pHddStaCtx))
 		return CDF_STATUS_E_FAILURE;
 
-	cds_force_sap_on_scc(pHddCtx, roamResult);
+	cds_force_sap_on_scc(roamResult);
 
 	return CDF_STATUS_SUCCESS;
 }
@@ -2461,12 +2459,11 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 				bss);
 		}
 		if (eCSR_ROAM_RESULT_IBSS_STARTED == roamResult) {
-			cds_incr_active_session(pHddCtx, pAdapter->device_mode,
+			cds_incr_active_session(pAdapter->device_mode,
 					pAdapter->sessionId);
 		} else if (eCSR_ROAM_RESULT_IBSS_JOIN_SUCCESS == roamResult ||
 				eCSR_ROAM_RESULT_IBSS_COALESCED == roamResult) {
-			cds_update_connection_info(pHddCtx,
-					pAdapter->sessionId);
+			cds_update_connection_info(pAdapter->sessionId);
 		}
 		break;
 	}

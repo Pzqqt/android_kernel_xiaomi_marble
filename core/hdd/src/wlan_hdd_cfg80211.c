@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1537,7 +1537,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	hdd_debug("get pcl for DO_ACS vendor command");
 
 	/* consult policy manager to get PCL */
-	status = cds_get_pcl(hdd_ctx, CDS_SAP_MODE,
+	status = cds_get_pcl(CDS_SAP_MODE,
 					sap_config->acs_cfg.pcl_channels,
 					&sap_config->acs_cfg.pcl_ch_count);
 	if (CDF_STATUS_SUCCESS != status)
@@ -4113,7 +4113,7 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 
 	hdd_debug("Userspace requested pref freq list");
 
-	status = cds_get_pcl(hdd_ctx, intf_mode, pcl, &pcl_len);
+	status = cds_get_pcl(intf_mode, pcl, &pcl_len);
 	if (status != CDF_STATUS_SUCCESS) {
 		hdd_err("Get pcl failed");
 		return -EINVAL;
@@ -4237,7 +4237,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 			[QCA_WLAN_VENDOR_ATTR_PROBABLE_OPER_CHANNEL_FREQ]));
 
 	/* check pcl table */
-	if (!cds_allow_concurrency(hdd_ctx, intf_mode,
+	if (!cds_allow_concurrency(intf_mode,
 					channel_hint, HW_MODE_20_MHZ)) {
 		hdd_err("Set channel hint failed due to concurrency check");
 		return -EINVAL;
@@ -6037,7 +6037,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	hddLog(CDF_TRACE_LEVEL_INFO, FL("Device_mode = %d, IFTYPE = 0x%x"),
 	       pAdapter->device_mode, type);
 
-	if (!cds_allow_concurrency(pHddCtx,
+	if (!cds_allow_concurrency(
 				wlan_hdd_convert_nl_iftype_to_hdd_type(type),
 				0, HW_MODE_20_MHZ)) {
 		hddLog(CDF_TRACE_LEVEL_DEBUG,
@@ -6049,7 +6049,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	wdev = ndev->ieee80211_ptr;
 
 	/* Reset the current device mode bit mask */
-	cds_clear_concurrency_mode(pHddCtx, pAdapter->device_mode);
+	cds_clear_concurrency_mode(pAdapter->device_mode);
 
 	hdd_tdls_notify_mode_change(pAdapter, pHddCtx);
 
@@ -6231,7 +6231,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 done:
 	/* Set bitmask based on updated value */
-	cds_set_concurrency_mode(pHddCtx, pAdapter->device_mode);
+	cds_set_concurrency_mode(pAdapter->device_mode);
 
 #ifdef WLAN_FEATURE_LPSS
 	wlan_hdd_send_all_scan_intf_info(pHddCtx);
@@ -7955,7 +7955,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		}
 
 		if (pHddCtx->config->policy_manager_enabled &&
-			(true == cds_is_connection_in_progress(pHddCtx))) {
+			(true == cds_is_connection_in_progress())) {
 			hdd_err("Connection refused: conn in progress");
 			return -EINVAL;
 		}
@@ -7994,9 +7994,9 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		 * check for other concurrency rules.
 		 */
 		if (!pHddCtx->config->policy_manager_enabled) {
-			cds_handle_conc_rule1(pHddCtx, pAdapter,
+			cds_handle_conc_rule1(pAdapter,
 					pRoamProfile);
-			if (true != cds_handle_conc_rule2(pHddCtx,
+			if (true != cds_handle_conc_rule2(
 					pAdapter, pRoamProfile, &roamId))
 				return 0;
 		}
@@ -8829,7 +8829,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 	if (req->channel) {
-		if (!cds_allow_concurrency(pHddCtx,
+		if (!cds_allow_concurrency(
 				cds_convert_device_mode_to_hdd_type(
 				pAdapter->device_mode),
 				req->channel->hw_value, HW_MODE_20_MHZ)) {
@@ -8837,7 +8837,7 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 			return -ECONNREFUSED;
 		}
 	} else {
-		if (!cds_allow_concurrency(pHddCtx,
+		if (!cds_allow_concurrency(
 				cds_convert_device_mode_to_hdd_type(
 				pAdapter->device_mode), 0, HW_MODE_20_MHZ)) {
 			hdd_err("This concurrency combination is not allowed");
@@ -9345,7 +9345,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		}
 	}
 
-	if (!cds_allow_concurrency(pHddCtx, CDS_IBSS_MODE, channelNum,
+	if (!cds_allow_concurrency(CDS_IBSS_MODE, channelNum,
 		HW_MODE_20_MHZ)) {
 		hdd_err("This concurrency combination is not allowed");
 		return -ECONNREFUSED;

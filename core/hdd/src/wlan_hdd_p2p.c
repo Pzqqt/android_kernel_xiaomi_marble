@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -845,8 +845,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	ret = wlan_hdd_validate_context(pHddCtx);
 	if (0 != ret)
 		return ret;
-	if (cds_is_connection_in_progress(
-		(hdd_context_t *) pAdapter->pHddCtx)) {
+	if (cds_is_connection_in_progress()) {
 		hddLog(LOGE, FL("Connection is in progress"));
 		isBusy = true;
 	}

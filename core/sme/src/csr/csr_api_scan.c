@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1990,9 +1990,9 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 	csr_ll_lock(&pMac->scan.scanResultList);
 
 	if (pFilter) {
-		if (cds_map_concurrency_mode(pMac->hHdd,
+		if (cds_map_concurrency_mode(
 					&pFilter->csrPersona, &new_mode)) {
-			status = cds_get_pcl(pMac->hHdd, new_mode,
+			status = cds_get_pcl(new_mode,
 				&pFilter->pcl_channels.channelList[0], &len);
 			pFilter->pcl_channels.numChannels = (uint8_t)len;
 		}
@@ -5485,7 +5485,7 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	 * out IBSS channel's band otherwise it will cause issue
 	 * in IBSS+STA concurrency
 	 */
-	if (true == cds_is_ibss_conn_exist(mac_ctx->hHdd, &ibss_channel)) {
+	if (true == cds_is_ibss_conn_exist(&ibss_channel)) {
 		sms_log(mac_ctx, LOG1,
 			FL("Conc IBSS exist, channel list will be modified"));
 	}
