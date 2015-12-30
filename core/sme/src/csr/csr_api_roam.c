@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -7777,6 +7777,8 @@ CDF_STATUS csr_roam_disconnect_internal(tpAniSirGlobal pMac, uint32_t sessionId,
 		status = csr_roam_issue_disassociate_cmd(pMac, sessionId,
 							 reason);
 	} else {
+		pMac->roam.roamSession[sessionId].connectState =
+			eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING;
 		csr_scan_abort_scan_for_ssid(pMac, sessionId);
 		status = CDF_STATUS_CMD_NOT_QUEUED;
 		sms_log(pMac, LOG1,
