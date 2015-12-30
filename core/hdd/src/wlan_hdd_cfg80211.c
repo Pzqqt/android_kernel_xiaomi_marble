@@ -8949,10 +8949,15 @@ int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 
 	status = sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     pAdapter->sessionId, reason);
+	/*
+	 * Wait here instead of returning directly, this will block the next
+	 * connect command and allow processing of the scan for ssid and
+	 * the previous connect command in CSR. Else we might hit some
+	 * race conditions leading to SME and HDD out of sync.
+	 */
 	if (CDF_STATUS_CMD_NOT_QUEUED == status) {
 		hddLog(LOG1, FL("status = %d, already disconnected"),
 		       (int)status);
-		goto disconnected;
 	} else if (0 != status) {
 		hddLog(LOGE,
 			FL("csr_roam_disconnect failure, returned %d"),
@@ -9130,7 +9135,6 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 		hddLog(LOG1,
 			FL("convert to internal reason %d to reasonCode %d"),
 			reason, reasonCode);
-		pHddStaCtx->conn_info.connState = eConnectionState_NotConnected;
 		pScanInfo = &pAdapter->scan_info;
 		if (pScanInfo->mScanPending) {
 			hddLog(LOG1,
