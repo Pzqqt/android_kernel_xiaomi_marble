@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,7 +104,6 @@ enum eWniMsgTypes {
 	eWNI_SME_CHNG_MCC_BEACON_INTERVAL,
 	eWNI_SME_REMAIN_ON_CHANNEL_REQ,
 	eWNI_SME_REMAIN_ON_CHN_RSP,
-	eWNI_SME_MGMT_FRM_IND,
 	eWNI_SME_REMAIN_ON_CHN_RDY_IND,
 	eWNI_SME_SEND_ACTION_FRAME_IND,
 	eWNI_SME_ACTION_FRAME_SEND_CNF,
@@ -249,6 +248,7 @@ enum eWniMsgTypes {
 	eWNI_SME_SET_IE_REQ,
 	eWNI_SME_EXT_CHANGE_CHANNEL,
 	eWNI_SME_EXT_CHANGE_CHANNEL_IND,
+	eWNI_SME_REGISTER_MGMT_FRAME_CB,
 	eWNI_SME_MSG_TYPES_END
 };
 

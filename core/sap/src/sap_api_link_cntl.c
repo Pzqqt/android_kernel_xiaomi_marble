@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -887,11 +887,6 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("CSR roam_status = eCSR_ROAM_WPS_PBC_PROBE_REQ_IND (%d)\n"),
 			  roam_status);
-		break;
-	case eCSR_ROAM_INDICATE_MGMT_FRAME:
-		sap_signal_hdd_event(sap_ctx, csr_roam_info,
-				     eSAP_INDICATE_MGMT_FRAME,
-				     (void *) eSAP_STATUS_SUCCESS);
 		break;
 	case eCSR_ROAM_REMAIN_CHAN_READY:
 		/* roamId contains scan identifier */

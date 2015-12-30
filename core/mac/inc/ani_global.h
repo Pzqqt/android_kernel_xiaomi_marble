@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1041,7 +1041,7 @@ typedef struct sAniSirGlobal {
 	bool enable_dot11p;
 
 	uint32_t dual_mac_feature_disable;
-
+	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
 } tAniSirGlobal;

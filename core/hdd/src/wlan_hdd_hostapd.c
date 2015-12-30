@@ -1519,17 +1519,6 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		cdf_mem_free(pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas);        /* Release caller allocated memory here */
 		pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas = NULL;
 		return CDF_STATUS_SUCCESS;
-	case eSAP_INDICATE_MGMT_FRAME:
-		hdd_indicate_mgmt_frame(pHostapdAdapter,
-					pSapEvent->sapevt.sapManagementFrameInfo.
-					nFrameLength,
-					pSapEvent->sapevt.sapManagementFrameInfo.
-					pbFrames,
-					pSapEvent->sapevt.sapManagementFrameInfo.
-					frameType,
-					pSapEvent->sapevt.sapManagementFrameInfo.
-					rxChan, 0);
-		return CDF_STATUS_SUCCESS;
 	case eSAP_REMAIN_CHAN_READY:
 		hdd_remain_chan_ready_handler(pHostapdAdapter,
 			pSapEvent->sapevt.sap_roc_ind.scan_id);

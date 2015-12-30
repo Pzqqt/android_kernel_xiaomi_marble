@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -818,7 +818,6 @@ static uint8_t *sap_hdd_event_to_string(eSapHddEvent event)
 	CASE_RETURN_STRING(eSAP_ASSOC_STA_CALLBACK_EVENT);
 	CASE_RETURN_STRING(eSAP_GET_WPSPBC_SESSION_EVENT);
 	CASE_RETURN_STRING(eSAP_WPS_PBC_PROBE_REQ_EVENT);
-	CASE_RETURN_STRING(eSAP_INDICATE_MGMT_FRAME);
 	CASE_RETURN_STRING(eSAP_REMAIN_CHAN_READY);
 	CASE_RETURN_STRING(eSAP_SEND_ACTION_CNF);
 	CASE_RETURN_STRING(eSAP_DISCONNECT_ALL_P2P_CLIENT);
@@ -2516,7 +2515,6 @@ CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 	tSap_StationDisassocCompleteEvent *disassoc_comp;
 	tSap_StationSetKeyCompleteEvent *key_complete;
 	tSap_StationMICFailureEvent *mic_failure;
-	tSap_ManagementFrameInfo *mgmt_frame;
 
 	/* Format the Start BSS Complete event to return... */
 	if (NULL == sap_ctx->pfnSapEventCallback) {
@@ -2730,16 +2728,6 @@ CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		cdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
 			     WPSPBCProbeReq, csr_roaminfo->u.pWPSPBCProbeReq,
 			     sizeof(tSirWPSPBCProbeReq));
-		break;
-
-	case eSAP_INDICATE_MGMT_FRAME:
-		sap_ap_event.sapHddEventCode = eSAP_INDICATE_MGMT_FRAME;
-		mgmt_frame = &sap_ap_event.sapevt.sapManagementFrameInfo;
-
-		mgmt_frame->nFrameLength = csr_roaminfo->nFrameLength;
-		mgmt_frame->pbFrames = csr_roaminfo->pbFrames;
-		mgmt_frame->frameType = csr_roaminfo->frameType;
-		mgmt_frame->rxChan = csr_roaminfo->rxChan;
 		break;
 
 	case eSAP_REMAIN_CHAN_READY:

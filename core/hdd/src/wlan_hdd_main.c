@@ -3159,6 +3159,43 @@ hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *hdd_ctx,
 	return NULL;
 }
 
+/**
+ * hdd_get_adapter_by_sme_session_id() - Return adapter with
+ * the sessionid
+ * @hdd_ctx: hdd context.
+ * @sme_session_id: sme session is for the adapter to get.
+ *
+ * This function is used to get the adapter with provided session id
+ *
+ * Return: adapter pointer if found
+ *
+ */
+hdd_adapter_t *hdd_get_adapter_by_sme_session_id(hdd_context_t *hdd_ctx,
+						uint32_t sme_session_id)
+{
+	hdd_adapter_list_node_t *adapter_node = NULL, *next = NULL;
+	hdd_adapter_t *adapter;
+	CDF_STATUS cdf_status;
+
+
+	cdf_status = hdd_get_front_adapter(hdd_ctx, &adapter_node);
+
+	while ((NULL != adapter_node) &&
+			(CDF_STATUS_SUCCESS == cdf_status)) {
+		adapter = adapter_node->pAdapter;
+
+		if (adapter &&
+			 adapter->sessionId == sme_session_id)
+			return adapter;
+
+		cdf_status =
+			hdd_get_next_adapter(hdd_ctx,
+				 adapter_node, &next);
+		adapter_node = next;
+	}
+	return NULL;
+}
+
 hdd_adapter_t *hdd_get_adapter(hdd_context_t *hdd_ctx, device_mode_t mode)
 {
 	hdd_adapter_list_node_t *adapterNode = NULL, *pNext = NULL;
@@ -4449,6 +4486,59 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 		}
 	}
 	return 0;
+}
+/**
+ * hdd_indicate_mgmt_frame() - Wrapper to indicate management frame to
+ * user space
+ * @frame_ind: Management frame data to be informed.
+ *
+ * This function is used to indicate management frame to
+ * user space
+ *
+ * Return: None
+ *
+ */
+void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
+{
+	hdd_context_t *hdd_ctx = NULL;
+	hdd_adapter_t *adapter = NULL;
+	void *cds_context = NULL;
+	int i;
+
+	/* Get the global VOSS context.*/
+	cds_context = cds_get_global_context();
+	if (!cds_context) {
+		hddLog(LOGE, FL("Global VOS context is Null"));
+		return;
+	}
+	/* Get the HDD context.*/
+	hdd_ctx =
+	  (hdd_context_t *)cds_get_context(CDF_MODULE_ID_HDD);
+
+	if (0 != wlan_hdd_validate_context(hdd_ctx))
+		return;
+
+	if (SME_SESSION_ID_ANY == frame_ind->sessionId) {
+		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
+			adapter =
+				hdd_get_adapter_by_sme_session_id(hdd_ctx, i);
+			if (adapter)
+				break;
+		}
+	} else {
+		adapter = hdd_get_adapter_by_sme_session_id(hdd_ctx,
+					frame_ind->sessionId);
+	}
+
+	if ((NULL != adapter) &&
+		(WLAN_HDD_ADAPTER_MAGIC == adapter->magic))
+		__hdd_indicate_mgmt_frame(adapter,
+						frame_ind->frame_len,
+						frame_ind->frameBuf,
+						frame_ind->frameType,
+						frame_ind->rxChan,
+						frame_ind->rxRssi);
+	return;
 }
 
 /**

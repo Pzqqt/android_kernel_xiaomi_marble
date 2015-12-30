@@ -2084,7 +2084,7 @@ int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	return ret;
 }
 
-void hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
+void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 			     uint32_t nFrameLength,
 			     uint8_t *pbFrames,
 			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi)

@@ -4168,14 +4168,6 @@ defined(FEATURE_WLAN_LFR))
 		}
 		break;
 #endif
-
-	case eCSR_ROAM_INDICATE_MGMT_FRAME:
-		hdd_indicate_mgmt_frame(pAdapter,
-					pRoamInfo->nFrameLength,
-					pRoamInfo->pbFrames,
-					pRoamInfo->frameType,
-					pRoamInfo->rxChan, pRoamInfo->rxRssi);
-		break;
 	case eCSR_ROAM_REMAIN_CHAN_READY:
 		hdd_remain_chan_ready_handler(pAdapter, pRoamInfo->roc_scan_id);
 		break;
