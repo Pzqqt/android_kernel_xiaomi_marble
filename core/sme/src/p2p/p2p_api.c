@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -136,46 +136,6 @@ CDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 		sme_release_command(pMac, pCommand);
 	}
 	sme_process_pending_queue(pMac);
-	return status;
-}
-
-/*------------------------------------------------------------------
- *
- * Handle the Mgmt frm ind from LIM and forward to HDD.
- *
- *------------------------------------------------------------------*/
-
-CDF_STATUS sme_mgmt_frm_ind(tHalHandle hHal, tpSirSmeMgmtFrameInd pSmeMgmtFrm)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	tCsrRoamInfo pRoamInfo = { 0 };
-	uint8_t i = 0;
-	uint32_t SessionId = pSmeMgmtFrm->sessionId;
-
-	pRoamInfo.nFrameLength =
-		pSmeMgmtFrm->mesgLen - sizeof(tSirSmeMgmtFrameInd);
-	pRoamInfo.pbFrames = pSmeMgmtFrm->frameBuf;
-	pRoamInfo.frameType = pSmeMgmtFrm->frameType;
-	pRoamInfo.rxChan = pSmeMgmtFrm->rxChan;
-	pRoamInfo.rxRssi = pSmeMgmtFrm->rxRssi;
-	if (CSR_IS_SESSION_ANY(SessionId)) {
-		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-			if (CSR_IS_SESSION_VALID(pMac, i)) {
-				SessionId = i;
-				break;
-			}
-		}
-	}
-
-	if (i == CSR_ROAM_SESSION_MAX) {
-		sms_log(pMac, LOGE, FL("No valid sessions found."));
-		return CDF_STATUS_E_FAILURE;
-	}
-	/* forward the mgmt frame to HDD */
-	csr_roam_call_callback(pMac, SessionId, &pRoamInfo, 0,
-			       eCSR_ROAM_INDICATE_MGMT_FRAME, 0);
-
 	return status;
 }
 

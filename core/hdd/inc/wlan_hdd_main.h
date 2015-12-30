@@ -1542,6 +1542,9 @@ void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *pHddCtx);
 void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx);
 void wlan_hdd_clear_netif_queue_history(hdd_context_t *hdd_ctx);
 const char *hdd_get_fwpath(void);
+void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind);
+hdd_adapter_t *hdd_get_adapter_by_sme_session_id(hdd_context_t *hdd_ctx,
+						uint32_t sme_session_id);
 
 uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 			uint8_t bw_offset);

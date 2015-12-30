@@ -4733,6 +4733,34 @@ __lim_process_sme_reset_ap_caps_change(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 }
 
 /**
+ * lim_register_mgmt_frame_ind_cb() - Save the Management frame
+ * indication callback in PE.
+ * @mac_ptr: Mac pointer
+ * @msg_buf: Msg pointer containing the callback
+ *
+ * This function is used save the Management frame
+ * indication callback in PE.
+ *
+ * Return: None
+ */
+static void lim_register_mgmt_frame_ind_cb(tpAniSirGlobal mac_ctx,
+							uint32_t *msg_buf)
+{
+	struct sir_sme_mgmt_frame_cb_req *sme_req =
+		(struct sir_sme_mgmt_frame_cb_req *)msg_buf;
+
+	if (NULL == msg_buf) {
+		lim_log(mac_ctx, LOGE, FL("msg_buf is null"));
+		return;
+	}
+	if (sme_req->callback)
+		mac_ctx->mgmt_frame_ind_cb =
+			(sir_mgmt_frame_ind_callback)sme_req->callback;
+	else
+		lim_log(mac_ctx, LOGE, FL("sme_req->callback is null"));
+}
+
+/**
  * lim_process_sme_req_messages()
  *
  ***FUNCTION:
@@ -4967,6 +4995,9 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 	case eWNI_SME_SET_IE_REQ:
 		lim_process_set_ie_req(pMac, pMsgBuf);
+		break;
+	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
+		lim_register_mgmt_frame_ind_cb(pMac, pMsgBuf);
 		break;
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
 		lim_process_ext_change_channel(pMac, pMsgBuf);

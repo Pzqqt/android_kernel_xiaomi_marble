@@ -5576,6 +5576,9 @@ void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter)
 
 	ENTER();
 
+	/* Register frame indication call back */
+	sme_register_mgmt_frame_ind_callback(hHal, hdd_indicate_mgmt_frame);
+
 	/* Right now we are registering these frame when driver is getting
 	   initialized. Once we will move to 2.6.37 kernel, in which we have
 	   frame register ops, we will move this code as a part of that */

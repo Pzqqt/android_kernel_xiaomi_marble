@@ -2577,14 +2577,28 @@ typedef struct sSirKeepAliveReq {
 } tSirKeepAliveReq, *tpSirKeepAliveReq;
 
 typedef struct sSirSmeMgmtFrameInd {
-	uint16_t mesgType;
-	uint16_t mesgLen;
+	uint16_t frame_len;
 	uint32_t rxChan;
 	uint8_t sessionId;
 	uint8_t frameType;
 	int8_t rxRssi;
 	uint8_t frameBuf[1];    /* variable */
 } tSirSmeMgmtFrameInd, *tpSirSmeMgmtFrameInd;
+
+typedef void (*sir_mgmt_frame_ind_callback)(tSirSmeMgmtFrameInd *frame_ind);
+/**
+ * struct sir_sme_mgmt_frame_cb_req - Register a
+ * management frame callback req
+ *
+ * @message_type: message id
+ * @length: msg length
+ * @callback: callback for management frame indication
+ */
+struct sir_sme_mgmt_frame_cb_req {
+	uint16_t message_type;
+	uint16_t length;
+	sir_mgmt_frame_ind_callback callback;
+};
 
 #ifdef WLAN_FEATURE_11W
 typedef struct sSirSmeUnprotMgmtFrameInd {

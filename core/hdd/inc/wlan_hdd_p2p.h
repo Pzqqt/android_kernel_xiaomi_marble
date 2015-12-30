@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -108,7 +108,7 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData);
 int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command);
 int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command);
 
-void hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
+void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 			     uint32_t nFrameLength, uint8_t *pbFrames,
 			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi);
 

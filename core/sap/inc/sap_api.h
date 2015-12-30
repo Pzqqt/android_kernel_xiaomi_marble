@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -158,7 +158,6 @@ typedef enum {
 	eSAP_GET_WPSPBC_SESSION_EVENT,
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
-	eSAP_INDICATE_MGMT_FRAME,
 	eSAP_REMAIN_CHAN_READY,
 	eSAP_SEND_ACTION_CNF,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
@@ -448,8 +447,6 @@ typedef struct sap_Event_s {
 		tSap_GetWPSPBCSessionEvent sapGetWPSPBCSessionEvent;
 		/*eSAP_WPS_PBC_PROBE_REQ_EVENT */
 		tSap_WPSPBCProbeReqEvent sapPBCProbeReqEvent;
-		/*eSAP_INDICATE_MGMT_FRAME */
-		tSap_ManagementFrameInfo sapManagementFrameInfo;
 		/* eSAP_SEND_ACTION_CNF */
 		tSap_SendActionCnf sapActionCnf;
 		/* eSAP_UNKNOWN_STA_JOIN */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -74,8 +74,6 @@ extern void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 extern CDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 						    tSmeCmd *p2pRemainonChn);
 extern CDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
-extern CDF_STATUS sme_mgmt_frm_ind(tHalHandle hHal,
-				   tpSirSmeMgmtFrameInd pSmeMgmtFrm);
 extern CDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg);
 extern CDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg);
 
@@ -2344,15 +2342,6 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_REMAIN_ON_CHN_RDY_IND:
 		if (pMsg->bodyptr) {
 			status = sme_remain_on_chn_ready(pMac, pMsg->bodyptr);
-			cdf_mem_free(pMsg->bodyptr);
-		} else {
-			sms_log(pMac, LOGE, FL("Empty message for %d"),
-				pMsg->type);
-		}
-		break;
-	case eWNI_SME_MGMT_FRM_IND:
-		if (pMsg->bodyptr) {
-			sme_mgmt_frm_ind(pMac, pMsg->bodyptr);
 			cdf_mem_free(pMsg->bodyptr);
 		} else {
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
@@ -6127,6 +6116,48 @@ CDF_STATUS sme_get_operation_channel(tHalHandle hHal, uint32_t *pChannel,
 	}
 	return CDF_STATUS_E_FAILURE;
 } /* sme_get_operation_channel ends here */
+
+/**
+ * sme_register_mgmt_frame_ind_callback() - Register a callback for
+ * management frame indication to PE.
+ *
+ * @hal: hal pointer
+ * @callback: callback pointer to be registered
+ *
+ * This function is used to register a callback for management
+ * frame indication to PE.
+ *
+ * Return: Success if msg is posted to PE else Failure.
+ */
+CDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
+				sir_mgmt_frame_ind_callback callback)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct sir_sme_mgmt_frame_cb_req *msg;
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+
+	sms_log(mac_ctx, LOG1, FL(": ENTER"));
+
+	if (CDF_STATUS_SUCCESS ==
+			sme_acquire_global_lock(&mac_ctx->sme)) {
+		msg = cdf_mem_malloc(sizeof(*msg));
+		if (NULL == msg) {
+			sms_log(mac_ctx, LOGE,
+				FL("Not able to allocate memory for eWNI_SME_REGISTER_MGMT_FRAME_CB"));
+			sme_release_global_lock(&mac_ctx->sme);
+			return CDF_STATUS_E_NOMEM;
+		}
+		cdf_mem_set(msg, sizeof(*msg), 0);
+		msg->message_type = eWNI_SME_REGISTER_MGMT_FRAME_CB;
+		msg->length          = sizeof(*msg);
+
+		msg->callback = callback;
+		status = cds_send_mb_message_to_mac(msg);
+		sme_release_global_lock(&mac_ctx->sme);
+		return status;
+	}
+	return CDF_STATUS_E_FAILURE;
+}
 
 /* ---------------------------------------------------------------------------
 

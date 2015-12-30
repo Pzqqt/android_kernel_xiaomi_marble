@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -283,7 +283,6 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_HIDE_SSID_REQ);
 		CASE_RETURN_STRING(eWNI_SME_REMAIN_ON_CHANNEL_REQ);
 		CASE_RETURN_STRING(eWNI_SME_REMAIN_ON_CHN_RSP);
-		CASE_RETURN_STRING(eWNI_SME_MGMT_FRM_IND);
 		CASE_RETURN_STRING(eWNI_SME_REMAIN_ON_CHN_RDY_IND);
 		CASE_RETURN_STRING(eWNI_SME_SEND_ACTION_FRAME_IND);
 		CASE_RETURN_STRING(eWNI_SME_ACTION_FRAME_SEND_CNF);
@@ -334,6 +333,7 @@ uint8_t *mac_trace_get_sme_msg_string(uint16_t sme_msg)
 		CASE_RETURN_STRING(eWNI_SME_SET_HW_MODE_REQ);
 		CASE_RETURN_STRING(eWNI_SME_SET_HW_MODE_RESP);
 		CASE_RETURN_STRING(eWNI_SME_HW_MODE_TRANS_IND);
+		CASE_RETURN_STRING(eWNI_SME_REGISTER_MGMT_FRAME_CB);
 	default:
 		return (uint8_t *) "UNKNOWN";
 		break;

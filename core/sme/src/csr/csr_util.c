@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -203,7 +203,6 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_FT_RESPONSE);
 #endif
 		CASE_RETURN_STR(eCSR_ROAM_FT_START);
-		CASE_RETURN_STR(eCSR_ROAM_INDICATE_MGMT_FRAME);
 		CASE_RETURN_STR(eCSR_ROAM_REMAIN_CHAN_READY);
 		CASE_RETURN_STR(eCSR_ROAM_SEND_ACTION_CNF);
 		CASE_RETURN_STR(eCSR_ROAM_SESSION_OPENED);

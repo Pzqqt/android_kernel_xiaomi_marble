@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -972,6 +972,9 @@ CDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 					struct rssi_monitor_req *input);
 CDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
 			void (*cb)(void *, struct rssi_breach_event *));
+
+CDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
+			sir_mgmt_frame_ind_callback callback);
 
 CDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss);
 
