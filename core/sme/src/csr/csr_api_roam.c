@@ -2694,82 +2694,116 @@ QDF_STATUS csr_init_channel_power_list(tpAniSirGlobal pMac, tCsr11dinfo *ps11din
 	return QDF_STATUS_SUCCESS;
 }
 
-/* pCommand may be NULL */
-/* Pass in sessionId in case pCommand is NULL. sessionId is not used in case pCommand is not NULL. */
-void csr_roam_remove_duplicate_command(tpAniSirGlobal pMac, uint32_t sessionId,
-				       tSmeCmd *pCommand,
-				       eCsrRoamReason eRoamReason)
+/**
+ * csr_roam_remove_duplicate_cmd_from_list()- Remove duplicate roam cmd from
+ * list
+ *
+ * @mac_ctx: pointer to global mac
+ * @session_id: session id for the cmd
+ * @list: pending list from which cmd needs to be removed
+ * @command: cmd to be removed, can be NULL
+ * @roam_reason: cmd with reason to be removed
+ *
+ * Remove duplicate command from the pending list.
+ *
+ * Return: void
+ */
+static void csr_roam_remove_duplicate_cmd_from_list(tpAniSirGlobal mac_ctx,
+			uint32_t session_id, tDblLinkList *list,
+			tSmeCmd *command, eCsrRoamReason roam_reason)
 {
-	tListElem *pEntry, *pNextEntry;
-	tSmeCmd *pDupCommand;
-	tDblLinkList localList;
+	tListElem *entry, *next_entry;
+	tSmeCmd *dup_cmd;
+	tDblLinkList local_list;
 
-	qdf_mem_zero(&localList, sizeof(tDblLinkList));
-	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
-		sms_log(pMac, LOGE, FL(" failed to open list"));
+	qdf_mem_zero(&local_list, sizeof(tDblLinkList));
+	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(mac_ctx->hHdd, &local_list))) {
+		sms_log(mac_ctx, LOGE, FL(" failed to open list"));
 		return;
 	}
-	csr_ll_lock(&pMac->sme.smeCmdPendingList);
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdPendingList, LL_ACCESS_NOLOCK);
-	while (pEntry) {
-		pNextEntry =
-			csr_ll_next(&pMac->sme.smeCmdPendingList, pEntry,
-				    LL_ACCESS_NOLOCK);
-		pDupCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		/* Remove the previous command if.. */
-		/* - the new roam command is for the same RoamReason... */
-		/* - the new roam command is a NewProfileList. */
-		/* - the new roam command is a Forced Dissoc */
-		/* - the new roam command is from an 802.11 OID (OID_SSID or OID_BSSID). */
-		if ((pCommand && (pCommand->sessionId == pDupCommand->sessionId)
-		     && ((pCommand->command == pDupCommand->command) &&
+	csr_ll_lock(list);
+	entry = csr_ll_peek_head(list, LL_ACCESS_NOLOCK);
+	while (entry) {
+		next_entry = csr_ll_next(list, entry, LL_ACCESS_NOLOCK);
+		dup_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
+		/*
+		 * Remove the previous command if..
+		 * - the new roam command is for the same RoamReason...
+		 * - the new roam command is a NewProfileList.
+		 * - the new roam command is a Forced Dissoc
+		 * - the new roam command is from an 802.11 OID
+		 *   (OID_SSID or OID_BSSID).
+		 */
+		if ((command && (command->sessionId == dup_cmd->sessionId) &&
+			((command->command == dup_cmd->command) &&
 			/*
 			 * This peermac check is requried for Softap/GO
-			 * scenarios. For STA scenario below OR check will
-			 * suffice as pCommand will always be NULL for STA
-			 * scenarios
+			 * scenarios. for STA scenario below OR check will
+			 * suffice as command will always be NULL for
+			 * STA scenarios
 			 */
-			 (!qdf_mem_cmp
-				  (pDupCommand->u.roamCmd.peerMac,
-				  pCommand->u.roamCmd.peerMac,
-				  QDF_MAC_ADDR_SIZE))
-			 && (pCommand->u.roamCmd.roamReason ==
-			     pDupCommand->u.roamCmd.roamReason
-			     || eCsrForcedDisassoc ==
-			     pCommand->u.roamCmd.roamReason
-			     || eCsrHddIssued ==
-			     pCommand->u.roamCmd.roamReason)))
-		    ||
-		    /* below the pCommand is NULL */
-		    ((sessionId == pDupCommand->sessionId) &&
-		     (eSmeCommandRoam == pDupCommand->command) &&
-		     ((eCsrForcedDisassoc == eRoamReason) ||
-		      (eCsrHddIssued == eRoamReason))
-		    )
-		    ) {
-			sms_log(pMac, LOGW, FL("   roamReason = %d"),
-				pDupCommand->u.roamCmd.roamReason);
-			/* Remove the 'stale' roam command from the pending list... */
-			if (csr_ll_remove_entry
-				    (&pMac->sme.smeCmdPendingList, pEntry,
-				    LL_ACCESS_NOLOCK)) {
-				csr_ll_insert_tail(&localList, pEntry,
-						   LL_ACCESS_NOLOCK);
-			}
+			(!qdf_mem_cmp(dup_cmd->u.roamCmd.peerMac,
+				command->u.roamCmd.peerMac,
+					sizeof(QDF_MAC_ADDR_SIZE))) &&
+				((command->u.roamCmd.roamReason ==
+					dup_cmd->u.roamCmd.roamReason) ||
+				(eCsrForcedDisassoc ==
+					command->u.roamCmd.roamReason) ||
+				(eCsrHddIssued ==
+					command->u.roamCmd.roamReason)))) ||
+			/* OR if pCommand is NULL */
+			((session_id == dup_cmd->sessionId) &&
+			(eSmeCommandRoam == dup_cmd->command) &&
+			((eCsrForcedDisassoc == roam_reason) ||
+			(eCsrHddIssued == roam_reason)))) {
+			sms_log(mac_ctx, LOGW, FL("RoamReason = %d"),
+					dup_cmd->u.roamCmd.roamReason);
+			/* Remove the roam command from the pending list */
+			if (csr_ll_remove_entry(list, entry, LL_ACCESS_NOLOCK))
+				csr_ll_insert_tail(&local_list, entry,
+							LL_ACCESS_NOLOCK);
 		}
-		pEntry = pNextEntry;
+		entry = next_entry;
 	}
-	csr_ll_unlock(&pMac->sme.smeCmdPendingList);
+	csr_ll_unlock(list);
 
-	while ((pEntry = csr_ll_remove_head(&localList, LL_ACCESS_NOLOCK))) {
-		pDupCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
+	while ((entry = csr_ll_remove_head(&local_list, LL_ACCESS_NOLOCK))) {
+		dup_cmd = GET_BASE_ADDR(entry, tSmeCmd, Link);
 		/* Tell caller that the command is cancelled */
-		csr_roam_call_callback(pMac, pDupCommand->sessionId, NULL,
-				       pDupCommand->u.roamCmd.roamId,
-				       eCSR_ROAM_CANCELLED, eCSR_ROAM_RESULT_NONE);
-		csr_release_command_roam(pMac, pDupCommand);
+		csr_roam_call_callback(mac_ctx, dup_cmd->sessionId, NULL,
+				dup_cmd->u.roamCmd.roamId,
+				eCSR_ROAM_CANCELLED, eCSR_ROAM_RESULT_NONE);
+		csr_release_command_roam(mac_ctx, dup_cmd);
 	}
-	csr_ll_close(&localList);
+	csr_ll_close(&local_list);
+}
+
+/**
+ * csr_roam_remove_duplicate_command()- Remove duplicate roam cmd
+ * from pending lists.
+ *
+ * @mac_ctx: pointer to global mac
+ * @session_id: session id for the cmd
+ * @command: cmd to be removed, can be null
+ * @roam_reason: cmd with reason to be removed
+ *
+ * Remove duplicate command from the sme and roam pending list.
+ *
+ * Return: void
+ */
+void csr_roam_remove_duplicate_command(tpAniSirGlobal mac_ctx,
+			uint32_t session_id, tSmeCmd *command,
+			eCsrRoamReason roam_reason)
+{
+	/* Always lock active list before locking pending lists */
+	csr_ll_lock(&mac_ctx->sme.smeCmdActiveList);
+	csr_roam_remove_duplicate_cmd_from_list(mac_ctx,
+		session_id, &mac_ctx->sme.smeCmdPendingList,
+		command, roam_reason);
+	csr_roam_remove_duplicate_cmd_from_list(mac_ctx,
+		session_id, &mac_ctx->roam.roamCmdPendingList,
+		command, roam_reason);
+	csr_ll_unlock(&mac_ctx->sme.smeCmdActiveList);
 }
 
 /**
