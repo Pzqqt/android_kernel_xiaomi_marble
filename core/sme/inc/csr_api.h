@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -662,6 +662,8 @@ typedef enum {
 	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED,
 	/* Participating in a Infra network and connected to a peer */
 	eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED,
+	/* Disconnecting with AP or stop connecting process */
+	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING,
 
 } eCsrConnectState;
 

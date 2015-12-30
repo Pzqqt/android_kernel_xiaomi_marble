@@ -1181,6 +1181,13 @@ CDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal pMac,
 		status = csr_scan_get_result(pMac, pScanFilter, &hBSSList);
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			break;
+		if (pMac->roam.roamSession[sessionId].connectState ==
+				eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING) {
+			sms_log(pMac, LOGE,
+				FL("upper layer issued disconnetion"));
+			status = CDF_STATUS_E_FAILURE;
+			break;
+		}
 		status = csr_roam_issue_connect(pMac, sessionId, pProfile,
 						hBSSList, eCsrHddIssued,
 						pCommand->u.scanCmd.roamId,
