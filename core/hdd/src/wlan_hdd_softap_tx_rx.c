@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -581,7 +581,7 @@ CDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 	 */
 	cdf_net_buf_debug_release_skb(rxBuf);
 
-	if (hdd_napi_enabled(HDD_NAPI_ANY))
+	if (hdd_napi_enabled(HDD_NAPI_ANY) && !pHddCtx->config->enableRxThread)
 		rxstat = netif_receive_skb(skb);
 	else
 		rxstat = netif_rx_ni(skb);
