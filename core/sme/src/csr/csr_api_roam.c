@@ -6644,10 +6644,9 @@ static bool csr_roam_process_results(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		roam_info.pbFrames = session->connectedInfo.pbFrames;
 		roam_info.staId = session->connectedInfo.staId;
 		roam_info.u.pConnectedProfile = &session->connectedProfile;
-		if (0 == roam_info.staId) {
+		if (0 == roam_info.staId)
 			CDF_ASSERT(0);
-			return false;
-		}
+
 		session->bRefAssocStartCnt--;
 		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
 				cmd->u.roamCmd.roamId,
@@ -7196,6 +7195,19 @@ CDF_STATUS csr_roam_connect(tpAniSirGlobal pMac, uint32_t sessionId,
 			&pSession->connectedProfile.SSID, &pProfile->SSIDs))
 			csr_roam_issue_disassociate_cmd(pMac, sessionId,
 					eCSR_DISCONNECT_REASON_UNSPECIFIED);
+	/*
+	 * If roamSession.connectState is disconnecting that mean
+	 * disconnect was received with scan for ssid in progress
+	 * and dropped. This state will ensure that connect will
+	 * not be issued from scan for ssid completion. Thus
+	 * if this fresh connect also issue scan for ssid the connect
+	 * command will be dropped assuming disconnect is in progress.
+	 * Thus reset connectState here
+	 */
+	if (eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING ==
+		pMac->roam.roamSession[sessionId].connectState)
+			pMac->roam.roamSession[sessionId].connectState =
+				eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
 	pSession->maxRetryCount = CSR_JOIN_MAX_RETRY_COUNT;
 #endif
