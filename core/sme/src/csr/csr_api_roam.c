@@ -10268,7 +10268,7 @@ csr_roam_chk_lnk_swt_ch_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	 * statusCode.
 	 */
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-			(struct cdf_mac_addr *) pSwitchChnInd->bssId, &sessionId);
+			&pSwitchChnInd->bssid, &sessionId);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		session = CSR_GET_SESSION(mac_ctx, sessionId);
 		if (!session) {
