@@ -2683,8 +2683,8 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, CDF_STATUS status,
 	pSirSmeSwitchChInd->newChannelId =
 		psessionEntry->gLimChannelSwitch.primaryChannel;
 	pSirSmeSwitchChInd->sessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(pSirSmeSwitchChInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
 

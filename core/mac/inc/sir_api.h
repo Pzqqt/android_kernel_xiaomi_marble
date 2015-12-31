@@ -1469,7 +1469,7 @@ typedef struct sSirSmeSwitchChannelInd {
 	uint16_t length;
 	uint8_t sessionId;
 	uint16_t newChannelId;
-	tSirMacAddr bssId;      /* BSSID */
+	struct cdf_mac_addr bssid;      /* BSSID */
 } tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
 
 /* / Definition for Neighbor BSS indication */
