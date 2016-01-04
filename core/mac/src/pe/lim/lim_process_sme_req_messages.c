@@ -3332,7 +3332,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 	}
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				stopBssReq.bssId,
+				stopBssReq.bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGW,

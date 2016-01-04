@@ -1450,7 +1450,7 @@ typedef struct sSirSmeStopBssReq {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* tranSaction ID for cmd */
 	tSirResultCodes reasonCode;
-	tSirMacAddr bssId;      /* Self BSSID */
+	struct cdf_mac_addr bssid;      /* Self BSSID */
 } tSirSmeStopBssReq, *tpSirSmeStopBssReq;
 
 /* / Definition for stop BSS response message */

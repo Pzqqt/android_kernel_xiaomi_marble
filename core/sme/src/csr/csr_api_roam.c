@@ -14674,9 +14674,7 @@ CDF_STATUS csr_send_mb_stop_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId)
 	pMsg->length = sizeof(tSirSmeStopBssReq);
 	pMsg->transactionId = 0;
 	pMsg->reasonCode = 0;
-	cdf_mem_copy(&pMsg->bssId,
-		     &pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMsg->bssid, &pSession->connectedProfile.bssid);
 	return cds_send_mb_message_to_mac(pMsg);
 }
 
