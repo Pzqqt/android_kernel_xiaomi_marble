@@ -10193,8 +10193,8 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	sms_log(mac_ctx, LOG1, FL("DEAUTHENTICATION Indication from MAC"));
 	pDeauthInd = (tpSirSmeDeauthInd) msg_ptr;
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-						   (struct cdf_mac_addr *) pDeauthInd->
-						   bssId, &sessionId);
+						   &pDeauthInd->bssid,
+						   &sessionId);
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		return;
 	/* If we are in neighbor preauth done state then on receiving
@@ -10240,12 +10240,10 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		roam_info_ptr->reasonCode = pDeauthInd->reasonCode;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
 		roam_info_ptr->staId = (uint8_t) pDeauthInd->staId;
-		cdf_mem_copy(roam_info_ptr->peerMac.bytes,
-			     pDeauthInd->peerMacAddr,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(&roam_info_ptr->bssid.bytes,
-			     pDeauthInd->bssId,
-			     sizeof(struct cdf_mac_addr));
+		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+				 &pDeauthInd->peer_macaddr);
+		cdf_copy_macaddr(&roam_info_ptr->bssid,
+				 &pDeauthInd->bssid);
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 						roam_info_ptr, 0,
 						eCSR_ROAM_INFRA_IND,
@@ -11401,14 +11399,13 @@ CDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 		roamInfo.reasonCode = pDisassocIndMsg->reasonCode;
 	} else if (eWNI_SME_DEAUTH_IND == type) {
 		/* staMacAddr */
-		cdf_mem_copy(roamInfo.peerMac.bytes,
-				pDeauthIndMsg->peerMacAddr,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac,
+				 &pDeauthIndMsg->peer_macaddr);
 		roamInfo.staId = (uint8_t) pDeauthIndMsg->staId;
 		roamInfo.reasonCode = pDeauthIndMsg->reasonCode;
 		roamInfo.rxRssi = pDeauthIndMsg->rssi;
 	}
-	sms_log(pMac, LOGW, FL("roamInfo.staId (%d)"), roamInfo.staId);
+	sms_log(pMac, LOGW, FL("roamInfo.staId: %d"), roamInfo.staId);
 
 	/* See if we can possibly roam.  If so, start the roaming process and notify HDD
 	   that we are roaming.  But if we cannot possibly roam, or if we are unable to
@@ -14329,15 +14326,15 @@ CDF_STATUS csr_send_mb_deauth_cnf_msg(tpAniSirGlobal pMac,
 		pMsg->messageType = eWNI_SME_DEAUTH_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
 		pMsg->length = sizeof(tSirSmeDeauthCnf);
-		cdf_mem_copy(pMsg->bssId, pDeauthInd->bssId,
-			     sizeof(pMsg->bssId));
+		cdf_mem_copy(pMsg->bssId, pDeauthInd->bssid.bytes,
+			     CDF_MAC_ADDR_SIZE);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
 			break;
 		}
-		cdf_mem_copy(pMsg->peerMacAddr, pDeauthInd->peerMacAddr,
-			     sizeof(pMsg->peerMacAddr));
+		cdf_mem_copy(pMsg->peerMacAddr, pDeauthInd->peer_macaddr.bytes,
+			     CDF_MAC_ADDR_SIZE);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);

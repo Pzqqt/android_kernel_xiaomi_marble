@@ -1435,8 +1435,8 @@ typedef struct sSirSmeDeauthInd {
 	uint8_t sessionId;      /* Added for BT-AMP */
 	uint16_t transactionId; /* Added for BT-AMP */
 	tSirResultCodes statusCode;
-	tSirMacAddr bssId;      /* AP BSSID */
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr bssid;      /* AP BSSID */
+	struct cdf_mac_addr peer_macaddr;
 
 	uint16_t staId;
 	uint32_t reasonCode;
