@@ -1125,11 +1125,11 @@ lim_send_sme_deauth_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			(tSirResultCodes) pStaDs->mlmStaContext.disassocReason;
 	}
 	/* BSSID */
-	cdf_mem_copy(pSirSmeDeauthInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 	/* peerMacAddr */
-	cdf_mem_copy(pSirSmeDeauthInd->peerMacAddr, pStaDs->staAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, pStaDs->staAddr,
+		     CDF_MAC_ADDR_SIZE);
 	pSirSmeDeauthInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
 	pSirSmeDeauthInd->staId = pStaDs->staIndex;
@@ -1451,8 +1451,8 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		pBuf += sizeof(tSirMacAddr);
 
 		/* peerMacAddr */
-		cdf_mem_copy(pSirSmeDeauthInd->peerMacAddr, peerMacAddr,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, peerMacAddr,
+			     CDF_MAC_ADDR_SIZE);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 		lim_diag_event_report(pMac, WLAN_PE_DIAG_DEAUTH_IND_EVENT,
