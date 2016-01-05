@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -863,14 +863,6 @@ void *cds_get_context(CDF_MODULE_ID moduleId)
 	}
 
 	switch (moduleId) {
-#ifndef WLAN_FEATURE_MBSSID
-	case CDF_MODULE_ID_SAP:
-	{
-		pModContext = gp_cds_context->pSAPContext;
-		break;
-	}
-#endif
-
 	case CDF_MODULE_ID_HDD:
 	{
 		pModContext = gp_cds_context->pHDDContext;
@@ -1064,15 +1056,6 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	}
 
 	switch (moduleID) {
-
-#ifndef WLAN_FEATURE_MBSSID
-	case CDF_MODULE_ID_SAP:
-	{
-		pGpModContext = &(gp_cds_context->pSAPContext);
-		break;
-	}
-#endif
-
 	case CDF_MODULE_ID_WMA:
 	{
 		pGpModContext = &(gp_cds_context->pWMAContext);
@@ -1160,14 +1143,6 @@ CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	}
 
 	switch (moduleID) {
-#ifndef WLAN_FEATURE_MBSSID
-	case CDF_MODULE_ID_SAP:
-	{
-		pGpModContext = &(gp_cds_context->pSAPContext);
-		break;
-	}
-#endif
-
 	case CDF_MODULE_ID_WMA:
 	{
 		pGpModContext = &(gp_cds_context->pWMAContext);

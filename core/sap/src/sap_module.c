@@ -99,54 +99,22 @@ ptSapContext gp_sap_ctx;
  * all its internal resources and will wait for the call to start to
  * register with the other modules.
  *
- * Return: The result code associated with performing the operation
- *
- * #ifdef WLAN_FEATURE_MBSSID
- *          void *: Pointer to the SAP context
- * #else
- *          CDF_STATUS_E_FAULT: Pointer to SAP cb is NULL ;
- *                              access would cause a page fault
- *          CDF_STATUS_SUCCESS: Success
- *  #endif
+ * Return: Pointer to the SAP context
  */
-#ifdef WLAN_FEATURE_MBSSID
-void *
-#else
-CDF_STATUS
-#endif
-wlansap_open(void *p_cds_gctx) {
+void *wlansap_open(void *p_cds_gctx)
+{
 	ptSapContext pSapCtx = NULL;
 
-	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-#ifdef WLAN_FEATURE_MBSSID
-	/* amically allocate the sapContext */
+	/* dynamically allocate the sapContext */
 	pSapCtx = (ptSapContext) cdf_mem_malloc(sizeof(tSapContext));
-#else
-	if (NULL == p_cds_gctx) {
-		CDF_ASSERT(p_cds_gctx);
-		return CDF_STATUS_E_NOMEM;
-	}
-	/*------------------------------------------------------------------------
-	     Allocate (and sanity check?!) SAP control block
-	   ------------------------------------------------------------------------*/
-	cds_alloc_context(p_cds_gctx, CDF_MODULE_ID_SAP, (void **)&pSapCtx,
-			  sizeof(tSapContext));
-#endif
 
 	if (NULL == pSapCtx) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid SAP pointer from p_cds_gctx", __func__);
-#ifdef WLAN_FEATURE_MBSSID
 		return NULL;
-#else
-		return CDF_STATUS_E_FAULT;
-#endif
 	}
 
-
-	/*------------------------------------------------------------------------
-	    Clean up SAP control block, initialize all values
-	   ------------------------------------------------------------------------*/
+	/* Clean up SAP control block, initialize all values */
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH, "wlansap_open");
 
 	wlansap_clean_cb(pSapCtx, 0); /*do not empty */
@@ -157,15 +125,7 @@ wlansap_open(void *p_cds_gctx) {
 	/* Store a pointer to the SAP context provided by CDS */
 	gp_sap_ctx = pSapCtx;
 
-	/*------------------------------------------------------------------------
-	    Allocate internal resources
-	   ------------------------------------------------------------------------*/
-
-#ifdef WLAN_FEATURE_MBSSID
 	return pSapCtx;
-#else
-	return CDF_STATUS_SUCCESS;
-#endif
 } /* wlansap_open */
 
 /**
@@ -253,10 +213,7 @@ CDF_STATUS wlansap_stop(void *pCtx)
 {
 	ptSapContext pSapCtx = NULL;
 
-	/*------------------------------------------------------------------------
-	    Sanity check
-	    Extract SAP control block
-	   ------------------------------------------------------------------------*/
+	/* Sanity check - Extract SAP control block */
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_stop invoked successfully ");
 
@@ -274,9 +231,6 @@ CDF_STATUS wlansap_stop(void *pCtx)
 			  "wlansap_stop failed destroy lock");
 		return CDF_STATUS_E_FAULT;
 	}
-	/*------------------------------------------------------------------------
-	    Stop SAP (de-register RSN handler!?)
-	   ------------------------------------------------------------------------*/
 
 	return CDF_STATUS_SUCCESS;
 }
@@ -299,12 +253,7 @@ CDF_STATUS wlansap_close(void *pCtx)
 {
 	ptSapContext pSapCtx = NULL;
 
-	/*- - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - - -*/
-
-	/*------------------------------------------------------------------------
-	    Sanity check
-	    Extract SAP control block
-	   ------------------------------------------------------------------------*/
+	/* Sanity check - Extract SAP control block */
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_close invoked");
 
@@ -315,22 +264,14 @@ CDF_STATUS wlansap_close(void *pCtx)
 		return CDF_STATUS_E_FAULT;
 	}
 
-	/*------------------------------------------------------------------------
-	    Cleanup SAP control block.
-	   ------------------------------------------------------------------------*/
+	/* Cleanup SAP control block */
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_close");
-	wlansap_clean_cb(pSapCtx,
-			 true); /* empty queues/lists/pkts if any */
 
-#ifdef WLAN_FEATURE_MBSSID
+	/* empty queues/lists/pkts if any */
+	wlansap_clean_cb(pSapCtx, true);
+
 	cdf_mem_free(pSapCtx);
-#else
-	/*------------------------------------------------------------------------
-	    Free SAP context from CDS global
-	   ------------------------------------------------------------------------*/
-	cds_free_context(pCtx, CDF_MODULE_ID_SAP, pSapCtx);
-#endif
 
 	return CDF_STATUS_SUCCESS;
 } /* wlansap_close */

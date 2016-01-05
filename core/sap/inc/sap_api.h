@@ -69,11 +69,7 @@ extern "C" {
 #define       MAX_TEXT_SIZE                32
 
 #define       MAX_CHANNEL_LIST_LEN         256
-#ifdef WLAN_FEATURE_MBSSID
 #define       CDF_MAX_NO_OF_SAP_MODE       2    /* max # of SAP */
-#else
-#define       CDF_MAX_NO_OF_SAP_MODE       1    /* max # of SAP */
-#endif
 #define       SAP_MAX_NUM_SESSION          5
 #define       SAP_MAX_OBSS_STA_CNT         1    /* max # of OBSS STA */
 #define       SAP_ACS_WEIGHT_MAX           (4444)
@@ -803,23 +799,14 @@ typedef struct {
 	bool isSafe;
 } sapSafeChannelType;
 #endif /* FEATURE_WLAN_CH_AVOID */
-#ifdef WLAN_FEATURE_MBSSID
 void sap_cleanup_channel_list(void *sapContext);
-#else
-void sap_cleanup_channel_list(void);
-#endif
 void sapCleanupAllChannelList(void);
 CDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
 CDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
 CDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
 CDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
 
-#ifdef WLAN_FEATURE_MBSSID
-void *
-#else
-CDF_STATUS
-#endif
-wlansap_open(void *p_cds_gctx);
+void *wlansap_open(void *p_cds_gctx);
 CDF_STATUS wlansap_start(void *p_cds_gctx);
 CDF_STATUS wlansap_stop(void *p_cds_gctx);
 CDF_STATUS wlansap_close(void *p_cds_gctx);

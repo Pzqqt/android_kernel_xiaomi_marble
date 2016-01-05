@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -58,13 +58,9 @@ extern "C" {
 #define SAP_DEBUG
 /* Used to enable or disable security on the BT-AMP link */
 #define WLANSAP_SECURITY_ENABLED_STATE true
-#ifdef WLAN_FEATURE_MBSSID
+
 /* When MBSSID feature is enabled, SAP context is directly passed to SAP APIs */
 #define CDS_GET_SAP_CB(ctx) (ptSapContext)(ctx)
-#else
-/* How do I get SAP context from cds context? */
-#define CDS_GET_SAP_CB(ctx) cds_get_context(CDF_MODULE_ID_SAP)
-#endif
 
 #define CDS_GET_HAL_CB(ctx) cds_get_context(CDF_MODULE_ID_PE)
 /* MAC Address length */
@@ -239,8 +235,7 @@ typedef struct sSapContext {
 	uint8_t cc_switch_mode;
 #endif
 
-#if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE) || \
-	defined(WLAN_FEATURE_MBSSID)
+#if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	bool dfs_ch_disable;
 #endif
 	bool isCacEndNotified;

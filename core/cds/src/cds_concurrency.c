@@ -6633,11 +6633,8 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 	if (hal_handle == NULL)
 		return;
 
-#ifdef WLAN_FEATURE_MBSSID
 	intf_ch = wlansap_check_cc_intf(hdd_ap_ctx->sapContext);
-#else
-	intf_ch = wlansap_check_cc_intf(hdd_ctx->pcds_context);
-#endif
+
 	if (intf_ch == 0)
 		return;
 
@@ -7177,9 +7174,7 @@ void cds_set_mcc_latency(hdd_adapter_t *adapter, int set_value)
 #if defined(FEATURE_WLAN_MCC_TO_SCC_SWITCH) || \
 			defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 /**
- * cds_restart_sap() - This function is used to restart SAP in
- *                          driver internally
- *
+ * cds_restart_sap() - to restart SAP in driver internally
  * @ap_adapter: Pointer to SAP hdd_adapter_t structure
  *
  * Return: None
@@ -7194,9 +7189,11 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 	struct tagCsrDelStaParams delStaParams;
 #endif
 	tsap_Config_t *sap_config;
+	void *sap_ctx;
 
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
-	sap_config = &ap_adapter->sessionCtx.ap.sapConfig;
+	sap_config = &hdd_ap_ctx.sapConfig;
+	sap_ctx = hdd_ap_ctx->sapContext;
 
 	mutex_lock(&hdd_ctx->sap_lock);
 	if (test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
@@ -7214,13 +7211,7 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		cdf_event_reset(&hostapd_state->cdf_stop_bss_event);
-		if (CDF_STATUS_SUCCESS == wlansap_stop_bss(
-#ifdef WLAN_FEATURE_MBSSID
-					hdd_ap_ctx->sapContext
-#else
-					hdd_ctx->pcds_context
-#endif
-					)) {
+		if (CDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
 			cdf_status =
 				cdf_wait_single_event(&hostapd_state->
 						cdf_stop_bss_event,
@@ -7243,16 +7234,9 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 			goto end;
 		}
 
-		if (wlansap_start_bss(
-#ifdef WLAN_FEATURE_MBSSID
-					hdd_ap_ctx->sapContext,
-#else
-					hdd_ctx->pcds_context,
-#endif
-					hdd_hostapd_sap_event_cb,
-					&hdd_ap_ctx->sapConfig,
-					ap_adapter->dev) !=
-				CDF_STATUS_SUCCESS) {
+		if (wlansap_start_bss(sap_ctx, hdd_hostapd_sap_event_cb,
+				      sap_config,
+				      ap_adapter->dev) != CDF_STATUS_SUCCESS) {
 			cds_err("SAP Start Bss fail");
 			goto end;
 		}
@@ -7544,7 +7528,6 @@ bool cds_concurrent_open_sessions_running(void)
 	return j > 1;
 }
 
-#ifdef WLAN_FEATURE_MBSSID
 /**
  * cds_concurrent_beaconing_sessions_running() - Checks for concurrent beaconing
  * entities
@@ -7567,7 +7550,7 @@ bool cds_concurrent_beaconing_sessions_running(void)
 	}
 	return i > 1;
 }
-#endif
+
 
 /**
  * cds_max_concurrent_connections_reached() - Check if max conccurrency is

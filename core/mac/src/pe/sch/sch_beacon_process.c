@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -848,11 +848,10 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 
 /**
  * sch_beacon_process() - process the beacon frame
- *
  * @mac_ctx:        mac global context
  * @rx_pkt_info:  pointer to buffer descriptor
  *
- * @return None
+ * Return: None
  */
 void
 sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
@@ -861,9 +860,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	static tSchBeaconStruct bcn;
 	tUpdateBeaconParams bcn_prm;
 	tpPESession ap_session = NULL;
-#ifdef WLAN_FEATURE_MBSSID
 	uint8_t i;
-#endif
 
 	cdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
 	bcn_prm.paramChangeBitmap = 0;
@@ -889,7 +886,6 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	 * on another concurrent link. In this case also, we want to apply the
 	 * protection settings(as advertised by Infra AP) to BTAP beacons
 	 */
-#ifdef WLAN_FEATURE_MBSSID
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		ap_session = pe_find_session_by_session_id(mac_ctx, i);
 		if (!((ap_session != NULL) &&
@@ -918,30 +914,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			lim_send_beacon_params(mac_ctx, &bcn_prm, ap_session);
 		}
 	}
-#else
-	ap_session = lim_is_ap_session_active(mac_ctx);
-	if ((ap_session != NULL)
-	    && (!(WMA_GET_OFFLOADSCANLEARN(rx_pkt_info)))) {
-		bcn_prm.bssIdx = ap_session->bssIdx;
-		if (ap_session->gLimProtectionControl !=
-		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
-			ap_beacon_process(mac_ctx, rx_pkt_info, &bcn,
-					  &bcn_prm, ap_session);
 
-		if ((false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)
-		    && bcn_prm.paramChangeBitmap) {
-			/* Update the bcn and apply the new settings to HAL */
-			sch_set_fixed_beacon_fields(mac_ctx, ap_session);
-			PELOG1(sch_log(mac_ctx, LOG1,
-			       FL("Beacon for PE session[%d] got changed."),
-			       ap_session->peSessionId);)
-			PELOG1(sch_log(mac_ctx, LOG1,
-			       FL("sending beacon param change bitmap: 0x%x "),
-			       bcn_prm.paramChangeBitmap);)
-			lim_send_beacon_params(mac_ctx, &bcn_prm, ap_session);
-		}
-	}
-#endif
 	/*
 	 * Now process the beacon in the context of the BSS which is
 	 * transmitting the beacons, if one is found

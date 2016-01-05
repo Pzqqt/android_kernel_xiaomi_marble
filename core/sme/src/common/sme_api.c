@@ -1045,9 +1045,6 @@ CDF_STATUS sme_open(tHalHandle hHal)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-#ifndef WLAN_FEATURE_MBSSID
-	void *p_cds_gctx = cds_get_global_context();
-#endif
 
 	pMac->sme.state = SME_STATE_STOP;
 	pMac->sme.currDeviceMode = CDF_STA_MODE;
@@ -1092,18 +1089,6 @@ CDF_STATUS sme_open(tHalHandle hHal)
 	status = init_sme_cmd_list(pMac);
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		return status;
-#ifndef WLAN_FEATURE_MBSSID
-	if (NULL == p_cds_gctx) {
-		sms_log(pMac, LOGE, FL("p_cds_gctx is NULL"));
-		return CDF_STATUS_E_FAILURE;
-	}
-	status = wlansap_open(p_cds_gctx);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("wlansap_open failed, status=%d"),
-			status);
-		return status;
-	}
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI
 	status = rrm_open(pMac);
@@ -1754,17 +1739,6 @@ CDF_STATUS sme_start(tHalHandle hHal)
 				status);
 			break;
 		}
-
-#ifndef WLAN_FEATURE_MBSSID
-		status = wlansap_start(cds_get_global_context());
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
-			sms_log(pMac, LOGE,
-				"wlansap_start failed during smeStart with status=%d",
-				status);
-			break;
-		}
-#endif
-
 		pMac->sme.state = SME_STATE_START;
 	} while (0);
 
@@ -2870,16 +2844,6 @@ CDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType)
 	CDF_STATUS fail_status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-#ifndef WLAN_FEATURE_MBSSID
-	status = wlansap_stop(cds_get_global_context());
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			"wlansap_stop failed during smeStop with status=%d",
-			status);
-		fail_status = status;
-	}
-#endif
-
 	p2p_stop(hHal);
 
 	status = csr_stop(pMac, stopType);
@@ -2936,16 +2900,6 @@ CDF_STATUS sme_close(tHalHandle hHal)
 			status);
 		fail_status = status;
 	}
-#ifndef WLAN_FEATURE_MBSSID
-	status = wlansap_close(cds_get_global_context());
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			"WLANSAP_close failed during sme close with status=%d",
-			status);
-		fail_status = status;
-	}
-#endif
-
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	status = sme_qos_close(pMac);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {

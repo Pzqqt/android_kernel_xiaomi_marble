@@ -1912,40 +1912,20 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 
 		case CDF_SAP_MODE:
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-#ifndef WLAN_FEATURE_MBSSID
-			if ((bss_persona == CDF_SAP_MODE) &&
-					(connect_state !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
+			if ((bss_persona == CDF_IBSS_MODE)
+				&& (connect_state != temp)) {
+				/* allow IBSS+SAP for Emulation only */
+#ifndef QCA_WIFI_3_0_EMU
 				CDF_TRACE(CDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
-						FL("sap mode already exist"));
+						FL("Can't start SAP"));
 				return CDF_STATUS_E_FAILURE;
-			} else
 #endif
-				if ((bss_persona == CDF_IBSS_MODE)
-					&& (connect_state != temp)) {
-					/* allow IBSS+SAP for Emulation only */
-#ifndef QCA_WIFI_3_0_EMU
-					CDF_TRACE(CDF_MODULE_ID_SME,
-							CDF_TRACE_LEVEL_ERROR,
-							FL("Can't start SAP"));
-					return CDF_STATUS_E_FAILURE;
-#endif
-				}
+			}
 			break;
 
 		case CDF_P2P_GO_MODE:
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-#ifndef WLAN_FEATURE_MBSSID
-			if ((bss_persona == CDF_P2P_GO_MODE) &&
-					(connect_state !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
-						CDF_TRACE_LEVEL_ERROR,
-						FL("GO mode already exists"));
-				return CDF_STATUS_E_FAILURE;
-			}
-#endif
 			if ((bss_persona == CDF_IBSS_MODE)
 					&& (connect_state != temp)) {
 				CDF_TRACE(CDF_MODULE_ID_SME,

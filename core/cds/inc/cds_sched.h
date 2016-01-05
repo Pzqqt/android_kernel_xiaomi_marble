@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -249,11 +249,6 @@ typedef struct _cds_context_type {
 
 	/* MAC Module Context  */
 	void *pMACContext;
-
-#ifndef WLAN_FEATURE_MBSSID
-	/* SAP Context */
-	void *pSAPContext;
-#endif
 
 	cdf_event_t ProbeEvent;
 
