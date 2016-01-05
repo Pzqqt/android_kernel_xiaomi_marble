@@ -1937,14 +1937,26 @@ CDF_STATUS wma_open(void *cds_context,
 				WMI_RSSI_BREACH_EVENTID,
 				wma_rssi_breached_event_handler);
 
+	cdf_wake_lock_init(&wma_handle->wmi_cmd_rsp_wake_lock,
+				"wlan_fw_rsp_wakelock");
+	wma_handle->wmi_cmd_rsp_runtime_lock =
+			cdf_runtime_lock_init("wlan_fw_rsp_runtime_lock");
+
 	/* Register peer assoc conf event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_ASSOC_CONF_EVENTID,
 					   wma_peer_assoc_conf_handler);
-
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_VDEV_DELETE_RESP_EVENTID,
+					   wma_vdev_delete_handler);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_PEER_DELETE_RESP_EVENTID,
+					   wma_peer_delete_handler);
 	return CDF_STATUS_SUCCESS;
 
 err_dbglog_init:
+	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	cdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
 	cdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
 err_event_init:
@@ -3094,6 +3106,8 @@ CDF_STATUS wma_close(void *cds_ctx)
 	cdf_event_destroy(&wma_handle->recovery_event);
 	wma_cleanup_vdev_resp(wma_handle);
 	wma_cleanup_hold_req(wma_handle);
+	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
 		cdf_os_mem_free_consistent(wma_handle->cdf_dev,
 					   wma_handle->mem_chunks[idx].len,
