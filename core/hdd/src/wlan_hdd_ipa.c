@@ -3804,7 +3804,6 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		}
 
 		hdd_ipa->sap_num_connected_sta++;
-		hdd_ipa->pending_cons_req = false;
 
 		cdf_mutex_release(&hdd_ipa->event_lock);
 
