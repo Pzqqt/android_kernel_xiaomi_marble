@@ -2010,9 +2010,9 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 						mlm_deauth_req->sessionId;
 				sme_deauth_rsp->transactionId = 0;
 
-				cdf_mem_copy(sme_deauth_rsp->peerMacAddr,
+				cdf_mem_copy(sme_deauth_rsp->peer_macaddr.bytes,
 						mlm_deauth_req->peerMacAddr,
-						sizeof(tSirMacAddr));
+						CDF_MAC_ADDR_SIZE);
 
 				msg_buf = (uint32_t *)sme_deauth_rsp;
 

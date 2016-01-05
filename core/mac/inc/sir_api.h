@@ -1425,7 +1425,7 @@ typedef struct sSirSmeDeauthRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 } tSirSmeDeauthRsp, *tpSirSmeDeauthRsp;
 
 /* / Definition for Deauthetication indication from peer */
