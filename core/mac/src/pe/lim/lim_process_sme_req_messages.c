@@ -2603,7 +2603,7 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			sizeof(struct sSirSmeDisassocCnf));
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				smeDisassocCnf.bssId,
+				smeDisassocCnf.bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
@@ -2661,13 +2661,13 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	    (psessionEntry->limSmeState == eLIM_SME_WT_DEAUTH_STATE) ||
 	    LIM_IS_AP_ROLE(psessionEntry)) {
 		pStaDs = dph_lookup_hash_entry(pMac,
-				smeDisassocCnf.peerMacAddr, &aid,
+				smeDisassocCnf.peer_macaddr.bytes, &aid,
 				&psessionEntry->dph.dphHashTable);
 		if (pStaDs == NULL) {
 			lim_log(pMac, LOGE,
 				FL("DISASSOC_CNF for a STA with no context, addr= "
 				MAC_ADDRESS_STR),
-				MAC_ADDR_ARRAY(smeDisassocCnf.peerMacAddr));
+				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes));
 			return;
 		}
 
@@ -2677,7 +2677,7 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 				eLIM_MLM_WT_DEL_STA_RSP_STATE)) {
 			lim_log(pMac, LOGE,
 				FL("No need of cleanup for addr:" MAC_ADDRESS_STR "as MLM state is %d"),
-				MAC_ADDR_ARRAY(smeDisassocCnf.peerMacAddr),
+				MAC_ADDR_ARRAY(smeDisassocCnf.peer_macaddr.bytes),
 				pStaDs->mlmStaContext.mlmState);
 			return;
 		}
@@ -2689,8 +2689,7 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
 
 		lim_clean_up_disassoc_deauth_req(pMac,
-						 (char *)&smeDisassocCnf.peerMacAddr,
-						 0);
+				 (char *)&smeDisassocCnf.peer_macaddr, 0);
 	}
 
 	return;

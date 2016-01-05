@@ -618,7 +618,7 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal pMac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
 			      tpPESession psessionEntry)
 {
-	if (lim_is_group_addr(pDisassocCnf->peerMacAddr))
+	if (cdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
 		return false;
 
 	return true;
