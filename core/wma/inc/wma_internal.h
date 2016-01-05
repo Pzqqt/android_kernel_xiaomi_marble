@@ -1169,5 +1169,11 @@ CDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);
 int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);
+int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
+				uint32_t len);
 
+int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
+				uint32_t len);
+void wma_remove_req(tp_wma_handle wma, uint8_t vdev_id,
+			    uint8_t type);
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -332,6 +332,7 @@ enum wifi_connectivity_events {
  * @WIFI_POWER_EVENT_WAKELOCK_PNO: PNO feature related
  * @WIFI_POWER_EVENT_WAKELOCK_DEL_STA: Deletion of a station
  * @WIFI_POWER_EVENT_WAKELOCK_DFS: DFS related wakelocks
+ * @WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP: Firmware response
  * @WIFI_POWER_EVENT_WAKELOCK_MISC: Miscellaneous wakelocks
  *
  * Indicates the reason for which the wakelock was taken/released
@@ -353,6 +354,7 @@ enum wake_lock_reason {
 	WIFI_POWER_EVENT_WAKELOCK_PNO,
 	WIFI_POWER_EVENT_WAKELOCK_DEL_STA,
 	WIFI_POWER_EVENT_WAKELOCK_DFS,
+	WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP,
 	WIFI_POWER_EVENT_WAKELOCK_MISC,
 };
 

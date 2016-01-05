@@ -1288,6 +1288,16 @@ struct del_sta_self_params {
 };
 
 /**
+ * struct del_sta_self_rsp_params - Del Sta Self response params
+ * @self_sta_param: sta params
+ * @generate_rsp: generate response to upper layers
+ */
+struct del_sta_self_rsp_params {
+	struct del_sta_self_params *self_sta_param;
+	uint8_t generate_rsp;
+};
+
+/**
  * struct tP2pPsParams - P2P powersave related params
  * @opp_ps: opportunistic power save
  * @ctWindow: CT window

@@ -243,6 +243,11 @@
 #define WMA_PEER_ASSOC_CNF_START 0x01
 #define WMA_PEER_ASSOC_TIMEOUT (3000) /* 3 seconds */
 
+#define WMA_DELETE_STA_RSP_START 0x02
+#define WMA_DELETE_STA_TIMEOUT (6000) /* 6 seconds */
+
+#define WMA_DEL_P2P_SELF_STA_RSP_START 0x03
+
 #define WMA_VDEV_START_REQUEST_TIMEOUT (3000)   /* 3 seconds */
 #define WMA_VDEV_STOP_REQUEST_TIMEOUT  (3000)   /* 3 seconds */
 
@@ -300,6 +305,7 @@
 #define WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION    (5 * 1000)     /* in msec */
 #endif
 #define WMA_BMISS_EVENT_WAKE_LOCK_DURATION      (4 * 1000)     /* in msec */
+#define WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION      (3 * 1000)  /* in msec */
 
 #define WMA_TXMIC_LEN 8
 #define WMA_RXMIC_LEN 8
@@ -1188,6 +1194,8 @@ struct wmi_init_cmd {
  * handle of other modules.
  * @saved_wmi_init_cmd: Saved WMI INIT command
  * @service_ready_ext_evt: Wait event for service ready ext
+ * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
+ * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
  */
 typedef struct {
 	void *wmi_handle;
@@ -1373,6 +1381,8 @@ typedef struct {
 	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr);
+	cdf_wake_lock_t wmi_cmd_rsp_wake_lock;
+	cdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 } t_wma_handle, *tp_wma_handle;
 
 /**
