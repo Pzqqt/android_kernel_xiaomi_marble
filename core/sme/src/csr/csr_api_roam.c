@@ -14284,16 +14284,17 @@ CDF_STATUS csr_send_mb_disassoc_cnf_msg(tpAniSirGlobal pMac,
 		pMsg->messageType = eWNI_SME_DISASSOC_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
 		pMsg->length = sizeof(tSirSmeDisassocCnf);
-		cdf_mem_copy(pMsg->peerMacAddr, pDisassocInd->peerMacAddr,
-			     sizeof(pMsg->peerMacAddr));
+		cdf_mem_copy(pMsg->peer_macaddr.bytes,
+				pDisassocInd->peerMacAddr,
+				CDF_MAC_ADDR_SIZE);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
 			break;
 		}
 
-		cdf_mem_copy(pMsg->bssId, pDisassocInd->bssId,
-			     sizeof(pMsg->peerMacAddr));
+		cdf_mem_copy(pMsg->bssid.bytes, pDisassocInd->bssId,
+				CDF_MAC_ADDR_SIZE);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
@@ -14322,15 +14323,14 @@ CDF_STATUS csr_send_mb_deauth_cnf_msg(tpAniSirGlobal pMac,
 		pMsg->messageType = eWNI_SME_DEAUTH_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
 		pMsg->length = sizeof(tSirSmeDeauthCnf);
-		cdf_mem_copy(pMsg->bssId, pDeauthInd->bssid.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->bssid, &pDeauthInd->bssid);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
 			break;
 		}
-		cdf_mem_copy(pMsg->peerMacAddr, pDeauthInd->peer_macaddr.bytes,
-			     CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->peer_macaddr,
+				 &pDeauthInd->peer_macaddr);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);

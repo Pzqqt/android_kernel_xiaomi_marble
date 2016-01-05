@@ -1402,8 +1402,8 @@ typedef struct sSirSmeDisassocCnf {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_CNF */
 	uint16_t length;
 	tSirResultCodes statusCode;
-	tSirMacAddr bssId;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr bssid;
+	struct cdf_mac_addr peer_macaddr;
 } tSirSmeDisassocCnf, *tpSirSmeDisassocCnf,
 	tSirSmeDeauthCnf, *tpSirSmeDeauthCnf;
 
