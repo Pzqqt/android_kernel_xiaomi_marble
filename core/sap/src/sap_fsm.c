@@ -1981,11 +1981,11 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			  FL("invalid h_hal"));
 		return CDF_STATUS_E_FAULT;
 	}
-#ifdef WLAN_FEATURE_MBSSID
+
 	if (cds_concurrent_beaconing_sessions_running()) {
 		con_ch =
 			sme_get_concurrent_operation_channel(h_hal);
-
+#ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
 		if (con_ch && sap_context->channel == AUTO_CHANNEL_SELECT) {
 			sap_context->dfs_ch_disable = true;
 		} else if (con_ch && sap_context->channel != con_ch &&
@@ -1994,6 +1994,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 				  FL("MCC DFS not supported in AP_AP Mode"));
 			return CDF_STATUS_E_ABORTED;
 		}
+#endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
 						CDF_MCC_TO_SCC_SWITCH_DISABLE) {
@@ -2011,7 +2012,6 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		}
 #endif
 	}
-#endif
 
 	if (cds_get_concurrency_mode() == (CDF_STA_MASK | CDF_SAP_MASK)) {
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
@@ -3251,7 +3251,6 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 						eCSR_DOT11_MODE_11g_ONLY))
 			sap_ctx->csr_roamProfile.phyMode = eCSR_DOT11_MODE_11a;
 
-#ifdef WLAN_FEATURE_MBSSID
 		/*
 		 * when AP2 is started while AP1 is performing ACS, we may not
 		 * have the AP1 channel yet.So here after the completion of AP2
@@ -3265,7 +3264,7 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 			if (con_ch && CDS_IS_DFS_CH(con_ch))
 				sap_ctx->channel = con_ch;
 		}
-#endif
+
 		/*
 		 * Transition from eSAP_CH_SELECT to eSAP_STARTING
 		 * (both without substates)

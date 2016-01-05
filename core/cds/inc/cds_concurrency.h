@@ -648,16 +648,7 @@ bool cds_max_concurrent_connections_reached(void);
 void cds_clear_concurrent_session_count(void);
 bool cds_is_multiple_active_sta_sessions(void);
 bool cds_is_sta_active_connection_exists(void);
-
-#ifdef WLAN_FEATURE_MBSSID
 bool cds_concurrent_beaconing_sessions_running(void);
-#else
-static inline bool cds_concurrent_beaconing_sessions_running(void)
-{
-	return true;
-}
-#endif
-
 CDF_STATUS cdf_wait_for_connection_update(void);
 CDF_STATUS cdf_reset_connection_update(void);
 CDF_STATUS cdf_set_connection_update(void);
