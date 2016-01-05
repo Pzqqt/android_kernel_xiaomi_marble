@@ -309,7 +309,7 @@ typedef struct sLimMlmAuthCnf {
 } tLimMlmAuthCnf, *tpLimMlmAuthCnf;
 
 typedef struct sLimMlmDeauthReq {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	uint16_t deauthTrigger;
 	uint16_t aid;
@@ -318,7 +318,7 @@ typedef struct sLimMlmDeauthReq {
 } tLimMlmDeauthReq, *tpLimMlmDeauthReq;
 
 typedef struct sLimMlmDeauthCnf {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	tSirResultCodes resultCode;
 	uint16_t deauthTrigger;
 	uint16_t aid;

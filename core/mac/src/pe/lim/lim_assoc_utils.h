@@ -134,7 +134,7 @@ void lim_post_reassoc_failure(tpAniSirGlobal,
 			      tSirResultCodes, uint16_t, tpPESession);
 bool lim_is_reassoc_in_progress(tpAniSirGlobal, tpPESession);
 void
-lim_send_del_sta_cnf(tpAniSirGlobal pMac, tSirMacAddr staDsAddr,
+lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct cdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
 		     tSirResultCodes statusCode, tpPESession psessionEntry);
 

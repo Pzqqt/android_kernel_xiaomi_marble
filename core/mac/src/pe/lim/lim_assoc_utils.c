@@ -668,45 +668,32 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 } /*** end lim_cleanup_rx_path() ***/
 
 /**
- * lim_send_del_sta_cnf()
+ * lim_send_del_sta_cnf() - Send Del sta confirmation
+ * @pMac: Pointer to Global MAC structure
+ * @sta_dsaddr: sta ds address
+ * @staDsAssocId: sta ds association id
+ * @mlmStaContext: MLM station context
+ * @statusCode: Status code
+ * @psessionEntry: Session entry
  *
- ***FUNCTION:
- * This function is called to  send appropriate CNF message to SME
+ * This function is called to send appropriate CNF message to SME.
  *
- ***LOGIC:
- *
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param pMac    Pointer to Global MAC structure
- * @param tpAniSirGlobal pMac,
- * @param tSirMacAddr staDsAddr,
- * @param uint16_t staDsAssocId,
- * @param tLimMlmStaContext mlmStaContext,
- * @param tSirResultCodes statusCode
- *
- * @return None
+ * Return: None
  */
-
 void
-lim_send_del_sta_cnf(tpAniSirGlobal pMac, tSirMacAddr staDsAddr,
+lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct cdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
 		     tSirResultCodes statusCode, tpPESession psessionEntry)
 {
-
 	tLimMlmDisassocCnf mlmDisassocCnf;
 	tLimMlmDeauthCnf mlmDeauthCnf;
 	tLimMlmPurgeStaInd mlmPurgeStaInd;
 
-	lim_log(pMac, LOG1, FL("Sessionid: %d staDsAssocId: %d Trigger: %d"
-			       "statusCode: %d staDsAddr: " MAC_ADDRESS_STR),
+	lim_log(pMac, LOG1,
+		FL("Sessionid: %d staDsAssocId: %d Trigger: %d statusCode: %d sta_dsaddr: "MAC_ADDRESS_STR),
 		psessionEntry->peSessionId, staDsAssocId,
 		mlmStaContext.cleanupTrigger, statusCode,
-		MAC_ADDR_ARRAY(staDsAddr));
+		MAC_ADDR_ARRAY(sta_dsaddr.bytes));
 
 	if (LIM_IS_STA_ROLE(psessionEntry) ||
 	    LIM_IS_BT_AMP_STA_ROLE(psessionEntry)) {
@@ -748,7 +735,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, tSirMacAddr staDsAddr,
 			mlmStaContext.cleanupTrigger);
 
 		cdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
-			     (uint8_t *) staDsAddr, sizeof(tSirMacAddr));
+			     (uint8_t *) sta_dsaddr.bytes, CDF_MAC_ADDR_SIZE);
 		mlmDisassocCnf.resultCode = statusCode;
 		mlmDisassocCnf.disassocTrigger = mlmStaContext.cleanupTrigger;
 		/* Update PE session Id */
@@ -768,8 +755,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, tSirMacAddr staDsAddr,
 		lim_log(pMac, LOGW,
 			FL("Lim Posting DEAUTH_CNF to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
-		cdf_mem_copy((uint8_t *) &mlmDeauthCnf.peerMacAddr,
-			     (uint8_t *) staDsAddr, sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr, &sta_dsaddr);
 		mlmDeauthCnf.resultCode = statusCode;
 		mlmDeauthCnf.deauthTrigger = mlmStaContext.cleanupTrigger;
 		/* PE session Id */
@@ -789,7 +775,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, tSirMacAddr staDsAddr,
 			FL("Lim Posting PURGE_STA_IND to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
 		cdf_mem_copy((uint8_t *) &mlmPurgeStaInd.peerMacAddr,
-			     (uint8_t *) staDsAddr, sizeof(tSirMacAddr));
+			     (uint8_t *) sta_dsaddr.bytes, CDF_MAC_ADDR_SIZE);
 		mlmPurgeStaInd.reasonCode =
 			(uint8_t) mlmStaContext.disassocReason;
 		mlmPurgeStaInd.aid = staDsAssocId;
@@ -4857,7 +4843,7 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 				 tpPESession psessionEntry)
 {
 	uint16_t staDsAssocId = 0;
-	tSirMacAddr staDsAddr;
+	struct cdf_mac_addr sta_dsaddr;
 	tLimMlmStaContext mlmStaContext;
 
 	if (pStaDs == NULL) {
@@ -4865,8 +4851,8 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 		return;
 	}
 	staDsAssocId = pStaDs->assocId;
-	cdf_mem_copy((uint8_t *) staDsAddr,
-		     pStaDs->staAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) sta_dsaddr.bytes,
+		     pStaDs->staAddr, CDF_MAC_ADDR_SIZE);
 
 	mlmStaContext = pStaDs->mlmStaContext;
 	if (LIM_IS_AP_ROLE(psessionEntry) ||
@@ -4883,7 +4869,7 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 				 psessionEntry->peSessionId,
 				 psessionEntry->limMlmState));
 	}
-	lim_send_del_sta_cnf(pMac, staDsAddr, staDsAssocId, mlmStaContext,
+	lim_send_del_sta_cnf(pMac, sta_dsaddr, staDsAssocId, mlmStaContext,
 			     statusCode, psessionEntry);
 }
 

@@ -14252,19 +14252,16 @@ CDF_STATUS csr_send_mb_deauth_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	if ((pSession->pCurRoamProfile != NULL)
 	     && (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
-		cdf_mem_copy(&pMsg->bssId,
+		cdf_mem_copy(&pMsg->bssid,
 			     &pSession->selfMacAddr,
-			     sizeof(tSirMacAddr));
+			     CDF_MAC_ADDR_SIZE);
 	} else {
-		cdf_mem_copy(&pMsg->bssId,
-			     bssId,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(&pMsg->bssid,
+			     bssId, CDF_MAC_ADDR_SIZE);
 	}
 
 	/* Set the peer MAC address before sending the message to LIM */
-	cdf_mem_copy(&pMsg->peerMacAddr,
-		     bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(&pMsg->peer_macaddr.bytes, bssId, CDF_MAC_ADDR_SIZE);
 	pMsg->reasonCode = reasonCode;
 
 	return cds_send_mb_message_to_mac(pMsg);

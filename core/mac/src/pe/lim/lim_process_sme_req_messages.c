@@ -2729,8 +2729,9 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 	 * We need to get a session first but we don't even know
 	 * if the message is correct.
 	 */
-	session_entry = pe_find_session_by_bssid(mac_ctx, sme_deauth_req.bssId,
-				&session_id);
+	session_entry = pe_find_session_by_bssid(mac_ctx,
+					sme_deauth_req.bssid.bytes,
+					&session_id);
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGE,
 			FL("session does not exist for given bssId"));
@@ -2754,7 +2755,7 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 		MAC_ADDRESS_STR), sme_session_id,
 		GET_LIM_SYSTEM_ROLE(session_entry), sme_deauth_req.reasonCode,
 		session_entry->limSmeState,
-		MAC_ADDR_ARRAY(sme_deauth_req.peerMacAddr));
+		MAC_ADDR_ARRAY(sme_deauth_req.peer_macaddr.bytes));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_DEAUTH_REQ_EVENT,
 			session_entry, 0, sme_deauth_req.reasonCode);
@@ -2885,9 +2886,8 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	cdf_mem_copy((uint8_t *) &mlm_deauth_req->peerMacAddr,
-		     (uint8_t *) &sme_deauth_req.peerMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&mlm_deauth_req->peer_macaddr,
+			 &sme_deauth_req.peer_macaddr);
 
 	mlm_deauth_req->reasonCode = reason_code;
 	mlm_deauth_req->deauthTrigger = deauth_trigger;
@@ -2900,8 +2900,9 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 	return;
 
 send_deauth:
-	lim_send_sme_deauth_ntf(mac_ctx, sme_deauth_req.peerMacAddr, ret_code,
-			deauth_trigger, 1, sme_session_id, sme_transaction_id);
+	lim_send_sme_deauth_ntf(mac_ctx, sme_deauth_req.peer_macaddr.bytes,
+				ret_code, deauth_trigger, 1,
+				sme_session_id, sme_transaction_id);
 }
 
 /**

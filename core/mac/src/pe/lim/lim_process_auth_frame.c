@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -527,15 +527,14 @@ lim_process_auth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			    &&
 			    (cdf_mem_compare
 				     ((uint8_t *) pHdr->sa,
-				     (uint8_t *) &pMlmDeauthReq->peerMacAddr,
-				     sizeof(tSirMacAddr)))) {
+				     (uint8_t *) &pMlmDeauthReq->peer_macaddr.bytes,
+				     CDF_MAC_ADDR_SIZE))) {
 				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("TODO:Ack for deauth frame "
-						  "is pending Issue delsta for "
-						  MAC_ADDRESS_STR),
-					       MAC_ADDR_ARRAY(pMlmDeauthReq->
-							      peerMacAddr));
+				      (pMac, LOGE,
+				       FL("TODO:Ack for deauth frame is pending Issue delsta for "
+					  MAC_ADDRESS_STR),
+					  MAC_ADDR_ARRAY(pMlmDeauthReq->
+							 peer_macaddr.bytes));
 				       )
 				lim_process_deauth_ack_timeout(pMac);
 				isConnected = eSIR_FALSE;
