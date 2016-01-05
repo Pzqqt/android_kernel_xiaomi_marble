@@ -5068,7 +5068,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = cds_enable(hdd_ctx->pcds_context);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_enable failed"));
-		goto err_wiphy_unregister;
+		goto err_ipa_cleanup;
 	}
 
 	hdd_init_channel_avoidance(hdd_ctx);
@@ -5496,6 +5496,9 @@ err_close_adapter:
 
 err_cds_disable:
 	cds_disable(p_cds_context);
+
+err_ipa_cleanup:
+	hdd_ipa_cleanup(hdd_ctx);
 
 err_wiphy_unregister:
 	wiphy_unregister(wiphy);
