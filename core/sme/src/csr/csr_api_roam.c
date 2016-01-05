@@ -10302,9 +10302,8 @@ csr_roam_chk_lnk_deauth_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (CSR_IS_INFRA_AP(&session->connectedProfile)) {
 		roam_info_ptr = &roam_info;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
-		cdf_mem_copy(roam_info_ptr->peerMac.bytes,
-			     pDeauthRsp->peerMacAddr,
-			     sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+				 &pDeauthRsp->peer_macaddr);
 		roam_info_ptr->reasonCode = eCSR_ROAM_RESULT_FORCED;
 		roam_info_ptr->statusCode = pDeauthRsp->statusCode;
 		status = csr_roam_call_callback(mac_ctx, sessionId,

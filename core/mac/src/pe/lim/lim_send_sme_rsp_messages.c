@@ -1401,7 +1401,7 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthRsp->sessionId = smesessionId;
 		pSirSmeDeauthRsp->transactionId = smetransactionId;
 
-		pBuf = (uint8_t *) pSirSmeDeauthRsp->peerMacAddr;
+		pBuf = (uint8_t *) pSirSmeDeauthRsp->peer_macaddr.bytes;
 		cdf_mem_copy(pBuf, peerMacAddr, sizeof(tSirMacAddr));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
