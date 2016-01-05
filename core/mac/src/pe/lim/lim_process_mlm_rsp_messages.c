@@ -1328,7 +1328,7 @@ void lim_process_mlm_deauth_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			pMac->lim.gLimRspReqd = false;
 	}
 	/* On STA or on BASIC AP, send SME_DEAUTH_RSP to host */
-	lim_send_sme_deauth_ntf(pMac, pMlmDeauthCnf->peerMacAddr,
+	lim_send_sme_deauth_ntf(pMac, pMlmDeauthCnf->peer_macaddr.bytes,
 				resultCode,
 				pMlmDeauthCnf->deauthTrigger,
 				aid, psessionEntry->smeSessionId,

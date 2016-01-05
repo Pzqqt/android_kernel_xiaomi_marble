@@ -1413,8 +1413,8 @@ typedef struct sSirSmeDeauthReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr bssId;      /* AP BSSID */
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr bssid;      /* AP BSSID */
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 } tSirSmeDeauthReq, *tpSirSmeDeauthReq;
 

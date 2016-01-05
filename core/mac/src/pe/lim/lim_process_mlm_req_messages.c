@@ -1798,8 +1798,8 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
 			      (uint8_t *) &disassoc_req->peerMacAddr,
 			       sizeof(tSirMacAddr)))) ||
 	    (deauth_req && (cdf_mem_compare((uint8_t *) sta_mac,
-			      (uint8_t *) &deauth_req->peerMacAddr,
-			       sizeof(tSirMacAddr))))) {
+			      (uint8_t *) &deauth_req->peer_macaddr.bytes,
+			       CDF_MAC_ADDR_SIZE)))) {
 		PELOG1(lim_log(mac_ctx, LOG1,
 			       FL("Disassoc/Deauth ack pending"));)
 		return true;
@@ -1848,8 +1848,8 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 	mlm_deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (mlm_deauth_req &&
 	    (cdf_mem_compare((uint8_t *) sta_mac,
-			     (uint8_t *) &mlm_deauth_req->peerMacAddr,
-			     sizeof(tSirMacAddr)))) {
+			     (uint8_t *) &mlm_deauth_req->peer_macaddr.bytes,
+			     CDF_MAC_ADDR_SIZE))) {
 		if (clean_rx_path) {
 			lim_process_deauth_ack_timeout(mac_ctx);
 		} else {
@@ -1957,7 +1957,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		mlm_deauth_req->sessionId,
 		GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState,
-		MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+		MAC_ADDR_ARRAY(mlm_deauth_req->peer_macaddr.bytes));
 	sir_copy_mac_addr(curr_bssId, session->bssId);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
@@ -1974,14 +1974,14 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		case eLIM_MLM_AUTHENTICATED_STATE:
 		case eLIM_MLM_WT_ASSOC_RSP_STATE:
 		case eLIM_MLM_LINK_ESTABLISHED_STATE:
-			if (!cdf_mem_compare(mlm_deauth_req->peerMacAddr,
-					curr_bssId, sizeof(tSirMacAddr))) {
+			if (!cdf_mem_compare(mlm_deauth_req->peer_macaddr.bytes,
+					curr_bssId, CDF_MAC_ADDR_SIZE)) {
 				lim_log(mac_ctx, LOGE,
 					FL("received MLM_DEAUTH_REQ with invalid BSS id "
 					   "Peer MAC: "MAC_ADDRESS_STR
 					   " CFG BSSID Addr : "MAC_ADDRESS_STR),
 					MAC_ADDR_ARRAY(
-						mlm_deauth_req->peerMacAddr),
+						mlm_deauth_req->peer_macaddr.bytes),
 					MAC_ADDR_ARRAY(curr_bssId));
 				/*
 				 * Deauthentication response to host triggered
@@ -1998,7 +1998,8 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				lim_log(mac_ctx, LOG1,
 					FL("send deauth rsp with ret code %d for" MAC_ADDRESS_STR),
 					eSIR_SME_DEAUTH_STATUS,
-					MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+					MAC_ADDR_ARRAY(
+					  mlm_deauth_req->peer_macaddr.bytes));
 
 				sme_deauth_rsp->messageType =
 						eWNI_SME_DEAUTH_RSP;
@@ -2011,8 +2012,8 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				sme_deauth_rsp->transactionId = 0;
 
 				cdf_mem_copy(sme_deauth_rsp->peer_macaddr.bytes,
-						mlm_deauth_req->peerMacAddr,
-						CDF_MAC_ADDR_SIZE);
+					     mlm_deauth_req->peer_macaddr.bytes,
+					     CDF_MAC_ADDR_SIZE);
 
 				msg_buf = (uint32_t *)sme_deauth_rsp;
 
@@ -2027,9 +2028,9 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 			     eLIM_MLM_WT_ASSOC_RSP_STATE)) {
 				/* Send deauth frame to peer entity */
 				lim_send_deauth_mgmt_frame(mac_ctx,
-						mlm_deauth_req->reasonCode,
-						mlm_deauth_req->peerMacAddr,
-						session, false);
+					mlm_deauth_req->reasonCode,
+					mlm_deauth_req->peer_macaddr.bytes,
+					session, false);
 				/* Prepare and Send LIM_MLM_DEAUTH_CNF */
 				mlm_deauth_cnf.resultCode = eSIR_SME_SUCCESS;
 				session->limMlmState = eLIM_MLM_IDLE_STATE;
@@ -2044,7 +2045,8 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				FL("received MLM_DEAUTH_REQ with in state %d for peer "
 				   MAC_ADDRESS_STR),
 				session->limMlmState,
-				MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+				MAC_ADDR_ARRAY(
+					mlm_deauth_req->peer_macaddr.bytes));
 			lim_print_mlm_state(mac_ctx, LOGW,
 					    session->limMlmState);
 			/* Prepare and Send LIM_MLM_DEAUTH_CNF */
@@ -2077,13 +2079,14 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	 * Check if there exists a context for the peer entity
 	 * to be deauthenticated with.
 	 */
-	sta_ds = dph_lookup_hash_entry(mac_ctx, mlm_deauth_req->peerMacAddr,
+	sta_ds = dph_lookup_hash_entry(mac_ctx,
+				       mlm_deauth_req->peer_macaddr.bytes,
 				       &aid, &session->dph.dphHashTable);
 
 	if (sta_ds == NULL) {
 		/* Check if there exists pre-auth context for this STA */
 		auth_node = lim_search_pre_auth_list(mac_ctx,
-						mlm_deauth_req->peerMacAddr);
+					mlm_deauth_req->peer_macaddr.bytes);
 		if (auth_node == NULL) {
 			/*
 			 * Received DEAUTH REQ for a STA that is neither
@@ -2095,19 +2098,20 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				   "does not have context, Addr="
 				   MAC_ADDRESS_STR),
 				session->limMlmState,
-				MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+				MAC_ADDR_ARRAY(
+					mlm_deauth_req->peer_macaddr.bytes));
 			mlm_deauth_cnf.resultCode =
 				eSIR_SME_STA_NOT_AUTHENTICATED;
 		} else {
 			mlm_deauth_cnf.resultCode = eSIR_SME_SUCCESS;
 			/* Delete STA from pre-auth STA list */
 			lim_delete_pre_auth_node(mac_ctx,
-						 mlm_deauth_req->peerMacAddr);
+					 mlm_deauth_req->peer_macaddr.bytes);
 			/* Send Deauthentication frame to peer entity */
 			lim_send_deauth_mgmt_frame(mac_ctx,
-						   mlm_deauth_req->reasonCode,
-						   mlm_deauth_req->peerMacAddr,
-						   session, false);
+					   mlm_deauth_req->reasonCode,
+					   mlm_deauth_req->peer_macaddr.bytes,
+					   session, false);
 		}
 		goto end;
 	} else if ((sta_ds->mlmStaContext.mlmState !=
@@ -2120,7 +2124,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		 */
 		lim_log(mac_ctx, LOGW,
 			FL("Invalid MLM_DEAUTH_REQ, Addr="MAC_ADDRESS_STR),
-			MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+			MAC_ADDR_ARRAY(mlm_deauth_req->peer_macaddr.bytes));
 		/* Prepare and Send LIM_MLM_DEAUTH_CNF */
 		mlm_deauth_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
 		goto end;
@@ -2141,12 +2145,12 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	sta_ds->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 	/* Send Deauthentication frame to peer entity */
 	lim_send_deauth_mgmt_frame(mac_ctx, mlm_deauth_req->reasonCode,
-				   mlm_deauth_req->peerMacAddr, session, true);
+				   mlm_deauth_req->peer_macaddr.bytes,
+				   session, true);
 	return;
 end:
-	cdf_mem_copy((uint8_t *) &mlm_deauth_cnf.peerMacAddr,
-		     (uint8_t *) mlm_deauth_req->peerMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&mlm_deauth_cnf.peer_macaddr,
+			 &mlm_deauth_req->peer_macaddr);
 	mlm_deauth_cnf.deauthTrigger = mlm_deauth_req->deauthTrigger;
 	mlm_deauth_cnf.aid = mlm_deauth_req->aid;
 	mlm_deauth_cnf.sessionId = mlm_deauth_req->sessionId;
@@ -2200,7 +2204,7 @@ lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		FL("Process Deauth Req on sessionID %d from: "
 		   MAC_ADDRESS_STR),
 		mlm_deauth_req->sessionId,
-		MAC_ADDR_ARRAY(mlm_deauth_req->peerMacAddr));
+		MAC_ADDR_ARRAY(mlm_deauth_req->peer_macaddr.bytes));
 
 	session = pe_find_session_by_session_id(mac_ctx,
 				mlm_deauth_req->sessionId);

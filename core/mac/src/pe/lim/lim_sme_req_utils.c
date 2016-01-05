@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -648,8 +648,8 @@ uint8_t
 lim_is_sme_deauth_req_valid(tpAniSirGlobal pMac, tpSirSmeDeauthReq pDeauthReq,
 			    tpPESession psessionEntry)
 {
-	if (lim_is_group_addr(pDeauthReq->peerMacAddr) &&
-	    !lim_is_addr_bc(pDeauthReq->peerMacAddr))
+	if (cdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
+	    !cdf_is_macaddr_broadcast(&pDeauthReq->peer_macaddr))
 		return false;
 
 	return true;

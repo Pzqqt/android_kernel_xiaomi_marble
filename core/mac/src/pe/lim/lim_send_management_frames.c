@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -3078,7 +3078,9 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 		}
 
 		pStaDs =
-			dph_lookup_hash_entry(pMac, pMlmDeauthReq->peerMacAddr, &aid,
+			dph_lookup_hash_entry(pMac,
+					      pMlmDeauthReq->peer_macaddr.bytes,
+					      &aid,
 					      &psessionEntry->dph.dphHashTable);
 		if (pStaDs == NULL) {
 			mlmDeauthCnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
@@ -3132,9 +3134,8 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 	}
 	return CDF_STATUS_SUCCESS;
 end:
-	cdf_mem_copy((uint8_t *) &mlmDeauthCnf.peerMacAddr,
-		     (uint8_t *) pMlmDeauthReq->peerMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr,
+			 &pMlmDeauthReq->peer_macaddr);
 	mlmDeauthCnf.deauthTrigger = pMlmDeauthReq->deauthTrigger;
 	mlmDeauthCnf.aid = pMlmDeauthReq->aid;
 	mlmDeauthCnf.sessionId = pMlmDeauthReq->sessionId;
