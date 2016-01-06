@@ -10335,9 +10335,8 @@ csr_roam_chk_lnk_disassoc_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (CSR_IS_INFRA_AP(&session->connectedProfile)) {
 		roam_info_ptr = &roam_info;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
-		cdf_mem_copy(roam_info_ptr->peerMac.bytes,
-			     pDisassocRsp->peerMacAddr,
-			     sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+				 &pDisassocRsp->peer_macaddr);
 		roam_info_ptr->reasonCode = eCSR_ROAM_RESULT_FORCED;
 		roam_info_ptr->statusCode = pDisassocRsp->statusCode;
 		status = csr_roam_call_callback(mac_ctx, sessionId,
@@ -17885,7 +17884,7 @@ static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf, tSirSmeDisassocRsp *pR
 		pBuf += 2;
 		cdf_get_u32(pBuf, (uint32_t *) &pRsp->statusCode);
 		pBuf += 4;
-		cdf_mem_copy(pRsp->peerMacAddr, pBuf, 6);
+		cdf_mem_copy(pRsp->peer_macaddr.bytes, pBuf, CDF_MAC_ADDR_SIZE);
 	}
 }
 

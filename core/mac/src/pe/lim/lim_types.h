@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -333,7 +333,7 @@ typedef struct sLimMlmDeauthInd {
 } tLimMlmDeauthInd, *tpLimMlmDeauthInd;
 
 typedef struct sLimMlmDisassocReq {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	uint16_t disassocTrigger;
 	uint16_t aid;

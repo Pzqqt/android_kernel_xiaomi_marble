@@ -507,17 +507,15 @@ lim_process_auth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			if (pMlmDisassocReq
 			    &&
 			    (cdf_mem_compare
-				     ((uint8_t *) pHdr->sa,
-				     (uint8_t *) &pMlmDisassocReq->peerMacAddr,
-				     sizeof(tSirMacAddr)))) {
+				((uint8_t *) pHdr->sa,
+				&pMlmDisassocReq->peer_macaddr.bytes,
+				CDF_MAC_ADDR_SIZE))) {
 				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("TODO:Ack for disassoc "
-						  "frame is pending Issue delsta for "
-						  MAC_ADDRESS_STR),
-					       MAC_ADDR_ARRAY(pMlmDisassocReq->
-							      peerMacAddr));
-				       )
+				   (pMac, LOGE,
+				    FL("TODO:Ack for disassoc frame is pending Issue delsta for "
+					  MAC_ADDRESS_STR),
+				       MAC_ADDR_ARRAY(pMlmDisassocReq->
+						      peer_macaddr.bytes));)
 				lim_process_disassoc_ack_timeout(pMac);
 				isConnected = eSIR_FALSE;
 			}
