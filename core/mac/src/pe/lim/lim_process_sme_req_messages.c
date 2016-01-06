@@ -358,7 +358,7 @@ __lim_fresh_scan_reqd(tpAniSirGlobal mac_ctx, uint8_t return_fresh_results)
 
 static inline uint8_t __lim_is_sme_assoc_cnf_valid(tpSirSmeAssocCnf pAssocCnf)
 {
-	if (lim_is_group_addr(pAssocCnf->peerMacAddr))
+	if (cdf_is_macaddr_group(&pAssocCnf->peer_macaddr))
 		return false;
 	else
 		return true;
@@ -3526,7 +3526,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 		goto end;
 	}
 
-	session_entry = pe_find_session_by_bssid(mac_ctx, assoc_cnf.bssId,
+	session_entry = pe_find_session_by_bssid(mac_ctx, assoc_cnf.bssid.bytes,
 			&session_id);
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGE,
@@ -3551,13 +3551,13 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 		lim_log(mac_ctx, LOGE, FL(
 			"Rcvd invalid msg %X due to no STA ctx, aid %d, peer "),
 				msg_type, assoc_cnf.aid);
-		lim_print_mac_addr(mac_ctx, assoc_cnf.peerMacAddr, LOG1);
+		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOG1);
 
 		/*
 		 * send a DISASSOC_IND message to WSM to make sure
 		 * the state in WSM and LIM is the same
 		 */
-		lim_send_sme_disassoc_ntf(mac_ctx, assoc_cnf.peerMacAddr,
+		lim_send_sme_disassoc_ntf(mac_ctx, assoc_cnf.peer_macaddr.bytes,
 				eSIR_SME_STA_NOT_ASSOCIATED,
 				eLIM_PEER_ENTITY_DISASSOC, assoc_cnf.aid,
 				session_entry->smeSessionId,
@@ -3566,12 +3566,12 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 		goto end;
 	}
 	if (!cdf_mem_compare((uint8_t *)sta_ds->staAddr,
-				(uint8_t *) assoc_cnf.peerMacAddr,
-				sizeof(tSirMacAddr))) {
+				(uint8_t *) assoc_cnf.peer_macaddr.bytes,
+				CDF_MAC_ADDR_SIZE)) {
 		lim_log(mac_ctx, LOG1, FL(
 				"peerMacAddr mismatched for aid %d, peer "),
 				assoc_cnf.aid);
-		lim_print_mac_addr(mac_ctx, assoc_cnf.peerMacAddr, LOG1);
+		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOG1);
 		goto end;
 	}
 
@@ -3584,7 +3584,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 			"not in MLM_WT_ASSOC_CNF_STATE, for aid %d, peer"
 			"StaD mlmState : %d"),
 			assoc_cnf.aid, sta_ds->mlmStaContext.mlmState);
-		lim_print_mac_addr(mac_ctx, assoc_cnf.peerMacAddr, LOG1);
+		lim_print_mac_addr(mac_ctx, assoc_cnf.peer_macaddr.bytes, LOG1);
 		goto end;
 	}
 	/*
