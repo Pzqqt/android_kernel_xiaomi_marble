@@ -527,7 +527,6 @@ static int wlan_hdd_bus_resume(void)
 }
 
 #ifdef FEATURE_RUNTIME_PM
-
 /**
  * __wlan_hdd_runtime_suspend() - suspend the wlan bus without apps suspend
  *
@@ -542,21 +541,16 @@ static int __wlan_hdd_runtime_suspend(void)
 	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
-	if (0 != status) {
-		hif_log_runtime_suspend_failure();
-		return status;
-	}
+	if (0 != status)
+		goto process_failure;
 
-	if (!hif_can_suspend_link()) {
-		hdd_err("Runtime PM not supported for link up suspend");
-		hif_log_runtime_suspend_failure();
-		return -EINVAL;
-	}
+	status = hif_pre_runtime_suspend();
+	if (status)
+		goto process_failure;
 
-	hif_runtime_pm_set_state_inprogress();
 	status = htc_runtime_suspend();
 	if (status)
-		goto set_state;
+		goto process_failure;
 
 	status = wma_runtime_suspend();
 	if (status)
@@ -570,8 +564,7 @@ static int __wlan_hdd_runtime_suspend(void)
 	if (status)
 		goto resume_hif;
 
-	hif_runtime_pm_set_state_suspended();
-	hif_log_runtime_suspend_success();
+	hif_process_runtime_suspend_success();
 	return status;
 
 resume_hif:
@@ -580,9 +573,8 @@ resume_wma:
 	CDF_BUG(!wma_runtime_resume());
 resume_htc:
 	CDF_BUG(!htc_runtime_resume());
-set_state:
-	hif_log_runtime_suspend_failure();
-	hif_runtime_pm_set_state_on();
+process_failure:
+	hif_process_runtime_suspend_failure();
 	return status;
 }
 
@@ -616,13 +608,12 @@ static int wlan_hdd_runtime_suspend(void)
  */
 static int __wlan_hdd_runtime_resume(void)
 {
-	hif_runtime_pm_set_state_inprogress();
+	hif_pre_runtime_resume();
 	CDF_BUG(!cnss_auto_resume());
 	CDF_BUG(!hif_runtime_resume());
 	CDF_BUG(!wma_runtime_resume());
 	CDF_BUG(!htc_runtime_resume());
-	hif_log_runtime_resume_success();
-	hif_runtime_pm_set_state_on();
+	hif_process_runtime_resume_success();
 	return 0;
 }
 

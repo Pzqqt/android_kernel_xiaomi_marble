@@ -115,42 +115,6 @@ void dump_ce_debug_register(struct ol_softc *scn)
 }
 
 /**
- * hif_runtime_pm_set_state_inprogress() - dummy function
- *
- * currently runtime pm only supported in pci
- */
-void hif_runtime_pm_set_state_inprogress(void)
-{
-}
-
-/**
- * hif_runtime_pm_set_state_on() - dummy function
- *
- * currently runtime pm only supported in pci
- */
-void hif_runtime_pm_set_state_on(void)
-{
-}
-
-/**
- * hif_runtime_pm_set_state_suspended() - dummy function
- *
- * currently runtime pm only supported in pci
- */
-void hif_runtime_pm_set_state_on(void)
-{
-}
-
-/**
- * hif_runtime_pm_set_state_suspended() - dummy function
- *
- * currently runtime pm only supported in pci
- */
-void hif_runtime_pm_set_state_suspended(void)
-{
-}
-
-/**
  * hif_bus_suspend() - suspend the bus
  *
  * This function suspends the bus, but snoc doesn't need to suspend.
@@ -174,16 +138,6 @@ int hif_bus_suspend(void)
 int hif_bus_resume(void)
 {
 	return 0;
-}
-
-static int hif_runtime_suspend(void)
-{
-	return hif_bus_suspend();
-}
-
-static int hif_runtime_resume(void)
-{
-	return hif_bus_resume();
 }
 
 /**

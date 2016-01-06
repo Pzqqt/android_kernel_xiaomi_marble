@@ -685,26 +685,24 @@ static inline int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
 { return 0; }
 #endif
 
-void hif_runtime_pm_set_state_inprogress(void);
-void hif_runtime_pm_set_state_on(void);
-
 void hif_enable_power_management(void *hif_ctx);
 void hif_disable_power_management(void *hif_ctx);
-int hif_runtime_suspend(void);
-int hif_runtime_resume(void);
-int hif_bus_resume(void);
-int hif_bus_suspend(void);
+
 void hif_vote_link_down(void);
 void hif_vote_link_up(void);
 bool hif_can_suspend_link(void);
-void hif_runtime_pm_set_state_inprogress(void);
-void hif_runtime_pm_set_state_on(void);
-void hif_runtime_pm_set_state_suspended(void);
+
+int hif_bus_resume(void);
+int hif_bus_suspend(void);
 
 #ifdef FEATURE_RUNTIME_PM
-void hif_log_runtime_suspend_success(void);
-void hif_log_runtime_suspend_failure(void);
-void hif_log_runtime_resume_success(void);
+int hif_pre_runtime_suspend(void);
+void hif_pre_runtime_resume(void);
+int hif_runtime_suspend(void);
+int hif_runtime_resume(void);
+void hif_process_runtime_suspend_success(void);
+void hif_process_runtime_suspend_failure(void);
+void hif_process_runtime_resume_success(void);
 #endif
 
 int dump_ce_register(struct ol_softc *scn);
