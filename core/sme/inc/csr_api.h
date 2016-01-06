@@ -363,13 +363,11 @@ typedef struct tagCsrScanResultFilter {
 	/* For WPS filtering if true => auth and ecryption should be ignored */
 	bool bWPSAssociation;
 	bool bOSENAssociation;
-#if defined WLAN_FEATURE_VOWIFI
 	/*
 	 * For measurement reports --> if set, only SSID,
 	 * BSSID and channel is considered for filtering.
 	 */
 	bool fMeasurement;
-#endif
 	tCsrMobilityDomainInfo MDID;
 	bool p2pResult;
 #ifdef WLAN_FEATURE_11W

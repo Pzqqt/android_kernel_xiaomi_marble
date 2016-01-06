@@ -714,9 +714,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		}
 	}
 
-#if defined WLAN_FEATURE_VOWIFI
 	pAddBssParams->maxTxPower = pftSessionEntry->maxTxPower;
-#endif
 
 #ifdef WLAN_FEATURE_11W
 	if (pftSessionEntry->limRmfEnabled) {

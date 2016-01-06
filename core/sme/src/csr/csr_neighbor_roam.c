@@ -1671,7 +1671,6 @@ static QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
 }
 
 
-#if defined WLAN_FEATURE_VOWIFI
 /**
  * csr_neighbor_roam_channels_filter_by_current_band()
  *
@@ -1994,7 +1993,6 @@ QDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(tpAniSirGloba
 
 	return QDF_STATUS_SUCCESS;
 }
-#endif /* WLAN_FEATURE_VOWIFI */
 
 /**
  * csr_neighbor_roam_is_ssid_and_security_match() - to match ssid/security

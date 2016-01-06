@@ -52,9 +52,7 @@
 #include "oem_data_api.h"
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI
 #include "sme_rrm_internal.h"
-#endif
 #include "sir_types.h"
 /*--------------------------------------------------------------------------
   Preprocessor definitions and constants
@@ -90,9 +88,7 @@
 typedef void (*hdd_ftm_msg_processor)(void *);
 typedef struct _smeConfigParams {
 	tCsrConfigParam csrConfig;
-#if defined WLAN_FEATURE_VOWIFI
 	struct rrm_config_param rrmConfig;
-#endif
 } tSmeConfigParams, *tpSmeConfigParams;
 
 #ifdef FEATURE_WLAN_TDLS
@@ -434,11 +430,9 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 void sme_set_cfg_privacy(tHalHandle hHal, tCsrRoamProfile *pProfile,
 		bool fPrivacy);
 void sme_get_recovery_stats(tHalHandle hHal);
-#if defined WLAN_FEATURE_VOWIFI
 QDF_STATUS sme_neighbor_report_request(tHalHandle hHal, uint8_t sessionId,
 		tpRrmNeighborReq pRrmNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
-#endif
 QDF_STATUS sme_get_wcnss_wlan_compiled_version(tHalHandle hHal,
 		tSirVersionType * pVersion);
 QDF_STATUS sme_get_wcnss_wlan_reported_version(tHalHandle hHal,

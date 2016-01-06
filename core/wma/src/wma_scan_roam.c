@@ -2491,11 +2491,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		req.preferred_tx_streams = 1;
 	}
 
-#ifdef WLAN_FEATURE_VOWIFI
 	req.max_txpow = params->maxTxPower;
-#else
-	req.max_txpow = params->localPowerConstraint;
-#endif /* WLAN_FEATURE_VOWIFI */
 	req.beacon_intval = 100;
 	req.dtim_period = 1;
 	req.is_dfs = params->isDfsChannel;
@@ -2523,11 +2519,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 send_resp:
 	WMA_LOGD("%s: channel %d ch_width %d txpower %d status %d", __func__,
 		 params->channelNumber, params->ch_width,
-#ifdef WLAN_FEATURE_VOWIFI
 		 params->maxTxPower,
-#else
-		 params->localPowerConstraint,
-#endif /* WLAN_FEATURE_VOWIFI */
 		 status);
 	params->status = status;
 	WMA_LOGI("%s: sending WMA_SWITCH_CHANNEL_RSP, status = 0x%x",

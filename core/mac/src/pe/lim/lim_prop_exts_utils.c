@@ -78,9 +78,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	int8_t *local_constraint, tpPESession session)
 {
 	tSirProbeRespBeacon *beacon_struct;
-#if !defined WLAN_FEATURE_VOWIFI
-	uint32_t local_power_constraints = 0;
-#endif
 	uint32_t enable_txbf_20mhz;
 	tSirRetStatus cfg_set_status = eSIR_FAILURE;
 	tSirRetStatus cfg_get_status = eSIR_FAILURE;
@@ -213,25 +210,10 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			beacon_struct->is_ese_ver_ie_present;
 #endif
 		if (beacon_struct->powerConstraintPresent) {
-#if defined WLAN_FEATURE_VOWIFI
 			*local_constraint -=
 				beacon_struct->localPowerConstraint.
 				localPowerConstraints;
-#else
-			local_power_constraints =
-				(uint32_t) beacon_struct->localPowerConstraint.
-				localPowerConstraints;
-#endif
 		}
-#if !defined WLAN_FEATURE_VOWIFI
-		if (cfg_set_int
-			    (mac_ctx, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-			    local_power_constraints) != eSIR_SUCCESS) {
-			lim_log(mac_ctx, LOGP,
-				FL
-					("Could not update local power constraint to cfg."));
-		}
-#endif
 		session->country_info_present = false;
 		/* Initializing before first use */
 		if (beacon_struct->countryInfoPresent)

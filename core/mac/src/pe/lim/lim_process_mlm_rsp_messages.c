@@ -44,9 +44,7 @@
 #include "lim_ft_defs.h"
 #include "lim_session.h"
 #include "lim_session_utils.h"
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "lim_types.h"
@@ -2771,9 +2769,7 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	pStaDs->ucUcastSig = pAddBssParams->staContext.ucUcastSig;
 	pStaDs->ucBcastSig = pAddBssParams->staContext.ucBcastSig;
 
-#if defined WLAN_FEATURE_VOWIFI
 	rrm_cache_mgmt_tx_power(pMac, pAddBssParams->txMgmtPower, psessionEntry);
-#endif
 
 	pAddStaParams = qdf_mem_malloc(sizeof(tAddStaParams));
 	if (NULL == pAddStaParams) {
@@ -3027,10 +3023,8 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 			lim_send_edca_params(mac_ctx,
 				session_entry->gLimEdcaParamsActive,
 				sta_ds->bssId);
-#if defined WLAN_FEATURE_VOWIFI
 			rrm_cache_mgmt_tx_power(mac_ctx,
 				add_bss_params->txMgmtPower, session_entry);
-#endif
 			if (lim_add_sta_self(mac_ctx, sta_idx, update_sta,
 				session_entry) != eSIR_SUCCESS) {
 				/* Add STA context at HW */
@@ -3638,11 +3632,9 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 			FL("session does not exist for given sessionId"));
 		return;
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	/* HAL fills in the tx power used for mgmt frames in this field. */
 	/* Store this value to use in TPC report IE. */
 	rrm_cache_mgmt_tx_power(pMac, pChnlParams->txMgmtPower, psessionEntry);
-#endif
 	channelChangeReasonCode = psessionEntry->channelChangeReasonCode;
 	/* initialize it back to invalid id */
 	psessionEntry->chainMask = pChnlParams->chainMask;

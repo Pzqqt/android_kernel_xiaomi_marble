@@ -673,10 +673,8 @@ typedef struct sSirBssDescription {
 	uint8_t sSirBssDescriptionRsvd[3];
 	/* base on a tick count. It is a time stamp, not a relative time. */
 	uint32_t nReceivedTime;
-#if defined WLAN_FEATURE_VOWIFI
 	uint32_t parentTSF;
 	uint32_t startTSF[2];
-#endif
 	uint8_t mdiePresent;
 	/* MDIE for 11r, picked from the beacons */
 	uint8_t mdie[SIR_MDIE_SIZE];

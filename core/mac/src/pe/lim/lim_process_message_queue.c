@@ -55,9 +55,7 @@
 #include "lim_session.h"
 #include "lim_send_messages.h"
 
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 
 #include "lim_ft.h"
 
@@ -1340,10 +1338,8 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case eWNI_SME_GET_WPSPBC_SESSION_REQ:
 	case eWNI_SME_SET_APWPARSNIEs_REQ:
 	case eWNI_SME_CHNG_MCC_BEACON_INTERVAL:
-#if defined WLAN_FEATURE_VOWIFI
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
 	case eWNI_SME_BEACON_REPORT_RESP_XMIT_IND:
-#endif
 #if defined FEATURE_WLAN_ESE
 	case eWNI_SME_ESE_ADJACENT_AP_REPORT:
 #endif
@@ -1628,9 +1624,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		msg->bodyptr = NULL;
 		break;
 	case WMA_SET_MAX_TX_POWER_RSP:
-#if defined WLAN_FEATURE_VOWIFI
 		rrm_set_max_tx_power_rsp(mac_ctx, msg);
-#endif
 		if (msg->bodyptr != NULL) {
 			qdf_mem_free((void *)msg->bodyptr);
 			msg->bodyptr = NULL;

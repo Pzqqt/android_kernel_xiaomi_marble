@@ -45,9 +45,7 @@
 #include "lim_ser_des_utils.h"
 #include "sch_api.h"
 #include "wmm_apsd.h"
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 
 #include "cds_regdomain_common.h"
 
@@ -5491,7 +5489,6 @@ tSirRetStatus populate_dot11_assoc_res_p2p_ie(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 }
 
-#if defined WLAN_FEATURE_VOWIFI
 
 tSirRetStatus populate_dot11f_wfatpc(tpAniSirGlobal pMac,
 				     tDot11fIEWFATPC *pDot11f, uint8_t txPower,
@@ -5586,7 +5583,6 @@ tSirRetStatus populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 	pDot11f->present = 1;
 	return eSIR_SUCCESS;
 }
-#endif
 
 void populate_mdie(tpAniSirGlobal pMac,
 		   tDot11fIEMobilityDomain *pDot11f,

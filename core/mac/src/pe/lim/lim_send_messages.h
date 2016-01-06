@@ -63,7 +63,6 @@ tSirRetStatus lim_set_membership(tpAniSirGlobal pMac,
 tSirRetStatus lim_set_user_pos(tpAniSirGlobal pMac,
 			       tUpdateUserPos *pTempParam,
 			       tpPESession psessionEntry);
-#if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
@@ -72,16 +71,6 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  int8_t maxTxPower,
 					  uint8_t peSessionId,
 					  uint8_t is_restart);
-#else
-tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
-					  uint8_t chnlNumber,
-					  uint8_t ch_center_freq_seg0,
-					  uint8_t ch_center_freq_seg1,
-					  phy_ch_width ch_width,
-					  uint8_t localPwrConstraint,
-					  uint8_t peSessionId,
-					  uint8_t is_restart);
-#endif
 tSirRetStatus lim_send_edca_params(tpAniSirGlobal pMac,
 				   tSirMacEdcaParamRecord *pUpdatedEdcaParams,
 				   uint16_t bssIdx);

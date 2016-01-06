@@ -61,10 +61,8 @@ static tBeaconFilterIe beacon_filter_table[] = {
 	{SIR_MAC_CHNL_SWITCH_ANN_EID, 1, {0, 0, 0, 0} },
 	{SIR_MAC_HT_INFO_EID, 0, {0, 0, HT_BYTE0_FILTER_MASK, 0} },
 	{SIR_MAC_HT_INFO_EID, 0, {2, 0, HT_BYTE2_FILTER_MASK, 0} },
-	{SIR_MAC_HT_INFO_EID, 0, {5, 0, HT_BYTE5_FILTER_MASK, 0} }
-#if defined WLAN_FEATURE_VOWIFI
-	, {SIR_MAC_PWR_CONSTRAINT_EID, 0, {0, 0, 0, 0} }
-#endif
+	{SIR_MAC_HT_INFO_EID, 0, {5, 0, HT_BYTE5_FILTER_MASK, 0} },
+	{SIR_MAC_PWR_CONSTRAINT_EID, 0, {0, 0, 0, 0} }
 #ifdef WLAN_FEATURE_11AC
 	, {SIR_MAC_VHT_OPMODE_EID, 0, {0, 0, 0, 0} }
 	, {SIR_MAC_VHT_OPERATION_EID, 0, {0, 0, VHTOP_CHWIDTH_MASK, 0} }
@@ -205,16 +203,6 @@ tSirRetStatus lim_send_beacon_params(tpAniSirGlobal pMac,
  *
  * @return success if message send is ok, else false.
  */
-#if !defined WLAN_FEATURE_VOWIFI
-tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
-					  uint8_t chnlNumber,
-					  uint8_t ch_center_freq_seg0,
-					  uint8_t ch_center_freq_seg1,
-					  phy_ch_width ch_width,
-					  uint8_t localPwrConstraint,
-					  uint8_t peSessionId,
-					  uint8_t is_restart)
-#else
 tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint8_t chnlNumber,
 					  uint8_t ch_center_freq_seg0,
@@ -223,7 +211,6 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  int8_t maxTxPower,
 					  uint8_t peSessionId,
 					  uint8_t is_restart)
-#endif
 {
 	tpSwitchChannelParams pChnlParams = NULL;
 	tSirMsgQ msgQ;
@@ -248,11 +235,7 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	pChnlParams->ch_width = ch_width;
 	qdf_mem_copy(pChnlParams->selfStaMacAddr, pSessionEntry->selfMacAddr,
 		     sizeof(tSirMacAddr));
-#if defined WLAN_FEATURE_VOWIFI
 	pChnlParams->maxTxPower = maxTxPower;
-#else
-	pChnlParams->localPowerConstraint = localPwrConstraint;
-#endif
 	qdf_mem_copy(pChnlParams->bssId, pSessionEntry->bssId,
 		     sizeof(tSirMacAddr));
 	pChnlParams->peSessionId = peSessionId;
@@ -277,18 +260,10 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pChnlParams;
 	msgQ.bodyval = 0;
-#if defined WLAN_FEATURE_VOWIFI
 	PELOG3(lim_log(pMac, LOG3, FL(
 		"Sending CH_SWITCH_REQ, ch_width %d, ch_num %d, maxTxPower %d"),
 		       pChnlParams->ch_width,
 		       pChnlParams->channelNumber, pChnlParams->maxTxPower);)
-#else
-	PELOG3(lim_log(pMac, LOG3, FL(
-		"Sending CH_SWITCH_REQ, ch_width %d, ch_num %d, local_pwr_constraint %d"),
-		       pChnlParams->ch_width,
-		       pChnlParams->channelNumber,
-		       pChnlParams->localPowerConstraint);)
-#endif
 	MTRACE(mac_trace_msg_tx(pMac, peSessionId, msgQ.type));
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(pMac, &msgQ)) {
 		qdf_mem_free(pChnlParams);

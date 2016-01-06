@@ -51,9 +51,7 @@
 #include "oem_data_internal.h"
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI
 #include "sme_rrm_api.h"
-#endif
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 
 /*--------------------------------------------------------------------------

@@ -486,10 +486,8 @@ typedef struct {
 	tSirMacSSid ssId;
 	uint8_t respReqd;
 	uint8_t sessionId;
-#if defined WLAN_FEATURE_VOWIFI
 	int8_t txMgmtPower;
 	int8_t maxTxPower;
-#endif /* WLAN_FEATURE_VOWIFI */
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 	uint8_t extSetStaKeyParamValid;
@@ -613,10 +611,8 @@ typedef struct {
 typedef struct {
 	uint8_t scanChannel;
 	QDF_STATUS status;
-#if defined WLAN_FEATURE_VOWIFI
 	uint32_t startTSF[2];
 	int8_t txMgmtPower;
-#endif /* WLAN_FEATURE_VOWIFI */
 } tStartScanParams, *tpStartScanParams;
 
 /**
@@ -895,14 +891,9 @@ typedef struct {
  */
 typedef struct {
 	uint8_t channelNumber;
-#ifndef WLAN_FEATURE_VOWIFI
-	uint8_t localPowerConstraint;
-#endif /* WLAN_FEATURE_VOWIFI  */
 	uint8_t peSessionId;
-#if defined WLAN_FEATURE_VOWIFI
 	int8_t txMgmtPower;
 	int8_t maxTxPower;
-#endif /* WLAN_FEATURE_VOWIFI */
 	tSirMacAddr selfStaMacAddr;
 	/* the request has power constraints, this should be applied only to
 	 * that session

@@ -818,11 +818,9 @@ tSirRetStatus cfg_get_capability_info(tpAniSirGlobal pMac, uint16_t *pCap,
 	if (val)
 		pCapInfo->apsd = 1;
 
-#if defined WLAN_FEATURE_VOWIFI
 	pCapInfo->rrm = pMac->rrm.rrmSmeContext.rrmConfig.rrm_enabled;
 #if defined WLAN_VOWIFI_DEBUG
 	cfg_log(pMac, LOGE, FL("RRM = %d"), pCapInfo->rrm);
-#endif
 #endif
 	/* DSSS-OFDM */
 	/* FIXME : no config defined yet. */

@@ -38,7 +38,6 @@
 #ifndef __RRM_API_H__
 #define __RRM_API_H__
 
-#ifdef WLAN_FEATURE_VOWIFI
 #define RRM_MIN_TX_PWR_CAP    13
 #define RRM_MAX_TX_PWR_CAP    19
 
@@ -102,10 +101,4 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal pMac,
 			       tpSirBeaconReportXmitInd pBcnReport);
 extern void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
 				      tpSirSmeJoinReq join_req);
-#else
-void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
-			       tpSirSmeJoinReq join_req)
-{
-}
-#endif
 #endif

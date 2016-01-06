@@ -663,9 +663,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->bProxyProbeRespEn = 0;
 	addbss_param->obssProtEnabled = mlm_start_req->obssProtEnabled;
 
-#if defined WLAN_FEATURE_VOWIFI
 	addbss_param->maxTxPower = session->maxTxPower;
-#endif
 	mlm_add_sta(mac_ctx, &addbss_param->staContext,
 		    addbss_param->bssId, addbss_param->htCapable,
 		    session);
@@ -2893,9 +2891,6 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 		     phy_ch_width ch_width, int8_t max_tx_power,
 		     uint8_t pe_session_id)
 {
-#if !defined WLAN_FEATURE_VOWIFI
-	uint32_t localPwrConstraint;
-#endif
 	tpPESession pe_session;
 	pe_session = pe_find_session_by_session_id(mac_ctx, pe_session_id);
 
@@ -2904,21 +2899,7 @@ void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 			pe_session_id);
 		return;
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	lim_send_switch_chnl_params(mac_ctx, channel, ch_center_freq_seg0,
 				    ch_center_freq_seg1, ch_width,
 				    max_tx_power, pe_session_id, false);
-#else
-	if (wlan_cfg_get_int(mac_ctx, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-			    &localPwrConstraint) != eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGP,
-			FL("couldn't read CFG_LOCAL_POWER_CONSTRAINT"));
-		return;
-	}
-	/* Send WMA_CHNL_SWITCH_IND to HAL */
-	lim_send_switch_chnl_params(mac_ctx, channel, ch_center_freq_seg0,
-				    ch_center_freq_seg1, ch_width,
-				    (int8_t)localPwrConstraint,
-				    pe_session_id, false);
-#endif
 }

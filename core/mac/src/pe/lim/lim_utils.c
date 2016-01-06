@@ -2701,9 +2701,6 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 void lim_switch_primary_channel(tpAniSirGlobal pMac, uint8_t newChannel,
 				tpPESession psessionEntry)
 {
-#if !defined WLAN_FEATURE_VOWIFI
-	uint32_t localPwrConstraint;
-#endif
 
 	PELOG3(lim_log
 		       (pMac, LOG3,
@@ -2718,22 +2715,9 @@ void lim_switch_primary_channel(tpAniSirGlobal pMac, uint8_t newChannel,
 	pMac->lim.gpchangeChannelCallback = lim_switch_channel_cback;
 	pMac->lim.gpchangeChannelData = NULL;
 
-#if defined WLAN_FEATURE_VOWIFI
 	lim_send_switch_chnl_params(pMac, newChannel, 0, 0, CH_WIDTH_20MHZ,
 				    psessionEntry->maxTxPower,
 				    psessionEntry->peSessionId, false);
-#else
-	if (wlan_cfg_get_int
-		    (pMac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-		    &localPwrConstraint) != eSIR_SUCCESS) {
-		lim_log(pMac, LOGP,
-			FL("Unable to read Local Power Constraint from cfg"));
-		return;
-	}
-	lim_send_switch_chnl_params(pMac, newChannel, 0, 0, CH_WIDTH_20MHZ,
-				    localPwrConstraint,
-				    psessionEntry->peSessionId, false);
-#endif
 	return;
 }
 
@@ -2763,19 +2747,8 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 					uint8_t ch_center_freq_seg1,
 					phy_ch_width ch_width)
 {
-#if !defined WLAN_FEATURE_VOWIFI
-	uint32_t localPwrConstraint;
-#endif
 	uint8_t subband = 0;
-#if !defined WLAN_FEATURE_VOWIFI
-	if (wlan_cfg_get_int
-		    (pMac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-		    &localPwrConstraint) != eSIR_SUCCESS) {
-		lim_log(pMac, LOGP,
-			FL("Unable to get Local Power Constraint from cfg"));
-		return;
-	}
-#endif
+
 	/* Assign the callback to resume TX once channel is changed. */
 	psessionEntry->currentReqChannel = newChannel;
 	psessionEntry->limRFBand = lim_get_rf_band(newChannel);
@@ -2783,18 +2756,11 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 	pMac->lim.gpchangeChannelCallback = lim_switch_channel_cback;
 	pMac->lim.gpchangeChannelData = NULL;
 
-#if defined WLAN_FEATURE_VOWIFI
 	lim_send_switch_chnl_params(pMac, newChannel, ch_center_freq_seg0,
 					ch_center_freq_seg1, ch_width,
 					psessionEntry->maxTxPower,
 					psessionEntry->peSessionId,
 					false);
-#else
-	lim_send_switch_chnl_params(pMac, newChannel, ch_center_freq_seg0,
-					ch_center_freq_seg1, ch_width,
-					psessionEntry->peSessionId,
-					false);
-#endif
 
 	/* Store the new primary and secondary channel in session entries if different */
 	if (psessionEntry->currentOperChannel != newChannel) {
@@ -4888,24 +4854,11 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 						   tpPESession psessionEntry)
 {
 	uint8_t center_freq = 0;
-#if !defined WLAN_FEATURE_VOWIFI
-	uint32_t localPwrConstraint;
-#endif
 
 	/* If self capability is set to '20Mhz only', then do not change the CB mode. */
 	if (!lim_get_ht_capability
 		    (pMac, eHT_SUPPORTED_CHANNEL_WIDTH_SET, psessionEntry))
 		return;
-
-#if !defined WLAN_FEATURE_VOWIFI
-	if (wlan_cfg_get_int
-		    (pMac, WNI_CFG_LOCAL_POWER_CONSTRAINT,
-		    &localPwrConstraint) != eSIR_SUCCESS) {
-		lim_log(pMac, LOGP,
-			FL("Unable to get Local Power Constraint from cfg"));
-		return;
-	}
-#endif
 
 	if (psessionEntry->ftPEContext.ftPreAuthSession) {
 		lim_log(pMac, LOGE,
@@ -4957,21 +4910,12 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 		pMac->lim.gpchangeChannelCallback = NULL;
 		pMac->lim.gpchangeChannelData = NULL;
 
-#if defined WLAN_FEATURE_VOWIFI
 		lim_send_switch_chnl_params(pMac, (uint8_t) pHTInfo->primaryChannel,
 					    center_freq, 0,
 					    psessionEntry->htRecommendedTxWidthSet,
 					    psessionEntry->maxTxPower,
 					    psessionEntry->peSessionId,
 					    true);
-#else
-		lim_send_switch_chnl_params(pMac, (uint8_t) pHTInfo->primaryChannel,
-					    center_freq, 0,
-					    psessionEntry->htRecommendedTxWidthSet,
-					    (int8_t)localPwrConstraint,
-					    psessionEntry->peSessionId,
-					    true);
-#endif
 
 		/* In case of IBSS, if STA should update HT Info IE in its beacons. */
 		if (LIM_IS_IBSS_ROLE(psessionEntry)) {

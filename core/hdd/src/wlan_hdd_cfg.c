@@ -1285,7 +1285,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_WLAN_AUTO_SHUTDOWN_MIN,
 		     CFG_WLAN_AUTO_SHUTDOWN_MAX),
 #endif
-#if defined WLAN_FEATURE_VOWIFI
 	REG_VARIABLE(CFG_RRM_ENABLE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fRrmEnable,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -1320,7 +1319,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			    struct hdd_config, rm_capability,
 			    VAR_FLAGS_OPTIONAL,
 			    (void *) CFG_RM_CAPABILITY_DEFAULT),
-#endif
 
 	REG_VARIABLE(CFG_FT_RESOURCE_REQ_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fFTResourceReqSupported,
@@ -5852,14 +5850,12 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		       "Could not pass on WNI_CFG_GO_LINK_MONITOR_TIMEOUT to CFG");
 	}
 
-#if defined WLAN_FEATURE_VOWIFI
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_MCAST_BCAST_FILTER_SETTING,
 		    pConfig->mcastBcastFilterSetting) == QDF_STATUS_E_FAILURE)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_MCAST_BCAST_FILTER_SETTING to CFG");
-#endif
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_SINGLE_TID_RC,
@@ -6492,13 +6488,11 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.Is11eSupportEnabled = pConfig->b80211eIsEnabled;
 	smeConfig->csrConfig.WMMSupportMode = pConfig->WmmMode;
 
-#if defined WLAN_FEATURE_VOWIFI
 	smeConfig->rrmConfig.rrm_enabled = pConfig->fRrmEnable;
 	smeConfig->rrmConfig.max_randn_interval = pConfig->nRrmRandnIntvl;
 	hdd_hex_string_to_u8_array(pConfig->rm_capability,
 			smeConfig->rrmConfig.rm_capability, &rrm_capab_len,
 			DOT11F_IE_RRMENABLEDCAP_MAX_LEN);
-#endif
 	/* Remaining config params not obtained from registry
 	 * On RF EVB beacon using channel 1.
 	 */

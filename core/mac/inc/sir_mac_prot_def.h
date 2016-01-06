@@ -171,7 +171,6 @@
 
 /* RRM related. */
 /* Refer IEEE Std 802.11k-2008, Section 7.3.2.21, table 7.29 */
-#if defined WLAN_FEATURE_VOWIFI
 
 #define SIR_MAC_RRM_CHANNEL_LOAD_TYPE          3
 #define SIR_MAC_RRM_NOISE_HISTOGRAM_BEACON     4
@@ -190,8 +189,6 @@
 #define SIR_MAC_RRM_LINK_MEASUREMENT_RPT       3
 #define SIR_MAC_RRM_NEIGHBOR_REQ               4
 #define SIR_MAC_RRM_NEIGHBOR_RPT               5
-
-#endif
 
 /* VHT Action Field */
 #ifdef WLAN_FEATURE_11AC
@@ -565,9 +562,7 @@
 #define SIR_MAC_GET_QOS(x)               ((((uint16_t) x) & 0x0200) >> 9)
 #define SIR_MAC_GET_SHORT_SLOT_TIME(x)   ((((uint16_t) x) & 0x0400) >> 10)
 #define SIR_MAC_GET_APSD(x)              ((((uint16_t) x) & 0x0800) >> 11)
-#if defined WLAN_FEATURE_VOWIFI
 #define SIR_MAC_GET_RRM(x)               ((((uint16_t) x) & 0x1000) >> 12)
-#endif
 #define SIR_MAC_GET_BLOCK_ACK(x)         ((((uint16_t) x) & 0xc000) >> CAPABILITY_INFO_DELAYED_BA_BIT)
 #define SIR_MAC_SET_ESS(x)               (((uint16_t) x) | 0x0001)
 #define SIR_MAC_SET_IBSS(x)              (((uint16_t) x) | 0x0002)
@@ -579,9 +574,7 @@
 #define SIR_MAC_SET_QOS(x)               (((uint16_t) x) | 0x0200)
 #define SIR_MAC_SET_SHORT_SLOT_TIME(x)   (((uint16_t) x) | 0x0400)
 #define SIR_MAC_SET_APSD(x)              (((uint16_t) x) | 0x0800)
-#if defined WLAN_FEATURE_VOWIFI
 #define SIR_MAC_SET_RRM(x)               (((uint16_t) x) | 0x1000)
-#endif
 #define SIR_MAC_SET_GROUP_ACK(x)         (((uint16_t) x) | 0x4000)
 
 #ifdef WLAN_FEATURE_11AC
@@ -1992,8 +1985,6 @@ typedef struct sSirMacMeasReqActionFrame {
 } tSirMacMeasReqActionFrame, *tpSirMacMeasReqActionFrame;
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI
-
 typedef struct sSirMacNeighborReportReq {
 	uint8_t dialogToken;
 	uint8_t ssid_present;
@@ -2038,8 +2029,6 @@ typedef struct sSirMacRadioMeasureReport {
 	} report;
 
 } tSirMacRadioMeasureReport, *tpSirMacRadioMeasureReport;
-
-#endif
 
 /* QOS action frame definitions */
 

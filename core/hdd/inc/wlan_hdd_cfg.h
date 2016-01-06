@@ -801,7 +801,6 @@ typedef enum {
 #define CFG_TL_DELAYED_TRGR_FRM_INT_MAX                     (4294967295UL)
 #define CFG_TL_DELAYED_TRGR_FRM_INT_DEFAULT                 3000
 
-#if defined WLAN_FEATURE_VOWIFI
 #define CFG_RRM_ENABLE_NAME                              "gRrmEnable"
 #define CFG_RRM_ENABLE_MIN                               (0)
 #define CFG_RRM_ENABLE_MAX                               (1)
@@ -833,7 +832,6 @@ typedef enum {
  */
 #define CFG_RM_CAPABILITY_NAME            "rm_capability"
 #define CFG_RM_CAPABILITY_DEFAULT         "73,00,6D,00,04"
-#endif
 
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_NAME                 "ImplicitQosIsEnabled"
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MIN                  (0)
@@ -2956,14 +2954,12 @@ struct hdd_config {
 	uint8_t nTxPowerCap;    /* In dBm */
 	bool fIsLowGainOverride;
 	uint8_t disablePacketFilter;
-#if defined WLAN_FEATURE_VOWIFI
 	bool fRrmEnable;
 	uint8_t nInChanMeasMaxDuration;
 	uint8_t nOutChanMeasMaxDuration;
 	uint16_t nRrmRandnIntvl;
 	/* length includes separator */
 	char rm_capability[3 * DOT11F_IE_RRMENABLEDCAP_MAX_LEN];
-#endif
 
 	/* Vowifi 11r params */
 	bool fFTResourceReqSupported;

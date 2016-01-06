@@ -58,9 +58,7 @@
 #include "qdf_trace.h"
 #include "cds_utils.h"
 #include "sme_trace.h"
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 
 #include "wma_types.h"
 
@@ -288,7 +286,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-#if defined WLAN_FEATURE_VOWIFI
 	/*
 	 * Table 7-14 in IEEE Std. 802.11k-2008 says
 	 * DS params "can" be present in RRM is disabled and "is" present if
@@ -300,7 +297,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	txPower = (uint8_t) rrm_get_mgmt_tx_power(mac_ctx, pesession);
 	populate_dot11f_wfatpc(mac_ctx, &pr.WFATPC, txPower, 0);
 
-#endif
 
 	if (pesession != NULL) {
 		pesession->htCapability = IS_DOT11_MODE_HT(dot11mode);
@@ -1594,9 +1590,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint16_t add_ie_len;
 	uint8_t *add_ie;
 	uint8_t *wps_ie = NULL;
-#if defined WLAN_FEATURE_VOWIFI
 	uint8_t power_caps = false;
-#endif
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
 	bool vht_enabled = false;
@@ -1694,17 +1688,14 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	if (pe_session->lim11hEnable &&
 	    pe_session->pLimJoinReq->spectrumMgtIndicator == eSIR_TRUE) {
-#if defined WLAN_FEATURE_VOWIFI
 		power_caps = true;
 
 		populate_dot11f_power_caps(mac_ctx, &frm->PowerCaps,
 			LIM_ASSOC, pe_session);
-#endif
 		populate_dot11f_supp_channels(mac_ctx, &frm->SuppChannels,
 			LIM_ASSOC, pe_session);
 
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps)) {
 		if (power_caps == false) {
@@ -1713,8 +1704,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 				LIM_ASSOC, pe_session);
 		}
 	}
-#endif
-
 	if (qos_enabled)
 		populate_dot11f_qos_caps_station(mac_ctx, &frm->QOSCapsStation);
 
@@ -1722,12 +1711,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		POPULATE_DOT11F_RATES_OPERATIONAL, &frm->ExtSuppRates,
 		pe_session);
 
-#if defined WLAN_FEATURE_VOWIFI
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
 		populate_dot11f_rrm_ie(mac_ctx, &frm->RRMEnabledCap,
 			pe_session);
-#endif
+
 	/*
 	 * The join request *should* contain zero or one of the WPA and RSN
 	 * IEs.  The payload send along with the request is a
@@ -1997,9 +1985,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint8_t qos_enabled, wme_enabled, wsm_enabled;
 	void *packet;
 	QDF_STATUS qdf_status;
-#if defined WLAN_FEATURE_VOWIFI
 	uint8_t power_caps_populated = false;
-#endif
 	uint16_t ft_ies_length = 0;
 	uint8_t *body;
 	uint16_t add_ie_len;
@@ -2067,16 +2053,13 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	if (pe_session->lim11hEnable &&
 	    pe_session->pLimReAssocReq->spectrumMgtIndicator == eSIR_TRUE) {
-#if defined WLAN_FEATURE_VOWIFI
 		power_caps_populated = true;
 
 		populate_dot11f_power_caps(mac_ctx, &frm.PowerCaps,
 					   LIM_REASSOC, pe_session);
 		populate_dot11f_supp_channels(mac_ctx, &frm.SuppChannels,
 			LIM_REASSOC, pe_session);
-#endif
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps)) {
 		if (power_caps_populated == false) {
@@ -2085,7 +2068,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 				LIM_REASSOC, pe_session);
 		}
 	}
-#endif
 
 	if (qos_enabled)
 		populate_dot11f_qos_caps_station(mac_ctx, &frm.QOSCapsStation);
@@ -2094,11 +2076,9 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		POPULATE_DOT11F_RATES_OPERATIONAL, &frm.ExtSuppRates,
 		pe_session);
 
-#if defined WLAN_FEATURE_VOWIFI
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
 		populate_dot11f_rrm_ie(mac_ctx, &frm.RRMEnabledCap, pe_session);
-#endif
 
 	/*
 	 * Ideally this should be enabled for 11r also. But 11r does
@@ -2472,9 +2452,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	uint8_t *pAddIE;
 	uint8_t *wpsIe = NULL;
 	uint8_t txFlag = 0;
-#if defined WLAN_FEATURE_VOWIFI
 	uint8_t PowerCapsPopulated = false;
-#endif
 	uint8_t smeSessionId = 0;
 	bool isVHTEnabled = false;
 	tpSirMacMgmtHdr pMacHdr;
@@ -2527,15 +2505,12 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 
 	if (psessionEntry->lim11hEnable &&
 	    psessionEntry->pLimReAssocReq->spectrumMgtIndicator == eSIR_TRUE) {
-#if defined WLAN_FEATURE_VOWIFI
 		PowerCapsPopulated = true;
 		populate_dot11f_power_caps(pMac, &frm.PowerCaps, LIM_REASSOC,
 					   psessionEntry);
 		populate_dot11f_supp_channels(pMac, &frm.SuppChannels, LIM_REASSOC,
 					      psessionEntry);
-#endif
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	if (pMac->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps)) {
 		if (PowerCapsPopulated == false) {
@@ -2544,7 +2519,6 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 						   LIM_REASSOC, psessionEntry);
 		}
 	}
-#endif
 
 	if (fQosEnabled)
 		populate_dot11f_qos_caps_station(pMac, &frm.QOSCapsStation);
@@ -2552,11 +2526,9 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	populate_dot11f_ext_supp_rates(pMac, POPULATE_DOT11F_RATES_OPERATIONAL,
 				       &frm.ExtSuppRates, psessionEntry);
 
-#if defined WLAN_FEATURE_VOWIFI
 	if (pMac->rrm.rrmPEContext.rrmEnable &&
 	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps))
 		populate_dot11f_rrm_ie(pMac, &frm.RRMEnabledCap, psessionEntry);
-#endif
 	/* The join request *should* contain zero or one of the WPA and RSN */
 	/* IEs.  The payload send along with the request is a */
 	/* 'tSirSmeJoinReq'; the IE portion is held inside a 'tSirRSNie': */
@@ -4335,8 +4307,6 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 }
 
-#if defined WLAN_FEATURE_VOWIFI
-
 /**
  * \brief Send a Neighbor Report Request Action frame
  *
@@ -4841,8 +4811,6 @@ returnAfterError:
 	cds_packet_free((void *)pPacket);
 	return statusCode;
 }
-
-#endif
 
 #ifdef WLAN_FEATURE_11W
 /**

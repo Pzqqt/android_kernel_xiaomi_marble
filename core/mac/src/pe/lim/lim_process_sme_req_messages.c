@@ -2017,7 +2017,6 @@ end:
 		sme_transaction_id);
 }
 
-#if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
 uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 			     uint8_t iniTxPower)
 {
@@ -2033,7 +2032,6 @@ uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 
 	return maxTxPower;
 }
-#endif
 
 /**
  * __lim_process_sme_reassoc_req() - process reassoc req
@@ -4386,7 +4384,6 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 
 void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 {
-#ifdef WLAN_FEATURE_VOWIFI
 	switch (pMsg->type) {
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
 		rrm_process_neighbor_report_req(pMac, pMsg->bodyptr);
@@ -4397,10 +4394,8 @@ void __lim_process_report_message(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 	default:
 		lim_log(pMac, LOGE, FL("Invalid msg type:%d"), pMsg->type);
 	}
-#endif
 }
 
-#if defined(FEATURE_WLAN_ESE) || defined(WLAN_FEATURE_VOWIFI)
 /* -------------------------------------------------------------------- */
 /**
  * lim_send_set_max_tx_power_req
@@ -4469,7 +4464,6 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	}
 	return retCode;
 }
-#endif
 
 /**
  * __lim_process_sme_register_mgmt_frame_req() - process sme reg mgmt frame req
@@ -4853,12 +4847,10 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI
 	case eWNI_SME_NEIGHBOR_REPORT_REQ_IND:
 	case eWNI_SME_BEACON_REPORT_RESP_XMIT_IND:
 		__lim_process_report_message(pMac, pMsg);
 		break;
-#endif
 
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 		bufConsumed = (bool) lim_process_ft_pre_auth_req(pMac, pMsg);

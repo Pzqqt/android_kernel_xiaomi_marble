@@ -57,10 +57,8 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "oem_data_internal.h"
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI
 #include "sme_rrm_internal.h"
 #include "rrm_global.h"
-#endif
 #include "p2p_api.h"
 
 #include <lim_ft_defs.h>
@@ -851,12 +849,10 @@ struct mgmt_frm_reg_info {
 	uint8_t matchData[1];
 };
 
-#if defined WLAN_FEATURE_VOWIFI
 typedef struct sRrmContext {
 	tRrmSMEContext rrmSmeContext;
 	tRrmPEContext rrmPEContext;
 } tRrmContext, *tpRrmContext;
-#endif
 
 /**
  * enum tDriverType - Indicate the driver type to the mac, and based on this
@@ -989,9 +985,7 @@ typedef struct sAniSirGlobal {
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	tOemDataStruct oemData;
 #endif
-#if defined WLAN_FEATURE_VOWIFI
 	tRrmContext rrm;
-#endif
 #ifdef WLAN_FEATURE_CONCURRENT_P2P
 	tp2pContext p2pContext[MAX_NO_OF_P2P_SESSIONS];
 #else

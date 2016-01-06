@@ -1097,13 +1097,11 @@ QDF_STATUS sme_open(tHalHandle hHal)
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return status;
 
-#if defined WLAN_FEATURE_VOWIFI
 	status = rrm_open(pMac);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("rrm_open failed, status=%d"), status);
 		return status;
 	}
-#endif
 	sme_p2p_open(pMac);
 	sme_trace_init(pMac);
 	return status;
@@ -1364,7 +1362,6 @@ QDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams
 			"csr_change_default_config_param failed with status=%d",
 			status);
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	status =
 		rrm_change_default_config_param(hHal, &pSmeConfigParams->rrmConfig);
 
@@ -1373,7 +1370,6 @@ QDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams
 			"rrm_change_default_config_param failed with status=%d",
 			status);
 	}
-#endif
 	/* For SOC, CFG is set before start */
 	/* We don't want to apply global CFG in connect state because that may cause some side affect */
 	if (csr_is_all_session_disconnected(pMac)) {
@@ -1664,13 +1660,11 @@ QDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 			break;
 		}
 
-#if defined WLAN_FEATURE_VOWIFI
 		if (QDF_STATUS_SUCCESS != rrm_ready(hHal)) {
 			status = QDF_STATUS_E_FAILURE;
 			sms_log(pMac, LOGE, "rrm_ready failed");
 			break;
 		}
-#endif
 		pMac->sme.state = SME_STATE_READY;
 	} while (0);
 
@@ -2215,7 +2209,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 				pMsg->type);
 		}
 		break;
-#if defined WLAN_FEATURE_VOWIFI
 	case eWNI_SME_NEIGHBOR_REPORT_IND:
 	case eWNI_SME_BEACON_REPORT_REQ_IND:
 #if defined WLAN_VOWIFI_DEBUG
@@ -2231,7 +2224,6 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 				pMsg->type);
 		}
 		break;
-#endif
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	/* Handle the eWNI_SME_OEM_DATA_RSP: */
 	case eWNI_SME_OEM_DATA_RSP:
@@ -2891,7 +2883,6 @@ QDF_STATUS sme_close(tHalHandle hHal)
 		fail_status = status;
 	}
 
-#if defined WLAN_FEATURE_VOWIFI
 	status = rrm_close(hHal);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE,
@@ -2899,7 +2890,6 @@ QDF_STATUS sme_close(tHalHandle hHal)
 			status);
 		fail_status = status;
 	}
-#endif
 
 	sme_p2p_close(hHal);
 
@@ -5306,7 +5296,6 @@ void sme_set_cfg_privacy(tHalHandle hHal,
 	}
 }
 
-#if defined WLAN_FEATURE_VOWIFI
 /* ---------------------------------------------------------------------------
     \fn sme_neighbor_report_request
     \brief  API to request neighbor report.
@@ -5337,7 +5326,6 @@ QDF_STATUS sme_neighbor_report_request(tHalHandle hHal, uint8_t sessionId,
 
 	return status;
 }
-#endif
 
 void sms_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 {

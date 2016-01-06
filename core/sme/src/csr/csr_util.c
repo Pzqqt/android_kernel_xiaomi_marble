@@ -4779,13 +4779,11 @@ bool csr_match_bss(tHalHandle hal, tSirBssDescription *bss_descr,
 	}
 	if (!check)
 		goto end;
-#if defined WLAN_FEATURE_VOWIFI
 	/* If this is for measurement filtering */
 	if (filter->fMeasurement) {
 		rc = true;
 		goto end;
 	}
-#endif
 	if (!csr_is_phy_mode_match(mac_ctx, filter->phyMode, bss_descr,
 			NULL, NULL, ie_ptr))
 		goto end;

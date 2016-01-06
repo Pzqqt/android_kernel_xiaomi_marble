@@ -4204,10 +4204,8 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 			"could not Update the supported rates"));
 	pAddBssParams->staContext.encryptType = psessionEntry->encryptType;
 
-#if defined WLAN_FEATURE_VOWIFI
 	pAddBssParams->maxTxPower = psessionEntry->maxTxPower;
 	lim_log(pMac, LOG2, FL("maxTxPower: %d"), pAddBssParams->maxTxPower);
-#endif
 	/* FIXME_GEN4 - Any other value that can be used for initialization? */
 	pAddBssParams->status = QDF_STATUS_SUCCESS;
 	pAddBssParams->respReqd = true;
@@ -4733,10 +4731,8 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 
 	pAddBssParams->staContext.encryptType = psessionEntry->encryptType;
 
-#if defined WLAN_FEATURE_VOWIFI
 	pAddBssParams->maxTxPower = psessionEntry->maxTxPower;
 	lim_log(pMac, LOG2, FL("maxTxPower: %d"), pAddBssParams->maxTxPower);
-#endif
 
 	pAddBssParams->status = QDF_STATUS_SUCCESS;
 	pAddBssParams->respReqd = true;

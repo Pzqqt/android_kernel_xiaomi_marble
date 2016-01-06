@@ -2799,13 +2799,8 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
 	req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
 	req.vht_capable = add_bss->vhtCapable;
-#if defined WLAN_FEATURE_VOWIFI
 	req.max_txpow = add_bss->maxTxPower;
 	maxTxPower = add_bss->maxTxPower;
-#else
-	req.max_txpow = 0;
-	maxTxPower = 0;
-#endif /* WLAN_FEATURE_VOWIFI */
 #ifdef WLAN_FEATURE_11W
 	if (add_bss->rmfEnabled) {
 		/*
@@ -3197,11 +3192,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			req.chan_width = add_bss->ch_width;
 			req.ch_center_freq_seg0 = add_bss->ch_center_freq_seg0;
 			req.ch_center_freq_seg1 = add_bss->ch_center_freq_seg1;
-#if defined WLAN_FEATURE_VOWIFI
 			req.max_txpow = add_bss->maxTxPower;
-#else
-			req.max_txpow = 0;
-#endif
 			req.beacon_intval = add_bss->beaconInterval;
 			req.dtim_period = add_bss->dtimPeriod;
 			req.hidden_ssid = add_bss->bHiddenSSIDEn;
@@ -3915,11 +3906,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		}
 #endif
 	}
-#if defined WLAN_FEATURE_VOWIFI
 	maxTxPower = params->maxTxPower;
-#else
-	maxTxPower = 0;
-#endif
 	wma_vdev_set_bss_params(wma, params->smesessionId,
 				iface->beaconInterval, iface->dtimPeriod,
 				iface->shortSlotTimeSupported,

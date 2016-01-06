@@ -601,12 +601,10 @@ populate_dot11f_ext_supp_rates(tpAniSirGlobal pMac,
 			uint8_t nChannelNum, tDot11fIEExtSuppRates *pDot11f,
 			tpPESession psessionEntry);
 
-#if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus
 populate_dot11f_beacon_report(tpAniSirGlobal pMac,
 			tDot11fIEMeasurementReport *pDot11f,
 			tSirMacBeaconReport *pBeaconReport);
-#endif
 
 /**
  * \brief Populate a tDot11fIEExtSuppRates
@@ -887,7 +885,6 @@ tSirRetStatus populate_dot11_assoc_res_p2p_ie(tpAniSirGlobal pMac,
 tSirRetStatus populate_dot11f_wscInAssocRes(tpAniSirGlobal pMac,
 					tDot11fIEWscAssocRes *pDot11f);
 
-#if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus populate_dot11f_wfatpc(tpAniSirGlobal pMac,
 				tDot11fIEWFATPC *pDot11f, uint8_t txPower,
 				uint8_t linkMargin);
@@ -895,7 +892,6 @@ tSirRetStatus populate_dot11f_wfatpc(tpAniSirGlobal pMac,
 tSirRetStatus populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 				tDot11fIERRMEnabledCap *pDot11f,
 				tpPESession psessionEntry);
-#endif
 
 void populate_mdie(tpAniSirGlobal pMac,
 		tDot11fIEMobilityDomain * pDot11f, uint8_t mdie[]);

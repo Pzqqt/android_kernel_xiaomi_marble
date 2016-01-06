@@ -35,7 +35,6 @@
 
 /* $Header$ */
 
-#if defined WLAN_FEATURE_VOWIFI
 
 /*--------------------------------------------------------------------------
    Include Files
@@ -1460,5 +1459,3 @@ void lim_update_rrm_capability(tpAniSirGlobal mac_ctx,
 
 	return;
 }
-
-#endif

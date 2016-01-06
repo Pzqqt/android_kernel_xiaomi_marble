@@ -35,7 +35,6 @@
 
 /* $Header$ */
 
-#if defined WLAN_FEATURE_VOWIFI
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
@@ -1563,4 +1562,3 @@ tRrmNeighborReportDesc *sme_rrm_get_next_bss_entry_from_neighbor_cache(
 	return pTempBssEntry;
 }
 
-#endif

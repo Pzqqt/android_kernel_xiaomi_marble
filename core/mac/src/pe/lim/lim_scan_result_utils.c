@@ -41,9 +41,7 @@
 #include "lim_api.h"
 #include "lim_ft_defs.h"
 #include "lim_session.h"
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 #include "cds_utils.h"
 
 
@@ -67,24 +65,16 @@
  * @param  pMac - Pointer to Global MAC structure
  * @param  pBPR - Pointer to parsed Beacon/Probe Response structure
  * @param  pRxPacketInfo  - Pointer to Received frame's BD
- * ---------if defined WLAN_FEATURE_VOWIFI------
  * @param  fScanning - flag to indicate if it is during scan.
  * ---------------------------------------------
  *
  * @return None
  */
-#if defined WLAN_FEATURE_VOWIFI
 QDF_STATUS
 lim_collect_bss_description(tpAniSirGlobal pMac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning)
-#else
-QDF_STATUS
-lim_collect_bss_description(tpAniSirGlobal pMac,
-			    tSirBssDescription *pBssDescr,
-			    tpSirProbeRespBeacon pBPR, uint8_t *pRxPacketInfo)
-#endif
 {
 	uint8_t *pBody;
 	uint32_t ieLen = 0;
@@ -193,12 +183,10 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	lim_log(pMac, LOG1, FL("BSSID: "MAC_ADDRESS_STR " tsf_delta = %u"),
 			    MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->tsf_delta);
 
-#if defined WLAN_FEATURE_VOWIFI
 	if (fScanning) {
 		rrm_get_start_tsf(pMac, pBssDescr->startTSF);
 		pBssDescr->parentTSF = WMA_GET_RX_TIMESTAMP(pRxPacketInfo);
 	}
-#endif
 
 	/* MobilityDomain */
 	pBssDescr->mdie[0] = 0;
@@ -393,17 +381,10 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	/* In scan state, store scan result. */
-#if defined WLAN_FEATURE_VOWIFI
 	status = lim_collect_bss_description(mac_ctx, bssdescr,
 					     bpr, rx_packet_info, scanning);
 	if (QDF_STATUS_SUCCESS != status)
 		goto last;
-#else
-	status = lim_collect_bss_description(mac_ctx, bssdescr,
-					     bpr, rx_packet_info);
-	if (QDF_STATUS_SUCCESS != status)
-		goto last;
-#endif
 	bssdescr->fProbeRsp = fProbeRsp;
 
 	/*

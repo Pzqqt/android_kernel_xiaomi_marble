@@ -497,7 +497,6 @@ tSirRetStatus lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 						     tSirMacAddr peer, uint8_t nMode,
 						     tpPESession psessionEntry);
 
-#if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus lim_send_neighbor_report_request_frame(tpAniSirGlobal,
 						     tpSirMacNeighborReportReq,
 						     tSirMacAddr, tpPESession);
@@ -507,7 +506,6 @@ tSirRetStatus lim_send_radio_measure_report_action_frame(tpAniSirGlobal, uint8_t
 							 uint8_t,
 							 tpSirMacRadioMeasureReport,
 							 tSirMacAddr, tpPESession);
-#endif
 
 
 #ifdef FEATURE_WLAN_TDLS

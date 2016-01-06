@@ -50,9 +50,7 @@
 #include "lim_send_messages.h"
 #include "lim_sta_hash_api.h"
 
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #include "host_diag_core_log.h"
@@ -724,9 +722,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 #ifdef WLAN_FEATURE_11AC
 	tpSirMacMgmtHdr pMh = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 #endif
-#if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
 	int8_t regMax = 0, maxTxPower = 0;
-#endif
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
 
@@ -772,13 +768,10 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 					&beaconParams, &sendProbeReq, pMh);
 #endif
 
-#if defined (FEATURE_WLAN_ESE) || defined (WLAN_FEATURE_VOWIFI)
 	/* Obtain the Max Tx power for the current regulatory  */
 	regMax = cfg_get_regulatory_max_transmit_power(mac_ctx,
 					session->currentOperChannel);
-#endif
 
-#if defined WLAN_FEATURE_VOWIFI
 	if (mac_ctx->rrm.rrmPEContext.rrmEnable
 	    && bcn->powerConstraintPresent)
 		localRRMConstraint =
@@ -787,9 +780,6 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 		localRRMConstraint = 0;
 	maxTxPower = lim_get_max_tx_power(regMax, regMax - localRRMConstraint,
 					mac_ctx->roam.configParam.nTxPowerCap);
-#elif defined FEATURE_WLAN_ESE
-	maxTxPower = regMax;
-#endif
 
 #if defined FEATURE_WLAN_ESE
 	if (session->isESEconnection) {
@@ -806,7 +796,6 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 	}
 #endif
 
-#if defined (FEATURE_WLAN_ESE) || defined (WLAN_FEATURE_VOWIFI)
 	/* If maxTxPower is increased or decreased */
 	if (maxTxPower != session->maxTxPower) {
 		sch_log(mac_ctx, LOG1,
@@ -816,7 +805,6 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 		    == eSIR_SUCCESS)
 			session->maxTxPower = maxTxPower;
 	}
-#endif
 
 	/* Indicate to LIM that Beacon is received */
 	if (bcn->HTInfo.present)

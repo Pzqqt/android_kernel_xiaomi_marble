@@ -44,9 +44,7 @@
 #include "sir_params.h"
 #include "csr_api.h"
 #include "csr_inside_api.h"
-#if defined WLAN_FEATURE_VOWIFI
 #include "sme_rrm_internal.h"
-#endif
 #include <ani_global.h>
 #include "dot11f.h"
 #include <wlan_hdd_wowl.h>
@@ -284,9 +282,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WLAN_PRIV_SET_CHAR_GET_NONE   (SIOCIWFIRSTPRIV + 3)
 #define WE_WOWL_ADD_PTRN     1
 #define WE_WOWL_DEL_PTRN     2
-#if defined WLAN_FEATURE_VOWIFI
 #define WE_NEIGHBOR_REPORT_REQUEST 3
-#endif
 #define WE_SET_AP_WPS_IE     4  /* This is called in station mode to set probe rsp ie. */
 #define WE_SET_CONFIG        5
 
@@ -6181,9 +6177,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 	char *pBuffer = NULL;
 	hdd_adapter_t *pAdapter = (netdev_priv(dev));
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
-#ifdef WLAN_FEATURE_VOWIFI
 	struct hdd_config *pConfig = hdd_ctx->config;
-#endif /* WLAN_FEATURE_VOWIFI */
 	struct iw_point s_priv_data;
 
 	if (!capable(CAP_NET_ADMIN)) {
@@ -6233,7 +6227,6 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO, "DEL_PTRN");
 		hdd_del_wowl_ptrn(pAdapter, pBuffer);
 		break;
-#if defined WLAN_FEATURE_VOWIFI
 	case WE_NEIGHBOR_REPORT_REQUEST:
 	{
 		tRrmNeighborReq neighborReq;
@@ -6270,7 +6263,6 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		}
 	}
 	break;
-#endif
 	case WE_SET_AP_WPS_IE:
 		hddLog(LOGE, "Received WE_SET_AP_WPS_IE");
 		sme_update_p2p_ie(WLAN_HDD_GET_HAL_CTX(pAdapter), pBuffer,
@@ -10320,13 +10312,12 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "wowlDelPtrn"},
 
-#if defined WLAN_FEATURE_VOWIFI
 	/* handlers for sub-ioctl */
 	{WE_NEIGHBOR_REPORT_REQUEST,
 	 IW_PRIV_TYPE_CHAR | 512,
 	 0,
 	 "neighbor"},
-#endif
+
 	{WE_SET_AP_WPS_IE,
 	 IW_PRIV_TYPE_CHAR | 512,
 	 0,

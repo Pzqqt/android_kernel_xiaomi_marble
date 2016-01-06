@@ -44,9 +44,7 @@
 #include "lim_utils.h"
 #include "lim_prop_exts_utils.h"
 #include "sch_api.h"
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 
 static void lim_update_config(tpAniSirGlobal pMac, tpPESession psessionEntry);
 

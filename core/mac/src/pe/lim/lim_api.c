@@ -61,9 +61,7 @@
 #include "lim_session.h"
 #include "wma_types.h"
 
-#if defined WLAN_FEATURE_VOWIFI
 #include "rrm_api.h"
-#endif
 
 #include <lim_ft.h>
 #include "qdf_types.h"
@@ -600,9 +598,7 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 	/* Initializations for maintaining peers in IBSS */
 	lim_ibss_init(pMac);
 
-#if defined WLAN_FEATURE_VOWIFI
 	rrm_initialize(pMac);
-#endif
 
 	qdf_mutex_create(&pMac->lim.lim_frame_register_lock);
 	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
@@ -707,9 +703,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	/* Now, finally reset the deferred message queue pointers */
 	lim_reset_deferred_msg_q(pMac);
 
-#if defined WLAN_FEATURE_VOWIFI
 	rrm_cleanup(pMac);
-#endif
 
 	lim_ft_cleanup_all_ft_sessions(pMac);
 
