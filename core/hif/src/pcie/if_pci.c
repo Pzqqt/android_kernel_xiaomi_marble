@@ -1897,18 +1897,15 @@ static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
 	cdf_atomic_set(&sc->pm_state, state);
 
 }
-#else
-static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
-{
-}
 #endif
 
+#ifdef FEATURE_RUNTIME_PM
 /**
  * hif_runtime_pm_set_state_inprogress(): adjust runtime pm state
  *
  * Notify hif that a runtime pm opperation has started
  */
-void hif_runtime_pm_set_state_inprogress(void)
+static void hif_runtime_pm_set_state_inprogress(void)
 {
 	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_INPROGRESS);
 }
@@ -1918,7 +1915,7 @@ void hif_runtime_pm_set_state_inprogress(void)
  *
  * Notify hif that a the runtime pm state should be on
  */
-void hif_runtime_pm_set_state_on(void)
+static void hif_runtime_pm_set_state_on(void)
 {
 	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_ON);
 }
@@ -1928,13 +1925,11 @@ void hif_runtime_pm_set_state_on(void)
  *
  * Notify hif that a runtime suspend attempt has been completed successfully
  */
-void hif_runtime_pm_set_state_suspended(void)
+static void hif_runtime_pm_set_state_suspended(void)
 {
 	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_SUSPENDED);
 }
 
-
-#ifdef FEATURE_RUNTIME_PM
 static inline struct hif_pci_softc *get_sc(void)
 {
 	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
@@ -1951,7 +1946,7 @@ static inline struct hif_pci_softc *get_sc(void)
 /**
  * hif_log_runtime_suspend_success() - log a successful runtime suspend
  */
-void hif_log_runtime_suspend_success(void)
+static void hif_log_runtime_suspend_success(void)
 {
 	struct hif_pci_softc *sc = get_sc();
 	if (sc == NULL)
@@ -1967,14 +1962,13 @@ void hif_log_runtime_suspend_success(void)
  * log a failed runtime suspend
  * mark last busy to prevent immediate runtime suspend
  */
-void hif_log_runtime_suspend_failure(void)
+static void hif_log_runtime_suspend_failure(void)
 {
 	struct hif_pci_softc *sc = get_sc();
 	if (sc == NULL)
 		return;
 
 	sc->pm_stats.suspend_err++;
-	hif_pm_runtime_mark_last_busy(sc->dev);
 }
 
 /**
@@ -1983,14 +1977,90 @@ void hif_log_runtime_suspend_failure(void)
  * log a successfull runtime resume
  * mark last busy to prevent immediate runtime suspend
  */
-void hif_log_runtime_resume_success(void)
+static void hif_log_runtime_resume_success(void)
 {
 	struct hif_pci_softc *sc = get_sc();
 	if (sc == NULL)
 		return;
 
 	sc->pm_stats.resumed++;
-	hif_pm_runtime_mark_last_busy(sc->dev);
+}
+
+/**
+ * hif_process_runtime_suspend_failure() - bookkeeping of suspend failure
+ *
+ * Record the failure.
+ * mark last busy to delay a retry.
+ * adjust the runtime_pm state.
+ */
+void hif_process_runtime_suspend_failure(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+
+	hif_log_runtime_suspend_failure();
+	if (sc != NULL)
+		hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_runtime_pm_set_state_on();
+}
+
+/**
+ * hif_pre_runtime_suspend() - bookkeeping before beginning runtime suspend
+ *
+ * Makes sure that the pci link will be taken down by the suspend opperation.
+ * If the hif layer is configured to leave the bus on, runtime suspend will
+ * not save any power.
+ *
+ * Set the runtime suspend state to in progress.
+ *
+ * return -EINVAL if the bus won't go down.  otherwise return 0
+ */
+int hif_pre_runtime_suspend(void)
+{
+	if (!hif_can_suspend_link()) {
+		HIF_ERROR("Runtime PM not supported for link up suspend");
+		return -EINVAL;
+	}
+
+	hif_runtime_pm_set_state_inprogress();
+	return 0;
+}
+
+/**
+ * hif_process_runtime_suspend_success() - bookkeeping of suspend success
+ *
+ * Record the success.
+ * adjust the runtime_pm state
+ */
+void hif_process_runtime_suspend_success(void)
+{
+	hif_runtime_pm_set_state_suspended();
+	hif_log_runtime_suspend_success();
+}
+
+/**
+ * hif_pre_runtime_resume() - bookkeeping before beginning runtime resume
+ *
+ * update the runtime pm state.
+ */
+void hif_pre_runtime_resume(void)
+{
+	hif_runtime_pm_set_state_inprogress();
+}
+
+/**
+ * hif_process_runtime_resume_success() - bookkeeping after a runtime resume
+ *
+ * record the success.
+ * adjust the runtime_pm state
+ */
+void hif_process_runtime_resume_success(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+
+	hif_log_runtime_resume_success();
+	if (sc != NULL)
+		hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_runtime_pm_set_state_on();
 }
 #endif
 
