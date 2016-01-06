@@ -3186,7 +3186,7 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 		}
 
 		sta_ds = dph_lookup_hash_entry(mac_ctx,
-				disassoc_req->peerMacAddr, &aid,
+				disassoc_req->peer_macaddr.bytes, &aid,
 				&pe_session->dph.dphHashTable);
 		if (sta_ds == NULL) {
 			lim_log(mac_ctx, LOGE, FL("StaDs Null"));
@@ -3250,8 +3250,8 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 	}
 end:
 	cdf_mem_copy((uint8_t *) &disassoc_cnf.peerMacAddr,
-		     (uint8_t *) disassoc_req->peerMacAddr,
-		     sizeof(tSirMacAddr));
+		     (uint8_t *) disassoc_req->peer_macaddr.bytes,
+		     CDF_MAC_ADDR_SIZE);
 	disassoc_cnf.aid = disassoc_req->aid;
 	disassoc_cnf.disassocTrigger = disassoc_req->disassocTrigger;
 

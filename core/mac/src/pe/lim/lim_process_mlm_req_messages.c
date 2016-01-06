@@ -1584,7 +1584,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 				 CDF_STATUS suspend_status, uint32_t *msg)
 {
 	uint16_t aid;
-	tSirMacAddr curr_bssid;
+	struct cdf_mac_addr curr_bssid;
 	tpDphHashNode stads;
 	tLimMlmDisassocReq *mlm_disassocreq;
 	tLimMlmDisassocCnf mlm_disassoccnf;
@@ -1614,19 +1614,19 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		   "mlmstate %d from: " MAC_ADDRESS_STR),
 		mlm_disassocreq->sessionId, GET_LIM_SYSTEM_ROLE(session),
 		session->limMlmState,
-		MAC_ADDR_ARRAY(mlm_disassocreq->peerMacAddr));
+		MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
 
-	sir_copy_mac_addr(curr_bssid, session->bssId);
+	cdf_mem_copy(curr_bssid.bytes, session->bssId, CDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
 	case eLIM_BT_AMP_STA_ROLE:
-		if (!cdf_mem_compare(mlm_disassocreq->peerMacAddr,
-				     curr_bssid, sizeof(tSirMacAddr))) {
+		if (!cdf_is_macaddr_equal(&mlm_disassocreq->peer_macaddr,
+				     &curr_bssid)) {
 			lim_log(mac_ctx, LOGW,
 			  FL("received MLM_DISASSOC_REQ with invalid BSS id"));
 			lim_print_mac_addr(mac_ctx,
-				mlm_disassocreq->peerMacAddr, LOGW);
+				mlm_disassocreq->peer_macaddr.bytes, LOGW);
 
 			/*
 			 * Disassociation response due to host triggered
@@ -1643,7 +1643,8 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			lim_log(mac_ctx, LOG1,
 				FL("send disassoc rsp with ret code %d for" MAC_ADDRESS_STR),
 				eSIR_SME_DEAUTH_STATUS,
-				MAC_ADDR_ARRAY(mlm_disassocreq->peerMacAddr));
+				MAC_ADDR_ARRAY(
+					mlm_disassocreq->peer_macaddr.bytes));
 
 			sme_disassoc_rsp->messageType = eWNI_SME_DISASSOC_RSP;
 			sme_disassoc_rsp->length = sizeof(tSirSmeDisassocRsp);
@@ -1652,9 +1653,8 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			sme_disassoc_rsp->transactionId = 0;
 			sme_disassoc_rsp->statusCode = eSIR_SME_DEAUTH_STATUS;
 
-			cdf_mem_copy(sme_disassoc_rsp->peerMacAddr,
-				mlm_disassocreq->peerMacAddr,
-				sizeof(tSirMacAddr));
+			cdf_copy_macaddr(&sme_disassoc_rsp->peer_macaddr,
+					 &mlm_disassocreq->peer_macaddr);
 			msg = (uint32_t *)sme_disassoc_rsp;
 
 			lim_send_sme_disassoc_deauth_ntf(mac_ctx,
@@ -1683,7 +1683,8 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	 * Check if there exists a context for the peer entity
 	 * to be disassociated with.
 	 */
-	stads = dph_lookup_hash_entry(mac_ctx, mlm_disassocreq->peerMacAddr,
+	stads = dph_lookup_hash_entry(mac_ctx,
+				      mlm_disassocreq->peer_macaddr.bytes,
 				      &aid, &session->dph.dphHashTable);
 	if (stads)
 		mlm_state = stads->mlmStaContext.mlmState;
@@ -1699,7 +1700,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		 */
 		lim_log(mac_ctx, LOGW,
 			FL("Invalid MLM_DISASSOC_REQ, Addr= " MAC_ADDRESS_STR),
-			MAC_ADDR_ARRAY(mlm_disassocreq->peerMacAddr));
+			MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
 		if (stads != NULL)
 			lim_log(mac_ctx, LOGE, FL("Sta MlmState : %d"),
 				stads->mlmStaContext.mlmState);
@@ -1735,7 +1736,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 
 		lim_send_disassoc_mgmt_frame(mac_ctx,
 			mlm_disassocreq->reasonCode,
-			mlm_disassocreq->peerMacAddr, session, true);
+			mlm_disassocreq->peer_macaddr.bytes, session, true);
 		/*
 		 * Abort Tx so that data frames won't be sent to the AP
 		 * after sending Disassoc.
@@ -1760,8 +1761,8 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 
 end:
 	cdf_mem_copy((uint8_t *) &mlm_disassoccnf.peerMacAddr,
-		     (uint8_t *) mlm_disassocreq->peerMacAddr,
-		     sizeof(tSirMacAddr));
+		     (uint8_t *) mlm_disassocreq->peer_macaddr.bytes,
+		     CDF_MAC_ADDR_SIZE);
 	mlm_disassoccnf.aid = mlm_disassocreq->aid;
 	mlm_disassoccnf.disassocTrigger = mlm_disassocreq->disassocTrigger;
 
@@ -1795,8 +1796,8 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
 	disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if ((disassoc_req && (cdf_mem_compare((uint8_t *) sta_mac,
-			      (uint8_t *) &disassoc_req->peerMacAddr,
-			       sizeof(tSirMacAddr)))) ||
+			      (uint8_t *) &disassoc_req->peer_macaddr.bytes,
+			       CDF_MAC_ADDR_SIZE))) ||
 	    (deauth_req && (cdf_mem_compare((uint8_t *) sta_mac,
 			      (uint8_t *) &deauth_req->peer_macaddr.bytes,
 			       CDF_MAC_ADDR_SIZE)))) {
@@ -1829,8 +1830,8 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 	mlm_disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 	if (mlm_disassoc_req &&
 	    (cdf_mem_compare((uint8_t *) sta_mac,
-			     (uint8_t *) &mlm_disassoc_req->peerMacAddr,
-			     sizeof(tSirMacAddr)))) {
+			     (uint8_t *) &mlm_disassoc_req->peer_macaddr.bytes,
+			     CDF_MAC_ADDR_SIZE))) {
 		if (clean_rx_path) {
 			lim_process_disassoc_ack_timeout(mac_ctx);
 		} else {
@@ -1907,7 +1908,7 @@ lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	lim_log(mac_ctx, LOG1,
 		FL("Process disassoc req, sessionID %d from: "MAC_ADDRESS_STR),
 		mlm_disassoc_req->sessionId,
-		MAC_ADDR_ARRAY(mlm_disassoc_req->peerMacAddr));
+		MAC_ADDR_ARRAY(mlm_disassoc_req->peer_macaddr.bytes));
 
 	lim_process_mlm_disassoc_req_ntf(mac_ctx, CDF_STATUS_SUCCESS,
 					 (uint32_t *) msg_buf);

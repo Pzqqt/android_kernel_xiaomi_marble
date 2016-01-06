@@ -2549,7 +2549,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		return;
 	}
 
-	cdf_mem_copy((uint8_t *) &pMlmDisassocReq->peerMacAddr,
+	cdf_mem_copy((uint8_t *) &pMlmDisassocReq->peer_macaddr,
 		     (uint8_t *) &smeDisassocReq.peerMacAddr,
 		     sizeof(tSirMacAddr));
 

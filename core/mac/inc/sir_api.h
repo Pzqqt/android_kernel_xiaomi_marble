@@ -1377,7 +1377,7 @@ typedef struct sSirSmeDisassocRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
 } cdf_packed tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
