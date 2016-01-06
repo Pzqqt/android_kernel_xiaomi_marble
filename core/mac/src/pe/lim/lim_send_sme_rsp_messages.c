@@ -1063,11 +1063,11 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	pSirSmeDisassocInd->statusCode = pStaDs->mlmStaContext.disassocReason;
 	pSirSmeDisassocInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
-	cdf_mem_copy(pSirSmeDisassocInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDisassocInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(pSirSmeDisassocInd->peerMacAddr, pStaDs->staAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes, pStaDs->staAddr,
+		     CDF_MAC_ADDR_SIZE);
 
 	pSirSmeDisassocInd->staId = pStaDs->staIndex;
 

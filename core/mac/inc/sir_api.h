@@ -1389,8 +1389,8 @@ typedef struct sSirSmeDisassocInd {
 	uint8_t sessionId;      /* Session Identifier */
 	uint16_t transactionId; /* Transaction Identifier with PE */
 	tSirResultCodes statusCode;
-	tSirMacAddr bssId;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr bssid;
+	struct cdf_mac_addr peer_macaddr;
 	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
 	uint32_t reasonCode;

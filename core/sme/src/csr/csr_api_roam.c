@@ -10096,10 +10096,11 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	pDisassocInd = (tSirSmeDisassocInd *) msg_ptr;
 	cdf_mem_set(&roam_info, sizeof(roam_info), 0);
 	status = csr_roam_get_session_id_from_bssid(mac_ctx,
-				(struct cdf_mac_addr *) pDisassocInd->bssId, &sessionId);
+				&pDisassocInd->bssid, &sessionId);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE, FL("Session Id not found for BSSID "
-			MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pDisassocInd->bssId));
+			MAC_ADDRESS_STR),
+			MAC_ADDR_ARRAY(pDisassocInd->bssid.bytes));
 		return;
 	}
 
@@ -10109,7 +10110,7 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	sms_log(mac_ctx, LOGE,
 		FL("DISASSOCIATION from peer =" MAC_ADDRESS_STR
 		   " " " reason = %d status = %d "),
-		MAC_ADDR_ARRAY(pDisassocInd->peerMacAddr),
+		MAC_ADDR_ARRAY(pDisassocInd->peer_macaddr.bytes),
 		pDisassocInd->reasonCode,
 		pDisassocInd->statusCode);
 	/*
@@ -10154,12 +10155,10 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		roam_info_ptr->reasonCode = pDisassocInd->reasonCode;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
 		roam_info_ptr->staId = (uint8_t) pDisassocInd->staId;
-		cdf_mem_copy(roam_info_ptr->peerMac.bytes,
-			     pDisassocInd->peerMacAddr,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(&roam_info_ptr->bssid.bytes,
-			     pDisassocInd->bssId,
-			     sizeof(struct cdf_mac_addr));
+		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+				 &pDisassocInd->peer_macaddr);
+		cdf_copy_macaddr(&roam_info_ptr->bssid,
+				 &pDisassocInd->bssid);
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 						roam_info_ptr, 0,
 						eCSR_ROAM_INFRA_IND,
@@ -10172,8 +10171,8 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		cmd.sessionId = (uint8_t) sessionId;
 		cmd.u.roamCmd.roamReason = eCsrForcedDeauthSta;
 		cdf_mem_copy(cmd.u.roamCmd.peerMac,
-			     pDisassocInd->peerMacAddr,
-			     sizeof(tSirMacAddr));
+			     pDisassocInd->peer_macaddr.bytes,
+			     CDF_MAC_ADDR_SIZE);
 		csr_roam_remove_duplicate_command(mac_ctx, sessionId, &cmd,
 						  eCsrForcedDeauthSta);
 	}
@@ -11391,9 +11390,8 @@ CDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	roamInfo.reasonCode = pSession->joinFailStatusCode.reasonCode;
 	if (eWNI_SME_DISASSOC_IND == type) {
 		/* staMacAddr */
-		cdf_mem_copy(roamInfo.peerMac.bytes,
-				pDisassocIndMsg->peerMacAddr,
-				sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&roamInfo.peerMac,
+				 &pDisassocIndMsg->peer_macaddr);
 		roamInfo.staId = (uint8_t) pDisassocIndMsg->staId;
 		roamInfo.reasonCode = pDisassocIndMsg->reasonCode;
 	} else if (eWNI_SME_DEAUTH_IND == type) {
@@ -14284,17 +14282,15 @@ CDF_STATUS csr_send_mb_disassoc_cnf_msg(tpAniSirGlobal pMac,
 		pMsg->messageType = eWNI_SME_DISASSOC_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
 		pMsg->length = sizeof(tSirSmeDisassocCnf);
-		cdf_mem_copy(pMsg->peer_macaddr.bytes,
-				pDisassocInd->peerMacAddr,
-				CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->peer_macaddr,
+				 &pDisassocInd->peer_macaddr);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
 			break;
 		}
 
-		cdf_mem_copy(pMsg->bssid.bytes, pDisassocInd->bssId,
-				CDF_MAC_ADDR_SIZE);
+		cdf_copy_macaddr(&pMsg->bssid, &pDisassocInd->bssid);
 		status = CDF_STATUS_SUCCESS;
 		if (!CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
