@@ -14355,16 +14355,16 @@ CDF_STATUS csr_send_assoc_cnf_msg(tpAniSirGlobal pMac, tpSirSmeAssocInd pAssocIn
 		else
 			pMsg->statusCode = eSIR_SME_ASSOC_REFUSED;
 		/* bssId */
-		cdf_mem_copy(pMsg->bssId, pAssocInd->bssId,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pMsg->bssid.bytes, pAssocInd->bssId,
+			     CDF_MAC_ADDR_SIZE);
 		/* peerMacAddr */
-		cdf_mem_copy(pMsg->peerMacAddr, pAssocInd->peerMacAddr,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pMsg->peer_macaddr.bytes, pAssocInd->peerMacAddr,
+			     CDF_MAC_ADDR_SIZE);
 		/* aid */
 		pMsg->aid = pAssocInd->aid;
 		/* alternateBssId */
-		cdf_mem_copy(pMsg->alternateBssId, pAssocInd->bssId,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pMsg->alternate_bssid.bytes, pAssocInd->bssId,
+			     CDF_MAC_ADDR_SIZE);
 		/* alternateChannelId */
 		pMsg->alternateChannelId = 11;
 		/* pMsg is freed by cds_send_mb_message_to_mac in anycase*/

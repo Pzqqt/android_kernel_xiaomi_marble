@@ -1150,10 +1150,10 @@ typedef struct sSirSmeAssocCnf {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_CNF */
 	uint16_t length;
 	tSirResultCodes statusCode;
-	tSirMacAddr bssId;      /* Self BSSID */
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr bssid;      /* Self BSSID */
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t aid;
-	tSirMacAddr alternateBssId;
+	struct cdf_mac_addr alternate_bssid;
 	uint8_t alternateChannelId;
 } tSirSmeAssocCnf, *tpSirSmeAssocCnf;
 
