@@ -14052,19 +14052,17 @@ CDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	pMsg->transactionId = 0;
 	if ((pSession->pCurRoamProfile != NULL)
 		&& (CSR_IS_INFRA_AP(pSession->pCurRoamProfile))) {
-		cdf_mem_copy(&pMsg->bssId,
+		cdf_mem_copy(&pMsg->bssid.bytes,
 			     &pSession->selfMacAddr,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(&pMsg->peerMacAddr,
+			     CDF_MAC_ADDR_SIZE);
+		cdf_mem_copy(&pMsg->peer_macaddr.bytes,
 			     bssId,
-			     sizeof(tSirMacAddr));
+			     CDF_MAC_ADDR_SIZE);
 	} else {
-		cdf_mem_copy(&pMsg->bssId,
-			     bssId,
-			     sizeof(tSirMacAddr));
-		cdf_mem_copy(&pMsg->peerMacAddr,
-			     bssId,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(&pMsg->bssid.bytes,
+			     bssId, CDF_MAC_ADDR_SIZE);
+		cdf_mem_copy(&pMsg->peer_macaddr.bytes,
+			     bssId, CDF_MAC_ADDR_SIZE);
 	}
 	pMsg->reasonCode = reasonCode;
 	/*

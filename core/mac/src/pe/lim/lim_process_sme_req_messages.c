@@ -2396,13 +2396,13 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	}
 
 	psessionEntry = pe_find_session_by_bssid(pMac,
-				smeDisassocReq.bssId,
+				smeDisassocReq.bssid.bytes,
 				&sessionId);
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
 			FL("session does not exist for given bssId "
 			   MAC_ADDRESS_STR),
-			MAC_ADDR_ARRAY(smeDisassocReq.bssId));
+			MAC_ADDR_ARRAY(smeDisassocReq.bssid.bytes));
 		retCode = eSIR_SME_INVALID_PARAMETERS;
 		disassocTrigger = eLIM_HOST_DISASSOC;
 		goto sendDisassoc;
@@ -2412,7 +2412,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			MAC_ADDRESS_STR), smesessionId,
 		GET_LIM_SYSTEM_ROLE(psessionEntry), smeDisassocReq.reasonCode,
 		pMac->lim.gLimSmeState,
-		MAC_ADDR_ARRAY(smeDisassocReq.peerMacAddr));
+		MAC_ADDR_ARRAY(smeDisassocReq.peer_macaddr.bytes));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_DISASSOC_REQ_EVENT, psessionEntry,
@@ -2549,9 +2549,8 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		return;
 	}
 
-	cdf_mem_copy((uint8_t *) &pMlmDisassocReq->peer_macaddr,
-		     (uint8_t *) &smeDisassocReq.peerMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&pMlmDisassocReq->peer_macaddr,
+			 &smeDisassocReq.peer_macaddr);
 
 	pMlmDisassocReq->reasonCode = reasonCode;
 	pMlmDisassocReq->disassocTrigger = disassocTrigger;
@@ -2565,16 +2564,17 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 
 sendDisassoc:
 	if (psessionEntry)
-		lim_send_sme_disassoc_ntf(pMac, smeDisassocReq.peerMacAddr,
+		lim_send_sme_disassoc_ntf(pMac,
+					  smeDisassocReq.peer_macaddr.bytes,
 					  retCode,
 					  disassocTrigger,
 					  1, smesessionId, smetransactionId,
 					  psessionEntry);
 	else
-		lim_send_sme_disassoc_ntf(pMac, smeDisassocReq.peerMacAddr,
-					  retCode,
-					  disassocTrigger,
-					  1, smesessionId, smetransactionId, NULL);
+		lim_send_sme_disassoc_ntf(pMac,
+					  smeDisassocReq.peer_macaddr.bytes,
+					  retCode, disassocTrigger, 1,
+					  smesessionId, smetransactionId, NULL);
 
 } /*** end __lim_process_sme_disassoc_req() ***/
 

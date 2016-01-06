@@ -1241,8 +1241,8 @@ typedef struct sSirSmeDisassocReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	tSirMacAddr bssId;      /* Peer BSSID */
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr bssid;      /* Peer BSSID */
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	/* This flag tells LIM whether to send the disassoc OTA or not */
 	/* This will be set in while handing off from one AP to other */
