@@ -1379,12 +1379,12 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 
 	if (!rspRsnIe) {
 		hddLog(LOGE, FL("Unable to allocate RSN IE"));
-		return;
+		goto done;
 	}
 
 	if (!assoc_req_ies) {
 		hdd_err("Unable to allocate Assoc Req IE");
-		return;
+		goto done;
 	}
 	if (pCsrRoamInfo == NULL) {
 		hddLog(LOGE, FL("Invalid CSR roam info"));
