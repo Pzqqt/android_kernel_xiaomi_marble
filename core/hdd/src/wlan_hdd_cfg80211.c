@@ -8006,8 +8006,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		 * check for other concurrency rules.
 		 */
 		if (!pHddCtx->config->policy_manager_enabled) {
-			cds_handle_conc_rule1(pAdapter,
-					pRoamProfile);
+			cds_handle_conc_rule1(pAdapter, pRoamProfile);
 			if (true != cds_handle_conc_rule2(
 					pAdapter, pRoamProfile, &roamId))
 				return 0;

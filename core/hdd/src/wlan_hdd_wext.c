@@ -6875,9 +6875,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
-		cds_set_dual_mac_scan_config(
-				value[1], value[2],
-				value[3]);
+		cds_set_dual_mac_scan_config(value[1], value[2], value[3]);
 		break;
 	default:
 		hddLog(LOGE, "%s: Invalid IOCTL command %d", __func__, sub_cmd);
@@ -9513,8 +9511,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d", value[1], value[2]);
-		cds_set_dual_mac_fw_mode_config(
-				value[1], value[2]);
+		cds_set_dual_mac_fw_mode_config(value[1], value[2]);
 		break;
 	case WE_DUMP_DP_TRACE_LEVEL:
 		hdd_info("WE_DUMP_DP_TRACE_LEVEL: %d %d",
