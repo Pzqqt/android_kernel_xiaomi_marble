@@ -1480,7 +1480,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			rspRsnIe, rspRsnLength,
 			pCsrRoamInfo);
 done:
-	sme_roam_free_connect_profile(hal_handle, &roam_profile);
+	sme_roam_free_connect_profile(&roam_profile);
 	if (final_req_ie)
 		kfree(final_req_ie);
 	kfree(rspRsnIe);

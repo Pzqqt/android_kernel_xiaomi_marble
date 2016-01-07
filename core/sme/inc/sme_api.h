@@ -293,8 +293,7 @@ CDF_STATUS sme_roam_get_connect_state(tHalHandle hHal, uint8_t sessionId,
 		eCsrConnectState *pState);
 CDF_STATUS sme_roam_get_connect_profile(tHalHandle hHal, uint8_t sessionId,
 		tCsrRoamConnectedProfile *pProfile);
-CDF_STATUS sme_roam_free_connect_profile(tHalHandle hHal,
-		tCsrRoamConnectedProfile *pProfile);
+void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 CDF_STATUS sme_roam_set_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 		tPmkidCacheInfo *pPMKIDCache,
 		uint32_t numItems,

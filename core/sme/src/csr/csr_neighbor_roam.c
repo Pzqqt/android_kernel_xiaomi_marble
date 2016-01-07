@@ -2272,7 +2272,7 @@ CDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 	 * Free the current previous profile and move
 	 * the current profile to prev profile.
 	 */
-	csr_roam_free_connect_profile(pMac, pPrevProfile);
+	csr_roam_free_connect_profile(pPrevProfile);
 	csr_roam_copy_connect_profile(pMac, sessionId, pPrevProfile);
 	/*
 	 * clear the roaming parameters that are per connection.
@@ -2890,7 +2890,7 @@ void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 
 	/* Free the profile.. */
 	csr_release_profile(pMac, &pNeighborRoamInfo->csrNeighborRoamProfile);
-	csr_roam_free_connect_profile(pMac, &pNeighborRoamInfo->prevConnProfile);
+	csr_roam_free_connect_profile(&pNeighborRoamInfo->prevConnProfile);
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	pNeighborRoamInfo->FTRoamInfo.currentNeighborRptRetryNum = 0;
 	pNeighborRoamInfo->FTRoamInfo.numBssFromNeighborReport = 0;
