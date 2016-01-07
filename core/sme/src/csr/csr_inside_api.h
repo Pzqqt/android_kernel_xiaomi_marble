@@ -836,14 +836,7 @@ CDF_STATUS csr_roam_get_connect_profile(tpAniSirGlobal pMac, uint32_t sessionId,
 CDF_STATUS csr_roam_get_connect_state(tpAniSirGlobal pMac, uint32_t sessionId,
 				      eCsrConnectState *pState);
 
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_free_connect_profile
-    \brief To free and reinitialize the profile return previous by csr_roam_get_connect_profile.
-    \param pProfile - pointer to a caller allocated structure tCsrRoamConnectedProfile
-    \return CDF_STATUS.
-   -------------------------------------------------------------------------------*/
-CDF_STATUS csr_roam_free_connect_profile(tpAniSirGlobal pMac,
-					 tCsrRoamConnectedProfile *pProfile);
+void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 
 /* ---------------------------------------------------------------------------
     \fn csr_apply_channel_and_power_list

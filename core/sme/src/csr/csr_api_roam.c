@@ -1075,21 +1075,14 @@ CDF_STATUS csr_roam_get_connect_profile(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-CDF_STATUS csr_roam_free_connect_profile(tpAniSirGlobal pMac,
-					 tCsrRoamConnectedProfile *pProfile)
+void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-
-	if (pProfile->pBssDesc) {
-		cdf_mem_free(pProfile->pBssDesc);
-	}
-	if (pProfile->pAddIEAssoc) {
-		cdf_mem_free(pProfile->pAddIEAssoc);
-	}
-	cdf_mem_set(pProfile, sizeof(tCsrRoamConnectedProfile), 0);
-
-	pProfile->AuthType = eCSR_AUTH_TYPE_UNKNOWN;
-	return status;
+	if (profile->pBssDesc)
+		cdf_mem_free(profile->pBssDesc);
+	if (profile->pAddIEAssoc)
+		cdf_mem_free(profile->pAddIEAssoc);
+	cdf_mem_set(profile, sizeof(tCsrRoamConnectedProfile), 0);
+	profile->AuthType = eCSR_AUTH_TYPE_UNKNOWN;
 }
 
 static CDF_STATUS csr_roam_free_connected_info(tpAniSirGlobal pMac,
@@ -5759,8 +5752,7 @@ static void csr_roam_process_results_default(tpAniSirGlobal mac_ctx,
 		 * to send down stop BSS later
 		 */
 		csr_free_connect_bss_desc(mac_ctx, session_id);
-		csr_roam_free_connect_profile(mac_ctx,
-			&session->connectedProfile);
+		csr_roam_free_connect_profile(&session->connectedProfile);
 		csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
 		csr_set_default_dot11_mode(mac_ctx);
 	}
@@ -6003,10 +5995,8 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 					session_id);
 	}
 	csr_roam_save_connected_bss_desc(mac_ctx, session_id, bss_desc);
-	csr_roam_free_connect_profile(mac_ctx,
-			&session->connectedProfile);
-	csr_roam_free_connected_info(mac_ctx,
-			&session->connectedInfo);
+	csr_roam_free_connect_profile(&session->connectedProfile);
+	csr_roam_free_connected_info(mac_ctx, &session->connectedInfo);
 	if (bss_desc) {
 		csr_roam_save_connected_infomation(mac_ctx, session_id,
 				profile, bss_desc, ies_ptr);
@@ -15091,7 +15081,7 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 		sme_ft_close(pMac, sessionId);
 #endif
 		csr_free_connect_bss_desc(pMac, sessionId);
-		csr_roam_free_connect_profile(pMac, &pSession->connectedProfile);
+		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(pMac, &pSession->connectedInfo);
 		cdf_mc_timer_destroy(&pSession->hTimerRoaming);
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
@@ -15151,7 +15141,7 @@ static void csr_init_session(tpAniSirGlobal pMac, uint32_t sessionId)
 	pSession->pContext = NULL;
 	pSession->connectState = eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED;
 	csr_free_roam_profile(pMac, sessionId);
-	csr_roam_free_connect_profile(pMac, &pSession->connectedProfile);
+	csr_roam_free_connect_profile(&pSession->connectedProfile);
 	csr_roam_free_connected_info(pMac, &pSession->connectedInfo);
 	csr_free_connect_bss_desc(pMac, sessionId);
 	csr_scan_enable(pMac);

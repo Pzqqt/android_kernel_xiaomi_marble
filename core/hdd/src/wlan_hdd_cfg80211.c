@@ -7470,7 +7470,7 @@ struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
 			hddLog(LOG1,
 				FL("wlan_hdd_cfg80211_inform_bss_frame returned NULL"));
 
-		sme_roam_free_connect_profile(hHal, &roamProfile);
+		sme_roam_free_connect_profile(&roamProfile);
 	} else {
 		hddLog(LOGE, FL("roamProfile.pBssDesc is NULL"));
 	}

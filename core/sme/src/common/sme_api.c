@@ -3931,31 +3931,20 @@ CDF_STATUS sme_roam_get_connect_profile(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn sme_roam_free_connect_profile
-    \brief a wrapper function to request CSR to free and reinitialize the
-	profile returned previously by csr_roam_get_connect_profile.
-    This is a synchronous call.
-    \param pProfile - pointer to a caller allocated structure
-		      tCsrRoamConnectedProfile
-    \return CDF_STATUS.
-   ---------------------------------------------------------------------------*/
-CDF_STATUS sme_roam_free_connect_profile(tHalHandle hHal,
-					 tCsrRoamConnectedProfile *pProfile)
+/**
+ * sme_roam_free_connect_profile - a wrapper function to request CSR to free and
+ * reinitialize the profile returned previously by csr_roam_get_connect_profile.
+ *
+ * @profile - pointer to a caller allocated structure tCsrRoamConnectedProfile
+ *
+ * Return: none
+ */
+void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
 	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_ROAM_FREE_CONNECTPROFILE,
 			 NO_SESSION, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (CDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_free_connect_profile(pMac, pProfile);
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
+	csr_roam_free_connect_profile(profile);
 }
 
 /* ---------------------------------------------------------------------------
