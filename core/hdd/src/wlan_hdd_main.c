@@ -2922,8 +2922,7 @@ CDF_STATUS hdd_reset_all_adapters(hdd_context_t *hdd_ctx)
 		adapter->sessionCtx.station.hdd_ReassocScenario = false;
 
 		hdd_deinit_tx_rx(adapter);
-		cds_decr_session_set_pcl(
-						adapter->device_mode,
+		cds_decr_session_set_pcl(adapter->device_mode,
 						adapter->sessionId);
 		if (test_bit(WMM_INIT_DONE, &adapter->event_flags)) {
 			hdd_wmm_adapter_close(adapter);
@@ -6372,8 +6371,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
-		cds_decr_session_set_pcl(
-						ap_adapter->device_mode,
+		cds_decr_session_set_pcl(ap_adapter->device_mode,
 						ap_adapter->sessionId);
 		hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
 		       FL("SAP Stop Success"));

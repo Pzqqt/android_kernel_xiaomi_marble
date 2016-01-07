@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -2329,8 +2329,7 @@ void cds_set_dual_mac_scan_config(uint8_t dbs_val,
  *
  * Return: None
  */
-void cds_set_dual_mac_fw_mode_config(uint8_t dbs,
-		uint8_t dfs)
+void cds_set_dual_mac_fw_mode_config(uint8_t dbs, uint8_t dfs)
 {
 	struct sir_dual_mac_config cfg;
 	CDF_STATUS status;
@@ -3646,8 +3645,7 @@ static void cds_set_pcl_for_existing_combo(enum cds_con_mode mode)
 		return;
 	};
 
-	if (cds_mode_specific_connection_count(
-				mode, NULL) > 0) {
+	if (cds_mode_specific_connection_count(mode, NULL) > 0) {
 		/* Check, store and temp delete the mode's parameter */
 		cds_store_and_del_conn_info(mode, &info);
 		/* Set the PCL to the FW since connection got updated */
@@ -4910,8 +4908,7 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 			goto done;
 		}
 	}
-	count = cds_mode_specific_connection_count(
-			CDS_STA_MODE, list);
+	count = cds_mode_specific_connection_count(CDS_STA_MODE, list);
 	if ((CDS_STA_MODE == mode) &&
 		(cds_mode_specific_connection_count(
 		CDS_IBSS_MODE, list)) && count) {
@@ -4921,8 +4918,7 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 	}
 
 	if ((CDS_STA_MODE == mode) &&
-		(cds_mode_specific_connection_count(
-		CDS_IBSS_MODE, list))) {
+		(cds_mode_specific_connection_count(CDS_IBSS_MODE, list))) {
 		if (wma_is_hw_dbs_capable() == true) {
 			if (num_connections > 1) {
 				/* err msg */

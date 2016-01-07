@@ -1415,9 +1415,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	 * active session count should still be the same and hence upon
 	 * successful reassoc decrement the active session count here.
 	 */
-	cds_decr_session_set_pcl(
-					pAdapter->device_mode,
-					pAdapter->sessionId);
+	cds_decr_session_set_pcl(pAdapter->device_mode, pAdapter->sessionId);
 
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
@@ -1847,8 +1845,7 @@ defined(FEATURE_WLAN_LFR)
 		wlan_hdd_auto_shutdown_enable(pHddCtx, false);
 #endif
 
-		cds_check_concurrent_intf_and_restart_sap(
-							  pHddStaCtx,
+		cds_check_concurrent_intf_and_restart_sap(pHddStaCtx,
 							  pAdapter);
 
 #ifdef FEATURE_WLAN_TDLS

@@ -556,8 +556,7 @@ static int hdd_stop_bss_link(hdd_adapter_t *pHostapdAdapter,
 			hddLog(LOGE, FL("Deleting SAP/P2P link!!!!!!"));
 
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
-		cds_decr_session_set_pcl(
-					     pHostapdAdapter->device_mode,
+		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
 					     pHostapdAdapter->sessionId);
 	}
 	EXIT();
@@ -4965,8 +4964,7 @@ __iw_softap_stopbss(struct net_device *dev,
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
-		cds_decr_session_set_pcl(
-					     pHostapdAdapter->device_mode,
+		cds_decr_session_set_pcl(pHostapdAdapter->device_mode,
 					     pHostapdAdapter->sessionId);
 	}
 	EXIT();
@@ -7872,8 +7870,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pAdapter->event_flags);
 		/*BSS stopped, clear the active sessions for this device mode*/
-		cds_decr_session_set_pcl(
-						pAdapter->device_mode,
+		cds_decr_session_set_pcl(pAdapter->device_mode,
 						pAdapter->sessionId);
 		pAdapter->sessionCtx.ap.beacon = NULL;
 		kfree(old);
