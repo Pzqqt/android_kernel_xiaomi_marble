@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1313,7 +1313,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	HTC_ENDPOINT *pEndpoint;
 	HTC_FRAME_HDR *pHtcHdr;
 	HTC_PACKET_QUEUE sendQueue;
-	cdf_nbuf_t netbuf;
+	cdf_nbuf_t netbuf = NULL;
 	int tx_resources;
 	A_STATUS status = A_OK;
 	uint32_t data_attr = 0;

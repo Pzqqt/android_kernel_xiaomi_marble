@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -338,9 +338,6 @@ void cdf_mem_free(void *ptr)
 void *cdf_mem_malloc(size_t size)
 {
 	int flags = GFP_KERNEL;
-#ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
-	void *pmem;
-#endif
 	void *memPtr = NULL;
 	unsigned long  time_before_kzalloc;
 
@@ -353,6 +350,7 @@ void *cdf_mem_malloc(size_t size)
 
 #if defined(CONFIG_CNSS) && defined(CONFIG_WCNSS_MEM_PRE_ALLOC)
 	if (size > WCNSS_PRE_ALLOC_GET_THRESHOLD) {
+		void *pmem;
 		pmem = wcnss_prealloc_get(size);
 		if (NULL != pmem) {
 			memset(pmem, 0, size);
