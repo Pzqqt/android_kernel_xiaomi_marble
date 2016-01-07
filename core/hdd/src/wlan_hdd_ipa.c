@@ -1726,6 +1726,28 @@ end:
 }
 
 /**
+ * hdd_ipa_init_uc_op_work - init ipa uc op work
+ * @work: struct work_struct
+ * @work_handler: work_handler
+ *
+ * Return: none
+ */
+#ifdef CONFIG_CNSS
+static void hdd_ipa_init_uc_op_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	cnss_init_work(work, work_handler);
+}
+#else
+static void hdd_ipa_init_uc_op_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	INIT_WORK(work, work_handler);
+}
+#endif
+
+
+/**
  * hdd_ipa_uc_ol_init() - Initialize IPA uC offload
  * @hdd_ctx: Global HDD context
  *
@@ -1828,7 +1850,7 @@ static CDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 				  hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
 
 	for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
-		cnss_init_work(&ipa_ctxt->uc_op_work[i].work,
+		hdd_ipa_init_uc_op_work(&ipa_ctxt->uc_op_work[i].work,
 			hdd_ipa_uc_fw_op_event_handler);
 		ipa_ctxt->uc_op_work[i].msg = NULL;
 	}
@@ -2306,6 +2328,27 @@ int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
 }
 
 /**
+ * hdd_ipa_init_uc_rm_work - init ipa uc resource manager work
+ * @work: struct work_struct
+ * @work_handler: work_handler
+ *
+ * Return: none
+ */
+#ifdef CONFIG_CNSS
+static void  hdd_ipa_init_uc_rm_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	cnss_init_work(work, work_handler);
+}
+#else
+static void hdd_ipa_init_uc_rm_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	INIT_WORK(work, work_handler);
+}
+#endif
+
+/**
  * hdd_ipa_setup_rm() - Setup IPA resource management
  * @hdd_ipa: Global HDD IPA context
  *
@@ -2319,7 +2362,8 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 		return 0;
 
-	cnss_init_work(&hdd_ipa->uc_rm_work.work, hdd_ipa_uc_rm_notify_defer);
+	hdd_ipa_init_uc_rm_work(&hdd_ipa->uc_rm_work.work,
+		hdd_ipa_uc_rm_notify_defer);
 	memset(&create_params, 0, sizeof(create_params));
 	create_params.name = IPA_RM_RESOURCE_WLAN_PROD;
 	create_params.reg_params.user_data = hdd_ipa;
