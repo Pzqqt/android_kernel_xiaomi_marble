@@ -1445,8 +1445,9 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	cdf_mem_copy(buf_ptr, &roam_profile.SSID.ssId[0],
 			roam_profile.SSID.length);
 	ssid_ie_len = 2 + roam_profile.SSID.length;
-	hddLog(LOG2, FL("SSIDIE:"));
-	hddLog(CDF_TRACE_LEVEL_DEBUG, buf_ssid_ie, ssid_ie_len);
+	hdd_notice("SSIDIE:");
+	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+			   buf_ssid_ie, ssid_ie_len);
 	final_req_ie = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
 	if (final_req_ie == NULL)
 		goto done;
@@ -1457,9 +1458,9 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	cdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
 	cdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
 		IW_GENERIC_IE_MAX - (ssid_ie_len + reqRsnLength));
-	hddLog(LOG2, FL("Req RSN IE:"));
-	hddLog(CDF_TRACE_LEVEL_DEBUG, final_req_ie,
-		(ssid_ie_len + reqRsnLength));
+	hdd_notice("Req RSN IE:");
+	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+			   final_req_ie, (ssid_ie_len + reqRsnLength));
 	cfg80211_roamed_bss(dev, bss,
 			final_req_ie, (ssid_ie_len + reqRsnLength),
 			rspRsnIe, rspRsnLength, GFP_KERNEL);
