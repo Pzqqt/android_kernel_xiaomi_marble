@@ -625,10 +625,9 @@ typedef struct sSapDfsInfo {
 	 * New channel width and new channel bonding mode
 	 * will only be updated via channel fallback mechanism
 	 */
-	uint8_t orig_cbMode;
-	uint8_t orig_chanWidth;
-	uint8_t new_chanWidth;
-	uint8_t new_cbMode;
+	phy_ch_width orig_chanWidth;
+	phy_ch_width new_chanWidth;
+	chan_params_t new_ch_params;
 
 	/*
 	 * INI param to enable/disable SAP W53

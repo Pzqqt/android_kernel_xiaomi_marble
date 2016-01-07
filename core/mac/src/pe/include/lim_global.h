@@ -512,6 +512,7 @@ typedef struct sLimChannelSwitchInfo {
 	uint8_t primaryChannel;
 	uint8_t ch_center_freq_seg0;
 	uint8_t ch_center_freq_seg1;
+	uint8_t sec_ch_offset;
 	phy_ch_width ch_width;
 	int8_t switchCount;
 	uint32_t switchTimeoutValue;

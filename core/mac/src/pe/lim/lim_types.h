@@ -497,17 +497,9 @@ tSirRetStatus lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
 	uint8_t new_channel, uint8_t count, tpPESession session_entry);
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 						     tSirMacAddr peer, uint8_t nMode,
 						     tpPESession psessionEntry);
-tSirRetStatus lim_send_vht_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
-						     tSirMacAddr peer,
-						     uint8_t nChanWidth,
-						     uint8_t nNewChannel,
-						     uint8_t ncbMode,
-						     tpPESession psessionEntry);
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus lim_send_neighbor_report_request_frame(tpAniSirGlobal,

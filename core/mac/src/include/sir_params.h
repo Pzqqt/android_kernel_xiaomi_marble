@@ -71,7 +71,7 @@ typedef enum {
 	PHY_CHANNEL_BONDING_STATE_MAX = 11
 } ePhyChanBondState;
 
-#define MAX_BONDED_CHANNELS 4
+#define MAX_BONDED_CHANNELS 8
 
 typedef enum {
 	MCC = 0,

@@ -41,21 +41,6 @@
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
 
 typedef enum {
-	CH_WIDTH_20MHZ = 0,
-	CH_WIDTH_40MHZ = 1,
-	CH_WIDTH_80MHZ = 2,
-	CH_WIDTH_160MHZ = 3,
-	CH_WIDTH_80P80MHZ = 4
-} phy_ch_width;
-
-typedef struct ch_params_s {
-	phy_ch_width ch_width;
-	uint8_t sec_ch_offset;
-	uint8_t center_freq_seg0;
-	uint8_t center_freq_seg1;
-} chan_params_t;
-
-typedef enum {
 	/* never used */
 	eCSR_AUTH_TYPE_NONE,
 	/* MAC layer authentication types */
@@ -145,10 +130,8 @@ typedef enum {
 	eCSR_DOT11_MODE_11g_ONLY = 0x0020,
 	eCSR_DOT11_MODE_11n_ONLY = 0x0040,
 	eCSR_DOT11_MODE_11b_ONLY = 0x0080,
-#ifdef WLAN_FEATURE_11AC
 	eCSR_DOT11_MODE_11ac = 0x0100,
 	eCSR_DOT11_MODE_11ac_ONLY = 0x0200,
-#endif
 	/*
 	 * This is for WIFI test. It is same as eWNIAPI_MAC_PROTOCOL_ALL
 	 * except when it starts IBSS in 11B of 2.4GHz

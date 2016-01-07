@@ -878,23 +878,19 @@ static inline void sap_event_init(ptWLAN_SAPEvent sapEvent)
 
 #ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
 /*
- * This function gives the leakage matrix for given NOL channel and cbMode
+ * sap_find_target_channel_in_channel_matrix() - finds the leakage matrix
+ * @sapContext: Pointer to vos global context structure
+ * @ch_width: target channel width
+ * @NOL_channel: the NOL channel whose leakage matrix is required
+ * @pTarget_chnl_mtrx: pointer to target channel matrix returned.
  *
- * PARAMETERS
- * IN
- * sapContext        : Pointer to vos global context structure
- * cbMode            : target channel bonding mode
- * NOL_channel       : the NOL channel whose leakage matrix is required
- * pTarget_chnl_mtrx : pointer to target channel matrix returned.
+ * This function gives the leakage matrix for given NOL channel and ch_width
  *
- * RETURN VALUE
- * BOOLEAN
- * TRUE:  leakage matrix was found
- * FALSE: leakage matrix was not found
+ * Return: TRUE or FALSE
  */
 bool
 sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
-					  ePhyChanBondState cbMode,
+					  phy_ch_width ch_width,
 					  uint8_t NOL_channel,
 					  tSapTxLeakInfo **pTarget_chnl_mtrx)
 {
@@ -903,28 +899,22 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
 	uint32_t nchan_matrix;
 	int i = 0;
 
-	switch (cbMode) {
-	case PHY_SINGLE_CHANNEL_CENTERED:
+	switch (ch_width) {
+	case CH_WIDTH_20MHZ:
 		/* HT20 */
 		pchan_matrix = ht20_chan;
 		nchan_matrix = CDF_ARRAY_SIZE(ht20_chan);
 		break;
-	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+	case CH_WIDTH_40MHZ:
 		/* HT40 */
 		pchan_matrix = ht40_chan;
 		nchan_matrix = CDF_ARRAY_SIZE(ht40_chan);
 		break;
-#ifdef WLAN_FEATURE_11AC
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
+	case CH_WIDTH_80MHZ:
 		/* HT80 */
 		pchan_matrix = ht80_chan;
 		nchan_matrix = CDF_ARRAY_SIZE(ht80_chan);
 		break;
-#endif
 	default:
 		/* handle exception and fall back to HT20 table */
 		pchan_matrix = ht20_chan;
@@ -951,7 +941,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
 /**
  * sap_mark_channels_leaking_into_nol() - to mark channel leaking in to nol
  * @sap_ctx: pointer to SAP context
- * @cb_mode: channel bonding mode
+ * @ch_width: channel width
  * @nol: nol info
  * @temp_ch_lst_sz: the target channel list
  * @temp_ch_lst: the target channel list
@@ -965,7 +955,7 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
 
 CDF_STATUS
 sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
-		ePhyChanBondState cb_mode,
+		phy_ch_width ch_width,
 		tSapDfsNolInfo *nol,
 		uint8_t temp_ch_lst_sz,
 		uint8_t *temp_ch_lst)
@@ -990,7 +980,7 @@ sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
 			FL("sapdfs: processing NOL channel: %d"),
 			dfs_nol_channel);
 		if (false == sap_find_target_channel_in_channel_matrix(
-					sap_ctx, cb_mode, dfs_nol_channel,
+					sap_ctx, ch_width, dfs_nol_channel,
 					&target_chan_matrix)) {
 			/*
 			 * should never happen, we should always find a table
@@ -1066,9 +1056,9 @@ static void sap_set_bitmap(chan_bonding_bitmap *pBitmap, uint8_t channel)
 }
 
 /**
- * sap_populate_available_channels - To populate available channel
+ * sap_populate_available_channels() - To populate available channel
  * @bitmap: bitmap to populate
- * @current_cbmode: cb mode to check for channel availability
+ * @ch_width: channel width
  * @avail_chnl: available channel list to populate
  *
  * This function reads the bitmap and populates available channel
@@ -1079,20 +1069,16 @@ static void sap_set_bitmap(chan_bonding_bitmap *pBitmap, uint8_t channel)
  * Return: number of channels found
  */
 static uint8_t sap_populate_available_channels(chan_bonding_bitmap *bitmap,
-		ePhyChanBondState current_cbmode,
+		phy_ch_width ch_width,
 		uint8_t *avail_chnl)
 {
 	uint8_t i = 0;
 	uint8_t chnl_count = 0;
 	uint8_t start_channel = 0;
 
-	switch (current_cbmode) {
-#ifdef WLAN_FEATURE_11AC
-	/* HT80 */
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
+	switch (ch_width) {
+	/* VHT80 */
+	case CH_WIDTH_80MHZ:
 		for (i = 0; i < MAX_80MHZ_BANDS; i++) {
 			start_channel = bitmap->chanBondingSet[i].startChannel;
 			if (bitmap->chanBondingSet[i].channelMap ==
@@ -1104,10 +1090,8 @@ static uint8_t sap_populate_available_channels(chan_bonding_bitmap *bitmap,
 			}
 		}
 		break;
-#endif
 	/* HT40 */
-	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
+	case CH_WIDTH_40MHZ:
 		for (i = 0; i < MAX_80MHZ_BANDS; i++) {
 			start_channel = bitmap->chanBondingSet[i].startChannel;
 			if ((bitmap->chanBondingSet[i].channelMap &
@@ -1262,8 +1246,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 	uint8_t channelID;
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
 	tpAniSirGlobal pMac;
-	uint32_t chanWidth;
-	ePhyChanBondState cbModeCurrent;
+	phy_ch_width ch_width;
 	uint8_t   *tmp_ch_lst = NULL;
 	uint8_t   dfs_region;
 
@@ -1285,25 +1268,12 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 	 * use the stored original value when you call this function next time
 	 * so fall back mechanism always starts with original ini value.
 	 */
-	if (pMac->sap.SapDfsInfo.orig_cbMode == 0) {
-		pMac->sap.SapDfsInfo.orig_cbMode =
-			(sapContext->ch_width_orig > CH_WIDTH_20MHZ ? 1 : 0);
-		cbModeCurrent = pMac->sap.SapDfsInfo.orig_cbMode;
-	} else {
-		cbModeCurrent = pMac->sap.SapDfsInfo.orig_cbMode;
-	}
-
-	/*
-	 * Retrieve the original one and store it.
-	 * use the stored original value when you call this function next time
-	 * so fall back mechanism always starts with original ini value.
-	 */
 	if (pMac->sap.SapDfsInfo.orig_chanWidth == 0) {
 		pMac->sap.SapDfsInfo.orig_chanWidth =
 					sapContext->ch_width_orig;
-		chanWidth = pMac->sap.SapDfsInfo.orig_chanWidth;
+		ch_width = pMac->sap.SapDfsInfo.orig_chanWidth;
 	} else {
-		chanWidth = pMac->sap.SapDfsInfo.orig_chanWidth;
+		ch_width = pMac->sap.SapDfsInfo.orig_chanWidth;
 	}
 
 	if (sap_get5_g_hz_channel_list(sapContext)) {
@@ -1471,7 +1441,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 			  );
 		if (CDF_STATUS_SUCCESS !=
 			sap_mark_channels_leaking_into_nol(sapContext,
-							   cbModeCurrent,
+							   ch_width,
 							   nol,
 							   valid_chnl_count,
 							   tmp_ch_lst)) {
@@ -1505,8 +1475,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 				 * for 20MHz, directly create available
 				 * channel list
 				 */
-				if (cbModeCurrent ==
-					PHY_SINGLE_CHANNEL_CENTERED) {
+				if (ch_width == CH_WIDTH_20MHZ) {
 					CDF_TRACE(CDF_MODULE_ID_SAP,
 						  CDF_TRACE_LEVEL_DEBUG,
 						  FL
@@ -1529,18 +1498,17 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 		 * if 40 MHz or 80 MHz, populate available
 		 * channel list from bitmap
 		 */
-		if (cbModeCurrent != PHY_SINGLE_CHANNEL_CENTERED) {
+		if (ch_width != CH_WIDTH_20MHZ) {
 			available_ch_cnt =
 				sap_populate_available_channels(&channelBitmap,
-							cbModeCurrent,
+							ch_width,
 							availableChannels);
 			/*
 			 * if no valid channel bonding found,
 			 * fallback to lower bandwidth
 			 */
 			if (available_ch_cnt == 0) {
-				if (cbModeCurrent >=
-				    PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED) {
+				if (ch_width == CH_WIDTH_80MHZ) {
 					CDF_TRACE(CDF_MODULE_ID_SAP,
 						  CDF_TRACE_LEVEL_WARN,
 						  FL
@@ -1549,22 +1517,12 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 						  CDF_TRACE_LEVEL_WARN,
 						  FL
 						  ("sapdfs:Changing chanWidth from [%d] to [%d]"),
-						  chanWidth,
+						  ch_width,
 						  CH_WIDTH_40MHZ);
-					CDF_TRACE(CDF_MODULE_ID_SAP,
-						  CDF_TRACE_LEVEL_WARN,
-						  FL
-						  ("sapdfs:Changing CB mode from [%d] to [%d]"),
-						  cbModeCurrent,
-						  PHY_DOUBLE_CHANNEL_LOW_PRIMARY
-						  );
-					cbModeCurrent =
-						PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
-					chanWidth = CH_WIDTH_40MHZ;
+					ch_width = CH_WIDTH_40MHZ;
 					/* continue to start of do loop */
 					continue;
-				} else if (cbModeCurrent >=
-					   PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
+				} else if (ch_width == CH_WIDTH_40MHZ) {
 					CDF_TRACE(CDF_MODULE_ID_SAP,
 						  CDF_TRACE_LEVEL_WARN,
 						  FL
@@ -1573,17 +1531,9 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 						  CDF_TRACE_LEVEL_WARN,
 						  FL
 						  ("sapdfs:Changing chanWidth from [%d] to [%d]"),
-						  chanWidth,
+						  ch_width,
 						  CH_WIDTH_20MHZ);
-					CDF_TRACE(CDF_MODULE_ID_SAP,
-						  CDF_TRACE_LEVEL_WARN,
-						  FL
-						  ("sapdfs:Changing CB mode from [%d] to [%d]"),
-						  cbModeCurrent,
-						  PHY_SINGLE_CHANNEL_CENTERED);
-					cbModeCurrent =
-						PHY_SINGLE_CHANNEL_CENTERED;
-					chanWidth = CH_WIDTH_20MHZ;
+					ch_width = CH_WIDTH_20MHZ;
 					/* continue to start of do loop */
 					continue;
 				}
@@ -1629,12 +1579,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 			target_channel = avail_dfs_chan_list[i];
 		}
 
-		pMac->sap.SapDfsInfo.new_chanWidth = chanWidth;
-		pMac->sap.SapDfsInfo.new_cbMode = cbModeCurrent;
-		CDF_TRACE(CDF_MODULE_ID_SAP,
-				CDF_TRACE_LEVEL_INFO_LOW,
-				FL("sapdfs: New CB mode = %d"),
-				pMac->sap.SapDfsInfo.new_cbMode);
+		pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
 		CDF_TRACE(CDF_MODULE_ID_SAP,
 				CDF_TRACE_LEVEL_INFO_LOW,
 				FL("sapdfs: New Channel width = %d"),
