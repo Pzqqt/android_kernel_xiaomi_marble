@@ -8747,8 +8747,9 @@ static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 	hdd_conn_get_connected_bss_type(pHddStaCtx, &connectedBssType);
 
 	if ((eMib_dot11DesiredBssType_independent == connectedBssType) ||
-	    (eConnectionState_Associated == pHddStaCtx->conn_info.connState) ||
-	    (eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState)) {
+	  (eConnectionState_Associated == pHddStaCtx->conn_info.connState) ||
+	  (eConnectionState_Connecting == pHddStaCtx->conn_info.connState) ||
+	  (eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState)) {
 		hdd_conn_set_connection_state(pAdapter,
 						eConnectionState_Disconnecting);
 		/* Issue disconnect to CSR */
