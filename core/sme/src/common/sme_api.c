@@ -11995,32 +11995,28 @@ CDF_STATUS sme_set_mas(uint32_t val)
 	return CDF_STATUS_SUCCESS;
 }
 
-/* -------------------------------------------------------------------------
-   \fn sme_roam_channel_change_req
-   \brief API to Indicate Channel change to new target channel
-   \param hHal - The handle returned by mac_open
-   \param targetChannel - New Channel to move the SAP to.
-   \return CDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * sme_roam_channel_change_req() - Channel change to new target channel
+ * @hHal: handle returned by mac_open
+ * @bssid: mac address of BSS
+ * @ch_params: target channel information
+ * @profile: CSR profile
+ *
+ * API to Indicate Channel change to new target channel
+ *
+ * Return: CDF_STATUS
+ */
 CDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
-	struct cdf_mac_addr bssid, uint32_t cb_mode, tCsrRoamProfile *profile)
+	struct cdf_mac_addr bssid, chan_params_t *ch_params,
+	tCsrRoamProfile *profile)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	uint8_t ch_mode;
-
-	ch_mode = (profile->ChannelInfo.ChannelList[0] <=
-			CSR_MAX_2_4_GHZ_SUPPORTED_CHANNELS) ?
-			pMac->roam.configParam.channelBondingMode24GHz :
-			pMac->roam.configParam.channelBondingMode5GHz;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
-			  FL("sapdfs: requested cbmode=[%d] & new negotiated cbmode[%d]"),
-			  cb_mode, ch_mode);
-		status = csr_roam_channel_change_req(pMac, bssid, ch_mode,
+		status = csr_roam_channel_change_req(pMac, bssid, ch_params,
 				profile);
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -12109,25 +12105,26 @@ CDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal, struct cdf_mac_addr bssid,
 	return status;
 }
 
-/* -------------------------------------------------------------------------
-   \fn sme_roam_csa_ie_request
-   \brief API to request CSA IE transmission from PE
-   \param hHal - The handle returned by mac_open
-   \param pDfsCsaReq - CSA IE request
-   \param bssid - SAP bssid
-   \param ch_bandwidth - Channel offset
-   \return CDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * sme_roam_csa_ie_request() - request CSA IE transmission from PE
+ * @hHal: handle returned by mac_open
+ * @bssid: SAP bssid
+ * @targetChannel: target channel information
+ * @csaIeReqd: CSA IE Request
+ * @ch_params: channel information
+ *
+ * Return: CDF_STATUS
+ */
 CDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct cdf_mac_addr bssid,
 				uint8_t targetChannel, uint8_t csaIeReqd,
-				uint8_t ch_bandwidth)
+				chan_params_t *ch_params)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_send_chan_sw_ie_request(pMac, bssid, targetChannel,
-				csaIeReqd, ch_bandwidth);
+		status = csr_roam_send_chan_sw_ie_request(pMac, bssid,
+				targetChannel, csaIeReqd, ch_params);
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;

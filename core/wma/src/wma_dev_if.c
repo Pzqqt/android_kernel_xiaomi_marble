@@ -1922,32 +1922,6 @@ end:
 }
 
 /**
- * wma_get_center_channel() - get center channel
- * @chan: channel number
- * @chan_offset: channel offset
- *
- * Return: center channel
- */
-uint8_t wma_get_center_channel(uint8_t chan, uint8_t chan_offset)
-{
-	uint8_t band_center_chan = 0;
-
-	if ((chan_offset == PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED) ||
-	    (chan_offset == PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW))
-		band_center_chan = chan + 2;
-	else if (chan_offset == PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW)
-		band_center_chan = chan + 6;
-	else if ((chan_offset == PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH) ||
-		 (chan_offset ==
-		  PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED))
-		band_center_chan = chan - 2;
-	else if (chan_offset == PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH)
-		band_center_chan = chan - 6;
-
-	return band_center_chan;
-}
-
-/**
  * wma_vdev_start() - send vdev start request to fw
  * @wma: wma handle
  * @req: vdev start params

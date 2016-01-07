@@ -1458,3 +1458,27 @@ CDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain)
 
 	return CDF_STATUS_SUCCESS;
 }
+
+/**
+ * cds_set_ch_params() - set channel parameters
+ * @ch: channel
+ * @phy_mode: physical mode
+ * @ch_param: channel parameters will be returned
+ *
+ * Return: None
+ */
+void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
+		chan_params_t *ch_params)
+{
+	tHalHandle *hal_ctx = cds_get_context(CDF_MODULE_ID_PE);
+	if (!hal_ctx) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			("Invalid hal_ctx pointer"));
+		return;
+	}
+	/*
+	 * TODO: remove SME call and move the SME set channel
+	 * param functionality to CDS.
+	 */
+	sme_set_ch_params(hal_ctx, phy_mode, ch, 0, ch_params);
+}

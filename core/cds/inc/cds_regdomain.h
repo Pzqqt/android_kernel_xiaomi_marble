@@ -1094,5 +1094,7 @@ int32_t cds_get_country_from_alpha2(uint8_t *alpha2);
 void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
 				  uint32_t modeSelect);
 void cds_set_wma_dfs_region(struct regulatory *reg);
+void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
+		chan_params_t *ch_params);
 
 #endif /* REGULATORY_H */

@@ -49,18 +49,12 @@ tSirRetStatus lim_send_beacon_params(tpAniSirGlobal pMac,
 				     tpUpdateBeaconParams pUpdatedBcnParams,
 				     tpPESession psessionEntry);
 /* tSirRetStatus lim_send_beacon_params(tpAniSirGlobal pMac, tpUpdateBeaconParams pUpdatedBcnParams); */
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_send_mode_update(tpAniSirGlobal pMac,
 				   tUpdateVHTOpMode *tempParam,
 				   tpPESession psessionEntry);
 tSirRetStatus lim_send_rx_nss_update(tpAniSirGlobal pMac,
 				     tUpdateRxNss *tempParam,
 				     tpPESession psessionEntry);
-
-uint32_t lim_get_center_channel(tpAniSirGlobal pMac,
-				uint8_t primarychanNum,
-				ePhyChanBondState secondaryChanOffset,
-				uint8_t chanWidth);
 
 tSirRetStatus lim_set_membership(tpAniSirGlobal pMac,
 				 tUpdateMembership *pTempParam,
@@ -69,7 +63,6 @@ tSirRetStatus lim_set_membership(tpAniSirGlobal pMac,
 tSirRetStatus lim_set_user_pos(tpAniSirGlobal pMac,
 			       tUpdateUserPos *pTempParam,
 			       tpPESession psessionEntry);
-#endif
 #if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 					  uint8_t chnlNumber,

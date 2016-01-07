@@ -17964,14 +17964,21 @@ CDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 }
 #endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
-/*
- * Post Channel Change Request to LIM
+/**
+ * csr_roam_channel_change_req() - Post channel change request to LIM
+ * @pMac: mac context
+ * @bssid: SAP bssid
+ * @ch_params: channel information
+ * @profile: CSR profile
+ *
  * This API is primarily used to post
  * Channel Change Req for SAP
+ *
+ * Return: CDF_STATUS
  */
-CDF_STATUS
-csr_roam_channel_change_req(tpAniSirGlobal pMac, struct cdf_mac_addr bssid,
-			    uint8_t cbMode, tCsrRoamProfile *profile)
+CDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
+			struct cdf_mac_addr bssid,
+			chan_params_t *ch_params, tCsrRoamProfile *profile)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSirChanChangeRequest *pMsg;
@@ -17988,12 +17995,12 @@ csr_roam_channel_change_req(tpAniSirGlobal pMac, struct cdf_mac_addr bssid,
 	pMsg->messageType = eWNI_SME_CHANNEL_CHANGE_REQ;
 	pMsg->messageLen = sizeof(tSirChanChangeRequest);
 	pMsg->targetChannel = profile->ChannelInfo.ChannelList[0];
-	pMsg->cbMode = cbMode;
-	pMsg->channel_width = profile->ch_params.ch_width;
+	pMsg->sec_ch_offset = ch_params->sec_ch_offset;
+	pMsg->ch_width = profile->ch_params.ch_width;
 	pMsg->dot11mode = csr_translate_to_wni_cfg_dot11_mode(pMac,
 					pMac->roam.configParam.uCfgDot11Mode);
-	pMsg->center_freq_seg_0 = pMsg->targetChannel;
-	pMsg->center_freq_seg_1 = 0;
+	pMsg->center_freq_seg_0 = ch_params->center_freq_seg0;
+	pMsg->center_freq_seg_1 = ch_params->center_freq_seg1;
 	cdf_mem_copy(pMsg->bssid, bssid.bytes, CDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(&pMsg->operational_rateset,
 		&param.operationalRateSet, sizeof(pMsg->operational_rateset));
@@ -18194,7 +18201,7 @@ CDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx, uint32_t channel,
  * @bssid:          BSSID
  * @target_channel: Channel on which to send the IE
  * @csa_ie_reqd:    Include/Exclude CSA IE.
- * @ch_bandwidth:   Channel offset
+ * @ch_params:  operating Channel related information
  *
  * This function sends request to transmit channel switch announcement
  * IE to lower layers
@@ -18204,7 +18211,7 @@ CDF_STATUS csr_send_ext_change_channel(tpAniSirGlobal mac_ctx, uint32_t channel,
 CDF_STATUS
 csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 		struct cdf_mac_addr bssid, uint8_t target_channel,
-		uint8_t csa_ie_reqd, uint8_t ch_bandwidth)
+		uint8_t csa_ie_reqd, chan_params_t *ch_params)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSirDfsCsaIeRequest *msg;
@@ -18221,7 +18228,7 @@ csr_roam_send_chan_sw_ie_request(tpAniSirGlobal mac_ctx,
 	msg->targetChannel = target_channel;
 	msg->csaIeRequired = csa_ie_reqd;
 	cdf_mem_copy(msg->bssid, bssid.bytes, CDF_MAC_ADDR_SIZE);
-	msg->ch_bandwidth = ch_bandwidth;
+	cdf_mem_copy(&msg->ch_params, ch_params, sizeof(chan_params_t));
 
 	status = cds_send_mb_message_to_mac(msg);
 

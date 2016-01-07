@@ -2810,11 +2810,13 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 			psessionEntry->currentOperChannel, newChannel);
 		psessionEntry->currentOperChannel = newChannel;
 	}
-	if (psessionEntry->htSecondaryChannelOffset != subband) {
+	if (psessionEntry->htSecondaryChannelOffset !=
+			psessionEntry->gLimChannelSwitch.sec_ch_offset) {
 		lim_log(pMac, LOGW,
 			FL("switch old sec chnl %d --> new sec chnl %d "),
 			psessionEntry->htSecondaryChannelOffset, subband);
-		psessionEntry->htSecondaryChannelOffset = subband;
+		psessionEntry->htSecondaryChannelOffset =
+			psessionEntry->gLimChannelSwitch.sec_ch_offset;
 		if (psessionEntry->htSecondaryChannelOffset ==
 		    PHY_SINGLE_CHANNEL_CENTERED) {
 			psessionEntry->htSupportedChannelWidthSet =

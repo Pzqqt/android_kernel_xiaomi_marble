@@ -498,60 +498,6 @@ static bool __lim_process_sme_sys_ready_ind(tpAniSirGlobal pMac, uint32_t *pMsgB
 	return false;
 }
 
-#ifdef WLAN_FEATURE_11AC
-
-uint32_t lim_get_center_channel(tpAniSirGlobal pMac, uint8_t primarychanNum,
-				ePhyChanBondState secondaryChanOffset,
-				uint8_t chanWidth)
-{
-	if (chanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ) {
-		switch (secondaryChanOffset) {
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_CENTERED_40MHZ_CENTERED:
-			return primarychanNum;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
-			return primarychanNum + 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED:
-			return primarychanNum - 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
-			return primarychanNum + 6;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
-			return primarychanNum + 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-			return primarychanNum - 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
-			return primarychanNum - 6;
-		default:
-			return eSIR_CFG_INVALID_ID;
-		}
-	} else if (chanWidth == WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ) {
-		switch (secondaryChanOffset) {
-		case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
-			return primarychanNum + 2;
-		case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
-			return primarychanNum - 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_CENTERED_40MHZ_CENTERED:
-			return primarychanNum;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
-			return primarychanNum + 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED:
-			return primarychanNum - 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
-			return primarychanNum + 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
-			return primarychanNum - 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-			return primarychanNum + 2;
-		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
-			return primarychanNum - 2;
-		default:
-			return eSIR_CFG_INVALID_ID;
-		}
-	}
-	return primarychanNum;
-}
-
-#endif
-
 /**
  *lim_configure_ap_start_bss_session() - Configure the AP Start BSS in session.
  *@mac_ctx: Pointer to Global MAC structure
@@ -5136,17 +5082,17 @@ static void lim_process_sme_channel_change_request(tpAniSirGlobal mac_ctx,
 			"switch old chnl %d to new chnl %d, ch_bw %d"),
 			session_entry->currentOperChannel,
 			ch_change_req->targetChannel,
-			ch_change_req->channel_width);
+			ch_change_req->ch_width);
 
 	/* Store the New Channel Params in session_entry */
-	session_entry->ch_width = ch_change_req->channel_width;
+	session_entry->ch_width = ch_change_req->ch_width;
 	session_entry->ch_center_freq_seg0 =
 		ch_change_req->center_freq_seg_0;
 	session_entry->ch_center_freq_seg1 =
 		ch_change_req->center_freq_seg_1;
-	session_entry->htSecondaryChannelOffset = ch_change_req->cbMode;
+	session_entry->htSecondaryChannelOffset = ch_change_req->sec_ch_offset;
 	session_entry->htSupportedChannelWidthSet =
-		(ch_change_req->channel_width ? 1 : 0);
+		(ch_change_req->ch_width ? 1 : 0);
 	session_entry->htRecommendedTxWidthSet =
 		session_entry->htSupportedChannelWidthSet;
 	session_entry->currentOperChannel =
@@ -5548,7 +5494,6 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 {
 	tpSirDfsCsaIeRequest dfs_csa_ie_req;
 	tpPESession session_entry = NULL;
-	uint32_t ch_width = 0;
 	uint8_t session_id;
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
 
@@ -5581,7 +5526,7 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	session_entry->dfsIncludeChanSwIe = true;
 	session_entry->gLimChannelSwitch.switchCount = LIM_MAX_CSA_IE_UPDATES;
 	session_entry->gLimChannelSwitch.ch_width =
-				 dfs_csa_ie_req->ch_bandwidth;
+				 dfs_csa_ie_req->ch_params.ch_width;
 	if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
 		session_entry->gLimChannelSwitch.switchMode = 1;
 
@@ -5592,16 +5537,10 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	if (true != session_entry->vhtCapability)
 		goto skip_vht;
 
-	if (WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ ==
-			session_entry->vhtTxChannelWidthSet)
-		ch_width = eHT_CHANNEL_WIDTH_80MHZ;
-	else if (WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ ==
-			session_entry->vhtTxChannelWidthSet)
-		ch_width = session_entry->htSupportedChannelWidthSet;
 	/* Now encode the Wider Ch BW element depending on the ch width */
 	wider_bw_ch_switch = &session_entry->gLimWiderBWChannelSwitch;
-	switch (ch_width) {
-	case eHT_CHANNEL_WIDTH_20MHZ:
+	switch (dfs_csa_ie_req->ch_params.ch_width) {
+	case CH_WIDTH_20MHZ:
 		/*
 		 * Wide channel BW sublement in channel wrapper element is not
 		 * required in case of 20 Mhz operation. Currently It is set
@@ -5611,20 +5550,25 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 		wider_bw_ch_switch->newChanWidth =
 			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 		break;
-	case eHT_CHANNEL_WIDTH_40MHZ:
-		session_entry->dfsIncludeChanWrapperIe = true;
+	case CH_WIDTH_40MHZ:
+		session_entry->dfsIncludeChanWrapperIe = false;
 		wider_bw_ch_switch->newChanWidth =
 			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 		break;
-	case eHT_CHANNEL_WIDTH_80MHZ:
+	case CH_WIDTH_80MHZ:
 		session_entry->dfsIncludeChanWrapperIe = true;
 		wider_bw_ch_switch->newChanWidth =
 			WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
 		break;
-	case eHT_CHANNEL_WIDTH_160MHZ:
+	case CH_WIDTH_160MHZ:
 		session_entry->dfsIncludeChanWrapperIe = true;
 		wider_bw_ch_switch->newChanWidth =
 			WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		session_entry->dfsIncludeChanWrapperIe = true;
+		wider_bw_ch_switch->newChanWidth =
+			WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
 		break;
 	default:
 		session_entry->dfsIncludeChanWrapperIe = false;
@@ -5637,16 +5581,15 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	}
 	/* Fetch the center channel based on the channel width */
 	wider_bw_ch_switch->newCenterChanFreq0 =
-		lim_get_center_channel(mac_ctx, dfs_csa_ie_req->targetChannel,
-				       session_entry->htSecondaryChannelOffset,
-				       wider_bw_ch_switch->newChanWidth);
+		dfs_csa_ie_req->ch_params.center_freq_seg0;
 	/*
 	 * This is not applicable for 20/40/80 Mhz.Only used when we support
 	 * 80+80 Mhz operation. In case of 80+80 Mhz, this parameter indicates
 	 * center channel frequency index of 80 Mhz channel of
 	 * frequency segment 1.
 	 */
-	wider_bw_ch_switch->newCenterChanFreq1 = 0;
+	wider_bw_ch_switch->newCenterChanFreq1 =
+		dfs_csa_ie_req->ch_params.center_freq_seg1;
 skip_vht:
 	/* Send CSA IE request from here */
 	if (sch_set_fixed_beacon_fields(mac_ctx, session_entry) !=

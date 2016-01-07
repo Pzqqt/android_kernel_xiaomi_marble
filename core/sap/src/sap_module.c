@@ -1425,7 +1425,6 @@ static CDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 {
 	void *hal;
 	tpAniSirGlobal mac_ctx;
-	tSmeConfigParams *sme_config;
 	uint8_t bw;
 
 	hal = CDS_GET_HAL_CB(sap_context->p_cds_gctx);
@@ -1437,23 +1436,12 @@ static CDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 
 	mac_ctx = PMAC_STRUCT(hal);
 
-	sme_config = cdf_mem_malloc(sizeof(*sme_config));
-	if (!sme_config) {
-		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-			FL("memory allocation failed for sme_config"));
-		return CDF_STATUS_E_NOMEM;
-	}
-
-	sme_get_config_param(mac_ctx, sme_config);
 	if (channel <= RF_CHAN_14) {
 		/*
 		 * currently OBSS scan is done in hostapd, so to avoid
 		 * SAP coming up in HT40 on channel switch we are
 		 * disabling channel bonding in 2.4Ghz.
 		 */
-		sme_config->csrConfig.channelBondingMode24GHz =
-			eCSR_INI_SINGLE_CHANNEL_CENTERED;
-		mac_ctx->sap.SapDfsInfo.new_cbMode = 0;
 		mac_ctx->sap.SapDfsInfo.new_chanWidth = 0;
 
 	} else {
@@ -1475,37 +1463,23 @@ static CDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 				continue;
 
 			if (bw == BW80) {
-				wlansap_update_bw80_cbmode(channel, sme_config);
-				mac_ctx->sap.SapDfsInfo.new_cbMode =
-				   sme_config->csrConfig.channelBondingMode5GHz;
 				mac_ctx->sap.SapDfsInfo.new_chanWidth =
 					CH_WIDTH_80MHZ;
 			} else if (bw == BW40_HIGH_PRIMARY) {
 				mac_ctx->sap.SapDfsInfo.new_chanWidth =
 					CH_WIDTH_40MHZ;
-				sme_config->csrConfig.channelBondingMode5GHz =
-				mac_ctx->sap.SapDfsInfo.new_cbMode =
-				   eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY;
 			} else if (bw == BW40_LOW_PRIMARY) {
 				mac_ctx->sap.SapDfsInfo.new_chanWidth =
 				   CH_WIDTH_40MHZ;
-				sme_config->csrConfig.channelBondingMode5GHz =
-				mac_ctx->sap.SapDfsInfo.new_cbMode =
-				   eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
 			} else {
 				mac_ctx->sap.SapDfsInfo.new_chanWidth =
 				   CH_WIDTH_20MHZ;
-				sme_config->csrConfig.channelBondingMode5GHz =
-				mac_ctx->sap.SapDfsInfo.new_cbMode =
-				   eCSR_INI_SINGLE_CHANNEL_CENTERED;
 			}
 			break;
 		}
 
 	}
 
-	sme_update_config(mac_ctx, sme_config);
-	cdf_mem_free(sme_config);
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -1599,6 +1573,13 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 			 * to sap context.
 			 */
 			pMac->sap.SapDfsInfo.target_channel = targetChannel;
+			pMac->sap.SapDfsInfo.new_ch_params.ch_width =
+				pMac->sap.SapDfsInfo.new_chanWidth;
+			sme_set_ch_params(hHal,
+					sapContext->csr_roamProfile.phyMode,
+					targetChannel,
+					0,
+					&pMac->sap.SapDfsInfo.new_ch_params);
 			/*
 			 * Set the CSA IE required flag.
 			 */
@@ -2307,8 +2288,6 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
-	uint32_t cb_mode;
-	uint32_t vht_channel_width;
 	chan_params_t ch_params;
 	sapContext = (ptSapContext) pSapCtx;
 
@@ -2332,18 +2311,16 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	 * because we've implemented channel width fallback mechanism for DFS
 	 * which will result in channel width changing dynamically.
 	 */
-	cb_mode = mac_ctx->sap.SapDfsInfo.new_cbMode;
-	vht_channel_width = mac_ctx->sap.SapDfsInfo.new_chanWidth;
-	ch_params.ch_width = vht_channel_width;
+	ch_params.ch_width = mac_ctx->sap.SapDfsInfo.new_chanWidth;
 	sme_set_ch_params(hHal, phy_mode, target_channel, 0, &ch_params);
-	sapContext->ch_params.ch_width = vht_channel_width;
+	sapContext->ch_params.ch_width = ch_params.ch_width;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
 	 */
 	sapContext->channel = target_channel;
-	sapContext->csr_roamProfile.ch_params.ch_width = vht_channel_width;
+	sapContext->csr_roamProfile.ch_params.ch_width = ch_params.ch_width;
 	cdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
-				cb_mode, &sapContext->csr_roamProfile);
+				&ch_params, &sapContext->csr_roamProfile);
 
 	if (cdf_ret_status == CDF_STATUS_SUCCESS) {
 		sap_signal_hdd_event(sapContext, NULL,
@@ -2446,8 +2423,6 @@ CDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
-	uint32_t cbmode, vht_ch_width;
-	uint8_t ch_bandwidth;
 	sapContext = (ptSapContext) pSapCtx;
 
 	if (NULL == sapContext) {
@@ -2464,38 +2439,11 @@ CDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 	}
 	pMac = PMAC_STRUCT(hHal);
 
-	/*
-	 * We are getting channel bonding mode from sapDfsInfor structure
-	 * because we've implemented channel width fallback mechanism for DFS
-	 * which will result in channel width changing dynamically.
-	 */
-	vht_ch_width = pMac->sap.SapDfsInfo.new_chanWidth;
-	cbmode = pMac->sap.SapDfsInfo.new_cbMode;
-
-	if (pMac->sap.SapDfsInfo.target_channel <= 14 ||
-		vht_ch_width == eHT_CHANNEL_WIDTH_40MHZ ||
-		vht_ch_width == eHT_CHANNEL_WIDTH_20MHZ) {
-		switch (cbmode) {
-		case eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY:
-			ch_bandwidth = BW40_HIGH_PRIMARY;
-			break;
-		case eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY:
-			ch_bandwidth = BW40_LOW_PRIMARY;
-			break;
-		case eCSR_INI_SINGLE_CHANNEL_CENTERED:
-		default:
-			ch_bandwidth = BW20;
-			break;
-		}
-	} else {
-		ch_bandwidth = BW80;
-	}
-
 	cdf_ret_status = sme_roam_csa_ie_request(hHal,
 				sapContext->bssid,
 				pMac->sap.SapDfsInfo.target_channel,
 				pMac->sap.SapDfsInfo.csaIERequired,
-				ch_bandwidth);
+				&pMac->sap.SapDfsInfo.new_ch_params);
 
 	if (cdf_ret_status == CDF_STATUS_SUCCESS) {
 		return CDF_STATUS_SUCCESS;

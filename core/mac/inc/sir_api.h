@@ -287,6 +287,36 @@ struct rrm_config_param {
 	uint8_t max_randn_interval;
 	uint8_t rm_capability[RMENABLEDCAP_MAX_LEN];
 };
+/**
+ * typedef ch_width - channel width
+ * @CH_WIDTH_20MHZ: channel width 20 MHz
+ * @CH_WIDTH_40MHZ: channel width 40 MHz
+ * @CH_WIDTH_80MHZ: channel width 80MHz
+ * @CH_WIDTH_160MHZ: channel width 160 MHz
+ * @CH_WIDTH_80P80MHZ: channel width 160MHz(80+80)
+ */
+typedef enum ch_width {
+	CH_WIDTH_20MHZ = 0,
+	CH_WIDTH_40MHZ = 1,
+	CH_WIDTH_80MHZ = 2,
+	CH_WIDTH_160MHZ = 3,
+	CH_WIDTH_80P80MHZ = 4
+} phy_ch_width;
+
+/**
+ * struct ch_params_s
+ *
+ * @ch_width: channel width
+ * @sec_ch_offset: secondary channel offset
+ * @center_freq_seg0: center freq for segment 0
+ * @center_freq_seg1: center freq for segment 1
+ */
+typedef struct ch_params_s {
+	enum ch_width ch_width;
+	uint8_t sec_ch_offset;
+	uint8_t center_freq_seg0;
+	uint8_t center_freq_seg1;
+} chan_params_t;
 
 /* each station added has a rate mode which specifies the sta attributes */
 typedef enum eStaRateMode {
@@ -3790,8 +3820,8 @@ typedef struct sSirChanChangeRequest {
 	uint16_t messageType;
 	uint16_t messageLen;
 	uint8_t targetChannel;
-	uint8_t cbMode;
-	uint8_t channel_width;
+	uint8_t sec_ch_offset;
+	phy_ch_width ch_width;
 	uint8_t center_freq_seg_0;
 	uint8_t center_freq_seg_1;
 	uint8_t bssid[CDF_MAC_ADDR_SIZE];
@@ -3872,7 +3902,7 @@ typedef struct sSirDfsCsaIeRequest {
 	uint8_t targetChannel;
 	uint8_t csaIeRequired;
 	uint8_t bssid[CDF_MAC_ADDR_SIZE];
-	uint8_t ch_bandwidth;
+	struct ch_params_s ch_params;
 } tSirDfsCsaIeRequest, *tpSirDfsCsaIeRequest;
 
 /* Indication from lower layer indicating the completion of first beacon send
