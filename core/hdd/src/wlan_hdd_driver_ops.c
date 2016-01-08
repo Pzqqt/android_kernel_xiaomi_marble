@@ -25,6 +25,9 @@
  * to the Linux Foundation.
  */
 
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
+
 #include <linux/platform_device.h>
 #include <linux/pci.h>
 #ifdef HIF_PCI
@@ -338,8 +341,7 @@ static void wlan_hdd_shutdown(void)
 	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 
 	if (cds_is_load_unload_in_progress()) {
-		hddLog(LOGE,
-			FL("Load/unload in progress, ignore SSR shutdown"));
+		hdd_err("Load/unload in progress, ignore SSR shutdown");
 		return;
 	}
 	/* this is for cases, where shutdown invoked from CNSS */
@@ -350,8 +352,7 @@ static void wlan_hdd_shutdown(void)
 		hif_pktlogmod_exit(hif_ctx);
 
 	if (!cds_is_ssr_ready(__func__))
-		hddLog(LOGE,
-			FL("Host is not ready for SSR, attempting anyway"));
+		hdd_err("Host is not ready for SSR, attempting anyway");
 
 	if (!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
 		hif_disable_isr(hif_ctx);
@@ -390,7 +391,7 @@ void wlan_hdd_notify_handler(int state)
 		int ret = 0;
 		ret = hdd_wlan_notify_modem_power_state(state);
 		if (ret < 0)
-			hddLog(LOGE, FL("Fail to send notify"));
+			hdd_err("Fail to send notify");
 	}
 }
 
@@ -486,7 +487,7 @@ static int __wlan_hdd_bus_resume(void)
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (0 != status) {
-		hddLog(LOGE, FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return status;
 	}
 
