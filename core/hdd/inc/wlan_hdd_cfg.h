@@ -1945,7 +1945,11 @@ typedef enum {
 #define CFG_ENABLE_FW_LOG_NAME                   "gEnablefwlog"
 #define CFG_ENABLE_FW_LOG_DISABLE                (0)
 #define CFG_ENABLE_FW_LOG_ENABLE                 (1)
+#ifdef QCA_WIFI_3_0_ADRASTEA
 #define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_DISABLE)
+#else
+#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_ENABLE)
+#endif
 
 /*
  * Enable/Disable SSR for USB
