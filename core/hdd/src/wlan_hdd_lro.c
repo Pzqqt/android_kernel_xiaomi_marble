@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,6 +29,9 @@
  *
  * WLAN HDD LRO interface implementation
  */
+
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
 
 #include <wlan_hdd_includes.h>
 #include <cdf_types.h>
@@ -458,7 +461,7 @@ int hdd_lro_init(hdd_context_t *hdd_ctx)
 	struct wma_lro_config_cmd_t lro_config;
 
 	if (!hdd_ctx->config->lro_enable) {
-		hdd_err(FL("LRO Disabled"));
+		hdd_err("LRO Disabled");
 		return 0;
 	}
 
