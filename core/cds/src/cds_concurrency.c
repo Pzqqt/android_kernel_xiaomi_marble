@@ -2026,7 +2026,7 @@ bool cds_set_connection_in_progress(bool value)
 		return false;
 	}
 
-	spin_lock(&hdd_ctx->connection_status_lock);
+	cdf_spin_lock(&hdd_ctx->connection_status_lock);
 	/*
 	 * if the value is set to true previously and if someone is
 	 * trying to make it true again then it could be some race
@@ -2037,7 +2037,7 @@ bool cds_set_connection_in_progress(bool value)
 		status = false;
 	else
 		hdd_ctx->connection_in_progress = value;
-	spin_unlock(&hdd_ctx->connection_status_lock);
+	cdf_spin_unlock(&hdd_ctx->connection_status_lock);
 	return status;
 }
 

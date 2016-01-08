@@ -1951,15 +1951,15 @@ hdd_sched_scan_callback(void *callbackContext,
 		return;
 	}
 
-	spin_lock(&pHddCtx->schedScan_lock);
+	cdf_spin_lock(&pHddCtx->sched_scan_lock);
 	if (true == pHddCtx->isWiphySuspended) {
 		pHddCtx->isSchedScanUpdatePending = true;
-		spin_unlock(&pHddCtx->schedScan_lock);
+		cdf_spin_unlock(&pHddCtx->sched_scan_lock);
 		hddLog(LOG1,
 		       FL("Update cfg80211 scan database after it resume"));
 		return;
 	}
-	spin_unlock(&pHddCtx->schedScan_lock);
+	cdf_spin_unlock(&pHddCtx->sched_scan_lock);
 
 	ret = wlan_hdd_cfg80211_update_bss(pHddCtx->wiphy, pAdapter, 0);
 
