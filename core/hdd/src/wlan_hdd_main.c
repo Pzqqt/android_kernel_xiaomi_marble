@@ -4890,8 +4890,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	init_completion(&hdd_ctx->mc_sus_event_var);
 	init_completion(&hdd_ctx->ready_to_suspend);
 
-	spin_lock_init(&hdd_ctx->schedScan_lock);
-	spin_lock_init(&hdd_ctx->connection_status_lock);
+	cdf_spinlock_init(&hdd_ctx->sched_scan_lock);
+	cdf_spinlock_init(&hdd_ctx->connection_status_lock);
 
 	cdf_spinlock_init(&hdd_ctx->hdd_adapter_lock);
 	cdf_list_init(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);

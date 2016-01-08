@@ -1208,7 +1208,7 @@ struct hdd_context_s {
 	/* Use below lock to protect access to isSchedScanUpdatePending
 	 * since it will be accessed in two different contexts.
 	 */
-	spinlock_t schedScan_lock;
+	cdf_spinlock_t sched_scan_lock;
 
 	/* Flag keeps track of wiphy suspend/resume */
 	bool isWiphySuspended;
@@ -1325,7 +1325,7 @@ struct hdd_context_s {
 
 	cdf_mc_timer_t dbs_opportunistic_timer;
 	bool connection_in_progress;
-	spinlock_t connection_status_lock;
+	cdf_spinlock_t connection_status_lock;
 	cdf_mutex_t hdd_conc_list_lock;
 
 	uint16_t hdd_txrx_hist_idx;
