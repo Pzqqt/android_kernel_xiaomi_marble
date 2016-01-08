@@ -627,7 +627,7 @@ void hif_disable_isr(void *scn);
 void hif_reset_soc(void *scn);
 void hif_disable_aspm(void);
 void hif_save_htc_htt_config_endpoint(int htc_endpoint);
-CDF_STATUS hif_open(void);
+CDF_STATUS hif_open(enum ath_hal_bus_type bus_type);
 void hif_close(void *hif_ctx);
 CDF_STATUS hif_enable(void *hif_ctx, struct device *dev, void *bdev,
 	const hif_bus_id *bid, enum ath_hal_bus_type bus_type,

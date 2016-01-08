@@ -125,7 +125,7 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	int ret = 0;
 	void *hif_ctx;
 
-	status = hif_open();
+	status = hif_open(bus_type);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hif_open error = %d", status);
 		return cdf_status_to_os_return(status);
