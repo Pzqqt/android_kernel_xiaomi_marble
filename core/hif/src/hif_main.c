@@ -511,7 +511,7 @@ void hif_set_fw_info(void *scn, uint32_t target_fw_version)
  *
  * Return: scn
  */
-CDF_STATUS hif_open(void)
+CDF_STATUS hif_open(enum ath_hal_bus_type bus_type)
 {
 	struct ol_softc *scn;
 	v_CONTEXT_t cds_context;
@@ -536,6 +536,14 @@ CDF_STATUS hif_open(void)
 	cdf_atomic_init(&scn->tasklet_from_intr);
 	init_waitqueue_head(&scn->aps_osdev.event_queue);
 	scn->linkstate_vote = 0;
+
+	status = hif_bus_open(scn, bus_type);
+	if (status != CDF_STATUS_SUCCESS) {
+		HIF_ERROR("%s: hif_bus_open error = %d, bus_type = %d",
+				  __func__, status, bus_type);
+		cds_free_context(cds_context, CDF_MODULE_ID_HIF, scn);
+	}
+
 	return status;
 }
 
@@ -592,16 +600,8 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 		return CDF_STATUS_E_NULL_VALUE;
 	}
 
-	status = hif_bus_open(scn, bus_type);
-	if (status != CDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: hif_bus_open error = %d, bus_type = %d",
-				  __func__, status, bus_type);
-		return status;
-	}
-
 	status = hif_enable_bus(scn, dev, bdev, bid, type);
 	if (status != CDF_STATUS_SUCCESS) {
-		hif_bus_close(scn);
 		HIF_ERROR("%s: hif_enable_bus error = %d",
 				  __func__, status);
 		return status;
@@ -613,7 +613,6 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 	if (hif_config_ce(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
 		hif_disable_bus(scn->aps_osdev.bdev);
-		hif_bus_close(scn);
 		status = CDF_STATUS_E_FAILURE;
 		return status;
 	}
