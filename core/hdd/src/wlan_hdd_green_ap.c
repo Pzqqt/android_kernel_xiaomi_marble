@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -414,12 +414,9 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 	 */
 	if (hdd_ctx->green_ap_ctx->egap_support && cfg->enable_egap &&
 	    cfg->egap_feature_flag) {
-		hddLog(LOG1,
-		       FL("Set EGAP - enabled: %d, flag: %x, inact_time: %d, wait_time: %d"),
-			  cfg->enable_egap,
-			  cfg->egap_feature_flag,
-			  cfg->egap_inact_time,
-			  cfg->egap_wait_time);
+		hdd_notice("Set EGAP - enabled: %d, flag: %x, inact_time: %d, wait_time: %d",
+			   cfg->enable_egap, cfg->egap_feature_flag,
+			   cfg->egap_inact_time, cfg->egap_wait_time);
 		if (!sme_send_egap_conf_params(cfg->enable_egap,
 					       cfg->egap_inact_time,
 					       cfg->egap_wait_time,
