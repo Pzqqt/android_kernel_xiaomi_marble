@@ -1939,14 +1939,14 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 }
 
 CDF_STATUS hdd_register_interface(hdd_adapter_t *adapter,
-				  uint8_t rtnl_lock_held)
+				  bool rtnl_held)
 {
 	struct net_device *pWlanDev = adapter->dev;
 	/* hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station; */
 	/* hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX( adapter ); */
 	/* CDF_STATUS cdf_ret_status = CDF_STATUS_SUCCESS; */
 
-	if (rtnl_lock_held) {
+	if (rtnl_held) {
 		if (strnchr(pWlanDev->name, strlen(pWlanDev->name), '%')) {
 			if (dev_alloc_name(pWlanDev, pWlanDev->name) < 0) {
 				hddLog(CDF_TRACE_LEVEL_ERROR,
@@ -2234,7 +2234,7 @@ void hdd_deinit_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 }
 
 void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
-			 uint8_t rtnl_held)
+			 bool rtnl_held)
 {
 	struct net_device *pWlanDev = NULL;
 
@@ -2291,7 +2291,7 @@ CDF_STATUS hdd_check_for_existing_macaddr(hdd_context_t *hdd_ctx,
 }
 hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 				const char *iface_name, tSirMacAddr macAddr,
-				uint8_t rtnl_held)
+				bool rtnl_held)
 {
 	hdd_adapter_t *adapter = NULL;
 	hdd_adapter_list_node_t *pHddAdapterNode = NULL;
@@ -2673,7 +2673,7 @@ err_free_netdev:
 }
 
 CDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
-			     uint8_t rtnl_held)
+			     bool rtnl_held)
 {
 	hdd_adapter_list_node_t *adapterNode, *pCurrent, *pNext;
 	CDF_STATUS status;
@@ -2711,7 +2711,16 @@ CDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	return CDF_STATUS_E_FAILURE;
 }
 
-CDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx)
+/**
+ * hdd_close_all_adapters - Close all open adapters
+ * @hdd_ctx:	Hdd context
+ * rtnl_held:	True if RTNL lock held
+ *
+ * Close all open adapters.
+ *
+ * Return: CDF status code
+ */
+CDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
 {
 	hdd_adapter_list_node_t *pHddAdapterNode;
 	CDF_STATUS status;
@@ -2722,7 +2731,7 @@ CDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx)
 		status = hdd_remove_front_adapter(hdd_ctx, &pHddAdapterNode);
 		if (pHddAdapterNode && CDF_STATUS_SUCCESS == status) {
 			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->pAdapter,
-					    false);
+					    rtnl_held);
 			cdf_mem_free(pHddAdapterNode);
 		}
 	} while (NULL != pHddAdapterNode && CDF_STATUS_E_EMPTY != status);
@@ -3793,7 +3802,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 #endif /* WLAN_KD_READY_NOTIFIER */
 	nl_srv_exit();
 
-	hdd_close_all_adapters(hdd_ctx);
+	hdd_close_all_adapters(hdd_ctx, false);
 
 	hdd_ipa_cleanup(hdd_ctx);
 
@@ -5185,6 +5194,152 @@ err_out:
 	return ERR_PTR(ret);
 }
 
+#ifdef WLAN_OPEN_P2P_INTERFACE
+/**
+ * hdd_open_p2p_interface - Open P2P interface
+ * @hdd_ctx:	HDD context
+ * @rtnl_held:	True if RTNL lock held
+ *
+ * Open P2P interface during probe. This function called to open the P2P
+ * interface at probe along with STA interface.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
+{
+	hdd_adapter_t *adapter;
+	uint8_t *p2p_dev_addr;
+
+	if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
+	    !(hdd_ctx->config->intfMacAddr[0].bytes[0] & 0x02)) {
+		cdf_mem_copy(hdd_ctx->p2pDeviceAddress.bytes,
+			     hdd_ctx->config->intfMacAddr[0].bytes,
+			     sizeof(tSirMacAddr));
+
+		/*
+		 * Generate the P2P Device Address.  This consists of
+		 * the device's primary MAC address with the locally
+		 * administered bit set.
+		 */
+		hdd_ctx->p2pDeviceAddress.bytes[0] |= 0x02;
+	} else {
+		p2p_dev_addr = wlan_hdd_get_intf_addr(hdd_ctx);
+		if (p2p_dev_addr == NULL) {
+			hdd_alert("Failed to allocate mac_address for p2p_device");
+			return -ENOSPC;
+		}
+
+		cdf_mem_copy(&hdd_ctx->p2pDeviceAddress.bytes[0], p2p_dev_addr,
+			     CDF_MAC_ADDR_SIZE);
+	}
+
+	adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_P2P_DEVICE, "p2p%d",
+				   &hdd_ctx->p2pDeviceAddress.bytes[0],
+				   rtnl_held);
+
+	if (NULL == adapter) {
+		hdd_alert("Failed to do hdd_open_adapter for P2P Device Interface");
+		return -ENOSPC;
+	}
+
+	return 0;
+}
+#else
+static inline int hdd_open_p2p_interface(struct hdd_context_t *hdd_ctx,
+					 bool rtnl_held)
+{
+	return 0;
+}
+#endif
+
+/**
+ * hdd_open_interfaces - Open all required interfaces
+ * hdd_ctx:	HDD context
+ * rtnl_held: True if RTNL lock is held
+ *
+ * Open all the interfaces like STA, P2P and OCB based on the configuration.
+ *
+ * Return: Primary adapter on success and PTR_ERR on failure
+ */
+static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
+					  bool rtnl_held)
+{
+	hdd_adapter_t *adapter = NULL;
+	hdd_adapter_t *adapter_11p = NULL;
+	int ret;
+
+	/* Create only 802.11p interface */
+	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE) {
+		adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_OCB, "wlanocb%d",
+					   wlan_hdd_get_intf_addr(hdd_ctx),
+					   rtnl_held);
+
+		if (adapter == NULL)
+			return ERR_PTR(-ENOSPC);
+
+		return adapter;
+	}
+
+	adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_INFRA_STATION, "wlan%d",
+				   wlan_hdd_get_intf_addr(hdd_ctx),
+				   rtnl_held);
+
+	if (adapter == NULL)
+		return ERR_PTR(-ENOSPC);
+
+	ret = hdd_open_p2p_interface(hdd_ctx, rtnl_held);
+	if (ret)
+		goto err_close_adapter;
+
+	/* Open 802.11p Interface */
+	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_CONCURRENT) {
+		adapter_11p = hdd_open_adapter(hdd_ctx, WLAN_HDD_OCB,
+					       "wlanocb%d",
+					       wlan_hdd_get_intf_addr(hdd_ctx),
+					       rtnl_held);
+		if (adapter_11p == NULL) {
+			hdd_err("Failed to open 802.11p interface");
+			goto err_close_adapter;
+		}
+	}
+
+	return adapter;
+
+err_close_adapter:
+	hdd_close_all_adapters(hdd_ctx, rtnl_held);
+	return ERR_PTR(ret);
+}
+
+#if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
+/**
+ * hdd_hold_rtnl_lock - Hold RTNL lock
+ *
+ * Hold RTNL lock
+ *
+ * Return: True if held and false otherwise
+ */
+static inline bool hdd_hold_rtnl_lock(void)
+{
+	rtnl_lock();
+	return true;
+}
+
+/**
+ * hdd_release_rtnl_lock - Release RTNL lock
+ *
+ * Release RTNL lock
+ *
+ * Return: None
+ */
+static inline void hdd_release_rtnl_lock(void)
+{
+	rtnl_unlock();
+}
+#else
+static inline bool hdd_hold_rtnl_lock(void) { return false; }
+static inline void hdd_release_rtnl_lock(void) { }
+#endif
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -5197,17 +5352,12 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 {
 	CDF_STATUS status;
 	hdd_adapter_t *adapter = NULL;
-#ifdef WLAN_OPEN_P2P_INTERFACE
-	hdd_adapter_t *pP2adapter = NULL;
-#endif
 	hdd_context_t *hdd_ctx = NULL;
 	int ret;
 	unsigned long rc;
 	tSmeThermalParams thermalParam;
 	tSirTxPowerLimit *hddtxlimit;
-	uint8_t rtnl_lock_enable;
-	uint8_t reg_netdev_notifier_done = false;
-	hdd_adapter_t *dot11_adapter = NULL;
+	bool rtnl_held;
 
 	ENTER();
 
@@ -5365,87 +5515,13 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	cds_pkt_proto_trace_init();
 #endif /* QCA_PKT_PROTO_TRACE */
 
-#if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
-	rtnl_lock();
-	rtnl_lock_enable = true;
-#else
-	rtnl_lock_enable = false;
-#endif
+	rtnl_held = hdd_hold_rtnl_lock();
 
-	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE)
-		/* Create only 802.11p interface */
-		adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_OCB, "wlanocb%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   rtnl_lock_enable);
-	else
-		adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_INFRA_STATION,
-					   "wlan%d",
-					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   rtnl_lock_enable);
+	adapter = hdd_open_interfaces(hdd_ctx, rtnl_held);
 
-#ifdef WLAN_OPEN_P2P_INTERFACE
-	/* Open P2P device interface */
-	if (adapter != NULL) {
-		if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
-		   !(hdd_ctx->config->intfMacAddr[0].bytes[0] & 0x02)) {
-			cdf_mem_copy(hdd_ctx->p2pDeviceAddress.bytes,
-				     hdd_ctx->config->intfMacAddr[0].bytes,
-				     sizeof(tSirMacAddr));
-
-			/*
-			 * Generate the P2P Device Address.  This consists of
-			 * the device's primary MAC address with the locally
-			 * administered bit set.
-			 */
-			hdd_ctx->p2pDeviceAddress.bytes[0] |= 0x02;
-		} else {
-			uint8_t *p2p_dev_addr = wlan_hdd_get_intf_addr(hdd_ctx);
-			if (p2p_dev_addr != NULL) {
-				cdf_mem_copy(&hdd_ctx->p2pDeviceAddress.
-					     bytes[0], p2p_dev_addr,
-					     CDF_MAC_ADDR_SIZE);
-			} else {
-				hddLog(CDF_TRACE_LEVEL_FATAL,
-				       FL(
-					  "Failed to allocate mac_address for p2p_device"
-					 ));
-				goto err_close_adapter;
-			}
-		}
-
-		pP2adapter =
-			hdd_open_adapter(hdd_ctx, WLAN_HDD_P2P_DEVICE, "p2p%d",
-					 &hdd_ctx->p2pDeviceAddress.bytes[0],
-					 rtnl_lock_enable);
-
-		if (NULL == pP2adapter) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
-			       FL(
-				  "Failed to do hdd_open_adapter for P2P Device Interface"
-				 ));
-			goto err_close_adapter;
-		}
-	}
-#endif
-
-	if (adapter == NULL) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("hdd_open_adapter failed"));
-		goto err_close_adapter;
-	}
-
-	/* Open 802.11p Interface */
-	if (adapter != NULL) {
-		if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_CONCURRENT) {
-			dot11_adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_OCB,
-						"wlanocb%d",
-						wlan_hdd_get_intf_addr(hdd_ctx),
-						rtnl_lock_enable);
-			if (dot11_adapter == NULL) {
-				hddLog(LOGE,
-				       FL("failed to open 802.11p Interface"));
-				goto err_close_adapter;
-			}
-		}
+	if (IS_ERR(adapter)) {
+		ret = PTR_ERR(adapter);
+		goto err_cds_disable;
 	}
 
 	/*
@@ -5505,21 +5581,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
-#if !defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
-	/* register net device notifier for device change notification */
-	ret = register_netdevice_notifier(&hdd_netdev_notifier);
 
-	if (ret < 0) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("register_netdevice_notifier failed"));
-		goto err_free_power_on_lock;
-	}
-	reg_netdev_notifier_done = true;
-#endif
 	/* Initialize the nlink service */
 	if (nl_srv_init() != 0) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("nl_srv_init failed"));
-		goto err_reg_netdev;
+		goto err_close_adapter;
 	}
 #ifdef WLAN_KD_READY_NOTIFIER
 	hdd_ctx->kd_nl_init = 1;
@@ -5558,19 +5624,15 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	mutex_init(&hdd_ctx->sap_lock);
 
-#if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
-	if (rtnl_lock_enable == true) {
-		rtnl_lock_enable = false;
-		rtnl_unlock();
-	}
+	hdd_release_rtnl_lock();
+	rtnl_held = false;
+
 	ret = register_netdevice_notifier(&hdd_netdev_notifier);
 	if (ret < 0) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("register_netdevice_notifier failed"));
+		hdd_err("register_netdevice_notifier failed: %d", ret);
 		goto err_nl_srv;
 	}
-	reg_netdev_notifier_done = true;
-#endif
+
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	/* Initialize the wake lcok */
 	cdf_wake_lock_init(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
@@ -5605,7 +5667,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = cds_init_policy_mgr();
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("Policy manager initialization failed");
-		goto err_nl_srv;
+		goto err_unreg_netdev_notifier;
 	}
 
 	/* Thermal Mitigation */
@@ -5648,7 +5710,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (!hddtxlimit) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("Memory allocation for TxPowerLimit failed!"));
-		goto err_nl_srv;
+		goto err_unreg_netdev_notifier;
 	}
 	hddtxlimit->txPower2g = hdd_ctx->config->TxPower2g;
 	hddtxlimit->txPower5g = hdd_ctx->config->TxPower5g;
@@ -5718,7 +5780,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		status = wlan_hdd_disable_all_dual_mac_features(hdd_ctx);
 		if (status != CDF_STATUS_SUCCESS) {
 			hdd_err("Failed to disable dual mac features");
-			goto err_nl_srv;
+			goto err_unreg_netdev_notifier;
 		}
 	}
 
@@ -5727,6 +5789,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	memdump_init();
 
 	goto success;
+
+err_unreg_netdev_notifier:
+	unregister_netdevice_notifier(&hdd_netdev_notifier);
 
 err_nl_srv:
 #ifdef WLAN_KD_READY_NOTIFIER
@@ -5740,28 +5805,13 @@ err_nl_srv:
 		hdd_err("Failed to destroy hdd_conc_list_lock");
 		/* Proceed and complete the clean up */
 	}
-err_reg_netdev:
-	if (rtnl_lock_enable == true) {
-		rtnl_lock_enable = false;
-		rtnl_unlock();
-	}
-	if (reg_netdev_notifier_done == true) {
-	unregister_netdevice_notifier(&hdd_netdev_notifier);
-		reg_netdev_notifier_done = false;
-	}
-#if !defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
-err_free_power_on_lock:
-#endif
+
 	hdd_debugfs_exit(hdd_ctx);
 
 err_close_adapter:
-#if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
-	if (rtnl_lock_enable == true) {
-		rtnl_lock_enable = false;
-		rtnl_unlock();
-	}
-#endif
-	hdd_close_all_adapters(hdd_ctx);
+	hdd_release_rtnl_lock();
+
+	hdd_close_all_adapters(hdd_ctx, false);
 
 err_cds_disable:
 	cds_disable(hdd_ctx->pcds_context);

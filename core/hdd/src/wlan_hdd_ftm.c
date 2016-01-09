@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -659,7 +659,7 @@ int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx)
 		wlan_ftm_stop(hdd_ctx);
 	}
 
-	hdd_close_all_adapters(hdd_ctx);
+	hdd_close_all_adapters(hdd_ctx, false);
 
 	cdf_status = cds_sched_close(cds_context);
 	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
