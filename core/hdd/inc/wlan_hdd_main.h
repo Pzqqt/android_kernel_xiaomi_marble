@@ -1371,10 +1371,10 @@ CDF_STATUS hdd_add_adapter_front(hdd_context_t *pHddCtx,
 
 hdd_adapter_t *hdd_open_adapter(hdd_context_t *pHddCtx, uint8_t session_type,
 				const char *name, tSirMacAddr macAddr,
-				uint8_t rtnl_held);
+				bool rtnl_held);
 CDF_STATUS hdd_close_adapter(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter,
-			     uint8_t rtnl_held);
-CDF_STATUS hdd_close_all_adapters(hdd_context_t *pHddCtx);
+			     bool rtnl_held);
+CDF_STATUS hdd_close_all_adapters(hdd_context_t *pHddCtx, bool rtnl_held);
 CDF_STATUS hdd_stop_all_adapters(hdd_context_t *pHddCtx);
 CDF_STATUS hdd_reset_all_adapters(hdd_context_t *pHddCtx);
 CDF_STATUS hdd_start_all_adapters(hdd_context_t *pHddCtx);
