@@ -4572,7 +4572,7 @@ static void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 #if defined(FEATURE_WLAN_CH_AVOID) && defined(CONFIG_CNSS)
 /**
  * hdd_set_thermal_level_cb() - set thermal level callback function
- * @hdd_ctxt:	hdd context pointer
+ * @context:	hdd context pointer
  * @level:	thermal level
  *
  * Change IPA data path to SW path when the thermal throttle level greater
@@ -4580,8 +4580,10 @@ static void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
  *
  * Return: none
  */
-static void hdd_set_thermal_level_cb(hdd_context_t *hdd_ctx, u_int8_t level)
+static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 {
+	hdd_context_t *hdd_ctx = context;
+
 	/* Change IPA to SW path when throttle level greater than 0 */
 	if (level > THROTTLE_LEVEL_0)
 		hdd_ipa_send_mcc_scc_msg(hdd_ctx, true);
@@ -4950,7 +4952,7 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 {
 }
-static void hdd_set_thermal_level_cb(hdd_context_t *hdd_ctx, u_int8_t level)
+static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 {
 }
 #endif /* defined(FEATURE_WLAN_CH_AVOID) && defined(CONFIG_CNSS) */
@@ -5310,6 +5312,98 @@ err_close_adapter:
 	return ERR_PTR(ret);
 }
 
+/**
+ * hdd_update_country_code - Update country code
+ * @hdd_ctx: HDD context
+ * @adapter: Primary adapter context
+ *
+ * Update country code based on module parameter country_code at SME and wait
+ * for the settings to take effect.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_update_country_code(hdd_context_t *hdd_ctx,
+				  hdd_adapter_t *adapter)
+{
+	CDF_STATUS status;
+	int ret = 0;
+	unsigned long rc;
+
+	if (country_code == NULL)
+		return 0;
+
+	INIT_COMPLETION(adapter->change_country_code);
+
+	status = sme_change_country_code(hdd_ctx->hHal,
+					 wlan_hdd_change_country_code_callback,
+					 country_code, adapter,
+					 hdd_ctx->pcds_context, eSIR_TRUE,
+					 eSIR_TRUE);
+
+
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("SME Change Country code from module param fail ret=%d",
+			ret);
+		return -EINVAL;
+	}
+
+	rc = wait_for_completion_timeout(&adapter->change_country_code,
+			 msecs_to_jiffies(WLAN_WAIT_TIME_COUNTRY));
+	if (!rc) {
+		hdd_err("SME while setting country code timed out");
+		ret = -ETIMEDOUT;
+	}
+
+	return ret;
+}
+
+/**
+ * hdd_init_thermal_info - Initialize thermal level
+ * @hdd_ctx:	HDD context
+ *
+ * Initialize thermal level at SME layer and set the thermal level callback
+ * which would be called when a configured thermal threshold is hit.
+ *
+ * Return: 0 on success and errno on failure
+ */
+static int hdd_init_thermal_info(hdd_context_t *hdd_ctx)
+{
+	tSmeThermalParams thermal_param;
+	CDF_STATUS status;
+
+	thermal_param.smeThermalMgmtEnabled =
+		hdd_ctx->config->thermalMitigationEnable;
+	thermal_param.smeThrottlePeriod = hdd_ctx->config->throttlePeriod;
+
+	thermal_param.smeThermalLevels[0].smeMinTempThreshold =
+		hdd_ctx->config->thermalTempMinLevel0;
+	thermal_param.smeThermalLevels[0].smeMaxTempThreshold =
+		hdd_ctx->config->thermalTempMaxLevel0;
+	thermal_param.smeThermalLevels[1].smeMinTempThreshold =
+		hdd_ctx->config->thermalTempMinLevel1;
+	thermal_param.smeThermalLevels[1].smeMaxTempThreshold =
+		hdd_ctx->config->thermalTempMaxLevel1;
+	thermal_param.smeThermalLevels[2].smeMinTempThreshold =
+		hdd_ctx->config->thermalTempMinLevel2;
+	thermal_param.smeThermalLevels[2].smeMaxTempThreshold =
+		hdd_ctx->config->thermalTempMaxLevel2;
+	thermal_param.smeThermalLevels[3].smeMinTempThreshold =
+		hdd_ctx->config->thermalTempMinLevel3;
+	thermal_param.smeThermalLevels[3].smeMaxTempThreshold =
+		hdd_ctx->config->thermalTempMaxLevel3;
+
+	status = sme_init_thermal_info(hdd_ctx->hHal, thermal_param);
+
+	if (!CDF_IS_STATUS_SUCCESS(status))
+		return cdf_status_to_os_return(status);
+
+	sme_add_set_thermal_level_callback(hdd_ctx->hHal,
+					   hdd_set_thermal_level_cb);
+
+	return 0;
+
+}
+
 #if defined(CONFIG_HDD_INIT_WITH_RTNL_LOCK)
 /**
  * hdd_hold_rtnl_lock - Hold RTNL lock
@@ -5354,8 +5448,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_adapter_t *adapter = NULL;
 	hdd_context_t *hdd_ctx = NULL;
 	int ret;
-	unsigned long rc;
-	tSmeThermalParams thermalParam;
 	tSirTxPowerLimit *hddtxlimit;
 	bool rtnl_held;
 
@@ -5538,33 +5630,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	/* pass target_fw_version to HIF layer */
 	hif_set_fw_info(hif_sc, hdd_ctx->target_fw_version);
 
-	if (country_code) {
-		CDF_STATUS ret;
+	ret = hdd_update_country_code(hdd_ctx, adapter);
 
-		INIT_COMPLETION(adapter->change_country_code);
-
-		ret = sme_change_country_code(hdd_ctx->hHal,
-					      wlan_hdd_change_country_code_callback,
-					      country_code, adapter,
-					      hdd_ctx->pcds_context, eSIR_TRUE,
-					      eSIR_TRUE);
-		if (CDF_STATUS_SUCCESS == ret) {
-			rc = wait_for_completion_timeout(
-				&adapter->change_country_code,
-				msecs_to_jiffies(WLAN_WAIT_TIME_COUNTRY));
-			if (!rc) {
-				hddLog(LOGE,
-				       FL("SME while setting country code timed out"));
-			}
-		} else {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
-			       FL(
-				  "SME Change Country code from module param fail ret=%d"
-				 ),
-			       ret);
-			ret = -EINVAL;
-		}
-	}
+	if (ret)
+		goto err_cds_disable;
 
 	sme_register11d_scan_done_callback(hdd_ctx->hHal, hdd_11d_scan_done);
 
@@ -5670,40 +5739,15 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		goto err_unreg_netdev_notifier;
 	}
 
-	/* Thermal Mitigation */
-	thermalParam.smeThermalMgmtEnabled =
-		hdd_ctx->config->thermalMitigationEnable;
-	thermalParam.smeThrottlePeriod = hdd_ctx->config->throttlePeriod;
+	ret = hdd_init_thermal_info(hdd_ctx);
 
-	thermalParam.smeThermalLevels[0].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel0;
-	thermalParam.smeThermalLevels[0].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel0;
-	thermalParam.smeThermalLevels[1].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel1;
-	thermalParam.smeThermalLevels[1].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel1;
-	thermalParam.smeThermalLevels[2].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel2;
-	thermalParam.smeThermalLevels[2].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel2;
-	thermalParam.smeThermalLevels[3].smeMinTempThreshold =
-		hdd_ctx->config->thermalTempMinLevel3;
-	thermalParam.smeThermalLevels[3].smeMaxTempThreshold =
-		hdd_ctx->config->thermalTempMaxLevel3;
+	if (ret) {
+		hdd_err("Error while initializing thermal information");
+		goto err_unreg_netdev_notifier;
+	}
 
 	if (0 != hdd_lro_init(hdd_ctx))
 		hdd_err("Unable to initialize LRO in fw");
-
-	if (CDF_STATUS_SUCCESS !=
-	    sme_init_thermal_info(hdd_ctx->hHal, thermalParam)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("Error while initializing thermal information"));
-	}
-
-	/* Plug in set thermal level callback */
-	sme_add_set_thermal_level_callback(hdd_ctx->hHal,
-		(sme_set_thermal_level_callback)hdd_set_thermal_level_cb);
 
 	/* SAR power limit */
 	hddtxlimit = cdf_mem_malloc(sizeof(tSirTxPowerLimit));
