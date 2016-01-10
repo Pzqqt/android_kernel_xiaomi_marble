@@ -25,16 +25,6 @@
  * to the Linux Foundation.
  */
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
-/**=========================================================================
-
-   \brief Definitions for SME FT APIs
-
-   ========================================================================*/
-
-/*--------------------------------------------------------------------------
-   Include Files
-   ------------------------------------------------------------------------*/
 #include <sms_debug.h>
 #include <csr_inside_api.h>
 #include <csr_neighbor_roam.h>
@@ -600,4 +590,3 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 }
 
 /* End of File */
-#endif /* WLAN_FEATURE_VOWIFI_11R */

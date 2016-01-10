@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -79,10 +79,8 @@ typedef enum {
 	SME_QOS_CSR_HANDOFF_ASSOC_REQ,
 	SME_QOS_CSR_HANDOFF_COMPLETE,
 	SME_QOS_CSR_HANDOFF_FAILURE,
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	SME_QOS_CSR_PREAUTH_SUCCESS_IND,
 	SME_QOS_CSR_SET_KEY_SUCCESS_IND,
-#endif
 } sme_qos_csr_event_indType;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

@@ -198,9 +198,7 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 		CASE_RETURN_STR(eCSR_ROAM_IBSS_LEAVE);
 		CASE_RETURN_STR(eCSR_ROAM_INFRA_IND);
 		CASE_RETURN_STR(eCSR_ROAM_WPS_PBC_PROBE_REQ_IND);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		CASE_RETURN_STR(eCSR_ROAM_FT_RESPONSE);
-#endif
 		CASE_RETURN_STR(eCSR_ROAM_FT_START);
 		CASE_RETURN_STR(eCSR_ROAM_REMAIN_CHAN_READY);
 		CASE_RETURN_STR(eCSR_ROAM_SEND_ACTION_CNF);
@@ -1833,10 +1831,8 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
 	switch (pProfile->negotiatedAuthType) {
 	case eCSR_AUTH_TYPE_RSN:
 	case eCSR_AUTH_TYPE_RSN_PSK:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eCSR_AUTH_TYPE_FT_RSN:
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
-#endif
 #ifdef FEATURE_WLAN_ESE
 	case eCSR_AUTH_TYPE_CCKM_RSN:
 #endif
@@ -2343,13 +2339,18 @@ CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 	return CDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
-/* Function to return true if the authtype is 11r */
-bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent)
+/**
+ * csr_is_auth_type11r() - Check if Authentication type is 11R
+ * @auth_type: The authentication type that is used to make the connection
+ * @mdie_present: Is MDIE IE present
+ *
+ * Return: true if is 11R auth type, false otherwise
+ */
+bool csr_is_auth_type11r(eCsrAuthType auth_type, uint8_t mdie_present)
 {
-	switch (AuthType) {
+	switch (auth_type) {
 	case eCSR_AUTH_TYPE_OPEN_SYSTEM:
-		if (mdiePresent)
+		if (mdie_present)
 			return true;
 		break;
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
@@ -2369,7 +2370,6 @@ bool csr_is_profile11r(tCsrRoamProfile *pProfile)
 				   pProfile->MDID.mdiePresent);
 }
 
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 
@@ -2531,7 +2531,6 @@ static bool csr_is_auth_wapi_psk(tpAniSirGlobal pMac,
 }
 #endif /* FEATURE_WLAN_WAPI */
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 
 /*
  * Function for 11R FT Authentication. We match the FT Authentication Cipher
@@ -2557,7 +2556,6 @@ static bool csr_is_ft_auth_rsn_psk(tpAniSirGlobal pMac,
 		(pMac, AllSuites, cAllSuites, csr_rsn_oui[04], Oui);
 }
 
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 
@@ -2751,7 +2749,6 @@ bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 		 * Ciphers are supported, Match authentication algorithm and
 		 * pick first matching authtype.
 		 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		/* Changed the AKM suites according to order of preference */
 		if (csr_is_ft_auth_rsn(mac_ctx, authsuites,
 					c_auth_suites, authentication)) {
@@ -2765,7 +2762,6 @@ bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 					auth_type->authType[i])
 				neg_authtype = eCSR_AUTH_TYPE_FT_RSN_PSK;
 		}
-#endif
 #ifdef FEATURE_WLAN_ESE
 		/* ESE only supports 802.1X.  No PSK. */
 		if ((neg_authtype == eCSR_AUTH_TYPE_UNKNOWN) &&
@@ -4832,7 +4828,6 @@ bool csr_match_bss(tHalHandle hal, tSirBssDescription *bss_descr,
 	if (!check)
 		goto end;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (filter->MDID.mdiePresent && csr_roam_is11r_assoc(mac_ctx,
 			mac_ctx->roam.roamSession->sessionId)) {
 		if (bss_descr->mdiePresent) {
@@ -4844,7 +4839,6 @@ bool csr_match_bss(tHalHandle hal, tSirBssDescription *bss_descr,
 			goto end;
 		}
 	}
-#endif
 	rc = true;
 
 end:

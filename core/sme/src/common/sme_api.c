@@ -2195,9 +2195,7 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_ADDTS_RSP:
 	case eWNI_SME_DELTS_RSP:
 	case eWNI_SME_DELTS_IND:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eWNI_SME_FT_AGGR_QOS_RSP:
-#endif
 		/* QoS */
 		if (pMsg->bodyptr) {
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -9559,12 +9557,8 @@ bool sme_get_is_lfr_feature_enabled(tHalHandle hHal)
    --------------------------------------------------------------------------*/
 bool sme_get_is_ft_feature_enabled(tHalHandle hHal)
 {
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	return pMac->roam.configParam.isFastTransitionEnabled;
-#else
-	return false;
-#endif
 }
 
 /* ---------------------------------------------------------------------------

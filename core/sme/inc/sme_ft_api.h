@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -24,7 +24,6 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-#if defined(WLAN_FEATURE_VOWIFI_11R)
 
 #if !defined(__SME_FTAPI_H)
 #define __SME_FTAPI_H
@@ -103,5 +102,3 @@ bool sme_get_ft_pre_auth_state(tHalHandle hHal, uint32_t sessionId);
 bool sme_get_ftptk_state(tHalHandle hHal, uint32_t sessionId);
 void sme_set_ftptk_state(tHalHandle hHal, uint32_t sessionId, bool state);
 #endif
-
-#endif /* #if !defined( __SME_FTAPI_H ) */

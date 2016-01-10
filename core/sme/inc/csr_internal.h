@@ -457,11 +457,9 @@ typedef struct tagCsrCmd {
 	} u;
 } tCsrCmd;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 typedef struct tagCsr11rConfig {
 	bool IsFTResourceReqSupported;
 } tCsr11rConfig;
-#endif
 
 typedef struct tagCsrNeighborRoamConfig {
 	uint32_t nNeighborScanTimerPeriod;
@@ -564,9 +562,7 @@ typedef struct tagCsrConfig {
 	uint32_t statsReqPeriodicityInPS;/* stats req freq while in powersave */
 	uint32_t dtimPeriod;
 	bool ssidHidden;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsr11rConfig csr11rConfig;
-#endif
 	uint8_t isFastRoamIniFeatureEnabled;
 	uint8_t MAWCEnabled;
 	uint8_t isRoamOffloadScanEnabled;
@@ -771,10 +767,8 @@ typedef struct tagRoamCsrConnectedInfo {
 	uint32_t nBeaconLength;
 	uint32_t nAssocReqLength;
 	uint32_t nAssocRspLength;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	/* len of the parsed RIC resp IEs received in reassoc response */
 	uint32_t nRICRspLength;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint32_t nTspecIeLength;
 #endif
@@ -970,9 +964,7 @@ typedef struct tagCsrRoamSession {
 	uint8_t RoamKeyMgmtOffloadEnabled;
 	roam_offload_synch_ind *roam_synch_data;
 #endif
-#if defined WLAN_FEATURE_VOWIFI_11R
 	tftSMEContext ftSmeContext;
-#endif
 	/* This count represents the number of bssid's we try to join. */
 	uint8_t join_bssid_count;
 	struct csr_roam_stored_profile stored_roam_profile;
@@ -1304,10 +1296,8 @@ CDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 		pPrefNetworkFoundInd);
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 /* Returns whether the current association is a ESE assoc or not */

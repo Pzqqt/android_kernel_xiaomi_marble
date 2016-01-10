@@ -55,10 +55,8 @@ typedef enum {
 
 	eCSR_AUTH_TYPE_RSN,
 	eCSR_AUTH_TYPE_RSN_PSK,
-#if defined WLAN_FEATURE_VOWIFI_11R
 	eCSR_AUTH_TYPE_FT_RSN,
 	eCSR_AUTH_TYPE_FT_RSN_PSK,
-#endif
 #ifdef FEATURE_WLAN_WAPI
 	eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE,
 	eCSR_AUTH_TYPE_WAPI_WAI_PSK,
@@ -313,12 +311,10 @@ typedef struct tagCsrAuthList {
 	eCsrAuthType authType[eCSR_NUM_OF_SUPPORT_AUTH_TYPE];
 } tCsrAuthList, *tpCsrAuthList;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 typedef struct tagCsrMobilityDomainInfo {
 	uint8_t mdiePresent;
 	uint16_t mobilityDomain;
 } tCsrMobilityDomainInfo;
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 typedef struct tagCsrEseCckmInfo {
@@ -374,9 +370,7 @@ typedef struct tagCsrScanResultFilter {
 	 */
 	bool fMeasurement;
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsrMobilityDomainInfo MDID;
-#endif
 	bool p2pResult;
 #ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */
@@ -459,9 +453,7 @@ typedef enum {
 	/* BSS in SoftAP mode status indication */
 	eCSR_ROAM_INFRA_IND,
 	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND,
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	eCSR_ROAM_FT_RESPONSE,
-#endif
 	eCSR_ROAM_FT_START,
 	eCSR_ROAM_REMAIN_CHAN_READY,
 	eCSR_ROAM_SEND_ACTION_CNF,
@@ -932,9 +924,7 @@ typedef struct tagCsrRoamProfile {
 	bool obssProtEnabled;
 	uint16_t cfg_protection;
 	uint8_t wps_state;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsrMobilityDomainInfo MDID;
-#endif
 	enum tCDF_ADAPTER_MODE csrPersona;
 	uint8_t disableDFSChSwitch;
 	/* addIe params */
@@ -991,9 +981,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	tSirBssDescription *pBssDesc;
 	bool qap;               /* AP supports QoS */
 	bool qosConnection;     /* A connection is QoS enabled */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsrMobilityDomainInfo MDID;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	tCsrEseCckmInfo eseCckmInfo;
 	bool isESEAssoc;
@@ -1011,11 +999,9 @@ typedef struct tagCsrRoamConnectedProfile {
 #endif
 } tCsrRoamConnectedProfile;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 typedef struct tagCsr11rConfigParams {
 	bool IsFTResourceReqSupported;
 } tCsr11rConfigParams;
-#endif
 
 typedef struct tagCsrNeighborRoamConfigParams {
 
@@ -1122,9 +1108,7 @@ typedef struct tagCsrConfigParam {
 	uint32_t statsReqPeriodicity;
 	/* stats request frequency from PE while in power save */
 	uint32_t statsReqPeriodicityInPS;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsr11rConfigParams csr11rConfig;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
@@ -1590,10 +1574,8 @@ typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 CDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
 					 tpSirBssDescription pBssDescription);
-#endif
 CDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand);
 eCsrBand csr_get_current_band(tHalHandle hHal);
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);

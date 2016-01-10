@@ -43,10 +43,8 @@
 #include "host_diag_core_event.h"
 #include "host_diag_core_log.h"
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "sms_debug.h"
 #include "utils_parser.h"
-#endif
 #include "sme_power_save_api.h"
 
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
@@ -266,21 +264,28 @@ typedef struct sme_QosACInfo_s {
 	sme_QosStates prev_state;
 	sme_QosWmmTspecInfo curr_QoSInfo[SME_QOS_TSPEC_INDEX_MAX];
 	sme_QosWmmTspecInfo requested_QoSInfo[SME_QOS_TSPEC_INDEX_MAX];
-	bool reassoc_pending;   /* reassoc requested for APSD */
-	/* As per WMM spec there could be max 2 TSPEC running on the same AC with */
-	/* different direction. We will refer each TSPEC with an index */
-	uint8_t tspec_mask_status;      /* status showing if both the indices are in use */
-	uint8_t tspec_pending;  /* tspec negotiation going on for which index */
-	bool hoRenewal;         /* set to true while re-negotiating flows after */
-	/* handoff, will set to false once done with */
-	/* the process. Helps SME to decide if at all */
-	/* to notify HDD/LIS for flow renewal after HO */
-#ifdef WLAN_FEATURE_VOWIFI_11R
+	/* reassoc requested for APSD */
+	bool reassoc_pending;
+	/*
+	 * As per WMM spec there could be max 2 TSPEC running on the same
+	 * AC with different direction. We will refer each TSPEC with an index
+	 */
+	/* status showing if both the indices are in use */
+	uint8_t tspec_mask_status;
+	/* tspec negotiation going on for which index */
+	uint8_t tspec_pending;
+	/* set to true while re-negotiating flows after */
+	bool hoRenewal;
+	/*
+	 * handoff, will set to false once done with the process. Helps SME to
+	 * decide if at all to notify HDD/LIS for flow renewal after HO
+	 */
 	uint8_t ricIdentifier[SME_QOS_TSPEC_INDEX_MAX];
-	/* stores the ADD TS response for each AC. The ADD TS response is formed by
-	   parsing the RIC received in the the reassoc response */
+	/*
+	 * stores the ADD TS response for each AC. The ADD TS response is
+	 * formed by parsing the RIC received in the the reassoc response
+	 */
 	tSirAddtsRsp addTsRsp[SME_QOS_TSPEC_INDEX_MAX];
-#endif
 	sme_QosRelTriggers relTrig;
 
 } sme_QosACInfo;
@@ -313,9 +318,7 @@ typedef struct sme_QosSessionInfo_s {
 	/* commands that are being buffered for this session */
 	tDblLinkList bufferedCommandList;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	bool ftHandoffInProgress;
-#endif
 
 } sme_QosSessionInfo;
 /*---------------------------------------------------------------------------
@@ -411,7 +414,6 @@ CDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal pMac,
 					      uint8_t sessionId, void *pEvent_info);
 CDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
 					      uint8_t sessionId, void *pEvent_info);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 CDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal pMac,
 					       uint8_t sessionId,
 					       void *pEvent_info);
@@ -419,7 +421,6 @@ CDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
 					       uint8_t sessionId, void *pEvent_info);
 CDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal pMac, void *pMsgBuf);
 CDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal pMac, uint8_t sessionId);
-#endif
 CDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 					      uint8_t sessionId,
 					      tSirAddtsRspInfo *pRsp);
@@ -839,11 +840,9 @@ CDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
 	case eWNI_SME_DELTS_IND:
 		status = sme_qos_process_del_ts_ind(mac_ctx, msg);
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eWNI_SME_FT_AGGR_QOS_RSP:
 		status = sme_qos_process_aggr_qos_rsp(mac_ctx, msg);
 		break;
-#endif
 	default:
 		/* err msg */
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
@@ -981,7 +980,6 @@ CDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 			sme_qos_process_handoff_failure_ev(pMac, sessionId,
 							   pEvent_info);
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case SME_QOS_CSR_PREAUTH_SUCCESS_IND:
 		status =
 			sme_qos_process_preauth_success_ind(pMac, sessionId,
@@ -992,7 +990,6 @@ CDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 			sme_qos_process_set_key_success_ind(pMac, sessionId,
 							    pEvent_info);
 		break;
-#endif
 	default:
 		/* Err msg */
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
@@ -3165,7 +3162,6 @@ uint8_t sme_qos_ese_retrieve_tspec_info(tpAniSirGlobal mac_ctx,
 
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 
 CDF_STATUS sme_qos_create_tspec_ricie(tpAniSirGlobal pMac,
 				      sme_QosWmmTspecInfo *pTspec_Info,
@@ -3865,8 +3861,6 @@ CDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 	return status;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R */
-
 /**
  * sme_qos_add_ts_req() - send ADDTS request.
  * @pMac: Pointer to the global MAC parameter structure.
@@ -4122,19 +4116,16 @@ CDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 	sme_QosSessionInfo *pSession;
 	uint8_t sessionId = paddts_rsp->sessionId;
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	sme_QosWmmUpType up =
 		(sme_QosWmmUpType) paddts_rsp->rsp.tspec.tsinfo.traffic.userPrio;
 	sme_QosACInfo *pACInfo;
 	sme_QosEdcaAcType ac;
-#endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for UP %d",
 		  __func__, __LINE__, sessionId, up);
@@ -4157,7 +4148,6 @@ CDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 		pSession->readyForPowerSave = true;
 		return CDF_STATUS_SUCCESS;
 	}
-#endif
 
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d with return code %d",
@@ -4399,7 +4389,6 @@ CDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pSession->ftHandoffInProgress) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
@@ -4414,7 +4403,6 @@ CDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 		sme_qos_process_ft_reassoc_req_ev(sessionId);
 		return CDF_STATUS_SUCCESS;
 	}
-#endif
 
 	if (pSession->handoffRequested) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -4435,7 +4423,6 @@ CDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 		return CDF_STATUS_SUCCESS;
 	}
 /* TBH: Assuming both handoff algo & 11r willn't be enabled at the same time */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pSession->ftHandoffInProgress) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
@@ -4452,7 +4439,6 @@ CDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 		sme_qos_process_ft_reassoc_req_ev(sessionId);
 		return CDF_STATUS_SUCCESS;
 	}
-#endif
 
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
 		pACInfo = &pSession->ac_info[ac];
@@ -4641,7 +4627,6 @@ CDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 		(void)sme_qos_process_buffered_cmd(sessionid);
 		return CDF_STATUS_SUCCESS;
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (qos_session->ftHandoffInProgress) {
 		if (csr_roam_is11r_assoc(mac_ctx, sessionid)) {
 			if (csr_roam_session &&
@@ -4667,7 +4652,6 @@ CDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 		qos_session->handoffRequested = false;
 		return status;
 	}
-#endif
 
 	qos_session->sessionActive = true;
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
@@ -4796,7 +4780,6 @@ CDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 			break;
 		case SME_QOS_HANDOFF:
 			/* print error msg */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			if (pSession->ftHandoffInProgress) {
 				CDF_TRACE(CDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO,
@@ -4805,7 +4788,6 @@ CDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 					  __func__, __LINE__);
 				break;
 			}
-#endif
 
 		case SME_QOS_CLOSED:
 		case SME_QOS_INIT:
@@ -4879,12 +4861,10 @@ CDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal pMac,
 		case SME_QOS_LINK_UP:
 		case SME_QOS_QOS_ON:
 		default:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /* In case of 11r - RIC, we request QoS and Hand-off at the same time hence the
    state may be SME_QOS_REQUESTED */
 			if (pSession->ftHandoffInProgress)
 				break;
-#endif
 			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AC %d is in wrong state %d",
 				  __func__, __LINE__,
@@ -4982,13 +4962,12 @@ CDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
+	/*
+	 * In case of 11r - RIC, we request QoS and Hand-off at the
+	 * same time hence the state may be SME_QOS_REQUESTED
+	 */
 	if ((pSession->handoffRequested)
-#ifdef WLAN_FEATURE_VOWIFI_11R
-/* In case of 11r - RIC, we request QoS and Hand-off at the same time hence the
-   state may be SME_QOS_REQUESTED */
-	    && !pSession->ftHandoffInProgress
-#endif
-	    ) {
+	    && !pSession->ftHandoffInProgress) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
 			  "already be in handoff state", __func__, __LINE__);
@@ -5073,7 +5052,6 @@ CDF_STATUS sme_qos_process_join_req_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 	return CDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /**
  * sme_qos_process_preauth_success_ind() - process preauth success indication
  * @mac_ctx: global MAC context
@@ -5201,8 +5179,6 @@ add_next_ric:
 	}
 	return status;
 }
-
-#endif
 
 /*--------------------------------------------------------------------------
    \brief sme_qos_process_add_ts_failure_rsp() - Function to process the

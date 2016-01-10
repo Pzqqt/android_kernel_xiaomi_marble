@@ -45,10 +45,8 @@ typedef enum {
 	eCSR_NEIGHBOR_ROAM_STATE_INIT,
 	eCSR_NEIGHBOR_ROAM_STATE_CONNECTED,
 	eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING,
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING,
 	eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE,
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 	eNEIGHBOR_STATE_MAX
 } eCsrNeighborRoamState;
 
@@ -91,7 +89,6 @@ typedef struct sCsrNeighborRoamBSSInfo {
 	tpSirBssDescription pBssDescription;
 } tCsrNeighborRoamBSSInfo, *tpCsrNeighborRoamBSSInfo;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #define CSR_NEIGHBOR_ROAM_REPORT_QUERY_TIMEOUT  1000       /* in milliseconds */
 #define CSR_NEIGHBOR_ROAM_PREAUTH_RSP_WAIT_MULTIPLIER   10 /* in milliseconds */
 /* Max number of MAC addresses with which the pre-auth was failed */
@@ -124,7 +121,6 @@ typedef struct sCsr11rAssocNeighborInfo {
 	/* Contains info needed during REPORT_SCAN State */
 	tCsrNeighborReportBssInfo neighboReportBssInfo[MAX_BSS_IN_NEIGHBOR_RPT];
 } tCsr11rAssocNeighborInfo, *tpCsr11rAssocNeighborInfo;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 typedef enum {
 	eFirstEmptyScan = 1,
@@ -153,10 +149,8 @@ typedef struct sCsrNeighborRoamControlInfo {
 	uint8_t currentRoamRescanRssiDiff;
 	tDblLinkList roamableAPList;    /* List of current FT candidates */
 	tCsrRoamProfile csrNeighborRoamProfile;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	bool is11rAssoc;
 	tCsr11rAssocNeighborInfo FTRoamInfo;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 #ifdef FEATURE_WLAN_ESE
 	bool isESEAssoc;
 	bool isVOAdmitted;
@@ -198,9 +192,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId);
 CDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal pMac,
 		uint8_t sessionId, tSirRetStatus limStatus);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 bool csr_neighbor_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
-#endif
 CDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(
 		tpAniSirGlobal pMac, uint8_t sessionId);
 void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(

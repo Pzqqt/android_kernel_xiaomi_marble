@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -361,10 +361,8 @@ CDF_STATUS csr_isconcurrentsession_valid(tpAniSirGlobal pMac,
 CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
 		enum tCDF_ADAPTER_MODE currBssPersona);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 bool csr_is_profile11r(tCsrRoamProfile *pProfile);
 bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent);
-#endif
 #ifdef FEATURE_WLAN_ESE
 bool csr_is_auth_type_ese(eCsrAuthType AuthType);
 bool csr_is_profile_ese(tCsrRoamProfile *pProfile);

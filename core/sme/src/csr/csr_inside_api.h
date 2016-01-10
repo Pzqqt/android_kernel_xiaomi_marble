@@ -997,15 +997,12 @@ CDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
 CDF_STATUS
 csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessionId);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /* ---------------------------------------------------------------------------
     \fn csr_roam_ft_pre_auth_rsp_processor
     \brief csr function that handles pre auth response from LIM
    ---------------------------------------------------------------------------*/
 void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 					tpSirFTPreAuthRsp pFTPreAuthRsp);
-#endif
-
 
 #if defined(FEATURE_WLAN_ESE)
 void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,

@@ -1023,7 +1023,6 @@ CDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal pMac,
 			sizeof(struct cdf_mac_addr));
 		cdf_mem_copy(&pProfile->SSID, &connected_prof->SSID,
 			sizeof(tSirMacSSid));
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		if (connected_prof->MDID.mdiePresent) {
 			pProfile->MDID.mdiePresent = 1;
 			pProfile->MDID.mobilityDomain =
@@ -1032,7 +1031,6 @@ CDF_STATUS csr_roam_copy_connect_profile(tpAniSirGlobal pMac,
 			pProfile->MDID.mdiePresent = 0;
 			pProfile->MDID.mobilityDomain = 0;
 		}
-#endif
 #ifdef FEATURE_WLAN_ESE
 		pProfile->isESEAssoc = connected_prof->isESEAssoc;
 		if (csr_is_auth_type_ese(connected_prof->AuthType)) {
@@ -1098,9 +1096,7 @@ static CDF_STATUS csr_roam_free_connected_info(tpAniSirGlobal pMac,
 	pConnectedInfo->nAssocReqLength = 0;
 	pConnectedInfo->nAssocRspLength = 0;
 	pConnectedInfo->staId = 0;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	pConnectedInfo->nRICRspLength = 0;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	pConnectedInfo->nTspecIeLength = 0;
 #endif
@@ -1337,9 +1333,7 @@ static void init_config_param(tpAniSirGlobal pMac)
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD;
 	pMac->roam.configParam.statsReqPeriodicityInPS =
 		CSR_MIN_GLOBAL_STAT_QUERY_PERIOD_IN_BMPS;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	pMac->roam.configParam.csr11rConfig.IsFTResourceReqSupported = 0;
-#endif
 	pMac->roam.configParam.neighborRoamConfig.nMaxNeighborRetries = 3;
 	pMac->roam.configParam.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		120;
@@ -1917,14 +1911,12 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			csr_init_channel_power_list(pMac, &pParam->Csr11dinfo);
 		}
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		cdf_mem_copy(&pMac->roam.configParam.csr11rConfig,
 			     &pParam->csr11rConfig,
 			     sizeof(tCsr11rConfigParams));
 		sms_log(pMac, LOG1, "IsFTResourceReqSupp = %d",
 			pMac->roam.configParam.csr11rConfig.
 			IsFTResourceReqSupported);
-#endif
 		pMac->roam.configParam.isFastTransitionEnabled =
 			pParam->isFastTransitionEnabled;
 		pMac->roam.configParam.RoamRssiDiff = pParam->RoamRssiDiff;
@@ -2199,10 +2191,8 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->ignore_peer_erp_info = cfg_params->ignore_peer_erp_info;
 	pParam->enable2x2 = cfg_params->enable2x2;
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	cdf_mem_copy(&cfg_params->csr11rConfig, &pParam->csr11rConfig,
 		     sizeof(tCsr11rConfigParams));
-#endif
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
 	pParam->RoamRssiDiff = cfg_params->RoamRssiDiff;
 	pParam->nRoamPrefer5GHz = cfg_params->nRoamPrefer5GHz;
@@ -3057,7 +3047,6 @@ CDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
 	} else {
 		reasonCode = eSIR_MAC_UNSPEC_FAILURE_REASON;
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if ((csr_roam_is_handoff_in_progress(pMac, sessionId)) &&
 	    (NewSubstate != eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF)) {
 		tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
@@ -3065,9 +3054,7 @@ CDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
 		cdf_copy_macaddr(&bssId,
 			      pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.
 			      bssid);
-	} else
-#endif
-	if (pSession->pConnectBssDesc) {
+	} else if (pSession->pConnectBssDesc) {
 		cdf_mem_copy(&bssId.bytes, pSession->pConnectBssDesc->bssId,
 			     sizeof(struct cdf_mac_addr));
 	}
@@ -5346,10 +5333,8 @@ static CDF_STATUS csr_roam_save_params(tpAniSirGlobal mac_ctx,
 	uint8_t *pIeBuf;
 
 	if ((eCSR_AUTH_TYPE_RSN == auth_type) ||
-#if defined WLAN_FEATURE_VOWIFI_11R
 		(eCSR_AUTH_TYPE_FT_RSN == auth_type) ||
 		(eCSR_AUTH_TYPE_FT_RSN_PSK == auth_type) ||
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 #if defined WLAN_FEATURE_11W
 		(eCSR_AUTH_TYPE_RSN_PSK_SHA256 == auth_type) ||
 		(eCSR_AUTH_TYPE_RSN_8021X_SHA256 == auth_type) ||
@@ -5529,10 +5514,8 @@ static CDF_STATUS csr_roam_save_security_rsp_ie(tpAniSirGlobal pMac,
 		(eCSR_AUTH_TYPE_WPA_PSK == authType) ||
 		(eCSR_AUTH_TYPE_RSN == authType) ||
 		(eCSR_AUTH_TYPE_RSN_PSK == authType)
-#if defined WLAN_FEATURE_VOWIFI_11R
 		|| (eCSR_AUTH_TYPE_FT_RSN == authType) ||
 		(eCSR_AUTH_TYPE_FT_RSN_PSK == authType)
-#endif /* FEATURE_WLAN_WAPI */
 #ifdef FEATURE_WLAN_WAPI
 		|| (eCSR_AUTH_TYPE_WAPI_WAI_PSK == authType) ||
 		(eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE == authType)
@@ -5557,13 +5540,12 @@ static CDF_STATUS csr_roam_save_security_rsp_ie(tpAniSirGlobal pMac,
 	return status;
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /* Returns whether the current association is a 11r assoc or not */
 bool csr_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	return csr_neighbor_roam_is11r_assoc(pMac, sessionId);
 }
-#endif
+
 #ifdef FEATURE_WLAN_ESE
 /* Returns whether the current association is a ESE assoc or not */
 bool csr_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId)
@@ -6346,9 +6328,7 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 			len = join_rsp->assocReqLength +
 				join_rsp->assocRspLength +
 				join_rsp->beaconLength;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			len += join_rsp->parsedRicRspLen;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 #ifdef FEATURE_WLAN_ESE
 			len += join_rsp->tspecIeLen;
 #endif
@@ -6366,10 +6346,8 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 						join_rsp->assocRspLength;
 					session->connectedInfo.nBeaconLength =
 						join_rsp->beaconLength;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 					session->connectedInfo.nRICRspLength =
 						join_rsp->parsedRicRspLen;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 #ifdef FEATURE_WLAN_ESE
 					session->connectedInfo.nTspecIeLength =
 						join_rsp->tspecIeLen;
@@ -6847,13 +6825,11 @@ CDF_STATUS csr_roam_copy_profile(tpAniSirGlobal pMac,
 	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
 	pDstProfile->MFPCapable = pSrcProfile->MFPCapable;
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pSrcProfile->MDID.mdiePresent) {
 		pDstProfile->MDID.mdiePresent = 1;
 		pDstProfile->MDID.mobilityDomain =
 			pSrcProfile->MDID.mobilityDomain;
 	}
-#endif
 	cdf_mem_copy(&pDstProfile->addIeParams, &pSrcProfile->addIeParams,
 			sizeof(tSirAddIeParams));
 end:
@@ -6942,13 +6918,11 @@ CDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 	pDstProfile->CBMode = pSrcProfile->CBMode;
 	cdf_mem_copy(&pDstProfile->Keys, &pSrcProfile->Keys,
 		sizeof(pDstProfile->Keys));
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pSrcProfile->MDID.mdiePresent) {
 		pDstProfile->MDID.mdiePresent = 1;
 		pDstProfile->MDID.mobilityDomain =
 			pSrcProfile->MDID.mobilityDomain;
 	}
-#endif
 #ifdef WLAN_FEATURE_11W
 	pDstProfile->MFPEnabled = pSrcProfile->MFPEnabled;
 	pDstProfile->MFPRequired = pSrcProfile->MFPRequired;
@@ -7592,14 +7566,12 @@ CDF_STATUS csr_roam_process_disassoc_deauth(tpAniSirGlobal pMac, tSmeCmd *pComma
 			 * then go to disconnected state.
 			 * This happens for ESE and 11r FT connections ONLY.
 			 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			if (csr_roam_is11r_assoc(pMac, sessionId) &&
 				(csr_neighbor_roam_state_preauth_done(pMac,
 							sessionId))) {
 				csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							pMac, sessionId);
 			}
-#endif
 #ifdef FEATURE_WLAN_ESE
 			if (csr_roam_is_ese_assoc(pMac, sessionId) &&
 				(csr_neighbor_roam_state_preauth_done(pMac,
@@ -7896,13 +7868,11 @@ CDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGW, FL("ERROR: Beacon interval is ZERO"));
 	}
 	csr_get_bss_id_bss_desc(pMac, pSirBssDesc, &pConnectProfile->bssid);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pSirBssDesc->mdiePresent) {
 		pConnectProfile->MDID.mdiePresent = 1;
 		pConnectProfile->MDID.mobilityDomain =
 			(pSirBssDesc->mdie[1] << 8) | (pSirBssDesc->mdie[0]);
 	}
-#endif
 	if (NULL == pIesTemp) {
 		status =
 			csr_get_parsed_bss_description_ies(pMac, pSirBssDesc,
@@ -8515,7 +8485,6 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 		 * will be used only for ESE and 11r handoff whereas other
 		 * legacy roaming should use join request
 		 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		if (csr_roam_is_handoff_in_progress(mac_ctx, session_id)
 		    && csr_roam_is11r_assoc(mac_ctx, session_id)) {
 			status = csr_roam_issue_reassociate(mac_ctx,
@@ -8524,7 +8493,6 @@ csr_roaming_state_config_cnf_processor(tpAniSirGlobal mac_ctx,
 					(scan_result->Result.pvIes),
 					&cmd->u.roamCmd.roamProfile);
 		} else
-#endif
 #ifdef FEATURE_WLAN_ESE
 		if (csr_roam_is_handoff_in_progress(mac_ctx, session_id)
 		   && csr_roam_is_ese_assoc(mac_ctx, session_id)) {
@@ -9734,12 +9702,10 @@ csr_roam_prepare_filter_from_profile(tpAniSirGlobal mac_ctx,
 		cdf_mem_copy(scan_fltr->countryCode, profile->countryCode,
 			     WNI_CFG_COUNTRY_CODE_LEN);
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (profile->MDID.mdiePresent) {
 		scan_fltr->MDID.mdiePresent = 1;
 		scan_fltr->MDID.mobilityDomain = profile->MDID.mobilityDomain;
 	}
-#endif
 
 #ifdef WLAN_FEATURE_11W
 	/* Management Frame Protection */
@@ -10112,12 +10078,10 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	 * from current ap and then go to disconnected state
 	 * This happens for ESE and 11r FT connections ONLY.
 	 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (csr_roam_is11r_assoc(mac_ctx, sessionId) &&
 	    (csr_neighbor_roam_state_preauth_done(mac_ctx, sessionId)))
 		csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							mac_ctx, sessionId);
-#endif
 #ifdef FEATURE_WLAN_ESE
 	if (csr_roam_is_ese_assoc(mac_ctx, sessionId) &&
 	    (csr_neighbor_roam_state_preauth_done(mac_ctx, sessionId)))
@@ -10194,12 +10158,10 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	 * from current ap and then go to disconnected state
 	 * This happens for ESE and 11r FT connections ONLY.
 	 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (csr_roam_is11r_assoc(mac_ctx, sessionId) &&
 	    (csr_neighbor_roam_state_preauth_done(mac_ctx, sessionId)))
 		csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							mac_ctx, sessionId);
-#endif
 #ifdef FEATURE_WLAN_ESE
 	if (csr_roam_is_ese_assoc(mac_ctx, sessionId) &&
 	    (csr_neighbor_roam_state_preauth_done(mac_ctx, sessionId)))
@@ -10964,11 +10926,9 @@ void csr_roam_check_for_link_status_change(tpAniSirGlobal pMac, tSirSmeRsp *pSir
 		sms_log(pMac, LOG2, FL("GetSnrReq from self"));
 		csr_update_snr(pMac, pSirMsg);
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eWNI_SME_FT_PRE_AUTH_RSP:
 		csr_roam_ft_pre_auth_rsp_processor(pMac, (tpSirFTPreAuthRsp) pSirMsg);
 		break;
-#endif
 	case eWNI_SME_MAX_ASSOC_EXCEEDED:
 		csr_roam_chk_lnk_max_assoc_exceeded(pMac, pSirMsg);
 		break;
@@ -12124,7 +12084,6 @@ bool csr_is_same_profile(tpAniSirGlobal pMac,
 		fCheck = false;
 		goto free_scan_filter;
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pProfile1->MDID.mdiePresent || pProfile2->MDID.mdiePresent) {
 		if (pProfile1->MDID.mobilityDomain
 			!= pProfile2->MDID.mobilityDomain) {
@@ -12132,7 +12091,6 @@ bool csr_is_same_profile(tpAniSirGlobal pMac,
 			goto free_scan_filter;
 		}
 	}
-#endif
 	/* Match found */
 	fCheck = true;
 free_scan_filter:
@@ -13749,7 +13707,6 @@ CDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 #ifdef FEATURE_WLAN_ESE
 		ese_config =  pMac->roam.configParam.isEseIniFeatureEnabled;
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		pProfile->MDID.mdiePresent = pBssDescription->mdiePresent;
 		if (csr_is_profile11r(pProfile)
 #ifdef FEATURE_WLAN_ESE
@@ -13762,7 +13719,6 @@ CDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_join_req->is11Rconnection = true;
 		else
 			csr_join_req->is11Rconnection = false;
-#endif
 #ifdef FEATURE_WLAN_ESE
 		if (true == ese_config)
 			csr_join_req->isESEFeatureIniEnabled = true;
@@ -14076,10 +14032,7 @@ CDF_STATUS csr_send_mb_disassoc_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 	 * to the AP
 	 */
 	if (CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(pMac, sessionId)
-#ifdef WLAN_FEATURE_VOWIFI_11R
-	    && csr_roam_is11r_assoc(pMac, sessionId)
-#endif
-	    ) {
+	    && csr_roam_is11r_assoc(pMac, sessionId)) {
 		/* Set DoNotSendOverTheAir flag to 1 only for handoff case */
 		pMsg->doNotSendOverTheAir = CSR_DONT_SEND_DISASSOC_OVER_THE_AIR;
 	}
@@ -14872,10 +14825,8 @@ CDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 			pSession->sessionActive = true;
 			pSession->sessionId = (uint8_t) i;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			/* Initialize FT related data structures only in STA mode */
 			sme_ft_open(pMac, pSession->sessionId);
-#endif
 
 			pSession->callback = callback;
 			pSession->pContext = pContext;
@@ -15095,9 +15046,7 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 		csr_roam_stop(pMac, sessionId);
 
 		/* Clean up FT related data structures */
-#if defined WLAN_FEATURE_VOWIFI_11R
 		sme_ft_close(pMac, sessionId);
-#endif
 		csr_free_connect_bss_desc(pMac, sessionId);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(pMac, &pSession->connectedInfo);
@@ -15289,10 +15238,7 @@ static void csr_roam_link_down(tpAniSirGlobal pMac, uint32_t sessionId)
 	 */
 	if (csr_roam_is_sta_mode(pMac, sessionId)
 	    && !CSR_IS_ROAM_SUBSTATE_DISASSOC_HO(pMac, sessionId)
-#ifdef WLAN_FEATURE_VOWIFI_11R
-	    && !csr_roam_is11r_assoc(pMac, sessionId)
-#endif
-	    ) {
+	    && !csr_roam_is11r_assoc(pMac, sessionId)) {
 		sms_log(pMac, LOG1, FL("Inform Link lost for session %d"),
 			sessionId);
 		csr_roam_call_callback(pMac, sessionId, NULL, 0,
@@ -17669,7 +17615,6 @@ CDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 CDF_STATUS
 csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
 			      tpSirBssDescription pBssDescription)
@@ -17718,7 +17663,6 @@ csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
 	cdf_mem_copy((void *)&pftPreAuthReq->self_mac_addr,
 		     (void *)&pSession->selfMacAddr.bytes, sizeof(tSirMacAddr));
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (csr_roam_is11r_assoc(pMac, sessionId) &&
 	    (pMac->roam.roamSession[sessionId].connectedProfile.AuthType !=
 	     eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
@@ -17727,9 +17671,7 @@ csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
 		cdf_mem_copy(pftPreAuthReq->ft_ies,
 			     pSession->ftSmeContext.auth_ft_ies,
 			     pSession->ftSmeContext.auth_ft_ies_length);
-	} else
-#endif
-	{
+	} else {
 		pftPreAuthReq->ft_ies_length = 0;
 	}
 	cdf_mem_copy(pftPreAuthReq->pbssDescription, pBssDescription,
@@ -17878,7 +17820,6 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 		}
 	}
 }
-#endif
 
 
 /*
