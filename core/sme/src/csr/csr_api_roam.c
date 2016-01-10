@@ -7608,14 +7608,12 @@ CDF_STATUS csr_roam_process_disassoc_deauth(tpAniSirGlobal pMac, tSmeCmd *pComma
 							pMac, sessionId);
 			}
 #endif
-#ifdef FEATURE_WLAN_LFR
 			if (csr_roam_is_fast_roam_enabled(pMac, sessionId) &&
 				(csr_neighbor_roam_state_preauth_done(pMac,
 							sessionId))) {
 				csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 							pMac, sessionId);
 			}
-#endif
 		}
 		if (fDisassoc) {
 			status =
