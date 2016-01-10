@@ -131,10 +131,8 @@
 		.flags = flag, \
 	}
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #define WLAN_AKM_SUITE_FT_8021X         0x000FAC03
 #define WLAN_AKM_SUITE_FT_PSK           0x000FAC04
-#endif
 
 #define HDD_CHANNEL_14 14
 
@@ -6825,7 +6823,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		       MAC_ADDR_ARRAY(setKey.peerMac.bytes),
 		       setKey.keyDirection);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		/* The supplicant may attempt to set the PTK once pre-authentication
 		   is done. Save the key in the UMAC and include it in the ADD BSS
 		   request */
@@ -6840,7 +6837,6 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			       "%s: Update PreAuth Key failed", __func__);
 			return -EINVAL;
 		}
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 		/* issue set key request to SME */
 		status = sme_roam_set_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
@@ -8087,9 +8083,7 @@ static int wlan_hdd_cfg80211_set_auth_type(hdd_adapter_t *pAdapter,
 		break;
 
 	case NL80211_AUTHTYPE_OPEN_SYSTEM:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case NL80211_AUTHTYPE_FT:
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 		hddLog(LOG1,
 		       FL("set authentication type to OPEN"));
 		pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
@@ -8141,18 +8135,14 @@ static int wlan_hdd_set_akm_suite(hdd_adapter_t *pAdapter, u32 key_mgmt)
 	switch (key_mgmt) {
 	case WLAN_AKM_SUITE_PSK:
 	case WLAN_AKM_SUITE_PSK_SHA256:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case WLAN_AKM_SUITE_FT_PSK:
-#endif
 		hddLog(LOG1, FL("setting key mgmt type to PSK"));
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_PSK;
 		break;
 
 	case WLAN_AKM_SUITE_8021X_SHA256:
 	case WLAN_AKM_SUITE_8021X:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case WLAN_AKM_SUITE_FT_8021X:
-#endif
 		hddLog(LOG1,
 		       FL("setting key mgmt type to 8021x"));
 		pWextState->authKeyMgmt |= IW_AUTH_KEY_MGMT_802_1X;
@@ -10354,7 +10344,7 @@ static int wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 	return ret;
 }
 
-#if defined(WLAN_FEATURE_VOWIFI_11R) && defined(KERNEL_SUPPORT_11R_CFG80211)
+#if defined(KERNEL_SUPPORT_11R_CFG80211)
 /**
  * __wlan_hdd_cfg80211_update_ft_ies() - update fast transition ies
  * @wiphy: Pointer to wiphy
@@ -11297,7 +11287,7 @@ static struct cfg80211_ops wlan_hdd_cfg80211_ops = {
 	.set_pmksa = wlan_hdd_cfg80211_set_pmksa,
 	.del_pmksa = wlan_hdd_cfg80211_del_pmksa,
 	.flush_pmksa = wlan_hdd_cfg80211_flush_pmksa,
-#if defined(WLAN_FEATURE_VOWIFI_11R) && defined(KERNEL_SUPPORT_11R_CFG80211)
+#if defined(KERNEL_SUPPORT_11R_CFG80211)
 	.update_ft_ies = wlan_hdd_cfg80211_update_ft_ies,
 #endif
 #ifdef FEATURE_WLAN_TDLS

@@ -6114,10 +6114,8 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SETROAMRESCANRSSIDIFF",     drv_cmd_set_roam_rescan_rssi_diff},
 	{"GETROAMRESCANRSSIDIFF",     drv_cmd_get_roam_rescan_rssi_diff},
 	{"SETFASTROAM",               drv_cmd_set_fast_roam},
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	{"SETFASTTRANSITION",         drv_cmd_set_fast_transition},
 	{"FASTREASSOC",               drv_cmd_fast_reassoc},
-#endif
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 	{"CCXPLMREQ",                 drv_cmd_ccx_plm_req},
 #endif

@@ -1322,14 +1322,12 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			    (void *) CFG_RM_CAPABILITY_DEFAULT),
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	REG_VARIABLE(CFG_FT_RESOURCE_REQ_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fFTResourceReqSupported,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_FT_RESOURCE_REQ_DEFAULT,
 		     CFG_FT_RESOURCE_REQ_MIN,
 		     CFG_FT_RESOURCE_REQ_MAX),
-#endif
 
 	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME,
 			     WLAN_PARAM_Integer,
@@ -4768,11 +4766,9 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [IsRArateLimitEnabled] Value = [%u] ",
 		  pHddCtx->config->IsRArateLimitEnabled);
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [fFTResourceReqSupported] Value = [%u] ",
 		  pHddCtx->config->fFTResourceReqSupported);
-#endif
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [nNeighborLookupRssiThreshold] Value = [%u] ",
@@ -6517,10 +6513,8 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 	hdd_set_power_save_offload_config(pHddCtx);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	smeConfig->csrConfig.csr11rConfig.IsFTResourceReqSupported =
 		pConfig->fFTResourceReqSupported;
-#endif
 	smeConfig->csrConfig.isFastRoamIniFeatureEnabled =
 		pConfig->isFastRoamIniFeatureEnabled;
 	smeConfig->csrConfig.MAWCEnabled = pConfig->MAWCEnabled;

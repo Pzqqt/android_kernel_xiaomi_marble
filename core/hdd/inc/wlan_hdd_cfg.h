@@ -840,12 +840,10 @@ typedef enum {
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX                  (1)
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT              (1)
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 #define CFG_FT_RESOURCE_REQ_NAME                        "gFTResourceReqSupported"
 #define CFG_FT_RESOURCE_REQ_MIN                         (0)
 #define CFG_FT_RESOURCE_REQ_MAX                         (1)
 #define CFG_FT_RESOURCE_REQ_DEFAULT                     (0)
-#endif
 
 #define CFG_TELE_BCN_TRANS_LI_NAME                   "telescopicBeaconTransListenInterval"
 #define CFG_TELE_BCN_TRANS_LI_MIN                    (0)
@@ -2945,10 +2943,8 @@ struct hdd_config {
 	char rm_capability[3 * DOT11F_IE_RRMENABLEDCAP_MAX_LEN];
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	/* Vowifi 11r params */
 	bool fFTResourceReqSupported;
-#endif
 
 	uint16_t nNeighborScanPeriod;
 	uint8_t nNeighborLookupRssiThreshold;

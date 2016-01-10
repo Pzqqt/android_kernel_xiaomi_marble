@@ -99,11 +99,9 @@ uint8_t ccp_rsn_oui07[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x06 };
 uint8_t ccp_rsn_oui08[HDD_RSN_OUI_SIZE] = { 0x00, 0x0F, 0xAC, 0x05 };
 #endif
 
-#if defined(WLAN_FEATURE_VOWIFI_11R)
 /* Offset where the EID-Len-IE, start. */
 #define FT_ASSOC_RSP_IES_OFFSET 6  /* Capability(2) + AID(2) + Status Code(2) */
 #define FT_ASSOC_REQ_IES_OFFSET 4  /* Capability(2) + LI(2) */
-#endif
 
 #define BEACON_FRAME_IES_OFFSET 12
 #define HDD_PEER_AUTHORIZE_WAIT 10
@@ -400,7 +398,6 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 	hdd_conn_save_connected_bss_type(pHddStaCtx, eBssType);
 }
 
-#if defined(WLAN_FEATURE_VOWIFI_11R)
 /**
  * hdd_send_ft_assoc_response() - send fast transition assoc response
  * @dev: pointer to net device
@@ -461,9 +458,7 @@ hdd_send_ft_assoc_response(struct net_device *dev,
 
 	kfree(buff);
 }
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /**
  * hdd_send_ft_event() - send fast transition event
  * @pAdapter: pointer to adapter
@@ -574,8 +569,6 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 	kfree(buff);
 #endif
 }
-
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -708,12 +701,10 @@ static void hdd_send_association_event(struct net_device *dev,
 	char *msg;
 	struct cdf_mac_addr peerMacAddr;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	/* Added to find the auth type on the fly at run time */
 	/* rather than with cfg to see if FT is enabled */
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrRoamProfile *pRoamProfile = &(pWextState->roamProfile);
-#endif
 
 	memset(&wrqu, '\0', sizeof(wrqu));
 	wrqu.ap_addr.sa_family = ARPHRD_ETHER;
@@ -762,10 +753,9 @@ static void hdd_send_association_event(struct net_device *dev,
 		/*
 		 * Send IWEVASSOCRESPIE Event if WLAN_FEATURE_CIQ_METRICS
 		 * is Enabled Or Send IWEVASSOCRESPIE Event if
-		 * WLAN_FEATURE_VOWIFI_11R is Enabled and fFTEnable is true.
+		 * fFTEnable is true.
+		 * Send FT Keys to the supplicant when FT is enabled
 		 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
-		/* Send FT Keys to the supplicant when FT is enabled */
 		if ((pRoamProfile->AuthType.authType[0] ==
 		     eCSR_AUTH_TYPE_FT_RSN_PSK)
 		    || (pRoamProfile->AuthType.authType[0] ==
@@ -779,7 +769,6 @@ static void hdd_send_association_event(struct net_device *dev,
 		    ) {
 			hdd_send_ft_assoc_response(dev, pAdapter, pCsrRoamInfo);
 		}
-#endif
 		if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
 			tSirSmeChanInfo chan_info;
 			cdf_copy_macaddr(&peerMacAddr,
@@ -1089,9 +1078,7 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 	}
 
 	hdd_wmm_adapter_clear(pAdapter);
-#if defined(WLAN_FEATURE_VOWIFI_11R)
 	sme_ft_reset(WLAN_HDD_GET_HAL_CTX(pAdapter), pAdapter->sessionId);
-#endif
 	if (eCSR_ROAM_IBSS_LEAVE == roamStatus) {
 		uint8_t i;
 		sta_id = pHddStaCtx->broadcast_ibss_staid;
@@ -1849,13 +1836,11 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		 */
 		if (!pRoamInfo->fReassocReq) {
 			struct cfg80211_bss *bss;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			u8 *pFTAssocRsp = NULL;
 			unsigned int assocRsplen = 0;
 			u8 *pFTAssocReq = NULL;
 			unsigned int assocReqlen = 0;
 			struct ieee80211_channel *chan;
-#endif
 			uint8_t rspRsnIe[DOT11F_IE_RSN_MAX_LEN];
 			uint32_t rspRsnLength = DOT11F_IE_RSN_MAX_LEN;
 
@@ -1870,7 +1855,6 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 					WLAN_CONTROL_PATH);
 				return CDF_STATUS_E_FAILURE;
 			}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			if (pRoamInfo->u.pConnectedProfile->AuthType ==
 			    eCSR_AUTH_TYPE_FT_RSN
 			    || pRoamInfo->u.pConnectedProfile->AuthType ==
@@ -2028,9 +2012,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 								WLAN_STATUS_SUCCESS,
 								GFP_KERNEL);
 				}
-			} else
-#endif
-			{
+			} else {
 				/*
 				 * wpa supplicant expecting WPA/RSN IE in
 				 * connect result.
@@ -4075,11 +4057,11 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 			pRoamInfo->roamSynchInProgress = false;
 #endif
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
+
 	case eCSR_ROAM_FT_RESPONSE:
 		hdd_send_ft_event(pAdapter);
 		break;
-#endif
+
 	case eCSR_ROAM_PMK_NOTIFY:
 		if (eCSR_AUTH_TYPE_RSN == pHddStaCtx->conn_info.authType
 				|| hdd_is_8021x_sha256_auth_type(pHddStaCtx)) {
@@ -4208,16 +4190,13 @@ eCsrAuthType hdd_translate_rsn_to_csr_auth_type(uint8_t auth_suite[4])
 		auth_type = eCSR_AUTH_TYPE_RSN;
 	} else if (memcmp(auth_suite, ccp_rsn_oui02, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_RSN_PSK;
-	} else
-#ifdef WLAN_FEATURE_VOWIFI_11R
-	if (memcmp(auth_suite, ccp_rsn_oui04, 4) == 0) {
+	} else if (memcmp(auth_suite, ccp_rsn_oui04, 4) == 0) {
 		/* Check for 11r FT Authentication with PSK */
 		auth_type = eCSR_AUTH_TYPE_FT_RSN_PSK;
 	} else if (memcmp(auth_suite, ccp_rsn_oui03, 4) == 0) {
 		/* Check for 11R FT Authentication with 802.1X */
 		auth_type = eCSR_AUTH_TYPE_FT_RSN;
 	} else
-#endif
 #ifdef FEATURE_WLAN_ESE
 	if (memcmp(auth_suite, ccp_rsn_oui06, 4) == 0) {
 		auth_type = eCSR_AUTH_TYPE_CCKM_RSN;
@@ -4625,7 +4604,6 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType)
 			} else
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			if ((RSNAuthType == eCSR_AUTH_TYPE_FT_RSN) &&
 			    ((pWextState->
 			      authKeyMgmt & IW_AUTH_KEY_MGMT_802_1X)
@@ -4640,7 +4618,6 @@ int hdd_set_csr_auth_type(hdd_adapter_t *pAdapter, eCsrAuthType RSNAuthType)
 				pRoamProfile->AuthType.authType[0] =
 					eCSR_AUTH_TYPE_FT_RSN_PSK;
 			} else
-#endif
 
 #ifdef WLAN_FEATURE_11W
 			if (RSNAuthType == eCSR_AUTH_TYPE_RSN_PSK_SHA256) {
@@ -5251,9 +5228,8 @@ static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 		wrqu->param.flags = IW_AUTH_WPA_VERSION;
 		wrqu->param.value = IW_AUTH_WPA_VERSION_WPA;
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
+
 	case eCSR_AUTH_TYPE_FT_RSN:
-#endif
 	case eCSR_AUTH_TYPE_RSN:
 		wrqu->param.flags = IW_AUTH_WPA_VERSION;
 		wrqu->param.value = IW_AUTH_WPA_VERSION_WPA2;
@@ -5275,9 +5251,8 @@ static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 		hddLog(LOG1, FL("called with WPA PSK auth type"));
 		wrqu->param.value = IW_AUTH_ALG_OPEN_SYSTEM;
 		return -EIO;
-#ifdef WLAN_FEATURE_VOWIFI_11R
+
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
-#endif
 	case eCSR_AUTH_TYPE_RSN_PSK:
 #ifdef WLAN_FEATURE_11W
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:

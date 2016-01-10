@@ -392,9 +392,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 /* (SIOCIWFIRSTPRIV + 17) is currently unused */
 /* (SIOCIWFIRSTPRIV + 19) is currently unused */
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #define WLAN_PRIV_SET_FTIES             (SIOCIWFIRSTPRIV + 20)
-#endif
 
 /* Private ioctl for setting the host offload feature */
 #define WLAN_PRIV_SET_HOST_OFFLOAD (SIOCIWFIRSTPRIV + 18)
@@ -924,15 +922,11 @@ static bool hdd_is_auth_type_rsn(eCsrAuthType authType)
 	case eCSR_AUTH_TYPE_WPA_NONE:
 		rsnType = true;
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eCSR_AUTH_TYPE_FT_RSN:
-#endif
 	case eCSR_AUTH_TYPE_RSN:
 		rsnType = true;
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
-#endif
 	case eCSR_AUTH_TYPE_RSN_PSK:
 #ifdef WLAN_FEATURE_11W
 	case eCSR_AUTH_TYPE_RSN_PSK_SHA256:
@@ -4189,7 +4183,6 @@ static int __iw_set_encodeext(struct net_device *dev,
 		  ("%s:cipher_alg:%d key_len[%d] *pEncryptionType :%d"),
 		  __func__, (int)ext->alg, (int)ext->key_len, setKey.encType);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	/* The supplicant may attempt to set the PTK once
 	 * pre-authentication is done. Save the key in the UMAC and
 	 * include it in the ADD BSS request
@@ -4205,7 +4198,6 @@ static int __iw_set_encodeext(struct net_device *dev,
 		       "%s: Update PreAuth Key failed", __func__);
 		return -EINVAL;
 	}
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 	pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 
@@ -8340,7 +8332,6 @@ static int iw_get_tspec(struct net_device *dev,
 	return ret;
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /**
  * iw_set_fties - Set FT IEs private ioctl handler
  * @dev: device upon which the ioctl was received
@@ -8406,7 +8397,6 @@ static int iw_set_fties(struct net_device *dev,
 
 	return ret;
 }
-#endif
 
 /**
  * iw_set_host_offload - Set host offload ioctl handler
@@ -9613,9 +9603,7 @@ static const iw_handler we_private[] = {
 	[WLAN_PRIV_ADD_TSPEC - SIOCIWFIRSTPRIV] = iw_add_tspec,
 	[WLAN_PRIV_DEL_TSPEC - SIOCIWFIRSTPRIV] = iw_del_tspec,
 	[WLAN_PRIV_GET_TSPEC - SIOCIWFIRSTPRIV] = iw_get_tspec,
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	[WLAN_PRIV_SET_FTIES - SIOCIWFIRSTPRIV] = iw_set_fties,
-#endif
 	[WLAN_PRIV_SET_HOST_OFFLOAD - SIOCIWFIRSTPRIV] = iw_set_host_offload,
 	[WLAN_GET_WLAN_STATISTICS - SIOCIWFIRSTPRIV] = iw_get_statistics,
 	[WLAN_SET_KEEPALIVE_PARAMS - SIOCIWFIRSTPRIV] =
