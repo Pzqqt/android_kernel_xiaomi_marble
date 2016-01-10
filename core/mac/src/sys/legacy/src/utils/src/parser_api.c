@@ -2437,12 +2437,10 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 			((pr->MobilityDomain.overDSCap << 0) | (pr->MobilityDomain.
 								resourceReqCap <<
 								1));
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(pMac, LOG2, FL("mdie=%02x%02x%02x\n"),
 			(unsigned int)pProbeResp->mdie[0],
 			(unsigned int)pProbeResp->mdie[1],
 			(unsigned int)pProbeResp->mdie[2]);
-#endif
 	}
 #endif
 
@@ -2810,20 +2808,16 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 			((ar.MobilityDomain.overDSCap << 0) | (ar.MobilityDomain.
 							       resourceReqCap <<
 							       1));
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(pMac, LOG1, FL("new mdie=%02x%02x%02x"),
 			(unsigned int)pAssocRsp->mdie[0],
 			(unsigned int)pAssocRsp->mdie[1],
 			(unsigned int)pAssocRsp->mdie[2]);
-#endif
 	}
 
 	if (ar.FTInfo.present) {
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(pMac, LOG1, FL("FT Info present %d %d %d"),
 			ar.FTInfo.R0KH_ID.num_PMK_R0_ID,
 			ar.FTInfo.R0KH_ID.present, ar.FTInfo.R1KH_ID.present);
-#endif
 		pAssocRsp->ftinfoPresent = 1;
 		cdf_mem_copy(&pAssocRsp->FTInfo, &ar.FTInfo,
 			     sizeof(tDot11fIEFTInfo));

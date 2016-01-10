@@ -3002,11 +3002,9 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		mlm_set_key_req->sessionId = session_id;
 		mlm_set_key_req->smesessionId = sme_session_id;
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(mac_ctx, LOG1, FL(
 			"received SETCONTEXT_REQ message sessionId=%d"),
 					mlm_set_key_req->sessionId);
-#endif
 
 		if (((set_context_req->keyMaterial.edType == eSIR_ED_WEP40) ||
 		    (set_context_req->keyMaterial.edType == eSIR_ED_WEP104)) &&

@@ -8384,10 +8384,8 @@ static int __iw_set_fties(struct net_device *dev, struct iw_request_info *info,
 		       wrqu->data.length);
 		hddLog(LOGE, FL("Should be Re-assoc Req IEs"));
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 	hddLog(LOG1, FL("%s called with Ie of length = %d"), __func__,
 	       wrqu->data.length);
-#endif
 
 	/* Pass the received FT IEs to SME */
 	sme_set_ft_ies(WLAN_HDD_GET_HAL_CTX(pAdapter), pAdapter->sessionId,

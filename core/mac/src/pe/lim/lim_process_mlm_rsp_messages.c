@@ -2984,11 +2984,9 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 	if (CDF_STATUS_SUCCESS == add_bss_params->status) {
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 			session_entry->limMlmState) {
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx, LOG1, FL("Mlm=%d %d"),
 				session_entry->limMlmState,
 				eLIM_MLM_WT_ADD_BSS_RSP_REASSOC_STATE);
-#endif
 			lim_process_sta_mlm_add_bss_rsp_ft(mac_ctx, msg,
 				session_entry);
 			goto end;

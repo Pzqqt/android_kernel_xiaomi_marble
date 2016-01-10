@@ -272,10 +272,8 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			cdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
 			session_entry->bcnLen = 0;
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx, LOG1, FL("Beacon=%d"),
 				sme_join_rsp->beaconLength);
-#endif
 		}
 		if (session_entry->assocReq != NULL) {
 			sme_join_rsp->assocReqLength =
@@ -287,11 +285,9 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			cdf_mem_free(session_entry->assocReq);
 			session_entry->assocReq = NULL;
 			session_entry->assocReqLen = 0;
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx,
 				LOG1, FL("AssocReq=%d"),
 				sme_join_rsp->assocReqLength);
-#endif
 		}
 		if (session_entry->assocRsp != NULL) {
 			sme_join_rsp->assocRspLength =
@@ -341,10 +337,8 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 		}
 #endif
 		sme_join_rsp->aid = session_entry->limAID;
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(mac_ctx, LOG1, FL("AssocRsp=%d"),
 			sme_join_rsp->assocRspLength);
-#endif
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH

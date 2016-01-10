@@ -2816,11 +2816,9 @@ tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 	msg_q.bodyptr = add_sta_params;
 	msg_q.bodyval = 0;
 
-#if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 			"Sending WMA_ADD_STA_REQ (aid %d)",
 			 add_sta_params->assocId);
-#endif
 	MTRACE(mac_trace_msg_tx(mac_ctx, session_entry->peSessionId,
 			 msg_q.type));
 

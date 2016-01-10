@@ -1428,17 +1428,14 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		lim_log(pMac, LOGE, FL("Error: Frame len = 0"));
 		return eSIR_FAILURE;
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 	lim_print_mac_addr(pMac, pHdr->bssId, LOG2);
 	lim_print_mac_addr(pMac,
 			   psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
 			   LOG2);
 	lim_log(pMac, LOG2, FL("seqControl 0x%X"),
-		((pHdr->seqControl.seqNumHi << 8) | (pHdr->seqControl.
-						     seqNumLo << 4) | (pHdr->
-								       seqControl.
-								       fragNum)));
-#endif
+		((pHdr->seqControl.seqNumHi << 8) |
+		 (pHdr->seqControl.seqNumLo << 4) |
+		 (pHdr->seqControl.fragNum)));
 
 	/* Check that its the same bssId we have for preAuth */
 	if (!cdf_mem_compare
@@ -1483,10 +1480,8 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 			true;
 	}
 
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 	lim_log(pMac, LOG1, FL("Pre-Auth response received from neighbor"));
 	lim_log(pMac, LOG1, FL("Pre-Auth done state"));
-#endif
 	/* Stopping timer now, that we have our unicast from the AP */
 	/* of our choice. */
 	lim_deactivate_and_change_timer(pMac, eLIM_FT_PREAUTH_RSP_TIMER);
@@ -1502,7 +1497,6 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	}
 	pRxAuthFrameBody = &rxAuthFrame;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 	PELOGE(lim_log(pMac, LOG1,
 		       FL
 			       ("Received Auth frame with type=%d seqnum=%d, status=%d (%d)"),
@@ -1511,16 +1505,11 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		       (uint32_t) pRxAuthFrameBody->authStatusCode,
 		       (uint32_t) pMac->lim.gLimNumPreAuthContexts);
 	       )
-#endif
 	switch (pRxAuthFrameBody->authTransactionSeqNumber) {
 	case SIR_MAC_AUTH_FRAME_2:
 		if (pRxAuthFrameBody->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
-			PELOGE(lim_log
-				       (pMac, LOGE, "Auth status code received is %d",
-				       (uint32_t) pRxAuthFrameBody->authStatusCode);
-			       );
-#endif
+			lim_log(pMac, LOGE, "Auth status code received is %d",
+				(uint32_t) pRxAuthFrameBody->authStatusCode);
 			if (eSIR_MAC_MAX_ASSOC_STA_REACHED_STATUS ==
 			    pRxAuthFrameBody->authStatusCode)
 				ret_status = eSIR_LIM_MAX_STA_REACHED_ERROR;
@@ -1530,12 +1519,8 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		break;
 
 	default:
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
-		PELOGE(lim_log
-			       (pMac, LOGE, "Seq. no incorrect expected 2 received %d",
-			       (uint32_t) pRxAuthFrameBody->authTransactionSeqNumber);
-		       )
-#endif
+		lim_log(pMac, LOGE, "Seq. no incorrect expected 2 received %d",
+			(uint32_t) pRxAuthFrameBody->authTransactionSeqNumber);
 		break;
 	}
 

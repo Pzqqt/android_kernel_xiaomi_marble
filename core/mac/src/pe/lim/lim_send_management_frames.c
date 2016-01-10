@@ -1811,7 +1811,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 	if (pe_session->pLimJoinReq->is11Rconnection) {
-#if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
 		tSirBssDescription *bssdescr;
 
 		bssdescr = &pe_session->pLimJoinReq->bssDescription;
@@ -1819,7 +1818,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			(unsigned int) bssdescr->mdie[0],
 			(unsigned int) bssdescr->mdie[1],
 			(unsigned int) bssdescr->mdie[2]);
-#endif
 		populate_mdie(mac_ctx, &frm->MobilityDomain,
 			pe_session->pLimJoinReq->bssDescription.mdie);
 	} else {
@@ -2269,10 +2267,8 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + add_ie_len;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 	lim_log(mac_ctx, LOG1, FL("FT IE Reassoc Req (%d)."),
 		ft_sme_context->reassoc_ft_ies_length);
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 	if (pe_session->is11Rconnection)
@@ -2349,12 +2345,9 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			body++;
 		}
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
-	PELOGE(lim_log(mac_ctx, LOG1, FL("Re-assoc Req Frame is: "));
+	lim_log(mac_ctx, LOG1, FL("Re-assoc Req Frame is: "));
 	       sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG1,
 			    (uint8_t *) frame, (bytes + ft_ies_length));
-	       )
-#endif
 	if ((SIR_BAND_5_GHZ ==
 	     lim_get_rf_band(pe_session->currentOperChannel)) ||
 	    (pe_session->pePersona == CDF_P2P_CLIENT_MODE) ||
@@ -2978,13 +2971,11 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 					session->ftPEContext.
 						pFTPreAuthReq->ft_ies,
 					ft_ies_length);
-#if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
 				lim_log(mac_ctx, LOG2,
 					FL("Auth1 Frame FTIE is: "));
 				sir_dump_buf(mac_ctx, SIR_LIM_MODULE_ID, LOG2,
 					(uint8_t *) body,
 					ft_ies_length);
-#endif
 			} else if (NULL != session->ftPEContext.
 					pFTPreAuthReq->pbssDescription) {
 				/* MDID attr is 54 */

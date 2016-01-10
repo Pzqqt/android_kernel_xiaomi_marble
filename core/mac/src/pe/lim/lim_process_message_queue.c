@@ -815,13 +815,11 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 					      &sessionId)) == NULL) {
 #ifdef WLAN_FEATURE_VOWIFI_11R
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(pMac, LOG1,
 				FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
 				fc.protVer, fc.type, fc.subType,
 				WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
 			lim_print_mac_addr(pMac, pHdr->bssId, LOG1);
-#endif
 			if (lim_process_auth_frame_no_session
 				    (pMac, pRxPacketInfo,
 				    limMsg->bodyptr) == eSIR_SUCCESS) {

@@ -653,12 +653,10 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		))) {
 		/* Received unexpected Re/Association Response frame */
 
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(mac_ctx, LOG1,
 			FL("Recieved Re/Assoc rsp in unexpected "
 			"state %d on session=%d"),
 			session_entry->limMlmState, session_entry->peSessionId);
-#endif
 		if (!hdr->fc.retry) {
 			if (!(mac_ctx->lim.retry_packet_cnt & 0xf)) {
 				lim_log(mac_ctx, LOGE,
@@ -972,9 +970,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		if ((session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
 			session_entry->bRoamSynchInProgress) {
-#ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx, LOG1, FL("Sending self sta"));
-#endif
 			lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp,
 				session_entry);
 			/* Store assigned AID for TIM processing */
