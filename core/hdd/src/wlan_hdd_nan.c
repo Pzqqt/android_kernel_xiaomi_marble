@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -24,6 +24,9 @@
  *
  * WLAN Host Device Driver NAN API implementation
  */
+
+/* denote that this file does not allow legacy hddLog */
+#define HDD_DISALLOW_LEGACY_HDDLOG 1
 
 #include <linux/version.h>
 #include <linux/module.h>
@@ -131,15 +134,13 @@ static void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg)
 	int status;
 
 	if (NULL == msg) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  FL("msg received here is null"));
+		hdd_err("msg received here is null");
 		return;
 	}
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  FL("HDD context is not valid"));
+		hdd_err("HDD context is not valid");
 		return;
 	}
 
@@ -151,14 +152,12 @@ static void wlan_hdd_cfg80211_nan_callback(void *ctx, tSirNanEvent *msg)
 					    GFP_KERNEL);
 
 	if (!vendor_event) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  FL("cfg80211_vendor_event_alloc failed"));
+		hdd_err("cfg80211_vendor_event_alloc failed");
 		return;
 	}
 	if (nla_put(vendor_event, QCA_WLAN_VENDOR_ATTR_NAN,
 		    msg->event_data_len, msg->event_data)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  FL("QCA_WLAN_VENDOR_ATTR_NAN put fail"));
+		hdd_err("QCA_WLAN_VENDOR_ATTR_NAN put fail");
 		kfree_skb(vendor_event);
 		return;
 	}
