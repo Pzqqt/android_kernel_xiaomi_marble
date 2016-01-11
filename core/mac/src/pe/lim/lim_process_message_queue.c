@@ -51,9 +51,7 @@
 #include "lim_admit_control.h"
 #include "lim_ibss_peer_mgmt.h"
 #include "sch_api.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "lim_send_messages.h"
 
@@ -61,9 +59,7 @@
 #include "rrm_api.h"
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft.h"
-#endif
 
 #include "qdf_types.h"
 #include "cds_packet.h"
@@ -813,7 +809,6 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 	psessionEntry = pe_find_session_by_bssid(pMac, pHdr->bssId,
 						 &sessionId);
 	if (psessionEntry == NULL) {
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 			lim_log(pMac, LOG1,
 				FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
@@ -826,7 +821,6 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 				goto end;
 			}
 		}
-#endif
 		/* Public action frame can be received from non-assoc stations*/
 		if ((fc.subType != SIR_MAC_MGMT_PROBE_RSP) &&
 		    (fc.subType != SIR_MAC_MGMT_BEACON) &&
@@ -1353,11 +1347,9 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 #if defined FEATURE_WLAN_ESE
 	case eWNI_SME_ESE_ADJACENT_AP_REPORT:
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eWNI_SME_FT_UPDATE_KEY:
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 	case eWNI_SME_FT_AGGR_QOS_REQ:
-#endif
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
 	case eWNI_SME_UPDATE_NOA:
 	case eWNI_SME_CLEAR_DFS_CHANNEL_LIST:
@@ -1532,9 +1524,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case SIR_LIM_AUTH_RSP_TIMEOUT:
 	case SIR_LIM_ASSOC_FAIL_TIMEOUT:
 	case SIR_LIM_REASSOC_FAIL_TIMEOUT:
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
-#endif
 	case SIR_LIM_REMAIN_CHN_TIMEOUT:
 	case SIR_LIM_INSERT_SINGLESHOT_NOA_TIMEOUT:
 	case SIR_LIM_DISASSOC_ACK_TIMEOUT:
@@ -1655,14 +1645,11 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case WMA_AGGR_QOS_RSP:
 		lim_process_ft_aggr_qo_s_rsp(mac_ctx, msg);
 		break;
-#endif
 	case WMA_SET_LINK_STATE_RSP:
 		link_state_param = (tLinkStateParams *) msg->bodyptr;
-#if defined WLAN_FEATURE_VOWIFI_11R
 		session_entry = link_state_param->session;
 		if (link_state_param->ft
 #if defined WLAN_FEATURE_ROAM_OFFLOAD
@@ -1672,7 +1659,6 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			lim_send_reassoc_req_with_ft_ies_mgmt_frame(mac_ctx,
 				session_entry->pLimMlmReassocReq,
 				session_entry);
-#endif
 		if (link_state_param->callback)
 			link_state_param->callback(mac_ctx,
 				link_state_param->callbackArg,

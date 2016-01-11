@@ -89,12 +89,10 @@ tSirRetStatus lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 				 tSirMacAddr bssId, tSirMacAddr selfMac,
 				 tpSetLinkStateCallback callback,
 				 void *callbackArg);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 extern tSirRetStatus lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
 					   tpPESession psessionEntry);
-#endif
 void lim_set_active_edca_params(tpAniSirGlobal pMac,
 				tSirMacEdcaParamRecord *plocalEdcaParams,
 				tpPESession psessionEntry);

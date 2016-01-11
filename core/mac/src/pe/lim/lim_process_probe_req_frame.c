@@ -46,9 +46,7 @@
 #include "lim_assoc_utils.h"
 #include "lim_ser_des_utils.h"
 #include "parser_api.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 
 void

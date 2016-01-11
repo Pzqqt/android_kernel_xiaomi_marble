@@ -51,9 +51,7 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "lim_ser_des_utils.h"
 

@@ -52,9 +52,7 @@
 #include "wni_cfg.h"
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
@@ -1809,7 +1807,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	populate_dot11f_ext_cap(mac_ctx, vht_enabled, &frm->ExtCap, pe_session);
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	if (pe_session->pLimJoinReq->is11Rconnection) {
 		tSirBssDescription *bssdescr;
 
@@ -1824,7 +1821,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		/* No 11r IEs dont send any MDIE */
 		lim_log(mac_ctx, LOG1, FL("MDIE not present"));
 	}
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	/*
@@ -2215,7 +2211,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    mac_ctx->lim.htCapabilityPresentInBeacon) {
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm.HTCaps);
 	}
-#if defined WLAN_FEATURE_VOWIFI_11R
 	if (pe_session->pLimReAssocReq->bssDescription.mdiePresent &&
 	    (ft_sme_context->addMDIE == true)
 #if defined FEATURE_WLAN_ESE
@@ -2225,7 +2220,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_mdie(mac_ctx, &frm.MobilityDomain,
 			pe_session->pLimReAssocReq->bssDescription.mdie);
 	}
-#endif
 
 #ifdef WLAN_FEATURE_11AC
 	if (pe_session->vhtCapability &&
@@ -2270,10 +2264,8 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	lim_log(mac_ctx, LOG1, FL("FT IE Reassoc Req (%d)."),
 		ft_sme_context->reassoc_ft_ies_length);
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	if (pe_session->is11Rconnection)
 		ft_ies_length = ft_sme_context->reassoc_ft_ies_length;
-#endif
 
 	qdf_status = cds_packet_alloc((uint16_t) bytes + ft_ies_length,
 				 (void **)&frame, (void **)&packet);
@@ -2801,7 +2793,6 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 			   SIR_MAC_AUTH_CHALLENGE_OFFSET;
 		body_len = SIR_MAC_AUTH_CHALLENGE_OFFSET;
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 		if (auth_frame->authAlgoNumber == eSIR_FT_AUTH) {
 			if (NULL != session->ftPEContext.pFTPreAuthReq &&
 			    0 != session->ftPEContext.pFTPreAuthReq->
@@ -2818,7 +2809,6 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 				frame_len += (2 + SIR_MDIE_SIZE);
 			}
 		}
-#endif
 		break;
 
 	case SIR_MAC_AUTH_FRAME_2:
@@ -2960,7 +2950,6 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 			qdf_mem_copy(body, (uint8_t *) &auth_frame->type,
 				     body_len);
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 		if ((auth_frame->authAlgoNumber == eSIR_FT_AUTH) &&
 		    (auth_frame->authTransactionSeqNumber ==
 		     SIR_MAC_AUTH_FRAME_1) &&
@@ -2989,7 +2978,6 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 					SIR_MDIE_SIZE);
 			}
 		}
-#endif
 
 		lim_log(mac_ctx, LOG1,
 			FL("*** Sending Auth seq# %d status %d (%d) to "
@@ -3073,39 +3061,38 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 		/* / Receive path cleanup with dummy packet */
 		lim_ft_cleanup_pre_auth_info(pMac, psessionEntry);
 		lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
-#ifdef WLAN_FEATURE_VOWIFI_11R
-	if ((psessionEntry->limSystemRole == eLIM_STA_ROLE) &&
-		(
+		if ((psessionEntry->limSystemRole == eLIM_STA_ROLE) &&
+				(
 #ifdef FEATURE_WLAN_ESE
-		(psessionEntry->isESEconnection) ||
+				 (psessionEntry->isESEconnection) ||
 #endif
-		(psessionEntry->isFastRoamIniFeatureEnabled) ||
-		(psessionEntry->is11Rconnection))) {
-		PELOGE(lim_log(pMac, LOGE,
-			FL("FT Preauth Session (%p,%d) Cleanup Deauth reason %d Trigger = %d"),
-				psessionEntry, psessionEntry->peSessionId,
+				 (psessionEntry->isFastRoamIniFeatureEnabled) ||
+				 (psessionEntry->is11Rconnection))) {
+			lim_log(pMac, LOGE,
+				FL("FT Preauth (%p,%d) Deauth rc %d src = %d"),
+					psessionEntry,
+					psessionEntry->peSessionId,
+					pMlmDeauthReq->reasonCode,
+					pMlmDeauthReq->deauthTrigger);
+			lim_ft_cleanup(pMac, psessionEntry);
+		} else {
+			lim_log(pMac, LOGE,
+				FL("No FT Preauth Session Cleanup in role %d"
+#ifdef FEATURE_WLAN_ESE
+				" isESE %d"
+#endif
+				" isLFR %d"
+				" is11r %d, Deauth reason %d Trigger = %d"),
+				psessionEntry->limSystemRole,
+#ifdef FEATURE_WLAN_ESE
+				psessionEntry->isESEconnection,
+#endif
+				psessionEntry->isFastRoamIniFeatureEnabled,
+				psessionEntry->is11Rconnection,
 				pMlmDeauthReq->reasonCode,
-				pMlmDeauthReq->deauthTrigger););
-		lim_ft_cleanup(pMac, psessionEntry);
-	} else {
-		PELOGE(lim_log(pMac, LOGE,
-			FL("No FT Preauth Session Cleanup in role %d"
-#ifdef FEATURE_WLAN_ESE
-			" isESE %d"
-#endif
-			" isLFR %d"
-			" is11r %d, Deauth reason %d Trigger = %d"),
-			psessionEntry->limSystemRole,
-#ifdef FEATURE_WLAN_ESE
-			psessionEntry->isESEconnection,
-#endif
-			psessionEntry->isFastRoamIniFeatureEnabled,
-			psessionEntry->is11Rconnection,
-			pMlmDeauthReq->reasonCode,
-			pMlmDeauthReq->deauthTrigger););
-	}
-#endif
-		/* / Free up buffer allocated for mlmDeauthReq */
+				pMlmDeauthReq->deauthTrigger);
+		}
+		/* Free up buffer allocated for mlmDeauthReq */
 		qdf_mem_free(pMlmDeauthReq);
 		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
 	}
@@ -3178,7 +3165,6 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 			lim_log(mac_ctx, LOGE, FL("cleanup_rx_path error"));
 			goto end;
 		}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		if (LIM_IS_STA_ROLE(pe_session) && (
 #ifdef FEATURE_WLAN_ESE
 			    (pe_session->isESEconnection) ||
@@ -3191,10 +3177,8 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 				FL("FT Preauth Session (%p,%d) Clean up"),
 				pe_session, pe_session->peSessionId);
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 			/* Delete FT session if there exists one */
 			lim_ft_cleanup_pre_auth_info(mac_ctx, pe_session);
-#endif
 		} else {
 			lim_log(mac_ctx, LOGE,
 				FL("No FT Preauth Session Clean up in role %d"
@@ -3211,7 +3195,6 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 				pe_session->is11Rconnection,
 				disassoc_req->reasonCode);
 		}
-#endif
 		/* Free up buffer allocated for mlmDisassocReq */
 		qdf_mem_free(disassoc_req);
 		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;

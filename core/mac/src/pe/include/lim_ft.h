@@ -25,7 +25,6 @@
  * to the Linux Foundation.
  */
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 /**=========================================================================
 
    Macros and Function prototypes FT and 802.11R purposes
@@ -84,5 +83,3 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
 #endif /* __LIMFT_H__ */
-
-#endif /* WLAN_FEATURE_VOWIFI_11R */

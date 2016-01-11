@@ -363,7 +363,6 @@ void lim_update_re_assoc_globals(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 		       psessionEntry->limMlmState));
 
 }
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /**
  * lim_update_ric_data() - update session with ric data
  * @mac_ctx: Pointer to Global MAC structure
@@ -409,7 +408,6 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 	}
 	return;
 }
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 
@@ -761,9 +759,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		session_entry->assocRspLen = frame_len;
 	}
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	lim_update_ric_data(mac_ctx, session_entry, assoc_rsp);
-#endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	roam_session =
@@ -1106,12 +1102,9 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 
 assocReject:
 	if ((subtype == LIM_ASSOC)
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		|| ((subtype == LIM_REASSOC)
 		&& (session_entry->limMlmState ==
-		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE))
-#endif
-	    ) {
+		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE))) {
 		lim_log(mac_ctx, LOGE, FL("Assoc Rejected by the peer. "
 			"mlmestate: %d sessionid %d Reason: %d MACADDR:"
 			MAC_ADDRESS_STR),
@@ -1129,14 +1122,11 @@ assocReject:
 		if (subtype == LIM_ASSOC) {
 			lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 				(uint32_t *) &assoc_cnf);
-		}
-#ifdef WLAN_FEATURE_VOWIFI_11R
-		else {
+		} else {
 			assoc_cnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
 			lim_post_sme_message(mac_ctx, LIM_MLM_REASSOC_CNF,
 					(uint32_t *)&assoc_cnf);
 		}
-#endif
 	} else {
 		lim_restore_pre_reassoc_state(mac_ctx,
 			eSIR_SME_REASSOC_REFUSED,

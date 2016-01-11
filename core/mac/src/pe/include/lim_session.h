@@ -192,10 +192,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t *assocRsp;      /* Used to store association response received while associating */
 	tAniSirDph dph;
 	void **parsedAssocReq;  /* Used to store parsed assoc req from various requesting station */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	uint32_t RICDataLen;    /* Used to store the Ric data received in the assoc response */
 	uint8_t *ricData;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint32_t tspecLen;      /* Used to store the TSPEC IEs received in the assoc response */
 	uint8_t *tspecIes;
@@ -281,9 +279,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	int8_t txMgmtPower;
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tAniBool is11Rconnection;
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	tAniBool isESEconnection;
@@ -447,10 +443,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	bool bRoamSynchInProgress;
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	/* Fast Transition (FT) */
 	tftPEContext ftPEContext;
-#endif
 	bool isNonRoamReassoc;
 #ifdef WLAN_FEATURE_11W
 	qdf_mc_timer_t pmfComebackTimer;

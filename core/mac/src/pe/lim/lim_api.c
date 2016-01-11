@@ -57,9 +57,7 @@
 #include "lim_send_sme_rsp_messages.h"
 #include "wmm_apsd.h"
 #include "lim_trace.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "wma_types.h"
 
@@ -713,9 +711,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	rrm_cleanup(pMac);
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	lim_ft_cleanup_all_ft_sessions(pMac);
-#endif
 
 } /*** end lim_cleanup() ***/
 

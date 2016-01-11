@@ -527,7 +527,6 @@ tSirRetStatus lim_set_link_state(tpAniSirGlobal pMac, tSirLinkState state,
 	return retCode;
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 extern tSirRetStatus lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 					   state, tSirMacAddr bssId,
 					   tSirMacAddr selfMacAddr, int ft,
@@ -573,7 +572,6 @@ extern tSirRetStatus lim_set_link_state_ft(tpAniSirGlobal pMac, tSirLinkState
 	}
 	return retCode;
 }
-#endif
 
 /** ---------------------------------------------------------
    \fn      lim_send_beacon_filter_info

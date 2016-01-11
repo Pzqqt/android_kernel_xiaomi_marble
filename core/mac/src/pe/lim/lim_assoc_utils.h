@@ -120,10 +120,8 @@ tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal,
 tSirRetStatus lim_add_sta(tpAniSirGlobal, tpDphHashNode, uint8_t, tpPESession);
 tSirRetStatus lim_del_bss(tpAniSirGlobal, tpDphHashNode, uint16_t, tpPESession);
 tSirRetStatus lim_del_sta(tpAniSirGlobal, tpDphHashNode, bool, tpPESession);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal pMac, uint16_t assocId,
 				  tpPESession psessionEntry);
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 tSirRetStatus lim_add_sta_self(tpAniSirGlobal, uint16_t, uint8_t, tpPESession);
 tStaRateMode lim_get_sta_rate_mode(uint8_t dot11Mode);
 

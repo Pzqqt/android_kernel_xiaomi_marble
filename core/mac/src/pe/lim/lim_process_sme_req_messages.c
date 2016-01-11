@@ -61,9 +61,7 @@
 #include "sap_api.h"
 
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 #include <lim_ft.h>
-#endif
 #include "cds_regdomain_common.h"
 
 /*
@@ -1799,9 +1797,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * which inturn is dependent on the profile the user wants
 		 * to connect to, So input is coming from supplicant
 		 */
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		session->is11Rconnection = sme_join_req->is11Rconnection;
-#endif
 #ifdef FEATURE_WLAN_ESE
 		session->isESEconnection = sme_join_req->isESEconnection;
 #endif
@@ -2671,10 +2667,8 @@ static void __lim_process_sme_disassoc_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBu
 			return;
 		}
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 		/* Delete FT session if there exists one */
 		lim_ft_cleanup_pre_auth_info(pMac, psessionEntry);
-#endif
 		lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
 
 		lim_clean_up_disassoc_deauth_req(pMac,
@@ -4866,7 +4860,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 		break;
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	case eWNI_SME_FT_PRE_AUTH_REQ:
 		bufConsumed = (bool) lim_process_ft_pre_auth_req(pMac, pMsg);
 		break;
@@ -4877,7 +4870,6 @@ bool lim_process_sme_req_messages(tpAniSirGlobal pMac, tpSirMsgQ pMsg)
 	case eWNI_SME_FT_AGGR_QOS_REQ:
 		lim_process_ft_aggr_qos_req(pMac, pMsgBuf);
 		break;
-#endif
 
 	case eWNI_SME_REGISTER_MGMT_FRAME_REQ:
 		__lim_process_sme_register_mgmt_frame_req(pMac, pMsgBuf);

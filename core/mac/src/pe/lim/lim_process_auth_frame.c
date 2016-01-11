@@ -48,9 +48,7 @@
 #include "lim_assoc_utils.h"
 #include "lim_security_utils.h"
 #include "lim_ser_des_utils.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft.h"
-#endif
 #include "cds_utils.h"
 
 /**
@@ -512,7 +510,6 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 
 	/* AuthFrame 2 */
 	if (pe_session->limMlmState != eLIM_MLM_WT_AUTH_FRAME2_STATE) {
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		/**
 		 * Check if a Reassociation is in progress and this is a
 		 * Pre-Auth frame
@@ -540,9 +537,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 				pe_session->ftPEContext.saved_auth_rsp_length =
 					frame_len;
 			}
-		} else
-#endif
-		{
+		} else {
 			/*
 			 * Received Auth frame2 in an unexpected state.
 			 * Log error and ignore the frame.
@@ -1362,8 +1357,6 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	}
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
-
 /*----------------------------------------------------------------------
  *
  * Pass the received Auth frame. This is possibly the pre-auth from the
@@ -1529,5 +1522,3 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 
 	return ret_status;
 }
-
-#endif /* WLAN_FEATURE_VOWIFI_11R */

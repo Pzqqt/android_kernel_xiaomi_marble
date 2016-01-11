@@ -73,9 +73,7 @@ typedef enum eAniBool {
 typedef enum eAniAuthType {
 	eSIR_OPEN_SYSTEM,
 	eSIR_SHARED_KEY,
-#if defined WLAN_FEATURE_VOWIFI_11R
 	eSIR_FT_AUTH,
-#endif
 #if defined FEATURE_WLAN_ESE
 	eSIR_LEAP_AUTH = 0x80,
 #endif

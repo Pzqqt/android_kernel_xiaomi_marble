@@ -25,7 +25,6 @@
  * to the Linux Foundation.
  */
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 /**=========================================================================
 
    Macros and Function prototypes FT and 802.11R purposes
@@ -131,5 +130,3 @@ typedef struct sFTPEContext {
 } tftPEContext, *tpftPEContext;
 
 #endif /* __LIMFTDEFS_H__ */
-
-#endif /* WLAN_FEATURE_VOWIFI_11R */

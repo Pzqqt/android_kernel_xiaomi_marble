@@ -301,7 +301,6 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			session_entry->assocRsp = NULL;
 			session_entry->assocRspLen = 0;
 		}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		if (session_entry->ricData != NULL) {
 			sme_join_rsp->parsedRicRspLen =
 				session_entry->RICDataLen;
@@ -317,7 +316,6 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			lim_log(mac_ctx, LOG1, FL("RicLength=%d"),
 				sme_join_rsp->parsedRicRspLen);
 		}
-#endif
 #ifdef FEATURE_WLAN_ESE
 		if (session_entry->tspecIes != NULL) {
 			sme_join_rsp->tspecIeLen =
@@ -379,13 +377,11 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			session_entry->assocRsp = NULL;
 			session_entry->assocRspLen = 0;
 		}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		if (session_entry->ricData != NULL) {
 			qdf_mem_free(session_entry->ricData);
 			session_entry->ricData = NULL;
 			session_entry->RICDataLen = 0;
 		}
-#endif
 #ifdef FEATURE_WLAN_ESE
 		if (session_entry->tspecIes != NULL) {
 			qdf_mem_free(session_entry->tspecIes);
@@ -450,9 +446,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	} else {
 		rsp_len = session_entry->assocReqLen +
 			session_entry->assocRspLen + session_entry->bcnLen +
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			session_entry->RICDataLen +
-#endif
 #ifdef FEATURE_WLAN_ESE
 			session_entry->tspecLen +
 #endif
@@ -494,9 +488,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 		sme_join_rsp->beaconLength = 0;
 		sme_join_rsp->assocReqLength = 0;
 		sme_join_rsp->assocRspLength = 0;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		sme_join_rsp->parsedRicRspLen = 0;
-#endif
 #ifdef FEATURE_WLAN_ESE
 		sme_join_rsp->tspecIeLen = 0;
 #endif
@@ -2245,7 +2237,6 @@ void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ MsgQ)
 
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /** -----------------------------------------------------------------
    \brief lim_send_sme_aggr_qos_rsp() - sends SME FT AGGR QOS RSP
  \      This function sends a eWNI_SME_FT_AGGR_QOS_RSP to SME.
@@ -2270,7 +2261,6 @@ lim_send_sme_aggr_qos_rsp(tpAniSirGlobal pMac, tpSirAggrQosRsp aggrQosRsp,
 
 	return;
 }
-#endif
 
 void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 					 uint8_t smesessionId)

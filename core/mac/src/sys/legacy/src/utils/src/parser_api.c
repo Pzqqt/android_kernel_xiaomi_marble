@@ -2430,7 +2430,6 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 		pProbeResp->erpPresent = 1;
 		convert_erp_info(pMac, &pProbeResp->erpIEInfo, &pr->ERPInfo);
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pr->MobilityDomain.present) {
 		/* MobilityDomain */
 		pProbeResp->mdiePresent = 1;
@@ -2446,7 +2445,6 @@ tSirRetStatus sir_convert_probe_frame2_struct(tpAniSirGlobal pMac,
 			(unsigned int)pProbeResp->mdie[1],
 			(unsigned int)pProbeResp->mdie[2]);
 	}
-#endif
 
 #if defined FEATURE_WLAN_ESE
 	if (pr->ESEVersion.present)
@@ -2801,7 +2799,6 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pAssocRsp->HTInfo, &ar.HTInfo,
 			     sizeof(tDot11fIEHTInfo));
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (ar.MobilityDomain.present) {
 		/* MobilityDomain */
 		pAssocRsp->mdiePresent = 1;
@@ -2826,9 +2823,7 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		qdf_mem_copy(&pAssocRsp->FTInfo, &ar.FTInfo,
 			     sizeof(tDot11fIEFTInfo));
 	}
-#endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (ar.num_RICDataDesc) {
 		for (cnt = 0; cnt < ar.num_RICDataDesc; cnt++) {
 			if (ar.RICDataDesc[cnt].present) {
@@ -2840,7 +2835,6 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		pAssocRsp->num_RICData = ar.num_RICDataDesc;
 		pAssocRsp->ricPresent = true;
 	}
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	if (ar.num_WMMTSPEC) {
@@ -3904,7 +3898,6 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 		convert_erp_info(pMac, &pBeaconStruct->erpIEInfo,
 				 &pBeacon->ERPInfo);
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	if (pBeacon->MobilityDomain.present) {
 		/* MobilityDomain */
 		pBeaconStruct->mdiePresent = 1;
@@ -3918,7 +3911,6 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 								     << 1));
 
 	}
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	if (pBeacon->ESEVersion.present)
@@ -5596,7 +5588,6 @@ tSirRetStatus populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 }
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 void populate_mdie(tpAniSirGlobal pMac,
 		   tDot11fIEMobilityDomain *pDot11f,
 		   uint8_t mdie[SIR_MDIE_SIZE])
@@ -5617,7 +5608,6 @@ void populate_ft_info(tpAniSirGlobal pMac, tDot11fIEFTInfo *pDot11f)
 	/* All other info is zero. */
 
 }
-#endif
 
 void populate_dot11f_assoc_rsp_rates(tpAniSirGlobal pMac,
 				     tDot11fIESuppRates *pSupp,

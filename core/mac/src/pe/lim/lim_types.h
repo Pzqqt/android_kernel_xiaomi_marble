@@ -434,10 +434,8 @@ void lim_process_probe_req_frame_multiple_bss(tpAniSirGlobal, uint8_t *,
 
 /* Process Auth frame when we have a session in progress. */
 void lim_process_auth_frame(tpAniSirGlobal, uint8_t *, tpPESession);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *,
 						void *body);
-#endif
 
 void lim_process_assoc_req_frame(tpAniSirGlobal, uint8_t *, uint8_t, tpPESession);
 void lim_send_mlm_assoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
@@ -462,11 +460,9 @@ void lim_send_auth_mgmt_frame(tpAniSirGlobal, tSirMacAuthFrameBody *, tSirMacAdd
 void lim_send_assoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmAssocReq *, tpPESession);
 void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmReassocReq *,
 				     tpPESession);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal pMac,
 						 tLimMlmReassocReq *pMlmReassocReq,
 						 tpPESession psessionEntry);
-#endif
 void lim_send_delts_req_action_frame(tpAniSirGlobal pMac, tSirMacAddr peer,
 				     uint8_t wmmTspecPresent,
 				     tSirMacTSInfo * pTsinfo,
@@ -836,11 +832,9 @@ QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
 QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
 				      uint32_t txCompleteSuccess);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 typedef struct sSetLinkCbackParams {
 	void *cbackDataPtr;
 } tSetLinkCbackParams;
-#endif
 
 void lim_process_rx_scan_event(tpAniSirGlobal mac, void *buf);
 

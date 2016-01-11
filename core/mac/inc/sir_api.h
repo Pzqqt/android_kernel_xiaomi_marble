@@ -677,11 +677,9 @@ typedef struct sSirBssDescription {
 	uint32_t parentTSF;
 	uint32_t startTSF[2];
 #endif
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	uint8_t mdiePresent;
 	/* MDIE for 11r, picked from the beacons */
 	uint8_t mdie[SIR_MDIE_SIZE];
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint16_t QBSSLoad_present;
 	uint16_t QBSSLoad_avail;
@@ -990,9 +988,7 @@ typedef struct sSirSmeJoinReq {
 	tAniEdType MgmtEncryptionType;
 #endif
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	tAniBool is11Rconnection;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	tAniBool isESEFeatureIniEnabled;
 	tAniBool isESEconnection;
@@ -1045,9 +1041,7 @@ typedef struct sSirSmeJoinRsp {
 	uint32_t beaconLength;
 	uint32_t assocReqLength;
 	uint32_t assocRspLength;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	uint32_t parsedRicRspLen;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint32_t tspecIeLen;
 #endif

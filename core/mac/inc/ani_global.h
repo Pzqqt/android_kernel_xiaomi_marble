@@ -47,9 +47,7 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #include "sir_api.h"
 
 #include "csr_api.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "sme_ft_api.h"
-#endif
 #include "csr_support.h"
 #include "sme_internal.h"
 #include "sap_api.h"
@@ -65,9 +63,7 @@ typedef struct sAniSirGlobal *tpAniSirGlobal;
 #endif
 #include "p2p_api.h"
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 #include <lim_ft_defs.h>
-#endif
 
 /* Check if this definition can actually move here from halInternal.h even for Volans. In that case */
 /* this featurization can be removed. */
@@ -313,9 +309,7 @@ typedef struct sLimTimers {
 	/* quiet duration */
 	TX_TIMER gLimQuietBssTimer;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	TX_TIMER gLimFTPreAuthRspTimer;
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	TX_TIMER gLimEseTsmTimer;

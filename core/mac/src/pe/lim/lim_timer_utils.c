@@ -325,7 +325,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		lim_log(pMac, LOGP, FL("Cannot create update OLBC cache tmr"));
 		goto err_timer;
 	}
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	/* In future we need to use the auth timer, cause the pre auth session
 	 * will be introduced before sending Auth frame. We need to go off
 	 * channel and come back to home channel
@@ -339,7 +338,6 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		lim_log(pMac, LOGP, FL("could not create Join failure timer"));
 		goto err_timer;
 	}
-#endif
 	cfgValue = 1000;
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	if (tx_timer_create(pMac, &pMac->lim.limTimers.gLimRemainOnChannelTimer,
@@ -898,7 +896,6 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 	case eLIM_LEARN_DURATION_TIMER:
 		break;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case eLIM_FT_PREAUTH_RSP_TIMER:
 		if (tx_timer_deactivate
 			    (&pMac->lim.limTimers.gLimFTPreAuthRspTimer) !=
@@ -925,7 +922,7 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 			return;
 		}
 		break;
-#endif
+
 	case eLIM_REMAIN_CHN_TIMER:
 		if (tx_timer_deactivate
 			    (&pMac->lim.limTimers.gLimRemainOnChannelTimer) !=

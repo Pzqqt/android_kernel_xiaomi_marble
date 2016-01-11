@@ -40,10 +40,8 @@
    ------------------------------------------------------------------------*/
 #include "ani_global.h"
 #include "lim_debug.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
 #include "lim_ft.h"
-#endif
 #include "lim_session.h"
 #include "lim_utils.h"
 
@@ -303,9 +301,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->limSmeState = eLIM_SME_IDLE_STATE;
 	session_ptr->limCurrentAuthType = eSIR_OPEN_SYSTEM;
 	pe_init_beacon_params(pMac, &pMac->lim.gpSession[i]);
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	session_ptr->is11Rconnection = false;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	session_ptr->isESEconnection = false;
 #endif
@@ -359,10 +355,8 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 			return NULL;
 		}
 	}
-#if defined WLAN_FEATURE_VOWIFI_11R
 	if (eSIR_INFRASTRUCTURE_MODE == bssType)
 		lim_ft_open(pMac, &pMac->lim.gpSession[i]);
-#endif
 	if (eSIR_INFRA_AP_MODE == bssType) {
 		session_ptr->old_protection_state = 0;
 		session_ptr->mac_ctx = (void *)pMac;
@@ -554,10 +548,8 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		qdf_mc_timer_destroy(&session->protection_fields_reset_timer);
 	}
 
-#if defined (WLAN_FEATURE_VOWIFI_11R)
 	/* Delete FT related information */
 	lim_ft_cleanup(mac_ctx, session);
-#endif
 	if (session->pLimStartBssReq != NULL) {
 		qdf_mem_free(session->pLimStartBssReq);
 		session->pLimStartBssReq = NULL;

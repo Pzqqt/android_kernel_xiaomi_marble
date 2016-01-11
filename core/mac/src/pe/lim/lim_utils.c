@@ -53,9 +53,7 @@
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "lim_ibss_peer_mgmt.h"
 #include "lim_session_utils.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "cds_reg_service.h"
 
@@ -378,11 +376,8 @@ char *lim_msg_str(uint32_t msgType)
 		return "SIR_LIM_CNF_WAIT_TIMEOUT";
 	case SIR_LIM_RADAR_DETECT_IND:
 		return "SIR_LIM_RADAR_DETECT_IND";
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 		return "SIR_LIM_FT_PREAUTH_RSP_TIMEOUT";
-#endif
-
 	case WNI_CFG_PARAM_UPDATE_IND:
 		return "WNI_CFG_PARAM_UPDATE_IND";
 	case WNI_CFG_DNLD_REQ:
@@ -699,11 +694,9 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 		tx_timer_deactivate(&lim_timer->gLimPreAuthClnupTimer);
 		tx_timer_delete(&lim_timer->gLimPreAuthClnupTimer);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 		/* Deactivate and delete FT Preauth response timer */
 		tx_timer_deactivate(&lim_timer->gLimFTPreAuthRspTimer);
 		tx_timer_delete(&lim_timer->gLimFTPreAuthRspTimer);
-#endif
 
 		/* Deactivate and delete remain on channel timer */
 		tx_timer_deactivate(&lim_timer->gLimRemainOnChannelTimer);

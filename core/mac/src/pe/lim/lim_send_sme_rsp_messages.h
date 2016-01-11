@@ -73,11 +73,9 @@ void lim_send_sme_neighbor_bss_ind(tpAniSirGlobal, tLimScanResultNode *);
 void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ MsgQ);
 void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg);
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 void
 lim_send_sme_aggr_qos_rsp(tpAniSirGlobal pMac, tpSirAggrQosRsp aggrQosRsp,
 			  uint8_t smesessionId);
-#endif /*WLAN_FEATURE_VOWIFI_11R */
 
 void lim_send_sme_addts_rsp(tpAniSirGlobal pMac, uint8_t rspReqd, uint32_t status,
 			    tpPESession psessionEntry, tSirMacTspecIE tspec,

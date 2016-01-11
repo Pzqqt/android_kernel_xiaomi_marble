@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -60,9 +60,7 @@ enum {
 	eLIM_QUIET_TIMER,
 	eLIM_QUIET_BSS_TIMER,
 	eLIM_WPS_OVERLAP_TIMER,
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	eLIM_FT_PREAUTH_RSP_TIMER,
-#endif
 	eLIM_REMAIN_CHN_TIMER,
 	eLIM_PERIODIC_PROBE_REQ_TIMER,
 	eLIM_DISASSOC_ACK_TIMER,

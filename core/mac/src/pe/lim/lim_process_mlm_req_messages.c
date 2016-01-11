@@ -41,9 +41,7 @@
 #include "lim_send_messages.h"
 #include "lim_send_messages.h"
 #include "lim_session_utils.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include <lim_ft.h>
-#endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
 #include "host_diag_core_log.h"
 #endif
@@ -138,11 +136,9 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case SIR_LIM_ASSOC_FAIL_TIMEOUT:
 		lim_process_assoc_failure_timeout(mac_ctx, msg->bodyval);
 		break;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	case SIR_LIM_FT_PREAUTH_RSP_TIMEOUT:
 		lim_process_ft_preauth_rsp_timeout(mac_ctx);
 		break;
-#endif
 	case SIR_LIM_REMAIN_CHN_TIMEOUT:
 		lim_process_remain_on_chn_timeout(mac_ctx);
 		break;
@@ -687,9 +683,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 
 	addbss_param->bSpectrumMgtEnabled = session->spectrumMgtEnabled ||
 		lim_isconnected_on_dfs_channel(mlm_start_req->channelNumber);
-#if defined WLAN_FEATURE_VOWIFI_11R
 	addbss_param->extSetStaKeyParamValid = 0;
-#endif
 
 	addbss_param->dot11_mode = session->dot11mode;
 	addbss_param->nss = session->nss;

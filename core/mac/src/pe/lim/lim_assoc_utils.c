@@ -55,9 +55,7 @@
 #include "lim_admit_control.h"
 #include "lim_send_messages.h"
 #include "lim_ibss_peer_mgmt.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 
 #include "qdf_types.h"
@@ -2783,7 +2781,6 @@ lim_del_sta(tpAniSirGlobal pMac,
 	return retCode;
 }
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 /**
  * lim_add_ft_sta_self()- function to add STA once we have connected with a
  *          new AP
@@ -2837,7 +2834,6 @@ tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 	session_entry->ftPEContext.pAddStaReq = NULL;
 	return ret_code;
 }
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 /**
  * lim_add_sta_self()
@@ -4223,11 +4219,9 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 
 	pAddBssParams->bSpectrumMgtEnabled = psessionEntry->spectrumMgtEnabled;
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	pAddBssParams->extSetStaKeyParamValid = 0;
 	lim_log(pMac, LOG2, FL("extSetStaKeyParamValid: %d"),
 		pAddBssParams->extSetStaKeyParamValid);
-#endif
 
 #ifdef WLAN_FEATURE_11W
 	if (psessionEntry->limRmfEnabled) {
@@ -4755,11 +4749,9 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 
 	pAddBssParams->bSpectrumMgtEnabled = psessionEntry->spectrumMgtEnabled;
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	pAddBssParams->extSetStaKeyParamValid = 0;
 	lim_log(pMac, LOG2, FL("extSetStaKeyParamValid: %d"),
 		pAddBssParams->extSetStaKeyParamValid);
-#endif
 
 #ifdef WLAN_FEATURE_11W
 	if (psessionEntry->limRmfEnabled) {

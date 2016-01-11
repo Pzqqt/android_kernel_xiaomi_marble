@@ -51,9 +51,7 @@
 #include "lim_prop_exts_utils.h"
 #include "lim_ser_des_utils.h"
 #include "lim_trace.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "wma.h"
 

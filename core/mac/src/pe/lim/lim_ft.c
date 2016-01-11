@@ -25,7 +25,6 @@
  * to the Linux Foundation.
  */
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /**=========================================================================
 
    \brief implementation for PE 11r VoWiFi FT Protocol
@@ -922,9 +921,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->limReassocBssPropCap =
 		pftSessionEntry->limCurrentBssPropCap;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	pftSessionEntry->is11Rconnection = psessionEntry->is11Rconnection;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	pftSessionEntry->isESEconnection = psessionEntry->isESEconnection;
 	pftSessionEntry->is_ese_version_ie_present =
@@ -1998,4 +1995,3 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 	}
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R */

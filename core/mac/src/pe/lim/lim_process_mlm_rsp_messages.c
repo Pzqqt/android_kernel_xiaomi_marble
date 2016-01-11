@@ -40,10 +40,8 @@
 #include "lim_admit_control.h"
 #include "lim_send_messages.h"
 #include "lim_ibss_peer_mgmt.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft.h"
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 #include "lim_session_utils.h"
 #if defined WLAN_FEATURE_VOWIFI
@@ -1756,7 +1754,6 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 			goto end;
 		}
 		if (session_entry->limSmeState == eLIM_SME_WT_REASSOC_STATE) {
-#ifdef WLAN_FEATURE_VOWIFI_11R
 			/* check if we have keys(PTK)to install in case of 11r */
 			tpftPEContext ft_ctx = &session_entry->ftPEContext;
 			ft_session = pe_find_session_by_bssid(mac_ctx,
@@ -1771,7 +1768,6 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 				ft_ctx->PreAuthKeyInfo.extSetStaKeyParamValid =
 					false;
 			}
-#endif
 		}
 		/*
 		 * Update the DPH Hash Entry for this STA
@@ -2660,7 +2656,6 @@ joinFailure:
 
 }
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 /*------------------------------------------------------------------------------------------
  *
  * Function to handle WMA_ADD_BSS_RSP, in FT reassoc state.
@@ -2910,7 +2905,7 @@ end:
 	lim_post_sme_message(pMac, LIM_MLM_REASSOC_CNF,
 			     (uint32_t *) &mlmReassocCnf);
 }
-#endif /* WLAN_FEATURE_VOWIFI_11R */
+
 /**
  * lim_process_sta_mlm_add_bss_rsp() - Process ADD BSS response
  * @mac_ctx: Pointer to Global MAC structure

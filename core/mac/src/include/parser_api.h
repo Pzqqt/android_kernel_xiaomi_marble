@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,9 +41,7 @@
 #include <stdarg.h>
 #include "sir_mac_prop_exts.h"
 #include "dot11f.h"
-#ifdef WLAN_FEATURE_VOWIFI_11R
 #include "lim_ft_defs.h"
-#endif
 #include "lim_session.h"
 
 #define COUNTRY_STRING_LENGTH    (3)
@@ -115,9 +113,7 @@ typedef struct sSirProbeRespBeacon {
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEHTInfo HTInfo;
 	tDot11fIEP2PProbeRes P2PProbeRes;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	uint8_t mdie[SIR_MDIE_SIZE];
-#endif
 #ifdef FEATURE_WLAN_ESE
 	tDot11fIEESETxmitPower eseTxPwr;
 	tDot11fIEQBSSLoad QBSSLoad;
@@ -147,9 +143,7 @@ typedef struct sSirProbeRespBeacon {
 	uint8_t tpcReportPresent;
 	uint8_t powerConstraintPresent;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	uint8_t mdiePresent;
-#endif
 
 #ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps VHTCaps;
@@ -256,12 +250,10 @@ typedef struct sSirAssocRsp {
 	tSirAddtsRspInfo addtsRsp;
 	tDot11fIEHTCaps HTCaps;
 	tDot11fIEHTInfo HTInfo;
-#if defined WLAN_FEATURE_VOWIFI_11R
 	tDot11fIEFTInfo FTInfo;
 	uint8_t mdie[SIR_MDIE_SIZE];
 	uint8_t num_RICData;
 	tDot11fIERICDataDesc RICData[2];
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 	uint8_t num_tspecs;
@@ -276,11 +268,9 @@ typedef struct sSirAssocRsp {
 	uint8_t wmeEdcaPresent;
 	uint8_t addtsPresent;
 	uint8_t wsmCapablePresent;
-#if defined WLAN_FEATURE_VOWIFI_11R
 	uint8_t ftinfoPresent;
 	uint8_t mdiePresent;
 	uint8_t ricPresent;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t tspecPresent;
 	uint8_t tsmPresent;
@@ -907,11 +897,9 @@ tSirRetStatus populate_dot11f_rrm_ie(tpAniSirGlobal pMac,
 				tpPESession psessionEntry);
 #endif
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 void populate_mdie(tpAniSirGlobal pMac,
 		tDot11fIEMobilityDomain * pDot11f, uint8_t mdie[]);
 void populate_ft_info(tpAniSirGlobal pMac, tDot11fIEFTInfo *pDot11f);
-#endif
 
 void populate_dot11f_assoc_rsp_rates(tpAniSirGlobal pMac,
 				tDot11fIESuppRates *pSupp,
