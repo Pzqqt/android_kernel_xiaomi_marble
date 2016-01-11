@@ -5496,6 +5496,7 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry = NULL;
 	uint8_t session_id;
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
+	offset_t ch_offset;
 
 	if (msg_buf == NULL) {
 		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
@@ -5604,13 +5605,23 @@ skip_vht:
 	 * the template update
 	 */
 	lim_send_beacon_ind(mac_ctx, session_entry);
-	lim_log(mac_ctx, LOG1, FL("Updated CSA IE, IE COUNT = %d"),
-		       session_entry->gLimChannelSwitch.switchCount);
+
+	if (dfs_csa_ie_req->ch_params.ch_width == CH_WIDTH_80MHZ)
+		ch_offset = BW80;
+	else
+		ch_offset = dfs_csa_ie_req->ch_params.sec_ch_offset;
+
+	lim_log(mac_ctx, LOG1, FL("IE count:%d chan:%d width:%d wrapper:%d ch_offset:%d"),
+			session_entry->gLimChannelSwitch.switchCount,
+			session_entry->gLimChannelSwitch.primaryChannel,
+			session_entry->gLimChannelSwitch.ch_width,
+			session_entry->dfsIncludeChanWrapperIe,
+			ch_offset);
+
 	/* Send ECSA Action frame after updating the beacon */
 	send_extended_chan_switch_action_frame(mac_ctx,
 		session_entry->gLimChannelSwitch.primaryChannel,
-		session_entry->gLimChannelSwitch.ch_width,
-					   session_entry);
+		ch_offset, session_entry);
 	session_entry->gLimChannelSwitch.switchCount--;
 }
 
