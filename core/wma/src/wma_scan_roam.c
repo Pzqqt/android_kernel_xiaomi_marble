@@ -978,12 +978,10 @@ A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 		return WMI_AUTH_RSNA;
 	case eCSR_AUTH_TYPE_RSN_PSK:
 		return WMI_AUTH_RSNA_PSK;
-#if defined WLAN_FEATURE_VOWIFI_11R
 	case eCSR_AUTH_TYPE_FT_RSN:
 		return WMI_AUTH_FT_RSNA;
 	case eCSR_AUTH_TYPE_FT_RSN_PSK:
 		return WMI_AUTH_FT_RSNA_PSK;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 #ifdef FEATURE_WLAN_WAPI
 	case eCSR_AUTH_TYPE_WAPI_WAI_CERTIFICATE:
 		return WMI_AUTH_WAPI;

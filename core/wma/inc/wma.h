@@ -891,9 +891,7 @@ struct wma_txrx_node {
 	int8_t tx_power;
 	int8_t max_tx_power;
 	uint32_t nwType;
-#if defined WLAN_FEATURE_VOWIFI_11R
 	void *staKeyParams;
-#endif
 	bool ps_enabled;
 	uint32_t dtim_policy;
 	uint32_t peer_count;

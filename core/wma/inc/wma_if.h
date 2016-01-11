@@ -489,10 +489,8 @@ typedef struct {
 	int8_t txMgmtPower;
 	int8_t maxTxPower;
 
-#if defined WLAN_FEATURE_VOWIFI_11R
 	uint8_t extSetStaKeyParamValid;
 	tSetStaKeyParams extSetStaKeyParam;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 	uint8_t ucMaxProbeRespRetryLimit;
 	uint8_t bHiddenSSIDEn;
@@ -961,10 +959,8 @@ typedef struct sLinkStateParams {
 	tSirLinkState state;
 	tpSetLinkStateCallback callback;
 	void *callbackArg;
-#ifdef WLAN_FEATURE_VOWIFI_11R
 	int ft;
 	void *session;
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 	bool status;
 } tLinkStateParams, *tpLinkStateParams;
 
@@ -1016,7 +1012,6 @@ typedef struct {
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 } tDelTsParams, *tpDelTsParams;
 
-#ifdef WLAN_FEATURE_VOWIFI_11R
 
 #define HAL_QOS_NUM_TSPEC_MAX 2
 #define HAL_QOS_NUM_AC_MAX 4
@@ -1037,7 +1032,6 @@ typedef struct {
 	uint8_t sessionId;
 } tAggrAddTsParams, *tpAggrAddTsParams;
 
-#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 typedef tSirRetStatus (*tHalMsgCallback)(tpAniSirGlobal pMac, uint32_t mesgId,
 					 void *mesgParam);
