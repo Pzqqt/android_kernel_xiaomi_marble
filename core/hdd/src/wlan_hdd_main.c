@@ -5685,7 +5685,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	hdd_hostapd_channel_wakelock_init(hdd_ctx);
 
-	hdd_set_idle_ps_config(hdd_ctx, true);
+	if (hdd_ctx->config->fIsImpsEnabled)
+		hdd_set_idle_ps_config(hdd_ctx, true);
+	else
+		hdd_set_idle_ps_config(hdd_ctx, false);
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	if (hdd_ctx->config->WlanAutoShutdown != 0)
 		if (sme_set_auto_shutdown_cb

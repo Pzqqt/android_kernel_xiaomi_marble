@@ -5507,20 +5507,14 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode)
  */
 CDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
 {
-	struct hdd_config *pConfig = pHddCtx->config;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 
 	hddLog(LOG1, "hdd_set_idle_ps_config: Enter Val %d", val);
 
-	if (pConfig->fIsImpsEnabled) {
-		status = sme_set_idle_powersave_config(pHddCtx->pcds_context,
-						pHddCtx->hHal, val);
-		if (CDF_STATUS_SUCCESS != status) {
-			hddLog(LOGE, "Fail to Set Idle PS Config val %d", val);
-		}
-	} else {
-		hddLog(LOG1, "hdd_set_idle_ps_config: IMPS not enabled in ini");
-	}
+	status = sme_set_idle_powersave_config(pHddCtx->pcds_context,
+			pHddCtx->hHal, val);
+	if (CDF_STATUS_SUCCESS != status)
+		hddLog(LOGE, "Fail to Set Idle PS Config val %d", val);
 	return status;
 }
 
