@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -92,9 +92,19 @@
  * Length      : 4 bytes [LEN_PAYLOAD]
  * Payload     : LEN_PAYLOAD bytes
  */
+#ifdef PTT_SOCK_SVC_ENABLE
 int ptt_sock_activate_svc(void);
 void ptt_sock_deactivate_svc(void);
 int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid);
+#else
+static inline int ptt_sock_activate_svc(void) { return 0; }
+static inline void ptt_sock_deactivate_svc(void) { return; }
+static inline int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio,
+					   int src_mod, int pid)
+{
+	return 0;
+}
+#endif
 
 /*
  * Format of message exchanged between the PTT Socket App in userspace and the

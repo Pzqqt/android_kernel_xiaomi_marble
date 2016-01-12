@@ -1100,12 +1100,12 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 }
 
 /**
- * wlan_hdd_cfg80211_link_layer_stats_init() - initialize link layer stats
+ * hdd_cfg80211_link_layer_stats_init() - Initialize link layer stats
  * @pHddCtx: Pointer to hdd context
  *
  * Return: None
  */
-void wlan_hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
+void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
 {
 	sme_set_link_layer_stats_ind_cb(pHddCtx->hHal,
 					wlan_hdd_cfg80211_link_layer_stats_callback);

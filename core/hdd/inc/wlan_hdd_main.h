@@ -1147,10 +1147,6 @@ struct hdd_context_s {
 	/* Lock to avoid race condition during start/stop bss */
 	struct mutex sap_lock;
 
-#ifdef WLAN_KD_READY_NOTIFIER
-	bool kd_nl_init;
-#endif /* WLAN_KD_READY_NOTIFIER */
-
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	/* OEM App registered or not */
 	bool oem_app_registered;
@@ -1461,23 +1457,6 @@ hdd_adapter_t *hdd_get_con_sap_adapter(hdd_adapter_t *this_sap_adapter,
 bool hdd_is_5g_supported(hdd_context_t *pHddCtx);
 
 int wlan_hdd_scan_abort(hdd_adapter_t *pAdapter);
-
-#ifdef WLAN_FEATURE_STATS_EXT
-void wlan_hdd_cfg80211_stats_ext_init(hdd_context_t *pHddCtx);
-#endif
-
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
-void wlan_hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx);
-static inline bool hdd_link_layer_stats_supported(void)
-{
-	return true;
-}
-#else
-static inline bool hdd_link_layer_stats_supported(void)
-{
-	return false;
-}
-#endif /* WLAN_FEATURE_LINK_LAYER_STATS */
 
 void hdd_get_fw_version(hdd_context_t *hdd_ctx,
 			uint32_t *major_spid, uint32_t *minor_spid,
