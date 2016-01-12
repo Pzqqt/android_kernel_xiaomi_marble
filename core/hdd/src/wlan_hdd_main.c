@@ -349,6 +349,39 @@ static int con_mode;
 /* Variable to hold connection mode including module parameter con_mode */
 static int curr_con_mode;
 
+/**
+ * hdd_map_nl_chan_width() - Map NL channel width to internal representation
+ * @ch_width: NL channel width
+ *
+ * Converts the NL channel width to the driver's internal representation
+ *
+ * Return: Converted channel width. In case of non matching NL channel width,
+ * CH_WIDTH_MAX will be returned.
+ */
+phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
+{
+	switch (ch_width) {
+	case NL80211_CHAN_WIDTH_20_NOHT:
+	case NL80211_CHAN_WIDTH_20:
+		return CH_WIDTH_20MHZ;
+	case NL80211_CHAN_WIDTH_40:
+		return CH_WIDTH_40MHZ;
+		break;
+	case NL80211_CHAN_WIDTH_80:
+		return CH_WIDTH_80MHZ;
+	case NL80211_CHAN_WIDTH_80P80:
+		return CH_WIDTH_80P80MHZ;
+	case NL80211_CHAN_WIDTH_160:
+		return CH_WIDTH_160MHZ;
+	case NL80211_CHAN_WIDTH_5:
+	case NL80211_CHAN_WIDTH_10:
+	default:
+		hdd_err("Invalid channel width %d, setting to default",
+				ch_width);
+		return CH_WIDTH_MAX;
+	}
+}
+
 /* wlan_hdd_find_opclass() - Find operating class for a channel
  * @hal: handler to HAL
  * @channel: channel id

@@ -300,7 +300,8 @@ typedef enum ch_width {
 	CH_WIDTH_40MHZ = 1,
 	CH_WIDTH_80MHZ = 2,
 	CH_WIDTH_160MHZ = 3,
-	CH_WIDTH_80P80MHZ = 4
+	CH_WIDTH_80P80MHZ = 4,
+	CH_WIDTH_MAX
 } phy_ch_width;
 
 /**
