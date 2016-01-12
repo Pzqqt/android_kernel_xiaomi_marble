@@ -1921,6 +1921,13 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
 		return ret;
 	}
 
+	ret = hdd_validate_channel_and_bandwidth(pHostapdAdapter,
+						target_channel, target_bw);
+	if (ret) {
+		hdd_err("Invalid CH and BW combo");
+		return ret;
+	}
+
 	sta_adapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
 	/*
 	 * conc_custom_rule1:
