@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1483,32 +1483,20 @@ static CDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 	return CDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION    wlansap_set_channel_change_with_csa
-
-   DESCRIPTION
-      This api function does a channel change to the target channel specified
-      through an iwpriv. CSA IE is included in the beacons before doing a
-      channel change.
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    p_cds_gctx             : Pointer to cds global context structure
-    targetChannel        : New target channel to change to.
-
-   RETURN VALUE
-    The CDF_STATUS code associated with performing the operation
-
-    CDF_STATUS_SUCCESS:  Success
-
-   SIDE EFFECTS
-   ============================================================================*/
+/**
+ * wlansap_set_channel_change_with_csa() - Set channel change with CSA
+ * @p_cds_gctx: Pointer to cds global context structure
+ * @targetChannel: Target channel
+ * @target_bw: Target bandwidth
+ *
+ * This api function does a channel change to the target channel specified.
+ * CSA IE is included in the beacons before doing a channel change.
+ *
+ * Return: CDF_STATUS
+ */
 CDF_STATUS
-wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
+wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
+					phy_ch_width target_bw)
 {
 
 	ptSapContext sapContext = NULL;
@@ -1575,11 +1563,41 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel)
 			pMac->sap.SapDfsInfo.target_channel = targetChannel;
 			pMac->sap.SapDfsInfo.new_ch_params.ch_width =
 				pMac->sap.SapDfsInfo.new_chanWidth;
+
+			/* By this time, the best bandwidth is calculated for
+			 * the given target channel. Now, if there was a
+			 * request from user to move to a selected bandwidth,
+			 * we can see if it can be honored.
+			 *
+			 * Ex1: BW80 was selected for the target channel and
+			 * user wants BW40, it can be allowed
+			 * Ex2: BW40 was selected for the target channel and
+			 * user wants BW80, it cannot be allowed for the given
+			 * target channel.
+			 *
+			 * So, the MIN of the selected channel bandwidth and
+			 * user input is used for the bandwidth
+			 */
+			if (target_bw != CH_WIDTH_MAX) {
+				CDF_TRACE(CDF_MODULE_ID_SAP,
+					CDF_TRACE_LEVEL_INFO,
+					"%s: target bw:%d new width:%d",
+					__func__, target_bw,
+					pMac->sap.SapDfsInfo.
+					new_ch_params.ch_width);
+				pMac->sap.SapDfsInfo.new_ch_params.ch_width =
+					pMac->sap.SapDfsInfo.new_chanWidth =
+					CDF_MIN(pMac->sap.SapDfsInfo.
+							new_ch_params.ch_width,
+							target_bw);
+			}
+
 			sme_set_ch_params(hHal,
 					sapContext->csr_roamProfile.phyMode,
 					targetChannel,
 					0,
 					&pMac->sap.SapDfsInfo.new_ch_params);
+
 			/*
 			 * Set the CSA IE required flag.
 			 */

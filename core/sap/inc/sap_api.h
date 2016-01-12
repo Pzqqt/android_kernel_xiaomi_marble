@@ -841,7 +841,7 @@ CDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
 CDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
 			struct tagCsrDelStaParams *pDelStaParams);
 CDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
-			uint32_t targetChannel);
+			uint32_t targetChannel, phy_ch_width target_bw);
 CDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
 CDF_STATUS wlansap_get_assoc_stations(void *p_cds_gctx,

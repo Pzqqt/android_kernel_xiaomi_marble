@@ -1701,7 +1701,8 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		  FL("Channel change indication from peer for channel %d"),
 				pSapEvent->sapevt.sap_chan_cng_ind.new_chan);
 		if (hdd_softap_set_channel_change(dev,
-			 pSapEvent->sapevt.sap_chan_cng_ind.new_chan))
+			 pSapEvent->sapevt.sap_chan_cng_ind.new_chan,
+			 CH_WIDTH_MAX))
 			return CDF_STATUS_E_FAILURE;
 		else
 			return CDF_STATUS_SUCCESS;
@@ -1893,10 +1894,13 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
  *
  * @dev: pointer to the net device.
  * @target_channel: target channel number.
+ * @target_bw: Target bandwidth to move.
+ * If no bandwidth is specified, the value is CH_WIDTH_MAX
  *
  * Return: 0 for success, non zero for failure
  */
-int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
+int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
+				 phy_ch_width target_bw)
 {
 	CDF_STATUS status;
 	int ret = 0;
@@ -1960,12 +1964,13 @@ int hdd_softap_set_channel_change(struct net_device *dev, int target_channel)
 		p_cds_context,
 #endif
 		(uint32_t)
-		target_channel);
+		target_channel,
+		target_bw);
 
 	if (CDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE,
-		       FL("SAP set channel failed for channel = %d"),
-		       target_channel);
+		       FL("SAP set channel failed for channel = %d, bw:%d"),
+		       target_channel, target_bw);
 		/*
 		 * If channel change command fails then clear the
 		 * radar found flag and also restart the netif
@@ -2287,7 +2292,8 @@ static __iw_softap_setparam(struct net_device *dev,
 			hddLog(LOG1,
 			       "SET Channel Change to new channel= %d",
 			       set_value);
-			ret = hdd_softap_set_channel_change(dev, set_value);
+			ret = hdd_softap_set_channel_change(dev, set_value,
+								CH_WIDTH_MAX);
 		} else {
 			hddLog(LOGE,
 			       FL("Channel Change Failed, Device in test mode"));

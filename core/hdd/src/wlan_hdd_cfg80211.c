@@ -11115,6 +11115,7 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	uint8_t channel;
 	uint16_t freq;
 	int ret;
+	phy_ch_width ch_width;
 
 	hddLog(LOG1, FL("Set Freq %d"),
 		  csa_params->chandef.chan->center_freq);
@@ -11132,7 +11133,9 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	freq = csa_params->chandef.chan->center_freq;
 	channel = cds_freq_to_chan(freq);
 
-	ret = hdd_softap_set_channel_change(dev, channel);
+	ch_width = hdd_map_nl_chan_width(csa_params->chandef.width);
+
+	ret = hdd_softap_set_channel_change(dev, channel, ch_width);
 	return ret;
 }
 
