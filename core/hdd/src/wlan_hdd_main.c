@@ -5448,8 +5448,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_adapter_t *adapter = NULL;
 	hdd_context_t *hdd_ctx = NULL;
 	int ret;
-	tSirTxPowerLimit *hddtxlimit;
+	tSirTxPowerLimit hddtxlimit;
 	bool rtnl_held;
+	tSirRetStatus hal_status;
 
 	ENTER();
 
@@ -5472,10 +5473,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 		goto success;
 	}
-
-	cds_set_recovery_in_progress(false);
-
-	cds_set_connection_in_progress(false);
 
 	hdd_wlan_green_ap_init(hdd_ctx);
 
@@ -5559,27 +5556,19 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		       FL("can't update mac config, using MAC from ini file"));
 	}
 
-	{
-		CDF_STATUS cdf_ret_status;
-		/*
-		 * Set the MAC Address Currently this is used by HAL to
-		 * add self sta. Remove this once self sta is added as
-		 * part of session open.
-		 */
-		cdf_ret_status = cfg_set_str(hdd_ctx->hHal, WNI_CFG_STA_ID,
-					     (uint8_t *) &hdd_ctx->config->
-					     intfMacAddr[0],
-					     sizeof(hdd_ctx->config->
-						    intfMacAddr[0]));
+	/*
+	 * Set the MAC Address Currently this is used by HAL to add self sta.
+	 * Remove this once self sta is added as part of session open.
+	 */
+	hal_status = cfg_set_str(hdd_ctx->hHal, WNI_CFG_STA_ID,
+				     hdd_ctx->config->intfMacAddr[0].bytes,
+				     sizeof(hdd_ctx->config->intfMacAddr[0]));
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
-			       FL(
-				  "Failed to set MAC Address. HALStatus is %08d [x%08x]"
-				 ),
-			       cdf_ret_status, cdf_ret_status);
-			goto err_wiphy_unregister;
-		}
+	if (!IS_SIR_STATUS_SUCCESS(hal_status)) {
+		hdd_err("Failed to set MAC Address. HALStatus is %08d [x%08x]",
+			hal_status, hal_status);
+		ret = -EINVAL;
+		goto err_wiphy_unregister;
 	}
 
 	if (hdd_ipa_init(hdd_ctx) == CDF_STATUS_E_FAILURE)
@@ -5603,9 +5592,8 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		       FL("hdd_post_cds_enable_config failed"));
 		goto err_cds_disable;
 	}
-#ifdef QCA_PKT_PROTO_TRACE
+
 	cds_pkt_proto_trace_init();
-#endif /* QCA_PKT_PROTO_TRACE */
 
 	rtnl_held = hdd_hold_rtnl_lock();
 
@@ -5637,16 +5625,13 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	sme_register11d_scan_done_callback(hdd_ctx->hHal, hdd_11d_scan_done);
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
 	sme_register_oem_data_rsp_callback(hdd_ctx->hHal,
 					hdd_send_oem_data_rsp_msg);
-#endif
 
-	/* Open debugfs interface */
-	if (CDF_STATUS_SUCCESS != hdd_debugfs_init(adapter)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("hdd_debugfs_init failed!"));
-	}
+	status = hdd_debugfs_init(adapter);
+
+	if (CDF_IS_STATUS_SUCCESS(status))
+		hdd_err("hdd_debugfs_init failed: %d!", status);
 
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
@@ -5656,32 +5641,22 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("nl_srv_init failed"));
 		goto err_close_adapter;
 	}
-#ifdef WLAN_KD_READY_NOTIFIER
-	hdd_ctx->kd_nl_init = 1;
-#endif /* WLAN_KD_READY_NOTIFIER */
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-	/* Initialize the OEM service */
-	if (oem_activate_service(hdd_ctx) != 0) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("oem_activate_service failed"));
+	ret = oem_activate_service(hdd_ctx);
+	if (ret) {
+		hdd_alert("oem_activate_service failed: %d", ret);
 		goto err_nl_srv;
 	}
-#endif
 
-#ifdef PTT_SOCK_SVC_ENABLE
-	/* Initialize the PTT service */
-	if (ptt_sock_activate_svc() != 0) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("ptt_sock_activate_svc failed"));
+	ret = ptt_sock_activate_svc();
+	if (ret) {
+		hdd_alert("ptt_sock_activate_svc failed: %d", ret);
 		goto err_nl_srv;
 	}
-#endif
 
-	/* Initialize the CNSS-DIAG service */
-	if (cnss_diag_activate_service() < 0) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       FL("cnss_diag_activate_service failed"));
+	ret = cnss_diag_activate_service();
+	if (ret) {
+		hdd_alert("cnss_diag_activate_service failed: %d", ret);
 		goto err_nl_srv;
 	}
 
@@ -5749,19 +5724,11 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (0 != hdd_lro_init(hdd_ctx))
 		hdd_err("Unable to initialize LRO in fw");
 
-	/* SAR power limit */
-	hddtxlimit = cdf_mem_malloc(sizeof(tSirTxPowerLimit));
-	if (!hddtxlimit) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("Memory allocation for TxPowerLimit failed!"));
-		goto err_unreg_netdev_notifier;
-	}
-	hddtxlimit->txPower2g = hdd_ctx->config->TxPower2g;
-	hddtxlimit->txPower5g = hdd_ctx->config->TxPower5g;
-
-	if (CDF_STATUS_SUCCESS != sme_txpower_limit(hdd_ctx->hHal, hddtxlimit))
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       FL("Error setting txlimit in sme"));
+	hddtxlimit.txPower2g = hdd_ctx->config->TxPower2g;
+	hddtxlimit.txPower5g = hdd_ctx->config->TxPower5g;
+	status = sme_txpower_limit(hdd_ctx->hHal, &hddtxlimit);
+	if (CDF_IS_STATUS_SUCCESS(status))
+		hdd_err("Error setting txlimit in sme: %d", status);
 
 #ifdef MSM_PLATFORM
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
@@ -5770,25 +5737,20 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
 #endif
 
-#ifdef WLAN_FEATURE_STATS_EXT
 	wlan_hdd_cfg80211_stats_ext_init(hdd_ctx);
-#endif
-#ifdef FEATURE_WLAN_EXTSCAN
+
 	sme_ext_scan_register_callback(hdd_ctx->hHal,
 				       wlan_hdd_cfg80211_extscan_callback);
-#endif /* FEATURE_WLAN_EXTSCAN */
+
 	sme_set_rssi_threshold_breached_cb(hdd_ctx->hHal,
 				hdd_rssi_threshold_breached);
-#ifdef WLAN_FEATURE_LINK_LAYER_STATS
-	wlan_hdd_cfg80211_link_layer_stats_init(hdd_ctx);
-#endif
 
-#ifdef WLAN_FEATURE_LPSS
+	hdd_cfg80211_link_layer_stats_init(hdd_ctx);
+
 	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
 	wlan_hdd_send_version_pkg(hdd_ctx->target_fw_version,
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
-#endif
 
 	cdf_spinlock_init(&hdd_ctx->hdd_roc_req_q_lock);
 	cdf_list_init((&hdd_ctx->hdd_roc_req_q), MAX_ROC_REQ_QUEUE_ENTRY);
@@ -6327,6 +6289,24 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 
 	if (!scan_intf_found)
 		wlan_hdd_send_status_pkg(pDataAdapter, NULL, 1, 0);
+}
+#else
+static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *pAdapter,
+					    hdd_station_ctx_t *pHddStaCtx,
+					    uint8_t is_on, uint8_t is_connected)
+{
+	return;
+}
+
+static inline void wlan_hdd_send_version_pkg(uint32_t fw_version, uint32_t
+					     chip_id, const char *chip_name)
+{
+	return;
+}
+
+static inline void wlan_hdd_send_all_scan_intf_info(hdd_context_t *pHddCtx)
+{
+	return;
 }
 #endif
 

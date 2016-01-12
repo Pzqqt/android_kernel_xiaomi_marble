@@ -357,6 +357,12 @@ extern CDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
 #ifdef FEATURE_OEM_DATA_SUPPORT
 extern CDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 		sme_send_oem_data_rsp_msg callback);
+#else
+static inline CDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
+		sme_send_oem_data_rsp_msg callback)
+{
+	return CDF_STATUS_SUCCESS;
+}
 #endif
 
 extern CDF_STATUS sme_wow_add_pattern(tHalHandle hHal,
@@ -832,6 +838,12 @@ sme_set_ssid_hotlist(tHalHandle hal,
 
 CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 		void (*pExtScanIndCb)(void *, const uint16_t, void *));
+#else
+static inline CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
+		void (*pExtScanIndCb)(void *, const uint16_t, void *))
+{
+	return CDF_STATUS_SUCCESS;
+}
 #endif /* FEATURE_WLAN_EXTSCAN */
 CDF_STATUS sme_abort_roam_scan(tHalHandle hHal, uint8_t sessionId);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,8 +25,6 @@
  * to the Linux Foundation.
  */
 
-#ifdef FEATURE_OEM_DATA_SUPPORT
-
 /**
  * DOC: wlan_hdd_oemdata.h
  *
@@ -35,6 +33,8 @@
 
 #ifndef __WLAN_HDD_OEM_DATA_H__
 #define __WLAN_HDD_OEM_DATA_H__
+
+#ifdef FEATURE_OEM_DATA_SUPPORT
 
 #ifndef OEM_DATA_REQ_SIZE
 #define OEM_DATA_REQ_SIZE 280
@@ -166,7 +166,10 @@ int iw_get_oem_data_cap(struct net_device *dev, struct iw_request_info *info,
 int oem_activate_service(struct hdd_context_s *hdd_ctx);
 
 void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp);
-
-#endif /* __WLAN_HDD_OEM_DATA_H__ */
-
+#else
+static inline int oem_activate_service(struct hdd_context_s *hdd_ctx)
+{
+	return 0;
+}
 #endif /* FEATURE_OEM_DATA_SUPPORT */
+#endif /* __WLAN_HDD_OEM_DATA_H__ */

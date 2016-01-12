@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,7 +57,6 @@
 
 static bool appstarted = false;
 static bool senddriverstatus = false;
-static bool kd_nl_init = false;
 static int cnss_diag_pid = INVALID_PID;
 static int get_version = 0;
 static int gprint_limiter = 0;
@@ -4264,12 +4263,11 @@ int cnss_diag_activate_service()
 
 	/* Register the msg handler for msgs addressed to WLAN_NL_MSG_OEM */
 	ret = nl_srv_register(WLAN_NL_MSG_CNSS_DIAG, cnss_diag_msg_callback);
-	if (ret == -EINVAL) {
+	if (ret) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("CNSS-DIAG Registeration failed \n"));
+				("CNSS-DIAG Registration failed"));
 		return ret;
 	}
-	kd_nl_init = true;
 	return 0;
 }
 
@@ -4459,6 +4457,5 @@ int dbglog_deinit(wmi_unified_t wmi_handle)
 	if (res != 0)
 		return res;
 
-	kd_nl_init = false;
 	return res;
 }

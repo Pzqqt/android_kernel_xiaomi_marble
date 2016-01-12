@@ -12047,12 +12047,23 @@ CDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
 	cds_msg_t cds_message;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tSirTxPowerLimit *tx_power_limit;
+
+	tx_power_limit = cdf_mem_malloc(sizeof(*tx_power_limit));
+	if (!tx_power_limit) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Memory allocation for TxPowerLimit failed!",
+			  __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	*tx_power_limit = *psmetx;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		cds_message.type = WMA_TX_POWER_LIMIT;
 		cds_message.reserved = 0;
-		cds_message.bodyptr = psmetx;
+		cds_message.bodyptr = tx_power_limit;
 
 		cdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
@@ -12060,7 +12071,7 @@ CDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 				  "%s: not able to post WMA_TX_POWER_LIMIT",
 				  __func__);
 			status = CDF_STATUS_E_FAILURE;
-			cdf_mem_free(psmetx);
+			cdf_mem_free(tx_power_limit);
 		}
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -13079,14 +13090,6 @@ CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 	}
 	return status;
 }
-
-#else
-CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
-		  void (*pExtScanIndCb)(void *, const uint16_t, void *))
-{
-	return CDF_STATUS_SUCCESS;
-}
-
 #endif /* FEATURE_WLAN_EXTSCAN */
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
