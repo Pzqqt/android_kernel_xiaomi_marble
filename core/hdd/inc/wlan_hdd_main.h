@@ -1341,6 +1341,9 @@ struct hdd_context_s {
 /*---------------------------------------------------------------------------
    Function declarations and documentation
    -------------------------------------------------------------------------*/
+int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
+				uint32_t chan_number,
+				phy_ch_width chan_bw);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 void wlan_hdd_check_sta_ap_concurrent_ch_intf(void *sta_pAdapter);
 #endif

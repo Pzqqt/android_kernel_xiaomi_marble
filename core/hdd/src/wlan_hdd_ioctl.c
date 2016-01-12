@@ -34,6 +34,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_driver_ops.h"
 #include "cds_concurrency.h"
+#include "wlan_hdd_hostapd.h"
 
 #include "wlan_hdd_p2p.h"
 #include <linux/ctype.h>
@@ -5954,6 +5955,123 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 	return ret;
 }
 
+/**
+ * hdd_parse_set_channel_switch_command() - Parse and validate CHANNEL_SWITCH
+ * command
+ * @value: Pointer to the command
+ * @chan_number: Pointer to the channel number
+ * @chan_bw: Pointer to the channel bandwidth
+ *
+ * Parses and provides the channel number and channel width from the input
+ * command which is expected to be of the format: CHANNEL_SWITCH <CH> <BW>
+ * <CH> is channel number to move (where 1 = channel 1, 149 = channel 149, ...)
+ * <BW> is bandwidth to move (where 20 = BW 20, 40 = BW 40, 80 = BW 80)
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int hdd_parse_set_channel_switch_command(uint8_t *value,
+					 uint32_t *chan_number,
+					 uint32_t *chan_bw)
+{
+	const uint8_t *in_ptr = value;
+	int ret;
+
+	in_ptr = strnchr(value, strlen(value), SPACE_ASCII_VALUE);
+
+	/* no argument after the command */
+	if (NULL == in_ptr) {
+		hdd_err("No argument after the command");
+		return -EINVAL;
+	}
+
+	/* no space after the command */
+	if (SPACE_ASCII_VALUE != *in_ptr) {
+		hdd_err("No space after the command ");
+		return -EINVAL;
+	}
+
+	/* remove empty spaces and move the next argument */
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
+
+	/* no argument followed by spaces */
+	if ('\0' == *in_ptr) {
+		hdd_err("No argument followed by spaces");
+		return -EINVAL;
+	}
+
+	/* get the two arguments: channel number and bandwidth */
+	ret = sscanf(in_ptr, "%u %u", chan_number, chan_bw);
+	if (ret != 2) {
+		hdd_err("Arguments retrieval from cmd string failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * drv_cmd_set_channel_switch() - Switch SAP/P2P-GO operating channel
+ * @adapter: HDD adapter
+ * @hdd_ctx: HDD context
+ * @command: Pointer to the input command CHANNEL_SWITCH
+ * @command_len: Command len
+ * @priv_data: Private data
+ *
+ * Handles private IOCTL CHANNEL_SWITCH command to switch the operating channel
+ * of SAP/P2P-GO
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int drv_cmd_set_channel_switch(hdd_adapter_t *adapter,
+				   hdd_context_t *hdd_ctx,
+				   uint8_t *command,
+				   uint8_t command_len,
+				   hdd_priv_data_t *priv_data)
+{
+	struct net_device *dev = adapter->dev;
+	int status;
+	uint32_t chan_number = 0, chan_bw = 0;
+	uint8_t *value = command;
+	phy_ch_width width;
+
+	if ((adapter->device_mode != WLAN_HDD_P2P_GO) &&
+		(adapter->device_mode != WLAN_HDD_SOFTAP)) {
+		hdd_err("IOCTL CHANNEL_SWITCH not supported for mode %d",
+			adapter->device_mode);
+		return -EINVAL;
+	}
+
+	status = hdd_parse_set_channel_switch_command(value,
+							&chan_number, &chan_bw);
+	if (status) {
+		hdd_err("Invalid CHANNEL_SWITCH command");
+		return status;
+	}
+
+	if ((chan_bw != 20) && (chan_bw != 40) && (chan_bw != 80)) {
+		hdd_err("BW %d is not allowed for CHANNEL_SWITCH", chan_bw);
+		return -EINVAL;
+	}
+
+	if (chan_bw == 80)
+		width = CH_WIDTH_80MHZ;
+	else if (chan_bw == 40)
+		width = CH_WIDTH_40MHZ;
+	else
+		width = CH_WIDTH_20MHZ;
+
+	hdd_info("CH:%d BW:%d", chan_number, chan_bw);
+
+	status = hdd_softap_set_channel_change(dev, chan_number, width);
+	if (status) {
+		hdd_err("Set channel change fail");
+		return status;
+	}
+
+	return 0;
+}
+
 /*
  * The following table contains all supported WLAN HDD
  * IOCTL driver commands and the handler for each of them.
@@ -6066,6 +6184,7 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"RXFILTER-REMOVE",           drv_cmd_rx_filter_remove},
 	{"RXFILTER-ADD",              drv_cmd_rx_filter_add},
 	{"SET_FCC_CHANNEL",           drv_cmd_set_fcc_channel},
+	{"CHANNEL_SWITCH",            drv_cmd_set_channel_switch},
 };
 
 /**

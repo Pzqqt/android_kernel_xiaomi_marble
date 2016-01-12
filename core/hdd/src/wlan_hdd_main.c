@@ -232,6 +232,77 @@ const char *hdd_device_mode_to_string(uint8_t device_mode)
 	}
 }
 
+/**
+ * hdd_validate_channel_and_bandwidth() - Validate the channel-bandwidth combo
+ * @adapter: HDD adapter
+ * @chan_number: Channel number
+ * @chan_bw: Bandwidth
+ *
+ * Checks if the given bandwidth is valid for the given channel number.
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
+		uint32_t chan_number,
+		phy_ch_width chan_bw)
+{
+	uint8_t chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN, i;
+	bool found = false;
+	tHalHandle hal;
+
+	hal = WLAN_HDD_GET_HAL_CTX(adapter);
+	if (!hal) {
+		hdd_err("Invalid HAL context");
+		return -EINVAL;
+	}
+
+	if (0 != sme_cfg_get_str(hal, WNI_CFG_VALID_CHANNEL_LIST, chan, &len)) {
+		hdd_err("No valid channel list");
+		return -EOPNOTSUPP;
+	}
+
+	for (i = 0; i < len; i++) {
+		if (chan[i] == chan_number) {
+			found = true;
+			break;
+		}
+	}
+
+	if (found == false) {
+		hdd_err("Channel not in driver's valid channel list");
+		return -EOPNOTSUPP;
+	}
+
+	if ((!CDS_IS_CHANNEL_24GHZ(chan_number)) &&
+			(!CDS_IS_CHANNEL_5GHZ(chan_number))) {
+		hdd_err("CH %d is not in 2.4GHz or 5GHz", chan_number);
+		return -EINVAL;
+	}
+
+	if (CDS_IS_CHANNEL_24GHZ(chan_number)) {
+		if (chan_bw == CH_WIDTH_80MHZ) {
+			hdd_err("BW80 not possible in 2.4GHz band");
+			return -EINVAL;
+		}
+		if ((chan_bw != CH_WIDTH_20MHZ) && (chan_number == 14) &&
+				(chan_bw != CH_WIDTH_MAX)) {
+			hdd_err("Only BW20 possible on channel 14");
+			return -EINVAL;
+		}
+	}
+
+	if (CDS_IS_CHANNEL_5GHZ(chan_number)) {
+		if ((chan_bw != CH_WIDTH_20MHZ) && (chan_number == 165) &&
+				(chan_bw != CH_WIDTH_MAX)) {
+			hdd_err("Only BW20 possible on channel 165");
+			return -EINVAL;
+		}
+	}
+
+	return 0;
+}
+
 static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 				    unsigned long state, void *data)
 {
