@@ -2951,6 +2951,17 @@ CDF_STATUS wma_wmi_service_close(void *cds_ctx)
 			cdf_mem_free(wma_handle->interfaces[i].handle);
 			wma_handle->interfaces[i].handle = NULL;
 		}
+
+		if (wma_handle->interfaces[i].addBssStaContext) {
+			cdf_mem_free(wma_handle->
+				     interfaces[i].addBssStaContext);
+			wma_handle->interfaces[i].addBssStaContext = NULL;
+		}
+
+		if (wma_handle->interfaces[i].del_staself_req) {
+			cdf_mem_free(wma_handle->interfaces[i].del_staself_req);
+			wma_handle->interfaces[i].del_staself_req = NULL;
+		}
 	}
 
 	cdf_mem_free(wma_handle->interfaces);
