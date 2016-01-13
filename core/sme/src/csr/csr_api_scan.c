@@ -5305,7 +5305,6 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 			uint8_t ibss_channel, tCsrScanRequest *dst_req) {
 	uint8_t valid_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
-	uint8_t filtered_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
 	uint32_t filter_chnl_len = 0, i = 0;
 	uint32_t valid_chnl_len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 
@@ -5346,12 +5345,12 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 			continue;
 		if (CDS_IS_CHANNEL_5GHZ(ibss_channel) &&
 			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
-			filtered_chnl_list[filter_chnl_len] =
+			valid_chnl_list[filter_chnl_len] =
 					valid_chnl_list[i];
 			filter_chnl_len++;
 		} else if (CDS_IS_CHANNEL_24GHZ(ibss_channel) &&
 			CDS_IS_CHANNEL_5GHZ(valid_chnl_list[i])) {
-			filtered_chnl_list[filter_chnl_len] =
+			valid_chnl_list[filter_chnl_len] =
 					valid_chnl_list[i];
 			filter_chnl_len++;
 		}
@@ -5377,7 +5376,7 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 			FL("Memory allocation failed"));
 		return false;
 	}
-	cdf_mem_copy(dst_req->ChannelInfo.ChannelList, filtered_chnl_list,
+	cdf_mem_copy(dst_req->ChannelInfo.ChannelList, valid_chnl_list,
 			filter_chnl_len);
 	return true;
 }

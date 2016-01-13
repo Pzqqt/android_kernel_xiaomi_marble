@@ -285,6 +285,7 @@ typedef struct _cds_context_type {
 	struct cds_log_complete log_complete;
 	cdf_spinlock_t bug_report_lock;
 	cdf_event_t connection_update_done_evt;
+	cdf_mutex_t cdf_conc_list_lock;
 
 } cds_context_type, *p_cds_contextType;
 

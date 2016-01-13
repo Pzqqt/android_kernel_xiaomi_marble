@@ -556,6 +556,7 @@ void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
 void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
 		uint8_t session_id);
 CDF_STATUS cds_init_policy_mgr(void);
+CDF_STATUS cds_deinit_policy_mgr(void);
 CDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 				uint8_t *pcl_Channels, uint32_t *len);
 bool cds_allow_concurrency(enum cds_con_mode mode,
