@@ -3811,9 +3811,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	cdf_list_destroy(&hdd_ctx->hdd_roc_req_q);
 	cdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_mutex_destroy(
-				&hdd_ctx->hdd_conc_list_lock))) {
-		hdd_err("Failed to destroy hdd_conc_list_lock");
+	if (!CDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
+		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
 	}
 
@@ -5806,9 +5805,8 @@ err_nl_srv:
 #endif /* WLAN_KD_READY_NOTIFIER */
 	nl_srv_exit();
 
-	if (!CDF_IS_STATUS_SUCCESS
-			(cdf_mutex_destroy(&hdd_ctx->hdd_conc_list_lock))) {
-		hdd_err("Failed to destroy hdd_conc_list_lock");
+	if (!CDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
+		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
 	}
 

@@ -1631,9 +1631,8 @@ err_cds_close:
 		wiphy_unregister(pHddCtx->wiphy);
 		wiphy_free(pHddCtx->wiphy);
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_mutex_destroy(
-					&pHddCtx->hdd_conc_list_lock))) {
-			hdd_err("Failed to destroy hdd_conc_list_lock");
+		if (!CDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
+			hdd_err("Failed to deinit policy manager");
 			/* Proceed and complete the clean up */
 		}
 	}
