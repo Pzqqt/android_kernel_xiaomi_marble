@@ -473,34 +473,6 @@ static int ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	return ret;
 }
 
-int dump_ce_register(struct ol_softc *scn)
-{
-	uint32_t ce_reg_address = CE0_BASE_ADDRESS;
-	uint32_t ce_reg_values[8][CE_USEFUL_SIZE >> 2];
-	uint32_t ce_reg_word_size = CE_USEFUL_SIZE >> 2;
-	uint16_t i, j;
-
-	for (i = 0; i < 8; i++, ce_reg_address += CE_OFFSET) {
-		if (hif_diag_read_mem(scn, ce_reg_address,
-			(uint8_t *) &ce_reg_values[i][0], ce_reg_word_size *
-			sizeof(uint32_t)) != CDF_STATUS_SUCCESS) {
-			BMI_ERR("Dumping CE register failed!");
-			return -EACCES;
-		}
-	}
-
-	for (i = 0; i < 8; i++) {
-		BMI_ERR("CE%d Registers:", i);
-		for (j = 0; j < ce_reg_word_size; j++) {
-			BMI_ERR("0x%08x ", ce_reg_values[i][j]);
-			if (!((j + 1) % 5) || (ce_reg_word_size - 1) == j)
-				BMI_ERR(" ");
-		}
-	}
-
-	return 0;
-}
-
 #if  defined(CONFIG_CNSS)
 
 static struct ol_softc *ramdump_scn;
@@ -536,11 +508,10 @@ static void ramdump_work_handler(struct work_struct *ramdump)
 	if (ret)
 		goto out_fail;
 
-	ret = dump_ce_register(ramdump_scn);
+	ret = hif_dump_registers(ramdump_scn);
 	if (ret)
 		goto out_fail;
 
-	dump_ce_debug_register(ramdump_scn);
 #endif
 
 	if (hif_diag_read_mem(ramdump_scn,
@@ -1597,8 +1568,8 @@ static int ol_target_coredump(void *inst, void *memory_block,
 				section_count++;
 			} else {
 				BMI_ERR("Could not read dump section!");
-				dump_ce_register(scn);
-				dump_ce_debug_register(scn);
+				if (hif_dump_registers(scn))
+					BMI_ERR("Failed to dump bus registers");
 				ol_dump_target_memory(scn, memory_block);
 				ret = -EACCES;
 				break;  /* Could not read the section */

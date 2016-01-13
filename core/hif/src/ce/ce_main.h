@@ -35,6 +35,9 @@
 #define CE_HTT_T2H_MSG 1
 #define CE_HTT_H2T_MSG 4
 
+#define CE_OFFSET               0x00000400
+#define CE_USEFUL_SIZE          0x00000058
+
 /**
  * enum ce_id_type
  *
@@ -129,4 +132,5 @@ struct HIF_CE_state {
 	/* Copy Engine used for Diagnostic Accesses */
 	struct CE_handle *ce_diag;
 };
+int hif_dump_ce_registers(struct ol_softc *scn);
 #endif /* __CE_H__ */

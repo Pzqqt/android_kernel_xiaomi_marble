@@ -101,7 +101,7 @@ void hif_disable_isr(void *hif_ctx)
 }
 
 /**
- * dump_ce_debug_register(): dump CE debug registers
+ * hif_dump_snoc_registers(): dump CE debug registers
  *
  * This function dumps CE debug registers
  *
@@ -109,9 +109,30 @@ void hif_disable_isr(void *hif_ctx)
  *
  * Return: void
  */
-void dump_ce_debug_register(struct ol_softc *scn)
+static void hif_dump_snoc_registers(struct ol_softc *scn)
 {
 	return;
+}
+
+/**
+ * hif_dump_registers(): dump bus debug registers
+ *
+ * This function dumps hif bus debug registers
+ *
+ * @scn: struct ol_softc
+ *
+ * Return: 0 for success or error code
+ */
+int hif_dump_registers(struct ol_softc *scn)
+{
+	int status;
+
+	status = hif_dump_ce_registers(scn);
+	if (status)
+		return status;
+	hif_dump_snoc_registers(scn);
+
+	return 0;
 }
 
 /**

@@ -714,8 +714,7 @@ void hif_disable(void *hif_ctx, enum hif_disable_type type)
 
 
 /**
- * hif_crash_shutdown_dump_ce_register():
- * hif_crash_shutdown_dump_ce_register
+ * hif_crash_shutdown_dump_bus_register() - dump bus registers
  * @hif_ctx: hif_ctx
  *
  * Return: n/a
@@ -723,16 +722,15 @@ void hif_disable(void *hif_ctx, enum hif_disable_type type)
 #if defined(TARGET_RAMDUMP_AFTER_KERNEL_PANIC) \
 && defined(HIF_PCI) && defined(DEBUG)
 
-static void hif_crash_shutdown_dump_ce_register(void *hif_ctx)
+static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
 {
 	struct ol_softc *scn = hif_ctx;
 
-	if (hif_check_soc_status(scn)
-	    || dump_ce_register(scn)) {
+	if (hif_check_soc_status(scn))
 		return;
-	}
 
-	dump_ce_debug_register(scn);
+	if (hif_dump_registers(scn))
+		HIF_ERROR("Failed to dump bus registers!");
 }
 
 /**
@@ -768,7 +766,7 @@ void hif_crash_shutdown(void *hif_ctx)
 		return;
 	}
 
-	hif_crash_shutdown_dump_ce_register(hif_ctx);
+	hif_crash_shutdown_dump_bus_register(hif_ctx);
 
 	if (ol_copy_ramdump(scn))
 		goto out;

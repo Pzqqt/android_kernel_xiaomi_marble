@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -67,9 +67,6 @@
 
 #define AXI_LOCATION            0x000a0000
 #define AXI_SIZE                0x00018000
-
-#define CE_OFFSET               0x00000400
-#define CE_USEFUL_SIZE          0x00000058
 
 #define TOTAL_DUMP_SIZE         0x00200000
 #define PCIE_READ_LIMIT         0x00005000

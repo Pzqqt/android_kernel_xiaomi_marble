@@ -619,7 +619,6 @@ void hif_set_target_sleep(struct ol_softc *scn, bool sleep_ok,
 		     bool wait_for_it);
 int hif_check_fw_reg(struct ol_softc *scn);
 int hif_check_soc_status(struct ol_softc *scn);
-void dump_ce_debug_register(struct ol_softc *scn);
 void hif_get_hw_info(void *scn, u32 *version, u32 *revision,
 		     const char **target_name);
 void hif_set_fw_info(void *scn, u32 target_fw_version);
@@ -697,7 +696,7 @@ void hif_process_runtime_suspend_failure(void);
 void hif_process_runtime_resume_success(void);
 #endif
 
-int dump_ce_register(struct ol_softc *scn);
+int hif_dump_registers(struct ol_softc *scn);
 int ol_copy_ramdump(struct ol_softc *scn);
 void hif_pktlogmod_exit(void *hif_ctx);
 void hif_crash_shutdown(void *hif_ctx);

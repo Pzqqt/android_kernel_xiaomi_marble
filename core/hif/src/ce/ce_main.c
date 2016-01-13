@@ -2424,3 +2424,39 @@ static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
 	return;
 }
 #endif
+
+/**
+ * hif_dump_ce_registers() - dump ce registers
+ * @scn: ol_softc pointer.
+ *
+ * Output the copy engine registers
+ *
+ * Return: 0 for success or error code
+ */
+int hif_dump_ce_registers(struct ol_softc *scn)
+{
+	uint32_t ce_reg_address = CE0_BASE_ADDRESS;
+	uint32_t ce_reg_values[8][CE_USEFUL_SIZE >> 2];
+	uint32_t ce_reg_word_size = CE_USEFUL_SIZE >> 2;
+	uint16_t i, j;
+
+	for (i = 0; i < 8; i++, ce_reg_address += CE_OFFSET) {
+		if (hif_diag_read_mem(scn, ce_reg_address,
+			(uint8_t *) &ce_reg_values[i][0], ce_reg_word_size *
+			sizeof(uint32_t)) != CDF_STATUS_SUCCESS) {
+				HIF_ERROR("Dumping CE register failed!");
+				return -EACCES;
+		}
+	}
+
+	for (i = 0; i < 8; i++) {
+		HIF_ERROR("CE%d Registers:", i);
+		for (j = 0; j < ce_reg_word_size; j++) {
+			HIF_ERROR("0x%08x ", ce_reg_values[i][j]);
+			if (!((j + 1) % 5) || (ce_reg_word_size - 1) == j)
+				HIF_ERROR(" ");
+		}
+	}
+
+	return 0;
+}
