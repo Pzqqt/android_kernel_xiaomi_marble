@@ -607,7 +607,15 @@ int hif_check_soc_status(struct ol_softc *scn)
 	return 0;
 }
 
-void dump_ce_debug_register(struct ol_softc *scn)
+/**
+ * hif_dump_pci_registers(): dump PCI debug registers
+ * @scn: struct ol_softc
+ *
+ * This function dumps pci debug registers
+ *
+ * Return: void
+ */
+static void hif_dump_pci_registers(struct ol_softc *scn)
 {
 	struct hif_pci_softc *sc = scn->hif_sc;
 	void __iomem *mem = sc->mem;
@@ -730,6 +738,28 @@ void dump_ce_debug_register(struct ol_softc *scn)
 	}
 
 	A_TARGET_ACCESS_END(scn);
+}
+
+/**
+ * hif_dump_registers(): dump bus debug registers
+ * @scn: struct ol_softc
+ *
+ * This function dumps hif bus debug registers
+ *
+ * Return: 0 for success or error code
+ */
+int hif_dump_registers(struct ol_softc *scn)
+{
+	int status;
+
+	status = hif_dump_ce_registers(scn);
+
+	if (status)
+		HIF_ERROR("%s: Dump CE Registers Failed", __func__);
+
+	hif_dump_pci_registers(scn);
+
+	return 0;
 }
 
 /*
