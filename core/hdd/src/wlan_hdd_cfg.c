@@ -5543,10 +5543,11 @@ static void hdd_set_fine_time_meas_cap(hdd_context_t *hdd_ctx,
 
 	/* Make sure only supported capabilities are enabled in INI */
 	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
-	sme_config->fine_time_meas_cap = capability;
+	sme_config->csrConfig.fine_time_meas_cap = capability;
 
 	hddLog(LOG1, FL("fine time meas capability - INI: %04x Enabled: %04x"),
-		config->fine_time_meas_cap, sme_config->fine_time_meas_cap);
+		config->fine_time_meas_cap,
+		sme_config->csrConfig.fine_time_meas_cap);
 
 	return;
 }
@@ -6369,14 +6370,15 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 void hdd_set_pno_channel_prediction_config(
 		tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx)
 {
-	sme_config->dual_mac_feature_disable =
+	sme_config->csrConfig.dual_mac_feature_disable =
 		hdd_ctx->config->dual_mac_feature_disable;
-	sme_config->pno_channel_prediction =
+	sme_config->csrConfig.pno_channel_prediction =
 		hdd_ctx->config->pno_channel_prediction;
-	sme_config->top_k_num_of_channels =
+	sme_config->csrConfig.top_k_num_of_channels =
 		hdd_ctx->config->top_k_num_of_channels;
-	sme_config->stationary_thresh = hdd_ctx->config->stationary_thresh;
-	sme_config->channel_prediction_full_scan =
+	sme_config->csrConfig.stationary_thresh =
+		hdd_ctx->config->stationary_thresh;
+	sme_config->csrConfig.channel_prediction_full_scan =
 		hdd_ctx->config->channel_prediction_full_scan;
 }
 #endif
@@ -6635,17 +6637,18 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* Update PNO offoad status */
-	smeConfig->pnoOffload = pHddCtx->config->PnoOffload;
+	smeConfig->csrConfig.pnoOffload = pHddCtx->config->PnoOffload;
 #endif
 
 	/* Update maximum interfaces information */
-	smeConfig->max_intf_count = pHddCtx->max_intf_count;
+	smeConfig->csrConfig.max_intf_count = pHddCtx->max_intf_count;
 
-	smeConfig->fEnableDebugLog = pHddCtx->config->gEnableDebugLog;
+	smeConfig->csrConfig.fEnableDebugLog = pHddCtx->config->gEnableDebugLog;
 
-	smeConfig->enable5gEBT = pHddCtx->config->enable5gEBT;
+	smeConfig->csrConfig.enable5gEBT = pHddCtx->config->enable5gEBT;
 
-	smeConfig->enableSelfRecovery = pHddCtx->config->enableSelfRecovery;
+	smeConfig->csrConfig.enableSelfRecovery =
+			pHddCtx->config->enableSelfRecovery;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	smeConfig->csrConfig.isRoamOffloadEnabled =
 		pHddCtx->config->isRoamOffloadEnabled;
@@ -6657,25 +6660,25 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.is_sta_connection_in_5gz_enabled =
 		pHddCtx->config->is_sta_connection_in_5gz_enabled;
 
-	smeConfig->f_sta_miracast_mcc_rest_time_val =
+	smeConfig->csrConfig.f_sta_miracast_mcc_rest_time_val =
 		pHddCtx->config->sta_miracast_mcc_rest_time_val;
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	smeConfig->sap_channel_avoidance =
+	smeConfig->csrConfig.sap_channel_avoidance =
 		pHddCtx->config->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-	smeConfig->f_prefer_non_dfs_on_radar =
+	smeConfig->csrConfig.f_prefer_non_dfs_on_radar =
 		pHddCtx->config->prefer_non_dfs_on_radar;
 
-	smeConfig->is_ps_enabled = pHddCtx->config->is_ps_enabled;
+	smeConfig->csrConfig.is_ps_enabled = pHddCtx->config->is_ps_enabled;
 	hdd_set_fine_time_meas_cap(pHddCtx, smeConfig);
 
 	cds_set_multicast_logging(pHddCtx->config->multicast_host_fw_msgs);
 
 	smeConfig->csrConfig.sendDeauthBeforeCon = pConfig->sendDeauthBeforeCon;
 
-	smeConfig->policy_manager_enabled =
+	smeConfig->csrConfig.policy_manager_enabled =
 			pHddCtx->config->policy_manager_enabled;
 	smeConfig->csrConfig.max_scan_count =
 			pHddCtx->config->max_scan_count;
@@ -6685,11 +6688,11 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		(pHddCtx->config->dot11p_mode != WLAN_HDD_11P_DISABLED);
 	hdd_set_pno_channel_prediction_config(smeConfig, pHddCtx);
 
-	smeConfig->early_stop_scan_enable =
+	smeConfig->csrConfig.early_stop_scan_enable =
 		pHddCtx->config->early_stop_scan_enable;
-	smeConfig->early_stop_scan_min_threshold =
+	smeConfig->csrConfig.early_stop_scan_min_threshold =
 		pHddCtx->config->early_stop_scan_min_threshold;
-	smeConfig->early_stop_scan_max_threshold =
+	smeConfig->csrConfig.early_stop_scan_max_threshold =
 		pHddCtx->config->early_stop_scan_max_threshold;
 	smeConfig->csrConfig.first_scan_bucket_threshold =
 		pHddCtx->config->first_scan_bucket_threshold;

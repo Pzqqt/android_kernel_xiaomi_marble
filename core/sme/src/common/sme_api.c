@@ -1384,47 +1384,6 @@ CDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "Could not pass on WNI_CFG_SCAN_IN_POWERSAVE to CFG");
 	}
-	pMac->isCoalesingInIBSSAllowed =
-		pSmeConfigParams->csrConfig.isCoalesingInIBSSAllowed;
-
-	/* update p2p offload status */
-	pMac->pnoOffload = pSmeConfigParams->pnoOffload;
-
-	pMac->fEnableDebugLog = pSmeConfigParams->fEnableDebugLog;
-
-	/* update interface configuration */
-	pMac->sme.max_intf_count = pSmeConfigParams->max_intf_count;
-
-	pMac->enable5gEBT = pSmeConfigParams->enable5gEBT;
-	pMac->sme.enableSelfRecovery = pSmeConfigParams->enableSelfRecovery;
-
-	pMac->f_sta_miracast_mcc_rest_time_val =
-		pSmeConfigParams->f_sta_miracast_mcc_rest_time_val;
-
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	pMac->sap.sap_channel_avoidance =
-		pSmeConfigParams->sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
-	pMac->f_prefer_non_dfs_on_radar =
-		pSmeConfigParams->f_prefer_non_dfs_on_radar;
-
-	pMac->sme.ps_global_info.ps_enabled =
-		pSmeConfigParams->is_ps_enabled;
-
-	pMac->policy_manager_enabled = pSmeConfigParams->policy_manager_enabled;
-	pMac->fine_time_meas_cap = pSmeConfigParams->fine_time_meas_cap;
-	pMac->dual_mac_feature_disable =
-				pSmeConfigParams->dual_mac_feature_disable;
-	sme_update_roam_pno_channel_prediction_config(pMac, pSmeConfigParams,
-			SME_CONFIG_TO_ROAM_CONFIG);
-	pMac->roam.configParam.early_stop_scan_enable =
-		pSmeConfigParams->early_stop_scan_enable;
-	pMac->roam.configParam.early_stop_scan_min_threshold =
-		pSmeConfigParams->early_stop_scan_min_threshold;
-	pMac->roam.configParam.early_stop_scan_max_threshold =
-		pSmeConfigParams->early_stop_scan_max_threshold;
-
 	return status;
 }
 
@@ -4252,35 +4211,9 @@ CDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 			sme_release_global_lock(&pMac->sme);
 			return status;
 		}
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-		pParam->sap_channel_avoidance = pMac->sap.sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-		pParam->max_intf_count = pMac->sme.max_intf_count;
-		pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
-		pParam->pnoOffload = pMac->pnoOffload;
-		pParam->f_prefer_non_dfs_on_radar =
-						pMac->f_prefer_non_dfs_on_radar;
-		pParam->policy_manager_enabled = pMac->policy_manager_enabled;
-		pParam->fine_time_meas_cap = pMac->fine_time_meas_cap;
-		pParam->dual_mac_feature_disable =
-						pMac->dual_mac_feature_disable;
-		pParam->is_ps_enabled = pMac->sme.ps_global_info.ps_enabled;
-		pParam->pnoOffload = pMac->pnoOffload;
-		pParam->fEnableDebugLog = pMac->fEnableDebugLog;
-		pParam->enable5gEBT = pMac->enable5gEBT;
-		pParam->f_sta_miracast_mcc_rest_time_val =
-			pMac->f_sta_miracast_mcc_rest_time_val;
-		sme_update_roam_pno_channel_prediction_config(pMac, pParam,
-				ROAM_CONFIG_TO_SME_CONFIG);
-		pParam->early_stop_scan_enable =
-			pMac->roam.configParam.early_stop_scan_enable;
-		pParam->early_stop_scan_min_threshold =
-			pMac->roam.configParam.early_stop_scan_min_threshold;
-		pParam->early_stop_scan_max_threshold =
-			pMac->roam.configParam.early_stop_scan_max_threshold;
 		cdf_mem_copy(&pParam->rrmConfig,
-			     &pMac->rrm.rrmSmeContext.rrmConfig,
-			     sizeof(pMac->rrm.rrmSmeContext.rrmConfig));
+				&pMac->rrm.rrmSmeContext.rrmConfig,
+				sizeof(pMac->rrm.rrmSmeContext.rrmConfig));
 		sme_release_global_lock(&pMac->sme);
 	}
 
@@ -6849,7 +6782,7 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * sme_update_roam_pno_channel_prediction_config() - Update PNO config
- * @sme_config:      config from SME context
+ * @csr_config:      config from SME context
  * @hal:             Global Hal handle
  * @copy_from_to:    Used to specify the source and destination
  *
@@ -6859,27 +6792,27 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
  * Return: None
  */
 void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tpSmeConfigParams sme_config,
+		tHalHandle hal, tCsrConfigParam *csr_config,
 		uint8_t copy_from_to)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	if (copy_from_to == SME_CONFIG_TO_ROAM_CONFIG) {
 		mac_ctx->roam.configParam.pno_channel_prediction =
-			sme_config->pno_channel_prediction;
+			csr_config->pno_channel_prediction;
 		mac_ctx->roam.configParam.top_k_num_of_channels =
-			sme_config->top_k_num_of_channels;
+			csr_config->top_k_num_of_channels;
 		mac_ctx->roam.configParam.stationary_thresh =
-			sme_config->stationary_thresh;
+			csr_config->stationary_thresh;
 		mac_ctx->roam.configParam.channel_prediction_full_scan =
-			sme_config->channel_prediction_full_scan;
+			csr_config->channel_prediction_full_scan;
 	} else if (copy_from_to == ROAM_CONFIG_TO_SME_CONFIG) {
-		sme_config->pno_channel_prediction =
+		csr_config->pno_channel_prediction =
 			mac_ctx->roam.configParam.pno_channel_prediction;
-		sme_config->top_k_num_of_channels =
+		csr_config->top_k_num_of_channels =
 			mac_ctx->roam.configParam.top_k_num_of_channels;
-		sme_config->stationary_thresh =
+		csr_config->stationary_thresh =
 			mac_ctx->roam.configParam.stationary_thresh;
-		sme_config->channel_prediction_full_scan =
+		csr_config->channel_prediction_full_scan =
 			mac_ctx->roam.configParam.channel_prediction_full_scan;
 	}
 

@@ -2079,7 +2079,45 @@ CDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->early_stop_scan_min_threshold;
 		pMac->roam.configParam.early_stop_scan_max_threshold =
 			pParam->early_stop_scan_max_threshold;
+		pMac->isCoalesingInIBSSAllowed =
+			pParam->isCoalesingInIBSSAllowed;
 
+		/* update p2p offload status */
+		pMac->pnoOffload = pParam->pnoOffload;
+
+		pMac->fEnableDebugLog = pParam->fEnableDebugLog;
+
+		/* update interface configuration */
+		pMac->sme.max_intf_count = pParam->max_intf_count;
+
+		pMac->enable5gEBT = pParam->enable5gEBT;
+		pMac->sme.enableSelfRecovery = pParam->enableSelfRecovery;
+
+		pMac->f_sta_miracast_mcc_rest_time_val =
+			pParam->f_sta_miracast_mcc_rest_time_val;
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+		pMac->sap.sap_channel_avoidance =
+			pParam->sap_channel_avoidance;
+#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+
+		pMac->f_prefer_non_dfs_on_radar =
+			pParam->f_prefer_non_dfs_on_radar;
+
+		pMac->sme.ps_global_info.ps_enabled =
+			pParam->is_ps_enabled;
+
+		pMac->policy_manager_enabled = pParam->policy_manager_enabled;
+		pMac->fine_time_meas_cap = pParam->fine_time_meas_cap;
+		pMac->dual_mac_feature_disable =
+			pParam->dual_mac_feature_disable;
+		sme_update_roam_pno_channel_prediction_config(pMac, pParam,
+				SME_CONFIG_TO_ROAM_CONFIG);
+		pMac->roam.configParam.early_stop_scan_enable =
+			pParam->early_stop_scan_enable;
+		pMac->roam.configParam.early_stop_scan_min_threshold =
+			pParam->early_stop_scan_min_threshold;
+		pMac->roam.configParam.early_stop_scan_max_threshold =
+			pParam->early_stop_scan_max_threshold;
 	}
 
 	return status;
@@ -2222,6 +2260,31 @@ CDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->max_scan_count = pMac->scan.max_scan_count;
 	pParam->first_scan_bucket_threshold =
 		pMac->first_scan_bucket_threshold;
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+	pParam->sap_channel_avoidance = pMac->sap.sap_channel_avoidance;
+#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+	pParam->max_intf_count = pMac->sme.max_intf_count;
+	pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
+	pParam->pnoOffload = pMac->pnoOffload;
+	pParam->f_prefer_non_dfs_on_radar =
+		pMac->f_prefer_non_dfs_on_radar;
+	pParam->policy_manager_enabled = pMac->policy_manager_enabled;
+	pParam->fine_time_meas_cap = pMac->fine_time_meas_cap;
+	pParam->dual_mac_feature_disable =
+		pMac->dual_mac_feature_disable;
+	pParam->is_ps_enabled = pMac->sme.ps_global_info.ps_enabled;
+	pParam->fEnableDebugLog = pMac->fEnableDebugLog;
+	pParam->enable5gEBT = pMac->enable5gEBT;
+	pParam->f_sta_miracast_mcc_rest_time_val =
+		pMac->f_sta_miracast_mcc_rest_time_val;
+	sme_update_roam_pno_channel_prediction_config(pMac, pParam,
+			ROAM_CONFIG_TO_SME_CONFIG);
+	pParam->early_stop_scan_enable =
+		pMac->roam.configParam.early_stop_scan_enable;
+	pParam->early_stop_scan_min_threshold =
+		pMac->roam.configParam.early_stop_scan_min_threshold;
+	pParam->early_stop_scan_max_threshold =
+		pMac->roam.configParam.early_stop_scan_max_threshold;
 	return CDF_STATUS_SUCCESS;
 }
 
