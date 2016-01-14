@@ -1282,6 +1282,11 @@ ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 CDEFINES += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
 endif
 
+# Enable 11AC TX compact feature for adrastea
+ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
+CDEFINES += -DATH_11AC_TXCOMPACT
+endif
+
 # NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
 ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CONFIG_HELIUMPLUS := y
