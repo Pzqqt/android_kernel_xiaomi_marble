@@ -93,39 +93,6 @@ typedef struct _smeConfigParams {
 #if defined WLAN_FEATURE_VOWIFI
 	struct rrm_config_param rrmConfig;
 #endif
-	uint8_t isFastRoamIniFeatureEnabled;
-	uint8_t MAWCEnabled;
-#if defined FEATURE_WLAN_ESE
-	uint8_t isEseIniFeatureEnabled;
-#endif
-	uint8_t isFastTransitionEnabled;
-	uint8_t RoamRssiDiff;
-	bool isWESModeEnabled;
-	uint8_t isAmsduSupportInAMPDU;
-	bool pnoOffload;
-	uint8_t fEnableDebugLog;
-	uint8_t max_intf_count;
-	bool enable5gEBT;
-	bool enableSelfRecovery;
-	uint32_t f_sta_miracast_mcc_rest_time_val;
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	bool sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	uint8_t f_prefer_non_dfs_on_radar;
-	bool is_ps_enabled;
-	bool policy_manager_enabled;
-	uint32_t fine_time_meas_cap;
-	uint32_t dual_mac_feature_disable;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	bool pno_channel_prediction;
-	uint8_t top_k_num_of_channels;
-	uint8_t stationary_thresh;
-	uint32_t channel_prediction_full_scan;
-#endif
-	bool early_stop_scan_enable;
-	int8_t early_stop_scan_min_threshold;
-	int8_t early_stop_scan_max_threshold;
-	int8_t first_scan_bucket_threshold;
 } tSmeConfigParams, *tpSmeConfigParams;
 
 #ifdef FEATURE_WLAN_TDLS
@@ -242,11 +209,11 @@ CDF_STATUS sme_update_roam_params(tHalHandle hHal, uint8_t session_id,
 		struct roam_ext_params roam_params_src, int update_param);
 #ifdef FEATURE_WLAN_SCAN_PNO
 void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tpSmeConfigParams sme_config,
+		tHalHandle hal, tCsrConfigParam * csr_config,
 		uint8_t copy_from_to);
 #else
 static inline void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tpSmeConfigParams sme_config,
+		tHalHandle hal, tCsrConfigParam *csr_config,
 		uint8_t copy_from_to)
 {}
 #endif
