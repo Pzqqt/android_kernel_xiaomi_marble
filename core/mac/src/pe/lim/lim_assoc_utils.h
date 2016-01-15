@@ -45,7 +45,7 @@
 
 #include "lim_types.h"
 
-uint8_t lim_cmp_s_sid(tpAniSirGlobal, tSirMacSSid *, tpPESession);
+bool lim_cmp_ssid(tSirMacSSid *, tpPESession);
 uint8_t lim_compare_capabilities(tpAniSirGlobal,
 				 tSirAssocReq *,
 				 tSirMacCapabilityInfo *, tpPESession);
