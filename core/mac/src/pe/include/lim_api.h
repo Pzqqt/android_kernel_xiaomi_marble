@@ -81,8 +81,6 @@
 #define GET_LIM_PROCESS_DEFD_MESGS(pMac) (pMac->lim.gLimProcessDefdMsgs)
 #define SET_LIM_PROCESS_DEFD_MESGS(pMac, val) (pMac->lim.gLimProcessDefdMsgs = val)
 /* LIM exported function templates */
-#define LIM_IS_RADAR_DETECTED(pMac)         (pMac->lim.gLimSpecMgmt.fRadarDetCurOperChan)
-#define LIM_SET_RADAR_DETECTED(pMac, val)   (pMac->lim.gLimSpecMgmt.fRadarDetCurOperChan = val)
 #define LIM_MIN_BCN_PR_LENGTH  12
 #define LIM_BCN_PR_CAPABILITY_OFFSET 10
 typedef enum eMgmtFrmDropReason {

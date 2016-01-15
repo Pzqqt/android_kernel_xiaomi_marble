@@ -4449,7 +4449,7 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 			 * in the bssid.
 			 */
 			cdf_mem_copy(PMKIDCache[i].BSSID.bytes,
-				     bssid, ETHER_ADDR_LEN);
+				     bssid, CDF_MAC_ADDR_SIZE);
 			cdf_mem_copy(PMKIDCache[i].PMKID,
 				     dot11RSNIE.pmkid[i], CSR_RSN_PMKID_SIZE);
 		}
