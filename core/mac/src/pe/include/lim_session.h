@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,7 +65,8 @@ typedef struct tagComebackTimerInfo {
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
    ------------------------------------------------------------------------*/
-#define NUM_WEP_KEYS 4
+/* Maximum Number of WEP KEYS */
+#define MAX_WEP_KEYS 4
 
 /* Maximum allowable size of a beacon frame */
 #define SCH_MAX_BEACON_SIZE    512
@@ -251,7 +252,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 
 	uint8_t privacy;
 	tAniAuthType authType;
-	tSirKeyMaterial WEPKeyMaterial[NUM_WEP_KEYS];
+	tSirKeyMaterial WEPKeyMaterial[MAX_WEP_KEYS];
 
 	tDot11fIERSN gStartBssRSNIe;
 	tDot11fIEWPA gStartBssWPAIe;

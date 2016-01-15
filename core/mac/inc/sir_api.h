@@ -49,7 +49,7 @@
 #define SIR_MAX_SUPPORTED_CHANNEL_LIST      96
 
 #define SIR_MDIE_ELEMENT_ID         54
-#define SIR_MDIE_SIZE               3
+#define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */
 
 /* Increase dwell time for P2P search in ms */
 #define P2P_SEARCH_DWELL_TIME_INCREASE   20

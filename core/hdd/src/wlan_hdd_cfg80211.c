@@ -9871,7 +9871,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						mac,
 						pAdapter->aStaInfo[i].
 							macAddrSTA.bytes,
-						ETHER_ADDR_LEN);
+						CDF_MAC_ADDR_SIZE);
 					if (hdd_ipa_uc_is_enabled(pHddCtx)) {
 						hdd_ipa_wlan_evt(pAdapter,
 							pAdapter->
@@ -10161,7 +10161,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 
 	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
-	cdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, ETHER_ADDR_LEN);
+	cdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, CDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(pmk_id.PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
 
 	/* Add to the PMKSA ID Cache in CSR */

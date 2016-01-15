@@ -698,9 +698,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 } /*** end lim_send_sme_start_bss_rsp() ***/
 
-#define LIM_MAX_NUM_OF_SCAN_RESULTS_REPORTED  20
-#define LIM_SIZE_OF_EACH_BSS  400       /* this is a rough estimate */
-
 /**
  * lim_send_sme_scan_rsp() - Send scan response to SME
  * @pMac:         Pointer to Global MAC structure
