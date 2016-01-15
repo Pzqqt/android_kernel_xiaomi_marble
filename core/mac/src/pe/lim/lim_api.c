@@ -1417,7 +1417,7 @@ lim_handle_ibss_coalescing(tpAniSirGlobal pMac,
 	   4. Encyption type in the beacon does not match with self station
 	 */
 	if ((!pBeacon->capabilityInfo.ibss) ||
-	    (lim_cmp_s_sid(pMac, &pBeacon->ssId, psessionEntry) != true) ||
+	    (lim_cmp_ssid(&pBeacon->ssId, psessionEntry) != true) ||
 	    (psessionEntry->currentOperChannel != pBeacon->channelNumber))
 		retCode = eSIR_LIM_IGNORE_BEACON;
 	else if (lim_ibss_enc_type_matched(pBeacon, psessionEntry) != eSIR_TRUE) {
@@ -1553,7 +1553,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 						     psessionEntry);
 	if ((false == psessionEntry->limSentCapsChangeNtf) &&
 	    (((!lim_is_null_ssid(&pBeacon->ssId)) &&
-	       (false == lim_cmp_s_sid(pMac, &pBeacon->ssId, psessionEntry))) ||
+	       (false == lim_cmp_ssid(&pBeacon->ssId, psessionEntry))) ||
 	     ((SIR_MAC_GET_ESS(apNewCaps.capabilityInfo) !=
 	       SIR_MAC_GET_ESS(psessionEntry->limCurrentBssCaps)) ||
 	      (SIR_MAC_GET_PRIVACY(apNewCaps.capabilityInfo) !=

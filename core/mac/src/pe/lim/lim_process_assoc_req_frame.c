@@ -418,7 +418,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	updateContext = false;
 
-	if (lim_cmp_s_sid(pMac, &pAssocReq->ssId, psessionEntry) == false) {
+	if (lim_cmp_ssid(&pAssocReq->ssId, psessionEntry) == false) {
 		lim_log(pMac, LOGE,
 			FL("Received %s Req with unmatched ssid ( Received"
 			   " SSID: %.*s current SSID: %.*s ) from "

@@ -85,38 +85,20 @@ lim_fill_supported_rates_info(tpAniSirGlobal pMac,
 }
 
 /**
- * lim_cmp_s_sid()
+ * lim_cmp_ssid() - utility function to compare SSIDs
+ * @rx_ssid: Received SSID
+ * @session_entry: Session entry
  *
- ***FUNCTION:
  * This function is called in various places within LIM code
- * to determine whether received SSid is same as SSID in use.
+ * to determine whether received SSID is same as SSID in use.
  *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  *prxSSid - pointer to SSID structure
- *
- * @return status - true for SSID match else false.
+ * Return: true if SSID matched, false otherwise.
  */
-
-uint8_t
-lim_cmp_s_sid(tpAniSirGlobal pMac, tSirMacSSid *prxSSid,
-	      tpPESession psessionEntry)
+bool lim_cmp_ssid(tSirMacSSid *rx_ssid, tpPESession session_entry)
 {
-
-	if (cdf_mem_compare
-		    ((uint8_t *) prxSSid, (uint8_t *) &psessionEntry->ssId,
-		    (uint8_t) (psessionEntry->ssId.length + 1)))
-		return true;
-	else
-		return false;
-
-} /****** end lim_cmp_s_sid() ******/
+	return cdf_mem_compare(rx_ssid, &session_entry->ssId,
+				session_entry->ssId.length);
+}
 
 /**
  * lim_compare_capabilities()
