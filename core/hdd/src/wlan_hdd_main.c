@@ -3578,6 +3578,54 @@ int hdd_enable_ftm(hdd_context_t *hdd_ctx)
 static inline void hdd_disable_ftm(hdd_context_t *hdd_ctx) { }
 #endif
 
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+/**
+ * wlan_hdd_logging_sock_activate_svc() - Activate logging
+ * @hdd_ctx: HDD context
+ *
+ * Activates the logging service
+ *
+ * Return: Zero in case of success, negative value otherwise
+ */
+static int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
+{
+	if (hdd_ctx->config->wlanLoggingEnable) {
+		if (wlan_logging_sock_activate_svc(
+				hdd_ctx->config->wlanLoggingFEToConsole,
+				hdd_ctx->config->wlanLoggingNumBuf)) {
+			hdd_err("wlan_logging_sock_activate_svc failed");
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
+/**
+ * wlan_hdd_logging_sock_deactivate_svc() - Deactivate logging
+ * @hdd_ctx: HDD context
+ *
+ * Deactivates the logging service
+ *
+ * Return: 0 on deactivating the logging service
+ */
+static int wlan_hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
+{
+	if (hdd_ctx && hdd_ctx->config->wlanLoggingEnable)
+		return wlan_logging_sock_deactivate_svc();
+
+	return 0;
+}
+#else
+static inline int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+
+static inline int wlan_hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_wlan_exit() - HDD WLAN exit function
  * @hdd_ctx:	Pointer to the HDD Context
@@ -3591,7 +3639,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	v_CONTEXT_t p_cds_context = hdd_ctx->pcds_context;
 	CDF_STATUS cdf_status;
 	struct wiphy *wiphy = hdd_ctx->wiphy;
-	struct hdd_config *pConfig = hdd_ctx->config;
 
 	ENTER();
 
@@ -3718,11 +3765,9 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_wlan_green_ap_deinit(hdd_ctx);
 
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-	if (pConfig && pConfig->wlanLoggingEnable) {
-		wlan_logging_sock_deactivate_svc();
-	}
-#endif
+	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+		wlan_hdd_logging_sock_deactivate_svc(hdd_ctx);
+
 #ifdef WLAN_KD_READY_NOTIFIER
 	cnss_diag_notify_wlan_close();
 	ptt_sock_deactivate_svc();
@@ -4921,34 +4966,6 @@ static CDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
 	return CDF_STATUS_SUCCESS;
 }
 
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-/**
- * wlan_hdd_logging_sock_activate_svc() - Activate logging
- * @hdd_ctx: HDD context
- *
- * Activates the logging service
- *
- * Return: Zero in case of success, negative value otherwise
- */
-static int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
-{
-	if (hdd_ctx->config->wlanLoggingEnable) {
-		if (wlan_logging_sock_activate_svc(
-				hdd_ctx->config->wlanLoggingFEToConsole,
-				hdd_ctx->config->wlanLoggingNumBuf)) {
-			hdd_err("wlan_logging_sock_activate_svc failed");
-			return -EINVAL;
-		}
-	}
-	return 0;
-}
-#else
-static inline int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
-{
-	return 0;
-}
-#endif
-
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -5110,16 +5127,21 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		hdd_ctx->fw_log_settings.dl_mod_loglevel[i] = 0;
 	}
 
-	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
+	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam()) {
+		cds_set_multicast_logging(
+				hdd_ctx->config->multicast_host_fw_msgs);
 
-	if (wlan_hdd_logging_sock_activate_svc(hdd_ctx) < 0)
-		goto err_config;
+		if (wlan_hdd_logging_sock_activate_svc(hdd_ctx) < 0)
+			goto err_config;
 
-	/*
-	 * Update CDF trace levels based upon the code
-	 */
-	if (cds_is_multicast_logging())
-		wlan_logging_set_log_level();
+		/*
+		 * Update CDF trace levels based upon the code. The multicast
+		 * levels of the code need not be set when the logger thread
+		 * is not enabled.
+		 */
+		if (cds_is_multicast_logging())
+			wlan_logging_set_log_level();
+	}
 
 	/*
 	 * Update CDF trace levels based upon the cfg.ini
@@ -5733,6 +5755,9 @@ err_cds_close:
 		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(status));
 	}
 	cds_close(p_cds_context);
+
+	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+		wlan_hdd_logging_sock_deactivate_svc(hdd_ctx);
 
 err_config:
 	kfree(hdd_ctx->config);
