@@ -4921,6 +4921,34 @@ static CDF_STATUS wlan_hdd_disable_all_dual_mac_features(hdd_context_t *hdd_ctx)
 	return CDF_STATUS_SUCCESS;
 }
 
+#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
+/**
+ * wlan_hdd_logging_sock_activate_svc() - Activate logging
+ * @hdd_ctx: HDD context
+ *
+ * Activates the logging service
+ *
+ * Return: Zero in case of success, negative value otherwise
+ */
+static int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
+{
+	if (hdd_ctx->config->wlanLoggingEnable) {
+		if (wlan_logging_sock_activate_svc(
+				hdd_ctx->config->wlanLoggingFEToConsole,
+				hdd_ctx->config->wlanLoggingNumBuf)) {
+			hdd_err("wlan_logging_sock_activate_svc failed");
+			return -EINVAL;
+		}
+	}
+	return 0;
+}
+#else
+static inline int wlan_hdd_logging_sock_activate_svc(hdd_context_t *hdd_ctx)
+{
+	return 0;
+}
+#endif
+
 /**
  * hdd_wlan_startup() - HDD init function
  * @dev:	Pointer to the underlying device
@@ -5082,10 +5110,15 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		hdd_ctx->fw_log_settings.dl_mod_loglevel[i] = 0;
 	}
 
+	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
+
+	if (wlan_hdd_logging_sock_activate_svc(hdd_ctx) < 0)
+		goto err_config;
+
 	/*
 	 * Update CDF trace levels based upon the code
 	 */
-	if (hdd_ctx->config->multicast_host_fw_msgs)
+	if (cds_is_multicast_logging())
 		wlan_logging_set_log_level();
 
 	/*
@@ -5469,17 +5502,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		       FL("cnss_diag_activate_service failed"));
 		goto err_nl_srv;
 	}
-#ifdef WLAN_LOGGING_SOCK_SVC_ENABLE
-	if (hdd_ctx->config->wlanLoggingEnable) {
-		if (wlan_logging_sock_activate_svc
-			    (hdd_ctx->config->wlanLoggingFEToConsole,
-			    hdd_ctx->config->wlanLoggingNumBuf)) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
-			       FL("wlan_logging_sock_activate_svc failed"));
-			goto err_nl_srv;
-		}
-	}
-#endif
 
 	/*
 	 * Action frame registered in one adapter which will
