@@ -5081,7 +5081,16 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	for (i = 0; i < MAX_MOD_LOGLEVEL; i++) {
 		hdd_ctx->fw_log_settings.dl_mod_loglevel[i] = 0;
 	}
-	/* Update CDF trace levels based upon the cfg.ini */
+
+	/*
+	 * Update CDF trace levels based upon the code
+	 */
+	if (hdd_ctx->config->multicast_host_fw_msgs)
+		wlan_logging_set_log_level();
+
+	/*
+	 * Update CDF trace levels based upon the cfg.ini
+	 */
 	hdd_cdf_trace_enable(CDF_MODULE_ID_WMI,
 			     hdd_ctx->config->cdf_trace_enable_wdi);
 	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD,
@@ -5471,8 +5480,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		}
 	}
 #endif
-	if (cds_is_multicast_logging())
-		wlan_logging_set_log_level();
 
 	/*
 	 * Action frame registered in one adapter which will
