@@ -16900,24 +16900,29 @@ static void check_allowed_ssid_list(tSirRoamOffloadScanReq *req_buffer,
  *||==========================================================================||
  *|| New cmd        |            LAST SENT COMMAND --->                       ||
  *||====|=====================================================================||
- *||    V           |  RSO_START  |  RSO_STOP  |  RSO_RESTART | RSO_UPDATE_CFG||
+ *||    V           | START | STOP | RESTART | UPDATE_CFG| ABORT_SCAN         ||
  *|| -------------------------------------------------------------------------||
- *|| RSO_START      |     NO      |   YES      |     NO       |      NO       ||
- *|| RSO_STOP       |    YES      |   YES      |     YES      |      YES      ||
- *|| RSO_RESTART    |    YES      |   NO       |     NO       |      YES      ||
- *|| RSO_UPDATE_CFG |    YES      |   NO       |     YES      |      YES      ||
+ *|| RSO_START      | NO    | YES  |  NO     | NO        | NO                 ||
+ *|| RSO_STOP       | YES   | YES  |  YES    | YES       | YES                ||
+ *|| RSO_RESTART    | YES   | YES  |  NO     | YES       | YES                ||
+ *|| RSO_UPDATE_CFG | YES   | NO   |  YES    | YES       | YES                ||
+ *|| RSO_ABORT_SCAN | YES   | NO   |  YES    | YES       | YES                ||
  *||==========================================================================||
  **/
 #define RSO_START_BIT       (1<<ROAM_SCAN_OFFLOAD_START)
 #define RSO_STOP_BIT        (1<<ROAM_SCAN_OFFLOAD_STOP)
 #define RSO_RESTART_BIT     (1<<ROAM_SCAN_OFFLOAD_RESTART)
 #define RSO_UPDATE_CFG_BIT  (1<<ROAM_SCAN_OFFLOAD_UPDATE_CFG)
+#define RSO_ABORT_SCAN_BIT  (1<<ROAM_SCAN_OFFLOAD_ABORT_SCAN)
 #define RSO_START_ALLOW_MASK   (RSO_STOP_BIT)
 #define RSO_STOP_ALLOW_MASK    (RSO_UPDATE_CFG_BIT | RSO_RESTART_BIT | \
-		RSO_STOP_BIT | RSO_START_BIT)
-#define RSO_RESTART_ALLOW_MASK (RSO_UPDATE_CFG_BIT | RSO_START_BIT)
+		RSO_STOP_BIT | RSO_START_BIT | RSO_ABORT_SCAN_BIT)
+#define RSO_RESTART_ALLOW_MASK (RSO_UPDATE_CFG_BIT | RSO_START_BIT | \
+		RSO_ABORT_SCAN_BIT | RSO_RESTART_BIT)
 #define RSO_UPDATE_CFG_ALLOW_MASK  (RSO_UPDATE_CFG_BIT | RSO_STOP_BIT | \
-		RSO_START_BIT)
+		RSO_START_BIT | RSO_ABORT_SCAN_BIT)
+#define RSO_ABORT_SCAN_ALLOW_MASK (RSO_START_BIT | RSO_RESTART_BIT | \
+		RSO_UPDATE_CFG_BIT | RSO_ABORT_SCAN_BIT)
 
 bool csr_is_RSO_cmd_allowed(tpAniSirGlobal mac_ctx, uint8_t command,
 		uint8_t session_id)
@@ -16939,6 +16944,9 @@ bool csr_is_RSO_cmd_allowed(tpAniSirGlobal mac_ctx, uint8_t command,
 		break;
 	case ROAM_SCAN_OFFLOAD_UPDATE_CFG:
 		desiredMask = RSO_UPDATE_CFG_ALLOW_MASK;
+		break;
+	case ROAM_SCAN_OFFLOAD_ABORT_SCAN:
+		desiredMask = RSO_ABORT_SCAN_ALLOW_MASK;
 		break;
 	default:
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
