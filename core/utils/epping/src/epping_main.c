@@ -251,8 +251,6 @@ int epping_enable(struct device *parent_dev)
 	}
 	scn->htc_handle = pEpping_ctx->HTCHandle;
 
-	hif_claim_device(scn->hif_hdl, scn);
-
 	if (bmi_done(scn)) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed to complete BMI phase", __func__);

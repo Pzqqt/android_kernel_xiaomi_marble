@@ -872,20 +872,6 @@ static void hif_msg_callbacks_install(struct ol_softc *scn)
 		 sizeof(hif_state->msg_callbacks_pending));
 }
 
-void hif_claim_device(struct ol_softc *scn, void *claimedContext)
-{
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
-
-	hif_state->claimedContext = claimedContext;
-}
-
-void hif_release_device(struct ol_softc *scn)
-{
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
-
-	hif_state->claimedContext = NULL;
-}
-
 void
 hif_get_default_pipe(struct ol_softc *scn, uint8_t *ULPipe, uint8_t *DLPipe)
 {
