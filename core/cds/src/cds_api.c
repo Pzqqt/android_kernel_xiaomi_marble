@@ -1068,10 +1068,6 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	}
 
 	case CDF_MODULE_ID_EPPING:
-	{
-		pGpModContext = &(gp_cds_context->epping_ctx);
-		break;
-	}
 	case CDF_MODULE_ID_SME:
 	case CDF_MODULE_ID_PE:
 	case CDF_MODULE_ID_HDD:
@@ -1154,18 +1150,13 @@ CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 		break;
 	}
 
-	case CDF_MODULE_ID_EPPING:
-	{
-		pGpModContext = &(gp_cds_context->epping_ctx);
-		break;
-	}
-
 	case CDF_MODULE_ID_TXRX:
 	{
 		pGpModContext = &(gp_cds_context->pdev_txrx_ctx);
 		break;
 	}
 
+	case CDF_MODULE_ID_EPPING:
 	case CDF_MODULE_ID_HDD:
 	case CDF_MODULE_ID_SME:
 	case CDF_MODULE_ID_PE:

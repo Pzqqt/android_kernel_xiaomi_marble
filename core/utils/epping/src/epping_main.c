@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -73,6 +73,8 @@
 #define WLAN_WAIT_TIME_WLANSTART 2000
 #endif
 
+static struct epping_context *g_epping_ctx;
+
 /**
  * epping_open(): End point ping driver open Function
  *
@@ -83,22 +85,17 @@
  */
 int epping_open(void)
 {
-	epping_context_t *pEpping_ctx;
-	v_CONTEXT_t cds_context;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-
 	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
 
-	cds_context = cds_get_global_context();
-	status = cds_alloc_context(cds_context, CDF_MODULE_ID_EPPING,
-				       (void **)&pEpping_ctx,
-				       sizeof(*pEpping_ctx));
-	if (status != CDF_STATUS_SUCCESS) {
-		EPPING_LOG(CDF_TRACE_LEVEL_ERROR, "%s: cannot alloc epping context", __func__);
+	g_epping_ctx = cdf_mem_malloc(sizeof(*g_epping_ctx));
+
+	if (g_epping_ctx == NULL) {
+		EPPING_LOG(CDF_TRACE_LEVEL_ERROR,
+				"%s: cannot alloc epping context", __func__);
 		return -ENOMEM;
 	}
 
-	pEpping_ctx->con_mode = cds_get_conparam();
+	g_epping_ctx->con_mode = cds_get_conparam();
 	return 0;
 }
 
@@ -114,7 +111,7 @@ void epping_disable(void)
 {
 	epping_context_t *pEpping_ctx;
 
-	pEpping_ctx = cds_get_context(CDF_MODULE_ID_EPPING);
+	pEpping_ctx = g_epping_ctx;
 	if (pEpping_ctx == NULL) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: error: pEpping_ctx  = NULL", __func__);
@@ -140,30 +137,31 @@ void epping_disable(void)
  */
 void epping_close(void)
 {
-	epping_context_t *pEpping_ctx;
+	epping_context_t *to_free;
 
-	pEpping_ctx = cds_get_context(CDF_MODULE_ID_EPPING);
-	if (pEpping_ctx == NULL) {
+
+	if (g_epping_ctx == NULL) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
-			   "%s: error: pEpping_ctx  = NULL", __func__);
+			   "%s: error: g_epping_ctx  = NULL", __func__);
 		return;
 	}
-	cds_free_context(NULL, CDF_MODULE_ID_EPPING,
-		cds_get_context(CDF_MODULE_ID_EPPING));
+
+	to_free = g_epping_ctx;
+	g_epping_ctx = NULL;
+	cdf_mem_free(to_free);
 }
 
 static void epping_target_suspend_acknowledge(void *context)
 {
-	epping_context_t *pEpping_ctx = cds_get_context(CDF_MODULE_ID_EPPING);
 	int wow_nack = *((int *)context);
 
-	if (NULL == pEpping_ctx) {
+	if (NULL == g_epping_ctx) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_ctx is NULL", __func__);
 		return;
 	}
 	/* EPPING_TODO: do we need wow_nack? */
-	pEpping_ctx->wow_nack = wow_nack;
+	g_epping_ctx->wow_nack = wow_nack;
 }
 
 /**
@@ -195,7 +193,7 @@ int epping_enable(struct device *parent_dev)
 		return ret;
 	}
 
-	pEpping_ctx = cds_get_context(CDF_MODULE_ID_EPPING);
+	pEpping_ctx = g_epping_ctx;
 	if (pEpping_ctx == NULL) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed to get pEpping_ctx", __func__);
