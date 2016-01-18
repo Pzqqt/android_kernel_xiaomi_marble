@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -110,7 +110,6 @@ void bmi_cleanup(struct ol_softc *scn)
 CDF_STATUS bmi_done(struct ol_softc *scn)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	hif_claim_device(scn, scn);
 
 	if (NO_BMI)
 		return status;

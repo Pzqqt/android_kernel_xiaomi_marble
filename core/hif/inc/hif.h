@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -393,14 +393,6 @@ typedef struct osdrv_callbacks {
  *
  */
 int hif_init(OSDRV_CALLBACKS *callbacks);
-
-/*
- * This API claims the HIF device and provides a context for handling removal.
- * The device removal callback is only called when the OSDRV layer claims
- * a device.  The claimed context must be non-NULL */
-void hif_claim_device(struct ol_softc *scn, void *claimedContext);
-/* release the claimed device */
-void hif_release_device(struct ol_softc *scn);
 
 /* This API detaches the HTC layer from the HIF device */
 void hif_detach_htc(struct ol_softc *scn);
