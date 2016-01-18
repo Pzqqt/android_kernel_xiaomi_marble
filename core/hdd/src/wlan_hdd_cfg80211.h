@@ -106,6 +106,10 @@
 #define CHANNEL_SWITCH_SUPPORTED
 #endif
 
+#if defined(CFG80211_DEL_STA_V2) || (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 19, 0)) || defined(WITH_BACKPORTS)
+#define USE_CFG80211_DEL_STA_V2
+#endif
+
 /**
  * typedef struct qcom_ie_age - age ie
  *
@@ -2324,7 +2328,9 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel);
 uint8_t *wlan_hdd_cfg80211_get_ie_ptr(const uint8_t *ies_ptr, int length,
 				      uint8_t eid);
 
-#ifdef CFG80211_DEL_STA_V2
+void wlan_hdd_del_station(hdd_adapter_t *adapter);
+
+#if defined(USE_CFG80211_DEL_STA_V2)
 int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				  struct net_device *dev,
 				  struct station_del_parameters *param);
@@ -2338,7 +2344,8 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				  struct net_device *dev,
 				  uint8_t *mac);
 #endif
-#endif
+#endif /* USE_CFG80211_DEL_STA_V2 */
+
 
 #if  defined(QCA_WIFI_FTM)     && defined(CONFIG_NL80211_TESTMODE)
 void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len);

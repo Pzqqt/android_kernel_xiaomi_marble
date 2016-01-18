@@ -10004,7 +10004,31 @@ fn_end:
 	return 0;
 }
 
-#ifdef CFG80211_DEL_STA_V2
+#if defined(USE_CFG80211_DEL_STA_V2)
+/**
+ * wlan_hdd_del_station() - delete station wrapper
+ * @adapter: pointer to the hdd adapter
+ *
+ * Return: None
+ */
+void wlan_hdd_del_station(hdd_adapter_t *adapter)
+{
+	struct station_del_parameters del_sta;
+	del_sta.mac = NULL;
+	del_sta.subtype = SIR_MAC_MGMT_DEAUTH >> 4;
+	del_sta.reason_code = eCsrForcedDeauthSta;
+
+	wlan_hdd_cfg80211_del_station(adapter->wdev.wiphy, adapter->dev,
+				      &del_sta);
+}
+#else
+void wlan_hdd_del_station(hdd_adapter_t *adapter)
+{
+	wlan_hdd_cfg80211_del_station(adapter->wdev.wiphy, adapter->dev, NULL);
+}
+#endif
+
+#if defined(USE_CFG80211_DEL_STA_V2)
 /**
  * wlan_hdd_cfg80211_del_station() - delete station v2
  * @wiphy: Pointer to wiphy
@@ -10038,9 +10062,9 @@ int wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	struct tagCsrDelStaParams delStaParams;
 
 	cds_ssr_protect(__func__);
-#ifdef CFG80211_DEL_STA_V2
+#if defined(USE_CFG80211_DEL_STA_V2)
 	if (NULL == param) {
-		hddLog(LOGE, FL("Invalid argumet passed"));
+		hdd_err("Invalid argument passed");
 		return -EINVAL;
 	}
 	wlansap_populate_del_sta_params(param->mac, param->reason_code,
