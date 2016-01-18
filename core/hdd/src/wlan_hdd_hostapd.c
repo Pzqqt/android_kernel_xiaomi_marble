@@ -1405,7 +1405,15 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					(const u8 *)&pSapEvent->sapevt.
 					sapStationAssocReassocCompleteEvent.ies[0];
 				staInfo.assoc_req_ies_len = iesLen;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
+				/*
+				 * After Kernel 4.0, it's no longer need to set
+				 * STATION_INFO_ASSOC_REQ_IES flag, as it
+				 * changed to use assoc_req_ies_len length to
+				 * check the existance of request IE.
+				 */
 				staInfo.filled |= STATION_INFO_ASSOC_REQ_IES;
+#endif
 				cfg80211_new_sta(dev,
 						 (const u8 *)&pSapEvent->sapevt.
 						 sapStationAssocReassocCompleteEvent.

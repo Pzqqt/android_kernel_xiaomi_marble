@@ -1748,7 +1748,11 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		return status;
 
 	wlan_hdd_get_rssi(pAdapter, &sinfo->signal);
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 	sinfo->filled |= STATION_INFO_SIGNAL;
+#else
+	sinfo->filled |= BIT(NL80211_STA_INFO_SIGNAL);
+#endif
 
 #ifdef WLAN_FEATURE_LPSS
 	if (!pAdapter->rssi_send) {
@@ -2118,10 +2122,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		}
 	}
 
-	sinfo->filled |= STATION_INFO_TX_BITRATE;
-
 	sinfo->tx_bytes = pAdapter->stats.tx_bytes;
-	sinfo->filled |= STATION_INFO_TX_BYTES;
 
 	sinfo->tx_packets =
 		pAdapter->hdd_stats.summary_stat.tx_frm_cnt[0] +
@@ -2141,15 +2142,26 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		pAdapter->hdd_stats.summary_stat.fail_cnt[2] +
 		pAdapter->hdd_stats.summary_stat.fail_cnt[3];
 
-	sinfo->filled |=
-		STATION_INFO_TX_PACKETS |
-		STATION_INFO_TX_RETRIES | STATION_INFO_TX_FAILED;
-
 	sinfo->rx_bytes = pAdapter->stats.rx_bytes;
-	sinfo->filled |= STATION_INFO_RX_BYTES;
-
 	sinfo->rx_packets = pAdapter->stats.rx_packets;
-	sinfo->filled |= STATION_INFO_RX_PACKETS;
+
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
+	sinfo->filled |= STATION_INFO_TX_BITRATE |
+			 STATION_INFO_TX_BYTES   |
+			 STATION_INFO_TX_PACKETS |
+			 STATION_INFO_TX_RETRIES |
+			 STATION_INFO_TX_FAILED  |
+			 STATION_INFO_RX_BYTES   |
+			 STATION_INFO_RX_PACKETS;
+#else
+	sinfo->filled |= BIT(NL80211_STA_INFO_TX_BYTES)   |
+			 BIT(NL80211_STA_INFO_TX_BITRATE) |
+			 BIT(NL80211_STA_INFO_TX_PACKETS) |
+			 BIT(NL80211_STA_INFO_TX_RETRIES) |
+			 BIT(NL80211_STA_INFO_TX_FAILED)  |
+			 BIT(NL80211_STA_INFO_RX_BYTES)   |
+			 BIT(NL80211_STA_INFO_RX_PACKETS);
+#endif
 
 	if (rate_flags & eHAL_TX_RATE_LEGACY)
 		hddLog(LOG1, FL("Reporting legacy rate %d pkt cnt tx %d rx %d"),
