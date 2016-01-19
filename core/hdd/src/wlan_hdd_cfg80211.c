@@ -5994,9 +5994,15 @@ void *wlan_hdd_change_country_code_cb(void *pAdapter)
 	return NULL;
 }
 
-/*
- * FUNCTION: __wlan_hdd_cfg80211_change_iface
- * This function is used to set the interface type (INFRASTRUCTURE/ADHOC)
+/**
+ * __wlan_hdd_cfg80211_change_iface() - change interface cfg80211 op
+ * @wiphy: Pointer to the wiphy structure
+ * @ndev: Pointer to the net device
+ * @type: Interface type
+ * @flags: Flags for change interface
+ * @params: Pointer to change interface parameters
+ *
+ * Return: 0 for success, error number on failure.
  */
 static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					    struct net_device *ndev,
@@ -6238,9 +6244,15 @@ done:
 	return 0;
 }
 
-/*
- * FUNCTION: wlan_hdd_cfg80211_change_iface
- * wrapper function to protect the actual implementation from SSR.
+/**
+ * wlan_hdd_cfg80211_change_iface() - change interface cfg80211 op
+ * @wiphy: Pointer to the wiphy structure
+ * @ndev: Pointer to the net device
+ * @type: Interface type
+ * @flags: Flags for change interface
+ * @params: Pointer to change interface parameters
+ *
+ * Return: 0 for success, error number on failure.
  */
 static int wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 					  struct net_device *ndev,
