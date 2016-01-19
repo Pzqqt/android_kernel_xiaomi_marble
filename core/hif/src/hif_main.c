@@ -764,7 +764,7 @@ void hif_crash_shutdown(void *hif_ctx)
 		return;
 	}
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		HIF_ERROR("%s: Load/unload is in progress, ignore!", __func__);
 		return;
 	}

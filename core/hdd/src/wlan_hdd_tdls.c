@@ -2842,7 +2842,7 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	/* Check whether driver load unload is in progress */
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		hddLog(LOGE, FL("Driver load/unload is in progress."));
 		return;
 	}

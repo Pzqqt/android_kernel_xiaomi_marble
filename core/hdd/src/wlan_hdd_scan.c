@@ -2333,7 +2333,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 		return ret;
 	}
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Unload/Load in Progress, state: 0x%x.  Ignore!!!",
 			cds_get_driver_state());
 		return ret;

@@ -116,7 +116,7 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 	uint16_t data_len;
 	uint16_t total_len;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
 			  "%s: Unloading/Loading in Progress. Ignore!!!",
 			  __func__);
@@ -213,7 +213,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 	event_report_t *pEvent_report;
 	uint16_t total_len;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
 			  "%s: Unloading/Loading in Progress. Ignore!!!",
 			  __func__);
