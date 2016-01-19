@@ -116,14 +116,14 @@ static inline bool cds_is_driver_recovering(void)
 /**
  * cds_is_load_unload_in_progress() - Is driver load/unload in progress
  *
- * Return: true if driver is loading or unloading and false otherwise.
+ * Return: true if driver is loading OR unloading and false otherwise.
  */
 static inline bool cds_is_load_unload_in_progress(void)
 {
 	enum cds_driver_state state = cds_get_driver_state();
 
-	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADING |
-				     CDS_DRIVER_STATE_UNLOADING);
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_UNLOADING);
 }
 
 /**
