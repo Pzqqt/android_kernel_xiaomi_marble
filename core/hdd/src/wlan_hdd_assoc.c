@@ -1433,7 +1433,11 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	bss = cfg80211_get_bss(pAdapter->wdev.wiphy, chan,
 			pCsrRoamInfo->bssid.bytes,
 			&roam_profile.SSID.ssId[0], roam_profile.SSID.length,
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && !defined(WITH_BACKPORTS)
 			WLAN_CAPABILITY_ESS, WLAN_CAPABILITY_ESS);
+#else
+			IEEE80211_BSS_TYPE_ESS, IEEE80211_PRIVACY_ANY);
+#endif
 
 	if (bss == NULL)
 		hddLog(LOGE, FL("Get BSS returned NULL"));
