@@ -372,93 +372,11 @@ int32_t regdmn_get_regdmn_for_country(uint8_t *alpha2)
 	return -1;
 }
 
-/*
- * Test to see if the bitmask array is all zeros
- */
-static bool is_chan_bit_mask_zero(const uint64_t *bitmask)
-{
-	int i;
-
-	for (i = 0; i < BMLEN; i++) {
-		if (bitmask[i] != 0)
-			return false;
-	}
-	return true;
-}
-
-/*
- * Return the mask of available modes based on the hardware
- * capabilities and the specified country code and reg domain.
- */
-static uint32_t regdmn_getwmodesnreg(uint32_t modesAvail,
-				     const COUNTRY_CODE_TO_ENUM_RD *country,
-				     const REG_DOMAIN *rd5GHz)
-{
-
-	/* Check country regulations for allowed modes */
-	if ((modesAvail & (REGDMN_MODE_11A_TURBO | REGDMN_MODE_TURBO)) &&
-	    (!country->allow11aTurbo))
-		modesAvail &= ~(REGDMN_MODE_11A_TURBO | REGDMN_MODE_TURBO);
-
-	if ((modesAvail & REGDMN_MODE_11G_TURBO) && (!country->allow11gTurbo))
-		modesAvail &= ~REGDMN_MODE_11G_TURBO;
-
-	if ((modesAvail & REGDMN_MODE_11G) && (!country->allow11g))
-		modesAvail &= ~REGDMN_MODE_11G;
-
-	if ((modesAvail & REGDMN_MODE_11A) &&
-	    (is_chan_bit_mask_zero(rd5GHz->chan11a)))
-		modesAvail &= ~REGDMN_MODE_11A;
-
-	if ((modesAvail & REGDMN_MODE_11NG_HT20) && (!country->allow11ng20))
-		modesAvail &= ~REGDMN_MODE_11NG_HT20;
-
-	if ((modesAvail & REGDMN_MODE_11NA_HT20) && (!country->allow11na20))
-		modesAvail &= ~REGDMN_MODE_11NA_HT20;
-
-	if ((modesAvail & REGDMN_MODE_11NG_HT40PLUS) && (!country->allow11ng40))
-		modesAvail &= ~REGDMN_MODE_11NG_HT40PLUS;
-
-	if ((modesAvail & REGDMN_MODE_11NG_HT40MINUS) &&
-	    (!country->allow11ng40))
-		modesAvail &= ~REGDMN_MODE_11NG_HT40MINUS;
-
-	if ((modesAvail & REGDMN_MODE_11NA_HT40PLUS) && (!country->allow11na40))
-		modesAvail &= ~REGDMN_MODE_11NA_HT40PLUS;
-
-	if ((modesAvail & REGDMN_MODE_11NA_HT40MINUS) &&
-	    (!country->allow11na40))
-		modesAvail &= ~REGDMN_MODE_11NA_HT40MINUS;
-
-	if ((modesAvail & REGDMN_MODE_11AC_VHT20) && (!country->allow11na20))
-		modesAvail &= ~REGDMN_MODE_11AC_VHT20;
-
-	if ((modesAvail & REGDMN_MODE_11AC_VHT40PLUS) &&
-	    (!country->allow11na40))
-		modesAvail &= ~REGDMN_MODE_11AC_VHT40PLUS;
-
-	if ((modesAvail & REGDMN_MODE_11AC_VHT40MINUS) &&
-	    (!country->allow11na40))
-		modesAvail &= ~REGDMN_MODE_11AC_VHT40MINUS;
-
-	if ((modesAvail & REGDMN_MODE_11AC_VHT80) && (!country->allow11na80))
-		modesAvail &= ~REGDMN_MODE_11AC_VHT80;
-
-	if ((modesAvail & REGDMN_MODE_11AC_VHT20_2G) && (!country->allow11ng20))
-		modesAvail &= ~REGDMN_MODE_11AC_VHT20_2G;
-
-	return modesAvail;
-}
-
-void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
-				  uint32_t modeSelect)
+void cds_fill_send_ctl_info_to_fw(struct regulatory *reg)
 {
 	const REG_DOMAIN *regdomain2G = NULL;
 	const REG_DOMAIN *regdomain5G = NULL;
-	int8_t ctl_2g, ctl_5g, ctl;
-	const REG_DOMAIN *rd = NULL;
-	const struct cmode *cm;
-	const COUNTRY_CODE_TO_ENUM_RD *country;
+	int8_t ctl_2g, ctl_5g;
 	const REG_DMN_PAIR_MAPPING *regpair;
 
 	regpair = reg->regpair;
@@ -478,70 +396,6 @@ void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
 	ctl_2g = regdomain2G->conformance_test_limit;
 	ctl_5g = regdomain5G->conformance_test_limit;
 
-	/* find second nible of CTL */
-	country = find_country(reg->country_code);
-	if (country != NULL)
-		modesAvail =
-			regdmn_getwmodesnreg(modesAvail, country, regdomain5G);
-
-	for (cm = modes; cm < &modes[QDF_ARRAY_SIZE(modes)]; cm++) {
-
-		if ((cm->mode & modeSelect) == 0)
-			continue;
-
-		if ((cm->mode & modesAvail) == 0)
-			continue;
-
-		switch (cm->mode) {
-		case REGDMN_MODE_TURBO:
-			rd = regdomain5G;
-			ctl = rd->conformance_test_limit | CTL_TURBO;
-			break;
-		case REGDMN_MODE_11A:
-		case REGDMN_MODE_11NA_HT20:
-		case REGDMN_MODE_11NA_HT40PLUS:
-		case REGDMN_MODE_11NA_HT40MINUS:
-		case REGDMN_MODE_11AC_VHT20:
-		case REGDMN_MODE_11AC_VHT40PLUS:
-		case REGDMN_MODE_11AC_VHT40MINUS:
-		case REGDMN_MODE_11AC_VHT80:
-			rd = regdomain5G;
-			ctl = rd->conformance_test_limit;
-			break;
-		case REGDMN_MODE_11B:
-			rd = regdomain2G;
-			ctl = rd->conformance_test_limit | CTL_11B;
-			break;
-		case REGDMN_MODE_11G:
-		case REGDMN_MODE_11NG_HT20:
-		case REGDMN_MODE_11NG_HT40PLUS:
-		case REGDMN_MODE_11NG_HT40MINUS:
-		case REGDMN_MODE_11AC_VHT20_2G:
-		case REGDMN_MODE_11AC_VHT40_2G:
-		case REGDMN_MODE_11AC_VHT80_2G:
-			rd = regdomain2G;
-			ctl = rd->conformance_test_limit | CTL_11G;
-			break;
-		case REGDMN_MODE_11G_TURBO:
-			rd = regdomain2G;
-			ctl = rd->conformance_test_limit | CTL_108G;
-			break;
-		case REGDMN_MODE_11A_TURBO:
-			rd = regdomain5G;
-			ctl = rd->conformance_test_limit | CTL_108G;
-			break;
-		default:
-			qdf_print(KERN_ERR "%s: Unkonwn HAL mode 0x%x\n",
-				  __func__, cm->mode);
-			continue;
-		}
-
-		if (rd == regdomain2G)
-			ctl_2g = ctl;
-
-		if (rd == regdomain5G)
-			ctl_5g = ctl;
-	}
 
 	/* save the ctl information for future reference */
 	reg->ctl_5g = ctl_5g;
@@ -573,17 +427,13 @@ void cds_set_wma_dfs_region(uint8_t dfs_region)
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	uint32_t modeSelect = 0xFFFFFFFF;
 
 	if (!wma) {
 		WMA_LOGE("%s: Unable to get WMA handle", __func__);
 		return;
 	}
 
-	wma_get_modeselect(wma, &modeSelect);
-
-	cds_fill_send_ctl_info_to_fw(reg, wma->reg_cap.wireless_modes,
-				     modeSelect);
+	cds_fill_send_ctl_info_to_fw(reg);
 	return;
 }
 

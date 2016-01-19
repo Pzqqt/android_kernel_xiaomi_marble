@@ -5602,45 +5602,6 @@ QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 	return ret;
 }
 
-/**
- * wma_get_modeselect() - get modeSelect flag based on phy_capability
- * @wma: wma handle
- * @modeSelect: mode Select
- *
- * Return: none
- */
-void wma_get_modeselect(tp_wma_handle wma, uint32_t *modeSelect)
-{
-
-	switch (wma->phy_capability) {
-	case WMI_11G_CAPABILITY:
-	case WMI_11NG_CAPABILITY:
-		*modeSelect &= ~(REGDMN_MODE_11A | REGDMN_MODE_TURBO |
-				 REGDMN_MODE_108A | REGDMN_MODE_11A_HALF_RATE |
-				 REGDMN_MODE_11A_QUARTER_RATE |
-				 REGDMN_MODE_11NA_HT20 |
-				 REGDMN_MODE_11NA_HT40PLUS |
-				 REGDMN_MODE_11NA_HT40MINUS |
-				 REGDMN_MODE_11AC_VHT20 |
-				 REGDMN_MODE_11AC_VHT40PLUS |
-				 REGDMN_MODE_11AC_VHT40MINUS |
-				 REGDMN_MODE_11AC_VHT80);
-		break;
-	case WMI_11A_CAPABILITY:
-	case WMI_11NA_CAPABILITY:
-	case WMI_11AC_CAPABILITY:
-		*modeSelect &= ~(REGDMN_MODE_11B | REGDMN_MODE_11G |
-				 REGDMN_MODE_108G | REGDMN_MODE_11NG_HT20 |
-				 REGDMN_MODE_11NG_HT40PLUS |
-				 REGDMN_MODE_11NG_HT40MINUS |
-				 REGDMN_MODE_11AC_VHT20_2G |
-				 REGDMN_MODE_11AC_VHT40_2G |
-				 REGDMN_MODE_11AC_VHT80_2G);
-		break;
-	}
-}
-
-
 #ifdef FEATURE_WLAN_TDLS
 /**
  * wma_tdls_event_handler() - handle TDLS event

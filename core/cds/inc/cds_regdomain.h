@@ -92,6 +92,7 @@ enum {
 #define    SUPER_DOMAIN_MASK    0x0fff
 #define    COUNTRY_CODE_MASK    0x3fff
 #define CF_INTERFERENCE         (CHANNEL_CW_INT | CHANNEL_RADAR_INT)
+#define NO_CTL          0xff
 
 /*
  * The following describe the bit masks for different passive scan
@@ -118,84 +119,6 @@ enum {
 #define PSCAN_DEFER 0x7FFFFFFFFFFFFFFFULL
 #define IS_ECM_CHAN 0x8000000000000000ULL
 
-/* define in ah_eeprom.h */
-#define SD_NO_CTL       0xf0
-#define NO_CTL          0xff
-#define CTL_MODE_M      0x0f
-#define CTL_11A         0
-#define CTL_11B         1
-#define CTL_11G         2
-#define CTL_TURBO       3
-#define CTL_108G        4
-#define CTL_2GHT20      5
-#define CTL_5GHT20      6
-#define CTL_2GHT40      7
-#define CTL_5GHT40      8
-#define CTL_5GVHT80     9
-
-#ifndef ATH_NO_5G_SUPPORT
-#define REGDMN_MODE_11A_TURBO    REGDMN_MODE_108A
-#define CHAN_11A_BMZERO BMZERO,
-#define CHAN_11A_BM(_a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l) \
-	BM(_a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l),
-#else
-/* remove 11a channel info if 11a is not supported */
-#define CHAN_11A_BMZERO
-#define CHAN_11A_BM(_a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l)
-#endif
-#ifndef ATH_REMOVE_2G_TURBO_RD_TABLE
-#define REGDMN_MODE_11G_TURBO    REGDMN_MODE_108G
-#define CHAN_TURBO_G_BMZERO BMZERO,
-#define CHAN_TURBO_G_BM(_a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l)	\
-	BM(_a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l),
-#else
-/* remove turbo-g channel info if turbo-g is not supported */
-#define CHAN_TURBO_G(a, b)
-#define CHAN_TURBO_G_BMZERO
-#define CHAN_TURBO_G_BM(_a, _b, _c, _d, _e, _f, _g, _h, _i, _j, _k, _l)
-#endif
-
-#define BMLEN 2                 /* Use 2 64 bit uint for channel bitmask
-	                           NB: Must agree with macro below (BM) */
-#define BMZERO {(uint64_t) 0, (uint64_t) 0} /* BMLEN zeros */
-
-#ifndef SUPPRESS_SHIFT_WARNING
-#define SUPPRESS_SHIFT_WARNING
-#endif
-
-/* Suppress MS warning "C4293: 'operator' : shift count negative or too big,
- * undefined behavior"
- * This is safe below because the the operand is properly range-checked, but
- * the compiler can't reason that out before it spits the warning.
- * Using suppress, so the warning can still be enabled globally to catch other
- * incorrect uses.
- */
-#define BM(_fa, _fb, _fc, _fd, _fe, _ff, _fg, _fh, _fi, _fj, _fk, _fl) \
-	SUPPRESS_SHIFT_WARNING \
-	{((((_fa >= 0) && (_fa < 64)) ? (((uint64_t) 1) << _fa) : (uint64_t) 0) | \
-	  (((_fb >= 0) && (_fb < 64)) ? (((uint64_t) 1) << _fb) : (uint64_t) 0) | \
-	  (((_fc >= 0) && (_fc < 64)) ? (((uint64_t) 1) << _fc) : (uint64_t) 0) | \
-	  (((_fd >= 0) && (_fd < 64)) ? (((uint64_t) 1) << _fd) : (uint64_t) 0) | \
-	  (((_fe >= 0) && (_fe < 64)) ? (((uint64_t) 1) << _fe) : (uint64_t) 0) | \
-	  (((_ff >= 0) && (_ff < 64)) ? (((uint64_t) 1) << _ff) : (uint64_t) 0) | \
-	  (((_fg >= 0) && (_fg < 64)) ? (((uint64_t) 1) << _fg) : (uint64_t) 0) | \
-	  (((_fh >= 0) && (_fh < 64)) ? (((uint64_t) 1) << _fh) : (uint64_t) 0) | \
-	  (((_fi >= 0) && (_fi < 64)) ? (((uint64_t) 1) << _fi) : (uint64_t) 0) | \
-	  (((_fj >= 0) && (_fj < 64)) ? (((uint64_t) 1) << _fj) : (uint64_t) 0) | \
-	  (((_fk >= 0) && (_fk < 64)) ? (((uint64_t) 1) << _fk) : (uint64_t) 0) | \
-	  (((_fl >= 0) && (_fl < 64)) ? (((uint64_t) 1) << _fl) : (uint64_t) 0) ) \
-	 ,(((((_fa > 63) && (_fa < 128)) ? (((uint64_t) 1) << (_fa - 64)) : (uint64_t) 0) | \
-	    (((_fb > 63) && (_fb < 128)) ? (((uint64_t) 1) << (_fb - 64)) : (uint64_t) 0) | \
-	    (((_fc > 63) && (_fc < 128)) ? (((uint64_t) 1) << (_fc - 64)) : (uint64_t) 0) | \
-	    (((_fd > 63) && (_fd < 128)) ? (((uint64_t) 1) << (_fd - 64)) : (uint64_t) 0) | \
-	    (((_fe > 63) && (_fe < 128)) ? (((uint64_t) 1) << (_fe - 64)) : (uint64_t) 0) | \
-	    (((_ff > 63) && (_ff < 128)) ? (((uint64_t) 1) << (_ff - 64)) : (uint64_t) 0) | \
-	    (((_fg > 63) && (_fg < 128)) ? (((uint64_t) 1) << (_fg - 64)) : (uint64_t) 0) | \
-	    (((_fh > 63) && (_fh < 128)) ? (((uint64_t) 1) << (_fh - 64)) : (uint64_t) 0) | \
-	    (((_fi > 63) && (_fi < 128)) ? (((uint64_t) 1) << (_fi - 64)) : (uint64_t) 0) | \
-	    (((_fj > 63) && (_fj < 128)) ? (((uint64_t) 1) << (_fj - 64)) : (uint64_t) 0) | \
-	    (((_fk > 63) && (_fk < 128)) ? (((uint64_t) 1) << (_fk - 64)) : (uint64_t) 0) | \
-	    (((_fl > 63) && (_fl < 128)) ? (((uint64_t) 1) << (_fl - 64)) : (uint64_t) 0)))}
 
 /*
  * THE following table is the mapping of regdomain pairs specified by
@@ -255,15 +178,6 @@ typedef struct reg_domain {
 	uint8_t conformance_test_limit;
 	uint64_t dfsMask;       /* DFS bitmask for 5Ghz tables */
 	uint64_t pscan;         /* Bitmask for passive scan */
-	uint32_t flags;         /* Requirement flags (AdHoc disallow, noise
-	                           floor cal needed, etc) */
-	uint64_t chan11a[BMLEN];        /* 128 bit bitmask for channel/band selection */
-	uint64_t chan11a_turbo[BMLEN];  /* 128 bit bitmask for channel/band select */
-	uint64_t chan11a_dyn_turbo[BMLEN];      /* 128 bit mask for chan/band select */
-
-	uint64_t chan11b[BMLEN];        /* 128 bit bitmask for channel/band selection */
-	uint64_t chan11g[BMLEN];        /* 128 bit bitmask for channel/band selection */
-	uint64_t chan11g_turbo[BMLEN];
 } REG_DOMAIN;
 
 struct cmode {
@@ -566,8 +480,7 @@ struct ch_params_s {
 int32_t cds_fill_some_regulatory_info(struct regulatory *reg);
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg);
 int32_t cds_get_country_from_alpha2(uint8_t *alpha2);
-void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
-				  uint32_t modeSelect);
+void cds_fill_send_ctl_info_to_fw(struct regulatory *reg);
 void cds_set_wma_dfs_region(uint8_t dfs_region);
 void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
 		       struct ch_params_s *ch_params);
