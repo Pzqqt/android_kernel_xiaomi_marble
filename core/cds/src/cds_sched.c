@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1230,14 +1230,14 @@ void cds_ssr_unprotect(const char *caller_func)
 }
 
 /**
- * cds_is_ssr_ready() - check if the calling execution can proceed with ssr
- *
+ * cds_wait_for_external_threads_completion() - wait for external threads
+ *					completion before proceeding further
  * @caller_func: name of calling function.
  *
  * Return: true if there is no active entry points in driver
  *	   false if there is at least one active entry in driver
  */
-bool cds_is_ssr_ready(const char *caller_func)
+bool cds_wait_for_external_threads_completion(const char *caller_func)
 {
 	int count = MAX_SSR_WAIT_ITERATIONS;
 
@@ -1260,7 +1260,7 @@ bool cds_is_ssr_ready(const char *caller_func)
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
-		  "Allowing SSR for %s", caller_func);
+		  "Allowing SSR/Driver unload for %s", caller_func);
 
 	return true;
 }

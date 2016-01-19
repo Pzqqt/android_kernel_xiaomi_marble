@@ -310,6 +310,9 @@ static void wlan_hdd_remove(void)
 	cds_set_driver_loaded(false);
 	cds_set_unload_in_progress(true);
 
+	if (!cds_wait_for_external_threads_completion(__func__))
+		hdd_err("External threads are still active attempting driver unload anyway");
+
 	hdd_cnss_driver_unloading();
 
 	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
@@ -354,7 +357,7 @@ static void wlan_hdd_shutdown(void)
 	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
 		hif_pktlogmod_exit(hif_ctx);
 
-	if (!cds_is_ssr_ready(__func__))
+	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_err("Host is not ready for SSR, attempting anyway");
 
 	if (!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
