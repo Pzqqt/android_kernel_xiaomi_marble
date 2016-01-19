@@ -8739,6 +8739,7 @@ static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 	unsigned long rc;
 	hdd_station_ctx_t *pHddStaCtx;
 	eMib_dot11DesiredBssType connectedBssType;
+	int status, result = 0;
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
@@ -8752,36 +8753,48 @@ static int wlan_hdd_try_disconnect(hdd_adapter_t *pAdapter)
 						eConnectionState_Disconnecting);
 		/* Issue disconnect to CSR */
 		INIT_COMPLETION(pAdapter->disconnect_comp_var);
-		if (CDF_STATUS_SUCCESS ==
-		    sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
-					pAdapter->sessionId,
-					eCSR_DISCONNECT_REASON_UNSPECIFIED)) {
-			rc = wait_for_completion_timeout(&pAdapter->
-							 disconnect_comp_var,
-							 msecs_to_jiffies
-								 (WLAN_WAIT_TIME_DISCONNECT));
-			if (!rc) {
-				hddLog(LOGE,
-				       FL("Sme disconnect event timed out session Id %d staDebugState %d"),
-				       pAdapter->sessionId,
-				       pHddStaCtx->staDebugState);
-				return -EALREADY;
-			}
+
+		status = sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
+				pAdapter->sessionId,
+				eCSR_DISCONNECT_REASON_UNSPECIFIED);
+		/*
+		 * Wait here instead of returning directly, this will block the
+		 * next connect command and allow processing of the scan for
+		 * ssid and the previous connect command in CSR. Else we might
+		 * hit some race conditions leading to SME and HDD out of sync.
+		 */
+		if (CDF_STATUS_CMD_NOT_QUEUED == status) {
+			hdd_info("Already disconnected or connect was in sme/roam pending list and removed by disconnect");
+		} else if (0 != status) {
+			hdd_err("csrRoamDisconnect failure, returned %d",
+				(int)status);
+			pHddStaCtx->staDebugState = status;
+			result = -EINVAL;
+			goto disconnected;
+		}
+
+		rc = wait_for_completion_timeout(
+			&pAdapter->disconnect_comp_var,
+			msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
+		if (!rc && (CDF_STATUS_CMD_NOT_QUEUED != status)) {
+			hdd_err("Sme disconnect event timed out session Id %d staDebugState %d",
+				pAdapter->sessionId, pHddStaCtx->staDebugState);
+			result = -ETIMEDOUT;
 		}
 	} else if (eConnectionState_Disconnecting ==
-		   pHddStaCtx->conn_info.connState) {
+				pHddStaCtx->conn_info.connState) {
 		rc = wait_for_completion_timeout(&pAdapter->disconnect_comp_var,
-						 msecs_to_jiffies
-							 (WLAN_WAIT_TIME_DISCONNECT));
+				msecs_to_jiffies(WLAN_WAIT_TIME_DISCONNECT));
 		if (!rc) {
-			hddLog(LOGE,
-				FL("Disconnect event timed out session Id %d staDebugState %d"),
+			hdd_err("Disconnect event timed out session Id %d staDebugState %d",
 				pAdapter->sessionId, pHddStaCtx->staDebugState);
-			return -EALREADY;
+			result = -ETIMEDOUT;
 		}
 	}
-
-	return 0;
+disconnected:
+	hdd_info("Set HDD connState to eConnectionState_NotConnected");
+	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
+	return result;
 }
 
 /**
@@ -8952,8 +8965,7 @@ int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 	 * race conditions leading to SME and HDD out of sync.
 	 */
 	if (CDF_STATUS_CMD_NOT_QUEUED == status) {
-		hddLog(LOG1, FL("status = %d, already disconnected"),
-		       (int)status);
+		hdd_info("Already disconnected or connect was in sme/roam pending list and removed by disconnect");
 	} else if (0 != status) {
 		hddLog(LOGE,
 			FL("csr_roam_disconnect failure, returned %d"),
@@ -8966,7 +8978,7 @@ int wlan_hdd_disconnect(hdd_adapter_t *pAdapter, u16 reason)
 					 msecs_to_jiffies
 						 (WLAN_WAIT_TIME_DISCONNECT));
 
-	if (!rc) {
+	if (!rc && (CDF_STATUS_CMD_NOT_QUEUED != status)) {
 		hddLog(LOGE,
 			FL("Failed to disconnect, timed out"));
 		result = -ETIMEDOUT;
