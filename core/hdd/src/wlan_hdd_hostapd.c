@@ -222,7 +222,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Driver load/unload in progress, ignore, state: 0x%x",
 			cds_get_driver_state());
 		goto done;

@@ -809,7 +809,7 @@ CDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 	/* bss deregister is not allowed during wlan driver loading or
 	 * unloading
 	 */
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Loading_unloading in Progress, state: 0x%x. Ignore!!!",
 			  __func__, cds_get_driver_state());

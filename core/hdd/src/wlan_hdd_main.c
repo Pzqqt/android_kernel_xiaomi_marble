@@ -527,7 +527,7 @@ int wlan_hdd_validate_context(hdd_context_t *hdd_ctx)
 		return -EAGAIN;
 	}
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Unloading/Loading in Progress. Ignore!!!: 0x%x",
 			cds_get_driver_state());
 		return -EAGAIN;

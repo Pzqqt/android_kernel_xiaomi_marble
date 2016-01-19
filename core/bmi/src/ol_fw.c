@@ -623,7 +623,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 		return;
 	}
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		BMI_ERR("%s: Loading/Unloading is in progress, ignore!",
 		       __func__);
 		return;

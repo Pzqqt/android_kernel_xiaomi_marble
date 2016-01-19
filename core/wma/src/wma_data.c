@@ -806,7 +806,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	tp_wma_handle wma_handle;
 	pWMAAckFnTxComp ack_cb;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("%s: Driver load/unload in progress", __func__);
 		return;
 	}
@@ -1480,7 +1480,7 @@ static void wma_mgmt_tx_ack_work_handler(void *ack_work)
 	tp_wma_handle wma_handle;
 	pWMAAckFnTxComp ack_cb;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("%s: Driver load/unload in progress", __func__);
 		return;
 	}
