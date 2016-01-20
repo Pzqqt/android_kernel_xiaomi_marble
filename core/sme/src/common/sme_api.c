@@ -1733,6 +1733,7 @@ static CDF_STATUS sme_handle_scan_req(tpAniSirGlobal mac_ctx,
 			FL("scan request failed. session_id %d"), session_id);
 	}
 	csr_scan_free_request(mac_ctx, scan_msg->scan_param);
+	cdf_mem_free(scan_msg->scan_param);
 	return status;
 }
 
@@ -2989,6 +2990,7 @@ CDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 		sms_log(mac_ctx, LOGE,
 			" sme_scan_req failed to post msg");
 		csr_scan_free_request(mac_ctx, scan_msg->scan_param);
+		cdf_mem_free(scan_msg->scan_param);
 		cdf_mem_free(scan_msg);
 		status = CDF_STATUS_E_FAILURE;
 	}
