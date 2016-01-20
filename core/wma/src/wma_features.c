@@ -1586,6 +1586,7 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 	int is_hw_chirp = 0;
 	int is_sw_chirp = 0;
 	int is_pri = 0;
+	bool is_ch_dfs = false;
 
 	WMI_DFS_RADAR_EVENTID_param_tlvs *param_tlvs;
 	wmi_dfs_radar_event_fixed_param *radar_event;
@@ -1627,7 +1628,19 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 		return 0;
 	}
 
-	if (CHANNEL_STATE_DFS != cds_get_channel_state(chan->ic_ieee)) {
+	if (IEEE80211_IS_CHAN_11AC_VHT160(chan)) {
+		is_ch_dfs = true;
+	} else if (IEEE80211_IS_CHAN_11AC_VHT80P80(chan)) {
+		if (cds_get_channel_state(chan->ic_ieee) == CHANNEL_STATE_DFS ||
+		    cds_get_channel_state(chan->ic_ieee_ext -
+					  WMA_80MHZ_START_CENTER_CH_DIFF) ==
+							CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	} else {
+		if (cds_get_channel_state(chan->ic_ieee) == CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	}
+	if (!is_ch_dfs) {
 		WMA_LOGE
 			("%s: Invalid DFS Phyerror event. Channel=%d is Non-DFS",
 			__func__, chan->ic_ieee);
@@ -6132,13 +6145,9 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 		dfs_ic->ic_curchan->ic_ieee_ext = ext_channel;
 
 		/* verify both the 80MHz are DFS bands or not */
-		if ((CHANNEL_STATE_DFS ==
-			cds_get_bonded_channel_state(req->chan ,
-						CH_WIDTH_80MHZ)) &&
-			(CHANNEL_STATE_DFS ==
-				cds_get_bonded_channel_state(
-					ext_channel - 6 ,
-					CH_WIDTH_80MHZ)))
+		if (CHANNEL_STATE_DFS == cds_get_channel_state(req->chan) &&
+		    CHANNEL_STATE_DFS == cds_get_channel_state(ext_channel -
+						WMA_80MHZ_START_CENTER_CH_DIFF))
 			dfs_ic->ic_curchan->ic_80p80_both_dfs = true;
 		break;
 	case CH_WIDTH_160MHZ:
@@ -6202,10 +6211,51 @@ int wma_get_channels(struct dfs_ieee80211_channel *ichan,
 		     struct wma_dfs_radar_channel_list *chan_list)
 {
 	uint8_t center_chan = cds_freq_to_chan(ichan->ic_vhtop_ch_freq_seg1);
+	int count = 0;
+	int start_channel = 0;
+	int loop;
 
 	chan_list->nchannels = 0;
 
-	if (IEEE80211_IS_CHAN_11AC_VHT80(ichan)) {
+	if (IEEE80211_IS_CHAN_11AC_VHT160(ichan)) {
+		/*
+		 * In 160MHz channel width, need to
+		 * check if each of the 8 20MHz channel
+		 * is DFS before adding to the NOL list.
+		 * As it is possible that part of the
+		 * 160MHz can be Non-DFS channels.
+		 */
+		start_channel = center_chan - WMA_160MHZ_START_CENTER_CH_DIFF;
+		for (loop = 0; loop < WMA_DFS_MAX_20M_SUB_CH; loop++) {
+			if (cds_get_channel_state(start_channel +
+				    (loop * WMA_NEXT_20MHZ_START_CH_DIFF)) ==
+							CHANNEL_STATE_DFS) {
+				chan_list->channels[count] = start_channel +
+					(loop * WMA_NEXT_20MHZ_START_CH_DIFF);
+				count++;
+			}
+		}
+		chan_list->nchannels = count;
+	} else if (IEEE80211_IS_CHAN_11AC_VHT80P80(ichan)) {
+		chan_list->nchannels = 4;
+		/*
+		 * If SAP is operating in 80p80 mode, either
+		 * one of the two 80 segments or both the 80
+		 * segments can be DFS channels, so need to
+		 * identify on which 80 segment radar has
+		 * been detected and only add those channels
+		 * to the NOL list. center frequency should be
+		 * based on the segment id passed as part of
+		 * channel information in radar indication.
+		 */
+		if (ichan->ic_radar_found_segid == DFS_80P80_SEG1)
+			center_chan =
+				cds_freq_to_chan(ichan->ic_vhtop_ch_freq_seg2);
+		chan_list->channels[0] = center_chan - 6;
+		chan_list->channels[1] = center_chan - 2;
+		chan_list->channels[2] = center_chan + 2;
+		chan_list->channels[3] = center_chan + 6;
+	} else if (IEEE80211_IS_CHAN_11AC_VHT80(ichan)) {
 		chan_list->nchannels = 4;
 		chan_list->channels[0] = center_chan - 6;
 		chan_list->channels[1] = center_chan - 2;
