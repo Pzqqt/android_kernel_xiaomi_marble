@@ -140,7 +140,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *pOemDataCmd = NULL;
-	tOemDataReq *cmd_req, *mac_req;
+	tOemDataReq *cmd_req;
 
 	do {
 		if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
@@ -148,28 +148,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 			break;
 		}
 
-		pMac->oemData.oemDataReqConfig.sessionId = sessionId;
 		pMac->oemData.oemDataReqID = *(pOemDataReqID);
-
-		pMac->oemData.oemDataReqConfig.data_len =
-				oemDataReqConfig->data_len;
-
-		if (pMac->oemData.oemDataReqConfig.data) {
-			cdf_mem_free(pMac->oemData.oemDataReqConfig.data);
-			pMac->oemData.oemDataReqConfig.data = NULL;
-		}
-
-		pMac->oemData.oemDataReqConfig.data =
-			cdf_mem_malloc(pMac->oemData.oemDataReqConfig.data_len);
-		if (!pMac->oemData.oemDataReqConfig.data) {
-			sms_log(pMac, LOGE, FL("memory alloc failed"));
-			status = CDF_STATUS_E_NOMEM;
-			break;
-		}
-
-		cdf_mem_copy((void *)(pMac->oemData.oemDataReqConfig.data),
-			     (void *)(oemDataReqConfig->data),
-			     oemDataReqConfig->data_len);
 
 		pMac->oemData.oemDataReqActive = false;
 
@@ -183,10 +162,9 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 
 
 			cmd_req = &(pOemDataCmd->u.oemDataCmd.oemDataReq);
-			mac_req = &(pMac->oemData.oemDataReqConfig);
 			/* set the oem data request */
-			cmd_req->sessionId = mac_req->sessionId;
-			cmd_req->data_len =  mac_req->data_len;
+			cmd_req->sessionId = sessionId;
+			cmd_req->data_len =  oemDataReqConfig->data_len;
 			cmd_req->data = cdf_mem_malloc(cmd_req->data_len);
 
 			if (!cmd_req->data) {
@@ -196,7 +174,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 			}
 
 			cdf_mem_copy((void *)(cmd_req->data),
-				     (void *)(mac_req->data),
+				     (void *)(oemDataReqConfig->data),
 				     cmd_req->data_len);
 		} else {
 			status = CDF_STATUS_E_FAILURE;
@@ -247,20 +225,15 @@ CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
 		return CDF_STATUS_E_NOMEM;
 	}
-	pMsg->data = cdf_mem_malloc(pOemDataReq->data_len);
-	if (!pMsg->data) {
-		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
-		cdf_mem_free(pMsg);
-		return CDF_STATUS_E_NOMEM;
-	}
 
 	msgLen = (uint16_t) (sizeof(*pMsg) + pOemDataReq->data_len);
 	pMsg->messageType = eWNI_SME_OEM_DATA_REQ;
 	pMsg->messageLen = msgLen;
 	cdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
 	pMsg->data_len = pOemDataReq->data_len;
-	cdf_mem_copy(pMsg->data, pOemDataReq->data,
-		     pOemDataReq->data_len);
+	pMsg->data = pOemDataReq->data;
+	/* Incoming buffer ptr saved, set to null to avoid free by caller */
+	pOemDataReq->data = NULL;
 	sms_log(pMac, LOGW, "OEM_DATA: sending message to pe%s", __func__);
 	status = cds_send_mb_message_to_mac(pMsg);
 

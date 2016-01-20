@@ -51,7 +51,6 @@ typedef struct tagOemDataStruct {
 	/* context of the original caller */
 	void *pContext;
 	uint32_t oemDataReqID;              /* original request ID */
-	tOemDataReqConfig oemDataReqConfig; /* current oem data request */
 	uint8_t sessionId;  /* Session on which oem data req is active */
 	/* callback for sending data response to oem application */
 	sme_send_oem_data_rsp_msg oem_data_rsp_callback;

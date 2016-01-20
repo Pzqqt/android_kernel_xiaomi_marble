@@ -1466,7 +1466,8 @@ static void __lim_process_sme_oem_data_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 	pMlmOemDataReq->data_len = pOemDataReq->data_len;
 	cdf_mem_copy(pMlmOemDataReq->data, pOemDataReq->data,
 		     pOemDataReq->data_len);
-
+	/* buffer from SME copied, free it now */
+	cdf_mem_free(pOemDataReq->data);
 	/* Issue LIM_MLM_OEM_DATA_REQ to MLM */
 	lim_post_mlm_message(pMac, LIM_MLM_OEM_DATA_REQ,
 			     (uint32_t *) pMlmOemDataReq);
