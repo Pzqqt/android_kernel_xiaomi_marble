@@ -67,8 +67,6 @@ int wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 		struct wireless_dev *wdev, const void *data,
 		int data_len);
 
-int hdd_vendor_put_ifindex(struct sk_buff *skb, int ifindex);
 void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx);
-
 #endif /* end #if !defined(WLAN_HDD_SCAN_H) */
 

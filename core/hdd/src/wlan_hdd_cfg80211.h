@@ -2390,14 +2390,37 @@ static inline int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr,
 
 int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter);
 
-#if !(defined (SUPPORT_WDEV_CFG80211_VENDOR_EVENT_ALLOC))
+#if !(defined (SUPPORT_WDEV_CFG80211_VENDOR_EVENT_ALLOC)) &&	\
+	(LINUX_VERSION_CODE < KERNEL_VERSION(4, 1, 0)) && 	\
+	!(defined(WITH_BACKPORTS))
+
 static inline struct sk_buff *
 backported_cfg80211_vendor_event_alloc(struct wiphy *wiphy,
 					struct wireless_dev *wdev,
 					int approxlen,
 					int event_idx, gfp_t gfp)
 {
-	return cfg80211_vendor_event_alloc(wiphy, approxlen, event_idx, gfp);
+	struct sk_buff *skb;
+
+	skb = cfg80211_vendor_event_alloc(wiphy, approxlen, event_idx, gfp);
+
+	if (skb && wdev) {
+		struct nlattr *attr;
+		u32 ifindex = wdev->netdev->ifindex;
+
+		nla_nest_cancel(skb, ((void **)skb->cb)[2]);
+		if (nla_put_u32(skb, NL80211_ATTR_IFINDEX, ifindex))
+			goto nla_fail;
+
+		attr = nla_nest_start(skb, NL80211_ATTR_VENDOR_DATA);
+		((void **)skb->cb)[2] = attr;
+	}
+
+	return skb;
+
+nla_fail:
+	kfree_skb(skb);
+	return NULL;
 }
 #define cfg80211_vendor_event_alloc backported_cfg80211_vendor_event_alloc
 #endif

@@ -1658,20 +1658,13 @@ void wlan_hdd_cfg80211_acs_ch_select_evt(hdd_adapter_t *adapter)
 	uint16_t ch_width;
 
 	vendor_event = cfg80211_vendor_event_alloc(hdd_ctx->wiphy,
-			NULL,
+			&(adapter->wdev),
 			4 * sizeof(u8) + 1 * sizeof(u16) + 4 + NLMSG_HDRLEN,
 			QCA_NL80211_VENDOR_SUBCMD_DO_ACS_INDEX,
 			GFP_KERNEL);
 
 	if (!vendor_event) {
 		hddLog(LOGE, FL("cfg80211_vendor_event_alloc failed"));
-		return;
-	}
-
-	ret_val = hdd_vendor_put_ifindex(vendor_event, adapter->dev->ifindex);
-	if (ret_val) {
-		hddLog(LOGE, FL("NL80211_ATTR_IFINDEX put fail"));
-		kfree_skb(vendor_event);
 		return;
 	}
 

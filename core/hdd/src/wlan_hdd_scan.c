@@ -1017,7 +1017,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 		qdf_mem_free(req);
 		return;
 	}
-	skb = cfg80211_vendor_event_alloc(hddctx->wiphy, NULL,
+	skb = cfg80211_vendor_event_alloc(hddctx->wiphy, &(adapter->wdev),
 			SCAN_DONE_EVENT_BUF_SIZE + 4 + NLMSG_HDRLEN,
 			QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX,
 			GFP_KERNEL);
@@ -1027,9 +1027,6 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 		qdf_mem_free(req);
 		return;
 	}
-
-	if (0 != hdd_vendor_put_ifindex(skb, adapter->dev->ifindex))
-		goto nla_put_failure;
 
 	cookie = (uintptr_t)req;
 
@@ -1676,12 +1673,6 @@ static int wlan_hdd_send_scan_start_event(struct wiphy *wiphy,
 	if (!skb) {
 		hddLog(LOGE, FL("skb alloc failed"));
 		return -ENOMEM;
-	}
-
-	ret = hdd_vendor_put_ifindex(skb, wdev->netdev->ifindex);
-	if (ret) {
-		kfree_skb(skb);
-		return -EINVAL;
 	}
 
 	if (nla_put_u64(skb, QCA_WLAN_VENDOR_ATTR_SCAN_COOKIE, cookie)) {
@@ -2409,29 +2400,6 @@ int wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	return ret;
 }
 #endif /*FEATURE_WLAN_SCAN_PNO */
-
-/**
- * hdd_vendor_put_ifindex() -send interface index
- * @skb: buffer pointer
- * @ifindex: interface index
- *
- * Send the IF index to differentiate the events on each interface
- * Return: 0 for success, non zero for failure
- */
-int hdd_vendor_put_ifindex(struct sk_buff *skb, int ifindex)
-{
-	struct nlattr *attr;
-
-	nla_nest_cancel(skb, ((void **)skb->cb)[2]);
-	if (nla_put_u32(skb, NL80211_ATTR_IFINDEX, ifindex))
-		return -EINVAL;
-
-	attr = nla_nest_start(skb, NL80211_ATTR_VENDOR_DATA);
-	((void **)skb->cb)[2] = attr;
-
-	return 0;
-}
-
 
 /**
  * hdd_cleanup_scan_queue() - remove entries in scan queue
