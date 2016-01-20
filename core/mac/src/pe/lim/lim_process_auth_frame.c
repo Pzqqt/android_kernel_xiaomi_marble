@@ -179,8 +179,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOGP);
 
 			/*
-			 * Send Authenticaton frame with
-			 * unspecified failure status code.
+			 * Send Auth frame with unspecified failure status code.
 			 */
 
 			auth_frame->authAlgoNumber =
@@ -420,9 +419,8 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 			!lim_delete_open_auth_pre_auth_node(mac_ctx)) {
 		lim_log(mac_ctx, LOGE, FL("Max no of preauth context reached"));
 		/*
-		 * Maximum number of pre-auth contexts
-		 * reached. Send Authentication frame
-		 * with unspecified failure
+		 * Maximum number of pre-auth contexts reached.
+		 * Send Authentication frame with unspecified failure
 		 */
 		auth_frame->authAlgoNumber = rx_auth_frm_body->authAlgoNumber;
 		auth_frame->authTransactionSeqNumber =
@@ -555,7 +553,6 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
 		}
 		return;
-
 	}
 
 	if (!cdf_mem_compare((uint8_t *) mac_hdr->sa,
@@ -570,7 +567,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGW,
 			FL("received Auth frame2 from unexpected peer "
 			MAC_ADDRESS_STR), MAC_ADDR_ARRAY(mac_hdr->sa));
-			return;
+		return;
 	}
 
 	if (rx_auth_frm_body->authStatusCode ==
@@ -602,7 +599,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			MAC_ADDRESS_STR),
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
-			return;
+		return;
 	}
 
 	if (rx_auth_frm_body->authStatusCode != eSIR_MAC_SUCCESS_STATUS) {
@@ -659,7 +656,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 					FL("couldnt retrieve Privacy option"));
 		cfg_privacy_opt_imp = (uint8_t) val;
 		if (!cfg_privacy_opt_imp) {
-			/**
+			/*
 			 * Requesting STA does not have WEP implemented.
 			 * Reject with unsupported authentication algo
 			 * Status code & wait until auth failure timeout
@@ -813,11 +810,9 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 				MAC_ADDRESS_STR),
 				MAC_ADDR_ARRAY(mac_hdr->sa));
 			/*
-			 * No 'pre-auth' context exists for
-			 * this STA that sent an Authentication
-			 * frame3.
-			 * Send Auth frame4 with 'out of sequence'
-			 * status code.
+			 * No 'pre-auth' context exists for this STA that sent
+			 * an Authentication frame3. Send Auth frame4 with
+			 * 'out of sequence' status code.
 			 */
 			auth_frame->authAlgoNumber = eSIR_SHARED_KEY;
 			auth_frame->authTransactionSeqNumber =
@@ -859,7 +854,7 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 			 * to delete STA context.
 			 */
 			lim_log(mac_ctx, LOGE,
-				FL("received Auth frame3 from peer with status code %d "
+				FL("rx Auth frm3 from peer with status code %d "
 				MAC_ADDRESS_STR),
 				rx_auth_frm_body->authStatusCode,
 				MAC_ADDR_ARRAY(mac_hdr->sa));
@@ -872,9 +867,10 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 		if (cdf_mem_compare(rx_auth_frm_body->challengeText,
 					auth_node->challengeText,
 					SIR_MAC_AUTH_CHALLENGE_LENGTH)) {
-			/* Challenge match. STA is autheticated! */
-
-			/* Delete Authentication response timer if running */
+			/*
+			 * Challenge match. STA is autheticated
+			 * Delete Authentication response timer if running
+			 */
 			lim_deactivate_and_change_per_sta_id_timer(mac_ctx,
 				eLIM_AUTH_RSP_TIMER, auth_node->authNodeIdx);
 
@@ -934,7 +930,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 			MAC_ADDRESS_STR),
 			pe_session->limMlmState,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
-			return;
+		return;
 	}
 
 	if (rx_auth_frm_body->authAlgoNumber != eSIR_SHARED_KEY) {
@@ -949,7 +945,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 			MAC_ADDRESS_STR),
 			rx_auth_frm_body->authAlgoNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
-			return;
+		return;
 	}
 
 	if (!cdf_mem_compare((uint8_t *) mac_hdr->sa,
@@ -965,7 +961,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 			FL("received Auth frame4 from unexpected peer "
 			MAC_ADDRESS_STR),
 			MAC_ADDR_ARRAY(mac_hdr->sa));
-			return;
+		return;
 	}
 
 	if (rx_auth_frm_body->authAlgoNumber !=
@@ -981,13 +977,12 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 			MAC_ADDRESS_STR),
 			rx_auth_frm_body->authTransactionSeqNumber,
 			MAC_ADDR_ARRAY(mac_hdr->sa));
-			return;
+		return;
 	}
 
 	if (rx_auth_frm_body->authStatusCode == eSIR_MAC_SUCCESS_STATUS) {
-		/**
-		 * Authentication Success !
-		 * Inform SME of same.
+		/*
+		 * Authentication Success, Inform SME of same.
 		 */
 		pe_session->limCurrentAuthType = eSIR_SHARED_KEY;
 		auth_node = lim_acquire_free_pre_auth_node(mac_ctx,
@@ -1363,7 +1358,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			FL("rx auth frm with invalid authseq no %d from: %pM"),
 			rx_auth_frm_body->authTransactionSeqNumber,
 			mac_hdr->sa);
-		return;
+		break;
 	}
 }
 
