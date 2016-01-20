@@ -27,6 +27,8 @@
 
 #include "ath_dfs_structs.h"
 #include <qdf_lock.h>
+#include "cds_reg_service.h"
+#include "cds_regdomain.h"
 #include "cds_ieee80211_common.h"
 
 #define IEEE80211_CHAN_MAX      255
@@ -258,7 +260,7 @@ typedef struct ieee80211com {
 	int (*ic_dfs_control)(struct ieee80211com *ic,
 			      u_int id, void *indata, uint32_t insize,
 			      void *outdata, uint32_t *outsize);
-	HAL_DFS_DOMAIN current_dfs_regdomain;
+	enum HAL_DFS_DOMAIN current_dfs_regdomain;
 	uint8_t vdev_id;
 	uint8_t last_radar_found_chan;
 	int32_t dfs_pri_multiplier;

@@ -28,14 +28,6 @@
 #ifndef CDS_COMMON__IEEE80211_I_H_
 #define CDS_COMMON__IEEE80211_I_H_
 
-/* These defines should match the table from ah_internal.h */
-typedef enum {
-	DFS_UNINIT_DOMAIN = 0,  /* Uninitialized dfs domain */
-	DFS_FCC_DOMAIN = 1,     /* FCC3 dfs domain */
-	DFS_ETSI_DOMAIN = 2,    /* ETSI dfs domain */
-	DFS_MKK4_DOMAIN = 3     /* Japan dfs domain */
-} HAL_DFS_DOMAIN;
-
 /* XXX not really a mode; there are really multiple PHY's */
 enum ieee80211_phymode {
 	IEEE80211_MODE_AUTO = 0,        /* autoselect */

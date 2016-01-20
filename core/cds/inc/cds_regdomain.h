@@ -71,53 +71,19 @@
 #ifndef REGULATORY_H
 #define REGULATORY_H
 
-enum {
-	CTRY_DEBUG = 0x1ff,     /* debug country code */
-	CTRY_DEFAULT = 0        /* default country code */
-};
-
-#define BMLEN 2                 /* Use 2 64 bit uint for channel bitmask */
-
-/*
- * The following table is the master list for all different freqeuncy
- * bands with the complete matrix of all possible flags and settings
- * for each band if it is used in ANY reg domain.
- */
-
-#define DEF_REGDMN              FCC3_FCCA
-#define    DEF_DMN_5            FCC1
-#define    DEF_DMN_2            FCCA
-#define    COUNTRY_ERD_FLAG     0x8000
+#define	CTRY_DEBUG              0x1ff
+#define	CTRY_DEFAULT            0
+#define COUNTRY_ERD_FLAG        0x8000
 #define WORLDWIDE_ROAMING_FLAG  0x4000
-#define    SUPER_DOMAIN_MASK    0x0fff
-#define    COUNTRY_CODE_MASK    0x3fff
-#define CF_INTERFERENCE         (CHANNEL_CW_INT | CHANNEL_RADAR_INT)
-#define NO_CTL          0xff
+#define DEF_REGDMN              FCC3_FCCA
 
-/*
- * The following describe the bit masks for different passive scan
- * capability/requirements per regdomain.
- */
-#define NO_PSCAN    0x0ULL
-#define PSCAN_FCC   0x0000000000000001ULL
-#define PSCAN_FCC_T 0x0000000000000002ULL
-#define PSCAN_ETSI  0x0000000000000004ULL
-#define PSCAN_MKK1  0x0000000000000008ULL
-#define PSCAN_MKK2  0x0000000000000010ULL
-#define PSCAN_MKKA  0x0000000000000020ULL
-#define PSCAN_MKKA_G    0x0000000000000040ULL
-#define PSCAN_ETSIA 0x0000000000000080ULL
-#define PSCAN_ETSIB 0x0000000000000100ULL
-#define PSCAN_ETSIC 0x0000000000000200ULL
-#define PSCAN_WWR   0x0000000000000400ULL
-#define PSCAN_MKKA1 0x0000000000000800ULL
-#define PSCAN_MKKA1_G   0x0000000000001000ULL
-#define PSCAN_MKKA2 0x0000000000002000ULL
-#define PSCAN_MKKA2_G   0x0000000000004000ULL
-#define PSCAN_MKK3  0x0000000000008000ULL
-#define PSCAN_EXT_CHAN  0x0000000000010000ULL
-#define PSCAN_DEFER 0x7FFFFFFFFFFFFFFFULL
-#define IS_ECM_CHAN 0x8000000000000000ULL
+/* These defines should match the table from ah_internal.h */
+enum HAL_DFS_DOMAIN {
+	DFS_UNINIT_DOMAIN = 0,  /* Uninitialized dfs domain */
+	DFS_FCC_DOMAIN = 1,     /* FCC3 dfs domain */
+	DFS_ETSI_DOMAIN = 2,    /* ETSI dfs domain */
+	DFS_MKK4_DOMAIN = 3     /* Japan dfs domain */
+};
 
 
 /*
@@ -129,17 +95,6 @@ typedef struct reg_dmn_pair_mapping {
 	uint16_t regDmnEnum;    /* 16 bit reg domain pair */
 	uint16_t regDmn5GHz;    /* 5GHz reg domain */
 	uint16_t regDmn2GHz;    /* 2GHz reg domain */
-	uint32_t flags5GHz;     /* Requirements flags (AdHoc
-	                           disallow, noise floor cal needed,
-	                           etc) */
-	uint32_t flags2GHz;     /* Requirements flags (AdHoc
-	                           disallow, noise floor cal needed,
-	                           etc) */
-	uint64_t pscanMask;     /* Passive Scan flags which
-	                           can override unitary domain
-	                           passive scan flags.  This
-	                           value is used as a mask on
-	                           the unitary flags */
 	uint16_t singleCC;      /* Country code of single country if
 	                           a one-on-one mapping exists */
 } REG_DMN_PAIR_MAPPING;
@@ -149,71 +104,12 @@ typedef struct {
 	uint16_t regDmnEnum;
 	const char *isoName;
 	const char *name;
-	uint16_t allow11g : 1, allow11aTurbo : 1, allow11gTurbo : 1, allow11ng20 : 1, /* HT-20 allowed in 2GHz? */
-		 allow11ng40 : 1, /* HT-40 allowed in 2GHz? */
-		 allow11na20 : 1, /* HT-20 allowed in 5GHz? */
-		 allow11na40 : 1, /* HT-40 VHT-40 allowed in 5GHz? */
-		 allow11na80 : 1; /* VHT-80 allowed in 5GHz */
-	uint16_t outdoorChanStart;
 } COUNTRY_CODE_TO_ENUM_RD;
-
-typedef struct RegDmnFreqBand {
-	uint16_t lowChannel;    /* Low channel center in MHz */
-	uint16_t highChannel;   /* High Channel center in MHz */
-	uint8_t powerDfs;       /* Max power (dBm) for channel
-	                           range when using DFS */
-	uint8_t antennaMax;     /* Max allowed antenna gain */
-	uint8_t channelBW;      /* Bandwidth of the channel */
-	uint8_t channelSep;     /* Channel separation within
-	                           the band */
-	uint64_t useDfs;        /* Use DFS in the RegDomain
-	                           if corresponding bit is set */
-	uint64_t usePassScan;   /* Use Passive Scan in the RegDomain
-	                           if corresponding bit is set */
-	uint8_t regClassId;     /* Regulatory class id */
-} REG_DMN_FREQ_BAND;
 
 typedef struct reg_domain {
 	uint16_t regDmnEnum;    /* value from EnumRd table */
 	uint8_t conformance_test_limit;
-	uint64_t dfsMask;       /* DFS bitmask for 5Ghz tables */
-	uint64_t pscan;         /* Bitmask for passive scan */
 } REG_DOMAIN;
-
-struct cmode {
-	uint32_t mode;
-	uint32_t flags;
-};
-
-#define    YES    true
-#define    NO    false
-
-/* mapping of old skus to new skus for Japan */
-typedef struct {
-	uint16_t domain;
-	uint16_t newdomain_pre53;       /* pre eeprom version 5.3 */
-	uint16_t newdomain_post53;      /* post eeprom version 5.3 */
-} JAPAN_SKUMAP;
-
-/* mapping of countrycode to new skus for Japan */
-typedef struct {
-	uint16_t ccode;
-	uint16_t newdomain_pre53;       /* pre eeprom version 5.3 */
-	uint16_t newdomain_post53;      /* post eeprom version 5.3 */
-} JAPAN_COUNTRYMAP;
-
-/* check rd flags in eeprom for japan */
-typedef struct {
-	uint16_t freqbandbit;
-	uint32_t eepromflagtocheck;
-} JAPAN_BANDCHECK;
-
-/* Common mode power table for 5Ghz */
-typedef struct {
-	uint16_t lchan;
-	uint16_t hchan;
-	uint8_t pwrlvl;
-} COMMON_MODE_POWER;
 
 /* Multi-Device RegDomain Support */
 typedef struct ath_hal_reg_dmn_tables {
