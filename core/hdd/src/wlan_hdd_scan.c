@@ -1014,6 +1014,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("Invalid adapter magic");
+		cdf_mem_free(req);
 		return;
 	}
 	skb = cfg80211_vendor_event_alloc(hddctx->wiphy, NULL,
@@ -1023,6 +1024,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 
 	if (!skb) {
 		hdd_err("skb alloc failed");
+		cdf_mem_free(req);
 		return;
 	}
 
@@ -1067,10 +1069,12 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 		goto nla_put_failure;
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cdf_mem_free(req);
 	return;
 
 nla_put_failure:
 	kfree_skb(skb);
+	cdf_mem_free(req);
 	return;
 }
 
