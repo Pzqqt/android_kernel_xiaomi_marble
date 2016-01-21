@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -823,9 +823,15 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	int rem_len;
 	int start_offset, end_offset;
 	int fold_offset, ppos_data, cur_rd_offset;
-	struct ath_pktlog_info *pl_info = (struct ath_pktlog_info *)
-					  PDE_DATA(file->f_dentry->d_inode);
-	struct ath_pktlog_buf *log_buf = pl_info->buf;
+	struct ath_pktlog_info *pl_info;
+	struct ath_pktlog_buf *log_buf;
+
+	pl_info = (struct ath_pktlog_info *)
+					PDE_DATA(file->f_path.dentry->d_inode);
+	if (!pl_info)
+		return 0;
+
+	log_buf = pl_info->buf;
 
 	if (log_buf == NULL)
 		return 0;
@@ -968,8 +974,10 @@ static struct vm_operations_struct pktlog_vmops = {
 
 static int pktlog_mmap(struct file *file, struct vm_area_struct *vma)
 {
-	struct ath_pktlog_info *pl_info = (struct ath_pktlog_info *)
-					  PDE_DATA(file->f_dentry->d_inode);
+	struct ath_pktlog_info *pl_info;
+
+	pl_info = (struct ath_pktlog_info *)
+					PDE_DATA(file->f_path.dentry->d_inode);
 
 	if (vma->vm_pgoff != 0) {
 		/* Entire buffer should be mapped */
