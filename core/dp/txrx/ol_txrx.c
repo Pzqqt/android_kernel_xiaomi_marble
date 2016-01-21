@@ -1965,7 +1965,8 @@ ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 }
 
 A_STATUS
-ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req)
+ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
+			bool response_expected)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	uint64_t cookie;
@@ -2005,6 +2006,9 @@ ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req)
 	if (req->wait.blocking)
 		while (cdf_semaphore_acquire(pdev->osdev, req->wait.sem_ptr))
 			;
+
+	if (response_expected == false)
+		cdf_mem_free(non_volatile_req);
 
 	return A_OK;
 }

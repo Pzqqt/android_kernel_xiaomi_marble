@@ -1834,7 +1834,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 	}
 	cdf_mem_zero(&req, sizeof(req));
 	req.stats_type_reset_mask = value;
-	ol_txrx_fw_stats_get(vdev, &req);
+	ol_txrx_fw_stats_get(vdev, &req, false);
 
 	return 0;
 }
@@ -1947,7 +1947,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 	}
 	req.stats_type_upload_mask = l_up_mask;
 
-	ol_txrx_fw_stats_get(vdev, &req);
+	ol_txrx_fw_stats_get(vdev, &req, true);
 
 	return 0;
 }
