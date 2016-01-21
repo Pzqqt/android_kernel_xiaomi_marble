@@ -11856,10 +11856,22 @@ CDF_STATUS csr_roam_issue_stop_bss(tpAniSirGlobal pMac, uint32_t sessionId,
 CDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 				      uint32_t *pNumChan)
 {
+	uint8_t num_chan_temp = 0;
+	int i;
+
 	if (!IS_SIR_STATUS_SUCCESS(wlan_cfg_get_str(pMac,
 					WNI_CFG_VALID_CHANNEL_LIST,
 					(uint8_t *) pChannels, pNumChan)))
 		return CDF_STATUS_E_FAILURE;
+
+	for (i = 0; i < *pNumChan; i++) {
+		if (!cds_is_dsrc_channel(cds_chan_to_freq(pChannels[i]))) {
+			pChannels[num_chan_temp] = pChannels[i];
+			num_chan_temp++;
+		}
+	}
+
+	*pNumChan = num_chan_temp;
 	return CDF_STATUS_SUCCESS;
 }
 
