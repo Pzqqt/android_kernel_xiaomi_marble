@@ -2227,13 +2227,26 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	}
 
 	/*
-	 * Driver gets only one time interval which is hard coded in
-	 * supplicant for 10000ms. Taking power consumption into account
-	 * firmware after gPNOScanTimerRepeatValue times fast_scan_period
-	 * switches slow_scan_period. This is less frequent scans and firmware
-	 * shall be in slow_scan_period mode until next PNO Start.
+	 * Before Kernel 4.4
+	 *   Driver gets only one time interval which is hard coded in
+	 *   supplicant for 10000ms.
+	 *
+	 * After Kernel 4.4
+	 *   User can configure multiple scan_plans, each scan would have
+	 *   separate scan cycle and interval. For our use case, we would
+	 *   only have supplicant set one scan_plan, and firmware also support
+	 *   only one as well, so pick up the first index.
+	 *
+	 *   Taking power consumption into account
+	 *   firmware after gPNOScanTimerRepeatValue times fast_scan_period
+	 *   switches slow_scan_period. This is less frequent scans and firmware
+	 *   shall be in slow_scan_period mode until next PNO Start.
 	 */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 4, 0)) || defined(WITH_BACKPORTS)
+	pPnoRequest->fast_scan_period = request->scan_plans[0].interval;
+#else
 	pPnoRequest->fast_scan_period = request->interval;
+#endif
 	pPnoRequest->fast_scan_max_cycles =
 				config->configPNOScanTimerRepeatValue;
 	pPnoRequest->slow_scan_period =
@@ -2241,7 +2254,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 				pPnoRequest->fast_scan_period;
 
 	hdd_info("Base scan interval: %d sec PNOScanTimerRepeatValue: %d",
-			(request->interval / 1000),
+			(pPnoRequest->fast_scan_period / 1000),
 			config->configPNOScanTimerRepeatValue);
 
 	pPnoRequest->modePNO = SIR_PNO_MODE_IMMEDIATE;
