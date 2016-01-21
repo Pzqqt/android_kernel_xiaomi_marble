@@ -3127,7 +3127,11 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 				/* indicate disconnected event to nl80211 */
 				cfg80211_disconnected(adapter->dev,
 						      WLAN_REASON_UNSPECIFIED,
-						      NULL, 0, GFP_KERNEL);
+						      NULL, 0,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)) || defined(WITH_BACKPORTS)
+						      true,
+#endif
+						      GFP_KERNEL);
 			} else if (eConnectionState_Connecting == connState) {
 				/*
 				 * Indicate connect failure to supplicant if we were in the

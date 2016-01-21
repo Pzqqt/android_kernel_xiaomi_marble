@@ -1041,12 +1041,17 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 				    eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON)
 					pr_info("wlan: disconnected due to poor signal, rssi is %d dB\n", pRoamInfo->rxRssi);
 				cfg80211_disconnected(dev, pRoamInfo->
-						      reasonCode, NULL,
-						      0, GFP_KERNEL);
+						      reasonCode, NULL, 0,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)) || defined(WITH_BACKPORTS)
+						      true,
+#endif
+						      GFP_KERNEL);
 			} else {
 				cfg80211_disconnected(dev,
-					      WLAN_REASON_UNSPECIFIED,
-					      NULL, 0,
+					      WLAN_REASON_UNSPECIFIED, NULL, 0,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)) || defined(WITH_BACKPORTS)
+						      true,
+#endif
 					      GFP_KERNEL);
 			}
 

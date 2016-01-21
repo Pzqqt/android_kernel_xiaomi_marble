@@ -9006,8 +9006,11 @@ disconnected:
 	 * is handled by __cfg80211_disconnect call to __cfg80211_disconnected
 	 */
 	hddLog(LOG1, FL("Send disconnected event to userspace"));
-	cfg80211_disconnected(pAdapter->dev, WLAN_REASON_UNSPECIFIED,
-				NULL, 0, GFP_KERNEL);
+	cfg80211_disconnected(pAdapter->dev, WLAN_REASON_UNSPECIFIED, NULL, 0,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 2, 0)) || defined(WITH_BACKPORTS)
+			      false,
+#endif
+			      GFP_KERNEL);
 #endif
 
 	return result;
