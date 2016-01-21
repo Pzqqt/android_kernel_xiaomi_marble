@@ -332,6 +332,32 @@ uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 {
 	return pdev->num_msdu_desc;
 }
+
+/**
+ * ol_tx_get_total_free_desc() - get total free descriptors
+ * @pdev: pdev handle
+ *
+ * Return: total free descriptors
+ */
+static inline
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_tx_flow_pool_t *pool = NULL;
+	uint32_t free_desc;
+
+	free_desc = pdev->tx_desc.num_free;
+	cdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	TAILQ_FOREACH(pool, &pdev->tx_desc.flow_pool_list,
+					 flow_pool_list_elem) {
+		cdf_spin_lock_bh(&pool->flow_pool_lock);
+		free_desc += pool->avail_desc;
+		cdf_spin_unlock_bh(&pool->flow_pool_lock);
+	}
+	cdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
+
+	return free_desc;
+}
+
 #else
 /**
  * ol_tx_get_desc_global_pool_size() - get global pool size
@@ -344,6 +370,19 @@ uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 {
 	return ol_cfg_target_tx_credit(pdev->ctrl_pdev);
 }
+
+/**
+ * ol_tx_get_total_free_desc() - get total free descriptors
+ * @pdev: pdev handle
+ *
+ * Return: total free descriptors
+ */
+static inline
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
+{
+	return pdev->tx_desc.num_free;
+}
+
 #endif
 
 /**
@@ -1859,7 +1898,7 @@ int ol_txrx_get_tx_pending(ol_txrx_pdev_handle pdev_handle)
 
 	total = ol_tx_get_desc_global_pool_size(pdev);
 
-	return total - pdev->tx_desc.num_free;
+	return total - ol_tx_get_total_free_desc(pdev);
 }
 
 void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev_handle)
