@@ -4447,18 +4447,24 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	if (!(rate_flags & eHAL_TX_RATE_LEGACY)) {
 		if (rate_flags & eHAL_TX_RATE_VHT80) {
 			final_rate_flags |= RATE_INFO_FLAGS_VHT_MCS;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 			final_rate_flags |= RATE_INFO_FLAGS_80_MHZ_WIDTH;
+#endif
 		} else if (rate_flags & eHAL_TX_RATE_VHT40) {
 			final_rate_flags |= RATE_INFO_FLAGS_VHT_MCS;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 			final_rate_flags |= RATE_INFO_FLAGS_40_MHZ_WIDTH;
+#endif
 		} else if (rate_flags & eHAL_TX_RATE_VHT20) {
 			final_rate_flags |= RATE_INFO_FLAGS_VHT_MCS;
 		} else if (rate_flags &
 				(eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
 			final_rate_flags |= RATE_INFO_FLAGS_MCS;
+#if (LINUX_VERSION_CODE < KERNEL_VERSION(4, 0, 0)) && !defined(WITH_BACKPORTS)
 			if (rate_flags & eHAL_TX_RATE_HT40)
 				final_rate_flags |=
 					RATE_INFO_FLAGS_40_MHZ_WIDTH;
+#endif
 		}
 
 		if (rate_flags & eHAL_TX_RATE_SGI) {
