@@ -11966,6 +11966,7 @@ typedef enum {
 	TSF_TSTAMP_CAPTURE_REQ = 1,
 	TSF_TSTAMP_CAPTURE_RESET = 2,
 	TSF_TSTAMP_READ_VALUE = 3,
+	TSF_TSTAMP_QTIMER_CAPTURE_REQ = 4,
 } wmi_tsf_tstamp_action;
 
 typedef struct {
@@ -11976,6 +11977,10 @@ typedef struct {
 	A_UINT32 vdev_id;
 	/* action type, refer to wmi_tsf_tstamp_action */
 	A_UINT32 tsf_action;
+	/* low 32 bits of qtimer */
+	A_UINT32 qtimer_low;
+	/* high 32 bits of qtimer */
+	A_UINT32 qtimer_high;
 } wmi_vdev_tsf_tstamp_action_cmd_fixed_param;
 
 typedef struct {
