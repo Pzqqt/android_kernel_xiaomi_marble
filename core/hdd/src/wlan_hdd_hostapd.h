@@ -48,7 +48,9 @@
 #define HOSTAPD_IOCTL_COMMAND_STRLEN_MAX   8192
 
 hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
-				      tSirMacAddr macAddr, uint8_t *name);
+				      tSirMacAddr macAddr,
+				      unsigned char name_assign_type,
+				      uint8_t *name);
 
 QDF_STATUS hdd_register_hostapd(hdd_adapter_t *pAdapter, uint8_t rtnl_held);
 

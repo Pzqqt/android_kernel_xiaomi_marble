@@ -247,6 +247,15 @@
 #endif
 #endif
 
+/*
+ * NET_NAME_UNKNOWN is only introduced after Kernel 3.17, to have a macro
+ * here if the Kernel version is less than 3.17 to avoid the interleave
+ * conditional compilation.
+ */
+#if !((LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS))
+#define NET_NAME_UNKNOWN	0
+#endif
+
 #define BSS_WAIT_TIMEOUT 10000
 
 /*
@@ -1398,6 +1407,7 @@ QDF_STATUS hdd_add_adapter_front(hdd_context_t *pHddCtx,
 
 hdd_adapter_t *hdd_open_adapter(hdd_context_t *pHddCtx, uint8_t session_type,
 				const char *name, tSirMacAddr macAddr,
+				unsigned char name_assign_type,
 				bool rtnl_held);
 QDF_STATUS hdd_close_adapter(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter,
 			     bool rtnl_held);

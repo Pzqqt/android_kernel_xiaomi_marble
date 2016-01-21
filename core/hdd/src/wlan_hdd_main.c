@@ -1887,8 +1887,20 @@ void hdd_set_station_ops(struct net_device *pWlanDev)
 	pWlanDev->netdev_ops = &wlan_drv_ops;
 }
 
+/**
+ * hdd_alloc_station_adapter() - allocate the station hdd adapter
+ * @hdd_ctx: global hdd context
+ * @macAddr: mac address to assign to the interface
+ * @name: User-visible name of the interface
+ *
+ * hdd adapter pointer would point to the netdev->priv space, this function
+ * would retrive the pointer, and setup the hdd adapter configuration.
+ *
+ * Return: the pointer to hdd adapter, otherwise NULL
+ */
 static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 						tSirMacAddr macAddr,
+						unsigned char name_assign_type,
 						const char *name)
 {
 	struct net_device *pWlanDev = NULL;
@@ -1896,13 +1908,11 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 	/*
 	 * cfg80211 initialization and registration....
 	 */
-	pWlanDev =
-		alloc_netdev_mq(sizeof(hdd_adapter_t), name,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
-				NET_NAME_UNKNOWN,
+	pWlanDev = alloc_netdev_mq(sizeof(hdd_adapter_t), name,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
+				   name_assign_type,
 #endif
-				ether_setup,
-				NUM_TX_QUEUES);
+				   ether_setup, NUM_TX_QUEUES);
 
 	if (pWlanDev != NULL) {
 
@@ -2347,8 +2357,25 @@ QDF_STATUS hdd_check_for_existing_macaddr(hdd_context_t *hdd_ctx,
 	}
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * hdd_open_adapter() - open and setup the hdd adatper
+ * @hdd_ctx: global hdd context
+ * @session_type: type of the interface to be created
+ * @iface_name: User-visible name of the interface
+ * @macAddr: MAC address to assign to the interface
+ * @name_assign_type: the name of assign type of the netdev
+ * @rtnl_held: the rtnl lock hold flag
+ *
+ * This function open and setup the hdd adpater according to the device
+ * type request, assign the name, the mac address assigned, and then prepared
+ * the hdd related parameters, queue, lock and ready to start.
+ *
+ * Return: the pointer of hdd adapter, otherwise NULL.
+ */
 hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 				const char *iface_name, tSirMacAddr macAddr,
+				unsigned char name_assign_type,
 				bool rtnl_held)
 {
 	hdd_adapter_t *adapter = NULL;
@@ -2398,8 +2425,9 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	case WLAN_HDD_P2P_DEVICE:
 	case WLAN_HDD_OCB:
 	{
-		adapter =
-			hdd_alloc_station_adapter(hdd_ctx, macAddr, iface_name);
+		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
+						    name_assign_type,
+						    iface_name);
 
 		if (NULL == adapter) {
 			hddLog(QDF_TRACE_LEVEL_FATAL,
@@ -2470,9 +2498,9 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	case WLAN_HDD_P2P_GO:
 	case WLAN_HDD_SOFTAP:
 	{
-		adapter =
-			hdd_wlan_create_ap_dev(hdd_ctx, macAddr,
-					       (uint8_t *) iface_name);
+		adapter = hdd_wlan_create_ap_dev(hdd_ctx, macAddr,
+						 name_assign_type,
+						 (uint8_t *) iface_name);
 		if (NULL == adapter) {
 			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("failed to allocate adapter for session %d"),
@@ -2505,8 +2533,9 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	}
 	case WLAN_HDD_FTM:
 	{
-		adapter =
-			hdd_alloc_station_adapter(hdd_ctx, macAddr, iface_name);
+		adapter = hdd_alloc_station_adapter(hdd_ctx, macAddr,
+						    name_assign_type,
+						    iface_name);
 
 		if (NULL == adapter) {
 			hddLog(QDF_TRACE_LEVEL_FATAL,
@@ -5307,7 +5336,7 @@ static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
 
 	adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_P2P_DEVICE, "p2p%d",
 				   &hdd_ctx->p2pDeviceAddress.bytes[0],
-				   rtnl_held);
+				   NET_NAME_UNKNOWN, rtnl_held);
 
 	if (NULL == adapter) {
 		hdd_alert("Failed to do hdd_open_adapter for P2P Device Interface");
@@ -5344,7 +5373,7 @@ static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
 	if (hdd_ctx->config->dot11p_mode == WLAN_HDD_11P_STANDALONE) {
 		adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_OCB, "wlanocb%d",
 					   wlan_hdd_get_intf_addr(hdd_ctx),
-					   rtnl_held);
+					   NET_NAME_UNKNOWN, rtnl_held);
 
 		if (adapter == NULL)
 			return ERR_PTR(-ENOSPC);
@@ -5354,7 +5383,7 @@ static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
 
 	adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_INFRA_STATION, "wlan%d",
 				   wlan_hdd_get_intf_addr(hdd_ctx),
-				   rtnl_held);
+				   NET_NAME_UNKNOWN, rtnl_held);
 
 	if (adapter == NULL)
 		return ERR_PTR(-ENOSPC);
@@ -5368,7 +5397,7 @@ static hdd_adapter_t *hdd_open_interfaces(hdd_context_t *hdd_ctx,
 		adapter_11p = hdd_open_adapter(hdd_ctx, WLAN_HDD_OCB,
 					       "wlanocb%d",
 					       wlan_hdd_get_intf_addr(hdd_ctx),
-					       rtnl_held);
+					       NET_NAME_UNKNOWN, rtnl_held);
 		if (adapter_11p == NULL) {
 			hdd_err("Failed to open 802.11p interface");
 			goto err_close_adapter;

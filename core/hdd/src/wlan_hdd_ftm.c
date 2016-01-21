@@ -612,7 +612,8 @@ static int hdd_ftm_service_registration(hdd_context_t *hdd_ctx)
 {
 	hdd_adapter_t *adapter;
 	adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_FTM, "wlan%d",
-				    wlan_hdd_get_intf_addr(hdd_ctx), false);
+				    wlan_hdd_get_intf_addr(hdd_ctx),
+				    NET_NAME_UNKNOWN, false);
 	if (NULL == adapter) {
 		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: hdd_open_adapter failed",
 		       __func__);

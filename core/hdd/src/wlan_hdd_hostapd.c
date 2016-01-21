@@ -6143,6 +6143,7 @@ error_wmm_init:
  * hdd_wlan_create_ap_dev() - create an AP-mode device
  * @pHddCtx: Global HDD context
  * @macAddr: MAC address to assign to the interface
+ * @name_assign_type: the name of assign type of the netdev
  * @iface_name: User-visible name of the interface
  *
  * This function will allocate a Linux net_device and configuration it
@@ -6154,19 +6155,19 @@ error_wmm_init:
  */
 hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 				      tSirMacAddr macAddr,
-				      uint8_t *iface_name) {
+				      unsigned char name_assign_type,
+				      uint8_t *iface_name)
+{
 	struct net_device *pWlanHostapdDev = NULL;
 	hdd_adapter_t *pHostapdAdapter = NULL;
 
 	hddLog(LOG4, FL("iface_name = %s"), iface_name);
 
-	pWlanHostapdDev =
-		alloc_netdev_mq(sizeof(hdd_adapter_t), iface_name,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0))
-				NET_NAME_UNKNOWN,
+	pWlanHostapdDev = alloc_netdev_mq(sizeof(hdd_adapter_t), iface_name,
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 17, 0)) || defined(WITH_BACKPORTS)
+					  name_assign_type,
 #endif
-				ether_setup,
-				NUM_TX_QUEUES);
+					  ether_setup, NUM_TX_QUEUES);
 
 	if (pWlanHostapdDev != NULL) {
 		pHostapdAdapter = netdev_priv(pWlanHostapdDev);

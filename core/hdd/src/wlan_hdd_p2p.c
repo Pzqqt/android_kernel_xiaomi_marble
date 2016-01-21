@@ -1949,8 +1949,20 @@ static uint8_t wlan_hdd_get_session_type(enum nl80211_iftype type)
 	return sessionType;
 }
 
+/**
+ * __wlan_hdd_add_virtual_intf() - Add virtual interface
+ * @wiphy: wiphy pointer
+ * @name: User-visible name of the interface
+ * @name_assign_type: the name of assign type of the netdev
+ * @nl80211_iftype: (virtual) interface types
+ * @flags: moniter configuraiton flags (not used)
+ * @vif_params: virtual interface parameters (not used)
+ *
+ * Return: the pointer of wireless dev, otherwise NULL.
+ */
 struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 						 const char *name,
+						 unsigned char name_assign_type,
 						 enum nl80211_iftype type,
 						 u32 *flags,
 						 struct vif_params *params)
@@ -2020,12 +2032,16 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		p2pDeviceAddress.bytes[4] ^= 0x80;
 		pAdapter = hdd_open_adapter(pHddCtx,
 					    wlan_hdd_get_session_type(type),
-					    name, p2pDeviceAddress.bytes, true);
+					    name, p2pDeviceAddress.bytes,
+					    name_assign_type,
+					    true);
 	} else {
-		pAdapter =
-			hdd_open_adapter(pHddCtx, wlan_hdd_get_session_type(type),
-					 name, wlan_hdd_get_intf_addr(pHddCtx),
-					 true);
+		pAdapter = hdd_open_adapter(pHddCtx,
+					    wlan_hdd_get_session_type(type),
+					    name,
+					    wlan_hdd_get_intf_addr(pHddCtx),
+					    name_assign_type,
+					    true);
 	}
 
 	if (NULL == pAdapter) {
@@ -2037,8 +2053,21 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	return pAdapter->dev->ieee80211_ptr;
 }
 
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(4, 1, 0)) || defined(WITH_BACKPORTS)
+/**
+ * wlan_hdd_add_virtual_intf() - Add virtual interface wrapper
+ * @wiphy: wiphy pointer
+ * @name: User-visible name of the interface
+ * @name_assign_type: the name of assign type of the netdev
+ * @nl80211_iftype: (virtual) interface types
+ * @flags: monitor mode configuration flags (not used)
+ * @vif_params: virtual interface parameters (not used)
+ *
+ * Return: the pointer of wireless dev, otherwise NULL.
+ */
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
+					       unsigned char name_assign_type,
 					       enum nl80211_iftype type,
 					       u32 *flags,
 					       struct vif_params *params)
@@ -2046,10 +2075,40 @@ struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	struct wireless_dev *wdev;
 
 	cds_ssr_protect(__func__);
-	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, type, flags, params);
+	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
+					   type, flags, params);
 	cds_ssr_unprotect(__func__);
 	return wdev;
+
 }
+#else
+/**
+ * wlan_hdd_add_virtual_intf() - Add virtual interface wrapper
+ * @wiphy: wiphy pointer
+ * @name: User-visible name of the interface
+ * @nl80211_iftype: (virtual) interface types
+ * @flags: monitor mode configuration flags (not used)
+ * @vif_params: virtual interface parameters (not used)
+ *
+ * Return: the pointer of wireless dev, otherwise NULL.
+ */
+struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
+					       const char *name,
+					       enum nl80211_iftype type,
+					       u32 *flags,
+					       struct vif_params *params)
+{
+	struct wireless_dev *wdev;
+	unsigned char name_assign_type = 0;
+
+	cds_ssr_protect(__func__);
+	wdev = __wlan_hdd_add_virtual_intf(wiphy, name, name_assign_type,
+					   type, flags, params);
+	cds_ssr_unprotect(__func__);
+	return wdev;
+
+}
+#endif
 
 int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 {
