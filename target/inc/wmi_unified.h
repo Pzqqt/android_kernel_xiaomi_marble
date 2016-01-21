@@ -9107,6 +9107,11 @@ typedef struct {
 #define LPI_IE_BITMAP_SCAN_ID                0x00100000     /*extscan inserts the scan cycle count for this value; other scan clients can insert the scan id of the scan, if needed.*/
 #define LPI_IE_BITMAP_FLAGS                  0x00200000     /* reserved as a bitmap to indicate more scan information; one such use being to indicate if the on-going scan is interrupted or not*/
 #define LPI_IE_BITMAP_CACHING_REQD           0x00400000     /*extscan will use this field to indicate if this frame info needs to be cached in LOWI LP or not*/
+/*
+ * extscan will use this field to indicate to
+ * LOWI LP whether to report result to context hub or not
+ */
+#define LPI_IE_BITMAP_REPORT_CONTEXT_HUB     0x00800000
 #define LPI_IE_BITMAP_ALL                    0xFFFFFFFF
 
 typedef struct {
@@ -10123,6 +10128,8 @@ typedef enum {
 	WMI_EXTSCAN_BUCKET_COMPLETED_EVENT = 0x0008,
 	WMI_EXTSCAN_BUCKET_FAILED_EVENT = 0x0010,
 	WMI_EXTSCAN_BUCKET_OVERRUN_EVENT = 0x0020,
+	WMI_EXTSCAN_THRESHOLD_NUM_SCANS = 0x0040,
+	WMI_EXTSCAN_THRESHOLD_PERCENT = 0x0080,
 
 	WMI_EXTSCAN_EVENT_MAX = 0x8000
 } wmi_extscan_event_type;
@@ -10152,6 +10159,8 @@ typedef enum {
 	 * configuration flags has this bit  set
 	 */
 	WMI_EXTSCAN_BUCKET_CACHE_RESULTS = 0x0001,
+	/* Report ext scan results to context hub or not.*/
+	WMI_EXTSCAN_REPORT_EVENT_CONTEXT_HUB = 0x0002,
 } wmi_extscan_bucket_configuration_flags;
 
 typedef enum {
@@ -10725,6 +10734,8 @@ typedef struct {
 	A_UINT32 first_entry_index;
 	/**number of bssids in this page */
 	A_UINT32 num_entries_in_page;
+	/* number of buckets scanned */
+	A_UINT32 buckets_scanned;
 	/* Followed by the variable length TLVs
 	 *     wmi_extscan_wlan_descriptor    bssid_list[]
 	 *     wmi_extscan_rssi_info          rssi_list[]
