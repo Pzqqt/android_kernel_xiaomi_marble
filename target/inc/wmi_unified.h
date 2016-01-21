@@ -6056,6 +6056,7 @@ typedef struct {
 	/* The TLVs will follow.
 	 * wmi_roam_scan_extended_threshold_param extended_param;
 	 * wmi_roam_earlystop_rssi_thres_param earlystop_param;
+	 * wmi_roam_dense_thres_param dense_param;
 	 */
 } wmi_roam_scan_rssi_threshold_fixed_param;
 
@@ -6227,6 +6228,24 @@ typedef struct {
 	/* Maminum RSSI threshold value for early stop, unit is dB above NF. */
 	A_UINT32 roam_earlystop_thres_max;
 } wmi_roam_earlystop_rssi_thres_param;
+
+typedef struct {
+	/* TLV tag and len;
+	 * tag equals WMITLV_TAG_STRUC_wmi_roam_dense_thres_param
+	 */
+	A_UINT32 tlv_header;
+	/* rssi threshold offset under trffic and dense env */
+	A_UINT32 roam_dense_rssi_thres_offset;
+	/* minimum number of APs to determine dense env */
+	A_UINT32 roam_dense_min_aps;
+	/* initial dense status detected by host
+	 * at the time of initial connection */
+	A_UINT32 roam_dense_status;
+	/* traffic threshold to enable aggressive roaming in dense env;
+	 * units are percent of medium occupancy, 0 - 100
+	 */
+	A_UINT32 roam_dense_traffic_thres;
+} wmi_roam_dense_thres_param;
 
 /** Beacon filter wmi command info */
 
