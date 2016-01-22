@@ -620,6 +620,77 @@ hdd_sap_get_phymode(hdd_adapter_t *hostapd_adapter)
 #endif
 
 /**
+ * hdd_update_chandef() - Function to update channel width and center freq
+ * @hostapd_adapter:	hostapd adapter
+ * @chandef:		cfg80211 chan def
+ * @cb_mode:		chan offset
+ *
+ * This function will be called to update channel width and center freq
+ *
+ * Return: None
+ */
+#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)) || defined(WITH_BACKPORTS)
+static inline void
+hdd_update_chandef(hdd_adapter_t *hostapd_adapter,
+		struct cfg80211_chan_def *chandef,
+		ePhyChanBondState cb_mode)
+{
+	uint16_t   ch_width;
+	hdd_ap_ctx_t *phdd_ap_ctx;
+	uint8_t  center_chan, chan;
+
+	phdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(hostapd_adapter);
+	ch_width = phdd_ap_ctx->sapConfig.acs_cfg.ch_width;
+
+	switch (ch_width) {
+	case eHT_CHANNEL_WIDTH_20MHZ:
+	case eHT_CHANNEL_WIDTH_40MHZ:
+		hdd_info("ch_width %d, won't update", ch_width);
+		break;
+	case eHT_CHANNEL_WIDTH_80MHZ:
+		chan = cds_freq_to_chan(chandef->chan->center_freq);
+		chandef->width = NL80211_CHAN_WIDTH_80;
+
+		switch (cb_mode) {
+		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
+		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
+			center_chan = chan + 2;
+			break;
+		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
+			center_chan = chan + 6;
+			break;
+		case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
+		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED:
+			center_chan = chan - 2;
+			break;
+		case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
+			center_chan = chan - 6;
+			break;
+		default:
+			center_chan = chan;
+			break;
+		}
+
+		chandef->center_freq1 = cds_chan_to_freq(center_chan);
+		break;
+	case eHT_CHANNEL_WIDTH_160MHZ:
+	default:
+		/* Todo, please add related codes if support 160MHZ or others */
+		hdd_err("unsupport ch_width %d", ch_width);
+		break;
+	}
+
+}
+#else
+static inline void
+hdd_update_chandef(hdd_adapter_t *hostapd_adapter,
+		struct cfg80211_chan_def *chandef,
+		ePhyChanBondState cb_mode)
+{
+}
+#endif
+
+/**
  * hdd_chan_change_notify() - Function to notify hostapd about channel change
  * @hostapd_adapter	hostapd adapter
  * @dev:		Net device structure
@@ -688,6 +759,10 @@ CDF_STATUS hdd_chan_change_notify(hdd_adapter_t *hostapd_adapter,
 		__func__, phy_mode, cb_mode, channel_type, oper_chan);
 
 	cfg80211_chandef_create(&chandef, chan, channel_type);
+
+	if ((phy_mode == eCSR_DOT11_MODE_11ac) ||
+	    (phy_mode == eCSR_DOT11_MODE_11ac_ONLY))
+		hdd_update_chandef(hostapd_adapter, &chandef, cb_mode);
 
 	cfg80211_ch_switch_notify(dev, &chandef);
 
