@@ -1675,9 +1675,7 @@ void hif_disable_bus(void *bdev)
 
 #define OL_ATH_PCI_PM_CONTROL 0x44
 
-#ifdef CONFIG_CNSS
-
-#ifdef RUNTIME_PM
+#ifdef FEATURE_RUNTIME_PM
 /**
  * hif_runtime_prevent_linkdown() - prevent or allow a runtime pm from occuring
  * @scn: hif context
@@ -1700,6 +1698,7 @@ static void hif_runtime_prevent_linkdown(struct ol_softc *scn, bool flag)
 }
 #endif
 
+#if defined(CONFIG_CNSS) && defined(CONFIG_PCI_MSM)
 /**
  * hif_bus_prevent_linkdown(): allow or permit linkdown
  * @flag: true prevents linkdown, false allows
@@ -1715,6 +1714,13 @@ void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
 			(flag ? "disable" : "enable"));
 	hif_runtime_prevent_linkdown(scn, flag);
 	cnss_wlan_pm_control(flag);
+}
+#else
+void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
+{
+	HIF_ERROR("wlan: %s pcie power collapse",
+			(flag ? "disable" : "enable"));
+	hif_runtime_prevent_linkdown(scn, flag);
 }
 #endif
 
