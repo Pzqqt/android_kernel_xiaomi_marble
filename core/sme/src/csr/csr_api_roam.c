@@ -18413,7 +18413,7 @@ csr_update_op_class_array(tpAniSirGlobal mac_ctx,
 		&& *i < (CDS_MAX_SUPP_OPER_CLASSES - 1); idx++) {
 		for (ch_bandwidth = BW20; ch_bandwidth < BWALL;
 			ch_bandwidth++) {
-			class = cds_regdm_get_opclass_from_channel(
+			class = cds_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel_info->channelList[idx],
 					ch_bandwidth);
@@ -18484,7 +18484,7 @@ void csr_init_operating_classes(tHalHandle hHal)
 	/* Set the ordered list of op classes in regdomain
 	 * for use by other modules
 	 */
-	cds_regdm_set_curr_opclasses(numClasses, &opClasses[0]);
+	cds_reg_dmn_set_curr_opclasses(numClasses, &opClasses[0]);
 }
 
 /**

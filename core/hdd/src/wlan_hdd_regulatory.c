@@ -139,10 +139,10 @@ hdd_world_regrules_67_68_6A_6C = {
 static const struct ieee80211_regdomain *hdd_get_world_regrules(
 struct regulatory *reg)
 {
-	REG_DMN_PAIR_MAPPING *regpair =
-		(REG_DMN_PAIR_MAPPING *)reg->regpair;
+	struct reg_dmn_pair *regpair =
+		(struct reg_dmn_pair *)reg->regpair;
 
-	switch (regpair->regDmnEnum) {
+	switch (regpair->reg_dmn_enum) {
 	case 0x60:
 	case 0x61:
 	case 0x62:

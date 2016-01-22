@@ -260,7 +260,7 @@ typedef struct ieee80211com {
 	int (*ic_dfs_control)(struct ieee80211com *ic,
 			      u_int id, void *indata, uint32_t insize,
 			      void *outdata, uint32_t *outsize);
-	enum HAL_DFS_DOMAIN current_dfs_regdomain;
+	enum dfs_domain current_dfs_regdomain;
 	uint8_t vdev_id;
 	uint8_t last_radar_found_chan;
 	int32_t dfs_pri_multiplier;

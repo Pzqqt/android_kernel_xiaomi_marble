@@ -5544,7 +5544,7 @@ static void send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tpDphHashNode psta;
 
 
-	op_class = cds_regdm_get_opclass_from_channel(
+	op_class = cds_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				new_channel,
 				ch_bandwidth);
@@ -5591,7 +5591,7 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	tpPESession session_entry = NULL;
 	uint8_t session_id;
 	tLimWiderBWChannelSwitchInfo *wider_bw_ch_switch;
-	offset_t ch_offset;
+	enum offset_t ch_offset;
 
 	if (msg_buf == NULL) {
 		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));

@@ -1430,7 +1430,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 		for (; bw >= BW20; bw--) {
 			uint16_t op_class;
 
-			op_class = cds_regdm_get_opclass_from_channel(
+			op_class = cds_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel, bw);
 			if (!op_class)

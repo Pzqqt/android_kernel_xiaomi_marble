@@ -256,7 +256,7 @@ void populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 		ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
 
 	dot_11_ptr->switch_mode = session_entry->gLimChannelSwitch.switchMode;
-	dot_11_ptr->new_reg_class = cds_regdm_get_opclass_from_channel(
+	dot_11_ptr->new_reg_class = cds_reg_dmn_get_opclass_from_channel(
 			mac_ptr->scan.countryCodeCurrent,
 			session_entry->gLimChannelSwitch.primaryChannel,
 			ch_offset);
@@ -320,9 +320,9 @@ populate_dot11_supp_operating_classes(tpAniSirGlobal mac_ptr,
 		}
 	}
 
-	cds_regdm_get_curr_opclasses(&dot_11_ptr->num_classes,
+	cds_reg_dmn_get_curr_opclasses(&dot_11_ptr->num_classes,
 					&dot_11_ptr->classes[1]);
-	dot_11_ptr->classes[0] = cds_regdm_get_opclass_from_channel(
+	dot_11_ptr->classes[0] = cds_reg_dmn_get_opclass_from_channel(
 					mac_ptr->scan.countryCodeCurrent,
 					session_entry->currentOperChannel,
 					ch_bandwidth);

@@ -880,10 +880,10 @@ tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
 	ht40_obss_scanind->obss_activity_threshold =
 		session->obss_ht40_scanparam.obss_activity_threshold;
 	ht40_obss_scanind->current_operatingclass =
-			cds_regdm_get_opclass_from_channel(
-				mac_ctx->scan.countryCodeCurrent,
-				session->currentOperChannel,
-				session->ch_width);
+		cds_reg_dmn_get_opclass_from_channel(
+			mac_ctx->scan.countryCodeCurrent,
+			session->currentOperChannel,
+			session->ch_width);
 	channelnum = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	if (wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
 			chan_list, &channelnum) != eSIR_SUCCESS) {

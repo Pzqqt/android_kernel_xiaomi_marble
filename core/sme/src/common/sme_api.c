@@ -15303,20 +15303,20 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 	 * matching 20MHz, else for any BW.
 	 */
 	if (bw_offset & (1 << BW_40_OFFSET_BIT)) {
-		*opclass = cds_regdm_get_opclass_from_channel(
+		*opclass = cds_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BW40_LOW_PRIMARY);
 		if (!(*opclass)) {
-			*opclass = cds_regdm_get_opclass_from_channel(
+			*opclass = cds_reg_dmn_get_opclass_from_channel(
 					mac_ctx->scan.countryCodeCurrent,
 					channel, BW40_HIGH_PRIMARY);
 		}
 	} else if (bw_offset & (1 << BW_20_OFFSET_BIT)) {
-		*opclass = cds_regdm_get_opclass_from_channel(
+		*opclass = cds_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BW20);
 	} else {
-		*opclass = cds_regdm_get_opclass_from_channel(
+		*opclass = cds_reg_dmn_get_opclass_from_channel(
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BWALL);
 	}

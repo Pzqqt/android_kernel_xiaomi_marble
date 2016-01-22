@@ -2610,7 +2610,7 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 
 	}
 
-	op_class = cds_regdm_get_opclass_from_channel(
+	op_class = cds_reg_dmn_get_opclass_from_channel(
 		pMac->scan.countryCodeCurrent,
 		psessionEntry->currentOperChannel,
 		chanOffset);
@@ -2635,7 +2635,7 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 	suppOperClasses->present = 1;
 	suppOperClasses->classes[0] = op_class;
 
-	cds_regdm_get_curr_opclasses(&numClasses, &classes[0]);
+	cds_reg_dmn_get_curr_opclasses(&numClasses, &classes[0]);
 
 	for (i = 0; i < numClasses; i++) {
 		suppOperClasses->classes[i + 1] = classes[i];

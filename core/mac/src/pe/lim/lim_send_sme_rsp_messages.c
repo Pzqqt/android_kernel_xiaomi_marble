@@ -2106,7 +2106,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			} else if (csa_params->ies_present_flag
 			    & lim_xcsa_ie_present) {
 				chan_space =
-					cds_regdm_get_chanwidth_from_opclass(
+					cds_reg_dmn_get_chanwidth_from_opclass(
 					    mac_ctx->scan.countryCodeCurrent,
 					    csa_params->channel,
 					    csa_params->new_op_class);
@@ -2157,7 +2157,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			if (csa_params->ies_present_flag
 			    & lim_xcsa_ie_present) {
 				chan_space =
-					cds_regdm_get_chanwidth_from_opclass(
+					cds_reg_dmn_get_chanwidth_from_opclass(
 					mac_ctx->scan.countryCodeCurrent,
 					csa_params->channel,
 					csa_params->new_op_class);
