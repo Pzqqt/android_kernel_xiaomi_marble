@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -912,18 +912,17 @@ static inline uint8_t cdf_nbuf_get_tx_parallel_dnload_frm(cdf_nbuf_t buf)
  *
  * Return: none
  */
+
+#ifdef MSM_PLATFORM
 static inline void cdf_invalidate_range(void *start, void *end)
 {
-#ifdef MSM_PLATFORM
 	dmac_inv_range(start, end);
-#else
-	/* TODO figure out how to invalidate cache on x86 and other
-	   non-MSM platform */
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
-		  "Cache invalidate not yet implemneted for non-MSM platform");
-	return;
-#endif
 }
+#else
+static inline void cdf_invalidate_range(void *start, void *end)
+{
+}
+#endif
 
 #if defined(FEATURE_TSO)
 /**
