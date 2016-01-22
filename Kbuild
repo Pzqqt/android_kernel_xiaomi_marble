@@ -847,6 +847,23 @@ ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 WMA_OBJS +=	$(WMA_SRC_DIR)/wma_utils_ut.o
 endif
 
+############## PLD ##########
+PLD_DIR := core/pld
+PLD_INC_DIR := $(PLD_DIR)/inc
+PLD_SRC_DIR := $(PLD_DIR)/src
+
+PLD_INC :=	-I$(WLAN_ROOT)/$(PLD_INC_DIR) \
+		-I$(WLAN_ROOT)/$(PLD_SRC_DIR)
+
+PLD_OBJS :=	$(PLD_SRC_DIR)/pld_common.o
+
+ifeq ($(CONFIG_PCI), y)
+PLD_OBJS +=	$(PLD_SRC_DIR)/pld_pcie.o
+endif
+ifeq ($(CONFIG_ICNSS),y)
+PLD_OBJS +=	$(PLD_SRC_DIR)/pld_snoc.o
+endif
+
 TARGET_INC :=	-I$(WLAN_ROOT)/target/inc
 
 LINUX_INC :=	-Iinclude/linux
@@ -884,6 +901,8 @@ INCS +=		$(NLINK_INC) \
 		$(PTT_INC) \
 		$(WLAN_LOGGING_INC)
 
+INCS +=		$(PLD_INC)
+
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)
 INCS +=		$(PKTLOG_INC)
 endif
@@ -916,6 +935,8 @@ OBJS +=		$(HIF_OBJS) \
 OBJS +=		$(WLAN_LOGGING_OBJS)
 OBJS +=		$(NLINK_OBJS)
 OBJS +=		$(PTT_OBJS)
+
+OBJS +=		$(PLD_OBJS)
 
 ifeq ($(CONFIG_REMOVE_PKT_LOG), 0)
 OBJS +=		$(PKTLOG_OBJS)
