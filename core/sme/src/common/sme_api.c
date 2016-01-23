@@ -3125,11 +3125,10 @@ QDF_STATUS sme_get_ap_channel_from_scan_cache(tHalHandle hal_handle,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("Aquiring lock failed"));
+		csr_free_scan_filter(mac_ctx, scan_filter);
 		status = QDF_STATUS_E_FAILURE;
 	}
-
 	qdf_mem_free(scan_filter);
-
 	return status;
 }
 
