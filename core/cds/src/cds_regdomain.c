@@ -65,7 +65,7 @@
  * SUCH DAMAGES.
  */
 
-#include <qdf_types.h>
+#include "qdf_types.h"
 #include "wma.h"
 #include "cds_regdomain.h"
 
@@ -486,32 +486,51 @@ struct reg_dmn_tables g_reg_dmn_tbl = {
 	QDF_ARRAY_SIZE(g_reg_dmns),
 };
 
-static uint16_t get_eeprom_rd(uint16_t rd)
+/**
+ * get_bdf_reg_dmn() - get regulatory domain from BDF
+ * @reg_dmn: BDF regulatory domain
+ *
+ * Return: regulatory domain
+ */
+static uint16_t get_bdf_reg_dmn(uint16_t reg_dmn)
 {
-	return rd & ~WORLDWIDE_ROAMING_FLAG;
+	return reg_dmn & ~WORLDWIDE_ROAMING_FLAG;
 }
 
-static bool reg_dmn_is_eeprom_valid(uint16_t rd)
+/**
+ * is_reg_dmn_valid() - is regulatory domain valid
+ * @reg_dmn: regulatory domain
+ *
+ * Return: true or false
+ */
+static bool is_reg_dmn_valid(uint16_t reg_dmn)
 {
 	int32_t i;
 
-	if (rd & COUNTRY_ERD_FLAG) {
-		uint16_t cc = rd & ~COUNTRY_ERD_FLAG;
+	if (reg_dmn & COUNTRY_ERD_FLAG) {
+		uint16_t cc = reg_dmn & ~COUNTRY_ERD_FLAG;
 		for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++)
 			if (g_reg_dmn_tbl.all_countries[i].country_code == cc)
 				return true;
 	} else {
 		for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++)
-			if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum == rd)
+			if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum
+			    == reg_dmn)
 				return true;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-		  "invalid regulatory domain/country code 0x%x", rd);
+		  "invalid regulatory domain/country code 0x%x", reg_dmn);
 
 	return false;
 }
 
+/**
+ * find_country() - find country data
+ * @country_code: country code
+ *
+ * Return: country code data pointer
+ */
 static const struct country_code_to_reg_dmn *find_country(uint16_t country_code)
 {
 	int32_t i;
@@ -524,6 +543,12 @@ static const struct country_code_to_reg_dmn *find_country(uint16_t country_code)
 	return NULL;
 }
 
+/**
+ * cds_get_country_from_alpha2() - get country from alpha2
+ * @alpha2: country code alpha2
+ *
+ * Return: country code
+ */
 int32_t cds_get_country_from_alpha2(uint8_t *alpha2)
 {
 	int32_t i;
@@ -537,20 +562,26 @@ int32_t cds_get_country_from_alpha2(uint8_t *alpha2)
 	return CTRY_DEFAULT;
 }
 
-static uint16_t reg_dmn_get_default_country(uint16_t rd)
+/**
+ * reg_dmn_get_default_country() - get default country for regulatory domain
+ * @reg_dmn: regulatory domain
+ *
+ * Return: default country
+ */
+static uint16_t reg_dmn_get_default_country(uint16_t reg_dmn)
 {
 	int32_t i;
 	const struct country_code_to_reg_dmn *country = NULL;
-	uint16_t cc = rd & ~COUNTRY_ERD_FLAG;
+	uint16_t cc = reg_dmn & ~COUNTRY_ERD_FLAG;
 
-	if (rd & COUNTRY_ERD_FLAG) {
+	if (reg_dmn & COUNTRY_ERD_FLAG) {
 		country = find_country(cc);
 		if (country)
 			return cc;
 	}
 
 	for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++) {
-		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum == rd) {
+		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum == reg_dmn) {
 			if (g_reg_dmn_tbl.reg_dmn_pairs[i].single_cc != 0)
 				return g_reg_dmn_tbl.reg_dmn_pairs[i].single_cc;
 			else
@@ -561,6 +592,12 @@ static uint16_t reg_dmn_get_default_country(uint16_t rd)
 	return CTRY_DEFAULT;
 }
 
+/**
+ * get_reg_dmn_pair() - get regulatory domain pair pointer
+ * @reg_dmn: regulatory domain
+ *
+ * Return: pointer to regulatory domain pair data
+ */
 static const struct reg_dmn_pair *get_reg_dmn_pair(uint16_t reg_dmn)
 {
 	int32_t i;
@@ -573,6 +610,12 @@ static const struct reg_dmn_pair *get_reg_dmn_pair(uint16_t reg_dmn)
 	return NULL;
 }
 
+/**
+ * get_reg_dmn() - get regulatory domain pointer
+ * @reg_dmn: regulatory domain
+ *
+ * Return: pointer to regulatory domain data
+ */
 static const struct reg_dmn *get_reg_dmn(uint16_t reg_dmn)
 {
 	int32_t i;
@@ -585,6 +628,12 @@ static const struct reg_dmn *get_reg_dmn(uint16_t reg_dmn)
 	return NULL;
 }
 
+/**
+ * get_country_from_rd() - get country from regulatory domain
+ * @reg_dmn: regulatory domain
+ *
+ * Return: country code enum
+ */
 static const struct country_code_to_reg_dmn *get_country_from_rd(
 	uint16_t reg_dmn)
 {
@@ -598,7 +647,13 @@ static const struct country_code_to_reg_dmn *get_country_from_rd(
 	return NULL;
 }
 
-static void regd_sanitize(struct regulatory *reg)
+/**
+ * reg_dmn_sanitize() - sanitize regulatory domain
+ * @reg: regulatory data structure
+ *
+ * Return: none
+ */
+static void reg_dmn_sanitize(struct regulatory *reg)
 {
 	if (reg->reg_domain != COUNTRY_ERD_FLAG)
 		return;
@@ -606,19 +661,25 @@ static void regd_sanitize(struct regulatory *reg)
 	reg->reg_domain = WOR0_WORLD;
 }
 
+/**
+ * cds_fill_some_regulatory_info() - fill regulatory information
+ * @reg: regulatory data structure
+ *
+ * Return: error code
+ */
 int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 {
 	uint16_t country_code;
 	uint16_t reg_dmn, rd;
 	const struct country_code_to_reg_dmn *country = NULL;
 
-	regd_sanitize(reg);
+	reg_dmn_sanitize(reg);
 	rd = reg->reg_domain;
 
-	if (!reg_dmn_is_eeprom_valid(rd))
+	if (!is_reg_dmn_valid(rd))
 		return -EINVAL;
 
-	reg_dmn = get_eeprom_rd(rd);
+	reg_dmn = get_bdf_reg_dmn(rd);
 
 	country_code = reg_dmn_get_default_country(reg_dmn);
 	if (country_code == CTRY_DEFAULT && reg_dmn == CTRY_DEFAULT)
@@ -658,6 +719,12 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 	return 0;
 }
 
+/**
+ * get_reg_dmn_for_country() - get regulatory domain for country
+ * @alpha2: country alpha2
+ *
+ * Return: regulatory domain
+ */
 int32_t get_reg_dmn_for_country(uint8_t *alpha2)
 {
 	uint8_t i;
@@ -671,6 +738,12 @@ int32_t get_reg_dmn_for_country(uint8_t *alpha2)
 	return -1;
 }
 
+/**
+ * cds_fill_and_send_ctl_to_fw() - fill and send ctl to firmware
+ * @reg: the regulatory handle
+ *
+ * Return: none
+ */
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 {
 	const struct reg_dmn *reg_dmn_2g = NULL;
@@ -711,8 +784,8 @@ void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 				      regpair->reg_dmn_5ghz, ctl_2g, ctl_5g);
 }
 
-/* cds_set_wma_dfs_region() - to set the dfs region to wma
- *
+/**
+ * cds_set_wma_dfs_region() - to set the dfs region to wma
  * @reg: the regulatory handle
  *
  * Return: none
@@ -733,6 +806,12 @@ void cds_set_wma_dfs_region(uint8_t dfs_region)
 	wma_set_dfs_region(wma, dfs_region);
 }
 
+/**
+ * cds_get_reg_dmn_5g() - get the 5G reg-domain
+ * @reg_dmn: the complete reg domain
+ *
+ * Return: 5 G reg domain
+ */
 uint16_t cds_get_reg_dmn_5g(uint32_t reg_dmn)
 {
 	uint16_t i;
@@ -745,6 +824,7 @@ uint16_t cds_get_reg_dmn_5g(uint32_t reg_dmn)
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "invalid regulatory domain/country code 0x%x",
 		  reg_dmn);
+
 	return 0;
 }
 
@@ -761,8 +841,8 @@ uint16_t cds_get_reg_dmn_5g(uint32_t reg_dmn)
  *
  */
 uint16_t cds_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
-					       uint8_t channel,
-					       uint8_t opclass)
+						uint8_t channel,
+						uint8_t opclass)
 {
 	const struct reg_dmn_op_class_map_t *class;
 	uint16_t i;
@@ -793,8 +873,16 @@ uint16_t cds_reg_dmn_get_chanwidth_from_opclass(uint8_t *country,
 }
 
 
+/**
+ * cds_reg_dmn_get_opclass_from_channel() - get operating class from channel
+ * @country: the complete reg domain
+ * @channel: channel number
+ * @offset: the value of offset
+ *
+ * Return: operating class
+ */
 uint16_t cds_reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
-					    uint8_t offset)
+					      uint8_t offset)
 {
 	const struct reg_dmn_op_class_map_t *class = NULL;
 	uint16_t i = 0;
@@ -824,6 +912,13 @@ uint16_t cds_reg_dmn_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 	return 0;
 }
 
+/**
+ * cds_reg_dmn_set_curr_opclasses() - set the current operating class
+ * @num_classes: number of classes
+ * @class: operating class
+ *
+ * Return: error code
+ */
 uint16_t cds_reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class)
 {
 	uint8_t i;
@@ -843,6 +938,13 @@ uint16_t cds_reg_dmn_set_curr_opclasses(uint8_t num_classes, uint8_t *class)
 	return 0;
 }
 
+/**
+ * cds_reg_dmn_get_curr_opclasses() - get the current operating class
+ * @num_classes: number of classes
+ * @class: operating class
+ *
+ * Return: error code
+ */
 uint16_t cds_reg_dmn_get_curr_opclasses(uint8_t *num_classes, uint8_t *class)
 {
 	uint8_t i;
