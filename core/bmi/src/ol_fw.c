@@ -146,6 +146,8 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	int bin_off, bin_len;
 	SIGN_HEADER_T *sign_header;
 #endif
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	uint32_t target_type = tgt_info->target_type;
 
 	switch (file) {
 	default:
@@ -303,7 +305,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		cdf_mem_copy(temp_eeprom, (uint8_t *) fw_entry->data,
 			  fw_entry_size);
 
-		switch (scn->target_type) {
+		switch (target_type) {
 		default:
 			board_data_size = 0;
 			board_ext_data_size = 0;
@@ -318,7 +320,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		}
 
 		/* Determine where in Target RAM to write Board Data */
-		bmi_read_memory(HOST_INTEREST_ITEM_ADDRESS(scn->target_type,
+		bmi_read_memory(HOST_INTEREST_ITEM_ADDRESS(target_type,
 							   hi_board_ext_data),
 				(uint8_t *) &board_ext_address, 4, scn);
 		BMI_INFO("Board extended Data download address: 0x%x",
@@ -344,7 +346,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 			/* Record extended board Data initialized */
 			param = (board_ext_data_size << 16) | 1;
 			bmi_write_memory(
-				HOST_INTEREST_ITEM_ADDRESS(scn->target_type,
+				HOST_INTEREST_ITEM_ADDRESS(target_type,
 					hi_board_ext_data_config),
 					(uint8_t *)&param, 4, scn);
 
@@ -498,11 +500,15 @@ static void ramdump_work_handler(struct work_struct *ramdump)
 	int ret;
 	uint32_t host_interest_address;
 	uint32_t dram_dump_values[4];
-
+	uint32_t target_type;
+	struct hif_target_info *tgt_info;
 	if (!ramdump_scn) {
 		BMI_ERR("%s:Ramdump_scn is null:", __func__);
 		goto out_fail;
 	}
+
+	tgt_info = hif_get_target_info_handle(ramdump_scn);
+	target_type = tgt_info->target_type;
 #ifdef DEBUG
 	ret = hif_check_soc_status(ramdump_scn);
 	if (ret)
@@ -515,7 +521,7 @@ static void ramdump_work_handler(struct work_struct *ramdump)
 #endif
 
 	if (hif_diag_read_mem(ramdump_scn,
-			hif_hia_item_address(ramdump_scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_failure_state)),
 			(uint8_t *)&host_interest_address,
 			sizeof(uint32_t)) != CDF_STATUS_SUCCESS) {
@@ -579,6 +585,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 {
 	struct ol_softc *scn = (struct ol_softc *)instance;
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
 	int ret;
 
 	cdf_event_set(&wma->recovery_event);
@@ -604,7 +611,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 #ifdef CONFIG_CNSS
 	ret = hif_check_fw_reg(scn);
 	if (0 == ret) {
-		if (scn->enable_self_recovery) {
+		if (ini_cfg->enable_self_recovery) {
 			ol_schedule_fw_indication_work(scn);
 			return;
 		}
@@ -617,7 +624,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 
 #if  defined(CONFIG_CNSS)
 	/* Collect the RAM dump through a workqueue */
-	if (scn->enable_ramdump_collection)
+	if (ini_cfg->enable_ramdump_collection)
 		ol_schedule_ramdump_work(scn);
 	else
 		pr_debug("%s: athdiag read for target reg\n", __func__);
@@ -633,11 +640,14 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	struct cnss_platform_cap cap;
 	int ret;
 #endif
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
+	uint32_t target_type = tgt_info->target_type;
 
 	/* Tell target which HTC version it is used */
 	param = HTC_PROTOCOL_VERSION;
 	if (bmi_write_memory(
-		hif_hia_item_address(scn->target_type,
+		hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_app_host_interest)),
 		(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
 		BMI_ERR("bmi_write_memory for htc version failed");
@@ -646,7 +656,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 
 	/* set the firmware mode to STA/IBSS/AP */
 	{
-		if (bmi_read_memory(hif_hia_item_address(scn->target_type,
+		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("bmi_read_memory for setting fwmode failed");
@@ -668,7 +678,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		       1, HI_OPTION_FW_MODE_AP, 0, 0);
 
 		if (bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI WRITE for setting fwmode failed");
@@ -679,7 +689,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 #if (CONFIG_DISABLE_CDC_MAX_PERF_WAR)
 	{
 		/* set the firmware to disable CDC max perf WAR */
-		if (bmi_read_memory(hif_hia_item_address(scn->target_type,
+		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI READ for setting cdc max perf failed");
@@ -688,7 +698,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 
 		param |= HI_OPTION_DISABLE_CDC_MAX_PERF_WAR;
 		if (bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("setting cdc max perf failed");
@@ -704,7 +714,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		BMI_ERR("platform capability info from CNSS not available");
 
 	if (!ret && cap.cap_flag & CNSS_HAS_EXTERNAL_SWREG) {
-		if (bmi_read_memory(hif_hia_item_address(scn->target_type,
+		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("bmi_read_memory for setting"
@@ -714,7 +724,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 
 		param |= HI_OPTION_USE_EXT_LDO;
 		if (bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI WRITE for setting external SWREG fail");
@@ -724,8 +734,8 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 #endif
 
 #ifdef WLAN_FEATURE_LPSS
-	if (scn->enablelpasssupport) {
-		if (bmi_read_memory(hif_hia_item_address(scn->target_type,
+	if (ini_cfg->enable_lpass_support) {
+		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI READ:Setting LPASS Support failed");
@@ -734,7 +744,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 
 		param |= HI_OPTION_DBUART_SUPPORT;
 		if (bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
 			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI_READ for setting LPASS Support fail");
@@ -751,7 +761,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		param = 0;
 #endif
 		if (bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_be)),
 			(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("setting host CPU BE mode failed");
@@ -762,7 +772,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	/* FW descriptor/Data swap flags */
 	param = 0;
 	if (bmi_write_memory(
-		hif_hia_item_address(scn->target_type,
+		hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_fw_swap)),
 		(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI WRITE failed setting FW data/desc swap flags");
@@ -854,8 +864,10 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	uint32_t cmnos_core_clk_div_addr = 0;
 	uint32_t cmnos_cpu_pll_init_done_addr = 0;
 	uint32_t cmnos_cpu_speed_addr = 0;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	uint32_t target_version = tgt_info->target_version;
 
-	switch (scn->target_version) {
+	switch (target_version) {
 	case AR6320_REV1_1_VERSION:
 		cmnos_core_clk_div_addr = AR6320_CORE_CLK_DIV_ADDR;
 		cmnos_cpu_pll_init_done_addr = AR6320_CPU_PLL_INIT_DONE_ADDR;
@@ -875,7 +887,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 		break;
 	default:
 		BMI_ERR("%s: Unsupported target version %x", __func__,
-		       scn->target_version);
+							target_version);
 		goto end;
 	}
 
@@ -1166,18 +1178,22 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 	uint32_t param, address = 0;
 	int status = !EOK;
 	CDF_STATUS ret;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
+	uint32_t target_type = tgt_info->target_type;
+	uint32_t target_version = tgt_info->target_version;
 
 #ifdef CONFIG_CNSS
 	if (0 != cnss_get_fw_files_for_target(&scn->fw_files,
-					      scn->target_type,
-					      scn->target_version)) {
+					      target_type,
+					      target_version)) {
 		BMI_ERR("%s: No FW files from CNSS driver", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
 #endif
 	/* Transfer Board Data from Target EEPROM to Target RAM */
 	/* Determine where in Target RAM to write Board Data */
-	bmi_read_memory(hif_hia_item_address(scn->target_type,
+	bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_board_data)),
 			(uint8_t *)&address, 4, scn);
 
@@ -1201,7 +1217,7 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		/* Record the fact that Board Data is initialized */
 		param = 1;
 		bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s,
 				hi_board_data_initialized)),
 				(uint8_t *) &param, 4, scn);
@@ -1215,7 +1231,7 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		/* Record the fact that Board Data is initialized */
 		param = 1;
 		bmi_write_memory(
-			hif_hia_item_address(scn->target_type,
+			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s,
 				hi_board_data_initialized)),
 				(uint8_t *) &param, 4, scn);
@@ -1264,15 +1280,15 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		    != EOK) {
 			return -1;
 		}
-		bmi_write_memory(hif_hia_item_address(scn->target_type,
+		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_dset_list_head)),
 			(uint8_t *) &address, 4, scn);
 	}
 
-	if (scn->enableuartprint ||
+	if (ini_cfg->enable_uart_print ||
 	    (WLAN_IS_EPPING_ENABLED(cds_get_conparam()) &&
 	     WLAN_IS_EPPING_FW_UART(cds_get_conparam()))) {
-		switch (scn->target_version) {
+		switch (tgt_info->target_version) {
 		case AR6004_VERSION_REV1_3:
 			param = 11;
 			break;
@@ -1289,11 +1305,11 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 			param = 7;
 		}
 
-		bmi_write_memory(hif_hia_item_address(scn->target_type,
+		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_dbg_uart_txpin)),
 			(uint8_t *)&param, 4, scn);
 		param = 1;
-		bmi_write_memory(hif_hia_item_address(scn->target_type,
+		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_serial_enable)),
 			(uint8_t *)&param, 4, scn);
 	} else {
@@ -1302,18 +1318,18 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		 * based on scratch registers.
 		 */
 		param = 0;
-		bmi_write_memory(hif_hia_item_address(scn->target_type,
+		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_serial_enable)),
 			(uint8_t *)&param, 4, scn);
 	}
 
-	if (scn->enablefwlog) {
-		bmi_read_memory(hif_hia_item_address(scn->target_type,
+	if (ini_cfg->enable_fw_log) {
+		bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *)&param, 4, scn);
 
 		param &= ~(HI_OPTION_DISABLE_DBGLOG);
-		bmi_write_memory(hif_hia_item_address(scn->target_type,
+		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *)&param, 4, scn);
 	} else {
@@ -1321,12 +1337,12 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		 * Explicitly setting fwlog prints to zero as target turns it on
 		 * based on scratch registers.
 		 */
-		bmi_read_memory(hif_hia_item_address(scn->target_type,
+		bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *)&param, 4, scn);
 
 		param |= HI_OPTION_DISABLE_DBGLOG;
-		bmi_write_memory(hif_hia_item_address(scn->target_type,
+		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
 			(uint8_t *) &param, 4, scn);
 	}
@@ -1413,8 +1429,10 @@ static int ol_diag_read_reg_loc(struct ol_softc *scn, uint8_t *buffer,
 	int dump_len, result = 0;
 	tgt_reg_table reg_table;
 	tgt_reg_section *curr_sec, *next_sec;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	uint32_t target_version =  tgt_info->target_version;
 
-	section_len = ol_ath_get_reg_table(scn->target_version, &reg_table);
+	section_len = ol_ath_get_reg_table(target_version, &reg_table);
 
 	if (!reg_table.section || !reg_table.section_size || !section_len) {
 		BMI_ERR("%s: failed to get reg table", __func__);
@@ -1587,21 +1605,19 @@ static int ol_target_coredump(void *inst, void *memory_block,
 
 uint8_t ol_get_number_of_peers_supported(struct ol_softc *scn)
 {
-	uint8_t max_no_of_peers = 0;
+	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	uint8_t max_no_of_peers = ini_cfg->max_no_of_peers;
 
-	switch (scn->target_version) {
+	switch (tgt_info->target_version) {
 	case AR6320_REV1_1_VERSION:
-		if (scn->max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_1)
+		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_1)
 			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_1;
-		else
-			max_no_of_peers = scn->max_no_of_peers;
 		break;
 
 	default:
-		if (scn->max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_3)
+		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_3)
 			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_3;
-		else
-			max_no_of_peers = scn->max_no_of_peers;
 		break;
 
 	}

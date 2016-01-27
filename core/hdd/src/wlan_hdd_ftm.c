@@ -137,6 +137,18 @@ static void wlan_hdd_ftm_update_tgt_cfg(void *context, void *param)
 	}
 }
 
+#ifdef WLAN_FEATURE_LPSS
+static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
+						hdd_context_t *hdd_ctx)
+{
+	mac_openParms->is_lpass_enabled = hdd_ctx->config->enable_lpass_support;
+}
+#else
+static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
+						hdd_context_t *hdd_ctx)
+{ }
+#endif
+
 /**
  * wlan_ftm_cds_open() - Open the CDS Module in FTM mode
  * @p_cds_context: pointer to the global CDS context
@@ -281,9 +293,7 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	mac_openParms.powersaveOffloadEnabled =
 		hdd_ctx->config->enablePowersaveOffload;
 
-#ifdef WLAN_FEATURE_LPSS
-	mac_openParms.is_lpass_enabled = hdd_ctx->config->enablelpasssupport;
-#endif
+	hdd_is_lpass_supported(&mac_openParms, hdd_ctx);
 
 	vStatus = wma_open(gp_cds_context,
 			   wlan_hdd_ftm_update_tgt_cfg, NULL, &mac_openParms);
@@ -296,8 +306,7 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 		goto err_htc_close;
 	}
 #if  defined(QCA_WIFI_FTM)
-	((struct ol_softc *)pHifContext)->enable_ramdump_collection =
-				hdd_ctx->config->is_ramdump_enabled;
+	hdd_update_hif_config(pHifContext, hdd_ctx);
 
 	pHtcContext = cds_get_context(CDF_MODULE_ID_HTC);
 	if (!pHtcContext) {

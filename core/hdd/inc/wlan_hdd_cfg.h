@@ -3242,7 +3242,7 @@ struct hdd_config {
 	bool enable_ip_tcp_udp_checksum_offload;
 	bool enablePowersaveOffload;
 	bool enablefwprint;
-	bool enablefwlog;
+	bool enable_fw_log;
 #ifdef WLAN_FEATURE_11AC
 	uint8_t fVhtAmpduLenExponent;
 	uint32_t vhtMpduLen;
@@ -3368,7 +3368,7 @@ struct hdd_config {
 	bool enableSifsBurst;
 
 #ifdef WLAN_FEATURE_LPSS
-	bool enablelpasssupport;
+	bool enable_lpass_support;
 #endif
 #ifdef WLAN_FEATURE_NAN
 	bool enable_nan_support;

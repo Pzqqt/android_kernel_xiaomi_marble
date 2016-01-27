@@ -2591,7 +2591,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 	/* Enable FW logs based on INI configuration */
 	if ((CDF_GLOBAL_FTM_MODE != cds_get_conparam()) &&
-	    (hdd_ctx->config->enablefwlog)) {
+	    (hdd_ctx->config->enable_fw_log)) {
 		uint8_t count = 0;
 		uint32_t value = 0;
 		uint8_t numEntries = 0;
@@ -5076,6 +5076,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	int ret = 0;
 	hdd_context_t *hdd_ctx;
 	v_CONTEXT_t p_cds_context;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_sc);
 
 	ENTER();
 
@@ -5133,11 +5134,11 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	hdd_tdls_pre_init(hdd_ctx);
 	mutex_init(&hdd_ctx->dfs_lock);
 
-	hdd_ctx->target_type = ((struct ol_softc *)hif_sc)->target_type;
+	hdd_ctx->target_type = tgt_info->target_type;
 
 	hdd_init_offloaded_packets_ctx(hdd_ctx);
 
-	icnss_set_fw_debug_mode(hdd_ctx->config->enablefwlog);
+	icnss_set_fw_debug_mode(hdd_ctx->config->enable_fw_log);
 
 	hdd_ctx->max_intf_count = CSR_ROAM_SESSION_MAX;
 
@@ -5159,7 +5160,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	hdd_enable_fastpath(hdd_ctx->config, hif_sc);
 
 	/* Uses to enabled logging after SSR */
-	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enablefwlog;
+	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enable_fw_log;
 
 	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto skip_multicast_logging;
@@ -5612,9 +5613,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	/* Get the wlan hw/fw version */
 	hdd_wlan_get_version(adapter, NULL, NULL);
 
-	/* pass target_fw_version to HIF layer */
-	hif_set_fw_info(hif_sc, hdd_ctx->target_fw_version);
-
 	ret = hdd_update_country_code(hdd_ctx, adapter);
 
 	if (ret)
@@ -5975,7 +5973,7 @@ int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (hdd_ctx->lpss_support && hdd_ctx->config->enablelpasssupport)
+	if (hdd_ctx->lpss_support && hdd_ctx->config->enable_lpass_support)
 		data->lpss_support = 1;
 	else
 		data->lpss_support = 0;
@@ -6976,6 +6974,39 @@ enum tCDF_GLOBAL_CON_MODE hdd_get_conparam(void)
 void hdd_set_conparam(uint32_t con_param)
 {
 	curr_con_mode = con_param;
+}
+
+#ifdef WLAN_FEATURE_LPSS
+static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
+{
+	return hdd_ctx->config->enable_lpass_support;
+}
+#else
+static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
+{
+	return false;
+}
+#endif
+
+/**
+ * hdd_update_hif_config() - Initialize HIF ini parameters
+ * @scn: HIF Context
+ * @hdd_ctx: HDD Context
+ *
+ * API is used to initialize all HIF configuration parameters
+ * Return: void
+ */
+void hdd_update_hif_config(void *scn, hdd_context_t *hdd_ctx)
+{
+	struct hif_config_info *cfg = hif_get_ini_handle(scn);
+
+	cfg->enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
+	cfg->enable_uart_print = hdd_ctx->config->enablefwprint;
+	cfg->enable_fw_log = hdd_ctx->config->enable_fw_log;
+	cfg->max_no_of_peers = hdd_ctx->config->maxNumberOfPeers;
+	cfg->enable_ramdump_collection =
+				hdd_ctx->config->is_ramdump_enabled;
+	cfg->enable_lpass_support = hdd_is_lpass_supported(hdd_ctx);
 }
 
 /* Register the module init/exit functions */

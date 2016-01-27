@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -382,12 +382,15 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 	struct bmi_target_info targ_info;
 	struct image_desc_info image_desc_info;
 	CDF_STATUS status;
+	struct hif_target_info *tgt_info;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
 		bmi_assert(0);
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
+
+	tgt_info = hif_get_target_info_handle(scn);
 
 	if (scn->bmi_cmd_buff == NULL || scn->bmi_rsp_buff == NULL) {
 		BMI_ERR("bmi_open failed!");
@@ -400,8 +403,9 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 
 	BMI_DBG("%s: target type 0x%x, target ver 0x%x", __func__,
 	       targ_info.target_type, targ_info.target_ver);
-	scn->target_type = targ_info.target_type;
-	scn->target_version = targ_info.target_ver;
+
+	tgt_info->target_type = targ_info.target_type;
+	tgt_info->target_version = targ_info.target_ver;
 
 	if (cnss_get_fw_image(&image_desc_info) != 0) {
 		BMI_ERR("Failed to get fw image");

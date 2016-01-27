@@ -2587,7 +2587,7 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_FW_UART_PRINT_ENABLE),
 
 	REG_VARIABLE(CFG_ENABLE_FW_LOG_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, enablefwlog,
+		     struct hdd_config, enable_fw_log,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_ENABLE_FW_LOG_DEFAULT,
 		     CFG_ENABLE_FW_LOG_DISABLE,
@@ -3209,7 +3209,7 @@ REG_TABLE_ENTRY g_registry_table[] = {
 
 #ifdef WLAN_FEATURE_LPSS
 	REG_VARIABLE(CFG_ENABLE_LPASS_SUPPORT, WLAN_PARAM_Integer,
-		     struct hdd_config, enablelpasssupport,
+		     struct hdd_config, enable_lpass_support,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
 		     CFG_ENABLE_LPASS_SUPPORT_DEFAULT,
 		     CFG_ENABLE_LPASS_SUPPORT_MIN,
@@ -5078,7 +5078,7 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 #ifdef WLAN_FEATURE_LPSS
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gEnableLpassSupport] Value = [%u] ",
-		  pHddCtx->config->enablelpasssupport);
+		  pHddCtx->config->enable_lpass_support);
 #endif
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,

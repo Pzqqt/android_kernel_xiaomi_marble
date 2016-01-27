@@ -253,15 +253,8 @@ CDF_STATUS cds_open(void)
 			  "%s: scn is null!", __func__);
 		goto err_sched_close;
 	}
-	scn->enableuartprint = pHddCtx->config->enablefwprint;
-	scn->enablefwlog = pHddCtx->config->enablefwlog;
-	scn->max_no_of_peers = pHddCtx->config->maxNumberOfPeers;
-#ifdef WLAN_FEATURE_LPSS
-	scn->enablelpasssupport = pHddCtx->config->enablelpasssupport;
-#endif
-	scn->enable_ramdump_collection =
-				pHddCtx->config->is_ramdump_enabled;
-	scn->enable_self_recovery = pHddCtx->config->enableSelfRecovery;
+
+	hdd_update_hif_config(scn, pHddCtx);
 
 	/* Initialize BMI and Download firmware */
 	cdf_status = bmi_download_firmware(scn);

@@ -181,6 +181,8 @@ int epping_enable(struct device *parent_dev)
 	HTC_INIT_INFO htcInfo;
 	struct ol_softc *scn;
 	tSirMacAddr adapter_macAddr;
+	struct hif_config_info *cfg;
+	struct hif_target_info *tgt_info;
 
 	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
 
@@ -212,10 +214,16 @@ int epping_enable(struct device *parent_dev)
 			  "%s: scn is null!", __func__);
 		return -1;
 	}
-	scn->enableuartprint = 0;
-	scn->enablefwlog = 0;
+
+	cfg = hif_get_ini_handle(scn);
+
+	cfg->enable_uart_print = 0;
+	cfg->enable_fw_log = 0;
+
+	tgt_info = hif_get_target_info_handle(scn);
+
 	/* store target type and target version info in hdd ctx */
-	pEpping_ctx->target_type = scn->target_type;
+	pEpping_ctx->target_type = tgt_info->target_type;
 
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */

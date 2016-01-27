@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -234,8 +234,9 @@ bmi_firmware_download(struct ol_softc *scn)
 {
 	CDF_STATUS status;
 	struct bmi_target_info targ_info;
-	cdf_mem_zero(&targ_info, sizeof(targ_info));
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
+	cdf_mem_zero(&targ_info, sizeof(targ_info));
 	/* Initialize BMI */
 	status = bmi_init(scn);
 	if (status != CDF_STATUS_SUCCESS) {
@@ -250,8 +251,8 @@ bmi_firmware_download(struct ol_softc *scn)
 		return status;
 	}
 
-	scn->target_type = targ_info.target_type;
-	scn->target_version = targ_info.target_ver;
+	tgt_info->target_type = targ_info.target_type;
+	tgt_info->target_version = targ_info.target_ver;
 
 	/* Configure target */
 	status = ol_configure_target(scn);
