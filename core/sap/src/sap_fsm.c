@@ -1296,7 +1296,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 		channelID = sapContext->SapAllChnlList.channelList[i].channel;
 
 		/*
-		 * IN JAPAN REGULATORY DOMAIN CHECK IF THE FOLLOWING TWO
+		 * IN MKK DFS REGION CHECK IF THE FOLLOWING TWO
 		 * TWO RULES APPLY AND FILTER THE AVAILABLE CHANNELS
 		 * ACCORDINGLY.
 		 *
@@ -1312,7 +1312,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 		 * channels only based up on the SAP Channel location
 		 * indicated by "sap_operating_channel_location" param.
 		 */
-		if (DFS_MKK4_DOMAIN == dfs_region) {
+		if (DFS_MKK_REGION == dfs_region) {
 			/*
 			 * Check for JAPAN W53 Channel operation capability
 			 */
@@ -4698,7 +4698,7 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
 
 	cds_get_dfs_region(&dfs_region);
 
-	if ((dfs_region == DFS_ETSI_DOMAIN)
+	if ((dfs_region == DFS_ETSI_REGION)
 	    && ((IS_ETSI_WEATHER_CH(sapContext->channel)) ||
 		(sap_is_channel_bonding_etsi_weather_channel(sapContext)))) {
 		cacTimeOut = ETSI_WEATHER_CH_CAC_TIMEOUT;

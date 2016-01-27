@@ -61,7 +61,7 @@
 #include "dfs_ioctl.h"
 #include "dfs.h"
 
-int domainoverride = DFS_UNINIT_DOMAIN;
+int domainoverride = DFS_UNINIT_REGION;
 
 /*
 ** channel switch announcement (CSA)

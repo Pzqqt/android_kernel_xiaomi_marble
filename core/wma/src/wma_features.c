@@ -6008,25 +6008,25 @@ void wma_dfs_configure(struct ieee80211com *ic)
 	 * which radar pulses to use.
 	 */
 	switch (dfsdomain) {
-	case DFS_FCC_DOMAIN:
+	case DFS_FCC_REGION:
 		WMA_LOGI("%s: DFS-FCC domain", __func__);
-		rinfo.dfsdomain = DFS_FCC_DOMAIN;
+		rinfo.dfsdomain = DFS_FCC_REGION;
 		rinfo.dfs_radars = dfs_fcc_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
 		rinfo.b5pulses = dfs_fcc_bin5pulses;
 		rinfo.numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
 		break;
-	case DFS_ETSI_DOMAIN:
+	case DFS_ETSI_REGION:
 		WMA_LOGI("%s: DFS-ETSI domain", __func__);
-		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
+		rinfo.dfsdomain = DFS_ETSI_REGION;
 		rinfo.dfs_radars = dfs_etsi_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
 		break;
-	case DFS_MKK4_DOMAIN:
-		WMA_LOGI("%s: DFS-MKK4 domain", __func__);
-		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
+	case DFS_MKK_REGION:
+		WMA_LOGI("%s: DFS-MKK domain", __func__);
+		rinfo.dfsdomain = DFS_MKK_REGION;
 		rinfo.dfs_radars = dfs_mkk4_radars;
 		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 		rinfo.b5pulses = dfs_jpn_bin5pulses;
@@ -6034,7 +6034,7 @@ void wma_dfs_configure(struct ieee80211com *ic)
 		break;
 	default:
 		WMA_LOGI("%s: DFS-UNINT domain", __func__);
-		rinfo.dfsdomain = DFS_UNINIT_DOMAIN;
+		rinfo.dfsdomain = DFS_UNINIT_REGION;
 		rinfo.dfs_radars = NULL;
 		rinfo.numradars = 0;
 		rinfo.b5pulses = NULL;
@@ -6190,9 +6190,9 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region)
 {
 	/* dfs information is passed */
-	if (dfs_region > DFS_MKK4_DOMAIN || dfs_region == DFS_UNINIT_DOMAIN)
-		/* assign DFS_FCC_DOMAIN as default domain*/
-		wma->dfs_ic->current_dfs_regdomain = DFS_FCC_DOMAIN;
+	if (dfs_region > DFS_MKK_REGION || dfs_region == DFS_UNINIT_REGION)
+		/* assign DFS_FCC_REGION as default region*/
+		wma->dfs_ic->current_dfs_regdomain = DFS_FCC_REGION;
 	else
 		wma->dfs_ic->current_dfs_regdomain = dfs_region;
 

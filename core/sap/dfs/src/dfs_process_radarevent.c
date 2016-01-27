@@ -176,7 +176,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 	   This is normally 2 but can be higher for W53.
 	 */
 
-	if ((dfs->dfsdomain == DFS_MKK4_DOMAIN) &&
+	if ((dfs->dfsdomain == DFS_MKK_REGION) &&
 	    (dfs->dfs_caps.ath_chip_is_bb_tlv) &&
 	    (chan->ic_freq < FREQ_5500_MHZ)) {
 
@@ -430,8 +430,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * so process the next pulse in the queue.
 		 */
 		if ((dfs->disable_dfs_ch_switch == false) &&
-			 (DFS_FCC_DOMAIN == dfs->dfsdomain ||
-			  DFS_MKK4_DOMAIN == dfs->dfsdomain) &&
+			 (DFS_FCC_REGION == dfs->dfsdomain ||
+			  DFS_MKK_REGION == dfs->dfsdomain) &&
 			 (re.re_dur >= 11 && re.re_dur <= 20) &&
 			 (diff_ts > 500 || diff_ts <= 305) &&
 			 (re.sidx == -4)) {
@@ -452,8 +452,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * following condition is reported in radar
 		 * summary report.
 		 */
-		if ((DFS_FCC_DOMAIN == dfs->dfsdomain ||
-			DFS_MKK4_DOMAIN == dfs->dfsdomain) &&
+		if ((DFS_FCC_REGION == dfs->dfsdomain ||
+			DFS_MKK_REGION == dfs->dfsdomain) &&
 		    ((chan->ic_flags & IEEE80211_CHAN_VHT80) ==
 			IEEE80211_CHAN_VHT80) &&
 		    (chan->ic_pri_freq_center_freq_mhz_separation ==
@@ -486,7 +486,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		 * and ETSI type 3 radar pulses when the following
 		 * condition is reported in radar summary report.
 		 */
-		if ((DFS_ETSI_DOMAIN == dfs->dfsdomain) &&
+		if ((DFS_ETSI_REGION == dfs->dfsdomain) &&
 		    ((chan->ic_flags & IEEE80211_CHAN_VHT80) ==
 			IEEE80211_CHAN_VHT80) &&
 		    (chan->ic_pri_freq_center_freq_mhz_separation ==
@@ -520,8 +520,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 
 		/* BIN5 pulses are FCC and Japan specific */
 
-		if ((dfs->dfsdomain == DFS_FCC_DOMAIN)
-		    || (dfs->dfsdomain == DFS_MKK4_DOMAIN)) {
+		if ((dfs->dfsdomain == DFS_FCC_REGION)
+		    || (dfs->dfsdomain == DFS_MKK_REGION)) {
 			for (p = 0;
 			     (p < dfs->dfs_rinfo.rn_numbin5radars) && (!found);
 			     p++) {

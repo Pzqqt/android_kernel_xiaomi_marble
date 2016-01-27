@@ -77,177 +77,6 @@
 #define COUNTRY_ERD_FLAG        0x8000
 #define WORLDWIDE_ROAMING_FLAG  0x4000
 
-enum reg_domain {
-	NO_ENUMRD = 0x00,
-	NULL1_WORLD = 0x03,
-	NULL1_ETSIB = 0x07,
-	NULL1_ETSIC = 0x08,
-
-	FCC1_FCCA = 0x10,
-	FCC1_WORLD = 0x11,
-	FCC2_FCCA = 0x20,
-	FCC2_WORLD = 0x21,
-	FCC2_ETSIC = 0x22,
-	FCC3_FCCA = 0x3A,
-	FCC3_WORLD = 0x3B,
-	FCC3_ETSIC = 0x3F,
-	FCC4_FCCA = 0x12,
-	FCC5_FCCA = 0x13,
-	FCC6_FCCA = 0x14,
-	FCC7_FCCA = 0x15,
-	FCC8_FCCA = 0x16,
-	FCC6_WORLD = 0x23,
-	FCC9_FCCA = 0x17,
-	FCC10_FCCA = 0x18,
-	FCC11_WORLD = 0x19,
-
-	ETSI1_WORLD = 0x37,
-	ETSI3_ETSIA = 0x32,
-	ETSI2_WORLD = 0x35,
-	ETSI3_WORLD = 0x36,
-	ETSI4_WORLD = 0x30,
-	ETSI4_ETSIC = 0x38,
-	ETSI5_WORLD = 0x39,
-	ETSI6_WORLD = 0x34,
-	ETSI_RESERVED = 0x33,
-	FRANCE_RES = 0x31,
-	ETSI7_WORLD = 0x3C,
-	ETSI8_WORLD = 0x3D,
-	ETSI9_WORLD = 0x3E,
-	ETSI10_WORLD = 0x24,
-	ETSI11_WORLD = 0x26,
-
-	APL4_WORLD = 0x42,
-	APL3_FCCA = 0x50,
-	APL_RESERVED = 0x44,
-	APL2_WORLD = 0x45,
-	APL2_FCCA = 0x4D,
-	APL2_APLC = 0x46,
-	APL3_WORLD = 0x47,
-	APL2_APLD = 0x49,
-	APL1_WORLD = 0x52,
-	APL1_FCCA = 0x53,
-	APL1_APLA = 0x54,
-	APL1_ETSIC = 0x55,
-	APL2_ETSIC = 0x56,
-	APL5_WORLD = 0x58,
-	APL6_WORLD = 0x5B,
-	APL7_FCCA = 0x5C,
-	APL8_WORLD = 0x5D,
-	APL9_WORLD = 0x5E,
-	APL10_WORLD = 0x5F,
-	APL11_FCCA = 0x4F,
-	APL12_WORLD = 0x51,
-	APL13_WORLD = 0x5A,
-
-	WOR0_WORLD = 0x60,
-	WOR1_WORLD = 0x61,
-	WOR2_WORLD = 0x62,
-	WOR3_WORLD = 0x63,
-	WOR4_FCCA = 0x64,
-	WOR5_ETSIC = 0x65,
-	WOR01_WORLD = 0x66,
-	WOR02_WORLD = 0x67,
-	EU1_WORLD = 0x68,
-	WOR9_WORLD = 0x69,
-	WORA_WORLD = 0x6A,
-	WORB_WORLD = 0x6B,
-	WORC_WORLD = 0x6C,
-
-	MKK3_MKKB = 0x80,
-	MKK3_MKKA2 = 0x81,
-	MKK3_MKKC = 0x82,
-	MKK4_MKKB = 0x83,
-	MKK4_MKKA2 = 0x84,
-	MKK4_MKKC = 0x85,
-	MKK5_MKKA = 0x99,
-	MKK5_FCCA = 0x9A,
-	MKK5_MKKB = 0x86,
-	MKK5_MKKA2 = 0x87,
-	MKK5_MKKC = 0x88,
-	MKK3_MKKA = 0xF0,
-	MKK3_MKKA1 = 0xF1,
-	MKK3_FCCA = 0xF2,
-	MKK4_MKKA = 0xF3,
-	MKK4_MKKA1 = 0xF4,
-	MKK4_FCCA = 0xF5,
-	MKK9_MKKA = 0xF6,
-	MKK9_FCCA = 0xFC,
-	MKK9_MKKA1 = 0xFD,
-	MKK9_MKKC = 0xFE,
-	MKK9_MKKA2 = 0xFF,
-	MKK10_MKKA = 0xF7,
-	MKK10_FCCA = 0xD0,
-	MKK10_MKKA1 = 0xD1,
-	MKK10_MKKC = 0xD2,
-	MKK10_MKKA2 = 0xD3,
-	MKK11_MKKA = 0xD4,
-	MKK11_FCCA = 0xD5,
-	MKK11_MKKA1 = 0xD6,
-	MKK11_MKKC = 0xD7,
-	MKK11_MKKA2 = 0xD8,
-
-	FCC1 = 0x0110,
-	FCC2 = 0x0120,
-	FCC3 = 0x0160,
-	FCC4 = 0x0165,
-	FCC5 = 0x0510,
-	FCC6 = 0x0610,
-	FCC7 = 0x0710,
-	FCC8 = 0x0810,
-	FCC9 = 0x0910,
-	FCC10 = 0x0B10,
-	FCC11 = 0x0B20,
-
-	ETSI1 = 0x0130,
-	ETSI2 = 0x0230,
-	ETSI3 = 0x0330,
-	ETSI4 = 0x0430,
-	ETSI5 = 0x0530,
-	ETSI6 = 0x0630,
-	ETSI8 = 0x0830,
-	ETSI9 = 0x0930,
-	ETSI10 = 0x0D30,
-	ETSI11 = 0x0E30,
-
-	APL1 = 0x0150,
-	APL2 = 0x0250,
-	APL3 = 0x0350,
-	APL4 = 0x0450,
-	APL5 = 0x0550,
-	APL6 = 0x0650,
-	APL7 = 0x0750,
-	APL8 = 0x0850,
-	APL9 = 0x0950,
-	APL10 = 0x1050,
-	APL11 = 0x1150,
-	APL12 = 0x1160,
-	APL13 = 0x1170,
-
-	NULL1 = 0x0198,
-	MKK3 = 0x0340,
-	MKK4 = 0x0440,
-	MKK5 = 0x0540,
-	MKK9 = 0x0940,
-	MKK10 = 0x1040,
-	MKK11 = 0x1140,
-
-	WORLD = 0x0199,
-	FCCA = 0x0A10,
-	MKKA = 0x0A40,
-	MKKC = 0x0A50,
-	ETSIC = 0x0C30,
-
-	DEBUG_REG_DMN = 0x01ff,
-};
-
-enum ctl_val {
-	FCC = 0x10,
-	MKK = 0x40,
-	ETSI = 0x30,
-	NO_CTL = 0xff
-};
-
 enum country_code {
 	CTRY_AFGHANISTAN = 4,
 	CTRY_ALBANIA = 8,
@@ -461,25 +290,194 @@ enum country_code {
 	CTRY_JAPAN56 = 4056,
 };
 
-enum dfs_domain {
-	DFS_UNINIT_DOMAIN = 0,
-	DFS_FCC_DOMAIN = 1,
-	DFS_ETSI_DOMAIN = 2,
-	DFS_MKK4_DOMAIN = 3
+enum reg_domain {
+	NO_ENUMRD = 0x00,
+	NULL1_WORLD = 0x03,
+	NULL1_ETSIB = 0x07,
+	NULL1_ETSIC = 0x08,
+
+	FCC1_FCCA = 0x10,
+	FCC1_WORLD = 0x11,
+	FCC2_FCCA = 0x20,
+	FCC2_WORLD = 0x21,
+	FCC2_ETSIC = 0x22,
+	FCC3_FCCA = 0x3A,
+	FCC3_WORLD = 0x3B,
+	FCC3_ETSIC = 0x3F,
+	FCC4_FCCA = 0x12,
+	FCC5_FCCA = 0x13,
+	FCC6_FCCA = 0x14,
+	FCC7_FCCA = 0x15,
+	FCC8_FCCA = 0x16,
+	FCC6_WORLD = 0x23,
+	FCC9_FCCA = 0x17,
+	FCC10_FCCA = 0x18,
+	FCC11_WORLD = 0x19,
+
+	ETSI1_WORLD = 0x37,
+	ETSI3_ETSIA = 0x32,
+	ETSI2_WORLD = 0x35,
+	ETSI3_WORLD = 0x36,
+	ETSI4_WORLD = 0x30,
+	ETSI4_ETSIC = 0x38,
+	ETSI5_WORLD = 0x39,
+	ETSI6_WORLD = 0x34,
+	ETSI_RESERVED = 0x33,
+	FRANCE_RES = 0x31,
+	ETSI7_WORLD = 0x3C,
+	ETSI8_WORLD = 0x3D,
+	ETSI9_WORLD = 0x3E,
+	ETSI10_WORLD = 0x24,
+	ETSI11_WORLD = 0x26,
+
+	APL4_WORLD = 0x42,
+	APL3_FCCA = 0x50,
+	APL_RESERVED = 0x44,
+	APL2_WORLD = 0x45,
+	APL2_FCCA = 0x4D,
+	APL2_APLC = 0x46,
+	APL3_WORLD = 0x47,
+	APL2_APLD = 0x49,
+	APL1_WORLD = 0x52,
+	APL1_FCCA = 0x53,
+	APL1_APLA = 0x54,
+	APL1_ETSIC = 0x55,
+	APL2_ETSIC = 0x56,
+	APL5_WORLD = 0x58,
+	APL6_WORLD = 0x5B,
+	APL7_FCCA = 0x5C,
+	APL8_WORLD = 0x5D,
+	APL9_WORLD = 0x5E,
+	APL10_WORLD = 0x5F,
+	APL11_FCCA = 0x4F,
+	APL12_WORLD = 0x51,
+	APL13_WORLD = 0x5A,
+
+	WOR0_WORLD = 0x60,
+	WOR1_WORLD = 0x61,
+	WOR2_WORLD = 0x62,
+	WOR3_WORLD = 0x63,
+	WOR4_FCCA = 0x64,
+	WOR5_ETSIC = 0x65,
+	WOR01_WORLD = 0x66,
+	WOR02_WORLD = 0x67,
+	EU1_WORLD = 0x68,
+	WOR9_WORLD = 0x69,
+	WORA_WORLD = 0x6A,
+	WORB_WORLD = 0x6B,
+	WORC_WORLD = 0x6C,
+
+	MKK3_MKKB = 0x80,
+	MKK3_MKKA2 = 0x81,
+	MKK3_MKKC = 0x82,
+	MKK4_MKKB = 0x83,
+	MKK4_MKKA2 = 0x84,
+	MKK4_MKKC = 0x85,
+	MKK5_MKKA = 0x99,
+	MKK5_FCCA = 0x9A,
+	MKK5_MKKB = 0x86,
+	MKK5_MKKA2 = 0x87,
+	MKK5_MKKC = 0x88,
+	MKK3_MKKA = 0xF0,
+	MKK3_MKKA1 = 0xF1,
+	MKK3_FCCA = 0xF2,
+	MKK4_MKKA = 0xF3,
+	MKK4_MKKA1 = 0xF4,
+	MKK4_FCCA = 0xF5,
+	MKK9_MKKA = 0xF6,
+	MKK9_FCCA = 0xFC,
+	MKK9_MKKA1 = 0xFD,
+	MKK9_MKKC = 0xFE,
+	MKK9_MKKA2 = 0xFF,
+	MKK10_MKKA = 0xF7,
+	MKK10_FCCA = 0xD0,
+	MKK10_MKKA1 = 0xD1,
+	MKK10_MKKC = 0xD2,
+	MKK10_MKKA2 = 0xD3,
+	MKK11_MKKA = 0xD4,
+	MKK11_FCCA = 0xD5,
+	MKK11_MKKA1 = 0xD6,
+	MKK11_MKKC = 0xD7,
+	MKK11_MKKA2 = 0xD8,
+
+	FCC1 = 0x0110,
+	FCC2 = 0x0120,
+	FCC3 = 0x0160,
+	FCC4 = 0x0165,
+	FCC5 = 0x0510,
+	FCC6 = 0x0610,
+	FCC7 = 0x0710,
+	FCC8 = 0x0810,
+	FCC9 = 0x0910,
+	FCC10 = 0x0B10,
+	FCC11 = 0x0B20,
+
+	ETSI1 = 0x0130,
+	ETSI2 = 0x0230,
+	ETSI3 = 0x0330,
+	ETSI4 = 0x0430,
+	ETSI5 = 0x0530,
+	ETSI6 = 0x0630,
+	ETSI8 = 0x0830,
+	ETSI9 = 0x0930,
+	ETSI10 = 0x0D30,
+	ETSI11 = 0x0E30,
+
+	APL1 = 0x0150,
+	APL2 = 0x0250,
+	APL3 = 0x0350,
+	APL4 = 0x0450,
+	APL5 = 0x0550,
+	APL6 = 0x0650,
+	APL7 = 0x0750,
+	APL8 = 0x0850,
+	APL9 = 0x0950,
+	APL10 = 0x1050,
+	APL11 = 0x1150,
+	APL12 = 0x1160,
+	APL13 = 0x1170,
+
+	NULL1 = 0x0198,
+	MKK3 = 0x0340,
+	MKK4 = 0x0440,
+	MKK5 = 0x0540,
+	MKK9 = 0x0940,
+	MKK10 = 0x1040,
+	MKK11 = 0x1140,
+
+	WORLD = 0x0199,
+	FCCA = 0x0A10,
+	MKKA = 0x0A40,
+	MKKC = 0x0A50,
+	ETSIC = 0x0C30,
 };
 
-struct reg_dmn_pair {
-	uint16_t reg_dmn_enum;
-	uint16_t reg_dmn_5ghz;
-	uint16_t reg_dmn_2ghz;
-	uint16_t single_cc;
+/**
+ * enum ctl_val - CTL value
+ * @FCC: FCC
+ * @MKK: MKK
+ * @ETSI: ETSI
+ * @NO_CTL: no CTL
+ */
+enum ctl_val {
+	FCC = 0x10,
+	MKK = 0x40,
+	ETSI = 0x30,
+	NO_CTL = 0xff
 };
 
-struct country_code_to_reg_dmn {
-	uint16_t country_code;
-	uint16_t reg_dmn_enum;
-	const char *iso_name;
-	const char *name;
+/**
+ * enum dfs_region - DFS region
+ * @DFS_UNINIT_REGION: un-initialized region
+ * @DFS_FCC_REGION: FCC region
+ * @DFS_ETSI_REGION: ETSI region
+ * @DFS_MKK_REGION: MKK region
+ */
+enum dfs_region {
+	DFS_UNINIT_REGION = 0,
+	DFS_FCC_REGION = 1,
+	DFS_ETSI_REGION = 2,
+	DFS_MKK_REGION = 3
 };
 
 /**
@@ -500,8 +498,51 @@ enum ch_width {
 };
 
 /**
+ * enum offset_t: channel offset
+ * @BW20: 20 mhz channel
+ * @BW40_LOW_PRIMARY: lower channel in 40 mhz
+ * @BW40_HIGH_PRIMARY: higher channel in 40 mhz
+ * @BW80: 80 mhz channel
+ * @BWALL: unknown bandwidth
+ */
+enum offset_t {
+	BW20 = 0,
+	BW40_LOW_PRIMARY = 1,
+	BW40_HIGH_PRIMARY = 3,
+	BW80,
+	BWALL
+};
+
+/**
+ * struct reg_dmn_pair: regulatory domain pair
+ * @reg_dmn_pair: reg domain pair
+ * @reg_dmn_5ghz: 5G reg domain
+ * @reg_dmn_2ghz: 2G reg domain
+ * @single_cc: country with this reg domain
+ */
+struct reg_dmn_pair {
+	uint16_t reg_dmn_pair;
+	uint16_t reg_dmn_5ghz;
+	uint16_t reg_dmn_2ghz;
+	uint16_t single_cc;
+};
+
+/**
+ * struct country_code_to_reg_dmn: country code to reg domain mapping
+ * @country_code: country code
+ * @reg_dmn_pair: regulatory domain pair
+ * @alpha2: country alpha2
+ * @name: country name
+ */
+struct country_code_to_reg_dmn {
+	uint16_t country_code;
+	uint16_t reg_dmn_pair;
+	const char *alpha2;
+	const char *name;
+};
+
+/**
  * struct ch_params_s
- *
  * @ch_width: channel width
  * @sec_ch_offset: secondary channel offset
  * @center_freq_seg0: center freq for segment 0
@@ -514,19 +555,23 @@ struct ch_params_s {
 	uint8_t center_freq_seg1;
 };
 
+/**
+ * struct reg_dmn: regulatory domain structure
+ * @reg_dmn: regulatory domain
+ * @conformance_test_limit:  CTL limit
+ */
 struct reg_dmn {
 	uint16_t reg_dmn;
 	uint8_t conformance_test_limit;
 };
 
-enum offset_t {
-	BW20 = 0,
-	BW40_LOW_PRIMARY = 1,
-	BW40_HIGH_PRIMARY = 3,
-	BW80,
-	BWALL
-};
-
+/**
+ * struct reg_dmn_op_class_map_t: operating class
+ * @op_class: operating class number
+ * @ch_spacing: channel spacing
+ * @offset: offset
+ * @channels: channel set
+ */
 struct reg_dmn_op_class_map_t {
 	uint8_t op_class;
 	uint8_t ch_spacing;
@@ -534,11 +579,25 @@ struct reg_dmn_op_class_map_t {
 	uint8_t channels[MAX_CHANNELS_PER_OPERATING_CLASS];
 };
 
+/**
+ * struct reg_dmn_supp_op_classes: operating classes
+ * @num_classes: number of classes
+ * @classes: classes
+ */
 struct reg_dmn_supp_op_classes {
 	uint8_t num_classes;
 	uint8_t classes[CDS_MAX_SUPP_OPER_CLASSES];
 };
 
+/**
+ * struct reg_dmn_tables: reg domain table
+ * @reg_dmn_pairs: list of reg domain pairs
+ * @all_countries: list of countries
+ * @reg_dmns: list of reg domains
+ * @reg_dmn_pairs_cnt: count of reg domain pairs
+ * @all_countries_cnt: count of countries
+ * @reg_dmns_cnt: count of reg domains
+ */
 struct reg_dmn_tables {
 	const struct reg_dmn_pair *reg_dmn_pairs;
 	const struct country_code_to_reg_dmn *all_countries;

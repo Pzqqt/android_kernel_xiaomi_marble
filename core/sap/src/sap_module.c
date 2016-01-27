@@ -2563,7 +2563,7 @@ wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal, uint8_t disable_Dfs_W53)
 	 * Set the JAPAN W53 restriction only if the current
 	 * regulatory domain is JAPAN.
 	 */
-	if (DFS_MKK4_DOMAIN == dfs_region) {
+	if (DFS_MKK_REGION == dfs_region) {
 		pMac->sap.SapDfsInfo.is_dfs_w53_disabled = disable_Dfs_W53;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 			  QDF_TRACE_LEVEL_INFO_LOW,
@@ -2648,7 +2648,7 @@ wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
 	 * restriction is currently enforeced only for
 	 * JAPAN regulatory domain.
 	 */
-	if (DFS_MKK4_DOMAIN == dfs_region) {
+	if (DFS_MKK_REGION == dfs_region) {
 		pMac->sap.SapDfsInfo.sap_operating_chan_preferred_location =
 			dfs_Preferred_Channels_location;
 		QDF_TRACE(QDF_MODULE_ID_SAP,

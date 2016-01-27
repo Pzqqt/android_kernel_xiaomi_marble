@@ -625,8 +625,8 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		 *
 		 * BIN 5 chirping pulses are only for FCC or Japan MMK4 domain
 		 */
-		if (((dfs->dfsdomain == DFS_FCC_DOMAIN) ||
-		     (dfs->dfsdomain == DFS_MKK4_DOMAIN)) &&
+		if (((dfs->dfsdomain == DFS_FCC_REGION) ||
+		     (dfs->dfsdomain == DFS_MKK_REGION)) &&
 		    (e.dur >= MAYBE_BIN5_DUR) && (e.dur < MAX_BIN5_DUR)) {
 			int add_dur;
 			int slope = 0, dc_found = 0;
@@ -675,8 +675,8 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 			 * We have a pulse that is either bigger than
 			 * MAX_BIN5_DUR or * less than MAYBE_BIN5_DUR
 			 */
-			if ((dfs->dfsdomain == DFS_FCC_DOMAIN) ||
-			    (dfs->dfsdomain == DFS_MKK4_DOMAIN)) {
+			if ((dfs->dfsdomain == DFS_FCC_REGION) ||
+			    (dfs->dfsdomain == DFS_MKK_REGION)) {
 				/*
 				 * XXX Would this result in very large pulses
 				 *     wrapping around to become short pulses?

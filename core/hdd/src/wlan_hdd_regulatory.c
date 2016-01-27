@@ -142,7 +142,7 @@ struct regulatory *reg)
 	struct reg_dmn_pair *regpair =
 		(struct reg_dmn_pair *)reg->regpair;
 
-	switch (regpair->reg_dmn_enum) {
+	switch (regpair->reg_dmn_pair) {
 	case 0x60:
 	case 0x61:
 	case 0x62:
@@ -497,17 +497,17 @@ static void hdd_set_dfs_region(hdd_context_t *hdd_ctx,
 	/* remap the ctl code to dfs region code */
 	switch (hdd_ctx->reg.ctl_5g) {
 	case FCC:
-		cds_put_dfs_region(DFS_FCC_DOMAIN);
+		cds_put_dfs_region(DFS_FCC_REGION);
 		break;
 	case ETSI:
-		cds_put_dfs_region(DFS_ETSI_DOMAIN);
+		cds_put_dfs_region(DFS_ETSI_REGION);
 		break;
 	case MKK:
-		cds_put_dfs_region(DFS_MKK4_DOMAIN);
+		cds_put_dfs_region(DFS_MKK_REGION);
 		break;
 	default:
 		/* set default dfs_region to FCC */
-		cds_put_dfs_region(DFS_FCC_DOMAIN);
+		cds_put_dfs_region(DFS_FCC_REGION);
 		break;
 	}
 

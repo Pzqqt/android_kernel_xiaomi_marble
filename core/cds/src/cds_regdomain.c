@@ -482,7 +482,7 @@ static bool is_reg_dmn_valid(uint16_t reg_dmn)
 				return true;
 	} else {
 		for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++)
-			if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum
+			if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_pair
 			    == reg_dmn)
 				return true;
 	}
@@ -522,8 +522,8 @@ int32_t cds_get_country_from_alpha2(uint8_t *alpha2)
 	int32_t i;
 
 	for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++) {
-		if (g_reg_dmn_tbl.all_countries[i].iso_name[0] == alpha2[0] &&
-		    g_reg_dmn_tbl.all_countries[i].iso_name[1] == alpha2[1])
+		if (g_reg_dmn_tbl.all_countries[i].alpha2[0] == alpha2[0] &&
+		    g_reg_dmn_tbl.all_countries[i].alpha2[1] == alpha2[1])
 			return g_reg_dmn_tbl.all_countries[i].country_code;
 	}
 
@@ -549,7 +549,7 @@ static uint16_t reg_dmn_get_default_country(uint16_t reg_dmn)
 	}
 
 	for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++) {
-		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum == reg_dmn) {
+		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_pair == reg_dmn) {
 			if (g_reg_dmn_tbl.reg_dmn_pairs[i].single_cc != 0)
 				return g_reg_dmn_tbl.reg_dmn_pairs[i].single_cc;
 			else
@@ -571,7 +571,7 @@ static const struct reg_dmn_pair *get_reg_dmn_pair(uint16_t reg_dmn)
 	int32_t i;
 
 	for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++) {
-		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum == reg_dmn)
+		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_pair == reg_dmn)
 			return &g_reg_dmn_tbl.reg_dmn_pairs[i];
 	}
 
@@ -608,7 +608,7 @@ static const struct country_code_to_reg_dmn *get_country_from_rd(
 	int32_t i;
 
 	for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++) {
-		if (g_reg_dmn_tbl.all_countries[i].reg_dmn_enum == reg_dmn)
+		if (g_reg_dmn_tbl.all_countries[i].reg_dmn_pair == reg_dmn)
 			return &g_reg_dmn_tbl.all_countries[i];
 	}
 
@@ -661,7 +661,7 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 			return -EINVAL;
 		}
 
-		reg_dmn = country->reg_dmn_enum;
+		reg_dmn = country->reg_dmn_pair;
 	}
 
 	reg->regpair = get_reg_dmn_pair(reg_dmn);
@@ -677,8 +677,8 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 		country = get_country_from_rd(reg_dmn);
 
 	if (country) {
-		reg->alpha2[0] = country->iso_name[0];
-		reg->alpha2[1] = country->iso_name[1];
+		reg->alpha2[0] = country->alpha2[0];
+		reg->alpha2[1] = country->alpha2[1];
 	} else {
 		reg->alpha2[0] = '0';
 		reg->alpha2[1] = '0';
@@ -698,9 +698,9 @@ int32_t get_reg_dmn_for_country(uint8_t *alpha2)
 	uint8_t i;
 
 	for (i = 0; i < g_reg_dmn_tbl.all_countries_cnt; i++) {
-		if ((g_reg_dmn_tbl.all_countries[i].iso_name[0] == alpha2[0]) &&
-		    (g_reg_dmn_tbl.all_countries[i].iso_name[1] == alpha2[1]))
-			return g_reg_dmn_tbl.all_countries[i].reg_dmn_enum;
+		if ((g_reg_dmn_tbl.all_countries[i].alpha2[0] == alpha2[0]) &&
+		    (g_reg_dmn_tbl.all_countries[i].alpha2[1] == alpha2[1]))
+			return g_reg_dmn_tbl.all_countries[i].reg_dmn_pair;
 	}
 
 	return -1;
@@ -785,7 +785,7 @@ uint16_t cds_get_reg_dmn_5g(uint32_t reg_dmn)
 	uint16_t i;
 
 	for (i = 0; i < g_reg_dmn_tbl.reg_dmn_pairs_cnt; i++) {
-		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_enum == reg_dmn)
+		if (g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_pair == reg_dmn)
 			return g_reg_dmn_tbl.reg_dmn_pairs[i].reg_dmn_5ghz;
 	}
 
