@@ -2183,17 +2183,17 @@ void hif_reset_soc(void *ol_sc)
 {
 	struct ol_softc *scn = (struct ol_softc *)ol_sc;
 	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
 #if defined(CPU_WARM_RESET_WAR)
 	/* Currently CPU warm reset sequence is tested only for AR9888_REV2
 	 * Need to enable for AR9888_REV1 once CPU warm reset sequence is
 	 * verified for AR9888_REV1
 	 */
-	if (scn->target_version == AR9888_REV2_VERSION) {
+	if (tgt_info->target_version == AR9888_REV2_VERSION)
 		hif_pci_device_warm_reset(sc);
-	} else {
+	else
 		hif_pci_device_reset(sc);
-	}
 #else
 	hif_pci_device_reset(sc);
 #endif
@@ -2300,6 +2300,7 @@ hif_target_sleep_state_adjust(struct ol_softc *scn,
 	static int max_delay;
 	struct hif_pci_softc *sc = scn->hif_sc;
 	static int debug;
+	struct hif_config_info *cfg = hif_get_ini_handle(scn);
 
 	if (scn->recovery)
 		return -EACCES;
@@ -2416,7 +2417,7 @@ hif_target_sleep_state_adjust(struct ol_softc *scn,
 					HIF_ERROR("%s:error, wakeup target",
 						__func__);
 					hif_msm_pcie_debug_info(sc);
-					if (!sc->ol_sc->enable_self_recovery)
+					if (!cfg->enable_self_recovery)
 						CDF_BUG(0);
 					scn->recovery = true;
 					cds_set_recovery_in_progress(true);
@@ -2706,6 +2707,7 @@ CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc,
 	int probe_again = 0;
 	struct pci_dev *pdev = bdev;
 	const struct pci_device_id *id = bid;
+	struct hif_target_info *tgt_info;
 
 	HIF_TRACE("%s: con_mode = 0x%x, device_id = 0x%x",
 		  __func__, cds_get_conparam(), id->device);
@@ -2726,6 +2728,7 @@ CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc,
 	ol_sc->aps_osdev.bc.bc_bustype = type;
 	sc->devid = id->device;
 	sc->cacheline_sz = dma_get_cache_alignment();
+	tgt_info = hif_get_target_info_handle(ol_sc);
 again:
 	ret = hif_enable_pci(sc, pdev, id);
 	if (ret < 0) {
@@ -2766,7 +2769,8 @@ again:
 	}
 	HIF_TRACE("%s: hif_pci_probe_tgt_wakeup done", __func__);
 
-	ol_sc->target_type = target_type;
+	tgt_info->target_type = target_type;
+
 	sc->soc_pcie_bar0 = pci_resource_start(pdev, BAR_NUM);
 	if (!sc->soc_pcie_bar0) {
 		HIF_ERROR("%s: ERROR - cannot get CE BAR0", __func__);

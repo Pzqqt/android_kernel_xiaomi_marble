@@ -1535,6 +1535,8 @@ int hif_set_hia(struct ol_softc *scn)
 	uint32_t chip_id;
 #endif
 	uint32_t pipe_cfg_addr;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	uint32_t target_type = tgt_info->target_type;
 
 	HIF_TRACE("%s: E", __func__);
 
@@ -1578,11 +1580,11 @@ int hif_set_hia(struct ol_softc *scn)
 			offsetof(struct host_interest_area_t, hi_option_flag2);
 
 #else
-	interconnect_targ_addr = hif_hia_item_address(scn->target_type,
+	interconnect_targ_addr = hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_interconnect_state));
-	ealloc_targ_addr = hif_hia_item_address(scn->target_type,
+	ealloc_targ_addr = hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_early_alloc));
-	flag2_targ_addr = hif_hia_item_address(scn->target_type,
+	flag2_targ_addr = hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_option_flag2));
 #endif
 	/* Supply Target-side CE configuration */
@@ -1679,10 +1681,10 @@ int hif_set_hia(struct ol_softc *scn)
 
 #ifndef QCA_WIFI_3_0
 	/* configure early allocation */
-	ealloc_targ_addr = hif_hia_item_address(scn->target_type,
-							offsetof(
-							struct host_interest_s,
-							hi_early_alloc));
+	ealloc_targ_addr = hif_hia_item_address(target_type,
+						offsetof(
+						struct host_interest_s,
+						hi_early_alloc));
 
 	rv = hif_diag_read_access(scn, ealloc_targ_addr,
 			&ealloc_value);
@@ -1704,8 +1706,7 @@ int hif_set_hia(struct ol_softc *scn)
 		goto done;
 	}
 	if (CHIP_ID_VERSION_GET(chip_id) == 0xD) {
-		scn->target_revision =
-			CHIP_ID_REVISION_GET(chip_id);
+		tgt_info->target_revision = CHIP_ID_REVISION_GET(chip_id);
 		switch (CHIP_ID_REVISION_GET(chip_id)) {
 		case 0x2:       /* ROME 1.3 */
 			/* 2 banks are switched to IRAM */
@@ -1743,7 +1744,7 @@ int hif_set_hia(struct ol_softc *scn)
 #endif
 
 	/* Tell Target to proceed with initialization */
-	flag2_targ_addr = hif_hia_item_address(scn->target_type,
+	flag2_targ_addr = hif_hia_item_address(target_type,
 						offsetof(
 						struct host_interest_s,
 						hi_option_flag2));
@@ -1821,6 +1822,7 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	int ret;
 	struct ol_softc *scn = hif_hdl;
 	struct icnss_soc_info soc_info;
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
 	/* if epping is enabled we need to use the epping configuration. */
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
@@ -1862,7 +1864,7 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	scn->hif_hdl = hif_state;
 	scn->mem = soc_info.v_addr;
 	scn->mem_pa = soc_info.p_addr;
-	scn->soc_version = soc_info.version;
+	tgt_info->soc_version = soc_info.version;
 
 	cdf_spinlock_init(&hif_state->keep_awake_lock);
 

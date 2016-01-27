@@ -462,15 +462,17 @@ void hif_save_htc_htt_config_endpoint(int htc_endpoint)
 
 /**
  * hif_get_hw_name(): get a human readable name for the hardware
+ * @info: Target Info
  *
- * Return: human readible name for the underlying wifi hardware.
+ * Return: human readable name for the underlying wifi hardware.
  */
-const char *hif_get_hw_name(struct ol_softc *scn)
+static const char *hif_get_hw_name(struct hif_target_info *info)
 {
 	int i;
+
 	for (i = 0; i < ARRAY_SIZE(qwlan_hw_list); i++) {
-		if (scn->target_version == qwlan_hw_list[i].id &&
-		    scn->target_revision == qwlan_hw_list[i].subid) {
+		if (info->target_version == qwlan_hw_list[i].id &&
+		    info->target_revision == qwlan_hw_list[i].subid) {
 			return qwlan_hw_list[i].name;
 		}
 	}
@@ -486,24 +488,13 @@ const char *hif_get_hw_name(struct ol_softc *scn)
  *
  * Return: n/a
  */
-void hif_get_hw_info(void *scn, u32 *version, u32 *revision,
+void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
 			const char **target_name)
 {
-	*version = ((struct ol_softc *)scn)->target_version;
-	*revision = ((struct ol_softc *)scn)->target_revision;
-	*target_name = hif_get_hw_name((struct ol_softc *)scn);
-}
-
-/**
- * hif_set_fw_info(): set the target_fw_version
- * @scn: scn
- * @target_fw_version: target_fw_version
- *
- * Return: n/a
- */
-void hif_set_fw_info(void *scn, uint32_t target_fw_version)
-{
-	((struct ol_softc *)scn)->target_fw_version = target_fw_version;
+	struct hif_target_info *info = hif_get_target_info_handle(scn);
+	*version = info->target_version;
+	*revision = info->target_revision;
+	*target_name = hif_get_hw_name(info);
 }
 
 /**
@@ -516,6 +507,7 @@ CDF_STATUS hif_open(enum ath_hal_bus_type bus_type)
 	struct ol_softc *scn;
 	v_CONTEXT_t cds_context;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	struct hif_config_info *cfg;
 
 	cds_context = cds_get_global_context();
 	status = cds_alloc_context(cds_context, CDF_MODULE_ID_HIF,
@@ -526,9 +518,8 @@ CDF_STATUS hif_open(enum ath_hal_bus_type bus_type)
 	}
 
 	cdf_mem_zero(scn, sizeof(*scn));
-	scn->enableuartprint = 0;
-	scn->enablefwlog = 0;
-	scn->max_no_of_peers = 1;
+	cfg = hif_get_ini_handle(scn);
+	cfg->max_no_of_peers = 1;
 	scn->pkt_log_init = false;
 	cdf_atomic_init(&scn->wow_done);
 	cdf_atomic_init(&scn->active_tasklet_cnt);
@@ -878,4 +869,34 @@ int hif_get_device_type(uint32_t device_id,
 	}
 end:
 	return ret;
+}
+
+/**
+ * Target info and ini parameters are global to the driver
+ * Hence these structures are exposed to all the modules in
+ * the driver and they don't need to maintains multiple copies
+ * of the same info, instead get the handle from hif and
+ * modify them in hif
+ */
+
+/**
+ * hif_get_ini_handle() - API to get hif_config_param handle
+ * @scn: HIF Context
+ *
+ * Return: pointer to hif_config_info
+ */
+struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn)
+{
+	return &scn->hif_config;
+}
+
+/**
+ * hif_get_target_info_handle() - API to get hif_target_info handle
+ * @scn: HIF context
+ *
+ * Return: Pointer to hif_target_info
+ */
+struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn)
+{
+	return &scn->target_info;
 }

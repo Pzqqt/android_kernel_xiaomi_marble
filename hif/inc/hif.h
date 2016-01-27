@@ -145,10 +145,47 @@ struct qca_napi_data {
 	struct qca_napi_info napis[CE_COUNT_MAX];
 };
 
+/**
+ * struct hif_config_info - Place Holder for hif configuration
+ * @enable_uart_print: UART Print
+ * @enable_self_recovery: Self Recovery
+ * @enable_fw_log: To Enable FW LOG
+ * @enable_lpass_support: LPASS support
+ * @enable_ramdump_collection: Ramdump Collection
+ * @max_no_of_peers: Max Number of Peers
+ *
+ * Structure for holding ini parameters.
+ */
+struct hif_config_info {
+	bool enable_uart_print;
+	bool enable_self_recovery;
+	bool enable_fw_log;
+	bool enable_lpass_support;
+	bool enable_ramdump_collection;
+	uint8_t max_no_of_peers;
+};
+
+/**
+ * struct hif_target_info - Target Information
+ * @target_version: Target Version
+ * @target_type: Target Type
+ * @target_revision: Target Revision
+ * @soc_version: SOC Version
+ *
+ * Structure to hold target information.
+ */
+struct hif_target_info {
+	uint32_t target_version;
+	uint32_t target_type;
+	uint32_t target_revision;
+	uint32_t soc_version;
+};
+
 struct ol_softc {
 	void __iomem *mem;      /* IO mapped memory base address */
 	cdf_dma_addr_t mem_pa;
-	uint32_t soc_version;
+	struct hif_config_info hif_config;
+	struct hif_target_info target_info;
 	/*
 	 * handle for code that uses the osdep.h version of OS
 	 * abstraction primitives
@@ -164,20 +201,10 @@ struct ol_softc {
 	 */
 	cdf_device_t cdf_dev;
 
-	struct ol_version version;
-
 	/* Packet statistics */
 	struct ol_ath_stats pkt_stats;
 
-	/* A_TARGET_TYPE_* */
-	uint32_t target_type;
-	uint32_t target_fw_version;
-	uint32_t target_version;
-	uint32_t target_revision;
-	uint8_t crm_version_string[64];
-	uint8_t wlan_version_string[64];
 	ol_target_status target_status;
-	bool is_sim;
 	/* calibration data is stored in flash */
 	uint8_t *cal_in_flash;
 	/* virtual address for the calibration data on the flash */
@@ -187,9 +214,7 @@ struct ol_softc {
 
 	/* BMI info */
 	/* OS-dependent private info for BMI */
-	void *bmi_ol_priv;
 	bool bmi_done;
-	bool bmi_ua_done;
 	uint8_t *bmi_cmd_buff;
 	dma_addr_t bmi_cmd_da;
 	OS_DMA_MEM_CONTEXT(bmicmd_dmacontext)
@@ -197,7 +222,6 @@ struct ol_softc {
 	uint8_t *bmi_rsp_buff;
 	dma_addr_t bmi_rsp_da;
 	/* length of last response */
-	uint32_t last_rxlen;
 	OS_DMA_MEM_CONTEXT(bmirsp_dmacontext)
 
 	void *msi_magic;
@@ -217,57 +241,7 @@ struct ol_softc {
 	/* HTC handles */
 	void *htc_handle;
 
-	bool fEnableBeaconEarlyTermination;
-	uint8_t bcnEarlyTermWakeInterval;
-
-	/* UTF event information */
-	struct {
-		uint8_t *data;
-		uint32_t length;
-		cdf_size_t offset;
-		uint8_t currentSeq;
-		uint8_t expectedSeq;
-	} utf_event_info;
-
-	struct ol_wow_info *scn_wowInfo;
-	/* enable uart/serial prints from target */
-	bool enableuartprint;
-	/* enable fwlog */
-	bool enablefwlog;
-
-	HAL_REG_CAPABILITIES hal_reg_capabilities;
-	struct ol_regdmn *ol_regdmn_handle;
-	uint8_t bcn_mode;
-	uint8_t arp_override;
-	/*
-	 * Includes host side stack level stats +
-	 * radio level athstats
-	 */
-	struct wlan_dbg_stats ath_stats;
-	/* noise_floor */
-	int16_t chan_nf;
-	uint32_t min_tx_power;
-	uint32_t max_tx_power;
-	uint32_t txpowlimit2G;
-	uint32_t txpowlimit5G;
-	uint32_t txpower_scale;
-	uint32_t chan_tx_pwr;
-	uint32_t vdev_count;
-	uint32_t max_bcn_ie_size;
-	cdf_spinlock_t scn_lock;
 	uint8_t vow_extstats;
-	/* if dcs enabled or not */
-	uint8_t scn_dcs;
-	wdi_event_subscribe scn_rx_peer_invalid_subscriber;
-	uint8_t proxy_sta;
-	uint8_t bcn_enabled;
-	/* Dynamic Tx Chainmask Selection enabled/disabled */
-	uint8_t dtcs;
-	/* true if vht ies are set on target */
-	uint32_t set_ht_vht_ies:1;
-	/*CWM enable/disable state */
-	bool scn_cwmenable;
-	uint8_t max_no_of_peers;
 #ifdef CONFIG_CNSS
 	struct cnss_fw_files fw_files;
 #endif
@@ -276,11 +250,6 @@ struct ol_softc {
 	unsigned long ramdump_address;
 	unsigned long ramdump_size;
 #endif
-	bool enable_self_recovery;
-#ifdef WLAN_FEATURE_LPSS
-	bool enablelpasssupport;
-#endif
-	bool enable_ramdump_collection;
 	struct targetdef_s *targetdef;
 	struct ce_reg_def *target_ce_def;
 	struct hostdef_s *hostdef;
@@ -619,9 +588,6 @@ void hif_set_target_sleep(struct ol_softc *scn, bool sleep_ok,
 		     bool wait_for_it);
 int hif_check_fw_reg(struct ol_softc *scn);
 int hif_check_soc_status(struct ol_softc *scn);
-void hif_get_hw_info(void *scn, u32 *version, u32 *revision,
-		     const char **target_name);
-void hif_set_fw_info(void *scn, u32 target_fw_version);
 void hif_disable_isr(void *scn);
 void hif_reset_soc(void *scn);
 void hif_disable_aspm(void);
@@ -700,6 +666,10 @@ int hif_dump_registers(struct ol_softc *scn);
 int ol_copy_ramdump(struct ol_softc *scn);
 void hif_pktlogmod_exit(void *hif_ctx);
 void hif_crash_shutdown(void *hif_ctx);
+void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
+		     const char **target_name);
+struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn);
+struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn);
 #ifdef __cplusplus
 }
 #endif
