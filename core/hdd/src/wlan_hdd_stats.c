@@ -2118,12 +2118,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 		}
 	}
 
-	if (rate_flags & eHAL_TX_RATE_LEGACY)
-		hdd_info("Reporting legacy rate %d", sinfo->txrate.legacy);
-	else
-		hdd_info("Reporting MCS rate %d flags 0x%x",
-			 sinfo->txrate.mcs, sinfo->txrate.flags);
-
 	sinfo->filled |= STATION_INFO_TX_BITRATE;
 
 	sinfo->tx_bytes = pAdapter->stats.tx_bytes;
@@ -2156,6 +2150,16 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	sinfo->rx_packets = pAdapter->stats.rx_packets;
 	sinfo->filled |= STATION_INFO_RX_PACKETS;
+
+	if (rate_flags & eHAL_TX_RATE_LEGACY)
+		hddLog(LOG1, FL("Reporting legacy rate %d pkt cnt tx %d rx %d"),
+			sinfo->txrate.legacy, sinfo->tx_packets,
+			sinfo->rx_packets);
+	else
+		hddLog(LOG1,
+			FL("Reporting MCS rate %d flags 0x%x pkt cnt tx %d rx %d"),
+			sinfo->txrate.mcs, sinfo->txrate.flags,
+			sinfo->tx_packets, sinfo->rx_packets);
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
