@@ -2292,7 +2292,7 @@ typedef enum {
 #endif
 
 #define CFG_MAX_CONCURRENT_CONNECTIONS_NAME        "gMaxConcurrentActiveSessions"
-#define CFG_MAX_CONCURRENT_CONNECTIONS_DEFAULT     (2)
+#define CFG_MAX_CONCURRENT_CONNECTIONS_DEFAULT     (3)
 #define CFG_MAX_CONCURRENT_CONNECTIONS_MIN         (1)
 #define CFG_MAX_CONCURRENT_CONNECTIONS_MAX         (4)
 
