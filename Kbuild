@@ -710,20 +710,25 @@ HIF_DIR := hif
 HIF_CE_DIR := $(HIF_DIR)/src/ce
 HIF_CNSS_STUB_DIR := $(HIF_DIR)/src/icnss_stub
 
-ifeq ($(CONFIG_HIF_PCI), 1)
+
+HIF_DISPATCHER_DIR := $(HIF_DIR)/src/dispatcher
+
 HIF_PCIE_DIR := $(HIF_DIR)/src/pcie
-else
 HIF_SNOC_DIR := $(HIF_DIR)/src/snoc
-endif
 
 HIF_INC := -I$(WLAN_COMMON_INC)/$(HIF_DIR)/inc \
 	   -I$(WLAN_COMMON_INC)/$(HIF_DIR)/src \
 	   -I$(WLAN_COMMON_INC)/$(HIF_CE_DIR) \
 	   -I$(WLAN_COMMON_INC)/$(HIF_CNSS_STUB_DIR)
 
+
 ifeq ($(CONFIG_HIF_PCI), 1)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_PCIE_DIR)
-else
+endif
+
+ifeq ($(CONFIG_HIF_SNOC), 1)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_DISPATCHER_DIR)
 HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SNOC_DIR)
 endif
 
@@ -736,23 +741,28 @@ HIF_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
 		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
 		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
-ifeq ($(CONFIG_CNSS), y)
-HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CNSS_STUB_DIR)/icnss_stub.o \
-		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o
+ifneq ($(CONFIG_ICNSS), y)
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CNSS_STUB_DIR)/icnss_stub.o
 endif
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
 HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_napi.o
 endif
 
-ifeq ($(CONFIG_HIF_PCI), 1)
 HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
-
-HIF_OBJS += $(HIF_PCIE_OBJS)
-else
+HIF_PCIE_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o
 HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
 
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus.o
+
+ifeq ($(CONFIG_HIF_PCI), 1)
+HIF_OBJS += $(HIF_PCIE_OBJS)
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_pci.o
+endif
+
+ifeq ($(CONFIG_HIF_SNOC), 1)
 HIF_OBJS += $(HIF_SNOC_OBJS)
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DISPATCHER_DIR)/multibus_snoc.o
 endif
 
 ############ WMA ############
@@ -1088,6 +1098,10 @@ endif
 #Enable PCI specific APIS (dma, etc)
 ifeq ($(CONFIG_HIF_PCI), 1)
 CDEFINES += -DHIF_PCI
+endif
+
+ifeq ($(CONFIG_HIF_SNOC), 1)
+CDEFINES += -DHIF_SNOC
 endif
 
 #Enable USB specific APIS
