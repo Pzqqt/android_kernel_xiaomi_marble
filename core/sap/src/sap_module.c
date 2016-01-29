@@ -1558,12 +1558,12 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 			sap_cac_reset_notify(hHal);
 
 			/*
-			 * Post the eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START
+			 * Post the eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START
 			 * to SAP state machine to process the channel
 			 * request with CSA IE set in the beacons.
 			 */
 			sapEvent.event =
-				eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START;
+				eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START;
 			sapEvent.params = 0;
 			sapEvent.u1 = 0;
 			sapEvent.u2 = 0;
@@ -1586,8 +1586,7 @@ wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: Posted eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START"
-		  "successfully to sap_fsm for Channel = %d",
+		  "%s: Posted eSAP_CHANNEL_SWITCH_ANNOUNCEMENT_START successfully to sap_fsm for Channel = %d",
 		  __func__, targetChannel);
 
 	return QDF_STATUS_SUCCESS;
