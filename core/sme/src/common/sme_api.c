@@ -155,6 +155,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	struct sir_set_hw_mode_resp *param;
 	enum cds_conn_update_reason reason;
 	tSmeCmd *saved_cmd;
+	tCsrRoamInfo roam_info = {0};
 
 	sms_log(mac, LOG1, FL("%s"), __func__);
 	param = (struct sir_set_hw_mode_resp *)msg;
@@ -227,6 +228,12 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 				saved_cmd = NULL;
 				mac->sme.saved_scan_cmd = NULL;
 			}
+		} else if (reason == CDS_UPDATE_REASON_CHANNEL_SWITCH) {
+			csr_roam_call_callback(mac,
+					command->u.set_hw_mode_cmd.session_id,
+					&roam_info, 0,
+					eCSR_ROAM_STATUS_UPDATE_HW_MODE,
+					eCSR_ROAM_RESULT_UPDATE_HW_MODE);
 		} else {
 			sms_log(mac, LOGE,
 			      FL("Calling HDD callback for HW mode response"));

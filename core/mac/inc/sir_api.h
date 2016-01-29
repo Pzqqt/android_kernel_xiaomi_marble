@@ -104,6 +104,7 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
  * @CDS_UPDATE_REASON_HIDDEN_STA: Connection to Hidden STA
  * @CDS_UPDATE_REASON_OPPORTUNISTIC: Opportunistic HW mode update
  * @CDS_UPDATE_REASON_NSS_UPDATE: NSS update
+ * @CDS_UPDATE_REASON_CHANNEL_SWITCH: Channel switch
  */
 enum cds_conn_update_reason {
 	CDS_UPDATE_REASON_SET_OPER_CHAN,
@@ -114,6 +115,7 @@ enum cds_conn_update_reason {
 	CDS_UPDATE_REASON_HIDDEN_STA,
 	CDS_UPDATE_REASON_OPPORTUNISTIC,
 	CDS_UPDATE_REASON_NSS_UPDATE,
+	CDS_UPDATE_REASON_CHANNEL_SWITCH,
 };
 
 typedef enum {

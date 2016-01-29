@@ -48,9 +48,13 @@
 #include "qdf_trace.h"
 /* Pick up the CSR callback definition */
 #include "csr_api.h"
+#include "ani_global.h"
+#include "csr_inside_api.h"
 #include "sme_api.h"
 /* SAP Internal API header file */
 #include "sap_internal.h"
+#include "cds_concurrency.h"
+#include "wma.h"
 
 /*----------------------------------------------------------------------------
  * Preprocessor Definitions and Constants
@@ -495,8 +499,130 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * wlansap_roam_process_dfs_chansw_update_fail() - handles the case for
- * eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_FAILURE in wlansap_roam_callback()
+ * wlansap_set_hw_mode_on_channel_switch() - Set hw mode before channel switch
+ * @sap_ctx: Global SAP context
+ * @target_channel: Target channel
+ *
+ * Sets hw mode, if needed, before doing a channel switch
+ *
+ * Return: None
+ */
+static QDF_STATUS wlansap_set_hw_mode_on_channel_switch(tpAniSirGlobal mac_ctx,
+		ptSapContext sap_ctx,
+		uint32_t target_channel)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE, qdf_status;
+	cds_context_type *cds_ctx;
+	enum cds_conc_next_action action;
+
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
+	if (!cds_ctx) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid CDS Context"));
+		return status;
+	}
+
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
+
+	action = cds_get_pref_hw_mode_for_chan(sap_ctx->sessionId,
+					target_channel);
+
+	if ((action != CDS_DBS_DOWNGRADE) && (action != CDS_MCC_UPGRADE)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("Invalid action: %d"), action);
+		goto done;
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			FL("action:%d session id:%d"),
+			action, sap_ctx->sessionId);
+
+	/* For MCC, opportunistic timer will be trigerred. We do not
+	 * want to do hw mode change here to avoid the ping pong effect.
+	 * e.g., If a new connection is immediately coming up, we could be
+	 * moving in and out of MCC. The timer after DBS_OPPORTUNISTIC_TIME
+	 * seconds will check if the driver can move to MCC or not.
+	 *
+	 * 1. Start opportunistic timer
+	 * 2. Do vdev restart on the new channel
+	 * 3. PM will check if MCC upgrade can be done after timer expiry
+	 */
+	if (action == CDS_MCC_UPGRADE) {
+		qdf_mc_timer_stop(&cds_ctx->dbs_opportunistic_timer);
+		qdf_status = qdf_mc_timer_start(
+				&cds_ctx->dbs_opportunistic_timer,
+				DBS_OPPORTUNISTIC_TIME *
+				1000);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+				FL("Failed to start dbs opportunistic timer"));
+		else
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
+				FL("opportunistic timer for MCC upgrade"));
+		goto done;
+	}
+
+	/* For DBS, we want to move right away to DBS mode. Else, we could
+	 * be doing MCC momentarily.
+	 *
+	 * 1. PM will initiate HW mode change to DBS rightaway
+	 * 2. Do vdev restart on the new channel
+	 */
+	status = cds_next_actions(sap_ctx->sessionId, action,
+				CDS_UPDATE_REASON_CHANNEL_SWITCH);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			FL("no set hw mode command was issued"));
+		goto done;
+	}
+done:
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
+	/* success must be returned only when a set hw mode was done */
+	return status;
+}
+
+/**
+ * wlansap_update_hw_mode() - Set the hw mode for the new channel switch
+ * @hal: HAL pointer
+ * @sap_ctx: SAP context
+ *
+ * Sets the hw mode, if needed, for the driver based on the new channel
+ * to which the vdev is going to switch to
+ *
+ * Return: None
+ */
+void wlansap_update_hw_mode(tHalHandle hal, ptSapContext sap_ctx)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	tCsrRoamInfo roam_info = {0};
+
+	if (mac_ctx->policy_manager_enabled &&
+				wma_is_hw_dbs_capable() == true) {
+		status = wlansap_set_hw_mode_on_channel_switch(mac_ctx, sap_ctx,
+				mac_ctx->sap.SapDfsInfo.target_channel);
+	}
+
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+			FL("status:%d"), status);
+
+	/*
+	 * If no set hw mode was done, proceed as before by doing set channel.
+	 * If set hw mode was done, perform the following in the callback so
+	 * that the set channel operations are done after the driver moves to
+	 * the required hw mode.
+	 */
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		csr_roam_call_callback(mac_ctx, sap_ctx->sessionId,
+			&roam_info, 0,
+			eCSR_ROAM_STATUS_UPDATE_HW_MODE,
+			eCSR_ROAM_RESULT_UPDATE_HW_MODE);
+	}
+}
+
+/**
+ * wlansap_roam_process_dfs_chansw_update() - handles the case for
+ * eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS in wlansap_roam_callback()
  *
  * @hal:           hal global context
  * @sap_ctx:       sap context
@@ -505,7 +631,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
  * Return: void
  */
 static void
-wlansap_roam_process_dfs_chansw_update_fail(tHalHandle hHal,
+wlansap_roam_process_dfs_chansw_update(tHalHandle hHal,
 					    ptSapContext sap_ctx,
 					    QDF_STATUS *ret_status)
 {
@@ -531,8 +657,7 @@ wlansap_roam_process_dfs_chansw_update_fail(tHalHandle hHal,
 		return;
 	}
 	/*
-	 * Both success and failure cases are handled intentionally handled
-	 * together. Irrespective of whether the channel switch IE was sent out
+	 * Irrespective of whether the channel switch IE was sent out
 	 * successfully or not, SAP should still vacate the channel immediately
 	 */
 	if (eSAP_STARTED != sap_ctx->sapsMachine) {
@@ -965,6 +1090,10 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received Chan Sw Update Notification"));
 		break;
+	case eCSR_ROAM_STATUS_UPDATE_HW_MODE:
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
+			  FL("Received HW mode update notification"));
+		break;
 	case eCSR_ROAM_SET_CHANNEL_RSP:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Received set channel response"));
@@ -1180,8 +1309,25 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 						&qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS:
-	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_FAILURE:
-		wlansap_roam_process_dfs_chansw_update_fail(hal, sap_ctx,
+		/* eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS indicates the
+		 * completion of sending (E)CSA IEs. After these IEs are sent,
+		 * in eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS state, check
+		 * for DBS downgrade/MCC upgrade is done.
+		 * (1) From this state
+		 * eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS, on MCC upgrade,
+		 * transition immediately happens to the state
+		 * eCSR_ROAM_RESULT_UPDATE_HW_MODE, where the vdev restart
+		 * happens internally.
+		 * (2) From this state,
+		 * eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS, on DBS downgrade,
+		 * transition happens to the state
+		 * eCSR_ROAM_RESULT_UPDATE_HW_MODE to do vdev restart only after
+		 * SME received the set HW mode response.
+		 */
+		wlansap_update_hw_mode(hal, sap_ctx);
+		break;
+	case eCSR_ROAM_RESULT_UPDATE_HW_MODE:
+		wlansap_roam_process_dfs_chansw_update(hal, sap_ctx,
 						&qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS:

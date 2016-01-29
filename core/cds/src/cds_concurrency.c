@@ -3593,6 +3593,12 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 	/* Are both mac's still in use*/
 	for (conn_index = 0; conn_index < MAX_NUMBER_OF_CONC_CONNECTIONS;
 		conn_index++) {
+		cds_debug("index:%d mac:%d in_use:%d chan:%d org_nss:%d",
+			conn_index,
+			conc_connection_list[conn_index].mac,
+			conc_connection_list[conn_index].in_use,
+			conc_connection_list[conn_index].chan,
+			conc_connection_list[conn_index].original_nss);
 		if ((conc_connection_list[conn_index].mac == 0) &&
 			conc_connection_list[conn_index].in_use) {
 			mac |= 1;
@@ -3608,8 +3614,10 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 #ifdef QCA_WIFI_3_0_EMU
 	/* For M2M emulation only: if we have a connection on 2.4, stay in DBS */
 	if (hdd_ctx->config->enable_m2m_limitation &&
-		CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan))
+		CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan)) {
+		cds_debug("For emulation only: connection on 2.4, stay in DBS");
 		goto done;
+	}
 #endif
 	/* Let's request for single MAC mode */
 	upgrade = CDS_MCC;
@@ -3803,6 +3811,7 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	/* if we still need it */
 	action = cds_need_opportunistic_upgrade();
+	cds_info("action:%d", action);
 	if (action) {
 		/* lets call for action */
 		/* session id is being used only
@@ -7853,4 +7862,122 @@ QDF_STATUS qdf_init_connection_update(void)
 	}
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * cds_get_pref_hw_mode_for_chan() - Get preferred hw mode for new channel
+ * @vdev_id: vdev id whose target channel needs to change
+ * @target_channel: Target channel
+ *
+ * Get the preferred hw mode based on the vdev whose channel is going to change
+ *
+ * Return: No change (CDS_NOP), MCC (CDS_MCC_UPGRADE), DBS (CDS_DBS_DOWNGRADE)
+ */
+enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
+		uint32_t target_channel)
+{
+	uint32_t num_connections;
+	uint32_t conn_index = 0;
+	bool found = false;
+	uint8_t old_band, new_band;
+
+	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
+		if ((vdev_id == conc_connection_list[conn_index].vdev_id) &&
+			(conc_connection_list[conn_index].in_use == true)) {
+			found = true;
+			break;
+		}
+		conn_index++;
+	}
+
+	if (!found) {
+		cds_err("vdev_id:%d not available in the conn info", vdev_id);
+		return CDS_NOP;
+	}
+
+	old_band = cds_chan_to_band(conc_connection_list[conn_index].chan);
+	new_band = cds_chan_to_band(target_channel);
+
+	num_connections = cds_get_connection_count();
+
+	cds_debug("vdev_id:%d conn_index:%d target_channel:%d chan[0]:%d chan[1]:%d chan[2]:%d num_connections:%d",
+		vdev_id, conn_index, target_channel,
+		conc_connection_list[0].chan, conc_connection_list[1].chan,
+		conc_connection_list[2].chan,
+		num_connections);
+
+	/* If the band of the new channel to which the switching is done is same
+	 * as the band of the old channel, then there is no need for a hw mode
+	 * change. The driver would already be in the required hw mode.
+	 */
+	if (old_band == new_band)
+		return CDS_NOP;
+
+	switch (num_connections) {
+	case 1:
+		/* The driver would already be in the required hw mode */
+		return CDS_NOP;
+	case 2:
+		/* If the band of the new channel, is same as that of the band
+		 * of the channel on the other interface, the driver needs to
+		 * move to single MAC.
+		 *
+		 * If the band of the new channel, is different than that of the
+		 * band of the channel on the other interface, the driver needs
+		 * to move to DBS.
+		 */
+		if (conn_index == 0) {
+			if (new_band == cds_chan_to_band(
+					conc_connection_list[1].chan))
+				return CDS_MCC_UPGRADE;
+			else if (new_band != cds_chan_to_band(
+					conc_connection_list[1].chan))
+				return CDS_DBS_DOWNGRADE;
+		} else {
+			if (new_band == cds_chan_to_band(
+					conc_connection_list[0].chan))
+				return CDS_MCC_UPGRADE;
+			else if (new_band != cds_chan_to_band(
+					conc_connection_list[0].chan))
+				return CDS_DBS_DOWNGRADE;
+		}
+	case 3:
+		/* If the band of the new channel, is same as that of the band
+		 * of the channel on the other two interfaces, the driver needs
+		 * to move to single MAC.
+		 *
+		 * If the band of the new channel, is different than that of the
+		 * band of the channel on the other two interfaces, the driver
+		 * needs to move to DBS.
+		 */
+		if (conn_index == 0) {
+			if ((new_band == cds_chan_to_band(
+					conc_connection_list[1].chan)) &&
+				(new_band == cds_chan_to_band(
+					conc_connection_list[2].chan)))
+				return CDS_MCC_UPGRADE;
+			else
+				return CDS_DBS_DOWNGRADE;
+		} else if (conn_index == 1) {
+			if ((new_band == cds_chan_to_band(
+					conc_connection_list[0].chan)) &&
+				(new_band == cds_chan_to_band(
+					conc_connection_list[2].chan)))
+				return CDS_MCC_UPGRADE;
+			else
+				return CDS_DBS_DOWNGRADE;
+		} else {
+			if ((new_band == cds_chan_to_band(
+					conc_connection_list[0].chan)) &&
+				(new_band == cds_chan_to_band(
+					conc_connection_list[1].chan)))
+				return CDS_MCC_UPGRADE;
+			else
+				return CDS_DBS_DOWNGRADE;
+		}
+	default:
+		cds_err("unexpected num_connections value %d",
+				num_connections);
+		return CDS_NOP;
+	}
 }

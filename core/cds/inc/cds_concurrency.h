@@ -463,6 +463,8 @@ struct cds_conc_connection_info {
 	bool          in_use;
 };
 
+enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
+		uint32_t target_channel);
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
 void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);

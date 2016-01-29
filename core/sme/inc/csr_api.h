@@ -497,6 +497,7 @@ typedef enum {
 	/* Channel sw update notification */
 	eCSR_ROAM_DFS_CHAN_SW_NOTIFY,
 	eCSR_ROAM_EXT_CHG_CHNL_IND,
+	eCSR_ROAM_STATUS_UPDATE_HW_MODE,
 } eRoamCmdStatus;
 
 /* comment inside indicates what roaming callback gets */
@@ -590,8 +591,8 @@ typedef enum {
 	eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS,
 	eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE,
 	eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS,
-	eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_FAILURE,
 	eCSR_ROAM_EXT_CHG_CHNL_UPDATE_IND,
+	eCSR_ROAM_RESULT_UPDATE_HW_MODE,
 } eCsrRoamResult;
 
 /*----------------------------------------------------------------------------
