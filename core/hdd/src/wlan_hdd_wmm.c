@@ -1799,7 +1799,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 {
 	hdd_wmm_qos_context_t *pQosContext;
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Entered for AC %d", __func__, acType);
 
 	if (!hdd_wmm_is_active(pAdapter) ||
@@ -1808,7 +1808,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 		/* either we don't want QoS or the AP doesn't support
 		 * QoS or we don't want to do implicit QoS
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: QoS not configured on both ends ", __func__);
 
 		*pGranted =
@@ -1823,7 +1823,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 		/* request already pending so we need to wait for that
 		 * response
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Implicit QoS for TL AC %d already scheduled",
 			  __func__, acType);
 
@@ -1838,7 +1838,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 		/* request previously failed
 		 * allow access, but we'll be downgraded
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 			  "%s: Implicit QoS for TL AC %d previously failed",
 			  __func__, acType);
 
@@ -1856,7 +1856,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 		return QDF_STATUS_SUCCESS;
 	}
 	/* we need to establish implicit QoS */
-	QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Need to schedule implicit QoS for TL AC %d, pAdapter is %p",
 		  __func__, acType, pAdapter);
 
@@ -1867,7 +1867,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 		/* no memory for QoS context.  Nothing we can do but
 		 * let data flow
 		 */
-		QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, WMM_TRACE_LEVEL_ERROR,
 			  "%s: Unable to allocate context", __func__);
 		pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcAccessAllowed =
 			true;
@@ -1889,7 +1889,7 @@ QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 	INIT_WORK(&pQosContext->wmmAcSetupImplicitQos, hdd_wmm_do_implicit_qos);
 #endif
 
-	QDF_TRACE(QDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_DEBUG,
 		  "%s: Scheduling work for AC %d, context %p",
 		  __func__, acType, pQosContext);
 
