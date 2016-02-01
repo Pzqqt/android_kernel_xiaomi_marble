@@ -6117,6 +6117,10 @@ typedef struct {
 #define WMI_PEER_PARAM_FIXED_RATE                       0xF
 /** Whitelist peer TIDs */
 #define WMI_PEER_SET_MU_WHITELIST                       0x10
+/** Set peer max tx rate (MCS) in adaptive rate ctrl */
+#define WMI_PEER_SET_MAX_TX_RATE                        0x11
+/** Set peer minimal tx rate (MCS) in adaptive rate ctrl */
+#define WMI_PEER_SET_MIN_TX_RATE                        0x12
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
@@ -6135,6 +6139,69 @@ typedef struct {
 	/** parametr value */
 	A_UINT32 param_value;
 } wmi_peer_set_param_cmd_fixed_param;
+
+typedef union {
+	/*
+	 * The A_UINT16 "mode" and "tx_rate" fields can only be directly used
+	 * by the target or a little-endian host.
+	 * A big-endian host needs to use the WMI_PEER_MAX_MIN_TX_xxx_GET/SET
+	 * macros on the A_UINT32 "value" field.
+	 */
+	struct {
+		/* 0:CCK, 1:OFDM, 2:HT, 3:VHT (see WMI_RATE_PREAMBLE) */
+		A_UINT16 mode;
+		A_UINT16 tx_rate; /* see per-mode specs below */
+	};
+	A_UINT32 value; /* for use by big-endian host */
+} wmi_peer_max_min_tx_rate;
+
+/*
+ * Any access to the mode/tx_rate in an big endian system should use
+ * the below Macros on the wmi_peer_max_min_tx_rate.value field.
+ */
+#define WMI_PEER_MAX_MIN_TX_MODE_GET(value32) WMI_GET_BITS(value32, 0, 16)
+#define WMI_PEER_MAX_MIN_TX_MODE_SET(value32, tx_mode) WMI_SET_BITS(value32, 0, 16, tx_mode)
+
+#define WMI_PEER_MAX_MIN_TX_RATE_GET(value32) WMI_GET_BITS(value32, 16, 16)
+#define WMI_PEER_MAX_MIN_TX_RATE_SET(value32, tx_mode) WMI_SET_BITS(value32, 16, 16, tx_mode)
+
+/*
+ *   CCK max/min tx Rate description
+ *   tx_rate = 0:    1Mbps,
+ *   tx_rate = 1:    2Mbps
+ *   tx_rate = 2:    5.5Mbps
+ *   tx_rate = 3:    11Mbps
+ *   tx_rate = else : invalid.
+ */
+#define WMI_MAX_CCK_TX_RATE 0x03
+
+/*
+ *   OFDM max/min tx Rate description
+ *   tx_rate = 0:   6Mbps,
+ *   tx_rate = 1:    9Mbps
+ *   tx_rate = 2:    12Mbps
+ *   tx_rate = 3:     18Mbps
+ *   tx_rate = 4:     24Mbps
+ *   tx_rate = 5:     32Mbps
+ *   tx_rate = 6:     48Mbps
+ *   tx_rate = 7:     54Mbps
+ *   tx_rate = else : invalid.
+ */
+#define WMI_MAX_OFDM_TX_RATE 0x07
+
+/*
+ *    HT max/min tx rate description
+ *    tx_rate = 0~7 : MCS Rate 0~7
+ *    tx_rate=else : invalid.
+ */
+#define WMI_MAX_HT_TX_MCS 0x07
+
+/*
+ *    VHT max/min tx rate description
+ *    tx_rate = 0~9 : MCS Rate 0~9
+ *    tx_rate=else : invalid.
+ */
+#define WMI_MAX_VHT_TX_MCS 0x09
 
 #define MAX_SUPPORTED_RATES 128
 

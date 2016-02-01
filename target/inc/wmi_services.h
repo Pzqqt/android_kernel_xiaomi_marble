@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -143,6 +143,8 @@ typedef enum {
 	WMI_SERVICE_SYNC_DELETE_CMDS,     /* FW sends response event for Peer, Vdev delete commands */
 	WMI_SERVICE_SMART_ANTENNA_SW_SUPPORT,
 	WMI_SERVICE_SMART_ANTENNA_HW_SUPPORT,
+	/* allow per-peer tx MCS min/max limits by host */
+	WMI_SERVICE_RATECTRL_LIMIT_MAX_MIN_RATES,
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
