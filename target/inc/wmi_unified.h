@@ -6956,6 +6956,16 @@ typedef struct {
 					WMI_ROAM_AP_PROFILE, found during scan
 					triggered upon FINAL_BMISS **/
 #define WMI_ROAM_REASON_HO_FAILED  0x5  /** LFR3.0 roaming failed, indicate the disconnection to host */
+
+/*
+ * WMI_ROAM_REASON_INVOKE_ROAM_FAIL:
+ * Result code of WMI_ROAM_INVOKE_CMDID.
+ * Any roaming failure before reassociation will be indicated to host
+ * with this reason.
+ * Any roaming failure after reassociation will be indicated to host with
+ * WMI_ROAM_REASON_HO_FAILED no matter WMI_ROAM_INVOKE_CMDID is called or not.
+ */
+#define WMI_ROAM_REASON_INVOKE_ROAM_FAIL 0x6
 /* reserved up through 0xF */
 
 /* subnet status: bits 4-5 */
@@ -7019,7 +7029,9 @@ typedef struct {
 /* flags for roam_invoke_cmd */
 /* add this channel into roam cache channel list after this command is finished */
 #define WMI_ROAM_INVOKE_FLAG_ADD_CH_TO_CACHE       0
-/* from bit 1 to bit 31 are reserved */
+/* indicate to host of failure if WMI_ROAM_INVOKE_CMDID. */
+#define WMI_ROAM_INVOKE_FLAG_REPORT_FAILURE        1
+/* from bit 2 to bit 31 are reserved */
 
 #define WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE(flag) do { \
 	(flag) |=  (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE);      \
