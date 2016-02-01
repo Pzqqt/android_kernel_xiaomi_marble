@@ -48,6 +48,7 @@
 #include <cds_mq.h>
 #include <qdf_types.h>
 #include "qdf_lock.h"
+#include "qdf_mc_timer.h"
 
 #define TX_POST_EVENT_MASK               0x001
 #define TX_SUSPEND_EVENT_MASK            0x002
@@ -286,6 +287,7 @@ typedef struct _cds_context_type {
 	qdf_spinlock_t bug_report_lock;
 	qdf_event_t connection_update_done_evt;
 	qdf_mutex_t qdf_conc_list_lock;
+	qdf_mc_timer_t dbs_opportunistic_timer;
 
 } cds_context_type, *p_cds_contextType;
 

@@ -3687,14 +3687,7 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 						uint8_t session_id)
 {
 	QDF_STATUS qdf_status;
-	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
-
-	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (!hdd_ctx) {
-		cds_err("HDD context is NULL");
-		return;
-	}
 
 	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
@@ -3722,9 +3715,9 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 	/* do we need to change the HW mode */
 	if (cds_need_opportunistic_upgrade()) {
 		/* let's start the timer */
-		qdf_mc_timer_stop(&hdd_ctx->dbs_opportunistic_timer);
+		qdf_mc_timer_stop(&cds_ctx->dbs_opportunistic_timer);
 		qdf_status = qdf_mc_timer_start(
-					&hdd_ctx->dbs_opportunistic_timer,
+					&cds_ctx->dbs_opportunistic_timer,
 					DBS_OPPORTUNISTIC_TIME *
 						1000);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -3791,7 +3784,7 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 /**
  * cds_dbs_opportunistic_timer_handler() - handler of
  * dbs_opportunistic_timer
- * @data: HDD context
+ * @data: CDS context
  *
  * handler for dbs_opportunistic_timer
  *
@@ -3800,9 +3793,8 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 void cds_dbs_opportunistic_timer_handler(void *data)
 {
 	enum cds_conc_next_action action = CDS_NOP;
-	cds_context_type *cds_ctx;
+	cds_context_type *cds_ctx = (cds_context_type *)data;
 
-	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -3846,6 +3838,19 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 		cds_err("Failed to destroy qdf_conc_list_lock");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
+				&cds_ctx->dbs_opportunistic_timer)) {
+		qdf_mc_timer_stop(&cds_ctx->dbs_opportunistic_timer);
+	}
+
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_destroy(
+				      &cds_ctx->dbs_opportunistic_timer))) {
+		cds_err("Cannot deallocate dbs opportunistic timer");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -3889,10 +3894,10 @@ QDF_STATUS cds_init_policy_mgr(void)
 
 	sme_register_hw_mode_trans_cb(hdd_ctx->hHal,
 				cds_hw_mode_transition_cb);
-	status = qdf_mc_timer_init(&hdd_ctx->dbs_opportunistic_timer,
+	status = qdf_mc_timer_init(&cds_ctx->dbs_opportunistic_timer,
 				   QDF_TIMER_TYPE_SW,
 				   cds_dbs_opportunistic_timer_handler,
-				   (void *)hdd_ctx);
+				   (void *)cds_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		cds_err("Failed to init DBS opportunistic timer");
 		return status;
