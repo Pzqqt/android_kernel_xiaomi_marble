@@ -98,6 +98,20 @@ struct hif_pci_pm_stats {
 };
 #endif
 
+/**
+ * struct hif_msi_info - Structure to hold msi info
+ * @magic: cookie
+ * @magic_da: dma address
+ * @dmaContext: dma address
+ *
+ * Structure to hold MSI information for PCIe interrupts
+ */
+struct hif_msi_info {
+	void *magic;
+	dma_addr_t magic_da;
+	OS_DMA_MEM_CONTEXT(dmacontext)
+};
+
 struct hif_pci_softc {
 	void __iomem *mem;      /* PCI address. */
 	/* For efficiency, should be first in struct */
@@ -109,7 +123,7 @@ struct hif_pci_softc {
 	/* 0 --> using legacy PCI line interrupts */
 	struct tasklet_struct intr_tq;  /* tasklet */
 
-
+	struct hif_msi_info msi_info;
 	int irq;
 	int irq_event;
 	int cacheline_sz;
@@ -117,6 +131,9 @@ struct hif_pci_softc {
 	cdf_dma_addr_t soc_pcie_bar0;
 	struct hif_tasklet_entry tasklet_entries[HIF_MAX_TASKLET_NUM];
 	bool pci_enabled;
+	cdf_spinlock_t irq_lock;
+	cdf_work_t reschedule_tasklet_work;
+	uint32_t lcr_val;
 #ifdef FEATURE_RUNTIME_PM
 	atomic_t pm_state;
 	uint32_t prevent_suspend_cnt;

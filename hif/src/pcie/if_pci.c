@@ -789,17 +789,15 @@ static irqreturn_t ce_per_engine_handler(int irq, void *arg)
 #ifdef CONFIG_SLUB_DEBUG_ON
 
 /* worker thread to schedule wlan_tasklet in SLUB debug build */
-static void reschedule_tasklet_work_handler(struct work_struct *recovery)
+static void reschedule_tasklet_work_handler(void *arg)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
-	struct hif_pci_softc *sc;
+	struct hif_pci_softc *sc = arg;
+	struct ol_softc *scn = sc->ol_sc;
 
-	if (NULL == scn) {
-		HIF_ERROR("%s: tasklet scn is null", __func__);
+	if (!scn) {
+		HIF_ERROR("%s: ol_softc is NULL", __func__);
 		return;
 	}
-
-	sc = scn->hif_sc;
 
 	if (scn->hif_init_done == false) {
 		HIF_ERROR("%s: wlan driver is unloaded", __func__);
@@ -810,9 +808,21 @@ static void reschedule_tasklet_work_handler(struct work_struct *recovery)
 	return;
 }
 
-static DECLARE_WORK(reschedule_tasklet_work, reschedule_tasklet_work_handler);
-
-#endif
+/**
+ * hif_init_reschedule_tasklet_work() - API to initialize reschedule tasklet
+ * work
+ * @sc: HIF PCI Context
+ *
+ * Return: void
+ */
+static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc)
+{
+	cdf_create_work(&sc->reschedule_tasklet_work,
+				reschedule_tasklet_work_handler, sc);
+}
+#else
+static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc) { }
+#endif /* CONFIG_SLUB_DEBUG_ON */
 
 static void wlan_tasklet(unsigned long data)
 {
@@ -1194,7 +1204,7 @@ CDF_STATUS hif_bus_open(struct ol_softc *ol_sc, enum ath_hal_bus_type bus_type)
 	ol_sc->bus_type = bus_type;
 	hif_pm_runtime_open(sc);
 
-	cdf_spinlock_init(&ol_sc->irq_lock);
+	cdf_spinlock_init(&sc->irq_lock);
 
 	return CDF_STATUS_SUCCESS;
 }
@@ -2159,19 +2169,31 @@ int hif_runtime_resume(void)
 	return status;
 }
 
+#if CONFIG_PCIE_64BIT_MSI
+static void hif_free_msi_ctx(struct ol_softc *scn)
+{
+	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_msi_info *info = &sc->msi_info;
+
+	OS_FREE_CONSISTENT(&scn->aps_osdev, 4,
+			info->magic, info->magic_dma,
+			OS_GET_DMA_MEM_CONTEXT(scn, dmacontext));
+	info->magic = NULL;
+	info->magic_dma = 0;
+}
+#else
+static void hif_free_msi_ctx(struct ol_softc *scn)
+{
+}
+#endif
+
 void hif_disable_isr(void *ol_sc)
 {
 	struct ol_softc *scn = (struct ol_softc *)ol_sc;
 	struct hif_pci_softc *sc = scn->hif_sc;
 
 	hif_nointrs(ol_sc);
-#if CONFIG_PCIE_64BIT_MSI
-	OS_FREE_CONSISTENT(&scn->aps_osdev, 4,
-			   scn->msi_magic, scn->msi_magic_dma,
-			   OS_GET_DMA_MEM_CONTEXT(scn, MSI_dmacontext));
-	scn->msi_magic = NULL;
-	scn->msi_magic_dma = 0;
-#endif
+	hif_free_msi_ctx(scn);
 	/* Cancel the pending tasklet */
 	ce_tasklet_kill(scn->hif_hdl);
 	tasklet_kill(&sc->intr_tq);
@@ -2213,8 +2235,8 @@ void hif_disable_aspm(void)
 	sc = scn->hif_sc;
 
 	/* Disable ASPM when pkt log is enabled */
-	pci_read_config_dword(sc->pdev, 0x80, &scn->lcr_val);
-	pci_write_config_dword(sc->pdev, 0x80, (scn->lcr_val & 0xffffff00));
+	pci_read_config_dword(sc->pdev, 0x80, &sc->lcr_val);
+	pci_write_config_dword(sc->pdev, 0x80, (sc->lcr_val & 0xffffff00));
 }
 
 /**
@@ -2237,7 +2259,7 @@ void hif_enable_power_gating(void *hif_ctx)
 	sc = scn->hif_sc;
 
 	/* Re-enable ASPM after firmware/OTP download is complete */
-	pci_write_config_dword(sc->pdev, 0x80, scn->lcr_val);
+	pci_write_config_dword(sc->pdev, 0x80, sc->lcr_val);
 	if (scn->pkt_log_init == false) {
 		PKT_LOG_MOD_INIT(scn);
 		scn->pkt_log_init = true;
@@ -2613,6 +2635,8 @@ int hif_configure_irq(struct hif_pci_softc *sc)
 	struct ol_softc *scn = sc->ol_sc;
 
 	HIF_TRACE("%s: E", __func__);
+
+	hif_init_reschedule_tasklet_work(sc);
 
 	if (ENABLE_MSI) {
 		ret = hif_configure_msi(sc);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -258,7 +258,7 @@ static inline void ce_irq_enable(struct ol_softc *scn, int ce_id)
 	uint32_t tmp = 1 << ce_id;
 	struct hif_pci_softc *sc = scn->hif_sc;
 
-	cdf_spin_lock_irqsave(&scn->irq_lock);
+	cdf_spin_lock_irqsave(&sc->irq_lock);
 	scn->ce_irq_summary &= ~tmp;
 	if (scn->ce_irq_summary == 0) {
 		/* Enable Legacy PCI line interrupts */
@@ -278,7 +278,7 @@ static inline void ce_irq_enable(struct ol_softc *scn, int ce_id)
 	}
 	if (scn->hif_init_done == true)
 		A_TARGET_ACCESS_END(scn);
-	cdf_spin_unlock_irqrestore(&scn->irq_lock);
+	cdf_spin_unlock_irqrestore(&sc->irq_lock);
 
 	/* check for missed firmware crash */
 	hif_fw_interrupt_handler(0, scn);

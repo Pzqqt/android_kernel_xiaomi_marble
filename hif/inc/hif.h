@@ -192,7 +192,6 @@ struct ol_softc {
 	 */
 	struct _NIC_DEV aps_osdev;
 	enum ath_hal_bus_type bus_type;
-	uint32_t lcr_val;
 	bool pkt_log_init;
 	bool request_irq_done;
 	/*
@@ -223,10 +222,6 @@ struct ol_softc {
 	dma_addr_t bmi_rsp_da;
 	/* length of last response */
 	OS_DMA_MEM_CONTEXT(bmirsp_dmacontext)
-
-	void *msi_magic;
-	dma_addr_t msi_magic_da;
-	OS_DMA_MEM_CONTEXT(msi_dmacontext)
 
 	/* Handles for Lower Layers : filled in at init time */
 	hif_handle_t hif_hdl;
@@ -274,7 +269,6 @@ struct ol_softc {
 	atomic_t active_tasklet_cnt;
 	bool notice_send;
 #ifdef HIF_PCI
-	cdf_spinlock_t irq_lock;
 	uint32_t ce_irq_summary;
 #endif
 	uint32_t *vaddr_rri_on_ddr;
