@@ -804,6 +804,13 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	params.hi_rssi_scan_rssi_delta = hirssi_scan_delta;
 	params.hi_rssi_scan_rssi_ub = hirssi_upper_bound & 0x00000ff;
 	params.raise_rssi_thresh_5g = roam_params->raise_rssi_thresh_5g;
+	params.dense_rssi_thresh_offset =
+			 roam_params->dense_rssi_thresh_offset;
+	params.dense_min_aps_cnt = roam_params->dense_min_aps_cnt;
+	params.traffic_threshold =
+			roam_params->traffic_threshold;
+	params.initial_dense_status = 0; /* reserved */
+
 
 	/*
 	 * The current Noise floor in firmware is -96dBm. Penalty/Boost
@@ -862,6 +869,11 @@ QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	WMA_LOGI(
 		FL("hirssi_scan max_count=%d, delta=%d, hirssi_upper_bound=%d"),
 		hirssi_scan_max_count, hirssi_scan_delta, hirssi_upper_bound);
+	WMA_LOGI(
+		FL("dense_rssi_thresh_offset=%d, dense_min_aps_cnt=%d, traffic_threshold=%d"),
+			roam_params->dense_rssi_thresh_offset,
+			roam_params->dense_min_aps_cnt,
+			roam_params->traffic_threshold);
 	return status;
 }
 

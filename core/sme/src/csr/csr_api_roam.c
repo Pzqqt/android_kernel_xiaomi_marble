@@ -2069,6 +2069,13 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->isCoalesingInIBSSAllowed =
 			pParam->isCoalesingInIBSSAllowed;
 
+		pMac->roam.configParam.roam_params.dense_rssi_thresh_offset =
+			pParam->roam_dense_rssi_thresh_offset;
+		pMac->roam.configParam.roam_params.dense_min_aps_cnt =
+			pParam->roam_dense_min_aps;
+		pMac->roam.configParam.roam_params.traffic_threshold =
+			pParam->roam_dense_traffic_thresh;
+
 		/* update p2p offload status */
 		pMac->pnoOffload = pParam->pnoOffload;
 
@@ -2105,8 +2112,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pParam->early_stop_scan_min_threshold;
 		pMac->roam.configParam.early_stop_scan_max_threshold =
 			pParam->early_stop_scan_max_threshold;
-	}
 
+	}
 	return status;
 }
 
@@ -2238,6 +2245,13 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enable_dot11p = pMac->enable_dot11p;
 	csr_set_channels(pMac, pParam);
 	pParam->obssEnabled = cfg_params->obssEnabled;
+	pParam->roam_dense_rssi_thresh_offset =
+			cfg_params->roam_params.dense_rssi_thresh_offset;
+	pParam->roam_dense_min_aps =
+			cfg_params->roam_params.dense_min_aps_cnt;
+	pParam->roam_dense_traffic_thresh =
+			cfg_params->roam_params.traffic_threshold;
+
 	pParam->conc_custom_rule1 = cfg_params->conc_custom_rule1;
 	pParam->conc_custom_rule2 = cfg_params->conc_custom_rule2;
 	pParam->is_sta_connection_in_5gz_enabled =
@@ -17045,6 +17059,12 @@ csr_roam_offload_scan(tpAniSirGlobal mac_ctx, uint8_t session_id,
 		roam_params_dst->max_raise_rssi_5g,
 		roam_params_dst->max_drop_rssi_5g,
 		req_buf->RoamRssiDiff, roam_params_dst->alert_rssi_threshold);
+
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		"dense_rssi_thresh_offset: %d, dense_min_aps_cnt:%d, traffic_threshold:%d",
+		roam_params_dst->dense_rssi_thresh_offset,
+		roam_params_dst->dense_min_aps_cnt,
+		roam_params_dst->traffic_threshold);
 
 	for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,

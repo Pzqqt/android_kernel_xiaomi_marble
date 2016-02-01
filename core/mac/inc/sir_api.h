@@ -2916,6 +2916,10 @@ struct roam_ext_params {
 	int rssi_diff;
 	int good_rssi_roam;
 	bool is_5g_pref_enabled;
+	int dense_rssi_thresh_offset;
+	int dense_min_aps_cnt;
+	int initial_dense_status;
+	int traffic_threshold;
 };
 
 typedef struct sSirRoamOffloadScanReq {

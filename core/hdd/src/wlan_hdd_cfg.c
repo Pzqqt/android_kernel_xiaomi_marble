@@ -3684,6 +3684,27 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		CFG_ENABLE_M2M_LIMITATION_MAX),
 #endif
 
+	REG_VARIABLE(CFG_ROAM_DENSE_TRAFFIC_THRESHOLD, WLAN_PARAM_Integer,
+		struct hdd_config, roam_dense_traffic_thresh,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT,
+		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MIN,
+		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX),
+
+	REG_VARIABLE(CFG_ROAM_DENSE_RSSI_THRE_OFFSET, WLAN_PARAM_Integer,
+		struct hdd_config, roam_dense_rssi_thresh_offset,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT,
+		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN,
+		CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX),
+
+	REG_VARIABLE(CFG_ROAM_DENSE_MIN_APS, WLAN_PARAM_Integer,
+		struct hdd_config, roam_dense_min_aps,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ROAM_DENSE_MIN_APS_DEFAULT,
+		CFG_ROAM_DENSE_MIN_APS_MIN,
+		CFG_ROAM_DENSE_MIN_APS_MAX),
+
 };
 
 
@@ -5263,6 +5284,15 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		CFG_ENABLE_LFR_SUBNET_DETECTION,
 		pHddCtx->config->enable_lfr_subnet_detection);
 #endif
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ROAM_DENSE_TRAFFIC_THRESHOLD,
+		pHddCtx->config->roam_dense_traffic_thresh);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ROAM_DENSE_RSSI_THRE_OFFSET,
+		pHddCtx->config->roam_dense_rssi_thresh_offset);
+	hdd_info("Name = [%s] Value = [%u]",
+		CFG_ROAM_DENSE_MIN_APS,
+		pHddCtx->config->roam_dense_min_aps);
 }
 
 
@@ -6698,6 +6728,14 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pHddCtx->config->early_stop_scan_max_threshold;
 	smeConfig->csrConfig.first_scan_bucket_threshold =
 		pHddCtx->config->first_scan_bucket_threshold;
+
+	smeConfig->csrConfig.roam_dense_rssi_thresh_offset =
+			pHddCtx->config->roam_dense_rssi_thresh_offset;
+	smeConfig->csrConfig.roam_dense_min_aps =
+			pHddCtx->config->roam_dense_min_aps;
+	smeConfig->csrConfig.roam_dense_traffic_thresh =
+			pHddCtx->config->roam_dense_traffic_thresh;
+
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, "sme_update_config() return failure %d",

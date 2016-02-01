@@ -1217,6 +1217,9 @@ typedef struct tagCsrConfigParam {
 	bool policy_manager_enabled;
 	uint32_t fine_time_meas_cap;
 	uint32_t dual_mac_feature_disable;
+	uint32_t roam_dense_traffic_thresh;
+	uint32_t roam_dense_rssi_thresh_offset;
+	uint32_t roam_dense_min_aps;
 } tCsrConfigParam;
 
 /* Tush */

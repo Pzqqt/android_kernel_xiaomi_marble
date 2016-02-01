@@ -2895,6 +2895,38 @@ enum dot11p_mode {
 #define CFG_ENABLE_M2M_LIMITATION_DEFAULT      (1)
 #endif /* QCA_WIFI_3_0_EMU */
 
+/*
+ * Dense traffic threshold
+ * traffic threshold required for dense roam scan
+ * not used currently
+ */
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD         "gtraffic_threshold"
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MIN     (0)
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_MAX     (100)
+#define CFG_ROAM_DENSE_TRAFFIC_THRESHOLD_DEFAULT (0)
+
+/*
+ * Dense Roam RSSI Threshold diff
+ * offset value from normal RSSI threshold to dense RSSI threshold
+ * Fw will optimize roaming based on new RSSI threshold once it detects
+ * dense enviournment.
+ */
+#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET         "groam_dense_rssi_thresh_offset"
+#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MIN     (0)
+#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_MAX     (20)
+#define CFG_ROAM_DENSE_RSSI_THRE_OFFSET_DEFAULT (0)
+
+/*
+ * Dense Roam Min APs
+ * minimum number of AP required for dense roam
+ * FW will consider environment as dense once it detects #APs
+ * operating is more than CFG_ROAM_DENSE_MIN_APS.
+ */
+#define CFG_ROAM_DENSE_MIN_APS         "groam_dense_min_aps"
+#define CFG_ROAM_DENSE_MIN_APS_MIN     (1)
+#define CFG_ROAM_DENSE_MIN_APS_MAX     (5)
+#define CFG_ROAM_DENSE_MIN_APS_DEFAULT (1)
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -3482,6 +3514,9 @@ struct hdd_config {
 #ifdef QCA_WIFI_3_0_EMU
 	bool enable_m2m_limitation;
 #endif
+	uint32_t roam_dense_traffic_thresh;
+	uint32_t roam_dense_rssi_thresh_offset;
+	uint32_t roam_dense_min_aps;
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
