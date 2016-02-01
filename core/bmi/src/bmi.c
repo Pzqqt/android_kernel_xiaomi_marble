@@ -57,26 +57,30 @@ bmi_command_test(uint32_t command, uint32_t address, uint8_t *data,
 
 CDF_STATUS bmi_init(struct ol_softc *scn)
 {
+	struct bmi_info *info;
+
 	if (!scn) {
 		BMI_ERR("Invalid scn Context");
 		bmi_assert(0);
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
-	scn->bmi_done = false;
 
-	if (!scn->bmi_cmd_buff) {
-		scn->bmi_cmd_buff = cdf_os_mem_alloc_consistent(scn->cdf_dev,
-					MAX_BMI_CMDBUF_SZ, &scn->bmi_cmd_da, 0);
-		if (!scn->bmi_cmd_buff) {
+	info = hif_get_bmi_ctx(scn);
+	info->bmi_done = false;
+
+	if (!info->bmi_cmd_buff) {
+		info->bmi_cmd_buff = cdf_os_mem_alloc_consistent(scn->cdf_dev,
+					MAX_BMI_CMDBUF_SZ, &info->bmi_cmd_da, 0);
+		if (!info->bmi_cmd_buff) {
 			BMI_ERR("No Memory for BMI Command");
 			return CDF_STATUS_E_NOMEM;
 		}
 	}
 
-	if (!scn->bmi_rsp_buff) {
-		scn->bmi_rsp_buff = cdf_os_mem_alloc_consistent(scn->cdf_dev,
-					MAX_BMI_CMDBUF_SZ, &scn->bmi_rsp_da, 0);
-		if (!scn->bmi_rsp_buff) {
+	if (!info->bmi_rsp_buff) {
+		info->bmi_rsp_buff = cdf_os_mem_alloc_consistent(scn->cdf_dev,
+					MAX_BMI_CMDBUF_SZ, &info->bmi_rsp_da, 0);
+		if (!info->bmi_rsp_buff) {
 			BMI_ERR("No Memory for BMI Response");
 			goto end;
 		}
@@ -84,25 +88,27 @@ CDF_STATUS bmi_init(struct ol_softc *scn)
 	return CDF_STATUS_SUCCESS;
 end:
 	cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				 scn->bmi_cmd_buff, scn->bmi_cmd_da, 0);
-	scn->bmi_cmd_buff = NULL;
+				 info->bmi_cmd_buff, info->bmi_cmd_da, 0);
+	info->bmi_cmd_buff = NULL;
 	return CDF_STATUS_E_NOMEM;
 }
 
 void bmi_cleanup(struct ol_softc *scn)
 {
-	if (scn->bmi_cmd_buff) {
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+
+	if (info->bmi_cmd_buff) {
 		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				    scn->bmi_cmd_buff, scn->bmi_cmd_da, 0);
-		scn->bmi_cmd_buff = NULL;
-		scn->bmi_cmd_da = 0;
+				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
+		info->bmi_cmd_buff = NULL;
+		info->bmi_cmd_da = 0;
 	}
 
-	if (scn->bmi_rsp_buff) {
+	if (info->bmi_rsp_buff) {
 		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				    scn->bmi_rsp_buff, scn->bmi_rsp_da, 0);
-		scn->bmi_rsp_buff = NULL;
-		scn->bmi_rsp_da = 0;
+				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
+		info->bmi_rsp_buff = NULL;
+		info->bmi_rsp_da = 0;
 	}
 }
 
@@ -126,11 +132,12 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 						struct ol_softc *scn)
 {
 	int status = 0;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t cid, length;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("BMI Phase is Already Done");
 		return CDF_STATUS_E_PERM;
 	}
@@ -208,14 +215,15 @@ bmi_read_soc_register(uint32_t address, uint32_t *param, struct ol_softc *scn)
 	uint32_t cid;
 	int status;
 	uint32_t offset, param_len;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
 	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
 	cdf_mem_set(bmi_rsp_buff, 0, sizeof(cid) + sizeof(address));
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_DBG("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -249,12 +257,13 @@ bmi_write_soc_register(uint32_t address, uint32_t param, struct ol_softc *scn)
 	uint32_t cid;
 	int status;
 	uint32_t offset;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
 	bmi_assert(BMI_COMMAND_FITS(size));
 	cdf_mem_set(bmi_cmd_buff, 0, size);
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_DBG("Command disallowed");
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -290,12 +299,13 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_softc *scn)
 	uint32_t offset;
 	uint32_t remaining, txlen;
 	const uint32_t header = sizeof(cid) + sizeof(length);
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -342,13 +352,14 @@ bmi_sign_stream_start(uint32_t address,
 	const uint32_t header = sizeof(cid) + sizeof(address) + sizeof(length);
 	uint8_t aligned_buf[BMI_DATASZ_MAX + 4];
 	uint8_t *src;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t remaining, txlen;
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -402,12 +413,13 @@ bmilz_stream_start(uint32_t address, struct ol_softc *scn)
 	uint32_t cid;
 	int status;
 	uint32_t offset;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
 	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_DBG("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}

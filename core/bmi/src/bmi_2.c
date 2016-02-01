@@ -39,10 +39,11 @@ bmi_no_command(struct ol_softc *scn)
 	int status;
 	uint32_t length;
 	uint8_t ret = 0;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed: BMI DONE ALREADY");
 		return CDF_STATUS_E_PERM;
 	}
@@ -79,10 +80,11 @@ bmi_done_local(struct ol_softc *scn)
 	int status;
 	uint32_t length;
 	uint8_t ret = 0;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -110,18 +112,18 @@ bmi_done_local(struct ol_softc *scn)
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (scn->bmi_cmd_buff) {
+	if (info->bmi_cmd_buff) {
 		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				    scn->bmi_cmd_buff, scn->bmi_cmd_da, 0);
-		scn->bmi_cmd_buff = NULL;
-		scn->bmi_cmd_da = 0;
+				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
+		info->bmi_cmd_buff = NULL;
+		info->bmi_cmd_da = 0;
 	}
 
-	if (scn->bmi_rsp_buff) {
+	if (info->bmi_rsp_buff) {
 		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				    scn->bmi_rsp_buff, scn->bmi_rsp_da, 0);
-		scn->bmi_rsp_buff = NULL;
-		scn->bmi_rsp_da = 0;
+				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
+		info->bmi_rsp_buff = NULL;
+		info->bmi_rsp_da = 0;
 	}
 
 	return CDF_STATUS_SUCCESS;
@@ -142,10 +144,11 @@ bmi_write_memory(uint32_t address,
 	const uint32_t header = sizeof(cid) + sizeof(address) + sizeof(length);
 	uint8_t aligned_buffer[BMI_DATASZ_MAX];
 	uint8_t *src;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -211,12 +214,13 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 	uint8_t ret = 0;
 	uint32_t offset;
 	uint32_t remaining, rxlen, rsp_len, total_len;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	/* note we reuse the same buffer to receive on */
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(length);
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -282,10 +286,11 @@ bmi_execute(uint32_t address, uint32_t *param,
 	int status;
 	uint32_t length;
 	uint8_t ret = 0;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -326,11 +331,12 @@ bmi_load_image(dma_addr_t address,
 	uint32_t offset;
 	uint32_t length;
 	uint8_t ret = 0;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t addr_h, addr_l;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -383,6 +389,7 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 	struct image_desc_info image_desc_info;
 	CDF_STATUS status;
 	struct hif_target_info *tgt_info;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
@@ -392,7 +399,7 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 
 	tgt_info = hif_get_target_info_handle(scn);
 
-	if (scn->bmi_cmd_buff == NULL || scn->bmi_rsp_buff == NULL) {
+	if (info->bmi_cmd_buff == NULL || info->bmi_rsp_buff == NULL) {
 		BMI_ERR("bmi_open failed!");
 		return CDF_STATUS_NOT_INITIALIZED;
 	}

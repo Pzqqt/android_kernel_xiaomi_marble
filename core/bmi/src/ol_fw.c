@@ -148,6 +148,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 #endif
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
+	struct bmi_info *bmi_ctx = hif_get_bmi_ctx(scn);
 
 	switch (file) {
 	default:
@@ -155,7 +156,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		return -1;
 	case ATH_OTP_FILE:
 #if defined(CONFIG_CNSS)
-		filename = scn->fw_files.otp_data;
+		filename = bmi_ctx->fw_files.otp_data;
 #else
 		filename = QCA_OTP_FILE;
 #endif
@@ -166,7 +167,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	case ATH_FIRMWARE_FILE:
 		if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
 #if defined(CONFIG_CNSS)
-			filename = scn->fw_files.epping_file;
+			filename = bmi_ctx->fw_files.epping_file;
 #else
 			filename = QCA_FIRMWARE_EPPING_FILE;
 #endif
@@ -177,7 +178,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 #ifdef QCA_WIFI_FTM
 		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 #if defined(CONFIG_CNSS)
-			filename = scn->fw_files.utf_file;
+			filename = bmi_ctx->fw_files.utf_file;
 #else
 			filename = QCA_UTF_FIRMWARE_FILE;
 #endif
@@ -190,7 +191,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		}
 #endif
 #if defined(CONFIG_CNSS)
-		filename = scn->fw_files.image_file;
+		filename = bmi_ctx->fw_files.image_file;
 #else
 		filename = QCA_FIRMWARE_FILE;
 #endif
@@ -205,7 +206,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 #ifdef QCA_WIFI_FTM
 		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 #if defined(CONFIG_CNSS)
-			filename = scn->fw_files.utf_board_data;
+			filename = bmi_ctx->fw_files.utf_board_data;
 #else
 			filename = QCA_BOARD_DATA_FILE;
 #endif
@@ -218,7 +219,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		}
 #endif /* QCA_WIFI_FTM */
 #if defined(CONFIG_CNSS)
-		filename = scn->fw_files.board_data;
+		filename = bmi_ctx->fw_files.board_data;
 #else
 		filename = QCA_BOARD_DATA_FILE;
 #endif
@@ -256,8 +257,8 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 #if defined(QCA_WIFI_FTM) && defined(CONFIG_CNSS)
 		/* Try default board data file if FTM specific
 		 * board data file is not present. */
-		if (filename == scn->fw_files.utf_board_data) {
-			filename = scn->fw_files.board_data;
+		if (filename == bmi_ctx->fw_files.utf_board_data) {
+			filename = bmi_ctx->fw_files.board_data;
 			BMI_INFO("%s: Trying to load default %s",
 			       __func__, filename);
 			if (request_firmware(&fw_entry, filename,
@@ -1211,9 +1212,10 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 	uint32_t target_version = tgt_info->target_version;
+	struct bmi_info *bmi_ctx = hif_get_bmi_ctx(scn);
 
 #ifdef CONFIG_CNSS
-	if (0 != cnss_get_fw_files_for_target(&scn->fw_files,
+	if (0 != cnss_get_fw_files_for_target(&bmi_ctx->fw_files,
 					      target_type,
 					      target_version)) {
 		BMI_ERR("%s: No FW files from CNSS driver", __func__);

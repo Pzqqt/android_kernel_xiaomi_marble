@@ -37,16 +37,17 @@ bmi_read_memory(uint32_t address,
 	int status;
 	uint32_t offset;
 	uint32_t remaining, rxlen;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t align;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_DBG("command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
 
-	if (!scn->bmi_cmd_buff || !scn->bmi_rsp_buff) {
+	if (!info->bmi_cmd_buff || !info->bmi_rsp_buff) {
 		BMI_ERR("BMI Initialization hasn't done");
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
@@ -111,9 +112,10 @@ bmi_write_memory(uint32_t address,
 	const uint32_t header = sizeof(cid) + sizeof(address) + sizeof(length);
 	uint8_t aligned_buffer[BMI_DATASZ_MAX];
 	uint8_t *src;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -178,11 +180,12 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_softc *scn)
 	int status;
 	uint32_t offset;
 	uint32_t param_len;
-	uint8_t *bmi_cmd_buff = scn->bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff = scn->bmi_rsp_buff;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
 
-	if (scn->bmi_done) {
+	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
 		return CDF_STATUS_E_PERM;
 	}
@@ -272,6 +275,7 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 {
 	int status;
 	uint32_t cid;
+	struct bmi_info *info;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
@@ -279,43 +283,44 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
-	if (scn->bmi_done) {
+	info = hif_get_bmi_ctx(scn);
+	if (info->bmi_done) {
 		BMI_DBG("bmi_done_local skipped");
 		return CDF_STATUS_E_PERM;
 	}
 
 	BMI_DBG("BMI Done: Enter (device: 0x%p)", scn);
 
-	scn->bmi_done = true;
+	info->bmi_done = true;
 	cid = BMI_DONE;
 
-	if (!scn->bmi_cmd_buff) {
+	if (!info->bmi_cmd_buff) {
 		BMI_ERR("Invalid scn BMICmdBuff");
 		bmi_assert(0);
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
-	cdf_mem_copy(scn->bmi_cmd_buff, &cid, sizeof(cid));
+	cdf_mem_copy(info->bmi_cmd_buff, &cid, sizeof(cid));
 
-	status = hif_exchange_bmi_msg(scn, scn->bmi_cmd_buff,
+	status = hif_exchange_bmi_msg(scn, info->bmi_cmd_buff,
 				sizeof(cid), NULL, NULL, 0);
 	if (status) {
 		BMI_ERR("Failed to write to the device; status:%d", status);
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (scn->bmi_cmd_buff) {
+	if (info->bmi_cmd_buff) {
 		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				    scn->bmi_cmd_buff, scn->bmi_cmd_da, 0);
-		scn->bmi_cmd_buff = NULL;
-		scn->bmi_cmd_da = 0;
+				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
+		info->bmi_cmd_buff = NULL;
+		info->bmi_cmd_da = 0;
 	}
 
-	if (scn->bmi_rsp_buff) {
+	if (info->bmi_rsp_buff) {
 		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
-				    scn->bmi_rsp_buff, scn->bmi_rsp_da, 0);
-		scn->bmi_rsp_buff = NULL;
-		scn->bmi_rsp_da = 0;
+				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
+		info->bmi_rsp_buff = NULL;
+		info->bmi_rsp_da = 0;
 	}
 
 	return CDF_STATUS_SUCCESS;
