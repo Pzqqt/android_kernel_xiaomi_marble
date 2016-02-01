@@ -3329,3 +3329,15 @@ void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *data)
 }
 
 #endif /* FEATURE_RUNTIME_PM */
+
+/**
+ * hif_get_bmi_ctx() - API to get BMI context
+ * @hif_ctx: HIF Context
+ *
+ * Return: Pointer to BMI Context
+ */
+struct bmi_info *hif_get_bmi_ctx(void *hif_ctx)
+{
+	struct ol_softc *sc = hif_ctx;
+	return &sc->bmi_ctx;
+}

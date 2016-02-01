@@ -181,11 +181,24 @@ struct hif_target_info {
 	uint32_t soc_version;
 };
 
+struct bmi_info {
+	uint8_t *bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff;
+	dma_addr_t bmi_cmd_da;
+	dma_addr_t bmi_rsp_da;
+	uint8_t *cal_in_flash;
+	bool bmi_done;
+#ifdef CONFIG_CNSS
+	struct cnss_fw_files fw_files;
+#endif
+};
+
 struct ol_softc {
 	void __iomem *mem;      /* IO mapped memory base address */
 	cdf_dma_addr_t mem_pa;
 	struct hif_config_info hif_config;
 	struct hif_target_info target_info;
+	struct bmi_info bmi_ctx;
 	/*
 	 * handle for code that uses the osdep.h version of OS
 	 * abstraction primitives
@@ -210,18 +223,6 @@ struct ol_softc {
 	/* status of target init */
 	WLAN_INIT_STATUS wlan_init_status;
 
-	/* BMI info */
-	/* OS-dependent private info for BMI */
-	bool bmi_done;
-	uint8_t *bmi_cmd_buff;
-	dma_addr_t bmi_cmd_da;
-	OS_DMA_MEM_CONTEXT(bmicmd_dmacontext)
-
-	uint8_t *bmi_rsp_buff;
-	dma_addr_t bmi_rsp_da;
-	/* length of last response */
-	OS_DMA_MEM_CONTEXT(bmirsp_dmacontext)
-
 	/* Handles for Lower Layers : filled in at init time */
 	hif_handle_t hif_hdl;
 #ifdef HIF_PCI
@@ -236,9 +237,6 @@ struct ol_softc {
 	void *htc_handle;
 
 	uint8_t vow_extstats;
-#ifdef CONFIG_CNSS
-	struct cnss_fw_files fw_files;
-#endif
 	struct targetdef_s *targetdef;
 	struct ce_reg_def *target_ce_def;
 	struct hostdef_s *hostdef;
@@ -657,6 +655,7 @@ void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);
 struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn);
 struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn);
+struct bmi_info *hif_get_bmi_ctx(void *hif_ctx);
 #ifdef __cplusplus
 }
 #endif

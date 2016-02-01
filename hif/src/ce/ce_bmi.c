@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -156,6 +156,7 @@ CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
 	unsigned int mux_id = 0;
 	unsigned int transaction_id = 0xffff;
 	unsigned int user_flags = 0;
+	struct bmi_info *info = hif_get_bmi_ctx(scn);
 #ifdef BMI_RSP_POLLING
 	cdf_dma_addr_t buf;
 	unsigned int completed_nbytes, id, flags;
@@ -190,7 +191,7 @@ CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
 	 * CE_request = dma_map_single(dev,
 	 * (void *)bmi_request, request_length, DMA_TO_DEVICE);
 	 */
-	CE_request = scn->bmi_cmd_da;
+	CE_request = info->bmi_cmd_da;
 	transaction->bmi_request_CE = CE_request;
 
 	if (bmi_response) {
@@ -199,7 +200,7 @@ CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
 		 * CE_response = dma_map_single(dev, bmi_response,
 		 * BMI_DATASZ_MAX, DMA_FROM_DEVICE);
 		 */
-		CE_response = scn->bmi_rsp_da;
+		CE_response = info->bmi_rsp_da;
 		transaction->bmi_response_host = bmi_response;
 		transaction->bmi_response_CE = CE_response;
 		/* dma_cache_sync(dev, bmi_response,
