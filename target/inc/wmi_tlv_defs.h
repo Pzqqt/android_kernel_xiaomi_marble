@@ -658,6 +658,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_mu_report_total_mu,
 	WMITLV_TAG_STRUC_wmi_vdev_set_dscp_tid_map_cmd_fixed_param,
 	WMITLV_TAG_STRUC_wmi_roam_set_mbo_fixed_param,
+	WMITLV_TAG_STRUC_wmi_mib_stats_enable_cmd_fixed_param,
 
 } WMITLV_TAG_ID;
 
@@ -924,8 +925,8 @@ typedef enum {
 	OP(WMI_PEER_ATF_REQUEST_CMDID) \
 	OP(WMI_FWTEST_CMDID) \
 	OP(WMI_QBOOST_CFG_CMDID) \
-	OP(WMI_ROAM_SET_MBO_PARAM_CMDID)
-
+	OP(WMI_ROAM_SET_MBO_PARAM_CMDID) \
+	OP(WMI_MIB_STATS_ENABLE_CMDID)
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
  * Otherwise, these WMI TLV Functions will be process them.
@@ -1797,6 +1798,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_GET_TPC_CONFIG_CMDID);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_pdev_set_base_macaddr_cmd_fixed_param, wmi_pdev_set_base_macaddr_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_BASE_MACADDR_CMDID);
+
+/* MIB Stats*/
+#define WMITLV_TABLE_WMI_MIB_STATS_ENABLE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_mib_stats_enable_cmd_fixed_param, wmi_mib_stats_enable_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_MIB_STATS_ENABLE_CMDID);
 
 /* Peer multicast group Cmd */
 #define WMITLV_TABLE_WMI_PEER_MCAST_GROUP_CMDID(id,op,buf,len) \
