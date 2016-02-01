@@ -361,20 +361,6 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 		pStaDs->mlmStaContext.disassocReason = reasonCode;
 		pStaDs->mlmStaContext.cleanupTrigger =
 			eLIM_LINK_MONITORING_DEAUTH;
-
-		/*
-		 * Set state to mlm State to eLIM_MLM_WT_DEL_STA_RSP_STATE
-		 * This is to address the issue of race condition between
-		 * disconnect request from the HDD and deauth from
-		 * Tx inactivity timer by FWR. This will make sure that we
-		 * will not process disassoc if deauth is in progress for
-		 * the station and thus mlmStaContext.cleanupTrigger will
-		 * not be overwritten.
-		 */
-
-		pStaDs->mlmStaContext.mlmState =
-					eLIM_MLM_WT_DEL_STA_RSP_STATE;
-
 		/* / Issue Deauth Indication to SME. */
 		qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
 			     pStaDs->staAddr, sizeof(tSirMacAddr));
