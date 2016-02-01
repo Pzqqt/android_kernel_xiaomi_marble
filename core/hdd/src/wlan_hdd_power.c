@@ -1622,10 +1622,9 @@ err_cds_close:
 	if (pHddCtx) {
 		/* Unregister the Net Device Notifier */
 		unregister_netdevice_notifier(&hdd_netdev_notifier);
-#ifdef WLAN_KD_READY_NOTIFIER
 		cnss_diag_notify_wlan_close();
 		ptt_sock_deactivate_svc();
-#endif /* WLAN_KD_READY_NOTIFIER */
+
 		nl_srv_exit();
 
 		/* Free up dynamically allocated members inside HDD Adapter */
