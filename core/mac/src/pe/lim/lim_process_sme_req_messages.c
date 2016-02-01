@@ -822,16 +822,10 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			  FL("cbMode %u"), sme_start_bss_req->cbMode);
 		if (session->vhtCapability || session->htCapability) {
 			chanwidth = sme_start_bss_req->vht_channel_width;
-			lim_log(mac_ctx, LOG1, FL("vht_channel_width %u"),
-					sme_start_bss_req->vht_channel_width);
-			if (channel_number <= RF_CHAN_14 &&
-					chanwidth != eHT_CHANNEL_WIDTH_20MHZ) {
-				chanwidth = CH_WIDTH_20MHZ;
-				session->htSupportedChannelWidthSet = 0;
-				lim_log(mac_ctx, LOG1,
-					FL("Set chanwidth to 20Mhz, chan %d"),
-					channel_number);
-			}
+			lim_log(mac_ctx, LOG1,
+				FL("vht_channel_width %u htSupportedChannelWidthSet %d"),
+				sme_start_bss_req->vht_channel_width,
+				session->htSupportedChannelWidthSet);
 			session->ch_width = chanwidth;
 			if (session->htSupportedChannelWidthSet) {
 				session->ch_center_freq_seg0 =
