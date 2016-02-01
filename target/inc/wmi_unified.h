@@ -1354,6 +1354,8 @@ typedef enum {
 #define WMI_CHANNEL_CHANGE_CAUSE_CSA 13 /*Indicate reason for channel switch */
 #define WMI_CHAN_FLAG_HALF_RATE     14  /* Indicates half rate channel */
 #define WMI_CHAN_FLAG_QUARTER_RATE  15  /* Indicates quarter rate channel */
+/* Enable radar event reporting for sec80 in VHT80p80 */
+#define WMI_CHAN_FLAG_DFS_CFREQ2  16
 
 #define WMI_SET_CHANNEL_FLAG(pwmi_channel, flag) do { \
 		(pwmi_channel)->info |=  (1 << flag);	   \
@@ -2365,6 +2367,12 @@ typedef struct {
  * oui specified by WMI_SCAN_PROB_REQ_OUI_CMDID to the probe req frame.
  * if oui is not set by WMI_SCAN_PROB_REQ_OUI_CMDID  then the flag is ignored*/
 #define WMI_SCAN_ADD_SPOOFED_MAC_IN_PROBE_REQ   0x1000
+/** allow mgmt transmission during off channel scan */
+#define WMI_SCAN_OFFCHAN_MGMT_TX    0x2000
+/** allow data transmission during off channel scan */
+#define WMI_SCAN_OFFCHAN_DATA_TX    0x4000
+/** allow capture ppdu with phy errrors */
+#define WMI_SCAN_CAPTURE_PHY_ERROR  0x8000
 
 /** WMI_SCAN_CLASS_MASK must be the same value as IEEE80211_SCAN_CLASS_MASK */
 #define WMI_SCAN_CLASS_MASK 0xFF000000
@@ -2885,6 +2893,7 @@ typedef struct {
 	A_UINT32 reg_domain_5G;
 	A_UINT32 conformance_test_limit_2G;
 	A_UINT32 conformance_test_limit_5G;
+	A_UINT32 dfs_domain;
 } wmi_pdev_set_regdomain_cmd_fixed_param;
 
 typedef struct {
@@ -3083,6 +3092,14 @@ typedef struct {
 } wmi_csa_event_fixed_param;
 
 typedef enum {
+	WAL_PEER_MCAST2UCAST_DISABLED    = 0,
+	/* Drop the frames if match is not found */
+	WAL_PEER_MCAST2UCAST_DROP_EMPTY  = 1,
+	/* Send as mcast if match is not found */
+	WAL_PEER_MCAST2UCAST_MCAST_EMPTY = 2,
+} WMI_PEER_MCAST2UCAST_MODE;
+
+typedef enum {
 	/** TX chain mask */
 	WMI_PDEV_PARAM_TX_CHAIN_MASK = 0x1,
 	/** RX chain mask */
@@ -3257,6 +3274,111 @@ typedef enum {
 	 * the values. Safety check will happen in Halphy
 	 */
 	WMI_PDEV_PARAM_TXPOWER_DECR_DB,
+	/** enable and disable aggregate burst along with duration */
+	WMI_PDEV_PARAM_AGGR_BURST,
+	/** Set the global RX decap mode */
+	WMI_PDEV_PARAM_RX_DECAP_MODE,
+	/** Enable/Disable Fast channel reset */
+	WMI_PDEV_PARAM_FAST_CHANNEL_RESET,
+	/** Default antenna for Smart antenna */
+	WMI_PDEV_PARAM_SMART_ANTENNA_DEFAULT_ANTENNA,
+	/** Set the user-specified antenna gain */
+	WMI_PDEV_PARAM_ANTENNA_GAIN,
+	/** Set the user-specified RX filter */
+	WMI_PDEV_PARAM_RX_FILTER,
+	/*
+	 * configure the user-specified MCAST tid for managed mcast feature
+	 * 0-15 is the valid range. 0xff will clear the tid setting
+	 */
+	WMI_PDEV_SET_MCAST_TO_UCAST_TID,
+	/** Enable/Disable Proxy sta mode */
+	WMI_PDEV_PARAM_PROXY_STA_MODE,
+	/*
+	 * configure the mcast2ucast mode for the pdev->peer_mcast.
+	 * See WMI_PEER_MCAST2UCAST_MODE for possible values
+	 */
+	WMI_PDEV_PARAM_SET_MCAST2UCAST_MODE,
+	/** Sets the Mcast buffers for cloning, to support Mcast enhancement */
+	WMI_PDEV_PARAM_SET_MCAST2UCAST_BUFFER,
+	/** Remove the Mcast buffers added by host */
+	WMI_PDEV_PARAM_REMOVE_MCAST2UCAST_BUFFER,
+	/** En/disable station power save state indication */
+	WMI_PDEV_PEER_STA_PS_STATECHG_ENABLE,
+	/** Access category on which ARP frames are sent */
+	WMI_PDEV_PARAM_IGMPMLD_AC_OVERRIDE,
+	/** allow or disallow interbss frame forwarding */
+	WMI_PDEV_PARAM_BLOCK_INTERBSS,
+	/** Enable/Disable reset */
+	WMI_PDEV_PARAM_SET_DISABLE_RESET_CMDID,
+	/** Enable/Disable/Set MSDU_TTL in milliseconds. */
+	WMI_PDEV_PARAM_SET_MSDU_TTL_CMDID,
+	/** Set global PPDU duration limit (usec). */
+	WMI_PDEV_PARAM_SET_PPDU_DURATION_CMDID,
+	/** set txbf sounding period of vap in milliseconds */
+	WMI_PDEV_PARAM_TXBF_SOUND_PERIOD_CMDID,
+	/** Set promiscuous mode */
+	WMI_PDEV_PARAM_SET_PROMISC_MODE_CMDID,
+	/** Set burst mode */
+	WMI_PDEV_PARAM_SET_BURST_MODE_CMDID,
+	/** enable enhanced stats */
+	WMI_PDEV_PARAM_EN_STATS,
+	/** Set mu-grouping policy */
+	WMI_PDEV_PARAM_MU_GROUP_POLICY,
+	/** Channel Hopping Enable */
+	WMI_PDEV_PARAM_NOISE_DETECTION,
+	/** Set Channel Hopping NF threshold in dBm */
+	WMI_PDEV_PARAM_NOISE_THRESHOLD,
+	/** Set PAPRD policy */
+	WMI_PDEV_PARAM_DPD_ENABLE,
+	/** Enable/disable mcast/bcast echo, used by ProxySTA */
+	WMI_PDEV_PARAM_SET_MCAST_BCAST_ECHO,
+	/** ATF enable/disable strict schedule */
+	WMI_PDEV_PARAM_ATF_STRICT_SCH,
+	/** ATF set access category duration, B0-B29 duration, B30-B31: AC */
+	WMI_PDEV_PARAM_ATF_SCHED_DURATION,
+	/** Default antenna polarization */
+	WMI_PDEV_PARAM_ANT_PLZN,
+	/** Set mgmt retry limit */
+	WMI_PDEV_PARAM_MGMT_RETRY_LIMIT,
+	/** Set CCA sensitivity level in dBm */
+	WMI_PDEV_PARAM_SENSITIVITY_LEVEL,
+	/** Set 2G positive and negative Tx power in 0.5dBm units */
+	WMI_PDEV_PARAM_SIGNED_TXPOWER_2G,
+	/** Set 5G positive and negative Tx power in 0.5dBm units */
+	WMI_PDEV_PARAM_SIGNED_TXPOWER_5G,
+	/** Enable/disble AMSDU for tids */
+	WMI_PDEV_PARAM_ENABLE_PER_TID_AMSDU,
+	/** Enable/disable AMPDU for tids */
+	WMI_PDEV_PARAM_ENABLE_PER_TID_AMPDU,
+	/** Set CCA threshold in dBm */
+	WMI_PDEV_PARAM_CCA_THRESHOLD,
+	/** RTS Fixed rate setting */
+	WMI_PDEV_PARAM_RTS_FIXED_RATE,
+	/** Pdev reset */
+	WMI_PDEV_PARAM_PDEV_RESET,
+	/** wapi mbssid offset **/
+	WMI_PDEV_PARAM_WAPI_MBSSID_OFFSET,
+	/** ARP DEBUG source address*/
+	WMI_PDEV_PARAM_ARP_DBG_SRCADDR,
+	/** ARP DEBUG destination address*/
+	WMI_PDEV_PARAM_ARP_DBG_DSTADDR,
+	/** ATF enable/disable obss noise scheduling */
+	WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCH,
+	/** ATF obss noise scaling factor */
+	WMI_PDEV_PARAM_ATF_OBSS_NOISE_SCALING_FACTOR,
+	/**
+	 * TX power reduction scaling exponent - final tx power is the
+	 * nominal tx power (A_MIN(reg_pow,ctl,etc..)) divided by
+	 * 2^(scale exponent).  For example:
+	 * If this scale exponent is  0, the power is unchanged (divided by 2^0)
+	 * If this factor is 1, the power is scaled down by 2^1, i.e. 3 dB
+	 * If this factor is 2, the power is scaled down by 2^2, i.e. 6 dB
+	 * If this factor is 3, the power is scaled down by 2^3, i.e. 9 dB
+	 */
+	WMI_PDEV_PARAM_CUST_TXPOWER_SCALE,
+	/** ATF enabe/disabe dynamically */
+	WMI_PDEV_PARAM_ATF_DYNAMIC_ENABLE,
+
 } WMI_PDEV_PARAM;
 
 typedef enum {
@@ -3698,6 +3820,7 @@ typedef enum {
 	WMI_REQUEST_VDEV_STAT = 0x08,
 	WMI_REQUEST_BCNFLT_STAT = 0x10,
 	WMI_REQUEST_VDEV_RATE_STAT = 0x20,
+	WMI_REQUEST_INST_STAT  = 0x40,
 } wmi_stats_id;
 
 typedef struct {
@@ -4366,6 +4489,8 @@ typedef struct {
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_DEVICE 0x1
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT 0x2
 #define WMI_UNIFIED_VDEV_SUBTYPE_P2P_GO     0x3
+#define WMI_UNIFIED_VDEV_SUBTYPE_PROXY_STA  0x4
+#define WMI_UNIFIED_VDEV_SUBTYPE_MESH       0x5
 
 /** values for vdev_start_request flags */
 /** Indicates that AP VDEV uses hidden ssid. only valid for
@@ -4817,6 +4942,50 @@ typedef enum {
 	 * by the values.  Safety check will happen in Halphy.
 	 */
 	WMI_VDEV_PARAM_TXPOWER_SCALE_DECR_DB,
+	/** Multicast to Unicast conversion setting */
+	WMI_VDEV_PARAM_MCAST2UCAST_SET,
+
+	/** Total number of HW retries */
+	WMI_VDEV_PARAM_RC_NUM_RETRIES,
+
+	/** Max tx percentage for cabq */
+	WMI_VDEV_PARAM_CABQ_MAXDUR,
+
+	/** MFPTEST settings */
+	WMI_VDEV_PARAM_MFPTEST_SET,
+
+	/** RTS Fixed rate setting */
+	WMI_VDEV_PARAM_RTS_FIXED_RATE,
+
+	/** VHT SGI MASK */
+	WMI_VDEV_PARAM_VHT_SGIMASK,
+
+	/** VHT80 Auto Rate MASK */
+	WMI_VDEV_PARAM_VHT80_RATEMASK,
+
+	/** set Proxy STA features for this vap */
+	WMI_VDEV_PARAM_PROXY_STA,
+
+	/** set virtual cell mode - enable/disable */
+	WMI_VDEV_PARAM_VIRTUAL_CELL_MODE,
+
+	/** Set receive packet type */
+	WMI_VDEV_PARAM_RX_DECAP_TYPE,
+
+	/** Set ratemask with specific Bandwidth and NSS */
+	WMI_VDEV_PARAM_BW_NSS_RATEMASK,
+
+	/** Set SENSOR Support */
+	WMI_VDEV_PARAM_SENSOR_AP,
+
+	/** Set beacon rate */
+	WMI_VDEV_PARAM_BEACON_RATE,
+
+	/** Enable CTS to self for DTIM beacon */
+	WMI_VDEV_PARAM_DTIM_ENABLE_CTS,
+
+	/** Disable station kickout at Vap level */
+	WMI_VDEV_PARAM_STA_KICKOUT,
 
 } WMI_VDEV_PARAM;
 
@@ -5257,6 +5426,17 @@ enum wmi_ap_ps_peer_param {
 
 	/** Time in seconds for aging out buffered frames for STA in power save */
 	WMI_AP_PS_PEER_PARAM_AGEOUT_TIME = 2,
+	/** Specify frame types that are considered SIFS RESP trigger frame */
+	WMI_AP_PS_PEER_PARAM_SIFS_RESP_FRMTYPE = 3,
+
+	/*
+	 * Specifies the trigger state of TID.
+	 * Valid only for UAPSD frame type
+	 */
+	WMI_AP_PS_PEER_PARAM_SIFS_RESP_UAPSD = 4,
+
+	/** Specifies the WNM sleep state of a STA */
+	WMI_AP_PS_PEER_PARAM_WNM_SLEEP = 5,
 };
 
 typedef struct {
@@ -5840,6 +6020,12 @@ typedef struct {
 
 /** peer phy mode */
 #define WMI_PEER_PHYMODE 0xD
+/** Use FIXED Pwr */
+#define WMI_PEER_USE_FIXED_PWR                          0xE
+/** Set peer fixed rate */
+#define WMI_PEER_PARAM_FIXED_RATE                       0xF
+/** Whitelist peer TIDs */
+#define WMI_PEER_SET_MU_WHITELIST                       0x10
 
 /** mimo ps values for the parameter WMI_PEER_MIMO_PS_STATE  */
 #define WMI_PEER_MIMO_PS_NONE                          0x0
@@ -5883,6 +6069,7 @@ typedef struct {
 	A_UINT32 rx_mcs_set;            /* Negotiated RX VHT rates */
 	A_UINT32 tx_max_rate;           /* Max Tx data rate */
 	A_UINT32 tx_mcs_set;            /* Negotiated TX VHT rates */
+	A_UINT32 tx_max_mcs_nss;  /* b0-b3: max mcs idx; b4-b7: max nss */
 } wmi_vht_rate_set;
 
 /*
@@ -5975,6 +6162,21 @@ typedef struct {
 	/** total number of negotiated ht rate set. Also the sizeof
 	 *  peer_ht_rates[] */
 	A_UINT32 num_peer_ht_rates;
+	/**
+	 * Bitmap providing QCA proprietary mapping of bandwidths to max Rx NSS
+	 * for this peer.
+	 * This is required since 802.11 standard currently facilitates peer to
+	 * be able to advertise only a single max Rx NSS value across all
+	 * bandwidths.
+	 * Some QCA chipsets might need to be able to advertise a different max
+	 * Rx NSS value for 160 MHz, than that for 80 MHz and lower.
+	 *
+	 *  bit[2:0] : Represents value of Rx NSS for VHT 160 MHz
+	 *  bit[30:3]: Reserved
+	 *  bit[31]  : MSB(0/1): 1 in case of valid data else all bits will be
+	 *             set to 0 by host
+	 */
+	A_UINT32 peer_bw_rxnss_override;
 	/* Following this struc are the TLV's:
 	 *     A_UINT8 peer_legacy_rates[];
 	 *     A_UINT8 peer_ht_rates[];
@@ -5982,12 +6184,17 @@ typedef struct {
 	 */
 } wmi_peer_assoc_complete_cmd_fixed_param;
 
+/* WDS Entry Flags */
+#define WMI_WDS_FLAG_STATIC    0x1    /* Disable aging & learning */
+
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_add_wds_entry_cmd_fixed_param */
 	/** peer MAC address */
 	wmi_mac_addr peer_macaddr;
 	/** wds MAC addr */
 	wmi_mac_addr wds_macaddr;
+	/* Flags associated with WDS entry - see WMI_WDS_FLAG defs */
+	A_UINT32 flags;
 } wmi_peer_add_wds_entry_cmd_fixed_param;
 
 typedef struct {
@@ -6042,6 +6249,12 @@ typedef struct {
 	A_UINT32 rx_clear_count;
 	/** cycle count */
 	A_UINT32 cycle_count;
+	/** channel tx power per range in 0.5dBm steps */
+	A_UINT32 chan_tx_pwr_range;
+	/** channel tx power per throughput */
+	A_UINT32 chan_tx_pwr_tp;
+	/** rx frame count (cumulative) */
+	A_UINT32   rx_frame_count;
 } wmi_chan_info_event_fixed_param;
 
 /**
@@ -6148,6 +6361,16 @@ enum wmi_peer_mcast_group_action {
 #define WMI_PEER_MCAST_GROUP_FLAG_ACTION_S   0
 #define WMI_PEER_MCAST_GROUP_FLAG_WILDCARD_M 0x2
 #define WMI_PEER_MCAST_GROUP_FLAG_WILDCARD_S 1
+/* flag to exclude an ip while filtering.set to exclude */
+#define WMI_PEER_MCAST_GROUP_FLAG_SRC_FILTER_EXCLUDE_M 0x4
+#define WMI_PEER_MCAST_GROUP_FLAG_SRC_FILTER_EXCLUDE_S 2
+/* flag to say ipv4/ipv6. Will be set for ipv6 */
+#define WMI_PEER_MCAST_GROUP_FLAG_IPV6_M 0x8
+#define WMI_PEER_MCAST_GROUP_FLAG_IPV6_S 3
+/* delete all mcast table entries. */
+#define WMI_PEER_MCAST_GROUP_FLAG_DELETEALL_M 0x10
+#define WMI_PEER_MCAST_GROUP_FLAG_DELETEALL_S 4
+
 /* multicast group membership commands */
 /* TODO: Converting this will be tricky since it uses an union.
    Also, the mac_addr is not aligned. We will convert to the wmi_mac_addr */
@@ -6156,7 +6379,25 @@ typedef struct {
 	/** TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_peer_mcast_group_cmd_fixed_param */
 	A_UINT32 flags;
 	wmi_mac_addr ucast_mac_addr;
-	A_UINT8 mcast_ip_addr[16];              /* in network byte order */
+	/*
+	 * for ipv4, bytes (12-15) should contain ip address and
+	 * other lower bytes 0. ipv6 should have all bytes valid
+	 */
+	A_UINT8 mcast_ip_addr[16]; /* in network byte order */
+	/*
+	 * for ipv6, all 16 bytes has to be valid;
+	 * for ipv4 last 4 bytes(12-15) has to be valid, rest all 0s
+	 */
+	A_UINT8 mcast_ip_mask[16]; /* zero out lower bytes if ipv4 */
+	/* number of address filters - irrespective of ipv4/ipv6 addresses */
+	A_UINT32 num_filter_addr;
+	/*
+	 * this array should contain the src IPs that are to be filtered
+	 * during find. The array should be packed. If there are 2 ipv4
+	 * addresses, there should be 8 bytes and rest all 0s
+	 */
+	A_UINT8 filter_addr[64]; /* 16 ipv4 addresses or 4 ipv6 addresses */
+	A_UINT8  vdev_id; /* vdev of this mcast group */
 } wmi_peer_mcast_group_cmd_fixed_param;
 
 /** Offload Scan and Roaming related  commands */
@@ -6458,6 +6699,7 @@ typedef struct wmi_bcn_send_from_host {
 	A_UINT32 frag_ptr;              /* Physical address of the frame */
 	A_UINT32 frame_ctrl;            /* farme ctrl to setup PPDU desc */
 	A_UINT32 dtim_flag;             /* to control CABQ traffic */
+	A_UINT32 bcn_antenna;   /* Antenna for beacon transmission */
 } wmi_bcn_send_from_host_cmd_fixed_param;
 
 /* cmd to support bcn snd for all vaps at once */
