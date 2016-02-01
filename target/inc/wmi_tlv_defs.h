@@ -657,6 +657,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_pdev_nfcal_power_all_channels_freqNum,
 	WMITLV_TAG_STRUC_wmi_mu_report_total_mu,
 	WMITLV_TAG_STRUC_wmi_vdev_set_dscp_tid_map_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_roam_set_mbo_fixed_param,
 
 } WMITLV_TAG_ID;
 
@@ -922,7 +923,8 @@ typedef enum {
 	OP(WMI_PEER_SMART_ANT_SET_NODE_CONFIG_OPS_CMDID) \
 	OP(WMI_PEER_ATF_REQUEST_CMDID) \
 	OP(WMI_FWTEST_CMDID) \
-	OP(WMI_QBOOST_CFG_CMDID)
+	OP(WMI_QBOOST_CFG_CMDID) \
+	OP(WMI_ROAM_SET_MBO_PARAM_CMDID)
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -1210,6 +1212,17 @@ WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_CHAN_LIST);
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_roam_scan_cmd_fixed_param, wmi_roam_scan_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SCAN_CMD);
+
+/* Roam mbo configuration */
+#define WMITLV_TABLE_WMI_ROAM_SET_MBO_PARAM_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_roam_set_mbo_fixed_param, wmi_roam_set_mbo_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, cellular_cap, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_supported_operating_class_param, supp_op_class_param, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, supp_op_class_list, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_mbo_non_preferred_channel_report_param, non_prefer_ch_param, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, non_prefer_ch_attr, WMITLV_SIZE_VAR)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SET_MBO_PARAM_CMDID);
 
 #define WMITLV_TABLE_WMI_VDEV_PLMREQ_START_CMDID(id,op,buf,len)	\
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_vdev_plmreq_start_cmd_fixed_param, wmi_vdev_plmreq_start_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)	\

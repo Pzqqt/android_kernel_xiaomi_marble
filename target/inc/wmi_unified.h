@@ -357,8 +357,8 @@ typedef enum {
 	/* TSF timestamp action for specified vdev */
 	WMI_VDEV_TSF_TSTAMP_ACTION_CMDID,
 	/*
-	 * set the capabilties IE, e.g. for extended caps in probe
-	 * requests, assoc req etc for frames FW locally generates
+	 * set the additional IEs in probe requests for scan or
+	 * assoc req etc for frames FW locally generates
 	 */
 	WMI_VDEV_SET_IE_CMDID,
 
@@ -498,6 +498,8 @@ typedef enum {
 	WMI_ROAM_SUBNET_CHANGE_CONFIG_CMDID,
 	/** configure thresholds for MAWC */
 	WMI_ROAM_CONFIGURE_MAWC_CMDID,
+	/** configure MultiBand Operation(refer WFA MBO spec) parameter */
+	WMI_ROAM_SET_MBO_PARAM_CMDID,
 
 	/** offload scan specific commands */
 	/** set offload scan AP profile   */
@@ -2134,6 +2136,12 @@ typedef struct {
 	*   0 - Don't allocate fragment descriptor for data packet.
 	*/
 	A_UINT32 alloc_frag_desc_for_data_pkt;
+
+	/*
+	 * how much space to allocate for NDP NS (neighbor solicitation)
+	 * specs
+	 */
+	A_UINT32 num_ns_ext_tuples_cfg;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
@@ -7931,6 +7939,8 @@ typedef struct {
 #define WMI_NSOFF_FLAGS_VALID           (1 << 0)        /* the tuple entry is valid */
 #define WMI_NSOFF_FLAGS_MAC_VALID       (1 << 1)        /* the target mac address is valid */
 #define WMI_NSOFF_FLAGS_REMOTE_IP_VALID (1 << 2)        /* remote IP field is valid */
+/* whether the configured IPv6 address is anycast */
+#define WMI_NSOFF_FLAGS_IS_IPV6_ANYCAST (1 << 3)
 
 #define WMI_NSOFF_MAX_TARGET_IPS    2
 
@@ -12663,6 +12673,69 @@ typedef struct {
 	/** status code of sensor, MAWC_SENSOR_STATUS */
 	A_UINT32 sensor_status;
 } wmi_mawc_sensor_report_ind_cmd_fixed_param;
+
+/* MBO flag field definition */
+/*
+ * Bit 0: 0 - Allow to connect to both MBO and non-MBO AP
+ *        1 - Allow to connect to MBO AP only
+ * Bit 1-31 : reserved.
+ */
+#define WMI_ROAM_MBO_FLAG_MBO_ONLY_MODE  (1<<0)
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_wmi_roam_set_mbo_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/** vdev id */
+	A_UINT32 vdev_id;
+	/** enable or disable MBO */
+	A_UINT32 enable;
+	/** MBO flags, refer to definition of MBO flags*/
+	A_UINT32 flags;
+} wmi_roam_set_mbo_fixed_param;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_ARRAY_STRUC
+	 */
+	A_UINT32 tlv_header;
+	/** Current operating class number */
+	A_UINT32 cur_op_class;
+	/*
+	 * Country string of current reg domain,
+	 * the expected value should be same as country str defined
+	 * in country IE.
+	 * 3 octets (COUNTRY_STR) + 1 octet (always 0)
+	 * The ordering of this array must be maintained,
+	 * even when a big-endian host's WMI messages undergo
+	 * automatic byte reordering for conversion to the
+	 * little-endian ordering required by the target.
+	 * On big-endian hosts, this array may need to be byte-swapped
+	 * by the host, so the subsequent automatic byte-swap
+	 * will result in the correct final byte order.
+	 * global operating class: set country_str[0]=0
+	 */
+	A_UINT8 country_str[4];
+	/** Supported operating class number in current regdomain */
+	A_UINT32 supp_op_class_num;
+	/* The TLVs will follow. */
+	/* A_UINT32 supp_op_class_list[] */
+} wmi_supported_operating_class_param;
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_ARRAY_STRUC
+	 */
+	A_UINT32 tlv_header;
+	/** non preferred channel attribute length */
+	A_UINT32 non_prefer_ch_attr_len;
+	/* The TLVs will follow. */
+	/** A_UINT8 non_prefer_ch_attr[];*/
+} wmi_mbo_non_preferred_channel_report_param;
 
 typedef struct {
 	/* TLV tag and len; tag equals
