@@ -1765,9 +1765,8 @@ static inline int hif_drain_tasklets(struct ol_softc *scn)
  *
  * Return: 0 for success and non-zero for failure
  */
-static int hif_bus_suspend_link_up(void)
+static int hif_bus_suspend_link_up(struct ol_softc *scn)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 	struct pci_dev *pdev;
 	int status;
 
@@ -1795,9 +1794,8 @@ static int hif_bus_suspend_link_up(void)
  *
  * Return: 0 for success and non-zero for failure
  */
-static int hif_bus_resume_link_up(void)
+static int hif_bus_resume_link_up(struct ol_softc *scn)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 	struct pci_dev *pdev;
 
 	if (!scn)
@@ -1827,9 +1825,8 @@ static int hif_bus_resume_link_up(void)
  *
  * Return: 0 for success and non-zero for failure
  */
-static int hif_bus_suspend_link_down(void)
+static int hif_bus_suspend_link_down(struct ol_softc *scn)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 	struct pci_dev *pdev;
 	struct HIF_CE_state *hif_state;
 	int status = 0;
@@ -1868,9 +1865,8 @@ static int hif_bus_suspend_link_down(void)
  *
  * Return: 0 for success and non-zero for failure
  */
-static int hif_bus_resume_link_down(void)
+static int hif_bus_resume_link_down(struct ol_softc *scn)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 	struct pci_dev *pdev;
 
 	if (!scn)
@@ -1896,12 +1892,13 @@ static int hif_bus_resume_link_down(void)
  *
  * Return: 0 for success and non-zero error code for failure
  */
-int hif_bus_suspend(void)
+int hif_bus_suspend(void *hif_ctx)
 {
-	if (hif_can_suspend_link())
-		return hif_bus_suspend_link_down();
+	struct ol_softc *scn = hif_ctx;
+	if (hif_can_suspend_link(scn))
+		return hif_bus_suspend_link_down(scn);
 	else
-		return hif_bus_suspend_link_up();
+		return hif_bus_suspend_link_up(scn);
 }
 
 /**
@@ -1911,12 +1908,13 @@ int hif_bus_suspend(void)
  *
  * Return: 0 for success and non-zero error code for failure
  */
-int hif_bus_resume(void)
+int hif_bus_resume(void *hif_ctx)
 {
-	if (hif_can_suspend_link())
-		return hif_bus_resume_link_down();
+	struct ol_softc *scn = hif_ctx;
+	if (hif_can_suspend_link(scn))
+		return hif_bus_resume_link_down(scn);
 	else
-		return hif_bus_resume_link_up();
+		return hif_bus_resume_link_up(scn);
 }
 
 #ifdef FEATURE_RUNTIME_PM
@@ -1926,9 +1924,9 @@ int hif_bus_resume(void)
  *
  * indexes into the runtime pm state and sets it.
  */
-static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
+static void __hif_runtime_pm_set_state(struct ol_softc *scn,
+				enum hif_pm_runtime_state state)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 	struct hif_pci_softc *sc;
 
 	if (NULL == scn) {
@@ -1941,17 +1939,15 @@ static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
 	cdf_atomic_set(&sc->pm_state, state);
 
 }
-#endif
 
-#ifdef FEATURE_RUNTIME_PM
 /**
  * hif_runtime_pm_set_state_inprogress(): adjust runtime pm state
  *
  * Notify hif that a runtime pm opperation has started
  */
-static void hif_runtime_pm_set_state_inprogress(void)
+static void hif_runtime_pm_set_state_inprogress(struct ol_softc *scn)
 {
-	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_INPROGRESS);
+	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_INPROGRESS);
 }
 
 /**
@@ -1959,9 +1955,9 @@ static void hif_runtime_pm_set_state_inprogress(void)
  *
  * Notify hif that a the runtime pm state should be on
  */
-static void hif_runtime_pm_set_state_on(void)
+static void hif_runtime_pm_set_state_on(struct ol_softc *scn)
 {
-	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_ON);
+	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_ON);
 }
 
 /**
@@ -1969,14 +1965,14 @@ static void hif_runtime_pm_set_state_on(void)
  *
  * Notify hif that a runtime suspend attempt has been completed successfully
  */
-static void hif_runtime_pm_set_state_suspended(void)
+static void hif_runtime_pm_set_state_suspended(struct ol_softc *scn)
 {
-	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_SUSPENDED);
+	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_SUSPENDED);
 }
 
-static inline struct hif_pci_softc *get_sc(void)
+static inline struct hif_pci_softc *get_sc(void *hif_ctx)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 
 	if (NULL == scn) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",
@@ -1990,9 +1986,9 @@ static inline struct hif_pci_softc *get_sc(void)
 /**
  * hif_log_runtime_suspend_success() - log a successful runtime suspend
  */
-static void hif_log_runtime_suspend_success(void)
+static void hif_log_runtime_suspend_success(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc();
+	struct hif_pci_softc *sc = get_sc(hif_ctx);
 	if (sc == NULL)
 		return;
 
@@ -2006,9 +2002,9 @@ static void hif_log_runtime_suspend_success(void)
  * log a failed runtime suspend
  * mark last busy to prevent immediate runtime suspend
  */
-static void hif_log_runtime_suspend_failure(void)
+static void hif_log_runtime_suspend_failure(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc();
+	struct hif_pci_softc *sc = get_sc(hif_ctx);
 	if (sc == NULL)
 		return;
 
@@ -2021,9 +2017,9 @@ static void hif_log_runtime_suspend_failure(void)
  * log a successfull runtime resume
  * mark last busy to prevent immediate runtime suspend
  */
-static void hif_log_runtime_resume_success(void)
+static void hif_log_runtime_resume_success(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc();
+	struct hif_pci_softc *sc = get_sc(hif_ctx);
 	if (sc == NULL)
 		return;
 
@@ -2037,9 +2033,9 @@ static void hif_log_runtime_resume_success(void)
  * mark last busy to delay a retry.
  * adjust the runtime_pm state.
  */
-void hif_process_runtime_suspend_failure(void)
+void hif_process_runtime_suspend_failure(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc();
+	struct hif_pci_softc *sc = get_sc(hif_ctx);
 
 	hif_log_runtime_suspend_failure();
 	if (sc != NULL)
@@ -2058,14 +2054,14 @@ void hif_process_runtime_suspend_failure(void)
  *
  * return -EINVAL if the bus won't go down.  otherwise return 0
  */
-int hif_pre_runtime_suspend(void)
+int hif_pre_runtime_suspend(void *hif_ctx)
 {
-	if (!hif_can_suspend_link()) {
+	if (!hif_can_suspend_link(hif_ctx)) {
 		HIF_ERROR("Runtime PM not supported for link up suspend");
 		return -EINVAL;
 	}
 
-	hif_runtime_pm_set_state_inprogress();
+	hif_runtime_pm_set_state_inprogress(hif_ctx);
 	return 0;
 }
 
@@ -2075,10 +2071,10 @@ int hif_pre_runtime_suspend(void)
  * Record the success.
  * adjust the runtime_pm state
  */
-void hif_process_runtime_suspend_success(void)
+void hif_process_runtime_suspend_success(void *hif_ctx)
 {
-	hif_runtime_pm_set_state_suspended();
-	hif_log_runtime_suspend_success();
+	hif_runtime_pm_set_state_suspended(hif_ctx);
+	hif_log_runtime_suspend_success(hif_ctx);
 }
 
 /**
@@ -2086,9 +2082,9 @@ void hif_process_runtime_suspend_success(void)
  *
  * update the runtime pm state.
  */
-void hif_pre_runtime_resume(void)
+void hif_pre_runtime_resume(void *hif_ctx)
 {
-	hif_runtime_pm_set_state_inprogress();
+	hif_runtime_pm_set_state_inprogress(hif_ctx);
 }
 
 /**
@@ -2097,9 +2093,9 @@ void hif_pre_runtime_resume(void)
  * record the success.
  * adjust the runtime_pm state
  */
-void hif_process_runtime_resume_success(void)
+void hif_process_runtime_resume_success(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc();
+	struct hif_pci_softc *sc = get_sc(hif_ctx);
 
 	hif_log_runtime_resume_success();
 	if (sc != NULL)
@@ -2113,9 +2109,9 @@ void hif_process_runtime_resume_success(void)
  *
  * Return: 0 for success and non-zero error code for failure
  */
-int hif_runtime_suspend(void)
+int hif_runtime_suspend(void *hif_ctx)
 {
-	return hif_bus_suspend();
+	return hif_bus_suspend(hif_ctx);
 }
 
 #ifdef WLAN_FEATURE_FASTPATH
@@ -2126,10 +2122,9 @@ int hif_runtime_suspend(void)
  * since runtime pm may cause ce_send_fast to skip the register
  * write.
  */
-static void hif_fastpath_resume(void)
+static void hif_fastpath_resume(void *hif_ctx)
 {
-	struct ol_softc *scn =
-		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 	struct CE_state *ce_state;
 
 	if (!scn)
@@ -2149,7 +2144,7 @@ static void hif_fastpath_resume(void)
 	}
 }
 #else
-static void hif_fastpath_resume(void) {}
+static void hif_fastpath_resume(void *hif_ctx) {}
 #endif
 
 
@@ -2158,11 +2153,11 @@ static void hif_fastpath_resume(void) {}
  *
  *  Return: 0 for success and non-zero error code for failure
  */
-int hif_runtime_resume(void)
+int hif_runtime_resume(void *hif_ctx)
 {
-	int status = hif_bus_resume();
+	int status = hif_bus_resume(hif_ctx);
 
-	hif_fastpath_resume();
+	hif_fastpath_resume(hif_ctx);
 
 	return status;
 }
@@ -2219,9 +2214,9 @@ void hif_reset_soc(void *ol_sc)
 #endif
 }
 
-void hif_disable_aspm(void)
+void hif_disable_aspm(void *hif_ctx)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 	struct hif_pci_softc *sc;
 
 	if (NULL == scn) {
@@ -2730,7 +2725,6 @@ CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc,
 	HIF_TRACE("%s: con_mode = 0x%x, device_id = 0x%x",
 		  __func__, cds_get_conparam(), id->device);
 
-	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
 	if (!ol_sc) {
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
 		return CDF_STATUS_E_NOMEM;
@@ -3299,11 +3293,11 @@ struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name)
  *
  * Return: void
  */
-void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *data)
+void hif_runtime_lock_deinit(void *hif_ctx, struct hif_pm_runtime_lock *data)
 {
 	unsigned long flags;
 	struct hif_pm_runtime_lock *context = data;
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 	struct hif_pci_softc *sc;
 
 	if (!scn)

@@ -142,7 +142,7 @@ int hif_dump_registers(struct ol_softc *scn)
  *
  * Return: 0 for success and non-zero for failure
  */
-int hif_bus_suspend(void)
+int hif_bus_suspend(void *hif_ctx)
 {
 	return 0;
 }
@@ -155,7 +155,7 @@ int hif_bus_suspend(void)
  *
  * Return: 0 for success and non-zero for failure
  */
-int hif_bus_resume(void)
+int hif_bus_resume(void *hif_ctx)
 {
 	return 0;
 }
@@ -174,7 +174,7 @@ void hif_enable_power_gating(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_disable_aspm(void)
+void hif_disable_aspm(void *hif_ctx)
 {
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -398,7 +398,7 @@ int hif_napi_schedule(struct ol_softc *scn, int ce_id)
  * Returns:
  *  int: the amount of work done in this poll ( <= budget)
  */
-int hif_napi_poll(struct napi_struct *napi, int budget)
+int hif_napi_poll(void *hif_ctx, struct napi_struct *napi, int budget)
 {
 	int    rc = 0; /* default: no work done, also takes care of error */
 	int    normalized, bucket;
@@ -413,7 +413,7 @@ int hif_napi_poll(struct napi_struct *napi, int budget)
 		container_of(napi, struct qca_napi_info, napi);
 	napi_info->stats[cpu].napi_polls++;
 
-	hif = (struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	hif = hif_ctx;
 	if (unlikely(NULL == hif))
 		CDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
 	else {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -331,14 +331,15 @@ void icnss_dispatch_ce_irq(struct ol_softc *scn)
  *
  * Return: 0 for success
  */
-int icnss_get_soc_info(struct icnss_soc_info *info)
+int icnss_get_soc_info(void *hif_ctx, struct icnss_soc_info *info)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 
 	if (!scn) {
 		HIF_ERROR("%s: SCN = NULL", __func__);
 		return -EINVAL;
 	}
+
 	info->v_addr = scn->mem;
 	info->p_addr = scn->mem_pa;
 	info->version = 0;

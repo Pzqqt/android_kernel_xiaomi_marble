@@ -1848,7 +1848,7 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	scn->notice_send = true;
 
 	cdf_mem_zero(&soc_info, sizeof(soc_info));
-	ret = icnss_get_soc_info(&soc_info);
+	ret = icnss_get_soc_info(scn, &soc_info);
 	if (ret < 0) {
 		HIF_ERROR("%s: icnss_get_soc_info error = %d", __func__, ret);
 		return CDF_STATUS_NOT_INITIALIZED;
@@ -1957,7 +1957,7 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	if (rv != CDF_STATUS_SUCCESS)
 		goto err;
 	else
-		init_tasklet_workers();
+		init_tasklet_workers(scn);
 
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
 

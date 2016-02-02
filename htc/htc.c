@@ -879,3 +879,57 @@ void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
 	}
 }
 #endif /* IPA_OFFLOAD */
+
+/**
+ * htc_vote_link_down - API to vote for link down
+ * @htc_handle: HTC handle
+ *
+ * API for upper layers to call HIF to vote for link down
+ *
+ * Return: void
+ */
+void htc_vote_link_down(HTC_HANDLE htc_handle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	if (!target->hif_dev)
+		return;
+
+	hif_vote_link_down(target->hif_dev);
+}
+
+/**
+ * htc_vote_link_up - API to vote for link up
+ * @htc_handle: HTC Handle
+ *
+ * API for upper layers to call HIF to vote for link up
+ *
+ * Return: void
+ */
+void htc_vote_link_up(HTC_HANDLE htc_handle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	if (!target->hif_dev)
+		return;
+
+	hif_vote_link_up(target->hif_dev);
+}
+
+/**
+ * htc_can_suspend_link - API to query HIF for link status
+ * @htc_handle: HTC Handle
+ *
+ * API for upper layers to call HIF to query if the link can suspend
+ *
+ * Return: void
+ */
+bool htc_can_suspend_link(HTC_HANDLE htc_handle)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
+
+	if (!target->hif_dev)
+		return false;
+
+	return hif_can_suspend_link(target->hif_dev);
+}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -128,7 +128,7 @@ int icnss_ce_request_irq(int ce_id,
 int icnss_ce_free_irq(int irq, void *context);
 void icnss_enable_irq(unsigned int ce_id);
 void icnss_disable_irq(unsigned int ce_id);
-int icnss_get_soc_info(struct icnss_soc_info *info);
+int icnss_get_soc_info(void *hif_ctx, struct icnss_soc_info *info);
 int icnss_get_ce_id(int irq);
 #endif /* _ICNSS_WLAN_H_ */
 #endif /* HIF_PCI */

@@ -576,9 +576,9 @@ int hif_check_fw_reg(struct ol_softc *scn);
 int hif_check_soc_status(struct ol_softc *scn);
 void hif_disable_isr(void *scn);
 void hif_reset_soc(void *scn);
-void hif_disable_aspm(void);
-void hif_save_htc_htt_config_endpoint(int htc_endpoint);
-CDF_STATUS hif_open(enum ath_hal_bus_type bus_type);
+void hif_disable_aspm(void *);
+void hif_save_htc_htt_config_endpoint(void *hif_ctx, int htc_endpoint);
+CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type);
 void hif_close(void *hif_ctx);
 CDF_STATUS hif_enable(void *hif_ctx, struct device *dev, void *bdev,
 	const hif_bus_id *bid, enum ath_hal_bus_type bus_type,
@@ -592,7 +592,7 @@ int hif_pm_runtime_get(void *hif_ctx);
 void hif_pm_runtime_get_noresume(void *hif_ctx);
 int hif_pm_runtime_put(void *hif_ctx);
 struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name);
-void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock);
+void hif_runtime_lock_deinit(void *hif_ctx, struct hif_pm_runtime_lock *lock);
 int hif_pm_runtime_prevent_suspend(void *ol_sc,
 		struct hif_pm_runtime_lock *lock);
 int hif_pm_runtime_allow_suspend(void *ol_sc,
@@ -614,8 +614,8 @@ static inline int hif_pm_runtime_put(void *hif_ctx)
 static inline struct hif_pm_runtime_lock *hif_runtime_lock_init(
 		const char *name)
 { return NULL; }
-static inline void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock)
-{}
+static inline void
+hif_runtime_lock_deinit(void *hif_ctx, struct hif_pm_runtime_lock *lock) {}
 
 static inline int hif_pm_runtime_prevent_suspend(void *ol_sc,
 		struct hif_pm_runtime_lock *lock)
@@ -631,21 +631,21 @@ static inline int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
 void hif_enable_power_management(void *hif_ctx);
 void hif_disable_power_management(void *hif_ctx);
 
-void hif_vote_link_down(void);
-void hif_vote_link_up(void);
-bool hif_can_suspend_link(void);
+void hif_vote_link_down(void *);
+void hif_vote_link_up(void *);
+bool hif_can_suspend_link(void *);
 
-int hif_bus_resume(void);
-int hif_bus_suspend(void);
+int hif_bus_resume(void *);
+int hif_bus_suspend(void *);
 
 #ifdef FEATURE_RUNTIME_PM
-int hif_pre_runtime_suspend(void);
-void hif_pre_runtime_resume(void);
-int hif_runtime_suspend(void);
-int hif_runtime_resume(void);
-void hif_process_runtime_suspend_success(void);
-void hif_process_runtime_suspend_failure(void);
-void hif_process_runtime_resume_success(void);
+int hif_pre_runtime_suspend(void *hif_ctx);
+void hif_pre_runtime_resume(void *hif_ctx);
+int hif_runtime_suspend(void *hif_ctx);
+int hif_runtime_resume(void *hif_ctx);
+void hif_process_runtime_suspend_success(void *);
+void hif_process_runtime_suspend_failure(void *);
+void hif_process_runtime_resume_success(void *);
 #endif
 
 int hif_dump_registers(struct ol_softc *scn);

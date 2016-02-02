@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -72,14 +72,29 @@ static inline void ce_irq_status(struct ol_softc *scn,
 }
 
 /**
+ * struct tasklet_work
+ *
+ * @id: ce_id
+ * @work: work
+ */
+struct tasklet_work {
+	enum ce_id_type id;
+	void *data;
+	struct work_struct work;
+};
+
+
+/**
  * reschedule_ce_tasklet_work_handler() - reschedule work
- * @ce_id: ce_id
+ * @work: struct work_struct
  *
  * Return: N/A
  */
-static void reschedule_ce_tasklet_work_handler(int ce_id)
+static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct tasklet_work *ce_work = container_of(work, struct tasklet_work,
+						    work);
+	struct ol_softc *scn = ce_work->data;
 	struct HIF_CE_state *hif_ce_state;
 
 	if (NULL == scn) {
@@ -92,37 +107,12 @@ static void reschedule_ce_tasklet_work_handler(int ce_id)
 		HIF_ERROR("%s: wlan driver is unloaded", __func__);
 		return;
 	}
-	tasklet_schedule(&hif_ce_state->tasklets[ce_id].intr_tq);
+	tasklet_schedule(&hif_ce_state->tasklets[ce_work->id].intr_tq);
 	return;
 }
 
-/**
- * struct tasklet_work
- *
- * @id: ce_id
- * @work: work
- */
-struct tasklet_work {
-	enum ce_id_type id;
-	struct work_struct work;
-};
-
 static struct tasklet_work tasklet_workers[CE_ID_MAX];
 static bool work_initialized;
-
-/**
- * work_handler() - work_handler
- * @work: struct work_struct
- *
- * Return: N/A
- */
-static void work_handler(struct work_struct *work)
-{
-	struct tasklet_work *tmp;
-
-	tmp = container_of(work, struct tasklet_work, work);
-	reschedule_ce_tasklet_work_handler(tmp->id);
-}
 
 /**
  * init_tasklet_work() - init_tasklet_work
@@ -133,13 +123,13 @@ static void work_handler(struct work_struct *work)
  */
 #ifdef CONFIG_CNSS
 static void init_tasklet_work(struct work_struct *work,
-	work_func_t work_handler)
+			      work_func_t work_handler)
 {
 	cnss_init_work(work, work_handler);
 }
 #else
 static void init_tasklet_work(struct work_struct *work,
-	work_func_t work_handler)
+			      work_func_t work_handler)
 {
 	INIT_WORK(work, work_handler);
 }
@@ -147,16 +137,19 @@ static void init_tasklet_work(struct work_struct *work,
 
 /**
  * init_tasklet_workers() - init_tasklet_workers
+ * @scn: HIF Context
  *
  * Return: N/A
  */
-void init_tasklet_workers(void)
+void init_tasklet_workers(struct ol_softc *scn)
 {
 	uint32_t id;
 
 	for (id = 0; id < CE_ID_MAX; id++) {
 		tasklet_workers[id].id = id;
-		init_tasklet_work(&tasklet_workers[id].work, work_handler);
+		tasklet_workers[id].data = scn;
+		init_tasklet_work(&tasklet_workers[id].work,
+				  reschedule_ce_tasklet_work_handler);
 	}
 	work_initialized = true;
 }

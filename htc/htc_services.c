@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,6 +34,24 @@
 unsigned int htc_credit_flow = 1;
 #ifndef DEBUG_CREDIT
 #define DEBUG_CREDIT 0
+#endif
+
+/**
+ * htc_update_htc_htt_config - API to update HIF with the HTT endpoint info
+ * @target: HTC handle
+ * @endpoint: Endpoint on which HTT messages flow
+ *
+ * Return: void
+ */
+#ifdef HIF_PCI
+void htc_update_htc_htt_config(HTC_TARGET *target, int endpoint)
+{
+	hif_save_htc_htt_config_endpoint(target->hif_dev, endpoint);
+}
+#else
+void htc_update_htc_htt_config(HTC_TARGET *target, int endpoint)
+{
+}
 #endif
 
 A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
@@ -335,7 +353,10 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 	} while (false);
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_connect_service \n"));
+	if (HTT_SERVICE_GROUP == (pConnectReq->service_id >> 8))
+		htc_update_htc_htt_config(target, assignedEndpoint);
+
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_connect_service\n"));
 
 	return status;
 }
@@ -363,7 +384,12 @@ void htc_fw_event_handler(void *context, CDF_STATUS status)
 }
 
 /* Disable ASPM : disable PCIe low power */
-void htc_disable_aspm(void)
+void htc_disable_aspm(HTC_HANDLE HTCHandle)
 {
-	hif_disable_aspm();
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
+
+	if (!target->hif_dev)
+		return;
+
+	hif_disable_aspm(target->hif_dev);
 }

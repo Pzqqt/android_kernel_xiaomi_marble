@@ -281,9 +281,9 @@ void *hif_get_targetdef(struct ol_softc *scn)
  *
  * Return: n/a
  */
-void hif_vote_link_down(void)
+void hif_vote_link_down(void *hif_ctx)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 	CDF_BUG(scn);
 
 	scn->linkstate_vote--;
@@ -302,9 +302,9 @@ void hif_vote_link_down(void)
  *
  * Return: n/a
  */
-void hif_vote_link_up(void)
+void hif_vote_link_up(void *hif_ctx)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 	CDF_BUG(scn);
 
 	scn->linkstate_vote++;
@@ -324,9 +324,9 @@ void hif_vote_link_up(void)
  *
  * Return: false if hif will guarantee link up durring suspend.
  */
-bool hif_can_suspend_link(void)
+bool hif_can_suspend_link(void *hif_ctx)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 	CDF_BUG(scn);
 
 	return scn->linkstate_vote == 0;
@@ -405,19 +405,12 @@ cdf_size_t init_buffer_count(cdf_size_t maxSize)
  */
 int hif_init_cdf_ctx(void *hif_ctx)
 {
-	cdf_device_t cdf_ctx;
 	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
-
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
-	if (!cdf_ctx) {
-		HIF_ERROR("%s: CDF is NULL", __func__);
-		return -ENOMEM;
-	}
+	cdf_device_t cdf_ctx = scn->cdf_dev;
 
 	cdf_ctx->drv = &scn->aps_osdev;
 	cdf_ctx->drv_hdl = scn->aps_osdev.bdev;
 	cdf_ctx->dev = scn->aps_osdev.device;
-	scn->cdf_dev = cdf_ctx;
 	return 0;
 }
 
@@ -443,9 +436,9 @@ void hif_deinit_cdf_ctx(void *hif_ctx)
  *
  * Return: void
  */
-void hif_save_htc_htt_config_endpoint(int htc_endpoint)
+void hif_save_htc_htt_config_endpoint(void *hif_ctx, int htc_endpoint)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct ol_softc *scn = hif_ctx;
 
 	if (!scn) {
 		HIF_ERROR("%s: error: scn or scn->hif_sc is NULL!",
@@ -498,7 +491,7 @@ void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
  *
  * Return: scn
  */
-CDF_STATUS hif_open(enum ath_hal_bus_type bus_type)
+CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 {
 	struct ol_softc *scn;
 	v_CONTEXT_t cds_context;
@@ -514,6 +507,7 @@ CDF_STATUS hif_open(enum ath_hal_bus_type bus_type)
 	}
 
 	cdf_mem_zero(scn, sizeof(*scn));
+	scn->cdf_dev = cdf_ctx;
 	cfg = hif_get_ini_handle(scn);
 	cfg->max_no_of_peers = 1;
 	cdf_atomic_init(&scn->wow_done);
@@ -594,7 +588,7 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 	}
 
 	if (ADRASTEA_BU)
-		hif_vote_link_up();
+		hif_vote_link_up(hif_ctx);
 
 	if (hif_config_ce(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
@@ -663,7 +657,7 @@ void hif_disable(void *hif_ctx, enum hif_disable_type type)
 		hif_stop(scn);
 
 	if (ADRASTEA_BU)
-		hif_vote_link_down();
+		hif_vote_link_down(hif_ctx);
 
 	if (scn->aps_osdev.bdev)
 		hif_disable_bus(scn->aps_osdev.bdev);
