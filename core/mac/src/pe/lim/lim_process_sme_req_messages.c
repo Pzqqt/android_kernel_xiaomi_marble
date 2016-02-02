@@ -5676,7 +5676,7 @@ static void lim_process_nss_update_request(tpAniSirGlobal mac_ctx,
 	}
 
 	nss_update_req_ptr = (struct sir_nss_update_request *)msg_buf;
-	session_entry = pe_find_session_by_session_id(mac_ctx,
+	session_entry = pe_find_session_by_sme_session_id(mac_ctx,
 				nss_update_req_ptr->vdev_id);
 	if (session_entry == NULL) {
 		lim_log(mac_ctx, LOGE, FL(
