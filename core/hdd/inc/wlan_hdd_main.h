@@ -1805,4 +1805,14 @@ static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 }
 #endif
 void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context);
+
+#if !defined(REMOVE_PKT_LOG)
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable);
+#else
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable)
+{
+	return 0;
+}
+#endif /* REMOVE_PKT_LOG */
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

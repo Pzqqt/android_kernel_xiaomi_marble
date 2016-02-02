@@ -6703,6 +6703,34 @@ static inline bool hdd_hold_rtnl_lock(void) { return false; }
 static inline void hdd_release_rtnl_lock(void) { }
 #endif
 
+#if !defined(REMOVE_PKT_LOG)
+/**
+ * hdd_pktlog_enable_disable() - Enable/Disable packet logging
+ * @hdd_ctx: HDD context
+ * @enable: Flag to enable/disable
+ *
+ * Return: 0 on success; error number otherwise
+ */
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable)
+{
+	struct sir_wifi_start_log start_log;
+	QDF_STATUS status;
+
+	start_log.ring_id = RING_ID_PER_PACKET_STATS;
+	start_log.verbose_level =
+			enable ? WLAN_LOG_LEVEL_ACTIVE : WLAN_LOG_LEVEL_OFF;
+	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
+		EXIT();
+		return -EINVAL;
+	}
+
+	return 0;
+}
+#endif /* REMOVE_PKT_LOG */
+
+
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 /**
  * hdd_register_for_sap_restart_with_channel_switch() - Register for SAP channel
@@ -7506,6 +7534,10 @@ int hdd_wlan_startup(struct device *dev)
 
 	if (hdd_ctx->rps)
 		hdd_set_rps_cpu_mask(hdd_ctx);
+
+
+	if (cds_is_packet_log_enabled())
+		hdd_pktlog_enable_disable(hdd_ctx, true);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)
