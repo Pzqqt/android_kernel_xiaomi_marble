@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -697,7 +697,7 @@ ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	struct ol_softc *hif_device =
 		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
 
-	if (cdf_likely(hif_device && hif_device->fastpath_mode_on))
+	if (cdf_likely(hif_device && hif_is_fastpath_mode_enabled(hif_device)))
 		msdu_list = ol_tx_ll_fast(vdev, msdu_list);
 	else
 		msdu_list = ol_tx_ll(vdev, msdu_list);

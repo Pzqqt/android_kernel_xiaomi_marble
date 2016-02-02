@@ -291,8 +291,7 @@ setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
 	 * CE handles are (struct CE_state *)
 	 * This is only required in the fast path
 	 */
-	pdev->ce_tx_hdl = (struct CE_handle *)
-		osc->ce_id_to_state[CE_HTT_H2T_MSG];
+	pdev->ce_tx_hdl = hif_get_ce_handle(osc, CE_HTT_H2T_MSG);
 
 }
 
@@ -3423,7 +3422,7 @@ void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 	pdev->lro_info.lro_flush_cb = handler;
 	pdev->lro_info.lro_data = data;
 
-	ce_lro_flush_cb_register(hif_device, ol_txrx_lro_flush, pdev);
+	hif_lro_flush_cb_register(hif_device, ol_txrx_lro_flush, pdev);
 }
 
 /**
@@ -3441,7 +3440,7 @@ void ol_deregister_lro_flush_cb(void)
 		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 
-	ce_lro_flush_cb_deregister(hif_device);
+	hif_lro_flush_cb_deregister(hif_device);
 
 	pdev->lro_info.lro_flush_cb = NULL;
 	pdev->lro_info.lro_data = NULL;
