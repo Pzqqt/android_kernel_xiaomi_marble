@@ -434,9 +434,6 @@ int htt_htc_attach(struct htt_pdev_t *pdev)
 		return -EIO;       /* failure */
 
 	pdev->htc_endpoint = response.Endpoint;
-#if defined(HIF_PCI)
-	hif_save_htc_htt_config_endpoint(pdev->htc_endpoint);
-#endif
 
 	return 0;               /* success */
 }
@@ -467,9 +464,9 @@ void htt_display(htt_pdev_handle pdev, int indent)
 #endif
 
 /* Disable ASPM : Disable PCIe low power */
-void htt_htc_disable_aspm(void)
+void htt_htc_disable_aspm(struct htt_pdev_t *pdev)
 {
-	htc_disable_aspm();
+	htc_disable_aspm(pdev->htc_pdev);
 }
 
 #ifdef IPA_OFFLOAD

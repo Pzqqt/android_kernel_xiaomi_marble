@@ -3567,7 +3567,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_wow_enable_cmd_fixed_param));
 	cmd->enable = true;
-	if (hif_can_suspend_link())
+	if (htc_can_suspend_link(wma->htc_handle))
 		cmd->pause_iface_config = WOW_IFACE_PAUSE_ENABLED;
 	else
 		cmd->pause_iface_config = WOW_IFACE_PAUSE_DISABLED;

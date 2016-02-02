@@ -459,7 +459,7 @@ htt_htc_misc_pkt_list_add(struct htt_pdev_t *pdev, struct htt_htc_pkt *pkt);
 void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev);
 #endif
 
-void htt_htc_disable_aspm(void);
+void htt_htc_disable_aspm(struct htt_pdev_t *pdev);
 
 int
 htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,

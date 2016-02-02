@@ -124,8 +124,9 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	CDF_STATUS status;
 	int ret = 0;
 	void *hif_ctx;
+	cdf_device_t cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
-	status = hif_open(bus_type);
+	status = hif_open(cdf_ctx, bus_type);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hif_open error = %d", status);
 		return cdf_status_to_os_return(status);
@@ -413,6 +414,7 @@ void wlan_hdd_notify_handler(int state)
 static int __wlan_hdd_bus_suspend(pm_message_t state)
 {
 	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 	int err = wlan_hdd_validate_context(hdd_ctx);
 	int status;
 
@@ -430,7 +432,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto resume_oltxrx;
 
-	err = hif_bus_suspend();
+	err = hif_bus_suspend(hif_ctx);
 	if (err)
 		goto resume_wma;
 
@@ -485,6 +487,7 @@ int wlan_hdd_bus_suspend(pm_message_t state)
 static int __wlan_hdd_bus_resume(void)
 {
 	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (0 != status) {
@@ -492,7 +495,7 @@ static int __wlan_hdd_bus_resume(void)
 		return status;
 	}
 
-	status = hif_bus_resume();
+	status = hif_bus_resume(hif_ctx);
 	CDF_BUG(!status);
 
 	status = wma_bus_resume();
@@ -537,12 +540,13 @@ static int wlan_hdd_bus_resume(void)
 static int __wlan_hdd_runtime_suspend(void)
 {
 	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (0 != status)
 		goto process_failure;
 
-	status = hif_pre_runtime_suspend();
+	status = hif_pre_runtime_suspend(hif_ctx);
 	if (status)
 		goto process_failure;
 
@@ -554,7 +558,7 @@ static int __wlan_hdd_runtime_suspend(void)
 	if (status)
 		goto resume_htc;
 
-	status = hif_runtime_suspend();
+	status = hif_runtime_suspend(hif_ctx);
 	if (status)
 		goto resume_wma;
 
@@ -562,17 +566,17 @@ static int __wlan_hdd_runtime_suspend(void)
 	if (status)
 		goto resume_hif;
 
-	hif_process_runtime_suspend_success();
+	hif_process_runtime_suspend_success(hif_ctx);
 	return status;
 
 resume_hif:
-	CDF_BUG(!hif_runtime_resume());
+	CDF_BUG(!hif_runtime_resume(hif_ctx));
 resume_wma:
 	CDF_BUG(!wma_runtime_resume());
 resume_htc:
 	CDF_BUG(!htc_runtime_resume());
 process_failure:
-	hif_process_runtime_suspend_failure();
+	hif_process_runtime_suspend_failure(hif_ctx);
 	return status;
 }
 
@@ -606,12 +610,14 @@ static int wlan_hdd_runtime_suspend(void)
  */
 static int __wlan_hdd_runtime_resume(void)
 {
-	hif_pre_runtime_resume();
+	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+
+	hif_pre_runtime_resume(hif_ctx);
 	CDF_BUG(!cnss_auto_resume());
-	CDF_BUG(!hif_runtime_resume());
+	CDF_BUG(!hif_runtime_resume(hif_ctx));
 	CDF_BUG(!wma_runtime_resume());
 	CDF_BUG(!htc_runtime_resume());
-	hif_process_runtime_resume_success();
+	hif_process_runtime_resume_success(hif_ctx);
 	return 0;
 }
 

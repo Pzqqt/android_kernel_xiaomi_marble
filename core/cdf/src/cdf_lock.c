@@ -643,5 +643,6 @@ cdf_runtime_lock_t cdf_runtime_lock_init(const char *name)
  */
 void cdf_runtime_lock_deinit(cdf_runtime_lock_t lock)
 {
-	hif_runtime_lock_deinit(lock);
+	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	hif_runtime_lock_deinit(hif_ctx, lock);
 }
