@@ -1219,98 +1219,6 @@ static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 		(ol_txrx_vdev_peer_remove_cb)wma_remove_peer, wma, false);
 }
 
-#ifdef QCA_IBSS_SUPPORT
-
-/**
- * wma_recreate_ibss_vdev_and_bss_peer() - recreate IBSS vdev and create peer
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Return: none
- */
-static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
-						uint8_t vdev_id)
-{
-	ol_txrx_vdev_handle vdev;
-	ol_txrx_pdev_handle pdev;
-	struct add_sta_self_params add_sta_self_param;
-	struct del_sta_self_params del_sta_param;
-	QDF_STATUS status;
-	struct qdf_mac_addr *mac_addr;
-	uint8_t *mac_addr_raw;
-
-	if (!wma) {
-		WMA_LOGE("%s: Null wma handle", __func__);
-		return;
-	}
-
-	vdev = wma_find_vdev_by_id(wma, vdev_id);
-	if (!vdev) {
-		WMA_LOGE("%s: Can't find vdev with id %d", __func__, vdev_id);
-		return;
-	}
-
-	mac_addr = ol_txrx_get_vdev_struct_mac_addr(vdev);
-	if (mac_addr == NULL) {
-		WMA_LOGE("%s: mac_addr is NULL for vdev with id %d", __func__,
-			 vdev_id);
-		return;
-	}
-
-	qdf_copy_macaddr(
-		(struct qdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
-		mac_addr);
-	add_sta_self_param.session_id = vdev_id;
-	add_sta_self_param.type = WMI_VDEV_TYPE_IBSS;
-	add_sta_self_param.sub_type = 0;
-	add_sta_self_param.status = 0;
-
-	/* delete old ibss vdev */
-	del_sta_param.session_id = vdev_id;
-	qdf_mem_copy((void *)del_sta_param.self_mac_addr,
-		     (void *)mac_addr, QDF_MAC_ADDR_SIZE);
-	wma_vdev_detach(wma, &del_sta_param, 0);
-
-	/* create new vdev for ibss */
-	vdev = wma_vdev_attach(wma, &add_sta_self_param, 0);
-	if (!vdev) {
-		WMA_LOGE("%s: Failed to create vdev", __func__);
-		return;
-	}
-
-	mac_addr_raw = ol_txrx_get_vdev_mac_addr(vdev);
-	/* Register with TxRx Module for Data Ack Complete Cb */
-	ol_txrx_data_tx_cb_set(vdev, wma_data_tx_ack_comp_hdlr, wma);
-	WMA_LOGA("new IBSS vdev created with mac %pM",
-		 add_sta_self_param.self_mac_addr);
-
-	pdev = ol_txrx_get_pdev_from_vdev(vdev);
-
-	/* create ibss bss peer */
-	status = wma_create_peer(wma, pdev, vdev, mac_addr_raw,
-				 WMI_PEER_TYPE_DEFAULT, vdev_id, false);
-	if (status != QDF_STATUS_SUCCESS)
-		WMA_LOGE("%s: Failed to create IBSS bss peer", __func__);
-	else
-		WMA_LOGA("IBSS BSS peer created with mac %pM",
-			 mac_addr_raw);
-}
-#else
-/**
- * wma_recreate_ibss_vdev_and_bss_peer() - dummy function
- * @wma: wma handle
- * @vdev_id: vdev id
- *
- * Dummy for when IBSS not supported
- *
- * Return: none
- */
-static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
-						uint8_t vdev_id)
-{
-}
-#endif /* QCA_IBSS_SUPPORT */
-
 /**
  * wma_hidden_ssid_vdev_restart_on_vdev_stop() - restart vdev to set hidden ssid
  * @wma_handle: wma handle
@@ -1488,11 +1396,6 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			qdf_mem_free(bcn);
 			wma->interfaces[resp_event->vdev_id].beacon = NULL;
 		}
-
-		/* recreate ibss vdev and bss peer for scan purpose */
-		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
-			wma_recreate_ibss_vdev_and_bss_peer(wma,
-						resp_event->vdev_id);
 
 		/* Timeout status means its WMA generated DEL BSS REQ when ADD
 		 * BSS REQ was timed out to stop the VDEV in this case no need
@@ -2476,12 +2379,6 @@ void wma_vdev_resp_timer(void *data)
 			qdf_mem_free(bcn);
 			wma->interfaces[tgt_req->vdev_id].beacon = NULL;
 		}
-
-		/* recreate ibss vdev and bss peer for scan purpose */
-		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
-			wma_recreate_ibss_vdev_and_bss_peer(wma,
-							    tgt_req->vdev_id);
-
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_DELETE_BSS_REQ timedout", __func__);
 		wma_send_msg(wma, WMA_DELETE_BSS_RSP, (void *)params, 0);
