@@ -1184,6 +1184,16 @@ void hif_disable_power_management(void *hif_ctx)
 
 #define ATH_PCI_PROBE_RETRY_MAX 3
 /**
+ * hif_bus_get_context_size - API to return size of the bus specific structure
+ *
+ * Return: sizeof of hif_pci_softc
+ */
+int hif_bus_get_context_size(void)
+{
+	return sizeof(struct hif_pci_softc);
+}
+
+/**
  * hif_bus_open(): hif_bus_open
  * @scn: scn
  * @bus_type: bus type
@@ -1192,13 +1202,8 @@ void hif_disable_power_management(void *hif_ctx)
  */
 CDF_STATUS hif_bus_open(struct ol_softc *ol_sc, enum ath_hal_bus_type bus_type)
 {
-	struct hif_pci_softc *sc;
+	struct hif_pci_softc *sc = (struct hif_pci_softc *)ol_sc;
 
-	sc = cdf_mem_malloc(sizeof(*sc));
-	if (!sc) {
-		HIF_ERROR("%s: no mem", __func__);
-		return CDF_STATUS_E_NOMEM;
-	}
 	ol_sc->hif_sc = (void *)sc;
 	sc->ol_sc = ol_sc;
 	ol_sc->bus_type = bus_type;
@@ -1227,7 +1232,6 @@ void hif_bus_close(struct ol_softc *ol_sc)
 		return;
 
 	hif_pm_runtime_close(sc);
-	cdf_mem_free(sc);
 	ol_sc->hif_sc = NULL;
 }
 

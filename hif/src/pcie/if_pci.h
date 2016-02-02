@@ -39,9 +39,7 @@
 #include "osapi_linux.h"
 #include "hif.h"
 #include "cepci.h"
-
-struct CE_state;
-struct ol_softc;
+#include "ce_main.h"
 
 /* An address (e.g. of a buffer) in Copy Engine space. */
 
@@ -113,6 +111,7 @@ struct hif_msi_info {
 };
 
 struct hif_pci_softc {
+	struct HIF_CE_state ce_sc;
 	void __iomem *mem;      /* PCI address. */
 	/* For efficiency, should be first in struct */
 

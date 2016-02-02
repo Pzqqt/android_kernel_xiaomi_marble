@@ -497,16 +497,17 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 	v_CONTEXT_t cds_context;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	struct hif_config_info *cfg;
+	int bus_context_size = hif_bus_get_context_size();
 
 	cds_context = cds_get_global_context();
 	status = cds_alloc_context(cds_context, CDF_MODULE_ID_HIF,
-				(void **)&scn, sizeof(*scn));
+				(void **)&scn, bus_context_size);
 	if (status != CDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: cannot alloc ol_sc", __func__);
 		return status;
 	}
 
-	cdf_mem_zero(scn, sizeof(*scn));
+	cdf_mem_zero(scn, bus_context_size);
 	scn->cdf_dev = cdf_ctx;
 	cfg = hif_get_ini_handle(scn);
 	cfg->max_no_of_peers = 1;

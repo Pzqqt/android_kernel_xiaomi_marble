@@ -108,6 +108,7 @@ struct ce_tasklet_entry {
 };
 
 struct HIF_CE_state {
+	struct ol_softc ol_sc;
 	struct ol_softc *scn;
 	bool started;
 	struct ce_tasklet_entry tasklets[CE_COUNT_MAX];

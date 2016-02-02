@@ -1838,7 +1838,6 @@ static int hif_wlan_enable(void)
  */
 int hif_config_ce(hif_handle_t hif_hdl)
 {
-	struct HIF_CE_state *hif_state;
 	struct HIF_CE_pipe_info *pipe_info;
 	int pipe_num;
 #ifdef ADRASTEA_SHADOW_REGISTERS
@@ -1847,6 +1846,7 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	CDF_STATUS rv = CDF_STATUS_SUCCESS;
 	int ret;
 	struct ol_softc *scn = hif_hdl;
+	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn;
 	struct icnss_soc_info soc_info;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
@@ -1879,12 +1879,6 @@ int hif_config_ce(hif_handle_t hif_hdl)
 		HIF_ERROR("%s: icnss_get_soc_info error = %d", __func__, ret);
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
-
-	hif_state = (struct HIF_CE_state *)cdf_mem_malloc(sizeof(*hif_state));
-	if (!hif_state) {
-		return -ENOMEM;
-	}
-	cdf_mem_zero(hif_state, sizeof(*hif_state));
 
 	hif_state->scn = scn;
 	scn->hif_hdl = hif_state;
@@ -2016,10 +2010,8 @@ err:
 		cdf_softirq_timer_free(&hif_state->sleep_timer);
 		hif_state->sleep_timer_init = false;
 	}
-	if (scn->hif_hdl) {
-		scn->hif_hdl = NULL;
-		cdf_mem_free(hif_state);
-	}
+
+	scn->hif_hdl = NULL;
 	athdiag_procfs_remove();
 	scn->athdiag_procfs_inited = false;
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);

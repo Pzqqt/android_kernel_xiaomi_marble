@@ -132,5 +132,5 @@ CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, enum hif_enable_type type);
 void hif_disable_bus(void *bdev);
 void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag);
-
+int hif_bus_get_context_size(void);
 #endif /* __HIF_MAIN_H__ */
