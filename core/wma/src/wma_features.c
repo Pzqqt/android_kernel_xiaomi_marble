@@ -6457,7 +6457,7 @@ int wma_runtime_suspend(void)
 int wma_bus_suspend(void)
 {
 
-	return __wma_bus_suspend(CDF_RUNTIME_SUSPEND);
+	return __wma_bus_suspend(CDF_SYSTEM_SUSPEND);
 }
 
 /**
