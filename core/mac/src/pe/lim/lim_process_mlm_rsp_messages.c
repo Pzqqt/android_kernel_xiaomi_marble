@@ -52,6 +52,7 @@
 #include "wma_types.h"
 #include "cds_utils.h"
 #include "lim_types.h"
+#include "cds_concurrency.h"
 
 #define MAX_SUPPORTED_PEERS_WEP 16
 
@@ -3680,6 +3681,10 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 							  gpchangeChannelData,
 							  psessionEntry);
 		}
+		/* If MCC upgrade/DBS downgrade happended during channel switch,
+		 * the policy manager connection table needs to be updated.
+		 */
+		cds_update_connection_info(psessionEntry->smeSessionId);
 		break;
 	case LIM_SWITCH_CHANNEL_SAP_DFS:
 	{
@@ -3693,6 +3698,10 @@ void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 		 */
 		lim_send_sme_ap_channel_switch_resp(pMac, psessionEntry,
 						    pChnlParams);
+		/* If MCC upgrade/DBS downgrade happended during channel switch,
+		 * the policy manager connection table needs to be updated.
+		 */
+		cds_update_connection_info(psessionEntry->smeSessionId);
 	}
 	break;
 	default:
