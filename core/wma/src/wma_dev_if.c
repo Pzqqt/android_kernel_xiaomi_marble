@@ -4031,12 +4031,25 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		wma_delete_sta_req_sta_mode(wma, del_sta);
 		if (wma_is_roam_synch_in_progress(wma, smesession_id))
 			return;
+		if (!rsp_requested) {
+			WMA_LOGD(FL("vdev_id %d status %d"),
+				 del_sta->smesessionId, del_sta->status);
+			qdf_mem_free(del_sta);
+		}
 		break;
 
 	case BSS_OPERATIONAL_MODE_IBSS: /* IBSS shares AP code */
 	case BSS_OPERATIONAL_MODE_AP:
 		htc_vote_link_up(wma->htc_handle);
 		wma_delete_sta_req_ap_mode(wma, del_sta);
+		/* free the memory here only if sync feature is not enabled */
+		if (!rsp_requested &&
+		    !WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+				WMI_SERVICE_SYNC_DELETE_CMDS)) {
+			WMA_LOGD(FL("vdev_id %d status %d"),
+				 del_sta->smesessionId, del_sta->status);
+			qdf_mem_free(del_sta);
+		}
 		break;
 	}
 
@@ -4047,11 +4060,6 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (oper_mode == BSS_OPERATIONAL_MODE_IBSS)
 		wma_adjust_ibss_heart_beat_timer(wma, smesession_id, -1);
 #endif
-	if (!rsp_requested) {
-		WMA_LOGD("%s: vdev_id %d status %d", __func__,
-			 del_sta->smesessionId, del_sta->status);
-		qdf_mem_free(del_sta);
-	}
 }
 
 /**
