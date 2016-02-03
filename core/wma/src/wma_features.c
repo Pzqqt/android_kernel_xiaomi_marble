@@ -3364,8 +3364,9 @@ bool wma_is_extscan_in_progress(tp_wma_handle wma, int vdev_id)
  *  2) Is any one of vdev in connected state (in STA mode) ?
  *  3) Is PNO in progress in any one of vdev ?
  *  4) Is Extscan in progress in any one of vdev ?
+ *  If none of above conditions is true then return false
  *
- * Return: true if wma needs to configure wow.
+ * Return: true if wma needs to configure wow false otherwise.
  */
 bool wma_is_wow_applicable(tp_wma_handle wma)
 {
@@ -3389,7 +3390,7 @@ bool wma_is_wow_applicable(tp_wma_handle wma)
 	}
 
 	WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
-	return true;
+	return false;
 }
 
 /**
