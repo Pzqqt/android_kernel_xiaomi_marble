@@ -500,6 +500,15 @@ lim_restore_from_auth_state(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 		       (pMac, TRACE_CODE_MLM_STATE, sessionEntry->peSessionId,
 		       sessionEntry->limMlmState));
 
+	/*
+	 * Set the auth_ack_status status flag as success as
+	 * host have received the auth rsp and no longer auth
+	 * retry is needed also cancel the auth rety timer
+	 */
+	pMac->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
+	/* 'Change' timer for future activations */
+	lim_deactivate_and_change_timer(pMac, eLIM_AUTH_RETRY_TIMER);
+
 	/* 'Change' timer for future activations */
 	lim_deactivate_and_change_timer(pMac, eLIM_AUTH_FAIL_TIMER);
 

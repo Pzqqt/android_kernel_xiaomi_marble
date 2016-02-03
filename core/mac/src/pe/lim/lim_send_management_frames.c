@@ -2690,6 +2690,30 @@ end:
 } /* lim_send_reassoc_req_mgmt_frame */
 
 /**
+ * lim_auth_tx_complete_cnf()- Confirmation for auth sent over the air
+ *
+ * @mac_ctx: pointer to global mac
+ * @tx_complete : Sent status
+ *
+ * Return: This returns QDF_STATUS
+ */
+
+QDF_STATUS lim_auth_tx_complete_cnf(tpAniSirGlobal mac_ctx,
+					uint32_t tx_complete)
+{
+	lim_log(mac_ctx, LOG1,
+		 FL("tx_complete= %d"), tx_complete);
+	if (tx_complete) {
+		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_SUCCESS;
+		/* 'Change' timer for future activations */
+		lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);
+	} else {
+		mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
  * lim_send_auth_mgmt_frame() - Send an Authentication frame
  *
  * @mac_ctx: Pointer to Global MAC structure
@@ -2708,7 +2732,8 @@ void
 lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 			 tpSirMacAuthFrameBody auth_frame,
 			 tSirMacAddr peer_addr,
-			 uint8_t wep_bit, tpPESession session)
+			 uint8_t wep_bit,
+			 tpPESession session, bool wait_for_ack)
 {
 	uint8_t *frame, *body;
 	uint32_t frame_len = 0, body_len = 0;
@@ -2727,10 +2752,12 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	sme_sessionid = session->smeSessionId;
 
 	lim_log(mac_ctx, LOG1,
-		FL("Sending Auth seq# %d status %d (%d) to " MAC_ADDRESS_STR),
+		FL("Sending Auth seq# %d status %d (%d) wait_for_ack %d to "
+		MAC_ADDRESS_STR),
 		auth_frame->authTransactionSeqNumber,
 		auth_frame->authStatusCode,
 		(auth_frame->authStatusCode == eSIR_MAC_SUCCESS_STATUS),
+		wait_for_ack,
 		MAC_ADDR_ARRAY(peer_addr));
 
 	switch (auth_frame->authTransactionSeqNumber) {
@@ -2959,18 +2986,37 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 session->peSessionId, mac_hdr->fc.subType));
-	/* Queue Authentication frame in high priority WQ */
-	qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) frame_len,
-				TXRX_FRM_802_11_MGMT,
-				ANI_TXDIR_TODS, 7, lim_tx_complete,
-				frame, tx_flag, sme_sessionid, 0);
-	MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 session->peSessionId, qdf_status));
-	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-		lim_log(mac_ctx, LOGE,
-			FL("*** Could not send Auth frame, retCode=%X ***"),
-			qdf_status);
 
+	if (wait_for_ack) {
+		mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
+		qdf_status = wma_tx_frameWithTxComplete(mac_ctx, packet,
+					 (uint16_t)frame_len,
+					 TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
+					 7, lim_tx_complete, frame,
+					 lim_auth_tx_complete_cnf,
+					 tx_flag, sme_sessionid, false, 0);
+		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
+			session->peSessionId, qdf_status));
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			lim_log(mac_ctx, LOGE,
+			  FL("*** Could not send Auth frame, retCode=%X ***"),
+			  qdf_status);
+			mac_ctx->auth_ack_status = LIM_AUTH_ACK_RCD_FAILURE;
+		/* Pkt will be freed up by the callback */
+		}
+	} else {
+		/* Queue Authentication frame in high priority WQ */
+		qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) frame_len,
+					TXRX_FRM_802_11_MGMT,
+					ANI_TXDIR_TODS, 7, lim_tx_complete,
+					frame, tx_flag, sme_sessionid, 0);
+		MTRACE(qdf_trace(QDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
+				 session->peSessionId, qdf_status));
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+			lim_log(mac_ctx, LOGE,
+			  FL("*** Could not send Auth frame, retCode=%X ***"),
+			  qdf_status);
+	}
 	return;
 }
 

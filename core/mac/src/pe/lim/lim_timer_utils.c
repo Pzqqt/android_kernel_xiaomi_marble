@@ -50,6 +50,9 @@
 #define LIM_KEEPALIVE_TIMER_MS                   3000
 /* Lim JoinProbeRequest Retry  timer default (200)ms */
 #define LIM_JOIN_PROBE_REQ_TIMER_MS              200
+/* Lim Periodic Auth Retry timer default 60 ms */
+#define LIM_AUTH_RETRY_TIMER_MS   60
+
 
 /* This timer is a periodic timer which expires at every 1 sec to
    convert  ACTIVE DFS channel to DFS channels */
@@ -119,6 +122,18 @@ lim_create_non_ap_timers(tpAniSirGlobal pMac)
 			    TX_NO_ACTIVATE) != TX_SUCCESS) {
 		lim_log(pMac, LOGP,
 			FL("could not create Periodic Join Probe Request tmr"));
+		return false;
+	}
+
+	/* Send Auth frame every 60 ms */
+	if ((tx_timer_create(pMac,
+		&pMac->lim.limTimers.g_lim_periodic_auth_retry_timer,
+		"Periodic AUTH Timer",
+		lim_timer_handler, SIR_LIM_AUTH_RETRY_TIMEOUT,
+		SYS_MS_TO_TICKS(LIM_AUTH_RETRY_TIMER_MS), 0,
+		TX_NO_ACTIVATE)) != TX_SUCCESS) {
+		lim_log(pMac, LOGP,
+			FL("could not create Periodic AUTH Timer"));
 		return false;
 	}
 
@@ -429,6 +444,7 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimAssocFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimJoinFailureTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimPeriodicJoinProbeReqTimer);
+	tx_timer_delete(&pMac->lim.limTimers.g_lim_periodic_auth_retry_timer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimQuietBssTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimQuietTimer);
 	tx_timer_delete(&pMac->lim.limTimers.gLimChannelSwitchTimer);
@@ -668,6 +684,7 @@ void lim_update_olbc_cache_timer_handler(void *pMacGlobal, uint32_t param)
 void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 {
 	uint32_t val = 0;
+	tpPESession  session_entry;
 
 	MTRACE(mac_trace
 		       (pMac, TRACE_CODE_TIMER_DEACTIVATE, NO_SESSION, timerId));
@@ -797,6 +814,37 @@ void lim_deactivate_and_change_timer(tpAniSirGlobal pMac, uint32_t timerId)
 				FL("unable to change Auth failure timer"));
 		}
 
+		break;
+
+	case eLIM_AUTH_RETRY_TIMER:
+
+		if (tx_timer_deactivate
+			  (&pMac->lim.limTimers.g_lim_periodic_auth_retry_timer)
+							 != TX_SUCCESS) {
+			/* Could not deactivate Auth Retry Timer. */
+			lim_log(pMac, LOGE,
+				   FL("Unable to deactivate Auth Retry timer"));
+		}
+		session_entry = pe_find_session_by_session_id(pMac,
+			pMac->lim.limTimers.
+				g_lim_periodic_auth_retry_timer.sessionId);
+		if (NULL == session_entry) {
+			lim_log(pMac, LOGE,
+			  FL("session does not exist for given SessionId : %d"),
+			pMac->lim.limTimers.
+				g_lim_periodic_auth_retry_timer.sessionId);
+			break;
+		}
+		/* 3/5 of the beacon interval */
+		val = (session_entry->beaconParams.beaconInterval * 3) / 5;
+		val = SYS_MS_TO_TICKS(val);
+		if (tx_timer_change
+			 (&pMac->lim.limTimers.g_lim_periodic_auth_retry_timer,
+							val, 0) != TX_SUCCESS) {
+			/* Could not change Auth Retry timer. */
+			lim_log(pMac, LOGE,
+			  FL("Unable to change Auth Retry timer"));
+		}
 		break;
 
 	case eLIM_ASSOC_FAIL_TIMER:

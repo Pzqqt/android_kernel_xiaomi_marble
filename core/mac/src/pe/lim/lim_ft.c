@@ -359,7 +359,7 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 
 	lim_send_auth_mgmt_frame(pMac, &authFrame,
 		 psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
-		 LIM_NO_WEP_IN_FC, psessionEntry);
+		 LIM_NO_WEP_IN_FC, psessionEntry, false);
 
 	return;
 

@@ -66,6 +66,7 @@ static void lim_process_auth_failure_timeout(tpAniSirGlobal);
 static void lim_process_auth_rsp_timeout(tpAniSirGlobal, uint32_t);
 static void lim_process_assoc_failure_timeout(tpAniSirGlobal, uint32_t);
 static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal);
+static void lim_process_auth_retry_timer(tpAniSirGlobal);
 
 /**
  * lim_process_mlm_req_messages() - process mlm request messages
@@ -153,6 +154,9 @@ void lim_process_mlm_req_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 	case SIR_LIM_DEAUTH_ACK_TIMEOUT:
 		lim_process_deauth_ack_timeout(mac_ctx);
+		break;
+	case SIR_LIM_AUTH_RETRY_TIMEOUT:
+		lim_process_auth_retry_timer(mac_ctx);
 		break;
 	case LIM_MLM_TSPEC_REQ:
 	default:
@@ -1284,25 +1288,39 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_AUTH_START_EVENT, session,
 			      eSIR_SUCCESS, auth_frame_body.authStatusCode);
 #endif
-
+	mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
 	lim_send_auth_mgmt_frame(mac_ctx,
 		&auth_frame_body, mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
-		LIM_NO_WEP_IN_FC, session);
+		LIM_NO_WEP_IN_FC, session, true);
 
 	/* assign appropriate session_id to the timer object */
 	mac_ctx->lim.limTimers.gLimAuthFailureTimer.sessionId = session_id;
 
+	/* assign appropriate sessionId to the timer object */
+	 mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId =
+								  session_id;
+	 lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);
 	/* Activate Auth failure timer */
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
 			 session->peSessionId, eLIM_AUTH_FAIL_TIMER));
 	if (tx_timer_activate(&mac_ctx->lim.limTimers.gLimAuthFailureTimer)
 	    != TX_SUCCESS) {
 		/* Could not start Auth failure timer. */
-		lim_log(mac_ctx, LOGP,
+		lim_log(mac_ctx, LOGE,
 			FL("could not start Auth failure timer"));
 		/* Cleanup as if auth timer expired */
 		lim_process_auth_failure_timeout(mac_ctx);
+	} else {
+		MTRACE(mac_trace(mac_ctx, TRACE_CODE_TIMER_ACTIVATE,
+			   session->peSessionId, eLIM_AUTH_RETRY_TIMER));
+		/* Activate Auth Retry timer */
+		if (tx_timer_activate
+		    (&mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer)
+							      != TX_SUCCESS)
+			lim_log(mac_ctx, LOGE,
+			    FL("could not activate Auth Retry timer"));
 	}
+
 	return;
 end:
 	qdf_mem_copy((uint8_t *) &mlm_auth_cnf.peerMacAddr,
@@ -2601,6 +2619,68 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 		}
 	}
 }
+
+/**
+ * lim_process_auth_retry_timer()- function to Retry Auth
+ * @mac_ctx:pointer to global mac
+ *
+ * Return: void
+ */
+
+static void lim_process_auth_retry_timer(tpAniSirGlobal mac_ctx)
+{
+	tpPESession  session_entry;
+
+	lim_log(mac_ctx, LOG1, FL("ENTER"));
+
+	session_entry =
+	  pe_find_session_by_session_id(mac_ctx,
+	  mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer.sessionId);
+	if (NULL == session_entry) {
+		lim_log(mac_ctx, LOGE,
+		  FL("session does not exist for given SessionId : %d"),
+		  mac_ctx->lim.limTimers.
+			g_lim_periodic_auth_retry_timer.sessionId);
+		return;
+	}
+
+	if (tx_timer_running(&mac_ctx->lim.limTimers.gLimAuthFailureTimer) &&
+	     (session_entry->limMlmState == eLIM_MLM_WT_AUTH_FRAME2_STATE) &&
+	     (LIM_AUTH_ACK_RCD_SUCCESS != mac_ctx->auth_ack_status)) {
+		tSirMacAuthFrameBody    auth_frame;
+
+		/*
+		 * Send the auth retry only in case we have received ack failure
+		 * else just restart the retry timer.
+		 */
+		if (LIM_AUTH_ACK_RCD_FAILURE == mac_ctx->auth_ack_status) {
+			/* Prepare & send Authentication frame */
+			auth_frame.authAlgoNumber =
+			    (uint8_t) mac_ctx->lim.gpLimMlmAuthReq->authType;
+			auth_frame.authTransactionSeqNumber =
+						SIR_MAC_AUTH_FRAME_1;
+			auth_frame.authStatusCode = 0;
+			lim_log(mac_ctx, LOGW, FL("Retry Auth "));
+			mac_ctx->auth_ack_status = LIM_AUTH_ACK_NOT_RCD;
+			lim_send_auth_mgmt_frame(mac_ctx,
+				&auth_frame,
+				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
+				LIM_NO_WEP_IN_FC, session_entry, true);
+		}
+
+		lim_deactivate_and_change_timer(mac_ctx, eLIM_AUTH_RETRY_TIMER);
+
+		/* Activate Auth Retry timer */
+		if (tx_timer_activate
+		     (&mac_ctx->lim.limTimers.g_lim_periodic_auth_retry_timer)
+			 != TX_SUCCESS) {
+			lim_log(mac_ctx, LOGE,
+			  FL("could not activate Auth Retry failure timer"));
+			return;
+		}
+	}
+	return;
+} /*** lim_process_auth_retry_timer() ***/
 
 /**
  * lim_process_auth_failure_timeout() - This function is called to process Min

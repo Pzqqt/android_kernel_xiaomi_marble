@@ -324,6 +324,7 @@ typedef struct sLimTimers {
 	 * for a period of time on a particular DFS channel
 	 */
 	TX_TIMER gLimActiveToPassiveChannelTimer;
+	TX_TIMER g_lim_periodic_auth_retry_timer;
 
 /* ********************TIMER SECTION ENDS************************************************** */
 /* ALL THE FIELDS BELOW THIS CAN BE ZEROED OUT in lim_initialize */
@@ -962,6 +963,21 @@ typedef struct sHalMacStartParameters {
 
 } tHalMacStartParameters;
 
+/**
+ * enum auth_tx_ack_status - Indicate TX status of AUTH
+ * @LIM_AUTH_ACK_NOT_RCD : Default status while waiting for ack status.
+ * @LIM_AUTH_ACK_RCD_SUCCESS : Ack is received.
+ * @LIM_AUTH_ACK_RCD_FAILURE : No Ack received.
+ *
+ * Indicate if driver is waiting for ACK status of auth or ACK received for AUTH
+ * OR NO ACK is received for the auth sent.
+ */
+enum auth_tx_ack_status {
+	LIM_AUTH_ACK_NOT_RCD,
+	LIM_AUTH_ACK_RCD_SUCCESS,
+	LIM_AUTH_ACK_RCD_FAILURE,
+};
+
 /* ------------------------------------------------------------------- */
 /* / MAC Sirius parameter structure */
 typedef struct sAniSirGlobal {
@@ -1030,6 +1046,7 @@ typedef struct sAniSirGlobal {
 	sir_mgmt_frame_ind_callback mgmt_frame_ind_cb;
 	bool first_scan_done;
 	int8_t first_scan_bucket_threshold;
+	enum auth_tx_ack_status auth_ack_status;
 } tAniSirGlobal;
 
 typedef enum {

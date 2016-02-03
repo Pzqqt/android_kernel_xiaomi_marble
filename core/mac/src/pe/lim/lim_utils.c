@@ -625,6 +625,11 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 		tx_timer_deactivate(&lim_timer->gLimPeriodicJoinProbeReqTimer);
 		tx_timer_delete(&lim_timer->gLimPeriodicJoinProbeReqTimer);
 
+		/* Deactivate and delete Auth Retry timer. */
+		tx_timer_deactivate
+				(&lim_timer->g_lim_periodic_auth_retry_timer);
+		tx_timer_delete(&lim_timer->g_lim_periodic_auth_retry_timer);
+
 		/* Deactivate and delete Association failure timer. */
 		tx_timer_deactivate(&lim_timer->gLimAssocFailureTimer);
 		tx_timer_delete(&lim_timer->gLimAssocFailureTimer);
