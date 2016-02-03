@@ -2279,7 +2279,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
-	struct ch_params_s ch_params;
+	struct ch_params_s *ch_params;
 	sapContext = (ptSapContext) pSapCtx;
 
 	if (NULL == sapContext) {
@@ -2302,16 +2302,16 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	 * because we've implemented channel width fallback mechanism for DFS
 	 * which will result in channel width changing dynamically.
 	 */
-	ch_params.ch_width = mac_ctx->sap.SapDfsInfo.new_chanWidth;
-	sme_set_ch_params(hHal, phy_mode, target_channel, 0, &ch_params);
-	sapContext->ch_params.ch_width = ch_params.ch_width;
+	ch_params = &mac_ctx->sap.SapDfsInfo.new_ch_params;
+	sme_set_ch_params(hHal, phy_mode, target_channel, 0, ch_params);
+	sapContext->ch_params.ch_width = ch_params->ch_width;
 	/* Update the channel as this will be used to
 	 * send event to supplicant
 	 */
 	sapContext->channel = target_channel;
-	sapContext->csr_roamProfile.ch_params.ch_width = ch_params.ch_width;
+	sapContext->csr_roamProfile.ch_params.ch_width = ch_params->ch_width;
 	qdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
-				&ch_params, &sapContext->csr_roamProfile);
+				ch_params, &sapContext->csr_roamProfile);
 
 	if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 		sap_signal_hdd_event(sapContext, NULL,
@@ -2429,6 +2429,13 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 		return QDF_STATUS_E_FAULT;
 	}
 	pMac = PMAC_STRUCT(hHal);
+
+	pMac->sap.SapDfsInfo.new_ch_params.ch_width =
+				pMac->sap.SapDfsInfo.new_chanWidth;
+
+	sme_set_ch_params(hHal, sapContext->csr_roamProfile.phyMode,
+				pMac->sap.SapDfsInfo.target_channel, 0,
+				&pMac->sap.SapDfsInfo.new_ch_params);
 
 	qdf_ret_status = sme_roam_csa_ie_request(hHal,
 				sapContext->bssid,

@@ -5665,6 +5665,15 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 		session_entry->dfsIncludeChanWrapperIe = true;
 		wider_bw_ch_switch->newChanWidth =
 			WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
+		/*
+		 * This is not applicable for 20/40/80 Mhz.
+		 * Only used when we support 80+80 Mhz operation.
+		 * In case of 80+80 Mhz, this parameter indicates
+		 * center channel frequency index of 80 Mhz channel of
+		 * frequency segment 1.
+		 */
+		wider_bw_ch_switch->newCenterChanFreq1 =
+			dfs_csa_ie_req->ch_params.center_freq_seg1;
 		break;
 	default:
 		session_entry->dfsIncludeChanWrapperIe = false;
@@ -5678,14 +5687,6 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	/* Fetch the center channel based on the channel width */
 	wider_bw_ch_switch->newCenterChanFreq0 =
 		dfs_csa_ie_req->ch_params.center_freq_seg0;
-	/*
-	 * This is not applicable for 20/40/80 Mhz.Only used when we support
-	 * 80+80 Mhz operation. In case of 80+80 Mhz, this parameter indicates
-	 * center channel frequency index of 80 Mhz channel of
-	 * frequency segment 1.
-	 */
-	wider_bw_ch_switch->newCenterChanFreq1 =
-		dfs_csa_ie_req->ch_params.center_freq_seg1;
 skip_vht:
 	/* Send CSA IE request from here */
 	if (sch_set_fixed_beacon_fields(mac_ctx, session_entry) !=

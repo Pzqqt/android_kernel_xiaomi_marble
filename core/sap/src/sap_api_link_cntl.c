@@ -430,6 +430,7 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 {
 	tWLAN_SAPEvent sap_event;
 	QDF_STATUS qdf_status;
+	bool is_ch_dfs = false;
 	/*
 	 * Channel change is successful. If the new channel is a DFS channel,
 	 * then we will to perform channel availability check for 60 seconds
@@ -442,8 +443,23 @@ wlansap_roam_process_ch_change_success(tpAniSirGlobal mac_ctx,
 	if (eSAP_DISCONNECTING != sap_ctx->sapsMachine)
 		return;
 
+	if (sap_ctx->ch_params.ch_width == CH_WIDTH_160MHZ) {
+		is_ch_dfs = true;
+	} else if (sap_ctx->ch_params.ch_width == CH_WIDTH_80P80MHZ) {
+		if (cds_get_channel_state(sap_ctx->channel) ==
+						CHANNEL_STATE_DFS ||
+		    cds_get_channel_state(sap_ctx->ch_params.center_freq_seg1 -
+					  SIR_80MHZ_START_CENTER_CH_DIFF) ==
+							CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	} else {
+		if (cds_get_channel_state(sap_ctx->channel) ==
+						CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	}
+
 	/* check if currently selected channel is a DFS channel */
-	if (CHANNEL_STATE_DFS == cds_get_channel_state(sap_ctx->channel)) {
+	if (is_ch_dfs) {
 		if ((false == mac_ctx->sap.SapDfsInfo.ignore_cac)
 		    && (eSAP_DFS_DO_NOT_SKIP_CAC ==
 			mac_ctx->sap.SapDfsInfo.cac_state)) {

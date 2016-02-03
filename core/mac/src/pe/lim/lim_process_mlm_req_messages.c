@@ -582,6 +582,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	tSirMsgQ msg_buf;
 	tpAddBssParams addbss_param = NULL;
 	uint32_t retcode;
+	bool is_ch_dfs = false;
 
 	/* Package WMA_ADD_BSS_REQ message parameters */
 	addbss_param = qdf_mem_malloc(sizeof(tAddBssParams));
@@ -673,8 +674,23 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	/* pass on the session persona to hal */
 	addbss_param->halPersona = session->pePersona;
 
-	addbss_param->bSpectrumMgtEnabled = session->spectrumMgtEnabled ||
-		lim_isconnected_on_dfs_channel(mlm_start_req->channelNumber);
+	if (session->ch_width == CH_WIDTH_160MHZ) {
+		is_ch_dfs = true;
+	} else if (session->ch_width == CH_WIDTH_80P80MHZ) {
+		if (cds_get_channel_state(mlm_start_req->channelNumber) ==
+							CHANNEL_STATE_DFS ||
+		    cds_get_channel_state(session->ch_center_freq_seg1 -
+					    SIR_80MHZ_START_CENTER_CH_DIFF) ==
+							CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	} else {
+		if (cds_get_channel_state(mlm_start_req->channelNumber) ==
+							CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	}
+
+	addbss_param->bSpectrumMgtEnabled =
+				session->spectrumMgtEnabled || is_ch_dfs;
 	addbss_param->extSetStaKeyParamValid = 0;
 
 	addbss_param->dot11_mode = session->dot11mode;

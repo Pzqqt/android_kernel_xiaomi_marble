@@ -244,10 +244,21 @@ tSirRetStatus lim_send_switch_chnl_params(tpAniSirGlobal pMac,
 	lim_log(pMac, LOG2, FL("nss value: %d"), pChnlParams->nss);
 
 	/*Set DFS flag for DFS channel */
-	if (cds_get_channel_state(chnlNumber) == CHANNEL_STATE_DFS)
+	if (ch_width == CH_WIDTH_160MHZ) {
 		pChnlParams->isDfsChannel = true;
-	else
+	} else if (ch_width == CH_WIDTH_80P80MHZ) {
 		pChnlParams->isDfsChannel = false;
+		if (cds_get_channel_state(chnlNumber) == CHANNEL_STATE_DFS ||
+		    cds_get_channel_state(pChnlParams->ch_center_freq_seg1 -
+				SIR_80MHZ_START_CENTER_CH_DIFF) ==
+							CHANNEL_STATE_DFS)
+			pChnlParams->isDfsChannel = true;
+	} else {
+		if (cds_get_channel_state(chnlNumber) == CHANNEL_STATE_DFS)
+			pChnlParams->isDfsChannel = true;
+		else
+			pChnlParams->isDfsChannel = false;
+	}
 
 	pChnlParams->restart_on_chan_switch = is_restart;
 

@@ -1078,6 +1078,8 @@ static uint8_t sap_populate_available_channels(chan_bonding_bitmap *bitmap,
 
 	switch (ch_width) {
 	/* VHT80 */
+	case CH_WIDTH_160MHZ:
+	case CH_WIDTH_80P80MHZ:
 	case CH_WIDTH_80MHZ:
 		for (i = 0; i < MAX_80MHZ_BANDS; i++) {
 			start_channel = bitmap->chanBondingSet[i].startChannel;
@@ -1499,28 +1501,28 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 		 * channel list from bitmap
 		 */
 		if (ch_width != CH_WIDTH_20MHZ) {
+			bool flag = false;
+			uint8_t count = 0, new_160_startchannel = 0;
+			uint8_t index = 0, sec_seg_ch = 0;
+			uint8_t primary_seg_start_ch = 0;
 			available_ch_cnt =
 				sap_populate_available_channels(&channelBitmap,
 							ch_width,
 							availableChannels);
+
 			/*
-			 * if no valid channel bonding found,
+			 * If no valid channel bonding found,
 			 * fallback to lower bandwidth
 			 */
 			if (available_ch_cnt == 0) {
-				if (ch_width == CH_WIDTH_80MHZ) {
+				if ((ch_width == CH_WIDTH_160MHZ) ||
+					(ch_width == CH_WIDTH_80P80MHZ) ||
+					(ch_width == CH_WIDTH_80MHZ)) {
 					QDF_TRACE(QDF_MODULE_ID_SAP,
 						  QDF_TRACE_LEVEL_WARN,
-						  FL
-						  ("sapdfs:No 80MHz cb found, falling to 40MHz"));
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_WARN,
-						  FL
-						  ("sapdfs:Changing chanWidth from [%d] to [%d]"),
-						  ch_width,
-						  CH_WIDTH_40MHZ);
+						  FL("sapdfs:Changing chanWidth from [%d] to 40Mhz"),
+						  ch_width);
 					ch_width = CH_WIDTH_40MHZ;
-					/* continue to start of do loop */
 					continue;
 				} else if (ch_width == CH_WIDTH_40MHZ) {
 					QDF_TRACE(QDF_MODULE_ID_SAP,
@@ -1538,47 +1540,167 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 					continue;
 				}
 			}
-		}
 
-		/*
-		 * by now, available channels list will be populated or
-		 * no channels are avaialbe
-		 */
-		if (available_ch_cnt) {
-			for (i = 0; i < available_ch_cnt; i++) {
-				if (CDS_IS_DFS_CH(availableChannels[i])) {
-					avail_dfs_chan_list[
-						avail_dfs_chan_count++] =
-							availableChannels[i];
-				} else {
-					avail_non_dfs_chan_list[
-						avail_non_dfs_chan_count++] =
-							availableChannels[i];
-				}
+			/*
+			 * Number of channel count should be more than 8 to
+			 * switch new channel in 160Mhz band
+			 */
+			if (((ch_width == CH_WIDTH_160MHZ) ||
+				(ch_width == CH_WIDTH_80P80MHZ)) &&
+				(available_ch_cnt < SIR_DFS_MAX_20M_SUB_CH)) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_WARN,
+					FL("sapdfs:Changing chanWidth from [%d] to [%d]"),
+					ch_width, CH_WIDTH_80MHZ);
+				ch_width = CH_WIDTH_80MHZ;
+				continue;
 			}
-		} else {
-			QDF_TRACE(QDF_MODULE_ID_SAP,
+			if (ch_width == CH_WIDTH_160MHZ) {
+				/*
+				 * NA supports only 2 blocks for 160Mhz
+				 * bandwidth i.e 36-64 & 100-128 and
+				 * all the channels in these blocks are
+				 * continuous and seperated by 4Mhz.
+				 */
+				for (i = 1; ((i < available_ch_cnt)); i++) {
+					if ((availableChannels[i] -
+						availableChannels[i-1]) == 4)
+						count++;
+					else
+						count = 0;
+					if (count ==
+						SIR_DFS_MAX_20M_SUB_CH - 1) {
+						flag = true;
+						new_160_startchannel =
+							availableChannels[i-7];
+						break;
+					}
+				}
+			} else if (ch_width == CH_WIDTH_80P80MHZ) {
+					flag = true;
+			}
+			if ((flag == false) && (ch_width > CH_WIDTH_80MHZ)) {
+				ch_width = CH_WIDTH_80MHZ;
+				continue;
+			}
+
+			if (ch_width == CH_WIDTH_160MHZ) {
+				cds_rand_get_bytes(0, (uint8_t *)&random_byte,
+						   1);
+				random_byte = (random_byte +
+						qdf_mc_timer_get_system_ticks())
+						% SIR_DFS_MAX_20M_SUB_CH;
+				pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
+				target_channel = new_160_startchannel +
+							(random_byte * 4);
+				QDF_TRACE(QDF_MODULE_ID_SAP,
 					QDF_TRACE_LEVEL_INFO_LOW,
-					FL("No target channel found"));
+					FL("sapdfs: New Channel width = %d"),
+					pMac->sap.SapDfsInfo.new_chanWidth);
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_INFO_LOW,
+					FL("sapdfs: target_channel = %d"),
+					target_channel);
+
+				qdf_mem_free(tmp_ch_lst);
+				return target_channel;
+			} else if (ch_width == CH_WIDTH_80P80MHZ) {
+				cds_rand_get_bytes(0,
+						(uint8_t *)&random_byte, 1);
+				index = (random_byte +
+					qdf_mc_timer_get_system_ticks()) %
+					available_ch_cnt;
+				target_channel = availableChannels[index];
+				index -= (index % 4);
+				primary_seg_start_ch = availableChannels[index];
+
+				/* reset channels associate with primary 80Mhz */
+				for (i = 0; i < 4; i++)
+					availableChannels[i + index] = 0;
+				/*
+				 * select and calculate center frequency for
+				 * secondary segement
+				 */
+				for (i = 0; i < available_ch_cnt / 4; i++) {
+					if (availableChannels[i * 4] &&
+					    (abs(primary_seg_start_ch -
+						 availableChannels[i * 4]) >
+						(SIR_DFS_MAX_20M_SUB_CH * 2))) {
+
+						sec_seg_ch =
+						  availableChannels[i * 4] +
+						SIR_80MHZ_START_CENTER_CH_DIFF;
+
+						break;
+					}
+				}
+				if (!sec_seg_ch &&
+					(available_ch_cnt ==
+						SIR_DFS_MAX_20M_SUB_CH))
+					ch_width = CH_WIDTH_160MHZ;
+				else if (!sec_seg_ch)
+					ch_width = CH_WIDTH_80MHZ;
+
+				pMac->sap.SapDfsInfo.new_ch_params.center_freq_seg1
+						= sec_seg_ch;
+				pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
+
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_INFO_LOW,
+					FL("sapdfs: New Channel width = %d"),
+					pMac->sap.SapDfsInfo.new_chanWidth);
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_INFO_LOW,
+					FL("sapdfs: New Center Freq Seg1 = %d"),
+					sec_seg_ch);
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					QDF_TRACE_LEVEL_INFO_LOW,
+					FL("sapdfs: target_channel = %d"),
+					target_channel);
+
+				qdf_mem_free(tmp_ch_lst);
+
+				return target_channel;
+			}
+			/*
+			 * by now, available channels list will be populated or
+			 * no channels are avaialbe
+			 */
+			if (available_ch_cnt) {
+				for (i = 0; i < available_ch_cnt; i++) {
+					if (CDS_IS_DFS_CH(availableChannels[i])) {
+						avail_dfs_chan_list[
+							avail_dfs_chan_count++] =
+								availableChannels[i];
+					} else {
+						avail_non_dfs_chan_list[
+							avail_non_dfs_chan_count++] =
+								availableChannels[i];
+					}
+				}
+			} else {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+						QDF_TRACE_LEVEL_INFO_LOW,
+						FL("No target channel found"));
+			}
+
+			cds_rand_get_bytes(0, (uint8_t *)&random_byte, 1);
+
+			/* Give preference to non-DFS channel */
+			if (!pMac->f_prefer_non_dfs_on_radar) {
+				i = (random_byte + qdf_mc_timer_get_system_ticks()) %
+					available_ch_cnt;
+				target_channel = availableChannels[i];
+			} else if (avail_non_dfs_chan_count) {
+				i = (random_byte + qdf_mc_timer_get_system_ticks()) %
+					avail_non_dfs_chan_count;
+				target_channel = avail_non_dfs_chan_list[i];
+			} else {
+				i = (random_byte + qdf_mc_timer_get_system_ticks()) %
+					avail_dfs_chan_count;
+				target_channel = avail_dfs_chan_list[i];
+			}
 		}
-
-		cds_rand_get_bytes(0, (uint8_t *)&random_byte, 1);
-
-		/* Give preference to non-DFS channel */
-		if (!pMac->f_prefer_non_dfs_on_radar) {
-			i = (random_byte + qdf_mc_timer_get_system_ticks()) %
-				available_ch_cnt;
-			target_channel = availableChannels[i];
-		} else if (avail_non_dfs_chan_count) {
-			i = (random_byte + qdf_mc_timer_get_system_ticks()) %
-				avail_non_dfs_chan_count;
-			target_channel = avail_non_dfs_chan_list[i];
-		} else {
-			i = (random_byte + qdf_mc_timer_get_system_ticks()) %
-				avail_dfs_chan_count;
-			target_channel = avail_dfs_chan_list[i];
-		}
-
 		pMac->sap.SapDfsInfo.new_chanWidth = ch_width;
 		QDF_TRACE(QDF_MODULE_ID_SAP,
 				QDF_TRACE_LEVEL_INFO_LOW,

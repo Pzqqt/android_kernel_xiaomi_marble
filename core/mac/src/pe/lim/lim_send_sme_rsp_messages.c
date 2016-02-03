@@ -2397,6 +2397,9 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 	tSirMsgQ mmhMsg;
 	tpSwitchChannelParams pSmeSwithChnlParams;
 	uint8_t channelId;
+	bool is_ch_dfs = false;
+	enum ch_width ch_width;
+	uint8_t ch_center_freq_seg1;
 
 	pSmeSwithChnlParams = (tSwitchChannelParams *)
 			      qdf_mem_malloc(sizeof(tSwitchChannelParams));
@@ -2413,6 +2416,8 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 		     sizeof(tSwitchChannelParams));
 
 	channelId = pSmeSwithChnlParams->channelNumber;
+	ch_width = pSmeSwithChnlParams->ch_width;
+	ch_center_freq_seg1 = pSmeSwithChnlParams->ch_center_freq_seg1;
 
 	/*
 	 * Pass the sme sessionID to SME instead
@@ -2432,7 +2437,20 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 	 * upper layers to start the beacon transmission .
 	 */
 
-	if (CHANNEL_STATE_DFS != cds_get_channel_state(channelId)) {
+	if (ch_width == CH_WIDTH_160MHZ) {
+		is_ch_dfs = true;
+	} else if (ch_width == CH_WIDTH_80P80MHZ) {
+		if (cds_get_channel_state(channelId) == CHANNEL_STATE_DFS ||
+		    cds_get_channel_state(ch_center_freq_seg1 -
+					SIR_80MHZ_START_CENTER_CH_DIFF) ==
+							CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	} else {
+		if (cds_get_channel_state(channelId) == CHANNEL_STATE_DFS)
+			is_ch_dfs = true;
+	}
+
+	if (!is_ch_dfs) {
 		if (channelId == psessionEntry->currentOperChannel) {
 			lim_apply_configuration(pMac, psessionEntry);
 			lim_send_beacon_ind(pMac, psessionEntry);

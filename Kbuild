@@ -1206,8 +1206,10 @@ ifeq ($(CONFIG_WLAN_FEATURE_RX_WAKELOCK), y)
 CDEFINES += -DWLAN_FEATURE_HOLD_RX_WAKELOCK
 endif
 
-#Enable Channel Matrix restriction for all targets
+#Enable Channel Matrix restriction for all Rome only targets
+ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_ENABLE_CHNL_MATRIX_RESTRICTION
+endif
 
 #features specific to mobile router use case
 ifeq ($(CONFIG_MOBILE_ROUTER), y)
