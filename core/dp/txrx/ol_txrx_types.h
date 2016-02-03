@@ -466,7 +466,8 @@ struct ol_txrx_pdev_t {
 	/* WDI subscriber's event list */
 	wdi_event_subscribe **wdi_event_list;
 
-#ifndef REMOVE_PKT_LOG
+#if !defined(REMOVE_PKT_LOG) && !defined(QVIT)
+	bool pkt_log_init;
 	/* Pktlog pdev */
 	struct ol_pktlog_dev_t *pl_dev;
 #endif /* #ifndef REMOVE_PKT_LOG */

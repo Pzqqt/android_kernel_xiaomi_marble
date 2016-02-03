@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,7 +71,11 @@
 #include <ol_tx_queue.h>
 #include <ol_txrx.h>
 #include "wma.h"
-
+#ifndef REMOVE_PKT_LOG
+#include "pktlog_ac.h"
+#endif
+#include <cds_concurrency.h>
+#include "epping_main.h"
 
 
 /*=== function definitions ===*/
@@ -439,6 +443,50 @@ fail1:
 fail0:
 	return NULL;
 }
+
+#if !defined(REMOVE_PKT_LOG) && !defined(QVIT)
+/**
+ * htt_pkt_log_init() - API to initialize packet log
+ * @handle: pdev handle
+ * @scn: HIF context
+ *
+ * Return: void
+ */
+void htt_pkt_log_init(struct ol_txrx_pdev_t *handle, void *scn)
+{
+	if (handle->pkt_log_init)
+		return;
+
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
+			!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+		ol_pl_sethandle(&handle->pl_dev, scn);
+		if (pktlogmod_init(scn))
+			cdf_print("%s: pktlogmod_init failed", __func__);
+		else
+			handle->pkt_log_init = true;
+	}
+}
+
+/**
+ * htt_pktlogmod_exit() - API to cleanup pktlog info
+ * @handle: Pdev handle
+ * @scn: HIF Context
+ *
+ * Return: void
+ */
+void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
+{
+	if (scn && cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
+		!WLAN_IS_EPPING_ENABLED(cds_get_conparam()) &&
+			handle->pkt_log_init) {
+		pktlogmod_exit(scn);
+		handle->pkt_log_init = false;
+	}
+}
+#else
+void htt_pkt_log_init(ol_txrx_pdev_handle handle, void *ol_sc) { }
+void htt_pktlogmod_exit(ol_txrx_pdev_handle handle, void *sc)  { }
+#endif
 
 /**
  * ol_txrx_pdev_attach() - attach txrx pdev
@@ -871,6 +919,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	ol_tx_throttle_init(pdev);
 	ol_tso_seg_list_init(pdev, desc_pool_size);
 	ol_tx_register_flow_control(pdev);
+	htt_pkt_log_init(pdev, osc);
 
 	return 0;            /* success */
 
@@ -911,6 +960,7 @@ A_STATUS ol_txrx_pdev_attach_target(ol_txrx_pdev_handle pdev)
 void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 {
 	int i;
+	struct ol_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
 
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
@@ -923,8 +973,9 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 	/* check that the pdev has no vdevs allocated */
 	TXRX_ASSERT1(TAILQ_EMPTY(&pdev->vdev_list));
 
-	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
+	htt_pktlogmod_exit(pdev, osc);
 
+	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
 #ifdef QCA_SUPPORT_TX_THROTTLE
 	/* Thermal Mitigation */
 	cdf_softirq_timer_cancel(&pdev->tx_throttle.phase_timer);

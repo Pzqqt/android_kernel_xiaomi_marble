@@ -318,7 +318,6 @@ static void wlan_hdd_remove(void)
 	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 
 	hif_disable_power_management(hif_ctx);
-	hif_pktlogmod_exit(hif_ctx);
 
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
 		epping_disable();
@@ -352,10 +351,6 @@ static void wlan_hdd_shutdown(void)
 	}
 	/* this is for cases, where shutdown invoked from CNSS */
 	cds_set_recovery_in_progress(true);
-
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
-	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
-		hif_pktlogmod_exit(hif_ctx);
 
 	if (!cds_wait_for_external_threads_completion(__func__))
 		hdd_err("Host is not ready for SSR, attempting anyway");

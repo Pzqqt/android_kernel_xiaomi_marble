@@ -106,15 +106,15 @@ struct CE_pipe_config {
  * HIA Map Definition
  */
 struct host_interest_area_t {
-	uint32_t hi_interconnect_state;
-	uint32_t hi_early_alloc;
-	uint32_t hi_option_flag2;
-	uint32_t hi_board_data;
-	uint32_t hi_board_data_initialized;
-	uint32_t hi_failure_state;
-	uint32_t hi_rddi_msi_num;
-	uint32_t hi_pcie_perst_couple_en;
-	uint32_t hi_sw_protocol_version;
+	A_UINT32 hi_interconnect_state;
+	A_UINT32 hi_early_alloc;
+	A_UINT32 hi_option_flag2;
+	A_UINT32 hi_board_data;
+	A_UINT32 hi_board_data_initialized;
+	A_UINT32 hi_failure_state;
+	A_UINT32 hi_rddi_msi_num;
+	A_UINT32 hi_pcie_perst_couple_en;
+	A_UINT32 hi_sw_protocol_version;
 };
 
 struct shadow_reg_cfg {

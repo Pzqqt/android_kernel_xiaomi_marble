@@ -479,19 +479,48 @@ static int ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 
 static struct ol_softc *ramdump_scn;
 
+/**
+ * struct ramdump_info: Structure to hold ramdump information
+ * @base: Base address for Ramdump collection
+ * @size: Size of the dump
+ *
+ * Ramdump information.
+ */
+struct ramdump_info {
+        void *base;
+        unsigned long size;
+};
+
+#if defined(CONFIG_CNSS) && !defined(QCA_WIFI_3_0)
+static inline void ol_get_ramdump_mem(struct ramdump_info *info)
+{
+	info->base = cnss_get_virt_ramdump_mem(&info->size);
+}
+#else
+static inline void ol_get_ramdump_mem(struct ramdump_info *info) { }
+#endif
+
 int ol_copy_ramdump(struct ol_softc *scn)
 {
-	int ret;
+	int ret = -1;
 
-	if (!scn->ramdump_base || !scn->ramdump_size) {
-		BMI_ERR("%s:ramdump collection fail", __func__);
-		ret = -EACCES;
-		goto out;
+	struct ramdump_info *info = cdf_mem_malloc(sizeof(struct ramdump_info));
+
+	if (!info) {
+		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);
+		return -ENOMEM;
 	}
 
-	ret = ol_target_coredump(scn, scn->ramdump_base, scn->ramdump_size);
+	ol_get_ramdump_mem(info);
 
-out:
+	if (!info->base || !info->size) {
+		BMI_ERR("%s:ramdump collection fail", __func__);
+		return -EACCES;
+	}
+
+	ret = ol_target_coredump(scn, info->base, info->size);
+
+	cdf_mem_free(info);
 	return ret;
 }
 
