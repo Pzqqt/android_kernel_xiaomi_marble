@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -50,18 +50,6 @@
 #define PCI_CFG_TO_DISABLE_L1SS_STATES(pdev, addr)
 #endif
 
-#if defined(CONFIG_CNSS) && !defined(QCA_WIFI_3_0)
-#define GET_VIRT_RAMDUMP_MEM(ol_sc) \
-{ \
-	ol_sc->ramdump_base = cnss_get_virt_ramdump_mem(&ol_sc->ramdump_size); \
-	if (ol_sc->ramdump_base == NULL || !ol_sc->ramdump_size) \
-		HIF_ERROR("%s: Failed to get RAM dump memory addr or size!", \
-			__func__); \
-}
-#else
-#define GET_VIRT_RAMDUMP_MEM(ol_sc)
-#endif
-
 #ifdef QCA_WIFI_3_0
 #define PCI_CLR_CAUSE0_REGISTER(sc) \
 { \
@@ -90,21 +78,5 @@
 		+ RTC_STATE_ADDRESS); \
 	return RTC_STATE_V_GET(val) == RTC_STATE_V_ON; \
 }
-#endif
-
-#if !defined(REMOVE_PKT_LOG) && !defined(QVIT)
-#define PKT_LOG_MOD_INIT(ol_sc) \
-{ \
-	ol_txrx_pdev_handle pdev_txrx_handle; \
-	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX); \
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE && \
-	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam())) { \
-		ol_pl_sethandle(&pdev_txrx_handle->pl_dev, ol_sc); \
-		if (pktlogmod_init(ol_sc)) \
-			HIF_ERROR("%s: pktlogmod_init failed", __func__); \
-	} \
-}
-#else
-#define PKT_LOG_MOD_INIT(ol_sc)
 #endif
 #endif /* __IF_PCI_INTERNAL_H__ */

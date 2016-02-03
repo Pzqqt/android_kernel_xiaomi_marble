@@ -192,7 +192,6 @@ struct ol_softc {
 	 */
 	struct _NIC_DEV aps_osdev;
 	enum ath_hal_bus_type bus_type;
-	bool pkt_log_init;
 	bool request_irq_done;
 	/*
 	 * handle for code that uses cdf version of OS
@@ -239,11 +238,6 @@ struct ol_softc {
 	uint8_t vow_extstats;
 #ifdef CONFIG_CNSS
 	struct cnss_fw_files fw_files;
-#endif
-#if defined(CONFIG_CNSS)
-	void *ramdump_base;
-	unsigned long ramdump_address;
-	unsigned long ramdump_size;
 #endif
 	struct targetdef_s *targetdef;
 	struct ce_reg_def *target_ce_def;
@@ -658,7 +652,6 @@ void hif_process_runtime_resume_success(void);
 
 int hif_dump_registers(struct ol_softc *scn);
 int ol_copy_ramdump(struct ol_softc *scn);
-void hif_pktlogmod_exit(void *hif_ctx);
 void hif_crash_shutdown(void *hif_ctx);
 void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);

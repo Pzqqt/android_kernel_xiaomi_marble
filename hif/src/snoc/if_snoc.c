@@ -104,7 +104,7 @@ void hif_disable_isr(void *hif_ctx)
  * hif_dump_snoc_registers(): dump CE debug registers
  * @scn: struct ol_softc
  *
- * This function dumps CE debug registers
+ * This function dumps SNOC debug registers
  *
  * Return: void
  */

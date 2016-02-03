@@ -60,10 +60,6 @@
 #include <soc/qcom/icnss.h>
 #endif
 
-#ifndef REMOVE_PKT_LOG
-#include "pktlog_ac.h"
-#endif
-
 #include "cds_concurrency.h"
 
 #define AGC_DUMP         1
@@ -520,7 +516,6 @@ CDF_STATUS hif_open(enum ath_hal_bus_type bus_type)
 	cdf_mem_zero(scn, sizeof(*scn));
 	cfg = hif_get_ini_handle(scn);
 	cfg->max_no_of_peers = 1;
-	scn->pkt_log_init = false;
 	cdf_atomic_init(&scn->wow_done);
 	cdf_atomic_init(&scn->active_tasklet_cnt);
 	cdf_atomic_init(&scn->link_suspended);
@@ -630,29 +625,6 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 
 	return CDF_STATUS_SUCCESS;
 }
-
-/**
- * hif_pktlogmod_exit(): hif_pktlogmod_exit
- * @scn: scn
- *
- * Return: n/a
- */
-#ifndef REMOVE_PKT_LOG
-void hif_pktlogmod_exit(void *hif_ctx)
-{
-	struct ol_softc *scn = hif_ctx;
-
-	if (scn && cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
-	    !WLAN_IS_EPPING_ENABLED(cds_get_conparam()) && scn->pkt_log_init) {
-		pktlogmod_exit(scn);
-		scn->pkt_log_init = false;
-	}
-}
-#else
-void hif_pktlogmod_exit(void *hif_ctx)
-{
-}
-#endif
 
 /**
  * hif_wlan_disable(): call the platform driver to disable wlan

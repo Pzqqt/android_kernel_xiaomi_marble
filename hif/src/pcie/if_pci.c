@@ -1321,8 +1321,6 @@ int hif_enable_pci(struct hif_pci_softc *sc,
 	ol_sc->aps_osdev.bc.bc_bustype = HAL_BUS_TYPE_PCI;
 	sc->devid = id->device;
 	sc->cacheline_sz = dma_get_cache_alignment();
-	/* Get RAM dump memory address and size */
-	GET_VIRT_RAMDUMP_MEM(ol_sc);
 	ol_sc->mem = mem;
 	sc->pci_enabled = true;
 	return ret;
@@ -2260,10 +2258,6 @@ void hif_enable_power_gating(void *hif_ctx)
 
 	/* Re-enable ASPM after firmware/OTP download is complete */
 	pci_write_config_dword(sc->pdev, 0x80, sc->lcr_val);
-	if (scn->pkt_log_init == false) {
-		PKT_LOG_MOD_INIT(scn);
-		scn->pkt_log_init = true;
-	}
 }
 
 #ifdef CONFIG_PCI_MSM
