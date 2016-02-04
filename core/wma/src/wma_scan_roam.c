@@ -2037,6 +2037,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 				__func__);
 		return status;
 	}
+	WMA_LOGE("LFR3: Received WMA_ROAM_OFFLOAD_SYNCH_IND");
 
 	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = true;
 	len = sizeof(roam_offload_synch_ind) +
@@ -2426,7 +2427,7 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 				 vdev_id)) {
 		return;
 	}
-
+	WMA_LOGE("LFR3: Posting WMA_ROAM_OFFLOAD_SYNCH_CNF");
 	return;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */

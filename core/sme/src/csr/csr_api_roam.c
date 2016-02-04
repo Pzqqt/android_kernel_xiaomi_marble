@@ -19143,7 +19143,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	conn_profile->acm_mask = sme_qos_get_acm_mask(mac_ctx,
 			bss_desc, NULL);
 	if (conn_profile->modifyProfileFields.uapsd_mask) {
-		sms_log(mac_ctx, LOGE,
+		sms_log(mac_ctx, LOG1,
 				" uapsd_mask (0x%X) set, request UAPSD now",
 				conn_profile->modifyProfileFields.uapsd_mask);
 		sme_ps_start_uapsd(mac_ctx, session_id,

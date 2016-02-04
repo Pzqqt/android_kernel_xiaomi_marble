@@ -2004,7 +2004,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("LFR3:roam_sync_ind_ptr is NULL"));
 		return status;
 	}
-	lim_log(mac_ctx, LOGE, FL("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND"));
+	lim_log(mac_ctx, LOG1, FL("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND"));
 	lim_log(mac_ctx, QDF_TRACE_LEVEL_DEBUG, FL("LFR3:auth=%d, vdevId=%d"),
 		roam_sync_ind_ptr->authStatus, roam_sync_ind_ptr->roamedVdevId);
 	lim_print_mac_addr(mac_ctx, roam_sync_ind_ptr->bssid.bytes,
