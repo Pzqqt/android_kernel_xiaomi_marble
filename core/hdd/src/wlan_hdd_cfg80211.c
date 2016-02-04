@@ -2998,6 +2998,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		uint32_t rsp_rsn_len, tCsrRoamInfo *roam_info_ptr)
 {
 	struct sk_buff *skb = NULL;
+	eCsrAuthType auth_type;
 	ENTER();
 
 	if (wlan_hdd_validate_context(hdd_ctx_ptr)) {
@@ -3043,14 +3044,17 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 			hdd_err("nla put fail");
 			goto nla_put_failure;
 		}
-		/* if FT connection: dont send ROAM_AUTH_KEY_REPLAY_CTR */
-		if (roam_info_ptr->u.pConnectedProfile->AuthType !=
-			eCSR_AUTH_TYPE_FT_RSN &&
-		    roam_info_ptr->u.pConnectedProfile->AuthType !=
-			eCSR_AUTH_TYPE_FT_RSN_PSK &&
-		    nla_put(skb, QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR,
-			SIR_REPLAY_CTR_LEN, roam_info_ptr->replay_ctr)) {
-			hdd_err("non FT connection.");
+		auth_type = roam_info_ptr->u.pConnectedProfile->AuthType;
+		/* if FT or CCKM connection: dont send replay counter */
+		if (auth_type != eCSR_AUTH_TYPE_FT_RSN &&
+		    auth_type != eCSR_AUTH_TYPE_FT_RSN_PSK &&
+		    auth_type != eCSR_AUTH_TYPE_CCKM_WPA &&
+		    auth_type != eCSR_AUTH_TYPE_CCKM_RSN &&
+		    nla_put(skb,
+			    QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR,
+			    SIR_REPLAY_CTR_LEN,
+			    roam_info_ptr->replay_ctr)) {
+			hdd_err("non FT/non CCKM connection.");
 			hdd_err("failed to send replay counter.");
 			goto nla_put_failure;
 		}
