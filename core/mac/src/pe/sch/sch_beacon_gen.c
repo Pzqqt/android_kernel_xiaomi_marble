@@ -288,10 +288,17 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 	/* Initialize the 'new' fields at the end of the beacon */
 
 	if ((session->limSystemRole == eLIM_AP_ROLE) &&
-		session->dfsIncludeChanSwIe == true)
+		session->dfsIncludeChanSwIe == true) {
 		populate_dot_11_f_ext_chann_switch_ann(mac_ctx,
 				&bcn_2->ext_chan_switch_ann,
 				session);
+		sch_log(mac_ctx, LOG1,
+			FL("ecsa: mode:%d reg:%d chan:%d count:%d"),
+			bcn_2->ext_chan_switch_ann.switch_mode,
+			bcn_2->ext_chan_switch_ann.new_reg_class,
+			bcn_2->ext_chan_switch_ann.new_channel,
+			bcn_2->ext_chan_switch_ann.switch_count);
+	}
 
 	populate_dot11_supp_operating_classes(mac_ctx,
 		&bcn_2->SuppOperatingClasses, session);
@@ -315,6 +322,11 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			 */
 			populate_dot11f_chan_switch_ann(mac_ctx,
 						&bcn_2->ChanSwitchAnn, session);
+			sch_log(mac_ctx, LOG1,
+				FL("csa: mode:%d chan:%d count:%d"),
+				bcn_2->ChanSwitchAnn.switchMode,
+				bcn_2->ChanSwitchAnn.newChannel,
+				bcn_2->ChanSwitchAnn.switchCount);
 
 			/*
 			 * TODO: depending the CB mode, extended channel switch
@@ -338,9 +350,19 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			 * Populate the Channel Switch Wrapper Element if
 			 * SAP operates in 40/80 Mhz Channel Width.
 			 */
-			if (true == session->dfsIncludeChanWrapperIe)
+			if (true == session->dfsIncludeChanWrapperIe) {
 				populate_dot11f_chan_switch_wrapper(mac_ctx,
 					&bcn_2->ChannelSwitchWrapper, session);
+				sch_log(mac_ctx, LOG1,
+				    FL("wrapper: width:%d f0:%d f1:%d"),
+				      bcn_2->ChannelSwitchWrapper.
+					WiderBWChanSwitchAnn.newChanWidth,
+				      bcn_2->ChannelSwitchWrapper.
+					WiderBWChanSwitchAnn.newCenterChanFreq0,
+				      bcn_2->ChannelSwitchWrapper.
+					WiderBWChanSwitchAnn.newCenterChanFreq1
+					);
+			}
 		}
 	}
 
