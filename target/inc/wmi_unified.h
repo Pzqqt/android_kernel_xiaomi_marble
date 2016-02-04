@@ -3657,23 +3657,6 @@ typedef struct {
 } wmi_debug_mesg_event;
 
 enum {
-	/** IBSS station */
-	VDEV_TYPE_IBSS = 0,
-	/** infra STA */
-	VDEV_TYPE_STA = 1,
-	/** infra AP */
-	VDEV_TYPE_AP = 2,
-	/** Monitor */
-	VDEV_TYPE_MONITOR = 3,
-	/** Reserved for NAN - See WMI_VDEV_TYPE_NAN */
-	VDEV_TYPE_RSVD_1 = 5,
-	/** OCB */
-	VDEV_TYPE_OCB = 6,
-	/** Reserved for NAN Data Interface - See WMI_VDEV_TYPE_NDI */
-	VDEV_TYPE_RSVD_2 = 7,
-};
-
-enum {
 	/** P2P device */
 	VDEV_SUBTYPE_P2PDEV = 0,
 	/** P2P client */
