@@ -7820,12 +7820,16 @@ QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 		qdf_mem_free(pConnectProfile->pAddIEAssoc);
 		pConnectProfile->pAddIEAssoc = NULL;
 	}
+	/*
+	 * In case of LFR2.0, the connected profile is copied into a temporary
+	 * profile and cleared and then is copied back. This is not needed for
+	 * LFR3.0, since the profile is not cleared.
+	 */
 	if (!pSession->roam_synch_in_progress) {
 		qdf_mem_set(&pSession->connectedProfile,
 				sizeof(tCsrRoamConnectedProfile), 0);
 		pConnectProfile->AuthType = pProfile->negotiatedAuthType;
 		pConnectProfile->AuthInfo = pProfile->AuthType;
-		pConnectProfile->CBMode = pProfile->CBMode;
 		pConnectProfile->EncryptionType =
 			pProfile->negotiatedUCEncryptionType;
 		pConnectProfile->EncryptionInfo = pProfile->EncryptionType;
@@ -7861,6 +7865,12 @@ QDF_STATUS csr_roam_save_connected_infomation(tpAniSirGlobal pMac,
 		pConnectProfile->MFPCapable = pProfile->MFPCapable;
 #endif
 	}
+	if (pIes)
+		pConnectProfile->CBMode = csr_get_cb_mode_from_ies(pMac,
+				pSirBssDesc->channelId, pIes);
+	else
+		sms_log(pMac, LOGE, FL("IE unavailable to derive CB mode"));
+
 	/* Save bssid */
 	pConnectProfile->operationChannel = pSirBssDesc->channelId;
 	pConnectProfile->beaconInterval = pSirBssDesc->beaconInterval;
