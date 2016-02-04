@@ -1466,7 +1466,7 @@ QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 }
 
 /**
- * wma_process_roam_scan_req() - process roam request
+ * wma_process_roaming_config() - process roam request
  * @wma_handle: wma handle
  * @roam_req: roam request parameters
  *
@@ -1474,7 +1474,7 @@ QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
  *
  * Return: QDF status
  */
-QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_roaming_config(tp_wma_handle wma_handle,
 				     tSirRoamOffloadScanReq *roam_req)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -1499,6 +1499,9 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_PERM;
 	}
+	WMA_LOGD("%s: roaming in progress set to false for vdev %d",
+			__func__, roam_req->sessionId);
+	wma_handle->interfaces[roam_req->sessionId].roaming_in_progress = false;
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:
 		intr = &wma_handle->interfaces[roam_req->sessionId];
@@ -5317,6 +5320,9 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 			__func__);
 		return;
 	}
+	WMA_LOGD("%s: roaming in progress for vdev %d",
+			__func__, vdev_id);
+	wma->interfaces[vdev_id].roaming_in_progress = true;
 
 	candidate_ind->messageType = eWNI_SME_CANDIDATE_FOUND_IND;
 	candidate_ind->sessionId = vdev_id;

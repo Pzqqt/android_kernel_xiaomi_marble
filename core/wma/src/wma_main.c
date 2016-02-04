@@ -4804,7 +4804,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		/*
 		 * Main entry point or roaming directives from CSR.
 		 */
-		wma_process_roam_scan_req(wma_handle,
+		wma_process_roaming_config(wma_handle,
 				(tSirRoamOffloadScanReq *) msg->bodyptr);
 		break;
 

@@ -315,6 +315,10 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	WMA_LOGA("%s: PEER:[%pM], ADDR:[%pN], INTERFACE:%d, peer_id:%d, reason:%d",
 		__func__, macaddr, wma->interfaces[vdev_id].addr, vdev_id,
 		 peer_id, kickout_event->reason);
+	if (wma->interfaces[vdev_id].roaming_in_progress) {
+		WMA_LOGE("Ignore STA kick out since roaming is in progress");
+		return -EINVAL;
+	}
 
 	switch (kickout_event->reason) {
 	case WMI_PEER_STA_KICKOUT_REASON_IBSS_DISCONNECT:
