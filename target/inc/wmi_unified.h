@@ -7606,6 +7606,13 @@ typedef enum {
 enum {
 	/* some win10 platfrom will not assert pcie_reset for wow.*/
 	WMI_WOW_FLAG_IGNORE_PCIE_RESET = 0x00000001,
+	/*
+	 * WMI_WOW_FLAG_SEND_PM_PME
+	 * Some platforms have issues if the PM_PME message is sent after WoW,
+	 * so don't send PM_PME after WoW unless the host uses this flag
+	 * to request it.
+	 */
+	WMI_WOW_FLAG_SEND_PM_PME       = 0x00000002,
 };
 
 
