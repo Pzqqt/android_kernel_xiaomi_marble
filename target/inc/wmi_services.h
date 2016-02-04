@@ -145,6 +145,8 @@ typedef enum {
 	WMI_SERVICE_SMART_ANTENNA_HW_SUPPORT,
 	/* allow per-peer tx MCS min/max limits by host */
 	WMI_SERVICE_RATECTRL_LIMIT_MAX_MIN_RATES,
+	WMI_SERVICE_NAN_DATA,             /* FW supports NAN data */
+	WMI_SERVICE_NAN_RTT,              /* FW supports NAN RTT */
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
