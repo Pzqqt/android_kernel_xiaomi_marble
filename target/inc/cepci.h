@@ -62,22 +62,22 @@
  * required to initialize pipe_cfg_addr and svc_to_pipe_map.
  */
 struct pcie_state_s {
-	A_UINT32 pipe_cfg_addr; /* Pipe configuration Target address */
+	uint32_t pipe_cfg_addr; /* Pipe configuration Target address */
 	/* NB: CE_pipe_config[CE_COUNT] */
 
-	A_UINT32 svc_to_pipe_map;       /* Service to pipe map Target address */
+	uint32_t svc_to_pipe_map;       /* Service to pipe map Target address */
 	/* NB: service_to_pipe[PIPE_TO_CE_MAP_CN] */
 
-	A_UINT32 MSI_requested; /* number of MSI interrupts requested */
-	A_UINT32 MSI_granted;   /* number of MSI interrupts granted */
-	A_UINT32 MSI_addr;      /* Message Signalled Interrupt address */
-	A_UINT32 MSI_data;      /* Base data */
-	A_UINT32 MSI_fw_intr_data;      /* Data for firmware interrupt;
+	uint32_t MSI_requested; /* number of MSI interrupts requested */
+	uint32_t MSI_granted;   /* number of MSI interrupts granted */
+	uint32_t MSI_addr;      /* Message Signalled Interrupt address */
+	uint32_t MSI_data;      /* Base data */
+	uint32_t MSI_fw_intr_data;      /* Data for firmware interrupt;
 	                                   MSI data for other interrupts are
 	                                   in various SoC registers */
 
-	A_UINT32 power_mgmt_method;     /* PCIE_PWR_METHOD_* */
-	A_UINT32 config_flags;  /* PCIE_CONFIG_FLAG_* */
+	uint32_t power_mgmt_method;     /* PCIE_PWR_METHOD_* */
+	uint32_t config_flags;  /* PCIE_CONFIG_FLAG_* */
 };
 
 /*
@@ -94,32 +94,32 @@ struct pcie_state_s {
  * Passed from Host to Target during startup (one per CE).
  */
 struct CE_pipe_config {
-	A_UINT32 pipenum;
-	A_UINT32 pipedir;
-	A_UINT32 nentries;
-	A_UINT32 nbytes_max;
-	A_UINT32 flags;
-	A_UINT32 reserved;
+	uint32_t pipenum;
+	uint32_t pipedir;
+	uint32_t nentries;
+	uint32_t nbytes_max;
+	uint32_t flags;
+	uint32_t reserved;
 };
 
 /*
  * HIA Map Definition
  */
 struct host_interest_area_t {
-	A_UINT32 hi_interconnect_state;
-	A_UINT32 hi_early_alloc;
-	A_UINT32 hi_option_flag2;
-	A_UINT32 hi_board_data;
-	A_UINT32 hi_board_data_initialized;
-	A_UINT32 hi_failure_state;
-	A_UINT32 hi_rddi_msi_num;
-	A_UINT32 hi_pcie_perst_couple_en;
-	A_UINT32 hi_sw_protocol_version;
+	uint32_t hi_interconnect_state;
+	uint32_t hi_early_alloc;
+	uint32_t hi_option_flag2;
+	uint32_t hi_board_data;
+	uint32_t hi_board_data_initialized;
+	uint32_t hi_failure_state;
+	uint32_t hi_rddi_msi_num;
+	uint32_t hi_pcie_perst_couple_en;
+	uint32_t hi_sw_protocol_version;
 };
 
 struct shadow_reg_cfg {
-	A_UINT16 ce_id;
-	A_UINT16 reg_offset;
+	uint16_t ce_id;
+	uint16_t reg_offset;
 };
 
 #endif /* __CEPCI_H__ */

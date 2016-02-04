@@ -257,15 +257,15 @@ int epping_enable(struct device *parent_dev)
 			   "%s: HTCHandle is NULL", __func__);
 		return -1;
 	}
-	scn->htc_handle = pEpping_ctx->HTCHandle;
 
 	if (bmi_done(scn)) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed to complete BMI phase", __func__);
 		goto error_end;
 	}
+
 	/* start HIF */
-	if (htc_wait_target(scn->htc_handle) != A_OK) {
+	if (htc_wait_target(pEpping_ctx->HTCHandle) != A_OK) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_wait_target error", __func__);
 		goto error_end;

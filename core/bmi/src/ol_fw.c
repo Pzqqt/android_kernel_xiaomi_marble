@@ -617,14 +617,17 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
 	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
 	int ret;
+	ol_target_status target_status =
+			hif_get_target_status(scn);
 
 	cdf_event_set(&wma->recovery_event);
 
-	if (OL_TRGET_STATUS_RESET == scn->target_status) {
+	if (OL_TRGET_STATUS_RESET == target_status) {
 		BMI_ERR("Target is already asserted, ignore!");
 		return;
 	}
-	scn->target_status = OL_TRGET_STATUS_RESET;
+
+	hif_set_target_status(scn, OL_TRGET_STATUS_RESET);
 
 	if (cds_is_driver_recovering()) {
 		BMI_ERR("%s: Recovery in progress, ignore!\n", __func__);
@@ -1238,7 +1241,8 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		BMI_ERR("pll switch failed. status %d", ret);
 		return ret;
 	}
-	if (scn->cal_in_flash) {
+
+	if (bmi_ctx->cal_in_flash) {
 		/* Write EEPROM or Flash data to Target RAM */
 		status = ol_transfer_bin_file(scn, ATH_FLASH_FILE,
 						address, false);
