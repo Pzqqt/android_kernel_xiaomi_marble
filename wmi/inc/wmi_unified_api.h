@@ -26,7 +26,8 @@
  */
 
 /*
- * This file contains the API definitions for the Unified Wireless Module Interface (WMI).
+ * This file contains the API definitions for the Unified Wireless Module
+ * Interface (WMI).
  */
 
 #ifndef _WMI_UNIFIED_API_H_
@@ -42,13 +43,41 @@ typedef cdf_nbuf_t wmi_buf_t;
 #define wmi_buf_data(_buf) cdf_nbuf_data(_buf)
 
 /**
+ * struct wmi_ops - service callbacks to upper layer
+ * @service_ready_cbk: service ready callback
+ * @service_ready_ext_cbk: service ready ext callback
+ * @ready_cbk: ready calback
+ * @wma_process_fw_event_handler_cbk: generic event handler callback
+ */
+struct wmi_ops {
+	void (*service_ready_cbk)(void *ctx, void *ev);
+	void (*service_ready_ext_cbk)(void *ctx, void *ev);
+	void (*ready_cbk)(void *ctx, void *ev);
+	int (*wma_process_fw_event_handler_cbk)(void *ctx,
+				  void *ev);
+};
+
+/**
+ * enum wmi_target_type - type of supported wmi command
+ * @WMI_TLV_TARGET: tlv based target
+ * @WMI_NON_TLV_TARGET: non-tlv based target
+ *
+ */
+enum wmi_target_type {
+	WMI_TLV_TARGET,
+	WMI_NON_TLV_TARGET
+};
+
+/**
  * attach for unified WMI
  *
  *  @param scn_handle      : handle to SCN.
  *  @return opaque handle.
  */
 void *wmi_unified_attach(void *scn_handle,
-			 int (*func)(struct wmi_unified *, wmi_buf_t));
+			 osdev_t osdev, enum wmi_target_type target_type,
+			 bool use_cookie, struct wmi_ops *ops);
+
 /**
  * detach for unified WMI
  *
@@ -92,7 +121,7 @@ void wmi_buf_free(wmi_buf_t net_buf);
  *  @return 0  on success and -ve on failure.
  */
 int
-wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int buflen,
+wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t buflen,
 		     WMI_CMD_ID cmd_id);
 
 /**
@@ -168,13 +197,9 @@ static inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
 }
 #endif
 
-
 /**
  * WMA Callback to process fw event.
  */
-typedef int (*wma_process_fw_event_handler_cbk)(struct wmi_unified *wmi_handle,
-						wmi_buf_t evt_buf);
-
 void wmi_process_fw_event(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf);
 uint16_t wmi_get_max_msg_len(wmi_unified_t wmi_handle);
 #endif /* _WMI_UNIFIED_API_H_ */
