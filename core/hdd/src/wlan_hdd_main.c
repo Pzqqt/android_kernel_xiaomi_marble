@@ -2012,6 +2012,35 @@ static QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * hdd_check_and_init_tdls() - check and init TDLS operation for desired mode
+ * @adapter: pointer to device adapter
+ * @type: type of interface
+ *
+ * This routine will check the mode of adapter and if it is required then it
+ * will initialize the TDLS operations
+ *
+ * Return: QDF_STATUS
+ */
+#ifdef FEATURE_WLAN_TDLS
+static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter, uint32_t type)
+{
+	if (QDF_IBSS_MODE != type) {
+		if (0 != wlan_hdd_tdls_init(adapter)) {
+			hddLog(LOGE, FL("wlan_hdd_tdls_init failed"));
+			return QDF_STATUS_E_FAILURE;
+		}
+		set_bit(TDLS_INIT_DONE, &adapter->event_flags);
+	}
+	return QDF_STATUS_SUCCESS;
+}
+#else
+static QDF_STATUS hdd_check_and_init_tdls(hdd_adapter_t *adapter, uint32_t type)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 {
 	struct net_device *pWlanDev = adapter->dev;
@@ -2105,14 +2134,9 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 		       FL("WMI_PDEV_PARAM_BURST_ENABLE set failed %d"),
 		       ret_val);
 	}
-#ifdef FEATURE_WLAN_TDLS
-	if (0 != wlan_hdd_tdls_init(adapter)) {
-		status = QDF_STATUS_E_FAILURE;
-		hddLog(LOGE, FL("wlan_hdd_tdls_init failed"));
+	status = hdd_check_and_init_tdls(adapter, type);
+	if (status != QDF_STATUS_SUCCESS)
 		goto error_tdls_init;
-	}
-	set_bit(TDLS_INIT_DONE, &adapter->event_flags);
-#endif
 
 	return QDF_STATUS_SUCCESS;
 

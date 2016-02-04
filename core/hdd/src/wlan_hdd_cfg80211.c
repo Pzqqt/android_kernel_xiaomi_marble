@@ -5903,63 +5903,61 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	return ret;
 }
 
-static int
-wlan_hdd_change_iface_to_adhoc(struct net_device *ndev,
-			       tCsrRoamProfile *pRoamProfile,
-			       enum nl80211_iftype type)
-{
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	struct hdd_config *pConfig = pHddCtx->config;
-	struct wireless_dev *wdev = ndev->ieee80211_ptr;
-
-	pRoamProfile->BSSType = eCSR_BSS_TYPE_START_IBSS;
-	pRoamProfile->phyMode =
-		hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);
-	pAdapter->device_mode = WLAN_HDD_IBSS;
-	wdev->iftype = type;
-
-	return 0;
-}
-
-static int wlan_hdd_change_iface_to_sta_mode(struct net_device *ndev,
+/**
+ * wlan_hdd_change_client_iface_to_new_mode() - to change iface to provided mode
+ * @ndev: pointer to net device provided by supplicant
+ * @type: type of the interface, upper layer wanted to change
+ *
+ * Upper layer provides the new interface mode that needs to be changed
+ * for given net device
+ *
+ * Return: success or failure in terms of integer value
+ */
+static int wlan_hdd_change_client_iface_to_new_mode(struct net_device *ndev,
 					     enum nl80211_iftype type)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(ndev);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(ndev);
+	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	struct hdd_config *config = hdd_ctx->config;
 	hdd_wext_state_t *wext;
 	struct wireless_dev *wdev;
 	QDF_STATUS status;
 
 	ENTER();
 
-	if (test_bit(ACS_IN_PROGRESS, &pHddCtx->g_event_flags)) {
+	if (test_bit(ACS_IN_PROGRESS, &hdd_ctx->g_event_flags)) {
 		hddLog(LOG1, FL("ACS is in progress, don't change iface!"));
 		return 0;
 	}
 
 	wdev = ndev->ieee80211_ptr;
-	hdd_stop_adapter(pHddCtx, pAdapter, true);
-	hdd_deinit_adapter(pHddCtx, pAdapter, true);
+	hdd_stop_adapter(hdd_ctx, adapter, true);
+	hdd_deinit_adapter(hdd_ctx, adapter, true);
 	wdev->iftype = type;
 	/*Check for sub-string p2p to confirm its a p2p interface */
 	if (NULL != strnstr(ndev->name, "p2p", 3)) {
-		pAdapter->device_mode =
+		adapter->device_mode =
 			(type == NL80211_IFTYPE_STATION) ?
 			WLAN_HDD_P2P_DEVICE : WLAN_HDD_P2P_CLIENT;
+	} else if (type == NL80211_IFTYPE_ADHOC) {
+		adapter->device_mode = WLAN_HDD_IBSS;
 	} else {
-		pAdapter->device_mode =
+		adapter->device_mode =
 			(type == NL80211_IFTYPE_STATION) ?
 			WLAN_HDD_INFRA_STATION : WLAN_HDD_P2P_CLIENT;
 	}
-
-	memset(&pAdapter->sessionCtx, 0, sizeof(pAdapter->sessionCtx));
-	hdd_set_station_ops(pAdapter->dev);
-	status = hdd_init_station_mode(pAdapter);
-	wext = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	wext->roamProfile.pAddIEScan = pAdapter->scan_info.scanAddIE.addIEdata;
+	memset(&adapter->sessionCtx, 0, sizeof(adapter->sessionCtx));
+	hdd_set_station_ops(adapter->dev);
+	status = hdd_init_station_mode(adapter);
+	wext = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
+	wext->roamProfile.pAddIEScan = adapter->scan_info.scanAddIE.addIEdata;
 	wext->roamProfile.nAddIEScanLength =
-		pAdapter->scan_info.scanAddIE.length;
+		adapter->scan_info.scanAddIE.length;
+	if (type == NL80211_IFTYPE_ADHOC) {
+		wext->roamProfile.BSSType = eCSR_BSS_TYPE_START_IBSS;
+		wext->roamProfile.phyMode =
+			hdd_cfg_xlate_to_csr_phy_mode(config->dot11Mode);
+	}
 	EXIT();
 	return status;
 }
@@ -6009,8 +6007,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	tCsrRoamProfile *pRoamProfile = NULL;
 	eCsrRoamBssType LastBSSType;
 	struct hdd_config *pConfig = NULL;
-	eMib_dot11DesiredBssType connectedBssType;
-	unsigned long rc;
 	QDF_STATUS vstatus;
 	int status;
 
@@ -6062,24 +6058,28 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		switch (type) {
 		case NL80211_IFTYPE_STATION:
 		case NL80211_IFTYPE_P2P_CLIENT:
-			vstatus = wlan_hdd_change_iface_to_sta_mode(ndev, type);
+		case NL80211_IFTYPE_ADHOC:
+			if (type == NL80211_IFTYPE_ADHOC) {
+				wlan_hdd_tdls_exit(pAdapter);
+				hdd_deregister_tx_flow_control(pAdapter);
+				hddLog(LOG1,
+					FL("Setting interface Type to ADHOC"));
+			}
+			vstatus = wlan_hdd_change_client_iface_to_new_mode(ndev,
+					type);
 			if (vstatus != QDF_STATUS_SUCCESS)
 				return -EINVAL;
 
-			hdd_register_tx_flow_control(pAdapter,
+			/*
+			 * for ibss interface type flow control is not required
+			 * so don't register tx flow control
+			 */
+			if (type != NL80211_IFTYPE_ADHOC)
+				hdd_register_tx_flow_control(pAdapter,
 					hdd_tx_resume_timer_expired_handler,
 					hdd_tx_resume_cb);
 
 			goto done;
-
-		case NL80211_IFTYPE_ADHOC:
-			wlan_hdd_tdls_exit(pAdapter);
-			hdd_deregister_tx_flow_control(pAdapter);
-			hddLog(LOG1, FL("Setting interface Type to ADHOC"));
-			wlan_hdd_change_iface_to_adhoc(ndev, pRoamProfile,
-						       type);
-			break;
-
 		case NL80211_IFTYPE_AP:
 		case NL80211_IFTYPE_P2P_GO:
 		{
@@ -6162,7 +6162,8 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		case NL80211_IFTYPE_STATION:
 		case NL80211_IFTYPE_P2P_CLIENT:
 		case NL80211_IFTYPE_ADHOC:
-			status = wlan_hdd_change_iface_to_sta_mode(ndev, type);
+			status = wlan_hdd_change_client_iface_to_new_mode(ndev,
+					type);
 			if (status != QDF_STATUS_SUCCESS)
 				return status;
 
@@ -6196,35 +6197,6 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 		       pAdapter->device_mode);
 		return -EOPNOTSUPP;
 	}
-
-	if (LastBSSType != pRoamProfile->BSSType) {
-		/* Interface type changed update in wiphy structure */
-		wdev->iftype = type;
-
-		/* The BSS mode changed, We need to issue disconnect
-		   if connected or in IBSS disconnect state */
-		if (hdd_conn_get_connected_bss_type
-			    (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter), &connectedBssType)
-		    || (eCSR_BSS_TYPE_START_IBSS == LastBSSType)) {
-			/* Need to issue a disconnect to CSR. */
-			INIT_COMPLETION(pAdapter->disconnect_comp_var);
-			if (QDF_STATUS_SUCCESS ==
-			    sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
-						pAdapter->sessionId,
-						eCSR_DISCONNECT_REASON_UNSPECIFIED)) {
-				rc = wait_for_completion_timeout(&pAdapter->
-								 disconnect_comp_var,
-								 msecs_to_jiffies
-									 (WLAN_WAIT_TIME_DISCONNECT));
-				if (!rc) {
-					hddLog(LOGE,
-					       FL
-						       ("Wait on disconnect_comp_var failed"));
-				}
-			}
-		}
-	}
-
 done:
 	/* Set bitmask based on updated value */
 	cds_set_concurrency_mode(pAdapter->device_mode);

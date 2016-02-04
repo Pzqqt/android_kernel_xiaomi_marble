@@ -1545,6 +1545,9 @@ QDF_STATUS cds_get_vdev_types(enum tQDF_ADAPTER_MODE mode, uint32_t *type,
 	case QDF_OCB_MODE:
 		*type = WMI_VDEV_TYPE_OCB;
 		break;
+	case QDF_IBSS_MODE:
+		*type = WMI_VDEV_TYPE_IBSS;
+		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Invalid device mode %d", mode);
