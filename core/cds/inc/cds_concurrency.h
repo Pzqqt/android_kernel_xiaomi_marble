@@ -656,4 +656,5 @@ QDF_STATUS qdf_wait_for_connection_update(void);
 QDF_STATUS qdf_reset_connection_update(void);
 QDF_STATUS qdf_set_connection_update(void);
 QDF_STATUS qdf_init_connection_update(void);
+QDF_STATUS cds_stop_start_opportunistic_timer(void);
 #endif /* __CDS_CONCURRENCY_H */

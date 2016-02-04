@@ -3614,8 +3614,8 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 #ifdef QCA_WIFI_3_0_EMU
 	/* For M2M emulation only: if we have a connection on 2.4, stay in DBS */
 	if (hdd_ctx->config->enable_m2m_limitation &&
-		CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan)) {
-		cds_debug("For emulation only: connection on 2.4, stay in DBS");
+	    CDS_IS_CHANNEL_24GHZ(conc_connection_list[0].chan)) {
+		cds_debug("emulation only: conn on 2.4, stay in DBS");
 		goto done;
 	}
 #endif
@@ -7982,4 +7982,36 @@ enum cds_conc_next_action cds_get_pref_hw_mode_for_chan(uint32_t vdev_id,
 				num_connections);
 		return CDS_NOP;
 	}
+}
+
+/**
+ * cds_stop_start_opportunistic_timer() - Start and stop the opportunistic timer
+ *
+ * Stops and starts the opportunistic timer for DBS_OPPORTUNISTIC_TIME seconds
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_stop_start_opportunistic_timer(void)
+{
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
+	p_cds_contextType cds_ctx;
+
+	cds_ctx = cds_get_global_context();
+	if (!cds_ctx) {
+		cds_err("Invalid CDS context");
+		return status;
+	}
+
+	qdf_mc_timer_stop(&cds_ctx->dbs_opportunistic_timer);
+
+	status = qdf_mc_timer_start(
+			&cds_ctx->dbs_opportunistic_timer,
+			DBS_OPPORTUNISTIC_TIME * 1000);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("failed to start opportunistic timer");
+		return status;
+	}
+
+	return status;
 }

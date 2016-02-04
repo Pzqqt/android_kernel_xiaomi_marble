@@ -921,28 +921,6 @@ typedef struct {
 	uint8_t nss;
 } tSwitchChannelParams, *tpSwitchChannelParams;
 
-/**
- * struct tpCSAOffloadParams - CSA offload request parameters
- * @channel: channel
- * @switchmode: switch mode
- * @sec_chan_offset: second channel offset
- * @new_ch_width: new channel width
- * @new_ch_freq_seg1: channel center freq 1
- * @new_ch_freq_seg2: channel center freq 2
- * @ies_present_flag: IE present flag
- */
-typedef struct CSAOffloadParams {
-	uint8_t channel;
-	uint8_t switchmode;
-	uint8_t sec_chan_offset;
-	uint8_t new_ch_width;
-	uint8_t new_op_class;
-	uint8_t new_ch_freq_seg1;
-	uint8_t new_ch_freq_seg2;
-	uint32_t ies_present_flag;
-	tSirMacAddr bssId;
-} *tpCSAOffloadParams, tCSAOffloadParams;
-
 typedef void (*tpSetLinkStateCallback)(tpAniSirGlobal pMac, void *msgParam,
 		bool status);
 

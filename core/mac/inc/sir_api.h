@@ -105,6 +105,7 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
  * @CDS_UPDATE_REASON_OPPORTUNISTIC: Opportunistic HW mode update
  * @CDS_UPDATE_REASON_NSS_UPDATE: NSS update
  * @CDS_UPDATE_REASON_CHANNEL_SWITCH: Channel switch
+ * @CDS_UPDATE_REASON_CHANNEL_SWITCH_STA: Channel switch for STA
  */
 enum cds_conn_update_reason {
 	CDS_UPDATE_REASON_SET_OPER_CHAN,
@@ -116,6 +117,7 @@ enum cds_conn_update_reason {
 	CDS_UPDATE_REASON_OPPORTUNISTIC,
 	CDS_UPDATE_REASON_NSS_UPDATE,
 	CDS_UPDATE_REASON_CHANNEL_SWITCH,
+	CDS_UPDATE_REASON_CHANNEL_SWITCH_STA,
 };
 
 typedef enum {
@@ -5518,4 +5520,39 @@ struct egap_conf_params {
 	uint32_t   wait_time;
 	uint32_t   flags;
 };
+
+/**
+ * struct csa_offload_params - CSA offload request parameters
+ * @channel: channel
+ * @switch_mode: switch mode
+ * @sec_chan_offset: second channel offset
+ * @new_ch_width: new channel width
+ * @new_ch_freq_seg1: channel center freq 1
+ * @new_ch_freq_seg2: channel center freq 2
+ * @ies_present_flag: IE present flag
+ */
+struct csa_offload_params {
+	uint8_t channel;
+	uint8_t switch_mode;
+	uint8_t sec_chan_offset;
+	uint8_t new_ch_width;
+	uint8_t new_op_class;
+	uint8_t new_ch_freq_seg1;
+	uint8_t new_ch_freq_seg2;
+	uint32_t ies_present_flag;
+	tSirMacAddr bssId;
+};
+
+/**
+ * struct sir_saved_csa_params - saved csa offload params
+ * @message_type: Message type
+ * @length: Message length
+ * @session_id: Session id
+ */
+struct sir_saved_csa_params {
+	uint16_t message_type;
+	uint16_t length;
+	uint32_t session_id;
+};
+
 #endif /* __SIR_API_H */

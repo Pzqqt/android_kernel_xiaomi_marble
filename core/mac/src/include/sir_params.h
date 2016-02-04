@@ -642,10 +642,7 @@ typedef struct sSirMbMsgP2p {
 #define SIR_LIM_SCH_CLEAN_MSG              (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xB)
 /* Message from ISR upon Radar Detection */
 #define SIR_LIM_RADAR_DETECT_IND           (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xC)
-
-/* /////////////////////////////////// */
-/* message id Available */
-/* ////////////////////////////////// */
+#define SIR_LIM_CSA_POST_HW_MODE_CHANGE    (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xD)
 
 /* Message from Hal to send out a DEL-TS indication */
 #define SIR_LIM_DEL_TS_IND                  (SIR_LIM_ITC_MSG_TYPES_BEGIN + 0xE)

@@ -471,6 +471,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t country_info_present;
 	uint8_t nss;
 	bool add_bss_failed;
+	struct csa_offload_params saved_csa_params;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

@@ -2016,7 +2016,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 {
 	tpPESession session_entry;
 	tSirMsgQ mmh_msg;
-	tpCSAOffloadParams csa_params = (tpCSAOffloadParams) (msg->bodyptr);
+	struct csa_offload_params *csa_params =
+				(struct csa_offload_params *) (msg->bodyptr);
 	tpSmeCsaOffloadInd csa_offload_ind;
 	tpDphHashNode sta_ds = NULL;
 	uint8_t session_id;
@@ -2026,6 +2027,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
 	tLimChannelSwitchInfo *lim_ch_switch = NULL;
+
+	lim_log(mac_ctx, LOG1, FL("handle csa offload msg"));
 
 	if (!csa_params) {
 		lim_log(mac_ctx, LOGE, FL("limMsgQ body ptr is NULL"));
@@ -2037,7 +2040,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			csa_params->bssId, &session_id);
 	if (!session_entry) {
 		lim_log(mac_ctx, LOGE,
-			FL("Session does not exist"));
+			FL("Session does not exists for %pM"),
+				csa_params->bssId);
 		goto err;
 	}
 
@@ -2059,7 +2063,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 		lim_ch_switch = &session_entry->gLimChannelSwitch;
 		session_entry->gLimChannelSwitch.switchMode =
-			csa_params->switchmode;
+			csa_params->switch_mode;
 		/* timer already started by firmware, switch immediately */
 		session_entry->gLimChannelSwitch.switchCount = 0;
 		session_entry->gLimChannelSwitch.primaryChannel =
