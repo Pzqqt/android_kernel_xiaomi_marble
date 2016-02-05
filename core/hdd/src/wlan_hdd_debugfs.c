@@ -502,6 +502,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	return count;
 
 failure:
+	hdd_err("Invalid input. Input format is: ptrn_idx duration pattern");
 	qdf_mem_free(cmd);
 	return -EINVAL;
 }
