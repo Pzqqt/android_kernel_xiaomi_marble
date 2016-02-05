@@ -29,15 +29,15 @@
 #define _WLAN_HDD_DEBUGFS_H
 
 #ifdef WLAN_OPEN_SOURCE
-QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter);
-void hdd_debugfs_exit(hdd_context_t *pHddCtx);
+QDF_STATUS hdd_debugfs_init(hdd_adapter_t *adapter);
+void hdd_debugfs_exit(hdd_adapter_t *adapter);
 #else
 inline QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
 {
 	return QDF_STATUS_SUCCESS;
 }
 
-inline void hdd_debugfs_exit(hdd_context_t *pHddCtx)
+inline void hdd_debugfs_exit(hdd_adapter_t *adapter)
 {
 }
 #endif /* #ifdef WLAN_OPEN_SOURCE */

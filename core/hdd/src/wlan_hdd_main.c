@@ -2265,6 +2265,7 @@ void hdd_cleanup_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 	}
 
 	hdd_lro_disable(hdd_ctx, adapter);
+	hdd_debugfs_exit(adapter);
 	/*
 	 * The adapter is marked as closed. When hdd_wlan_exit() call returns,
 	 * the driver is almost closed and cannot handle either control
@@ -2679,6 +2680,8 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		}
 	}
 #endif
+	if (QDF_STATUS_SUCCESS != hdd_debugfs_init(adapter))
+		hdd_err("Interface %s wow debug_fs init failed", iface_name);
 
 	return adapter;
 
@@ -3755,8 +3758,6 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	 * Disable Idle Power Save Mode
 	 */
 	hdd_set_idle_ps_config(hdd_ctx, false);
-
-	hdd_debugfs_exit(hdd_ctx);
 
 	/* Unregister the Net Device Notifier */
 	unregister_netdevice_notifier(&hdd_netdev_notifier);
@@ -5634,11 +5635,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	sme_register_oem_data_rsp_callback(hdd_ctx->hHal,
 					hdd_send_oem_data_rsp_msg);
 
-	status = hdd_debugfs_init(adapter);
-
-	if (QDF_IS_STATUS_SUCCESS(status))
-		hdd_err("hdd_debugfs_init failed: %d!", status);
-
 	/* FW capabilities received, Set the Dot11 mode */
 	sme_setdef_dot11mode(hdd_ctx->hHal);
 
@@ -5817,8 +5813,6 @@ err_nl_srv:
 		hdd_err("Failed to deinit policy manager");
 		/* Proceed and complete the clean up */
 	}
-
-	hdd_debugfs_exit(hdd_ctx);
 
 err_close_adapter:
 	hdd_release_rtnl_lock();

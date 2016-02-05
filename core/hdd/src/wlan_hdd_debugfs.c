@@ -603,7 +603,7 @@ static const struct file_operations fops_patterngen = {
 
 /**
  * hdd_debugfs_init() - Initialize debugfs interface
- * @pAdapter: primary wlan adapter
+ * @adapter: interface adapter pointer
  *
  * Register support for the debugfs files supported by the driver.
  *
@@ -613,26 +613,26 @@ static const struct file_operations fops_patterngen = {
  * Return: QDF_STATUS_SUCCESS if all files registered,
  *	   QDF_STATUS_E_FAILURE on failure
  */
-QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_debugfs_init(hdd_adapter_t *adapter)
 {
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	pHddCtx->debugfs_phy = debugfs_create_dir("wlan_wcnss", 0);
+	struct net_device *dev = adapter->dev;
+	adapter->debugfs_phy = debugfs_create_dir(dev->name, 0);
 
-	if (NULL == pHddCtx->debugfs_phy)
+	if (NULL == adapter->debugfs_phy)
 		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("wow_enable", S_IRUSR | S_IWUSR,
-					pHddCtx->debugfs_phy, pAdapter,
+					adapter->debugfs_phy, adapter,
 					&fops_wowenable))
 		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("wow_pattern", S_IRUSR | S_IWUSR,
-					pHddCtx->debugfs_phy, pAdapter,
+					adapter->debugfs_phy, adapter,
 					&fops_wowpattern))
 		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("pattern_gen", S_IRUSR | S_IWUSR,
-					pHddCtx->debugfs_phy, pAdapter,
+					adapter->debugfs_phy, adapter,
 					&fops_patterngen))
 		return QDF_STATUS_E_FAILURE;
 
@@ -641,14 +641,19 @@ QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
 
 /**
  * hdd_debugfs_exit() - Shutdown debugfs interface
- * @pHddCtx: the global HDD context
+ * @adapter: interface adapter pointer
  *
  * Unregister support for the debugfs files supported by the driver.
  *
  * Return: None
  */
-void hdd_debugfs_exit(hdd_context_t *pHddCtx)
+void hdd_debugfs_exit(hdd_adapter_t *adapter)
 {
-	debugfs_remove_recursive(pHddCtx->debugfs_phy);
+	struct net_device *dev = adapter->dev;
+
+	if (adapter->debugfs_phy)
+		debugfs_remove_recursive(adapter->debugfs_phy);
+	else
+		hdd_info("Interface %s has no debugfs entry", dev->name);
 }
 #endif /* #ifdef WLAN_OPEN_SOURCE */

@@ -1024,6 +1024,8 @@ struct hdd_adapter_s {
 	struct hdd_netif_queue_stats queue_oper_stats[WLAN_REASON_TYPE_MAX];
 	struct hdd_lro_s lro_info;
 	ol_txrx_tx_fp tx_fn;
+	/* debugfs entry */
+	struct dentry *debugfs_phy;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
@@ -1198,9 +1200,6 @@ struct hdd_context_s {
 	uint8_t sus_res_mcastbcast_filter;
 
 	bool sus_res_mcastbcast_filter_valid;
-
-	/* debugfs entry */
-	struct dentry *debugfs_phy;
 
 	/* Use below lock to protect access to isSchedScanUpdatePending
 	 * since it will be accessed in two different contexts.
