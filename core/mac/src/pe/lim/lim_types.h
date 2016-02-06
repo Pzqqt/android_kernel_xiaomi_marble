@@ -418,7 +418,7 @@ void lim_apply_configuration(tpAniSirGlobal, tpPESession);
 void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry);
 
 /* Function to Initialize MLM state machine on STA */
-void lim_init_mlm(tpAniSirGlobal);
+tSirRetStatus lim_init_mlm(tpAniSirGlobal);
 
 /* Function to cleanup MLM state machine */
 void lim_cleanup_mlm(tpAniSirGlobal);

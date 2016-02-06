@@ -4900,7 +4900,7 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
 {
 	uint32_t cfgValue;
 	uint32_t authNodeIdx;
-	tpLimPreAuthNode pAuthNode = pPreAuthTimerTable->pTable;
+	tLimPreAuthNode **pAuthNode = pPreAuthTimerTable->pTable;
 
 	/* Get AUTH_RSP Timers value */
 
@@ -4917,8 +4917,8 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
 
 	cfgValue = SYS_MS_TO_TICKS(cfgValue);
 	for (authNodeIdx = 0; authNodeIdx < pPreAuthTimerTable->numEntry;
-	     authNodeIdx++, pAuthNode++) {
-		if (tx_timer_create(pMac, &pAuthNode->timer,
+	     authNodeIdx++) {
+		if (tx_timer_create(pMac, &(pAuthNode[authNodeIdx]->timer),
 			"AUTH RESPONSE TIMEOUT",
 			lim_auth_response_timer_handler, authNodeIdx,
 			cfgValue, 0, TX_NO_ACTIVATE) != TX_SUCCESS) {
@@ -4928,10 +4928,9 @@ void lim_init_pre_auth_timer_table(tpAniSirGlobal pMac,
 				authNodeIdx);
 			return;
 		}
-		pAuthNode->authNodeIdx = (uint8_t) authNodeIdx;
-		pAuthNode->fFree = 1;
+		pAuthNode[authNodeIdx]->authNodeIdx = (uint8_t) authNodeIdx;
+		pAuthNode[authNodeIdx]->fFree = 1;
 	}
-
 }
 
 /** -------------------------------------------------------------
@@ -4945,11 +4944,11 @@ tLimPreAuthNode *lim_acquire_free_pre_auth_node(tpAniSirGlobal pMac,
 						tpLimPreAuthTable pPreAuthTimerTable)
 {
 	uint32_t i;
-	tLimPreAuthNode *pTempNode = pPreAuthTimerTable->pTable;
-	for (i = 0; i < pPreAuthTimerTable->numEntry; i++, pTempNode++) {
-		if (pTempNode->fFree == 1) {
-			pTempNode->fFree = 0;
-			return pTempNode;
+	tLimPreAuthNode **pTempNode = pPreAuthTimerTable->pTable;
+	for (i = 0; i < pPreAuthTimerTable->numEntry; i++) {
+		if (pTempNode[i]->fFree == 1) {
+			pTempNode[i]->fFree = 0;
+			return pTempNode[i];
 		}
 	}
 
@@ -4976,7 +4975,7 @@ tLimPreAuthNode *lim_get_pre_auth_node_from_index(tpAniSirGlobal pMac,
 		return NULL;
 	}
 
-	return pAuthTable->pTable + authNodeIdx;
+	return pAuthTable->pTable[authNodeIdx];
 }
 
 /* Util API to check if the channels supported by STA is within range */

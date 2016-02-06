@@ -300,11 +300,23 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		lim_log(pMac, LOGP, FL("could not retrieve mac preauth value"));
 	pMac->lim.gLimPreAuthTimerTable.numEntry = cfgValue;
 	pMac->lim.gLimPreAuthTimerTable.pTable =
-		qdf_mem_malloc(cfgValue * sizeof(tLimPreAuthNode));
+		qdf_mem_malloc(cfgValue * sizeof(tLimPreAuthNode *));
 
 	if (pMac->lim.gLimPreAuthTimerTable.pTable == NULL) {
 		lim_log(pMac, LOGP, FL("AllocateMemory failed!"));
 		goto err_timer;
+	}
+	qdf_mem_zero(pMac->lim.gLimPreAuthTimerTable.pTable,
+		     cfgValue * sizeof(tLimPreAuthNode *));
+
+	for (i = 0; i < cfgValue; i++) {
+		pMac->lim.gLimPreAuthTimerTable.pTable[i] =
+					qdf_mem_malloc(sizeof(tLimPreAuthNode));
+		if (pMac->lim.gLimPreAuthTimerTable.pTable[i] == NULL) {
+			pMac->lim.gLimPreAuthTimerTable.numEntry = 0;
+			lim_log(pMac, LOGP, FL("AllocateMemory failed!"));
+			goto err_timer;
+		}
 	}
 
 	lim_init_pre_auth_timer_table(pMac, &pMac->lim.gLimPreAuthTimerTable);
@@ -425,6 +437,8 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
 
 	if (NULL != pMac->lim.gLimPreAuthTimerTable.pTable) {
+		for (i = 0; i < cfgValue; i++)
+			qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable[i]);
 		qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable);
 		pMac->lim.gLimPreAuthTimerTable.pTable = NULL;
 	}

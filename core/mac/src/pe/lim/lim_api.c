@@ -541,7 +541,10 @@ tSirRetStatus lim_start(tpAniSirGlobal pMac)
 		pMac->lim.gLimReturnAfterFirstMatch = 0;
 
 		/* Initialize MLM state machine */
-		lim_init_mlm(pMac);
+		if (eSIR_SUCCESS != lim_init_mlm(pMac)) {
+			lim_log(pMac, LOGE, FL("Init MLM failed."));
+			return eSIR_FAILURE;
+		}
 
 		/* By default return unique scan results */
 		pMac->lim.gLimReturnUniqueResults = true;

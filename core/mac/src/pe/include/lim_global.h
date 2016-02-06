@@ -330,7 +330,7 @@ typedef struct tLimPreAuthNode {
 /* Pre-authentication table definition */
 typedef struct tLimPreAuthTable {
 	uint32_t numEntry;
-	tpLimPreAuthNode pTable;
+	tLimPreAuthNode **pTable;
 } tLimPreAuthTable, *tpLimPreAuthTable;
 
 /* / Per STA context structure definition */

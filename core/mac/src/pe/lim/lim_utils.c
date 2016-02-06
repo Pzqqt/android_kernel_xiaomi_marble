@@ -518,50 +518,36 @@ void lim_print_msg_name(tpAniSirGlobal pMac, uint16_t logLevel, uint32_t msgType
 }
 
 /**
- * lim_init_mlm()
- *
- ***FUNCTION:
- * This function is called by limProcessSmeMessages() to
+ * lim_init_mlm() -  This function is called by limProcessSmeMessages() to
  * initialize MLM state machine on STA
+ * @pMac: Pointer to Global MAC structure
  *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac      Pointer to Global MAC structure
- * @return None
+ * @Return: Status of operation
  */
-void lim_init_mlm(tpAniSirGlobal pMac)
+tSirRetStatus lim_init_mlm(tpAniSirGlobal pMac)
 {
 	uint32_t retVal;
 
 	pMac->lim.gLimTimersCreated = 0;
 
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, NO_SESSION,
-		       pMac->lim.gLimMlmState));
+	MTRACE(mac_trace(pMac, TRACE_CODE_MLM_STATE, NO_SESSION,
+			  pMac->lim.gLimMlmState));
 
-
-	/* / Initialize number of pre-auth contexts */
+	/* Initialize number of pre-auth contexts */
 	pMac->lim.gLimNumPreAuthContexts = 0;
 
-	/* / Initialize MAC based Authentication STA list */
+	/* Initialize MAC based Authentication STA list */
 	lim_init_pre_auth_list(pMac);
 
 	/* Create timers used by LIM */
 	retVal = lim_create_timers(pMac);
-	if (retVal == TX_SUCCESS) {
-		pMac->lim.gLimTimersCreated = 1;
-	} else {
-		lim_log(pMac, LOGP,
-			FL(" lim_create_timers Failed to create lim timers "));
+	if (retVal != TX_SUCCESS) {
+		lim_log(pMac, LOGP, FL("lim_create_timers Failed"));
+		return eSIR_SUCCESS;
 	}
+
+	pMac->lim.gLimTimersCreated = 1;
+	return eSIR_SUCCESS;
 } /*** end lim_init_mlm() ***/
 
 /**
@@ -608,7 +594,7 @@ static void lim_deactivate_del_sta(tpAniSirGlobal mac_ctx, uint32_t bss_entry,
 void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 {
 	uint32_t n;
-	tLimPreAuthNode *pAuthNode;
+	tLimPreAuthNode **pAuthNode;
 #ifdef WLAN_FEATURE_11W
 	uint32_t bss_entry;
 	tpDphHashNode sta_ds = NULL;
@@ -674,14 +660,10 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 		/* Deactivate any Authentication response timers */
 		lim_delete_pre_auth_list(mac_ctx);
 
+		/* Delete any Auth rsp timers, which might have been started */
 		for (n = 0; n < mac_ctx->lim.gLimPreAuthTimerTable.numEntry;
-					n++, pAuthNode++) {
-			/*
-			 * Delete any Authentication response
-			 * timers, which might have been started.
-			 */
-			tx_timer_delete(&pAuthNode->timer);
-		}
+				n++)
+			tx_timer_delete(&pAuthNode[n]->timer);
 
 		/* Deactivate and delete Hash Miss throttle timer */
 		tx_timer_deactivate(&lim_timer->
