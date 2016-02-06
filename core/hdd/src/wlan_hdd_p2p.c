@@ -1252,6 +1252,7 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	unsigned long rc;
 	hdd_adapter_t *goAdapter;
 	uint16_t current_freq;
+	uint8_t home_ch = 0;
 
 	ENTER();
 
@@ -1268,9 +1269,13 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	if (0 != status)
 		return status;
 
-	hddLog(LOG1, FL("Device_mode %s(%d) type: %d"),
+	hddLog(LOG1, FL("Device_mode %s(%d) type: %d, wait: %d, offchan: %d, category: %d, actionId: %d"),
 	       hdd_device_mode_to_string(pAdapter->device_mode),
-	       pAdapter->device_mode, type);
+	       pAdapter->device_mode, type, wait, offchan,
+	       buf[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET +
+			WLAN_HDD_PUBLIC_ACTION_FRAME_CATEGORY_OFFSET],
+	       buf[WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET +
+			WLAN_HDD_PUBLIC_ACTION_FRAME_ACTION_OFFSET]);
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
 	if ((type == SIR_MAC_MGMT_FRAME) &&
@@ -1391,16 +1396,22 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 					     [WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET]));
 	}
 
-	goAdapter = hdd_get_adapter(pAdapter->pHddCtx, WLAN_HDD_P2P_GO);
+	if (pAdapter->device_mode == WLAN_HDD_SOFTAP) {
+		home_ch = pAdapter->sessionCtx.ap.operatingChannel;
+	} else if (pAdapter->device_mode == WLAN_HDD_INFRA_STATION) {
+		home_ch =
+			pAdapter->sessionCtx.station.conn_info.operationChannel;
+	} else {
+		goAdapter = hdd_get_adapter(pAdapter->pHddCtx, WLAN_HDD_P2P_GO);
+		if (goAdapter)
+			home_ch = goAdapter->sessionCtx.ap.operatingChannel;
+	}
 
-	/* If GO adapter exists and operating on same frequency */
-	/* then we will not request remain on channel */
-	if (goAdapter && (ieee80211_frequency_to_channel(chan->center_freq)
-			  == goAdapter->sessionCtx.ap.operatingChannel)) {
-		/* if GO exist and is not off channel
-		 * wait time should be zero
-		 */
+	if (ieee80211_frequency_to_channel(chan->center_freq) == home_ch) {
+		/* if adapter is already on requested ch, no need for ROC */
 		wait = 0;
+		hddLog(LOG1,
+			FL("Adapter already on requested ch. No ROC needed"));
 		goto send_frame;
 	}
 
