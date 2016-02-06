@@ -1923,21 +1923,6 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 			return -EAGAIN;
 		}
 
-		if (pHddCtx->config->is_ps_enabled) {
-			if (sme_is_auto_ps_timer_running(pHddCtx->hHal,
-						pAdapter->sessionId)) {
-				hddLog(LOGE,
-					FL("Auto Power save timer is running; Do not allow suspend"));
-				return -EAGAIN;
-			} else {
-				sme_ps_enable_disable(pHddCtx->hHal,
-						pAdapter->sessionId,
-						SME_PS_ENABLE);
-				hddLog(LOG1,
-					FL("Auto PS timer is not running; allow suspend and enter into power save"));
-			}
-		}
-
 		if (pScanInfo->mScanPending) {
 			INIT_COMPLETION(pScanInfo->abortscan_event_var);
 			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
