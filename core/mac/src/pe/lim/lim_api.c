@@ -644,6 +644,7 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 
 void lim_cleanup(tpAniSirGlobal pMac)
 {
+	uint8_t i;
 	/*
 	 * Before destroying the list making sure all the nodes have been
 	 * deleted Which should be the normal case, but a memory leak has been
@@ -670,6 +671,8 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	/* free up preAuth table */
 	if (pMac->lim.gLimPreAuthTimerTable.pTable != NULL) {
+		for (i = 0; i < pMac->lim.gLimPreAuthTimerTable.numEntry; i++)
+			qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable[i]);
 		qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable);
 		pMac->lim.gLimPreAuthTimerTable.pTable = NULL;
 		pMac->lim.gLimPreAuthTimerTable.numEntry = 0;

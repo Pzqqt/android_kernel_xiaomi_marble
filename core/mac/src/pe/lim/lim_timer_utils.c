@@ -437,7 +437,7 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
 
 	if (NULL != pMac->lim.gLimPreAuthTimerTable.pTable) {
-		for (i = 0; i < cfgValue; i++)
+		for (i = 0; i < pMac->lim.gLimPreAuthTimerTable.numEntry; i++)
 			qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable[i]);
 		qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable);
 		pMac->lim.gLimPreAuthTimerTable.pTable = NULL;
