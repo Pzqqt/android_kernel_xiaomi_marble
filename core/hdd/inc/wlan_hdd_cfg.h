@@ -2736,7 +2736,7 @@ enum dot11p_mode {
 #define CFG_CE_CLASSIFY_ENABLE_NAME	"gCEClassifyEnable"
 #define CFG_CE_CLASSIFY_ENABLE_MIN	(0)
 #define CFG_CE_CLASSIFY_ENABLE_MAX	(1)
-#define CFG_CE_CLASSIFY_ENABLE_DEFAULT	(0)
+#define CFG_CE_CLASSIFY_ENABLE_DEFAULT	(1)
 
 #define CFG_DUAL_MAC_FEATURE_DISABLE               "gDualMacFeatureDisable"
 #define CFG_DUAL_MAC_FEATURE_DISABLE_MIN          (0)
