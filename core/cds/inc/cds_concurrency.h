@@ -44,6 +44,31 @@
 #define CONNECTION_UPDATE_TIMEOUT 500
 
 /**
+ * enum cds_max_rx_ss - Maximum number of receive spatial streams
+ * @CDS_RX_NSS_1: Receive Nss = 1
+ * @CDS_RX_NSS_2: Receive Nss = 2
+ * @CDS_RX_NSS_3: Receive Nss = 3
+ * @CDS_RX_NSS_4: Receive Nss = 4
+ * @CDS_RX_NSS_5: Receive Nss = 5
+ * @CDS_RX_NSS_6: Receive Nss = 6
+ * @CDS_RX_NSS_7: Receive Nss = 7
+ * @CDS_RX_NSS_8: Receive Nss = 8
+ *
+ * Indicates the maximum number of spatial streams that the STA can receive
+ */
+enum cds_max_rx_ss {
+	CDS_RX_NSS_1 = 0,
+	CDS_RX_NSS_2 = 1,
+	CDS_RX_NSS_3 = 2,
+	CDS_RX_NSS_4 = 3,
+	CDS_RX_NSS_5 = 4,
+	CDS_RX_NSS_6 = 5,
+	CDS_RX_NSS_7 = 6,
+	CDS_RX_NSS_8 = 7,
+	CDS_RX_NSS_MAX,
+};
+
+/**
  * enum cds_chain_mode - Chain Mask tx & rx combination.
  *
  * @CDS_ONE_ONE: One for Tx, One for Rx

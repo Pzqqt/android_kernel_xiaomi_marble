@@ -5912,7 +5912,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 		* update the beacon template & notify FW. Once FW confirms
 		*  beacon updated, send down the HW mode change req
 		*/
-		status = cds_complete_action(1, CDS_DBS, reason,
+		status = cds_complete_action(CDS_RX_NSS_1, CDS_DBS, reason,
 						session_id);
 		break;
 	case CDS_DBS:
@@ -5930,7 +5930,7 @@ QDF_STATUS cds_next_actions(uint32_t session_id,
 		* intially. If yes, update the beacon template & notify FW.
 		* Once FW confirms beacon updated, send the HW mode change req
 		*/
-		status = cds_complete_action(0, CDS_MCC, reason,
+		status = cds_complete_action(CDS_RX_NSS_2, CDS_MCC, reason,
 						session_id);
 		break;
 	case CDS_MCC:
