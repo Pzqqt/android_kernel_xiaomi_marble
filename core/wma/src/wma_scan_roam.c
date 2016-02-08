@@ -1967,8 +1967,8 @@ void wma_roam_update_vdev(tp_wma_handle wma,
 	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
 			IEEE80211_ADDR_LEN);
 	set_link_params->state = eSIR_LINK_PREASSOC_STATE;
-	qdf_mem_copy(set_link_params->selfMacAddr, wma->myaddr,
-			IEEE80211_ADDR_LEN);
+	qdf_mem_copy(set_link_params->selfMacAddr,
+		roam_synch_ind_ptr->self_mac.bytes, IEEE80211_ADDR_LEN);
 	qdf_mem_copy(set_link_params->bssid, roam_synch_ind_ptr->bssid.bytes,
 			IEEE80211_ADDR_LEN);
 	add_sta_params->staType = STA_ENTRY_SELF;

@@ -3990,6 +3990,7 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	uint8_t isBeacon;
 	uint8_t roamedVdevId;
 	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr self_mac;
 	int8_t txMgmtPower;
 	uint32_t authStatus;
 	uint8_t rssi;
