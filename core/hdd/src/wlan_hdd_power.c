@@ -61,6 +61,7 @@
 
 #include <linux/inetdevice.h>
 #include <wlan_hdd_cfg.h>
+#include <wlan_hdd_scan.h>
 #include <wlan_hdd_cfg80211.h>
 #include <net/addrconf.h>
 #include <wlan_hdd_ipa.h>
@@ -1299,7 +1300,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	cds_set_recovery_in_progress(true);
 
 	cds_clear_concurrent_session_count();
-
+	hdd_cleanup_scan_queue(pHddCtx);
 	hdd_reset_all_adapters(pHddCtx);
 
 	hdd_ipa_uc_ssr_deinit();

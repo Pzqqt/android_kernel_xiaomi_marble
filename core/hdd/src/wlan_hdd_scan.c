@@ -2418,3 +2418,56 @@ int hdd_vendor_put_ifindex(struct sk_buff *skb, int ifindex)
 
 	return 0;
 }
+
+
+/**
+ * hdd_cleanup_scan_queue() - remove entries in scan queue
+ *
+ * Removes entries in scan queue and sends scan complete event to NL
+ * Return: None
+ */
+void hdd_cleanup_scan_queue(hdd_context_t *hdd_ctx)
+{
+	struct hdd_scan_req *hdd_scan_req;
+	qdf_list_node_t *node = NULL;
+	struct cfg80211_scan_request *req;
+	hdd_adapter_t *adapter;
+	uint8_t source;
+	bool aborted = true;
+
+	if (NULL == hdd_ctx) {
+		hdd_err("HDD context is Null");
+		return;
+	}
+
+	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
+	while (!qdf_list_empty(&hdd_ctx->hdd_scan_req_q)) {
+		if (QDF_STATUS_SUCCESS !=
+			qdf_list_remove_front(&hdd_ctx->hdd_scan_req_q,
+						&node)) {
+			qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+			hdd_err("Failed to remove scan request");
+			return;
+		}
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		hdd_scan_req = (struct hdd_scan_req *)node;
+		req = hdd_scan_req->scan_request;
+		source = hdd_scan_req->source;
+		adapter = hdd_scan_req->adapter;
+		if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
+			hdd_err("HDD adapter magic is invalid");
+		} else {
+			if (NL_SCAN == source)
+				cfg80211_scan_done(req, aborted);
+			else
+				hdd_vendor_scan_callback(adapter, req, aborted);
+			hdd_info("removed Scan id: %d, req = %p",
+					hdd_scan_req->scan_id, req);
+		}
+		qdf_mem_free(hdd_scan_req);
+		qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
+	}
+	qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+
+	return;
+}
