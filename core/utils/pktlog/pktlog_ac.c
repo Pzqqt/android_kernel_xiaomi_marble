@@ -353,7 +353,6 @@ int pktlog_enable(struct ol_softc *scn, int32_t log_state)
 	}
 
 	pl_info = pl_dev->pl_info;
-	pl_dev->sc_osdev = &scn->aps_osdev;
 
 	if (!pl_info)
 		return 0;

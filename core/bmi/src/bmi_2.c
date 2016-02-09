@@ -25,6 +25,7 @@
  * to the Linux Foundation.
  */
 #include "i_bmi.h"
+#include "cds_api.h"
 /* This need to defined in firmware interface files.
  * Defining here to address compilation issues.
  * Will be deleted once firmware interface files for
@@ -83,6 +84,7 @@ bmi_done_local(struct ol_softc *scn)
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
+	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -93,6 +95,12 @@ bmi_done_local(struct ol_softc *scn)
 		BMI_ERR("No Memory Allocated for BMI CMD/RSP Buffer");
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
+
+	if (!cdf_dev->dev) {
+		BMI_ERR("%s Invalid Device pointer", __func__);
+		return CDF_STATUS_NOT_INITIALIZED;
+	}
+
 	cid = BMI_DONE;
 
 	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
@@ -113,14 +121,14 @@ bmi_done_local(struct ol_softc *scn)
 	}
 
 	if (info->bmi_cmd_buff) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 		info->bmi_cmd_buff = NULL;
 		info->bmi_cmd_da = 0;
 	}
 
 	if (info->bmi_rsp_buff) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
 		info->bmi_rsp_buff = NULL;
 		info->bmi_rsp_da = 0;

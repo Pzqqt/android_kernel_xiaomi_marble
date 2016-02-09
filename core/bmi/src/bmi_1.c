@@ -26,6 +26,7 @@
  */
 
 #include "i_bmi.h"
+#include "cds_api.h"
 
 /* APIs visible to the driver */
 
@@ -276,10 +277,16 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 	int status;
 	uint32_t cid;
 	struct bmi_info *info;
+	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
 		bmi_assert(0);
+		return CDF_STATUS_NOT_INITIALIZED;
+	}
+
+	if (!cdf_dev->dev) {
+		BMI_ERR("%s: Invalid device pointer", __func__);
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
@@ -310,14 +317,14 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 	}
 
 	if (info->bmi_cmd_buff) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 		info->bmi_cmd_buff = NULL;
 		info->bmi_cmd_da = 0;
 	}
 
 	if (info->bmi_rsp_buff) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
 		info->bmi_rsp_buff = NULL;
 		info->bmi_rsp_da = 0;

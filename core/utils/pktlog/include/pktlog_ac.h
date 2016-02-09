@@ -94,7 +94,6 @@ struct ol_pktlog_dev_t {
 	ol_ath_generic_softc_handle scn;
 	char *name;
 	bool tgt_pktlog_enabled;
-	osdev_t sc_osdev;
 };
 
 #define PKTLOG_SYSCTL_SIZE      14

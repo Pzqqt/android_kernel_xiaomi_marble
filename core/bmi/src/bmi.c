@@ -26,6 +26,7 @@
  */
 
 #include "i_bmi.h"
+#include "cds_api.h"
 
 /* APIs visible to the driver */
 
@@ -58,6 +59,7 @@ bmi_command_test(uint32_t command, uint32_t address, uint8_t *data,
 CDF_STATUS bmi_init(struct ol_softc *scn)
 {
 	struct bmi_info *info;
+	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	if (!scn) {
 		BMI_ERR("Invalid scn Context");
@@ -65,12 +67,18 @@ CDF_STATUS bmi_init(struct ol_softc *scn)
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
+	if (!cdf_dev->dev) {
+		BMI_ERR("%s: Invalid Device Pointer", __func__);
+		return CDF_STATUS_NOT_INITIALIZED;
+	}
+
 	info = hif_get_bmi_ctx(scn);
 	info->bmi_done = false;
 
 	if (!info->bmi_cmd_buff) {
-		info->bmi_cmd_buff = cdf_os_mem_alloc_consistent(scn->cdf_dev,
-					MAX_BMI_CMDBUF_SZ, &info->bmi_cmd_da, 0);
+		info->bmi_cmd_buff =
+			cdf_os_mem_alloc_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+							&info->bmi_cmd_da, 0);
 		if (!info->bmi_cmd_buff) {
 			BMI_ERR("No Memory for BMI Command");
 			return CDF_STATUS_E_NOMEM;
@@ -78,8 +86,9 @@ CDF_STATUS bmi_init(struct ol_softc *scn)
 	}
 
 	if (!info->bmi_rsp_buff) {
-		info->bmi_rsp_buff = cdf_os_mem_alloc_consistent(scn->cdf_dev,
-					MAX_BMI_CMDBUF_SZ, &info->bmi_rsp_da, 0);
+		info->bmi_rsp_buff =
+			cdf_os_mem_alloc_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+							&info->bmi_rsp_da, 0);
 		if (!info->bmi_rsp_buff) {
 			BMI_ERR("No Memory for BMI Response");
 			goto end;
@@ -87,7 +96,7 @@ CDF_STATUS bmi_init(struct ol_softc *scn)
 	}
 	return CDF_STATUS_SUCCESS;
 end:
-	cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+	cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				 info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 	info->bmi_cmd_buff = NULL;
 	return CDF_STATUS_E_NOMEM;
@@ -96,16 +105,22 @@ end:
 void bmi_cleanup(struct ol_softc *scn)
 {
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+
+	if (!cdf_dev->dev) {
+		BMI_ERR("%s: Invalid Device Pointer", __func__);
+		return;
+	}
 
 	if (info->bmi_cmd_buff) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 		info->bmi_cmd_buff = NULL;
 		info->bmi_cmd_da = 0;
 	}
 
 	if (info->bmi_rsp_buff) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, MAX_BMI_CMDBUF_SZ,
+		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
 		info->bmi_rsp_buff = NULL;
 		info->bmi_rsp_da = 0;

@@ -186,6 +186,21 @@ static void hdd_hif_close(void *hif_ctx)
 }
 
 /**
+ * hdd_init_cdf_ctx() - API to initialize global CDF Device structure
+ * @dev: Device Pointer
+ * @bdev: Bus Device pointer
+ *
+ * Return: void
+ */
+void hdd_init_cdf_ctx(struct device *dev, void *bdev)
+{
+	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+
+	cdf_dev->dev = dev;
+	cdf_dev->drv_hdl = bdev;
+}
+
+/**
  * wlan_hdd_probe() - handles probe request
  *
  * This function is called to probe the wlan driver
@@ -233,6 +248,8 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		if (status != CDF_STATUS_SUCCESS)
 			goto err_hdd_deinit;
 	}
+
+	hdd_init_cdf_ctx(dev, bdev);
 
 	ret = hdd_hif_open(dev, bdev, bid, bus_type, reinit);
 

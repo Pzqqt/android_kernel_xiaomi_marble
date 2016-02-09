@@ -149,6 +149,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 	struct bmi_info *bmi_ctx = hif_get_bmi_ctx(scn);
+	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	switch (file) {
 	default:
@@ -248,7 +249,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		break;
 	}
 
-	if (request_firmware(&fw_entry, filename, scn->aps_osdev.device) != 0) {
+	if (request_firmware(&fw_entry, filename, cdf_dev->dev) != 0) {
 		BMI_ERR("%s: Failed to get %s", __func__, filename);
 
 		if (file == ATH_OTP_FILE)
@@ -262,7 +263,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 			BMI_INFO("%s: Trying to load default %s",
 			       __func__, filename);
 			if (request_firmware(&fw_entry, filename,
-					     scn->aps_osdev.device) != 0) {
+						cdf_dev->dev) != 0) {
 				BMI_ERR("%s: Failed to get %s",
 				       __func__, filename);
 				return -1;
@@ -488,8 +489,8 @@ static struct ol_softc *ramdump_scn;
  * Ramdump information.
  */
 struct ramdump_info {
-        void *base;
-        unsigned long size;
+	void *base;
+	unsigned long size;
 };
 
 #if defined(CONFIG_CNSS) && !defined(QCA_WIFI_3_0)
