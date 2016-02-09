@@ -396,35 +396,6 @@ cdf_size_t init_buffer_count(cdf_size_t maxSize)
 }
 
 /**
- * hif_init_cdf_ctx(): hif_init_cdf_ctx
- * @hif_ctx: hif_ctx
- *
- * Return: int
- */
-int hif_init_cdf_ctx(struct hif_softc *scn)
-{
-	cdf_device_t cdf_ctx = scn->cdf_dev;
-
-	cdf_ctx->drv = &scn->aps_osdev;
-	cdf_ctx->drv_hdl = scn->aps_osdev.bdev;
-	cdf_ctx->dev = scn->aps_osdev.device;
-	return 0;
-}
-
-/**
- * hif_deinit_cdf_ctx(): hif_deinit_cdf_ctx
- * @hif_ctx: hif_ctx
- *
- * Return: void
- */
-void hif_deinit_cdf_ctx(struct hif_softc *scn)
-{
-	if (scn == NULL || !scn->cdf_dev)
-		return;
-	scn->cdf_dev = NULL;
-}
-
-/**
  * hif_save_htc_htt_config_endpoint():
  * hif_save_htc_htt_config_endpoint
  * @htc_endpoint: htc_endpoint
@@ -507,13 +478,11 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 	cdf_mem_zero(scn, bus_context_size);
 	hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	scn->cdf_dev = cdf_ctx;
-	hif_hdl->cdf_dev = cdf_ctx;
 	cfg = hif_get_ini_handle(hif_hdl);
 	cfg->max_no_of_peers = 1;
 	cdf_atomic_init(&scn->active_tasklet_cnt);
 	cdf_atomic_init(&scn->link_suspended);
 	cdf_atomic_init(&scn->tasklet_from_intr);
-	init_waitqueue_head(&scn->aps_osdev.event_queue);
 	scn->linkstate_vote = 0;
 
 	status = hif_bus_open(scn, bus_type);
@@ -555,9 +524,6 @@ void hif_init_opaque_handle(struct hif_softc *scn)
 {
 	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
-	cdf_mem_copy(&hif_hdl->aps_osdev, &scn->aps_osdev,
-				sizeof(hif_hdl->aps_osdev));
-	hif_hdl->cdf_dev = scn->cdf_dev;
 	hif_hdl->targetdef = scn->targetdef;
 }
 
@@ -599,7 +565,7 @@ CDF_STATUS hif_enable(struct ol_softc *hif_ctx, struct device *dev,
 
 	if (hif_config_ce(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
-		hif_disable_bus(scn->aps_osdev.bdev);
+		hif_disable_bus(scn);
 		status = CDF_STATUS_E_FAILURE;
 		return status;
 	}
@@ -666,8 +632,7 @@ void hif_disable(struct ol_softc *hif_ctx, enum hif_disable_type type)
 	if (ADRASTEA_BU)
 		hif_vote_link_down(hif_ctx);
 
-	if (scn->aps_osdev.bdev)
-		hif_disable_bus(scn->aps_osdev.bdev);
+	hif_disable_bus(scn);
 
 	hif_wlan_disable();
 

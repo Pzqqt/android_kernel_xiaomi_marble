@@ -267,10 +267,6 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	ol_sc->aps_osdev.device = dev;
-	ol_sc->aps_osdev.bc.bc_handle = (void *)ol_sc->mem;
-	ol_sc->aps_osdev.bc.bc_bustype = type;
-
 	ret = hif_get_target_type(ol_sc, dev, bdev, bid,
 			&hif_type, &target_type);
 	if (ret < 0) {
@@ -284,12 +280,6 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 	HIF_TRACE("%s: X - hif_type = 0x%x, target_type = 0x%x",
 		  __func__, hif_type, target_type);
 
-	ret = hif_init_cdf_ctx(ol_sc);
-	if (ret != 0) {
-		HIF_ERROR("%s: cannot init CDF", __func__);
-		return CDF_STATUS_E_FAILURE;
-	}
-
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -302,7 +292,7 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
  *
  * Return: none
  */
-void hif_disable_bus(void *bdev)
+void hif_disable_bus(struct hif_softc *scn)
 {
 }
 

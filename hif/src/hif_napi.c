@@ -250,8 +250,7 @@ inline struct qca_napi_data *hif_napi_get_all(struct ol_softc *hif_ctx)
  *  = 0: NAPI is now disabled
  *  = 1: NAPI is now enabled
  */
-int hif_napi_event(struct ol_softc *hif_ctx,
-		   enum qca_napi_event event,
+int hif_napi_event(struct ol_softc *hif_ctx, enum qca_napi_event event,
 		   void *data)
 {
 	int      rc;

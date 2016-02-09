@@ -194,17 +194,6 @@ struct bmi_info {
 };
 
 struct ol_softc {
-	/*
-	 * handle for code that uses the osdep.h version of OS
-	 * abstraction primitives
-	 */
-	struct _NIC_DEV aps_osdev;
-	/*
-	 * handle for code that uses cdf version of OS
-	 * abstraction primitives
-	 */
-	cdf_device_t cdf_dev;
-
 	struct targetdef_s *targetdef;
 };
 

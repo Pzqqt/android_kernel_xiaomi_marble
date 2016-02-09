@@ -117,7 +117,6 @@ struct hif_softc {
 	enum ath_hal_bus_type bus_type;
 	void *ce_id_to_state[CE_COUNT_MAX];
 	cdf_device_t cdf_dev;
-	struct _NIC_DEV aps_osdev;
 	bool hif_init_done;
 	bool request_irq_done;
 	/* Packet statistics */
@@ -170,8 +169,6 @@ int hif_get_device_type(uint32_t device_id,
 			uint32_t revision_id,
 			uint32_t *hif_type, uint32_t *target_type);
 /*These functions are exposed to HDD*/
-int hif_init_cdf_ctx(struct hif_softc *ol_sc);
-void hif_deinit_cdf_ctx(struct hif_softc *ol_sc);
 bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem);
 void hif_nointrs(struct hif_softc *scn);
 void hif_bus_close(struct hif_softc *ol_sc);
@@ -179,7 +176,7 @@ CDF_STATUS hif_bus_open(struct hif_softc *ol_sc,
 	enum ath_hal_bus_type bus_type);
 CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, enum hif_enable_type type);
-void hif_disable_bus(void *bdev);
+void hif_disable_bus(struct hif_softc *scn);
 void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
 int hif_bus_get_context_size(void);
 void hif_read_phy_mem_base(struct hif_softc *scn, cdf_dma_addr_t *bar_value);

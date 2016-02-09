@@ -1304,10 +1304,6 @@ int hif_enable_pci(struct hif_pci_softc *sc,
 	sc->mem = mem;
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
-	ol_sc->aps_osdev.bdev = pdev;
-	ol_sc->aps_osdev.device = &pdev->dev;
-	ol_sc->aps_osdev.bc.bc_handle = (void *)mem;
-	ol_sc->aps_osdev.bc.bc_bustype = HAL_BUS_TYPE_PCI;
 	sc->devid = id->device;
 	sc->cacheline_sz = dma_get_cache_alignment();
 	ol_sc->mem = mem;
@@ -1628,11 +1624,10 @@ void hif_nointrs(struct hif_softc *scn)
  *
  * Return: none
  */
-void hif_disable_bus(void *bdev)
+void hif_disable_bus(struct hif_softc *scn)
 {
-	struct pci_dev *pdev = bdev;
-	struct hif_pci_softc *sc = pci_get_drvdata(pdev);
-	struct hif_softc *scn;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct pci_dev *pdev = sc->pdev;
 	void __iomem *mem;
 
 	/* Attach did not succeed, all resources have been
@@ -1640,8 +1635,6 @@ void hif_disable_bus(void *bdev)
 	 */
 	if (!sc)
 		return;
-
-	scn = HIF_GET_SOFTC(sc);
 
 	if (ADRASTEA_BU) {
 		hif_write32_mb(sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
@@ -1653,7 +1646,6 @@ void hif_disable_bus(void *bdev)
 	if (mem) {
 		pci_disable_msi(pdev);
 		hif_dump_pipe_debug_count(scn);
-		hif_deinit_cdf_ctx(scn);
 		if (scn->athdiag_procfs_inited) {
 			athdiag_procfs_remove();
 			scn->athdiag_procfs_inited = false;
@@ -1759,11 +1751,12 @@ static int hif_bus_suspend_link_up(struct hif_softc *scn)
 {
 	struct pci_dev *pdev;
 	int status;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	if (!scn)
+	if (!sc)
 		return -EFAULT;
 
-	pdev = scn->aps_osdev.bdev;
+	pdev = sc->pdev;
 
 	status = hif_drain_tasklets(scn);
 	if (status != 0)
@@ -1787,11 +1780,13 @@ static int hif_bus_suspend_link_up(struct hif_softc *scn)
 static int hif_bus_resume_link_up(struct hif_softc *scn)
 {
 	struct pci_dev *pdev;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	if (!scn)
+	if (!sc)
 		return -EFAULT;
 
-	pdev = scn->aps_osdev.bdev;
+	pdev = sc->pdev;
+
 	if (!pdev) {
 		HIF_ERROR("%s: pci_dev is null", __func__);
 		return -EFAULT;
@@ -1818,16 +1813,11 @@ static int hif_bus_resume_link_up(struct hif_softc *scn)
 static int hif_bus_suspend_link_down(struct hif_softc *scn)
 {
 	struct pci_dev *pdev;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	int status = 0;
 
-	if (!hif_state) {
-		HIF_ERROR("%s: hif_state is null", __func__);
-		return -EFAULT;
-	}
-
-	pdev = scn->aps_osdev.bdev;
+	pdev = sc->pdev;
 
 	disable_irq(pdev->irq);
 
@@ -1855,11 +1845,13 @@ static int hif_bus_suspend_link_down(struct hif_softc *scn)
 static int hif_bus_resume_link_down(struct hif_softc *scn)
 {
 	struct pci_dev *pdev;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	if (!scn)
+	if (!sc)
 		return -EFAULT;
 
-	pdev = scn->aps_osdev.bdev;
+	pdev = sc->pdev;
+
 	if (!pdev) {
 		HIF_ERROR("%s: pci_dev is null", __func__);
 		return -EFAULT;
@@ -2162,10 +2154,10 @@ static void hif_free_msi_ctx(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = scn->hif_sc;
 	struct hif_msi_info *info = &sc->msi_info;
+	struct device *dev = scn->cdf_dev->dev;
 
-	OS_FREE_CONSISTENT(&scn->aps_osdev, 4,
-			info->magic, info->magic_dma,
-			OS_GET_DMA_MEM_CONTEXT(scn, dmacontext));
+	OS_FREE_CONSISTENT(dev, 4, info->magic, info->magic_dma,
+			   OS_GET_DMA_MEM_CONTEXT(scn, dmacontext));
 	info->magic = NULL;
 	info->magic_dma = 0;
 }
@@ -2726,10 +2718,6 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
-	ol_sc->aps_osdev.bdev = pdev;
-	ol_sc->aps_osdev.device = &pdev->dev;
-	ol_sc->aps_osdev.bc.bc_handle = (void *)ol_sc->mem;
-	ol_sc->aps_osdev.bc.bc_bustype = type;
 	sc->devid = id->device;
 	sc->cacheline_sz = dma_get_cache_alignment();
 	tgt_info = hif_get_target_info_handle(hif_hdl);
@@ -2786,17 +2774,10 @@ again:
 	BUG_ON(pci_get_drvdata(sc->pdev) != NULL);
 	pci_set_drvdata(sc->pdev, sc);
 
-	ret = hif_init_cdf_ctx(ol_sc);
-	if (ret != 0) {
-		HIF_ERROR("%s: cannot init CDF", __func__);
-		goto err_tgtstate;
-	}
-
 	hif_target_sync(ol_sc);
 	return 0;
 
 err_tgtstate:
-	hif_deinit_cdf_ctx(ol_sc);
 	hif_disable_pci(sc);
 	sc->pci_enabled = false;
 	HIF_ERROR("%s: error, hif_disable_pci done", __func__);
