@@ -349,90 +349,73 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 					struct wiphy *wiphy,
 					bool reset)
 {
-	int i, j, m;
-	int k = 0;
-	struct ieee80211_channel *chan;
-	struct regulatory_channel *temp_chan_k, *temp_chan;
+	int band_num;
+	int chan_num;
+	int chan_enum = 0;
+	struct ieee80211_channel *wiphy_chan;
+	struct regulatory_channel *cds_chan;
 	uint8_t band_capability;
 
 	band_capability = hdd_ctx->config->nBandCapability;
-
 	hdd_ctx->isVHT80Allowed = 0;
 
-	if (band_capability == eCSR_BAND_24)
-		hdd_info("band capability is set to 2G only");
+	for (band_num = 0; band_num < IEEE80211_NUM_BANDS; band_num++) {
 
-	for (i = 0, m = 0; i < IEEE80211_NUM_BANDS; i++) {
-
-		if (i == IEEE80211_BAND_2GHZ &&
+		if (band_num == IEEE80211_BAND_2GHZ &&
 		    band_capability == eCSR_BAND_5G)
 			continue;
 
-		else if (i == IEEE80211_BAND_5GHZ &&
+		else if (band_num == IEEE80211_BAND_5GHZ &&
 			 band_capability == eCSR_BAND_24)
 			continue;
 
-		if (wiphy->bands[i] == NULL) {
-			hdd_info("wiphy band no %d is NULL", i);
+		if (wiphy->bands[band_num] == NULL)
 			continue;
-		}
 
-		if (i == 0)
-			m = 0;
-		else
-			m = wiphy->bands[i-1]->n_channels + m;
+		for (chan_num = 0;
+		     chan_num < wiphy->bands[band_num]->n_channels;
+		     chan_num++) {
 
-		for (j = 0; j < wiphy->bands[i]->n_channels; j++) {
+			wiphy_chan =
+				&(wiphy->bands[band_num]->channels[chan_num]);
+			cds_chan = &(reg_channels[chan_enum]);
 
-			k = m + j;
-
-			chan = &(wiphy->bands[i]->channels[j]);
-			temp_chan_k = &(reg_channels[k]);
+			chan_enum++;
 
 			if (!reset)
-				hdd_modify_wiphy(wiphy, chan);
+				hdd_modify_wiphy(wiphy, wiphy_chan);
 
-			if (chan->flags & IEEE80211_CHAN_DISABLED) {
-				temp_chan_k->state =
-					CHANNEL_STATE_DISABLE;
-				temp_chan_k->flags = chan->flags;
-
-			} else if (chan->flags &
+			if (wiphy_chan->flags & IEEE80211_CHAN_DISABLED) {
+				cds_chan->state = CHANNEL_STATE_DISABLE;
+			} else if (wiphy_chan->flags &
 				   (IEEE80211_CHAN_RADAR |
 				    IEEE80211_CHAN_PASSIVE_SCAN |
 				    IEEE80211_CHAN_INDOOR_ONLY)) {
 
-				if (chan->flags &
+				if (wiphy_chan->flags &
 				    IEEE80211_CHAN_INDOOR_ONLY)
-					chan->flags |=
+					wiphy_chan->flags |=
 						IEEE80211_CHAN_PASSIVE_SCAN;
-				temp_chan_k->state = CHANNEL_STATE_DFS;
-				temp_chan_k->pwr_limit =
-					chan->max_power;
-				temp_chan_k->flags = chan->flags;
-
-				if ((chan->flags &
+				cds_chan->state = CHANNEL_STATE_DFS;
+				if ((wiphy_chan->flags &
 				     IEEE80211_CHAN_NO_80MHZ) == 0)
 					hdd_ctx->isVHT80Allowed = 1;
 			} else {
-				temp_chan_k->state = CHANNEL_STATE_ENABLE;
-				temp_chan_k->pwr_limit = chan->max_power;
-				temp_chan_k->flags = chan->flags;
-
-				if ((chan->flags &
+				cds_chan->state = CHANNEL_STATE_ENABLE;
+				if ((wiphy_chan->flags &
 				     IEEE80211_CHAN_NO_80MHZ) == 0)
 					hdd_ctx->isVHT80Allowed = 1;
 			}
+			cds_chan->pwr_limit = wiphy_chan->max_power;
+			cds_chan->flags = wiphy_chan->flags;
 		}
 	}
 
 	if (0 == (hdd_ctx->reg.eeprom_rd_ext &
 		  (1 << WHAL_REG_EXT_FCC_CH_144))) {
-		temp_chan = &(reg_channels[CHAN_ENUM_144]);
-		temp_chan->state =
-			CHANNEL_STATE_DISABLE;
+		cds_chan = &(reg_channels[CHAN_ENUM_144]);
+		cds_chan->state = CHANNEL_STATE_DISABLE;
 	}
-
 }
 
 
