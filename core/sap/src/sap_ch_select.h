@@ -192,7 +192,7 @@ typedef struct sSapTxLeakInfo {
 
 typedef struct sSapChanMatrixInfo {
 	uint8_t channel;        /* channel to switch from */
-	tSapTxLeakInfo chan_matrix[RF_CHAN_144 - RF_CHAN_36 + 1];
+	tSapTxLeakInfo chan_matrix[CHAN_ENUM_144 - CHAN_ENUM_36 + 1];
 } tSapChanMatrixInfo;
 
 #endif /* if !defined __SAP_CH_SELECT_H */

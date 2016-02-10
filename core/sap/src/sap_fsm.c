@@ -961,7 +961,7 @@ sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
 		uint8_t *temp_ch_lst)
 {
 	tSapTxLeakInfo *target_chan_matrix = NULL;
-	uint32_t         num_channel = (RF_CHAN_144 - RF_CHAN_36) + 1;
+	uint32_t         num_channel = (CHAN_ENUM_144 - CHAN_ENUM_36) + 1;
 	uint32_t         i = 0;
 	uint32_t         j = 0;
 	uint32_t         k = 0;
@@ -4181,10 +4181,10 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 	sme_cfg_get_int(hal, WNI_CFG_ENABLE_LTE_COEX, &en_lte_coex);
 
 	/* Check if LTE coex is enabled and 2.4GHz is selected */
-	if (en_lte_coex && (band_start_ch == RF_CHAN_1) &&
-	    (band_end_ch == RF_CHAN_14)) {
+	if (en_lte_coex && (band_start_ch == CHAN_ENUM_1) &&
+	    (band_end_ch == CHAN_ENUM_14)) {
 		/* Set 2.4GHz upper limit to channel 9 for LTE COEX */
-		band_end_ch = RF_CHAN_9;
+		band_end_ch = CHAN_ENUM_9;
 	}
 
 	/* Allocate the max number of channel supported */
@@ -4219,7 +4219,7 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 			continue;
 
 #ifdef FEATURE_WLAN_CH_AVOID
-		for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
+		for (i = 0; i < NUM_CHANNELS; i++) {
 			if ((safe_channels[i].channelNumber ==
 			     CDS_CHANNEL_NUM(loop_count))) {
 				/* Check if channel is safe */
@@ -4324,7 +4324,7 @@ static QDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	for (i = RF_CHAN_36; i <= RF_CHAN_165; i++) {
+	for (i = CHAN_ENUM_36; i <= CHAN_ENUM_165; i++) {
 		if (CDS_CHANNEL_STATE(i) == CHANNEL_STATE_ENABLE ||
 		    CDS_CHANNEL_STATE(i) == CHANNEL_STATE_DFS) {
 			sapContext->SapAllChnlList.channelList[count].channel =
@@ -4619,7 +4619,7 @@ QDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
 		bFound = true;
 	}
 
-	for (i = RF_CHAN_36; i <= RF_CHAN_165; i++) {
+	for (i = CHAN_ENUM_36; i <= CHAN_ENUM_165; i++) {
 		if (CDS_CHANNEL_STATE(i) == CHANNEL_STATE_DFS) {
 			/* if dfs nol is not found, initialize it */
 			if (!bFound) {

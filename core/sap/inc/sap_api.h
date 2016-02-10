@@ -485,7 +485,7 @@ struct sap_acs_cfg {
 #endif
 
 	uint16_t   ch_width;
-	uint8_t    pcl_channels[NUM_RF_CHANNELS];
+	uint8_t    pcl_channels[NUM_CHANNELS];
 	uint32_t   pcl_ch_count;
 	/* ACS Algo Output */
 	uint8_t    pri_ch;

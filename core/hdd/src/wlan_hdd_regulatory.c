@@ -428,7 +428,7 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 
 	if (0 == (hdd_ctx->reg.eeprom_rd_ext &
 		  (1 << WHAL_REG_EXT_FCC_CH_144))) {
-		temp_chan = &(reg_channels[RF_CHAN_144]);
+		temp_chan = &(reg_channels[CHAN_ENUM_144]);
 		temp_chan->state =
 			CHANNEL_STATE_DISABLE;
 	}

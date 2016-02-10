@@ -1245,7 +1245,7 @@ struct hdd_context_s {
 	struct regulatory reg;
 #ifdef FEATURE_WLAN_CH_AVOID
 	uint16_t unsafe_channel_count;
-	uint16_t unsafe_channel_list[NUM_20MHZ_RF_CHANNELS];
+	uint16_t unsafe_channel_list[NUM_CHANNELS];
 #endif /* FEATURE_WLAN_CH_AVOID */
 
 	uint8_t max_intf_count;

@@ -4623,7 +4623,7 @@ static void hdd_set_thermal_level_cb(void *context, u_int8_t level)
 static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 					hdd_adapter_t *ap_adapter)
 {
-	uint16_t safe_channels[NUM_20MHZ_RF_CHANNELS];
+	uint16_t safe_channels[NUM_CHANNELS];
 	uint16_t safe_channel_count;
 	uint16_t unsafe_channel_count;
 	uint8_t is_unsafe = 1;
@@ -4637,9 +4637,9 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 
 	safe_channel_count = 0;
 	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctxt->unsafe_channel_count,
-				       (uint16_t)NUM_20MHZ_RF_CHANNELS);
+				       (uint16_t)NUM_CHANNELS);
 
-	for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		is_unsafe = 0;
 		for (channel_loop = 0;
 		     channel_loop < unsafe_channel_count; channel_loop++) {
@@ -4693,8 +4693,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	hdd_context_t *hdd_ctxt;
 	tSirChAvoidIndType *ch_avoid_indi;
 	uint8_t range_loop;
-	enum channel_enum channel_loop, start_channel_idx = INVALID_RF_CHANNEL,
-					end_channel_idx = INVALID_RF_CHANNEL;
+	enum channel_enum channel_loop, start_channel_idx = INVALID_CHANNEL,
+					end_channel_idx = INVALID_CHANNEL;
 	uint16_t start_channel;
 	uint16_t end_channel;
 	v_CONTEXT_t cds_context;
@@ -4737,7 +4737,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 	for (range_loop = 0; range_loop < ch_avoid_indi->avoid_range_count;
 								range_loop++) {
-		if (hdd_ctxt->unsafe_channel_count >= NUM_20MHZ_RF_CHANNELS) {
+		if (hdd_ctxt->unsafe_channel_count >= NUM_CHANNELS) {
 			hddLog(LOGW, FL("LTE Coex unsafe channel list full"));
 			break;
 		}
@@ -4758,8 +4758,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		if (start_channel == 0 || end_channel == 0)
 			continue;
 
-		for (channel_loop = MIN_20MHZ_RF_CHANNEL; channel_loop <=
-					MAX_20MHZ_RF_CHANNEL; channel_loop++) {
+		for (channel_loop = CHAN_ENUM_1; channel_loop <=
+					CHAN_ENUM_184; channel_loop++) {
 			if (CDS_CHANNEL_FREQ(channel_loop) >=
 						ch_avoid_indi->avoid_freq_range[
 						range_loop].start_freq) {
@@ -4767,8 +4767,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 				break;
 			}
 		}
-		for (channel_loop = MIN_20MHZ_RF_CHANNEL; channel_loop <=
-					MAX_20MHZ_RF_CHANNEL; channel_loop++) {
+		for (channel_loop = CHAN_ENUM_1; channel_loop <=
+					CHAN_ENUM_184; channel_loop++) {
 			if (CDS_CHANNEL_FREQ(channel_loop) >=
 						ch_avoid_indi->avoid_freq_range[
 						range_loop].end_freq) {
@@ -4781,8 +4781,8 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 			}
 		}
 
-		if (start_channel_idx == INVALID_RF_CHANNEL ||
-					end_channel_idx == INVALID_RF_CHANNEL)
+		if (start_channel_idx == INVALID_CHANNEL ||
+					end_channel_idx == INVALID_CHANNEL)
 			continue;
 
 		for (channel_loop = start_channel_idx; channel_loop <=
@@ -4791,7 +4791,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 				hdd_ctxt->unsafe_channel_count++] =
 				CDS_CHANNEL_FREQ(channel_loop);
 			if (hdd_ctxt->unsafe_channel_count >=
-							NUM_20MHZ_RF_CHANNELS) {
+							NUM_CHANNELS) {
 				hddLog(LOGW, FL("LTECoex unsafe ch list full"));
 				break;
 			}
@@ -4893,13 +4893,13 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 
 	cnss_get_wlan_unsafe_channel(hdd_ctx->unsafe_channel_list,
 				     &(hdd_ctx->unsafe_channel_count),
-				     sizeof(uint16_t) * NUM_20MHZ_RF_CHANNELS);
+				     sizeof(uint16_t) * NUM_CHANNELS);
 
 	hddLog(QDF_TRACE_LEVEL_INFO, FL("num of unsafe channels is %d"),
 	       hdd_ctx->unsafe_channel_count);
 
 	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
-				       (uint16_t)NUM_20MHZ_RF_CHANNELS);
+				       (uint16_t)NUM_CHANNELS);
 
 	for (index = 0; index < unsafe_channel_count; index++) {
 		hddLog(QDF_TRACE_LEVEL_INFO, FL("channel %d is not safe"),

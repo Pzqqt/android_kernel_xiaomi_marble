@@ -84,86 +84,46 @@
 }
 
 #ifdef FEATURE_WLAN_CH_AVOID
-sapSafeChannelType safe_channels[NUM_20MHZ_RF_CHANNELS] = {
-	/*CH  , SAFE, default safe */
-	{1, true}
-	,                       /* RF_CHAN_1, */
-	{2, true}
-	,                       /* RF_CHAN_2, */
-	{3, true}
-	,                       /* RF_CHAN_3, */
-	{4, true}
-	,                       /* RF_CHAN_4, */
-	{5, true}
-	,                       /* RF_CHAN_5, */
-	{6, true}
-	,                       /* RF_CHAN_6, */
-	{7, true}
-	,                       /* RF_CHAN_7, */
-	{8, true}
-	,                       /* RF_CHAN_8, */
-	{9, true}
-	,                       /* RF_CHAN_9, */
-	{10, true}
-	,                       /* RF_CHAN_10, */
-	{11, true}
-	,                       /* RF_CHAN_11, */
-	{12, true}
-	,                       /* RF_CHAN_12, */
-	{13, true}
-	,                       /* RF_CHAN_13, */
-	{14, true}
-	,                       /* RF_CHAN_14, */
-	{36, true}
-	,                       /* RF_CHAN_36, */
-	{40, true}
-	,                       /* RF_CHAN_40, */
-	{44, true}
-	,                       /* RF_CHAN_44, */
-	{48, true}
-	,                       /* RF_CHAN_48, */
-	{52, true}
-	,                       /* RF_CHAN_52, */
-	{56, true}
-	,                       /* RF_CHAN_56, */
-	{60, true}
-	,                       /* RF_CHAN_60, */
-	{64, true}
-	,                       /* RF_CHAN_64, */
-	{100, true}
-	,                       /* RF_CHAN_100, */
-	{104, true}
-	,                       /* RF_CHAN_104, */
-	{108, true}
-	,                       /* RF_CHAN_108, */
-	{112, true}
-	,                       /* RF_CHAN_112, */
-	{116, true}
-	,                       /* RF_CHAN_116, */
-	{120, true}
-	,                       /* RF_CHAN_120, */
-	{124, true}
-	,                       /* RF_CHAN_124, */
-	{128, true}
-	,                       /* RF_CHAN_128, */
-	{132, true}
-	,                       /* RF_CHAN_132, */
-	{136, true}
-	,                       /* RF_CHAN_136, */
-	{140, true}
-	,                       /* RF_CHAN_140, */
-	{144, true}
-	,                       /* RF_CHAN_144, */
-	{149, true}
-	,                       /* RF_CHAN_149, */
-	{153, true}
-	,                       /* RF_CHAN_153, */
-	{157, true}
-	,                       /* RF_CHAN_157, */
-	{161, true}
-	,                       /* RF_CHAN_161, */
-	{165, true}
-	,                       /* RF_CHAN_165, */
+sapSafeChannelType safe_channels[NUM_CHANNELS] = {
+	{1, true},
+	{2, true},
+	{3, true},
+	{4, true},
+	{5, true},
+	{6, true},
+	{7, true},
+	{8, true},
+	{9, true},
+	{10, true},
+	{11, true},
+	{12, true},
+	{13, true},
+	{14, true},
+	{36, true},
+	{40, true},
+	{44, true},
+	{48, true},
+	{52, true},
+	{56, true},
+	{60, true},
+	{64, true},
+	{100, true},
+	{104, true},
+	{108, true},
+	{112, true},
+	{116, true},
+	{120, true},
+	{124, true},
+	{128, true},
+	{132, true},
+	{136, true},
+	{140, true},
+	{144, true},
+	{149, true},
+	{153, true},
+	{157, true},
+	{161, true},
+	{165, true},
 };
 #endif
 
@@ -411,17 +371,17 @@ void sap_process_avoid_ie(tHalHandle hal,
 void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 {
 	uint16_t i, j;
-	uint16_t unsafe_channel_list[NUM_20MHZ_RF_CHANNELS];
+	uint16_t unsafe_channel_list[NUM_CHANNELS];
 	uint16_t unsafe_channel_count = 0;
 
 	/* Flush, default set all channel safe */
-	for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		safe_channels[i].isSafe = true;
 	}
 
 	/* Try to find unsafe channel */
 #if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
-	for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		if (pSapCtx->dfs_ch_disable == true) {
 			if (CDS_IS_DFS_CH(safe_channels[i].channelNumber)) {
 				safe_channels[i].isSafe = false;
@@ -441,7 +401,7 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 				     sizeof(unsafe_channel_list));
 
 	for (i = 0; i < unsafe_channel_count; i++) {
-		for (j = 0; j < NUM_20MHZ_RF_CHANNELS; j++) {
+		for (j = 0; j < NUM_CHANNELS; j++) {
 			if (safe_channels[j].channelNumber ==
 			    unsafe_channel_list[i]) {
 				/* Found unsafe channel, update it */
@@ -661,7 +621,7 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 		}
 
 #ifdef FEATURE_WLAN_CH_AVOID
-		for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
+		for (i = 0; i < NUM_CHANNELS; i++) {
 			if ((safe_channels[i].channelNumber == *pChans) &&
 			    (false == safe_channels[i].isSafe)) {
 				QDF_TRACE(QDF_MODULE_ID_SAP,
@@ -2012,7 +1972,7 @@ uint8_t sap_select_channel(tHalHandle halHandle, ptSapContext pSapCtx,
 		if (SAP_CHANNEL_NOT_SELECTED != firstSafeChannelInRange)
 			return firstSafeChannelInRange;
 
-		for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
+		for (i = 0; i < NUM_CHANNELS; i++) {
 			if ((safe_channels[i].channelNumber >= startChannelNum)
 			    && (safe_channels[i].channelNumber <=
 				endChannelNum)) {

@@ -3703,8 +3703,8 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 {
 	uint32_t num_channels = 0;
 	uint8_t i = 0;
-	uint8_t bandStartChannel = RF_CHAN_1;
-	uint8_t bandEndChannel = RF_CHAN_184;
+	uint8_t bandStartChannel = CHAN_ENUM_1;
+	uint8_t bandEndChannel = CHAN_ENUM_184;
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 	tpChannelListInfo channel_list = (tpChannelListInfo) extra;
@@ -3726,11 +3726,11 @@ static int __iw_softap_get_channel_list(struct net_device *dev,
 	wrqu->data.length = sizeof(tChannelListInfo);
 
 	if (eCSR_BAND_24 == curBand) {
-		bandStartChannel = RF_CHAN_1;
-		bandEndChannel = RF_CHAN_14;
+		bandStartChannel = CHAN_ENUM_1;
+		bandEndChannel = CHAN_ENUM_14;
 	} else if (eCSR_BAND_5G == curBand) {
-		bandStartChannel = RF_CHAN_36;
-		bandEndChannel = RF_CHAN_184;
+		bandStartChannel = CHAN_ENUM_36;
+		bandEndChannel = CHAN_ENUM_184;
 	}
 
 	hddLog(LOG1, FL("curBand = %d, StartChannel = %hu, EndChannel = %hu "),

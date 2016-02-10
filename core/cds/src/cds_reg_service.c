@@ -40,64 +40,68 @@
 #include "cds_reg_service.h"
 #include "cds_regdomain.h"
 
-const struct chan_map chan_mapping[NUM_RF_CHANNELS] = {
-	{2412, 1},
-	{2417, 2},
-	{2422, 3},
-	{2427, 4},
-	{2432, 5},
-	{2437, 6},
-	{2442, 7},
-	{2447, 8},
-	{2452, 9},
-	{2457, 10},
-	{2462, 11},
-	{2467, 12},
-	{2472, 13},
-	{2484, 14},
-	{5180, 36},
-	{5200, 40},
-	{5220, 44},
-	{5240, 48},
-	{5260, 52},
-	{5280, 56},
-	{5300, 60},
-	{5320, 64},
-	{5500, 100},
-	{5520, 104},
-	{5540, 108},
-	{5560, 112},
-	{5580, 116},
-	{5600, 120},
-	{5620, 124},
-	{5640, 128},
-	{5660, 132},
-	{5680, 136},
-	{5700, 140},
-	{5720, 144},
-	{5745, 149},
-	{5765, 153},
-	{5785, 157},
-	{5805, 161},
-	{5825, 165},
-	{5852, 170},
-	{5855, 171},
-	{5860, 172},
-	{5865, 173},
-	{5870, 174},
-	{5875, 175},
-	{5880, 176},
-	{5885, 177},
-	{5890, 178},
-	{5895, 179},
-	{5900, 180},
-	{5905, 181},
-	{5910, 182},
-	{5915, 183},
-	{5920, 184},
+const struct chan_map chan_mapping[NUM_CHANNELS] = {
+	[CHAN_ENUM_1] = {2412, 1},
+	[CHAN_ENUM_2] = {2417, 2},
+	[CHAN_ENUM_3] = {2422, 3},
+	[CHAN_ENUM_4] = {2427, 4},
+	[CHAN_ENUM_5] = {2432, 5},
+	[CHAN_ENUM_6] = {2437, 6},
+	[CHAN_ENUM_7] = {2442, 7},
+	[CHAN_ENUM_8] = {2447, 8},
+	[CHAN_ENUM_9] = {2452, 9},
+	[CHAN_ENUM_10] = {2457, 10},
+	[CHAN_ENUM_11] = {2462, 11},
+	[CHAN_ENUM_12] = {2467, 12},
+	[CHAN_ENUM_13] = {2472, 13},
+	[CHAN_ENUM_14] = {2484, 14},
+
+	[CHAN_ENUM_36] = {5180, 36},
+	[CHAN_ENUM_40] = {5200, 40},
+	[CHAN_ENUM_44] = {5220, 44},
+	[CHAN_ENUM_48] = {5240, 48},
+	[CHAN_ENUM_52] = {5260, 52},
+	[CHAN_ENUM_56] = {5280, 56},
+	[CHAN_ENUM_60] = {5300, 60},
+	[CHAN_ENUM_64] = {5320, 64},
+
+	[CHAN_ENUM_100] = {5500, 100},
+	[CHAN_ENUM_104] = {5520, 104},
+	[CHAN_ENUM_108] = {5540, 108},
+	[CHAN_ENUM_112] = {5560, 112},
+	[CHAN_ENUM_116] = {5580, 116},
+	[CHAN_ENUM_120] = {5600, 120},
+	[CHAN_ENUM_124] = {5620, 124},
+	[CHAN_ENUM_128] = {5640, 128},
+	[CHAN_ENUM_132] = {5660, 132},
+	[CHAN_ENUM_136] = {5680, 136},
+	[CHAN_ENUM_140] = {5700, 140},
+	[CHAN_ENUM_144] = {5720, 144},
+
+	[CHAN_ENUM_149] = {5745, 149},
+	[CHAN_ENUM_153] = {5765, 153},
+	[CHAN_ENUM_157] = {5785, 157},
+	[CHAN_ENUM_161] = {5805, 161},
+	[CHAN_ENUM_165] = {5825, 165},
+
+	[CHAN_ENUM_170] = {5852, 170},
+	[CHAN_ENUM_171] = {5855, 171},
+	[CHAN_ENUM_172] = {5860, 172},
+	[CHAN_ENUM_173] = {5865, 173},
+	[CHAN_ENUM_174] = {5870, 174},
+	[CHAN_ENUM_175] = {5875, 175},
+	[CHAN_ENUM_176] = {5880, 176},
+	[CHAN_ENUM_177] = {5885, 177},
+	[CHAN_ENUM_178] = {5890, 178},
+	[CHAN_ENUM_179] = {5895, 179},
+	[CHAN_ENUM_180] = {5900, 180},
+	[CHAN_ENUM_181] = {5905, 181},
+	[CHAN_ENUM_182] = {5910, 182},
+	[CHAN_ENUM_183] = {5915, 183},
+	[CHAN_ENUM_184] = {5920, 184},
 };
 
-struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
+struct regulatory_channel reg_channels[NUM_CHANNELS];
 uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
 uint8_t dfs_region;
 
@@ -117,7 +121,7 @@ QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 
 	if (base_channels && num_base_channels) {
 		count = 0;
-		for (i = 0; i <= RF_CHAN_14; i++) {
+		for (i = 0; i <= CHAN_ENUM_14; i++) {
 			if (reg_channels[i].state) {
 				base_channels[count].chan_num =
 					chan_mapping[i].chan_num;
@@ -125,7 +129,7 @@ QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					reg_channels[i].pwr_limit;
 			}
 		}
-		for (i = RF_CHAN_36; i <= RF_CHAN_184; i++) {
+		for (i = CHAN_ENUM_36; i <= CHAN_ENUM_184; i++) {
 			if (reg_channels[i].state) {
 				base_channels[count].chan_num =
 					chan_mapping[i].chan_num;
@@ -169,14 +173,14 @@ static enum channel_enum cds_get_channel_enum(uint32_t chan_num)
 {
 	uint32_t loop;
 
-	for (loop = 0; loop <= RF_CHAN_184; loop++)
+	for (loop = 0; loop <= CHAN_ENUM_184; loop++)
 		if (chan_mapping[loop].chan_num == chan_num)
 			return loop;
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "invalid channel number %d", chan_num);
 
-	return INVALID_RF_CHANNEL;
+	return INVALID_CHANNEL;
 }
 
 
@@ -191,7 +195,7 @@ enum channel_state cds_get_channel_state(uint32_t chan_num)
 	enum channel_enum chan_enum;
 
 	chan_enum = cds_get_channel_enum(chan_num);
-	if (INVALID_RF_CHANNEL == chan_enum)
+	if (INVALID_CHANNEL == chan_enum)
 		return CHANNEL_STATE_INVALID;
 	else
 		return reg_channels[chan_enum].state;
@@ -211,7 +215,7 @@ enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
 	bool bw_enabled = false;
 
 	chan_enum = cds_get_channel_enum(chan_num);
-	if (INVALID_RF_CHANNEL == chan_enum)
+	if (INVALID_CHANNEL == chan_enum)
 		return CHANNEL_STATE_INVALID;
 
 	if (reg_channels[chan_enum].state) {
@@ -253,7 +257,7 @@ enum channel_width cds_get_max_channel_bw(uint32_t chan_num)
 
 	chan_enum = cds_get_channel_enum(chan_num);
 
-	if ((INVALID_RF_CHANNEL != chan_enum) &&
+	if ((INVALID_CHANNEL != chan_enum) &&
 	    (CHANNEL_STATE_DISABLE != reg_channels[chan_enum].state)) {
 
 		if (!(reg_channels[chan_enum].flags &

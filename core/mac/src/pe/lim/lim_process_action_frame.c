@@ -473,7 +473,7 @@ static void __lim_process_operating_mode_action_frame(tpAniSirGlobal mac_ctx,
 
 	lim_log(mac_ctx, LOG1,
 		FL("Received Operating Mode action frame"));
-	if (RF_CHAN_14 >= session->currentOperChannel)
+	if (CHAN_ENUM_14 >= session->currentOperChannel)
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode24GHz;
 	else
 		cb_mode = mac_ctx->roam.configParam.channelBondingMode5GHz;

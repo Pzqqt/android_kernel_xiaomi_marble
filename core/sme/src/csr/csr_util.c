@@ -5523,7 +5523,7 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 {
 	int i;
 
-	for (i = 0; i < NUM_RF_CHANNELS; i++) {
+	for (i = 0; i < NUM_CHANNELS; i++) {
 		if (CDS_CHANNEL_NUM(i) == chanNum)
 			return CDS_CHANNEL_FREQ(i);
 	}

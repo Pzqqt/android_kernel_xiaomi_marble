@@ -1266,20 +1266,20 @@ static void wlan_hdd_set_acs_ch_range(tsap_Config_t *sap_cfg, bool ht_enabled,
 	int i;
 	if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211B) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11b;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(RF_CHAN_1);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(RF_CHAN_14);
+		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_1);
+		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_14);
 	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211G) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11g;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(RF_CHAN_1);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(RF_CHAN_13);
+		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_1);
+		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_13);
 	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211A) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_11a;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(RF_CHAN_36);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(RF_CHAN_165);
+		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_36);
+		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_165);
 	} else if (sap_cfg->acs_cfg.hw_mode == QCA_ACS_MODE_IEEE80211ANY) {
 		sap_cfg->acs_cfg.hw_mode = eCSR_DOT11_MODE_abg;
-		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(RF_CHAN_1);
-		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(RF_CHAN_165);
+		sap_cfg->acs_cfg.start_ch = CDS_CHANNEL_NUM(CHAN_ENUM_1);
+		sap_cfg->acs_cfg.end_ch = CDS_CHANNEL_NUM(CHAN_ENUM_165);
 	}
 
 	if (ht_enabled)
@@ -5812,7 +5812,7 @@ QDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
 
 	if (hdd_pConfig_ini->sapAllowAllChannel) {
 		/* Validate the channel */
-		for (count = RF_CHAN_1; count <= RF_CHAN_165; count++) {
+		for (count = CHAN_ENUM_1; count <= CHAN_ENUM_165; count++) {
 			if (channel == CDS_CHANNEL_NUM(count)) {
 				fValidChannel = true;
 				break;

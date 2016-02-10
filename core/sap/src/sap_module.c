@@ -1377,7 +1377,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
 
 	mac_ctx = PMAC_STRUCT(hal);
 
-	if (channel <= RF_CHAN_14) {
+	if (channel <= CHAN_ENUM_14) {
 		/*
 		 * currently OBSS scan is done in hostapd, so to avoid
 		 * SAP coming up in HT40 on channel switch we are
@@ -2818,22 +2818,22 @@ void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 	uint8_t tmp_startChannelNum = 0, tmp_endChannelNum = 0;
 
 	if (*startChannelNum <= 14 && *endChannelNum <= 14) {
-		*bandStartChannel = RF_CHAN_1;
-		*bandEndChannel = RF_CHAN_14;
+		*bandStartChannel = CHAN_ENUM_1;
+		*bandEndChannel = CHAN_ENUM_14;
 		tmp_startChannelNum = *startChannelNum > 5 ?
 				   (*startChannelNum - ACS_2G_EXTEND) : 1;
 		tmp_endChannelNum = (*endChannelNum + ACS_2G_EXTEND) <= 14 ?
 				 (*endChannelNum + ACS_2G_EXTEND) : 14;
 	} else if (*startChannelNum >= 36 && *endChannelNum >= 36) {
-		*bandStartChannel = RF_CHAN_36;
-		*bandEndChannel = RF_CHAN_165;
+		*bandStartChannel = CHAN_ENUM_36;
+		*bandEndChannel = CHAN_ENUM_165;
 		tmp_startChannelNum = (*startChannelNum - ACS_5G_EXTEND) > 36 ?
 				   (*startChannelNum - ACS_5G_EXTEND) : 36;
 		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <= 165 ?
 				 (*endChannelNum + ACS_5G_EXTEND) : 165;
 	} else {
-		*bandStartChannel = RF_CHAN_1;
-		*bandEndChannel = RF_CHAN_165;
+		*bandStartChannel = CHAN_ENUM_1;
+		*bandEndChannel = CHAN_ENUM_165;
 		tmp_startChannelNum = *startChannelNum > 5 ?
 			(*startChannelNum - ACS_2G_EXTEND) : 1;
 		tmp_endChannelNum = (*endChannelNum + ACS_5G_EXTEND) <= 165 ?
