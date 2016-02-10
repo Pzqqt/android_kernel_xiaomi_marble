@@ -2420,6 +2420,8 @@ hdd_wlan_wmm_status_e hdd_wmm_delts(hdd_adapter_t *pAdapter, uint32_t handle)
 		 */
 		pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcTspecValid =
 			false;
+		pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcAccessAllowed =
+			false;
 
 		/* need to tell TL to stop trigger timer, etc */
 		hdd_wmm_disable_tl_uapsd(pQosContext);
