@@ -146,6 +146,9 @@
 /* Scan Req Timeout */
 #define WLAN_WAIT_TIME_SCAN_REQ 100
 
+#define WLAN_WAIT_TIME_ANTENNA_MODE_REQ 3000
+#define WLAN_WAIT_TIME_SET_DUAL_MAC_CFG 1500
+
 #define MAX_NUMBER_OF_ADAPTERS 4
 
 #define MAX_CFG_STRING_LEN  255
@@ -1112,6 +1115,36 @@ typedef struct {
 
 } fw_log_info;
 
+/**
+ * enum antenna_mode - number of TX/RX chains
+ * @HDD_ANTENNA_MODE_INVALID: Invalid mode place holder
+ * @HDD_ANTENNA_MODE_1X1: Number of TX/RX chains equals 1
+ * @HDD_ANTENNA_MODE_2X2: Number of TX/RX chains equals 2
+ * @HDD_ANTENNA_MODE_MAX: Place holder for max mode
+ */
+enum antenna_mode {
+	HDD_ANTENNA_MODE_INVALID,
+	HDD_ANTENNA_MODE_1X1,
+	HDD_ANTENNA_MODE_2X2,
+	HDD_ANTENNA_MODE_MAX
+};
+
+/**
+ * enum smps_mode - SM power save mode
+ * @HDD_SMPS_MODE_STATIC: Static power save
+ * @HDD_SMPS_MODE_DYNAMIC: Dynamic power save
+ * @HDD_SMPS_MODE_RESERVED: Reserved
+ * @HDD_SMPS_MODE_DISABLED: Disable power save
+ * @HDD_SMPS_MODE_MAX: Place holder for max mode
+ */
+enum smps_mode {
+	HDD_SMPS_MODE_STATIC,
+	HDD_SMPS_MODE_DYNAMIC,
+	HDD_SMPS_MODE_RESERVED,
+	HDD_SMPS_MODE_DISABLED,
+	HDD_SMPS_MODE_MAX
+};
+
 #ifdef WLAN_FEATURE_OFFLOAD_PACKETS
 /**
  * struct hdd_offloaded_packets - request id to pattern id mapping
@@ -1372,6 +1405,10 @@ struct hdd_context_s {
 	 * at runtime and intersecting it with target capab before updating.
 	 */
 	uint32_t fine_time_meas_cap_target;
+	/* completion variable to indicate set antenna mode complete*/
+	struct completion set_antenna_mode_cmpl;
+	/* Current number of TX X RX chains being used */
+	enum antenna_mode current_antenna_mode;
 };
 
 /*---------------------------------------------------------------------------
@@ -1565,6 +1602,8 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter);
 static inline void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter) {}
 static inline void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter) {}
 #endif
+
+void wlan_hdd_soc_set_antenna_mode_cb(enum set_antenna_mode_status status);
 
 #ifdef QCA_CONFIG_SMP
 int wlan_hdd_get_cpu(void);

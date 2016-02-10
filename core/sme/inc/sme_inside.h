@@ -191,6 +191,7 @@ typedef struct tagSmeCmd {
 		struct sir_hw_mode set_hw_mode_cmd;
 		struct s_nss_update_cmd nss_update_cmd;
 		struct sir_dual_mac_config set_dual_mac_cmd;
+		struct sir_antenna_mode_param set_antenna_mode_cmd;
 	} u;
 } tSmeCmd;
 
@@ -282,6 +283,7 @@ QDF_STATUS csr_create_roam_scan_channel_list(tpAniSirGlobal pMac,
 ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue);
 void active_list_cmd_timeout_handle(void *userData);
 void csr_process_set_dual_mac_config(tpAniSirGlobal mac, tSmeCmd *command);
+void csr_process_set_antenna_mode(tpAniSirGlobal mac, tSmeCmd *command);
 void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command);
 void csr_process_nss_update_req(tpAniSirGlobal mac, tSmeCmd *command);
 
