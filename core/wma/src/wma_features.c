@@ -1506,7 +1506,7 @@ void wma_start_oem_data_req(tp_wma_handle wma_handle,
 
 	WMA_LOGD(FL("Send OEM Data Request to target"));
 
-	if (!startOemDataReq && !startOemDataReq->data) {
+	if (!startOemDataReq || !startOemDataReq->data) {
 		WMA_LOGE(FL("startOemDataReq is null"));
 		goto out;
 	}
