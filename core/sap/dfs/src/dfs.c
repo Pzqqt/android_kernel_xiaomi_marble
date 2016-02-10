@@ -489,8 +489,7 @@ void dfs_detach(struct ieee80211com *ic)
 		dfs->pulses = NULL;
 	}
 
-	if (dfs->pulses_ext_seg != NULL &&
-	    ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+	if (dfs->pulses_ext_seg != NULL) {
 		OS_FREE(dfs->pulses_ext_seg);
 		dfs->pulses_ext_seg = NULL;
 	}
@@ -520,8 +519,7 @@ void dfs_detach(struct ieee80211com *ic)
 		OS_FREE(dfs->dfs_b5radars);
 		dfs->dfs_b5radars = NULL;
 	}
-	if (dfs->dfs_b5radars_ext_seg != NULL &&
-	    ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+	if (dfs->dfs_b5radars_ext_seg != NULL) {
 		OS_FREE(dfs->dfs_b5radars_ext_seg);
 		dfs->dfs_b5radars_ext_seg = NULL;
 	}
