@@ -54,7 +54,6 @@ static void lim_process_mlm_oem_data_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_join_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_auth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_assoc_req(tpAniSirGlobal, uint32_t *);
-static void lim_process_mlm_reassoc_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_disassoc_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_deauth_req(tpAniSirGlobal, uint32_t *);
 static void lim_process_mlm_set_keys_req(tpAniSirGlobal, uint32_t *);
@@ -1456,131 +1455,6 @@ end:
 	qdf_mem_free(mlm_assoc_req);
 	lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 			     (uint32_t *) &mlm_assoc_cnf);
-}
-
-/**
- * lim_process_mlm_reassoc_req() - process mlm reassoc request.
- *
- * @mac_ctx:     pointer to Global MAC structure
- * @msg:  pointer to the MLM message buffer
- *
- * This function is called to process MLM_REASSOC_REQ message
- * from SME
- *
- * Return: None
- */
-static void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
-{
-	uint8_t channel, sec_ch_offset;
-	struct tLimPreAuthNode *auth_node;
-	tLimMlmReassocReq *reassoc_req;
-	tLimMlmReassocCnf reassoc_cnf;
-	tpPESession session;
-
-	if (msg == NULL) {
-		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
-		return;
-	}
-
-	reassoc_req = (tLimMlmReassocReq *) msg;
-	session = pe_find_session_by_session_id(mac_ctx,
-			reassoc_req->sessionId);
-	if (NULL == session) {
-		lim_log(mac_ctx, LOGE,
-			FL("Session Does not exist for given sessionId %d"),
-			reassoc_req->sessionId);
-		qdf_mem_free(reassoc_req);
-		return;
-	}
-
-	lim_log(mac_ctx, LOG1,
-		FL("Process ReAssoc Req on sessionID %d Systemrole %d mlmstate %d from: " MAC_ADDRESS_STR),
-		reassoc_req->sessionId, GET_LIM_SYSTEM_ROLE(session),
-		session->limMlmState, MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
-
-	if ((LIM_IS_AP_ROLE(session) ||
-		LIM_IS_BT_AMP_AP_ROLE(session)) ||
-		(session->limMlmState !=
-		eLIM_MLM_LINK_ESTABLISHED_STATE)) {
-		/*
-		 * Received Reassoc request in invalid state or
-		 * in AP role.Return Reassoc confirm with Invalid
-		 * parameters code.
-		 */
-
-		lim_log(mac_ctx, LOGW,
-			FL("received unexpected MLM_REASSOC_CNF in state %X for role=%d, MAC addr= " MAC_ADDRESS_STR),
-			session->limMlmState, GET_LIM_SYSTEM_ROLE(session),
-			MAC_ADDR_ARRAY(reassoc_req->peerMacAddr));
-		lim_print_mlm_state(mac_ctx, LOGW, session->limMlmState);
-		reassoc_cnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
-		reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
-		goto end;
-	}
-
-	if (session->pLimMlmReassocReq)
-		qdf_mem_free(session->pLimMlmReassocReq);
-
-	/*
-	 * Hold Re-Assoc request as part of Session, knock-out mac_ctx
-	 * Hold onto Reassoc request parameters
-	 */
-	session->pLimMlmReassocReq = reassoc_req;
-
-	/* See if we have pre-auth context with new AP */
-	auth_node = lim_search_pre_auth_list(mac_ctx, session->limReAssocbssId);
-
-	if (!auth_node && qdf_mem_cmp(reassoc_req->peerMacAddr,
-					    session->bssId,
-					    sizeof(tSirMacAddr))) {
-		/*
-		 * Either pre-auth context does not exist AND
-		 * we are not reassociating with currently
-		 * associated AP.
-		 * Return Reassoc confirm with not authenticated
-		 */
-		reassoc_cnf.resultCode = eSIR_SME_STA_NOT_AUTHENTICATED;
-		reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
-
-		goto end;
-	}
-	/* assign the sessionId to the timer object */
-	mac_ctx->lim.limTimers.gLimReassocFailureTimer.sessionId =
-		reassoc_req->sessionId;
-	session->limPrevMlmState = session->limMlmState;
-	session->limMlmState = eLIM_MLM_WT_REASSOC_RSP_STATE;
-	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, session->peSessionId,
-			 session->limMlmState));
-
-	/* Derive channel from BSS description and store it at CFG. */
-	channel = session->limReassocChannelId;
-	sec_ch_offset = session->reAssocHtSecondaryChannelOffset;
-
-	/* Apply previously set configuration at HW */
-	lim_apply_configuration(mac_ctx, session);
-
-	/* store the channel switch sessionEntry in the lim global var */
-	session->channelChangeReasonCode =
-		LIM_SWITCH_CHANNEL_REASSOC;
-
-	/* Switch channel to the new Operating channel for Reassoc */
-	lim_set_channel(mac_ctx, channel,
-			session->ch_center_freq_seg0,
-			session->ch_center_freq_seg1,
-			session->ch_width,
-			session->maxTxPower,
-			session->peSessionId);
-
-	return;
-end:
-	reassoc_cnf.protStatusCode = eSIR_MAC_UNSPEC_FAILURE_STATUS;
-	/* Update PE sessio Id */
-	reassoc_cnf.sessionId = reassoc_req->sessionId;
-	/* Free up buffer allocated for reassocReq */
-	qdf_mem_free(reassoc_req);
-	session->pLimReAssocReq = NULL;
-	lim_post_sme_message(mac_ctx, LIM_MLM_REASSOC_CNF,
-			     (uint32_t *) &reassoc_cnf);
 }
 
 /**

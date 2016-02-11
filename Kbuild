@@ -416,6 +416,7 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_deauth_frame.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_disassoc_frame.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_message_queue.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_process_mlm_host_roam.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_mlm_req_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_mlm_rsp_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_probe_req_frame.o \

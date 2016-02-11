@@ -58,6 +58,10 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 				uint8_t *auth_rsp, uint16_t auth_rsp_len,
 				tpPESession psessionEntry);
+void lim_process_mlm_reassoc_cnf(tpAniSirGlobal, uint32_t *);
+void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
+		tpSirMsgQ limMsgQ, tpPESession psessionEntry);
+void lim_process_mlm_reassoc_req(tpAniSirGlobal, uint32_t *);
 void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 				    tpPESession psessionEntry);
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
