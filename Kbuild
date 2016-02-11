@@ -427,6 +427,7 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_scan_result_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_security_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_management_frames.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_send_frames_host_roam.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_sme_rsp_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ser_des_utils.o \
