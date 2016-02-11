@@ -1254,6 +1254,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			 TRACE_CODE_HDD_CFG80211_SCAN,
 			 pAdapter->sessionId, request->n_channels));
 
+	if (!sme_is_session_id_valid(pHddCtx->hHal, pAdapter->sessionId))
+		return -EINVAL;
+
 	hddLog(LOG1, FL("Device_mode %s(%d)"),
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);

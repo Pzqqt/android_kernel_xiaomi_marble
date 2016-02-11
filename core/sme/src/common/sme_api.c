@@ -2959,6 +2959,13 @@ QDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 	MTRACE(qdf_trace(QDF_MODULE_ID_SME,
 		 TRACE_CODE_SME_RX_HDD_MSG_SCAN_REQ, session_id,
 		 scan_req->scanType));
+
+	if (!CSR_IS_SESSION_VALID(mac_ctx, session_id)) {
+		sms_log(mac_ctx, LOGE, FL("Invalid session id:%d"),
+				session_id);
+		return status;
+	}
+
 	if (!mac_ctx->scan.fScanEnable) {
 		sms_log(mac_ctx, LOGE, FL("fScanEnable false"));
 		return status;
@@ -14783,6 +14790,32 @@ void sme_update_tgt_services(tHalHandle hal, struct wma_tgt_services *cfg)
 		FL("mac_ctx->pmf_offload: %d"), mac_ctx->pmf_offload);
 
 	return;
+}
+
+/**
+ * sme_is_session_id_valid() - Check if the session id is valid
+ * @hal: Pointer to HAL
+ * @session_id: Session id
+ *
+ * Checks if the session id is valid or not
+ *
+ * Return: True is the session id is valid, false otherwise
+ */
+bool sme_is_session_id_valid(tHalHandle hal, uint32_t session_id)
+{
+	tpAniSirGlobal mac = PMAC_STRUCT(hal);
+	if (!mac) {
+		sms_log(mac, LOGE, FL("null mac pointer"));
+		return false;
+	}
+
+	if (CSR_IS_SESSION_VALID(mac, session_id)) {
+		return true;
+	} else {
+		sms_log(mac, LOGE,
+			FL("invalid session id:%d"), session_id);
+		return false;
+	}
 }
 
 #ifdef FEATURE_WLAN_TDLS

@@ -1042,6 +1042,8 @@ bool sme_validate_sap_channel_switch(tHalHandle hal,
 		uint16_t sap_ch, eCsrPhyMode sap_phy_mode,
 		uint8_t cc_switch_mode, uint8_t session_id);
 
+bool sme_is_session_id_valid(tHalHandle hal, uint32_t session_id);
+
 #ifdef FEATURE_WLAN_TDLS
 void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 		uint8_t *opclass);
