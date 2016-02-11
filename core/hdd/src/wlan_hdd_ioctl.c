@@ -6357,7 +6357,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 	hdd_context_t *hdd_ctx;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (dev != adapter->dev) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,

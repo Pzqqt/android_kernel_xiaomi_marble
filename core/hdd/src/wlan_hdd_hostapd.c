@@ -218,7 +218,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 {
 	hdd_adapter_t *pAdapter = netdev_priv(dev);
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
@@ -267,7 +267,8 @@ static int hdd_hostapd_open(struct net_device *dev)
 static int __hdd_hostapd_stop(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
-	ENTER();
+
+	ENTER_DEV(dev);
 
 	/* Stop all tx queues */
 	hddLog(LOG1, FL("Disabling queues"));
@@ -311,7 +312,7 @@ static void __hdd_hostapd_uninit(struct net_device *dev)
 	hdd_adapter_t *adapter = netdev_priv(dev);
 	hdd_context_t *hdd_ctx;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hddLog(LOGE, FL("Invalid magic"));
@@ -355,6 +356,8 @@ static void hdd_hostapd_uninit(struct net_device *dev)
  */
 static int __hdd_hostapd_change_mtu(struct net_device *dev, int new_mtu)
 {
+	ENTER_DEV(dev);
+
 	return 0;
 }
 
@@ -420,7 +423,7 @@ static int __hdd_hostapd_set_mac_address(struct net_device *dev, void *addr)
 	hdd_context_t *hdd_ctx;
 	int ret = 0;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -470,7 +473,7 @@ void hdd_hostapd_inactivity_timer_cb(void *usrDataForCallback)
 	/* For the NULL at the end */
 	int event_len = strlen(autoShutEvent) + 1;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 #ifdef DISABLE_CONCURRENCY_AUTOSAVE
 	if (cds_concurrent_open_sessions_running()) {
