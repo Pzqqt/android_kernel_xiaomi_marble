@@ -401,6 +401,7 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_admit_control.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_api.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_assoc_utils.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_reassoc_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_debug.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ft.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ft_preauth.o \

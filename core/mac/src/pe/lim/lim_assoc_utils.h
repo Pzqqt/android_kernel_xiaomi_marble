@@ -84,6 +84,9 @@ lim_populate_matching_rate_set(tpAniSirGlobal pMac,
 			       uint8_t *pSupportedMCSSet,
 			       tpPESession psessionEntry,
 			       tDot11fIEVHTCaps * pVHTCaps);
+void lim_handle_del_bss_in_re_assoc_context(tpAniSirGlobal pMac,
+		   tpDphHashNode pStaDs, tpPESession psessionEntry);
+
 #define MCSMAPMASK1x1 0x3
 #define MCSMAPMASK2x2 0xC
 

@@ -303,55 +303,6 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 }
 
 /**
- * @function : lim_update_re_assoc_globals
- *
- * @brief :  This function is called to Update the Globals (LIM) during ReAssoc.
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  pMac    - Pointer to Global MAC structure
- * @param  pAssocRsp    - Pointer to Association Response Structure
- *
- * @return None
- */
-
-void lim_update_re_assoc_globals(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
-				 tpPESession psessionEntry)
-{
-	/* Update the current Bss Information */
-	qdf_mem_copy(psessionEntry->bssId,
-		     psessionEntry->limReAssocbssId, sizeof(tSirMacAddr));
-	psessionEntry->currentOperChannel = psessionEntry->limReassocChannelId;
-	psessionEntry->htSecondaryChannelOffset =
-		psessionEntry->reAssocHtSupportedChannelWidthSet;
-	psessionEntry->htRecommendedTxWidthSet =
-		psessionEntry->reAssocHtRecommendedTxWidthSet;
-	psessionEntry->htSecondaryChannelOffset =
-		psessionEntry->reAssocHtSecondaryChannelOffset;
-	psessionEntry->limCurrentBssCaps = psessionEntry->limReassocBssCaps;
-	psessionEntry->limCurrentBssQosCaps =
-		psessionEntry->limReassocBssQosCaps;
-	psessionEntry->limCurrentBssPropCap =
-		psessionEntry->limReassocBssPropCap;
-
-	qdf_mem_copy((uint8_t *) &psessionEntry->ssId,
-		     (uint8_t *) &psessionEntry->limReassocSSID,
-		     psessionEntry->limReassocSSID.length + 1);
-
-	/* Store assigned AID for TIM processing */
-	psessionEntry->limAID = pAssocRsp->aid & 0x3FFF;
-	/** Set the State Back to ReAssoc Rsp*/
-	psessionEntry->limMlmState = eLIM_MLM_WT_REASSOC_RSP_STATE;
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, psessionEntry->peSessionId,
-		       psessionEntry->limMlmState));
-
-}
-/**
  * lim_update_ric_data() - update session with ric data
  * @mac_ctx: Pointer to Global MAC structure
  * @session_entry: PE session handle
@@ -398,7 +349,6 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 }
 
 #ifdef FEATURE_WLAN_ESE
-
 /**
  * lim_update_ese_tspec() - update session with Tspec info.
  * @mac_ctx: Pointer to Global MAC structure
