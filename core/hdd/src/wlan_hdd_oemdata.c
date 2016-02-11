@@ -150,8 +150,10 @@ int iw_get_oem_data_cap(struct net_device *dev,
 		return ret;
 
 	status = populate_oem_data_cap(pAdapter, &oemDataCap);
-	if (!status)
+	if (0 != status) {
+		hdd_err("Failed to populate oem data capabilities");
 		return status;
+	}
 
 	pHddOemDataCap = (t_iw_oem_data_cap *) (extra);
 	*pHddOemDataCap = oemDataCap;
