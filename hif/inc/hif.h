@@ -152,7 +152,6 @@ struct qca_napi_data {
  * @enable_fw_log: To Enable FW LOG
  * @enable_lpass_support: LPASS support
  * @enable_ramdump_collection: Ramdump Collection
- * @max_no_of_peers: Max Number of Peers
  *
  * Structure for holding ini parameters.
  */
@@ -162,7 +161,6 @@ struct hif_config_info {
 	bool enable_fw_log;
 	bool enable_lpass_support;
 	bool enable_ramdump_collection;
-	uint8_t max_no_of_peers;
 };
 
 /**

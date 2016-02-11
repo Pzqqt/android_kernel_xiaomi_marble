@@ -479,7 +479,6 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 	hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	scn->cdf_dev = cdf_ctx;
 	cfg = hif_get_ini_handle(hif_hdl);
-	cfg->max_no_of_peers = 1;
 	cdf_atomic_init(&scn->active_tasklet_cnt);
 	cdf_atomic_init(&scn->link_suspended);
 	cdf_atomic_init(&scn->tasklet_from_intr);
