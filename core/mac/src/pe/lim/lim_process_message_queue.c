@@ -1174,7 +1174,6 @@ static QDF_STATUS lim_handle_hw_mode_change_on_csa(tpAniSirGlobal mac_ctx,
 	tpDphHashNode sta_ds = NULL;
 	uint8_t session_id;
 	uint16_t aid = 0;
-	enum cds_conc_next_action action;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	lim_log(mac_ctx, LOG1, FL("handle hw mode change for csa"));
@@ -1200,62 +1199,13 @@ static QDF_STATUS lim_handle_hw_mode_change_on_csa(tpAniSirGlobal mac_ctx,
 		goto err;
 	}
 
-	/* Since all the write to the policy manager table happens in the
-	 * MC thread context and this channel change event is also processed
-	 * in the MC thread context, explicit lock/unlock of qdf_conc_list_lock
-	 * is not done here
-	 */
-	action = cds_get_pref_hw_mode_for_chan(session_entry->smeSessionId,
-				csa_params->channel);
+	status = cds_handle_hw_mode_change_on_csa(session_entry->smeSessionId,
+			csa_params->channel, csa_params->bssId,
+			&session_entry->saved_csa_params, csa_params,
+			sizeof(session_entry->saved_csa_params));
 
-	if (action == CDS_NOP) {
-		lim_log(mac_ctx, LOG1, FL("no need for hw mode change"));
-		/* Proceed with processing csa params. So, not freeing it */
-		return QDF_STATUS_SUCCESS;
-	}
-
-	lim_log(mac_ctx, LOG1, FL("session:%d action:%d"),
-		session_entry->smeSessionId, action);
-
-	/*     1. Start opportunistic timer
-	 *     2. Do vdev restart on the new channel (by the caller)
-	 *     3. PM will check if MCC upgrade can be done after timer expiry
-	 */
-	if (action == CDS_MCC_UPGRADE) {
-		status = cds_stop_start_opportunistic_timer();
-		if (QDF_IS_STATUS_SUCCESS(status))
-			lim_log(mac_ctx, LOG1,
-				FL("opportunistic timer for MCC upgrade"));
-
-		/* After opportunistic timer is triggered, we can go ahead
-		 * with processing the csa params. So, not freeing the memory
-		 * through 'err' label.
-		 */
-		return QDF_STATUS_SUCCESS;
-	}
-
-	/*     CDS_DBS_DOWNGRADE:
-	 *     1. PM will initiate HW mode change to DBS rightaway
-	 *     2. Do vdev restart on the new channel (on getting hw mode resp)
-	 */
-	status = cds_next_actions(session_entry->smeSessionId, action,
-				CDS_UPDATE_REASON_CHANNEL_SWITCH_STA);
-	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		lim_log(mac_ctx, LOGE, FL("no set hw mode command was issued"));
-		/* Proceed with processing csa params. So, not freeing it */
-		return QDF_STATUS_SUCCESS;
-	} else {
-		/* Save the csa params to be used after DBS downgrade */
-		qdf_mem_copy(&session_entry->saved_csa_params, csa_params,
-				sizeof(session_entry->saved_csa_params));
-
-		lim_log(mac_ctx, LOG1,
-			FL("saved csa params for dbs downgrade for %pM"),
-			session_entry->saved_csa_params.bssId);
-
-		/* Returning error so that csa params are not processed here */
-		status = QDF_STATUS_E_FAILURE;
-	}
+	if (QDF_IS_STATUS_SUCCESS(status))
+		return status;
 
 err:
 	qdf_mem_free(csa_params);

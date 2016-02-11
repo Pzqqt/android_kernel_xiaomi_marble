@@ -8015,3 +8015,84 @@ QDF_STATUS cds_stop_start_opportunistic_timer(void)
 
 	return status;
 }
+
+/**
+ * cds_handle_hw_mode_change_on_csa() - handle hw mode change for csa
+ * @session_id: SME session id
+ * @channel: given channel
+ * @bssid: pointer to bssid
+ * @dst: pointer to dest buffer
+ * @src: pointer to src buffer
+ * @numbytes: number of bytes to copy from src to dst
+ *
+ * Use this function to decide whether the hw mode upgrage or downgrade
+ * is required based on session_id and given channel
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS cds_handle_hw_mode_change_on_csa(uint16_t session_id,
+		uint8_t channel, uint8_t *bssid, void *dst, void *src,
+		uint32_t numbytes)
+{
+	enum cds_conc_next_action action;
+	QDF_STATUS status;
+
+	/*
+	 * Since all the write to the policy manager table happens in the
+	 * MC thread context and this channel change event is also processed
+	 * in the MC thread context, explicit lock/unlock of qdf_conc_list_lock
+	 * is not done here
+	 */
+	action = cds_get_pref_hw_mode_for_chan(session_id, channel);
+
+	if (action == CDS_NOP) {
+		cds_info("no need for hw mode change");
+		/* Proceed with processing csa params. So, not freeing it */
+		return QDF_STATUS_SUCCESS;
+	}
+	cds_info("session:%d action:%d", session_id, action);
+
+	/*
+	 *     1. Start opportunistic timer
+	 *     2. Do vdev restart on the new channel (by the caller)
+	 *     3. PM will check if MCC upgrade can be done after timer expiry
+	 */
+	if (action == CDS_MCC_UPGRADE) {
+		status = cds_stop_start_opportunistic_timer();
+		if (QDF_IS_STATUS_SUCCESS(status))
+			cds_info("opportunistic timer for MCC upgrade");
+
+		/*
+		 * After opportunistic timer is triggered, we can go ahead
+		 * with processing the csa params. So, not freeing the memory
+		 * through 'err' label.
+		 */
+		return QDF_STATUS_SUCCESS;
+	}
+
+	/*
+	 *     CDS_DBS_DOWNGRADE:
+	 *     1. PM will initiate HW mode change to DBS rightaway
+	 *     2. Do vdev restart on the new channel (on getting hw mode resp)
+	 */
+	status = cds_next_actions(session_id, action,
+				CDS_UPDATE_REASON_CHANNEL_SWITCH_STA);
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("no set hw mode command was issued");
+		/* Proceed with processing csa params. So, not freeing it */
+		return QDF_STATUS_SUCCESS;
+	} else {
+		if ((NULL == dst) || (NULL == src)) {
+			cds_err("given buffers are null, can't copy csa param");
+			return QDF_STATUS_E_FAILURE;
+		}
+		/* Save the csa params to be used after DBS downgrade */
+		qdf_mem_copy(dst, src, numbytes);
+		cds_info("saved csa params for dbs downgrade for bssid %pM",
+				bssid);
+
+		/* Returning error so that csa params are not processed here */
+		status = QDF_STATUS_E_FAILURE;
+	}
+	return status;
+}
