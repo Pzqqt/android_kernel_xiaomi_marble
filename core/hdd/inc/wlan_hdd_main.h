@@ -178,6 +178,8 @@
 		hdd_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 
 #define ENTER() hdd_logfl(QDF_TRACE_LEVEL_INFO_LOW, "enter")
+#define ENTER_DEV(dev) \
+		hdd_logfl(QDF_TRACE_LEVEL_INFO_LOW, "enter(%s)", (dev)->name)
 #define EXIT() hdd_logfl(QDF_TRACE_LEVEL_INFO_LOW, "exit")
 
 #define WLAN_HDD_GET_PRIV_PTR(__dev__) (hdd_adapter_t *)(netdev_priv((__dev__)))
