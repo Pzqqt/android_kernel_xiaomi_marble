@@ -88,11 +88,9 @@
 #include <net/cnss.h>
 #endif
 #include "cds_regdomain.h"
-
-#include "wlan_hdd_ocb.h"
 #include "cdp_txrx_flow_ctrl_v2.h"
 #endif /* FEATURE_WLAN_CH_AVOID */
-
+#include "wlan_hdd_ocb.h"
 #include "wlan_hdd_nan.h"
 #include "wlan_hdd_debugfs.h"
 #include "wlan_hdd_driver_ops.h"
