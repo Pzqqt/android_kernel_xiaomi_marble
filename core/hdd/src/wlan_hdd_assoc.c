@@ -4722,7 +4722,7 @@ static int __iw_set_essid(struct net_device *dev,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4922,7 +4922,7 @@ static int __iw_get_essid(struct net_device *dev,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4992,7 +4992,7 @@ static int __iw_set_auth(struct net_device *dev, struct iw_request_info *info,
 	eCsrEncryptionType ucEncryptionType;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5239,7 +5239,7 @@ static int __iw_get_auth(struct net_device *dev, struct iw_request_info *info,
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -5396,7 +5396,7 @@ static int __iw_set_ap_address(struct net_device *dev,
 	uint8_t *pMacAddress = NULL;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
@@ -5456,7 +5456,7 @@ static int __iw_get_ap_address(struct net_device *dev,
 		WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);

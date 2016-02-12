@@ -716,7 +716,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 	uint16_t con_dfs_ch;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -897,7 +897,7 @@ static int __iw_get_scan(struct net_device *dev,
 	int i = 0;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
