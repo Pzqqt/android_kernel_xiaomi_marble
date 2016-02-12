@@ -1032,6 +1032,7 @@ typedef struct sSirSmeJoinRsp {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	tSirSmeHTProfile HTProfile;
 #endif
+	bool supported_nss_1x1;
 	uint8_t frames[1];
 } tSirSmeJoinRsp, *tpSirSmeJoinRsp;
 

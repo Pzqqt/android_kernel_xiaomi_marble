@@ -965,6 +965,7 @@ typedef struct tagCsrRoamSession {
 	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
 	bool roam_synch_in_progress;
+	bool supported_nss_1x1;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {

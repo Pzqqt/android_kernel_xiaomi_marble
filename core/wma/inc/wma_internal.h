@@ -814,6 +814,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 #endif
 
 tSmpsModeValue host_map_smps_mode(A_UINT32 fw_smps_mode);
+int wma_smps_mode_to_force_mode_param(uint8_t smps_mode);
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle);

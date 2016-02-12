@@ -3623,6 +3623,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	bool peer_assoc_cnf = false;
 	struct vdev_up_params param = {0};
 	struct pdev_params pdev_param = {0};
+	int smps_param;
 
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType) {
@@ -3798,13 +3799,23 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		 __func__, iface->type, iface->sub_type);
 	/* Sta is now associated, configure various params */
 
-	/* SM power save, configure the h/w as configured
-	 * in the ini file. SMPS is not published in assoc
-	 * request. Once configured, fw sends the required
-	 * action frame to AP.
+	/* Send SMPS force command to FW to send the required
+	 * action frame only when SM power save is enbaled in
+	 * the INI. In case dynamic antenna selection, the
+	 * action frames are sent by the chain mask manager.
+	 * In addition to the action frames, The SM power save is
+	 * published in the assoc request HT SMPS IE for both cases.
 	 */
-	if (params->enableHtSmps)
-		wma_set_mimops(wma, params->smesessionId, params->htSmpsconfig);
+	if (params->enableHtSmps) {
+		smps_param = wma_smps_mode_to_force_mode_param(
+			params->htSmpsconfig);
+		if (smps_param >= 0) {
+			WMA_LOGD("%s: Set MIMO power save smps mode %d",
+				__func__, params->htSmpsconfig);
+			wma_set_mimops(wma, params->smesessionId,
+				smps_param);
+		}
+	}
 
 	/* Partial AID match power save, enable when SU bformee */
 	if (params->enableVhtpAid && params->vhtTxBFCapable)

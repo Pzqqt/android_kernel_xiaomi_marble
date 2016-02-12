@@ -493,6 +493,13 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 
 		lim_handle_join_rsp_status(mac_ctx, session_entry, result_code,
 			sme_join_rsp);
+
+		/* Send supported NSS 1x1 to SME */
+		sme_join_rsp->supported_nss_1x1 =
+			session_entry->supported_nss_1x1;
+		lim_log(mac_ctx, LOG1,
+		       FL("SME Join Rsp is supported NSS 1X1: %d"),
+		       sme_join_rsp->supported_nss_1x1);
 	}
 
 	sme_join_rsp->messageType = msg_type;

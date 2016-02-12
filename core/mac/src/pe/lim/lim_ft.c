@@ -933,6 +933,12 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 		eHT_CHANNEL_WIDTH_40MHZ))
 		lim_init_obss_params(pMac, pftSessionEntry);
 
+	pftSessionEntry->enableHtSmps = psessionEntry->enableHtSmps;
+	pftSessionEntry->smpsMode = psessionEntry->smpsMode;
+	lim_log(pMac, LOG1, FL("FT session enable smps: %d mode: %d"),
+		pftSessionEntry->enableHtSmps,
+		pftSessionEntry->smpsMode);
+
 	qdf_mem_free(pBeaconStruct);
 }
 

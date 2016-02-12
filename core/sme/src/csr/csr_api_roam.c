@@ -2290,6 +2290,9 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.obss_active_dwelltime;
 	pParam->obss_passive_dwelltime =
 		pMac->roam.configParam.obss_passive_dwelltime;
+	pParam->enableHtSmps = pMac->roam.configParam.enableHtSmps;
+	pParam->htSmps = pMac->roam.configParam.htSmps;
+	pParam->send_smps_action = pMac->roam.configParam.send_smps_action;
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -8011,6 +8014,13 @@ static void csr_roam_join_rsp_processor(tpAniSirGlobal pMac,
 					      SME_QOS_CSR_HANDOFF_COMPLETE, NULL);
 #endif
 		}
+
+		session_ptr->supported_nss_1x1 =
+			pSmeJoinRsp->supported_nss_1x1;
+		sms_log(pMac, LOG1,
+			FL("SME session supported nss: %d"),
+			session_ptr->supported_nss_1x1);
+
 		/* *
 		 * The join bssid count can be reset as soon as
 		 * we are done with the join requests and returning

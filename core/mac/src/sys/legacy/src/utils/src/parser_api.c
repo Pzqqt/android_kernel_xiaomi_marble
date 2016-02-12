@@ -769,6 +769,18 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 			pDot11f->supportedMCSSet[1] = 0;
 	}
 
+	/* If STA mode, session supported NSS > 1 and
+	 * SMPS enabled publish HT SMPS IE
+	 */
+	if (psessionEntry && (!pMac->lteCoexAntShare) &&
+	    LIM_IS_STA_ROLE(psessionEntry) &&
+	    (psessionEntry->enableHtSmps) &&
+	    (!psessionEntry->supported_nss_1x1)) {
+		lim_log(pMac, LOG1, FL("Add SM power save IE: %d"),
+			psessionEntry->htSmpsvalue);
+		pDot11f->mimoPowerSave = psessionEntry->htSmpsvalue;
+	}
+
 	CFG_GET_INT(nSirStatus, pMac, WNI_CFG_EXT_HT_CAP_INFO, nCfgValue);
 
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;

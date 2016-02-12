@@ -566,8 +566,9 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 					      privcmd->param_value);
 		break;
 	case WMI_STA_SMPS_FORCE_MODE_CMDID:
-		wma_set_mimops(wma_handle, privcmd->param_vdev_id,
-			       privcmd->param_value);
+		ret = wma_set_mimops(wma_handle,
+				     privcmd->param_vdev_id,
+				     privcmd->param_value);
 		break;
 	case WMI_STA_SMPS_PARAM_CMDID:
 		wma_set_smps_params(wma_handle, privcmd->param_vdev_id,

@@ -1590,6 +1590,15 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.configParam.enable2x2,
 		rates->vhtRxMCSMap, rates->vhtTxMCSMap);
 
+	if (NULL != session_entry) {
+		session_entry->supported_nss_1x1 =
+			((rates->vhtTxMCSMap & VHT_MCS_1x1) ==
+			 VHT_MCS_1x1) ? true : false;
+		lim_log(mac_ctx, LOG1,
+		       FL("VHT supported nss 1x1: %d"),
+		       session_entry->supported_nss_1x1);
+	}
+
 	return eSIR_SUCCESS;
 error:
 
@@ -1891,6 +1900,11 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 				       (pMac, LOG2, FL("%x "),
 				       pRates->supportedMCSSet[i]);
 			       )
+
+		psessionEntry->supported_nss_1x1 =
+			((pRates->supportedMCSSet[1] != 0) ? false : true);
+		PELOG1(lim_log(pMac, LOG1, FL("HT supported nss 1x1: %d"),
+			      psessionEntry->supported_nss_1x1);)
 	}
 	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps, psessionEntry);
 	return eSIR_SUCCESS;
@@ -2996,7 +3010,8 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->vhtTxMUBformeeCapable = psessionEntry->txMuBformee;
 	pAddStaParams->enableVhtpAid = psessionEntry->enableVhtpAid;
 	pAddStaParams->enableAmpduPs = psessionEntry->enableAmpduPs;
-	pAddStaParams->enableHtSmps = psessionEntry->enableHtSmps;
+	pAddStaParams->enableHtSmps = (psessionEntry->enableHtSmps &&
+				(!psessionEntry->supported_nss_1x1));
 	pAddStaParams->htSmpsconfig = psessionEntry->htSmpsvalue;
 
 	/* For Self STA get the LDPC capability from session i.e config.ini */
