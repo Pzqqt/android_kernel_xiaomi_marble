@@ -390,7 +390,7 @@ struct dfs_filter {
 #endif
 
 struct dfs_filtertype {
-	struct dfs_filter ft_filters[DFS_MAX_NUM_RADAR_FILTERS];
+	struct dfs_filter *ft_filters[DFS_MAX_NUM_RADAR_FILTERS];
 	/* Duration of pulse which specifies filter type */
 	uint32_t ft_filterdur;
 	/* Num filters of this type */

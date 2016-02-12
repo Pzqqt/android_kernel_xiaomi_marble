@@ -108,7 +108,7 @@ void dfs_print_filters(struct ath_dfs *dfs)
 				("===========ft->ft_numfilters=%u===========\n",
 				ft->ft_numfilters);
 			for (j = 0; j < ft->ft_numfilters; j++) {
-				rf = &(ft->ft_filters[j]);
+				rf = ft->ft_filters[j];
 				DFS_PRINTK
 					("filter[%d] filterID = %d rf_numpulses=%u; rf->rf_minpri=%u; rf->rf_maxpri=%u; rf->rf_threshold=%u; rf->rf_filterlen=%u; rf->rf_mindur=%u; rf->rf_maxdur=%u\n",
 					j, rf->rf_pulseid, rf->rf_numpulses,

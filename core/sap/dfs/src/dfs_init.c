@@ -118,7 +118,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 			ft = dfs->dfs_radarf[i];
 			if (NULL != ft) {
 				for (j = 0; j < ft->ft_numfilters; j++) {
-					rf = &(ft->ft_filters[j]);
+					rf = ft->ft_filters[j];
 					if (dfs->ic->dfs_hw_bd_id !=
 							DFS_HWBD_QCA6174)
 						dl = (seg_id == 0) ?
@@ -332,7 +332,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 			}
 			dfs->dfs_rinfo.rn_numradars++;
 		}
-		rf = &(ft->ft_filters[ft->ft_numfilters++]);
+		rf = ft->ft_filters[ft->ft_numfilters++];
 		dfs_reset_delayline(&rf->rf_dl);
 
 		if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)

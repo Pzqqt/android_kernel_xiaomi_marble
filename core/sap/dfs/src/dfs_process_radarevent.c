@@ -634,7 +634,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			}
 			for (p = 0, found = 0;
 			     (p < ft->ft_numfilters) && (!found); p++) {
-				rf = &(ft->ft_filters[p]);
+				rf = ft->ft_filters[p];
 				dl = (seg_id == 0) ? &rf->rf_dl :
 						     &rf->rf_dl_ext_seg;
 				if ((re.re_dur >= rf->rf_mindur)
