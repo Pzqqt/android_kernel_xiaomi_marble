@@ -407,15 +407,7 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 	sap_ctx->sap_state = eSAP_ACS_CHANNEL_SELECTED;
 	sap_ctx->sap_status = eSAP_STATUS_SUCCESS;
 close_session:
-	status = sme_close_session(hal_handle,
-			sap_ctx->sessionId, sap_hdd_signal_event_handler,
-			sap_ctx);
-	if (QDF_STATUS_SUCCESS != status)
-		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  FL("CloseSession failed"));
-	else
-		sap_ctx->isScanSessionOpen = eSAP_FALSE;
-	sap_ctx->sessionId = 0xff;
+	sap_hdd_signal_event_handler(sap_ctx);
 	return status;
 }
 
@@ -949,11 +941,10 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	switch (roam_status) {
 	case eCSR_ROAM_SESSION_OPENED:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("Calling sme_roam_connect with eCSR_BSS_TYPE_INFRA_AP"));
+			  FL("Session %d opened successfully"),
+			  sap_ctx->sessionId);
 		sap_ctx->isSapSessionOpen = eSAP_TRUE;
-		qdf_ret_status = sme_roam_connect(hal, sap_ctx->sessionId,
-						  &sap_ctx->csr_roamProfile,
-						  &sap_ctx->csr_roamId);
+		qdf_event_set(&sap_ctx->sap_session_opened_evt);
 		break;
 	case eCSR_ROAM_INFRA_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,

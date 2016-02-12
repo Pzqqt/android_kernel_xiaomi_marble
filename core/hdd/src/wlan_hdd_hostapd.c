@@ -6014,6 +6014,8 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	v_CONTEXT_t sapContext = NULL;
 #endif
 	int ret;
+	enum tQDF_ADAPTER_MODE mode;
+	uint32_t session_id = CSR_SESSION_ID_INVALID;
 
 	ENTER();
 
@@ -6026,12 +6028,25 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 
 	pAdapter->sessionCtx.ap.sapContext = sapContext;
 
-	status = wlansap_start(sapContext);
+	if (pAdapter->device_mode == WLAN_HDD_P2P_GO) {
+		mode = QDF_P2P_GO_MODE;
+	} else if (pAdapter->device_mode == WLAN_HDD_SOFTAP) {
+		mode = QDF_SAP_MODE;
+	} else {
+		hdd_err("Invalid mode for AP: %d", pAdapter->device_mode);
+		return QDF_STATUS_E_FAULT;
+	}
+
+	status = wlansap_start(sapContext, mode,
+			pAdapter->macAddressCurrent.bytes,
+			&session_id);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, ("ERROR: wlansap_start failed!!"));
 		wlansap_close(sapContext);
+		pAdapter->sessionCtx.ap.sapContext = NULL;
 		return status;
 	}
+	pAdapter->sessionId = session_id;
 #endif
 
 	/* Allocate the Wireless Extensions state structure */
@@ -6049,6 +6064,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 		hddLog(LOGE, ("ERROR: hdd_set_hostapd failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
+		pAdapter->sessionCtx.ap.sapContext = NULL;
 #endif
 		return status;
 	}
@@ -6058,6 +6074,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 		hddLog(LOGE, ("ERROR: Hostapd HDD qdf event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
+		pAdapter->sessionCtx.ap.sapContext = NULL;
 #endif
 		return qdf_status;
 	}
@@ -6068,6 +6085,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 			  ("ERROR: Hostapd HDD stop bss event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
+		pAdapter->sessionCtx.ap.sapContext = NULL;
 #endif
 		return qdf_status;
 	}
@@ -6115,6 +6133,7 @@ error_wmm_init:
 	hdd_softap_deinit_tx_rx(pAdapter);
 #ifdef WLAN_FEATURE_MBSSID
 	wlansap_close(sapContext);
+	pAdapter->sessionCtx.ap.sapContext = NULL;
 #endif
 	EXIT();
 	return status;

@@ -3900,6 +3900,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	case eCSR_ROAM_SESSION_OPENED:
 		set_bit(SME_SESSION_OPENED, &pAdapter->event_flags);
 		complete(&pAdapter->session_open_comp_var);
+		hdd_debug("session %d opened", pAdapter->sessionId);
 		break;
 
 	/*

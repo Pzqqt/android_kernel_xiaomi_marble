@@ -2663,7 +2663,9 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 	vdev = wma_find_vdev_by_addr(wma, add_bss->bssId, &vdev_id);
 	if (!vdev) {
-		WMA_LOGE("%s: Failed to get vdev handle", __func__);
+		WMA_LOGE("%s: Failed to get vdev handle:"MAC_ADDRESS_STR,
+			__func__, MAC_ADDR_ARRAY(add_bss->bssId));
+
 		goto send_fail_resp;
 	}
 	if (SAP_WPS_DISABLED == add_bss->wps_state)

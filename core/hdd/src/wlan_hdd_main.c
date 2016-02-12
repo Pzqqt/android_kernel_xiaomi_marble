@@ -2805,6 +2805,43 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 	}
 }
 
+/**
+ * hdd_wait_for_sme_close_sesion() - Close and wait for SME session close
+ * @hdd_ctx: HDD context which is already NULL validated
+ * @adapter: HDD adapter which is already NULL validated
+ *
+ * Close the SME session and wait for its completion, if needed.
+ *
+ * Return: None
+ */
+static void hdd_wait_for_sme_close_sesion(hdd_context_t *hdd_ctx,
+					hdd_adapter_t *adapter)
+{
+	unsigned long rc;
+
+	if (!test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
+		hdd_err("session is not opened:%d", adapter->sessionId);
+		return;
+	}
+
+	INIT_COMPLETION(adapter->session_close_comp_var);
+	if (QDF_STATUS_SUCCESS ==
+			sme_close_session(hdd_ctx->hHal, adapter->sessionId,
+				hdd_sme_close_session_callback,
+				adapter)) {
+		/*
+		 * Block on a completion variable. Can't wait
+		 * forever though.
+		 */
+		rc = wait_for_completion_timeout(
+				&adapter->session_close_comp_var,
+				msecs_to_jiffies
+				(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
+		if (!rc)
+			hdd_err("failure waiting for session_close_comp_var");
+	}
+}
+
 QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			    const bool bCloseSession)
 {
@@ -2884,29 +2921,8 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		 * It is possible that the caller of this function does not
 		 * wish to close the session
 		 */
-		if (true == bCloseSession &&
-		    test_bit(SME_SESSION_OPENED, &adapter->event_flags)) {
-			INIT_COMPLETION(adapter->session_close_comp_var);
-			if (QDF_STATUS_SUCCESS ==
-			    sme_close_session(hdd_ctx->hHal, adapter->sessionId,
-					      hdd_sme_close_session_callback,
-					      adapter)) {
-				/*
-				 * Block on a completion variable. Can't wait
-				 * forever though.
-				 */
-				rc = wait_for_completion_timeout(
-					&adapter->session_close_comp_var,
-					msecs_to_jiffies
-						(WLAN_WAIT_TIME_SESSIONOPENCLOSE));
-				if (!rc) {
-					hddLog(LOGE,
-					       FL(
-						  "failure waiting for session_close_comp_var"
-						 ));
-				}
-			}
-		}
+		if (true == bCloseSession)
+			hdd_wait_for_sme_close_sesion(hdd_ctx, adapter);
 		break;
 
 	case WLAN_HDD_SOFTAP:
@@ -2999,6 +3015,8 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			adapter->sessionCtx.ap.beacon = NULL;
 		}
 		mutex_unlock(&hdd_ctx->sap_lock);
+		if (true == bCloseSession)
+			hdd_wait_for_sme_close_sesion(hdd_ctx, adapter);
 		break;
 	case WLAN_HDD_OCB:
 		ol_txrx_clear_peer(WLAN_HDD_GET_STATION_CTX_PTR(adapter)->

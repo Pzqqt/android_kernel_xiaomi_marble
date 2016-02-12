@@ -806,11 +806,12 @@ QDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
 QDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
 
 void *wlansap_open(void *p_cds_gctx);
-QDF_STATUS wlansap_start(void *p_cds_gctx);
+QDF_STATUS wlansap_start(void *p_cds_gctx, enum tQDF_ADAPTER_MODE mode,
+			 uint8_t *addr, uint32_t *session_id);
 QDF_STATUS wlansap_stop(void *p_cds_gctx);
 QDF_STATUS wlansap_close(void *p_cds_gctx);
 typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
-		void *pUsrContext);
+					void *pUsrContext);
 uint8_t wlansap_get_state(void *p_cds_gctx);
 
 QDF_STATUS wlansap_start_bss(void *p_cds_gctx,

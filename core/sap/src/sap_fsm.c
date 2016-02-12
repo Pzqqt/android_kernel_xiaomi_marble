@@ -2214,29 +2214,20 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 	return QDF_STATUS_SUCCESS;
 }
 
-/*==========================================================================
-   FUNCTION    sap_OpenSession
+/**
+ * sap_open_session() - Opens a SAP session
+ * @hHal: Hal handle
+ * @sapContext:  Sap Context value
+ * @session_id: Pointer to the session id
+ *
+ * Function for opening SME and SAP sessions when system is in SoftAP role
+ *
+ * Return: QDF_STATUS
+ */
 
-   DESCRIPTION
-    Function for opening SME and SAP sessions when system is in SoftAP role
-
-   DEPENDENCIES
-    NA.
-
-   PARAMETERS
-
-    IN
-    hHal        : Hal handle
-    sapContext  : Sap Context value
-
-   RETURN VALUE
-    The QDF_STATUS code associated with performing the operation
-
-    QDF_STATUS_SUCCESS: Success
-
-   SIDE EFFECTS
-   ============================================================================*/
-QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
+#define SAP_OPEN_SESSION_TIMEOUT 500
+QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
+			    uint32_t *session_id)
 {
 	uint32_t type, subType;
 	QDF_STATUS qdf_ret_status;
@@ -2253,6 +2244,8 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 			  "failed to get vdev type");
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	qdf_event_reset(&sapContext->sap_session_opened_evt);
 	/* Open SME Session for Softap */
 	qdf_ret_status = sme_open_session(hHal,
 					  &wlansap_roam_callback,
@@ -2268,11 +2261,21 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 		return QDF_STATUS_E_FAILURE;
 	}
 
+	status = qdf_wait_single_event(&sapContext->sap_session_opened_evt,
+				       SAP_OPEN_SESSION_TIMEOUT);
+
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
+		cds_err("wait for sap open session event timed out");
+		return QDF_STATUS_E_FAILURE;
+	}
+
 	pMac->sap.sapCtxList[sapContext->sessionId].sessionID =
 		sapContext->sessionId;
 	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = sapContext;
 	pMac->sap.sapCtxList[sapContext->sessionId].sapPersona =
 		sapContext->csr_roamProfile.csrPersona;
+	*session_id = sapContext->sessionId;
+	sapContext->isSapSessionOpen = eSAP_TRUE;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2300,10 +2303,9 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 
    SIDE EFFECTS
    ============================================================================*/
-QDF_STATUS
-sap_goto_starting
-	(ptSapContext sapContext,
-	ptWLAN_SAPEvent sapEvent, eCsrRoamBssType bssType) {
+QDF_STATUS sap_goto_starting(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
+			     eCsrRoamBssType bssType)
+{
 	/* tHalHandle */
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
 	QDF_STATUS qdf_ret_status;
@@ -2313,7 +2315,9 @@ sap_goto_starting
 		4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, };
 	sapContext->key_type = 0x05;
 	sapContext->key_length = 32;
-	qdf_mem_copy(sapContext->key_material, key_material, sizeof(key_material));     /* Need a key size define */
+	/* Need a key size define */
+	qdf_mem_copy(sapContext->key_material, key_material,
+		     sizeof(key_material));
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH, "In %s",
 		  __func__);
@@ -2325,16 +2329,17 @@ sap_goto_starting
 		return QDF_STATUS_E_FAULT;
 	}
 
-	qdf_ret_status = sap_open_session(hHal, sapContext);
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO, "%s: session: %d",
+		  __func__, sapContext->sessionId);
 
-	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
+	qdf_ret_status = sme_roam_connect(hHal, sapContext->sessionId,
+					  &sapContext->csr_roamProfile,
+					  &sapContext->csr_roamId);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status)
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "Error: In %s calling sap_open_session status = %d",
-			  __func__, qdf_ret_status);
-		return QDF_STATUS_E_FAILURE;
-	}
+			"%s: Failed to issue sme_roam_connect", __func__);
 
-	return QDF_STATUS_SUCCESS;
+	return qdf_ret_status;
 } /* sapGotoStarting */
 
 /*==========================================================================
@@ -2844,6 +2849,7 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
 	sapContext->isCacStartNotified = false;
 	sapContext->isCacEndNotified = false;
 	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = NULL;
+	sapContext->isSapSessionOpen = false;
 
 	if (NULL == sap_find_valid_concurrent_session(hHal)) {
 		/* If timer is running then stop the timer and destory it */
@@ -3071,36 +3077,41 @@ static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		 * (both without substates)
 		 */
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-			  FL("new from state %s => %s"),
-			  "eSAP_DISCONNECTED", "eSAP_CH_SELECT");
+			  FL("new from state %s => %s: session:%d"),
+			  "eSAP_DISCONNECTED", "eSAP_CH_SELECT",
+			  sap_ctx->sessionId);
 
-		/* There can be one SAP Session for softap */
-		if (sap_ctx->isSapSessionOpen == eSAP_TRUE) {
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_FATAL,
-				  FL("SME Session is already opened"));
-			return QDF_STATUS_E_EXISTS;
-		}
-
-		sap_ctx->sessionId = 0xff;
-
-		if ((sap_ctx->channel == AUTO_CHANNEL_SELECT) &&
-		    (sap_ctx->isScanSessionOpen == eSAP_FALSE)) {
+		if (sap_ctx->isSapSessionOpen == eSAP_FALSE) {
 			uint32_t type, subtype;
-			if (QDF_STATUS_SUCCESS == cds_get_vdev_types(
-					QDF_STA_MODE, &type, &subtype)) {
-				/* Open SME Session for scan */
-				qdf_status = sme_open_session(hal, NULL,
-					    sap_ctx, sap_ctx->self_mac_addr,
-					    &sap_ctx->sessionId, type, subtype);
-				if (QDF_STATUS_SUCCESS != qdf_status) {
-					QDF_TRACE(QDF_MODULE_ID_SAP,
-						  QDF_TRACE_LEVEL_ERROR,
-						  FL("Error: calling sme_open_session"));
-				} else {
-					sap_ctx->isScanSessionOpen = eSAP_TRUE;
-				}
+			if (sap_ctx->csr_roamProfile.csrPersona ==
+			    QDF_P2P_GO_MODE)
+				qdf_status = cds_get_vdev_types(QDF_P2P_GO_MODE,
+							&type, &subtype);
+			else
+				qdf_status = cds_get_vdev_types(QDF_SAP_MODE,
+								&type,
+								&subtype);
+
+			if (QDF_STATUS_SUCCESS != qdf_status) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+						QDF_TRACE_LEVEL_FATAL,
+						"failed to get vdev type");
+				return QDF_STATUS_E_FAILURE;
 			}
+			/* Open SME Session for scan */
+			qdf_status = sme_open_session(hal, NULL,
+					sap_ctx, sap_ctx->self_mac_addr,
+					&sap_ctx->sessionId, type, subtype);
+			if (QDF_STATUS_SUCCESS != qdf_status) {
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					 QDF_TRACE_LEVEL_ERROR,
+					 FL("Error: calling sme_open_session"));
+				return QDF_STATUS_E_FAILURE;
+			}
+
+			sap_ctx->isSapSessionOpen = eSAP_TRUE;
 		}
+
 		/* init dfs channel nol */
 		sap_init_dfs_channel_nol_list(sap_ctx);
 
@@ -3178,18 +3189,6 @@ static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 	uint8_t temp_chan;
 	tSapDfsNolInfo *p_nol;
 #endif
-
-	if (sap_ctx->isScanSessionOpen == eSAP_TRUE) {
-		/* scan completed, so close the session */
-		qdf_status = sme_close_session(hal, sap_ctx->sessionId,
-				NULL, NULL);
-		if (QDF_STATUS_SUCCESS != qdf_status)
-			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-				FL("CloseSession error event msg %d"), msg);
-		else
-			sap_ctx->isScanSessionOpen = eSAP_FALSE;
-		sap_ctx->sessionId = 0xff;
-	}
 
 	if (msg == eSAP_MAC_SCAN_COMPLETE) {
 		/* get the bonding mode */

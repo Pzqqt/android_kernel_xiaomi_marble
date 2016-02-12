@@ -5640,17 +5640,18 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
-		  "%s: type=%d, subType=%d", __func__, type, subType);
+		  "%s: type=%d, subType=%d addr:%pM",
+		  __func__, type, subType, pSelfMacAddr);
 
 	if (NULL == pbSessionId) {
 		status = QDF_STATUS_E_INVAL;
 	} else {
 		status = sme_acquire_global_lock(&pMac->sme);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			status =
-				csr_roam_open_session(pMac, callback, pContext,
-						      pSelfMacAddr, pbSessionId, type,
-						      subType);
+			status = csr_roam_open_session(pMac, callback, pContext,
+						       pSelfMacAddr,
+						       pbSessionId, type,
+						       subType);
 
 			sme_release_global_lock(&pMac->sme);
 		}

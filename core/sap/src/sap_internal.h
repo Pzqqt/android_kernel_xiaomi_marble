@@ -262,6 +262,8 @@ typedef struct sSapContext {
 	eSapHddEvent sap_state;
 	eSapStatus sap_status;
 	uint32_t roc_ind_scan_id;
+
+	qdf_event_t sap_session_opened_evt;
 } *ptSapContext;
 
 /*----------------------------------------------------------------------------
@@ -417,6 +419,11 @@ void sap_config_acs_result(tHalHandle hal, ptSapContext sap_ctx,
  */
 bool
 sap_check_in_avoid_ch_list(ptSapContext sap_ctx, uint8_t channel);
+QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext,
+				uint32_t *session_id);
+QDF_STATUS sap_close_session(tHalHandle hHal,
+			     ptSapContext sapContext,
+			     csr_roamSessionCloseCallback callback, bool valid);
 #ifdef __cplusplus
 }
 #endif
