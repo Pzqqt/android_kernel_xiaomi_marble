@@ -3911,7 +3911,7 @@ int __iw_set_auth_hostap(struct net_device *dev, struct iw_request_info *info,
 	hdd_context_t *hdd_ctx;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4003,7 +4003,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 	tCsrRoamSetKey setKey;
 	int i;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4172,6 +4172,7 @@ static int __iw_set_ap_mlme(struct net_device *dev,
 			  struct iw_request_info *info,
 			  union iwreq_data *wrqu, char *extra)
 {
+	ENTER_DEV(dev);
 	return 0;
 }
 
@@ -4215,7 +4216,7 @@ static int __iw_get_ap_rts_threshold(struct net_device *dev,
 	int ret;
 	hdd_context_t *hdd_ctx;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4266,7 +4267,7 @@ static int __iw_get_ap_frag_threshold(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	int ret = 0;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4321,7 +4322,7 @@ static int __iw_get_ap_freq(struct net_device *dev,
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -4401,6 +4402,8 @@ static int __iw_get_mode(struct net_device *dev,
 	hdd_adapter_t *adapter;
 	hdd_context_t *hdd_ctx;
 	int ret;
+
+	ENTER_DEV(dev);
 
 	adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -5248,7 +5251,7 @@ static int __iw_set_ap_genie(struct net_device *dev,
 	uint8_t *genie = (uint8_t *)extra;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
