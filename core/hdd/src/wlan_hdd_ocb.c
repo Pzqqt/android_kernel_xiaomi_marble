@@ -487,6 +487,8 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 	int i, j;
 	struct sir_ocb_config_channel *curr_chan;
 
+	ENTER_DEV(dev);
+
 	if (wlan_hdd_validate_context(WLAN_HDD_GET_CTX(adapter))) {
 		hddLog(LOGE, FL("HDD context is not valid"));
 		return -EINVAL;
