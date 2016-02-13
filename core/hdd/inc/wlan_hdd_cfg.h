@@ -2871,6 +2871,29 @@ enum dot11p_mode {
 #define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
 #define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
 
+
+/*
+ * OBSS scan parameters
+ * obss_active_dwelltime - minimum per channel scan duration in active scan
+ * obss_passive_dwelltime - minimum per channel scan duration in passive scan
+ * obss_width_trigger_interval - During an OBSS scan operation, each channel
+ *  in the set is scanned at least once per configured trigger interval time.
+ */
+#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_NAME    "obss_active_dwelltime"
+#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MIN     (5)
+#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MAX     (1000)
+#define CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_DEFAULT (10)
+
+#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_NAME   "obss_passive_dwelltime"
+#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MIN    (10)
+#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MAX    (1000)
+#define CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_DEFAULT (20)
+
+#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_NAME "obss_width_trigger_interval"
+#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MIN  (10)
+#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MAX  (900)
+#define CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_DEFAULT (200)
+
 #ifdef QCA_WIFI_3_0_EMU
 /*
  * On M2M emulation platform we have a fixed mapping between macs, hence
@@ -3498,6 +3521,9 @@ struct hdd_config {
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 	bool enable_lfr_subnet_detection;
 #endif
+	uint16_t obss_active_dwelltime;
+	uint16_t obss_passive_dwelltime;
+	uint16_t obss_width_trigger_interval;
 	uint8_t inform_bss_rssi_raw;
 #ifdef QCA_WIFI_3_0_EMU
 	bool enable_m2m_limitation;

@@ -328,7 +328,8 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_DUMP_PCIE_LOG           16
 #endif
 #define WE_GET_RECOVERY_STAT       17
-#define WE_GET_FW_PROFILE_DATA        18
+#define WE_GET_FW_PROFILE_DATA     18
+#define WE_STOP_OBSS_SCAN          19
 
 /* Private ioctls and their sub-ioctls */
 #define WLAN_PRIV_SET_VAR_INT_GET_NONE   (SIOCIWFIRSTPRIV + 7)
@@ -7423,14 +7424,14 @@ static int __iw_setnone_getnone(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
-	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
+	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx;
 	int ret;
 	int sub_cmd;
 
 	ENTER_DEV(dev);
 
-	hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
 		return ret;
@@ -7458,25 +7459,25 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	switch (sub_cmd) {
 	case WE_GET_RECOVERY_STAT:
 	{
-		tHalHandle hal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+		tHalHandle hal = WLAN_HDD_GET_HAL_CTX(adapter);
 		sme_get_recovery_stats(hal);
 		break;
 	}
 
 	case WE_GET_FW_PROFILE_DATA:
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
 				0, DBG_CMD);
 		break;
 
 	case WE_SET_REASSOC_TRIGGER:
 	{
-		hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
-		tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
+		hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+		tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 		uint32_t roamId = 0;
 		tCsrRoamModifyProfileFields modProfileFields;
 		hdd_station_ctx_t *hdd_sta_ctx =
-				   WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+				   WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 
 		/* Reassoc to same AP, only supported for Open Security*/
 		if ((hdd_sta_ctx->conn_info.ucEncryptionType ||
@@ -7486,9 +7487,9 @@ static int __iw_setnone_getnone(struct net_device *dev,
 			return -ENOTSUPP;
 		}
 
-		sme_get_modify_profile_fields(hHal, pAdapter->sessionId,
+		sme_get_modify_profile_fields(hHal, adapter->sessionId,
 					      &modProfileFields);
-		sme_roam_reassoc(hHal, pAdapter->sessionId,
+		sme_roam_reassoc(hHal, adapter->sessionId,
 				 NULL, modProfileFields, &roamId, 1);
 		return 0;
 	}
@@ -7496,7 +7497,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_DUMP_AGC_START:
 	{
 		hddLog(LOG1, "WE_DUMP_AGC_START");
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 					  GEN_PARAM_DUMP_AGC_START,
 					  0, GEN_CMD);
 		break;
@@ -7504,7 +7505,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_DUMP_AGC:
 	{
 		hddLog(LOG1, "WE_DUMP_AGC");
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 					  GEN_PARAM_DUMP_AGC,
 					  0, GEN_CMD);
 		break;
@@ -7513,7 +7514,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_DUMP_CHANINFO_START:
 	{
 		hddLog(LOG1, "WE_DUMP_CHANINFO_START");
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 					  GEN_PARAM_DUMP_CHANINFO_START,
 					  0, GEN_CMD);
 		break;
@@ -7521,7 +7522,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_DUMP_CHANINFO:
 	{
 		hddLog(LOG1, "WE_DUMP_CHANINFO_START");
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 					  GEN_PARAM_DUMP_CHANINFO,
 					  0, GEN_CMD);
 		break;
@@ -7529,7 +7530,7 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_DUMP_WATCHDOG:
 	{
 		hddLog(LOG1, "WE_DUMP_WATCHDOG");
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 					  GEN_PARAM_DUMP_WATCHDOG,
 					  0, GEN_CMD);
 		break;
@@ -7538,12 +7539,29 @@ static int __iw_setnone_getnone(struct net_device *dev,
 	case WE_DUMP_PCIE_LOG:
 	{
 		hddLog(LOGE, "WE_DUMP_PCIE_LOG");
-		ret = wma_cli_set_command(pAdapter->sessionId,
+		ret = wma_cli_set_command(adapter->sessionId,
 					  GEN_PARAM_DUMP_PCIE_ACCESS_LOG,
 					  0, GEN_CMD);
 		break;
 	}
 #endif
+	case WE_STOP_OBSS_SCAN:
+	{
+		/*
+		 * 1.OBSS Scan is mandatory while operating in 2.4GHz
+		 * 2.OBSS scan is stopped by Firmware during the disassociation
+		 * 3.OBSS stop comamnd is added for debugging purpose
+		 */
+		tHalHandle hal;
+
+		hal = WLAN_HDD_GET_HAL_CTX(adapter);
+		if (hal == NULL) {
+			hdd_err("hal context is NULL");
+			return -EINVAL;
+		}
+		sme_ht40_stop_obss_scan(hal, adapter->sessionId);
+	}
+	break;
 	default:
 	{
 		hddLog(LOGE, "%s: unknown ioctl %d", __func__, sub_cmd);
@@ -10473,6 +10491,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "dump_pcie_log"},
 #endif
+	{WE_STOP_OBSS_SCAN,
+	 0,
+	 0,
+	 "stop_obss_scan"},
 	/* handlers for main ioctl */
 	{WLAN_PRIV_SET_VAR_INT_GET_NONE,
 	 IW_PRIV_TYPE_INT | MAX_VAR_ARGS,

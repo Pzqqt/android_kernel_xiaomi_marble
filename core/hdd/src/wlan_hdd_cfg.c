@@ -3657,6 +3657,29 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_LFR_SUBNET_MIN,
 		     CFG_ENABLE_LFR_SUBNET_MAX),
 #endif
+	REG_VARIABLE(CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_NAME,
+		WLAN_PARAM_Integer,
+		struct hdd_config, obss_active_dwelltime,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_DEFAULT,
+		CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MIN,
+		CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME_MAX),
+
+	REG_VARIABLE(CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_NAME,
+		WLAN_PARAM_Integer,
+		struct hdd_config, obss_passive_dwelltime,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_DEFAULT,
+		CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MIN,
+		CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME_MAX),
+
+	REG_VARIABLE(CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_NAME,
+		WLAN_PARAM_Integer,
+		struct hdd_config, obss_width_trigger_interval,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_DEFAULT,
+		CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MIN,
+		CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL_MAX),
 
 	REG_VARIABLE(CFG_INFORM_BSS_RSSI_RAW_NAME, WLAN_PARAM_Integer,
 		struct hdd_config, inform_bss_rssi_raw,
@@ -6714,6 +6737,12 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 			pHddCtx->config->roam_dense_min_aps;
 	smeConfig->csrConfig.roam_dense_traffic_thresh =
 			pHddCtx->config->roam_dense_traffic_thresh;
+	smeConfig->csrConfig.obss_width_interval =
+			pHddCtx->config->obss_width_trigger_interval;
+	smeConfig->csrConfig.obss_active_dwelltime =
+			pHddCtx->config->obss_active_dwelltime;
+	smeConfig->csrConfig.obss_passive_dwelltime =
+			pHddCtx->config->obss_passive_dwelltime;
 
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
