@@ -1716,7 +1716,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 			  1];
 	QDF_STATUS status;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1850,7 +1850,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	int retval = 0;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1998,7 +1998,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	int rem, retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2195,7 +2195,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	int rem, retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2477,7 +2477,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	uint8_t i;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3142,7 +3142,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	int retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3352,7 +3352,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	int retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3479,7 +3479,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	int retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3604,7 +3604,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	int retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3816,7 +3816,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	uint32_t num_networks, len;
 	int ret_val;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
@@ -4022,7 +4022,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	uint32_t num_networks = 0;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -4138,7 +4138,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	QDF_STATUS status;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -4268,7 +4268,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 	int retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -4488,7 +4488,7 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 	int retval;
 	unsigned long rc;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");

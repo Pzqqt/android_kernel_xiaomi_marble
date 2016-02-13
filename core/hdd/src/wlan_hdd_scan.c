@@ -1718,7 +1718,7 @@ static int __wlan_hdd_cfg80211_vendor_scan(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	int ret;
 
-	ENTER();
+	ENTER_DEV(wdev->netdev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)

@@ -671,6 +671,8 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 	struct sk_buff *skb;
 	uint32_t set = 0;
 
+	ENTER_DEV(wdev->netdev);
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
@@ -1100,7 +1102,7 @@ static int __is_driver_dfs_capable(struct wiphy *wiphy,
 	int ret_val;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	ENTER_DEV(wdev->netdev);
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)
@@ -1412,6 +1414,8 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	 * [QCA_WLAN_VENDOR_ATTR_ACS_CHWIDTH] = { .type = NLA_U16 },
 	 * [QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST] = { .type = NLA_NESTED },
 	 */
+
+	ENTER_DEV(ndev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1800,7 +1804,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 	uint32_t fset = 0;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -1941,7 +1945,7 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	QDF_STATUS status;
 	int ret;
 
-	ENTER();
+	ENTER_DEV(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2063,6 +2067,8 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 
 	uint8_t feature_flags[(NUM_QCA_WLAN_VENDOR_FEATURES + 7) / 8] = {0};
 	hdd_context_t *hdd_ctx_ptr = wiphy_priv(wiphy);
+
+	ENTER_DEV(wdev->netdev);
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx_ptr);
 	if (ret_val)
@@ -2186,6 +2192,8 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	int rem, i;
 	uint32_t buf_len = 0;
 	int ret;
+
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2630,7 +2638,8 @@ static int __wlan_hdd_cfg80211_disable_dfs_chan_scan(struct wiphy *wiphy,
 	int ret_val;
 	uint32_t no_dfs_flag = 0;
 
-	ENTER();
+	ENTER_DEV(dev);
+
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 
 	if (ret_val) {
@@ -2716,6 +2725,8 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	hdd_adapter_t *hdd_adapter_ptr = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx_ptr;
 	int status;
+
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2805,6 +2816,8 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 	uint8_t attr;
 	int status;
 	struct sk_buff *reply_skb = NULL;
+
+	ENTER_DEV(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -2902,6 +2915,8 @@ __wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
 	int status;
 	uint32_t features;
 	struct sk_buff *reply_skb = NULL;
+
+	ENTER_DEV(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3141,6 +3156,8 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 guard_time;
 	QDF_STATUS status;
 
+	ENTER_DEV(dev);
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
@@ -3259,6 +3276,8 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_START_MAX + 1];
 	struct sir_wifi_start_log start_log;
+
+	ENTER_DEV(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3383,6 +3402,8 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct nlattr *tb
 		[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_MAX + 1];
+
+	ENTER_DEV(wdev->netdev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3776,7 +3797,7 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 			[PARAM_PERIOD] = { .type = NLA_U32 },
 	};
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3892,7 +3913,7 @@ __wlan_hdd_cfg80211_monitor_rssi(struct wiphy *wiphy,
 			[PARAM_MAX_RSSI] = { .type = NLA_S8 },
 	};
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != ret)
@@ -4081,6 +4102,8 @@ static int __wlan_hdd_cfg80211_get_preferred_freq_list(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	struct sk_buff *reply_skb;
 
+	ENTER_DEV(wdev->netdev);
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return -EINVAL;
@@ -4197,6 +4220,8 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	enum cds_con_mode intf_mode;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GET_PREFERRED_FREQ_LIST_MAX + 1];
 	uint32_t channel_hint;
+
+	ENTER_DEV(ndev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
@@ -4329,7 +4354,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	uint8_t final_rate_flags = 0;
 	uint32_t freq;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -4514,6 +4539,8 @@ static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	QDF_STATUS status;
 	uint32_t current_roam_state;
 
+	ENTER_DEV(dev);
+
 	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
@@ -4620,6 +4647,8 @@ static int __wlan_hdd_cfg80211_txpower_scale(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX + 1];
 	uint8_t scale_value;
 
+	ENTER_DEV(dev);
+
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)
 		return ret;
@@ -4699,6 +4728,8 @@ static int __wlan_hdd_cfg80211_txpower_scale_decr_db(struct wiphy *wiphy,
 	int ret = 0;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX + 1];
 	uint8_t scale_value;
+
+	ENTER_DEV(dev);
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
 	if (ret)

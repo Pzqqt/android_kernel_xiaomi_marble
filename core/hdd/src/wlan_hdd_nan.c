@@ -62,7 +62,7 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	int ret_val;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 
-	ENTER();
+	ENTER_DEV(wdev->netdev);
 
 	ret_val = wlan_hdd_validate_context(hdd_ctx);
 	if (ret_val)

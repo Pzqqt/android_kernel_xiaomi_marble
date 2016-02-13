@@ -208,6 +208,8 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	unsigned long rc;
 	struct hdd_fw_dump_context *context;
 
+	ENTER_DEV(wdev->netdev);
+
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
 		hddLog(LOGE, FL("HDD context is invalid"));

@@ -796,7 +796,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	int rc = -EINVAL;
 	uint8_t *mac_addr;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -991,7 +991,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 	struct sir_ocb_utc *utc;
 	int rc = -EINVAL;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -1104,7 +1104,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 	struct sir_ocb_timing_advert *timing_advert;
 	int rc = -EINVAL;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -1224,7 +1224,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	struct sir_ocb_timing_advert *timing_advert;
 	int rc = -EINVAL;
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -1352,7 +1352,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 	struct sir_ocb_get_tsf_timer request = {0};
 	struct hdd_ocb_ctxt context = {0};
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -1542,7 +1542,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 	struct sir_dcc_get_stats request = {0};
 	struct hdd_ocb_ctxt context = {0};
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -1709,7 +1709,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_MAX + 1];
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -1830,7 +1830,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 	int rc = -EINVAL;
 	struct hdd_ocb_ctxt context = {0};
 
-	ENTER();
+	ENTER_DEV(dev);
 
 	if (wlan_hdd_validate_context(hdd_ctx)) {
 		hddLog(LOGE, FL("HDD context is not valid"));
