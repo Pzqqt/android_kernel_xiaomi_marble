@@ -62,24 +62,7 @@ struct ol_config_info {
 
 void ol_init_ini_config(struct ol_context *ol_ctx,
 			struct ol_config_info *cfg);
-#ifdef HIF_PCI
 void bmi_cleanup(struct ol_context *scn);
 QDF_STATUS bmi_done(struct ol_context *ol_ctx);
 QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx);
-#else
-static inline void bmi_cleanup(struct ol_context *scn)
-{
-	return;
-}
-
-static inline QDF_STATUS bmi_done(struct ol_context *ol_ctx)
-{
-	return QDF_STATUS_SUCCESS;
-}
-
-static inline QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
-{
-	return QDF_STATUS_SUCCESS;
-}
-#endif
 #endif /* _BMI_H_ */

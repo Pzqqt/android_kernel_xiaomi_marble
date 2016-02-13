@@ -617,6 +617,11 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 	ol_target_status target_status =
 			hif_get_target_status(scn);
 
+	if (hif_get_bus_type(scn) == QDF_BUS_TYPE_SNOC) {
+		BMI_ERR("SNOC doesn't suppor this code path!");
+		return;
+	}
+
 	qdf_event_set(&wma->recovery_event);
 
 	if (OL_TRGET_STATUS_RESET == target_status) {
@@ -1422,6 +1427,7 @@ int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
 		return -EIO;
 }
 
+#ifdef HIF_PCI
 static int ol_ath_get_reg_table(uint32_t target_version,
 				tgt_reg_table *reg_table)
 {
@@ -1522,6 +1528,13 @@ static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 out:
 	return result;
 }
+#else
+static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
+				uint32_t buffer_len)
+{
+	return -EINVAL;
+}
+#endif
 
 void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 {

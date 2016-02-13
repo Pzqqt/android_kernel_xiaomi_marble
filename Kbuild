@@ -624,14 +624,12 @@ BMI_DIR := core/bmi
 
 BMI_INC := -I$(WLAN_ROOT)/$(BMI_DIR)/inc
 
-ifneq ($(CONFIG_ICNSS), y)
 BMI_OBJS := $(BMI_DIR)/src/bmi.o \
             $(BMI_DIR)/src/ol_fw.o
 ifeq ($(CONFIG_FEATURE_BMI_2), y)
 BMI_OBJS += $(BMI_DIR)/src/bmi_2.o
 else
 BMI_OBJS += $(BMI_DIR)/src/bmi_1.o
-endif
 endif
 ########### WMI ###########
 WMI_DIR := core/wmi

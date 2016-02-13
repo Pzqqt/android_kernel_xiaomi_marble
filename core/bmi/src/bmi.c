@@ -105,9 +105,15 @@ end:
 void bmi_cleanup(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
-	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
+	qdf_device_t qdf_dev;
 
-	if (!qdf_dev->dev) {
+	if (!info || !ol_ctx) {
+		BMI_WARN("%s: no bmi to cleanup", __func__);
+		return;
+	}
+
+	qdf_dev = ol_ctx->qdf_dev;
+	if (!qdf_dev || !qdf_dev->dev) {
 		BMI_ERR("%s: Invalid Device Pointer", __func__);
 		return;
 	}
@@ -129,16 +135,34 @@ void bmi_cleanup(struct ol_context *ol_ctx)
 	}
 }
 
-
+/**
+ * bmi_done() - finish the bmi opperation
+ * @ol_ctx: the bmi context
+ *
+ * does some sanity checking.
+ * exchanges one last message with firmware.
+ * frees some buffers.
+ *
+ * Return: QDF_STATUS_SUCCESS if bmi isn't needed.
+ *	QDF_STATUS_SUCCESS if bmi finishes.
+ *	otherwise returns failure.
+ */
 QDF_STATUS bmi_done(struct ol_context *ol_ctx)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NO_BMI)
-		return status;
+		return QDF_STATUS_SUCCESS;
+
+	if (!ol_ctx) {
+		BMI_ERR("%s: null context", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	if (!hif_needs_bmi(ol_ctx->scn))
+		return QDF_STATUS_SUCCESS;
 
 	status = bmi_done_local(ol_ctx);
-
 	if (status != QDF_STATUS_SUCCESS)
 		BMI_ERR("BMI_DONE Failed status:%d", status);
 
@@ -203,8 +227,8 @@ QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 	int32_t ret;
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 
-	if (NO_BMI)
-		return QDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
+	if (NO_BMI || !hif_needs_bmi(scn))
+		return QDF_STATUS_SUCCESS;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");

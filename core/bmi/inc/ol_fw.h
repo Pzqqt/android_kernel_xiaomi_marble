@@ -47,12 +47,5 @@
 #define AR6320_REV4_VERSION          AR6320_REV2_1_VERSION
 #define AR6320_DEV_VERSION           0x1000000
 
-#ifdef HIF_PCI
 void ol_target_failure(void *instance, QDF_STATUS status);
-#else
-static inline void ol_target_failure(void *instance, QDF_STATUS status)
-{
-	return;
-}
-#endif
 #endif /* _OL_FW_H_ */
