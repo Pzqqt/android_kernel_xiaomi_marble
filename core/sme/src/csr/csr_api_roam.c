@@ -1861,6 +1861,27 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 			pMac->roam.configParam.scanAgeTimeCPS =
 				pParam->scanAgeTimeCPS;
 		}
+		if (pParam->obss_width_interval) {
+			pMac->roam.configParam.obss_width_interval =
+				pParam->obss_width_interval;
+			cfg_set_int(pMac,
+				WNI_CFG_OBSS_HT40_SCAN_WIDTH_TRIGGER_INTERVAL,
+				pParam->obss_width_interval);
+		}
+		if (pParam->obss_active_dwelltime) {
+			pMac->roam.configParam.obss_active_dwelltime =
+				pParam->obss_active_dwelltime;
+			cfg_set_int(pMac,
+				WNI_CFG_OBSS_HT40_SCAN_ACTIVE_DWELL_TIME,
+				pParam->obss_active_dwelltime);
+		}
+		if (pParam->obss_passive_dwelltime) {
+			pMac->roam.configParam.obss_passive_dwelltime =
+				pParam->obss_passive_dwelltime;
+			cfg_set_int(pMac,
+				WNI_CFG_OBSS_HT40_SCAN_PASSIVE_DWELL_TIME,
+				pParam->obss_passive_dwelltime);
+		}
 
 		pMac->first_scan_bucket_threshold =
 			pParam->first_scan_bucket_threshold;
@@ -2263,6 +2284,13 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 		pMac->roam.configParam.early_stop_scan_min_threshold;
 	pParam->early_stop_scan_max_threshold =
 		pMac->roam.configParam.early_stop_scan_max_threshold;
+	pParam->obss_width_interval =
+		pMac->roam.configParam.obss_width_interval;
+	pParam->obss_active_dwelltime =
+		pMac->roam.configParam.obss_active_dwelltime;
+	pParam->obss_passive_dwelltime =
+		pMac->roam.configParam.obss_passive_dwelltime;
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -10792,6 +10820,28 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		} else {
 			result = eCSR_ROAM_RESULT_NONE;
 		}
+		/*
+		 * OBSS SCAN Indication will be sent to Firmware
+		 * to start OBSS Scan
+		 */
+		if (CSR_IS_CHANNEL_24GHZ(
+			session->connectedProfile.operationChannel)
+			&& (session->connectState ==
+				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)
+			&& session->pCurRoamProfile
+			&& ((QDF_P2P_CLIENT_MODE ==
+				session->pCurRoamProfile->csrPersona)
+			|| (QDF_STA_MODE ==
+				session->pCurRoamProfile->csrPersona))) {
+			struct sme_obss_ht40_scanind_msg *msg;
+			msg = qdf_mem_malloc(sizeof(
+				struct sme_obss_ht40_scanind_msg));
+			msg->msg_type = eWNI_SME_HT40_OBSS_SCAN_IND;
+			msg->length = sizeof(struct sme_obss_ht40_scanind_msg);
+			qdf_copy_macaddr(&msg->mac_addr,
+				&session->connectedProfile.bssid);
+			status = cds_send_mb_message_to_mac(msg);
+		}
 		roam_info_ptr = &roam_info;
 	} else {
 		result = eCSR_ROAM_RESULT_FAILURE;
@@ -11891,18 +11941,8 @@ static ePhyChanBondState csr_get_cb_mode_from_ies(tpAniSirGlobal pMac,
 	uint8_t centerChn;
 	uint32_t ChannelBondingMode;
 	if (CDS_IS_CHANNEL_24GHZ(primaryChn)) {
-		/*
-		 * gChannelBondingMode24GHz configuration item is common for
-		 * SAP and STA mode and currently MDM does not support
-		 * HT40 in 2.4Ghz STA mode.
-		 * So disabling the HT40 in 2.4GHz station mode
-		 */
-#ifdef QCA_HT_20_24G_STA_ONLY
-		ChannelBondingMode = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-#else
 		ChannelBondingMode =
 			pMac->roam.configParam.channelBondingMode24GHz;
-#endif
 	} else {
 		ChannelBondingMode =
 			pMac->roam.configParam.channelBondingMode5GHz;

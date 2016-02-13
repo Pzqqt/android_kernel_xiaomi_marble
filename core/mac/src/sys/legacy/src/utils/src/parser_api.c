@@ -2877,7 +2877,11 @@ sir_convert_assoc_resp_frame2_struct(tpAniSirGlobal pMac,
 		pAssocRsp->vendor2_ie.type = ar.vendor2_ie.type;
 		pAssocRsp->vendor2_ie.sub_type = ar.vendor2_ie.sub_type;
 	}
-
+	if (ar.OBSSScanParameters.present) {
+		qdf_mem_copy(&pAssocRsp->obss_scanparams,
+			&ar.OBSSScanParameters,
+			sizeof(struct sDot11fIEOBSSScanParameters));
+	}
 	if (ar.vendor2_ie.VHTCaps.present) {
 		qdf_mem_copy(&pAssocRsp->vendor2_ie.VHTCaps,
 				&ar.vendor2_ie.VHTCaps,
@@ -3967,7 +3971,11 @@ sir_convert_beacon_frame2_struct(tpAniSirGlobal pMac,
 			pBeacon->QComVendorIE.channel;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
+	if (pBeacon->OBSSScanParameters.present) {
+		qdf_mem_copy(&pBeaconStruct->obss_scanparams,
+			&pBeacon->OBSSScanParameters,
+			sizeof(struct sDot11fIEOBSSScanParameters));
+	}
 
 	qdf_mem_free(pBeacon);
 	return eSIR_SUCCESS;

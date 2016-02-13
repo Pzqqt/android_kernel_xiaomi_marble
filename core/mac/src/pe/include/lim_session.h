@@ -472,6 +472,8 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t nss;
 	bool add_bss_failed;
 	struct csa_offload_params saved_csa_params;
+	/* To hold OBSS Scan IE Parameters */
+	struct obss_scanparam obss_ht40_scanparam;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

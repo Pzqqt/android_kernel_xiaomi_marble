@@ -161,6 +161,7 @@ typedef struct sSirProbeRespBeacon {
 #ifdef FEATURE_WLAN_ESE
 	uint8_t    is_ese_ver_ie_present;
 #endif
+	tDot11fIEOBSSScanParameters obss_scanparams;
 } tSirProbeRespBeacon, *tpSirProbeRespBeacon;
 
 /* probe Request structure */
@@ -276,6 +277,7 @@ typedef struct sSirAssocRsp {
 	tDot11fIETimeoutInterval TimeoutInterval;
 #endif
 	tDot11fIEvendor2_ie vendor2_ie;
+	tDot11fIEOBSSScanParameters obss_scanparams;
 } tSirAssocRsp, *tpSirAssocRsp;
 
 #if defined(FEATURE_WLAN_ESE_UPLOAD)

@@ -5183,6 +5183,11 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 			(struct egap_conf_params *)msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
+	case WMA_HT40_OBSS_SCAN_IND:
+		wma_send_ht40_obss_scanind(wma_handle,
+			(struct obss_ht40_scanind *)msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
+		break;
 	default:
 		WMA_LOGD("unknow msg type %x", msg->type);
 		/* Do Nothing? MSG Body should be freed at here */

@@ -2022,5 +2022,10 @@ static inline QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 void
 wma_indicate_err(enum ol_rx_err_type err_type,
 	 struct ol_error_info *err_info);
+
+QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma_handle,
+				int32_t vdev_id);
+QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
+	struct obss_ht40_scanind *req);
 #endif
 struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);

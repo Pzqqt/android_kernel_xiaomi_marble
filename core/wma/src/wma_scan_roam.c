@@ -5511,3 +5511,142 @@ QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
 
+/**
+ * wma_ht40_stop_obss_scan() - ht40 obss stop scan
+ * @wma: WMA handel
+ * @vdev_id: vdev identifier
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS wma_ht40_stop_obss_scan(tp_wma_handle wma, int32_t vdev_id)
+{
+
+	wmi_buf_t buf;
+	wmi_obss_scan_disable_cmd_fixed_param *cmd;
+	int ret;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	WMA_LOGD("cmd %x vdev_id %d", WMI_OBSS_SCAN_DISABLE_CMDID, vdev_id);
+
+	cmd = (wmi_obss_scan_disable_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_obss_scan_disable_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_obss_scan_disable_cmd_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				WMI_OBSS_SCAN_DISABLE_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("Failed to send gw config parameter to fw, ret: %d",
+			ret);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_send_ht40_obss_scanind() - ht40 obss start scan indication
+ * @wma: WMA handel
+ * @req: start scan request
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS wma_send_ht40_obss_scanind(tp_wma_handle wma,
+				struct obss_ht40_scanind *req)
+{
+	wmi_buf_t buf;
+	wmi_obss_scan_enable_cmd_fixed_param *cmd;
+	int ret;
+	int len = 0;
+	uint8_t *buf_ptr, i;
+	uint8_t *channel_list;
+
+	len += sizeof(wmi_obss_scan_enable_cmd_fixed_param);
+
+	len += WMI_TLV_HDR_SIZE;
+	len += qdf_roundup(sizeof(uint8_t) * req->channel_count,
+				sizeof(uint32_t));
+
+	len += WMI_TLV_HDR_SIZE;
+	len += qdf_roundup(sizeof(uint8_t) * 1, sizeof(uint32_t));
+
+	WMA_LOGE("cmdlen %d vdev_id %d channel count %d iefield_len %d",
+			len, req->bss_id, req->channel_count, req->iefield_len);
+
+	WMA_LOGE("scantype %d active_time %d passive %d Obss interval %d",
+			req->scan_type, req->obss_active_dwelltime,
+			req->obss_passive_dwelltime,
+			req->obss_width_trigger_interval);
+
+	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_obss_scan_enable_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_obss_scan_enable_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_obss_scan_enable_cmd_fixed_param));
+
+	buf_ptr = (uint8_t *) cmd;
+
+	cmd->vdev_id = req->bss_id;
+	cmd->scan_type = req->scan_type;
+	cmd->obss_scan_active_dwell =
+		req->obss_active_dwelltime;
+	cmd->obss_scan_passive_dwell =
+		req->obss_passive_dwelltime;
+	cmd->bss_channel_width_trigger_scan_interval =
+		req->obss_width_trigger_interval;
+	cmd->bss_width_channel_transition_delay_factor =
+		req->bsswidth_ch_trans_delay;
+	cmd->obss_scan_active_total_per_channel =
+		req->obss_active_total_per_channel;
+	cmd->obss_scan_passive_total_per_channel =
+		req->obss_passive_total_per_channel;
+	cmd->obss_scan_activity_threshold =
+		req->obss_activity_threshold;
+
+	cmd->channel_len = req->channel_count;
+	cmd->forty_mhz_intolerant =  req->fortymhz_intolerent;
+	cmd->current_operating_class = req->current_operatingclass;
+	cmd->ie_len = req->iefield_len;
+
+	buf_ptr += sizeof(wmi_obss_scan_enable_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+		qdf_roundup(req->channel_count, sizeof(uint32_t)));
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	channel_list = (uint8_t *) buf_ptr;
+
+	for (i = 0; i < req->channel_count; i++) {
+		channel_list[i] = req->channels[i];
+		WMA_LOGD("Ch[%d]: %d ", i, channel_list[i]);
+	}
+
+	buf_ptr += qdf_roundup(sizeof(uint8_t) * req->channel_count,
+				sizeof(uint32_t));
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+			qdf_roundup(1, sizeof(uint32_t)));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
+				WMI_OBSS_SCAN_ENABLE_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("Failed to send gw config parameter to fw, ret: %d",
+			ret);
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}

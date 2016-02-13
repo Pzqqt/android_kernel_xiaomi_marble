@@ -42,6 +42,7 @@
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 #include "host_diag_core_log.h"
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
+#include "cds_regdomain_common.h"
 /* When beacon filtering is enabled, firmware will
  * analyze the selected beacons received during BMPS,
  * and monitor any changes in the IEs as listed below.
@@ -821,3 +822,97 @@ tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 	return retCode;
 }
 #endif
+
+/**
+ * lim_send_ht40_obss_scanind() - send ht40 obss start scan request
+ * mac: mac context
+ * session  PE session handle
+ *
+ * LIM sends a HT40 start scan message to WMA
+ *
+ * Return: status of operation
+ */
+tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
+						struct sPESession *session)
+{
+	enum eSirRetStatus ret = eSIR_SUCCESS;
+	struct obss_ht40_scanind *ht40_obss_scanind;
+	uint32_t channelnum;
+	struct sSirMsgQ msg;
+	uint8_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	uint8_t channel24gnum, count;
+
+	ht40_obss_scanind = qdf_mem_malloc(sizeof(struct obss_ht40_scanind));
+	if (NULL == ht40_obss_scanind) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+			"Memory allocation failed");
+		return eSIR_FAILURE;
+	}
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
+		"OBSS Scan Indication bssIdx- %d staId %d",
+		session->bssIdx, session->staId);
+
+	ht40_obss_scanind->cmd = HT40_OBSS_SCAN_PARAM_START;
+	ht40_obss_scanind->scan_type = eSIR_ACTIVE_SCAN;
+	ht40_obss_scanind->obss_passive_dwelltime =
+		session->obss_ht40_scanparam.obss_passive_dwelltime;
+	ht40_obss_scanind->obss_active_dwelltime =
+		session->obss_ht40_scanparam.obss_active_dwelltime;
+	ht40_obss_scanind->obss_width_trigger_interval =
+		session->obss_ht40_scanparam.obss_width_trigger_interval;
+	ht40_obss_scanind->obss_passive_total_per_channel =
+		session->obss_ht40_scanparam.obss_passive_total_per_channel;
+	ht40_obss_scanind->obss_active_total_per_channel =
+		session->obss_ht40_scanparam.obss_active_total_per_channel;
+	ht40_obss_scanind->bsswidth_ch_trans_delay =
+		session->obss_ht40_scanparam.bsswidth_ch_trans_delay;
+	ht40_obss_scanind->obss_activity_threshold =
+		session->obss_ht40_scanparam.obss_activity_threshold;
+	ht40_obss_scanind->current_operatingclass =
+			cds_regdm_get_opclass_from_channel(
+				mac_ctx->scan.countryCodeCurrent,
+				session->currentOperChannel,
+				session->ch_width);
+	channelnum = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+	if (wlan_cfg_get_str(mac_ctx, WNI_CFG_VALID_CHANNEL_LIST,
+			chan_list, &channelnum) != eSIR_SUCCESS) {
+		lim_log(mac_ctx, LOGE,
+			FL("could not retrieve Valid channel list"));
+		qdf_mem_free(ht40_obss_scanind);
+		return eSIR_FAILURE;
+	}
+	/* Extract 24G channel list */
+	channel24gnum = 0;
+	for (count = 0; count < channelnum &&
+		(channel24gnum < SIR_ROAM_MAX_CHANNELS); count++) {
+		if ((chan_list[count] > CHAN_ENUM_1) &&
+			(chan_list[count] < CHAN_ENUM_14)) {
+			ht40_obss_scanind->channels[channel24gnum] =
+				chan_list[count];
+			channel24gnum++;
+		}
+	}
+	ht40_obss_scanind->channel_count = channel24gnum;
+	/* FW API requests BSS IDX */
+	ht40_obss_scanind->self_sta_idx = session->staId;
+	ht40_obss_scanind->bss_id = session->bssIdx;
+	ht40_obss_scanind->fortymhz_intolerent = 0;
+	ht40_obss_scanind->iefield_len = 0;
+	msg.type = WMA_HT40_OBSS_SCAN_IND;
+	msg.reserved = 0;
+	msg.bodyptr = (void *)ht40_obss_scanind;
+	msg.bodyval = 0;
+	lim_log(mac_ctx, LOG1,
+		FL("Sending WDA_HT40_OBSS_SCAN_IND to WDA"
+		"Obss Scan trigger width = %d, delay factor = %d"),
+		ht40_obss_scanind->obss_width_trigger_interval,
+		ht40_obss_scanind->bsswidth_ch_trans_delay);
+	ret = wma_post_ctrl_msg(mac_ctx, &msg);
+	if (eSIR_SUCCESS != ret) {
+		lim_log(mac_ctx, LOGP,
+			FL("WDA_HT40_OBSS_SCAN_IND msg failed, reason=%X"),
+			ret);
+		qdf_mem_free(ht40_obss_scanind);
+	}
+	return ret;
+}

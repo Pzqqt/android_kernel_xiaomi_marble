@@ -1067,6 +1067,10 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	lim_diag_event_report(mac_ctx, WLAN_PE_DIAG_CONNECTED, session_entry,
 			      eSIR_SUCCESS, eSIR_SUCCESS);
 #endif
+	if (assoc_rsp->obss_scanparams.present)
+		lim_update_obss_scanparams(session_entry,
+				&assoc_rsp->obss_scanparams);
+
 	if (assoc_rsp->QosMapSet.present)
 		qdf_mem_copy(&session_entry->QosMapSet,
 			&assoc_rsp->QosMapSet, sizeof(tSirQosMapSet));

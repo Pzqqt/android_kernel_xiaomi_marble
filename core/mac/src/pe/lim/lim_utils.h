@@ -582,4 +582,8 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 void lim_merge_extcap_struct(tDot11fIEExtCap *dst, tDot11fIEExtCap *src);
 
 uint8_t lim_get_80Mhz_center_channel(uint8_t primary_channel);
+void lim_update_obss_scanparams(tpPESession session,
+			tDot11fIEOBSSScanParameters *scan_params);
+void lim_init_obss_params(tpAniSirGlobal mac_ctx, tpPESession session);
+
 #endif /* __LIM_UTILS_H */

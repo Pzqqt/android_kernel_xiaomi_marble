@@ -104,4 +104,6 @@ tSirRetStatus lim_send_exclude_unencrypt_ind(tpAniSirGlobal pMac,
 					     bool excludeUnenc,
 					     tpPESession psessionEntry);
 #endif
+tSirRetStatus lim_send_ht40_obss_scanind(tpAniSirGlobal mac_ctx,
+						tpPESession session);
 #endif

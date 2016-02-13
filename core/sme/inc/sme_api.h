@@ -1083,5 +1083,6 @@ static inline QDF_STATUS sme_send_egap_conf_params(uint32_t enable,
 #endif
 
 void sme_update_fine_time_measurement_capab(tHalHandle hal, uint32_t val);
+QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hHal, uint32_t vdev_id);
 
 #endif /* #if !defined( __SME_API_H ) */

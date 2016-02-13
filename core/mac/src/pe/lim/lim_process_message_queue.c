@@ -1147,6 +1147,38 @@ void lim_process_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *body)
 
 #endif
 
+static void lim_process_sme_obss_scan_ind(tpAniSirGlobal mac_ctx,
+							struct sSirMsgQ *msg)
+{
+	struct sPESession *session;
+	uint8_t session_id;
+	struct sme_obss_ht40_scanind_msg *ht40_scanind;
+
+	ht40_scanind = (struct sme_obss_ht40_scanind_msg *)msg->bodyptr;
+	session = pe_find_session_by_bssid(mac_ctx,
+			ht40_scanind->mac_addr.bytes, &session_id);
+	if (session == NULL) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			"OBSS Scan not started: session id is NULL");
+		return;
+	}
+	if (session->htSupportedChannelWidthSet ==
+			WNI_CFG_CHANNEL_BONDING_MODE_ENABLE) {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			"OBSS Scan Start Req: session id %d"
+			"htSupportedChannelWidthSet %d",
+			session->peSessionId,
+			session->htSupportedChannelWidthSet);
+		lim_send_ht40_obss_scanind(mac_ctx, session);
+	} else {
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
+			"OBSS Scan not started: channel width - %d session %d",
+			session->htSupportedChannelWidthSet,
+			session->peSessionId);
+	}
+	return;
+}
+
 /**
  * lim_handle_hw_mode_change_on_csa() - Do HW mode change on CSA for STA mode
  * @mac_ctx: Global MAC context
@@ -1973,6 +2005,11 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
+	case eWNI_SME_HT40_OBSS_SCAN_IND:
+		lim_process_sme_obss_scan_ind(mac_ctx, msg);
+		qdf_mem_free(msg->bodyptr);
+		msg->bodyptr = NULL;
+		break;
 	default:
 		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
@@ -2208,6 +2245,7 @@ handle_ht_capabilityand_ht_info(struct sAniSirGlobal *pMac,
 			IS_DOT11_MODE_HT(psessionEntry->dot11mode);
 		psessionEntry->beaconParams.fLsigTXOPProtectionFullSupport =
 			(uint8_t) macHTInfoField3.lsigTXOPProtectionFullSupport;
+		lim_init_obss_params(pMac, psessionEntry);
 	}
 }
 

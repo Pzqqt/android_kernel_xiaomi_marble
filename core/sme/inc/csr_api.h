@@ -1214,6 +1214,9 @@ typedef struct tagCsrConfigParam {
 	uint32_t roam_dense_traffic_thresh;
 	uint32_t roam_dense_rssi_thresh_offset;
 	uint32_t roam_dense_min_aps;
+	uint32_t obss_width_interval;
+	uint32_t obss_active_dwelltime;
+	uint32_t obss_passive_dwelltime;
 } tCsrConfigParam;
 
 /* Tush */

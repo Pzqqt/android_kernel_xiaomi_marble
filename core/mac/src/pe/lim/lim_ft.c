@@ -928,6 +928,10 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_11W
 	pftSessionEntry->limRmfEnabled = psessionEntry->limRmfEnabled;
 #endif
+	if ((pftSessionEntry->limRFBand == SIR_BAND_2_4_GHZ) &&
+		(pftSessionEntry->htSupportedChannelWidthSet ==
+		eHT_CHANNEL_WIDTH_40MHZ))
+		lim_init_obss_params(pMac, pftSessionEntry);
 
 	qdf_mem_free(pBeaconStruct);
 }

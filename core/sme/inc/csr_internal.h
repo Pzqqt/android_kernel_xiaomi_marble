@@ -94,7 +94,8 @@
 	  (((pMac)->roam.configParam.bFastRoamInConIniFeatureEnabled) ? \
 		true : false) \
 	)
-
+#define CSR_IS_CHANNEL_24GHZ(chnNum) \
+	(((chnNum) > 0) && ((chnNum) <= 14))
 /* Support for "Fast roaming" (i.e., ESE, LFR, or 802.11r.) */
 #define CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN 15
 
@@ -633,6 +634,9 @@ typedef struct tagCsrConfig {
 	bool early_stop_scan_enable;
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
+	uint32_t obss_width_interval;
+	uint32_t obss_active_dwelltime;
+	uint32_t obss_passive_dwelltime;
 } tCsrConfig;
 
 typedef struct tagCsrChannelPowerInfo {

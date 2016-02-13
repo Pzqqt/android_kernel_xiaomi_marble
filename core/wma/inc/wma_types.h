@@ -196,6 +196,8 @@
 #define WMA_TSM_STATS_RSP              SIR_HAL_TSM_STATS_RSP
 #endif
 
+#define WMA_HT40_OBSS_SCAN_IND                  SIR_HAL_HT40_OBSS_SCAN_IND
+
 #define WMA_SET_MIMOPS_REQ                      SIR_HAL_SET_MIMOPS_REQ
 #define WMA_SET_MIMOPS_RSP                      SIR_HAL_SET_MIMOPS_RSP
 #define WMA_SYS_READY_IND                       SIR_HAL_SYS_READY_IND

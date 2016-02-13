@@ -5493,4 +5493,89 @@ struct sir_saved_csa_params {
 	uint32_t session_id;
 };
 
+/**
+ * enum obss_ht40_scancmd_type - obss scan command type
+ * @HT40_OBSS_SCAN_PARAM_START: OBSS scan start
+ * @HT40_OBSS_SCAN_PARAM_UPDATE: OBSS scan param update
+ */
+enum obss_ht40_scancmd_type {
+	HT40_OBSS_SCAN_PARAM_START,
+	HT40_OBSS_SCAN_PARAM_UPDATE
+};
+
+/**
+ * struct sme_obss_ht40_scanind_msg - sme obss scan params
+ * @msg_type: message type
+ * @length: message length
+ * @mac_addr: mac address
+ */
+struct sme_obss_ht40_scanind_msg {
+	uint16_t               msg_type;
+	uint16_t               length;
+	struct qdf_mac_addr    mac_addr;
+};
+
+/**
+ * struct obss_ht40_scanind - ht40 obss scan request
+ * @cmd: message type
+ * @scan_type: message length
+ * @obss_passive_dwelltime: obss passive dwelltime
+ * @obss_active_dwelltime: obss active dwelltime
+ * @obss_width_trigger_interval: scan interval
+ * @obss_passive_total_per_channel: total passive scan time per channel
+ * @obss_active_total_per_channel: total active scan time per channel
+ * @bsswidth_ch_trans_delay: OBSS transition delay time
+ * @obss_activity_threshold: OBSS activity threshold
+ * @self_sta_id: self sta identification
+ * @bss_id: BSS index
+ * @fortymhz_intolerent: Ht40mhz intolerance
+ * @channel_count: channel count
+ * @channels: channel information
+ * @current_operatingclass: operating class
+ * @iefield_len: ie's length
+ * @iefiled: ie's information
+ */
+struct obss_ht40_scanind {
+	enum obss_ht40_scancmd_type cmd;
+	enum eSirScanType scan_type;
+	/* In TUs */
+	uint16_t obss_passive_dwelltime;
+	uint16_t obss_active_dwelltime;
+	/* In seconds */
+	uint16_t obss_width_trigger_interval;
+	/* In TU's */
+	uint16_t obss_passive_total_per_channel;
+	uint16_t obss_active_total_per_channel;
+	uint16_t bsswidth_ch_trans_delay;
+	uint16_t obss_activity_threshold;
+	uint8_t  self_sta_idx;
+	uint8_t bss_id;
+	uint8_t fortymhz_intolerent;
+	uint8_t channel_count;
+	uint8_t channels[SIR_ROAM_MAX_CHANNELS];
+	uint8_t current_operatingclass;
+	uint16_t iefield_len;
+	uint8_t  iefield[SIR_ROAM_SCAN_MAX_PB_REQ_SIZE];
+};
+
+/**
+ * struct obss_scanparam - OBSS scan parameters
+ * @obss_passive_dwelltime: message type
+ * @obss_active_dwelltime: message length
+ * @obss_width_trigger_interval: obss passive dwelltime
+ * @obss_passive_total_per_channel: obss passive total scan time
+ * @obss_active_total_per_channel: obss active total scan time
+ * @bsswidth_ch_trans_delay: OBSS transition delay time
+ * @obss_activity_threshold: OBSS activity threshold
+ */
+struct obss_scanparam {
+	uint16_t obss_passive_dwelltime;
+	uint16_t obss_active_dwelltime;
+	uint16_t obss_width_trigger_interval;
+	uint16_t obss_passive_total_per_channel;
+	uint16_t obss_active_total_per_channel;
+	uint16_t bsswidth_ch_trans_delay;
+	uint16_t obss_activity_threshold;
+};
+
 #endif /* __SIR_API_H */

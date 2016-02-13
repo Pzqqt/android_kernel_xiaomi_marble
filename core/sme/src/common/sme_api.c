@@ -14964,3 +14964,24 @@ QDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
 	return status;
 }
 #endif
+
+/**
+ * sme_ht40_stop_obss_scan() - ht40 obss stop scan
+ * @hal: mac handel
+ * @vdev_id: vdev identifier
+ *
+ * Return: Return QDF_STATUS, otherwise appropriate failure code
+ */
+QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hal, uint32_t vdev_id)
+{
+	void *wma_handle;
+
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
+	if (!wma_handle) {
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+				"wma handle is NULL");
+		return QDF_STATUS_E_FAILURE;
+	}
+	wma_ht40_stop_obss_scan(wma_handle, vdev_id);
+	return QDF_STATUS_SUCCESS;
+}
