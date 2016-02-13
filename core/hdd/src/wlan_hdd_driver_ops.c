@@ -815,7 +815,7 @@ void wlan_hdd_pci_remove(struct pci_dev *pdev)
 int wlan_hdd_pci_reinit(struct pci_dev *pdev,
 	const struct pci_device_id *id)
 {
-	return wlan_hdd_probe(&pdev->dev, pdev, id,
+	return wlan_hdd_probe(&pdev->dev, pdev, (void *)id,
 			QDF_BUS_TYPE_PCI, true);
 }
 
