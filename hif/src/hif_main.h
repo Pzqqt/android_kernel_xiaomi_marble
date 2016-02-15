@@ -112,7 +112,6 @@ struct hif_softc {
 	struct ol_softc osc;
 	struct hif_config_info hif_config;
 	struct hif_target_info target_info;
-	struct bmi_info bmi_ctx;
 	void __iomem *mem;
 	enum ath_hal_bus_type bus_type;
 	void *ce_id_to_state[CE_COUNT_MAX];

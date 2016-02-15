@@ -179,18 +179,6 @@ struct hif_target_info {
 	uint32_t soc_version;
 };
 
-struct bmi_info {
-	uint8_t *bmi_cmd_buff;
-	uint8_t *bmi_rsp_buff;
-	dma_addr_t bmi_cmd_da;
-	dma_addr_t bmi_rsp_da;
-	uint8_t *cal_in_flash;
-	bool bmi_done;
-#ifdef CONFIG_CNSS
-	struct cnss_fw_files fw_files;
-#endif
-};
-
 struct ol_softc {
 };
 
@@ -565,7 +553,6 @@ void hif_lro_flush_cb_deregister(struct ol_softc *scn);
 struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn);
 struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn);
 struct ramdump_info *hif_get_ramdump_ctx(struct ol_softc *hif_ctx);
-struct bmi_info *hif_get_bmi_ctx(struct ol_softc *hif_ctx);
 ol_target_status hif_get_target_status(struct ol_softc *hif_ctx);
 void hif_set_target_status(struct ol_softc *hif_ctx, ol_target_status);
 #ifdef __cplusplus
