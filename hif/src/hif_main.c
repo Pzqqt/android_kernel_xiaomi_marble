@@ -519,13 +519,6 @@ void hif_close(struct ol_softc *hif_ctx)
 		CDF_MODULE_ID_HIF, hif_ctx);
 }
 
-void hif_init_opaque_handle(struct hif_softc *scn)
-{
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-
-	hif_hdl->targetdef = scn->targetdef;
-}
-
 /**
  * hif_enable(): hif_enable
  * @hif_ctx: hif_ctx
@@ -556,8 +549,6 @@ CDF_STATUS hif_enable(struct ol_softc *hif_ctx, struct device *dev,
 				  __func__, status);
 		return status;
 	}
-
-	hif_init_opaque_handle(scn);
 
 	if (ADRASTEA_BU)
 		hif_vote_link_up(hif_ctx);

@@ -192,7 +192,6 @@ struct bmi_info {
 };
 
 struct ol_softc {
-	struct targetdef_s *targetdef;
 };
 
 typedef enum {
