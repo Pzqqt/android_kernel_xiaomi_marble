@@ -272,10 +272,10 @@ void hif_detach_htc(struct ol_softc *scn);
  * API to handle HIF-specific BMI message exchanges, this API is synchronous
  * and only allowed to be called from a context that can block (sleep) */
 CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
-			 uint8_t *pSendMessage,
-			 uint32_t Length,
-			 uint8_t *pResponseMessage,
-			 uint32_t *pResponseLength, uint32_t TimeoutMS);
+				cdf_dma_addr_t cmd, cdf_dma_addr_t rsp,
+				uint8_t *pSendMessage, uint32_t Length,
+				uint8_t *pResponseMessage,
+				uint32_t *pResponseLength, uint32_t TimeoutMS);
 
 /*
  * APIs to handle HIF specific diagnostic read accesses. These APIs are
