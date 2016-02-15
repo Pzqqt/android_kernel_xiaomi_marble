@@ -180,6 +180,7 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	HTC_INIT_INFO htcInfo;
 	void *pHifContext = NULL;
 	void *pHtcContext = NULL;
+	struct ol_context *ol_ctx;
 #endif
 	hdd_context_t *hdd_ctx;
 
@@ -251,7 +252,8 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 		goto err_sched_close;
 	}
 
-	if (bmi_download_firmware(pHifContext)) {
+	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
+	if (bmi_download_firmware(ol_ctx)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
 		goto err_bmi_close;
@@ -270,7 +272,7 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 		goto err_bmi_close;
 	}
 
-	if (bmi_done(pHifContext)) {
+	if (bmi_done(ol_ctx)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
 		goto err_htc_close;

@@ -183,6 +183,7 @@ int epping_enable(struct device *parent_dev)
 	tSirMacAddr adapter_macAddr;
 	struct hif_config_info *cfg;
 	struct hif_target_info *tgt_info;
+	struct ol_context *ol_ctx;
 
 	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
 
@@ -225,9 +226,10 @@ int epping_enable(struct device *parent_dev)
 	/* store target type and target version info in hdd ctx */
 	pEpping_ctx->target_type = tgt_info->target_type;
 
+	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */
-	if (bmi_download_firmware(scn)) {
+	if (bmi_download_firmware(ol_ctx)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
 		bmi_cleanup(scn);
@@ -258,7 +260,7 @@ int epping_enable(struct device *parent_dev)
 		return -1;
 	}
 
-	if (bmi_done(scn)) {
+	if (bmi_done(ol_ctx)) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed to complete BMI phase", __func__);
 		goto error_end;

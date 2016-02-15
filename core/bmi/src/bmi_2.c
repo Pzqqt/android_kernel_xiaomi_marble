@@ -43,6 +43,8 @@ bmi_no_command(struct ol_softc *scn)
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed: BMI DONE ALREADY");
@@ -58,7 +60,7 @@ bmi_no_command(struct ol_softc *scn)
 	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(ret);
 
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, sizeof(cid),
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
 			bmi_rsp_buff, &length, BMI_EXCHANGE_TIMEOUT_MS);
 
 	if (status) {
@@ -85,6 +87,8 @@ bmi_done_local(struct ol_softc *scn)
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -106,7 +110,7 @@ bmi_done_local(struct ol_softc *scn)
 	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(ret);
 
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, sizeof(cid),
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
 		   bmi_rsp_buff, &length, BMI_EXCHANGE_TIMEOUT_MS);
 
 	if (status) {
@@ -155,6 +159,8 @@ bmi_write_memory(uint32_t address,
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -196,8 +202,9 @@ bmi_write_memory(uint32_t address,
 		offset += sizeof(txlen);
 		cdf_mem_copy(&(bmi_cmd_buff[offset]), src, txlen);
 		offset += txlen;
-		status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
-			bmi_rsp_buff, &rsp_len, BMI_EXCHANGE_TIMEOUT_MS);
+		status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff,
+						offset, bmi_rsp_buff, &rsp_len,
+						BMI_EXCHANGE_TIMEOUT_MS);
 		if (status) {
 			BMI_ERR("BMI Write Memory Failed status:%d", status);
 			return CDF_STATUS_E_FAILURE;
@@ -227,6 +234,8 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 	/* note we reuse the same buffer to receive on */
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(length);
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -259,7 +268,7 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 
 		total_len = rxlen + rsp_len;
 
-		status = hif_exchange_bmi_msg(scn,
+		status = hif_exchange_bmi_msg(scn, cmd, rsp,
 					   bmi_cmd_buff,
 					   offset,
 					   bmi_rsp_buff,
@@ -297,6 +306,8 @@ bmi_execute(uint32_t address, uint32_t *param,
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -313,7 +324,7 @@ bmi_execute(uint32_t address, uint32_t *param,
 	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(ret);
 
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, sizeof(cid),
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
 		   bmi_rsp_buff, &length, BMI_EXCHANGE_TIMEOUT_MS);
 
 	if (status) {
@@ -342,6 +353,9 @@ bmi_load_image(dma_addr_t address,
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+
 	uint32_t addr_h, addr_l;
 
 	if (info->bmi_done) {
@@ -375,7 +389,7 @@ bmi_load_image(dma_addr_t address,
 	offset += sizeof(size);
 	length = sizeof(ret);
 
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, offset,
 		   bmi_rsp_buff, &length, BMI_EXCHANGE_TIMEOUT_MS);
 
 	if (status) {

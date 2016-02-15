@@ -263,6 +263,7 @@ typedef struct _cds_context_type {
 
 	void *htc_ctx;
 
+	void *g_ol_context;
 	/*
 	 * cdf_ctx will be used by cdf
 	 * while allocating dma memory

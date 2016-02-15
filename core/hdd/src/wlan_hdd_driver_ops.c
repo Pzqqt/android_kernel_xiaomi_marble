@@ -52,6 +52,7 @@
 #include "wlan_hdd_napi.h"
 #include "cds_concurrency.h"
 #include "qwlan_version.h"
+#include "bmi.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -219,6 +220,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	void *hif_ctx;
 	CDF_STATUS status;
 	int ret = 0;
+	cdf_device_t cdf_dev;
 
 	pr_info("%s: %sprobing driver v%s\n", WLAN_MODULE_NAME,
 		reinit ? "re-" : "", QWLAN_VERSIONSTR);
@@ -257,6 +259,14 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		goto err_epping_close;
 
 	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+
+	status = ol_cds_init(cdf_dev, hif_ctx);
+
+	if (status != CDF_STATUS_SUCCESS) {
+		pr_err("%s No Memory to Create BMI Context\n", __func__);
+		goto err_hif_close;
+	}
 
 	if (reinit)
 		ret = hdd_wlan_re_init(hif_ctx);
@@ -264,7 +274,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		ret = hdd_wlan_startup(dev, hif_ctx);
 
 	if (ret)
-		goto err_hif_close;
+		goto err_bmi_close;
 
 	hif_enable_power_management(hif_ctx);
 
@@ -280,6 +290,8 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 
 	return 0;
 
+err_bmi_close:
+	ol_cds_free();
 err_hif_close:
 	hdd_hif_close(hif_ctx);
 err_epping_close:
@@ -344,8 +356,8 @@ static void wlan_hdd_remove(void)
 		__hdd_wlan_exit();
 	}
 
+	ol_cds_free();
 	hdd_hif_close(hif_ctx);
-
 	hdd_deinit();
 
 	pr_info("%s: Driver Removed\n", WLAN_MODULE_NAME);
@@ -378,6 +390,7 @@ static void wlan_hdd_shutdown(void)
 		hdd_wlan_shutdown();
 	}
 
+	ol_cds_free();
 	hdd_hif_close(hif_ctx);
 }
 

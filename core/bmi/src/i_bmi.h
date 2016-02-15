@@ -121,6 +121,18 @@ typedef enum _ATH_BIN_FILE {
 #define NO_BMI 0
 #endif
 
+/**
+ * struct ol_context - Structure to hold OL context
+ * @cdf_dev: CDF Device
+ * @scn: HIF Context
+ *
+ * Structure to hold all ol BMI/Ramdump info
+ */
+struct ol_context {
+	cdf_device_t cdf_dev;
+	struct ol_softc *scn;
+};
+
 CDF_STATUS bmi_execute(uint32_t address, uint32_t *param,
 						struct ol_softc *scn);
 CDF_STATUS bmi_init(struct ol_softc *scn);

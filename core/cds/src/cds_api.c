@@ -173,6 +173,7 @@ CDF_STATUS cds_open(void)
 	cdf_device_t cdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	struct ol_softc *scn;
+	struct ol_context *ol_ctx;
 	void *HTCHandle;
 	hdd_context_t *pHddCtx;
 
@@ -256,8 +257,9 @@ CDF_STATUS cds_open(void)
 
 	hdd_update_hif_config(scn, pHddCtx);
 
+	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
-	cdf_status = bmi_download_firmware(scn);
+	cdf_status = bmi_download_firmware(ol_ctx);
 	if (cdf_status != CDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "BMI FIALED status:%d", cdf_status);
@@ -278,7 +280,7 @@ CDF_STATUS cds_open(void)
 		goto err_bmi_close;
 	}
 
-	if (bmi_done(scn)) {
+	if (bmi_done(ol_ctx)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
 		goto err_htc_close;
@@ -902,6 +904,12 @@ void *cds_get_context(CDF_MODULE_ID moduleId)
 		break;
 	}
 
+	case CDF_MODULE_ID_BMI:
+	{
+		pModContext = gp_cds_context->g_ol_context;
+		break;
+	}
+
 	case CDF_MODULE_ID_TXRX:
 	{
 		pModContext = gp_cds_context->pdev_txrx_ctx;
@@ -1061,6 +1069,12 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 		break;
 	}
 
+	case CDF_MODULE_ID_BMI:
+	{
+		pGpModContext = &(gp_cds_context->g_ol_context);
+		break;
+	}
+
 	case CDF_MODULE_ID_EPPING:
 	case CDF_MODULE_ID_SME:
 	case CDF_MODULE_ID_PE:
@@ -1147,6 +1161,12 @@ CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	case CDF_MODULE_ID_TXRX:
 	{
 		pGpModContext = &(gp_cds_context->pdev_txrx_ctx);
+		break;
+	}
+
+	case CDF_MODULE_ID_BMI:
+	{
+		pGpModContext = &(gp_cds_context->g_ol_context);
 		break;
 	}
 

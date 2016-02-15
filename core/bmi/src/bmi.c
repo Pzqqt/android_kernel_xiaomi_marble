@@ -128,9 +128,10 @@ void bmi_cleanup(struct ol_softc *scn)
 }
 
 
-CDF_STATUS bmi_done(struct ol_softc *scn)
+CDF_STATUS bmi_done(struct ol_context *ol_ctx)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	struct ol_softc *scn = ol_ctx->scn;
 
 	if (NO_BMI)
 		return status;
@@ -151,6 +152,8 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t cid, length;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("BMI Phase is Already Done");
@@ -166,7 +169,7 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(struct bmi_target_info);
 
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, sizeof(cid),
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
 					(uint8_t *)bmi_rsp_buff, &length,
 					BMI_EXCHANGE_TIMEOUT_MS);
 	if (status) {
@@ -190,11 +193,12 @@ static inline uint32_t bmi_get_test_addr(void)
 }
 #endif
 
-CDF_STATUS bmi_download_firmware(struct ol_softc *scn)
+CDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 {
 	uint8_t data[10], out[10];
 	uint32_t address;
 	int32_t ret;
+	struct ol_softc *scn = ol_ctx->scn;
 
 	if (NO_BMI)
 		return CDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
@@ -233,6 +237,8 @@ bmi_read_soc_register(uint32_t address, uint32_t *param, struct ol_softc *scn)
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
 	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
@@ -254,7 +260,7 @@ bmi_read_soc_register(uint32_t address, uint32_t *param, struct ol_softc *scn)
 	cdf_mem_copy(&(bmi_cmd_buff[offset]), &address, sizeof(address));
 	offset += sizeof(address);
 	param_len = sizeof(*param);
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, offset,
 			bmi_rsp_buff, &param_len, BMI_EXCHANGE_TIMEOUT_MS);
 	if (status) {
 		BMI_DBG("Unable to read from the device; status:%d", status);
@@ -275,6 +281,9 @@ bmi_write_soc_register(uint32_t address, uint32_t param, struct ol_softc *scn)
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+
 	bmi_assert(BMI_COMMAND_FITS(size));
 	cdf_mem_set(bmi_cmd_buff, 0, size);
 
@@ -295,7 +304,7 @@ bmi_write_soc_register(uint32_t address, uint32_t param, struct ol_softc *scn)
 	offset += sizeof(address);
 	cdf_mem_copy(&(bmi_cmd_buff[offset]), &param, sizeof(param));
 	offset += sizeof(param);
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, offset,
 						NULL, NULL, 0);
 	if (status) {
 		BMI_ERR("Unable to write to the device: status:%d", status);
@@ -316,6 +325,8 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_softc *scn)
 	const uint32_t header = sizeof(cid) + sizeof(length);
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
@@ -342,8 +353,9 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_softc *scn)
 		cdf_mem_copy(&(bmi_cmd_buff[offset]),
 			&buffer[length - remaining], txlen);
 		offset += txlen;
-		status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
-					NULL, NULL, 0);
+		status = hif_exchange_bmi_msg(scn, cmd, rsp,
+						bmi_cmd_buff, offset,
+						NULL, NULL, 0);
 		if (status) {
 			BMI_ERR("Failed to write to the device: status:%d",
 								status);
@@ -370,6 +382,8 @@ bmi_sign_stream_start(uint32_t address,
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t remaining, txlen;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
@@ -407,9 +421,9 @@ bmi_sign_stream_start(uint32_t address,
 		offset += sizeof(txlen);
 		cdf_mem_copy(&(bmi_cmd_buff[offset]), src, txlen);
 		offset += txlen;
-		status = hif_exchange_bmi_msg(scn,
-					bmi_cmd_buff, offset,
-					NULL, NULL, BMI_EXCHANGE_TIMEOUT_MS);
+		status = hif_exchange_bmi_msg(scn, cmd, rsp,
+						bmi_cmd_buff, offset, NULL,
+						NULL, BMI_EXCHANGE_TIMEOUT_MS);
 		if (status) {
 			BMI_ERR("Unable to write to the device: status:%d",
 								status);
@@ -430,6 +444,8 @@ bmilz_stream_start(uint32_t address, struct ol_softc *scn)
 	uint32_t offset;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
 	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
@@ -447,7 +463,7 @@ bmilz_stream_start(uint32_t address, struct ol_softc *scn)
 	offset += sizeof(cid);
 	cdf_mem_copy(&(bmi_cmd_buff[offset]), &address, sizeof(address));
 	offset += sizeof(address);
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, offset,
 						NULL, NULL, 0);
 	if (status) {
 		BMI_ERR("Unable to Start LZ Stream to the device status:%d",
@@ -494,3 +510,47 @@ end:
 	return status;
 }
 
+/**
+ * ol_cds_init() - API to initialize global CDS OL Context
+ * @cdf_dev: CDF Device
+ * @hif_ctx: HIF Context
+ *
+ * Return: Success/Failure
+ */
+CDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx)
+{
+	struct ol_context *ol_info;
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+
+	if (NO_BMI)
+		return CDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
+
+	status = cds_alloc_context(cds_get_global_context(), CDF_MODULE_ID_BMI,
+					(void **)&ol_info, sizeof(*ol_info));
+
+	if (status != CDF_STATUS_SUCCESS) {
+		BMI_ERR("%s: CDS Allocation failed for ol_bmi context",
+								__func__);
+		return status;
+	}
+
+	ol_info->cdf_dev = cdf_dev;
+	ol_info->scn = hif_ctx;
+
+	return status;
+}
+
+/**
+ * ol_cds_free() - API to free the global CDS OL Context
+ *
+ * Return: void
+ */
+void ol_cds_free(void)
+{
+	struct ol_context *ol_info = cds_get_context(CDF_MODULE_ID_BMI);
+
+	if (NO_BMI)
+		return;
+
+	cds_free_context(cds_get_global_context(), CDF_MODULE_ID_BMI, ol_info);
+}

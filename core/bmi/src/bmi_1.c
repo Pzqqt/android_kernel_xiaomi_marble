@@ -42,6 +42,8 @@ bmi_read_memory(uint32_t address,
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t align;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_DBG("command disallowed");
@@ -80,8 +82,9 @@ bmi_read_memory(uint32_t address,
 		offset += sizeof(length);
 
 		/* note we reuse the same buffer to receive on */
-		status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
-				bmi_rsp_buff, &rxlen, BMI_EXCHANGE_TIMEOUT_MS);
+		status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff,
+						offset, bmi_rsp_buff, &rxlen,
+						BMI_EXCHANGE_TIMEOUT_MS);
 		if (status) {
 			BMI_ERR("Unable to read from the device");
 			return CDF_STATUS_E_FAILURE;
@@ -115,6 +118,8 @@ bmi_write_memory(uint32_t address,
 	uint8_t *src;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -158,8 +163,9 @@ bmi_write_memory(uint32_t address,
 		offset += sizeof(txlen);
 		cdf_mem_copy(&(bmi_cmd_buff[offset]), src, txlen);
 		offset += txlen;
-		status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
-					NULL, NULL, BMI_EXCHANGE_TIMEOUT_MS);
+		status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff,
+						offset, NULL, NULL,
+						BMI_EXCHANGE_TIMEOUT_MS);
 		if (status) {
 			BMI_ERR("Unable to write to the device; status:%d",
 								status);
@@ -185,6 +191,8 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_softc *scn)
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
+	cdf_dma_addr_t cmd = info->bmi_cmd_da;
+	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -214,7 +222,7 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_softc *scn)
 	cdf_mem_copy(&(bmi_cmd_buff[offset]), param, sizeof(*param));
 	offset += sizeof(*param);
 	param_len = sizeof(*param);
-	status = hif_exchange_bmi_msg(scn, bmi_cmd_buff, offset,
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, offset,
 					bmi_rsp_buff, &param_len, 0);
 	if (status) {
 		BMI_ERR("Unable to read from the device status:%d", status);
@@ -278,6 +286,7 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 	uint32_t cid;
 	struct bmi_info *info;
 	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_dma_addr_t cmd, rsp;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
@@ -296,6 +305,9 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 		return CDF_STATUS_E_PERM;
 	}
 
+	cmd = info->bmi_cmd_da;
+	rsp = info->bmi_rsp_da;
+
 	BMI_DBG("BMI Done: Enter (device: 0x%p)", scn);
 
 	info->bmi_done = true;
@@ -309,7 +321,7 @@ CDF_STATUS bmi_done_local(struct ol_softc *scn)
 
 	cdf_mem_copy(info->bmi_cmd_buff, &cid, sizeof(cid));
 
-	status = hif_exchange_bmi_msg(scn, info->bmi_cmd_buff,
+	status = hif_exchange_bmi_msg(scn, cmd, rsp, info->bmi_cmd_buff,
 				sizeof(cid), NULL, NULL, 0);
 	if (status) {
 		BMI_ERR("Failed to write to the device; status:%d", status);
