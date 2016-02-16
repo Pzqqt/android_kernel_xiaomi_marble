@@ -543,6 +543,7 @@ CDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx)
 
 	ol_info->cdf_dev = cdf_dev;
 	ol_info->scn = hif_ctx;
+	ol_info->tgt_def.targetdef = hif_get_targetdef(hif_ctx);
 
 	cdf_create_work(&ol_info->ramdump_work, ramdump_work_handler, ol_info);
 

@@ -887,7 +887,7 @@ CDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
 
 CDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct ol_softc *hif = ol_ctx->scn;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	uint32_t addr = 0;
 	uint32_t reg_val = 0;
@@ -896,8 +896,9 @@ CDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 	uint32_t cmnos_core_clk_div_addr = 0;
 	uint32_t cmnos_cpu_pll_init_done_addr = 0;
 	uint32_t cmnos_cpu_speed_addr = 0;
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif);
 	uint32_t target_version = tgt_info->target_version;
+	struct targetdef_t *scn = &ol_ctx->tgt_def;
 
 	switch (target_version) {
 	case AR6320_REV1_1_VERSION:

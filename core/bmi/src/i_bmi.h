@@ -133,6 +133,9 @@ struct ol_context {
 	cdf_device_t cdf_dev;
 	struct ol_softc *scn;
 	cdf_work_t ramdump_work;
+	struct targetdef_t {
+		struct targetdef_s *targetdef;
+	} tgt_def;
 };
 
 CDF_STATUS bmi_execute(uint32_t address, uint32_t *param,
