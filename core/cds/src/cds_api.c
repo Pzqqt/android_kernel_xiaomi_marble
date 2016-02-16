@@ -564,7 +564,6 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "Failed to get ready event from target firmware");
-		htc_set_target_to_sleep(scn);
 		htc_stop(gp_cds_context->htc_ctx);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -573,13 +572,10 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	if (ol_txrx_pdev_attach(gp_cds_context->pdev_txrx_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			"Failed to attach pdev");
-		htc_set_target_to_sleep(scn);
 		htc_stop(gp_cds_context->htc_ctx);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	htc_set_target_to_sleep(scn);
 
 	return QDF_STATUS_SUCCESS;
 }
