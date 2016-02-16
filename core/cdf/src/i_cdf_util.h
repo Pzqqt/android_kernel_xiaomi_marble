@@ -37,6 +37,7 @@
 
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 #include <asm/byteorder.h>
 /*
  * Generic compiler-dependent macros if defined by the OS

@@ -1739,8 +1739,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		if (wma_is_vdev_in_ibss_mode(wma, resp_event->vdev_id))
 			wma_delete_all_ibss_peers(wma, resp_event->vdev_id);
-		else
-		{
+		else {
 			if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
 				wma_delete_all_ap_remote_peers(wma,
 						resp_event->vdev_id);
@@ -2749,8 +2748,7 @@ void wma_vdev_resp_timer(void *data)
 		}
 		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
 			wma_delete_all_ibss_peers(wma, tgt_req->vdev_id);
-		else
-		{
+		else {
 			if (wma_is_vdev_in_ap_mode(wma, tgt_req->vdev_id)) {
 				wma_delete_all_ap_remote_peers(wma,
 							       tgt_req->
@@ -4714,7 +4712,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 
 	while (ol_txrx_get_tx_pending(pdev) && max_wait_iterations) {
 		WMA_LOGW(FL("Waiting for outstanding packet to drain."));
-		cdf_wait_single_event(&wma->tx_queue_empty_event,
+		qdf_wait_single_event(&wma->tx_queue_empty_event,
 				      WMA_TX_Q_RECHECK_TIMER_MAX_WAIT);
 		max_wait_iterations--;
 	}

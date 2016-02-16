@@ -849,7 +849,7 @@ struct ol_txrx_vdev_t {
 	ol_txrx_tx_flow_control_fp osif_flow_control_cb;
 	void *osif_fc_ctx;
 	uint16_t wait_on_peer_id;
-	cdf_event_t wait_delete_comp;
+	qdf_event_t wait_delete_comp;
 #if defined(FEATURE_TSO)
 	struct {
 		int pool_elems; /* total number of elements in the pool */

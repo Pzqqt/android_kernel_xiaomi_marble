@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __CDS_UTILS_H )
+#if !defined(__CDS_UTILS_H)
 #define __CDS_UTILS_H
 
 /**=========================================================================
@@ -43,7 +43,8 @@
    ------------------------------------------------------------------------*/
 #include <cdf_types.h>
 #include <cdf_status.h>
-#include <cdf_event.h>
+#include <qdf_status.h>
+#include <qdf_event.h>
 #include "ani_global.h"
 
 /*--------------------------------------------------------------------------
@@ -132,9 +133,9 @@ CDF_STATUS cds_rand_get_bytes(uint32_t handle, uint8_t *pbBuf,
  *
  */
 CDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
-			     uint8_t * text,    /* pointer to data stream */
+			     uint8_t *text,    /* pointer to data stream */
 			     uint32_t textLen,  /* length of data stream */
-			     uint8_t * key,     /* pointer to authentication key */
+			     uint8_t *key,     /* pointer to authentication key */
 			     uint32_t keyLen,   /* length of authentication key */
 			     uint8_t digest[CDS_DIGEST_SHA1_SIZE]);     /* caller digest to be filled in */
 
@@ -161,9 +162,9 @@ CDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
  *
  */
 CDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
-			    uint8_t * text,     /* pointer to data stream */
+			    uint8_t *text,     /* pointer to data stream */
 			    uint32_t textLen,   /* length of data stream */
-			    uint8_t * key,      /* pointer to authentication key */
+			    uint8_t *key,      /* pointer to authentication key */
 			    uint32_t keyLen,    /* length of authentication key */
 			    uint8_t digest[CDS_DIGEST_MD5_SIZE]);       /* caller digest to be filled in */
 

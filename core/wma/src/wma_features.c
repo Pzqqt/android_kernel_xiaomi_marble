@@ -2845,7 +2845,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		 wma_wow_wake_reason_str(wake_info->wake_reason),
 		 wake_info->wake_reason, wake_info->vdev_id);
 
-	cdf_event_set(&wma->wma_resume_event);
+	qdf_event_set(&wma->wma_resume_event);
 
 	switch (wake_info->wake_reason) {
 	case WOW_REASON_AUTH_REQ_RECV:
@@ -3088,7 +3088,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 
 	WMA_LOGA("Received PDEV resume event");
 
-	cdf_event_set(&wma->wma_resume_event);
+	qdf_event_set(&wma->wma_resume_event);
 
 	return 0;
 }
@@ -3576,7 +3576,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
 		"WOW_IFACE_PAUSE_ENABLED" : "WOW_IFACE_PAUSE_DISABLED");
 
-	cdf_event_reset(&wma->target_suspend);
+	qdf_event_reset(&wma->target_suspend);
 	wma->wow_nack = 0;
 
 	host_credits = wmi_get_host_credits(wma->wmi_handle);
@@ -3603,9 +3603,9 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 
 	wmi_set_target_suspend(wma->wmi_handle, true);
 
-	if (cdf_wait_single_event(&wma->target_suspend,
+	if (qdf_wait_single_event(&wma->target_suspend,
 				  WMA_TGT_SUSPEND_COMPLETE_TIMEOUT)
-	    != CDF_STATUS_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to receive WoW Enable Ack from FW");
 		WMA_LOGE("Credits:%d; Pending_Cmds: %d",
 			 wmi_get_host_credits(wma->wmi_handle),
@@ -4201,7 +4201,7 @@ static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
 	if (type == CDF_SYSTEM_SUSPEND)
 		wma_send_status_to_suspend_ind(wma, true);
 	else if (type == CDF_RUNTIME_SUSPEND)
-		cdf_event_set(&wma->runtime_suspend);
+		qdf_event_set(&wma->runtime_suspend);
 }
 
 /**
@@ -4256,6 +4256,7 @@ static CDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 	wmi_wow_hostwakeup_from_sleep_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int32_t len;
 	int ret;
 #ifdef CONFIG_CNSS
@@ -4281,7 +4282,7 @@ static CDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_wow_hostwakeup_from_sleep_cmd_fixed_param));
 
-	cdf_event_reset(&wma->wma_resume_event);
+	qdf_event_reset(&wma->wma_resume_event);
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				   WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID);
@@ -4293,9 +4294,9 @@ static CDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 
 	WMA_LOGD("Host wakeup indication sent to fw");
 
-	cdf_status = cdf_wait_single_event(&(wma->wma_resume_event),
+	qdf_status = qdf_wait_single_event(&(wma->wma_resume_event),
 					   WMA_RESUME_TIMEOUT);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		WMA_LOGP("%s: Timeout waiting for resume event from FW",
 			 __func__);
 		WMA_LOGP("%s: Pending commands %d credits %d", __func__,
@@ -4932,7 +4933,7 @@ static int wma_add_clear_mcbc_filter(tp_wma_handle wma_handle, uint8_t vdev_id,
  * Return: CDF status
  */
 CDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
-					   tSirRcvFltMcAddrList * mcbc_param)
+					   tSirRcvFltMcAddrList *mcbc_param)
 {
 	uint8_t vdev_id = 0;
 	int i;
@@ -6367,7 +6368,7 @@ static CDF_STATUS wma_post_runtime_suspend_msg(WMA_HANDLE handle)
 	CDF_STATUS cdf_status;
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
-	cdf_event_reset(&wma->runtime_suspend);
+	qdf_event_reset(&wma->runtime_suspend);
 
 	cds_msg.bodyptr = NULL;
 	cds_msg.type    = WMA_RUNTIME_PM_SUSPEND_IND;
@@ -6376,9 +6377,9 @@ static CDF_STATUS wma_post_runtime_suspend_msg(WMA_HANDLE handle)
 	if (cdf_status != CDF_STATUS_SUCCESS)
 		goto failure;
 
-	if (cdf_wait_single_event(&wma->runtime_suspend,
+	if (qdf_wait_single_event(&wma->runtime_suspend,
 			WMA_TGT_SUSPEND_COMPLETE_TIMEOUT) !=
-			CDF_STATUS_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get runtime suspend event");
 		goto failure;
 	}
@@ -6573,7 +6574,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	} else {
 		cmd->suspend_opt = WMI_PDEV_SUSPEND;
 	}
-	cdf_event_reset(&wma_handle->target_suspend);
+	qdf_event_reset(&wma_handle->target_suspend);
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, wmibuf, len,
 				 WMI_PDEV_SUSPEND_CMDID);
 	if (ret < 0) {
@@ -6583,9 +6584,9 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 
 	wmi_set_target_suspend(wma_handle->wmi_handle, true);
 
-	if (cdf_wait_single_event(&wma_handle->target_suspend,
+	if (qdf_wait_single_event(&wma_handle->target_suspend,
 				  WMA_TGT_SUSPEND_COMPLETE_TIMEOUT)
-	    != CDF_STATUS_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get ACK from firmware for pdev suspend");
 		wmi_set_target_suspend(wma_handle->wmi_handle, false);
 #ifdef CONFIG_CNSS
@@ -6632,7 +6633,7 @@ void wma_target_suspend_acknowledge(void *context)
 	}
 
 	wma->wow_nack = wow_nack;
-	cdf_event_set(&wma->target_suspend);
+	qdf_event_set(&wma->target_suspend);
 	if (wow_nack)
 		cdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
 					      WMA_WAKE_LOCK_TIMEOUT,
@@ -6652,6 +6653,7 @@ int wma_resume_target(WMA_HANDLE handle)
 	wmi_buf_t wmibuf;
 	wmi_pdev_resume_cmd_fixed_param *cmd;
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 #ifdef CONFIG_CNSS
 	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
 	if (NULL == pMac) {
@@ -6670,7 +6672,7 @@ int wma_resume_target(WMA_HANDLE handle)
 		       WMITLV_GET_STRUCT_TLVLEN
 			       (wmi_pdev_resume_cmd_fixed_param));
 	cmd->reserved0 = 0;
-	cdf_event_reset(&wma->wma_resume_event);
+	qdf_event_reset(&wma->wma_resume_event);
 	ret = wmi_unified_cmd_send(wma->wmi_handle, wmibuf, sizeof(*cmd),
 				   WMI_PDEV_RESUME_CMDID);
 	if (ret != EOK) {
@@ -6678,9 +6680,9 @@ int wma_resume_target(WMA_HANDLE handle)
 		wmi_buf_free(wmibuf);
 	}
 
-	cdf_status = cdf_wait_single_event(&(wma->wma_resume_event),
+	qdf_status = qdf_wait_single_event(&(wma->wma_resume_event),
 			WMA_RESUME_TIMEOUT);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		WMA_LOGP("%s: Timeout waiting for resume event from FW",
 			__func__);
 		WMA_LOGP("%s: Pending commands %d credits %d", __func__,

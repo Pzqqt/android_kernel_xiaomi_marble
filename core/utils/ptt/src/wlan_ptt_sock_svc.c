@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,6 +33,7 @@
 #include <wlan_nlink_srv.h>
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 #include <cdf_trace.h>
 #include <wlan_nlink_common.h>
 #include <wlan_ptt_sock_svc.h>
@@ -96,7 +97,8 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	}
 	payload_len = wmsg_length + 4;  /* 4 extra bytes for the radio idx */
 	tot_msg_len = NLMSG_SPACE(payload_len);
-	if ((skb = dev_alloc_skb(tot_msg_len)) == NULL) {
+	skb = dev_alloc_skb(tot_msg_len);
+	if (skb  == NULL) {
 		PTT_TRACE(CDF_TRACE_LEVEL_ERROR,
 			  "%s: dev_alloc_skb() failed for msg size[%d]\n",
 			  __func__, tot_msg_len);

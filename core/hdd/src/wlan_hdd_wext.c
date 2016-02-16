@@ -1448,7 +1448,7 @@ void hdd_statistics_cb(void *pStats, void *pContext)
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pContext;
 	hdd_stats_t *pStatsCache = NULL;
 	hdd_wext_state_t *pWextState;
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	tCsrSummaryStatsInfo *pSummaryStats = NULL;
 	tCsrGlobalClassAStatsInfo *pClassAStats = NULL;
@@ -1487,9 +1487,9 @@ void hdd_statistics_cb(void *pStats, void *pContext)
 
 	if (pAdapter) {
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-		cdf_status = cdf_event_set(&pWextState->hdd_cdf_event);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-			hddLog(LOGE, FL("cdf_event_set failed"));
+		qdf_status = qdf_event_set(&pWextState->hdd_cdf_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+			hddLog(LOGE, FL("qdf_event_set failed"));
 			return;
 		}
 	}
@@ -2228,6 +2228,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 			    union iwreq_data *wrqu, char *extra)
 {
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -2273,11 +2274,11 @@ static int __iw_get_bitrate(struct net_device *dev,
 
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
-		cdf_status =
-			cdf_wait_single_event(&pWextState->hdd_cdf_event,
+		qdf_status =
+			qdf_wait_single_event(&pWextState->hdd_cdf_event,
 					      WLAN_WAIT_TIME_STATS);
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: SME timeout while retrieving statistics",
 			       __func__);
@@ -8812,7 +8813,7 @@ static int __iw_get_statistics(struct net_device *dev,
 			       union iwreq_data *wrqu, char *extra)
 {
 
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -8856,10 +8857,10 @@ static int __iw_get_statistics(struct net_device *dev,
 
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
-		cdf_status =
-			cdf_wait_single_event(&pWextState->hdd_cdf_event,
+		qdf_status =
+			qdf_wait_single_event(&pWextState->hdd_cdf_event,
 					      WLAN_WAIT_TIME_STATS);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: SME timeout while retrieving statistics",
 			       __func__);
@@ -10751,7 +10752,7 @@ int hdd_register_wext(struct net_device *dev)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ENTER();
 
@@ -10763,20 +10764,20 @@ int hdd_register_wext(struct net_device *dev)
 
 	status = hdd_set_wext(pAdapter);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: hdd_set_wext failed!!"));
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_event_init(&pwextBuf->hdd_cdf_event))) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_create(&pwextBuf->hdd_cdf_event))) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: HDD cdf event init failed!!"));
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_event_init(&pwextBuf->scanevent))) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_create(&pwextBuf->scanevent))) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: HDD scan event init failed!!"));
 		return CDF_STATUS_E_FAILURE;

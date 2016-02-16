@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,6 +38,7 @@
   Include Files
   ------------------------------------------------------------------------*/
 #include "cdf_status.h"
+#include "qdf_status.h"
 #include "cdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"

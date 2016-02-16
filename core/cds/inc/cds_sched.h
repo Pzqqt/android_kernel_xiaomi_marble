@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __CDS_SCHED_H )
+#if !defined(__CDS_SCHED_H)
 #define __CDS_SCHED_H
 
 /**=========================================================================
@@ -39,7 +39,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include <cdf_event.h>
+#include <qdf_event.h>
 #include "i_cdf_types.h"
 #include <linux/wait.h>
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
@@ -250,11 +250,11 @@ typedef struct _cds_context_type {
 	/* MAC Module Context  */
 	void *pMACContext;
 
-	cdf_event_t ProbeEvent;
+	qdf_event_t ProbeEvent;
 
 	uint32_t driver_state;
 
-	cdf_event_t wmaCompleteEvent;
+	qdf_event_t wmaCompleteEvent;
 
 	/* WMA Context */
 	void *pWMAContext;
@@ -284,7 +284,7 @@ typedef struct _cds_context_type {
 	uint32_t fw_debug_log_level;
 	struct cds_log_complete log_complete;
 	cdf_spinlock_t bug_report_lock;
-	cdf_event_t connection_update_done_evt;
+	qdf_event_t connection_update_done_evt;
 	cdf_mutex_t cdf_conc_list_lock;
 
 } cds_context_type, *p_cds_contextType;
@@ -372,22 +372,21 @@ void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
    \param  p_cds_context - pointer to the global CDF Context
 
    \param  p_cds_sched_context - pointer to a previously allocated buffer big
-          enough to hold a scheduler context.
- \
+   enough to hold a scheduler context.
 
    \return CDF_STATUS_SUCCESS - Scheduler was successfully initialized and
-          is ready to be used.
+   is ready to be used.
 
-          CDF_STATUS_E_RESOURCES - System resources (other than memory)
-          are unavailable to initilize the scheduler
+   CDF_STATUS_E_RESOURCES - System resources (other than memory)
+   are unavailable to initilize the scheduler
 
-          CDF_STATUS_E_NOMEM - insufficient memory exists to initialize
-          the scheduler
+   CDF_STATUS_E_NOMEM - insufficient memory exists to initialize
+   the scheduler
 
-          CDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
-          function
+   CDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
+   function
 
-          CDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
+   CDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
 
    \sa cds_sched_open()
 
@@ -411,12 +410,12 @@ CDF_STATUS cds_sched_open(void *p_cds_context,
    \param  p_cds_context - pointer to the global CDF Context
 
    \return CDF_STATUS_SUCCESS - Scheduler was successfully initialized and
-          is ready to be used.
+   is ready to be used.
 
-          CDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
-          function
+   CDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
+   function
 
-          CDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
+   CDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
 
    \sa cds_sched_close()
 

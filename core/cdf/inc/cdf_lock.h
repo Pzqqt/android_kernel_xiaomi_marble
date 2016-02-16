@@ -40,6 +40,7 @@
 
 /* Include Files */
 #include "cdf_status.h"
+#include "qdf_status.h"
 #include "i_cdf_lock.h"
 
 /* Preprocessor definitions and constants */

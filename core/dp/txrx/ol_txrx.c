@@ -1332,7 +1332,7 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 				peer_mac_addr[4], peer_mac_addr[5]);
 			if (cdf_atomic_read(&temp_peer->delete_in_progress)) {
 				vdev->wait_on_peer_id = temp_peer->local_id;
-				cdf_event_init(&vdev->wait_delete_comp);
+				qdf_event_create(&vdev->wait_delete_comp);
 				wait_on_deletion = true;
 			} else {
 				cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
@@ -1344,7 +1344,7 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 
 	if (wait_on_deletion) {
 		/* wait for peer deletion */
-		rc = cdf_wait_single_event(&vdev->wait_delete_comp,
+		rc = qdf_wait_single_event(&vdev->wait_delete_comp,
 			cdf_system_msecs_to_ticks(PEER_DELETION_TIMEOUT));
 		if (!rc) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -1729,7 +1729,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 		 * with registered peer id.
 		 */
 		if (peer_id == vdev->wait_on_peer_id) {
-			cdf_event_set(&vdev->wait_delete_comp);
+			qdf_event_set(&vdev->wait_delete_comp);
 			vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 		}
 

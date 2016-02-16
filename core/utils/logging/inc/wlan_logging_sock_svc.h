@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,6 +35,7 @@
 
 #include <wlan_nlink_srv.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 #include <cdf_trace.h>
 #include <wlan_nlink_common.h>
 

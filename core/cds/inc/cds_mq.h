@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __CDS_MQ_H )
+#if !defined(__CDS_MQ_H)
 #define __CDS_MQ_H
 
 /**=========================================================================
@@ -43,6 +43,7 @@
    ------------------------------------------------------------------------*/
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -120,24 +121,24 @@ typedef enum {
    </ul>
 
    \param msgQueueId - identifies the message queue upon which the message
-         will be posted.
+   will be posted.
 
    \param message - a pointer to a message buffer.  Memory for this message
-         buffer is allocated by the caller and free'd by the CDF after the
-         message is posted to the message queue.  If the consumer of the
-         message needs anything in this message, it needs to copy the contents
-         before returning from the message queue handler.
+   buffer is allocated by the caller and free'd by the CDF after the
+   message is posted to the message queue.  If the consumer of the
+   message needs anything in this message, it needs to copy the contents
+   before returning from the message queue handler.
 
    \return CDF_STATUS_SUCCESS - the message has been successfully posted
-          to the message queue.
+   to the message queue.
 
-          CDF_STATUS_E_INVAL - The value specified by msgQueueId does not
-          refer to a valid Message Queue Id.
+   CDF_STATUS_E_INVAL - The value specified by msgQueueId does not
+   refer to a valid Message Queue Id.
 
-          CDF_STATUS_E_FAULT  - message is an invalid pointer.
+   CDF_STATUS_E_FAULT  - message is an invalid pointer.
 
-          CDF_STATUS_E_FAILURE - the message queue handler has reported
-          an unknown failure.
+   CDF_STATUS_E_FAILURE - the message queue handler has reported
+   an unknown failure.
 
    \sa
 
@@ -149,13 +150,13 @@ CDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *message);
    \brief cds_send_mb_message_to_mac() - post a message to a message queue
 
    \param pBuf is a buffer allocated by caller. The actual structure varies
-         base on message type
+   base on message type
 
    \return CDF_STATUS_SUCCESS - the message has been successfully posted
-          to the message queue.
+   to the message queue.
 
-          CDF_STATUS_E_FAILURE - the message queue handler has reported
-          an unknown failure.
+   CDF_STATUS_E_FAILURE - the message queue handler has reported
+   an unknown failure.
 
    \sa
    --------------------------------------------------------------------------*/

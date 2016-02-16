@@ -34,7 +34,7 @@
 #include <linux/wireless.h>
 #include <net/iw_handler.h>
 #include <linux/timer.h>
-#include "cdf_event.h"
+#include "qdf_event.h"
 
 /*
  * order of parameters in addTs private ioctl
@@ -250,9 +250,9 @@ typedef struct hdd_wext_state_s {
 	int32_t authKeyMgmt;
 
 	/* cdf event */
-	cdf_event_t hdd_cdf_event;
+	qdf_event_t hdd_cdf_event;
 
-	cdf_event_t scanevent;
+	qdf_event_t scanevent;
 
 	/**Counter measure state, Started/Stopped*/
 	bool mTKIPCounterMeasures;

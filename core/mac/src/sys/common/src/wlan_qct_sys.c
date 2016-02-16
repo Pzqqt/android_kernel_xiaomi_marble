@@ -45,7 +45,7 @@
 
 /* SYS stop timeout 30 seconds */
 #define SYS_STOP_TIMEOUT (30000)
-static cdf_event_t g_stop_evt;
+static qdf_event_t g_stop_evt;
 
 /**
  * sys_build_message_header() - to build the sys message header
@@ -74,10 +74,10 @@ CDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg)
  */
 void sys_stop_complete_cb(void *pUserData)
 {
-	cdf_event_t *pStopEvt = (cdf_event_t *) pUserData;
-	CDF_STATUS cdf_status = cdf_event_set(pStopEvt);
+	qdf_event_t *pStopEvt = (qdf_event_t *) pUserData;
+	QDF_STATUS qdf_status = qdf_event_set(pStopEvt);
 
-	CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+	CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 
 }
 
@@ -92,13 +92,14 @@ void sys_stop_complete_cb(void *pUserData)
 CDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 {
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cds_msg_t sysMsg;
 
 	/* Initialize the stop event */
-	cdf_status = cdf_event_init(&g_stop_evt);
+	qdf_status = qdf_event_create(&g_stop_evt);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
-		return cdf_status;
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		return qdf_status;
 
 	/* post a message to SYS module in MC to stop SME and MAC */
 	sys_build_message_header(SYS_MSG_ID_MC_STOP, &sysMsg);
@@ -112,13 +113,13 @@ CDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
 		cdf_status = CDF_STATUS_E_BADMSG;
 
-	cdf_status = cdf_wait_single_event(&g_stop_evt, SYS_STOP_TIMEOUT);
-	CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+	qdf_status = qdf_wait_single_event(&g_stop_evt, SYS_STOP_TIMEOUT);
+	CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 
-	cdf_status = cdf_event_destroy(&g_stop_evt);
-	CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+	qdf_status = qdf_event_destroy(&g_stop_evt);
+	CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -253,7 +254,7 @@ CDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 		if (pMsg->bodyptr)
 			cdf_mem_free(pMsg->bodyptr);
 	}
-	return (cdf_status);
+	return cdf_status;
 }
 
 /**

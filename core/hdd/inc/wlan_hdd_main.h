@@ -399,7 +399,7 @@ typedef enum {
 
 typedef struct roaming_info_s {
 	HDD_ROAM_STATE roamingState;
-	cdf_event_t roamingEvent;
+	qdf_event_t roamingEvent;
 
 	tSirMacAddr bssid;
 	tSirMacAddr peerMac;
@@ -672,8 +672,8 @@ struct hdd_station_ctx {
 #define BSS_START   1
 typedef struct hdd_hostapd_state_s {
 	int bssState;
-	cdf_event_t cdf_event;
-	cdf_event_t cdf_stop_bss_event;
+	qdf_event_t cdf_event;
+	qdf_event_t cdf_stop_bss_event;
 	CDF_STATUS cdf_status;
 	bool bCommit;
 

@@ -50,6 +50,7 @@
 /* Include Files */
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 #include <cdf_trace.h>
 #include <linux/list.h>
 

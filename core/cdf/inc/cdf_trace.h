@@ -41,6 +41,7 @@
 #include  <cdf_types.h>         /* For CDF_MODULE_ID... */
 #include  <stdarg.h>            /* For va_list... */
 #include  <cdf_status.h>
+#include  <qdf_status.h>
 #include  <cdf_nbuf.h>
 #include  <cds_packet.h>
 #include  <i_cdf_types.h>

@@ -9332,8 +9332,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return status;
 
 	if (NULL !=
-		params->chandef.chan)
-	{
+		params->chandef.chan) {
 		uint32_t numChans = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 		uint8_t validChan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 		tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
@@ -9831,6 +9830,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
 	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	hdd_hostapd_state_t *hapd_state;
 	int status;
 	uint8_t staId;
@@ -9892,7 +9892,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 							DFS_CAC_IN_PROGRESS)
 						goto fn_end;
 
-					cdf_event_reset(&hapd_state->cdf_event);
+					qdf_event_reset(&hapd_state->cdf_event);
 					hdd_softap_sta_disassoc(pAdapter,
 								mac);
 					cdf_status =
@@ -9901,12 +9901,12 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 					if (CDF_IS_STATUS_SUCCESS(cdf_status)) {
 						pAdapter->aStaInfo[i].
 						isDeauthInProgress = true;
-						cdf_status =
-							cdf_wait_single_event(
+						qdf_status =
+							qdf_wait_single_event(
 								&hapd_state->cdf_event,
 								1000);
-						if (!CDF_IS_STATUS_SUCCESS(
-								cdf_status))
+						if (!QDF_IS_STATUS_SUCCESS(
+								qdf_status))
 							hddLog(LOGE,
 								"%s: Deauth wait time expired",
 								__func__);
@@ -9956,7 +9956,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			if (pHddCtx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS)
 				goto fn_end;
 
-			cdf_event_reset(&hapd_state->cdf_event);
+			qdf_event_reset(&hapd_state->cdf_event);
 			hdd_softap_sta_disassoc(pAdapter, mac);
 			cdf_status = hdd_softap_sta_deauth(pAdapter,
 							   pDelStaParams);
@@ -9969,10 +9969,10 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				       MAC_ADDR_ARRAY(mac));
 				return -ENOENT;
 			} else {
-				cdf_status = cdf_wait_single_event(
+				qdf_status = qdf_wait_single_event(
 							&hapd_state->cdf_event,
 							1000);
-				if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+				if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 					hddLog(LOGE,
 						"%s: Deauth wait time expired",
 						__func__);

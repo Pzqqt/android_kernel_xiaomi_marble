@@ -37,6 +37,7 @@
 /* Include Files */
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 #include <cdf_lock.h>
 #include <i_cdf_mc_timer.h>
 

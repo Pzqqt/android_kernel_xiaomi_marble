@@ -2906,6 +2906,7 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		mutex_lock(&hdd_ctx->sap_lock);
 		if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
 			CDF_STATUS status;
+			QDF_STATUS qdf_status;
 
 			/* Stop Bss. */
 #ifdef WLAN_FEATURE_MBSSID
@@ -2919,19 +2920,19 @@ CDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			if (CDF_IS_STATUS_SUCCESS(status)) {
 				hdd_hostapd_state_t *hostapd_state =
 					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
-				cdf_event_reset(&hostapd_state->
+				qdf_event_reset(&hostapd_state->
 						cdf_stop_bss_event);
-				status =
-					cdf_wait_single_event(&hostapd_state->
+				qdf_status =
+					qdf_wait_single_event(&hostapd_state->
 							cdf_stop_bss_event,
 							BSS_WAIT_TIMEOUT);
 
-				if (!CDF_IS_STATUS_SUCCESS(status)) {
+				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 					hddLog(LOGE,
 					       FL(
 						  "failure waiting for wlansap_stop_bss %d"
 						 ),
-					       status);
+					       qdf_status);
 				}
 			} else {
 				hddLog(LOGE, FL("failure in wlansap_stop_bss"));
@@ -6555,7 +6556,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 {
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	hdd_context_t *hdd_ctx;
 #ifdef CFG80211_DEL_STA_V2
 	struct station_del_parameters delStaParams;
@@ -6592,13 +6593,13 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
 		       FL("Now doing SAP STOPBSS"));
-		cdf_event_reset(&hostapd_state->cdf_stop_bss_event);
+		qdf_event_reset(&hostapd_state->cdf_stop_bss_event);
 		if (CDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
 							sapContext)) {
-			cdf_status = cdf_wait_single_event(&hostapd_state->
+			qdf_status = qdf_wait_single_event(&hostapd_state->
 							   cdf_stop_bss_event,
 							   BSS_WAIT_TIMEOUT);
-			if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				mutex_unlock(&hdd_ctx->sap_lock);
 				hddLog(CDF_TRACE_LEVEL_ERROR,
 				       FL("SAP Stop Failed"));
@@ -6630,7 +6631,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 {
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	hdd_context_t *hdd_ctx;
 	tsap_Config_t *sap_config;
 
@@ -6673,9 +6674,9 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 
 	hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
 	       FL("Waiting for SAP to start"));
-	cdf_status = cdf_wait_single_event(&hostapd_state->cdf_event,
+	qdf_status = qdf_wait_single_event(&hostapd_state->cdf_event,
 					BSS_WAIT_TIMEOUT);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, FL("SAP Start failed"));
 		goto end;
 	}

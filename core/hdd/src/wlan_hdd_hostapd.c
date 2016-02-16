@@ -857,6 +857,7 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	int i = 0;
 	uint8_t staId;
 	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	bool bWPSState;
 	bool bAuthRequired = true;
 	tpSap_AssocMacAddr pAssocStasArray = NULL;
@@ -933,9 +934,9 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		pHostapdState->cdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
-		cdf_status = cdf_event_set(&pHostapdState->cdf_event);
+		qdf_status = qdf_event_set(&pHostapdState->cdf_event);
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)
 		    || pHostapdState->cdf_status) {
 			hddLog(LOGE, ("ERROR: startbss event failed!!"));
 			goto stopbss;
@@ -1443,8 +1444,8 @@ CDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hddLog(LOG1, " disassociated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
-		cdf_status = cdf_event_set(&pHostapdState->cdf_event);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+		qdf_status = qdf_event_set(&pHostapdState->cdf_event);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hddLog(LOGE, "ERR: Station Deauth event Set failed");
 
 		if (pSapEvent->sapevt.sapStationDisassocCompleteEvent.reason ==
@@ -1863,7 +1864,7 @@ stopbss:
 		 * not be touched since they are now subject to being deleted
 		 * by another thread */
 		if (eSAP_STOP_BSS_EVENT == sapEvent)
-			cdf_event_set(&pHostapdState->cdf_stop_bss_event);
+			qdf_event_set(&pHostapdState->cdf_stop_bss_event);
 
 		/* notify userspace that the BSS has stopped */
 		memset(&we_custom_event, '\0', sizeof(we_custom_event));
@@ -5035,6 +5036,7 @@ __iw_softap_stopbss(struct net_device *dev,
 {
 	hdd_adapter_t *pHostapdAdapter = (netdev_priv(dev));
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	hdd_context_t *hdd_ctx;
 
 	ENTER();
@@ -5048,7 +5050,7 @@ __iw_softap_stopbss(struct net_device *dev,
 		hdd_hostapd_state_t *pHostapdState =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 
-		cdf_event_reset(&pHostapdState->cdf_stop_bss_event);
+		qdf_event_reset(&pHostapdState->cdf_stop_bss_event);
 #ifdef WLAN_FEATURE_MBSSID
 		status =
 			wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
@@ -5058,12 +5060,12 @@ __iw_softap_stopbss(struct net_device *dev,
 					 pcds_context);
 #endif
 		if (CDF_IS_STATUS_SUCCESS(status)) {
-			status =
-				cdf_wait_single_event(&pHostapdState->
+			qdf_status =
+				qdf_wait_single_event(&pHostapdState->
 						      cdf_stop_bss_event,
 						      10000);
 
-			if (!CDF_IS_STATUS_SUCCESS(status)) {
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOGE,
 				       FL("wait for single_event failed!!"));
 				CDF_ASSERT(0);
@@ -5989,6 +5991,7 @@ CDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 	struct net_device *dev = pAdapter->dev;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	CDF_STATUS status;
+	QDF_STATUS qdf_status;
 #ifdef WLAN_FEATURE_MBSSID
 	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(pAdapter))->pcds_context;
 	v_CONTEXT_t sapContext = NULL;
@@ -6033,23 +6036,23 @@ CDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 		return status;
 	}
 
-	status = cdf_event_init(&phostapdBuf->cdf_event);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	qdf_status = qdf_event_create(&phostapdBuf->cdf_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, ("ERROR: Hostapd HDD cdf event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
 #endif
-		return status;
+		return qdf_status;
 	}
 
-	status = cdf_event_init(&phostapdBuf->cdf_stop_bss_event);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	qdf_status = qdf_event_create(&phostapdBuf->cdf_stop_bss_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: Hostapd HDD stop bss event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
 #endif
-		return status;
+		return qdf_status;
 	}
 
 	init_completion(&pAdapter->session_close_comp_var);
@@ -7314,6 +7317,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	eCsrEncryptionType RSNEncryptType;
 	eCsrEncryptionType mcRSNEncryptType;
 	int status = CDF_STATUS_SUCCESS, ret;
+	int qdf_status = QDF_STATUS_SUCCESS;
 	tpWLAN_SAPEventCB pSapEventCallback;
 	hdd_hostapd_state_t *pHostapdState;
 #ifndef WLAN_FEATURE_MBSSID
@@ -7775,7 +7779,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->dfs_cac_block_tx = true;
 
-	cdf_event_reset(&pHostapdState->cdf_event);
+	qdf_event_reset(&pHostapdState->cdf_event);
 	status = wlansap_start_bss(
 #ifdef WLAN_FEATURE_MBSSID
 		WLAN_HDD_GET_SAP_CTX_PTR
@@ -7795,11 +7799,11 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	hddLog(LOG1,
 	       FL("Waiting for Scan to complete(auto mode) and BSS to start"));
 
-	status = cdf_wait_single_event(&pHostapdState->cdf_event, 10000);
+	qdf_status = qdf_wait_single_event(&pHostapdState->cdf_event, 10000);
 
 	wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE,
 			FL("ERROR: HDD cdf wait for single_event failed!!"));
 		cds_set_connection_in_progress(false);
@@ -7859,6 +7863,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	hdd_scaninfo_t *pScanInfo = NULL;
 	hdd_adapter_t *staAdapter = NULL;
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tSirUpdateIE updateIE;
 	beacon_data_t *old;
 	int ret;
@@ -7957,19 +7962,19 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		hdd_hostapd_state_t *pHostapdState =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 
-		cdf_event_reset(&pHostapdState->cdf_stop_bss_event);
+		qdf_event_reset(&pHostapdState->cdf_stop_bss_event);
 #ifdef WLAN_FEATURE_MBSSID
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter));
 #else
 		status = wlansap_stop_bss(pHddCtx->pcds_context);
 #endif
 		if (CDF_IS_STATUS_SUCCESS(status)) {
-			status =
-				cdf_wait_single_event(&pHostapdState->
+			qdf_status =
+				qdf_wait_single_event(&pHostapdState->
 						      cdf_stop_bss_event,
 						      10000);
 
-			if (!CDF_IS_STATUS_SUCCESS(status)) {
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOGE,
 				       FL("HDD cdf wait for single_event failed!!"));
 				CDF_ASSERT(0);

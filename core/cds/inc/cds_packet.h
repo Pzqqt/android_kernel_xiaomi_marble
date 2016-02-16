@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __CDS_PKT_H )
+#if !defined(__CDS_PKT_H)
 #define __CDS_PKT_H
 
 /**=========================================================================
@@ -43,6 +43,7 @@
    ------------------------------------------------------------------------*/
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants

@@ -36,6 +36,7 @@
 #endif
 #include <cdf_types.h>
 #include <cdf_status.h>
+#include <qdf_status.h>
 #include <cdf_trace.h>
 
 typedef struct tasklet_struct __cdf_bh_t;

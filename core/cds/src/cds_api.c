@@ -194,14 +194,14 @@ CDF_STATUS cds_open(void)
 	cds_init_log_completion();
 
 	/* Initialize the probe event */
-	if (cdf_event_init(&gp_cds_context->ProbeEvent) != CDF_STATUS_SUCCESS) {
+	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Unable to init probeEvent", __func__);
 		CDF_ASSERT(0);
 		return CDF_STATUS_E_FAILURE;
 	}
-	if (cdf_event_init(&(gp_cds_context->wmaCompleteEvent)) !=
-	    CDF_STATUS_SUCCESS) {
+	if (qdf_event_create(&(gp_cds_context->wmaCompleteEvent)) !=
+	    QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Unable to init wmaCompleteEvent", __func__);
 		CDF_ASSERT(0);
@@ -470,10 +470,10 @@ err_msg_queue:
 	cds_mq_deinit(&gp_cds_context->freeVosMq);
 
 err_wma_complete_event:
-	cdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
 
 err_probe_event:
-	cdf_event_destroy(&gp_cds_context->ProbeEvent);
+	qdf_event_destroy(&gp_cds_context->ProbeEvent);
 
 	return CDF_STATUS_E_FAILURE;
 } /* cds_open() */
@@ -487,6 +487,7 @@ err_probe_event:
 CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 	void *scn;
 	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO, "cds prestart");
@@ -520,7 +521,7 @@ CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	}
 
 	/* Reset wma wait event */
-	cdf_event_reset(&gp_cds_context->wmaCompleteEvent);
+	qdf_event_reset(&gp_cds_context->wmaCompleteEvent);
 
 	/*call WMA pre start */
 	cdf_status = wma_pre_start(gp_cds_context);
@@ -532,10 +533,10 @@ CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 	}
 
 	/* Need to update time out of complete */
-	cdf_status = cdf_wait_single_event(&gp_cds_context->wmaCompleteEvent,
+	qdf_status = qdf_wait_single_event(&gp_cds_context->wmaCompleteEvent,
 					   CDS_WMA_TIMEOUT);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
-		if (cdf_status == CDF_STATUS_E_TIMEOUT) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		if (qdf_status == QDF_STATUS_E_TIMEOUT) {
 			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Timeout occurred before WMA complete",
 				  __func__);
@@ -593,6 +594,7 @@ CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 CDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 	tHalMacStartParameters halStartParams;
@@ -679,7 +681,7 @@ err_mac_stop:
 	mac_stop(p_cds_context->pMACContext, HAL_STOP_TYPE_SYS_RESET);
 
 err_wma_stop:
-	cdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
+	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
 	cdf_status = wma_stop(p_cds_context, HAL_STOP_TYPE_RF_KILL);
 	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
@@ -687,11 +689,11 @@ err_wma_stop:
 		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
 		wma_setneedshutdown(cds_context);
 	} else {
-		cdf_status =
-			cdf_wait_single_event(&(gp_cds_context->wmaCompleteEvent),
+		qdf_status =
+			qdf_wait_single_event(&(gp_cds_context->wmaCompleteEvent),
 					      CDS_WMA_TIMEOUT);
-		if (cdf_status != CDF_STATUS_SUCCESS) {
-			if (cdf_status == CDF_STATUS_E_TIMEOUT) {
+		if (qdf_status != QDF_STATUS_SUCCESS) {
+			if (qdf_status == QDF_STATUS_E_TIMEOUT) {
 				CDF_TRACE(CDF_MODULE_ID_CDF,
 					  CDF_TRACE_LEVEL_FATAL,
 					  "%s: Timeout occurred before WMA_stop complete",
@@ -724,7 +726,7 @@ CDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 	 * pending responses will not be handled during uninitialization of
 	 * WLAN driver
 	 */
-	cdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
+	qdf_event_reset(&(gp_cds_context->wmaCompleteEvent));
 
 	cdf_status = wma_stop(cds_context, HAL_STOP_TYPE_RF_KILL);
 
@@ -758,6 +760,7 @@ CDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 CDF_STATUS cds_close(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	cdf_status = wma_wmi_work_close(cds_context);
 	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
@@ -813,18 +816,18 @@ CDF_STATUS cds_close(v_CONTEXT_t cds_context)
 
 	cds_mq_deinit(&((p_cds_contextType) cds_context)->freeVosMq);
 
-	cdf_status = cdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to destroy wmaCompleteEvent", __func__);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	cdf_status = cdf_event_destroy(&gp_cds_context->ProbeEvent);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to destroy ProbeEvent", __func__);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
 	cds_deinit_log_completion();
@@ -1357,9 +1360,9 @@ void cds_sys_probe_thread_cback(void *pUserData)
 		return;
 	}
 
-	if (cdf_event_set(&gp_cds_context->ProbeEvent) != CDF_STATUS_SUCCESS) {
+	if (qdf_event_set(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: cdf_event_set failed", __func__);
+			  "%s: qdf_event_set failed", __func__);
 		return;
 	}
 } /* cds_sys_probe_thread_cback() */
@@ -1378,10 +1381,10 @@ void cds_wma_complete_cback(void *pUserData)
 		return;
 	}
 
-	if (cdf_event_set(&gp_cds_context->wmaCompleteEvent) !=
-	    CDF_STATUS_SUCCESS) {
+	if (qdf_event_set(&gp_cds_context->wmaCompleteEvent) !=
+	    QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: cdf_event_set failed", __func__);
+			  "%s: qdf_event_set failed", __func__);
 		return;
 	}
 } /* cds_wma_complete_cback() */
@@ -1430,6 +1433,7 @@ void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper)
 CDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	tpAniSirGlobal pmac = (((p_cds_contextType)cds_context)->pMACContext);
 
 	ol_txrx_pdev_detach(gp_cds_context->pdev_txrx_ctx, 1);
@@ -1495,18 +1499,18 @@ CDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
 
 	cds_mq_deinit(&((p_cds_contextType) cds_context)->freeVosMq);
 
-	cdf_status = cdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to destroy wmaCompleteEvent", __func__);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	cdf_status = cdf_event_destroy(&gp_cds_context->ProbeEvent);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to destroy ProbeEvent", __func__);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
 	return CDF_STATUS_SUCCESS;
@@ -1615,7 +1619,7 @@ bool cds_is_packet_log_enabled(void)
 void cds_trigger_recovery(void)
 {
 	tp_wma_handle wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!wma_handle) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
@@ -1625,10 +1629,10 @@ void cds_trigger_recovery(void)
 
 	wma_crash_inject(wma_handle, RECOVERY_SIM_SELF_RECOVERY, 0);
 
-	status = cdf_wait_single_event(&wma_handle->recovery_event,
+	status = qdf_wait_single_event(&wma_handle->recovery_event,
 		WMA_CRASH_INJECT_TIMEOUT);
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"CRASH_INJECT command is timed out!");
  #ifdef CONFIG_CNSS

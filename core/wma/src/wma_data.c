@@ -1586,7 +1586,7 @@ static void
 wma_mgmt_tx_dload_comp_hldr(void *wma_context, cdf_nbuf_t netbuf,
 			    int32_t status)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 	void *mac_context = wma_handle->mac_context;
@@ -1605,8 +1605,8 @@ wma_mgmt_tx_dload_comp_hldr(void *wma_context, cdf_nbuf_t netbuf,
 	wma_handle->tx_frm_download_comp_cb = NULL;
 
 	/* Set the Tx Mgmt Complete Event */
-	cdf_status = cdf_event_set(&wma_handle->tx_frm_download_comp_event);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+	qdf_status = qdf_event_set(&wma_handle->tx_frm_download_comp_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGP("%s: Event Set failed - tx_frm_comp_event", __func__);
 }
 
@@ -1674,10 +1674,10 @@ CDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 		}
 	}
 	/* Destroy Tx Frame Complete event */
-	cdf_event_destroy(&wma_handle->tx_frm_download_comp_event);
+	qdf_event_destroy(&wma_handle->tx_frm_download_comp_event);
 
 	/* Tx queue empty check event (dummy event) */
-	cdf_event_destroy(&wma_handle->tx_queue_empty_event);
+	qdf_event_destroy(&wma_handle->tx_queue_empty_event);
 
 	/* Reset Tx Frm Callbacks */
 	wma_handle->tx_frm_download_comp_cb = NULL;
@@ -2444,6 +2444,7 @@ CDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	tp_wma_handle wma_handle = (tp_wma_handle) (wma_context);
 	int32_t status;
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int32_t is_high_latency;
 	ol_txrx_vdev_handle txrx_vdev;
 	enum frame_index tx_frm_index = GENERIC_NODOWNLD_NOACK_COMP_INDEX;
@@ -2740,7 +2741,7 @@ CDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 		/* Reset the Tx Frame Complete Event */
 		cdf_status =
-			cdf_event_reset(&wma_handle->tx_frm_download_comp_event);
+			qdf_event_reset(&wma_handle->tx_frm_download_comp_event);
 
 		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
 			WMA_LOGP("%s: Event Reset failed tx comp event %x",
@@ -2817,12 +2818,12 @@ CDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		 * @ Integrated : Dxe Complete
 		 * @ Discrete : Target Download Complete
 		 */
-		cdf_status =
-			cdf_wait_single_event(&wma_handle->
+		qdf_status =
+			qdf_wait_single_event(&wma_handle->
 					      tx_frm_download_comp_event,
 					      WMA_TX_FRAME_COMPLETE_TIMEOUT);
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGP("Wait Event failed txfrm_comp_event");
 			/*
 			 * @Integrated: Something Wrong with Dxe

@@ -32,13 +32,14 @@
 #include "cdf_types.h"
 #include "osapi_linux.h"
 #include "htc_packet.h"
-#include "i_cdf_event.h"
+#include "i_qdf_event.h"
 #include "wmi_services.h"
 #include "wmi_unified.h"
 #include "wmi_version.h"
 #include "cdf_types.h"
 #include "cfg_api.h"
 #include "cdf_status.h"
+#include "qdf_status.h"
 #include "cds_sched.h"
 #include "ol_txrx_api.h"
 #include "sir_mac_prot_def.h"
@@ -1174,11 +1175,11 @@ typedef struct {
 	void *htc_handle;
 	void *cds_context;
 	void *mac_context;
-	cdf_event_t wma_ready_event;
-	cdf_event_t wma_resume_event;
-	cdf_event_t target_suspend;
-	cdf_event_t runtime_suspend;
-	cdf_event_t recovery_event;
+	qdf_event_t wma_ready_event;
+	qdf_event_t wma_resume_event;
+	qdf_event_t target_suspend;
+	qdf_event_t runtime_suspend;
+	qdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;
 	uint32_t frame_xln_reqd;
@@ -1205,14 +1206,14 @@ typedef struct {
 	uint32_t frameTransRequired;
 	tBssSystemRole wmaGlobalSystemRole;
 	pWMATxRxCompFunc tx_frm_download_comp_cb;
-	cdf_event_t tx_frm_download_comp_event;
+	qdf_event_t tx_frm_download_comp_event;
 	/*
 	 * Dummy event to wait for draining MSDUs left in hardware tx
 	 * queue and before requesting VDEV_STOP. Nobody will set this
 	 * and wait will timeout, and code will poll the pending tx
 	 * descriptors number to be zero.
 	 */
-	cdf_event_t tx_queue_empty_event;
+	qdf_event_t tx_queue_empty_event;
 	pWMAAckFnTxComp umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
 	pWMAAckFnTxComp umac_data_ota_ack_cb;
 	v_TIME_t last_umac_data_ota_timestamp;
@@ -1361,9 +1362,9 @@ typedef struct {
  * @wlan_resource_config: resource config
  */
 struct wma_target_cap {
-        /* wmi services bitmap received from Target */
+	/* wmi services bitmap received from Target */
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
-        /* default resource config,the os shim can overwrite it */
+	/* default resource config,the os shim can overwrite it */
 	wmi_resource_config wlan_resource_config;
 };
 

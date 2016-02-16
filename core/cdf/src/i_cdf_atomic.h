@@ -28,6 +28,7 @@
 #define I_CDF_ATOMIC_H
 
 #include <cdf_status.h>         /* CDF_STATUS */
+#include <qdf_status.h>         /* QDF_STATUS */
 
 #include <linux/atomic.h>
 

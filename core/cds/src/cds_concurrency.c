@@ -7262,6 +7262,7 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
 	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 #ifdef CFG80211_DEL_STA_V2
 	struct tagCsrDelStaParams delStaParams;
@@ -7288,14 +7289,14 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 #endif
 		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
-		cdf_event_reset(&hostapd_state->cdf_stop_bss_event);
+		qdf_event_reset(&hostapd_state->cdf_stop_bss_event);
 		if (CDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
-			cdf_status =
-				cdf_wait_single_event(&hostapd_state->
+			qdf_status =
+				qdf_wait_single_event(&hostapd_state->
 						cdf_stop_bss_event,
 						BSS_WAIT_TIMEOUT);
 
-			if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				cds_err("SAP Stop Failed");
 				goto end;
 			}
@@ -7320,10 +7321,10 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 		}
 
 		cds_info("Waiting for SAP to start");
-		cdf_status =
-			cdf_wait_single_event(&hostapd_state->cdf_event,
+		qdf_status =
+			qdf_wait_single_event(&hostapd_state->cdf_event,
 					BSS_WAIT_TIMEOUT);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_err("SAP Start failed");
 			goto end;
 		}
@@ -7743,7 +7744,7 @@ bool cds_is_sta_active_connection_exists(void)
  */
 CDF_STATUS cdf_wait_for_connection_update(void)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	p_cds_contextType cds_context;
 
 	cds_context = cds_get_global_context();
@@ -7752,11 +7753,11 @@ CDF_STATUS cdf_wait_for_connection_update(void)
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	status = cdf_wait_single_event(
+	status = qdf_wait_single_event(
 			&cds_context->connection_update_done_evt,
 			CONNECTION_UPDATE_TIMEOUT);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		cds_err("wait for event failed");
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -7773,7 +7774,7 @@ CDF_STATUS cdf_wait_for_connection_update(void)
  */
 CDF_STATUS cdf_reset_connection_update(void)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	p_cds_contextType cds_context;
 
 	cds_context = cds_get_global_context();
@@ -7782,9 +7783,9 @@ CDF_STATUS cdf_reset_connection_update(void)
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	status = cdf_event_reset(&cds_context->connection_update_done_evt);
+	status = qdf_event_reset(&cds_context->connection_update_done_evt);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		cds_err("clear event failed");
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -7801,23 +7802,23 @@ CDF_STATUS cdf_reset_connection_update(void)
  */
 CDF_STATUS cdf_set_connection_update(void)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	p_cds_contextType cds_context;
 
 	cds_context = cds_get_global_context();
 	if (!cds_context) {
 		cds_err("Invalid CDS context");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = cdf_event_set(&cds_context->connection_update_done_evt);
+	status = qdf_event_set(&cds_context->connection_update_done_evt);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		cds_err("set event failed");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -7829,7 +7830,7 @@ CDF_STATUS cdf_set_connection_update(void)
  */
 CDF_STATUS cdf_init_connection_update(void)
 {
-	CDF_STATUS status;
+	QDF_STATUS qdf_status;
 	p_cds_contextType cds_context;
 
 	cds_context = cds_get_global_context();
@@ -7838,9 +7839,9 @@ CDF_STATUS cdf_init_connection_update(void)
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	status = cdf_event_init(&cds_context->connection_update_done_evt);
+	qdf_status = qdf_event_create(&cds_context->connection_update_done_evt);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_err("init event failed");
 		return CDF_STATUS_E_FAILURE;
 	}

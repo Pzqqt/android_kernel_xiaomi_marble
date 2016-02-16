@@ -28,6 +28,7 @@
 #if !defined(__CDF_STATUS_H)
 #define __CDF_STATUS_H
 
+#include <qdf_status.h>
 /**
  * DOC:  cdf_status
  *

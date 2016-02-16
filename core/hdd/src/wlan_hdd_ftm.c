@@ -195,15 +195,15 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	}
 
 	/* Initialize the probe event */
-	if (cdf_event_init(&gp_cds_context->ProbeEvent) != CDF_STATUS_SUCCESS) {
+	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to init probeEvent", __func__);
 		CDF_ASSERT(0);
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	if (cdf_event_init(&(gp_cds_context->wmaCompleteEvent)) !=
-	    CDF_STATUS_SUCCESS) {
+	if (qdf_event_create(&(gp_cds_context->wmaCompleteEvent)) !=
+	    QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to init wmaCompleteEvent", __func__);
 		CDF_ASSERT(0);
@@ -392,10 +392,10 @@ err_msg_queue:
 	cds_mq_deinit(&gp_cds_context->freeVosMq);
 
 err_wma_complete_event:
-	cdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
 
 err_probe_event:
-	cdf_event_destroy(&gp_cds_context->ProbeEvent);
+	qdf_event_destroy(&gp_cds_context->ProbeEvent);
 
 	return CDF_STATUS_E_FAILURE;
 
@@ -412,6 +412,7 @@ err_probe_event:
 static CDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	p_cds_contextType gp_cds_context = (p_cds_contextType) cds_context;
 
 #ifndef QCA_WIFI_FTM
@@ -457,20 +458,20 @@ static CDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 
 	cds_mq_deinit(&((p_cds_contextType) cds_context)->freeVosMq);
 
-	cdf_status = cdf_event_destroy(&gp_cds_context->ProbeEvent);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to destroy ProbeEvent %d", __func__,
-			  cdf_status);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+			  qdf_status);
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
-	cdf_status = cdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to destroy wmaCompleteEvent %d", __func__,
-			  cdf_status);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+			  qdf_status);
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
 	return CDF_STATUS_SUCCESS;
@@ -489,6 +490,7 @@ static CDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 static CDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 {
 	CDF_STATUS vStatus = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 #if  defined(QCA_WIFI_FTM)
 	p_cds_contextType gp_cds_context =
@@ -504,7 +506,7 @@ static CDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 	}
 
 	/* Reset WMA wait event */
-	cdf_event_reset(&p_cds_context->wmaCompleteEvent);
+	qdf_event_reset(&p_cds_context->wmaCompleteEvent);
 
 	/*call WMA pre start */
 	vStatus = wma_pre_start(p_cds_context);
@@ -516,10 +518,10 @@ static CDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 	}
 
 	/* Need to update time out of complete */
-	vStatus = cdf_wait_single_event(&p_cds_context->wmaCompleteEvent,
+	qdf_status = qdf_wait_single_event(&p_cds_context->wmaCompleteEvent,
 					HDD_FTM_WMA_PRE_START_TIMEOUT);
-	if (vStatus != CDF_STATUS_SUCCESS) {
-		if (vStatus == CDF_STATUS_E_TIMEOUT) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
+		if (qdf_status == QDF_STATUS_E_TIMEOUT) {
 			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Timeout occurred before WMA complete",
 				  __func__);
