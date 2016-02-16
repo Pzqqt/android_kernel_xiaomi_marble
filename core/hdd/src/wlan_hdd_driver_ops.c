@@ -108,6 +108,107 @@ static inline void hdd_remove_pm_qos(void)
 #endif
 
 /**
+ * hdd_set_recovery_in_progress() - API to set recovery in progress
+ * @data: Context
+ * @val: Value to set
+ *
+ * Return: None
+ */
+static void hdd_set_recovery_in_progress(void *data, uint8_t val)
+{
+	cds_set_recovery_in_progress(val);
+}
+
+/**
+ * hdd_is_driver_unloading() - API to query if driver is unloading
+ * @data: Private Data
+ *
+ * Return: True/False
+ */
+static bool hdd_is_driver_unloading(void *data)
+{
+	return cds_is_driver_unloading();
+}
+
+/**
+ * hdd_is_load_or_unload_in_progress() - API to query if driver is
+ * loading/unloading
+ * @data: Private Data
+ *
+ * Return: bool
+ */
+static bool hdd_is_load_or_unload_in_progress(void *data)
+{
+	return cds_is_load_or_unload_in_progress();
+}
+
+/**
+ * hdd_is_recovery_in_prgress() - API to query if recovery in progress
+ * @data: Private Data
+ *
+ * Return: bool
+ */
+static bool hdd_is_recovery_in_prgress(void *data)
+{
+	return cds_is_driver_recovering();
+}
+
+/**
+ * hdd_hif_init_cds_callbacks() - API to initialize HIF callbacks
+ * @data: Private Data
+ * @cbk: callbacks
+ *
+ * HIF should be independent of CDS calls. Pass CDS Callbacks to HIF, HIF will
+ * call the callbacks.
+ *
+ * Return: void
+ */
+static void hdd_hif_init_cds_callbacks(void *data, struct hif_callbacks *cbk)
+{
+	cbk->context = data;
+	cbk->set_recovery_in_progress = hdd_set_recovery_in_progress;
+	cbk->get_monotonic_boottime = cds_get_monotonic_boottime;
+	cbk->is_recovery_in_progress = hdd_is_recovery_in_prgress;
+	cbk->is_load_unload_in_progress = hdd_is_load_or_unload_in_progress;
+	cbk->is_driver_unloading = hdd_is_driver_unloading;
+}
+
+/**
+ * hdd_init_cds_hif_context() - API to set CDS HIF Context
+ * @hif: HIF Context
+ *
+ * Return: success/failure
+ */
+static int hdd_init_cds_hif_context(void *hif)
+{
+	CDF_STATUS status;
+
+	status = cds_set_context(CDF_MODULE_ID_HIF, hif);
+
+	if (status)
+		return -ENOENT;
+
+	return 0;
+}
+
+/**
+ * hdd_deinit_cds_hif_context() - API to clear CDS HIF COntext
+ *
+ * Return: None
+ */
+static void hdd_deinit_cds_hif_context(void)
+{
+	CDF_STATUS status;
+
+	status = cds_set_context(CDF_MODULE_ID_HIF, NULL);
+
+	if (status)
+		hdd_err("Failed to reset CDS HIF Context");
+
+	return;
+}
+
+/**
  * hdd_hif_open() - HIF open helper
  * @dev: wlan device structure
  * @bdev: bus device structure
@@ -124,23 +225,31 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 {
 	CDF_STATUS status;
 	int ret = 0;
-	void *hif_ctx;
+	struct hif_opaque_softc *hif_ctx;
 	cdf_device_t cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	struct hif_callbacks cbk;
+	uint32_t mode = cds_get_conparam();
 
-	status = hif_open(cdf_ctx, bus_type);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		hdd_err("hif_open error = %d", status);
-		return cdf_status_to_os_return(status);
+	hdd_hif_init_cds_callbacks(dev, &cbk);
+
+	hif_ctx = hif_open(cdf_ctx, mode, bus_type, &cbk);
+	if (!hif_ctx) {
+		hdd_err("hif_open error");
+		return -ENOMEM;
 	}
 
-	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	ret = hdd_init_cds_hif_context(hif_ctx);
+	if (ret) {
+		hdd_err("Failed to set global HIF CDS Context err:%d", ret);
+		goto err_hif_close;
+	}
 
 	ret = hdd_napi_create();
 	if (hdd_napi_enabled(HDD_NAPI_ANY)) {
-		hdd_info("hdd_napi_create returned: %d", status);
+		hdd_info("hdd_napi_create returned: %d", ret);
 		if (ret <= 0) {
 			hdd_err("NAPI creation error, rc: 0x%x, reinit = %d",
-				status, reinit);
+				ret, reinit);
 			ret = -EFAULT;
 			goto err_hif_close;
 		}
@@ -162,10 +271,9 @@ err_napi_destroy:
 	hdd_napi_destroy(true);
 
 err_hif_close:
+	hdd_deinit_cds_hif_context();
 	hif_close(hif_ctx);
-
 	return ret;
-
 }
 
 /**
@@ -183,6 +291,7 @@ static void hdd_hif_close(void *hif_ctx)
 
 	hdd_napi_destroy(true);
 
+	hdd_deinit_cds_hif_context();
 	hif_close(hif_ctx);
 }
 
@@ -221,6 +330,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	CDF_STATUS status;
 	int ret = 0;
 	cdf_device_t cdf_dev;
+	uint32_t mode = cds_get_conparam();
 
 	pr_info("%s: %sprobing driver v%s\n", WLAN_MODULE_NAME,
 		reinit ? "re-" : "", QWLAN_VERSIONSTR);
@@ -245,7 +355,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		cds_set_load_in_progress(true);
 	}
 
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (WLAN_IS_EPPING_ENABLED(mode)) {
 		status = epping_open();
 		if (status != CDF_STATUS_SUCCESS)
 			goto err_hdd_deinit;
@@ -295,7 +405,7 @@ err_bmi_close:
 err_hif_close:
 	hdd_hif_close(hif_ctx);
 err_epping_close:
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+	if (WLAN_IS_EPPING_ENABLED(mode))
 		epping_close();
 err_hdd_deinit:
 	cds_set_load_in_progress(false);

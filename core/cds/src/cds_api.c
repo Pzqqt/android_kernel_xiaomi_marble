@@ -1122,6 +1122,40 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 } /* cds_alloc_context() */
 
 /**
+ * cds_set_context() - API to set context in global CDS Context
+ * @moduleID: Module ID
+ * @context: Pointer to the Module Context
+ *
+ * API to set a MODULE Context in gloabl CDS Context
+ *
+ * Return: CDF_STATUS
+ */
+CDF_STATUS cds_set_context(CDF_MODULE_ID module_id, void *context)
+{
+	p_cds_contextType p_cds_context = cds_get_global_context();
+
+	if (!p_cds_context) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "cds context is Invald");
+		return CDF_STATUS_NOT_INITIALIZED;
+	}
+
+	switch (module_id) {
+	case CDF_MODULE_ID_HIF:
+		p_cds_context->pHIFContext = context;
+		break;
+	default:
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Module ID %i does not have its context "
+			  "allocated by CDS", __func__, module_id);
+		CDF_ASSERT(0);
+		return CDF_STATUS_E_INVAL;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
  * cds_free_context() - free an allocated context within the
  *			CDS global Context
  * @p_cds_context: pointer to the global Vos context
