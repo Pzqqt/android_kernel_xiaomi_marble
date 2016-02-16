@@ -436,6 +436,7 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_sme_req_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_sta_hash_api.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_timer_utils.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_roam_timer_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_trace.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_utils.o
 
