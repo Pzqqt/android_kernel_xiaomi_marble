@@ -34,11 +34,9 @@ else
        DLKM_DIR := build/dlkm
 endif # platform-sdk-version
 
-# Copy WCNSS_cfg.dat and WCNSS_qcom_cfg.ini file from firmware_bin/ folder to target out directory.
+# Copy WCNSS_qcom_cfg.ini file from firmware_bin/ folder to target out directory.
 ifeq ($(call is-board-platform-in-list, msm8960),true)
-$(shell rm -f $(TARGET_OUT_ETC)/firmware/wlan/qca_cld/WCNSS_cfg.dat)
 $(shell rm -f $(TARGET_OUT_ETC)/firmware/wlan/qca_cld/WCNSS_qcom_cfg.ini)
-$(shell cp $(LOCAL_PATH)/firmware_bin/WCNSS_cfg.dat $(TARGET_OUT_ETC)/firmware/wlan/qca_cld)
 $(shell cp $(LOCAL_PATH)/firmware_bin/WCNSS_qcom_cfg.ini $(TARGET_OUT_ETC)/firmware/wlan/qca_cld)
 endif
 
@@ -47,9 +45,13 @@ endif
 # This is set once per LOCAL_PATH, not per (kernel) module
 ifeq ($(WLAN_PROPRIETARY),1)
 	KBUILD_OPTIONS := WLAN_ROOT=../$(WLAN_BLD_DIR)/qcacld-new
+	KBUILD_OPTIONS += WLAN_COMMON_ROOT=../../../opensource/wlan/qca-wifi-host-cmn
 else
 	KBUILD_OPTIONS := WLAN_ROOT=../$(WLAN_BLD_DIR)/qcacld-3.0
+	KBUILD_OPTIONS += WLAN_COMMON_ROOT=../../opensource/wlan/qca-wifi-host-cmn
 endif # WLAN_PROPRIETARY
+KBUILD_OPTIONS += WLAN_COMMON_INC=../vendor/qcom/opensource/wlan/qca-wifi-host-cmn
+
 # We are actually building wlan.ko here, as per the
 # requirement we are specifying <chipset>_wlan.ko as LOCAL_MODULE.
 # This means we need to rename the module to <chipset>_wlan.ko
@@ -102,9 +104,7 @@ ifeq ($(WLAN_PROPRIETARY),1)
 $(shell mkdir -p $(TARGET_OUT)/etc/firmware/wlan/$(WLAN_CHIPSET))
 $(shell mkdir -p $(TARGET_OUT)/etc/wifi)
 $(shell rm -f $(TARGET_OUT)/etc/wifi/WCNSS_qcom_cfg.ini)
-$(shell rm -f $(TARGET_OUT)/etc/firmware/wlan/$(WLAN_SHIPSET)/WCNSS_cfg.dat)
 $(shell cp $(LOCAL_PATH)/config/WCNSS_qcom_cfg.ini $(TARGET_OUT)/etc/wifi)
-$(shell cp $(LOCAL_PATH)/firmware_bin/WCNSS_cfg.dat $(TARGET_OUT)/etc/firmware/wlan/$(WLAN_CHIPSET))
 endif
 #endif
 

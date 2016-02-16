@@ -18,6 +18,8 @@ ifeq ($(KERNEL_BUILD),1)
 	# Need to explicitly define for Kernel-based builds
 	MODNAME := wlan
 	WLAN_ROOT := drivers/staging/qcacld-3.0
+	WLAN_COMMON_ROOT := drivers/staging/qca-wifi-host-cmn
+	WLAN_COMMON_INC := $(WLAN_COMMON_ROOT)
 endif
 
 # Make WLAN as open-source driver by default
@@ -134,6 +136,10 @@ ifeq ($(KERNEL_BUILD), 0)
 	# Flag to enable LFR Subnet Detection
 	CONFIG_LFR_SUBNET_DETECTION := y
 endif
+
+# If not set, assume, Common driver is with in the build tree
+WLAN_COMMON_ROOT ?= qca-wifi-host-cmn
+WLAN_COMMON_INC ?= $(WLAN_ROOT)/$(WLAN_COMMON_ROOT)
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
 # To enable ESE upload, dependent config
@@ -575,23 +581,24 @@ SYS_OBJS :=	$(SYS_COMMON_SRC_DIR)/wlan_qct_sys.o \
 		$(SYS_LEGACY_SRC_DIR)/utils/src/utils_api.o \
 		$(SYS_LEGACY_SRC_DIR)/utils/src/utils_parser.o
 
-############ CDF (Connectivity driver framework) ############
-CDF_DIR :=	core/cdf
-CDF_INC_DIR :=	$(CDF_DIR)/inc
-CDF_SRC_DIR :=	$(CDF_DIR)/src
+############ Qca-wifi-host-cmn ############
+QDF_OS_DIR :=	qdf
+QDF_OS_INC_DIR := $(QDF_OS_DIR)/inc
+QDF_OS_SRC_DIR := $(QDF_OS_DIR)/linux/src
+QDF_OBJ_DIR := $(WLAN_COMMON_ROOT)/$(QDF_OS_SRC_DIR)
 
-CDF_INC := 	-I$(WLAN_ROOT)/$(CDF_INC_DIR) \
-		-I$(WLAN_ROOT)/$(CDF_SRC_DIR)
+QDF_INC :=	-I$(WLAN_COMMON_INC)/$(QDF_OS_INC_DIR) \
+		-I$(WLAN_COMMON_INC)/$(QDF_OS_SRC_DIR)
 
-CDF_OBJS :=	$(CDF_SRC_DIR)/cdf_event.o \
-		$(CDF_SRC_DIR)/cdf_list.o \
-		$(CDF_SRC_DIR)/cdf_lock.o \
-		$(CDF_SRC_DIR)/cdf_memory.o \
-		$(CDF_SRC_DIR)/cdf_threads.o \
-		$(CDF_SRC_DIR)/cdf_mc_timer.o \
-		$(CDF_SRC_DIR)/cdf_trace.o \
-		$(CDF_SRC_DIR)/cdf_nbuf.o \
-		$(CDF_SRC_DIR)/cdf_defer.o
+QDF_OBJS := 	$(QDF_OBJ_DIR)/qdf_defer.o \
+		$(QDF_OBJ_DIR)/qdf_event.o \
+		$(QDF_OBJ_DIR)/qdf_list.o \
+		$(QDF_OBJ_DIR)/qdf_lock.o \
+		$(QDF_OBJ_DIR)/qdf_mc_timer.o \
+		$(QDF_OBJ_DIR)/qdf_mem.o \
+		$(QDF_OBJ_DIR)/qdf_nbuf.o \
+		$(QDF_OBJ_DIR)/qdf_threads.o \
+		$(QDF_OBJ_DIR)/qdf_trace.o
 
 ############ CDS (Connectivity driver services) ############
 CDS_DIR :=	core/cds
@@ -608,7 +615,8 @@ CDS_OBJS :=	$(CDS_SRC_DIR)/cds_api.o \
 		$(CDS_SRC_DIR)/cds_regdomain.o \
 		$(CDS_SRC_DIR)/cds_sched.o \
 		$(CDS_SRC_DIR)/cds_concurrency.o \
-		$(CDS_SRC_DIR)/cds_utils.o
+		$(CDS_SRC_DIR)/cds_utils.o \
+		$(CDS_SRC_DIR)/cds_mc_timer.o
 
 
 ########### BMI ###########
@@ -689,16 +697,16 @@ HTT_OBJS := $(HTT_DIR)/htt_tx.o \
             $(HTT_DIR)/htt_rx.o
 
 ############## HTC ##########
-HTC_DIR := core/htc
-HTC_INC := -I$(WLAN_ROOT)/$(HTC_DIR)
+HTC_DIR := htc
+HTC_INC := -I$(WLAN_COMMON_INC)/$(HTC_DIR)
 
-HTC_OBJS := $(HTC_DIR)/htc.o \
-            $(HTC_DIR)/htc_send.o \
-            $(HTC_DIR)/htc_recv.o \
-            $(HTC_DIR)/htc_services.o
+HTC_OBJS := $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc.o \
+            $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc_send.o \
+            $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc_recv.o \
+            $(WLAN_COMMON_ROOT)/$(HTC_DIR)/htc_services.o
 
 ########### HIF ###########
-HIF_DIR := core/hif
+HIF_DIR := hif
 HIF_CE_DIR := $(HIF_DIR)/src/ce
 HIF_CNSS_STUB_DIR := $(HIF_DIR)/src/icnss_stub
 
@@ -708,41 +716,41 @@ else
 HIF_SNOC_DIR := $(HIF_DIR)/src/snoc
 endif
 
-HIF_INC := -I$(WLAN_ROOT)/$(HIF_DIR)/inc \
-				-I$(WLAN_ROOT)/$(HIF_DIR)/src \
-				-I$(WLAN_ROOT)/$(HIF_CE_DIR) \
-				-I$(WLAN_ROOT)/$(HIF_CNSS_STUB_DIR)
+HIF_INC := -I$(WLAN_COMMON_INC)/$(HIF_DIR)/inc \
+	   -I$(WLAN_COMMON_INC)/$(HIF_DIR)/src \
+	   -I$(WLAN_COMMON_INC)/$(HIF_CE_DIR) \
+	   -I$(WLAN_COMMON_INC)/$(HIF_CNSS_STUB_DIR)
 
 ifeq ($(CONFIG_HIF_PCI), 1)
-HIF_INC += -I$(WLAN_ROOT)/$(HIF_PCIE_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_PCIE_DIR)
 else
-HIF_INC += -I$(WLAN_ROOT)/$(HIF_SNOC_DIR)
+HIF_INC += -I$(WLAN_COMMON_INC)/$(HIF_SNOC_DIR)
 endif
 
-HIF_OBJS := $(HIF_DIR)/src/ath_procfs.o \
-		$(HIF_CE_DIR)/ce_diag.o \
-		$(HIF_CE_DIR)/ce_main.o \
-		$(HIF_CE_DIR)/ce_service.o \
-		$(HIF_CE_DIR)/ce_tasklet.o \
-		$(HIF_DIR)/src/hif_main.o \
-		$(HIF_DIR)/src/mp_dev.o \
-		$(HIF_DIR)/src/regtable.o
+HIF_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/ath_procfs.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_diag.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_main.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_service.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_tasklet.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_main.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/mp_dev.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/regtable.o
 
 ifeq ($(CONFIG_CNSS), y)
-HIF_OBJS += $(HIF_CNSS_STUB_DIR)/icnss_stub.o \
-		$(HIF_CE_DIR)/ce_bmi.o
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_CNSS_STUB_DIR)/icnss_stub.o \
+		$(WLAN_COMMON_ROOT)/$(HIF_CE_DIR)/ce_bmi.o
 endif
 
 ifeq ($(CONFIG_WLAN_NAPI), y)
-HIF_OBJS += $(HIF_DIR)/src/hif_napi.o
+HIF_OBJS += $(WLAN_COMMON_ROOT)/$(HIF_DIR)/src/hif_napi.o
 endif
 
 ifeq ($(CONFIG_HIF_PCI), 1)
-HIF_PCIE_OBJS := $(HIF_PCIE_DIR)/if_pci.o
+HIF_PCIE_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_PCIE_DIR)/if_pci.o
 
 HIF_OBJS += $(HIF_PCIE_OBJS)
 else
-HIF_SNOC_OBJS := $(HIF_SNOC_DIR)/if_snoc.o
+HIF_SNOC_OBJS := $(WLAN_COMMON_ROOT)/$(HIF_SNOC_DIR)/if_snoc.o
 
 HIF_OBJS += $(HIF_SNOC_OBJS)
 endif
@@ -783,7 +791,7 @@ INCS :=		$(HDD_INC) \
 		$(SAP_INC) \
 		$(SME_INC) \
 		$(SYS_INC) \
-		$(CDF_INC) \
+		$(QDF_INC) \
 		$(CDS_INC) \
 		$(DFS_INC)
 
@@ -822,7 +830,7 @@ OBJS :=		$(HDD_OBJS) \
 		$(SAP_OBJS) \
 		$(SME_OBJS) \
 		$(SYS_OBJS) \
-		$(CDF_OBJS) \
+		$(QDF_OBJS) \
 		$(CDS_OBJS) \
 		$(DFS_OBJS)
 
@@ -893,7 +901,8 @@ CDEFINES :=	-DANI_LITTLE_BYTE_ENDIAN \
 		-DWLAN_LOGGING_SOCK_SVC_ENABLE \
 		-DFEATURE_WLAN_EXTSCAN \
 		-DWLAN_FEATURE_MBSSID \
-		-DCONFIG_160MHZ_SUPPORT
+		-DCONFIG_160MHZ_SUPPORT \
+		-DCONFIG_MCL
 
 ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CDEFINES += -DQCA_WIFI_3_0
@@ -1339,3 +1348,4 @@ endif
 # Module information used by KBuild framework
 obj-$(CONFIG_QCA_CLD_WLAN) += $(MODNAME).o
 $(MODNAME)-y := $(OBJS)
+
