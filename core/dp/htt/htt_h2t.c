@@ -332,9 +332,7 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 		enable_hdr = 1;
 		enable_ppdu_start = 1;
 		enable_ppdu_end = 1;
-		/* Disable ASPM when pkt log is enabled */
 		qdf_print("Pkt log is enabled\n");
-		htt_htc_disable_aspm(pdev);
 	} else {
 		qdf_print("Pkt log is disabled\n");
 		enable_ctrl_data = 0;

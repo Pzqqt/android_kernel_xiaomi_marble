@@ -5784,8 +5784,6 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 		}
 	}
 
-	hif_enable_power_gating(hif_sc);
-
 	memdump_init();
 
 	goto success;

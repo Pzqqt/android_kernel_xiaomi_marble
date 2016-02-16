@@ -463,12 +463,6 @@ void htt_display(htt_pdev_handle pdev, int indent)
 }
 #endif
 
-/* Disable ASPM : Disable PCIe low power */
-void htt_htc_disable_aspm(struct htt_pdev_t *pdev)
-{
-	htc_disable_aspm(pdev->htc_pdev);
-}
-
 #ifdef IPA_OFFLOAD
 /**
  * htt_ipa_uc_attach() - Allocate UC data path resources

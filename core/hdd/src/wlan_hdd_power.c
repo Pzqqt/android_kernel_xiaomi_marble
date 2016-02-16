@@ -1601,7 +1601,6 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 				  pHddCtx->target_hw_name);
 #endif
 
-	hif_enable_power_gating(hif_sc);
 	hddLog(LOGE,
 		"%s: WLAN host driver reinitiation completed!", __func__);
 	goto success;
