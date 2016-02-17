@@ -285,3 +285,13 @@ void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id)
 	ce_clear_irq_group_status(scn, 1<<ce_id);
 	ce_disable_irq_in_individual_register(scn, ce_id);
 }
+
+/**
+ * hif_enable_power_management(): enable power management
+ * @hif_ctx: hif context
+ *
+ * Dummy place holder implementation for SNOC
+ */
+void hif_enable_power_management(void *hif_ctx)
+{
+}
