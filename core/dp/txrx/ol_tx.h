@@ -34,9 +34,7 @@
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_lock.h>
-#include <ol_txrx_api.h>        /* ol_txrx_vdev_handle */
-
-#include <ol_txrx_types.h>      /* ol_tx_desc_t, ol_txrx_msdu_info_t */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 
 qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #ifdef WLAN_FEATURE_FASTPATH

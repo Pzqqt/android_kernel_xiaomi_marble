@@ -683,6 +683,11 @@ endif
 OL_DIR :=     core/dp/ol
 OL_INC :=     -I$(WLAN_ROOT)/$(OL_DIR)/inc
 
+############ CDP ############
+CDP_ROOT_DIR := dp
+CDP_INC_DIR := $(CDP_ROOT_DIR)/inc
+CDP_INC := -I$(WLAN_COMMON_INC)/$(CDP_INC_DIR)
+
 ############ PKTLOG ############
 PKTLOG_DIR :=      core/utils/pktlog
 PKTLOG_INC :=      -I$(WLAN_ROOT)/$(PKTLOG_DIR)/include
@@ -819,6 +824,7 @@ INCS +=		$(WMA_INC) \
 		$(FWLOG_INC) \
 		$(TXRX_INC) \
 		$(OL_INC) \
+		$(CDP_INC) \
 		$(PKTLOG_INC) \
 		$(HTT_INC) \
 		$(HTC_INC) \

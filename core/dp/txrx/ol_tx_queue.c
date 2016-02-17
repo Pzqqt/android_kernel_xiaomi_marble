@@ -30,11 +30,8 @@
 #include <ol_cfg.h>             /* ol_cfg_addba_retry */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
 #include <ol_htt_tx_api.h>      /* htt_tx_desc_tid */
-#include <ol_txrx_api.h>        /* ol_txrx_vdev_handle */
-#include <ol_txrx_ctrl_api.h>   /* ol_txrx_sync, ol_tx_addba_conf */
 #include <ol_ctrl_txrx_api.h>   /* ol_ctrl_addba_req */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT1, etc. */
-#include <ol_txrx_types.h>      /* pdev stats */
 #include <ol_tx_desc.h>         /* ol_tx_desc, ol_tx_desc_frame_list_free */
 #include <ol_tx.h>              /* ol_tx_vdev_ll_pause_queue_send */
 #include <ol_tx_queue.h>

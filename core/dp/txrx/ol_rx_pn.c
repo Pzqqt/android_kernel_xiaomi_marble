@@ -31,7 +31,6 @@
 #include <ol_ctrl_txrx_api.h>   /* ol_rx_err */
 
 #include <ol_txrx_internal.h>   /* ol_rx_mpdu_list_next */
-#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
 #include <ol_rx_pn.h>           /* our own defs */
 #include <ol_rx_fwd.h>          /* ol_rx_fwd_check */
 #include <ol_rx.h>              /* ol_rx_deliver */

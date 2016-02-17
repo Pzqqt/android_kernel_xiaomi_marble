@@ -32,7 +32,6 @@
 #include <qdf_time.h>
 
 /* datapath internal interfaces */
-#include <ol_txrx_types.h>      /* ol_txrx_pdev_t, etc. */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT, etc. */
 #include <ol_rx_reorder.h>      /* ol_rx_reorder_flush, etc. */
 

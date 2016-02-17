@@ -29,10 +29,11 @@
 #define _OL_CFG__H_
 
 #include <qdf_types.h>          /* uint32_t */
-#include <ol_ctrl_api.h>        /* ol_pdev_handle */
+#include <cdp_txrx_cmn.h>       /* ol_pdev_handle */
 #include <cds_ieee80211_common.h>   /* ieee80211_qosframe_htc_addr4 */
 #include <enet.h>               /* LLC_SNAP_HDR_LEN */
 #include "wlan_tgt_def_config.h"
+#include "ol_txrx_ctrl_api.h"   /* txrx_pdev_cfg_param_t */
 
 /**
  * @brief format of data frames delivered to/from the WLAN driver by/to the OS

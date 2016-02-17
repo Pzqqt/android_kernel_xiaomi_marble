@@ -48,7 +48,6 @@
 #include <pktlog_ac_fmt.h>
 #include <wdi_event.h>
 #include <ol_htt_tx_api.h>
-#include <ol_txrx_types.h>
 #include <ol_txrx_peer_find.h>
 
 /*--- target->host HTT message dispatch function ----------------------------*/

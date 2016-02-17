@@ -35,7 +35,6 @@
 
 #include <ol_htt_tx_api.h>      /* htt_tx_desc_id */
 
-#include <ol_txrx_types.h>      /* ol_txrx_pdev_t */
 #include <ol_tx_desc.h>
 #include <ol_txrx_internal.h>
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP

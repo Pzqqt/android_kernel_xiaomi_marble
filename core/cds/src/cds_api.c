@@ -427,7 +427,7 @@ QDF_STATUS cds_open(void)
 	}
 
 	gp_cds_context->pdev_txrx_ctx =
-		ol_txrx_pdev_alloc(gp_cds_context->cfg_ctx,
+		ol_txrx_pdev_attach(gp_cds_context->cfg_ctx,
 				    gp_cds_context->htc_ctx,
 				    gp_cds_context->qdf_ctx);
 	if (!gp_cds_context->pdev_txrx_ctx) {
@@ -569,7 +569,7 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (ol_txrx_pdev_attach(gp_cds_context->pdev_txrx_ctx)) {
+	if (ol_txrx_pdev_post_attach(gp_cds_context->pdev_txrx_ctx)) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			"Failed to attach pdev");
 		htc_stop(gp_cds_context->htc_ctx);
@@ -655,7 +655,7 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 		  "%s: SME correctly started", __func__);
 
 	if (ol_txrx_pdev_attach_target
-		       (p_cds_context->pdev_txrx_ctx) != A_OK) {
+		       (p_cds_context->pdev_txrx_ctx)) {
 	   QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				"%s: Failed attach target", __func__);
 	   goto err_sme_stop;

@@ -35,7 +35,6 @@
 #include <cds_ieee80211_common.h>   /* ieee80211_frame, etc. */
 
 /* internal header files */
-#include <ol_txrx_types.h>      /* ol_txrx_dev_t, etc. */
 #include <ol_rx_fwd.h>          /* our own defs */
 #include <ol_rx.h>              /* ol_rx_deliver */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT1 */

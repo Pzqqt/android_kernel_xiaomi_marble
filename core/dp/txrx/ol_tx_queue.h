@@ -33,7 +33,7 @@
 #define _OL_TX_QUEUE__H_
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include <qdf_types.h>          /* bool */
 
 /*--- function prototypes for optional queue log feature --------------------*/

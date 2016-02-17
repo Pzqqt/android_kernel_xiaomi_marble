@@ -33,15 +33,12 @@
 /* APIs for other modules */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
 #include <ol_htt_tx_api.h>      /* htt_tx_desc_tid */
-#include <ol_txrx_api.h>        /* ol_txrx_vdev_handle */
-#include <ol_txrx_ctrl_api.h>   /* ol_txrx_sync */
 
 /* internal header files relevant for all systems */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT1 */
-#include <ol_txrx_types.h>      /* pdev stats */
 #include <ol_tx_desc.h>         /* ol_tx_desc */
 #include <ol_tx_send.h>         /* ol_tx_send */
-#include <ol_txrx.h>
+#include <ol_txrx.h>            /* ol_txrx_get_vdev_from_vdev_id */
 
 /* internal header files relevant only for HL systems */
 #include <ol_tx_queue.h>        /* ol_tx_enqueue */

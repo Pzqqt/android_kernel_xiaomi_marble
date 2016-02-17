@@ -37,11 +37,9 @@
 #include <qdf_types.h>          /* qdf_device_t */
 #include <htc_api.h>            /* HTC_HANDLE */
 
-#include <ol_osif_api.h>        /* ol_osif_vdev_handle */
-#include <ol_txrx_api.h>        /* ol_txrx_pdev_handle, etc. */
-#include <ol_ctrl_api.h>        /* ol_pdev_handle, ol_vdev_handle */
-
+#include <ol_txrx_api.h>        /* ol_sec_type */
 #include <wlan_defs.h>          /* MAX_SPATIAL_STREAM */
+#include <cdp_txrx_cmn.h>       /* ol_pdev_handle, ol_vdev_handle, etc */
 
 #define OL_ATH_TX_DRAIN_WAIT_DELAY 50
 
@@ -54,25 +52,6 @@
 /* The symbolic station ID return to HDD to specify the packet is
        to soft-AP itself */
 #define WLAN_RX_SAP_SELF_STA_ID (WLAN_MAX_STA_COUNT + 2)
-
-/**
- * enum wlan_op_mode - Virtual device operation mode
- *
- * @wlan_op_mode_unknown: Unknown mode
- * @wlan_op_mode_ap: AP mode
- * @wlan_op_mode_ibss: IBSS mode
- * @wlan_op_mode_sta: STA (client) mode
- * @wlan_op_mode_monitor: Monitor mode
- * @wlan_op_mode_ocb: OCB mode
- */
-enum wlan_op_mode {
-	wlan_op_mode_unknown,
-	wlan_op_mode_ap,
-	wlan_op_mode_ibss,
-	wlan_op_mode_sta,
-	wlan_op_mode_monitor,
-	wlan_op_mode_ocb,
-};
 
 #define OL_TXQ_PAUSE_REASON_FW                (1 << 0)
 #define OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED (1 << 1)
@@ -137,10 +116,6 @@ enum netif_reason_type {
 #define WLAN_DUMP_TX_FLOW_POOL_INFO 5
 #define WLAN_TXRX_DESC_STATS  6
 
-ol_txrx_pdev_handle
-ol_txrx_pdev_alloc(ol_pdev_handle ctrl_pdev,
-		   HTC_HANDLE htc_pdev, qdf_device_t osdev);
-
 /**
  * @brief Set up the data SW subsystem.
  * @details
@@ -163,59 +138,7 @@ ol_txrx_pdev_alloc(ol_pdev_handle ctrl_pdev,
  * @return 0 for success or error code
  */
 int
-ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev);
-
-/**
- * @brief Do final steps of data SW setup that send messages to the target.
- * @details
- *  The majority of the data SW setup are done by the pdev_attach function,
- *  but this function completes the data SW setup by sending datapath
- *  configuration messages to the target.
- *
- * @param data_pdev - the physical device being initialized
- */
-A_STATUS ol_txrx_pdev_attach_target(ol_txrx_pdev_handle data_pdev);
-
-/**
- * @brief Allocate and initialize the data object for a new virtual device.
- * @param data_pdev - the physical device the virtual device belongs to
- * @param vdev_mac_addr - the MAC address of the virtual device
- * @param vdev_id - the ID used to identify the virtual device to the target
- * @param op_mode - whether this virtual device is operating as an AP,
- *      an IBSS, or a STA
- * @return
- *      success: handle to new data vdev object, -OR-
- *      failure: NULL
- */
-ol_txrx_vdev_handle
-ol_txrx_vdev_attach(ol_txrx_pdev_handle data_pdev,
-		    uint8_t *vdev_mac_addr,
-		    uint8_t vdev_id, enum wlan_op_mode op_mode);
-
-/**
- * @brief Allocate and set up references for a data peer object.
- * @details
- *  When an association with a peer starts, the host's control SW
- *  uses this function to inform the host data SW.
- *  The host data SW allocates its own peer object, and stores a
- *  reference to the control peer object within the data peer object.
- *  The host data SW also stores a reference to the virtual device
- *  that the peer is associated with.  This virtual device handle is
- *  used when the data SW delivers rx data frames to the OS shim layer.
- *  The host data SW returns a handle to the new peer data object,
- *  so a reference within the control peer object can be set to the
- *  data peer object.
- *
- * @param data_pdev - data physical device object that will indirectly
- *      own the data_peer object
- * @param data_vdev - data virtual device object that will directly
- *      own the data_peer object
- * @param peer_mac_addr - MAC address of the new peer
- * @return handle to new data peer object, or NULL if the attach fails
- */
-ol_txrx_peer_handle
-ol_txrx_peer_attach(ol_txrx_pdev_handle data_pdev,
-		    ol_txrx_vdev_handle data_vdev, uint8_t *peer_mac_addr);
+ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev);
 
 /**
  * @brief Parameter type to be input to ol_txrx_peer_update
@@ -486,61 +409,8 @@ void ol_txrx_pdev_unpause(struct ol_txrx_pdev_t *pdev, uint32_t reason)
  */
 void ol_txrx_tx_sync(ol_txrx_pdev_handle data_pdev, uint8_t sync_cnt);
 
-/**
- * @brief Delete a peer's data object.
- * @details
- *  When the host's control SW disassociates a peer, it calls this
- *  function to delete the peer's data object.
- *  The reference stored in the control peer object to the data peer
- *  object (set up by a call to ol_peer_store()) is provided.
- *
- * @param data_peer - the object to delete
- */
-void ol_txrx_peer_detach(ol_txrx_peer_handle data_peer);
-
 typedef void (*ol_txrx_vdev_delete_cb)(void *context);
 
-/**
- * @brief Deallocate the specified data virtual device object.
- * @details
- *  All peers associated with the virtual device need to be deleted
- *  (ol_txrx_peer_detach) before the virtual device itself is deleted.
- *  However, for the peers to be fully deleted, the peer deletion has to
- *  percolate through the target data FW and back up to the host data SW.
- *  Thus, even though the host control SW may have issued a peer_detach
- *  call for each of the vdev's peers, the peer objects may still be
- *  allocated, pending removal of all references to them by the target FW.
- *  In this case, though the vdev_detach function call will still return
- *  immediately, the vdev itself won't actually be deleted, until the
- *  deletions of all its peers complete.
- *  The caller can provide a callback function pointer to be notified when
- *  the vdev deletion actually happens - whether it's directly within the
- *  vdev_detach call, or if it's deferred until all in-progress peer
- *  deletions have completed.
- *
- * @param data_vdev - data object for the virtual device in question
- * @param callback - function to call (if non-NULL) once the vdev has
- *      been wholly deleted
- * @param callback_context - context to provide in the callback
- */
-void
-ol_txrx_vdev_detach(ol_txrx_vdev_handle data_vdev,
-		    ol_txrx_vdev_delete_cb callback, void *callback_context);
-
-/**
- * @brief Delete the data SW state.
- * @details
- *  This function is used when the WLAN driver is being removed to
- *  remove the host data component within the driver.
- *  All virtual devices within the physical device need to be deleted
- *  (ol_txrx_vdev_detach) before the physical device itself is deleted.
- *
- * @param data_pdev - the data physical device object being removed
- * @param force - delete the pdev (and its vdevs and peers) even if there
- *      are outstanding references by the target to the vdevs and peers
- *      within the pdev
- */
-void ol_txrx_pdev_detach(ol_txrx_pdev_handle data_pdev, int force);
 
 typedef void
 (*ol_txrx_data_tx_cb)(void *ctxt, qdf_nbuf_t tx_frm, int had_error);
@@ -587,93 +457,6 @@ qdf_nbuf_t
 ol_tx_non_std(ol_txrx_vdev_handle data_vdev,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 
-typedef void
-(*ol_txrx_mgmt_tx_cb)(void *ctxt, qdf_nbuf_t tx_mgmt_frm, int had_error);
-
-/**
- * @brief Store a callback for delivery notifications for management frames.
- * @details
- *  When the txrx SW receives notifications from the target that a tx frame
- *  has been delivered to its recipient, it will check if the tx frame
- *  is a management frame.  If so, the txrx SW will check the management
- *  frame type specified when the frame was submitted for transmission.
- *  If there is a callback function registered for the type of managment
- *  frame in question, the txrx code will invoke the callback to inform
- *  the management + control SW that the mgmt frame was delivered.
- *  This function is used by the control SW to store a callback pointer
- *  for a given type of management frame.
- *
- * @param pdev - the data physical device object
- * @param type - the type of mgmt frame the callback is used for
- * @param download_cb - the callback for notification of delivery to the target
- * @param ota_ack_cb - the callback for notification of delivery to the peer
- * @param ctxt - context to use with the callback
- */
-void
-ol_txrx_mgmt_tx_cb_set(ol_txrx_pdev_handle pdev,
-		       uint8_t type,
-		       ol_txrx_mgmt_tx_cb download_cb,
-		       ol_txrx_mgmt_tx_cb ota_ack_cb, void *ctxt);
-
-/**
- * @brief Transmit a management frame.
- * @details
- *  Send the specified management frame from the specified virtual device.
- *  The type is used for determining whether to invoke a callback to inform
- *  the sender that the tx mgmt frame was delivered, and if so, which
- *  callback to use.
- *
- * @param vdev - virtual device transmitting the frame
- * @param tx_mgmt_frm - management frame to transmit
- * @param type - the type of managment frame (determines what callback to use)
- * @param use_6mbps - specify whether management frame to transmit should use 6 Mbps
- *                    rather than 1 Mbps min rate(for 5GHz band or P2P)
- * @return
- *      0 -> the frame is accepted for transmission, -OR-
- *      1 -> the frame was not accepted
- */
-int
-ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
-		  qdf_nbuf_t tx_mgmt_frm,
-		  uint8_t type, uint8_t use_6mbps, uint16_t chanfreq);
-
-/**
- * @brief Setup the monitor mode vap (vdev) for this pdev
- * @details
- *  When a non-NULL vdev handle is registered as the monitor mode vdev, all
- *  packets received by the system are delivered to the OS stack on this
- *  interface in 802.11 MPDU format. Only a single monitor mode interface
- *  can be up at any timer. When the vdev handle is set to NULL the monitor
- *  mode delivery is stopped. This handle may either be a unique vdev
- *  object that only receives monitor mode packets OR a point to a a vdev
- *  object that also receives non-monitor traffic. In the second case the
- *  OS stack is responsible for delivering the two streams using approprate
- *  OS APIs
- *
- * @param pdev - the data physical device object
- * @param vdev - the data virtual device object to deliver monitor mode
- *                  packets on
- * @return
- *       0 -> the monitor mode vap was sucessfully setup
- *      -1 -> Unable to setup monitor mode
- */
-int
-ol_txrx_set_monitor_mode_vap(ol_txrx_pdev_handle pdev,
-			     ol_txrx_vdev_handle vdev);
-
-/**
- * @brief Setup the current operating channel of the device
- * @details
- *  Mainly used when populating monitor mode status that requires the
- *  current operating channel
- *
- * @param pdev - the data physical device object
- * @param chan_mhz - the channel frequency (mhz)
- *                  packets on
- * @return - void
- */
-void ol_txrx_set_curchan(ol_txrx_pdev_handle pdev, uint32_t chan_mhz);
-
 #ifdef FEATURE_RUNTIME_PM
 QDF_STATUS ol_txrx_runtime_suspend(ol_txrx_pdev_handle txrx_pdev);
 QDF_STATUS ol_txrx_runtime_resume(ol_txrx_pdev_handle txrx_pdev);
@@ -716,22 +499,6 @@ void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev);
  * @return - void
  */
 void ol_txrx_set_safemode(ol_txrx_vdev_handle vdev, uint32_t val);
-
-/**
- * @brief set the privacy filter
- * @details
- *  Rx related. Set the privacy filters. When rx packets, check
- *  the ether type, filter type and packet type
- *  to decide whether discard these packets.
- *
- * @param vdev - the data virtual device object
- * @param filter - filters to be set
- * @param num - the number of filters
- * @return - void
- */
-void
-ol_txrx_set_privacy_filters(ol_txrx_vdev_handle vdev,
-			    void *filter, uint32_t num);
 
 /**
  * @brief configure the drop unencrypted frame flag

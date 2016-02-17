@@ -53,7 +53,6 @@
 #include <ol_txrx_api.h>
 #include <ol_txrx_htt_api.h>
 #include <ol_htt_rx_api.h>
-#include <ol_txrx_types.h>
 #include <ol_rx_reorder.h>
 #include <ol_rx_pn.h>
 #include <ol_rx_fwd.h>

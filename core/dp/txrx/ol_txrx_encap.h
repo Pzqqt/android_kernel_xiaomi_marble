@@ -36,7 +36,7 @@
 
 #include <qdf_nbuf.h>               /* qdf_nbuf_t */
 #include <cds_ieee80211_common.h>   /* ieee80211_qosframe_htc_addr4 */
-#include <ol_txrx_types.h>          /* ol_tx_desc_t, ol_txrx_msdu_info_t */
+#include <cdp_txrx_cmn.h>           /* ol_txrx_vdev_t, etc. */
 
 /**
  * @brief Encap outgoing frm from OS dependent format to Target

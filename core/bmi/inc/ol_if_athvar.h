@@ -37,9 +37,6 @@
 #include "wmi_unified_api.h"
 #include "htc_api.h"
 #include "bmi_msg.h"
-#include "ol_txrx_api.h"
-#include "ol_txrx_ctrl_api.h"
-#include "ol_txrx_osif_api.h"
 #include "ol_params.h"
 #include <wdi_event_api.h>
 

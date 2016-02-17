@@ -33,7 +33,7 @@
 #define _OL_TXRX_PEER_FIND__H_
 
 #include <htt.h>                /* HTT_INVALID_PEER */
-#include <ol_txrx_types.h>      /* ol_txrx_pdev_t, etc. */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_pdev_t, etc. */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT */
 
 int ol_txrx_peer_find_attach(struct ol_txrx_pdev_t *pdev);

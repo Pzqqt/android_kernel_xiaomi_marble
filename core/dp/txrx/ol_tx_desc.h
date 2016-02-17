@@ -34,7 +34,7 @@
 
 #include <cds_queue.h>          /* TAILQ_HEAD */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include <ol_txrx_types.h>      /* ol_tx_desc_t */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include <ol_txrx_internal.h>   /*TXRX_ASSERT2 */
 
 struct ol_tx_desc_t *

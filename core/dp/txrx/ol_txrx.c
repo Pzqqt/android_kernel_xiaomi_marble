@@ -46,19 +46,12 @@
 #include <ol_htt_api.h>
 #include <ol_htt_tx_api.h>
 
-/* header files for OS shim API */
-#include <ol_osif_api.h>
-
 /* header files for our own APIs */
 #include <ol_txrx_api.h>
 #include <ol_txrx_dbg.h>
-#include <ol_txrx_ctrl_api.h>
-#include <ol_txrx_osif_api.h>
 /* header files for our internal definitions */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT, etc. */
 #include <wdi_event.h>          /* WDI events */
-#include <ol_txrx_types.h>      /* ol_txrx_pdev_t, etc. */
-#include <ol_ctrl_txrx_api.h>
 #include <ol_tx.h>              /* ol_tx_ll */
 #include <ol_rx.h>              /* ol_rx_deliver */
 #include <ol_txrx_peer_find.h>  /* ol_txrx_peer_find_attach, etc. */
@@ -389,7 +382,7 @@ uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
 #endif
 
 /**
- * ol_txrx_pdev_alloc() - allocate txrx pdev
+ * ol_txrx_pdev_attach() - allocate txrx pdev
  * @ctrl_pdev: cfg pdev
  * @htc_pdev: HTC pdev
  * @osdev: os dev
@@ -398,7 +391,7 @@ uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
  *		  NULL for failure
  */
 ol_txrx_pdev_handle
-ol_txrx_pdev_alloc(ol_pdev_handle ctrl_pdev,
+ol_txrx_pdev_attach(ol_pdev_handle ctrl_pdev,
 		    HTC_HANDLE htc_pdev, qdf_device_t osdev)
 {
 	struct ol_txrx_pdev_t *pdev;
@@ -488,13 +481,13 @@ void htt_pktlogmod_exit(ol_txrx_pdev_handle handle, void *sc)  { }
 #endif
 
 /**
- * ol_txrx_pdev_attach() - attach txrx pdev
+ * ol_txrx_pdev_post_attach() - attach txrx pdev
  * @pdev: txrx pdev
  *
  * Return: 0 for success
  */
 int
-ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
+ol_txrx_pdev_post_attach(ol_txrx_pdev_handle pdev)
 {
 	uint16_t i;
 	uint16_t fail_idx = 0;
@@ -953,11 +946,36 @@ ol_attach_fail:
 	return ret;            /* fail */
 }
 
+/**
+ * ol_txrx_pdev_attach_target() - send target configuration
+ *
+ * @pdev - the physical device being initialized
+ *
+ * The majority of the data SW setup are done by the pdev_attach
+ * functions, but this function completes the data SW setup by
+ * sending datapath configuration messages to the target.
+ *
+ * Return: 0 - success 1 - failure
+ */
 A_STATUS ol_txrx_pdev_attach_target(ol_txrx_pdev_handle pdev)
 {
-	return htt_attach_target(pdev->htt_pdev);
+	return htt_attach_target(pdev->htt_pdev) == A_OK ? 0:1;
 }
 
+/**
+ * ol_txrx_pdev_detach() - delete the data SW state
+ *
+ * @pdev - the data physical device object being removed
+ * @force - delete the pdev (and its vdevs and peers) even if
+ * there are outstanding references by the target to the vdevs
+ * and peers within the pdev
+ *
+ * This function is used when the WLAN driver is being removed to
+ * remove the host data component within the driver.
+ * All virtual devices within the physical device need to be deleted
+ * (ol_txrx_vdev_detach) before the physical device itself is deleted.
+ *
+ */
 void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 {
 	int i;
@@ -1068,6 +1086,18 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 #endif
 }
 
+/**
+ * ol_txrx_vdev_attach - Allocate and initialize the data object
+ * for a new virtual device.
+ *
+ * @data_pdev - the physical device the virtual device belongs to
+ * @vdev_mac_addr - the MAC address of the virtual device
+ * @vdev_id - the ID used to identify the virtual device to the target
+ * @op_mode - whether this virtual device is operating as an AP,
+ * an IBSS, or a STA
+ *
+ * Return: success: handle to new data vdev object, failure: NULL
+ */
 ol_txrx_vdev_handle
 ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 		    uint8_t *vdev_mac_addr,
@@ -1143,15 +1173,43 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	return vdev;
 }
 
-void ol_txrx_osif_vdev_register(ol_txrx_vdev_handle vdev,
+/**
+ *ol_txrx_vdev_register - Link a vdev's data object with the
+ * matching OS shim vdev object.
+ *
+ * @txrx_vdev: the virtual device's data object
+ * @osif_vdev: the virtual device's OS shim object
+ * @txrx_ops: (pointers to)functions used for tx and rx data xfer
+ *
+ *  The data object for a virtual device is created by the
+ *  function ol_txrx_vdev_attach.  However, rather than fully
+ *  linking the data vdev object with the vdev objects from the
+ *  other subsystems that the data vdev object interacts with,
+ *  the txrx_vdev_attach function focuses primarily on creating
+ *  the data vdev object. After the creation of both the data
+ *  vdev object and the OS shim vdev object, this
+ *  txrx_osif_vdev_attach function is used to connect the two
+ *  vdev objects, so the data SW can use the OS shim vdev handle
+ *  when passing rx data received by a vdev up to the OS shim.
+ */
+void ol_txrx_vdev_register(ol_txrx_vdev_handle vdev,
 				void *osif_vdev,
-				struct ol_txrx_osif_ops *txrx_ops)
+				struct ol_txrx_ops *txrx_ops)
 {
 	vdev->osif_dev = osif_vdev;
-	txrx_ops->tx.std = vdev->tx = OL_TX_LL;
-	txrx_ops->tx.non_std = ol_tx_non_std_ll;
+	txrx_ops->tx.tx = vdev->tx = OL_TX_LL;
 }
 
+/**
+ * ol_txrx_set_curchan - Setup the current operating channel of
+ * the device
+ * @pdev - the data physical device object
+ * @chan_mhz - the channel frequency (mhz) packets on
+ *
+ * Mainly used when populating monitor mode status that requires
+ * the current operating channel
+ *
+ */
 void ol_txrx_set_curchan(ol_txrx_pdev_handle pdev, uint32_t chan_mhz)
 {
 	return;
@@ -1162,6 +1220,16 @@ void ol_txrx_set_safemode(ol_txrx_vdev_handle vdev, uint32_t val)
 	vdev->safemode = val;
 }
 
+/**
+ * ol_txrx_set_privacy_filters - set the privacy filter
+ * @vdev - the data virtual device object
+ * @filter - filters to be set
+ * @num - the number of filters
+ *
+ * Rx related. Set the privacy filters. When rx packets, check
+ * the ether type, filter type and packet type to decide whether
+ * discard these packets.
+ */
 void
 ol_txrx_set_privacy_filters(ol_txrx_vdev_handle vdev,
 			    void *filters, uint32_t num)
@@ -1176,6 +1244,29 @@ void ol_txrx_set_drop_unenc(ol_txrx_vdev_handle vdev, uint32_t val)
 	vdev->drop_unenc = val;
 }
 
+/**
+ * ol_txrx_vdev_detach - Deallocate the specified data virtual
+ * device object.
+ * @data_vdev: data object for the virtual device in question
+ * @callback: function to call (if non-NULL) once the vdev has
+ * been wholly deleted
+ * @callback_context: context to provide in the callback
+ *
+ * All peers associated with the virtual device need to be deleted
+ * (ol_txrx_peer_detach) before the virtual device itself is deleted.
+ * However, for the peers to be fully deleted, the peer deletion has to
+ * percolate through the target data FW and back up to the host data SW.
+ * Thus, even though the host control SW may have issued a peer_detach
+ * call for each of the vdev's peers, the peer objects may still be
+ * allocated, pending removal of all references to them by the target FW.
+ * In this case, though the vdev_detach function call will still return
+ * immediately, the vdev itself won't actually be deleted, until the
+ * deletions of all its peers complete.
+ * The caller can provide a callback function pointer to be notified when
+ * the vdev deletion actually happens - whether it's directly within the
+ * vdev_detach call, or if it's deferred until all in-progress peer
+ * deletions have completed.
+ */
 void
 ol_txrx_vdev_detach(ol_txrx_vdev_handle vdev,
 		    ol_txrx_vdev_delete_cb callback, void *context)
@@ -1303,9 +1394,31 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 	qdf_atomic_dec(&peer->flush_in_progress);
 }
 
+/**
+ * ol_txrx_peer_attach - Allocate and set up references for a
+ * data peer object.
+ * @data_pdev: data physical device object that will indirectly
+ * own the data_peer object
+ * @data_vdev - data virtual device object that will directly
+ * own the data_peer object
+ * @peer_mac_addr - MAC address of the new peer
+ *
+ * When an association with a peer starts, the host's control SW
+ * uses this function to inform the host data SW.
+ * The host data SW allocates its own peer object, and stores a
+ * reference to the control peer object within the data peer object.
+ * The host data SW also stores a reference to the virtual device
+ * that the peer is associated with.  This virtual device handle is
+ * used when the data SW delivers rx data frames to the OS shim layer.
+ * The host data SW returns a handle to the new peer data object,
+ * so a reference within the control peer object can be set to the
+ * data peer object.
+ *
+ * Return: handle to new data peer object, or NULL if the attach
+ * fails
+ */
 ol_txrx_peer_handle
-ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
-		    ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
+ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_peer_t *temp_peer;
@@ -1313,11 +1426,14 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 	int differs;
 	bool wait_on_deletion = false;
 	unsigned long rc;
+	struct ol_txrx_pdev_t *pdev;
 
 	/* preconditions */
-	TXRX_ASSERT2(pdev);
 	TXRX_ASSERT2(vdev);
 	TXRX_ASSERT2(peer_mac_addr);
+
+	pdev = vdev->pdev;
+	TXRX_ASSERT2(pdev);
 
 	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 	/* check for duplicate exsisting peer */
@@ -1798,6 +1914,16 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	}
 }
 
+/**
+ * ol_txrx_peer_detach - Delete a peer's data object.
+ * @data_peer - the object to delete
+ *
+ * When the host's control SW disassociates a peer, it calls
+ * this function to delete the peer's data object. The reference
+ * stored in the control peer object to the data peer
+ * object (set up by a call to ol_peer_store()) is provided.
+ *
+ */
 void ol_txrx_peer_detach(ol_txrx_peer_handle peer)
 {
 	struct ol_txrx_vdev_t *vdev = peer->vdev;
@@ -2036,7 +2162,6 @@ struct ol_txrx_stats_req_internal *ol_txrx_u64_to_stats_ptr(uint64_t cookie)
 	return (struct ol_txrx_stats_req_internal *)((size_t) cookie);
 }
 
-#ifdef ATH_PERF_PWR_OFFLOAD
 void
 ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 		     uint8_t cfg_stats_type, uint32_t cfg_val)
@@ -2095,7 +2220,7 @@ ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
 
 	return A_OK;
 }
-#endif
+
 void
 ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 			 uint64_t cookie, uint8_t *stats_info_list)
@@ -3479,3 +3604,26 @@ void ol_deregister_lro_flush_cb(void)
 	pdev->lro_info.lro_data = NULL;
 }
 #endif /* FEATURE_LRO */
+
+/**
+ * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id
+ * @vdev_id: vdev_id
+ *
+ * Return: vdev handle
+ *            NULL if not found.
+ */
+ol_txrx_vdev_handle ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
+{
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	ol_txrx_vdev_handle vdev = NULL;
+
+	if (qdf_unlikely(!pdev))
+		return NULL;
+
+	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
+		if (vdev->vdev_id == vdev_id)
+			break;
+	}
+
+	return vdev;
+}

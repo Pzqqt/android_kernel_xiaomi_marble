@@ -29,8 +29,7 @@
 #define _OL_TXRX__H_
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
-#include <ol_ctrl_api.h>        /* ol_pdev_handle */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 #include "cds_sched.h"
 
 void ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
@@ -39,28 +38,6 @@ void ol_txrx_peer_unref_delete(struct ol_txrx_peer_t *peer);
 #define OL_TX_AVG_FRM_BYTES 1000
 #endif
 
-/**
- * ol_txrx_get_vdev_from_vdev_id() - get vdev from vdev_id
- * @vdev_id: vdev_id
- *
- * Return: vdev handle
- *            NULL if not found.
- */
-static inline ol_txrx_vdev_handle ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
-{
-	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	ol_txrx_vdev_handle vdev = NULL;
-
-	if (qdf_unlikely(!pdev)) {
-		return NULL;
-	}
-
-	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (vdev->vdev_id == vdev_id)
-			break;
-	}
-
-	return vdev;
-}
+ol_txrx_vdev_handle ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id);
 
 #endif /* _OL_TXRX__H_ */

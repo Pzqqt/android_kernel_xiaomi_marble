@@ -36,9 +36,6 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <htc_api.h>            /* HTC_PACKET */
 
-#include <ol_ctrl_api.h>        /* ol_pdev_handle */
-#include <ol_txrx_api.h>        /* ol_txrx_pdev_handle */
-
 #define DEBUG_DMA_DONE
 
 #define HTT_TX_MUTEX_TYPE qdf_spinlock_t

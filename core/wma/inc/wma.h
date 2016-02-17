@@ -40,7 +40,6 @@
 #include "cfg_api.h"
 #include "qdf_status.h"
 #include "cds_sched.h"
-#include "ol_txrx_api.h"
 #include "sir_mac_prot_def.h"
 #include "wma_types.h"
 #include "ol_txrx_types.h"
@@ -48,6 +47,7 @@
 #include "utils_api.h"
 #include "lim_types.h"
 #include "wmi_unified_api.h"
+#include "cdp_txrx_cmn.h"
 
 /* Platform specific configuration for max. no. of fragments */
 #define QCA_OL_11AC_TX_MAX_FRAGS            2

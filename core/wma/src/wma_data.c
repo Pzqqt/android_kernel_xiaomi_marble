@@ -42,14 +42,11 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
-#include "ol_txrx_api.h"
 #include "qdf_mem.h"
-#include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
@@ -2561,8 +2558,8 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			wmi_desc_put(wma_handle, mgmt_param.wmi_desc);
 	} else {
 		/* Hand over the Tx Mgmt frame to TxRx */
-		status = ol_txrx_mgmt_send(txrx_vdev, tx_frame, tx_frm_index,
-					   use_6mbps, chanfreq);
+		status = ol_txrx_mgmt_send_ext(txrx_vdev, tx_frame,
+				 tx_frm_index, use_6mbps, chanfreq);
 	}
 
 	/*

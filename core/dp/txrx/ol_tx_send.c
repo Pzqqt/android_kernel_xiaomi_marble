@@ -43,7 +43,6 @@
 #include <ol_txrx_htt_api.h>    /* htt_tx_status */
 
 #include <ol_ctrl_txrx_api.h>
-#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc */
 #include <ol_tx_desc.h>         /* ol_tx_desc_find, ol_tx_desc_frame_free */
 #ifdef QCA_COMPUTE_TX_DELAY
 #endif

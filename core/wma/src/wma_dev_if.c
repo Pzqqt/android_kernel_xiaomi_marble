@@ -42,14 +42,11 @@
 #include "wmi_unified.h"
 #include "wni_cfg.h"
 #include "cfg_api.h"
-#include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
 #include "qdf_nbuf.h"
 #include "qdf_types.h"
-#include "ol_txrx_api.h"
 #include "qdf_mem.h"
-#include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
 #include "wma_types.h"
@@ -1079,7 +1076,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 			 wma->interfaces[vdev_id].peer_count - 1);
 		goto err;
 	}
-	peer = ol_txrx_peer_attach(pdev, vdev, peer_addr);
+	peer = ol_txrx_peer_attach(vdev, peer_addr);
 	if (!peer) {
 		WMA_LOGE("%s : Unable to attach peer %pM", __func__, peer_addr);
 		goto err;

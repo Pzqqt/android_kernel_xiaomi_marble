@@ -32,13 +32,11 @@
 
 /* external API header files */
 #include <ol_ctrl_txrx_api.h>   /* ol_rx_notify */
-#include <ol_htt_api.h>         /* htt_pdev_handle */
 #include <ol_txrx_api.h>        /* ol_txrx_pdev_handle */
 #include <ol_txrx_htt_api.h>    /* ol_rx_indication_handler */
 #include <ol_htt_rx_api.h>      /* htt_rx_peer_id, etc. */
 
 /* internal API header files */
-#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
 #include <ol_txrx_peer_find.h>  /* ol_txrx_peer_find_by_id */
 #include <ol_rx_reorder.h>      /* ol_rx_reorder_store, etc. */
 #include <ol_rx_reorder_timeout.h>      /* OL_RX_REORDER_TIMEOUT_UPDATE */
@@ -58,7 +56,6 @@
 #include <ipv4.h>               /* IPv4 header defs */
 #include <ipv6_defs.h>          /* IPv6 header defs */
 #include <ol_vowext_dbg_defs.h>
-#include <ol_txrx_osif_api.h>
 #include <wma.h>
 
 #ifdef HTT_RX_RESTORE

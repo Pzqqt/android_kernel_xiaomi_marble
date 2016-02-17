@@ -110,18 +110,6 @@ QDF_STATUS wlan_register_mgmt_client(void *pdev_txrx,
 				     QDF_STATUS (*rx_mgmt)(void *g_cdsctx,
 							   void *buf));
 
-typedef void (*ol_txrx_vdev_delete_cb)(void *context);
-
-/**
- * @typedef ol_txrx_tx_fp
- * @brief top-level transmit function
- */
-typedef qdf_nbuf_t
-(*ol_txrx_tx_fp)(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu_list);
-
-typedef void
-(*ol_txrx_mgmt_tx_cb)(void *ctxt, qdf_nbuf_t tx_mgmt_frm, int had_error);
-
 /* If RSSI realm is changed, send notification to Clients, SME, HDD */
 typedef QDF_STATUS (*wlan_txrx_rssi_cross_thresh)(void *adapter, u8 rssi,
 						  void *usr_ctx,

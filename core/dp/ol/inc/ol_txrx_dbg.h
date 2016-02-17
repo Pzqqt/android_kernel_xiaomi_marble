@@ -37,69 +37,9 @@
 #include <htt.h>                /* htt_dbg_stats_type */
 #include <ol_txrx_stats.h>      /* ol_txrx_stats */
 
-typedef void (*ol_txrx_stats_callback)(void *ctxt,
-				       enum htt_dbg_stats_type type,
-				       uint8_t *buf, int bytes);
-
-struct ol_txrx_stats_req {
-	uint32_t stats_type_upload_mask;        /* which stats to upload */
-	uint32_t stats_type_reset_mask; /* which stats to reset */
-
-	/* stats will be printed if either print element is set */
-	struct {
-		int verbose;    /* verbose stats printout */
-		int concise;    /* concise stats printout (takes precedence) */
-	} print;                /* print uploaded stats */
-
-	/* stats notify callback will be invoked if fp is non-NULL */
-	struct {
-		ol_txrx_stats_callback fp;
-		void *ctxt;
-	} callback;
-
-	/* stats will be copied into the specified buffer if buf is non-NULL */
-	struct {
-		uint8_t *buf;
-		int byte_limit; /* don't copy more than this */
-	} copy;
-
-	/*
-	 * If blocking is true, the caller will take the specified semaphore
-	 * to wait for the stats to be uploaded, and the driver will release
-	 * the semaphore when the stats are done being uploaded.
-	 */
-	struct {
-		int blocking;
-		qdf_semaphore_t *sem_ptr;
-	} wait;
-};
-
 #ifndef TXRX_DEBUG_LEVEL
 #define TXRX_DEBUG_LEVEL 0      /* no debug info */
 #endif
-
-#ifndef ATH_PERF_PWR_OFFLOAD /*---------------------------------------------*/
-
-#define ol_txrx_debug(vdev, debug_specs) 0
-#define ol_txrx_fw_stats_cfg(vdev, type, val) 0
-#define ol_txrx_fw_stats_get(vdev, req, response_expected) 0
-#define ol_txrx_aggr_cfg(vdev, max_subfrms_ampdu, max_subfrms_amsdu) 0
-
-#else /*---------------------------------------------------------------------*/
-
-#include <ol_txrx_api.h>        /* ol_txrx_pdev_handle, etc. */
-
-int ol_txrx_debug(ol_txrx_vdev_handle vdev, int debug_specs);
-
-void ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
-			  uint8_t cfg_stats_type, uint32_t cfg_val);
-
-int ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev,
-			 struct ol_txrx_stats_req *req,
-			 bool response_expected);
-
-int ol_txrx_aggr_cfg(ol_txrx_vdev_handle vdev,
-		     int max_subfrms_ampdu, int max_subfrms_amsdu);
 
 enum {
 	TXRX_DBG_MASK_OBJS = 0x01,
@@ -118,8 +58,6 @@ enum {
 #define TXRX_PRINT_ENABLE 1
 /* uncomment this for verbose txrx printouts (may impact performance) */
 /* #define TXRX_PRINT_VERBOSE_ENABLE 1 */
-
-void ol_txrx_print_level_set(unsigned level);
 
 /*--- txrx object (pdev, vdev, peer) display debug functions ---*/
 
@@ -198,7 +136,6 @@ void ol_rx_pn_trace_display(ol_txrx_pdev_handle pdev, int just_once);
 
 #define ol_tx_queue_log_display(pdev)
 
-#endif /* ATH_PERF_PWR_OFFLOAD  */
 /*----------------------------------------*/
 
 #endif /* _OL_TXRX_DBG__H_ */

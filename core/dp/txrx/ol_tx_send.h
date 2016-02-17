@@ -33,7 +33,7 @@
 #define _OL_TX_SEND__H_
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include <ol_txrx_types.h>      /* ol_tx_send_t */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t, etc. */
 
 /**
  * @flush the ol tx when surprise remove.

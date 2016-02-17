@@ -39,9 +39,8 @@
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <athdefs.h>            /* A_STATUS */
 #include <htc_api.h>            /* HTC_HANDLE */
-#include <ol_ctrl_api.h>        /* ol_pdev_handle */
-#include <ol_txrx_api.h>        /* ol_txrx_pdev_handle */
 #include "htt.h"                /* htt_dbg_stats_type, etc. */
+#include <cdp_txrx_cmn.h>       /* ol_pdev_handle */
 
 /* TID */
 #define OL_HTT_TID_NON_QOS_UNICAST     16

@@ -29,7 +29,8 @@
 #define _OL_RX__H_
 
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
+#include <ol_htt_api.h>         /* htt_pdev_handle */
+#include <cdp_txrx_cmn.h>       /* ol_txrx_vdev_t */
 
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,

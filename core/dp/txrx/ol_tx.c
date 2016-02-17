@@ -33,12 +33,9 @@
 /* APIs for other modules */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
 #include <ol_htt_tx_api.h>      /* htt_tx_desc_tid */
-#include <ol_txrx_api.h>        /* ol_txrx_vdev_handle */
-#include <ol_txrx_ctrl_api.h>   /* ol_txrx_sync */
 
 /* internal header files relevant for all systems */
 #include <ol_txrx_internal.h>   /* TXRX_ASSERT1 */
-#include <ol_txrx_types.h>      /* pdev stats */
 #include <ol_tx_desc.h>         /* ol_tx_desc */
 #include <ol_tx_send.h>         /* ol_tx_send */
 #include <ol_txrx.h>
@@ -1178,6 +1175,26 @@ ol_txrx_data_tx_cb_set(ol_txrx_vdev_handle vdev,
 	pdev->tx_data_callback.ctxt = ctxt;
 }
 
+/**
+ * ol_txrx_mgmt_tx_cb_set() - Store a callback for delivery
+ * notifications for management frames.
+ *
+ * @pdev - the data physical device object
+ * @type - the type of mgmt frame the callback is used for
+ * @download_cb - the callback for notification of delivery to the target
+ * @ota_ack_cb - the callback for notification of delivery to the peer
+ * @ctxt - context to use with the callback
+ *
+ * When the txrx SW receives notifications from the target that a tx frame
+ * has been delivered to its recipient, it will check if the tx frame
+ * is a management frame.  If so, the txrx SW will check the management
+ * frame type specified when the frame was submitted for transmission.
+ * If there is a callback function registered for the type of managment
+ * frame in question, the txrx code will invoke the callback to inform
+ * the management + control SW that the mgmt frame was delivered.
+ * This function is used by the control SW to store a callback pointer
+ * for a given type of management frame.
+ */
 void
 ol_txrx_mgmt_tx_cb_set(ol_txrx_pdev_handle pdev,
 		       uint8_t type,
@@ -1229,8 +1246,26 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 }
 #endif /* HELIUMPLUS_PADDR64 */
 
+/**
+ * ol_txrx_mgmt_send_ext() - Transmit a management frame
+ *
+ * @vdev - virtual device transmitting the frame
+ * @tx_mgmt_frm - management frame to transmit
+ * @type - the type of managment frame (determines what callback to use)
+ * @use_6mbps - specify whether management frame to transmit should
+ * use 6 Mbps rather than 1 Mbps min rate(for 5GHz band or P2P)
+ * @chanfreq - channel to transmit the frame on
+ *
+ * Send the specified management frame from the specified virtual device.
+ * The type is used for determining whether to invoke a callback to inform
+ * the sender that the tx mgmt frame was delivered, and if so, which
+ * callback to use.
+ *
+ * Return: 0 - the frame is accepted for transmission
+ *         1 - the frame was not accepted
+ */
 int
-ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
+ol_txrx_mgmt_send_ext(ol_txrx_vdev_handle vdev,
 		  qdf_nbuf_t tx_mgmt_frm,
 		  uint8_t type, uint8_t use_6mbps, uint16_t chanfreq)
 {

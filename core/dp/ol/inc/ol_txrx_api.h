@@ -33,27 +33,6 @@
 #define _OL_TXRX_API__H_
 
 /**
- * @typedef ol_txrx_pdev_handle
- * @brief opaque handle for txrx physical device object
- */
-struct ol_txrx_pdev_t;
-typedef struct ol_txrx_pdev_t *ol_txrx_pdev_handle;
-
-/**
- * @typedef ol_txrx_vdev_handle
- * @brief opaque handle for txrx virtual device object
- */
-struct ol_txrx_vdev_t;
-typedef struct ol_txrx_vdev_t *ol_txrx_vdev_handle;
-
-/**
- * @typedef ol_txrx_peer_handle
- * @brief opaque handle for txrx peer object
- */
-struct ol_txrx_peer_t;
-typedef struct ol_txrx_peer_t *ol_txrx_peer_handle;
-
-/**
  * @brief ADDBA negotiation status, used both during requests and confirmations
  */
 enum ol_addba_status {
