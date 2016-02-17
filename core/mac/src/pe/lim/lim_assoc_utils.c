@@ -3013,6 +3013,8 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	pAddStaParams->enableHtSmps = (psessionEntry->enableHtSmps &&
 				(!psessionEntry->supported_nss_1x1));
 	pAddStaParams->htSmpsconfig = psessionEntry->htSmpsvalue;
+	pAddStaParams->send_smps_action =
+		psessionEntry->send_smps_action;
 
 	/* For Self STA get the LDPC capability from session i.e config.ini */
 	pAddStaParams->htLdpcCapable =

@@ -3801,16 +3801,16 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 
 	/* Send SMPS force command to FW to send the required
 	 * action frame only when SM power save is enbaled in
-	 * the INI. In case dynamic antenna selection, the
-	 * action frames are sent by the chain mask manager.
+	 * from INI. In case dynamic antenna selection, the
+	 * action frames are sent by the chain mask manager
 	 * In addition to the action frames, The SM power save is
 	 * published in the assoc request HT SMPS IE for both cases.
 	 */
-	if (params->enableHtSmps) {
+	if ((params->enableHtSmps) && (params->send_smps_action)) {
 		smps_param = wma_smps_mode_to_force_mode_param(
 			params->htSmpsconfig);
 		if (smps_param >= 0) {
-			WMA_LOGD("%s: Set MIMO power save smps mode %d",
+			WMA_LOGD("%s: Send SMPS force mode: %d",
 				__func__, params->htSmpsconfig);
 			wma_set_mimops(wma, params->smesessionId,
 				smps_param);

@@ -1158,6 +1158,7 @@ typedef struct tagCsrConfigParam {
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
+	bool send_smps_action;
 	bool ignore_peer_erp_info;
 	/*
 	 * To enable/disable scanning only 2.4Ghz channels on first scan

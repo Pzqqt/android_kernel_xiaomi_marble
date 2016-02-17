@@ -1744,10 +1744,13 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->enableAmpduPs = sme_join_req->enableAmpduPs;
 		session->enableHtSmps = sme_join_req->enableHtSmps;
 		session->htSmpsvalue = sme_join_req->htSmps;
+		session->send_smps_action =
+			sme_join_req->send_smps_action;
 		lim_log(mac_ctx, LOG1,
-			FL("enableHtSmps: %d htSmps: %d"),
+			FL("enable Smps: %d mode: %d send action: %d"),
 			session->enableHtSmps,
-			session->htSmpsvalue);
+			session->htSmpsvalue,
+			session->send_smps_action);
 
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
@@ -2171,9 +2174,13 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 
 	session_entry->enableHtSmps = reassoc_req->enableHtSmps;
 	session_entry->htSmpsvalue = reassoc_req->htSmps;
-	lim_log(mac_ctx, LOG1, FL("enableHtSmps: %d htSmps: %d"),
+	session_entry->send_smps_action =
+		reassoc_req->send_smps_action;
+	lim_log(mac_ctx, LOG1,
+		FL("enableHtSmps: %d htSmps: %d send action: %d"),
 		session_entry->enableHtSmps,
-		session_entry->htSmpsvalue);
+		session_entry->htSmpsvalue,
+		session_entry->send_smps_action);
 	/*
 	 * Reassociate request is expected
 	 * in link established state only.

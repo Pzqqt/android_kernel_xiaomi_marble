@@ -309,6 +309,7 @@ typedef struct {
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmpsconfig;
+	bool send_smps_action;
 	uint8_t htLdpcCapable;
 	uint8_t vhtLdpcCapable;
 	uint8_t smesessionId;

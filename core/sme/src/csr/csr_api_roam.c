@@ -2031,6 +2031,8 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.enableAmpduPs = pParam->enableAmpduPs;
 		pMac->roam.configParam.enableHtSmps = pParam->enableHtSmps;
 		pMac->roam.configParam.htSmps = pParam->htSmps;
+		pMac->roam.configParam.send_smps_action =
+			pParam->send_smps_action;
 		pMac->roam.configParam.txLdpcEnable = pParam->enableTxLdpc;
 		pMac->roam.configParam.ignore_peer_erp_info =
 			pParam->ignore_peer_erp_info;
@@ -13860,6 +13862,8 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 			(uint8_t) pMac->roam.configParam.enableHtSmps;
 
 		csr_join_req->htSmps = (uint8_t) pMac->roam.configParam.htSmps;
+		csr_join_req->send_smps_action =
+			pMac->roam.configParam.send_smps_action;
 
 		csr_join_req->isAmsduSupportInAMPDU =
 			(uint8_t) pMac->roam.configParam.isAmsduSupportInAMPDU;

@@ -6543,6 +6543,8 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.enableAmpduPs = pConfig->enableAmpduPs;
 	smeConfig->csrConfig.enableHtSmps = pConfig->enableHtSmps;
 	smeConfig->csrConfig.htSmps = pConfig->htSmps;
+	/* This param cannot be configured from INI */
+	smeConfig->csrConfig.send_smps_action = true;
 	smeConfig->csrConfig.AdHocChannel5G = pConfig->AdHocChannel5G;
 	smeConfig->csrConfig.AdHocChannel24 = pConfig->AdHocChannel24G;
 	smeConfig->csrConfig.ProprietaryRatesEnabled = 0;

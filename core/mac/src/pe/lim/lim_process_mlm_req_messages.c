@@ -549,6 +549,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	sta_param->enableAmpduPs = session_entry->enableAmpduPs;
 	sta_param->enableHtSmps = session_entry->enableHtSmps;
 	sta_param->htSmpsconfig = session_entry->htSmpsvalue;
+	sta_param->send_smps_action = session_entry->send_smps_action;
 
 	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
 				  false, session_entry, NULL);

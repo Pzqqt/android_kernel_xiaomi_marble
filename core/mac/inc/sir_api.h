@@ -970,6 +970,7 @@ typedef struct sSirSmeJoinReq {
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
+	bool send_smps_action;
 
 	uint8_t isAmsduSupportInAMPDU;
 	tAniBool isWMEenabled;

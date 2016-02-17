@@ -325,6 +325,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmpsvalue;
+	bool send_smps_action;
 	uint8_t spectrumMgtEnabled;
 	/* *********************11H related**************************** */
 	tLimSpecMgmtInfo gLimSpecMgmt;

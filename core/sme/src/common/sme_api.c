@@ -15392,21 +15392,28 @@ QDF_STATUS sme_ht40_stop_obss_scan(tHalHandle hal, uint32_t vdev_id)
  * @hal: The handle returned by macOpen
  * @is_ht_smps_enabled: enable/disable ht smps
  * @ht_smps_mode: smps mode disabled/static/dynamic
+ * @send_smps_action: flag to send smps force mode command
+ * to FW
  *
  * Return: QDF_STATUS if SME update mimo power save
  * configuration sucsess else failue status
  */
 QDF_STATUS sme_update_mimo_power_save(tHalHandle hal,
 				      uint8_t is_ht_smps_enabled,
-				      uint8_t ht_smps_mode)
+				      uint8_t ht_smps_mode,
+				      bool send_smps_action)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+
 	sms_log(mac_ctx, LOG1,
-		"update SMPS config enable smps: %d mode: %d",
-		is_ht_smps_enabled, ht_smps_mode);
+		"SMPS enable: %d mode: %d send action: %d",
+		is_ht_smps_enabled, ht_smps_mode,
+		send_smps_action);
 	mac_ctx->roam.configParam.enableHtSmps =
 		is_ht_smps_enabled;
 	mac_ctx->roam.configParam.htSmps = ht_smps_mode;
+	mac_ctx->roam.configParam.send_smps_action =
+		send_smps_action;
 
 	return QDF_STATUS_SUCCESS;
 }
