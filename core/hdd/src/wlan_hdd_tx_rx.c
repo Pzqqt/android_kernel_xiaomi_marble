@@ -641,9 +641,8 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 
 /**
  * hdd_rx_packet_cbk() - Receive packet handler
- * @cds_context: pointer to CDS context
+ * @context: pointer to HDD context
  * @rxBuf: pointer to rx qdf_nbuf
- * @staId: Station Id
  *
  * Receive callback registered with TL.  TL will call this to notify
  * the HDD when one or more packets were received for a registered
@@ -652,7 +651,7 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS hdd_rx_packet_cbk(void *cds_context, qdf_nbuf_t rxBuf, uint8_t staId)
+QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 {
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_context_t *pHddCtx = NULL;
@@ -665,36 +664,30 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, qdf_nbuf_t rxBuf, uint8_t staId)
 	unsigned int cpu_index;
 
 	/* Sanity check on inputs */
-	if ((NULL == cds_context) || (NULL == rxBuf)) {
+	if (unlikely((NULL == context) || (NULL == rxBuf))) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (NULL == pHddCtx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is Null", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	pAdapter = pHddCtx->sta_to_adapter[staId];
-	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hddLog(LOGE,
-			FL("invalid adapter %p or adapter has invalid magic"),
-			pAdapter);
-		return QDF_STATUS_E_FAILURE;
-	}
-	cpu_index = wlan_hdd_get_cpu();
-
-	skb = (struct sk_buff *)rxBuf;
-
-	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
+	pAdapter = (hdd_adapter_t *)context;
+	if (unlikely(WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_FATAL,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
 			  pAdapter->magic);
 		return QDF_STATUS_E_FAILURE;
 	}
+
+	pHddCtx = pAdapter->pHddCtx;
+	if (unlikely(NULL == pHddCtx)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "%s: HDD context is Null", __func__);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	cpu_index = wlan_hdd_get_cpu();
+
+	skb = (struct sk_buff *)rxBuf;
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	if ((pHddStaCtx->conn_info.proxyARPService) &&

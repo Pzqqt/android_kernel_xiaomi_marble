@@ -1146,6 +1146,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	qdf_atomic_set(&vdev->os_q_paused, 0);
 	vdev->tx_fl_lwm = 0;
 	vdev->tx_fl_hwm = 0;
+	vdev->rx = NULL;
 	vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
 	qdf_spinlock_create(&vdev->flow_control_lock);
 	vdev->osif_flow_control_cb = NULL;
@@ -1197,7 +1198,7 @@ void ol_txrx_vdev_register(ol_txrx_vdev_handle vdev,
 				struct ol_txrx_ops *txrx_ops)
 {
 	vdev->osif_dev = osif_vdev;
-	txrx_ops->tx.tx = vdev->tx = OL_TX_LL;
+	vdev->rx = txrx_ops->rx.rx;
 }
 
 /**
@@ -1355,18 +1356,19 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 {
 	struct ol_rx_cached_buf *cache_buf;
 	QDF_STATUS ret;
-	ol_rx_callback_fp data_rx = NULL;
-	void *cds_ctx = cds_get_global_context();
+	ol_txrx_rx_fp data_rx = NULL;
 
 	if (qdf_atomic_inc_return(&peer->flush_in_progress) > 1) {
 		qdf_atomic_dec(&peer->flush_in_progress);
 		return;
 	}
 
-	qdf_assert(cds_ctx);
+	qdf_assert(peer->vdev);
+
 	qdf_spin_lock_bh(&peer->peer_info_lock);
+
 	if (peer->state >= ol_txrx_peer_state_conn)
-		data_rx = peer->osif_rx;
+		data_rx = peer->vdev->rx;
 	else
 		drop = true;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
@@ -1381,7 +1383,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_free(cache_buf->buf);
 		} else {
 			/* Flush the cached frames to HDD */
-			ret = data_rx(cds_ctx, cache_buf->buf, peer->local_id);
+			ret = data_rx(peer->vdev->osif_dev, cache_buf->buf);
 			if (ret != QDF_STATUS_SUCCESS)
 				qdf_nbuf_free(cache_buf->buf);
 		}
@@ -1498,8 +1500,7 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++)
 		peer->peer_ids[i] = HTT_INVALID_PEER;
 
-
-	peer->osif_rx = NULL;
+	peer->vdev->rx = NULL;
 	qdf_spinlock_create(&peer->peer_info_lock);
 	qdf_spinlock_create(&peer->bufq_lock);
 
@@ -3143,12 +3144,11 @@ void ol_txrx_clear_stats(uint16_t value)
 static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 			  qdf_nbuf_t buf_list)
 {
-	void *cds_ctx = cds_get_global_context();
 	qdf_nbuf_t buf, next_buf;
 	QDF_STATUS ret;
-	ol_rx_callback_fp data_rx = NULL;
+	ol_txrx_rx_fp data_rx = NULL;
 
-	if (qdf_unlikely(!cds_ctx))
+	if (qdf_unlikely(!peer->vdev))
 		goto free_buf;
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
@@ -3156,7 +3156,8 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 		qdf_spin_unlock_bh(&peer->peer_info_lock);
 		goto free_buf;
 	}
-	data_rx = peer->osif_rx;
+
+	data_rx = peer->vdev->rx;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
 	qdf_spin_lock_bh(&peer->bufq_lock);
@@ -3171,7 +3172,7 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 	while (buf) {
 		next_buf = qdf_nbuf_queue_next(buf);
 		qdf_nbuf_set_next(buf, NULL);   /* Add NULL terminator */
-		ret = data_rx(cds_ctx, buf, peer->local_id);
+		ret = data_rx(peer->vdev->osif_dev, buf);
 		if (ret != QDF_STATUS_SUCCESS) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Frame Rx to HDD failed");
 			qdf_nbuf_free(buf);
@@ -3204,7 +3205,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 * T2H MSG running on SIRQ context,
 	 * IPA kernel module API should not be called on SIRQ CTXT */
 	qdf_nbuf_t buf, next_buf;
-	ol_rx_callback_fp data_rx = NULL;
+	ol_txrx_rx_fp data_rx = NULL;
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((!peer) || (!pdev)) {
@@ -3212,9 +3213,11 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 		goto drop_rx_buf;
 	}
 
+	qdf_assert(peer->vdev);
+
 	qdf_spin_lock_bh(&peer->peer_info_lock);
 	if (peer->state >= ol_txrx_peer_state_conn)
-		data_rx = peer->osif_rx;
+		data_rx = peer->vdev->rx;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
 	/*
@@ -3291,13 +3294,11 @@ drop_rx_buf:
 
 /**
  * ol_txrx_register_peer() - register peer
- * @rxcb: rx callback
  * @sta_desc: sta descriptor
  *
  * Return: QDF Status
  */
-QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
-				 struct ol_txrx_desc_type *sta_desc)
+QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -3320,7 +3321,6 @@ QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 		return QDF_STATUS_E_FAULT;
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	peer->osif_rx = rxcb;
 	peer->state = ol_txrx_peer_state_conn;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
@@ -3379,7 +3379,7 @@ QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 	ol_txrx_flush_rx_frames(peer, 1);
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	peer->osif_rx = NULL;
+	peer->vdev->rx = NULL;
 	peer->state = ol_txrx_peer_state_disc;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 

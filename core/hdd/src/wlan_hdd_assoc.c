@@ -55,6 +55,7 @@
 #include "sme_power_save_api.h"
 #include "ol_txrx_ctrl_api.h"
 #include "ol_txrx_types.h"
+#include "ol_txrx.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1269,6 +1270,7 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
+	struct ol_txrx_ops txrx_ops;
 
 	if (NULL == pBssDesc)
 		return QDF_STATUS_E_FAILURE;
@@ -1291,14 +1293,21 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 		staDesc.is_wapi_supported = 0;
 #endif /* FEATURE_WLAN_WAPI */
 
-	qdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
-						&staDesc);
+	qdf_status = ol_txrx_register_peer(&staDesc);
+
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGW,
 			"ol_txrx_register_peer() failed to register. Status=%d [0x%08X]",
 			qdf_status, qdf_status);
 		return qdf_status;
 	}
+
+	/* Register the vdev transmit and receive functions */
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+		 pAdapter, &txrx_ops);
 
 	if (!pRoamInfo->fAuthRequired) {
 		/*
@@ -2836,6 +2845,7 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
+	struct ol_txrx_ops txrx_ops;
 
 	/*
 	 * TDLS sta in BSS should be set as STA type TDLS and STA MAC should
@@ -2849,13 +2859,19 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 
 
 	/* Register the Station with TL...  */
-	qdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
-						&staDesc);
+	qdf_status = ol_txrx_register_peer(&staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("ol_txrx_register_peer() failed to register. Status=%d [0x%08X]"),
 			qdf_status, qdf_status);
 		return qdf_status;
 	}
+
+	/* Register the vdev transmit and receive functions */
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+		 pAdapter, &txrx_ops);
 
 	return qdf_status;
 }

@@ -136,8 +136,8 @@ qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 			qdf_nbuf_t skb);
 #endif
 
-QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
-				 struct ol_txrx_desc_type *sta_desc);
+QDF_STATUS ol_txrx_register_peer
+			(struct ol_txrx_desc_type *sta_desc);
 
 QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id);
 

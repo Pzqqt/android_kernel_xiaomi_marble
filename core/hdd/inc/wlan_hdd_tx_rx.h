@@ -55,10 +55,10 @@
 
 int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev);
 void hdd_tx_timeout(struct net_device *dev);
+
 QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter);
 QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter);
-QDF_STATUS hdd_rx_packet_cbk(void *cds_context, qdf_nbuf_t rxBufChain,
-			     uint8_t staId);
+QDF_STATUS hdd_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf);
 
 #ifdef IPA_OFFLOAD
 QDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,

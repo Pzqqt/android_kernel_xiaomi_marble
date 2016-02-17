@@ -39,6 +39,7 @@
 #include "wlan_tgt_def_config.h"
 #include "sch_api.h"
 #include "wma_api.h"
+#include "ol_txrx.h"
 
 /* Structure definitions for WLAN_SET_DOT11P_CHANNEL_SCHED */
 #define AIFSN_MIN		(2)
@@ -246,6 +247,7 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint8_t peer_id;
+	struct ol_txrx_ops txrx_ops;
 
 	qdf_status = ol_txrx_register_ocb_peer(hdd_ctx->pcds_context,
 					       adapter->macAddressCurrent.bytes,
@@ -260,13 +262,19 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	sta_desc.sta_id = peer_id;
 	sta_desc.is_qos_enabled = 1;
 
-	qdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
-						&sta_desc);
+	qdf_status = ol_txrx_register_peer(&sta_desc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("Failed to register. Status= %d [0x%08X]"),
 		       qdf_status, qdf_status);
 		return -EINVAL;
 	}
+
+	/* Register the vdev transmit and receive functions */
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(adapter->sessionId),
+		 adapter, &txrx_ops);
 
 	if (pHddStaCtx->conn_info.staId[0] != 0 &&
 	     pHddStaCtx->conn_info.staId[0] != peer_id) {

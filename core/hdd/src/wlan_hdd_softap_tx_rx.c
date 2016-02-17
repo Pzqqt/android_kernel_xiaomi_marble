@@ -38,6 +38,7 @@
 #include <net/ieee80211_radiotap.h>
 #include <cds_sched.h>
 #include <wlan_hdd_napi.h>
+#include <ol_txrx.h>
 
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
@@ -489,9 +490,8 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId)
 
 /**
  * hdd_softap_rx_packet_cbk() - Receive packet handler
- * @cds_context: pointer to CDS context
+ * @context: pointer to HDD context
  * @rxBuf: pointer to rx qdf_nbuf
- * @staId: Station Id
  *
  * Receive callback registered with TL.  TL will call this to notify
  * the HDD when one or more packets were received for a registered
@@ -500,8 +500,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId)
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
-				    qdf_nbuf_t rxBuf, uint8_t staId)
+QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBuf)
 {
 	hdd_adapter_t *pAdapter = NULL;
 	int rxstat;
@@ -513,24 +512,24 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 #endif /* QCA_PKT_PROTO_TRACE */
 
 	/* Sanity check on inputs */
-	if ((NULL == cds_context) || (NULL == rxBuf)) {
+	if (unlikely((NULL == context) || (NULL == rxBuf))) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
-	if (NULL == pHddCtx) {
-		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is Null", __func__);
+	pAdapter = (hdd_adapter_t *)context;
+	if (unlikely(WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_FATAL,
+			  "Magic cookie(%x) for adapter sanity verification is invalid",
+			  pAdapter->magic);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pAdapter = pHddCtx->sta_to_adapter[staId];
-	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
-		hddLog(LOGE,
-			FL("invalid adapter %p or adapter has invalid magic"),
-			pAdapter);
+	pHddCtx = pAdapter->pHddCtx;
+	if (unlikely(NULL == pHddCtx)) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
+			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -541,7 +540,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 
 	skb->dev = pAdapter->dev;
 
-	if (skb->dev == NULL) {
+	if (unlikely(skb->dev == NULL)) {
 
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: ERROR!!Invalid netdevice", __func__);
@@ -667,6 +666,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
 	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
+	struct ol_txrx_ops txrx_ops;
 
 	/*
 	 * Clean up old entry if it is not cleaned up properly
@@ -692,16 +692,20 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		  "HDD SOFTAP register TL QoS_enabled=%d",
 		  staDesc.is_qos_enabled);
 
-
-	qdf_status =
-		ol_txrx_register_peer(hdd_softap_rx_packet_cbk,
-					   &staDesc);
+	qdf_status = ol_txrx_register_peer(&staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "SOFTAP ol_txrx_register_peer() failed to register.  Status= %d [0x%08X]",
 			  qdf_status, qdf_status);
 		return qdf_status;
 	}
+
+	/* Register the vdev transmit and receive functions */
+	qdf_mem_zero(&txrx_ops, sizeof(txrx_ops));
+	txrx_ops.rx.rx = hdd_softap_rx_packet_cbk;
+	ol_txrx_vdev_register(
+		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
+		 pAdapter, &txrx_ops);
 
 	/* if ( WPA ), tell TL to go to 'connected' and after keys come to the
 	 * driver then go to 'authenticated'.  For all other authentication

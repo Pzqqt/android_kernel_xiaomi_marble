@@ -784,7 +784,7 @@ struct ol_txrx_vdev_t {
 	struct ol_txrx_peer_t *last_real_peer; /* last real peer created for
 						  this vdev (not "self"
 						  pseudo-peer) */
-	ol_txrx_tx_fp tx; /* transmit function used by this vdev */
+	ol_txrx_rx_fp rx; /* receive function used by this vdev */
 
 	struct {
 		/*
@@ -918,7 +918,6 @@ struct ol_txrx_peer_t {
 	 */
 	enum ol_txrx_peer_state state;
 	qdf_spinlock_t peer_info_lock;
-	ol_rx_callback_fp osif_rx;
 	qdf_spinlock_t bufq_lock;
 	struct list_head cached_bufq;
 

@@ -46,9 +46,8 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter,
 				     struct qdf_mac_addr *pmacAddrSTA);
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter,
 				       uint8_t STAId);
-QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
-				    qdf_nbuf_t rxBufChain,
-				    uint8_t staId);
+
+QDF_STATUS hdd_softap_rx_packet_cbk(void *context, qdf_nbuf_t rxBufChain);
 #ifdef IPA_OFFLOAD
 QDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
 					qdf_nbuf_t rx_buf_list, uint8_t staId);
