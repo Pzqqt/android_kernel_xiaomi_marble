@@ -4653,9 +4653,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	tSirMacAddr targetApBssid;
 	uint32_t roamId = 0;
 	tCsrRoamModifyProfileFields modProfileFields;
-#ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
 	tCsrHandoffRequest handoffInfo;
-#endif
 	hdd_station_ctx_t *pHddStaCtx;
 
 	if (QDF_STA_MODE != adapter->device_mode) {
@@ -4723,15 +4721,12 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	}
 #endif
 	/* Proceed with reassoc */
-#ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
 	handoffInfo.channel = channel;
 	handoffInfo.src = FASTREASSOC;
-	qdf_mem_copy(handoffInfo.bssid, targetApBssid,
+	qdf_mem_copy(handoffInfo.bssid.bytes, targetApBssid,
 		     sizeof(tSirMacAddr));
 	sme_handoff_request(hdd_ctx->hHal, adapter->sessionId,
 			    &handoffInfo);
-#endif
-
 exit:
 	return ret;
 }

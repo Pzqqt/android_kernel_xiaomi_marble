@@ -15223,13 +15223,11 @@ QDF_STATUS sme_update_roam_scan_hi_rssi_scan_params(tHalHandle hal_handle,
 		}
 		sme_release_global_lock(&mac_ctx->sme);
 	}
-#ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
 	if (mac_ctx->roam.configParam.isRoamOffloadScanEnabled &&
 		status == QDF_STATUS_SUCCESS) {
 		csr_roam_offload_scan(mac_ctx, session_id,
 			ROAM_SCAN_OFFLOAD_UPDATE_CFG, reason);
 	}
-#endif
 
 	return status;
 }
