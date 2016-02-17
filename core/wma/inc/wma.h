@@ -1227,9 +1227,9 @@ typedef struct {
 	uint32_t scan_id;
 	struct wma_txrx_node *interfaces;
 	pdev_cli_config_t pdevconfig;
-	cdf_list_t vdev_resp_queue;
+	qdf_list_t vdev_resp_queue;
 	cdf_spinlock_t vdev_respq_lock;
-	cdf_list_t wma_hold_req_queue;
+	qdf_list_t wma_hold_req_queue;
 	cdf_spinlock_t wma_hold_req_q_lock;
 	uint32_t ht_cap_info;
 #ifdef WLAN_FEATURE_11AC
@@ -1459,7 +1459,7 @@ struct wma_tx_ack_work_ctx {
  */
 struct wma_target_req {
 	cdf_mc_timer_t event_timeout;
-	cdf_list_node_t node;
+	qdf_list_node_t node;
 	void *user_data;
 	uint32_t msg_type;
 	uint8_t vdev_id;

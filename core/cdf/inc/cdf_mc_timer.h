@@ -42,7 +42,7 @@
 #include <i_cdf_mc_timer.h>
 
 #ifdef TIMER_MANAGER
-#include <cdf_list.h>
+#include <qdf_list.h>
 #endif
 
 /* Preprocessor definitions and constants */
@@ -65,7 +65,7 @@ typedef enum {
 #ifdef TIMER_MANAGER
 struct cdf_mc_timer_s;
 typedef struct cdf_mc_timer_node_s {
-	cdf_list_node_t pNode;
+	qdf_list_node_t pNode;
 	char *fileName;
 	unsigned int lineNum;
 	struct cdf_mc_timer_s *cdf_timer;

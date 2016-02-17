@@ -1416,7 +1416,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				if (cfg_set_int(pMac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
 						privcmd->param_value) !=
-				    				eSIR_SUCCESS)
+								eSIR_SUCCESS)
 					WMA_LOGE("could not set WNI_CFG_CURRENT_TX_POWER_LEVEL");
 
 			} else {
@@ -1432,7 +1432,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				if (cfg_set_int(pMac,
 						WNI_CFG_CURRENT_TX_POWER_LEVEL,
 						privcmd->param_value) !=
-						 	    eSIR_SUCCESS)
+							    eSIR_SUCCESS)
 					WMA_LOGE("could not set WNI_CFG_CURRENT_TX_POWER_LEVEL");
 
 			} else {
@@ -1723,7 +1723,7 @@ CDF_STATUS wma_open(void *cds_context,
 		WMA_MAXNUM_PERIODIC_TX_PTRNS;
 
 	/* The current firmware implementation requires the number of
-         * offload peers should be (number of vdevs + 1).
+	 * offload peers should be (number of vdevs + 1).
 	 */
 	wma_handle->wlan_resource_config.num_offload_peers =
 		mac_params->apMaxOffloadPeers + 1;
@@ -1833,10 +1833,10 @@ CDF_STATUS wma_open(void *cds_context,
 		goto err_event_init;
 	}
 
-	cdf_list_init(&wma_handle->vdev_resp_queue,
+	qdf_list_create(&wma_handle->vdev_resp_queue,
 		      MAX_ENTRY_VDEV_RESP_QUEUE);
 	cdf_spinlock_init(&wma_handle->vdev_respq_lock);
-	cdf_list_init(&wma_handle->wma_hold_req_queue,
+	qdf_list_create(&wma_handle->wma_hold_req_queue,
 		      MAX_ENTRY_HOLD_REQ_QUEUE);
 	cdf_spinlock_init(&wma_handle->wma_hold_req_q_lock);
 	cdf_atomic_init(&wma_handle->is_wow_bus_suspended);
@@ -2914,21 +2914,21 @@ end:
 static void wma_cleanup_hold_req(tp_wma_handle wma)
 {
 	struct wma_target_req *req_msg = NULL;
-	cdf_list_node_t *node1 = NULL;
-	CDF_STATUS status;
+	qdf_list_node_t *node1 = NULL;
+	QDF_STATUS status;
 
 	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
-	if (cdf_list_empty(&wma->wma_hold_req_queue)) {
+	if (!qdf_list_size(&wma->wma_hold_req_queue)) {
 		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGI(FL("request queue is empty"));
 		return;
 	}
 
-	while (CDF_STATUS_SUCCESS !=
-			cdf_list_peek_front(&wma->wma_hold_req_queue, &node1)) {
+	while (QDF_STATUS_SUCCESS !=
+			qdf_list_peek_front(&wma->wma_hold_req_queue, &node1)) {
 		req_msg = cdf_container_of(node1, struct wma_target_req, node);
-		status = cdf_list_remove_node(&wma->wma_hold_req_queue, node1);
-		if (CDF_STATUS_SUCCESS != status) {
+		status = qdf_list_remove_node(&wma->wma_hold_req_queue, node1);
+		if (QDF_STATUS_SUCCESS != status) {
 			cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 			WMA_LOGE(FL("Failed to remove request for vdev_id %d type %d"),
 				 req_msg->vdev_id, req_msg->type);
@@ -2949,21 +2949,21 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 static void wma_cleanup_vdev_resp(tp_wma_handle wma)
 {
 	struct wma_target_req *req_msg = NULL;
-	cdf_list_node_t *node1 = NULL;
-	CDF_STATUS status;
+	qdf_list_node_t *node1 = NULL;
+	QDF_STATUS status;
 
 	cdf_spin_lock_bh(&wma->vdev_respq_lock);
-	if (cdf_list_empty(&wma->vdev_resp_queue)) {
+	if (!qdf_list_size(&wma->vdev_resp_queue)) {
 		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
 		WMA_LOGI(FL("request queue maybe empty"));
 		return;
 	}
 
-	while (CDF_STATUS_SUCCESS != cdf_list_peek_front(&wma->vdev_resp_queue,
+	while (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->vdev_resp_queue,
 						      &node1)) {
 		req_msg = cdf_container_of(node1, struct wma_target_req, node);
-		status = cdf_list_remove_node(&wma->vdev_resp_queue, node1);
-		if (CDF_STATUS_SUCCESS != status) {
+		status = qdf_list_remove_node(&wma->vdev_resp_queue, node1);
+		if (QDF_STATUS_SUCCESS != status) {
 			cdf_spin_unlock_bh(&wma->vdev_respq_lock);
 			WMA_LOGE(FL("Failed to remove request for vdev_id %d type %d"),
 				 req_msg->vdev_id, req_msg->type);

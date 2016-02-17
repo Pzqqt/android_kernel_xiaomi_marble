@@ -1427,8 +1427,7 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
 					scan_req->scan_id);
 			return;
 		}
-	}
-	else {
+	} else {
 		/* In all other cases return 'cached' scan results */
 		if (mac_ctx->lim.gLimRspReqd) {
 			mac_ctx->lim.gLimRspReqd = false;
@@ -4492,7 +4491,7 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 static void __lim_process_sme_register_mgmt_frame_req(tpAniSirGlobal mac_ctx,
 		uint32_t *msg_buf)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	tpSirRegisterMgmtFrame sme_req = (tpSirRegisterMgmtFrame)msg_buf;
 	struct mgmt_frm_reg_info *lim_mgmt_regn = NULL;
 	struct mgmt_frm_reg_info *next = NULL;
@@ -4504,8 +4503,8 @@ static void __lim_process_sme_register_mgmt_frame_req(tpAniSirGlobal mac_ctx,
 				sme_req->matchLen);
 	/* First check whether entry exists already */
 	cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-	cdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-			    (cdf_list_node_t **) &lim_mgmt_regn);
+	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
+			    (qdf_list_node_t **) &lim_mgmt_regn);
 	cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 
 	while (lim_mgmt_regn != NULL) {
@@ -4527,19 +4526,19 @@ static void __lim_process_sme_register_mgmt_frame_req(tpAniSirGlobal mac_ctx,
 		}
 skip_match:
 		cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-		cdf_status = cdf_list_peek_next(
+		qdf_status = qdf_list_peek_next(
 				&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-				(cdf_list_node_t *)lim_mgmt_regn,
-				(cdf_list_node_t **)&next);
+				(qdf_list_node_t *)lim_mgmt_regn,
+				(qdf_list_node_t **)&next);
 		cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 		lim_mgmt_regn = next;
 		next = NULL;
 	}
 	if (match) {
 		cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-		cdf_list_remove_node(
+		qdf_list_remove_node(
 				&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-				(cdf_list_node_t *)lim_mgmt_regn);
+				(qdf_list_node_t *)lim_mgmt_regn);
 		cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 		cdf_mem_free(lim_mgmt_regn);
 	}
@@ -4562,7 +4561,7 @@ skip_match:
 			}
 			cdf_mutex_acquire(
 					&mac_ctx->lim.lim_frame_register_lock);
-			cdf_list_insert_front(&mac_ctx->lim.
+			qdf_list_insert_front(&mac_ctx->lim.
 					      gLimMgmtFrameRegistratinQueue,
 					      &lim_mgmt_regn->node);
 			cdf_mutex_release(

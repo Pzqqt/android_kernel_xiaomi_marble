@@ -38,7 +38,7 @@
 
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
-#include <cdf_list.h>
+#include <qdf_list.h>
 #include <cdf_types.h>
 #include <wlan_hdd_main.h>
 

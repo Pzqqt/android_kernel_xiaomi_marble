@@ -826,7 +826,7 @@ typedef struct sAniSirLim {
 
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
 	cdf_mutex_t lim_frame_register_lock;
-	cdf_list_t gLimMgmtFrameRegistratinQueue;
+	qdf_list_t gLimMgmtFrameRegistratinQueue;
 	uint32_t mgmtFrameSessionId;
 
 	tpPESession pSessionEntry;
@@ -850,7 +850,7 @@ typedef struct sAniSirLim {
 } tAniSirLim, *tpAniSirLim;
 
 struct mgmt_frm_reg_info {
-	cdf_list_node_t node;   /* MUST be first element */
+	qdf_list_node_t node;   /* MUST be first element */
 	uint16_t frameType;
 	uint16_t matchLen;
 	uint16_t sessionId;

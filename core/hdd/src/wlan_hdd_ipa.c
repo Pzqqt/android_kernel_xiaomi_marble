@@ -318,7 +318,7 @@ struct ipa_uc_fw_stats {
 };
 
 struct ipa_uc_pending_event {
-	cdf_list_node_t node;
+	qdf_list_node_t node;
 	hdd_adapter_t *adapter;
 	enum ipa_wlan_event type;
 	uint8_t sta_id;
@@ -422,7 +422,7 @@ struct hdd_ipa_priv {
 	bool resource_unloading;
 	bool pending_cons_req;
 	struct ipa_uc_stas_map assoc_stas_map[WLAN_MAX_STA_COUNT];
-	cdf_list_t pending_event;
+	qdf_list_t pending_event;
 	cdf_mutex_t event_lock;
 	bool ipa_pipes_down;
 	uint32_t ipa_tx_packets_diff;
@@ -1316,7 +1316,7 @@ static void hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
 	unsigned int pending_event_count;
 	struct ipa_uc_pending_event *pending_event = NULL;
 
-	cdf_list_size(&hdd_ipa->pending_event, &pending_event_count);
+	pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
 	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
 		"%s, Pending Event Count %d", __func__, pending_event_count);
 	if (!pending_event_count) {
@@ -1325,8 +1325,8 @@ static void hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
 		return;
 	}
 
-	cdf_list_remove_front(&hdd_ipa->pending_event,
-			(cdf_list_node_t **)&pending_event);
+	qdf_list_remove_front(&hdd_ipa->pending_event,
+			(qdf_list_node_t **)&pending_event);
 	while (pending_event != NULL) {
 		hdd_ipa_wlan_evt(pending_event->adapter,
 			pending_event->type,
@@ -1334,8 +1334,8 @@ static void hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
 			pending_event->mac_addr);
 		cdf_mem_free(pending_event);
 		pending_event = NULL;
-		cdf_list_remove_front(&hdd_ipa->pending_event,
-			(cdf_list_node_t **)&pending_event);
+		qdf_list_remove_front(&hdd_ipa->pending_event,
+			(qdf_list_node_t **)&pending_event);
 	}
 }
 
@@ -1788,7 +1788,7 @@ static CDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	cdf_mem_zero(&pipe_in, sizeof(struct ipa_wdi_in_params));
 	cdf_mem_zero(&pipe_out, sizeof(struct ipa_wdi_out_params));
 
-	cdf_list_init(&ipa_ctxt->pending_event, 1000);
+	qdf_list_create(&ipa_ctxt->pending_event, 1000);
 	cdf_mutex_init(&ipa_ctxt->event_lock);
 	cdf_mutex_init(&ipa_ctxt->ipa_lock);
 
@@ -3653,11 +3653,11 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		cdf_mutex_acquire(&hdd_ipa->event_lock);
 
-		cdf_list_size(&hdd_ipa->pending_event, &pending_event_count);
+		pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
 		if (pending_event_count >= HDD_IPA_MAX_PENDING_EVENT_COUNT) {
 			hdd_notice("Reached max pending event count");
-			cdf_list_remove_front(&hdd_ipa->pending_event,
-				(cdf_list_node_t **)&pending_event);
+			qdf_list_remove_front(&hdd_ipa->pending_event,
+				(qdf_list_node_t **)&pending_event);
 		} else {
 			pending_event =
 				(struct ipa_uc_pending_event *)cdf_mem_malloc(
@@ -3676,7 +3676,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		cdf_mem_copy(pending_event->mac_addr,
 			mac_addr,
 			CDF_MAC_ADDR_SIZE);
-		cdf_list_insert_back(&hdd_ipa->pending_event,
+		qdf_list_insert_back(&hdd_ipa->pending_event,
 				&pending_event->node);
 
 		cdf_mutex_release(&hdd_ipa->event_lock);
@@ -4121,12 +4121,12 @@ void hdd_ipa_cleanup_pending_event(struct hdd_ipa_priv *hdd_ipa)
 {
 	struct ipa_uc_pending_event *pending_event = NULL;
 
-	while (cdf_list_remove_front(&hdd_ipa->pending_event,
-		(cdf_list_node_t **)&pending_event) == CDF_STATUS_SUCCESS) {
+	while (qdf_list_remove_front(&hdd_ipa->pending_event,
+		(qdf_list_node_t **)&pending_event) == QDF_STATUS_SUCCESS) {
 		cdf_mem_free(pending_event);
 	}
 
-	cdf_list_destroy(&hdd_ipa->pending_event);
+	qdf_list_destroy(&hdd_ipa->pending_event);
 }
 
 /**

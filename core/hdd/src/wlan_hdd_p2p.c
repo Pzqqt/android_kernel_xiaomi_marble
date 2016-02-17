@@ -282,7 +282,7 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 		hddLog(LOGE, "Cancel Existing Remain on Channel");
 
 		if (CDF_TIMER_STATE_RUNNING == cdf_mc_timer_get_current_state(
-                    &cfgState->remain_on_chan_ctx->hdd_remain_on_chan_timer))
+		    &cfgState->remain_on_chan_ctx->hdd_remain_on_chan_timer))
 			cdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
 					  hdd_remain_on_chan_timer);
 
@@ -702,7 +702,7 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
 {
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_roc_req_t *hdd_roc_req;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	/*
 	 * "Driver is busy" OR "there is already RoC request inside the queue"
@@ -721,11 +721,11 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
 
 	/* Enqueue this RoC request */
 	cdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
-	status = cdf_list_insert_back(&hdd_ctx->hdd_roc_req_q,
+	status = qdf_list_insert_back(&hdd_ctx->hdd_roc_req_q,
 					&hdd_roc_req->node);
 	cdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGP, FL("Not able to enqueue RoC Req context"));
 		cdf_mem_free(hdd_roc_req);
 		return -EINVAL;
@@ -773,7 +773,7 @@ void wlan_hdd_indicate_roc_drop(hdd_adapter_t *adapter,
  */
 void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret = 0;
 	hdd_roc_req_t *hdd_roc_req;
 	hdd_context_t *hdd_ctx =
@@ -796,10 +796,10 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 		hdd_debug("list is empty");
 		return;
 	}
-	status = cdf_list_remove_front(&hdd_ctx->hdd_roc_req_q,
-			(cdf_list_node_t **) &hdd_roc_req);
+	status = qdf_list_remove_front(&hdd_ctx->hdd_roc_req_q,
+			(qdf_list_node_t **) &hdd_roc_req);
 	cdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_debug("unable to remove roc element from list");
 		return;
 	}
@@ -871,10 +871,10 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress = false;
 	if (REMAIN_ON_CHANNEL_REQUEST == request_type) {
 		sta_adapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
-		if ((NULL != sta_adapter)&&
+		if ((NULL != sta_adapter) &&
 			hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter))) {
-			if (pAdapter->last_roc_ts !=0 &&
+			if (pAdapter->last_roc_ts != 0 &&
 				((cdf_mc_timer_get_system_time() -
 					 pAdapter->last_roc_ts) <
 				pHddCtx->config->p2p_listen_defer_interval)) {
@@ -895,7 +895,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	}
 
 	cdf_spin_lock(&pHddCtx->hdd_roc_req_q_lock);
-	cdf_list_size(&(pHddCtx->hdd_roc_req_q), &size);
+	size = qdf_list_size(&(pHddCtx->hdd_roc_req_q));
 	cdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
 	if ((isBusy == false) && (!size)) {
 		status = wlan_hdd_execute_remain_on_channel(pAdapter,
@@ -1087,8 +1087,9 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	int status;
+	int qdf_status;
 	unsigned long rc;
-	cdf_list_node_t *tmp, *q;
+	qdf_list_node_t *tmp, *q;
 	hdd_roc_req_t *curr_roc_req;
 
 	ENTER();
@@ -1106,11 +1107,11 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	list_for_each_safe(tmp, q, &pHddCtx->hdd_roc_req_q.anchor) {
 		curr_roc_req = list_entry(tmp, hdd_roc_req_t, node);
 		if ((uintptr_t) curr_roc_req->pRemainChanCtx == cookie) {
-			status = cdf_list_remove_node(&pHddCtx->hdd_roc_req_q,
-						      (cdf_list_node_t *)
+			qdf_status = qdf_list_remove_node(&pHddCtx->hdd_roc_req_q,
+						      (qdf_list_node_t *)
 						      curr_roc_req);
 			cdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
-			if (status == CDF_STATUS_SUCCESS) {
+			if (qdf_status == QDF_STATUS_SUCCESS) {
 				cdf_mem_free(curr_roc_req->pRemainChanCtx);
 				cdf_mem_free(curr_roc_req);
 			}

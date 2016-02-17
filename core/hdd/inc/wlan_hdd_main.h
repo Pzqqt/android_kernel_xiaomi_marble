@@ -42,7 +42,7 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
-#include <cdf_list.h>
+#include <qdf_list.h>
 #include <cdf_types.h>
 #include "sir_mac_prot_def.h"
 #include "csr_api.h"
@@ -578,7 +578,7 @@ typedef struct hdd_remain_on_chan_ctx {
 
 /* RoC Request entry */
 typedef struct hdd_roc_req {
-	cdf_list_node_t node;   /* MUST be first element */
+	qdf_list_node_t node;   /* MUST be first element */
 	hdd_adapter_t *pAdapter;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx;
 } hdd_roc_req_t;
@@ -596,7 +596,7 @@ typedef struct hdd_roc_req {
  * Scan request linked list element
  */
 struct hdd_scan_req {
-	cdf_list_node_t node;
+	qdf_list_node_t node;
 	hdd_adapter_t *adapter;
 	struct cfg80211_scan_request *scan_request;
 	uint32_t scan_id;
@@ -1049,7 +1049,7 @@ struct hdd_adapter_s {
 #define HDD_RESET_MCC_P2P_QUOTA      50
 
 typedef struct hdd_adapter_list_node {
-	cdf_list_node_t node;   /* MUST be first element */
+	qdf_list_node_t node;   /* MUST be first element */
 	hdd_adapter_t *pAdapter;
 } hdd_adapter_list_node_t;
 
@@ -1106,7 +1106,7 @@ struct hdd_context_s {
 	/* TODO Remove this from here. */
 
 	cdf_spinlock_t hdd_adapter_lock;
-	cdf_list_t hddAdapters; /* List of adapters */
+	qdf_list_t hddAdapters; /* List of adapters */
 
 	/* One per STA: 1 for BCMC_STA_ID, 1 for each SAP_SELF_STA_ID, 1 for WDS_STAID */
 	hdd_adapter_t *sta_to_adapter[WLAN_MAX_STA_COUNT + CDF_MAX_NO_OF_SAP_MODE + 2]; /* One per sta. For quick reference. */
@@ -1290,9 +1290,9 @@ struct hdd_context_s {
 	/* RoC request queue and work */
 	struct delayed_work roc_req_work;
 	cdf_spinlock_t hdd_roc_req_q_lock;
-	cdf_list_t hdd_roc_req_q;
+	qdf_list_t hdd_roc_req_q;
 	cdf_spinlock_t hdd_scan_req_q_lock;
-	cdf_list_t hdd_scan_req_q;
+	qdf_list_t hdd_scan_req_q;
 	uint8_t miracast_value;
 #ifdef WLAN_NS_OFFLOAD
 	/* IPv6 notifier callback for handling NS offload on change in IP */

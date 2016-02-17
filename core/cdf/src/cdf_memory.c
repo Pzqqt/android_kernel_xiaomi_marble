@@ -47,10 +47,10 @@
 #endif
 
 #ifdef MEMORY_DEBUG
-#include <cdf_list.h>
+#include <qdf_list.h>
 #include <linux/stacktrace.h>
 
-cdf_list_t cdf_mem_list;
+qdf_list_t cdf_mem_list;
 cdf_spinlock_t cdf_mem_list_lock;
 
 static uint8_t WLAN_MEM_HEADER[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
@@ -61,7 +61,7 @@ static uint8_t WLAN_MEM_TAIL[] = { 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
 #define CDF_MEM_MAX_STACK_TRACE 16
 
 struct s_cdf_mem_struct {
-	cdf_list_node_t pNode;
+	qdf_list_node_t pNode;
 	char *fileName;
 	unsigned int lineNum;
 	unsigned int size;
@@ -136,7 +136,7 @@ static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
 void cdf_mem_init(void)
 {
 	/* Initalizing the list with maximum size of 60000 */
-	cdf_list_init(&cdf_mem_list, 60000);
+	qdf_list_create(&cdf_mem_list, 60000);
 	cdf_spinlock_init(&cdf_mem_list_lock);
 	cdf_net_buf_debug_init();
 	return;
@@ -150,13 +150,13 @@ void cdf_mem_init(void)
 void cdf_mem_clean(void)
 {
 	uint32_t listSize;
-	cdf_list_size(&cdf_mem_list, &listSize);
+	listSize = qdf_list_size(&cdf_mem_list);
 
 	cdf_net_buf_debug_clean();
 
 	if (listSize) {
-		cdf_list_node_t *pNode;
-		CDF_STATUS cdf_status;
+		qdf_list_node_t *pNode;
+		QDF_STATUS qdf_status;
 
 		struct s_cdf_mem_struct *memStruct;
 		char *prev_mleak_file = "";
@@ -170,10 +170,10 @@ void cdf_mem_clean(void)
 
 		do {
 			cdf_spin_lock(&cdf_mem_list_lock);
-			cdf_status =
-				cdf_list_remove_front(&cdf_mem_list, &pNode);
+			qdf_status =
+				qdf_list_remove_front(&cdf_mem_list, &pNode);
 			cdf_spin_unlock(&cdf_mem_list_lock);
-			if (CDF_STATUS_SUCCESS == cdf_status) {
+			if (QDF_STATUS_SUCCESS == qdf_status) {
 				memStruct = (struct s_cdf_mem_struct *)pNode;
 				/* Take care to log only once multiple memory
 				   leaks from the same place */
@@ -199,7 +199,7 @@ void cdf_mem_clean(void)
 				cdf_mem_print_stack_trace(memStruct);
 				kfree((void *)memStruct);
 			}
-		} while (cdf_status == CDF_STATUS_SUCCESS);
+		} while (qdf_status == QDF_STATUS_SUCCESS);
 
 		/* Print last memory leak from the module */
 		if (mleak_cnt) {
@@ -223,7 +223,7 @@ void cdf_mem_exit(void)
 {
 	cdf_net_buf_debug_exit();
 	cdf_mem_clean();
-	cdf_list_destroy(&cdf_mem_list);
+	qdf_list_destroy(&cdf_mem_list);
 }
 
 /**
@@ -288,7 +288,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 			 size, (void *)_RET_IP_, lineNum);
 
 	if (memStruct != NULL) {
-		CDF_STATUS cdf_status;
+		QDF_STATUS qdf_status;
 
 		memStruct->fileName = fileName;
 		memStruct->lineNum = lineNum;
@@ -302,13 +302,13 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 			     &WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL));
 
 		cdf_spin_lock_irqsave(&cdf_mem_list_lock);
-		cdf_status = cdf_list_insert_front(&cdf_mem_list,
+		qdf_status = qdf_list_insert_front(&cdf_mem_list,
 						   &memStruct->pNode);
 		cdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
-		if (CDF_STATUS_SUCCESS != cdf_status) {
+		if (QDF_STATUS_SUCCESS != qdf_status) {
 			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Unable to insert node into List cdf_status %d",
-				  __func__, cdf_status);
+				  __func__, qdf_status);
 		}
 
 		memPtr = (void *)(memStruct + 1);
@@ -329,7 +329,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 void cdf_mem_free(void *ptr)
 {
 	if (ptr != NULL) {
-		CDF_STATUS cdf_status;
+		QDF_STATUS qdf_status;
 		struct s_cdf_mem_struct *memStruct =
 			((struct s_cdf_mem_struct *)ptr) - 1;
 
@@ -339,11 +339,11 @@ void cdf_mem_free(void *ptr)
 #endif
 
 		cdf_spin_lock_irqsave(&cdf_mem_list_lock);
-		cdf_status =
-			cdf_list_remove_node(&cdf_mem_list, &memStruct->pNode);
+		qdf_status =
+			qdf_list_remove_node(&cdf_mem_list, &memStruct->pNode);
 		cdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
 
-		if (CDF_STATUS_SUCCESS == cdf_status) {
+		if (QDF_STATUS_SUCCESS == qdf_status) {
 			if (0 == cdf_mem_compare(memStruct->header,
 						 &WLAN_MEM_HEADER[0],
 						 sizeof(WLAN_MEM_HEADER))) {

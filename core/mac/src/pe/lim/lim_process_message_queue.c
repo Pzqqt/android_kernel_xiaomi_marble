@@ -514,7 +514,7 @@ __lim_handle_beacon(tpAniSirGlobal pMac, tpSirMsgQ pMsg,
 	/* checking for global SME state... */
 	uint8_t *pRxPacketInfo;
 	lim_get_b_dfrom_rx_packet(pMac, pMsg->bodyptr,
-				  (uint32_t * *) &pRxPacketInfo);
+				  (uint32_t **) &pRxPacketInfo);
 
 	/* This function should not be called if beacon is received in scan state. */
 	/* So not doing any checks for the global state. */
@@ -644,7 +644,7 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 	uint16_t frm_len;
 	uint8_t type, sub_type;
 	bool match = false;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	hdr = WMA_GET_RX_MAC_HEADER(buff_desc);
 	fc = hdr->fc;
@@ -653,8 +653,8 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 	frm_len = WMA_GET_RX_PAYLOAD_LEN(buff_desc);
 
 	cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-	cdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-			    (cdf_list_node_t **) &mgmt_frame);
+	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
+			    (qdf_list_node_t **) &mgmt_frame);
 	cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 
 	while (mgmt_frame != NULL) {
@@ -684,11 +684,11 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 		}
 
 		cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
-		cdf_status =
-			cdf_list_peek_next(
+		qdf_status =
+			qdf_list_peek_next(
 			&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
-			(cdf_list_node_t *) mgmt_frame,
-			(cdf_list_node_t **) &next_frm);
+			(qdf_list_node_t *) mgmt_frame,
+			(qdf_list_node_t **) &next_frm);
 		cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 		mgmt_frame = next_frm;
 		next_frm = NULL;
@@ -750,7 +750,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 
 	*pDeferMsg = false;
 	lim_get_b_dfrom_rx_packet(pMac, limMsg->bodyptr,
-				  (uint32_t * *) &pRxPacketInfo);
+				  (uint32_t **) &pRxPacketInfo);
 
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	isFrmFt = WMA_GET_RX_FT_DONE(pRxPacketInfo);
@@ -810,9 +810,9 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 		goto end;
 	}
 	/* Added For BT-AMP Support */
-	if ((psessionEntry =
-		     pe_find_session_by_bssid(pMac, pHdr->bssId,
-					      &sessionId)) == NULL) {
+	psessionEntry = pe_find_session_by_bssid(pMac, pHdr->bssId,
+						 &sessionId);
+	if (psessionEntry == NULL) {
 #ifdef WLAN_FEATURE_VOWIFI_11R
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 			lim_log(pMac, LOG1,
@@ -1269,13 +1269,13 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			break;
 		}
 
-                if (WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr))
-                        lim_log(mac_ctx, LOG1, FL("roamCandidateInd %d"),
-                                WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr));
+		if (WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr))
+			lim_log(mac_ctx, LOG1, FL("roamCandidateInd %d"),
+				WMA_GET_ROAMCANDIDATEIND(new_msg.bodyptr));
 
-                if (WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr))
-                        lim_log(mac_ctx, LOG1, FL("offloadScanLearn %d"),
-                                 WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr));
+		if (WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr))
+			lim_log(mac_ctx, LOG1, FL("offloadScanLearn %d"),
+				WMA_GET_OFFLOADSCANLEARN(new_msg.bodyptr));
 
 		lim_handle80211_frames(mac_ctx, &new_msg, &defer_msg);
 

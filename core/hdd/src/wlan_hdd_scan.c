@@ -523,7 +523,7 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
 {
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	struct hdd_scan_req *hdd_scan_req;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ENTER();
 	hdd_scan_req = cdf_mem_malloc(sizeof(*hdd_scan_req));
@@ -539,11 +539,11 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
 	hdd_scan_req->timestamp = timestamp;
 
 	cdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
-	status = cdf_list_insert_back(&hdd_ctx->hdd_scan_req_q,
+	status = qdf_list_insert_back(&hdd_ctx->hdd_scan_req_q,
 					&hdd_scan_req->node);
 	cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to enqueue Scan Req");
 		cdf_mem_free(hdd_scan_req);
 		return -EINVAL;
@@ -566,36 +566,36 @@ CDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 	uint32_t scan_id, struct cfg80211_scan_request **req, uint8_t *source,
 	uint32_t *timestamp)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct hdd_scan_req *hdd_scan_req;
-	cdf_list_node_t *pNode = NULL, *ppNode = NULL;
+	qdf_list_node_t *pNode = NULL, *ppNode = NULL;
 
 	hdd_info("Dequeue Scan id: %d", scan_id);
 
 	if ((source == NULL) && (timestamp == NULL) && (req == NULL))
-		return CDF_STATUS_E_NULL_VALUE;
+		return QDF_STATUS_E_NULL_VALUE;
 
 	cdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
 
 	if (list_empty(&hdd_ctx->hdd_scan_req_q.anchor)) {
 		cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (CDF_STATUS_SUCCESS !=
-		cdf_list_peek_front(&hdd_ctx->hdd_scan_req_q, &ppNode)) {
+	if (QDF_STATUS_SUCCESS !=
+		qdf_list_peek_front(&hdd_ctx->hdd_scan_req_q, &ppNode)) {
 		cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 		hdd_err("Failed to remove Scan Req from queue");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	do {
 		pNode = ppNode;
 		hdd_scan_req = (struct hdd_scan_req *)pNode;
 		if (hdd_scan_req->scan_id == scan_id) {
-			status = cdf_list_remove_node(&hdd_ctx->hdd_scan_req_q,
+			status = qdf_list_remove_node(&hdd_ctx->hdd_scan_req_q,
 					pNode);
-			if (status == CDF_STATUS_SUCCESS) {
+			if (status == QDF_STATUS_SUCCESS) {
 				*req = hdd_scan_req->scan_request;
 				*source = hdd_scan_req->source;
 				*timestamp = hdd_scan_req->timestamp;
@@ -603,7 +603,7 @@ CDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 				cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 				hdd_info("removed Scan id: %d, req = %p",
 					scan_id, req);
-				return CDF_STATUS_SUCCESS;
+				return QDF_STATUS_SUCCESS;
 			} else {
 				cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 				hdd_err("Failed to remove node scan id %d",
@@ -611,8 +611,8 @@ CDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 				return status;
 			}
 		}
-	} while (CDF_STATUS_SUCCESS ==
-		cdf_list_peek_next(&hdd_ctx->hdd_scan_req_q, pNode, &ppNode));
+	} while (QDF_STATUS_SUCCESS ==
+		qdf_list_peek_next(&hdd_ctx->hdd_scan_req_q, pNode, &ppNode));
 
 	cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 	hdd_err("Failed to find scan id %d", scan_id);
@@ -674,7 +674,7 @@ hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 			scanId);
 
 	cdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
-	cdf_list_size(&(hddctx->hdd_scan_req_q), &size);
+	size = qdf_list_size(&(hddctx->hdd_scan_req_q));
 	if (!size)
 		/* Scan is no longer pending */
 		pAdapter->scan_info.mScanPending = false;
@@ -1142,7 +1142,7 @@ static CDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	}
 
 	cdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
-	cdf_list_size(&(hddctx->hdd_scan_req_q), &size);
+	size = qdf_list_size(&(hddctx->hdd_scan_req_q));
 	if (!size) {
 		/* Scan is no longer pending */
 		pScanInfo->mScanPending = false;

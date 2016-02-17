@@ -607,7 +607,7 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 #endif
 
 	cdf_mutex_init(&pMac->lim.lim_frame_register_lock);
-	cdf_list_init(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
+	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
 
 	/* Initialize the configurations needed by PE */
 	if (eSIR_FAILURE == __lim_init_config(pMac)) {
@@ -657,16 +657,16 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	if (CDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
 		cdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
-		while (cdf_list_remove_front(
+		while (qdf_list_remove_front(
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,
-			(cdf_list_node_t **) &pLimMgmtRegistration) ==
-			CDF_STATUS_SUCCESS) {
+			(qdf_list_node_t **) &pLimMgmtRegistration) ==
+			QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			FL("Fixing leak! Deallocating pLimMgmtRegistration node"));
 			cdf_mem_free(pLimMgmtRegistration);
 		}
 		cdf_mutex_release(&pMac->lim.lim_frame_register_lock);
-		cdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
+		qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
 	}
 
 	lim_cleanup_mlm(pMac);

@@ -3148,10 +3148,10 @@ CDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 CDF_STATUS hdd_get_front_adapter(hdd_context_t *hdd_ctx,
 				 hdd_adapter_list_node_t **padapterNode)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
-	status = cdf_list_peek_front(&hdd_ctx->hddAdapters,
-				     (cdf_list_node_t **) padapterNode);
+	status = qdf_list_peek_front(&hdd_ctx->hddAdapters,
+				     (qdf_list_node_t **) padapterNode);
 	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
@@ -3160,11 +3160,11 @@ CDF_STATUS hdd_get_next_adapter(hdd_context_t *hdd_ctx,
 				hdd_adapter_list_node_t *adapterNode,
 				hdd_adapter_list_node_t **pNextAdapterNode)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
-	status = cdf_list_peek_next(&hdd_ctx->hddAdapters,
-				    (cdf_list_node_t *) adapterNode,
-				    (cdf_list_node_t **) pNextAdapterNode);
+	status = qdf_list_peek_next(&hdd_ctx->hddAdapters,
+				    (qdf_list_node_t *) adapterNode,
+				    (qdf_list_node_t **) pNextAdapterNode);
 
 	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -3173,9 +3173,9 @@ CDF_STATUS hdd_get_next_adapter(hdd_context_t *hdd_ctx,
 CDF_STATUS hdd_remove_adapter(hdd_context_t *hdd_ctx,
 			      hdd_adapter_list_node_t *adapterNode)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
-	status = cdf_list_remove_node(&hdd_ctx->hddAdapters,
+	status = qdf_list_remove_node(&hdd_ctx->hddAdapters,
 				      &adapterNode->node);
 	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
@@ -3184,10 +3184,10 @@ CDF_STATUS hdd_remove_adapter(hdd_context_t *hdd_ctx,
 CDF_STATUS hdd_remove_front_adapter(hdd_context_t *hdd_ctx,
 				    hdd_adapter_list_node_t **padapterNode)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
-	status = cdf_list_remove_front(&hdd_ctx->hddAdapters,
-				       (cdf_list_node_t **) padapterNode);
+	status = qdf_list_remove_front(&hdd_ctx->hddAdapters,
+				       (qdf_list_node_t **) padapterNode);
 	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
@@ -3195,10 +3195,10 @@ CDF_STATUS hdd_remove_front_adapter(hdd_context_t *hdd_ctx,
 CDF_STATUS hdd_add_adapter_back(hdd_context_t *hdd_ctx,
 				hdd_adapter_list_node_t *adapterNode)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
-	status = cdf_list_insert_back(&hdd_ctx->hddAdapters,
-				      (cdf_list_node_t *) adapterNode);
+	status = qdf_list_insert_back(&hdd_ctx->hddAdapters,
+				      (qdf_list_node_t *) adapterNode);
 	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
@@ -3208,8 +3208,8 @@ CDF_STATUS hdd_add_adapter_front(hdd_context_t *hdd_ctx,
 {
 	CDF_STATUS status;
 	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
-	status = cdf_list_insert_front(&hdd_ctx->hddAdapters,
-				       (cdf_list_node_t *) adapterNode);
+	status = qdf_list_insert_front(&hdd_ctx->hddAdapters,
+				       (qdf_list_node_t *) adapterNode);
 	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
@@ -3802,8 +3802,8 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	/* Free up RoC request queue and flush workqueue */
 	cds_flush_work(&hdd_ctx->roc_req_work);
-	cdf_list_destroy(&hdd_ctx->hdd_roc_req_q);
-	cdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
+	qdf_list_destroy(&hdd_ctx->hdd_roc_req_q);
+	qdf_list_destroy(&hdd_ctx->hdd_scan_req_q);
 
 	if (!CDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
 		hdd_err("Failed to deinit policy manager");
@@ -5123,7 +5123,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	cdf_spinlock_init(&hdd_ctx->sched_scan_lock);
 
 	cdf_spinlock_init(&hdd_ctx->hdd_adapter_lock);
-	cdf_list_init(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
+	qdf_list_create(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
 
 	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
 
@@ -5747,9 +5747,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				  hdd_ctx->target_hw_name);
 
 	cdf_spinlock_init(&hdd_ctx->hdd_roc_req_q_lock);
-	cdf_list_init((&hdd_ctx->hdd_roc_req_q), MAX_ROC_REQ_QUEUE_ENTRY);
+	qdf_list_create((&hdd_ctx->hdd_roc_req_q), MAX_ROC_REQ_QUEUE_ENTRY);
 	cdf_spinlock_init(&hdd_ctx->hdd_scan_req_q_lock);
-	cdf_list_init((&hdd_ctx->hdd_scan_req_q), CFG_MAX_SCAN_COUNT_MAX);
+	qdf_list_create((&hdd_ctx->hdd_scan_req_q), CFG_MAX_SCAN_COUNT_MAX);
 #ifdef CONFIG_CNSS
 	cnss_init_delayed_work(&hdd_ctx->roc_req_work,
 			wlan_hdd_roc_request_dequeue);
