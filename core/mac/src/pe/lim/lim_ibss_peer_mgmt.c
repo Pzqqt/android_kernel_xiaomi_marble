@@ -194,7 +194,6 @@ ibss_peer_collect(tpAniSirGlobal pMac,
 	}
 
 	/* Collect peer VHT capabilities based on the received beacon from the peer */
-#ifdef WLAN_FEATURE_11AC
 	if (pBeacon->VHTCaps.present) {
 		pPeer->vhtSupportedChannelWidthSet =
 			pBeacon->VHTOperation.chanWidth;
@@ -205,7 +204,6 @@ ibss_peer_collect(tpAniSirGlobal pMac,
 			     (uint8_t *) &pBeacon->VHTCaps,
 			     sizeof(tDot11fIEVHTCaps));
 	}
-#endif
 	pPeer->erpIePresent = pBeacon->erpPresent;
 
 	qdf_mem_copy((uint8_t *) &pPeer->supportedRates,
@@ -261,7 +259,6 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 			pStaDs->htLdpcCapable = pPeerNode->htLdpcCapable;
 		}
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (IS_DOT11_MODE_VHT(psessionEntry->dot11mode)) {
 		pStaDs->mlmStaContext.vhtCapability = pPeerNode->vhtCapable;
 		if (pPeerNode->vhtCapable) {
@@ -276,7 +273,6 @@ ibss_sta_caps_update(tpAniSirGlobal pMac,
 				(uint8_t) pPeerNode->VHTCaps.ldpcCodingCap;
 		}
 	}
-#endif
 	/* peer is 11e capable but is not 11e enabled yet */
 	/* some STA's when joining Airgo IBSS, assert qos capability even when */
 	/* they don't suport qos. however, they do not include the edca parameter */
@@ -330,18 +326,10 @@ ibss_sta_rates_update(tpAniSirGlobal pMac,
 		      tpDphHashNode pStaDs,
 		      tLimIbssPeerNode *pPeer, tpPESession psessionEntry)
 {
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_matching_rate_set(pMac, pStaDs, &pPeer->supportedRates,
 				       &pPeer->extendedRates,
 				       pPeer->supportedMCSSet, psessionEntry,
 				       &pPeer->VHTCaps);
-#else
-	/* Populate supported rateset */
-	lim_populate_matching_rate_set(pMac, pStaDs, &pPeer->supportedRates,
-				       &pPeer->extendedRates,
-				       pPeer->supportedMCSSet, psessionEntry);
-#endif
-
 	pStaDs->mlmStaContext.capabilityInfo = pPeer->capabilityInfo;
 } /*** end ibss_sta_info_update() ***/
 

@@ -442,7 +442,6 @@ bool lim_isconnected_on_dfs_channel(uint8_t currentChannel);
 uint8_t lim_get_current_operating_channel(tpAniSirGlobal pMac);
 uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds);
 
-#ifdef WLAN_FEATURE_11AC
 bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac,
 		tpPESession psessionEntry,
 		uint8_t chanWidth, uint8_t staId,
@@ -453,7 +452,6 @@ bool lim_check_membership_user_position(tpAniSirGlobal pMac,
 		tpPESession psessionEntry,
 		uint32_t membership, uint32_t userPosition,
 		uint8_t staId);
-#endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 
@@ -561,12 +559,10 @@ void lim_set_ht_caps(tpAniSirGlobal p_mac,
 		uint8_t *p_ie_start,
 		uint32_t num_bytes);
 
-#ifdef WLAN_FEATURE_11AC
 void lim_set_vht_caps(tpAniSirGlobal p_mac,
 		tpPESession p_session_entry,
 		uint8_t *p_ie_start,
 		uint32_t num_bytes);
-#endif /* WLAN_FEATURE_11AC */
 bool lim_validate_received_frame_a1_addr(tpAniSirGlobal mac_ctx,
 		tSirMacAddr a1, tpPESession session);
 void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,

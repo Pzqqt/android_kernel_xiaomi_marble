@@ -797,7 +797,6 @@ typedef struct {
 	uint8_t smeSessionId;
 } tUpdateBeaconParams, *tpUpdateBeaconParams;
 
-#ifdef WLAN_FEATURE_11AC
 /**
  * struct tUpdateVHTOpMode - VHT operating mode
  * @opMode: VHT operating mode
@@ -853,8 +852,6 @@ typedef struct {
 	uint16_t smesessionId;
 	tSirMacAddr peer_mac;
 } tUpdateUserPos, *tpUpdateUserPos;
-
-#endif /* WLAN_FEATURE_11AC */
 
 /**
  * struct tUpdateCFParams -CF parameters

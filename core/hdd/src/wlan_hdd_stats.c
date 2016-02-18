@@ -149,7 +149,6 @@ static struct index_data_rate_type supported_mcs_rate_nss2[] = {
 	{7, {1300, 2700, 1444, 3000} }
 };
 
-#ifdef WLAN_FEATURE_11AC
 /* MCS Based VHT rate table MCS parameters with Nss = 1*/
 static struct index_vht_data_rate_type supported_vht_mcs_rate_nss1[] = {
 /* MCS  L80    S80     L40   S40    L20   S40*/
@@ -179,7 +178,6 @@ static struct index_vht_data_rate_type supported_vht_mcs_rate_nss2[] = {
 	{8, {7020, 7800}, {3240, 3600}, {1560, 1733} },
 	{9, {7800, 8667}, {3600, 4000}, {1560, 1733} }
 };
-#endif /* End of WLAN_FEATURE_11AC */
 
 /*array index ponints to MCS and array value points respective rssi*/
 static int rssi_mcs_tbl[][10] = {
@@ -1715,11 +1713,8 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 	struct index_vht_data_rate_type *supported_vht_mcs_rate;
 	struct index_data_rate_type *supported_mcs_rate;
 
-#ifdef WLAN_FEATURE_11AC
 	uint32_t vht_mcs_map;
 	enum eDataRate11ACMaxMcs vhtMaxMcs;
-#endif /* WLAN_FEATURE_11AC */
-
 
 	ENTER();
 
@@ -1887,7 +1882,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				return 0;
 			}
 			rateFlag = 0;
-#ifdef WLAN_FEATURE_11AC
 			supported_vht_mcs_rate =
 				(struct index_vht_data_rate_type *)
 				((nss ==
@@ -1967,9 +1961,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				if (currentRate > maxRate)
 					maxRate = currentRate;
 
-			} else
-#endif /* WLAN_FEATURE_11AC */
-			{
+			} else {
 				if (rate_flags & eHAL_TX_RATE_HT40)
 					rateFlag |= 1;
 				if (rate_flags & eHAL_TX_RATE_SGI)
@@ -2042,7 +2034,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #endif /* LINKSPEED_DEBUG_ENABLED */
 		} else {
 			sinfo->txrate.mcs = maxMCSIdx;
-#ifdef WLAN_FEATURE_11AC
 			sinfo->txrate.nss = nss;
 			if (rate_flags & eHAL_TX_RATE_VHT80) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
@@ -2064,7 +2055,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			} else
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
-#endif /* WLAN_FEATURE_11AC */
 			if (rate_flags &
 			    (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;
@@ -2104,7 +2094,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			/* must be MCS */
 			sinfo->txrate.mcs =
 				pAdapter->hdd_stats.ClassA_stat.mcs_index;
-#ifdef WLAN_FEATURE_11AC
 			sinfo->txrate.nss = nss;
 			sinfo->txrate.flags |= RATE_INFO_FLAGS_VHT_MCS;
 			if (rate_flags & eHAL_TX_RATE_VHT80) {
@@ -2122,7 +2111,6 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 					RATE_INFO_FLAGS_40_MHZ_WIDTH;
 #endif
 			}
-#endif /* WLAN_FEATURE_11AC */
 			if (rate_flags &
 			    (eHAL_TX_RATE_HT20 | eHAL_TX_RATE_HT40)) {
 				sinfo->txrate.flags |= RATE_INFO_FLAGS_MCS;

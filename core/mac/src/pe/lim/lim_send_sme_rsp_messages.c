@@ -351,14 +351,12 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 				session_entry->htSecondaryChannelOffset;
 			ht_profile->dot11mode = session_entry->dot11mode;
 			ht_profile->htCapability = session_entry->htCapability;
-#ifdef WLAN_FEATURE_11AC
 			ht_profile->vhtCapability =
 				session_entry->vhtCapability;
 			ht_profile->vhtTxChannelWidthSet =
 				session_entry->vhtTxChannelWidthSet;
 			ht_profile->apCenterChan = session_entry->ch_center_freq_seg0;
 			ht_profile->apChanWidth = session_entry->ch_width;
-#endif
 		}
 #endif
 	} else {
@@ -641,7 +639,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 					psessionEntry->dot11mode;
 				pSirSmeRsp->HTProfile.htCapability =
 					psessionEntry->htCapability;
-#ifdef WLAN_FEATURE_11AC
 				pSirSmeRsp->HTProfile.vhtCapability =
 					psessionEntry->vhtCapability;
 				pSirSmeRsp->HTProfile.vhtTxChannelWidthSet =
@@ -650,13 +647,10 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 					psessionEntry->ch_center_freq_seg0;
 				pSirSmeRsp->HTProfile.apChanWidth =
 					psessionEntry->ch_width;
-#endif
 			}
 #endif
 		}
-
 	}
-
 	pSirSmeRsp->messageType = msgType;
 	pSirSmeRsp->length = size;
 

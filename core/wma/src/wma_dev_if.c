@@ -3804,12 +3804,10 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	if (params->enableHtSmps)
 		wma_set_mimops(wma, params->smesessionId, params->htSmpsconfig);
 
-#ifdef WLAN_FEATURE_11AC
 	/* Partial AID match power save, enable when SU bformee */
 	if (params->enableVhtpAid && params->vhtTxBFCapable)
 		wma_set_ppsconfig(params->smesessionId,
 				  WMA_VHT_PPS_PAID_MATCH, 1);
-#endif
 
 	/* Enable AMPDU power save, if htCapable/vhtCapable */
 	if (params->enableAmpduPs && (params->htCapable || params->vhtCapable))

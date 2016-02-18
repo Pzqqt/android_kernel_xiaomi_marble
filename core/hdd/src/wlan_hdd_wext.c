@@ -299,9 +299,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_CFG           3
 #define WE_GET_WMM_STATUS    4
 #define WE_GET_CHANNEL_LIST  5
-#ifdef WLAN_FEATURE_11AC
 #define WE_GET_RSSI          6
-#endif
 #ifdef FEATURE_WLAN_TDLS
 #define WE_GET_TDLS_PEERS    8
 #endif
@@ -4550,9 +4548,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 	bool ch_bond24 = false, ch_bond5g = false;
 	tSmeConfigParams smeconfig;
 	uint32_t chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-#ifdef WLAN_FEATURE_11AC
 	uint32_t vhtchanwidth;
-#endif
 	eCsrPhyMode phymode = -EIO, old_phymode;
 	eHddDot11Mode hdd_dot11mode = phddctx->config->dot11Mode;
 	eCsrBand curr_band = eCSR_BAND_ALL;
@@ -4684,7 +4680,6 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			return -EIO;
 		}
 		break;
-#ifdef WLAN_FEATURE_11AC
 	case IEEE80211_MODE_11AC_VHT20:
 	case IEEE80211_MODE_11AC_VHT40:
 	case IEEE80211_MODE_11AC_VHT80:
@@ -4699,7 +4694,6 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			return -EIO;
 		}
 		break;
-#endif
 	case IEEE80211_MODE_2G_AUTO:
 		sme_set_phy_mode(hal, eCSR_DOT11_MODE_AUTO);
 		if ((hdd_set_band(net, WLAN_HDD_UI_BAND_2_4_GHZ) == 0)) {
@@ -4741,7 +4735,6 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 		return -EIO;
 	}
 
-#ifdef WLAN_FEATURE_11AC
 	switch (new_phymode) {
 	case IEEE80211_MODE_11AC_VHT20:
 		chwidth = WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
@@ -4757,7 +4750,6 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 		vhtchanwidth = phddctx->config->vhtChannelWidth;
 		break;
 	}
-#endif
 
 	if (phymode != -EIO) {
 		sme_get_config_param(hal, &smeconfig);
@@ -4800,9 +4792,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			smeconfig.csrConfig.channelBondingMode24GHz = chwidth;
 			smeconfig.csrConfig.channelBondingMode5GHz = chwidth;
 		}
-#ifdef WLAN_FEATURE_11AC
 		smeconfig.csrConfig.nVhtChannelWidth = vhtchanwidth;
-#endif
 		sme_update_config(hal, &smeconfig);
 
 		phddctx->config->dot11Mode = hdd_dot11mode;
@@ -5461,7 +5451,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 				return -EINVAL;
 
 			break;
-#ifdef WLAN_FEATURE_11AC
 		case eHT_CHANNEL_WIDTH_80MHZ:
 			if (chwidth)
 				smeConfig.csrConfig.
@@ -5472,7 +5461,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 				return -EINVAL;
 
 			break;
-#endif
 
 		default:
 			return -EINVAL;
@@ -7128,7 +7116,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		wrqu->data.length = strlen(extra) + 1;
 		break;
 	}
-#ifdef WLAN_FEATURE_11AC
 	case WE_GET_RSSI:
 	{
 		int8_t s7Rssi = 0;
@@ -7137,7 +7124,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		wrqu->data.length = strlen(extra) + 1;
 		break;
 	}
-#endif
 
 	case WE_GET_WMM_STATUS:
 	{
@@ -7339,7 +7325,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		case eCSR_DOT11_MODE_11g_ONLY:
 			snprintf(extra, WE_MAX_STR_LEN, "11G");
 			break;
-#ifdef WLAN_FEATURE_11AC
 		case eCSR_DOT11_MODE_11ac:
 		case eCSR_DOT11_MODE_11ac_ONLY:
 			if (hddctx->config->vhtChannelWidth ==
@@ -7359,7 +7344,6 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				snprintf(extra, WE_MAX_STR_LEN,
 					 "11ACVHT160");
 			break;
-#endif
 		}
 
 		wrqu->data.length = strlen(extra) + 1;
@@ -10392,12 +10376,10 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getConfig"},
-#ifdef WLAN_FEATURE_11AC
 	{WE_GET_RSSI,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,
 	 "getRSSI"},
-#endif
 	{WE_GET_WMM_STATUS,
 	 0,
 	 IW_PRIV_TYPE_CHAR | WE_MAX_STR_LEN,

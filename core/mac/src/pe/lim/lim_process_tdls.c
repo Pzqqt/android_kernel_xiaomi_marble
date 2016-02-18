@@ -564,7 +564,6 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 	}
 	lim_log(pMac, LOG1, FL("HT present = %hu, Chan Width = %hu"),
 		htCap->present, htCap->supportedChannelWidthSet);
-#ifdef WLAN_FEATURE_11AC
 	if (((psessionEntry->currentOperChannel <= SIR_11B_CHANNEL_END) &&
 	     pMac->roam.configParam.enableVhtFor24GHz) ||
 	    (psessionEntry->currentOperChannel >= SIR_11B_CHANNEL_END)) {
@@ -585,7 +584,6 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
 	}
 	lim_log(pMac, LOG1, FL("VHT present = %hu, Chan Width = %hu"),
 		vhtCap->present, vhtCap->supportedChannelWidthSet);
-#endif
 }
 
 /*
@@ -2101,7 +2099,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 
 	if ((temp_rate_set.numRates + temp_rate_set2.numRates) > 12) {
 		lim_log(mac_ctx, LOGE, FL("more than 12 rates in CFG"));
-		goto error;
+		return eSIR_FAILURE;
 	}
 
 	/**
@@ -2198,7 +2196,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 			/* Could not get rateset from CFG. Log error. */
 			lim_log(mac_ctx, LOGP,
 				FL("could not retrieve supportedMCSSet"));
-			goto error;
+			return eSIR_FAILURE;
 		}
 
 		for (i = 0; i < val; i++)
@@ -2212,10 +2210,8 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 				stads->supportedRates.supportedMCSSet[i]);
 		}
 	}
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_vht_mcs_set(mac_ctx, &stads->supportedRates, vht_caps,
 				 session_entry);
-#endif
 	/**
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported
@@ -2224,9 +2220,6 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 		stads->erpEnabled = eHAL_SET;
 
 	return eSIR_SUCCESS;
-
-error:
-	return eSIR_FAILURE;
 }
 
 /*
@@ -2241,10 +2234,8 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 	tDot11fIEHTCaps *htCaps;
 	tDot11fIEVHTCaps *pVhtCaps = NULL;
 	tDot11fIEVHTCaps *pVhtCaps_txbf = NULL;
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps vhtCap;
 	uint8_t cbMode;
-#endif
 	tpDphHashNode pSessStaDs = NULL;
 	uint16_t aid;
 
@@ -2284,7 +2275,6 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		pStaDs->mlmStaContext.htCapability = 0;
 		pMac->lim.gLimTdlsLinkMode = TDLS_LINK_MODE_BG;
 	}
-#ifdef WLAN_FEATURE_11AC
 	lim_tdls_populate_dot11f_vht_caps(pMac, pTdlsAddStaReq, &vhtCap);
 	pVhtCaps = &vhtCap;
 	if (pVhtCaps->present) {
@@ -2328,7 +2318,6 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 		pStaDs->vhtSupportedChannelWidthSet =
 			WNI_CFG_VHT_CHANNEL_WIDTH_20_40MHZ;
 	}
-#endif
 	/*Calculate the Secondary Coannel Offset */
 	cbMode = lim_select_cb_mode(pStaDs, psessionEntry,
 				    psessionEntry->currentOperChannel,
@@ -2336,15 +2325,11 @@ static void lim_tdls_update_hash_node_info(tpAniSirGlobal pMac,
 
 	pStaDs->htSecondaryChannelOffset = cbMode;
 
-#ifdef WLAN_FEATURE_11AC
 	if (pStaDs->mlmStaContext.vhtCapability) {
 		pStaDs->htSecondaryChannelOffset = lim_get_htcb_state(cbMode);
 	}
-#endif
-
 	pSessStaDs = dph_lookup_hash_entry(pMac, psessionEntry->bssId, &aid,
 					   &psessionEntry->dph.dphHashTable);
-
 	/* Lets enable QOS parameter */
 	pStaDs->qosMode = 1;
 	pStaDs->wmeEnabled = 1;

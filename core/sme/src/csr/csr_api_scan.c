@@ -4407,18 +4407,14 @@ static bool csr_scan_is_bss_allowed(tpAniSirGlobal pMac,
 			fAllowed = (bool) ((eCSR_DOT11_MODE_11n == phyMode));
 			break;
 
-#ifdef WLAN_FEATURE_11AC
 		case eCSR_DOT11_MODE_11ac_ONLY:
 			fAllowed = (bool) ((eCSR_DOT11_MODE_11ac == phyMode));
 			break;
-#endif
 		case eCSR_DOT11_MODE_11b_ONLY:
 			fAllowed = (bool) (eCSR_DOT11_MODE_11b == phyMode);
 			break;
 		case eCSR_DOT11_MODE_11n:
-#ifdef WLAN_FEATURE_11AC
 		case eCSR_DOT11_MODE_11ac:
-#endif
 		default:
 			fAllowed = true;
 			break;

@@ -195,7 +195,6 @@ typedef enum {
 	eCSR_INI_SINGLE_CHANNEL_CENTERED = 0,
 	eCSR_INI_DOUBLE_CHANNEL_HIGH_PRIMARY,
 	eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY,
-#ifdef WLAN_FEATURE_11AC
 	eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED,
 	eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_CENTERED_40MHZ_CENTERED,
 	eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED,
@@ -203,7 +202,6 @@ typedef enum {
 	eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW,
 	eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH,
 	eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH,
-#endif
 	eCSR_INI_CHANNEL_BONDING_STATE_MAX
 } eIniChanBondState;
 
@@ -938,12 +936,10 @@ typedef struct tagCsrRoamHTProfile {
 	uint8_t htSupportedChannelWidthSet;
 	uint8_t htRecommendedTxWidthSet;
 	ePhyChanBondState htSecondaryChannelOffset;
-#ifdef WLAN_FEATURE_11AC
 	uint8_t vhtCapability;
 	uint8_t vhtTxChannelWidthSet;
 	uint8_t apCenterChan;
 	uint8_t apChanWidth;
-#endif
 } tCsrRoamHTProfile;
 #endif
 typedef struct tagCsrRoamConnectedProfile {
@@ -1146,7 +1142,6 @@ typedef struct tagCsrConfigParam {
 	 * request from HDD
 	 */
 	bool fScanTwice;
-#ifdef WLAN_FEATURE_11AC
 	uint32_t nVhtChannelWidth;
 	uint8_t enableTxBF;
 	uint8_t enable_txbf_sap_mode;
@@ -1156,7 +1151,6 @@ typedef struct tagCsrConfigParam {
 	uint8_t enableMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
-#endif
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;

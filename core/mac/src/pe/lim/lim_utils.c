@@ -2126,9 +2126,7 @@ lim_update_channel_switch(struct sAniSirGlobal *mac_ctx,
 	uint16_t beacon_period;
 	tDot11fIEChanSwitchAnn *chnl_switch;
 	tLimChannelSwitchInfo *ch_switch_params;
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEWiderBWChanSwitchAnn *widerchnl_switch;
-#endif
 
 	beacon_period = psession_entry->beaconParams.beaconInterval;
 
@@ -2141,7 +2139,6 @@ lim_update_channel_switch(struct sAniSirGlobal *mac_ctx,
 	ch_switch_params->switchTimeoutValue =
 		SYS_MS_TO_TICKS(beacon_period) * (chnl_switch->switchCount);
 	ch_switch_params->switchMode = chnl_switch->switchMode;
-#ifdef WLAN_FEATURE_11AC
 	widerchnl_switch = &(beacon->WiderBWChanSwitchAnn);
 	if (beacon->WiderBWChanSwitchAnnPresent) {
 		psession_entry->gLimWiderBWChannelSwitch.newChanWidth =
@@ -2151,8 +2148,6 @@ lim_update_channel_switch(struct sAniSirGlobal *mac_ctx,
 		psession_entry->gLimWiderBWChannelSwitch.newCenterChanFreq1 =
 				widerchnl_switch->newCenterChanFreq1;
 	}
-#endif
-
 	/* Only primary channel switch element is present */
 	ch_switch_params->state =
 			eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
@@ -2179,7 +2174,6 @@ lim_update_channel_switch(struct sAniSirGlobal *mac_ctx,
 			ch_switch_params->ch_center_freq_seg0 =
 				ch_switch_params->primaryChannel - 2;
 		}
-#ifdef WLAN_FEATURE_11AC
 		if (psession_entry->vhtCapability &&
 			beacon->WiderBWChanSwitchAnnPresent) {
 			ch_switch_params->ch_width =
@@ -2190,7 +2184,6 @@ lim_update_channel_switch(struct sAniSirGlobal *mac_ctx,
 			ch_switch_params->ch_center_freq_seg1 =
 				psession_entry->gLimWiderBWChannelSwitch.
 						newCenterChanFreq1;
-#endif
 		}
 	}
 	if (eSIR_SUCCESS != lim_start_channel_switch(mac_ctx, psession_entry))
@@ -6428,7 +6421,6 @@ void lim_pmf_sa_query_timer_handler(void *pMacGlobal, uint32_t param)
 }
 #endif
 
-#ifdef WLAN_FEATURE_11AC
 bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac, tpPESession psessionEntry,
 				  uint8_t chanWidth, uint8_t staId,
 				  uint8_t *peerMac)
@@ -6486,7 +6478,6 @@ bool lim_check_membership_user_position(tpAniSirGlobal pMac,
 
 	return true;
 }
-#endif
 
 void lim_get_short_slot_from_phy_mode(tpAniSirGlobal pMac, tpPESession psessionEntry,
 				      uint32_t phyMode, uint8_t *pShortSlotEnabled)
@@ -6652,7 +6643,6 @@ void lim_set_ht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 	}
 }
 
-#ifdef WLAN_FEATURE_11AC
 void lim_set_vht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 		      uint8_t *p_ie_start, uint32_t num_bytes)
 {
@@ -6715,7 +6705,6 @@ void lim_set_vht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 		vht_mcs->txHighest = u_vht_data_rate_info.u_value;
 	}
 }
-#endif /* WLAN_FEATURE_11AC */
 
 /**
  * lim_validate_received_frame_a1_addr() - To validate received frame's A1 addr

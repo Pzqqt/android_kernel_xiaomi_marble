@@ -440,7 +440,6 @@ lim_process_ext_channel_switch_action_frame(tpAniSirGlobal mac_ctx,
 	return;
 } /*** end lim_process_ext_channel_switch_action_frame() ***/
 
-#ifdef WLAN_FEATURE_11AC
 /**
  * __lim_process_operating_mode_action_frame() - To process op mode frames
  * @mac_ctx: pointer to mac context
@@ -679,8 +678,6 @@ out:
 	qdf_mem_free(gid_mgmt_frame);
 	return;
 }
-
-#endif
 
 static void
 __lim_process_add_ts_req(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
@@ -2094,7 +2091,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		}
 		break;
 #endif
-#ifdef WLAN_FEATURE_11AC
 	case SIR_MAC_ACTION_VHT:
 		if (!session->vhtCapability)
 			break;
@@ -2113,7 +2109,6 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			break;
 		}
 		break;
-#endif
 	case SIR_MAC_ACTION_FST: {
 		tpSirMacMgmtHdr     hdr;
 		uint32_t            frame_len;

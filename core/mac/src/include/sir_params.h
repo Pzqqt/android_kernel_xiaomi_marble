@@ -59,7 +59,6 @@ typedef enum {
 	PHY_SINGLE_CHANNEL_CENTERED = 0,        /* 20MHz IF bandwidth centered on IF carrier */
 	PHY_DOUBLE_CHANNEL_LOW_PRIMARY = 1,     /* 40MHz IF bandwidth with lower 20MHz supporting the primary channel */
 	PHY_DOUBLE_CHANNEL_HIGH_PRIMARY = 3,    /* 40MHz IF bandwidth with higher 20MHz supporting the primary channel */
-#ifdef WLAN_FEATURE_11AC
 	PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED = 4,     /* 20/40MHZ offset LOW 40/80MHZ offset CENTERED */
 	PHY_QUADRUPLE_CHANNEL_20MHZ_CENTERED_40MHZ_CENTERED = 5,        /* 20/40MHZ offset CENTERED 40/80MHZ offset CENTERED */
 	PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED = 6,    /* 20/40MHZ offset HIGH 40/80MHZ offset CENTERED */
@@ -67,7 +66,6 @@ typedef enum {
 	PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW = 8, /* 20/40MHZ offset HIGH 40/80MHZ offset LOW */
 	PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH = 9, /* 20/40MHZ offset LOW 40/80MHZ offset HIGH */
 	PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH = 10,       /* 20/40MHZ offset-HIGH 40/80MHZ offset HIGH */
-#endif
 	PHY_CHANNEL_BONDING_STATE_MAX = 11
 } ePhyChanBondState;
 
@@ -393,9 +391,7 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_HAL_SET_TM_LEVEL_REQ           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 134)
 
-#ifdef WLAN_FEATURE_11AC
 #define SIR_HAL_UPDATE_OP_MODE             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 135)
-#endif
 
 #ifdef FEATURE_WLAN_TDLS
 /* / PE <-> HAL TDLS messages */
@@ -453,10 +449,8 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_SET_MAX_TX_POWER_PER_BAND_REQ \
 					    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 170)
 
-#ifdef WLAN_FEATURE_11AC
 #define SIR_HAL_UPDATE_MEMBERSHIP           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 172)
 #define SIR_HAL_UPDATE_USERPOS              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 173)
-#endif
 
 #ifdef FEATURE_WLAN_TDLS
 #define SIR_HAL_UPDATE_FW_TDLS_STATE        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 174)
@@ -485,9 +479,7 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_DISASSOC_TX_COMP            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 191)
 #define SIR_HAL_DEAUTH_TX_COMP              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 192)
 
-#ifdef WLAN_FEATURE_11AC
 #define SIR_HAL_UPDATE_RX_NSS               (SIR_HAL_ITC_MSG_TYPES_BEGIN + 193)
-#endif
 
 #ifdef WLAN_FEATURE_STATS_EXT
 #define SIR_HAL_STATS_EXT_REQUEST           (SIR_HAL_ITC_MSG_TYPES_BEGIN + 194)

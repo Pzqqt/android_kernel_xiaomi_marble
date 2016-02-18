@@ -96,7 +96,6 @@ static struct index_data_rate_type mcs_nss2[] = {
 	{7,  {1300, 1440}, {2700, 3000} }
 };
 
-#ifdef WLAN_FEATURE_11AC
 /* MCS Based VHT rate table */
 /* MCS parameters with Nss = 1*/
 static struct index_vht_data_rate_type vht_mcs_nss1[] = {
@@ -127,7 +126,6 @@ static struct index_vht_data_rate_type vht_mcs_nss2[] = {
 	{8,  {1560, 1733}, {3240, 3600}, {7020, 7800} },
 	{9,  {1730, 1920}, {3600, 4000}, {7800, 8667} }
 };
-#endif /* WLAN_FEATURE_11AC */
 
 #ifdef BIG_ENDIAN_HOST
 
@@ -216,7 +214,6 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 
 	*mcsRateFlag = rate_flags;
 	*mcsRateFlag &= ~eHAL_TX_RATE_SGI;
-#ifdef WLAN_FEATURE_11AC
 	for (index = 0; index < MAX_VHT_MCS_IDX; index++) {
 		if (rate_flags & eHAL_TX_RATE_VHT80) {
 			/* check for vht80 nss1/2 rate set */
@@ -257,7 +254,6 @@ static uint8_t wma_get_mcs_idx(uint16_t maxRate, uint8_t rate_flags,
 			}
 		}
 	}
-#endif /* WLAN_FEATURE_11AC */
 	for (index = 0; index < MAX_HT_MCS_IDX; index++) {
 		if (rate_flags & eHAL_TX_RATE_HT40) {
 			/* check for ht40 nss1/2 rate set */

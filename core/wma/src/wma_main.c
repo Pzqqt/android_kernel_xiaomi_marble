@@ -3372,7 +3372,6 @@ static inline void wma_update_target_ht_cap(tp_wma_handle wh,
 
 }
 
-#ifdef WLAN_FEATURE_11AC
 /**
  * wma_update_target_vht_cap() - update vht capabality from wma handle
  * @wh: wma handle
@@ -3433,7 +3432,6 @@ static inline void wma_update_target_vht_cap(tp_wma_handle wh,
 		 cfg->vht_txop_ps, cfg->vht_su_bformee, cfg->vht_mu_bformee,
 		 cfg->vht_max_ampdu_len_exp);
 }
-#endif /* #ifdef WLAN_FEATURE_11AC */
 
 /**
  * wma_update_hdd_cfg() - update HDD config
@@ -3473,9 +3471,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 
 	wma_update_target_services(wma_handle, &tgt_cfg.services);
 	wma_update_target_ht_cap(wma_handle, &tgt_cfg.ht_cap);
-#ifdef WLAN_FEATURE_11AC
 	wma_update_target_vht_cap(wma_handle, &tgt_cfg.vht_cap);
-#endif /* #ifdef WLAN_FEATURE_11AC */
 
 	tgt_cfg.target_fw_version = wma_handle->target_fw_version;
 #ifdef WLAN_FEATURE_LPSS
@@ -3734,10 +3730,8 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 	qdf_mem_copy(&wma_handle->reg_cap, param_buf->hal_reg_capabilities,
 		     sizeof(HAL_REG_CAPABILITIES));
 	wma_handle->ht_cap_info = ev->ht_cap_info;
-#ifdef WLAN_FEATURE_11AC
 	wma_handle->vht_cap_info = ev->vht_cap_info;
 	wma_handle->vht_supp_mcs = ev->vht_supp_mcs;
-#endif /* WLAN_FEATURE_11AC */
 	wma_handle->num_rf_chains = ev->num_rf_chains;
 
 	wma_handle->target_fw_version = ev->fw_build_vers;
@@ -4695,7 +4689,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 					  (tUpdateRxNss *) msg->bodyptr);
 		qdf_mem_free(msg->bodyptr);
 		break;
-#ifdef WLAN_FEATURE_11AC
 	case WMA_UPDATE_MEMBERSHIP:
 		wma_process_update_membership(wma_handle,
 			(tUpdateMembership *) msg->bodyptr);
@@ -4704,7 +4697,6 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		wma_process_update_userpos(wma_handle,
 					   (tUpdateUserPos *) msg->bodyptr);
 		break;
-#endif /* WLAN_FEATURE_11AC */
 	case WMA_UPDATE_BEACON_IND:
 		wma_process_update_beacon_params(wma_handle,
 			(tUpdateBeaconParams *) msg->bodyptr);

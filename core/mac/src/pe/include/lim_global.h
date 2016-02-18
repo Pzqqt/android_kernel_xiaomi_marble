@@ -351,9 +351,7 @@ typedef struct sLimMlmStaContext {
 	uint8_t schClean:1;
 	/* 802.11n HT Capability in Station: Enabled 1 or DIsabled 0 */
 	uint8_t htCapability:1;
-#ifdef WLAN_FEATURE_11AC
 	uint8_t vhtCapability:1;
-#endif
 } tLimMlmStaContext, *tpLimMlmStaContext;
 
 /* Structure definition to hold deferred messages queue parameters */
@@ -480,11 +478,9 @@ struct tLimIbssPeerNode {
 	uint8_t *beacon;        /* Hold beacon to be sent to HDD/CSR */
 	uint16_t beaconLen;
 
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps VHTCaps;
 	uint8_t vhtSupportedChannelWidthSet;
 	uint8_t vhtBeamFormerCapable;
-#endif
 	/*
 	 * Peer Atim Info
 	 */
@@ -512,7 +508,6 @@ typedef struct sLimChannelSwitchInfo {
 	uint8_t switchMode;
 } tLimChannelSwitchInfo, *tpLimChannelSwitchInfo;
 
-#ifdef WLAN_FEATURE_11AC
 typedef struct sLimOperatingModeInfo {
 	uint8_t present;
 	uint8_t chanWidth:2;
@@ -520,7 +515,6 @@ typedef struct sLimOperatingModeInfo {
 	uint8_t rxNSS:3;
 	uint8_t rxNSSType:1;
 } tLimOperatingModeInfo, *tpLimOperatingModeInfo;
-#endif
 
 typedef struct sLimWiderBWChannelSwitch {
 	uint8_t newChanWidth;

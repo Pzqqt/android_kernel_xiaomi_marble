@@ -145,14 +145,12 @@ typedef struct sSirProbeRespBeacon {
 
 	uint8_t mdiePresent;
 
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEVHTOperation VHTOperation;
 	tDot11fIEVHTExtBssLoad VHTExtBssLoad;
 	tDot11fIEOperatingMode OperatingMode;
 	uint8_t WiderBWChanSwitchAnnPresent;
 	tDot11fIEWiderBWChanSwitchAnn WiderBWChanSwitchAnn;
-#endif
 	uint8_t Vendor1IEPresent;
 	tDot11fIEvendor2_ie vendor2_ie;
 	uint8_t Vendor3IEPresent;
@@ -177,10 +175,7 @@ typedef struct sSirProbeReq {
 	uint8_t extendedRatesPresent;
 	uint8_t wscIePresent;
 	uint8_t p2pIePresent;
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps VHTCaps;
-#endif
-
 } tSirProbeReq, *tpSirProbeReq;
 
 /* / Association Request structure (one day to be replaced by */
@@ -229,10 +224,8 @@ typedef struct sSirAssocReq {
 	   required for indicating the frame to upper layers */
 	uint32_t assocReqFrameLength;
 	uint8_t *assocReqFrame;
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEOperatingMode operMode;
-#endif
 	tDot11fIEExtCap ExtCap;
 } tSirAssocReq, *tpSirAssocReq;
 
@@ -275,10 +268,8 @@ typedef struct sSirAssocRsp {
 	uint8_t tspecPresent;
 	uint8_t tsmPresent;
 #endif
-#ifdef WLAN_FEATURE_11AC
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEVHTOperation VHTOperation;
-#endif
 	tDot11fIEExtCap ExtCap;
 	tSirQosMapSet QosMapSet;
 #ifdef WLAN_FEATURE_11W
@@ -904,7 +895,6 @@ void populate_dot11f_assoc_rsp_rates(tpAniSirGlobal pMac,
 
 int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID);
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus
 populate_dot11f_vht_caps(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			tDot11fIEVHTCaps *pDot11f);
@@ -931,7 +921,6 @@ void
 populate_dot11f_wider_bw_chan_switch_ann(tpAniSirGlobal pMac,
 					tDot11fIEWiderBWChanSwitchAnn *pDot11f,
 					tpPESession psessionEntry);
-#endif
 
 void populate_dot11f_timeout_interval(tpAniSirGlobal pMac,
 				tDot11fIETimeoutInterval *pDot11f,

@@ -7785,14 +7785,10 @@ void hdd_select_cbmode(hdd_adapter_t *pAdapter, uint8_t operationChannel)
 	case eHDD_DOT11_MODE_AUTO:
 	case eHDD_DOT11_MODE_11ac:
 	case eHDD_DOT11_MODE_11ac_ONLY:
-#ifdef WLAN_FEATURE_11AC
 		if (sme_is_feature_supported_by_fw(DOT11AC))
 			hddDot11Mode = eHDD_DOT11_MODE_11ac;
 		else
 			hddDot11Mode = eHDD_DOT11_MODE_11n;
-#else
-		hddDot11Mode = eHDD_DOT11_MODE_11n;
-#endif
 		break;
 	case eHDD_DOT11_MODE_11n:
 	case eHDD_DOT11_MODE_11n_ONLY:

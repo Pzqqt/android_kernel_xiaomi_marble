@@ -1734,7 +1734,6 @@ uint8_t sap_get_bonding_channels(ptSapContext sapContext, uint8_t channel,
 		channels[0] = channel;
 		channels[1] = channel + 4;
 		break;
-#ifdef WLAN_FEATURE_11AC
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
 		numChannel = 4;
 		channels[0] = channel;
@@ -1763,7 +1762,6 @@ uint8_t sap_get_bonding_channels(ptSapContext sapContext, uint8_t channel,
 		channels[2] = channel - 4;
 		channels[3] = channel;
 		break;
-#endif
 	default:
 		numChannel = 1;
 		channels[0] = channel;

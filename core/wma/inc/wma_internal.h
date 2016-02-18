@@ -128,7 +128,6 @@ struct index_data_rate_type {
 	uint16_t ht40_rate[2];
 };
 
-#ifdef WLAN_FEATURE_11AC
 /**
  * struct index_vht_data_rate_type - vht data rate type
  * @mcs_index: mcs rate index
@@ -142,7 +141,6 @@ struct index_vht_data_rate_type {
 	uint16_t ht40_rate[2];
 	uint16_t ht80_rate[2];
 };
-#endif
 
 /*
  * wma_main.c functions declarations

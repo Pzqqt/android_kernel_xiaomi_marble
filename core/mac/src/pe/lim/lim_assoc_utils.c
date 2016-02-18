@@ -1482,7 +1482,6 @@ bool lim_is_reassoc_in_progress(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	return false;
 } /*** end lim_is_reassoc_in_progress() ***/
 
-#ifdef WLAN_FEATURE_11AC
 /**
  * lim_populate_vht_mcs_set - function to populate vht mcs rate set
  * @mac_ctx: pointer to global mac structure
@@ -1616,7 +1615,6 @@ error:
 
 	return eSIR_FAILURE;
 }
-#endif
 
 /**
  * lim_populate_own_rate_set() - comprises the basic and extended rates read
@@ -1640,19 +1638,11 @@ error:
  *
  * Return: eSIR_SUCCESS or eSIR_FAILURE.
  */
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus
 lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		tpSirSupportedRates rates, uint8_t *supported_mcs_set,
 		uint8_t basic_only, tpPESession session_entry,
 		tDot11fIEVHTCaps *vht_caps)
-#else
-tSirRetStatus
-lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
-			  tpSirSupportedRates rates,
-			  uint8_t *supported_mcs_set,
-			  uint8_t basic_only, tpPESession session_entry)
-#endif
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -1661,7 +1651,6 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 	uint32_t self_sta_dot11mode = 0;
 	uint8_t a_rate_index = 0;
 	uint8_t b_rate_index = 0;
-
 
 	is_arate = 0;
 
@@ -1700,7 +1689,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 		/* we are in big trouble */
 		lim_log(mac_ctx, LOGP, FL("more than 12 rates in CFG"));
 		/* panic */
-		goto error;
+		return eSIR_FAILURE;
 	}
 	/* copy all rates in temp_rate_set, there are 12 rates max */
 	for (i = 0; i < temp_rate_set2.numRates; i++)
@@ -1767,7 +1756,7 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 			/* Could not get rateset from CFG. Log error. */
 			lim_log(mac_ctx, LOGE,
 				FL("could not retrieve supportedMCSSet"));
-			goto error;
+			return eSIR_FAILURE;
 		}
 
 		/*
@@ -1787,29 +1776,17 @@ lim_populate_own_rate_set(tpAniSirGlobal mac_ctx,
 			PELOG2(lim_log(mac_ctx, LOG2, FL("%x "),
 				       rates->supportedMCSSet[i]);)
 	}
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_vht_mcs_set(mac_ctx, rates, vht_caps, session_entry);
-#endif
 
 	return eSIR_SUCCESS;
-error:
-	return eSIR_FAILURE;
 }
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus
 lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			   tpSirSupportedRates pRates,
 			   uint8_t *pSupportedMCSSet,
 			   uint8_t basicOnly,
 			   tpPESession psessionEntry, tDot11fIEVHTCaps *pVHTCaps)
-#else
-tSirRetStatus
-lim_populate_peer_rate_set(tpAniSirGlobal pMac,
-			   tpSirSupportedRates pRates,
-			   uint8_t *pSupportedMCSSet,
-			   uint8_t basicOnly, tpPESession psessionEntry)
-#endif
 {
 	tSirMacRateSet tempRateSet;
 	tSirMacRateSet tempRateSet2;
@@ -1825,7 +1802,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	} else {
 		lim_log(pMac, LOGE,
 			FL("more than SIR_MAC_RATESET_EID_MAX rates\n"));
-		goto error;
+		return eSIR_FAILURE;
 	}
 	if ((psessionEntry->dot11mode == WNI_CFG_DOT11_MODE_11G) ||
 		(psessionEntry->dot11mode == WNI_CFG_DOT11_MODE_11A) ||
@@ -1843,7 +1820,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 			lim_log(pMac, LOGE,
 				FL
 					("psessionEntry->extRateSet.numRates more than SIR_MAC_RATESET_EID_MAX rates\n"));
-			goto error;
+			return eSIR_FAILURE;
 		}
 	} else
 		tempRateSet2.numRates = 0;
@@ -1851,7 +1828,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 	    SIR_MAC_RATESET_EID_MAX) {
 		/* we are in big trouble */
 		lim_log(pMac, LOGP, FL("more than 12 rates in CFG"));
-		goto error;
+		return eSIR_FAILURE;
 	}
 
 	/* copy all rates in tempRateSet, there are 12 rates max */
@@ -1919,7 +1896,7 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 				       (pMac, LOGE,
 				       FL("could not retrieve supportedMCSSet"));
 			       )
-			goto error;
+			return eSIR_FAILURE;
 		}
 		/* if supported MCS Set of the peer is passed in, then do the intersection */
 		/* else use the MCS set from local CFG. */
@@ -1935,12 +1912,8 @@ lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 				       pRates->supportedMCSSet[i]);
 			       )
 	}
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_vht_mcs_set(pMac, pRates, pVHTCaps, psessionEntry);
-#endif
 	return eSIR_SUCCESS;
-error:
-	return eSIR_FAILURE;
 } /*** lim_populate_peer_rate_set() ***/
 
 /**
@@ -1973,18 +1946,13 @@ error:
  *
  * Return: eSIR_SUCCESS on success else eSIR_FAILURE
  */
-#ifdef WLAN_FEATURE_11AC
-tSirRetStatus
-lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
-	tSirMacRateSet *oper_rate_set, tSirMacRateSet *ext_rate_set,
-	uint8_t *supported_mcs_set, tpPESession session_entry,
-	tDot11fIEVHTCaps *vht_caps)
-#else
-tSirRetStatus
-lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
-	tSirMacRateSet *oper_rate_set, tSirMacRateSet *ext_rate_set,
-	uint8_t *supported_mcs_set, tpPESession session_entry)
-#endif
+tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx,
+					     tpDphHashNode sta_ds,
+					     tSirMacRateSet *oper_rate_set,
+					     tSirMacRateSet *ext_rate_set,
+					     uint8_t *supported_mcs_set,
+					     tpPESession session_entry,
+					     tDot11fIEVHTCaps *vht_caps)
 {
 	tSirMacRateSet temp_rate_set;
 	tSirMacRateSet temp_rate_set2;
@@ -2016,7 +1984,7 @@ lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 
 	if ((temp_rate_set.numRates + temp_rate_set2.numRates) > 12) {
 		lim_log(mac_ctx, LOGE, FL("more than 12 rates in CFG"));
-		goto error;
+		return eSIR_FAILURE;
 	}
 
 	/*
@@ -2147,7 +2115,7 @@ lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 			/* Could not get rateset from CFG. Log error. */
 			lim_log(mac_ctx, LOGP,
 				FL("could not retrieve supportedMCSet"));
-			goto error;
+			return eSIR_FAILURE;
 		}
 
 		for (i = 0; i < val; i++)
@@ -2162,10 +2130,8 @@ lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 			    sta_ds->supportedRates.supportedMCSSet[i]);
 		}
 	}
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_vht_mcs_set(mac_ctx, &sta_ds->supportedRates, vht_caps,
 				 session_entry);
-#endif
 	/*
 	 * Set the erpEnabled bit if the phy is in G mode and at least
 	 * one A rate is supported
@@ -2174,10 +2140,6 @@ lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 		sta_ds->erpEnabled = eHAL_SET;
 
 	return eSIR_SUCCESS;
-
-error:
-
-	return eSIR_FAILURE;
 }
 
 /**
@@ -2354,32 +2316,24 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 	    LIM_IS_BT_AMP_AP_ROLE(session_entry) ||
 	    LIM_IS_IBSS_ROLE(session_entry)) {
 		add_sta_params->htCapable = sta_ds->mlmStaContext.htCapability;
-#ifdef WLAN_FEATURE_11AC
 		add_sta_params->vhtCapable =
 			 sta_ds->mlmStaContext.vhtCapability;
-#endif
 	}
 #ifdef FEATURE_WLAN_TDLS
 	/* SystemRole shouldn't be matter if staType is TDLS peer */
 	else if (STA_ENTRY_TDLS_PEER == sta_ds->staType) {
 		add_sta_params->htCapable = sta_ds->mlmStaContext.htCapability;
-#ifdef WLAN_FEATURE_11AC
 		add_sta_params->vhtCapable =
 			 sta_ds->mlmStaContext.vhtCapability;
-#endif
 	}
 #endif
 	else {
 		add_sta_params->htCapable = session_entry->htCapability;
-#ifdef WLAN_FEATURE_11AC
 		add_sta_params->vhtCapable = session_entry->vhtCapability;
-#endif
 
 	}
-#ifdef WLAN_FEATURE_11AC
 	lim_log(mac_ctx, LOG2, FL("vhtCapable: %d "),
 		 add_sta_params->vhtCapable);
-#endif
 	lim_log(mac_ctx, LOG2, FL(" StaIdx: %d updateSta = %d htcapable = %d "),
 		add_sta_params->staIdx, add_sta_params->updateSta,
 		add_sta_params->htCapable);
@@ -2928,13 +2882,8 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		pAddStaParams->shortPreambleSupported = val;
 	}
 
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_own_rate_set(pMac, &pAddStaParams->supportedRates, NULL, false,
 				  psessionEntry, NULL);
-#else
-	lim_populate_own_rate_set(pMac, &pAddStaParams->supportedRates, NULL, false,
-				  psessionEntry);
-#endif
 	if (IS_DOT11_MODE_HT(selfStaDot11Mode)) {
 		pAddStaParams->htCapable = true;
 #ifdef DISABLE_GF_FOR_INTEROP
@@ -3042,7 +2991,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 				pAddStaParams->mimoPS, pAddStaParams->rifsMode);
 		}
 	}
-#ifdef WLAN_FEATURE_11AC
 	pAddStaParams->vhtCapable = IS_DOT11_MODE_VHT(selfStaDot11Mode);
 	if (pAddStaParams->vhtCapable) {
 		pAddStaParams->ch_width =
@@ -3070,7 +3018,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	}
 	pAddStaParams->vhtTxMUBformeeCapable = psessionEntry->txMuBformee;
 	pAddStaParams->enableVhtpAid = psessionEntry->enableVhtpAid;
-#endif
 	pAddStaParams->enableAmpduPs = psessionEntry->enableAmpduPs;
 	pAddStaParams->enableHtSmps = psessionEntry->enableHtSmps;
 	pAddStaParams->htSmpsconfig = psessionEntry->htSmpsvalue;
@@ -4464,7 +4411,6 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	pAddBssParams->currentOperChannel = bssDescription->channelId;
 	lim_log(pMac, LOG2, FL("currentOperChannel %d"),
 		pAddBssParams->currentOperChannel);
-#ifdef WLAN_FEATURE_11AC
 	if (psessionEntry->vhtCapability &&
 		(IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) ||
 		 IS_BSS_VHT_CAPABLE(pBeaconStruct->vendor2_ie.VHTCaps))) {
@@ -4505,7 +4451,6 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		pAddBssParams->vhtCapable, pAddBssParams->ch_width,
 		pAddBssParams->ch_center_freq_seg0,
 		pAddBssParams->ch_center_freq_seg1);
-#endif
 
 	/*
 	 * Populate the STA-related parameters here
@@ -4710,20 +4655,12 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 		pAddBssParams->staContext.wmmEnabled = 0;
 
 	/* Update the rates */
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_peer_rate_set(pMac,
 			&pAddBssParams->staContext.
 			supportedRates,
 			pBeaconStruct->HTCaps.supportedMCSSet,
 			false, psessionEntry,
 			&pBeaconStruct->VHTCaps);
-#else
-	lim_populate_peer_rate_set(pMac,
-			&pAddBssParams->staContext.
-			supportedRates,
-			pBeaconStruct->HTCaps.supportedMCSSet,
-			false, psessionEntry);
-#endif
 	lim_fill_supported_rates_info(pMac, NULL,
 			&pAddBssParams->staContext.
 			supportedRates, psessionEntry);
@@ -4876,14 +4813,11 @@ tStaRateMode lim_get_sta_rate_mode(uint8_t dot11Mode)
 		return eSTA_11bg;
 	case WNI_CFG_DOT11_MODE_11N:
 		return eSTA_11n;
-#ifdef WLAN_FEATURE_11AC
 	case WNI_CFG_DOT11_MODE_11AC:
 		return eSTA_11ac;
-#endif
 	case WNI_CFG_DOT11_MODE_ALL:
 	default:
 		return eSTA_11n;
-
 	}
 }
 

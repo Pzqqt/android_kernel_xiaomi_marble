@@ -190,7 +190,6 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 		lim_update_stads_htcap(mac_ctx, sta_ds, assoc_rsp,
 				       session_entry);
 
-#ifdef WLAN_FEATURE_11AC
 	if (assoc_rsp->VHTCaps.present)
 		vht_caps = &assoc_rsp->VHTCaps;
 	else if (assoc_rsp->vendor2_ie.VHTCaps.present)
@@ -225,20 +224,9 @@ void lim_update_assoc_sta_datas(tpAniSirGlobal mac_ctx,
 			FL("could not get rateset and extended rate set"));
 		return;
 	}
-#else
-	if (lim_populate_peer_rate_set(mac_ctx, &sta_ds->supportedRates,
-		assoc_rsp->HTCaps.supportedMCSSet,
-		false, session_entry) != eSIR_SUCCESS) {
-		lim_log(mac_ctx, LOGP,
-			FL("could not get rateset and extended rate set"));
-		return;
-	}
-#endif
-#ifdef WLAN_FEATURE_11AC
 	sta_ds->vhtSupportedRxNss =
 		((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
 		 == MCSMAPMASK2x2) ? 1 : 2;
-#endif
 	/* If one of the rates is 11g rates, set the ERP mode. */
 	if ((phy_mode == WNI_CFG_PHY_MODE_11G) &&
 		sirIsArate(sta_ds->supportedRates.llaRates[0] & 0x7f))

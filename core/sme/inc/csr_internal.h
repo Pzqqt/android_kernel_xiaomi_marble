@@ -105,14 +105,10 @@ typedef enum {
 	eCSR_CFG_DOT11_MODE_11B,
 	eCSR_CFG_DOT11_MODE_11G,
 	eCSR_CFG_DOT11_MODE_11N,
-#ifdef WLAN_FEATURE_11AC
 	eCSR_CFG_DOT11_MODE_11AC,
-#endif
 	eCSR_CFG_DOT11_MODE_11G_ONLY,
 	eCSR_CFG_DOT11_MODE_11N_ONLY,
-#ifdef WLAN_FEATURE_11AC
 	eCSR_CFG_DOT11_MODE_11AC_ONLY,
-#endif
 	/* This value can never set to CFG. Its for CSR's internal use */
 	eCSR_CFG_DOT11_MODE_AUTO,
 } eCsrCfgDot11Mode;
@@ -594,7 +590,6 @@ typedef struct tagCsrConfig {
 	bool doBMPSWorkaround;
 	/* To enable scanning 2g channels twice on single scan req from HDD */
 	bool fScanTwice;
-#ifdef WLAN_FEATURE_11AC
 	uint32_t nVhtChannelWidth;
 	uint8_t txBFEnable;
 	uint8_t enable_txbf_sap_mode;
@@ -604,7 +599,6 @@ typedef struct tagCsrConfig {
 	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
-#endif
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;
@@ -1091,18 +1085,11 @@ typedef struct tagCsrRoamStruct {
 #define CSR_IS_PHY_MODE_A_ONLY(pMac) \
 	(eCSR_DOT11_MODE_11a == (pMac)->roam.configParam.phyMode)
 
-#ifdef WLAN_FEATURE_11AC
 #define CSR_IS_PHY_MODE_DUAL_BAND(phyMode) \
 	((eCSR_DOT11_MODE_abg & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11n & (phyMode)) || \
 	 (eCSR_DOT11_MODE_11ac & (phyMode)) || \
 	 (eCSR_DOT11_MODE_AUTO & (phyMode)))
-#else
-#define CSR_IS_PHY_MODE_DUAL_BAND(phyMode) \
-	((eCSR_DOT11_MODE_abg & (phyMode)) ||  \
-	 (eCSR_DOT11_MODE_11n & (phyMode)) || \
-	 (eCSR_DOT11_MODE_AUTO & (phyMode)))
-#endif
 
 #define CSR_IS_PHY_MODE_11n(phy_mode) \
 	((eCSR_DOT11_MODE_11n == phy_mode) || \

@@ -62,11 +62,9 @@ static tBeaconFilterIe beacon_filter_table[] = {
 	{SIR_MAC_HT_INFO_EID, 0, {0, 0, HT_BYTE0_FILTER_MASK, 0} },
 	{SIR_MAC_HT_INFO_EID, 0, {2, 0, HT_BYTE2_FILTER_MASK, 0} },
 	{SIR_MAC_HT_INFO_EID, 0, {5, 0, HT_BYTE5_FILTER_MASK, 0} },
-	{SIR_MAC_PWR_CONSTRAINT_EID, 0, {0, 0, 0, 0} }
-#ifdef WLAN_FEATURE_11AC
-	, {SIR_MAC_VHT_OPMODE_EID, 0, {0, 0, 0, 0} }
-	, {SIR_MAC_VHT_OPERATION_EID, 0, {0, 0, VHTOP_CHWIDTH_MASK, 0} }
-#endif
+	{SIR_MAC_PWR_CONSTRAINT_EID, 0, {0, 0, 0, 0} },
+	{SIR_MAC_VHT_OPMODE_EID, 0, {0, 0, 0, 0} },
+	{SIR_MAC_VHT_OPERATION_EID, 0, {0, 0, VHTOP_CHWIDTH_MASK, 0} }
 };
 
 /**
@@ -620,7 +618,6 @@ tSirRetStatus lim_send_beacon_filter_info(tpAniSirGlobal pMac,
 	return retCode;
 }
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_send_mode_update(tpAniSirGlobal pMac,
 				   tUpdateVHTOpMode *pTempParam,
 				   tpPESession psessionEntry)
@@ -774,8 +771,6 @@ tSirRetStatus lim_set_user_pos(tpAniSirGlobal pMac,
 
 	return retCode;
 }
-
-#endif
 
 #ifdef WLAN_FEATURE_11W
 /**

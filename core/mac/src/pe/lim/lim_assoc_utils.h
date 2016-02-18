@@ -62,22 +62,13 @@ void lim_reject_association(tpAniSirGlobal, tSirMacAddr, uint8_t,
 			    uint8_t, tAniAuthType,
 			    uint16_t, uint8_t, tSirResultCodes, tpPESession);
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 					 tpSirSupportedRates pRates,
 					 uint8_t *pSupportedMCSSet,
 					 uint8_t basicOnly,
 					 tpPESession psessionEntry,
 					 tDot11fIEVHTCaps * pVHTCaps);
-#else
-tSirRetStatus lim_populate_peer_rate_set(tpAniSirGlobal pMac,
-					 tpSirSupportedRates pRates,
-					 uint8_t *pSupportedMCSSet,
-					 uint8_t basicOnly,
-					 tpPESession psessionEntry);
-#endif
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
 					tpSirSupportedRates pRates,
 					uint8_t *pSupportedMCSSet,
@@ -85,15 +76,6 @@ tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
 					tpPESession psessionEntry,
 					tDot11fIEVHTCaps * pVHTCaps);
 
-#else
-tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
-					tpSirSupportedRates pRates,
-					uint8_t *pSupportedMCSSet,
-					uint8_t basicOnly,
-					tpPESession psessionEntry);
-#endif
-
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus
 lim_populate_matching_rate_set(tpAniSirGlobal pMac,
 			       tpDphHashNode pStaDs,
@@ -102,20 +84,8 @@ lim_populate_matching_rate_set(tpAniSirGlobal pMac,
 			       uint8_t *pSupportedMCSSet,
 			       tpPESession psessionEntry,
 			       tDot11fIEVHTCaps * pVHTCaps);
-#else
-tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal,
-					     tpDphHashNode,
-					     tSirMacRateSet *,
-					     tSirMacRateSet *,
-					     uint8_t *pSupportedMCSSet,
-					     tpPESession);
-
-#endif
-
-#ifdef WLAN_FEATURE_11AC
 #define MCSMAPMASK1x1 0x3
 #define MCSMAPMASK2x2 0xC
-#endif
 
 tSirRetStatus lim_add_sta(tpAniSirGlobal, tpDphHashNode, uint8_t, tpPESession);
 tSirRetStatus lim_del_bss(tpAniSirGlobal, tpDphHashNode, uint16_t, tpPESession);

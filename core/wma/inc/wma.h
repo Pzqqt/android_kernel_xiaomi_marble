@@ -1234,10 +1234,8 @@ typedef struct {
 	qdf_list_t wma_hold_req_queue;
 	qdf_spinlock_t wma_hold_req_q_lock;
 	uint32_t ht_cap_info;
-#ifdef WLAN_FEATURE_11AC
 	uint32_t vht_cap_info;
 	uint32_t vht_supp_mcs;
-#endif
 	uint32_t num_rf_chains;
 #if defined(QCA_WIFI_FTM)
 	struct utf_event_info utf_event_info;

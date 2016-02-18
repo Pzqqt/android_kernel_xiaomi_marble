@@ -191,10 +191,8 @@
 #define SIR_MAC_RRM_NEIGHBOR_RPT               5
 
 /* VHT Action Field */
-#ifdef WLAN_FEATURE_11AC
 #define SIR_MAC_VHT_GID_NOTIFICATION           1
 #define SIR_MAC_VHT_OPMODE_NOTIFICATION        2
-#endif
 
 #define NUM_OF_SOUNDING_DIMENSIONS	1 /*Nss - 1, (Nss = 2 for 2x2)*/
 /* HT Action Field Codes */
@@ -382,12 +380,10 @@
 #define SIR_MAC_HT_INFO_EID_MIN    0
 #define SIR_MAC_HT_INFO_EID_MAX    255
 
-#ifdef WLAN_FEATURE_11AC
 #define SIR_MAC_VHT_CAPABILITIES_EID   191
 #define SIR_MAC_VHT_OPERATION_EID      192
 #define SIR_MAC_VHT_EXT_BSS_LOAD_EID   193
 #define SIR_MAC_VHT_OPMODE_EID         199
-#endif
 #define SIR_MAC_MAX_SUPPORTED_MCS_SET    16
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
@@ -577,9 +573,7 @@
 #define SIR_MAC_SET_RRM(x)               (((uint16_t) x) | 0x1000)
 #define SIR_MAC_SET_GROUP_ACK(x)         (((uint16_t) x) | 0x4000)
 
-#ifdef WLAN_FEATURE_11AC
 #define SIR_MAC_GET_VHT_MAX_AMPDU_EXPO(x) ((((uint32_t) x) & 0x03800000) >> 23)
-#endif
 
 /* bitname must be one of the above, eg ESS, CF_POLLABLE, etc. */
 #define SIR_MAC_CLEAR_CAPABILITY(u16value, bitname) \

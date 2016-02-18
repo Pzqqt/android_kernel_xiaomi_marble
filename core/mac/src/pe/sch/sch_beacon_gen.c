@@ -340,7 +340,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			populate_dot11f_ext_chan_switch_ann(mac_ctx,
 					&bcn_2->ExtChanSwitchAnn, session);
 			*/
-#ifdef WLAN_FEATURE_11AC
 			/*
 			 * TODO: If in 11AC mode, wider bw channel switch
 			 * announcement needs to be called
@@ -349,7 +348,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			populate_dot11f_wider_bw_chan_switch_ann(mac_ctx,
 					&bcn_2->WiderBWChanSwitchAnn, session);
 			*/
-#endif
 			/*
 			 * Populate the Channel Switch Wrapper Element if
 			 * SAP operates in 40/80 Mhz Channel Width.
@@ -383,7 +381,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 		populate_dot11f_ht_caps(mac_ctx, session, &bcn_2->HTCaps);
 		populate_dot11f_ht_info(mac_ctx, &bcn_2->HTInfo, session);
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (session->vhtCapability) {
 		sch_log(mac_ctx, LOGW, FL("Populate VHT IEs in Beacon"));
 		populate_dot11f_vht_caps(mac_ctx, session, &bcn_2->VHTCaps);
@@ -398,7 +395,6 @@ sch_set_fixed_beacon_fields(tpAniSirGlobal mac_ctx, tpPESession session)
 			populate_dot11f_operating_mode(mac_ctx,
 						&bcn_2->OperatingMode, session);
 	}
-#endif
 	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &bcn_2->ExtCap,
 				session);
 	populate_dot11f_ext_supp_rates(mac_ctx,
@@ -722,7 +718,6 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal pMac,
 		qdf_mem_copy((void *)&prb_rsp->HTInfo, (void *)&beacon2->HTInfo,
 			     sizeof(beacon2->HTInfo));
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (beacon2->VHTCaps.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap,
 					SIR_MAC_VHT_CAPABILITIES_EID);
@@ -744,8 +739,6 @@ void lim_update_probe_rsp_template_ie_bitmap_beacon2(tpAniSirGlobal pMac,
 			     (void *)&beacon2->VHTExtBssLoad,
 			     sizeof(beacon2->VHTExtBssLoad));
 	}
-#endif
-
 	/* WMM IE */
 	if (beacon2->WMMParams.present) {
 		set_probe_rsp_ie_bitmap(DefProbeRspIeBitmap, SIR_MAC_WPA_EID);

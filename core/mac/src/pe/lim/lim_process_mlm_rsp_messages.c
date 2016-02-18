@@ -2804,21 +2804,13 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 
 	pAddStaParams->shortPreambleSupported =
 		(uint8_t) psessionEntry->beaconParams.fShortPreamble;
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_peer_rate_set(pMac, &pAddStaParams->supportedRates, NULL,
 				   false, psessionEntry, NULL);
-#else
-	lim_populate_peer_rate_set(pMac, &pAddStaParams->supportedRates, NULL,
-				   false, psessionEntry);
-#endif
 
 	if (psessionEntry->htCapability) {
 		pAddStaParams->htCapable = psessionEntry->htCapability;
-#ifdef WLAN_FEATURE_11AC
 		pAddStaParams->vhtCapable = psessionEntry->vhtCapability;
 		pAddStaParams->ch_width = psessionEntry->ch_width;
-#endif
-
 		pAddStaParams->greenFieldCapable =
 			lim_get_ht_capability(pMac, eHT_GREENFIELD,
 					      psessionEntry);

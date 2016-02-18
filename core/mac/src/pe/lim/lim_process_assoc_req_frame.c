@@ -1239,9 +1239,7 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 	}
 
 	sta_ds->mlmStaContext.htCapability = assoc_req->HTCaps.present;
-#ifdef WLAN_FEATURE_11AC
 	sta_ds->mlmStaContext.vhtCapability = assoc_req->VHTCaps.present;
-#endif
 	sta_ds->qos.addtsPresent =
 		(assoc_req->addtsPresent == 0) ? false : true;
 	sta_ds->qos.addts = assoc_req->addtsReq;
@@ -1340,7 +1338,6 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		sta_ds->htSecondaryChannelOffset =
 			(sta_ds->htSupportedChannelWidthSet) ?
 				session->htSecondaryChannelOffset : 0;
-#ifdef WLAN_FEATURE_11AC
 		if (assoc_req->operMode.present) {
 			sta_ds->vhtSupportedChannelWidthSet =
 				(uint8_t) ((assoc_req->operMode.chanWidth ==
@@ -1371,7 +1368,6 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			session->htSupportedChannelWidthSet) ?
 			sta_ds->htSupportedChannelWidthSet :
 			session->htSupportedChannelWidthSet;
-#endif
 		sta_ds->baPolicyFlag = 0xFF;
 		sta_ds->htLdpcCapable =
 			(uint8_t) assoc_req->HTCaps.advCodingCap;
@@ -1398,20 +1394,11 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 		else
 			sta_ds->vht_su_bfee_capable = 0;
 	}
-
-#ifdef WLAN_FEATURE_11AC
 	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
 			&(assoc_req->supportedRates),
 			&(assoc_req->extendedRates),
 			assoc_req->HTCaps.supportedMCSSet,
 			session, &assoc_req->VHTCaps) != eSIR_SUCCESS)
-#else
-	if (lim_populate_matching_rate_set(mac_ctx, sta_ds,
-			&(assoc_req->supportedRates),
-			&(assoc_req->extendedRates),
-			assoc_req->HTCaps.supportedMCSSet,
-			session) != eSIR_SUCCESS)
-#endif
 	{
 		/* Could not update hash table entry at DPH with rateset */
 		lim_log(mac_ctx, LOGE,
@@ -1431,7 +1418,6 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			assoc_req = session->parsedAssocReq[sta_ds->assocId];
 		return false;
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (assoc_req->operMode.present) {
 		sta_ds->vhtSupportedRxNss = assoc_req->operMode.rxNSS + 1;
 	} else {
@@ -1439,10 +1425,8 @@ static bool lim_update_sta_ds(tpAniSirGlobal mac_ctx, tpSirMacMgmtHdr hdr,
 			((sta_ds->supportedRates.vhtRxMCSMap & MCSMAPMASK2x2)
 				== MCSMAPMASK2x2) ? 1 : 2;
 	}
-#endif
 
 	/* Add STA context at MAC HW (BMU, RHP & TFP) */
-
 	sta_ds->qosMode = false;
 	sta_ds->lleEnabled = false;
 	if (assoc_req->capabilityInfo.qos && (qos_mode == eHAL_SET)) {

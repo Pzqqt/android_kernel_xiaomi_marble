@@ -57,8 +57,6 @@ void lim_extract_ap_capability(tpAniSirGlobal, uint8_t *, uint16_t, uint8_t *,
 			       uint16_t *, uint8_t *, int8_t *, tpPESession);
 
 tStaRateMode lim_get_sta_peer_type(tpAniSirGlobal, tpDphHashNode, tpPESession);
-#ifdef WLAN_FEATURE_11AC
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
-#endif
 
 #endif /* __LIM_PROP_EXTS_UTILS_H */

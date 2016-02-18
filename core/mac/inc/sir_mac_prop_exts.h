@@ -51,12 +51,10 @@
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC_ONLY) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
 
-#ifdef WLAN_FEATURE_11AC
 #define IS_DOT11_MODE_VHT(dot11Mode) \
 	(((dot11Mode == WNI_CFG_DOT11_MODE_11AC) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_11AC_ONLY) || \
 	  (dot11Mode ==  WNI_CFG_DOT11_MODE_ALL)) ? true:false)
-#endif
 
 #define IS_DOT11_MODE_11B(dot11Mode)  \
 	((dot11Mode == WNI_CFG_DOT11_MODE_11B) ? true:false)

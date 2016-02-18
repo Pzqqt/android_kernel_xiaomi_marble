@@ -186,11 +186,7 @@ typedef enum {
 
 #define CFG_DOT11_MODE_NAME                    "gDot11Mode"
 #define CFG_DOT11_MODE_MIN                     eHDD_DOT11_MODE_AUTO
-#ifdef WLAN_FEATURE_11AC
 #define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11ac
-#else
-#define CFG_DOT11_MODE_DEFAULT                 eHDD_DOT11_MODE_11n
-#endif
 #define CFG_DOT11_MODE_MAX                     eHDD_DOT11_MODE_11a
 
 #define CFG_CHANNEL_BONDING_MODE_24GHZ_NAME    "gChannelBondingMode24GHz"
@@ -1074,7 +1070,6 @@ typedef enum {
 	eHDD_LINK_SPEED_REPORT_MAX = 1,
 	eHDD_LINK_SPEED_REPORT_MAX_SCALED = 2,
 } eHddLinkSpeedReportType;
-#ifdef WLAN_FEATURE_11AC
 #define CFG_VHT_CHANNEL_WIDTH                "gVhtChannelWidth"
 #define CFG_VHT_CHANNEL_WIDTH_MIN            (0)
 #define CFG_VHT_CHANNEL_WIDTH_MAX            (4)
@@ -1119,7 +1114,6 @@ typedef enum {
 #define CFG_VHT_ENABLE_GID_FEATURE_MIN          (0)
 #define CFG_VHT_ENABLE_GID_FEATURE_MAX          (1)
 #define CFG_VHT_ENABLE_GID_FEATURE_DEFAULT      (0)
-#endif
 
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK         "gSetTxChainmask1x1"
 #define CFG_VHT_ENABLE_1x1_TX_CHAINMASK_MIN     (1)
@@ -1788,12 +1782,10 @@ typedef enum {
 #define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM_MAX           (1)
 #define CFG_SAP_ALLOW_ALL_CHANNEL_PARAM_DEFAULT       (0)
 
-#ifdef WLAN_FEATURE_11AC
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP             "gDisableLDPCWithTxbfAP"
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MIN         (0)
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_MAX         (1)
 #define CFG_DISABLE_LDPC_WITH_TXBF_AP_DEFAULT     (0)
-#endif
 
 /*
  * IBSS Operating Channels for 2.4G and 5GHz channels
@@ -1979,7 +1971,6 @@ typedef enum {
 #define CFG_ENABLE_FW_SELF_RECOVERY_ENABLE       (1)
 #define CFG_ENABLE_FW_SELF_RECOVERY_DEFAULT      (CFG_ENABLE_FW_SELF_RECOVERY_DISABLE)
 
-#ifdef WLAN_FEATURE_11AC
 /* Macro to handle maximum receive AMPDU size configuration */
 #define CFG_VHT_AMPDU_LEN_EXPONENT_NAME                "gVhtAmpduLenExponent"
 #define CFG_VHT_AMPDU_LEN_EXPONENT_MIN                 (0)
@@ -1990,7 +1981,6 @@ typedef enum {
 #define CFG_VHT_MPDU_LEN_MIN                           (0)
 #define CFG_VHT_MPDU_LEN_MAX                           (2)
 #define CFG_VHT_MPDU_LEN_DEFAULT                       (0)
-#endif
 
 #define CFG_MAX_WOW_FILTERS_NAME                       "gMaxWoWFilters"
 #define CFG_MAX_WOW_FILTERS_MIN                        (0)
@@ -3299,10 +3289,8 @@ struct hdd_config {
 	bool enablePowersaveOffload;
 	bool enablefwprint;
 	bool enable_fw_log;
-#ifdef WLAN_FEATURE_11AC
 	uint8_t fVhtAmpduLenExponent;
 	uint32_t vhtMpduLen;
-#endif
 	uint32_t IpaConfig;
 	bool IpaClkScalingEnable;
 	uint32_t IpaDescSize;

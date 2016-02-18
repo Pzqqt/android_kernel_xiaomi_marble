@@ -323,7 +323,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 				eHT_CHANNEL_WIDTH_40MHZ;
 		}
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (pesession != NULL) {
 		pesession->vhtCapability = IS_DOT11_MODE_VHT(dot11mode);
 		/* Include VHT Capability IE */
@@ -339,7 +338,6 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			is_vht_enabled = true;
 		}
 	}
-#endif
 	if (pesession != NULL)
 		populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &pr.ExtCap,
 			pesession);
@@ -648,7 +646,6 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
 		populate_dot11f_ht_info(mac_ctx, &frm->HTInfo, pe_session);
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (pe_session->vhtCapability) {
 		lim_log(mac_ctx, LOG1, FL("Populate VHT IE in Probe Response"));
 		populate_dot11f_vht_caps(mac_ctx, pe_session, &frm->VHTCaps);
@@ -661,7 +658,6 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		 */
 		is_vht_enabled = true;
 	}
-#endif
 
 	populate_dot11f_ext_cap(mac_ctx, is_vht_enabled, &frm->ExtCap,
 		pe_session);
@@ -1211,7 +1207,6 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			populate_dot11f_ht_info(mac_ctx, &frm.HTInfo,
 				pe_session);
 		}
-#ifdef WLAN_FEATURE_11AC
 		if (sta->mlmStaContext.vhtCapability &&
 		    pe_session->vhtCapability) {
 			lim_log(mac_ctx, LOG1,
@@ -1222,8 +1217,6 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 				&frm.VHTOperation);
 			is_vht = true;
 		}
-#endif
-
 		populate_dot11f_ext_cap(mac_ctx, is_vht, &frm.ExtCap,
 			pe_session);
 
@@ -1768,7 +1761,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1, FL("Populate HT Caps in Assoc Request"));
 		populate_dot11f_ht_caps(mac_ctx, pe_session, &frm->HTCaps);
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (pe_session->vhtCapability &&
 	    pe_session->vhtCapabilityPresentInBeacon) {
 		lim_log(mac_ctx, LOG1, FL("Populate VHT IEs in Assoc Request"));
@@ -1790,9 +1782,6 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 				&frm->vendor2_ie.VHTCaps);
 		vht_enabled = true;
 	}
-
-#endif
-
 	populate_dot11f_ext_cap(mac_ctx, vht_enabled, &frm->ExtCap, pe_session);
 
 	if (pe_session->pLimJoinReq->is11Rconnection) {
@@ -2200,8 +2189,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		populate_mdie(mac_ctx, &frm.MobilityDomain,
 			pe_session->pLimReAssocReq->bssDescription.mdie);
 	}
-
-#ifdef WLAN_FEATURE_11AC
 	if (pe_session->vhtCapability &&
 	    pe_session->vhtCapabilityPresentInBeacon) {
 		lim_log(mac_ctx, LOG1,
@@ -2225,8 +2212,6 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 				&frm.vendor2_ie.VHTCaps);
 		vht_enabled = true;
 	}
-#endif
-
 	status = dot11f_get_packed_re_assoc_request_size(mac_ctx, &frm,
 			&payload);
 	if (DOT11F_FAILED(status)) {
@@ -2579,17 +2564,13 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	    pMac->lim.htCapabilityPresentInBeacon) {
 		populate_dot11f_ht_caps(pMac, psessionEntry, &frm.HTCaps);
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (psessionEntry->vhtCapability &&
 	    psessionEntry->vhtCapabilityPresentInBeacon) {
 		lim_log(pMac, LOGW, FL("Populate VHT IEs in Re-Assoc Request"));
 		populate_dot11f_vht_caps(pMac, psessionEntry, &frm.VHTCaps);
 		isVHTEnabled = true;
 	}
-#endif
-
 	populate_dot11f_ext_cap(pMac, isVHTEnabled, &frm.ExtCap, psessionEntry);
-
 	nStatus = dot11f_get_packed_re_assoc_request_size(pMac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
 		lim_log(pMac, LOGP, FL("Failed to calculate the packed size f"

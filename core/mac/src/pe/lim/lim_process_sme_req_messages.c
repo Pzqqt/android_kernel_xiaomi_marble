@@ -1151,10 +1151,8 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	tSirMsgQ msg;
 	uint16_t i, len;
 	uint16_t ht_cap_len = 0, addn_ie_len = 0;
-#ifdef WLAN_FEATURE_11AC
 	uint8_t *vht_cap_ie;
 	uint16_t vht_cap_len = 0;
-#endif /* WLAN_FEATURE_11AC */
 	tSirRetStatus status, rc = eSIR_SUCCESS;
 	tDot11fIEExtCap extracted_extcap = {0};
 	bool extcap_present = true;
@@ -1198,7 +1196,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		addn_ie_len += ht_cap_len;
 	}
 
-#ifdef WLAN_FEATURE_11AC
 	if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
 		lim_log(pMac, LOG1,
 			FL("Adding VHT Caps IE since dot11mode=%d"),
@@ -1209,7 +1206,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		len += vht_cap_len;
 		addn_ie_len += vht_cap_len;
 	}
-#endif /* WLAN_FEATURE_11AC */
 
 	pScanOffloadReq = qdf_mem_malloc(len);
 	if (NULL == pScanOffloadReq) {
@@ -1291,7 +1287,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		pScanOffloadReq->uIEFieldLen += ht_cap_len;
 	}
 
-#ifdef WLAN_FEATURE_11AC
 	/* Copy VHT Capability info if dot11mode is VHT Capable */
 	if (IS_DOT11_MODE_VHT(pScanReq->dot11mode)) {
 		/* Populate EID and Length field here */
@@ -1304,7 +1299,6 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 		lim_set_vht_caps(pMac, NULL, vht_cap_ie, vht_cap_len);
 		pScanOffloadReq->uIEFieldLen += vht_cap_len;
 	}
-#endif /* WLAN_FEATURE_11AC */
 
 	rc = wma_post_ctrl_msg(pMac, &msg);
 	if (rc != eSIR_SUCCESS) {
@@ -1691,7 +1685,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->nss = 2;
 		else
 			session->nss = 1;
-#ifdef WLAN_FEATURE_11AC
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
@@ -1740,8 +1733,6 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				  sme_join_req->txBFCsnValue);
 			session->txbf_csn_value = sme_join_req->txBFCsnValue;
 		}
-#endif
-
 		/*Phy mode */
 		session->gLimPhyMode = bss_desc.nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);

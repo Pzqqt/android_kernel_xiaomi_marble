@@ -550,13 +550,8 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	sta_param->enableHtSmps = session_entry->enableHtSmps;
 	sta_param->htSmpsconfig = session_entry->htSmpsvalue;
 
-#ifdef WLAN_FEATURE_11AC
 	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
 				  false, session_entry, NULL);
-#else
-	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
-				  false, session_entry);
-#endif
 	lim_fill_supported_rates_info(mac_ctx, NULL, &sta_param->supportedRates,
 				      session_entry);
 

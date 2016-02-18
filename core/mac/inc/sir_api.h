@@ -301,9 +301,7 @@ typedef enum eStaRateMode {
 	eSTA_11bg,
 	eSTA_11a,
 	eSTA_11n,
-#ifdef WLAN_FEATURE_11AC
 	eSTA_11ac,
-#endif
 	eSTA_INVALID_RATE_MODE
 } tStaRateMode, *tpStaRateMode;
 
@@ -355,7 +353,6 @@ typedef struct sSirSupportedRates {
 	 */
 	uint16_t rxHighestDataRate;
 
-#ifdef WLAN_FEATURE_11AC
 	/*Indicates the Maximum MCS that can be received for each number
 	   of spacial streams */
 	uint16_t vhtRxMCSMap;
@@ -366,7 +363,6 @@ typedef struct sSirSupportedRates {
 	uint16_t vhtTxMCSMap;
 	/*Indicate the highest VHT data rate that the STA is able to transmit */
 	uint16_t vhtTxHighestDataRate;
-#endif
 } tSirSupportedRates, *tpSirSupportedRates;
 
 typedef enum eSirRFBand {
@@ -512,9 +508,7 @@ typedef enum eSirNwType {
 	eSIR_11B_NW_TYPE,
 	eSIR_11G_NW_TYPE,
 	eSIR_11N_NW_TYPE,
-#ifdef WLAN_FEATURE_11AC
 	eSIR_11AC_NW_TYPE,
-#endif
 	eSIR_DONOT_USE_NW_TYPE = SIR_MAX_ENUM_SIZE
 } tSirNwType;
 
@@ -681,12 +675,10 @@ typedef struct sSirSmeHTProfile {
 	uint8_t htSupportedChannelWidthSet;
 	uint8_t htRecommendedTxWidthSet;
 	ePhyChanBondState htSecondaryChannelOffset;
-#ifdef WLAN_FEATURE_11AC
 	uint8_t vhtCapability;
 	uint8_t vhtTxChannelWidthSet;
 	uint8_t apCenterChan;
 	uint8_t apChanWidth;
-#endif
 } tSirSmeHTProfile;
 #endif
 /* / Definition for response message to previously */
@@ -973,13 +965,11 @@ typedef struct sSirSmeJoinReq {
 
 	uint8_t txLdpcIniFeatureEnabled;
 	tSirHTConfig htConfig;
-#ifdef WLAN_FEATURE_11AC
 	uint8_t txBFIniFeatureEnabled;
 	uint8_t txBFCsnValue;
 	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
-#endif
 	uint8_t enableAmpduPs;
 	uint8_t enableHtSmps;
 	uint8_t htSmps;

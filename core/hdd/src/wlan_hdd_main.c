@@ -784,12 +784,10 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 	/* Set up UAPSD */
 	config->apUapsdEnabled &= cfg->uapsd;
 
-#ifdef WLAN_FEATURE_11AC
 	/* 11AC mode support */
 	if ((config->dot11Mode == eHDD_DOT11_MODE_11ac ||
 	     config->dot11Mode == eHDD_DOT11_MODE_11ac_ONLY) && !cfg->en_11ac)
 		config->dot11Mode = eHDD_DOT11_MODE_AUTO;
-#endif /* #ifdef WLAN_FEATURE_11AC */
 
 	/* ARP offload: override user setting if invalid  */
 	config->fhostArpOffload &= cfg->arp_offload;
@@ -943,7 +941,6 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES
 }
 
-#ifdef WLAN_FEATURE_11AC
 static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				   struct wma_tgt_vht_cap *cfg)
 {
@@ -1269,7 +1266,6 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 		band_5g->vht_cap.cap |= IEEE80211_VHT_CAP_VHT_TXOP_PS;
 
 }
-#endif /* #ifdef WLAN_FEATURE_11AC */
 
 void hdd_update_tgt_cfg(void *context, void *param)
 {
@@ -1327,9 +1323,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	hdd_update_tgt_ht_cap(hdd_ctx, &cfg->ht_cap);
 
-#ifdef WLAN_FEATURE_11AC
 	hdd_update_tgt_vht_cap(hdd_ctx, &cfg->vht_cap);
-#endif /* #ifdef WLAN_FEATURE_11AC */
 	hdd_ctx->config->fine_time_meas_cap &= cfg->fine_time_measurement_cap;
 	hdd_ctx->fine_time_meas_cap_target = cfg->fine_time_measurement_cap;
 	hdd_info(FL("fine_time_meas_cap: 0x%x"),

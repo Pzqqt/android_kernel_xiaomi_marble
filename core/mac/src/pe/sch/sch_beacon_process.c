@@ -719,9 +719,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 	uint8_t bssIdx = 0;
 	tUpdateBeaconParams beaconParams;
 	uint8_t sendProbeReq = false;
-#ifdef WLAN_FEATURE_11AC
 	tpSirMacMgmtHdr pMh = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-#endif
 	int8_t regMax = 0, maxTxPower = 0;
 	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
@@ -759,15 +757,12 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 			lim_cancel_dot11h_channel_switch(mac_ctx, session);
 		}
 	}
-#ifdef WLAN_FEATURE_11AC
 	if (LIM_IS_STA_ROLE(session)
 	    || LIM_IS_BT_AMP_STA_ROLE(session)
 	    || LIM_IS_IBSS_ROLE(session))
 		sch_bcn_process_sta_bt_amp_sta_ibss(mac_ctx, bcn,
 					rx_pkt_info, session, &bssIdx,
 					&beaconParams, &sendProbeReq, pMh);
-#endif
-
 	/* Obtain the Max Tx power for the current regulatory  */
 	regMax = cfg_get_regulatory_max_transmit_power(mac_ctx,
 					session->currentOperChannel);

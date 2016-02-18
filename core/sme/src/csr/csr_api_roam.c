@@ -1344,10 +1344,8 @@ static void init_config_param(tpAniSirGlobal pMac)
 	pMac->roam.configParam.neighborRoamConfig.nRoamBmissFirstBcnt = 10;
 	pMac->roam.configParam.neighborRoamConfig.nRoamBmissFinalBcnt = 10;
 	pMac->roam.configParam.neighborRoamConfig.nRoamBeaconRssiWeight = 14;
-#ifdef WLAN_FEATURE_11AC
 	pMac->roam.configParam.nVhtChannelWidth =
 		WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ + 1;
-#endif
 
 	pMac->roam.configParam.addTSWhenACMIsOff = 0;
 	pMac->roam.configParam.fScanTwice = false;
@@ -1625,7 +1623,6 @@ ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue)
 	case eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY:
 		phyCbState = PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
 		break;
-#ifdef WLAN_FEATURE_11AC
 	case eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
 		phyCbState = PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED;
 		break;
@@ -1648,7 +1645,6 @@ ePhyChanBondState csr_convert_cb_ini_value_to_phy_cb_state(uint32_t cbIniValue)
 	case eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
 		phyCbState = PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH;
 		break;
-#endif
 	default:
 		/* If an invalid value is passed, disable CHANNEL BONDING */
 		phyCbState = PHY_SINGLE_CHANNEL_CENTERED;
@@ -1674,7 +1670,6 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
 		cbIniValue = eCSR_INI_DOUBLE_CHANNEL_LOW_PRIMARY;
 		break;
-#ifdef WLAN_FEATURE_11AC
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
 		cbIniValue =
 			eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED;
@@ -1699,7 +1694,6 @@ uint32_t csr_convert_phy_cb_state_to_ini_value(ePhyChanBondState phyCbState)
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
 		cbIniValue = eCSR_INI_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH;
 		break;
-#endif
 	default:
 		/* return some invalid value */
 		cbIniValue = eCSR_INI_CHANNEL_BONDING_STATE_MAX;
@@ -2001,7 +1995,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		/* BMPS_WORKAROUND_NOT_NEEDED */
 		pMac->roam.configParam.doBMPSWorkaround = 0;
 
-#ifdef WLAN_FEATURE_11AC
 		pMac->roam.configParam.nVhtChannelWidth =
 			pParam->nVhtChannelWidth;
 		pMac->roam.configParam.txBFEnable = pParam->enableTxBF;
@@ -2014,7 +2007,6 @@ QDF_STATUS csr_change_default_config_param(tpAniSirGlobal pMac,
 		pMac->roam.configParam.txMuBformee = pParam->enableMuBformee;
 		pMac->roam.configParam.enableVhtpAid = pParam->enableVhtpAid;
 		pMac->roam.configParam.enableVhtGid = pParam->enableVhtGid;
-#endif
 		pMac->roam.configParam.enableAmpduPs = pParam->enableAmpduPs;
 		pMac->roam.configParam.enableHtSmps = pParam->enableHtSmps;
 		pMac->roam.configParam.htSmps = pParam->htSmps;
@@ -2174,7 +2166,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	qdf_mem_copy(&pParam->neighborRoamConfig,
 		     &cfg_params->neighborRoamConfig,
 		     sizeof(tCsrNeighborRoamConfigParams));
-#ifdef WLAN_FEATURE_11AC
 	pParam->nVhtChannelWidth = cfg_params->nVhtChannelWidth;
 	pParam->enableTxBF = cfg_params->txBFEnable;
 	pParam->enable_txbf_sap_mode =
@@ -2184,7 +2175,6 @@ QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam)
 	pParam->enableVhtFor24GHz = cfg_params->enableVhtFor24GHz;
 	pParam->ignore_peer_erp_info = cfg_params->ignore_peer_erp_info;
 	pParam->enable2x2 = cfg_params->enable2x2;
-#endif
 	qdf_mem_copy(&cfg_params->csr11rConfig, &pParam->csr11rConfig,
 		     sizeof(tCsr11rConfigParams));
 	pParam->isFastTransitionEnabled = cfg_params->isFastTransitionEnabled;
@@ -4166,7 +4156,6 @@ uint32_t csr_roam_get_phy_mode_from_dot11_mode(eCsrCfgDot11Mode dot11Mode,
 	return WNI_CFG_PHY_MODE_11A;
 }
 
-#ifdef WLAN_FEATURE_11AC
 ePhyChanBondState csr_get_htcb_state_from_vhtcb_state(ePhyChanBondState aniCBMode)
 {
 	switch (aniCBMode) {
@@ -4183,7 +4172,6 @@ ePhyChanBondState csr_get_htcb_state_from_vhtcb_state(ePhyChanBondState aniCBMod
 		return PHY_SINGLE_CHANNEL_CENTERED;
 	}
 }
-#endif
 
 /* pIes may be NULL */
 QDF_STATUS csr_roam_set_bss_config_cfg(tpAniSirGlobal pMac, uint32_t sessionId,
@@ -5690,12 +5678,10 @@ static void csr_roam_copy_ht_profile(tCsrRoamHTProfile *dst_profile,
 		src_profile->htRecommendedTxWidthSet;
 	dst_profile->htSecondaryChannelOffset =
 		src_profile->htSecondaryChannelOffset;
-#ifdef WLAN_FEATURE_11AC
 	dst_profile->vhtCapability = src_profile->vhtCapability;
 	dst_profile->vhtTxChannelWidthSet = src_profile->vhtTxChannelWidthSet;
 	dst_profile->apCenterChan = src_profile->apCenterChan;
 	dst_profile->apChanWidth = src_profile->apChanWidth;
-#endif
 }
 #endif
 
@@ -11587,7 +11573,6 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 		*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		*band = CSR_GET_BAND(opr_ch);
 		break;
-#ifdef WLAN_FEATURE_11AC
 	case eCSR_CFG_DOT11_MODE_11AC:
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			/*
@@ -11620,9 +11605,7 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 		}
 		*band = CSR_GET_BAND(opr_ch);
 		break;
-#endif
 	case eCSR_CFG_DOT11_MODE_AUTO:
-#ifdef WLAN_FEATURE_11AC
 		if (IS_FEATURE_SUPPORTED_BY_FW(DOT11AC)) {
 			/*
 			 * If the operating channel is in 2.4 GHz band,
@@ -11638,9 +11621,6 @@ csr_compute_mode_and_band(tpAniSirGlobal mac_ctx,
 		} else {
 			*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
 		}
-#else
-		*dot11_mode = eCSR_CFG_DOT11_MODE_11N;
-#endif
 		*band = CSR_GET_BAND(opr_ch);
 		break;
 	default:
@@ -11760,10 +11740,7 @@ csr_roam_get_phy_mode_band_for_bss(tpAniSirGlobal mac_ctx,
 		&& (profile->EncryptionType.encryptionType[0] ==
 		eCSR_ENCRYPT_TYPE_NONE)))
 		&& ((eCSR_CFG_DOT11_MODE_11N == cfg_dot11_mode) ||
-#ifdef WLAN_FEATURE_11AC
-	     (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode)
-#endif
-	     )) {
+	     (eCSR_CFG_DOT11_MODE_11AC == cfg_dot11_mode))) {
 		/* We cannot do 11n here */
 		if (CDS_IS_CHANNEL_24GHZ(opr_chn))
 			cfg_dot11_mode = eCSR_CFG_DOT11_MODE_11G;
@@ -13800,7 +13777,6 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 		qdf_mem_copy(&csr_join_req->htConfig,
 				&pSession->htConfig, sizeof(tSirHTConfig));
-#ifdef WLAN_FEATURE_11AC
 		csr_join_req->txBFIniFeatureEnabled =
 				(uint8_t) pMac->roam.configParam.txBFEnable;
 
@@ -13827,7 +13803,6 @@ QDF_STATUS csr_send_join_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		csr_join_req->enableVhtGid =
 			(uint8_t) pMac->roam.configParam.enableVhtGid;
 
-#endif
 		csr_join_req->enableAmpduPs =
 			(uint8_t) pMac->roam.configParam.enableAmpduPs;
 

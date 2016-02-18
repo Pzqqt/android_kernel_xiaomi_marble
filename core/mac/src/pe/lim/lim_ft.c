@@ -517,7 +517,6 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		pBeaconStruct->HTInfo.secondaryChannelOffset;
 	sta_ctx = &pAddBssParams->staContext;
 
-#ifdef WLAN_FEATURE_11AC
 	if (pftSessionEntry->vhtCapability &&
 	    pftSessionEntry->vhtCapabilityPresentInBeacon) {
 		pAddBssParams->vhtCapable = pBeaconStruct->VHTCaps.present;
@@ -573,7 +572,6 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	} else {
 		pAddBssParams->vhtCapable = 0;
 	}
-#endif
 
 	lim_log(pMac, LOG1, FL("SIR_HAL_ADD_BSS_REQ with channel = %d..."),
 		pAddBssParams->currentOperChannel);
@@ -683,20 +681,12 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		    && (pftSessionEntry->isOSENConnection))
 			pAddBssParams->staContext.wpa_rsn = 1;
 		/* Update the rates */
-#ifdef WLAN_FEATURE_11AC
 		lim_populate_peer_rate_set(pMac,
 					   &pAddBssParams->staContext.
 					   supportedRates,
 					   pBeaconStruct->HTCaps.supportedMCSSet,
 					   false, pftSessionEntry,
 					   &pBeaconStruct->VHTCaps);
-#else
-		lim_populate_peer_rate_set(pMac,
-					   &pAddBssParams->staContext.
-					   supportedRates,
-					   beaconStruct.HTCaps.supportedMCSSet,
-					   false, pftSessionEntry);
-#endif
 		if (pftSessionEntry->htCapability) {
 			pAddBssParams->staContext.supportedRates.opRateMode =
 				eSTA_11n;
@@ -834,8 +824,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->htRecommendedTxWidthSet =
 		pftSessionEntry->htSupportedChannelWidthSet;
 
-
-#ifdef WLAN_FEATURE_11AC
 	if (IS_BSS_VHT_CAPABLE(pBeaconStruct->VHTCaps) &&
 		pBeaconStruct->VHTOperation.present &&
 		pftSessionEntry->vhtCapability) {
@@ -843,7 +831,6 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	} else {
 		pftSessionEntry->vhtCapabilityPresentInBeacon = 0;
 	}
-#endif
 	if (pftSessionEntry->htRecommendedTxWidthSet) {
 		pftSessionEntry->ch_width = CH_WIDTH_40MHZ;
 		if (pftSessionEntry->vhtCapabilityPresentInBeacon &&

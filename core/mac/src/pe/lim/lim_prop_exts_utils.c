@@ -111,7 +111,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		else
 			mac_ctx->lim.htCapabilityPresentInBeacon = 0;
 
-#ifdef WLAN_FEATURE_11AC
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
 			  "beacon.VHTCaps.present = %d BSS_VHT_Capable:%d",
 			  beacon_struct->VHTCaps.present,
@@ -195,7 +194,6 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 				lim_log(mac_ctx, LOGP,
 					FL("Set VHT_SU_BEAMFORMEE_CAP Fail"));
 		}
-#endif
 		/* Extract the UAPSD flag from WMM Parameter element */
 		if (beacon_struct->wmeEdcaPresent)
 			*uapsd = beacon_struct->edcaParams.qosInfo.uapsd;
@@ -240,24 +238,18 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode)
 {
 	switch (aniCBMode) {
-#ifdef WLAN_FEATURE_11AC
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW:
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_CENTERED:
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH:
-#endif
 	case PHY_DOUBLE_CHANNEL_HIGH_PRIMARY:
 		return PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
-#ifdef WLAN_FEATURE_11AC
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW:
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_CENTERED:
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH:
-#endif
 	case PHY_DOUBLE_CHANNEL_LOW_PRIMARY:
 		return PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
-#ifdef WLAN_FEATURE_11AC
 	case PHY_QUADRUPLE_CHANNEL_20MHZ_CENTERED_40MHZ_CENTERED:
 		return PHY_SINGLE_CHANNEL_CENTERED;
-#endif
 	default:
 		return PHY_SINGLE_CHANNEL_CENTERED;
 	}
@@ -284,10 +276,8 @@ tStaRateMode lim_get_sta_peer_type(tpAniSirGlobal pMac,
 				   tpDphHashNode pStaDs, tpPESession psessionEntry)
 {
 	tStaRateMode staPeerType = eSTA_11b;
-#ifdef WLAN_FEATURE_11AC
 	if (pStaDs->mlmStaContext.vhtCapability)
 		staPeerType = eSTA_11ac;
-#endif
 	else if (pStaDs->mlmStaContext.htCapability)
 		staPeerType = eSTA_11n;
 	else if (pStaDs->erpEnabled)

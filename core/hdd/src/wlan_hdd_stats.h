@@ -35,7 +35,6 @@
 #define MAX_HT_MCS_IDX 8
 #define MAX_VHT_MCS_IDX 10
 
-#ifdef WLAN_FEATURE_11AC
 #define DATA_RATE_11AC_MCS_MASK    0x03
 
 /* LL stats get request time out value */
@@ -68,7 +67,6 @@ enum eDataRate11ACMaxMcs{
 	DATA_RATE_11AC_MAX_MCS_9,
 	DATA_RATE_11AC_MAX_MCS_NA
 };
-#endif /* End of WLAN_FEATURE_11AC */
 
 /**
  * struct index_data_rate_type - non vht data rate type
