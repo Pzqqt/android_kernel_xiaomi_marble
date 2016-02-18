@@ -470,6 +470,8 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 
 	resp_event = param_buf->fixed_param;
 
+	WMA_LOGD("%s", __func__);
+
 	/* Check for valid handle to ensure session is not
 	 * deleted in any race
 	 */

@@ -978,7 +978,8 @@ void sme_register_hw_mode_trans_cb(tHalHandle hal,
 		hw_mode_transition_cb callback);
 QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
 				uint8_t  new_nss, void *cback,
-				uint8_t next_action, void *hdd_context);
+				uint8_t next_action, void *hdd_context,
+				enum sir_conn_update_reason reason);
 
 typedef void (*sme_peer_authorized_fp) (uint32_t vdev_id);
 QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,

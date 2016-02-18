@@ -95,29 +95,29 @@ typedef uint8_t tSirVersionString[SIR_VERSION_STRING_LEN];
 #define MAX_VDEV_SUPPORTED                        4
 
 /**
- * enum cds_conn_update_reason: Reason for conc connection update
- * @CDS_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
- * @CDS_UPDATE_REASON_JOIN_IBSS: Join IBSS
- * @CDS_UPDATE_REASON_UT: Unit test related
- * @CDS_UPDATE_REASON_START_AP: Start AP
- * @CDS_UPDATE_REASON_NORMAL_STA: Connection to Normal STA
- * @CDS_UPDATE_REASON_HIDDEN_STA: Connection to Hidden STA
- * @CDS_UPDATE_REASON_OPPORTUNISTIC: Opportunistic HW mode update
- * @CDS_UPDATE_REASON_NSS_UPDATE: NSS update
- * @CDS_UPDATE_REASON_CHANNEL_SWITCH: Channel switch
- * @CDS_UPDATE_REASON_CHANNEL_SWITCH_STA: Channel switch for STA
+ * enum sir_conn_update_reason: Reason for conc connection update
+ * @SIR_UPDATE_REASON_SET_OPER_CHAN: Set probable operating channel
+ * @SIR_UPDATE_REASON_JOIN_IBSS: Join IBSS
+ * @SIR_UPDATE_REASON_UT: Unit test related
+ * @SIR_UPDATE_REASON_START_AP: Start AP
+ * @SIR_UPDATE_REASON_NORMAL_STA: Connection to Normal STA
+ * @SIR_UPDATE_REASON_HIDDEN_STA: Connection to Hidden STA
+ * @SIR_UPDATE_REASON_OPPORTUNISTIC: Opportunistic HW mode update
+ * @SIR_UPDATE_REASON_NSS_UPDATE: NSS update
+ * @SIR_UPDATE_REASON_CHANNEL_SWITCH: Channel switch
+ * @SIR_UPDATE_REASON_CHANNEL_SWITCH_STA: Channel switch for STA
  */
-enum cds_conn_update_reason {
-	CDS_UPDATE_REASON_SET_OPER_CHAN,
-	CDS_UPDATE_REASON_JOIN_IBSS,
-	CDS_UPDATE_REASON_UT,
-	CDS_UPDATE_REASON_START_AP,
-	CDS_UPDATE_REASON_NORMAL_STA,
-	CDS_UPDATE_REASON_HIDDEN_STA,
-	CDS_UPDATE_REASON_OPPORTUNISTIC,
-	CDS_UPDATE_REASON_NSS_UPDATE,
-	CDS_UPDATE_REASON_CHANNEL_SWITCH,
-	CDS_UPDATE_REASON_CHANNEL_SWITCH_STA,
+enum sir_conn_update_reason {
+	SIR_UPDATE_REASON_SET_OPER_CHAN,
+	SIR_UPDATE_REASON_JOIN_IBSS,
+	SIR_UPDATE_REASON_UT,
+	SIR_UPDATE_REASON_START_AP,
+	SIR_UPDATE_REASON_NORMAL_STA,
+	SIR_UPDATE_REASON_HIDDEN_STA,
+	SIR_UPDATE_REASON_OPPORTUNISTIC,
+	SIR_UPDATE_REASON_NSS_UPDATE,
+	SIR_UPDATE_REASON_CHANNEL_SWITCH,
+	SIR_UPDATE_REASON_CHANNEL_SWITCH_STA,
 };
 
 typedef enum {
@@ -472,7 +472,7 @@ typedef struct sSirSmeReadyReq {
 struct sir_hw_mode {
 	uint32_t hw_mode_index;
 	void *set_hw_mode_cb;
-	enum cds_conn_update_reason reason;
+	enum sir_conn_update_reason reason;
 	uint32_t session_id;
 };
 
@@ -5203,7 +5203,7 @@ struct sir_beacon_tx_complete_rsp {
 };
 
 typedef void (*nss_update_cb)(void *context, uint8_t tx_status, uint8_t vdev_id,
-		uint8_t next_action);
+		uint8_t next_action, enum sir_conn_update_reason reason);
 
 /**
  * OCB structures

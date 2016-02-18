@@ -3999,7 +3999,7 @@ csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand,
 	case eCsrNextCheckAllowConc:
 		ret = cds_current_connections_update(pCommand->sessionId,
 					chan,
-					CDS_UPDATE_REASON_HIDDEN_STA);
+					SIR_UPDATE_REASON_HIDDEN_STA);
 		sms_log(mac_ctx, LOG1, FL("chan: %d session: %d status: %d"),
 					chan, pCommand->sessionId, ret);
 		if (mac_ctx->sme.saved_scan_cmd) {

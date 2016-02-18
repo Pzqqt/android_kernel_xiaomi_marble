@@ -164,6 +164,7 @@ struct s_nss_update_cmd {
 	void *nss_update_cb;
 	void *context;
 	uint8_t next_action;
+	enum sir_conn_update_reason reason;
 };
 
 typedef struct tagSmeCmd {

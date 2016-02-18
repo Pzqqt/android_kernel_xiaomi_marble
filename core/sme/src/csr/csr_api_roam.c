@@ -18718,7 +18718,7 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	/* For hidden SSID case, if there is any scan command pending
 	 * it needs to be cleared before issuing set HW mode
 	 */
-	if (command->u.set_hw_mode_cmd.reason == CDS_UPDATE_REASON_HIDDEN_STA) {
+	if (command->u.set_hw_mode_cmd.reason == SIR_UPDATE_REASON_HIDDEN_STA) {
 		sms_log(mac, LOGE, FL("clear any pending scan command"));
 		status = csr_scan_abort_mac_scan_not_for_connect(mac,
 				command->u.set_hw_mode_cmd.session_id);
@@ -18741,7 +18741,9 @@ void csr_process_set_hw_mode(tpAniSirGlobal mac, tSmeCmd *command)
 	cmd->set_hw.set_hw_mode_cb = command->u.set_hw_mode_cmd.set_hw_mode_cb;
 
 	sms_log(mac, LOG1,
-		FL("Posting eWNI_SME_SET_HW_MODE_REQ to PE"));
+		FL("Posting set hw mode req to PE session:%d reason:%d"),
+		command->u.set_hw_mode_cmd.session_id,
+		command->u.set_hw_mode_cmd.reason);
 
 	status = cds_send_mb_message_to_mac(cmd);
 	if (QDF_STATUS_SUCCESS != status) {

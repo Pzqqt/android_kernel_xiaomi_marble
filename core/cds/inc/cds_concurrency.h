@@ -596,7 +596,7 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id);
 QDF_STATUS cds_decr_connection_count(uint32_t vdev_id);
 QDF_STATUS cds_current_connections_update(uint32_t session_id,
 				uint8_t channel,
-				enum cds_conn_update_reason);
+				enum sir_conn_update_reason);
 bool cds_is_ibss_conn_exist(uint8_t *ibss_channel);
 #ifdef MPC_UT_FRAMEWORK
 QDF_STATUS cds_incr_connection_count_utfw(
@@ -652,11 +652,11 @@ QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs,
-		enum cds_conn_update_reason reason);
+		enum sir_conn_update_reason reason);
 enum cds_conc_next_action cds_need_opportunistic_upgrade(void);
 QDF_STATUS cds_next_actions(uint32_t session_id,
 		enum cds_conc_next_action action,
-		enum cds_conn_update_reason reason);
+		enum sir_conn_update_reason reason);
 void cds_set_dual_mac_scan_config(uint8_t dbs_val,
 		uint8_t dbs_plus_agile_scan_val,
 		uint8_t single_mac_scan_with_dbs_val);

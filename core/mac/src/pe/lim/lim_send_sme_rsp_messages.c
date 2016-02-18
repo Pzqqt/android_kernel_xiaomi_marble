@@ -2078,6 +2078,17 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		chnl_switch_info =
 			&session_entry->gLimWiderBWChannelSwitch;
 
+		lim_log(mac_ctx, LOG1,
+			FL("vht:%d ht:%d flag:%x chan:%d seg1:%d seg2:%d width:%d country:%s class:%d"),
+			session_entry->vhtCapability,
+			session_entry->htSupportedChannelWidthSet,
+			csa_params->ies_present_flag,
+			csa_params->channel, csa_params->new_ch_freq_seg1,
+			csa_params->new_ch_freq_seg2,
+			csa_params->new_ch_width,
+			mac_ctx->scan.countryCodeCurrent,
+			csa_params->new_op_class);
+
 		if (session_entry->vhtCapability &&
 				session_entry->htSupportedChannelWidthSet) {
 			if (csa_params->ies_present_flag & lim_wbw_ie_present) {
@@ -2191,8 +2202,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			}
 
 		}
-		lim_log(mac_ctx, LOG1, FL("new ch width = %d"),
-			session_entry->gLimChannelSwitch.ch_width);
+		lim_log(mac_ctx, LOG1, FL("new ch width = %d space:%d"),
+			session_entry->gLimChannelSwitch.ch_width, chan_space);
 
 		lim_prepare_for11h_channel_switch(mac_ctx, session_entry);
 		csa_offload_ind = qdf_mem_malloc(sizeof(tSmeCsaOffloadInd));
@@ -2468,6 +2479,11 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 			FL("Session Does not exist for given sessionID"));
 		return;
 	}
+
+	lim_log(pMac, LOG1, FL("role:%d swIe:%d opIe:%d"),
+		GET_LIM_SYSTEM_ROLE(psessionEntry),
+		psessionEntry->dfsIncludeChanSwIe,
+		psessionEntry->gLimOperatingMode.present);
 
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    true == psessionEntry->dfsIncludeChanSwIe) {

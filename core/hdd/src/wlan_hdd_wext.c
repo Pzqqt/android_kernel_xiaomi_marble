@@ -7778,7 +7778,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 					HW_MODE_SS_0x0, HW_MODE_BW_NONE,
 					HW_MODE_DBS_NONE,
 					HW_MODE_AGILE_DFS_NONE,
-					CDS_UPDATE_REASON_UT);
+					SIR_UPDATE_REASON_UT);
 		} else if (apps_args[0] == 1) {
 			hddLog(LOGE,
 				FL("set hw mode for dual mac\n"));
@@ -7789,7 +7789,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 					HW_MODE_SS_1x1, HW_MODE_40_MHZ,
 					HW_MODE_DBS,
 					HW_MODE_AGILE_DFS_NONE,
-					CDS_UPDATE_REASON_UT);
+					SIR_UPDATE_REASON_UT);
 		}
 	}
 	break;
@@ -7801,7 +7801,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			FL("<iwpriv wlan0 pm_query_action> is called\n"));
 		action = cds_current_connections_update(pAdapter->sessionId,
 						apps_args[0],
-						CDS_UPDATE_REASON_UT);
+						SIR_UPDATE_REASON_UT);
 		pr_info("next action is %d {HDD_NOP = 0, HDD_DBS, HDD_DBS_DOWNGRADE, HDD_MCC, HDD_MCC_UPGRADE}", action);
 	}
 	break;

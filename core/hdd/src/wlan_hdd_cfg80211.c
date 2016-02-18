@@ -4243,7 +4243,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 
 		ret = cds_current_connections_update(adapter->sessionId,
 					channel_hint,
-					CDS_UPDATE_REASON_SET_OPER_CHAN);
+					SIR_UPDATE_REASON_SET_OPER_CHAN);
 		if (QDF_STATUS_E_FAILURE == ret) {
 			/* return in the failure case */
 			hdd_err("ERROR: connections update failed!!");
@@ -9351,7 +9351,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 
 		status = cds_current_connections_update(pAdapter->sessionId,
 						channelNum,
-						CDS_UPDATE_REASON_JOIN_IBSS);
+						SIR_UPDATE_REASON_JOIN_IBSS);
 		if (QDF_STATUS_E_FAILURE == status) {
 			hdd_err("ERROR: connections update failed!!");
 			return -EINVAL;

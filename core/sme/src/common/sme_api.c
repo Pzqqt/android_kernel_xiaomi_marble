@@ -153,7 +153,7 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 	bool found;
 	hw_mode_cb callback = NULL;
 	struct sir_set_hw_mode_resp *param;
-	enum cds_conn_update_reason reason;
+	enum sir_conn_update_reason reason;
 	tSmeCmd *saved_cmd;
 	tCsrRoamInfo roam_info = {0};
 	QDF_STATUS status;
@@ -187,11 +187,16 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 
 	callback = command->u.set_hw_mode_cmd.set_hw_mode_cb;
 	reason = command->u.set_hw_mode_cmd.reason;
+
+	sms_log(mac, LOG1, FL("reason:%d session:%d"),
+		command->u.set_hw_mode_cmd.reason,
+		command->u.set_hw_mode_cmd.session_id);
+
 	if (callback) {
 		if (!param) {
 			sms_log(mac, LOGE,
 			    FL("Callback failed since HW mode params is NULL"));
-		} else if (reason == CDS_UPDATE_REASON_HIDDEN_STA) {
+		} else if (reason == SIR_UPDATE_REASON_HIDDEN_STA) {
 			/* In the case of hidden SSID, connection update
 			 * (set hw mode) is done after the scan with reason
 			 * code eCsrScanForSsid completes. The connect/failure
@@ -229,13 +234,13 @@ static QDF_STATUS sme_process_set_hw_mode_resp(tpAniSirGlobal mac, uint8_t *msg)
 				saved_cmd = NULL;
 				mac->sme.saved_scan_cmd = NULL;
 			}
-		} else if (reason == CDS_UPDATE_REASON_CHANNEL_SWITCH) {
+		} else if (reason == SIR_UPDATE_REASON_CHANNEL_SWITCH) {
 			csr_roam_call_callback(mac,
 					command->u.set_hw_mode_cmd.session_id,
 					&roam_info, 0,
 					eCSR_ROAM_STATUS_UPDATE_HW_MODE,
 					eCSR_ROAM_RESULT_UPDATE_HW_MODE);
-		} else if (reason == CDS_UPDATE_REASON_CHANNEL_SWITCH_STA) {
+		} else if (reason == SIR_UPDATE_REASON_CHANNEL_SWITCH_STA) {
 			struct sir_saved_csa_params *msg;
 
 			sms_log(mac, LOG1, FL("process channel switch sta"));
@@ -2772,7 +2777,8 @@ QDF_STATUS sme_process_nss_update_resp(tpAniSirGlobal mac, uint8_t *msg)
 			callback(command->u.nss_update_cmd.context,
 				param->tx_status,
 				param->session_id,
-				command->u.nss_update_cmd.next_action);
+				command->u.nss_update_cmd.next_action,
+				command->u.nss_update_cmd.reason);
 		}
 	} else {
 		sms_log(mac, LOGE, FL("Callback does not exisit"));
@@ -14460,7 +14466,10 @@ QDF_STATUS sme_soc_set_hw_mode(tHalHandle hal,
 	cmd->u.set_hw_mode_cmd.reason = msg.reason;
 	cmd->u.set_hw_mode_cmd.session_id = msg.session_id;
 
-	sms_log(mac, LOG1, FL("Queuing e_sme_command_set_hw_mode to CSR"));
+	sms_log(mac, LOG1,
+		FL("Queuing set hw mode to CSR, session:%d reason:%d"),
+		cmd->u.set_hw_mode_cmd.session_id,
+		cmd->u.set_hw_mode_cmd.reason);
 	csr_queue_sme_command(mac, cmd, false);
 
 	sme_release_global_lock(&mac->sme);
@@ -14500,7 +14509,8 @@ void sme_register_hw_mode_trans_cb(tHalHandle hal,
  */
 QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
 				uint8_t  new_nss, void *cback, uint8_t next_action,
-				void *hdd_context)
+				void *hdd_context,
+				enum sir_conn_update_reason reason)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal mac = PMAC_STRUCT(hHal);
@@ -14522,6 +14532,7 @@ QDF_STATUS sme_nss_update_request(tHalHandle hHal, uint32_t vdev_id,
 		cmd->u.nss_update_cmd.nss_update_cb = cback;
 		cmd->u.nss_update_cmd.context = hdd_context;
 		cmd->u.nss_update_cmd.next_action = next_action;
+		cmd->u.nss_update_cmd.reason = reason;
 
 		sms_log(mac, LOG1, FL("Queuing e_sme_command_nss_update to CSR"));
 		csr_queue_sme_command(mac, cmd, false);
