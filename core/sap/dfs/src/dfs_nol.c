@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,7 +27,7 @@
 
 /*===========================================================================
 
-                     dfs_nol.c
+			dfs_nol.c
 
    OVERVIEW:
 
@@ -41,7 +41,7 @@
 
 /*===========================================================================
 
-                      EDIT HISTORY FOR FILE
+			EDIT HISTORY FOR FILE
 
    This section contains comments describing changes made to the module.
    Notice that changes are listed in reverse chronological order.
@@ -63,7 +63,7 @@
 #if defined(ATH_SUPPORT_DFS) && !defined(ATH_DFS_RADAR_DETECTION_ONLY)
 #include "dfs_ioctl.h"
 #include "dfs_ioctl_private.h"
-#include "cdf_time.h"           /* cdf_time_t, cdf_system_time_after */
+#include "qdf_time.h"           /* qdf_time_t, qdf_system_time_after */
 
 static void
 dfs_nol_delete(struct ath_dfs *dfs, uint16_t delfreq, uint16_t delchwidth);
@@ -113,7 +113,7 @@ void dfs_print_nol(struct ath_dfs *dfs)
 	DFS_DPRINTK(dfs, ATH_DEBUG_DFS_NOL, "%s: NOL", __func__);
 	while (nol != NULL) {
 		diff_ms =
-			cdf_system_ticks_to_msecs(cdf_system_ticks() -
+			qdf_system_ticks_to_msecs(qdf_system_ticks() -
 						  nol->nol_start_ticks);
 		diff_ms = (nol->nol_timeout_ms - diff_ms);
 		remaining_sec = diff_ms / 1000; /* convert to seconds */
@@ -160,7 +160,7 @@ void dfs_set_nol(struct ath_dfs *dfs, struct dfsreq_nolelem *dfs_nol, int nchan)
 
 	for (i = 0; i < nchan; i++) {
 		nol_time_left_ms =
-			cdf_system_ticks_to_msecs(cdf_system_ticks() -
+			qdf_system_ticks_to_msecs(qdf_system_ticks() -
 						  dfs_nol[i].nol_start_ticks);
 		if (nol_time_left_ms < dfs_nol[i].nol_timeout_ms) {
 			chan.ic_freq = dfs_nol[i].nol_freq;
@@ -198,7 +198,7 @@ dfs_nol_addchan(struct ath_dfs *dfs, struct dfs_ieee80211_channel *chan,
 	while (nol != NULL) {
 		if ((nol->nol_freq == chan->ic_freq) &&
 		    (nol->nol_chwidth == ch_width)) {
-			nol->nol_start_ticks = cdf_system_ticks();
+			nol->nol_start_ticks = qdf_system_ticks();
 			nol->nol_timeout_ms = dfs_nol_timeout * TIME_IN_MS;
 			DFS_DPRINTK(dfs, ATH_DEBUG_DFS_NOL,
 				    "%s: Update OS Ticks for NOL %d MHz / %d MHz",
@@ -228,7 +228,7 @@ dfs_nol_addchan(struct ath_dfs *dfs, struct dfs_ieee80211_channel *chan,
 	}
 	elem->nol_freq = chan->ic_freq;
 	elem->nol_chwidth = ch_width;
-	elem->nol_start_ticks = cdf_system_ticks();
+	elem->nol_start_ticks = qdf_system_ticks();
 	elem->nol_timeout_ms = dfs_nol_timeout * TIME_IN_MS;
 	elem->nol_next = NULL;
 	if (prev) {
@@ -285,8 +285,8 @@ dfs_nol_delete(struct ath_dfs *dfs, uint16_t delfreq, uint16_t delchwidth)
 			DFS_DPRINTK(dfs, ATH_DEBUG_DFS_NOL,
 				    "%s removing channel %d/%dMHz from NOL tstamp=%d",
 				    __func__, nol->nol_freq, nol->nol_chwidth,
-				    (cdf_system_ticks_to_msecs
-					     (cdf_system_ticks()) / 1000));
+				    (qdf_system_ticks_to_msecs
+					     (qdf_system_ticks()) / 1000));
 			OS_CANCEL_TIMER(&nol->nol_timer);
 			OS_FREE(nol);
 			nol = NULL;

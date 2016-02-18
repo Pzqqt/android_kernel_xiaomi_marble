@@ -30,7 +30,7 @@
 #include <cdf_util.h>           /* cdf_assert */
 #include <cdf_lock.h>           /* cdf_spinlock */
 #ifdef QCA_COMPUTE_TX_DELAY
-#include <cdf_time.h>           /* cdf_system_ticks */
+#include <qdf_time.h>           /* qdf_system_ticks */
 #endif
 
 #include <ol_htt_tx_api.h>      /* htt_tx_desc_id */
@@ -79,7 +79,7 @@ static inline void ol_tx_desc_compute_delay(struct ol_tx_desc_t *tx_desc)
 				   __func__, tx_desc->entry_timestamp_ticks);
 		cdf_assert(0);
 	}
-	tx_desc->entry_timestamp_ticks = cdf_system_ticks();
+	tx_desc->entry_timestamp_ticks = qdf_system_ticks();
 }
 static inline void ol_tx_desc_reset_timestamp(struct ol_tx_desc_t *tx_desc)
 {

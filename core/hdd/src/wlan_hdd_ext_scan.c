@@ -544,7 +544,7 @@ wlan_hdd_cfg80211_extscan_hotlist_match_ind(void *ctx,
 			data->ap_found);
 
 	for (i = 0; i < data->numOfAps; i++) {
-		data->ap[i].ts = cdf_get_monotonic_boottime();
+		data->ap[i].ts = qdf_get_monotonic_boottime();
 
 		hddLog(LOG1, "[i=%d] Timestamp %llu "
 		       "Ssid: %s "
@@ -3256,7 +3256,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	pHddCtx->ext_scan_start_since_boot = cdf_get_monotonic_boottime();
+	pHddCtx->ext_scan_start_since_boot = qdf_get_monotonic_boottime();
 	hddLog(LOG1, FL("Timestamp since boot: %llu"),
 			pHddCtx->ext_scan_start_since_boot);
 

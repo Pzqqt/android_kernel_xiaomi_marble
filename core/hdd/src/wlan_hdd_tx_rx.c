@@ -1044,7 +1044,7 @@ void wlan_hdd_netif_queue_control(hdd_adapter_t *adapter,
 	wlan_hdd_update_queue_oper_stats(adapter, action, reason);
 
 	adapter->queue_oper_history[adapter->history_index].time =
-							cdf_system_ticks();
+							qdf_system_ticks();
 	adapter->queue_oper_history[adapter->history_index].netif_action =
 									action;
 	adapter->queue_oper_history[adapter->history_index].netif_reason =

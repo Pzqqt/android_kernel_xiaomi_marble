@@ -70,7 +70,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		wmi_command_log_buffer[g_wmi_command_buf_idx].command = a;	\
 		cdf_mem_copy(wmi_command_log_buffer[g_wmi_command_buf_idx].data, b, 16); \
 		wmi_command_log_buffer[g_wmi_command_buf_idx].time =		\
-			cdf_get_log_timestamp();					\
+			qdf_get_log_timestamp();					\
 		g_wmi_command_buf_idx++;					\
 }
 
@@ -81,7 +81,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		cdf_mem_copy(wmi_command_tx_cmp_log_buffer			\
 			     [g_wmi_command_tx_cmp_buf_idx].data, b, 16);	     \
 		wmi_command_tx_cmp_log_buffer[g_wmi_command_tx_cmp_buf_idx].time = \
-			cdf_get_log_timestamp();					\
+			qdf_get_log_timestamp();					\
 		g_wmi_command_tx_cmp_buf_idx++;					\
 }
 
@@ -91,17 +91,17 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		wmi_event_log_buffer[g_wmi_event_buf_idx].event = a;		\
 		cdf_mem_copy(wmi_event_log_buffer[g_wmi_event_buf_idx].data, b, 16); \
 		wmi_event_log_buffer[g_wmi_event_buf_idx].time =		\
-			cdf_get_log_timestamp();					\
+			qdf_get_log_timestamp();					\
 		g_wmi_event_buf_idx++;						\
 }
 
-#define WMI_RX_EVENT_RECORD(a,b) {					\
+#define WMI_RX_EVENT_RECORD(a, b) {					\
 		if (WMI_EVENT_DEBUG_MAX_ENTRY <= g_wmi_rx_event_buf_idx)	\
 			g_wmi_rx_event_buf_idx = 0;					\
 		wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].event = a;	\
 		cdf_mem_copy(wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].data, b, 16); \
 		wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].time =		\
-			cdf_get_log_timestamp();					\
+			qdf_get_log_timestamp();					\
 		g_wmi_rx_event_buf_idx++;					\
 }
 /* wmi_mgmt commands */
@@ -130,7 +130,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 		wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data,\
 		b, 16);							     \
 	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].time =	     \
-		cdf_get_log_timestamp();				     \
+		qdf_get_log_timestamp();				     \
 	g_wmi_mgmt_command_buf_idx++;					     \
 }
 
@@ -144,7 +144,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 		     [g_wmi_mgmt_command_tx_cmp_buf_idx].data, b, 16);	     \
 	wmi_mgmt_command_tx_cmp_log_buffer[g_wmi_mgmt_command_tx_cmp_buf_idx].\
 									time =\
-		cdf_get_log_timestamp();				      \
+		qdf_get_log_timestamp();				      \
 	g_wmi_mgmt_command_tx_cmp_buf_idx++;				      \
 }
 
@@ -155,7 +155,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 	cdf_mem_copy(wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].data,\
 		     b, 16);						      \
 	wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].time =	      \
-		cdf_get_log_timestamp();				      \
+		qdf_get_log_timestamp();				      \
 	g_wmi_mgmt_event_buf_idx++;					      \
 }
 
@@ -168,7 +168,7 @@ int wmi_get_host_credits(wmi_unified_t wmi_handle);
 #ifdef MEMORY_DEBUG
 wmi_buf_t
 wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
-                    uint32_t line_num)
+		    uint32_t line_num)
 {
 	wmi_buf_t wmi_buf;
 
@@ -855,7 +855,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	SET_HTC_PACKET_INFO_TX(pkt,
 			       NULL,
 			       cdf_nbuf_data(buf), len + sizeof(WMI_CMD_HDR),
-	                       /* htt_host_data_dl_len(buf)+20 */
+				/* htt_host_data_dl_len(buf)+20 */
 			       wmi_handle->wmi_endpoint_id, htc_tag);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(pkt, buf);
@@ -883,7 +883,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 		pr_err("%s %d, htc_send_pkt failed\n", __func__, __LINE__);
 	}
 
-	return ((status == A_OK) ? EOK : -1);
+	return (status == A_OK) ? EOK : -1;
 }
 
 /* WMI Event handler register API */
@@ -928,8 +928,8 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 					 WMI_EVT_ID event_id)
 {
 	uint32_t idx = 0;
-	if ((idx =
-		     wmi_unified_get_event_handler_ix(wmi_handle, event_id)) == -1) {
+	idx = wmi_unified_get_event_handler_ix(wmi_handle, event_id);
+	if (idx == -1) {
 		printk("%s : event handler is not registered: event id 0x%x \n",
 		       __func__, event_id);
 		return -1;
@@ -1344,8 +1344,8 @@ wmi_unified_connect_htc_service(struct wmi_unified *wmi_handle,
 	/* connect to control service */
 	connect.service_id = WMI_CONTROL_SVC;
 
-	if ((status =
-		     htc_connect_service(htc_handle, &connect, &response)) != EOK) {
+	status = htc_connect_service(htc_handle, &connect, &response);
+	if (status != EOK) {
 		printk
 			(" Failed to connect to WMI CONTROL  service status:%d \n",
 			status);

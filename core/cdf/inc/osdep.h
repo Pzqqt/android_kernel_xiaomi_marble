@@ -31,7 +31,7 @@
 #include <cdf_types.h>
 #include <cdf_memory.h>
 #include <cdf_lock.h>
-#include <cdf_time.h>
+#include <qdf_time.h>
 #include <cdf_softirq_timer.h>
 #include <cdf_defer.h>
 #include <cdf_nbuf.h>
@@ -138,7 +138,7 @@ typedef struct hal_bus_context {
 /*
  * Normal Delay functions. Time specified in microseconds.
  */
-#define OS_DELAY(_us)                     cdf_udelay(_us)
+#define OS_DELAY(_us)                     qdf_udelay(_us)
 
 /*
  * memory data manipulation functions.
@@ -182,12 +182,12 @@ typedef struct hal_bus_context {
 /*
  * System time interface
  */
-typedef cdf_time_t systime_t;
-typedef cdf_time_t systick_t;
+typedef qdf_time_t systime_t;
+typedef qdf_time_t systick_t;
 
-static INLINE cdf_time_t os_get_timestamp(void)
+static INLINE qdf_time_t os_get_timestamp(void)
 {
-	return cdf_system_ticks();      /* Fix double conversion from jiffies to ms */
+	return qdf_system_ticks();      /* Fix double conversion from jiffies to ms */
 }
 
 struct _NIC_DEV;

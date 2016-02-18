@@ -27,7 +27,7 @@
 
 #include <cdf_atomic.h>         /* cdf_atomic_inc, etc. */
 #include <cdf_lock.h>           /* cdf_os_spinlock */
-#include <cdf_time.h>           /* cdf_system_ticks, etc. */
+#include <qdf_time.h>           /* qdf_system_ticks, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <cdf_net_types.h>      /* ADF_NBUF_TX_EXT_TID_INVALID */
 
@@ -655,7 +655,7 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 
 void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev, uint32_t interval)
 {
-	pdev->tx_delay.avg_period_ticks = cdf_system_msecs_to_ticks(interval);
+	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(interval);
 }
 
 void
@@ -707,7 +707,7 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
 			ol_tx_delay_avg(data->avgs.transmit_sum_ticks,
 					data->avgs.transmit_num);
 		*tx_delay_microsec =
-			cdf_system_ticks_to_msecs(avg_delay_ticks * 1000);
+			qdf_system_ticks_to_msecs(avg_delay_ticks * 1000);
 	} else {
 		/*
 		 * This case should only happen if there's a query
@@ -720,7 +720,7 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
 			ol_tx_delay_avg(data->avgs.queue_sum_ticks,
 					data->avgs.queue_num);
 		*queue_delay_microsec =
-			cdf_system_ticks_to_msecs(avg_delay_ticks * 1000);
+			qdf_system_ticks_to_msecs(avg_delay_ticks * 1000);
 	} else {
 		/*
 		 * This case should only happen if there's a query
@@ -889,7 +889,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		    uint16_t *desc_ids, int num_msdus)
 {
 	int i, index, cat;
-	uint32_t now_ticks = cdf_system_ticks();
+	uint32_t now_ticks = qdf_system_ticks();
 	uint32_t tx_delay_transmit_ticks, tx_delay_queue_ticks;
 	uint32_t avg_time_ticks;
 	struct ol_tx_delay_data *data;

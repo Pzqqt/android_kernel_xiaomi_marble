@@ -38,12 +38,12 @@
 #include <cdf_trace.h>
 #include <ani_global.h>
 #include <wlan_logging_sock_svc.h>
-#include "cdf_time.h"
+#include "qdf_time.h"
 /* Preprocessor definitions and constants */
 
 #define CDF_TRACE_BUFFER_SIZE (512)
 
-enum cdf_timestamp_unit cdf_log_timestamp_type = CDF_LOG_TIMESTAMP_UNIT;
+enum qdf_timestamp_unit qdf_log_timestamp_type = QDF_LOG_TIMESTAMP_UNIT;
 
 /* macro to map cdf trace levels into the bitmask */
 #define CDF_TRACE_LEVEL_TO_MODULE_BITMASK(_level) ((1 << (_level)))
@@ -539,7 +539,7 @@ void cdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
 	rec->code = code;
 	rec->session = session;
 	rec->data = data;
-	rec->time = cdf_get_log_timestamp();
+	rec->time = qdf_get_log_timestamp();
 	rec->module = module;
 	rec->pid = (in_interrupt() ? 0 : current->pid);
 	g_cdf_trace_data.numSinceLastDump++;
@@ -927,7 +927,7 @@ register_record:
 			break;
 		}
 	}
-	rec->time = cdf_get_log_timestamp();
+	rec->time = qdf_get_log_timestamp();
 	rec->pid = (in_interrupt() ? 0 : current->pid);
 	spin_unlock_bh(&l_dp_trace_lock);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -68,7 +68,7 @@
 #include <cdf_memory.h>
 #include <ol_rx_defrag.h>
 #include <enet.h>
-#include <cdf_time.h>           /* cdf_system_time */
+#include <qdf_time.h>           /* qdf_system_time */
 
 #define DEFRAG_IEEE80211_ADDR_EQ(a1, a2) \
 	(cdf_mem_compare(a1, a2, IEEE80211_ADDR_LEN) == 0)
@@ -279,7 +279,7 @@ ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 		peer->tids_rx_reorder[tid].defrag_timeout_ms = 0;
 		peer->tids_last_seq[tid] = seq_num;
 	} else if (pdev->rx.flags.defrag_timeout_check) {
-		uint32_t now_ms = cdf_system_ticks_to_msecs(cdf_system_ticks());
+		uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 
 		peer->tids_rx_reorder[tid].defrag_timeout_ms =
 			now_ms + pdev->rx.defrag.timeout_ms;
@@ -419,7 +419,7 @@ void ol_rx_defrag_waitlist_remove(struct ol_txrx_peer_t *peer, unsigned tid)
 void ol_rx_defrag_waitlist_flush(struct ol_txrx_pdev_t *pdev)
 {
 	struct ol_rx_reorder_t *rx_reorder, *tmp;
-	uint32_t now_ms = cdf_system_ticks_to_msecs(cdf_system_ticks());
+	uint32_t now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 
 	TAILQ_FOREACH_SAFE(rx_reorder, &pdev->rx.defrag.waitlist,
 			   defrag_waitlist_elem, tmp) {

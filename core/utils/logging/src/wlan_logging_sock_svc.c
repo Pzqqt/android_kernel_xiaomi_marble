@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,7 @@
 #include <cds_api.h>
 #include <wlan_logging_sock_svc.h>
 #include <kthread.h>
-#include <cdf_time.h>
+#include <qdf_time.h>
 #include <wlan_ptt_sock_svc.h>
 #include "pktlog_ac.h"
 #include <host_diag_core_event.h>
@@ -322,7 +322,7 @@ int wlan_log_to_user(CDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 		return 0;
 	}
 
-	ts = cdf_get_log_timestamp();
+	ts = qdf_get_log_timestamp();
 	tlen = wlan_add_user_log_time_stamp(tbuf, sizeof(tbuf), ts);
 
 	/* 1+1 indicate '\n'+'\0' */

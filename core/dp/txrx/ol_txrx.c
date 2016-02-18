@@ -874,11 +874,11 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	cdf_spinlock_init(&pdev->tx_delay.mutex);
 
 	/* initialize compute interval with 5 seconds (ESE default) */
-	pdev->tx_delay.avg_period_ticks = cdf_system_msecs_to_ticks(5000);
+	pdev->tx_delay.avg_period_ticks = qdf_system_msecs_to_ticks(5000);
 	{
 		uint32_t bin_width_1000ticks;
 		bin_width_1000ticks =
-			cdf_system_msecs_to_ticks
+			qdf_system_msecs_to_ticks
 				(QCA_TX_DELAY_HIST_INTERNAL_BIN_WIDTH_MS
 				 * 1000);
 		/*
@@ -1345,7 +1345,7 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 	if (wait_on_deletion) {
 		/* wait for peer deletion */
 		rc = qdf_wait_single_event(&vdev->wait_delete_comp,
-			cdf_system_msecs_to_ticks(PEER_DELETION_TIMEOUT));
+			qdf_system_msecs_to_ticks(PEER_DELETION_TIMEOUT));
 		if (!rc) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				"timedout waiting for peer(%d) deletion\n",

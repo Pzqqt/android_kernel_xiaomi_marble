@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,7 +29,7 @@
 /* generic utilities */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <cdf_softirq_timer.h>
-#include <cdf_time.h>
+#include <qdf_time.h>
 
 /* datapath internal interfaces */
 #include <ol_txrx_types.h>      /* ol_txrx_pdev_t, etc. */
@@ -91,7 +91,7 @@ ol_rx_reorder_timeout_add(struct ol_txrx_peer_t *peer, uint8_t tid)
 	list_elem->tid = tid;
 
 	/* set the expiration timestamp */
-	time_now_ms = cdf_system_ticks_to_msecs(cdf_system_ticks());
+	time_now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 	list_elem->timestamp_ms =
 		time_now_ms + rx_reorder_timeout_ac->duration_ms;
 
@@ -133,7 +133,7 @@ static void ol_rx_reorder_timeout(void *arg)
 	struct ol_tx_reorder_cat_timeout_t *rx_reorder_timeout_ac;
 
 	rx_reorder_timeout_ac = (struct ol_tx_reorder_cat_timeout_t *)arg;
-	time_now_ms = cdf_system_ticks_to_msecs(cdf_system_ticks());
+	time_now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 
 	pdev = rx_reorder_timeout_ac->pdev;
 	cdf_spin_lock(&pdev->rx.mutex);

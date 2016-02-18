@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -161,7 +161,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 			 */
 			msdu = mpdu;
 			current_time_ms =
-				cdf_system_ticks_to_msecs(cdf_system_ticks());
+				qdf_system_ticks_to_msecs(qdf_system_ticks());
 			if (TXRX_PN_CHECK_FAILURE_PRINT_PERIOD_MS <
 			    (current_time_ms - last_pncheck_print_time)) {
 				last_pncheck_print_time = current_time_ms;

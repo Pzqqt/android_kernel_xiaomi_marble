@@ -4443,7 +4443,7 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 		for (i = 0; i < WLAN_HDD_MAX_HISTORY_ENTRY; i++) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 				"%d: %u: %s: %s: %x",
-				i, cdf_system_ticks_to_msecs(
+				i, qdf_system_ticks_to_msecs(
 					adapter->queue_oper_history[i].time),
 				hdd_action_type_to_string(
 				adapter->queue_oper_history[i].netif_action),

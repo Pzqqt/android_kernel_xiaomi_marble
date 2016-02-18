@@ -1402,7 +1402,7 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 	uint32_t cur_ap_rssi;
 	uint32_t age_ticks = 0;
 	uint32_t limit_ticks =
-		cdf_system_msecs_to_ticks(ROAM_AP_AGE_LIMIT_MS);
+		qdf_system_msecs_to_ticks(ROAM_AP_AGE_LIMIT_MS);
 	uint8_t num_candidates = 0;
 	uint8_t num_dropped = 0;
 	/*

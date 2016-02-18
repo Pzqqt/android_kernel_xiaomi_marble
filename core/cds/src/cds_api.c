@@ -1663,7 +1663,7 @@ uint64_t cds_get_monotonic_boottime(void)
 	cnss_get_monotonic_boottime(&ts);
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 #else
-	return ((uint64_t)cdf_system_ticks_to_msecs(cdf_system_ticks()) *
+	return ((uint64_t)qdf_system_ticks_to_msecs(qdf_system_ticks()) *
 			 1000);
 #endif
 }

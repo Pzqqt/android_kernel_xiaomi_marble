@@ -806,7 +806,7 @@ struct hdd_netif_queue_stats {
  * @pause_map: pause map
  */
 struct hdd_netif_queue_history {
-	cdf_time_t time;
+	qdf_time_t time;
 	uint16_t netif_action;
 	uint16_t netif_reason;
 	uint32_t pause_map;

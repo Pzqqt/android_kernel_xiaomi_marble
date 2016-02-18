@@ -877,7 +877,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 			while (dbg_iter &&
 			       (!((*(uint32_t *) &rx_desc->attention) &
 				  RX_ATTENTION_0_MSDU_DONE_MASK))) {
-				cdf_mdelay(1);
+				qdf_mdelay(1);
 
 				cdf_invalidate_range((void *)rx_desc,
 						     (void *)((char *)rx_desc +

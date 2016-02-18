@@ -40,7 +40,7 @@
 #include <cdf_types.h>          /* cdf_dma_addr_t */
 #include <cdf_memory.h>         /* cdf_os_mem_alloc_consistent et al */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_time.h>           /* cdf_mdelay */
+#include <qdf_time.h>           /* qdf_mdelay */
 
 #include <htt.h>                /* htt_tx_msdu_desc_t */
 #include <htc.h>                /* HTC_HDR_LENGTH */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2005-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2005-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,7 +53,7 @@
 #include <cdf_util.h>           /* cdf_assert */
 #include <cdf_lock.h>           /* cdf_spinlock */
 #include <cds_queue.h>          /* TAILQ */
-#include <cdf_time.h>
+#include <qdf_time.h>
 #include <cdf_softirq_timer.h>
 #include <cdf_memory.h>
 #include <osdep.h>
