@@ -56,7 +56,6 @@ uint32_t limComputeAvg(tpAniSirGlobal, uint32_t, uint32_t);
 void lim_extract_ap_capability(tpAniSirGlobal, uint8_t *, uint16_t, uint8_t *,
 			       uint16_t *, uint8_t *, int8_t *, tpPESession);
 
-tStaRateMode lim_get_sta_peer_type(tpAniSirGlobal, tpDphHashNode, tpPESession);
 ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode);
 
 #endif /* __LIM_PROP_EXTS_UTILS_H */

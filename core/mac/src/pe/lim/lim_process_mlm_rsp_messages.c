@@ -2845,8 +2845,6 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
 	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfStaDot11Mode);
-	pAddStaParams->supportedRates.opRateMode =
-		lim_get_sta_rate_mode((uint8_t) selfStaDot11Mode);
 	pAddStaParams->encryptType = psessionEntry->encryptType;
 	pAddStaParams->maxTxPower = psessionEntry->maxTxPower;
 

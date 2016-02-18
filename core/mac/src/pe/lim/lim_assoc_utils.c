@@ -62,26 +62,6 @@
 #include "wma_types.h"
 #include "lim_types.h"
 
-/*
- * fill up the rate info properly based on what is actually supported by the peer
- * TBD TBD TBD
- */
-void
-lim_fill_supported_rates_info(tpAniSirGlobal pMac,
-			      tpDphHashNode pSta,
-			      tpSirSupportedRates pRates, tpPESession psessionEntry)
-{
-	/* pSta will be NULL for self entry, so get the opRateMode based on the self mode. */
-	/* For the peer entry get it from the peer Capabilities present in hash table */
-	if (pSta == NULL)
-		pRates->opRateMode =
-			lim_get_sta_rate_mode((uint8_t) psessionEntry->dot11mode);
-	else
-		pRates->opRateMode =
-			lim_get_sta_peer_type(pMac, pSta, psessionEntry);
-
-}
-
 /**
  * lim_cmp_ssid() - utility function to compare SSIDs
  * @rx_ssid: Received SSID
@@ -2260,9 +2240,6 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 		     &sta_ds->mlmStaContext.capabilityInfo,
 		     sizeof(add_sta_params->capab_info));
 
-	lim_fill_supported_rates_info(mac_ctx, sta_ds, &sta_ds->supportedRates,
-				      session_entry);
-
 	/* Copy legacy rates */
 	qdf_mem_copy((uint8_t *) &add_sta_params->supportedRates,
 		     (uint8_t *) &sta_ds->supportedRates,
@@ -3036,9 +3013,6 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 	if (QDF_P2P_CLIENT_MODE == psessionEntry->pePersona) {
 		pAddStaParams->p2pCapableSta = 1;
 	}
-
-	pAddStaParams->supportedRates.opRateMode =
-		lim_get_sta_rate_mode((uint8_t) selfStaDot11Mode);
 
 	lim_log(pMac, LOG2, FL(" StaIdx: %d updateSta = %d htcapable = %d "),
 		pAddStaParams->staIdx, pAddStaParams->updateSta,
@@ -4139,12 +4113,9 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	pStaDs = dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
 				&psessionEntry->dph.dphHashTable);
 	if (pStaDs != NULL) {
-		lim_fill_supported_rates_info(pMac, pStaDs,
-				&pStaDs->supportedRates,
-				psessionEntry);
 		qdf_mem_copy((uint8_t *) &pAddBssParams->staContext.
 				supportedRates,
-				(uint8_t *) &pStaDs->supportedRates,
+				(uint8_t *)&pStaDs->supportedRates,
 				sizeof(tSirSupportedRates));
 	} else
 		lim_log(pMac, LOGE, FL(
@@ -4661,10 +4632,6 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 			pBeaconStruct->HTCaps.supportedMCSSet,
 			false, psessionEntry,
 			&pBeaconStruct->VHTCaps);
-	lim_fill_supported_rates_info(pMac, NULL,
-			&pAddBssParams->staContext.
-			supportedRates, psessionEntry);
-
 
 	pAddBssParams->staContext.encryptType = psessionEntry->encryptType;
 
@@ -4794,31 +4761,6 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	}
 	lim_send_del_sta_cnf(pMac, sta_dsaddr, staDsAssocId, mlmStaContext,
 			     statusCode, psessionEntry);
-}
-
-/** -------------------------------------------------------------
-   \fn lim_get_sta_rate_mode
-   \brief Gets the Station Rate Mode.
-   \param     uint8_t dot11Mode
-   \return none
-   -------------------------------------------------------------*/
-tStaRateMode lim_get_sta_rate_mode(uint8_t dot11Mode)
-{
-	switch (dot11Mode) {
-	case WNI_CFG_DOT11_MODE_11A:
-		return eSTA_11a;
-	case WNI_CFG_DOT11_MODE_11B:
-		return eSTA_11b;
-	case WNI_CFG_DOT11_MODE_11G:
-		return eSTA_11bg;
-	case WNI_CFG_DOT11_MODE_11N:
-		return eSTA_11n;
-	case WNI_CFG_DOT11_MODE_11AC:
-		return eSTA_11ac;
-	case WNI_CFG_DOT11_MODE_ALL:
-	default:
-		return eSTA_11n;
-	}
 }
 
 /** -------------------------------------------------------------

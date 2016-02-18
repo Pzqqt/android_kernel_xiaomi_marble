@@ -292,19 +292,6 @@ struct rrm_config_param {
 	uint8_t rm_capability[RMENABLEDCAP_MAX_LEN];
 };
 
-/* each station added has a rate mode which specifies the sta attributes */
-typedef enum eStaRateMode {
-	eSTA_TAURUS = 0,
-	eSTA_TITAN,
-	eSTA_POLARIS,
-	eSTA_11b,
-	eSTA_11bg,
-	eSTA_11a,
-	eSTA_11n,
-	eSTA_11ac,
-	eSTA_INVALID_RATE_MODE
-} tStaRateMode, *tpStaRateMode;
-
 /*
  * although in tSirSupportedRates each IE is 16bit but PE only passes IEs in 8
  * bits with MSB=1 for basic rates. change the mask for bit0-7 only so HAL gets
@@ -318,21 +305,6 @@ const char *lim_bss_type_to_string(const uint16_t bss_type);
 const char *lim_scan_type_to_string(const uint8_t scan_type);
 
 typedef struct sSirSupportedRates {
-	/*
-	 * For Self STA Entry: this represents Self Mode.
-	 * For Peer Stations, this represents the mode of the peer.
-	 * On Station:
-	 * --this mode is updated when PE adds the Self Entry.
-	 * -- OR when PE sends 'ADD_BSS' message and station context in BSS is
-	 * used to indicate the mode of the AP.
-	 * ON AP:
-	 * -- this mode is updated when PE sends 'ADD_BSS' and Sta entry for
-	 * that BSS is used to indicate the self mode of the AP.
-	 * -- OR when a station is associated, PE sends 'ADD_STA' message with
-	 * this mode updated.
-	 */
-
-	tStaRateMode opRateMode;
 	/*
 	 * 11b, 11a and aniLegacyRates are IE rates which gives rate in unit
 	 * of 500Kbps

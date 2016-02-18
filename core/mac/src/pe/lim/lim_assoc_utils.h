@@ -93,7 +93,6 @@ tSirRetStatus lim_del_sta(tpAniSirGlobal, tpDphHashNode, bool, tpPESession);
 tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal pMac, uint16_t assocId,
 				  tpPESession psessionEntry);
 tSirRetStatus lim_add_sta_self(tpAniSirGlobal, uint16_t, uint8_t, tpPESession);
-tStaRateMode lim_get_sta_rate_mode(uint8_t dot11Mode);
 
 void lim_teardown_infra_bss(tpAniSirGlobal, tpPESession);
 void lim_restore_pre_reassoc_state(tpAniSirGlobal,
@@ -118,9 +117,6 @@ void lim_update_re_assoc_globals(tpAniSirGlobal pMac,
 void lim_update_assoc_sta_datas(tpAniSirGlobal pMac,
 				tpDphHashNode pStaDs, tpSirAssocRsp pAssocRsp,
 				tpPESession psessionEntry);
-void lim_fill_supported_rates_info(tpAniSirGlobal pMac, tpDphHashNode pSta,
-				   tpSirSupportedRates pRates,
-				   tpPESession psessionEntry);
 
 tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				   tpSchBeaconStruct pBeaconStruct,

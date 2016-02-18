@@ -552,8 +552,6 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 
 	lim_populate_own_rate_set(mac_ctx, &sta_param->supportedRates, NULL,
 				  false, session_entry, NULL);
-	lim_fill_supported_rates_info(mac_ctx, NULL, &sta_param->supportedRates,
-				      session_entry);
 
 	lim_log(mac_ctx, LOGE, FL(
 		"GF: %d, ChnlWidth: %d, MimoPS: %d, lsigTXOP: %d, dsssCCK: %d,"

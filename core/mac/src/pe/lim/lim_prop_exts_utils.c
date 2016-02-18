@@ -254,35 +254,3 @@ ePhyChanBondState lim_get_htcb_state(ePhyChanBondState aniCBMode)
 		return PHY_SINGLE_CHANNEL_CENTERED;
 	}
 }
-
-/*
- * lim_get_sta_peer_type
- *
- ***FUNCTION:
- * This API returns STA peer type
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- *
- ***NOTE:
- *
- * @param  pMac - Pointer to Global MAC structure
- * @param  pStaDs - Pointer to the tpDphHashNode of the STA
- *         under consideration
- * @return tStaRateMode
- */
-tStaRateMode lim_get_sta_peer_type(tpAniSirGlobal pMac,
-				   tpDphHashNode pStaDs, tpPESession psessionEntry)
-{
-	tStaRateMode staPeerType = eSTA_11b;
-	if (pStaDs->mlmStaContext.vhtCapability)
-		staPeerType = eSTA_11ac;
-	else if (pStaDs->mlmStaContext.htCapability)
-		staPeerType = eSTA_11n;
-	else if (pStaDs->erpEnabled)
-		staPeerType = eSTA_11bg;
-	else if (psessionEntry->limRFBand == SIR_BAND_5_GHZ)
-		staPeerType = eSTA_11a;
-	return staPeerType;
-}

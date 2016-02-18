@@ -687,21 +687,6 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 					   pBeaconStruct->HTCaps.supportedMCSSet,
 					   false, pftSessionEntry,
 					   &pBeaconStruct->VHTCaps);
-		if (pftSessionEntry->htCapability) {
-			pAddBssParams->staContext.supportedRates.opRateMode =
-				eSTA_11n;
-			if (pftSessionEntry->vhtCapability)
-				pAddBssParams->staContext.supportedRates.
-				opRateMode = eSTA_11ac;
-		} else {
-			if (pftSessionEntry->limRFBand == SIR_BAND_5_GHZ) {
-				pAddBssParams->staContext.supportedRates.
-				opRateMode = eSTA_11a;
-			} else {
-				pAddBssParams->staContext.supportedRates.
-				opRateMode = eSTA_11bg;
-			}
-		}
 	}
 
 	pAddBssParams->maxTxPower = pftSessionEntry->maxTxPower;
