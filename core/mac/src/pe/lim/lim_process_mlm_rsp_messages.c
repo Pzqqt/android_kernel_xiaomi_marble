@@ -1720,7 +1720,7 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 	if (true == session_entry->fDeauthReceived) {
 		lim_log(mac_ctx, LOGE,
 			FL("Received Deauth frame in ADD_STA_RESP state"));
-		if (CDF_STATUS_SUCCESS == add_sta_params->status) {
+		if (QDF_STATUS_SUCCESS == add_sta_params->status) {
 			lim_log(mac_ctx, LOGE,
 				FL("ADD_STA success, send update result code with eSIR_SME_JOIN_DEAUTH_FROM_AP_DURING_ADD_STA staIdx: %d limMlmState: %d"),
 				add_sta_params->staIdx,
@@ -1744,7 +1744,7 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-	if (CDF_STATUS_SUCCESS == add_sta_params->status) {
+	if (QDF_STATUS_SUCCESS == add_sta_params->status) {
 		if (eLIM_MLM_WT_ADD_STA_RSP_STATE !=
 			session_entry->limMlmState) {
 			lim_log(mac_ctx, LOGE,
@@ -1783,8 +1783,7 @@ void lim_process_sta_mlm_add_sta_rsp(tpAniSirGlobal mac_ctx,
 			sta_ds->mlmStaContext.mlmState =
 				eLIM_MLM_LINK_ESTABLISHED_STATE;
 			sta_ds->nss = add_sta_params->nss;
-		}
-		else
+		} else
 			lim_log(mac_ctx, LOGW,
 				FL("Fail to get DPH Hash Entry for AID - %d"),
 				DPH_STA_HASH_INDEX_PEER);
@@ -1880,7 +1879,7 @@ void lim_process_sta_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		lim_log(pMac, LOGE, FL("Invalid body pointer in message"));
 		goto end;
 	}
-	if (CDF_STATUS_SUCCESS == pDelBssParams->status) {
+	if (QDF_STATUS_SUCCESS == pDelBssParams->status) {
 		PELOGW(lim_log(pMac, LOGW,
 			       FL("STA received the DEL_BSS_RSP for BSSID: %X."),
 			       pDelBssParams->bssIdx);
@@ -1980,7 +1979,7 @@ void lim_process_bt_amp_ap_mlm_del_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg
 		rc = eSIR_SME_REFUSED;
 		goto end;
 	}
-	if (pDelBss->status != CDF_STATUS_SUCCESS) {
+	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		lim_log(pMac, LOGE, FL("BSS: DEL_BSS_RSP error (%x) Bss %d "),
 			pDelBss->status, pDelBss->bssIdx);
 		rc = eSIR_SME_STOP_BSS_FAILURE;
@@ -2087,7 +2086,7 @@ void lim_process_bt_amp_ap_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg
 	}
 	lim_log(pMac, LOG1, FL("Received del Sta Rsp in StaD MlmState : %d"),
 		pStaDs->mlmStaContext.mlmState);
-	if (CDF_STATUS_SUCCESS == pDelStaParams->status) {
+	if (QDF_STATUS_SUCCESS == pDelStaParams->status) {
 		lim_log(pMac, LOGW,
 			FL("AP received the DEL_STA_RSP for assocID: %X."),
 			pDelStaParams->assocId);
@@ -2184,7 +2183,7 @@ void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	lim_log(pMac, LOG1, FL("Del STA RSP received. Status:%d AssocID:%d"),
 			pDelStaParams->status, pDelStaParams->assocId);
 
-	if (CDF_STATUS_SUCCESS != pDelStaParams->status)
+	if (QDF_STATUS_SUCCESS != pDelStaParams->status)
 		lim_log(pMac, LOGE, FL(
 			"Del STA failed! Status:%d, proceeding with Del BSS"),
 			pDelStaParams->status);
@@ -2258,7 +2257,7 @@ void lim_process_ap_mlm_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 			pStaDs->mlmStaContext.mlmState);
 		goto end;
 	}
-	if (CDF_STATUS_SUCCESS != pAddStaParams->status) {
+	if (QDF_STATUS_SUCCESS != pAddStaParams->status) {
 		PELOGE(lim_log
 			       (pMac, LOGE,
 			       FL("Error! rcvd delSta rsp from HAL with status %d"),
@@ -2358,10 +2357,10 @@ static void lim_process_ap_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg
 	}
 	/* Update PE session Id */
 	mlmStartCnf.sessionId = pAddBssParams->sessionId;
-	if (CDF_STATUS_SUCCESS == pAddBssParams->status) {
+	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		PELOG2(lim_log
 			       (pMac, LOG2,
-			       FL("WMA_ADD_BSS_RSP returned with CDF_STATUS_SUCCESS"));
+			       FL("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS"));
 		       )
 		if (lim_set_link_state
 			    (pMac, eSIR_LINK_AP_STATE, psessionEntry->bssId,
@@ -2490,10 +2489,10 @@ lim_process_ibss_mlm_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		lim_log(pMac, LOGE, FL("Invalid body pointer in message"));
 		goto end;
 	}
-	if (CDF_STATUS_SUCCESS == pAddBssParams->status) {
+	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		PELOG1(lim_log
 			       (pMac, LOG1,
-			       FL("WMA_ADD_BSS_RSP returned with CDF_STATUS_SUCCESS"));
+			       FL("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS"));
 		       )
 		if (lim_set_link_state
 			    (pMac, eSIR_LINK_IBSS_STATE, psessionEntry->bssId,
@@ -2569,7 +2568,7 @@ lim_process_sta_add_bss_rsp_pre_assoc(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("Invalid body pointer in message"));
 		goto joinFailure;
 	}
-	if (CDF_STATUS_SUCCESS == pAddBssParams->status) {
+	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		pStaDs = dph_add_hash_entry(mac_ctx,
 				pAddBssParams->staContext.staMac,
 				DPH_STA_HASH_INDEX_PEER,
@@ -2797,7 +2796,7 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		     psessionEntry->bssId, sizeof(tSirMacAddr));
 
 	pAddStaParams->staType = STA_ENTRY_SELF;
-	pAddStaParams->status = CDF_STATUS_SUCCESS;
+	pAddStaParams->status = QDF_STATUS_SUCCESS;
 	pAddStaParams->respReqd = 1;
 
 	/* Update  PE session ID */
@@ -2981,7 +2980,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 			"LFR3:lim_process_sta_mlm_add_bss_rsp");
 #endif
 
-	if (CDF_STATUS_SUCCESS == add_bss_params->status) {
+	if (QDF_STATUS_SUCCESS == add_bss_params->status) {
 		if (eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE ==
 			session_entry->limMlmState) {
 			lim_log(mac_ctx, LOG1, FL("Mlm=%d %d"),
@@ -3385,7 +3384,7 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
  */
 static void lim_process_switch_channel_re_assoc_req(tpAniSirGlobal pMac,
 						    tpPESession psessionEntry,
-						    CDF_STATUS status)
+						    QDF_STATUS status)
 {
 	tLimMlmReassocCnf mlmReassocCnf;
 	tLimMlmReassocReq *pMlmReassocReq;
@@ -3399,7 +3398,7 @@ static void lim_process_switch_channel_re_assoc_req(tpAniSirGlobal pMac,
 		goto end;
 	}
 
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		PELOGE(lim_log(pMac, LOGE, FL("Change channel failed!!"));)
 		mlmReassocCnf.resultCode = eSIR_SME_CHANNEL_SWITCH_FAIL;
 		goto end;
@@ -3456,11 +3455,11 @@ end:
  */
 static void lim_process_switch_channel_join_req(
 	tpAniSirGlobal mac_ctx, tpPESession session_entry,
-	CDF_STATUS status)
+	QDF_STATUS status)
 {
 	tSirMacSSid ssId;
 	tLimMlmJoinCnf join_cnf;
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		PELOGE(lim_log(mac_ctx, LOGE, FL("Change channel failed!!"));)
 		goto error;
 	}
@@ -3505,23 +3504,23 @@ static void lim_process_switch_channel_join_req(
 	* If sendDeauthBeforeCon is enabled, Send Deauth first to AP if last
 	* disconnection was caused by HB failure.
 	*/
-	if(mac_ctx->roam.configParam.sendDeauthBeforeCon) {
+	if (mac_ctx->roam.configParam.sendDeauthBeforeCon) {
 		int apCount;
 
-		for(apCount = 0; apCount < 2; apCount++) {
+		for (apCount = 0; apCount < 2; apCount++) {
 
 			if (cdf_mem_compare(session_entry->pLimMlmJoinReq->bssDescription.bssId,
 				mac_ctx->lim.gLimHeartBeatApMac[apCount], sizeof(tSirMacAddr))) {
 
 				lim_log(mac_ctx, LOGE, FL("Index %d Sessionid: %d Send deauth on "
-				"channel %d to BSSID: "MAC_ADDRESS_STR ), apCount,
+				"channel %d to BSSID: "MAC_ADDRESS_STR), apCount,
 				session_entry->peSessionId, session_entry->currentOperChannel,
 				MAC_ADDR_ARRAY(session_entry->pLimMlmJoinReq->bssDescription.
 											bssId));
 
 				lim_send_deauth_mgmt_frame(mac_ctx, eSIR_MAC_UNSPEC_FAILURE_REASON,
 					session_entry->pLimMlmJoinReq->bssDescription.bssId,
-					session_entry, false );
+					session_entry, false);
 
 				cdf_mem_zero(mac_ctx->lim.gLimHeartBeatApMac[apCount],
 					sizeof(tSirMacAddr));
@@ -3625,7 +3624,7 @@ error:
 void lim_process_switch_channel_rsp(tpAniSirGlobal pMac, void *body)
 {
 	tpSwitchChannelParams pChnlParams = NULL;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint16_t channelChangeReasonCode;
 	uint8_t peSessionId;
 	tpPESession psessionEntry;
@@ -3872,9 +3871,9 @@ lim_process_btamp_add_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		lim_log(pMac, LOGE, FL("Invalid body pointer in message"));
 		goto end;
 	}
-	if (CDF_STATUS_SUCCESS == pAddBssParams->status) {
+	if (QDF_STATUS_SUCCESS == pAddBssParams->status) {
 		lim_log(pMac, LOG2,
-			FL("WMA_ADD_BSS_RSP returned with CDF_STATUS_SUCCESS"));
+			FL("WMA_ADD_BSS_RSP returned with QDF_STATUS_SUCCESS"));
 		if (psessionEntry->bssType == eSIR_BTAMP_AP_MODE) {
 			if (lim_set_link_state
 				    (pMac, eSIR_LINK_BTAMP_AP_STATE,
@@ -4131,7 +4130,7 @@ void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
 	msg.bodyptr = NULL;
 	msg.bodyval = sessionId;
 
-	if (!CDF_IS_STATUS_SUCCESS
+	if (!QDF_IS_STATUS_SUCCESS
 		    (cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)))
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_SME_SCAN_CACHE_UPDATED message to WMA",
@@ -4165,7 +4164,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 	case SCAN_EVENT_COMPLETED:
 		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			lim_send_sme_roc_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
-					 CDF_STATUS_SUCCESS,
+					 QDF_STATUS_SUCCESS,
 					 pScanEvent->sessionId,
 					 pScanEvent->scanId);
 			cdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
@@ -4196,7 +4195,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 			if (pMac->lim.gpLimRemainOnChanReq) {
 				lim_send_sme_roc_rsp(pMac,
 						 eWNI_SME_REMAIN_ON_CHN_RDY_IND,
-						 CDF_STATUS_SUCCESS,
+						 QDF_STATUS_SUCCESS,
 						 pScanEvent->sessionId,
 						 pScanEvent->scanId);
 			} else {

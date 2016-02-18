@@ -35,7 +35,7 @@
 void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
 	if (NULL != pSession) {
@@ -59,7 +59,7 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 					  sme_preauth_reassoc_intvl_timer_callback,
 					  (void *)pSession->ftSmeContext.pUsrCtx);
 
-		if (CDF_STATUS_SUCCESS != status) {
+		if (QDF_STATUS_SUCCESS != status) {
 			sms_log(pMac, LOGE,
 				FL
 					("Preauth Reassoc interval Timer allocation failed"));
@@ -91,7 +91,7 @@ void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
 					  preAuthReassocIntvlTimer);
 		}
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    cdf_mc_timer_destroy(&pSession->ftSmeContext.
 					 preAuthReassocIntvlTimer)) {
 			sms_log(pMac, LOGE,
@@ -144,7 +144,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ptr);
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == session || NULL == ft_ies) {
 		sms_log(mac_ctx, LOGE, FL(" ft ies or session is NULL"));
@@ -152,7 +152,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 	}
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
-	if (!(CDF_IS_STATUS_SUCCESS(status)))
+	if (!(QDF_IS_STATUS_SUCCESS(status)))
 		return;
 
 	sms_log(mac_ctx, LOG1, "FT IEs Req is received in state %d",
@@ -255,15 +255,15 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
  *
  * To send key update indication for FT session
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 static
-CDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
+QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 				      tCsrRoamSetKey *ftkey_info)
 {
 	tSirFTUpdateKeyInfo *msg;
 	uint16_t msglen;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tSirKeyMaterial *keymaterial = NULL;
 	tAniEdType ed_type;
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
@@ -276,13 +276,13 @@ CDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 	if (ftkey_info->keyLength > CSR_MAX_KEY_LEN) {
 		sms_log(mac_ctx, LOGE, FL("invalid keyLength %d"),
 			ftkey_info->keyLength);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	msglen  = sizeof(tSirFTUpdateKeyInfo);
 
 	msg = cdf_mem_malloc(msglen);
 	if (NULL == msg)
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 
 	cdf_mem_set(msg, msglen, 0);
 	msg->messageType = eWNI_SME_FT_UPDATE_KEY;
@@ -362,26 +362,26 @@ void sme_set_ftptk_state(tHalHandle hHal, uint32_t sessionId, bool state)
 	pSession->ftSmeContext.setFTPTKState = state;
 }
 
-CDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
+QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 			     tCsrRoamSetKey *pFTKeyInfo)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (pFTKeyInfo == NULL) {
 		sms_log(pMac, LOGE, "%s: pFTKeyInfo is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	status = sme_acquire_global_lock(&pMac->sme);
-	if (!(CDF_IS_STATUS_SUCCESS(status))) {
-		return CDF_STATUS_E_FAILURE;
+	if (!(QDF_IS_STATUS_SUCCESS(status))) {
+		return QDF_STATUS_E_FAILURE;
 	}
 	sms_log(pMac, LOG1, "sme_ft_update_key is received in state %d",
 		pSession->ftSmeContext.FTState);
@@ -396,10 +396,10 @@ CDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 				sms_log(pMac, LOGE, "%s: Key set failure %d",
 					__func__, status);
 				pSession->ftSmeContext.setFTPTKState = false;
-				status = CDF_STATUS_FT_PREAUTH_KEY_FAILED;
+				status = QDF_STATUS_FT_PREAUTH_KEY_FAILED;
 			} else {
 				pSession->ftSmeContext.setFTPTKState = true;
-				status = CDF_STATUS_FT_PREAUTH_KEY_SUCCESS;
+				status = QDF_STATUS_FT_PREAUTH_KEY_SUCCESS;
 				sms_log(pMac, LOG1, "%s: Key set success",
 					__func__);
 			}
@@ -414,7 +414,7 @@ CDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 	default:
 		sms_log(pMac, LOGW, "%s: Unhandled state=%d", __func__,
 			pSession->ftSmeContext.FTState);
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		break;
 	}
 	sme_release_global_lock(&pMac->sme);
@@ -435,7 +435,7 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
@@ -445,7 +445,7 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 	*ft_ies_length = 0;
 
 	status = sme_acquire_global_lock(&pMac->sme);
-	if (!(CDF_IS_STATUS_SUCCESS(status)))
+	if (!(QDF_IS_STATUS_SUCCESS(status)))
 		return;
 
 	/* All or nothing - proceed only if both BSSID and FT IE fit */
@@ -487,7 +487,7 @@ void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
@@ -497,7 +497,7 @@ void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
 	*ric_ies_length = 0;
 
 	status = sme_acquire_global_lock(&pMac->sme);
-	if (!(CDF_IS_STATUS_SUCCESS(status)))
+	if (!(QDF_IS_STATUS_SUCCESS(status)))
 		return;
 
 	/* All or nothing */

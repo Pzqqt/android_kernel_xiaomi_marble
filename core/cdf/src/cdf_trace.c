@@ -554,11 +554,11 @@ void cdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data)
  *
  * Return : nothing
  */
-CDF_STATUS cdf_trace_spin_lock_init(void)
+QDF_STATUS cdf_trace_spin_lock_init(void)
 {
 	spin_lock_init(&ltrace_lock);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

@@ -800,109 +800,109 @@ typedef struct {
 #endif /* FEATURE_WLAN_CH_AVOID */
 void sap_cleanup_channel_list(void *sapContext);
 void sapCleanupAllChannelList(void);
-CDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
-CDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
-CDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
-CDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
+QDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
+QDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
+QDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
+QDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
 
 void *wlansap_open(void *p_cds_gctx);
-CDF_STATUS wlansap_start(void *p_cds_gctx);
-CDF_STATUS wlansap_stop(void *p_cds_gctx);
-CDF_STATUS wlansap_close(void *p_cds_gctx);
-typedef CDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
+QDF_STATUS wlansap_start(void *p_cds_gctx);
+QDF_STATUS wlansap_stop(void *p_cds_gctx);
+QDF_STATUS wlansap_close(void *p_cds_gctx);
+typedef QDF_STATUS (*tpWLAN_SAPEventCB)(tpSap_Event pSapEvent,
 		void *pUsrContext);
 uint8_t wlansap_get_state(void *p_cds_gctx);
 
-CDF_STATUS wlansap_start_bss(void *p_cds_gctx,
+QDF_STATUS wlansap_start_bss(void *p_cds_gctx,
 	 tpWLAN_SAPEventCB pSapEventCallback,
 	 tsap_Config_t *pConfig, void *pUsrContext);
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 uint16_t wlansap_check_cc_intf(void *Ctx);
 #endif
-CDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
-CDF_STATUS wlansap_stop_bss(void *p_cds_gctx);
-CDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
+QDF_STATUS wlansap_set_mac_acl(void *p_cds_gctx, tsap_Config_t *pConfig);
+QDF_STATUS wlansap_stop_bss(void *p_cds_gctx);
+QDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
 				const uint8_t *pPeerStaMac);
-CDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
+QDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
 			struct tagCsrDelStaParams *pDelStaParams);
-CDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
+QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
 			uint32_t targetChannel, phy_ch_width target_bw);
-CDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
+QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
-CDF_STATUS wlansap_get_assoc_stations(void *p_cds_gctx,
+QDF_STATUS wlansap_get_assoc_stations(void *p_cds_gctx,
 	 CDF_MODULE_ID module, tpSap_AssocMacAddr pAssocStas);
-CDF_STATUS wlansap_remove_wps_session_overlap(void *p_cds_gctx,
+QDF_STATUS wlansap_remove_wps_session_overlap(void *p_cds_gctx,
 	struct cdf_mac_addr pRemoveMac);
-CDF_STATUS wlansap_get_wps_session_overlap(void *p_cds_gctx);
-CDF_STATUS wlansap_set_counter_measure(void *p_cds_gctx, bool bEnable);
-CDF_STATUS wlan_sap_getstation_ie_information(void *p_cds_gctx,
+QDF_STATUS wlansap_get_wps_session_overlap(void *p_cds_gctx);
+QDF_STATUS wlansap_set_counter_measure(void *p_cds_gctx, bool bEnable);
+QDF_STATUS wlan_sap_getstation_ie_information(void *p_cds_gctx,
 	uint32_t *pLen, uint8_t *pBuf);
-CDF_STATUS wlansap_clear_acl(void *p_cds_gctx);
-CDF_STATUS wlansap_get_acl_accept_list(void *p_cds_gctx,
+QDF_STATUS wlansap_clear_acl(void *p_cds_gctx);
+QDF_STATUS wlansap_get_acl_accept_list(void *p_cds_gctx,
 	 struct cdf_mac_addr *pAcceptList, uint8_t *nAcceptList);
-CDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
+QDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
 	struct cdf_mac_addr *pDenyList, uint8_t *nDenyList);
-CDF_STATUS wlansap_set_mode(void *p_cds_gctx, uint32_t mode);
-CDF_STATUS wlansap_get_acl_mode(void *p_cds_gctx, eSapMacAddrACL *mode);
-CDF_STATUS wlansap_modify_acl(void *p_cds_gctx,
+QDF_STATUS wlansap_set_mode(void *p_cds_gctx, uint32_t mode);
+QDF_STATUS wlansap_get_acl_mode(void *p_cds_gctx, eSapMacAddrACL *mode);
+QDF_STATUS wlansap_modify_acl(void *p_cds_gctx,
 	 uint8_t *pPeerStaMac, eSapACLType listType, eSapACLCmdType cmd);
-CDF_STATUS wlansap_set_wparsn_ies
+QDF_STATUS wlansap_set_wparsn_ies
 	(void *p_cds_gctx, uint8_t *pWPARSNIEs, uint32_t WPARSNIEsLen);
-CDF_STATUS wlansap_send_action
+QDF_STATUS wlansap_send_action
 	(void *p_cds_gctx,
 	 const uint8_t *pBuf, uint32_t len, uint16_t wait, uint16_t channel_freq);
-CDF_STATUS wlansap_remain_on_channel
+QDF_STATUS wlansap_remain_on_channel
 	(void *p_cds_gctx,
 	 uint8_t channel,
 	 uint32_t duration, remainOnChanCallback callback, void *pContext,
 	 uint32_t *scan_id);
-CDF_STATUS wlansap_cancel_remain_on_channel(void *p_cds_gctx,
+QDF_STATUS wlansap_cancel_remain_on_channel(void *p_cds_gctx,
 		uint32_t scan_id);
-CDF_STATUS wlansap_register_mgmt_frame
+QDF_STATUS wlansap_register_mgmt_frame
 	(void *p_cds_gctx,
 	 uint16_t frameType, uint8_t *matchData, uint16_t matchLen);
-CDF_STATUS wlansap_de_register_mgmt_frame
+QDF_STATUS wlansap_de_register_mgmt_frame
 	(void *p_cds_gctx,
 	 uint16_t frameType, uint8_t *matchData, uint16_t matchLen);
-CDF_STATUS wlansap_channel_change_request(void *p_cds_gctx,
+QDF_STATUS wlansap_channel_change_request(void *p_cds_gctx,
 		uint8_t tArgetChannel);
-CDF_STATUS wlansap_start_beacon_req(void *pSapCtx);
-CDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx);
-CDF_STATUS wlansap_get_dfs_ignore_cac(tHalHandle hHal, uint8_t *pIgnore_cac);
-CDF_STATUS wlansap_set_dfs_ignore_cac(tHalHandle hHal, uint8_t ignore_cac);
-CDF_STATUS wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal,
+QDF_STATUS wlansap_start_beacon_req(void *pSapCtx);
+QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx);
+QDF_STATUS wlansap_get_dfs_ignore_cac(tHalHandle hHal, uint8_t *pIgnore_cac);
+QDF_STATUS wlansap_set_dfs_ignore_cac(tHalHandle hHal, uint8_t ignore_cac);
+QDF_STATUS wlansap_set_dfs_restrict_japan_w53(tHalHandle hHal,
 			uint8_t disable_Dfs_JapanW3);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-CDF_STATUS
+QDF_STATUS
 wlan_sap_set_channel_avoidance(tHalHandle hal, bool sap_channel_avoidance);
 #endif
 
-CDF_STATUS wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
+QDF_STATUS wlansap_set_dfs_preferred_channel_location(tHalHandle hHal,
 		uint8_t dfs_Preferred_Channels_location);
-CDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal,
+QDF_STATUS wlansap_set_dfs_target_chnl(tHalHandle hHal,
 			uint8_t target_channel);
 uint32_t wlan_sap_get_vht_ch_width(void *ctx);
 void wlan_sap_set_vht_ch_width(void *ctx, uint32_t vht_channel_width);
-CDF_STATUS wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
+QDF_STATUS wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		const uint8_t *
 		pAdditionIEBuffer,
 		uint16_t additionIELength,
 		eUpdateIEsType updateType);
-CDF_STATUS wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig,
+QDF_STATUS wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig,
 			eUpdateIEsType updateType);
 void wlansap_extend_to_acs_range(uint8_t *startChannelNum,
 		uint8_t *endChannelNum,
 		uint8_t *bandStartChannel,
 		uint8_t *bandEndChannel);
-CDF_STATUS wlansap_get_dfs_nol(void *pSapCtx);
-CDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf);
+QDF_STATUS wlansap_get_dfs_nol(void *pSapCtx);
+QDF_STATUS wlansap_set_dfs_nol(void *pSapCtx, eSapDfsNolType conf);
 void wlansap_populate_del_sta_params(const uint8_t *mac,
 		uint16_t reason_code,
 		uint8_t subtype,
 		struct tagCsrDelStaParams *pDelStaParams);
-CDF_STATUS wlansap_acs_chselect(void *pvos_gctx,
+QDF_STATUS wlansap_acs_chselect(void *pvos_gctx,
 		tpWLAN_SAPEventCB pacs_event_callback,
 		tsap_Config_t *pconfig,
 		void *pusr_context);

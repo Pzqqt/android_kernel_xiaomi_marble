@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,8 +53,8 @@ typedef struct sP2pPsConfig {
 	uint8_t sessionid;
 } tP2pPsConfig, *tpP2pPsConfig;
 
-typedef CDF_STATUS (*remainOnChanCallback)(tHalHandle, void *context,
-		CDF_STATUS status, uint32_t scan_id);
+typedef QDF_STATUS (*remainOnChanCallback)(tHalHandle, void *context,
+		QDF_STATUS status, uint32_t scan_id);
 
 typedef struct sRemainOnChn {
 	uint8_t chn;
@@ -81,33 +81,33 @@ typedef struct sp2pContext {
 	uint32_t probeRspIeLength;
 } tp2pContext, *tPp2pContext;
 
-CDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS sme_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 		uint8_t channel, uint32_t duration,
 		remainOnChanCallback callback,
 		void *pContext, uint8_t isP2PProbeReqAllowed,
 		uint32_t *scan_id);
-CDF_STATUS sme_report_probe_req(tHalHandle hHal, uint8_t flag);
-CDF_STATUS sme_update_p2p_ie(tHalHandle hHal, void *p2pIe,
+QDF_STATUS sme_report_probe_req(tHalHandle hHal, uint8_t flag);
+QDF_STATUS sme_update_p2p_ie(tHalHandle hHal, void *p2pIe,
 		uint32_t p2pIeLength);
-CDF_STATUS sme_send_action(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS sme_send_action(tHalHandle hHal, uint8_t sessionId,
 		const uint8_t *pBuf, uint32_t len, uint16_t wait, bool noack,
 		uint16_t channel_freq);
-CDF_STATUS sme_cancel_remain_on_channel(tHalHandle hHal,
+QDF_STATUS sme_cancel_remain_on_channel(tHalHandle hHal,
 	uint8_t sessionId, uint32_t scan_id);
-CDF_STATUS sme_p2p_open(tHalHandle hHal);
-CDF_STATUS p2p_stop(tHalHandle hHal);
-CDF_STATUS sme_p2p_close(tHalHandle hHal);
-CDF_STATUS sme_p2p_set_ps(tHalHandle hHal, tP2pPsConfig *data);
-CDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS sme_p2p_open(tHalHandle hHal);
+QDF_STATUS p2p_stop(tHalHandle hHal);
+QDF_STATUS sme_p2p_close(tHalHandle hHal);
+QDF_STATUS sme_p2p_set_ps(tHalHandle hHal, tP2pPsConfig *data);
+QDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 		uint8_t channel, uint32_t duration,
 		remainOnChanCallback callback,
 		void *pContext, uint8_t isP2PProbeReqAllowed,
 		uint32_t scan_id);
-CDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 		const uint8_t *pBuf, uint32_t len, uint16_t wait, bool noack,
 		uint16_t channel_freq);
-CDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
+QDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 	uint8_t sessionId, uint32_t scan_id);
-CDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA);
+QDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA);
 tSirRFBand get_rf_band(uint8_t channel);
 #endif /* __P2P_API_H__ */

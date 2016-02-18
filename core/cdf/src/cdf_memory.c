@@ -307,7 +307,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		cdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
 			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-				  "%s: Unable to insert node into List cdf_status %d",
+				  "%s: Unable to insert node into List qdf_status %d",
 				  __func__, qdf_status);
 		}
 

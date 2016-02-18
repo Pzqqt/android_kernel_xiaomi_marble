@@ -244,7 +244,7 @@ tSirRetStatus lim_restore_pre_quiet_state(tpAniSirGlobal pMac,
 
 void lim_prepare_for11h_channel_switch(tpAniSirGlobal pMac,
 		tpPESession psessionEntry);
-void lim_switch_channel_cback(tpAniSirGlobal pMac, CDF_STATUS status,
+void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 		uint32_t *data, tpPESession psessionEntry);
 
 static inline tSirRFBand lim_get_rf_band(uint8_t channel)
@@ -576,7 +576,7 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
 
 void lim_check_and_reset_protection_params(tpAniSirGlobal mac_ctx);
 
-CDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx, uint32_t session_id,
+QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx, uint32_t session_id,
 			       tDot11fIEExtCap *extracted_extcap, bool merge);
 
 tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx, uint8_t *addn_ie,

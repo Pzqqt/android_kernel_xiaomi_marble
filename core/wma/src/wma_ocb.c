@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,7 +42,7 @@
  */
 int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	struct sir_ocb_set_config_response *resp;
 	cds_msg_t msg = {0};
 	struct sir_ocb_config *req = wma_handle->ocb_config_req;
@@ -53,7 +53,7 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	 * If the command was successful, save the channel information in the
 	 * vdev.
 	 */
-	if (status == CDF_STATUS_SUCCESS && vdev && req) {
+	if (status == QDF_STATUS_SUCCESS && vdev && req) {
 		if (vdev->ocb_channel_info)
 			cdf_mem_free(vdev->ocb_channel_info);
 		vdev->ocb_channel_count =
@@ -93,8 +93,8 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	msg.type = eWNI_SME_OCB_SET_CONFIG_RSP;
 	msg.bodyptr = resp;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post msg to SME"));
 		cdf_mem_free(resp);
 		return -EINVAL;
@@ -159,7 +159,7 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 {
 	struct wma_target_req *msg;
 	struct wma_vdev_start_req req;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* if vdev is not yet up, send vdev start request and wait for response.
 	 * OCB set_config request should be sent on receiving
@@ -174,7 +174,7 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 					(void *)config_req, 1000);
 		if (!msg) {
 			WMA_LOGE(FL("Failed to fill vdev req %d"), req.vdev_id);
-			status = CDF_STATUS_E_NOMEM;
+			status = QDF_STATUS_E_NOMEM;
 			return status;
 		}
 		req.chan = cds_freq_to_chan(config_req->channels[0].chan_freq);
@@ -191,7 +191,7 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 		req.preferred_tx_streams = 2;
 
 		status = wma_vdev_start(wma_handle, &req, false);
-		if (status != CDF_STATUS_SUCCESS) {
+		if (status != QDF_STATUS_SUCCESS) {
 			wma_remove_vdev_req(wma_handle, req.vdev_id,
 					    WMA_TARGET_REQ_TYPE_VDEV_START);
 			WMA_LOGE(FL("vdev_start failed, status = %d"), status);
@@ -204,15 +204,15 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 
 int wma_ocb_start_resp_ind_cont(tp_wma_handle wma_handle)
 {
-	CDF_STATUS cdf_status = 0;
+	QDF_STATUS qdf_status = 0;
 
 	if (!wma_handle->ocb_config_req) {
 		WMA_LOGE(FL("The request could not be found"));
-		return CDF_STATUS_E_EMPTY;
+		return QDF_STATUS_E_EMPTY;
 	}
 
-	cdf_status = wma_ocb_set_config(wma_handle, wma_handle->ocb_config_req);
-	return cdf_status;
+	qdf_status = wma_ocb_set_config(wma_handle, wma_handle->ocb_config_req);
+	return qdf_status;
 }
 
 static WLAN_PHY_MODE wma_ocb_freq_to_mode(uint32_t freq)
@@ -626,7 +626,7 @@ int wma_ocb_stop_timing_advert(tp_wma_handle wma_handle,
 int wma_ocb_get_tsf_timer(tp_wma_handle wma_handle,
 			  struct sir_ocb_get_tsf_timer *request)
 {
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 	wmi_ocb_get_tsf_timer_cmd_fixed_param *cmd;
 	uint8_t *buf_ptr;
 	wmi_buf_t buf;
@@ -671,7 +671,7 @@ int wma_ocb_get_tsf_timer(tp_wma_handle wma_handle,
 int wma_ocb_get_tsf_timer_resp_event_handler(void *handle, uint8_t *event_buf,
 					     uint32_t len)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	struct sir_ocb_get_tsf_timer_response *response;
 	WMI_OCB_GET_TSF_TIMER_RESP_EVENTID_param_tlvs *param_tlvs;
 	wmi_ocb_get_tsf_timer_resp_event_fixed_param *fix_param;
@@ -691,8 +691,8 @@ int wma_ocb_get_tsf_timer_resp_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_OCB_GET_TSF_TIMER_RSP;
 	msg.bodyptr = response;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(response);
 		return -EINVAL;
@@ -733,7 +733,7 @@ int wma_dcc_get_stats(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE(FL("wmi_buf_alloc failed"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = wmi_buf_data(buf);
@@ -787,7 +787,7 @@ int wma_dcc_get_stats(tp_wma_handle wma_handle,
 int wma_dcc_get_stats_resp_event_handler(void *handle, uint8_t *event_buf,
 				uint32_t len)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	struct sir_dcc_get_stats_response *response;
 	WMI_DCC_GET_STATS_RESP_EVENTID_param_tlvs *param_tlvs;
 	wmi_dcc_get_stats_resp_event_fixed_param *fix_param;
@@ -814,8 +814,8 @@ int wma_dcc_get_stats_resp_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_DCC_GET_STATS_RSP;
 	msg.bodyptr = response;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(response);
 		return -EINVAL;
@@ -884,7 +884,7 @@ int wma_dcc_clear_stats(tp_wma_handle wma_handle,
 int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 		       struct sir_dcc_update_ndl *update_ndl_param)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	wmi_dcc_update_ndl_cmd_fixed_param *cmd;
 	wmi_dcc_ndl_chan *ndl_chan_array;
 	wmi_dcc_ndl_active_state_config *ndl_active_state_array;
@@ -898,7 +898,7 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 	if (update_ndl_param->dcc_ndl_chan_list_len !=
 	    update_ndl_param->channel_count * sizeof(*ndl_chan_array)) {
 		WMA_LOGE(FL("Invalid parameter"));
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	active_state_count = 0;
 	ndl_chan_array = update_ndl_param->dcc_ndl_chan_list;
@@ -908,7 +908,7 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 	if (update_ndl_param->dcc_ndl_active_state_list_len !=
 	    active_state_count * sizeof(*ndl_active_state_array)) {
 		WMA_LOGE(FL("Invalid parameter"));
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	/* Allocate memory for the WMI command */
@@ -968,11 +968,11 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 	buf_ptr += update_ndl_param->dcc_ndl_active_state_list_len;
 
 	/* Send the WMI command */
-	cdf_status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+	qdf_status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				   WMI_DCC_UPDATE_NDL_CMDID);
 	/* If there is an error, set the completion event */
-	if (cdf_status) {
-		WMA_LOGE(FL("Failed to send WMI message: %d"), cdf_status);
+	if (qdf_status) {
+		WMA_LOGE(FL("Failed to send WMI message: %d"), qdf_status);
 		wmi_buf_free(buf);
 		return -EIO;
 	}
@@ -992,7 +992,7 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 int wma_dcc_update_ndl_resp_event_handler(void *handle, uint8_t *event_buf,
 					  uint32_t len)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	struct sir_dcc_update_ndl_response *resp;
 	WMI_DCC_UPDATE_NDL_RESP_EVENTID_param_tlvs *param_tlvs;
 	wmi_dcc_update_ndl_resp_event_fixed_param *fix_param;
@@ -1012,8 +1012,8 @@ int wma_dcc_update_ndl_resp_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_DCC_UPDATE_NDL_RSP;
 	msg.bodyptr = resp;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))	{
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))	{
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(resp);
 		return -EINVAL;
@@ -1033,7 +1033,7 @@ int wma_dcc_update_ndl_resp_event_handler(void *handle, uint8_t *event_buf,
 int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 				uint32_t len)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	struct sir_dcc_get_stats_response *response;
 	WMI_DCC_STATS_EVENTID_param_tlvs *param_tlvs;
 	wmi_dcc_stats_event_fixed_param *fix_param;
@@ -1058,8 +1058,8 @@ int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_DCC_STATS_EVENT;
 	msg.bodyptr = response;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))	{
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))	{
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(response);
 		return -EINVAL;
@@ -1118,5 +1118,5 @@ int wma_ocb_register_event_handlers(tp_wma_handle wma_handle)
 	if (status)
 		return status;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }

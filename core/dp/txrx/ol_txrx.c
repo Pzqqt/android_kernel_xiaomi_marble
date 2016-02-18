@@ -130,16 +130,16 @@ ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
 	return peer;
 }
 
-CDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id)
+QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id)
 {
 	if (!peer) {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				  "peer argument is null!!");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	*vdev_id = peer->vdev->vdev_id;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
@@ -1263,7 +1263,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 				    bool drop)
 {
 	struct ol_rx_cached_buf *cache_buf;
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 	ol_rx_callback_fp data_rx = NULL;
 	void *cds_ctx = cds_get_global_context();
 
@@ -1291,7 +1291,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 		} else {
 			/* Flush the cached frames to HDD */
 			ret = data_rx(cds_ctx, cache_buf->buf, peer->local_id);
-			if (ret != CDF_STATUS_SUCCESS)
+			if (ret != QDF_STATUS_SUCCESS)
 				cdf_nbuf_free(cache_buf->buf);
 		}
 		cdf_mem_free(cache_buf);
@@ -1466,7 +1466,7 @@ static A_STATUS ol_tx_filter_pass_thru(struct ol_txrx_msdu_info_t *tx_msdu_info)
 	return A_OK;
 }
 
-CDF_STATUS
+QDF_STATUS
 ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 			  enum ol_txrx_peer_state state)
 {
@@ -1475,7 +1475,7 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 	if (cdf_unlikely(!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Pdev is NULL");
 		cdf_assert(0);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	peer =  ol_txrx_peer_find_hash_find(pdev, peer_mac, 0, 1);
@@ -1484,7 +1484,7 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 			" 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x\n", __FUNCTION__,
 			peer_mac[0], peer_mac[1], peer_mac[2], peer_mac[3],
 			peer_mac[4], peer_mac[5]);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	/* TODO: Should we send WMI command of the connection state? */
@@ -1496,7 +1496,7 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 			   __func__);
 #endif
 		cdf_atomic_dec(&peer->ref_cnt);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO2, "%s: change from %d to %d\n",
@@ -1530,7 +1530,7 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 	/* Set the state after the Pause to avoid the race condiction
 	   with ADDBA check in tx path */
 	peer->state = state;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void
@@ -1886,18 +1886,18 @@ static void ol_txrx_dump_tx_desc(ol_txrx_pdev_handle pdev_handle)
  * queue doesn't empty before timeout occurs.
  *
  * Return:
- *    CDF_STATUS_SUCCESS if the queue empties,
- *    CDF_STATUS_E_TIMEOUT in case of timeout,
- *    CDF_STATUS_E_FAULT in case of missing handle
+ *    QDF_STATUS_SUCCESS if the queue empties,
+ *    QDF_STATUS_E_TIMEOUT in case of timeout,
+ *    QDF_STATUS_E_FAULT in case of missing handle
  */
-CDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
+QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 {
 	ol_txrx_pdev_handle txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 
 	if (txrx_pdev == NULL) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "%s: txrx context is null", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	while (ol_txrx_get_tx_pending(txrx_pdev)) {
@@ -1906,11 +1906,11 @@ CDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				"%s: tx frames are pending", __func__);
 			ol_txrx_dump_tx_desc(txrx_pdev);
-			return CDF_STATUS_E_TIMEOUT;
+			return QDF_STATUS_E_TIMEOUT;
 		}
 		timeout = timeout - OL_ATH_TX_DRAIN_WAIT_DELAY;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifndef QCA_WIFI_3_0_EMU
@@ -1924,9 +1924,9 @@ CDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
  *
  * Ensure that ol_txrx is ready for bus suspend
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS ol_txrx_bus_suspend(void)
+QDF_STATUS ol_txrx_bus_suspend(void)
 {
 	return ol_txrx_wait_for_pending_tx(SUSPEND_DRAIN_WAIT);
 }
@@ -1936,11 +1936,11 @@ CDF_STATUS ol_txrx_bus_suspend(void)
  *
  * Dummy function for symetry
  *
- * Return: CDF_STATUS_SUCCESS
+ * Return: QDF_STATUS_SUCCESS
  */
-CDF_STATUS ol_txrx_bus_resume(void)
+QDF_STATUS ol_txrx_bus_resume(void)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 int ol_txrx_get_tx_pending(ol_txrx_pdev_handle pdev_handle)
@@ -2990,7 +2990,7 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 {
 	void *cds_ctx = cds_get_global_context();
 	cdf_nbuf_t buf, next_buf;
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 	ol_rx_callback_fp data_rx = NULL;
 
 	if (cdf_unlikely(!cds_ctx))
@@ -3017,7 +3017,7 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 		next_buf = cdf_nbuf_queue_next(buf);
 		cdf_nbuf_set_next(buf, NULL);   /* Add NULL terminator */
 		ret = data_rx(cds_ctx, buf, peer->local_id);
-		if (ret != CDF_STATUS_SUCCESS) {
+		if (ret != QDF_STATUS_SUCCESS) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Frame Rx to HDD failed");
 			cdf_nbuf_free(buf);
 		}
@@ -3141,7 +3141,7 @@ drop_rx_buf:
  *
  * Return: CDF Status
  */
-CDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
+QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 				 struct ol_txrx_desc_type *sta_desc)
 {
 	struct ol_txrx_peer_t *peer;
@@ -3151,18 +3151,18 @@ CDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Pdev is NULL");
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (sta_desc->sta_id >= WLAN_MAX_STA_COUNT) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Invalid sta id :%d",
 			 sta_desc->sta_id);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_desc->sta_id);
 	if (!peer)
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 
 	cdf_spin_lock_bh(&peer->peer_info_lock);
 	peer->osif_rx = rxcb;
@@ -3182,7 +3182,7 @@ CDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 	}
 
 	ol_txrx_flush_rx_frames(peer, 0);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3191,7 +3191,7 @@ CDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
  *
  * Return: CDF Status
  */
-CDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
+QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 {
 	struct ol_txrx_peer_t *peer;
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
@@ -3199,12 +3199,12 @@ CDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find pdev!",
 			   __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Invalid sta id %d", sta_id);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 #ifdef QCA_CONFIG_SMP
@@ -3218,7 +3218,7 @@ CDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 	if (!peer)
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 
 	/* Purge the cached rx frame queue */
 	ol_txrx_flush_rx_frames(peer, 1);
@@ -3228,7 +3228,7 @@ CDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 	peer->state = ol_txrx_peer_state_disc;
 	cdf_spin_unlock_bh(&peer->peer_info_lock);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3237,9 +3237,9 @@ CDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
  * @mac_addr: MAC address of the self peer
  * @peer_id: Pointer to the peer ID
  *
- * Return: CDF_STATUS_SUCCESS on success, CDF_STATUS_E_FAILURE on failure
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_FAILURE on failure
  */
-CDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
+QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 				     uint8_t *peer_id)
 {
 	ol_txrx_pdev_handle pdev;
@@ -3248,21 +3248,21 @@ CDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 	if (!cds_ctx) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Invalid context",
 			   __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find pdev!",
 			   __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	peer = ol_txrx_find_peer_by_addr(pdev, mac_addr, peer_id);
 	if (!peer) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find OCB peer!",
 			   __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ol_txrx_set_ocb_peer(pdev, peer);
@@ -3271,7 +3271,7 @@ CDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 	ol_txrx_peer_state_update(pdev, peer->mac_addr.raw,
 				  ol_txrx_peer_state_auth);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3324,15 +3324,15 @@ exit:
  *
  * Return: CDF status
  */
-CDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
+QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
 {
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 	if (!pdev || !pause_cb) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "pdev or pause_cb is NULL");
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	pdev->pause_cb = pause_cb;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 

@@ -50,7 +50,7 @@
 #include "wma.h"
 
 extern void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
-				     tLimMlmSetKeysReq *pMlmSetKeysReq,
+				     tLimMlmSetKeysReq * pMlmSetKeysReq,
 				     uint16_t staIdx,
 				     uint8_t defWEPIdx,
 				     tpPESession sessionEntry, bool sendRsp);
@@ -283,7 +283,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			FL("Performing pre-auth on same channel (session %p)"),
 			session);
 		/* We are in the same channel. Perform pre-auth */
-		lim_perform_ft_pre_auth(mac_ctx, CDF_STATUS_SUCCESS, NULL,
+		lim_perform_ft_pre_auth(mac_ctx, QDF_STATUS_SUCCESS, NULL,
 					session);
 	}
 
@@ -294,7 +294,7 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
  * Send the Auth1
  * Receive back Auth2
  *------------------------------------------------------------------*/
-void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
+void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 			     uint32_t *data, tpPESession psessionEntry)
 {
 	tSirMacAuthFrameBody authFrame;
@@ -314,7 +314,7 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 		}
 	}
 
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		lim_log(pMac, LOGE,
 			FL(" Change channel not successful for FT pre-auth"));
 		goto preauth_fail;
@@ -404,7 +404,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		cdf_mem_free(pBeaconStruct);
 		lim_log(pMac, LOGP,
 			FL("Unable to allocate memory for creating ADD_BSS"));
-		return (eSIR_MEM_ALLOC_FAILED);
+		return eSIR_MEM_ALLOC_FAILED;
 	}
 
 	cdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams), 0);
@@ -726,7 +726,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	}
 #endif
 
-	pAddBssParams->status = CDF_STATUS_SUCCESS;
+	pAddBssParams->status = QDF_STATUS_SUCCESS;
 	pAddBssParams->respReqd = true;
 
 	pAddBssParams->staContext.sessionId = pftSessionEntry->peSessionId;
@@ -1012,7 +1012,7 @@ tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
 /*------------------------------------------------------------------
  * Resume Link Call Back
  *------------------------------------------------------------------*/
-void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac, CDF_STATUS status,
+void lim_ft_process_pre_auth_result(tpAniSirGlobal pMac, QDF_STATUS status,
 				    tpPESession psessionEntry)
 {
 	if (NULL == psessionEntry ||
@@ -1172,10 +1172,11 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 		pbssDescription =
 			psessionEntry->ftPEContext.pFTPreAuthReq->pbssDescription;
 		lim_print_mac_addr(pMac, pbssDescription->bssId, LOG1);
-		if ((pftSessionEntry =
+		pftSessionEntry =
 			     pe_create_session(pMac, pbssDescription->bssId,
 					       &sessionId, pMac->lim.maxStation,
-					       psessionEntry->bssType)) == NULL) {
+					       psessionEntry->bssType);
+		if (pftSessionEntry == NULL) {
 			lim_log(pMac, LOGE, FL(
 				"Session not created for pre-auth 11R AP"));
 			status = eSIR_FAILURE;
@@ -1655,7 +1656,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 	}
 	for (i = 0; i < HAL_QOS_NUM_AC_MAX; i++) {
 		if ((((1 << i) & pAggrQosRspMsg->tspecIdx)) &&
-		    (pAggrQosRspMsg->status[i] != CDF_STATUS_SUCCESS)) {
+		    (pAggrQosRspMsg->status[i] != QDF_STATUS_SUCCESS)) {
 			sir_copy_mac_addr(peerMacAddr, psessionEntry->bssId);
 			addTsParam.staIdx = pAggrQosRspMsg->staIdx;
 			addTsParam.sessionId = pAggrQosRspMsg->sessionId;
@@ -1878,7 +1879,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
  *
  * Return: Status of sending message to WMA.
  */
-CDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 			uint8_t session_id,
 			tSirFTPreAuthReq *ft_preauth_req)
 {
@@ -1890,7 +1891,7 @@ CDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 	if (NULL == scan_offload_req) {
 		lim_log(mac_ctx, LOGE,
 			FL("Memory allocation failed for pScanOffloadReq"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cdf_mem_zero(scan_offload_req, sizeof(tSirScanOffloadReq));
@@ -1932,10 +1933,10 @@ CDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 	if (rc != eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOGE, FL("START_SCAN_OFFLOAD failed %u"), rc);
 		cdf_mem_free(scan_offload_req);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 
@@ -1982,13 +1983,13 @@ void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 		 * after successful auth, or timed out. Either way, STA
 		 * is back to home channel. Data traffic can continue.
 		 */
-		lim_ft_process_pre_auth_result(mac_ctx, CDF_STATUS_SUCCESS,
+		lim_ft_process_pre_auth_result(mac_ctx, QDF_STATUS_SUCCESS,
 			session_entry);
 		break;
 
 	case SCAN_EVENT_FOREIGN_CHANNEL:
 		/* Sta is on candidate channel. Send auth */
-		lim_perform_ft_pre_auth(mac_ctx, CDF_STATUS_SUCCESS, NULL,
+		lim_perform_ft_pre_auth(mac_ctx, QDF_STATUS_SUCCESS, NULL,
 					session_entry);
 		break;
 	default:

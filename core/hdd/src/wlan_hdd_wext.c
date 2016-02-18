@@ -799,7 +799,7 @@ int hdd_wlan_get_rts_threshold(hdd_adapter_t *pAdapter, union iwreq_data *wrqu)
 	if (0 != ret)
 		return ret;
 
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    sme_cfg_get_int(hHal, WNI_CFG_RTS_THRESHOLD, &threshold)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  FL
@@ -847,7 +847,7 @@ int hdd_wlan_get_frag_threshold(hdd_adapter_t *pAdapter,
 		return status;
 
 	if (sme_cfg_get_int(hHal, WNI_CFG_FRAGMENTATION_THRESHOLD, &threshold)
-	    != CDF_STATUS_SUCCESS) {
+	    != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  FL
 				  ("failed to get ini parameter, WNI_CFG_FRAGMENTATION_THRESHOLD"));
@@ -1088,27 +1088,27 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
  * @pAdapter: adapter upon which the measurement is requested
  * @rssi_value: pointer to where the RSSI should be returned
  *
- * Return: CDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
  */
-CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
+QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 {
 	struct statsContext context;
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
-	CDF_STATUS hstatus;
+	QDF_STATUS hstatus;
 	unsigned long rc;
 
 	if (NULL == pAdapter) {
 		hddLog(CDF_TRACE_LEVEL_WARN,
 		       "%s: Invalid context, pAdapter", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	if (cds_is_driver_recovering()) {
 		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
 			cds_get_driver_state());
 		/* return a cached value */
 		*rssi_value = pAdapter->rssi;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -1117,13 +1117,13 @@ CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 	if (eConnectionState_Associated != pHddStaCtx->conn_info.connState) {
 		hdd_err("Not associated!, return last connected AP rssi!");
 		*rssi_value = pAdapter->rssi;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (pHddStaCtx->hdd_ReassocScenario) {
 		hdd_info("Roaming in progress, return cached RSSI");
 		*rssi_value = pAdapter->rssi;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	init_completion(&context.completion);
@@ -1134,7 +1134,7 @@ CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 			       pHddStaCtx->conn_info.staId[0],
 			       pHddStaCtx->conn_info.bssId, pAdapter->rssi,
 			       &context, pHddCtx->pcds_context);
-	if (CDF_STATUS_SUCCESS != hstatus) {
+	if (QDF_STATUS_SUCCESS != hstatus) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: Unable to retrieve RSSI",
 		       __func__);
 		/* we'll returned a cached value below */
@@ -1169,7 +1169,7 @@ CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 
 	*rssi_value = pAdapter->rssi;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1177,14 +1177,14 @@ CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
  * @pAdapter: adapter upon which the measurement is requested
  * @snr: pointer to where the SNR should be returned
  *
- * Return: CDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
  */
-CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
+QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 {
 	struct statsContext context;
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
-	CDF_STATUS hstatus;
+	QDF_STATUS hstatus;
 	unsigned long rc;
 	int valid;
 
@@ -1193,14 +1193,14 @@ CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 	if (NULL == pAdapter) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Invalid context, pAdapter", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	valid = wlan_hdd_validate_context(pHddCtx);
 	if (0 != valid)
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
@@ -1211,7 +1211,7 @@ CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 	hstatus = sme_get_snr(pHddCtx->hHal, hdd_get_snr_cb,
 			      pHddStaCtx->conn_info.staId[0],
 			      pHddStaCtx->conn_info.bssId, &context);
-	if (CDF_STATUS_SUCCESS != hstatus) {
+	if (QDF_STATUS_SUCCESS != hstatus) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: Unable to retrieve RSSI",
 		       __func__);
 		/* we'll returned a cached value below */
@@ -1246,7 +1246,7 @@ CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 
 	*snr = pAdapter->snr;
 	EXIT();
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1326,25 +1326,25 @@ hdd_get_link_speed_cb(tSirLinkSpeedInfo *pLinkSpeed, void *pContext)
  * This function will send a query to SME for the linkspeed of the
  * given peer, and then wait for the callback to be invoked.
  *
- * Return: CDF_STATUS_SUCCESS if linkspeed data is available,
+ * Return: QDF_STATUS_SUCCESS if linkspeed data is available,
  * otherwise a CDF_STATUS_E_* error.
  */
-CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 					      struct cdf_mac_addr macAddress) {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	unsigned long rc;
 	struct linkspeedContext context;
 	tSirLinkSpeedInfo *linkspeed_req;
 
 	if (NULL == pAdapter) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: pAdapter is NULL", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	linkspeed_req = cdf_mem_malloc(sizeof(*linkspeed_req));
 	if (NULL == linkspeed_req) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s Request Buffer Alloc Fail", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	init_completion(&context.completion);
 	context.pAdapter = pAdapter;
@@ -1354,7 +1354,7 @@ CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 	status = sme_get_link_speed(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				    linkspeed_req,
 				    &context, hdd_get_link_speed_cb);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Unable to retrieve statistics for link speed",
 		       __func__);
@@ -1386,7 +1386,7 @@ CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 	spin_lock(&hdd_context_lock);
 	context.magic = 0;
 	spin_unlock(&hdd_context_lock);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1418,13 +1418,13 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 		/* we are not connected so we don't have a classAstats */
 		*link_speed = 0;
 	} else {
-		CDF_STATUS status;
+		QDF_STATUS status;
 		struct cdf_mac_addr bssid;
 
 		cdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
 
 		status = wlan_hdd_get_linkspeed_for_peermac(sta_adapter, bssid);
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hddLog(LOGE, FL("Unable to retrieve SME linkspeed"));
 			return -EINVAL;
 		}
@@ -1772,14 +1772,14 @@ static int __iw_set_mode(struct net_device *dev,
 		if (hdd_conn_get_connected_bss_type
 			    (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter), &connectedBssType)
 		    || (eCSR_BSS_TYPE_START_IBSS == LastBSSType)) {
-			CDF_STATUS cdf_status;
+			QDF_STATUS qdf_status;
 			/* need to issue a disconnect to CSR. */
 			INIT_COMPLETION(pAdapter->disconnect_comp_var);
-			cdf_status =
+			qdf_status =
 				sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						    pAdapter->sessionId,
 						    eCSR_DISCONNECT_REASON_IBSS_LEAVE);
-			if (CDF_STATUS_SUCCESS == cdf_status) {
+			if (QDF_STATUS_SUCCESS == qdf_status) {
 				unsigned long rc;
 				rc = wait_for_completion_timeout(&pAdapter->
 								 disconnect_comp_var,
@@ -1961,7 +1961,7 @@ static int __iw_set_freq(struct net_device *dev, struct iw_request_info *info,
 
 		if (sme_cfg_get_str(hHal, WNI_CFG_VALID_CHANNEL_LIST,
 				    validChan, &numChans) !=
-				CDF_STATUS_SUCCESS) {
+				QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN, FL
 				  ("failed to get ini parameter, WNI_CFG_VALID_CHANNEL_LIST"));
 			return -EIO;
@@ -2050,7 +2050,7 @@ static int __iw_get_freq(struct net_device *dev, struct iw_request_info *info,
 
 	if (pHddStaCtx->conn_info.connState == eConnectionState_Associated) {
 		if (sme_get_operation_channel(hHal, &channel, pAdapter->sessionId)
-		    != CDF_STATUS_SUCCESS) {
+		    != QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  FL("failed to get operating channel %u"),
 				  pAdapter->sessionId);
@@ -2181,7 +2181,7 @@ static int __iw_set_tx_power(struct net_device *dev,
 		return ret;
 
 	if (sme_cfg_set_int(hHal, WNI_CFG_CURRENT_TX_POWER_LEVEL,
-				wrqu->txpower.value) != CDF_STATUS_SUCCESS) {
+				wrqu->txpower.value) != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR, FL
 				("failed to set ini parameter, WNI_CFG_CURRENT_TX_POWER_LEVEL"));
 		return -EIO;
@@ -2227,9 +2227,8 @@ static int __iw_get_bitrate(struct net_device *dev,
 			    struct iw_request_info *info,
 			    union iwreq_data *wrqu, char *extra)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -2266,7 +2265,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 					   pHddStaCtx->conn_info.staId[0],
 					   pAdapter, pAdapter->sessionId);
 
-		if (CDF_STATUS_SUCCESS != status) {
+		if (QDF_STATUS_SUCCESS != status) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Unable to retrieve statistics", __func__);
 			return status;
@@ -2282,7 +2281,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: SME timeout while retrieving statistics",
 			       __func__);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 
 		wrqu->bitrate.value =
@@ -2291,7 +2290,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 
 	EXIT();
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -2360,17 +2359,17 @@ static int __iw_set_bitrate(struct net_device *dev,
 		valid_rate = true;
 	} else if (sme_cfg_get_int(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				   WNI_CFG_DOT11_MODE,
-				   &active_phy_mode) == CDF_STATUS_SUCCESS) {
+				   &active_phy_mode) == QDF_STATUS_SUCCESS) {
 		if (active_phy_mode == WNI_CFG_DOT11_MODE_11A
 		    || active_phy_mode == WNI_CFG_DOT11_MODE_11G
 		    || active_phy_mode == WNI_CFG_DOT11_MODE_11B) {
 			if ((sme_cfg_get_str(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     WNI_CFG_SUPPORTED_RATES_11A, supp_rates,
-				     &a_len) == CDF_STATUS_SUCCESS)
+				     &a_len) == QDF_STATUS_SUCCESS)
 			    &&
 			    (sme_cfg_get_str(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     WNI_CFG_SUPPORTED_RATES_11B, supp_rates,
-				     &b_len) == CDF_STATUS_SUCCESS)) {
+				     &b_len) == QDF_STATUS_SUCCESS)) {
 				for (i = 0; i < (b_len + a_len); ++i) {
 					/* supported rates returned is double
 					 * the actual rate so we divide it by 2
@@ -2390,7 +2389,7 @@ static int __iw_set_bitrate(struct net_device *dev,
 		return -EINVAL;
 	}
 	if (sme_cfg_set_int(WLAN_HDD_GET_HAL_CTX(pAdapter),
-			    WNI_CFG_FIXED_RATE, rate) != CDF_STATUS_SUCCESS) {
+			    WNI_CFG_FIXED_RATE, rate) != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR, FL
 				("failed to set ini parameter, WNI_CFG_FIXED_RATE"));
 		return -EIO;
@@ -2606,7 +2605,7 @@ static int __iw_get_genie(struct net_device *dev,
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t length = DOT11F_IE_RSN_MAX_LEN;
 	uint8_t genIeBytes[DOT11F_IE_RSN_MAX_LEN];
 	hdd_context_t *hdd_ctx;
@@ -2825,7 +2824,7 @@ static int __iw_set_rts_threshold(struct net_device *dev,
 	}
 
 	if (sme_cfg_set_int(hHal, WNI_CFG_RTS_THRESHOLD, wrqu->rts.value) !=
-			CDF_STATUS_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR, FL
 				("failed to set ini parameter, WNI_CFG_RTS_THRESHOLD"));
 		return -EIO;
@@ -2955,7 +2954,7 @@ static int __iw_set_frag_threshold(struct net_device *dev,
 
 	if (sme_cfg_set_int
 		    (hHal, WNI_CFG_FRAGMENTATION_THRESHOLD, wrqu->frag.value)
-		    != CDF_STATUS_SUCCESS) {
+		    != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR, FL
 				("failed to set ini parameter, WNI_CFG_FRAGMENTATION_THRESHOLD"));
 		return -EIO;
@@ -3129,7 +3128,7 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 	/*Get the phy mode */
 	if (sme_cfg_get_int(hHal,
 			    WNI_CFG_DOT11_MODE,
-			    &active_phy_mode) == CDF_STATUS_SUCCESS) {
+			    &active_phy_mode) == QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "active_phy_mode = %d", active_phy_mode);
 
@@ -3140,7 +3139,7 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 			if (sme_cfg_get_str(hHal,
 					    WNI_CFG_SUPPORTED_RATES_11A,
 					    supp_rates,
-					    &a_len) == CDF_STATUS_SUCCESS) {
+					    &a_len) == QDF_STATUS_SUCCESS) {
 				if (a_len > WNI_CFG_SUPPORTED_RATES_11A_LEN) {
 					a_len = WNI_CFG_SUPPORTED_RATES_11A_LEN;
 				}
@@ -3159,7 +3158,7 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 			if (sme_cfg_get_str(hHal,
 					    WNI_CFG_SUPPORTED_RATES_11B,
 					    supp_rates,
-					    &b_len) == CDF_STATUS_SUCCESS) {
+					    &b_len) == QDF_STATUS_SUCCESS) {
 				if (b_len > WNI_CFG_SUPPORTED_RATES_11B_LEN) {
 					b_len = WNI_CFG_SUPPORTED_RATES_11B_LEN;
 				}
@@ -3191,7 +3190,7 @@ static int __iw_get_range(struct net_device *dev, struct iw_request_info *info,
 	/*Supported Channels and Frequencies */
 	if (sme_cfg_get_str
 		    ((hHal), WNI_CFG_VALID_CHANNEL_LIST, channels,
-		    &num_channels) != CDF_STATUS_SUCCESS) {
+		    &num_channels) != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  FL
 				  ("failed to get ini parameter, WNI_CFG_VALID_CHANNEL_LIST"));
@@ -3334,23 +3333,23 @@ static void hdd_get_class_a_statistics_cb(void *pStats, void *pContext)
  * wlan_hdd_get_class_astats() - Get Class A statistics
  * @pAdapter: adapter for which statistics are desired
  *
- * Return: CDF_STATUS_SUCCESS if adapter's Class A statistics were updated
+ * Return: QDF_STATUS_SUCCESS if adapter's Class A statistics were updated
  */
-CDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
+QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 {
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	CDF_STATUS hstatus;
+	QDF_STATUS hstatus;
 	unsigned long rc;
 	struct statsContext context;
 
 	if (NULL == pAdapter) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: pAdapter is NULL", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	if (cds_is_driver_recovering()) {
 		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
 			 cds_get_driver_state());
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	/* we are connected so prepare our callback context */
@@ -3365,7 +3364,7 @@ CDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 				     false, /* non-cached results */
 				     pHddStaCtx->conn_info.staId[0],
 				     &context, pAdapter->sessionId);
-	if (CDF_STATUS_SUCCESS != hstatus) {
+	if (QDF_STATUS_SUCCESS != hstatus) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Unable to retrieve Class A statistics", __func__);
 		/* we'll returned a cached value below */
@@ -3398,7 +3397,7 @@ CDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 	spin_unlock(&hdd_context_lock);
 
 	/* either callback updated pAdapter stats or it has cached data */
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3474,18 +3473,18 @@ static void hdd_get_station_statistics_cb(void *pStats, void *pContext)
  * wlan_hdd_get_station_stats() - Get station statistics
  * @pAdapter: adapter for which statistics are desired
  *
- * Return: CDF_STATUS_SUCCESS if adapter's statistics were updated
+ * Return: QDF_STATUS_SUCCESS if adapter's statistics were updated
  */
-CDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
+QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 {
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	CDF_STATUS hstatus;
+	QDF_STATUS hstatus;
 	unsigned long rc;
 	struct statsContext context;
 
 	if (NULL == pAdapter) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: pAdapter is NULL", __func__);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	/* we are connected so prepare our callback context */
@@ -3503,7 +3502,7 @@ CDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 				     false, /* non-cached results */
 				     pHddStaCtx->conn_info.staId[0],
 				     &context, pAdapter->sessionId);
-	if (CDF_STATUS_SUCCESS != hstatus) {
+	if (QDF_STATUS_SUCCESS != hstatus) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Unable to retrieve statistics", __func__);
 		/* we'll return with cached values */
@@ -3537,7 +3536,7 @@ CDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter)
 	spin_unlock(&hdd_context_lock);
 
 	/* either callback updated pAdapter stats or it has cached data */
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3748,7 +3747,7 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 	eCsrEncryptionType encryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	bool fKeyPresent = 0;
 	int i;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int ret;
 
 	ENTER();
@@ -3800,7 +3799,7 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 				sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						    pAdapter->sessionId,
 						    eCSR_DISCONNECT_REASON_UNSPECIFIED);
-			if (CDF_STATUS_SUCCESS == status) {
+			if (QDF_STATUS_SUCCESS == status) {
 				unsigned long rc;
 				rc = wait_for_completion_timeout(&pAdapter->
 								 disconnect_comp_var,
@@ -4037,7 +4036,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	hdd_context_t *hdd_ctx;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
 	int ret;
 	struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
@@ -4190,11 +4189,11 @@ static int __iw_set_encodeext(struct net_device *dev,
 	 */
 	cdf_ret_status = sme_ft_update_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					   pAdapter->sessionId, &setKey);
-	if (cdf_ret_status == CDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
+	if (cdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
 		hddLog(CDF_TRACE_LEVEL_INFO_MED,
 		       "%s: Update PreAuth Key success", __func__);
 		return 0;
-	} else if (cdf_ret_status == CDF_STATUS_FT_PREAUTH_KEY_FAILED) {
+	} else if (cdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Update PreAuth Key failed", __func__);
 		return -EINVAL;
@@ -4206,7 +4205,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 					  pAdapter->sessionId,
 					  &setKey, &roamId);
 
-	if (cdf_ret_status != CDF_STATUS_SUCCESS) {
+	if (cdf_ret_status != QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "[%4d] sme_roam_set_key returned ERROR status= %d",
 			  __LINE__, cdf_ret_status);
@@ -4277,7 +4276,7 @@ static int __iw_set_retry(struct net_device *dev, struct iw_request_info *info,
 		if ((wrqu->retry.flags & IW_RETRY_LONG)) {
 			if (sme_cfg_set_int (hHal, WNI_CFG_LONG_RETRY_LIMIT,
 						wrqu->retry.value) !=
-					CDF_STATUS_SUCCESS) {
+					QDF_STATUS_SUCCESS) {
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR, FL
 					  ("failed to set ini parameter, WNI_CFG_LONG_RETRY_LIMIT"));
@@ -4286,7 +4285,7 @@ static int __iw_set_retry(struct net_device *dev, struct iw_request_info *info,
 		} else if ((wrqu->retry.flags & IW_RETRY_SHORT)) {
 			if (sme_cfg_set_int (hHal, WNI_CFG_SHORT_RETRY_LIMIT,
 						wrqu->retry.value) !=
-					CDF_STATUS_SUCCESS) {
+					QDF_STATUS_SUCCESS) {
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					CDF_TRACE_LEVEL_ERROR, FL
 					("failed to set ini parameter, WNI_CFG_LONG_RETRY_LIMIT"));
@@ -4356,7 +4355,7 @@ static int __iw_get_retry(struct net_device *dev, struct iw_request_info *info,
 		wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_LONG;
 
 		if (sme_cfg_get_int(hHal, WNI_CFG_LONG_RETRY_LIMIT, &retry) !=
-		    CDF_STATUS_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 				  FL
 					  ("failed to get ini parameter, WNI_CFG_LONG_RETRY_LIMIT"));
@@ -4368,7 +4367,7 @@ static int __iw_get_retry(struct net_device *dev, struct iw_request_info *info,
 		wrqu->retry.flags = IW_RETRY_LIMIT | IW_RETRY_SHORT;
 
 		if (sme_cfg_get_int(hHal, WNI_CFG_SHORT_RETRY_LIMIT, &retry) !=
-		    CDF_STATUS_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 				  FL
 					  ("failed to get ini parameter, WNI_CFG_LONG_RETRY_LIMIT"));
@@ -4425,7 +4424,7 @@ static int __iw_set_mlme(struct net_device *dev,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	struct iw_mlme *mlme = (struct iw_mlme *)extra;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_context_t *hdd_ctx;
 	int ret;
 
@@ -4456,7 +4455,7 @@ static int __iw_set_mlme(struct net_device *dev,
 				sme_roam_disconnect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						    pAdapter->sessionId, reason);
 
-			if (CDF_STATUS_SUCCESS == status) {
+			if (QDF_STATUS_SUCCESS == status) {
 				unsigned long rc;
 				rc = wait_for_completion_timeout(&pAdapter->
 								 disconnect_comp_var,
@@ -4540,7 +4539,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 {
 #ifdef QCA_HT_2040_COEX
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(net);
-	CDF_STATUS halStatus = CDF_STATUS_E_FAILURE;
+	QDF_STATUS halStatus = QDF_STATUS_E_FAILURE;
 #endif
 	bool band_24 = false, band_5g = false;
 	bool ch_bond24 = false, ch_bond5g = false;
@@ -4765,7 +4764,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			halStatus = sme_set_ht2040_mode(hal,
 							pAdapter->sessionId,
 							eHT_CHAN_HT20, false);
-			if (halStatus == CDF_STATUS_E_FAILURE) {
+			if (halStatus == QDF_STATUS_E_FAILURE) {
 				hddLog(LOGE, FL("Failed to disable OBSS"));
 				return -EIO;
 			}
@@ -4775,7 +4774,7 @@ int wlan_hdd_update_phymode(struct net_device *net, tHalHandle hal,
 			halStatus = sme_set_ht2040_mode(hal,
 							pAdapter->sessionId,
 							eHT_CHAN_HT20, true);
-			if (halStatus == CDF_STATUS_E_FAILURE) {
+			if (halStatus == QDF_STATUS_E_FAILURE) {
 				hddLog(LOGE, FL("Failed to enable OBSS"));
 				return -EIO;
 			}
@@ -4877,7 +4876,7 @@ static void hdd_get_temperature_cb(int temperature, void *pContext)
  */
 int wlan_hdd_get_temperature(hdd_adapter_t *pAdapter, int *temperature)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct statsContext tempContext;
 	unsigned long rc;
 
@@ -4891,7 +4890,7 @@ int wlan_hdd_get_temperature(hdd_adapter_t *pAdapter, int *temperature)
 	tempContext.magic = TEMP_CONTEXT_MAGIC;
 	status = sme_get_temperature(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				     &tempContext, hdd_get_temperature_cb);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("Unable to retrieve temperature"));
 	} else {
@@ -4936,7 +4935,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	int set_value = value[1];
 	int ret;
 	int enable_pbm, enable_mp;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ENTER();
 
@@ -5033,7 +5032,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 			ret = -EINVAL;
 		} else if (sme_cfg_set_int(hHal, WNI_CFG_ASSOC_STA_LIMIT,
 					set_value)
-			   != CDF_STATUS_SUCCESS) {
+			   != QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_HDD,
 				  CDF_TRACE_LEVEL_ERROR, FL
 				  ("failed to set ini parameter, WNI_CFG_ASSOC_STA_LIMIT"));
@@ -5056,7 +5055,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		    (set_value > CFG_DATA_INACTIVITY_TIMEOUT_MAX) ||
 		    (sme_cfg_set_int((WLAN_HDD_GET_CTX(pAdapter))->hHal,
 				     WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
-				     set_value) == CDF_STATUS_E_FAILURE)) {
+				     set_value) == QDF_STATUS_E_FAILURE)) {
 			hddLog(LOGE, "Failure: Could not pass on "
 			       "WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT configuration info "
 			       "to CCM");
@@ -5077,7 +5076,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (sme_set_tx_power
 			    (hHal, pAdapter->sessionId, bssid,
 			    pAdapter->device_mode,
-			    set_value) != CDF_STATUS_SUCCESS) {
+			    set_value) != QDF_STATUS_SUCCESS) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Setting tx power failed", __func__);
 			return -EIO;
@@ -5096,7 +5095,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		cdf_copy_macaddr(&selfMac, &pHddStaCtx->conn_info.bssId);
 
 		if (sme_set_max_tx_power(hHal, bssid, selfMac, set_value)
-		    != CDF_STATUS_SUCCESS) {
+		    != QDF_STATUS_SUCCESS) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Setting maximum tx power failed",
 			       __func__);
@@ -5111,7 +5110,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		       "%s: Setting maximum tx power %d dBm for 2.4 GHz band",
 		       __func__, set_value);
 		if (sme_set_max_tx_power_per_band(eCSR_BAND_24, set_value) !=
-		    CDF_STATUS_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Setting maximum tx power failed for 2.4 GHz band",
 			       __func__);
@@ -5126,7 +5125,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		       "%s: Setting maximum tx power %d dBm for 5.0 GHz band",
 		       __func__, set_value);
 		if (sme_set_max_tx_power_per_band(eCSR_BAND_5G, set_value) !=
-		    CDF_STATUS_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Setting maximum tx power failed for 5.0 GHz band",
 			       __func__);
@@ -5180,7 +5179,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 			hddLog(LOGE, "NSS greater than 2 not supported");
 			ret = -EINVAL;
 		} else {
-			if (CDF_STATUS_SUCCESS !=
+			if (QDF_STATUS_SUCCESS !=
 				hdd_update_nss(WLAN_HDD_GET_CTX(pAdapter),
 				set_value))
 				ret = -EINVAL;
@@ -5273,7 +5272,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		hddLog(LOG1, "LDPC val %d", set_value);
 		/* get the HT capability info */
 		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (CDF_STATUS_SUCCESS != ret) {
+		if (QDF_STATUS_SUCCESS != ret) {
 			CDF_TRACE(CDF_MODULE_ID_HDD,
 				  CDF_TRACE_LEVEL_ERROR,
 				  "%s: could not get HT capability info",
@@ -5311,7 +5310,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		hddLog(LOG1, "TX_STBC val %d", set_value);
 		/* get the HT capability info */
 		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (CDF_STATUS_SUCCESS != ret) {
+		if (QDF_STATUS_SUCCESS != ret) {
 			CDF_TRACE(CDF_MODULE_ID_HDD,
 				  CDF_TRACE_LEVEL_ERROR,
 				  "%s: could not get HT capability info",
@@ -5349,7 +5348,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		       set_value);
 		/* get the HT capability info */
 		ret = sme_cfg_get_int(hHal, WNI_CFG_HT_CAP_INFO, &value);
-		if (CDF_STATUS_SUCCESS != ret) {
+		if (QDF_STATUS_SUCCESS != ret) {
 			CDF_TRACE(CDF_MODULE_ID_CDF,
 				  CDF_TRACE_LEVEL_ERROR,
 				  "%s: could not get HT capability info",
@@ -5414,7 +5413,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 		if (!ret) {
 			if (sme_cfg_set_int
 				    (hHal, WNI_CFG_RTS_THRESHOLD, value) !=
-				    CDF_STATUS_SUCCESS) {
+				    QDF_STATUS_SUCCESS) {
 				hddLog(LOGE, "FAILED TO SET RTSCTS");
 				return -EIO;
 			}
@@ -6120,7 +6119,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 			status = sme_ext_change_channel(hHal,
 				   set_value, pAdapter->sessionId);
-			if (status != CDF_STATUS_SUCCESS) {
+			if (status != QDF_STATUS_SUCCESS) {
 				hddLog(LOGE,
 				  FL("Error in change channel status %d"),
 				  status);
@@ -6174,7 +6173,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
 {
-	CDF_STATUS vstatus;
+	QDF_STATUS vstatus;
 	int sub_cmd;
 	int ret;
 	char *pBuffer = NULL;
@@ -6277,7 +6276,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 		break;
 	case WE_SET_CONFIG:
 		vstatus = hdd_execute_global_config_command(hdd_ctx, pBuffer);
-		if (CDF_STATUS_SUCCESS != vstatus) {
+		if (QDF_STATUS_SUCCESS != vstatus) {
 			ret = -EINVAL;
 		}
 		break;
@@ -6362,7 +6361,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 	{
 		if (sme_cfg_get_int
 			    (hHal, WNI_CFG_ASSOC_STA_LIMIT,
-			    (uint32_t *) value) != CDF_STATUS_SUCCESS) {
+			    (uint32_t *) value) != QDF_STATUS_SUCCESS) {
 			CDF_TRACE(CDF_MODULE_ID_HDD,
 				  CDF_TRACE_LEVEL_WARN, FL
 					  ("failed to get ini parameter, WNI_CFG_ASSOC_STA_LIMIT"));
@@ -6638,7 +6637,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 		*value = wma_cli_get_command(pAdapter->sessionId,
 					     WMI_PDEV_PARAM_TXPOWER_LIMIT2G,
 					     PDEV_CMD);
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sme_cfg_get_int(hHal, WNI_CFG_CURRENT_TX_POWER_LEVEL,
 				    &txpow2g)) {
 			return -EIO;
@@ -6655,7 +6654,7 @@ static int __iw_setnone_getint(struct net_device *dev,
 		*value = wma_cli_get_command(pAdapter->sessionId,
 					     WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
 					     PDEV_CMD);
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sme_cfg_get_int(hHal, WNI_CFG_CURRENT_TX_POWER_LEVEL,
 				    &txpow5g)) {
 			return -EIO;
@@ -6852,9 +6851,9 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 	 */
 	case WE_SET_SAP_CHANNELS:
 		if (wlan_hdd_validate_operation_channel(pAdapter, value[1]) !=
-			CDF_STATUS_SUCCESS ||
+			QDF_STATUS_SUCCESS ||
 			wlan_hdd_validate_operation_channel(pAdapter,
-					value[2]) != CDF_STATUS_SUCCESS) {
+					value[2]) != QDF_STATUS_SUCCESS) {
 			ret = -EINVAL;
 		} else {
 			hdd_ctx->config->force_sap_acs_st_ch = value[1];
@@ -7189,7 +7188,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 	}
 	case WE_GET_CHANNEL_LIST:
 	{
-		CDF_STATUS status;
+		QDF_STATUS status;
 		uint8_t i, len;
 		char *buf;
 		uint8_t ubuf[WNI_CFG_COUNTRY_CODE_LEN];
@@ -7202,7 +7201,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		status =
 			iw_softap_get_channel_list(dev, info, wrqu,
 						   (char *)&channel_list);
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			hddLog(LOGE, FL("GetChannelList Failed!!!"));
 			return -EINVAL;
 		}
@@ -7221,7 +7220,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 		}
 		len = scnprintf(buf, WE_MAX_STR_LEN, "%u ",
 				channel_list.num_channels);
-		if (CDF_STATUS_SUCCESS == sme_get_country_code(hdd_ctx->hHal,
+		if (QDF_STATUS_SUCCESS == sme_get_country_code(hdd_ctx->hHal,
 						ubuf, &ubuf_len)) {
 			/* Printing Country code in getChannelList */
 			for (i = 0; i < (ubuf_len - 1); i++)
@@ -7292,7 +7291,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 			ch_bond5g = true;
 
 		phymode = sme_get_phy_mode(hal);
-		if ((CDF_STATUS_SUCCESS !=
+		if ((QDF_STATUS_SUCCESS !=
 		     sme_get_freq_band(hal, &currBand))) {
 			CDF_TRACE(CDF_MODULE_ID_HDD,
 				  CDF_TRACE_LEVEL_INFO,
@@ -7919,7 +7918,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		msg.type = SIR_HAL_UNIT_TEST_CMD;
 		msg.reserved = 0;
 		msg.bodyptr = unitTestArgs;
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
 			cdf_mem_free(unitTestArgs);
 			CDF_TRACE(CDF_MODULE_ID_HDD,
@@ -8491,7 +8490,7 @@ static int __iw_set_host_offload(struct net_device *dev,
 	 * copied individually.
 	 */
 	memcpy(&offloadRequest, pRequest, wrqu->data.length);
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				 pAdapter->sessionId, &offloadRequest)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
@@ -8579,7 +8578,7 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 
 	hdd_info("Keep alive period  %d", request->timePeriod);
 
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    sme_set_keep_alive(WLAN_HDD_GET_HAL_CTX(pAdapter),
 		pAdapter->sessionId, request)) {
 		hdd_err("Failure to execute Keep Alive");
@@ -8694,7 +8693,7 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 				request->params_data[i].data_mask[5]);
 		}
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 			sme_receive_filter_set_filter(hdd_ctx->hHal,
 				&packetFilterSetReq,
 				sessionId)) {
@@ -8709,7 +8708,7 @@ static int wlan_hdd_set_filter(hdd_context_t *hdd_ctx,
 		hdd_info("Clear Packet Filter Request for Id: %d",
 			request->filter_id);
 		packetFilterClrReq.filterId = request->filter_id;
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sme_receive_filter_clear_filter(hdd_ctx->hHal,
 						    &packetFilterClrReq,
 						    sessionId)) {
@@ -8814,7 +8813,7 @@ static int __iw_get_statistics(struct net_device *dev,
 {
 
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_wext_state_t *pWextState;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
@@ -8848,7 +8847,7 @@ static int __iw_get_statistics(struct net_device *dev,
 						     (pAdapter))->conn_info.staId[0],
 					    pAdapter, pAdapter->sessionId);
 
-		if (CDF_STATUS_SUCCESS != status) {
+		if (QDF_STATUS_SUCCESS != status) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Unable to retrieve SME statistics",
 			       __func__);
@@ -9259,7 +9258,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	eCsrBand band;
 
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_context_t *pHddCtx;
 	hdd_adapter_list_node_t *pAdapterNode, *pNext;
 	eCsrBand currBand = eCSR_BAND_MAX;
@@ -9308,7 +9307,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 		band = pHddCtx->config->nBandCapability;
 	}
 
-	if (CDF_STATUS_SUCCESS != sme_get_freq_band(hHal, &currBand)) {
+	if (QDF_STATUS_SUCCESS != sme_get_freq_band(hHal, &currBand)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s: Failed to get current band config", __func__);
 		return -EIO;
@@ -9324,7 +9323,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 			  __func__, currBand, band);
 
 		status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-		while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+		while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 			pAdapter = pAdapterNode->pAdapter;
 			hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 			hdd_abort_mac_scan(pHddCtx, pAdapter->sessionId,
@@ -9341,7 +9340,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 			    (hdd_conn_is_connected
 				     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)))
 			    && (connectedBand != band)) {
-				CDF_STATUS status = CDF_STATUS_SUCCESS;
+				QDF_STATUS status = QDF_STATUS_SUCCESS;
 				long lrc;
 
 				/* STA already connected on current band, So issue disconnect
@@ -9359,7 +9358,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 							    pAdapter->sessionId,
 							    eCSR_DISCONNECT_REASON_UNSPECIFIED);
 
-				if (CDF_STATUS_SUCCESS != status) {
+				if (QDF_STATUS_SUCCESS != status) {
 					hddLog(CDF_TRACE_LEVEL_ERROR,
 					       "%s csr_roam_disconnect failure, returned %d",
 					       __func__, (int)status);
@@ -9387,7 +9386,7 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 			pAdapterNode = pNext;
 		}
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sme_set_freq_band(hHal, pAdapter->sessionId, band)) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 				  FL("Failed to set the band value to %u"),
@@ -10744,7 +10743,7 @@ int hdd_set_wext(hdd_adapter_t *pAdapter)
 
 	hdd_clear_roam_profile_ie(pAdapter);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 }
 
@@ -10768,19 +10767,19 @@ int hdd_register_wext(struct net_device *dev)
 
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: hdd_set_wext failed!!"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_create(&pwextBuf->hdd_cdf_event))) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: HDD cdf event init failed!!"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_event_create(&pwextBuf->scanevent))) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: HDD scan event init failed!!"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Register as a wireless device */
 	dev->wireless_handlers = (struct iw_handler_def *)&we_handler_def;

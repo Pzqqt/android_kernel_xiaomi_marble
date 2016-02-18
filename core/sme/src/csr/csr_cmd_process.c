@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,11 +46,11 @@
  *
  * This routine will handle all the message for csr to process
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
+QDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirSmeRsp *sme_rsp = (tSirSmeRsp *) msg_buf;
 #ifdef FEATURE_WLAN_SCAN_PNO
 	tSirMbMsg *msg = (tSirMbMsg *) msg_buf;
@@ -80,12 +80,12 @@ CDF_STATUS csr_msg_processor(tpAniSirGlobal mac_ctx, void *msg_buf)
 	if (!session) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found, msgType : %d"),
 			session_id, msg->type);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (eWNI_SME_SCAN_RSP == msg->type) {
 		status = csr_scanning_state_msg_processor(mac_ctx, msg_buf);
-		if (CDF_STATUS_SUCCESS != status)
+		if (QDF_STATUS_SUCCESS != status)
 			sms_log(mac_ctx, LOGE,
 				FL("handling PNO scan resp 0x%X CSR state %d"),
 				sme_rsp->messageType, cur_state);

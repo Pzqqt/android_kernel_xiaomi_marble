@@ -27,18 +27,17 @@
 #ifndef I_CDF_ATOMIC_H
 #define I_CDF_ATOMIC_H
 
-#include <cdf_status.h>         /* CDF_STATUS */
 #include <qdf_status.h>         /* QDF_STATUS */
 
 #include <linux/atomic.h>
 
 typedef atomic_t __cdf_atomic_t;
 
-static inline CDF_STATUS __cdf_atomic_init(__cdf_atomic_t *v)
+static inline QDF_STATUS __cdf_atomic_init(__cdf_atomic_t *v)
 {
 	atomic_set(v, 0);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline int32_t __cdf_atomic_read(__cdf_atomic_t *v)

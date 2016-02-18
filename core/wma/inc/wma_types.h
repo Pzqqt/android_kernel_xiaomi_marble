@@ -51,7 +51,7 @@
 #define WMA_MAX_STA    (16)
 #endif
 
-#define WMA_NVDownload_Start(x)    ({ CDF_STATUS_SUCCESS; })
+#define WMA_NVDownload_Start(x)    ({ QDF_STATUS_SUCCESS; })
 
 #define DPU_FEEDBACK_UNPROTECTED_ERROR 0x0F
 
@@ -462,7 +462,7 @@
 
 #define wma_tx_frame(hHal, pFrmBuf, frmLen, frmType, txDir, tid, pCompFunc, \
 		   pData, txFlag, sessionid, channel_freq) \
-	(CDF_STATUS)( wma_tx_packet( \
+	(QDF_STATUS)( wma_tx_packet( \
 		      cds_get_context(CDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
 		      (frmLen), \
@@ -480,7 +480,7 @@
 #define wma_tx_frameWithTxComplete(hHal, pFrmBuf, frmLen, frmType, txDir, tid, \
 	 pCompFunc, pData, pCBackFnTxComp, txFlag, sessionid, tdlsflag, \
 	 channel_freq) \
-	(CDF_STATUS)( wma_tx_packet( \
+	(QDF_STATUS)( wma_tx_packet( \
 		      cds_get_context(CDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
 		      (frmLen), \
@@ -584,7 +584,7 @@ typedef void (*pWMATxRxCompFunc)(void *pContext, void *pData,
 /* callback function for TX complete */
 /* parameter 1 - global pMac pointer */
 /* parameter 2 - txComplete status : 1- success, 0 - failure. */
-typedef CDF_STATUS (*pWMAAckFnTxComp)(tpAniSirGlobal, uint32_t);
+typedef QDF_STATUS (*pWMAAckFnTxComp)(tpAniSirGlobal, uint32_t);
 
 /* generic callback for updating parameters from target to UMAC */
 typedef void (*wma_tgt_cfg_cb)(void *context, void *param);
@@ -653,17 +653,17 @@ tSirRetStatus wma_post_ctrl_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
 
 tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
-CDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps);
-CDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req);
+QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps);
+QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req);
 
-CDF_STATUS
+QDF_STATUS
 wma_ds_peek_rx_packet_info
 	(cds_pkt_t *vosDataBuff, void **ppRxHeader, bool bSwap);
 
 
 void wma_tx_abort(uint8_t vdev_id);
 
-CDF_STATUS wma_tx_packet(void *pWMA,
+QDF_STATUS wma_tx_packet(void *pWMA,
 			 void *pFrmBuf,
 			 uint16_t frmLen,
 			 eFrameType frmType,
@@ -675,23 +675,23 @@ CDF_STATUS wma_tx_packet(void *pWMA,
 			 uint8_t txFlag, uint8_t sessionId, bool tdlsflag,
 			 uint16_t channel_freq);
 
-CDF_STATUS wma_open(void *p_cds_context,
+QDF_STATUS wma_open(void *p_cds_context,
 		    wma_tgt_cfg_cb pTgtUpdCB,
 		    wma_dfs_radar_indication_cb radar_ind_cb,
 		    tMacOpenParameters *pMacParams);
 
-typedef CDF_STATUS (*wma_mgmt_frame_rx_callback)(void *p_cds_gctx,
+typedef QDF_STATUS (*wma_mgmt_frame_rx_callback)(void *p_cds_gctx,
 					     void *cds_buff);
 
-CDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
+QDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
 				wma_mgmt_frame_rx_callback mgmt_rx_cb);
 
-CDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
-CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+QDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
+QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr, uint8_t reason),
-		CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr));
 

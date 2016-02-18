@@ -1193,7 +1193,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 		LinkLayerStatsSetReq.mpduSizeThreshold,
 		LinkLayerStatsSetReq.aggressiveStatisticsGathering);
 
-	if (CDF_STATUS_SUCCESS != sme_ll_stats_set_req(pHddCtx->hHal,
+	if (QDF_STATUS_SUCCESS != sme_ll_stats_set_req(pHddCtx->hHal,
 						       &LinkLayerStatsSetReq)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s:"
 		       "sme_ll_stats_set_req Failed", __func__);
@@ -1323,7 +1323,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	INIT_COMPLETION(context->response_event);
 	spin_unlock(&context->context_lock);
 
-	if (CDF_STATUS_SUCCESS != sme_ll_stats_get_req(pHddCtx->hHal,
+	if (QDF_STATUS_SUCCESS != sme_ll_stats_get_req(pHddCtx->hHal,
 						       &LinkLayerStatsGetReq)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s:"
 		       "sme_ll_stats_get_req Failed", __func__);
@@ -1454,7 +1454,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 		LinkLayerStatsClearReq.statsClearReqMask,
 		LinkLayerStatsClearReq.stopReq);
 
-	if (CDF_STATUS_SUCCESS == sme_ll_stats_clear_req(pHddCtx->hHal,
+	if (QDF_STATUS_SUCCESS == sme_ll_stats_clear_req(pHddCtx->hHal,
 					&LinkLayerStatsClearReq)) {
 		temp_skbuff = cfg80211_vendor_cmd_alloc_reply_skb(wiphy,
 								  2 *
@@ -1537,7 +1537,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	struct net_device *dev = wdev->netdev;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	int ret_val;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 
 	ENTER();
@@ -1556,7 +1556,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 
 	status = sme_stats_ext_request(pAdapter->sessionId, &stats_ext_req);
 
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		ret_val = -EINVAL;
 
 	return ret_val;

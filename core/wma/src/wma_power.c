@@ -170,7 +170,7 @@ int32_t wmi_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
  *
  * Return: 0 for success or error code.
  */
-CDF_STATUS
+QDF_STATUS
 wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 {
 	int ret;
@@ -181,7 +181,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed to set WMI_VDEV_PARAM_ATIM_WINDOW_LENGTH ret = %d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -190,7 +190,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed, set WMI_VDEV_PARAM_IS_IBSS_POWER_SAVE_ALLOWED ret=%d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -199,7 +199,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed, set WMI_VDEV_PARAM_IS_POWER_COLLAPSE_ALLOWED ret=%d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -208,7 +208,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed, set WMI_VDEV_PARAM_IS_AWAKE_ON_TXRX_ENABLED ret=%d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -217,7 +217,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed, set WMI_VDEV_PARAM_INACTIVITY_CNT ret=%d",
 			 ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -226,7 +226,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed, set WMI_VDEV_PARAM_TXSP_END_INACTIVITY_TIME_MS ret=%d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -235,7 +235,7 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed, set WMI_VDEV_PARAM_IBSS_PS_WARMUP_TIME_SECS ret=%d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -244,10 +244,10 @@ wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret < 0) {
 		WMA_LOGE("Failed to set IBSS_PS_1RX_CHAIN_IN_ATIM_WINDOW_ENABLE ret=%d",
 			ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* QCA_IBSS_SUPPORT */
 
@@ -1209,9 +1209,9 @@ wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
  * trigger frames periodically when there
  * is no traffic on the transmit side.
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
+QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params
 				    trigger_uapsd_params)
 {
@@ -1232,7 +1232,7 @@ CDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 	    !WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				    WMI_STA_UAPSD_VAR_AUTO_TRIG)) {
 		WMA_LOGD("Trigger uapsd is not supported vdev id %d", vdev_id);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	uapsd_trigger_param.wmm_ac = trigger_uapsd_params->wmm_ac;
@@ -1250,9 +1250,9 @@ CDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 	if (ret) {
 		WMA_LOGE("Fail to send uapsd param cmd for vdevid %d ret = %d",
 			 ret, vdev_id);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1261,9 +1261,9 @@ CDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
  * @vdev_id: vdev id
  * @ac: access category
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
+QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 				    uint32_t vdev_id, enum uapsd_ac ac)
 {
 	int32_t ret;
@@ -1300,7 +1300,7 @@ CDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 		break;
 	default:
 		WMA_LOGE("Invalid AC vdevId %d ac %d", vdev_id, ac);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
@@ -1319,7 +1319,7 @@ CDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 	if (ret) {
 		WMA_LOGE("Fail to send auto trig cmd for vdevid %d ret = %d",
 			 ret, vdev_id);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_set_sta_ps_param(wma_handle->wmi_handle, vdev_id,
@@ -1328,20 +1328,20 @@ CDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 	if (ret) {
 		WMA_LOGE("Disable Uapsd per ac Failed vdevId %d ac %d", vdev_id,
 			 ac);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	WMA_LOGD("Disable Uapsd per ac vdevId %d val %d", vdev_id,
 		 iface->uapsd_cached_val);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * wma_get_temperature() - get pdev temperature req
  * @wmi_handle: wma handle
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
+QDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
 {
 	wmi_pdev_get_temperature_cmd_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
@@ -1350,13 +1350,13 @@ CDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
 
 	if (!wma_handle) {
 		WMA_LOGE(FL("WMA is closed, can not issue cmd"));
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE(FL("wmi_buf_alloc failed"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -1371,9 +1371,9 @@ CDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
 				 WMI_PDEV_GET_TEMPERATURE_CMDID)) {
 		WMA_LOGE(FL("failed to send get temperature command"));
 		wmi_buf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1387,7 +1387,7 @@ CDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
 int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 				     uint32_t len)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cds_msg_t sme_msg = { 0 };
 	WMI_PDEV_TEMPERATURE_EVENTID_param_tlvs *param_buf;
 	wmi_pdev_temperature_event_fixed_param *wmi_event;
@@ -1405,8 +1405,8 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = wmi_event->value;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post get temperature ind msg"));
 	}
 
@@ -1418,9 +1418,9 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
  * @handle: wma handle
  * @ptxlim: power limit value
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
+QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 				       tSirTxPowerLimit *ptxlim)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
@@ -1431,7 +1431,7 @@ CDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue tx power limit",
 			 __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	/* Set value and reason code for 2g and 5g power limit */
 
@@ -1451,16 +1451,16 @@ CDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 					 txpower_params2g);
 	if (ret) {
 		WMA_LOGE("%s: Failed to set txpower 2g (%d)", __func__, ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	ret = wmi_unified_pdev_set_param(wma->wmi_handle,
 					 WMI_PDEV_PARAM_TXPOWER_LIMIT5G,
 					 txpower_params5g);
 	if (ret) {
 		WMA_LOGE("%s: Failed to set txpower 5g (%d)", __func__, ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1909,11 +1909,11 @@ void wma_process_set_mimops_req(tp_wma_handle wma_handle,
  * @vdev_id: vdev id
  * @value: value
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
+QDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
 {
-	int ret = CDF_STATUS_SUCCESS;
+	int ret = QDF_STATUS_SUCCESS;
 	wmi_sta_smps_force_mode_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len = sizeof(*cmd);
@@ -1946,7 +1946,7 @@ CDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
 		break;
 	default:
 		WMA_LOGE("%s:INVALID Mimo PS CONFIG", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Setting vdev %d value = %u", vdev_id, value);
@@ -1966,9 +1966,9 @@ CDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
  * @wma_ptr: wma handle
  * @pReq: modem power state
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
+QDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
 					tSirModemPowerStateInd *pReq)
 {
 	int32_t ret;
@@ -1980,11 +1980,11 @@ CDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
 	if (ret) {
 		WMA_LOGE("%s: Fail to notify Modem Power State %d",
 			 __func__, pReq->param);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Successfully notify Modem Power State %d", pReq->param);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1992,9 +1992,9 @@ CDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
  * @wma_ptr: wma handle
  * @idle_ps: idle powersave
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
+QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
 {
 	int32_t ret;
 	tp_wma_handle wma = (tp_wma_handle) wma_ptr;
@@ -2007,11 +2007,11 @@ CDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
 					 idle_ps);
 	if (ret) {
 		WMA_LOGE("Fail to Set Idle Ps Config %d", idle_ps);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Successfully Set Idle Ps Config %d", idle_ps);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2020,12 +2020,12 @@ CDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
  * @vdev_id: vdev id
  * @value: value
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
+QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 			       int value)
 {
-	int ret = CDF_STATUS_SUCCESS;
+	int ret = QDF_STATUS_SUCCESS;
 	wmi_sta_smps_param_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
 	uint16_t len = sizeof(*cmd);
@@ -2257,21 +2257,21 @@ void wma_set_resume_dtim(tp_wma_handle wma)
  * @vdev_id: vdev id
  * @value: value
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
+QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
 {
-	int ret = CDF_STATUS_SUCCESS;
+	int ret = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle =
 			(tp_wma_handle)cds_get_context(CDF_MODULE_ID_WMA);
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
 		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle, vdev_id,
@@ -2287,21 +2287,21 @@ CDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
  * @vdev_id: vdev id
  * @value: value
  *
- * Return: CDF_STATUS_SUCCESS for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code.
  */
-CDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
+QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
 {
-	int ret = CDF_STATUS_SUCCESS;
+	int ret = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle =
 			(tp_wma_handle)cds_get_context(CDF_MODULE_ID_WMA);
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
 		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle, vdev_id,

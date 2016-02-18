@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -82,7 +82,7 @@ typedef struct tagDblLinkList {
 #define csrIsListEmpty(pHead) ((pHead)->next == (pHead))
 
 uint32_t csr_ll_count(tDblLinkList *pList);
-CDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList);
+QDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList);
 void csr_ll_close(tDblLinkList *pList);
 void csr_ll_lock(tDblLinkList *pList);
 void csr_ll_unlock(tDblLinkList *pList);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1087,7 +1087,7 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		goto end;
 	}
 
-	if (pAddTsRspMsg->status == CDF_STATUS_SUCCESS) {
+	if (pAddTsRspMsg->status == QDF_STATUS_SUCCESS) {
 		PELOG1(lim_log
 			       (pMac, LOG1,
 			       FL("Received successful ADDTS response from HAL "));

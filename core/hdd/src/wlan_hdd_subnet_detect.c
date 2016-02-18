@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -78,7 +78,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1];
 	struct gateway_param_update_req req = { 0 };
 	int ret;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ENTER();
 
@@ -156,7 +156,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	hdd_info("ipv6 addr: %pI6c", req.ipv6_addr);
 
 	status = sme_gateway_param_update(hdd_ctx->hHal, &req);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_gateway_param_update failed(err=%d)", status);
 		ret = -EINVAL;
 	}

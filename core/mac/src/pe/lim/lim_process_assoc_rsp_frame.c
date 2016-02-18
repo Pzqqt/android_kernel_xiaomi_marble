@@ -811,8 +811,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	/* Stop Association failure timer */
 	if (subtype == LIM_ASSOC)
 		lim_deactivate_and_change_timer(mac_ctx, eLIM_ASSOC_FAIL_TIMER);
-	else
-	{
+	else {
 		/* Stop Reassociation failure timer */
 		mac_ctx->lim.reAssocRetryAttempt = 0;
 		if ((NULL != mac_ctx->lim.pSessionEntry)
@@ -893,7 +892,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				FL("ASSOC res with eSIR_MAC_TRY_AGAIN_LATER "
 				" recvd.Starting timer to wait timeout=%d."),
 				timeout_value);
-			if (CDF_STATUS_SUCCESS !=
+			if (QDF_STATUS_SUCCESS !=
 				cdf_mc_timer_start(
 					&session_entry->pmfComebackTimer,
 					timeout_value)) {

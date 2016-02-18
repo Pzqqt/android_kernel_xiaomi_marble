@@ -3766,10 +3766,10 @@ static char *i_trim(char *str)
  * @pBuf: buffer to store the configuration
  * @buflen: size of the buffer
  *
- * Return: CDF_STATUS_SUCCESS if the configuration and buffer size can carry
- *		the content, otherwise CDF_STATUS_E_RESOURCES
+ * Return: QDF_STATUS_SUCCESS if the configuration and buffer size can carry
+ *		the content, otherwise QDF_STATUS_E_RESOURCES
  */
-static CDF_STATUS hdd_cfg_get_config(REG_TABLE_ENTRY *reg_table,
+static QDF_STATUS hdd_cfg_get_config(REG_TABLE_ENTRY *reg_table,
 				     unsigned long cRegTableEntries,
 				     uint8_t *ini_struct,
 				     hdd_context_t *pHddCtx, char *pBuf,
@@ -3842,7 +3842,7 @@ static CDF_STATUS hdd_cfg_get_config(REG_TABLE_ENTRY *reg_table,
 			buflen -= curlen;
 		} else {
 			/* buffer space exhausted, return what we have */
-			return CDF_STATUS_E_RESOURCES;
+			return QDF_STATUS_E_RESOURCES;
 		}
 #else
 		printk(KERN_INFO "%s", configStr);
@@ -3855,7 +3855,7 @@ static CDF_STATUS hdd_cfg_get_config(REG_TABLE_ENTRY *reg_table,
 	snprintf(pCur, buflen, "WLAN configuration written to system log");
 #endif /* RETURN_IN_BUFFER */
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /** struct tCfgIniEntry - ini configuration entry
@@ -3875,13 +3875,13 @@ typedef struct {
  * @name: the interested configuration to find
  * @value: the value to read back
  *
- * Return: CDF_STATUS_SUCCESS if the interested configuration is found,
- *		otherwise CDF_STATUS_E_FAILURE
+ * Return: QDF_STATUS_SUCCESS if the interested configuration is found,
+ *		otherwise QDF_STATUS_E_FAILURE
  */
-static CDF_STATUS find_cfg_item(tCfgIniEntry *iniTable, unsigned long entries,
+static QDF_STATUS find_cfg_item(tCfgIniEntry *iniTable, unsigned long entries,
 				char *name, char **value)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	unsigned long i;
 
 	for (i = 0; i < entries; i++) {
@@ -3890,7 +3890,7 @@ static CDF_STATUS find_cfg_item(tCfgIniEntry *iniTable, unsigned long entries,
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "Found %s entry for Name=[%s] Value=[%s] ",
 				  WLAN_INI_FILE, name, *value);
-			return CDF_STATUS_SUCCESS;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -3959,15 +3959,15 @@ static void update_mac_from_string(hdd_context_t *pHddCtx,
  * @entries: number fo the configuration entries
  * It overwrites the MAC address if config file exist.
  *
- * Return: CDF_STATUS_SUCCESS if the ini configuration file is correctly parsed,
- *		otherwise CDF_STATUS_E_INVAL
+ * Return: QDF_STATUS_SUCCESS if the ini configuration file is correctly parsed,
+ *		otherwise QDF_STATUS_E_INVAL
  */
-static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
+static QDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				    tCfgIniEntry *iniTable,
 				    unsigned long entries)
 {
-	CDF_STATUS match_status = CDF_STATUS_E_FAILURE;
-	CDF_STATUS ret_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS match_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS ret_status = QDF_STATUS_SUCCESS;
 	unsigned int idx;
 	void *pField;
 	char *value_str = NULL;
@@ -3996,13 +3996,13 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			find_cfg_item(iniTable, entries, pRegEntry->RegName,
 				      &value_str);
 
-		if ((match_status != CDF_STATUS_SUCCESS)
+		if ((match_status != QDF_STATUS_SUCCESS)
 		    && (pRegEntry->Flags & VAR_FLAGS_REQUIRED)) {
 			/* If we could not read the cfg item and it is required, this is an error. */
 			hddLog(LOGE,
 			       "%s: Failed to read required config parameter %s",
 			       __func__, pRegEntry->RegName);
-			ret_status = CDF_STATUS_E_FAILURE;
+			ret_status = QDF_STATUS_E_FAILURE;
 			break;
 		}
 
@@ -4011,7 +4011,7 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			/* If successfully read from the registry, use the value read.
 			 * If not, use the default value.
 			 */
-			if (match_status == CDF_STATUS_SUCCESS
+			if (match_status == QDF_STATUS_SUCCESS
 			    && (WLAN_PARAM_Integer == pRegEntry->RegType)) {
 				rv = kstrtou32(value_str, 10, &value);
 				if (rv < 0) {
@@ -4020,7 +4020,7 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 					       __func__, pRegEntry->RegName);
 					value = pRegEntry->VarDefault;
 				}
-			} else if (match_status == CDF_STATUS_SUCCESS
+			} else if (match_status == QDF_STATUS_SUCCESS
 				   && (WLAN_PARAM_HexInteger ==
 				       pRegEntry->RegType)) {
 				rv = kstrtou32(value_str, 16, &value);
@@ -4079,7 +4079,7 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 			/* If successfully read from the registry, use the value read.
 			 * If not, use the default value.
 			 */
-			if (CDF_STATUS_SUCCESS == match_status) {
+			if (QDF_STATUS_SUCCESS == match_status) {
 				rv = kstrtos32(value_str, 10, &svalue);
 				if (rv < 0) {
 					hddLog(CDF_TRACE_LEVEL_WARN,
@@ -4149,7 +4149,7 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				  (char *)pRegEntry->VarDefault);
 #endif
 
-			if (match_status == CDF_STATUS_SUCCESS) {
+			if (match_status == QDF_STATUS_SUCCESS) {
 				len_value_str = strlen(value_str);
 
 				if (len_value_str > (pRegEntry->VarSize - 1)) {
@@ -4192,7 +4192,7 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 				continue;
 			}
 			candidate = (char *)pRegEntry->VarDefault;
-			if (match_status == CDF_STATUS_SUCCESS) {
+			if (match_status == QDF_STATUS_SUCCESS) {
 				len_value_str = strlen(value_str);
 				if (len_value_str != (CDF_MAC_ADDR_SIZE * 2)) {
 					hddLog(LOGE,
@@ -4217,7 +4217,7 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
 		}
 
 		/* did we successfully parse a cfg item for this parameter? */
-		if ((match_status == CDF_STATUS_SUCCESS) &&
+		if ((match_status == QDF_STATUS_SUCCESS) &&
 		    (idx < MAX_CFG_INI_ITEMS)) {
 			set_bit(idx, (void *)&pHddCtx->config->bExplicitCfg);
 		}
@@ -4234,10 +4234,10 @@ static CDF_STATUS hdd_apply_cfg_ini(hdd_context_t *pHddCtx,
  * @pHddCtx: the pointer to hdd context
  * @command: the command to run
  *
- * Return: CDF_STATUS_SUCCESS if the command is found and able to execute,
- *		otherwise the appropriate CDF_STATUS will be returned
+ * Return: QDF_STATUS_SUCCESS if the command is found and able to execute,
+ *		otherwise the appropriate QDF_STATUS will be returned
  */
-static CDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
+static QDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 					     unsigned long tableSize,
 					     uint8_t *ini_struct,
 					     hdd_context_t *pHddCtx,
@@ -4254,11 +4254,11 @@ static CDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 	size_t len_value_str;
 	unsigned int idx;
 	unsigned int i;
-	CDF_STATUS vstatus;
+	QDF_STATUS vstatus;
 	int rv;
 
 	/* assume failure until proven otherwise */
-	vstatus = CDF_STATUS_E_FAILURE;
+	vstatus = QDF_STATUS_E_FAILURE;
 
 	/* clone the command so that we can manipulate it */
 	clone = kstrdup(command, GFP_ATOMIC);
@@ -4329,7 +4329,7 @@ static CDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 		/* does not support dynamic configuration */
 		hddLog(LOGE, "%s: Global_Registry_Table.%s does not support "
 		       "dynamic configuration", __func__, name);
-		vstatus = CDF_STATUS_E_PERM;
+		vstatus = QDF_STATUS_E_PERM;
 		goto done;
 	}
 
@@ -4438,7 +4438,7 @@ static CDF_STATUS hdd_execute_config_command(REG_TABLE_ENTRY *reg_table,
 	}
 
 	/* if we get here, we had a successful modification */
-	vstatus = CDF_STATUS_SUCCESS;
+	vstatus = QDF_STATUS_SUCCESS;
 
 	/* config table has been modified, is there a notifier? */
 	if (NULL != pRegEntry->pfnDynamicnotify) {
@@ -5241,10 +5241,10 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
  *
  * It overwrites the MAC address if config file exist.
  *
- * Return: CDF_STATUS_SUCCESS if the MAC address is found from cfg file
- *      and overwritten, otherwise CDF_STATUS_E_INVAL
+ * Return: QDF_STATUS_SUCCESS if the MAC address is found from cfg file
+ *      and overwritten, otherwise QDF_STATUS_E_INVAL
  */
-CDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
+QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 {
 	int status, i = 0;
 	const struct firmware *fw = NULL;
@@ -5253,7 +5253,7 @@ CDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	tCfgIniEntry macTable[CDF_MAX_CONCURRENCY_PERSONA];
 	tSirMacAddr customMacAddr;
 
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	memset(macTable, 0, sizeof(macTable));
 	status = request_firmware(&fw, WLAN_MAC_FILE, pHddCtx->parent_dev);
@@ -5261,12 +5261,12 @@ CDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 	if (status) {
 		hddLog(CDF_TRACE_LEVEL_WARN, "%s: request_firmware failed %d",
 		       __func__, status);
-		cdf_status = CDF_STATUS_E_FAILURE;
-		return cdf_status;
+		qdf_status = QDF_STATUS_E_FAILURE;
+		return qdf_status;
 	}
 	if (!fw || !fw->data || !fw->size) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: invalid firmware", __func__);
-		cdf_status = CDF_STATUS_E_INVAL;
+		qdf_status = QDF_STATUS_E_INVAL;
 		goto config_exit;
 	}
 
@@ -5313,7 +5313,7 @@ CDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: invalid number of Mac address provided, nMac = %d",
 		       __func__, i);
-		cdf_status = CDF_STATUS_E_INVAL;
+		qdf_status = QDF_STATUS_E_INVAL;
 		goto config_exit;
 	}
 
@@ -5326,7 +5326,7 @@ CDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 
 config_exit:
 	release_firmware(fw);
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -5336,10 +5336,10 @@ config_exit:
  * This function reads the qcom_cfg.ini file and
  * parses each 'Name=Value' pair in the ini file
  *
- * Return: CDF_STATUS_SUCCESS if the qcom_cfg.ini is correctly read,
- *		otherwise CDF_STATUS_E_INVAL
+ * Return: QDF_STATUS_SUCCESS if the qcom_cfg.ini is correctly read,
+ *		otherwise QDF_STATUS_E_INVAL
  */
-CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
+QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 {
 	int status, i = 0;
 	/** Pointer for firmware image data */
@@ -5349,7 +5349,7 @@ CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 	char *name, *value;
 	/* cfgIniTable is static to avoid excess stack usage */
 	static tCfgIniEntry cfgIniTable[MAX_CFG_INI_ITEMS];
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 	memset(cfgIniTable, 0, sizeof(cfgIniTable));
 
@@ -5358,13 +5358,13 @@ CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 	if (status) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: request_firmware failed %d",
 		       __func__, status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto config_exit;
 	}
 	if (!fw || !fw->data || !fw->size) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: %s download failed",
 		       __func__, WLAN_INI_FILE);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto config_exit;
 	}
 
@@ -5375,7 +5375,7 @@ CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 	if (NULL == buffer) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cdf_mem_malloc failure"));
 		release_firmware(fw);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	pTemp = buffer;
 
@@ -5426,9 +5426,9 @@ CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 	}
 
 	/* Loop through the registry table and apply all these configs */
-	cdf_status = hdd_apply_cfg_ini(pHddCtx, cfgIniTable, i);
+	qdf_status = hdd_apply_cfg_ini(pHddCtx, cfgIniTable, i);
 #ifdef FEATURE_NAPI
-	if (CDF_STATUS_SUCCESS == cdf_status)
+	if (QDF_STATUS_SUCCESS == qdf_status)
 		hdd_napi_event(NAPI_EVT_INI_FILE,
 			       (void *)pHddCtx->config->napi_enable);
 #endif /* FEATURE_NAPI */
@@ -5436,7 +5436,7 @@ CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 config_exit:
 	release_firmware(fw);
 	cdf_mem_free(pTemp);
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -5489,18 +5489,18 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode)
  * @pHddCtx: the pointer to hdd context
  * @val: the value to configure
  *
- * Return: CDF_STATUS_SUCCESS if command set correctly,
- *		otherwise the CDF_STATUS return from SME layer
+ * Return: QDF_STATUS_SUCCESS if command set correctly,
+ *		otherwise the QDF_STATUS return from SME layer
  */
-CDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
+QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	hddLog(LOG1, "hdd_set_idle_ps_config: Enter Val %d", val);
 
 	status = sme_set_idle_powersave_config(pHddCtx->pcds_context,
 			pHddCtx->hHal, val);
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		hddLog(LOGE, "Fail to Set Idle PS Config val %d", val);
 	return status;
 }
@@ -5544,16 +5544,16 @@ static void hdd_set_fine_time_meas_cap(hdd_context_t *hdd_ctx,
  * This API is called to convert string (each byte separated by
  * a comma) into an u8 array
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 
-static CDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
+static QDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
 			       uint8_t *len, uint8_t array_max_len, bool to_hex)
 {
 	char *format, *s = str;
 
 	if (str == NULL || array == NULL || len == NULL)
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 
 	format = (to_hex) ? "%02x" : "%d";
 
@@ -5573,7 +5573,7 @@ static CDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
 			s++;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5586,9 +5586,9 @@ static CDF_STATUS hdd_convert_string_to_array(char *str, uint8_t *array,
  * This API is called to convert hexadecimal string (each byte separated by
  * a comma) into an u8 array
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
+QDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
 				      uint8_t *len, uint8_t array_max_len)
 {
 	return hdd_convert_string_to_array(str, hex_array, len,
@@ -5605,10 +5605,10 @@ CDF_STATUS hdd_hex_string_to_u8_array(char *str, uint8_t *hex_array,
  * This API is called to convert decimal string (each byte separated by
  * a comma) into an u8 array
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 
-CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
+QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
 				  uint8_t *len, uint8_t array_max_len)
 {
 	return hdd_convert_string_to_array(str, array, len,
@@ -5621,8 +5621,8 @@ CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *array,
  * @intArray: the pointer of buffer to store the u8 value
  * @len: size of the buffer
  *
- * Return: CDF_STATUS_SUCCESS if the configuration could be updated corectly,
- *		otherwise CDF_STATUS_E_INVAL
+ * Return: QDF_STATUS_SUCCESS if the configuration could be updated corectly,
+ *		otherwise QDF_STATUS_E_INVAL
  */
 bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 {
@@ -5635,20 +5635,20 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_SHORT_GI_20MHZ,
 			    pConfig->ShortGI20MhzEnable) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_SHORT_GI_20MHZ to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_FIXED_RATE, pConfig->TxRate)
-			    == CDF_STATUS_E_FAILURE) {
+			    == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_FIXED_RATE to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_MAX_RX_AMPDU_FACTOR,
 			    pConfig->MaxRxAmpduFactor) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_HT_AMPDU_PARAMS_MAX_RX_AMPDU_FACTOR to CFG");
@@ -5656,7 +5656,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_MPDU_DENSITY,
 			    pConfig->ht_mpdu_density) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_MPDU_DENSITY to CFG");
@@ -5664,7 +5664,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_SHORT_PREAMBLE,
-		     pConfig->fIsShortPreamble) == CDF_STATUS_E_FAILURE) {
+		     pConfig->fIsShortPreamble) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 			"Could not pass on WNI_CFG_SHORT_PREAMBLE to CFG");
@@ -5673,7 +5673,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int(pHddCtx->hHal,
 				WNI_CFG_PASSIVE_MINIMUM_CHANNEL_TIME,
 				pConfig->nPassiveMinChnTime)
-				== CDF_STATUS_E_FAILURE) {
+				== QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PASSIVE_MINIMUM_CHANNEL_TIME"
@@ -5683,7 +5683,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int(pHddCtx->hHal,
 				WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME,
 				pConfig->nPassiveMaxChnTime)
-				== CDF_STATUS_E_FAILURE) {
+				== QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PASSIVE_MAXIMUM_CHANNEL_TIME"
@@ -5692,7 +5692,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_BEACON_INTERVAL,
-		     pConfig->nBeaconInterval) == CDF_STATUS_E_FAILURE) {
+		     pConfig->nBeaconInterval) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_BEACON_INTERVAL to CFG");
@@ -5700,21 +5700,21 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_MAX_PS_POLL,
-		     pConfig->nMaxPsPoll) == CDF_STATUS_E_FAILURE) {
+		     pConfig->nMaxPsPoll) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_MAX_PS_POLL to CFG");
 	}
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_CURRENT_RX_ANTENNA,
-		     pConfig->nRxAnt) == CDF_STATUS_E_FAILURE) {
+		     pConfig->nRxAnt) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_CURRENT_RX_ANTENNA to CFG");
 	}
 
 	if (sme_cfg_set_int (pHddCtx->hHal, WNI_CFG_LOW_GAIN_OVERRIDE,
-		    pConfig->fIsLowGainOverride) == CDF_STATUS_E_FAILURE) {
+		    pConfig->fIsLowGainOverride) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_LOW_GAIN_OVERRIDE to HAL");
@@ -5722,7 +5722,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_RSSI_FILTER_PERIOD,
-		    pConfig->nRssiFilterPeriod) == CDF_STATUS_E_FAILURE) {
+		    pConfig->nRssiFilterPeriod) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_RSSI_FILTER_PERIOD to CFG");
@@ -5730,7 +5730,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_IGNORE_DTIM,
-		     pConfig->fIgnoreDtim) == CDF_STATUS_E_FAILURE) {
+		     pConfig->fIgnoreDtim) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_IGNORE_DTIM to CFG");
@@ -5739,7 +5739,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_PS_ENABLE_HEART_BEAT,
 		    pConfig->fEnableFwHeartBeatMonitoring)
-		    == CDF_STATUS_E_FAILURE) {
+		    == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PS_HEART_BEAT to CFG");
@@ -5748,7 +5748,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_PS_ENABLE_BCN_FILTER,
 		    pConfig->fEnableFwBeaconFiltering) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PS_BCN_FILTER to CFG");
@@ -5757,7 +5757,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_PS_ENABLE_RSSI_MONITOR,
 		    pConfig->fEnableFwRssiMonitoring) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PS_RSSI_MONITOR to CFG");
@@ -5765,7 +5765,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
-		    pConfig->nDataInactivityTimeout) == CDF_STATUS_E_FAILURE) {
+		    pConfig->nDataInactivityTimeout) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT to CFG");
@@ -5773,7 +5773,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_ENABLE_LTE_COEX,
-		     pConfig->enableLTECoex) == CDF_STATUS_E_FAILURE) {
+		     pConfig->enableLTECoex) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_LTE_COEX to CFG");
@@ -5781,7 +5781,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_ENABLE_PHY_AGC_LISTEN_MODE,
-		    pConfig->nEnableListenMode) == CDF_STATUS_E_FAILURE) {
+		    pConfig->nEnableListenMode) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_PHY_AGC_LISTEN_MODE to CFG");
@@ -5789,7 +5789,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_AP_KEEP_ALIVE_TIMEOUT,
-		    pConfig->apKeepAlivePeriod) == CDF_STATUS_E_FAILURE) {
+		    pConfig->apKeepAlivePeriod) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_AP_KEEP_ALIVE_TIMEOUT to CFG");
@@ -5797,7 +5797,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_GO_KEEP_ALIVE_TIMEOUT,
-		    pConfig->goKeepAlivePeriod) == CDF_STATUS_E_FAILURE) {
+		    pConfig->goKeepAlivePeriod) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_GO_KEEP_ALIVE_TIMEOUT to CFG");
@@ -5805,7 +5805,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_AP_LINK_MONITOR_TIMEOUT,
-		    pConfig->apLinkMonitorPeriod) == CDF_STATUS_E_FAILURE) {
+		    pConfig->apLinkMonitorPeriod) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_AP_LINK_MONITOR_TIMEOUT to CFG");
@@ -5813,7 +5813,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_GO_LINK_MONITOR_TIMEOUT,
-		    pConfig->goLinkMonitorPeriod) == CDF_STATUS_E_FAILURE) {
+		    pConfig->goLinkMonitorPeriod) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_GO_LINK_MONITOR_TIMEOUT to CFG");
@@ -5822,7 +5822,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 #if defined WLAN_FEATURE_VOWIFI
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_MCAST_BCAST_FILTER_SETTING,
-		    pConfig->mcastBcastFilterSetting) == CDF_STATUS_E_FAILURE)
+		    pConfig->mcastBcastFilterSetting) == QDF_STATUS_E_FAILURE)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_MCAST_BCAST_FILTER_SETTING to CFG");
@@ -5830,7 +5830,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_SINGLE_TID_RC,
-		    pConfig->bSingleTidRc) == CDF_STATUS_E_FAILURE) {
+		    pConfig->bSingleTidRc) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_SINGLE_TID_RC to CFG");
@@ -5838,7 +5838,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_TELE_BCN_WAKEUP_EN,
-		    pConfig->teleBcnWakeupEn) == CDF_STATUS_E_FAILURE) {
+		    pConfig->teleBcnWakeupEn) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TELE_BCN_WAKEUP_EN to CFG");
@@ -5847,7 +5847,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_TELE_BCN_TRANS_LI,
 		    pConfig->nTeleBcnTransListenInterval) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TELE_BCN_TRANS_LI to CFG");
@@ -5856,7 +5856,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_TELE_BCN_MAX_LI,
 		    pConfig->nTeleBcnMaxListenInterval) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TELE_BCN_MAX_LI to CFG");
@@ -5865,7 +5865,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_TELE_BCN_TRANS_LI_IDLE_BCNS,
 		    pConfig->nTeleBcnTransLiNumIdleBeacons) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TELE_BCN_TRANS_LI_IDLE_BCNS to CFG");
@@ -5874,7 +5874,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_TELE_BCN_MAX_LI_IDLE_BCNS,
 		    pConfig->nTeleBcnMaxLiNumIdleBeacons) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TELE_BCN_MAX_LI_IDLE_BCNS to CFG");
@@ -5882,7 +5882,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_RF_SETTLING_TIME_CLK,
-		    pConfig->rfSettlingTimeUs) == CDF_STATUS_E_FAILURE) {
+		    pConfig->rfSettlingTimeUs) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_RF_SETTLING_TIME_CLK to CFG");
@@ -5891,14 +5891,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD,
 		    pConfig->infraStaKeepAlivePeriod) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD to CFG");
 	}
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_DYNAMIC_PS_POLL_VALUE,
-		    pConfig->dynamicPsPollValue) == CDF_STATUS_E_FAILURE) {
+		    pConfig->dynamicPsPollValue) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DYNAMIC_PS_POLL_VALUE to CFG");
@@ -5906,7 +5906,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_PS_NULLDATA_AP_RESP_TIMEOUT,
-		    pConfig->nNullDataApRespTimeout) == CDF_STATUS_E_FAILURE) {
+		    pConfig->nNullDataApRespTimeout) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_PS_NULLDATA_DELAY_TIMEOUT to CFG");
@@ -5915,21 +5915,21 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD,
 		    pConfig->apDataAvailPollPeriodInMs) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD to CFG");
 	}
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_FRAGMENTATION_THRESHOLD,
-		    pConfig->FragmentationThreshold) == CDF_STATUS_E_FAILURE) {
+		    pConfig->FragmentationThreshold) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_FRAGMENTATION_THRESHOLD to CFG");
 	}
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_RTS_THRESHOLD,
-		     pConfig->RTSThreshold) == CDF_STATUS_E_FAILURE) {
+		     pConfig->RTSThreshold) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_RTS_THRESHOLD to CFG");
@@ -5937,7 +5937,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_11D_ENABLED,
-		     pConfig->Is11dSupportEnabled) == CDF_STATUS_E_FAILURE) {
+		     pConfig->Is11dSupportEnabled) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_11D_ENABLED to CFG");
@@ -5945,7 +5945,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_DFS_MASTER_ENABLED,
 			    pConfig->enableDFSMasterCap) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Failure: Could not set value for WNI_CFG_DFS_MASTER_ENABLED");
@@ -5953,7 +5953,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_ENABLE_TXBF_20MHZ,
 			    pConfig->enableTxBFin20MHz) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not set value for WNI_CFG_VHT_ENABLE_TXBF_20MHZ");
@@ -5961,7 +5961,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_HEART_BEAT_THRESHOLD,
-		    pConfig->HeartbeatThresh24) == CDF_STATUS_E_FAILURE) {
+		    pConfig->HeartbeatThresh24) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_HEART_BEAT_THRESHOLD to CFG");
@@ -5970,7 +5970,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD,
 		    pConfig->apDataAvailPollPeriodInMs) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_AP_DATA_AVAIL_POLL_PERIOD to CFG");
@@ -5978,7 +5978,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ENABLE_CLOSE_LOOP,
 			    pConfig->enableCloseLoop) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_CLOSE_LOOP to CFG");
@@ -5986,7 +5986,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TX_PWR_CTRL_ENABLE,
 			    pConfig->enableAutomaticTxPowerControl)
-			== CDF_STATUS_E_FAILURE) {
+			== QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TX_PWR_CTRL_ENABLE to CFG");
@@ -5994,14 +5994,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_SHORT_GI_40MHZ,
 			    pConfig->ShortGI40MhzEnable) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_SHORT_GI_40MHZ to CFG");
 	}
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_ENABLE_MC_ADDR_LIST,
-		    pConfig->fEnableMCAddrList) == CDF_STATUS_E_FAILURE) {
+		    pConfig->fEnableMCAddrList) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_MC_ADDR_LIST to CFG");
@@ -6023,7 +6023,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 			temp = (temp & 0xFFF3) | (pConfig->vhtRxMCS2x2 << 2);
 			if (sme_cfg_set_int(pHddCtx->hHal,
 					WNI_CFG_VHT_BASIC_MCS_SET, temp) ==
-					CDF_STATUS_E_FAILURE) {
+					QDF_STATUS_E_FAILURE) {
 			fStatus = false;
 			hddLog(LOGE,
 			       "Could not pass on WNI_CFG_VHT_BASIC_MCS_SET to CFG");
@@ -6036,7 +6036,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 			temp = (temp & 0xFFF3) | (pConfig->vhtRxMCS2x2 << 2);
 			if (sme_cfg_set_int(pHddCtx->hHal,
 					WNI_CFG_VHT_RX_MCS_MAP, temp)
-				== CDF_STATUS_E_FAILURE) {
+				== QDF_STATUS_E_FAILURE) {
 			fStatus = false;
 			hddLog(LOGE,
 			       "Could not pass on WNI_CFG_VHT_RX_MCS_MAP to CFG");
@@ -6051,7 +6051,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 			  pConfig->enable2x2);
 
 		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_TX_MCS_MAP,
-					temp) == CDF_STATUS_E_FAILURE) {
+					temp) == QDF_STATUS_E_FAILURE) {
 			fStatus = false;
 			hddLog(LOGE,
 			       "Could not pass on WNI_CFG_VHT_TX_MCS_MAP to CFG");
@@ -6060,7 +6060,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		if (sme_cfg_set_int
 			    (pHddCtx->hHal, WNI_CFG_VHT_SHORT_GI_80MHZ,
 			    pConfig->ShortGI40MhzEnable) ==
-			    CDF_STATUS_E_FAILURE) {
+			    QDF_STATUS_E_FAILURE) {
 			fStatus = false;
 			hddLog(LOGE,
 			       "Could not pass WNI_VHT_SHORT_GI_80MHZ to CFG");
@@ -6070,7 +6070,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		if (sme_cfg_set_int(pHddCtx->hHal,
 			     WNI_CFG_VHT_AMPDU_LEN_EXPONENT,
 			     pConfig->fVhtAmpduLenExponent) ==
-			    CDF_STATUS_E_FAILURE) {
+			    QDF_STATUS_E_FAILURE) {
 			fStatus = false;
 			hddLog(LOGE,
 			       "Could not pass on WNI_CFG_VHT_AMPDU_LEN_EXPONENT to CFG");
@@ -6084,7 +6084,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 				if (sme_cfg_set_int(pHddCtx->hHal,
 					    WNI_CFG_VHT_MU_BEAMFORMEE_CAP,
 					    pConfig->enableMuBformee
-					    ) == CDF_STATUS_E_FAILURE) {
+					    ) == QDF_STATUS_E_FAILURE) {
 					fStatus = false;
 					hddLog(LOGE,
 						"Could not pass on WNI_CFG_VHT_MU_BEAMFORMEE_CAP to CFG");
@@ -6092,7 +6092,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 			}
 		}
 		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_MAX_MPDU_LENGTH,
-			    pConfig->vhtMpduLen) == CDF_STATUS_E_FAILURE) {
+			    pConfig->vhtMpduLen) == QDF_STATUS_E_FAILURE) {
 			fStatus = false;
 			hddLog(LOGE,
 			       "Could not pass on WNI_CFG_VHT_MAX_MPDU_LENGTH to CFG");
@@ -6102,14 +6102,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 			if (sme_cfg_set_int(pHddCtx->hHal,
 					WNI_CFG_VHT_SU_BEAMFORMER_CAP,
 					pConfig->enable_su_tx_bformer) ==
-				CDF_STATUS_E_FAILURE) {
+				QDF_STATUS_E_FAILURE) {
 				fStatus = false;
 				hdd_err("set SU_BEAMFORMER_CAP to CFG failed");
 			}
 			if (sme_cfg_set_int(pHddCtx->hHal,
 					WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,
 					NUM_OF_SOUNDING_DIMENSIONS) ==
-				CDF_STATUS_E_FAILURE) {
+				QDF_STATUS_E_FAILURE) {
 				fStatus = false;
 				hdd_err("failed to set NUM_OF_SOUNDING_DIM");
 			}
@@ -6117,7 +6117,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_HT_RX_STBC,
-			    pConfig->enableRxSTBC) == CDF_STATUS_E_FAILURE) {
+			    pConfig->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_HT_RX_STBC to CFG");
 	}
@@ -6129,25 +6129,25 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	phtCapInfo->advCodingCap = pConfig->enableRxLDPC;
 	val = val16;
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_HT_CAP_INFO, val)
-			== CDF_STATUS_E_FAILURE) {
+			== QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_RXSTBC,
-			    pConfig->enableRxSTBC) == CDF_STATUS_E_FAILURE) {
+			    pConfig->enableRxSTBC) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_RXSTBC to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_TXSTBC,
-			    pConfig->enableTxSTBC) == CDF_STATUS_E_FAILURE) {
+			    pConfig->enableTxSTBC) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_TXSTBC to CFG");
 	}
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_VHT_LDPC_CODING_CAP,
-			    pConfig->enableRxLDPC) == CDF_STATUS_E_FAILURE) {
+			    pConfig->enableRxLDPC) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_VHT_LDPC_CODING_CAP to CFG");
@@ -6162,7 +6162,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	}
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ASSOC_STA_LIMIT, val) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ASSOC_STA_LIMIT to CFG");
@@ -6170,7 +6170,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 #endif
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ENABLE_LPWR_IMG_TRANSITION,
 			    pConfig->enableLpwrImgTransition)
-			== CDF_STATUS_E_FAILURE) {
+			== QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_LPWR_IMG_TRANSITION to CFG");
@@ -6179,14 +6179,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
 		    pConfig->enableMCCAdaptiveScheduler) ==
-		    CDF_STATUS_E_FAILURE) {
+		    QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED to CFG");
 	}
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP,
-		    pConfig->disableLDPCWithTxbfAP) == CDF_STATUS_E_FAILURE) {
+		    pConfig->disableLDPCWithTxbfAP) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DISABLE_LDPC_WITH_TXBF_AP to CFG");
@@ -6194,7 +6194,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_DYNAMIC_THRESHOLD_ZERO,
-		    pConfig->retryLimitZero) == CDF_STATUS_E_FAILURE) {
+		    pConfig->retryLimitZero) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DYNAMIC_THRESHOLD_ZERO to CFG");
@@ -6202,7 +6202,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_DYNAMIC_THRESHOLD_ONE,
-		    pConfig->retryLimitOne) == CDF_STATUS_E_FAILURE) {
+		    pConfig->retryLimitOne) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DYNAMIC_THRESHOLD_ONE to CFG");
@@ -6210,7 +6210,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_DYNAMIC_THRESHOLD_TWO,
-		    pConfig->retryLimitTwo) == CDF_STATUS_E_FAILURE) {
+		    pConfig->retryLimitTwo) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DYNAMIC_THRESHOLD_TWO to CFG");
@@ -6218,7 +6218,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int
 		    (pHddCtx->hHal, WNI_CFG_MAX_MEDIUM_TIME,
-		     pConfig->cfgMaxMediumTime) == CDF_STATUS_E_FAILURE) {
+		     pConfig->cfgMaxMediumTime) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_MAX_MEDIUM_TIME to CFG");
@@ -6226,28 +6226,28 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 #ifdef FEATURE_WLAN_TDLS
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK,
-			    pConfig->fTDLSUapsdMask) == CDF_STATUS_E_FAILURE) {
+			    pConfig->fTDLSUapsdMask) == QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TDLS_QOS_WMM_UAPSD_MASK to CFG");
 	}
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TDLS_BUF_STA_ENABLED,
 			    pConfig->fEnableTDLSBufferSta) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
 	}
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TDLS_PUAPSD_INACT_TIME,
 			    pConfig->fTDLSPuapsdInactivityTimer) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TDLS_PUAPSD_INACT_TIME to CFG");
 	}
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TDLS_RX_FRAME_THRESHOLD,
 			    pConfig->fTDLSRxFrameThreshold) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TDLS_RX_FRAME_THRESHOLD to CFG");
@@ -6255,14 +6255,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TDLS_OFF_CHANNEL_ENABLED,
 			    pConfig->fEnableTDLSOffChannel) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TDLS_BUF_STA_ENABLED to CFG");
 	}
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_TDLS_WMM_MODE_ENABLED,
 			    pConfig->fEnableTDLSWmmMode) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_TDLS_WMM_MODE_ENABLED to CFG");
@@ -6271,7 +6271,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ENABLE_ADAPT_RX_DRAIN,
 			    pConfig->fEnableAdaptRxDrain) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ENABLE_ADAPT_RX_DRAIN to CFG");
@@ -6279,7 +6279,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_FLEX_CONNECT_POWER_FACTOR,
 			    pConfig->flexConnectPowerFactor) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE, "Failure: Could not pass on "
 		       "WNI_CFG_FLEX_CONNECT_POWER_FACTOR to CFG");
@@ -6287,7 +6287,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_ANTENNA_DIVESITY,
 			    pConfig->antennaDiversity) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_ANTENNA_DIVESITY to CFG");
@@ -6296,7 +6296,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int(pHddCtx->hHal,
 			    WNI_CFG_DEFAULT_RATE_INDEX_24GHZ,
 			    pConfig->defaultRateIndex24Ghz) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DEFAULT_RATE_INDEX_24GHZ to CFG");
@@ -6305,7 +6305,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 	if (sme_cfg_set_int(pHddCtx->hHal,
 			    WNI_CFG_DEBUG_P2P_REMAIN_ON_CHANNEL,
 			    pConfig->debugP2pRemainOnChannel) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_DEBUG_P2P_REMAIN_ON_CHANNEL to CFG");
@@ -6313,7 +6313,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 #ifdef WLAN_FEATURE_11W
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
 			    pConfig->pmfSaQueryMaxRetries) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_SA_QUERY_MAX_RETRIES to CFG");
@@ -6321,7 +6321,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL,
 			    pConfig->pmfSaQueryRetryInterval) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_SA_QUERY_RETRY_INTERVAL to CFG");
@@ -6330,7 +6330,7 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 
 	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_IBSS_ATIM_WIN_SIZE,
 			    pConfig->ibssATIMWinSize) ==
-			CDF_STATUS_E_FAILURE) {
+			QDF_STATUS_E_FAILURE) {
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_IBSS_ATIM_WIN_SIZE to CFG");
@@ -6368,12 +6368,12 @@ void hdd_set_pno_channel_prediction_config(
  *
  * @pHddCtx: the pointer to hdd context
  *
- * Return: CDF_STATUS_SUCCESS if configuration is correctly applied,
- *		otherwise the appropriate CDF_STATUS would be returned
+ * Return: QDF_STATUS_SUCCESS if configuration is correctly applied,
+ *		otherwise the appropriate QDF_STATUS would be returned
  */
-CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
+QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSmeConfigParams *smeConfig;
 	uint8_t rrm_capab_len;
 
@@ -6383,7 +6383,7 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	if (NULL == smeConfig) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: unable to allocate smeConfig", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	cdf_mem_zero(smeConfig, sizeof(*smeConfig));
 
@@ -6672,7 +6672,7 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.first_scan_bucket_threshold =
 		pHddCtx->config->first_scan_bucket_threshold;
 	status = sme_update_config(pHddCtx->hHal, smeConfig);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, "sme_update_config() return failure %d",
 		       status);
 	}
@@ -6686,9 +6686,9 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
  * @pHddCtx: the pointer to hdd context
  * @command: the command to run
  *
- * Return: the CDF_STATUS return from hdd_execute_config_command
+ * Return: the QDF_STATUS return from hdd_execute_config_command
  */
-CDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
+QDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
 					     char *command)
 {
 	return hdd_execute_config_command(g_registry_table,
@@ -6703,10 +6703,10 @@ CDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
  * @pBuf: buffer to store the configuration
  * @buflen: size of the buffer
  *
- * Return: CDF_STATUS_SUCCESS if the configuration and buffer size can carry
- *		the content, otherwise CDF_STATUS_E_RESOURCES
+ * Return: QDF_STATUS_SUCCESS if the configuration and buffer size can carry
+ *		the content, otherwise QDF_STATUS_E_RESOURCES
  */
-CDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
+QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
 				     int buflen)
 {
 	return hdd_cfg_get_config(g_registry_table,
@@ -6744,10 +6744,10 @@ bool hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx)
  * This function is used to modify the number of spatial streams
  * supported when not in connected state.
  *
- * Return: CDF_STATUS_SUCCESS if nss is correctly updated,
- *              otherwise CDF_STATUS_E_FAILURE would be returned
+ * Return: QDF_STATUS_SUCCESS if nss is correctly updated,
+ *              otherwise QDF_STATUS_E_FAILURE would be returned
  */
-CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
+QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 {
 	struct hdd_config *hdd_config = hdd_ctx->config;
 	uint32_t temp = 0;
@@ -6762,19 +6762,19 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 
 	if ((nss == 2) && (hdd_ctx->num_rf_chains != 2)) {
 		hddLog(LOGE, "No support for 2 spatial streams");
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	enable2x2 = (nss == 1) ? 0 : 1;
 
 	if (hdd_config->enable2x2 == enable2x2) {
 		hddLog(LOGE, "NSS same as requested");
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (true == sme_is_any_session_in_connected_state(hdd_ctx->hHal)) {
 		hddLog(LOGE, "Connected sessions present, Do not change NSS");
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	hdd_config->enable2x2 = enable2x2;
@@ -6792,7 +6792,7 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 	/* Update Rx Highest Long GI data Rate */
 	if (sme_cfg_set_int(hdd_ctx->hHal,
 			    WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE,
-			    rx_supp_data_rate) == CDF_STATUS_E_FAILURE) {
+			    rx_supp_data_rate) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE,
 			"Could not pass on WNI_CFG_VHT_RX_HIGHEST_SUPPORTED_DATA_RATE to CFG");
@@ -6801,7 +6801,7 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 	/* Update Tx Highest Long GI data Rate */
 	if (sme_cfg_set_int(hdd_ctx->hHal,
 			    WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE,
-			    tx_supp_data_rate) == CDF_STATUS_E_FAILURE) {
+			    tx_supp_data_rate) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE,
 			"Could not pass on WNI_CFG_VHT_TX_HIGHEST_SUPPORTED_DATA_RATE to CFG");
@@ -6816,7 +6816,7 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 		ht_cap_info->txSTBC = hdd_config->enableTxSTBC;
 	temp = val16;
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO,
-			    temp) == CDF_STATUS_E_FAILURE) {
+			    temp) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_HT_CAP_INFO to CFG");
 	}
@@ -6829,7 +6829,7 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 		temp |= 0x000C;
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_BASIC_MCS_SET,
-			    temp) == CDF_STATUS_E_FAILURE) {
+			    temp) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE,
 			"Could not pass on WNI_CFG_VHT_BASIC_MCS_SET to CFG");
@@ -6843,7 +6843,7 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 		temp |= 0x000C;
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_RX_MCS_MAP,
-			    temp) == CDF_STATUS_E_FAILURE) {
+			    temp) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_RX_MCS_MAP to CFG");
 	}
@@ -6856,7 +6856,7 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 		temp |= 0x000C;
 
 	if (sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_VHT_TX_MCS_MAP,
-			    temp) == CDF_STATUS_E_FAILURE) {
+			    temp) == QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE, "Could not pass on WNI_CFG_VHT_TX_MCS_MAP to CFG");
 	}
@@ -6874,14 +6874,14 @@ CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss)
 	if (sme_cfg_set_str(hdd_ctx->hHal, WNI_CFG_SUPPORTED_MCS_SET,
 			    mcs_set,
 			    SIZE_OF_SUPPORTED_MCS_SET) ==
-				CDF_STATUS_E_FAILURE) {
+				QDF_STATUS_E_FAILURE) {
 		status = false;
 		hddLog(LOGE, "Could not pass on MCS SET to CFG");
 	}
 #undef WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES
 
-	if (CDF_STATUS_SUCCESS != sme_update_nss(hdd_ctx->hHal, nss))
+	if (QDF_STATUS_SUCCESS != sme_update_nss(hdd_ctx->hHal, nss))
 		status = false;
 
-	return (status == false) ? CDF_STATUS_E_FAILURE : CDF_STATUS_SUCCESS;
+	return (status == false) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }

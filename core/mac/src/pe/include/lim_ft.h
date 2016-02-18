@@ -48,11 +48,11 @@ void lim_ft_open(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac, tpPESession psessionEntry);
 int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
-void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
+void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
 			     uint32_t *data, tpPESession psessionEntry);
-void limPerformPostFTPreAuth(tpAniSirGlobal pMac, CDF_STATUS status,
+void limPerformPostFTPreAuth(tpAniSirGlobal pMac, QDF_STATUS status,
 			     uint32_t *data, tpPESession psessionEntry);
-void limFTResumeLinkCb(tpAniSirGlobal pMac, CDF_STATUS status, uint32_t *data);
+void limFTResumeLinkCb(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *data);
 void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 			      uint8_t *auth_rsp, uint16_t auth_rsp_length,
 			      tpPESession psessionEntry);
@@ -81,7 +81,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		uint8_t updateEntry,
 		tpPESession pftSessionEntry,
 		tpSirBssDescription bssDescription);
-CDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
 #endif /* __LIMFT_H__ */
 

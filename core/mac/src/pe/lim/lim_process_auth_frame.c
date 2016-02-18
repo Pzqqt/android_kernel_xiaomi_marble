@@ -200,7 +200,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		 * get random bytes and use as challenge text.
 		 * If it fails we already have random stack bytes.
 		 */
-		if (!CDF_IS_STATUS_SUCCESS(cds_rand_get_bytes(0,
+		if (!QDF_IS_STATUS_SUCCESS(cds_rand_get_bytes(0,
 				(uint8_t *) challenge_txt_arr,
 				SIR_MAC_AUTH_CHALLENGE_LENGTH)))
 			lim_log(mac_ctx, LOGE,

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -76,13 +76,13 @@
  * @return None
  */
 #if defined WLAN_FEATURE_VOWIFI
-CDF_STATUS
+QDF_STATUS
 lim_collect_bss_description(tpAniSirGlobal pMac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR,
 			    uint8_t *pRxPacketInfo, uint8_t fScanning)
 #else
-CDF_STATUS
+QDF_STATUS
 lim_collect_bss_description(tpAniSirGlobal pMac,
 			    tSirBssDescription *pBssDescr,
 			    tpSirProbeRespBeacon pBPR, uint8_t *pRxPacketInfo)
@@ -100,7 +100,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	if (SIR_MAC_B_PR_SSID_OFFSET > WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo)) {
 		CDF_ASSERT(WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) >=
 			   SIR_MAC_B_PR_SSID_OFFSET);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	ieLen =
 		WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) - SIR_MAC_B_PR_SSID_OFFSET;
@@ -237,7 +237,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 		FL("Collected BSS Description for Channel(%1d), length(%u), IE Fields(%u)"),
 		pBssDescr->channelId, pBssDescr->length, ieLen);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /*** end lim_collect_bss_description() ***/
 
 /**
@@ -257,8 +257,8 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
  * NA
  *
  * @param  pMac - Pointer to Global MAC structure
- * @param  ssId - SSID Received in beacons/Probe responses that is compared against the
-                            requeusted SSID in scan list
+ * @param  ssId - SSID Received in beacons/Probe responses that is compared
+ * against therequeusted SSID in scan list
  * ---------------------------------------------
  *
  * @return bool - true if SSID is present in requested list, false otherwise
@@ -306,7 +306,7 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 	tSirBssDescription *bssdescr = NULL;
 	uint32_t frame_len, ie_len = 0;
 	uint8_t rx_chan_in_beacon = 0;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t dont_update_all = 0;
 	uint8_t rf_band = 0;
 	uint8_t rx_chan_bd = 0;
@@ -400,12 +400,12 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 #if defined WLAN_FEATURE_VOWIFI
 	status = lim_collect_bss_description(mac_ctx, bssdescr,
 					     bpr, rx_packet_info, scanning);
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		goto last;
 #else
 	status = lim_collect_bss_description(mac_ctx, bssdescr,
 					     bpr, rx_packet_info);
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		goto last;
 #endif
 	bssdescr->fProbeRsp = fProbeRsp;
@@ -419,7 +419,7 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 	} else {
 		lim_log(mac_ctx, LOGE,
 			FL("No CSR callback routine to send beacons"));
-		status = CDF_STATUS_E_INVAL;
+		status = QDF_STATUS_E_INVAL;
 	}
 last:
 	cdf_mem_free(bssdescr);

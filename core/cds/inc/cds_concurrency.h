@@ -477,7 +477,7 @@ int cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 			const void *data,
 			int data_len);
 uint32_t cds_get_concurrency_mode(void);
-CDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
+QDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 		hdd_station_ctx_t *hdd_sta_ctx);
 void cds_handle_conc_rule1(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile);
@@ -494,9 +494,9 @@ static inline bool cds_handle_conc_rule2(hdd_adapter_t *adapter,
 }
 #endif /* FEATURE_WLAN_CH_AVOID */
 uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
-		tCsrRoamProfile * roam_profile);
+		tCsrRoamProfile *roam_profile);
 bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel);
-CDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
+QDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel);
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
 void cds_force_sap_on_scc(eCsrRoamResult roam_result,
@@ -525,7 +525,7 @@ uint8_t cds_is_mcc_in_24G(void);
 int32_t cds_set_mas(hdd_adapter_t *adapter, uint8_t mas_value);
 int cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		uint32_t set_value);
-CDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter);
+QDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter);
 int cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		uint32_t set_value);
 void cds_set_mcc_latency(hdd_adapter_t *adapter, int set_value);
@@ -555,32 +555,32 @@ void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
 void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
 		uint8_t session_id);
-CDF_STATUS cds_init_policy_mgr(void);
-CDF_STATUS cds_deinit_policy_mgr(void);
-CDF_STATUS cds_get_pcl(enum cds_con_mode mode,
+QDF_STATUS cds_init_policy_mgr(void);
+QDF_STATUS cds_deinit_policy_mgr(void);
+QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 				uint8_t *pcl_Channels, uint32_t *len);
 bool cds_allow_concurrency(enum cds_con_mode mode,
 				uint8_t channel, enum hw_mode_bandwidth bw);
 enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(void);
 enum cds_one_connection_mode cds_get_second_connection_pcl_table_index(void);
 enum cds_two_connection_mode cds_get_third_connection_pcl_table_index(void);
-CDF_STATUS cds_incr_connection_count(uint32_t vdev_id);
-CDF_STATUS cds_update_connection_info(uint32_t vdev_id);
-CDF_STATUS cds_decr_connection_count(uint32_t vdev_id);
-CDF_STATUS cds_current_connections_update(uint32_t session_id,
+QDF_STATUS cds_incr_connection_count(uint32_t vdev_id);
+QDF_STATUS cds_update_connection_info(uint32_t vdev_id);
+QDF_STATUS cds_decr_connection_count(uint32_t vdev_id);
+QDF_STATUS cds_current_connections_update(uint32_t session_id,
 				uint8_t channel,
 				enum cds_conn_update_reason);
 bool cds_is_ibss_conn_exist(uint8_t *ibss_channel);
 #ifdef MPC_UT_FRAMEWORK
-CDF_STATUS cds_incr_connection_count_utfw(
+QDF_STATUS cds_incr_connection_count_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id);
-CDF_STATUS cds_update_connection_info_utfw(
+QDF_STATUS cds_update_connection_info_utfw(
 		uint32_t vdev_id, uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id);
-CDF_STATUS cds_decr_connection_count_utfw(
+QDF_STATUS cds_decr_connection_count_utfw(
 		uint32_t del_all, uint32_t vdev_id);
 struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len);
 enum cds_pcl_type get_pcl_from_first_conn_table(enum cds_con_mode type,
@@ -592,24 +592,24 @@ enum cds_pcl_type get_pcl_from_third_conn_table(
 	enum cds_two_connection_mode idx, enum cds_con_mode type,
 	enum cds_conc_priority_mode sys_pref, uint8_t dbs_capable);
 #else
-static inline CDF_STATUS cds_incr_connection_count_utfw(uint32_t vdev_id,
+static inline QDF_STATUS cds_incr_connection_count_utfw(uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
-static inline CDF_STATUS cds_update_connection_info_utfw(uint32_t vdev_id,
+static inline QDF_STATUS cds_update_connection_info_utfw(uint32_t vdev_id,
 		uint32_t tx_streams, uint32_t rx_streams,
 		uint32_t chain_mask, uint32_t type, uint32_t sub_type,
 		uint32_t channelid, uint32_t mac_id)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
-static inline CDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
+static inline QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 		uint32_t vdev_id)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 static inline struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
 {
@@ -618,7 +618,7 @@ static inline struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
 #endif
 enum cds_con_mode cds_convert_device_mode_to_hdd_type(
 				device_mode_t device_mode);
-CDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
+QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 		enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac0_bw,
 		enum hw_mode_ss_config mac1_ss,
@@ -627,7 +627,7 @@ CDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 		enum hw_mode_agile_dfs_capab dfs,
 		enum cds_conn_update_reason reason);
 enum cds_conc_next_action cds_need_opportunistic_upgrade(void);
-CDF_STATUS cds_next_actions(uint32_t session_id,
+QDF_STATUS cds_next_actions(uint32_t session_id,
 		enum cds_conc_next_action action,
 		enum cds_conn_update_reason reason);
 void cds_set_dual_mac_scan_config(uint8_t dbs_val,
@@ -640,7 +640,7 @@ void cds_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t fw_mode_config);
 bool cds_map_concurrency_mode(enum tCDF_ADAPTER_MODE *old_mode,
 		enum cds_con_mode *new_mode);
-CDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
+QDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile, uint8_t *channel);
 
 enum tCDF_GLOBAL_CON_MODE cds_get_conparam(void);
@@ -650,8 +650,8 @@ void cds_clear_concurrent_session_count(void);
 bool cds_is_multiple_active_sta_sessions(void);
 bool cds_is_sta_active_connection_exists(void);
 bool cds_concurrent_beaconing_sessions_running(void);
-CDF_STATUS cdf_wait_for_connection_update(void);
-CDF_STATUS cdf_reset_connection_update(void);
-CDF_STATUS cdf_set_connection_update(void);
-CDF_STATUS cdf_init_connection_update(void);
+QDF_STATUS cdf_wait_for_connection_update(void);
+QDF_STATUS cdf_reset_connection_update(void);
+QDF_STATUS cdf_set_connection_update(void);
+QDF_STATUS cdf_init_connection_update(void);
 #endif /* __CDS_CONCURRENCY_H */

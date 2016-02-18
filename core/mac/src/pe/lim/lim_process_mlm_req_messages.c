@@ -674,7 +674,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		    addbss_param->bssId, addbss_param->htCapable,
 		    session);
 
-	addbss_param->status = CDF_STATUS_SUCCESS;
+	addbss_param->status = QDF_STATUS_SUCCESS;
 	addbss_param->respReqd = 1;
 
 	/* Set a new state for MLME */
@@ -941,14 +941,14 @@ failure:
  */
 static void
 lim_process_mlm_post_join_suspend_link(tpAniSirGlobal mac_ctx,
-				       CDF_STATUS status,
+				       QDF_STATUS status,
 				       uint32_t *ctx)
 {
 	tLimMlmJoinCnf mlm_join_cnf;
 	tpPESession session = (tpPESession) ctx;
 	tSirLinkState lnk_state;
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		lim_log(mac_ctx, LOGE,
 			FL("Sessionid %d Suspend link(NOTIFY_BSS) failed. Still proceeding with join"),
 			session->peSessionId);
@@ -1057,7 +1057,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 				goto error;
 			}
 			lim_process_mlm_post_join_suspend_link(mac_ctx,
-				CDF_STATUS_SUCCESS, (uint32_t *)session);
+				QDF_STATUS_SUCCESS, (uint32_t *)session);
 		} else {
 			lim_log(mac_ctx, LOG1, FL("No need to Suspend link"));
 			 /*
@@ -1070,7 +1070,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 				FL("SessionId:%d Join req on current chan"),
 				sessionid);
 			lim_process_mlm_post_join_suspend_link(mac_ctx,
-				CDF_STATUS_SUCCESS, (uint32_t *)session);
+				QDF_STATUS_SUCCESS, (uint32_t *)session);
 		}
 		return;
 	} else {
@@ -1578,7 +1578,7 @@ end:
  */
 static void
 lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
-				 CDF_STATUS suspend_status, uint32_t *msg)
+				 QDF_STATUS suspend_status, uint32_t *msg)
 {
 	uint16_t aid;
 	struct cdf_mac_addr curr_bssid;
@@ -1590,7 +1590,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	tLimMlmStates mlm_state;
 	tSirSmeDisassocRsp *sme_disassoc_rsp;
 
-	if (CDF_STATUS_SUCCESS != suspend_status)
+	if (QDF_STATUS_SUCCESS != suspend_status)
 		lim_log(mac_ctx, LOGE, FL("Suspend Status is not success %X"),
 			suspend_status);
 
@@ -1655,7 +1655,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			msg = (uint32_t *)sme_disassoc_rsp;
 
 			lim_send_sme_disassoc_deauth_ntf(mac_ctx,
-					CDF_STATUS_SUCCESS, msg);
+					QDF_STATUS_SUCCESS, msg);
 			return;
 
 		}
@@ -1907,7 +1907,7 @@ lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		mlm_disassoc_req->sessionId,
 		MAC_ADDR_ARRAY(mlm_disassoc_req->peer_macaddr.bytes));
 
-	lim_process_mlm_disassoc_req_ntf(mac_ctx, CDF_STATUS_SUCCESS,
+	lim_process_mlm_disassoc_req_ntf(mac_ctx, QDF_STATUS_SUCCESS,
 					 (uint32_t *) msg_buf);
 }
 
@@ -1925,7 +1925,7 @@ lim_process_mlm_disassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
  */
 static void
 lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
-			       CDF_STATUS suspend_status, uint32_t *msg_buf)
+			       QDF_STATUS suspend_status, uint32_t *msg_buf)
 {
 	uint16_t aid;
 	tSirMacAddr curr_bssId;
@@ -1936,7 +1936,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 	tpPESession session;
 	tSirSmeDeauthRsp *sme_deauth_rsp;
 
-	if (CDF_STATUS_SUCCESS != suspend_status)
+	if (QDF_STATUS_SUCCESS != suspend_status)
 		lim_log(mac_ctx, LOGE, FL("Suspend Status is not success %X"),
 			suspend_status);
 
@@ -2016,7 +2016,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				msg_buf = (uint32_t *)sme_deauth_rsp;
 
 				lim_send_sme_disassoc_deauth_ntf(mac_ctx,
-						CDF_STATUS_SUCCESS, msg_buf);
+						QDF_STATUS_SUCCESS, msg_buf);
 				return;
 			}
 
@@ -2212,7 +2212,7 @@ lim_process_mlm_deauth_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			mlm_deauth_req->sessionId);
 		return;
 	}
-	lim_process_mlm_deauth_req_ntf(mac_ctx, CDF_STATUS_SUCCESS,
+	lim_process_mlm_deauth_req_ntf(mac_ctx, QDF_STATUS_SUCCESS,
 				       (uint32_t *) msg_buf);
 }
 

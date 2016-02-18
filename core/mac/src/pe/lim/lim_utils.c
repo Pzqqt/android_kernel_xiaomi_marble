@@ -1155,7 +1155,7 @@ uint8_t lim_is_null_ssid(tSirMacSSid *ssid)
 	 * characters in SSID are spaces to consider it as NULL SSID
 	 */
 	if ((ASCII_SPACE_CHARACTER == ssid->ssId[0]) &&
-		(ssid->length == 1)){
+		(ssid->length == 1)) {
 			fnull_ssid = true;
 			return fnull_ssid;
 	} else {
@@ -2653,7 +2653,7 @@ lim_util_count_sta_del(tpAniSirGlobal pMac,
  * @param  psessionEntry      Session information
  * @return NONE
  */
-void lim_switch_channel_cback(tpAniSirGlobal pMac, CDF_STATUS status,
+void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 			      uint32_t *data, tpPESession psessionEntry)
 {
 	tSirMsgQ mmhMsg = { 0 };
@@ -3487,7 +3487,7 @@ lim_handle_11g_protection_for_11bcoexist(tpAniSirGlobal mac_ctx,
 					overlap, beaconparams, session_entry);
 				if (session_entry->gLimHt20Params.
 						protectionEnabled) {
-				if(eHT_CHANNEL_WIDTH_20MHZ ==
+				if (eHT_CHANNEL_WIDTH_20MHZ ==
 					session_entry->htSupportedChannelWidthSet)
 					session_entry->htOperMode =
 						eSIR_HT_OP_MODE_PURE;
@@ -3896,7 +3896,7 @@ lim_enable_ht_protection_from11g(tpAniSirGlobal pMac, uint8_t enable,
 									      psessionEntry);
 
 						if (psessionEntry->gLimHt20Params.protectionEnabled) {
-						if(eHT_CHANNEL_WIDTH_20MHZ ==
+						if (eHT_CHANNEL_WIDTH_20MHZ ==
 							psessionEntry->htSupportedChannelWidthSet)
 							psessionEntry->htOperMode =
 								eSIR_HT_OP_MODE_PURE;
@@ -4313,7 +4313,7 @@ static void lim_handle_ht20coexist_ht20protection(tpAniSirGlobal mac_ctx,
 				session_entry->htOperMode)) {
 				if (session_entry->gLimHt20Params.
 					protectionEnabled) {
-				if(eHT_CHANNEL_WIDTH_20MHZ ==
+				if (eHT_CHANNEL_WIDTH_20MHZ ==
 				session_entry->htSupportedChannelWidthSet)
 					session_entry->htOperMode =
 						eSIR_HT_OP_MODE_PURE;
@@ -5591,7 +5591,7 @@ tAniBool lim_is_channel_valid_for_channel_switch(tpAniSirGlobal pMac, uint8_t ch
    \param  type - Which way we want to stop/ resume tx.
    \param  mode - To stop/resume.
    -------------------------------------------------------*/
-static CDF_STATUS
+static QDF_STATUS
 __lim_fill_tx_control_params(tpAniSirGlobal pMac, tpTxControlParams pTxCtrlMsg,
 			     tLimQuietTxMode type, tLimControlTx mode)
 {
@@ -5626,10 +5626,10 @@ __lim_fill_tx_control_params(tpAniSirGlobal pMac, tpTxControlParams pTxCtrlMsg,
 	/* Fall thru... */
 	default:
 		PELOGW(lim_log(pMac, LOGW, FL("Invalid case: Not Handled"));)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5654,7 +5654,7 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 				    tLimControlTx mode)
 {
 
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpTxControlParams pTxCtrlMsg;
 	tSirMsgQ msgQ;
 	uint8_t nBytes = 0; /* No of bytes required for station bitmap. */
@@ -5671,7 +5671,7 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 
 	cdf_mem_set((void *)pTxCtrlMsg, (sizeof(*pTxCtrlMsg) + nBytes), 0);
 	status = __lim_fill_tx_control_params(pMac, pTxCtrlMsg, type, mode);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		cdf_mem_free(pTxCtrlMsg);
 		lim_log(pMac, LOGP,
 			FL("__lim_fill_tx_control_params failed, status = %d"),
@@ -6898,9 +6898,9 @@ void lim_set_stads_rtt_cap(tpDphHashNode sta_ds, struct s_ext_cap *ext_cap,
  * of. Since STA/SAP can have different Extended capabilities set, this function
  * is called per vdev creation.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
+QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 			       uint32_t session_id,
 			       tDot11fIEExtCap *extra_extcap, bool merge)
 {
@@ -6920,7 +6920,7 @@ CDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 					 NULL);
 	if (eSIR_SUCCESS != status) {
 		lim_log(mac_ctx, LOGE, FL("Failed to populate ext cap IE"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	num_bytes = ext_cap_data.num_bytes;
@@ -6935,7 +6935,7 @@ CDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	vdev_ie = cdf_mem_malloc(sizeof(*vdev_ie) + num_bytes);
 	if (!vdev_ie) {
 		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	vdev_ie->vdev_id = session_id;
@@ -6955,15 +6955,15 @@ CDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	msg.bodyptr = vdev_ie;
 	msg.reserved = 0;
 
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 		cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
 		lim_log(mac_ctx, LOGE,
 		       FL("Not able to post WMA_SET_IE_INFO to WDA"));
 		cdf_mem_free(vdev_ie);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

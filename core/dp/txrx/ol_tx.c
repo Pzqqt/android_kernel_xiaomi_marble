@@ -149,7 +149,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 	struct ol_txrx_peer_t *peer;
 	cdf_nbuf_t ret;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if (cdf_unlikely(!pdev)) {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
@@ -182,7 +182,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	}
 
 	status = cdf_nbuf_map_single(cdf_ctx, skb, CDF_DMA_TO_DEVICE);
-	if (cdf_unlikely(status != CDF_STATUS_SUCCESS)) {
+	if (cdf_unlikely(status != QDF_STATUS_SUCCESS)) {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;

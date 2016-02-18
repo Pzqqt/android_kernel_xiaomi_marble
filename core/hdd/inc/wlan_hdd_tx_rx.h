@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,17 +55,17 @@
 
 int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev);
 void hdd_tx_timeout(struct net_device *dev);
-CDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter);
-CDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter);
-CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBufChain,
+QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBufChain,
 			     uint8_t staId);
 
 #ifdef IPA_OFFLOAD
-CDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,
+QDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,
 				 cdf_nbuf_t rx_buf_list, uint8_t staId);
 #endif /* IPA_OFFLOAD */
 
-CDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
+QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
 			       struct cdf_mac_addr *pMacAddress,
 			       uint8_t *staId);
 

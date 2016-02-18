@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -128,11 +128,11 @@ struct pkt_filter_cfg {
 
 
 /* SSR shutdown & re-init functions */
-CDF_STATUS hdd_wlan_shutdown(void);
-CDF_STATUS hdd_wlan_re_init(void *hif_sc);
+QDF_STATUS hdd_wlan_shutdown(void);
+QDF_STATUS hdd_wlan_re_init(void *hif_sc);
 
 void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter);
-CDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable);
+QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable);
 void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable);
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING

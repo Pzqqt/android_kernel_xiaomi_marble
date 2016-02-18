@@ -2266,16 +2266,16 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
 					int index, bool preauth);
 
 #ifdef FEATURE_WLAN_LFR_METRICS
-CDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
 						tCsrRoamInfo *pRoamInfo);
 
-CDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(hdd_adapter_t *
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth_status(hdd_adapter_t *
 							 pAdapter,
 							 tCsrRoamInfo *
 							 pRoamInfo,
 							 bool preauth_status);
 
-CDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
 						   tCsrRoamInfo *pRoamInfo);
 #endif
 
@@ -2304,7 +2304,7 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 extern void hdd_conn_set_connection_state(hdd_adapter_t *pAdapter,
 					  eConnectionState connState);
-CDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
+QDF_STATUS wlan_hdd_validate_operation_channel(hdd_adapter_t *pAdapter,
 					       int channel);
 #ifdef FEATURE_WLAN_TDLS
 int wlan_hdd_cfg80211_send_tdls_discover_req(struct wiphy *wiphy,

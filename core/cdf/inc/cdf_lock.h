@@ -39,7 +39,6 @@
  */
 
 /* Include Files */
-#include "cdf_status.h"
 #include "qdf_status.h"
 #include "i_cdf_lock.h"
 
@@ -107,10 +106,10 @@ cdf_semaphore_release(cdf_device_t osdev, cdf_semaphore_t *m)
  * a failure.
  *
  * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
+ *	QDF_STATUS_SUCCESS:	lock was successfully initialized
  *	CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_init(cdf_mutex_t *lock);
+QDF_STATUS cdf_mutex_init(cdf_mutex_t *lock);
 
 /**
  * cdf_mutex_acquire () - acquire a CDF lock
@@ -122,10 +121,10 @@ CDF_STATUS cdf_mutex_init(cdf_mutex_t *lock);
  * lock in the locked state with the calling thread as its owner.
  *
  * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
+ *	QDF_STATUS_SUCCESS:	lock was successfully initialized
  *	CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock);
+QDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock);
 
 /**
  * cdf_mutex_release() - release a CDF lock
@@ -138,10 +137,10 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock);
  * initialized, an error is returned.
  *
  * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
+ *	QDF_STATUS_SUCCESS:	lock was successfully initialized
  *	CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock);
+QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock);
 
 /**
  * cdf_mutex_destroy() - destroy a CDF lock
@@ -159,10 +158,10 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock);
  * been re-initialized.
  *
  * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
+ *	QDF_STATUS_SUCCESS:	lock was successfully initialized
  *	CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock);
+QDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock);
 
 /**
  * cdf_spinlock_init() - initialize a spinlock
@@ -217,7 +216,7 @@ static inline void cdf_spin_unlock_bh(cdf_spinlock_t *lock)
  *    CDF status success : if wake lock is initialized
  *    CDF status fialure : if wake lock was not initialized
  */
-CDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *lock, const char *name);
+QDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *lock, const char *name);
 
 /**
  * cdf_wake_lock_acquire() - acquires a wake lock
@@ -228,7 +227,7 @@ CDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *lock, const char *name);
  *    CDF status success : if wake lock is acquired
  *    CDF status fialure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason);
+QDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason);
 
 /**
  * cdf_wake_lock_timeout_acquire() - acquires a wake lock with a timeout
@@ -239,7 +238,7 @@ CDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason);
  *   CDF status success : if wake lock is acquired
  *   CDF status fialure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock,
+QDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock,
 					 uint32_t msec, uint32_t reason);
 
 /**
@@ -251,7 +250,7 @@ CDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock,
  *    CDF status success : if wake lock is acquired
  *    CDF status fialure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason);
+QDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason);
 
 /**
  * cdf_wake_lock_destroy() - destroys a wake lock
@@ -261,15 +260,15 @@ CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason);
  * CDF status success :	if wake lock is acquired
  * CDF status fialure :	if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock);
+QDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock);
 
 struct hif_pm_runtime_lock;
 typedef struct hif_pm_runtime_lock *cdf_runtime_lock_t;
 
-CDF_STATUS cdf_runtime_pm_get(void);
-CDF_STATUS cdf_runtime_pm_put(void);
-CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock);
-CDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock);
+QDF_STATUS cdf_runtime_pm_get(void);
+QDF_STATUS cdf_runtime_pm_put(void);
+QDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock);
+QDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock);
 cdf_runtime_lock_t cdf_runtime_lock_init(const char *name);
 void cdf_runtime_lock_deinit(cdf_runtime_lock_t lock);
 
@@ -281,7 +280,7 @@ void cdf_runtime_lock_deinit(cdf_runtime_lock_t lock);
  *    CDF status success : if wake lock is acquired
  *    CDF status fialure : if wake lock was not acquired
  */
-CDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock);
+QDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock);
 
 /**
  * cdf_spinlock_release() - release a spin lock
@@ -291,7 +290,7 @@ CDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock);
  * CDF status success :	if wake lock is acquired
  * CDF status fialure :	if wake lock was not acquired
  */
-CDF_STATUS cdf_spinlock_release(cdf_spinlock_t *pLock);
+QDF_STATUS cdf_spinlock_release(cdf_spinlock_t *pLock);
 
 #define cdf_spin_lock(_lock) __cdf_spin_lock(_lock)
 #define cdf_spin_unlock(_lock) __cdf_spin_unlock(_lock)

@@ -42,7 +42,6 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include <cdf_types.h>
-#include <cdf_status.h>
 #include <qdf_status.h>
 #include <qdf_event.h>
 #include "ani_global.h"
@@ -90,9 +89,9 @@
    Function declarations and documenation
    ------------------------------------------------------------------------*/
 
-CDF_STATUS cds_crypto_init(uint32_t *phCryptProv);
+QDF_STATUS cds_crypto_init(uint32_t *phCryptProv);
 
-CDF_STATUS cds_crypto_deinit(uint32_t hCryptProv);
+QDF_STATUS cds_crypto_deinit(uint32_t hCryptProv);
 
 /**
  * cds_rand_get_bytes
@@ -105,9 +104,9 @@ CDF_STATUS cds_crypto_deinit(uint32_t hCryptProv);
  * @param numBytes the number of bytes that should be generated and
  * copied
  *
- * @return CDF_STATUS_SUCCSS if the operation succeeds
+ * @return QDF_STATUS_SUCCSS if the operation succeeds
  */
-CDF_STATUS cds_rand_get_bytes(uint32_t handle, uint8_t *pbBuf,
+QDF_STATUS cds_rand_get_bytes(uint32_t handle, uint8_t *pbBuf,
 			      uint32_t numBytes);
 
 /**
@@ -129,10 +128,10 @@ CDF_STATUS cds_rand_get_bytes(uint32_t handle, uint8_t *pbBuf,
  * @param keyLen length of key
  * @param digest holds resultant SHA1 HMAC (20B)
  *
- * @return CDF_STATUS_SUCCSS if the operation succeeds
+ * @return QDF_STATUS_SUCCSS if the operation succeeds
  *
  */
-CDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
+QDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
 			     uint8_t *text,    /* pointer to data stream */
 			     uint32_t textLen,  /* length of data stream */
 			     uint8_t *key,     /* pointer to authentication key */
@@ -158,21 +157,21 @@ CDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
  * @param keyLen length of key
  * @param digest holds resultant MD5 HMAC (16B)
  *
- * @return CDF_STATUS_SUCCSS if the operation succeeds
+ * @return QDF_STATUS_SUCCSS if the operation succeeds
  *
  */
-CDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
+QDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
 			    uint8_t *text,     /* pointer to data stream */
 			    uint32_t textLen,   /* length of data stream */
 			    uint8_t *key,      /* pointer to authentication key */
 			    uint32_t keyLen,    /* length of authentication key */
 			    uint8_t digest[CDS_DIGEST_MD5_SIZE]);       /* caller digest to be filled in */
 
-CDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
+QDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
 			   uint8_t *pText,      /* pointer to data stream */
 			   uint8_t *Encrypted, uint8_t *pKey);          /* pointer to authentication key */
 
-CDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
+QDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
 			   uint8_t *pText,      /* pointer to data stream */
 			   uint8_t *pDecrypted, uint8_t *pKey);         /* pointer to authentication key */
 
@@ -186,5 +185,5 @@ bool cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 		     uint8_t *frm, uint8_t *efrm, uint16_t frmLen);
 uint8_t cds_get_mmie_size(void);
 #endif /* WLAN_FEATURE_11W */
-CDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal pMac);
+QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal pMac);
 #endif /* #if !defined __CDS_UTILS_H */

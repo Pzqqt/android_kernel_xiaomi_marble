@@ -35,7 +35,6 @@
 #include <net/cnss.h>
 #endif
 #include <cdf_types.h>
-#include <cdf_status.h>
 #include <qdf_status.h>
 #include <cdf_trace.h>
 
@@ -52,7 +51,7 @@ typedef struct {
 
 extern void __cdf_defer_func(struct work_struct *work);
 
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_init_work(__cdf_work_t *work, cdf_defer_fn_t func, void *arg)
 {
 	/*Initilize func and argument in work struct */
@@ -63,38 +62,38 @@ __cdf_init_work(__cdf_work_t *work, cdf_defer_fn_t func, void *arg)
 #else
 	INIT_WORK(&work->work, __cdf_defer_func);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS __cdf_schedule_work(__cdf_work_t *work)
+static inline QDF_STATUS __cdf_schedule_work(__cdf_work_t *work)
 {
 	schedule_work(&work->work);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS __cdf_init_bh(cdf_handle_t hdl,
+static inline QDF_STATUS __cdf_init_bh(cdf_handle_t hdl,
 				       struct tasklet_struct *bh,
 				       cdf_defer_fn_t func, void *arg)
 {
 	tasklet_init(bh, (__cdf_bh_fn_t) func, (unsigned long)arg);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_sched_bh(cdf_handle_t hdl, struct tasklet_struct *bh)
 {
 	tasklet_schedule(bh);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_disable_bh(cdf_handle_t hdl, struct tasklet_struct *bh)
 {
 	tasklet_kill(bh);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #endif /*_I_CDF_DEFER_H*/

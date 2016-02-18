@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,9 +48,9 @@
 #define AR6320_DEV_VERSION           0x1000000
 
 #ifdef HIF_PCI
-void ol_target_failure(void *instance, CDF_STATUS status);
+void ol_target_failure(void *instance, QDF_STATUS status);
 #else
-static inline void ol_target_failure(void *instance, CDF_STATUS status)
+static inline void ol_target_failure(void *instance, QDF_STATUS status)
 {
 	return;
 }

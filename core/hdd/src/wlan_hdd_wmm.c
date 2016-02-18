@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -158,7 +158,7 @@ static void hdd_wmm_enable_tl_uapsd(hdd_wmm_qos_context_t *pQosContext)
 	sme_ac_enum_type acType = pQosContext->acType;
 	hdd_wmm_ac_status_t *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t service_interval;
 	uint32_t suspension_interval;
 	sme_QosWmmDirType direction;
@@ -209,7 +209,7 @@ static void hdd_wmm_enable_tl_uapsd(hdd_wmm_qos_context_t *pQosContext)
 					   direction, psb, pAdapter->sessionId,
 					   pHddCtx->config->DelayedTriggerFrmInt);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
 			  "%s: Failed to enable U-APSD for AC=%d",
 			  __func__, acType);
@@ -243,7 +243,7 @@ static void hdd_wmm_disable_tl_uapsd(hdd_wmm_qos_context_t *pQosContext)
 	hdd_adapter_t *pAdapter = pQosContext->pAdapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	hdd_wmm_ac_status_t *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	/* have we previously enabled UAPSD? */
 	if (pAc->wmmAcUapsdInfoValid == true) {
@@ -254,7 +254,7 @@ static void hdd_wmm_disable_tl_uapsd(hdd_wmm_qos_context_t *pQosContext)
 							     (pAdapter))->conn_info.staId[0],
 						    acType, pAdapter->sessionId);
 
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
 				  "%s: Failed to disable U-APSD for AC=%d",
 				  __func__, acType);
@@ -376,7 +376,7 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 	hdd_adapter_t *pAdapter;
 	hdd_wmm_ac_status_t *pAc;
 	hdd_wlan_wmm_status_e status;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint32_t currentTrafficCnt = 0;
 	sme_ac_enum_type acType = pQosContext->acType;
 
@@ -405,10 +405,10 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
 		pAc->wmmPrevTrafficCnt = currentTrafficCnt;
 		if (pAc->wmmInactivityTimer.state == CDF_TIMER_STATE_STOPPED) {
 			/* Restart the timer */
-			cdf_status =
+			qdf_status =
 				cdf_mc_timer_start(&pAc->wmmInactivityTimer,
 						   pAc->wmmInactivityTime);
-			if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL(
@@ -437,13 +437,13 @@ static void hdd_wmm_inactivity_timer_cb(void *user_data)
  * time specified in the AddTS parameters is non-zero, this function
  * is invoked to start a traffic inactivity timer for the given AC.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS
+static QDF_STATUS
 hdd_wmm_enable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext,
 				uint32_t inactivityTime)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	hdd_adapter_t *pAdapter = pQosContext->pAdapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	hdd_wmm_ac_status_t *pAc;
@@ -451,28 +451,28 @@ hdd_wmm_enable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext,
 	pAdapter = pQosContext->pAdapter;
 	pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
 
-	cdf_status = cdf_mc_timer_init(&pAc->wmmInactivityTimer,
+	qdf_status = cdf_mc_timer_init(&pAc->wmmInactivityTimer,
 				       CDF_TIMER_TYPE_SW,
 				       hdd_wmm_inactivity_timer_cb,
 				       pQosContext);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  FL("Initializing inactivity timer failed on AC %d"),
 			  acType);
-		return cdf_status;
+		return qdf_status;
 	}
 	/* Start the inactivity timer */
-	cdf_status = cdf_mc_timer_start(&pAc->wmmInactivityTimer,
+	qdf_status = cdf_mc_timer_start(&pAc->wmmInactivityTimer,
 					inactivityTime);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  FL("Starting inactivity timer failed on AC %d"),
 			  acType);
-		cdf_status = cdf_mc_timer_destroy(&pAc->wmmInactivityTimer);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		qdf_status = cdf_mc_timer_destroy(&pAc->wmmInactivityTimer);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to destroy inactivity timer");
 		}
-		return cdf_status;
+		return qdf_status;
 	}
 	pAc->wmmInactivityTime = inactivityTime;
 	/* Initialize the current tx traffic count on this AC */
@@ -480,7 +480,7 @@ hdd_wmm_enable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext,
 		pAdapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[pQosContext->
 								    acType];
 	pQosContext->is_inactivity_timer_running = true;
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -492,15 +492,15 @@ hdd_wmm_enable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext,
  * This function is invoked to disable the traffic inactivity timer
  * for the given AC.  This is normally done when the TS is deleted.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS
+static QDF_STATUS
 hdd_wmm_disable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext)
 {
 	hdd_adapter_t *pAdapter = pQosContext->pAdapter;
 	sme_ac_enum_type acType = pQosContext->acType;
 	hdd_wmm_ac_status_t *pAc = &pAdapter->hddWmmStatus.wmmAcStatus[acType];
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/* Clear the timer and the counter */
 	pAc->wmmInactivityTime = 0;
@@ -508,17 +508,17 @@ hdd_wmm_disable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext)
 
 	if (pQosContext->is_inactivity_timer_running == true) {
 		pQosContext->is_inactivity_timer_running = false;
-		cdf_status = cdf_mc_timer_stop(&pAc->wmmInactivityTimer);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		qdf_status = cdf_mc_timer_stop(&pAc->wmmInactivityTimer);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hdd_err("Failed to stop inactivity timer");
-			return cdf_status;
+			return qdf_status;
 		}
-		cdf_status = cdf_mc_timer_destroy(&pAc->wmmInactivityTimer);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+		qdf_status = cdf_mc_timer_destroy(&pAc->wmmInactivityTimer);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hdd_err("Failed to destroy inactivity timer:Timer started");
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 #endif /* FEATURE_WLAN_ESE */
 
@@ -536,9 +536,9 @@ hdd_wmm_disable_inactivity_timer(hdd_wmm_qos_context_t *pQosContext)
  * gets called externally through some function pointer magic (so
  * there is a need for rigorous parameter checking).
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
+static QDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 				       void *hddCtx,
 				       sme_QosWmmTspecInfo *pCurrentQosInfo,
 				       sme_QosStatusType smeStatus,
@@ -556,7 +556,7 @@ static CDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 		     (HDD_WMM_CTX_MAGIC != pQosContext->magic))) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_ERROR,
 			  "%s: Invalid QoS Context", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pAdapter = pQosContext->pAdapter;
@@ -1059,7 +1059,7 @@ static CDF_STATUS hdd_wmm_sme_callback(tHalHandle hHal,
 		  "%s: complete, access for TL AC %d is%sallowed",
 		  __func__, acType, pAc->wmmAcAccessAllowed ? " " : " not ");
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -1371,9 +1371,9 @@ static void hdd_wmm_do_implicit_qos(struct work_struct *work)
  * adapter to an initial state.  The configuration can later be
  * overwritten via application APIs or via QoS Map sent OTA.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter)
 {
 	sme_QosWmmUpType *hddWmmDscpToUpMap = pAdapter->hddWmmDscpToUpMap;
 	uint8_t dscp;
@@ -1391,7 +1391,7 @@ CDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter)
 	/* Special case for Expedited Forwarding (DSCP 46) */
 	hddWmmDscpToUpMap[46] = SME_QOS_WMM_UP_VO;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1402,9 +1402,9 @@ CDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter)
  * adapter to an initial state.  The configuration can later be
  * overwritten via application APIs
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter)
 {
 	hdd_wmm_ac_status_t *pAcStatus;
 	sme_ac_enum_type acType;
@@ -1432,7 +1432,7 @@ CDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter)
 	 */
 	pAdapter->configuredPsb = HDD_PSB_CFG_INVALID;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1441,9 +1441,9 @@ CDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter)
  *
  * @pAdapter: [in]  pointer to Adapter context
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter)
 {
 	hdd_wmm_ac_status_t *pAcStatus;
 	sme_ac_enum_type acType;
@@ -1460,7 +1460,7 @@ CDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter)
 		pAcStatus->wmmAcTspecValid = false;
 		pAcStatus->wmmAcUapsdInfoValid = false;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1470,9 +1470,9 @@ CDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter)
  * Function which will perform any necessary work to to clean up the
  * WMM functionality prior to the kernel module unload.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter)
 {
 	hdd_wmm_qos_context_t *pQosContext;
 
@@ -1494,7 +1494,7 @@ CDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter)
 		hdd_wmm_free_context(pQosContext);
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1792,9 +1792,9 @@ void hdd_wmm_acquire_access_required(hdd_adapter_t *pAdapter,
  * @pGranted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 				  sme_ac_enum_type acType, bool *pGranted)
 {
 	hdd_wmm_qos_context_t *pQosContext;
@@ -1815,7 +1815,7 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 			pAdapter->hddWmmStatus.wmmAcStatus[acType].
 			wmmAcAccessAllowed;
 
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	/* do we already have an implicit QoS request pending for this AC? */
 	if ((pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcAccessNeeded) ||
@@ -1828,7 +1828,7 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 			  __func__, acType);
 
 		*pGranted = false;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	/* did we already fail to establish implicit QoS for this AC?
 	 * (if so, access should have been granted when the failure
@@ -1853,7 +1853,7 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 			*pGranted = false;
 		}
 
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	/* we need to establish implicit QoS */
 	CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO,
@@ -1872,7 +1872,7 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 		pAdapter->hddWmmStatus.wmmAcStatus[acType].wmmAcAccessAllowed =
 			true;
 		*pGranted = true;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	pQosContext->acType = acType;
@@ -1899,7 +1899,7 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 	 * TSPEC negotiation completes
 	 */
 	*pGranted = false;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1910,13 +1910,13 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
  * @pRoamInfo: [in]  pointer to roam information
  * @eBssType: [in]  type of BSS
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 			 tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType)
 {
 	uint8_t uapsdMask;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
 	/* when we associate we need to notify TL if it needs to
@@ -1939,7 +1939,7 @@ CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 		CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
 			  "%s: Reassoc so no work, Exiting", __func__);
 
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	/* get the negotiated UAPSD Mask */
 	uapsdMask =
@@ -1961,7 +1961,7 @@ CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
 	if (uapsdMask & HDD_AC_VI) {
@@ -1977,7 +1977,7 @@ CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
 	if (uapsdMask & HDD_AC_BK) {
@@ -1993,7 +1993,7 @@ CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
 	if (uapsdMask & HDD_AC_BE) {
@@ -2009,21 +2009,21 @@ CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 						   pAdapter->sessionId,
 						   pHddCtx->config->DelayedTriggerFrmInt);
 
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 
 	status = sme_update_dsc_pto_up_mapping(pHddCtx->hHal,
 					       pAdapter->hddWmmDscpToUpMap,
 					       pAdapter->sessionId);
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_wmm_init(pAdapter);
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
 		  "%s: Exiting", __func__);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
@@ -2041,9 +2041,9 @@ static const uint8_t acm_mask_bit[WLAN_MAX_AC] = {
  * @pRoamInfo: [in]  pointer to roam information
  * @eBssType : [in]  type of BSS
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
 			   tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType)
 {
 	int ac;
@@ -2108,7 +2108,7 @@ CDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
 	CDF_TRACE(CDF_MODULE_ID_HDD, WMM_TRACE_LEVEL_INFO_LOW,
 		  "%s: Exiting", __func__);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2118,9 +2118,9 @@ CDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
  * @pAdapter  : [in]  pointer to adapter context
  * @pUapsdMask: [out] pointer to where the UAPSD Mask is to be stored
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
 				  uint8_t *pUapsdMask)
 {
 	uint8_t uapsdMask;
@@ -2157,7 +2157,7 @@ CDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
 
 	/* return calculated mask */
 	*pUapsdMask = uapsdMask;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

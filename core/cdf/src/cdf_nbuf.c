@@ -44,7 +44,7 @@
 #include <cdf_nbuf.h>
 #include <cdf_memory.h>
 #include <cdf_trace.h>
-#include <cdf_status.h>
+#include <qdf_status.h>
 #include <cdf_lock.h>
 
 /* Packet Counter */
@@ -230,9 +230,9 @@ void __cdf_nbuf_free(struct sk_buff *skb)
  * @skb: Pointer to network buffer
  * @dir: Direction
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS
+QDF_STATUS
 __cdf_nbuf_map(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
 {
 #ifdef CDF_OS_DEBUG
@@ -252,7 +252,7 @@ __cdf_nbuf_map(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
 
 	return __cdf_nbuf_map_single(osdev, skb, dir);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -284,9 +284,9 @@ __cdf_nbuf_unmap(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
  * @skb: Pointer to network buffer
  * @dir: Direction
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS
+QDF_STATUS
 __cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
 {
 	cdf_dma_addr_t paddr;
@@ -294,15 +294,15 @@ __cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
 /* tempory hack for simulation */
 #ifdef A_SIMOS_DEVHOST
 	NBUF_CB_PADDR(buf) = paddr = buf->data;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 #else
 	/* assume that the OS only provides a single fragment */
 	NBUF_CB_PADDR(buf) = paddr =
 		dma_map_single(osdev->dev, buf->data,
 			       skb_end_pointer(buf) - buf->data, dir);
 	return dma_mapping_error(osdev->dev, paddr)
-		? CDF_STATUS_E_FAILURE
-		: CDF_STATUS_SUCCESS;
+		? QDF_STATUS_E_FAILURE
+		: QDF_STATUS_SUCCESS;
 #endif /* #ifdef A_SIMOS_DEVHOST */
 }
 
@@ -328,9 +328,9 @@ __cdf_nbuf_unmap_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
  * @skb: Pointer to network buffer
  * @cksum: Pointer to checksum value
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS
+QDF_STATUS
 __cdf_nbuf_set_rx_cksum(struct sk_buff *skb, cdf_nbuf_rx_cksum_t *cksum)
 {
 	switch (cksum->l4_result) {
@@ -347,9 +347,9 @@ __cdf_nbuf_set_rx_cksum(struct sk_buff *skb, cdf_nbuf_rx_cksum_t *cksum)
 	default:
 		pr_err("ADF_NET:Unknown checksum type\n");
 		cdf_assert(0);
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

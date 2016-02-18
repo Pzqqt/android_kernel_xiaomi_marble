@@ -113,17 +113,17 @@ typedef struct {
 /*--------------------------------------------------------------------------
   External APIs for CSR - Internal to SME
   ------------------------------------------------------------------------*/
-CDF_STATUS sme_qos_open(tpAniSirGlobal pMac);
-CDF_STATUS sme_qos_close(tpAniSirGlobal pMac);
-CDF_STATUS sme_qos_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
+QDF_STATUS sme_qos_open(tpAniSirGlobal pMac);
+QDF_STATUS sme_qos_close(tpAniSirGlobal pMac);
+QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 		void *pMsgBuf);
 
 /*--------------------------------------------------------------------------
   Internal APIs for CSR
   ------------------------------------------------------------------------*/
-CDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
+QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 		tSirBssDescription *pBssDesc);
-CDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
+QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 		uint8_t sessionId,
 		sme_qos_csr_event_indType ind, void *pEvent_info);
 uint8_t sme_qos_get_acm_mask(tpAniSirGlobal pMac,

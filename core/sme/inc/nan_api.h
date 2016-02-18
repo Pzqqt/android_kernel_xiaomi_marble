@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,6 +46,6 @@ typedef struct sNanRequestReq {
 
 typedef void (*NanCallback)(void *, tSirNanEvent *);
 void sme_nan_register_callback(tHalHandle hHal, NanCallback callback);
-CDF_STATUS sme_nan_request(tpNanRequestReq input);
+QDF_STATUS sme_nan_request(tpNanRequestReq input);
 
 #endif /* __NAN_API_H__ */

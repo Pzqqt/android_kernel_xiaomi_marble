@@ -38,7 +38,7 @@
 #include "hif.h"
 
 struct ol_context;
-CDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx);
+QDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx);
 void ol_cds_free(void);
 
 /**
@@ -64,22 +64,22 @@ void ol_init_ini_config(struct ol_context *ol_ctx,
 			struct ol_config_info *cfg);
 #ifdef HIF_PCI
 void bmi_cleanup(struct ol_context *scn);
-CDF_STATUS bmi_done(struct ol_context *ol_ctx);
-CDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx);
+QDF_STATUS bmi_done(struct ol_context *ol_ctx);
+QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx);
 #else
 static inline void bmi_cleanup(struct ol_context *scn)
 {
 	return;
 }
 
-static inline CDF_STATUS bmi_done(struct ol_context *ol_ctx)
+static inline QDF_STATUS bmi_done(struct ol_context *ol_ctx)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
+static inline QDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 #endif /* _BMI_H_ */

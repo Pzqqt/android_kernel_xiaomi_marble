@@ -30,7 +30,7 @@
 
 /* APIs visible to the driver */
 
-CDF_STATUS
+QDF_STATUS
 bmi_read_memory(uint32_t address,
 		uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 {
@@ -48,12 +48,12 @@ bmi_read_memory(uint32_t address,
 
 	if (info->bmi_done) {
 		BMI_DBG("command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!info->bmi_cmd_buff || !info->bmi_rsp_buff) {
 		BMI_ERR("BMI Initialization hasn't done");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + sizeof(cid) +
@@ -88,7 +88,7 @@ bmi_read_memory(uint32_t address,
 						BMI_EXCHANGE_TIMEOUT_MS);
 		if (status) {
 			BMI_ERR("Unable to read from the device");
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		if (remaining == rxlen) {
 			cdf_mem_copy(&buffer[length - remaining + align],
@@ -103,10 +103,10 @@ bmi_read_memory(uint32_t address,
 	}
 
 	BMI_DBG("BMI Read Memory: Exit");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
+QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 						struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -124,12 +124,12 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff) {
 		BMI_ERR("BMI initialization hasn't done");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
@@ -170,7 +170,7 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 		if (status) {
 			BMI_ERR("Unable to write to the device; status:%d",
 								status);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		remaining -= txlen;
 		address += txlen;
@@ -178,10 +178,10 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 
 	BMI_DBG("BMI Write Memory: Exit");
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
+QDF_STATUS
 bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -198,12 +198,12 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("%s:BMI CMD/RSP Buffer is NULL", __func__);
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(size));
@@ -228,40 +228,40 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 					bmi_rsp_buff, &param_len, 0);
 	if (status) {
 		BMI_ERR("Unable to read from the device status:%d", status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	cdf_mem_copy(param, bmi_rsp_buff, sizeof(*param));
 
 	BMI_DBG("BMI Execute: Exit (param: %d)", *param);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-inline CDF_STATUS
+inline QDF_STATUS
 bmi_no_command(struct ol_context *ol_ctx)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
+QDF_STATUS
 bmi_firmware_download(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct bmi_target_info targ_info;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
 	cdf_mem_zero(&targ_info, sizeof(targ_info));
 	/* Initialize BMI */
 	status = bmi_init(ol_ctx);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Initialization Failed err:%d", status);
 		return status;
 	}
 
 	/* Get target information */
 	status = bmi_get_target_info(&targ_info, ol_ctx);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Target Info get failed: status:%d", status);
 		return status;
 	}
@@ -271,19 +271,19 @@ bmi_firmware_download(struct ol_context *ol_ctx)
 
 	/* Configure target */
 	status = ol_configure_target(ol_ctx);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Configure Target Failed status:%d", status);
 		return status;
 	}
 
 	status = ol_download_firmware(ol_ctx);
-	if (status != CDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS)
 		BMI_ERR("BMI Download Firmware Failed Status:%d", status);
 
 	return status;
 }
 
-CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
+QDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	int status;
@@ -295,18 +295,18 @@ CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
 		bmi_assert(0);
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	if (!cdf_dev->dev) {
 		BMI_ERR("%s: Invalid device pointer", __func__);
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	info = GET_BMI_CONTEXT(ol_ctx);
 	if (info->bmi_done) {
 		BMI_DBG("bmi_done_local skipped");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	cmd = info->bmi_cmd_da;
@@ -320,7 +320,7 @@ CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 	if (!info->bmi_cmd_buff) {
 		BMI_ERR("Invalid scn BMICmdBuff");
 		bmi_assert(0);
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	cdf_mem_copy(info->bmi_cmd_buff, &cid, sizeof(cid));
@@ -329,7 +329,7 @@ CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 				sizeof(cid), NULL, NULL, 0);
 	if (status) {
 		BMI_ERR("Failed to write to the device; status:%d", status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (info->bmi_cmd_buff) {
@@ -346,5 +346,5 @@ CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 		info->bmi_rsp_da = 0;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }

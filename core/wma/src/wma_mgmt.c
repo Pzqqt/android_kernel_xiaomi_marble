@@ -90,7 +90,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	wmi_tim_info *tim_info = param_buf->tim_info;
 	uint8_t *bcn_payload;
 	wmi_buf_t wmi_buf;
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 	struct beacon_tim_ie *tim_ie;
 	wmi_p2p_noa_info *p2p_noa_info = param_buf->p2p_noa_info;
 	struct p2p_sub_element_noa noa_ie;
@@ -204,7 +204,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 		bcn->dma_mapped = 0;
 	}
 	ret = cdf_nbuf_map_single(pdev->osdev, bcn->buf, CDF_DMA_TO_DEVICE);
-	if (ret != CDF_STATUS_SUCCESS) {
+	if (ret != QDF_STATUS_SUCCESS) {
 		cdf_nbuf_free(wmi_buf);
 		WMA_LOGE("%s: failed map beacon buf to DMA region", __func__);
 		cdf_spin_unlock_bh(&bcn->lock);
@@ -322,7 +322,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		return -EINVAL;
 	}
 
-	if (ol_txrx_get_vdevid(peer, &vdev_id) != CDF_STATUS_SUCCESS) {
+	if (ol_txrx_get_vdevid(peer, &vdev_id) != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Not able to find BSSID for peer [%pM]", macaddr);
 		return -EINVAL;
 	}
@@ -1600,7 +1600,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
-		key_info->status = CDF_STATUS_E_FAILURE;
+		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
@@ -1610,7 +1610,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 	 * STA key is been setup for a peer
 	 */
 	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
-		key_info->status = CDF_STATUS_SUCCESS;
+		key_info->status = QDF_STATUS_SUCCESS;
 		if (wma_handle->ibss_started > 0)
 			goto out;
 		WMA_LOGD("Caching IBSS Key");
@@ -1673,7 +1673,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		if (!buf) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
-			key_info->status = CDF_STATUS_E_NOMEM;
+			key_info->status = QDF_STATUS_E_NOMEM;
 			goto out;
 		}
 
@@ -1683,14 +1683,14 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 			cdf_nbuf_free(buf);
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
-			key_info->status = CDF_STATUS_E_FAILURE;
+			key_info->status = QDF_STATUS_E_FAILURE;
 			goto out;
 		}
 	}
 
 	wma_handle->ibss_started++;
 	/* TODO: Should we wait till we get HTT_T2H_MSG_TYPE_SEC_IND? */
-	key_info->status = CDF_STATUS_SUCCESS;
+	key_info->status = QDF_STATUS_SUCCESS;
 
 out:
 	wma_send_msg(wma_handle, WMA_SET_BSSKEY_RSP, (void *)key_info, 0);
@@ -1819,7 +1819,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
-		key_info->status = CDF_STATUS_E_FAILURE;
+		key_info->status = QDF_STATUS_E_FAILURE;
 		return;
 	}
 
@@ -1907,7 +1907,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 	if (!txrx_pdev) {
 		WMA_LOGE("%s:Invalid txrx pdev handle", __func__);
-		key_info->status = CDF_STATUS_E_FAILURE;
+		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
@@ -1916,14 +1916,14 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 					 &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s:Invalid peer for key setting", __func__);
-		key_info->status = CDF_STATUS_E_FAILURE;
+		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:TxRx Vdev Handle is NULL", __func__);
-		key_info->status = CDF_STATUS_E_FAILURE;
+		key_info->status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
@@ -1981,7 +1981,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		if (!buf) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
-			key_info->status = CDF_STATUS_E_NOMEM;
+			key_info->status = QDF_STATUS_E_NOMEM;
 			goto out;
 		}
 
@@ -1994,7 +1994,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 			cdf_nbuf_free(buf);
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
-			key_info->status = CDF_STATUS_E_FAILURE;
+			key_info->status = QDF_STATUS_E_FAILURE;
 			goto out;
 		}
 	}
@@ -2008,7 +2008,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	}
 
 	/* TODO: Should we wait till we get HTT_T2H_MSG_TYPE_SEC_IND? */
-	key_info->status = CDF_STATUS_SUCCESS;
+	key_info->status = QDF_STATUS_SUCCESS;
 out:
 	if (key_info->sendRsp)
 		wma_send_msg(wma_handle, WMA_SET_STAKEY_RSP, (void *)key_info,
@@ -2024,7 +2024,7 @@ out:
  *
  * Return: CDF Status
  */
-CDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
+QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 					     tEdcaParams *edca_params)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
@@ -2042,7 +2042,7 @@ CDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 
 	if (!buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -2092,12 +2092,12 @@ CDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	else
 		CDF_ASSERT(0);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 fail:
 	wmi_buf_free(buf);
 	WMA_LOGE("%s: Failed to set WMM Paremeters", __func__);
-	return CDF_STATUS_E_FAILURE;
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -2297,7 +2297,7 @@ static int wmi_unified_bcn_tmpl_send(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
+QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 			      tpSendbeaconParams bcn_info)
 {
 	struct beacon_info *bcn;
@@ -2309,14 +2309,14 @@ CDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 	if (!bcn || !bcn->buf) {
 		WMA_LOGE("%s: Memory is not allocated to hold bcn template",
 			 __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	len = *(u32 *) &bcn_info->beacon[0];
 	if (len > WMA_BCN_BUF_MAX_SIZE) {
 		WMA_LOGE("%s: Received beacon len %d exceeding max limit %d",
 			 __func__, len, WMA_BCN_BUF_MAX_SIZE);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	WMA_LOGD("%s: Storing received beacon template buf to local buffer",
 		 __func__);
@@ -2360,7 +2360,7 @@ CDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 
 	cdf_spin_unlock_bh(&bcn->lock);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2565,7 +2565,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 {
 	ol_txrx_vdev_handle vdev;
 	uint8_t vdev_id;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t *p2p_ie;
 	tpAniBeaconStruct beacon;
 
@@ -2599,7 +2599,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		}
 	}
 	status = wma_store_bcn_tmpl(wma, vdev_id, bcn_info);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s : wma_store_bcn_tmpl Failed", __func__);
 		return;
 	}
@@ -2810,14 +2810,14 @@ void wma_process_update_userpos(tp_wma_handle wma_handle,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
+QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 {
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
 	int ret = -EIO;
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	switch (ht_capab) {
@@ -2849,7 +2849,7 @@ CDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 		WMA_LOGE("%s:INVALID HT CONFIG", __func__);
 	}
 
-	return (ret) ? CDF_STATUS_E_FAILURE : CDF_STATUS_SUCCESS;
+	return (ret) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3306,28 +3306,28 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
+QDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 {
 	tp_wma_handle wma_handle;
 
 #ifdef QCA_WIFI_FTM
 	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 #endif
 
 	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma_handle) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
 						 WMI_MGMT_RX_EVENTID) != 0) {
 		WMA_LOGE("Failed to Unregister rx mgmt handler with wmi");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma_handle->mgmt_rx = NULL;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3341,11 +3341,11 @@ CDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
  *
  * Return: Success or Failure Status
  */
-CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr, uint8_t reason),
-	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr))
 {
@@ -3354,12 +3354,12 @@ CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 
 	if (!wma) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma->csr_roam_synch_cb = csr_roam_synch_cb;
 	wma->pe_roam_synch_cb = pe_roam_synch_cb;
 	WMA_LOGD("Registered roam synch callbacks with WMA successfully");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 /**
  * wma_register_mgmt_frm_client() - register management frame callback
@@ -3368,23 +3368,23 @@ CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_register_mgmt_frm_client(
+QDF_STATUS wma_register_mgmt_frm_client(
 	void *cds_ctx, wma_mgmt_frame_rx_callback mgmt_frm_rx)
 {
 	tp_wma_handle wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					       WMI_MGMT_RX_EVENTID,
 					       wma_mgmt_rx_process) != 0) {
 		WMA_LOGE("Failed to register rx mgmt handler with wmi");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma_handle->mgmt_rx = mgmt_frm_rx;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }

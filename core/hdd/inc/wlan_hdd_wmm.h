@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012,2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012,2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -223,9 +223,9 @@ int hdd_wmmps_helper(hdd_adapter_t *pAdapter, uint8_t *ptr);
  * adapter to an initial state.  The configuration can later be
  * overwritten via application APIs or via QoS Map sent OTA.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter);
 
 /**
  * hdd_wmm_adapter_init() - initialize the WMM configuration of an adapter
@@ -235,9 +235,9 @@ CDF_STATUS hdd_wmm_init(hdd_adapter_t *pAdapter);
  * adapter to an initial state.  The configuration can later be
  * overwritten via application APIs
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter);
 
 /**
  * hdd_wmm_close() - WMM close function
@@ -246,9 +246,9 @@ CDF_STATUS hdd_wmm_adapter_init(hdd_adapter_t *pAdapter);
  * Function which will perform any necessary work to to clean up the
  * WMM functionality prior to the kernel module unload.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_adapter_close(hdd_adapter_t *pAdapter);
 
 /**
  * hdd_wmm_select_queue() - Function which will classify the packet
@@ -301,9 +301,9 @@ void hdd_wmm_acquire_access_required(hdd_adapter_t *pAdapter,
  * @pGranted: [out] pointer to bool flag when indicates if access
  *	      has been granted or not
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
 				  sme_ac_enum_type acType, bool *pGranted);
 
 /**
@@ -314,9 +314,9 @@ CDF_STATUS hdd_wmm_acquire_access(hdd_adapter_t *pAdapter,
  * @pRoamInfo: [in]  pointer to roam information
  * @eBssType: [in]  type of BSS
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
 			 tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
 
 /**
@@ -327,9 +327,9 @@ CDF_STATUS hdd_wmm_assoc(hdd_adapter_t *pAdapter,
  * @pRoamInfo: [in]  pointer to roam information
  * @eBssType : [in]  type of BSS
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
 			   tCsrRoamInfo *pRoamInfo, eCsrRoamBssType eBssType);
 
 /**
@@ -339,9 +339,9 @@ CDF_STATUS hdd_wmm_connect(hdd_adapter_t *pAdapter,
  * @pAdapter  : [in]  pointer to adapter context
  * @pUapsdMask: [out] pointer to where the UAPSD Mask is to be stored
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_wmm_get_uapsd_mask(hdd_adapter_t *pAdapter,
 				  uint8_t *pUapsdMask);
 
 /**
@@ -396,9 +396,9 @@ hdd_wlan_wmm_status_e hdd_wmm_checkts(hdd_adapter_t *pAdapter,
  *
  * @pAdapter: [in]  pointer to Adapter context
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_wmm_adapter_clear(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_process_peer_unauthorised_pause(hdd_adapter_t *adapter);
 #endif /* #ifndef _WLAN_HDD_WMM_H */

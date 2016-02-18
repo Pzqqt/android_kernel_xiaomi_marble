@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,7 +57,7 @@ static inline int find_ptrn_len(const char *ptrn)
 	return len;
 }
 
-static void hdd_wowl_callback(void *pContext, CDF_STATUS cdf_ret_status)
+static void hdd_wowl_callback(void *pContext, QDF_STATUS cdf_ret_status)
 {
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: Return code = (%d)", __func__, cdf_ret_status);
@@ -117,7 +117,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 {
 	struct wow_add_pattern localPattern;
 	int i, first_empty_slot, len, offset;
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	const char *temp;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	uint8_t sessionId = pAdapter->sessionId;
@@ -256,7 +256,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		cdf_ret_status =
 			sme_wow_add_pattern(hHal, &localPattern,
 						   sessionId);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
 			/* Add failed, so invalidate the local storage */
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "sme_wowl_add_bcast_pattern failed with error code (%d)",
@@ -293,7 +293,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 	unsigned char id;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	bool patternFound = false;
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	uint8_t sessionId = pAdapter->sessionId;
 	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
 
@@ -314,7 +314,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		cdf_ret_status =
 			sme_wow_delete_pattern(hHal, &delPattern,
 						   sessionId);
-		if (CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+		if (QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
 			/* Remove from local storage as well */
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "Deleted pattern with id %d [%s]", id,
@@ -344,7 +344,7 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 			       char *pattern_mask)
 {
 	struct wow_add_pattern localPattern;
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	uint8_t session_id = pAdapter->sessionId;
 	uint16_t pattern_len, mask_len, i;
@@ -432,7 +432,7 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 	cdf_ret_status =
 		sme_wow_add_pattern(hHal, &localPattern, session_id);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_wowl_add_bcast_pattern failed with error code (%d).",
 			  __func__, cdf_ret_status);
@@ -463,7 +463,7 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 {
 	struct wow_delete_pattern delPattern;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	uint8_t sessionId = pAdapter->sessionId;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
@@ -487,7 +487,7 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 	cdf_ret_status = sme_wow_delete_pattern(hHal, &delPattern,
 						    sessionId);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_wowl_del_bcast_pattern failed with error code (%d).",
 			  __func__, cdf_ret_status);
@@ -513,7 +513,7 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 {
 	tSirSmeWowlEnterParams wowParams;
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
 	cdf_mem_zero(&wowParams, sizeof(tSirSmeWowlEnterParams));
@@ -541,8 +541,8 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 #endif /* WLAN_WAKEUP_EVENTS */
 					&wowParams, pAdapter->sessionId);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
-		if (CDF_STATUS_PMC_PENDING != cdf_ret_status) {
+	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+		if (QDF_STATUS_PMC_PENDING != cdf_ret_status) {
 			/* We failed to enter WoWL */
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "sme_enter_wowl failed with error code (%d)",
@@ -563,12 +563,12 @@ bool hdd_exit_wowl(hdd_adapter_t *pAdapter)
 {
 	tSirSmeWowlExitParams wowParams;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 
 	wowParams.sessionId = pAdapter->sessionId;
 
 	cdf_ret_status = sme_exit_wowl(hHal, &wowParams);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "sme_exit_wowl failed with error code (%d)",
 			  cdf_ret_status);

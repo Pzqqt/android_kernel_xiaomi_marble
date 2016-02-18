@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,14 +46,14 @@
 #include "sme_internal.h"
 #include "sme_rrm_internal.h"
 
-CDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
+QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 		void *pMsgBuf);
-CDF_STATUS rrm_close(tpAniSirGlobal pMac);
-CDF_STATUS rrm_ready(tpAniSirGlobal pMac);
-CDF_STATUS rrm_open(tpAniSirGlobal pMac);
-CDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
+QDF_STATUS rrm_close(tpAniSirGlobal pMac);
+QDF_STATUS rrm_ready(tpAniSirGlobal pMac);
+QDF_STATUS rrm_open(tpAniSirGlobal pMac);
+QDF_STATUS rrm_change_default_config_param(tpAniSirGlobal pMac,
 		struct rrm_config_param *rrm_config);
-CDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac,
+QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac,
 		uint8_t sessionId, tpRrmNeighborReq pNeighborReq,
 		tpRrmNeighborRspCallbackInfo callbackInfo);
 tRrmNeighborReportDesc *sme_rrm_get_first_bss_entry_from_neighbor_cache(
@@ -61,7 +61,7 @@ tRrmNeighborReportDesc *sme_rrm_get_first_bss_entry_from_neighbor_cache(
 tRrmNeighborReportDesc *sme_rrm_get_next_bss_entry_from_neighbor_cache(
 		tpAniSirGlobal pMac,
 		tpRrmNeighborReportDesc pBssEntry);
-CDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
+QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac,
 		void *pMsgBuf);
 
 #endif

@@ -234,11 +234,11 @@ static uint32_t wlan_hdd_tdls_discovery_sent_cnt(hdd_context_t *pHddCtx)
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *pAdapter = NULL;
 	tdlsCtx_t *pHddTdlsCtx = NULL;
-	CDF_STATUS status = 0;
+	QDF_STATUS status = 0;
 	uint32_t count = 0;
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 
 		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
@@ -535,7 +535,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	int i;
 	uint8_t staIdx;
 	tdlsInfo_t *tInfo;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pHddCtx)
 		return -EINVAL;
@@ -723,7 +723,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	dump_tdls_state_param_setting(tInfo);
 
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, true);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		cdf_mem_free(tInfo);
 		cdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 		cdf_mem_free(pHddTdlsCtx);
@@ -744,7 +744,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 	tdlsCtx_t *pHddTdlsCtx;
 	hdd_context_t *pHddCtx;
 	tdlsInfo_t *tInfo;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	if (!pHddCtx) {
@@ -826,7 +826,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 
 			cdf_ret_status =
 				sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, false);
-			if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+			if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 				cdf_mem_free(tInfo);
 			}
 		} else {
@@ -1530,7 +1530,7 @@ void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 			    eTDLSSupportMode tdls_mode, bool bUpdateLast)
 {
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_adapter_t *pAdapter;
 	tdlsCtx_t *pHddTdlsCtx;
 
@@ -1551,7 +1551,7 @@ void wlan_hdd_tdls_set_mode(hdd_context_t *pHddCtx,
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 		if (NULL != pHddTdlsCtx) {
@@ -1591,7 +1591,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 	eTDLSSupportMode req_tdls_mode;
 	tdlsInfo_t *tdlsParams;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pHddTdlsCtx) {
 		hddLog(LOGE, FL("TDLS not enabled!"));
@@ -1666,7 +1666,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	dump_tdls_state_param_setting(tdlsParams);
 
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tdlsParams, true);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		cdf_mem_free(tdlsParams);
 		return -EINVAL;
 	}
@@ -1697,7 +1697,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tdlsCtx_t *hdd_tdls_ctx = WLAN_HDD_GET_TDLS_CTX_PTR(adapter);
 	tdlsInfo_t *tdls_param;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	if (!hdd_tdls_ctx) {
 		/* may be TDLS is not applicable for this adapter */
@@ -1777,7 +1777,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	cdf_ret_status = sme_update_fw_tdls_state(hdd_ctx->hHal,
 					       tdls_param,
 					       true);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		cdf_mem_free(tdls_param);
 		return;
 	}
@@ -1855,7 +1855,7 @@ int wlan_hdd_tdls_update_peer_mac(hdd_adapter_t *adapter, const uint8_t *mac,
 				  uint32_t peer_state)
 {
 	tSmeTdlsPeerStateParams sme_tdls_peer_state_params = {0};
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	sme_tdls_peer_state_params.vdevId = adapter->sessionId;
@@ -1864,7 +1864,7 @@ int wlan_hdd_tdls_update_peer_mac(hdd_adapter_t *adapter, const uint8_t *mac,
 	sme_tdls_peer_state_params.peerState = peer_state;
 	status = sme_update_tdls_peer_state(hdd_ctx->hHal,
 					    &sme_tdls_peer_state_params);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE, FL("sme_UpdateTdlsPeerState failed for "MAC_ADDRESS_STR),
 				MAC_ADDR_ARRAY(mac));
 		return -EPERM;
@@ -1971,12 +1971,12 @@ hddTdlsPeer_t *wlan_hdd_tdls_find_all_peer(hdd_context_t *pHddCtx,
 	hdd_adapter_t *pAdapter = NULL;
 	tdlsCtx_t *pHddTdlsCtx = NULL;
 	hddTdlsPeer_t *curr_peer = NULL;
-	CDF_STATUS status = 0;
+	QDF_STATUS status = 0;
 
 	mutex_lock(&pHddCtx->tdls_lock);
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 
 		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
@@ -2366,12 +2366,12 @@ hddTdlsPeer_t *wlan_hdd_tdls_is_progress(hdd_context_t *pHddCtx,
 	hdd_adapter_t *pAdapter = NULL;
 	tdlsCtx_t *pHddTdlsCtx = NULL;
 	hddTdlsPeer_t *curr_peer = NULL;
-	CDF_STATUS status = 0;
+	QDF_STATUS status = 0;
 
 	mutex_lock(&pHddCtx->tdls_lock);
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 
 		pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
@@ -3055,7 +3055,7 @@ __wlan_hdd_cfg80211_exttdls_get_status(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TDLS_GET_STATUS_MAX + 1];
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 	uint32_t state;
 	int32_t reason;
 	uint32_t global_operating_class = 0;
@@ -3237,7 +3237,7 @@ __wlan_hdd_cfg80211_exttdls_enable(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TDLS_ENABLE_MAX + 1];
-	CDF_STATUS status;
+	QDF_STATUS status;
 	tdls_req_params_t pReqMsg = { 0 };
 	int ret;
 
@@ -3360,7 +3360,7 @@ static int __wlan_hdd_cfg80211_exttdls_disable(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_TDLS_DISABLE_MAX + 1];
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
@@ -3429,7 +3429,7 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hddTdlsPeer_t *pTdlsPeer;
 	uint16_t numCurrTdlsPeers;
 	unsigned long rc;
@@ -3588,7 +3588,7 @@ int wlan_hdd_tdls_add_station(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if (CDF_STATUS_SUCCESS != pAdapter->tdlsAddStaStatus) {
+	if (QDF_STATUS_SUCCESS != pAdapter->tdlsAddStaStatus) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Add Station is unsuccessful", __func__);
 		return -EPERM;
@@ -3671,7 +3671,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	hdd_station_ctx_t *hdd_sta_ctx;
 	u8 peerMac[CDF_MAC_ADDR_SIZE];
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int max_sta_failed = 0;
 	int responder;
 	unsigned long rc;
@@ -3859,7 +3859,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 					  peer_capability, (uint8_t *) buf, len,
 					  !responder);
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_send_tdls_mgmt_frame failed!", __func__);
 		pAdapter->mgmtTxCompletionStatus = false;
@@ -4157,7 +4157,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	int status;
 	tSmeTdlsPeerStateParams smeTdlsPeerStateParams;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	hddTdlsPeer_t *pTdlsPeer;
 
 	ENTER();
@@ -4194,7 +4194,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	switch (oper) {
 	case NL80211_TDLS_ENABLE_LINK:
 	{
-		CDF_STATUS status;
+		QDF_STATUS status;
 		unsigned long rc;
 		tCsrTdlsLinkEstablishParams tdlsLinkEstablishParams;
 
@@ -4269,7 +4269,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 							  pTdlsPeer->staId,
 							  pTdlsPeer->
 							  signature);
-			if (CDF_STATUS_SUCCESS == status) {
+			if (QDF_STATUS_SUCCESS == status) {
 				uint8_t i;
 
 				cdf_mem_zero(&smeTdlsPeerStateParams,
@@ -4388,7 +4388,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 					sme_update_tdls_peer_state(pHddCtx->
 								   hHal,
 								   &smeTdlsPeerStateParams);
-				if (CDF_STATUS_SUCCESS !=
+				if (QDF_STATUS_SUCCESS !=
 				    cdf_ret_status) {
 					CDF_TRACE(CDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_ERROR,
@@ -4741,7 +4741,7 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	hdd_station_ctx_t *hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	sme_tdls_chan_switch_params chan_switch_params;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (offchanmode < ENABLE_CHANSWITCH ||
 			offchanmode > DISABLE_CHANSWITCH) {
@@ -4834,7 +4834,7 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	status = sme_send_tdls_chan_switch_req(WLAN_HDD_GET_HAL_CTX(adapter),
 			&chan_switch_params);
 
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		hdd_log(LOG1,
 			FL("Failed to send channel switch request to sme"));
 		return -EINVAL;

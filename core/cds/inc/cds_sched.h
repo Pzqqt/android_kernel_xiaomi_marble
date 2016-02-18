@@ -374,24 +374,24 @@ void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
    \param  p_cds_sched_context - pointer to a previously allocated buffer big
    enough to hold a scheduler context.
 
-   \return CDF_STATUS_SUCCESS - Scheduler was successfully initialized and
+   \return QDF_STATUS_SUCCESS - Scheduler was successfully initialized and
    is ready to be used.
 
-   CDF_STATUS_E_RESOURCES - System resources (other than memory)
+   QDF_STATUS_E_RESOURCES - System resources (other than memory)
    are unavailable to initilize the scheduler
 
-   CDF_STATUS_E_NOMEM - insufficient memory exists to initialize
+   QDF_STATUS_E_NOMEM - insufficient memory exists to initialize
    the scheduler
 
-   CDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
+   QDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
    function
 
-   CDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
+   QDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
 
    \sa cds_sched_open()
 
    -------------------------------------------------------------------------*/
-CDF_STATUS cds_sched_open(void *p_cds_context,
+QDF_STATUS cds_sched_open(void *p_cds_context,
 			  p_cds_sched_context pSchedCxt, uint32_t SchedCtxSize);
 
 /*---------------------------------------------------------------------------
@@ -409,27 +409,27 @@ CDF_STATUS cds_sched_open(void *p_cds_context,
 
    \param  p_cds_context - pointer to the global CDF Context
 
-   \return CDF_STATUS_SUCCESS - Scheduler was successfully initialized and
+   \return QDF_STATUS_SUCCESS - Scheduler was successfully initialized and
    is ready to be used.
 
-   CDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
+   QDF_STATUS_E_INVAL - Invalid parameter passed to the scheduler Open
    function
 
-   CDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
+   QDF_STATUS_E_FAILURE - Failure to initialize the scheduler/
 
    \sa cds_sched_close()
 
    ---------------------------------------------------------------------------*/
-CDF_STATUS cds_sched_close(void *p_cds_context);
+QDF_STATUS cds_sched_close(void *p_cds_context);
 
 /* Helper routines provided to other CDS API's */
-CDF_STATUS cds_mq_init(p_cds_mq_type pMq);
+QDF_STATUS cds_mq_init(p_cds_mq_type pMq);
 void cds_mq_deinit(p_cds_mq_type pMq);
 void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper);
 p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq);
 bool cds_is_mq_empty(p_cds_mq_type pMq);
 p_cds_sched_context get_cds_sched_ctxt(void);
-CDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext);
+QDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext);
 void cds_sched_deinit_mqs(p_cds_sched_context pSchedContext);
 void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext);
 

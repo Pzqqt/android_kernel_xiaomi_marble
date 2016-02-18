@@ -158,7 +158,7 @@ void wma_send_msg(tp_wma_handle wma_handle, uint16_t msg_type,
 void wma_data_tx_ack_comp_hdlr(void *wma_context,
 				      cdf_nbuf_t netbuf, int32_t status);
 
-CDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
+QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 				    int value);
 
 /*
@@ -176,52 +176,52 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 					uint32_t len);
 #endif
 
-CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
 				      wmi_buf_t *buf, int *buf_len);
 
-CDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 				     wmi_buf_t *buf,
 				     int *buf_len,
 				     tAbortScanParams *abort_scan_req);
 
-CDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
+QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 			  tSirScanOffloadReq *scan_req, uint16_t msg_type);
 
-CDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
+QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 			 tAbortScanParams *abort_scan_req);
 
-CDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
+QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					wmi_roam_offload_tlv_param *
 					roam_offload_params,
 					tSirRoamOffloadScanReq *roam_req);
 #endif
 
-CDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
 				      scan_cmd_fp,
 				      tSirRoamOffloadScanReq *roam_req,
 				      uint32_t mode, uint32_t vdev_id);
 
-CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 					     tSirRoamOffloadScanReq *roam_req);
 
-CDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 					     uint32_t scan_period,
 					     uint32_t scan_age,
 					     uint32_t vdev_id);
 
-CDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 					     uint32_t vdev_id,
 					     int32_t rssi_change_thresh,
 					     uint32_t bcn_rssi_weight,
 					     uint32_t hirssi_delay_btw_scans);
 
-CDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t chan_count,
 					   uint8_t *chan_list,
 					   uint8_t list_type, uint32_t vdev_id);
@@ -242,25 +242,25 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 				    wmi_start_scan_cmd_fixed_param *
 				    scan_params);
 
-CDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 					    wmi_ap_profile *ap_profile_p,
 					    uint32_t vdev_id);
 
-CDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 				   A_INT32 first_bcnt,
 				   A_UINT32 final_bcnt, uint32_t vdev_id);
 
-CDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id);
 
-CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 				     tSirRoamOffloadScanReq *roam_req);
 
-CDF_STATUS wma_roam_preauth_chan_set(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_preauth_chan_set(tp_wma_handle wma_handle,
 				     tpSwitchChannelParams params,
 				     uint8_t vdev_id);
 
-CDF_STATUS wma_roam_preauth_chan_cancel(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_preauth_chan_cancel(tp_wma_handle wma_handle,
 					tpSwitchChannelParams params,
 					uint8_t vdev_id);
 
@@ -272,9 +272,9 @@ void wma_roam_preauth_scan_event_handler(tp_wma_handle wma_handle,
 void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params);
 
 #ifdef FEATURE_WLAN_SCAN_PNO
-CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno);
+QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno);
 
-CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id);
+QDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id);
 
 void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno);
 void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
@@ -289,9 +289,9 @@ static inline void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
 }
 #endif
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
-CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm);
+QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm);
 
-CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm);
+QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm);
 
 void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm);
 #endif
@@ -343,70 +343,70 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
 void wma_register_extscan_event_handler(tp_wma_handle wma_handle);
 
 #ifdef FEATURE_WLAN_EXTSCAN
-CDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 					 tSirWifiScanCmdReqParams *pstart,
 					 wmi_buf_t *buf, int *buf_len);
 
-CDF_STATUS wma_start_extscan(tp_wma_handle wma,
+QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 			     tSirWifiScanCmdReqParams *pstart);
 
-CDF_STATUS wma_stop_extscan(tp_wma_handle wma,
+QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 			    tSirExtScanStopReqParams *pstopcmd);
 
-CDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 					   tSirExtScanSetBssidHotListReqParams *
 					   photlist, int *buf_len);
 
-CDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 					     tSirExtScanSetBssidHotListReqParams
 					     *photlist);
 
-CDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 					    tSirExtScanResetBssidHotlistReqParams
 					    *photlist_reset);
 
-CDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
 						  tSirExtScanSetSigChangeReqParams
 						  *psigchange, wmi_buf_t *buf,
 						  int *buf_len);
 
-CDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *
 					    psigchange);
 
-CDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 					   tSirExtScanResetSignificantChangeReqParams
 					   *pResetReq);
 
-CDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
+QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 					  tSirExtScanGetCachedResultsReqParams *
 					  pcached_results);
 
-CDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
+QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 					tSirGetExtScanCapabilitiesReqParams *
 					pgetcapab);
-CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
+QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 				struct wifi_epno_params *req);
 
-CDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
+QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req);
 
-CDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
+QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req);
-CDF_STATUS
+QDF_STATUS
 wma_set_ssid_hotlist(tp_wma_handle wma,
 		     struct sir_set_ssid_hotlist_request *request);
 #endif
 
-CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
+QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 			struct sir_ipa_offload_enable_disable *ipa_offload);
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_process_unit_test_cmd(WMA_HANDLE handle,
-				      t_wma_unit_test_cmd *wma_utest);
+				      t_wma_unit_test_cmd * wma_utest);
 #endif
 
-CDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
+QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
 
 int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data, uint32_t len);
 
@@ -536,7 +536,7 @@ int wma_unified_vdev_create_send(wmi_unified_t wmi_handle, uint8_t if_id,
 				 uint32_t type, uint32_t subtype,
 				 uint8_t macaddr[IEEE80211_ADDR_LEN]);
 
-CDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
+QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			struct del_sta_self_params *pdel_sta_self_req_param,
 			uint8_t generateRsp);
 
@@ -556,7 +556,7 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			    uint8_t vdev_id, ol_txrx_peer_handle peer,
 			    bool roam_synch_in_progress);
 
-CDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
+QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 			  ol_txrx_vdev_handle vdev,
 			  u8 peer_addr[IEEE80211_ADDR_LEN],
 			  uint32_t peer_type, uint8_t vdev_id,
@@ -569,7 +569,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 				struct add_sta_self_params *self_sta_req,
 				uint8_t generateRsp);
 
-CDF_STATUS wma_vdev_start(tp_wma_handle wma,
+QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 				 struct wma_vdev_start_req *req, bool isRestart);
 
 void wma_vdev_resp_timer(void *data);
@@ -656,7 +656,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 
 void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info);
 
-CDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
+QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 						    tEdcaParams *edca_params);
 
 int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
@@ -697,7 +697,7 @@ int32_t wmi_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 					    uint32_t vdev_id, uint32_t param,
 					    uint32_t value);
 
-CDF_STATUS
+QDF_STATUS
 wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id);
 
 int32_t wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
@@ -723,12 +723,12 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req);
 void wma_disable_uapsd_mode(tp_wma_handle wma,
 				   tpDisableUapsdParams ps_req);
 
-CDF_STATUS wma_get_temperature(tp_wma_handle wma_handle);
+QDF_STATUS wma_get_temperature(tp_wma_handle wma_handle);
 
 int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 					    uint32_t len);
 
-CDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
+QDF_STATUS wma_process_tx_power_limits(WMA_HANDLE handle,
 				       tSirTxPowerLimit *ptxlim);
 
 void wma_update_noa(struct beacon_info *beacon,
@@ -746,12 +746,12 @@ void wma_process_set_p2pgo_noa_req(tp_wma_handle wma,
 void wma_process_set_mimops_req(tp_wma_handle wma_handle,
 				       tSetMIMOPS *mimops);
 
-CDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value);
+QDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value);
 
-CDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
+QDF_STATUS wma_notify_modem_power_state(void *wma_ptr,
 					tSirModemPowerStateInd *pReq);
 
-CDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
+QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 				      int value);
 
 void wma_set_suspend_dtim(tp_wma_handle wma);
@@ -774,14 +774,14 @@ int wma_peer_state_change_event_handler(void *handle,
 					       uint8_t *event_buff,
 					       uint32_t len);
 
-CDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
+QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 						mcc_adaptive_scheduler);
 
-CDF_STATUS wma_set_mcc_channel_time_latency
+QDF_STATUS wma_set_mcc_channel_time_latency
 	(tp_wma_handle wma,
 	uint32_t mcc_channel, uint32_t mcc_channel_time_latency);
 
-CDF_STATUS wma_set_mcc_channel_time_quota
+QDF_STATUS wma_set_mcc_channel_time_quota
 	(tp_wma_handle wma,
 	uint32_t adapter_1_chan_number,
 	uint32_t adapter_1_quota, uint32_t adapter_2_chan_number);
@@ -790,26 +790,26 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params);
 
 void wma_unpause_vdev(tp_wma_handle wma);
 
-CDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
+QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 					    tSirRateUpdateInd *
 					    pRateUpdateParams);
 
-CDF_STATUS wma_tx_attach(tp_wma_handle wma_handle);
+QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle);
 
-CDF_STATUS wma_tx_detach(tp_wma_handle wma_handle);
+QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle);
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 int wma_mcc_vdev_tx_pause_evt_handler(void *handle, uint8_t *event,
 					     uint32_t len);
 #endif
 
-CDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
+QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 					 t_thermal_mgmt *pThermalParams);
 
-CDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
+QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 					 uint8_t thermal_level);
 
-CDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
+QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 				       t_thermal_cmd_params thermal_info);
 
 int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
@@ -829,13 +829,13 @@ tSmpsModeValue host_map_smps_mode(A_UINT32 fw_smps_mode);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle);
 
-CDF_STATUS wma_process_ll_stats_clear_req
+QDF_STATUS wma_process_ll_stats_clear_req
 	(tp_wma_handle wma, const tpSirLLStatsClearReq clearReq);
 
-CDF_STATUS wma_process_ll_stats_set_req
+QDF_STATUS wma_process_ll_stats_set_req
 	(tp_wma_handle wma, const tpSirLLStatsSetReq setReq);
 
-CDF_STATUS wma_process_ll_stats_get_req
+QDF_STATUS wma_process_ll_stats_get_req
 	(tp_wma_handle wma, const tpSirLLStatsGetReq getReq) ;
 
 int wma_unified_link_iface_stats_event_handler(void *handle,
@@ -852,12 +852,12 @@ int wma_link_status_event_handler(void *handle, uint8_t *cmd_param_info,
 int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
 			    uint32_t len);
 
-CDF_STATUS wma_send_link_speed(uint32_t link_speed);
+QDF_STATUS wma_send_link_speed(uint32_t link_speed);
 
 int wma_link_speed_event_handler(void *handle, uint8_t *cmd_param_info,
 				 uint32_t len);
 
-CDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle);
+QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle);
 
 int wma_unified_debug_print_event_handler(void *handle, uint8_t *datap,
 					  uint32_t len);
@@ -891,7 +891,7 @@ void wma_utf_detach(tp_wma_handle wma_handle);
 
 void wma_utf_attach(tp_wma_handle wma_handle);
 
-CDF_STATUS
+QDF_STATUS
 wma_process_ftm_command(tp_wma_handle wma_handle,
 			struct ar6k_testmode_cmd_data *msg_buffer);
 #endif
@@ -904,18 +904,18 @@ void wma_process_link_status_req(tp_wma_handle wma,
 				 tAniGetLinkStatus *pGetLinkStatus);
 
 #ifdef FEATURE_WLAN_LPHB
-CDF_STATUS wma_process_lphb_conf_req(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_lphb_conf_req(tp_wma_handle wma_handle,
 				     tSirLPHBReq *lphb_conf_req);
 
 #endif
 
-CDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 				tAniDHCPInd *ta_dhcp_ind);
 
 WLAN_PHY_MODE wma_chan_to_mode(u8 chan, phy_ch_width chan_width,
 				      u8 vht_capable, u8 dot11_mode);
 
-CDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed);
+QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed);
 
 #ifdef FEATURE_GREEN_AP
 int32_t wmi_unified_pdev_green_ap_ps_enable_cmd(wmi_unified_t wmi_handle,
@@ -968,7 +968,7 @@ int
 wma_unified_dfs_phyerr_filter_offload_enable(tp_wma_handle wma_handle);
 
 #if !defined(REMOVE_PKT_LOG)
-CDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
+QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 				   struct ath_pktlog_wmi_params *params);
 #endif
 
@@ -988,19 +988,19 @@ static inline int wma_get_wow_bus_suspend(tp_wma_handle wma)
 	return cdf_atomic_read(&wma->is_wow_bus_suspended);
 }
 
-CDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type);
+QDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type);
 
-CDF_STATUS wma_wow_add_pattern(tp_wma_handle wma,
+QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma,
 			struct wow_add_pattern *ptrn);
 
-CDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
+QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
 			struct wow_delete_pattern *pattern);
 
-CDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
+QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 
-CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
+QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
 
-CDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type);
+QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type);
 void wma_calculate_and_update_conn_state(tp_wma_handle wma);
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
@@ -1022,43 +1022,43 @@ int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma_handle,
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 void wma_start_oem_data_req(tp_wma_handle wma_handle,
-				   tStartOemDataReq *startOemDataReq);
+				   tStartOemDataReq * startOemDataReq);
 #endif
 
 #ifdef FEATURE_WLAN_ESE
-CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
+QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 				     void *pTsmStatsMsg);
 #endif
 
-CDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
-					   tSirRcvFltMcAddrList *mcbc_param);
+QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
+					   tSirRcvFltMcAddrList * mcbc_param);
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
-CDF_STATUS wma_process_gtk_offload_req(tp_wma_handle wma,
+QDF_STATUS wma_process_gtk_offload_req(tp_wma_handle wma,
 					      tpSirGtkOffloadParams params);
 
-CDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
+QDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
 					       tpSirGtkOffloadGetInfoRspParams
 					       params);
 #endif
 
-CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
+QDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 				     tpSirHostOffloadReq pHostOffloadParams,
 				     bool bArpOnly);
 
-CDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
+QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirAddPeriodicTxPtrn *
 						pAddPeriodicTxPtrnParams);
 
-CDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
+QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirDelPeriodicTxPtrn *
 						pDelPeriodicTxPtrnParams);
 
 #ifdef WLAN_FEATURE_STATS_EXT
-CDF_STATUS wma_stats_ext_req(void *wma_ptr, tpStatsExtRequest preq);
+QDF_STATUS wma_stats_ext_req(void *wma_ptr, tpStatsExtRequest preq);
 #endif
 
-CDF_STATUS wma_process_ibss_route_table_update_ind(void *wma_handle,
-						   tAniIbssRouteTable *pData);
+QDF_STATUS wma_process_ibss_route_table_update_ind(void *wma_handle,
+						   tAniIbssRouteTable * pData);
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 int wma_enable_ext_wow(tp_wma_handle wma, tpSirExtWoWParams params);
@@ -1074,14 +1074,14 @@ int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 int wma_auto_shutdown_event_handler(void *handle, uint8_t *event,
 				    uint32_t len);
 
-CDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
+QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 					   tSirAutoShutdownCmdParams *
 					   auto_sh_cmd);
 #endif
 
 #ifdef WLAN_FEATURE_NAN
 
-CDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req);
+QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req);
 #endif
 
 #ifdef DHCP_SERVER_OFFLOAD
@@ -1091,7 +1091,7 @@ int wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
 #endif
 
 #ifdef WLAN_FEATURE_GPIO_LED_FLASHING
-CDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
+QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 				tSirLedFlashingReq *flashing);
 #endif
 
@@ -1099,7 +1099,7 @@ CDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 int wma_channel_avoid_evt_handler(void *handle, uint8_t *event,
 					 uint32_t len);
 
-CDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 					   tSirChAvoidUpdateReq *
 					   ch_avoid_update_req);
 #endif
@@ -1150,7 +1150,7 @@ int wma_rssi_breached_event_handler(void *handle,
 #ifdef WLAN_FEATURE_MEMDUMP
 int wma_fw_mem_dump_event_handler(void *handle, u_int8_t *cmd_param_info,
 				  u_int32_t len);
-CDF_STATUS wma_process_fw_mem_dump_req(tp_wma_handle wma,
+QDF_STATUS wma_process_fw_mem_dump_req(tp_wma_handle wma,
 					struct fw_dump_req *mem_dump_req);
 #else
 static inline int wma_fw_mem_dump_event_handler(void *handle,
@@ -1159,13 +1159,13 @@ static inline int wma_fw_mem_dump_event_handler(void *handle,
 	return 0;
 }
 
-static inline CDF_STATUS wma_process_fw_mem_dump_req(tp_wma_handle wma,
+static inline QDF_STATUS wma_process_fw_mem_dump_req(tp_wma_handle wma,
 						     void *mem_dump_req)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
-CDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
+QDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);
 int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);

@@ -27,7 +27,7 @@
 
 /*===========================================================================
 
-                      s a p F s m . C
+			s a p F s m . C
 
    OVERVIEW:
 
@@ -732,7 +732,7 @@ tSapChanMatrixInfo ht20_chan[] = {
  * Static Function Declarations and Definitions
  * -------------------------------------------------------------------------*/
 #ifdef SOFTAP_CHANNEL_RANGE
-static CDF_STATUS sap_get_channel_list(ptSapContext sapContext,
+static QDF_STATUS sap_get_channel_list(ptSapContext sapContext,
 				    uint8_t **channelList,
 				    uint8_t *numberOfChannels);
 #endif
@@ -757,7 +757,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sapContext,
 
    SIDE EFFECTS
    ============================================================================*/
-static CDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext);
+static QDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext);
 
 /*==========================================================================
    FUNCTION    sapStopDfsCacTimer
@@ -950,10 +950,10 @@ sap_find_target_channel_in_channel_matrix(ptSapContext sapContext,
  * (if selected as target channel) will cause leakage in one of
  * the NOL channels
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 
-CDF_STATUS
+QDF_STATUS
 sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
 		phy_ch_width ch_width,
 		tSapDfsNolInfo *nol,
@@ -989,7 +989,7 @@ sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 				  FL("Couldn't find target channel matrix!"));
 			CDF_ASSERT(0);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		/*
 		 * following is based on assumption that both temp_ch_lst
@@ -1027,7 +1027,7 @@ sap_mark_channels_leaking_into_nol(ptSapContext sap_ctx,
 			k++;
 		}
 	} /* end of loop that selects each NOL */
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* end of WLAN_ENABLE_CHNL_MATRIX_RESTRICTION */
 
@@ -1382,8 +1382,8 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 					  CDF_TRACE_LEVEL_INFO_LOW,
 					  FL("index: %d, Channel = %d, avoided due to presence of another AP+AP MCC device in same channel."),
 					  i, channelID);
-				sapContext->SapAllChnlList.channelList[i].valid
-					= false;
+				sapContext->SapAllChnlList.channelList[i].
+					valid = false;
 			}
 		}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
@@ -1439,7 +1439,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 			  FL
 			  ("sapdfs: Processing temp channel list against NOL.")
 			  );
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 			sap_mark_channels_leaking_into_nol(sapContext,
 							   ch_width,
 							   nol,
@@ -1954,18 +1954,18 @@ sap_dfs_is_channel_in_nol_list(ptSapContext sap_context,
  *
  * Initiates sme scan for ACS to pick a channel.
  *
- * Return: The CDF_STATUS code associated with performing the operation.
+ * Return: The QDF_STATUS code associated with performing the operation.
  */
-CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
+QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 	ptWLAN_SAPEvent sap_event,
 	bool sap_do_acs_pre_start_bss)
 {
 
 	/* Initiate a SCAN request */
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	/* To be initialised if scan is required */
 	tCsrScanRequest scan_request;
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
 #ifdef SOFTAP_CHANNEL_RANGE
 	uint8_t *channel_list = NULL;
@@ -1979,7 +1979,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		/* we have a serious problem */
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_FATAL,
 			  FL("invalid h_hal"));
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	if (cds_concurrent_beaconing_sessions_running()) {
@@ -1992,7 +1992,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			   CDS_IS_DFS_CH(sap_context->channel)) {
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_WARN,
 				  FL("MCC DFS not supported in AP_AP Mode"));
-			return CDF_STATUS_E_ABORTED;
+			return QDF_STATUS_E_ABORTED;
 		}
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -2020,7 +2020,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		else if (CDS_IS_DFS_CH(sap_context->channel)) {
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_WARN,
 				  FL("DFS not supported in STA_AP Mode"));
-			return CDF_STATUS_E_ABORTED;
+			return QDF_STATUS_E_ABORTED;
 		}
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -2127,7 +2127,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 				&wlansap_scan_callback,
 				sap_context);
 		}
-		if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+		if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 				  FL("sme_scan_request  fail %d!!!"),
 				  cdf_ret_status);
@@ -2152,12 +2152,12 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 				* return failure so that the calling
 				* fucntion can use the default channel.
 				*/
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 			} else {
 				/* Fill in the event structure */
 				sap_event_init(sap_event);
 				/* Handle event */
-				cdf_status = sap_fsm(sap_context, sap_event);
+				qdf_status = sap_fsm(sap_context, sap_event);
 			}
 		} else {
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -2189,7 +2189,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			sap_context->acs_cfg->ch_width =
 						 sap_context->ch_width_orig;
 			sap_config_acs_result(h_hal, sap_context, 0);
-			return CDF_STATUS_E_CANCELED;
+			return QDF_STATUS_E_CANCELED;
 		} else {
 			/*
 			 * Fill in the event structure
@@ -2198,7 +2198,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			 */
 			sap_event_init(sap_event);
 			/* Handle event */
-			cdf_status = sap_fsm(sap_context, sap_event);
+			qdf_status = sap_fsm(sap_context, sap_event);
 		}
 	}
 
@@ -2213,7 +2213,7 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		  FL("before exiting sap_goto_channel_sel channel=%d"),
 		  sap_context->channel);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*==========================================================================
@@ -2232,17 +2232,17 @@ CDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
     sapContext  : Sap Context value
 
    RETURN VALUE
-    The CDF_STATUS code associated with performing the operation
+    The QDF_STATUS code associated with performing the operation
 
-    CDF_STATUS_SUCCESS: Success
+    QDF_STATUS_SUCCESS: Success
 
    SIDE EFFECTS
    ============================================================================*/
-CDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
+QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 {
 	uint32_t type, subType;
-	CDF_STATUS cdf_ret_status;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	if (sapContext->csr_roamProfile.csrPersona == CDF_P2P_GO_MODE)
@@ -2250,10 +2250,10 @@ CDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 	else
 		status = cds_get_vdev_types(CDF_SAP_MODE, &type, &subType);
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_FATAL,
 			  "failed to get vdev type");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Open SME Session for Softap */
 	cdf_ret_status = sme_open_session(hHal,
@@ -2262,12 +2262,12 @@ CDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 					  sapContext->self_mac_addr,
 					  &sapContext->sessionId, type, subType);
 
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sme_roam_connect status = %d",
 			  __func__, cdf_ret_status);
 
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pMac->sap.sapCtxList[sapContext->sessionId].sessionID =
@@ -2275,7 +2275,7 @@ CDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 	pMac->sap.sapCtxList[sapContext->sessionId].pSapContext = sapContext;
 	pMac->sap.sapCtxList[sapContext->sessionId].sapPersona =
 		sapContext->csr_roamProfile.csrPersona;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*==========================================================================
@@ -2296,19 +2296,19 @@ CDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
     status      : Return the SAP status here
 
    RETURN VALUE
-    The CDF_STATUS code associated with performing the operation
+    The QDF_STATUS code associated with performing the operation
 
-    CDF_STATUS_SUCCESS: Success
+    QDF_STATUS_SUCCESS: Success
 
    SIDE EFFECTS
    ============================================================================*/
-CDF_STATUS
+QDF_STATUS
 sap_goto_starting
 	(ptSapContext sapContext,
 	ptWLAN_SAPEvent sapEvent, eCsrRoamBssType bssType) {
 	/* tHalHandle */
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 
 	/*- - - - - - - - TODO:once configs from hdd available - - - - - - - - -*/
 	char key_material[32] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3,
@@ -2324,19 +2324,19 @@ sap_goto_starting
 		/* we have a serious problem */
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_FATAL,
 			  "In %s, invalid hHal", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	cdf_ret_status = sap_open_session(hHal, sapContext);
 
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sap_open_session status = %d",
 			  __func__, cdf_ret_status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /* sapGotoStarting */
 
 /*==========================================================================
@@ -2355,15 +2355,15 @@ sap_goto_starting
     status      : Return the SAP status here
 
    RETURN VALUE
-    The CDF_STATUS code associated with performing the operation
+    The QDF_STATUS code associated with performing the operation
 
-    CDF_STATUS_SUCCESS: Success
+    QDF_STATUS_SUCCESS: Success
 
    SIDE EFFECTS
    ============================================================================*/
-CDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
+QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 {
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	tHalHandle hHal;
 
 	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
@@ -2371,22 +2371,22 @@ CDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 		/* we have a serious problem */
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "In %s, invalid hHal", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	sap_free_roam_profile(&sapContext->csr_roamProfile);
 	cdf_ret_status = sme_roam_stop_bss(hHal, sapContext->sessionId);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sme_roam_stop_bss status = %d",
 			  __func__, cdf_ret_status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static CDF_STATUS sap_roam_session_close_callback(void *pContext)
+static QDF_STATUS sap_roam_session_close_callback(void *pContext)
 {
 	ptSapContext sapContext = (ptSapContext) pContext;
 	return sap_signal_hdd_event(sapContext, NULL,
@@ -2411,15 +2411,15 @@ static CDF_STATUS sap_roam_session_close_callback(void *pContext)
     status      : Return the SAP status here
 
    RETURN VALUE
-    The CDF_STATUS code associated with performing the operation
+    The QDF_STATUS code associated with performing the operation
 
-    CDF_STATUS_SUCCESS: Success
+    QDF_STATUS_SUCCESS: Success
 
    SIDE EFFECTS
    ============================================================================*/
-CDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
+QDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tWLAN_SAPEvent sapEvent;
 	/* Processing has to be coded */
 	/* Clean up stations from TL etc as AP BSS is shut down then set event */
@@ -2428,9 +2428,9 @@ CDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
 	sapEvent.u1 = 0;
 	sapEvent.u2 = 0;
 	/* Handle event */
-	cdf_status = sap_fsm(sapContext, &sapEvent);
+	qdf_status = sap_fsm(sapContext, &sapEvent);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -2442,13 +2442,13 @@ CDF_STATUS sap_goto_disconnected(ptSapContext sapContext)
  *
  * Function for HDD to send the event notification using callback
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
+QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		tCsrRoamInfo *csr_roaminfo, eSapHddEvent sap_hddevent,
 		void *context)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSap_Event sap_ap_event;       /* This now encodes ALL event types */
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	tpAniSirGlobal mac_ctx;
@@ -2464,18 +2464,18 @@ CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 	/* Format the Start BSS Complete event to return... */
 	if (NULL == sap_ctx->pfnSapEventCallback) {
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (NULL == hal) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid hal"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	mac_ctx = PMAC_STRUCT(hal);
 	if (NULL == mac_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid MAC context"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -2763,10 +2763,10 @@ CDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 			  sap_hddevent);
 		break;
 	}
-	cdf_status = (*sap_ctx->pfnSapEventCallback)
+	qdf_status = (*sap_ctx->pfnSapEventCallback)
 			(&sap_ap_event, sap_ctx->pUsrContext);
 
-	return cdf_status;
+	return qdf_status;
 
 }
 
@@ -2820,25 +2820,25 @@ ptSapContext sap_find_valid_concurrent_session(tHalHandle hHal)
     valid       : Sap context is valid or no
 
    RETURN VALUE
-    The CDF_STATUS code associated with performing the operation
-    CDF_STATUS_SUCCESS: Success
+    The QDF_STATUS code associated with performing the operation
+    QDF_STATUS_SUCCESS: Success
 
    SIDE EFFECTS
     NA
    ============================================================================*/
-CDF_STATUS sap_close_session(tHalHandle hHal,
+QDF_STATUS sap_close_session(tHalHandle hHal,
 			     ptSapContext sapContext,
 			     csr_roamSessionCloseCallback callback, bool valid)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	if (false == valid) {
-		cdf_status = sme_close_session(hHal,
+		qdf_status = sme_close_session(hHal,
 					       sapContext->sessionId,
 					       callback, NULL);
 	} else {
-		cdf_status = sme_close_session(hHal,
+		qdf_status = sme_close_session(hHal,
 					       sapContext->sessionId,
 					       callback, sapContext);
 	}
@@ -2869,14 +2869,14 @@ CDF_STATUS sap_close_session(tHalHandle hHal,
 		cdf_mem_zero(&pMac->sap, sizeof(pMac->sap));
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /*==========================================================================
    FUNCTION  sap_cac_reset_notify
 
    DESCRIPTION Function will be called up on stop bss indication to clean up
-              DFS global structure.
+   DFS global structure.
 
    DEPENDENCIES PARAMETERS
      IN hHAL : HAL pointer
@@ -2907,20 +2907,20 @@ void sap_cac_reset_notify(tHalHandle hHal)
    FUNCTION  sap_cac_start_notify
 
    DESCRIPTION Function will be called to notify eSAP_DFS_CAC_START event
-              to HDD
+   to HDD
 
    DEPENDENCIES PARAMETERS
      IN hHAL : HAL pointer
 
-   RETURN VALUE  : CDF_STATUS.
+   RETURN VALUE  : QDF_STATUS.
 
    SIDE EFFECTS
    ============================================================================*/
-CDF_STATUS sap_cac_start_notify(tHalHandle hHal)
+QDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 {
 	uint8_t intf = 0;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	for (intf = 0; intf < SAP_MAX_NUM_SESSION; intf++) {
 		ptSapContext pSapContext =
@@ -2934,41 +2934,41 @@ CDF_STATUS sap_cac_start_notify(tHalHandle hHal)
 				  "sapdfs: Signaling eSAP_DFS_CAC_START to HDD for sapctx[%p]",
 				  pSapContext);
 
-			cdf_status = sap_signal_hdd_event(pSapContext, NULL,
+			qdf_status = sap_signal_hdd_event(pSapContext, NULL,
 							  eSAP_DFS_CAC_START,
 							  (void *)
 							  eSAP_STATUS_SUCCESS);
-			if (CDF_STATUS_SUCCESS != cdf_status) {
+			if (QDF_STATUS_SUCCESS != qdf_status) {
 				CDF_TRACE(CDF_MODULE_ID_SAP,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "In %s, failed setting isCacStartNotified on interface[%d]",
 					  __func__, intf);
-				return cdf_status;
+				return qdf_status;
 			}
 			pSapContext->isCacStartNotified = true;
 		}
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /*==========================================================================
    FUNCTION  sap_cac_end_notify
 
    DESCRIPTION Function will be called to notify eSAP_DFS_CAC_END event
-              to HDD
+   to HDD
 
    DEPENDENCIES PARAMETERS
      IN hHAL : HAL pointer
 
-   RETURN VALUE  : CDF_STATUS.
+   RETURN VALUE  : QDF_STATUS.
 
    SIDE EFFECTS
    ============================================================================*/
-CDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
+QDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 {
 	uint8_t intf;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	/*
 	 * eSAP_DFS_CHANNEL_CAC_END:
@@ -2985,16 +2985,16 @@ CDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 		    && pMac->sap.sapCtxList[intf].pSapContext != NULL &&
 		    (false == pSapContext->isCacEndNotified)) {
 			pSapContext = pMac->sap.sapCtxList[intf].pSapContext;
-			cdf_status = sap_signal_hdd_event(pSapContext, NULL,
+			qdf_status = sap_signal_hdd_event(pSapContext, NULL,
 							  eSAP_DFS_CAC_END,
 							  (void *)
 							  eSAP_STATUS_SUCCESS);
-			if (CDF_STATUS_SUCCESS != cdf_status) {
+			if (QDF_STATUS_SUCCESS != qdf_status) {
 				CDF_TRACE(CDF_MODULE_ID_SAP,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "In %s, failed setting isCacEndNotified on interface[%d]",
 					  __func__, intf);
-				return cdf_status;
+				return qdf_status;
 			}
 			pSapContext->isCacEndNotified = true;
 			pMac->sap.SapDfsInfo.sap_radar_found_status = false;
@@ -3016,16 +3016,16 @@ CDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 			pSapContext->sapsMachine = eSAP_STARTED;
 
 			/*Action code for transition */
-			cdf_status = sap_signal_hdd_event(pSapContext, roamInfo,
+			qdf_status = sap_signal_hdd_event(pSapContext, roamInfo,
 							  eSAP_START_BSS_EVENT,
 							  (void *)
 							  eSAP_STATUS_SUCCESS);
-			if (CDF_STATUS_SUCCESS != cdf_status) {
+			if (QDF_STATUS_SUCCESS != qdf_status) {
 				CDF_TRACE(CDF_MODULE_ID_SAP,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "In %s, failed setting isCacEndNotified on interface[%d]",
 					  __func__, intf);
-				return cdf_status;
+				return qdf_status;
 			}
 
 			/* Transition from eSAP_STARTING to eSAP_STARTED
@@ -3046,7 +3046,7 @@ CDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
 	 * by checking against eSAP_DFS_SKIP_CAC while starting the timer.
 	 */
 	pMac->sap.SapDfsInfo.cac_state = eSAP_DFS_SKIP_CAC;
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3058,14 +3058,14 @@ CDF_STATUS sap_cac_end_notify(tHalHandle hHal, tCsrRoamInfo *roamInfo)
  *
  * This function is called for state transition from "eSAP_DISCONNECTED"
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
+static QDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_HDD_START_INFRA_BSS) {
 		/*
@@ -3080,7 +3080,7 @@ static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		if (sap_ctx->isSapSessionOpen == eSAP_TRUE) {
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_FATAL,
 				  FL("SME Session is already opened"));
-			return CDF_STATUS_E_EXISTS;
+			return QDF_STATUS_E_EXISTS;
 		}
 
 		sap_ctx->sessionId = 0xff;
@@ -3088,13 +3088,13 @@ static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		if ((sap_ctx->channel == AUTO_CHANNEL_SELECT) &&
 		    (sap_ctx->isScanSessionOpen == eSAP_FALSE)) {
 			uint32_t type, subtype;
-			if (CDF_STATUS_SUCCESS == cds_get_vdev_types(
+			if (QDF_STATUS_SUCCESS == cds_get_vdev_types(
 					CDF_STA_MODE, &type, &subtype)) {
 				/* Open SME Session for scan */
-				cdf_status = sme_open_session(hal, NULL,
+				qdf_status = sme_open_session(hal, NULL,
 					    sap_ctx, sap_ctx->self_mac_addr,
 					    &sap_ctx->sessionId, type, subtype);
-				if (CDF_STATUS_SUCCESS != cdf_status) {
+				if (QDF_STATUS_SUCCESS != qdf_status) {
 					CDF_TRACE(CDF_MODULE_ID_SAP,
 						  CDF_TRACE_LEVEL_ERROR,
 						  FL("Error: calling sme_open_session"));
@@ -3113,7 +3113,7 @@ static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		 * Perform sme_ScanRequest. This scan request is post start bss
 		 * request so, set the third to false.
 		 */
-		cdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false);
+		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false);
 
 		/*
 		 * Transition from eSAP_DISCONNECTED to eSAP_CH_SELECT
@@ -3138,7 +3138,7 @@ static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 			sap_start_dfs_cac_timer(sap_ctx);
 		}
 
-		cdf_status = sap_cac_start_notify(hal);
+		qdf_status = sap_cac_start_notify(hal);
 	} else if (msg == eSAP_CHANNEL_SELECTION_RETRY) {
 		/* Set SAP device role */
 		sap_ctx->sapsMachine = eSAP_CH_SELECT;
@@ -3147,14 +3147,14 @@ static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
 		 * Perform sme_ScanRequest. This scan request is post start bss
 		 * request so, set the third to false.
 		 */
-		cdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false);
+		qdf_status = sap_goto_channel_sel(sap_ctx, sap_event, false);
 	} else {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, event msg %d"),
 			  "eSAP_DISCONNECTED", msg);
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3166,14 +3166,14 @@ static CDF_STATUS sap_fsm_state_disconnected(ptSapContext sap_ctx,
  *
  * This function is called for state transition from "eSAP_CH_SELECT"
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
+static QDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint32_t cbmode;
 	bool b_leak_chan = false;
 #ifdef WLAN_ENABLE_CHNL_MATRIX_RESTRICTION
@@ -3183,9 +3183,9 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 
 	if (sap_ctx->isScanSessionOpen == eSAP_TRUE) {
 		/* scan completed, so close the session */
-		cdf_status = sme_close_session(hal, sap_ctx->sessionId,
+		qdf_status = sme_close_session(hal, sap_ctx->sessionId,
 				NULL, NULL);
-		if (CDF_STATUS_SUCCESS != cdf_status)
+		if (QDF_STATUS_SUCCESS != qdf_status)
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 				FL("CloseSession error event msg %d"), msg);
 		else
@@ -3233,7 +3233,7 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 				sap_signal_hdd_event(sap_ctx, NULL,
 					eSAP_DFS_NO_AVAILABLE_CHANNEL,
 					(void *)eSAP_STATUS_SUCCESS);
-				return CDF_STATUS_E_FAULT;
+				return QDF_STATUS_E_FAULT;
 			}
 
 			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -3295,7 +3295,7 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 		sap_signal_hdd_event(sap_ctx, NULL,
 					eSAP_CHANNEL_CHANGE_EVENT,
 					(void *) eSAP_STATUS_SUCCESS);
-		cdf_status = sap_goto_starting(sap_ctx, sap_event,
+		qdf_status = sap_goto_starting(sap_ctx, sap_event,
 					  eCSR_BSS_TYPE_INFRA_AP);
 	} else if (msg == eSAP_CHANNEL_SELECTION_FAILED) {
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
@@ -3313,7 +3313,7 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
 			  "eSAP_CH_SELECT", msg);
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3325,15 +3325,15 @@ static CDF_STATUS sap_fsm_state_ch_select(ptSapContext sap_ctx,
  *
  * This function is called for state transition from "eSAP_DFS_CAC_WAIT"
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
+static QDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
 	tCsrRoamInfo *roam_info = (tCsrRoamInfo *) (sap_event->params);
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_DFS_CHANNEL_CAC_START) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -3341,7 +3341,7 @@ static CDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
 			  "eSAP_CH_SELECT", "eSAP_DFS_CAC_WAIT");
 		if (mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running != true)
 			sap_start_dfs_cac_timer(sap_ctx);
-		cdf_status = sap_cac_start_notify(hal);
+		qdf_status = sap_cac_start_notify(hal);
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_RADAR_FOUND) {
 		uint8_t intf;
 		/*
@@ -3386,7 +3386,7 @@ static CDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
 			}
 		}
 	} else if (msg == eSAP_DFS_CHANNEL_CAC_END) {
-		cdf_status = sap_cac_end_notify(hal, roam_info);
+		qdf_status = sap_cac_end_notify(hal, roam_info);
 	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/* Transition from eSAP_DFS_CAC_WAIT to eSAP_DISCONNECTING */
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -3407,14 +3407,14 @@ static CDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
 		}
 
 		sap_ctx->sapsMachine = eSAP_DISCONNECTING;
-		cdf_status = sap_goto_disconnecting(sap_ctx);
+		qdf_status = sap_goto_disconnecting(sap_ctx);
 	} else {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("in state %s, invalid event msg %d"),
 			  "eSAP_DFS_CAC_WAIT", msg);
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3426,16 +3426,16 @@ static CDF_STATUS sap_fsm_state_dfs_cac_wait(ptSapContext sap_ctx,
  *
  * This function is called for state transition from "eSAP_STARTING"
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
+static QDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
 	tCsrRoamInfo *roam_info = (tCsrRoamInfo *) (sap_event->params);
 	tSapDfsInfo *sap_dfs_info;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_MAC_START_BSS_SUCCESS) {
 		/*
@@ -3448,7 +3448,7 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 		sap_ctx->sapsMachine = eSAP_STARTED;
 
 		/* Action code for transition */
-		cdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
+		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_SUCCESS);
 
@@ -3475,7 +3475,7 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 				if (sap_dfs_info->is_dfs_cac_timer_running !=
 									true)
 					sap_start_dfs_cac_timer(sap_ctx);
-				cdf_status = sap_cac_start_notify(hal);
+				qdf_status = sap_cac_start_notify(hal);
 
 			} else {
 				wlansap_start_beacon_req(sap_ctx);
@@ -3491,10 +3491,10 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 			  "eSAP_STARTING", "eSAP_DISCONNECTED");
 
 		/*Action code for transition */
-		cdf_status = sap_signal_hdd_event(sap_ctx, NULL,
+		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_FAILURE);
-		cdf_status = sap_goto_disconnected(sap_ctx);
+		qdf_status = sap_goto_disconnected(sap_ctx);
 		/* Advance outer statevar */
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
 	} else if (msg == eSAP_HDD_STOP_INFRA_BSS) {
@@ -3508,14 +3508,14 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 
 		/* Advance outer statevar */
 		sap_ctx->sapsMachine = eSAP_DISCONNECTED;
-		cdf_status = sap_signal_hdd_event(sap_ctx, NULL,
+		qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 				eSAP_START_BSS_EVENT,
 				(void *) eSAP_STATUS_FAILURE);
-		cdf_status = sap_goto_disconnected(sap_ctx);
+		qdf_status = sap_goto_disconnected(sap_ctx);
 		/* Close the SME session */
 
 		if (eSAP_TRUE == sap_ctx->isSapSessionOpen) {
-			if (CDF_STATUS_SUCCESS == sap_close_session(hal,
+			if (QDF_STATUS_SUCCESS == sap_close_session(hal,
 						sap_ctx, NULL, false))
 				sap_ctx->isSapSessionOpen = eSAP_FALSE;
 		}
@@ -3531,7 +3531,7 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 			  "eSAP_STARTING", "eSAP_STARTED");
 
 		/* Indicate change in the state to upper layers */
-		cdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
+		qdf_status = sap_signal_hdd_event(sap_ctx, roam_info,
 				  eSAP_START_BSS_EVENT,
 				  (void *)eSAP_STATUS_SUCCESS);
 	} else {
@@ -3540,7 +3540,7 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
 			  "eSAP_STARTING", msg);
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3551,13 +3551,13 @@ static CDF_STATUS sap_fsm_state_starting(ptSapContext sap_ctx,
  *
  * This function is called for state transition from "eSAP_STARTED"
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_fsm_state_started(ptSapContext sap_ctx,
+static QDF_STATUS sap_fsm_state_started(ptSapContext sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx)
 {
 	uint32_t msg = sap_event->event;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_HDD_STOP_INFRA_BSS) {
 		/*
@@ -3568,7 +3568,7 @@ static CDF_STATUS sap_fsm_state_started(ptSapContext sap_ctx,
 			  FL("from state %s => %s"),
 			  "eSAP_STARTED", "eSAP_DISCONNECTING");
 		sap_ctx->sapsMachine = eSAP_DISCONNECTING;
-		cdf_status = sap_goto_disconnecting(sap_ctx);
+		qdf_status = sap_goto_disconnecting(sap_ctx);
 	} else if (eSAP_DFS_CHNL_SWITCH_ANNOUNCEMENT_START == msg) {
 		uint8_t intf;
 		/*
@@ -3590,7 +3590,7 @@ static CDF_STATUS sap_fsm_state_started(ptSapContext sap_ctx,
 					  FL("sapdfs: Sending CSAIE for sapctx[%p]"),
 					  temp_sap_ctx);
 
-				cdf_status = wlansap_dfs_send_csa_ie_request(
+				qdf_status = wlansap_dfs_send_csa_ie_request(
 						(void *) temp_sap_ctx);
 			}
 		}
@@ -3600,7 +3600,7 @@ static CDF_STATUS sap_fsm_state_started(ptSapContext sap_ctx,
 			  "eSAP_STARTED", msg);
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3611,14 +3611,14 @@ static CDF_STATUS sap_fsm_state_started(ptSapContext sap_ctx,
  *
  * This function is called for state transition from "eSAP_DISCONNECTING"
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
+static QDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 			ptWLAN_SAPEvent sap_event, tpAniSirGlobal mac_ctx,
 			tHalHandle hal)
 {
 	uint32_t msg = sap_event->event;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 
 	if (msg == eSAP_MAC_READY_FOR_CONNECTIONS) {
 		/*
@@ -3633,10 +3633,10 @@ static CDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 		/* Close the SME session */
 		if (eSAP_TRUE == sap_ctx->isSapSessionOpen) {
 			sap_ctx->isSapSessionOpen = eSAP_FALSE;
-			cdf_status = sap_close_session(hal, sap_ctx,
+			qdf_status = sap_close_session(hal, sap_ctx,
 					sap_roam_session_close_callback, true);
-			if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-				cdf_status = sap_signal_hdd_event(sap_ctx, NULL,
+			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
+				qdf_status = sap_signal_hdd_event(sap_ctx, NULL,
 						eSAP_STOP_BSS_EVENT,
 						(void *)eSAP_STATUS_SUCCESS);
 			}
@@ -3649,7 +3649,7 @@ static CDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 		 * Most likely, radar has been detected and SAP wants to
 		 * change the channel
 		 */
-		cdf_status = wlansap_channel_change_request((void *) sap_ctx,
+		qdf_status = wlansap_channel_change_request((void *) sap_ctx,
 				mac_ctx->sap.SapDfsInfo.target_channel);
 
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
@@ -3660,7 +3660,7 @@ static CDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
 			  "eSAP_DISCONNECTING", msg);
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -3670,9 +3670,9 @@ static CDF_STATUS sap_fsm_state_disconnecting(ptSapContext sap_ctx,
  *
  * SAP statem machine entry function
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS sap_fsm(ptSapContext sap_ctx, ptWLAN_SAPEvent sap_event)
+QDF_STATUS sap_fsm(ptSapContext sap_ctx, ptWLAN_SAPEvent sap_event)
 {
 	/*
 	 * Retrieve the phy link state machine structure
@@ -3681,21 +3681,21 @@ CDF_STATUS sap_fsm(ptSapContext sap_ctx, ptWLAN_SAPEvent sap_event)
 	 */
 	eSapFsmStates_t state_var = sap_ctx->sapsMachine;
 	uint32_t msg = sap_event->event; /* State machine input event message */
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	tpAniSirGlobal mac_ctx;
 
 	if (NULL == hal) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid hal"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	mac_ctx = PMAC_STRUCT(hal);
 	if (NULL == mac_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid MAC context"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_DEBUG,
@@ -3704,36 +3704,36 @@ CDF_STATUS sap_fsm(ptSapContext sap_ctx, ptWLAN_SAPEvent sap_event)
 
 	switch (state_var) {
 	case eSAP_DISCONNECTED:
-		cdf_status = sap_fsm_state_disconnected(sap_ctx, sap_event,
+		qdf_status = sap_fsm_state_disconnected(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
 	case eSAP_CH_SELECT:
-		cdf_status = sap_fsm_state_ch_select(sap_ctx, sap_event,
+		qdf_status = sap_fsm_state_ch_select(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
 	case eSAP_DFS_CAC_WAIT:
-		cdf_status = sap_fsm_state_dfs_cac_wait(sap_ctx, sap_event,
+		qdf_status = sap_fsm_state_dfs_cac_wait(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
 	case eSAP_STARTING:
-		cdf_status = sap_fsm_state_starting(sap_ctx, sap_event,
+		qdf_status = sap_fsm_state_starting(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 
 	case eSAP_STARTED:
-		cdf_status = sap_fsm_state_started(sap_ctx, sap_event,
+		qdf_status = sap_fsm_state_started(sap_ctx, sap_event,
 				mac_ctx);
 		break;
 
 	case eSAP_DISCONNECTING:
-		cdf_status = sap_fsm_state_disconnecting(sap_ctx, sap_event,
+		qdf_status = sap_fsm_state_disconnecting(sap_ctx, sap_event,
 				mac_ctx, hal);
 		break;
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 eSapStatus
@@ -4062,25 +4062,25 @@ void sap_print_acl(struct cdf_mac_addr *macList, uint8_t size)
 	return;
 }
 
-CDF_STATUS sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac)
+QDF_STATUS sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac)
 {
 	if (eSAP_ALLOW_ALL == sapContext->eSapMacAddrAclMode)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	if (sap_search_mac_list
 		    (sapContext->acceptMacList, sapContext->nAcceptMac, peerMac, NULL))
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	if (sap_search_mac_list
 		    (sapContext->denyMacList, sapContext->nDenyMac, peerMac, NULL)) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "In %s, Peer " MAC_ADDRESS_STR " in deny list",
 			  __func__, MAC_ADDR_ARRAY(peerMac));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* A new station CAN associate, unless in deny list. Less stringent mode */
 	if (eSAP_ACCEPT_UNLESS_DENIED == sapContext->eSapMacAddrAclMode)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	/* A new station CANNOT associate, unless in accept list. More stringent mode */
 	if (eSAP_DENY_UNLESS_ACCEPTED == sapContext->eSapMacAddrAclMode) {
@@ -4088,7 +4088,7 @@ CDF_STATUS sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac)
 			  "In %s, Peer " MAC_ADDRESS_STR
 			  " denied, Mac filter mode is eSAP_DENY_UNLESS_ACCEPTED",
 			  __func__, MAC_ADDR_ARRAY(peerMac));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* The new STA is neither in accept list nor in deny list. In this case, deny the association
@@ -4101,9 +4101,9 @@ CDF_STATUS sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac)
 			  "In %s, Peer " MAC_ADDRESS_STR
 			  " denied, Mac filter mode is eSAP_SUPPORT_ACCEPT_AND_DENY",
 			  __func__, MAC_ADDR_ARRAY(peerMac));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef SOFTAP_CHANNEL_RANGE
@@ -4115,9 +4115,9 @@ CDF_STATUS sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac)
  *
  * This function populates the list of channels for scanning.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
+static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 				       uint8_t **ch_list,
 				       uint8_t *num_ch)
 {
@@ -4138,7 +4138,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 			FL("Invalid HAL pointer from p_cds_gctx"));
 		*num_ch = 0;
 		*ch_list = NULL;
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	start_ch_num = sap_ctx->acs_cfg->start_ch;
@@ -4176,7 +4176,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 			  FL("Unable to allocate channel list"));
 		*num_ch = 0;
 		*ch_list = NULL;
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	/* Search for the Active channels in the given range */
@@ -4273,7 +4273,7 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_DEBUG,
 			FL("channel number: %d"), list[loop_count]);
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -4281,14 +4281,14 @@ static CDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
  * Function for initializing list of  2.4/5 Ghz [NON-DFS/DFS]
  * available channels in the current regulatory domain.
  */
-static CDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
+static QDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
 {
 	uint8_t count = 0;
 	int i;
 	if (NULL == sapContext) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid sapContext pointer on sap_get_channel_list");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	if (sapContext->SapAllChnlList.channelList) {
@@ -4302,7 +4302,7 @@ static CDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
 	if (NULL == sapContext->SapAllChnlList.channelList) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  " Memory Allocation failed sap_get_channel_list");
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	for (i = RF_CHAN_36; i <= RF_CHAN_165; i++) {
@@ -4326,7 +4326,7 @@ static CDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
 		  "sapContext->SapAllChnlList.numChannel = %d",
 		  __func__, __LINE__, count,
 		  sapContext->SapAllChnlList.numChannel);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -4511,7 +4511,7 @@ sap_is_channel_bonding_etsi_weather_channel(ptSapContext sap_context)
  */
 int sap_start_dfs_cac_timer(ptSapContext sapContext)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t cacTimeOut;
 	tHalHandle hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
@@ -4557,7 +4557,7 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
 	status =
 		cdf_mc_timer_start(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
 				   cacTimeOut);
-	if (status == CDF_STATUS_SUCCESS) {
+	if (status == QDF_STATUS_SUCCESS) {
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;
 		return 1;
 	} else {
@@ -4570,7 +4570,7 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
  * parameters required to track the radar
  * found DFS channels in the current Reg. Domain .
  */
-CDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
+QDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
 {
 	uint8_t count = 0;
 	int i;
@@ -4581,19 +4581,19 @@ CDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
 	if (NULL == sapContext) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid sapContext pointer on sap_init_dfs_channel_nol_list");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
 
 	if (NULL == hHal) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "In %s invalid hHal", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	pMac = PMAC_STRUCT(hHal);
 
 	/* to indicate hdd to get cnss dfs nol */
-	if (CDF_STATUS_SUCCESS == sap_signal_hdd_event(sapContext, NULL,
+	if (QDF_STATUS_SUCCESS == sap_signal_hdd_event(sapContext, NULL,
 						       eSAP_DFS_NOL_GET,
 						       (void *)
 						       eSAP_STATUS_SUCCESS)) {
@@ -4632,7 +4632,7 @@ CDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext)
 		  __func__, __LINE__,
 		  pMac->sap.SapDfsInfo.numCurrentRegDomainDfsChannels);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*

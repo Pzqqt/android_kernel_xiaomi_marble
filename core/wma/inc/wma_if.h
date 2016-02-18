@@ -278,9 +278,9 @@ typedef struct {
 	 * HAL to PE via response message. HAL does not read them.
 	 */
 	/* The return status of SIR_HAL_ADD_STA_REQ is reported here */
-	CDF_STATUS status;
+	QDF_STATUS status;
 	/* Station index; valid only when 'status' field value is
-	 * CDF_STATUS_SUCCESS
+	 * QDF_STATUS_SUCCESS
 	 */
 	uint8_t staIdx;
 	/* BSSID of BSS to which the station is associated.
@@ -338,7 +338,7 @@ typedef struct {
 typedef struct {
 	uint16_t staIdx;
 	uint16_t assocId;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t respReqd;
 	uint8_t sessionId;
 	uint8_t smesessionId;
@@ -374,7 +374,7 @@ typedef struct {
 	uint8_t singleTidRc;
 	uint8_t smesessionId;
 	struct cdf_mac_addr peer_macaddr;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t sessionId;
 	uint8_t sendRsp;
 } tSetStaKeyParams, *tpSetStaKeyParams;
@@ -476,7 +476,7 @@ typedef struct {
 	uint8_t txChannelWidthSet;
 	uint8_t currentOperChannel;
 	tAddStaParams staContext;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint16_t bssIdx;
 	/* HAL should update the existing BSS entry, if this flag is set.
 	 * PE will set this flag in case of reassoc, where we want to resue the
@@ -525,7 +525,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t bssIdx;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t respReqd;
 	uint8_t sessionId;
 	tSirMacAddr bssid;
@@ -568,7 +568,7 @@ typedef struct {
 	tSirMacMgmtHdr macMgmtHdr;
 	tSirScanEntry scanEntry;
 	tSirLinkTrafficCheck checkLinkTraffic;
-	CDF_STATUS status;
+	QDF_STATUS status;
 } tInitScanParams, *tpInitScanParams;
 
 typedef enum eDelStaReasonCode {
@@ -612,7 +612,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t scanChannel;
-	CDF_STATUS status;
+	QDF_STATUS status;
 #if defined WLAN_FEATURE_VOWIFI
 	uint32_t startTSF[2];
 	int8_t txMgmtPower;
@@ -626,7 +626,7 @@ typedef struct {
  */
 typedef struct {
 	uint8_t scanChannel;
-	CDF_STATUS status;
+	QDF_STATUS status;
 } tEndScanParams, *tpEndScanParams;
 
 /**
@@ -659,7 +659,7 @@ typedef struct {
 	uint8_t frameType;
 	tSirMacMgmtHdr macMgmtHdr;
 	tSirScanEntry scanEntry;
-	CDF_STATUS status;
+	QDF_STATUS status;
 } tFinishScanParams, *tpFinishScanParams;
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
@@ -679,7 +679,7 @@ typedef struct {
  */
 typedef struct {
 	struct cdf_mac_addr selfMacAddr;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t data_len;
 	uint8_t *data;
 } tStartOemDataReq, *tpStartOemDataReq;
@@ -765,7 +765,7 @@ typedef struct {
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
 	uint8_t singleTidRc;
 	uint8_t smesessionId;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t sessionId;
 } tSetBssKeyParams, *tpSetBssKeyParams;
 
@@ -915,7 +915,7 @@ typedef struct {
 	 * this struct
 	 */
 	tSirMacAddr bssId;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint16_t chainMask;
 	uint16_t smpsMode;
 	uint8_t isDfsChannel;
@@ -992,7 +992,7 @@ typedef struct {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
 	tSirMacTspecIE tspec;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t sessionId;
 #ifdef FEATURE_WLAN_ESE
 	uint16_t tsm_interval;
@@ -1042,7 +1042,7 @@ typedef struct {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
 	tSirMacTspecIE tspec[HAL_QOS_NUM_AC_MAX];
-	CDF_STATUS status[HAL_QOS_NUM_AC_MAX];
+	QDF_STATUS status[HAL_QOS_NUM_AC_MAX];
 	uint8_t sessionId;
 } tAggrAddTsParams, *tpAggrAddTsParams;
 
@@ -1079,7 +1079,7 @@ typedef struct {
 typedef struct sSet_MIMOPS {
 	uint16_t staIdx;
 	tSirMacHTMIMOPowerSaveState htMIMOPSState;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t fsendRsp;
 	tSirMacAddr peerMac;
 	uint8_t sessionId;
@@ -1108,7 +1108,7 @@ typedef struct sUapsdParams {
 	uint8_t beTriggerEnabled:1;
 	uint8_t viTriggerEnabled:1;
 	uint8_t voTriggerEnabled:1;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t bssIdx;
 } tUapsdParams, *tpUapsdParams;
 

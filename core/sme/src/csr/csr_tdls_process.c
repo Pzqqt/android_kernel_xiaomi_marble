@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,9 +51,9 @@
  * common routine to remove TDLS cmd from SME command list..
  * commands are removed after getting reponse from PE.
  */
-CDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac, eSmeCommandType cmdType)
+QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac, eSmeCommandType cmdType)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tListElem *pEntry;
 	tSmeCmd *pCommand;
 
@@ -67,7 +67,7 @@ CDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac, eSmeCommandType cmdType)
 					     sizeof(tTdlsCmd));
 				csr_release_command(pMac, pCommand);
 				sme_process_pending_queue(pMac);
-				status = CDF_STATUS_SUCCESS;
+				status = QDF_STATUS_SUCCESS;
 			}
 		}
 	}
@@ -83,13 +83,13 @@ CDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac, eSmeCommandType cmdType)
  * TDLS request API, called from HDD to send a TDLS frame in SME/CSR and
  * send message to PE to trigger TDLS discovery procedure.
  */
-CDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 				  tCsrTdlsSendMgmt *tdlsSendMgmt)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *tdlsSendMgmtCmd;
 	tTdlsSendMgmtCmdInfo *tdlsSendMgmtCmdInfo;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	/* If connected and in Infra. Only then allow this */
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId) ||
@@ -112,7 +112,7 @@ CDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 	if ((0 != tdlsSendMgmt->len) && (NULL != tdlsSendMgmt->buf)) {
 		tdlsSendMgmtCmdInfo->buf = cdf_mem_malloc(tdlsSendMgmt->len);
 		if (NULL == tdlsSendMgmtCmdInfo->buf) {
-			status = CDF_STATUS_E_NOMEM;
+			status = QDF_STATUS_E_NOMEM;
 			sms_log(pMac, LOGE, FL("Alloc Failed"));
 			CDF_ASSERT(0);
 			return status;
@@ -128,20 +128,20 @@ CDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 	tdlsSendMgmtCmd->command = eSmeCommandTdlsSendMgmt;
 	tdlsSendMgmtCmd->u.tdlsCmd.size = sizeof(tTdlsSendMgmtCmdInfo);
 	sme_push_command(pMac, tdlsSendMgmtCmd, false);
-	status = CDF_STATUS_SUCCESS;
+	status = QDF_STATUS_SUCCESS;
 	return status;
 }
 
 /*
  * TDLS request API, called from HDD to add a TDLS peer
  */
-CDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				    const tSirMacAddr peerMac,
 				    tCsrStaParams *pstaParams)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *tdlsAddStaCmd;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	/* If connected and in Infra. Only then allow this */
 	if (CSR_IS_SESSION_VALID(pMac, sessionId) &&
@@ -200,7 +200,7 @@ CDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsAddStaCmd->u.tdlsCmd.size =
 				sizeof(tTdlsAddStaCmdInfo);
 			sme_push_command(pMac, tdlsAddStaCmd, false);
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -210,7 +210,7 @@ CDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 /*
  * TDLS request API, called from HDD to Send Link Establishment Parameters
  */
-CDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
+QDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 					       uint8_t sessionId,
 					       const tSirMacAddr peerMac,
 					       tCsrTdlsLinkEstablishParams *
@@ -218,7 +218,7 @@ CDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *tdlsLinkEstablishCmd;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	/* If connected and in Infra. Only then allow this */
 	if (CSR_IS_SESSION_VALID(pMac, sessionId) &&
 	    csr_is_conn_state_connected_infra(pMac, sessionId) &&
@@ -270,7 +270,7 @@ CDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 			tdlsLinkEstablishCmd->u.tdlsCmd.size =
 				sizeof(tTdlsLinkEstablishCmdInfo);
 			sme_push_command(pMac, tdlsLinkEstablishCmd, false);
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -280,12 +280,12 @@ CDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 /*
  * TDLS request API, called from HDD to add a TDLS peer
  */
-CDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				 const tSirMacAddr peerMac)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *tdlsAddStaCmd;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	/* If connected and in Infra. Only then allow this */
 	if (CSR_IS_SESSION_VALID(pMac, sessionId) &&
@@ -307,7 +307,7 @@ CDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsAddStaCmd->u.tdlsCmd.size =
 				sizeof(tTdlsAddStaCmdInfo);
 			sme_push_command(pMac, tdlsAddStaCmd, false);
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -317,12 +317,12 @@ CDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 /*
  * TDLS request API, called from HDD to delete a TDLS peer
  */
-CDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				 const tSirMacAddr peerMac)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *tdlsDelStaCmd;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	/* If connected and in Infra. Only then allow this */
 	if (CSR_IS_SESSION_VALID(pMac, sessionId) &&
@@ -343,7 +343,7 @@ CDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsDelStaCmd->u.tdlsCmd.size =
 				sizeof(tTdlsDelStaCmdInfo);
 			sme_push_command(pMac, tdlsDelStaCmd, false);
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 
@@ -353,7 +353,7 @@ CDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 /*
  * TDLS messages sent to PE .
  */
-CDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
+QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
 			     void *msg_data, uint32_t msg_size)
 {
 
@@ -364,40 +364,40 @@ CDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 		  ("sending msg = %d"), pMsg->type);
 	/* Send message. */
-	if (cds_send_mb_message_to_mac(pMsg) != CDF_STATUS_SUCCESS) {
+	if (cds_send_mb_message_to_mac(pMsg) != QDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE, FL("Cannot send message"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
+QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsSendMgmtCmdInfo *tdlsSendMgmtCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsSendMgmtCmdInfo;
 	tSirTdlsSendMgmtReq *tdlsSendMgmtReq = NULL;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (NULL == pSession->pConnectBssDesc) {
 		sms_log(pMac, LOGE, FL("BSS Description is not present"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	tdlsSendMgmtReq =
 		cdf_mem_malloc(sizeof(tSirTdlsSendMgmtReq) +
 			       tdlsSendMgmtCmdInfo->len);
 	if (NULL == tdlsSendMgmtReq)
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 	else
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
 		CDF_ASSERT(0);
 		return status;
@@ -428,7 +428,7 @@ CDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 				   (void *)tdlsSendMgmtReq,
 				   sizeof(tSirTdlsSendMgmtReq) +
 				   tdlsSendMgmtCmdInfo->len);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("Failed to send request to MAC"));
 	}
 	if (tdlsSendMgmtCmdInfo->len && tdlsSendMgmtCmdInfo->buf) {
@@ -441,31 +441,31 @@ CDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	return status;
 }
 
-CDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
+QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsAddStaCmdInfo *tdlsAddStaCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsAddStaCmdInfo;
 	tSirTdlsAddStaReq *tdlsAddStaReq = NULL;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (NULL == pSession->pConnectBssDesc) {
 		sms_log(pMac, LOGE, FL("BSS description is not present"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	tdlsAddStaReq = cdf_mem_malloc(sizeof(tSirTdlsAddStaReq));
 	if (NULL == tdlsAddStaReq)
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 	else
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
 		CDF_ASSERT(0);
 		return status;
@@ -506,37 +506,37 @@ CDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_ADD_STA_REQ,
 				   (void *)tdlsAddStaReq,
 				   sizeof(tSirTdlsAddStaReq));
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("Failed to send request to MAC"));
 	}
 	return status;
 }
 
-CDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
+QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsDelStaCmdInfo *tdlsDelStaCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsDelStaCmdInfo;
 	tSirTdlsDelStaReq *tdlsDelStaReq = NULL;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (NULL == pSession->pConnectBssDesc) {
 		sms_log(pMac, LOGE, FL("BSS description is not present"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	tdlsDelStaReq = cdf_mem_malloc(sizeof(tSirTdlsDelStaReq));
 	if (NULL == tdlsDelStaReq)
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 	else
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
 		CDF_ASSERT(0);
 		return status;
@@ -558,7 +558,7 @@ CDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_DEL_STA_REQ,
 				   (void *)tdlsDelStaReq,
 				   sizeof(tSirTdlsDelStaReq));
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("Failed to send request to MAC"));
 	}
 	return status;
@@ -567,7 +567,7 @@ CDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 /*
  * commands received from CSR
  */
-CDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
+QDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	eSmeCommandType cmdType = cmd->command;
 	bool status = true;
@@ -575,7 +575,7 @@ CDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	case eSmeCommandTdlsSendMgmt:
 	{
 		status = csr_tdls_process_send_mgmt(pMac, cmd);
-		if (CDF_IS_STATUS_SUCCESS(status)) {
+		if (QDF_IS_STATUS_SUCCESS(status)) {
 			status = false;
 		}
 	}
@@ -583,7 +583,7 @@ CDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	case eSmeCommandTdlsAddPeer:
 	{
 		status = csr_tdls_process_add_sta(pMac, cmd);
-		if (CDF_IS_STATUS_SUCCESS(status)) {
+		if (QDF_IS_STATUS_SUCCESS(status)) {
 			status = false;
 		}
 	}
@@ -591,7 +591,7 @@ CDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	case eSmeCommandTdlsDelPeer:
 	{
 		status = csr_tdls_process_del_sta(pMac, cmd);
-		if (CDF_IS_STATUS_SUCCESS(status)) {
+		if (QDF_IS_STATUS_SUCCESS(status)) {
 			status = false;
 		}
 	}
@@ -599,7 +599,7 @@ CDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	case eSmeCommandTdlsLinkEstablish:
 	{
 		status = csr_tdls_process_link_establish(pMac, cmd);
-		if (CDF_IS_STATUS_SUCCESS(status)) {
+		if (QDF_IS_STATUS_SUCCESS(status)) {
 			status = false;
 		}
 	}
@@ -614,17 +614,17 @@ CDF_STATUS csr_tdls_process_cmd(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	return status;
 }
 
-CDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
+QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 {
 	tTdlsLinkEstablishCmdInfo *tdlsLinkEstablishCmdInfo =
 		&cmd->u.tdlsCmd.u.tdlsLinkEstablishCmdInfo;
 	tSirTdlsLinkEstablishReq *tdlsLinkEstablishReq = NULL;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, cmd->sessionId);
 
 	if (NULL == pSession) {
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	tdlsLinkEstablishReq = cdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReq));
@@ -632,7 +632,7 @@ CDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	if (tdlsLinkEstablishReq == NULL) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	tdlsLinkEstablishReq->sessionId = cmd->sessionId;
 	/* Using dialog as transactionId. This can be used to match response with request */
@@ -663,7 +663,7 @@ CDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	status = tdls_send_message(pMac, eWNI_SME_TDLS_LINK_ESTABLISH_REQ,
 				   (void *)tdlsLinkEstablishReq,
 				   sizeof(tSirTdlsLinkEstablishReq));
-				   if (!CDF_IS_STATUS_SUCCESS(status)) {
+				   if (!QDF_IS_STATUS_SUCCESS(status)) {
 					   sms_log(pMac, LOGE, FL("Failed to send request to MAC\n"));
 				   }
 				   return status;
@@ -673,7 +673,7 @@ CDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
  * TDLS Message processor, will be called after TDLS message recieved from
  * PE
  */
-CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
+QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 			      void *pMsgBuf)
 {
 	tCsrRoamInfo roamInfo = { 0 };
@@ -809,6 +809,6 @@ CDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		break;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif

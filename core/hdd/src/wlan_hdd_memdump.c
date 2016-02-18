@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -197,7 +197,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 					       const void *data, int data_len)
 {
 	int status;
-	CDF_STATUS sme_status;
+	QDF_STATUS sme_status;
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
 	struct fw_dump_req fw_mem_dump_req;
 	struct fw_dump_seg_req *seg_req;
@@ -296,7 +296,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	spin_unlock(&hdd_context_lock);
 
 	sme_status = sme_fw_mem_dump(hdd_ctx->hHal, &fw_mem_dump_req);
-	if (CDF_STATUS_SUCCESS != sme_status) {
+	if (QDF_STATUS_SUCCESS != sme_status) {
 		hddLog(LOGE, FL("sme_fw_mem_dump Failed"));
 		mutex_lock(&hdd_ctx->memdump_lock);
 		cdf_os_mem_free_consistent(cdf_ctx,
@@ -539,8 +539,8 @@ int memdump_init(void)
 {
 	hdd_context_t *hdd_ctx;
 	int status = 0;
-	CDF_STATUS cb_status;
-	CDF_STATUS cdf_status;
+	QDF_STATUS cb_status;
+	QDF_STATUS qdf_status;
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -555,7 +555,7 @@ int memdump_init(void)
 
 	cb_status = sme_fw_mem_dump_register_cb(hdd_ctx->hHal,
 				wlan_hdd_cfg80211_fw_mem_dump_cb);
-	if (CDF_STATUS_SUCCESS != cb_status) {
+	if (QDF_STATUS_SUCCESS != cb_status) {
 		hddLog(LOGE , FL("Failed to register the callback"));
 		return -EINVAL;
 	}
@@ -568,10 +568,10 @@ int memdump_init(void)
 
 	init_completion(&fw_dump_context.response_event);
 
-	cdf_status = cdf_mc_timer_init(&hdd_ctx->memdump_cleanup_timer,
+	qdf_status = cdf_mc_timer_init(&hdd_ctx->memdump_cleanup_timer,
 				    CDF_TIMER_TYPE_SW, memdump_cleanup_timer_cb,
 				    (void *)hdd_ctx);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("Failed to init memdump cleanup timer"));
 		return -EINVAL;
 	}
@@ -594,7 +594,7 @@ void memdump_deinit(void)
 	cdf_dma_addr_t paddr;
 	cdf_dma_addr_t dma_ctx = 0;
 	cdf_device_t cdf_ctx;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
@@ -631,7 +631,7 @@ void memdump_deinit(void)
 		cdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
 	}
 
-	cdf_status = cdf_mc_timer_destroy(&hdd_ctx->memdump_cleanup_timer);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+	qdf_status = cdf_mc_timer_destroy(&hdd_ctx->memdump_cleanup_timer);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hddLog(LOGE, FL("Failed to deallocate timer"));
 }

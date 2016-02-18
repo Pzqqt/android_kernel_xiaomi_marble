@@ -180,13 +180,13 @@ static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 }
 
 static
-CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
+QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 			     const uint8_t tid,
 			     tAniTrafStrmMetrics *tsm_metrics)
 {
 	hdd_station_ctx_t *hdd_sta_ctx = NULL;
-	CDF_STATUS hstatus;
-	CDF_STATUS vstatus = CDF_STATUS_SUCCESS;
+	QDF_STATUS hstatus;
+	QDF_STATUS vstatus = QDF_STATUS_SUCCESS;
 	unsigned long rc;
 	struct statsContext context;
 	hdd_context_t *hdd_ctx = NULL;
@@ -194,7 +194,7 @@ CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 	if (NULL == adapter) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: adapter is NULL", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
@@ -210,10 +210,10 @@ CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 				    hdd_sta_ctx->conn_info.staId[0],
 				    hdd_sta_ctx->conn_info.bssId,
 				    &context, hdd_ctx->pcds_context, tid);
-	if (CDF_STATUS_SUCCESS != hstatus) {
+	if (QDF_STATUS_SUCCESS != hstatus) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Unable to retrieve statistics", __func__);
-		vstatus = CDF_STATUS_E_FAULT;
+		vstatus = QDF_STATUS_E_FAULT;
 	} else {
 		/* request was sent -- wait for the response */
 		rc = wait_for_completion_timeout(&context.completion,
@@ -222,7 +222,7 @@ CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: SME timed out while retrieving statistics",
 			       __func__);
-			vstatus = CDF_STATUS_E_TIMEOUT;
+			vstatus = QDF_STATUS_E_TIMEOUT;
 		}
 	}
 
@@ -243,7 +243,7 @@ CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 	context.magic = 0;
 	spin_unlock(&hdd_context_lock);
 
-	if (CDF_STATUS_SUCCESS == vstatus) {
+	if (QDF_STATUS_SUCCESS == vstatus) {
 		tsm_metrics->UplinkPktQueueDly =
 			adapter->tsmStats.UplinkPktQueueDly;
 		cdf_mem_copy(tsm_metrics->UplinkPktQueueDlyHist,
@@ -566,7 +566,7 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 	}
 
 	/* Check channel number is a valid channel number */
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    wlan_hdd_validate_operation_channel(adapter, channel)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: Invalid Channel %d",
 		       __func__, channel);
@@ -1107,7 +1107,7 @@ hdd_parse_set_roam_scan_channels_v1(hdd_adapter_t *adapter,
 {
 	uint8_t channel_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t num_chan = 0;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
@@ -1135,7 +1135,7 @@ hdd_parse_set_roam_scan_channels_v1(hdd_adapter_t *adapter,
 		sme_change_roam_scan_channel_list(hdd_ctx->hHal,
 						  adapter->sessionId,
 						  channel_list, num_chan);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to update channel list information",
 			  __func__);
@@ -1174,7 +1174,7 @@ hdd_parse_set_roam_scan_channels_v2(hdd_adapter_t *adapter,
 	uint8_t num_chan;
 	int i;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret = 0;
 
 	/* array of values begins after "SETROAMSCANCHANNELS " */
@@ -1208,7 +1208,7 @@ hdd_parse_set_roam_scan_channels_v2(hdd_adapter_t *adapter,
 		sme_change_roam_scan_channel_list(hdd_ctx->hHal,
 						  adapter->sessionId,
 						  channel_list, num_chan);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to update channel list information",
 			  __func__);
@@ -1278,7 +1278,7 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
  *
  * Return: 0 for success non-zero for failure
  */
-CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
+QDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 {
 	uint8_t *cmdPtr = NULL;
 	int count, content = 0, ret = 0;
@@ -1287,11 +1287,11 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 	/* move to argument list */
 	cmdPtr = strnchr(pValue, strlen(pValue), SPACE_ASCII_VALUE);
 	if (NULL == cmdPtr)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	/* no space after the command */
 	if (SPACE_ASCII_VALUE != *cmdPtr)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1300,17 +1300,17 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 	/* START/STOP PLM req */
 	ret = sscanf(cmdPtr, "%31s ", buf);
 	if (1 != ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	ret = kstrtos32(buf, 10, &content);
 	if (ret < 0)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	pPlmRequest->enable = content;
 	cmdPtr = strpbrk(cmdPtr, " ");
 
 	if (NULL == cmdPtr)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1319,11 +1319,11 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 	/* Dialog token of radio meas req containing meas reqIE */
 	ret = sscanf(cmdPtr, "%31s ", buf);
 	if (1 != ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	ret = kstrtos32(buf, 10, &content);
 	if (ret < 0)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	pPlmRequest->diag_token = content;
 	hddLog(CDF_TRACE_LEVEL_DEBUG, "diag token %d",
@@ -1331,7 +1331,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 	cmdPtr = strpbrk(cmdPtr, " ");
 
 	if (NULL == cmdPtr)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	/* remove empty spaces */
 	while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1340,11 +1340,11 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 	/* measurement token of meas req IE */
 	ret = sscanf(cmdPtr, "%31s ", buf);
 	if (1 != ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	ret = kstrtos32(buf, 10, &content);
 	if (ret < 0)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	pPlmRequest->meas_token = content;
 	hddLog(CDF_TRACE_LEVEL_DEBUG, "meas token %d",
@@ -1357,7 +1357,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
 		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1366,14 +1366,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		/* total number of bursts after which STA stops sending */
 		ret = sscanf(cmdPtr, "%31s ", buf);
 		if (1 != ret)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		ret = kstrtos32(buf, 10, &content);
 		if (ret < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		if (content < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->numBursts = content;
 		hddLog(CDF_TRACE_LEVEL_DEBUG, "num burst %d",
@@ -1381,7 +1381,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
 		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1390,14 +1390,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		/* burst interval in seconds */
 		ret = sscanf(cmdPtr, "%31s ", buf);
 		if (1 != ret)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		ret = kstrtos32(buf, 10, &content);
 		if (ret < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		if (content <= 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->burstInt = content;
 		hddLog(CDF_TRACE_LEVEL_DEBUG, "burst Int %d",
@@ -1405,7 +1405,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
 		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1414,14 +1414,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		/* Meas dur in TU's,STA goes off-ch and transmit PLM bursts */
 		ret = sscanf(cmdPtr, "%31s ", buf);
 		if (1 != ret)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		ret = kstrtos32(buf, 10, &content);
 		if (ret < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		if (content <= 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->measDuration = content;
 		hddLog(CDF_TRACE_LEVEL_DEBUG, "measDur %d",
@@ -1429,7 +1429,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
 		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1438,14 +1438,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		/* burst length of PLM bursts */
 		ret = sscanf(cmdPtr, "%31s ", buf);
 		if (1 != ret)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		ret = kstrtos32(buf, 10, &content);
 		if (ret < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		if (content <= 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->burstLen = content;
 		hddLog(CDF_TRACE_LEVEL_DEBUG, "burstLen %d",
@@ -1453,7 +1453,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
 		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1462,14 +1462,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		/* desired tx power for transmission of PLM bursts */
 		ret = sscanf(cmdPtr, "%31s ", buf);
 		if (1 != ret)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		ret = kstrtos32(buf, 10, &content);
 		if (ret < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		if (content <= 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->desiredTxPwr = content;
 		hddLog(CDF_TRACE_LEVEL_DEBUG,
@@ -1479,7 +1479,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			cmdPtr = strpbrk(cmdPtr, " ");
 
 			if (NULL == cmdPtr)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			/* remove empty spaces */
 			while ((SPACE_ASCII_VALUE == *cmdPtr)
@@ -1488,11 +1488,11 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 
 			ret = sscanf(cmdPtr, "%31s ", buf);
 			if (1 != ret)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			ret = kstrtos32(buf, 16, &content);
 			if (ret < 0)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			pPlmRequest->mac_addr.bytes[count] = content;
 		}
@@ -1503,7 +1503,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		cmdPtr = strpbrk(cmdPtr, " ");
 
 		if (NULL == cmdPtr)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		/* remove empty spaces */
 		while ((SPACE_ASCII_VALUE == *cmdPtr) && ('\0' != *cmdPtr))
@@ -1512,14 +1512,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		/* number of channels */
 		ret = sscanf(cmdPtr, "%31s ", buf);
 		if (1 != ret)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		ret = kstrtos32(buf, 10, &content);
 		if (ret < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		if (content < 0)
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 
 		pPlmRequest->plmNumCh = content;
 		hddLog(CDF_TRACE_LEVEL_DEBUG, "numch %d",
@@ -1530,7 +1530,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 			cmdPtr = strpbrk(cmdPtr, " ");
 
 			if (NULL == cmdPtr)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			/* remove empty spaces */
 			while ((SPACE_ASCII_VALUE == *cmdPtr)
@@ -1539,14 +1539,14 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 
 			ret = sscanf(cmdPtr, "%31s ", buf);
 			if (1 != ret)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			ret = kstrtos32(buf, 10, &content);
 			if (ret < 0)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			if (content <= 0)
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 
 			pPlmRequest->plmChList[count] = content;
 			hddLog(CDF_TRACE_LEVEL_DEBUG, " ch- %d",
@@ -1554,7 +1554,7 @@ CDF_STATUS hdd_parse_plm_cmd(uint8_t *pValue, tSirPlmReq *pPlmRequest)
 		}
 	}
 	/* If PLM START */
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -1577,7 +1577,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 			      tpSirExtWoWParams arg_params)
 {
 	tSirExtWoWParams params;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int rc;
@@ -1589,7 +1589,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 	cdf_ret_status = sme_configure_ext_wow(hHal, &params,
 						&wlan_hdd_ready_to_extwow,
 						hdd_ctx);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_ext_wow returned failure %d"),
 		       cdf_ret_status);
@@ -1621,7 +1621,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 				return rc;
 			}
 			cdf_ret_status = wlan_hdd_bus_suspend(state);
-			if (cdf_ret_status != CDF_STATUS_SUCCESS) {
+			if (cdf_ret_status != QDF_STATUS_SUCCESS) {
 				CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 					"%s: wlan_hdd_suspend failed, status = %d",
 					__func__, cdf_ret_status);
@@ -1685,12 +1685,12 @@ static int hdd_set_app_type1_params(tHalHandle hHal,
 				    tpSirAppType1Params arg_params)
 {
 	tSirAppType1Params params;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	cdf_mem_copy(&params, arg_params, sizeof(params));
 
 	cdf_ret_status = sme_configure_app_type1_params(hHal, &params);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_app_type1_params returned failure %d"),
 		       cdf_ret_status);
@@ -1743,12 +1743,12 @@ static int hdd_set_app_type2_params(tHalHandle hHal,
 				    tpSirAppType2Params arg_params)
 {
 	tSirAppType2Params params;
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	cdf_mem_copy(&params, arg_params, sizeof(params));
 
 	cdf_ret_status = sme_configure_app_type2_params(hHal, &params);
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_app_type2_params returned failure %d"),
 		       cdf_ret_status);
@@ -2105,7 +2105,7 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 	hdd_station_ctx_t *pHddStaCtx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct statsContext context;
-	CDF_STATUS hstatus;
+	QDF_STATUS hstatus;
 	unsigned long rc;
 
 	if (cds_is_driver_recovering()) {
@@ -2137,7 +2137,7 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 	hstatus = sme_get_link_status(WLAN_HDD_GET_HAL_CTX(adapter),
 				      hdd_get_link_status_cb,
 				      &context, adapter->sessionId);
-	if (CDF_STATUS_SUCCESS != hstatus) {
+	if (QDF_STATUS_SUCCESS != hstatus) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: Unable to retrieve link status", __func__);
 		/* return a cached value */
@@ -2399,7 +2399,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 {
 	tSirRateUpdateInd rateUpdate = {0};
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct hdd_config *pConfig = NULL;
 
@@ -2433,7 +2433,7 @@ int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 	status = sme_send_rate_update_ind(pHddCtx->hHal, &rateUpdate);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: SETMCRATE failed",
 		       __func__);
 		return -EFAULT;
@@ -2557,7 +2557,7 @@ static int drv_cmd_country(hdd_adapter_t *adapter,
 			   hdd_priv_data_t *priv_data)
 {
 	int ret = 0;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	unsigned long rc;
 	char *country_code;
 
@@ -2572,7 +2572,7 @@ static int drv_cmd_country(hdd_adapter_t *adapter,
 			hdd_ctx->pcds_context,
 			eSIR_TRUE,
 			eSIR_TRUE);
-	if (status == CDF_STATUS_SUCCESS) {
+	if (status == QDF_STATUS_SUCCESS) {
 		rc = wait_for_completion_timeout(
 			&adapter->change_country_code,
 			 msecs_to_jiffies(WLAN_WAIT_TIME_COUNTRY));
@@ -2600,7 +2600,7 @@ static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
 	uint8_t *value = command;
 	int8_t rssi = 0;
 	uint8_t lookUpThreshold = CFG_NEIGHBOR_LOOKUP_RSSI_THRESHOLD_DEFAULT;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* Move pointer to ahead of SETROAMTRIGGER<delimiter> */
 	value = value + command_len + 1;
@@ -2648,7 +2648,7 @@ static int drv_cmd_set_roam_trigger(hdd_adapter_t *adapter,
 	status = sme_set_neighbor_lookup_rssi_threshold(hdd_ctx->hHal,
 							adapter->sessionId,
 							lookUpThreshold);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD,
 			  CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to set roam trigger, try again",
@@ -3131,7 +3131,7 @@ static int drv_cmd_get_roam_scan_channels(hdd_adapter_t *adapter,
 	char extra[128] = { 0 };
 	int len;
 
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 		sme_get_roam_scan_channel_list(hdd_ctx->hHal,
 					       ChannelList,
 					       &numChannels,
@@ -4160,7 +4160,7 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 	msg.type = SIR_HAL_ROAM_INVOKE;
 	msg.reserved = 0;
 	msg.bodyptr = fastreassoc;
-	if (CDF_STATUS_SUCCESS != cds_mq_post_message(CDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDF_MODULE_ID_WMA,
 								&msg)) {
 		cdf_mem_free(fastreassoc);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
@@ -4237,7 +4237,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	}
 
 	/* Check channel number is a valid channel number */
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 		wlan_hdd_validate_operation_channel(adapter, channel)) {
 		hddLog(LOGE, FL("Invalid Channel [%d]"), channel);
 		return -EINVAL;
@@ -4272,7 +4272,7 @@ static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
 {
 	int ret = 0;
 	uint8_t *value = command;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirPlmReq pPlmRequest = NULL;
 
 	pPlmRequest = cdf_mem_malloc(sizeof(tSirPlmReq));
@@ -4282,7 +4282,7 @@ static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
 	}
 
 	status = hdd_parse_plm_cmd(value, pPlmRequest);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		cdf_mem_free(pPlmRequest);
 		pPlmRequest = NULL;
 		ret = -EINVAL;
@@ -4291,7 +4291,7 @@ static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
 	pPlmRequest->sessionId = adapter->sessionId;
 
 	status = sme_set_plm_request(hdd_ctx->hHal, pPlmRequest);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		cdf_mem_free(pPlmRequest);
 		pPlmRequest = NULL;
 		ret = -EINVAL;
@@ -4600,7 +4600,7 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 			    uint8_t command_len,
 			    hdd_priv_data_t *priv_data)
 {
-	CDF_STATUS ret_status;
+	QDF_STATUS ret_status;
 	int ret = 0;
 	tHalHandle hHal;
 	uint8_t filterType = 0;
@@ -4646,7 +4646,7 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 	pHddCtx->miracast_value = filterType;
 
 	ret_status = sme_set_miracast(hHal, filterType);
-	if (CDF_STATUS_SUCCESS != ret_status) {
+	if (QDF_STATUS_SUCCESS != ret_status) {
 		hddLog(LOGE, "Failed to set miracast");
 		return -EBUSY;
 	}
@@ -4669,7 +4669,7 @@ static int drv_cmd_set_ccx_roam_scan_channels(hdd_adapter_t *adapter,
 	uint8_t *value = command;
 	uint8_t ChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint8_t numChannels = 0;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ret = hdd_parse_channellist(value, ChannelList, &numChannels);
 	if (ret) {
@@ -4693,7 +4693,7 @@ static int drv_cmd_set_ccx_roam_scan_channels(hdd_adapter_t *adapter,
 						    adapter->sessionId,
 						    ChannelList,
 						    numChannels);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD,
 			  CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to update channel list information",
@@ -4769,7 +4769,7 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 		  CDF_TRACE_LEVEL_INFO,
 		  "%s: Received Command to get tsm stats tid = %d",
 		  __func__, tid);
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 	    hdd_get_tsm_stats(adapter, tid, &tsm_metrics)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD,
 			  CDF_TRACE_LEVEL_ERROR,
@@ -4878,7 +4878,7 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 	int ret;
 	uint8_t *value = command;
 	tCsrEseBeaconReq eseBcnReq;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (WLAN_HDD_INFRA_STATION != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
@@ -4909,13 +4909,13 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 					    adapter->sessionId,
 					    &eseBcnReq);
 
-	if (CDF_STATUS_E_RESOURCES == status) {
+	if (QDF_STATUS_E_RESOURCES == status) {
 		hddLog(CDF_TRACE_LEVEL_INFO,
 		       FL("sme_set_ese_beacon_request failed (%d), a request already in progress"),
 		       status);
 		ret = -EBUSY;
 		goto exit;
-	} else if (CDF_STATUS_SUCCESS != status) {
+	} else if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD,
 			  CDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_set_ese_beacon_request failed (%d)",
@@ -4960,8 +4960,8 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 	int ret = 0;
 	int status;
 	int txPower;
-	CDF_STATUS cdf_status;
-	CDF_STATUS smeStatus;
+	QDF_STATUS qdf_status;
+	QDF_STATUS smeStatus;
 	uint8_t *value = command;
 	struct cdf_mac_addr bssid = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	struct cdf_mac_addr selfMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
@@ -4977,9 +4977,9 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 		goto exit;
 	}
 
-	cdf_status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
+	qdf_status = hdd_get_front_adapter(hdd_ctx, &pAdapterNode);
 	while (NULL != pAdapterNode
-	       && CDF_STATUS_SUCCESS == cdf_status) {
+	       && QDF_STATUS_SUCCESS == qdf_status) {
 		adapter = pAdapterNode->pAdapter;
 		/* Assign correct self MAC address */
 		cdf_copy_macaddr(&bssid,
@@ -4995,7 +4995,7 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 
 		smeStatus = sme_set_max_tx_power(hdd_ctx->hHal,
 						 bssid, selfMac, txPower);
-		if (CDF_STATUS_SUCCESS != status) {
+		if (QDF_STATUS_SUCCESS != status) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s:Set max tx power failed",
 			       __func__);
@@ -5005,7 +5005,7 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 		hddLog(CDF_TRACE_LEVEL_INFO,
 		       "%s: Set max tx power success",
 		       __func__);
-		cdf_status = hdd_get_next_adapter(hdd_ctx, pAdapterNode,
+		qdf_status = hdd_get_next_adapter(hdd_ctx, pAdapterNode,
 						  &pNext);
 		pAdapterNode = pNext;
 	}
@@ -5910,7 +5910,7 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 {
 	uint8_t *value;
 	uint8_t fcc_constraint;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret = 0;
 
 	/*
@@ -5936,7 +5936,7 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 	}
 
 	status = sme_disable_non_fcc_channel(hdd_ctx->hHal, !fcc_constraint);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		hdd_err("sme disable fn. returned err");
 		ret = -EPERM;
 	}

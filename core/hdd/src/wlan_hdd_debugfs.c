@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -321,7 +321,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	char *pattern_buf;
 	uint16_t pattern_len = 0;
 	uint16_t i = 0;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret;
 
 	ENTER();
@@ -411,7 +411,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		/* Delete pattern */
 		status = sme_del_periodic_tx_ptrn(pHddCtx->hHal,
 						  delPeriodicTxPtrnParams);
-		if (CDF_STATUS_SUCCESS != status) {
+		if (QDF_STATUS_SUCCESS != status) {
 			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: sme_del_periodic_tx_ptrn() failed!",
 				  __func__);
@@ -489,7 +489,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	/* Add pattern */
 	status = sme_add_periodic_tx_ptrn(pHddCtx->hHal,
 					  addPeriodicTxPtrnParams);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_add_periodic_tx_ptrn() failed!", __func__);
 
@@ -610,33 +610,33 @@ static const struct file_operations fops_patterngen = {
  * NB: The current implementation only supports debugfs operations
  * on the primary interface, i.e. wlan0
  *
- * Return: CDF_STATUS_SUCCESS if all files registered,
- *	   CDF_STATUS_E_FAILURE on failure
+ * Return: QDF_STATUS_SUCCESS if all files registered,
+ *	   QDF_STATUS_E_FAILURE on failure
  */
-CDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	pHddCtx->debugfs_phy = debugfs_create_dir("wlan_wcnss", 0);
 
 	if (NULL == pHddCtx->debugfs_phy)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("wow_enable", S_IRUSR | S_IWUSR,
 					pHddCtx->debugfs_phy, pAdapter,
 					&fops_wowenable))
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("wow_pattern", S_IRUSR | S_IWUSR,
 					pHddCtx->debugfs_phy, pAdapter,
 					&fops_wowpattern))
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	if (NULL == debugfs_create_file("pattern_gen", S_IRUSR | S_IWUSR,
 					pHddCtx->debugfs_phy, pAdapter,
 					&fops_patterngen))
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

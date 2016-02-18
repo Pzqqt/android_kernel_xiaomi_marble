@@ -630,11 +630,11 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	bool status = false;
 	enum cds_pcl_type pcl_type;
 	char reason[20] = {0};
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 
 	/* flush the entire table first */
 	ret = cds_init_policy_mgr();
-	if (!CDF_IS_STATUS_SUCCESS(ret)) {
+	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		hdd_err("Policy manager initialization failed");
 		return;
 	}
@@ -681,7 +681,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 	enum cds_one_connection_mode second_index;
 	char reason[20] = {0};
 	bool status = false;
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 
 	for (sub_type = CDS_STA_MODE;
 		sub_type < CDS_MAX_NUM_OF_MODE; sub_type++) {
@@ -689,7 +689,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 
 		/* flush the entire table first */
 		ret = cds_init_policy_mgr();
-		if (!CDF_IS_STATUS_SUCCESS(ret)) {
+		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
 		}
@@ -761,7 +761,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 	enum cds_two_connection_mode third_index;
 	char reason[20] = {0};
 	bool status = false;
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 
 	/* let's set the chain_mask, mac_ids*/
 	if (chain_mask == CDS_TWO_TWO) {
@@ -787,7 +787,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 		type_1 = wlan_hdd_valid_type_of_persona(sub_type_1);
 		/* flush the entire table first */
 		ret = cds_init_policy_mgr();
-		if (!CDF_IS_STATUS_SUCCESS(ret)) {
+		if (!QDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
 		}

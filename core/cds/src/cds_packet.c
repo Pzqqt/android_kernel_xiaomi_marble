@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -76,11 +76,11 @@ cdf_spinlock_t trace_buffer_lock;
  * cds_pkt_return_packet  Free the cds Packet
  * @ cds Packet
  */
-CDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
+QDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
 {
 	/* Validate the input parameter pointer */
 	if (unlikely(packet == NULL)) {
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	/* Free up the Adf nbuf */
@@ -91,7 +91,7 @@ CDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
 	/* Free up the Rx packet */
 	cdf_mem_free(packet);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**--------------------------------------------------------------------------
@@ -103,13 +103,13 @@ CDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
    \param pPacket - the cds Packet to get the packet length from.
 
    \param pPacketSize - location to return the total size of the data contained
-                       in the cds Packet.
+   in the cds Packet.
    \return
 
    \sa
 
    ---------------------------------------------------------------------------*/
-CDF_STATUS
+QDF_STATUS
 cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 {
 	/* Validate the parameter pointers */
@@ -117,11 +117,11 @@ cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 	    (pPacket->pkt_buf == NULL)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "VPKT [%d]: NULL pointer", __LINE__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	/* return the requested information */
 	*pPacketSize = cdf_nbuf_len(pPacket->pkt_buf);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*---------------------------------------------------------------------------
@@ -289,10 +289,10 @@ void cds_pkt_proto_trace_close(void)
 * @brief cds_packet_alloc_debug() -
       Allocate a network buffer for TX
    ---------------------------------------------------------------------------*/
-CDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
+QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 				  uint8_t *file_name, uint32_t line_num)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	cdf_nbuf_t nbuf;
 
 	nbuf =
@@ -305,7 +305,7 @@ CDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 		cdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
 		*data = cdf_nbuf_data(nbuf);
-		cdf_ret_status = CDF_STATUS_SUCCESS;
+		cdf_ret_status = QDF_STATUS_SUCCESS;
 	}
 
 	return cdf_ret_status;
@@ -315,9 +315,9 @@ CDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 * @brief cds_packet_alloc() -
       Allocate a network buffer for TX
    ---------------------------------------------------------------------------*/
-CDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
+QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	cdf_nbuf_t nbuf;
 
 	nbuf = cdf_nbuf_alloc(NULL, roundup(size + TX_PKT_MIN_HEADROOM, 4),
@@ -328,7 +328,7 @@ CDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
 		cdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
 		*data = cdf_nbuf_data(nbuf);
-		cdf_ret_status = CDF_STATUS_SUCCESS;
+		cdf_ret_status = QDF_STATUS_SUCCESS;
 	}
 
 	return cdf_ret_status;

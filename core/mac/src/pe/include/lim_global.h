@@ -209,7 +209,7 @@ typedef enum eLimDot11hChanSwStates {
 
 /* WLAN_SUSPEND_LINK Related */
 typedef void (*SUSPEND_RESUME_LINK_CALLBACK)(tpAniSirGlobal pMac,
-					     CDF_STATUS status,
+					     QDF_STATUS status,
 					     uint32_t *data);
 
 /* LIM to HAL SCAN Management Message Interface states */

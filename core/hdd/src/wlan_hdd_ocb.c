@@ -241,16 +241,16 @@ static int hdd_ocb_validate_config(hdd_adapter_t *adapter,
  */
 static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type sta_desc = {0};
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	uint8_t peer_id;
 
-	cdf_status = ol_txrx_register_ocb_peer(hdd_ctx->pcds_context,
+	qdf_status = ol_txrx_register_ocb_peer(hdd_ctx->pcds_context,
 					       adapter->macAddressCurrent.bytes,
 					       &peer_id);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("Error registering OCB Self Peer!"));
 		return -EINVAL;
 	}
@@ -260,11 +260,11 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	sta_desc.sta_id = peer_id;
 	sta_desc.is_qos_enabled = 1;
 
-	cdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
+	qdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
 						&sta_desc);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("Failed to register. Status= %d [0x%08X]"),
-		       cdf_status, cdf_status);
+		       qdf_status, qdf_status);
 		return -EINVAL;
 	}
 
@@ -400,7 +400,7 @@ static int hdd_ocb_set_config_req(hdd_adapter_t *adapter,
 				  struct sir_ocb_config *config)
 {
 	int rc;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	struct hdd_ocb_ctxt context = {0};
 
 	if (hdd_ocb_validate_config(adapter, config)) {
@@ -417,10 +417,10 @@ static int hdd_ocb_set_config_req(hdd_adapter_t *adapter,
 	netif_carrier_off(adapter->dev);
 
 	/* Call the SME API to set the config */
-	cdf_status = sme_ocb_set_config(
+	qdf_status = sme_ocb_set_config(
 		((hdd_context_t *)adapter->pHddCtx)->hHal, &context,
 		hdd_ocb_set_config_callback, config);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, FL("Error calling SME function."));
 		/* Convert from ecdf_status to errno */
 		return -EINVAL;
@@ -1036,7 +1036,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 	cdf_mem_copy(utc->time_error, nla_data(time_error_attr),
 		SIZE_UTC_TIME_ERROR);
 
-	if (sme_ocb_set_utc_time(hdd_ctx->hHal, utc) != CDF_STATUS_SUCCESS) {
+	if (sme_ocb_set_utc_time(hdd_ctx->hHal, utc) != QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, FL("Error while setting UTC time"));
 		rc = -EINVAL;
 	} else {
@@ -1152,7 +1152,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 	}
 
 	if (sme_ocb_start_timing_advert(hdd_ctx->hHal, timing_advert) !=
-			CDF_STATUS_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, FL("Error while starting timing advert"));
 		rc = -EINVAL;
 	} else {
@@ -1254,7 +1254,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_OCB_STOP_TIMING_ADVERT_CHANNEL_FREQ]);
 
 	if (sme_ocb_stop_timing_advert(hdd_ctx->hHal, timing_advert) !=
-			CDF_STATUS_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, FL("Error while stopping timing advert"));
 		rc = -EINVAL;
 	} else {
@@ -1586,7 +1586,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 			       &request);
 	if (rc) {
 		hddLog(LOGE, FL("Error calling SME function"));
-		/* Need to convert from cdf_status to errno. */
+		/* Need to convert from qdf_status to errno. */
 		return -EINVAL;
 	}
 
@@ -1733,7 +1733,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 	if (sme_dcc_clear_stats(hdd_ctx->hHal, adapter->sessionId,
 		nla_get_u32(
 			tb[QCA_WLAN_VENDOR_ATTR_DCC_CLEAR_STATS_BITMAP])) !=
-			CDF_STATUS_SUCCESS) {
+			QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, FL("Error calling SME function."));
 		return -EINVAL;
 	}
@@ -1882,7 +1882,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 				&request);
 	if (rc) {
 		hddLog(LOGE, FL("Error calling SME function."));
-		/* Convert from cdf_status to errno */
+		/* Convert from qdf_status to errno */
 		return -EINVAL;
 	}
 

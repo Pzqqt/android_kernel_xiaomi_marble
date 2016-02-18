@@ -58,7 +58,7 @@ static struct hdd_context_s *p_hdd_ctx;
 static int populate_oem_data_cap(hdd_adapter_t *adapter,
 				 t_iw_oem_data_cap *data_cap)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	struct hdd_config *config;
 	uint32_t num_chan;
 	uint8_t *chan_list;
@@ -97,7 +97,7 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 	num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	status = sme_get_cfg_valid_channels(hdd_ctx->hHal,
 					    &chan_list[0], &num_chan);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("failed to get valid channel list, status: %d", status);
 		cdf_mem_free(chan_list);
 		return -EINVAL;
@@ -179,7 +179,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 	hdd_adapter_list_node_t *pAdapterNode = NULL;
 	hdd_adapter_list_node_t *pNext = NULL;
 	hdd_adapter_t *pAdapter = NULL;
-	CDF_STATUS status = 0;
+	QDF_STATUS status = 0;
 
 	/* OEM message is always to a specific process and cannot be a broadcast */
 	if (p_hdd_ctx->oem_pid == 0) {
@@ -215,7 +215,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 
 	/* Iterate through each of the adapters and fill device mode and vdev id */
 	status = hdd_get_front_adapter(p_hdd_ctx, &pAdapterNode);
-	while ((CDF_STATUS_SUCCESS == status) && pAdapterNode) {
+	while ((QDF_STATUS_SUCCESS == status) && pAdapterNode) {
 		pAdapter = pAdapterNode->pAdapter;
 		if (pAdapter) {
 			deviceMode = buf++;
@@ -364,27 +364,27 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
  *
  * This function sends oem message to SME
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
+static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 {
 	hdd_adapter_t *pAdapter = NULL;
 	tOemDataReqConfig oemDataReqConfig;
 	uint32_t oemDataReqID = 0;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* for now, STA interface only */
 	pAdapter = hdd_get_adapter(p_hdd_ctx, WLAN_HDD_INFRA_STATION);
 	if (!pAdapter) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: No adapter for STA mode", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!oemData) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: oemData is null", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	cdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
@@ -392,7 +392,7 @@ static CDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 	oemDataReqConfig.data = cdf_mem_malloc(oemDataLen);
 	if (!oemDataReqConfig.data) {
 		hddLog(LOGE, FL("malloc failed for data req buffer"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	oemDataReqConfig.data_len = oemDataLen;
@@ -431,7 +431,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 	uint8_t chanId;
 	uint32_t reg_info_1;
 	uint32_t reg_info_2;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int i;
 	uint8_t *buf;
 
@@ -479,7 +479,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 		chanId = chanList[i];
 		status = sme_get_reg_info(p_hdd_ctx->hHal, chanId,
 					  &reg_info_1, &reg_info_2);
-		if (CDF_STATUS_SUCCESS == status) {
+		if (QDF_STATUS_SUCCESS == status) {
 			/* copy into hdd chan info struct */
 			hddChanInfo.chan_id = chanId;
 			hddChanInfo.reserved0 = 0;
@@ -538,7 +538,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 static int oem_process_set_cap_req_msg(int oem_cap_len,
 				       char *oem_cap, int32_t app_pid)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int error_code;
 	struct sk_buff *skb;
 	struct nlmsghdr *nlh;
@@ -552,7 +552,7 @@ static int oem_process_set_cap_req_msg(int oem_cap_len,
 
 	status = sme_oem_update_capability(p_hdd_ctx->hHal,
 					(struct sme_oem_capability *)oem_cap);
-	if (!CDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("error updating rm capability, status: %d", status);
 	error_code = cdf_status_to_os_return(status);
 

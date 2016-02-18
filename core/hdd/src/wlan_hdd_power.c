@@ -103,7 +103,7 @@ static bool ssr_timer_started;
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
 static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 {
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 	tSirGtkOffloadParams hddGtkOffloadReqParams;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
@@ -119,7 +119,7 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 			ret = sme_set_gtk_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						  &hddGtkOffloadReqParams,
 						  pAdapter->sessionId);
-			if (CDF_STATUS_SUCCESS != ret) {
+			if (QDF_STATUS_SUCCESS != ret) {
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: sme_set_gtk_offload failed, returned %d",
@@ -145,7 +145,7 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 				(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				 wlan_hdd_cfg80211_update_replay_counter_callback,
 				 pAdapter, pAdapter->sessionId);
-			if (CDF_STATUS_SUCCESS != ret) {
+			if (QDF_STATUS_SUCCESS != ret) {
 				CDF_TRACE(CDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: sme_get_gtk_offload failed, returned %d",
@@ -168,7 +168,7 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 								    (pAdapter),
 							    &hddGtkOffloadReqParams,
 							    pAdapter->sessionId);
-				if (CDF_STATUS_SUCCESS != ret) {
+				if (QDF_STATUS_SUCCESS != ret) {
 					CDF_TRACE(CDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: failed to dissable GTK offload, returned %d",
@@ -280,7 +280,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 	hdd_context_t *pHddCtx;
 
 	int i = 0;
-	CDF_STATUS returnStatus;
+	QDF_STATUS returnStatus;
 	uint32_t count = 0, scope;
 
 	ENTER();
@@ -394,7 +394,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 			/* Configure the Firmware with this */
 			returnStatus = sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				pAdapter->sessionId, &offLoadRequest);
-			if (CDF_STATUS_SUCCESS != returnStatus) {
+			if (QDF_STATUS_SUCCESS != returnStatus) {
 				hdd_err("Failed to enable HostOffload feature with status: %d",
 					returnStatus);
 			}
@@ -408,7 +408,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 		offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
 		offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 			sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				pAdapter->sessionId, &offLoadRequest))
 				hdd_err("Failed to disable NS Offload");
@@ -679,10 +679,10 @@ int wlan_hdd_ipv4_changed(struct notifier_block *nb,
  * @fenable: true : enable ARP offload false : disable arp offload
  *
  * Return:
- *	CDF_STATUS_SUCCESS - on successful operation,
- *	CDF_STATUS_E_FAILURE - on failure of operation
+ *	QDF_STATUS_SUCCESS - on successful operation,
+ *	QDF_STATUS_E_FAILURE - on failure of operation
  */
-CDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
+QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 {
 	struct in_ifaddr **ifap = NULL;
 	struct in_ifaddr *ifa = NULL;
@@ -701,7 +701,7 @@ CDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 		!pHddCtx->ap_arpns_support) {
 		hddLog(LOG1,
 			FL("ARP Offload is not supported in SAP/P2PGO mode"));
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	if (fenable) {
@@ -749,36 +749,36 @@ CDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 			       offLoadRequest.params.hostIpv4Addr[2],
 			       offLoadRequest.params.hostIpv4Addr[3]);
 
-			if (CDF_STATUS_SUCCESS !=
+			if (QDF_STATUS_SUCCESS !=
 			    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						 pAdapter->sessionId,
 						 &offLoadRequest)) {
 				hddLog(CDF_TRACE_LEVEL_ERROR,
 				       "%s: Failed to enable HostOffload feature",
 				       __func__);
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 			}
 		} else {
 			hddLog(CDF_TRACE_LEVEL_INFO,
 			       FL("IP Address is not assigned"));
 		}
 
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	} else {
 		cdf_mem_zero((void *)&offLoadRequest,
 			     sizeof(tSirHostOffloadReq));
 		offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
 		offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sme_set_host_offload(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					 pAdapter->sessionId, &offLoadRequest)) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       "%s: Failure to disable host " "offload feature",
 			       __func__);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 }
 
@@ -832,7 +832,7 @@ static void hdd_mcbc_filter_modification(hdd_context_t *pHddCtx,
  */
 void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	tpSirWlanSetRxpFilters wlanRxpFilterParam =
 		cdf_mem_malloc(sizeof(tSirWlanSetRxpFilters));
 	if (NULL == wlanRxpFilterParam) {
@@ -857,17 +857,17 @@ void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter)
 	cdf_ret_status =
 		sme_configure_rxp_filter(pHddCtx->hHal, wlanRxpFilterParam);
 
-	if (setfilter && (CDF_STATUS_SUCCESS == cdf_ret_status))
+	if (setfilter && (QDF_STATUS_SUCCESS == cdf_ret_status))
 		pHddCtx->hdd_mcastbcast_filter_set = true;
 
 	hddLog(LOG1,
 		FL("%s to post set/reset filter to lower mac with status %d configuredMcstBcstFilterSetting = %d setMcstBcstFilter = %d"),
-		(CDF_STATUS_SUCCESS != cdf_ret_status) ? "Failed" : "Success",
+		(QDF_STATUS_SUCCESS != cdf_ret_status) ? "Failed" : "Success",
 		cdf_ret_status,
 		wlanRxpFilterParam->configuredMcstBcstFilterSetting,
 		wlanRxpFilterParam->setMcstBcstFilter);
 
-	if (CDF_STATUS_SUCCESS != cdf_ret_status)
+	if (QDF_STATUS_SUCCESS != cdf_ret_status)
 		cdf_mem_free(wlanRxpFilterParam);
 }
 
@@ -1001,7 +1001,7 @@ static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
 						  bool suspended),
 				 void *callbackContext)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	hdd_info("%s: send wlan suspend indication", __func__);
 
@@ -1009,7 +1009,7 @@ static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
 		sme_configure_suspend_ind(pHddCtx->hHal, conn_state_mask,
 					  callback, callbackContext);
 
-	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
 		pHddCtx->hdd_mcastbcast_filter_set = true;
 	} else {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
@@ -1027,11 +1027,11 @@ static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
 static void hdd_conf_resume_ind(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	cdf_ret_status = sme_configure_resume_req(pHddCtx->hHal, NULL);
 
-	if (CDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       "%s: sme_configure_resume_req return failure %d",
 		       __func__, cdf_ret_status);
@@ -1090,7 +1090,7 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 {
 	hdd_context_t *pHddCtx;
 
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	uint32_t conn_state_mask = 0;
@@ -1113,7 +1113,7 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 	hdd_update_mcastbcast_filter(pHddCtx);
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 
 		/* stop all TX queues before suspend */
@@ -1149,7 +1149,7 @@ static void hdd_resume_wlan(void)
 	hdd_context_t *pHddCtx;
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	hddLog(CDF_TRACE_LEVEL_INFO, "%s: WLAN being resumed by OS",
 	       __func__);
@@ -1172,7 +1172,7 @@ static void hdd_resume_wlan(void)
 	/*loop through all adapters. Concurrency */
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 
 		/* wake the tx queues */
@@ -1258,12 +1258,12 @@ static void hdd_ssr_timer_start(int msec)
  *
  * This function is called by the HIF to shutdown the driver during SSR.
  *
- * Return: CDF_STATUS_SUCCESS if the driver was shut down,
+ * Return: QDF_STATUS_SUCCESS if the driver was shut down,
  *	or an error status otherwise
  */
-CDF_STATUS hdd_wlan_shutdown(void)
+QDF_STATUS hdd_wlan_shutdown(void)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx;
 	p_cds_sched_context cds_sched_context = NULL;
@@ -1284,7 +1284,7 @@ CDF_STATUS hdd_wlan_shutdown(void)
 	if (!p_cds_context) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Global CDS context is Null",
 		       __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Get the HDD context. */
@@ -1292,7 +1292,7 @@ CDF_STATUS hdd_wlan_shutdown(void)
 	if (!pHddCtx) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
 		       __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	cds_set_recovery_in_progress(true);
@@ -1343,12 +1343,12 @@ CDF_STATUS hdd_wlan_shutdown(void)
 #endif
 
 	hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Doing WMA STOP", __func__);
-	cdf_status = wma_stop(p_cds_context, HAL_STOP_TYPE_RF_KILL);
+	qdf_status = wma_stop(p_cds_context, HAL_STOP_TYPE_RF_KILL);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to stop WMA", __func__);
-		CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 		wma_setneedshutdown(p_cds_context);
 	}
 
@@ -1356,19 +1356,19 @@ CDF_STATUS hdd_wlan_shutdown(void)
 	/* Stop SME - Cannot invoke cds_disable as cds_disable relies
 	 * on threads being running to process the SYS Stop
 	 */
-	cdf_status = sme_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = sme_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to stop sme %d", __func__, cdf_status);
+			  "%s: Failed to stop sme %d", __func__, qdf_status);
 		CDF_ASSERT(0);
 	}
 
 	hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Doing MAC STOP", __func__);
 	/* Stop MAC (PE and HAL) */
-	cdf_status = mac_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = mac_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Failed to stop mac %d", __func__, cdf_status);
+			  "%s: Failed to stop mac %d", __func__, qdf_status);
 		CDF_ASSERT(0);
 	}
 
@@ -1389,7 +1389,7 @@ CDF_STATUS hdd_wlan_shutdown(void)
 
 	hddLog(CDF_TRACE_LEVEL_FATAL, "%s: WLAN driver shutdown complete",
 	       __func__);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1397,15 +1397,15 @@ CDF_STATUS hdd_wlan_shutdown(void)
  *
  * This function is called by the HIF to re-initialize the driver after SSR.
  *
- * Return: CDF_STATUS_SUCCESS if the driver was re-initialized,
+ * Return: QDF_STATUS_SUCCESS if the driver was re-initialized,
  *	or an error status otherwise
  */
-CDF_STATUS hdd_wlan_re_init(void *hif_sc)
+QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx = NULL;
-	CDF_STATUS cdf_ret_status;
+	QDF_STATUS cdf_ret_status;
 	hdd_adapter_t *pAdapter;
 	int i;
 
@@ -1438,8 +1438,8 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	hdd_set_conparam(0);
 
 	/* Re-open CDS, it is a re-open b'se control transport was never closed. */
-	cdf_status = cds_open();
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_open();
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: cds_open failed", __func__);
 		goto err_re_init;
 	}
@@ -1452,8 +1452,8 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 		goto err_cds_close;
 	}
 
-	cdf_status = cds_pre_enable(pHddCtx->pcds_context);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_pre_enable(pHddCtx->pcds_context);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hdd_alert("cds_pre_enable failed");
 		goto err_cds_close;
 	}
@@ -1464,16 +1464,16 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	 * since the SME config operation must access the cfg database.
 	 * Set the SME configuration parameters.
 	 */
-	cdf_status = hdd_set_sme_config(pHddCtx);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+	qdf_status = hdd_set_sme_config(pHddCtx);
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		hdd_alert("Failed hdd_set_sme_config");
 		goto err_cds_close;
 	}
 
 	ol_txrx_register_pause_cb(wlan_hdd_txrx_pause_cb);
 
-	cdf_status = hdd_set_sme_chan_list(pHddCtx);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = hdd_set_sme_chan_list(pHddCtx);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL,
 		       "%s: Failed to init channel list", __func__);
 		goto err_cds_close;
@@ -1492,7 +1492,7 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 				     (uint8_t *) &pHddCtx->config->
 				     intfMacAddr[0],
 				     sizeof(pHddCtx->config->intfMacAddr[0]));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: Failed to set MAC Address. "
 		       "HALStatus is %08d [x%08x]", __func__, cdf_ret_status,
 		       cdf_ret_status);
@@ -1501,14 +1501,14 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 
 	/* Start CDS which starts up the SME/MAC/HAL modules and everything else
 	   Note: Firmware image will be read and downloaded inside cds_enable API */
-	cdf_status = cds_enable(p_cds_context);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_enable(p_cds_context);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: cds_enable failed", __func__);
 		goto err_cds_close;
 	}
 
-	cdf_status = hdd_post_cds_enable_config(pHddCtx);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = hdd_post_cds_enable_config(pHddCtx);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL,
 		       "%s: hdd_post_cds_enable_config failed", __func__);
 		goto err_cds_disable;
@@ -1628,7 +1628,7 @@ err_cds_close:
 		wiphy_unregister(pHddCtx->wiphy);
 		wiphy_free(pHddCtx->wiphy);
 
-		if (!CDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
+		if (!QDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
 			hdd_err("Failed to deinit policy manager");
 			/* Proceed and complete the clean up */
 		}
@@ -1641,7 +1641,7 @@ err_re_init:
 	return -EPERM;
 
 success:
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1720,7 +1720,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	hdd_adapter_t *pAdapter;
 	hdd_adapter_list_node_t *pAdapterNode, *pNext;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int result;
 	p_cds_sched_context cds_sched_context = get_cds_sched_ctxt();
 
@@ -1768,7 +1768,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 		if ((NULL != pAdapter) &&
 		    (WLAN_HDD_INFRA_STATION == pAdapter->device_mode)) {
@@ -1857,7 +1857,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *pAdapter;
 	hdd_scaninfo_t *pScanInfo;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int rc;
 
 	ENTER();
@@ -1876,7 +1876,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	 * until CAC is done for a SoftAP which is in started state.
 	 */
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 		if (WLAN_HDD_SOFTAP == pAdapter->device_mode) {
 			if (BSS_START ==
@@ -1911,7 +1911,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	/* Stop ongoing scan on each interface */
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 		pScanInfo = &pAdapter->scan_info;
 
@@ -2077,7 +2077,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	int status;
 
 	ENTER();
@@ -2105,11 +2105,11 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 		hddLog(LOG1,
 			FL("offload: in cfg80211_set_power_mgmt, calling arp offload"));
-		cdf_status = hdd_conf_arp_offload(pAdapter, true);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		qdf_status = hdd_conf_arp_offload(pAdapter, true);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(LOG1,
 				FL("Failed to enable ARPOFFLOAD Feature %d"),
-				cdf_status);
+				qdf_status);
 		}
 	}
 
@@ -2204,7 +2204,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 	/* Fall through */
 	case NL80211_TX_POWER_LIMITED:  /* Limit TX power by the mBm parameter */
 		if (sme_set_max_tx_power(hHal, bssid, selfMac, dbm) !=
-		    CDF_STATUS_SUCCESS) {
+		    QDF_STATUS_SUCCESS) {
 			hddLog(LOGE, FL("Setting maximum tx power failed"));
 			return -EIO;
 		}

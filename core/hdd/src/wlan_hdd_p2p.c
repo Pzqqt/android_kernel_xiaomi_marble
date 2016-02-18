@@ -160,8 +160,8 @@ static bool hdd_p2p_is_action_type_rsp(const u8 *buf)
 }
 
 static
-CDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
-			CDF_STATUS status, uint32_t scan_id)
+QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
+			QDF_STATUS status, uint32_t scan_id)
 {
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pCtx;
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
@@ -170,7 +170,7 @@ CDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 
 	if (!hdd_ctx) {
 		hdd_err("Invalid HDD context");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
@@ -181,7 +181,7 @@ CDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 		hddLog(LOGW,
 		       "%s: No Rem on channel pending for which Rsp is received",
 		       __func__);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	hddLog(LOG1, "Received remain on channel rsp");
@@ -266,9 +266,9 @@ CDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	}
 	cdf_mem_free(pRemainChanCtx);
 	complete(&pAdapter->cancel_rem_on_chan_var);
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		complete(&pAdapter->rem_on_chan_ready_event);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
@@ -542,11 +542,11 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		      hdd_remain_on_chan_ctx_t *pRemainChanCtx)
 {
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
 	hdd_adapter_t *pAdapter_temp;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	bool isGoPresent = false;
 	unsigned int duration;
 
@@ -565,11 +565,11 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 
 	/* Initialize Remain on chan timer */
-	cdf_status =
+	qdf_status =
 		cdf_mc_timer_init(&pRemainChanCtx->hdd_remain_on_chan_timer,
 				  CDF_TIMER_TYPE_SW,
 				  wlan_hdd_remain_on_chan_timeout, pAdapter);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("Not able to initialize remain_on_chan timer"));
 		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
@@ -581,7 +581,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 	}
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
-	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
+	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter_temp = pAdapterNode->pAdapter;
 		if (pAdapter_temp->device_mode == WLAN_HDD_P2P_GO) {
 			isGoPresent = true;
@@ -608,7 +608,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		uint8_t sessionId = pAdapter->sessionId;
 		/* call sme API to start remain on channel. */
 
-		if (CDF_STATUS_SUCCESS != sme_remain_on_channel(
+		if (QDF_STATUS_SUCCESS != sme_remain_on_channel(
 				WLAN_HDD_GET_HAL_CTX(pAdapter),
 				sessionId,
 				pRemainChanCtx->chan.hw_value, duration,
@@ -631,7 +631,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 
 		if (REMAIN_ON_CHANNEL_REQUEST ==
 		    pRemainChanCtx->rem_on_chan_request) {
-			if (CDF_STATUS_SUCCESS != sme_register_mgmt_frame(
+			if (QDF_STATUS_SUCCESS != sme_register_mgmt_frame(
 						WLAN_HDD_GET_HAL_CTX(pAdapter),
 						sessionId,
 						(SIR_MAC_MGMT_FRAME << 2) |
@@ -644,7 +644,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 	} else if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
 		   (WLAN_HDD_P2P_GO == pAdapter->device_mode)) {
 		/* call sme API to start remain on channel. */
-		if (CDF_STATUS_SUCCESS != wlansap_remain_on_channel(
+		if (QDF_STATUS_SUCCESS != wlansap_remain_on_channel(
 #ifdef WLAN_FEATURE_MBSSID
 			    WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
 #else
@@ -665,7 +665,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 			return -EINVAL;
 		}
 
-		if (CDF_STATUS_SUCCESS != wlansap_register_mgmt_frame(
+		if (QDF_STATUS_SUCCESS != wlansap_register_mgmt_frame(
 #ifdef WLAN_FEATURE_MBSSID
 			    WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
 #else
@@ -987,7 +987,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 {
 	hdd_cfg80211_state_t *cfgState = NULL;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx = NULL;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if (NULL == pAdapter) {
 		hddLog(LOGE, FL("pAdapter is NULL"));
@@ -1017,7 +1017,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 					   hdd_remain_on_chan_timer,
 					   (pRemainChanCtx->duration +
 					    COMPLETE_EVENT_PROPOGATE_TIME));
-		if (status != CDF_STATUS_SUCCESS) {
+		if (status != QDF_STATUS_SUCCESS) {
 			hddLog(LOGE, "%s: Remain on Channel timer start failed",
 			       __func__);
 		}
@@ -1430,7 +1430,7 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 							   remain_on_chan_ctx->
 							   hdd_remain_on_chan_timer,
 							   wait);
-				if (status != CDF_STATUS_SUCCESS) {
+				if (status != QDF_STATUS_SUCCESS) {
 					hddLog(LOGE,
 					       "%s: Remain on Channel timer start failed",
 					       __func__);
@@ -1572,7 +1572,7 @@ send_frame:
 			}
 		}
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    sme_send_action(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				    sessionId, buf, len, extendedWait, noack,
 				    current_freq)) {
@@ -1582,7 +1582,7 @@ send_frame:
 		}
 	} else if (WLAN_HDD_SOFTAP == pAdapter->device_mode ||
 		   WLAN_HDD_P2P_GO == pAdapter->device_mode) {
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 #ifdef WLAN_FEATURE_MBSSID
 		    wlansap_send_action(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
 #else
@@ -1896,7 +1896,7 @@ int hdd_set_p2p_ps(struct net_device *dev, void *msgData)
 {
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tP2pPsConfig NoA;
 	p2p_app_setP2pPs_t *pappNoA = (p2p_app_setP2pPs_t *) msgData;
 
@@ -2096,7 +2096,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 	uint8_t subType = 0;
 	tActionFrmType actionFrmType;
 	hdd_cfg80211_state_t *cfgState = NULL;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	hdd_remain_on_chan_ctx_t *pRemainChanCtx = NULL;
 	hdd_context_t *pHddCtx;
 
@@ -2270,7 +2270,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 										hdd_remain_on_chan_timer,
 										extend_time);
 								if (status !=
-								    CDF_STATUS_SUCCESS) {
+								    QDF_STATUS_SUCCESS) {
 									hddLog
 										(LOGE,
 										"%s: Remain on Channel timer start failed",

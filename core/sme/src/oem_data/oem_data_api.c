@@ -48,18 +48,18 @@
 /* ---------------------------------------------------------------------------
     \fn oem_data_oem_data_req_open
     \brief This function must be called before any API call to (OEM DATA REQ/RSP module)
-    \return CDF_STATUS
+    \return QDF_STATUS
    -------------------------------------------------------------------------------*/
 
-CDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal)
+QDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	do {
 		/* initialize all the variables to null */
 		cdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				"oem_data_oem_data_req_open: Cannot allocate memory for the timer function");
 			break;
@@ -72,16 +72,16 @@ CDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal)
 /* ---------------------------------------------------------------------------
     \fn oem_data_oem_data_req_close
     \brief This function must be called before closing the csr module
-    \return CDF_STATUS
+    \return QDF_STATUS
    -------------------------------------------------------------------------------*/
 
-CDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal)
+QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	do {
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
+		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				"oem_data_oem_data_req_close: Failed in oem_data_oem_data_req_close at StopTimers");
 			break;
@@ -92,14 +92,14 @@ CDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal)
 
 	} while (0);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /* ---------------------------------------------------------------------------
     \fn oem_data_release_oem_data_req_command
     \brief This function removes the oemDataCommand from the active list and
-           and frees up any memory occupied by this
-    \return CDF_STATUS
+    and frees up any memory occupied by this
+    \return QDF_STATUS
    -------------------------------------------------------------------------------*/
 void oem_data_release_oem_data_req_command(tpAniSirGlobal pMac,
 					   tSmeCmd *pOemDataCmd,
@@ -130,21 +130,21 @@ void oem_data_release_oem_data_req_command(tpAniSirGlobal pMac,
     \brief Request an OEM DATA RSP
     \param sessionId - Id of session to be used
     \param pOemDataReqID - pointer to an object to get back the request ID
-    \return CDF_STATUS
+    \return QDF_STATUS
    -------------------------------------------------------------------------------*/
-CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
+QDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 				 uint8_t sessionId,
 				 tOemDataReqConfig *oemDataReqConfig,
 				 uint32_t *pOemDataReqID)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *pOemDataCmd = NULL;
 	tOemDataReq *cmd_req;
 
 	do {
 		if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
 
@@ -169,7 +169,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 
 			if (!cmd_req->data) {
 				sms_log(pMac, LOGE, FL("memory alloc failed"));
-				status = CDF_STATUS_E_NOMEM;
+				status = QDF_STATUS_E_NOMEM;
 				break;
 			}
 
@@ -177,7 +177,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 				     (void *)(oemDataReqConfig->data),
 				     cmd_req->data_len);
 		} else {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
 
@@ -188,7 +188,7 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 
 	} while (0);
 
-	if (!CDF_IS_STATUS_SUCCESS(status) && pOemDataCmd) {
+	if (!QDF_IS_STATUS_SUCCESS(status) && pOemDataCmd) {
 		oem_data_release_oem_data_req_command(pMac, pOemDataCmd,
 						      eOEM_DATA_REQ_FAILURE);
 		pMac->oemData.oemDataReqActive = false;
@@ -202,12 +202,12 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
     \brief Request an OEM DATA REQ to be passed down to PE
     \param pMac:
     \param pOemDataReq: Pointer to the oem data request
-    \return CDF_STATUS
+    \return QDF_STATUS
    -------------------------------------------------------------------------------*/
-CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
+QDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 					 tOemDataReq *pOemDataReq)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirOemDataReq *pMsg;
 	tCsrRoamSession *pSession =
 		CSR_GET_SESSION(pMac, pOemDataReq->sessionId);
@@ -217,13 +217,13 @@ CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 
 	if (!pOemDataReq) {
 		sms_log(pMac, LOGE, FL("oem data req is NULL"));
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	pMsg = cdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg) {
 		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	msgLen = (uint16_t) (sizeof(*pMsg) + pOemDataReq->data_len);
@@ -250,12 +250,12 @@ CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
  * This function is called by the sme_process_command when the case hits
  * eSmeCommandOemDataReq.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS oem_data_process_oem_data_req_command(tpAniSirGlobal pMac,
+QDF_STATUS oem_data_process_oem_data_req_command(tpAniSirGlobal pMac,
 						 tSmeCmd *pOemDataReqCmd)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* check if the system is in proper mode of operation for
 	 * oem data req/rsp to be functional. Currently, concurrency is not
@@ -268,7 +268,7 @@ CDF_STATUS oem_data_process_oem_data_req_command(tpAniSirGlobal pMac,
 	 * 3. BTAMP Mode
 	 */
 
-	if (CDF_STATUS_SUCCESS == oem_data_is_oem_data_req_allowed(pMac)) {
+	if (QDF_STATUS_SUCCESS == oem_data_is_oem_data_req_allowed(pMac)) {
 		sms_log(pMac, LOG1,
 			FL("OEM_DATA REQ allowed in the current mode"));
 		pMac->oemData.oemDataReqActive = true;
@@ -277,10 +277,10 @@ CDF_STATUS oem_data_process_oem_data_req_command(tpAniSirGlobal pMac,
 	} else {
 		sms_log(pMac, LOG1,
 			FL("OEM_DATA REQ not allowed in the current mode"));
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 	}
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOG1, FL("OEM_DATA Failure, Release command"));
 		oem_data_release_oem_data_req_command(pMac, pOemDataReqCmd,
 				eOEM_DATA_REQ_INVALID_MODE);
@@ -297,11 +297,11 @@ CDF_STATUS oem_data_process_oem_data_req_command(tpAniSirGlobal pMac,
  *
  * This function processes the oem data response obtained from the PE
  *
- * Return: CDF_STATUS.
+ * Return: QDF_STATUS.
  */
-CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
+QDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac;
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
@@ -315,7 +315,7 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 	do {
 		if (pMsg == NULL) {
 			sms_log(pMac, LOGE, "in %s msg ptr is NULL", __func__);
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
 
@@ -365,12 +365,12 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 /* ---------------------------------------------------------------------------
     \fn oem_data_is_oem_data_req_allowed
     \brief This function checks if OEM DATA REQs can be performed in the
-           current driver state
-    \return CDF_STATUS
+    current driver state
+    \return QDF_STATUS
    -------------------------------------------------------------------------------*/
-CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal)
+QDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint32_t sessionId;
 
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -382,7 +382,7 @@ CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal)
 				sms_log(pMac, LOGW,
 					"OEM DATA REQ is not allowed due to IBSS exist in session %d",
 					sessionId);
-				status = CDF_STATUS_CSR_WRONG_STATE;
+				status = QDF_STATUS_CSR_WRONG_STATE;
 				break;
 			}
 		}
@@ -391,7 +391,7 @@ CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal)
 	sms_log(pMac, LOG1, "Exiting oem_data_is_oem_data_req_allowed with status %d",
 		status);
 
-	return (status);
+	return status;
 }
 
 #endif /*FEATURE_OEM_DATA_SUPPORT */

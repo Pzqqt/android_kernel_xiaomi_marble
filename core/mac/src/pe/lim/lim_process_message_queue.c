@@ -1018,9 +1018,9 @@ end:
  ***NOTE:
  *
  * @param  pMac      Pointer to Global MAC structure
- * @return CDF_STATUS_SUCCESS or CDF_STATUS_E_FAILURE
+ * @return QDF_STATUS_SUCCESS or QDF_STATUS_E_FAILURE
  */
-CDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	uint8_t SessionId, uint32_t scan_id, uint32_t scan_requestor_id)
 {
 	tSirMsgQ msg;
@@ -1031,7 +1031,7 @@ CDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	if (NULL == pAbortScanParams) {
 		lim_log(pMac, LOGP,
 			FL("Memory allocation failed for AbortScanParams"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	pAbortScanParams->SessionId = SessionId;
@@ -1045,11 +1045,11 @@ CDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	if (rc != eSIR_SUCCESS) {
 		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure"));
 		cdf_mem_free(pAbortScanParams);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	lim_log(pMac, LOG1, FL("Abort ongoing offload scan."));
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 }
 
@@ -1110,10 +1110,10 @@ void lim_message_processor(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 
-void lim_oem_data_rsp_handle_resume_link_rsp(tpAniSirGlobal pMac, CDF_STATUS status,
+void lim_oem_data_rsp_handle_resume_link_rsp(tpAniSirGlobal pMac, QDF_STATUS status,
 					     uint32_t *mlmOemDataRsp)
 {
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		lim_log(pMac, LOGE,
 			FL
 				("OEM Data Rsp failed to get the response for resume link"));
@@ -1175,7 +1175,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	tLinkStateParams *link_state_param;
 	uint16_t pkt_len = 0;
 	cds_pkt_t *body_ptr = NULL;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	tSirMsgQ new_msg;
 	tSirSmeScanAbortReq *req_msg = NULL;
 	uint8_t session_id;
@@ -1261,10 +1261,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		body_ptr = (cds_pkt_t *) new_msg.bodyptr;
 		cds_pkt_get_packet_length(body_ptr, &pkt_len);
 
-		cdf_status = wma_ds_peek_rx_packet_info(body_ptr,
+		qdf_status = wma_ds_peek_rx_packet_info(body_ptr,
 			(void **) &new_msg.bodyptr, false);
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_pkt_return_packet(body_ptr);
 			break;
 		}
@@ -1407,13 +1407,13 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				p2p_go_exists = 1;
 				cdf_mem_copy(&session_entry->p2pGoPsNoaStartInd,
 					msg->bodyptr, sizeof(tSirP2PNoaStart));
-				cdf_status =
+				qdf_status =
 					session_entry->p2pGoPsNoaStartInd.status;
-				if (cdf_status != CDF_STATUS_SUCCESS)
+				if (qdf_status != QDF_STATUS_SUCCESS)
 					CDF_TRACE(CDF_MODULE_ID_PE, LOGW,
 						FL(
 						"GO NOA start status %d by FW"),
-						cdf_status);
+						qdf_status);
 				break;
 			}
 		}

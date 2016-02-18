@@ -302,19 +302,19 @@ static void hdd_wlan_green_ap_timer_fn(void *ctx)
  * hdd_wlan_green_ap_attach() - Attach Green AP context to HDD context
  * @hdd_ctx: Global HDD contect
  *
- * Return: CDF_STATUS_SUCCESS on success, otherwise CDF_STATUS_E_* error
+ * Return: QDF_STATUS_SUCCESS on success, otherwise CDF_STATUS_E_* error
  */
-static CDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
+static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_green_ap_ctx *green_ap;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	ENTER();
 
 	green_ap = cdf_mem_malloc(sizeof(*green_ap));
 	if (!green_ap) {
 		hdd_alert("Memory allocation for Green-AP failed!");
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 		goto error;
 	}
 
@@ -340,18 +340,18 @@ error:
  * hdd_wlan_green_ap_deattach() - Detach Green AP context from HDD context
  * @hdd_ctx: Global HDD contect
  *
- * Return: CDF_STATUS_SUCCESS on success, otherwise CDF_STATUS_E_* error
+ * Return: QDF_STATUS_SUCCESS on success, otherwise CDF_STATUS_E_* error
  */
-static CDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
+static QDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 {
 	struct hdd_green_ap_ctx *green_ap = hdd_ctx->green_ap_ctx;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	ENTER();
 
 	if (green_ap == NULL) {
 		hdd_notice("Green-AP is not enabled");
-		status = CDF_STATUS_E_NOSUPPORT;
+		status = QDF_STATUS_E_NOSUPPORT;
 		goto done;
 	}
 
@@ -361,7 +361,7 @@ static CDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 		cdf_mc_timer_stop(&green_ap->ps_timer);
 
 	/* Destroy the Green AP timer */
-	if (!CDF_IS_STATUS_SUCCESS(cdf_mc_timer_destroy(&green_ap->ps_timer)))
+	if (!QDF_IS_STATUS_SUCCESS(cdf_mc_timer_destroy(&green_ap->ps_timer)))
 		hdd_notice("Cannot deallocate Green-AP's timer");
 
 	/* release memory */
@@ -383,7 +383,7 @@ done:
  */
 void hdd_wlan_green_ap_init(struct hdd_context_s *hdd_ctx)
 {
-	if (!CDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_attach(hdd_ctx)))
+	if (!QDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_attach(hdd_ctx)))
 		hdd_err("Failed to allocate Green-AP resource");
 }
 
@@ -395,7 +395,7 @@ void hdd_wlan_green_ap_init(struct hdd_context_s *hdd_ctx)
  */
 void hdd_wlan_green_ap_deinit(struct hdd_context_s *hdd_ctx)
 {
-	if (!CDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_deattach(hdd_ctx)))
+	if (!QDF_IS_STATUS_SUCCESS(hdd_wlan_green_ap_deattach(hdd_ctx)))
 		hdd_err("Cannot deallocate Green-AP resource");
 }
 

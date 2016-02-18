@@ -560,9 +560,9 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
  * @source : returns source of the scan request
  * @timestamp: scan request timestamp
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
+QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 	uint32_t scan_id, struct cfg80211_scan_request **req, uint8_t *source,
 	uint32_t *timestamp)
 {
@@ -633,7 +633,7 @@ CDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
  * Return: 0 for success, non zero for failure
  */
 
-static CDF_STATUS
+static QDF_STATUS
 hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 			  uint8_t sessionId, uint32_t scanId,
 			  eCsrScanStatus status)
@@ -663,7 +663,7 @@ hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 	if (pAdapter->dev != dev) {
 		hddLog(LOGW, "%s: device mismatch %p vs %p",
 		       __func__, pAdapter->dev, dev);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	wlan_hdd_scan_request_dequeue(hddctx, scanId, &req, &source,
@@ -687,7 +687,7 @@ hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 	wireless_send_event(dev, we_event, &wrqu, msg);
 
 	EXIT();
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -710,7 +710,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	tCsrScanRequest scanRequest;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	struct iw_scan_req *scanReq = (struct iw_scan_req *)extra;
 	hdd_adapter_t *con_sap_adapter;
 	uint16_t con_dfs_ch;
@@ -832,7 +832,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 	status = sme_scan_request((WLAN_HDD_GET_CTX(pAdapter))->hHal,
 				  pAdapter->sessionId, &scanRequest,
 				  &hdd_scan_request_callback, dev);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 			  "%s:sme_scan_request  fail %d!!!", __func__, status);
 		goto error;
@@ -891,7 +891,7 @@ static int __iw_get_scan(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	tCsrScanResultInfo *pScanResult;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_scan_info_t scanInfo;
 	tScanResultHandle pResult;
 	int i = 0;
@@ -1089,7 +1089,7 @@ nla_put_failure:
  *
  * Return: CDF status
  */
-static CDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
+static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 					   void *pContext,
 					   uint8_t sessionId,
 					   uint32_t scanId,
@@ -1108,7 +1108,7 @@ static CDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 
 	ret = wlan_hdd_validate_context(hddctx);
 	if (0 != ret)
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 
 	hddLog(CDF_TRACE_LEVEL_INFO,
 		"%s called with hal = %p, pContext = %p, ID = %d, status = %d",
@@ -1121,7 +1121,7 @@ static CDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 		goto allow_suspend;
 	}
 
-	if (CDF_STATUS_SUCCESS !=
+	if (QDF_STATUS_SUCCESS !=
 		wlan_hdd_scan_request_dequeue(hddctx, scanId, &req, &source,
 			&scan_time)) {
 		hdd_err("Dequeue of scan request failed ID: %d", scanId);
@@ -1554,9 +1554,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 				pAdapter->sessionId, &scan_req,
 				&hdd_cfg80211_scan_done_callback, dev);
 
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE, FL("sme_scan_request returned error %d"), status);
-		if (CDF_STATUS_E_RESOURCES == status) {
+		if (QDF_STATUS_E_RESOURCES == status) {
 			hddLog(LOGE,
 			       FL("HO is in progress.So defer the scan by informing busy"));
 			status = -EBUSY;
@@ -1985,7 +1985,7 @@ hdd_sched_scan_callback(void *callbackContext,
  *
  * Return: Success if PNO is allowed, Failure otherwise.
  */
-static CDF_STATUS wlan_hdd_is_pno_allowed(hdd_adapter_t *adapter)
+static QDF_STATUS wlan_hdd_is_pno_allowed(hdd_adapter_t *adapter)
 {
 	hddLog(LOG1,
 		FL("dev_mode=%d, conn_state=%d, session ID=%d"),
@@ -1995,9 +1995,9 @@ static CDF_STATUS wlan_hdd_is_pno_allowed(hdd_adapter_t *adapter)
 	if ((adapter->device_mode == WLAN_HDD_INFRA_STATION) &&
 		(eConnectionState_NotConnected ==
 		 adapter->sessionCtx.station.conn_info.connState))
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	else
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 }
 
@@ -2023,7 +2023,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 	u8 valid_ch[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	u8 channels_allowed[WNI_CFG_VALID_CHANNEL_LIST_LEN] = { 0 };
 	uint32_t num_channels_allowed = WNI_CFG_VALID_CHANNEL_LIST_LEN;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int ret = 0;
 	hdd_scaninfo_t *pScanInfo = &pAdapter->scan_info;
 	struct hdd_config *config = NULL;
@@ -2079,7 +2079,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		}
 	}
 
-	if (CDF_STATUS_E_FAILURE == wlan_hdd_is_pno_allowed(pAdapter)) {
+	if (QDF_STATUS_E_FAILURE == wlan_hdd_is_pno_allowed(pAdapter)) {
 		hddLog(LOGE, FL("pno is not allowed"));
 		return -ENOTSUPP;
 	}
@@ -2251,7 +2251,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						pAdapter->sessionId,
 						hdd_sched_scan_callback,
 						pAdapter);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE, FL("Failed to enable PNO"));
 		ret = -EINVAL;
 		goto error;
@@ -2297,7 +2297,7 @@ int wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 					       struct net_device *dev)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
 	tHalHandle hHal;
@@ -2361,7 +2361,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	status = sme_set_preferred_network_list(hHal, pPnoRequest,
 						pAdapter->sessionId,
 						NULL, pAdapter);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE, FL("Failed to disabled PNO"));
 		ret = -EINVAL;
 	}

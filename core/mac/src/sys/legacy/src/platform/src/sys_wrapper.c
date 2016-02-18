@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,7 +34,7 @@
 
 /*===========================================================================
 
-                       EDIT HISTORY FOR FILE
+			EDIT HISTORY FOR FILE
 
    This section contains comments describing changes made to the module.
    Notice that changes are listed in reverse chronological order.
@@ -44,18 +44,18 @@
    when        who    what, where, why
    --------    ---    --------------------------------------------------------
    03/31/09    sho    Remove the use of cdf_timerIsActive flag as it is not
-                     thread-safe
+			thread-safe
    02/17/08    sho    Fix the timer callback function to work when it is called
-                     after the timer has stopped due to a race condition.
+			after the timer has stopped due to a race condition.
    02/10/08    sho    Refactor the TX timer to use VOS timer directly instead
-                     of using VOS utility timer
+			of using VOS utility timer
    12/15/08    sho    Resolved errors and warnings from the AMSS compiler when
-                     this is ported from WM
+			this is ported from WM
    11/20/08    sho    Renamed this to VosWrapper.c; remove all dependencies on
-                     WM platform and allow this to work on all VOSS enabled
-                     platform
+			WM platform and allow this to work on all VOSS enabled
+			platform
    06/24/08    tbh    Modified the file to remove the dependecy on HDD files as
-                     part of Gen6 bring up process.
+			part of Gen6 bring up process.
    10/29/02 Neelay Das Created file.
 
    ===========================================================================*/
@@ -89,7 +89,7 @@
  */
 uint64_t tx_time_get(void)
 {
-	return (cdf_mc_timer_get_system_ticks());
+	return cdf_mc_timer_get_system_ticks();
 
 } /* * tx_time_get() */
 
@@ -111,7 +111,7 @@ uint64_t tx_time_get(void)
  */
 uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	/* Uncomment the asserts, if the intention is to debug the occurence of the */
 	/* following anomalous cnditions. */
@@ -141,11 +141,11 @@ uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 	status = cdf_mc_timer_start(&timer_ptr->cdf_timer,
 				    timer_ptr->initScheduleTimeInMsecs);
 
-	if (CDF_STATUS_SUCCESS == status) {
+	if (QDF_STATUS_SUCCESS == status) {
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
 			  "Timer %s now activated\n", TIMER_NAME);
 		return TX_SUCCESS;
-	} else if (CDF_STATUS_E_ALREADY == status) {
+	} else if (QDF_STATUS_E_ALREADY == status) {
 		/* starting timer fails because timer is already started; this is okay */
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
 			  "Timer %s is already running\n", TIMER_NAME);
@@ -271,12 +271,12 @@ static void tx_main_timer_func(void *functionContext)
 
 	/* check if this needs to be rescheduled */
 	if (0 != timer_ptr->rescheduleTimeInMsecs) {
-		CDF_STATUS status;
+		QDF_STATUS status;
 		status = cdf_mc_timer_start(&timer_ptr->cdf_timer,
 					    timer_ptr->rescheduleTimeInMsecs);
 		timer_ptr->rescheduleTimeInMsecs = 0;
 
-		if (CDF_STATUS_SUCCESS != status) {
+		if (QDF_STATUS_SUCCESS != status) {
 			CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_WARN,
 				  "Unable to reschedule timer %s; status=%d",
 				  TIMER_NAME, status);
@@ -295,7 +295,7 @@ uint32_t tx_timer_create_intern_debug(void *pMacGlobal,
 				      uint64_t auto_activate, char *fileName,
 				      uint32_t lineNum)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if (NULL == expiration_function) {
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
@@ -338,7 +338,7 @@ uint32_t tx_timer_create_intern_debug(void *pMacGlobal,
 		cdf_mc_timer_init_debug(&timer_ptr->cdf_timer, CDF_TIMER_TYPE_SW,
 					tx_main_timer_func, (void *) timer_ptr,
 					fileName, lineNum);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "Cannot create timer for %s\n", TIMER_NAME);
 		return TX_TIMER_ERROR;
@@ -366,7 +366,7 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
 				uint64_t rescheduleTimeInTicks,
 				uint64_t auto_activate)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if ((NULL == name_ptr) || (NULL == expiration_function))
 		return TX_TIMER_ERROR;
@@ -396,7 +396,7 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
 
 	status = cdf_mc_timer_init(&timer_ptr->cdf_timer, CDF_TIMER_TYPE_SW,
 				   tx_main_timer_func, (void *) timer_ptr);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "Cannot create timer for %s\n", TIMER_NAME);
 		return TX_TIMER_ERROR;
@@ -434,7 +434,7 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
  */
 uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 {
-	CDF_STATUS vStatus;
+	QDF_STATUS vStatus;
 	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
 		  "tx_timer_deactivate() called for timer %s\n", TIMER_NAME);
 
@@ -444,7 +444,7 @@ uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 	}
 	/* if the timer is not running then we do not need to do anything here */
 	vStatus = cdf_mc_timer_stop(&timer_ptr->cdf_timer);
-	if (CDF_STATUS_SUCCESS != vStatus) {
+	if (QDF_STATUS_SUCCESS != vStatus) {
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "Unable to stop timer %s; status =%d\n",
 			  TIMER_NAME, vStatus);

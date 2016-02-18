@@ -292,7 +292,7 @@ static bool wlan_hdd_is_eapol_or_wai(struct sk_buff *skb)
  */
 int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	sme_ac_enum_type ac;
 	sme_QosWmmUpType up;
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
@@ -325,7 +325,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		struct cdf_mac_addr *pDestMacAddress =
 					(struct cdf_mac_addr *) skb->data;
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 				hdd_ibss_get_sta_id(&pAdapter->sessionCtx.station,
 					pDestMacAddress, &STAId))
 			STAId = HDD_WLAN_INVALID_STA_ID;
@@ -522,10 +522,10 @@ drop_pkt:
  * @pMacAddress: pointer to Peer Mac address
  * @staID: pointer to returned Station Index
  *
- * Return: CDF_STATUS_SUCCESS/CDF_STATUS_E_FAILURE
+ * Return: QDF_STATUS_SUCCESS/QDF_STATUS_E_FAILURE
  */
 
-CDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
+QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
 			       struct cdf_mac_addr *pMacAddress, uint8_t *staId)
 {
 	uint8_t idx;
@@ -534,11 +534,11 @@ CDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
 		if (cdf_mem_compare(&pHddStaCtx->conn_info.peerMacAddress[idx],
 				    pMacAddress, CDF_MAC_ADDR_SIZE)) {
 			*staId = pHddStaCtx->conn_info.staId[idx];
-			return CDF_STATUS_SUCCESS;
+			return QDF_STATUS_SUCCESS;
 		}
 	}
 
-	return CDF_STATUS_E_FAILURE;
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -601,18 +601,18 @@ void hdd_tx_timeout(struct net_device *dev)
  * @hdd_init_tx_rx() - Initialize Tx/RX module
  * @pAdapter: pointer to adapter context
  *
- * Return: CDF_STATUS_E_FAILURE if any errors encountered,
- *	   CDF_STATUS_SUCCESS otherwise
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
  */
-CDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  FL("pAdapter is NULL"));
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	return status;
@@ -622,18 +622,18 @@ CDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
  * @hdd_deinit_tx_rx() - Deinitialize Tx/RX module
  * @pAdapter: pointer to adapter context
  *
- * Return: CDF_STATUS_E_FAILURE if any errors encountered,
- *	   CDF_STATUS_SUCCESS otherwise
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
  */
-CDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
+QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  FL("pAdapter is NULL"));
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	return status;
@@ -649,10 +649,10 @@ CDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
  * the HDD when one or more packets were received for a registered
  * STA.
  *
- * Return: CDF_STATUS_E_FAILURE if any errors encountered,
- *	   CDF_STATUS_SUCCESS otherwise
+ * Return: QDF_STATUS_E_FAILURE if any errors encountered,
+ *	   QDF_STATUS_SUCCESS otherwise
  */
-CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
+QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 {
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_context_t *pHddCtx = NULL;
@@ -668,14 +668,14 @@ CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	if ((NULL == cds_context) || (NULL == rxBuf)) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (NULL == pHddCtx) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pAdapter = pHddCtx->sta_to_adapter[staId];
@@ -683,7 +683,7 @@ CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 		hddLog(LOGE,
 			FL("invalid adapter %p or adapter has invalid magic"),
 			pAdapter);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	cpu_index = wlan_hdd_get_cpu();
 
@@ -693,7 +693,7 @@ CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
 			  pAdapter->magic);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -707,7 +707,7 @@ CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 		 * it to stack
 		 */
 		cdf_nbuf_free(skb);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	wlan_hdd_log_eapol(skb, WIFI_EVENT_DRIVER_EAPOL_FRAME_RECEIVED);
@@ -764,7 +764,7 @@ CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 
 	pAdapter->dev->last_rx = jiffies;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT

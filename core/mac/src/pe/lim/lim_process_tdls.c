@@ -319,7 +319,7 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 /*
  * TX Complete for Management frames
  */
-CDF_STATUS lim_mgmt_tx_complete(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
+QDF_STATUS lim_mgmt_tx_complete(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
 {
 	tpPESession psessionEntry = NULL;
 
@@ -330,13 +330,13 @@ CDF_STATUS lim_mgmt_tx_complete(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
 		if (NULL == psessionEntry) {
 			lim_log(pMac, LOGE, FL("sessionID %d is not found"),
 				pMac->lim.mgmtFrameSessionId);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		lim_send_sme_mgmt_tx_completion(pMac, psessionEntry,
 						txCompleteSuccess);
 		pMac->lim.mgmtFrameSessionId = 0xff;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -356,7 +356,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 	uint32_t header_offset = 0;
 	uint8_t *pFrame;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
 	uint32_t padLen = 0;
 #endif
@@ -437,9 +437,9 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
 
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP,
 			FL(
 			   "Failed to allocate %d bytes for a TDLS Discovery Request."
@@ -509,7 +509,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(peer_mac.bytes));
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
-	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_DATA,
 					      ANI_TXDIR_TODS,
 					      TID_AC_VI,
@@ -517,7 +517,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 					      lim_mgmt_tx_complete,
 					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					      smeSessionId, false, 0);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Discovery Request frame"));
@@ -606,7 +606,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	uint32_t nBytes = 0;
 	uint8_t *pFrame;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint32_t selfDot11Mode;
 /*  Placeholder to support different channel bonding mode of TDLS than AP. */
 /*  Today, WNI_CFG_CHANNEL_BONDING_MODE will be overwritten when connecting to AP */
@@ -717,9 +717,9 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr) + addIeLen;
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				(void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL(
 			   "Failed to allocate %d bytes for a TDLS Discovery Request."
@@ -790,7 +790,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	 * wma does not do header conversion to 802.3 before calling tx/rx
 	 * routine and subsequenly target also sends frame as is OTA
 	 */
-	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_MGMT,
 					      ANI_TXDIR_IBSS,
 					      0,
@@ -798,7 +798,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 					      lim_mgmt_tx_complete,
 					      HAL_USE_SELF_STA_REQUESTED_MASK,
 					      smeSessionId, false, 0);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Discovery Response frame!"));
@@ -867,7 +867,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	uint32_t header_offset = 0;
 	uint8_t *pFrame;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint32_t selfDot11Mode;
 	uint8_t smeSessionId = 0;
 /*  Placeholder to support different channel bonding mode of TDLS than AP. */
@@ -1039,9 +1039,9 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 		 + PAYLOAD_TYPE_TDLS_SIZE + addIeLen;
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 			(void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL(
 			   "Failed to allocate %d bytes for a TDLS Setup Request."
@@ -1110,7 +1110,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_DATA,
 					      ANI_TXDIR_TODS,
 					      TID_AC_VI,
@@ -1119,7 +1119,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					      smeSessionId, false, 0);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Setup Request frame!"));
@@ -1148,7 +1148,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	uint32_t header_offset = 0;
 	uint8_t *pFrame;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
 	uint32_t padLen = 0;
 #endif
@@ -1224,9 +1224,9 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 #endif
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 			(void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL(
 			   "Failed to allocate %d bytes for a TDLS Teardown Frame."
@@ -1312,7 +1312,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_DATA,
 					      ANI_TXDIR_TODS,
 					      TID_AC_VI,
@@ -1321,7 +1321,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					      smeSessionId, false, 0);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Teardown frame"));
@@ -1350,7 +1350,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	uint32_t nBytes = 0;
 	uint8_t *pFrame;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint32_t selfDot11Mode;
 /*  Placeholder to support different channel bonding mode of TDLS than AP. */
 /*  Today, WNI_CFG_CHANNEL_BONDING_MODE will be overwritten when connecting to AP */
@@ -1521,9 +1521,9 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 		 + PAYLOAD_TYPE_TDLS_SIZE + addIeLen;
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL(
 			   "Failed to allocate %d bytes for a TDLS Setup Response."
@@ -1590,7 +1590,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_DATA,
 					      ANI_TXDIR_TODS,
 					      TID_AC_VI,
@@ -1599,7 +1599,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					      smeSessionId, false, 0);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Dis Request frame!"));
@@ -1627,7 +1627,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	uint32_t header_offset = 0;
 	uint8_t *pFrame;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
 	uint32_t padLen = 0;
 #endif
@@ -1728,9 +1728,9 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 #endif
 
 	/* Ok-- try to allocate memory from MGMT PKT pool */
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL(
 			   "Failed to allocate %d bytes for a TDLS Setup Confirm."
@@ -1810,7 +1810,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 
 	pMac->lim.mgmtFrameSessionId = psessionEntry->peSessionId;
 
-	cdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					      TXRX_FRM_802_11_DATA,
 					      ANI_TXDIR_TODS,
 					      TID_AC_VI,
@@ -1819,7 +1819,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 					      HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME,
 					      smeSessionId, false, 0);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pMac->lim.mgmtFrameSessionId = 0xff;
 		lim_log(pMac, LOGE,
 			FL("could not send TDLS Setup Confirm frame"));
@@ -2470,7 +2470,7 @@ static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac,
 /*
  * Once Link is setup with PEER, send Add STA ind to SME
  */
-static CDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
+static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 						uint8_t sessionId,
 						tSirMacAddr peerMac,
 						uint8_t updateSta,
@@ -2483,7 +2483,7 @@ static CDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	addStaRsp = cdf_mem_malloc(sizeof(tSirTdlsAddStaRsp));
 	if (NULL == addStaRsp) {
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	addStaRsp->sessionId = sessionId;
@@ -2509,13 +2509,13 @@ static CDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	mmhMsg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
  * STA RSP received from HAL
  */
-CDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg,
+QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg,
 					tpPESession psessionEntry)
 {
 	tAddStaParams *pAddStaParams = (tAddStaParams *) msg;
@@ -2528,7 +2528,7 @@ CDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg,
 	       pAddStaParams->staIdx,
 	       MAC_ADDR_ARRAY(pAddStaParams->staMac));
 
-	if (pAddStaParams->status != CDF_STATUS_SUCCESS) {
+	if (pAddStaParams->status != QDF_STATUS_SUCCESS) {
 		CDF_ASSERT(0);
 		lim_log(pMac, LOGE, FL("Add sta failed "));
 		status = eSIR_FAILURE;
@@ -2876,7 +2876,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 /*
  * Once link is teardown, send Del Peer Ind to SME
  */
-static CDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
+static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 						uint8_t sessionId,
 						struct cdf_mac_addr peerMac,
 						tDphHashNode *pStaDs, uint8_t status)
@@ -2888,7 +2888,7 @@ static CDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 	pDelSta = cdf_mem_malloc(sizeof(tSirTdlsDelStaRsp));
 	if (NULL == pDelSta) {
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	pDelSta->sessionId = sessionId;
@@ -2907,7 +2907,7 @@ static CDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 
 	mmhMsg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 }
 

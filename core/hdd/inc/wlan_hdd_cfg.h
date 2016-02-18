@@ -3569,32 +3569,32 @@ static __inline unsigned long util_min(unsigned long a, unsigned long b)
 }
 
 /* Function declarations and documenation */
-CDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx);
-CDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx);
-CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx);
-CDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx);
+QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx);
+QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx);
+QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx);
+QDF_STATUS hdd_set_sme_chan_list(hdd_context_t *hdd_ctx);
 bool hdd_update_config_dat(hdd_context_t *pHddCtx);
-CDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
+QDF_STATUS hdd_cfg_get_global_config(hdd_context_t *pHddCtx, char *pBuf,
 				     int buflen);
 
 eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode);
-CDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
+QDF_STATUS hdd_execute_global_config_command(hdd_context_t *pHddCtx,
 					     char *command);
 
 bool hdd_is_okc_mode_enabled(hdd_context_t *pHddCtx);
-CDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val);
+QDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val);
 
 void hdd_update_tgt_cfg(void *context, void *param);
 bool hdd_dfs_indicate_radar(void *context, void *param);
 
-CDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
+QDF_STATUS hdd_string_to_u8_array(char *str, uint8_t *intArray, uint8_t *len,
 				  uint8_t intArrayMaxLen);
-CDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
+QDF_STATUS hdd_hex_string_to_u16_array(char *str, uint16_t *int_array,
 				uint8_t *len, uint8_t int_array_max_len);
 
 void hdd_cfg_print(hdd_context_t *pHddCtx);
 
-CDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss);
+QDF_STATUS hdd_update_nss(hdd_context_t *hdd_ctx, uint8_t nss);
 #ifdef FEATURE_WLAN_SCAN_PNO
 void hdd_set_pno_channel_prediction_config(
 	tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx);

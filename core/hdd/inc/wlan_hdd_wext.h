@@ -338,23 +338,23 @@ extern int hdd_priv_get_data(struct iw_point *p_priv_data,
 
 extern void *mem_alloc_copy_from_user_helper(const void *wrqu_data, size_t len);
 
-extern CDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
+extern QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 					     struct cdf_mac_addr mac_address);
 void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter);
 
 uint8_t *wlan_hdd_get_vendor_oui_ie_ptr(uint8_t *oui, uint8_t oui_size,
 					uint8_t *ie, int ie_len);
 
-CDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter);
+QDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter);
 
-CDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter);
+QDF_STATUS wlan_hdd_get_station_stats(hdd_adapter_t *pAdapter);
 
-CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value);
+QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value);
 
-CDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr);
+QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr);
 
 #ifdef FEATURE_WLAN_TDLS
-CDF_STATUS iw_set_tdls_params(struct net_device *dev,
+QDF_STATUS iw_set_tdls_params(struct net_device *dev,
 			      struct iw_request_info *info,
 			      union iwreq_data *wrqu, char *extra, int nOffset);
 #endif

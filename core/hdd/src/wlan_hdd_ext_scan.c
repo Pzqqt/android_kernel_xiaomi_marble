@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1714,7 +1714,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ENTER();
 
@@ -1759,7 +1759,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_ext_scan_get_capabilities(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, FL("sme_ext_scan_get_capabilities failed(err=%d)"),
 			status);
 		goto fail;
@@ -1846,7 +1846,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_EXTSCAN_SUBCMD_CONFIG_PARAM_MAX +
 			  1];
 	struct hdd_ext_scan_context *context;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int retval = 0;
 	unsigned long rc;
 
@@ -1900,7 +1900,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_get_cached_results(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_get_cached_results failed(err=%d)"), status);
 		goto fail;
@@ -1993,7 +1993,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	struct nlattr *apTh;
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t i;
 	int rem, retval;
 	unsigned long rc;
@@ -2111,7 +2111,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_set_bss_hotlist(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, FL("sme_set_bss_hotlist failed(err=%d)"), status);
 		goto fail;
 	}
@@ -2190,7 +2190,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	struct nlattr *apTh;
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t i;
 	int rem, retval;
 	unsigned long rc;
@@ -2330,7 +2330,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_set_significant_change(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_set_significant_change failed(err=%d)"), status);
 		cdf_mem_free(pReqMsg);
@@ -2472,7 +2472,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 			  1];
 	uint32_t requestId, maxChannels;
 	tWifiBand wifiBand;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct sk_buff *reply_skb;
 	uint8_t i;
 	int ret;
@@ -2527,7 +2527,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 	status = sme_get_valid_channels_by_band((tHalHandle) (pHddCtx->hHal),
 						wifiBand, chan_list,
 						&num_channels);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGE,
 		       FL("sme_get_valid_channels_by_band failed (err=%d)"),
 		       status);
@@ -2693,7 +2693,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 	struct nlattr *buckets;
 	struct nlattr *channels;
 	int rem1, rem2;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t bkt_index, j, num_channels, total_channels = 0;
 	uint32_t chan_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
 
@@ -2821,7 +2821,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			status = sme_get_valid_channels_by_band(hdd_ctx->hHal,
 						req_msg->buckets[bkt_index].band,
 						chan_list, &num_channels);
-			if (!CDF_IS_STATUS_SUCCESS(status)) {
+			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				hddLog(LOGE,
 				       FL("sme_GetValidChannelsByBand failed (err=%d)"),
 				       status);
@@ -3138,7 +3138,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	struct nlattr *tb[PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id, num_buckets;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int retval;
 	unsigned long rc;
 
@@ -3250,7 +3250,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_ext_scan_start(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 			FL("sme_ext_scan_start failed(err=%d)"), status);
 		goto fail;
@@ -3347,7 +3347,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	struct nlattr *tb[PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t request_id;
 	int retval;
 	unsigned long rc;
@@ -3393,7 +3393,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_ext_scan_stop(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_ext_scan_stop failed(err=%d)"), status);
 		goto fail;
@@ -3475,7 +3475,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 			  1];
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int retval;
 	unsigned long rc;
 
@@ -3522,7 +3522,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_reset_bss_hotlist(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_reset_bss_hotlist failed(err=%d)"), status);
 		goto fail;
@@ -3600,7 +3600,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 			  1];
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int retval;
 	unsigned long rc;
 
@@ -3647,7 +3647,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	spin_unlock(&context->context_lock);
 
 	status = sme_reset_significant_change(pHddCtx->hHal, pReqMsg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, FL("sme_reset_significant_change failed(err=%d)"),
 			status);
 		cdf_mem_free(pReqMsg);
@@ -3812,7 +3812,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx           = wiphy_priv(wiphy);
 	struct nlattr *tb[
 		QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t num_networks, len;
 	int ret_val;
 
@@ -3869,7 +3869,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 		goto fail;
 
 	status = sme_set_epno_list(hdd_ctx->hHal, req_msg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, FL("sme_set_epno_list failed(err=%d)"), status);
 		goto fail;
 	}
@@ -4018,7 +4018,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	hdd_adapter_t *adapter             = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx             = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t num_networks = 0;
 	int ret;
 
@@ -4072,7 +4072,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 		goto fail;
 
 	status = sme_set_passpoint_list(hdd_ctx->hHal, req_msg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 			FL("sme_set_passpoint_list failed(err=%d)"), status);
 		goto fail;
@@ -4135,7 +4135,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	hdd_adapter_t *adapter             = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx             = wiphy_priv(wiphy);
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_PNO_MAX + 1];
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret;
 
 	ENTER();
@@ -4174,7 +4174,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 			req_msg->request_id, req_msg->session_id);
 
 	status = sme_reset_passpoint_list(hdd_ctx->hHal, req_msg);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 			FL("sme_reset_passpoint_list failed(err=%d)"), status);
 		goto fail;
@@ -4264,7 +4264,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 	uint32_t request_id;
 	char ssid_string[SIR_MAC_MAX_SSID_LENGTH + 1];
 	int ssid_len, i, rem;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int retval;
 	unsigned long rc;
 
@@ -4384,7 +4384,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_set_ssid_hotlist(hdd_ctx->hHal, request);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_set_ssid_hotlist failed(err=%d)"), status);
 		goto fail;
@@ -4484,7 +4484,7 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 	struct nlattr *tb[PARAM_MAX + 1];
 	struct hdd_ext_scan_context *context;
 	uint32_t request_id;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int retval;
 	unsigned long rc;
 
@@ -4534,7 +4534,7 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 	spin_unlock(&context->context_lock);
 
 	status = sme_set_ssid_hotlist(hdd_ctx->hHal, request);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_reset_ssid_hotlist failed(err=%d)"), status);
 		goto fail;

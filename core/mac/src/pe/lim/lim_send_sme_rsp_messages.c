@@ -231,7 +231,7 @@ uint32_t lim_get_max_rate_flags(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds)
  * Return: None
  */
 static void lim_send_sme_join_reassoc_rsp_after_resume(tpAniSirGlobal mac_ctx,
-	CDF_STATUS status, uint32_t *ctx)
+	QDF_STATUS status, uint32_t *ctx)
 {
 	tSirMsgQ msg;
 	tpSirSmeJoinRsp sme_join_rsp = (tpSirSmeJoinRsp) ctx;
@@ -513,7 +513,7 @@ lim_send_sme_join_reassoc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	sme_join_rsp->sessionId = sme_session_id;
 	sme_join_rsp->transactionId = sme_transaction_id;
 
-	lim_send_sme_join_reassoc_rsp_after_resume(mac_ctx, CDF_STATUS_SUCCESS,
+	lim_send_sme_join_reassoc_rsp_after_resume(mac_ctx, QDF_STATUS_SUCCESS,
 			(uint32_t *)sme_join_rsp);
 }
 
@@ -854,7 +854,7 @@ void lim_send_sme_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 #endif
 
 void lim_send_sme_disassoc_deauth_ntf(tpAniSirGlobal pMac,
-				      CDF_STATUS status, uint32_t *pCtx)
+				      QDF_STATUS status, uint32_t *pCtx)
 {
 	tSirMsgQ mmhMsg;
 	tSirMsgQ *pMsg = (tSirMsgQ *) pCtx;
@@ -1019,7 +1019,7 @@ error:
 	}
 
 	if (false == failure)
-		lim_send_sme_disassoc_deauth_ntf(pMac, CDF_STATUS_SUCCESS,
+		lim_send_sme_disassoc_deauth_ntf(pMac, QDF_STATUS_SUCCESS,
 						 (uint32_t *) pMsg);
 } /*** end lim_send_sme_disassoc_ntf() ***/
 
@@ -1462,7 +1462,7 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		pe_delete_session(pMac, psessionEntry);
 	}
 
-	lim_send_sme_disassoc_deauth_ntf(pMac, CDF_STATUS_SUCCESS,
+	lim_send_sme_disassoc_deauth_ntf(pMac, QDF_STATUS_SUCCESS,
 					 (uint32_t *) pMsg);
 
 } /*** end lim_send_sme_deauth_ntf() ***/
@@ -2489,7 +2489,7 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 			pChanSwTxResponse->sessionId =
 				psessionEntry->smeSessionId;
 			pChanSwTxResponse->chanSwIeTxStatus =
-				CDF_STATUS_SUCCESS;
+				QDF_STATUS_SUCCESS;
 
 			mmhMsg.type = eWNI_SME_DFS_CSAIE_TX_COMPLETE_IND;
 			mmhMsg.bodyptr = pChanSwTxResponse;
@@ -2514,7 +2514,7 @@ lim_process_beacon_tx_success_ind(tpAniSirGlobal pMac, uint16_t msgType, void *e
 					sizeof(*beacon_tx_comp_rsp_ptr), 0);
 		beacon_tx_comp_rsp_ptr->session_id =
 			psessionEntry->smeSessionId;
-		beacon_tx_comp_rsp_ptr->tx_status = CDF_STATUS_SUCCESS;
+		beacon_tx_comp_rsp_ptr->tx_status = QDF_STATUS_SUCCESS;
 		mmhMsg.type = eWNI_SME_NSS_UPDATE_RSP;
 		mmhMsg.bodyptr = beacon_tx_comp_rsp_ptr;
 		mmhMsg.bodyval = 0;

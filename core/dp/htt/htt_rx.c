@@ -224,7 +224,7 @@ static void htt_rx_ring_refill_retry(void *arg)
 void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 {
 	int idx;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct htt_host_rx_desc_base *rx_desc;
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
@@ -284,7 +284,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 			cdf_nbuf_map(pdev->osdev, rx_netbuf,
 						CDF_DMA_FROM_DEVICE);
 #endif
-		if (status != CDF_STATUS_SUCCESS) {
+		if (status != QDF_STATUS_SUCCESS) {
 			cdf_nbuf_free(rx_netbuf);
 			goto fail;
 		}

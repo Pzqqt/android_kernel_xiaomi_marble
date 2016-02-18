@@ -33,7 +33,7 @@
  */
 #define BMI_LOAD_IMAGE              18
 
-CDF_STATUS
+QDF_STATUS
 bmi_no_command(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -49,12 +49,12 @@ bmi_no_command(struct ol_context *ol_ctx)
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed: BMI DONE ALREADY");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("No Memory Allocated for BMI CMD/RSP Buffer");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 	cid = BMI_NO_COMMAND;
 
@@ -66,18 +66,18 @@ bmi_no_command(struct ol_context *ol_ctx)
 
 	if (status) {
 		BMI_ERR("Failed to write bmi no command status:%d", status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	cdf_mem_copy(&ret, bmi_rsp_buff, length);
 	if (ret != 0) {
 		BMI_ERR("bmi no command response error ret 0x%x", ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
+QDF_STATUS
 bmi_done_local(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -94,17 +94,17 @@ bmi_done_local(struct ol_context *ol_ctx)
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("No Memory Allocated for BMI CMD/RSP Buffer");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	if (!cdf_dev->dev) {
 		BMI_ERR("%s Invalid Device pointer", __func__);
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	cid = BMI_DONE;
@@ -117,13 +117,13 @@ bmi_done_local(struct ol_context *ol_ctx)
 
 	if (status) {
 		BMI_ERR("Failed to close BMI on target status:%d", status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	cdf_mem_copy(&ret, bmi_rsp_buff, length);
 
 	if (ret != 0) {
 		BMI_ERR("BMI DONE response failed:%d", ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (info->bmi_cmd_buff) {
@@ -140,10 +140,10 @@ bmi_done_local(struct ol_context *ol_ctx)
 		info->bmi_rsp_da = 0;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
+QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 			    struct ol_context *ol_ctx)
 {
 	uint32_t cid;
@@ -164,12 +164,12 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("BMI Initialization is not happened");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
@@ -207,20 +207,20 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 						BMI_EXCHANGE_TIMEOUT_MS);
 		if (status) {
 			BMI_ERR("BMI Write Memory Failed status:%d", status);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		cdf_mem_copy(&ret, bmi_rsp_buff, rsp_len);
 		if (ret != 0) {
 			BMI_ERR("BMI Write memory response fail: %x", ret);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		remaining -= txlen; address += txlen;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
+QDF_STATUS
 bmi_read_memory(uint32_t address, uint8_t *buffer,
 		uint32_t length, struct ol_context *ol_ctx)
 {
@@ -240,11 +240,11 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("BMI Initialization is not done");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + size));
@@ -278,14 +278,14 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 
 		if (status) {
 			BMI_ERR("BMI Read memory failed status:%d", status);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 
 		cdf_mem_copy(&ret, bmi_rsp_buff, rsp_len);
 
 		if (ret != 0) {
 			BMI_ERR("bmi read memory response fail %x", ret);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 
 		cdf_mem_copy(&buffer[length - remaining],
@@ -293,10 +293,10 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 		remaining -= rxlen; address += rxlen;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
+QDF_STATUS
 bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
@@ -312,12 +312,12 @@ bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("No Memory Allocated for bmi buffers");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	cid = BMI_EXECUTE;
@@ -330,24 +330,24 @@ bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 
 	if (status) {
 		BMI_ERR("Failed to do BMI_EXECUTE status:%d", status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	cdf_mem_copy(&ret, bmi_rsp_buff, length);
 
 	if (ret != 0) {
 		BMI_ERR("%s: ret 0x%x", __func__, ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static CDF_STATUS
+static QDF_STATUS
 bmi_load_image(dma_addr_t address,
 		uint32_t size, struct ol_context *ol_ctx)
 {
 	uint32_t cid;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t offset;
 	uint32_t length;
 	uint8_t ret = 0;
@@ -362,12 +362,12 @@ bmi_load_image(dma_addr_t address,
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 
 	if (!bmi_cmd_buff || !bmi_rsp_buff) {
 		BMI_ERR("No Memory Allocated for BMI CMD/RSP Buffer");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
@@ -396,41 +396,41 @@ bmi_load_image(dma_addr_t address,
 
 	if (status) {
 		BMI_ERR("BMI Load Image Failed; status:%d", status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	cdf_mem_copy(&ret, bmi_rsp_buff, length);
 	if (ret != 0) {
 		BMI_ERR("%s: ret 0x%x", __func__, ret);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static CDF_STATUS bmi_enable(struct ol_context *ol_ctx)
+static QDF_STATUS bmi_enable(struct ol_context *ol_ctx)
 {
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_target_info targ_info;
 	struct image_desc_info image_desc_info;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct hif_target_info *tgt_info;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
 		bmi_assert(0);
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	tgt_info = hif_get_target_info_handle(scn);
 
 	if (info->bmi_cmd_buff == NULL || info->bmi_rsp_buff == NULL) {
 		BMI_ERR("bmi_open failed!");
-		return CDF_STATUS_NOT_INITIALIZED;
+		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
 	status = bmi_get_target_info(&targ_info, ol_ctx);
-	if (status != CDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS)
 			return status;
 
 	BMI_DBG("%s: target type 0x%x, target ver 0x%x", __func__,
@@ -441,13 +441,13 @@ static CDF_STATUS bmi_enable(struct ol_context *ol_ctx)
 
 	if (cnss_get_fw_image(&image_desc_info) != 0) {
 		BMI_ERR("Failed to get fw image");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	status = bmi_load_image(image_desc_info.bdata_addr,
 				image_desc_info.bdata_size,
 				ol_ctx);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("Load board data failed! status:%d", status);
 		return status;
 	}
@@ -455,27 +455,27 @@ static CDF_STATUS bmi_enable(struct ol_context *ol_ctx)
 	status = bmi_load_image(image_desc_info.fw_addr,
 				image_desc_info.fw_size,
 				ol_ctx);
-	if (status != CDF_STATUS_SUCCESS)
+	if (status != QDF_STATUS_SUCCESS)
 		BMI_ERR("Load fw image failed! status:%d", status);
 
 	return status;
 }
 
-CDF_STATUS bmi_firmware_download(struct ol_context *ol_ctx)
+QDF_STATUS bmi_firmware_download(struct ol_context *ol_ctx)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if (NO_BMI)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	status = bmi_init(ol_ctx);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI_INIT Failed status:%d", status);
 		goto end;
 	}
 
 	status = bmi_enable(ol_ctx);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI_ENABLE failed status:%d\n", status);
 		goto err_bmi_enable;
 	}

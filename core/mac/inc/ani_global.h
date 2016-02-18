@@ -247,7 +247,7 @@ enum wifi_logging_ring_id {
 
 /* ------------------------------------------------------------------- */
 /* Change channel generic scheme */
-typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal pMac, CDF_STATUS status,
+typedef void (*CHANGE_CHANNEL_CALLBACK)(tpAniSirGlobal pMac, QDF_STATUS status,
 					uint32_t *data,
 					tpPESession psessionEntry);
 
@@ -842,7 +842,7 @@ typedef struct sAniSirLim {
 	uint8_t gLimDfsTargetChanNum;
 	uint8_t probeCounter;
 	uint8_t maxProbe;
-	CDF_STATUS(*add_bssdescr_callback)
+	QDF_STATUS(*add_bssdescr_callback)
 		(tpAniSirGlobal pMac, tpSirBssDescription buf,
 		uint32_t scan_id, uint32_t flags);
 	uint8_t retry_packet_cnt;

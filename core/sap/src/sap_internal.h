@@ -289,13 +289,13 @@ typedef struct sWLAN_SAPEvent {
  * Function Declarations and Documentation
  * -------------------------------------------------------------------------*/
 
-CDF_STATUS
+QDF_STATUS
 wlansap_scan_callback
 	(tHalHandle halHandle,
 	void *pContext,
 	uint8_t sessionId, uint32_t scanID, eCsrScanStatus scanStatus);
 
-CDF_STATUS
+QDF_STATUS
 wlansap_pre_start_bss_acs_scan_callback(
 	tHalHandle hal_handle,
 	void *pcontext,
@@ -304,29 +304,29 @@ wlansap_pre_start_bss_acs_scan_callback(
 	eCsrScanStatus scan_status
 );
 
-CDF_STATUS
+QDF_STATUS
 wlansap_roam_callback
 	(void *pContext,
 	tCsrRoamInfo *pCsrRoamInfo,
 	uint32_t roamId,
 	eRoamCmdStatus roamStatus, eCsrRoamResult roamResult);
 
-CDF_STATUS wlansap_clean_cb(ptSapContext pSapCtx, uint32_t freeFlag);
-CDF_STATUS SapFsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
+QDF_STATUS wlansap_clean_cb(ptSapContext pSapCtx, uint32_t freeFlag);
+QDF_STATUS SapFsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent,
 			 uint8_t *status);
 
 void
-wlansap_pmc_full_pwr_req_cb(void *callbackContext, CDF_STATUS status);
+wlansap_pmc_full_pwr_req_cb(void *callbackContext, QDF_STATUS status);
 
 uint8_t sap_select_channel(tHalHandle halHandle, ptSapContext pSapCtx,
 			   tScanResultHandle pScanResult);
 
-CDF_STATUS
+QDF_STATUS
 sap_signal_hdd_event(ptSapContext sapContext,
 		  tCsrRoamInfo *pCsrRoamInfo,
 		  eSapHddEvent sapHddevent, void *);
 
-CDF_STATUS sap_fsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent);
+QDF_STATUS sap_fsm(ptSapContext sapContext, ptWLAN_SAPEvent sapEvent);
 
 eSapStatus
 sapconvert_to_csr_profile(tsap_Config_t *pconfig_params,
@@ -335,7 +335,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params,
 
 void sap_free_roam_profile(tCsrRoamProfile *profile);
 
-CDF_STATUS
+QDF_STATUS
 sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac);
 
 void
@@ -356,9 +356,9 @@ eSapBool
 sap_search_mac_list(struct cdf_mac_addr *macList, uint8_t num_mac,
 		 uint8_t *peerMac, uint8_t *index);
 
-CDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx);
+QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx);
 
-CDF_STATUS sap_release_global_lock(ptSapContext pSapCtx);
+QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx);
 
 #ifdef FEATURE_WLAN_CH_AVOID
 void sap_update_unsafe_channel_list(ptSapContext pSapCtx);
@@ -368,7 +368,7 @@ uint8_t
 sap_indicate_radar(ptSapContext sapContext,
 		 tSirSmeDfsEventInd *dfs_event);
 
-CDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext);
+QDF_STATUS sap_init_dfs_channel_nol_list(ptSapContext sapContext);
 
 bool sap_dfs_is_channel_in_nol_list(ptSapContext sapContext,
 				    uint8_t channelNumber,
@@ -395,7 +395,7 @@ bool sap_dfs_is_w53_invalid(tHalHandle hHal, uint8_t channelID);
 bool sap_dfs_is_channel_in_preferred_location(tHalHandle hHal,
 					      uint8_t channelID);
 
-CDF_STATUS sap_goto_channel_sel(
+QDF_STATUS sap_goto_channel_sel(
 	ptSapContext sapContext,
 	ptWLAN_SAPEvent sapEvent,
 	bool sap_do_acs_pre_start_bss);

@@ -38,7 +38,7 @@
 #include <linux/etherdevice.h>
 #include <linux/dma-mapping.h>
 #include <cdf_types.h>
-#include <cdf_status.h>
+#include <qdf_status.h>
 
 /*
  * Use socket buffer as the underlying implentation as skbuf .
@@ -334,11 +334,11 @@ typedef void (*cdf_nbuf_trace_update_t)(char *);
 __cdf_nbuf_t __cdf_nbuf_alloc(__cdf_device_t osdev, size_t size, int reserve,
 			      int align, int prio);
 void __cdf_nbuf_free(struct sk_buff *skb);
-CDF_STATUS __cdf_nbuf_map(__cdf_device_t osdev,
+QDF_STATUS __cdf_nbuf_map(__cdf_device_t osdev,
 			  struct sk_buff *skb, cdf_dma_dir_t dir);
 void __cdf_nbuf_unmap(__cdf_device_t osdev,
 		      struct sk_buff *skb, cdf_dma_dir_t dir);
-CDF_STATUS __cdf_nbuf_map_single(__cdf_device_t osdev,
+QDF_STATUS __cdf_nbuf_map_single(__cdf_device_t osdev,
 				 struct sk_buff *skb, cdf_dma_dir_t dir);
 void __cdf_nbuf_unmap_single(__cdf_device_t osdev,
 			     struct sk_buff *skb, cdf_dma_dir_t dir);
@@ -356,16 +356,16 @@ void __cdf_nbuf_trace_update(struct sk_buff *buf, char *event_string);
  *
  * Return: CDF status
  */
-static inline CDF_STATUS __cdf_os_to_status(signed int error)
+static inline QDF_STATUS __cdf_os_to_status(signed int error)
 {
 	switch (error) {
 	case 0:
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	case ENOMEM:
 	case -ENOMEM:
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	default:
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 }
 
@@ -397,13 +397,13 @@ static inline size_t __cdf_nbuf_len(struct sk_buff *skb)
  * Link tow nbufs the new buf is piggybacked into the older one. The older
  * (src) skb is released.
  *
- * Return: CDF_STATUS (status of the call) if failed the src skb
+ * Return: QDF_STATUS (status of the call) if failed the src skb
  *	   is released
  */
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_nbuf_cat(struct sk_buff *dst, struct sk_buff *src)
 {
-	CDF_STATUS error = 0;
+	QDF_STATUS error = 0;
 
 	cdf_assert(dst && src);
 
@@ -520,7 +520,7 @@ static inline void __cdf_nbuf_trim_tail(struct sk_buff *skb, size_t size)
  * prototypes. Implemented in cdf_nbuf.c
  */
 cdf_nbuf_tx_cksum_t __cdf_nbuf_get_tx_cksum(struct sk_buff *skb);
-CDF_STATUS __cdf_nbuf_set_rx_cksum(struct sk_buff *skb,
+QDF_STATUS __cdf_nbuf_set_rx_cksum(struct sk_buff *skb,
 				   cdf_nbuf_rx_cksum_t *cksum);
 uint8_t __cdf_nbuf_get_tid(struct sk_buff *skb);
 void __cdf_nbuf_set_tid(struct sk_buff *skb, uint8_t tid);
@@ -927,10 +927,10 @@ typedef struct __cdf_nbuf_qhead {
  *
  * Return: CDF status
  */
-static inline CDF_STATUS __cdf_nbuf_queue_init(__cdf_nbuf_queue_t *qhead)
+static inline QDF_STATUS __cdf_nbuf_queue_init(__cdf_nbuf_queue_t *qhead)
 {
 	memset(qhead, 0, sizeof(struct __cdf_nbuf_qhead));
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

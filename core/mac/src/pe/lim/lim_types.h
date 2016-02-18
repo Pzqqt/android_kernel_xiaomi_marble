@@ -469,8 +469,8 @@ void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal pMac,
 #endif
 void lim_send_delts_req_action_frame(tpAniSirGlobal pMac, tSirMacAddr peer,
 				     uint8_t wmmTspecPresent,
-				     tSirMacTSInfo *pTsinfo,
-				     tSirMacTspecIE *pTspecIe,
+				     tSirMacTSInfo * pTsinfo,
+				     tSirMacTspecIE * pTspecIe,
 				     tpPESession psessionEntry);
 void lim_send_addts_req_action_frame(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 				     tSirAddtsReqInfo *addts, tpPESession);
@@ -530,7 +530,7 @@ void lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac, tpPESession psessionEn
 				     uint32_t txCompleteStatus);
 tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry);
-CDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
+QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
 #else
 static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 						tpPESession session_entry)
@@ -829,11 +829,11 @@ void lim_process_regd_defd_sme_req_after_noa_start(tpAniSirGlobal pMac);
 
 void lim_process_disassoc_ack_timeout(tpAniSirGlobal pMac);
 void lim_process_deauth_ack_timeout(tpAniSirGlobal pMac);
-CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal pMac);
-CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac);
-CDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
+QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal pMac);
+QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac);
+QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
 					uint32_t txCompleteSuccess);
-CDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
+QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
 				      uint32_t txCompleteSuccess);
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
@@ -845,9 +845,9 @@ typedef struct sSetLinkCbackParams {
 void lim_process_rx_scan_event(tpAniSirGlobal mac, void *buf);
 
 int lim_process_remain_on_chnl_req(tpAniSirGlobal pMac, uint32_t *pMsg);
-void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, CDF_STATUS status, uint32_t *data);
+void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *data);
 void lim_send_sme_disassoc_deauth_ntf(tpAniSirGlobal mac_ctx,
-				CDF_STATUS status, uint32_t *ctx);
+				QDF_STATUS status, uint32_t *ctx);
 
 /* / Bit value data structure */
 typedef enum sHalBitVal         /* For Bit operations */

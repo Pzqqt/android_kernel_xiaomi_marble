@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -201,7 +201,8 @@ void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
 
 	PELOG1(sch_log(pMac, LOG1, FL("Sending LIM message to go into scan"));)
 	msgQ.type = SIR_SCH_START_SCAN_RSP;
-	if ((retCode = lim_post_msg_api(pMac, &msgQ)) != eSIR_SUCCESS)
+	retCode = lim_post_msg_api(pMac, &msgQ);
+	if (retCode != eSIR_SUCCESS)
 		sch_log(pMac, LOGE,
 			FL("Posting START_SCAN_RSP to LIM failed, reason=%X"),
 			retCode);
@@ -230,7 +231,7 @@ void sch_send_start_scan_rsp(tpAniSirGlobal pMac)
  *
  * @param size - Length of the beacon
  *
- * @return CDF_STATUS
+ * @return QDF_STATUS
  */
 tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 				  uint16_t size, tpPESession psessionEntry)
@@ -300,7 +301,8 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	}
 
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
-	if (eSIR_SUCCESS != (retCode = wma_post_ctrl_msg(pMac, &msgQ))) {
+	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	if (eSIR_SUCCESS != retCode) {
 		sch_log(pMac, LOGE,
 			FL("Posting SEND_BEACON_REQ to HAL failed, reason=%X"),
 			retCode);
@@ -310,12 +312,12 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 
 		if (LIM_IS_AP_ROLE(psessionEntry) &&
 		   (pMac->sch.schObject.fBeaconChanged)) {
-			if (eSIR_SUCCESS !=
-			    (retCode =
-				     lim_send_probe_rsp_template_to_hal(pMac, psessionEntry,
-									&psessionEntry->
-									DefProbeRspIeBitmap
-									[0]))) {
+			retCode = lim_send_probe_rsp_template_to_hal(pMac,
+								     psessionEntry,
+								     &psessionEntry->
+								     DefProbeRspIeBitmap
+								     [0]);
+			if (eSIR_SUCCESS != retCode) {
 				/* check whether we have to free any memory */
 				sch_log(pMac, LOGE,
 					FL
@@ -335,7 +337,7 @@ uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
 {
 	uint32_t left = psessionEntry->addIeParams.probeRespDataLen;
 	uint8_t *ptr = psessionEntry->addIeParams.probeRespData_buff;
-	uint8_t elem_id,elem_len;
+	uint8_t elem_id, elem_len;
 	uint32_t offset = 0;
 	uint8_t eid = 0xDD;
 
@@ -347,7 +349,7 @@ uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
 			elem_id  = ptr[0];
 			elem_len = ptr[1];
 			left -= 2;
-			if(elem_len > left) {
+			if (elem_len > left) {
 				sch_log(pMac, LOGE, FL("Invalid IEs"));
 				return eSIR_FAILURE;
 			}
@@ -516,7 +518,8 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		msgQ.bodyptr = pprobeRespParams;
 		msgQ.bodyval = 0;
 
-		if (eSIR_SUCCESS != (retCode = wma_post_ctrl_msg(pMac, &msgQ))) {
+		retCode = wma_post_ctrl_msg(pMac, &msgQ);
+		if (eSIR_SUCCESS != retCode) {
 			/* free the allocated Memory */
 			sch_log(pMac, LOGE,
 				FL

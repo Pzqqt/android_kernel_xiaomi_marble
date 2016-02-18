@@ -40,10 +40,10 @@
  *
  *------------------------------------------------------------------*/
 
-CDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
+QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 					     tSmeCmd *p2pRemainonChn)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tSirRemainOnChnReq *pMsg;
 	uint32_t len;
 	tCsrRoamSession *pSession =
@@ -94,7 +94,7 @@ CDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 		status = cds_send_mb_message_to_mac(pMsg);
 	}
 error:
-	if (CDF_STATUS_E_FAILURE == status)
+	if (QDF_STATUS_E_FAILURE == status)
 		csr_release_roc_req_cmd(pMac);
 	return status;
 }
@@ -105,9 +105,9 @@ error:
  *
  *------------------------------------------------------------------*/
 
-CDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
+QDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
 	bool fFound;
@@ -145,10 +145,10 @@ CDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg)
  *
  *------------------------------------------------------------------*/
 
-CDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg)
+QDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
 	tCsrRoamInfo RoamInfo;
@@ -174,10 +174,10 @@ CDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg)
 	return status;
 }
 
-CDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg)
+QDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tCsrRoamInfo RoamInfo;
 	tSirSmeRsp *pSmeRsp = (tSirSmeRsp *) pMsg;
 
@@ -190,22 +190,22 @@ CDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg)
 	return status;
 }
 
-CDF_STATUS sme_p2p_open(tHalHandle hHal)
+QDF_STATUS sme_p2p_open(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* If static structure is too big, Need to change this function to allocate memory dynamically */
 	cdf_mem_zero(&pMac->p2pContext, sizeof(tp2pContext));
 
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_p2p_close(hHal);
 	}
 
 	return status;
 }
 
-CDF_STATUS p2p_stop(tHalHandle hHal)
+QDF_STATUS p2p_stop(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -216,10 +216,10 @@ CDF_STATUS p2p_stop(tHalHandle hHal)
 
 	pMac->p2pContext.probeRspIeLength = 0;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS sme_p2p_close(tHalHandle hHal)
+QDF_STATUS sme_p2p_close(tHalHandle hHal)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -230,7 +230,7 @@ CDF_STATUS sme_p2p_close(tHalHandle hHal)
 
 	pMac->p2pContext.probeRspIeLength = 0;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 tSirRFBand get_rf_band(uint8_t channel)
@@ -256,23 +256,23 @@ tSirRFBand get_rf_band(uint8_t channel)
     \param  duration - Duration for which we should remain on channel
     \param  callback - callback function.
     \param  pContext - argument to the callback function
-    \return CDF_STATUS
+    \return QDF_STATUS
 
    -------------------------------------------------------------------------------*/
-CDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 				 uint8_t channel, uint32_t duration,
 				 remainOnChanCallback callback,
 				 void *pContext, uint8_t isP2PProbeReqAllowed,
 				 uint32_t scan_id)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *pRemainChlCmd = NULL;
 	uint32_t phyMode;
 
 	pRemainChlCmd = sme_get_command_buffer(pMac);
 	if (pRemainChlCmd == NULL)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	if (SIR_BAND_5_GHZ == get_rf_band(channel)) {
 		phyMode = WNI_CFG_PHY_MODE_11A;
@@ -300,14 +300,14 @@ CDF_STATUS p2p_remain_on_channel(tHalHandle hHal, uint8_t sessionId,
 
 	sms_log(pMac, LOGW, "exiting function %s", __func__);
 
-	return (status);
+	return status;
 }
 
-CDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
+QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 			   const uint8_t *pBuf, uint32_t len, uint16_t wait,
 			   bool noack, uint16_t channel_freq)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirMbMsgP2p *pMsg;
 	uint16_t msgLen;
 
@@ -316,7 +316,7 @@ CDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 	msgLen = (uint16_t) ((sizeof(tSirMbMsgP2p)) + len);
 	pMsg = cdf_mem_malloc(msgLen);
 	if (NULL == pMsg)
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 	else {
 		cdf_mem_set((void *)pMsg, msgLen, 0);
 		pMsg->type = eWNI_SME_SEND_ACTION_FRAME_IND;
@@ -328,13 +328,13 @@ CDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 		cdf_mem_copy(pMsg->data, pBuf, len);
 		status = cds_send_mb_message_to_mac(pMsg);
 	}
-	return (status);
+	return status;
 }
 
-CDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
+QDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 	uint8_t sessionId, uint32_t scan_id)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tSirMbMsgP2p *pMsg;
 	uint16_t msgLen;
 
@@ -343,7 +343,7 @@ CDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 	msgLen = (uint16_t) (sizeof(tSirMbMsgP2p));
 	pMsg = cdf_mem_malloc(msgLen);
 	if (NULL == pMsg)
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 	else {
 		cdf_mem_set((void *)pMsg, msgLen, 0);
 		pMsg->type = eWNI_SME_ABORT_REMAIN_ON_CHAN_IND;
@@ -353,19 +353,19 @@ CDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 		status = cds_send_mb_message_to_mac(pMsg);
 	}
 
-	return (status);
+	return status;
 }
 
-CDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA)
+QDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA)
 {
 	tpP2pPsConfig pNoAParam;
 	tSirMsgQ msg;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	pNoAParam = cdf_mem_malloc(sizeof(tP2pPsConfig));
 	if (NULL == pNoAParam)
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 	else {
 		cdf_mem_set(pNoAParam, sizeof(tP2pPsConfig), 0);
 		cdf_mem_copy(pNoAParam, pNoA, sizeof(tP2pPsConfig));

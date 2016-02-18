@@ -328,20 +328,20 @@ uint16_t csr_rates_find_best_rate(tSirMacRateSet *pSuppRates,
 		tSirMacRateSet *pExtRates, tSirMacPropRateSet *pPropRates);
 tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype);
 /* Caller allocates memory for pIEStruct */
-CDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
+QDF_STATUS csr_parse_bss_description_ies(tHalHandle hHal,
 		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIEStruct);
 /*
  * This function will allocate memory for the parsed IEs to the caller.
  * Caller must free the memory. after it is done with the data only if
  * this function succeeds
  */
-CDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
+QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
 		tSirBssDescription *pBssDesc, tDot11fBeaconIEs **ppIEStruct);
 
 bool csrValidateCountryString(tHalHandle hHal, uint8_t *pCountryString);
 tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId);
 uint8_t csr_to_upper(uint8_t ch);
-CDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
+QDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
 		tSirBssDescription *pBSSDescription,
 		eCsrPhyMode *pPhyMode, tDot11fBeaconIEs *pIes);
 /*
@@ -351,14 +351,14 @@ CDF_STATUS csr_get_phy_mode_from_bss(tpAniSirGlobal pMac,
  * the user wants. There may be discrepency in it. UAPSD-bypass logic should
  * decide if it needs to reassoc
  */
-CDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
+QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 		tCsrRoamModifyProfileFields *pModProfileFields,
 		uint32_t *pRoamId, bool fForce);
 
-CDF_STATUS csr_isconcurrentsession_valid(tpAniSirGlobal pMac,
+QDF_STATUS csr_isconcurrentsession_valid(tpAniSirGlobal pMac,
 		uint32_t cursessionId, enum tCDF_ADAPTER_MODE currBssPersona);
 /* BeaconInterval validation for MCC support */
-CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
+QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
 		enum tCDF_ADAPTER_MODE currBssPersona);
 bool csr_is_profile11r(tCsrRoamProfile *pProfile);

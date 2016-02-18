@@ -82,29 +82,29 @@ enum {
  * a failure.
  *
  * Return:
- *      CDF_STATUS_SUCCESS:     lock was successfully initialized
+ *      QDF_STATUS_SUCCESS:     lock was successfully initialized
  *      CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_init(cdf_mutex_t *lock)
+QDF_STATUS cdf_mutex_init(cdf_mutex_t *lock)
 {
 	/* check for invalid pointer */
 	if (lock == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	/* check for 'already initialized' lock */
 	if (LINUX_LOCK_COOKIE == lock->cookie) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: already initialized lock", __func__);
-		return CDF_STATUS_E_BUSY;
+		return QDF_STATUS_E_BUSY;
 	}
 
 	if (in_interrupt()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	/* initialize new lock */
@@ -114,7 +114,7 @@ CDF_STATUS cdf_mutex_init(cdf_mutex_t *lock)
 	lock->processID = 0;
 	lock->refcount = 0;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -127,10 +127,10 @@ CDF_STATUS cdf_mutex_init(cdf_mutex_t *lock)
  * lock in the locked state with the calling thread as its owner.
  *
  * Return:
- *      CDF_STATUS_SUCCESS:     lock was successfully initialized
+ *      QDF_STATUS_SUCCESS:     lock was successfully initialized
  *      CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
+QDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 {
 	int rc;
 	/* check for invalid pointer */
@@ -138,14 +138,14 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	/* check if lock refers to an initialized object */
 	if (LINUX_LOCK_COOKIE != lock->cookie) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: uninitialized lock", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (in_interrupt()) {
@@ -153,7 +153,7 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 	if ((lock->processID == current->pid) &&
 		(lock->state == LOCK_ACQUIRED)) {
@@ -163,7 +163,7 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 			  "%s: %x %d %d", __func__, lock, current->pid,
 			  lock->refcount);
 #endif
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	/* acquire a Lock */
 	mutex_lock(&lock->m_lock);
@@ -172,7 +172,7 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: unable to lock mutex (rc = %d)", __func__, rc);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 #ifdef CDF_NESTED_LOCK_DEBUG
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
@@ -182,14 +182,14 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 		lock->processID = current->pid;
 		lock->refcount++;
 		lock->state = LOCK_ACQUIRED;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	} else {
 		/* lock is already destroyed */
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Lock is already destroyed", __func__);
 		mutex_unlock(&lock->m_lock);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 }
 
@@ -204,17 +204,17 @@ CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
  * initialized, an error is returned.
  *
  * Return:
- *      CDF_STATUS_SUCCESS:     lock was successfully initialized
+ *      QDF_STATUS_SUCCESS:     lock was successfully initialized
  *      CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
+QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 {
 	/* check for invalid pointer */
 	if (lock == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	/* check if lock refers to an uninitialized object */
@@ -222,7 +222,7 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: uninitialized lock", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (in_interrupt()) {
@@ -230,7 +230,7 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	/* CurrentThread = GetCurrentThreadId();
@@ -247,7 +247,7 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 			  __func__, lock->processID, current->pid);
 #endif
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 	if ((lock->processID == current->pid) &&
 		(lock->state == LOCK_ACQUIRED)) {
@@ -260,7 +260,7 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 		  lock->refcount);
 #endif
 	if (lock->refcount)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	lock->processID = 0;
 	lock->refcount = 0;
@@ -272,7 +272,7 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 		  "%s: Freeing lock %x %d %d", lock, lock->processID,
 		  lock->refcount);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -291,36 +291,36 @@ CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
  * been re-initialized.
  *
  * Return:
- *      CDF_STATUS_SUCCESS:     lock was successfully initialized
+ *      QDF_STATUS_SUCCESS:     lock was successfully initialized
  *      CDF failure reason codes: lock is not initialized and can't be used
  */
-CDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock)
+QDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock)
 {
 	/* check for invalid pointer */
 	if (NULL == lock) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	if (LINUX_LOCK_COOKIE != lock->cookie) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: uninitialized lock", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (in_interrupt()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	/* check if lock is released */
 	if (!mutex_trylock(&lock->m_lock)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: lock is not released", __func__);
-		return CDF_STATUS_E_BUSY;
+		return QDF_STATUS_E_BUSY;
 	}
 	lock->cookie = 0;
 	lock->state = LOCK_DESTROYED;
@@ -329,7 +329,7 @@ CDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock)
 
 	mutex_unlock(&lock->m_lock);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -340,10 +340,10 @@ CDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock)
  *    CDF status success : if wake lock is acquired
  *    CDF status failure : if wake lock was not acquired
  */
-CDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock)
+QDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock)
 {
 	spin_lock(&pLock->spinlock);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -354,10 +354,10 @@ CDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock)
  * CDF status success : if wake lock is acquired
  * CDF status failure : if wake lock was not acquired
  */
-CDF_STATUS cdf_spinlock_release(cdf_spinlock_t *pLock)
+QDF_STATUS cdf_spinlock_release(cdf_spinlock_t *pLock)
 {
 	spin_unlock(&pLock->spinlock);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -390,14 +390,14 @@ static const char *cdf_wake_lock_name(cdf_wake_lock_t *pLock)
  *    CDF status success : if wake lock is initialized
  *    CDF status failure : if wake lock was not initialized
  */
-CDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *pLock, const char *name)
+QDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *pLock, const char *name)
 {
 #if defined CONFIG_CNSS
 	cnss_pm_wake_lock_init(pLock, name);
 #elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 	wake_lock_init(pLock, WAKE_LOCK_SUSPEND, name);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -409,7 +409,7 @@ CDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *pLock, const char *name)
  *    CDF status success : if wake lock is acquired
  *    CDF status failure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason)
+QDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason)
 {
 	host_diag_log_wlock(reason, cdf_wake_lock_name(pLock),
 			WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
@@ -419,7 +419,7 @@ CDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason)
 #elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 	wake_lock(pLock);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -431,7 +431,7 @@ CDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason)
  *   CDF status success : if wake lock is acquired
  *   CDF status failure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock, uint32_t msec,
+QDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock, uint32_t msec,
 					 uint32_t reason)
 {
 	/* Wakelock for Rx is frequent.
@@ -448,7 +448,7 @@ CDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock, uint32_t msec,
 #elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 	wake_lock_timeout(pLock, msecs_to_jiffies(msec));
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -460,7 +460,7 @@ CDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock, uint32_t msec,
  *    CDF status success : if wake lock is acquired
  *    CDF status failure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason)
+QDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason)
 {
 	host_diag_log_wlock(reason, cdf_wake_lock_name(pLock),
 			WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT,
@@ -470,7 +470,7 @@ CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason)
 #elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 	wake_unlock(pLock);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -481,14 +481,14 @@ CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason)
  * CDF status success : if wake lock is acquired
  * CDF status failure : if wake lock was not acquired
  */
-CDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock)
+QDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock)
 {
 #if defined CONFIG_CNSS
 	cnss_pm_wake_lock_destroy(pLock);
 #elif defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 	wake_lock_destroy(pLock);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -504,7 +504,7 @@ CDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock)
  * return: success if the bus is up and a get has been issued
  *   otherwise an error code.
  */
-CDF_STATUS cdf_runtime_pm_get(void)
+QDF_STATUS cdf_runtime_pm_get(void)
 {
 	void *ol_sc;
 	int ret;
@@ -515,15 +515,15 @@ CDF_STATUS cdf_runtime_pm_get(void)
 		CDF_ASSERT(0);
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	ret = hif_pm_runtime_get(ol_sc);
 
 	if (ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -534,9 +534,9 @@ CDF_STATUS cdf_runtime_pm_get(void)
  *
  * This api will return a failure if the hif module hasn't been initialized
  *
- * return: CDF_STATUS_SUCCESS if the put is performed
+ * return: QDF_STATUS_SUCCESS if the put is performed
  */
-CDF_STATUS cdf_runtime_pm_put(void)
+QDF_STATUS cdf_runtime_pm_put(void)
 {
 	void *ol_sc;
 	int ret;
@@ -547,15 +547,15 @@ CDF_STATUS cdf_runtime_pm_put(void)
 		CDF_ASSERT(0);
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	ret = hif_pm_runtime_put(ol_sc);
 
 	if (ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -564,9 +564,9 @@ CDF_STATUS cdf_runtime_pm_put(void)
  *
  * The lock can only be acquired once per lock context and is tracked.
  *
- * return: CDF_STATUS_SUCCESS or failure code.
+ * return: QDF_STATUS_SUCCESS or failure code.
  */
-CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock)
+QDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock)
 {
 	void *ol_sc;
 	int ret;
@@ -577,15 +577,15 @@ CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock)
 		CDF_ASSERT(0);
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	ret = hif_pm_runtime_prevent_suspend(ol_sc, lock);
 
 	if (ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -594,9 +594,9 @@ CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock)
  *
  * The lock can only be acquired once per lock context and is tracked.
  *
- * return: CDF_STATUS_SUCCESS or failure code.
+ * return: QDF_STATUS_SUCCESS or failure code.
  */
-CDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock)
+QDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock)
 {
 	void *ol_sc;
 	int ret;
@@ -607,15 +607,15 @@ CDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock)
 		CDF_ASSERT(0);
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	ret = hif_pm_runtime_allow_suspend(ol_sc, lock);
 
 	if (ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

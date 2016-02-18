@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,9 +70,9 @@ void sme_nan_register_callback(tHalHandle hHal, NanCallback callback)
  * Nan Request structure ptr
  *
  * Returns:
- * CDF_STATUS
+ * QDF_STATUS
  *****************************************************************************/
-CDF_STATUS sme_nan_request(tpNanRequestReq input)
+QDF_STATUS sme_nan_request(tpNanRequestReq input)
 {
 	cds_msg_t msg;
 	tpNanRequest data;
@@ -84,7 +84,7 @@ CDF_STATUS sme_nan_request(tpNanRequestReq input)
 	if (data == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("Memory allocation failure"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cdf_mem_zero(data, data_len);
@@ -98,15 +98,15 @@ CDF_STATUS sme_nan_request(tpNanRequestReq input)
 	msg.reserved = 0;
 	msg.bodyptr = data;
 
-	if (CDF_STATUS_SUCCESS != cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL
 				  ("Not able to post WMA_NAN_REQUEST message to WMA"));
 		cdf_mem_free(data);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /******************************************************************************
@@ -121,17 +121,17 @@ CDF_STATUS sme_nan_request(tpNanRequestReq input)
 * pMsg - Message body passed from WMA; includes NAN header
 *
 * Returns:
-* CDF_STATUS
+* QDF_STATUS
 ******************************************************************************/
-CDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
+QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pMsg) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("msg ptr is NULL"));
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 	} else {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  FL("SME: Received sme_nan_event"));

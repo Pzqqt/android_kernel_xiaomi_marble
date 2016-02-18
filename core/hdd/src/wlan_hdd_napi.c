@@ -121,7 +121,7 @@ int hdd_napi_create(void)
 		 * services/calls.
 		 * For Rome, there is only one service, hence a single call
 		 */
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    hif_map_service_to_pipe(hif_ctx, HTT_DATA_MSG_SVC,
 					    &ul, &dl, &ul_polled, &dl_polled)) {
 			hdd_err("cannot map service to pipe");

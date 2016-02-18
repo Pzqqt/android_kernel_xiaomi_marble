@@ -38,7 +38,6 @@
 #include <soc/qcom/icnss.h>
 #endif /* HIF_PCI */
 #include "cds_api.h"
-#include "cdf_status.h"
 #include "qdf_status.h"
 #include "cdf_lock.h"
 #include "cds_sched.h"
@@ -182,7 +181,7 @@ static void hdd_hif_init_cds_callbacks(void *data, struct hif_callbacks *cbk)
  */
 static int hdd_init_cds_hif_context(void *hif)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	status = cds_set_context(CDF_MODULE_ID_HIF, hif);
 
@@ -199,7 +198,7 @@ static int hdd_init_cds_hif_context(void *hif)
  */
 static void hdd_deinit_cds_hif_context(void)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	status = cds_set_context(CDF_MODULE_ID_HIF, NULL);
 
@@ -224,7 +223,7 @@ static void hdd_deinit_cds_hif_context(void)
 static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 			enum ath_hal_bus_type bus_type, bool reinit)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret = 0;
 	struct hif_opaque_softc *hif_ctx;
 	cdf_device_t cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
@@ -259,7 +258,7 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	status = hif_enable(hif_ctx, dev, bdev, bid, bus_type,
 			    (reinit == true) ?  HIF_ENABLE_TYPE_REINIT :
 			    HIF_ENABLE_TYPE_PROBE);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hif_enable error = %d, reinit = %d",
 			status, reinit);
 		ret = cdf_status_to_os_return(status);
@@ -328,7 +327,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	enum ath_hal_bus_type bus_type, bool reinit)
 {
 	void *hif_ctx;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	int ret = 0;
 	cdf_device_t cdf_dev;
 	uint32_t mode = cds_get_conparam();
@@ -358,7 +357,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 
 	if (WLAN_IS_EPPING_ENABLED(mode)) {
 		status = epping_open();
-		if (status != CDF_STATUS_SUCCESS)
+		if (status != QDF_STATUS_SUCCESS)
 			goto err_hdd_deinit;
 	}
 
@@ -374,7 +373,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 
 	status = ol_cds_init(cdf_dev, hif_ctx);
 
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		pr_err("%s No Memory to Create BMI Context\n", __func__);
 		goto err_hif_close;
 	}
@@ -599,7 +598,7 @@ done:
  *
  * @state: state
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 int wlan_hdd_bus_suspend(pm_message_t state)
 {

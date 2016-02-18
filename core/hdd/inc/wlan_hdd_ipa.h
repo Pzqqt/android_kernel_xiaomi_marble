@@ -52,9 +52,9 @@ static inline hdd_ipa_nbuf_cb_fn wlan_hdd_stub_ipa_fn(void)
 	return hdd_ipa_nbuf_cb;
 };
 
-CDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx);
-CDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx);
-CDF_STATUS hdd_ipa_process_rxt(void *cds_context, cdf_nbuf_t rxBuf,
+QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx);
+QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx);
+QDF_STATUS hdd_ipa_process_rxt(void *cds_context, cdf_nbuf_t rxBuf,
 	uint8_t sta_id);
 int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	enum ipa_wlan_event type, uint8_t *mac_addr);
@@ -75,20 +75,20 @@ void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx);
 struct sk_buff *hdd_ipa_tx_packet_ipa(hdd_context_t *hdd_ctx,
 	struct sk_buff *skb, uint8_t session_id);
 #else
-static inline CDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
+static inline QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
+static inline QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-static inline CDF_STATUS hdd_ipa_process_rxt(void *cds_context,
+static inline QDF_STATUS hdd_ipa_process_rxt(void *cds_context,
 	cdf_nbuf_t rxBuf, uint8_t sta_id)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 static inline int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,

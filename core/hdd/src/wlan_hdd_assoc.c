@@ -917,12 +917,12 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
  * @pAdapter: pointer to adapter
  * @staId: station identifier
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS
+static QDF_STATUS
 hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	if (eConnectionState_IbssDisconnected ==
@@ -933,13 +933,13 @@ hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 		 */
 	}
 
-	cdf_status = ol_txrx_clear_peer(staId);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = ol_txrx_clear_peer(staId);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE,
 			FL("ol_txrx_clear_peer() failed for staID %d. Status(%d) [0x%08X]"),
-			staId, cdf_status, cdf_status);
+			staId, qdf_status, qdf_status);
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -955,16 +955,16 @@ hdd_roam_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
  * 2. Clean up internal connection states and data structures;
  * 3. Send disconnect indication to supplicant.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 					  tCsrRoamInfo *pRoamInfo,
 					  uint32_t roamId,
 					  eRoamCmdStatus roamStatus,
 					  eCsrRoamResult roamResult)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	CDF_STATUS vstatus;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS vstatus;
 	struct net_device *dev = pAdapter->dev;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -973,7 +973,7 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 
 	if (dev == NULL) {
 		hddLog(LOGE, FL("net_dev is released return"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* notify apps that we can't pass traffic anymore */
 	hddLog(LOG1, FL("Disabling queues"));
@@ -1083,10 +1083,10 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		uint8_t i;
 		sta_id = pHddStaCtx->broadcast_ibss_staid;
 		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
-		if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
+		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
 			hdd_err("hdd_roam_deregister_sta() failed for staID %d Status=%d [0x%x]",
 					sta_id, status, status);
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 		}
 		pHddCtx->sta_to_adapter[sta_id] = NULL;
 		/* Clear all the peer sta register with TL. */
@@ -1096,11 +1096,11 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 			sta_id = pHddStaCtx->conn_info.staId[i];
 			hddLog(LOG1, FL("Deregister StaID %d"), sta_id);
 			vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
-			if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
+			if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
 				hddLog(LOGE,
 					FL("hdd_roamDeregisterSTA() failed to for staID %d. Status= %d [0x%x]"),
 					sta_id, status, status);
-				status = CDF_STATUS_E_FAILURE;
+				status = QDF_STATUS_E_FAILURE;
 			}
 			/* set the staid and peer mac as 0, all other
 			 * reset are done in hdd_connRemoveConnectInfo.
@@ -1117,11 +1117,11 @@ static CDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		 * for now, only one.
 		 */
 		vstatus = hdd_roam_deregister_sta(pAdapter, sta_id);
-		if (!CDF_IS_STATUS_SUCCESS(vstatus)) {
+		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
 			hddLog(LOGE,
 				FL("hdd_roam_deregister_sta() failed to for staID %d. Status= %d [0x%x]"),
 				sta_id, status, status);
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 		}
 		pHddCtx->sta_to_adapter[sta_id] = NULL;
 	}
@@ -1181,38 +1181,38 @@ void hdd_set_peer_authorized_event(uint32_t vdev_id)
  *
  * Return: CDF status
  */
-CDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 				 uint8_t sta_id,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress)
 {
 	struct ol_txrx_peer_t *peer;
-	CDF_STATUS err;
+	QDF_STATUS err;
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
 		hdd_err("Failed to get txrx context");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
 		hddLog(LOGE, "Invalid sta id :%d", sta_id);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 	if (!peer)
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 
 	err = ol_txrx_peer_state_update(pdev,
 			(u_int8_t *) peer->mac_addr.raw, sta_state);
-	if (err != CDF_STATUS_SUCCESS) {
+	if (err != QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, "peer state update failed");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (roam_synch_in_progress)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 #endif
 
 	if (sta_state == ol_txrx_peer_state_auth) {
@@ -1224,9 +1224,9 @@ CDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		err = sme_set_peer_authorized(peer->mac_addr.raw,
 				hdd_set_peer_authorized_event,
 				pAdapter->sessionId);
-		if (err != CDF_STATUS_SUCCESS) {
+		if (err != QDF_STATUS_SUCCESS) {
 			hddLog(LOGE, "Failed to set the peer state to authorized");
-			return CDF_STATUS_E_FAULT;
+			return QDF_STATUS_E_FAULT;
 		}
 
 		if (pAdapter->device_mode == WLAN_HDD_INFRA_STATION ||
@@ -1247,7 +1247,7 @@ CDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 #endif
 		}
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1258,20 +1258,20 @@ CDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
  * @pPeerMacAddress: peer MAC address
  * @pBssDesc: pointer to BSS description
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					uint8_t staId,
 					struct cdf_mac_addr *pPeerMacAddress,
 					tSirBssDescription *pBssDesc)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
 	if (NULL == pBssDesc)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	/* Get the Station ID from the one saved during the association */
 	staDesc.sta_id = staId;
@@ -1291,13 +1291,13 @@ static CDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 		staDesc.is_wapi_supported = 0;
 #endif /* FEATURE_WLAN_WAPI */
 
-	cdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
+	qdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
 						&staDesc);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGW,
 			"ol_txrx_register_peer() failed to register. Status=%d [0x%08X]",
-			cdf_status, cdf_status);
-		return cdf_status;
+			qdf_status, qdf_status);
+		return qdf_status;
 	}
 
 	if (!pRoamInfo->fAuthRequired) {
@@ -1305,7 +1305,7 @@ static CDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 		 * Connections that do not need Upper layer auth, transition
 		 * TLSHIM directly to 'Authenticated' state
 		 */
-		cdf_status =
+		qdf_status =
 			hdd_change_peer_state(pAdapter, staDesc.sta_id,
 						ol_txrx_peer_state_auth,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -1320,7 +1320,7 @@ static CDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 		hddLog(LOG3,
 			"ULA auth StaId= %d. Changing TL state to CONNECTED at Join time",
 			 pHddStaCtx->conn_info.staId[0]);
-		cdf_status =
+		qdf_status =
 			hdd_change_peer_state(pAdapter, staDesc.sta_id,
 						ol_txrx_peer_state_conn,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -1331,7 +1331,7 @@ static CDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 						);
 		hdd_conn_set_authenticated(pAdapter, false);
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1541,9 +1541,9 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
  * @roamStatus: roam status
  * @roamResult: roam result
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 						    tCsrRoamInfo *pRoamInfo,
 						    uint32_t roamId,
 						    eRoamCmdStatus roamStatus,
@@ -1551,13 +1551,13 @@ static CDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 {
 	eCsrEncryptionType connectedCipherAlgo;
 	bool fConnected = false;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	ENTER();
 
 	if (NULL == pRoamInfo) {
 		hddLog(LOG2, FL("pRoamInfo is NULL"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/*
 	 * if (WPA), tell TL to go to 'authenticated' after the keys are set.
@@ -1579,11 +1579,11 @@ static CDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 				pHddStaCtx->roam_info.roamingState =
 					HDD_ROAM_STATE_NONE;
 			} else {
-				cdf_status = hdd_ibss_get_sta_id(
+				qdf_status = hdd_ibss_get_sta_id(
 							pHddStaCtx,
 							&pRoamInfo->peerMac,
 							&staId);
-				if (CDF_STATUS_SUCCESS == cdf_status) {
+				if (QDF_STATUS_SUCCESS == qdf_status) {
 					hddLog(LOG2,
 						"WLAN TL STA Ptk Installed for STAID=%d",
 						staId);
@@ -1623,11 +1623,11 @@ static CDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 			  eCSR_ENCRYPT_TYPE_WEP104_STATICKEY)) {
 				if (pHddStaCtx->conn_info.gtk_installed &&
 					pHddStaCtx->conn_info.ptk_installed)
-					cdf_status =
+					qdf_status =
 					    hdd_change_sta_state_authenticated(pAdapter,
 						pRoamInfo);
 			} else if (pHddStaCtx->conn_info.ptk_installed) {
-				cdf_status =
+				qdf_status =
 				    hdd_change_sta_state_authenticated(pAdapter,
 					pRoamInfo);
 			}
@@ -1650,7 +1650,7 @@ static CDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 	}
 
 	EXIT();
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1661,7 +1661,7 @@ static CDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
  */
 void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamInfo roamInfo;
 	roamInfo.fAuthRequired = false;
@@ -1676,7 +1676,7 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 					   pHddStaCtx->roam_info.roamId,
 					   pHddStaCtx->roam_info.roamStatus,
 					   eCSR_ROAM_RESULT_AUTHENTICATED);
-	if (cdf_ret_status != CDF_STATUS_SUCCESS)
+	if (cdf_ret_status != QDF_STATUS_SUCCESS)
 		hddLog(LOGE, FL("Set Key complete failure"));
 
 	pHddStaCtx->roam_info.deferKeyComplete = false;
@@ -1690,9 +1690,9 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
  * @roamStatus: roam status
  * @roamResult: roam result
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						     tCsrRoamInfo *pRoamInfo,
 						     uint32_t roamId,
 						     eRoamCmdStatus roamStatus,
@@ -1701,7 +1701,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 	struct net_device *dev = pAdapter->dev;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t reqRsnIe[DOT11F_IE_RSN_MAX_LEN];
 	uint32_t reqRsnLength = DOT11F_IE_RSN_MAX_LEN;
 	int ft_carrier_on = false;
@@ -1710,7 +1710,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 
 	if (!pHddCtx) {
 		hdd_err("HDD context is NULL");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* HDD has initiated disconnect, do not send connect result indication
@@ -1726,7 +1726,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 	if (eCSR_ROAM_RESULT_ASSOCIATED == roamResult) {
 		if (NULL == pRoamInfo) {
 			hddLog(LOGE, FL("pRoamInfo is NULL"));
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		if (!hddDisconInProgress) {
 			hddLog(LOG1, FL("Set HDD connState to eConnectionState_Associated"));
@@ -1853,7 +1853,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				wlan_hdd_netif_queue_control(pAdapter,
 					WLAN_NETIF_CARRIER_OFF,
 					WLAN_CONTROL_PATH);
-				return CDF_STATUS_E_FAILURE;
+				return QDF_STATUS_E_FAILURE;
 			}
 			if (pRoamInfo->u.pConnectedProfile->AuthType ==
 			    eCSR_AUTH_TYPE_FT_RSN
@@ -2083,7 +2083,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				/*
 				 * Register the Station with TL after associated
 				 */
-				cdf_status = hdd_roam_register_sta(pAdapter,
+				qdf_status = hdd_roam_register_sta(pAdapter,
 								   pRoamInfo,
 								   pHddStaCtx->
 								   conn_info.
@@ -2107,7 +2107,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						reqRsnIe, reqRsnLength);
 			/* Reassoc successfully */
 			if (pRoamInfo->fAuthRequired) {
-				cdf_status =
+				qdf_status =
 					hdd_change_peer_state(pAdapter,
 						pHddStaCtx->conn_info.staId[0],
 						ol_txrx_peer_state_conn,
@@ -2122,7 +2122,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				hddLog(LOG2,
 					FL("staId: %d Changing TL state to AUTHENTICATED"),
 					  pHddStaCtx->conn_info.staId[0]);
-				cdf_status =
+				qdf_status =
 					hdd_change_peer_state(pAdapter,
 						pHddStaCtx->conn_info.staId[0],
 						ol_txrx_peer_state_auth,
@@ -2135,7 +2135,7 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				hdd_conn_set_authenticated(pAdapter, true);
 			}
 
-			if (CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				/*
 				 * Perform any WMM-related association
 				 * processing
@@ -2155,10 +2155,10 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						   WLAN_CONTROL_PATH);
 		}
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(LOGE,
 				"STA register with TL failed. status(=%d) [%08X]",
-				cdf_status, cdf_status);
+				qdf_status, qdf_status);
 		}
 #ifdef WLAN_FEATURE_11W
 		cdf_mem_zero(&pAdapter->hdd_stats.hddPmfStats,
@@ -2293,19 +2293,19 @@ static CDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 					   WLAN_CONTROL_PATH);
 	}
 
-	if (CDF_STATUS_SUCCESS != cds_check_and_restart_sap(
+	if (QDF_STATUS_SUCCESS != cds_check_and_restart_sap(
 					roamResult, pHddStaCtx))
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
 	if (NULL != pRoamInfo && NULL != pRoamInfo->pBssDesc) {
 		cds_force_sap_on_scc(roamResult,
 				pRoamInfo->pBssDesc->channelId);
 	} else {
 		hdd_err("pRoamInfo profile is not set properly");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2561,9 +2561,9 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
  *
  * We update the status of the IBSS to connected in this function.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
+static QDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
 					    tCsrRoamInfo *pRoamInfo)
 {
 	struct cfg80211_bss *bss;
@@ -2585,13 +2585,13 @@ static CDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
 		hddLog(LOGE,
 		       FL("%s: unable to create IBSS entry"),
 		       pAdapter->dev->name);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	cfg80211_put_bss(
 		WLAN_HDD_GET_CTX(pAdapter)->wiphy,
 		bss);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2604,9 +2604,9 @@ static CDF_STATUS roam_ibss_connect_handler(hdd_adapter_t *pAdapter,
  *
  * This function indicates the Mic failure to the supplicant
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS
+static QDF_STATUS
 hdd_roam_mic_error_indication_handler(hdd_adapter_t *pAdapter,
 				      tCsrRoamInfo *pRoamInfo,
 				      uint32_t roamId,
@@ -2652,7 +2652,7 @@ hdd_roam_mic_error_indication_handler(hdd_adapter_t *pAdapter,
 
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2665,16 +2665,16 @@ hdd_roam_mic_error_indication_handler(hdd_adapter_t *pAdapter,
  *
  * The Ibss connection status is updated regularly here in this function.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS
+static QDF_STATUS
 roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					uint32_t roamId,
 					eRoamCmdStatus roamStatus,
 					eCsrRoamResult roamResult)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	switch (roamResult) {
@@ -2702,15 +2702,15 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 		pHddCtx->sta_to_adapter[pRoamInfo->staId] = pAdapter;
 
 		/* Register the Station with TL for the new peer. */
-		cdf_status = hdd_roam_register_sta(pAdapter,
+		qdf_status = hdd_roam_register_sta(pAdapter,
 						   pRoamInfo,
 						   pRoamInfo->staId,
 						   &pRoamInfo->peerMac,
 						   pRoamInfo->pBssDesc);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(LOGE,
-				"Cannot register STA with TL for IBSS. Failed with cdf_status = %d [%08X]",
-				cdf_status, cdf_status);
+				"Cannot register STA with TL for IBSS. Failed with qdf_status = %d [%08X]",
+				qdf_status, qdf_status);
 		}
 		pHddStaCtx->ibss_sta_generation++;
 		memset(&staInfo, 0, sizeof(staInfo));
@@ -2737,18 +2737,18 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 			hddLog(LOG2, "New peer joined set PTK encType=%d",
 				  pHddStaCtx->ibss_enc_key.encType);
 
-			cdf_status =
+			qdf_status =
 				sme_roam_set_key(WLAN_HDD_GET_HAL_CTX
 							 (pAdapter),
 						 pAdapter->sessionId,
 						 &pHddStaCtx->ibss_enc_key,
 						 &roamId);
 
-			if (CDF_STATUS_SUCCESS != cdf_status) {
+			if (QDF_STATUS_SUCCESS != qdf_status) {
 				hddLog(LOGE,
 				       FL("sme_roam_set_key failed, status=%d"),
-				       cdf_status);
-				return CDF_STATUS_E_FAILURE;
+				       qdf_status);
+				return QDF_STATUS_E_FAILURE;
 			}
 		}
 		hddLog(LOG1, FL("Enabling queues"));
@@ -2814,7 +2814,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_WLAN_TDLS
@@ -2828,13 +2828,13 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
  * Construct the staDesc and register with TL the new STA.
  * This is called as part of ADD_STA in the TDLS setup.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 				     const uint8_t *peerMac, uint16_t staId,
 				     uint8_t ucastSig)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	struct ol_txrx_desc_type staDesc = { 0 };
 
 	/*
@@ -2849,15 +2849,15 @@ CDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 
 
 	/* Register the Station with TL...  */
-	cdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
+	qdf_status = ol_txrx_register_peer(hdd_rx_packet_cbk,
 						&staDesc);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("ol_txrx_register_peer() failed to register. Status=%d [0x%08X]"),
-			cdf_status, cdf_status);
-		return cdf_status;
+			qdf_status, qdf_status);
+		return qdf_status;
 	}
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -2865,18 +2865,18 @@ CDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
  * @pAdapter: pointer to adapter
  * @staId: station identifier
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
+static QDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
 					      uint8_t staId)
 {
-	CDF_STATUS cdf_status;
-	cdf_status = ol_txrx_clear_peer(staId);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	QDF_STATUS qdf_status;
+	qdf_status = ol_txrx_clear_peer(staId);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGW, FL("ol_txrx_clear_peer() failed for staID %d. Status=%d [0x%08X]"),
-			staId, cdf_status, cdf_status);
+			staId, qdf_status, qdf_status);
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -2891,9 +2891,9 @@ static CDF_STATUS hdd_roam_deregister_tdlssta(hdd_adapter_t *pAdapter,
  * TL in case of new TDLS client is added and deregistration at the time
  * TDLS client is deleted.
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-static CDF_STATUS
+static QDF_STATUS
 hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				    tCsrRoamInfo *pRoamInfo,
 				    uint32_t roamId,
@@ -2903,7 +2903,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 	tSmeTdlsPeerStateParams smeTdlsPeerStateParams;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint8_t staIdx;
 	hddTdlsPeer_t *curr_peer;
 	uint32_t reason;
@@ -2978,7 +2978,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 							 peerMac,
 							 &pRoamInfo->
 							 peerMac);
-					status = CDF_STATUS_SUCCESS;
+					status = QDF_STATUS_SUCCESS;
 					break;
 				}
 			}
@@ -2991,7 +2991,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 							     staId)) {
 					hddLog(LOGE,
 						"wlan_hdd_tdls_set_sta_id() failed");
-					return CDF_STATUS_E_FAILURE;
+					return QDF_STATUS_E_FAILURE;
 				}
 
 				(WLAN_HDD_GET_CTX(pAdapter))->
@@ -3008,7 +3008,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 							    pRoamInfo->
 							    ucastSig);
 			} else {
-				status = CDF_STATUS_E_FAILURE;
+				status = QDF_STATUS_E_FAILURE;
 				hddLog(LOGE,
 					FL("no available slot in conn_info. staId %d cannot be stored"),
 					pRoamInfo->staId);
@@ -3078,7 +3078,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					     tdlsConnInfo[staIdx].
 					     peerMac,
 					     CDF_MAC_ADDR_SIZE);
-				status = CDF_STATUS_SUCCESS;
+				status = QDF_STATUS_SUCCESS;
 				break;
 			}
 		}
@@ -3096,7 +3096,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						pRoamInfo->peerMac.bytes, true);
 		wlan_hdd_tdls_indicate_teardown(pAdapter, curr_peer,
 						pRoamInfo->reasonCode);
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 		break;
 	}
 	case eCSR_ROAM_RESULT_DELETE_ALL_TDLS_PEER_IND:
@@ -3156,7 +3156,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					sme_update_tdls_peer_state(
 						pHddCtx->hHal,
 						&smeTdlsPeerStateParams);
-				if (CDF_STATUS_SUCCESS != status) {
+				if (QDF_STATUS_SUCCESS != status) {
 					hddLog(LOGE,
 						  FL("sme_update_tdls_peer_state failed for "
 						  MAC_ADDRESS_STR),
@@ -3176,7 +3176,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				pHddCtx->tdlsConnInfo[staIdx].
 				sessionId = 255;
 
-				status = CDF_STATUS_SUCCESS;
+				status = QDF_STATUS_SUCCESS;
 			}
 		}
 		break;
@@ -3190,7 +3190,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				FL("concurrency detected. ignore SHOULD_DISCOVER concurrency_mode: 0x%x, active_sessions: %d"),
 				 pHddCtx->concurrency_mode,
 				 pHddCtx->no_of_active_sessions[CDF_STA_MODE]);
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
 
@@ -3199,7 +3199,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					       pRoamInfo->peerMac.bytes);
 		if (!curr_peer) {
 			hddLog(LOGE, FL("curr_peer is null"));
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 		} else {
 			if (eTDLS_LINK_CONNECTED ==
 			    curr_peer->link_status) {
@@ -3218,7 +3218,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					hddLog(LOG2,
 						FL
 						("TDLS ExternalControl enabled but curr_peer is not forced, ignore SHOULD_DISCOVER"));
-					status = CDF_STATUS_SUCCESS;
+					status = QDF_STATUS_SUCCESS;
 					break;
 				} else {
 					hddLog(LOG2,
@@ -3232,7 +3232,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				wlan_hdd_tdls_pre_setup_init_work
 					(pHddTdlsCtx, curr_peer);
 			}
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 		break;
 	}
@@ -3244,7 +3244,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						pRoamInfo->peerMac.bytes, true);
 		if (!curr_peer) {
 			hddLog(LOGE, FL("curr_peer is null"));
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 		} else {
 			if (eTDLS_LINK_CONNECTED ==
 			    curr_peer->link_status) {
@@ -3281,7 +3281,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					  ("TDLS link is not connected, ignore SHOULD_TEARDOWN, reason: %d"),
 					  pRoamInfo->reasonCode);
 			}
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 		break;
 	}
@@ -3293,7 +3293,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						pRoamInfo->peerMac.bytes, true);
 		if (!curr_peer) {
 			hddLog(LOGE, FL("curr_peer is null"));
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 		} else {
 			if (eTDLS_LINK_CONNECTED ==
 			    curr_peer->link_status) {
@@ -3329,7 +3329,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					  ("TDLS link is not connected, ignore SHOULD_PEER_DISCONNECTED, reason: %d"),
 					  pRoamInfo->reasonCode);
 			}
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 		break;
 	}
@@ -3835,17 +3835,17 @@ static inline bool hdd_is_8021x_sha256_auth_type(hdd_station_ctx_t *pHddStaCtx)
  * @roamStatus: roam status
  * @roamResult: roam result
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS
+QDF_STATUS
 hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		      eRoamCmdStatus roamStatus, eCsrRoamResult roamResult)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pContext;
 	hdd_wext_state_t *pWextState = NULL;
 	hdd_station_ctx_t *pHddStaCtx = NULL;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	hdd_context_t *pHddCtx = NULL;
 
 	hddLog(LOG2,
@@ -3855,7 +3855,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	/* Sanity check */
 	if ((NULL == pAdapter) || (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic)) {
 		hddLog(LOGP, "invalid adapter or adapter has invalid magic");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -3916,8 +3916,8 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 				WLAN_CONTROL_PATH);
 		status = hdd_roam_deregister_sta(pAdapter,
 					pHddStaCtx->conn_info.staId[0]);
-		if (!CDF_IS_STATUS_SUCCESS(status))
-			cdf_ret_status = CDF_STATUS_E_FAILURE;
+		if (!QDF_IS_STATUS_SUCCESS(status))
+			cdf_ret_status = QDF_STATUS_E_FAILURE;
 		pHddStaCtx->ft_carrier_on = true;
 		pHddStaCtx->hdd_ReassocScenario = true;
 		hddLog(LOG1,
@@ -4075,39 +4075,39 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 #ifdef FEATURE_WLAN_LFR_METRICS
 	case eCSR_ROAM_PREAUTH_INIT_NOTIFY:
 		/* This event is to notify pre-auth initiation */
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_preauth(pAdapter,
 							   pRoamInfo)) {
-			cdf_ret_status = CDF_STATUS_E_FAILURE;
+			cdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_PREAUTH_STATUS_SUCCESS:
 		/*
 		 * This event will notify pre-auth completion in case of success
 		 */
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_preauth_status(pAdapter,
 							 pRoamInfo, 1)) {
-			cdf_ret_status = CDF_STATUS_E_FAILURE;
+			cdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_PREAUTH_STATUS_FAILURE:
 		/*
 		 * This event will notify pre-auth completion incase of failure.
 		 */
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_preauth_status(pAdapter,
 								pRoamInfo, 0)) {
-			cdf_ret_status = CDF_STATUS_E_FAILURE;
+			cdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_HANDOVER_SUCCESS:
 		/* This event is to notify handover success.
 		   It will be only invoked on success */
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_handover(pAdapter,
 							    pRoamInfo)) {
-			cdf_ret_status = CDF_STATUS_E_FAILURE;
+			cdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 #endif
@@ -4321,7 +4321,7 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 				 uint16_t gen_ie_len, uint8_t *gen_ie)
 {
 	tHalHandle halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	CDF_STATUS result;
+	QDF_STATUS result;
 	tDot11fIERSN dot11RSNIE;
 	tDot11fIEWPA dot11WPAIE;
 	uint32_t i;
@@ -4723,14 +4723,14 @@ static int __iw_set_essid(struct net_device *dev,
 	if (hdd_conn_get_connected_bss_type(pHddStaCtx, &connectedBssType) ||
 	    (eMib_dot11DesiredBssType_independent ==
 	     pHddStaCtx->conn_info.connDot11DesiredBssType)) {
-		CDF_STATUS cdf_status;
+		QDF_STATUS qdf_status;
 
 		/* Need to issue a disconnect to CSR. */
 		INIT_COMPLETION(pAdapter->disconnect_comp_var);
-		cdf_status = sme_roam_disconnect(hHal, pAdapter->sessionId,
+		qdf_status = sme_roam_disconnect(hHal, pAdapter->sessionId,
 					 eCSR_DISCONNECT_REASON_UNSPECIFIED);
 
-		if (CDF_STATUS_SUCCESS == cdf_status) {
+		if (QDF_STATUS_SUCCESS == qdf_status) {
 			rc = wait_for_completion_timeout(&pAdapter->
 						 disconnect_comp_var,
 						 msecs_to_jiffies
@@ -4751,7 +4751,7 @@ static int __iw_set_essid(struct net_device *dev,
 
 	status = hdd_wmm_get_uapsd_mask(pAdapter,
 					&pWextState->roamProfile.uapsd_mask);
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		pWextState->roamProfile.uapsd_mask = 0;
 
 	pWextState->roamProfile.SSIDs.numOfSSIDs = 1;

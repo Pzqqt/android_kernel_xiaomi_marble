@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,18 +29,18 @@
    FILE:         cds_utils.c
 
    OVERVIEW:     This source file contains definitions for CDS crypto APIs
-                The four APIs mentioned in this file are used for
-                initializing, and de-initializing a crypto context, and
-                obtaining truly random data (for keys), as well as
-                SHA1 HMAC, and AES encrypt and decrypt routines.
+   The four APIs mentioned in this file are used for
+   initializing, and de-initializing a crypto context, and
+   obtaining truly random data (for keys), as well as
+   SHA1 HMAC, and AES encrypt and decrypt routines.
 
-                The routines include:
-                cds_crypto_init() - Initializes Crypto module
-                cds_crypto_deinit() - De-initializes Crypto module
-                cds_rand_get_bytes() - Generates random byte
-                cds_sha1_hmac_str() - Generate the HMAC-SHA1 of a string given a key
-                cds_encrypt_aes() - Generate AES Encrypted byte stream
-                cds_decrypt_aes() - Decrypts an AES Encrypted byte stream
+   The routines include:
+   cds_crypto_init() - Initializes Crypto module
+   cds_crypto_deinit() - De-initializes Crypto module
+   cds_rand_get_bytes() - Generates random byte
+   cds_sha1_hmac_str() - Generate the HMAC-SHA1 of a string given a key
+   cds_encrypt_aes() - Generate AES Encrypted byte stream
+   cds_decrypt_aes() - Decrypts an AES Encrypted byte stream
 
    DEPENDENCIES:
    ============================================================================*/
@@ -201,37 +201,37 @@ static void cds_cmac_calc_mic(struct crypto_cipher *tfm,
 
    \param phCryptProv - pointer to the Crypt handle
 
-   \return CDF_STATUS_SUCCESS - Successfully generated random memory.
+   \return QDF_STATUS_SUCCESS - Successfully generated random memory.
 
-          CDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
+   QDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
 
-          CDF_STATUS_E_FAILURE - default return value if it fails due to
-          unknown reasons
+   QDF_STATUS_E_FAILURE - default return value if it fails due to
+   unknown reasons
 
-  ***CDF_STATUS_E_RESOURCES - System resources (other than memory)
-          are unavailable
+   ***QDF_STATUS_E_RESOURCES - System resources (other than memory)
+   are unavailable
    \sa
 
     ( *** return value not considered yet )
    --------------------------------------------------------------------------*/
-CDF_STATUS cds_crypto_init(uint32_t *phCryptProv)
+QDF_STATUS cds_crypto_init(uint32_t *phCryptProv)
 {
-	CDF_STATUS uResult = CDF_STATUS_E_FAILURE;
+	QDF_STATUS uResult = QDF_STATUS_E_FAILURE;
 
 	/* This implementation doesn't require a crypto context */
 	*phCryptProv = 0;
-	uResult = CDF_STATUS_SUCCESS;
-	return (uResult);
+	uResult = QDF_STATUS_SUCCESS;
+	return uResult;
 }
 
-CDF_STATUS cds_crypto_deinit(uint32_t hCryptProv)
+QDF_STATUS cds_crypto_deinit(uint32_t hCryptProv)
 {
-	CDF_STATUS uResult = CDF_STATUS_E_FAILURE;
+	QDF_STATUS uResult = QDF_STATUS_E_FAILURE;
 
 	/* CryptReleaseContext succeeded */
-	uResult = CDF_STATUS_SUCCESS;
+	uResult = QDF_STATUS_SUCCESS;
 
-	return (uResult);
+	return uResult;
 }
 
 /*--------------------------------------------------------------------------
@@ -247,38 +247,38 @@ CDF_STATUS cds_crypto_deinit(uint32_t hCryptProv)
 
    \param lock - pointer to the opaque lock object to initialize
 
-   \return CDF_STATUS_SUCCESS - Successfully generated random memory.
+   \return QDF_STATUS_SUCCESS - Successfully generated random memory.
 
-          CDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
+   QDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
 
-          CDF_STATUS_E_FAILURE - default return value if it fails due to
-          unknown reasons
+   QDF_STATUS_E_FAILURE - default return value if it fails due to
+   unknown reasons
 
-  ***CDF_STATUS_E_RESOURCES - System resources (other than memory)
-          are unavailable
+  ***QDF_STATUS_E_RESOURCES - System resources (other than memory)
+  are unavailable
    \sa
 
     ( *** return value not considered yet )
    --------------------------------------------------------------------------*/
-CDF_STATUS
+QDF_STATUS
 cds_rand_get_bytes(uint32_t cryptHandle, uint8_t *pbBuf, uint32_t numBytes)
 {
-	CDF_STATUS uResult = CDF_STATUS_E_FAILURE;
+	QDF_STATUS uResult = QDF_STATUS_E_FAILURE;
 
 	/* check for invalid pointer */
 	if (NULL == pbBuf) {
-		uResult = CDF_STATUS_E_FAULT;
-		return (uResult);
+		uResult = QDF_STATUS_E_FAULT;
+		return uResult;
 	}
 
 	get_random_bytes(pbBuf, numBytes);
 	/* "Random sequence generated." */
-	uResult = CDF_STATUS_SUCCESS;
-	return (uResult);
+	uResult = QDF_STATUS_SUCCESS;
+	return uResult;
 }
 
 #ifdef WLAN_FEATURE_11W
-uint8_t cds_get_mmie_size()
+uint8_t cds_get_mmie_size(void)
 {
 	return sizeof(struct ieee80211_mmie);
 }
@@ -310,7 +310,7 @@ static void cds_increase_seq(uint8_t *ipn)
    of Broadcast/Multicast robust management frames.
 
    \param igtk - pointer  group key which will be used to calculate
-                the 8 byte MIC.
+   the 8 byte MIC.
    \param ipn - pointer ipn, it is also known as sequence number
    \param key_id - key identication number
    \param frm - pointer to the start of the frame.
@@ -318,7 +318,7 @@ static void cds_increase_seq(uint8_t *ipn)
    \param frmLen - size of the entire frame.
 
    \return - this function will return true on success and false on
-            failure.
+   failure.
 
    --------------------------------------------------------------------------*/
 
@@ -420,7 +420,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	if (NULL == input) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Memory allocation failed", __func__);
-		ret = CDF_STATUS_E_NOMEM;
+		ret = QDF_STATUS_E_NOMEM;
 		goto err_tfm;
 	}
 
@@ -530,7 +530,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	if (NULL == input) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "Memory allocation failed");
-		ret = CDF_STATUS_E_NOMEM;
+		ret = QDF_STATUS_E_NOMEM;
 		goto err_tfm;
 	}
 
@@ -708,7 +708,7 @@ err_tfm:
 	return ret;
 }
 
-CDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
+QDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
 			     uint8_t *pText,    /* pointer to data stream */
 			     uint32_t textLen,  /* length of data stream */
 			     uint8_t *pKey,     /* pointer to authentication key */
@@ -728,10 +728,10 @@ CDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
 	if (ret != 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "hmac_sha1() call failed");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -868,7 +868,7 @@ err_tfm:
 	return ret;
 }
 
-CDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
+QDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
 			    uint8_t *pText,     /* pointer to data stream */
 			    uint32_t textLen,   /* length of data stream */
 			    uint8_t *pKey,      /* pointer to authentication key */
@@ -888,10 +888,10 @@ CDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
 	if (ret != 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "hmac_md5() call failed");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 struct ecb_aes_result {
@@ -921,21 +921,21 @@ static void ecb_aes_complete(struct crypto_async_request *req, int err)
 
    \param lock - pointer to the opaque lock object to initialize
 
-   \return CDF_STATUS_SUCCESS - Successfully generated random memory.
+   \return QDF_STATUS_SUCCESS - Successfully generated random memory.
 
-          CDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
+   QDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
 
-          CDF_STATUS_E_FAILURE - default return value if it fails due to
-          unknown reasons
+   QDF_STATUS_E_FAILURE - default return value if it fails due to
+   unknown reasons
 
-  ***CDF_STATUS_E_RESOURCES - System resources (other than memory)
-          are unavailable
+  ***QDF_STATUS_E_RESOURCES - System resources (other than memory)
+  are unavailable
    \sa
 
     ( *** return value not considered yet )
    --------------------------------------------------------------------------*/
 
-CDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
+QDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
 			   uint8_t *pPlainText,         /* pointer to data stream */
 			   uint8_t *pCiphertext, uint8_t *pKey)
 {                               /* pointer to authentication key */
@@ -997,10 +997,10 @@ err_tfm:
 	if (ret != 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s() call failed", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*--------------------------------------------------------------------------
@@ -1016,25 +1016,25 @@ err_tfm:
 
    \param lock - pointer to the opaque lock object to initialize
 
-   \return CDF_STATUS_SUCCESS - Successfully generated random memory.
+   \return QDF_STATUS_SUCCESS - Successfully generated random memory.
 
-          CDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
+   QDF_STATUS_E_FAULT  - pbBuf is an invalid pointer.
 
-          CDF_STATUS_E_FAILURE - default return value if it fails due to
-          unknown reasons
+   QDF_STATUS_E_FAILURE - default return value if it fails due to
+   unknown reasons
 
-  ***CDF_STATUS_E_RESOURCES - System resources (other than memory)
-          are unavailable
+  ***QDF_STATUS_E_RESOURCES - System resources (other than memory)
+  are unavailable
    \sa
 
     ( *** return value not considered yet )
    --------------------------------------------------------------------------*/
 
-CDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
+QDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
 			   uint8_t *pText,      /* pointer to data stream */
 			   uint8_t *pDecrypted, uint8_t *pKey)
 {                               /* pointer to authentication key */
-/*    CDF_STATUS uResult = CDF_STATUS_E_FAILURE; */
+/*    QDF_STATUS uResult = QDF_STATUS_E_FAILURE; */
 	struct ecb_aes_result result;
 	struct ablkcipher_request *req;
 	struct crypto_ablkcipher *tfm;
@@ -1093,10 +1093,10 @@ err_tfm:
 	if (ret != 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s() call failed", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 uint32_t cds_chan_to_freq(uint8_t chan)

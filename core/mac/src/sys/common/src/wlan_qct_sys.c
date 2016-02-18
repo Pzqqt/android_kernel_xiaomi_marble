@@ -54,14 +54,14 @@ static qdf_event_t g_stop_evt;
  *
  * This API is used to build the sys message header.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg)
+QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg)
 {
 	pMsg->type = sysMsgId;
 	pMsg->reserved = SYS_MSG_COOKIE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -87,11 +87,10 @@ void sys_stop_complete_cb(void *pUserData)
  *
  * This API is used post a stop message to system module
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
+QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cds_msg_t sysMsg;
 
@@ -109,9 +108,9 @@ CDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 	sysMsg.bodyptr = (void *)&g_stop_evt;
 
 	/* post the message.. */
-	cdf_status = cds_mq_post_message(CDS_MQ_ID_SYS, &sysMsg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
-		cdf_status = CDF_STATUS_E_BADMSG;
+	qdf_status = cds_mq_post_message(CDS_MQ_ID_SYS, &sysMsg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
+		qdf_status = QDF_STATUS_E_BADMSG;
 
 	qdf_status = qdf_wait_single_event(&g_stop_evt, SYS_STOP_TIMEOUT);
 	CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
@@ -129,11 +128,11 @@ CDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
  *
  * This API is used to process the message
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
+QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cdf_mc_timer_callback_t timerCB;
 	tpAniSirGlobal mac_ctx;
 	void *hHal;
@@ -142,7 +141,7 @@ CDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer to cds_msg_t", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	/*
@@ -177,17 +176,17 @@ CDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 					CDF_TRACE_LEVEL_ERROR,
 					"%s: Invalid hHal", __func__);
 			} else {
-				cdf_status = sme_stop(hHal,
+				qdf_status = sme_stop(hHal,
 						HAL_STOP_TYPE_SYS_DEEP_SLEEP);
-				CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
-				cdf_status = mac_stop(hHal,
+				CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+				qdf_status = mac_stop(hHal,
 						HAL_STOP_TYPE_SYS_DEEP_SLEEP);
-				CDF_ASSERT(CDF_IS_STATUS_SUCCESS(cdf_status));
+				CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 
 				((sysResponseCback) pMsg->callback)(
 						(void *)pMsg->bodyptr);
 
-				cdf_status = CDF_STATUS_SUCCESS;
+				qdf_status = QDF_STATUS_SUCCESS;
 			}
 			break;
 
@@ -249,12 +248,12 @@ CDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 				"Rx SYS unknown MC msgtype= %d [0x%08X]",
 				pMsg->type, pMsg->type);
 		CDF_ASSERT(0);
-		cdf_status = CDF_STATUS_E_BADMSG;
+		qdf_status = QDF_STATUS_E_BADMSG;
 
 		if (pMsg->bodyptr)
 			cdf_mem_free(pMsg->bodyptr);
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -339,7 +338,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	/*
 	 * Post now the message to the appropriate module for handling
 	 */
-	if (CDF_STATUS_SUCCESS != cds_mq_post_message(targetMQ,
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(targetMQ,
 					(cds_msg_t *) pMsg)) {
 		/*
 		 * Caller doesn't allocate memory for the pMsg.

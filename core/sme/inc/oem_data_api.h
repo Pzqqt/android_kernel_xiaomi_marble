@@ -66,20 +66,20 @@ typedef enum {
 	eOEM_DATA_REQ_FAILURE,
 	eOEM_DATA_REQ_INVALID_MODE,
 } eOemDataReqStatus;
-CDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal);
-CDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal);
+QDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal);
+QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal);
 
 /*
  * HDD Callback function for the sme to callback when
  * the oem data rsp is available
  */
-typedef CDF_STATUS (*oem_data_oem_data_reqCompleteCallback)(tHalHandle,
+typedef QDF_STATUS (*oem_data_oem_data_reqCompleteCallback)(tHalHandle,
 		void *p2, uint32_t oemDataReqID, eOemDataReqStatus status);
 
-CDF_STATUS oem_data_oem_data_req(tHalHandle, uint8_t, tOemDataReqConfig *,
+QDF_STATUS oem_data_oem_data_req(tHalHandle, uint8_t, tOemDataReqConfig *,
 				 uint32_t *pOemDataReqID);
-CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *);
-CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal);
+QDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *);
+QDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal);
 typedef void (*sme_send_oem_data_rsp_msg)(int length, uint8_t *oem_data_rsp);
 #endif /* _OEM_DATA_API_H__ */
 

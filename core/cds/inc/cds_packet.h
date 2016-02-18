@@ -42,7 +42,6 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include <cdf_types.h>
-#include <cdf_status.h>
 #include <qdf_status.h>
 
 /*--------------------------------------------------------------------------
@@ -119,13 +118,13 @@ static inline void cds_pkt_proto_trace_close(void) {}
  * cds_pkt_return_packet  Free the cds Packet
  * @ cds Packet
  */
-CDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet);
+QDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet);
 
 /**
  * cds_pkt_get_packet_length  Returns the packet length
  * @ cds Packet
  */
-CDF_STATUS cds_pkt_get_packet_length(cds_pkt_t *pPacket,
+QDF_STATUS cds_pkt_get_packet_length(cds_pkt_t *pPacket,
 				     uint16_t *pPacketSize);
 
 /*
@@ -175,15 +174,15 @@ typedef enum {
 #define cds_packet_alloc(s, d, p)	\
 	cds_packet_alloc_debug(s, d, p, __FILE__, __LINE__)
 
-CDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
+QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 				  uint8_t *file_name, uint32_t line_num);
 #else
-CDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket);
+QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket);
 #endif
 
 void cds_packet_free(void *pPacket);
 
-typedef CDF_STATUS (*cds_pkt_get_packet_callback)(cds_pkt_t *pPacket,
+typedef QDF_STATUS (*cds_pkt_get_packet_callback)(cds_pkt_t *pPacket,
 						  void *userData);
 
 #endif /* !defined( __CDS_PKT_H ) */

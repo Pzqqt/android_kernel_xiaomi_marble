@@ -89,7 +89,7 @@ void sme_ft_close(tHalHandle hHal, uint32_t sessionId);
 void sme_ft_reset(tHalHandle hHal, uint32_t sessionId);
 void sme_set_ft_ies(tHalHandle hHal, uint32_t sessionId, const uint8_t *ft_ies,
 		uint16_t ft_ies_length);
-CDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
+QDF_STATUS sme_ft_update_key(tHalHandle hHal, uint32_t sessionId,
 		tCsrRoamSetKey *pFTKeyInfo);
 void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 		uint8_t *ft_ies, uint32_t ft_ies_ip_len,

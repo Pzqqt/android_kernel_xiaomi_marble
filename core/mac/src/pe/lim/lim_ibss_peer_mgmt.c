@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1088,7 +1088,7 @@ lim_ibss_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEntry)
 		return eSIR_FAILURE;
 	}
 
-	if (pAddStaParams->status != CDF_STATUS_SUCCESS) {
+	if (pAddStaParams->status != QDF_STATUS_SUCCESS) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("IBSS: ADD_STA_RSP error (%x) "),
 			       pAddStaParams->status);
@@ -1137,7 +1137,7 @@ void lim_ibss_del_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 		goto end;
 	}
 
-	if (pDelBss->status != CDF_STATUS_SUCCESS) {
+	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		lim_log(pMac, LOGE,
 			FL("IBSS: DEL_BSS_RSP(coalesce) error (%x) Bss %d "),
 			pDelBss->status, pDelBss->bssIdx);
@@ -1234,7 +1234,7 @@ void lim_ibss_del_bss_rsp(tpAniSirGlobal pMac, void *msg, tpPESession psessionEn
 		return;
 	}
 
-	if (pDelBss->status != CDF_STATUS_SUCCESS) {
+	if (pDelBss->status != QDF_STATUS_SUCCESS) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("IBSS: DEL_BSS_RSP error (%x) Bss %d "),
 			       pDelBss->status, pDelBss->bssIdx);

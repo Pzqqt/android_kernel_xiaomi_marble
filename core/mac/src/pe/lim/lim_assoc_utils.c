@@ -1980,7 +1980,7 @@ tSirRetStatus
 lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	tSirMacRateSet *oper_rate_set, tSirMacRateSet *ext_rate_set,
 	uint8_t *supported_mcs_set, tpPESession session_entry,
-	tDot11fIEVHTCaps * vht_caps)
+	tDot11fIEVHTCaps *vht_caps)
 #else
 tSirRetStatus
 lim_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
@@ -2348,7 +2348,7 @@ lim_add_sta(tpAniSirGlobal mac_ctx,
 
 	add_sta_params->updateSta = update_entry;
 
-	add_sta_params->status = CDF_STATUS_SUCCESS;
+	add_sta_params->status = QDF_STATUS_SUCCESS;
 	add_sta_params->respReqd = 1;
 	/* Update HT Capability */
 
@@ -2757,7 +2757,7 @@ lim_del_sta(tpAniSirGlobal pMac,
 	cdf_mem_copy((uint8_t *) pDelStaParams->staMac,
 		     (uint8_t *) pStaDs->staAddr, sizeof(tSirMacAddr));
 
-	pDelStaParams->status = CDF_STATUS_SUCCESS;
+	pDelStaParams->status = QDF_STATUS_SUCCESS;
 	msgQ.type = WMA_DELETE_STA_REQ;
 	msgQ.reserved = 0;
 	msgQ.bodyptr = pDelStaParams;
@@ -2908,7 +2908,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 
 	pAddStaParams->assocId = psessionEntry->limAID;
 	pAddStaParams->staType = STA_ENTRY_SELF;
-	pAddStaParams->status = CDF_STATUS_SUCCESS;
+	pAddStaParams->status = QDF_STATUS_SUCCESS;
 	pAddStaParams->respReqd = 1;
 
 	/* Update  PE session ID */
@@ -3586,7 +3586,7 @@ lim_del_bss(tpAniSirGlobal pMac, tpDphHashNode pStaDs, uint16_t bssIdx,
 		lim_deactivate_and_change_timer(pMac, eLIM_JOIN_FAIL_TIMER);
 	}
 
-	pDelBssParams->status = CDF_STATUS_SUCCESS;
+	pDelBssParams->status = QDF_STATUS_SUCCESS;
 	pDelBssParams->respReqd = 1;
 	cdf_mem_copy(pDelBssParams->bssid, psessionEntry->bssId,
 		     sizeof(tSirMacAddr));
@@ -4213,7 +4213,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	lim_log(pMac, LOG2, FL("maxTxPower: %d"), pAddBssParams->maxTxPower);
 #endif
 	/* FIXME_GEN4 - Any other value that can be used for initialization? */
-	pAddBssParams->status = CDF_STATUS_SUCCESS;
+	pAddBssParams->status = QDF_STATUS_SUCCESS;
 	pAddBssParams->respReqd = true;
 	/* update persona */
 	pAddBssParams->halPersona = (uint8_t) psessionEntry->pePersona;
@@ -4744,7 +4744,7 @@ tSirRetStatus lim_sta_send_add_bss_pre_assoc(tpAniSirGlobal pMac, uint8_t update
 	lim_log(pMac, LOG2, FL("maxTxPower: %d"), pAddBssParams->maxTxPower);
 #endif
 
-	pAddBssParams->status = CDF_STATUS_SUCCESS;
+	pAddBssParams->status = QDF_STATUS_SUCCESS;
 	pAddBssParams->respReqd = true;
 
 	pAddBssParams->staContext.smesessionId = psessionEntry->smeSessionId;

@@ -173,7 +173,7 @@ static bool wma_is_mcc_24G(WMA_HANDLE handle)
  *
  * Return: CDF status
  */
-CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
 				      wmi_buf_t *buf, int *buf_len)
 {
@@ -182,7 +182,7 @@ CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	wmi_mac_addr *bssid;
 	wmi_ssid *ssid = NULL;
 	uint32_t *tmp_ptr, ie_len_with_pad;
-	CDF_STATUS cdf_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	uint8_t *buf_ptr;
 	uint32_t dwell_time;
 	uint8_t SSID_num;
@@ -192,7 +192,7 @@ CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 
 	if (!pMac) {
 		WMA_LOGP("%s: pMac is NULL!", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	len += WMI_TLV_HDR_SIZE;        /* Length TLV placeholder for array of uint32_t */
@@ -216,7 +216,7 @@ CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	if (!*buf) {
 		WMA_LOGP("%s: failed to allocate memory for start scan cmd",
 			 __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(*buf);
@@ -520,11 +520,11 @@ CDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE + ie_len_with_pad;
 
 	*buf_len = len;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	cdf_mem_free(*buf);
 	*buf = NULL;
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -538,13 +538,13 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 				     wmi_buf_t *buf,
 				     int *buf_len,
 				     tAbortScanParams *abort_scan_req)
 {
 	wmi_stop_scan_cmd_fixed_param *cmd;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	int len = sizeof(*cmd);
 
 	/* Allocate the memory */
@@ -552,7 +552,7 @@ CDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 	if (!*buf) {
 		WMA_LOGP("%s: failed to allocate memory for stop scan cmd",
 			 __func__);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
@@ -567,9 +567,9 @@ CDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 	cmd->req_type = WMI_SCAN_STOP_ONE;
 
 	*buf_len = len;
-	cdf_status = CDF_STATUS_SUCCESS;
+	qdf_status = QDF_STATUS_SUCCESS;
 error:
-	return cdf_status;
+	return qdf_status;
 
 }
 
@@ -584,11 +584,11 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
+QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 			  tSirScanOffloadReq *scan_req, uint16_t msg_type)
 {
 	uint32_t vdev_id, scan_id;
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	wmi_start_scan_cmd_fixed_param *cmd;
 	int status = 0;
@@ -610,9 +610,9 @@ CDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 
 	/* Fill individual elements of wmi_start_scan_req and
 	 * TLV for channel list, bssid, ssid etc ... */
-	cdf_status = wma_get_buf_start_scan_cmd(wma_handle, scan_req,
+	qdf_status = wma_get_buf_start_scan_cmd(wma_handle, scan_req,
 						&buf, &len);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get buffer for start scan cmd");
 		goto error;
 	}
@@ -645,13 +645,13 @@ CDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 	/* Call the wmi api to request the scan */
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI("WMA --> WMI_START_SCAN_CMDID");
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	/* Send completion event for only for start scan request */
 	if (msg_type == WMA_START_SCAN_OFFLOAD_REQ) {
@@ -661,7 +661,7 @@ error:
 		if (!scan_event) {
 			WMA_LOGP("%s: Failed to allocate memory for scan rsp",
 				 __func__);
-			return CDF_STATUS_E_NOMEM;
+			return QDF_STATUS_E_NOMEM;
 		}
 		memset(scan_event, 0x00, sizeof(*scan_event));
 		scan_event->event = WMI_SCAN_EVENT_COMPLETED;
@@ -673,7 +673,7 @@ error:
 		wma_send_msg(wma_handle, WMA_RX_SCAN_EVENT, (void *)scan_event,
 			     0);
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -685,24 +685,24 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
+QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 			 tAbortScanParams *abort_scan_req)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	wmi_buf_t buf;
 	int status = 0;
 	int len;
 
-	cdf_status = wma_get_buf_stop_scan_cmd(wma_handle, &buf, &len,
+	qdf_status = wma_get_buf_stop_scan_cmd(wma_handle, &buf, &len,
 					       abort_scan_req);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get buffer for stop scan cmd");
 		goto error1;
 	}
 
 	if (NULL == buf) {
 		WMA_LOGE("Failed to get buffer for stop scan cmd");
-		cdf_status = CDF_STATUS_E_FAULT;
+		qdf_status = QDF_STATUS_E_FAULT;
 		goto error1;
 	}
 
@@ -712,7 +712,7 @@ CDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_STOP_SCAN_CMDID returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 	WMA_LOGE("scan_id 0x%x, scan_requestor_id 0x%x, vdev_id %d",
@@ -721,12 +721,12 @@ CDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 		 abort_scan_req->SessionId);
 	WMA_LOGI("WMA --> WMI_STOP_SCAN_CMDID");
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	if (buf)
 		cdf_nbuf_free(buf);
 error1:
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -738,12 +738,12 @@ error1:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
+QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	wmi_buf_t buf;
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_scan_chan_list_cmd_fixed_param *cmd;
 	int status, i;
 	uint8_t *buf_ptr;
@@ -754,7 +754,7 @@ CDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("Failed to allocate memory");
-		cdf_status = CDF_STATUS_E_NOMEM;
+		qdf_status = QDF_STATUS_E_NOMEM;
 		goto end;
 	}
 
@@ -819,12 +819,12 @@ CDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				      WMI_SCAN_CHAN_LIST_CMDID);
 
 	if (status != EOK) {
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		WMA_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
 		wmi_buf_free(buf);
 	}
 end:
-	return cdf_status;
+	return qdf_status;
 }
 
 
@@ -841,13 +841,13 @@ end:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
 				      scan_cmd_fp,
 				      tSirRoamOffloadScanReq *roam_req,
 				      uint32_t mode, uint32_t vdev_id)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	int status = 0;
 	int len;
@@ -908,7 +908,7 @@ CDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1086,16 +1086,16 @@ CDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_MODE returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_MODE", __func__);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1107,10 +1107,10 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	tSirRoamOffloadScanReq *roam_req)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	int status = 0;
 	int len, rssi_thresh, rssi_thresh_diff;
@@ -1140,7 +1140,7 @@ CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1233,7 +1233,7 @@ CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("cmd WMI_ROAM_SCAN_RSSI_THRESHOLD returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
@@ -1242,11 +1242,11 @@ CDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	WMA_LOGI(
 		FL("hirssi_scan max_count=%d, delta=%d, hirssi_upper_bound=%d"),
 		hirssi_scan_max_count, hirssi_scan_delta, hirssi_upper_bound);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1260,12 +1260,12 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 					     uint32_t scan_period,
 					     uint32_t scan_age,
 					     uint32_t vdev_id)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	int status = 0;
 	int len;
@@ -1277,7 +1277,7 @@ CDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1296,17 +1296,17 @@ CDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_PERIOD returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_PERIOD roam_scan_period=%d, roam_scan_age=%d",
 		__func__, scan_period, scan_age);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1320,13 +1320,13 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 	uint32_t vdev_id,
 	int32_t rssi_change_thresh,
 	uint32_t bcn_rssi_weight,
 	uint32_t hirssi_delay_btw_scans)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	int status = 0;
 	int len;
@@ -1338,7 +1338,7 @@ CDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1359,18 +1359,18 @@ CDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI(FL("roam_scan_rssi_change_thresh=%d, bcn_rssi_weight=%d"),
 		rssi_change_thresh, bcn_rssi_weight);
 	WMA_LOGI(FL("hirssi_delay_btw_scans=%d"), hirssi_delay_btw_scans);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1385,12 +1385,12 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t chan_count,
 					   uint8_t *chan_list,
 					   uint8_t list_type, uint32_t vdev_id)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	int status = 0;
 	int len, list_tlv_len;
@@ -1402,7 +1402,7 @@ CDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 	if (chan_count == 0) {
 		WMA_LOGD("%s : invalid number of channels %d", __func__,
 			 chan_count);
-		return CDF_STATUS_E_EMPTY;
+		return QDF_STATUS_E_EMPTY;
 	}
 	/* Channel list is a table of 2 TLV's */
 	list_tlv_len = WMI_TLV_HDR_SIZE + chan_count * sizeof(A_UINT32);
@@ -1410,7 +1410,7 @@ CDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1447,16 +1447,16 @@ CDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_CHAN_LIST returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_CHAN_LIST", __func__);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1800,11 +1800,11 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 					    wmi_ap_profile *ap_profile_p,
 					    uint32_t vdev_id)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf = NULL;
 	int status = 0;
 	int len;
@@ -1816,7 +1816,7 @@ CDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1839,16 +1839,16 @@ CDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_AP_PROFILE returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI("WMA --> WMI_ROAM_AP_PROFILE and other parameters");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1863,7 +1863,7 @@ error:
  * Return: Return success upon succesfully passing the
  *         parameters to the firmware, otherwise failure.
  */
-CDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	tSirRoamOffloadScanReq *roam_req)
 {
 	wmi_buf_t buf = NULL;
@@ -1908,7 +1908,7 @@ CDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			break;
 		default:
 			WMA_LOGD("%s : Roam Filter need not be sent", __func__);
-			return CDF_STATUS_SUCCESS;
+			return QDF_STATUS_SUCCESS;
 			break;
 		}
 	} else {
@@ -1926,7 +1926,7 @@ CDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (u_int8_t *) wmi_buf_data(buf);
@@ -2000,10 +2000,10 @@ CDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 				status);
 		goto error;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 error:
 	wmi_buf_free(buf);
-	return CDF_STATUS_E_FAILURE;
+	return QDF_STATUS_E_FAILURE;
 }
 
 /**
@@ -2017,7 +2017,7 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 				   A_INT32 first_bcnt,
 				   A_UINT32 final_bcnt, uint32_t vdev_id)
 {
@@ -2033,7 +2033,7 @@ CDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_vdev_set_param_send WMI_VDEV_PARAM_BMISS_FIRST_BCNT returned Error %d",
 			status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	status = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
@@ -2043,10 +2043,10 @@ CDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_vdev_set_param_send WMI_VDEV_PARAM_BMISS_FINAL_BCNT returned Error %d",
 			status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2059,10 +2059,10 @@ CDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id)
 {
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	wmi_roam_scan_cmd_fixed_param *cmd_fp;
 	wmi_buf_t buf = NULL;
 	int status = 0;
@@ -2073,7 +2073,7 @@ CDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -2090,17 +2090,17 @@ CDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 	if (status != EOK) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_CMD returned Error %d",
 			status);
-		cdf_status = CDF_STATUS_E_FAILURE;
+		qdf_status = QDF_STATUS_E_FAILURE;
 		goto error;
 	}
 
 	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_CMD", __func__);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 error:
 	wmi_buf_free(buf);
 
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -2112,10 +2112,10 @@ error:
  *
  * Return: CDF status
  */
-CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
+QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 				     tSirRoamOffloadScanReq *roam_req)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_start_scan_cmd_fixed_param scan_params;
 	wmi_ap_profile ap_profile;
 	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
@@ -2127,7 +2127,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: pMac is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!wma_handle->roam_offload_enabled) {
@@ -2135,7 +2135,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 * Cannot initialize it in the middle of connection.
 		 */
 		cdf_mem_free(roam_req);
-		return CDF_STATUS_E_PERM;
+		return QDF_STATUS_E_PERM;
 	}
 	switch (roam_req->Command) {
 	case ROAM_SCAN_OFFLOAD_START:
@@ -2152,15 +2152,15 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 */
 		wma_handle->suitable_ap_hb_failure = false;
 
-		cdf_status = wma_roam_scan_offload_rssi_thresh(wma_handle,
+		qdf_status = wma_roam_scan_offload_rssi_thresh(wma_handle,
 								roam_req);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
-		cdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
+		qdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
 						     roam_req->RoamBmissFirstBcnt,
 						     roam_req->RoamBmissFinalBcnt,
 						     roam_req->sessionId);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
 		/* Opportunistic scan runs on a timer, value set by
@@ -2168,12 +2168,12 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 * cycles.
 		 */
 		if (roam_req->EmptyRefreshScanPeriod > 0) {
-			cdf_status =
+			qdf_status =
 				wma_roam_scan_offload_scan_period(wma_handle,
 								  roam_req->EmptyRefreshScanPeriod,
 								  roam_req->EmptyRefreshScanPeriod * 3,
 								  roam_req->sessionId);
-			if (cdf_status != CDF_STATUS_SUCCESS)
+			if (qdf_status != QDF_STATUS_SUCCESS)
 				break;
 
 			mode = WMI_ROAM_SCAN_MODE_PERIODIC;
@@ -2191,44 +2191,44 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 * Beacon weight of 14 means average rssi is taken over 14 previous samples +
 		 * 2 times the current beacon's rssi.
 		 */
-		cdf_status = wma_roam_scan_offload_rssi_change(wma_handle,
+		qdf_status = wma_roam_scan_offload_rssi_change(wma_handle,
 					roam_req->sessionId,
 					roam_req->RoamRescanRssiDiff,
 					roam_req->RoamBeaconRssiWeight,
 					roam_req->hi_rssi_scan_delay);
 
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
 		wma_roam_scan_fill_ap_profile(wma_handle, pMac, roam_req,
 					      &ap_profile);
 
-		cdf_status = wma_roam_scan_offload_ap_profile(wma_handle,
+		qdf_status = wma_roam_scan_offload_ap_profile(wma_handle,
 							      &ap_profile,
 							      roam_req->sessionId);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
-		cdf_status = wma_roam_scan_offload_chan_list(wma_handle,
+		qdf_status = wma_roam_scan_offload_chan_list(wma_handle,
 							     roam_req->ConnectedNetwork.ChannelCount,
 							     &roam_req->ConnectedNetwork.ChannelCache[0],
 							     roam_req->ChannelCacheType,
 							     roam_req->sessionId);
-		if ((cdf_status != CDF_STATUS_SUCCESS) &&
-			(cdf_status != CDF_STATUS_E_EMPTY))
+		if ((qdf_status != QDF_STATUS_SUCCESS) &&
+			(qdf_status != QDF_STATUS_E_EMPTY))
 			break;
 
 
 		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,
 					       &scan_params);
-		cdf_status =
+		qdf_status =
 			wma_roam_scan_offload_mode(wma_handle, &scan_params,
 						   roam_req, mode,
 						   roam_req->sessionId);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
-		cdf_status = wma_roam_scan_filter(wma_handle, roam_req);
-		if (cdf_status != CDF_STATUS_SUCCESS) {
+		qdf_status = wma_roam_scan_filter(wma_handle, roam_req);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Sending start for roam scan filter failed");
 			break;
 		}
@@ -2240,7 +2240,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 
 			wma_roam_scan_fill_scan_params(wma_handle, pMac,
 						       NULL, &scan_params);
-			cdf_status = wma_roam_scan_offload_mode(wma_handle,
+			qdf_status = wma_roam_scan_offload_mode(wma_handle,
 								&scan_params,
 								NULL,
 								WMI_ROAM_SCAN_MODE_NONE,
@@ -2253,8 +2253,8 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 * send the cleared entries.
 		 */
 		if (!roam_req->middle_of_roaming) {
-			cdf_status = wma_roam_scan_filter(wma_handle, roam_req);
-			if (cdf_status != CDF_STATUS_SUCCESS) {
+			qdf_status = wma_roam_scan_filter(wma_handle, roam_req);
+			if (qdf_status != QDF_STATUS_SUCCESS) {
 				WMA_LOGE("clear for roam scan filter failed");
 				break;
 			}
@@ -2270,7 +2270,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 				WMA_LOGE("%s: Alloc failed for scan_offload_rsp",
 					__func__);
 				cdf_mem_free(roam_req);
-				return CDF_STATUS_E_NOMEM;
+				return QDF_STATUS_E_NOMEM;
 			}
 			cds_msg.type = eWNI_SME_ROAM_SCAN_OFFLOAD_RSP;
 			scan_offload_rsp->sessionId = roam_req->sessionId;
@@ -2281,7 +2281,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 			 * Roam_Scan_Offload_Rsp post a dummy rsp msg back to
 			 * SME with proper reason code.
 			 */
-			if (CDF_STATUS_SUCCESS !=
+			if (QDF_STATUS_SUCCESS !=
 			    cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 				cdf_mem_free(scan_offload_rsp);
@@ -2297,7 +2297,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		/* If roam scan is running, stop that cycle.
 		 * It will continue automatically on next trigger.
 		 */
-		cdf_status = wma_roam_scan_offload_command(wma_handle,
+		qdf_status = wma_roam_scan_offload_command(wma_handle,
 							   WMI_ROAM_SCAN_STOP_CMD,
 							   roam_req->sessionId);
 		break;
@@ -2322,25 +2322,25 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		wma_handle->suitable_ap_hb_failure = false;
 		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,
 					       &scan_params);
-		cdf_status =
+		qdf_status =
 			wma_roam_scan_offload_mode(wma_handle, &scan_params,
 						   roam_req,
 						   WMI_ROAM_SCAN_MODE_NONE,
 						   roam_req->sessionId);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
 		if (roam_req->RoamScanOffloadEnabled == false)
 			break;
 
-		cdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
+		qdf_status = wma_roam_scan_bmiss_cnt(wma_handle,
 						     roam_req->RoamBmissFirstBcnt,
 						     roam_req->RoamBmissFinalBcnt,
 						     roam_req->sessionId);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
-		cdf_status = wma_roam_scan_filter(wma_handle, roam_req);
-		if (cdf_status != CDF_STATUS_SUCCESS) {
+		qdf_status = wma_roam_scan_filter(wma_handle, roam_req);
+		if (qdf_status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Sending update for roam scan filter failed");
 			break;
 		}
@@ -2350,7 +2350,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 * Runtime (after association) changes to rssi thresholds and
 		 * other parameters.
 		 */
-		cdf_status = wma_roam_scan_offload_chan_list(wma_handle,
+		qdf_status = wma_roam_scan_offload_chan_list(wma_handle,
 							     roam_req->ConnectedNetwork.ChannelCount,
 							     &roam_req->ConnectedNetwork.ChannelCache[0],
 							     roam_req->ChannelCacheType,
@@ -2359,23 +2359,23 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		 * Even though the channel list is empty, we can
 		 * still go ahead and start Roaming.
 		 */
-		if ((cdf_status != CDF_STATUS_SUCCESS) &&
-			(cdf_status != CDF_STATUS_E_EMPTY))
+		if ((qdf_status != QDF_STATUS_SUCCESS) &&
+			(qdf_status != QDF_STATUS_E_EMPTY))
 			break;
 
 
-		cdf_status = wma_roam_scan_offload_rssi_thresh(wma_handle,
+		qdf_status = wma_roam_scan_offload_rssi_thresh(wma_handle,
 							       roam_req);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
 		if (roam_req->EmptyRefreshScanPeriod > 0) {
-			cdf_status =
+			qdf_status =
 				wma_roam_scan_offload_scan_period(wma_handle,
 								  roam_req->EmptyRefreshScanPeriod,
 								  roam_req->EmptyRefreshScanPeriod * 3,
 								  roam_req->sessionId);
-			if (cdf_status != CDF_STATUS_SUCCESS)
+			if (qdf_status != QDF_STATUS_SUCCESS)
 				break;
 
 			mode = WMI_ROAM_SCAN_MODE_PERIODIC;
@@ -2389,25 +2389,25 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 			mode = WMI_ROAM_SCAN_MODE_RSSI_CHANGE;
 		}
 
-		cdf_status = wma_roam_scan_offload_rssi_change(wma_handle,
+		qdf_status = wma_roam_scan_offload_rssi_change(wma_handle,
 				    roam_req->sessionId,
 				    roam_req->RoamRescanRssiDiff,
 				    roam_req->RoamBeaconRssiWeight,
 				    roam_req->hi_rssi_scan_delay);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
 		wma_roam_scan_fill_ap_profile(wma_handle, pMac, roam_req,
 					      &ap_profile);
-		cdf_status =
+		qdf_status =
 			wma_roam_scan_offload_ap_profile(wma_handle, &ap_profile,
 							 roam_req->sessionId);
-		if (cdf_status != CDF_STATUS_SUCCESS)
+		if (qdf_status != QDF_STATUS_SUCCESS)
 			break;
 
 		wma_roam_scan_fill_scan_params(wma_handle, pMac, roam_req,
 					       &scan_params);
-		cdf_status =
+		qdf_status =
 			wma_roam_scan_offload_mode(wma_handle, &scan_params,
 						   roam_req, mode,
 						   roam_req->sessionId);
@@ -2418,7 +2418,7 @@ CDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		break;
 	}
 	cdf_mem_free(roam_req);
-	return cdf_status;
+	return qdf_status;
 }
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -2819,7 +2819,7 @@ int wma_rssi_breached_event_handler(void *handle,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
+QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					wmi_roam_offload_tlv_param *
 					roam_offload_params,
 					tSirRoamOffloadScanReq *roam_req)
@@ -2844,13 +2844,13 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED, &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_PRIVACY_ENABLED");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	selfCaps.ess = 1;
 	selfCaps.ibss = 0;
@@ -2859,7 +2859,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_SHORT_PREAMBLE");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.shortPreamble = 1;
@@ -2870,28 +2870,28 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 			     &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.shortSlotTime = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11H_ENABLED");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.spectrumMgt = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_QOS_ENABLED, &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_QOS_ENABLED");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.qos = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_APSD_ENABLED, &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_APSD_ENABLED");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.apsd = 1;
@@ -2902,7 +2902,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	    eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_BLOCK_ACK_ENABLED");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	selfCaps.delayedBA =
 		(uint16_t) ((val >> WNI_CFG_BLOCK_ACK_ENABLED_DELAYED) & 1);
@@ -2915,7 +2915,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	    eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_HT_CAP_INFO");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
 	roam_offload_params->ht_caps_info =
@@ -2924,7 +2924,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	    eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_HT_AMPDU_PARAMS");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* tSirMacHTParametersInfo */
 	nCfgValue8 = (uint8_t) nCfgValue;
@@ -2936,13 +2936,13 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 			     &val) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_SUPPORTED_MCS_SET");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_EXT_HT_CAP_INFO, &nCfgValue) !=
 	    eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_EXT_HT_CAP_INFO");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* uHTCapabilityInfo.extHtCapInfo */
 	uHTCapabilityInfo.nCfgValue16 = nCfgValue & 0xFFFF;
@@ -2952,7 +2952,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &nCfgValue) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_TX_BF_CAP");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* tSirMacTxBFCapabilityInfo */
 	nCfgValue8 = (uint8_t) nCfgValue;
@@ -2960,7 +2960,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (wlan_cfg_get_int(pMac, WNI_CFG_AS_CAP, &nCfgValue) != eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_AS_CAP");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* tSirMacASCapabilityInfo */
 	nCfgValue8 = (uint8_t) nCfgValue;
@@ -2971,7 +2971,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	    eSIR_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_MAX_SP_LENGTH");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	nCfgValue8 = (uint8_t) nCfgValue;
 	macQosInfoSta.maxSpLen = nCfgValue8;
@@ -2987,7 +2987,7 @@ CDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	 */
 	roam_offload_params->qos_caps = (*pCfgValue8) & 0xFF;
 	roam_offload_params->wmm_caps = 0x4 & 0xFF;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3075,7 +3075,7 @@ void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts)
 		WMA_LOGP("%s: Failed to send vdev Set RIC Req command",
 			 __func__);
 		if (is_add_ts)
-			((tAddTsParams *) msg)->status = CDF_STATUS_E_FAILURE;
+			((tAddTsParams *) msg)->status = QDF_STATUS_E_FAILURE;
 		cdf_nbuf_free(buf);
 	}
 }
@@ -3154,7 +3154,7 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	tSirSmeHOFailureInd *ho_failure_ind;
 	cds_msg_t sme_msg = { 0 };
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	ho_failure_ind = cdf_mem_malloc(sizeof(tSirSmeHOFailureInd));
 
@@ -3167,8 +3167,8 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_HO_FAIL_IND msg to SME");
 		cdf_mem_free(ho_failure_ind);
 		return;
@@ -3233,7 +3233,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 {
 	struct wma_vdev_start_req req;
 	struct wma_target_req *msg;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	uint8_t vdev_id, peer_id;
 	ol_txrx_peer_handle peer;
 	ol_txrx_pdev_handle pdev;
@@ -3244,13 +3244,13 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	if (!wma_find_vdev_by_addr(wma, params->selfStaMacAddr, &vdev_id)) {
 		WMA_LOGP("%s: Failed to find vdev id for %pM",
 			 __func__, params->selfStaMacAddr);
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
 
@@ -3264,7 +3264,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	if (!msg) {
 		WMA_LOGP("%s: Failed to fill channel switch request for vdev %d",
 			__func__, req.vdev_id);
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 		goto send_resp;
 	}
 	req.chan = params->channelNumber;
@@ -3274,7 +3274,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 	req.ch_center_freq_seg1 = params->ch_center_freq_seg1;
 	req.dot11_mode = params->dot11_mode;
 	status = wma_get_current_hw_mode(&hw_mode);
-	if (!CDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		WMA_LOGE("wma_get_current_hw_mode failed");
 
 	if ((params->nss == 2) && !hw_mode.dbs_cap) {
@@ -3304,7 +3304,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	status = wma_vdev_start(wma, &req,
 				wma->interfaces[req.vdev_id].is_channel_switch);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		wma_remove_vdev_req(wma, req.vdev_id,
 				    WMA_TARGET_REQ_TYPE_VDEV_START);
 		WMA_LOGP("%s: vdev start failed status = %d", __func__, status);
@@ -3369,7 +3369,7 @@ void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
  * This function request FW to start PNO request.
  * Request: CDF status
  */
-CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
+QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 {
 	wmi_nlo_config_cmd_fixed_param *cmd;
 	nlo_configured_parameters *nlo_list;
@@ -3399,7 +3399,7 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_nlo_config_cmd_fixed_param *) wmi_buf_data(buf);
@@ -3497,7 +3497,7 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	if (ret) {
 		WMA_LOGE("%s: Failed to send nlo wmi cmd", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	wma->interfaces[pno->sessionId].pno_in_progress = true;
@@ -3505,7 +3505,7 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	WMA_LOGD("PNO start request sent successfully for vdev %d",
 		 pno->sessionId);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3517,7 +3517,7 @@ CDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
  *
  * Return: CDF status
  */
-CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
+QDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 {
 	wmi_nlo_config_cmd_fixed_param *cmd;
 	int32_t len = sizeof(*cmd);
@@ -3528,7 +3528,7 @@ CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 	if (!wma->interfaces[vdev_id].pno_in_progress) {
 		WMA_LOGD("No active pno session found for vdev %d, skip pno stop request",
 			vdev_id);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	WMA_LOGD("PNO Stop");
@@ -3542,7 +3542,7 @@ CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_nlo_config_cmd_fixed_param *) wmi_buf_data(buf);
@@ -3572,14 +3572,14 @@ CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 	if (ret) {
 		WMA_LOGE("%s: Failed to send nlo wmi cmd", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	wma->interfaces[vdev_id].pno_in_progress = false;
 
 	WMA_LOGD("PNO stop request sent successfully for vdev %d", vdev_id);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3591,7 +3591,7 @@ CDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
  */
 void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno)
 {
-	CDF_STATUS ret;
+	QDF_STATUS ret;
 
 	if (pno->enable)
 		ret = wma_pno_start(wma, pno);
@@ -3618,7 +3618,7 @@ void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno)
  *
  * Return: CDF status
  */
-CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
+QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
 {
 	wmi_vdev_plmreq_start_cmd_fixed_param *cmd;
 	uint32_t *channel_list;
@@ -3630,7 +3630,7 @@ CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
 
 	if (NULL == plm || NULL == wma) {
 		WMA_LOGE("%s: input pointer is NULL ", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	WMA_LOGD("PLM Start");
 
@@ -3640,7 +3640,7 @@ CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	cmd = (wmi_vdev_plmreq_start_cmd_fixed_param *) wmi_buf_data(buf);
 
@@ -3695,14 +3695,14 @@ CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
 	if (ret) {
 		WMA_LOGE("%s: Failed to send plm start wmi cmd", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma->interfaces[plm->sessionId].plm_in_progress = true;
 
 	WMA_LOGD("Plm start request sent successfully for vdev %d",
 		 plm->sessionId);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3714,7 +3714,7 @@ CDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
  *
  * Return: CDF status
  */
-CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
+QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
 {
 	wmi_vdev_plmreq_stop_cmd_fixed_param *cmd;
 	int32_t len;
@@ -3724,12 +3724,12 @@ CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
 
 	if (NULL == plm || NULL == wma) {
 		WMA_LOGE("%s: input pointer is NULL ", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (false == wma->interfaces[plm->sessionId].plm_in_progress) {
 		WMA_LOGE("No active plm req found, skip plm stop req");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("PLM Stop");
@@ -3738,7 +3738,7 @@ CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_vdev_plmreq_stop_cmd_fixed_param *) wmi_buf_data(buf);
@@ -3760,14 +3760,14 @@ CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
 	if (ret) {
 		WMA_LOGE("%s: Failed to send plm stop wmi cmd", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma->interfaces[plm->sessionId].plm_in_progress = false;
 
 	WMA_LOGD("Plm stop request sent successfully for vdev %d",
 		 plm->sessionId);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3779,7 +3779,7 @@ CDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
  */
 void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
 {
-	CDF_STATUS ret = 0;
+	QDF_STATUS ret = 0;
 
 	if (NULL == plm || NULL == wma)
 		return;
@@ -3816,7 +3816,7 @@ void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
 void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 {
 	tSirPrefNetworkFoundInd *nw_found_ind;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cds_msg_t cds_msg;
 	uint8_t len, i;
 
@@ -3850,7 +3850,7 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 	cds_msg.bodyval = 0;
 
 	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post PNO completion match event to SME",
 			 __func__);
 		cdf_mem_free(nw_found_ind);
@@ -5145,7 +5145,7 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
  *
  * Return: CDF Status.
  */
-CDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 					 tSirWifiScanCmdReqParams *pstart,
 					 wmi_buf_t *buf, int *buf_len)
 {
@@ -5201,7 +5201,7 @@ CDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 	if (!*buf) {
 		WMA_LOGP("%s: failed to allocate memory"
 			 " for start extscan cmd", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(*buf);
 	cmd = (wmi_extscan_start_cmd_fixed_param *) buf_ptr;
@@ -5361,7 +5361,7 @@ CDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE +
 		   (nchannels * sizeof(wmi_extscan_bucket_channel));
 	*buf_len = len;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5373,46 +5373,46 @@ CDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
  *
  * Return: CDF Status.
  */
-CDF_STATUS wma_start_extscan(tp_wma_handle wma,
+QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 			     tSirWifiScanCmdReqParams *pstart)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf;
 	int len;
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed,can not issue extscan cmd",
 			 __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan feature bit not enabled", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* Fill individual elements of extscan request and
 	 * TLV for buckets, channel list.
 	 */
-	cdf_status = wma_get_buf_extscan_start_cmd(wma, pstart, &buf, &len);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	qdf_status = wma_get_buf_extscan_start_cmd(wma, pstart, &buf, &len);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to get buffer for ext scan cmd", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!buf) {
 		WMA_LOGE("%s:Failed to get buffer"
 			 "for current extscan info", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf,
 				 len, WMI_EXTSCAN_START_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
 		cdf_nbuf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma->interfaces[pstart->sessionId].extscan_in_progress = true;
 	WMA_LOGD("Extscan start request sent successfully for vdev %d",
 		 pstart->sessionId);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5424,7 +5424,7 @@ CDF_STATUS wma_start_extscan(tp_wma_handle wma,
  *
  * Return: CDF Status.
  */
-CDF_STATUS wma_stop_extscan(tp_wma_handle wma,
+QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 			    tSirExtScanStopReqParams *pstopcmd)
 {
 	wmi_extscan_stop_cmd_fixed_param *cmd;
@@ -5434,18 +5434,18 @@ CDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, cannot issue cmd", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
 	cmd = (wmi_extscan_stop_cmd_fixed_param *) buf_ptr;
@@ -5461,13 +5461,13 @@ CDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 				 WMI_EXTSCAN_STOP_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
 		cdf_nbuf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	wma->interfaces[pstopcmd->sessionId].extscan_in_progress = false;
 	WMA_LOGD("Extscan stop request sent successfully for vdev %d",
 		 pstopcmd->sessionId);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /** wma_get_hotlist_entries_per_page() - hotlist entries per page
@@ -5507,7 +5507,7 @@ static inline int wma_get_hotlist_entries_per_page(wmi_unified_t wmi_handle,
  *
  * Return: CDF Status.
  */
-CDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 					   tSirExtScanSetBssidHotListReqParams *
 					   photlist, int *buf_len)
 {
@@ -5532,7 +5532,7 @@ CDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 	 */
 	if (!numap) {
 		WMA_LOGE("%s: Invalid number of bssid's", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	num_entries = wma_get_hotlist_entries_per_page(wma_handle->wmi_handle,
 							cmd_len,
@@ -5547,7 +5547,7 @@ CDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 		buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 		if (!buf) {
 			WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		buf_ptr = (uint8_t *) wmi_buf_data(buf);
 		cmd = (wmi_extscan_configure_hotlist_monitor_cmd_fixed_param *)
@@ -5610,13 +5610,13 @@ CDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 					 WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
 			WMA_LOGE("%s: failed to send command", __func__);
 			cdf_nbuf_free(buf);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 		index = index + min_entries;
 		num_entries = numap - min_entries;
 		len = cmd_len;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5628,28 +5628,28 @@ CDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 					     tSirExtScanSetBssidHotListReqParams
 					     *photlist)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int len;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue hotlist cmd",
 			 __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	/* Fill individual elements for  hotlist request and
 	 * TLV for bssid entries
 	 */
-	cdf_status = wma_get_buf_extscan_hotlist_cmd(wma, photlist, &len);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	qdf_status = wma_get_buf_extscan_hotlist_cmd(wma, photlist, &len);
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to get buffer"
 			 "for hotlist scan cmd", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5661,7 +5661,7 @@ CDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 					    tSirExtScanResetBssidHotlistReqParams
 					    *photlist_reset)
 {
@@ -5673,16 +5673,16 @@ CDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!photlist_reset) {
 		WMA_LOGE("%s: Invalid reset hotlist buffer", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	len = sizeof(*cmd);
 
@@ -5693,7 +5693,7 @@ CDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -5719,9 +5719,9 @@ CDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 				 WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
 		cdf_nbuf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5735,7 +5735,7 @@ CDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
 						  tSirExtScanSetSigChangeReqParams
 						  *psigchange, wmi_buf_t *buf,
 						  int *buf_len)
@@ -5750,7 +5750,7 @@ CDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
 
 	if (!numap) {
 		WMA_LOGE("%s: Invalid number of bssid's", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	len += WMI_TLV_HDR_SIZE;
 	len += numap * sizeof(wmi_extscan_wlan_change_bssid_param);
@@ -5759,7 +5759,7 @@ CDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
 	if (!*buf) {
 		WMA_LOGP("%s: failed to allocate memory for change monitor cmd",
 			 __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(*buf);
 	cmd =
@@ -5806,7 +5806,7 @@ CDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE +
 		   (numap * sizeof(wmi_extscan_wlan_change_bssid_param));
 	*buf_len = len;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5818,41 +5818,41 @@ CDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *
 					    psigchange)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_buf_t buf;
 	int len;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed,can not issue extscan cmd",
 			 __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	/* Fill individual elements of change monitor and
 	 * TLV info ... */
 
-	cdf_status = wma_get_buf_extscan_change_monitor_cmd(wma,
+	qdf_status = wma_get_buf_extscan_change_monitor_cmd(wma,
 							    psigchange, &buf,
 							    &len);
-	if (cdf_status != CDF_STATUS_SUCCESS) {
+	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to get buffer for change monitor cmd",
 			 __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!buf) {
 		WMA_LOGE("%s: Failed to get buffer", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				 WMI_EXTSCAN_CONFIGURE_WLAN_CHANGE_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
 		cdf_nbuf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5864,7 +5864,7 @@ CDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
+QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 					   tSirExtScanResetSignificantChangeReqParams
 					   *pResetReq)
 {
@@ -5876,12 +5876,12 @@ CDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: ext scan not enabled", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	len = sizeof(*cmd);
 
@@ -5891,7 +5891,7 @@ CDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
 
@@ -5919,9 +5919,9 @@ CDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 				 WMI_EXTSCAN_CONFIGURE_WLAN_CHANGE_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
 		cdf_nbuf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5933,7 +5933,7 @@ CDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
+QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 					  tSirExtScanGetCachedResultsReqParams *
 					  pcached_results)
 {
@@ -5944,18 +5944,18 @@ CDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, cannot issue cmd", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
 
@@ -5973,9 +5973,9 @@ CDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 				 WMI_EXTSCAN_GET_CACHED_RESULTS_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
 		cdf_nbuf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -5987,7 +5987,7 @@ CDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
+QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 					tSirGetExtScanCapabilitiesReqParams *
 					pgetcapab)
 {
@@ -5998,18 +5998,18 @@ CDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
 
@@ -6025,12 +6025,12 @@ CDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 				 WMI_EXTSCAN_GET_CAPABILITIES_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
 		cdf_nbuf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
+QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		struct sir_ipa_offload_enable_disable *ipa_offload)
 {
 	wmi_ipa_offload_enable_disable_cmd_fixed_param *cmd;
@@ -6044,7 +6044,7 @@ CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd",
 			__func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
@@ -6055,18 +6055,18 @@ CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 			((ipa_offload->offload_type == AP_RX_DATA_OFFLOAD) ?
 			"WMI_SERVICE_HSOFFLOAD" :
 			"WMI_SERVICE_STA_RX_IPA_OFFLOAD_SUPPORT"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (ipa_offload->offload_type > STA_RX_DATA_OFFLOAD) {
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	len  = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed (len=%d)", __func__, len);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	WMA_LOGE("%s: offload_type=%d, enable=%d", __func__,
@@ -6088,7 +6088,7 @@ CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		WMI_IPA_OFFLOAD_ENABLE_DISABLE_CMDID)) {
 		WMA_LOGE("%s: failed to command", __func__);
 		wmi_buf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
@@ -6097,7 +6097,7 @@ CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 	 */
 	vdev = wma_find_vdev_by_id(wma, ipa_offload->vdev_id);
 	if (!vdev)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	/* Disable Intra-BSS FWD offload when gDisableIntraBssFwd=1 in INI */
 	cfg = (struct txrx_pdev_cfg_t *)vdev->pdev->ctrl_pdev;
@@ -6113,10 +6113,10 @@ CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 		ipa_offload->vdev_id, WMI_VDEV_PARAM_INTRA_BSS_FWD,
 		intra_bss_fwd)) {
 		WMA_LOGE("Failed to disable WMI_VDEV_PARAM_INTRA_BSS_FWD");
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /** wma_set_epno_network_list() - set epno network list
@@ -6128,7 +6128,7 @@ CDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
  *
  * Returns: 0 on success, error number otherwise
  */
-CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
+QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		struct wifi_epno_params *req)
 {
 	wmi_nlo_config_cmd_fixed_param *cmd;
@@ -6142,12 +6142,12 @@ CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 			WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	/* TLV place holder for array of structures
@@ -6161,7 +6161,7 @@ CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_nlo_config_cmd_fixed_param *) wmi_buf_data(buf);
@@ -6231,13 +6231,13 @@ CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	if (ret) {
 		WMA_LOGE("%s: Failed to send nlo wmi cmd", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("set ePNO list request sent successfully for vdev %d",
 		 req->session_id);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -6248,9 +6248,9 @@ CDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
  * This function reads the incoming @req and fill in the destination
  * WMI structure and send down the passpoint configs down to the firmware
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
+QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req)
 {
 	wmi_passpoint_config_cmd_fixed_param *cmd;
@@ -6263,12 +6263,12 @@ CDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 			WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	len = sizeof(*cmd);
@@ -6276,7 +6276,7 @@ CDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 		buf = wmi_buf_alloc(wma->wmi_handle, len);
 		if (!buf) {
 			WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-			return CDF_STATUS_E_NOMEM;
+			return QDF_STATUS_E_NOMEM;
 		}
 
 		cmd = (wmi_passpoint_config_cmd_fixed_param *)
@@ -6312,14 +6312,14 @@ CDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 			WMA_LOGE("%s: Failed to send set passpoint network list wmi cmd",
 				 __func__);
 			wmi_buf_free(buf);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 
 	WMA_LOGD("Set passpoint network list request is sent successfully for vdev %d",
 		 req->session_id);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -6330,9 +6330,9 @@ CDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
  * This function sends down WMI command with network id set to wildcard id.
  * firmware shall clear all the config entries
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
+QDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 					struct wifi_passpoint_req *req)
 {
 	wmi_passpoint_config_cmd_fixed_param *cmd;
@@ -6344,19 +6344,19 @@ CDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue cmd", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 			WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled", __func__);
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	len = sizeof(*cmd);
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_passpoint_config_cmd_fixed_param *) wmi_buf_data(buf);
@@ -6373,13 +6373,13 @@ CDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
 		WMA_LOGE("%s: Failed to send reset passpoint network list wmi cmd",
 			 __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Reset passpoint network list request is sent successfully for vdev %d",
 		 req->session_id);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -6387,9 +6387,9 @@ CDF_STATUS wma_reset_passpoint_network_list(tp_wma_handle wma,
  * @wma: WMA handle
  * @request: SSID hotlist set request from SME
  *
- * Return: CDF_STATUS enumeration
+ * Return: QDF_STATUS enumeration
  */
-CDF_STATUS
+QDF_STATUS
 wma_set_ssid_hotlist(tp_wma_handle wma,
 		     struct sir_set_ssid_hotlist_request *request)
 {
@@ -6402,17 +6402,17 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue hotlist cmd",
 			 __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!request) {
 		WMA_LOGE("%s: Invalid request buffer", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				    WMI_SERVICE_EXTSCAN)) {
 		WMA_LOGE("%s: extscan not enabled",
 			__func__);
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	/* length of fixed portion */
@@ -6426,7 +6426,7 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -6481,9 +6481,9 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
 		 WMI_EXTSCAN_CONFIGURE_HOTLIST_SSID_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
 		wmi_buf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -6496,7 +6496,7 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-CDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
+QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 {
 	wmi_scan_prob_req_oui_cmd_fixed_param *cmd;
 	wmi_buf_t wmi_buf;
@@ -6506,13 +6506,13 @@ CDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	len = sizeof(*cmd);
 	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!wmi_buf) {
 		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
 	cmd = (wmi_scan_prob_req_oui_cmd_fixed_param *) buf_ptr;
@@ -6532,9 +6532,9 @@ CDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 				 WMI_SCAN_PROB_REQ_OUI_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
 		cdf_nbuf_free(wmi_buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -6674,7 +6674,7 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
 		  FL("posting candidate ind to SME"));
 
-	if (CDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME,
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 		cdf_mem_free(candidate_ind);
 		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
@@ -6753,7 +6753,7 @@ int wma_roam_event_callback(WMA_HANDLE handle, uint8_t *event_buf,
  *
  * Return: 0 on success; error number otherwise
  */
-CDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
+QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 					struct rssi_monitor_req *req)
 {
 	wmi_rssi_breach_monitor_config_fixed_param *cmd;
@@ -6763,7 +6763,7 @@ CDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_rssi_breach_monitor_config_fixed_param *) wmi_buf_data(buf);
@@ -6794,11 +6794,11 @@ CDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 	if (ret != EOK) {
 		WMA_LOGE("Failed to send WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID");
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGI("Sent WMI_RSSI_BREACH_MONITOR_CONFIG_CMDID to FW");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -6807,16 +6807,16 @@ CDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
  *
  * This function generates the scan id.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 
-CDF_STATUS wma_get_scan_id(uint32_t *scan_id)
+QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 {
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
 
 	if (!scan_id) {
 		WMA_LOGE("Scan_id is NULL");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	/* host need to cycle through the lower 12 bits to generate ids */
@@ -6827,7 +6827,7 @@ CDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 	 * by PREFIX 0xA000
 	 */
 	*scan_id = *scan_id | WMI_HOST_SCAN_REQ_ID_PREFIX;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
@@ -6839,9 +6839,9 @@ CDF_STATUS wma_get_scan_id(uint32_t *scan_id)
  * This function reads the incoming @req and fill in the destination
  * WMI structure and sends down the gateway configs down to the firmware
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 					struct gateway_param_update_req *req)
 {
 	wmi_roam_subnet_change_config_fixed_param *cmd;
@@ -6852,7 +6852,7 @@ CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd = (wmi_roam_subnet_change_config_fixed_param *) wmi_buf_data(buf);
@@ -6884,10 +6884,10 @@ CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 		WMA_LOGE("Failed to send gw config parameter to fw, ret: %d",
 			ret);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
 

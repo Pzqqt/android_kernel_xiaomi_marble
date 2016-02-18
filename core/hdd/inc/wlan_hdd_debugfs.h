@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,12 +29,12 @@
 #define _WLAN_HDD_DEBUGFS_H
 
 #ifdef WLAN_OPEN_SOURCE
-CDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter);
 void hdd_debugfs_exit(hdd_context_t *pHddCtx);
 #else
-inline CDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
+inline QDF_STATUS hdd_debugfs_init(hdd_adapter_t *pAdapter)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 inline void hdd_debugfs_exit(hdd_context_t *pHddCtx)

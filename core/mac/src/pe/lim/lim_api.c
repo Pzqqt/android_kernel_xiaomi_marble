@@ -766,7 +766,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, tMacOpenParameters *pMacOpenParam)
 	pMac->lim.mgmtFrameSessionId = 0xff;
 	pMac->lim.deferredMsgCnt = 0;
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_mutex_init(&pMac->lim.lkPeGlobalLock))) {
+	if (!QDF_IS_STATUS_SUCCESS(cdf_mutex_init(&pMac->lim.lkPeGlobalLock))) {
 		PELOGE(lim_log(pMac, LOGE, FL("pe lock init failed!"));)
 		status = eSIR_FAILURE;
 		goto pe_open_lock_fail;
@@ -829,7 +829,7 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 
 	cdf_mem_free(pMac->lim.gpSession);
 	pMac->lim.gpSession = NULL;
-	if (!CDF_IS_STATUS_SUCCESS
+	if (!QDF_IS_STATUS_SUCCESS
 		    (cdf_mutex_destroy(&pMac->lim.lkPeGlobalLock))) {
 		return eSIR_FAILURE;
 	}
@@ -987,18 +987,18 @@ tSirRetStatus pe_process_messages(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
  * @return None
  */
 
-CDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
+QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 {
 	tpAniSirGlobal pMac;
 	tpSirMacMgmtHdr mHdr;
 	tSirMsgQ msg;
 	cds_pkt_t *pVosPkt;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t *pRxPacketInfo;
 
 	pVosPkt = (cds_pkt_t *) cds_buff;
 	if (NULL == pVosPkt) {
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pMac = cds_get_context(CDF_MODULE_ID_PE);
@@ -1006,16 +1006,16 @@ CDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 		/* cannot log a failure without a valid pMac */
 		cds_pkt_return_packet(pVosPkt);
 		pVosPkt = NULL;
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_status =
+	qdf_status =
 		wma_ds_peek_rx_packet_info(pVosPkt, (void *)&pRxPacketInfo, false);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		cds_pkt_return_packet(pVosPkt);
 		pVosPkt = NULL;
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/*
@@ -1065,10 +1065,10 @@ CDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 		lim_log(pMac, LOGW,
 			FL
 				("sys_bbt_process_message_core failed to process SIR_BB_XPORT_MGMT_MSG"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1081,20 +1081,20 @@ CDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 void pe_register_wma_handle(tpAniSirGlobal pMac, tSirSmeReadyReq *ready_req)
 {
 	void *p_cds_gctx;
-	CDF_STATUS retStatus;
+	QDF_STATUS retStatus;
 
 	p_cds_gctx = cds_get_global_context();
 
 	retStatus = wma_register_mgmt_frm_client(p_cds_gctx,
 				 pe_handle_mgmt_frame);
-	if (retStatus != CDF_STATUS_SUCCESS)
+	if (retStatus != QDF_STATUS_SUCCESS)
 		lim_log(pMac, LOGP,
 			FL("Registering the PE Handle with WMA has failed"));
 
 	retStatus = wma_register_roaming_callbacks(p_cds_gctx,
 			ready_req->csr_roam_synch_cb,
 			ready_req->pe_roam_synch_cb);
-	if (retStatus != CDF_STATUS_SUCCESS)
+	if (retStatus != QDF_STATUS_SUCCESS)
 		lim_log(pMac, LOGP,
 			FL("Registering roaming callbacks with WMA failed"));
 }
@@ -1836,7 +1836,7 @@ void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
+QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 		roam_offload_synch_ind *roam_offload_synch_ind_ptr,
 		tpSirBssDescription  bss_desc_ptr)
 {
@@ -1852,7 +1852,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 	(tpSirProbeRespBeacon) cdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == parsed_frm_ptr) {
 		lim_log(pMac, LOGE, "fail to allocate memory for frame");
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	if (roam_offload_synch_ind_ptr->beaconProbeRespLength <=
@@ -1861,7 +1861,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 		"few bytes in synchInd beacon / probe resp frame! length=%d",
 		__func__, roam_offload_synch_ind_ptr->beaconProbeRespLength);
 		cdf_mem_free(parsed_frm_ptr);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
@@ -1879,7 +1879,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			"Parse error Beacon, length=%d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
 			cdf_mem_free(parsed_frm_ptr);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		if (sir_convert_probe_frame2_struct(pMac,
@@ -1891,7 +1891,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			"Parse error ProbeResponse, length=%d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
 			cdf_mem_free(parsed_frm_ptr);
-			return CDF_STATUS_E_FAILURE;
+			return QDF_STATUS_E_FAILURE;
 		}
 	}
 	/* 24 byte MAC header and 12 byte to ssid IE */
@@ -1983,7 +1983,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			ie_len);
 	}
 	cdf_mem_free(parsed_frm_ptr);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 /**
  * pe_roam_synch_callback() - PE level callback for roam synch propagation
@@ -1997,7 +1997,7 @@ CDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
  *
  * Return: Success or Failure status
  */
-CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	roam_offload_synch_ind *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc)
 {
@@ -2008,7 +2008,7 @@ CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	uint16_t aid;
 	tpAddBssParams add_bss_params;
 	uint8_t local_nss;
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
 	if (!roam_sync_ind_ptr) {
 		lim_log(mac_ctx, LOGE, FL("LFR3:roam_sync_ind_ptr is NULL"));
@@ -2030,11 +2030,11 @@ CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		return status;
 	}
 	status = lim_roam_fill_bss_descr(mac_ctx, roam_sync_ind_ptr, bss_desc);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac_ctx, LOGE, FL("LFR3:Failed to fill Bss Descr"));
 		return status;
 	}
-	status = CDF_STATUS_E_FAILURE;
+	status = QDF_STATUS_E_FAILURE;
 	ft_session_ptr = pe_create_session(mac_ctx, bss_desc->bssId,
 			&session_id, mac_ctx->lim.maxStation,
 			eSIR_INFRASTRUCTURE_MODE);
@@ -2096,7 +2096,7 @@ CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	if (NULL == mac_ctx->roam.pReassocResp) {
 		lim_log(mac_ctx, LOGE, FL("LFR3:assoc resp mem alloc failed"));
 		ft_session_ptr->bRoamSynchInProgress = false;
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 	cdf_mem_copy(mac_ctx->roam.pReassocResp,
 			(uint8_t *)roam_sync_ind_ptr +
@@ -2137,7 +2137,7 @@ CDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	if (mac_ctx->roam.pReassocResp)
 		cdf_mem_free(mac_ctx->roam.pReassocResp);
 	mac_ctx->roam.pReassocResp = NULL;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
@@ -2259,26 +2259,26 @@ tMgmtFrmDropReason lim_is_pkt_candidate_for_drop(tpAniSirGlobal pMac,
 	return eMGMT_DROP_NO_DROP;
 }
 
-CDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe)
+QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe)
 {
-	CDF_STATUS status = CDF_STATUS_E_INVAL;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
 
 	if (psPe) {
-		if (CDF_IS_STATUS_SUCCESS
+		if (QDF_IS_STATUS_SUCCESS
 			    (cdf_mutex_acquire(&psPe->lkPeGlobalLock))) {
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 	return status;
 }
 
-CDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
+QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
 {
-	CDF_STATUS status = CDF_STATUS_E_INVAL;
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	if (psPe) {
-		if (CDF_IS_STATUS_SUCCESS
+		if (QDF_IS_STATUS_SUCCESS
 			    (cdf_mutex_release(&psPe->lkPeGlobalLock))) {
-			status = CDF_STATUS_SUCCESS;
+			status = QDF_STATUS_SUCCESS;
 		}
 	}
 	return status;

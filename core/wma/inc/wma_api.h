@@ -78,19 +78,19 @@ typedef enum {
 typedef void (*wma_peer_authorized_fp) (uint32_t vdev_id);
 
 
-CDF_STATUS wma_pre_start(void *cds_context);
+QDF_STATUS wma_pre_start(void *cds_context);
 
-CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg);
+QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg);
 
-CDF_STATUS wma_start(void *cds_context);
+QDF_STATUS wma_start(void *cds_context);
 
-CDF_STATUS wma_stop(void *cds_context, uint8_t reason);
+QDF_STATUS wma_stop(void *cds_context, uint8_t reason);
 
-CDF_STATUS wma_close(void *cds_context);
+QDF_STATUS wma_close(void *cds_context);
 
-CDF_STATUS wma_wmi_service_close(void *cds_context);
+QDF_STATUS wma_wmi_service_close(void *cds_context);
 
-CDF_STATUS wma_wmi_work_close(void *cds_context);
+QDF_STATUS wma_wmi_work_close(void *cds_context);
 
 void wma_rx_ready_event(WMA_HANDLE handle, void *ev);
 
@@ -102,7 +102,7 @@ void wma_setneedshutdown(void *cds_context);
 
 bool wma_needshutdown(void *cds_context);
 
-CDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle);
+QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle);
 
 uint8_t wma_map_channel(uint8_t mapChannel);
 
@@ -111,10 +111,10 @@ int wma_cli_set_command(int vdev_id, int param_id, int sval, int vpdev);
 int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 			 int sval2, int vpdev);
 
-CDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
-CDF_STATUS wma_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId);
+QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value);
+QDF_STATUS wma_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId);
 
-CDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
+QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 					  uint8_t *pVersion,
 					  uint32_t versionBufferSize);
 int wma_runtime_suspend(void);
@@ -124,17 +124,17 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 void wma_target_suspend_acknowledge(void *context);
 int wma_bus_resume(void);
 int wma_resume_target(WMA_HANDLE handle);
-CDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);
-CDF_STATUS wma_disable_d0wow_in_fw(WMA_HANDLE handle);
+QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);
+QDF_STATUS wma_disable_d0wow_in_fw(WMA_HANDLE handle);
 bool wma_is_wow_mode_selected(WMA_HANDLE handle);
-CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle);
-CDF_STATUS wma_enable_d0wow_in_fw(WMA_HANDLE handle);
+QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle);
+QDF_STATUS wma_enable_d0wow_in_fw(WMA_HANDLE handle);
 bool wma_check_scan_in_progress(WMA_HANDLE handle);
 void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb);
 int wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr, uint32_t param_id,
 		       uint32_t param_value, uint32_t vdev_id);
 #ifdef NOT_YET
-CDF_STATUS wma_update_channel_list(WMA_HANDLE handle, void *scan_chan_info);
+QDF_STATUS wma_update_channel_list(WMA_HANDLE handle, void *scan_chan_info);
 #endif
 
 uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id);
@@ -159,7 +159,7 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 		enum hw_mode_bandwidth mac1_bw,
 		enum hw_mode_dbs_capab dbs,
 		enum hw_mode_agile_dfs_capab dfs);
-CDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
+QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		struct sir_hw_mode_params *hw_mode);
 int8_t wma_get_num_dbs_hw_modes(void);
 bool wma_is_hw_dbs_capable(void);
@@ -167,18 +167,18 @@ bool wma_is_hw_agile_dfs_capable(void);
 int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id);
 void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 				uint32_t cfgd_hw_mode_index);
-CDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
+QDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
 		uint32_t *new_hw_mode_index);
 void wma_set_dbs_capability_ut(uint32_t dbs);
-CDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs);
-CDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode);
+QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs);
+QDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode);
 bool wma_is_dbs_enable(void);
 bool wma_is_agile_dfs_enable(void);
-CDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
+QDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 		bool dbs_scan,
 		bool dbs_plus_agile_scan,
 		bool single_mac_scan_with_dfs);
-CDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
+QDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
 		bool dbs,
 		bool agile_dfs);
 bool wma_get_dbs_scan_config(void);
@@ -225,18 +225,18 @@ bool wma_is_scan_simultaneous_capable(void);
 #ifdef FEATURE_GREEN_AP
 void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle);
 void wma_register_egap_event_handle(WMA_HANDLE handle);
-CDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
+QDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
 				     struct egap_conf_params *egap_params);
 #else
 static inline void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg,
 					  WMA_HANDLE handle) {}
 static inline void wma_register_egap_event_handle(WMA_HANDLE handle) {}
-static inline CDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
+static inline QDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
 				     struct egap_conf_params *egap_params)
 {
-	return CDF_STATUS_E_NOSUPPORT;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
-CDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
-CDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
+QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
+QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 #endif

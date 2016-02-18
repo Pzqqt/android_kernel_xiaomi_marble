@@ -38,7 +38,6 @@
 #include "wmi_version.h"
 #include "cdf_types.h"
 #include "cfg_api.h"
-#include "cdf_status.h"
 #include "qdf_status.h"
 #include "cds_sched.h"
 #include "ol_txrx_api.h"
@@ -1347,7 +1346,7 @@ typedef struct {
 	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr, uint8_t reason);
-	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr);
 	cdf_wake_lock_t wmi_cmd_rsp_wake_lock;
@@ -1855,7 +1854,7 @@ enum uapsd_ac {
 	UAPSD_VO
 };
 
-CDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
+QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 				    uint32_t vdev_id, enum uapsd_ac ac);
 
 /**
@@ -1945,32 +1944,32 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 			   struct dfs_ieee80211_channel *ichan);
 uint16_t dfs_usenol(struct ieee80211com *ic);
 
-CDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
+QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params
 				    trigger_uapsd_params);
 
 /* added to get average snr for both data and beacon */
-CDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle, void *pGetRssiReq);
+QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle, void *pGetRssiReq);
 
 
-CDF_STATUS wma_update_vdev_tbl(tp_wma_handle wma_handle, uint8_t vdev_id,
+QDF_STATUS wma_update_vdev_tbl(tp_wma_handle wma_handle, uint8_t vdev_id,
 			       ol_txrx_vdev_handle tx_rx_vdev_handle,
 			       uint8_t *mac, uint32_t vdev_type, bool add_del);
 
 void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle);
 void wma_log_completion_timeout(void *data);
 
-CDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
+QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 					struct rssi_monitor_req *req);
 
-CDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
 		struct sir_pcl_list *msg);
 
-CDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
 		struct sir_hw_mode *msg);
-CDF_STATUS wma_get_scan_id(uint32_t *scan_id);
+QDF_STATUS wma_get_scan_id(uint32_t *scan_id);
 
-CDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
+QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		struct sir_dual_mac_config *msg);
 int wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
 			uint32_t delay_time_ms);
@@ -1984,7 +1983,7 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 				    uint8_t type, void *params,
 				    uint32_t timeout);
 
-CDF_STATUS wma_vdev_start(tp_wma_handle wma,
+QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			  struct wma_vdev_start_req *req, bool isRestart);
 
 void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
@@ -2000,24 +1999,24 @@ void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
 uint32_t wma_get_vht_ch_width(void);
 
 #ifdef FEATURE_LFR_SUBNET_DETECTION
-CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 					struct gateway_param_update_req *req);
 #else
-static inline CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+static inline QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 					struct gateway_param_update_req *req)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_LFR_SUBNET_DETECTION */
 
 #if defined(FEATURE_LRO)
-CDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
+QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	 struct wma_lro_config_cmd_t *wma_lro_cmd);
 #else
-static inline CDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
+static inline QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	 struct wma_lro_config_cmd_t *wma_lro_cmd)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 void

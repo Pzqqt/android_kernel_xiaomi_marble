@@ -48,7 +48,7 @@
  */
 #define cdf_likely(_expr)       __cdf_likely(_expr)
 
-CDF_INLINE_FN int cdf_status_to_os_return(CDF_STATUS status)
+CDF_INLINE_FN int cdf_status_to_os_return(QDF_STATUS status)
 {
 	return __cdf_status_to_os_return(status);
 }

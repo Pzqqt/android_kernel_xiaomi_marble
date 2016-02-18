@@ -82,7 +82,7 @@ static int cds_mc_thread(void *Arg);
 #ifdef QCA_CONFIG_SMP
 static int cds_ol_rx_thread(void *arg);
 static unsigned long affine_cpu;
-static CDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
+static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 #endif
 
 #ifdef QCA_CONFIG_SMP
@@ -186,29 +186,29 @@ static struct notifier_block cds_cpu_hotplug_notifier = {
  *
  * Return: CDF status
  */
-CDF_STATUS cds_sched_open(void *p_cds_context,
+QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
 		uint32_t SchedCtxSize)
 {
-	CDF_STATUS vStatus = CDF_STATUS_SUCCESS;
+	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening the CDS Scheduler", __func__);
 	/* Sanity checks */
 	if ((p_cds_context == NULL) || (pSchedContext == NULL)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	if (sizeof(cds_sched_context) != SchedCtxSize) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Incorrect CDS Sched Context size passed",
 			  __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 	cdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
 	pSchedContext->pVContext = p_cds_context;
 	vStatus = cds_sched_init_mqs(pSchedContext);
-	if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to initialize CDS Scheduler MQs",
 			  __func__);
@@ -240,8 +240,8 @@ CDF_STATUS cds_sched_open(void *p_cds_context,
 	spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 	INIT_LIST_HEAD(&pSchedContext->cds_ol_rx_pkt_freeq);
 	spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
-	if (cds_alloc_ol_rx_pkt_freeq(pSchedContext) != CDF_STATUS_SUCCESS) {
-		return CDF_STATUS_E_FAILURE;
+	if (cds_alloc_ol_rx_pkt_freeq(pSchedContext) != QDF_STATUS_SUCCESS) {
+		return QDF_STATUS_E_FAILURE;
 	}
 	register_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 	pSchedContext->cpu_hot_plug_notifier = &cds_cpu_hotplug_notifier;
@@ -292,7 +292,7 @@ CDF_STATUS cds_sched_open(void *p_cds_context,
 	/* We're good now: Let's get the ball rolling!!! */
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS Scheduler successfully Opened", __func__);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 #ifdef QCA_CONFIG_SMP
 OL_RX_THREAD_START_FAILURE:
@@ -313,7 +313,7 @@ MC_THREAD_START_FAILURE:
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 #endif
 
-	return CDF_STATUS_E_RESOURCES;
+	return QDF_STATUS_E_RESOURCES;
 
 } /* cds_sched_open() */
 
@@ -329,7 +329,7 @@ static int cds_mc_thread(void *Arg)
 	p_cds_msg_wrapper pMsgWrapper = NULL;
 	tpAniSirGlobal pMacContext = NULL;
 	tSirRetStatus macStatus = eSIR_SUCCESS;
-	CDF_STATUS vStatus = CDF_STATUS_SUCCESS;
+	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
 	int retWaitStatus = 0;
 	bool shutdown = false;
 	hdd_context_t *pHddCtx = NULL;
@@ -424,7 +424,7 @@ static int cds_mc_thread(void *Arg)
 				vStatus =
 					sys_mc_process_msg(pSchedContext->pVContext,
 							   pMsgWrapper->pVosMsg);
-				if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+				if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 					CDF_TRACE(CDF_MODULE_ID_CDF,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: Issue Processing SYS message",
@@ -455,7 +455,7 @@ static int cds_mc_thread(void *Arg)
 				vStatus =
 					wma_mc_process_msg(pSchedContext->pVContext,
 							 pMsgWrapper->pVosMsg);
-				if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+				if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 					CDF_TRACE(CDF_MODULE_ID_CDF,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: Issue Processing WMA message",
@@ -546,7 +546,7 @@ static int cds_mc_thread(void *Arg)
 				vStatus =
 					sme_process_msg((tHalHandle) pMacContext,
 							pMsgWrapper->pVosMsg);
-				if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+				if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 					CDF_TRACE(CDF_MODULE_ID_CDF,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: Issue Processing SME message",
@@ -619,7 +619,7 @@ void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
  *
  * Return: status of memory allocation
  */
-static CDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
+static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 {
 	struct cds_ol_rx_pkt *pkt, *tmp;
 	int i;
@@ -638,7 +638,7 @@ static CDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 		spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 free:
 	spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
@@ -650,7 +650,7 @@ free:
 		spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 	}
 	spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
-	return CDF_STATUS_E_NOMEM;
+	return QDF_STATUS_E_NOMEM;
 }
 
 /**
@@ -895,14 +895,14 @@ static int cds_ol_rx_thread(void *arg)
  *
  * Return: cdf status
  */
-CDF_STATUS cds_sched_close(void *p_cds_context)
+QDF_STATUS cds_sched_close(void *p_cds_context)
 {
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: invoked", __func__);
 	if (gp_cds_sched_context == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: gp_cds_sched_context == NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	/* shut down MC Thread */
 	set_bit(MC_SHUTDOWN_EVENT_MASK, &gp_cds_sched_context->mcEventFlag);
@@ -929,7 +929,7 @@ CDF_STATUS cds_sched_close(void *p_cds_context)
 	cds_free_ol_rx_pkt_freeq(gp_cds_sched_context);
 	unregister_hotcpu_notifier(&cds_cpu_hotplug_notifier);
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /* cds_sched_close() */
 
 /**
@@ -940,14 +940,14 @@ CDF_STATUS cds_sched_close(void *p_cds_context)
  *
  * Return: CDF status
  */
-CDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
+QDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
 {
-	CDF_STATUS vStatus = CDF_STATUS_SUCCESS;
+	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
 	/* Now intialize all the message queues */
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Initializing the WMA MC Message queue", __func__);
 	vStatus = cds_mq_init(&pSchedContext->wmaMcMq);
-	if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to init WMA MC Message queue", __func__);
 		CDF_ASSERT(0);
@@ -956,7 +956,7 @@ CDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Initializing the PE MC Message queue", __func__);
 	vStatus = cds_mq_init(&pSchedContext->peMcMq);
-	if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to init PE MC Message queue", __func__);
 		CDF_ASSERT(0);
@@ -965,7 +965,7 @@ CDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Initializing the SME MC Message queue", __func__);
 	vStatus = cds_mq_init(&pSchedContext->smeMcMq);
-	if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to init SME MC Message queue", __func__);
 		CDF_ASSERT(0);
@@ -974,14 +974,14 @@ CDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Initializing the SYS MC Message queue", __func__);
 	vStatus = cds_mq_init(&pSchedContext->sysMcMq);
-	if (!CDF_IS_STATUS_SUCCESS(vStatus)) {
+	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to init SYS MC Message queue", __func__);
 		CDF_ASSERT(0);
 		return vStatus;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /* cds_sched_init_mqs() */
 
 /**

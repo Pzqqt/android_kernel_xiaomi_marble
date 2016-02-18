@@ -162,8 +162,7 @@ void pe_reset_protection_callback(void *ptr)
 
 	cdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
 	/* index 0, is self node, peers start from 1 */
-	for (i = 1 ; i <= mac_ctx->lim.gLimAssocStaLimit ; i++)
-	{
+	for (i = 1 ; i <= mac_ctx->lim.gLimAssocStaLimit ; i++) {
 		station_hash_node = dph_get_hash_entry(mac_ctx, i,
 					&pe_session_entry->dph.dphHashTable);
 		if (NULL == station_hash_node)
@@ -217,7 +216,7 @@ void pe_reset_protection_callback(void *ptr)
 	if (cdf_mc_timer_start(&pe_session_entry->
 				protection_fields_reset_timer,
 				SCH_PROTECTION_RESET_TIME)
-		!= CDF_STATUS_SUCCESS) {
+		!= QDF_STATUS_SUCCESS) {
 		CDF_TRACE(CDF_MODULE_ID_PE,
 			CDF_TRACE_LEVEL_ERROR,
 			FL("cannot create or start protectionFieldsResetTimer\n"));
@@ -242,7 +241,7 @@ tpPESession
 pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		  uint16_t numSta, tSirBssType bssType)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t i;
 	tpPESession session_ptr;
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
@@ -371,12 +370,12 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 			&session_ptr->protection_fields_reset_timer,
 			CDF_TIMER_TYPE_SW, pe_reset_protection_callback,
 			(void *)&pMac->lim.gpSession[i]);
-		if (status == CDF_STATUS_SUCCESS) {
+		if (status == QDF_STATUS_SUCCESS) {
 			status = cdf_mc_timer_start(
 				&session_ptr->protection_fields_reset_timer,
 				SCH_PROTECTION_RESET_TIME);
 		}
-		if (status != CDF_STATUS_SUCCESS)
+		if (status != QDF_STATUS_SUCCESS)
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("cannot create or start protectionFieldsResetTimer\n"));
 	}
@@ -386,7 +385,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	status = cdf_mc_timer_init(&session_ptr->pmfComebackTimer,
 			CDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
 			(void *)&session_ptr->pmfComebackTimerInfo);
-	if (!CDF_IS_STATUS_SUCCESS(status))
+	if (!QDF_IS_STATUS_SUCCESS(status))
 		lim_log(pMac, LOGE, FL("cannot init pmf comeback timer."));
 
 	return &pMac->lim.gpSession[i];
@@ -414,16 +413,16 @@ tpPESession pe_find_session_by_bssid(tpAniSirGlobal pMac, uint8_t *bssid,
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		/* If BSSID matches return corresponding tables address */
 		if ((pMac->lim.gpSession[i].valid)
-		    && (sir_compare_mac_addr(pMac->lim.gpSession[i].bssId, bssid)))
-		{
+		    && (sir_compare_mac_addr(pMac->lim.gpSession[i].bssId,
+					    bssid))) {
 			*sessionId = i;
-			return (&pMac->lim.gpSession[i]);
+			return &pMac->lim.gpSession[i];
 		}
 	}
 
 	lim_log(pMac, LOG4, FL("Session lookup fails for BSSID: \n "));
 	lim_print_mac_addr(pMac, bssid, LOG4);
-	return (NULL);
+	return NULL;
 
 }
 
@@ -468,12 +467,12 @@ tpPESession pe_find_session_by_session_id(tpAniSirGlobal pMac, uint8_t sessionId
 {
 	if (sessionId >= pMac->lim.maxBssId) {
 		lim_log(pMac, LOGE, FL("Invalid sessionId: %d \n "), sessionId);
-		return (NULL);
+		return NULL;
 	}
 	if ((pMac->lim.gpSession[sessionId].valid == true)) {
-		return (&pMac->lim.gpSession[sessionId]);
+		return &pMac->lim.gpSession[sessionId];
 	}
-	return (NULL);
+	return NULL;
 
 }
 

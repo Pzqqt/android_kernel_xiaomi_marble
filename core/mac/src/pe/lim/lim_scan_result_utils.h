@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -47,11 +47,11 @@ void lim_copy_scan_result(tpAniSirGlobal, uint8_t *);
 void lim_check_and_add_bss_description(tpAniSirGlobal, tpSirProbeRespBeacon,
 				       uint8_t *, bool, uint8_t);
 #if defined WLAN_FEATURE_VOWIFI
-CDF_STATUS lim_collect_bss_description(tpAniSirGlobal,
+QDF_STATUS lim_collect_bss_description(tpAniSirGlobal,
 				       tSirBssDescription *,
 				       tpSirProbeRespBeacon, uint8_t *, uint8_t);
 #else
-CDF_STATUS lim_collect_bss_description(tpAniSirGlobal,
+QDF_STATUS lim_collect_bss_description(tpAniSirGlobal,
 				       tSirBssDescription *,
 				       tpSirProbeRespBeacon, uint8_t *);
 #endif

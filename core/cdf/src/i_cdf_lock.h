@@ -101,12 +101,12 @@ typedef int cdf_wake_lock_t;
  * __cdf_semaphore_init() - initialize the semaphore
  * @m: Semaphore object
  *
- * Return: CDF_STATUS_SUCCESS
+ * Return: QDF_STATUS_SUCCESS
  */
-static inline CDF_STATUS __cdf_semaphore_init(struct semaphore *m)
+static inline QDF_STATUS __cdf_semaphore_init(struct semaphore *m)
 {
 	sema_init(m, 1);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -138,14 +138,14 @@ __cdf_semaphore_release(cdf_device_t osdev, struct semaphore *m)
  * __cdf_spinlock_init() - initialize spin lock
  * @lock: Spin lock object
  *
- * Return: CDF_STATUS_SUCCESS
+ * Return: QDF_STATUS_SUCCESS
  */
-static inline CDF_STATUS __cdf_spinlock_init(__cdf_spinlock_t *lock)
+static inline QDF_STATUS __cdf_spinlock_init(__cdf_spinlock_t *lock)
 {
 	spin_lock_init(&lock->spinlock);
 	lock->flags = 0;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 #define __cdf_spinlock_destroy(lock)

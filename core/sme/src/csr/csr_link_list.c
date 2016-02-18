@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -217,28 +217,28 @@ bool csr_ll_find_entry(tDblLinkList *pList, tListElem *pEntryToFind)
 	return fFound;
 }
 
-CDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList)
+QDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	CDF_STATUS cdf_status;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status;
 
 	if (!pList) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (LIST_FLAG_OPEN != pList->Flag) {
 		pList->Count = 0;
 		pList->cmdTimeoutTimer = NULL;
-		cdf_status = cdf_mutex_init(&pList->Lock);
+		qdf_status = cdf_mutex_init(&pList->Lock);
 
-		if (CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			csr_list_init(&pList->ListHead);
 			pList->Flag = LIST_FLAG_OPEN;
 			pList->hHdd = hHdd;
 		} else {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 		}
 	}
 	return status;

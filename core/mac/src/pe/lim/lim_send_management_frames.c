@@ -217,7 +217,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t status, bytes, payload;
 	uint8_t *frame;
 	void *packet;
-	CDF_STATUS cdf_status, extcap_status;
+	QDF_STATUS qdf_status, extcap_status;
 	tpPESession pesession;
 	uint8_t sessionid;
 	uint8_t *p2pie = NULL;
@@ -365,7 +365,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (addn_ielen) {
 		extcap_status = lim_strip_extcap_ie(mac_ctx, additional_ie,
 					&addn_ielen, NULL);
-		if (CDF_STATUS_SUCCESS != extcap_status)
+		if (QDF_STATUS_SUCCESS != extcap_status)
 			lim_log(mac_ctx, LOGE,
 			    FL("Error:%d stripping extcap IE"), extcap_status);
 	}
@@ -373,9 +373,9 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	bytes = payload + sizeof(tSirMacMgmtHdr) + addn_ielen;
 
 	/* Ok-- try to allocate some memory: */
-	cdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
+	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				      (void **)&packet);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGP, FL("Failed to allocate %d bytes for a Probe Request."), bytes);
 		return eSIR_MEM_ALLOC_FAILED;
 	}
@@ -422,13 +422,13 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		txflag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	cdf_status =
+	qdf_status =
 		wma_tx_frame(mac_ctx, packet,
 			   (uint16_t) sizeof(tSirMacMgmtHdr) + payload,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, frame, txflag, sme_sessionid,
 			   0);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGE,
 			FL("could not send Probe Request frame!"));
 		/* Pkt will be freed up by the callback */
@@ -525,7 +525,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr mac_hdr;
 	uint8_t *frame;
 	void *packet;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint32_t addn_ie_present = false;
 
 	uint16_t addn_ie_len = 0;
@@ -768,9 +768,9 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-	cdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
+	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				      (void **)&packet);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGP, FL("Probe Response allocation failed"));
 		goto err_ret;
 	}
@@ -841,7 +841,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 	/* Queue Probe Response frame in high priority WQ */
-	cdf_status = wma_tx_frame((tHalHandle) mac_ctx, packet,
+	qdf_status = wma_tx_frame((tHalHandle) mac_ctx, packet,
 				(uint16_t) bytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
@@ -849,7 +849,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 				sme_sessionid, 0);
 
 	/* Pkt will be freed up by the callback */
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		lim_log(mac_ctx, LOGE, FL("Could not send Probe Response."));
 
 	if (add_ie != NULL)
@@ -884,7 +884,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 #ifdef FEATURE_WLAN_ESE
 	uint32_t phyMode;
 #endif
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
@@ -997,9 +997,9 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for an Ad"
 				       "d TS Request."), nBytes);
 		return;
@@ -1069,17 +1069,17 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
 
 	/* Queue Addts Response frame in high priority WQ */
-	cdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
+			 psessionEntry->peSessionId, qdf_status));
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE, FL("*** Could not send an Add TS Request"
-				       " (%X) ***"), cdf_status);
+				       " (%X) ***"), qdf_status);
 		/* Pkt will be freed up by the callback */
 	}
 
@@ -1113,7 +1113,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	tHalBitVal qos_mode, wme_mode;
 	uint32_t payload, bytes, status;
 	void *packet;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	tUpdateBeaconParams beacon_params;
 	uint8_t tx_flag = 0;
 	uint32_t addn_ie_len = 0;
@@ -1330,9 +1330,9 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			FL("addn_ie_len = %d for Assoc Resp : %d"),
 			addn_ie_len, assoc_req->addIEPresent);
 	}
-	cdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
+	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				      (void **)&packet);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGP, FL("cds_packet_alloc failed."));
 		return;
 	}
@@ -1391,19 +1391,19 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
 	/* Queue Association Response frame in high priority WQ */
-	cdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) bytes,
+	qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) bytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, frame, tx_flag,
 				sme_session, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 pe_session->peSessionId, cdf_status));
+			 pe_session->peSessionId, qdf_status));
 
 	/* Pkt will be freed up by the callback */
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		lim_log(mac_ctx, LOGE,
 			FL("*** Could not Send Re/AssocRsp, retCode=%X ***"),
-			cdf_status);
+			qdf_status);
 
 	/*
 	 * update the ANI peer station count.
@@ -1427,7 +1427,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 	tDot11fWMMDelTS WMMDelTS;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
@@ -1483,10 +1483,10 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for an Ad"
 				       "d TS Response."), nBytes);
 		return;
@@ -1554,17 +1554,17 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
+			 psessionEntry->peSessionId, qdf_status));
 	/* Pkt will be freed up by the callback */
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		lim_log(pMac, LOGE, FL("Failed to send Del TS (%X)!"),
-			cdf_status);
+			qdf_status);
 
 } /* End lim_send_delts_req_action_frame. */
 
@@ -1592,7 +1592,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t bytes, payload, status;
 	uint8_t qos_enabled, wme_enabled, wsm_enabled;
 	void *packet;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint16_t add_ie_len;
 	uint8_t *add_ie;
 	uint8_t *wps_ie = NULL;
@@ -1860,9 +1860,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	bytes = payload + sizeof(tSirMacMgmtHdr) + add_ie_len;
 
-	cdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
+	qdf_status = cds_packet_alloc((uint16_t) bytes, (void **)&frame,
 				(void **)&packet);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGP, FL("Failed to allocate %d bytes."),
 			bytes);
 
@@ -1952,18 +1952,18 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	mac_hdr = (tpSirMacMgmtHdr) frame;
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
-	cdf_status =
+	qdf_status =
 		wma_tx_frame(mac_ctx, packet,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + payload),
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, frame, tx_flag, sme_sessionid, 0);
 	MTRACE(cdf_trace
 		       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-		       pe_session->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		       pe_session->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGE,
 			FL("Failed to send Association Request (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 		cdf_mem_free(frm);
 		return;
@@ -2000,7 +2000,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t bytes, payload, status;
 	uint8_t qos_enabled, wme_enabled, wsm_enabled;
 	void *packet;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 #if defined WLAN_FEATURE_VOWIFI
 	uint8_t power_caps_populated = false;
 #endif
@@ -2275,9 +2275,9 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		ft_ies_length = ft_sme_context->reassoc_ft_ies_length;
 #endif
 
-	cdf_status = cds_packet_alloc((uint16_t) bytes + ft_ies_length,
+	qdf_status = cds_packet_alloc((uint16_t) bytes + ft_ies_length,
 				 (void **)&frame, (void **)&packet);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		pe_session->limMlmState = pe_session->limPrevMlmState;
 		MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_MLM_STATE,
 				 pe_session->peSessionId,
@@ -2386,17 +2386,17 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 #endif
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 pe_session->peSessionId, mac_hdr->fc.subType));
-	cdf_status = wma_tx_frame(mac_ctx, packet,
+	qdf_status = wma_tx_frame(mac_ctx, packet,
 				(uint16_t) (bytes + ft_ies_length),
 				TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 				lim_tx_complete, frame, tx_flag, sme_sessionid,
 				0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-		       pe_session->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		       pe_session->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGE,
 			FL("Failed to send Re-Assoc Request (%X)!"),
-			cdf_status);
+			qdf_status);
 	}
 
 end:
@@ -2475,7 +2475,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	uint32_t nBytes, nPayload, nStatus;
 	uint8_t fQosEnabled, fWmeEnabled, fWsmEnabled;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint16_t nAddIELen;
 	uint8_t *pAddIE;
 	uint8_t *wpsIe = NULL;
@@ -2641,9 +2641,9 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr) + nAddIELen;
 
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		psessionEntry->limMlmState = psessionEntry->limPrevMlmState;
 		MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_MLM_STATE,
 				 psessionEntry->peSessionId,
@@ -2722,18 +2722,18 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 #endif
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status =
+	qdf_status =
 		wma_tx_frame(pMac, pPacket,
 			   (uint16_t) (sizeof(tSirMacMgmtHdr) + nPayload),
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, txFlag, smeSessionId, 0);
 	MTRACE(cdf_trace
 		       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-		       psessionEntry->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		       psessionEntry->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to send Re-Association Request (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 	}
 
@@ -2769,7 +2769,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	uint32_t frame_len = 0, body_len = 0;
 	tpSirMacMgmtHdr mac_hdr;
 	void *packet;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t tx_flag = 0;
 	uint8_t sme_sessionid = 0;
 	uint16_t ft_ies_length = 0;
@@ -2901,10 +2901,10 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		break;
 	} /* switch (auth_frame->authTransactionSeqNumber) */
 
-	cdf_status = cds_packet_alloc((uint16_t) frame_len, (void **)&frame,
+	qdf_status = cds_packet_alloc((uint16_t) frame_len, (void **)&frame,
 				 (void **)&packet);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGP,
 			FL("call to bufAlloc failed for AUTH frame"));
 		return;
@@ -3019,21 +3019,21 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 session->peSessionId, mac_hdr->fc.subType));
 	/* Queue Authentication frame in high priority WQ */
-	cdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) frame_len,
+	qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) frame_len,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS, 7, lim_tx_complete,
 				frame, tx_flag, sme_sessionid, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 session->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+			 session->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		lim_log(mac_ctx, LOGE,
 			FL("*** Could not send Auth frame, retCode=%X ***"),
-			cdf_status);
+			qdf_status);
 
 	return;
 }
 
-CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
+QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 {
 	uint16_t aid;
 	tpDphHashNode pStaDs;
@@ -3109,7 +3109,7 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 		cdf_mem_free(pMlmDeauthReq);
 		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 end:
 	cdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr,
 			 &pMlmDeauthReq->peer_macaddr);
@@ -3123,7 +3123,7 @@ end:
 
 	lim_post_sme_message(pMac,
 			     LIM_MLM_DEAUTH_CNF, (uint32_t *) &mlmDeauthCnf);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3134,10 +3134,10 @@ end:
  * Sends disassoc confirmation to SME. Removes disassoc request stored
  * in lim.
  *
- * Return: CDF_STATUS_SUCCESS
+ * Return: QDF_STATUS_SUCCESS
  */
 
-CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
+QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 {
 	uint16_t aid;
 	tpDphHashNode sta_ds;
@@ -3215,9 +3215,9 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 		/* Free up buffer allocated for mlmDisassocReq */
 		cdf_mem_free(disassoc_req);
 		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	} else {
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 end:
 	cdf_mem_copy((uint8_t *) &disassoc_cnf.peerMacAddr,
@@ -3237,16 +3237,16 @@ end:
 
 	lim_post_sme_message(mac_ctx, LIM_MLM_DISASSOC_CNF,
 		(uint32_t *) &disassoc_cnf);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
+QDF_STATUS lim_disassoc_tx_complete_cnf(tpAniSirGlobal pMac,
 					uint32_t txCompleteSuccess)
 {
 	return lim_send_disassoc_cnf(pMac);
 }
 
-CDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
+QDF_STATUS lim_deauth_tx_complete_cnf(tpAniSirGlobal pMac,
 				      uint32_t txCompleteSuccess)
 {
 	return lim_send_deauth_cnf(pMac);
@@ -3278,7 +3278,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint32_t val = 0;
 	uint8_t smeSessionId = 0;
@@ -3319,9 +3319,9 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a Dis"
 				       "association."), nBytes);
 		return;
@@ -3377,7 +3377,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 				 pMacHdr->fc.subType));
 		/* Queue Disassociation frame in high priority WQ */
 		/* get the duration from the request */
-		cdf_status =
+		qdf_status =
 			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
@@ -3385,7 +3385,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 					 txFlag, smeSessionId, false, 0);
 		MTRACE(cdf_trace
 			       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			       psessionEntry->peSessionId, cdf_status));
+			       psessionEntry->peSessionId, qdf_status));
 
 		val = SYS_MS_TO_TICKS(LIM_DISASSOC_DEAUTH_ACK_TIMEOUT);
 
@@ -3409,7 +3409,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
 		/* Queue Disassociation frame in high priority WQ */
-		cdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+		qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 					TXRX_FRM_802_11_MGMT,
 					ANI_TXDIR_TODS,
 					7,
@@ -3417,11 +3417,11 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 					smeSessionId, 0);
 		MTRACE(cdf_trace
 			       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			       psessionEntry->peSessionId, cdf_status));
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			       psessionEntry->peSessionId, qdf_status));
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			lim_log(pMac, LOGE,
 				FL("Failed to send Disassociation (%X)!"),
-				cdf_status);
+				qdf_status);
 			/* Pkt will be freed up by the callback */
 		}
 	}
@@ -3452,7 +3452,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint32_t val = 0;
 #ifdef FEATURE_WLAN_TDLS
@@ -3498,9 +3498,9 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
+	qdf_status = cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				      (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a De-"
 				       "Authentication."), nBytes);
 		return;
@@ -3558,7 +3558,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 				 psessionEntry->peSessionId,
 				 pMacHdr->fc.subType));
 		/* Queue Disassociation frame in high priority WQ */
-		cdf_status =
+		qdf_status =
 			wma_tx_frameWithTxComplete(pMac, pPacket, (uint16_t) nBytes,
 					 TXRX_FRM_802_11_MGMT,
 					 ANI_TXDIR_TODS, 7, lim_tx_complete,
@@ -3566,12 +3566,12 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 					 txFlag, smeSessionId, false, 0);
 		MTRACE(cdf_trace
 			       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			       psessionEntry->peSessionId, cdf_status));
+			       psessionEntry->peSessionId, qdf_status));
 		/* Pkt will be freed up by the callback lim_tx_complete */
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			lim_log(pMac, LOGE,
 				FL("Failed to send De-Authentication (%X)!"),
-				cdf_status);
+				qdf_status);
 
 			/* Call lim_process_deauth_ack_timeout which will send
 			 * DeauthCnf for this frame
@@ -3605,7 +3605,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		if ((NULL != pStaDs)
 		    && (STA_ENTRY_TDLS_PEER == pStaDs->staType)) {
 			/* Queue Disassociation frame in high priority WQ */
-			cdf_status =
+			qdf_status =
 				wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 					   TXRX_FRM_802_11_MGMT, ANI_TXDIR_IBSS,
 					   7, lim_tx_complete, pFrame, txFlag,
@@ -3613,7 +3613,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		} else {
 #endif
 		/* Queue Disassociation frame in high priority WQ */
-		cdf_status =
+		qdf_status =
 			wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 				   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS,
 				   7, lim_tx_complete, pFrame, txFlag,
@@ -3622,11 +3622,11 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	}
 #endif
 		MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-				 psessionEntry->peSessionId, cdf_status));
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+				 psessionEntry->peSessionId, qdf_status));
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			lim_log(pMac, LOGE,
 				FL("Failed to send De-Authentication (%X)!"),
-				cdf_status);
+				qdf_status);
 			/* Pkt will be freed up by the callback */
 		}
 	}
@@ -3658,7 +3658,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
@@ -3707,11 +3707,11 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc(pMac->hHdd, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a De-"
 				       "Authentication."), nBytes);
 		return eSIR_FAILURE;
@@ -3748,18 +3748,18 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 ((psessionEntry) ? psessionEntry->
 			  peSessionId : NO_SESSION), pMacHdr->fc.subType));
-	cdf_status =
+	qdf_status =
 		wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, 0, 0);
 	MTRACE(cdf_trace
 		       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       ((psessionEntry) ? psessionEntry->peSessionId : NO_SESSION),
-		       cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		       qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to send a Measurement Report  (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 		return eSIR_FAILURE;    /* just allocated... */
 	}
@@ -3788,7 +3788,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
@@ -3811,11 +3811,11 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc(pMac->hHdd, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a TPC"
 				       " Request."), nBytes);
 		return;
@@ -3851,18 +3851,18 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 ((psessionEntry) ? psessionEntry->
 			  peSessionId : NO_SESSION), pMacHdr->fc.subType));
-	cdf_status =
+	qdf_status =
 		wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, 0, 0);
 	MTRACE(cdf_trace
 		       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       ((psessionEntry) ? psessionEntry->peSessionId : NO_SESSION),
-		       cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		       qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to send a TPC Request (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 	}
 
@@ -3891,7 +3891,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
@@ -3917,11 +3917,11 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc(pMac->hHdd, TXRX_FRM_802_11_MGMT,
 				 (uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a TPC"
 				       " Report."), nBytes);
 		return eSIR_FAILURE;
@@ -3958,18 +3958,18 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 ((psessionEntry) ? psessionEntry->
 			  peSessionId : NO_SESSION), pMacHdr->fc.subType));
-	cdf_status =
+	qdf_status =
 		wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 			   TXRX_FRM_802_11_MGMT, ANI_TXDIR_TODS, 7,
 			   lim_tx_complete, pFrame, 0, 0);
 	MTRACE(cdf_trace
 		       (CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
 		       ((psessionEntry) ? psessionEntry->peSessionId : NO_SESSION),
-		       cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		       qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to send a TPC Report (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 		return eSIR_FAILURE;    /* just allocated... */
 	}
@@ -4010,7 +4010,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;     /* , nCfg; */
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 
 	uint8_t smeSessionId = 0;
@@ -4045,10 +4045,10 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a TPC"
 				       " Report."), nBytes);
 		return eSIR_FAILURE;
@@ -4091,17 +4091,17 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			 psessionEntry->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to send a Channel Switch (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 		return eSIR_FAILURE;
 	}
@@ -4135,7 +4135,7 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr          mac_hdr;
 	uint32_t                 num_bytes, n_payload, status;
 	void                     *packet;
-	CDF_STATUS               cdf_status;
+	QDF_STATUS               qdf_status;
 	uint8_t                  txFlag = 0;
 	uint8_t                  sme_session_id = 0;
 
@@ -4173,10 +4173,10 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	num_bytes = n_payload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status = cds_packet_alloc((uint16_t)num_bytes,
+	qdf_status = cds_packet_alloc((uint16_t)num_bytes,
 				(void **) &frame, (void **) &packet);
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGP,
 		 FL("Failed to allocate %d bytes for a Ext Channel Switch."),
 								 num_bytes);
@@ -4225,18 +4225,18 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			session_entry->peSessionId, mac_hdr->fc.subType));
-	cdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) num_bytes,
+	qdf_status = wma_tx_frame(mac_ctx, packet, (uint16_t) num_bytes,
 						 TXRX_FRM_802_11_MGMT,
 						 ANI_TXDIR_TODS,
 						 7,
 						 lim_tx_complete, frame,
 						 txFlag, sme_session_id, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			session_entry->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			session_entry->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(mac_ctx, LOGE,
 		  FL("Failed to send a Ext Channel Switch %X!"),
-							 cdf_status);
+							 qdf_status);
 		/* Pkt will be freed up by the callback */
 		return eSIR_FAILURE;
 	}
@@ -4253,7 +4253,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload = 0, nStatus; /* , nCfg; */
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 
 	uint8_t smeSessionId = 0;
@@ -4287,10 +4287,10 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate %d bytes for a Operating Mode"
 			   " Report."), nBytes);
@@ -4334,17 +4334,17 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
+	qdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+			 psessionEntry->peSessionId, qdf_status));
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGE,
 			FL("Failed to send a Channel Switch (%X)!"),
-			cdf_status);
+			qdf_status);
 		/* Pkt will be freed up by the callback */
 		return eSIR_FAILURE;
 	}
@@ -4382,7 +4382,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
@@ -4419,10 +4419,10 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate %d bytes for a Neighbor "
 			   "Report Request."), nBytes);
@@ -4478,7 +4478,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(pMac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4486,11 +4486,11 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+			 psessionEntry->peSessionId, qdf_status));
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
-			       cdf_status);
+			       qdf_status);
 		       )
 		statusCode = eSIR_FAILURE;
 		/* Pkt will be freed up by the callback */
@@ -4532,7 +4532,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
@@ -4579,10 +4579,10 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a Link "
 				       "Report."), nBytes);
 		return eSIR_FAILURE;
@@ -4635,7 +4635,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(pMac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4643,11 +4643,11 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+			 psessionEntry->peSessionId, qdf_status));
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
-			       cdf_status);
+			       qdf_status);
 		       )
 		statusCode = eSIR_FAILURE;
 		/* Pkt will be freed up by the callback */
@@ -4695,7 +4695,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t i;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
@@ -4771,10 +4771,10 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
 
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
 				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate %d bytes for a Radio Measure "
 			   "Report."), nBytes);
@@ -4830,7 +4830,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(pMac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -4838,11 +4838,11 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+			 psessionEntry->peSessionId, qdf_status));
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
-			       cdf_status);
+			       qdf_status);
 		       )
 		statusCode = eSIR_FAILURE;
 		/* Pkt will be freed up by the callback */
@@ -4891,7 +4891,7 @@ tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *tran
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
@@ -4918,9 +4918,9 @@ tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *tran
 	}
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc(nBytes, (void **)&pFrame, (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate %d bytes for a SA Query Request "
 			   "action frame"), nBytes);
@@ -4977,17 +4977,17 @@ tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *tran
 	}
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(pMac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
 				ANI_TXDIR_TODS,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
-			       cdf_status);
+			       qdf_status);
 		       )
 		nSirStatus = eSIR_FAILURE;
 		/* Pkt will be freed up by the callback */
@@ -5030,7 +5030,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr pMacHdr;
 	uint32_t nBytes, nPayload, nStatus;
 	void *pPacket;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
@@ -5060,9 +5060,9 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	}
 
 	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
-	cdf_status =
+	qdf_status =
 		cds_packet_alloc(nBytes, (void **)&pFrame, (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate %d bytes for a SA query response"
 			   " action frame"), nBytes);
@@ -5118,7 +5118,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac,
+	qdf_status = wma_tx_frame(pMac,
 				pPacket,
 				(uint16_t) nBytes,
 				TXRX_FRM_802_11_MGMT,
@@ -5126,11 +5126,11 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 				7, lim_tx_complete, pFrame, txFlag,
 				smeSessionId, 0);
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (CDF_STATUS_SUCCESS != cdf_status) {
+			 psessionEntry->peSessionId, qdf_status));
+	if (QDF_STATUS_SUCCESS != qdf_status) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("wma_tx_frame FAILED! Status [%d]"),
-			       cdf_status);
+			       qdf_status);
 		       )
 		nSirStatus = eSIR_FAILURE;
 		/* Pkt will be freed up by the callback */

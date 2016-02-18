@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -674,9 +674,9 @@ ol_txrx_set_monitor_mode_vap(ol_txrx_pdev_handle pdev,
  */
 void ol_txrx_set_curchan(ol_txrx_pdev_handle pdev, uint32_t chan_mhz);
 
-CDF_STATUS ol_txrx_bus_suspend(void);
-CDF_STATUS ol_txrx_bus_resume(void);
-CDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
+QDF_STATUS ol_txrx_bus_suspend(void);
+QDF_STATUS ol_txrx_bus_resume(void);
+QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
 
 /**
  * @brief Get the number of pending transmit frames that are awaiting completion.
@@ -764,7 +764,7 @@ enum ol_txrx_peer_state {
  *
  * Return: CDF Status
  */
-CDF_STATUS
+QDF_STATUS
 ol_txrx_peer_state_update(ol_txrx_pdev_handle pdev, uint8_t *peer_addr,
 			  enum ol_txrx_peer_state state);
 
@@ -900,7 +900,7 @@ struct txrx_pdev_cfg_param_t {
 ol_pdev_handle ol_pdev_cfg_attach(cdf_device_t osdev,
 				  struct txrx_pdev_cfg_param_t cfg_param);
 
-CDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
+QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
 void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
 
 
@@ -1252,7 +1252,7 @@ void ol_txrx_display_stats(uint16_t bitmap);
 void ol_txrx_clear_stats(uint16_t bitmap);
 int ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len);
 
-CDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
+QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 				     uint8_t *peer_id);
 
 void ol_txrx_set_ocb_peer(struct ol_txrx_pdev_t *pdev,

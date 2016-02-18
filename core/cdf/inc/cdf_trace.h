@@ -40,7 +40,6 @@
 /* Include Files */
 #include  <cdf_types.h>         /* For CDF_MODULE_ID... */
 #include  <stdarg.h>            /* For va_list... */
-#include  <cdf_status.h>
 #include  <qdf_status.h>
 #include  <cdf_nbuf.h>
 #include  <cds_packet.h>
@@ -265,7 +264,7 @@ bool cdf_trace_get_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level);
 typedef void (*tp_cdf_trace_cb)(void *pMac, tp_cdf_trace_record, uint16_t);
 void cdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
 void cdf_trace_register(CDF_MODULE_ID, tp_cdf_trace_cb);
-CDF_STATUS cdf_trace_spin_lock_init(void);
+QDF_STATUS cdf_trace_spin_lock_init(void);
 void cdf_trace_init(void);
 void cdf_trace_enable(uint32_t, uint8_t enable);
 void cdf_trace_dump_all(void *, uint8_t, uint8_t, uint32_t, uint32_t);

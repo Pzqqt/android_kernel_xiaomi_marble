@@ -36,7 +36,7 @@
 
    ========================================================================*/
 
-#include "cdf_status.h"
+#include "qdf_status.h"
 
 #define CDS_COUNTRY_CODE_LEN  2
 #define CDS_MAC_ADDRESS_LEN 6
@@ -318,26 +318,26 @@ enum channel_width {
 extern struct regulatory_channel reg_channels[NUM_RF_CHANNELS];
 extern const struct chan_map chan_mapping[NUM_RF_CHANNELS];
 
-CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
+QDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *pRegDomain,
 						const uint8_t *country_alpha2,
 						enum country_src source);
 
-CDF_STATUS cds_read_default_country(uint8_t *default_country);
+QDF_STATUS cds_read_default_country(uint8_t *default_country);
 
-CDF_STATUS cds_get_channel_list_with_power(struct channel_power
+QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   *base_channels,
 					   uint8_t *num_base_channels,
 					   struct channel_power
 					   *channel_40mhz,
 					   uint8_t *num_channels_40mhz);
 
-CDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
+QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
 
 enum channel_state cds_get_channel_state(uint32_t chan_num);
 
-CDF_STATUS cds_regulatory_init(void);
-CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
-CDF_STATUS cds_set_dfs_region(uint8_t dfs_region);
+QDF_STATUS cds_regulatory_init(void);
+QDF_STATUS cds_get_dfs_region(uint8_t *dfs_region);
+QDF_STATUS cds_set_dfs_region(uint8_t dfs_region);
 bool cds_is_dsrc_channel(uint16_t);
 enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
 					   enum channel_width chan_width);

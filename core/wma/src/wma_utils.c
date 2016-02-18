@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -337,7 +337,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	WMI_STATS_EXT_EVENTID_param_tlvs *param_buf;
 	tSirStatsExtEvent *stats_ext_event;
 	wmi_stats_ext_event_fixed_param *stats_ext_info;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	cds_msg_t cds_msg;
 	uint8_t *buf_ptr;
 	uint32_t alloc_len;
@@ -374,7 +374,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	cds_msg.bodyval = 0;
 
 	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post stats ext event to SME", __func__);
 		cdf_mem_free(stats_ext_event);
 		return -EFAULT;
@@ -782,9 +782,9 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
  * @wma: wma handle
  * @clearReq: ll stats clear request command params
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS wma_process_ll_stats_clear_req
+QDF_STATUS wma_process_ll_stats_clear_req
 	(tp_wma_handle wma, const tpSirLLStatsClearReq clearReq)
 {
 	wmi_clear_link_stats_cmd_fixed_param *cmd;
@@ -795,7 +795,7 @@ CDF_STATUS wma_process_ll_stats_clear_req
 
 	if (!clearReq || !wma) {
 		WMA_LOGE("%s: input pointer is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = sizeof(*cmd);
@@ -803,7 +803,7 @@ CDF_STATUS wma_process_ll_stats_clear_req
 
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -834,11 +834,11 @@ CDF_STATUS wma_process_ll_stats_clear_req
 	if (ret) {
 		WMA_LOGE("%s: Failed to send clear link stats req", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Clear Link Layer Stats request sent successfully");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -846,9 +846,9 @@ CDF_STATUS wma_process_ll_stats_clear_req
  * @wma:       wma handle
  * @setReq:  ll stats set request command params
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS wma_process_ll_stats_set_req
+QDF_STATUS wma_process_ll_stats_set_req
 	(tp_wma_handle wma, const tpSirLLStatsSetReq setReq)
 {
 	wmi_start_link_stats_cmd_fixed_param *cmd;
@@ -859,7 +859,7 @@ CDF_STATUS wma_process_ll_stats_set_req
 
 	if (!setReq || !wma) {
 		WMA_LOGE("%s: input pointer is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = sizeof(*cmd);
@@ -867,7 +867,7 @@ CDF_STATUS wma_process_ll_stats_set_req
 
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -892,11 +892,11 @@ CDF_STATUS wma_process_ll_stats_set_req
 	if (ret) {
 		WMA_LOGE("%s: Failed to send set link stats request", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Set Link Layer Stats request sent successfully");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -904,9 +904,9 @@ CDF_STATUS wma_process_ll_stats_set_req
  * @wma:wma handle
  * @getReq:ll stats get request command params
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS wma_process_ll_stats_get_req
+QDF_STATUS wma_process_ll_stats_get_req
 	(tp_wma_handle wma, const tpSirLLStatsGetReq getReq)
 {
 	wmi_request_link_stats_cmd_fixed_param *cmd;
@@ -917,7 +917,7 @@ CDF_STATUS wma_process_ll_stats_get_req
 
 	if (!getReq || !wma) {
 		WMA_LOGE("%s: input pointer is NULL", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	len = sizeof(*cmd);
@@ -925,7 +925,7 @@ CDF_STATUS wma_process_ll_stats_get_req
 
 	if (!buf) {
 		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -955,11 +955,11 @@ CDF_STATUS wma_process_ll_stats_get_req
 	if (ret) {
 		WMA_LOGE("%s: Failed to send get link stats request", __func__);
 		wmi_buf_free(buf);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	WMA_LOGD("Get Link Layer Stats request sent successfully");
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1177,7 +1177,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 	struct wma_txrx_node *node;
 	uint8_t i;
 	int8_t rssi = 0;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 	tAniGetRssiReq *pGetRssiReq = (tAniGetRssiReq *) wma->pGetRssiReq;
 	cds_msg_t sme_msg = { 0 };
 
@@ -1268,8 +1268,8 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 		sme_msg.bodyptr = p_snr_req;
 		sme_msg.bodyval = 0;
 
-		cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post snr ind msg", __func__);
 			cdf_mem_free(p_snr_req);
 		}
@@ -1378,7 +1378,7 @@ static void wma_update_peer_stats(tp_wma_handle wma,
 void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 			  uint8_t link_status)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cds_msg_t sme_msg = { 0 };
 
 	pGetLinkStatus->linkStatus = link_status;
@@ -1386,8 +1386,8 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 	sme_msg.bodyptr = pGetLinkStatus;
 	sme_msg.bodyval = 0;
 
-	cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post link status ind msg", __func__);
 		cdf_mem_free(pGetLinkStatus);
 	}
@@ -1520,31 +1520,31 @@ int wma_stats_event_handler(void *handle, uint8_t *cmd_param_info,
  * wma_send_link_speed() - send link speed to SME
  * @link_speed: link speed
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS wma_send_link_speed(uint32_t link_speed)
+QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cds_msg_t sme_msg = { 0 };
 	tSirLinkSpeedInfo *ls_ind =
 		(tSirLinkSpeedInfo *) cdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
 	if (!ls_ind) {
 		WMA_LOGE("%s: Memory allocation failed.", __func__);
-		cdf_status = CDF_STATUS_E_NOMEM;
+		qdf_status = QDF_STATUS_E_NOMEM;
 	} else {
 		ls_ind->estLinkSpeed = link_speed;
 		sme_msg.type = eWNI_SME_LINK_SPEED_IND;
 		sme_msg.bodyptr = ls_ind;
 		sme_msg.bodyval = 0;
 
-		cdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
-		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post linkspeed ind  msg",
 				 __func__);
 			cdf_mem_free(ls_ind);
 		}
 	}
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -1560,7 +1560,7 @@ int wma_link_speed_event_handler(void *handle, uint8_t *cmd_param_info,
 {
 	WMI_PEER_ESTIMATED_LINKSPEED_EVENTID_param_tlvs *param_buf;
 	wmi_peer_estimated_linkspeed_event_fixed_param *event;
-	CDF_STATUS cdf_status;
+	QDF_STATUS qdf_status;
 
 	param_buf =
 		(WMI_PEER_ESTIMATED_LINKSPEED_EVENTID_param_tlvs *) cmd_param_info;
@@ -1569,8 +1569,8 @@ int wma_link_speed_event_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 	event = param_buf->fixed_param;
-	cdf_status = wma_send_link_speed(event->est_linkspeed_kbps);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+	qdf_status = wma_send_link_speed(event->est_linkspeed_kbps);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		return -EINVAL;
 	}
 	return 0;
@@ -1580,11 +1580,11 @@ int wma_link_speed_event_handler(void *handle, uint8_t *cmd_param_info,
  * wma_wni_cfg_dnld() - cfg download request
  * @handle: wma handle
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
+QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
 {
-	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	void *mac = cds_get_context(CDF_MODULE_ID_PE);
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -1592,13 +1592,13 @@ CDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
 	if (NULL == mac) {
 		WMA_LOGP("%s: Invalid context", __func__);
 		CDF_ASSERT(0);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	process_cfg_download_req(mac);
 
 	WMA_LOGD("%s: Exit", __func__);
-	return cdf_status;
+	return qdf_status;
 }
 
 /**
@@ -2047,7 +2047,7 @@ static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
 	stats_rsp_params->statsMask = get_stats_param->statsMask;
 	stats_rsp_params->msgType = WMA_GET_STATISTICS_RSP;
 	stats_rsp_params->msgLen = len - sizeof(tAniGetPEStatsRsp);
-	stats_rsp_params->rc = CDF_STATUS_SUCCESS;
+	stats_rsp_params->rc = QDF_STATUS_SUCCESS;
 	return stats_rsp_params;
 }
 
@@ -2122,7 +2122,7 @@ void wma_get_stats_req(WMA_HANDLE handle,
 	goto end;
 failed:
 
-	pGetPEStatsRspParams->rc = CDF_STATUS_E_FAILURE;
+	pGetPEStatsRspParams->rc = QDF_STATUS_E_FAILURE;
 	node->stats_rsp = NULL;
 	/* send response to UMAC */
 	wma_send_msg(wma_handle, WMA_GET_STATISTICS_RSP, pGetPEStatsRspParams,
@@ -2301,7 +2301,7 @@ static void wma_post_ftm_response(tp_wma_handle wma_handle)
 	uint8_t *payload;
 	uint32_t data_len;
 	cds_msg_t msg = { 0 };
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	ret = wma_utf_rsp(wma_handle, &payload, &data_len);
 
@@ -2315,7 +2315,7 @@ static void wma_post_ftm_response(tp_wma_handle wma_handle)
 
 	status = cds_mq_post_message(CDS_MQ_ID_SYS, &msg);
 
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("failed to post ftm response to SYS");
 		cdf_mem_free(payload);
 	}
@@ -2537,9 +2537,9 @@ int wma_utf_cmd(tp_wma_handle wma_handle, uint8_t *data, uint16_t len)
  * @wma_handle: wma handle
  * @msg_buffer: message buffer
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS
+QDF_STATUS
 wma_process_ftm_command(tp_wma_handle wma_handle,
 			struct ar6k_testmode_cmd_data *msg_buffer)
 {
@@ -2548,13 +2548,13 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 	int ret;
 
 	if (!msg_buffer)
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 
 	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 		WMA_LOGE("FTM command issued in non-FTM mode");
 		cdf_mem_free(msg_buffer->data);
 		cdf_mem_free(msg_buffer);
-		return CDF_STATUS_E_NOSUPPORT;
+		return QDF_STATUS_E_NOSUPPORT;
 	}
 
 	data = msg_buffer->data;
@@ -2566,9 +2566,9 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 	cdf_mem_free(msg_buffer);
 
 	if (ret)
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif /* QCA_WIFI_FTM */
 
@@ -2578,9 +2578,9 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
  * @pVersion: version pointer
  * @versionBufferSize: buffer size
  *
- * Return: CDF_STATUS_SUCCESS for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-CDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
+QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 					  uint8_t *pVersion,
 					  uint32_t versionBufferSize)
 {
@@ -2589,12 +2589,12 @@ CDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	snprintf(pVersion, versionBufferSize, "%x",
 		 (unsigned int)wma_handle->target_fw_version);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2780,7 +2780,7 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
  *
  * Return: Success if hw mode is obtained and the hw mode params
  */
-CDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
+QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 		struct sir_hw_mode_params *hw_mode)
 {
 	tp_wma_handle wma;
@@ -2789,17 +2789,17 @@ CDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (idx > wma->num_dbs_hw_modes) {
 		WMA_LOGE("%s: Invalid index", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!wma->num_dbs_hw_modes) {
 		WMA_LOGE("%s: No dbs hw modes available", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	param = wma->hw_mode.hw_mode_list[idx];
@@ -2813,7 +2813,7 @@ CDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 	hw_mode->dbs_cap = WMI_DBS_HW_MODE_DBS_MODE_GET(param);
 	hw_mode->agile_dfs_cap = WMI_DBS_HW_MODE_AGILE_DFS_GET(param);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -2975,7 +2975,7 @@ int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id)
  * otherwise. When no HW mode transition has happened the values of
  * old_hw_mode_index and new_hw_mode_index will be the same.
  */
-CDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
+QDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
 				    uint32_t *new_hw_mode_index)
 {
 	tp_wma_handle wma;
@@ -2983,13 +2983,13 @@ CDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 	*old_hw_mode_index = wma->old_hw_mode_index;
 	*new_hw_mode_index = wma->new_hw_mode_index;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3055,7 +3055,7 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
  *         false values of one_by_one_dbs/two_by_two_dbs,
  *         indicate DBS is disabled
  */
-CDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
+QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
 {
 	tp_wma_handle wma;
 	uint32_t i;
@@ -3069,14 +3069,14 @@ CDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
 	if (wma_is_hw_dbs_capable() == false) {
 		WMA_LOGE("%s: HW is not DBS capable", __func__);
 		/* Caller will understand that DBS is disabled */
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	}
 
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* To check 1x1 capability */
@@ -3138,7 +3138,7 @@ CDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
 	if (found_two_by_two >= 0)
 		*two_by_two_dbs = true;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3150,31 +3150,31 @@ CDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
  *
  * Return: Success if the current HW mode params are successfully populated
  */
-CDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode)
+QDF_STATUS wma_get_current_hw_mode(struct sir_hw_mode_params *hw_mode)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint32_t old_hw_index = 0, new_hw_index = 0;
 
 	WMA_LOGI("%s: Get the current hw mode", __func__);
 
 	status = wma_get_old_and_new_hw_index(&old_hw_index,
 			&new_hw_index);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		WMA_LOGE("%s: Failed to get HW mode index", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (new_hw_index == WMA_DEFAULT_HW_MODE_INDEX) {
 		WMA_LOGE("%s: HW mode is not yet initialized", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	status = wma_get_hw_mode_from_idx(new_hw_index, hw_mode);
-	if (CDF_STATUS_SUCCESS != status) {
+	if (QDF_STATUS_SUCCESS != status) {
 		WMA_LOGE("%s: Failed to get HW mode index", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3258,7 +3258,7 @@ bool wma_is_agile_dfs_enable(void)
  *
  * Return: 0 on success
  */
-CDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
+QDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 		bool dbs_scan,
 		bool dbs_plus_agile_scan,
 		bool single_mac_scan_with_dfs)
@@ -3268,7 +3268,7 @@ CDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	*scan_config = wma->dual_mac_cfg.cur_scan_config;
 
@@ -3279,7 +3279,7 @@ CDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 			single_mac_scan_with_dfs);
 
 	WMA_LOGD("%s: *scan_config:%x ", __func__, *scan_config);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3294,7 +3294,7 @@ CDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
  *
  * Return: 0 on success
  */
-CDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
+QDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
 		bool dbs,
 		bool agile_dfs)
 {
@@ -3303,7 +3303,7 @@ CDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
 	wma = cds_get_context(CDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	*fw_mode_config = wma->dual_mac_cfg.cur_fw_mode_config;
 
@@ -3311,7 +3311,7 @@ CDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
 	WMI_DBS_FW_MODE_CFG_AGILE_DFS_SET(*fw_mode_config, agile_dfs);
 
 	WMA_LOGD("%s: *fw_mode_config:%x ", __func__, *fw_mode_config);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

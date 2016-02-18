@@ -36,7 +36,6 @@
 #include <linux/random.h>
 
 #include <cdf_types.h>
-#include <cdf_status.h>
 #include <qdf_status.h>
 #include <asm/byteorder.h>
 /*
@@ -47,36 +46,36 @@
 #define __cdf_likely(_expr)     likely(_expr)
 
 /**
- * cdf_status_to_os_return(): translates cdf_status types to linux return types
+ * cdf_status_to_os_return(): translates qdf_status types to linux return types
  * @status: status to translate
  *
  * Translates error types that linux may want to handle specially.
  *
- * return: 0 or the linux error code that most closely matches the CDF_STATUS.
+ * return: 0 or the linux error code that most closely matches the QDF_STATUS.
  *	defaults to -1 (EPERM)
  */
-static inline int __cdf_status_to_os_return(CDF_STATUS status)
+static inline int __cdf_status_to_os_return(QDF_STATUS status)
 {
 	switch (status) {
-	case CDF_STATUS_SUCCESS:
+	case QDF_STATUS_SUCCESS:
 		return 0;
-	case CDF_STATUS_E_NULL_VALUE:
-	case CDF_STATUS_E_FAULT:
+	case QDF_STATUS_E_NULL_VALUE:
+	case QDF_STATUS_E_FAULT:
 		return -EFAULT;
-	case CDF_STATUS_E_TIMEOUT:
-	case CDF_STATUS_E_BUSY:
+	case QDF_STATUS_E_TIMEOUT:
+	case QDF_STATUS_E_BUSY:
 		return -EBUSY;
-	case CDF_STATUS_NOT_INITIALIZED:
-	case CDF_STATUS_E_AGAIN:
+	case QDF_STATUS_NOT_INITIALIZED:
+	case QDF_STATUS_E_AGAIN:
 		return -EAGAIN;
-	case CDF_STATUS_E_NOSUPPORT:
+	case QDF_STATUS_E_NOSUPPORT:
 		return -ENOSYS;
-	case CDF_STATUS_E_ALREADY:
+	case QDF_STATUS_E_ALREADY:
 		return -EALREADY;
-	case CDF_STATUS_E_NOMEM:
+	case QDF_STATUS_E_NOMEM:
 		return -ENOMEM;
-	case CDF_STATUS_E_FAILURE:
-	case CDF_STATUS_E_INVAL:
+	case QDF_STATUS_E_FAILURE:
+	case QDF_STATUS_E_INVAL:
 		return -EINVAL;
 	default:
 		return -EPERM;

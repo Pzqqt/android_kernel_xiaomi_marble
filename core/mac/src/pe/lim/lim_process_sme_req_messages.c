@@ -127,11 +127,11 @@ static void lim_process_ext_change_channel(tpAniSirGlobal mac_ctx,
  *
  * Send the set HW mode command to WMA
  *
- * Return: CDF_STATUS_SUCCESS if message posting is successful
+ * Return: QDF_STATUS_SUCCESS if message posting is successful
  */
-static CDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
+static QDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	cds_msg_t cds_message;
 	struct sir_hw_mode *req_msg;
 	uint32_t len;
@@ -154,7 +154,7 @@ static CDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 		/* Free the active command list
 		 * Probably the malloc is going to fail there as well?!
 		 */
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cdf_mem_zero(req_msg, len);
@@ -168,7 +168,7 @@ static CDF_STATUS lim_process_set_hw_mode(tpAniSirGlobal mac, uint32_t *msg)
 
 	lim_log(mac, LOG1, FL("Posting SIR_HAL_SOC_SET_HW_MOD to WMA"));
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
 			FL("vos_mq_post_message failed!(err=%d)"),
 			status);
@@ -180,7 +180,7 @@ fail:
 	param = cdf_mem_malloc(sizeof(*param));
 	if (!param) {
 		lim_log(mac, LOGE, FL("HW mode resp failed"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	param->cfgd_hw_mode_index = 0;
@@ -189,7 +189,7 @@ fail:
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -199,12 +199,12 @@ fail:
  *
  * Send the set dual mac config command to WMA
  *
- * Return: CDF_STATUS_SUCCESS if message posting is successful
+ * Return: QDF_STATUS_SUCCESS if message posting is successful
  */
-static CDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
+static QDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 		uint32_t *msg)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	cds_msg_t cds_message;
 	struct sir_dual_mac_config *req_msg;
 	uint32_t len;
@@ -227,7 +227,7 @@ static CDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 		/* Free the active command list
 		 * Probably the malloc is going to fail there as well?!
 		 */
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cdf_mem_zero(req_msg, len);
@@ -243,7 +243,7 @@ static CDF_STATUS lim_process_set_dual_mac_cfg_req(tpAniSirGlobal mac,
 		FL("Post SIR_HAL_SOC_DUAL_MAC_CFG_REQ to WMA: %x %x"),
 		req_msg->scan_config, req_msg->fw_mode_config);
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
+	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		lim_log(mac, LOGE,
 				FL("vos_mq_post_message failed!(err=%d)"),
 				status);
@@ -255,14 +255,14 @@ fail:
 	param = cdf_mem_malloc(sizeof(*param));
 	if (!param) {
 		lim_log(mac, LOGE, FL("Dual mac config resp failed"));
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 	param->status = SET_HW_MODE_STATUS_ECANCELED;
 	resp_msg.type = eWNI_SME_SET_DUAL_MAC_CFG_RESP;
 	resp_msg.bodyptr = param;
 	resp_msg.bodyval = 0;
 	lim_sys_process_mmh_msg_api(mac, &resp_msg, ePROT);
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1150,7 +1150,7 @@ void lim_get_random_bssid(tpAniSirGlobal pMac, uint8_t *data)
 	cdf_mem_copy(data, (uint8_t *) random, sizeof(tSirMacAddr));
 }
 
-static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
+static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 						      tpSirSmeScanReq pScanReq)
 {
 	tSirScanOffloadReq *pScanOffloadReq;
@@ -1223,7 +1223,7 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	if (NULL == pScanOffloadReq) {
 		lim_log(pMac, LOGE,
 			FL("AllocateMemory failed for pScanOffloadReq"));
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	cdf_mem_set((uint8_t *) pScanOffloadReq, len, 0);
@@ -1239,7 +1239,7 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 			FL("Invalid value (%d) for numSsid"),
 			SIR_SCAN_MAX_NUM_SSID);
 		cdf_mem_free(pScanOffloadReq);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	pScanOffloadReq->numSsid = pScanReq->numSsid;
@@ -1318,12 +1318,12 @@ static CDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	if (rc != eSIR_SUCCESS) {
 		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure"));
 		cdf_mem_free(pScanOffloadReq);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	lim_log(pMac, LOG1, FL("Processed Offload Scan Request Successfully"));
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1415,7 +1415,7 @@ static void __lim_process_sme_scan_req(tpAniSirGlobal mac_ctx,
 		mac_ctx->lim.gLimReturnUniqueResults =
 			((scan_req->returnUniqueResults) > 0 ? true : false);
 
-		if (CDF_STATUS_SUCCESS !=
+		if (QDF_STATUS_SUCCESS !=
 			lim_send_hal_start_scan_offload_req(mac_ctx,
 			    scan_req)) {
 			lim_log(mac_ctx, LOGE, FL(
@@ -3182,7 +3182,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	}
 
 	sap_get_wpspbc_event = &sap_event.sapevt.sapGetWPSPBCSessionEvent;
-	sap_get_wpspbc_event->status = CDF_STATUS_E_FAULT;
+	sap_get_wpspbc_event->status = QDF_STATUS_E_FAULT;
 
 	cdf_mem_copy(&get_wps_pbc_sessions_req, msg_buf,
 			sizeof(struct sSirSmeGetWPSPBCSessionsReq));
@@ -3230,7 +3230,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	lim_print_mac_addr(mac_ctx,
 				sap_get_wpspbc_event->addr.bytes, LOG4);
 
-	sap_get_wpspbc_event->status = CDF_STATUS_SUCCESS;
+	sap_get_wpspbc_event->status = QDF_STATUS_SUCCESS;
 
 lim_get_wpspbc_sessions_end:
 	sap_event_cb =
@@ -4350,7 +4350,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 			msg.type = WMA_UPDATE_OP_MODE;
 			msg.reserved = 0;
 			msg.bodyptr = pHtOpMode;
-			if (!CDF_IS_STATUS_SUCCESS
+			if (!QDF_IS_STATUS_SUCCESS
 				    (cds_mq_post_message(CDF_MODULE_ID_WMA, &msg))) {
 				lim_log(pMac, LOGE,
 					FL
@@ -5719,7 +5719,7 @@ static void lim_process_nss_update_request(tpAniSirGlobal mac_ctx,
 static void lim_process_set_ie_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 {
 	struct send_extcap_ie *msg;
-	CDF_STATUS status;
+	QDF_STATUS status;
 
 	if (msg_buf == NULL) {
 		lim_log(mac_ctx, LOGE, FL("Buffer is Pointing to NULL"));
@@ -5728,7 +5728,7 @@ static void lim_process_set_ie_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 	msg = (struct send_extcap_ie *)msg_buf;
 	status = lim_send_ext_cap_ie(mac_ctx, msg->session_id, NULL, false);
-	if (CDF_STATUS_SUCCESS != status)
+	if (QDF_STATUS_SUCCESS != status)
 		lim_log(mac_ctx, LOGE, FL("Unable to send ExtCap to FW"));
 
 }

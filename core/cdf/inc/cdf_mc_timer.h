@@ -36,7 +36,6 @@
 
 /* Include Files */
 #include <cdf_types.h>
-#include <cdf_status.h>
 #include <qdf_status.h>
 #include <cdf_lock.h>
 #include <i_cdf_mc_timer.h>
@@ -150,7 +149,7 @@ CDF_TIMER_STATE cdf_mc_timer_get_current_state(cdf_mc_timer_t *pTimer);
  *  within the tx thread flow.
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
+ *	QDF_STATUS_SUCCESS - Timer is initialized successfully
  *	CDF failure status - Timer initialization failed
  */
 #ifdef TIMER_MANAGER
@@ -158,13 +157,13 @@ CDF_TIMER_STATE cdf_mc_timer_get_current_state(cdf_mc_timer_t *pTimer);
 	cdf_mc_timer_init_debug(timer, timerType, callback, userdata, \
 		__FILE__, __LINE__)
 
-CDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
+QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 				   CDF_TIMER_TYPE timerType,
 				   cdf_mc_timer_callback_t callback,
 				   void *userData, char *fileName,
 				   uint32_t lineNum);
 #else
-CDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
+QDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
 			     cdf_mc_timer_callback_t callback,
 			     void *userData);
 #endif
@@ -187,10 +186,10 @@ CDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
  * been re-initialized.
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
+ *	QDF_STATUS_SUCCESS - Timer is initialized successfully
  *	CDF failure status - Timer initialization failed
  */
-CDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer);
+QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer);
 
 /**
  * cdf_mc_timer_start() - start a CDF Timer object
@@ -206,10 +205,10 @@ CDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer);
  * or has been cancelled.
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
+ *	QDF_STATUS_SUCCESS - Timer is initialized successfully
  *	CDF failure status - Timer initialization failed
  */
-CDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime);
+QDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime);
 
 /**
  * cdf_mc_timer_stop() - stop a CDF Timer
@@ -221,10 +220,10 @@ CDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime);
  * was created and can be started again via a call to cdf_mc_timer_start().
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
+ *	QDF_STATUS_SUCCESS - Timer is initialized successfully
  *	CDF failure status - Timer initialization failed
  */
-CDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer);
+QDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer);
 
 /**
  * cdf_mc_timer_get_system_ticks() - get the system time in 10ms ticks

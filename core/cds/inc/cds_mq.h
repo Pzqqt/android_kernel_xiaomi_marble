@@ -42,7 +42,6 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include <cdf_types.h>
-#include <cdf_status.h>
 #include <qdf_status.h>
 
 /*--------------------------------------------------------------------------
@@ -129,21 +128,21 @@ typedef enum {
    message needs anything in this message, it needs to copy the contents
    before returning from the message queue handler.
 
-   \return CDF_STATUS_SUCCESS - the message has been successfully posted
+   \return QDF_STATUS_SUCCESS - the message has been successfully posted
    to the message queue.
 
-   CDF_STATUS_E_INVAL - The value specified by msgQueueId does not
+   QDF_STATUS_E_INVAL - The value specified by msgQueueId does not
    refer to a valid Message Queue Id.
 
-   CDF_STATUS_E_FAULT  - message is an invalid pointer.
+   QDF_STATUS_E_FAULT  - message is an invalid pointer.
 
-   CDF_STATUS_E_FAILURE - the message queue handler has reported
+   QDF_STATUS_E_FAILURE - the message queue handler has reported
    an unknown failure.
 
    \sa
 
    --------------------------------------------------------------------------*/
-CDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *message);
+QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *message);
 
 /**---------------------------------------------------------------------------
 
@@ -152,15 +151,15 @@ CDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *message);
    \param pBuf is a buffer allocated by caller. The actual structure varies
    base on message type
 
-   \return CDF_STATUS_SUCCESS - the message has been successfully posted
+   \return QDF_STATUS_SUCCESS - the message has been successfully posted
    to the message queue.
 
-   CDF_STATUS_E_FAILURE - the message queue handler has reported
+   QDF_STATUS_E_FAILURE - the message queue handler has reported
    an unknown failure.
 
    \sa
    --------------------------------------------------------------------------*/
 
-CDF_STATUS cds_send_mb_message_to_mac(void *pBuf);
+QDF_STATUS cds_send_mb_message_to_mac(void *pBuf);
 
 #endif /* if !defined __CDS_MQ_H */

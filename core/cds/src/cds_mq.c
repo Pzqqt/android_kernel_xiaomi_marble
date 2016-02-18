@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,13 +55,13 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, void *pMb);
  *
  * Return: cdf status
  */
-inline CDF_STATUS cds_mq_init(p_cds_mq_type pMq)
+inline QDF_STATUS cds_mq_init(p_cds_mq_type pMq)
 {
 
 	if (pMq == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* Now initialize the lock */
@@ -70,7 +70,7 @@ inline CDF_STATUS cds_mq_init(p_cds_mq_type pMq)
 	/* Now initialize the List data structure */
 	INIT_LIST_HEAD(&pMq->mqList);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 } /* cds_mq_init() */
 
 /**
@@ -170,7 +170,7 @@ inline bool cds_is_mq_empty(p_cds_mq_type pMq)
 	if (pMq == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	spin_lock_irqsave(&pMq->mqLock, flags);
@@ -186,9 +186,9 @@ inline bool cds_is_mq_empty(p_cds_mq_type pMq)
  *
  * Return: cdf status
  */
-CDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
+QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
 {
-	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
+	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	tSirRetStatus sirStatus;
 	v_CONTEXT_t cds_context;
 	void *hHal;
@@ -205,7 +205,7 @@ CDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
 		} else {
 			sirStatus = u_mac_post_ctrl_msg(hHal, pBuf);
 			if (eSIR_SUCCESS == sirStatus)
-				cdf_ret_status = CDF_STATUS_SUCCESS;
+				cdf_ret_status = QDF_STATUS_SUCCESS;
 		}
 	}
 

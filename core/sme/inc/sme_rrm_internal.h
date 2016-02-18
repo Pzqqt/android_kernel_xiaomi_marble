@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@ typedef struct sRrmNeighborReportDesc {
 } tRrmNeighborReportDesc, *tpRrmNeighborReportDesc;
 
 typedef void (*NeighborReportRspCallback)(void *context,
-		CDF_STATUS cdf_status);
+		QDF_STATUS qdf_status);
 
 typedef struct sRrmNeighborRspCallbackInfo {
 	uint32_t timeout;       /* in ms.. min value is 10 (10ms) */

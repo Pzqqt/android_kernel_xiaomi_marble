@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -110,7 +110,7 @@ struct ol_txrx_desc_type {
 };
 
 
-typedef CDF_STATUS (*ol_rx_callback_fp)(void *p_cds_gctx,
+typedef QDF_STATUS (*ol_rx_callback_fp)(void *p_cds_gctx,
 					 cdf_nbuf_t pDataBuff,
 					 uint8_t ucSTAId);
 
@@ -119,12 +119,12 @@ typedef void (*ol_tx_pause_callback_fp)(uint8_t vdev_id,
 					enum netif_reason_type reason);
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
-CDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb);
+QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb);
 #else
 static inline
-CDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
+QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 
 }
 #endif
@@ -262,12 +262,12 @@ cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 			cdf_nbuf_t skb);
 #endif
 
-CDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
+QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 				 struct ol_txrx_desc_type *sta_desc);
 
-CDF_STATUS ol_txrx_clear_peer(uint8_t sta_id);
+QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id);
 
-CDF_STATUS ol_txrx_change_peer_state(uint8_t sta_id,
+QDF_STATUS ol_txrx_change_peer_state(uint8_t sta_id,
 				     enum ol_txrx_peer_state sta_state,
 				     bool roam_synch_in_progress);
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,24 +39,24 @@
 int hdd_softap_hard_start_xmit(struct sk_buff *skb,
 			       struct net_device *dev);
 void hdd_softap_tx_timeout(struct net_device *dev);
-CDF_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter);
-CDF_STATUS hdd_softap_deinit_tx_rx(hdd_adapter_t *pAdapter);
-CDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_softap_deinit_tx_rx(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter,
 				     uint8_t STAId,
 				     struct cdf_mac_addr *pmacAddrSTA);
-CDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter,
 				       uint8_t STAId);
-CDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
+QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 				    cdf_nbuf_t rxBufChain,
 				    uint8_t staId);
 #ifdef IPA_OFFLOAD
-CDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
+QDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
 					cdf_nbuf_t rx_buf_list, uint8_t staId);
 #endif /* IPA_OFFLOAD */
 
-CDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter,
 				     uint8_t staId);
-CDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 				   bool fAuthRequired,
 				   bool fPrivacyBit,
 				   uint8_t staId,
@@ -64,14 +64,14 @@ CDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 				   uint8_t bcastSig,
 				   struct cdf_mac_addr *pPeerMacAddress,
 				   bool fWmmEnabled);
-CDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 				      bool fPrivacyBit);
-CDF_STATUS hdd_softap_deregister_bc_sta(hdd_adapter_t *pAdapter);
-CDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pHostapdAdapter);
-CDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_deregister_bc_sta(hdd_adapter_t *pAdapter);
+QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pHostapdAdapter);
+QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 				       struct cdf_mac_addr *pDestMacAddress,
 				       enum ol_txrx_peer_state state);
-CDF_STATUS hdd_softap_get_sta_id(hdd_adapter_t *pAdapter,
+QDF_STATUS hdd_softap_get_sta_id(hdd_adapter_t *pAdapter,
 				 struct cdf_mac_addr *pMacAddress,
 				 uint8_t *staId);
 

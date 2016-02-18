@@ -34,7 +34,6 @@
  * WLAN Host Device Driver Factory Test Mode header file
  */
 
-#include "cdf_status.h"
 #include "qdf_status.h"
 #include "cds_mq.h"
 #include "cds_api.h"
@@ -60,7 +59,7 @@ int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx);
 int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx);
 
 #if  defined(QCA_WIFI_FTM)
-CDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);
+QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len);
 int wlan_hdd_qcmbr_unified_ioctl(hdd_adapter_t *adapter, struct ifreq *ifr);
 int hdd_ftm_start(hdd_context_t *hdd_ctx);
 int hdd_ftm_stop(hdd_context_t *hdd_ctx);

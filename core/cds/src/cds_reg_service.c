@@ -333,7 +333,7 @@ static int cds_regulatory_wiphy_init(hdd_context_t *hdd_ctx,
  * cds_update_regulatory_info() - update regulatory info
  * @hdd_ctx: hdd context
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
 static void cds_update_regulatory_info(hdd_context_t *hdd_ctx)
 {
@@ -357,16 +357,16 @@ static void cds_update_regulatory_info(hdd_context_t *hdd_ctx)
  * @channels_40mhz: 40 MHz channels
  * @num_40mhz_channels: number of 40 Mhz channels
  *
- * Return: CDF_STATUS_SUCCESS
+ * Return: QDF_STATUS_SUCCESS
  */
-CDF_STATUS cds_get_channel_list_with_power(struct channel_power
+QDF_STATUS cds_get_channel_list_with_power(struct channel_power
 					   *base_channels,
 					   uint8_t *num_base_channels,
 					   struct channel_power
 					   *channels_40mhz,
 					   uint8_t *num_40mhz_channels)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int i, count;
 
 	if (base_channels && num_base_channels) {
@@ -420,9 +420,9 @@ CDF_STATUS cds_get_channel_list_with_power(struct channel_power
  * cds_read_default_country() - set the default country
  * @default_country: default country
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS cds_read_default_country(uint8_t *default_country)
+QDF_STATUS cds_read_default_country(uint8_t *default_country)
 {
 	hdd_context_t *hdd_ctx;
 
@@ -430,7 +430,7 @@ CDF_STATUS cds_read_default_country(uint8_t *default_country)
 	if (!hdd_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "invalid hdd_ctx pointer");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	memcpy(default_country,
@@ -442,7 +442,7 @@ CDF_STATUS cds_read_default_country(uint8_t *default_country)
 		  default_country[0],
 		  default_country[1]);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -580,9 +580,7 @@ static int cds_bw20_ch_index_to_bw40_ch_index(int k)
 		m = k - RF_CHAN_36 + RF_CHAN_BOND_38;
 		if (m > RF_CHAN_BOND_62)
 			m = RF_CHAN_BOND_62;
-	}
-	else if (k >= RF_CHAN_100 && k <= RF_CHAN_144)
-	{
+	} else if (k >= RF_CHAN_100 && k <= RF_CHAN_144) {
 		m = k - RF_CHAN_100 + RF_CHAN_BOND_102;
 		if (m > RF_CHAN_BOND_142)
 			m = RF_CHAN_BOND_142;
@@ -598,17 +596,17 @@ static int cds_bw20_ch_index_to_bw40_ch_index(int k)
  * cds_set_dfs_region() - set the dfs_region
  * @dfs_region: the dfs_region to set
  *
- * Return: CDF_STATUS_SUCCESS if dfs_region set correctly
- *         CDF_STATUS_E_EXISTS if hdd context not found
+ * Return: QDF_STATUS_SUCCESS if dfs_region set correctly
+ *         QDF_STATUS_E_EXISTS if hdd context not found
  */
-CDF_STATUS cds_set_dfs_region(uint8_t dfs_region)
+QDF_STATUS cds_set_dfs_region(uint8_t dfs_region)
 {
 	hdd_context_t *hdd_ctx;
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 
 	if (NULL == hdd_ctx)
-		return CDF_STATUS_E_EXISTS;
+		return QDF_STATUS_E_EXISTS;
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0)) || defined(WITH_BACKPORTS)
 	hdd_ctx->reg.dfs_region = dfs_region;
@@ -631,39 +629,39 @@ CDF_STATUS cds_set_dfs_region(uint8_t dfs_region)
 		break;
 	}
 #endif
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * cds_get_dfs_region() - get the dfs_region
  * @dfs_region: the dfs_region to return
  *
- * Return: CDF_STATUS_SUCCESS if dfs_region set correctly
- *         CDF_STATUS_E_EXISTS if hdd context not found
+ * Return: QDF_STATUS_SUCCESS if dfs_region set correctly
+ *         QDF_STATUS_E_EXISTS if hdd context not found
  */
-CDF_STATUS cds_get_dfs_region(uint8_t *dfs_region)
+QDF_STATUS cds_get_dfs_region(uint8_t *dfs_region)
 {
 	hdd_context_t *hdd_ctx;
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
 
 	if (NULL == hdd_ctx)
-		return CDF_STATUS_E_EXISTS;
+		return QDF_STATUS_E_EXISTS;
 
 	*dfs_region = hdd_ctx->reg.dfs_region;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
  * cds_get_reg_domain_from_country_code() - get the regulatory domain
  * @reg_domain_ptr: ptr to store regulatory domain
  *
- * Return: CDF_STATUS_SUCCESS on success
- *         CDF_STATUS_E_FAULT on error
- *         CDF_STATUS_E_EMPTY country table empty
+ * Return: QDF_STATUS_SUCCESS on success
+ *         QDF_STATUS_E_FAULT on error
+ *         QDF_STATUS_E_EMPTY country table empty
  */
-CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
+QDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 						const uint8_t *country_alpha2,
 						enum country_src source)
 {
@@ -673,24 +671,24 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 	if (NULL == reg_domain_ptr) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Invalid reg domain pointer"));
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	*reg_domain_ptr = 0;
 
 	if (SOURCE_QUERY == source)
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 
 	if (NULL == country_alpha2) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Country code array is NULL"));
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "SSR in progress, return");
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 
 	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
@@ -698,7 +696,7 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 	if (NULL == hdd_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Invalid pHddCtx pointer"));
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	wiphy = hdd_ctx->wiphy;
@@ -716,7 +714,7 @@ CDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 				     NL80211_USER_REG_HINT_USER);
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /*
@@ -757,7 +755,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 	if (NULL == hdd_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "invalid hdd_ctx pointer");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	hdd_ctx->isVHT80Allowed = 0;
@@ -928,7 +926,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 	if (k == 0)
 		return -1;
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 #if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 14, 0)) && !defined(WITH_BACKPORTS)
@@ -1098,9 +1096,9 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 
 /**
  * cds_regulatory_init() - regulatory_init
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS cds_regulatory_init(void)
+QDF_STATUS cds_regulatory_init(void)
 {
 	hdd_context_t *hdd_ctx = NULL;
 	struct wiphy *wiphy = NULL;
@@ -1111,7 +1109,7 @@ CDF_STATUS cds_regulatory_init(void)
 	if (!hdd_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "invalid hdd_ctx pointer");
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	wiphy = hdd_ctx->wiphy;
@@ -1125,7 +1123,7 @@ CDF_STATUS cds_regulatory_init(void)
 					nBandCapability, true) != 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Error while creating regulatory entry"));
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	reg_info->cc_src = SOURCE_DRIVER;
@@ -1143,7 +1141,7 @@ CDF_STATUS cds_regulatory_init(void)
 
 	cds_fill_and_send_ctl_to_fw(reg_info);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1151,18 +1149,18 @@ CDF_STATUS cds_regulatory_init(void)
  * @client_ctxt: client context
  * @reg_domain: regulatory domain
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain)
+QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain)
 {
 	if (reg_domain >= REGDOMAIN_COUNT) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "CDS set reg domain, invalid REG domain ID %d",
 			  reg_domain);
-		return CDF_STATUS_E_INVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

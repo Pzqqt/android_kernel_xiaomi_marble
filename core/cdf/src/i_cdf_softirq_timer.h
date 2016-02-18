@@ -56,7 +56,7 @@ typedef void (*cdf_dummy_timer_func_t)(unsigned long arg);
  *
  * Return: none
  */
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_softirq_timer_init(cdf_handle_t hdl,
 			 struct timer_list *timer,
 			 cdf_softirq_timer_func_t func, void *arg,
@@ -69,7 +69,7 @@ __cdf_softirq_timer_init(cdf_handle_t hdl,
 	timer->function = (cdf_dummy_timer_func_t) func;
 	timer->data = (unsigned long)arg;
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -79,13 +79,13 @@ __cdf_softirq_timer_init(cdf_handle_t hdl,
  *
  * Return: none
  */
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_softirq_timer_start(struct timer_list *timer, uint32_t delay)
 {
 	timer->expires = jiffies + msecs_to_jiffies(delay);
 	add_timer(timer);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -95,12 +95,12 @@ __cdf_softirq_timer_start(struct timer_list *timer, uint32_t delay)
  *
  * Return: none
  */
-static inline CDF_STATUS
+static inline QDF_STATUS
 __cdf_softirq_timer_mod(struct timer_list *timer, uint32_t delay)
 {
 	mod_timer(timer, jiffies + msecs_to_jiffies(delay));
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

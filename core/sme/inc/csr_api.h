@@ -1526,16 +1526,16 @@ struct tagCsrDelStaParams {
  * NOTE: p2 is the second context pass in for the caller
  * NOTE: what if callback is called before requester gets the scanId??
  */
-typedef CDF_STATUS (*csr_scan_completeCallback)(tHalHandle, void *p2,
+typedef QDF_STATUS (*csr_scan_completeCallback)(tHalHandle, void *p2,
 						uint8_t sessionId,
 						uint32_t scanID,
 						eCsrScanStatus status);
-typedef CDF_STATUS (*csr_roam_completeCallback)(void *pContext,
+typedef QDF_STATUS (*csr_roam_completeCallback)(void *pContext,
 						tCsrRoamInfo * pParam,
 						uint32_t roamId,
 						eRoamCmdStatus roamStatus,
 						eCsrRoamResult roamResult);
-typedef CDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
+typedef QDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 
 #define CSR_IS_START_IBSS(pProfile) (eCSR_BSS_TYPE_START_IBSS == \
 				     (pProfile)->BSSType)
@@ -1554,14 +1554,14 @@ typedef CDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 #define CSR_IS_CLOSE_SESSION_COMMAND(pCommand) \
 	((pCommand)->command == eSmeCommandDelStaSession)
 
-CDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam);
+QDF_STATUS csr_set_channels(tHalHandle hHal, tCsrConfigParam *pParam);
 
-CDF_STATUS csr_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
+QDF_STATUS csr_set_reg_info(tHalHandle hHal, uint8_t *apCntryCode);
 
 /* enum to string conversion for debug output */
 const char *get_e_roam_cmd_status_str(eRoamCmdStatus val);
 const char *get_e_csr_roam_result_str(eCsrRoamResult val);
-CDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode, eCsrBand eBand,
+QDF_STATUS csr_set_phy_mode(tHalHandle hHal, uint32_t phyMode, eCsrBand eBand,
 			    bool *pfRestartNeeded);
 typedef void (*csr_roamLinkQualityIndCallback)
 	(eCsrRoamLinkQualityInd ind, void *pContext);
@@ -1574,16 +1574,16 @@ typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
 
-CDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
+QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
 					 tpSirBssDescription pBssDescription);
-CDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand);
+QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand);
 eCsrBand csr_get_current_band(tHalHandle hHal);
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
 typedef void (*csr_readyToExtWoWCallback)(void *pContext, bool status);
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-CDF_STATUS csr_roam_issue_ft_roam_offload_synch(tHalHandle hHal,
+QDF_STATUS csr_roam_issue_ft_roam_offload_synch(tHalHandle hHal,
 		uint32_t sessionId, tSirBssDescription *pBssDescription);
 #endif
 typedef void (*tCsrLinkStatusCallback)(uint8_t status, void *pContext);

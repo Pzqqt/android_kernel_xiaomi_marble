@@ -107,7 +107,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 	void *bd_ptr;
 	tMgmtFrmDropReason dropreason;
 	cds_pkt_t *vos_pkt = (cds_pkt_t *) msg->bodyptr;
-	CDF_STATUS cdf_status =
+	QDF_STATUS qdf_status =
 		wma_ds_peek_rx_packet_info(vos_pkt, &bd_ptr, false);
 	uint8_t sessionid;
 	tpPESession pe_session;
@@ -115,7 +115,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 
 	mac_ctx->sys.gSysBbtReceived++;
 
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status))
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		goto fail;
 
 	sys_log(mac_ctx, LOG3, FL("Rx Mgmt Frame Subtype: %d\n"), subtype);

@@ -132,7 +132,7 @@ void swap_bit_field32(uint32_t in, uint32_t *out)
 #endif /* ANI_LITTLE_BIT_ENDIAN */
 }
 
-inline static void __print_wmm_params(tpAniSirGlobal pMac,
+static inline void __print_wmm_params(tpAniSirGlobal pMac,
 				      tDot11fIEWMMParams *pWmm)
 {
 	lim_log(pMac, LOG1, FL("WMM Parameters Received: \n"));
@@ -199,9 +199,9 @@ int find_ie_location(tpAniSirGlobal pMac, tpSirRSNie pRsnIe, uint8_t EID)
 	while (1) {
 		if (EID == pRsnIe->rsnIEdata[idx]) {
 			/* Found it */
-			return (idx);
+			return idx;
 		} else if (EID != pRsnIe->rsnIEdata[idx] &&
-		           /* & if no more IE, */
+			/* & if no more IE, */
 			   bytesLeft <= (uint16_t) (ieLen)) {
 			dot11f_log(pMac, LOG3,
 				   FL("No IE (%d) in find_ie_location.\n"), EID);
@@ -705,8 +705,7 @@ populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 		uHTCapabilityInfo.htCapInfo.lsigTXOPProtection;
 
 	/* All sessionized entries will need the check below */
-	if (psessionEntry == NULL)      /* Only in case of NO session */
-	{
+	if (psessionEntry == NULL) {     /* Only in case of NO session */
 		pDot11f->supportedChannelWidthSet =
 			uHTCapabilityInfo.htCapInfo.supportedChannelWidthSet;
 		pDot11f->advCodingCap =
@@ -1551,7 +1550,8 @@ populate_dot11f_rsn(tpAniSirGlobal pMac,
 	int idx;
 
 	if (pRsnIe->length) {
-		if (0 <= (idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_RSN))) {
+		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_RSN);
+		if (0 <= idx) {
 			status = dot11f_unpack_ie_rsn(pMac, pRsnIe->rsnIEdata + idx + 2,   /* EID, length */
 						      pRsnIe->rsnIEdata[idx + 1],
 						      pDot11f);
@@ -1578,7 +1578,8 @@ tSirRetStatus populate_dot11f_rsn_opaque(tpAniSirGlobal pMac,
 	int idx;
 
 	if (pRsnIe->length) {
-		if (0 <= (idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_RSN))) {
+		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_RSN);
+		if (0 <= idx) {
 			pDot11f->present = 1;
 			pDot11f->num_data = pRsnIe->rsnIEdata[idx + 1];
 			cdf_mem_copy(pDot11f->data, pRsnIe->rsnIEdata + idx + 2,        /* EID, len */
@@ -1600,7 +1601,8 @@ populate_dot11f_wapi(tpAniSirGlobal pMac,
 	int idx;
 
 	if (pRsnIe->length) {
-		if (0 <= (idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WAPI))) {
+		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WAPI);
+		if (0 <= idx) {
 			status = dot11f_unpack_ie_wapi(pMac, pRsnIe->rsnIEdata + idx + 2,  /* EID, length */
 						       pRsnIe->rsnIEdata[idx + 1],
 						       pDot11f);
@@ -1627,7 +1629,8 @@ tSirRetStatus populate_dot11f_wapi_opaque(tpAniSirGlobal pMac,
 	int idx;
 
 	if (pRsnIe->length) {
-		if (0 <= (idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WAPI))) {
+		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WAPI);
+		if (0 <= idx) {
 			pDot11f->present = 1;
 			pDot11f->num_data = pRsnIe->rsnIEdata[idx + 1];
 			cdf_mem_copy(pDot11f->data, pRsnIe->rsnIEdata + idx + 2,        /* EID, len */
@@ -1783,21 +1786,20 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 	wlan_cfg_get_int(p_mac, WNI_CFG_DOT11_MODE, &self_dot11mode);
 
 	/**
-         * Include 11b rates only when the device configured in
+	* Include 11b rates only when the device configured in
 	 * auto, 11a/b/g or 11b_only
-         */
+	 */
 	if ((self_dot11mode == WNI_CFG_DOT11_MODE_ALL) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11A) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11AC) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11N) ||
 	    (self_dot11mode == WNI_CFG_DOT11_MODE_11G) ||
-	    (self_dot11mode == WNI_CFG_DOT11_MODE_11B) ) {
+	    (self_dot11mode == WNI_CFG_DOT11_MODE_11B)) {
 		val = WNI_CFG_SUPPORTED_RATES_11B_LEN;
 		wlan_cfg_get_str(p_mac, WNI_CFG_SUPPORTED_RATES_11B,
 				(uint8_t *)&temp_rateset.rate, &val);
 		temp_rateset.numRates = (uint8_t) val;
-	}
-	else {
+	} else {
 	    temp_rateset.numRates = 0;
 	}
 
@@ -1814,14 +1816,14 @@ populate_dot11f_rates_tdls(tpAniSirGlobal p_mac,
 	if ((temp_rateset.numRates + temp_rateset2.numRates) >
 					SIR_MAC_MAX_NUMBER_OF_RATES) {
 		lim_log(p_mac, LOGP, FL("more than %d rates in CFG"),
-                                    SIR_MAC_MAX_NUMBER_OF_RATES);
+				SIR_MAC_MAX_NUMBER_OF_RATES);
 		return eSIR_FAILURE;
 	}
 
 	/**
-         * copy all rates in temp_rateset,
-         * there are SIR_MAC_MAX_NUMBER_OF_RATES rates max
-         */
+	 * copy all rates in temp_rateset,
+	 * there are SIR_MAC_MAX_NUMBER_OF_RATES rates max
+	 */
 	for (i = 0; i < temp_rateset2.numRates; i++)
 		temp_rateset.rate[i + temp_rateset.numRates] =
 						temp_rateset2.rate[i];
@@ -2092,7 +2094,8 @@ populate_dot11f_wpa(tpAniSirGlobal pMac,
 	int idx;
 
 	if (pRsnIe->length) {
-		if (0 <= (idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WPA))) {
+		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WPA);
+		if (0 <= idx) {
 			status = dot11f_unpack_ie_wpa(pMac, pRsnIe->rsnIEdata + idx + 2 + 4,       /* EID, length, OUI */
 						      pRsnIe->rsnIEdata[idx + 1] - 4,   /* OUI */
 						      pDot11f);
@@ -2115,7 +2118,8 @@ tSirRetStatus populate_dot11f_wpa_opaque(tpAniSirGlobal pMac,
 	int idx;
 
 	if (pRsnIe->length) {
-		if (0 <= (idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WPA))) {
+		idx = find_ie_location(pMac, pRsnIe, DOT11F_EID_WPA);
+		if (0 <= idx) {
 			pDot11f->present = 1;
 			pDot11f->num_data = pRsnIe->rsnIEdata[idx + 1] - 4;
 			cdf_mem_copy(pDot11f->data, pRsnIe->rsnIEdata + idx + 2 + 4,    /* EID, len, OUI */
@@ -3111,7 +3115,7 @@ sir_beacon_ie_ese_bcn_report(tpAniSirGlobal pMac,
 	uint8_t **outIeBuf, uint32_t *pOutIeLen)
 {
 	tDot11fBeaconIEs *pBies = NULL;
-	uint32_t status = CDF_STATUS_SUCCESS;
+	uint32_t status = QDF_STATUS_SUCCESS;
 	tSirRetStatus retStatus = eSIR_SUCCESS;
 	tSirEseBcnReportMandatoryIe eseBcnReportMandatoryIe;
 
@@ -4060,8 +4064,8 @@ sir_convert_addts_req2_struct(tpAniSirGlobal pMac,
 			      uint8_t *pFrame,
 			      uint32_t nFrame, tSirAddtsReqInfo *pAddTs)
 {
-	tDot11fAddTSRequest addts = { {0}};
-	tDot11fWMMAddTSRequest wmmaddts = { {0}};
+	tDot11fAddTSRequest addts = { {0} };
+	tDot11fWMMAddTSRequest wmmaddts = { {0} };
 	uint8_t j;
 	uint16_t i;
 	uint32_t status;
@@ -4201,8 +4205,8 @@ sir_convert_addts_rsp2_struct(tpAniSirGlobal pMac,
 			      uint8_t *pFrame,
 			      uint32_t nFrame, tSirAddtsRspInfo *pAddTs)
 {
-	tDot11fAddTSResponse addts = { {0}};
-	tDot11fWMMAddTSResponse wmmaddts = { {0}};
+	tDot11fAddTSResponse addts = { {0} };
+	tDot11fWMMAddTSResponse wmmaddts = { {0} };
 	uint8_t j;
 	uint16_t i;
 	uint32_t status;
@@ -4386,8 +4390,8 @@ sir_convert_delts_req2_struct(tpAniSirGlobal pMac,
 			      uint8_t *pFrame,
 			      uint32_t nFrame, tSirDeltsReqInfo *pDelTs)
 {
-	tDot11fDelTS delts = { {0}};
-	tDot11fWMMDelTS wmmdelts = { {0}};
+	tDot11fDelTS delts = { {0} };
+	tDot11fWMMDelTS wmmdelts = { {0} };
 	uint32_t status;
 
 	if (SIR_MAC_QOS_DEL_TS_REQ != *(pFrame + 1)) {
@@ -4607,7 +4611,7 @@ sir_convert_meas_req_frame2_struct(tpAniSirGlobal pMac,
 									    [0].
 									    request
 									    << 1) |
-		(mr.MeasurementRequest[0].report /*<< 0 */ );
+		(mr.MeasurementRequest[0].report /*<< 0 */);
 	pMeasReqFrame->measReqIE.measType =
 		mr.MeasurementRequest[0].measurement_type;
 
@@ -4721,8 +4725,9 @@ tSirRetStatus populate_dot11f_ese_cckm_opaque(tpAniSirGlobal pMac,
 {
 	int idx;
 	if (pCCKMie->length) {
-		if (0 <= (idx = find_ie_location(pMac, (tpSirRSNie) pCCKMie,
-						 DOT11F_EID_ESECCKMOPAQUE))) {
+		idx = find_ie_location(pMac, (tpSirRSNie) pCCKMie,
+						 DOT11F_EID_ESECCKMOPAQUE);
+		if (0 <= idx) {
 			pDot11f->present = 1;
 			/* Dont include OUI */
 			pDot11f->num_data = pCCKMie->cckmIEdata[idx + 1] - 4;

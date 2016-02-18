@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -57,8 +57,8 @@ uint8_t *mac_trace_get_lim_msg_string(uint16_t limMsg);
 uint8_t *mac_trace_get_wma_msg_string(uint16_t wmaMsg);
 uint8_t *mac_trace_get_sme_msg_string(uint16_t smeMsg);
 uint8_t *mac_trace_get_info_log_string(uint16_t infoLog);
-CDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe);
-CDF_STATUS pe_release_global_lock(tAniSirLim *psPe);
+QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe);
+QDF_STATUS pe_release_global_lock(tAniSirLim *psPe);
 
 uint8_t *mac_trace_get_neighbour_roam_state(uint16_t neighbourRoamState);
 uint8_t *mac_trace_getcsr_roam_state(uint16_t csr_roamState);

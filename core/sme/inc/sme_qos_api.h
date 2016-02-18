@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -83,14 +83,14 @@ typedef enum {
 	 * async: In case of UAPSD, once PE notifies successful TSPEC
 	 * negotiation, or CSR notifies for successful reassoc to SME-QoS,
 	 * notify HDD if PMC can't put the module in UAPSD mode right away
-	 * (CDF_STATUS_PMC_PENDING)
+	 * (QDF_STATUS_PMC_PENDING)
 	 */
 	SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_PENDING,
 	/*
 	 * async: In case of UAPSD, once PE notifies successful TSPEC
 	 * negotiation, or CSR notifies for successful reassoc to SME-QoS,
 	 * notify HDD if PMC can't put the module in UAPSD mode at all
-	 * (CDF_STATUS_E_FAILURE)
+	 * (QDF_STATUS_E_FAILURE)
 	 */
 	SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_SET_FAILED,
 	/*
@@ -129,14 +129,14 @@ typedef enum {
 	 * async: In case of UAPSD, once PE notifies successful TSPEC
 	 * negotiation or CSR notifies for successful reassoc to SME-QoS,
 	 * notify HDD if PMC can't put the module in UAPSD mode right away
-	 * (CDF_STATUS_PMC_PENDING)
+	 * (QDF_STATUS_PMC_PENDING)
 	 */
 	SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_IND_APSD_PENDING,
 	/*
 	 * async: In case of UAPSD, once PE notifies successful TSPEC
 	 * negotiation, or CSR notifies for successful reassoc to SME-QoS,
 	 * notify HDD if PMC can't put the module in UAPSD mode at all
-	 * (CDF_STATUS_E_FAILURE)
+	 * (QDF_STATUS_E_FAILURE)
 	 */
 	SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_IND_APSD_SET_FAILED,
 	/* sync: STA is handing off to a new AP */
@@ -231,7 +231,7 @@ typedef struct {
 /*--------------------------------------------------------------------------
   External APIs
   ------------------------------------------------------------------------*/
-typedef CDF_STATUS (*sme_QosCallback)(tHalHandle hHal, void *HDDcontext,
+typedef QDF_STATUS (*sme_QosCallback)(tHalHandle hHal, void *HDDcontext,
 		sme_QosWmmTspecInfo *pCurrentQoSInfo,
 		sme_QosStatusType status, uint32_t QosFlowID);
 sme_QosStatusType sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
@@ -244,12 +244,12 @@ sme_QosStatusType sme_qos_release_req(tHalHandle hHal, uint32_t QosFlowID);
 bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 		sme_QosWmmTspecInfo *pQoSInfo, uint8_t sessionId);
 void sme_qos_update_hand_off(uint8_t sessionId, bool updateHandOff);
-CDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
+QDF_STATUS sme_update_dsc_pto_up_mapping(tHalHandle hHal,
 		sme_QosWmmUpType *dscpmapping, uint8_t sessionId);
 
-CDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal mac_ctx,
 		uint32_t session_id);
-CDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal mac_ctx,
+QDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal mac_ctx,
 		uint32_t session_id);
 
 

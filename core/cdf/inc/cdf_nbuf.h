@@ -95,7 +95,7 @@ typedef __cdf_nbuf_queue_t cdf_nbuf_queue_t;
  *
  * Return: Status of the operation
  */
-static inline CDF_STATUS
+static inline QDF_STATUS
 cdf_nbuf_map(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
 {
 	return __cdf_nbuf_map(osdev, buf, dir);
@@ -123,7 +123,7 @@ cdf_nbuf_unmap(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
  *
  * Return: Status of the operation
  */
-static inline CDF_STATUS
+static inline QDF_STATUS
 cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
 {
 	return __cdf_nbuf_map_single(osdev, buf, dir);
@@ -448,7 +448,7 @@ static inline cdf_nbuf_t cdf_nbuf_copy(cdf_nbuf_t buf)
  *
  * Return: Status of the call - 0 successful
  */
-static inline CDF_STATUS cdf_nbuf_cat(cdf_nbuf_t dst, cdf_nbuf_t src)
+static inline QDF_STATUS cdf_nbuf_cat(cdf_nbuf_t dst, cdf_nbuf_t src)
 {
 	return __cdf_nbuf_cat(dst, src);
 }
