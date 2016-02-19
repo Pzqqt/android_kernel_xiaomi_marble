@@ -1502,7 +1502,7 @@ lim_update_short_preamble(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
  * lim_update_short_slot_time() - This function Updates short slot time
  * @mac_ctx: pointer to Global MAC structure
  * @peer_mac_addr: pointer to tSirMacAddr
- * @beaconparams: pointer to tpUpdateBeaconParams
+ * @beacon_params: pointer to tpUpdateBeaconParams
  * @psession_entry: pointer to tpPESession
  *
  * Function Updates short slot time if needed when a new station joins
@@ -1511,8 +1511,8 @@ lim_update_short_preamble(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
  */
 void
 lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
-			tpUpdateBeaconParams beaconparams,
-			tpPESession session_entry)
+			   tpUpdateBeaconParams beacon_params,
+			   tpPESession session_entry)
 {
 	uint16_t aid;
 	tpDphHashNode sta_ds;
@@ -1521,9 +1521,8 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 	uint16_t i;
 
 	/* check whether to enable protection or not */
-	sta_ds =
-		dph_lookup_hash_entry(mac_ctx, peer_mac_addr, &aid,
-				      &session_entry->dph.dphHashTable);
+	sta_ds = dph_lookup_hash_entry(mac_ctx, peer_mac_addr, &aid,
+				       &session_entry->dph.dphHashTable);
 	lim_get_phy_mode(mac_ctx, &phy_mode, session_entry);
 
 	if (sta_ds == NULL || phy_mode != WNI_CFG_PHY_MODE_11G)
@@ -1538,114 +1537,104 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 	 * softap is always short slot enabled. When the last long slot STA
 	 * leaves softAP, we take care of it in lim_decide_short_slot
 	 */
-	if (sta_ds->shortSlotTimeEnabled == eHAL_CLEAR) {
-		lim_log(mac_ctx, LOG1,
-			FL("Short Slot Time is not enabled in Assoc Req from "));
-		lim_print_mac_addr(mac_ctx, peer_mac_addr, LOG1);
-		for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
-			if (LIM_IS_AP_ROLE(session_entry) &&
-				session_entry->gLimNoShortSlotParams.
-					staNoShortSlotCache[i].active) {
-				if (!qdf_mem_cmp(
-					session_entry->gLimNoShortSlotParams.
-					staNoShortSlotCache[i].addr,
-					peer_mac_addr, sizeof(tSirMacAddr)))
-					return;
-			} else if (!LIM_IS_AP_ROLE(session_entry)) {
-				if (mac_ctx->lim.gLimNoShortSlotParams.
-					staNoShortSlotCache[i].active) {
-					if (!qdf_mem_cmp(mac_ctx->lim.
-							gLimNoShortSlotParams.
-							staNoShortSlotCache[i].
-							addr, peer_mac_addr,
-							sizeof(tSirMacAddr)))
+	if (sta_ds->shortSlotTimeEnabled != eHAL_CLEAR)
+		return;
+
+	lim_log(mac_ctx, LOG1, FL("Short Slot Time is not enabled in Assoc Req from "));
+	lim_print_mac_addr(mac_ctx, peer_mac_addr, LOG1);
+	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
+		if (LIM_IS_AP_ROLE(session_entry) &&
+		    session_entry->gLimNoShortSlotParams.
+		    staNoShortSlotCache[i].active) {
+			if (!qdf_mem_cmp(session_entry->
+			    gLimNoShortSlotParams.staNoShortSlotCache[i].addr,
+			    peer_mac_addr, sizeof(tSirMacAddr)))
+				return;
+		} else if (!LIM_IS_AP_ROLE(session_entry)) {
+			if (mac_ctx->lim.gLimNoShortSlotParams.
+			    staNoShortSlotCache[i].active) {
+				if (!qdf_mem_cmp(mac_ctx->
+				    lim.gLimNoShortSlotParams.
+				    staNoShortSlotCache[i].addr,
+				    peer_mac_addr, sizeof(tSirMacAddr)))
 						return;
-				}
 			}
 		}
-		for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
-			if (LIM_IS_AP_ROLE(session_entry) &&
-				!session_entry->gLimNoShortSlotParams.
-					staNoShortSlotCache[i].active)
+	}
+	for (i = 0; i < LIM_PROT_STA_CACHE_SIZE; i++) {
+		if (LIM_IS_AP_ROLE(session_entry) &&
+		    !session_entry->gLimNoShortSlotParams.
+		    staNoShortSlotCache[i].active)
+			break;
+		else
+			if (!mac_ctx->lim.gLimNoShortSlotParams.
+			    staNoShortSlotCache[i].active)
 				break;
-			else {
-				if (!mac_ctx->lim.gLimNoShortSlotParams.
-					staNoShortSlotCache[i].active)
-					break;
-			}
-		}
+	}
 
-		if (i >= LIM_PROT_STA_CACHE_SIZE) {
-			if (LIM_IS_AP_ROLE(session_entry)) {
-				lim_log(mac_ctx, LOGE,
-					FL("No space in ShortSlot cache (#active %d, #sta %d) for sta "),
-					i,
-					session_entry->gLimNoShortSlotParams.
-					numNonShortSlotSta);
-				lim_print_mac_addr(mac_ctx, peer_mac_addr,
-							LOGE);
-				return;
-			} else {
-				lim_log(mac_ctx, LOGE,
-					FL("No space in ShortSlot cache (#active %d, #sta %d) for sta "),
-					i,
-					mac_ctx->lim.gLimNoShortSlotParams.
-					numNonShortSlotSta);
-				lim_print_mac_addr(mac_ctx, peer_mac_addr,
-							LOGE);
-				return;
-			}
-		}
-
+	if (i >= LIM_PROT_STA_CACHE_SIZE) {
 		if (LIM_IS_AP_ROLE(session_entry)) {
-			qdf_mem_copy(session_entry->gLimNoShortSlotParams.
-					staNoShortSlotCache[i].addr,
-					peer_mac_addr, sizeof(tSirMacAddr));
-			session_entry->gLimNoShortSlotParams.
-				staNoShortSlotCache[i].active = true;
-			session_entry->gLimNoShortSlotParams.
-				numNonShortSlotSta++;
+			lim_log(mac_ctx, LOGE,
+				FL("No space in ShortSlot cache (#active %d, #sta %d) for sta "),
+				i, session_entry->gLimNoShortSlotParams.
+				numNonShortSlotSta);
+			lim_print_mac_addr(mac_ctx, peer_mac_addr, LOGE);
+			return;
 		} else {
-			qdf_mem_copy(mac_ctx->lim.gLimNoShortSlotParams.
-					staNoShortSlotCache[i].addr,
-					peer_mac_addr, sizeof(tSirMacAddr));
-			mac_ctx->lim.gLimNoShortSlotParams.
-				staNoShortSlotCache[i].active = true;
-			mac_ctx->lim.gLimNoShortSlotParams.
-				numNonShortSlotSta++;
+			lim_log(mac_ctx, LOGE,
+				FL("No space in ShortSlot cache (#active %d, #sta %d) for sta "),
+				i,
+				mac_ctx->lim.gLimNoShortSlotParams.
+				numNonShortSlotSta);
+			lim_print_mac_addr(mac_ctx, peer_mac_addr, LOGE);
+			return;
 		}
-		wlan_cfg_get_int(mac_ctx,
-				WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
-				&val);
-		/*
-		 * Here we check if we are AP role and short slot enabled
-		 * (both admin and oper modes) but we have atleast one STA
-		 * connected with only long slot enabled, we need to change
-		 * our beacon/pb rsp to broadcast short slot disabled
-		 */
-		if ((LIM_IS_AP_ROLE(session_entry)) && (val &&
-			session_entry->gLimNoShortSlotParams.numNonShortSlotSta
-			&& session_entry->shortSlotTimeSupported)) {
-			/* enable long slot time */
-			beaconparams->fShortSlotTime = false;
-			beaconparams->paramChangeBitmap |=
+	}
+
+	if (LIM_IS_AP_ROLE(session_entry)) {
+		qdf_mem_copy(session_entry->gLimNoShortSlotParams.
+			staNoShortSlotCache[i].addr,
+			peer_mac_addr, sizeof(tSirMacAddr));
+		session_entry->gLimNoShortSlotParams.
+			staNoShortSlotCache[i].active = true;
+		session_entry->gLimNoShortSlotParams.numNonShortSlotSta++;
+	} else {
+		qdf_mem_copy(mac_ctx->lim.gLimNoShortSlotParams.
+			staNoShortSlotCache[i].addr,
+			peer_mac_addr, sizeof(tSirMacAddr));
+		mac_ctx->lim.gLimNoShortSlotParams.
+			staNoShortSlotCache[i].active = true;
+		mac_ctx->lim.gLimNoShortSlotParams.
+			numNonShortSlotSta++;
+	}
+	wlan_cfg_get_int(mac_ctx, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED, &val);
+	/*
+	 * Here we check if we are AP role and short slot enabled
+	 * (both admin and oper modes) but we have atleast one STA
+	 * connected with only long slot enabled, we need to change
+	 * our beacon/pb rsp to broadcast short slot disabled
+	 */
+	if ((LIM_IS_AP_ROLE(session_entry)) && (val &&
+	    session_entry->gLimNoShortSlotParams.numNonShortSlotSta
+	    && session_entry->shortSlotTimeSupported)) {
+		/* enable long slot time */
+		beacon_params->fShortSlotTime = false;
+		beacon_params->paramChangeBitmap |=
 				PARAM_SHORT_SLOT_TIME_CHANGED;
-			lim_log(mac_ctx, LOG1,
-				FL("Disable short slot time. Enable long slot time."));
-				session_entry->shortSlotTimeSupported = false;
-		} else if (!LIM_IS_AP_ROLE(session_entry) &&
-			(val && mac_ctx->lim.gLimNoShortSlotParams.
-				numNonShortSlotSta &&
-				session_entry->shortSlotTimeSupported)) {
-				/* enable long slot time */
-				beaconparams->fShortSlotTime = false;
-				beaconparams->paramChangeBitmap |=
-					PARAM_SHORT_SLOT_TIME_CHANGED;
-				lim_log(mac_ctx, LOG1,
-					FL("Disable short slot time. Enable long slot time."));
-					session_entry->shortSlotTimeSupported =
-									false;
-		}
+		lim_log(mac_ctx, LOG1,
+			FL("Disable short slot time. Enable long slot time."));
+		session_entry->shortSlotTimeSupported = false;
+	} else if (!LIM_IS_AP_ROLE(session_entry) &&
+		   (val && mac_ctx->lim.gLimNoShortSlotParams.
+		    numNonShortSlotSta &&
+		    session_entry->shortSlotTimeSupported)) {
+		/* enable long slot time */
+		beacon_params->fShortSlotTime = false;
+		beacon_params->paramChangeBitmap |=
+			PARAM_SHORT_SLOT_TIME_CHANGED;
+		lim_log(mac_ctx, LOG1,
+			FL("Disable short slot time. Enable long slot time."));
+		session_entry->shortSlotTimeSupported = false;
 	}
 }
 
