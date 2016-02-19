@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,9 +48,9 @@
 #define OL_TX_DESC_REF_INC(tx_desc)     /* no-op */
 #else
 #define OL_TX_DESC_NO_REFS(tx_desc) \
-	cdf_atomic_dec_and_test(&tx_desc->ref_cnt)
-#define OL_TX_DESC_REF_INIT(tx_desc) cdf_atomic_init(&tx_desc->ref_cnt)
-#define OL_TX_DESC_REF_INC(tx_desc) cdf_atomic_inc(&tx_desc->ref_cnt)
+	qdf_atomic_dec_and_test(&tx_desc->ref_cnt)
+#define OL_TX_DESC_REF_INIT(tx_desc) qdf_atomic_init(&tx_desc->ref_cnt)
+#define OL_TX_DESC_REF_INC(tx_desc) qdf_atomic_inc(&tx_desc->ref_cnt)
 #endif
 
 #ifndef TXRX_ASSERT_LEVEL

@@ -1840,8 +1840,8 @@ QDF_STATUS wma_open(void *cds_context,
 	qdf_list_create(&wma_handle->wma_hold_req_queue,
 		      MAX_ENTRY_HOLD_REQ_QUEUE);
 	cdf_spinlock_init(&wma_handle->wma_hold_req_q_lock);
-	cdf_atomic_init(&wma_handle->is_wow_bus_suspended);
-	cdf_atomic_init(&wma_handle->scan_id_counter);
+	qdf_atomic_init(&wma_handle->is_wow_bus_suspended);
+	qdf_atomic_init(&wma_handle->scan_id_counter);
 
 	/* Register vdev start response event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,

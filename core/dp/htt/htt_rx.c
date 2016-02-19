@@ -1849,7 +1849,7 @@ void htt_rx_msdu_desc_free(htt_pdev_handle htt_pdev, cdf_nbuf_t msdu)
 
 void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev)
 {
-	if (cdf_atomic_dec_and_test(&pdev->rx_ring.refill_ref_cnt)) {
+	if (qdf_atomic_dec_and_test(&pdev->rx_ring.refill_ref_cnt)) {
 		int num_to_fill;
 		num_to_fill = pdev->rx_ring.fill_level -
 			pdev->rx_ring.fill_cnt;
@@ -1857,7 +1857,7 @@ void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev)
 		htt_rx_ring_fill_n(pdev,
 				   num_to_fill /* okay if <= 0 */);
 	}
-	cdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
+	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 }
 
 #define AR600P_ASSEMBLE_HW_RATECODE(_rate, _nss, _pream)     \
@@ -2204,8 +2204,8 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	* Initialize the Rx refill reference counter to be one so that
 	* only one thread is allowed to refill the Rx ring.
 	*/
-	cdf_atomic_init(&pdev->rx_ring.refill_ref_cnt);
-	cdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
+	qdf_atomic_init(&pdev->rx_ring.refill_ref_cnt);
+	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 
 	/* Initialize the Rx refill retry timer */
 	cdf_softirq_timer_init(pdev->osdev,

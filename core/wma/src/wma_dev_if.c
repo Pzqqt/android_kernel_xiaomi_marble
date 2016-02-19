@@ -688,7 +688,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	uint8_t vdev_id = pdel_sta_self_req_param->session_id;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 
-	if (cdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
+	if (qdf_atomic_read(&iface->bss_status) == WMA_BSS_STATUS_STARTED) {
 		WMA_LOGA("BSS is not yet stopped. Defering vdev(vdev id %x) deletion",
 			vdev_id);
 		iface->del_staself_req = pdel_sta_self_req_param;
@@ -812,7 +812,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 		}
 		bcn->seq_no = MIN_SW_SEQ;
 		cdf_spinlock_init(&bcn->lock);
-		cdf_atomic_set(&wma->interfaces[resp_event->vdev_id].bss_status,
+		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].bss_status,
 			       WMA_BSS_STATUS_STARTED);
 		WMA_LOGD("%s: AP mode (type %d subtype %d) BSS is started",
 			 __func__, wma->interfaces[resp_event->vdev_id].type,
@@ -951,7 +951,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 
 	if ((resp_event->vdev_id <= wma->max_bssid) &&
-	    (cdf_atomic_read
+	    (qdf_atomic_read
 		(&wma->interfaces[resp_event->vdev_id].vdev_restart_params.hidden_ssid_restart_in_progress))
 	    && (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id) == true)) {
 		WMA_LOGE("%s: vdev restart event recevied for hidden ssid set using IOCTL",
@@ -963,7 +963,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 			WMA_LOGE("%s : failed to send vdev up", __func__);
 			return -EEXIST;
 		}
-		cdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
+		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].
 			       vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
 		wma->interfaces[resp_event->vdev_id].vdev_up = true;
@@ -1409,7 +1409,7 @@ static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t, peer_list_elem) {
 		if (temp) {
 			cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-			if (cdf_atomic_read(&temp->delete_in_progress) == 0) {
+			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
 				wma_remove_peer(wma, temp->mac_addr.raw,
 					vdev_id, temp, false);
 			}
@@ -1480,7 +1480,7 @@ static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 			      peer_list_elem) {
 		if (temp) {
 			cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
-			if (cdf_atomic_read(&temp->delete_in_progress) == 0) {
+			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
 				wma_remove_peer(wma, temp->mac_addr.raw,
 						vdev_id, temp, false);
 			}
@@ -1598,7 +1598,7 @@ void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
 	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		cdf_atomic_set(&intr[sessionId].vdev_restart_params.
+		qdf_atomic_set(&intr[sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
 		return;
 	}
@@ -1649,7 +1649,7 @@ void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
 				   WMI_VDEV_RESTART_REQUEST_CMDID);
 	if (ret < 0) {
 		WMA_LOGE("%s: Failed to send vdev restart command", __func__);
-		cdf_atomic_set(&intr[sessionId].vdev_restart_params.
+		qdf_atomic_set(&intr[sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
 		cdf_nbuf_free(buf);
 	}
@@ -1692,7 +1692,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	resp_event = param_buf->fixed_param;
 
 	if ((resp_event->vdev_id <= wma->max_bssid) &&
-	    (cdf_atomic_read
+	    (qdf_atomic_read
 		     (&wma->interfaces[resp_event->vdev_id].vdev_restart_params.
 		     hidden_ssid_restart_in_progress))
 	    && ((wma->interfaces[resp_event->vdev_id].type == WMI_VDEV_TYPE_AP)
@@ -1770,7 +1770,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		ol_txrx_vdev_unpause(iface->handle,
 				     OL_TXQ_PAUSE_REASON_VDEV_STOP);
 		iface->pause_bitmap &= ~(1 << PAUSE_TYPE_HOST);
-		cdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
+		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 		WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			 __func__, iface->type, iface->sub_type);
 		bcn = wma->interfaces[resp_event->vdev_id].beacon;
@@ -1942,7 +1942,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 		self_sta_req->type;
 	wma_handle->interfaces[self_sta_req->session_id].sub_type =
 		self_sta_req->sub_type;
-	cdf_atomic_init(&wma_handle->interfaces
+	qdf_atomic_init(&wma_handle->interfaces
 			[self_sta_req->session_id].bss_status);
 
 	if (((self_sta_req->type == WMI_VDEV_TYPE_AP) &&
@@ -2777,7 +2777,7 @@ void wma_vdev_resp_timer(void *data)
 		ol_txrx_vdev_unpause(iface->handle,
 				     OL_TXQ_PAUSE_REASON_VDEV_STOP);
 		iface->pause_bitmap &= ~(1 << PAUSE_TYPE_HOST);
-		cdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
+		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STOPPED);
 		WMA_LOGD("%s: (type %d subtype %d) BSS is stopped",
 			 __func__, iface->type, iface->sub_type);
 
@@ -4149,7 +4149,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	if (params->nonRoamReassoc) {
 		ol_txrx_peer_state_update(pdev, params->bssId,
 					  ol_txrx_peer_state_auth);
-		cdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
+		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
 		iface->aid = params->assocId;
 		goto out;
 	}
@@ -4188,7 +4188,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			 * following which are useful for LFR3.0.*/
 			ol_txrx_peer_state_update(pdev, params->bssId,
 						  ol_txrx_peer_state_auth);
-			cdf_atomic_set(&iface->bss_status,
+			qdf_atomic_set(&iface->bss_status,
 				       WMA_BSS_STATUS_STARTED);
 			iface->aid = params->assocId;
 			WMA_LOGE("LFR3:statype %d vdev %d aid %d bssid %pM",
@@ -4294,7 +4294,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		wma->interfaces[params->smesessionId].vdev_up = true;
 	}
 
-	cdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
+	qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
 	WMA_LOGD("%s: STA mode (type %d subtype %d) BSS is started",
 		 __func__, iface->type, iface->sub_type);
 	/* Sta is now associated, configure various params */

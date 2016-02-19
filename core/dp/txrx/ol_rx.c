@@ -1201,7 +1201,7 @@ void ol_rx_peer_init(struct ol_txrx_pdev_t *pdev, struct ol_txrx_peer_t *peer)
 	peer->security[txrx_sec_ucast].sec_type =
 		peer->security[txrx_sec_mcast].sec_type = htt_sec_type_none;
 	peer->keyinstalled = 0;
-	cdf_atomic_init(&peer->fw_pn_check);
+	qdf_atomic_init(&peer->fw_pn_check);
 }
 
 void

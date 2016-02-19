@@ -50,7 +50,7 @@
 #include "htc_api.h"
 #include "htc_packet.h"
 #include "epping_test.h"
-#include <cdf_atomic.h>
+#include <qdf_atomic.h>
 #include <sir_mac_prot_def.h>
 #include <sir_debug.h>
 
@@ -68,7 +68,7 @@
    -------------------------------------------------------------------------*/
 #define EPPING_MAX_ADAPTERS             1
 
-#define EPPING_LOG(level, args ...) CDF_TRACE( CDF_MODULE_ID_HDD, level, ## args)
+#define EPPING_LOG(level, args ...) CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
 
 struct epping_cookie {
 	HTC_PACKET HtcPkt;      /* HTC packet wrapper */
@@ -100,7 +100,7 @@ typedef struct {
 	HTC_ENDPOINT_ID eid;
 	struct semaphore sem;
 	bool inited;
-	cdf_atomic_t atm;
+	qdf_atomic_t atm;
 } epping_poll_t;
 #endif
 

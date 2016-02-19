@@ -3102,7 +3102,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len)
 static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
 {
 
-	cdf_atomic_set(&wma->is_wow_bus_suspended, val);
+	qdf_atomic_set(&wma->is_wow_bus_suspended, val);
 }
 
 

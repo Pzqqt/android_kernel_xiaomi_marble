@@ -6820,7 +6820,7 @@ QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 	}
 
 	/* host need to cycle through the lower 12 bits to generate ids */
-	*scan_id = cdf_atomic_inc_return(&wma->scan_id_counter) &
+	*scan_id = qdf_atomic_inc_return(&wma->scan_id_counter) &
 			WMA_SCAN_ID_MASK;
 	/*
 	 * Firmware expects the host scan request id appended

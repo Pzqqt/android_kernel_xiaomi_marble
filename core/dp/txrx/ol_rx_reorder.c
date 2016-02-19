@@ -617,7 +617,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 	else
 		return;
 
-	cdf_atomic_set(&peer->fw_pn_check, 1);
+	qdf_atomic_set(&peer->fw_pn_check, 1);
 	/*TODO: Fragmentation case */
 	win_sz_mask = peer->tids_rx_reorder[tid].win_sz_mask;
 	seq_num_start &= win_sz_mask;

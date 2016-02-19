@@ -443,7 +443,7 @@ void ol_tx_desc_frame_list_free(struct ol_txrx_pdev_t *pdev,
 	TAILQ_FOREACH_SAFE(tx_desc, tx_descs, tx_desc_list_elem, tmp) {
 		cdf_nbuf_t msdu = tx_desc->netbuf;
 
-		cdf_atomic_init(&tx_desc->ref_cnt);   /* clear the ref cnt */
+		qdf_atomic_init(&tx_desc->ref_cnt);   /* clear the ref cnt */
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 		/* restore original hdr offset */
 		OL_TX_RESTORE_HDR(tx_desc, msdu);
@@ -466,7 +466,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 	ol_txrx_mgmt_tx_cb ota_ack_cb;
 	char *trace_str;
 
-	cdf_atomic_init(&tx_desc->ref_cnt);     /* clear the ref cnt */
+	qdf_atomic_init(&tx_desc->ref_cnt);     /* clear the ref cnt */
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 	/* restore original hdr offset */
 	OL_TX_RESTORE_HDR(tx_desc, (tx_desc->netbuf));

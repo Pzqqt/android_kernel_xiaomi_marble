@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -194,7 +194,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
 		    && peer->vdev == vdev) {
 			/* found it - increment the ref count before releasing
 			   the lock */
-			cdf_atomic_inc(&peer->ref_cnt);
+			qdf_atomic_inc(&peer->ref_cnt);
 			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			return peer;
 		}
@@ -226,7 +226,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_hash_find(struct ol_txrx_pdev_t *pdev,
 		    0 && (check_valid == 0 || peer->valid)) {
 			/* found it - increment the ref count before
 			   releasing the lock */
-			cdf_atomic_inc(&peer->ref_cnt);
+			qdf_atomic_inc(&peer->ref_cnt);
 			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			return peer;
 		}
@@ -290,8 +290,8 @@ void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev)
 				 * 1, so it will get deleted by
 				 * ol_txrx_peer_unref_delete.
 				 */
-				cdf_atomic_init(&peer->ref_cnt); /* set to 0 */
-				cdf_atomic_inc(&peer->ref_cnt); /* incr to 1 */
+				qdf_atomic_init(&peer->ref_cnt); /* set to 0 */
+				qdf_atomic_inc(&peer->ref_cnt); /* incr to 1 */
 				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 					   "%s: Delete Peer %p\n", __func__,
 					   peer);
@@ -441,7 +441,7 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 	 */
 	if (vdev->last_real_peer
 	    && vdev->last_real_peer->peer_ids[0] != HTT_INVALID_PEER_ID) {
-		cdf_atomic_inc(&vdev->last_real_peer->ref_cnt);
+		qdf_atomic_inc(&vdev->last_real_peer->ref_cnt);
 		peer = vdev->last_real_peer;
 	} else {
 		peer = NULL;

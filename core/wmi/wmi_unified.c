@@ -802,7 +802,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
 		if (wmi_is_runtime_pm_cmd(cmd_id))
 			htc_tag = HTC_TX_PACKET_TAG_AUTO_PM;
-	} else if (cdf_atomic_read(&wmi_handle->is_target_suspended) &&
+	} else if (qdf_atomic_read(&wmi_handle->is_target_suspended) &&
 	    ((WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID != cmd_id) &&
 	     (WMI_PDEV_RESUME_CMDID != cmd_id))) {
 		pr_err("%s: Target is suspended  could not send WMI command\n",
@@ -832,13 +832,13 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 
 	WMI_SET_FIELD(cdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
 
-	cdf_atomic_inc(&wmi_handle->pending_cmds);
-	if (cdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
+	qdf_atomic_inc(&wmi_handle->pending_cmds);
+	if (qdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
 		scn = cds_get_context(CDF_MODULE_ID_HIF);
 		pr_err("\n%s: hostcredits = %d\n", __func__,
 		       wmi_get_host_credits(wmi_handle));
 		htc_dump_counter_info(wmi_handle->htc_handle);
-		cdf_atomic_dec(&wmi_handle->pending_cmds);
+		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		pr_err("%s: MAX 1024 WMI Pending cmds reached.\n", __func__);
 		CDF_BUG(0);
 		return -EBUSY;
@@ -846,7 +846,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 
 	pkt = cdf_mem_malloc(sizeof(*pkt));
 	if (!pkt) {
-		cdf_atomic_dec(&wmi_handle->pending_cmds);
+		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		pr_err("%s, Failed to alloc htc packet %x, no memory\n",
 		       __func__, cmd_id);
 		return -ENOMEM;
@@ -879,7 +879,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	status = htc_send_pkt(wmi_handle->htc_handle, pkt);
 
 	if (A_OK != status) {
-		cdf_atomic_dec(&wmi_handle->pending_cmds);
+		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		pr_err("%s %d, htc_send_pkt failed\n", __func__, __LINE__);
 	}
 
@@ -1193,7 +1193,7 @@ void wmi_rx_event_work(struct work_struct *work)
  */
 void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
 {
-	cdf_atomic_init(&wmi_handle->runtime_pm_inprogress);
+	qdf_atomic_init(&wmi_handle->runtime_pm_inprogress);
 }
 #else
 void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
@@ -1215,8 +1215,8 @@ void *wmi_unified_attach(ol_scn_t scn_handle,
 	}
 	OS_MEMZERO(wmi_handle, sizeof(struct wmi_unified));
 	wmi_handle->scn_handle = scn_handle;
-	cdf_atomic_init(&wmi_handle->pending_cmds);
-	cdf_atomic_init(&wmi_handle->is_target_suspended);
+	qdf_atomic_init(&wmi_handle->pending_cmds);
+	qdf_atomic_init(&wmi_handle->is_target_suspended);
 	wmi_runtime_pm_init(wmi_handle);
 	cdf_spinlock_init(&wmi_handle->eventq_lock);
 	cdf_nbuf_queue_init(&wmi_handle->event_queue);
@@ -1313,7 +1313,7 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 #endif
 	cdf_nbuf_free(wmi_cmd_buf);
 	cdf_mem_free(htc_pkt);
-	cdf_atomic_dec(&wmi_handle->pending_cmds);
+	qdf_atomic_dec(&wmi_handle->pending_cmds);
 }
 
 int
@@ -1369,22 +1369,22 @@ int wmi_get_host_credits(wmi_unified_t wmi_handle)
 
 int wmi_get_pending_cmds(wmi_unified_t wmi_handle)
 {
-	return cdf_atomic_read(&wmi_handle->pending_cmds);
+	return qdf_atomic_read(&wmi_handle->pending_cmds);
 }
 
 void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 {
-	cdf_atomic_set(&wmi_handle->is_target_suspended, val);
+	qdf_atomic_set(&wmi_handle->is_target_suspended, val);
 }
 
 #ifdef FEATURE_RUNTIME_PM
 void wmi_set_runtime_pm_inprogress(wmi_unified_t wmi_handle, A_BOOL val)
 {
-	cdf_atomic_set(&wmi_handle->runtime_pm_inprogress, val);
+	qdf_atomic_set(&wmi_handle->runtime_pm_inprogress, val);
 }
 
 inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
 {
-	return cdf_atomic_read(&wmi_handle->runtime_pm_inprogress);
+	return qdf_atomic_read(&wmi_handle->runtime_pm_inprogress);
 }
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,7 +27,7 @@
 
 /* OS abstraction libraries */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_atomic.h>         /* cdf_atomic_read, etc. */
+#include <cdf_atomic.h>         /* qdf_atomic_read, etc. */
 #include <cdf_util.h>           /* cdf_unlikely */
 
 /* APIs for other modules */

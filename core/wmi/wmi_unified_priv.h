@@ -34,7 +34,7 @@
 #include "a_types.h"
 #include "wmi.h"
 #include "wmi_unified.h"
-#include "cdf_atomic.h"
+#include "qdf_atomic.h"
 
 #define WMI_UNIFIED_MAX_EVENT 0x100
 #define WMI_MAX_CMDS  1024
@@ -69,7 +69,7 @@ struct fwdebug {
 
 struct wmi_unified {
 	ol_scn_t scn_handle;    /* handle to device */
-	cdf_atomic_t pending_cmds;
+	qdf_atomic_t pending_cmds;
 	HTC_ENDPOINT_ID wmi_endpoint_id;
 	uint16_t max_msg_len;
 	WMI_EVT_ID event_id[WMI_UNIFIED_MAX_EVENT];
@@ -88,10 +88,10 @@ struct wmi_unified {
 	cdf_spinlock_t wmi_record_lock;
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
-	cdf_atomic_t is_target_suspended;
+	qdf_atomic_t is_target_suspended;
 
 #ifdef FEATURE_RUNTIME_PM
-	cdf_atomic_t runtime_pm_inprogress;
+	qdf_atomic_t runtime_pm_inprogress;
 #endif
 
 	int (*wma_process_fw_event_handler_cbk)(struct wmi_unified *wmi_handle,

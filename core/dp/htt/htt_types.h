@@ -32,7 +32,7 @@
 #include <cdf_types.h>          /* cdf_device_t */
 #include <cdf_lock.h>           /* cdf_spinlock_t */
 #include <cdf_softirq_timer.h>  /* cdf_softirq_timer_t */
-#include <cdf_atomic.h>         /* cdf_atomic_inc */
+#include <qdf_atomic.h>         /* qdf_atomic_inc */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <htc_api.h>            /* HTC_PACKET */
 
@@ -331,7 +331,7 @@ struct htt_pdev_t {
 		 * variable is used to guarantee that only one thread tries
 		 * to replenish Rx ring.
 		 */
-		cdf_atomic_t refill_ref_cnt;
+		qdf_atomic_t refill_ref_cnt;
 #ifdef DEBUG_DMA_DONE
 		uint32_t dbg_initial_msdu_payld;
 		uint32_t dbg_mpdu_range;

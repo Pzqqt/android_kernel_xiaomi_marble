@@ -31,7 +31,7 @@
 #include <cdf_memory.h>         /* cdf_mem_malloc,free */
 #include <cdf_types.h>          /* cdf_device_t, cdf_print */
 #include <cdf_lock.h>           /* cdf_spinlock */
-#include <cdf_atomic.h>         /* cdf_atomic_read */
+#include <qdf_atomic.h>         /* qdf_atomic_read */
 
 /* Required for WLAN_FEATURE_FASTPATH */
 #include <ce_api.h>
@@ -126,7 +126,7 @@ ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
-	cdf_atomic_dec(&peer->ref_cnt);
+	qdf_atomic_dec(&peer->ref_cnt);
 	return peer;
 }
 
@@ -180,7 +180,7 @@ ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
 	if (!peer)
 		return NULL;
 	*peer_id = peer->local_id;
-	cdf_atomic_dec(&peer->ref_cnt);
+	qdf_atomic_dec(&peer->ref_cnt);
 	return peer;
 }
 
@@ -523,14 +523,14 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	 */
 
 	/* initialize the counter of the target's tx buffer availability */
-	cdf_atomic_init(&pdev->target_tx_credit);
-	cdf_atomic_init(&pdev->orig_target_tx_credit);
+	qdf_atomic_init(&pdev->target_tx_credit);
+	qdf_atomic_init(&pdev->orig_target_tx_credit);
 	/*
 	 * LL - initialize the target credit outselves.
 	 * HL - wait for a HTT target credit initialization during htt_attach.
 	 */
 
-	cdf_atomic_add(ol_cfg_target_tx_credit(pdev->ctrl_pdev),
+	qdf_atomic_add(ol_cfg_target_tx_credit(pdev->ctrl_pdev),
 		   &pdev->target_tx_credit);
 
 	desc_pool_size = ol_tx_get_desc_global_pool_size(pdev);
@@ -638,7 +638,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 #endif
 #endif
 		c_element->tx_desc.id = i;
-		cdf_atomic_init(&c_element->tx_desc.ref_cnt);
+		qdf_atomic_init(&c_element->tx_desc.ref_cnt);
 		c_element = c_element->next;
 		fail_idx = i;
 	}
@@ -1022,7 +1022,7 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		 * been given to the target to transmit, for which the
 		 * target has never provided a response.
 		 */
-		if (cdf_atomic_read(&tx_desc->ref_cnt)) {
+		if (qdf_atomic_read(&tx_desc->ref_cnt)) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
 				   "Warning: freeing tx frame (no compltn)\n");
 			ol_tx_desc_frame_free_nonstd(pdev,
@@ -1112,8 +1112,8 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 			       &vdev->ll_pause.timer,
 			       ol_tx_vdev_ll_pause_queue_send, vdev,
 			       CDF_TIMER_TYPE_SW);
-	cdf_atomic_init(&vdev->os_q_paused);
-	cdf_atomic_set(&vdev->os_q_paused, 0);
+	qdf_atomic_init(&vdev->os_q_paused);
+	qdf_atomic_set(&vdev->os_q_paused, 0);
 	vdev->tx_fl_lwm = 0;
 	vdev->tx_fl_hwm = 0;
 	vdev->wait_on_peer_id = OL_TXRX_INVALID_LOCAL_PEER_ID;
@@ -1267,8 +1267,8 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 	ol_rx_callback_fp data_rx = NULL;
 	void *cds_ctx = cds_get_global_context();
 
-	if (cdf_atomic_inc_return(&peer->flush_in_progress) > 1) {
-		cdf_atomic_dec(&peer->flush_in_progress);
+	if (qdf_atomic_inc_return(&peer->flush_in_progress) > 1) {
+		qdf_atomic_dec(&peer->flush_in_progress);
 		return;
 	}
 
@@ -1300,7 +1300,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 				typeof(*cache_buf), list);
 	}
 	cdf_spin_unlock_bh(&peer->bufq_lock);
-	cdf_atomic_dec(&peer->flush_in_progress);
+	qdf_atomic_dec(&peer->flush_in_progress);
 }
 
 ol_txrx_peer_handle
@@ -1330,7 +1330,7 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 				peer_mac_addr[0], peer_mac_addr[1],
 				peer_mac_addr[2], peer_mac_addr[3],
 				peer_mac_addr[4], peer_mac_addr[5]);
-			if (cdf_atomic_read(&temp_peer->delete_in_progress)) {
+			if (qdf_atomic_read(&temp_peer->delete_in_progress)) {
 				vdev->wait_on_peer_id = temp_peer->local_id;
 				qdf_event_create(&vdev->wait_delete_comp);
 				wait_on_deletion = true;
@@ -1387,16 +1387,16 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 	cdf_spinlock_init(&peer->peer_info_lock);
 	cdf_spinlock_init(&peer->bufq_lock);
 
-	cdf_atomic_init(&peer->delete_in_progress);
-	cdf_atomic_init(&peer->flush_in_progress);
+	qdf_atomic_init(&peer->delete_in_progress);
+	qdf_atomic_init(&peer->flush_in_progress);
 
-	cdf_atomic_init(&peer->ref_cnt);
+	qdf_atomic_init(&peer->ref_cnt);
 
 	/* keep one reference for attach */
-	cdf_atomic_inc(&peer->ref_cnt);
+	qdf_atomic_inc(&peer->ref_cnt);
 
 	/* keep one reference for ol_rx_peer_map_handler */
-	cdf_atomic_inc(&peer->ref_cnt);
+	qdf_atomic_inc(&peer->ref_cnt);
 
 	peer->valid = 1;
 
@@ -1495,7 +1495,7 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 			   "%s: no state change, returns directly\n",
 			   __func__);
 #endif
-		cdf_atomic_dec(&peer->ref_cnt);
+		qdf_atomic_dec(&peer->ref_cnt);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -1525,7 +1525,7 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 				ol_txrx_peer_tid_unpause(peer, tid);
 		}
 	}
-	cdf_atomic_dec(&peer->ref_cnt);
+	qdf_atomic_dec(&peer->ref_cnt);
 
 	/* Set the state after the Pause to avoid the race condiction
 	   with ADDBA check in tx path */
@@ -1628,7 +1628,7 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 		break;
 	}
 	}
-	cdf_atomic_dec(&peer->ref_cnt);
+	qdf_atomic_dec(&peer->ref_cnt);
 }
 
 uint8_t
@@ -1683,7 +1683,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	 * (A double-free should never happen, so assert if it does.)
 	 */
 
-	if (0 == cdf_atomic_read(&(peer->ref_cnt))) {
+	if (0 == qdf_atomic_read(&(peer->ref_cnt))) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "The Peer is not present anymore\n");
 		cdf_assert(0);
@@ -1701,7 +1701,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	 * concurrently with the empty check.
 	 */
 	cdf_spin_lock_bh(&pdev->peer_ref_mutex);
-	if (cdf_atomic_dec_and_test(&peer->ref_cnt)) {
+	if (qdf_atomic_dec_and_test(&peer->ref_cnt)) {
 		u_int16_t peer_id;
 
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -1722,7 +1722,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 		ol_rx_peer_cleanup(vdev, peer);
 
 		/* peer is removed from peer_list */
-		cdf_atomic_set(&peer->delete_in_progress, 0);
+		qdf_atomic_set(&peer->delete_in_progress, 0);
 
 		/*
 		 * Set wait_delete_comp event if the current peer id matches
@@ -1834,7 +1834,7 @@ void ol_txrx_peer_detach(ol_txrx_peer_handle peer)
 	cdf_spinlock_destroy(&peer->bufq_lock);
 	/* set delete_in_progress to identify that wma
 	 * is waiting for unmap massage for this peer */
-	cdf_atomic_set(&peer->delete_in_progress, 1);
+	qdf_atomic_set(&peer->delete_in_progress, 1);
 	/*
 	 * Remove the reference added during peer_attach.
 	 * The peer will still be left allocated until the
@@ -1956,8 +1956,8 @@ int ol_txrx_get_tx_pending(ol_txrx_pdev_handle pdev_handle)
 void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev_handle)
 {
 	ol_tx_desc_list tx_descs;
-	/* First let hif do the cdf_atomic_dec_and_test(&tx_desc->ref_cnt)
-	 * then let htt do the cdf_atomic_dec_and_test(&tx_desc->ref_cnt)
+	/* First let hif do the qdf_atomic_dec_and_test(&tx_desc->ref_cnt)
+	 * then let htt do the qdf_atomic_dec_and_test(&tx_desc->ref_cnt)
 	 * which is tha same with normal data send complete path*/
 	htt_tx_pending_discard(pdev_handle->htt_pdev);
 
@@ -2672,7 +2672,7 @@ ol_txrx_get_tx_resource(uint8_t sta_id,
 		vdev->tx_fl_hwm =
 			(uint16_t) (low_watermark + high_watermark_offset);
 		/* Not enough free resource, stop TX OS Q */
-		cdf_atomic_set(&vdev->os_q_paused, 1);
+		qdf_atomic_set(&vdev->os_q_paused, 1);
 		cdf_spin_unlock_bh(&vdev->pdev->tx_mutex);
 		return false;
 	}

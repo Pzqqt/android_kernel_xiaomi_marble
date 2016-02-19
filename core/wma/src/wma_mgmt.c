@@ -2873,7 +2873,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 	}
 
 	intr[pReq->sessionId].vdev_restart_params.ssidHidden = pReq->ssidHidden;
-	cdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
+	qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
 		       hidden_ssid_restart_in_progress, 1);
 
 	/* vdev stop -> vdev restart -> vdev up */
@@ -2885,7 +2885,7 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 							(1 << PAUSE_TYPE_HOST);
 	if (wmi_unified_vdev_stop_send(wma_handle->wmi_handle, pReq->sessionId)) {
 		WMA_LOGE("%s: %d Failed to send vdev stop", __func__, __LINE__);
-		cdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
+		qdf_atomic_set(&intr[pReq->sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
 		return;
 	}

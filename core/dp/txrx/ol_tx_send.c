@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#include <cdf_atomic.h>         /* cdf_atomic_inc, etc. */
+#include <qdf_atomic.h>         /* qdf_atomic_inc, etc. */
 #include <cdf_lock.h>           /* cdf_os_spinlock */
 #include <qdf_time.h>           /* qdf_system_ticks, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
@@ -60,7 +60,7 @@
 
 #define OL_TX_CREDIT_RECLAIM(pdev)					\
 	do {								\
-		if (cdf_atomic_read(&pdev->target_tx_credit)  <		\
+		if (qdf_atomic_read(&pdev->target_tx_credit)  <		\
 		    ol_cfg_tx_credit_lwm(pdev->ctrl_pdev)) {		\
 			ol_osif_ath_tasklet(pdev->osdev);		\
 		}							\
@@ -83,16 +83,16 @@
  * messages.
  */
 #define OL_TX_TARGET_CREDIT_ADJUST(factor, pdev, msdu) \
-	cdf_atomic_add(	\
+	qdf_atomic_add(	\
 		factor * htt_tx_msdu_credit(msdu), &pdev->target_tx_credit)
 #define OL_TX_TARGET_CREDIT_DECR(pdev, msdu) \
 	OL_TX_TARGET_CREDIT_ADJUST(-1, pdev, msdu)
 #define OL_TX_TARGET_CREDIT_INCR(pdev, msdu) \
 	OL_TX_TARGET_CREDIT_ADJUST(1, pdev, msdu)
 #define OL_TX_TARGET_CREDIT_DECR_INT(pdev, delta) \
-	cdf_atomic_add(-1 * delta, &pdev->target_tx_credit)
+	qdf_atomic_add(-1 * delta, &pdev->target_tx_credit)
 #define OL_TX_TARGET_CREDIT_INCR_INT(pdev, delta) \
-	cdf_atomic_add(delta, &pdev->target_tx_credit)
+	qdf_atomic_add(delta, &pdev->target_tx_credit)
 #else
 /*
  * LL does not need to keep track of target credit.
@@ -112,12 +112,12 @@
 	do {								\
 		struct ol_txrx_vdev_t *vdev;				\
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {	\
-			if (cdf_atomic_read(&vdev->os_q_paused) &&	\
+			if (qdf_atomic_read(&vdev->os_q_paused) &&	\
 			    (vdev->tx_fl_hwm != 0)) {			\
 				cdf_spin_lock(&pdev->tx_mutex);		\
 				if (pdev->tx_desc.num_free >		\
 				    vdev->tx_fl_hwm) {			\
-					cdf_atomic_set(&vdev->os_q_paused, 0); \
+					qdf_atomic_set(&vdev->os_q_paused, 0); \
 					cdf_spin_unlock(&pdev->tx_mutex); \
 					ol_txrx_flow_control_cb(vdev, true);\
 				}					\
@@ -139,8 +139,8 @@ ol_tx_send_base(struct ol_txrx_pdev_t *pdev,
 
 	TX_CREDIT_DEBUG_PRINT("TX %d bytes\n", cdf_nbuf_len(msdu));
 	TX_CREDIT_DEBUG_PRINT(" <HTT> Decrease credit %d - 1 = %d, len:%d.\n",
-			      cdf_atomic_read(&pdev->target_tx_credit),
-			      cdf_atomic_read(&pdev->target_tx_credit) - 1,
+			      qdf_atomic_read(&pdev->target_tx_credit),
+			      qdf_atomic_read(&pdev->target_tx_credit) - 1,
 			      cdf_nbuf_len(msdu));
 
 	msdu_credit_consumed = htt_tx_msdu_credit(msdu);
@@ -312,24 +312,24 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 
 	if ((tx_desc->pkt_type != ol_tx_frm_no_free) &&
 	    (tx_desc->pkt_type < OL_TXRX_MGMT_TYPE_BASE)) {
-		cdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
+		qdf_atomic_add(1, &pdev->tx_queue.rsrc_cnt);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, status != A_OK);
 	}
 }
 
 void ol_tx_target_credit_init(struct ol_txrx_pdev_t *pdev, int credit_delta)
 {
-	cdf_atomic_add(credit_delta, &pdev->orig_target_tx_credit);
+	qdf_atomic_add(credit_delta, &pdev->orig_target_tx_credit);
 }
 
 void ol_tx_target_credit_update(struct ol_txrx_pdev_t *pdev, int credit_delta)
 {
 	TX_CREDIT_DEBUG_PRINT(" <HTT> Increase credit %d + %d = %d\n",
-			      cdf_atomic_read(&pdev->target_tx_credit),
+			      qdf_atomic_read(&pdev->target_tx_credit),
 			      credit_delta,
-			      cdf_atomic_read(&pdev->target_tx_credit) +
+			      qdf_atomic_read(&pdev->target_tx_credit) +
 			      credit_delta);
-	cdf_atomic_add(credit_delta, &pdev->target_tx_credit);
+	qdf_atomic_add(credit_delta, &pdev->target_tx_credit);
 }
 
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -360,7 +360,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 #define ol_tx_msdu_complete_single(_pdev, _tx_desc, _netbuf,\
 				   _lcl_freelist, _tx_desc_last)	\
 	do {								\
-		cdf_atomic_init(&(_tx_desc)->ref_cnt);			\
+		qdf_atomic_init(&(_tx_desc)->ref_cnt);			\
 		/* restore orginal hdr offset */			\
 		OL_TX_RESTORE_HDR((_tx_desc), (_netbuf));		\
 		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), CDF_DMA_TO_DEVICE); \
@@ -453,7 +453,7 @@ void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev)
 		 * been given to the target to transmit, for which the
 		 * target has never provided a response.
 		 */
-		if (cdf_atomic_read(&tx_desc->ref_cnt)) {
+		if (qdf_atomic_read(&tx_desc->ref_cnt)) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
 				   "Warning: freeing tx frame "
 				   "(no tx completion from the target)\n");
@@ -577,11 +577,11 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 	}
 
 	TX_CREDIT_DEBUG_PRINT(" <HTT> Increase credit %d + %d = %d\n",
-			      cdf_atomic_read(&pdev->target_tx_credit),
-			      1, cdf_atomic_read(&pdev->target_tx_credit) + 1);
+			      qdf_atomic_read(&pdev->target_tx_credit),
+			      1, qdf_atomic_read(&pdev->target_tx_credit) + 1);
 
 
-	cdf_atomic_add(1, &pdev->target_tx_credit);
+	qdf_atomic_add(1, &pdev->target_tx_credit);
 }
 
 /* WARNING: ol_tx_inspect_handler()'s bahavior is similar to that of
@@ -620,7 +620,7 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 
 #ifndef ATH_11AC_TXCOMPACT
 		/* save this multicast packet to local free list */
-		if (cdf_atomic_dec_and_test(&tx_desc->ref_cnt))
+		if (qdf_atomic_dec_and_test(&tx_desc->ref_cnt))
 #endif
 		{
 			/* for this function only, force htt status to be
@@ -643,9 +643,9 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 					   htt_tx_status_discard);
 	}
 	TX_CREDIT_DEBUG_PRINT(" <HTT> Increase HTT credit %d + %d = %d..\n",
-			      cdf_atomic_read(&pdev->target_tx_credit),
+			      qdf_atomic_read(&pdev->target_tx_credit),
 			      num_msdus,
-			      cdf_atomic_read(&pdev->target_tx_credit) +
+			      qdf_atomic_read(&pdev->target_tx_credit) +
 			      num_msdus);
 
 	OL_TX_TARGET_CREDIT_ADJUST(num_msdus, pdev, NULL);

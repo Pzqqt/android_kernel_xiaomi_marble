@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,7 +26,7 @@
  */
 
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_atomic.h>         /* cdf_atomic_read, etc. */
+#include <qdf_atomic.h>         /* qdf_atomic_read, etc. */
 #include <ol_cfg.h>             /* ol_cfg_addba_retry */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
 #include <ol_htt_tx_api.h>      /* htt_tx_desc_tid */

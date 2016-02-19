@@ -765,7 +765,7 @@ typedef struct {
 	A_UINT32 requestor_id;
 	A_UINT32 disable_hw_ack;
 	wmi_channel chan;
-	cdf_atomic_t hidden_ssid_restart_in_progress;
+	qdf_atomic_t hidden_ssid_restart_in_progress;
 	uint8_t ssidHidden;
 } vdev_restart_params_t;
 
@@ -870,7 +870,7 @@ struct wma_txrx_node {
 	tAniGetPEStatsRsp *stats_rsp;
 	uint8_t fw_stats_set;
 	void *del_staself_req;
-	cdf_atomic_t bss_status;
+	qdf_atomic_t bss_status;
 	uint8_t rate_flags;
 	uint8_t nss;
 	bool is_channel_switch;
@@ -1273,7 +1273,7 @@ typedef struct {
 #endif
 	cdf_wake_lock_t wow_wake_lock;
 	int wow_nack;
-	cdf_atomic_t is_wow_bus_suspended;
+	qdf_atomic_t is_wow_bus_suspended;
 	cdf_mc_timer_t wma_scan_comp_timer;
 	uint8_t dfs_phyerr_filter_offload;
 	bool suitable_ap_hb_failure;
@@ -1301,7 +1301,7 @@ typedef struct {
 	struct dbs_hw_mode_info hw_mode;
 	uint32_t old_hw_mode_index;
 	uint32_t new_hw_mode_index;
-	cdf_atomic_t scan_id_counter;
+	qdf_atomic_t scan_id_counter;
 	wma_peer_authorized_fp peer_authorized_cb;
 	uint32_t num_of_diag_events_logs;
 	uint32_t *events_logs_list;

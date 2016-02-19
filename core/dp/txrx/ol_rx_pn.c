@@ -96,7 +96,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 	int last_pn_valid;
 
 	/* Make sure host pn check is not redundant */
-	if ((cdf_atomic_read(&peer->fw_pn_check)) ||
+	if ((qdf_atomic_read(&peer->fw_pn_check)) ||
 		(vdev->opmode == wlan_op_mode_ibss)) {
 		return msdu_list;
 	}

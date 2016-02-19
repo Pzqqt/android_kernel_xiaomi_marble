@@ -985,7 +985,7 @@ int wma_pdev_resume_event_handler(void *handle, uint8_t *event, uint32_t len);
 static inline int wma_get_wow_bus_suspend(tp_wma_handle wma)
 {
 
-	return cdf_atomic_read(&wma->is_wow_bus_suspended);
+	return qdf_atomic_read(&wma->is_wow_bus_suspended);
 }
 
 QDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type);

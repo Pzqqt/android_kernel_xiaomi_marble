@@ -27,7 +27,7 @@
 
 /* OS abstraction libraries */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_atomic.h>         /* cdf_atomic_read, etc. */
+#include <qdf_atomic.h>         /* qdf_atomic_read, etc. */
 #include <cdf_util.h>           /* cdf_unlikely */
 
 /* APIs for other modules */
@@ -1106,7 +1106,7 @@ ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
 #define OL_TX_ENCAP_WRAPPER(pdev, vdev, tx_desc, msdu, tx_msdu_info) \
 	do { \
 		if (OL_TX_ENCAP(vdev, tx_desc, msdu, &tx_msdu_info) != A_OK) { \
-			cdf_atomic_inc(&pdev->tx_queue.rsrc_cnt); \
+			qdf_atomic_inc(&pdev->tx_queue.rsrc_cnt); \
 			ol_tx_desc_frame_free_nonstd(pdev, tx_desc, 1);	\
 			if (tx_msdu_info.peer) { \
 				/* remove the peer reference added above */ \

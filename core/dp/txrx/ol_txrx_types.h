@@ -37,7 +37,7 @@
 #include <cds_queue.h>          /* TAILQ */
 #include <a_types.h>            /* A_UINT8 */
 #include <htt.h>                /* htt_sec_type, htt_pkt_type, etc. */
-#include <cdf_atomic.h>         /* cdf_atomic_t */
+#include <qdf_atomic.h>         /* qdf_atomic_t */
 #include <wdi_event_api.h>      /* wdi_event_subscribe */
 #include <cdf_softirq_timer.h>  /* cdf_softirq_timer_t */
 #include <cdf_lock.h>           /* cdf_spinlock */
@@ -133,7 +133,7 @@ struct ol_tx_desc_t {
 	cdf_dma_addr_t htt_tx_desc_paddr;
 	void *htt_frag_desc; /* struct msdu_ext_desc_t * */
 	cdf_dma_addr_t htt_frag_desc_paddr;
-	cdf_atomic_t ref_cnt;
+	qdf_atomic_t ref_cnt;
 	enum htt_tx_status status;
 
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -497,8 +497,8 @@ struct ol_txrx_pdev_t {
 	 * track of roughly how much space is available in the target for
 	 * tx frames
 	 */
-	cdf_atomic_t target_tx_credit;
-	cdf_atomic_t orig_target_tx_credit;
+	qdf_atomic_t target_tx_credit;
+	qdf_atomic_t orig_target_tx_credit;
 
 	/* Peer mac address to staid mapping */
 	struct ol_mac_addr mac_to_staid[WLAN_MAX_STA_COUNT + 3];
@@ -677,7 +677,7 @@ struct ol_txrx_pdev_t {
 	 * conditional compilation.
 	 */
 	struct {
-		cdf_atomic_t rsrc_cnt;
+		qdf_atomic_t rsrc_cnt;
 		/* threshold_lo - when to start tx desc margin replenishment */
 		uint16_t rsrc_threshold_lo;
 		/* threshold_hi - where to stop during tx desc margin
@@ -842,7 +842,7 @@ struct ol_txrx_vdev_t {
 		uint32_t q_overflow_cnt;
 	} ll_pause;
 	bool disable_intrabss_fwd;
-	cdf_atomic_t os_q_paused;
+	qdf_atomic_t os_q_paused;
 	uint16_t tx_fl_lwm;
 	uint16_t tx_fl_hwm;
 	cdf_spinlock_t flow_control_lock;
@@ -910,9 +910,9 @@ typedef A_STATUS (*ol_tx_filter_func)(struct ol_txrx_msdu_info_t *
 struct ol_txrx_peer_t {
 	struct ol_txrx_vdev_t *vdev;
 
-	cdf_atomic_t ref_cnt;
-	cdf_atomic_t delete_in_progress;
-	cdf_atomic_t flush_in_progress;
+	qdf_atomic_t ref_cnt;
+	qdf_atomic_t delete_in_progress;
+	qdf_atomic_t flush_in_progress;
 
 	/* The peer state tracking is used for HL systems
 	 * that don't support tx and rx filtering within the target.
@@ -985,7 +985,7 @@ struct ol_txrx_peer_t {
 	uint8_t keyinstalled;
 
 	/* Bit to indicate if PN check is done in fw */
-	cdf_atomic_t fw_pn_check;
+	qdf_atomic_t fw_pn_check;
 
 #ifdef WLAN_FEATURE_11W
 	/* PN counter for Robust Management Frames */
