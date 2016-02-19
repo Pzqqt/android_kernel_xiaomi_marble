@@ -1901,7 +1901,7 @@ QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 	}
 
 	while (ol_txrx_get_tx_pending(txrx_pdev)) {
-		cdf_sleep(OL_ATH_TX_DRAIN_WAIT_DELAY);
+		qdf_sleep(OL_ATH_TX_DRAIN_WAIT_DELAY);
 		if (timeout <= 0) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				"%s: tx frames are pending", __func__);

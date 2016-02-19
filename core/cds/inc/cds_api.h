@@ -45,7 +45,7 @@
 #include <cds_mq.h>
 #include <cds_packet.h>
 #include <cds_sched.h>
-#include <cdf_threads.h>
+#include <qdf_threads.h>
 #include <cdf_mc_timer.h>
 #include <cds_pack_align.h>
 
