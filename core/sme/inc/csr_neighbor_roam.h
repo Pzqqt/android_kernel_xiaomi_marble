@@ -298,5 +298,27 @@ void csr_roam_synch_callback(tpAniSirGlobal mac,
 void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,
 		uint8_t newstate, uint8_t session);
 uint8_t *csr_neighbor_roam_state_to_string(uint8_t state);
+tpCsrNeighborRoamBSSInfo csr_neighbor_roam_next_roamable_ap(
+		tpAniSirGlobal mac_ctx, tDblLinkList *llist,
+		tpCsrNeighborRoamBSSInfo neighbor_entry);
+bool csr_neighbor_roam_remove_roamable_ap_list_entry(tpAniSirGlobal pMac,
+		tDblLinkList *pList, tpCsrNeighborRoamBSSInfo pNeighborEntry);
+void csr_neighbor_roam_free_neighbor_roam_bss_node(tpAniSirGlobal pMac,
+		tpCsrNeighborRoamBSSInfo neighborRoamBSSNode);
+QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal pMac,
+		uint8_t sessionId);
+void csr_neighbor_roam_reset_preauth_control_info(
+		tpAniSirGlobal mac_ctx, uint8_t session_id);
+bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal pMac,
+		    uint8_t sessionId, tSirMacAddr bssId);
+#ifdef FEATURE_WLAN_LFR_METRICS
+void csr_neighbor_roam_send_lfr_metric_event(tpAniSirGlobal mac_ctx,
+		uint8_t session_id, tSirMacAddr bssid, eRoamCmdStatus status);
+#else
+static inline void csr_neighbor_roam_send_lfr_metric_event(
+		tpAniSirGlobal mac_ctx, uint8_t session_id,
+		tSirMacAddr bssid, eRoamCmdStatus status)
+{}
+#endif
 
 #endif /* CSR_NEIGHBOR_ROAM_H */

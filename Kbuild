@@ -500,6 +500,7 @@ SME_INC := 	-I$(WLAN_ROOT)/$(SME_INC_DIR) \
 		-I$(WLAN_ROOT)/$(SME_SRC_DIR)/csr
 
 SME_CSR_OBJS := $(SME_SRC_DIR)/csr/csr_api_roam.o \
+		$(SME_SRC_DIR)/csr/csr_roam_preauth.o \
 		$(SME_SRC_DIR)/csr/csr_api_scan.o \
 		$(SME_SRC_DIR)/csr/csr_cmd_process.o \
 		$(SME_SRC_DIR)/csr/csr_link_list.o \

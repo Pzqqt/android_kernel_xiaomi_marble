@@ -280,7 +280,6 @@ static QDF_STATUS csr_roam_get_qos_info_from_bss(tpAniSirGlobal pMac,
 void csr_roam_reissue_roam_command(tpAniSirGlobal pMac);
 static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf,
 					   tSirSmeDisassocRsp *pRsp);
-void csr_reinit_preauth_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 void csr_init_operating_classes(tHalHandle hHal);
 
 /* Initialize global variables */
@@ -1087,12 +1086,6 @@ static QDF_STATUS csr_roam_free_connected_info(tpAniSirGlobal pMac,
 	pConnectedInfo->nTspecIeLength = 0;
 #endif
 	return status;
-}
-
-void csr_release_command_preauth(tpAniSirGlobal pMac, tSmeCmd *pCommand)
-{
-	csr_reinit_preauth_cmd(pMac, pCommand);
-	csr_release_command(pMac, pCommand);
 }
 
 void csr_release_command_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand)
@@ -5508,14 +5501,6 @@ QDF_STATUS csr_roam_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	return status;
 }
 
-void csr_reinit_preauth_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
-{
-	pCommand->u.roamCmd.pLastRoamBss = NULL;
-	pCommand->u.roamCmd.pRoamBssEntry = NULL;
-	/* Because u.roamCmd is union and share with scanCmd and StatusChange */
-	qdf_mem_set(&pCommand->u.roamCmd, sizeof(tRoamCmd), 0);
-}
-
 void csr_reinit_roam_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	if (pCommand->u.roamCmd.fReleaseBssList) {
@@ -7318,42 +7303,6 @@ QDF_STATUS csr_roam_issue_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 			csr_roam_completion(pMac, sessionId, NULL, pCommand,
 					    eCSR_ROAM_RESULT_FAILURE, false);
 			csr_release_command_roam(pMac, pCommand);
-		}
-	}
-	return status;
-}
-
-QDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal pMac, uint32_t sessionId,
-				    tpSirBssDescription pBssDescription,
-				    eCsrRoamReason reason, bool fImmediate)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeCmd *pCommand;
-
-	pCommand = csr_get_command_buffer(pMac);
-	if (NULL == pCommand) {
-		sms_log(pMac, LOGE, FL(" fail to get command buffer"));
-		status = QDF_STATUS_E_RESOURCES;
-	} else {
-		if (pBssDescription) {
-			/* copy over the parameters we need later */
-			pCommand->command = eSmeCommandRoam;
-			pCommand->sessionId = (uint8_t) sessionId;
-			pCommand->u.roamCmd.roamReason = reason;
-			/* this is the important parameter */
-			/* in this case we are using this field for the "next" BSS */
-			pCommand->u.roamCmd.pLastRoamBss = pBssDescription;
-			status = csr_queue_sme_command(pMac, pCommand, fImmediate);
-			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				sms_log(pMac, LOGE,
-					FL
-						(" fail to enqueue preauth command, status = %d"),
-					status);
-				csr_release_command_preauth(pMac, pCommand);
-			}
-		} else {
-			/* Return failure */
-			status = QDF_STATUS_E_RESOURCES;
 		}
 	}
 	return status;
@@ -17742,213 +17691,6 @@ QDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac, uint32_t sessionId,
 	} while (0);
 	return status;
 }
-
-QDF_STATUS
-csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
-			      tpSirBssDescription pBssDescription)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	tpSirFTPreAuthReq pftPreAuthReq;
-	uint16_t auth_req_len = 0;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	if (NULL == pSession) {
-		sms_log(pMac, LOGE,
-			FL("Session does not exist for session id(%d)"),
-			sessionId);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	auth_req_len = sizeof(tSirFTPreAuthReq);
-	pftPreAuthReq = (tpSirFTPreAuthReq) qdf_mem_malloc(auth_req_len);
-	if (NULL == pftPreAuthReq) {
-		sms_log(pMac, LOGE,
-			FL("Memory allocation for FT Preauth request failed"));
-		return QDF_STATUS_E_NOMEM;
-	}
-	/* Save the SME Session ID here. We need it while processing the preauth response */
-	pSession->ftSmeContext.smeSessionId = sessionId;
-	qdf_mem_zero(pftPreAuthReq, auth_req_len);
-
-	pftPreAuthReq->pbssDescription =
-		(tpSirBssDescription) qdf_mem_malloc(sizeof(pBssDescription->length)
-						     + pBssDescription->length);
-	if (NULL == pftPreAuthReq->pbssDescription) {
-		sms_log(pMac, LOGE,
-			FL("Memory allocation for FT Preauth request failed"));
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	pftPreAuthReq->messageType = eWNI_SME_FT_PRE_AUTH_REQ;
-
-	pftPreAuthReq->preAuthchannelNum = pBssDescription->channelId;
-
-	qdf_mem_copy((void *)&pftPreAuthReq->currbssId,
-		     (void *)pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
-	qdf_mem_copy((void *)&pftPreAuthReq->preAuthbssId,
-		     (void *)pBssDescription->bssId, sizeof(tSirMacAddr));
-	qdf_mem_copy((void *)&pftPreAuthReq->self_mac_addr,
-		     (void *)&pSession->selfMacAddr.bytes, sizeof(tSirMacAddr));
-
-	if (csr_roam_is11r_assoc(pMac, sessionId) &&
-	    (pMac->roam.roamSession[sessionId].connectedProfile.AuthType !=
-	     eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
-		pftPreAuthReq->ft_ies_length =
-			(uint16_t) pSession->ftSmeContext.auth_ft_ies_length;
-		qdf_mem_copy(pftPreAuthReq->ft_ies,
-			     pSession->ftSmeContext.auth_ft_ies,
-			     pSession->ftSmeContext.auth_ft_ies_length);
-	} else {
-		pftPreAuthReq->ft_ies_length = 0;
-	}
-	qdf_mem_copy(pftPreAuthReq->pbssDescription, pBssDescription,
-		     sizeof(pBssDescription->length) + pBssDescription->length);
-	pftPreAuthReq->length = auth_req_len;
-	return cds_send_mb_message_to_mac(pftPreAuthReq);
-}
-
-/*--------------------------------------------------------------------------
- * This will receive and process the FT Pre Auth Rsp from the current
- * associated ap.
- *
- * This will invoke the hdd call back. This is so that hdd can now
- * send the FTIEs from the Auth Rsp (Auth Seq 2) to the supplicant.
-   ------------------------------------------------------------------------*/
-void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
-					tpSirFTPreAuthRsp pFTPreAuthRsp)
-{
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tCsrRoamInfo roamInfo;
-	eCsrAuthType conn_Auth_type;
-	uint32_t sessionId = pFTPreAuthRsp->smeSessionId;
-	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
-
-	if (NULL == pSession) {
-		sms_log(pMac, LOGE, FL("pSession is NULL"));
-		return;
-	}
-	status = csr_neighbor_roam_preauth_rsp_handler(pMac,
-				pFTPreAuthRsp->smeSessionId,
-				pFTPreAuthRsp->status);
-	if (status != QDF_STATUS_SUCCESS) {
-		/*
-		 * Bail out if pre-auth was not even processed.
-		 */
-		sms_log(pMac, LOGE,
-			FL("Preauth was not processed: %d SessionID: %d"),
-			status, sessionId);
-		return;
-	}
-
-	/* The below function calls/timers should be invoked only if the pre-auth is successful */
-	if (QDF_STATUS_SUCCESS != (QDF_STATUS) pFTPreAuthRsp->status)
-		return;
-	/* Implies a success */
-	pSession->ftSmeContext.FTState = eFT_AUTH_COMPLETE;
-	/* Indicate SME QoS module the completion of Preauth success. This will trigger the creation of RIC IEs */
-	pSession->ftSmeContext.psavedFTPreAuthRsp = pFTPreAuthRsp;
-	/* No need to notify qos module if this is a non 11r & ESE roam */
-	if (csr_roam_is11r_assoc(pMac, pFTPreAuthRsp->smeSessionId)
-#ifdef FEATURE_WLAN_ESE
-		 || csr_roam_is_ese_assoc(pMac, pFTPreAuthRsp->smeSessionId)
-#endif
-	) {
-		sme_qos_csr_event_ind(pMac,
-				      pSession->ftSmeContext.smeSessionId,
-				      SME_QOS_CSR_PREAUTH_SUCCESS_IND, NULL);
-	}
-	/* Start the pre-auth reassoc interval timer with a period of 400ms. When this expires,
-	 * actual transition from the current to handoff AP is triggered */
-	status =
-		qdf_mc_timer_start(&pSession->ftSmeContext.preAuthReassocIntvlTimer,
-				   60);
-	if (QDF_STATUS_SUCCESS != status) {
-		sms_log(pMac, LOGE,
-			FL
-				("Preauth reassoc interval timer start failed to start with status %d"),
-			status);
-		return;
-	}
-	/* Save the received response */
-	qdf_mem_copy((void *)&pSession->ftSmeContext.preAuthbssId,
-		     (void *)pFTPreAuthRsp->preAuthbssId, sizeof(struct qdf_mac_addr));
-	if (csr_roam_is11r_assoc(pMac, pFTPreAuthRsp->smeSessionId))
-		csr_roam_call_callback(pMac, pFTPreAuthRsp->smeSessionId, NULL, 0,
-				       eCSR_ROAM_FT_RESPONSE,
-				       eCSR_ROAM_RESULT_NONE);
-
-#ifdef FEATURE_WLAN_ESE
-	if (csr_roam_is_ese_assoc(pMac, pFTPreAuthRsp->smeSessionId)) {
-		/* read TSF */
-		csr_roam_read_tsf(pMac, (uint8_t *) roamInfo.timestamp,
-				  pFTPreAuthRsp->smeSessionId);
-		/* Save the bssid from the received response */
-		qdf_mem_copy((void *)&roamInfo.bssid,
-			     (void *)pFTPreAuthRsp->preAuthbssId,
-			     sizeof(struct qdf_mac_addr));
-		csr_roam_call_callback(pMac, pFTPreAuthRsp->smeSessionId,
-				       &roamInfo, 0, eCSR_ROAM_CCKM_PREAUTH_NOTIFY,
-				       0);
-	}
-#endif /* FEATURE_WLAN_ESE */
-
-	/* If Legacy Fast Roaming is enabled, signal the supplicant */
-	/* So he can send us a PMK-ID for this candidate AP. */
-	if (csr_roam_is_fast_roam_enabled(pMac, pFTPreAuthRsp->smeSessionId)) {
-		/* Save the bssid from the received response */
-		qdf_mem_copy((void *)&roamInfo.bssid,
-			     (void *)pFTPreAuthRsp->preAuthbssId,
-			     sizeof(struct qdf_mac_addr));
-		csr_roam_call_callback(pMac, pFTPreAuthRsp->smeSessionId,
-				       &roamInfo, 0, eCSR_ROAM_PMK_NOTIFY, 0);
-	}
-
-	/* If its an Open Auth, FT IEs are not provided by supplicant */
-	/* Hence populate them here */
-	conn_Auth_type =
-		pMac->roam.roamSession[sessionId].connectedProfile.AuthType;
-
-	pSession->ftSmeContext.addMDIE = false;
-
-	/* Done with it, init it. */
-	pSession->ftSmeContext.psavedFTPreAuthRsp = NULL;
-
-	if (csr_roam_is11r_assoc(pMac, pFTPreAuthRsp->smeSessionId) &&
-	    (conn_Auth_type == eCSR_AUTH_TYPE_OPEN_SYSTEM)) {
-		uint16_t ft_ies_length;
-		ft_ies_length = pFTPreAuthRsp->ric_ies_length;
-
-		if ((pSession->ftSmeContext.reassoc_ft_ies) &&
-		    (pSession->ftSmeContext.reassoc_ft_ies_length)) {
-			qdf_mem_free(pSession->ftSmeContext.reassoc_ft_ies);
-			pSession->ftSmeContext.reassoc_ft_ies_length = 0;
-			pSession->ftSmeContext.reassoc_ft_ies = NULL;
-		}
-
-		if (!ft_ies_length)
-			return;
-
-		pSession->ftSmeContext.reassoc_ft_ies =
-			qdf_mem_malloc(ft_ies_length);
-		if (NULL == pSession->ftSmeContext.reassoc_ft_ies) {
-			sms_log(pMac, LOGE,
-				FL("Memory allocation failed for ft_ies"));
-			return;
-		} else {
-			/* Copy the RIC IEs to reassoc IEs */
-			qdf_mem_copy(((uint8_t *) pSession->ftSmeContext.
-				      reassoc_ft_ies),
-				     (uint8_t *) pFTPreAuthRsp->ric_ies,
-				     pFTPreAuthRsp->ric_ies_length);
-			pSession->ftSmeContext.reassoc_ft_ies_length =
-				ft_ies_length;
-			pSession->ftSmeContext.addMDIE = true;
-		}
-	}
-}
-
 
 /*
    pBuf points to the beginning of the message

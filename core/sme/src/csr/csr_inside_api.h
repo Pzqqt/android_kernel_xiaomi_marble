@@ -1058,3 +1058,4 @@ bool is_disconnect_pending(tpAniSirGlobal mac_ctx,
 void csr_scan_active_list_timeout_handle(void *userData);
 QDF_STATUS csr_prepare_disconnect_command(tpAniSirGlobal mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);
+void csr_release_command_preauth(tpAniSirGlobal mac_ctx, tSmeCmd *command);
