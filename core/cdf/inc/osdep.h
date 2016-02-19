@@ -33,7 +33,7 @@
 #include <cdf_lock.h>
 #include <qdf_time.h>
 #include <cdf_softirq_timer.h>
-#include <cdf_defer.h>
+#include <qdf_defer.h>
 #include <cdf_nbuf.h>
 #include <cds_if_upperproto.h>
 
@@ -233,7 +233,7 @@ typedef struct {
 struct _NIC_DEV {
 	void *bdev;             /* bus device handle */
 	struct net_device *netdev;      /* net device handle (wifi%d) */
-	cdf_bh_t intr_tq;       /* tasklet */
+	qdf_bh_t intr_tq;       /* tasklet */
 	struct net_device_stats devstats;       /* net device statisitics */
 	HAL_BUS_CONTEXT bc;
 #ifdef ATH_PERF_PWR_OFFLOAD

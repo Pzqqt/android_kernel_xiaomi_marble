@@ -1444,7 +1444,7 @@ struct wma_tx_ack_work_ctx {
 	tp_wma_handle wma_handle;
 	uint16_t sub_type;
 	int32_t status;
-	cdf_work_t ack_cmp_work;
+	qdf_work_t ack_cmp_work;
 };
 
 /**

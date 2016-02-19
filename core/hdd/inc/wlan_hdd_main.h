@@ -58,7 +58,7 @@
 #include "wlan_hdd_tdls.h"
 #endif
 #include "wlan_hdd_cfg80211.h"
-#include <cdf_defer.h>
+#include <qdf_defer.h>
 #ifdef WLAN_FEATURE_MBSSID
 #include "sap_api.h"
 #endif
@@ -1253,7 +1253,7 @@ struct hdd_context_s {
 	tSirScanType ioctl_scan_mode;
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
-	cdf_work_t sta_ap_intf_check_work;
+	qdf_work_t sta_ap_intf_check_work;
 #endif
 
 	struct work_struct  sap_start_work;

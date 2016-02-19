@@ -6753,10 +6753,10 @@ void cds_check_concurrent_intf_and_restart_sap(hdd_station_ctx_t *hdd_sta_ctx,
 				operationChannel)
 #endif
 	   ) {
-		cdf_create_work(&hdd_ctx->sta_ap_intf_check_work,
+		qdf_create_work(0, &hdd_ctx->sta_ap_intf_check_work,
 				cds_check_sta_ap_concurrent_ch_intf,
 				(void *)adapter);
-		cdf_schedule_work(&hdd_ctx->sta_ap_intf_check_work);
+		qdf_sched_work(0, &hdd_ctx->sta_ap_intf_check_work);
 		cds_info("Checking for Concurrent Change interference");
 	}
 }
