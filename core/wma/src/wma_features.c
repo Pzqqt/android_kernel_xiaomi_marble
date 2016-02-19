@@ -3660,8 +3660,6 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	htc_cancel_deferred_target_sleep(scn);
-
 	wma->wow.wow_enable_cmd_sent = true;
 
 	return QDF_STATUS_SUCCESS;
@@ -6609,8 +6607,6 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 		QDF_ASSERT(0);
 		return -EFAULT;
 	}
-
-	htc_cancel_deferred_target_sleep(scn);
 
 	return 0;
 }
