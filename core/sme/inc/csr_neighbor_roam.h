@@ -295,4 +295,8 @@ void csr_roam_synch_callback(tpAniSirGlobal mac,
 	roam_offload_synch_ind *roam_synch_data,
 	tpSirBssDescription  bss_desc_ptr, uint8_t reason);
 #endif
+void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,
+		uint8_t newstate, uint8_t session);
+uint8_t *csr_neighbor_roam_state_to_string(uint8_t state);
+
 #endif /* CSR_NEIGHBOR_ROAM_H */

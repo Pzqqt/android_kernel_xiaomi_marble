@@ -61,16 +61,17 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac, uint32_t session
 static QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal pMac,
 						      uint8_t sessionId);
 
-#define CSR_NEIGHBOR_ROAM_STATE_TRANSITION(mac_ctx, newstate, session) \
-{ \
-	mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState = \
-		mac_ctx->roam.neighborRoamInfo[session].neighborRoamState; \
-	mac_ctx->roam.neighborRoamInfo[session].neighborRoamState = newstate; \
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, \
-		FL("Sessionid (%d) NeighborRoam transition from %s to %s"), \
-		session, csr_neighbor_roam_state_to_string( \
-		mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState),\
-		csr_neighbor_roam_state_to_string(newstate)); \
+void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,
+		uint8_t newstate, uint8_t session)
+{
+	mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState =
+		mac_ctx->roam.neighborRoamInfo[session].neighborRoamState;
+	mac_ctx->roam.neighborRoamInfo[session].neighborRoamState = newstate;
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
+		FL("Sessionid (%d) NeighborRoam transition from %s to %s"),
+		session, csr_neighbor_roam_state_to_string(
+		mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState),
+		csr_neighbor_roam_state_to_string(newstate));
 }
 
 uint8_t *csr_neighbor_roam_state_to_string(uint8_t state)
@@ -922,9 +923,8 @@ static QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
 	neighbor_roam_info->FTRoamInfo.numPreAuthRetries++;
 
 	/* Transition the state to preauthenticating */
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-		(mac_ctx, eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING,
-		session_id)
+	csr_neighbor_roam_state_transition(mac_ctx,
+			eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING, session_id);
 
 	return status;
 }
@@ -1013,9 +1013,8 @@ QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 			&preauth_rsp_node->List, LL_ACCESS_LOCK);
 
 		/* Pre-auth successful. Transition to PREAUTH Done state */
-		CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-			(mac_ctx, eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE,
-			session_id)
+		csr_neighbor_roam_state_transition(mac_ctx,
+			eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE, session_id);
 		neighbor_roam_info->FTRoamInfo.numPreAuthRetries = 0;
 
 		/*
@@ -1103,9 +1102,8 @@ ABORT_PREAUTH:
 						      ROAM_SCAN_OFFLOAD_RESTART,
 						      REASON_PREAUTH_FAILED_FOR_ALL);
 			}
-			CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-				(mac_ctx, eCSR_NEIGHBOR_ROAM_STATE_CONNECTED,
-				session_id);
+			csr_neighbor_roam_state_transition(mac_ctx,
+				eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 		}
 	}
 
@@ -1167,8 +1165,8 @@ csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 	csr_ll_insert_tail(&neighbor_roam_info_ptr->FTRoamInfo.preAuthDoneList,
 			   &bss_info_ptr->List, LL_ACCESS_LOCK);
 
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-		(pMac, eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE, session_id)
+	csr_neighbor_roam_state_transition(pMac,
+			eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE, session_id);
 	neighbor_roam_info_ptr->FTRoamInfo.numPreAuthRetries = 0;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "LFR3:Entry added to Auth Done List");
@@ -1663,8 +1661,8 @@ static QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
 					      ROAM_SCAN_OFFLOAD_RESTART,
 					      REASON_NO_CAND_FOUND_OR_NOT_ROAMING_NOW);
 		}
-		CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-			(pMac, eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, sessionId);
+		csr_neighbor_roam_state_transition(pMac,
+				eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, sessionId);
 	}
 	return QDF_STATUS_SUCCESS;
 
@@ -2304,9 +2302,8 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 			 * Otherwise, we will be stuck in reassoc state which'll
 			 * in-turn block scans.
 			 */
-			CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-				(pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT,
-				sessionId);
+		csr_neighbor_roam_state_transition(pMac,
+				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 			pNeighborRoamInfo->roamChannelInfo.
 				IAPPNeighborListReceived = false;
 		}
@@ -2318,8 +2315,8 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 		break;
 
 	case eCSR_NEIGHBOR_ROAM_STATE_CONNECTED:
-		CSR_NEIGHBOR_ROAM_STATE_TRANSITION(
-				pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId)
+		csr_neighbor_roam_state_transition(pMac,
+				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 		pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived =
 				false;
 		csr_neighbor_roam_reset_connected_state_control_info(pMac,
@@ -2331,8 +2328,8 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 		qdf_mc_timer_stop(&pSession->ftSmeContext.
 				preAuthReassocIntvlTimer);
 	case eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING:
-		CSR_NEIGHBOR_ROAM_STATE_TRANSITION(
-				pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId)
+		csr_neighbor_roam_state_transition(pMac,
+				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 		pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived =
 				false;
 		csr_neighbor_roam_reset_preauth_control_info(pMac, sessionId);
@@ -2345,8 +2342,8 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 				mac_trace_get_neighbour_roam_state(
 					pNeighborRoamInfo->neighborRoamState));
 		NEIGHBOR_ROAM_DEBUG(pMac, LOGW, FL("Transit to INIT state"));
-		CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-			(pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId)
+		csr_neighbor_roam_state_transition(pMac,
+				eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 			pNeighborRoamInfo->roamChannelInfo.
 			IAPPNeighborListReceived = false;
 		break;
@@ -2387,8 +2384,8 @@ static void csr_neighbor_roam_info_ctx_init(
 	if (eCSR_NEIGHBOR_ROAM_STATE_INIT ==
 		ngbr_roam_info->neighborRoamState)
 		csr_init_occupied_channels_list(pMac, session_id);
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-		(pMac, eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
+	csr_neighbor_roam_state_transition(pMac,
+			eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 
 	qdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
 			&session->connectedProfile.bssid);
@@ -2567,9 +2564,8 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 			 * Just transition the state to INIT state.Rest of the
 			 * clean up happens when we get next connect indication
 			 */
-			CSR_NEIGHBOR_ROAM_STATE_TRANSITION(
-				pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT,
-				session_id)
+			csr_neighbor_roam_state_transition(pMac,
+				eCSR_NEIGHBOR_ROAM_STATE_INIT, session_id);
 			ngbr_roam_info->roamChannelInfo.IAPPNeighborListReceived =
 				false;
 			break;
@@ -2805,8 +2801,8 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 		return QDF_STATUS_E_RESOURCES;
 	}
 
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION(pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT,
-					   sessionId)
+	csr_neighbor_roam_state_transition(pMac,
+			eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 	/* Set the Last Sent Cmd as RSO_STOP */
 	pNeighborRoamInfo->last_sent_cmd = ROAM_SCAN_OFFLOAD_STOP;
@@ -2874,8 +2870,8 @@ void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 						 preAuthDoneList);
 	csr_ll_close(&pNeighborRoamInfo->FTRoamInfo.preAuthDoneList);
 
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION(pMac,
-		eCSR_NEIGHBOR_ROAM_STATE_CLOSED, sessionId)
+	csr_neighbor_roam_state_transition(pMac,
+		eCSR_NEIGHBOR_ROAM_STATE_CLOSED, sessionId);
 
 	return;
 }
@@ -2928,8 +2924,8 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 			       eCSR_ROAM_FT_START, eSIR_SME_SUCCESS);
 
 	qdf_mem_zero(&roam_info, sizeof(tCsrRoamInfo));
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
-		(mac_ctx, eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING, session_id)
+	csr_neighbor_roam_state_transition(mac_ctx,
+			eCSR_NEIGHBOR_ROAM_STATE_REASSOCIATING, session_id);
 
 	csr_neighbor_roam_send_lfr_metric_event(mac_ctx, session_id,
 		handoff_node.pBssDescription->bssId,
@@ -3133,8 +3129,8 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(tpAniSirGlobal pM
 	qdf_mc_timer_stop(&session->ftSmeContext.preAuthReassocIntvlTimer);
 
 	/* Transition to init state */
-	CSR_NEIGHBOR_ROAM_STATE_TRANSITION(pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT,
-					   sessionId)
+	csr_neighbor_roam_state_transition(pMac,
+			eCSR_NEIGHBOR_ROAM_STATE_INIT, sessionId);
 	pNeighborRoamInfo->roamChannelInfo.IAPPNeighborListReceived = false;
 }
 
