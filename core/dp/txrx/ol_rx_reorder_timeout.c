@@ -28,7 +28,7 @@
 /*=== header file includes ===*/
 /* generic utilities */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_softirq_timer.h>
+#include <qdf_timer.h>
 #include <qdf_time.h>
 
 /* datapath internal interfaces */
@@ -68,7 +68,7 @@ ol_rx_reorder_timeout_start(struct ol_tx_reorder_cat_timeout_t
 	list_elem = TAILQ_FIRST(&rx_reorder_timeout_ac->virtual_timer_list);
 
 	duration_ms = list_elem->timestamp_ms - time_now_ms;
-	cdf_softirq_timer_start(&rx_reorder_timeout_ac->timer, duration_ms);
+	qdf_timer_start(&rx_reorder_timeout_ac->timer, duration_ms);
 }
 
 static inline void
@@ -178,7 +178,7 @@ void ol_rx_reorder_timeout_init(struct ol_txrx_pdev_t *pdev)
 		rx_reorder_timeout_ac =
 			&pdev->rx.reorder_timeout.access_cats[i];
 		/* init the per-AC timers */
-		cdf_softirq_timer_init(pdev->osdev,
+		qdf_timer_init(pdev->osdev,
 				       &rx_reorder_timeout_ac->timer,
 				       ol_rx_reorder_timeout,
 				       rx_reorder_timeout_ac);
@@ -211,8 +211,8 @@ void ol_rx_reorder_timeout_cleanup(struct ol_txrx_pdev_t *pdev)
 		struct ol_tx_reorder_cat_timeout_t *rx_reorder_timeout_ac;
 		rx_reorder_timeout_ac =
 			&pdev->rx.reorder_timeout.access_cats[i];
-		cdf_softirq_timer_cancel(&rx_reorder_timeout_ac->timer);
-		cdf_softirq_timer_free(&rx_reorder_timeout_ac->timer);
+		qdf_timer_stop(&rx_reorder_timeout_ac->timer);
+		qdf_timer_free(&rx_reorder_timeout_ac->timer);
 	}
 }
 

@@ -88,7 +88,7 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 {
 	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
-	cdf_softirq_timer_cancel(&vdev->ll_pause.timer);
+	qdf_timer_stop(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
 	while (vdev->ll_pause.txq.head) {
 		cdf_nbuf_t next =
@@ -310,7 +310,7 @@ void ol_tx_pdev_throttle_phase_timer(void *context)
 				THROTTLE_LEVEL_0) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
 					   "start timer %d ms\n", ms);
-			cdf_softirq_timer_start(&pdev->tx_throttle.
+			qdf_timer_start(&pdev->tx_throttle.
 							phase_timer, ms);
 		}
 	} else {
@@ -325,7 +325,7 @@ void ol_tx_pdev_throttle_phase_timer(void *context)
 		    THROTTLE_LEVEL_0) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_WARN, "start timer %d ms\n",
 				   ms);
-			cdf_softirq_timer_start(&pdev->tx_throttle.phase_timer,
+			qdf_timer_start(&pdev->tx_throttle.phase_timer,
 						ms);
 		}
 	}
@@ -363,10 +363,10 @@ void ol_tx_throttle_set_level(struct ol_txrx_pdev_t *pdev, int level)
 	ms = pdev->tx_throttle.
 	     throttle_time_ms[level][THROTTLE_PHASE_OFF];
 
-	cdf_softirq_timer_cancel(&pdev->tx_throttle.phase_timer);
+	qdf_timer_stop(&pdev->tx_throttle.phase_timer);
 
 	if (level != THROTTLE_LEVEL_0)
-		cdf_softirq_timer_start(&pdev->tx_throttle.phase_timer, ms);
+		qdf_timer_start(&pdev->tx_throttle.phase_timer, ms);
 }
 
 /* This table stores the duty cycle for each level.
@@ -411,13 +411,13 @@ void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev)
 
 	ol_tx_throttle_init_period(pdev, throttle_period);
 
-	cdf_softirq_timer_init(pdev->osdev,
+	qdf_timer_init(pdev->osdev,
 			       &pdev->tx_throttle.phase_timer,
 			       ol_tx_pdev_throttle_phase_timer, pdev,
 			       CDF_TIMER_TYPE_SW);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-	cdf_softirq_timer_init(pdev->osdev,
+	qdf_timer_init(pdev->osdev,
 			       &pdev->tx_throttle.tx_timer,
 			       ol_tx_pdev_throttle_tx_timer, pdev,
 			       CDF_TIMER_TYPE_SW);

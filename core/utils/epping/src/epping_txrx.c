@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -267,7 +267,8 @@ static int epping_register_adapter(epping_adapter_t *pAdapter)
 {
 	int ret = 0;
 
-	if ((ret = register_netdev(pAdapter->dev)) != 0) {
+	ret = register_netdev(pAdapter->dev);
+	if (ret != 0) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: unable to register device\n",
 			   pAdapter->dev->name);
@@ -308,7 +309,7 @@ void epping_destroy_adapter(epping_adapter_t *pAdapter)
 	epping_unregister_adapter(pAdapter);
 
 	cdf_spinlock_destroy(&pAdapter->data_lock);
-	cdf_softirq_timer_free(&pAdapter->epping_timer);
+	qdf_timer_free(&pAdapter->epping_timer);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 
 	while (cdf_nbuf_queue_len(&pAdapter->nodrop_queue)) {
@@ -369,7 +370,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	cdf_spinlock_init(&pAdapter->data_lock);
 	cdf_nbuf_queue_init(&pAdapter->nodrop_queue);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
-	cdf_softirq_timer_init(epping_get_cdf_ctx(), &pAdapter->epping_timer,
+	qdf_timer_init(epping_get_cdf_ctx(), &pAdapter->epping_timer,
 		epping_timer_expire, dev, CDF_TIMER_TYPE_SW);
 	dev->type = ARPHRD_IEEE80211;
 	dev->netdev_ops = &epping_drv_ops;

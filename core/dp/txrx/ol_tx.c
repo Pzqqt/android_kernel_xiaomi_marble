@@ -806,8 +806,8 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 		}
 	}
 	if (vdev->ll_pause.txq.depth) {
-		cdf_softirq_timer_cancel(&vdev->ll_pause.timer);
-		cdf_softirq_timer_start(&vdev->ll_pause.timer,
+		qdf_timer_stop(&vdev->ll_pause.timer);
+		qdf_timer_start(&vdev->ll_pause.timer,
 					OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
 		vdev->ll_pause.is_q_timer_on = true;
 		if (vdev->ll_pause.txq.depth >= vdev->ll_pause.max_q_depth)
@@ -846,8 +846,8 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 		cdf_nbuf_set_next(vdev->ll_pause.txq.tail, NULL);
 
 	if (start_timer) {
-		cdf_softirq_timer_cancel(&vdev->ll_pause.timer);
-		cdf_softirq_timer_start(&vdev->ll_pause.timer,
+		qdf_timer_stop(&vdev->ll_pause.timer);
+		qdf_timer_start(&vdev->ll_pause.timer,
 					OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
 		vdev->ll_pause.is_q_timer_on = true;
 	}
@@ -995,8 +995,8 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		cdf_spin_lock_bh(&vdev->ll_pause.mutex);
 		if (vdev->ll_pause.txq.depth) {
-			cdf_softirq_timer_cancel(&pdev->tx_throttle.tx_timer);
-			cdf_softirq_timer_start(
+			qdf_timer_stop(&pdev->tx_throttle.tx_timer);
+			qdf_timer_start(
 				&pdev->tx_throttle.tx_timer,
 				OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
 			cdf_spin_unlock_bh(&vdev->ll_pause.mutex);

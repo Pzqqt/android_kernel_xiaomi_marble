@@ -39,7 +39,7 @@
 #include <htt.h>                /* htt_sec_type, htt_pkt_type, etc. */
 #include <qdf_atomic.h>         /* qdf_atomic_t */
 #include <wdi_event_api.h>      /* wdi_event_subscribe */
-#include <cdf_softirq_timer.h>  /* cdf_softirq_timer_t */
+#include <qdf_timer.h>		/* qdf_timer_t */
 #include <cdf_lock.h>           /* cdf_spinlock */
 #include <pktlog.h>             /* ol_pktlog_dev_handle */
 #include <ol_txrx_stats.h>
@@ -202,7 +202,7 @@ struct ol_rx_reorder_timeout_list_elem_t {
 
 struct ol_tx_reorder_cat_timeout_t {
 	TAILQ_HEAD(, ol_rx_reorder_timeout_list_elem_t) virtual_timer_list;
-	cdf_softirq_timer_t timer;
+	qdf_timer_t timer;
 	uint32_t duration_ms;
 	struct ol_txrx_pdev_t *pdev;
 };
@@ -729,9 +729,9 @@ struct ol_txrx_pdev_t {
 		cdf_spinlock_t mutex;
 		/* timer used to monitor the throttle "on" phase and
 		   "off" phase */
-		cdf_softirq_timer_t phase_timer;
+		qdf_timer_t phase_timer;
 		/* timer used to send tx frames */
-		cdf_softirq_timer_t tx_timer;
+		qdf_timer_t tx_timer;
 		/* This is the time in ms of the throttling window, it will
 		 * include an "on" phase and an "off" phase */
 		uint32_t throttle_period_ms;
@@ -833,7 +833,7 @@ struct ol_txrx_vdev_t {
 		} txq;
 		uint32_t paused_reason;
 		cdf_spinlock_t mutex;
-		cdf_softirq_timer_t timer;
+		qdf_timer_t timer;
 		int max_q_depth;
 		bool is_q_paused;
 		bool is_q_timer_on;

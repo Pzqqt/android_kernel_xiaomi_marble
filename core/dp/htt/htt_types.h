@@ -31,7 +31,7 @@
 #include <osdep.h>              /* uint16_t, dma_addr_t */
 #include <cdf_types.h>          /* cdf_device_t */
 #include <cdf_lock.h>           /* cdf_spinlock_t */
-#include <cdf_softirq_timer.h>  /* cdf_softirq_timer_t */
+#include <qdf_timer.h>		/* qdf_timer_t */
 #include <qdf_atomic.h>         /* qdf_atomic_inc */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <htc_api.h>            /* HTC_PACKET */
@@ -324,7 +324,7 @@ struct htt_pdev_t {
 		 * refill_retry_timer - timer triggered when the ring is not
 		 * refilled to the level expected
 		 */
-		cdf_softirq_timer_t refill_retry_timer;
+		qdf_timer_t refill_retry_timer;
 
 		/*
 		 * refill_ref_cnt - ref cnt for Rx buffer replenishment - this

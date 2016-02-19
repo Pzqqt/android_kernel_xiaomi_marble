@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,7 +53,7 @@
 
 #define TX_RETRY_TIMEOUT_IN_MS 1
 
-static bool enb_tx_dump = 0;
+static bool enb_tx_dump;
 
 void epping_tx_dup_pkt(epping_adapter_t *pAdapter,
 		       HTC_ENDPOINT_ID eid, cdf_nbuf_t skb)
@@ -204,7 +204,7 @@ void epping_tx_timer_expire(epping_adapter_t *pAdapter)
 		/* if nodrop queue is not empty, continue to arm timer */
 		if (pAdapter->epping_timer_state != EPPING_TX_TIMER_RUNNING) {
 			pAdapter->epping_timer_state = EPPING_TX_TIMER_RUNNING;
-			cdf_softirq_timer_mod(&pAdapter->epping_timer,
+			qdf_timer_mod(&pAdapter->epping_timer,
 					      TX_RETRY_TIMEOUT_IN_MS);
 		}
 		cdf_spin_unlock_bh(&pAdapter->data_lock);
@@ -291,7 +291,7 @@ tx_fail:
 		cdf_spin_lock_bh(&pAdapter->data_lock);
 		if (pAdapter->epping_timer_state != EPPING_TX_TIMER_RUNNING) {
 			pAdapter->epping_timer_state = EPPING_TX_TIMER_RUNNING;
-			cdf_softirq_timer_mod(&pAdapter->epping_timer,
+			qdf_timer_mod(&pAdapter->epping_timer,
 					      TX_RETRY_TIMEOUT_IN_MS);
 		}
 		cdf_spin_unlock_bh(&pAdapter->data_lock);

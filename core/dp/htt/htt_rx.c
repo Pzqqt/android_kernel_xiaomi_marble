@@ -42,7 +42,7 @@
 #include <cdf_memory.h>         /* cdf_mem_malloc,free, etc. */
 #include <cdf_types.h>          /* cdf_print, bool */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_softirq_timer.h>  /* cdf_softirq_timer_free */
+#include <qdf_timer.h>		/* qdf_timer_free */
 
 #include <htt.h>                /* HTT_HL_RX_DESC_SIZE */
 #include <ol_cfg.h>
@@ -237,7 +237,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 			cdf_nbuf_alloc(pdev->osdev, HTT_RX_BUF_SIZE,
 				       0, 4, false);
 		if (!rx_netbuf) {
-			cdf_softirq_timer_cancel(&pdev->rx_ring.
+			qdf_timer_stop(&pdev->rx_ring.
 						 refill_retry_timer);
 			/*
 			 * Failed to fill it to the desired level -
@@ -248,7 +248,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 #ifdef DEBUG_DMA_DONE
 			pdev->rx_ring.dbg_refill_cnt++;
 #endif
-			cdf_softirq_timer_start(
+			qdf_timer_start(
 				&pdev->rx_ring.refill_retry_timer,
 				HTT_RX_RING_REFILL_RETRY_TIME_MS);
 			goto fail;
@@ -342,8 +342,8 @@ unsigned int htt_rx_in_order_ring_elems(struct htt_pdev_t *pdev)
 
 void htt_rx_detach(struct htt_pdev_t *pdev)
 {
-	cdf_softirq_timer_cancel(&pdev->rx_ring.refill_retry_timer);
-	cdf_softirq_timer_free(&pdev->rx_ring.refill_retry_timer);
+	qdf_timer_stop(&pdev->rx_ring.refill_retry_timer);
+	qdf_timer_free(&pdev->rx_ring.refill_retry_timer);
 
 	if (pdev->cfg.is_full_reorder_offload) {
 		cdf_os_mem_free_consistent(pdev->osdev,
@@ -2208,7 +2208,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	qdf_atomic_inc(&pdev->rx_ring.refill_ref_cnt);
 
 	/* Initialize the Rx refill retry timer */
-	cdf_softirq_timer_init(pdev->osdev,
+	qdf_timer_init(pdev->osdev,
 		 &pdev->rx_ring.refill_retry_timer,
 		 htt_rx_ring_refill_retry, (void *)pdev,
 		 CDF_TIMER_TYPE_SW);

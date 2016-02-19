@@ -54,7 +54,7 @@
 #include <cdf_lock.h>           /* cdf_spinlock */
 #include <cds_queue.h>          /* TAILQ */
 #include <qdf_time.h>
-#include <cdf_softirq_timer.h>
+#include <qdf_timer.h>
 #include <cdf_memory.h>
 #include <osdep.h>
 /*DFS Utility Include END*/

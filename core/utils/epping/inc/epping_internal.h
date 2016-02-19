@@ -143,7 +143,7 @@ typedef struct epping_adapter_s {
 	/* for mboxping */
 	cdf_spinlock_t data_lock;
 	cdf_nbuf_queue_t nodrop_queue;
-	cdf_softirq_timer_t epping_timer;
+	qdf_timer_t epping_timer;
 	epping_tx_timer_state_t epping_timer_state;
 	bool registered;
 	bool started;

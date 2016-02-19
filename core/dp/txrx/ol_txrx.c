@@ -979,11 +979,11 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 	OL_RX_REORDER_TIMEOUT_CLEANUP(pdev);
 #ifdef QCA_SUPPORT_TX_THROTTLE
 	/* Thermal Mitigation */
-	cdf_softirq_timer_cancel(&pdev->tx_throttle.phase_timer);
-	cdf_softirq_timer_free(&pdev->tx_throttle.phase_timer);
+	qdf_timer_stop(&pdev->tx_throttle.phase_timer);
+	qdf_timer_free(&pdev->tx_throttle.phase_timer);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-	cdf_softirq_timer_cancel(&pdev->tx_throttle.tx_timer);
-	cdf_softirq_timer_free(&pdev->tx_throttle.tx_timer);
+	qdf_timer_stop(&pdev->tx_throttle.tx_timer);
+	qdf_timer_free(&pdev->tx_throttle.tx_timer);
 #endif
 #endif
 	ol_tso_seg_list_deinit(pdev);
@@ -1108,7 +1108,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	vdev->ll_pause.paused_reason = 0;
 	vdev->ll_pause.txq.head = vdev->ll_pause.txq.tail = NULL;
 	vdev->ll_pause.txq.depth = 0;
-	cdf_softirq_timer_init(pdev->osdev,
+	qdf_timer_init(pdev->osdev,
 			       &vdev->ll_pause.timer,
 			       ol_tx_vdev_ll_pause_queue_send, vdev,
 			       CDF_TIMER_TYPE_SW);
@@ -1186,8 +1186,8 @@ ol_txrx_vdev_detach(ol_txrx_vdev_handle vdev,
 	TXRX_ASSERT2(vdev);
 
 	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
-	cdf_softirq_timer_cancel(&vdev->ll_pause.timer);
-	cdf_softirq_timer_free(&vdev->ll_pause.timer);
+	qdf_timer_stop(&vdev->ll_pause.timer);
+	qdf_timer_free(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
 	while (vdev->ll_pause.txq.head) {
 		cdf_nbuf_t next = cdf_nbuf_next(vdev->ll_pause.txq.head);

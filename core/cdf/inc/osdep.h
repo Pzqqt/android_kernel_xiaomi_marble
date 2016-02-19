@@ -32,7 +32,7 @@
 #include <cdf_memory.h>
 #include <cdf_lock.h>
 #include <qdf_time.h>
-#include <cdf_softirq_timer.h>
+#include <qdf_timer.h>
 #include <qdf_defer.h>
 #include <cdf_nbuf.h>
 #include <cds_if_upperproto.h>
@@ -282,13 +282,13 @@ static INLINE unsigned char *os_malloc(osdev_t pNicDev,
 	(_arg) = (_type)(timer_arg)
 
 #define OS_INIT_TIMER(_osdev, _timer, _fn, _ctx, type)  \
-		cdf_softirq_timer_init(_osdev, _timer, _fn, _ctx, type)
+		qdf_timer_init(_osdev, _timer, _fn, _ctx, type)
 
-#define OS_SET_TIMER(_timer, _ms)      cdf_softirq_timer_mod(_timer, _ms)
+#define OS_SET_TIMER(_timer, _ms)      qdf_timer_mod(_timer, _ms)
 
-#define OS_CANCEL_TIMER(_timer)        cdf_softirq_timer_cancel(_timer)
+#define OS_CANCEL_TIMER(_timer)        qdf_timer_stop(_timer)
 
-#define OS_FREE_TIMER(_timer)          cdf_softirq_timer_cancel(_timer)
+#define OS_FREE_TIMER(_timer)          qdf_timer_stop(_timer)
 
 /*
  * These are required for network manager support
