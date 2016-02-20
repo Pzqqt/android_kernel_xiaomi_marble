@@ -47,7 +47,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -200,10 +200,10 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	}
 
 	if (bcn->dma_mapped) {
-		cdf_nbuf_unmap_single(pdev->osdev, bcn->buf, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
 		bcn->dma_mapped = 0;
 	}
-	ret = cdf_nbuf_map_single(pdev->osdev, bcn->buf, CDF_DMA_TO_DEVICE);
+	ret = cdf_nbuf_map_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
 	if (ret != QDF_STATUS_SUCCESS) {
 		cdf_nbuf_free(wmi_buf);
 		WMA_LOGE("%s: failed map beacon buf to DMA region", __func__);
@@ -268,7 +268,7 @@ int wma_beacon_swba_handler(void *handle, uint8_t *event, uint32_t len)
 	swba_event = param_buf->fixed_param;
 	vdev_map = swba_event->vdev_map;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s: pdev is NULL", __func__);
 		return -EINVAL;
@@ -310,7 +310,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	WMA_LOGD("%s: Enter", __func__);
 	param_buf = (WMI_PEER_STA_KICKOUT_EVENTID_param_tlvs *) event;
 	kickout_event = param_buf->fixed_param;
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s: pdev is NULL", __func__);
 		return -EINVAL;
@@ -565,7 +565,7 @@ static inline void wma_get_link_probe_timeout(struct sAniSirGlobal *mac,
 void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 {
 	uint32_t min_inactive_time, max_inactive_time, max_unresponsive_time;
-	struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -610,7 +610,7 @@ void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 void wma_set_sta_sa_query_param(tp_wma_handle wma,
 				  uint8_t vdev_id)
 {
-	struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t max_retries, retry_interval;
 	wmi_buf_t buf;
 	WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param *cmd;
@@ -850,7 +850,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	}
 	intr = &wma->interfaces[params->smesessionId];
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -1327,7 +1327,7 @@ void wma_update_cfg_params(tp_wma_handle wma, tSirMsgQ *cfgParam)
 		return;
 	}
 
-	pmac = cds_get_context(CDF_MODULE_ID_PE);
+	pmac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == pmac) {
 		WMA_LOGE("%s: Failed to get pmac", __func__);
@@ -1806,7 +1806,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
  */
 static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 				   tpSetBssKeyParams key_info,
-				   struct cdf_mac_addr peer_macaddr)
+				   struct qdf_mac_addr peer_macaddr)
 {
 	struct wma_set_key_params key_params;
 	wmi_buf_t buf;
@@ -1904,7 +1904,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	WMA_LOGD("STA key setup");
 
 	/* Get the txRx Pdev handle */
-	txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!txrx_pdev) {
 		WMA_LOGE("%s:Invalid txrx pdev handle", __func__);
 		key_info->status = QDF_STATUS_E_FAILURE;
@@ -2086,7 +2086,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 				 WMI_VDEV_SET_WMM_PARAMS_CMDID))
 		goto fail;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (pdev)
 		ol_txrx_set_wmm_param(pdev, ol_tx_wmm_param);
 	else
@@ -2679,7 +2679,7 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	wmi_mgmt_tx_compl_event_fixed_param	*cmpl_params;
 	struct wmi_desc_t *wmi_desc;
 
-	ol_txrx_pdev_handle pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	param_buf = (WMI_MGMT_TX_COMPLETION_EVENTID_param_tlvs *)
 		cmpl_event_params;
@@ -2702,7 +2702,7 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 
 	if (wmi_desc->nbuf)
 		cdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
-				      CDF_DMA_TO_DEVICE);
+				      QDF_DMA_TO_DEVICE);
 	if (wmi_desc->tx_cmpl_cb)
 		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
 				       wmi_desc->nbuf, 1);
@@ -2812,7 +2812,7 @@ void wma_process_update_userpos(tp_wma_handle wma_handle,
  */
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	int ret = -EIO;
 
 	if (NULL == wma) {
@@ -2953,7 +2953,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 	uint64_t *last_pn, new_pn;
 	uint32_t *rmf_pn_replays;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s: Failed to find pdev", __func__);
 		return true;
@@ -3311,11 +3311,11 @@ QDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 	tp_wma_handle wma_handle;
 
 #ifdef QCA_WIFI_FTM
-	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
+	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		return QDF_STATUS_SUCCESS;
 #endif
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma_handle) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -3350,7 +3350,7 @@ QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 		tpSirBssDescription  bss_desc_ptr))
 {
 
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);
@@ -3371,7 +3371,7 @@ QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 QDF_STATUS wma_register_mgmt_frm_client(
 	void *cds_ctx, wma_mgmt_frame_rx_callback mgmt_frm_rx)
 {
-	tp_wma_handle wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma_handle) {
 		WMA_LOGE("%s: Failed to get WMA context", __func__);

@@ -403,7 +403,7 @@ typedef struct sSirRemainOnChnReq {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;
-	struct cdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr selfMacAddr;
 	uint8_t chnNum;
 	uint8_t phyMode;
 	uint32_t duration;
@@ -544,7 +544,7 @@ typedef enum eSirNwType {
 
 /* / Definition for new iBss peer info */
 typedef struct sSirNewIbssPeerInfo {
-	struct cdf_mac_addr peerAddr;
+	struct qdf_mac_addr peerAddr;
 	uint16_t aid;
 } tSirNewIbssPeerInfo, *tpSirNewIbssPeerInfo;
 
@@ -559,7 +559,7 @@ typedef struct sSirHtConfig {
 	/* Enable/Disable SGI */
 	uint32_t ht_sgi:1;
 	uint32_t unused:27;
-} cdf_packed tSirHTConfig, *tpSirHTConfig;
+} qdf_packed tSirHTConfig, *tpSirHTConfig;
 
 typedef struct sSirAddIeParams {
 	uint16_t probeRespDataLen;
@@ -592,8 +592,8 @@ typedef struct sSirSmeStartBssReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Added for BT-AMP Support */
 	uint16_t transactionId; /* Added for BT-AMP Support */
-	struct cdf_mac_addr bssid;      /* Added for BT-AMP Support */
-	struct cdf_mac_addr self_macaddr;        /* Added for BT-AMP Support */
+	struct qdf_mac_addr bssid;      /* Added for BT-AMP Support */
+	struct qdf_mac_addr self_macaddr;        /* Added for BT-AMP Support */
 	uint16_t beaconInterval;        /* Added for BT-AMP Support */
 	uint8_t dot11mode;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
@@ -621,7 +621,7 @@ typedef struct sSirSmeStartBssReq {
 	uint32_t dtimPeriod;
 	uint8_t wps_state;
 	uint8_t isCoalesingInIBSSAllowed;       /* Coalesing on/off knob */
-	enum tCDF_ADAPTER_MODE bssPersona;
+	enum tQDF_ADAPTER_MODE bssPersona;
 
 	uint8_t txLdpcIniFeatureEnabled;
 
@@ -655,7 +655,7 @@ typedef struct sSirBssDescription {
 	/* offset of the ieFields from bssId. */
 	uint16_t length;
 	tSirMacAddr bssId;
-	v_TIME_t scanSysTimeMsec;
+	unsigned long scanSysTimeMsec;
 	uint32_t timeStamp[2];
 	uint16_t beaconInterval;
 	uint16_t capabilityInfo;
@@ -783,9 +783,9 @@ typedef struct sSirSmeScanReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
-	struct cdf_mac_addr selfMacAddr;        /* Added For BT-AMP Support */
+	struct qdf_mac_addr selfMacAddr;        /* Added For BT-AMP Support */
 	tSirBssType bssType;
 	uint8_t dot11mode;
 	tSirScanType scanType;
@@ -909,7 +909,7 @@ typedef struct sSirSmeScanChanReq {
 typedef struct sSirOemDataReq {
 	uint16_t messageType;   /* eWNI_SME_OEM_DATA_REQ */
 	uint16_t messageLen;
-	struct cdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr selfMacAddr;
 	uint8_t data_len;
 	uint8_t *data;
 } tSirOemDataReq, *tpSirOemDataReq;
@@ -952,7 +952,7 @@ typedef struct sSirSmeJoinReq {
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	uint8_t cc_switch_mode;
 #endif
-	enum tCDF_ADAPTER_MODE staPersona;       /* Persona */
+	enum tQDF_ADAPTER_MODE staPersona;       /* Persona */
 	ePhyChanBondState cbMode;       /* Pass CB mode value in Join. */
 
 	/*This contains the UAPSD Flag for all 4 AC
@@ -1084,7 +1084,7 @@ typedef struct sSirSmeProbereq {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t devicePasswdId;
 } tSirSmeProbeReq, *tpSirSmeProbeReq;
 
@@ -1145,10 +1145,10 @@ typedef struct sSirSmeAssocCnf {
 	uint16_t messageType;   /* eWNI_SME_ASSOC_CNF */
 	uint16_t length;
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr bssid;      /* Self BSSID */
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;      /* Self BSSID */
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t aid;
-	struct cdf_mac_addr alternate_bssid;
+	struct qdf_mac_addr alternate_bssid;
 	uint8_t alternateChannelId;
 } tSirSmeAssocCnf, *tpSirSmeAssocCnf;
 
@@ -1169,7 +1169,7 @@ typedef enum eSirSmeStatusChangeCode {
 } tSirSmeStatusChangeCode;
 
 typedef struct sSirSmeNewBssInfo {
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	uint8_t channelNumber;
 	uint8_t reserved;
 	tSirMacSSid ssId;
@@ -1177,7 +1177,7 @@ typedef struct sSirSmeNewBssInfo {
 
 typedef struct sSirSmeApNewCaps {
 	uint16_t capabilityInfo;
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	uint8_t channelId;
 	uint8_t reserved[3];
 	tSirMacSSid ssId;
@@ -1213,7 +1213,7 @@ typedef struct sSirSmeWmStatusChangeNtf {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	tSirSmeStatusChangeCode statusChangeCode;
-	struct cdf_mac_addr bssid;      /* Self BSSID */
+	struct qdf_mac_addr bssid;      /* Self BSSID */
 	union {
 		uint16_t deAuthReasonCode;      /* eSIR_SME_DEAUTH_FROM_PEER */
 		/* eSIR_SME_DISASSOC_FROM_PEER */
@@ -1236,13 +1236,13 @@ typedef struct sSirSmeDisassocReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr bssid;      /* Peer BSSID */
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;      /* Peer BSSID */
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	/* This flag tells LIM whether to send the disassoc OTA or not */
 	/* This will be set in while handing off from one AP to other */
 	uint8_t doNotSendOverTheAir;
-} cdf_packed tSirSmeDisassocReq, *tpSirSmeDisassocReq;
+} qdf_packed tSirSmeDisassocReq, *tpSirSmeDisassocReq;
 
 /* / Definition for Tkip countermeasures request */
 typedef struct sSirSmeTkipCntrMeasReq {
@@ -1250,9 +1250,9 @@ typedef struct sSirSmeTkipCntrMeasReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr bssId; /* Peer BSSID */
+	struct qdf_mac_addr bssId; /* Peer BSSID */
 	bool bEnable;           /* Start/stop countermeasures */
-} cdf_packed tSirSmeTkipCntrMeasReq, *tpSirSmeTkipCntrMeasReq;
+} qdf_packed tSirSmeTkipCntrMeasReq, *tpSirSmeTkipCntrMeasReq;
 
 typedef struct sAni64BitCounters {
 	uint32_t Hi;
@@ -1372,10 +1372,10 @@ typedef struct sSirSmeDisassocRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
-} cdf_packed tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
+} qdf_packed tSirSmeDisassocRsp, *tpSirSmeDisassocRsp;
 
 /* / Definition for Disassociation indication from peer */
 typedef struct sSirSmeDisassocInd {
@@ -1384,8 +1384,8 @@ typedef struct sSirSmeDisassocInd {
 	uint8_t sessionId;      /* Session Identifier */
 	uint16_t transactionId; /* Transaction Identifier with PE */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr bssid;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peer_macaddr;
 	tAniStaStatStruct perStaStats;  /* STA stats */
 	uint16_t staId;
 	uint32_t reasonCode;
@@ -1397,8 +1397,8 @@ typedef struct sSirSmeDisassocCnf {
 	uint16_t messageType;   /* eWNI_SME_DISASSOC_CNF */
 	uint16_t length;
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr bssid;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peer_macaddr;
 } tSirSmeDisassocCnf, *tpSirSmeDisassocCnf,
 	tSirSmeDeauthCnf, *tpSirSmeDeauthCnf;
 
@@ -1408,8 +1408,8 @@ typedef struct sSirSmeDeauthReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr bssid;      /* AP BSSID */
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;      /* AP BSSID */
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 } tSirSmeDeauthReq, *tpSirSmeDeauthReq;
 
@@ -1420,7 +1420,7 @@ typedef struct sSirSmeDeauthRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 } tSirSmeDeauthRsp, *tpSirSmeDeauthRsp;
 
 /* / Definition for Deauthetication indication from peer */
@@ -1430,8 +1430,8 @@ typedef struct sSirSmeDeauthInd {
 	uint8_t sessionId;      /* Added for BT-AMP */
 	uint16_t transactionId; /* Added for BT-AMP */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr bssid;      /* AP BSSID */
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;      /* AP BSSID */
+	struct qdf_mac_addr peer_macaddr;
 
 	uint16_t staId;
 	uint32_t reasonCode;
@@ -1445,7 +1445,7 @@ typedef struct sSirSmeStopBssReq {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* tranSaction ID for cmd */
 	tSirResultCodes reasonCode;
-	struct cdf_mac_addr bssid;      /* Self BSSID */
+	struct qdf_mac_addr bssid;      /* Self BSSID */
 } tSirSmeStopBssReq, *tpSirSmeStopBssReq;
 
 /* / Definition for stop BSS response message */
@@ -1464,7 +1464,7 @@ typedef struct sSirSmeSwitchChannelInd {
 	uint16_t length;
 	uint8_t sessionId;
 	uint16_t newChannelId;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 } tSirSmeSwitchChannelInd, *tpSirSmeSwitchChannelInd;
 
 /* / Definition for Neighbor BSS indication */
@@ -1484,7 +1484,7 @@ typedef struct sSirSmeMicFailureInd {
 	uint16_t messageType;   /* eWNI_SME_MIC_FAILURE_IND */
 	uint16_t length;
 	uint8_t sessionId;
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	tSirMicFailureInfo info;
 } tSirSmeMicFailureInd, *tpSirSmeMicFailureInd;
 
@@ -1501,8 +1501,8 @@ typedef struct sSirSmeSetContextReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr peer_macaddr;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;      /* BSSID */
 	tSirKeyMaterial keyMaterial;
 } tSirSmeSetContextReq, *tpSirSmeSetContextReq;
 
@@ -1514,7 +1514,7 @@ typedef struct sSirSmeSetContextRsp {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 } tSirSmeSetContextRsp, *tpSirSmeSetContextRsp;
 
 /* / Statistic definitions */
@@ -1711,7 +1711,7 @@ typedef struct sAniGetTsmStatsReq {
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t staId;
 	uint8_t tid;            /* traffic id */
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	void *tsmStatsCallback;
 	void *pDevContext;      /* device context */
 	void *p_cds_context;    /* cds context */
@@ -1835,8 +1835,8 @@ typedef struct sAniDHCPStopInd {
 	uint16_t msgType;
 	uint16_t msgLen;
 	uint8_t device_mode;
-	struct cdf_mac_addr adapterMacAddr;
-	struct cdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr adapterMacAddr;
+	struct qdf_mac_addr peerMacAddr;
 } tAniDHCPInd, *tpAniDHCPInd;
 
 typedef enum eTxRateInfo {
@@ -1908,8 +1908,8 @@ typedef struct sSirTclasInfo {
 		tSirMacTclasParamIPv4 ipv4;
 		tSirMacTclasParamIPv6 ipv6;
 		tSirMacTclasParam8021dq t8021dq;
-	} cdf_packed tclasParams;
-} cdf_packed tSirTclasInfo;
+	} qdf_packed tclasParams;
+} qdf_packed tSirTclasInfo;
 
 #if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_ESE_UPLOAD)
 #define TSRS_11AG_RATE_6MBPS   0xC
@@ -1925,7 +1925,7 @@ typedef struct sSirMacESETSMIE {
 } tSirMacESETSMIE;
 typedef struct sTSMStats {
 	uint8_t tid;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	tTrafStrmMetrics tsmMetrics;
 } tTSMStats, *tpTSMStats;
 typedef struct sEseTSMContext {
@@ -1990,7 +1990,7 @@ typedef struct sSirAddtsReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	uint32_t timeout;       /* in ms */
 	uint8_t rspReqd;
 	tSirAddtsReqInfo req;
@@ -2010,9 +2010,9 @@ typedef struct sSirDeltsReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	uint16_t aid;           /* use 0 if macAddr is being specified */
-	struct cdf_mac_addr macaddr;    /* only on AP to specify the STA */
+	struct qdf_mac_addr macaddr;    /* only on AP to specify the STA */
 	uint8_t rspReqd;
 	tSirDeltsReqInfo req;
 } tSirDeltsReq, *tpSirDeltsReq;
@@ -2024,7 +2024,7 @@ typedef struct sSirDeltsRsp {
 	uint16_t transactionId; /* sme transaction Id - for BT-AMP Support */
 	uint32_t rc;
 	uint16_t aid;           /* use 0 if macAddr is being specified */
-	struct cdf_mac_addr macaddr;    /* only on AP to specify the STA */
+	struct qdf_mac_addr macaddr;    /* only on AP to specify the STA */
 	tSirDeltsReqInfo rsp;
 } tSirDeltsRsp, *tpSirDeltsRsp;
 
@@ -2038,7 +2038,7 @@ typedef struct sSirPlmReq {
 	/* no of times the STA should cycle through PLM ch list */
 	uint8_t burstLen;
 	int8_t desiredTxPwr; /* desired tx power */
-	struct cdf_mac_addr mac_addr;    /* MC dest addr */
+	struct qdf_mac_addr mac_addr;    /* MC dest addr */
 	/* no of channels */
 	uint8_t plmNumCh;
 	/* channel numbers */
@@ -2061,7 +2061,7 @@ typedef struct sSirAggrQosReq {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	uint32_t timeout;       /* in ms */
 	uint8_t rspReqd;
 	tSirAggrQosReqInfo aggrInfo;
@@ -2092,7 +2092,7 @@ typedef struct sSmeIbssPeerInd {
 	uint16_t mesgLen;
 	uint8_t sessionId;
 
-	struct cdf_mac_addr peer_addr;
+	struct qdf_mac_addr peer_addr;
 	uint16_t staId;
 
 	/*
@@ -2111,7 +2111,7 @@ typedef struct sSmeIbssPeerInd {
 typedef struct sSirIbssPeerInactivityInd {
 	uint8_t bssIdx;
 	uint8_t staIdx;
-	struct cdf_mac_addr peer_addr;
+	struct qdf_mac_addr peer_addr;
 } tSirIbssPeerInactivityInd, *tpSirIbssPeerInactivityInd;
 
 typedef struct sLimScanChn {
@@ -2137,7 +2137,7 @@ typedef struct sLimScanChnInfo {
 typedef struct sSirSmeGetAssocSTAsReq {
 	uint16_t messageType;   /* eWNI_SME_GET_ASSOC_STAS_REQ */
 	uint16_t length;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	uint16_t modId;
 	void *pUsrContext;
 	void *pSapEventCallback;
@@ -2150,13 +2150,13 @@ typedef struct sSmeMaxAssocInd {
 	uint16_t mesgLen;
 	uint8_t sessionId;
 	/* the new peer that got rejected max assoc limit reached */
-	struct cdf_mac_addr peer_mac;
+	struct qdf_mac_addr peer_mac;
 } tSmeMaxAssocInd, *tpSmeMaxAssocInd;
 
 typedef struct sSmeCsaOffloadInd {
 	uint16_t mesgType;      /* eWNI_SME_CSA_OFFLOAD_EVENT */
 	uint16_t mesgLen;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 } tSmeCsaOffloadInd, *tpSmeCsaOffloadInd;
 
 /* WOW related structures */
@@ -2201,7 +2201,7 @@ typedef struct sSirSmeWowlEnterParams {
 	uint8_t ucMagicPktEnable;
 
 	/* Magic pattern */
-	struct cdf_mac_addr magic_ptrn;
+	struct qdf_mac_addr magic_ptrn;
 
 	/* Enables/disables packet pattern filtering */
 	uint8_t ucPatternFilteringEnable;
@@ -2234,7 +2234,7 @@ typedef struct sSirSmeWowlEnterParams {
 	uint8_t ucWoWBSSConnLoss;
 #endif /* WLAN_WAKEUP_EVENTS */
 
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tSirSmeWowlEnterParams, *tpSirSmeWowlEnterParams;
 
 /* PE<->HAL: Enter WOWLAN parameters */
@@ -2245,7 +2245,7 @@ typedef struct sSirHalWowlEnterParams {
 	uint8_t ucMagicPktEnable;
 
 	/* Magic pattern */
-	struct cdf_mac_addr magic_ptrn;
+	struct qdf_mac_addr magic_ptrn;
 
 	/* Enables/disables packet pattern filtering in firmware.
 	   Enabling this flag enables broadcast pattern matching
@@ -2458,7 +2458,7 @@ typedef struct sSirUpdateAPWPSIEsReq {
 	uint16_t messageType;   /* eWNI_SME_UPDATE_APWPSIE_REQ */
 	uint16_t length;
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	uint8_t sessionId;      /* Session ID */
 	tSirAPWPSIEs APWPSIEs;
 } tSirUpdateAPWPSIEsReq, *tpSirUpdateAPWPSIEsReq;
@@ -2475,7 +2475,7 @@ typedef struct sSirChangeBIParams {
 	uint16_t messageType;
 	uint16_t length;
 	uint16_t beaconInterval;        /* Beacon Interval */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	uint8_t sessionId;      /* Session ID */
 } tSirChangeBIParams, *tpSirChangeBIParams;
 
@@ -2485,7 +2485,7 @@ typedef struct sSirSetHT2040Mode {
 	uint16_t length;
 	uint8_t cbMode;
 	bool obssEnabled;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	uint8_t sessionId;      /* Session ID */
 } tSirSetHT2040Mode, *tpSirSetHT2040Mode;
 #endif
@@ -2494,7 +2494,7 @@ typedef struct sSirSetHT2040Mode {
 
 typedef struct sSirWPSPBCSession {
 	struct sSirWPSPBCSession *next;
-	struct cdf_mac_addr addr;
+	struct qdf_mac_addr addr;
 	uint8_t uuid_e[SIR_WPS_UUID_LEN];
 	uint32_t timestamp;
 } tSirWPSPBCSession;
@@ -2504,13 +2504,13 @@ typedef struct sSirSmeGetWPSPBCSessionsReq {
 	uint16_t length;
 	void *pUsrContext;
 	void *pSapEventCallback;
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	/* MAC Address of STA in WPS Session to be removed */
-	struct cdf_mac_addr remove_mac;
+	struct qdf_mac_addr remove_mac;
 } tSirSmeGetWPSPBCSessionsReq, *tpSirSmeGetWPSPBCSessionsReq;
 
 typedef struct sSirWPSPBCProbeReq {
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t probeReqIELen;
 	uint8_t probeReqIE[512];
 } tSirWPSPBCProbeReq, *tpSirWPSPBCProbeReq;
@@ -2520,7 +2520,7 @@ typedef struct sSirSmeProbeReqInd {
 	uint16_t messageType;   /*  eWNI_SME_WPS_PBC_PROBE_REQ_IND */
 	uint16_t length;
 	uint8_t sessionId;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 } tSirSmeProbeReqInd, *tpSirSmeProbeReqInd;
 
@@ -2528,7 +2528,7 @@ typedef struct sSirUpdateAPWPARSNIEsReq {
 	uint16_t messageType;   /* eWNI_SME_SET_APWPARSNIEs_REQ */
 	uint16_t length;
 	uint16_t transactionId; /* Transaction ID for cmd */
-	struct cdf_mac_addr bssid;      /* BSSID */
+	struct qdf_mac_addr bssid;      /* BSSID */
 	uint8_t sessionId;      /* Session ID */
 	tSirRSNie APWPARSNIEs;
 } tSirUpdateAPWPARSNIEsReq, *tpSirUpdateAPWPARSNIEsReq;
@@ -2567,7 +2567,7 @@ typedef struct sSirNsOffloadReq {
 	uint8_t srcIPv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	uint8_t selfIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][SIR_MAC_IPV6_ADDR_LEN];
 	uint8_t targetIPv6Addr[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][SIR_MAC_IPV6_ADDR_LEN];
-	struct cdf_mac_addr self_macaddr;
+	struct qdf_mac_addr self_macaddr;
 	uint8_t srcIPv6AddrValid;
 	uint8_t targetIPv6AddrValid[SIR_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 	uint8_t slotIdx;
@@ -2585,7 +2585,7 @@ typedef struct sSirHostOffloadReq {
 #ifdef WLAN_NS_OFFLOAD
 	tSirNsOffloadReq nsOffloadInfo;
 #endif /* WLAN_NS_OFFLOAD */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tSirHostOffloadReq, *tpSirHostOffloadReq;
 
 /* Packet Types. */
@@ -2598,8 +2598,8 @@ typedef struct sSirKeepAliveReq {
 	uint32_t timePeriod;
 	tSirIpv4Addr hostIpv4Addr;
 	tSirIpv4Addr destIpv4Addr;
-	struct cdf_mac_addr dest_macaddr;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr dest_macaddr;
+	struct qdf_mac_addr bssid;
 	uint8_t sessionId;
 } tSirKeepAliveReq, *tpSirKeepAliveReq;
 
@@ -2674,7 +2674,7 @@ typedef struct {
 
 typedef struct {
 	uint8_t vdev_id;
-	struct cdf_mac_addr wakee_mac_addr;
+	struct qdf_mac_addr wakee_mac_addr;
 	uint8_t identification_id[8];
 	uint8_t password[16];
 	uint32_t id_length;
@@ -2703,7 +2703,7 @@ typedef struct {
 	uint32_t keepalive_max; /* Maximum ping interval */
 	uint32_t keepalive_inc; /* Increment of ping interval */
 
-	struct cdf_mac_addr gateway_mac;
+	struct qdf_mac_addr gateway_mac;
 	uint32_t tcp_tx_timeout_val;
 	uint32_t tcp_rx_timeout_val;
 } tSirAppType2Params, *tpSirAppType2Params;
@@ -2718,8 +2718,8 @@ typedef struct sSirWlanSetRxpFilters {
 #define ANI_MAX_IBSS_ROUTE_TABLE_ENTRY   100
 
 typedef struct sAniDestIpNextHopMacPair {
-	uint8_t destIpv4Addr[CDF_IPV4_ADDR_SIZE];
-	uint8_t nextHopMacAddr[CDF_MAC_ADDR_SIZE];
+	uint8_t destIpv4Addr[QDF_IPV4_ADDR_SIZE];
+	uint8_t nextHopMacAddr[QDF_MAC_ADDR_SIZE];
 } tAniDestIpNextHopMacPair;
 
 typedef struct sAniIbssRouteTable {
@@ -2837,7 +2837,7 @@ typedef struct {
 
 typedef struct {
 	tSirMacSSid ssId;
-	uint8_t currAPbssid[CDF_MAC_ADDR_SIZE];
+	uint8_t currAPbssid[QDF_MAC_ADDR_SIZE];
 	uint32_t authentication;
 	uint8_t encryption;
 	uint8_t mcencryption;
@@ -2904,8 +2904,8 @@ struct roam_ext_params {
 	uint8_t num_ssid_allowed_list;
 	uint8_t num_bssid_favored;
 	tSirMacSSid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
-	struct cdf_mac_addr bssid_avoid_list[MAX_BSSID_AVOID_LIST];
-	struct cdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
+	struct qdf_mac_addr bssid_avoid_list[MAX_BSSID_AVOID_LIST];
+	struct qdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
 	uint8_t bssid_favored_factor[MAX_BSSID_FAVORED];
 	int raise_rssi_thresh_5g;
 	int drop_rssi_thresh_5g;
@@ -3053,8 +3053,8 @@ typedef struct sSirRcvPktFilterCfg {
 	eSirReceivePacketFilterType filterType;
 	uint32_t numFieldParams;
 	uint32_t coalesceTime;
-	struct cdf_mac_addr self_macaddr;
-	struct cdf_mac_addr bssid;      /* Bssid of the connected AP */
+	struct qdf_mac_addr self_macaddr;
+	struct qdf_mac_addr bssid;      /* Bssid of the connected AP */
 	tSirRcvPktFilterFieldParams paramsData[SIR_MAX_NUM_TESTS_PER_FILTER];
 } tSirRcvPktFilterCfgType, *tpSirRcvPktFilterCfgType;
 
@@ -3073,7 +3073,7 @@ typedef struct sSirRcvFltPktMatchRsp {
 	/* Success or Failure */
 	uint32_t status;
 	tSirRcvFltPktMatchCnt filterMatchCnt[SIR_MAX_NUM_FILTERS];
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tSirRcvFltPktMatchRsp, *tpSirRcvFltPktMatchRsp;
 
 /* */
@@ -3082,8 +3082,8 @@ typedef struct sSirRcvFltPktMatchRsp {
 typedef struct sSirRcvFltPktClearParam {
 	uint32_t status;        /* only valid for response message */
 	uint8_t filterId;
-	struct cdf_mac_addr self_macaddr;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr self_macaddr;
+	struct qdf_mac_addr bssid;
 } tSirRcvFltPktClearParam, *tpSirRcvFltPktClearParam;
 
 /* */
@@ -3091,9 +3091,9 @@ typedef struct sSirRcvFltPktClearParam {
 /* */
 typedef struct sSirRcvFltMcAddrList {
 	uint32_t ulMulticastAddrCnt;
-	struct cdf_mac_addr multicastAddr[SIR_MAX_NUM_MULTICAST_ADDRESS];
-	struct cdf_mac_addr self_macaddr;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr multicastAddr[SIR_MAX_NUM_MULTICAST_ADDRESS];
+	struct qdf_mac_addr self_macaddr;
+	struct qdf_mac_addr bssid;
 	uint8_t action;
 } tSirRcvFltMcAddrList, *tpSirRcvFltMcAddrList;
 #endif /* WLAN_FEATURE_PACKET_FILTERING */
@@ -3117,7 +3117,7 @@ typedef struct {
 	uint8_t aKCK[16];       /* Key confirmation key */
 	uint8_t aKEK[16];       /* key encryption key */
 	uint64_t ullKeyReplayCounter;   /* replay counter */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tSirGtkOffloadParams, *tpSirGtkOffloadParams;
 
 /*---------------------------------------------------------------------------
@@ -3132,7 +3132,7 @@ typedef struct {
 	uint32_t ulTotalRekeyCount;     /* total rekey attempts */
 	uint32_t ulGTKRekeyCount;       /* successful GTK rekeys */
 	uint32_t ulIGTKRekeyCount;      /* successful iGTK rekeys */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tSirGtkOffloadGetInfoRspParams, *tpSirGtkOffloadGetInfoRspParams;
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
@@ -3359,8 +3359,8 @@ typedef struct sSirTdlsSendMgmtReq {
 	uint8_t responder;
 	uint32_t peerCapability;
 	/* For multi-session, for PE to locate peSession ID */
-	struct cdf_mac_addr bssid;
-	struct cdf_mac_addr peer_mac;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peer_mac;
 	/* Variable length. Dont add any field after this. */
 	uint8_t addIe[1];
 } tSirTdlsSendMgmtReq, *tpSirSmeTdlsSendMgmtReq;
@@ -3378,9 +3378,9 @@ typedef struct sSirTdlsAddStaReq {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	/* For multi-session, for PE to locate peSession ID */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	eTdlsAddOper tdlsAddOper;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint16_t capability;
 	uint8_t extn_capability[SIR_MAC_MAX_EXTN_CAP];
 	uint8_t supported_rates_length;
@@ -3398,7 +3398,7 @@ typedef struct sSirTdlsAddStaRsp {
 	uint16_t messageType;
 	uint16_t length;
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint8_t sessionId;      /* Session ID */
 	uint16_t staId;
 	uint16_t staType;
@@ -3420,8 +3420,8 @@ typedef struct {
 	uint8_t isOffChannelSupported;
 	uint8_t isResponder;    /* Is Peer a responder. */
 	/* For multi-session, for PE to locate peSession ID */
-	struct cdf_mac_addr bssid;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peermac;
 	uint8_t supportedChannelsLen;
 	uint8_t supportedChannels[SIR_MAC_MAX_SUPP_CHANNELS];
 	uint8_t supportedOperClassesLen;
@@ -3435,7 +3435,7 @@ typedef struct {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 } tSirTdlsLinkEstablishReqRsp, *tpSirTdlsLinkEstablishReqRsp;
 
 /* TDLS Request struct SME-->PE */
@@ -3445,8 +3445,8 @@ typedef struct sSirTdlsDelStaReq {
 	uint8_t sessionId;      /* Session ID */
 	uint16_t transactionId; /* Transaction ID for cmd */
 	/* For multi-session, for PE to locate peSession ID */
-	struct cdf_mac_addr bssid;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peermac;
 } tSirTdlsDelStaReq, *tpSirSmeTdlsDelStaReq;
 /* TDLS Response struct PE-->SME */
 typedef struct sSirTdlsDelStaRsp {
@@ -3454,7 +3454,7 @@ typedef struct sSirTdlsDelStaRsp {
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
 	tSirResultCodes statusCode;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint16_t staId;
 } tSirTdlsDelStaRsp, *tpSirTdlsDelStaRsp;
 /* TDLS Delete Indication struct PE-->SME */
@@ -3462,7 +3462,7 @@ typedef struct sSirTdlsDelStaInd {
 	uint16_t messageType;
 	uint16_t length;
 	uint8_t sessionId;      /* Session ID */
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint16_t staId;
 	uint16_t reasonCode;
 } tSirTdlsDelStaInd, *tpSirTdlsDelStaInd;
@@ -3480,7 +3480,7 @@ typedef struct sSirMgmtTxCompletionInd {
 
 typedef struct sSirTdlsEventnotify {
 	uint8_t sessionId;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint16_t messageType;
 	uint32_t peer_reason;
 } tSirTdlsEventnotify;
@@ -3496,7 +3496,7 @@ typedef struct sSirActiveModeSetBcnFilterReq {
 typedef struct sSirResetAPCapsChange {
 	uint16_t messageType;
 	uint16_t length;
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 } tSirResetAPCapsChange, *tpSirResetAPCapsChange;
 
 /* / Definition for Candidate found indication from FW */
@@ -3509,7 +3509,7 @@ typedef struct sSirSmeCandidateFoundInd {
 #ifdef WLAN_FEATURE_11W
 typedef struct sSirWlanExcludeUnencryptParam {
 	bool excludeUnencrypt;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tSirWlanExcludeUnencryptParam, *tpSirWlanExcludeUnencryptParam;
 #endif
 
@@ -3523,7 +3523,7 @@ typedef struct sAniHandoffReq {
 	uint16_t msgType;       /* message type is same as the request type */
 	uint16_t msgLen;        /* length of the entire request */
 	uint8_t sessionId;
-	uint8_t bssid[CDF_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint8_t channel;
 	uint8_t handoff_src;
 } tAniHandoffReq, *tpAniHandoffReq;
@@ -3547,11 +3547,11 @@ typedef struct sAniHandoffReq {
 
 typedef struct sSirScanOffloadReq {
 	uint8_t sessionId;
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	uint8_t numSsid;
 	tSirMacSSid ssId[SIR_SCAN_MAX_NUM_SSID];
 	uint8_t hiddenSsid;
-	struct cdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr selfMacAddr;
 	tSirBssType bssType;
 	uint8_t dot11mode;
 	tSirScanType scanType;
@@ -3658,7 +3658,7 @@ typedef struct sSirLPHBTcpParamStruct {
 	uint16_t dst_port;
 	uint16_t timeout;
 	uint8_t session;
-	struct cdf_mac_addr gateway_mac;
+	struct qdf_mac_addr gateway_mac;
 	uint16_t timePeriodSec; /* in seconds */
 	uint32_t tcpSn;
 } tSirLPHBTcpParamStruct;
@@ -3678,7 +3678,7 @@ typedef struct sSirLPHBUdpParamStruct {
 	uint16_t interval;
 	uint16_t timeout;
 	uint8_t session;
-	struct cdf_mac_addr gateway_mac;
+	struct qdf_mac_addr gateway_mac;
 } tSirLPHBUdpParamStruct;
 
 typedef struct sSirLPHBUdpFilterStruct {
@@ -3715,13 +3715,13 @@ typedef struct sSirChAvoidUpdateReq {
 
 typedef struct sSirLinkSpeedInfo {
 	/* MAC Address for the peer */
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint32_t estLinkSpeed;  /* Linkspeed from firmware */
 } tSirLinkSpeedInfo, *tpSirLinkSpeedInfo;
 
 typedef struct sSirAddPeriodicTxPtrn {
 	/* MAC Address for the adapter */
-	struct cdf_mac_addr mac_address;
+	struct qdf_mac_addr mac_address;
 	uint8_t ucPtrnId;       /* Pattern ID */
 	uint16_t ucPtrnSize;    /* Pattern size */
 	uint32_t usPtrnIntervalMs;      /* In msec */
@@ -3730,7 +3730,7 @@ typedef struct sSirAddPeriodicTxPtrn {
 
 typedef struct sSirDelPeriodicTxPtrn {
 	/* MAC Address for the adapter */
-	struct cdf_mac_addr mac_address;
+	struct qdf_mac_addr mac_address;
 	/* Bitmap of pattern IDs that need to be deleted */
 	uint32_t ucPatternIdBitmap;
 	uint8_t ucPtrnId;       /* Pattern ID */
@@ -3750,8 +3750,8 @@ typedef struct {
 #endif
 typedef struct sSirRateUpdateInd {
 	uint8_t nss;            /* 0: 1x1, 1: 2x2 */
-	struct cdf_mac_addr bssid;
-	enum tCDF_ADAPTER_MODE dev_mode;
+	struct qdf_mac_addr bssid;
+	enum tQDF_ADAPTER_MODE dev_mode;
 	int32_t bcastDataRate;  /* bcast rate unit Mbpsx10, -1:not used */
 	/*
 	 * 0 implies RA, positive value implies fixed rate, -1 implies ignore
@@ -3828,7 +3828,7 @@ typedef struct sSirChanChangeRequest {
 	phy_ch_width ch_width;
 	uint8_t center_freq_seg_0;
 	uint8_t center_freq_seg_1;
-	uint8_t bssid[CDF_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	uint32_t dot11mode;
 	tSirMacRateSet operational_rateset;
 	tSirMacRateSet extended_rateset;
@@ -3845,7 +3845,7 @@ typedef struct sSirStartBeaconIndication {
 	uint16_t messageType;
 	uint16_t messageLen;
 	uint8_t beaconStartStatus;
-	uint8_t bssid[CDF_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 } tSirStartBeaconIndication, *tpSirStartBeaconIndication;
 
 /* additional IE type */
@@ -3863,7 +3863,7 @@ typedef enum tUpdateIEsType {
 
 /* Modify particular IE in addition IE for prob resp Bcn */
 typedef struct sSirModifyIE {
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	uint16_t smeSessionId;
 	bool notify;
 	uint8_t ieID;
@@ -3883,7 +3883,7 @@ typedef struct sSirModifyIEsInd {
 
 /* Message format for Update IE message sent to PE  */
 typedef struct sSirUpdateIE {
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	uint16_t smeSessionId;
 	bool append;
 	bool notify;
@@ -3905,7 +3905,7 @@ typedef struct sSirDfsCsaIeRequest {
 	uint16_t msgLen;
 	uint8_t targetChannel;
 	uint8_t csaIeRequired;
-	uint8_t bssid[CDF_MAC_ADDR_SIZE];
+	uint8_t bssid[QDF_MAC_ADDR_SIZE];
 	struct ch_params_s ch_params;
 } tSirDfsCsaIeRequest, *tpSirDfsCsaIeRequest;
 
@@ -3983,7 +3983,7 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	uint16_t reassoc_req_length;
 	uint8_t isBeacon;
 	uint8_t roamedVdevId;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	int8_t txMgmtPower;
 	uint32_t authStatus;
 	uint8_t rssi;
@@ -4052,7 +4052,7 @@ enum extscan_configuration_flags {
 };
 
 typedef struct {
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 
 	/* Low threshold */
 	int32_t low;
@@ -4130,7 +4130,7 @@ typedef struct {
 	/* Null terminated SSID */
 	uint8_t ssid[SIR_MAC_MAX_SSID_LENGTH + 1];
 
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 
 	/* Frequency in MHz */
 	uint32_t channel;
@@ -4443,7 +4443,7 @@ typedef struct {
 } tSirExtScanSetSigChangeReqParams, *tpSirExtScanSetSigChangeReqParams;
 
 typedef struct {
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	uint32_t channel;
 	uint32_t numOfRssi;
 
@@ -4659,7 +4659,7 @@ typedef struct {
 	/* interface mode */
 	uint8_t mode;
 	/* interface mac address (self) */
-	struct cdf_mac_addr macAddr;
+	struct qdf_mac_addr macAddr;
 	/* tSirWifiConnectionState */
 	/* connection state (valid for STA, CLI only) */
 	uint8_t state;
@@ -4671,7 +4671,7 @@ typedef struct {
 	/* null terminated SSID */
 	uint8_t ssid[33];
 	/* bssid */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	/* country string advertised by AP */
 	uint8_t apCountryStr[WNI_CFG_COUNTRY_CODE_LEN];
 	/* country string for this association */
@@ -4804,7 +4804,7 @@ typedef struct {
 	/* peer type (AP, TDLS, GO etc.) */
 	tSirWifiPeerType type;
 	/* mac address */
-	struct cdf_mac_addr peerMacAddress;
+	struct qdf_mac_addr peerMacAddress;
 	/* peer WIFI_CAPABILITY_XXX */
 	uint32_t capabilities;
 	/* number of rates */
@@ -5072,7 +5072,7 @@ struct rssi_breach_event {
 	uint32_t     request_id;
 	uint32_t     session_id;
 	int8_t       curr_rssi;
-	struct cdf_mac_addr  curr_bssid;
+	struct qdf_mac_addr  curr_bssid;
 };
 
 #define MAX_NUM_FW_SEGMENTS 4
@@ -5235,7 +5235,7 @@ typedef void (*dcc_stats_event_callback_t)(void *hdd_ctx, uint32_t vdev_id,
 struct sir_ocb_config_channel {
 	uint32_t chan_freq;
 	uint32_t bandwidth;
-	struct cdf_mac_addr mac_address;
+	struct qdf_mac_addr mac_address;
 	struct sir_qos_params qos_params[MAX_NUM_AC];
 	uint32_t max_pwr;
 	uint32_t min_pwr;
@@ -5462,9 +5462,9 @@ struct gateway_param_update_req {
 	uint32_t     timeout;
 	uint32_t     ipv4_addr_type;
 	uint32_t     ipv6_addr_type;
-	struct cdf_mac_addr  gw_mac_addr;
-	uint8_t      ipv4_addr[CDF_IPV4_ADDR_SIZE];
-	uint8_t      ipv6_addr[CDF_IPV6_ADDR_SIZE];
+	struct qdf_mac_addr  gw_mac_addr;
+	uint8_t      ipv4_addr[QDF_IPV4_ADDR_SIZE];
+	uint8_t      ipv6_addr[QDF_IPV6_ADDR_SIZE];
 };
 #else
 struct gateway_param_update_req;

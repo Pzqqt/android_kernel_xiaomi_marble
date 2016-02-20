@@ -295,7 +295,7 @@ typedef struct tagScanProfile {
 	uint8_t bReturnAfter1stMatch;
 	uint8_t fUniqueResult;
 	uint8_t freshScan;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 } tScanProfile;
 
 typedef struct tagBssConfigParam {
@@ -327,7 +327,7 @@ typedef struct tagCsrRoamStartBssParams {
 	 * This is the BSSID for the party we want to
 	 * join (only use for IBSS or WDS).
 	 */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	tSirNwType sirNwType;
 	ePhyChanBondState cbMode;
 	tSirMacRateSet operationalRateSet;
@@ -346,7 +346,7 @@ typedef struct tagCsrRoamStartBssParams {
 	uint8_t ApUapsdEnable;
 	uint8_t ssidHidden;
 	uint8_t wps_state;
-	enum tCDF_ADAPTER_MODE bssPersona;
+	enum tQDF_ADAPTER_MODE bssPersona;
 	uint16_t nRSNIELength;  /* If 0, pRSNIE is ignored. */
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
@@ -409,7 +409,7 @@ typedef struct tagSetKeyCmd {
 	eCsrEncryptionType encType;
 	eCsrAuthType authType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
-	struct cdf_mac_addr peermac;    /* Peer's MAC address. ALL 1's for group key */
+	struct qdf_mac_addr peermac;    /* Peer's MAC address. ALL 1's for group key */
 	uint8_t paeRole;        /* 0 for supplicant */
 	uint8_t keyId;          /* Kye index */
 	uint8_t keyLength;      /* Number of bytes containing the key in pKey */
@@ -429,7 +429,7 @@ typedef struct tagWmStatusChangeCmd {
 typedef struct tagAddStaForSessionCmd {
 	/* Session self mac addr */
 	tSirMacAddr selfMacAddr;
-	enum tCDF_ADAPTER_MODE currDeviceMode;
+	enum tQDF_ADAPTER_MODE currDeviceMode;
 	uint32_t type;
 	uint32_t subType;
 	uint8_t sessionId;
@@ -706,7 +706,7 @@ typedef struct tagCsrScanStruct {
 	v_REGDOMAIN_t domainIdCurrent;  /* current regulatory domain */
 
 	/* Bssid for current country code */
-	struct cdf_mac_addr currentCountryBssid;
+	struct qdf_mac_addr currentCountryBssid;
 
 	int8_t currentCountryRSSI;      /* RSSI for current country code */
 	bool fCancelIdleScan;
@@ -841,7 +841,7 @@ typedef struct tagCsrRoamOffloadSynchStruct {
 	uint8_t nss;            /* no of spatial streams */
 	uint16_t chainMask;     /* chainmask */
 	uint16_t smpsMode;      /* smps.mode */
-	struct cdf_mac_addr bssid;      /* MAC address of roamed AP */
+	struct qdf_mac_addr bssid;      /* MAC address of roamed AP */
 	tCsrRoamOffloadAuthStatus authStatus;   /* auth status */
 	uint8_t kck[SIR_KCK_KEY_LEN];
 	uint8_t kek[SIR_KEK_KEY_LEN];
@@ -865,7 +865,7 @@ typedef struct tagCsrRoamSession {
 	bool sessionActive;     /* true if it is used */
 
 	/* For BT-AMP station, this serve as BSSID for self-BSS. */
-	struct cdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr selfMacAddr;
 
 	csr_roam_completeCallback callback;
 	void *pContext;
@@ -944,7 +944,7 @@ typedef struct tagCsrRoamSession {
 	tCsrEseCckmInfo eseCckmInfo;
 	bool isPrevApInfoValid;
 	tSirMacSSid prevApSSID;
-	struct cdf_mac_addr prevApBssid;
+	struct qdf_mac_addr prevApBssid;
 	uint8_t prevOpChannel;
 	uint16_t clientDissSecs;
 	uint32_t roamTS1;
@@ -1232,15 +1232,15 @@ QDF_STATUS csr_get_statistics(tpAniSirGlobal pMac,
 		uint32_t periodicity, bool cache, uint8_t staId,
 		void *pContext, uint8_t sessionId);
 QDF_STATUS csr_get_rssi(tpAniSirGlobal pMac, tCsrRssiCallback callback,
-		uint8_t staId, struct cdf_mac_addr bssId, int8_t lastRSSI,
+		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
 		void *pContext, void *p_cds_context);
 QDF_STATUS csr_get_snr(tpAniSirGlobal pMac, tCsrSnrCallback callback,
-		uint8_t staId, struct cdf_mac_addr bssId, void *pContext);
+		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 		tCsrTsmStatsCallback callback,
 		uint8_t staId,
-		struct cdf_mac_addr bssId,
+		struct qdf_mac_addr bssId,
 		void *pContext, void *p_cds_context, uint8_t tid);
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 QDF_STATUS csr_get_config_param(tpAniSirGlobal pMac, tCsrConfigParam *pParam);
@@ -1324,15 +1324,15 @@ bool csr_roam_is_sta_mode(tpAniSirGlobal pMac, uint32_t sessionId);
 
 /* Post Channel Change Indication */
 QDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
-		struct cdf_mac_addr bssid, chan_params_t *ch_params,
+		struct qdf_mac_addr bssid, chan_params_t *ch_params,
 		tCsrRoamProfile *profile);
 
 /* Post Beacon Tx Start Indication */
 QDF_STATUS csr_roam_start_beacon_req(tpAniSirGlobal pMac,
-		struct cdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
+		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
 
 QDF_STATUS
-csr_roam_send_chan_sw_ie_request(tpAniSirGlobal pMac, struct cdf_mac_addr bssid,
+csr_roam_send_chan_sw_ie_request(tpAniSirGlobal pMac, struct qdf_mac_addr bssid,
 		uint8_t targetChannel, uint8_t csaIeReqd,
 		chan_params_t *ch_params);
 QDF_STATUS
@@ -1397,6 +1397,6 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
 
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
-enum tCDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
+enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 						uint32_t session_id);
 #endif

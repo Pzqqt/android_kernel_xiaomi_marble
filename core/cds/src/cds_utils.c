@@ -358,7 +358,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 
 	/* Check if frame is invalid length */
 	if (((efrm - frm) != frmLen) || (frmLen < sizeof(*wh))) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid frame length", __func__);
 		return false;
 	}
@@ -388,14 +388,14 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	if (IS_ERR(tfm)) {
 		ret = PTR_ERR(tfm);
 		tfm = NULL;
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: crypto_alloc_cipher failed (%d)", __func__, ret);
 		goto err_tfm;
 	}
 
 	ret = crypto_cipher_setkey(tfm, igtk, AES_KEYSIZE_128);
 	if (ret) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: crypto_cipher_setkey failed (%d)", __func__,
 			  ret);
 		goto err_tfm;
@@ -418,7 +418,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	nBytes = AAD_LEN + (frmLen - sizeof(struct ieee80211_frame));
 	input = (uint8_t *) cdf_mem_malloc(nBytes);
 	if (NULL == input) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Memory allocation failed", __func__);
 		ret = QDF_STATUS_E_NOMEM;
 		goto err_tfm;
@@ -439,7 +439,7 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	cds_cmac_calc_mic(tfm, input, nBytes, mic);
 	cdf_mem_free(input);
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "CMAC(T)= %02X %02X %02X %02X %02X %02X %02X %02X",
 		  mic[0], mic[1], mic[2], mic[3],
 		  mic[4], mic[5], mic[6], mic[7]);
@@ -467,7 +467,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 
 	/* Check if frame is invalid length */
 	if ((efrm < frm) || ((efrm - frm) < sizeof(*wh))) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid frame length");
 		return false;
 	}
@@ -477,7 +477,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	/* Check Element ID */
 	if ((mmie->element_id != IEEE80211_ELEMID_MMIE) ||
 	    (mmie->length != (sizeof(*mmie) - 2))) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "IE is not Mgmt MIC IE or Invalid length");
 		/* IE is not Mgmt MIC IE or invalid length */
 		return false;
@@ -487,7 +487,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	rx_ipn = mmie->sequence_number;
 	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) <= 0) {
 		/* Replay error */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Replay error mmie ipn %02X %02X %02X %02X %02X %02X"
 			  " drvr ipn %02X %02X %02X %02X %02X %02X",
 			  rx_ipn[0], rx_ipn[1], rx_ipn[2], rx_ipn[3], rx_ipn[4],
@@ -499,14 +499,14 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	if (IS_ERR(tfm)) {
 		ret = PTR_ERR(tfm);
 		tfm = NULL;
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_alloc_cipher failed (%d)", ret);
 		goto err_tfm;
 	}
 
 	ret = crypto_cipher_setkey(tfm, igtk, AES_KEYSIZE_128);
 	if (ret) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_cipher_setkey failed (%d)", ret);
 		goto err_tfm;
 	}
@@ -528,7 +528,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	nBytes = AAD_LEN + (efrm - (uint8_t *) (wh + 1));
 	input = (uint8_t *) cdf_mem_malloc(nBytes);
 	if (NULL == input) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Memory allocation failed");
 		ret = QDF_STATUS_E_NOMEM;
 		goto err_tfm;
@@ -543,14 +543,14 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	cds_cmac_calc_mic(tfm, input, nBytes, mic);
 	cdf_mem_free(input);
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "CMAC(T)= %02X %02X %02X %02X %02X %02X %02X %02X",
 		  mic[0], mic[1], mic[2], mic[3],
 		  mic[4], mic[5], mic[6], mic[7]);
 
 	if (OS_MEMCMP(mic, mmie->mic, CMAC_TLEN) != 0) {
 		/* MMIE MIC mismatch */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "BC/MC MGMT frame MMIE MIC check Failed"
 			  " rmic %02X %02X %02X %02X %02X %02X %02X %02X"
 			  " cmic %02X %02X %02X %02X %02X %02X %02X %02X",
@@ -630,7 +630,7 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 	tfm = cds_crypto_alloc_ahash("hmac(sha1)", CRYPTO_ALG_TYPE_AHASH,
 				 CRYPTO_ALG_TYPE_AHASH_MASK);
 	if (IS_ERR(tfm)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_alloc_ahash failed");
 		ret = PTR_ERR(tfm);
 		goto err_tfm;
@@ -638,7 +638,7 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 
 	req = ahash_request_alloc(tfm, GFP_KERNEL);
 	if (!req) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "failed to allocate request for hmac(sha1)");
 		ret = -ENOMEM;
 		goto err_req;
@@ -649,7 +649,7 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 
 	hash_buff = kzalloc(psize, GFP_KERNEL);
 	if (!hash_buff) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "failed to kzalloc hash_buff");
 		ret = -ENOMEM;
 		goto err_hash_buf;
@@ -663,7 +663,7 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 		crypto_ahash_clear_flags(tfm, ~0);
 		ret = cds_crypto_ahash_setkey(tfm, key, ksize);
 		if (ret) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "crypto_ahash_setkey failed");
 			goto err_setkey;
 		}
@@ -671,7 +671,7 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 
 	ahash_request_set_crypt(req, &sg, hash_result, psize);
 	ret = cds_crypto_ahash_digest(req);
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, "ret 0x%x", ret);
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, "ret 0x%x", ret);
 
 	switch (ret) {
 	case 0:
@@ -687,7 +687,7 @@ hmac_sha1(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 			INIT_COMPLETION(tresult.completion);
 			break;
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "wait_for_completion_interruptible failed");
 			if (!ret)
 				ret = tresult.err;
@@ -726,7 +726,7 @@ QDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
 			);
 
 	if (ret != 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "hmac_sha1() call failed");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -791,7 +791,7 @@ hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 	tfm = cds_crypto_alloc_ahash("hmac(md5)", CRYPTO_ALG_TYPE_AHASH,
 				 CRYPTO_ALG_TYPE_AHASH_MASK);
 	if (IS_ERR(tfm)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_alloc_ahash failed");
 		ret = PTR_ERR(tfm);
 		goto err_tfm;
@@ -799,7 +799,7 @@ hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 
 	req = ahash_request_alloc(tfm, GFP_KERNEL);
 	if (!req) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "failed to allocate request for hmac(md5)");
 		ret = -ENOMEM;
 		goto err_req;
@@ -810,7 +810,7 @@ hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 
 	hash_buff = kzalloc(psize, GFP_KERNEL);
 	if (!hash_buff) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "failed to kzalloc hash_buff");
 		ret = -ENOMEM;
 		goto err_hash_buf;
@@ -824,7 +824,7 @@ hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 		crypto_ahash_clear_flags(tfm, ~0);
 		ret = cds_crypto_ahash_setkey(tfm, key, ksize);
 		if (ret) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "crypto_ahash_setkey failed");
 			goto err_setkey;
 		}
@@ -833,7 +833,7 @@ hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 	ahash_request_set_crypt(req, &sg, hash_result, psize);
 	ret = cds_crypto_ahash_digest(req);
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, "ret 0x%x", ret);
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, "ret 0x%x", ret);
 
 	switch (ret) {
 	case 0:
@@ -847,7 +847,7 @@ hmac_md5(uint8_t *key, uint8_t ksize, char *plaintext, uint8_t psize,
 			INIT_COMPLETION(tresult.completion);
 			break;
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "wait_for_completion_interruptible failed");
 			if (!ret)
 				ret = tresult.err;
@@ -886,7 +886,7 @@ QDF_STATUS cds_md5_hmac_str(uint32_t cryptHandle,       /* Handle */
 		       );
 
 	if (ret != 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "hmac_md5() call failed");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -951,7 +951,7 @@ QDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 	tfm = cds_crypto_alloc_ablkcipher("cbc(aes)", 0, 0);
 	if (IS_ERR(tfm)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_alloc_ablkcipher failed");
 		ret = PTR_ERR(tfm);
 		goto err_tfm;
@@ -959,7 +959,7 @@ QDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 	req = ablkcipher_request_alloc(tfm, GFP_KERNEL);
 	if (!req) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to allocate request for cbc(aes)");
 		ret = -ENOMEM;
 		goto err_req;
@@ -972,7 +972,7 @@ QDF_STATUS cds_encrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 	ret = crypto_ablkcipher_setkey(tfm, pKey, AES_KEYSIZE_128);
 	if (ret) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_cipher_setkey failed");
 		goto err_setkey;
 	}
@@ -995,7 +995,7 @@ err_req:
 err_tfm:
 	/* return ret; */
 	if (ret != 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s() call failed", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
@@ -1047,7 +1047,7 @@ QDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 	tfm = cds_crypto_alloc_ablkcipher("cbc(aes)", 0, 0);
 	if (IS_ERR(tfm)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_alloc_ablkcipher failed");
 		ret = PTR_ERR(tfm);
 		goto err_tfm;
@@ -1055,7 +1055,7 @@ QDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 	req = ablkcipher_request_alloc(tfm, GFP_KERNEL);
 	if (!req) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to allocate request for cbc(aes)");
 		ret = -ENOMEM;
 		goto err_req;
@@ -1068,7 +1068,7 @@ QDF_STATUS cds_decrypt_aes(uint32_t cryptHandle,        /* Handle */
 
 	ret = crypto_ablkcipher_setkey(tfm, pKey, AES_KEYSIZE_128);
 	if (ret) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "crypto_cipher_setkey failed");
 		goto err_setkey;
 	}
@@ -1091,7 +1091,7 @@ err_req:
 err_tfm:
 	/* return ret; */
 	if (ret != 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s() call failed", __func__);
 		return QDF_STATUS_E_FAULT;
 	}

@@ -55,7 +55,7 @@
 #include "wlan_hdd_ftm.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_stats.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_trace.h"
 
 #include <net/addrconf.h>
@@ -189,7 +189,7 @@ void wlan_hdd_auto_shutdown_cb(void);
 void wlan_hdd_txrx_pause_cb(uint8_t vdev_id,
 		enum netif_action_type action, enum netif_reason_type reason)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	hdd_adapter_t *adapter;
 
 	if (!hdd_ctx) {
@@ -482,7 +482,7 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
  *
  * Return: None
  */
-static void hdd_cdf_trace_enable(CDF_MODULE_ID moduleId, uint32_t bitmask)
+static void hdd_cdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 {
 	CDF_TRACE_LEVEL level;
 
@@ -744,16 +744,16 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
  * Return: None
  */
 void hdd_update_macaddr(struct hdd_config *config,
-			struct cdf_mac_addr hw_macaddr)
+			struct qdf_mac_addr hw_macaddr)
 {
 	int8_t i;
 	uint8_t macaddr_b3, tmp_br3;
 
 	cdf_mem_copy(config->intfMacAddr[0].bytes, hw_macaddr.bytes,
-		     CDF_MAC_ADDR_SIZE);
-	for (i = 1; i < CDF_MAX_CONCURRENCY_PERSONA; i++) {
+		     QDF_MAC_ADDR_SIZE);
+	for (i = 1; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 		cdf_mem_copy(config->intfMacAddr[i].bytes, hw_macaddr.bytes,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 		macaddr_b3 = config->intfMacAddr[i].bytes[3];
 		tmp_br3 = ((macaddr_b3 >> 4 & INTF_MACADDR_MASK) + i) &
 			  INTF_MACADDR_MASK;
@@ -1441,7 +1441,7 @@ static int __hdd_open(struct net_device *dev)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
 			 adapter->sessionId, adapter->device_mode));
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -1497,7 +1497,7 @@ static int __hdd_stop(struct net_device *dev)
 
 	ENTER();
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD, TRACE_CODE_HDD_STOP_REQUEST,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_STOP_REQUEST,
 			 adapter->sessionId, adapter->device_mode));
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -1678,12 +1678,12 @@ static int hdd_set_mac_address(struct net_device *dev, void *addr)
 uint8_t *wlan_hdd_get_intf_addr(hdd_context_t *hdd_ctx)
 {
 	int i;
-	for (i = 0; i < CDF_MAX_CONCURRENCY_PERSONA; i++) {
+	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 		if (0 == ((hdd_ctx->config->intfAddrMask) & (1 << i)))
 			break;
 	}
 
-	if (CDF_MAX_CONCURRENCY_PERSONA == i)
+	if (QDF_MAX_CONCURRENCY_PERSONA == i)
 		return NULL;
 
 	hdd_ctx->config->intfAddrMask |= (1 << i);
@@ -1693,7 +1693,7 @@ uint8_t *wlan_hdd_get_intf_addr(hdd_context_t *hdd_ctx)
 void wlan_hdd_release_intf_addr(hdd_context_t *hdd_ctx, uint8_t *releaseAddr)
 {
 	int i;
-	for (i = 0; i < CDF_MAX_CONCURRENCY_PERSONA; i++) {
+	for (i = 0; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
 		if (!memcmp(releaseAddr,
 			    &hdd_ctx->config->intfMacAddr[i].bytes[0],
 			    6)) {
@@ -1724,7 +1724,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 	static const uint8_t ipv6_router_solicitation[]
 			= {0x33, 0x33, 0x00, 0x00, 0x00, 0x02};
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
 	ENTER();
@@ -2522,7 +2522,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		cds_check_and_restart_sap_with_non_dfs_acs();
 	}
 
-	if ((cds_get_conparam() != CDF_GLOBAL_FTM_MODE)
+	if ((cds_get_conparam() != QDF_GLOBAL_FTM_MODE)
 	    && (!hdd_ctx->config->enable2x2)) {
 #define HDD_DTIM_1CHAIN_RX_ID 0x5
 #define HDD_SMPS_PARAM_VALUE_S 29
@@ -2568,7 +2568,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 #undef HDD_SMPS_PARAM_VALUE_S
 	}
 
-	if (CDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
 		ret = wma_cli_set_command(adapter->sessionId,
 					  WMI_PDEV_PARAM_HYST_EN,
 					  hdd_ctx->config->enableMemDeepSleep,
@@ -2585,7 +2585,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 #ifdef CONFIG_FW_LOGS_BASED_ON_INI
 
 	/* Enable FW logs based on INI configuration */
-	if ((CDF_GLOBAL_FTM_MODE != cds_get_conparam()) &&
+	if ((QDF_GLOBAL_FTM_MODE != cds_get_conparam()) &&
 	    (hdd_ctx->config->enable_fw_log)) {
 		uint8_t count = 0;
 		uint32_t value = 0;
@@ -2736,7 +2736,7 @@ QDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
 
 void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 {
-	struct cdf_mac_addr *bssid = NULL;
+	struct qdf_mac_addr *bssid = NULL;
 	tSirUpdateIE updateIE;
 	switch (pHostapdAdapter->device_mode) {
 	case WLAN_HDD_INFRA_STATION:
@@ -3051,7 +3051,7 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 	QDF_STATUS status;
 	hdd_adapter_t *adapter;
 #ifndef MSM_PLATFORM
-	struct cdf_mac_addr bcastMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bcastMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 #endif
 	eConnectionState connState;
 
@@ -3642,7 +3642,7 @@ static inline int hdd_logging_sock_deactivate_svc(hdd_context_t *hdd_ctx)
  */
 static void hdd_free_context(hdd_context_t *hdd_ctx)
 {
-	if (CDF_GLOBAL_FTM_MODE != hdd_get_conparam())
+	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
 		hdd_logging_sock_deactivate_svc(hdd_ctx);
 
 	cdf_mem_free(hdd_ctx->config);
@@ -3674,7 +3674,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	hdd_unregister_wext_all_adapters(hdd_ctx);
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_disable_ftm(hdd_ctx);
 
 		hdd_alert("FTM driver unloaded");
@@ -3823,7 +3823,7 @@ void __hdd_wlan_exit(void)
 
 	ENTER();
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("Invalid HDD Context"));
 		EXIT();
@@ -3874,7 +3874,7 @@ void hdd_skip_acs_scan_timer_handler(void *data)
  * Return: 0 if successful, error number otherwise
  */
 int hdd_wlan_set_ht2040_mode(hdd_adapter_t *adapter, uint16_t staId,
-			     struct cdf_mac_addr macAddrSTA, int channel_type)
+			     struct qdf_mac_addr macAddrSTA, int channel_type)
 {
 	int status;
 	QDF_STATUS qdf_status;
@@ -3915,7 +3915,7 @@ int hdd_wlan_notify_modem_power_state(int state)
 	QDF_STATUS qdf_status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
 		hddLog(LOGE, FL("HDD context is not valid"));
@@ -4614,7 +4614,7 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 	}
 
 	safe_channel_count = 0;
-	unsafe_channel_count = CDF_MIN((uint16_t)hdd_ctxt->unsafe_channel_count,
+	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctxt->unsafe_channel_count,
 				       (uint16_t)NUM_20MHZ_RF_CHANNELS);
 
 	for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
@@ -4679,7 +4679,7 @@ void hdd_indicate_mgmt_frame(tSirSmeMgmtFrameInd *frame_ind)
 	}
 	/* Get the HDD context.*/
 	hdd_ctx =
-	  (hdd_context_t *)cds_get_context(CDF_MODULE_ID_HDD);
+	  (hdd_context_t *)cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx))
 		return;
@@ -4929,7 +4929,7 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 	hddLog(CDF_TRACE_LEVEL_INFO, FL("num of unsafe channels is %d"),
 	       hdd_ctx->unsafe_channel_count);
 
-	unsafe_channel_count = CDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
+	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
 				       (uint16_t)NUM_20MHZ_RF_CHANNELS);
 
 	for (index = 0; index < unsafe_channel_count; index++) {
@@ -5016,41 +5016,41 @@ static void hdd_override_ini_config(hdd_context_t *hdd_ctx)
  */
 static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
 {
-	hdd_cdf_trace_enable(CDF_MODULE_ID_WMI,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_WMI,
 			     hdd_ctx->config->cdf_trace_enable_wdi);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD,
 			     hdd_ctx->config->cdf_trace_enable_hdd);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_SME,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_SME,
 			     hdd_ctx->config->cdf_trace_enable_sme);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_PE,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_PE,
 			     hdd_ctx->config->cdf_trace_enable_pe);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_WMA,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_WMA,
 			     hdd_ctx->config->cdf_trace_enable_wma);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_SYS,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_SYS,
 			     hdd_ctx->config->cdf_trace_enable_sys);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_CDF,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_QDF,
 			     hdd_ctx->config->cdf_trace_enable_cdf);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_SAP,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_SAP,
 			     hdd_ctx->config->cdf_trace_enable_sap);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD_SOFTAP,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD_SOFTAP,
 			     hdd_ctx->config->cdf_trace_enable_hdd_sap);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_BMI,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_BMI,
 				hdd_ctx->config->cdf_trace_enable_bmi);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_CFG,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_CFG,
 				hdd_ctx->config->cdf_trace_enable_cfg);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_EPPING,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_EPPING,
 				hdd_ctx->config->cdf_trace_enable_epping);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_CDF_DEVICE,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_QDF_DEVICE,
 				hdd_ctx->config->cdf_trace_enable_cdf_devices);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_TXRX,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_TXRX,
 				hdd_ctx->config->cfd_trace_enable_txrx);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_HTC,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_HTC,
 				hdd_ctx->config->cdf_trace_enable_htc);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_HIF,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_HIF,
 				hdd_ctx->config->cdf_trace_enable_hif);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD_SAP_DATA,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD_SAP_DATA,
 				hdd_ctx->config->cdf_trace_enable_hdd_sap_data);
-	hdd_cdf_trace_enable(CDF_MODULE_ID_HDD_DATA,
+	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD_DATA,
 				hdd_ctx->config->cdf_trace_enable_hdd_data);
 
 	hdd_cfg_print(hdd_ctx);
@@ -5158,7 +5158,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	/* Uses to enabled logging after SSR */
 	hdd_ctx->fw_log_settings.enable = hdd_ctx->config->enable_fw_log;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		goto skip_multicast_logging;
 
 	cds_set_multicast_logging(hdd_ctx->config->multicast_host_fw_msgs);
@@ -5226,7 +5226,7 @@ static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
 		}
 
 		cdf_mem_copy(&hdd_ctx->p2pDeviceAddress.bytes[0], p2p_dev_addr,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 	}
 
 	adapter = hdd_open_adapter(hdd_ctx, WLAN_HDD_P2P_DEVICE, "p2p%d",
@@ -5459,7 +5459,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	if (IS_ERR(hdd_ctx))
 		return PTR_ERR(hdd_ctx);
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		ret = hdd_enable_ftm(hdd_ctx);
 
 		if (ret)
@@ -5478,7 +5478,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	wlan_hdd_update_wiphy(hdd_ctx->wiphy, hdd_ctx->config);
 
-	hdd_ctx->hHal = cds_get_context(CDF_MODULE_ID_SME);
+	hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 
 	if (NULL == hdd_ctx->hHal) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, FL("HAL context is null"));
@@ -5694,7 +5694,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
 	status = cdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
-				   CDF_TIMER_TYPE_SW,
+				   QDF_TIMER_TYPE_SW,
 				   hdd_skip_acs_scan_timer_handler,
 				   (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -5727,7 +5727,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 #ifdef MSM_PLATFORM
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
 	cdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
-			  CDF_TIMER_TYPE_SW,
+			  QDF_TIMER_TYPE_SW,
 			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
 #endif
 
@@ -5992,10 +5992,10 @@ int wlan_hdd_gen_wlan_status_pack(struct wlan_status_data *data,
 			       pHddStaCtx->conn_info.SSID.SSID.ssId,
 			       pHddStaCtx->conn_info.SSID.SSID.length);
 		}
-		if (CDF_MAC_ADDR_SIZE >=
+		if (QDF_MAC_ADDR_SIZE >=
 		    sizeof(pHddStaCtx->conn_info.bssId))
 			memcpy(data->bssid, pHddStaCtx->conn_info.bssId.bytes,
-			       CDF_MAC_ADDR_SIZE);
+			       QDF_MAC_ADDR_SIZE);
 	}
 	return 0;
 }
@@ -6203,7 +6203,7 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *adapter,
 	int ret = 0;
 	struct wlan_status_data data;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
 	memset(&data, 0, sizeof(struct wlan_status_data));
@@ -6235,7 +6235,7 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 		return;
 #endif
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam())
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam())
 		return;
 
 	memset(&data, 0, sizeof(struct wlan_version_data));
@@ -6960,11 +6960,11 @@ static int con_mode_handler(const char *kmessage, struct kernel_param *kp)
  *
  * This is the driver exit point (invoked when module is unloaded using rmmod)
  *
- * Return: enum tCDF_GLOBAL_CON_MODE
+ * Return: enum tQDF_GLOBAL_CON_MODE
  */
-enum tCDF_GLOBAL_CON_MODE hdd_get_conparam(void)
+enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void)
 {
-	return (enum tCDF_GLOBAL_CON_MODE) curr_con_mode;
+	return (enum tQDF_GLOBAL_CON_MODE) curr_con_mode;
 }
 
 void hdd_set_conparam(uint32_t con_param)

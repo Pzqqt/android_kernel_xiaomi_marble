@@ -29,7 +29,7 @@
 #define _HTT_TYPES__H_
 
 #include <osdep.h>              /* uint16_t, dma_addr_t */
-#include <cdf_types.h>          /* cdf_device_t */
+#include <qdf_types.h>          /* qdf_device_t */
 #include <cdf_lock.h>           /* cdf_spinlock_t */
 #include <qdf_timer.h>		/* qdf_timer_t */
 #include <qdf_atomic.h>         /* qdf_atomic_inc */
@@ -122,8 +122,8 @@ struct htt_rx_hash_bucket {
    firmware shared memory structure */
 struct uc_shared_mem_t {
 	uint32_t *vaddr;
-	cdf_dma_addr_t paddr;
-	cdf_dma_mem_context(memctx);
+	qdf_dma_addr_t paddr;
+	qdf_dma_mem_context(memctx);
 };
 
 /* Micro controller datapath offload
@@ -149,13 +149,13 @@ struct htt_ipa_uc_tx_resource_t {
  * @rx2_ind_ring_size: rx process done ring size
  */
 struct htt_ipa_uc_rx_resource_t {
-	cdf_dma_addr_t rx_rdy_idx_paddr;
+	qdf_dma_addr_t rx_rdy_idx_paddr;
 	struct uc_shared_mem_t rx_ind_ring_base;
 	struct uc_shared_mem_t rx_ipa_prc_done_idx;
 	uint32_t rx_ind_ring_size;
 
 	/* 2nd RX ring */
-	cdf_dma_addr_t rx2_rdy_idx_paddr;
+	qdf_dma_addr_t rx2_rdy_idx_paddr;
 	struct uc_shared_mem_t rx2_ind_ring_base;
 	struct uc_shared_mem_t rx2_ipa_prc_done_idx;
 	uint32_t rx2_ind_ring_size;
@@ -168,7 +168,7 @@ struct htt_ipa_uc_rx_resource_t {
  * @rx_packet_leng: packet length
  */
 struct ipa_uc_rx_ring_elem_t {
-	cdf_dma_addr_t rx_packet_paddr;
+	qdf_dma_addr_t rx_packet_paddr;
 	uint32_t vdev_id;
 	uint32_t rx_packet_leng;
 };
@@ -218,7 +218,7 @@ struct htt_pdev_t {
 	ol_pdev_handle ctrl_pdev;
 	ol_txrx_pdev_handle txrx_pdev;
 	HTC_HANDLE htc_pdev;
-	cdf_device_t osdev;
+	qdf_device_t osdev;
 
 	HTC_ENDPOINT_ID htc_endpoint;
 
@@ -270,7 +270,7 @@ struct htt_pdev_t {
 #else   /* ! HTT_PADDR64 */
 			uint32_t *paddrs_ring;
 #endif
-			cdf_dma_mem_context(memctx);
+			qdf_dma_mem_context(memctx);
 		} buf;
 		/*
 		 * Base address of ring, as a "physical" device address rather
@@ -294,7 +294,7 @@ struct htt_pdev_t {
 		struct {
 			uint32_t *vaddr;
 			uint32_t paddr;
-			cdf_dma_mem_context(memctx);
+			qdf_dma_mem_context(memctx);
 		} target_idx;
 
 		/*
@@ -310,7 +310,7 @@ struct htt_pdev_t {
 		struct {
 			uint32_t *vaddr;
 			uint32_t paddr;
-			cdf_dma_mem_context(memctx);
+			qdf_dma_mem_context(memctx);
 		} alloc_idx;
 
 		/* sw_rd_idx -
@@ -357,14 +357,14 @@ struct htt_pdev_t {
 		uint16_t alloc_cnt;
 		struct cdf_mem_multi_page_t desc_pages;
 		uint32_t *freelist;
-		cdf_dma_mem_context(memctx);
+		qdf_dma_mem_context(memctx);
 	} tx_descs;
 #if defined(HELIUMPLUS_PADDR64)
 	struct {
 		int size; /* of each Fragment/MSDU-Ext descriptor */
 		int pool_elems;
 		struct cdf_mem_multi_page_t desc_pages;
-		cdf_dma_mem_context(memctx);
+		qdf_dma_mem_context(memctx);
 	} frag_descs;
 #endif /* defined(HELIUMPLUS_PADDR64) */
 

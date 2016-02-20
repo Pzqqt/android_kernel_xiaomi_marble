@@ -37,8 +37,7 @@
 #ifndef __P2P_API_H__
 #define __P2P_API_H__
 
-#include "cdf_types.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_mc_timer.h"
 #include "cdf_lock.h"
 

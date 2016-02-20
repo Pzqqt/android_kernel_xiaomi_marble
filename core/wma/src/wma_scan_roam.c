@@ -47,7 +47,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -188,7 +188,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	uint8_t SSID_num;
 	int i;
 	int len = sizeof(*cmd);
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
 		WMA_LOGP("%s: pMac is NULL!", __func__);
@@ -341,7 +341,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				 * the dwell time.
 				 */
 				cmd->dwell_time_active =
-				   CDF_MIN(scan_req->maxChannelTime,
+				   QDF_MIN(scan_req->maxChannelTime,
 					   (WMA_CTS_DURATION_MS_MAX -
 					    WMA_ROAM_SCAN_CHANNEL_SWITCH_TIME));
 				cmd->dwell_time_passive =
@@ -497,7 +497,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		if (wma_is_sap_active(wma_handle)) {
 			SSID_num = cmd->num_ssids * cmd->num_bssid;
 			cmd->repeat_probe_time = probe_time_dwell_time_map[
-				CDF_MIN(SSID_num,
+				QDF_MIN(SSID_num,
 					WMA_DWELL_TIME_PROBE_TIME_MAP_SIZE
 					- 1)].probe_time;
 		}
@@ -1717,13 +1717,13 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 			 * duration.
 			 */
 			scan_params->burst_duration =
-				CDF_MAX(scan_params->burst_duration,
+				QDF_MAX(scan_params->burst_duration,
 					scan_params->dwell_time_passive);
 		}
 		scan_params->min_rest_time = roam_req->NeighborScanTimerPeriod;
 		scan_params->max_rest_time = roam_req->NeighborScanTimerPeriod;
 		scan_params->repeat_probe_time = (roam_req->nProbes > 0) ?
-						 CDF_MAX(scan_params->dwell_time_active / roam_req->nProbes,
+						 QDF_MAX(scan_params->dwell_time_active / roam_req->nProbes,
 							 1) : 0;
 		scan_params->probe_spacing_time = 0;
 		scan_params->probe_delay = 0;
@@ -1964,7 +1964,7 @@ QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			roam_params->ssid_allowed_list[i].length);
 		ssid_ptr->ssid_len = roam_params->ssid_allowed_list[i].length;
 		WMA_LOGD("%s: SSID length=%d", __func__, ssid_ptr->ssid_len);
-		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
 				(uint8_t *)ssid_ptr->ssid,
 				ssid_ptr->ssid_len);
 		ssid_ptr++;
@@ -2118,7 +2118,7 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	wmi_start_scan_cmd_fixed_param scan_params;
 	wmi_ap_profile ap_profile;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t mode = 0;
 	struct wma_txrx_node *intr = NULL;
 
@@ -2285,7 +2285,7 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 			    cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 				cdf_mem_free(scan_offload_rsp);
-				CDF_TRACE(CDF_MODULE_ID_WMA,
+				CDF_TRACE(QDF_MODULE_ID_WMA,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: Failed to post Scan Offload Rsp to UMAC",
 					  __func__);
@@ -2589,13 +2589,13 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		cdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     key->replay_counter, SIR_REPLAY_CTR_LEN);
 		WMA_LOGD("%s: KCK dump", __func__);
-		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
 				   key->kck, SIR_KCK_KEY_LEN);
 		WMA_LOGD("%s: KEK dump", __func__);
-		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
 				   key->kek, SIR_KEK_KEY_LEN);
 		WMA_LOGD("%s: Key Replay Counter dump", __func__);
-		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
 				   key->replay_counter, SIR_REPLAY_CTR_LEN);
 	}
 }
@@ -2778,7 +2778,7 @@ int wma_rssi_breached_event_handler(void *handle,
 	WMI_RSSI_BREACH_EVENTID_param_tlvs *param_buf;
 	wmi_rssi_breach_event_fixed_param  *event;
 	struct rssi_breach_event  rssi;
-	tpAniSirGlobal mac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGE("%s: Invalid mac context", __func__);
@@ -2840,7 +2840,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	cdf_mem_set(&macQosInfoSta, sizeof(tSirMacQosInfoStation), 0);
 	/* Roaming is done only for INFRA STA type.
 	 * So, ess will be one and ibss will be Zero */
-	pMac = cds_get_context(CDF_MODULE_ID_PE);
+	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
 		CDF_ASSERT(0);
@@ -2848,7 +2848,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_PRIVACY_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2857,7 +2857,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (val)
 		selfCaps.privacy = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_SHORT_PREAMBLE");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2868,28 +2868,28 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	selfCaps.channelAgility = 0;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
 			     &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.shortSlotTime = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11H_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.spectrumMgt = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_QOS_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_QOS_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.qos = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_APSD_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_APSD_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2900,7 +2900,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_BLOCK_ACK_ENABLED, &val) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_BLOCK_ACK_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2913,7 +2913,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_HT_CAP_INFO");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2922,7 +2922,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_HT_AMPDU_PARAMS");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2934,13 +2934,13 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
 			     (uint8_t *) roam_offload_params->mcsset,
 			     &val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_SUPPORTED_MCS_SET");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_EXT_HT_CAP_INFO, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_EXT_HT_CAP_INFO");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2950,7 +2950,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &nCfgValue) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_TX_BF_CAP");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2958,7 +2958,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	nCfgValue8 = (uint8_t) nCfgValue;
 	roam_offload_params->ht_txbf = nCfgValue8 & 0xFF;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_AS_CAP, &nCfgValue) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_AS_CAP");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2969,7 +2969,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	/* QOS Info */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_MAX_SP_LENGTH");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3167,7 +3167,7 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 	sme_msg.bodyptr = ho_failure_ind;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_HO_FAIL_IND msg to SME");
 		cdf_mem_free(ho_failure_ind);
@@ -3247,7 +3247,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 		status = QDF_STATUS_E_FAILURE;
 		goto send_resp;
 	}
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		status = QDF_STATUS_E_FAILURE;
@@ -3390,10 +3390,10 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	len = sizeof(*cmd) +
 		WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE + WMI_TLV_HDR_SIZE;
 
-	len += sizeof(uint32_t) * CDF_MIN(pno->aNetworks[0].ucChannelCount,
+	len += sizeof(uint32_t) * QDF_MIN(pno->aNetworks[0].ucChannelCount,
 					  WMI_NLO_MAX_CHAN);
 	len += sizeof(nlo_configured_parameters) *
-	       CDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
+	       QDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
 	len += sizeof(nlo_channel_prediction_cfg);
 
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
@@ -3426,7 +3426,7 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 
 	buf_ptr += sizeof(wmi_nlo_config_cmd_fixed_param);
 
-	cmd->no_of_ssids = CDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
+	cmd->no_of_ssids = QDF_MIN(pno->ucNetworksCount, WMI_NLO_MAX_SSIDS);
 	WMA_LOGD("SSID count : %d", cmd->no_of_ssids);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->no_of_ssids * sizeof(nlo_configured_parameters));
@@ -3467,7 +3467,7 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 	buf_ptr += cmd->no_of_ssids * sizeof(nlo_configured_parameters);
 
 	/* Copy channel info */
-	cmd->num_of_channels = CDF_MIN(pno->aNetworks[0].ucChannelCount,
+	cmd->num_of_channels = QDF_MIN(pno->aNetworks[0].ucChannelCount,
 				       WMI_NLO_MAX_CHAN);
 	WMA_LOGD("Channel count: %d", cmd->num_of_channels);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
@@ -4179,7 +4179,7 @@ int wma_extscan_start_stop_event_handler(void *handle,
 	wmi_extscan_start_stop_event_fixed_param *event;
 	struct sir_extscan_generic_response   *extscan_ind;
 	uint16_t event_type;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
 		return -EINVAL;
@@ -4280,7 +4280,7 @@ int wma_extscan_operations_event_handler(void *handle,
 	WMI_EXTSCAN_OPERATION_EVENTID_param_tlvs *param_buf;
 	wmi_extscan_operation_event_fixed_param *oprn_event;
 	tSirExtScanOnScanEventIndParams *oprn_ind;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
 		return -EINVAL;
@@ -4355,7 +4355,7 @@ int wma_extscan_table_usage_event_handler(void *handle,
 	WMI_EXTSCAN_TABLE_USAGE_EVENTID_param_tlvs *param_buf;
 	wmi_extscan_table_usage_event_fixed_param *event;
 	tSirExtScanResultsAvailableIndParams *tbl_usg_ind;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
 		return -EINVAL;
@@ -4409,7 +4409,7 @@ int wma_extscan_capabilities_event_handler(void *handle,
 	wmi_extscan_wlan_change_monitor_capabilities *src_change;
 
 	struct ext_scan_capabilities_response  *dest_capab;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
 		return -EINVAL;
@@ -4515,7 +4515,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 	tSirWifiScanResult *dest_ap;
 	wmi_extscan_wlan_descriptor *src_hotlist;
 	int numap, j, ap_found = 0;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
@@ -4782,7 +4782,7 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	wmi_extscan_rssi_info *src_rssi;
 	int numap, i, moredata, scan_ids_cnt, buf_len;
 
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
 		return -EINVAL;
@@ -4891,7 +4891,7 @@ int wma_extscan_change_results_event_handler(void *handle,
 	int count = 0;
 	int moredata;
 	int rssi_num = 0;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s: Invalid pMac", __func__);
 		return -EINVAL;
@@ -4979,7 +4979,7 @@ int wma_passpoint_match_event_handler(void *handle,
 	struct wifi_passpoint_match  *dest_match;
 	tSirWifiScanResult      *dest_ap;
 	uint8_t *buf_ptr;
-	tpAniSirGlobal mac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGE("%s: Invalid mac", __func__);
@@ -5058,7 +5058,7 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
 	wmi_extscan_wlan_descriptor    *src_hotlist;
 	int numap, j;
 	bool ssid_found = false;
-	tpAniSirGlobal mac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGE("%s: Invalid mac", __func__);
@@ -5542,7 +5542,7 @@ QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 	 * requests if the buffer reaches the maximum request size
 	 */
 	while (index < numap) {
-		min_entries = CDF_MIN(num_entries, numap);
+		min_entries = QDF_MIN(num_entries, numap);
 		len += min_entries * sizeof(wmi_extscan_hotlist_entry);
 		buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
 		if (!buf) {
@@ -6154,7 +6154,7 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 	 * nlo_configured_parameters(nlo_list) */
 	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
 	len += sizeof(nlo_configured_parameters) *
-				CDF_MIN(req->num_networks, WMI_NLO_MAX_SSIDS);
+				QDF_MIN(req->num_networks, WMI_NLO_MAX_SSIDS);
 	len += WMI_TLV_HDR_SIZE; /* TLV for channel_list */
 	len += WMI_TLV_HDR_SIZE; /* TLV for channel prediction cfg*/
 
@@ -6176,7 +6176,7 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 
 	buf_ptr += sizeof(wmi_nlo_config_cmd_fixed_param);
 
-	cmd->no_of_ssids = CDF_MIN(req->num_networks, WMI_NLO_MAX_SSIDS);
+	cmd->no_of_ssids = QDF_MIN(req->num_networks, WMI_NLO_MAX_SSIDS);
 	WMA_LOGD("SSID count: %d", cmd->no_of_ssids);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
 		       cmd->no_of_ssids * sizeof(nlo_configured_parameters));
@@ -6671,13 +6671,13 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 
 	cds_msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
 	cds_msg.bodyptr = candidate_ind;
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
 		  FL("posting candidate ind to SME"));
 
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 		cdf_mem_free(candidate_ind);
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to post candidate ind to SME"));
 	}
 }
@@ -6812,7 +6812,7 @@ QDF_STATUS wma_set_rssi_monitoring(tp_wma_handle wma,
 
 QDF_STATUS wma_get_scan_id(uint32_t *scan_id)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!scan_id) {
 		WMA_LOGE("Scan_id is NULL");
@@ -6863,9 +6863,9 @@ QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 
 	cmd->vdev_id = req->session_id;
 	cdf_mem_copy(&cmd->inet_gw_ip_v4_addr, req->ipv4_addr,
-		CDF_IPV4_ADDR_SIZE);
+		QDF_IPV4_ADDR_SIZE);
 	cdf_mem_copy(&cmd->inet_gw_ip_v6_addr, req->ipv6_addr,
-		CDF_IPV6_ADDR_SIZE);
+		QDF_IPV6_ADDR_SIZE);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(req->gw_mac_addr.bytes,
 		&cmd->inet_gw_mac_addr);
 	cmd->max_retries = req->max_retries;

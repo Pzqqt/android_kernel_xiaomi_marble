@@ -67,9 +67,9 @@ static void memdump_cleanup_timer_cb(void *data)
 {
 	int status;
 	hdd_context_t *hdd_ctx = data;
-	cdf_dma_addr_t paddr;
-	cdf_dma_addr_t dma_ctx = 0;
-	cdf_device_t cdf_ctx;
+	qdf_dma_addr_t paddr;
+	qdf_dma_addr_t dma_ctx = 0;
+	qdf_device_t cdf_ctx;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
@@ -82,7 +82,7 @@ static void memdump_cleanup_timer_cb(void *data)
 		return;
 	}
 
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!cdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return;
@@ -202,9 +202,9 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	struct fw_dump_req fw_mem_dump_req;
 	struct fw_dump_seg_req *seg_req;
 	uint8_t loop;
-	cdf_dma_addr_t paddr;
-	cdf_dma_addr_t dma_ctx = 0;
-	cdf_device_t cdf_ctx;
+	qdf_dma_addr_t paddr;
+	qdf_dma_addr_t dma_ctx = 0;
+	qdf_device_t cdf_ctx;
 	unsigned long rc;
 	struct hdd_fw_dump_context *context;
 
@@ -214,7 +214,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 		return status;
 	}
 
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!cdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return -EINVAL;
@@ -393,9 +393,9 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 {
 	int status;
 	hdd_context_t *hdd_ctx;
-	cdf_dma_addr_t paddr;
-	cdf_dma_addr_t dma_ctx = 0;
-	cdf_device_t cdf_ctx;
+	qdf_dma_addr_t paddr;
+	qdf_dma_addr_t dma_ctx = 0;
+	qdf_device_t cdf_ctx;
 
 	hdd_ctx = memdump_get_file_data(file);
 
@@ -405,7 +405,7 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 		hddLog(LOGE, FL("HDD context is not valid"));
 		return -EINVAL;
 	}
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!cdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return -EINVAL;
@@ -481,7 +481,7 @@ static int memdump_procfs_init(void)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hddLog(LOGE , FL("Invalid HDD context"));
 		return -EINVAL;
@@ -542,13 +542,13 @@ int memdump_init(void)
 	QDF_STATUS cb_status;
 	QDF_STATUS qdf_status;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hddLog(LOGE , FL("Invalid HDD context"));
 		return -EINVAL;
 	}
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Not initializing memdump in FTM mode"));
 		return -EINVAL;
 	}
@@ -569,7 +569,7 @@ int memdump_init(void)
 	init_completion(&fw_dump_context.response_event);
 
 	qdf_status = cdf_mc_timer_init(&hdd_ctx->memdump_cleanup_timer,
-				    CDF_TIMER_TYPE_SW, memdump_cleanup_timer_cb,
+				    QDF_TIMER_TYPE_SW, memdump_cleanup_timer_cb,
 				    (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE, FL("Failed to init memdump cleanup timer"));
@@ -591,23 +591,23 @@ int memdump_init(void)
 void memdump_deinit(void)
 {
 	hdd_context_t *hdd_ctx;
-	cdf_dma_addr_t paddr;
-	cdf_dma_addr_t dma_ctx = 0;
-	cdf_device_t cdf_ctx;
+	qdf_dma_addr_t paddr;
+	qdf_dma_addr_t dma_ctx = 0;
+	qdf_device_t cdf_ctx;
 	QDF_STATUS qdf_status;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		hddLog(LOGE , FL("Invalid HDD context"));
 		return;
 	}
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Not deinitializing memdump in FTM mode"));
 		return;
 	}
 
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!cdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return;

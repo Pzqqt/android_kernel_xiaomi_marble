@@ -68,7 +68,7 @@
    -------------------------------------------------------------------------*/
 #define EPPING_MAX_ADAPTERS             1
 
-#define EPPING_LOG(level, args ...) CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
+#define EPPING_LOG(level, args ...) CDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 
 struct epping_cookie {
 	HTC_PACKET HtcPkt;      /* HTC packet wrapper */
@@ -135,10 +135,10 @@ typedef enum {
 
 typedef struct epping_adapter_s {
 	epping_context_t *pEpping_ctx;
-	enum tCDF_ADAPTER_MODE device_mode;
+	enum tQDF_ADAPTER_MODE device_mode;
 	/** Handle to the network device */
 	struct net_device *dev;
-	struct cdf_mac_addr macAddressCurrent;
+	struct qdf_mac_addr macAddressCurrent;
 	uint8_t sessionId;
 	/* for mboxping */
 	cdf_spinlock_t data_lock;
@@ -183,7 +183,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint);
 /* epping_txrx signatures */
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     enum tCDF_ADAPTER_MODE device_mode);
+				     enum tQDF_ADAPTER_MODE device_mode);
 void epping_destroy_adapter(epping_adapter_t *pAdapter);
 int epping_connect_service(epping_context_t *pEpping_ctx);
 #ifdef HIF_PCI

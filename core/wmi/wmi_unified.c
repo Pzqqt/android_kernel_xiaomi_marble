@@ -817,7 +817,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 
 		if (wmitlv_check_command_tlv_params(NULL, buf_ptr, len, cmd_id)
 		    != 0) {
-			cdf_print
+			qdf_print
 				("\nERROR: %s: Invalid WMI Parameter Buffer for Cmd:%d\n",
 				__func__, cmd_id);
 			return -1;
@@ -834,7 +834,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 
 	qdf_atomic_inc(&wmi_handle->pending_cmds);
 	if (qdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
-		scn = cds_get_context(CDF_MODULE_ID_HIF);
+		scn = cds_get_context(QDF_MODULE_ID_HIF);
 		pr_err("\n%s: hostcredits = %d\n", __func__,
 		       wmi_get_host_credits(wmi_handle));
 		htc_dump_counter_info(wmi_handle->htc_handle);
@@ -1266,7 +1266,7 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 {
 	wmi_buf_t buf;
 
-	CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_INFO,
 		"Enter: %s", __func__);
 	cds_flush_work(&wmi_handle->rx_event_work);
 	cdf_spin_lock_bh(&wmi_handle->eventq_lock);
@@ -1276,7 +1276,7 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	cdf_spin_unlock_bh(&wmi_handle->eventq_lock);
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
 		"Done: %s", __func__);
 }
 

@@ -233,7 +233,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 
 	if (tx_desc->pkt_type == ol_tx_frm_tso) {
 		if (cdf_unlikely(tx_desc->tso_desc == NULL)) {
-			cdf_print("%s %d TSO desc is NULL!\n",
+			qdf_print("%s %d TSO desc is NULL!\n",
 				 __func__, __LINE__);
 			cdf_assert(0);
 		} else {
@@ -262,7 +262,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 #if defined(FEATURE_TSO)
 	if (tx_desc->pkt_type == ol_tx_frm_tso) {
 		if (cdf_unlikely(tx_desc->tso_desc == NULL))
-			cdf_print("%s %d TSO desc is NULL!\n",
+			qdf_print("%s %d TSO desc is NULL!\n",
 				 __func__, __LINE__);
 		else
 			ol_tso_free_segment(pdev, tx_desc->tso_desc);
@@ -286,7 +286,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 		if (pool->avail_desc == pool->flow_pool_size) {
 			cdf_spin_unlock_bh(&pool->flow_pool_lock);
 			ol_tx_free_invalid_flow_pool(pool);
-			cdf_print("%s %d pool is INVALID State!!\n",
+			qdf_print("%s %d pool is INVALID State!!\n",
 				 __func__, __LINE__);
 			return;
 		}
@@ -294,7 +294,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	case FLOW_POOL_ACTIVE_UNPAUSED:
 		break;
 	default:
-		cdf_print("%s %d pool is INACTIVE State!!\n",
+		qdf_print("%s %d pool is INACTIVE State!!\n",
 				 __func__, __LINE__);
 		break;
 	};
@@ -309,7 +309,7 @@ dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 void
 dump_pkt(cdf_nbuf_t nbuf, cdf_dma_addr_t nbuf_paddr, int len)
 {
-	cdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
+	qdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
 		  cdf_nbuf_data(nbuf), nbuf_paddr, len);
 	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_ADDRESS, 16, 4,
 		       cdf_nbuf_data(nbuf), len, true);
@@ -404,7 +404,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			 msdu_info->tso_info.curr_seg->seg);
 	} else {
 		for (i = 1; i < num_frags; i++) {
-			cdf_size_t frag_len;
+			qdf_size_t frag_len;
 			cdf_dma_addr_t frag_paddr;
 #ifdef HELIUMPLUS_DEBUG
 			void *frag_vaddr;
@@ -416,7 +416,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc, i - 1,
 				 frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
-			cdf_print("%s:%d: htt_fdesc=%p frag=%d frag_vaddr=0x%p frag_paddr=0x%llx len=%zu\n",
+			qdf_print("%s:%d: htt_fdesc=%p frag=%d frag_vaddr=0x%p frag_paddr=0x%llx len=%zu\n",
 				  __func__, __LINE__, tx_desc->htt_frag_desc,
 				  i-1, frag_vaddr, frag_paddr, frag_len);
 			dump_pkt(netbuf, frag_paddr, 64);
@@ -448,7 +448,7 @@ void ol_tx_desc_frame_list_free(struct ol_txrx_pdev_t *pdev,
 		/* restore original hdr offset */
 		OL_TX_RESTORE_HDR(tx_desc, msdu);
 #endif
-		cdf_nbuf_unmap(pdev->osdev, msdu, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
 		/* free the tx desc */
 		ol_tx_desc_free(pdev, tx_desc);
 		/* link the netbuf into a list to free as a batch */
@@ -484,7 +484,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		}
 		/* let the code below unmap and free the frame */
 	}
-	cdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, CDF_DMA_TO_DEVICE);
+	cdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, QDF_DMA_TO_DEVICE);
 	/* check the frame type to see what kind of special steps are needed */
 	if ((tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) &&
 		   (tx_desc->pkt_type != 0xff)) {
@@ -502,7 +502,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		 * table pointer needs to be reset.
 		 */
 #if defined(HELIUMPLUS_DEBUG)
-		cdf_print("%s %d: Frag Descriptor Reset [%d] to 0x%x\n",
+		qdf_print("%s %d: Frag Descriptor Reset [%d] to 0x%x\n",
 			  __func__, __LINE__, tx_desc->id,
 			  frag_desc_paddr);
 #endif /* HELIUMPLUS_DEBUG */

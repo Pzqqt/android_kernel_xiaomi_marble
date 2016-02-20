@@ -81,7 +81,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 		break;
 	case ATH_FIRMWARE_FILE:
 #ifdef QCA_WIFI_FTM
-		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
+		if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 			hash = fw_hash.utf;
 			break;
 		}
@@ -120,9 +120,9 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 
 	if (cdf_mem_compare(hash, digest, SHA256_DIGEST_SIZE) != 0) {
 		BMI_ERR("Hash Mismatch");
-		cdf_trace_hex_dump(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		cdf_trace_hex_dump(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 				   digest, SHA256_DIGEST_SIZE);
-		cdf_trace_hex_dump(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		cdf_trace_hex_dump(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 				   hash, SHA256_DIGEST_SIZE);
 		ret = QDF_STATUS_E_FAILURE;
 	}
@@ -179,7 +179,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			break;
 		}
 #ifdef QCA_WIFI_FTM
-		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
+		if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 #if defined(CONFIG_CNSS)
 			filename = bmi_ctx->fw_files.utf_file;
 #else
@@ -207,7 +207,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		return 0;
 	case ATH_BOARD_DATA_FILE:
 #ifdef QCA_WIFI_FTM
-		if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
+		if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 #if defined(CONFIG_CNSS)
 			filename = bmi_ctx->fw_files.utf_board_data;
 #else
@@ -231,7 +231,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #endif
 		break;
 	case ATH_SETUP_FILE:
-		if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
+		if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 		    !WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
 #ifdef CONFIG_CNSS
 			BMI_INFO("%s: no Setup file defined", __func__);

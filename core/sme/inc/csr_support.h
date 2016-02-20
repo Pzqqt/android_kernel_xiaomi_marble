@@ -131,7 +131,7 @@ typedef enum {
 typedef struct sDot11IEHeader {
 	uint8_t ElementID;
 	uint8_t Length;
-} cdf_packed tDot11IEHeader;
+} qdf_packed tDot11IEHeader;
 
 typedef struct tagCsrWpaIe {
 	tDot11IEHeader IeHeader;
@@ -141,15 +141,15 @@ typedef struct tagCsrWpaIe {
 	uint16_t cUnicastCyphers;
 	struct {
 		uint8_t Oui[CSR_WPA_OUI_SIZE];
-	} cdf_packed UnicastOui[1];
-} cdf_packed tCsrWpaIe;
+	} qdf_packed UnicastOui[1];
+} qdf_packed tCsrWpaIe;
 
 typedef struct tagCsrWpaAuthIe {
 	uint16_t cAuthenticationSuites;
 	struct {
 		uint8_t Oui[CSR_WPA_OUI_SIZE];
-	} cdf_packed AuthOui[1];
-} cdf_packed tCsrWpaAuthIe;
+	} qdf_packed AuthOui[1];
+} qdf_packed tCsrWpaAuthIe;
 
 typedef struct tagCsrRSNIe {
 	tDot11IEHeader IeHeader;
@@ -158,15 +158,15 @@ typedef struct tagCsrRSNIe {
 	uint16_t cUnicastCyphers;
 	struct {
 		uint8_t Oui[CSR_RSN_OUI_SIZE];
-	} cdf_packed UnicastOui[1];
-} cdf_packed tCsrRSNIe;
+	} qdf_packed UnicastOui[1];
+} qdf_packed tCsrRSNIe;
 
 typedef struct tagCsrRSNAuthIe {
 	uint16_t cAuthenticationSuites;
 	struct {
 		uint8_t Oui[CSR_RSN_OUI_SIZE];
-	} cdf_packed AuthOui[1];
-} cdf_packed tCsrRSNAuthIe;
+	} qdf_packed AuthOui[1];
+} qdf_packed tCsrRSNAuthIe;
 
 typedef struct tagCsrRSNCapabilities {
 	uint16_t PreAuthSupported:1;
@@ -176,19 +176,19 @@ typedef struct tagCsrRSNCapabilities {
 	uint16_t MFPRequired:1;
 	uint16_t MFPCapable:1;
 	uint16_t Reserved:8;
-} cdf_packed tCsrRSNCapabilities;
+} qdf_packed tCsrRSNCapabilities;
 
 typedef struct tagCsrRSNPMKIe {
 	uint16_t cPMKIDs;
 	struct {
 		uint8_t PMKID[CSR_RSN_PMKID_SIZE];
-	} cdf_packed PMKIDList[1];
-} cdf_packed tCsrRSNPMKIe;
+	} qdf_packed PMKIDList[1];
+} qdf_packed tCsrRSNPMKIe;
 
 typedef struct tCsrIELenInfo {
 	uint8_t min;
 	uint8_t max;
-} cdf_packed tCsrIELenInfo;
+} qdf_packed tCsrIELenInfo;
 
 #ifdef FEATURE_WLAN_WAPI
 typedef struct tagCsrWapiIe {
@@ -197,17 +197,17 @@ typedef struct tagCsrWapiIe {
 	uint16_t cAuthenticationSuites;
 	struct {
 		uint8_t Oui[CSR_WAPI_OUI_SIZE];
-	} cdf_packed AuthOui[1];
+	} qdf_packed AuthOui[1];
 	uint16_t cUnicastCyphers;
 	struct {
 		uint8_t Oui[CSR_WAPI_OUI_SIZE];
-	} cdf_packed UnicastOui[1];
+	} qdf_packed UnicastOui[1];
 	uint8_t MulticastOui[CSR_WAPI_OUI_SIZE];
 	struct {
 		uint16_t PreAuthSupported:1;
 		uint16_t Reserved:15;
-	} cdf_packed tCsrWapiCapabilities;
-} cdf_packed tCsrWapiIe;
+	} qdf_packed tCsrWapiCapabilities;
+} qdf_packed tCsrWapiIe;
 #endif /* FEATURE_WLAN_WAPI */
 
 typedef struct tagRoamingTimerInfo {
@@ -225,7 +225,7 @@ typedef struct tagRoamingTimerInfo {
 	 ((pIes)->WMMInfoAp.present && (pIes)->WMMInfoAp.uapsd))
 
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
-		struct cdf_mac_addr *pBssId);
+		struct qdf_mac_addr *pBssId);
 bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 		tSirBssDescription *pSirBssDesc2);
 eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
@@ -316,8 +316,8 @@ bool csr_match_bss(tHalHandle hHal, tSirBssDescription *pBssDesc,
 		tCsrScanResultFilter *pFilter, eCsrAuthType *pNegAuth,
 		eCsrEncryptionType *pNegUc, eCsrEncryptionType *pNegMc,
 		tDot11fBeaconIEs **ppIes);
-bool csr_is_bssid_match(tHalHandle hHal, struct cdf_mac_addr *pProfBssid,
-		struct cdf_mac_addr *BssBssid);
+bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
+		struct qdf_mac_addr *BssBssid);
 bool csr_match_bss_to_connect_profile(tHalHandle hHal,
 		tCsrRoamConnectedProfile *pProfile,
 		tSirBssDescription *pBssDesc, tDot11fBeaconIEs *pIes);
@@ -356,11 +356,11 @@ QDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 		uint32_t *pRoamId, bool fForce);
 
 QDF_STATUS csr_isconcurrentsession_valid(tpAniSirGlobal pMac,
-		uint32_t cursessionId, enum tCDF_ADAPTER_MODE currBssPersona);
+		uint32_t cursessionId, enum tQDF_ADAPTER_MODE currBssPersona);
 /* BeaconInterval validation for MCC support */
 QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
-		enum tCDF_ADAPTER_MODE currBssPersona);
+		enum tQDF_ADAPTER_MODE currBssPersona);
 bool csr_is_profile11r(tCsrRoamProfile *pProfile);
 bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent);
 #ifdef FEATURE_WLAN_ESE

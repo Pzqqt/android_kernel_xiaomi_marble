@@ -408,7 +408,7 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 			 * doesn't exceed IW_MAX_BITRATES
 			 */
 
-			maxNumRates = CDF_MIN(maxNumRates, IW_MAX_BITRATES);
+			maxNumRates = QDF_MIN(maxNumRates, IW_MAX_BITRATES);
 
 			if ((maxNumRates - numBasicRates) > MAX_RATES) {
 				no_of_rates = MAX_RATES;
@@ -473,7 +473,7 @@ static int hdd_indicate_scan_result(hdd_scan_info_t *scanInfo,
 	event.cmd = IWEVQUAL;
 	event.u.qual.qual = descriptor->rssi;
 	event.u.qual.noise = descriptor->sinr;
-	event.u.qual.level = CDF_MIN((descriptor->rssi + descriptor->sinr), 0);
+	event.u.qual.level = QDF_MIN((descriptor->rssi + descriptor->sinr), 0);
 
 	event.u.qual.updated = IW_QUAL_ALL_UPDATED;
 
@@ -748,7 +748,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 		/* set bssid using sockaddr from iw_scan_req */
 		cdf_mem_copy(scanRequest.bssid.bytes,
 			     &scanReq->bssid.sa_data,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 
 		if (wrqu->data.flags & IW_SCAN_THIS_ESSID) {
 
@@ -766,7 +766,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 						     scanReq->essid_len);
 				} else {
 					scanRequest.SSIDs.numOfSSIDs = 0;
-					CDF_TRACE(CDF_MODULE_ID_HDD,
+					CDF_TRACE(QDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: Unable to allocate memory",
 						  __func__);
@@ -833,7 +833,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 				  pAdapter->sessionId, &scanRequest,
 				  &hdd_scan_request_callback, dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 			  "%s:sme_scan_request  fail %d!!!", __func__, status);
 		goto error;
 	}
@@ -904,12 +904,12 @@ static int __iw_get_scan(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: enter buffer length %d!!!", __func__,
 		  (wrqu->data.length) ? wrqu->data.length : IW_SCAN_MAX_DATA);
 
 	if (true == pAdapter->scan_info.mScanPending) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 			  "%s:mScanPending is true !!!", __func__);
 		return -EAGAIN;
 	}
@@ -945,7 +945,7 @@ static int __iw_get_scan(struct net_device *dev,
 
 	sme_scan_result_purge(hHal, pResult);
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: exit total %d BSS reported !!!", __func__, i);
 	EXIT();
 	return status;
@@ -1245,12 +1245,12 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCAN,
 			 pAdapter->sessionId, request->n_channels));
 
@@ -2031,7 +2031,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2059,7 +2059,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	/*
@@ -2132,7 +2132,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						&& (CHANNEL_STATE_DFS ==
 						cds_get_channel_state(
 						    channels_allowed[indx]))) {
-						CDF_TRACE(CDF_MODULE_ID_HDD,
+						CDF_TRACE(QDF_MODULE_ID_HDD,
 						    CDF_TRACE_LEVEL_INFO,
 						    "%s : Dropping DFS channel : %d",
 						     __func__,
@@ -2157,7 +2157,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		 * then ignore the PNO request
 		 */
 		if (num_ignore_dfs_ch == request->n_channels) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				"%s : All requested channels are DFS channels",
 				 __func__);
 			ret = -EINVAL;
@@ -2306,7 +2306,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2355,7 +2355,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	pPnoRequest->enable = 0;        /* Disable PNO */
 	pPnoRequest->ucNetworksCount = 0;
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	status = sme_set_preferred_network_list(hHal, pPnoRequest,

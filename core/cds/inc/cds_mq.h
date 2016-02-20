@@ -41,7 +41,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 
 /*--------------------------------------------------------------------------
@@ -92,16 +92,16 @@ typedef struct cds_msg_s {
 /* Message Queue IDs */
 typedef enum {
 	/* Message Queue ID for messages bound for SME */
-	CDS_MQ_ID_SME = CDF_MODULE_ID_SME,
+	CDS_MQ_ID_SME = QDF_MODULE_ID_SME,
 
 	/* Message Queue ID for messages bound for PE */
-	CDS_MQ_ID_PE = CDF_MODULE_ID_PE,
+	CDS_MQ_ID_PE = QDF_MODULE_ID_PE,
 
 	/* Message Queue ID for messages bound for WMA */
-	CDS_MQ_ID_WMA = CDF_MODULE_ID_WMA,
+	CDS_MQ_ID_WMA = QDF_MODULE_ID_WMA,
 
 	/* Message Queue ID for messages bound for the SYS module */
-	CDS_MQ_ID_SYS = CDF_MODULE_ID_SYS,
+	CDS_MQ_ID_SYS = QDF_MODULE_ID_SYS,
 
 } CDS_MQ_ID;
 

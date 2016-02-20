@@ -553,7 +553,7 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal mac_ctx, tSirMacAddr self_addr,
 	tDot11fTimingAdvertisementFrame frame;
 	uint32_t payload_size, buf_size;
 	int status;
-	struct cdf_mac_addr wildcard_bssid = {
+	struct qdf_mac_addr wildcard_bssid = {
 		{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
 	};
 

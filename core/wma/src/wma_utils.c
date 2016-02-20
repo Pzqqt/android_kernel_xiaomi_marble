@@ -46,7 +46,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -413,9 +413,9 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 	buf_ptr = buf_ptr + sizeof(wmi_wlan_profile_ctx_t) + WMI_TLV_HDR_SIZE;
 	profile_data = (wmi_wlan_profile_t *) buf_ptr;
 	entries = profile_ctx->bin_count;
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 				"Profile data stats\n");
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 		"TOT: %d\n"
 		"tx_msdu_cnt: %d\n"
 		"tx_mpdu_cnt: %d\n"
@@ -434,7 +434,7 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 	for (i = 0; i < entries; i++) {
 		if (i == WMI_WLAN_PROFILE_MAX_BIN_CNT)
 			break;
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			"Profile ID: %d\n"
 			"Profile Count: %d\n"
 			"Profile TOT: %d\n"
@@ -483,7 +483,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	size_t peer_info_size, peer_stats_size, rate_stats_size;
 	size_t link_stats_results_size;
 
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
 		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
@@ -634,7 +634,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	size_t radio_stats_size, chan_stats_size;
 	size_t link_stats_results_size;
 
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
 		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
@@ -985,7 +985,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	size_t link_stats_size, ac_stats_size, iface_info_size;
 	size_t link_stats_results_size;
 
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
 		WMA_LOGD("%s: NULL pMac ptr. Exiting", __func__);
@@ -1268,7 +1268,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 		sme_msg.bodyptr = p_snr_req;
 		sme_msg.bodyval = 0;
 
-		qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post snr ind msg", __func__);
 			cdf_mem_free(p_snr_req);
@@ -1386,7 +1386,7 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 	sme_msg.bodyptr = pGetLinkStatus;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post link status ind msg", __func__);
 		cdf_mem_free(pGetLinkStatus);
@@ -1537,7 +1537,7 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 		sme_msg.bodyptr = ls_ind;
 		sme_msg.bodyval = 0;
 
-		qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post linkspeed ind  msg",
 				 __func__);
@@ -1585,7 +1585,7 @@ int wma_link_speed_event_handler(void *handle, uint8_t *cmd_param_info,
 QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	void *mac = cds_get_context(CDF_MODULE_ID_PE);
+	void *mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -1941,7 +1941,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 		break;
 
 	default:
-		cdf_print("%s %d Invalid value %d\n",
+		qdf_print("%s %d Invalid value %d\n",
 				__func__, __LINE__, value);
 		return 0;
 	}
@@ -2147,7 +2147,7 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 	uint8_t *buf;
 	uint32_t buf_size;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return NULL;
@@ -2201,7 +2201,7 @@ uint8_t *wma_get_vdev_address_by_vdev_id(uint8_t vdev_id)
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return NULL;
@@ -2225,7 +2225,7 @@ struct wma_txrx_node  *wma_get_interface_by_vdev_id(uint8_t vdev_id)
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return NULL;
@@ -2550,7 +2550,7 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 	if (!msg_buffer)
 		return QDF_STATUS_E_INVAL;
 
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 		WMA_LOGE("FTM command issued in non-FTM mode");
 		cdf_mem_free(msg_buffer->data);
 		cdf_mem_free(msg_buffer);
@@ -2585,7 +2585,7 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 					  uint32_t versionBufferSize)
 {
 	tp_wma_handle wma_handle;
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
@@ -2748,7 +2748,7 @@ int8_t wma_get_hw_mode_idx_from_dbs_hw_list(enum hw_mode_ss_config mac0_ss,
 	uint32_t mac0_tx_ss, mac0_rx_ss;
 	uint32_t mac1_tx_ss, mac1_rx_ss;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return -EINVAL;
@@ -2786,7 +2786,7 @@ QDF_STATUS wma_get_hw_mode_from_idx(uint32_t idx,
 	tp_wma_handle wma;
 	uint32_t param;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -2827,7 +2827,7 @@ int8_t wma_get_num_dbs_hw_modes(void)
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return -EINVAL;
@@ -2847,7 +2847,7 @@ bool wma_is_hw_dbs_capable(void)
 	tp_wma_handle wma;
 	uint32_t param, i, found = 0;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return false;
@@ -2898,7 +2898,7 @@ bool wma_is_hw_agile_dfs_capable(void)
 	tp_wma_handle wma;
 	uint32_t param, i, found = 0;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return false;
@@ -2950,7 +2950,7 @@ int8_t wma_get_mac_id_of_vdev(uint32_t vdev_id)
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return -EINVAL;
@@ -2980,7 +2980,7 @@ QDF_STATUS wma_get_old_and_new_hw_index(uint32_t *old_hw_mode_index,
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return QDF_STATUS_E_INVAL;
@@ -3008,7 +3008,7 @@ void wma_update_intf_hw_mode_params(uint32_t vdev_id, uint32_t mac_id,
 	tp_wma_handle wma;
 	uint32_t param;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return;
@@ -3073,7 +3073,7 @@ QDF_STATUS wma_get_dbs_hw_modes(bool *one_by_one_dbs, bool *two_by_two_dbs)
 
 	}
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -3192,7 +3192,7 @@ bool wma_is_dbs_enable(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return false;
@@ -3222,7 +3222,7 @@ bool wma_is_agile_dfs_enable(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return false;
@@ -3265,7 +3265,7 @@ QDF_STATUS wma_get_updated_scan_config(uint32_t *scan_config,
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -3300,7 +3300,7 @@ QDF_STATUS wma_get_updated_fw_mode_config(uint32_t *fw_mode_config,
 {
 	tp_wma_handle wma;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -3329,7 +3329,7 @@ bool wma_get_dbs_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3355,7 +3355,7 @@ bool wma_get_agile_dfs_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3381,7 +3381,7 @@ bool wma_get_dbs_scan_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3407,7 +3407,7 @@ bool wma_get_dbs_plus_agile_scan_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3433,7 +3433,7 @@ bool wma_get_single_mac_scan_with_dfs_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3453,7 +3453,7 @@ bool wma_get_single_mac_scan_with_dfs_config(void)
  */
 bool wma_is_dual_mac_disabled_in_ini(void)
 {
-	tpAniSirGlobal mac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!mac) {
 		WMA_LOGE("%s: Invalid mac pointer", __func__);
@@ -3481,7 +3481,7 @@ bool wma_get_prev_dbs_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3507,7 +3507,7 @@ bool wma_get_prev_agile_dfs_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3533,7 +3533,7 @@ bool wma_get_prev_dbs_scan_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3559,7 +3559,7 @@ bool wma_get_prev_dbs_plus_agile_scan_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3586,7 +3586,7 @@ bool wma_get_prev_single_mac_scan_with_dfs_config(void)
 	if (wma_is_dual_mac_disabled_in_ini())
 		return false;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (!wma) {
 		WMA_LOGE("%s: Invalid WMA handle", __func__);
 		/* We take that it is disabled and proceed */
@@ -3622,7 +3622,7 @@ bool wma_is_scan_simultaneous_capable(void)
 uint32_t wma_get_vht_ch_width(void)
 {
 	uint32_t fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80MHZ;
-	tp_wma_handle wm_hdl = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wm_hdl = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wm_hdl)
 		return fw_ch_wd;

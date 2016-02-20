@@ -43,7 +43,7 @@
 #include <linux/skbuff.h>
 #include <net/cfg80211.h>
 #include <qdf_list.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include "sir_mac_prot_def.h"
 #include "csr_api.h"
 #include <wlan_hdd_assoc.h>
@@ -157,9 +157,9 @@
 #define WLAN_CHIP_VERSION   "WCNSS"
 
 #ifndef HDD_DISALLOW_LEGACY_HDDLOG
-#define hddLog(level, args ...) CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
+#define hddLog(level, args ...) CDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 #endif
-#define hdd_log(level, args...) CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
+#define hdd_log(level, args...) CDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 #define hdd_logfl(level, format, args...) hdd_log(level, FL(format), ## args)
 
 #define hdd_alert(format, args...) \
@@ -512,7 +512,7 @@ typedef struct _WLAN_BKID_LIST *pWLAN_BKID_LIST;
 struct hdd_wapi_info_s {
 	uint32_t nWapiMode;
 	bool fIsWapiSta;
-	struct cdf_mac_addr cachedMacAddr;
+	struct qdf_mac_addr cachedMacAddr;
 	uint8_t wapiAuthMode;
 } __packed;
 typedef struct hdd_wapi_info_s hdd_wapi_info_t;
@@ -531,7 +531,7 @@ typedef struct beacon_data_s {
 } beacon_data_t;
 
 /**
- * enum device_mode: Maintain one to one correspondence with tCDF_ADAPTER_MODE
+ * enum device_mode: Maintain one to one correspondence with tQDF_ADAPTER_MODE
  * @WLAN_HDD_INFRA_STATION: station mode
  * @WLAN_HDD_SOFTAP: sap mode
  * @WLAN_HDD_P2P_CLIENT: p2p client mode
@@ -691,7 +691,7 @@ typedef struct {
 	uint8_t ucSTAId;
 
 	/** MAC address of the station */
-	struct cdf_mac_addr macAddrSTA;
+	struct qdf_mac_addr macAddrSTA;
 
 	/** Current Station state so HDD knows how to deal with packet
 	 *  queue. Most recent states used to change TLSHIM STA state */
@@ -851,7 +851,7 @@ struct hdd_adapter_s {
 	uint32_t ctw;
 
 	/** Current MAC Address for the adapter  */
-	struct cdf_mac_addr macAddressCurrent;
+	struct qdf_mac_addr macAddressCurrent;
 
 	/**Event Flags*/
 	unsigned long event_flags;
@@ -997,10 +997,10 @@ struct hdd_adapter_s {
 	int temperature;
 
 	/* Time stamp for last completed RoC request */
-	v_TIME_t last_roc_ts;
+	unsigned long last_roc_ts;
 
 	/* Time stamp for start RoC request */
-	v_TIME_t start_roc_ts;
+	unsigned long start_roc_ts;
 
 	/* State for synchronous OCB requests to WMI */
 	struct sir_ocb_set_config_response ocb_set_config_resp;
@@ -1009,7 +1009,7 @@ struct hdd_adapter_s {
 	struct sir_dcc_update_ndl_response dcc_update_ndl_resp;
 
 	/* MAC addresses used for OCB interfaces */
-	struct cdf_mac_addr ocb_mac_address[CDF_MAX_CONCURRENCY_PERSONA];
+	struct qdf_mac_addr ocb_mac_address[QDF_MAX_CONCURRENCY_PERSONA];
 	int ocb_mac_addr_count;
 
 	/* BITMAP indicating pause reason */
@@ -1156,11 +1156,11 @@ struct hdd_context_s {
 	/** Concurrency Parameters*/
 	uint32_t concurrency_mode;
 
-	uint8_t no_of_open_sessions[CDF_MAX_NO_OF_MODE];
-	uint8_t no_of_active_sessions[CDF_MAX_NO_OF_MODE];
+	uint8_t no_of_open_sessions[QDF_MAX_NO_OF_MODE];
+	uint8_t no_of_active_sessions[QDF_MAX_NO_OF_MODE];
 
 	/** P2P Device MAC Address for the adapter  */
-	struct cdf_mac_addr p2pDeviceAddress;
+	struct qdf_mac_addr p2pDeviceAddress;
 
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	cdf_wake_lock_t rx_wake_lock;
@@ -1387,7 +1387,7 @@ void wlan_hdd_release_intf_addr(hdd_context_t *pHddCtx, uint8_t *releaseAddr);
 uint8_t hdd_get_operating_channel(hdd_context_t *pHddCtx, device_mode_t mode);
 
 void hdd_set_conparam(uint32_t con_param);
-enum tCDF_GLOBAL_CON_MODE hdd_get_conparam(void);
+enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void);
 
 void hdd_abort_mac_scan(hdd_context_t *pHddCtx, uint8_t sessionId,
 			eCsrAbortReason reason);
@@ -1432,7 +1432,7 @@ void __hdd_wlan_exit(void);
 int hdd_wlan_notify_modem_power_state(int state);
 #ifdef QCA_HT_2040_COEX
 int hdd_wlan_set_ht2040_mode(hdd_adapter_t *pAdapter, uint16_t staId,
-			     struct cdf_mac_addr macAddrSTA, int width);
+			     struct qdf_mac_addr macAddrSTA, int width);
 #endif
 
 #ifdef WLAN_FEATURE_LPSS
@@ -1480,7 +1480,7 @@ static inline bool hdd_is_memdump_supported(void)
 #endif /* WLAN_FEATURE_MEMDUMP */
 
 void hdd_update_macaddr(struct hdd_config *config,
-			struct cdf_mac_addr hw_macaddr);
+			struct qdf_mac_addr hw_macaddr);
 void wlan_hdd_disable_roaming(hdd_adapter_t *pAdapter);
 void wlan_hdd_enable_roaming(hdd_adapter_t *pAdapter);
 

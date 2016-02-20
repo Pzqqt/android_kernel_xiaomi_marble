@@ -32,7 +32,7 @@
 #ifndef PTT_SOCK_SVC_H
 #define PTT_SOCK_SVC_H
 #include <wlan_nlink_srv.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <cdf_trace.h>
 #include <wlan_nlink_common.h>

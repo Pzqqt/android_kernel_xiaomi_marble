@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@
 #include "cds_packet.h"
 #include "lim_session_utils.h"
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cds_utils.h"
 
 /**
@@ -167,7 +167,7 @@ void lim_check_sta_in_pe_entries(tpAniSirGlobal pMac, tpSirMacMgmtHdr pHdr)
 	for (i = 0; i < pMac->lim.maxBssId; i++) {
 		if ((&pMac->lim.gpSession[i] != NULL) &&
 		    (pMac->lim.gpSession[i].valid) &&
-		    (pMac->lim.gpSession[i].pePersona == CDF_SAP_MODE)) {
+		    (pMac->lim.gpSession[i].pePersona == QDF_SAP_MODE)) {
 
 			psessionEntry = &pMac->lim.gpSession[i];
 			pStaDs = dph_lookup_hash_entry(pMac, pHdr->sa, &assocId,
@@ -394,10 +394,9 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	}
 	lim_copy_u16((uint8_t *) &localCapabilities, temp);
 
-	if (lim_compare_capabilities(pMac,
-				     pAssocReq,
-				     &localCapabilities, psessionEntry) == false)
-	{
+	if (lim_compare_capabilities(pMac, pAssocReq,
+				     &localCapabilities, psessionEntry) ==
+					 false) {
 		lim_log(pMac, LOGE, FL("local caps mismatch received caps"));
 		lim_log(pMac, LOGE, FL("Received %s Req with unsupported "
 				       "capabilities from" MAC_ADDRESS_STR),
@@ -482,8 +481,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	if (LIM_IS_AP_ROLE(psessionEntry) &&
 	    (psessionEntry->dot11mode == WNI_CFG_DOT11_MODE_11G_ONLY) &&
-	    (pAssocReq->HTCaps.present))
-	{
+	    (pAssocReq->HTCaps.present)) {
 		lim_log(pMac, LOGE,
 			FL("SOFTAP was in 11G only mode, rejecting legacy "
 			   "STA : " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pHdr->sa));
@@ -721,16 +719,13 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 					if (SIR_MAC_OUI_VERSION_1 ==
 					    Dot11fIERSN.version) {
 						/* check the groupwise and pairwise cipher suites */
-						if (eSIR_SUCCESS !=
-						    (status =
-							     lim_check_rx_rsn_ie_match(pMac,
-										       Dot11fIERSN,
-										       psessionEntry,
-										       pAssocReq->
-										       HTCaps.
-										       present,
-										       &pmfConnection)))
-						{
+						status = lim_check_rx_rsn_ie_match(pMac,
+										   Dot11fIERSN,
+										   psessionEntry,
+										   pAssocReq->
+										   HTCaps.present,
+										   &pmfConnection);
+						if (eSIR_SUCCESS != status) {
 							lim_log(pMac, LOGE,
 								FL("RSN Mismatch."
 									"Rejecting Re/Assoc req from "
@@ -795,14 +790,13 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 							     pAssocReq->wpa.length,
 							     &Dot11fIEWPA);
 					/* check the groupwise and pairwise cipher suites */
-					if (eSIR_SUCCESS !=
-					    (status =
-						     lim_check_rx_wpa_ie_match(pMac,
-									       Dot11fIEWPA,
-									       psessionEntry,
-									       pAssocReq->
-									       HTCaps.
-									       present))) {
+					status = lim_check_rx_wpa_ie_match(pMac,
+									   Dot11fIEWPA,
+									   psessionEntry,
+									   pAssocReq->
+									   HTCaps.
+									   present);
+					if (eSIR_SUCCESS != status) {
 						lim_log(pMac, LOGW,
 							FL("WPA IE mismatch"
 								"Rejecting Re/Assoc req from "

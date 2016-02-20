@@ -36,7 +36,7 @@
 #include "cds_api.h"       /* cds_get_context */
 #include "hif.h"           /* hif_map_service...*/
 #include "wlan_hdd_main.h" /* hdd_err/warn... */
-#include "cdf_types.h"     /* CDF_MODULE_ID_... */
+#include "qdf_types.h"     /* QDF_MODULE_ID_... */
 #include "ce_api.h"
 
 /*  guaranteed to be initialized to zero/NULL by the standard */
@@ -58,7 +58,7 @@ struct qca_napi_data *hdd_napi_get_all(void)
 
 	NAPI_DEBUG("-->");
 
-	hif = cds_get_context(CDF_MODULE_ID_HIF);
+	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
 		CDF_ASSERT(NULL != hif); /* WARN */
 	else
@@ -110,7 +110,7 @@ int hdd_napi_create(void)
 
 	NAPI_DEBUG("-->");
 
-	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif_ctx)) {
 		CDF_ASSERT(NULL != hif_ctx);
 		rc = -EFAULT;
@@ -166,7 +166,7 @@ int hdd_napi_destroy(int force)
 	if (hdd_napi_map) {
 		struct hif_opaque_softc *hif_ctx;
 
-		hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 		if (unlikely(NULL == hif_ctx))
 			CDF_ASSERT(NULL != hif_ctx);
 		else
@@ -210,7 +210,7 @@ int hdd_napi_enabled(int id)
 	struct hif_opaque_softc *hif;
 	int rc = 0; /* NOT enabled */
 
-	hif = cds_get_context(CDF_MODULE_ID_HIF);
+	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
 		CDF_ASSERT(hif != NULL); /* WARN_ON; rc = 0 */
 	else if (-1 == id)
@@ -243,7 +243,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 
 	NAPI_DEBUG("-->(event=%d, aux=%p)", event, data);
 
-	hif = cds_get_context(CDF_MODULE_ID_HIF);
+	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
 		CDF_ASSERT(hif != NULL);
 	else
@@ -269,5 +269,5 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
  */
 int hdd_napi_poll(struct napi_struct *napi, int budget)
 {
-	return hif_napi_poll(cds_get_context(CDF_MODULE_ID_HIF), napi, budget);
+	return hif_napi_poll(cds_get_context(QDF_MODULE_ID_HIF), napi, budget);
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -154,11 +154,11 @@ CDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel)
 	}
 }
 
-static inline CDF_MODULE_ID get_vos_module_id(uint8_t modId)
+static inline QDF_MODULE_ID get_vos_module_id(uint8_t modId)
 {
 	switch (modId) {
 	case SIR_HAL_MODULE_ID:
-		return CDF_MODULE_ID_WMA;
+		return QDF_MODULE_ID_WMA;
 
 	case SIR_LIM_MODULE_ID:
 	case SIR_SCH_MODULE_ID:
@@ -166,16 +166,16 @@ static inline CDF_MODULE_ID get_vos_module_id(uint8_t modId)
 	case SIR_MNT_MODULE_ID:
 	case SIR_DPH_MODULE_ID:
 	case SIR_DBG_MODULE_ID:
-		return CDF_MODULE_ID_PE;
+		return QDF_MODULE_ID_PE;
 
 	case SIR_SYS_MODULE_ID:
-		return CDF_MODULE_ID_SYS;
+		return QDF_MODULE_ID_SYS;
 
 	case SIR_SMS_MODULE_ID:
-		return CDF_MODULE_ID_SME;
+		return QDF_MODULE_ID_SME;
 
 	default:
-		return CDF_MODULE_ID_SYS;
+		return QDF_MODULE_ID_SYS;
 	}
 }
 
@@ -184,7 +184,7 @@ void log_debug(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 	       const char *pStr, va_list marker)
 {
 	CDF_TRACE_LEVEL cdf_debug_level;
-	CDF_MODULE_ID cdf_module_id;
+	QDF_MODULE_ID cdf_module_id;
 	char logBuffer[LOG_SIZE];
 
 	cdf_debug_level = get_vos_debug_level(debugLevel);

@@ -138,7 +138,7 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 	void *hHal;
 
 	if (NULL == pMsg) {
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer to cds_msg_t", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
@@ -159,20 +159,20 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 			 * Handling for this message is not needed now so adding
 			 * debug print and CDF_ASSERT
 			 */
-			CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 				"Rx SYS_MSG_ID_MC_START msgType= %d [0x%08x]",
 				pMsg->type, pMsg->type);
 			CDF_ASSERT(0);
 			break;
 
 		case SYS_MSG_ID_MC_STOP:
-			CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
 				"Processing SYS MC STOP");
 
 			/* get the HAL context... */
-			hHal = cds_get_context(CDF_MODULE_ID_PE);
+			hHal = cds_get_context(QDF_MODULE_ID_PE);
 			if (NULL == hHal) {
-				CDF_TRACE(CDF_MODULE_ID_SYS,
+				CDF_TRACE(QDF_MODULE_ID_SYS,
 					CDF_TRACE_LEVEL_ERROR,
 					"%s: Invalid hHal", __func__);
 			} else {
@@ -195,7 +195,7 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 			 * Process MC thread probe.  Just callback to the
 			 * function that is in the message.
 			 */
-			CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 				"Rx SYS_MSG_ID_MC_THR_PROBE msgType=%d[0x%08x]",
 				pMsg->type, pMsg->type);
 			break;
@@ -207,9 +207,9 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 			break;
 
 		case SYS_MSG_ID_FTM_RSP:
-			hHal = cds_get_context(CDF_MODULE_ID_PE);
+			hHal = cds_get_context(QDF_MODULE_ID_PE);
 			if (NULL == hHal) {
-				CDF_TRACE(CDF_MODULE_ID_SYS,
+				CDF_TRACE(QDF_MODULE_ID_SYS,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("Invalid hal"));
 				cdf_mem_free(pMsg->bodyptr);
@@ -217,14 +217,14 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 			}
 			mac_ctx = PMAC_STRUCT(hHal);
 			if (NULL == mac_ctx) {
-				CDF_TRACE(CDF_MODULE_ID_SYS,
+				CDF_TRACE(QDF_MODULE_ID_SYS,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("Invalid mac context"));
 				cdf_mem_free(pMsg->bodyptr);
 				break;
 			}
 			if (NULL == mac_ctx->ftm_msg_processor_callback) {
-				CDF_TRACE(CDF_MODULE_ID_SYS,
+				CDF_TRACE(QDF_MODULE_ID_SYS,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("callback pointer is NULL"));
 				cdf_mem_free(pMsg->bodyptr);
@@ -236,14 +236,14 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 			break;
 
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 				"Unknown message type msgType= %d [0x%08x]",
 				pMsg->type, pMsg->type);
 			break;
 
 		}
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_SYS,
+		CDF_TRACE(QDF_MODULE_ID_SYS,
 				CDF_TRACE_LEVEL_ERROR,
 				"Rx SYS unknown MC msgtype= %d [0x%08X]",
 				pMsg->type, pMsg->type);
@@ -275,7 +275,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	 * It is up to the callee to free it
 	 */
 	if (NULL == pMsg) {
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 				"NULL Message Pointer");
 		CDF_ASSERT(0);
 		return;
@@ -289,7 +289,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	case WNI_CFG_DNLD_CNF:
 		/* Forward this message to the SYS module */
 		targetMQ = CDS_MQ_ID_SYS;
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			"Handling for the Message ID %d is removed in SYS",
 			pMsg->type);
 		CDF_ASSERT(0);
@@ -301,7 +301,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 	case WNI_CFG_DNLD_RSP:
 		/* Forward this message to the HAL module */
 		targetMQ = CDS_MQ_ID_WMA;
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			"Handling for the Message ID %d is removed as no HAL",
 			pMsg->type);
 
@@ -329,7 +329,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 			break;
 		}
 
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			"Message of ID %d is not yet handled by SYS",
 			pMsg->type);
 		CDF_ASSERT(0);

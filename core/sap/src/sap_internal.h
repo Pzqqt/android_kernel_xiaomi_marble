@@ -62,7 +62,7 @@ extern "C" {
 /* When MBSSID feature is enabled, SAP context is directly passed to SAP APIs */
 #define CDS_GET_SAP_CB(ctx) (ptSapContext)(ctx)
 
-#define CDS_GET_HAL_CB(ctx) cds_get_context(CDF_MODULE_ID_PE)
+#define CDS_GET_HAL_CB(ctx) cds_get_context(QDF_MODULE_ID_PE)
 /* MAC Address length */
 #define ANI_EAPOL_KEY_RSN_NONCE_SIZE      32
 
@@ -183,13 +183,13 @@ typedef struct sSapContext {
 	tCsrSSIDInfo SSIDList[2];
 
 	/* Actual storage for AP bssid */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 
 	/* Mac filtering settings */
 	eSapMacAddrACL eSapMacAddrAclMode;
-	struct cdf_mac_addr acceptMacList[MAX_ACL_MAC_ADDRESS];
+	struct qdf_mac_addr acceptMacList[MAX_ACL_MAC_ADDRESS];
 	uint8_t nAcceptMac;
-	struct cdf_mac_addr denyMacList[MAX_ACL_MAC_ADDRESS];
+	struct qdf_mac_addr denyMacList[MAX_ACL_MAC_ADDRESS];
 	uint8_t nDenyMac;
 
 	/* QOS config */
@@ -339,21 +339,21 @@ QDF_STATUS
 sap_is_peer_mac_allowed(ptSapContext sapContext, uint8_t *peerMac);
 
 void
-sap_sort_mac_list(struct cdf_mac_addr *macList, uint8_t size);
+sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size);
 
 void
-sap_add_mac_to_acl(struct cdf_mac_addr *macList, uint8_t *size,
+sap_add_mac_to_acl(struct qdf_mac_addr *macList, uint8_t *size,
 	       uint8_t *peerMac);
 
 void
-sap_remove_mac_from_acl(struct cdf_mac_addr *macList, uint8_t *size,
+sap_remove_mac_from_acl(struct qdf_mac_addr *macList, uint8_t *size,
 		    uint8_t index);
 
 void
-sap_print_acl(struct cdf_mac_addr *macList, uint8_t size);
+sap_print_acl(struct qdf_mac_addr *macList, uint8_t size);
 
 eSapBool
-sap_search_mac_list(struct cdf_mac_addr *macList, uint8_t num_mac,
+sap_search_mac_list(struct qdf_mac_addr *macList, uint8_t num_mac,
 		 uint8_t *peerMac, uint8_t *index);
 
 QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx);

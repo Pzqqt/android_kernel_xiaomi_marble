@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __HOST_DIAG_CORE_EVENT_H )
+#if !defined(__HOST_DIAG_CORE_EVENT_H)
 #define __HOST_DIAG_CORE_EVENT_H
 
 /**=========================================================================
@@ -43,7 +43,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cds_pack_align.h"
 #include "i_host_diag_core_event.h"
 

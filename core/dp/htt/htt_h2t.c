@@ -333,10 +333,10 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 		enable_ppdu_start = 1;
 		enable_ppdu_end = 1;
 		/* Disable ASPM when pkt log is enabled */
-		cdf_print("Pkt log is enabled\n");
+		qdf_print("Pkt log is enabled\n");
 		htt_htc_disable_aspm(pdev);
 	} else {
-		cdf_print("Pkt log is disabled\n");
+		qdf_print("Pkt log is disabled\n");
 		enable_ctrl_data = 0;
 		enable_mgmt_data = 0;
 		enable_null_data = 0;
@@ -448,7 +448,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 	if (stats_type_upload_mask >= 1 << HTT_DBG_NUM_STATS ||
 	    stats_type_reset_mask >= 1 << HTT_DBG_NUM_STATS) {
 		/* FIX THIS - add more details? */
-		cdf_print("%#x %#x stats not supported\n",
+		qdf_print("%#x %#x stats not supported\n",
 			  stats_type_upload_mask, stats_type_reset_mask);
 		return -EINVAL;      /* failure */
 	}
@@ -786,12 +786,12 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 
 	msg_word++;
 	*msg_word = 0;
-        /* TX COMP RING BASE LO */
+	/* TX COMP RING BASE LO */
 	HTT_WDI_IPA_CFG_TX_COMP_RING_BASE_ADDR_LO_SET(*msg_word,
 		(unsigned int)pdev->ipa_uc_tx_rsc.tx_comp_base.paddr);
 	msg_word++;
 	*msg_word = 0;
-        /* TX COMP RING BASE HI, NONE */
+	/* TX COMP RING BASE HI, NONE */
 
 	msg_word++;
 	*msg_word = 0;

@@ -111,7 +111,7 @@ static inline void cdf_mem_save_stack_trace(struct s_cdf_mem_struct *mem_struct)
 static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
 					     *mem_struct)
 {
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 		  "Call stack for the source of leaked memory:");
 
 	print_stack_trace(&mem_struct->trace, 1);
@@ -164,7 +164,7 @@ void cdf_mem_clean(void)
 		unsigned int prev_mleak_sz = 0;
 		unsigned int mleak_cnt = 0;
 
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: List is not Empty. listSize %d ",
 			  __func__, (int)listSize);
 
@@ -182,7 +182,7 @@ void cdf_mem_clean(void)
 					memStruct->lineNum)
 				    || (prev_mleak_sz != memStruct->size)) {
 					if (mleak_cnt != 0) {
-						CDF_TRACE(CDF_MODULE_ID_CDF,
+						CDF_TRACE(QDF_MODULE_ID_QDF,
 							  CDF_TRACE_LEVEL_FATAL,
 							  "%d Time Memory Leak@ File %s, @Line %d, size %d",
 							  mleak_cnt,
@@ -203,7 +203,7 @@ void cdf_mem_clean(void)
 
 		/* Print last memory leak from the module */
 		if (mleak_cnt) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 				  "%d Time memory Leak@ File %s, @Line %d, size %d",
 				  mleak_cnt, prev_mleak_file,
 				  prev_mleak_lineNum, prev_mleak_sz);
@@ -252,7 +252,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	unsigned long  time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!!",
 			  __func__, size);
 		return NULL;
@@ -281,7 +281,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	 */
 	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
 					  CDF_GET_MEMORY_TIME_THRESHOLD)
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			 "%s: kzalloc took %lu msec for size %zu called from %pS at line %d",
 			 __func__,
 			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
@@ -306,7 +306,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 						   &memStruct->pNode);
 		cdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Unable to insert node into List qdf_status %d",
 				  __func__, qdf_status);
 		}
@@ -347,7 +347,7 @@ void cdf_mem_free(void *ptr)
 			if (0 == cdf_mem_compare(memStruct->header,
 						 &WLAN_MEM_HEADER[0],
 						 sizeof(WLAN_MEM_HEADER))) {
-				CDF_TRACE(CDF_MODULE_ID_CDF,
+				CDF_TRACE(QDF_MODULE_ID_QDF,
 					  CDF_TRACE_LEVEL_FATAL,
 					  "Memory Header is corrupted. MemInfo: Filename %s, LineNum %d",
 					  memStruct->fileName,
@@ -358,7 +358,7 @@ void cdf_mem_free(void *ptr)
 			    cdf_mem_compare((uint8_t *) ptr + memStruct->size,
 					    &WLAN_MEM_TAIL[0],
 					    sizeof(WLAN_MEM_TAIL))) {
-				CDF_TRACE(CDF_MODULE_ID_CDF,
+				CDF_TRACE(QDF_MODULE_ID_QDF,
 					  CDF_TRACE_LEVEL_FATAL,
 					  "Memory Trailer is corrupted. MemInfo: Filename %s, LineNum %d",
 					  memStruct->fileName,
@@ -367,7 +367,7 @@ void cdf_mem_free(void *ptr)
 			}
 			kfree((void *)memStruct);
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 				  "%s: Unallocated memory (double free?)",
 				  __func__);
 			CDF_BUG(0);
@@ -396,7 +396,7 @@ void *cdf_mem_malloc(size_t size)
 	unsigned long  time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!",
 			  __func__, size);
 		return NULL;
@@ -423,7 +423,7 @@ void *cdf_mem_malloc(size_t size)
 	 */
 	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
 					   CDF_GET_MEMORY_TIME_THRESHOLD)
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			 "%s: kzalloc took %lu msec for size %zu called from %pS",
 			 __func__,
 			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
@@ -471,11 +471,11 @@ void cdf_mem_free(void *ptr)
  *
  * Return: None
  */
-void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
+void cdf_mem_multi_pages_alloc(qdf_device_t osdev,
 				struct cdf_mem_multi_page_t *pages,
 				size_t element_size,
 				uint16_t element_num,
-				cdf_dma_context_t memctxt,
+				qdf_dma_context_t memctxt,
 				bool cacheable)
 {
 	uint16_t page_idx;
@@ -487,7 +487,7 @@ void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
 
 	pages->num_element_per_page = PAGE_SIZE / element_size;
 	if (!pages->num_element_per_page) {
-		cdf_print("Invalid page %d or element size %d",
+		qdf_print("Invalid page %d or element size %d",
 			(int)PAGE_SIZE, (int)element_size);
 		goto out_fail;
 	}
@@ -501,7 +501,7 @@ void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
 		pages->cacheable_pages = cdf_mem_malloc(
 			pages->num_pages * sizeof(pages->cacheable_pages));
 		if (!pages->cacheable_pages) {
-			cdf_print("Cacheable page storage alloc fail");
+			qdf_print("Cacheable page storage alloc fail");
 			goto out_fail;
 		}
 
@@ -509,7 +509,7 @@ void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
 		for (page_idx = 0; page_idx < pages->num_pages; page_idx++) {
 			cacheable_pages[page_idx] = cdf_mem_malloc(PAGE_SIZE);
 			if (!cacheable_pages[page_idx]) {
-				cdf_print("cacheable page alloc fail, pi %d",
+				qdf_print("cacheable page alloc fail, pi %d",
 					page_idx);
 				goto page_alloc_fail;
 			}
@@ -519,7 +519,7 @@ void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
 		pages->dma_pages = cdf_mem_malloc(
 			pages->num_pages * sizeof(struct cdf_mem_dma_page_t));
 		if (!pages->dma_pages) {
-			cdf_print("dmaable page storage alloc fail");
+			qdf_print("dmaable page storage alloc fail");
 			goto out_fail;
 		}
 
@@ -529,7 +529,7 @@ void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
 				cdf_os_mem_alloc_consistent(osdev, PAGE_SIZE,
 					&dma_pages->page_p_addr, memctxt);
 			if (!dma_pages->page_v_addr_start) {
-				cdf_print("dmaable page alloc fail pi %d",
+				qdf_print("dmaable page alloc fail pi %d",
 					page_idx);
 				goto page_alloc_fail;
 			}
@@ -575,9 +575,9 @@ out_fail:
  *
  * Return: None
  */
-void cdf_mem_multi_pages_free(cdf_device_t osdev,
+void cdf_mem_multi_pages_free(qdf_device_t osdev,
 				struct cdf_mem_multi_page_t *pages,
-				cdf_dma_context_t memctxt,
+				qdf_dma_context_t memctxt,
 				bool cacheable)
 {
 	unsigned int page_idx;
@@ -618,7 +618,7 @@ void cdf_mem_multi_pages_free(cdf_device_t osdev,
 void cdf_mem_set(void *ptr, uint32_t numBytes, uint32_t value)
 {
 	if (ptr == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter ptr", __func__);
 		return;
 	}
@@ -646,7 +646,7 @@ void cdf_mem_zero(void *ptr, uint32_t numBytes)
 	}
 
 	if (ptr == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter ptr", __func__);
 		return;
 	}
@@ -678,7 +678,7 @@ void cdf_mem_copy(void *pDst, const void *pSrc, uint32_t numBytes)
 	}
 
 	if ((pDst == NULL) || (pSrc == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, source:%p destination:%p",
 			  __func__, pSrc, pDst);
 		CDF_ASSERT(0);
@@ -708,7 +708,7 @@ void cdf_mem_move(void *pDst, const void *pSrc, uint32_t numBytes)
 	}
 
 	if ((pDst == NULL) || (pSrc == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, source:%p destination:%p",
 			  __func__, pSrc, pDst);
 		CDF_ASSERT(0);
@@ -740,7 +740,7 @@ bool cdf_mem_compare(const void *pMemory1, const void *pMemory2,
 	}
 
 	if ((pMemory1 == NULL) || (pMemory2 == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, p1:%p p2:%p",
 			  __func__, pMemory1, pMemory2);
 		CDF_ASSERT(0);
@@ -779,9 +779,9 @@ int32_t cdf_mem_compare2(const void *pMemory1, const void *pMemory2,
  *
  * Return: pointer of allocated memory or null if memory alloc fails
  */
-inline void *cdf_os_mem_alloc_consistent(cdf_device_t osdev, cdf_size_t size,
-					 cdf_dma_addr_t *paddr,
-					 cdf_dma_context_t memctx)
+inline void *cdf_os_mem_alloc_consistent(qdf_device_t osdev, qdf_size_t size,
+					 qdf_dma_addr_t *paddr,
+					 qdf_dma_context_t memctx)
 {
 #if defined(A_SIMOS_DEVHOST)
 	static int first = 1;
@@ -792,7 +792,7 @@ inline void *cdf_os_mem_alloc_consistent(cdf_device_t osdev, cdf_size_t size,
 		pr_err("Warning: bypassing %s\n", __func__);
 	}
 	vaddr = cdf_mem_malloc(size);
-	*paddr = ((cdf_dma_addr_t) vaddr);
+	*paddr = ((qdf_dma_addr_t) vaddr);
 	return vaddr;
 #else
 	int flags = GFP_KERNEL;
@@ -819,10 +819,10 @@ inline void *cdf_os_mem_alloc_consistent(cdf_device_t osdev, cdf_size_t size,
  * Return: none
  */
 inline void
-cdf_os_mem_free_consistent(cdf_device_t osdev,
-			   cdf_size_t size,
+cdf_os_mem_free_consistent(qdf_device_t osdev,
+			   qdf_size_t size,
 			   void *vaddr,
-			   cdf_dma_addr_t paddr, cdf_dma_context_t memctx)
+			   qdf_dma_addr_t paddr, qdf_dma_context_t memctx)
 {
 #if defined(A_SIMOS_DEVHOST)
 	static int first = 1;
@@ -853,9 +853,9 @@ cdf_os_mem_free_consistent(cdf_device_t osdev,
  */
 
 inline void
-cdf_os_mem_dma_sync_single_for_device(cdf_device_t osdev,
-				      cdf_dma_addr_t bus_addr,
-				      cdf_size_t size,
+cdf_os_mem_dma_sync_single_for_device(qdf_device_t osdev,
+				      qdf_dma_addr_t bus_addr,
+				      qdf_size_t size,
 				      enum dma_data_direction direction)
 {
 	dma_sync_single_for_device(osdev->dev, bus_addr,  size, direction);

@@ -40,7 +40,7 @@
 #include "cdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "rrm_global.h"
 
 /*--------------------------------------------------------------------------
@@ -71,7 +71,7 @@ typedef struct sRrmNeighborRequestControlInfo {
 
 typedef struct sRrmSMEContext {
 	uint16_t token;
-	struct cdf_mac_addr sessionBssId;
+	struct qdf_mac_addr sessionBssId;
 	uint8_t regClass;
 	/* list of all channels to be measured. */
 	tCsrChannelInfo channelList;

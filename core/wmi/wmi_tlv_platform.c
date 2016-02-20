@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -44,7 +44,7 @@
     Pronto and its future platforms) specific APIs */
 #define dummy_print(fmt, ...) {}
 #define wmi_tlv_print_verbose dummy_print
-#define wmi_tlv_print_error   cdf_print
+#define wmi_tlv_print_error   qdf_print
 #define wmi_tlv_OS_MEMCPY     OS_MEMCPY
 #define wmi_tlv_OS_MEMZERO    OS_MEMZERO
 #define wmi_tlv_OS_MEMMOVE    OS_MEMMOVE

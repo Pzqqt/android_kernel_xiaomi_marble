@@ -41,7 +41,7 @@
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 #include <linux/wakelock.h>
 #endif
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "sme_api.h"
 #include <cds_api.h>
 #include <cds_sched.h>
@@ -120,14 +120,14 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 						  &hddGtkOffloadReqParams,
 						  pAdapter->sessionId);
 			if (QDF_STATUS_SUCCESS != ret) {
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: sme_set_gtk_offload failed, returned %d",
 					  __func__, ret);
 				return;
 			}
 
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				  "%s: sme_set_gtk_offload successfull",
 				  __func__);
 		}
@@ -146,13 +146,13 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 				 wlan_hdd_cfg80211_update_replay_counter_callback,
 				 pAdapter, pAdapter->sessionId);
 			if (QDF_STATUS_SUCCESS != ret) {
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: sme_get_gtk_offload failed, returned %d",
 					  __func__, ret);
 				return;
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: sme_get_gtk_offload successful",
 					  __func__);
@@ -169,13 +169,13 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 							    &hddGtkOffloadReqParams,
 							    pAdapter->sessionId);
 				if (QDF_STATUS_SUCCESS != ret) {
-					CDF_TRACE(CDF_MODULE_ID_HDD,
+					CDF_TRACE(QDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: failed to dissable GTK offload, returned %d",
 						  __func__, ret);
 					return;
 				}
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: successfully dissabled GTK offload request to HAL",
 					  __func__);
@@ -1097,7 +1097,7 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 
 	hdd_info("%s: WLAN being suspended by OS", __func__);
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
 		       __func__);
@@ -1154,7 +1154,7 @@ static void hdd_resume_wlan(void)
 	hddLog(CDF_TRACE_LEVEL_INFO, "%s: WLAN being resumed by OS",
 	       __func__);
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
 		       __func__);
@@ -1288,7 +1288,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	}
 
 	/* Get the HDD context. */
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
 		       __func__);
@@ -1346,7 +1346,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	qdf_status = wma_stop(p_cds_context, HAL_STOP_TYPE_RF_KILL);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to stop WMA", __func__);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 		wma_setneedshutdown(p_cds_context);
@@ -1358,7 +1358,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	 */
 	qdf_status = sme_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to stop sme %d", __func__, qdf_status);
 		CDF_ASSERT(0);
 	}
@@ -1367,7 +1367,7 @@ QDF_STATUS hdd_wlan_shutdown(void)
 	/* Stop MAC (PE and HAL) */
 	qdf_status = mac_stop(pHddCtx->hHal, HAL_STOP_TYPE_SYS_RESET);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to stop mac %d", __func__, qdf_status);
 		CDF_ASSERT(0);
 	}
@@ -1420,7 +1420,7 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	}
 
 	/* Get the HDD context */
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
 		       __func__);
@@ -1445,7 +1445,7 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	}
 
 	/* Save the hal context in Adapter */
-	pHddCtx->hHal = cds_get_context(CDF_MODULE_ID_SME);
+	pHddCtx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 	if (NULL == pHddCtx->hHal) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HAL context is null",
 		       __func__);
@@ -1726,7 +1726,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -1752,7 +1752,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 #endif
 	hdd_resume_wlan();
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
 			 NO_SESSION, pHddCtx->isWiphySuspended));
 	cdf_spin_lock(&pHddCtx->sched_scan_lock);
@@ -1862,7 +1862,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2015,7 +2015,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	}
 	pHddCtx->is_ol_rx_thread_suspended = true;
 #endif
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SUSPEND_WLAN,
 			 NO_SESSION, pHddCtx->isWiphySuspended));
 	pHddCtx->isWiphySuspended = true;
@@ -2082,12 +2082,12 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_POWER_MGMT,
 			 pAdapter->sessionId, timeout));
 
@@ -2169,18 +2169,18 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 {
 	hdd_context_t *pHddCtx = (hdd_context_t *) wiphy_priv(wiphy);
 	tHalHandle hHal = NULL;
-	struct cdf_mac_addr bssid = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct cdf_mac_addr selfMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	int status;
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_TXPOWER,
 			 NO_SESSION, type));
 
@@ -2267,7 +2267,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2284,7 +2284,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return -ENOENT;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_TXPOWER,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	wlan_hdd_get_class_astats(pAdapter);

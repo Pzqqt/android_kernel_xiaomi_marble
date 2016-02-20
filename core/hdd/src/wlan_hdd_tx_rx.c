@@ -159,7 +159,7 @@ void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
 {
 	if (adapter->tx_flow_timer_initialized == false) {
 		cdf_mc_timer_init(&adapter->tx_flow_control_timer,
-			  CDF_TIMER_TYPE_SW,
+			  QDF_TIMER_TYPE_SW,
 			  timer_callback,
 			  adapter);
 		adapter->tx_flow_timer_initialized = true;
@@ -242,7 +242,7 @@ static bool wlan_hdd_is_eapol(struct sk_buff *skb)
 	ether_type = (uint16_t)(*(uint16_t *)
 			(skb->data + HDD_ETHERTYPE_802_1_X_FRAME_OFFSET));
 
-	if (ether_type == CDF_SWAP_U16(HDD_ETHERTYPE_802_1_X))
+	if (ether_type == QDF_SWAP_U16(HDD_ETHERTYPE_802_1_X))
 		return true;
 
 	return false;
@@ -271,8 +271,8 @@ static bool wlan_hdd_is_eapol_or_wai(struct sk_buff *skb)
 	ether_type = (uint16_t)(*(uint16_t *)
 			(skb->data + HDD_ETHERTYPE_802_1_X_FRAME_OFFSET));
 
-	if (ether_type == CDF_SWAP_U16(HDD_ETHERTYPE_802_1_X) ||
-	    ether_type == CDF_SWAP_U16(HDD_ETHERTYPE_WAI))
+	if (ether_type == QDF_SWAP_U16(HDD_ETHERTYPE_802_1_X) ||
+	    ether_type == QDF_SWAP_U16(HDD_ETHERTYPE_WAI))
 		return true;
 
 	/* No error msg handled since this will happen often */
@@ -305,7 +305,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif /* QCA_PKT_PROTO_TRACE */
 
 #ifdef QCA_WIFI_FTM
-	if (hdd_get_conparam() == CDF_GLOBAL_FTM_MODE) {
+	if (hdd_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		kfree_skb(skb);
 		return NETDEV_TX_OK;
 	}
@@ -313,7 +313,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitCalled;
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
 			"Recovery in progress, dropping the packet");
 		++pAdapter->stats.tx_dropped;
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
@@ -322,8 +322,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	}
 
 	if (WLAN_HDD_IBSS == pAdapter->device_mode) {
-		struct cdf_mac_addr *pDestMacAddress =
-					(struct cdf_mac_addr *) skb->data;
+		struct qdf_mac_addr *pDestMacAddress =
+					(struct qdf_mac_addr *) skb->data;
 
 		if (QDF_STATUS_SUCCESS !=
 				hdd_ibss_get_sta_id(&pAdapter->sessionCtx.station,
@@ -334,11 +334,11 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		    (cdf_is_macaddr_broadcast(pDestMacAddress) ||
 		     cdf_is_macaddr_group(pDestMacAddress))) {
 			STAId = pHddStaCtx->broadcast_ibss_staid;
-			CDF_TRACE(CDF_MODULE_ID_HDD_DATA,
+			CDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 				  CDF_TRACE_LEVEL_INFO_LOW, "%s: BC/MC packet",
 				  __func__);
 		} else if (STAId == HDD_WLAN_INVALID_STA_ID) {
-			CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
+			CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
 				  "%s: Received Unicast frame with invalid staID",
 				  __func__);
 			++pAdapter->stats.tx_dropped;
@@ -350,7 +350,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if (WLAN_HDD_OCB != pAdapter->device_mode &&
 			eConnectionState_Associated !=
 				pHddStaCtx->conn_info.connState) {
-			CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
 				FL("Tx frame in not associated state in %d context"),
 				pAdapter->device_mode);
 			++pAdapter->stats.tx_dropped;
@@ -391,7 +391,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[ac];
 #ifdef HDD_WMM_DEBUG
-	CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
+	CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
 		  "%s: Classified as ac %d up %d", __func__, ac, up);
 #endif /* HDD_WMM_DEBUG */
 
@@ -491,7 +491,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	if (ol_tx_send_data_frame(STAId, (cdf_nbuf_t) skb,
 							  proto_type) != NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
 		goto drop_pkt;
@@ -526,13 +526,13 @@ drop_pkt:
  */
 
 QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
-			       struct cdf_mac_addr *pMacAddress, uint8_t *staId)
+			       struct qdf_mac_addr *pMacAddress, uint8_t *staId)
 {
 	uint8_t idx;
 
 	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
 		if (cdf_mem_compare(&pHddStaCtx->conn_info.peerMacAddress[idx],
-				    pMacAddress, CDF_MAC_ADDR_SIZE)) {
+				    pMacAddress, QDF_MAC_ADDR_SIZE)) {
 			*staId = pHddStaCtx->conn_info.staId[idx];
 			return QDF_STATUS_SUCCESS;
 		}
@@ -556,7 +556,7 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	struct netdev_queue *txq;
 	int i = 0;
 
-	CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: Transmission timeout occurred jiffies %lu trans_start %lu",
 		  __func__, jiffies, dev->trans_start);
 	DPTRACE(cdf_dp_trace(NULL, CDF_DP_TRACE_HDD_TX_TIMEOUT,
@@ -571,12 +571,12 @@ static void __hdd_tx_timeout(struct net_device *dev)
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
 			  "Queue%d status: %d txq->trans_start %lu",
 			   i, netif_tx_queue_stopped(txq), txq->trans_start);
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
 		  "carrier state: %d", netif_carrier_ok(dev));
 }
 
@@ -609,7 +609,7 @@ QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  FL("pAdapter is NULL"));
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -630,7 +630,7 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  FL("pAdapter is NULL"));
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -666,14 +666,14 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 
 	/* Sanity check on inputs */
 	if ((NULL == cds_context) || (NULL == rxBuf)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL == pHddCtx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -690,7 +690,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	skb = (struct sk_buff *)rxBuf;
 
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
 			  pAdapter->magic);
 		return QDF_STATUS_E_FAILURE;
@@ -700,7 +700,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	if ((pHddStaCtx->conn_info.proxyARPService) &&
 	    cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
 		++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
-		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
 			  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA",
 			  __func__);
 		/* Remove SKB from internal tracking table before submitting

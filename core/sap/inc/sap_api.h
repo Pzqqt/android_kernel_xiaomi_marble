@@ -42,7 +42,7 @@
  * -------------------------------------------------------------------------*/
 #include "cds_api.h"
 #include "cds_packet.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 
 #include "p2p_api.h"
 #include "sme_api.h"
@@ -249,7 +249,7 @@ typedef struct sap_StopBssCompleteEvent_s {
 } tSap_StopBssCompleteEvent;
 
 typedef struct sap_StationAssocIndication_s {
-	struct cdf_mac_addr staMac;
+	struct qdf_mac_addr staMac;
 	uint8_t assoId;
 	uint8_t staId;
 	uint8_t status;
@@ -266,7 +266,7 @@ typedef struct sap_StationAssocIndication_s {
 } tSap_StationAssocIndication;
 
 typedef struct sap_StationAssocReassocCompleteEvent_s {
-	struct cdf_mac_addr staMac;
+	struct qdf_mac_addr staMac;
 	uint8_t staId;
 	uint8_t status;
 	uint8_t ies[MAX_ASSOC_IND_IE_LEN];
@@ -286,7 +286,7 @@ typedef struct sap_StationAssocReassocCompleteEvent_s {
 } tSap_StationAssocReassocCompleteEvent;
 
 typedef struct sap_StationDisassocCompleteEvent_s {
-	struct cdf_mac_addr staMac;
+	struct qdf_mac_addr staMac;
 	uint8_t staId;          /* STAID should not be used */
 	uint8_t status;
 	uint32_t statusCode;
@@ -295,14 +295,14 @@ typedef struct sap_StationDisassocCompleteEvent_s {
 
 typedef struct sap_StationSetKeyCompleteEvent_s {
 	uint8_t status;
-	struct cdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr peerMacAddr;
 } tSap_StationSetKeyCompleteEvent;
 
 /*struct corresponding to SAP_STA_MIC_FAILURE_EVENT */
 typedef struct sap_StationMICFailureEvent_s {
-	struct cdf_mac_addr srcMacAddr;    /* address used to compute MIC */
-	struct cdf_mac_addr staMac;        /* taMacAddr transmitter address */
-	struct cdf_mac_addr dstMacAddr;
+	struct qdf_mac_addr srcMacAddr;    /* address used to compute MIC */
+	struct qdf_mac_addr staMac;        /* taMacAddr transmitter address */
+	struct qdf_mac_addr dstMacAddr;
 	eSapBool multicast;
 	uint8_t IV1;            /* first byte of IV */
 	uint8_t keyId;          /* second byte of IV */
@@ -311,7 +311,7 @@ typedef struct sap_StationMICFailureEvent_s {
 } tSap_StationMICFailureEvent;
 /*Structure to return MAC address of associated stations */
 typedef struct sap_AssocMacAddr_s {
-	struct cdf_mac_addr staMac; /* Associated station's MAC address */
+	struct qdf_mac_addr staMac; /* Associated station's MAC address */
 	uint8_t assocId;            /* Associated station's Association ID */
 	uint8_t staId;              /* Allocated station Id */
 	uint8_t ShortGI40Mhz;
@@ -323,7 +323,7 @@ typedef struct sap_AssocMacAddr_s {
 
 /*struct corresponding to SAP_ASSOC_STA_CALLBACK_EVENT */
 typedef struct sap_AssocStaListEvent_s {
-	CDF_MODULE_ID module;
+	QDF_MODULE_ID module;
 	/* module id that was passed in wlansap_get_assoc_stations API */
 	uint8_t noOfAssocSta;           /* Number of associated stations */
 	tpSap_AssocMacAddr pAssocStas;
@@ -336,16 +336,16 @@ typedef struct sap_AssocStaListEvent_s {
 typedef struct sap_GetWPSPBCSessionEvent_s {
 	uint8_t status;
 	/* module id that was passed in wlansap_get_assoc_stations API */
-	CDF_MODULE_ID module;
+	QDF_MODULE_ID module;
 	uint8_t UUID_E[16];             /* Unique identifier of the AP. */
-	struct cdf_mac_addr addr;
+	struct qdf_mac_addr addr;
 	eWPSPBCOverlap wpsPBCOverlap;
 } tSap_GetWPSPBCSessionEvent;
 
 typedef struct sap_WPSPBCProbeReqEvent_s {
 	uint8_t status;
 	/* module id that was passed in wlansap_get_assoc_stations API */
-	CDF_MODULE_ID module;
+	QDF_MODULE_ID module;
 	tSirWPSPBCProbeReq WPSPBCProbeReq;
 } tSap_WPSPBCProbeReqEvent;
 
@@ -366,11 +366,11 @@ typedef struct sap_SendActionCnf_s {
 } tSap_SendActionCnf;
 
 typedef struct sap_UnknownSTAJoinEvent_s {
-	struct cdf_mac_addr macaddr;
+	struct qdf_mac_addr macaddr;
 } tSap_UnknownSTAJoinEvent;
 
 typedef struct sap_MaxAssocExceededEvent_s {
-	struct cdf_mac_addr macaddr;
+	struct qdf_mac_addr macaddr;
 } tSap_MaxAssocExceededEvent;
 
 typedef struct sap_DfsNolInfo_s {
@@ -460,13 +460,13 @@ typedef struct sap_Event_s {
 typedef struct sap_SSID {
 	uint8_t length;
 	uint8_t ssId[MAX_SSID_LEN];
-} cdf_packed tSap_SSID_t;
+} qdf_packed tSap_SSID_t;
 
 typedef struct sap_SSIDInfo {
 	tSap_SSID_t ssid;     /* SSID of the AP */
 	/* SSID should/shouldn't be bcast in probe RSP & beacon */
 	uint8_t ssidHidden;
-} cdf_packed tSap_SSIDInfo_t;
+} qdf_packed tSap_SSIDInfo_t;
 
 struct sap_acs_cfg {
 	/* ACS Algo Input */
@@ -498,13 +498,13 @@ typedef struct sap_Config {
 	tSap_SSIDInfo_t SSIDinfo;
 	eCsrPhyMode SapHw_mode;         /* Wireless Mode */
 	eSapMacAddrACL SapMacaddr_acl;
-	struct cdf_mac_addr accept_mac[MAX_ACL_MAC_ADDRESS]; /* MAC filtering */
+	struct qdf_mac_addr accept_mac[MAX_ACL_MAC_ADDRESS]; /* MAC filtering */
 	bool ieee80211d;      /* Specify if 11D is enabled or disabled */
 	bool protEnabled;     /* Specify if protection is enabled or disabled */
 	/* Specify if OBSS protection is enabled or disabled */
 	bool obssProtEnabled;
-	struct cdf_mac_addr deny_mac[MAX_ACL_MAC_ADDRESS];  /* MAC filtering */
-	struct cdf_mac_addr self_macaddr;       /* self macaddress or BSSID */
+	struct qdf_mac_addr deny_mac[MAX_ACL_MAC_ADDRESS];  /* MAC filtering */
+	struct qdf_mac_addr self_macaddr;       /* self macaddress or BSSID */
 	uint8_t channel;          /* Operation channel */
 	uint8_t sec_ch;
 	chan_params_t ch_params;
@@ -532,7 +532,7 @@ typedef struct sap_Config {
 	uint32_t ap_table_max_size;
 	uint32_t ap_table_expiration_time;
 	uint32_t ht_op_mode_fixed;
-	enum tCDF_ADAPTER_MODE persona; /* Tells us which persona, GO or AP */
+	enum tQDF_ADAPTER_MODE persona; /* Tells us which persona, GO or AP */
 	uint8_t disableDFSChSwitch;
 	bool enOverLapCh;
 #ifdef WLAN_FEATURE_11W
@@ -663,7 +663,7 @@ typedef struct sSapDfsInfo {
 typedef struct tagSapCtxList {
 	uint8_t sessionID;
 	void *pSapContext;
-	enum tCDF_ADAPTER_MODE sapPersona;
+	enum tQDF_ADAPTER_MODE sapPersona;
 } tSapCtxList, tpSapCtxList;
 
 typedef struct tagSapStruct {
@@ -831,18 +831,18 @@ QDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
 QDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
 QDF_STATUS wlansap_get_assoc_stations(void *p_cds_gctx,
-	 CDF_MODULE_ID module, tpSap_AssocMacAddr pAssocStas);
+	 QDF_MODULE_ID module, tpSap_AssocMacAddr pAssocStas);
 QDF_STATUS wlansap_remove_wps_session_overlap(void *p_cds_gctx,
-	struct cdf_mac_addr pRemoveMac);
+	struct qdf_mac_addr pRemoveMac);
 QDF_STATUS wlansap_get_wps_session_overlap(void *p_cds_gctx);
 QDF_STATUS wlansap_set_counter_measure(void *p_cds_gctx, bool bEnable);
 QDF_STATUS wlan_sap_getstation_ie_information(void *p_cds_gctx,
 	uint32_t *pLen, uint8_t *pBuf);
 QDF_STATUS wlansap_clear_acl(void *p_cds_gctx);
 QDF_STATUS wlansap_get_acl_accept_list(void *p_cds_gctx,
-	 struct cdf_mac_addr *pAcceptList, uint8_t *nAcceptList);
+	 struct qdf_mac_addr *pAcceptList, uint8_t *nAcceptList);
 QDF_STATUS wlansap_get_acl_deny_list(void *pCtx,
-	struct cdf_mac_addr *pDenyList, uint8_t *nDenyList);
+	struct qdf_mac_addr *pDenyList, uint8_t *nDenyList);
 QDF_STATUS wlansap_set_mode(void *p_cds_gctx, uint32_t mode);
 QDF_STATUS wlansap_get_acl_mode(void *p_cds_gctx, eSapMacAddrACL *mode);
 QDF_STATUS wlansap_modify_acl(void *p_cds_gctx,

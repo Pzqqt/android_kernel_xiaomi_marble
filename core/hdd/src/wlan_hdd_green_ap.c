@@ -162,7 +162,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		break;
 
 	case GREEN_AP_PS_STOP_EVENT:
-		if (!(cds_get_concurrency_mode() & CDF_SAP_MASK))
+		if (!(cds_get_concurrency_mode() & QDF_SAP_MASK))
 			green_ap->ps_enable = 0;
 		break;
 
@@ -326,7 +326,7 @@ static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 	green_ap->ps_delay_time = GREEN_AP_PS_DELAY_TIME;
 
 	cdf_mc_timer_init(&green_ap->ps_timer,
-			  CDF_TIMER_TYPE_SW,
+			  QDF_TIMER_TYPE_SW,
 			  hdd_wlan_green_ap_timer_fn, hdd_ctx);
 
 error:
@@ -430,13 +430,13 @@ void hdd_wlan_green_ap_start_bss(struct hdd_context_s *hdd_ctx)
 		 */
 	}
 
-	if (!(CDF_STA_MASK & hdd_ctx->concurrency_mode) &&
+	if (!(QDF_STA_MASK & hdd_ctx->concurrency_mode) &&
 	    cfg->enable2x2 && cfg->enableGreenAP) {
 		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_START_EVENT);
 	} else {
 		hdd_wlan_green_ap_mc(hdd_ctx, GREEN_AP_PS_STOP_EVENT);
 		hdd_notice("Green-AP: is disabled, due to sta_concurrency: %d, enable2x2: %d, enableGreenAP: %d",
-			   CDF_STA_MASK & hdd_ctx->concurrency_mode,
+			   QDF_STA_MASK & hdd_ctx->concurrency_mode,
 			   cfg->enable2x2, cfg->enableGreenAP);
 	}
 exit:

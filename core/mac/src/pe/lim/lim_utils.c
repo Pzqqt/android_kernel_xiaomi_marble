@@ -593,7 +593,7 @@ static void lim_deactivate_del_sta(tpAniSirGlobal mac_ctx, uint32_t bss_entry,
 		if (NULL == sta_ds)
 			continue;
 
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("Deleting pmfSaQueryTimer for staid[%d]"),
 				sta_ds->staIndex);
 		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
@@ -735,7 +735,7 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 	 * the pmfSaQueryTimer for it
 	 */
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("SSR is detected, proceed to clean up pmfSaQueryTimer"));
 		for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
 						bss_entry++) {
@@ -2684,7 +2684,7 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 		psessionEntry->gLimChannelSwitch.primaryChannel;
 	pSirSmeSwitchChInd->sessionId = psessionEntry->smeSessionId;
 	cdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
 
@@ -6330,7 +6330,7 @@ uint8_t lim_get_noa_attr_stream(tpAniSirGlobal pMac, uint8_t *pNoaStream,
 	uint8_t *pBody = pNoaStream;
 
 	if ((psessionEntry != NULL) && (psessionEntry->valid) &&
-	    (psessionEntry->pePersona == CDF_P2P_GO_MODE)) {
+	    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) {
 		if ((!(psessionEntry->p2pGoPsUpdate.uNoa1Duration))
 		    && (!(psessionEntry->p2pGoPsUpdate.uNoa2Duration))
 		    && (!psessionEntry->p2pGoPsUpdate.oppPsFlag)
@@ -6422,7 +6422,7 @@ bool lim_is_noa_insert_reqd(tpAniSirGlobal pMac)
 		if (pMac->lim.gpSession[i].valid == true) {
 			if ((eLIM_AP_ROLE ==
 			     pMac->lim.gpSession[i].limSystemRole)
-			    && (CDF_P2P_GO_MODE ==
+			    && (QDF_P2P_GO_MODE ==
 				pMac->lim.gpSession[i].pePersona)
 			    ) {
 				return true;
@@ -6577,9 +6577,9 @@ void lim_get_short_slot_from_phy_mode(tpAniSirGlobal pMac, tpPESession psessionE
 	/* only 2.4G band should have short slot enable, rest it should be default */
 	if (phyMode == WNI_CFG_PHY_MODE_11G) {
 		/* short slot is default in all other modes */
-		if ((psessionEntry->pePersona == CDF_SAP_MODE) ||
-		    (psessionEntry->pePersona == CDF_IBSS_MODE) ||
-		    (psessionEntry->pePersona == CDF_P2P_GO_MODE)) {
+		if ((psessionEntry->pePersona == QDF_SAP_MODE) ||
+		    (psessionEntry->pePersona == QDF_IBSS_MODE) ||
+		    (psessionEntry->pePersona == QDF_P2P_GO_MODE)) {
 			val = true;
 		}
 		/* Program Polaris based on AP capability */
@@ -6812,7 +6812,7 @@ bool lim_validate_received_frame_a1_addr(tpAniSirGlobal mac_ctx,
 		tSirMacAddr a1, tpPESession session)
 {
 	if (mac_ctx == NULL || session == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 				"mac or session context is null");
 		/* let main routine handle it */
 		return true;
@@ -6956,7 +6956,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	msg.reserved = 0;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
+		cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		lim_log(mac_ctx, LOGE,
 		       FL("Not able to post WMA_SET_IE_INFO to WDA"));
 		cdf_mem_free(vdev_ie);

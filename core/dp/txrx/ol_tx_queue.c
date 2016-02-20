@@ -39,7 +39,7 @@
 #include <ol_tx.h>              /* ol_tx_vdev_ll_pause_queue_send */
 #include <ol_tx_queue.h>
 #include <ol_txrx_dbg.h>        /* ENABLE_TX_QUEUE_LOG */
-#include <cdf_types.h>          /* bool */
+#include <qdf_types.h>          /* bool */
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
 
@@ -96,7 +96,7 @@ void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 		cdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
 		cdf_nbuf_unmap(vdev->pdev->osdev,
 			       vdev->ll_pause.txq.head,
-			       CDF_DMA_TO_DEVICE);
+			       QDF_DMA_TO_DEVICE);
 		cdf_nbuf_tx_free(vdev->ll_pause.txq.head,
 				 NBUF_PKT_ERROR);
 		vdev->ll_pause.txq.head = next;
@@ -414,13 +414,13 @@ void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev)
 	qdf_timer_init(pdev->osdev,
 			       &pdev->tx_throttle.phase_timer,
 			       ol_tx_pdev_throttle_phase_timer, pdev,
-			       CDF_TIMER_TYPE_SW);
+			       QDF_TIMER_TYPE_SW);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 	qdf_timer_init(pdev->osdev,
 			       &pdev->tx_throttle.tx_timer,
 			       ol_tx_pdev_throttle_tx_timer, pdev,
-			       CDF_TIMER_TYPE_SW);
+			       QDF_TIMER_TYPE_SW);
 #endif
 
 	pdev->tx_throttle.tx_threshold = THROTTLE_TX_THRESHOLD;

@@ -183,14 +183,14 @@ static void send_oem_reg_rsp_nlink_msg(void)
 
 	/* OEM message is always to a specific process and cannot be a broadcast */
 	if (p_hdd_ctx->oem_pid == 0) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: invalid dest pid", __func__);
 		return;
 	}
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
 	if (skb == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: alloc_skb failed", __func__);
 		return;
 	}
@@ -223,7 +223,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 			*deviceMode = pAdapter->device_mode;
 			*vdevId = pAdapter->sessionId;
 			(*numInterfaces)++;
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				  "%s: numInterfaces: %d, deviceMode: %d, vdevId: %d",
 				  __func__, *numInterfaces, *deviceMode,
 				  *vdevId);
@@ -238,7 +238,7 @@ static void send_oem_reg_rsp_nlink_msg(void)
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: sending App Reg Response length (%d) to process pid (%d)",
 		  __func__, aniHdr->length, p_hdd_ctx->oem_pid);
 
@@ -265,7 +265,7 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
 	if (skb == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: alloc_skb failed", __func__);
 		return;
 	}
@@ -286,7 +286,7 @@ static void send_oem_err_rsp_nlink_msg(int32_t app_pid, uint8_t error_code)
 
 	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + aniHdr->length));
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: sending oem error response to process pid (%d)",
 		  __func__, app_pid);
 
@@ -314,13 +314,13 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 
 	/* OEM message is always to a specific process and cannot be a broadcast */
 	if (p_hdd_ctx->oem_pid == 0) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: invalid dest pid", __func__);
 		return;
 	}
 
 	if (length > OEM_DATA_RSP_SIZE) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: invalid length of Oem Data response", __func__);
 		return;
 	}
@@ -328,7 +328,7 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 	skb = alloc_skb(NLMSG_SPACE(sizeof(tAniMsgHdr) + OEM_DATA_RSP_SIZE),
 			GFP_KERNEL);
 	if (skb == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: alloc_skb failed", __func__);
 		return;
 	}
@@ -348,7 +348,7 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: sending Oem Data Response of len (%d) to process pid (%d)",
 		  __func__, length, p_hdd_ctx->oem_pid);
 
@@ -376,13 +376,13 @@ static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 	/* for now, STA interface only */
 	pAdapter = hdd_get_adapter(p_hdd_ctx, WLAN_HDD_INFRA_STATION);
 	if (!pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: No adapter for STA mode", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (!oemData) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: oemData is null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -398,7 +398,7 @@ static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 	oemDataReqConfig.data_len = oemDataLen;
 	cdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: calling sme_oem_data_req", __func__);
 
 	status = sme_oem_data_req(p_hdd_ctx->hHal,
@@ -437,7 +437,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 
 	/* OEM message is always to a specific process and cannot be a broadcast */
 	if (p_hdd_ctx->oem_pid == 0) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: invalid dest pid", __func__);
 		return -EPERM;
 	}
@@ -446,7 +446,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 				    numOfChannels * sizeof(tHddChannelInfo)),
 			GFP_KERNEL);
 	if (skb == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: alloc_skb failed", __func__);
 		return -ENOMEM;
 	}
@@ -498,7 +498,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 			/* channel info is not returned, fill in zeros in channel
 			 * info struct
 			 */
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				  "%s: sme_get_reg_info failed for chan (%d), return info 0",
 				  __func__, chanId);
 			hddChanInfo.chan_id = chanId;
@@ -516,7 +516,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: sending channel info resp for num channels (%d) to pid (%d)",
 		  __func__, numOfChannels, p_hdd_ctx->oem_pid);
 
@@ -662,7 +662,7 @@ static int oem_process_get_cap_req_msg(void)
  *
  * Return: none
  */
-void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
+void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 					 uint8_t peerStatus,
 					 uint8_t peerTimingMeasCap,
 					 uint8_t sessionId,
@@ -674,7 +674,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
 	tPeerStatusInfo *pPeerInfo;
 
 	if (!p_hdd_ctx || !p_hdd_ctx->hHal) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Either HDD Ctx is null or Hal Ctx is null",
 			  __func__);
 		return;
@@ -682,7 +682,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
 
 	/* check if oem app has registered and pid is valid */
 	if ((!p_hdd_ctx->oem_app_registered) || (p_hdd_ctx->oem_pid == 0)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: OEM app is not registered(%d) or pid is invalid(%d)",
 			  __func__, p_hdd_ctx->oem_app_registered,
 			  p_hdd_ctx->oem_pid);
@@ -693,7 +693,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
 				    sizeof(tPeerStatusInfo)),
 			GFP_KERNEL);
 	if (skb == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: alloc_skb failed", __func__);
 		return;
 	}
@@ -741,7 +741,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
 	}
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: sending peer " MAC_ADDRESS_STR
 		  " status(%d), peerTimingMeasCap(%d), vdevId(%d), chanId(%d)"
 		  " to oem app pid(%d), center freq 1 (%d), center freq 2 (%d),"
@@ -787,14 +787,14 @@ static int oem_msg_callback(struct sk_buff *skb)
 	nlh = (struct nlmsghdr *)skb->data;
 
 	if (!nlh) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Netlink header null", __func__);
 		return -EPERM;
 	}
 
 	ret = wlan_hdd_validate_context(p_hdd_ctx);
 	if (0 != ret) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  FL("HDD context is not valid"));
 		return ret;
 	}
@@ -802,7 +802,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 	msg_hdr = NLMSG_DATA(nlh);
 
 	if (!msg_hdr) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Message header null", __func__);
 		send_oem_err_rsp_nlink_msg(nlh->nlmsg_pid,
 					   OEM_ERR_NULL_MESSAGE_HEADER);
@@ -811,7 +811,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 
 	if (nlh->nlmsg_len <
 	    NLMSG_LENGTH(sizeof(tAniMsgHdr) + msg_hdr->length)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid nl msg len, nlh->nlmsg_len (%d), msg_hdr->len (%d)",
 			  __func__, nlh->nlmsg_len, msg_hdr->length);
 		send_oem_err_rsp_nlink_msg(nlh->nlmsg_pid,
@@ -822,7 +822,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 	switch (msg_hdr->type) {
 	case ANI_MSG_APP_REG_REQ:
 		/* Registration request is only allowed for Qualcomm Application */
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s: Received App Req Req from App process pid(%d), len(%d)",
 			  __func__, nlh->nlmsg_pid, msg_hdr->length);
 
@@ -830,7 +830,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 		if ((OEM_APP_SIGNATURE_LEN == msg_hdr->length) &&
 		    (0 == strncmp(sign_str, OEM_APP_SIGNATURE_STR,
 				  OEM_APP_SIGNATURE_LEN))) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				  "%s: Valid App Req Req from oem app process pid(%d)",
 				  __func__, nlh->nlmsg_pid);
 
@@ -838,7 +838,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 			p_hdd_ctx->oem_pid = nlh->nlmsg_pid;
 			send_oem_reg_rsp_nlink_msg();
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Invalid signature in App Reg Request from pid(%d)",
 				  __func__, nlh->nlmsg_pid);
 			send_oem_err_rsp_nlink_msg(nlh->nlmsg_pid,
@@ -848,14 +848,14 @@ static int oem_msg_callback(struct sk_buff *skb)
 		break;
 
 	case ANI_MSG_OEM_DATA_REQ:
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s: Received Oem Data Request length(%d) from pid: %d",
 			  __func__, msg_hdr->length, nlh->nlmsg_pid);
 
 		if ((!p_hdd_ctx->oem_app_registered) ||
 		    (nlh->nlmsg_pid != p_hdd_ctx->oem_pid)) {
 			/* either oem app is not registered yet or pid is different */
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: OEM DataReq: app not registered(%d) or incorrect pid(%d)",
 				  __func__, p_hdd_ctx->oem_app_registered,
 				  nlh->nlmsg_pid);
@@ -865,7 +865,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 		}
 
 		if ((!msg_hdr->length) || (OEM_DATA_REQ_SIZE < msg_hdr->length)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Invalid length (%d) in Oem Data Request",
 				  __func__, msg_hdr->length);
 			send_oem_err_rsp_nlink_msg(nlh->nlmsg_pid,
@@ -878,14 +878,14 @@ static int oem_msg_callback(struct sk_buff *skb)
 		break;
 
 	case ANI_MSG_CHANNEL_INFO_REQ:
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s: Received channel info request, num channel(%d) from pid: %d",
 			  __func__, msg_hdr->length, nlh->nlmsg_pid);
 
 		if ((!p_hdd_ctx->oem_app_registered) ||
 		    (nlh->nlmsg_pid != p_hdd_ctx->oem_pid)) {
 			/* either oem app is not registered yet or pid is different */
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Chan InfoReq: app not registered(%d) or incorrect pid(%d)",
 				  __func__, p_hdd_ctx->oem_app_registered,
 				  nlh->nlmsg_pid);
@@ -897,7 +897,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 		/* message length contains list of channel ids */
 		if ((!msg_hdr->length) ||
 		    (WNI_CFG_VALID_CHANNEL_LIST_LEN < msg_hdr->length)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Invalid length (%d) in channel info request",
 				  __func__, msg_hdr->length);
 			send_oem_err_rsp_nlink_msg(nlh->nlmsg_pid,
@@ -958,7 +958,7 @@ static int oem_msg_callback(struct sk_buff *skb)
 		break;
 
 	default:
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Received Invalid message type (%d), length (%d)",
 			  __func__, msg_hdr->type, msg_hdr->length);
 		send_oem_err_rsp_nlink_msg(nlh->nlmsg_pid,

@@ -35,7 +35,7 @@
 #include "cds_sched.h"
 #include <cds_api.h>
 #include "sir_types.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "sir_api.h"
 #include "sir_mac_prot_def.h"
 #include "sme_api.h"
@@ -99,7 +99,7 @@ static uint32_t wlan_ftm_postmsg(uint8_t *cmd_ptr, uint16_t cmd_len)
 	ftmMsg.bodyptr = (uint8_t *) cmd_ptr;
 	ftmMsg.bodyval = 0;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDF_MODULE_ID_WMA,
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
 						      &ftmMsg)) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: : Failed to post Msg to HAL",
 		       __func__);
@@ -176,7 +176,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	tMacOpenParameters mac_openParms;
 	p_cds_contextType gp_cds_context = (p_cds_contextType) p_cds_context;
 #if  defined(QCA_WIFI_FTM)
-	cdf_device_t cdf_ctx;
+	qdf_device_t cdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	void *pHifContext = NULL;
 	void *pHtcContext = NULL;
@@ -184,11 +184,11 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 #endif
 	hdd_context_t *hdd_ctx;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening CDS", __func__);
 
 	if (NULL == gp_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Trying to open CDS without a PreOpen", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -196,7 +196,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 
 	/* Initialize the probe event */
 	if (qdf_event_create(&gp_cds_context->ProbeEvent) != QDF_STATUS_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to init probeEvent", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -204,7 +204,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 
 	if (qdf_event_create(&(gp_cds_context->wmaCompleteEvent)) !=
 	    QDF_STATUS_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to init wmaCompleteEvent", __func__);
 		CDF_ASSERT(0);
 
@@ -216,7 +216,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 
 		/* Critical Error ...  Cannot proceed further */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to initialize CDS free message queue %d",
 			  __func__, vStatus);
 		CDF_ASSERT(0);
@@ -237,7 +237,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		/* Critical Error ...  Cannot proceed further */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to open CDS Scheduler %d", __func__,
 			  vStatus);
 		CDF_ASSERT(0);
@@ -245,16 +245,16 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	}
 #if  defined(QCA_WIFI_FTM)
 	/* Initialize BMI and Download firmware */
-	pHifContext = cds_get_context(CDF_MODULE_ID_HIF);
+	pHifContext = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!pHifContext) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: failed to get HIF context", __func__);
 		goto err_sched_close;
 	}
 
 	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
 	if (bmi_download_firmware(ol_ctx)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
 		goto err_bmi_close;
 	}
@@ -262,19 +262,19 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
 	gp_cds_context->htc_ctx =
 		htc_create(pHifContext, &htcInfo, cdf_ctx);
 	if (!gp_cds_context->htc_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);
 		goto err_bmi_close;
 	}
 
 	if (bmi_done(ol_ctx)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
 		goto err_htc_close;
 	}
@@ -287,7 +287,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	hdd_ctx = (hdd_context_t *) (gp_cds_context->pHDDContext);
 	if ((NULL == hdd_ctx) || (NULL == hdd_ctx->config)) {
 		/* Critical Error ...  Cannot proceed further */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Hdd Context is Null", __func__);
 		CDF_ASSERT(0);
 		goto err_htc_close;
@@ -302,7 +302,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 			   wlan_hdd_ftm_update_tgt_cfg, NULL, &mac_openParms);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		/* Critical Error ...  Cannot proceed further */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to open WMA module %d", __func__,
 			  vStatus);
 		CDF_ASSERT(0);
@@ -311,14 +311,14 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 #if  defined(QCA_WIFI_FTM)
 	hdd_update_config(hdd_ctx);
 
-	pHtcContext = cds_get_context(CDF_MODULE_ID_HTC);
+	pHtcContext = cds_get_context(QDF_MODULE_ID_HTC);
 	if (!pHtcContext) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: failed to get HTC context", __func__);
 		goto err_wma_close;
 	}
 	if (htc_wait_target(pHtcContext)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to complete BMI phase", __func__);
 		goto err_wma_close;
 	}
@@ -338,7 +338,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 
 	if (eSIR_SUCCESS != sirStatus) {
 		/* Critical Error ...  Cannot proceed further */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to open MAC %d", __func__, sirStatus);
 		CDF_ASSERT(0);
 		goto err_wma_close;
@@ -348,7 +348,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	vStatus = sme_open(gp_cds_context->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		/* Critical Error ...  Cannot proceed further */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to open SME %d", __func__, vStatus);
 		goto err_mac_close;
 	}
@@ -356,10 +356,10 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	vStatus = sme_init_chan_list(gp_cds_context->pMACContext,
 				     hdd_ctx->reg.alpha2, hdd_ctx->reg.cc_src);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to init sme channel list", __func__);
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: CDS successfully Opened", __func__);
 		return QDF_STATUS_SUCCESS;
 	}
@@ -417,7 +417,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 #ifndef QCA_WIFI_FTM
 	qdf_status = sme_close(((p_cds_contextType) cds_context)->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close SME %d", __func__, qdf_status);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
@@ -425,7 +425,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 
 	qdf_status = mac_close(((p_cds_contextType) cds_context)->pMACContext);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close MAC %d", __func__, qdf_status);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
@@ -435,7 +435,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 
 	qdf_status = wma_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close WMA %d", __func__, qdf_status);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
@@ -447,7 +447,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 	}
 	qdf_status = wma_wmi_service_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close wma_wmi_service", __func__);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
@@ -459,7 +459,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 
 	qdf_status = qdf_event_destroy(&gp_cds_context->ProbeEvent);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to destroy ProbeEvent %d", __func__,
 			  qdf_status);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
@@ -467,7 +467,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
 
 	qdf_status = qdf_event_destroy(&gp_cds_context->wmaCompleteEvent);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to destroy wmaCompleteEvent %d", __func__,
 			  qdf_status);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
@@ -521,11 +521,11 @@ static QDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 					HDD_FTM_WMA_PRE_START_TIMEOUT);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		if (qdf_status == QDF_STATUS_E_TIMEOUT) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Timeout occurred before WMA complete",
 				  __func__);
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: wma_pre_start reporting  other error",
 				  __func__);
 		}
@@ -676,7 +676,7 @@ int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx)
 
 	qdf_status = cds_sched_close(cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to close CDS Scheduler", __func__);
 		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
@@ -780,7 +780,7 @@ static int wlan_hdd_ftm_start(hdd_context_t *hdd_ctx)
 
 	vStatus = wma_start(p_cds_context);
 	if (vStatus != QDF_STATUS_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to start WMA", __func__);
 		goto err_status_failure;
 	}

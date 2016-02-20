@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,7 @@
 #ifndef _OL_HTT_API__H_
 #define _OL_HTT_API__H_
 
-#include <cdf_types.h>          /* cdf_device_t */
+#include <qdf_types.h>          /* qdf_device_t */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <athdefs.h>            /* A_STATUS */
 #include <htc_api.h>            /* HTC_HANDLE */
@@ -53,7 +53,7 @@ typedef struct htt_pdev_t *htt_pdev_handle;
 htt_pdev_handle
 htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	ol_pdev_handle ctrl_pdev,
-	HTC_HANDLE htc_pdev, cdf_device_t osdev);
+	HTC_HANDLE htc_pdev, qdf_device_t osdev);
 
 /**
  * @brief Allocate and initialize a HTT instance.
@@ -218,25 +218,25 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev);
 
 int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			cdf_dma_addr_t *ce_sr_base_paddr,
+			qdf_dma_addr_t *ce_sr_base_paddr,
 			uint32_t *ce_sr_ring_size,
-			cdf_dma_addr_t *ce_reg_paddr,
-			cdf_dma_addr_t *tx_comp_ring_base_paddr,
+			qdf_dma_addr_t *ce_reg_paddr,
+			qdf_dma_addr_t *tx_comp_ring_base_paddr,
 			uint32_t *tx_comp_ring_size,
 			uint32_t *tx_num_alloc_buffer,
-			cdf_dma_addr_t *rx_rdy_ring_base_paddr,
+			qdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			uint32_t *rx_rdy_ring_size,
-			cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			qdf_dma_addr_t *rx_proc_done_idx_paddr,
 			void **rx_proc_done_idx_vaddr,
-			cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
 			uint32_t *rx2_rdy_ring_size,
-			cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			qdf_dma_addr_t *rx2_proc_done_idx_paddr,
 			void **rx2_proc_done_idx_vaddr);
 
 int
 htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
-			      cdf_dma_addr_t ipa_uc_tx_doorbell_paddr,
-			      cdf_dma_addr_t ipa_uc_rx_doorbell_paddr);
+			      qdf_dma_addr_t ipa_uc_tx_doorbell_paddr,
+			      qdf_dma_addr_t ipa_uc_rx_doorbell_paddr);
 
 int
 htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev, bool uc_active, bool is_tx);
@@ -280,19 +280,19 @@ static inline int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
  */
 static inline int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			cdf_dma_addr_t *ce_sr_base_paddr,
+			qdf_dma_addr_t *ce_sr_base_paddr,
 			uint32_t *ce_sr_ring_size,
-			cdf_dma_addr_t *ce_reg_paddr,
-			cdf_dma_addr_t *tx_comp_ring_base_paddr,
+			qdf_dma_addr_t *ce_reg_paddr,
+			qdf_dma_addr_t *tx_comp_ring_base_paddr,
 			uint32_t *tx_comp_ring_size,
 			uint32_t *tx_num_alloc_buffer,
-			cdf_dma_addr_t *rx_rdy_ring_base_paddr,
+			qdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			uint32_t *rx_rdy_ring_size,
-			cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			qdf_dma_addr_t *rx_proc_done_idx_paddr,
 			void **rx_proc_done_idx_vaddr,
-			cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
 			uint32_t *rx2_rdy_ring_size,
-			cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			qdf_dma_addr_t *rx2_proc_done_idx_paddr,
 			void **rx2_proc_done_idx_vaddr)
 {
 	return 0;

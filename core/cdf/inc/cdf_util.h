@@ -48,7 +48,7 @@
  */
 #define cdf_likely(_expr)       __cdf_likely(_expr)
 
-CDF_INLINE_FN int cdf_status_to_os_return(QDF_STATUS status)
+static inline int cdf_status_to_os_return(QDF_STATUS status)
 {
 	return __cdf_status_to_os_return(status);
 }
@@ -125,15 +125,15 @@ CDF_INLINE_FN int cdf_status_to_os_return(QDF_STATUS status)
  * Return: true if the MacAddress's are equal
  *	not true if the MacAddress's are not equal
  */
-CDF_INLINE_FN bool cdf_is_macaddr_equal(struct cdf_mac_addr *pMacAddr1,
-					struct cdf_mac_addr *pMacAddr2)
+static inline bool cdf_is_macaddr_equal(struct qdf_mac_addr *pMacAddr1,
+					struct qdf_mac_addr *pMacAddr2)
 {
-	return 0 == memcmp(pMacAddr1, pMacAddr2, CDF_MAC_ADDR_SIZE);
+	return 0 == memcmp(pMacAddr1, pMacAddr2, QDF_MAC_ADDR_SIZE);
 }
 
 /**
  * cdf_is_macaddr_zero() - check for a MacAddress of all zeros.
- * @pMacAddr - pointer to the struct cdf_mac_addr to check.
+ * @pMacAddr - pointer to the struct qdf_mac_addr to check.
  *
  * This function returns a bool that tells if a MacAddress is made up of
  * all zeros.
@@ -143,24 +143,24 @@ CDF_INLINE_FN bool cdf_is_macaddr_equal(struct cdf_mac_addr *pMacAddr1,
  *	false if the MacAddress is not all Zeros.
  *
  */
-CDF_INLINE_FN bool cdf_is_macaddr_zero(struct cdf_mac_addr *pMacAddr)
+static inline bool cdf_is_macaddr_zero(struct qdf_mac_addr *pMacAddr)
 {
-	struct cdf_mac_addr zeroMacAddr = CDF_MAC_ADDR_ZERO_INITIALIZER;
+	struct qdf_mac_addr zeroMacAddr = QDF_MAC_ADDR_ZERO_INITIALIZER;
 
 	return cdf_is_macaddr_equal(pMacAddr, &zeroMacAddr);
 }
 
 /**
  * cdf_zero_macaddr() - zero out a MacAddress
- * @pMacAddr: pointer to the struct cdf_mac_addr to zero.
+ * @pMacAddr: pointer to the struct qdf_mac_addr to zero.
  *
  * This function zeros out a CDF MacAddress type.
  *
  * Return: nothing
  */
-CDF_INLINE_FN void cdf_zero_macaddr(struct cdf_mac_addr *pMacAddr)
+static inline void cdf_zero_macaddr(struct qdf_mac_addr *pMacAddr)
 {
-	memset(pMacAddr, 0, CDF_MAC_ADDR_SIZE);
+	memset(pMacAddr, 0, QDF_MAC_ADDR_SIZE);
 }
 
 /**
@@ -175,7 +175,7 @@ CDF_INLINE_FN void cdf_zero_macaddr(struct cdf_mac_addr *pMacAddr)
  * Return:  true if the input MacAddress is a Group address
  *	false if the input MacAddress is not a Group address
  */
-CDF_INLINE_FN bool cdf_is_macaddr_group(struct cdf_mac_addr *pMacAddr)
+static inline bool cdf_is_macaddr_group(struct qdf_mac_addr *pMacAddr)
 {
 	return pMacAddr->bytes[0] & 0x01;
 }
@@ -191,10 +191,10 @@ CDF_INLINE_FN bool cdf_is_macaddr_group(struct cdf_mac_addr *pMacAddr)
  * Return:  true if the input MacAddress is a broadcast address
  *	false if the input MacAddress is not a broadcast address
  */
-CDF_INLINE_FN bool cdf_is_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
+static inline bool cdf_is_macaddr_broadcast(struct qdf_mac_addr *pMacAddr)
 {
-	struct cdf_mac_addr broadcastMacAddr =
-					CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr broadcastMacAddr =
+					QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	return cdf_is_macaddr_equal(pMacAddr, &broadcastMacAddr);
 }
@@ -209,8 +209,8 @@ CDF_INLINE_FN bool cdf_is_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
  *
  * Return: nothing
  */
-CDF_INLINE_FN void cdf_copy_macaddr(struct cdf_mac_addr *pDst,
-				    struct cdf_mac_addr *pSrc)
+static inline void cdf_copy_macaddr(struct qdf_mac_addr *pDst,
+				    struct qdf_mac_addr *pSrc)
 {
 	*pDst = *pSrc;
 }
@@ -224,9 +224,9 @@ CDF_INLINE_FN void cdf_copy_macaddr(struct cdf_mac_addr *pDst,
  *
  * Return: nothing
  */
-CDF_INLINE_FN void cdf_set_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
+static inline void cdf_set_macaddr_broadcast(struct qdf_mac_addr *pMacAddr)
 {
-	memset(pMacAddr, 0xff, CDF_MAC_ADDR_SIZE);
+	memset(pMacAddr, 0xff, QDF_MAC_ADDR_SIZE);
 }
 
 #if defined(ANI_LITTLE_BYTE_ENDIAN)
@@ -237,7 +237,7 @@ CDF_INLINE_FN void cdf_set_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
  *
  * Return: converted network byte order
  */
-CDF_INLINE_FN unsigned long i_cdf_htonl(unsigned long ul)
+static inline unsigned long i_cdf_htonl(unsigned long ul)
 {
 	return ((ul & 0x000000ff) << 24) |
 		((ul & 0x0000ff00) << 8) |
@@ -250,7 +250,7 @@ CDF_INLINE_FN unsigned long i_cdf_htonl(unsigned long ul)
  *
  * Return: converted host byte order
  */
-CDF_INLINE_FN unsigned long i_cdf_ntohl(unsigned long ul)
+static inline unsigned long i_cdf_ntohl(unsigned long ul)
 {
 	return i_cdf_htonl(ul);
 }
@@ -268,7 +268,7 @@ CDF_INLINE_FN unsigned long i_cdf_ntohl(unsigned long ul)
  * Return: The address to the byte after the assignment. This may or may not
  *	be valid. Caller to verify.
  */
-CDF_INLINE_FN uint8_t *cdf_set_u16(uint8_t *ptr, uint16_t value)
+static inline uint8_t *cdf_set_u16(uint8_t *ptr, uint16_t value)
 {
 #if defined(ANI_BIG_BYTE_ENDIAN)
 	*(ptr) = (uint8_t) (value >> 8);
@@ -293,7 +293,7 @@ CDF_INLINE_FN uint8_t *cdf_set_u16(uint8_t *ptr, uint16_t value)
  * Return: The address to the byte after the assignment. This may or may not
  *	be valid. Caller to verify.
  */
-CDF_INLINE_FN uint8_t *cdf_get_u16(uint8_t *ptr, uint16_t *pValue)
+static inline uint8_t *cdf_get_u16(uint8_t *ptr, uint16_t *pValue)
 {
 #if defined(ANI_BIG_BYTE_ENDIAN)
 	*pValue = (((uint16_t) (*ptr << 8)) | ((uint16_t) (*(ptr + 1))));
@@ -316,7 +316,7 @@ CDF_INLINE_FN uint8_t *cdf_get_u16(uint8_t *ptr, uint16_t *pValue)
  * Return: The address to the byte after the assignment. This may or may not
  *		be valid. Caller to verify.
  */
-CDF_INLINE_FN uint8_t *cdf_get_u32(uint8_t *ptr, uint32_t *pValue)
+static inline uint8_t *cdf_get_u32(uint8_t *ptr, uint32_t *pValue)
 {
 #if defined(ANI_BIG_BYTE_ENDIAN)
 	*pValue = ((uint32_t) (*(ptr) << 24) |
@@ -338,7 +338,7 @@ CDF_INLINE_FN uint8_t *cdf_get_u32(uint8_t *ptr, uint32_t *pValue)
  *
  * Return: Power of 2 integer
  */
-CDF_INLINE_FN int cdf_get_pwr2(int value)
+static inline int cdf_get_pwr2(int value)
 {
 	int log2;
 	if (CDF_IS_PWR2(value))

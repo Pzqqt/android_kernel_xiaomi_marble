@@ -721,7 +721,7 @@ wlan_hdd_cfg80211_extscan_signif_wifi_change_results_ind(
 
 			if (nla_put(skb,
 				QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SIGNIFICANT_CHANGE_RESULT_BSSID,
-				CDF_MAC_ADDR_SIZE, ap_info->bssid.bytes) ||
+				QDF_MAC_ADDR_SIZE, ap_info->bssid.bytes) ||
 			    nla_put_u32(skb,
 				QCA_WLAN_VENDOR_ATTR_EXTSCAN_RESULTS_SIGNIFICANT_CHANGE_RESULT_CHANNEL,
 				ap_info->channel) ||
@@ -1718,7 +1718,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1852,7 +1852,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2000,7 +2000,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2075,7 +2075,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 		nla_memcpy(pReqMsg->ap[i].bssid.bytes,
 			tb2
 			[QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_BSSID],
-			   CDF_MAC_ADDR_SIZE);
+			   QDF_MAC_ADDR_SIZE);
 		hddLog(LOG1, MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(pReqMsg->ap[i].bssid.bytes));
 
@@ -2197,7 +2197,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2294,7 +2294,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 		nla_memcpy(pReqMsg->ap[i].bssid.bytes,
 			   tb2
 			   [QCA_WLAN_VENDOR_ATTR_EXTSCAN_AP_THRESHOLD_PARAM_BSSID],
-			   CDF_MAC_ADDR_SIZE);
+			   QDF_MAC_ADDR_SIZE);
 		hddLog(LOG1, MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(pReqMsg->ap[i].bssid.bytes));
 
@@ -2479,7 +2479,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2534,7 +2534,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	num_channels = CDF_MIN(num_channels, maxChannels);
+	num_channels = QDF_MIN(num_channels, maxChannels);
 
 	hdd_remove_dsrc_channels(wiphy, chan_list, &num_channels);
 
@@ -2831,7 +2831,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 				num_channels);
 
 			req_msg->buckets[bkt_index].numChannels =
-				CDF_MIN(num_channels,
+				QDF_MIN(num_channels,
 					(WLAN_EXTSCAN_MAX_CHANNELS -
 						total_channels));
 			hdd_info("Adj Num channels/bucket: %d total_channels: %d",
@@ -2926,7 +2926,7 @@ static int hdd_extscan_start_fill_bucket_channel_spec(
 			req_msg->buckets[bkt_index].numChannels);
 
 		req_msg->buckets[bkt_index].numChannels =
-			CDF_MIN(req_msg->buckets[bkt_index].numChannels,
+			QDF_MIN(req_msg->buckets[bkt_index].numChannels,
 				(WLAN_EXTSCAN_MAX_CHANNELS - total_channels));
 		hdd_info("Num channels/bucket: %d total_channels: %d",
 			req_msg->buckets[bkt_index].numChannels,
@@ -3144,7 +3144,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3354,7 +3354,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3481,7 +3481,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3606,7 +3606,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3822,7 +3822,7 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -4028,7 +4028,7 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -4144,7 +4144,7 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	if (ret)
 		return ret;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -4270,7 +4270,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -4490,7 +4490,7 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}

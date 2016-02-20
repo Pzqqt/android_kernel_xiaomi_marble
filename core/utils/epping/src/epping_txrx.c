@@ -343,7 +343,7 @@ static struct net_device_ops epping_drv_ops = {
 
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     enum tCDF_ADAPTER_MODE device_mode)
+				     enum tQDF_ADAPTER_MODE device_mode)
 {
 	struct net_device *dev;
 	epping_adapter_t *pAdapter;
@@ -371,7 +371,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	cdf_nbuf_queue_init(&pAdapter->nodrop_queue);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 	qdf_timer_init(epping_get_cdf_ctx(), &pAdapter->epping_timer,
-		epping_timer_expire, dev, CDF_TIMER_TYPE_SW);
+		epping_timer_expire, dev, QDF_TIMER_TYPE_SW);
 	dev->type = ARPHRD_IEEE80211;
 	dev->netdev_ops = &epping_drv_ops;
 	dev->watchdog_timeo = 5 * HZ;   /* XXX */

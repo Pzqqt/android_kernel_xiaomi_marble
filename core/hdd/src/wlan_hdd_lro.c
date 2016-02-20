@@ -34,7 +34,7 @@
 #define HDD_DISALLOW_LEGACY_HDDLOG 1
 
 #include <wlan_hdd_includes.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <wlan_hdd_lro.h>
 #include <wlan_hdd_napi.h>
 #include <wma_api.h>
@@ -503,7 +503,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	 hdd_adapter_t *adapter)
 {
 	struct hdd_lro_s *hdd_lro;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	size_t lro_mgr_sz, desc_arr_sz, desc_pool_sz, hash_table_sz;
 	uint8_t *lro_mem_ptr;
 

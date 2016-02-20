@@ -55,11 +55,11 @@
 
 #if defined(DEBUG)
 
-static bool appstarted = false;
-static bool senddriverstatus = false;
+static bool appstarted;
+static bool senddriverstatus;
 static int cnss_diag_pid = INVALID_PID;
-static int get_version = 0;
-static int gprint_limiter = 0;
+static int get_version;
+static int gprint_limiter;
 
 static ATH_DEBUG_MASK_DESCRIPTION g_fwlog_debug_description[] = {
 	{FWLOG_DEBUG, "fwlog"},
@@ -1869,7 +1869,7 @@ static int diag_fw_handler(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		gprint_limiter = true;
 	}
 	/* Always returns zero */
-	return (0);
+	return 0;
 }
 
 /*
@@ -1953,7 +1953,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 	A_UINT32 moduleid;
 	A_UINT16 vapid;
 	A_UINT16 numargs;
-	cdf_size_t length;
+	qdf_size_t length;
 	A_UINT32 dropped;
 	WMI_DEBUG_MESG_EVENTID_param_tlvs *param_buf;
 	uint8_t *datap;
@@ -2053,7 +2053,7 @@ int dbglog_parse_debug_logs(ol_scn_t scn, uint8_t *data, uint32_t datalen)
 		count += numargs + 2;   /* 32 bit Time stamp + 32 bit Dbg header */
 	}
 	/* Always returns zero */
-	return (0);
+	return 0;
 }
 
 void dbglog_reg_modprint(A_UINT32 mod_id, module_dbg_print printfn)
@@ -2191,8 +2191,8 @@ dbglog_sta_powersave_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "STA PS",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	case PS_STA_PM_ARB_REQUEST:
 		if (numargs == 4) {
@@ -2298,7 +2298,7 @@ dbglog_sta_powersave_print_handler(A_UINT32 mod_id,
 			A_UINT32 param = args[0];
 			A_UINT32 value = args[1];
 
-			if (param < CDF_ARRAY_SIZE(params)) {
+			if (param < QDF_ARRAY_SIZE(params)) {
 				if (params[param].is_time_param) {
 					dbglog_printf(timestamp, vap_id,
 						      "STA PS SET_PARAM %s => %u (us)",
@@ -2411,20 +2411,20 @@ dbglog_ibss_powersave_print_handler(A_UINT32 mod_id,
 		case WLAN_IBSS_PS_SUB_MODULE_IBSS_NW_SM:
 			dbglog_sm_print(timestamp, vap_id, numargs, args,
 					"IBSS PS NW", nw_states,
-					CDF_ARRAY_SIZE(nw_states), events,
-					CDF_ARRAY_SIZE(events));
+					QDF_ARRAY_SIZE(nw_states), events,
+					QDF_ARRAY_SIZE(events));
 			break;
 		case WLAN_IBSS_PS_SUB_MODULE_IBSS_SELF_PS:
 			dbglog_sm_print(timestamp, vap_id, numargs, args,
 					"IBSS PS Self", ps_states,
-					CDF_ARRAY_SIZE(ps_states), events,
-					CDF_ARRAY_SIZE(events));
+					QDF_ARRAY_SIZE(ps_states), events,
+					QDF_ARRAY_SIZE(events));
 			break;
 		case WLAN_IBSS_PS_SUB_MODULE_IBSS_PEER_PS:
 			dbglog_sm_print(timestamp, vap_id, numargs, args,
 					"IBSS PS Peer", peer_ps_states,
-					CDF_ARRAY_SIZE(peer_ps_states), events,
-					CDF_ARRAY_SIZE(events));
+					QDF_ARRAY_SIZE(peer_ps_states), events,
+					QDF_ARRAY_SIZE(events));
 			break;
 		default:
 			break;
@@ -3049,8 +3049,8 @@ dbglog_wal_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "TID PAUSE",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	case WAL_DBGID_SET_POWER_STATE:
 		if (numargs == 3) {
@@ -3188,8 +3188,8 @@ dbglog_scan_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "SCAN",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	default:
 		return false;
@@ -3719,8 +3719,8 @@ dbglog_beacon_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "EARLY_RX",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	case BEACON_EVENT_EARLY_RX_BMISS_STATUS:
 		if (numargs == 3) {
@@ -3826,8 +3826,8 @@ A_BOOL dbglog_smps_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "STA_SMPS SM",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	case STA_SMPS_DBGID_CREATE_PDEV_INSTANCE:
 		dbglog_printf(timestamp, vap_id, "STA_SMPS Create PDEV ctx %#x",
@@ -3944,8 +3944,8 @@ dbglog_p2p_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "P2P GO PS",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	default:
 		return false;
@@ -3984,8 +3984,8 @@ dbglog_pcielp_print_handler(A_UINT32 mod_id,
 	switch (dbg_id) {
 	case DBGLOG_DBGID_SM_FRAMEWORK_PROXY_DBGLOG_MSG:
 		dbglog_sm_print(timestamp, vap_id, numargs, args, "PCIELP",
-				states, CDF_ARRAY_SIZE(states), events,
-				CDF_ARRAY_SIZE(events));
+				states, QDF_ARRAY_SIZE(states), events,
+				QDF_ARRAY_SIZE(events));
 		break;
 	default:
 		return false;
@@ -4235,7 +4235,7 @@ int cnss_diag_msg_callback(struct sk_buff *skb)
 
    \return - 0 for success, non zero for failure
    --------------------------------------------------------------------------*/
-int cnss_diag_notify_wlan_close()
+int cnss_diag_notify_wlan_close(void)
 {
 	/* Send nl msg about the wlan close */
 	if (INVALID_PID != cnss_diag_pid) {
@@ -4257,7 +4257,7 @@ int cnss_diag_notify_wlan_close()
 
    \return - 0 for success, non zero for failure
    --------------------------------------------------------------------------*/
-int cnss_diag_activate_service()
+int cnss_diag_activate_service(void)
 {
 	int ret = 0;
 
@@ -4283,7 +4283,7 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (4 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "Enable NS offload, for sender %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\
-                :%02x%02x:%02x%02x:%02x%02x", *(A_UINT8 *) &args[0], *((A_UINT8 *) &args[0] + 1),
+		:%02x%02x:%02x%02x:%02x%02x", *(A_UINT8 *) &args[0], *((A_UINT8 *) &args[0] + 1),
 				      *((A_UINT8 *) &args[0] + 2), *((A_UINT8 *) &args[0] + 3), *(A_UINT8 *) &args[1], *((A_UINT8 *) &args[1] + 1), *((A_UINT8 *) &args[1] + 2), *((A_UINT8 *) &args[1] + 3),
 				      *(A_UINT8 *) &args[2], *((A_UINT8 *) &args[2] + 1), *((A_UINT8 *) &args[2] + 2), *((A_UINT8 *) &args[2] + 3), *(A_UINT8 *) &args[3], *((A_UINT8 *) &args[3] + 1),
 				      *((A_UINT8 *) &args[3] + 2), *((A_UINT8 *) &args[3] + 3));
@@ -4315,7 +4315,7 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (4 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "NS requested from %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\
-                :%02x%02x:%02x%02x:%02x%02x", *(A_UINT8 *) &args[0], *((A_UINT8 *) &args[0] + 1),
+		:%02x%02x:%02x%02x:%02x%02x", *(A_UINT8 *) &args[0], *((A_UINT8 *) &args[0] + 1),
 				      *((A_UINT8 *) &args[0] + 2), *((A_UINT8 *) &args[0] + 3), *(A_UINT8 *) &args[1], *((A_UINT8 *) &args[1] + 1), *((A_UINT8 *) &args[1] + 2),
 				      *((A_UINT8 *) &args[1] + 3), *(A_UINT8 *) &args[2], *((A_UINT8 *) &args[2] + 1), *((A_UINT8 *) &args[2] + 2), *((A_UINT8 *) &args[2] + 3),
 				      *(A_UINT8 *) &args[3], *((A_UINT8 *) &args[3] + 1), *((A_UINT8 *) &args[3] + 2), *((A_UINT8 *) &args[3] + 3));
@@ -4327,7 +4327,7 @@ dbglog_wow_print_handler(A_UINT32 mod_id,
 		if (4 == numargs) {
 			dbglog_printf(timestamp, vap_id,
 				      "NS replied to %02x%02x:%02x%02x:%02x%02x:%02x%02x:%02x%02x\
-                :%02x%02x:%02x%02x:%02x%02x", *(A_UINT8 *) &args[0], *((A_UINT8 *) &args[0] + 1),
+		:%02x%02x:%02x%02x:%02x%02x", *(A_UINT8 *) &args[0], *((A_UINT8 *) &args[0] + 1),
 				      *((A_UINT8 *) &args[0] + 2), *((A_UINT8 *) &args[0] + 3), *(A_UINT8 *) &args[1], *((A_UINT8 *) &args[1] + 1), *((A_UINT8 *) &args[1] + 2),
 				      *((A_UINT8 *) &args[1] + 3), *(A_UINT8 *) &args[2], *((A_UINT8 *) &args[2] + 1), *((A_UINT8 *) &args[2] + 2), *((A_UINT8 *) &args[2] + 3),
 				      *(A_UINT8 *) &args[3], *((A_UINT8 *) &args[3] + 1), *((A_UINT8 *) &args[3] + 2), *((A_UINT8 *) &args[3] + 3));

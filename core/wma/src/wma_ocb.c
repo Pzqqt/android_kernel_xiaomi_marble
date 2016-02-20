@@ -93,7 +93,7 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	msg.type = eWNI_SME_OCB_SET_CONFIG_RSP;
 	msg.bodyptr = resp;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post msg to SME"));
 		cdf_mem_free(resp);
@@ -691,7 +691,7 @@ int wma_ocb_get_tsf_timer_resp_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_OCB_GET_TSF_TIMER_RSP;
 	msg.bodyptr = response;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(response);
@@ -814,7 +814,7 @@ int wma_dcc_get_stats_resp_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_DCC_GET_STATS_RSP;
 	msg.bodyptr = response;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(response);
@@ -1012,7 +1012,7 @@ int wma_dcc_update_ndl_resp_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_DCC_UPDATE_NDL_RSP;
 	msg.bodyptr = resp;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))	{
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(resp);
@@ -1058,7 +1058,7 @@ int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	msg.type = eWNI_SME_DCC_STATS_EVENT;
 	msg.bodyptr = response;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))	{
 		WMA_LOGE(FL("Failed to post msg to SME"));
 		cdf_mem_free(response);

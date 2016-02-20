@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __I_HOST_DIAG_CORE_LOG_H )
+#if !defined(__I_HOST_DIAG_CORE_LOG_H)
 #define __I_HOST_DIAG_CORE_LOG_H
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -45,7 +45,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <cdf_memory.h>
 
 /*--------------------------------------------------------------------------
@@ -81,10 +81,10 @@ void host_diag_log_submit(void *plog_hdr_ptr);
    Allocate an event payload holder
    ---------------------------------------------------------------------------*/
 
-#define WLAN_HOST_DIAG_LOG_ALLOC( payload_ptr, payload_type, log_code )	\
+#define WLAN_HOST_DIAG_LOG_ALLOC(payload_ptr, payload_type, log_code)	\
 	do { \
-		payload_ptr = ( payload_type *)cdf_mem_malloc(sizeof(payload_type)); \
-		if(payload_ptr) { \
+		payload_ptr = (payload_type *)cdf_mem_malloc(sizeof(payload_type)); \
+		if (payload_ptr) { \
 			cdf_mem_zero(payload_ptr, sizeof(payload_type)); \
 			host_diag_log_set_code(payload_ptr, log_code); \
 			host_diag_log_set_length(payload_ptr, sizeof(payload_type)); \
@@ -94,10 +94,10 @@ void host_diag_log_submit(void *plog_hdr_ptr);
 /*---------------------------------------------------------------------------
    Report the event
    ---------------------------------------------------------------------------*/
-#define WLAN_HOST_DIAG_LOG_REPORT( payload_ptr ) \
+#define WLAN_HOST_DIAG_LOG_REPORT(payload_ptr) \
 	do { \
-		if(payload_ptr) { \
-			host_diag_log_submit( payload_ptr); \
+		if (payload_ptr) { \
+			host_diag_log_submit(payload_ptr); \
 			cdf_mem_free(payload_ptr); \
 		} \
 	} while (0)
@@ -105,20 +105,18 @@ void host_diag_log_submit(void *plog_hdr_ptr);
 /*---------------------------------------------------------------------------
    Free the payload
    ---------------------------------------------------------------------------*/
-#define WLAN_HOST_DIAG_LOG_FREE( payload_ptr ) \
-	do					    \
-	{				\
-		if( payload_ptr)	      \
-		{			      \
+#define WLAN_HOST_DIAG_LOG_FREE(payload_ptr) \
+	do {				\
+		if (payload_ptr) {	      \
 			cdf_mem_free(payload_ptr); \
 		}			      \
 	} while (0)
 
 #else                           /* FEATURE_WLAN_DIAG_SUPPORT */
 
-#define WLAN_HOST_DIAG_LOG_ALLOC( payload_ptr, payload_type, log_code )
-#define WLAN_HOST_DIAG_LOG_REPORT( payload_ptr )
-#define WLAN_HOST_DIAG_LOG_FREE( payload_ptr )
+#define WLAN_HOST_DIAG_LOG_ALLOC(payload_ptr, payload_type, log_code)
+#define WLAN_HOST_DIAG_LOG_REPORT(payload_ptr)
+#define WLAN_HOST_DIAG_LOG_FREE(payload_ptr)
 
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 

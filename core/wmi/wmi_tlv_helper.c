@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,7 +49,7 @@
 
 #define WMITLV_GET_CMD_EVT_ATTRB_LIST(id) \
 	WMITLV_SET_ATTRB0(id), \
-	WMITLV_TABLE(id,SET_TLV_ATTRIB,NULL,0)
+	WMITLV_TABLE(id, SET_TLV_ATTRIB, NULL, 0)
 
 A_UINT32 cmd_attr_list[] = {
 	WMITLV_ALL_CMD_LIST(WMITLV_GET_CMD_EVT_ATTRB_LIST)
@@ -60,7 +60,7 @@ A_UINT32 evt_attr_list[] = {
 };
 
 #ifdef NO_DYNAMIC_MEM_ALLOC
-static wmitlv_cmd_param_info *g_wmi_static_cmd_param_info_buf = NULL;
+static wmitlv_cmd_param_info *g_wmi_static_cmd_param_info_buf;
 A_UINT32 g_wmi_static_max_cmd_param_tlvs = 0;
 #endif
 
@@ -101,10 +101,10 @@ A_UINT32 wmitlv_get_attributes(A_UINT32 is_cmd_id, A_UINT32 cmd_event_id,
 
 	if (is_cmd_id) {
 		pAttrArrayList = &cmd_attr_list[0];
-		num_entries = CDF_ARRAY_SIZE(cmd_attr_list);
+		num_entries = QDF_ARRAY_SIZE(cmd_attr_list);
 	} else {
 		pAttrArrayList = &evt_attr_list[0];
-		num_entries = CDF_ARRAY_SIZE(evt_attr_list);
+		num_entries = QDF_ARRAY_SIZE(evt_attr_list);
 	}
 
 	for (i = 0; i < num_entries; i++) {
@@ -175,6 +175,7 @@ wmitlv_check_tlv_params(void *os_handle, void *param_struc_ptr,
 {
 	wmitlv_attributes_struc attr_struct_ptr;
 	A_UINT32 buf_idx = 0;
+	A_UINT32 ret = -1;
 	A_UINT32 tlv_index = 0;
 	A_UINT8 *buf_ptr = (unsigned char *)param_struc_ptr;
 	A_UINT32 expected_num_tlvs, expected_tlv_len;
@@ -345,8 +346,7 @@ wmitlv_check_tlv_params(void *os_handle, void *param_struc_ptr,
 					    || (curr_tlv_tag ==
 						WMITLV_TAG_ARRAY_BYTE)
 					    || (curr_tlv_tag ==
-						WMITLV_TAG_ARRAY_FIXED_STRUC))
-					{
+						WMITLV_TAG_ARRAY_FIXED_STRUC)) {
 						/* Nothing to verify here */
 					} else {
 						wmi_tlv_print_error
@@ -392,9 +392,9 @@ wmitlv_check_tlv_params(void *os_handle, void *param_struc_ptr,
 			__func__, wmi_cmd_event_id, tlv_index, expected_num_tlvs);
 	}
 
-	return (0);
+	return 0;
 Error_wmitlv_check_tlv_params:
-	return (-1);
+	return ret;
 }
 
 /*
@@ -407,9 +407,9 @@ wmitlv_check_event_tlv_params(void *os_handle, void *param_struc_ptr,
 			      A_UINT32 param_buf_len, A_UINT32 wmi_cmd_event_id)
 {
 	A_UINT32 is_cmd_id = 0;
-	return (wmitlv_check_tlv_params
+	return wmitlv_check_tlv_params
 			(os_handle, param_struc_ptr, param_buf_len, is_cmd_id,
-			wmi_cmd_event_id));
+			wmi_cmd_event_id);
 }
 
 /*
@@ -423,15 +423,15 @@ wmitlv_check_command_tlv_params(void *os_handle, void *param_struc_ptr,
 				A_UINT32 wmi_cmd_event_id)
 {
 	A_UINT32 is_cmd_id = 1;
-	return (wmitlv_check_tlv_params
+	return wmitlv_check_tlv_params
 			(os_handle, param_struc_ptr, param_buf_len, is_cmd_id,
-			wmi_cmd_event_id));
+			wmi_cmd_event_id);
 }
 
 /*
  * Helper Function to vaidate the TLV's coming for an event/command and also pads data to TLV's if necessary
  * Return 0 if success.
-              <0 if failure.
+ * <0 if failure.
  */
 static int
 wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
@@ -440,6 +440,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 {
 	wmitlv_attributes_struc attr_struct_ptr;
 	A_UINT32 buf_idx = 0;
+	A_UINT32 ret = -1;
 	A_UINT32 tlv_index = 0;
 	A_UINT32 num_of_elems = 0;
 	int tlv_size_diff = 0;
@@ -861,7 +862,7 @@ wmitlv_check_and_pad_tlvs(void *os_handle, void *param_struc_ptr,
 		buf_idx += curr_tlv_len + num_padding_bytes;
 	}
 
-	return (0);
+	return 0;
 Error_wmitlv_check_and_pad_tlvs:
 	if (is_cmd_id) {
 		wmitlv_free_allocated_command_tlvs(wmi_cmd_event_id,
@@ -871,13 +872,13 @@ Error_wmitlv_check_and_pad_tlvs:
 						 wmi_cmd_struct_ptr);
 	}
 	*wmi_cmd_struct_ptr = NULL;
-	return (-1);
+	return ret;
 }
 
 /*
  * Helper Function to validate and pad(if necessary) for incoming WMI Event TLVs
  * Return 0 if success.
-              <0 if failure.
+ * <0 if failure.
  */
 int
 wmitlv_check_and_pad_event_tlvs(void *os_handle, void *param_struc_ptr,
@@ -886,15 +887,15 @@ wmitlv_check_and_pad_event_tlvs(void *os_handle, void *param_struc_ptr,
 				void **wmi_cmd_struct_ptr)
 {
 	A_UINT32 is_cmd_id = 0;
-	return (wmitlv_check_and_pad_tlvs
+	return wmitlv_check_and_pad_tlvs
 			(os_handle, param_struc_ptr, param_buf_len, is_cmd_id,
-			wmi_cmd_event_id, wmi_cmd_struct_ptr));
+			wmi_cmd_event_id, wmi_cmd_struct_ptr);
 }
 
 /*
  * Helper Function to validate and pad(if necessary) for incoming WMI Command TLVs
  * Return 0 if success.
-              <0 if failure.
+ * <0 if failure.
  */
 int
 wmitlv_check_and_pad_command_tlvs(void *os_handle, void *param_struc_ptr,
@@ -903,9 +904,9 @@ wmitlv_check_and_pad_command_tlvs(void *os_handle, void *param_struc_ptr,
 				  void **wmi_cmd_struct_ptr)
 {
 	A_UINT32 is_cmd_id = 1;
-	return (wmitlv_check_and_pad_tlvs
+	return wmitlv_check_and_pad_tlvs
 			(os_handle, param_struc_ptr, param_buf_len, is_cmd_id,
-			wmi_cmd_event_id, wmi_cmd_struct_ptr));
+			wmi_cmd_event_id, wmi_cmd_struct_ptr);
 }
 
 /*
@@ -927,10 +928,9 @@ static void wmitlv_free_allocated_tlvs(A_UINT32 is_cmd_id,
 
 /* macro to free that previously allocated memory for this TLV. When (op==FREE_TLV_ELEM). */
 #define WMITLV_OP_FREE_TLV_ELEM_macro(param_ptr, param_len, wmi_cmd_event_id, elem_tlv_tag, elem_struc_type, elem_name, var_len, arr_size)  \
-	if ((((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->WMITLV_FIELD_BUF_IS_ALLOCATED(elem_name)) &&	\
-	    (((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->elem_name != NULL)) \
-	{ \
-		wmi_tlv_os_mem_free(((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id) *)ptr)->elem_name); \
+	if ((((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id)*)ptr)->WMITLV_FIELD_BUF_IS_ALLOCATED(elem_name)) &&	\
+	    (((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id)*)ptr)->elem_name != NULL)) { \
+		wmi_tlv_os_mem_free(((WMITLV_TYPEDEF_STRUCT_PARAMS_TLVS(wmi_cmd_event_id)*)ptr)->elem_name); \
 	}
 
 #define WMITLV_FREE_TLV_ELEMS(id)	     \

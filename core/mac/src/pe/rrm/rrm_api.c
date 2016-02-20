@@ -58,7 +58,7 @@ rrm_get_min_of_max_tx_power(tpAniSirGlobal pMac,
 			    int8_t regMax, int8_t apTxPower)
 {
 	uint8_t maxTxPower = 0;
-	uint8_t txPower = CDF_MIN(regMax, (apTxPower));
+	uint8_t txPower = QDF_MIN(regMax, (apTxPower));
 	if ((txPower >= RRM_MIN_TX_PWR_CAP) && (txPower <= RRM_MAX_TX_PWR_CAP))
 		maxTxPower = txPower;
 	else if (txPower < RRM_MIN_TX_PWR_CAP)
@@ -166,10 +166,10 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	/* Allocated memory for pMaxTxParams...will be freed in other module */
 	pMaxTxParams->power = txPower;
 	cdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(pMaxTxParams->selfStaMacAddr.bytes,
 			pSessionEntry->selfMacAddr,
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;
 	msgQ.reserved = 0;
@@ -181,7 +181,8 @@ rrm_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 		txPower);
 
 	MTRACE(mac_trace_msg_tx(pMac, pSessionEntry->peSessionId, msgQ.type));
-	if (eSIR_SUCCESS != (retCode = wma_post_ctrl_msg(pMac, &msgQ))) {
+	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	if (eSIR_SUCCESS != retCode) {
 		lim_log(pMac, LOGP,
 			FL
 				("Posting WMA_SET_MAX_TX_POWER_REQ to HAL failed, reason=%X"),
@@ -224,10 +225,10 @@ tSirRetStatus rrm_set_max_tx_power_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ)
 			}
 		}
 	} else {
-		if ((pSessionEntry =
-			     pe_find_session_by_bssid(pMac,
-						pMaxTxParams->bssId.bytes,
-						&sessionId)) == NULL) {
+		pSessionEntry = pe_find_session_by_bssid(pMac,
+							 pMaxTxParams->bssId.bytes,
+							 &sessionId);
+		if (pSessionEntry == NULL) {
 			PELOGE(lim_log
 				       (pMac, LOGE, FL("Unable to find session:"));
 			       )
@@ -476,9 +477,9 @@ rrm_process_neighbor_report_req(tpAniSirGlobal pMac,
 		PELOGE(lim_log(pMac, LOGE, "NeighborReq is NULL");)
 		return eSIR_FAILURE;
 	}
-	if ((pSessionEntry =
-		     pe_find_session_by_bssid(pMac, pNeighborReq->bssId,
-					      &sessionId)) == NULL) {
+	pSessionEntry = pe_find_session_by_bssid(pMac, pNeighborReq->bssId,
+						 &sessionId);
+	if (pSessionEntry == NULL) {
 		PELOGE(lim_log
 			       (pMac, LOGE,
 			       FL("session does not exist for given bssId"));
@@ -827,11 +828,10 @@ rrm_process_beacon_report_xmit(tpAniSirGlobal pMac,
 			 RRM_BCN_RPT_NO_BSS_INFO) ? RRM_BCN_RPT_MIN_RPT :
 			pBcnReport->numBssDesc;
 
-		if (NULL == (pSessionEntry = pe_find_session_by_bssid(pMac,
-								      pBcnReport->
-								      bssId,
-								      &sessionId)))
-		{
+		pSessionEntry = pe_find_session_by_bssid(pMac,
+							 pBcnReport->bssId,
+							 &sessionId);
+		if (NULL == pSessionEntry) {
 			PELOGE(lim_log
 				       (pMac, LOGE,
 				       FL("session does not exist for given bssId"));
@@ -1140,8 +1140,7 @@ rrm_process_radio_measurement_request(tpAniSirGlobal pMac,
 		case SIR_MAC_RRM_BEACON_TYPE:
 			/* Process beacon request. */
 			if (pCurrentReq) {
-				if (pReport == NULL)    /* Allocate memory to send reports for any subsequent requests. */
-				{
+				if (pReport == NULL) {  /* Allocate memory to send reports for any subsequent requests. */
 					pReport =
 						cdf_mem_malloc(sizeof
 							       (tSirMacRadioMeasureReport)
@@ -1222,8 +1221,7 @@ rrm_process_radio_measurement_request(tpAniSirGlobal pMac,
 			break;
 		default:
 			/* Send a report with incapabale bit set. */
-			if (pReport == NULL)    /* Allocate memory to send reports for any subsequent requests. */
-			{
+			if (pReport == NULL) { /* Allocate memory to send reports for any subsequent requests. */
 				pReport =
 					cdf_mem_malloc(sizeof
 						       (tSirMacRadioMeasureReport)

@@ -38,12 +38,12 @@
  */
 
 /* Include Files */
-#include  <cdf_types.h>         /* For CDF_MODULE_ID... */
+#include  <qdf_types.h>         /* For QDF_MODULE_ID... */
 #include  <stdarg.h>            /* For va_list... */
 #include  <qdf_status.h>
 #include  <cdf_nbuf.h>
 #include  <cds_packet.h>
-#include  <i_cdf_types.h>
+#include  <i_qdf_types.h>
 
 /* Type declarations */
 
@@ -240,7 +240,7 @@ struct s_cdf_dp_trace_data {
  *
  * Return:  nothing
  */
-void cdf_trace_set_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level);
+void cdf_trace_set_level(QDF_MODULE_ID module, CDF_TRACE_LEVEL level);
 
 /**
  * cdf_trace_get_level() - get the trace level
@@ -259,11 +259,11 @@ void cdf_trace_set_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level);
  *  false - the specified trace level for the specified module is OFF
  *  true - the specified trace level for the specified module is ON
  */
-bool cdf_trace_get_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level);
+bool cdf_trace_get_level(QDF_MODULE_ID module, CDF_TRACE_LEVEL level);
 
 typedef void (*tp_cdf_trace_cb)(void *pMac, tp_cdf_trace_record, uint16_t);
 void cdf_trace(uint8_t module, uint8_t code, uint16_t session, uint32_t data);
-void cdf_trace_register(CDF_MODULE_ID, tp_cdf_trace_cb);
+void cdf_trace_register(QDF_MODULE_ID, tp_cdf_trace_cb);
 QDF_STATUS cdf_trace_spin_lock_init(void);
 void cdf_trace_init(void);
 void cdf_trace_enable(uint32_t, uint8_t enable);

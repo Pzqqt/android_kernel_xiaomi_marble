@@ -154,7 +154,7 @@ struct wma_tgt_cfg {
 	uint8_t band_cap;
 	uint32_t reg_domain;
 	uint32_t eeprom_rd_ext;
-	struct cdf_mac_addr hw_macaddr;
+	struct qdf_mac_addr hw_macaddr;
 	struct wma_tgt_services services;
 	struct wma_tgt_ht_cap ht_cap;
 #ifdef WLAN_FEATURE_11AC

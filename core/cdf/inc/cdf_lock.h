@@ -74,7 +74,7 @@ static inline void cdf_semaphore_init(cdf_semaphore_t *m)
  *
  * Return: None
  */
-static inline int cdf_semaphore_acquire(cdf_device_t osdev, cdf_semaphore_t *m)
+static inline int cdf_semaphore_acquire(qdf_device_t osdev, cdf_semaphore_t *m)
 {
 	return __cdf_semaphore_acquire(osdev, m);
 }
@@ -86,7 +86,7 @@ static inline int cdf_semaphore_acquire(cdf_device_t osdev, cdf_semaphore_t *m)
  * Return: None
  */
 static inline void
-cdf_semaphore_release(cdf_device_t osdev, cdf_semaphore_t *m)
+cdf_semaphore_release(qdf_device_t osdev, cdf_semaphore_t *m)
 {
 	__cdf_semaphore_release(osdev, m);
 }

@@ -39,7 +39,7 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <qdf_list.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <wlan_hdd_main.h>
 
 /* Preprocessor definitions and constants */

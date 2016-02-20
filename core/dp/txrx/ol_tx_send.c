@@ -363,7 +363,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		qdf_atomic_init(&(_tx_desc)->ref_cnt);			\
 		/* restore orginal hdr offset */			\
 		OL_TX_RESTORE_HDR((_tx_desc), (_netbuf));		\
-		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), CDF_DMA_TO_DEVICE); \
+		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), QDF_DMA_TO_DEVICE); \
 		cdf_nbuf_free((_netbuf));				\
 		((union ol_tx_desc_list_elem_t *)(_tx_desc))->next =	\
 			(_lcl_freelist);				\
@@ -379,7 +379,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 	do {								\
 		/* restore orginal hdr offset */			\
 		OL_TX_RESTORE_HDR((_tx_desc), (_netbuf));		\
-		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), CDF_DMA_TO_DEVICE); \
+		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), QDF_DMA_TO_DEVICE); \
 		cdf_nbuf_free((_netbuf));				\
 		((union ol_tx_desc_list_elem_t *)(_tx_desc))->next =	\
 			(_lcl_freelist);				\
@@ -776,7 +776,7 @@ static inline uint8_t *ol_tx_dest_addr_find(struct ol_txrx_pdev_t *pdev,
 	} else if (pdev->frame_format == wlan_frm_fmt_802_3) {
 		hdr_ptr = datap;
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid standard frame type: %d",
 			  pdev->frame_format);
 		cdf_assert(0);

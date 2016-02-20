@@ -35,7 +35,7 @@
 
 #include <linux/random.h>
 
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <asm/byteorder.h>
 /*

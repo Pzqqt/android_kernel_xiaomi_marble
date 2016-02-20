@@ -36,7 +36,7 @@
  */
 
 /* Include Files */
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <linux/mutex.h>
 #include <linux/spinlock.h>
 #include <linux/sched.h>
@@ -116,7 +116,7 @@ static inline QDF_STATUS __cdf_semaphore_init(struct semaphore *m)
  * Return: 0
  */
 static inline int
-__cdf_semaphore_acquire(cdf_device_t osdev, struct semaphore *m)
+__cdf_semaphore_acquire(qdf_device_t osdev, struct semaphore *m)
 {
 	down(m);
 	return 0;
@@ -129,7 +129,7 @@ __cdf_semaphore_acquire(cdf_device_t osdev, struct semaphore *m)
  * Return: result of UP operation in integer
  */
 static inline void
-__cdf_semaphore_release(cdf_device_t osdev, struct semaphore *m)
+__cdf_semaphore_release(qdf_device_t osdev, struct semaphore *m)
 {
 	up(m);
 }

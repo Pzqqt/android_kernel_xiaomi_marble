@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -50,7 +50,7 @@ struct ol_txrx_stats_elem {
 #define NUM_MAX_TSO_MSDUS_MASK (NUM_MAX_TSO_MSDUS - 1)
 
 struct ol_txrx_stats_tso_msdu {
-	struct cdf_tso_seg_t tso_segs[NUM_MAX_TSO_SEGS];
+	struct qdf_tso_seg_t tso_segs[NUM_MAX_TSO_SEGS];
 	uint32_t num_seg;
 	uint32_t tso_seg_idx;
 };

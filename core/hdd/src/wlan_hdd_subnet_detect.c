@@ -46,15 +46,15 @@ static const struct nla_policy
 	policy[QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX + 1] = {
 		[PARAM_MAC_ADDR] = {
 				.type = NLA_BINARY,
-				.len = CDF_MAC_ADDR_SIZE
+				.len = QDF_MAC_ADDR_SIZE
 		},
 		[PARAM_IPV4_ADDR] = {
 				.type = NLA_BINARY,
-				.len = CDF_IPV4_ADDR_SIZE
+				.len = QDF_IPV4_ADDR_SIZE
 		},
 		[PARAM_IPV6_ADDR] = {
 				.type = NLA_BINARY,
-				.len = CDF_IPV6_ADDR_SIZE
+				.len = QDF_IPV6_ADDR_SIZE
 		}
 };
 
@@ -121,20 +121,20 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	nla_memcpy(req.gw_mac_addr.bytes, tb[PARAM_MAC_ADDR],
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 
 	/* req ipv4_addr_type and ipv6_addr_type are initially false due
 	 * to zeroing the struct
 	 */
 	if (tb[PARAM_IPV4_ADDR]) {
 		nla_memcpy(req.ipv4_addr, tb[PARAM_IPV4_ADDR],
-			CDF_IPV4_ADDR_SIZE);
+			QDF_IPV4_ADDR_SIZE);
 		req.ipv4_addr_type = true;
 	}
 
 	if (tb[PARAM_IPV6_ADDR]) {
 		nla_memcpy(&req.ipv6_addr, tb[PARAM_IPV6_ADDR],
-			CDF_IPV6_ADDR_SIZE);
+			QDF_IPV6_ADDR_SIZE);
 		req.ipv6_addr_type = true;
 	}
 

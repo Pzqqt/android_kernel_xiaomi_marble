@@ -30,7 +30,7 @@
 #include "cdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ani_system_defs.h"
 #include "sir_api.h"
 

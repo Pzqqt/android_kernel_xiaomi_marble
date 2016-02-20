@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __HOST_DIAG_CORE_LOG_H )
+#if !defined(__HOST_DIAG_CORE_LOG_H)
 #define __HOST_DIAG_CORE_LOG_H
 
 /**=========================================================================
@@ -43,7 +43,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "i_host_diag_core_log.h"
 
 /*--------------------------------------------------------------------------
@@ -98,8 +98,8 @@ typedef struct {
 	log_hdr_type hdr;
 	uint8_t eventId;
 	uint8_t channelSetting;
-	struct cdf_mac_addr bssid;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr bssid;
+	struct qdf_mac_addr peer_macaddr;
 	uint8_t ssid[HOST_LOG_MAX_SSID_SIZE];
 	uint8_t operatingChannel;
 	uint8_t beaconInterval;

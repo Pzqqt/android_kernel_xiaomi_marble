@@ -402,7 +402,7 @@ int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
 void csr_free_roam_profile(tpAniSirGlobal pMac, uint32_t sessionId);
 void csr_free_connect_bss_desc(tpAniSirGlobal pMac, uint32_t sessionId);
 QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
-					   struct cdf_mac_addr *bssid,
+					   struct qdf_mac_addr *bssid,
 					   tScanResultHandle hScanResult);
 bool csr_check_ps_ready(void *pv);
 bool csr_check_ps_offload_ready(void *pv, uint32_t sessionId);
@@ -464,7 +464,7 @@ QDF_STATUS csr_roam_close_session(tpAniSirGlobal pMac, uint32_t sessionId,
 				  csr_roamSessionCloseCallback callback,
 				  void *pContext);
 void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId);
-QDF_STATUS csr_roam_get_session_id_from_bssid(tpAniSirGlobal pMac, struct cdf_mac_addr *bssid,
+QDF_STATUS csr_roam_get_session_id_from_bssid(tpAniSirGlobal pMac, struct qdf_mac_addr *bssid,
 					      uint32_t *pSessionId);
 eCsrCfgDot11Mode csr_find_best_phy_mode(tpAniSirGlobal pMac, uint32_t phyMode);
 
@@ -955,14 +955,14 @@ QDF_STATUS csr_roam_issue_tkip_counter_measures(tpAniSirGlobal pMac,
     \return QDF_STATUS
    ---------------------------------------------------------------------------*/
 QDF_STATUS csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
-					CDF_MODULE_ID modId, void *pUsrContext,
+					QDF_MODULE_ID modId, void *pUsrContext,
 					void *pfnSapEventCallback,
 					uint8_t *pAssocStasBuf);
 
 QDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 						   uint32_t sessionId,
-						   CDF_MODULE_ID modId,
-						   struct cdf_mac_addr bssId,
+						   QDF_MODULE_ID modId,
+						   struct qdf_mac_addr bssId,
 						   void *pUsrContext,
 						   void *pfnSapEventCallback,
 						   uint8_t *pAssocStasBuf);
@@ -979,14 +979,14 @@ QDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 QDF_STATUS csr_roam_get_wps_session_overlap(tpAniSirGlobal pMac, uint32_t sessionId,
 					    void *pUsrContext,
 					    void *pfnSapEventCallback,
-					    struct cdf_mac_addr pRemoveMac);
+					    struct qdf_mac_addr pRemoveMac);
 
 QDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
 					   uint32_t sessionId,
-					   struct cdf_mac_addr bssId,
+					   struct qdf_mac_addr bssId,
 					   void *pUsrContext,
 					   void *pfnSapEventCallback,
-					   struct cdf_mac_addr pRemoveMac);
+					   struct qdf_mac_addr pRemoveMac);
 
 /* ---------------------------------------------------------------------------
     \fn csr_send_chng_mcc_beacon_interval
@@ -1023,7 +1023,7 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 
 QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 						uint32_t sessionId,
-						struct cdf_mac_addr bssid,
+						struct qdf_mac_addr bssid,
 						uint8_t channel);
 
 QDF_STATUS csr_update_channel_list(tpAniSirGlobal pMac);

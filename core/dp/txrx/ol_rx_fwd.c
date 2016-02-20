@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -118,7 +118,7 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 	 * Map the netbuf, so it's accessible to the DMA that
 	 * sends it to the target.
 	 */
-	cdf_nbuf_map_single(pdev->osdev, msdu, CDF_DMA_TO_DEVICE);
+	cdf_nbuf_map_single(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
 	cdf_nbuf_set_next(msdu, NULL);  /* add NULL terminator */
 
 	msdu = OL_TX_LL(vdev, msdu);
@@ -129,7 +129,7 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 		 * We could store the frame and try again later,
 		 * but the simplest solution is to discard the frames.
 		 */
-		cdf_nbuf_unmap_single(pdev->osdev, msdu, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap_single(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
 		cdf_nbuf_tx_free(msdu, NBUF_PKT_ERROR);
 	}
 }

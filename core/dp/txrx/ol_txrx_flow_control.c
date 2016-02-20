@@ -141,7 +141,7 @@ void ol_tx_deregister_flow_control(struct ol_txrx_pdev_t *pdev)
  */
 void ol_tx_dump_flow_pool_info(void)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool = NULL;
 	struct ol_tx_flow_pool_t tmp_pool;
 
@@ -202,7 +202,7 @@ void ol_tx_dump_flow_pool_info(void)
  */
 void ol_tx_clear_flow_pool_stats(void)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: pdev is null\n",
@@ -277,7 +277,7 @@ static int ol_tx_move_desc_n(struct ol_tx_flow_pool_t *src_pool,
 int
 ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *dst_pool = NULL;
 	uint16_t desc_count = src_pool->avail_desc;
 	uint16_t desc_move_count = 0;
@@ -321,7 +321,7 @@ ol_tx_distribute_descs_to_deficient_pools(struct ol_tx_flow_pool_t *src_pool)
 struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 						 uint16_t flow_pool_size)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool;
 	uint16_t size = 0, i;
 	struct ol_tx_desc_t *tx_desc;
@@ -392,7 +392,7 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
  */
 int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	uint16_t i, size;
 	union ol_tx_desc_list_elem_t *temp_list = NULL;
 	struct ol_tx_desc_t *tx_desc = NULL;
@@ -464,7 +464,7 @@ int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
  */
 int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((!pdev) || (!pool) || (pool->status != FLOW_POOL_INVALID)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -495,7 +495,7 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
  */
 struct ol_tx_flow_pool_t *ol_tx_get_flow_pool(uint8_t flow_pool_id)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool = NULL;
 	bool is_found = false;
 
@@ -591,7 +591,7 @@ void ol_tx_flow_pool_vdev_unmap(struct ol_tx_flow_pool_t *pool,
 void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 				 uint8_t flow_pool_id, uint16_t flow_pool_size)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool;
 	uint8_t pool_create = 0;
 	enum htt_flow_type type = flow_type;
@@ -651,7 +651,7 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 							  uint8_t flow_pool_id)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_tx_flow_pool_t *pool;
 	enum htt_flow_type type = flow_type;
 

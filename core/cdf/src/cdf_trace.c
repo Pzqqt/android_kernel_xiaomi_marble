@@ -70,23 +70,23 @@ typedef struct {
  * information.  This includes the trace level for the module and
  * the 3 character 'name' of the module for marking the trace logs
  */
-moduleTraceInfo g_cdf_trace_info[CDF_MODULE_ID_MAX] = {
-	[CDF_MODULE_ID_TLSHIM] = {CDF_DEFAULT_TRACE_LEVEL, "DP"},
-	[CDF_MODULE_ID_WMI] = {CDF_DEFAULT_TRACE_LEVEL, "WMI"},
-	[CDF_MODULE_ID_HDD] = {CDF_DEFAULT_TRACE_LEVEL, "HDD"},
-	[CDF_MODULE_ID_SME] = {CDF_DEFAULT_TRACE_LEVEL, "SME"},
-	[CDF_MODULE_ID_PE] = {CDF_DEFAULT_TRACE_LEVEL, "PE "},
-	[CDF_MODULE_ID_WMA] = {CDF_DEFAULT_TRACE_LEVEL, "WMA"},
-	[CDF_MODULE_ID_SYS] = {CDF_DEFAULT_TRACE_LEVEL, "SYS"},
-	[CDF_MODULE_ID_CDF] = {CDF_DEFAULT_TRACE_LEVEL, "CDF"},
-	[CDF_MODULE_ID_SAP] = {CDF_DEFAULT_TRACE_LEVEL, "SAP"},
-	[CDF_MODULE_ID_HDD_SOFTAP] = {CDF_DEFAULT_TRACE_LEVEL, "HSP"},
-	[CDF_MODULE_ID_HDD_DATA] = {CDF_DEFAULT_TRACE_LEVEL, "HDP"},
-	[CDF_MODULE_ID_HDD_SAP_DATA] = {CDF_DEFAULT_TRACE_LEVEL, "SDP"},
-	[CDF_MODULE_ID_BMI] = {CDF_DEFAULT_TRACE_LEVEL, "BMI"},
-	[CDF_MODULE_ID_HIF] = {CDF_DEFAULT_TRACE_LEVEL, "HIF"},
-	[CDF_MODULE_ID_TXRX] = {CDF_DEFAULT_TRACE_LEVEL, "TRX"},
-	[CDF_MODULE_ID_HTT] = {CDF_DEFAULT_TRACE_LEVEL, "HTT"},
+moduleTraceInfo g_cdf_trace_info[QDF_MODULE_ID_MAX] = {
+	[QDF_MODULE_ID_TLSHIM] = {CDF_DEFAULT_TRACE_LEVEL, "DP"},
+	[QDF_MODULE_ID_WMI] = {CDF_DEFAULT_TRACE_LEVEL, "WMI"},
+	[QDF_MODULE_ID_HDD] = {CDF_DEFAULT_TRACE_LEVEL, "HDD"},
+	[QDF_MODULE_ID_SME] = {CDF_DEFAULT_TRACE_LEVEL, "SME"},
+	[QDF_MODULE_ID_PE] = {CDF_DEFAULT_TRACE_LEVEL, "PE "},
+	[QDF_MODULE_ID_WMA] = {CDF_DEFAULT_TRACE_LEVEL, "WMA"},
+	[QDF_MODULE_ID_SYS] = {CDF_DEFAULT_TRACE_LEVEL, "SYS"},
+	[QDF_MODULE_ID_QDF] = {CDF_DEFAULT_TRACE_LEVEL, "CDF"},
+	[QDF_MODULE_ID_SAP] = {CDF_DEFAULT_TRACE_LEVEL, "SAP"},
+	[QDF_MODULE_ID_HDD_SOFTAP] = {CDF_DEFAULT_TRACE_LEVEL, "HSP"},
+	[QDF_MODULE_ID_HDD_DATA] = {CDF_DEFAULT_TRACE_LEVEL, "HDP"},
+	[QDF_MODULE_ID_HDD_SAP_DATA] = {CDF_DEFAULT_TRACE_LEVEL, "SDP"},
+	[QDF_MODULE_ID_BMI] = {CDF_DEFAULT_TRACE_LEVEL, "BMI"},
+	[QDF_MODULE_ID_HIF] = {CDF_DEFAULT_TRACE_LEVEL, "HIF"},
+	[QDF_MODULE_ID_TXRX] = {CDF_DEFAULT_TRACE_LEVEL, "TRX"},
+	[QDF_MODULE_ID_HTT] = {CDF_DEFAULT_TRACE_LEVEL, "HTT"},
 };
 
 /* Static and Global variables */
@@ -103,8 +103,8 @@ static t_cdf_trace_data g_cdf_trace_data;
  * cdf_trace_cb_table, we can certainly retrieve all the call back functions
  * back from Restore Table
  */
-static tp_cdf_trace_cb cdf_trace_cb_table[CDF_MODULE_ID_MAX];
-static tp_cdf_trace_cb cdf_trace_restore_cb_table[CDF_MODULE_ID_MAX];
+static tp_cdf_trace_cb cdf_trace_cb_table[QDF_MODULE_ID_MAX];
+static tp_cdf_trace_cb cdf_trace_restore_cb_table[QDF_MODULE_ID_MAX];
 
 /* Static and Global variables */
 static spinlock_t l_dp_trace_lock;
@@ -135,7 +135,7 @@ static tp_cdf_dp_trace_cb cdf_dp_trace_cb_table[CDF_DP_TRACE_MAX];
  *
  * Return:  nothing
  */
-void cdf_trace_set_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level)
+void cdf_trace_set_level(QDF_MODULE_ID module, CDF_TRACE_LEVEL level)
 {
 	/* make sure the caller is passing in a valid LEVEL */
 	if (level >= CDF_TRACE_LEVEL_MAX) {
@@ -167,16 +167,16 @@ void cdf_trace_set_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level)
  *
  * Return: None
  */
-void cdf_trace_set_module_trace_level(CDF_MODULE_ID module, uint32_t level)
+void cdf_trace_set_module_trace_level(QDF_MODULE_ID module, uint32_t level)
 {
-	if (module < 0 || module >= CDF_MODULE_ID_MAX) {
+	if (module < 0 || module >= QDF_MODULE_ID_MAX) {
 		pr_err("%s: Invalid module id %d passed\n", __func__, module);
 		return;
 	}
 	g_cdf_trace_info[module].moduleTraceLevel = level;
 }
 
-void cdf_trace_set_value(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
+void cdf_trace_set_value(QDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 			 uint8_t on)
 {
 	/* make sure the caller is passing in a valid LEVEL */
@@ -187,7 +187,7 @@ void cdf_trace_set_value(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 	}
 
 	/* make sure the caller is passing in a valid module */
-	if (module < 0 || module >= CDF_MODULE_ID_MAX) {
+	if (module < 0 || module >= QDF_MODULE_ID_MAX) {
 		pr_err("%s: Invalid module id %d passed in!\n", __func__,
 		       module);
 		return;
@@ -234,7 +234,7 @@ void cdf_trace_set_value(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
  *      false - the specified trace level for the specified module is OFF
  *      true - the specified trace level for the specified module is ON
  */
-bool cdf_trace_get_level(CDF_MODULE_ID module, CDF_TRACE_LEVEL level)
+bool cdf_trace_get_level(QDF_MODULE_ID module, CDF_TRACE_LEVEL level)
 {
 	bool traceOn = false;
 
@@ -262,7 +262,7 @@ void cdf_snprintf(char *strBuffer, unsigned int size, char *strFormat, ...)
 
 /**
  * cdf_trace_msg() - externally called trace function
- * @module : Module identifier a member of the CDF_MODULE_ID
+ * @module : Module identifier a member of the QDF_MODULE_ID
  *	enumeration that identifies the module issuing the trace message.
  * @level : Trace level a member of the CDF_TRACE_LEVEL enumeration
  *	indicating the severity of the condition causing the trace message
@@ -276,7 +276,7 @@ void cdf_snprintf(char *strBuffer, unsigned int size, char *strFormat, ...)
  *  Return:  nothing
  *
  */
-void cdf_trace_msg(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
+void cdf_trace_msg(QDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 		   char *strFormat, ...)
 {
 	char strBuffer[CDF_TRACE_BUFFER_SIZE];
@@ -322,11 +322,11 @@ void cdf_trace_msg(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 
 void cdf_trace_display(void)
 {
-	CDF_MODULE_ID moduleId;
+	QDF_MODULE_ID moduleId;
 
 	pr_err
 		("     1)FATAL  2)ERROR  3)WARN  4)INFO  5)INFO_H  6)INFO_M  7)INFO_L 8)DEBUG\n");
-	for (moduleId = 0; moduleId < CDF_MODULE_ID_MAX; ++moduleId) {
+	for (moduleId = 0; moduleId < QDF_MODULE_ID_MAX; ++moduleId) {
 		pr_err
 			("%2d)%s    %s        %s       %s       %s        %s         %s         %s        %s\n",
 			(int)moduleId, g_cdf_trace_info[moduleId].moduleNameStr,
@@ -363,7 +363,7 @@ void cdf_trace_display(void)
 
 /**
  * cdf_trace_hex_dump() - externally called hex dump function
- * @module : Module identifier a member of the CDF_MODULE_ID enumeration that
+ * @module : Module identifier a member of the QDF_MODULE_ID enumeration that
  *	     identifies the module issuing the trace message.
  * @level : Trace level a member of the CDF_TRACE_LEVEL enumeration indicating
  *	    the severity of the condition causing the trace message to be
@@ -375,7 +375,7 @@ void cdf_trace_display(void)
  *
  *  Return :  nothing
  */
-void cdf_trace_hex_dump(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
+void cdf_trace_hex_dump(QDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 			void *data, int buf_len)
 {
 	const u8 *ptr = data;
@@ -423,7 +423,7 @@ void cdf_trace_enable(uint32_t bitmask_of_moduleId, uint8_t enable)
 {
 	int i;
 	if (bitmask_of_moduleId) {
-		for (i = 0; i < CDF_MODULE_ID_MAX; i++) {
+		for (i = 0; i < QDF_MODULE_ID_MAX; i++) {
 			if (((bitmask_of_moduleId >> i) & 1)) {
 				if (enable) {
 					if (NULL !=
@@ -440,14 +440,14 @@ void cdf_trace_enable(uint32_t bitmask_of_moduleId, uint8_t enable)
 		}
 	} else {
 		if (enable) {
-			for (i = 0; i < CDF_MODULE_ID_MAX; i++) {
+			for (i = 0; i < QDF_MODULE_ID_MAX; i++) {
 				if (NULL != cdf_trace_restore_cb_table[i]) {
 					cdf_trace_cb_table[i] =
 						cdf_trace_restore_cb_table[i];
 				}
 			}
 		} else {
-			for (i = 0; i < CDF_MODULE_ID_MAX; i++) {
+			for (i = 0; i < QDF_MODULE_ID_MAX; i++) {
 				cdf_trace_restore_cb_table[i] =
 					cdf_trace_cb_table[i];
 				cdf_trace_cb_table[i] = NULL;
@@ -474,7 +474,7 @@ void cdf_trace_init(void)
 	g_cdf_trace_data.dumpCount = DEFAULT_CDF_TRACE_DUMP_COUNT;
 	g_cdf_trace_data.numSinceLastDump = 0;
 
-	for (i = 0; i < CDF_MODULE_ID_MAX; i++) {
+	for (i = 0; i < QDF_MODULE_ID_MAX; i++) {
 		cdf_trace_cb_table[i] = NULL;
 		cdf_trace_restore_cb_table[i] = NULL;
 	}
@@ -574,7 +574,7 @@ QDF_STATUS cdf_trace_spin_lock_init(void)
  *
  * Return : nothing
  */
-void cdf_trace_register(CDF_MODULE_ID moduleID,
+void cdf_trace_register(QDF_MODULE_ID moduleID,
 			tp_cdf_trace_cb cdf_trace_callback)
 {
 	cdf_trace_cb_table[moduleID] = cdf_trace_callback;
@@ -607,12 +607,12 @@ void cdf_trace_dump_all(void *pMac, uint8_t code, uint8_t session,
 	int32_t i, tail;
 
 	if (!g_cdf_trace_data.enable) {
-		CDF_TRACE(CDF_MODULE_ID_SYS,
+		CDF_TRACE(QDF_MODULE_ID_SYS,
 			  CDF_TRACE_LEVEL_ERROR, "Tracing Disabled");
 		return;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
 		  "Total Records: %d, Head: %d, Tail: %d",
 		  g_cdf_trace_data.num, g_cdf_trace_data.head,
 		  g_cdf_trace_data.tail);
@@ -780,10 +780,10 @@ static void dump_hex_trace(uint8_t *buf, uint8_t buf_len)
 {
 	uint8_t i = 0;
 	/* Dump the bytes in the last line */
-	cdf_print("DATA: ");
+	qdf_print("DATA: ");
 	for (i = 0; i < buf_len; i++)
-		cdf_print("%02x ", buf[i]);
-	cdf_print("\n");
+		qdf_print("%02x ", buf[i]);
+	qdf_print("\n");
 }
 
 /**
@@ -796,23 +796,23 @@ static void dump_hex_trace(uint8_t *buf, uint8_t buf_len)
 void cdf_dp_display_record(struct cdf_dp_trace_record_s *pRecord,
 				uint16_t recIndex)
 {
-	cdf_print("INDEX: %04d TIME: %012llu CODE: %02d\n", recIndex,
+	qdf_print("INDEX: %04d TIME: %012llu CODE: %02d\n", recIndex,
 						pRecord->time, pRecord->code);
 	switch (pRecord->code) {
 	case  CDF_DP_TRACE_HDD_TX_TIMEOUT:
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 						"HDD TX Timeout\n");
 		break;
 	case  CDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT:
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 						"HDD SoftAP TX Timeout\n");
 		break;
 	case  CDF_DP_TRACE_VDEV_PAUSE:
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 						"VDEV Pause\n");
 		break;
 	case  CDF_DP_TRACE_VDEV_UNPAUSE:
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 						"VDEV UnPause\n");
 		break;
 	default:
@@ -960,12 +960,12 @@ void cdf_dp_trace_dump_all(uint32_t count)
 	int32_t i, tail;
 
 	if (!g_cdf_dp_trace_data.enable) {
-		CDF_TRACE(CDF_MODULE_ID_SYS,
+		CDF_TRACE(QDF_MODULE_ID_SYS,
 			  CDF_TRACE_LEVEL_ERROR, "Tracing Disabled");
 		return;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 		  "Total Records: %d, Head: %d, Tail: %d",
 		  g_cdf_dp_trace_data.num, g_cdf_dp_trace_data.head,
 		  g_cdf_dp_trace_data.tail);

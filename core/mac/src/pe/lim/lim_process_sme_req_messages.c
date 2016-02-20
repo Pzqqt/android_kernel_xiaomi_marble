@@ -316,7 +316,7 @@ __lim_fresh_scan_reqd(tpAniSirGlobal mac_ctx, uint8_t return_fresh_results)
 			      ((((mac_ctx->lim.gpSession[i].bssType ==
 					eSIR_INFRA_AP_MODE) &&
 				(mac_ctx->lim.gpSession[i].pePersona ==
-					CDF_P2P_GO_MODE)) ||
+					QDF_P2P_GO_MODE)) ||
 			      (mac_ctx->lim.gpSession[i].limSystemRole ==
 					eLIM_AP_ROLE)) &&
 			      (mac_ctx->lim.gpSession[i].limSmeState ==
@@ -521,7 +521,7 @@ lim_configure_ap_start_bss_session(tpAniSirGlobal mac_ctx, tpPESession session,
 	session->dtimPeriod = (uint8_t) sme_start_bss_req->dtimPeriod;
 	/* Enable/disable UAPSD */
 	session->apUapsdEnable = sme_start_bss_req->apUapsdEnable;
-	if (session->pePersona == CDF_P2P_GO_MODE) {
+	if (session->pePersona == QDF_P2P_GO_MODE) {
 		session->proxyProbeRspEn = 0;
 	} else {
 		/*
@@ -694,7 +694,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Store Persona */
 		session->pePersona = sme_start_bss_req->bssPersona;
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			  FL("PE PERSONA=%d"), session->pePersona);
 
 		/* Update the phymode */
@@ -713,7 +713,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			IS_DOT11_MODE_HT(session->dot11mode);
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			  FL("*****session->vhtCapability = %d"),
 			  session->vhtCapability);
 		session->txLdpcIniFeatureEnabled =
@@ -740,7 +740,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		case eSIR_INFRA_AP_MODE:
 			lim_configure_ap_start_bss_session(mac_ctx, session,
 				sme_start_bss_req);
-			if (session->pePersona == CDF_SAP_MODE) {
+			if (session->pePersona == QDF_SAP_MODE) {
 				session->txBFIniFeatureEnabled =
 					sme_start_bss_req->txbf_ini_enabled;
 				session->txbf_csn_value =
@@ -820,7 +820,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			sme_start_bss_req->sec_ch_offset;
 		session->htRecommendedTxWidthSet =
 			(session->htSecondaryChannelOffset) ? 1 : 0;
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			  FL("cbMode %u"), sme_start_bss_req->cbMode);
 		if (session->vhtCapability || session->htCapability) {
 			chanwidth = sme_start_bss_req->vht_channel_width;
@@ -1692,7 +1692,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			  FL("PE PERSONA=%d cbMode %u"),
 			  session->pePersona, sme_join_req->cbMode);
 		if (mac_ctx->roam.configParam.enable2x2)
@@ -1702,11 +1702,11 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #ifdef WLAN_FEATURE_11AC
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
 			  "***__lim_process_sme_join_req: vhtCapability=%d****",
 			  session->vhtCapability);
 		if (session->vhtCapability) {
-			if (session->pePersona == CDF_STA_MODE) {
+			if (session->pePersona == QDF_STA_MODE) {
 				session->txBFIniFeatureEnabled =
 					sme_join_req->txBFIniFeatureEnabled;
 			} else {
@@ -1718,7 +1718,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->enableVhtGid =
 				sme_join_req->enableVhtGid;
 
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
 				  FL("***txBFIniFeatureEnabled=%d***"),
 				  session->txBFIniFeatureEnabled);
 			if (wlan_cfg_get_int(mac_ctx,
@@ -1743,7 +1743,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				ret_code = eSIR_LOGP_EXCEPTION;
 				goto end;
 			}
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
 				  "%s: txBFCsnValue=%d", __func__,
 				  sme_join_req->txBFCsnValue);
 			session->txbf_csn_value = sme_join_req->txBFCsnValue;
@@ -1908,7 +1908,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 					mac_ctx->roam.configParam.nTxPowerCap);
 #else
 		session->maxTxPower =
-			CDF_MIN(reg_max, (local_power_constraint));
+			QDF_MIN(reg_max, (local_power_constraint));
 #endif
 #if defined WLAN_VOWIFI_DEBUG
 		lim_log(mac_ctx, LOGE,
@@ -2026,8 +2026,8 @@ uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 			     uint8_t iniTxPower)
 {
 	uint8_t maxTxPower = 0;
-	uint8_t txPower = CDF_MIN(regMax, (apTxPower));
-	txPower = CDF_MIN(txPower, iniTxPower);
+	uint8_t txPower = QDF_MIN(regMax, (apTxPower));
+	txPower = QDF_MIN(txPower, iniTxPower);
 	if ((txPower >= MIN_TX_PWR_CAP) && (txPower <= MAX_TX_PWR_CAP))
 		maxTxPower = txPower;
 	else if (txPower < MIN_TX_PWR_CAP)
@@ -2188,7 +2188,7 @@ static void __lim_process_sme_reassoc_req(tpAniSirGlobal mac_ctx,
 		&session_entry->limReassocBssPropCap,
 		&session_entry->gLimCurrentBssUapsd,
 		&local_pwr_constraint, session_entry);
-	session_entry->maxTxPower = CDF_MIN(reg_max, (local_pwr_constraint));
+	session_entry->maxTxPower = QDF_MIN(reg_max, (local_pwr_constraint));
 #if defined WLAN_VOWIFI_DEBUG
 	lim_log(mac_ctx, LOGE,
 		"Regulatory max = %d, local pwr constraint = %d, max tx = %d",
@@ -3114,7 +3114,7 @@ void lim_process_sme_get_assoc_sta_info(tpAniSirGlobal mac_ctx,
 		if (sta_ds->valid) {
 			cdf_mem_copy((uint8_t *) &assoc_sta_tmp->staMac,
 					(uint8_t *) &sta_ds->staAddr,
-					 CDF_MAC_ADDR_SIZE);
+					 QDF_MAC_ADDR_SIZE);
 			assoc_sta_tmp->assocId = (uint8_t) sta_ds->assocId;
 			assoc_sta_tmp->staId = (uint8_t) sta_ds->staIndex;
 
@@ -3146,7 +3146,7 @@ lim_assoc_sta_end:
 	if (sap_event_cb != NULL) {
 		sap_event.sapHddEventCode = eSAP_ASSOC_STA_CALLBACK_EVENT;
 		sap_event.sapevt.sapAssocStaListEvent.module =
-			CDF_MODULE_ID_PE;
+			QDF_MODULE_ID_PE;
 		sap_event.sapevt.sapAssocStaListEvent.noOfAssocSta = sta_cnt;
 		sap_event.sapevt.sapAssocStaListEvent.pAssocStas =
 			(tpSap_AssocMacAddr)get_assoc_stas_req.pAssocStasArray;
@@ -3209,7 +3209,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	 * WPS PBC overlap information
 	 */
 	sap_event.sapHddEventCode = eSAP_GET_WPSPBC_SESSION_EVENT;
-	sap_get_wpspbc_event->module = CDF_MODULE_ID_PE;
+	sap_get_wpspbc_event->module = QDF_MODULE_ID_PE;
 
 	if (cdf_is_macaddr_zero(&get_wps_pbc_sessions_req.remove_mac)) {
 		lim_get_wpspbc_sessions(mac_ctx,
@@ -3554,7 +3554,7 @@ void __lim_process_sme_assoc_cnf_new(tpAniSirGlobal mac_ctx, uint32_t msg_type,
 	}
 	if (!cdf_mem_compare((uint8_t *)sta_ds->staAddr,
 				(uint8_t *) assoc_cnf.peer_macaddr.bytes,
-				CDF_MAC_ADDR_SIZE)) {
+				QDF_MAC_ADDR_SIZE)) {
 		lim_log(mac_ctx, LOG1, FL(
 				"peerMacAddr mismatched for aid %d, peer "),
 				assoc_cnf.aid);
@@ -4351,7 +4351,7 @@ static void __lim_process_sme_set_ht2040_mode(tpAniSirGlobal pMac,
 			msg.reserved = 0;
 			msg.bodyptr = pHtOpMode;
 			if (!QDF_IS_STATUS_SUCCESS
-				    (cds_mq_post_message(CDF_MODULE_ID_WMA, &msg))) {
+				    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
 				lim_log(pMac, LOGE,
 					FL
 						("%s: Not able to post WMA_UPDATE_OP_MODE message to WMA"),
@@ -4456,10 +4456,10 @@ lim_send_set_max_tx_power_req(tpAniSirGlobal pMac, int8_t txPower,
 	}
 	pMaxTxParams->power = txPower;
 	cdf_mem_copy(pMaxTxParams->bssId.bytes, pSessionEntry->bssId,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(pMaxTxParams->selfStaMacAddr.bytes,
 			pSessionEntry->selfMacAddr,
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 
 	msgQ.type = WMA_SET_MAX_TX_POWER_REQ;
 	msgQ.bodyptr = pMaxTxParams;
@@ -4998,7 +4998,7 @@ static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg
 		 * Tx right after the WMA_ADD_BSS_RSP.
 		 */
 		lim_apply_configuration(pMac, psessionEntry);
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			  FL("Start Beacon with ssid %s Ch %d"),
 			  psessionEntry->ssId.ssId,
 			  psessionEntry->currentOperChannel);
@@ -5263,7 +5263,7 @@ static void lim_process_modify_add_ies(tpAniSirGlobal mac_ctx,
 	case eUPDATE_IE_ASSOC_RESP:
 		/* assoc resp IE */
 		if (add_ie_params->assocRespDataLen == 0) {
-			CDF_TRACE(CDF_MODULE_ID_PE,
+			CDF_TRACE(QDF_MODULE_ID_PE,
 					CDF_TRACE_LEVEL_ERROR, FL(
 				"assoc resp add ie not present %d"),
 				add_ie_params->assocRespDataLen);

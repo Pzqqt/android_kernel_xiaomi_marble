@@ -59,7 +59,7 @@ inline QDF_STATUS cds_mq_init(p_cds_mq_type pMq)
 {
 
 	if (pMq == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -84,7 +84,7 @@ inline QDF_STATUS cds_mq_init(p_cds_mq_type pMq)
 inline void cds_mq_deinit(p_cds_mq_type pMq)
 {
 	if (pMq == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
 		return;
 	}
@@ -104,7 +104,7 @@ inline void cds_mq_put(p_cds_mq_type pMq, p_cds_msg_wrapper pMsgWrapper)
 	unsigned long flags;
 
 	if ((pMq == NULL) || (pMsgWrapper == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
 		return;
 	}
@@ -131,7 +131,7 @@ inline p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq)
 	unsigned long flags;
 
 	if (pMq == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
 		return NULL;
 	}
@@ -139,7 +139,7 @@ inline p_cds_msg_wrapper cds_mq_get(p_cds_mq_type pMq)
 	spin_lock_irqsave(&pMq->mqLock, flags);
 
 	if (list_empty(&pMq->mqList)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_WARN,
 			  "%s: CDS Message Queue is empty", __func__);
 	} else {
 		listptr = pMq->mqList.next;
@@ -168,7 +168,7 @@ inline bool cds_is_mq_empty(p_cds_mq_type pMq)
 	unsigned long flags;
 
 	if (pMq == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -195,12 +195,12 @@ QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
 
 	cds_context = cds_get_global_context();
 	if (NULL == cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "%s: invalid cds_context", __func__);
 	} else {
-		hHal = cds_get_context(CDF_MODULE_ID_SME);
+		hHal = cds_get_context(QDF_MODULE_ID_SME);
 		if (NULL == hHal) {
-			CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 				  "%s: invalid hHal", __func__);
 		} else {
 			sirStatus = u_mac_post_ctrl_msg(hHal, pBuf);

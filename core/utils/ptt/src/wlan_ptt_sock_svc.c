@@ -31,17 +31,17 @@
 ******************************************************************************/
 #ifdef PTT_SOCK_SVC_ENABLE
 #include <wlan_nlink_srv.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <cdf_trace.h>
 #include <wlan_nlink_common.h>
 #include <wlan_ptt_sock_svc.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <cdf_trace.h>
 
 #define PTT_SOCK_DEBUG
 #ifdef PTT_SOCK_DEBUG
-#define PTT_TRACE(level, args ...) CDF_TRACE(CDF_MODULE_ID_CDF, level, ## args)
+#define PTT_TRACE(level, args ...) CDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
 #else
 #define PTT_TRACE(level, args ...)
 #endif
@@ -56,13 +56,13 @@ static void ptt_sock_dump_buf(const unsigned char *pbuf, int cnt)
 	int i;
 	for (i = 0; i < cnt; i++) {
 		if ((i % 16) == 0)
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 				  "\n%p:", pbuf);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO, " %02X",
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO, " %02X",
 			  *pbuf);
 		pbuf++;
 	}
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO, "\n");
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO, "\n");
 }
 #endif
 

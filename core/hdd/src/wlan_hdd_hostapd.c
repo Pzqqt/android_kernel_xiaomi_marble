@@ -70,7 +70,7 @@
 #include "wma_api.h"
 #endif
 #include "wlan_hdd_trace.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_trace.h"
 #include "wlan_hdd_cfg.h"
 #include "cds_concurrency.h"
@@ -219,7 +219,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 
 	ENTER();
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
 
 	if (cds_is_load_or_unload_in_progress()) {
@@ -589,7 +589,7 @@ static void hdd_issue_stored_joinreq(hdd_adapter_t *sta_adapter,
 	hal_handle = WLAN_HDD_GET_HAL_CTX(sta_adapter);
 
 	if (true ==  cds_is_sta_connection_pending()) {
-		MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+		MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 				TRACE_CODE_HDD_ISSUE_JOIN_REQ,
 				sta_adapter->sessionId, roam_id));
 		if (QDF_STATUS_SUCCESS !=
@@ -980,7 +980,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			qdf_status =
 				cdf_mc_timer_init(&pHddApCtx->
 						  hdd_ap_inactivity_timer,
-						  CDF_TIMER_TYPE_SW,
+						  QDF_TIMER_TYPE_SW,
 						  hdd_hostapd_inactivity_timer_cb,
 						  dev);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -1229,7 +1229,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		msg.src_addr.sa_family = ARPHRD_ETHER;
 		memcpy(msg.src_addr.sa_data,
 		       &pSapEvent->sapevt.sapStationMICFailureEvent.
-		       staMac, CDF_MAC_ADDR_SIZE);
+		       staMac, QDF_MAC_ADDR_SIZE);
 		hddLog(LOG1, "MIC MAC " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(msg.src_addr.sa_data));
 		if (pSapEvent->sapevt.sapStationMICFailureEvent.
@@ -1265,7 +1265,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		wrqu.addr.sa_family = ARPHRD_ETHER;
 		memcpy(wrqu.addr.sa_data,
 		       &pSapEvent->sapevt.sapStationAssocReassocCompleteEvent.
-		       staMac, CDF_MAC_ADDR_SIZE);
+		       staMac, QDF_MAC_ADDR_SIZE);
 		hddLog(LOG1, " associated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 		we_event = IWEVREGISTERED;
@@ -1294,7 +1294,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						pSapEvent->sapevt.
 						sapStationAssocReassocCompleteEvent.
 						staId, 0, 0,
-						(struct cdf_mac_addr *)
+						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
 						pSapEvent->sapevt.
 						sapStationAssocReassocCompleteEvent.
@@ -1312,7 +1312,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						pSapEvent->sapevt.
 						sapStationAssocReassocCompleteEvent.
 						staId, 0, 0,
-						(struct cdf_mac_addr *)
+						(struct qdf_mac_addr *)
 						wrqu.addr.sa_data,
 						pSapEvent->sapevt.
 						sapStationAssocReassocCompleteEvent.
@@ -1439,7 +1439,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 	case eSAP_STA_DISASSOC_EVENT:
 		memcpy(wrqu.addr.sa_data,
 		       &pSapEvent->sapevt.sapStationDisassocCompleteEvent.
-		       staMac, CDF_MAC_ADDR_SIZE);
+		       staMac, QDF_MAC_ADDR_SIZE);
 		hddLog(LOG1, " disassociated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
@@ -1900,9 +1900,9 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
 		return -EINVAL;
 	}
 	/* Validity checks */
-	if ((gen_ie_len < CDF_MIN(DOT11F_IE_RSN_MIN_LEN, DOT11F_IE_WPA_MIN_LEN))
+	if ((gen_ie_len < QDF_MIN(DOT11F_IE_RSN_MIN_LEN, DOT11F_IE_WPA_MIN_LEN))
 	    || (gen_ie_len >
-		CDF_MAX(DOT11F_IE_RSN_MAX_LEN, DOT11F_IE_WPA_MAX_LEN)))
+		QDF_MAX(DOT11F_IE_RSN_MAX_LEN, DOT11F_IE_WPA_MAX_LEN)))
 		return -EINVAL;
 	/* Type check */
 	if (gen_ie[0] == DOT11F_EID_RSN) {
@@ -2244,7 +2244,7 @@ static int iw_softap_set_two_ints_getnone(struct net_device *dev,
 	return ret;
 }
 
-static void print_mac_list(struct cdf_mac_addr *macList, uint8_t size)
+static void print_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 {
 	int i;
 	uint8_t *macArray;
@@ -2260,7 +2260,7 @@ static void print_mac_list(struct cdf_mac_addr *macList, uint8_t size)
 static QDF_STATUS hdd_print_acl(hdd_adapter_t *pHostapdAdapter)
 {
 	eSapMacAddrACL acl_mode;
-	struct cdf_mac_addr MacList[MAX_ACL_MAC_ADDRESS];
+	struct qdf_mac_addr MacList[MAX_ACL_MAC_ADDRESS];
 	uint8_t listnum;
 	void *p_cds_gctx = NULL;
 
@@ -3232,7 +3232,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 	v_CONTEXT_t cds_ctx;
 #endif
 	uint8_t *value = (uint8_t *) extra;
-	uint8_t pPeerStaMac[CDF_MAC_ADDR_SIZE];
+	uint8_t pPeerStaMac[QDF_MAC_ADDR_SIZE];
 	int listType, cmd, i;
 	int ret;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -3248,13 +3248,13 @@ int __iw_softap_modify_acl(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx =  hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Vos Context is NULL", __func__);
 		return -EINVAL;
 	}
 #endif
 
-	for (i = 0; i < CDF_MAC_ADDR_SIZE; i++)
+	for (i = 0; i < QDF_MAC_ADDR_SIZE; i++)
 		pPeerStaMac[i] = *(value + i);
 
 	listType = (int)(*(value + i));
@@ -3346,8 +3346,8 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 	int *value = (int *)extra;
 	int set_value;
 	int ret;
-	struct cdf_mac_addr bssid = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
-	struct cdf_mac_addr selfMac = CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr bssid = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr selfMac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 	ENTER();
 
@@ -3397,7 +3397,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	hdd_context_t *hdd_ctx;
 	int *value = (int *)extra;
 	int set_value;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	int ret;
 
 	ENTER();
@@ -3494,13 +3494,13 @@ static __iw_softap_getassoc_stamacaddr(struct net_device *dev,
 	left = wrqu->data.length - maclist_index;
 
 	spin_lock_bh(&pHostapdAdapter->staInfo_lock);
-	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= CDF_MAC_ADDR_SIZE)) {
+	while ((cnt < WLAN_MAX_STA_COUNT) && (left >= QDF_MAC_ADDR_SIZE)) {
 		if ((pStaInfo[cnt].isUsed) &&
 		    (!IS_BROADCAST_MAC(pStaInfo[cnt].macAddrSTA.bytes))) {
 			memcpy(&buf[maclist_index], &(pStaInfo[cnt].macAddrSTA),
-			       CDF_MAC_ADDR_SIZE);
-			maclist_index += CDF_MAC_ADDR_SIZE;
-			left -= CDF_MAC_ADDR_SIZE;
+			       QDF_MAC_ADDR_SIZE);
+			maclist_index += QDF_MAC_ADDR_SIZE;
+			left -= QDF_MAC_ADDR_SIZE;
 		}
 		cnt++;
 	}
@@ -3557,7 +3557,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	ENTER();
 
 	if (!capable(CAP_NET_ADMIN)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			FL("permission check failed"));
 		return -EPERM;
 	}
@@ -3780,7 +3780,7 @@ int __iw_get_genie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: vos context is not valid ", __func__);
 		return -EINVAL;
 	}
@@ -3799,7 +3799,7 @@ int __iw_get_genie(struct net_device *dev,
 #endif
 		&length, genIeBytes);
 	if (status == QDF_STATUS_SUCCESS) {
-		length = CDF_MIN(length, DOT11F_IE_RSN_MAX_LEN);
+		length = QDF_MIN(length, DOT11F_IE_RSN_MAX_LEN);
 		if (wrqu->data.length < length ||
 		copy_to_user(wrqu->data.pointer, (void *)genIeBytes, length)) {
 			hddLog(LOG1, FL("failed to copy data to user buffer"));
@@ -4009,7 +4009,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: pVosContext is NULL", __func__);
 		return -EINVAL;
 	}
@@ -4041,12 +4041,12 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 
 		setKey.keyDirection = eSIR_TX_RX;
 		cdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 	}
 	if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) {
 		setKey.keyDirection = eSIR_TX_DEFAULT;
 		cdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 	}
 
 	/*For supplicant pae role is zero */
@@ -4455,7 +4455,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 	ENTER();
 
 	if (!capable(CAP_NET_ADMIN)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			FL("permission check failed"));
 		return -EPERM;
 	}
@@ -4468,7 +4468,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is not valid ", __func__);
 		return -EINVAL;
 	}
@@ -5139,7 +5139,7 @@ QDF_STATUS hdd_softap_get_sta_info(hdd_adapter_t *pAdapter, uint8_t *pBuf,
 	ENTER();
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Adapter is NULL", __func__);
 		return -EINVAL;
 	}
@@ -5254,7 +5254,7 @@ static int __iw_set_ap_genie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: CDF Context is NULL", __func__);
 		return -EINVAL;
 	}
@@ -5329,7 +5329,7 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	char *pLinkSpeed = (char *)extra;
 	uint32_t link_speed = 0;
 	int len = sizeof(uint32_t) + 1;
-	struct cdf_mac_addr macAddress;
+	struct qdf_mac_addr macAddress;
 	char pmacAddress[MAC_ADDRESS_STR_LEN + 1];
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	int rc, valid, i;
@@ -5952,9 +5952,9 @@ static const iw_handler hostapd_private[] = {
 		iw_softap_set_two_ints_getnone,
 };
 const struct iw_handler_def hostapd_handler_def = {
-	.num_standard = CDF_ARRAY_SIZE(hostapd_handler),
-	.num_private = CDF_ARRAY_SIZE(hostapd_private),
-	.num_private_args = CDF_ARRAY_SIZE(hostapd_private_args),
+	.num_standard = QDF_ARRAY_SIZE(hostapd_handler),
+	.num_private = QDF_ARRAY_SIZE(hostapd_private),
+	.num_private_args = QDF_ARRAY_SIZE(hostapd_private_args),
 	.standard = (iw_handler *) hostapd_handler,
 	.private = (iw_handler *) hostapd_private,
 	.private_args = hostapd_private_args,
@@ -6046,7 +6046,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 
 	qdf_status = qdf_event_create(&phostapdBuf->cdf_stop_bss_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: Hostapd HDD stop bss event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
@@ -6352,7 +6352,7 @@ static int wlan_hdd_set_channel(struct wiphy *wiphy,
 	}
 	pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_CHANNEL,
 			 pAdapter->sessionId, channel_type));
 
@@ -7485,7 +7485,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		 * */
 		status =
 			hdd_softap_unpack_ie(cds_get_context
-						     (CDF_MODULE_ID_SME),
+						     (QDF_MODULE_ID_SME),
 					     &RSNEncryptType, &mcRSNEncryptType,
 					     &RSNAuthType, &MFPCapable,
 					     &MFPRequired,
@@ -7533,7 +7533,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 				       "RSNWPA IE MAX Length exceeded; length =%d",
 				       pConfig->RSNWPAReqIELength);
 			status = hdd_softap_unpack_ie
-					(cds_get_context(CDF_MODULE_ID_SME),
+					(cds_get_context(QDF_MODULE_ID_SME),
 					 &RSNEncryptType,
 					 &mcRSNEncryptType, &RSNAuthType,
 					 &MFPCapable, &MFPRequired,
@@ -7591,7 +7591,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	cdf_mem_copy(pConfig->self_macaddr.bytes,
 		     pHostapdAdapter->macAddressCurrent.bytes,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	/* default value */
 	pConfig->SapMacaddr_acl = eSAP_ACCEPT_UNLESS_DENIED;
@@ -7872,12 +7872,12 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_STOP_AP,
 			 pAdapter->sessionId, pAdapter->device_mode));
 
@@ -8100,12 +8100,12 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_START_AP, pAdapter->sessionId,
 			 params->beacon_interval));
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
@@ -8258,12 +8258,12 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BEACON,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	hddLog(LOG1, FL("Device_mode %s(%d)"),

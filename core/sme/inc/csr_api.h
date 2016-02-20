@@ -245,7 +245,7 @@ typedef struct tagCsrSSIDs {
 
 typedef struct tagCsrBSSIDs {
 	uint32_t numOfBSSIDs;
-	struct cdf_mac_addr *bssid;
+	struct qdf_mac_addr *bssid;
 } tCsrBSSIDs;
 
 typedef struct tagCsrStaParams {
@@ -267,7 +267,7 @@ typedef struct tagCsrStaParams {
 
 typedef struct tagCsrScanRequest {
 	tSirScanType scanType;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	eCsrRoamBssType BSSType;
 	tCsrSSIDs SSIDs;
 	tCsrChannelInfo ChannelInfo;
@@ -291,7 +291,7 @@ typedef struct tagCsrScanResultInfo {
 	 */
 	void *pvIes;
 	tAniSSID ssId;
-	v_TIME_t timer;           /* timer is variable for hidden SSID timer */
+	unsigned long timer;           /* timer is variable for hidden SSID timer */
 	/*
 	 * This member must be the last in the structure because the
 	 * end of tSirBssDescription is an
@@ -385,7 +385,7 @@ typedef struct tagCsrScanResultFilter {
 	 */
 	uint8_t scan_filter_for_roam;
 	struct sCsrChannel_ pcl_channels;
-	enum tCDF_ADAPTER_MODE csrPersona;
+	enum tQDF_ADAPTER_MODE csrPersona;
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
@@ -804,23 +804,23 @@ enum csr_hi_rssi_scan_id {
 };
 
 typedef struct tagPmkidCandidateInfo {
-	struct cdf_mac_addr BSSID;
+	struct qdf_mac_addr BSSID;
 	bool preAuthSupported;
 } tPmkidCandidateInfo;
 
 typedef struct tagPmkidCacheInfo {
-	struct cdf_mac_addr BSSID;
+	struct qdf_mac_addr BSSID;
 	uint8_t PMKID[CSR_RSN_PMKID_SIZE];
 } tPmkidCacheInfo;
 
 #ifdef FEATURE_WLAN_WAPI
 typedef struct tagBkidCandidateInfo {
-	struct cdf_mac_addr BSSID;
+	struct qdf_mac_addr BSSID;
 	bool preAuthSupported;
 } tBkidCandidateInfo;
 
 typedef struct tagBkidCacheInfo {
-	struct cdf_mac_addr BSSID;
+	struct qdf_mac_addr BSSID;
 	uint8_t BKID[CSR_WAPI_BKID_SIZE];
 } tBkidCacheInfo;
 #endif /* FEATURE_WLAN_WAPI */
@@ -925,7 +925,7 @@ typedef struct tagCsrRoamProfile {
 	uint16_t cfg_protection;
 	uint8_t wps_state;
 	tCsrMobilityDomainInfo MDID;
-	enum tCDF_ADAPTER_MODE csrPersona;
+	enum tQDF_ADAPTER_MODE csrPersona;
 	uint8_t disableDFSChSwitch;
 	/* addIe params */
 	tSirAddIeParams addIeParams;
@@ -951,7 +951,7 @@ typedef struct tagCsrRoamConnectedProfile {
 	tSirMacSSid SSID;
 	bool handoffPermitted;
 	bool ssidHidden;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	eCsrRoamBssType BSSType;
 	eCsrAuthType AuthType;
 	tCsrAuthList AuthInfo;
@@ -1253,12 +1253,12 @@ typedef struct tagCsrRoamInfo {
 	uint8_t *pbFrames;
 	bool fReassocReq;       /* set to true if for re-association */
 	bool fReassocRsp;       /* set to true if for re-association */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	/*
 	 * Only valid in IBSS. this is the peers MAC address for
 	 * eCSR_ROAM_RESULT_IBSS_NEW_PEER or PEER_DEPARTED
 	 */
-	struct cdf_mac_addr peerMac;
+	struct qdf_mac_addr peerMac;
 	tSirResultCodes statusCode;
 	/* this'd be our own defined or sent from otherBSS(per 802.11spec) */
 	uint32_t reasonCode;
@@ -1447,7 +1447,7 @@ typedef struct tagCsrPerStaStatsInfo {
 typedef struct tagCsrRoamSetKey {
 	eCsrEncryptionType encType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
-	struct cdf_mac_addr peerMac;    /* Peer MAC. ALL 1's for group key */
+	struct qdf_mac_addr peerMac;    /* Peer MAC. ALL 1's for group key */
 	uint8_t paeRole;        /* 0 for supplicant */
 	uint8_t keyId;          /* Key index */
 	uint16_t keyLength;     /* Number of bytes containing the key in pKey */
@@ -1457,7 +1457,7 @@ typedef struct tagCsrRoamSetKey {
 
 typedef struct tagCsrRoamRemoveKey {
 	eCsrEncryptionType encType;
-	struct cdf_mac_addr peerMac; /* Peer MAC. ALL 1's for group key */
+	struct qdf_mac_addr peerMac; /* Peer MAC. ALL 1's for group key */
 	uint8_t keyId;          /* key index */
 } tCsrRoamRemoveKey;
 
@@ -1497,7 +1497,7 @@ typedef enum {
 } handoff_src;
 
 typedef struct tagCsrHandoffRequest {
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	uint8_t channel;
 	uint8_t src;   /* To check if its a REASSOC or a FASTREASSOC IOCTL */
 } tCsrHandoffRequest;
@@ -1517,7 +1517,7 @@ typedef struct tagCsrEseBeaconReq {
 #endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
 struct tagCsrDelStaParams {
-	struct cdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr peerMacAddr;
 	uint16_t reason_code;
 	uint8_t subtype;
 };

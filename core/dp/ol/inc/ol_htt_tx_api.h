@@ -287,35 +287,35 @@ struct htt_msdu_info_t {
 
 static inline void htt_msdu_info_dump(struct htt_msdu_info_t *msdu_info)
 {
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "HTT MSDU info object (%p)\n", msdu_info);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  ethertype: %#x\n", msdu_info->info.ethertype);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  peer_id: %d\n", msdu_info->info.peer_id);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  vdev_id: %d\n", msdu_info->info.vdev_id);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  ext_tid: %d\n", msdu_info->info.ext_tid);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  l2_hdr_type: %d\n", msdu_info->info.l2_hdr_type);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  frame_type: %d\n", msdu_info->info.frame_type);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  frame_subtype: %d\n", msdu_info->info.frame_subtype);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  is_unicast: %u\n", msdu_info->info.is_unicast);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  l3_hdr_offset: %u\n", msdu_info->info.l3_hdr_offset);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  use 6 Mbps: %d\n", msdu_info->action.use_6mbps);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  do_encrypt: %d\n", msdu_info->action.do_encrypt);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  do_tx_complete: %d\n", msdu_info->action.do_tx_complete);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  is_unicast: %u\n", msdu_info->info.is_unicast);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "  is_unicast: %u\n", msdu_info->info.is_unicast);
 }
 
@@ -533,7 +533,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		 cdf_dma_addr_t htt_tx_desc_paddr,
 		 uint16_t msdu_id,
 		 cdf_nbuf_t msdu, struct htt_msdu_info_t *msdu_info,
-		 struct cdf_tso_info_t *tso_info,
+		 struct qdf_tso_info_t *tso_info,
 		 struct ocb_tx_ctrl_hdr_t *tx_ctrl,
 		 uint8_t is_dsrc)
 {
@@ -573,7 +573,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 		ce_pkt_type = htt_to_ce_pkt_type[pkt_type];
 		if (0xffffffff == ce_pkt_type) {
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_DEBUG,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_DEBUG,
 			"Invalid HTT pkt type %d\n", pkt_type);
 			return;
 		}
@@ -696,9 +696,9 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	if (cdf_likely(pdev->cfg.ce_classify_enabled &&
 		(msdu_info->info.l2_hdr_type != htt_pkt_type_mgmt))) {
 		uint32_t pkt_offset = cdf_nbuf_get_frag_len(msdu, 0);
-		data_attr = hw_classify << CDF_CE_TX_CLASSIFY_BIT_S;
-		data_attr |= ce_pkt_type << CDF_CE_TX_PKT_TYPE_BIT_S;
-		data_attr |= pkt_offset  << CDF_CE_TX_PKT_OFFSET_BIT_S;
+		data_attr = hw_classify << QDF_CE_TX_CLASSIFY_BIT_S;
+		data_attr |= ce_pkt_type << QDF_CE_TX_PKT_TYPE_BIT_S;
+		data_attr |= pkt_offset  << QDF_CE_TX_PKT_OFFSET_BIT_S;
 	}
 
 	cdf_nbuf_data_attr_set(msdu, data_attr);
@@ -979,7 +979,7 @@ void htt_tx_desc_set_chanfreq(void *htt_tx_desc, uint16_t chanfreq)
 #if defined(FEATURE_TSO)
 void
 htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
-	 struct cdf_tso_info_t *tso_info);
+	 struct qdf_tso_info_t *tso_info);
 #else
 #define htt_tx_desc_fill_tso_info(pdev, desc, tso_info)
 #endif

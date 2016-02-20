@@ -29,7 +29,7 @@
 /* header files for OS primitives */
 #include <osdep.h>              /* uint32_t, etc. */
 #include <cdf_memory.h>         /* cdf_mem_malloc,free */
-#include <cdf_types.h>          /* cdf_device_t, cdf_print */
+#include <qdf_types.h>          /* qdf_device_t, qdf_print */
 #include <cdf_lock.h>           /* cdf_spinlock */
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 
@@ -89,9 +89,9 @@
  */
 void ol_tx_set_is_mgmt_over_wmi_enabled(uint8_t value)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		cdf_print("%s: pdev is NULL\n", __func__);
+		qdf_print("%s: pdev is NULL\n", __func__);
 		return;
 	}
 	pdev->is_mgmt_over_wmi_enabled = value;
@@ -105,9 +105,9 @@ void ol_tx_set_is_mgmt_over_wmi_enabled(uint8_t value)
  */
 uint8_t ol_tx_get_is_mgmt_over_wmi_enabled(void)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		cdf_print("%s: pdev is NULL\n", __func__);
+		qdf_print("%s: pdev is NULL\n", __func__);
 		return 0;
 	}
 	return pdev->is_mgmt_over_wmi_enabled;
@@ -133,7 +133,7 @@ ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
 QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id)
 {
 	if (!peer) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				  "peer argument is null!!");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -148,21 +148,21 @@ void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id)
 	ol_txrx_pdev_handle pdev = NULL;
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid sta id passed");
 		return NULL;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "PDEV not found for sta_id [%d]", sta_id);
 		return NULL;
 	}
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 	if (!peer) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "PEER [%d] not found", sta_id);
 		return NULL;
 	}
@@ -311,9 +311,9 @@ static inline void setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
  */
 void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		cdf_print("%s: pdev is NULL\n", __func__);
+		qdf_print("%s: pdev is NULL\n", __func__);
 		return;
 	}
 	pdev->num_msdu_desc = num_msdu_desc;
@@ -399,7 +399,7 @@ uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
  */
 ol_txrx_pdev_handle
 ol_txrx_pdev_alloc(ol_pdev_handle ctrl_pdev,
-		    HTC_HANDLE htc_pdev, cdf_device_t osdev)
+		    HTC_HANDLE htc_pdev, qdf_device_t osdev)
 {
 	struct ol_txrx_pdev_t *pdev;
 	int i;
@@ -500,7 +500,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	uint16_t fail_idx = 0;
 	int ret = 0;
 	uint16_t desc_pool_size;
-	struct hif_opaque_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *osc =  cds_get_context(QDF_MODULE_ID_HIF);
 
 	uint16_t desc_element_size = sizeof(union ol_tx_desc_list_elem_t);
 	union ol_tx_desc_list_elem_t *c_element;
@@ -555,7 +555,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		pdev->tx_desc.desc_reserved_size, desc_pool_size, 0, true);
 	if ((0 == pdev->tx_desc.desc_pages.num_pages) ||
 		(NULL == pdev->tx_desc.desc_pages.cacheable_pages)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"Page alloc fail");
 		goto page_alloc_fail;
 	}
@@ -568,7 +568,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		desc_per_page = desc_per_page >> 1;
 	}
 	pdev->tx_desc.page_divider = (sig_bit - 1);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		"page_divider 0x%x, offset_filter 0x%x num elem %d, ol desc num page %d, ol desc per page %d",
 		pdev->tx_desc.page_divider, pdev->tx_desc.offset_filter,
 		desc_pool_size, pdev->tx_desc.desc_pages.num_pages,
@@ -588,8 +588,8 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	for (i = 0; i < desc_pool_size; i++) {
 		void *htt_tx_desc;
 		void *htt_frag_desc = NULL;
-		cdf_dma_addr_t frag_paddr = 0;
-		cdf_dma_addr_t paddr;
+		qdf_dma_addr_t frag_paddr = 0;
+		qdf_dma_addr_t paddr;
 
 		if (i == (desc_pool_size - 1))
 			c_element->next = NULL;
@@ -599,7 +599,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 
 		htt_tx_desc = htt_tx_desc_alloc(pdev->htt_pdev, &paddr, i);
 		if (!htt_tx_desc) {
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 				  "%s: failed to alloc HTT tx desc (%d of %d)",
 				__func__, i, desc_pool_size);
 			fail_idx = i;
@@ -611,7 +611,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		ret = htt_tx_frag_alloc(pdev->htt_pdev,
 					i, &frag_paddr, &htt_frag_desc);
 		if (ret) {
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				"%s: failed to alloc HTT frag dsc (%d/%d)",
 				__func__, i, desc_pool_size);
 			/* Is there a leak here, is this handling correct? */
@@ -625,7 +625,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			c_element->tx_desc.htt_frag_desc = htt_frag_desc;
 			c_element->tx_desc.htt_frag_desc_paddr = frag_paddr;
 		}
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 			"%s:%d - %d FRAG VA 0x%p FRAG PA 0x%llx",
 			__func__, __LINE__, i,
 			c_element->tx_desc.htt_frag_desc,
@@ -660,7 +660,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		else
 			pdev->htt_pkt_type = htt_pkt_type_ethernet;
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "%s Invalid standard frame type: %d",
 			  __func__, pdev->frame_format);
 		goto control_init_fail;
@@ -727,7 +727,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			? 0 : 1;
 		break;
 	default:
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid std frame type; [en/de]cap: f:%x t:%x r:%x",
 			  pdev->frame_format,
 			  pdev->target_tx_tran_caps, pdev->target_rx_tran_caps);
@@ -777,7 +777,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			} else {
 #define TRACESTR01 "invalid config: if rx PN check is on the host,"\
 "rx->tx forwarding check needs to also be on the host"
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %s", __func__, TRACESTR01);
 #undef TRACESTR01
@@ -961,7 +961,7 @@ A_STATUS ol_txrx_pdev_attach_target(ol_txrx_pdev_handle pdev)
 void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 {
 	int i;
-	struct hif_opaque_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *osc =  cds_get_context(QDF_MODULE_ID_HIF);
 
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
@@ -1111,7 +1111,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	qdf_timer_init(pdev->osdev,
 			       &vdev->ll_pause.timer,
 			       ol_tx_vdev_ll_pause_queue_send, vdev,
-			       CDF_TIMER_TYPE_SW);
+			       QDF_TIMER_TYPE_SW);
 	qdf_atomic_init(&vdev->os_q_paused);
 	qdf_atomic_set(&vdev->os_q_paused, 0);
 	vdev->tx_fl_lwm = 0;
@@ -1622,7 +1622,7 @@ ol_txrx_peer_update(ol_txrx_vdev_handle vdev,
 	}
 	default:
 	{
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "ERROR: unknown param %d in %s", select,
 			  __func__);
 		break;
@@ -1892,7 +1892,7 @@ static void ol_txrx_dump_tx_desc(ol_txrx_pdev_handle pdev_handle)
  */
 QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 {
-	ol_txrx_pdev_handle txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (txrx_pdev == NULL) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -1976,11 +1976,11 @@ unsigned g_txrx_print_level = TXRX_PRINT_LEVEL_ERR;     /* default */
 void ol_txrx_print_level_set(unsigned level)
 {
 #ifndef TXRX_PRINT_ENABLE
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 		  "The driver is compiled without TXRX prints enabled.\n"
 		  "To enable them, recompile with TXRX_PRINT_ENABLE defined");
 #else
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 		  "TXRX printout level changed from %d to %d",
 		  g_txrx_print_level, level);
 	g_txrx_print_level = level;
@@ -2263,7 +2263,7 @@ int ol_txrx_debug(ol_txrx_vdev_handle vdev, int debug_specs)
 #if defined(TXRX_DEBUG_LEVEL) && TXRX_DEBUG_LEVEL > 5
 		ol_txrx_pdev_display(vdev->pdev, 0);
 #else
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 			  "The pdev,vdev,peer display functions are disabled.\n"
 			  "To enable them, recompile with TXRX_DEBUG_LEVEL > 5");
 #endif
@@ -2275,7 +2275,7 @@ int ol_txrx_debug(ol_txrx_vdev_handle vdev, int debug_specs)
 #if defined(ENABLE_TXRX_PROT_ANALYZE)
 		ol_txrx_prot_ans_display(vdev->pdev);
 #else
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 			  "txrx protocol analysis is disabled.\n"
 			  "To enable it, recompile with "
 			  "ENABLE_TXRX_PROT_ANALYZE defined");
@@ -2285,7 +2285,7 @@ int ol_txrx_debug(ol_txrx_vdev_handle vdev, int debug_specs)
 #if defined(ENABLE_RX_REORDER_TRACE)
 		ol_rx_reorder_trace_display(vdev->pdev, 0, 0);
 #else
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 			  "rx reorder seq num trace is disabled.\n"
 			  "To enable it, recompile with "
 			  "ENABLE_RX_REORDER_TRACE defined");
@@ -2308,20 +2308,20 @@ void ol_txrx_pdev_display(ol_txrx_pdev_handle pdev, int indent)
 {
 	struct ol_txrx_vdev_t *vdev;
 
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*s%s:\n", indent, " ", "txrx pdev");
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*spdev object: %p", indent + 4, " ", pdev);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*svdev list:", indent + 4, " ");
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 		ol_txrx_vdev_display(vdev, indent + 8);
 	}
 	ol_txrx_peer_find_display(pdev, indent + 4);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*stx desc pool: %d elems @ %p", indent + 4, " ",
 		  pdev->tx_desc.pool_size, pdev->tx_desc.array);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW, " ");
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW, " ");
 	htt_display(pdev->htt_pdev, indent);
 }
 
@@ -2329,17 +2329,17 @@ void ol_txrx_vdev_display(ol_txrx_vdev_handle vdev, int indent)
 {
 	struct ol_txrx_peer_t *peer;
 
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*stxrx vdev: %p\n", indent, " ", vdev);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*sID: %d\n", indent + 4, " ", vdev->vdev_id);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*sMAC addr: %d:%d:%d:%d:%d:%d",
 		  indent + 4, " ",
 		  vdev->mac_addr.raw[0], vdev->mac_addr.raw[1],
 		  vdev->mac_addr.raw[2], vdev->mac_addr.raw[3],
 		  vdev->mac_addr.raw[4], vdev->mac_addr.raw[5]);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*speer list:", indent + 4, " ");
 	TAILQ_FOREACH(peer, &vdev->peer_list, peer_list_elem) {
 		ol_txrx_peer_display(peer, indent + 8);
@@ -2350,11 +2350,11 @@ void ol_txrx_peer_display(ol_txrx_peer_handle peer, int indent)
 {
 	int i;
 
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 		  "%*stxrx peer: %p", indent, " ", peer);
 	for (i = 0; i < MAX_NUM_PEER_ID_PER_PEER; i++) {
 		if (peer->peer_ids[i] != HTT_INVALID_PEER) {
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
 				  "%*sID: %d", indent + 4, " ",
 				  peer->peer_ids[i]);
 		}
@@ -2368,13 +2368,13 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 	int msdu_idx;
 	int seg_idx;
 
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		"TSO pkts %lld, bytes %lld\n",
 		pdev->stats.pub.tx.tso.tso_pkts.pkts,
 		pdev->stats.pub.tx.tso.tso_pkts.bytes);
 
 	for (msdu_idx = 0; msdu_idx < NUM_MAX_TSO_MSDUS; msdu_idx++) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"curr msdu idx: %d curr seg idx: %d num segs %d\n",
 			TXRX_STATS_TSO_MSDU_IDX(pdev),
 			TXRX_STATS_TSO_SEG_IDX(pdev),
@@ -2383,16 +2383,16 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 			 ((seg_idx < TXRX_STATS_TSO_MSDU_NUM_SEG(pdev, msdu_idx)) &&
 			  (seg_idx < NUM_MAX_TSO_SEGS));
 			 seg_idx++) {
-			struct cdf_tso_seg_t tso_seg =
+			struct qdf_tso_seg_t tso_seg =
 				 TXRX_STATS_TSO_SEG(pdev, msdu_idx, seg_idx);
 
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				 "msdu idx: %d seg idx: %d\n",
 				 msdu_idx, seg_idx);
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				 "tso_enable: %d\n",
 				 tso_seg.tso_flags.tso_enable);
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				 "fin %d syn %d rst %d psh %d ack %d\n"
 				 "urg %d ece %d cwr %d ns %d\n",
 				 tso_seg.tso_flags.fin, tso_seg.tso_flags.syn,
@@ -2400,7 +2400,7 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 				 tso_seg.tso_flags.ack, tso_seg.tso_flags.urg,
 				 tso_seg.tso_flags.ece, tso_seg.tso_flags.cwr,
 				 tso_seg.tso_flags.ns);
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				 "tcp_seq_num: 0x%x ip_id: %d\n",
 				 tso_seg.tso_flags.tcp_seq_num,
 				 tso_seg.tso_flags.ip_id);
@@ -2410,7 +2410,7 @@ void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 #else
 void ol_txrx_stats_display_tso(ol_txrx_pdev_handle pdev)
 {
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 	 "TSO is not supported\n");
 }
 #endif
@@ -2430,7 +2430,7 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len)
 
 	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (!vdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"%s: vdev is NULL", __func__);
 		snprintf(buffer, buf_len, "vdev not found");
 		return len;
@@ -2453,8 +2453,8 @@ ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len)
 
 void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 {
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR, "txrx stats:");
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR, "txrx stats:");
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		  "  tx: sent %lld msdus (%lld B), "
 		  "      rejected %lld (%lld B), dropped %lld (%lld B)",
 		  pdev->stats.pub.tx.delivered.pkts,
@@ -2467,7 +2467,7 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.tx.dropped.download_fail.bytes
 		  + pdev->stats.pub.tx.dropped.target_discard.bytes
 		  + pdev->stats.pub.tx.dropped.no_ack.bytes);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		  "    download fail: %lld (%lld B), "
 		  "target discard: %lld (%lld B), "
 		  "no ack: %lld (%lld B)",
@@ -2477,7 +2477,7 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.tx.dropped.target_discard.bytes,
 		  pdev->stats.pub.tx.dropped.no_ack.pkts,
 		  pdev->stats.pub.tx.dropped.no_ack.bytes);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		  "Tx completion per interrupt:\n"
 		  "Single Packet  %d\n"
 		  " 2-10 Packets  %d\n"
@@ -2495,7 +2495,7 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.tx.comp_histogram.pkts_41_50,
 		  pdev->stats.pub.tx.comp_histogram.pkts_51_60,
 		  pdev->stats.pub.tx.comp_histogram.pkts_61_plus);
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		  "  rx: %lld ppdus, %lld mpdus, %lld msdus, %lld bytes, %lld errs",
 		  pdev->stats.priv.rx.normal.ppdus,
 		  pdev->stats.priv.rx.normal.mpdus,
@@ -2503,7 +2503,7 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 		  pdev->stats.pub.rx.delivered.bytes,
 		  pdev->stats.priv.rx.err.mpdu_bad);
 
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		  "  fwd to stack %d, fwd to fw %d, fwd to stack & fw  %d\n",
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_stack,
 		  pdev->stats.pub.rx.intra_bss_fwd.packets_fwd,
@@ -2569,14 +2569,14 @@ static ol_txrx_vdev_handle ol_txrx_get_vdev_from_sta_id(uint8_t sta_id)
 	ol_txrx_pdev_handle pdev = NULL;
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"Invalid sta id passed");
 		return NULL;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"PDEV not found for sta_id [%d]", sta_id);
 		return NULL;
 	}
@@ -2584,7 +2584,7 @@ static ol_txrx_vdev_handle ol_txrx_get_vdev_from_sta_id(uint8_t sta_id)
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 
 	if (!peer) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"PEER [%d] not found", sta_id);
 		return NULL;
 	}
@@ -2606,7 +2606,7 @@ int ol_txrx_register_tx_flow_control (uint8_t vdev_id,
 {
 	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (NULL == vdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid vdev_id %d", __func__, vdev_id);
 		return -EINVAL;
 	}
@@ -2628,7 +2628,7 @@ int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id)
 {
 	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (NULL == vdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				"%s: Invalid vdev_id", __func__);
 		return -EINVAL;
 	}
@@ -2655,7 +2655,7 @@ ol_txrx_get_tx_resource(uint8_t sta_id,
 {
 	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_sta_id(sta_id);
 	if (NULL == vdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid sta_id %d", __func__, sta_id);
 		/* Return true so caller do not understand that resource
 		 * is less than low_watermark.
@@ -2692,7 +2692,7 @@ ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth)
 {
 	ol_txrx_vdev_handle vdev = ol_txrx_get_vdev_from_vdev_id(vdev_id);
 	if (NULL == vdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"%s: Invalid vdev_id %d", __func__, vdev_id);
 		return -EINVAL;
 	}
@@ -2750,19 +2750,19 @@ inline void ol_txrx_flow_control_cb(ol_txrx_vdev_handle vdev,
  */
 void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    cdf_dma_addr_t *ce_sr_base_paddr,
+			    qdf_dma_addr_t *ce_sr_base_paddr,
 			    uint32_t *ce_sr_ring_size,
-			    cdf_dma_addr_t *ce_reg_paddr,
-			    cdf_dma_addr_t *tx_comp_ring_base_paddr,
+			    qdf_dma_addr_t *ce_reg_paddr,
+			    qdf_dma_addr_t *tx_comp_ring_base_paddr,
 			    uint32_t *tx_comp_ring_size,
 			    uint32_t *tx_num_alloc_buffer,
-			    cdf_dma_addr_t *rx_rdy_ring_base_paddr,
+			    qdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			    uint32_t *rx_rdy_ring_size,
-			    cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			    qdf_dma_addr_t *rx_proc_done_idx_paddr,
 			    void **rx_proc_done_idx_vaddr,
-			    cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			    qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
 			    uint32_t *rx2_rdy_ring_size,
-			    cdf_dma_addr_t *rx2_proc_done_idx2_paddr,
+			    qdf_dma_addr_t *rx2_proc_done_idx2_paddr,
 			    void **rx2_proc_done_idx2_vaddr)
 {
 	htt_ipa_uc_get_resource(pdev->htt_pdev,
@@ -2793,8 +2793,8 @@ ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
  */
 void
 ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  cdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  cdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
+				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
 	htt_ipa_uc_set_doorbell_paddr(pdev->htt_pdev,
 				      ipa_tx_uc_doorbell_paddr,
@@ -2833,7 +2833,7 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)context;
 
 	if (cdf_unlikely(!pdev)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: Invalid context", __func__);
 		cdf_mem_free(rxpkt);
 		return;
@@ -2842,7 +2842,7 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	if (pdev->ipa_uc_op_cb) {
 		pdev->ipa_uc_op_cb(rxpkt, pdev->osif_dev);
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: ipa_uc_op_cb NULL", __func__);
 		cdf_mem_free(rxpkt);
 	}
@@ -2866,7 +2866,7 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 
 	pkt = cds_alloc_ol_rx_pkt(sched_ctx);
 	if (cdf_unlikely(!pkt)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: Not able to allocate context", __func__);
 		return;
 	}
@@ -2884,7 +2884,7 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev,
 	if (pdev->ipa_uc_op_cb) {
 		pdev->ipa_uc_op_cb(op_msg, pdev->osif_dev);
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 		    "%s: IPA callback function is not registered", __func__);
 		cdf_mem_free(op_msg);
 		return;
@@ -2923,9 +2923,9 @@ void ol_txrx_display_stats(uint16_t value)
 {
 	ol_txrx_pdev_handle pdev;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"%s: pdev is NULL", __func__);
 		return;
 	}
@@ -2944,7 +2944,7 @@ void ol_txrx_display_stats(uint16_t value)
 		cdf_nbuf_tx_desc_count_display();
 		break;
 	default:
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 					"%s: Unknown value", __func__);
 		break;
 	}
@@ -2954,9 +2954,9 @@ void ol_txrx_clear_stats(uint16_t value)
 {
 	ol_txrx_pdev_handle pdev;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			"%s: pdev is NULL", __func__);
 		return;
 	}
@@ -2972,7 +2972,7 @@ void ol_txrx_clear_stats(uint16_t value)
 		cdf_nbuf_tx_desc_count_clear();
 		break;
 	default:
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 					"%s: Unknown value", __func__);
 		break;
 	}
@@ -3050,7 +3050,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	 * IPA kernel module API should not be called on SIRQ CTXT */
 	cdf_nbuf_t buf, next_buf;
 	ol_rx_callback_fp data_rx = NULL;
-	ol_txrx_pdev_handle pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if ((!peer) || (!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "peer/pdev is NULL");
@@ -3145,7 +3145,7 @@ QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 				 struct ol_txrx_desc_type *sta_desc)
 {
 	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	union ol_txrx_peer_update_param_t param;
 	struct privacy_exemption privacy_filter;
 
@@ -3194,7 +3194,7 @@ QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 {
 	struct ol_txrx_peer_t *peer;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find pdev!",
@@ -3251,7 +3251,7 @@ QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s: Unable to find pdev!",
 			   __func__);
@@ -3326,7 +3326,7 @@ exit:
  */
 QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
 {
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev || !pause_cb) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "pdev or pause_cb is NULL");
 		return QDF_STATUS_E_INVAL;
@@ -3356,7 +3356,7 @@ void ol_txrx_lro_flush_handler(void *context,
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)context;
 
 	if (cdf_unlikely(!pdev)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			 "%s: Invalid context", __func__);
 		cdf_assert(0);
 		return;
@@ -3365,7 +3365,7 @@ void ol_txrx_lro_flush_handler(void *context,
 	if (pdev->lro_info.lro_flush_cb)
 		pdev->lro_info.lro_flush_cb(pdev->lro_info.lro_data);
 	else
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			 "%s: lro_flush_cb NULL", __func__);
 }
 
@@ -3392,7 +3392,7 @@ void ol_txrx_lro_flush(void *data)
 	} else {
 		pkt = cds_alloc_ol_rx_pkt(sched_ctx);
 		if (cdf_unlikely(!pkt)) {
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				 "%s: Not able to allocate context", __func__);
 			return;
 		}
@@ -3419,8 +3419,8 @@ void ol_txrx_lro_flush(void *data)
 void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 {
 	struct hif_opaque_softc *hif_device =
-		(struct hif_opaque_softc *)cds_get_context(CDF_MODULE_ID_HIF);
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	pdev->lro_info.lro_flush_cb = handler;
 	pdev->lro_info.lro_data = data;
@@ -3440,8 +3440,8 @@ void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 void ol_deregister_lro_flush_cb(void)
 {
 	struct hif_opaque_softc *hif_device =
-		(struct hif_opaque_softc *)cds_get_context(CDF_MODULE_ID_HIF);
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	hif_lro_flush_cb_deregister(hif_device);
 

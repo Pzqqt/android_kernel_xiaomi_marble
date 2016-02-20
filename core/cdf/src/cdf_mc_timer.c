@@ -61,9 +61,9 @@ static cdf_mutex_t persistent_timer_count_lock;
  *
  * Return: none
  */
-static void try_allowing_sleep(CDF_TIMER_TYPE type)
+static void try_allowing_sleep(QDF_TIMER_TYPE type)
 {
-	if (CDF_TIMER_TYPE_WAKE_APPS == type) {
+	if (QDF_TIMER_TYPE_WAKE_APPS == type) {
 		/* cdf_mutex_acquire(&persistent_timer_count_lock); */
 		persistent_timer_count--;
 		if (0 == persistent_timer_count) {
@@ -102,12 +102,12 @@ static void cdf_linux_timer_callback(unsigned long data)
 	cdf_mc_timer_callback_t callback = NULL;
 	void *userData = NULL;
 	int threadId;
-	CDF_TIMER_TYPE type = CDF_TIMER_TYPE_SW;
+	QDF_TIMER_TYPE type = QDF_TIMER_TYPE_SW;
 
 	CDF_ASSERT(timer);
 
 	if (timer == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s Null pointer passed in!", __func__);
 		return;
 	}
@@ -158,7 +158,7 @@ static void cdf_linux_timer_callback(unsigned long data)
 	spin_unlock_irqrestore(&timer->platformInfo.spinlock, flags);
 
 	if (QDF_STATUS_SUCCESS != vStatus) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "TIMER callback called in a wrong state=%d",
 			  timer->state);
 		return;
@@ -168,12 +168,12 @@ static void cdf_linux_timer_callback(unsigned long data)
 
 	if (callback == NULL) {
 		CDF_ASSERT(0);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: No TIMER callback, Could not enqueue timer to any queue",
 			  __func__);
 		return;
 	}
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "TIMER callback: running on MC thread");
 
 	/* serialize to the MC thread */
@@ -185,7 +185,7 @@ static void cdf_linux_timer_callback(unsigned long data)
 	if (cds_mq_post_message(CDS_MQ_ID_SYS, &msg) == QDF_STATUS_SUCCESS)
 		return;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "%s: Could not enqueue timer to any queue", __func__);
 	CDF_ASSERT(0);
 }
@@ -226,7 +226,7 @@ CDF_TIMER_STATE cdf_mc_timer_get_current_state(cdf_mc_timer_t *pTimer)
  */
 void cdf_timer_module_init(void)
 {
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "Initializing the CDF timer module");
 	cdf_mutex_init(&persistent_timer_count_lock);
 }
@@ -271,7 +271,7 @@ static void cdf_timer_clean(void)
 		QDF_STATUS qdf_status;
 
 		cdf_mc_timer_node_t *ptimerNode;
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: List is not Empty. listSize %d ",
 			  __func__, (int)listSize);
 
@@ -282,7 +282,7 @@ static void cdf_timer_clean(void)
 			cdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
 			if (QDF_STATUS_SUCCESS == qdf_status) {
 				ptimerNode = (cdf_mc_timer_node_t *) pNode;
-				CDF_TRACE(CDF_MODULE_ID_CDF,
+				CDF_TRACE(QDF_MODULE_ID_QDF,
 					  CDF_TRACE_LEVEL_FATAL,
 					  "Timer Leak@ File %s, @Line %d",
 					  ptimerNode->fileName,
@@ -340,7 +340,7 @@ void cdf_mc_timer_exit(void)
  */
 #ifdef TIMER_MANAGER
 QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
-				   CDF_TIMER_TYPE timerType,
+				   QDF_TIMER_TYPE timerType,
 				   cdf_mc_timer_callback_t callback,
 				   void *userData, char *fileName,
 				   uint32_t lineNum)
@@ -349,7 +349,7 @@ QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 
 	/* check for invalid pointer */
 	if ((timer == NULL) || (callback == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
@@ -358,7 +358,7 @@ QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 	timer->ptimerNode = cdf_mem_malloc(sizeof(cdf_mc_timer_node_t));
 
 	if (timer->ptimerNode == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to allocate memory for timeNode",
 			  __func__);
 		CDF_ASSERT(0);
@@ -376,7 +376,7 @@ QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 					   &timer->ptimerNode->pNode);
 	cdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to insert node into List qdf_status %d",
 			  __func__, qdf_status);
 	}
@@ -385,7 +385,7 @@ QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 	 * with arguments passed or with default values
 	 */
 	spin_lock_init(&timer->platformInfo.spinlock);
-	if (CDF_TIMER_TYPE_SW == timerType)
+	if (QDF_TIMER_TYPE_SW == timerType)
 		init_timer_deferrable(&(timer->platformInfo.Timer));
 	else
 		init_timer(&(timer->platformInfo.Timer));
@@ -401,13 +401,13 @@ QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 	return QDF_STATUS_SUCCESS;
 }
 #else
-QDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
+QDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, QDF_TIMER_TYPE timerType,
 			     cdf_mc_timer_callback_t callback,
 			     void *userData)
 {
 	/* check for invalid pointer */
 	if ((timer == NULL) || (callback == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
@@ -417,7 +417,7 @@ QDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
 	 * with arguments passed or with default values
 	 */
 	spin_lock_init(&timer->platformInfo.spinlock);
-	if (CDF_TIMER_TYPE_SW == timerType)
+	if (QDF_TIMER_TYPE_SW == timerType)
 		init_timer_deferrable(&(timer->platformInfo.Timer));
 	else
 		init_timer(&(timer->platformInfo.Timer));
@@ -463,7 +463,7 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 
 	/* check for invalid pointer */
 	if (NULL == timer) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null timer pointer being passed", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
@@ -471,7 +471,7 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 
 	/* Check if timer refers to an uninitialized object */
 	if (LINUX_TIMER_COOKIE != timer->platformInfo.cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot destroy uninitialized timer", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
@@ -522,7 +522,7 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 
 	spin_unlock_irqrestore(&timer->platformInfo.spinlock, flags);
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "%s: Cannot destroy timer in state = %d", __func__,
 		  timer->state);
 	CDF_ASSERT(0);
@@ -560,7 +560,7 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 
 	/* check for invalid pointer */
 	if (NULL == timer) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null timer pointer being passed", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
@@ -568,7 +568,7 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 
 	/* check if timer refers to an uninitialized object */
 	if (LINUX_TIMER_COOKIE != timer->platformInfo.cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot destroy uninitialized timer", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
@@ -609,7 +609,7 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 
 	spin_unlock_irqrestore(&timer->platformInfo.spinlock, flags);
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "%s: Cannot destroy timer in state = %d", __func__,
 		  timer->state);
 	CDF_ASSERT(0);
@@ -639,12 +639,12 @@ QDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime)
 {
 	unsigned long flags;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Timer Addr inside cds_enable : 0x%p ", timer);
 
 	/* check for invalid pointer */
 	if (NULL == timer) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s Null timer pointer being passed", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
@@ -652,7 +652,7 @@ QDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime)
 
 	/* check if timer refers to an uninitialized object */
 	if (LINUX_TIMER_COOKIE != timer->platformInfo.cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot start uninitialized timer", __func__);
 		CDF_ASSERT(0);
 
@@ -661,7 +661,7 @@ QDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime)
 
 	/* check if timer has expiration time less than 10 ms */
 	if (expirationTime < 10) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot start a timer with expiration less than 10 ms",
 			  __func__);
 		CDF_ASSERT(0);
@@ -674,7 +674,7 @@ QDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime)
 	/* ensure if the timer can be started */
 	if (CDF_TIMER_STATE_STOPPED != timer->state) {
 		spin_unlock_irqrestore(&timer->platformInfo.spinlock, flags);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Cannot start timer in state = %d ", __func__,
 			  timer->state);
 		return QDF_STATUS_E_ALREADY;
@@ -689,7 +689,7 @@ QDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime)
 	/* get the thread ID on which the timer is being started */
 	timer->platformInfo.threadID = current->pid;
 
-	if (CDF_TIMER_TYPE_WAKE_APPS == timer->type) {
+	if (QDF_TIMER_TYPE_WAKE_APPS == timer->type) {
 		persistent_timer_count++;
 		if (1 == persistent_timer_count) {
 			/* since we now have one persistent timer,
@@ -721,12 +721,12 @@ QDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer)
 {
 	unsigned long flags;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Timer Addr inside cds_disable : 0x%p", __func__, timer);
 
 	/* check for invalid pointer */
 	if (NULL == timer) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s Null timer pointer being passed", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
@@ -734,7 +734,7 @@ QDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer)
 
 	/* check if timer refers to an uninitialized object */
 	if (LINUX_TIMER_COOKIE != timer->platformInfo.cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Cannot stop uninitialized timer", __func__);
 		CDF_ASSERT(0);
 
@@ -746,7 +746,7 @@ QDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer)
 
 	if (CDF_TIMER_STATE_RUNNING != timer->state) {
 		spin_unlock_irqrestore(&timer->platformInfo.spinlock, flags);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Cannot stop timer in state = %d",
 			  __func__, timer->state);
 		return QDF_STATUS_SUCCESS;
@@ -775,7 +775,7 @@ QDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer)
  *	The current system tick count (in 10msec intervals).  This
  *	function cannot fail.
  */
-v_TIME_t cdf_mc_timer_get_system_ticks(void)
+unsigned long cdf_mc_timer_get_system_ticks(void)
 {
 	return jiffies_to_msecs(jiffies) / 10;
 }
@@ -789,7 +789,7 @@ v_TIME_t cdf_mc_timer_get_system_ticks(void)
  * Return:
  *	The current system time in milliseconds
  */
-v_TIME_t cdf_mc_timer_get_system_time(void)
+unsigned long cdf_mc_timer_get_system_time(void)
 {
 	struct timeval tv;
 	do_gettimeofday(&tv);

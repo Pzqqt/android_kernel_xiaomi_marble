@@ -33,7 +33,7 @@
 #ifndef _CDF_NBUF_H
 #define _CDF_NBUF_H
 #include <cdf_util.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <cdf_net_types.h>
 #include <cdf_lock.h>
 #include <i_cdf_nbuf.h>
@@ -74,7 +74,7 @@ typedef __cdf_nbuf_t cdf_nbuf_t;
  * @cdf_dma_map_cb_t - Dma map callback prototype
  */
 typedef void (*cdf_dma_map_cb_t)(void *arg, cdf_nbuf_t buf,
-				 cdf_dma_map_t dmap);
+				 qdf_dma_map_t dmap);
 
 /**
  * @__CDF_NBUF_NULL - invalid handle
@@ -96,7 +96,7 @@ typedef __cdf_nbuf_queue_t cdf_nbuf_queue_t;
  * Return: Status of the operation
  */
 static inline QDF_STATUS
-cdf_nbuf_map(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
+cdf_nbuf_map(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	return __cdf_nbuf_map(osdev, buf, dir);
 }
@@ -110,7 +110,7 @@ cdf_nbuf_map(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
  * Return: none
  */
 static inline void
-cdf_nbuf_unmap(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
+cdf_nbuf_unmap(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	__cdf_nbuf_unmap(osdev, buf, dir);
 }
@@ -124,7 +124,7 @@ cdf_nbuf_unmap(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
  * Return: Status of the operation
  */
 static inline QDF_STATUS
-cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
+cdf_nbuf_map_single(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	return __cdf_nbuf_map_single(osdev, buf, dir);
 }
@@ -138,7 +138,7 @@ cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
  * Return: none
  */
 static inline void
-cdf_nbuf_unmap_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
+cdf_nbuf_unmap_single(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	__cdf_nbuf_unmap_single(osdev, buf, dir);
 }
@@ -339,7 +339,7 @@ void cdf_net_buf_debug_release_skb(cdf_nbuf_t net_buf);
 #define cdf_nbuf_alloc(d, s, r, a, p)			\
 	cdf_nbuf_alloc_debug(d, s, r, a, p, __FILE__, __LINE__)
 static inline cdf_nbuf_t
-cdf_nbuf_alloc_debug(cdf_device_t osdev, cdf_size_t size, int reserve,
+cdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size, int reserve,
 		     int align, int prio, uint8_t *file_name,
 		     uint32_t line_num)
 {
@@ -392,8 +392,8 @@ static inline void cdf_net_buf_debug_release_skb(cdf_nbuf_t net_buf)
  * Return: new cdf_nbuf instance or NULL if there's not enough memory.
  */
 static inline cdf_nbuf_t
-cdf_nbuf_alloc(cdf_device_t osdev,
-	       cdf_size_t size, int reserve, int align, int prio)
+cdf_nbuf_alloc(qdf_device_t osdev,
+	       qdf_size_t size, int reserve, int align, int prio)
 {
 	return __cdf_nbuf_alloc(osdev, size, reserve, align, prio);
 }
@@ -533,7 +533,7 @@ static inline uint32_t cdf_nbuf_tailroom(cdf_nbuf_t buf)
  * Return: New data pointer of this buf after data has been pushed,
  *	   or NULL if there is not enough room in this buf.
  */
-static inline uint8_t *cdf_nbuf_push_head(cdf_nbuf_t buf, cdf_size_t size)
+static inline uint8_t *cdf_nbuf_push_head(cdf_nbuf_t buf, qdf_size_t size)
 {
 	return __cdf_nbuf_push_head(buf, size);
 }
@@ -546,7 +546,7 @@ static inline uint8_t *cdf_nbuf_push_head(cdf_nbuf_t buf, cdf_size_t size)
  * Return: Data pointer of this buf where new data has to be
  *	   put, or NULL if there is not enough room in this buf.
  */
-static inline uint8_t *cdf_nbuf_put_tail(cdf_nbuf_t buf, cdf_size_t size)
+static inline uint8_t *cdf_nbuf_put_tail(cdf_nbuf_t buf, qdf_size_t size)
 {
 	return __cdf_nbuf_put_tail(buf, size);
 }
@@ -559,7 +559,7 @@ static inline uint8_t *cdf_nbuf_put_tail(cdf_nbuf_t buf, cdf_size_t size)
  * Return: New data pointer of this buf after data has been popped,
  *	   or NULL if there is not sufficient data to pull.
  */
-static inline uint8_t *cdf_nbuf_pull_head(cdf_nbuf_t buf, cdf_size_t size)
+static inline uint8_t *cdf_nbuf_pull_head(cdf_nbuf_t buf, qdf_size_t size)
 {
 	return __cdf_nbuf_pull_head(buf, size);
 }
@@ -571,7 +571,7 @@ static inline uint8_t *cdf_nbuf_pull_head(cdf_nbuf_t buf, cdf_size_t size)
  *
  * Return: none
  */
-static inline void cdf_nbuf_trim_tail(cdf_nbuf_t buf, cdf_size_t size)
+static inline void cdf_nbuf_trim_tail(cdf_nbuf_t buf, qdf_size_t size)
 {
 	__cdf_nbuf_trim_tail(buf, size);
 }
@@ -582,7 +582,7 @@ static inline void cdf_nbuf_trim_tail(cdf_nbuf_t buf, cdf_size_t size)
  *
  * Return: total length of this buf.
  */
-static inline cdf_size_t cdf_nbuf_len(cdf_nbuf_t buf)
+static inline qdf_size_t cdf_nbuf_len(cdf_nbuf_t buf)
 {
 	return __cdf_nbuf_len(buf);
 }
@@ -606,7 +606,7 @@ static inline void cdf_nbuf_set_pktlen(cdf_nbuf_t buf, uint32_t len)
  *
  * Return: none
  */
-static inline void cdf_nbuf_reserve(cdf_nbuf_t buf, cdf_size_t size)
+static inline void cdf_nbuf_reserve(cdf_nbuf_t buf, qdf_size_t size)
 {
 	__cdf_nbuf_reserve(buf, size);
 }
@@ -818,7 +818,7 @@ static inline cdf_nbuf_t cdf_nbuf_next_ext(cdf_nbuf_t buf)
  */
 static inline void
 cdf_nbuf_append_ext_list(cdf_nbuf_t head_buf, cdf_nbuf_t ext_list,
-			 cdf_size_t ext_len)
+			 qdf_size_t ext_len)
 {
 	__cdf_nbuf_append_ext_list(head_buf, ext_list, ext_len);
 }
@@ -1033,8 +1033,8 @@ static inline bool cdf_nbuf_is_tso(cdf_nbuf_t nbuf)
  *
  * Return: number of TSO segments
  */
-static inline uint32_t cdf_nbuf_get_tso_info(cdf_device_t osdev,
-		 cdf_nbuf_t nbuf, struct cdf_tso_info_t *tso_info)
+static inline uint32_t cdf_nbuf_get_tso_info(qdf_device_t osdev,
+		 cdf_nbuf_t nbuf, struct qdf_tso_info_t *tso_info)
 {
 	return __cdf_nbuf_get_tso_info(osdev, nbuf, tso_info);
 }

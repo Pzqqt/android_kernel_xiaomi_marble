@@ -81,7 +81,7 @@
 		if (((dfs) == NULL) ||				     \
 		    ((dfs) != NULL &&				       \
 		     ((_m) & (dfs)->dfs_debug_mask))) {		       \
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_DEBUG, \
+			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_DEBUG, \
 				 _fmt, __VA_ARGS__);	\
 		}						     \
 } while (0)
@@ -231,7 +231,7 @@ struct dfs_pulseparams {
 	uint64_t p_time;        /* time for start of pulse in usecs */
 	uint8_t p_dur;          /* Duration of pulse in usecs */
 	uint8_t p_rssi;         /* Duration of pulse in usecs */
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_pulseparams)
 #endif
@@ -245,7 +245,7 @@ struct dfs_pulseline {
 	uint32_t pl_firstelem;  /* Index of the first element */
 	uint32_t pl_lastelem;   /* Index of the last element */
 	uint32_t pl_numelems;   /* Number of elements in the delay line */
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_pulseline)
 #endif
@@ -287,7 +287,7 @@ struct dfs_event {
 	int sidx;               /* Pulse Index as in radar summary report */
 	int radar_80p80_segid;  /* 80p80 segment ID as in radar sum report */
 	STAILQ_ENTRY(dfs_event) re_list;        /* List of radar events */
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_event)
 #endif
@@ -329,7 +329,7 @@ struct dfs_delayelem {
 	uint8_t de_rssi;
 	/* time stamp for this delay element */
 	uint64_t de_ts;
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_delayelem)
 #endif
@@ -350,7 +350,7 @@ struct dfs_delayline {
 	uint32_t dl_lastelem;
 	/* Number of elements in the delay line */
 	uint32_t dl_numelems;
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_delayline)
 #endif
@@ -384,7 +384,7 @@ struct dfs_filter {
 	uint32_t rf_ignore_pri_window;
 	/* Unique ID corresponding to the original filter ID */
 	uint32_t rf_pulseid;
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_filter)
 #endif
@@ -441,7 +441,7 @@ struct dfs_nolelem {
 	uint32_t nol_timeout_ms;        /* NOL timeout value in msec */
 	os_timer_t nol_timer;   /* per element NOL timer */
 	struct dfs_nolelem *nol_next;   /* next element pointer */
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_nolelem)
 #endif
@@ -484,7 +484,7 @@ struct dfs_info {
 	uint64_t dfs_bin5_chirp_ts;
 	uint8_t dfs_last_bin5_dur;
 	uint8_t dfs_last_bin5_dur_ext_seg;
-} cdf_packed;
+} qdf_packed;
 #ifdef WIN32
 #pragma pack(pop, dfs_info)
 #endif

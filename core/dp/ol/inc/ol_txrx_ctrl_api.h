@@ -34,7 +34,7 @@
 
 #include <athdefs.h>            /* A_STATUS */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_types.h>          /* cdf_device_t */
+#include <qdf_types.h>          /* qdf_device_t */
 #include <htc_api.h>            /* HTC_HANDLE */
 
 #include <ol_osif_api.h>        /* ol_osif_vdev_handle */
@@ -139,7 +139,7 @@ enum netif_reason_type {
 
 ol_txrx_pdev_handle
 ol_txrx_pdev_alloc(ol_pdev_handle ctrl_pdev,
-		   HTC_HANDLE htc_pdev, cdf_device_t osdev);
+		   HTC_HANDLE htc_pdev, qdf_device_t osdev);
 
 /**
  * @brief Set up the data SW subsystem.
@@ -897,7 +897,7 @@ struct txrx_pdev_cfg_param_t {
  * @param osdev - OS handle needed as an argument for some OS primitives
  * @return the control device object
  */
-ol_pdev_handle ol_pdev_cfg_attach(cdf_device_t osdev,
+ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 				  struct txrx_pdev_cfg_param_t cfg_param);
 
 QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
@@ -1092,26 +1092,26 @@ void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val);
 #ifdef IPA_OFFLOAD
 void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    cdf_dma_addr_t *ce_sr_base_paddr,
+			    qdf_dma_addr_t *ce_sr_base_paddr,
 			    uint32_t *ce_sr_ring_size,
-			    cdf_dma_addr_t *ce_reg_paddr,
-			    cdf_dma_addr_t *tx_comp_ring_base_paddr,
+			    qdf_dma_addr_t *ce_reg_paddr,
+			    qdf_dma_addr_t *tx_comp_ring_base_paddr,
 			    uint32_t *tx_comp_ring_size,
 			    uint32_t *tx_num_alloc_buffer,
-			    cdf_dma_addr_t *rx_rdy_ring_base_paddr,
+			    qdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			    uint32_t *rx_rdy_ring_size,
-			    cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			    qdf_dma_addr_t *rx_proc_done_idx_paddr,
 			    void **rx_proc_done_idx_vaddr,
-			    cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			    qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
 			    uint32_t *rx2_rdy_ring_size,
-			    cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			    qdf_dma_addr_t *rx2_proc_done_idx_paddr,
 			    void **rx2_proc_done_idx_vaddr);
 
 
 void
 ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  cdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  cdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
+				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
 
 void
 ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev, bool uc_active, bool is_tx);
@@ -1151,19 +1151,19 @@ void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev);
  */
 static inline void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    cdf_dma_addr_t *ce_sr_base_paddr,
+			    qdf_dma_addr_t *ce_sr_base_paddr,
 			    uint32_t *ce_sr_ring_size,
-			    cdf_dma_addr_t *ce_reg_paddr,
-			    cdf_dma_addr_t *tx_comp_ring_base_paddr,
+			    qdf_dma_addr_t *ce_reg_paddr,
+			    qdf_dma_addr_t *tx_comp_ring_base_paddr,
 			    uint32_t *tx_comp_ring_size,
 			    uint32_t *tx_num_alloc_buffer,
-			    cdf_dma_addr_t *rx_rdy_ring_base_paddr,
+			    qdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			    uint32_t *rx_rdy_ring_size,
-			    cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			    qdf_dma_addr_t *rx_proc_done_idx_paddr,
 			    void **rx_proc_done_idx_vaddr,
-			    cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			    qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
 			    uint32_t *rx2_rdy_ring_size,
-			    cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			    qdf_dma_addr_t *rx2_proc_done_idx_paddr,
 			    void **rx2_proc_done_idx_vaddr)
 {
 	return;
@@ -1182,8 +1182,8 @@ ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
  */
 static inline void
 ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  cdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  cdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
+				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
+				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
 {
 	return;
 }

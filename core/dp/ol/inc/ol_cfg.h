@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,7 +28,7 @@
 #ifndef _OL_CFG__H_
 #define _OL_CFG__H_
 
-#include <cdf_types.h>          /* uint32_t */
+#include <qdf_types.h>          /* uint32_t */
 #include <ol_ctrl_api.h>        /* ol_pdev_handle */
 #include <cds_ieee80211_common.h>   /* ieee80211_qosframe_htc_addr4 */
 #include <enet.h>               /* LLC_SNAP_HDR_LEN */

@@ -110,10 +110,10 @@ typedef enum {
 typedef struct connection_info_s {
 	eConnectionState connState;
 	eMib_dot11DesiredBssType connDot11DesiredBssType;
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 	tCsrSSIDInfo SSID;
 	uint8_t staId[MAX_IBSS_PEERS];
-	struct cdf_mac_addr peerMacAddress[MAX_IBSS_PEERS];
+	struct qdf_mac_addr peerMacAddress[MAX_IBSS_PEERS];
 	eCsrAuthType authType;
 	eCsrEncryptionType ucEncryptionType;
 	eCsrEncryptionType mcEncryptionType;

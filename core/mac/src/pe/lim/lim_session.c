@@ -114,7 +114,7 @@ void pe_reset_protection_callback(void *ptr)
 	bool bcn_prms_changed = false;
 
 	if (pe_session_entry->valid == false) {
-		CDF_TRACE(CDF_MODULE_ID_PE,
+		CDF_TRACE(QDF_MODULE_ID_PE,
 			  CDF_TRACE_LEVEL_ERROR,
 			  FL("session already deleted. exiting timer callback"));
 		return;
@@ -127,7 +127,7 @@ void pe_reset_protection_callback(void *ptr)
 	       pe_session_entry->gLimOverlapNonGfParams.protectionEnabled << 3 |
 	       pe_session_entry->gLimOlbcParams.protectionEnabled         << 4;
 
-	CDF_TRACE(CDF_MODULE_ID_PE,
+	CDF_TRACE(QDF_MODULE_ID_PE,
 		  CDF_TRACE_LEVEL_INFO,
 		  FL("old protection state: 0x%04X, new protection state: 0x%04X\n"),
 		  pe_session_entry->old_protection_state,
@@ -177,7 +177,7 @@ void pe_reset_protection_callback(void *ptr)
 	if ((current_protection_state !=
 		pe_session_entry->old_protection_state) &&
 		(false == mac_ctx->sap.SapDfsInfo.is_dfs_cac_timer_running)) {
-		CDF_TRACE(CDF_MODULE_ID_PE,
+		CDF_TRACE(QDF_MODULE_ID_PE,
 			  CDF_TRACE_LEVEL_ERROR,
 			  FL("protection changed, update beacon template\n"));
 		/* update beacon fix params and send update to FW */
@@ -217,7 +217,7 @@ void pe_reset_protection_callback(void *ptr)
 				protection_fields_reset_timer,
 				SCH_PROTECTION_RESET_TIME)
 		!= QDF_STATUS_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_PE,
+		CDF_TRACE(QDF_MODULE_ID_PE,
 			CDF_TRACE_LEVEL_ERROR,
 			FL("cannot create or start protectionFieldsResetTimer\n"));
 	}
@@ -326,7 +326,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->fWaitForProbeRsp = 0;
 	session_ptr->fIgnoreCapsChange = 0;
 
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 		FL("Create a new PE session(%d), BSSID: "MAC_ADDRESS_STR" Max No. of STA %d"),
 		session_ptr->peSessionId, MAC_ADDR_ARRAY(bssid), numSta);
 
@@ -368,7 +368,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 		session_ptr->mac_ctx = (void *)pMac;
 		status = cdf_mc_timer_init(
 			&session_ptr->protection_fields_reset_timer,
-			CDF_TIMER_TYPE_SW, pe_reset_protection_callback,
+			QDF_TIMER_TYPE_SW, pe_reset_protection_callback,
 			(void *)&pMac->lim.gpSession[i]);
 		if (status == QDF_STATUS_SUCCESS) {
 			status = cdf_mc_timer_start(
@@ -376,14 +376,14 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 				SCH_PROTECTION_RESET_TIME);
 		}
 		if (status != QDF_STATUS_SUCCESS)
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("cannot create or start protectionFieldsResetTimer\n"));
 	}
 
 	session_ptr->pmfComebackTimerInfo.pMac = pMac;
 	session_ptr->pmfComebackTimerInfo.sessionID = *sessionId;
 	status = cdf_mc_timer_init(&session_ptr->pmfComebackTimer,
-			CDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
+			QDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
 			(void *)&session_ptr->pmfComebackTimerInfo);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		lim_log(pMac, LOGE, FL("cannot init pmf comeback timer."));
@@ -532,12 +532,12 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	TX_TIMER *timer_ptr;
 
 	if (!session || (session && !session->valid)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 			  FL("session is not valid"));
 		return;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 		FL("Trying to delete PE session %d Opmode %d BssIdx %d BSSID: "MAC_ADDRESS_STR),
 		session->peSessionId, session->operMode,
 		session->bssIdx,

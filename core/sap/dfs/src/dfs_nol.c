@@ -242,7 +242,7 @@ dfs_nol_addchan(struct ath_dfs *dfs, struct dfs_ieee80211_channel *chan,
 	dfs_nol_arg->delchwidth = elem->nol_chwidth;
 
 	OS_INIT_TIMER(NULL, &elem->nol_timer, dfs_remove_from_nol,
-		dfs_nol_arg, CDF_TIMER_TYPE_SW);
+		dfs_nol_arg, QDF_TIMER_TYPE_SW);
 	OS_SET_TIMER(&elem->nol_timer, dfs_nol_timeout * TIME_IN_MS);
 
 	/* Update the NOL counter */

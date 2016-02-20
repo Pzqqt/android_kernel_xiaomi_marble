@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@ typedef struct {
 		uint8_t hostIpv4Addr[SIR_IPV4_ADDR_LEN];
 		uint8_t hostIpv6Addr[SIR_MAC_IPV6_ADDR_LEN];
 	} params;
-	struct cdf_mac_addr bssId;
+	struct qdf_mac_addr bssId;
 } tHostOffloadRequest, *tpHostOffloadRequest;
 
 #endif /* __WLAN_HDD_HOST_OFFLOAD_H__ */

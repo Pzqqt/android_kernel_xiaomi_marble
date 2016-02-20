@@ -77,7 +77,7 @@ typedef enum {
  * @patch: Version ID patch number
  * @build: Version ID build number
  */
-typedef struct cdf_packed {
+typedef struct qdf_packed {
 	uint8_t major;
 	uint8_t minor;
 	uint8_t patch;
@@ -98,7 +98,7 @@ typedef struct cdf_packed {
  * @num_channels: Num of channels IDs to follow
  * @channel_list: List of channel IDs
  */
-typedef struct cdf_packed {
+typedef struct qdf_packed {
 	uint8_t oem_target_signature[OEM_TARGET_SIGNATURE_LEN];
 	uint32_t oem_target_type;
 	uint32_t oem_fw_version;
@@ -125,7 +125,7 @@ typedef struct cdf_packed {
  *	max power, reg power and reg class id
  * @reg_info_2: regulatory information field 2 which contains antennamax
  */
-typedef struct cdf_packed {
+typedef struct qdf_packed {
 	uint32_t chan_id;
 	uint32_t reserved0;
 	uint32_t mhz;
@@ -145,7 +145,7 @@ typedef struct cdf_packed {
  * @reserved0: reserved0
  * @peer_chan_info: channel info on which peer is connected
  */
-typedef struct cdf_packed {
+typedef struct qdf_packed {
 	uint8_t peer_mac_addr[ETH_ALEN];
 	uint8_t peer_status;
 	uint8_t vdev_id;
@@ -174,7 +174,7 @@ struct oem_get_capability_rsp {
 	struct sme_oem_capability cap;
 };
 
-void hdd_send_peer_status_ind_to_oem_app(struct cdf_mac_addr *peerMac,
+void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 					 uint8_t peerStatus,
 					 uint8_t peerTimingMeasCap,
 					 uint8_t sessionId,

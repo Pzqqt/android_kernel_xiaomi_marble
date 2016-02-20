@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1821,7 +1821,7 @@ void cfg_process_mb_msg(tpAniSirGlobal pMac, tSirMbMsg *pMsg)
 	/* Use type[7:0] as index to function table */
 	index = CFG_GET_FUNC_INDX(pMsg->type);
 
-	if (index >= CDF_ARRAY_SIZE(g_cfg_func)) {
+	if (index >= QDF_ARRAY_SIZE(g_cfg_func)) {
 		cdf_mem_free(pMsg);
 		return;
 	}
@@ -2490,7 +2490,7 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 	uint32_t    index;
 	uint8_t    *pDstTest, *pSrcTest;
 	uint8_t     len;
-	cfgstatic_string *pStrCfg;
+	cfgstatic_string * pStrCfg;
 	uint32_t    bufStart, bufEnd;
 	uint32_t    logLevel, retVal;
 	uint32_t    iCount = 0;
@@ -2499,7 +2499,7 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 	for (i = 0; i < CFG_PARAM_MAX_NUM ; i++) {
 		if ((cfg_static[i].control & CFG_CTL_VALID) != 0) {
 			if (!(cfg_static[i].control & CFG_CTL_INT)) {
-				pStrCfg = (cfgstatic_string *)cfg_static[i].
+				pStrCfg = (cfgstatic_string*)cfg_static[i].
 								pStrData;
 				if (pStrCfg == NULL) {
 					PELOGE(cfg_log(pMac, LOGE,
@@ -2552,7 +2552,7 @@ process_cfg_download_req(tpAniSirGlobal pMac)
 				continue;
 
 			pDstTest = &pMac->cfg.gCfgSBuf[index];
-			pStrCfg = (cfgstatic_string *)cfg_static[i].pStrData;
+			pStrCfg = (cfgstatic_string*)cfg_static[i].pStrData;
 			pSrcTest = pStrCfg->data;
 			if ((pDstTest == NULL) || (pStrCfg == NULL) ||
 							(pSrcTest == NULL))

@@ -66,7 +66,7 @@ QDF_STATUS hdd_rx_mul_packet_cbk(void *cds_context,
 #endif /* IPA_OFFLOAD */
 
 QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
-			       struct cdf_mac_addr *pMacAddress,
+			       struct qdf_mac_addr *pMacAddress,
 			       uint8_t *staId);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL

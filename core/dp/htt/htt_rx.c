@@ -40,7 +40,7 @@
  */
 
 #include <cdf_memory.h>         /* cdf_mem_malloc,free, etc. */
-#include <cdf_types.h>          /* cdf_print, bool */
+#include <qdf_types.h>          /* qdf_print, bool */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <qdf_timer.h>		/* qdf_timer_free */
 
@@ -129,10 +129,10 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 			if (hash_entry->netbuf) {
 #ifdef DEBUG_DMA_DONE
 				cdf_nbuf_unmap(pdev->osdev, hash_entry->netbuf,
-					       CDF_DMA_BIDIRECTIONAL);
+					       QDF_DMA_BIDIRECTIONAL);
 #else
 				cdf_nbuf_unmap(pdev->osdev, hash_entry->netbuf,
-					       CDF_DMA_FROM_DEVICE);
+					       QDF_DMA_FROM_DEVICE);
 #endif
 				cdf_nbuf_free(hash_entry->netbuf);
 				hash_entry->paddr = 0;
@@ -229,7 +229,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
 	while (num > 0) {
-		cdf_dma_addr_t paddr;
+		qdf_dma_addr_t paddr;
 		cdf_nbuf_t rx_netbuf;
 		int headroom;
 
@@ -278,11 +278,11 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 #ifdef DEBUG_DMA_DONE
 		status =
 			cdf_nbuf_map(pdev->osdev, rx_netbuf,
-						CDF_DMA_BIDIRECTIONAL);
+						QDF_DMA_BIDIRECTIONAL);
 #else
 		status =
 			cdf_nbuf_map(pdev->osdev, rx_netbuf,
-						CDF_DMA_FROM_DEVICE);
+						QDF_DMA_FROM_DEVICE);
 #endif
 		if (status != QDF_STATUS_SUCCESS) {
 			cdf_nbuf_free(rx_netbuf);
@@ -293,14 +293,14 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 			if (cdf_unlikely
 				    (htt_rx_hash_list_insert(pdev, paddr,
 							     rx_netbuf))) {
-				cdf_print("%s: hash insert failed!\n",
+				qdf_print("%s: hash insert failed!\n",
 					  __func__);
 #ifdef DEBUG_DMA_DONE
 				cdf_nbuf_unmap(pdev->osdev, rx_netbuf,
-					       CDF_DMA_BIDIRECTIONAL);
+					       QDF_DMA_BIDIRECTIONAL);
 #else
 				cdf_nbuf_unmap(pdev->osdev, rx_netbuf,
-					       CDF_DMA_FROM_DEVICE);
+					       QDF_DMA_FROM_DEVICE);
 #endif
 				cdf_nbuf_free(rx_netbuf);
 				goto fail;
@@ -350,7 +350,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
 					   pdev->rx_ring.target_idx.paddr,
-					   cdf_get_dma_mem_context((&pdev->
+					   qdf_get_dma_mem_context((&pdev->
 								    rx_ring.
 								    target_idx),
 								   memctx));
@@ -363,12 +363,12 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 			cdf_nbuf_unmap(pdev->osdev,
 				       pdev->rx_ring.buf.
 				       netbufs_ring[sw_rd_idx],
-				       CDF_DMA_BIDIRECTIONAL);
+				       QDF_DMA_BIDIRECTIONAL);
 #else
 			cdf_nbuf_unmap(pdev->osdev,
 				       pdev->rx_ring.buf.
 				       netbufs_ring[sw_rd_idx],
-				       CDF_DMA_FROM_DEVICE);
+				       QDF_DMA_FROM_DEVICE);
 #endif
 			cdf_nbuf_free(pdev->rx_ring.buf.
 				      netbufs_ring[sw_rd_idx]);
@@ -382,15 +382,15 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 				   sizeof(uint32_t),
 				   pdev->rx_ring.alloc_idx.vaddr,
 				   pdev->rx_ring.alloc_idx.paddr,
-				   cdf_get_dma_mem_context((&pdev->rx_ring.
+				   qdf_get_dma_mem_context((&pdev->rx_ring.
 							    alloc_idx),
 							   memctx));
 
 	cdf_os_mem_free_consistent(pdev->osdev,
-				   pdev->rx_ring.size * sizeof(cdf_dma_addr_t),
+				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
-				   cdf_get_dma_mem_context((&pdev->rx_ring.buf),
+				   qdf_get_dma_mem_context((&pdev->rx_ring.buf),
 							   memctx));
 }
 
@@ -486,7 +486,7 @@ htt_rx_mpdu_desc_pn_ll(htt_pdev_handle pdev,
 			((uint64_t) rx_desc->msdu_end.ext_wapi_pn_127_96) << 32;
 		break;
 	default:
-		cdf_print("Error: invalid length spec (%d bits) for PN\n",
+		qdf_print("Error: invalid length spec (%d bits) for PN\n",
 			  pn_len_bits);
 	};
 }
@@ -721,35 +721,35 @@ void htt_rx_print_rx_indication(cdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
 
 	msg_word = (uint32_t *) cdf_nbuf_data(rx_ind_msg);
 
-	cdf_print
+	qdf_print
 		("------------------HTT RX IND-----------------------------\n");
-	cdf_print("alloc idx paddr %x (*vaddr) %d\n",
+	qdf_print("alloc idx paddr %x (*vaddr) %d\n",
 		  pdev->rx_ring.alloc_idx.paddr,
 		  *pdev->rx_ring.alloc_idx.vaddr);
 
-	cdf_print("sw_rd_idx msdu_payld %d msdu_desc %d\n",
+	qdf_print("sw_rd_idx msdu_payld %d msdu_desc %d\n",
 		  pdev->rx_ring.sw_rd_idx.msdu_payld,
 		  pdev->rx_ring.sw_rd_idx.msdu_desc);
 
-	cdf_print("dbg_ring_idx %d\n", pdev->rx_ring.dbg_ring_idx);
+	qdf_print("dbg_ring_idx %d\n", pdev->rx_ring.dbg_ring_idx);
 
-	cdf_print("fill_level %d fill_cnt %d\n", pdev->rx_ring.fill_level,
+	qdf_print("fill_level %d fill_cnt %d\n", pdev->rx_ring.fill_level,
 		  pdev->rx_ring.fill_cnt);
 
-	cdf_print("initial msdu_payld %d curr mpdu range %d curr mpdu cnt %d\n",
+	qdf_print("initial msdu_payld %d curr mpdu range %d curr mpdu cnt %d\n",
 		  pdev->rx_ring.dbg_initial_msdu_payld,
 		  pdev->rx_ring.dbg_mpdu_range, pdev->rx_ring.dbg_mpdu_count);
 
 	/* Print the RX_IND contents */
 
-	cdf_print("peer id %x RV %x FV %x ext_tid %x msg_type %x\n",
+	qdf_print("peer id %x RV %x FV %x ext_tid %x msg_type %x\n",
 		  HTT_RX_IND_PEER_ID_GET(*msg_word),
 		  HTT_RX_IND_REL_VALID_GET(*msg_word),
 		  HTT_RX_IND_FLUSH_VALID_GET(*msg_word),
 		  HTT_RX_IND_EXT_TID_GET(*msg_word),
 		  HTT_T2H_MSG_TYPE_GET(*msg_word));
 
-	cdf_print("num_mpdu_ranges %x rel_seq_num_end %x rel_seq_num_start %x\n"
+	qdf_print("num_mpdu_ranges %x rel_seq_num_end %x rel_seq_num_start %x\n"
 		  " flush_seq_num_end %x flush_seq_num_start %x\n",
 		  HTT_RX_IND_NUM_MPDU_RANGES_GET(*(msg_word + 1)),
 		  HTT_RX_IND_REL_SEQ_NUM_END_GET(*(msg_word + 1)),
@@ -757,7 +757,7 @@ void htt_rx_print_rx_indication(cdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
 		  HTT_RX_IND_FLUSH_SEQ_NUM_END_GET(*(msg_word + 1)),
 		  HTT_RX_IND_FLUSH_SEQ_NUM_START_GET(*(msg_word + 1)));
 
-	cdf_print("fw_rx_desc_bytes %x\n",
+	qdf_print("fw_rx_desc_bytes %x\n",
 		  HTT_RX_IND_FW_RX_DESC_BYTES_GET(*
 						  (msg_word + 2 +
 						   HTT_RX_PPDU_DESC_SIZE32)));
@@ -767,7 +767,7 @@ void htt_rx_print_rx_indication(cdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
 		HTT_ENDIAN_BYTE_IDX_SWAP(HTT_RX_IND_FW_RX_DESC_BYTE_OFFSET +
 					 pdev->rx_ind_msdu_byte_idx);
 
-	cdf_print("msdu byte idx %x msdu desc %x\n", pdev->rx_ind_msdu_byte_idx,
+	qdf_print("msdu byte idx %x msdu desc %x\n", pdev->rx_ind_msdu_byte_idx,
 		  HTT_RX_IND_FW_RX_DESC_BYTES_GET(*
 						  (msg_word + 2 +
 						   HTT_RX_PPDU_DESC_SIZE32)));
@@ -781,10 +781,10 @@ void htt_rx_print_rx_indication(cdf_nbuf_t rx_ind_msg, htt_pdev_handle pdev)
 		htt_rx_ind_mpdu_range_info(pdev, rx_ind_msg, mpdu_range,
 					   &status, &num_mpdus);
 
-		cdf_print("mpdu_range %x status %x num_mpdus %x\n",
+		qdf_print("mpdu_range %x status %x num_mpdus %x\n",
 			  pdev->rx_ind_msdu_byte_idx, status, num_mpdus);
 	}
-	cdf_print
+	qdf_print
 		("---------------------------------------------------------\n");
 }
 #endif
@@ -832,9 +832,9 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		 */
 		cdf_nbuf_set_pktlen(msdu, HTT_RX_BUF_SIZE);
 #ifdef DEBUG_DMA_DONE
-		cdf_nbuf_unmap(pdev->osdev, msdu, CDF_DMA_BIDIRECTIONAL);
+		cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_BIDIRECTIONAL);
 #else
-		cdf_nbuf_unmap(pdev->osdev, msdu, CDF_DMA_FROM_DEVICE);
+		cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 #endif
 
 		/* cache consistency has been taken care of by cdf_nbuf_unmap */
@@ -872,7 +872,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 
 			int dbg_iter = MAX_DONE_BIT_CHECK_ITER;
 
-			cdf_print("malformed frame\n");
+			qdf_print("malformed frame\n");
 
 			while (dbg_iter &&
 			       (!((*(uint32_t *) &rx_desc->attention) &
@@ -883,7 +883,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 						     (void *)((char *)rx_desc +
 						 HTT_RX_STD_DESC_RESERVATION));
 
-				cdf_print("debug iter %d success %d\n",
+				qdf_print("debug iter %d success %d\n",
 					  dbg_iter,
 					  pdev->rx_ring.dbg_sync_success);
 
@@ -894,7 +894,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 					   & RX_ATTENTION_0_MSDU_DONE_MASK))) {
 
 #ifdef HTT_RX_RESTORE
-				cdf_print("RX done bit error detected!\n");
+				qdf_print("RX done bit error detected!\n");
 				cdf_nbuf_set_next(msdu, NULL);
 				*tail_msdu = msdu;
 				pdev->rx_ring.rx_reset = 1;
@@ -906,7 +906,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 #endif
 			}
 			pdev->rx_ring.dbg_sync_success++;
-			cdf_print("debug iter %d success %d\n", dbg_iter,
+			qdf_print("debug iter %d success %d\n", dbg_iter,
 				  pdev->rx_ring.dbg_sync_success);
 		}
 #else
@@ -1080,9 +1080,9 @@ htt_rx_offload_msdu_pop_ll(htt_pdev_handle pdev,
 	htt_rx_mpdu_desc_list_next(pdev, NULL);
 	cdf_nbuf_set_pktlen(buf, HTT_RX_BUF_SIZE);
 #ifdef DEBUG_DMA_DONE
-	cdf_nbuf_unmap(pdev->osdev, buf, CDF_DMA_BIDIRECTIONAL);
+	cdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_BIDIRECTIONAL);
 #else
-	cdf_nbuf_unmap(pdev->osdev, buf, CDF_DMA_FROM_DEVICE);
+	cdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_FROM_DEVICE);
 #endif
 	msdu_hdr = (uint32_t *) cdf_nbuf_data(buf);
 
@@ -1122,14 +1122,14 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 	*head_buf = *tail_buf = buf = htt_rx_in_order_netbuf_pop(pdev, paddr);
 
 	if (cdf_unlikely(NULL == buf)) {
-		cdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("%s: netbuf pop failed!\n", __func__);
 		return 0;
 	}
 	cdf_nbuf_set_pktlen(buf, HTT_RX_BUF_SIZE);
 #ifdef DEBUG_DMA_DONE
-	cdf_nbuf_unmap(pdev->osdev, buf, CDF_DMA_BIDIRECTIONAL);
+	cdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_BIDIRECTIONAL);
 #else
-	cdf_nbuf_unmap(pdev->osdev, buf, CDF_DMA_FROM_DEVICE);
+	cdf_nbuf_unmap(pdev->osdev, buf, QDF_DMA_FROM_DEVICE);
 #endif
 	msdu_hdr = (uint32_t *) cdf_nbuf_data(buf);
 
@@ -1195,7 +1195,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*msg_word));
 
 	if (cdf_unlikely(NULL == msdu)) {
-		cdf_print("%s: netbuf pop failed!\n", __func__);
+		qdf_print("%s: netbuf pop failed!\n", __func__);
 		*tail_msdu = NULL;
 		return 0;
 	}
@@ -1208,9 +1208,9 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		 */
 		cdf_nbuf_set_pktlen(msdu, HTT_RX_BUF_SIZE);
 #ifdef DEBUG_DMA_DONE
-		cdf_nbuf_unmap(pdev->osdev, msdu, CDF_DMA_BIDIRECTIONAL);
+		cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_BIDIRECTIONAL);
 #else
-		cdf_nbuf_unmap(pdev->osdev, msdu, CDF_DMA_FROM_DEVICE);
+		cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 #endif
 
 		/* cache consistency has been taken care of by cdf_nbuf_unmap */
@@ -1274,7 +1274,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(
 						*msg_word));
 				if (cdf_unlikely(NULL == next)) {
-					cdf_print("%s: netbuf pop failed!\n",
+					qdf_print("%s: netbuf pop failed!\n",
 								 __func__);
 					*tail_msdu = NULL;
 					return 0;
@@ -1306,7 +1306,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 				pdev,
 				HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*msg_word));
 			if (cdf_unlikely(NULL == next)) {
-				cdf_print("%s: netbuf pop failed!\n",
+				qdf_print("%s: netbuf pop failed!\n",
 					  __func__);
 				*tail_msdu = NULL;
 				return 0;
@@ -1921,7 +1921,7 @@ static inline void htt_list_remove(struct htt_list_node *node)
 #define HTT_RX_HASH_COUNT_RESET(hash_bucket) ((hash_bucket).count = 0)
 
 #define HTT_RX_HASH_COUNT_PRINT(hash_bucket) \
-	RX_HASH_LOG(cdf_print(" count %d\n", (hash_bucket).count))
+	RX_HASH_LOG(qdf_print(" count %d\n", (hash_bucket).count))
 #else                           /* RX_HASH_DEBUG */
 /* Hash cookie related macros */
 #define HTT_RX_HASH_COOKIE_SET(hash_element)    /* no-op */
@@ -1982,7 +1982,7 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 	htt_list_add_tail(&pdev->rx_ring.hash_table[i].listhead,
 			  &hash_element->listnode);
 
-	RX_HASH_LOG(cdf_print("rx hash: %s: paddr 0x%x netbuf %p bucket %d\n",
+	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x netbuf %p bucket %d\n",
 			      __func__, paddr, netbuf, (int)i));
 
 	HTT_RX_HASH_COUNT_INCR(pdev->rx_ring.hash_table[i]);
@@ -2029,12 +2029,12 @@ cdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr)
 		}
 	}
 
-	RX_HASH_LOG(cdf_print("rx hash: %s: paddr 0x%x, netbuf %p, bucket %d\n",
+	RX_HASH_LOG(qdf_print("rx hash: %s: paddr 0x%x, netbuf %p, bucket %d\n",
 			      __func__, paddr, netbuf, (int)i));
 	HTT_RX_HASH_COUNT_PRINT(pdev->rx_ring.hash_table[i]);
 
 	if (netbuf == NULL) {
-		cdf_print("rx hash: %s: no entry found for 0x%x!!!\n",
+		qdf_print("rx hash: %s: no entry found for 0x%x!!!\n",
 			  __func__, paddr);
 		HTT_ASSERT_ALWAYS(0);
 	}
@@ -2056,7 +2056,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 			       sizeof(struct htt_rx_hash_bucket));
 
 	if (NULL == pdev->rx_ring.hash_table) {
-		cdf_print("rx hash table allocation failed!\n");
+		qdf_print("rx hash table allocation failed!\n");
 		return 1;
 	}
 
@@ -2075,7 +2075,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 				       sizeof(struct htt_rx_hash_entry));
 
 		if (NULL == pdev->rx_ring.hash_table[i].entries) {
-			cdf_print("rx hash bucket %d entries alloc failed\n",
+			qdf_print("rx hash bucket %d entries alloc failed\n",
 				(int)i);
 			while (i) {
 				i--;
@@ -2097,7 +2097,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 	}
 
 	pdev->rx_ring.listnode_offset =
-		cdf_offsetof(struct htt_rx_hash_entry, listnode);
+		qdf_offsetof(struct htt_rx_hash_entry, listnode);
 
 	return 0;
 }
@@ -2115,7 +2115,7 @@ void htt_rx_hash_dump_table(struct htt_pdev_t *pdev)
 				(struct htt_rx_hash_entry *)((char *)list_iter -
 							     pdev->rx_ring.
 							     listnode_offset);
-			cdf_print("hash_table[%d]: netbuf %p paddr 0x%x\n", i,
+			qdf_print("hash_table[%d]: netbuf %p paddr 0x%x\n", i,
 				  hash_entry->netbuf, hash_entry->paddr);
 		}
 	}
@@ -2128,8 +2128,8 @@ void htt_rx_hash_dump_table(struct htt_pdev_t *pdev)
  */
 int htt_rx_attach(struct htt_pdev_t *pdev)
 {
-	cdf_dma_addr_t paddr;
-	uint32_t ring_elem_size = sizeof(cdf_dma_addr_t);
+	qdf_dma_addr_t paddr;
+	uint32_t ring_elem_size = sizeof(qdf_dma_addr_t);
 
 	pdev->rx_ring.size = htt_rx_ring_size(pdev);
 	HTT_ASSERT2(CDF_IS_PWR2(pdev->rx_ring.size));
@@ -2154,7 +2154,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 			 cdf_os_mem_alloc_consistent(pdev->osdev,
 				 sizeof(uint32_t),
 				 &paddr,
-				 cdf_get_dma_mem_context(
+				 qdf_get_dma_mem_context(
 					(&pdev->rx_ring.target_idx),
 					 memctx));
 
@@ -2178,7 +2178,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 			pdev->osdev,
 			 pdev->rx_ring.size * ring_elem_size,
 			 &paddr,
-			 cdf_get_dma_mem_context(
+			 qdf_get_dma_mem_context(
 				(&pdev->rx_ring.buf),
 				 memctx));
 	if (!pdev->rx_ring.buf.paddrs_ring)
@@ -2190,7 +2190,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 			pdev->osdev,
 			 sizeof(uint32_t),
 			 &paddr,
-			 cdf_get_dma_mem_context(
+			 qdf_get_dma_mem_context(
 				(&pdev->rx_ring.alloc_idx),
 				 memctx));
 
@@ -2211,7 +2211,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	qdf_timer_init(pdev->osdev,
 		 &pdev->rx_ring.refill_retry_timer,
 		 htt_rx_ring_refill_retry, (void *)pdev,
-		 CDF_TIMER_TYPE_SW);
+		 QDF_TIMER_TYPE_SW);
 
 	pdev->rx_ring.fill_cnt = 0;
 #ifdef DEBUG_DMA_DONE
@@ -2227,7 +2227,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	htt_rx_ring_fill_n(pdev, pdev->rx_ring.fill_level);
 
 	if (pdev->cfg.is_full_reorder_offload) {
-		cdf_print("HTT: full reorder offload enabled\n");
+		qdf_print("HTT: full reorder offload enabled\n");
 		htt_rx_amsdu_pop = htt_rx_amsdu_rx_in_order_pop_ll;
 		htt_rx_frag_pop = htt_rx_amsdu_rx_in_order_pop_ll;
 		htt_rx_mpdu_desc_list_next =
@@ -2258,10 +2258,10 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 
 fail3:
 	cdf_os_mem_free_consistent(pdev->osdev,
-				   pdev->rx_ring.size * sizeof(cdf_dma_addr_t),
+				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
-				   cdf_get_dma_mem_context((&pdev->rx_ring.buf),
+				   qdf_get_dma_mem_context((&pdev->rx_ring.buf),
 							   memctx));
 
 fail2:
@@ -2270,7 +2270,7 @@ fail2:
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
 					   pdev->rx_ring.target_idx.paddr,
-					   cdf_get_dma_mem_context((&pdev->
+					   qdf_get_dma_mem_context((&pdev->
 								    rx_ring.
 								    target_idx),
 								   memctx));
@@ -2306,11 +2306,11 @@ int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 			rx_ind_ring_elements *
 			sizeof(struct ipa_uc_rx_ring_elem_t),
 			&pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx2_ind_ring_base),
 						memctx));
 	if (!pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
-		cdf_print("%s: RX IND RING alloc fail", __func__);
+		qdf_print("%s: RX IND RING alloc fail", __func__);
 		return -ENOBUFS;
 	}
 
@@ -2326,17 +2326,17 @@ int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 			pdev->osdev,
 			4,
 			&pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx_ipa_prc_done_idx),
 						memctx));
 	if (!pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
-		cdf_print("%s: RX PROC DONE IND alloc fail", __func__);
+		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
 		cdf_os_mem_free_consistent(
 			pdev->osdev,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx2_ind_ring_base),
 						memctx));
 		return -ENOBUFS;
@@ -2374,11 +2374,11 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			rx_ind_ring_elements *
 			sizeof(struct ipa_uc_rx_ring_elem_t),
 			&pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx_ind_ring_base),
 						memctx));
 	if (!pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr) {
-		cdf_print("%s: RX IND RING alloc fail", __func__);
+		qdf_print("%s: RX IND RING alloc fail", __func__);
 		return -ENOBUFS;
 	}
 
@@ -2394,17 +2394,17 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			pdev->osdev,
 			4,
 			&pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx_ipa_prc_done_idx),
 						memctx));
 	if (!pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
-		cdf_print("%s: RX PROC DONE IND alloc fail", __func__);
+		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
 		cdf_os_mem_free_consistent(
 			pdev->osdev,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx_ind_ring_base),
 						memctx));
 		return -ENOBUFS;
@@ -2430,7 +2430,7 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx2_ind_ring_base),
 						memctx));
 	}
@@ -2442,7 +2442,7 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 			pdev->ipa_uc_rx_rsc.
 			rx_ipa_prc_done_idx.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx_ipa_prc_done_idx),
 						memctx));
 	}
@@ -2462,7 +2462,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx_ind_ring_base),
 						memctx));
 	}
@@ -2474,7 +2474,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 			pdev->ipa_uc_rx_rsc.
 			rx_ipa_prc_done_idx.vaddr,
 			pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
 						 rx2_ipa_prc_done_idx),
 						memctx));
 	}

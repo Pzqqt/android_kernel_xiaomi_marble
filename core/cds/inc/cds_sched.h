@@ -40,13 +40,13 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include <qdf_event.h>
-#include "i_cdf_types.h"
+#include <i_qdf_types.h>
 #include <linux/wait.h>
 #if defined(WLAN_OPEN_SOURCE) && defined(CONFIG_HAS_WAKELOCK)
 #include <linux/wakelock.h>
 #endif
 #include <cds_mq.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include "cdf_lock.h"
 
 #define TX_POST_EVENT_MASK               0x001
@@ -269,7 +269,7 @@ typedef struct _cds_context_type {
 	 * while allocating dma memory
 	 * to access dev information.
 	 */
-	cdf_device_t cdf_ctx;
+	qdf_device_t cdf_ctx;
 
 	void *pdev_txrx_ctx;
 

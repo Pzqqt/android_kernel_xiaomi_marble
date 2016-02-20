@@ -117,11 +117,11 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			mac_ctx->lim.htCapabilityPresentInBeacon = 0;
 
 #ifdef WLAN_FEATURE_11AC
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
 			  "beacon.VHTCaps.present = %d BSS_VHT_Capable:%d",
 			  beacon_struct->VHTCaps.present,
 			  IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps));
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
 			  "***beacon.SU Beamformer Capable*****=%d",
 			  beacon_struct->VHTCaps.suBeamFormerCap);
 
@@ -165,7 +165,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			   beacon_struct->VHTOperation.chanWidth) {
 			/* If VHT is supported min 80 MHz support is must */
 			uint32_t fw_vht_ch_wd = wma_get_vht_ch_width();
-			uint32_t vht_ch_wd = CDF_MIN(fw_vht_ch_wd,
+			uint32_t vht_ch_wd = QDF_MIN(fw_vht_ch_wd,
 					beacon_struct->VHTOperation.chanWidth);
 			if (vht_ch_wd == beacon_struct->VHTOperation.chanWidth
 			    || vht_ch_wd >= WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ) {

@@ -35,7 +35,7 @@
  */
 
 #include <cdf_memory.h>         /* cdf_mem_malloc */
-#include <cdf_types.h>          /* cdf_device_t, cdf_print */
+#include <qdf_types.h>          /* qdf_device_t, qdf_print */
 
 #include <htt.h>                /* htt_tx_msdu_desc_t */
 #include <ol_cfg.h>
@@ -127,7 +127,7 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
 	while (pkt) {
 		next = pkt->u.next;
 		netbuf = (cdf_nbuf_t) (pkt->u.pkt.htc_pkt.pNetBufContext);
-		cdf_nbuf_unmap(pdev->osdev, netbuf, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
 		cdf_nbuf_free(netbuf);
 		cdf_mem_free(pkt);
 		pkt = next;
@@ -148,7 +148,7 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
 htt_pdev_handle
 htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	   ol_pdev_handle ctrl_pdev,
-	   HTC_HANDLE htc_pdev, cdf_device_t osdev)
+	   HTC_HANDLE htc_pdev, qdf_device_t osdev)
 {
 	struct htt_pdev_t *pdev;
 
@@ -171,12 +171,12 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 
 	pdev->cfg.is_full_reorder_offload =
 			ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev);
-	cdf_print("is_full_reorder_offloaded? %d\n",
+	qdf_print("is_full_reorder_offloaded? %d\n",
 		  (int)pdev->cfg.is_full_reorder_offload);
 
 	pdev->cfg.ce_classify_enabled =
 		ol_cfg_is_ce_classify_enabled(ctrl_pdev);
-	cdf_print("ce_classify_enabled %d\n",
+	qdf_print("ce_classify_enabled %d\n",
 		  pdev->cfg.ce_classify_enabled);
 
 	pdev->targetdef = htc_get_targetdef(htc_pdev);
@@ -254,7 +254,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 	} else if (frm_type == wlan_frm_fmt_802_3) {
 		pdev->download_len = HTT_TX_HDR_SIZE_ETHERNET;
 	} else {
-		cdf_print("Unexpected frame type spec: %d\n", frm_type);
+		qdf_print("Unexpected frame type spec: %d\n", frm_type);
 		HTT_ASSERT0(0);
 	}
 	/*
@@ -441,22 +441,22 @@ int htt_htc_attach(struct htt_pdev_t *pdev)
 #if HTT_DEBUG_LEVEL > 5
 void htt_display(htt_pdev_handle pdev, int indent)
 {
-	cdf_print("%*s%s:\n", indent, " ", "HTT");
-	cdf_print("%*stx desc pool: %d elems of %d bytes, %d allocated\n",
+	qdf_print("%*s%s:\n", indent, " ", "HTT");
+	qdf_print("%*stx desc pool: %d elems of %d bytes, %d allocated\n",
 		  indent + 4, " ",
 		  pdev->tx_descs.pool_elems,
 		  pdev->tx_descs.size, pdev->tx_descs.alloc_cnt);
-	cdf_print("%*srx ring: space for %d elems, filled with %d buffers\n",
+	qdf_print("%*srx ring: space for %d elems, filled with %d buffers\n",
 		  indent + 4, " ",
 		  pdev->rx_ring.size, pdev->rx_ring.fill_level);
-	cdf_print("%*sat %p (%#x paddr)\n", indent + 8, " ",
+	qdf_print("%*sat %p (%#x paddr)\n", indent + 8, " ",
 		  pdev->rx_ring.buf.paddrs_ring, pdev->rx_ring.base_paddr);
-	cdf_print("%*snetbuf ring @ %p\n", indent + 8, " ",
+	qdf_print("%*snetbuf ring @ %p\n", indent + 8, " ",
 		  pdev->rx_ring.buf.netbufs_ring);
-	cdf_print("%*sFW_IDX shadow register: vaddr = %p, paddr = %#x\n",
+	qdf_print("%*sFW_IDX shadow register: vaddr = %p, paddr = %#x\n",
 		  indent + 8, " ",
 		  pdev->rx_ring.alloc_idx.vaddr, pdev->rx_ring.alloc_idx.paddr);
-	cdf_print("%*sSW enqueue idx= %d, SW dequeue idx: desc= %d, buf= %d\n",
+	qdf_print("%*sSW enqueue idx= %d, SW dequeue idx: desc= %d, buf= %d\n",
 		  indent + 8, " ", *pdev->rx_ring.alloc_idx.vaddr,
 		  pdev->rx_ring.sw_rd_idx.msdu_desc,
 		  pdev->rx_ring.sw_rd_idx.msdu_payld);
@@ -488,7 +488,7 @@ int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
 		ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev),
 		ol_cfg_ipa_uc_tx_partition_base(pdev->ctrl_pdev));
 	if (error) {
-		cdf_print("HTT IPA UC TX attach fail code %d\n", error);
+		qdf_print("HTT IPA UC TX attach fail code %d\n", error);
 		HTT_ASSERT0(0);
 		return error;
 	}
@@ -498,7 +498,7 @@ int htt_ipa_uc_attach(struct htt_pdev_t *pdev)
 		pdev,
 		ol_cfg_ipa_uc_rx_ind_ring_size(pdev->ctrl_pdev));
 	if (error) {
-		cdf_print("HTT IPA UC RX attach fail code %d\n", error);
+		qdf_print("HTT IPA UC RX attach fail code %d\n", error);
 		htt_tx_ipa_uc_detach(pdev);
 		HTT_ASSERT0(0);
 		return error;
@@ -544,19 +544,19 @@ void htt_ipa_uc_detach(struct htt_pdev_t *pdev)
  */
 int
 htt_ipa_uc_get_resource(htt_pdev_handle pdev,
-			cdf_dma_addr_t *ce_sr_base_paddr,
+			qdf_dma_addr_t *ce_sr_base_paddr,
 			uint32_t *ce_sr_ring_size,
-			cdf_dma_addr_t *ce_reg_paddr,
-			cdf_dma_addr_t *tx_comp_ring_base_paddr,
+			qdf_dma_addr_t *ce_reg_paddr,
+			qdf_dma_addr_t *tx_comp_ring_base_paddr,
 			uint32_t *tx_comp_ring_size,
 			uint32_t *tx_num_alloc_buffer,
-			cdf_dma_addr_t *rx_rdy_ring_base_paddr,
+			qdf_dma_addr_t *rx_rdy_ring_base_paddr,
 			uint32_t *rx_rdy_ring_size,
-			cdf_dma_addr_t *rx_proc_done_idx_paddr,
+			qdf_dma_addr_t *rx_proc_done_idx_paddr,
 			void **rx_proc_done_idx_vaddr,
-			cdf_dma_addr_t *rx2_rdy_ring_base_paddr,
+			qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
 			uint32_t *rx2_rdy_ring_size,
-			cdf_dma_addr_t *rx2_proc_done_idx_paddr,
+			qdf_dma_addr_t *rx2_proc_done_idx_paddr,
 			void **rx2_proc_done_idx_vaddr)
 {
 	/* Release allocated resource to client */
@@ -598,8 +598,8 @@ htt_ipa_uc_get_resource(htt_pdev_handle pdev,
  */
 int
 htt_ipa_uc_set_doorbell_paddr(htt_pdev_handle pdev,
-			      cdf_dma_addr_t ipa_uc_tx_doorbell_paddr,
-			      cdf_dma_addr_t ipa_uc_rx_doorbell_paddr)
+			      qdf_dma_addr_t ipa_uc_tx_doorbell_paddr,
+			      qdf_dma_addr_t ipa_uc_rx_doorbell_paddr)
 {
 	pdev->ipa_uc_tx_rsc.tx_comp_idx_paddr = ipa_uc_tx_doorbell_paddr;
 	pdev->ipa_uc_rx_rsc.rx_rdy_idx_paddr = ipa_uc_rx_doorbell_paddr;

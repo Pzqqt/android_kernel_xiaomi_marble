@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -30,7 +30,7 @@
 
 /*===========================================================================
 
-                         Log Code Definitions
+			Log Code Definitions
 
    General Description
    This file contains log code definitions and is shared with the tools.
@@ -52,7 +52,7 @@
 
 /*===========================================================================
 
-                             Edit History
+				Edit History
 
    $Header: //source/qcom/qct/core/services/diag/api/inc/main/latest/log_codes.h#9 $
 
@@ -72,12 +72,12 @@
    05/16/01   sfh     Reserved log code 155.
    05/08/01   sfh     Reserved log codes 150 - 154.
    04/06/01   lad     Added definitions of base IDs (such as LOG_WCDMA_BASE_C).
-                   This is currently using temporary ID values in the 0x1000
-                   range.
+			This is currently using temporary ID values in the 0x1000
+			range.
    02/23/01   lad     Created file from DMSS log.h.  Log codes only
 
    ===========================================================================*/
-#include <cdf_types.h>
+#include <qdf_types.h>
 
 /* -------------------------------------------------------------------------
  * Data Declarations
@@ -2014,7 +2014,7 @@
 #define LOG_1X_LAST_C                                   ((0x8E0) + LOG_1X_BASE_C)
 
 /* This is only here for old (pre equipment ID update) logging code */
-#define LOG_LAST_C                                      ( LOG_1X_LAST_C & 0xFFF )
+#define LOG_LAST_C                                      (LOG_1X_LAST_C & 0xFFF)
 
 /* -------------------------------------------------------------------------
  * APPS LOG definition:

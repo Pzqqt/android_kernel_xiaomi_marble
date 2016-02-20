@@ -35,7 +35,7 @@
  */
 
 /* Include Files */
-#include <cdf_types.h>
+#include <qdf_types.h>
 
 /**
  * struct cdf_mem_dma_page_t - Allocated dmaable page
@@ -46,7 +46,7 @@
 struct cdf_mem_dma_page_t {
 	char *page_v_addr_start;
 	char *page_v_addr_end;
-	cdf_dma_addr_t page_p_addr;
+	qdf_dma_addr_t page_p_addr;
 };
 
 /**
@@ -221,19 +221,19 @@ bool cdf_mem_compare(const void *pMemory1, const void *pMemory2,
 int32_t cdf_mem_compare2(const void *pMemory1, const void *pMemory2,
 			 uint32_t numBytes);
 
-void *cdf_os_mem_alloc_consistent(cdf_device_t osdev, cdf_size_t size,
-				  cdf_dma_addr_t *paddr,
-				  cdf_dma_context_t mctx);
+void *cdf_os_mem_alloc_consistent(qdf_device_t osdev, qdf_size_t size,
+				  qdf_dma_addr_t *paddr,
+				  qdf_dma_context_t mctx);
 void
-cdf_os_mem_free_consistent(cdf_device_t osdev,
-			   cdf_size_t size,
+cdf_os_mem_free_consistent(qdf_device_t osdev,
+			   qdf_size_t size,
 			   void *vaddr,
-			   cdf_dma_addr_t paddr, cdf_dma_context_t memctx);
+			   qdf_dma_addr_t paddr, qdf_dma_context_t memctx);
 
 void
-cdf_os_mem_dma_sync_single_for_device(cdf_device_t osdev,
-				      cdf_dma_addr_t bus_addr,
-				      cdf_size_t size,
+cdf_os_mem_dma_sync_single_for_device(qdf_device_t osdev,
+				      qdf_dma_addr_t bus_addr,
+				      qdf_size_t size,
 				      enum dma_data_direction direction);
 
 /**
@@ -248,15 +248,15 @@ static inline int32_t cdf_str_len(const char *str)
 	return strlen(str);
 }
 
-void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
+void cdf_mem_multi_pages_alloc(qdf_device_t osdev,
 				struct cdf_mem_multi_page_t *pages,
 				size_t element_size,
 				uint16_t element_num,
-				cdf_dma_context_t memctxt,
+				qdf_dma_context_t memctxt,
 				bool cacheable);
 
-void cdf_mem_multi_pages_free(cdf_device_t osdev,
+void cdf_mem_multi_pages_free(qdf_device_t osdev,
 				struct cdf_mem_multi_page_t *pages,
-				cdf_dma_context_t memctxt,
+				qdf_dma_context_t memctxt,
 				bool cacheable);
 #endif /* __CDF_MEMORY_H */

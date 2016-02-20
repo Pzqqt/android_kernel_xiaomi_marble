@@ -29,7 +29,7 @@
 #define _OL_FW_H_
 
 #ifdef QCA_WIFI_FTM
-#include "cdf_types.h"
+#include "qdf_types.h"
 #endif
 #include "hif.h"
 

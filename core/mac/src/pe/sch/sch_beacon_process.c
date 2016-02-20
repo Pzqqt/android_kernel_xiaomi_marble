@@ -135,7 +135,7 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			return;
 #ifdef FEATURE_WLAN_ESE
 		if (session->isESEconnection)
-			CDF_TRACE(CDF_MODULE_ID_PE,
+			CDF_TRACE(QDF_MODULE_ID_PE,
 				  CDF_TRACE_LEVEL_INFO,
 				  FL("[INFOLOG]ESE 11g erpPresent=%d useProtection=%d nonErpPresent=%d"),
 				  bcn_struct->erpPresent,
@@ -162,7 +162,7 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if (tmp_exp) {
 #ifdef FEATURE_WLAN_ESE
 		if (session->isESEconnection) {
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 				  FL("[INFOLOG]ESE 11g erpPresent=%d useProtection=%d nonErpPresent=%d"),
 				  bcn_struct->erpPresent,
 				  bcn_struct->erpIEInfo.useProtection,
@@ -296,7 +296,8 @@ static void __sch_beacon_process_no_session(tpAniSirGlobal pMac,
 {
 	tpPESession psessionEntry = NULL;
 
-	if ((psessionEntry = lim_is_ibss_session_active(pMac)) != NULL) {
+	psessionEntry = lim_is_ibss_session_active(pMac);
+	if (psessionEntry != NULL) {
 		lim_handle_ibss_coalescing(pMac, pBeacon, pRxPacketInfo,
 					   psessionEntry);
 	}

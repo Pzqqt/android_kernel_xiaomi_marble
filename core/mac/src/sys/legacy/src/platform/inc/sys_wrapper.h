@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -48,7 +48,7 @@ extern "C" {
 #include "sir_params.h"
 #include "sys_def.h"
 #include "cdf_mc_timer.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
 

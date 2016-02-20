@@ -33,7 +33,7 @@
 #ifndef _CDF_NET_TYPES_H
 #define _CDF_NET_TYPES_H
 
-#include <cdf_types.h>          /* uint8_t, etc. */
+#include <qdf_types.h>          /* uint8_t, etc. */
 
 #define ADF_NET_MAC_ADDR_MAX_LEN 6
 #define ADF_NET_IF_NAME_SIZE    64

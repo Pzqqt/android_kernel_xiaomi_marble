@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -31,7 +31,7 @@
 #include <cdf_nbuf.h>
 #include <cds_ieee80211_common.h>
 #include <cdf_util.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <cdf_memory.h>
 #include <ol_txrx_internal.h>
 #include <ol_txrx_dbg.h>
@@ -125,9 +125,9 @@ ol_rx_reorder_flush_frag(htt_pdev_handle htt_pdev,
 			 struct ol_txrx_peer_t *peer,
 			 unsigned tid, int seq_num);
 
-static inline void xor_block(uint8_t *b, const uint8_t *a, cdf_size_t len)
+static inline void xor_block(uint8_t *b, const uint8_t *a, qdf_size_t len)
 {
-	cdf_size_t i;
+	qdf_size_t i;
 
 	for (i = 0; i < len; i++)
 		b[i] ^= a[i];

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -125,7 +125,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	}
 
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_Packet_info);
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 		FL("Probe Resp Frame Received: BSSID "
 		MAC_ADDRESS_STR " (RSSI %d)"),
 		MAC_ADDR_ARRAY(header->bssId),
@@ -345,7 +345,7 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 	}
 
 	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_packet_info);
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 		  FL("Probe Resp Frame Received: BSSID "
 		  MAC_ADDRESS_STR " (RSSI %d)"),
 		  MAC_ADDR_ARRAY(header->bssId),

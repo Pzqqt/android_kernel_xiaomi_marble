@@ -300,7 +300,7 @@ struct tLimScanResultNode {
 
 /* OEM Data related structure definitions */
 typedef struct sLimMlmOemDataReq {
-	struct cdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr selfMacAddr;
 	uint8_t data_len;
 	uint8_t *data;
 } tLimMlmOemDataReq, *tpLimMlmOemDataReq;
@@ -325,7 +325,7 @@ typedef struct tLimPreAuthNode {
 	uint8_t rsvd:5;
 	TX_TIMER timer;
 	uint16_t seq_num;
-	v_TIME_t timestamp;
+	unsigned long timestamp;
 } tLimPreAuthNode, *tpLimPreAuthNode;
 
 /* Pre-authentication table definition */
@@ -570,7 +570,7 @@ typedef struct sLimTspecInfo {
 	uint8_t tclasProc;
 	/* tclassProc is valid only if this is set to 1. */
 	uint8_t tclasProcPresent:1;
-} cdf_packed tLimTspecInfo, *tpLimTspecInfo;
+} qdf_packed tLimTspecInfo, *tpLimTspecInfo;
 
 typedef struct sLimAdmitPolicyInfo {
 	/* admit control policy type */

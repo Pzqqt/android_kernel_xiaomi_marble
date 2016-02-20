@@ -37,7 +37,7 @@
  *      tx frame to HTC.
  */
 #include <osdep.h>              /* uint32_t, offsetof, etc. */
-#include <cdf_types.h>          /* cdf_dma_addr_t */
+#include <qdf_types.h>          /* qdf_dma_addr_t */
 #include <cdf_memory.h>         /* cdf_os_mem_alloc_consistent et al */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <qdf_time.h>           /* qdf_mdelay */
@@ -83,7 +83,7 @@ do {                                                                           \
 uint32_t *g_dbg_htt_desc_end_addr, *g_dbg_htt_desc_start_addr;
 #endif
 
-static cdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
+static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 				char *target_vaddr);
 
 #ifdef HELIUMPLUS
@@ -160,7 +160,7 @@ static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
 	pdev->frag_descs.pool_elems = desc_pool_elems;
 	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->frag_descs.desc_pages,
 		pdev->frag_descs.size, desc_pool_elems,
-		cdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
+		qdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
 	if ((0 == pdev->frag_descs.desc_pages.num_pages) ||
 		(NULL == pdev->frag_descs.desc_pages.dma_pages)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -181,7 +181,7 @@ static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
 static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev)
 {
 	cdf_mem_multi_pages_free(pdev->osdev, &pdev->frag_descs.desc_pages,
-		cdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
+		qdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
 }
 
 /**
@@ -330,7 +330,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	pool_size = pdev->tx_descs.pool_elems * pdev->tx_descs.size;
 	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_descs.desc_pages,
 		pdev->tx_descs.size, pdev->tx_descs.pool_elems,
-		cdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
+		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
 		(NULL == pdev->tx_descs.desc_pages.dma_pages)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -382,7 +382,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 
 free_htt_desc:
 	cdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
-		cdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
+		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 out_fail:
 	return -ENOBUFS;
 }
@@ -390,13 +390,13 @@ out_fail:
 void htt_tx_detach(struct htt_pdev_t *pdev)
 {
 	if (!pdev) {
-		cdf_print("htt tx detach invalid instance");
+		qdf_print("htt tx detach invalid instance");
 		return;
 	}
 
 	htt_tx_frag_desc_detach(pdev);
 	cdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
-		cdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
+		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 }
 
 /**
@@ -407,7 +407,7 @@ void htt_tx_detach(struct htt_pdev_t *pdev)
  *
  * Return: Physical address of descriptor
  */
-static cdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
+static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 				char *target_vaddr)
 {
 	uint16_t i;
@@ -646,7 +646,7 @@ htt_tx_resume_handler(void *context) { }
 cdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
 {
-	cdf_print("*** %s curently only applies for HL systems\n", __func__);
+	qdf_print("*** %s curently only applies for HL systems\n", __func__);
 	cdf_assert(0);
 	return head_msdu;
 
@@ -821,28 +821,28 @@ void htt_tx_desc_display(void *tx_desc)
 	htt_tx_desc = (struct htt_tx_msdu_desc_t *)tx_desc;
 
 	/* only works for little-endian */
-	cdf_print("HTT tx desc (@ %p):", htt_tx_desc);
-	cdf_print("  msg type = %d", htt_tx_desc->msg_type);
-	cdf_print("  pkt subtype = %d", htt_tx_desc->pkt_subtype);
-	cdf_print("  pkt type = %d", htt_tx_desc->pkt_type);
-	cdf_print("  vdev ID = %d", htt_tx_desc->vdev_id);
-	cdf_print("  ext TID = %d", htt_tx_desc->ext_tid);
-	cdf_print("  postponed = %d", htt_tx_desc->postponed);
-	cdf_print("  extension = %d", htt_tx_desc->extension);
-	cdf_print("  cksum_offload = %d", htt_tx_desc->cksum_offload);
-	cdf_print("  tx_compl_req= %d", htt_tx_desc->tx_compl_req);
-	cdf_print("  length = %d", htt_tx_desc->len);
-	cdf_print("  id = %d", htt_tx_desc->id);
+	qdf_print("HTT tx desc (@ %p):", htt_tx_desc);
+	qdf_print("  msg type = %d", htt_tx_desc->msg_type);
+	qdf_print("  pkt subtype = %d", htt_tx_desc->pkt_subtype);
+	qdf_print("  pkt type = %d", htt_tx_desc->pkt_type);
+	qdf_print("  vdev ID = %d", htt_tx_desc->vdev_id);
+	qdf_print("  ext TID = %d", htt_tx_desc->ext_tid);
+	qdf_print("  postponed = %d", htt_tx_desc->postponed);
+	qdf_print("  extension = %d", htt_tx_desc->extension);
+	qdf_print("  cksum_offload = %d", htt_tx_desc->cksum_offload);
+	qdf_print("  tx_compl_req= %d", htt_tx_desc->tx_compl_req);
+	qdf_print("  length = %d", htt_tx_desc->len);
+	qdf_print("  id = %d", htt_tx_desc->id);
 #if HTT_PADDR64
-	cdf_print("  frag desc addr.lo = %#x",
+	qdf_print("  frag desc addr.lo = %#x",
 		  htt_tx_desc->frags_desc_ptr.lo);
-	cdf_print("  frag desc addr.hi = %#x",
+	qdf_print("  frag desc addr.hi = %#x",
 		  htt_tx_desc->frags_desc_ptr.hi);
 #else /* ! HTT_PADDR64 */
-	cdf_print("  frag desc addr = %#x", htt_tx_desc->frags_desc_ptr);
+	qdf_print("  frag desc addr = %#x", htt_tx_desc->frags_desc_ptr);
 #endif /* HTT_PADDR64 */
-	cdf_print("  peerid = %d", htt_tx_desc->peerid);
-	cdf_print("  chanfreq = %d", htt_tx_desc->chanfreq);
+	qdf_print("  peerid = %d", htt_tx_desc->peerid);
+	qdf_print("  chanfreq = %d", htt_tx_desc->chanfreq);
 }
 #endif
 
@@ -866,7 +866,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 {
 	unsigned int tx_buffer_count;
 	cdf_nbuf_t buffer_vaddr;
-	cdf_dma_addr_t buffer_paddr;
+	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
 #define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
@@ -879,7 +879,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
 					      uc_tx_buf_sz, 0, 4, false);
 		if (!buffer_vaddr) {
-			cdf_print("%s: TX BUF alloc fail, loop index: %d",
+			qdf_print("%s: TX BUF alloc fail, loop index: %d",
 				  __func__, tx_buffer_count);
 			return tx_buffer_count;
 		}
@@ -896,7 +896,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
 
-		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
+		cdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
 		buffer_paddr = cdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 		*header_ptr = (uint32_t) (buffer_paddr +
@@ -939,7 +939,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
 					      uc_tx_buf_sz, 0, 4, false);
 		if (!buffer_vaddr) {
-			cdf_print("%s: TX BUF alloc fail, loop index: %d",
+			qdf_print("%s: TX BUF alloc fail, loop index: %d",
 				  __func__, tx_buffer_count);
 			return tx_buffer_count;
 		}
@@ -956,7 +956,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
 
-		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
+		cdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
 		buffer_paddr = cdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 
@@ -1014,11 +1014,11 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			pdev->osdev,
 			4,
 			&pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
-			cdf_get_dma_mem_context(
+			qdf_get_dma_mem_context(
 				(&pdev->ipa_uc_tx_rsc.tx_ce_idx),
 				memctx));
 	if (!pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
-		cdf_print("%s: CE Write Index WORD alloc fail", __func__);
+		qdf_print("%s: CE Write Index WORD alloc fail", __func__);
 		return -ENOBUFS;
 	}
 
@@ -1029,11 +1029,11 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			pdev->osdev,
 			tx_comp_ring_size,
 			&pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
 						 tx_comp_base),
 						memctx));
 	if (!pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
-		cdf_print("%s: TX COMP ring alloc fail", __func__);
+		qdf_print("%s: TX COMP ring alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_ce_idx;
 	}
@@ -1045,7 +1045,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 		(cdf_nbuf_t *) cdf_mem_malloc(uc_tx_buf_cnt *
 					      sizeof(cdf_nbuf_t));
 	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg) {
-		cdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
+		qdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
@@ -1063,7 +1063,7 @@ free_tx_comp_base:
 				   tx_comp_ring_size,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
-				   cdf_get_dma_mem_context((&pdev->
+				   qdf_get_dma_mem_context((&pdev->
 							    ipa_uc_tx_rsc.
 							    tx_comp_base),
 							   memctx));
@@ -1072,7 +1072,7 @@ free_tx_ce_idx:
 				   4,
 				   pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
-				   cdf_get_dma_mem_context((&pdev->
+				   qdf_get_dma_mem_context((&pdev->
 							    ipa_uc_tx_rsc.
 							    tx_ce_idx),
 							   memctx));
@@ -1089,7 +1089,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 			4,
 			pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
 			pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
-			cdf_get_dma_mem_context(
+			qdf_get_dma_mem_context(
 				(&pdev->ipa_uc_tx_rsc.tx_ce_idx),
 				memctx));
 	}
@@ -1100,7 +1100,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) * sizeof(cdf_nbuf_t),
 			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 			pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
-			cdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
+			qdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
 						 tx_comp_base),
 						memctx));
 	}
@@ -1111,7 +1111,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 			cdf_nbuf_unmap(pdev->osdev,
 				       pdev->ipa_uc_tx_rsc.
 				       tx_buf_pool_vaddr_strg[idx],
-				       CDF_DMA_FROM_DEVICE);
+				       QDF_DMA_FROM_DEVICE);
 			cdf_nbuf_free(pdev->ipa_uc_tx_rsc.
 				      tx_buf_pool_vaddr_strg[idx]);
 		}
@@ -1127,7 +1127,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 #if defined(FEATURE_TSO)
 void
 htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
-	 struct cdf_tso_info_t *tso_info)
+	 struct qdf_tso_info_t *tso_info)
 {
 	u_int32_t *word;
 	int i;

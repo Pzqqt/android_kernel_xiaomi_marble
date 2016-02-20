@@ -34,7 +34,7 @@
  *
  */
 
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <cdf_memory.h>
 #include <qdf_list.h>
@@ -199,17 +199,17 @@ QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context);
 
 void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper);
 
-void *cds_get_context(CDF_MODULE_ID moduleId);
+void *cds_get_context(QDF_MODULE_ID moduleId);
 
 v_CONTEXT_t cds_get_global_context(void);
 
-QDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
+QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 			     void **ppModuleContext, uint32_t size);
 
-QDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
+QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 			    void *pModuleContext);
 
-QDF_STATUS cds_set_context(CDF_MODULE_ID moduleID, void *context);
+QDF_STATUS cds_set_context(QDF_MODULE_ID moduleID, void *context);
 
 QDF_STATUS cds_get_vdev_types(enum tCDF_ADAPTER_MODE mode, uint32_t *type,
 			      uint32_t *subType);

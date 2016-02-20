@@ -36,8 +36,7 @@
 #ifndef __NAN_API_H__
 #define __NAN_API_H__
 
-#include "cdf_types.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 
 typedef struct sNanRequestReq {
 	uint16_t request_data_len;

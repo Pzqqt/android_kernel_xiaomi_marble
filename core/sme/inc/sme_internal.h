@@ -41,7 +41,7 @@
 #include "cdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "host_diag_core_event.h"
 #include "csr_link_list.h"
 #include "sme_power_save.h"
@@ -148,7 +148,7 @@ typedef struct tagSmeStruct {
 	tDblLinkList smeCmdActiveList;
 	tDblLinkList smeCmdPendingList;
 	tDblLinkList smeCmdFreeList;    /* preallocated roam cmd list */
-	enum tCDF_ADAPTER_MODE currDeviceMode;
+	enum tQDF_ADAPTER_MODE currDeviceMode;
 #ifdef FEATURE_WLAN_LPHB
 	void (*pLphbIndCb)(void *pHddCtx, tSirLPHBInd *indParam);
 #endif /* FEATURE_WLAN_LPHB */

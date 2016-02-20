@@ -111,7 +111,7 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 				struct cdf_tso_seg_elem_t *next_seg;
 				struct cdf_tso_seg_elem_t *free_seg =
 					msdu_info->tso_info.tso_seg_list;
-				cdf_print("TSO seg alloc failed!\n");
+				qdf_print("TSO seg alloc failed!\n");
 				while (free_seg) {
 					next_seg = free_seg->next;
 					ol_tso_free_segment(vdev->pdev,
@@ -145,14 +145,14 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 				 uint8_t proto_type)
 {
-	void *cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	void *cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_txrx_peer_t *peer;
 	cdf_nbuf_t ret;
 	QDF_STATUS status;
 
 	if (cdf_unlikely(!pdev)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
@@ -163,27 +163,27 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	}
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:Invalid sta id", __func__);
 		return skb;
 	}
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 	if (!peer) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:Invalid peer", __func__);
 		return skb;
 	}
 
 	if (peer->state < ol_txrx_peer_state_conn) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: station to be yet registered..dropping pkt", __func__);
 		return skb;
 	}
 
-	status = cdf_nbuf_map_single(cdf_ctx, skb, CDF_DMA_TO_DEVICE);
+	status = cdf_nbuf_map_single(cdf_ctx, skb, QDF_DMA_TO_DEVICE);
 	if (cdf_unlikely(status != QDF_STATUS_SUCCESS)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;
 	}
@@ -199,9 +199,9 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	cdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_LL(peer->vdev, skb);
 	if (ret) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: Failed to tx", __func__);
-		cdf_nbuf_unmap_single(cdf_ctx, ret, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap_single(cdf_ctx, ret, QDF_DMA_TO_DEVICE);
 		return ret;
 	}
 
@@ -219,7 +219,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 			cdf_nbuf_t skb)
 {
-	ol_txrx_pdev_handle pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	cdf_nbuf_t ret;
 
 	if (cdf_unlikely(!pdev)) {
@@ -270,7 +270,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.peer = NULL;
 
 		if (cdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
-			cdf_print("ol_tx_prepare_tso failed\n");
+			qdf_print("ol_tx_prepare_tso failed\n");
 			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
 				 tx.dropped.host_reject, msdu);
 			return msdu;
@@ -460,7 +460,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 			 msdu_info->tso_info.curr_seg->seg);
 	} else {
 		for (i = 1; i < num_frags; i++) {
-			cdf_size_t frag_len;
+			qdf_size_t frag_len;
 			cdf_dma_addr_t frag_paddr;
 
 			frag_len = cdf_nbuf_get_frag_len(msdu, i);
@@ -469,7 +469,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
 					 i - 1, frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
-			cdf_print("%s:%d: htt_fdesc=%p frag=%d frag_paddr=0x%0llx len=%zu",
+			qdf_print("%s:%d: htt_fdesc=%p frag=%d frag_paddr=0x%0llx len=%zu",
 				  __func__, __LINE__, tx_desc->htt_frag_desc,
 				  i-1, frag_paddr, frag_len);
 			dump_pkt(netbuf, frag_paddr, 64);
@@ -540,7 +540,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.peer = NULL;
 
 		if (cdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
-			cdf_print("ol_tx_prepare_tso failed\n");
+			qdf_print("ol_tx_prepare_tso failed\n");
 			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
 				 tx.dropped.host_reject, msdu);
 			return msdu;
@@ -732,7 +732,7 @@ static inline cdf_nbuf_t
 ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 {
 	struct hif_opaque_softc *hif_device =
-		(struct hif_opaque_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (cdf_likely(hif_device && hif_is_fastpath_mode_enabled(hif_device)))
 		msdu_list = ol_tx_ll_fast(vdev, msdu_list);
@@ -800,7 +800,7 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 			 */
 			if (tx_msdu) {
 				cdf_nbuf_unmap(vdev->pdev->osdev, tx_msdu,
-					       CDF_DMA_TO_DEVICE);
+					       QDF_DMA_TO_DEVICE);
 				cdf_nbuf_tx_free(tx_msdu, NBUF_PKT_ERROR);
 			}
 		}
@@ -979,7 +979,7 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 				 */
 				if (tx_msdu) {
 					cdf_nbuf_unmap(pdev->osdev, tx_msdu,
-						       CDF_DMA_TO_DEVICE);
+						       QDF_DMA_TO_DEVICE);
 					cdf_nbuf_tx_free(tx_msdu,
 							 NBUF_PKT_ERROR);
 				}
@@ -1137,7 +1137,7 @@ bool parse_ocb_tx_header(cdf_nbuf_t msdu,
 
 	/* Check if TX control header is present */
 	eth_hdr_p = (struct ether_header *) cdf_nbuf_data(msdu);
-	if (eth_hdr_p->ether_type != CDF_SWAP_U16(ETHERTYPE_OCB_TX))
+	if (eth_hdr_p->ether_type != QDF_SWAP_U16(ETHERTYPE_OCB_TX))
 		/* TX control header is not present. Nothing to do.. */
 		return true;
 
@@ -1195,11 +1195,11 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 	uint32_t                *frag_ptr_i_p;
 	int                     i;
 
-	cdf_print("OL TX Descriptor 0x%p msdu_id %d\n",
+	qdf_print("OL TX Descriptor 0x%p msdu_id %d\n",
 		 tx_desc, tx_desc->id);
-	cdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%llx",
+	qdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%llx",
 		 tx_desc->htt_tx_desc, tx_desc->htt_tx_desc_paddr);
-	cdf_print("%s %d: Fragment Descriptor 0x%p (paddr=0x%llx)",
+	qdf_print("%s %d: Fragment Descriptor 0x%p (paddr=0x%llx)",
 		 __func__, __LINE__, tx_desc->htt_frag_desc, tx_desc->htt_frag_desc_paddr);
 
 	/* it looks from htt_tx_desc_frag() that tx_desc->htt_frag_desc
@@ -1287,7 +1287,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 
 	tx_msdu_info.peer = NULL;
 
-	cdf_nbuf_map_single(pdev->osdev, tx_mgmt_frm, CDF_DMA_TO_DEVICE);
+	cdf_nbuf_map_single(pdev->osdev, tx_mgmt_frm, QDF_DMA_TO_DEVICE);
 	/* For LL tx_comp_req is not used so initialized to 0 */
 	tx_msdu_info.htt.action.tx_comp_req = 0;
 	tx_desc = ol_tx_desc_ll(pdev, vdev, tx_mgmt_frm, &tx_msdu_info);
@@ -1320,7 +1320,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 	}
 	if (!tx_desc) {
 		cdf_nbuf_unmap_single(pdev->osdev, tx_mgmt_frm,
-				      CDF_DMA_TO_DEVICE);
+				      QDF_DMA_TO_DEVICE);
 		return -EINVAL;       /* can't accept the tx mgmt frame */
 	}
 	TXRX_STATS_MSDU_INCR(pdev, tx.mgmt, tx_mgmt_frm);

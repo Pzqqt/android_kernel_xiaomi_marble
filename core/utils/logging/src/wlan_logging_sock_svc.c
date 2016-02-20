@@ -41,7 +41,7 @@
 #include <host_diag_core_event.h>
 
 #define LOGGING_TRACE(level, args ...) \
-	CDF_TRACE(CDF_MODULE_ID_HDD, level, ## args)
+	CDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 
 /* Global variables */
 
@@ -162,14 +162,14 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
  *
  * Return: True if the module belongs to data path, false otherwise
  */
-static bool is_data_path_module(CDF_MODULE_ID mod_id)
+static bool is_data_path_module(QDF_MODULE_ID mod_id)
 {
 	switch (mod_id) {
-	case CDF_MODULE_ID_HDD_DATA:
-	case CDF_MODULE_ID_HDD_SAP_DATA:
-	case CDF_MODULE_ID_HTC:
-	case CDF_MODULE_ID_TXRX:
-	case CDF_MODULE_ID_HIF:
+	case QDF_MODULE_ID_HDD_DATA:
+	case QDF_MODULE_ID_HDD_SAP_DATA:
+	case QDF_MODULE_ID_HTC:
+	case QDF_MODULE_ID_TXRX:
+	case QDF_MODULE_ID_HIF:
 		return true;
 	default:
 		return false;
@@ -181,7 +181,7 @@ static void set_default_logtoapp_log_level(void)
 	int i;
 
 	/* module id 0 is reserved */
-	for (i = 1; i < CDF_MODULE_ID_MAX; i++) {
+	for (i = 1; i < QDF_MODULE_ID_MAX; i++) {
 		if (is_data_path_module(i))
 			cdf_trace_set_module_trace_level(i,
 					CDF_DATA_PATH_TRACE_LEVEL);
@@ -194,13 +194,13 @@ static void clear_default_logtoapp_log_level(void)
 {
 	int module;
 
-	for (module = 0; module < CDF_MODULE_ID_MAX; module++) {
+	for (module = 0; module < QDF_MODULE_ID_MAX; module++) {
 		cdf_trace_set_value(module, CDF_TRACE_LEVEL_NONE, false);
 		cdf_trace_set_value(module, CDF_TRACE_LEVEL_FATAL, true);
 		cdf_trace_set_value(module, CDF_TRACE_LEVEL_ERROR, true);
 	}
 
-	cdf_trace_set_value(CDF_MODULE_ID_RSV4, CDF_TRACE_LEVEL_NONE,
+	cdf_trace_set_value(QDF_MODULE_ID_RSV4, CDF_TRACE_LEVEL_NONE,
 			    false);
 }
 

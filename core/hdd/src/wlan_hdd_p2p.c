@@ -48,7 +48,7 @@
 #include <net/ieee80211_radiotap.h>
 #include "wlan_hdd_tdls.h"
 #include "wlan_hdd_trace.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_trace.h"
 #include "cds_sched.h"
 #include "cds_concurrency.h"
@@ -400,7 +400,7 @@ void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 	unsigned long rc;
 	hdd_cfg80211_state_t *cfg_state = WLAN_HDD_GET_CFG_STATE_PTR(adapter);
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			"%s: ROC completion is not received.!!!",
 			__func__);
 
@@ -438,7 +438,7 @@ wait:
 			msecs_to_jiffies
 			(WAIT_CANCEL_REM_CHAN));
 	if (!rc) {
-		CDF_TRACE(CDF_MODULE_ID_HDD,
+		CDF_TRACE(QDF_MODULE_ID_HDD,
 		    CDF_TRACE_LEVEL_ERROR,
 		    "%s: Timeout occurred while waiting for RoC Cancellation",
 		    __func__);
@@ -472,7 +472,7 @@ void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter)
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	while (pAdapter->is_roc_inprogress) {
 		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: ROC in progress for session %d!!!",
 			  __func__, pAdapter->sessionId);
 		msleep(500);
@@ -567,7 +567,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 	/* Initialize Remain on chan timer */
 	qdf_status =
 		cdf_mc_timer_init(&pRemainChanCtx->hdd_remain_on_chan_timer,
-				  CDF_TIMER_TYPE_SW,
+				  QDF_TIMER_TYPE_SW,
 				  wlan_hdd_remain_on_chan_timeout, pAdapter);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
@@ -673,7 +673,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 #endif
 			(SIR_MAC_MGMT_FRAME << 2) |
 			(SIR_MAC_MGMT_PROBE_REQ << 4), NULL, 0)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				FL("wlansap_register_mgmt_frame return fail"));
 			wlansap_cancel_remain_on_channel(
 #ifdef WLAN_FEATURE_MBSSID
@@ -949,12 +949,12 @@ int __wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
 	if (0 != ret)
 		return ret;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_REMAIN_ON_CHANNEL,
 			 pAdapter->sessionId, REMAIN_ON_CHANNEL_REQUEST));
 
@@ -1000,7 +1000,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	pRemainChanCtx = cfgState->remain_on_chan_ctx;
 	if (pRemainChanCtx != NULL) {
-		MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+		MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 				 TRACE_CODE_HDD_REMAINCHANREADYHANDLER,
 				 pAdapter->sessionId,
 				 pRemainChanCtx->duration));
@@ -1094,7 +1094,7 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -1255,12 +1255,12 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_ACTION, pAdapter->sessionId,
 			 pAdapter->device_mode));
 	status = wlan_hdd_validate_context(pHddCtx);
@@ -1576,7 +1576,7 @@ send_frame:
 		    sme_send_action(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				    sessionId, buf, len, extendedWait, noack,
 				    current_freq)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "%s: sme_send_action returned fail", __func__);
 			goto err;
 		}
@@ -1723,19 +1723,19 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 
 	param = strnchr(command, strlen(command), ' ');
 	if (param == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: strnchr failed to find delimeter", __func__);
 		return -EINVAL;
 	}
 	param++;
 	ret = sscanf(param, "%d %d %d", &count, &start_time, &duration);
 	if (ret != 3) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: P2P_SET GO NoA: fail to read params, ret=%d",
 			  __func__, ret);
 		return -EINVAL;
 	}
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: P2P_SET GO NoA: count=%d start_time=%d duration=%d",
 		  __func__, count, start_time, duration);
 	duration = MS_TO_MUS(duration);
@@ -1758,7 +1758,7 @@ int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command)
 	NoA.count = count;
 	NoA.sessionid = pAdapter->sessionId;
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: P2P_PS_ATTR:oppPS %d ctWindow %d duration %d "
 		  "interval %d count %d single noa duration %d "
 		  "PsSelection %x", __func__, NoA.opp_ps,
@@ -1801,19 +1801,19 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 
 	param = strnchr(command, strlen(command), ' ');
 	if (param == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: strnchr failed to find delimiter", __func__);
 		return -EINVAL;
 	}
 	param++;
 	ret = sscanf(param, "%d %d %d", &legacy_ps, &opp_ps, &ctwindow);
 	if (ret != 3) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: P2P_SET GO PS: fail to read params, ret=%d",
 			  __func__, ret);
 		return -EINVAL;
 	}
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: P2P_SET GO PS: legacy_ps=%d opp_ps=%d ctwindow=%d",
 		  __func__, legacy_ps, opp_ps, ctwindow);
 
@@ -1831,7 +1831,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 	 */
 	if (ctwindow != -1) {
 
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "Opportunistic Power Save is %s",
 			  (true == pAdapter->ops) ? "Enable" : "Disable");
 
@@ -1849,7 +1849,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 					P2P_POWER_SAVE_TYPE_OPPORTUNISTIC;
 				NoA.sessionid = pAdapter->sessionId;
 
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: P2P_PS_ATTR:oppPS %d ctWindow %d duration %d "
 					  "interval %d count %d single noa duration %d "
@@ -1878,7 +1878,7 @@ int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command)
 			NoA.psSelection = P2P_POWER_SAVE_TYPE_OPPORTUNISTIC;
 			NoA.sessionid = pAdapter->sessionId;
 
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				  "%s: P2P_PS_ATTR:oppPS %d ctWindow %d duration %d "
 				  "interval %d count %d single noa duration %d "
 				  "PsSelection %x", __func__, NoA.opp_ps,
@@ -1952,7 +1952,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return ERR_PTR(-EINVAL);
 	}
@@ -1961,7 +1961,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	if (0 != ret)
 		return ERR_PTR(ret);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_ADD_VIRTUAL_INTF, NO_SESSION, type));
 	/*
 	 * Allow addition multiple interfaces for WLAN_HDD_P2P_GO,
@@ -2004,7 +2004,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 		 * Generate the P2P Interface Address. this address must be
 		 * different from the P2P Device Address.
 		 */
-		struct cdf_mac_addr p2pDeviceAddress =
+		struct qdf_mac_addr p2pDeviceAddress =
 						pHddCtx->p2pDeviceAddress;
 		p2pDeviceAddress.bytes[4] ^= 0x80;
 		pAdapter = hdd_open_adapter(pHddCtx,
@@ -2048,12 +2048,12 @@ int __wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev)
 	int status;
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_DEL_VIRTUAL_INTF,
 			 pVirtAdapter->sessionId, pVirtAdapter->device_mode));
 	hddLog(LOG1, FL("Device_mode %s(%d)"),

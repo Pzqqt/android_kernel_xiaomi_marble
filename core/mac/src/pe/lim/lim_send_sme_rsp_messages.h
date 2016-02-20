@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -67,7 +67,7 @@ void lim_send_sme_deauth_ind(tpAniSirGlobal, tpDphHashNode,
 			     tpPESession psessionEntry);
 void lim_send_sme_wm_status_change_ntf(tpAniSirGlobal, tSirSmeStatusChangeCode,
 				       uint32_t *, uint16_t, uint8_t);
-void lim_send_sme_set_context_rsp(tpAniSirGlobal, struct cdf_mac_addr, uint16_t,
+void lim_send_sme_set_context_rsp(tpAniSirGlobal, struct qdf_mac_addr, uint16_t,
 				  tSirResultCodes, tpPESession, uint8_t, uint16_t);
 void lim_send_sme_neighbor_bss_ind(tpAniSirGlobal, tLimScanResultNode *);
 void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ MsgQ);
@@ -109,7 +109,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 					 uint8_t smesessionId);
 #ifdef FEATURE_WLAN_TDLS
 void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac, uint8_t sessionId,
-					      struct cdf_mac_addr *peermac,
+					      struct qdf_mac_addr *peermac,
 					      tDphHashNode *pStaDs, uint8_t status);
 void lim_send_sme_tdls_event_notify(tpAniSirGlobal pMac, uint16_t msgType,
 				    void *events);

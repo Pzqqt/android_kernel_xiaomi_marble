@@ -35,7 +35,7 @@
  */
 
 /* Include Files */
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <cdf_lock.h>
 #include <i_cdf_mc_timer.h>
@@ -80,7 +80,7 @@ typedef struct cdf_mc_timer_s {
 	cdf_mc_timer_callback_t callback;
 	void *userData;
 	cdf_mutex_t lock;
-	CDF_TIMER_TYPE type;
+	QDF_TIMER_TYPE type;
 	CDF_TIMER_STATE state;
 } cdf_mc_timer_t;
 
@@ -158,12 +158,12 @@ CDF_TIMER_STATE cdf_mc_timer_get_current_state(cdf_mc_timer_t *pTimer);
 		__FILE__, __LINE__)
 
 QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
-				   CDF_TIMER_TYPE timerType,
+				   QDF_TIMER_TYPE timerType,
 				   cdf_mc_timer_callback_t callback,
 				   void *userData, char *fileName,
 				   uint32_t lineNum);
 #else
-QDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
+QDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, QDF_TIMER_TYPE timerType,
 			     cdf_mc_timer_callback_t callback,
 			     void *userData);
 #endif
@@ -237,7 +237,7 @@ QDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer);
  *	The current system tick count (in 10msec intervals).  This
  *	function cannot fail.
  */
-v_TIME_t cdf_mc_timer_get_system_ticks(void);
+unsigned long cdf_mc_timer_get_system_ticks(void);
 
 /**
  * cdf_mc_timer_get_system_time() - Get the system time in milliseconds
@@ -248,6 +248,6 @@ v_TIME_t cdf_mc_timer_get_system_ticks(void);
  * Return:
  *	The current system time in milliseconds
  */
-v_TIME_t cdf_mc_timer_get_system_time(void);
+unsigned long cdf_mc_timer_get_system_time(void);
 
 #endif /* #if !defined __CDF_MC_TIMER_H */

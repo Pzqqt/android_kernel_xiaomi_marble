@@ -32,7 +32,7 @@
    ============================================================================*/
 
 #include <net/cfg80211.h>
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cds_reg_service.h"
 #include "cdf_trace.h"
 #include "sme_api.h"
@@ -426,9 +426,9 @@ QDF_STATUS cds_read_default_country(uint8_t *default_country)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "invalid hdd_ctx pointer");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -437,7 +437,7 @@ QDF_STATUS cds_read_default_country(uint8_t *default_country)
 	       hdd_ctx->reg.def_country,
 	       CDS_COUNTRY_CODE_LEN + 1);
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "default country is %c%c\n",
 		  default_country[0],
 		  default_country[1]);
@@ -459,7 +459,7 @@ static enum channel_enum cds_get_channel_enum(uint32_t chan_num)
 		if (chan_mapping[loop].chan_num == chan_num)
 			return loop;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "invalid channel number %d", chan_num);
 
 	return INVALID_RF_CHANNEL;
@@ -603,7 +603,7 @@ QDF_STATUS cds_set_dfs_region(uint8_t dfs_region)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (NULL == hdd_ctx)
 		return QDF_STATUS_E_EXISTS;
@@ -643,7 +643,7 @@ QDF_STATUS cds_get_dfs_region(uint8_t *dfs_region)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (NULL == hdd_ctx)
 		return QDF_STATUS_E_EXISTS;
@@ -669,7 +669,7 @@ QDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 	struct wiphy *wiphy = NULL;
 
 	if (NULL == reg_domain_ptr) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Invalid reg domain pointer"));
 		return QDF_STATUS_E_FAULT;
 	}
@@ -680,21 +680,21 @@ QDF_STATUS cds_get_reg_domain_from_country_code(v_REGDOMAIN_t *reg_domain_ptr,
 		return QDF_STATUS_SUCCESS;
 
 	if (NULL == country_alpha2) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Country code array is NULL"));
 		return QDF_STATUS_E_FAULT;
 	}
 
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "SSR in progress, return");
 		return QDF_STATUS_SUCCESS;
 	}
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	if (NULL == hdd_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Invalid pHddCtx pointer"));
 		return QDF_STATUS_E_FAULT;
 	}
@@ -751,9 +751,9 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 	struct ieee80211_channel *chan;
 	struct regulatory_channel *temp_chan_k, *temp_chan_n, *temp_chan;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL == hdd_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "invalid hdd_ctx pointer");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -761,7 +761,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 	hdd_ctx->isVHT80Allowed = 0;
 
 	if (band_capability == eCSR_BAND_24)
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 			  "band capability is set to 2G only");
 
 	for (i = 0, m = 0; i < IEEE80211_NUM_BANDS; i++) {
@@ -808,7 +808,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 
 					if (!(reg_rule->flags &
 					      NL80211_RRF_DFS)) {
-						CDF_TRACE(CDF_MODULE_ID_CDF,
+						CDF_TRACE(QDF_MODULE_ID_QDF,
 							  CDF_TRACE_LEVEL_INFO,
 							  "%s: Remove passive scan restriction for %u",
 							  __func__,
@@ -819,7 +819,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 
 					if (!(reg_rule->flags &
 					      NL80211_RRF_PASSIVE_SCAN)) {
-						CDF_TRACE(CDF_MODULE_ID_CDF,
+						CDF_TRACE(QDF_MODULE_ID_QDF,
 							  CDF_TRACE_LEVEL_INFO,
 							  "%s: Remove passive scan restriction for %u",
 							  __func__,
@@ -830,7 +830,7 @@ static int cds_process_regulatory_data(struct wiphy *wiphy,
 
 					if (!(reg_rule->flags &
 					      NL80211_RRF_NO_IBSS)) {
-						CDF_TRACE(CDF_MODULE_ID_CDF,
+						CDF_TRACE(QDF_MODULE_ID_QDF,
 							  CDF_TRACE_LEVEL_INFO,
 							  "%s: Remove no ibss restriction for %u",
 							  __func__,
@@ -972,7 +972,7 @@ void __hdd_reg_notifier(struct wiphy *wiphy,
 	bool vht80_allowed;
 	bool reset = false;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  FL("country: %c%c, initiator %d, dfs_region: %d"),
 		  request->alpha2[0],
 		  request->alpha2[1],
@@ -980,13 +980,13 @@ void __hdd_reg_notifier(struct wiphy *wiphy,
 		  request->dfs_region);
 
 	if (NULL == hdd_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Invalid pHddCtx pointer"));
 		return;
 	}
 
 	if (cds_is_driver_unloading() || cds_is_driver_recovering()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unloading or SSR in Progress, Ignore!!!",
 			  __func__);
 		return;
@@ -1055,7 +1055,7 @@ void __hdd_reg_notifier(struct wiphy *wiphy,
 		vht80_allowed = hdd_ctx->isVHT80Allowed;
 		if (cds_process_regulatory_data(wiphy, band_capability,
 						reset) == 0) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 				  (" regulatory entry created"));
 		}
 		if (hdd_ctx->isVHT80Allowed != vht80_allowed)
@@ -1105,9 +1105,9 @@ QDF_STATUS cds_regulatory_init(void)
 	int ret_val = 0;
 	struct regulatory *reg_info;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "invalid hdd_ctx pointer");
 		return QDF_STATUS_E_FAULT;
 	}
@@ -1121,7 +1121,7 @@ QDF_STATUS cds_regulatory_init(void)
 	if (cds_process_regulatory_data(wiphy,
 					hdd_ctx->config->
 					nBandCapability, true) != 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  ("Error while creating regulatory entry"));
 		return QDF_STATUS_E_FAULT;
 	}
@@ -1130,7 +1130,7 @@ QDF_STATUS cds_regulatory_init(void)
 
 	ret_val = cds_fill_some_regulatory_info(reg_info);
 	if (ret_val) {
-		cdf_print(KERN_ERR "Error in getting country code\n");
+		qdf_print(KERN_ERR "Error in getting country code\n");
 		return ret_val;
 	}
 
@@ -1154,7 +1154,7 @@ QDF_STATUS cds_regulatory_init(void)
 QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain)
 {
 	if (reg_domain >= REGDOMAIN_COUNT) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "CDS set reg domain, invalid REG domain ID %d",
 			  reg_domain);
 		return QDF_STATUS_E_INVAL;
@@ -1174,9 +1174,9 @@ QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain)
 void cds_set_ch_params(uint8_t ch, uint32_t phy_mode,
 		chan_params_t *ch_params)
 {
-	tHalHandle *hal_ctx = cds_get_context(CDF_MODULE_ID_PE);
+	tHalHandle *hal_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (!hal_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			("Invalid hal_ctx pointer"));
 		return;
 	}

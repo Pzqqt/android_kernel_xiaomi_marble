@@ -38,7 +38,7 @@
 #include "cds_mq.h"
 #include "cds_api.h"
 #include "msg.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include <wlan_ptt_sock_svc.h>
 
 enum wlan_hdd_ftm_state {

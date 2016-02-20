@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -75,7 +75,7 @@ uint8_t ol_defrag_timeout_check(void)
  * Many of these should actually be determined dynamically instead.
  */
 
-ol_pdev_handle ol_pdev_cfg_attach(cdf_device_t osdev,
+ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 				  struct txrx_pdev_cfg_param_t cfg_param)
 {
 	struct txrx_pdev_cfg_t *cfg_ctx;

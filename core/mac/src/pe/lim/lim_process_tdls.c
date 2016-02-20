@@ -92,7 +92,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 		tSirTdlsAddStaReq * pAddStaReq, tpPESession psessionEntry);
 void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			       tDot11fIELinkIdentifier *linkIden,
-			       struct cdf_mac_addr peer_mac, uint8_t reqType);
+			       struct qdf_mac_addr peer_mac, uint8_t reqType);
 void populate_dot11f_tdls_ext_capability(tpAniSirGlobal pMac,
 					 tpPESession psessionEntry,
 					 tDot11fIEExtCap *extCapability);
@@ -344,7 +344,7 @@ QDF_STATUS lim_mgmt_tx_complete(tpAniSirGlobal pMac, uint32_t txCompleteSuccess)
  * We are not differentiating it here, it will all depnds on peer MAC address,
  */
 tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
-					  struct cdf_mac_addr peer_mac,
+					  struct qdf_mac_addr peer_mac,
 					  uint8_t dialog,
 					  tpPESession psessionEntry)
 {
@@ -593,7 +593,7 @@ static void populate_dot11f_tdls_ht_vht_cap(tpAniSirGlobal pMac,
  */
 
 static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
-						 struct cdf_mac_addr peer_mac,
+						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 tpPESession psessionEntry,
 						 uint8_t *addIe,
@@ -814,7 +814,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
  * lim_send_tdls_setup_rsp_frame to populate the AID if device is 11ac capable.
  */
 static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mode,
-				       struct cdf_mac_addr peerMac,
+				       struct qdf_mac_addr peerMac,
 				       tDot11fIEAID *Aid,
 				       tpPESession psessionEntry)
 {
@@ -853,7 +853,7 @@ static void populate_dotf_tdls_vht_aid(tpAniSirGlobal pMac, uint32_t selfDot11Mo
  */
 
 tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
-						 struct cdf_mac_addr peer_mac,
+						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 tpPESession psessionEntry,
 						 uint8_t *addIe,
@@ -1135,7 +1135,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
  */
 
 tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
-					   struct cdf_mac_addr peer_mac,
+					   struct qdf_mac_addr peer_mac,
 					   uint16_t reason,
 					   uint8_t responder,
 					   tpPESession psessionEntry,
@@ -1335,7 +1335,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
  * Send Setup RSP frame on AP link.
  */
 static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
-						   struct cdf_mac_addr peer_mac,
+						   struct qdf_mac_addr peer_mac,
 						   uint8_t dialog,
 						   tpPESession psessionEntry,
 						   etdlsLinkSetupStatus setupStatus,
@@ -1614,7 +1614,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
  */
 
 tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
-						 struct cdf_mac_addr peer_mac,
+						 struct qdf_mac_addr peer_mac,
 						 uint8_t dialog,
 						 uint32_t peerCapability,
 						 tpPESession psessionEntry,
@@ -2442,7 +2442,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
  * Del STA, after Link is teardown or discovery response sent on direct link
  */
 static tpDphHashNode lim_tdls_del_sta(tpAniSirGlobal pMac,
-				      struct cdf_mac_addr peerMac,
+				      struct qdf_mac_addr peerMac,
 				      tpPESession psessionEntry)
 {
 	tSirRetStatus status = eSIR_SUCCESS;
@@ -2495,7 +2495,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	}
 	if (peerMac) {
 		cdf_mem_copy(addStaRsp->peermac.bytes,
-			     (uint8_t *) peerMac, CDF_MAC_ADDR_SIZE);
+			     (uint8_t *) peerMac, QDF_MAC_ADDR_SIZE);
 	}
 	if (updateSta)
 		addStaRsp->tdlsAddOper = TDLS_OPER_UPDATE;
@@ -2668,7 +2668,7 @@ void populate_dot11f_tdls_offchannel_params(tpAniSirGlobal pMac,
 
 void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 			       tDot11fIELinkIdentifier *linkIden,
-			       struct cdf_mac_addr peer_mac, uint8_t reqType)
+			       struct qdf_mac_addr peer_mac, uint8_t reqType)
 {
 	uint8_t *initStaAddr = NULL;
 	uint8_t *respStaAddr = NULL;
@@ -2678,13 +2678,13 @@ void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 	: ((respStaAddr = linkIden->InitStaAddr),
 	   (initStaAddr = linkIden->RespStaAddr));
 	cdf_mem_copy((uint8_t *) linkIden->bssid,
-		     (uint8_t *) psessionEntry->bssId, CDF_MAC_ADDR_SIZE);
+		     (uint8_t *) psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
 
 	cdf_mem_copy((uint8_t *) initStaAddr,
-		     psessionEntry->selfMacAddr, CDF_MAC_ADDR_SIZE);
+		     psessionEntry->selfMacAddr, QDF_MAC_ADDR_SIZE);
 
 	cdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	linkIden->present = 1;
 	return;
@@ -2754,7 +2754,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(session_entry)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			  FL("send mgmt received in wrong system Role %d"),
 			  GET_LIM_SYSTEM_ROLE(session_entry));
 		goto lim_tdls_send_mgmt_error;
@@ -2847,7 +2847,7 @@ lim_tdls_send_mgmt_error:
  */
 void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 					      uint8_t sessionId,
-					      struct cdf_mac_addr *peermac,
+					      struct qdf_mac_addr *peermac,
 					      tDphHashNode *pStaDs, uint8_t status)
 {
 	tSirMsgQ mmhMsg = { 0 };
@@ -2878,7 +2878,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
  */
 static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 						uint8_t sessionId,
-						struct cdf_mac_addr peerMac,
+						struct qdf_mac_addr peerMac,
 						tDphHashNode *pStaDs, uint8_t status)
 {
 	tSirMsgQ mmhMsg = { 0 };
@@ -2937,7 +2937,7 @@ tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			  "send mgmt received in wrong system Role %d",
 			  GET_LIM_SYSTEM_ROLE(psessionEntry));
 		goto lim_tdls_add_sta_error;
@@ -3005,7 +3005,7 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			  "Del sta received in wrong system Role %d",
 			  GET_LIM_SYSTEM_ROLE(psessionEntry));
 		goto lim_tdls_del_sta_error;
@@ -3103,13 +3103,13 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 	uint32_t self_num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	uint8_t self_supp_chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 		  FL("Send Mgmt Recieved"));
 
 	session_entry = pe_find_session_by_bssid(mac_ctx, tdls_req->bssid.bytes,
 						 &session_id);
 	if (NULL == session_entry) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			  FL("PE Session does not exist for sme session_id %d"),
 			  tdls_req->sessionId);
 		lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
@@ -3120,7 +3120,7 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(session_entry)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			  FL("TDLS Link Establish Request received in wrong system Role %d"),
 			  GET_LIM_SYSTEM_ROLE(session_entry));
 		goto lim_tdls_link_establish_error;

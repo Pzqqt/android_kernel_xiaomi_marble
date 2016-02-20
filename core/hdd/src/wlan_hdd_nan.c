@@ -68,7 +68,7 @@ static int __wlan_hdd_cfg80211_nan_request(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -224,9 +224,9 @@ typedef struct sDphHashNode {
 	uint16_t pmfSaQueryCurrentTransId;
 	uint16_t pmfSaQueryStartTransId;
 	TX_TIMER pmfSaQueryTimer;
-	v_TIME_t last_unprot_deauth_disassoc;
+	unsigned long last_unprot_deauth_disassoc;
 	uint8_t proct_deauh_disassoc_cnt;
-	v_TIME_t last_assoc_received_time;
+	unsigned long last_assoc_received_time;
 #endif
 	uint8_t htLdpcCapable;
 	uint8_t vhtLdpcCapable;

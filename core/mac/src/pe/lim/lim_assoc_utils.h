@@ -68,7 +68,7 @@ tSirRetStatus lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 					 uint8_t *pSupportedMCSSet,
 					 uint8_t basicOnly,
 					 tpPESession psessionEntry,
-					 tDot11fIEVHTCaps *pVHTCaps);
+					 tDot11fIEVHTCaps * pVHTCaps);
 #else
 tSirRetStatus lim_populate_peer_rate_set(tpAniSirGlobal pMac,
 					 tpSirSupportedRates pRates,
@@ -83,7 +83,7 @@ tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
 					uint8_t *pSupportedMCSSet,
 					uint8_t basicOnly,
 					tpPESession psessionEntry,
-					tDot11fIEVHTCaps *pVHTCaps);
+					tDot11fIEVHTCaps * pVHTCaps);
 
 #else
 tSirRetStatus lim_populate_own_rate_set(tpAniSirGlobal pMac,
@@ -101,7 +101,7 @@ lim_populate_matching_rate_set(tpAniSirGlobal pMac,
 			       tSirMacRateSet *pExtRateSet,
 			       uint8_t *pSupportedMCSSet,
 			       tpPESession psessionEntry,
-			       tDot11fIEVHTCaps *pVHTCaps);
+			       tDot11fIEVHTCaps * pVHTCaps);
 #else
 tSirRetStatus lim_populate_matching_rate_set(tpAniSirGlobal,
 					     tpDphHashNode,
@@ -134,7 +134,7 @@ void lim_post_reassoc_failure(tpAniSirGlobal,
 			      tSirResultCodes, uint16_t, tpPESession);
 bool lim_is_reassoc_in_progress(tpAniSirGlobal, tpPESession);
 void
-lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct cdf_mac_addr sta_dsaddr,
+lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
 		     tSirResultCodes statusCode, tpPESession psessionEntry);
 

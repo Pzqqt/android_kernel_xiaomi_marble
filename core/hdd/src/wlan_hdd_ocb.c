@@ -546,7 +546,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 			/* Save the mac address to release later */
 			cdf_mem_copy(adapter->ocb_mac_address[
 				     adapter->ocb_mac_addr_count].bytes,
-				     mac_addr, CDF_MAC_ADDR_SIZE);
+				     mac_addr, QDF_MAC_ADDR_SIZE);
 			adapter->ocb_mac_addr_count++;
 		}
 
@@ -886,7 +886,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 				goto fail;
 			}
 			cdf_mem_copy(config->channels[i].mac_address.bytes,
-				mac_addr, CDF_MAC_ADDR_SIZE);
+				mac_addr, QDF_MAC_ADDR_SIZE);
 			/* Save the mac address to release later */
 			cdf_copy_macaddr(&adapter->ocb_mac_address[
 				     adapter->ocb_mac_addr_count],

@@ -37,7 +37,7 @@
 #include <linux/netdevice.h>
 #include <linux/etherdevice.h>
 #include <linux/dma-mapping.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 
 /*
@@ -331,17 +331,17 @@ typedef void (*cdf_nbuf_trace_update_t)(char *);
 /*
  * prototypes. Implemented in cdf_nbuf.c
  */
-__cdf_nbuf_t __cdf_nbuf_alloc(__cdf_device_t osdev, size_t size, int reserve,
+__cdf_nbuf_t __cdf_nbuf_alloc(__qdf_device_t osdev, size_t size, int reserve,
 			      int align, int prio);
 void __cdf_nbuf_free(struct sk_buff *skb);
-QDF_STATUS __cdf_nbuf_map(__cdf_device_t osdev,
-			  struct sk_buff *skb, cdf_dma_dir_t dir);
-void __cdf_nbuf_unmap(__cdf_device_t osdev,
-		      struct sk_buff *skb, cdf_dma_dir_t dir);
-QDF_STATUS __cdf_nbuf_map_single(__cdf_device_t osdev,
-				 struct sk_buff *skb, cdf_dma_dir_t dir);
-void __cdf_nbuf_unmap_single(__cdf_device_t osdev,
-			     struct sk_buff *skb, cdf_dma_dir_t dir);
+QDF_STATUS __cdf_nbuf_map(__qdf_device_t osdev,
+			  struct sk_buff *skb, qdf_dma_dir_t dir);
+void __cdf_nbuf_unmap(__qdf_device_t osdev,
+		      struct sk_buff *skb, qdf_dma_dir_t dir);
+QDF_STATUS __cdf_nbuf_map_single(__qdf_device_t osdev,
+				 struct sk_buff *skb, qdf_dma_dir_t dir);
+void __cdf_nbuf_unmap_single(__qdf_device_t osdev,
+			     struct sk_buff *skb, qdf_dma_dir_t dir);
 void __cdf_nbuf_reg_trace_cb(cdf_nbuf_trace_update_t cb_func_ptr);
 
 #ifdef QCA_PKT_PROTO_TRACE
@@ -825,8 +825,8 @@ __cdf_nbuf_set_protocol(struct sk_buff *skb, uint16_t protocol)
 	NBUF_CB_TX_HL_HTT2_FRM(skb)
 
 #if defined(FEATURE_TSO)
-uint32_t __cdf_nbuf_get_tso_info(cdf_device_t osdev, struct sk_buff *skb,
-	struct cdf_tso_info_t *tso_info);
+uint32_t __cdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
+	struct qdf_tso_info_t *tso_info);
 
 uint32_t __cdf_nbuf_get_tso_num_seg(struct sk_buff *skb);
 

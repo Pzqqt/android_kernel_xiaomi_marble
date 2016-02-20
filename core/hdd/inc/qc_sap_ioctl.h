@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -109,7 +109,7 @@ struct sQcSapreq_wscie {
  * Retrieve the WPS PBC Probe Request IEs.
  */
 typedef struct sQcSapreq_WPSPBCProbeReqIES {
-	struct cdf_mac_addr macaddr;
+	struct qdf_mac_addr macaddr;
 	uint16_t probeReqIELen;
 	uint8_t probeReqIE[512];
 } sQcSapreq_WPSPBCProbeReqIES_t;

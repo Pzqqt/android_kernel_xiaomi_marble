@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@ void sch_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 	/* extracting arguments from pstring */
 	va_start(marker, pString);
 	vsnprintf(logBuffer, LOG_SIZE, pString, marker);
-	CDF_TRACE(CDF_MODULE_ID_PE, cdf_debug_level, "%s", logBuffer);
+	CDF_TRACE(QDF_MODULE_ID_PE, cdf_debug_level, "%s", logBuffer);
 	va_end(marker);
 }
 

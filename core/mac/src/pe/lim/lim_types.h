@@ -309,7 +309,7 @@ typedef struct sLimMlmAuthCnf {
 } tLimMlmAuthCnf, *tpLimMlmAuthCnf;
 
 typedef struct sLimMlmDeauthReq {
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	uint16_t deauthTrigger;
 	uint16_t aid;
@@ -318,7 +318,7 @@ typedef struct sLimMlmDeauthReq {
 } tLimMlmDeauthReq, *tpLimMlmDeauthReq;
 
 typedef struct sLimMlmDeauthCnf {
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	tSirResultCodes resultCode;
 	uint16_t deauthTrigger;
 	uint16_t aid;
@@ -333,7 +333,7 @@ typedef struct sLimMlmDeauthInd {
 } tLimMlmDeauthInd, *tpLimMlmDeauthInd;
 
 typedef struct sLimMlmDisassocReq {
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	uint16_t disassocTrigger;
 	uint16_t aid;
@@ -371,7 +371,7 @@ typedef struct sLimMlmPurgeStaInd {
 } tLimMlmPurgeStaInd, *tpLimMlmPurgeStaInd;
 
 typedef struct sLimMlmSetKeysCnf {
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint16_t resultCode;
 	uint16_t aid;
 	uint8_t sessionId;
@@ -799,13 +799,13 @@ void
 lim_send_vdev_restart(tpAniSirGlobal pMac, tpPESession psessionEntry,
 		      uint8_t sessionId);
 
-void lim_get_wpspbc_sessions(tpAniSirGlobal pMac, struct cdf_mac_addr addr,
+void lim_get_wpspbc_sessions(tpAniSirGlobal pMac, struct qdf_mac_addr addr,
 			uint8_t *uuid_e, eWPSPBCOverlap *overlap,
 			tpPESession psessionEntry);
 void limWPSPBCTimeout(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_wpspbc_close(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_remove_pbc_sessions(tpAniSirGlobal pMac,
-				struct cdf_mac_addr pRemoveMac,
+				struct qdf_mac_addr pRemoveMac,
 				tpPESession psessionEntry);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000

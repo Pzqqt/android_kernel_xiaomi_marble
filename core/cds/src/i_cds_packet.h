@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __I_CDS_PACKET_H )
+#if !defined(__I_CDS_PACKET_H)
 #define __I_CDS_PACKET_H
 
 /**=========================================================================
@@ -41,7 +41,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include "cdf_types.h"
+#include "qdf_types.h"
 /**
  * Rx Packet Struct
  * Buffer for the packet received from WMA has pointers to 802.11
@@ -76,9 +76,9 @@ typedef struct {
 	uint32_t mpdu_len;
 	uint32_t mpdu_hdr_len;
 	uint32_t mpdu_data_len;
-	uint8_t offloadScanLearn : 1;
-	uint8_t roamCandidateInd : 1;
-	uint8_t scan : 1;
+	uint8_t offloadScanLearn:1;
+	uint8_t roamCandidateInd:1;
+	uint8_t scan:1;
 	uint8_t scan_src;
 	uint8_t dpuFeedback;
 	uint8_t sessionId;

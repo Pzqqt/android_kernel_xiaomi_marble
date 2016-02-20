@@ -731,7 +731,7 @@ void mac_trace(tpAniSirGlobal mac_ctx, uint8_t code,
 	 * Today mac_trace is being invoked by PE only, need to remove this
 	 * function once PE is migrated to using new trace API.
 	 */
-	mac_trace_new(mac_ctx, CDF_MODULE_ID_PE, code, session, data);
+	mac_trace_new(mac_ctx, QDF_MODULE_ID_PE, code, session, data);
 }
 
 /**

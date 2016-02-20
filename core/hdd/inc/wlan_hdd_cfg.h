@@ -40,7 +40,7 @@
 /* Include files */
 #include <wlan_hdd_includes.h>
 #include <wlan_hdd_wmm.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <csr_api.h>
 #include <sap_api.h>
 #include <wmi_unified.h>
@@ -2911,11 +2911,11 @@ struct hdd_config {
 	uint32_t nScanAgeTimeCPS;
 	uint8_t nRssiCatGap;
 	bool fIsShortPreamble;
-	struct cdf_mac_addr IbssBssid;
+	struct qdf_mac_addr IbssBssid;
 	uint32_t AdHocChannel5G;
 	uint32_t AdHocChannel24G;
 	uint8_t intfAddrMask;
-	struct cdf_mac_addr intfMacAddr[CDF_MAX_CONCURRENCY_PERSONA];
+	struct qdf_mac_addr intfMacAddr[QDF_MAX_CONCURRENCY_PERSONA];
 
 	bool apUapsdEnabled;
 	bool apRandomBssidEnabled;

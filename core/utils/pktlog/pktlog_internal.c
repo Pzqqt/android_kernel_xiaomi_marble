@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -439,7 +439,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 			cdf_nbuf_peek_header(netbuf, &addr, &len);
 
 			if (len < (2 * IEEE80211_ADDR_LEN)) {
-				cdf_print("TX frame does not have a valid"
+				qdf_print("TX frame does not have a valid"
 					  " address\n");
 				return -1;
 			}
@@ -589,11 +589,11 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	uint32_t *pl_tgt_hdr;
 
 	if (!pdev) {
-		cdf_print("Invalid pdev in %s\n", __func__);
+		qdf_print("Invalid pdev in %s\n", __func__);
 		return A_ERROR;
 	}
 	if (!data) {
-		cdf_print("Invalid data in %s\n", __func__);
+		qdf_print("Invalid data in %s\n", __func__);
 		return A_ERROR;
 	}
 

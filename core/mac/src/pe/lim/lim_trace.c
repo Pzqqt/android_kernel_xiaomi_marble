@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -82,7 +82,7 @@ static uint8_t *__lim_trace_get_timer_string(uint16_t timerId)
 		CASE_RETURN_STRING(eLIM_INSERT_SINGLESHOT_NOA_TIMER);
 		CASE_RETURN_STRING(eLIM_CONVERT_ACTIVE_CHANNEL_TO_PASSIVE);
 	default:
-		return ("UNKNOWN");
+		return "UNKNOWN";
 		break;
 	}
 }
@@ -99,14 +99,14 @@ static uint8_t *__lim_trace_get_mgmt_drop_reason_string(uint16_t dropReason)
 		CASE_RETURN_STRING(eMGMT_DROP_SCAN_MODE_FRAME);
 
 	default:
-		return ("UNKNOWN");
+		return "UNKNOWN";
 		break;
 	}
 }
 
 void lim_trace_init(tpAniSirGlobal pMac)
 {
-	cdf_trace_register(CDF_MODULE_ID_PE, (tp_cdf_trace_cb) & lim_trace_dump);
+	cdf_trace_register(QDF_MODULE_ID_PE, (tp_cdf_trace_cb) &lim_trace_dump);
 }
 
 void lim_trace_dump(tpAniSirGlobal pMac, tp_cdf_trace_record pRecord,
@@ -440,7 +440,7 @@ uint8_t *lim_trace_get_mlm_state_string(uint32_t mlmState)
 		CASE_RETURN_STRING(eLIM_MLM_WT_SET_STA_BCASTKEY_STATE);
 		CASE_RETURN_STRING(eLIM_MLM_WT_SET_MIMOPS_STATE);
 	default:
-		return ("UNKNOWN");
+		return "UNKNOWN";
 		break;
 	}
 }
@@ -472,7 +472,7 @@ uint8_t *lim_trace_get_sme_state_string(uint32_t smeState)
 		CASE_RETURN_STRING(eLIM_SME_CHANNEL_SCAN_STATE);
 		CASE_RETURN_STRING(eLIM_SME_NORMAL_CHANNEL_SCAN_STATE);
 	default:
-		return ("UNKNOWN");
+		return "UNKNOWN";
 		break;
 	}
 }

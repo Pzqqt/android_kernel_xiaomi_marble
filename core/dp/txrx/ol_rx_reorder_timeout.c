@@ -172,7 +172,7 @@ void ol_rx_reorder_timeout_init(struct ol_txrx_pdev_t *pdev)
 {
 	int i;
 
-	for (i = 0; i < CDF_ARRAY_SIZE(pdev->rx.reorder_timeout.access_cats);
+	for (i = 0; i < QDF_ARRAY_SIZE(pdev->rx.reorder_timeout.access_cats);
 		i++) {
 		struct ol_tx_reorder_cat_timeout_t *rx_reorder_timeout_ac;
 		rx_reorder_timeout_ac =
@@ -206,7 +206,7 @@ void ol_rx_reorder_timeout_cleanup(struct ol_txrx_pdev_t *pdev)
 {
 	int i;
 
-	for (i = 0; i < CDF_ARRAY_SIZE(pdev->rx.reorder_timeout.access_cats);
+	for (i = 0; i < QDF_ARRAY_SIZE(pdev->rx.reorder_timeout.access_cats);
 		i++) {
 		struct ol_tx_reorder_cat_timeout_t *rx_reorder_timeout_ac;
 		rx_reorder_timeout_ac =

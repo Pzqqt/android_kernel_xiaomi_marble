@@ -39,7 +39,7 @@
 #include "cdf_lock.h"
 #include "cdf_memory.h"
 #include "cdf_trace.h"
-#include <cdf_types.h>
+#include <qdf_types.h>
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
@@ -89,19 +89,19 @@ QDF_STATUS cdf_mutex_init(cdf_mutex_t *lock)
 {
 	/* check for invalid pointer */
 	if (lock == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 	/* check for 'already initialized' lock */
 	if (LINUX_LOCK_COOKIE == lock->cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: already initialized lock", __func__);
 		return QDF_STATUS_E_BUSY;
 	}
 
 	if (in_interrupt()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
@@ -135,21 +135,21 @@ QDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 	int rc;
 	/* check for invalid pointer */
 	if (lock == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
 	}
 	/* check if lock refers to an initialized object */
 	if (LINUX_LOCK_COOKIE != lock->cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: uninitialized lock", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (in_interrupt()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		CDF_ASSERT(0);
@@ -159,7 +159,7 @@ QDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 		(lock->state == LOCK_ACQUIRED)) {
 		lock->refcount++;
 #ifdef CDF_NESTED_LOCK_DEBUG
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 			  "%s: %x %d %d", __func__, lock, current->pid,
 			  lock->refcount);
 #endif
@@ -169,13 +169,13 @@ QDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 	mutex_lock(&lock->m_lock);
 	rc = mutex_is_locked(&lock->m_lock);
 	if (rc == 0) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: unable to lock mutex (rc = %d)", __func__, rc);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 #ifdef CDF_NESTED_LOCK_DEBUG
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "%s: %x %d", __func__, lock, current->pid);
 #endif
 	if (LOCK_DESTROYED != lock->state) {
@@ -185,7 +185,7 @@ QDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock)
 		return QDF_STATUS_SUCCESS;
 	} else {
 		/* lock is already destroyed */
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Lock is already destroyed", __func__);
 		mutex_unlock(&lock->m_lock);
 		CDF_ASSERT(0);
@@ -211,7 +211,7 @@ QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 {
 	/* check for invalid pointer */
 	if (lock == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
@@ -219,14 +219,14 @@ QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 
 	/* check if lock refers to an uninitialized object */
 	if (LINUX_LOCK_COOKIE != lock->cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: uninitialized lock", __func__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (in_interrupt()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		CDF_ASSERT(0);
@@ -238,11 +238,11 @@ QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 	 * of the thread which acquire the lock
 	 */
 	if (lock->processID != current->pid) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: current task pid does not match original task pid!!",
 			  __func__);
 #ifdef CDF_NESTED_LOCK_DEBUG
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 			  "%s: Lock held by=%d being released by=%d",
 			  __func__, lock->processID, current->pid);
 #endif
@@ -255,7 +255,7 @@ QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 			lock->refcount--;
 	}
 #ifdef CDF_NESTED_LOCK_DEBUG
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "%s: %x %d %d", __func__, lock, lock->processID,
 		  lock->refcount);
 #endif
@@ -268,7 +268,7 @@ QDF_STATUS cdf_mutex_release(cdf_mutex_t *lock)
 	/* release a Lock */
 	mutex_unlock(&lock->m_lock);
 #ifdef CDF_NESTED_LOCK_DEBUG
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "%s: Freeing lock %x %d %d", lock, lock->processID,
 		  lock->refcount);
 #endif
@@ -298,19 +298,19 @@ QDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock)
 {
 	/* check for invalid pointer */
 	if (NULL == lock) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: NULL pointer passed in", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
 
 	if (LINUX_LOCK_COOKIE != lock->cookie) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: uninitialized lock", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (in_interrupt()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		return QDF_STATUS_E_FAULT;
@@ -318,7 +318,7 @@ QDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock)
 
 	/* check if lock is released */
 	if (!mutex_trylock(&lock->m_lock)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: lock is not released", __func__);
 		return QDF_STATUS_E_BUSY;
 	}
@@ -509,11 +509,11 @@ QDF_STATUS cdf_runtime_pm_get(void)
 	void *ol_sc;
 	int ret;
 
-	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+	ol_sc = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (ol_sc == NULL) {
 		CDF_ASSERT(0);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -541,11 +541,11 @@ QDF_STATUS cdf_runtime_pm_put(void)
 	void *ol_sc;
 	int ret;
 
-	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+	ol_sc = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (ol_sc == NULL) {
 		CDF_ASSERT(0);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -571,11 +571,11 @@ QDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock)
 	void *ol_sc;
 	int ret;
 
-	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+	ol_sc = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (ol_sc == NULL) {
 		CDF_ASSERT(0);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -601,11 +601,11 @@ QDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock)
 	void *ol_sc;
 	int ret;
 
-	ol_sc = cds_get_context(CDF_MODULE_ID_HIF);
+	ol_sc = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (ol_sc == NULL) {
 		CDF_ASSERT(0);
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: HIF context is null!", __func__);
 		return QDF_STATUS_E_INVAL;
 	}

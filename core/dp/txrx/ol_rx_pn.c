@@ -329,12 +329,12 @@ void ol_rx_pn_trace_display(ol_txrx_pdev_handle pdev, int just_once)
 	}
 
 	i = start;
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 		  "                                 seq     PN");
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 		  "   count  idx    peer   tid uni  num    LSBs");
 	do {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 			  "  %6lld %4d  %p %2d   %d %4d %8d",
 			  cnt, i,
 			  pdev->rx_pn_trace.data[i].peer,

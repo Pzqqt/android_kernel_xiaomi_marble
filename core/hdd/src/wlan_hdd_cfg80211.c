@@ -60,7 +60,7 @@
 #include "wlan_hdd_main.h"
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_trace.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_trace.h"
 #include "cds_utils.h"
 #include "cds_sched.h"
@@ -671,7 +671,7 @@ static int __wlan_hdd_cfg80211_get_tdls_capabilities(struct wiphy *wiphy,
 	struct sk_buff *skb;
 	uint32_t set = 0;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1106,7 +1106,7 @@ static int __is_driver_dfs_capable(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1346,7 +1346,7 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 	acs_event_callback = hdd_hostapd_sap_event_cb;
 
 	cdf_mem_copy(sap_config->self_macaddr.bytes,
-		adapter->macAddressCurrent.bytes, sizeof(struct cdf_mac_addr));
+		adapter->macAddressCurrent.bytes, sizeof(struct qdf_mac_addr));
 	hddLog(LOG1, FL("ACS Started for wlan%d"), adapter->dev->ifindex);
 	status = wlansap_acs_chselect(
 #ifdef WLAN_FEATURE_MBSSID
@@ -1413,7 +1413,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 	 * [QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST] = { .type = NLA_NESTED },
 	 */
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1802,7 +1802,7 @@ __wlan_hdd_cfg80211_get_supported_features(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1943,7 +1943,7 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2068,7 +2068,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2187,7 +2187,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 	uint32_t buf_len = 0;
 	int ret;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2379,7 +2379,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 			}
 			nla_memcpy(roam_params.bssid_favored[i].bytes,
 				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_LAZY_ROAM_BSSID],
-				CDF_MAC_ADDR_SIZE);
+				QDF_MAC_ADDR_SIZE);
 			hdd_debug(MAC_ADDRESS_STR,
 			    MAC_ADDR_ARRAY(roam_params.bssid_favored[i].bytes));
 			/* Parse and fetch preference factor*/
@@ -2424,7 +2424,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 			}
 			nla_memcpy(roam_params.bssid_avoid_list[i].bytes,
 				tb2[QCA_WLAN_VENDOR_ATTR_ROAMING_PARAM_SET_BSSID_PARAMS_BSSID],
-				CDF_MAC_ADDR_SIZE);
+				QDF_MAC_ADDR_SIZE);
 			hdd_debug(MAC_ADDRESS_STR,
 				MAC_ADDR_ARRAY(
 				roam_params.bssid_avoid_list[i].bytes));
@@ -2717,7 +2717,7 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	hdd_context_t *hdd_ctx_ptr;
 	int status;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2806,7 +2806,7 @@ __wlan_hdd_cfg80211_get_wifi_info(struct wiphy *wiphy,
 	int status;
 	struct sk_buff *reply_skb = NULL;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -2903,7 +2903,7 @@ __wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
 	uint32_t features;
 	struct sk_buff *reply_skb = NULL;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3137,7 +3137,7 @@ __wlan_hdd_cfg80211_wifi_configuration_set(struct wiphy *wiphy,
 	u32 guard_time;
 	QDF_STATUS status;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3256,7 +3256,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_start(struct wiphy *wiphy,
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_START_MAX + 1];
 	struct sir_wifi_start_log start_log;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3380,7 +3380,7 @@ static int __wlan_hdd_cfg80211_wifi_logger_get_ring_data(struct wiphy *wiphy,
 	struct nlattr *tb
 		[QCA_WLAN_VENDOR_ATTR_WIFI_LOGGER_GET_RING_DATA_MAX + 1];
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -3556,7 +3556,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	QDF_STATUS status;
 	uint32_t request_id, ret, len;
 	uint8_t pattern_id = 0;
-	struct cdf_mac_addr dst_addr;
+	struct qdf_mac_addr dst_addr;
 	uint16_t eth_type = htons(ETH_P_IP);
 
 	if (!hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
@@ -3599,7 +3599,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		goto fail;
 	}
 	nla_memcpy(add_req->mac_address.bytes, tb[PARAM_SRC_MAC_ADDR],
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 	hddLog(LOG1, "input src mac address: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(add_req->mac_address.bytes));
 
@@ -3613,7 +3613,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		hddLog(LOGE, FL("attr dst mac address failed"));
 		goto fail;
 	}
-	nla_memcpy(dst_addr.bytes, tb[PARAM_DST_MAC_ADDR], CDF_MAC_ADDR_SIZE);
+	nla_memcpy(dst_addr.bytes, tb[PARAM_DST_MAC_ADDR], QDF_MAC_ADDR_SIZE);
 	hddLog(LOG1, "input dst mac address: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(dst_addr.bytes));
 
@@ -3633,11 +3633,11 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	}
 
 	len = 0;
-	cdf_mem_copy(&add_req->ucPattern[0], dst_addr.bytes, CDF_MAC_ADDR_SIZE);
-	len += CDF_MAC_ADDR_SIZE;
+	cdf_mem_copy(&add_req->ucPattern[0], dst_addr.bytes, QDF_MAC_ADDR_SIZE);
+	len += QDF_MAC_ADDR_SIZE;
 	cdf_mem_copy(&add_req->ucPattern[len], add_req->mac_address.bytes,
-			CDF_MAC_ADDR_SIZE);
-	len += CDF_MAC_ADDR_SIZE;
+			QDF_MAC_ADDR_SIZE);
+	len += QDF_MAC_ADDR_SIZE;
 	cdf_mem_copy(&add_req->ucPattern[len], &eth_type, 2);
 	len += 2;
 
@@ -3766,15 +3766,15 @@ __wlan_hdd_cfg80211_offloaded_packets(struct wiphy *wiphy,
 			[PARAM_REQUEST_ID] = { .type = NLA_U32 },
 			[PARAM_CONTROL] = { .type = NLA_U32 },
 			[PARAM_SRC_MAC_ADDR] = { .type = NLA_BINARY,
-						.len = CDF_MAC_ADDR_SIZE },
+						.len = QDF_MAC_ADDR_SIZE },
 			[PARAM_DST_MAC_ADDR] = { .type = NLA_BINARY,
-						.len = CDF_MAC_ADDR_SIZE },
+						.len = QDF_MAC_ADDR_SIZE },
 			[PARAM_PERIOD] = { .type = NLA_U32 },
 	};
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -4317,7 +4317,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_station_ctx_t *hdd_sta_ctx;
 	struct nlattr *tb[QCA_WLAN_VENDOR_ATTR_MAX+1];
-	uint8_t peer_mac[CDF_MAC_ADDR_SIZE];
+	uint8_t peer_mac[QDF_MAC_ADDR_SIZE];
 	uint32_t sta_id;
 	struct sk_buff *reply_skb;
 	uint32_t rate_flags = 0;
@@ -4327,7 +4327,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -4349,7 +4349,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 	}
 
 	cdf_mem_copy(peer_mac, nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	hddLog(CDF_TRACE_LEVEL_INFO,
 	       FL("peerMac="MAC_ADDRESS_STR" for device_mode:%d"),
 	       MAC_ADDR_ARRAY(peer_mac), adapter->device_mode);
@@ -4360,7 +4360,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		if ((hdd_sta_ctx->conn_info.connState !=
 			eConnectionState_Associated) ||
 		    !cdf_mem_compare(hdd_sta_ctx->conn_info.bssId.bytes,
-			peer_mac, CDF_MAC_ADDR_SIZE)) {
+			peer_mac, QDF_MAC_ADDR_SIZE)) {
 			hddLog(CDF_TRACE_LEVEL_ERROR,
 			       FL("Not Associated to mac "MAC_ADDRESS_STR),
 			       MAC_ADDR_ARRAY(peer_mac));
@@ -4380,7 +4380,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 				&adapter->aStaInfo[sta_id].macAddrSTA) &&
 			    cdf_mem_compare(
 				&adapter->aStaInfo[sta_id].macAddrSTA.bytes,
-				peer_mac, CDF_MAC_ADDR_SIZE))
+				peer_mac, QDF_MAC_ADDR_SIZE))
 				break;
 		}
 
@@ -4510,7 +4510,7 @@ static int __wlan_hdd_cfg80211_set_ota_test(struct wiphy *wiphy,
 	QDF_STATUS status;
 	uint32_t current_roam_state;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -5368,7 +5368,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 #endif /*FEATURE_WLAN_SCAN_PNO */
 
 #if  defined QCA_WIFI_FTM
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #endif
 
 	/* even with WIPHY_FLAG_CUSTOM_REGULATORY,
@@ -5473,7 +5473,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 	wiphy->signal_type = CFG80211_SIGNAL_TYPE_MBM;
 	wiphy->max_remain_on_channel_duration = MAX_REMAIN_ON_CHANNEL_DURATION;
 
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 		wiphy->n_vendor_commands =
 				ARRAY_SIZE(hdd_wiphy_vendor_commands);
 		wiphy->vendor_commands = hdd_wiphy_vendor_commands;
@@ -5683,7 +5683,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	if (!mac_addr || is_broadcast_ether_addr(mac_addr)) {
 		cdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
-		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, CDF_MAC_ADDR_SIZE);
+		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
 	setKey.keyLength = key_Len;
 	pKeyPtr = setKey.Key;
@@ -5701,7 +5701,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 					  pAdapter->sessionId, &setKey, &roamId);
 	}
 	if (status != 0) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "[%4d] sme_roam_set_key returned ERROR status= %d",
 			  __LINE__, status);
 		pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
@@ -5861,12 +5861,12 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BSS,
 			 pAdapter->sessionId, params->ap_isolate));
 	hddLog(LOG1, FL("Device_mode %s(%d), ap_isolate = %d"),
@@ -6016,7 +6016,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -6026,7 +6026,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 	if (0 != status)
 		return status;
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_IFACE,
 			 pAdapter->sessionId, type));
 
@@ -6120,7 +6120,7 @@ static int __wlan_hdd_cfg80211_change_iface(struct wiphy *wiphy,
 				ndev->dev_addr[3] |= 0xF0;
 				memcpy(pAdapter->macAddressCurrent.
 				       bytes, ndev->dev_addr,
-				       CDF_MAC_ADDR_SIZE);
+				       QDF_MAC_ADDR_SIZE);
 				pr_info("wlan: Generated HotSpot BSSID "
 					MAC_ADDRESS_STR "\n",
 					MAC_ADDR_ARRAY(ndev->dev_addr));
@@ -6301,7 +6301,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx;
 	hdd_station_ctx_t *pHddStaCtx;
-	struct cdf_mac_addr STAMacAddress;
+	struct qdf_mac_addr STAMacAddress;
 #ifdef FEATURE_WLAN_TDLS
 	tCsrStaParams StaParams = { 0 };
 	uint8_t isBufSta = 0;
@@ -6311,12 +6311,12 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CHANGE_STATION,
 			 pAdapter->sessionId, params->listen_interval));
 
@@ -6327,7 +6327,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	cdf_mem_copy(STAMacAddress.bytes, mac, CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(STAMacAddress.bytes, mac, QDF_MAC_ADDR_SIZE);
 
 	if ((pAdapter->device_mode == WLAN_HDD_SOFTAP) ||
 	    (pAdapter->device_mode == WLAN_HDD_P2P_GO)) {
@@ -6358,7 +6358,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 			 * are an incremental of 1 else an incremental of 4 till the number
 			 * of channels.
 			 */
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 				  "%s: params->supported_channels_len: %d",
 				  __func__, params->supported_channels_len);
 			if (0 != params->supported_channels_len) {
@@ -6385,7 +6385,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 					no_of_channels =
 						params->supported_channels[i + 1];
 
-					CDF_TRACE(CDF_MODULE_ID_HDD,
+					CDF_TRACE(QDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_INFO,
 						  "%s: i: %d, j: %d, k: %d, StaParams.supported_channels[%d]: %d, wifi_chan_index: %d, no_of_channels: %d",
 						  __func__, i, j, k, j,
@@ -6409,7 +6409,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 						} else {
 							continue;
 						}
-						CDF_TRACE(CDF_MODULE_ID_HDD,
+						CDF_TRACE(QDF_MODULE_ID_HDD,
 							  CDF_TRACE_LEVEL_INFO,
 							  "%s: i: %d, j: %d, k: %d, StaParams.supported_channels[%d]: %d",
 							  __func__, i, j, k,
@@ -6421,11 +6421,11 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 					}
 				}
 				num_unique_channels = j + 1;
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: Unique Channel List", __func__);
 				for (i = 0; i < num_unique_channels; i++) {
-					CDF_TRACE(CDF_MODULE_ID_HDD,
+					CDF_TRACE(QDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_INFO,
 						  "%s: StaParams.supported_channels[%d]: %d,",
 						  __func__, i,
@@ -6436,7 +6436,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 					num_unique_channels = MAX_CHANNEL;
 				StaParams.supported_channels_len =
 					num_unique_channels;
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: After removing duplcates StaParams.supported_channels_len: %d",
 					  __func__,
@@ -6480,13 +6480,13 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 				cdf_mem_copy(StaParams.supported_rates,
 					     params->supported_rates,
 					     StaParams.supported_rates_len);
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "Supported Rates with Length %d",
 					  StaParams.supported_rates_len);
 				for (i = 0; i < StaParams.supported_rates_len;
 				     i++)
-					CDF_TRACE(CDF_MODULE_ID_HDD,
+					CDF_TRACE(QDF_MODULE_ID_HDD,
 						  CDF_TRACE_LEVEL_INFO,
 						  "[%d]: %0x", i,
 						  StaParams.supported_rates[i]);
@@ -6594,12 +6594,12 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_ADD_KEY,
 			 pAdapter->sessionId, params->key_len));
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
@@ -6722,16 +6722,16 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 	if (!pairwise) {
 		/* set group key */
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s- %d: setting Broadcast key", __func__, __LINE__);
 		setKey.keyDirection = eSIR_RX_ONLY;
 		cdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
 		/* set pairwise key */
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s- %d: setting pairwise key", __func__, __LINE__);
 		setKey.keyDirection = eSIR_TX_RX;
-		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, CDF_MAC_ADDR_SIZE);
+		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
 	if ((WLAN_HDD_IBSS == pAdapter->device_mode) && !pairwise) {
 		/* if a key is already installed, block all subsequent ones */
@@ -6772,7 +6772,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			status = wlansap_set_key_sta(p_cds_context, &setKey);
 #endif
 			if (status != QDF_STATUS_SUCCESS) {
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "[%4d] wlansap_set_key_sta returned ERROR status= %d",
 					  __LINE__, status);
@@ -6799,7 +6799,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		if (!pairwise) {
 			/* set group key */
 			if (pHddStaCtx->roam_info.deferKeyComplete) {
-				CDF_TRACE(CDF_MODULE_ID_HDD,
+				CDF_TRACE(QDF_MODULE_ID_HDD,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s- %d: Perform Set key Complete",
 					  __func__, __LINE__);
@@ -6926,7 +6926,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -6971,7 +6971,7 @@ static int __wlan_hdd_cfg80211_get_key(struct wiphy *wiphy,
 		break;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_KEY,
 			 pAdapter->sessionId, params.cipher));
 
@@ -7078,12 +7078,12 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_DEFAULT_KEY,
 			 pAdapter->sessionId, key_index));
 
@@ -7422,7 +7422,7 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 			bss_desc->rssi;
 
 	/* Supplicant takes the signal strength in terms of mBm(100*dBm) */
-	rssi = CDF_MIN(rssi, 0) * 100;
+	rssi = QDF_MIN(rssi, 0) * 100;
 
 	hddLog(LOG1, FL("BSSID: " MAC_ADDRESS_STR " Channel:%d RSSI:%d"),
 	       MAC_ADDR_ARRAY(mgmt->bssid), chan->center_freq,
@@ -7494,7 +7494,7 @@ int wlan_hdd_cfg80211_update_bss(struct wiphy *wiphy,
 
 	ENTER();
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_UPDATE_BSS,
 			 NO_SESSION, pAdapter->sessionId));
 
@@ -7850,29 +7850,29 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		if (bssid) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			cdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
-				     bssid, CDF_MAC_ADDR_SIZE);
+				     bssid, QDF_MAC_ADDR_SIZE);
 			/* Save BSSID in seperate variable as well, as RoamProfile
 			   BSSID is getting zeroed out in the association process. And in
 			   case of join failure we should send valid BSSID to supplicant
 			 */
 			cdf_mem_copy((void *)(pWextState->req_bssId.bytes),
-					bssid, CDF_MAC_ADDR_SIZE);
+					bssid, QDF_MAC_ADDR_SIZE);
 		} else if (bssid_hint) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
 			cdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
-						bssid_hint, CDF_MAC_ADDR_SIZE);
+						bssid_hint, QDF_MAC_ADDR_SIZE);
 			/* Save BSSID in separate variable as well, as
 			   RoamProfile BSSID is getting zeroed out in the
 			   association process. And in case of join failure
 			   we should send valid BSSID to supplicant
 			 */
 			cdf_mem_copy((void *)(pWextState->req_bssId.bytes),
-					bssid_hint, CDF_MAC_ADDR_SIZE);
+					bssid_hint, QDF_MAC_ADDR_SIZE);
 			hddLog(LOGW, FL(" bssid_hint "MAC_ADDRESS_STR),
 					MAC_ADDR_ARRAY(bssid_hint));
 		} else {
 			cdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
-				     CDF_MAC_ADDR_SIZE);
+				     QDF_MAC_ADDR_SIZE);
 		}
 
 		hddLog(LOG1, FL("Connect to SSID: %.*s operating Channel: %u"),
@@ -8817,12 +8817,12 @@ static int __wlan_hdd_cfg80211_connect(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CONNECT,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	hddLog(LOG1, FL("Device_mode %s(%d)"),
@@ -9080,12 +9080,12 @@ static int __wlan_hdd_cfg80211_disconnect(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_DISCONNECT,
 			 pAdapter->sessionId, reason));
 	hddLog(LOG1, FL("Device_mode %s(%d) reason code(%d)"),
@@ -9309,17 +9309,17 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 	int status;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	u8 channelNum = 0;
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_JOIN_IBSS,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	hddLog(LOG1, FL("Device_mode %s(%d)"),
@@ -9425,7 +9425,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 				FL("ccmCfgStInt failed for WNI_CFG_IBSS_AUTO_BSSID"));
 			return -EIO;
 		}
-		cdf_mem_copy(bssid.bytes, params->bssid, CDF_MAC_ADDR_SIZE);
+		cdf_mem_copy(bssid.bytes, params->bssid, QDF_MAC_ADDR_SIZE);
 	} else if (pHddCtx->config->isCoalesingInIBSSAllowed == 0) {
 		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_IBSS_AUTO_BSSID, 0)
 				== QDF_STATUS_E_FAILURE) {
@@ -9524,12 +9524,12 @@ static int __wlan_hdd_cfg80211_leave_ibss(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_LEAVE_IBSS,
 			 pAdapter->sessionId,
 			 eCSR_DISCONNECT_REASON_IBSS_LEAVE));
@@ -9621,12 +9621,12 @@ static int __wlan_hdd_cfg80211_set_wiphy_params(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_WIPHY_PARAMS,
 			 NO_SESSION, wiphy->rts_threshold));
 	status = wlan_hdd_validate_context(pHddCtx);
@@ -9837,12 +9837,12 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_DEL_STA,
 			 pAdapter->sessionId, pAdapter->device_mode));
 
@@ -9863,7 +9863,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			return 0;
 		}
 
-		if (cdf_is_macaddr_broadcast((struct cdf_mac_addr *) mac)) {
+		if (cdf_is_macaddr_broadcast((struct qdf_mac_addr *) mac)) {
 			uint16_t i;
 			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 				if ((pAdapter->aStaInfo[i].isUsed) &&
@@ -9873,7 +9873,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						mac,
 						pAdapter->aStaInfo[i].
 							macAddrSTA.bytes,
-						CDF_MAC_ADDR_SIZE);
+						QDF_MAC_ADDR_SIZE);
 					if (hdd_ipa_uc_is_enabled(pHddCtx)) {
 						hdd_ipa_wlan_evt(pAdapter,
 							pAdapter->
@@ -9915,7 +9915,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 		} else {
 			qdf_status =
 				hdd_softap_get_sta_id(pAdapter,
-					      (struct cdf_mac_addr *) mac,
+					      (struct qdf_mac_addr *) mac,
 					      &staId);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOG1,
@@ -10057,12 +10057,12 @@ static int __wlan_hdd_cfg80211_add_station(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_ADD_STA,
 			 pAdapter->sessionId, params->listen_interval));
 
@@ -10136,7 +10136,7 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -10162,14 +10162,14 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 
 	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
-	cdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, QDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(pmk_id.PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
 
 	/* Add to the PMKSA ID Cache in CSR */
 	result = sme_roam_set_pmkid_cache(halHandle, pAdapter->sessionId,
 					  &pmk_id, 1, false);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_PMKSA,
 			 pAdapter->sessionId, result));
 
@@ -10217,7 +10217,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -10242,7 +10242,7 @@ static int __wlan_hdd_cfg80211_del_pmksa(struct wiphy *wiphy,
 
 	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_DEL_PMKSA,
 			 pAdapter->sessionId, 0));
 	/* Delete the PMKID CSR cache */
@@ -10297,7 +10297,7 @@ static int __wlan_hdd_cfg80211_flush_pmksa(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -10368,12 +10368,12 @@ __wlan_hdd_cfg80211_update_ft_ies(struct wiphy *wiphy,
 	if (status)
 		return status;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_UPDATE_FT_IES,
 			 pAdapter->sessionId, pHddStaCtx->conn_info.connState));
 	/* Added for debug on reception of Re-assoc Req. */
@@ -10499,12 +10499,12 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_REKEY_DATA,
 			 pAdapter->sessionId, pAdapter->device_mode));
 
@@ -10611,7 +10611,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -10638,7 +10638,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 	hddLog(LOGE, "acl policy: = %d no acl entries = %d", params->acl_policy,
 		params->n_acl_entries);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_MAC_ACL,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	if (WLAN_HDD_SOFTAP == pAdapter->device_mode) {
@@ -10824,7 +10824,7 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_TESTMODE,
 			 NO_SESSION, nla_get_u32(tb[WLAN_HDD_TM_ATTR_CMD])));
 	switch (nla_get_u32(tb[WLAN_HDD_TM_ATTR_CMD])) {
@@ -10945,15 +10945,15 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
 	hdd_context_t *hdd_ctx;
 
 	if (!buf || !buf_len) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: buf or buf_len invalid, buf = %p buf_len = %zu",
 			  __func__, buf, buf_len);
 		return;
 	}
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: hdd context invalid", __func__);
 		return;
 	}
@@ -10961,7 +10961,7 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
 	skb = cfg80211_testmode_alloc_event_skb(hdd_ctx->wiphy,
 						buf_len, GFP_KERNEL);
 	if (!skb) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: failed to allocate testmode rx skb!", __func__);
 		return;
 	}
@@ -10977,7 +10977,7 @@ void wlan_hdd_testmode_rx_event(void *buf, size_t buf_len)
 
 nla_put_failure:
 	kfree_skb(skb);
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 		  "%s: nla_put failed on testmode rx skb!", __func__);
 }
 #endif
@@ -11003,7 +11003,7 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 	tSmeConfigParams sme_config;
 	bool cbModeChange;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}

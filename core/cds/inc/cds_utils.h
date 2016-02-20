@@ -41,7 +41,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <qdf_event.h>
 #include "ani_global.h"
@@ -66,7 +66,7 @@
 #define CDS_CHAN_15_FREQ       (2512)
 #define CDS_CHAN_170_FREQ      (5852)
 
-#define cds_log(level, args...) CDF_TRACE(CDF_MODULE_ID_CDF, level, ## args)
+#define cds_log(level, args...) CDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
 #define cds_logfl(level, format, args...) cds_log(level, FL(format), ## args)
 
 #define cds_alert(format, args...) \

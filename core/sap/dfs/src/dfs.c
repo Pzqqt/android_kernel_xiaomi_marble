@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,7 +27,7 @@
 
 /*===========================================================================
 
-                              dfs.c
+				dfs.c
 
    OVERVIEW:
 
@@ -41,7 +41,7 @@
 
 /*===========================================================================
 
-                      EDIT HISTORY FOR FILE
+			EDIT HISTORY FOR FILE
 
    This section contains comments describing changes made to the module.
    Notice that changes are listed in reverse chronological order.
@@ -260,10 +260,10 @@ int dfs_attach(struct ieee80211com *ic)
 	dfs_clear_stats(ic);
 	dfs->dfs_event_log_on = 0;
 	OS_INIT_TIMER(NULL, &(dfs->ath_dfs_task_timer), dfs_task, (void *)(ic),
-		CDF_TIMER_TYPE_SW);
+		QDF_TIMER_TYPE_SW);
 #ifndef ATH_DFS_RADAR_DETECTION_ONLY
 	OS_INIT_TIMER(NULL, &(dfs->ath_dfstesttimer), dfs_testtimer_task,
-		      (void *)ic, CDF_TIMER_TYPE_SW);
+		      (void *)ic, QDF_TIMER_TYPE_SW);
 	dfs->ath_dfs_cac_time = ATH_DFS_WAIT_MS;
 	dfs->ath_dfstesttime = ATH_DFS_TEST_RETURN_PERIOD_MS;
 #endif
@@ -314,7 +314,7 @@ int dfs_attach(struct ieee80211com *ic)
 			dfs->events = NULL;
 			OS_FREE(dfs);
 			ic->ic_dfs = NULL;
-			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			    "%s[%d]: pulse buffer allocation failed",
 			    __func__, __LINE__);
 			return 1;
@@ -341,7 +341,7 @@ int dfs_attach(struct ieee80211com *ic)
 	}
 	/* Allocate memory for radar table */
 	dfs->dfs_radartable =
-		(int8_t * *) os_malloc(NULL, 256 * sizeof(int8_t *), GFP_ATOMIC);
+		(int8_t **) os_malloc(NULL, 256 * sizeof(int8_t *), GFP_ATOMIC);
 	if (dfs->dfs_radartable == NULL) {
 		DFS_PRINTK("%s: cannot allocate memory for radar table\n",
 			   __func__);
@@ -607,7 +607,7 @@ int dfs_radar_enable(struct ieee80211com *ic,
 	 * 0 on success.
 	 */
 	if (DFS_STATUS_FAIL == radar_filters_init_status) {
-		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: DFS Radar Filters Initialization Failed",
 			  __func__, __LINE__);
 		return -EIO;

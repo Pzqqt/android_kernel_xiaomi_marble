@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,7 +33,7 @@ static inline wdi_event_subscribe *wdi_event_next_sub(wdi_event_subscribe *
 						      wdi_sub)
 {
 	if (!wdi_sub) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid subscriber in %s\n", __func__);
 		return NULL;
 	}
@@ -84,12 +84,12 @@ wdi_event_handler(enum WDI_EVENT event,
 	 * Input validation
 	 */
 	if (!event) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid WDI event in %s\n", __func__);
 		return;
 	}
 	if (!txrx_pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid pdev in WDI event handler\n");
 		return;
 	}
@@ -113,17 +113,17 @@ wdi_event_sub(struct ol_txrx_pdev_t *txrx_pdev,
 	wdi_event_subscribe *wdi_sub;
 	/* Input validation */
 	if (!txrx_pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid txrx_pdev in %s", __func__);
 		return A_ERROR;
 	}
 	if (!event_cb_sub) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid callback in %s", __func__);
 		return A_ERROR;
 	}
 	if ((!event) || (event >= WDI_EVENT_LAST) || (event < WDI_EVENT_BASE)) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid event in %s", __func__);
 		return A_ERROR;
 	}
@@ -157,7 +157,7 @@ wdi_event_unsub(struct ol_txrx_pdev_t *txrx_pdev,
 
 	/* Input validation */
 	if (!event_cb_sub) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid callback in %s", __func__);
 		return A_ERROR;
 	}
@@ -179,7 +179,7 @@ A_STATUS wdi_event_attach(struct ol_txrx_pdev_t *txrx_pdev)
 {
 	/* Input validation */
 	if (!txrx_pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid device in %s\nWDI event attach failed",
 			  __func__);
 		return A_ERROR;
@@ -190,7 +190,7 @@ A_STATUS wdi_event_attach(struct ol_txrx_pdev_t *txrx_pdev)
 					    sizeof(wdi_event_subscribe *) *
 					    WDI_NUM_EVENTS);
 	if (!txrx_pdev->wdi_event_list) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Insufficient memory for the WDI event lists\n");
 		return A_NO_MEMORY;
 	}
@@ -202,13 +202,13 @@ A_STATUS wdi_event_detach(struct ol_txrx_pdev_t *txrx_pdev)
 	int i;
 	wdi_event_subscribe *wdi_sub;
 	if (!txrx_pdev) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid device in %s\nWDI detach failed",
 			  __func__);
 		return A_ERROR;
 	}
 	if (!txrx_pdev->wdi_event_list) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "%s: wdi_event_list is NULL", __func__);
 		return A_ERROR;
 	}

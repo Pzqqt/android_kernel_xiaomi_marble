@@ -48,7 +48,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -158,7 +158,7 @@ static uint8_t wma_get_number_of_peers_supported(tp_wma_handle wma)
 	struct hif_target_info *tgt_info;
 	struct wma_ini_config *cfg = wma_get_ini_handle(wma);
 	uint8_t max_no_of_peers = cfg ? cfg->max_no_of_peers : MIN_NO_OF_PEERS;
-	struct hif_opaque_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (!scn) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
@@ -270,7 +270,7 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 	tp_wma_handle wma;
 	struct wma_txrx_node *intr = NULL;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
@@ -522,7 +522,7 @@ int wma_cli_set2_command(int vdev_id, int param_id, int sval1,
 	msg.bodyptr = iwcmd;
 
 	if (QDF_STATUS_SUCCESS !=
-	    cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
+	    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		WMA_LOGP("%s: Failed to post WMA_CLI_SET_CMD msg",
 			  __func__);
 		cdf_mem_free(iwcmd);
@@ -732,7 +732,7 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 	{
 		ol_txrx_pdev_handle pdev;
 
-		pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 		if (!pdev) {
 			WMA_LOGE("pdev NULL for uc stat");
 			return -EINVAL;
@@ -853,7 +853,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 {
 	int ret = 0, vid = privcmd->param_vdev_id, pps_val = 0;
 	struct wma_txrx_node *intr = wma->interfaces;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	struct qpower_params *qparams = &intr[vid].config.qpower_params;
 
 	WMA_LOGD("wmihandle %p", wma->wmi_handle);
@@ -1593,7 +1593,7 @@ QDF_STATUS wma_open(void *cds_context,
 {
 	tp_wma_handle wma_handle;
 	HTC_HANDLE htc_handle;
-	cdf_device_t cdf_dev;
+	qdf_device_t qdf_dev;
 	void *wmi_handle;
 	QDF_STATUS qdf_status;
 	QDF_STATUS qdf_status;
@@ -1601,8 +1601,8 @@ QDF_STATUS wma_open(void *cds_context,
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
-	htc_handle = cds_get_context(CDF_MODULE_ID_HTC);
+	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	htc_handle = cds_get_context(QDF_MODULE_ID_HTC);
 
 	if (!htc_handle) {
 		WMA_LOGP("%s: Invalid HTC handle", __func__);
@@ -1610,7 +1610,7 @@ QDF_STATUS wma_open(void *cds_context,
 	}
 
 	/* Alloc memory for WMA Context */
-	qdf_status = cds_alloc_context(cds_context, CDF_MODULE_ID_WMA,
+	qdf_status = cds_alloc_context(cds_context, QDF_MODULE_ID_WMA,
 				       (void **)&wma_handle,
 				       sizeof(t_wma_handle));
 
@@ -1622,7 +1622,7 @@ QDF_STATUS wma_open(void *cds_context,
 
 	cdf_mem_zero(wma_handle, sizeof(t_wma_handle));
 
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_init(&wma_handle->pno_wake_lock, "wlan_pno_wl");
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -1648,7 +1648,7 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->wmi_handle = wmi_handle;
 	wma_handle->htc_handle = htc_handle;
 	wma_handle->cds_context = cds_context;
-	wma_handle->cdf_dev = cdf_dev;
+	wma_handle->qdf_dev = qdf_dev;
 	wma_handle->max_scan = mac_params->max_scan;
 
 	/* initialize default target config */
@@ -1709,7 +1709,7 @@ QDF_STATUS wma_open(void *cds_context,
 		goto err_wmi_handle;
 	}
 #if defined(QCA_WIFI_FTM)
-	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
+	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
@@ -1784,7 +1784,7 @@ QDF_STATUS wma_open(void *cds_context,
 	}
 
 	qdf_status = cdf_mc_timer_init(&wma_handle->service_ready_ext_timer,
-					CDF_TIMER_TYPE_SW,
+					QDF_TIMER_TYPE_SW,
 					wma_service_ready_ext_evt_timeout,
 					wma_handle);
 	if (!CDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -2029,7 +2029,7 @@ err_wmi_handle:
 
 err_wma_handle:
 
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -2038,7 +2038,7 @@ err_wma_handle:
 #endif /* FEATURE_WLAN_EXTSCAN */
 		cdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
 	}
-	cds_free_context(cds_context, CDF_MODULE_ID_WMA, wma_handle);
+	cds_free_context(cds_context, QDF_MODULE_ID_WMA, wma_handle);
 
 	WMA_LOGD("%s: Exit", __func__);
 
@@ -2060,7 +2060,7 @@ QDF_STATUS wma_pre_start(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* Validate the wma_handle */
 	if (NULL == wma_handle) {
@@ -2109,7 +2109,7 @@ void wma_send_msg(tp_wma_handle wma_handle, uint16_t msg_type,
 {
 	tSirMsgQ msg = { 0 };
 	uint32_t status = QDF_STATUS_SUCCESS;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	msg.type = msg_type;
 	msg.bodyval = body_val;
 	msg.bodyptr = body_ptr;
@@ -2628,7 +2628,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 	int status;
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
 	if (NULL == wma_handle) {
@@ -2754,7 +2754,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 	 * Tx mgmt attach requires TXRX context which is not created
 	 * in FTM mode. So skip the TX mgmt attach.
 	 */
-	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
+	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		goto end;
 #endif /* QCA_WIFI_FTM */
 
@@ -2766,7 +2766,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	/* Initialize log completion timeout */
 	qdf_status = cdf_mc_timer_init(&wma_handle->log_completion_timer,
-			CDF_TIMER_TYPE_SW,
+			QDF_TIMER_TYPE_SW,
 			wma_log_completion_timeout,
 			wma_handle);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
@@ -2842,7 +2842,7 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	tp_wma_handle wma_handle;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	int i;
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -2857,7 +2857,7 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	 * Tx mgmt detach requires TXRX context which is not created
 	 * in FTM mode. So skip the TX mgmt detach.
 	 */
-	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE) {
 		qdf_status = QDF_STATUS_SUCCESS;
 		goto end;
 	}
@@ -2990,7 +2990,7 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
 	if (NULL == wma_handle) {
@@ -3014,8 +3014,8 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 
 		if (bcn) {
 			if (bcn->dma_mapped)
-				cdf_nbuf_unmap_single(wma_handle->cdf_dev,
-					bcn->buf, CDF_DMA_TO_DEVICE);
+				cdf_nbuf_unmap_single(wma_handle->qdf_dev,
+					bcn->buf, QDF_DMA_TO_DEVICE);
 			cdf_nbuf_free(bcn->buf);
 			cdf_mem_free(bcn);
 			wma_handle->interfaces[i].beacon = NULL;
@@ -3040,7 +3040,7 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 
 	cdf_mem_free(wma_handle->interfaces);
 	/* free the wma_handle */
-	cds_free_context(wma_handle->cds_context, CDF_MODULE_ID_WMA,
+	cds_free_context(wma_handle->cds_context, QDF_MODULE_ID_WMA,
 			 wma_handle);
 
 	cdf_mem_free(((p_cds_contextType) cds_ctx)->cfg_ctx);
@@ -3064,7 +3064,7 @@ QDF_STATUS wma_wmi_work_close(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
 	if (NULL == wma_handle) {
@@ -3101,7 +3101,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	/* validate the wma_handle */
 	if (NULL == wma_handle) {
@@ -3133,7 +3133,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 		wma_handle->saved_wmi_init_cmd.buf = NULL;
 	}
 
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -3164,18 +3164,18 @@ QDF_STATUS wma_close(void *cds_ctx)
 	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
 	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
-		cdf_os_mem_free_consistent(wma_handle->cdf_dev,
+		cdf_os_mem_free_consistent(wma_handle->qdf_dev,
 					   wma_handle->mem_chunks[idx].len,
 					   wma_handle->mem_chunks[idx].vaddr,
 					   wma_handle->mem_chunks[idx].paddr,
-					   cdf_get_dma_mem_context(
+					   qdf_get_dma_mem_context(
 						(&(wma_handle->mem_chunks[idx])),
 								   memctx));
 	}
 
 #if defined(QCA_WIFI_FTM)
 	/* Detach UTF and unregister the handler */
-	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
+	if (cds_get_conparam() == QDF_GLOBAL_FTM_MODE)
 		wma_utf_detach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 
@@ -3213,7 +3213,7 @@ static void wma_update_fw_config(tp_wma_handle wma_handle,
 	 */
 	/* Override the no. of max fragments as per platform configuration */
 	tgt_cap->wlan_resource_config.max_frag_entries =
-					CDF_MIN(QCA_OL_11AC_TX_MAX_FRAGS,
+					QDF_MIN(QCA_OL_11AC_TX_MAX_FRAGS,
 						wma_handle->max_frag_entry);
 	wma_handle->max_frag_entry =
 		tgt_cap->wlan_resource_config.max_frag_entries;
@@ -3237,7 +3237,7 @@ static uint32_t wma_alloc_host_mem_chunk(tp_wma_handle wma_handle,
 					 uint32_t req_id, uint32_t idx,
 					 uint32_t num_units, uint32_t unit_len)
 {
-	cdf_dma_addr_t paddr;
+	qdf_dma_addr_t paddr;
 	if (!num_units || !unit_len) {
 		return 0;
 	}
@@ -3245,9 +3245,9 @@ static uint32_t wma_alloc_host_mem_chunk(tp_wma_handle wma_handle,
 	/** reduce the requested allocation by half until allocation succeeds */
 	while (wma_handle->mem_chunks[idx].vaddr == NULL && num_units) {
 		wma_handle->mem_chunks[idx].vaddr =
-			cdf_os_mem_alloc_consistent(wma_handle->cdf_dev,
+			cdf_os_mem_alloc_consistent(wma_handle->qdf_dev,
 						    num_units * unit_len, &paddr,
-						    cdf_get_dma_mem_context(
+						    qdf_get_dma_mem_context(
 							(&(wma_handle->mem_chunks[idx])),
 								memctx));
 		if (wma_handle->mem_chunks[idx].vaddr == NULL) {
@@ -3513,7 +3513,7 @@ static inline void wma_update_target_vht_cap(tp_wma_handle wh,
 static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 {
 	struct wma_tgt_cfg tgt_cfg;
-	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 
 	cdf_mem_zero(&tgt_cfg, sizeof(struct wma_tgt_cfg));
 	tgt_cfg.reg_domain = wma_handle->reg_cap.eeprom_rd;
@@ -3736,7 +3736,7 @@ void wma_init_scan_fw_mode_config(tp_wma_handle wma_handle,
 				uint32_t scan_config,
 				uint32_t fw_config)
 {
-	tpAniSirGlobal mac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -4221,7 +4221,7 @@ void wma_setneedshutdown(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma_handle) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
@@ -4245,7 +4245,7 @@ bool wma_needshutdown(void *cds_ctx)
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma_handle) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
@@ -4291,7 +4291,7 @@ QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 				    int val)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	int ret = -EIO;
 	uint32_t pps_val;
 
@@ -4625,7 +4625,7 @@ void wma_set_wifi_start_packet_stats(void *wma_handle,
 		return;
 	}
 
-	scn = cds_get_context(CDF_MODULE_ID_HIF);
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
 
 	log_state = ATH_PKTLOG_ANI | ATH_PKTLOG_RCUPDATE | ATH_PKTLOG_RCFIND |
 		ATH_PKTLOG_RX | ATH_PKTLOG_TX | ATH_PKTLOG_TEXT;
@@ -4712,7 +4712,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	WMA_LOGD("msg->type = %x %s", msg->type,
 		 mac_trace_get_wma_msg_string(msg->type));
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma_handle) {
 		WMA_LOGP("%s: wma_handle is NULL", __func__);
@@ -4960,16 +4960,16 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 
 	case WMA_RUNTIME_PM_SUSPEND_IND:
 		wma_calculate_and_update_conn_state(wma_handle);
-		wma_suspend_req(wma_handle, CDF_RUNTIME_SUSPEND);
+		wma_suspend_req(wma_handle, QDF_RUNTIME_SUSPEND);
 		break;
 
 	case WMA_RUNTIME_PM_RESUME_IND:
-		wma_resume_req(wma_handle, CDF_RUNTIME_SUSPEND);
+		wma_resume_req(wma_handle, QDF_RUNTIME_SUSPEND);
 		break;
 
 	case WMA_WLAN_SUSPEND_IND:
 		wma_update_conn_state(wma_handle, msg->bodyval);
-		wma_suspend_req(wma_handle, CDF_SYSTEM_SUSPEND);
+		wma_suspend_req(wma_handle, QDF_SYSTEM_SUSPEND);
 		break;
 	case WMA_8023_MULTICAST_LIST_REQ:
 		wma_process_mcbc_set_filter_req(wma_handle,
@@ -5108,7 +5108,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		cdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_WLAN_RESUME_REQ:
-		wma_resume_req(wma_handle, CDF_SYSTEM_SUSPEND);
+		wma_resume_req(wma_handle, QDF_SYSTEM_SUSPEND);
 		break;
 
 #ifdef WLAN_FEATURE_STATS_EXT
@@ -5670,7 +5670,7 @@ int wma_lro_init(struct wma_lro_config_cmd_t *lro_config)
 	msg.bodyptr = iwcmd;
 
 	if (QDF_STATUS_SUCCESS !=
-		cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
+		cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		WMA_LOGE("Failed to post WMA_LRO_CONFIG_CMD msg!");
 		cdf_mem_free(iwcmd);
 		return -EAGAIN;

@@ -40,7 +40,7 @@
 #include <linux/if_vlan.h>
 #include <linux/ip.h>
 #endif /* FEATURE_TSO */
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <cdf_nbuf.h>
 #include <cdf_memory.h>
 #include <cdf_trace.h>
@@ -58,9 +58,9 @@ static uint32_t nbuf_tx_data[NBUF_TX_PKT_STATE_MAX];
  */
 void cdf_nbuf_tx_desc_count_display(void)
 {
-	cdf_print("Current Snapshot of the Driver:\n");
-	cdf_print("Data Packets:\n");
-	cdf_print("HDD %d TXRX_Q %d TXRX %d HTT %d",
+	qdf_print("Current Snapshot of the Driver:\n");
+	qdf_print("Data Packets:\n");
+	qdf_print("HDD %d TXRX_Q %d TXRX %d HTT %d",
 		nbuf_tx_data[NBUF_TX_PKT_HDD] -
 		(nbuf_tx_data[NBUF_TX_PKT_TXRX] +
 		nbuf_tx_data[NBUF_TX_PKT_TXRX_ENQUEUE] -
@@ -69,13 +69,13 @@ void cdf_nbuf_tx_desc_count_display(void)
 		nbuf_tx_data[NBUF_TX_PKT_TXRX_DEQUEUE],
 		nbuf_tx_data[NBUF_TX_PKT_TXRX] - nbuf_tx_data[NBUF_TX_PKT_HTT],
 		nbuf_tx_data[NBUF_TX_PKT_HTT]  - nbuf_tx_data[NBUF_TX_PKT_HTC]);
-	cdf_print(" HTC %d  HIF %d CE %d TX_COMP %d\n",
+	qdf_print(" HTC %d  HIF %d CE %d TX_COMP %d\n",
 		nbuf_tx_data[NBUF_TX_PKT_HTC]  - nbuf_tx_data[NBUF_TX_PKT_HIF],
 		nbuf_tx_data[NBUF_TX_PKT_HIF]  - nbuf_tx_data[NBUF_TX_PKT_CE],
 		nbuf_tx_data[NBUF_TX_PKT_CE]   - nbuf_tx_data[NBUF_TX_PKT_FREE],
 		nbuf_tx_data[NBUF_TX_PKT_FREE]);
-	cdf_print("Mgmt Packets:\n");
-	cdf_print("TXRX_Q %d TXRX %d HTT %d HTC %d HIF %d CE %d TX_COMP %d\n",
+	qdf_print("Mgmt Packets:\n");
+	qdf_print("TXRX_Q %d TXRX %d HTT %d HTC %d HIF %d CE %d TX_COMP %d\n",
 		nbuf_tx_mgmt[NBUF_TX_PKT_TXRX_ENQUEUE] -
 		nbuf_tx_mgmt[NBUF_TX_PKT_TXRX_DEQUEUE],
 		nbuf_tx_mgmt[NBUF_TX_PKT_TXRX] - nbuf_tx_mgmt[NBUF_TX_PKT_HTT],
@@ -164,7 +164,7 @@ cdf_nbuf_trace_update_t trace_update_cb;
  *
  * Return: nbuf or %NULL if no memory
  */
-struct sk_buff *__cdf_nbuf_alloc(cdf_device_t osdev, size_t size, int reserve,
+struct sk_buff *__cdf_nbuf_alloc(qdf_device_t osdev, size_t size, int reserve,
 				 int align, int prio)
 {
 	struct sk_buff *skb;
@@ -233,13 +233,13 @@ void __cdf_nbuf_free(struct sk_buff *skb)
  * Return: QDF_STATUS
  */
 QDF_STATUS
-__cdf_nbuf_map(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
+__cdf_nbuf_map(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 {
 #ifdef CDF_OS_DEBUG
 	struct skb_shared_info *sh = skb_shinfo(skb);
 #endif
-	cdf_assert((dir == CDF_DMA_TO_DEVICE)
-		   || (dir == CDF_DMA_FROM_DEVICE));
+	cdf_assert((dir == QDF_DMA_TO_DEVICE)
+		   || (dir == QDF_DMA_FROM_DEVICE));
 
 	/*
 	 * Assume there's only a single fragment.
@@ -264,13 +264,13 @@ __cdf_nbuf_map(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
  * Return: none
  */
 void
-__cdf_nbuf_unmap(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
+__cdf_nbuf_unmap(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 {
-	cdf_assert((dir == CDF_DMA_TO_DEVICE)
-		   || (dir == CDF_DMA_FROM_DEVICE));
+	cdf_assert((dir == QDF_DMA_TO_DEVICE)
+		   || (dir == QDF_DMA_FROM_DEVICE));
 
-	cdf_assert(((dir == CDF_DMA_TO_DEVICE)
-		    || (dir == CDF_DMA_FROM_DEVICE)));
+	cdf_assert(((dir == QDF_DMA_TO_DEVICE)
+		    || (dir == QDF_DMA_FROM_DEVICE)));
 	/*
 	 * Assume there's a single fragment.
 	 * If this is not true, the assertion in __cdf_nbuf_map will catch it.
@@ -287,7 +287,7 @@ __cdf_nbuf_unmap(cdf_device_t osdev, struct sk_buff *skb, cdf_dma_dir_t dir)
  * Return: QDF_STATUS
  */
 QDF_STATUS
-__cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
+__cdf_nbuf_map_single(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 	cdf_dma_addr_t paddr;
 
@@ -315,7 +315,7 @@ __cdf_nbuf_map_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
  * Return: none
  */
 void
-__cdf_nbuf_unmap_single(cdf_device_t osdev, cdf_nbuf_t buf, cdf_dma_dir_t dir)
+__cdf_nbuf_unmap_single(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
 #if !defined(A_SIMOS_DEVHOST)
 	dma_unmap_single(osdev->dev, NBUF_CB_PADDR(buf),
@@ -536,7 +536,7 @@ void cdf_net_buf_debug_exit(void)
 		while (p_node) {
 			p_prev = p_node;
 			p_node = p_node->p_next;
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 				  "SKB buf memory Leak@ File %s, @Line %d, size %zu\n",
 				  p_prev->file_name, p_prev->line_num,
 				  p_prev->size);
@@ -632,7 +632,7 @@ void cdf_net_buf_debug_add_node(cdf_nbuf_t net_buf, size_t size,
 	p_node = cdf_net_buf_debug_look_up(net_buf);
 
 	if (p_node) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Double allocation of skb ! Already allocated from %s %d",
 			  p_node->file_name, p_node->line_num);
 		CDF_ASSERT(0);
@@ -647,7 +647,7 @@ void cdf_net_buf_debug_add_node(cdf_nbuf_t net_buf, size_t size,
 			p_node->p_next = gp_cdf_net_buf_track_tbl[i];
 			gp_cdf_net_buf_track_tbl[i] = p_node;
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
 				  file_name, line_num, size);
 			CDF_ASSERT(0);
@@ -706,7 +706,7 @@ void cdf_net_buf_debug_delete_node(cdf_nbuf_t net_buf)
 
 done:
 	if (!found) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "Unallocated buffer ! Double free of net_buf %p ?",
 			  net_buf);
 		CDF_ASSERT(0);
@@ -771,7 +771,7 @@ uint8_t __cdf_nbuf_get_tso_cmn_seg_info(struct sk_buff *skb,
 		tso_info->ipv4_csum_en = 1;
 		tso_info->tcp_ipv4_csum_en = 1;
 		if (cdf_unlikely(ipv4_hdr->protocol != IPPROTO_TCP)) {
-			cdf_print("TSO IPV4 proto 0x%x not TCP\n",
+			qdf_print("TSO IPV4 proto 0x%x not TCP\n",
 				 ipv4_hdr->protocol);
 			return 1;
 		}
@@ -779,7 +779,7 @@ uint8_t __cdf_nbuf_get_tso_cmn_seg_info(struct sk_buff *skb,
 		/* for IPv6, enable TCP csum. No IP ID or IP csum */
 		tso_info->tcp_ipv6_csum_en = 1;
 	} else {
-		cdf_print("TSO: ethertype 0x%x is not supported!\n",
+		qdf_print("TSO: ethertype 0x%x is not supported!\n",
 			 tso_info->ethproto);
 		return 1;
 	}
@@ -826,8 +826,8 @@ static inline void cdf_dmaaddr_to_32s(cdf_dma_addr_t dmaaddr,
  *
  * Return: number of TSO segments
  */
-uint32_t __cdf_nbuf_get_tso_info(cdf_device_t osdev, struct sk_buff *skb,
-		struct cdf_tso_info_t *tso_info)
+uint32_t __cdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
+		struct qdf_tso_info_t *tso_info)
 {
 	/* common accross all segments */
 	struct cdf_tso_cmn_seg_info_t tso_cmn_info;
@@ -848,7 +848,7 @@ uint32_t __cdf_nbuf_get_tso_info(cdf_device_t osdev, struct sk_buff *skb,
 	memset(&tso_cmn_info, 0x0, sizeof(tso_cmn_info));
 
 	if (cdf_unlikely(__cdf_nbuf_get_tso_cmn_seg_info(skb, &tso_cmn_info))) {
-		cdf_print("TSO: error getting common segment info\n");
+		qdf_print("TSO: error getting common segment info\n");
 		return 0;
 	}
 	curr_seg = tso_info->tso_seg_list;

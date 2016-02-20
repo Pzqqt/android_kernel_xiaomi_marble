@@ -70,7 +70,7 @@
 /**-----------------------------------------------------------------
    \fn     lim_stop_tx_and_switch_channel
    \brief  Stops the transmission if channel switch mode is silent and
-        starts the channel switch timer.
+   starts the channel switch timer.
 
    \param  pMac
    \return NONE
@@ -124,8 +124,8 @@ void lim_stop_tx_and_switch_channel(tpAniSirGlobal pMac, uint8_t sessionId)
 /**------------------------------------------------------------
    \fn     lim_start_channel_switch
    \brief  Switches the channel if switch count == 0, otherwise
-        starts the timer for channel switch and stops BG scan
-        and heartbeat timer tempororily.
+   starts the timer for channel switch and stops BG scan
+   and heartbeat timer tempororily.
 
    \param  pMac
    \param  psessionEntry
@@ -1141,10 +1141,9 @@ __lim_process_basic_meas_req(tpAniSirGlobal pMac,
 			     tpSirMacMeasReqActionFrame pMeasReqFrame,
 			     tSirMacAddr peerMacAddr, tpPESession psessionEntry)
 {
-	if (lim_send_meas_report_frame(pMac,
-				       pMeasReqFrame,
-				       peerMacAddr, psessionEntry) != eSIR_SUCCESS)
-	{
+	if (lim_send_meas_report_frame(pMac, pMeasReqFrame,
+				       peerMacAddr, psessionEntry) !=
+					 eSIR_SUCCESS) {
 		PELOGE(lim_log
 			       (pMac, LOGE, FL("fail to send Basic Meas report "));
 		       )
@@ -1156,10 +1155,9 @@ __lim_process_cca_meas_req(tpAniSirGlobal pMac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
 			   tSirMacAddr peerMacAddr, tpPESession psessionEntry)
 {
-	if (lim_send_meas_report_frame(pMac,
-				       pMeasReqFrame,
-				       peerMacAddr, psessionEntry) != eSIR_SUCCESS)
-	{
+	if (lim_send_meas_report_frame(pMac, pMeasReqFrame,
+				       peerMacAddr, psessionEntry) !=
+					 eSIR_SUCCESS) {
 		PELOGE(lim_log(pMac, LOGE, FL("fail to send CCA Meas report "));)
 		return;
 	}
@@ -1169,10 +1167,9 @@ __lim_process_rpi_meas_req(tpAniSirGlobal pMac,
 			   tpSirMacMeasReqActionFrame pMeasReqFrame,
 			   tSirMacAddr peerMacAddr, tpPESession psessionEntry)
 {
-	if (lim_send_meas_report_frame(pMac,
-				       pMeasReqFrame,
-				       peerMacAddr, psessionEntry) != eSIR_SUCCESS)
-	{
+	if (lim_send_meas_report_frame(pMac, pMeasReqFrame,
+				       peerMacAddr, psessionEntry) !=
+					 eSIR_SUCCESS) {
 		PELOGE(lim_log(pMac, LOGE, FL("fail to send RPI Meas report "));)
 		return;
 	}
@@ -1607,7 +1604,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 		  ("SA Query Response received..."));
 
 	/* When a station, supplicant handles SA Query Response.
@@ -2053,7 +2050,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 				  ("Public Action TDLS Discovery RSP .."));
 			lim_send_sme_mgmt_frame_ind(mac_ctx,
 				mac_hdr->fc.subType, (uint8_t *) mac_hdr,

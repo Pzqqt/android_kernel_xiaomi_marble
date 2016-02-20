@@ -43,7 +43,7 @@ QDF_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter);
 QDF_STATUS hdd_softap_deinit_tx_rx(hdd_adapter_t *pAdapter);
 QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter,
 				     uint8_t STAId,
-				     struct cdf_mac_addr *pmacAddrSTA);
+				     struct qdf_mac_addr *pmacAddrSTA);
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter,
 				       uint8_t STAId);
 QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
@@ -62,17 +62,17 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 				   uint8_t staId,
 				   uint8_t ucastSig,
 				   uint8_t bcastSig,
-				   struct cdf_mac_addr *pPeerMacAddress,
+				   struct qdf_mac_addr *pPeerMacAddress,
 				   bool fWmmEnabled);
 QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 				      bool fPrivacyBit);
 QDF_STATUS hdd_softap_deregister_bc_sta(hdd_adapter_t *pAdapter);
 QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pHostapdAdapter);
 QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
-				       struct cdf_mac_addr *pDestMacAddress,
+				       struct qdf_mac_addr *pDestMacAddress,
 				       enum ol_txrx_peer_state state);
 QDF_STATUS hdd_softap_get_sta_id(hdd_adapter_t *pAdapter,
-				 struct cdf_mac_addr *pMacAddress,
+				 struct qdf_mac_addr *pMacAddress,
 				 uint8_t *staId);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL

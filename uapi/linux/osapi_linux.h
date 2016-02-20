@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -72,11 +72,11 @@
 #define A_MEMCMP(addr1, addr2, len)     memcmp((addr1), (addr2), (len))
 
 #define A_LOGGER(mask, mod, args ...) \
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, ## args)
 #define A_PRINTF(args ...) \
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, ## args)
 #define A_PRINTF_LOG(args ...) \
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR, ## args)
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, ## args)
 #define A_SNPRINTF(buf, len, args ...)   snprintf (buf, len, args)
 
 /*
@@ -132,13 +132,13 @@ typedef struct timer_list A_TIMER;
 extern unsigned int panic_on_assert;
 #define A_ASSERT(expr)	\
 	if (!(expr)) {	 \
-		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s \n",__FILE__, __LINE__,# expr); \
+		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s \n", __FILE__, __LINE__, # expr); \
 		if (panic_on_assert) panic(# expr);								  \
 	}
 #else
 #define A_ASSERT(expr)	\
 	if (!(expr)) {	 \
-		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s \n",__FILE__, __LINE__,# expr); \
+		printk(KERN_ALERT "Debug Assert Caught, File %s, Line: %d, Test:%s \n", __FILE__, __LINE__, # expr); \
 	}
 #endif
 #else
@@ -170,13 +170,13 @@ typedef struct sk_buff_head A_NETBUF_QUEUE_T;
 	a_netbuf_push(bufPtr, len)
 #define A_NETBUF_PUT(bufPtr, len) \
 	a_netbuf_put(bufPtr, len)
-#define A_NETBUF_TRIM(bufPtr,len) \
+#define A_NETBUF_TRIM(bufPtr, len) \
 	a_netbuf_trim(bufPtr, len)
 #define A_NETBUF_PULL(bufPtr, len) \
 	a_netbuf_pull(bufPtr, len)
 #define A_NETBUF_HEADROOM(bufPtr) \
 	a_netbuf_headroom(bufPtr)
-#define A_NETBUF_SETLEN(bufPtr,len) \
+#define A_NETBUF_SETLEN(bufPtr, len) \
 	a_netbuf_setlen(bufPtr, len)
 
 /* Add data to end of a buffer  */
@@ -197,7 +197,7 @@ typedef struct sk_buff_head A_NETBUF_QUEUE_T;
 
 /* View data as "size" contiguous bytes of type "t" */
 #define A_NETBUF_VIEW_DATA(bufPtr, t, size) \
-	(t )( ((struct skbuf *)(bufPtr))->data)
+	(t)(((struct skbuf *)(bufPtr))->data)
 
 /* return the beginning of the headroom for the buffer */
 #define A_NETBUF_HEAD(bufPtr) \

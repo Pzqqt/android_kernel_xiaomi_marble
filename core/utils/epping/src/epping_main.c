@@ -121,11 +121,11 @@ void epping_disable(void)
 		epping_destroy_adapter(pEpping_ctx->epping_adapter);
 		pEpping_ctx->epping_adapter = NULL;
 	}
-	hif_disable_isr(cds_get_context(CDF_MODULE_ID_HIF));
-	hif_reset_soc(cds_get_context(CDF_MODULE_ID_HIF));
-	htc_stop(cds_get_context(CDF_MODULE_ID_HTC));
+	hif_disable_isr(cds_get_context(QDF_MODULE_ID_HIF));
+	hif_reset_soc(cds_get_context(QDF_MODULE_ID_HIF));
+	htc_stop(cds_get_context(QDF_MODULE_ID_HTC));
 	epping_cookie_cleanup(pEpping_ctx);
-	htc_destroy(cds_get_context(CDF_MODULE_ID_HTC));
+	htc_destroy(cds_get_context(QDF_MODULE_ID_HTC));
 }
 
 /**
@@ -177,7 +177,7 @@ int epping_enable(struct device *parent_dev)
 	int ret = 0;
 	epping_context_t *pEpping_ctx = NULL;
 	cds_context_type *p_cds_context = NULL;
-	cdf_device_t cdf_ctx;
+	qdf_device_t cdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	struct hif_opaque_softc *scn;
 	tSirMacAddr adapter_macAddr;
@@ -208,9 +208,9 @@ int epping_enable(struct device *parent_dev)
 	/* Initialize the timer module */
 	cdf_timer_module_init();
 
-	scn = cds_get_context(CDF_MODULE_ID_HIF);
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: scn is null!", __func__);
 		return -1;
 	}
@@ -224,7 +224,7 @@ int epping_enable(struct device *parent_dev)
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */
 	if (bmi_download_firmware(ol_ctx)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
 		bmi_cleanup(ol_ctx);
 		return -1;
@@ -236,18 +236,18 @@ int epping_enable(struct device *parent_dev)
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = epping_target_suspend_acknowledge;
-	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
 	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, cdf_ctx);
 	if (!p_cds_context->htc_ctx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);
 		bmi_cleanup(ol_ctx);
 		return -1;
 	}
 	pEpping_ctx->HTCHandle =
-		cds_get_context(CDF_MODULE_ID_HTC);
+		cds_get_context(QDF_MODULE_ID_HTC);
 	if (pEpping_ctx->HTCHandle == NULL) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: HTCHandle is NULL", __func__);
@@ -284,7 +284,7 @@ int epping_enable(struct device *parent_dev)
 	if (ret == 0) {
 		pEpping_ctx->epping_adapter = epping_add_adapter(pEpping_ctx,
 								 adapter_macAddr,
-								 CDF_STA_MODE);
+								 QDF_STA_MODE);
 	}
 	if (ret < 0 || pEpping_ctx->epping_adapter == NULL) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,

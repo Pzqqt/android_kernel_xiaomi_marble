@@ -571,7 +571,7 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 		sta_param->lsigTxopProtection, sta_param->fDsssCckMode40Mhz,
 		sta_param->fShortGI20Mhz, sta_param->fShortGI40Mhz);
 
-	if (CDF_P2P_GO_MODE == session_entry->pePersona)
+	if (QDF_P2P_GO_MODE == session_entry->pePersona)
 		sta_param->p2pCapableSta = 1;
 }
 
@@ -1581,7 +1581,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 				 QDF_STATUS suspend_status, uint32_t *msg)
 {
 	uint16_t aid;
-	struct cdf_mac_addr curr_bssid;
+	struct qdf_mac_addr curr_bssid;
 	tpDphHashNode stads;
 	tLimMlmDisassocReq *mlm_disassocreq;
 	tLimMlmDisassocCnf mlm_disassoccnf;
@@ -1613,7 +1613,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		session->limMlmState,
 		MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
 
-	cdf_mem_copy(curr_bssid.bytes, session->bssId, CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
@@ -1759,7 +1759,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 end:
 	cdf_mem_copy((uint8_t *) &mlm_disassoccnf.peerMacAddr,
 		     (uint8_t *) mlm_disassocreq->peer_macaddr.bytes,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	mlm_disassoccnf.aid = mlm_disassocreq->aid;
 	mlm_disassoccnf.disassocTrigger = mlm_disassocreq->disassocTrigger;
 
@@ -1794,10 +1794,10 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if ((disassoc_req && (cdf_mem_compare((uint8_t *) sta_mac,
 			      (uint8_t *) &disassoc_req->peer_macaddr.bytes,
-			       CDF_MAC_ADDR_SIZE))) ||
+			       QDF_MAC_ADDR_SIZE))) ||
 	    (deauth_req && (cdf_mem_compare((uint8_t *) sta_mac,
 			      (uint8_t *) &deauth_req->peer_macaddr.bytes,
-			       CDF_MAC_ADDR_SIZE)))) {
+			       QDF_MAC_ADDR_SIZE)))) {
 		PELOG1(lim_log(mac_ctx, LOG1,
 			       FL("Disassoc/Deauth ack pending"));)
 		return true;
@@ -1828,7 +1828,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 	if (mlm_disassoc_req &&
 	    (cdf_mem_compare((uint8_t *) sta_mac,
 			     (uint8_t *) &mlm_disassoc_req->peer_macaddr.bytes,
-			     CDF_MAC_ADDR_SIZE))) {
+			     QDF_MAC_ADDR_SIZE))) {
 		if (clean_rx_path) {
 			lim_process_disassoc_ack_timeout(mac_ctx);
 		} else {
@@ -1847,7 +1847,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 	if (mlm_deauth_req &&
 	    (cdf_mem_compare((uint8_t *) sta_mac,
 			     (uint8_t *) &mlm_deauth_req->peer_macaddr.bytes,
-			     CDF_MAC_ADDR_SIZE))) {
+			     QDF_MAC_ADDR_SIZE))) {
 		if (clean_rx_path) {
 			lim_process_deauth_ack_timeout(mac_ctx);
 		} else {
@@ -1973,7 +1973,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		case eLIM_MLM_WT_ASSOC_RSP_STATE:
 		case eLIM_MLM_LINK_ESTABLISHED_STATE:
 			if (!cdf_mem_compare(mlm_deauth_req->peer_macaddr.bytes,
-					curr_bssId, CDF_MAC_ADDR_SIZE)) {
+					curr_bssId, QDF_MAC_ADDR_SIZE)) {
 				lim_log(mac_ctx, LOGE,
 					FL("received MLM_DEAUTH_REQ with invalid BSS id "
 					   "Peer MAC: "MAC_ADDRESS_STR
@@ -2011,7 +2011,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 
 				cdf_mem_copy(sme_deauth_rsp->peer_macaddr.bytes,
 					     mlm_deauth_req->peer_macaddr.bytes,
-					     CDF_MAC_ADDR_SIZE);
+					     QDF_MAC_ADDR_SIZE);
 
 				msg_buf = (uint32_t *)sme_deauth_rsp;
 
@@ -2233,7 +2233,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	uint16_t aid;
 	uint16_t sta_idx = 0;
 	uint32_t default_key_id = 0;
-	struct cdf_mac_addr curr_bssid;
+	struct qdf_mac_addr curr_bssid;
 	tpDphHashNode sta_ds;
 	tLimMlmSetKeysReq *mlm_set_keys_req;
 	tLimMlmSetKeysCnf mlm_set_keys_cnf;
@@ -2261,7 +2261,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		mlm_set_keys_req->aid, mlm_set_keys_req->edType,
 		mlm_set_keys_req->numKeys);
 	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peer_macaddr.bytes, LOGW);
-	cdf_mem_copy(curr_bssid.bytes, session->bssId, CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
@@ -2647,7 +2647,7 @@ static void lim_process_auth_failure_timeout(tpAniSirGlobal mac_ctx)
 		 * Failure timeout. Issue MLM auth confirm with timeout reason
 		 * code. Restore default failure timeout
 		 */
-		if (CDF_P2P_CLIENT_MODE == session->pePersona
+		if (QDF_P2P_CLIENT_MODE == session->pePersona
 		    && session->defaultAuthFailureTimeout)
 			cfg_set_int(mac_ctx,
 				    WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,

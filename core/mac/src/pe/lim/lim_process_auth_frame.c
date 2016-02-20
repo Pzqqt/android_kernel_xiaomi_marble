@@ -292,7 +292,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 		if (pMlmDisassocReq &&
 			cdf_mem_compare((uint8_t *) mac_hdr->sa, (uint8_t *)
 				&pMlmDisassocReq->peer_macaddr.bytes,
-				CDF_MAC_ADDR_SIZE)) {
+				QDF_MAC_ADDR_SIZE)) {
 			lim_log(mac_ctx, LOGE,
 				FL("TODO:Ack for disassoc frame is pending Issue delsta for "
 				MAC_ADDRESS_STR),
@@ -306,7 +306,7 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 		if (pMlmDeauthReq &&
 			cdf_mem_compare((uint8_t *) mac_hdr->sa, (uint8_t *)
 				&pMlmDeauthReq->peer_macaddr.bytes,
-				CDF_MAC_ADDR_SIZE)) {
+				QDF_MAC_ADDR_SIZE)) {
 			lim_log(mac_ctx, LOGE,
 				FL("TODO:Ack for deauth frame is pending Issue delsta for "
 				MAC_ADDRESS_STR),
@@ -1104,7 +1104,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	body_ptr = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 
 	/* Restore default failure timeout */
-	if (CDF_P2P_CLIENT_MODE == pe_session->pePersona &&
+	if (QDF_P2P_CLIENT_MODE == pe_session->pePersona &&
 			pe_session->defaultAuthFailureTimeout) {
 		lim_log(mac_ctx, LOG1, FL("Restore default failure timeout"));
 		cfg_set_int(mac_ctx, WNI_CFG_AUTHENTICATE_FAILURE_TIMEOUT,

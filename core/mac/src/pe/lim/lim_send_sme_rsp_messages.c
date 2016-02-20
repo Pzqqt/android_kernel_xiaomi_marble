@@ -36,7 +36,7 @@
  * --------------------------------------------------------------------
  */
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "wni_api.h"
 #include "sir_common.h"
 #include "ani_global.h"
@@ -91,7 +91,7 @@ lim_send_sme_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	sme_rsp = cdf_mem_malloc(sizeof(tSirSmeRsp));
 	if (NULL == sme_rsp) {
 		/* Buffer not available. Log error */
-		CDF_TRACE(CDF_MODULE_ID_PE, LOGP,
+		CDF_TRACE(QDF_MODULE_ID_PE, LOGP,
 			FL("call to AllocateMemory failed for eWNI_SME_*_RSP"));
 		return;
 	}
@@ -149,7 +149,7 @@ lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 
 	sme_rsp = cdf_mem_malloc(sizeof(struct sir_roc_rsp));
 	if (NULL == sme_rsp) {
-		CDF_TRACE(CDF_MODULE_ID_PE, LOGP,
+		CDF_TRACE(QDF_MODULE_ID_PE, LOGP,
 			FL("call to AllocateMemory failed for eWNI_SME_*_RSP"));
 		return;
 	}
@@ -1058,10 +1058,10 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	pSirSmeDisassocInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
 	cdf_mem_copy(pSirSmeDisassocInd->bssid.bytes, psessionEntry->bssId,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	cdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes, pStaDs->staAddr,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	pSirSmeDisassocInd->staId = pStaDs->staIndex;
 
@@ -1120,10 +1120,10 @@ lim_send_sme_deauth_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	}
 	/* BSSID */
 	cdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, psessionEntry->bssId,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	/* peerMacAddr */
 	cdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, pStaDs->staAddr,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 	pSirSmeDeauthInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
 	pSirSmeDeauthInd->staId = pStaDs->staIndex;
@@ -1188,7 +1188,7 @@ lim_send_sme_tdls_del_sta_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 
 	/* peerMacAddr */
 	cdf_mem_copy(pSirTdlsDelStaInd->peermac.bytes, pStaDs->staAddr,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	/* staId */
 	lim_copy_u16((uint8_t *) (&pSirTdlsDelStaInd->staId),
@@ -1446,7 +1446,7 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 
 		/* peerMacAddr */
 		cdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, peerMacAddr,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 		lim_diag_event_report(pMac, WLAN_PE_DIAG_DEAUTH_IND_EVENT,
@@ -1559,7 +1559,7 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
  */
 void
 lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
-			     struct cdf_mac_addr peer_macaddr, uint16_t aid,
+			     struct qdf_mac_addr peer_macaddr, uint16_t aid,
 			     tSirResultCodes resultCode,
 			     tpPESession psessionEntry, uint8_t smesessionId,
 			     uint16_t smetransactionId)
@@ -1974,7 +1974,7 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 		    0);
 
 	cdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
-		     peerMacAddr, CDF_MAC_ADDR_SIZE);
+		     peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pNewPeerInd->staId = staIndex;
 	pNewPeerInd->ucastSig = ucastIdx;
 	pNewPeerInd->bcastSig = bcastIdx;
@@ -2192,7 +2192,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
 		csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
 		cdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
-				CDF_MAC_ADDR_SIZE);
+				QDF_MAC_ADDR_SIZE);
 		mmh_msg.type = eWNI_SME_CSA_OFFLOAD_EVENT;
 		mmh_msg.bodyptr = csa_offload_ind;
 		mmh_msg.bodyval = 0;
@@ -2285,7 +2285,7 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 	}
 	cdf_mem_set((void *)pSmeMaxAssocInd, sizeof(tSmeMaxAssocInd), 0);
 	cdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peer_mac.bytes,
-		     (uint8_t *) peerMacAddr, CDF_MAC_ADDR_SIZE);
+		     (uint8_t *) peerMacAddr, QDF_MAC_ADDR_SIZE);
 	pSmeMaxAssocInd->mesgType = eWNI_SME_MAX_ASSOC_EXCEEDED;
 	pSmeMaxAssocInd->mesgLen = sizeof(tSmeMaxAssocInd);
 	pSmeMaxAssocInd->sessionId = smesessionId;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#if !defined( __I_HOST_DIAG_CORE_EVENT_H )
+#if !defined(__I_HOST_DIAG_CORE_EVENT_H)
 #define __I_HOST_DIAG_CORE_EVENT_H
 
 /**=========================================================================
@@ -41,7 +41,7 @@
 /*--------------------------------------------------------------------------
    Include Files
    ------------------------------------------------------------------------*/
-#include <cdf_types.h>
+#include <qdf_types.h>
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #include <host_diag_event_defs.h>
 #endif
@@ -61,23 +61,23 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 /*---------------------------------------------------------------------------
    Allocate an event payload holder
    ---------------------------------------------------------------------------*/
-#define WLAN_HOST_DIAG_EVENT_DEF( payload_name, payload_type ) \
+#define WLAN_HOST_DIAG_EVENT_DEF(payload_name, payload_type) \
 	payload_type(payload_name)
 
 /*---------------------------------------------------------------------------
    Report the event
    ---------------------------------------------------------------------------*/
-#define WLAN_HOST_DIAG_EVENT_REPORT( payload_ptr, ev_id ) \
+#define WLAN_HOST_DIAG_EVENT_REPORT(payload_ptr, ev_id) \
 	do {							\
-		host_diag_event_report_payload( ev_id,		\
-						sizeof( *(payload_ptr) ),			\
-						(void *)(payload_ptr) );			\
+		host_diag_event_report_payload(ev_id,		\
+						sizeof(*(payload_ptr)),			\
+						(void *)(payload_ptr));			\
 	} while (0)
 
 #else                           /* FEATURE_WLAN_DIAG_SUPPORT */
 
-#define WLAN_HOST_DIAG_EVENT_DEF( payload_name, payload_type )
-#define WLAN_HOST_DIAG_EVENT_REPORT( payload_ptr, ev_id )
+#define WLAN_HOST_DIAG_EVENT_DEF(payload_name, payload_type)
+#define WLAN_HOST_DIAG_EVENT_REPORT(payload_ptr, ev_id)
 
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
 

@@ -68,7 +68,7 @@
 #endif
 
 #include <lim_ft.h>
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cds_packet.h"
 #include "cds_utils.h"
 #include "sys_startup.h"
@@ -655,13 +655,13 @@ void lim_cleanup(tpAniSirGlobal pMac)
 
 	struct mgmt_frm_reg_info *pLimMgmtRegistration = NULL;
 
-	if (CDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
 		cdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
 		while (qdf_list_remove_front(
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,
 			(qdf_list_node_t **) &pLimMgmtRegistration) ==
 			QDF_STATUS_SUCCESS) {
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			FL("Fixing leak! Deallocating pLimMgmtRegistration node"));
 			cdf_mem_free(pLimMgmtRegistration);
 		}
@@ -1001,7 +1001,7 @@ QDF_STATUS pe_handle_mgmt_frame(void *p_cds_gctx, void *cds_buff)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pMac = cds_get_context(CDF_MODULE_ID_PE);
+	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		/* cannot log a failure without a valid pMac */
 		cds_pkt_return_packet(pVosPkt);
@@ -1601,7 +1601,7 @@ lim_detect_change_in_ap_capabilities(tpAniSirGlobal pMac,
 		      pBeacon->ssId.length + 1;
 
 		cdf_mem_copy(apNewCaps.bssId.bytes,
-			     psessionEntry->bssId, CDF_MAC_ADDR_SIZE);
+			     psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
 		if (newChannel != psessionEntry->currentOperChannel) {
 			PELOGE(lim_log
 				       (pMac, LOGE,
@@ -1857,16 +1857,16 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 
 	if (roam_offload_synch_ind_ptr->beaconProbeRespLength <=
 			SIR_MAC_HDR_LEN_3A) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR, "%s: very"
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR, "%s: very"
 		"few bytes in synchInd beacon / probe resp frame! length=%d",
 		__func__, roam_offload_synch_ind_ptr->beaconProbeRespLength);
 		cdf_mem_free(parsed_frm_ptr);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 		"LFR3:Beacon/Prb Rsp:%d", roam_offload_synch_ind_ptr->isBeacon);
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 	bcn_proberesp_ptr, roam_offload_synch_ind_ptr->beaconProbeRespLength);
 	if (roam_offload_synch_ind_ptr->isBeacon) {
 		if (sir_parse_beacon_ie(pMac, parsed_frm_ptr,
@@ -1875,7 +1875,7 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			roam_offload_synch_ind_ptr->beaconProbeRespLength -
 			SIR_MAC_HDR_LEN_3A) != eSIR_SUCCESS ||
 			!parsed_frm_ptr->ssidPresent) {
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			"Parse error Beacon, length=%d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
 			cdf_mem_free(parsed_frm_ptr);
@@ -1887,7 +1887,7 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			roam_offload_synch_ind_ptr->beaconProbeRespLength -
 			SIR_MAC_HDR_LEN_3A, parsed_frm_ptr) != eSIR_SUCCESS ||
 			!parsed_frm_ptr->ssidPresent) {
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 			"Parse error ProbeResponse, length=%d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
 			cdf_mem_free(parsed_frm_ptr);
@@ -1969,11 +1969,11 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 				(uint8_t *)parsed_frm_ptr->mdie,
 				SIR_MDIE_SIZE);
 	}
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 			"LFR3:%s:BssDescr Info:", __func__);
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 			bss_desc_ptr->bssId, sizeof(tSirMacAddr));
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 			"chan=%d, rssi=%d", bss_desc_ptr->channelId,
 			bss_desc_ptr->rssi);
 	if (ie_len) {
@@ -2104,7 +2104,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			mac_ctx->roam.reassocRespLen);
 
 	lim_log(mac_ctx, LOG1, FL("LFR3:the reassoc resp frame data:"));
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			mac_ctx->roam.pReassocResp,
 			mac_ctx->roam.reassocRespLen);
 	ft_session_ptr->bRoamSynchInProgress = true;

@@ -46,7 +46,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -856,7 +856,7 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 		return;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -897,7 +897,7 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 
 free_nbuf:
 	/* unmap and freeing the tx buf as txrx is not taking care */
-	cdf_nbuf_unmap_single(pdev->osdev, netbuf, CDF_DMA_TO_DEVICE);
+	cdf_nbuf_unmap_single(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
 	cdf_nbuf_free(netbuf);
 }
 
@@ -1001,7 +1001,7 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 	uint16_t len =
 		sizeof(wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param);
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
 		WMA_LOGE("%s : Failed to get wma", __func__);
 		return QDF_STATUS_E_FAULT;
@@ -1066,7 +1066,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pMac = cds_get_context(CDF_MODULE_ID_PE);
+	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
 		CDF_ASSERT(0);
@@ -1190,7 +1190,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	pMac = cds_get_context(CDF_MODULE_ID_PE);
+	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
 		CDF_ASSERT(0);
@@ -1299,7 +1299,7 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 		goto out;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Unable to get TXRX context", __func__);
@@ -1812,7 +1812,7 @@ QDF_STATUS wma_process_init_thermal_info(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	curr_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == curr_pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -1898,7 +1898,7 @@ static void wma_set_thermal_level_ind(u_int8_t level)
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = level;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGE(FL(
 			"Fail to post set thermal level ind msg"));
@@ -1925,7 +1925,7 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	curr_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == curr_pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -2081,7 +2081,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
 
 	param_buf = (WMI_THERMAL_MGMT_EVENTID_param_tlvs *) event;
 
-	curr_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	curr_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == curr_pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		return -EINVAL;
@@ -2354,7 +2354,7 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 	int32_t cmd_len;
 	uint64_t dma_addr;
 	struct wmi_desc_t *wmi_desc = NULL;
-	void *cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	void *cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	uint8_t *bufp;
 	int32_t bufp_len = (frmLen < mgmt_tx_dl_frm_len) ? frmLen :
 		mgmt_tx_dl_frm_len;
@@ -2393,7 +2393,7 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 							    sizeof(uint32_t)));
 	bufp += WMI_TLV_HDR_SIZE;
 	cdf_mem_copy(bufp, pData, bufp_len);
-	cdf_nbuf_map_single(cdf_ctx, tx_frame, CDF_DMA_TO_DEVICE);
+	cdf_nbuf_map_single(cdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
 	dma_addr = cdf_nbuf_get_frag_paddr(tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
 #if defined(HELIUMPLUS_PADDR64)
@@ -2481,7 +2481,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pMac = cds_get_context(CDF_MODULE_ID_PE);
+	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("pMac Handle is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -2598,12 +2598,12 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		cdf_nbuf_t ret;
 		cdf_nbuf_t skb = (cdf_nbuf_t) tx_frame;
 		ol_txrx_pdev_handle pdev =
-			cds_get_context(CDF_MODULE_ID_TXRX);
+			cds_get_context(QDF_MODULE_ID_TXRX);
 
 		struct wma_decap_info_t decap_info;
 		struct ieee80211_frame *wh =
 			(struct ieee80211_frame *)cdf_nbuf_data(skb);
-		v_TIME_t curr_timestamp = cdf_mc_timer_get_system_ticks();
+		unsigned long curr_timestamp = cdf_mc_timer_get_system_ticks();
 
 		if (pdev == NULL) {
 			WMA_LOGE("%s: pdev pointer is not available", __func__);
@@ -2654,7 +2654,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		cdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 
 		/* Do the DMA Mapping */
-		cdf_nbuf_map_single(pdev->osdev, skb, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_map_single(pdev->osdev, skb, QDF_DMA_TO_DEVICE);
 
 		/* Terminate the (single-element) list of tx frames */
 		skb->next = NULL;
@@ -2672,7 +2672,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		if (ret) {
 			WMA_LOGE("TxRx Rejected. Fail to do Tx");
 			cdf_nbuf_unmap_single(pdev->osdev, skb,
-					      CDF_DMA_TO_DEVICE);
+					      QDF_DMA_TO_DEVICE);
 			/* Call Download Cb so that umac can free the buffer */
 			if (tx_frm_download_comp_cb)
 				tx_frm_download_comp_cb(wma_handle->mac_context,
@@ -2896,7 +2896,7 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	       enum ol_rx_err_type err_type, cdf_nbuf_t rx_frame,
 	       uint64_t *pn, uint8_t key_id)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	tpSirSmeMicFailureInd mic_err_ind;
 	struct ether_header *eth_hdr;
 	cds_msg_t cds_msg;
@@ -2924,15 +2924,15 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	mic_err_ind->length = sizeof(*mic_err_ind);
 	mic_err_ind->sessionId = vdev_id;
 	cdf_copy_macaddr(&mic_err_ind->bssId,
-		     (struct cdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
+		     (struct qdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
 	cdf_mem_copy(mic_err_ind->info.taMacAddr,
-		     (struct cdf_mac_addr *) peer_mac_addr,
+		     (struct qdf_mac_addr *) peer_mac_addr,
 			sizeof(tSirMacAddr));
 	cdf_mem_copy(mic_err_ind->info.srcMacAddr,
-		     (struct cdf_mac_addr *) eth_hdr->ether_shost,
+		     (struct qdf_mac_addr *) eth_hdr->ether_shost,
 			sizeof(tSirMacAddr));
 	cdf_mem_copy(mic_err_ind->info.dstMacAddr,
-		     (struct cdf_mac_addr *) eth_hdr->ether_dhost,
+		     (struct qdf_mac_addr *) eth_hdr->ether_dhost,
 			sizeof(tSirMacAddr));
 	mic_err_ind->info.keyId = key_id;
 	mic_err_ind->info.multicast =
@@ -2966,7 +2966,7 @@ void wma_tx_abort(uint8_t vdev_id)
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	struct wma_txrx_node *iface;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
 		WMA_LOGE("%s: wma is NULL", __func__);
 		return;
@@ -3096,7 +3096,7 @@ wma_indicate_err(
 	switch (err_type) {
 	case OL_RX_ERR_TKIP_MIC:
 	{
-		tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+		tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 		tpSirSmeMicFailureInd mic_err_ind;
 		cds_msg_t cds_msg;
 		uint8_t vdev_id;
@@ -3120,19 +3120,19 @@ wma_indicate_err(
 		mic_err_ind->length = sizeof(*mic_err_ind);
 		vdev_id = err_info->u.mic_err.vdev_id;
 		cdf_copy_macaddr(&mic_err_ind->bssId,
-		     (struct cdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
+		     (struct qdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
 		WMA_LOGE("MIC error: BSSID:%02x:%02x:%02x:%02x:%02x:%02x\n",
 			 mic_err_ind->bssId.bytes[0], mic_err_ind->bssId.bytes[1],
 			 mic_err_ind->bssId.bytes[2], mic_err_ind->bssId.bytes[3],
 			 mic_err_ind->bssId.bytes[4], mic_err_ind->bssId.bytes[5]);
 		cdf_mem_copy(mic_err_ind->info.taMacAddr,
-			 (struct cdf_mac_addr *) err_info->u.mic_err.ta,
+			 (struct qdf_mac_addr *) err_info->u.mic_err.ta,
 			 sizeof(tSirMacAddr));
 		cdf_mem_copy(mic_err_ind->info.srcMacAddr,
-			 (struct cdf_mac_addr *) err_info->u.mic_err.sa,
+			 (struct qdf_mac_addr *) err_info->u.mic_err.sa,
 			 sizeof(tSirMacAddr));
 		cdf_mem_copy(mic_err_ind->info.dstMacAddr,
-			(struct cdf_mac_addr *) err_info->u.mic_err.da,
+			(struct qdf_mac_addr *) err_info->u.mic_err.da,
 			 sizeof(tSirMacAddr));
 		mic_err_ind->info.keyId = err_info->u.mic_err.key_id;
 		mic_err_ind->info.multicast =

@@ -32,9 +32,9 @@
 #include <linux/netdevice.h>
 #include <linux/skbuff.h>
 #include <linux/etherdevice.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <ani_global.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <net/ieee80211_radiotap.h>
 #include <cds_sched.h>
 #include <wlan_hdd_napi.h>
@@ -58,25 +58,25 @@
  */
 static void hdd_softap_dump_sk_buff(struct sk_buff *skb)
 {
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: head = %p ", __func__, skb->head);
-	/* CDF_TRACE( CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,"%s: data = %p ", __func__, skb->data); */
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	/* CDF_TRACE( QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,"%s: data = %p ", __func__, skb->data); */
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: tail = %p ", __func__, skb->tail);
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: end = %p ", __func__, skb->end);
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: len = %d ", __func__, skb->len);
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: data_len = %d ", __func__, skb->data_len);
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: mac_len = %d", __func__, skb->mac_len);
 
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x ", skb->data[0],
 		  skb->data[1], skb->data[2], skb->data[3], skb->data[4],
 		  skb->data[5], skb->data[6], skb->data[7]);
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x 0x%x", skb->data[8],
 		  skb->data[9], skb->data[10], skb->data[11], skb->data[12],
 		  skb->data[13], skb->data[14], skb->data[15]);
@@ -103,7 +103,7 @@ void hdd_softap_tx_resume_timer_expired_handler(void *adapter_context)
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
 
 	if (!pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: INV ARG", __func__);
 		/* INVALID ARG */
 		return;
@@ -129,7 +129,7 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) adapter_context;
 
 	if (!pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: INV ARG", __func__);
 		/* INVALID ARG */
 		return;
@@ -168,7 +168,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	sme_ac_enum_type ac = SME_AC_BE;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
-	struct cdf_mac_addr *pDestMacAddress;
+	struct qdf_mac_addr *pDestMacAddress;
 	uint8_t STAId;
 	uint8_t proto_type = 0;
 #ifdef QCA_PKT_PROTO_TRACE
@@ -181,7 +181,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * lead to a crash.
 	 */
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: Recovery in Progress. Ignore!!!", __func__);
 		goto drop_pkt;
 	}
@@ -198,7 +198,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		goto drop_pkt;
 	}
 
-	pDestMacAddress = (struct cdf_mac_addr *) skb->data;
+	pDestMacAddress = (struct qdf_mac_addr *) skb->data;
 
 	if (cdf_is_macaddr_broadcast(pDestMacAddress) ||
 	    cdf_is_macaddr_group(pDestMacAddress)) {
@@ -211,19 +211,19 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if (QDF_STATUS_SUCCESS !=
 			 hdd_softap_get_sta_id(pAdapter,
 				 pDestMacAddress, &STAId)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA,
+			CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  CDF_TRACE_LEVEL_WARN,
 				  "%s: Failed to find right station", __func__);
 			goto drop_pkt;
 		}
 
 		if (STAId == HDD_WLAN_INVALID_STA_ID) {
-			CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA,
+			CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  CDF_TRACE_LEVEL_WARN,
 				  "%s: Failed to find right station", __func__);
 			goto drop_pkt;
 		} else if (false == pAdapter->aStaInfo[STAId].isUsed) {
-			CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA,
+			CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  CDF_TRACE_LEVEL_WARN,
 				  "%s: STA %d is unregistered", __func__,
 				  STAId);
@@ -234,14 +234,14 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		     pAdapter->aStaInfo[STAId].tlSTAState)
 		    && (ol_txrx_peer_state_auth !=
 			pAdapter->aStaInfo[STAId].tlSTAState)) {
-			CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA,
+			CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  CDF_TRACE_LEVEL_WARN,
 				  "%s: Station not connected yet", __func__);
 			goto drop_pkt;
 		} else if (ol_txrx_peer_state_conn ==
 			   pAdapter->aStaInfo[STAId].tlSTAState) {
 			if (ntohs(skb->protocol) != HDD_ETHERTYPE_802_1_X) {
-				CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA,
+				CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 					  CDF_TRACE_LEVEL_WARN,
 					  "%s: NON-EAPOL packet in non-Authenticated state",
 					  __func__);
@@ -314,7 +314,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	if (ol_tx_send_data_frame(STAId, skb,
 							  proto_type) != NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDroppedAC[ac];
@@ -358,7 +358,7 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 
 	DPTRACE(cdf_dp_trace(NULL, CDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
 				NULL, 0));
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 		  "%s: Transmission timeout occurred", __func__);
 	/* Getting here implies we disabled the TX queues for too
 	 * long. Queues are disabled either because of disassociation
@@ -368,7 +368,7 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	 */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			 "%s: Recovery in Progress. Ignore!!!", __func__);
 		return;
 	}
@@ -436,11 +436,11 @@ QDF_STATUS hdd_softap_deinit_tx_rx(hdd_adapter_t *pAdapter)
  *	   QDF_STATUS_SUCCESS otherwise
  */
 QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId,
-				     struct cdf_mac_addr *pmacAddrSTA)
+				     struct qdf_mac_addr *pmacAddrSTA)
 {
 	spin_lock_bh(&pAdapter->staInfo_lock);
 	if (pAdapter->aStaInfo[STAId].isUsed) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Reinit station %d", __func__, STAId);
 		spin_unlock_bh(&pAdapter->staInfo_lock);
 		return QDF_STATUS_E_FAILURE;
@@ -475,7 +475,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId)
 
 	if (false == pAdapter->aStaInfo[STAId].isUsed) {
 		spin_unlock_bh(&pAdapter->staInfo_lock);
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Deinit station not inited %d", __func__, STAId);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -514,14 +514,14 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 
 	/* Sanity check on inputs */
 	if ((NULL == cds_context) || (NULL == rxBuf)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL == pHddCtx) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -543,7 +543,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 
 	if (skb->dev == NULL) {
 
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: ERROR!!Invalid netdevice", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -608,13 +608,13 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	hdd_context_t *pHddCtx;
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: pAdapter is NULL", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Invalid pAdapter magic", __func__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -626,7 +626,7 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 	 */
 	qdf_status = ol_txrx_clear_peer(staId);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "ol_txrx_clear_peer() failed to for staID %d.  "
 			  "Status= %d [0x%08X]", staId, qdf_status, qdf_status);
 	}
@@ -661,7 +661,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 				   uint8_t staId,
 				   uint8_t ucastSig,
 				   uint8_t bcastSig,
-				   struct cdf_mac_addr *pPeerMacAddress,
+				   struct qdf_mac_addr *pPeerMacAddress,
 				   bool fWmmEnabled)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -672,7 +672,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	 * Clean up old entry if it is not cleaned up properly
 	 */
 	if (pAdapter->aStaInfo[staId].isUsed) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 			  "clean up old entry for STA %d", staId);
 		hdd_softap_deregister_sta(pAdapter, staId);
 	}
@@ -688,7 +688,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 					  pPeerMacAddress);
 
 	staDesc.is_qos_enabled = fWmmEnabled;
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 		  "HDD SOFTAP register TL QoS_enabled=%d",
 		  staDesc.is_qos_enabled);
 
@@ -697,7 +697,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		ol_txrx_register_peer(hdd_softap_rx_packet_cbk,
 					   &staDesc);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "SOFTAP ol_txrx_register_peer() failed to register.  Status= %d [0x%08X]",
 			  qdf_status, qdf_status);
 		return qdf_status;
@@ -713,7 +713,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	pAdapter->aStaInfo[staId].isQosEnabled = fWmmEnabled;
 
 	if (!fAuthRequired) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 			  "open/shared auth StaId= %d.  Changing TL state to AUTHENTICATED at Join time",
 			  pAdapter->aStaInfo[staId].ucSTAId);
 
@@ -727,7 +727,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		pAdapter->sessionCtx.ap.uIsAuthenticated = true;
 	} else {
 
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 			  "ULA auth StaId= %d.  Changing TL state to CONNECTED at Join time",
 			  pAdapter->aStaInfo[staId].ucSTAId);
 
@@ -760,8 +760,8 @@ QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	struct cdf_mac_addr broadcastMacAddr =
-					CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	struct qdf_mac_addr broadcastMacAddr =
+					QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	hdd_ap_ctx_t *pHddApCtx;
 
 	pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
@@ -810,7 +810,7 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 	 * unloading
 	 */
 	if (cds_is_load_or_unload_in_progress()) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Loading_unloading in Progress, state: 0x%x. Ignore!!!",
 			  __func__, cds_get_driver_state());
 		return QDF_STATUS_E_PERM;
@@ -819,7 +819,7 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 	qdf_status = hdd_softap_deregister_bc_sta(pAdapter);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to deregister BC sta Id %d", __func__,
 			  (WLAN_HDD_GET_AP_CTX_PTR(pAdapter))->uBCStaId);
 	}
@@ -829,7 +829,7 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 		if (pAdapter->aStaInfo[staId].isUsed) {
 			qdf_status = hdd_softap_deregister_sta(pAdapter, staId);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-				CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA,
+				CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: Failed to deregister sta Id %d",
 					  __func__, staId);
@@ -848,19 +848,19 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
  * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
  */
 QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
-				       struct cdf_mac_addr *pDestMacAddress,
+				       struct qdf_mac_addr *pDestMacAddress,
 				       enum ol_txrx_peer_state state)
 {
 	uint8_t ucSTAId = WLAN_MAX_STA_COUNT;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 		  "%s: enter", __func__);
 
 	if (QDF_STATUS_SUCCESS !=
 		 hdd_softap_get_sta_id(pAdapter,
 			 pDestMacAddress, &ucSTAId)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Failed to find right station", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -868,7 +868,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 	if (false ==
 	    cdf_is_macaddr_equal(&pAdapter->aStaInfo[ucSTAId].macAddrSTA,
 				 pDestMacAddress)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Station MAC address does not matching",
 			  __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -876,7 +876,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 
 	qdf_status =
 		hdd_change_peer_state(pAdapter, ucSTAId, state, false);
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 		  "%s: change station to state %d succeed", __func__, state);
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
@@ -884,7 +884,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 			ol_txrx_peer_state_auth;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO,
 		  "%s exit", __func__);
 
 	return qdf_status;
@@ -901,7 +901,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
  *	   not found
  */
 QDF_STATUS hdd_softap_get_sta_id(hdd_adapter_t *pAdapter,
-				 struct cdf_mac_addr *pMacAddress,
+				 struct qdf_mac_addr *pMacAddress,
 				 uint8_t *staId)
 {
 	uint8_t i;
@@ -909,7 +909,7 @@ QDF_STATUS hdd_softap_get_sta_id(hdd_adapter_t *pAdapter,
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 		if (cdf_mem_compare
 			(&pAdapter->aStaInfo[i].macAddrSTA, pMacAddress,
-			CDF_MAC_ADDR_SIZE) && pAdapter->aStaInfo[i].isUsed) {
+			QDF_MAC_ADDR_SIZE) && pAdapter->aStaInfo[i].isUsed) {
 			*staId = i;
 			return QDF_STATUS_SUCCESS;
 		}

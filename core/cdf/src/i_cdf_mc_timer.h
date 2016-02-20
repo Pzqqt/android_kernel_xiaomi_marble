@@ -36,7 +36,7 @@
 
 /* Include Files */
 #include <cdf_mc_timer.h>
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <linux/timer.h>
 #include <linux/time.h>
 #include <linux/jiffies.h>

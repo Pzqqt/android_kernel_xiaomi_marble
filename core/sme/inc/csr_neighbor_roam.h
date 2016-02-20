@@ -141,7 +141,7 @@ typedef struct sCsrNeighborRoamControlInfo {
 	eCsrNeighborRoamState neighborRoamState;
 	eCsrNeighborRoamState prevNeighborRoamState;
 	tCsrNeighborRoamCfgParams cfgParams;
-	struct cdf_mac_addr currAPbssid;  /* current assoc AP */
+	struct qdf_mac_addr currAPbssid;  /* current assoc AP */
 	uint8_t currAPoperationChannel; /* current assoc AP */
 	tCsrNeighborRoamChannelInfo roamChannelInfo;
 	uint8_t currentNeighborLookupThreshold;

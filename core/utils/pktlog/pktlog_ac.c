@@ -265,7 +265,7 @@ wdi_pktlog_unsubscribe(struct ol_txrx_pdev_t *txrx_pdev, uint32_t log_state)
 int pktlog_disable(struct hif_opaque_softc *scn)
 {
 	struct ol_txrx_pdev_t *txrx_pdev =
-		cds_get_context(CDF_MODULE_ID_TXRX);
+		cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 
@@ -294,7 +294,7 @@ void pktlog_init(struct hif_opaque_softc *scn)
 {
 	struct ath_pktlog_info *pl_info;
 	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (pdev_txrx_handle == NULL ||
 			pdev_txrx_handle->pl_dev == NULL ||
@@ -339,7 +339,7 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
 		return -1;
 	}
 
-	txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!txrx_pdev) {
 		printk("%s: Invalid txrx_pdev context\n", __func__);
 		ASSERT(0);
@@ -414,7 +414,7 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
 int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle =
-		cds_get_context(CDF_MODULE_ID_TXRX);
+		cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 

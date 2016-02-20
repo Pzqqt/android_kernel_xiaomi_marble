@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -33,7 +33,7 @@
    DEPENDENCIES:
    ============================================================================*/
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "i_host_diag_core_log.h"
 #include "host_diag_core_event.h"
 #include "wlan_nlink_common.h"
@@ -62,7 +62,7 @@ typedef struct event_report_s {
    This function sets the logging code in the given log record.
 
    \param  - ptr - Pointer to the log header type.
-              - code - log code.
+		- code - log code.
    \return - None
 
    --------------------------------------------------------------------------*/
@@ -82,7 +82,7 @@ void host_diag_log_set_code(void *ptr, uint16_t code)
    This function sets the length field in the given log record.
 
    \param  - ptr - Pointer to the log header type.
-              - length - log length.
+		- length - log length.
 
    \return - None
 
@@ -117,7 +117,7 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 	uint16_t total_len;
 
 	if (cds_is_load_or_unload_in_progress()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 			  "%s: Unloading/Loading in Progress. Ignore!!!",
 			  __func__);
 		return;
@@ -134,7 +134,7 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 		pBuf = (uint8_t *) cdf_mem_malloc(total_len);
 
 		if (!pBuf) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "cdf_mem_malloc failed");
 			return;
 		}
@@ -214,7 +214,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 	uint16_t total_len;
 
 	if (cds_is_load_or_unload_in_progress()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 			  "%s: Unloading/Loading in Progress. Ignore!!!",
 			  __func__);
 		return;
@@ -229,7 +229,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 		pBuf = (uint8_t *) cdf_mem_malloc(total_len);
 
 		if (!pBuf) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "cdf_mem_malloc failed");
 			return;
 		}
@@ -250,7 +250,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 
 		if (ptt_sock_send_msg_to_app
 			    (wmsg, 0, ANI_NL_MSG_PUMAC, INVALID_PID) < 0) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 				  "Ptt Socket error sending message to the app!!");
 			cdf_mem_free((void *)wmsg);
 			return;

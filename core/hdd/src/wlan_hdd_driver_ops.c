@@ -183,7 +183,7 @@ static int hdd_init_cds_hif_context(void *hif)
 {
 	QDF_STATUS status;
 
-	status = cds_set_context(CDF_MODULE_ID_HIF, hif);
+	status = cds_set_context(QDF_MODULE_ID_HIF, hif);
 
 	if (status)
 		return -ENOENT;
@@ -200,7 +200,7 @@ static void hdd_deinit_cds_hif_context(void)
 {
 	QDF_STATUS status;
 
-	status = cds_set_context(CDF_MODULE_ID_HIF, NULL);
+	status = cds_set_context(QDF_MODULE_ID_HIF, NULL);
 
 	if (status)
 		hdd_err("Failed to reset CDS HIF Context");
@@ -368,7 +368,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	if (ret)
 		goto err_epping_close;
 
-	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	status = ol_cds_init(cdf_dev, hif_ctx);
@@ -455,7 +455,7 @@ static void wlan_hdd_remove(void)
 
 	hdd_cnss_driver_unloading();
 
-	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
 	hif_disable_power_management(hif_ctx);
 
@@ -483,7 +483,7 @@ static void wlan_hdd_remove(void)
  */
 static void wlan_hdd_shutdown(void)
 {
-	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (cds_is_load_or_unload_in_progress()) {
 		hdd_err("Load/unload in progress, ignore SSR shutdown");
@@ -514,7 +514,7 @@ static void wlan_hdd_shutdown(void)
  */
 void wlan_hdd_crash_shutdown(void)
 {
-	hif_crash_shutdown(cds_get_context(CDF_MODULE_ID_HIF));
+	hif_crash_shutdown(cds_get_context(QDF_MODULE_ID_HIF));
 }
 
 /**
@@ -553,8 +553,8 @@ void wlan_hdd_notify_handler(int state)
  */
 static int __wlan_hdd_bus_suspend(pm_message_t state)
 {
-	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
-	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	int err = wlan_hdd_validate_context(hdd_ctx);
 	int status;
 
@@ -626,8 +626,8 @@ int wlan_hdd_bus_suspend(pm_message_t state)
  */
 static int __wlan_hdd_bus_resume(void)
 {
-	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
-	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (0 != status) {
@@ -679,8 +679,8 @@ static int wlan_hdd_bus_resume(void)
  */
 static int __wlan_hdd_runtime_suspend(void)
 {
-	void *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
-	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	void *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	int status = wlan_hdd_validate_context(hdd_ctx);
 
 	if (0 != status)
@@ -750,7 +750,7 @@ static int wlan_hdd_runtime_suspend(void)
  */
 static int __wlan_hdd_runtime_resume(void)
 {
-	void *hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
+	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
 	hif_pre_runtime_resume(hif_ctx);
 	CDF_BUG(!cnss_auto_resume());

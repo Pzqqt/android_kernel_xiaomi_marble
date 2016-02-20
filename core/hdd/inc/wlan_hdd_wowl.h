@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -102,7 +102,7 @@
  * attempt to BMPS fails, request for WoWL will be rejected.
  */
 
-#include <cdf_types.h>
+#include <qdf_types.h>
 
 #define WOWL_PTRN_MAX_SIZE          146
 #define WOWL_PTRN_MASK_MAX_SIZE      19

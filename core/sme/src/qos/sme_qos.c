@@ -516,7 +516,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 	sme_QosSessionInfo *pSession;
 	uint8_t sessionId;
 	QDF_STATUS status;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: initializing SME-QoS module", __func__, __LINE__);
 	/* init the control block */
 	/* (note that this will make all sessions invalid) */
@@ -527,7 +527,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 	/* init flow list */
 	status = csr_ll_open(pMac->hHdd, &sme_qos_cb.flow_list);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
 			  "%s: %d: cannot initialize Flow List",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -541,7 +541,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 		/* initialize the session's buffered command list */
 		status = csr_ll_open(pMac->hHdd, &pSession->bufferedCommandList);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
 				  "%s: %d: cannot initialize cmd list for session %d",
 				  __func__, __LINE__, sessionId);
 			return QDF_STATUS_E_FAILURE;
@@ -549,7 +549,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 		pSession->readyForPowerSave = true;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: done initializing SME-QoS module",
 		  __func__, __LINE__);
 	return QDF_STATUS_SUCCESS;
@@ -568,7 +568,7 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 	sme_QosSessionInfo *pSession;
 	sme_QosEdcaAcType ac;
 	uint8_t sessionId;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: closing down SME-QoS", __func__, __LINE__);
 
 	/* cleanup control block */
@@ -606,7 +606,7 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 		pSession->sessionActive = false;
 		pSession->readyForPowerSave = true;
 	}
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: closed down QoS", __func__, __LINE__);
 	return QDF_STATUS_SUCCESS;
 }
@@ -650,18 +650,18 @@ sme_QosStatusType sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	sme_QosStatusType status;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS Setup requested by client on session %d",
 		  __func__, __LINE__, sessionId);
 	lock_status = sme_acquire_global_lock(&pMac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(lock_status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Unable to obtain lock", __func__, __LINE__);
 		return SME_QOS_STATUS_SETUP_FAILURE_RSP;
 	}
 	/* Make sure the session is valid */
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Supplied Session ID %d is invalid",
 			  __func__, __LINE__, sessionId);
 		status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
@@ -669,14 +669,14 @@ sme_QosStatusType sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
 		/* Make sure the session is active */
 		pSession = &sme_qos_cb.sessionInfo[sessionId];
 		if (!pSession->sessionActive) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: Supplied Session ID %d is inactive",
 				  __func__, __LINE__, sessionId);
 			status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
 		} else {
 			/* Assign a Flow ID */
 			*pQosFlowID = sme_qos_assign_flow_id();
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: QoS request on session %d assigned Flow ID %d",
 				  __func__, __LINE__, sessionId, *pQosFlowID);
 			/* Call the internal function for QoS setup, */
@@ -690,7 +690,7 @@ sme_QosStatusType sme_qos_setup_req(tHalHandle hHal, uint32_t sessionId,
 		}
 	}
 	sme_release_global_lock(&pMac->sme);
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS setup return status on session %d is %d",
 		  __func__, __LINE__, sessionId, status);
 	return status;
@@ -722,19 +722,19 @@ sme_QosStatusType sme_qos_modify_req(tHalHandle hHal,
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	sme_QosStatusType status;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS Modify requested by client for Flow %d",
 		  __func__, __LINE__, QosFlowID);
 	lock_status = sme_acquire_global_lock(&pMac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(lock_status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Unable to obtain lock", __func__, __LINE__);
 		return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 	}
 	/* Call the internal function for QoS modify, adding a layer of abstraction */
 	status = sme_qos_internal_modify_req(pMac, pQoSInfo, QosFlowID, false);
 	sme_release_global_lock(&pMac->sme);
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS Modify return status on Flow %d is %d",
 		  __func__, __LINE__, QosFlowID, status);
 	return status;
@@ -759,19 +759,19 @@ sme_QosStatusType sme_qos_release_req(tHalHandle hHal, uint32_t QosFlowID)
 	QDF_STATUS lock_status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	sme_QosStatusType status;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS Release requested by client for Flow %d",
 		  __func__, __LINE__, QosFlowID);
 	lock_status = sme_acquire_global_lock(&pMac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(lock_status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Unable to obtain lock", __func__, __LINE__);
 		return SME_QOS_STATUS_RELEASE_FAILURE_RSP;
 	}
 	/* Call the internal function for QoS release, adding a layer of abstraction */
 	status = sme_qos_internal_release_req(pMac, QosFlowID, false);
 	sme_release_global_lock(&pMac->sme);
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS Release return status on Flow %d is %d",
 		  __func__, __LINE__, QosFlowID, status);
 	return status;
@@ -800,7 +800,7 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tListElem *entry = NULL;
 	tSmeCmd *command;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		FL(" msg = %d for QoS"), msg_type);
 	/* switch on the msg type & make the state transition accordingly */
 	switch (msg_type) {
@@ -845,7 +845,7 @@ QDF_STATUS sme_qos_msg_processor(tpAniSirGlobal mac_ctx,
 		break;
 	default:
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL("unknown msg type = %d"),
 			msg_type);
 		break;
@@ -869,14 +869,14 @@ QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 {
 	tDot11fBeaconIEs *pIes = NULL;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: validation for QAP & APSD", __func__, __LINE__);
 	do {
 		if (!QDF_IS_STATUS_SUCCESS(
 			csr_get_parsed_bss_description_ies(
 				pMac, pBssDesc,	&pIes))) {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: csr_get_parsed_bss_description_ies() failed",
 				  __func__, __LINE__);
 			break;
@@ -884,7 +884,7 @@ QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 		/* check if the AP is QAP & it supports APSD */
 		if (!CSR_IS_QOS_BSS(pIes)) {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: AP doesn't support QoS",
 				  __func__, __LINE__);
 
@@ -893,14 +893,14 @@ QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 		if (!(pIes->WMMParams.qosInfo & SME_QOS_AP_SUPPORTS_APSD) &&
 		    !(pIes->WMMInfoAp.uapsd)) {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: AP doesn't support APSD",
 				  __func__, __LINE__);
 			break;
 		}
 		status = QDF_STATUS_SUCCESS;
 	} while (0);
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: validated with status = %d",
 		  __func__, __LINE__, status);
 	if (pIes) {
@@ -926,7 +926,7 @@ QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 				 sme_qos_csr_event_indType ind, void *pEvent_info)
 {
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: On Session %d Event %d received from CSR",
 		  __func__, __LINE__, sessionId, ind);
 	switch (ind) {
@@ -992,12 +992,12 @@ QDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 		break;
 	default:
 		/* Err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On Session %d Unknown Event %d received from CSR",
 			  __func__, __LINE__, sessionId, ind);
 		break;
 	}
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: On Session %d processed Event %d with status %d",
 		  __func__, __LINE__, sessionId, ind, status);
 	return status;
@@ -1020,7 +1020,7 @@ uint8_t sme_qos_get_acm_mask(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDes
 {
 	sme_QosEdcaAcType ac;
 	uint8_t acm_mask = 0;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked", __func__, __LINE__);
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
 		if (sme_qos_is_acm(pMac, pSirBssDesc, ac, pIes)) {
@@ -1028,7 +1028,7 @@ uint8_t sme_qos_get_acm_mask(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDes
 		}
 
 	}
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: mask is %d", __func__, __LINE__, acm_mask);
 	return acm_mask;
 }
@@ -1086,19 +1086,19 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 	uint8_t new_tmask = 0;
 	sme_QosSearchInfo search_key;
 	QDF_STATUS hstatus;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for flow %d",
 		  __func__, __LINE__, sessionId, QosFlowID);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	/* if caller sent an empty TSPEC, fill up with the default one */
 	if (!pQoSInfo) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 			  "%s: %d: caller sent an empty QoS param list, using defaults",
 			  __func__, __LINE__);
 		/* find the AC with UPType passed in */
 		ac = sme_qos_up_to_ac(UPType);
 		if (SME_QOS_EDCA_AC_MAX == ac) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid AC %d from UP %d",
 				  __func__, __LINE__, ac, UPType);
 
@@ -1109,7 +1109,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		/* find the AC */
 		ac = sme_qos_up_to_ac(pQoSInfo->ts_info.up);
 		if (SME_QOS_EDCA_AC_MAX == ac) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid AC %d from UP %d",
 				  __func__, __LINE__, ac, pQoSInfo->ts_info.up);
 
@@ -1117,7 +1117,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		}
 		/* validate QoS params */
 		if (!sme_qos_validate_requested_params(pMac, pQoSInfo, sessionId)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid params", __func__, __LINE__);
 			return SME_QOS_STATUS_SETUP_INVALID_PARAMS_RSP;
 		}
@@ -1133,7 +1133,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 	 * confuse PE with back to back Addts or Addts followed by Reassoc
 	 */
 	if (sme_qos_is_rsp_pending(sessionId, ac)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  "%s: %d: buffering the setup request for flow %d in state %d "
 			  "since another request is pending",
 			  __func__, __LINE__, QosFlowID, pACInfo->curr_state);
@@ -1149,7 +1149,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		cmd.u.setupCmdInfo.QosFlowID = QosFlowID;
 		hstatus = sme_qos_buffer_cmd(&cmd, buffered_cmd);
 		if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the setup request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
 			/* unable to buffer the request */
@@ -1157,7 +1157,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_SETUP_FAILURE_RSP;
 		}
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Buffered setup request for flow = %d",
 			  __func__, __LINE__, QosFlowID);
 		return SME_QOS_STATUS_SETUP_REQ_PENDING_RSP;
@@ -1168,7 +1168,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		/* call the internal qos setup logic to decide on if the */
 		/* request is NOP, or need reassoc for APSD and/or need to send out ADDTS */
 		status = sme_qos_setup(pMac, sessionId, &Tspec_Info, ac);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: On session %d with AC %d in state SME_QOS_LINK_UP "
 			  "sme_qos_setup returned with status %d",
 			  __func__, __LINE__, sessionId, ac, status);
@@ -1185,7 +1185,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			/* create an entry in the flow list */
 			pentry = cdf_mem_malloc(sizeof(*pentry));
 			if (!pentry) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: couldn't allocate memory for the new "
 					  "entry in the Flow List", __func__,
@@ -1205,7 +1205,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP == status) {
 				if (pACInfo->tspec_mask_status &&
 				    !pACInfo->reassoc_pending) {
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: On session %d with AC %d in state "
 						  "SME_QOS_LINK_UP tspec_mask_status is %d "
@@ -1250,7 +1250,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			/* Flow List at the end */
 			pentry->tspec_mask = pACInfo->tspec_mask_status;
 			pentry->QoSInfo = Tspec_Info;
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: Creating entry on session %d at %p with flowID %d",
 				  __func__, __LINE__,
 				  sessionId, pentry, QosFlowID);
@@ -1258,7 +1258,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 					   true);
 		} else {
 			/* unexpected status returned by sme_qos_setup() */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d unexpected status %d "
 				  "returned by sme_qos_setup",
 				  __func__, __LINE__, sessionId, status);
@@ -1274,7 +1274,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		break;
 	case SME_QOS_HANDOFF:
 	case SME_QOS_REQUESTED:
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  "%s: %d: Buffering setup request for flow %d in state = %d",
 			  __func__, __LINE__, QosFlowID, pACInfo->curr_state);
 		/* buffer cmd */
@@ -1289,7 +1289,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		cmd.u.setupCmdInfo.QosFlowID = QosFlowID;
 		hstatus = sme_qos_buffer_cmd(&cmd, buffered_cmd);
 		if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d couldn't buffer the setup "
 				  "request for flow %d in state = %d",
 				  __func__, __LINE__,
@@ -1311,13 +1311,13 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			if (CSR_IS_ADDTS_WHEN_ACMOFF_SUPPORTED(pMac) ||
 			    sme_qos_is_acm(pMac, pSession->assocInfo.pBssDesc, ac,
 					   NULL)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_MED,
 					  "%s: %d: tspec_mask_status = %d for AC = %d",
 					  __func__, __LINE__,
 					  pACInfo->tspec_mask_status, ac);
 				if (!pACInfo->tspec_mask_status) {
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: tspec_mask_status can't be 0 for ac = %d in "
 						  "state = %d", __func__,
@@ -1402,7 +1402,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 							SME_QOS_TSPEC_MASK_BIT_1_SET;
 					}
 				} else {
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_INFO_MED,
 						  "%s: %d: wrong tmask = %d",
 						  __func__, __LINE__,
@@ -1414,11 +1414,11 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 				/* to aggregate to calculate trigger frame parameters */
 				tmask = SME_QOS_TSPEC_MASK_BIT_1_SET;
 			}
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 				  "%s: %d: tmask = %d, new_tmask = %d in state = %d",
 				  __func__, __LINE__,
 				  tmask, new_tmask, pACInfo->curr_state);
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 				  "%s: %d: tspec_mask_status = %d for AC = %d",
 				  __func__, __LINE__,
 				  pACInfo->tspec_mask_status, ac);
@@ -1460,7 +1460,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 
 				if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 					/* err msg */
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: failed to aggregate params",
 						  __func__, __LINE__);
@@ -1480,7 +1480,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 					Tspec_Info;
 			}
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: no flows running for ac = %d while in state = %d",
 				  __func__, __LINE__, ac, pACInfo->curr_state);
 			CDF_ASSERT(0);
@@ -1501,7 +1501,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 		status =
 			sme_qos_setup(pMac, sessionId,
 				      &pACInfo->requested_QoSInfo[tmask - 1], ac);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: On session %d with AC %d in state SME_QOS_QOS_ON "
 			  "sme_qos_setup returned with status %d", __func__,
 			  __LINE__, sessionId, ac, status);
@@ -1520,7 +1520,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 				(sme_QosFlowInfoEntry *)
 				cdf_mem_malloc(sizeof(*pentry));
 			if (!pentry) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: couldn't allocate memory for the new "
 					  "entry in the Flow List", __func__,
@@ -1533,7 +1533,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			pentry->hoRenewal = hoRenewal;
 			pentry->QosFlowID = QosFlowID;
 			pentry->sessionId = sessionId;
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: Creating flow %d",
 				  __func__, __LINE__, QosFlowID);
 			if ((SME_QOS_STATUS_SETUP_SUCCESS_NO_ACM_NO_APSD_RSP ==
@@ -1571,7 +1571,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 						if (!QDF_IS_STATUS_SUCCESS
 							    (hstatus)) {
 							CDF_TRACE
-								(CDF_MODULE_ID_SME,
+								(QDF_MODULE_ID_SME,
 								CDF_TRACE_LEVEL_ERROR,
 								"%s: %d: couldn't notify other "
 								"entries on this AC =%d",
@@ -1594,7 +1594,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			/* Flow List at the end */
 			pentry->tspec_mask = tmask;
 			pentry->QoSInfo = Tspec_Info;
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: On session %d creating entry at %p with flowID %d",
 				  __func__, __LINE__,
 				  sessionId, pentry, QosFlowID);
@@ -1602,7 +1602,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 					   true);
 		} else {
 			/* unexpected status returned by sme_qos_setup() */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d unexpected status %d "
 				  "returned by sme_qos_setup",
 				  __func__, __LINE__, sessionId, status);
@@ -1612,7 +1612,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 	case SME_QOS_CLOSED:
 	case SME_QOS_INIT:
 	default:
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: setup requested in unexpected state = %d",
 			  __func__, __LINE__, pACInfo->curr_state);
 		/* unable to service the request */
@@ -1678,7 +1678,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 	sme_QosCmdInfo cmd;
 	uint8_t sessionId;
 	QDF_STATUS hstatus;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked for flow %d", __func__, __LINE__, QosFlowID);
 
 	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
@@ -1690,7 +1690,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 	pEntry = sme_qos_find_in_flow_list(search_key);
 	if (!pEntry) {
 		/* Err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: no match found for flowID = %d",
 			  __func__, __LINE__, QosFlowID);
 		return SME_QOS_STATUS_MODIFY_SETUP_INVALID_PARAMS_RSP;
@@ -1705,7 +1705,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 
 	/* validate QoS params */
 	if (!sme_qos_validate_requested_params(pMac, pQoSInfo, sessionId)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid params", __func__, __LINE__);
 		return SME_QOS_STATUS_MODIFY_SETUP_INVALID_PARAMS_RSP;
 	}
@@ -1714,7 +1714,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 	     flow_info->QoSInfo.ts_info.direction)
 	    || (pQoSInfo->ts_info.up != flow_info->QoSInfo.ts_info.up)
 	    || (pQoSInfo->ts_info.tid != flow_info->QoSInfo.ts_info.tid)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Modification of direction/tid/up is not allowed",
 			  __func__, __LINE__);
 
@@ -1742,7 +1742,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		flow_info->QoSInfo.suspension_interval) &&
 	    (pQoSInfo->surplus_bw_allowance ==
 		flow_info->QoSInfo.surplus_bw_allowance)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			"%s: %d: the addts parameters are same as last request,"
 			"dropping the current request", __func__, __LINE__);
 
@@ -1758,7 +1758,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 	 * confuse PE with back to back Addts or Addts followed by Reassoc
 	 */
 	if (sme_qos_is_rsp_pending(sessionId, ac)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  "%s: %d: buffering the modify request for flow %d in state %d "
 			  "since another request is pending",
 			  __func__, __LINE__, QosFlowID, pACInfo->curr_state);
@@ -1770,7 +1770,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		cmd.u.modifyCmdInfo.QoSInfo = *pQoSInfo;
 		hstatus = sme_qos_buffer_cmd(&cmd, buffered_cmd);
 		if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the modify request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
 			/* unable to buffer the request */
@@ -1778,7 +1778,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 		}
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Buffered modify request for flow = %d",
 			  __func__, __LINE__, QosFlowID);
 		return SME_QOS_STATUS_MODIFY_SETUP_PENDING_RSP;
@@ -1792,7 +1792,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		pNewEntry =
 			(sme_QosFlowInfoEntry *) cdf_mem_malloc(sizeof(*pNewEntry));
 		if (!pNewEntry) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't allocate memory for the new "
 				  "entry in the Flow List", __func__, __LINE__);
 			/* unable to service the request */
@@ -1812,7 +1812,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		pNewEntry->QoSInfo = *pQoSInfo;
 		/* update the entry from Flow List which needed to be modified */
 		flow_info->reason = SME_QOS_REASON_MODIFY;
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: On session %d creating modified "
 			  "entry at %p with flowID %d",
 			  __func__, __LINE__,
@@ -1833,7 +1833,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 					       requested_QoSInfo[pNewEntry->
 								 tspec_mask - 1],
 					       ac);
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: On session %d with AC %d in state SME_QOS_QOS_ON "
 				  "sme_qos_setup returned with status %d",
 				  __func__, __LINE__, sessionId, ac, status);
@@ -1893,7 +1893,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 						if (!QDF_IS_STATUS_SUCCESS
 							    (hstatus)) {
 							CDF_TRACE
-								(CDF_MODULE_ID_SME,
+								(QDF_MODULE_ID_SME,
 								CDF_TRACE_LEVEL_ERROR,
 								"%s: %d: couldn't notify other "
 								"entries on this AC =%d",
@@ -1923,7 +1923,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 
 			} else {
 				/* unexpected status returned by sme_qos_setup() */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: On session %d unexpected status %d "
 					  "returned by sme_qos_setup", __func__,
@@ -1932,7 +1932,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			}
 		} else {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: sme_qos_update_params() failed",
 				  __func__, __LINE__);
 			/* unable to service the request */
@@ -1953,7 +1953,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		break;
 	case SME_QOS_HANDOFF:
 	case SME_QOS_REQUESTED:
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  "%s: %d: Buffering modify request for flow %d in state = %d",
 			  __func__, __LINE__, QosFlowID, pACInfo->curr_state);
 		/* buffer cmd */
@@ -1964,7 +1964,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		cmd.u.modifyCmdInfo.QoSInfo = *pQoSInfo;
 		hstatus = sme_qos_buffer_cmd(&cmd, buffered_cmd);
 		if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the modify request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
 			/* unable to buffer the request */
@@ -1978,7 +1978,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 	case SME_QOS_INIT:
 	case SME_QOS_LINK_UP:
 	default:
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: modify requested in unexpected state = %d",
 			  __func__, __LINE__, pACInfo->curr_state);
 		/* unable to service the request */
@@ -2028,7 +2028,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	bool uplinkFlowsPresent = false;
 	bool downlinkFlowsPresent = false;
 	tListElem *pResult = NULL;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked for flow %d", __func__, __LINE__, QosFlowID);
 
 	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
@@ -2041,7 +2041,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 
 	if (!pEntry) {
 		/* Err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: no match found for flowID = %d",
 			  __func__, __LINE__, QosFlowID);
 		return SME_QOS_STATUS_RELEASE_INVALID_PARAMS_RSP;
@@ -2061,7 +2061,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	 * confuse PE with back to back Addts or Addts followed by Reassoc
 	 */
 	if (sme_qos_is_rsp_pending(sessionId, ac)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  "%s: %d: buffering the release request for flow %d in state %d "
 			  "since another request is pending",
 			  __func__, __LINE__, QosFlowID, pACInfo->curr_state);
@@ -2072,7 +2072,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 		cmd.u.releaseCmdInfo.QosFlowID = QosFlowID;
 		hstatus = sme_qos_buffer_cmd(&cmd, buffered_cmd);
 		if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the release request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
 			/* unable to buffer the request */
@@ -2080,7 +2080,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 			pSession->readyForPowerSave = true;
 			return SME_QOS_STATUS_RELEASE_FAILURE_RSP;
 		}
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Buffered release request for flow = %d",
 			  __func__, __LINE__, QosFlowID);
 		return SME_QOS_STATUS_RELEASE_REQ_PENDING_RSP;
@@ -2088,7 +2088,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	/* get into the stat m/c to see if the request can be granted */
 	switch (pACInfo->curr_state) {
 	case SME_QOS_QOS_ON:
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  "%s: %d: tspec_mask_status = %d for AC = %d with "
 			  "entry tspec_mask = %d",
 			  __func__, __LINE__,
@@ -2171,7 +2171,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 								SME_QOS_TSPEC_MASK_BIT_2_SET,
 								&Aggr_Tspec_Info);
 
-						CDF_TRACE(CDF_MODULE_ID_SME,
+						CDF_TRACE(QDF_MODULE_ID_SME,
 							  CDF_TRACE_LEVEL_ERROR,
 							  "%s: %d: On session %d buffering the AddTS request "
 							  "for AC %d in state %d as Addts is pending "
@@ -2200,7 +2200,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 							    (sme_qos_buffer_cmd
 								    (&cmd, false))) {
 							CDF_TRACE
-								(CDF_MODULE_ID_SME,
+								(QDF_MODULE_ID_SME,
 								CDF_TRACE_LEVEL_ERROR,
 								"%s: %d: On session %d unable to buffer the AddTS "
 								"request for AC %d TSPEC %d in state %d",
@@ -2242,7 +2242,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						       requested_QoSInfo
 						       [flow_info->tspec_mask -
 							1], ac);
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: On session %d with AC %d in state SME_QOS_QOS_ON "
 					  "sme_qos_setup returned with status %d",
@@ -2272,7 +2272,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						requested_QoSInfo[flow_info->
 								  tspec_mask - 1];
 					/* delete the entry from Flow List */
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_INFO_HIGH,
 						  "%s: %d: Deleting entry at %p with flowID %d",
 						  __func__, __LINE__, flow_info,
@@ -2296,7 +2296,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						if (!QDF_IS_STATUS_SUCCESS
 							    (hstatus)) {
 							CDF_TRACE
-								(CDF_MODULE_ID_SME,
+								(QDF_MODULE_ID_SME,
 								CDF_TRACE_LEVEL_ERROR,
 								"%s: %d: couldn't notify other "
 								"entries on this AC =%d",
@@ -2321,7 +2321,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					}
 				} else {
 					/* unexpected status returned by sme_qos_setup() */
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: On session %d unexpected status %d "
 						  "returned by sme_qos_setup",
@@ -2336,7 +2336,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						requested_QoSInfo[flow_info->
 								  tspec_mask - 1];
 					/* delete the entry from Flow List */
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_INFO_HIGH,
 						  "%s: %d: On session %d deleting entry at "
 						  "%p with flowID %d", __func__,
@@ -2361,7 +2361,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 				}
 			} else {
 				/* err msg */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: sme_qos_update_params() failed",
 					  __func__, __LINE__);
@@ -2428,7 +2428,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 								  tspec_mask);
 					if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 						/* err msg */
-						CDF_TRACE(CDF_MODULE_ID_SME,
+						CDF_TRACE(QDF_MODULE_ID_SME,
 							  CDF_TRACE_LEVEL_ERROR,
 							  "%s: %d: sme_qos_del_ts_req() failed",
 							  __func__, __LINE__);
@@ -2477,7 +2477,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 								  false);
 				if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 					/* err msg */
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: Reassoc failed",
 						  __func__, __LINE__);
@@ -2492,7 +2492,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					pACInfo->tspec_pending = 0;
 				}
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: nothing to do for AC = %d",
 					  __func__, __LINE__, ac);
@@ -2511,7 +2511,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 						       SME_QOS_STATUS_RELEASE_QOS_LOST_IND,
 						       flow_info->QosFlowID);
 
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: Deleting entry at %p with flowID %d",
 					  __func__, __LINE__, flow_info,
@@ -2541,7 +2541,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					new_state = SME_QOS_LINK_UP;
 				}
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: Exceeded the array bounds of pACInfo->num_flows",
 					  __func__, __LINE__);
@@ -2562,7 +2562,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 				     sizeof(sme_QosWmmTspecInfo));
 			pACInfo->num_flows[flow_info->tspec_mask - 1]--;
 			/* delete the entry from Flow List */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: On session %d deleting entry at %p with flowID %d",
 				  __func__, __LINE__,
 				  sessionId, flow_info, QosFlowID);
@@ -2591,7 +2591,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 		cmd.u.releaseCmdInfo.QosFlowID = QosFlowID;
 		hstatus = sme_qos_buffer_cmd(&cmd, buffered_cmd);
 		if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't buffer the release request in state = %d",
 				  __func__, __LINE__, pACInfo->curr_state);
 			/* unable to service the request */
@@ -2606,7 +2606,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	case SME_QOS_LINK_UP:
 	default:
 		/* print error msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: release request in unexpected state = %d",
 			  __func__, __LINE__, pACInfo->curr_state);
 		CDF_ASSERT(0);
@@ -2671,20 +2671,20 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 	tCsrRoamModifyProfileFields modifyProfileFields;
 	QDF_STATUS hstatus;
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session Id %d is invalid",
 			  __func__, __LINE__, sessionId);
 		return status;
 	}
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	if (!pSession->sessionActive) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session %d is inactive",
 			  __func__, __LINE__, sessionId);
 		return status;
 	}
 	if (!pSession->assocInfo.pBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session %d has an Invalid BSS Descriptor",
 			  __func__, __LINE__, sessionId);
 		return status;
@@ -2693,7 +2693,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 						      pSession->assocInfo.pBssDesc,
 						      &pIes);
 	if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d unable to parse BSS IEs",
 			  __func__, __LINE__, sessionId);
 		return status;
@@ -2702,7 +2702,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 	/* success so pIes was allocated */
 
 	if (!CSR_IS_QOS_BSS(pIes)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d AP doesn't support QoS",
 			  __func__, __LINE__, sessionId);
 		cdf_mem_free(pIes);
@@ -2710,7 +2710,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 		return SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
 		  "%s: %d: UAPSD/PSB set %d: ", __func__, __LINE__,
 		  pTspec_Info->ts_info.psb);
 
@@ -2726,7 +2726,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 			      qosInfo & SME_QOS_AP_SUPPORTS_APSD)
 			    && !(pIes->WMMInfoAp.uapsd)) {
 				/* application is looking for APSD but AP doesn't support it */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: On session %d AP doesn't support APSD",
 					  __func__, __LINE__, sessionId);
@@ -2744,13 +2744,13 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 				qos_issue_command(pMac, sessionId, eSmeCommandAddTs,
 						  pTspec_Info, ac, 0);
 			if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: sme_qos_add_ts_req() failed",
 					  __func__, __LINE__);
 				break;
 			}
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: On session %d AddTS on AC %d is pending",
 				  __func__, __LINE__, sessionId, ac);
 			status = SME_QOS_STATUS_SETUP_REQ_PENDING_RSP;
@@ -2768,7 +2768,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 			    apsdMask & (1 << (SME_QOS_EDCA_AC_VO - ac))) {
 				/* APSD was formerly enabled on this AC but is no longer required */
 				/* so we must reassociate */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: On session %d reassoc needed "
 					  "to disable APSD on AC %d", __func__,
@@ -2785,13 +2785,13 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 								false);
 				if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 					/* err msg */
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_ERROR,
 						  "%s: %d: Unable to request reassociation",
 						  __func__, __LINE__);
 					break;
 				} else {
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 						  CDF_TRACE_LEVEL_INFO_HIGH,
 						  "%s: %d: On session %d reassociation to enable "
 						  "APSD on AC %d is pending",
@@ -2804,7 +2804,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 			} else {
 				/* we don't need APSD on this AC */
 				/* and we don't currently have APSD on this AC */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: Request is not looking for APSD & Admission "
 					  "Control isn't mandatory for the AC",
@@ -2817,7 +2817,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 		} else if (!(pIes->WMMParams.qosInfo & SME_QOS_AP_SUPPORTS_APSD)
 			   && !(pIes->WMMInfoAp.uapsd)) {
 			/* application is looking for APSD but AP doesn't support it */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AP doesn't support APSD",
 				  __func__, __LINE__, sessionId);
 			break;
@@ -2826,7 +2826,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 			/* application is looking for APSD */
 			/* and it is already enabled on this AC */
 			status = SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY;
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: Request is looking for APSD and it is already "
 				  "set for the AC", __func__, __LINE__);
 			break;
@@ -2834,7 +2834,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 			/* application is looking for APSD */
 			/* but it is not enabled on this AC */
 			/* so we need to reassociate */
-			CDF_TRACE(CDF_MODULE_ID_SME,
+			CDF_TRACE(QDF_MODULE_ID_SME,
 				CDF_TRACE_LEVEL_INFO_HIGH,
 				FL("On session %d reassoc needed to enable APSD on AC %d"),
 				sessionId, ac);
@@ -2853,13 +2853,13 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 						false);
 			if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
 				/* err msg */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
 						"%s: %d: Unable to request reassociation",
 						__func__, __LINE__);
 				break;
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					CDF_TRACE_LEVEL_INFO_HIGH,
 					FL("On session %d reassociation to enable APSD on AC %d is pending"),
 					sessionId, ac);
@@ -2883,7 +2883,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 QDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
 					       uint8_t sessionId, void *pEvent_info)
 {
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 		  "########### Set Key Complete #############");
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return QDF_STATUS_SUCCESS;
@@ -2921,7 +2921,7 @@ QDF_STATUS sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionI
 	pAddtsRsp->rsp.dialogToken = 0;
 	pAddtsRsp->rsp.status = eSIR_SUCCESS;
 	pAddtsRsp->rsp.wmeTspecPresent = pTspec->present;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 		  "%s: Copy Tspec to local data structure ac=%d, tspecIdx=%d",
 		  __func__, ac, tspecIndex);
 
@@ -2963,7 +2963,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 
 	pCsrSession = CSR_GET_SESSION(pMac, sessionId);
 	if (NULL == pCsrSession) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("session %d not found"), sessionId);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2983,13 +2983,13 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 	/* should be atleast equal to the one TSPEC IE */
 	tspecIeLen = pCsrConnectedInfo->nTspecIeLength;
 	if (tspecIeLen < sizeof(tDot11fIEWMMTSPEC)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("ESE Tspec IE len %d less than min %zu"),
 			  tspecIeLen, sizeof(tDot11fIEWMMTSPEC));
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 		  "TspecLen = %d, pbFrames = %p, pTspecIE = %p",
 		  tspecIeLen, pCsrConnectedInfo->pbFrames, pTspecIE);
 
@@ -2997,13 +2997,13 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 	for (cnt = 0; cnt < numTspec; cnt++) {
 		ac = sme_qos_up_to_ac(pTspecIE->user_priority);
 		if (ac >= SME_QOS_EDCA_AC_MAX) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("ac %d more than it`s max value"), ac);
 			return QDF_STATUS_E_FAILURE;
 		}
 		pACInfo = &pSession->ac_info[ac];
 		tspec_mask_status = pACInfo->tspec_mask_status;
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 			  FL("UP=%d, ac=%d, tspec_mask_status=%x"),
 			  pTspecIE->user_priority, ac, tspec_mask_status);
 
@@ -3011,7 +3011,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 		     tspec_flow_index < SME_QOS_TSPEC_INDEX_MAX;
 		     tspec_flow_index++) {
 			if (tspec_mask_status & (1 << tspec_flow_index)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_WARN,
 					  FL
 						  ("Found Tspec entry flow = %d AC = %d"),
@@ -3020,7 +3020,7 @@ QDF_STATUS sme_qos_ese_process_reassoc_tspec_rsp(tpAniSirGlobal pMac,
 								pTspecIE, ac,
 								tspec_flow_index);
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_WARN,
 					  FL
 						  ("Not found Tspec entry flow = %d AC = %d"),
@@ -3088,7 +3088,7 @@ static void sme_qos_copy_tspec_info(tpAniSirGlobal pMac,
 	pTspec->tsinfo.traffic.ackPolicy = pTspec_Info->ts_info.ack_policy;
 	pTspec->type = SME_QOS_TSPEC_IE_TYPE;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: up = %d, tid = %d",
 		  __func__, __LINE__,
 		  pTspec_Info->ts_info.up, pTspec_Info->ts_info.tid);
@@ -3217,7 +3217,7 @@ QDF_STATUS sme_qos_create_tspec_ricie(tpAniSirGlobal pMac,
 		dot11f_pack_ie_ric_data_desc(pMac, &ricIE, pRICBuffer, sizeof(ricIE),
 					     pRICLength);
 	if (DOT11F_FAILED(nStatus)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL
 				  ("Packing of RIC Data of length %d failed with status %d"),
 			  *pRICLength, nStatus);
@@ -3258,7 +3258,7 @@ QDF_STATUS sme_qos_create_tspec_ricie(tpAniSirGlobal pMac,
 		dot11f_pack_ie_ric_data_desc(pMac, &ricIE, pRICBuffer, sizeof(ricIE),
 					     pRICLength);
 	if (DOT11F_FAILED(nStatus)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL
 				  ("Packing of RIC Data of length %d failed with status %d"),
 			  *pRICLength, nStatus);
@@ -3286,7 +3286,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 	sme_QosFlowInfoEntry *flow_info = NULL;
 	tListElem *entry = NULL;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		FL("Invoked on session %d"), sessionId);
 
 	session = &sme_qos_cb.sessionInfo[sessionId];
@@ -3306,7 +3306,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 				&& !ac_info->tspec_pending)
 				|| (ac_info->
 				tspec_mask_status & (1 << tspec_index))) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					CDF_TRACE_LEVEL_INFO,
 					FL("Copying the currentQos to "
 					"requestedQos for AC=%d, flow=%d"),
@@ -3332,7 +3332,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 					SME_QOS_REQUESTED);
 				break;
 			default:
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					CDF_TRACE_LEVEL_ERROR,
 					FL("FT Reassoc req event in"
 					" unexpected state %d"),
@@ -3357,7 +3357,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 	 */
 	entry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!entry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 			FL("Flow List empty, nothing to update"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3365,7 +3365,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 	do {
 		flow_info = GET_BASE_ADDR(entry, sme_QosFlowInfoEntry, link);
 		if (sessionId == flow_info->sessionId) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				FL("Changing FlowID %d reason to SETUP"
 				"and HO renewal to false"),
 				flow_info->QosFlowID);
@@ -3397,7 +3397,7 @@ static void sme_qos_fill_aggr_info(int ac_id, int ts_id,
 				   tSirAggrQosReq *msg,
 				   sme_QosSessionInfo *session)
 {
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 		  FL("Found tspec entry AC=%d, flow=%d, direction = %d"),
 		  ac_id, ts_id, direction);
 
@@ -3447,7 +3447,7 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	int i, j = 0;
 	uint8_t direction;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("invoked on session %d"), session_id);
 
 	session = &sme_qos_cb.sessionInfo[session_id];
@@ -3456,7 +3456,7 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 
 	if (!aggr_req) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("couldn't allocate memory for the msg buffer"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -3470,14 +3470,14 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	aggr_req->rspReqd = true;
 	cdf_mem_copy(&aggr_req->bssid.bytes[0],
 		     &session->assocInfo.pBssDesc->bssId[0],
-		     sizeof(struct cdf_mac_addr));
+		     sizeof(struct qdf_mac_addr));
 
 	for (i = 0; i < SME_QOS_EDCA_AC_MAX; i++) {
 		for (j = 0; j < SME_QOS_TSPEC_INDEX_MAX; j++) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  FL("ac=%d, tspec_mask_staus=%x, tspec_index=%d"),
 				  i, session->ac_info[i].tspec_mask_status, j);
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  FL("direction = %d"),
 				  session->ac_info[i].addTsRsp[j].rsp.tspec.
 				  tsinfo.traffic.direction);
@@ -3497,13 +3497,13 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 		}
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 		  FL("Sending aggregated message to HAL 0x%x"),
 		  aggr_req->aggrInfo.tspecIdx);
 
 	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(aggr_req))) {
 		status = QDF_STATUS_SUCCESS;
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("sent down a AGGR QoS req to PE"));
 	}
 
@@ -3585,7 +3585,7 @@ QDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal mac_ctx, void *msgbuf)
 	int i, j = 0;
 	uint8_t sessionid = rsp->sessionId;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 		  FL("Received AGGR_QOS resp from LIM"));
 
 	/* Copy the updated response information for TSPEC of all the ACs */
@@ -3599,7 +3599,7 @@ QDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal mac_ctx, void *msgbuf)
 				ac_info[i].addTsRsp[j].rsp.tspec.tsinfo.traffic.
 				direction;
 
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  FL("Addts rsp from LIM AC=%d, flow=%d dir=%d, tspecIdx=%x"),
 				  i, j, direction, rsp->aggrInfo.tspecIdx);
 
@@ -3617,7 +3617,7 @@ QDF_STATUS sme_qos_process_aggr_qos_rsp(tpAniSirGlobal mac_ctx, void *msgbuf)
 			addtsrsp.rsp.status = rsp->aggrInfo.aggrRsp[i].status;
 			addtsrsp.rsp.tspec = rsp->aggrInfo.aggrRsp[i].tspec;
 
-			CDF_TRACE(CDF_MODULE_ID_SME,
+			CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO,
 				  FL("Processing Addts rsp from LIM AC=%d, flow=%d"),
 				  i, j);
@@ -3661,7 +3661,7 @@ static QDF_STATUS sme_qos_find_matching_tspec(tpAniSirGlobal mac_ctx,
 			continue;
 
 		if (!*ric_rsplen) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("RIC Response not received for AC %d on "
 			  "TSPEC Index %d, RIC Req Identifier = %d"),
 			  ac, tspec_flow_index,
@@ -3677,14 +3677,14 @@ static QDF_STATUS sme_qos_find_matching_tspec(tpAniSirGlobal mac_ctx,
 
 		if (ric_data_desc->RICData.Identifier !=
 			ac_info->ricIdentifier[tspec_flow_index]) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("RIC response order not same as request sent. "
 			  "Request ID = %d, Response ID = %d"),
 			  ac_info->ricIdentifier[tspec_flow_index],
 			  ric_data_desc->RICData.Identifier);
 			CDF_ASSERT(0);
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_SME,
+			CDF_TRACE(QDF_MODULE_ID_SME,
 			  CDF_TRACE_LEVEL_INFO,
 			  FL("Processing RIC Response for AC %d, "
 			  "TSPEC Flow index %d with RIC ID %d "),
@@ -3694,7 +3694,7 @@ static QDF_STATUS sme_qos_find_matching_tspec(tpAniSirGlobal mac_ctx,
 					sessionid, ric_data_desc, ac,
 					tspec_flow_index);
 			if (QDF_STATUS_SUCCESS != status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_ERROR,
 				  FL("Failed with status %d for AC %d in "
 				  "TSPEC Flow index = %d"),
@@ -3749,7 +3749,7 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(tpAniSirGlobal mac_ctx,
 			ac1 = sme_qos_up_to_ac(
 				ric_data->WMMTSPEC.user_priority);
 			if (ac == SME_QOS_EDCA_AC_MAX) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_ERROR,
 				  FL("Invalid AC %d UP %d"), ac,
 				  ric_data->WMMTSPEC.user_priority);
@@ -3762,7 +3762,7 @@ static QDF_STATUS sme_qos_find_matching_tspec_lfr3(tpAniSirGlobal mac_ctx,
 						sessionid, ric_data, ac,
 						tspec_flow_idx);
 				if (QDF_STATUS_SUCCESS != status) {
-					CDF_TRACE(CDF_MODULE_ID_SME,
+					CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("Failed with status %d for AC %d "
 					  "in TSPEC Flow index = %d"),
@@ -3800,14 +3800,14 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 #endif
 
 	if (NULL == csr_session) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("The Session pointer is NULL"));
 		return QDF_STATUS_E_FAILURE;
 	}
 	csr_conn_info = &csr_session->connectedInfo;
 	ric_rsplen = csr_conn_info->nRICRspLength;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("invoked on session %d"), sessionid);
 
 	qos_session = &sme_qos_cb.sessionInfo[sessionid];
@@ -3827,14 +3827,14 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 		}
 
 		if (ric_rsplen) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				FL("RIC Resp still follows . Rem len = %d"),
 				ric_rsplen);
 			CDF_ASSERT(0);
 		}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			  FL("LFR3-11r Compare RIC in Reassoc Resp to find"
 			     " matching tspec in host."));
 		ric_data = ric_data_desc;
@@ -3848,7 +3848,7 @@ QDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 					ric_len);
 			}
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			  FL("LFR3-11r ric_rsplen is zero or ric_data_desc is"
 			  " not present or wmmtspec is not present"));
 		}
@@ -3887,12 +3887,12 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for AC %d",
 		  __func__, __LINE__, sessionId, ac);
 	if (sessionId >= CSR_ROAM_SESSION_MAX) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: sessionId(%d) is invalid",
 			  __func__, __LINE__, sessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -3902,7 +3902,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 	pMsg = (tSirAddtsReq *) cdf_mem_malloc(sizeof(tSirAddtsReq));
 	if (!pMsg) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: couldn't allocate memory for the msg buffer",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
@@ -3953,7 +3953,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 	pMsg->req.tspec.type = SME_QOS_TSPEC_IE_TYPE;
 	/*Fill the BSSID pMsg->req.bssId */
 	if (NULL == pSession->assocInfo.pBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
 		cdf_mem_free(pMsg);
@@ -3961,8 +3961,8 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 	}
 	cdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
-		     sizeof(struct cdf_mac_addr));
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		     sizeof(struct qdf_mac_addr));
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: up = %d, tid = %d",
 		  __func__, __LINE__,
 		  pTspec_Info->ts_info.up, pTspec_Info->ts_info.tid);
@@ -3974,7 +3974,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 #endif
 	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(pMsg))) {
 		status = QDF_STATUS_SUCCESS;
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: sent down a ADDTS req to PE",
 			  __func__, __LINE__);
 		/* event: EVENT_WLAN_QOS */
@@ -4013,13 +4013,13 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for AC %d",
 		  __func__, __LINE__, sessionId, ac);
 	pMsg = (tSirDeltsReq *) cdf_mem_malloc(sizeof(tSirDeltsReq));
 	if (!pMsg) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: couldn't allocate memory for the msg buffer",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
@@ -4063,7 +4063,7 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 	pMsg->req.tspec.type = SME_QOS_TSPEC_IE_TYPE;
 	/*Fill the BSSID pMsg->req.bssId */
 	if (NULL == pSession->assocInfo.pBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
 		cdf_mem_free(pMsg);
@@ -4071,9 +4071,9 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 	}
 	cdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
-		     sizeof(struct cdf_mac_addr));
+		     sizeof(struct qdf_mac_addr));
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: up = %d, tid = %d",
 		  __func__, __LINE__,
 		  pTspecInfo->ts_info.up, pTspecInfo->ts_info.tid);
@@ -4081,7 +4081,7 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 		     sizeof(sme_QosWmmTspecInfo));
 	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(pMsg))) {
 		status = QDF_STATUS_SUCCESS;
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: sme_qos_del_ts_req:Test: sent down a DELTS req to PE",
 			  __func__, __LINE__);
 		/* event: EVENT_WLAN_QOS */
@@ -4126,14 +4126,14 @@ QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for UP %d",
 		  __func__, __LINE__, sessionId, up);
 
 	ac = sme_qos_up_to_ac(up);
 	if (SME_QOS_EDCA_AC_MAX == ac) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
 			  __func__, __LINE__, ac, up);
 
@@ -4149,7 +4149,7 @@ QDF_STATUS sme_qos_process_add_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 		return QDF_STATUS_SUCCESS;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d with return code %d",
 		  __func__, __LINE__, sessionId, paddts_rsp->rc);
 	/* our outstanding request has been serviced */
@@ -4191,7 +4191,7 @@ QDF_STATUS sme_qos_process_del_ts_rsp(tpAniSirGlobal pMac, void *pMsgBuf)
 	sme_QosSessionInfo *pSession;
 	uint8_t sessionId = pDeltsRsp->sessionId;
 	/* msg */
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d with return code %d",
 		  __func__, __LINE__, sessionId, pDeltsRsp->rc);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4229,13 +4229,13 @@ QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 #endif
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d for UP %d",
 		  __func__, __LINE__, sessionId, up);
 	ac = sme_qos_up_to_ac(up);
 	if (SME_QOS_EDCA_AC_MAX == ac) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
 			  __func__, __LINE__, ac, up);
 		return QDF_STATUS_E_FAILURE;
@@ -4252,7 +4252,7 @@ QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 	/* through the callback it registered per request */
 	if (!QDF_IS_STATUS_SUCCESS
 		    (sme_qos_find_all_in_flow_list(pMac, search_key, sme_qos_del_ts_ind_fnp))) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: no match found for ac = %d", __func__,
 			  __LINE__, search_key.key.ac_type);
 		CDF_ASSERT(0);
@@ -4285,7 +4285,7 @@ QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal pMac, uint8_t sessio
 	sme_QosACInfo *pACInfo;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	sme_QosEdcaAcType ac = SME_QOS_EDCA_AC_BE;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4300,31 +4300,31 @@ QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal pMac, uint8_t sessio
 		/* get the association info */
 		if (!pEvent_info) {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: pEvent_info is NULL",
 				  __func__, __LINE__);
 			return status;
 		}
 		if (!((sme_QosAssocInfo *) pEvent_info)->pBssDesc) {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: pBssDesc is NULL",
 				  __func__, __LINE__);
 			return status;
 		}
 		if ((pSession->assocInfo.pBssDesc) &&
 		    (csr_is_bssid_match
-			     (pMac, (struct cdf_mac_addr *) &pSession->assocInfo.pBssDesc->bssId,
-			     (struct cdf_mac_addr *) &(((sme_QosAssocInfo *) pEvent_info)->
+			     (pMac, (struct qdf_mac_addr *) &pSession->assocInfo.pBssDesc->bssId,
+			     (struct qdf_mac_addr *) &(((sme_QosAssocInfo *) pEvent_info)->
 					     pBssDesc->bssId)))) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: assoc with the same BSS, no update needed",
 				  __func__, __LINE__);
 		} else {
 			status = sme_qos_save_assoc_info(pSession, pEvent_info);
 		}
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: wrong state: BE %d, BK %d, VI %d, VO %d",
 			  __func__, __LINE__,
 			  pSession->ac_info[SME_QOS_EDCA_AC_BE].curr_state,
@@ -4355,7 +4355,7 @@ QDF_STATUS sme_qos_process_assoc_complete_ev(tpAniSirGlobal pMac, uint8_t sessio
 			case SME_QOS_HANDOFF:
 			case SME_QOS_CLOSED:
 			default:
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: On session %d AC %d is in wrong state %d",
 					  __func__, __LINE__, sessionId, ac,
@@ -4384,13 +4384,13 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	sme_QosEdcaAcType ac;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 
 	if (pSession->ftHandoffInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
 			  "already be in handoff state", __func__, __LINE__);
 		if ((pSession->ac_info[0].curr_state != SME_QOS_HANDOFF) ||
@@ -4405,7 +4405,7 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 	}
 
 	if (pSession->handoffRequested) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
 			  "already be in handoff state", __func__, __LINE__);
 
@@ -4424,7 +4424,7 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 	}
 /* TBH: Assuming both handoff algo & 11r willn't be enabled at the same time */
 	if (pSession->ftHandoffInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
 			  "already be in handoff state", __func__, __LINE__);
 
@@ -4454,7 +4454,7 @@ QDF_STATUS sme_qos_process_reassoc_req_ev(tpAniSirGlobal pMac, uint8_t sessionId
 		case SME_QOS_CLOSED:
 		case SME_QOS_INIT:
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AC %d is in wrong state %d",
 				  __func__, __LINE__,
 				  sessionId, ac, pACInfo->curr_state);
@@ -4547,7 +4547,7 @@ QDF_STATUS sme_qos_handle_handoff_state(tpAniSirGlobal mac_ctx,
 	status = sme_qos_find_all_in_flow_list(mac_ctx, search_key,
 			sme_qos_reassoc_success_ev_fnp);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("no match found for ac = %d"),
 			  search_key.key.ac_type);
 		CDF_ASSERT(0);
@@ -4582,11 +4582,11 @@ QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 	sme_QosEdcaAcType ac;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("invoked on session %d"), sessionid);
 
 	if (CSR_ROAM_SESSION_MAX <= sessionid) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("invoked on session %d"), sessionid);
 		return status;
 	}
@@ -4602,19 +4602,19 @@ QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 
 	/* get the association info */
 	if (!event_info) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("event_info is NULL"));
 		return status;
 	}
 
 	if (!((sme_QosAssocInfo *) event_info)->pBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("pBssDesc is NULL"));
 		return status;
 	}
 	status = sme_qos_save_assoc_info(qos_session, event_info);
 	if (status)
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("sme_qos_save_assoc_info() failed"));
 
 	/*
@@ -4670,7 +4670,7 @@ QDF_STATUS sme_qos_process_reassoc_success_ev(tpAniSirGlobal mac_ctx,
 		case SME_QOS_REQUESTED:
 		case SME_QOS_QOS_ON:
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("session %d AC %d is in wrong state %d"),
 				  sessionid, ac, ac_info->curr_state);
 			CDF_ASSERT(0);
@@ -4697,7 +4697,7 @@ QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	sme_QosEdcaAcType ac;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4737,7 +4737,7 @@ QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal pMac,
 		case SME_QOS_REQUESTED:
 		case SME_QOS_QOS_ON:
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AC %d is in wrong state %d",
 				  __func__, __LINE__,
 				  sessionId, ac, pACInfo->curr_state);
@@ -4766,7 +4766,7 @@ QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	uint8_t ac;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4781,7 +4781,7 @@ QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 		case SME_QOS_HANDOFF:
 			/* print error msg */
 			if (pSession->ftHandoffInProgress) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO,
 					  "%s: %d: SME_QOS_CSR_HANDOFF_ASSOC_REQ received in "
 					  "SME_QOS_HANDOFF state with FT in progress",
@@ -4792,7 +4792,7 @@ QDF_STATUS sme_qos_process_handoff_assoc_req_ev(tpAniSirGlobal pMac,
 		case SME_QOS_CLOSED:
 		case SME_QOS_INIT:
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AC %d is in wrong state %d",
 				  __func__, __LINE__,
 				  sessionId, ac, pACInfo->curr_state);
@@ -4834,7 +4834,7 @@ QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal pMac,
 	sme_QosACInfo *pACInfo;
 	uint8_t ac;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4865,7 +4865,7 @@ QDF_STATUS sme_qos_process_handoff_success_ev(tpAniSirGlobal pMac,
    state may be SME_QOS_REQUESTED */
 			if (pSession->ftHandoffInProgress)
 				break;
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AC %d is in wrong state %d",
 				  __func__, __LINE__,
 				  sessionId, ac, pACInfo->curr_state);
@@ -4892,7 +4892,7 @@ QDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	uint8_t ac;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4925,7 +4925,7 @@ QDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
 		case SME_QOS_REQUESTED:
 		case SME_QOS_QOS_ON:
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: On session %d AC %d is in wrong state %d",
 				  __func__, __LINE__,
 				  sessionId, ac, pACInfo->curr_state);
@@ -4958,7 +4958,7 @@ QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 					 void *pEvent_info)
 {
 	sme_QosSessionInfo *pSession;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -4968,7 +4968,7 @@ QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 	 */
 	if ((pSession->handoffRequested)
 	    && !pSession->ftHandoffInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
 			  "already be in handoff state", __func__, __LINE__);
 		if ((pSession->ac_info[0].curr_state != SME_QOS_HANDOFF) ||
@@ -5019,12 +5019,12 @@ QDF_STATUS sme_qos_process_join_req_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 {
 	sme_QosSessionInfo *pSession;
 	sme_QosEdcaAcType ac;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	if (pSession->handoffRequested) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: no need for state transition, should "
 			  "already be in handoff state", __func__, __LINE__);
 		if ((pSession->ac_info[0].curr_state != SME_QOS_HANDOFF) ||
@@ -5077,11 +5077,11 @@ QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
 	uint8_t tspec_mask_status = 0;
 	uint8_t tspec_pending_status = 0;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("invoked on SME session %d"), sessionid);
 
 	if (NULL == sme_session) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("sme_session is NULL"));
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5102,7 +5102,7 @@ QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
 		case SME_QOS_CLOSED:
 		case SME_QOS_INIT:
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("Session %d AC %d is in wrong state %d"),
 				  sessionid, ac, ac_info->curr_state);
 			CDF_ASSERT(0);
@@ -5118,7 +5118,7 @@ QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
 
 	/* Data is accessed from saved PreAuth Rsp */
 	if (NULL == sme_session->ftSmeContext.psavedFTPreAuthRsp) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("psavedFTPreAuthRsp is NULL"));
 		return QDF_STATUS_E_INVAL;
 	}
@@ -5144,7 +5144,7 @@ QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
 		tspec_pending_status = ac_info->tspec_pending;
 		tspec_mask_status = ac_info->tspec_mask_status;
 		cdf_mem_zero(ac_info->ricIdentifier, SME_QOS_TSPEC_INDEX_MAX);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			  FL("AC %d ==> TSPEC status = %d, tspec pending = %d"),
 			  ac, tspec_mask_status, tspec_pending_status);
 
@@ -5206,13 +5206,13 @@ QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal pMac,
 	uint8_t tspec_pending;
 	sme_QosWmmUpType up =
 		(sme_QosWmmUpType) pRsp->tspec.tsinfo.traffic.userPrio;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for UP %d", __func__, __LINE__,
 		  sessionId, up);
 	ac = sme_qos_up_to_ac(up);
 	if (SME_QOS_EDCA_AC_MAX == ac) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
 			  __func__, __LINE__, ac, up);
 		return QDF_STATUS_E_FAILURE;
@@ -5222,7 +5222,7 @@ QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal pMac,
 	/* is there a TSPEC request pending on this AC? */
 	tspec_pending = pACInfo->tspec_pending;
 	if (!tspec_pending) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d an AddTS is not pending on AC %d",
 			  __func__, __LINE__, sessionId, ac);
 		CDF_ASSERT(0);
@@ -5237,7 +5237,7 @@ QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal pMac,
 	if (!QDF_IS_STATUS_SUCCESS
 		    (sme_qos_find_all_in_flow_list
 			    (pMac, search_key, sme_qos_add_ts_failure_fnp))) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d no match found for ac = %d",
 			  __func__, __LINE__, sessionId,
 			  search_key.key.ac_type);
@@ -5281,7 +5281,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
 	sme_QosSessionInfo *qos_session;
 	sme_QosACInfo *ac_info;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("invoked on session %d for AC %d TSPEC %d"),
 		  sessionid, search_key.key.ac_type, new_tspec_mask);
 
@@ -5290,7 +5290,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
 	if (search_key.key.ac_type < SME_QOS_EDCA_AC_MAX) {
 		ac_info = &qos_session->ac_info[search_key.key.ac_type];
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Exceeded the array bounds"));
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -5298,7 +5298,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
 
 	list_elt = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!list_elt) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("Flow List empty, nothing to update"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -5317,7 +5317,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
 			if ((search_key.key.ac_type == flow_info->ac_type) &&
 			    (search_key.direction ==
 				flow_info->QoSInfo.ts_info.direction)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("Flow %d matches"), flow_info->QosFlowID);
 				ac_info->num_flows[flow_info->tspec_mask - 1]--;
@@ -5327,7 +5327,7 @@ static QDF_STATUS sme_qos_update_tspec_mask(uint8_t sessionid,
 		} else if (search_key.index & SME_QOS_SEARCH_KEY_INDEX_5) {
 			if ((search_key.key.ac_type == flow_info->ac_type) &&
 			    (search_key.tspec_mask == flow_info->tspec_mask)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("Flow %d matches"), flow_info->QosFlowID);
 				ac_info->num_flows[flow_info->tspec_mask - 1]--;
@@ -5374,14 +5374,14 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	WLAN_HOST_DIAG_EVENT_DEF(qos, host_event_wlan_qos_payload_type);
 	host_log_qos_tspec_pkt_type *log_ptr = NULL;
 #endif /* FEATURE_WLAN_DIAG_SUPPORT */
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for UP %d",
 		  __func__, __LINE__, sessionId, up);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	ac = sme_qos_up_to_ac(up);
 	if (SME_QOS_EDCA_AC_MAX == ac) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: invalid AC %d from UP %d",
 			  __func__, __LINE__, ac, up);
 		return QDF_STATUS_E_FAILURE;
@@ -5390,7 +5390,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	/* is there a TSPEC request pending on this AC? */
 	tspec_pending = pACInfo->tspec_pending;
 	if (!tspec_pending) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d an AddTS is not pending on AC %d",
 			  __func__, __LINE__, sessionId, ac);
 		return QDF_STATUS_E_FAILURE;
@@ -5412,7 +5412,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 					~(1 << (SME_QOS_EDCA_AC_VO - ac));
 			}
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: Exceeded the array bounds of pACInfo->requested_QosInfo",
 				  __func__, __LINE__);
 			CDF_ASSERT(0);
@@ -5464,7 +5464,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	pACInfo->curr_QoSInfo[tspec_pending - 1].medium_time =
 		pRsp->tspec.mediumTime;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: On session %d AddTspec Medium Time %d",
 		  __func__, __LINE__, sessionId, pRsp->tspec.mediumTime);
 
@@ -5510,7 +5510,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	if (!QDF_IS_STATUS_SUCCESS
 		    (sme_qos_find_all_in_flow_list
 			    (pMac, search_key, sme_qos_add_ts_success_fnp))) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d no match found for ac %d",
 			  __func__, __LINE__, sessionId,
 			  search_key.key.ac_type);
@@ -5609,16 +5609,16 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 				    sme_QosWmmTspecInfo *pUpdated_Tspec_Info)
 {
 	sme_QosWmmTspecInfo TspecInfo;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked", __func__, __LINE__);
 	if (!pInput_Tspec_Info) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: input is NULL, nothing to aggregate",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (!pCurrent_Tspec_Info) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Current is NULL, can't aggregate",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -5634,7 +5634,7 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 	    (pCurrent_Tspec_Info->ts_info.direction !=
 	     pInput_Tspec_Info->ts_info.direction)) {
 		TspecInfo.min_service_interval =
-			CDF_MIN(pCurrent_Tspec_Info->min_service_interval,
+			QDF_MIN(pCurrent_Tspec_Info->min_service_interval,
 				pInput_Tspec_Info->min_service_interval);
 	} else if (pInput_Tspec_Info->min_service_interval) {
 		TspecInfo.min_service_interval =
@@ -5645,7 +5645,7 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 	    (pCurrent_Tspec_Info->ts_info.direction !=
 	     pInput_Tspec_Info->ts_info.direction)) {
 		TspecInfo.max_service_interval =
-			CDF_MIN(pCurrent_Tspec_Info->max_service_interval,
+			QDF_MIN(pCurrent_Tspec_Info->max_service_interval,
 				pInput_Tspec_Info->max_service_interval);
 	} else {
 		TspecInfo.max_service_interval =
@@ -5664,14 +5664,14 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 	   Max MSDU size : these sizes are `maxed'
 	   -------------------------------------------------------------------------*/
 	TspecInfo.maximum_msdu_size =
-		CDF_MAX(pCurrent_Tspec_Info->maximum_msdu_size,
+		QDF_MAX(pCurrent_Tspec_Info->maximum_msdu_size,
 			pInput_Tspec_Info->maximum_msdu_size);
 
 	/*-------------------------------------------------------------------------
 	   Inactivity interval : these sizes are `maxed'
 	   -------------------------------------------------------------------------*/
 	TspecInfo.inactivity_interval =
-		CDF_MAX(pCurrent_Tspec_Info->inactivity_interval,
+		QDF_MAX(pCurrent_Tspec_Info->inactivity_interval,
 			pInput_Tspec_Info->inactivity_interval);
 
 	/*-------------------------------------------------------------------------
@@ -5680,12 +5680,12 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 	   -------------------------------------------------------------------------*/
 	if (pCurrent_Tspec_Info->delay_bound) {
 		TspecInfo.delay_bound =
-			CDF_MIN(pCurrent_Tspec_Info->delay_bound,
+			QDF_MIN(pCurrent_Tspec_Info->delay_bound,
 				pInput_Tspec_Info->delay_bound);
 	} else {
 		TspecInfo.delay_bound = pInput_Tspec_Info->delay_bound;
 	}
-	TspecInfo.max_burst_size = CDF_MAX(pCurrent_Tspec_Info->max_burst_size,
+	TspecInfo.max_burst_size = QDF_MAX(pCurrent_Tspec_Info->max_burst_size,
 					   pInput_Tspec_Info->max_burst_size);
 
 	/*-------------------------------------------------------------------------
@@ -5696,7 +5696,7 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 	   These sizes are not added: but `maxed'
 	   -------------------------------------------------------------------------*/
 	TspecInfo.nominal_msdu_size =
-		CDF_MAX(pCurrent_Tspec_Info->nominal_msdu_size & ~SME_QOS_16BIT_MSB,
+		QDF_MAX(pCurrent_Tspec_Info->nominal_msdu_size & ~SME_QOS_16BIT_MSB,
 			pInput_Tspec_Info->nominal_msdu_size & ~SME_QOS_16BIT_MSB);
 
 	if (((pCurrent_Tspec_Info->nominal_msdu_size == 0) ||
@@ -5788,11 +5788,11 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 	sme_QosACInfo *pACInfo;
 	sme_QosFlowInfoEntry *flow_info = NULL;
 	sme_QosWmmTspecInfo Tspec_Info;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for AC %d TSPEC %d",
 		  __func__, __LINE__, sessionId, ac, tspec_mask);
 	if (!pTspec_Info) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: output is NULL, can't aggregate",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -5800,7 +5800,7 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 	cdf_mem_zero(&Tspec_Info, sizeof(sme_QosWmmTspecInfo));
 	pEntry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Flow List empty, nothing to update",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -5820,14 +5820,14 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 		if ((sessionId == flow_info->sessionId) &&
 		    (ac == flow_info->ac_type) &&
 		    (tspec_mask == flow_info->tspec_mask)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: Flow %d matches",
 				  __func__, __LINE__, flow_info->QosFlowID);
 
 			if ((SME_QOS_REASON_RELEASE == flow_info->reason) ||
 			    (SME_QOS_REASON_MODIFY == flow_info->reason)) {
 				/* msg */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  "%s: %d: Skipping Flow %d as it is marked "
 					  "for release/modify", __func__,
@@ -5837,7 +5837,7 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 				    (sme_qos_aggregate_params
 					    (&flow_info->QoSInfo, &Tspec_Info, NULL))) {
 				/* err msg */
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: sme_qos_aggregate_params() failed",
 					  __func__, __LINE__);
@@ -5866,7 +5866,7 @@ sme_QosWmmUpType sme_qos_ac_to_up(sme_QosEdcaAcType ac)
 	if (ac >= 0 && ac < SME_QOS_EDCA_AC_MAX) {
 		up = sme_qos_a_cto_up_map[ac];
 	}
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 		  "%s: %d: ac = %d up = %d returned",
 		  __func__, __LINE__, ac, up);
 	return up;
@@ -5886,7 +5886,7 @@ sme_QosEdcaAcType sme_qos_up_to_ac(sme_QosWmmUpType up)
 	if (up >= 0 && up < SME_QOS_WMM_UP_MAX) {
 		ac = sme_qos_u_pto_ac_map[up];
 	}
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 		  "%s: %d: up = %d ac = %d returned",
 		  __func__, __LINE__, up, ac);
 	return ac;
@@ -5914,7 +5914,7 @@ static void sme_qos_state_transition(uint8_t sessionId,
 	pACInfo = &pSession->ac_info[ac];
 	pACInfo->prev_state = pACInfo->curr_state;
 	pACInfo->curr_state = new_state;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: On session %d new state=%d, old state=%d, for AC=%d",
 		  __func__, __LINE__,
 		  sessionId, pACInfo->curr_state, pACInfo->prev_state, ac);
@@ -5940,7 +5940,7 @@ tListElem *sme_qos_find_in_flow_list(sme_QosSearchInfo search_key)
 
 	list_elt = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!list_elt) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("Flow List empty, can't search"));
 		return NULL;
 	}
@@ -5958,21 +5958,21 @@ tListElem *sme_qos_find_in_flow_list(sme_QosSearchInfo search_key)
 
 		if (search_key.index & SME_QOS_SEARCH_KEY_INDEX_1) {
 			if (search_key.key.QosFlowID == flow_info->QosFlowID) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("match found on flowID, ending search"));
 				break;
 			}
 		} else if (search_key.index & SME_QOS_SEARCH_KEY_INDEX_2) {
 			if (search_key.key.ac_type == flow_info->ac_type) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("match found on ac, ending search"));
 				break;
 			}
 		} else if (search_key.index & SME_QOS_SEARCH_KEY_INDEX_3) {
 			if (search_key.key.reason == flow_info->reason) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("match found on reason, ending search"));
 				break;
@@ -5981,7 +5981,7 @@ tListElem *sme_qos_find_in_flow_list(sme_QosSearchInfo search_key)
 			if ((search_key.key.ac_type == flow_info->ac_type) &&
 			    (search_key.direction ==
 				flow_info->QoSInfo.ts_info.direction)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				  CDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("match found on reason, ending search"));
 				break;
@@ -6019,7 +6019,7 @@ QDF_STATUS sme_qos_find_all_in_flow_list(tpAniSirGlobal mac_ctx,
 
 	list_elt = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!list_elt) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("Flow List empty, can't search"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6037,25 +6037,25 @@ QDF_STATUS sme_qos_find_all_in_flow_list(tpAniSirGlobal mac_ctx,
 
 		if ((search_key.index & SME_QOS_SEARCH_KEY_INDEX_1) &&
 		    (search_key.key.QosFlowID == flow_info->QosFlowID)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			    FL("match found on flowID, ending search"));
 			status = fnp(mac_ctx, list_elt);
 			if (QDF_STATUS_E_FAILURE == status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				    CDF_TRACE_LEVEL_ERROR,
 				    FL("Failed to process entry"));
 				break;
 			}
 		} else if ((search_key.index & SME_QOS_SEARCH_KEY_INDEX_2) &&
 			   (search_key.key.ac_type == flow_info->ac_type)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			    FL("match found on ac, ending search"));
 			ac_type = flow_info->ac_type;
 			flow_info->hoRenewal =
 				qos_session->ac_info[ac_type].hoRenewal;
 			status = fnp(mac_ctx, list_elt);
 			if (QDF_STATUS_E_FAILURE == status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 				    CDF_TRACE_LEVEL_ERROR,
 				    FL("Failed to process entry"));
 				break;
@@ -6082,7 +6082,7 @@ bool sme_qos_is_acm(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDesc,
 	bool ret_val = false;
 	tDot11fBeaconIEs *pIesLocal;
 	if (!pSirBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: pSirBssDesc is NULL", __func__, __LINE__);
 		return false;
 	}
@@ -6096,7 +6096,7 @@ bool sme_qos_is_acm(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDesc,
 			    (csr_get_parsed_bss_description_ies
 				    (pMac, pSirBssDesc, &pIesLocal))) {
 			/* err msg */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: csr_get_parsed_bss_description_ies() failed",
 				  __func__, __LINE__);
 			return false;
@@ -6124,7 +6124,7 @@ bool sme_qos_is_acm(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDesc,
 				ret_val = true;
 			break;
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: unknown AC = %d",
 				  __func__, __LINE__, ac);
 			/* Assert */
@@ -6132,7 +6132,7 @@ bool sme_qos_is_acm(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDesc,
 			break;
 		}
 	} /* IS_QOS_BSS */
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: ACM = %d for AC = %d",
 		  __func__, __LINE__, ret_val, ac);
 	if (NULL == pIes) {
@@ -6163,7 +6163,7 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
 
 	list_entry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!list_entry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Flow List empty, nothing to buffer"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6198,13 +6198,13 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
 
 			if (!QDF_IS_STATUS_SUCCESS
 				    (sme_qos_buffer_cmd(&cmd, true)))
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("couldn't buffer the setup request"
 					  " for flow %d in handoff state"),
 					  flow_info->QosFlowID);
 			else
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  FL("buffered a setup request for "
 					  "flow %d in handoff state"),
@@ -6216,13 +6216,13 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
 			cmd.u.releaseCmdInfo.QosFlowID = flow_info->QosFlowID;
 			if (!QDF_IS_STATUS_SUCCESS
 				    (sme_qos_buffer_cmd(&cmd, true)))
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("couldn't buffer the release req"
 					  " for flow %d in handoff state"),
 					  flow_info->QosFlowID);
 			else
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  FL("buffered a release request for "
 					  "flow %d in handoff state"),
@@ -6236,20 +6236,20 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
 			cmd.u.modifyCmdInfo.QoSInfo = flow_info->QoSInfo;
 			if (!QDF_IS_STATUS_SUCCESS
 				    (sme_qos_buffer_cmd(&cmd, true)))
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("couldn't buffer the modify req"
 					  " for flow %d in handoff state"),
 					  flow_info->QosFlowID);
 			else
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_INFO_HIGH,
 					  FL("buffered a modify request for "
 					  "flow %d in handoff state"),
 					  flow_info->QosFlowID);
 		}
 		/* delete the entry from Flow List */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Deleting original entry at %p with flowID %d"),
 			  flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, list_entry, true);
@@ -6278,7 +6278,7 @@ static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal pMac,
 	sme_QosFlowInfoEntry *flow_info = NULL;
 	pEntry = csr_ll_peek_head(&sme_qos_cb.flow_list, true);
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 			  "%s: %d: Flow List empty, nothing to delete",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -6297,7 +6297,7 @@ static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal pMac,
 						       SME_QOS_STATUS_RELEASE_QOS_LOST_IND,
 						       flow_info->QosFlowID);
 			}
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 				  "%s: %d: Deleting entry at %p with flowID %d",
 				  __func__, __LINE__,
 				  flow_info, flow_info->QosFlowID);
@@ -6326,13 +6326,13 @@ QDF_STATUS sme_qos_buffer_cmd(sme_QosCmdInfo *pcmd, bool insert_head)
 {
 	sme_QosSessionInfo *pSession;
 	sme_QosCmdInfoEntry *pentry = NULL;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked", __func__, __LINE__);
 	pentry =
 		(sme_QosCmdInfoEntry *) cdf_mem_malloc(sizeof(sme_QosCmdInfoEntry));
 	if (!pentry) {
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Memory allocation failure",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
@@ -6369,14 +6369,14 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
 	sme_QosCmdInfo *qos_cmd = NULL;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL("Invoked on session %d"), session_id);
 	qos_session = &sme_qos_cb.sessionInfo[session_id];
 	if (!csr_ll_is_list_empty(&qos_session->bufferedCommandList, false)) {
 		list_elt = csr_ll_remove_head(&qos_session->bufferedCommandList,
 					      true);
 		if (!list_elt) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("no more buffered commands on session %d"),
 				  session_id);
 			qos_session->readyForPowerSave = true;
@@ -6395,7 +6395,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 				       qos_cmd->u.setupCmdInfo.QosFlowID,
 				       true, qos_cmd->u.setupCmdInfo.hoRenewal);
 			if (SME_QOS_STATUS_SETUP_FAILURE_RSP == hdd_status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_internal_setup_req failed on session %d"),
 					  session_id);
@@ -6407,7 +6407,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					qos_cmd->u.releaseCmdInfo.QosFlowID,
 					true);
 			if (SME_QOS_STATUS_RELEASE_FAILURE_RSP == hdd_status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_internal_release_req failed on session %d"),
 					  session_id);
@@ -6421,7 +6421,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					true);
 			if (SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP ==
 				hdd_status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_internal_modify_req failed on session %d"),
 					  session_id);
@@ -6436,7 +6436,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					qos_cmd->u.resendCmdInfo.tspecMask);
 			if (SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP ==
 				hdd_status) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_re_request_add_ts failed on session %d"),
 					  session_id);
@@ -6444,7 +6444,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 			}
 			break;
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("On session %d unknown cmd = %d"),
 				  session_id, qos_cmd->command);
 			CDF_ASSERT(0);
@@ -6453,7 +6453,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 		/* buffered command has been processed, reclaim the memory */
 		cdf_mem_free(pcmd);
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("cmd buffer empty"));
 		qos_session->readyForPowerSave = true;
 	}
@@ -6475,13 +6475,13 @@ static QDF_STATUS sme_qos_delete_buffered_requests(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	sme_QosCmdInfoEntry *pcmd = NULL;
 	tListElem *pEntry = NULL, *pNextEntry = NULL;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d",
 		  __func__, __LINE__, sessionId);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pEntry = csr_ll_peek_head(&pSession->bufferedCommandList, true);
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_WARN,
 			  "%s: %d: Buffered List empty, nothing to delete on session %d",
 			  __func__, __LINE__, sessionId);
 		return QDF_STATUS_E_FAILURE;
@@ -6489,7 +6489,7 @@ static QDF_STATUS sme_qos_delete_buffered_requests(tpAniSirGlobal pMac,
 	while (pEntry) {
 		pNextEntry =
 			csr_ll_next(&pSession->bufferedCommandList, pEntry, true);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			  "%s: %d: deleting entry from buffered List", __func__,
 			  __LINE__);
 		/* delete the entry from Flow List */
@@ -6522,7 +6522,7 @@ QDF_STATUS sme_qos_save_assoc_info(sme_QosSessionInfo *pSession,
 	tSirBssDescription *pBssDesc = NULL;
 	uint32_t bssLen = 0;
 	if (NULL == pAssoc_info) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: pAssoc_info is NULL", __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6536,7 +6536,7 @@ QDF_STATUS sme_qos_save_assoc_info(sme_QosSessionInfo *pSession,
 	/* save the bss Descriptor */
 	pBssDesc = (tSirBssDescription *) cdf_mem_malloc(bssLen);
 	if (!pBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: couldn't allocate memory for the bss Descriptor",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
@@ -6570,7 +6570,7 @@ QDF_STATUS sme_qos_setup_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 	sme_QosStatusType hdd_status = SME_QOS_STATUS_SETUP_MODIFIED_IND;
 	sme_QosEdcaAcType ac;
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Entry is NULL", __func__, __LINE__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6585,7 +6585,7 @@ QDF_STATUS sme_qos_setup_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 				       &pACInfo->curr_QoSInfo[flow_info->
 							      tspec_mask - 1],
 				       hdd_status, flow_info->QosFlowID);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Entry with flowID = %d getting notified",
 			  __func__, __LINE__, flow_info->QosFlowID);
 	}
@@ -6611,7 +6611,7 @@ QDF_STATUS sme_qos_modification_notify_fnp(tpAniSirGlobal pMac, tListElem *pEntr
 	sme_QosStatusType hdd_status = SME_QOS_STATUS_SETUP_MODIFIED_IND;
 	sme_QosEdcaAcType ac;
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Entry is NULL", __func__, __LINE__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6626,7 +6626,7 @@ QDF_STATUS sme_qos_modification_notify_fnp(tpAniSirGlobal pMac, tListElem *pEntr
 				       &pACInfo->curr_QoSInfo[flow_info->
 							      tspec_mask - 1],
 				       hdd_status, flow_info->QosFlowID);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Entry with flowID = %d getting notified",
 			  __func__, __LINE__, flow_info->QosFlowID);
 	}
@@ -6648,7 +6648,7 @@ QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 {
 	sme_QosFlowInfoEntry *flow_info = NULL;
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Entry is NULL", __func__, __LINE__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6661,7 +6661,7 @@ QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 		break;
 	case SME_QOS_REASON_MODIFY:
 		/* delete the original entry from Flow List */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Deleting original entry at %p with flowID %d",
 			  __func__, __LINE__, flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, pEntry, true);
@@ -6696,7 +6696,7 @@ QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 	sme_QosStatusType status;
 
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Entry is NULL", __func__, __LINE__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6710,7 +6710,7 @@ QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 
 	lock_status = sme_acquire_global_lock(&pMac->sme);
 	if (!QDF_IS_STATUS_SUCCESS(lock_status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Unable to obtain lock", __func__, __LINE__);
 		return SME_QOS_STATUS_RELEASE_FAILURE_RSP;
 	}
@@ -6718,7 +6718,7 @@ QDF_STATUS sme_qos_del_ts_ind_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 	status =
 		sme_qos_internal_release_req(pMac, flow_info->QosFlowID, false);
 	sme_release_global_lock(&pMac->sme);
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: QoS Release return status on Flow %d is %d",
 		  __func__, __LINE__, flow_info->QosFlowID, status);
 
@@ -6749,7 +6749,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 	sme_QosEdcaAcType ac;
 	QDF_STATUS pmc_status = QDF_STATUS_E_FAILURE;
 	if (!entry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			"%s: %d: Entry is NULL", __func__, __LINE__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6843,7 +6843,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 		}
 	} else {
 		/* delete the entry from Flow List */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			FL("Deleting entry at %p with flowID %d"),
 			flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, entry, true);
@@ -6880,7 +6880,7 @@ QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 	sme_QosStatusType hdd_status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
 	sme_QosEdcaAcType ac;
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Entry is NULL", __func__, __LINE__);
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6930,7 +6930,7 @@ QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 					       flow_info->QosFlowID);
 		}
 		/* delete the entry from Flow List */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Deleting entry at %p with flowID %d",
 			  __func__, __LINE__, flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, pEntry, true);
@@ -6977,7 +6977,7 @@ QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 	uint8_t tspec_index;
 
 	if (!entry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL("Entry is NULL"));
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -6988,7 +6988,7 @@ QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 	ac_info = &qos_session->ac_info[ac];
 	tspec_index = ac_info->tspec_pending - 1;
 	if (flow_info->tspec_mask != ac_info->tspec_pending) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			FL(" No need to notify the HDD, the ADDTS "
 			"success is not for index = %d of the AC = %d"),
 			flow_info->tspec_mask, ac);
@@ -7110,7 +7110,7 @@ QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 		}
 	}
 	if (delete_entry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			FL("Deleting entry at %p with flowID %d"),
 			flow_info, flow_info->QosFlowID);
 		/* delete the entry from Flow List */
@@ -7168,7 +7168,7 @@ void sme_qos_update_hand_off(uint8_t sessionId, bool updateHandOff)
 {
 	sme_QosSessionInfo *pSession;
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 		  "%s: %d: handoffRequested %d updateHandOff %d",
 		  __func__, __LINE__, pSession->handoffRequested,
 		  updateHandOff);
@@ -7242,7 +7242,7 @@ QDF_STATUS sme_offload_qos_process_out_of_uapsd_mode(tpAniSirGlobal pMac,
 
 	pEntry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			  "%s: %d: Flow List empty, can't search",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -7277,7 +7277,7 @@ QDF_STATUS sme_offload_qos_process_into_uapsd_mode(tpAniSirGlobal pMac,
 
 	pEntry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!pEntry) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Flow List empty, can't search",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
@@ -7348,7 +7348,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 	sme_QosSessionInfo *pSession;
 	QDF_STATUS hstatus;
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session Id %d is invalid",
 			  __func__, __LINE__, sessionId);
 		return false;
@@ -7357,14 +7357,14 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 
 	if (!pSession->sessionActive) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session %d is inactive",
 			  __func__, __LINE__, sessionId);
 		return false;
 	}
 
 	if (!pSession->assocInfo.pBssDesc) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: Session %d has an Invalid BSS Descriptor",
 			  __func__, __LINE__, sessionId);
 		return false;
@@ -7374,7 +7374,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 						      pSession->assocInfo.pBssDesc,
 						      &pIes);
 	if (!QDF_IS_STATUS_SUCCESS(hstatus)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d unable to parse BSS IEs",
 			  __func__, __LINE__, sessionId);
 		return false;
@@ -7385,7 +7385,7 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 	if (!pIes->HTCaps.present &&
 	    pQoSInfo->ts_info.ack_policy ==
 	    SME_QOS_WMM_TS_ACK_POLICY_HT_IMMEDIATE_BLOCK_ACK) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d HT Caps aren't present but application set ack policy to HT ",
 			  __func__, __LINE__, sessionId);
 
@@ -7424,7 +7424,7 @@ static QDF_STATUS qos_issue_command(tpAniSirGlobal pMac, uint8_t sessionId,
 	do {
 		pCommand = sme_get_command_buffer(pMac);
 		if (!pCommand) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: fail to get command buffer for command %d",
 				  __func__, __LINE__, cmdType);
 			break;
@@ -7438,7 +7438,7 @@ static QDF_STATUS qos_issue_command(tpAniSirGlobal pMac, uint8_t sessionId,
 				pCommand->u.qosCmd.tspecInfo = *pQoSInfo;
 				pCommand->u.qosCmd.ac = ac;
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 					  CDF_TRACE_LEVEL_ERROR,
 					  "%s: %d: NULL pointer passed",
 					  __func__, __LINE__);
@@ -7451,7 +7451,7 @@ static QDF_STATUS qos_issue_command(tpAniSirGlobal pMac, uint8_t sessionId,
 			pCommand->u.qosCmd.tspec_mask = tspec_mask;
 			break;
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid command type %d",
 				  __func__, __LINE__, cmdType);
 			status = QDF_STATUS_E_INVAL;
@@ -7492,7 +7492,7 @@ bool qos_process_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 			}
 			break;
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: invalid command type %d",
 				  __func__, __LINE__, pCommand->command);
 			break;
@@ -7524,7 +7524,7 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 	sme_QosStatusType status = SME_QOS_STATUS_MODIFY_SETUP_FAILURE_RSP;
 	sme_QosCmdInfo cmd;
 
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		FL(" Invoked on session %d for AC %d TSPEC %d"),
 		session_id, ac, tspec_mask);
 	session = &sme_qos_cb.sessionInfo[session_id];
@@ -7541,7 +7541,7 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 	 * followed by Reassoc.
 	 */
 	if (sme_qos_is_rsp_pending(session_id, ac)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL(" On session %d buffering the AddTS request "
 			"for AC %d in state %d as Addts is pending "
 			"on other AC or waiting for full power"),
@@ -7555,7 +7555,7 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 		cmd.u.resendCmdInfo.tspecMask = tspec_mask;
 		cmd.u.resendCmdInfo.QoSInfo = *qos_info;
 		if (!QDF_IS_STATUS_SUCCESS(sme_qos_buffer_cmd(&cmd, false))) {
-			CDF_TRACE(CDF_MODULE_ID_SME,
+			CDF_TRACE(QDF_MODULE_ID_SME,
 				CDF_TRACE_LEVEL_ERROR,
 				FL("On session %d unable to buffer the AddTS "
 				"request for AC %d TSPEC %d in state %d"),
@@ -7576,9 +7576,9 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 		/* if ACM, send out a new ADDTS */
 		ac_info->hoRenewal = true;
 		status = sme_qos_setup(mac_ctx, session_id, qos_info, ac);
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			FL("sme_qos_setup returned in SME_QOS_QOS_ON state"));
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 			FL("sme_qos_setup AC %d with status =%d"), ac, status);
 		if (SME_QOS_STATUS_SETUP_REQ_PENDING_RSP != status) {
 			/* we aren't waiting for a response from the AP */
@@ -7594,11 +7594,11 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 			status) ||
 			(SME_QOS_STATUS_SETUP_SUCCESS_IND_APSD_PENDING ==
 			status)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				FL("UAPSD is setup already status = %d "),
 				status);
 		} else {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				FL("sme_qos_setup return status = %d "),
 				status);
 		}
@@ -7606,7 +7606,7 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 	break;
 	case SME_QOS_HANDOFF:
 	case SME_QOS_REQUESTED:
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL("Re-Add request in state = %d  buffer the request"),
 			ac_info->curr_state);
 		cmd.command = SME_QOS_RESEND_REQ;
@@ -7616,7 +7616,7 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 		cmd.u.resendCmdInfo.tspecMask = tspec_mask;
 		cmd.u.resendCmdInfo.QoSInfo = *qos_info;
 		if (!QDF_IS_STATUS_SUCCESS(sme_qos_buffer_cmd(&cmd, false))) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				FL(" couldn't buf the read request state = %d"),
 				ac_info->curr_state);
 			/* unable to buffer the request
@@ -7631,7 +7631,7 @@ sme_QosStatusType sme_qos_re_request_add_ts(tpAniSirGlobal mac_ctx,
 	case SME_QOS_LINK_UP:
 	default:
 		/* print error msg, */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			FL("ReAdd request in unexpected state = %d"),
 			ac_info->curr_state);
 		/* unable to service the request
@@ -7666,7 +7666,7 @@ static QDF_STATUS sme_qos_request_reassoc(tpAniSirGlobal pMac, uint8_t sessionId
 	sme_QosSessionInfo *pSession;
 	sme_QosACInfo *pACInfo;
 	QDF_STATUS status;
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked on session %d with UAPSD mask 0x%X",
 		  __func__, __LINE__, sessionId, pModFields->uapsd_mask);
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
@@ -7678,7 +7678,7 @@ static QDF_STATUS sme_qos_request_reassoc(tpAniSirGlobal pMac, uint8_t sessionId
 		sme_QosEdcaAcType ac;
 		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
 			pACInfo = &pSession->ac_info[ac];
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  "%s: %d: AC[%d] is in state [%d]",
 				  __func__, __LINE__, ac, pACInfo->curr_state);
 			/* If it is already in HANDOFF state, don't do anything since we */
@@ -7700,7 +7700,7 @@ static uint32_t sme_qos_assign_flow_id(void)
 	if (SME_QOS_MAX_FLOW_ID == flowId) {
 		/* The Flow ID wrapped.  This is obviously not a real life scenario */
 		/* but handle it to keep the software test folks happy */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
 			  "%s: %d: Software Test made the flow counter wrap, "
 			  "QoS may no longer be functional",
 			  __func__, __LINE__);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,7 +28,7 @@
 #if !defined(WLAN_HDD_MIB_h__)
 #define WLAN_HDD_MIB_h__
 
-#include <cdf_types.h>
+#include <qdf_types.h>
 
 typedef enum {
 	eMib_dot11DesiredBssType_infrastructure = 1,
@@ -45,7 +45,7 @@ typedef enum {
 typedef struct {
 	uint32_t cEntries;
 
-	struct cdf_mac_addr BSSIDs[MIB_DOT11_DESIRED_BSSID_LIST_MAX_COUNT];
+	struct qdf_mac_addr BSSIDs[MIB_DOT11_DESIRED_BSSID_LIST_MAX_COUNT];
 
 } sMib_dot11DesiredBssidList;
 
@@ -119,7 +119,7 @@ typedef enum {
 typedef struct {
 	uint32_t cEntries;
 
-	struct cdf_mac_addr macAddrs[MIB_DOT11_MAC_EXCLUSION_LIST_MAX_COUNT];
+	struct qdf_mac_addr macAddrs[MIB_DOT11_MAC_EXCLUSION_LIST_MAX_COUNT];
 
 } sMib_dot11MacExcludeList;
 

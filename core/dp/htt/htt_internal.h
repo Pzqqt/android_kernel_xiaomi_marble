@@ -152,31 +152,31 @@ static inline struct htt_host_rx_desc_base *htt_rx_desc(cdf_nbuf_t msdu)
  */
 static inline void htt_print_rx_desc_lro(struct htt_host_rx_desc_base *rx_desc)
 {
-	cdf_print
+	qdf_print
 		("----------------------RX DESC LRO----------------------\n");
-	cdf_print("msdu_end.lro_eligible:0x%x\n",
+	qdf_print("msdu_end.lro_eligible:0x%x\n",
 		 rx_desc->msdu_end.lro_eligible);
-	cdf_print("msdu_start.tcp_only_ack:0x%x\n",
+	qdf_print("msdu_start.tcp_only_ack:0x%x\n",
 		 rx_desc->msdu_start.tcp_only_ack);
-	cdf_print("msdu_end.tcp_udp_chksum:0x%x\n",
+	qdf_print("msdu_end.tcp_udp_chksum:0x%x\n",
 		 rx_desc->msdu_end.tcp_udp_chksum);
-	cdf_print("msdu_end.tcp_seq_number:0x%x\n",
+	qdf_print("msdu_end.tcp_seq_number:0x%x\n",
 		 rx_desc->msdu_end.tcp_seq_number);
-	cdf_print("msdu_end.tcp_ack_number:0x%x\n",
+	qdf_print("msdu_end.tcp_ack_number:0x%x\n",
 		 rx_desc->msdu_end.tcp_ack_number);
-	cdf_print("msdu_start.tcp_proto:0x%x\n",
+	qdf_print("msdu_start.tcp_proto:0x%x\n",
 		 rx_desc->msdu_start.tcp_proto);
-	cdf_print("msdu_start.ipv6_proto:0x%x\n",
+	qdf_print("msdu_start.ipv6_proto:0x%x\n",
 		 rx_desc->msdu_start.ipv6_proto);
-	cdf_print("msdu_start.ipv4_proto:0x%x\n",
+	qdf_print("msdu_start.ipv4_proto:0x%x\n",
 		 rx_desc->msdu_start.ipv4_proto);
-	cdf_print("msdu_start.l3_offset:0x%x\n",
+	qdf_print("msdu_start.l3_offset:0x%x\n",
 		 rx_desc->msdu_start.l3_offset);
-	cdf_print("msdu_start.l4_offset:0x%x\n",
+	qdf_print("msdu_start.l4_offset:0x%x\n",
 		 rx_desc->msdu_start.l4_offset);
-	cdf_print("msdu_start.flow_id_toeplitz:0x%x\n",
+	qdf_print("msdu_start.flow_id_toeplitz:0x%x\n",
 			   rx_desc->msdu_start.flow_id_toeplitz);
-	cdf_print
+	qdf_print
 		("---------------------------------------------------------\n");
 }
 
@@ -218,29 +218,29 @@ static inline void htt_rx_extract_lro_info(cdf_nbuf_t msdu,
 
 static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 {
-	cdf_print
+	qdf_print
 		("----------------------RX DESC----------------------------\n");
-	cdf_print("attention: %#010x\n",
+	qdf_print("attention: %#010x\n",
 		  (unsigned int)(*(uint32_t *) &rx_desc->attention));
-	cdf_print("frag_info: %#010x\n",
+	qdf_print("frag_info: %#010x\n",
 		  (unsigned int)(*(uint32_t *) &rx_desc->frag_info));
-	cdf_print("mpdu_start: %#010x %#010x %#010x\n",
+	qdf_print("mpdu_start: %#010x %#010x %#010x\n",
 		  (unsigned int)(((uint32_t *) &rx_desc->mpdu_start)[0]),
 		  (unsigned int)(((uint32_t *) &rx_desc->mpdu_start)[1]),
 		  (unsigned int)(((uint32_t *) &rx_desc->mpdu_start)[2]));
-	cdf_print("msdu_start: %#010x %#010x %#010x\n",
+	qdf_print("msdu_start: %#010x %#010x %#010x\n",
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_start)[0]),
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_start)[1]),
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_start)[2]));
-	cdf_print("msdu_end: %#010x %#010x %#010x %#010x %#010x\n",
+	qdf_print("msdu_end: %#010x %#010x %#010x %#010x %#010x\n",
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[0]),
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[1]),
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[2]),
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[3]),
 		  (unsigned int)(((uint32_t *) &rx_desc->msdu_end)[4]));
-	cdf_print("mpdu_end: %#010x\n",
+	qdf_print("mpdu_end: %#010x\n",
 		  (unsigned int)(*(uint32_t *) &rx_desc->mpdu_end));
-	cdf_print("ppdu_start: " "%#010x %#010x %#010x %#010x %#010x\n"
+	qdf_print("ppdu_start: " "%#010x %#010x %#010x %#010x %#010x\n"
 		  "%#010x %#010x %#010x %#010x %#010x\n",
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[0]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[1]),
@@ -252,7 +252,7 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[7]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[8]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_start)[9]));
-	cdf_print("ppdu_end:" "%#010x %#010x %#010x %#010x %#010x\n"
+	qdf_print("ppdu_end:" "%#010x %#010x %#010x %#010x %#010x\n"
 		  "%#010x %#010x %#010x %#010x %#010x\n"
 		  "%#010x,%#010x %#010x %#010x %#010x\n"
 		  "%#010x %#010x %#010x %#010x %#010x\n" "%#010x %#010x\n",
@@ -278,7 +278,7 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[19]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[20]),
 		  (unsigned int)(((uint32_t *) &rx_desc->ppdu_end)[21]));
-	cdf_print
+	qdf_print
 		("---------------------------------------------------------\n");
 }
 
@@ -536,7 +536,7 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 				 HTT_RX_RING_BUFF_DBG_LIST *
 				 sizeof(struct rx_buf_debug));
 	if (!pdev->rx_buff_list) {
-		cdf_print("HTT: debug RX buffer allocation failed\n");
+		qdf_print("HTT: debug RX buffer allocation failed\n");
 		CDF_ASSERT(0);
 	}
 }

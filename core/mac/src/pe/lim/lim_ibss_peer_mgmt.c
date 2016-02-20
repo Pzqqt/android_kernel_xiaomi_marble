@@ -1179,7 +1179,7 @@ void lim_ibss_add_bss_rsp_when_coalescing(tpAniSirGlobal pMac, void *msg,
 		  sizeof(uint8_t) + pBeacon->ssId.length + 1;
 
 	cdf_mem_set((void *)&newBssInfo, sizeof(newBssInfo), 0);
-	cdf_mem_copy(newBssInfo.bssId.bytes, pHdr->bssId, CDF_MAC_ADDR_SIZE);
+	cdf_mem_copy(newBssInfo.bssId.bytes, pHdr->bssId, QDF_MAC_ADDR_SIZE);
 	newBssInfo.channelNumber = (tSirMacChanNum) pAddBss->currentOperChannel;
 	cdf_mem_copy((uint8_t *) &newBssInfo.ssId,
 		     (uint8_t *) &pBeacon->ssId, pBeacon->ssId.length + 1);
@@ -1354,7 +1354,7 @@ __lim_ibss_search_and_delete_peer(tpAniSirGlobal pMac,
 	 * we set IBSS state to inactive.
 	 */
 	if (0 == pMac->lim.gLimNumIbssPeers) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			  "Last STA from IBSS walked out");
 		psessionEntry->limIbssActive = false;
 	}

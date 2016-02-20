@@ -29,14 +29,14 @@
 #define WMA_H
 
 #include "a_types.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "osapi_linux.h"
 #include "htc_packet.h"
 #include "i_qdf_event.h"
 #include "wmi_services.h"
 #include "wmi_unified.h"
 #include "wmi_version.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cfg_api.h"
 #include "qdf_status.h"
 #include "cds_sched.h"
@@ -93,21 +93,21 @@
 #define WMA_11P_CHANNEL_END             (184)
 
 #define WMA_LOGD(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG, ## args)
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG, ## args)
 #define WMA_LOGI(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO, ## args)
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO, ## args)
 #define WMA_LOGW(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_WARN, ## args)
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_WARN, ## args)
 #define WMA_LOGE(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR, ## args)
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR, ## args)
 #define WMA_LOGP(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_FATAL, ## args)
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_FATAL, ## args)
 
 #define WMA_DEBUG_ALWAYS
 
 #ifdef WMA_DEBUG_ALWAYS
 #define WMA_LOGA(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_FATAL, ## args)
+	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_FATAL, ## args)
 #else
 #define WMA_LOGA(args ...)
 #endif
@@ -466,7 +466,7 @@ enum wma_tdls_peer_reason {
 struct wma_mem_chunk {
 	uint32_t *vaddr;
 	uint32_t paddr;
-	cdf_dma_mem_context(memctx);
+	qdf_dma_mem_context(memctx);
 	uint32_t len;
 	uint32_t req_id;
 };
@@ -928,7 +928,7 @@ typedef struct {
 struct utf_event_info {
 	uint8_t *data;
 	uint32_t length;
-	cdf_size_t offset;
+	qdf_size_t offset;
 	uint8_t currentSeq;
 	uint8_t expectedSeq;
 };
@@ -1197,7 +1197,7 @@ typedef struct {
 #endif
 	bool wmi_ready;
 	uint32_t wlan_init_status;
-	cdf_device_t cdf_dev;
+	qdf_device_t cdf_dev;
 	uint32_t phy_capability;
 	uint32_t max_frag_entry;
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];
@@ -1215,7 +1215,7 @@ typedef struct {
 	qdf_event_t tx_queue_empty_event;
 	pWMAAckFnTxComp umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
 	pWMAAckFnTxComp umac_data_ota_ack_cb;
-	v_TIME_t last_umac_data_ota_timestamp;
+	unsigned long last_umac_data_ota_timestamp;
 	cdf_nbuf_t last_umac_data_nbuf;
 	bool needShutdown;
 	uint32_t num_mem_chunks;
@@ -1399,7 +1399,7 @@ typedef enum {
  * @driverType: driver type (production/FTM)
  * @uConfigBufferLen: length of config buffer
  */
-typedef struct cdf_packed sHalMacStartParameter {
+typedef struct qdf_packed sHalMacStartParameter {
 	tDriverType driverType;
 	uint32_t uConfigBufferLen;
 

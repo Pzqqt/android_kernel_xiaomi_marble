@@ -261,7 +261,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 		    stats->type) ||
 	    nla_put(vendor_event,
 		       QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_MAC_ADDRESS,
-		       CDF_MAC_ADDR_SIZE, &stats->peerMacAddress.bytes[0]) ||
+		       QDF_MAC_ADDR_SIZE, &stats->peerMacAddress.bytes[0]) ||
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_CAPABILITIES,
 			   stats->capabilities) ||
@@ -385,7 +385,7 @@ static bool put_wifi_interface_info(tpSirWifiInterfaceInfo stats,
 			stats->mode) ||
 	    nla_put(vendor_event,
 		    QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_MAC_ADDR,
-		    CDF_MAC_ADDR_SIZE, stats->macAddr.bytes) ||
+		    QDF_MAC_ADDR_SIZE, stats->macAddr.bytes) ||
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_STATE,
 			stats->state) ||
@@ -400,7 +400,7 @@ static bool put_wifi_interface_info(tpSirWifiInterfaceInfo stats,
 		    strlen(stats->ssid), stats->ssid) ||
 	    nla_put(vendor_event,
 		    QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_BSSID,
-		    CDF_MAC_ADDR_SIZE, stats->bssid.bytes) ||
+		    QDF_MAC_ADDR_SIZE, stats->bssid.bytes) ||
 	    nla_put(vendor_event,
 		    QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_AP_COUNTRY_STR,
 		    WNI_CFG_COUNTRY_CODE_LEN, stats->apCountryStr) ||
@@ -1002,13 +1002,13 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 					   linkLayerStatsResults->ifaceId);
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: vdev_id %d does not exist with host",
 			  __func__, linkLayerStatsResults->ifaceId);
 		return;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: Link Layer Indication indType: %d", __func__, indType);
 
 	switch (indType) {
@@ -1144,7 +1144,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1270,7 +1270,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1401,7 +1401,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1546,7 +1546,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1607,7 +1607,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	status = wlan_hdd_validate_context(pHddCtx);
 
 	if (0 != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is not valid", __func__);
 		return;
 	}
@@ -1615,7 +1615,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	pAdapter = hdd_get_adapter_by_vdev(pHddCtx, data->vdev_id);
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: vdev_id %d does not exist with host",
 			  __func__, data->vdev_id);
 		return;
@@ -1630,7 +1630,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 						   GFP_KERNEL);
 
 	if (!vendor_event) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: cfg80211_vendor_event_alloc failed", __func__);
 		return;
 	}
@@ -1638,7 +1638,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	ret_val = nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_IFINDEX,
 			      pAdapter->dev->ifindex);
 	if (ret_val) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: QCA_WLAN_VENDOR_ATTR_IFINDEX put fail",
 			  __func__);
 		kfree_skb(vendor_event);
@@ -1650,7 +1650,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 			  data->event_data_len, data->event_data);
 
 	if (ret_val) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: QCA_WLAN_VENDOR_ATTR_STATS_EXT put fail",
 			  __func__);
 		kfree_skb(vendor_event);
@@ -1723,7 +1723,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2161,7 +2161,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			sinfo->txrate.mcs, sinfo->txrate.flags,
 			sinfo->tx_packets, sinfo->rx_packets);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
 			 pAdapter->sessionId, maxRate));
 	EXIT();
@@ -2234,7 +2234,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2272,7 +2272,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	wlan_hdd_get_snr(pAdapter, &snr);
 	wlan_hdd_get_rssi(pAdapter, &rssi);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_DUMP_SURVEY,
 			 pAdapter->sessionId, pAdapter->device_mode));
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011,2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011,2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,7 +65,7 @@
  * SUCH DAMAGES.
  */
 
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include "wma.h"
 #include "cds_regdomain.h"
 #include "cds_regdomain_common.h"
@@ -74,89 +74,89 @@ static regdm_supp_op_classes regdm_curr_supp_opp_classes = { 0 };
 
 /* Global Operating Classes */
 regdm_op_class_map_t global_op_class[] = {
-	{81, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}},
-	{82, 25, BW20, {14}},
-	{83, 40, BW40_LOW_PRIMARY, {1, 2, 3, 4, 5, 6, 7, 8, 9}},
-	{84, 40, BW40_HIGH_PRIMARY, {5, 6, 7, 8, 9, 10, 11, 12, 13}},
-	{115, 20, BW20, {36, 40, 44, 48}},
-	{116, 40, BW40_LOW_PRIMARY, {36, 44}},
-	{117, 40, BW40_HIGH_PRIMARY, {40, 48}},
-	{118, 20, BW20, {52, 56, 60, 64}},
-	{119, 40, BW40_LOW_PRIMARY, {52, 60}},
-	{120, 40, BW40_HIGH_PRIMARY, {56, 64}},
+	{81, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{82, 25, BW20, {14} },
+	{83, 40, BW40_LOW_PRIMARY, {1, 2, 3, 4, 5, 6, 7, 8, 9} },
+	{84, 40, BW40_HIGH_PRIMARY, {5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{115, 20, BW20, {36, 40, 44, 48} },
+	{116, 40, BW40_LOW_PRIMARY, {36, 44} },
+	{117, 40, BW40_HIGH_PRIMARY, {40, 48} },
+	{118, 20, BW20, {52, 56, 60, 64} },
+	{119, 40, BW40_LOW_PRIMARY, {52, 60} },
+	{120, 40, BW40_HIGH_PRIMARY, {56, 64} },
 	{121, 20, BW20,
-	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
-	{122, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132}},
-	{123, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136}},
-	{125, 20, BW20, {149, 153, 157, 161, 165, 169}},
-	{126, 40, BW40_LOW_PRIMARY, {149, 157}},
-	{127, 40, BW40_HIGH_PRIMARY, {153, 161}},
+	 {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140} },
+	{122, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132} },
+	{123, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136} },
+	{125, 20, BW20, {149, 153, 157, 161, 165, 169} },
+	{126, 40, BW40_LOW_PRIMARY, {149, 157} },
+	{127, 40, BW40_HIGH_PRIMARY, {153, 161} },
 	{128, 80, BW80, {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108,
 			   112, 116, 120, 124, 128, 132, 136, 140, 144,
 			   149, 153, 157, 161} },
-	{0, 0, 0, {0}},
+	{0, 0, 0, {0} },
 };
 
 /* Operating Classes in US */
 regdm_op_class_map_t us_op_class[] = {
-	{1, 20, BW20, {36, 40, 44, 48}},
-	{2, 20, BW20, {52, 56, 60, 64}},
+	{1, 20, BW20, {36, 40, 44, 48} },
+	{2, 20, BW20, {52, 56, 60, 64} },
 	{4, 20, BW20, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140,
 			144} },
-	{5, 20, BW20, {149, 153, 157, 161, 165}},
-	{12, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11}},
-	{22, 40, BW40_LOW_PRIMARY, {36, 44}},
-	{23, 40, BW40_LOW_PRIMARY, {52, 60}},
-	{24, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132}},
-	{26, 40, BW40_LOW_PRIMARY, {149, 157}},
-	{27, 40, BW40_HIGH_PRIMARY, {40, 48}},
-	{28, 40, BW40_HIGH_PRIMARY, {56, 64}},
-	{29, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136}},
-	{31, 40, BW40_HIGH_PRIMARY, {153, 161}},
-	{32, 40, BW40_LOW_PRIMARY, {1, 2, 3, 4, 5, 6, 7}},
-	{33, 40, BW40_HIGH_PRIMARY, {5, 6, 7, 8, 9, 10, 11}},
+	{5, 20, BW20, {149, 153, 157, 161, 165} },
+	{12, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11} },
+	{22, 40, BW40_LOW_PRIMARY, {36, 44} },
+	{23, 40, BW40_LOW_PRIMARY, {52, 60} },
+	{24, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132} },
+	{26, 40, BW40_LOW_PRIMARY, {149, 157} },
+	{27, 40, BW40_HIGH_PRIMARY, {40, 48} },
+	{28, 40, BW40_HIGH_PRIMARY, {56, 64} },
+	{29, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136} },
+	{31, 40, BW40_HIGH_PRIMARY, {153, 161} },
+	{32, 40, BW40_LOW_PRIMARY, {1, 2, 3, 4, 5, 6, 7} },
+	{33, 40, BW40_HIGH_PRIMARY, {5, 6, 7, 8, 9, 10, 11} },
 	{128, 80, BW80, {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108,
 			   112, 116, 120, 124, 128, 132, 136, 140, 144,
 			   149, 153, 157, 161} },
-	{0, 0, 0, {0}},
+	{0, 0, 0, {0} },
 };
 
 /* Operating Classes in Europe */
 regdm_op_class_map_t euro_op_class[] = {
-	{1, 20, BW20, {36, 40, 44, 48}},
-	{2, 20, BW20, {52, 56, 60, 64}},
-	{3, 20, BW20, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
-	{4, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}},
-	{5, 40, BW40_LOW_PRIMARY, {36, 44}},
-	{6, 40, BW40_LOW_PRIMARY, {52, 60}},
-	{7, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132}},
-	{8, 40, BW40_HIGH_PRIMARY, {40, 48}},
-	{9, 40, BW40_HIGH_PRIMARY, {56, 64}},
-	{10, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136}},
-	{11, 40, BW40_LOW_PRIMARY, {1, 2, 3, 4, 5, 6, 7, 8, 9}},
-	{12, 40, BW40_HIGH_PRIMARY, {5, 6, 7, 8, 9, 10, 11, 12, 13}},
-	{17, 20, BW20, {149, 153, 157, 161, 165, 169}},
+	{1, 20, BW20, {36, 40, 44, 48} },
+	{2, 20, BW20, {52, 56, 60, 64} },
+	{3, 20, BW20, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140} },
+	{4, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{5, 40, BW40_LOW_PRIMARY, {36, 44} },
+	{6, 40, BW40_LOW_PRIMARY, {52, 60} },
+	{7, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132} },
+	{8, 40, BW40_HIGH_PRIMARY, {40, 48} },
+	{9, 40, BW40_HIGH_PRIMARY, {56, 64} },
+	{10, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136} },
+	{11, 40, BW40_LOW_PRIMARY, {1, 2, 3, 4, 5, 6, 7, 8, 9} },
+	{12, 40, BW40_HIGH_PRIMARY, {5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{17, 20, BW20, {149, 153, 157, 161, 165, 169} },
 	{128, 80, BW80, {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112,
 			   116, 120, 124, 128} },
-	{0, 0, 0, {0}},
+	{0, 0, 0, {0} },
 };
 
 /* Operating Classes in Japan */
 regdm_op_class_map_t japan_op_class[] = {
-	{1, 20, BW20, {36, 40, 44, 48}},
-	{30, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13}},
-	{31, 25, BW20, {14}},
-	{32, 20, BW20, {52, 56, 60, 64}},
-	{34, 20, BW20, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140}},
-	{36, 40, BW40_LOW_PRIMARY, {36, 44}},
-	{37, 40, BW40_LOW_PRIMARY, {52, 60}},
-	{39, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132}},
-	{41, 40, BW40_HIGH_PRIMARY, {40, 48}},
-	{42, 40, BW40_HIGH_PRIMARY, {56, 64}},
-	{44, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136}},
+	{1, 20, BW20, {36, 40, 44, 48} },
+	{30, 25, BW20, {1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13} },
+	{31, 25, BW20, {14} },
+	{32, 20, BW20, {52, 56, 60, 64} },
+	{34, 20, BW20, {100, 104, 108, 112, 116, 120, 124, 128, 132, 136, 140} },
+	{36, 40, BW40_LOW_PRIMARY, {36, 44} },
+	{37, 40, BW40_LOW_PRIMARY, {52, 60} },
+	{39, 40, BW40_LOW_PRIMARY, {100, 108, 116, 124, 132} },
+	{41, 40, BW40_HIGH_PRIMARY, {40, 48} },
+	{42, 40, BW40_HIGH_PRIMARY, {56, 64} },
+	{44, 40, BW40_HIGH_PRIMARY, {104, 112, 120, 128, 136} },
 	{128, 80, BW80, {36, 40, 44, 48, 52, 56, 60, 64, 100, 104, 108, 112,
 			   116, 120, 124, 128} },
-	{0, 0, 0, {0}},
+	{0, 0, 0, {0} },
 };
 
 /*
@@ -168,9 +168,9 @@ HAL_REG_DMN_TABLES ol_regdmn_rdt = {
 	ah_cmn_reg_domain_pairs,    /* regDomainPairs */
 	ah_cmn_all_countries,      /* allCountries */
 	ah_cmn_reg_domains,        /* allRegDomains */
-	CDF_ARRAY_SIZE(ah_cmn_reg_domain_pairs), /* regDomainPairsCt */
-	CDF_ARRAY_SIZE(ah_cmn_all_countries),   /* allCountriesCt */
-	CDF_ARRAY_SIZE(ah_cmn_reg_domains),     /* allRegDomainCt */
+	QDF_ARRAY_SIZE(ah_cmn_reg_domain_pairs), /* regDomainPairsCt */
+	QDF_ARRAY_SIZE(ah_cmn_all_countries),   /* allCountriesCt */
+	QDF_ARRAY_SIZE(ah_cmn_reg_domains),     /* allRegDomainCt */
 };
 
 static uint16_t get_eeprom_rd(uint16_t rd)
@@ -197,7 +197,7 @@ static bool regdmn_is_eeprom_valid(uint16_t rd)
 				return true;
 	}
 	/* TODO: Bring it under debug level */
-	cdf_print("%s: invalid regulatory domain/country code 0x%x\n",
+	qdf_print("%s: invalid regulatory domain/country code 0x%x\n",
 		  __func__, rd);
 	return false;
 }
@@ -329,7 +329,7 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 		country = find_country(country_code);
 		if (!country) {
 			/* TODO: Bring it under debug level */
-			cdf_print(KERN_ERR "Not a valid country code\n");
+			qdf_print(KERN_ERR "Not a valid country code\n");
 			return -EINVAL;
 		}
 		regdmn = country->regDmnEnum;
@@ -338,7 +338,7 @@ int32_t cds_fill_some_regulatory_info(struct regulatory *reg)
 	reg->regpair = get_regdmn_pair(regdmn);
 	if (!reg->regpair) {
 		/* TODO: Bring it under debug level */
-		cdf_print(KERN_ERR "No regpair is found, can not proceeed\n");
+		qdf_print(KERN_ERR "No regpair is found, can not proceeed\n");
 		return -EINVAL;
 	}
 	reg->country_code = country_code;
@@ -464,13 +464,13 @@ void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
 	regpair = reg->regpair;
 	regdomain2G = get_regdmn(regpair->regDmn2GHz);
 	if (!regdomain2G) {
-		cdf_print(KERN_ERR "Failed to get regdmn 2G");
+		qdf_print(KERN_ERR "Failed to get regdmn 2G");
 		return;
 	}
 
 	regdomain5G = get_regdmn(regpair->regDmn5GHz);
 	if (!regdomain5G) {
-		cdf_print(KERN_ERR "Failed to get regdmn 5G");
+		qdf_print(KERN_ERR "Failed to get regdmn 5G");
 		return;
 	}
 
@@ -484,7 +484,7 @@ void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
 		modesAvail =
 			regdmn_getwmodesnreg(modesAvail, country, regdomain5G);
 
-	for (cm = modes; cm < &modes[CDF_ARRAY_SIZE(modes)]; cm++) {
+	for (cm = modes; cm < &modes[QDF_ARRAY_SIZE(modes)]; cm++) {
 
 		if ((cm->mode & modeSelect) == 0)
 			continue;
@@ -531,7 +531,7 @@ void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
 			ctl = rd->conformance_test_limit | CTL_108G;
 			break;
 		default:
-			cdf_print(KERN_ERR "%s: Unkonwn HAL mode 0x%x\n",
+			qdf_print(KERN_ERR "%s: Unkonwn HAL mode 0x%x\n",
 				  __func__, cm->mode);
 			continue;
 		}
@@ -559,20 +559,20 @@ void cds_fill_send_ctl_info_to_fw(struct regulatory *reg, uint32_t modesAvail,
  */
 void cds_set_wma_dfs_region(struct regulatory *reg)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma) {
-		cdf_print(KERN_ERR "%s: Unable to get WMA handle", __func__);
+		qdf_print(KERN_ERR "%s: Unable to get WMA handle", __func__);
 		return;
 	}
 
-	cdf_print("%s: dfs_region: %d", __func__, reg->dfs_region);
+	qdf_print("%s: dfs_region: %d", __func__, reg->dfs_region);
 	wma_set_dfs_region(wma, reg->dfs_region);
 }
 
 void cds_fill_and_send_ctl_to_fw(struct regulatory *reg)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	uint32_t modeSelect = 0xFFFFFFFF;
 
 	if (!wma) {
@@ -617,7 +617,7 @@ uint16_t cds_get_regdmn_5g(uint32_t reg_dmn)
 			return ol_regdmn_rdt.regDomainPairs[i].regDmn5GHz;
 		}
 	}
-	cdf_print("%s: invalid regulatory domain/country code 0x%x\n",
+	qdf_print("%s: invalid regulatory domain/country code 0x%x\n",
 		  __func__, reg_dmn);
 	return 0;
 }
@@ -707,7 +707,7 @@ uint16_t cds_regdm_set_curr_opclasses(uint8_t num_classes, uint8_t *class)
 	uint8_t i;
 
 	if (SIR_MAC_MAX_SUPP_OPER_CLASSES < num_classes) {
-		cdf_print(KERN_ERR "%s: Invalid numClasses (%d)\n",
+		qdf_print(KERN_ERR "%s: Invalid numClasses (%d)\n",
 			  __func__, num_classes);
 		return -1;
 	}
@@ -728,7 +728,7 @@ uint16_t cds_regdm_get_curr_opclasses(uint8_t *num_classes, uint8_t *class)
 	uint8_t i;
 
 	if (!num_classes || !class) {
-		cdf_print(KERN_ERR "%s: Either num_classes or class is null\n",
+		qdf_print(KERN_ERR "%s: Either num_classes or class is null\n",
 			  __func__);
 		return -1;
 	}

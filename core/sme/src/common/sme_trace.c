@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -219,6 +219,6 @@ static void sme_trace_dump(tpAniSirGlobal pMac, tp_cdf_trace_record pRecord,
 
 void sme_trace_init(tpAniSirGlobal pMac)
 {
-	cdf_trace_register(CDF_MODULE_ID_SME, (tp_cdf_trace_cb) & sme_trace_dump);
+	cdf_trace_register(QDF_MODULE_ID_SME, (tp_cdf_trace_cb) &sme_trace_dump);
 }
 #endif

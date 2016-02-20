@@ -124,11 +124,11 @@ static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, cdf_nbuf_t msg)
 	start_idx = pdev->rx_ring.sw_rd_idx.msdu_payld;
 	msdu = pdev->rx_ring.buf.netbufs_ring[start_idx];
 	cdf_nbuf_set_pktlen(msdu, HTT_RX_BUF_SIZE);
-	cdf_nbuf_unmap(pdev->osdev, msdu, CDF_DMA_FROM_DEVICE);
+	cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 	rx_desc = htt_rx_desc(msdu);
 	*((uint8_t *) &rx_desc->fw_desc.u.val) = *p_fw_msdu_rx_desc;
 	rx_desc->msdu_end.last_msdu = 1;
-	cdf_nbuf_map(pdev->osdev, msdu, CDF_DMA_FROM_DEVICE);
+	cdf_nbuf_map(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 }
 
 /* Target to host Msg/event  handler  for low priority messages*/
@@ -146,20 +146,20 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		cdf_runtime_pm_put();
 		pdev->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 		pdev->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
-		cdf_print
+		qdf_print
 			("target uses HTT version %d.%d; host uses %d.%d",
 			pdev->tgt_ver.major, pdev->tgt_ver.minor,
 			HTT_CURRENT_VERSION_MAJOR,
 			HTT_CURRENT_VERSION_MINOR);
 		if (pdev->tgt_ver.major != HTT_CURRENT_VERSION_MAJOR)
-			cdf_print
+			qdf_print
 			      ("*** Incompatible host/target HTT versions!");
 		/* abort if the target is incompatible with the host */
 		cdf_assert(pdev->tgt_ver.major ==
 			   HTT_CURRENT_VERSION_MAJOR);
 		if (pdev->tgt_ver.minor != HTT_CURRENT_VERSION_MINOR) {
-			cdf_print("*** Warning: host/target HTT versions are ");
-			cdf_print(" different, though compatible!");
+			qdf_print("*** Warning: host/target HTT versions are ");
+			qdf_print(" different, though compatible!");
 		}
 		break;
 	}
@@ -293,7 +293,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			cdf_runtime_pm_put();
 			HTT_TX_SCHED(pdev);
 		} else {
-			cdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication");
+			qdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication");
 		}
 		break;
 	}
@@ -374,7 +374,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 				       (struct htt_wdi_ipa_op_response_t) +
 				       len);
 		if (!op_msg_buffer) {
-			cdf_print("OPCODE messsage buffer alloc fail");
+			qdf_print("OPCODE messsage buffer alloc fail");
 			break;
 		}
 		cdf_mem_copy(op_msg_buffer,
@@ -435,7 +435,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			peer = ol_txrx_peer_find_by_id(pdev->txrx_pdev,
 				 peer_id);
 			if (!peer) {
-				cdf_print("%s: invalid peer id %d\n",
+				qdf_print("%s: invalid peer id %d\n",
 					 __func__, peer_id);
 				cdf_assert(0);
 				break;
@@ -461,7 +461,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		}
 		default:
 		{
-			cdf_print("%s: unhandled error type %d\n",
+			qdf_print("%s: unhandled error type %d\n",
 			 __func__,
 			 HTT_RX_OFLD_PKT_ERR_MSG_SUB_TYPE_GET(*msg_word));
 		break;
@@ -497,7 +497,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	}
 #ifdef HTT_RX_RESTORE
 	if (cdf_unlikely(pdev->rx_ring.rx_reset)) {
-		cdf_print("rx restore ..\n");
+		qdf_print("rx restore ..\n");
 		cdf_nbuf_free(htt_t2h_msg);
 		return;
 	}
@@ -510,7 +510,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
 
 #if defined(HELIUMPLUS_DEBUG)
-	cdf_print("%s %d: msg_word 0x%x msg_type %d",
+	qdf_print("%s %d: msg_word 0x%x msg_type %d",
 		  __func__, __LINE__, *msg_word, msg_type);
 #endif
 
@@ -523,15 +523,15 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		uint8_t tid;
 
 		if (cdf_unlikely(pdev->cfg.is_full_reorder_offload)) {
-			cdf_print("HTT_T2H_MSG_TYPE_RX_IND not supported ");
-			cdf_print("with full reorder offload\n");
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IND not supported ");
+			qdf_print("with full reorder offload\n");
 			break;
 		}
 		peer_id = HTT_RX_IND_PEER_ID_GET(*msg_word);
 		tid = HTT_RX_IND_EXT_TID_GET(*msg_word);
 
 		if (tid >= OL_TXRX_NUM_EXT_TIDS) {
-			cdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid tid %d\n",
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid tid %d\n",
 				tid);
 			break;
 		}
@@ -650,9 +650,9 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		uint8_t offload_ind, frag_ind;
 
 		if (cdf_unlikely(!pdev->cfg.is_full_reorder_offload)) {
-			cdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND not ");
-			cdf_print("supported when full reorder offload is ");
-			cdf_print("disabled in the configuration.\n");
+			qdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND not ");
+			qdf_print("supported when full reorder offload is ");
+			qdf_print("disabled in the configuration.\n");
 			break;
 		}
 
@@ -662,7 +662,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		frag_ind = HTT_RX_IN_ORD_PADDR_IND_FRAG_GET(*msg_word);
 
 #if defined(HELIUMPLUS_DEBUG)
-		cdf_print("%s %d: peerid %d tid %d offloadind %d fragind %d\n",
+		qdf_print("%s %d: peerid %d tid %d offloadind %d fragind %d\n",
 			  __func__, __LINE__, peer_id, tid, offload_ind,
 			  frag_ind);
 #endif

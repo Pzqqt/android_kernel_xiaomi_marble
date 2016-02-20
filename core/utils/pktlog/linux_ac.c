@@ -85,8 +85,8 @@ static ssize_t pktlog_read(struct file *file, char *buf, size_t nbytes,
 static struct file_operations pktlog_fops = {
 	open:  pktlog_open,
 	release:pktlog_release,
-	mmap:  pktlog_mmap,
-	read:  pktlog_read,
+	mmap : pktlog_mmap,
+	read : pktlog_read,
 };
 
 /*
@@ -96,7 +96,7 @@ static struct file_operations pktlog_fops = {
 static struct ol_pktlog_dev_t *get_pl_handle(struct hif_opaque_softc *scn)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev_txrx_handle)
 		return NULL;
 	return pdev_txrx_handle->pl_dev;
@@ -105,7 +105,7 @@ static struct ol_pktlog_dev_t *get_pl_handle(struct hif_opaque_softc *scn)
 void ol_pl_set_name(hif_opaque_softc_handle scn, net_device_handle dev)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (pdev_txrx_handle && pdev_txrx_handle->pl_dev && dev)
 		pdev_txrx_handle->pl_dev->name = dev->name;
 }
@@ -124,7 +124,7 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 	struct page *vpg;
 	struct ath_pktlog_info *pl_info;
 	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev_txrx_handle || !pdev_txrx_handle->pl_dev) {
 		printk(PKTLOG_TAG
@@ -138,7 +138,8 @@ int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 
 	page_cnt = (sizeof(*(pl_info->buf)) + pl_info->buf_size) / PAGE_SIZE;
 
-	if ((pl_info->buf = vmalloc((page_cnt + 2) * PAGE_SIZE)) == NULL) {
+	pl_info->buf = vmalloc((page_cnt + 2) * PAGE_SIZE);
+	if (pl_info->buf == NULL) {
 		printk(PKTLOG_TAG
 		       "%s: Unable to allocate buffer "
 		       "(%d pages)\n", __func__, page_cnt);
@@ -166,7 +167,7 @@ void pktlog_release_buf(struct hif_opaque_softc *scn)
 	struct page *vpg;
 	struct ath_pktlog_info *pl_info;
 	ol_txrx_pdev_handle pdev_txrx_handle;
-	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev_txrx_handle = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev_txrx_handle || !pdev_txrx_handle->pl_dev) {
 		printk(PKTLOG_TAG
@@ -527,7 +528,7 @@ static int pktlog_release(struct inode *i, struct file *f)
 }
 
 #ifndef MIN
-#define MIN(a,b) (((a) < (b)) ? (a) : (b))
+#define MIN(a, b) (((a) < (b)) ? (a) : (b))
 #endif
 
 /**
@@ -544,7 +545,7 @@ int pktlog_send_per_pkt_stats_to_user(void)
 	ssize_t ret_val;
 	struct host_log_pktlog_info *pktlog = NULL;
 	ol_txrx_pdev_handle txrx_pdev =
-		cds_get_context(CDF_MODULE_ID_TXRX);
+		cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ath_pktlog_info *pl_info;
 	bool read_complete;
 	uint32_t num_bytes_read = 0;
@@ -848,7 +849,7 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 	count = 0;
 
 	if (*ppos < bufhdr_size) {
-		count = CDF_MIN((bufhdr_size - *ppos), rem_len);
+		count = QDF_MIN((bufhdr_size - *ppos), rem_len);
 		if (copy_to_user(buf, ((char *)&log_buf->bufhdr) + *ppos,
 				 count))
 			return -EFAULT;
@@ -894,7 +895,7 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 		if (ppos_data > end_offset)
 			goto rd_done;
 
-		count = CDF_MIN(rem_len, (end_offset - ppos_data + 1));
+		count = QDF_MIN(rem_len, (end_offset - ppos_data + 1));
 		if (copy_to_user(buf + ret_val,
 				 log_buf->log_data + ppos_data, count))
 			return -EFAULT;
@@ -902,7 +903,7 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 		rem_len -= count;
 	} else {
 		if (ppos_data <= fold_offset) {
-			count = CDF_MIN(rem_len, (fold_offset - ppos_data + 1));
+			count = QDF_MIN(rem_len, (fold_offset - ppos_data + 1));
 			if (copy_to_user(buf + ret_val,
 					 log_buf->log_data + ppos_data, count))
 				return -EFAULT;
@@ -918,7 +919,7 @@ pktlog_read(struct file *file, char *buf, size_t nbytes, loff_t *ppos)
 					   (fold_offset - start_offset + 1));
 
 		if (ppos_data <= end_offset) {
-			count = CDF_MIN(rem_len, (end_offset - ppos_data + 1));
+			count = QDF_MIN(rem_len, (end_offset - ppos_data + 1));
 			if (copy_to_user(buf + ret_val,
 					 log_buf->log_data + ppos_data, count))
 				return -EFAULT;

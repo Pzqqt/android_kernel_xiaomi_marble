@@ -465,8 +465,8 @@ struct cds_conc_connection_info {
 
 bool cds_is_connection_in_progress(void);
 void cds_dump_concurrency_info(void);
-void cds_set_concurrency_mode(enum tCDF_ADAPTER_MODE mode);
-void cds_clear_concurrency_mode(enum tCDF_ADAPTER_MODE mode);
+void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
+void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode);
 uint32_t cds_get_connection_count(void);
 bool cds_is_sta_connection_pending(void);
 void cds_change_sta_conn_pending_status(bool value);
@@ -549,11 +549,11 @@ static inline void cds_check_and_restart_sap_with_non_dfs_acs(void)
 
 }
 #endif /* FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE */
-void cds_incr_active_session(enum tCDF_ADAPTER_MODE mode,
+void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
-void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
+void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 				uint8_t sessionId);
-void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
+void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 		uint8_t session_id);
 QDF_STATUS cds_init_policy_mgr(void);
 QDF_STATUS cds_deinit_policy_mgr(void);
@@ -638,12 +638,12 @@ void cds_set_dual_mac_fw_mode_config(uint8_t dbs,
 void cds_soc_set_dual_mac_cfg_cb(enum set_hw_mode_status status,
 		uint32_t scan_config,
 		uint32_t fw_mode_config);
-bool cds_map_concurrency_mode(enum tCDF_ADAPTER_MODE *old_mode,
+bool cds_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
 		enum cds_con_mode *new_mode);
 QDF_STATUS cds_get_channel_from_scan_result(hdd_adapter_t *adapter,
 		tCsrRoamProfile *roam_profile, uint8_t *channel);
 
-enum tCDF_GLOBAL_CON_MODE cds_get_conparam(void);
+enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void);
 bool cds_concurrent_open_sessions_running(void);
 bool cds_max_concurrent_connections_reached(void);
 void cds_clear_concurrent_session_count(void);

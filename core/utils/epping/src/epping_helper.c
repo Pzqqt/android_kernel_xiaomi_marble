@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -165,9 +165,9 @@ void epping_hex_dump(void *data, int buf_len, const char *str)
 
 void *epping_get_cdf_ctx(void)
 {
-	cdf_device_t *p_cdf_ctx;
+	qdf_device_t *p_cdf_ctx;
 
-	p_cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	p_cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	return p_cdf_ctx;
 }
 

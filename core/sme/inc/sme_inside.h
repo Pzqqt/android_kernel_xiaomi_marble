@@ -41,7 +41,7 @@
 #include "cdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "sir_api.h"
 #include "csr_internal.h"
 #include "sme_qos_api.h"
@@ -109,7 +109,7 @@ typedef struct TdlsSendMgmtInfo {
 } tTdlsSendMgmtCmdInfo;
 
 typedef struct TdlsLinkEstablishInfo {
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint8_t uapsdQueues;
 	uint8_t maxSp;
 	uint8_t isBufSta;
@@ -123,7 +123,7 @@ typedef struct TdlsLinkEstablishInfo {
 
 typedef struct TdlsAddStaInfo {
 	eTdlsAddOper tdlsAddOper;
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 	uint16_t capability;
 	uint8_t extnCapability[SIR_MAC_MAX_EXTN_CAP];
 	uint8_t supportedRatesLen;
@@ -137,7 +137,7 @@ typedef struct TdlsAddStaInfo {
 } tTdlsAddStaCmdInfo;
 
 typedef struct TdlsDelStaInfo {
-	struct cdf_mac_addr peermac;
+	struct qdf_mac_addr peermac;
 } tTdlsDelStaCmdInfo;
 /*
  * TDLS cmd info, CMD from SME to PE.

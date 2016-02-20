@@ -463,7 +463,7 @@
 #define wma_tx_frame(hHal, pFrmBuf, frmLen, frmType, txDir, tid, pCompFunc, \
 		   pData, txFlag, sessionid, channel_freq) \
 	(QDF_STATUS)( wma_tx_packet( \
-		      cds_get_context(CDF_MODULE_ID_WMA), \
+		      cds_get_context(QDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
 		      (frmLen), \
 		      (frmType), \
@@ -481,7 +481,7 @@
 	 pCompFunc, pData, pCBackFnTxComp, txFlag, sessionid, tdlsflag, \
 	 channel_freq) \
 	(QDF_STATUS)( wma_tx_packet( \
-		      cds_get_context(CDF_MODULE_ID_WMA), \
+		      cds_get_context(QDF_MODULE_ID_WMA), \
 		      (pFrmBuf), \
 		      (frmLen), \
 		      (frmType), \

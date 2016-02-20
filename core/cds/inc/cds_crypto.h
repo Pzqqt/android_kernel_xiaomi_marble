@@ -34,7 +34,7 @@
  *
  */
 
-#include <cdf_types.h>
+#include <qdf_types.h>
 #include <qdf_status.h>
 #include <cdf_memory.h>
 #include <qdf_list.h>

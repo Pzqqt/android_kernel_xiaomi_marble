@@ -43,7 +43,7 @@
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_hostapd.h"
 #include "cds_concurrency.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cdf_trace.h"
 
 #include <net/addrconf.h>
@@ -1921,7 +1921,7 @@ bool cds_is_sta_connection_pending(void)
 	bool status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return false;
@@ -1946,7 +1946,7 @@ void cds_change_sta_conn_pending_status(bool value)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -1970,7 +1970,7 @@ static bool cds_is_sap_restart_required(void)
 	bool status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return false;
@@ -1995,7 +1995,7 @@ void cds_change_sap_restart_required_status(bool value)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -2020,7 +2020,7 @@ bool cds_set_connection_in_progress(bool value)
 	bool status = true;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return false;
@@ -2197,7 +2197,7 @@ static void cds_update_hw_mode_conn_info(uint32_t num_vdev_mac_entries,
 	uint32_t i, conn_index, found;
 	cds_context_type *cds_ctx;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -2276,7 +2276,7 @@ void cds_set_dual_mac_scan_config(uint8_t dbs_val,
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -2335,7 +2335,7 @@ void cds_set_dual_mac_fw_mode_config(uint8_t dbs, uint8_t dfs)
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -2537,7 +2537,7 @@ QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("Invalid HDD context");
 		return QDF_STATUS_E_FAILURE;
@@ -2585,7 +2585,7 @@ bool cds_is_connection_in_progress(void)
 	uint8_t *sta_mac = NULL;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return false;
@@ -3002,13 +3002,13 @@ static bool cds_current_concurrency_is_scc(void)
  */
 static void cds_dump_legacy_concurrency(
 		uint8_t sta_channel, uint8_t ap_channel, uint8_t p2p_channel,
-		struct cdf_mac_addr sta_bssid, struct cdf_mac_addr p2p_bssid,
-		struct cdf_mac_addr ap_bssid, const char *p2p_mode)
+		struct qdf_mac_addr sta_bssid, struct qdf_mac_addr p2p_bssid,
+		struct qdf_mac_addr ap_bssid, const char *p2p_mode)
 {
 	const char *cc_mode = "Standalone";
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -3089,9 +3089,9 @@ void cds_dump_concurrency_info(void)
 	hdd_station_ctx_t *pHddStaCtx;
 	hdd_ap_ctx_t *hdd_ap_ctx;
 	hdd_hostapd_state_t *hostapd_state;
-	struct cdf_mac_addr staBssid = CDF_MAC_ADDR_ZERO_INITIALIZER;
-	struct cdf_mac_addr p2pBssid = CDF_MAC_ADDR_ZERO_INITIALIZER;
-	struct cdf_mac_addr apBssid = CDF_MAC_ADDR_ZERO_INITIALIZER;
+	struct qdf_mac_addr staBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
+	struct qdf_mac_addr p2pBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
+	struct qdf_mac_addr apBssid = QDF_MAC_ADDR_ZERO_INITIALIZER;
 	uint8_t staChannel = 0, p2pChannel = 0, apChannel = 0;
 	const char *p2pMode = "DEV";
 	hdd_context_t *hdd_ctx;
@@ -3105,7 +3105,7 @@ void cds_dump_concurrency_info(void)
 	hdd_adapter_t *adapter5 = NULL;
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -3377,22 +3377,22 @@ void cds_dump_concurrency_info(void)
  *
  * Return: NONE
  */
-void cds_set_concurrency_mode(enum tCDF_ADAPTER_MODE mode)
+void cds_set_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
 	}
 
 	switch (mode) {
-	case CDF_STA_MODE:
-	case CDF_P2P_CLIENT_MODE:
-	case CDF_P2P_GO_MODE:
-	case CDF_SAP_MODE:
-	case CDF_IBSS_MODE:
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_IBSS_MODE:
 		hdd_ctx->concurrency_mode |= (1 << mode);
 		hdd_ctx->no_of_open_sessions[mode]++;
 		break;
@@ -3412,21 +3412,21 @@ void cds_set_concurrency_mode(enum tCDF_ADAPTER_MODE mode)
  *
  * Return: NONE
  */
-void cds_clear_concurrency_mode(enum tCDF_ADAPTER_MODE mode)
+void cds_clear_concurrency_mode(enum tQDF_ADAPTER_MODE mode)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
 	}
 
 	switch (mode) {
-	case CDF_STA_MODE:
-	case CDF_P2P_CLIENT_MODE:
-	case CDF_P2P_GO_MODE:
-	case CDF_SAP_MODE:
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
 		hdd_ctx->no_of_open_sessions[mode]--;
 		if (!(hdd_ctx->no_of_open_sessions[mode]))
 			hdd_ctx->concurrency_mode &= (~(1 << mode));
@@ -3449,14 +3449,14 @@ void cds_clear_concurrency_mode(enum tCDF_ADAPTER_MODE mode)
  *
  * Return: None
  */
-static void cds_soc_set_pcl(enum tCDF_ADAPTER_MODE mode)
+static void cds_soc_set_pcl(enum tQDF_ADAPTER_MODE mode)
 {
 	QDF_STATUS status;
 	enum cds_con_mode con_mode;
 	struct sir_pcl_list pcl;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -3464,19 +3464,19 @@ static void cds_soc_set_pcl(enum tCDF_ADAPTER_MODE mode)
 	pcl.pcl_len = 0;
 
 	switch (mode) {
-	case CDF_STA_MODE:
+	case QDF_STA_MODE:
 		con_mode = CDS_STA_MODE;
 		break;
-	case CDF_P2P_CLIENT_MODE:
+	case QDF_P2P_CLIENT_MODE:
 		con_mode = CDS_P2P_CLIENT_MODE;
 		break;
-	case CDF_P2P_GO_MODE:
+	case QDF_P2P_GO_MODE:
 		con_mode = CDS_P2P_GO_MODE;
 		break;
-	case CDF_SAP_MODE:
+	case QDF_SAP_MODE:
 		con_mode = CDS_SAP_MODE;
 		break;
-	case CDF_IBSS_MODE:
+	case QDF_IBSS_MODE:
 		con_mode = CDS_IBSS_MODE;
 		break;
 	default:
@@ -3511,19 +3511,19 @@ static void cds_soc_set_pcl(enum tCDF_ADAPTER_MODE mode)
  *
  * Return: None
  */
-void cds_incr_active_session(enum tCDF_ADAPTER_MODE mode,
+void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 				  uint8_t session_id)
 {
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -3535,11 +3535,11 @@ void cds_incr_active_session(enum tCDF_ADAPTER_MODE mode,
 	 */
 	cdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
 	switch (mode) {
-	case CDF_STA_MODE:
-	case CDF_P2P_CLIENT_MODE:
-	case CDF_P2P_GO_MODE:
-	case CDF_SAP_MODE:
-	case CDF_IBSS_MODE:
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_IBSS_MODE:
 		hdd_ctx->no_of_active_sessions[mode]++;
 		break;
 	default:
@@ -3552,7 +3552,7 @@ void cds_incr_active_session(enum tCDF_ADAPTER_MODE mode,
 	 * Let us set the PCL to the FW before updating the connection
 	 * info structure about the new connection.
 	 */
-	if (mode == CDF_STA_MODE) {
+	if (mode == QDF_STA_MODE) {
 		/* Set PCL of STA to the FW */
 		cds_soc_set_pcl(mode);
 		cds_info("Set PCL of STA to FW");
@@ -3578,7 +3578,7 @@ enum cds_conc_next_action cds_need_opportunistic_upgrade(void)
 #ifdef QCA_WIFI_3_0_EMU
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return upgrade;
@@ -3638,23 +3638,23 @@ done:
 static void cds_set_pcl_for_existing_combo(enum cds_con_mode mode)
 {
 	struct cds_conc_connection_info info;
-	enum tCDF_ADAPTER_MODE pcl_mode;
+	enum tQDF_ADAPTER_MODE pcl_mode;
 
 	switch (mode) {
 	case CDS_STA_MODE:
-		pcl_mode = CDF_STA_MODE;
+		pcl_mode = QDF_STA_MODE;
 		break;
 	case CDS_SAP_MODE:
-		pcl_mode = CDF_SAP_MODE;
+		pcl_mode = QDF_SAP_MODE;
 		break;
 	case CDS_P2P_CLIENT_MODE:
-		pcl_mode = CDF_P2P_CLIENT_MODE;
+		pcl_mode = QDF_P2P_CLIENT_MODE;
 		break;
 	case CDS_P2P_GO_MODE:
-		pcl_mode = CDF_P2P_GO_MODE;
+		pcl_mode = QDF_P2P_GO_MODE;
 		break;
 	case CDS_IBSS_MODE:
-		pcl_mode = CDF_IBSS_MODE;
+		pcl_mode = QDF_IBSS_MODE;
 		break;
 	default:
 		cds_err("Invalid mode to set PCL");
@@ -3682,20 +3682,20 @@ static void cds_set_pcl_for_existing_combo(enum cds_con_mode mode)
  *
  * Return: None
  */
-void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
+void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 						uint8_t session_id)
 {
 	QDF_STATUS qdf_status;
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -3746,19 +3746,19 @@ void cds_decr_session_set_pcl(enum tCDF_ADAPTER_MODE mode,
  *
  * Return: None
  */
-void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
+void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 				  uint8_t session_id)
 {
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -3770,11 +3770,11 @@ void cds_decr_active_session(enum tCDF_ADAPTER_MODE mode,
 	 */
 	cdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
 	switch (mode) {
-	case CDF_STA_MODE:
-	case CDF_P2P_CLIENT_MODE:
-	case CDF_P2P_GO_MODE:
-	case CDF_SAP_MODE:
-	case CDF_IBSS_MODE:
+	case QDF_STA_MODE:
+	case QDF_P2P_CLIENT_MODE:
+	case QDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_IBSS_MODE:
 		if (hdd_ctx->no_of_active_sessions[mode])
 			hdd_ctx->no_of_active_sessions[mode]--;
 		break;
@@ -3801,7 +3801,7 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 	enum cds_conc_next_action action = CDS_NOP;
 	cds_context_type *cds_ctx;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -3835,7 +3835,7 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 {
 	cds_context_type *cds_ctx;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return QDF_STATUS_E_FAILURE;
@@ -3862,13 +3862,13 @@ QDF_STATUS cds_init_policy_mgr(void)
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return QDF_STATUS_E_FAILURE;
@@ -3889,7 +3889,7 @@ QDF_STATUS cds_init_policy_mgr(void)
 	sme_register_hw_mode_trans_cb(hdd_ctx->hHal,
 				cds_hw_mode_transition_cb);
 	status = cdf_mc_timer_init(&hdd_ctx->dbs_opportunistic_timer,
-				   CDF_TIMER_TYPE_SW,
+				   QDF_TIMER_TYPE_SW,
 				   cds_dbs_opportunistic_timer_handler,
 				   (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -4020,13 +4020,13 @@ QDF_STATUS cds_incr_connection_count(uint32_t vdev_id)
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return status;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return status;
@@ -4087,7 +4087,7 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 	struct wma_txrx_node *wma_conn_table_entry;
 	cds_context_type *cds_ctx;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return status;
@@ -4294,7 +4294,7 @@ void cds_update_with_safe_channel_list(uint8_t *pcl_channels, uint32_t *len)
 	uint32_t safe_channel_count = 0, current_channel_count = 0;
 
 	if (len) {
-		current_channel_count = CDF_MIN(*len, MAX_NUM_CHAN);
+		current_channel_count = QDF_MIN(*len, MAX_NUM_CHAN);
 	} else {
 		cds_err("invalid number of channel length");
 		return;
@@ -4362,7 +4362,7 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
 	uint8_t channel_list_5[MAX_NUM_CHAN] = {0};
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return status;
@@ -4556,26 +4556,26 @@ QDF_STATUS cds_get_channel_list(enum cds_pcl_type pcl,
  *
  * Return: true or false
  */
-bool cds_map_concurrency_mode(enum tCDF_ADAPTER_MODE *old_mode,
+bool cds_map_concurrency_mode(enum tQDF_ADAPTER_MODE *old_mode,
 	enum cds_con_mode *new_mode)
 {
 	bool status = true;
 
 	switch (*old_mode) {
 
-	case CDF_STA_MODE:
+	case QDF_STA_MODE:
 		*new_mode = CDS_STA_MODE;
 		break;
-	case CDF_SAP_MODE:
+	case QDF_SAP_MODE:
 		*new_mode = CDS_SAP_MODE;
 		break;
-	case CDF_P2P_CLIENT_MODE:
+	case QDF_P2P_CLIENT_MODE:
 		*new_mode = CDS_P2P_CLIENT_MODE;
 		break;
-	case CDF_P2P_GO_MODE:
+	case QDF_P2P_GO_MODE:
 		*new_mode = CDS_P2P_GO_MODE;
 		break;
-	case CDF_IBSS_MODE:
+	case QDF_IBSS_MODE:
 		*new_mode = CDS_IBSS_MODE;
 		break;
 	default:
@@ -4612,7 +4612,7 @@ QDF_STATUS cds_get_pcl(enum cds_con_mode mode,
 	enum cds_conc_priority_mode conc_system_pref = 0;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return status;
@@ -4756,7 +4756,7 @@ bool cds_allow_new_home_channel(uint8_t channel, uint32_t num_connections)
 #ifdef QCA_WIFI_3_0_EMU
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return false;
@@ -4866,13 +4866,13 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return status;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return status;
@@ -5083,7 +5083,7 @@ enum cds_conc_priority_mode cds_get_first_connection_pcl_table_index(void)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return CDS_THROUGHPUT;
@@ -5551,13 +5551,13 @@ QDF_STATUS cds_current_connections_update(uint32_t session_id,
 	hdd_context_t *hdd_ctx;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return status;
 	}
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("Invalid HDD context");
 		return QDF_STATUS_E_FAILURE;
@@ -5712,7 +5712,7 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 		return;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
@@ -5777,7 +5777,7 @@ QDF_STATUS cds_complete_action(uint8_t  new_nss, uint8_t next_action,
 	uint32_t conn_index = 0;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return status;
@@ -5960,7 +5960,7 @@ static int __cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
+	if (QDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		cds_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -5992,7 +5992,7 @@ static int __cds_cfg80211_get_concurrency_matrix(struct wiphy *wiphy,
 		WIFI_FEATURE_P2P;
 	/* Add more feature combinations here */
 
-	feature_sets = CDF_MIN(feature_sets, max_feature_sets);
+	feature_sets = QDF_MIN(feature_sets, max_feature_sets);
 	cds_info("Number of feature sets (%d)", feature_sets);
 	cds_info("Feature set matrix");
 	for (i = 0; i < feature_sets; i++)
@@ -6053,7 +6053,7 @@ uint32_t cds_get_concurrency_mode(void)
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != hdd_ctx) {
 		cds_info("concurrency_mode = 0x%x",
 			hdd_ctx->concurrency_mode);
@@ -6062,7 +6062,7 @@ uint32_t cds_get_concurrency_mode(void)
 
 	/* we are in an invalid state :( */
 	cds_err("Invalid context");
-	return CDF_STA_MASK;
+	return QDF_STA_MASK;
 }
 
 /**
@@ -6114,7 +6114,7 @@ QDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 	uint8_t default_sap_channel = 6;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -6199,7 +6199,7 @@ static bool cds_sta_sap_concur_handle(hdd_adapter_t *sta_adapter,
 	QDF_STATUS status;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return are_cc_channels_same;
@@ -6270,7 +6270,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 	bool ret;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return are_cc_channels_same;
@@ -6292,7 +6292,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 		 */
 		if (false == are_cc_channels_same) {
 			if (true == cds_is_sta_connection_pending()) {
-				MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+				MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 					TRACE_CODE_HDD_CLEAR_JOIN_REQ,
 					sta_adapter->sessionId, *roam_id));
 				ret = sme_clear_joinreq_param(
@@ -6305,7 +6305,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 				cds_change_sta_conn_pending_status(false);
 				cds_info("===>Clear pending join req");
 			}
-			MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
+			MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 					TRACE_CODE_HDD_STORE_JOIN_REQ,
 					sta_adapter->sessionId, *roam_id));
 			/* store the scan cache here */
@@ -6379,7 +6379,7 @@ void cds_handle_conc_rule1(hdd_adapter_t *adapter,
 	bool ret;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -6420,7 +6420,7 @@ bool cds_handle_conc_rule2(hdd_adapter_t *adapter,
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return false;
@@ -6487,7 +6487,7 @@ uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
 	hdd_adapter_t *adapter;
 	bool ret;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("Invalid HDD context");
 		return channel;
@@ -6535,7 +6535,7 @@ bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel)
 	hdd_adapter_t *adapter;
 	bool ret;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("Invalid HDD context");
 		return false;
@@ -6613,7 +6613,7 @@ void cds_restart_softap(hdd_adapter_t *pHostapdAdapter)
 	tHddAvoidFreqList hdd_avoid_freq_list;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -6647,7 +6647,7 @@ void cds_force_sap_on_scc(eCsrRoamResult roam_result,
 	hdd_adapter_t *hostapd_adapter;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -6695,7 +6695,7 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 				CDF_MCC_TO_SCC_SWITCH_DISABLE)
 			|| !(cds_concurrent_open_sessions_running()
 			    || !(cds_get_concurrency_mode() ==
-					(CDF_STA_MASK | CDF_SAP_MASK))))
+					(QDF_STA_MASK | QDF_SAP_MASK))))
 		return;
 
 	ap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
@@ -6738,7 +6738,7 @@ void cds_check_concurrent_intf_and_restart_sap(hdd_station_ctx_t *hdd_sta_ctx,
 {
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
@@ -6784,7 +6784,7 @@ uint8_t cds_is_mcc_in_24G(void)
 	hdd_hostapd_state_t *hostapd_state;
 	hdd_context_t *hdd_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return 1;
@@ -6950,8 +6950,8 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 	 * Check if concurrency mode is active.
 	 * Need to modify this code to support MCC modes other than STA/P2P
 	 */
-	if ((concurrent_state == (CDF_STA_MASK | CDF_P2P_CLIENT_MASK)) ||
-		(concurrent_state == (CDF_STA_MASK | CDF_P2P_GO_MASK))) {
+	if ((concurrent_state == (QDF_STA_MASK | QDF_P2P_CLIENT_MASK)) ||
+		(concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK))) {
 		cds_info("STA & P2P are both enabled");
 		/*
 		 * The channel numbers for both adapters and the time
@@ -6985,7 +6985,7 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 			 * iwpriv cmd was issued on wlan0;
 			 * get p2p0 vdev channel
 			 */
-			if ((concurrent_state & CDF_P2P_CLIENT_MASK) != 0) {
+			if ((concurrent_state & QDF_P2P_CLIENT_MASK) != 0) {
 				/* The 2nd MCC vdev is P2P client */
 				sta_adapter = hdd_get_adapter(
 						hostapd_adapater->pHddCtx,
@@ -7102,7 +7102,7 @@ int32_t cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 	 */
 
 	concurrent_state = cds_get_concurrency_mode();
-	if (concurrent_state == (CDF_STA_MASK | CDF_P2P_GO_MASK)) {
+	if (concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK)) {
 		cds_info("STA & P2P are both enabled");
 
 		/*
@@ -7134,7 +7134,7 @@ int32_t cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		if (hostapd_adapter->device_mode ==
 				WLAN_HDD_INFRA_STATION) {
 			/* iwpriv cmd issued on wlan0; get p2p0 vdev chan */
-			if ((concurrent_state & CDF_P2P_CLIENT_MASK) != 0) {
+			if ((concurrent_state & QDF_P2P_CLIENT_MASK) != 0) {
 				/* The 2nd MCC vdev is P2P client */
 				sta_adapter = hdd_get_adapter
 					(
@@ -7219,8 +7219,8 @@ void cds_set_mcc_latency(hdd_adapter_t *adapter, int set_value)
 	 * Need to modify this code to support MCC modes other than STA/P2P
 	 */
 	concurrent_state = cds_get_concurrency_mode();
-	if ((concurrent_state == (CDF_STA_MASK | CDF_P2P_CLIENT_MASK)) ||
-		(concurrent_state == (CDF_STA_MASK | CDF_P2P_GO_MASK))) {
+	if ((concurrent_state == (QDF_STA_MASK | QDF_P2P_CLIENT_MASK)) ||
+		(concurrent_state == (QDF_STA_MASK | QDF_P2P_GO_MASK))) {
 		cds_info("STA & P2P are both enabled");
 		/*
 		 * The channel number and latency are formatted in
@@ -7354,19 +7354,19 @@ void cds_check_and_restart_sap_with_non_dfs_acs(void)
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return;
 	}
 
-	if (cds_get_concurrency_mode() != (CDF_STA_MASK | CDF_SAP_MASK)) {
+	if (cds_get_concurrency_mode() != (QDF_STA_MASK | QDF_SAP_MASK)) {
 		cds_info("Concurrency mode is not SAP");
 		return;
 	}
@@ -7398,7 +7398,7 @@ QDF_STATUS cds_update_connection_info_utfw(
 	uint32_t conn_index = 0, found = 0;
 	cds_context_type *cds_ctx;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return status;
@@ -7441,13 +7441,13 @@ QDF_STATUS cds_incr_connection_count_utfw(
 	hdd_context_t *hdd_ctx;
 	cds_context_type *cds_ctx;
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
 		cds_err("HDD context is NULL");
 		return status;
 	}
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return status;
@@ -7479,7 +7479,7 @@ QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 	QDF_STATUS status;
 	cds_context_type *cds_ctx;
 
-	cds_ctx = cds_get_context(CDF_MODULE_ID_CDF);
+	cds_ctx = cds_get_context(QDF_MODULE_ID_QDF);
 	if (!cds_ctx) {
 		cds_err("Invalid CDS Context");
 		return QDF_STATUS_E_FAILURE;
@@ -7589,11 +7589,11 @@ enum cds_con_mode cds_convert_device_mode_to_hdd_type(
  * Return the connection mode parameter set by insmod or set during statically
  * linked driver
  *
- * Return: enum tCDF_GLOBAL_CON_MODE
+ * Return: enum tQDF_GLOBAL_CON_MODE
  */
-enum tCDF_GLOBAL_CON_MODE cds_get_conparam(void)
+enum tQDF_GLOBAL_CON_MODE cds_get_conparam(void)
 {
-	enum tCDF_GLOBAL_CON_MODE con_mode;
+	enum tQDF_GLOBAL_CON_MODE con_mode;
 	con_mode = hdd_get_conparam();
 	return con_mode;
 }
@@ -7612,9 +7612,9 @@ bool cds_concurrent_open_sessions_running(void)
 	uint8_t j = 0;
 	hdd_context_t *pHddCtx;
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != pHddCtx) {
-		for (i = 0; i < CDF_MAX_NO_OF_MODE; i++)
+		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			j += pHddCtx->no_of_open_sessions[i];
 	}
 
@@ -7635,11 +7635,11 @@ bool cds_concurrent_beaconing_sessions_running(void)
 	uint8_t i = 0;
 	hdd_context_t *pHddCtx;
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != pHddCtx) {
-		i = pHddCtx->no_of_open_sessions[CDF_SAP_MODE] +
-			pHddCtx->no_of_open_sessions[CDF_P2P_GO_MODE] +
-			pHddCtx->no_of_open_sessions[CDF_IBSS_MODE];
+		i = pHddCtx->no_of_open_sessions[QDF_SAP_MODE] +
+			pHddCtx->no_of_open_sessions[QDF_P2P_GO_MODE] +
+			pHddCtx->no_of_open_sessions[QDF_IBSS_MODE];
 	}
 	return i > 1;
 }
@@ -7664,9 +7664,9 @@ bool cds_max_concurrent_connections_reached(void)
 	uint8_t i = 0, j = 0;
 	hdd_context_t *pHddCtx;
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != pHddCtx) {
-		for (i = 0; i < CDF_MAX_NO_OF_MODE; i++)
+		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			j += pHddCtx->no_of_active_sessions[i];
 		return j >
 			(pHddCtx->config->
@@ -7688,9 +7688,9 @@ void cds_clear_concurrent_session_count(void)
 	uint8_t i = 0;
 	hdd_context_t *pHddCtx;
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != pHddCtx) {
-		for (i = 0; i < CDF_MAX_NO_OF_MODE; i++)
+		for (i = 0; i < QDF_MAX_NO_OF_MODE; i++)
 			pHddCtx->no_of_active_sessions[i] = 0;
 	}
 }
@@ -7708,9 +7708,9 @@ bool cds_is_multiple_active_sta_sessions(void)
 	hdd_context_t *pHddCtx;
 	uint8_t j = 0;
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != pHddCtx)
-		j = pHddCtx->no_of_active_sessions[CDF_STA_MODE];
+		j = pHddCtx->no_of_active_sessions[QDF_STA_MODE];
 
 	return j > 1;
 }
@@ -7727,9 +7727,9 @@ bool cds_is_sta_active_connection_exists(void)
 	hdd_context_t *pHddCtx;
 	uint8_t j = 0;
 
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
+	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL != pHddCtx)
-		j = pHddCtx->no_of_active_sessions[CDF_STA_MODE];
+		j = pHddCtx->no_of_active_sessions[QDF_STA_MODE];
 
 	return j ? true : false;
 }

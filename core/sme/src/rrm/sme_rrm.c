@@ -72,7 +72,7 @@
 #define RRM_ROAM_SCORE_NEIGHBOR_IAPP_LIST                       30
 #endif
 
-v_TIME_t rrm_scan_timer;
+unsigned long rrm_scan_timer;
 
 /**
  * rrm_ll_purge_neighbor_cache() -Purges all the entries in the neighbor cache
@@ -209,7 +209,7 @@ sme_rrm_send_beacon_report_xmit_ind(tpAniSirGlobal mac_ctx,
 		beacon_rep->duration = rrm_ctx->duration[0];
 		beacon_rep->regClass = rrm_ctx->regClass;
 		cdf_mem_copy(beacon_rep->bssId, rrm_ctx->sessionBssId.bytes,
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 
 		i = 0;
 		while (cur_result) {
@@ -446,7 +446,7 @@ static QDF_STATUS sme_rrm_send_scan_result(tpAniSirGlobal mac_ctx,
 	cdf_mem_zero(scanresults_arr,
 			sizeof(next_result) * SIR_BCN_REPORT_MAX_BSS_DESC);
 	filter.BSSIDs.numOfBSSIDs = 1;
-	filter.BSSIDs.bssid = (struct cdf_mac_addr *)&rrm_ctx->bssId;
+	filter.BSSIDs.bssid = (struct qdf_mac_addr *)&rrm_ctx->bssId;
 
 	if (rrm_ctx->ssId.length) {
 		filter.SSIDs.SSIDList =
@@ -679,7 +679,7 @@ QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		scan_req.bcnRptReqScan = true;
 		scan_req.scanType = scan_type;
 		cdf_mem_copy(&scan_req.bssid.bytes, sme_rrm_ctx->bssId,
-				CDF_MAC_ADDR_SIZE);
+				QDF_MAC_ADDR_SIZE);
 		if (sme_rrm_ctx->ssId.length) {
 			scan_req.SSIDs.numOfSSIDs = 1;
 			scan_req.SSIDs.SSIDList =
@@ -905,7 +905,7 @@ QDF_STATUS sme_rrm_process_beacon_report_req_ind(tpAniSirGlobal pMac, void *pMsg
 	pSmeRrmContext->token = pBeaconReq->uDialogToken;
 	pSmeRrmContext->regClass = pBeaconReq->channelInfo.regulatoryClass;
 	pSmeRrmContext->randnIntvl =
-		CDF_MAX(pBeaconReq->randomizationInterval,
+		QDF_MAX(pBeaconReq->randomizationInterval,
 			pSmeRrmContext->rrmConfig.max_randn_interval);
 	pSmeRrmContext->currentIndex = 0;
 	pSmeRrmContext->msgSource = pBeaconReq->msgSource;
@@ -1183,7 +1183,7 @@ QDF_STATUS sme_rrm_process_neighbor_report(tpAniSirGlobal pMac, void *pMsgBuf)
 	/* Get the session id */
 	status =
 		csr_roam_get_session_id_from_bssid(pMac,
-						   (struct cdf_mac_addr *) pNeighborRpt->bssId,
+						   (struct qdf_mac_addr *) pNeighborRpt->bssId,
 						   (uint32_t *) &sessionId);
 	if (QDF_IS_STATUS_SUCCESS(status)) {
 #ifdef FEATURE_WLAN_ESE
@@ -1278,7 +1278,7 @@ end:
 QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 				 void *pMsgBuf)
 {
-	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
 		  FL(" Msg = %d for RRM measurement"), msg_type);
 
 	/* switch on the msg type & make the state transition accordingly */
@@ -1293,7 +1293,7 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 
 	default:
 		/* err msg */
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("sme_rrm_msg_processor:unknown msg type = %d"),
 			  msg_type);
 
@@ -1360,12 +1360,12 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	pSmeRrmContext->rrmConfig.max_randn_interval = 50;        /* ms */
 
 	qdf_status = cdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
-				       CDF_TIMER_TYPE_SW,
+				       QDF_TIMER_TYPE_SW,
 				       rrm_iter_meas_timer_handle, (void *)pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to init timer");
 
 		return QDF_STATUS_E_FAILURE;
@@ -1373,12 +1373,12 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	qdf_status =
 		cdf_mc_timer_init(&pSmeRrmContext->neighborReqControlInfo.
-				  neighborRspWaitTimer, CDF_TIMER_TYPE_SW,
+				  neighborRspWaitTimer, QDF_TIMER_TYPE_SW,
 				  rrm_neighbor_rsp_timeout_handler, (void *)pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to init timer");
 
 		return QDF_STATUS_E_FAILURE;
@@ -1389,7 +1389,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	cdf_ret_status =
 		csr_ll_open(pMac->hHdd, &pSmeRrmContext->neighborReportCache);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to open neighbor cache result");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1418,7 +1418,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	    cdf_mc_timer_get_current_state(&pSmeRrmContext->IterMeasTimer)) {
 		qdf_status = cdf_mc_timer_stop(&pSmeRrmContext->IterMeasTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("Timer stop fail"));
 		}
 	}
@@ -1426,7 +1426,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	qdf_status = cdf_mc_timer_destroy(&pSmeRrmContext->IterMeasTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("Fail to destroy timer"));
 
 	}
@@ -1439,7 +1439,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 			cdf_mc_timer_stop(&pSmeRrmContext->neighborReqControlInfo.
 					  neighborRspWaitTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
 				  FL("Timer stop fail"));
 		}
 	}
@@ -1448,7 +1448,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 		cdf_mc_timer_destroy(&pSmeRrmContext->neighborReqControlInfo.
 				     neighborRspWaitTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
 			  FL("Fail to destroy timer"));
 
 	}

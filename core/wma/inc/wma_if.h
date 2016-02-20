@@ -28,7 +28,7 @@
 #ifndef _HALMSGAPI_H_
 #define _HALMSGAPI_H_
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "sir_api.h"
 #include "sir_params.h"
 
@@ -155,7 +155,7 @@ typedef enum {
 typedef struct sAniBeaconStruct {
 	uint32_t beaconLength;
 	tSirMacMgmtHdr macHdr;
-} cdf_packed tAniBeaconStruct, *tpAniBeaconStruct;
+} qdf_packed tAniBeaconStruct, *tpAniBeaconStruct;
 
 /**
  * struct sAniProbeRspStruct - probeRsp template structure
@@ -164,7 +164,7 @@ typedef struct sAniBeaconStruct {
 typedef struct sAniProbeRspStruct {
 	tSirMacMgmtHdr macHdr;
 	/* probeRsp body follows here */
-} cdf_packed tAniProbeRspStruct, *tpAniProbeRspStruct;
+} qdf_packed tAniProbeRspStruct, *tpAniProbeRspStruct;
 
 /**
  * struct tAddStaParams - add sta related parameters
@@ -373,7 +373,7 @@ typedef struct {
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
 	uint8_t singleTidRc;
 	uint8_t smesessionId;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	QDF_STATUS status;
 	uint8_t sessionId;
 	uint8_t sendRsp;
@@ -390,7 +390,7 @@ typedef struct {
  * @key: key data
  */
 typedef struct sLimMlmSetKeysReq {
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 	uint8_t sessionId;      /* Added For BT-AMP Support */
 	uint8_t smesessionId;   /* Added for drivers based on wmi interface */
 	uint16_t aid;
@@ -678,7 +678,7 @@ typedef struct {
  * @oemDataReq: OEM Data request
  */
 typedef struct {
-	struct cdf_mac_addr selfMacAddr;
+	struct qdf_mac_addr selfMacAddr;
 	QDF_STATUS status;
 	uint8_t data_len;
 	uint8_t *data;
@@ -1155,15 +1155,15 @@ typedef struct sControlTxParams {
  * Request Type = SIR_HAL_SET_MAX_TX_POWER_REQ
  */
 typedef struct sMaxTxPowerParams {
-	struct cdf_mac_addr bssId;
-	struct cdf_mac_addr selfStaMacAddr;
+	struct qdf_mac_addr bssId;
+	struct qdf_mac_addr selfStaMacAddr;
 	/* In request,
 	 * power == MaxTx power to be used.
 	 * In response,
 	 * power == tx power used for management frames.
 	 */
 	int8_t power;
-	enum tCDF_ADAPTER_MODE dev_mode;
+	enum tQDF_ADAPTER_MODE dev_mode;
 } tMaxTxPowerParams, *tpMaxTxPowerParams;
 
 /**
@@ -1187,7 +1187,7 @@ typedef struct sMaxTxPowerPerBandParams {
  */
 struct add_sta_self_params {
 	tSirMacAddr self_mac_addr;
-	enum tCDF_ADAPTER_MODE curr_device_mode;
+	enum tQDF_ADAPTER_MODE curr_device_mode;
 	uint32_t type;
 	uint32_t sub_type;
 	uint8_t session_id;
@@ -1382,7 +1382,7 @@ typedef struct sBeaconFilterMsg {
 	uint16_t ieNum;
 	uint8_t bssIdx;
 	uint8_t reserved;
-} cdf_packed tBeaconFilterMsg, *tpBeaconFilterMsg;
+} qdf_packed tBeaconFilterMsg, *tpBeaconFilterMsg;
 
 /**
  * struct tEidByteInfo - Eid byte info
@@ -1396,7 +1396,7 @@ typedef struct sEidByteInfo {
 	uint8_t value;
 	uint8_t bitMask;
 	uint8_t ref;
-} cdf_packed tEidByteInfo, *tpEidByteInfo;
+} qdf_packed tEidByteInfo, *tpEidByteInfo;
 
 /**
  * struct tBeaconFilterIe - beacon filter IE
@@ -1408,7 +1408,7 @@ typedef struct sBeaconFilterIe {
 	uint8_t elementId;
 	uint8_t checkIePresence;
 	tEidByteInfo byte;
-} cdf_packed tBeaconFilterIe, *tpBeaconFilterIe;
+} qdf_packed tBeaconFilterIe, *tpBeaconFilterIe;
 
 /**
  * struct tDisableIntraBssFwd - intra bss forward parameters
@@ -1418,7 +1418,7 @@ typedef struct sBeaconFilterIe {
 typedef struct sDisableIntraBssFwd {
 	uint16_t sessionId;
 	bool disableintrabssfwd;
-} cdf_packed tDisableIntraBssFwd, *tpDisableIntraBssFwd;
+} qdf_packed tDisableIntraBssFwd, *tpDisableIntraBssFwd;
 
 #ifdef WLAN_FEATURE_STATS_EXT
 /**

@@ -46,7 +46,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -87,8 +87,8 @@ void *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
 
 	for (i = 0; i < wma->max_bssid; i++) {
 		if (cdf_is_macaddr_equal(
-			(struct cdf_mac_addr *) wma->interfaces[i].addr,
-			(struct cdf_mac_addr *) addr) == true) {
+			(struct qdf_mac_addr *) wma->interfaces[i].addr,
+			(struct qdf_mac_addr *) addr) == true) {
 			*vdev_id = i;
 			return wma->interfaces[i].handle;
 		}
@@ -168,8 +168,8 @@ void *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 
 	for (i = 0; i < wma->max_bssid; i++) {
 		if (cdf_is_macaddr_equal(
-			(struct cdf_mac_addr *) wma->interfaces[i].bssid,
-			(struct cdf_mac_addr *) bssid) == true) {
+			(struct qdf_mac_addr *) wma->interfaces[i].bssid,
+			(struct qdf_mac_addr *) bssid) == true) {
 			*vdev_id = i;
 			return wma->interfaces[i].handle;
 		}
@@ -485,7 +485,7 @@ void wma_vdev_detach_callback(void *ctx)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	cds_msg_t sme_msg = { 0 };
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (!wma || !iface->del_staself_req) {
 		WMA_LOGP("%s: wma %p iface %p", __func__, wma,
@@ -521,7 +521,7 @@ void wma_vdev_detach_callback(void *ctx)
 	sme_msg.bodyptr = param;
 	sme_msg.bodyval = 0;
 
-	status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
 		cdf_mem_free(param);
@@ -552,7 +552,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 	WMA_LOGE("P2P Device: removing self peer %pM",
 		 del_sta_self_req_param->self_mac_addr);
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 			return QDF_STATUS_E_FAULT;
@@ -664,7 +664,7 @@ out:
 		sme_msg.bodyptr = del_sta_self_req_param;
 		sme_msg.bodyval = 0;
 
-		status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_DEL_STA_SELF_RSP");
 			cdf_mem_free(del_sta_self_req_param);
@@ -906,7 +906,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	struct wma_target_req *req_msg;
 	struct wma_txrx_node *iface;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	tpAniSirGlobal mac_ctx = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		return -EINVAL;
@@ -1526,8 +1526,8 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	}
 
 	cdf_copy_macaddr(
-		(struct cdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
-		(struct cdf_mac_addr *) &(vdev->mac_addr));
+		(struct qdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
+		(struct qdf_mac_addr *) &(vdev->mac_addr));
 	add_sta_self_param.session_id = vdev_id;
 	add_sta_self_param.type = WMI_VDEV_TYPE_IBSS;
 	add_sta_self_param.sub_type = 0;
@@ -1536,7 +1536,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 	/* delete old ibss vdev */
 	del_sta_param.session_id = vdev_id;
 	cdf_mem_copy((void *)del_sta_param.self_mac_addr,
-		     (void *)&(vdev->mac_addr), CDF_MAC_ADDR_SIZE);
+		     (void *)&(vdev->mac_addr), QDF_MAC_ADDR_SIZE);
 	wma_vdev_detach(wma, &del_sta_param, 0);
 
 	/* create new vdev for ibss */
@@ -1676,7 +1676,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	struct wma_txrx_node *iface;
 	int32_t status = 0;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	tpAniSirGlobal mac_ctx = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		return -EINVAL;
@@ -1710,7 +1710,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			 __func__, resp_event->vdev_id);
 		return -EINVAL;
 	}
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (!pdev) {
 		WMA_LOGE("%s: pdev is NULL", __func__);
 		status = -EINVAL;
@@ -1780,7 +1780,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				 "template memory %p", __func__, bcn, bcn->buf);
 			if (bcn->dma_mapped)
 				cdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
-						      CDF_DMA_TO_DEVICE);
+						      QDF_DMA_TO_DEVICE);
 			cdf_nbuf_free(bcn->buf);
 			cdf_mem_free(bcn);
 			wma->interfaces[resp_event->vdev_id].beacon = NULL;
@@ -1835,10 +1835,10 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 				uint8_t generateRsp)
 {
 	ol_txrx_vdev_handle txrx_vdev_handle = NULL;
-	ol_txrx_pdev_handle txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	enum wlan_op_mode txrx_vdev_type;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
 	uint16_t val16;
 	int ret;
@@ -2060,7 +2060,7 @@ end:
 		sme_msg.bodyptr = self_sta_req;
 		sme_msg.bodyval = 0;
 
-		status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
 			cdf_mem_free(self_sta_req);
@@ -2090,7 +2090,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	tpAniSirGlobal mac_ctx = NULL;
 	struct ath_dfs *dfs;
 
-	mac_ctx = cds_get_context(CDF_MODULE_ID_PE);
+	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (mac_ctx == NULL) {
 		WMA_LOGE("%s: vdev start failed as mac_ctx is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -2552,7 +2552,7 @@ void wma_hold_req_timer(void *data)
 	struct wma_target_req *tgt_req = (struct wma_target_req *)data;
 	struct wma_target_req *msg;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
 		WMA_LOGE(FL("Failed to get wma"));
 		goto free_tgt_req;
@@ -2630,7 +2630,7 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	req->msg_type = msg_type;
 	req->type = type;
 	req->user_data = params;
-	cdf_mc_timer_init(&req->event_timeout, CDF_TIMER_TYPE_SW,
+	cdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
 			  wma_hold_req_timer, req);
 	cdf_mc_timer_start(&req->event_timeout, timeout);
 	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
@@ -2688,21 +2688,21 @@ void wma_vdev_resp_timer(void *data)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	cds_msg_t sme_msg = { 0 };
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	tpAniSirGlobal mac_ctx = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: Failed to get mac_ctx", __func__);
 		goto free_tgt_req;
 	}
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
 		goto free_tgt_req;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -2788,7 +2788,7 @@ void wma_vdev_resp_timer(void *data)
 				 "template memory %p", __func__, bcn, bcn->buf);
 			if (bcn->dma_mapped)
 				cdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
-						      CDF_DMA_TO_DEVICE);
+						      QDF_DMA_TO_DEVICE);
 			cdf_nbuf_free(bcn->buf);
 			cdf_mem_free(bcn);
 			wma->interfaces[tgt_req->vdev_id].beacon = NULL;
@@ -2827,7 +2827,7 @@ void wma_vdev_resp_timer(void *data)
 		sme_msg.bodyptr = iface->del_staself_req;
 		sme_msg.bodyval = 0;
 
-		status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
 			cdf_mem_free(iface->del_staself_req);
@@ -2938,7 +2938,7 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 	req->msg_type = msg_type;
 	req->type = type;
 	req->user_data = params;
-	cdf_mc_timer_init(&req->event_timeout, CDF_TIMER_TYPE_SW,
+	cdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
 			  wma_vdev_resp_timer, req);
 	cdf_mc_timer_start(&req->event_timeout, timeout);
 	cdf_spin_lock_bh(&wma->vdev_respq_lock);
@@ -3068,7 +3068,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 #endif /* WLAN_FEATURE_11W */
 	struct sir_hw_mode_params hw_mode = {0};
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -3210,7 +3210,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 	WMA_LOGD("%s: add_bss->sessionId = %d", __func__, vdev_id);
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -3235,17 +3235,17 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 		/* remove the non-ibss vdev */
 		cdf_copy_macaddr(
-			(struct cdf_mac_addr *) &(del_sta_param.self_mac_addr),
-			(struct cdf_mac_addr *) &(vdev->mac_addr));
+			(struct qdf_mac_addr *) &(del_sta_param.self_mac_addr),
+			(struct qdf_mac_addr *) &(vdev->mac_addr));
 		del_sta_param.session_id = vdev_id;
 		del_sta_param.status = 0;
 
 		wma_vdev_detach(wma, &del_sta_param, 0);
 
 		/* create new vdev for ibss */
-		cdf_copy_macaddr((struct cdf_mac_addr *) &
+		cdf_copy_macaddr((struct qdf_mac_addr *) &
 			 (add_sta_self_param.self_mac_addr),
-			 (struct cdf_mac_addr *) &(add_bss->selfMacAddr));
+			 (struct qdf_mac_addr *) &(add_bss->selfMacAddr));
 		add_sta_self_param.session_id = vdev_id;
 		add_sta_self_param.type = WMI_VDEV_TYPE_IBSS;
 		add_sta_self_param.sub_type = 0;
@@ -3402,7 +3402,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	int ret = 0;
 	int pps_val = 0;
 	bool roam_synch_in_progress = false;
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	struct sir_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
 
@@ -3411,7 +3411,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		goto send_fail_resp;
 	}
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s Failed to get pdev", __func__);
@@ -3699,8 +3699,8 @@ void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
 
 	switch (params->halPersona) {
 
-	case CDF_SAP_MODE:
-	case CDF_P2P_GO_MODE:
+	case QDF_SAP_MODE:
+	case QDF_P2P_GO_MODE:
 		/*If current bring up SAP/P2P channel matches the previous
 		 *radar found channel then reset the last_radar_found_chan
 		 *variable to avoid race conditions.
@@ -3713,7 +3713,7 @@ void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
 		break;
 
 #ifdef QCA_IBSS_SUPPORT
-	case CDF_IBSS_MODE:
+	case QDF_IBSS_MODE:
 		wma_add_bss_ibss_mode(wma, params);
 		break;
 #endif
@@ -3784,7 +3784,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to find pdev", __func__);
@@ -3986,7 +3986,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 		 __func__, add_sta->staType, add_sta->staIdx,
 		 add_sta->updateSta, add_sta->bssId, add_sta->staMac);
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to find pdev", __func__);
@@ -4132,7 +4132,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	}
 #endif
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Unable to get pdev", __func__);
@@ -4347,7 +4347,7 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 	struct ol_txrx_peer_t *peer;
 	struct wma_target_req *msg;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -4415,7 +4415,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	struct ol_txrx_peer_t *peer;
 	tTdlsPeerStateParams *peerStateParams;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to find pdev", __func__);
@@ -4641,7 +4641,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 	ol_txrx_vdev_handle txrx_vdev = NULL;
 	bool roam_synch_in_progress = false;
 
-	pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s:Unable to get TXRX context", __func__);

@@ -43,7 +43,7 @@
 
 /**
  * cdf_trace_msg()- logging API
- * @module: Module identifier. A member of the CDF_MODULE_ID enumeration that
+ * @module: Module identifier. A member of the QDF_MODULE_ID enumeration that
  *	    identifies the module issuing the trace message.
  * @level: Trace level. A member of the CDF_TRACE_LEVEL enumeration indicating
  *	   the severity of the condition causing the trace message to be issued.
@@ -59,18 +59,18 @@
  * Return: nothing
  *
  */
-void __printf(3, 4) cdf_trace_msg(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
+void __printf(3, 4) cdf_trace_msg(QDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 				  char *strFormat, ...);
 
-void cdf_trace_hex_dump(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
+void cdf_trace_hex_dump(QDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 			void *data, int buf_len);
 
 void cdf_trace_display(void);
 
-void cdf_trace_set_value(CDF_MODULE_ID module, CDF_TRACE_LEVEL level,
+void cdf_trace_set_value(QDF_MODULE_ID module, CDF_TRACE_LEVEL level,
 			 uint8_t on);
 
-void cdf_trace_set_module_trace_level(CDF_MODULE_ID module, uint32_t level);
+void cdf_trace_set_module_trace_level(QDF_MODULE_ID module, uint32_t level);
 
 /* CDF_TRACE is the macro invoked to add trace messages to code.  See the
  * documenation for cdf_trace_msg() for the parameters etc. for this function.
@@ -110,7 +110,7 @@ void __printf(3, 4) cdf_snprintf(char *strBuffer, unsigned int size,
 
 /* This code will be used for compilation if tracing is to be compiled out */
 /* of the code so these functions/macros are 'do nothing' */
-CDF_INLINE_FN void cdf_trace_msg(CDF_MODULE_ID module, ...)
+static inline void cdf_trace_msg(QDF_MODULE_ID module, ...)
 {
 }
 

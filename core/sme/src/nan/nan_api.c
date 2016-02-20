@@ -51,7 +51,7 @@ void sme_nan_register_callback(tHalHandle hHal, NanCallback callback)
 	tpAniSirGlobal pMac = NULL;
 
 	if (NULL == hHal) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("hHal is not valid"));
 		return;
 	}
@@ -82,7 +82,7 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 	data = cdf_mem_malloc(data_len);
 
 	if (data == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("Memory allocation failure"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -98,8 +98,8 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 	msg.reserved = 0;
 	msg.bodyptr = data;
 
-	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDF_MODULE_ID_WMA, &msg)) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL
 				  ("Not able to post WMA_NAN_REQUEST message to WMA"));
 		cdf_mem_free(data);
@@ -129,11 +129,11 @@ QDF_STATUS sme_nan_event(tHalHandle hHal, void *pMsg)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pMsg) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("msg ptr is NULL"));
 		status = QDF_STATUS_E_FAILURE;
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
 			  FL("SME: Received sme_nan_event"));
 		if (pMac->sme.nanCallback) {
 			pMac->sme.nanCallback(pMac->hHdd,

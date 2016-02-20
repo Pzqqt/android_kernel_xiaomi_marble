@@ -216,7 +216,7 @@ enum ol_tx_queue_status {
 struct ol_txrx_msdu_info_t {
 	struct htt_msdu_info_t htt;
 	struct ol_txrx_peer_t *peer;
-	struct cdf_tso_info_t tso_info;
+	struct qdf_tso_info_t tso_info;
 };
 
 enum {
@@ -447,7 +447,7 @@ struct ol_txrx_pdev_t {
 	ol_pdev_handle ctrl_pdev;
 
 	/* osdev - handle for mem alloc / free, map / unmap */
-	cdf_device_t osdev;
+	qdf_device_t osdev;
 
 	htt_pdev_handle htt_pdev;
 

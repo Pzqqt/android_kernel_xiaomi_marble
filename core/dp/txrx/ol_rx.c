@@ -27,7 +27,7 @@
 
 #include <cdf_nbuf.h>               /* cdf_nbuf_t, etc. */
 #include <cdf_util.h>               /* cdf_os_cpu_to_le64 */
-#include <cdf_types.h>              /* bool */
+#include <qdf_types.h>              /* bool */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
 
 /* external API header files */
@@ -75,10 +75,10 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 
 static void ol_rx_restore_handler(struct work_struct *htt_rx)
 {
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 		  "Enter: %s", __func__);
 	cnss_device_self_recovery();
-	CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 		  "Exit: %s", __func__);
 }
 
@@ -91,7 +91,7 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, cdf_nbuf_t head_msdu,
 
 	while (head_msdu) {
 		next = cdf_nbuf_next(head_msdu);
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 			  "freeing %p\n", head_msdu);
 		cdf_nbuf_free(head_msdu);
 		head_msdu = next;
@@ -1126,7 +1126,7 @@ DONE:
 					   type 0x8152 and push that to the
 					   front of the packet to indicate the
 					   RX stats header. */
-					eth_header.ether_type = CDF_SWAP_U16(
+					eth_header.ether_type = QDF_SWAP_U16(
 						ETHERTYPE_OCB_RX);
 					cdf_nbuf_push_head(msdu,
 							   sizeof(eth_header));
@@ -1248,7 +1248,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	}
 
 #if defined(HELIUMPLUS_DEBUG)
-	cdf_print("%s %d: rx_ind_msg 0x%p peer_id %d tid %d is_offload %d\n",
+	qdf_print("%s %d: rx_ind_msg 0x%p peer_id %d tid %d is_offload %d\n",
 		  __func__, __LINE__, rx_ind_msg, peer_id, tid, is_offload);
 #endif
 

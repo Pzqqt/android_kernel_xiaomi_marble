@@ -47,7 +47,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -128,7 +128,7 @@ static int wma_post_auto_shutdown_msg(void)
 	sme_msg.bodyptr = auto_sh_evt;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_AUTO_SHUTDOWN_IND msg to SME");
 		cdf_mem_free(auto_sh_evt);
@@ -217,7 +217,7 @@ QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 	tp_wma_handle wma_handle = NULL;
 	struct wma_txrx_node *intr;
 
-	wma_handle = cds_get_context(CDF_MODULE_ID_WMA);
+	wma_handle = cds_get_context(QDF_MODULE_ID_WMA);
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s : Failed to get wma_handle", __func__);
@@ -1308,7 +1308,7 @@ static int wma_lphb_handler(tp_wma_handle wma, uint8_t *event)
 	sme_msg.bodyptr = slphb_indication;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_LPHB_IND msg to SME");
 		cdf_mem_free(slphb_indication);
@@ -2178,13 +2178,13 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	uint8_t *bufp;
 	wmi_single_phyerr_rx_event *ev;
 	struct ieee80211com *ic = wma->dfs_ic;
-	cdf_size_t n;
+	qdf_size_t n;
 	A_UINT64 tsf64 = 0;
 	int phy_err_code = 0;
 	A_UINT32 phy_err_mask = 0;
 	int error = 0;
 	tpAniSirGlobal mac_ctx =
-		(tpAniSirGlobal)cds_get_context(CDF_MODULE_ID_PE);
+		(tpAniSirGlobal)cds_get_context(QDF_MODULE_ID_PE);
 	bool enable_log = false;
 	int max_dfs_buf_length = 0;
 
@@ -2946,7 +2946,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				param_buf->wow_packet_buffer + 4,
 				wow_buf_pkt_len,
 				WOW_REASON_PATTERN_MATCH_FOUND);
-			cdf_trace_hex_dump(CDF_MODULE_ID_WMA,
+			cdf_trace_hex_dump(QDF_MODULE_ID_WMA,
 					   CDF_TRACE_LEVEL_DEBUG,
 					   param_buf->wow_packet_buffer + 4,
 					   wow_buf_pkt_len);
@@ -2970,7 +2970,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 			cdf_mem_copy((uint8_t *) &wow_buf_pkt_len,
 				     param_buf->wow_packet_buffer, 4);
 			WMA_LOGD("wow_packet_buffer dump");
-			cdf_trace_hex_dump(CDF_MODULE_ID_WMA,
+			cdf_trace_hex_dump(QDF_MODULE_ID_WMA,
 					   CDF_TRACE_LEVEL_DEBUG,
 					   param_buf->wow_packet_buffer,
 					   wow_buf_pkt_len);
@@ -3003,7 +3003,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		    cdf_mem_copy((u_int8_t *) &wow_buf_pkt_len,
 				param_buf->wow_packet_buffer, 4);
 		    WMA_LOGD("wow_packet_buffer dump");
-				cdf_trace_hex_dump(CDF_MODULE_ID_WMA,
+				cdf_trace_hex_dump(QDF_MODULE_ID_WMA,
 				CDF_TRACE_LEVEL_DEBUG,
 				param_buf->wow_packet_buffer, wow_buf_pkt_len);
 		    if (wow_buf_pkt_len >= sizeof(param)) {
@@ -3252,11 +3252,11 @@ static QDF_STATUS wma_send_wow_patterns_to_fw(tp_wma_handle wma,
 		 bitmap_pattern->pattern_offset, user);
 
 	WMA_LOGI("Pattern : ");
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
 		&bitmap_pattern->patternbuf[0], bitmap_pattern->pattern_len);
 
 	WMA_LOGI("Mask : ");
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
 		&bitmap_pattern->bitmaskbuf[0], bitmap_pattern->pattern_len);
 
 	buf_ptr += sizeof(WOW_BITMAP_PATTERN_T);
@@ -3545,7 +3545,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 	int host_credits;
 	int wmi_pending_cmds;
 #ifdef CONFIG_CNSS
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
@@ -3652,7 +3652,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 	WMA_LOGD("WOW enabled successfully in fw: credits:%d"
 		 "pending_cmds: %d", host_credits, wmi_pending_cmds);
 
-	scn = cds_get_context(CDF_MODULE_ID_HIF);
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (scn == NULL) {
 		WMA_LOGE("%s: Failed to get HIF context", __func__);
@@ -3678,9 +3678,9 @@ error:
  *
  * Return: CDF status
  */
-QDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type)
+QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type)
 {
-	if (type == CDF_SYSTEM_SUSPEND) {
+	if (type == QDF_SYSTEM_SUSPEND) {
 		wma->no_of_resume_ind++;
 
 		if (wma->no_of_resume_ind < wma_get_vdev_count(wma))
@@ -4196,11 +4196,11 @@ void wma_apply_lphb(tp_wma_handle wma) {}
 #endif /* FEATURE_WLAN_LPHB */
 
 static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
-		enum cdf_suspend_type type)
+		enum qdf_suspend_type type)
 {
-	if (type == CDF_SYSTEM_SUSPEND)
+	if (type == QDF_SYSTEM_SUSPEND)
 		wma_send_status_to_suspend_ind(wma, true);
-	else if (type == CDF_RUNTIME_SUSPEND)
+	else if (type == QDF_RUNTIME_SUSPEND)
 		qdf_event_set(&wma->runtime_suspend);
 }
 
@@ -4214,9 +4214,9 @@ static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
  *
  * Return: CDF status
  */
-QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type)
+QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type)
 {
-	if (type == CDF_RUNTIME_SUSPEND)
+	if (type == QDF_RUNTIME_SUSPEND)
 		wmi_set_runtime_pm_inprogress(wma->wmi_handle, true);
 
 	if (wma_is_wow_applicable(wma)) {
@@ -4259,7 +4259,7 @@ static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 	int32_t len;
 	int ret;
 #ifdef CONFIG_CNSS
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -4559,7 +4559,7 @@ void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg)
 	 * interval_miliseconds overflow 32 bit
 	 */
 	uint32_t intervalMiliseconds;
-	ol_txrx_pdev_handle pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
 		goto err;
@@ -4692,7 +4692,7 @@ static int wma_config_packet_filter(tp_wma_handle wma,
 		cmd->filter_action = PACKET_FILTER_SET_INACTIVE;
 
 	if (enable) {
-		cmd->num_params = CDF_MIN(
+		cmd->num_params = QDF_MIN(
 					WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER,
 					rcv_filter_param->numFieldParams);
 		cmd->filter_type = rcv_filter_param->filterType;
@@ -4823,7 +4823,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	 */
 	uint16_t bin_values[QCA_TX_DELAY_HIST_REPORT_BINS] = { 0, };
 
-	ol_txrx_pdev_handle pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
@@ -4840,7 +4840,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	pTsmRspParams =
 		(tpAniGetTsmStatsRsp) cdf_mem_malloc(sizeof(tAniGetTsmStatsRsp));
 	if (NULL == pTsmRspParams) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: CDF MEM Alloc Failure", __func__);
 		CDF_ASSERT(0);
 		cdf_mem_free(pTsmStatsMsg);
@@ -4885,7 +4885,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
  * Return: 0 for success or error code
  */
 static int wma_add_clear_mcbc_filter(tp_wma_handle wma_handle, uint8_t vdev_id,
-				     struct cdf_mac_addr multicast_addr,
+				     struct qdf_mac_addr multicast_addr,
 				     bool clearList)
 {
 	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *cmd;
@@ -6191,7 +6191,7 @@ int wma_channel_avoid_evt_handler(void *handle, uint8_t *event,
 	sme_msg.bodyptr = sca_indication;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_CH_AVOID_IND msg to SME");
 		cdf_mem_free(sca_indication);
@@ -6287,7 +6287,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 	wmi_buf_t buf;
 	wmi_pdev_set_regdomain_cmd_fixed_param *cmd;
 	int32_t len = sizeof(*cmd);
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	int32_t cck_mask_val = 0;
 	int ret = 0;
 
@@ -6349,7 +6349,7 @@ static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
 
 	resume_msg.bodyptr = NULL;
 	resume_msg.type    = WMA_RUNTIME_PM_RESUME_IND;
-	return cds_mq_post_message(CDF_MODULE_ID_WMA, &resume_msg);
+	return cds_mq_post_message(QDF_MODULE_ID_WMA, &resume_msg);
 }
 
 /**
@@ -6371,7 +6371,7 @@ static QDF_STATUS wma_post_runtime_suspend_msg(WMA_HANDLE handle)
 
 	cds_msg.bodyptr = NULL;
 	cds_msg.type    = WMA_RUNTIME_PM_SUSPEND_IND;
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_WMA, &cds_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_WMA, &cds_msg);
 
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		goto failure;
@@ -6398,9 +6398,9 @@ failure:
  *
  * Return: 0 for success or error code
  */
-static int __wma_bus_suspend(enum cdf_suspend_type type)
+static int __wma_bus_suspend(enum qdf_suspend_type type)
 {
-	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
+	WMA_HANDLE handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
@@ -6411,13 +6411,13 @@ static int __wma_bus_suspend(enum cdf_suspend_type type)
 		return -EBUSY;
 	}
 
-	if (type == CDF_RUNTIME_SUSPEND) {
+	if (type == QDF_RUNTIME_SUSPEND) {
 		QDF_STATUS status = wma_post_runtime_suspend_msg(handle);
 		if (status)
 			return qdf_status_to_os_return(status);
 	}
 
-	if (type == CDF_SYSTEM_SUSPEND)
+	if (type == QDF_SYSTEM_SUSPEND)
 		WMA_LOGE("%s: wow mode selected %d", __func__,
 				wma_is_wow_mode_selected(handle));
 
@@ -6444,7 +6444,7 @@ static int __wma_bus_suspend(enum cdf_suspend_type type)
  */
 int wma_runtime_suspend(void)
 {
-	return __wma_bus_suspend(CDF_RUNTIME_SUSPEND);
+	return __wma_bus_suspend(QDF_RUNTIME_SUSPEND);
 }
 
 /**
@@ -6457,7 +6457,7 @@ int wma_runtime_suspend(void)
 int wma_bus_suspend(void)
 {
 
-	return __wma_bus_suspend(CDF_SYSTEM_SUSPEND);
+	return __wma_bus_suspend(QDF_SYSTEM_SUSPEND);
 }
 
 /**
@@ -6490,7 +6490,7 @@ int wma_runtime_resume(void)
 {
 	int ret;
 	QDF_STATUS status;
-	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
+	WMA_HANDLE handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
@@ -6514,7 +6514,7 @@ int wma_runtime_resume(void)
  */
 int wma_bus_resume(void)
 {
-	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
+	WMA_HANDLE handle = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
@@ -6539,7 +6539,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	struct hif_opaque_softc *scn;
 	int ret;
 #ifdef CONFIG_CNSS
-	tpAniSirGlobal pmac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
 #endif
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
@@ -6602,7 +6602,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 		return -EFAULT;
 	}
 
-	scn = cds_get_context(CDF_MODULE_ID_HIF);
+	scn = cds_get_context(QDF_MODULE_ID_HIF);
 
 	if (scn == NULL) {
 		WMA_LOGE("%s: Failed to get HIF context", __func__);
@@ -6623,7 +6623,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
  */
 void wma_target_suspend_acknowledge(void *context)
 {
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	int wow_nack = *((int *)context);
 
 	if (NULL == wma) {
@@ -6653,7 +6653,7 @@ int wma_resume_target(WMA_HANDLE handle)
 	wmi_pdev_resume_cmd_fixed_param *cmd;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 #ifdef CONFIG_CNSS
-	tpAniSirGlobal pMac = cds_get_context(CDF_MODULE_ID_PE);
+	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
 		return -EINVAL;
@@ -7230,7 +7230,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 
 	/* in case of teardown, remove peer from fw */
 	if (WMA_TDLS_PEER_STATE_TEARDOWN == peerStateParams->peerState) {
-		pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+		pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 		if (!pdev) {
 			WMA_LOGE("%s: Failed to find pdev", __func__);
 			ret = -EIO;
@@ -7363,15 +7363,15 @@ void wma_dfs_configure(struct ieee80211com *ic)
 		WMA_LOGI("%s: DFS-FCC domain", __func__);
 		rinfo.dfsdomain = DFS_FCC_DOMAIN;
 		rinfo.dfs_radars = dfs_fcc_radars;
-		rinfo.numradars = CDF_ARRAY_SIZE(dfs_fcc_radars);
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_fcc_radars);
 		rinfo.b5pulses = dfs_fcc_bin5pulses;
-		rinfo.numb5radars = CDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
+		rinfo.numb5radars = QDF_ARRAY_SIZE(dfs_fcc_bin5pulses);
 		break;
 	case DFS_ETSI_DOMAIN:
 		WMA_LOGI("%s: DFS-ETSI domain", __func__);
 		rinfo.dfsdomain = DFS_ETSI_DOMAIN;
 		rinfo.dfs_radars = dfs_etsi_radars;
-		rinfo.numradars = CDF_ARRAY_SIZE(dfs_etsi_radars);
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_etsi_radars);
 		rinfo.b5pulses = NULL;
 		rinfo.numb5radars = 0;
 		break;
@@ -7379,9 +7379,9 @@ void wma_dfs_configure(struct ieee80211com *ic)
 		WMA_LOGI("%s: DFS-MKK4 domain", __func__);
 		rinfo.dfsdomain = DFS_MKK4_DOMAIN;
 		rinfo.dfs_radars = dfs_mkk4_radars;
-		rinfo.numradars = CDF_ARRAY_SIZE(dfs_mkk4_radars);
+		rinfo.numradars = QDF_ARRAY_SIZE(dfs_mkk4_radars);
 		rinfo.b5pulses = dfs_jpn_bin5pulses;
-		rinfo.numb5radars = CDF_ARRAY_SIZE(dfs_jpn_bin5pulses);
+		rinfo.numb5radars = QDF_ARRAY_SIZE(dfs_jpn_bin5pulses);
 		break;
 	default:
 		WMA_LOGI("%s: DFS-UNINT domain", __func__);
@@ -7605,15 +7605,15 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 	tpAniSirGlobal pmac = NULL;
 	bool indication_status;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (wma == NULL) {
 		WMA_LOGE("%s: DFS- Invalid wma", __func__);
 		return -ENOENT;
 	}
 
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	pmac = (tpAniSirGlobal)
-		cds_get_context(CDF_MODULE_ID_PE);
+		cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pmac) {
 		WMA_LOGE("%s: Invalid MAC handle", __func__);
@@ -7809,7 +7809,7 @@ static QDF_STATUS wma_fw_mem_dump_rsp(uint32_t req_id, uint32_t status)
 	sme_msg.bodyptr = dump_rsp;
 	sme_msg.bodyval = 0;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post fw mem dump ind msg"));
 		cdf_mem_free(dump_rsp);

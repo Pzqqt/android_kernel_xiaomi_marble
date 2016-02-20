@@ -63,7 +63,7 @@
 /* protocol Storage Structure */
 typedef struct {
 	uint32_t order;
-	v_TIME_t event_time;
+	unsigned long event_time;
 	char event_string[CDS_PKT_TRAC_MAX_STRING_LEN];
 } cds_pkt_proto_trace_t;
 
@@ -115,7 +115,7 @@ cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 	/* Validate the parameter pointers */
 	if (unlikely((pPacket == NULL) || (pPacketSize == NULL)) ||
 	    (pPacket->pkt_buf == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "VPKT [%d]: NULL pointer", __LINE__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -154,7 +154,7 @@ uint8_t cds_pkt_get_proto_type(struct sk_buff *skb, uint8_t tracking_map,
 		ether_type = (uint16_t) (*(uint16_t *)
 					 (skb->data +
 					  CDS_PKT_TRAC_ETH_TYPE_OFFSET));
-		if (CDS_PKT_TRAC_EAPOL_ETH_TYPE == CDF_SWAP_U16(ether_type)) {
+		if (CDS_PKT_TRAC_EAPOL_ETH_TYPE == QDF_SWAP_U16(ether_type)) {
 			pkt_proto_type |= CDS_PKT_TRAC_TYPE_EAPOL;
 		}
 	}
@@ -168,10 +168,10 @@ uint8_t cds_pkt_get_proto_type(struct sk_buff *skb, uint8_t tracking_map,
 				    (skb->data + CDS_PKT_TRAC_IP_OFFSET +
 				     CDS_PKT_TRAC_IP_HEADER_SIZE +
 				     sizeof(uint16_t)));
-		if (((CDS_PKT_TRAC_DHCP_SRV_PORT == CDF_SWAP_U16(SPort))
-		     && (CDS_PKT_TRAC_DHCP_CLI_PORT == CDF_SWAP_U16(DPort)))
-		    || ((CDS_PKT_TRAC_DHCP_CLI_PORT == CDF_SWAP_U16(SPort))
-			&& (CDS_PKT_TRAC_DHCP_SRV_PORT == CDF_SWAP_U16(DPort)))) {
+		if (((CDS_PKT_TRAC_DHCP_SRV_PORT == QDF_SWAP_U16(SPort))
+		     && (CDS_PKT_TRAC_DHCP_CLI_PORT == QDF_SWAP_U16(DPort)))
+		    || ((CDS_PKT_TRAC_DHCP_CLI_PORT == QDF_SWAP_U16(SPort))
+			&& (CDS_PKT_TRAC_DHCP_SRV_PORT == QDF_SWAP_U16(DPort)))) {
 			pkt_proto_type |= CDS_PKT_TRAC_TYPE_DHCP;
 		}
 	}
@@ -191,7 +191,7 @@ void cds_pkt_trace_buf_update(char *event_string)
 {
 	uint32_t slot;
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "%s %d, %s", __func__, __LINE__, event_string);
 	cdf_spinlock_acquire(&trace_buffer_lock);
 	slot = trace_buffer_order % CDS_PKT_TRAC_MAX_TRACE_BUF;
@@ -218,14 +218,14 @@ void cds_pkt_trace_buf_dump(void)
 	uint32_t slot, idx;
 
 	cdf_spinlock_acquire(&trace_buffer_lock);
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP START Current Timestamp %u",
 		  (unsigned int)cdf_mc_timer_get_system_time());
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "ORDER :        TIME : EVT");
 	if (CDS_PKT_TRAC_MAX_TRACE_BUF > trace_buffer_order) {
 		for (slot = 0; slot < trace_buffer_order; slot++) {
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "%5d :%12u : %s",
 				  trace_buffer[slot].order,
 				  (unsigned int)trace_buffer[slot].event_time,
@@ -236,14 +236,14 @@ void cds_pkt_trace_buf_dump(void)
 			slot =
 				(trace_buffer_order +
 				 idx) % CDS_PKT_TRAC_MAX_TRACE_BUF;
-			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "%5d :%12u : %s", trace_buffer[slot].order,
 				  (unsigned int)trace_buffer[slot].event_time,
 				  trace_buffer[slot].event_string);
 		}
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP END");
 	cdf_spinlock_release(&trace_buffer_lock);
 
@@ -275,7 +275,7 @@ void cds_pkt_proto_trace_init(void)
    ---------------------------------------------------------------------------*/
 void cds_pkt_proto_trace_close(void)
 {
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "%s %d", __func__, __LINE__);
 	cdf_mem_free(trace_buffer);
 	cdf_spinlock_destroy(&trace_buffer_lock);

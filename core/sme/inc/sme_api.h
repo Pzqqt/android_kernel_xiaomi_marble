@@ -40,7 +40,7 @@
 #include "csr_api.h"
 #include "cds_mq.h"
 #include "cdf_lock.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "sir_api.h"
 #include "cds_reg_service.h"
 #include "p2p_api.h"
@@ -216,7 +216,7 @@ QDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		uint8_t *pbSessionId, uint32_t type,
 		uint32_t subType);
 void sme_set_curr_device_mode(tHalHandle hHal,
-		enum tCDF_ADAPTER_MODE currDeviceMode);
+		enum tQDF_ADAPTER_MODE currDeviceMode);
 QDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		csr_roamSessionCloseCallback callback,
 		void *pContext);
@@ -291,7 +291,7 @@ QDF_STATUS sme_roam_disconnect(tHalHandle hHal, uint8_t sessionId,
 		eCsrRoamDisconnectReason reason);
 QDF_STATUS sme_roam_stop_bss(tHalHandle hHal, uint8_t sessionId);
 QDF_STATUS sme_roam_get_associated_stas(tHalHandle hHal, uint8_t sessionId,
-		CDF_MODULE_ID modId, void *pUsrContext,
+		QDF_MODULE_ID modId, void *pUsrContext,
 		void *pfnSapEventCallback,
 		uint8_t *pAssocStasBuf);
 QDF_STATUS sme_roam_disconnect_sta(tHalHandle hHal, uint8_t sessionId,
@@ -303,7 +303,7 @@ QDF_STATUS sme_roam_tkip_counter_measures(tHalHandle hHal, uint8_t sessionId,
 QDF_STATUS sme_roam_get_wps_session_overlap(tHalHandle hHal, uint8_t sessionId,
 		void *pUsrContext,
 		void *pfnSapEventCallback,
-		struct cdf_mac_addr pRemoveMac);
+		struct qdf_mac_addr pRemoveMac);
 QDF_STATUS sme_roam_get_connect_state(tHalHandle hHal, uint8_t sessionId,
 		eCsrConnectState *pState);
 QDF_STATUS sme_roam_get_connect_profile(tHalHandle hHal, uint8_t sessionId,
@@ -336,15 +336,15 @@ QDF_STATUS sme_get_statistics(tHalHandle hHal,
 		void *pContext, uint8_t sessionId);
 QDF_STATUS sme_get_rssi(tHalHandle hHal,
 		tCsrRssiCallback callback,
-		uint8_t staId, struct cdf_mac_addr bssId, int8_t lastRSSI,
+		uint8_t staId, struct qdf_mac_addr bssId, int8_t lastRSSI,
 		void *pContext, void *p_cds_context);
 QDF_STATUS sme_get_snr(tHalHandle hHal,
 		tCsrSnrCallback callback,
-		uint8_t staId, struct cdf_mac_addr bssId, void *pContext);
+		uint8_t staId, struct qdf_mac_addr bssId, void *pContext);
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 QDF_STATUS sme_get_tsm_stats(tHalHandle hHal,
 		tCsrTsmStatsCallback callback,
-		uint8_t staId, struct cdf_mac_addr bssId,
+		uint8_t staId, struct qdf_mac_addr bssId,
 		void *pContext, void *p_cds_context, uint8_t tid);
 QDF_STATUS sme_set_cckm_ie(tHalHandle hHal,
 		uint8_t sessionId,
@@ -543,12 +543,12 @@ QDF_STATUS sme_get_gtk_offload(tHalHandle hal_ctx,
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 uint16_t sme_chn_to_freq(uint8_t chanNum);
 bool sme_is_channel_valid(tHalHandle hHal, uint8_t channel);
-QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct cdf_mac_addr pBssid,
-		struct cdf_mac_addr pSelfMacAddress, int8_t dB);
+QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
+		struct qdf_mac_addr pSelfMacAddress, int8_t dB);
 QDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t db);
 QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
-		struct cdf_mac_addr bssid,
-		enum tCDF_ADAPTER_MODE dev_mode, int power);
+		struct qdf_mac_addr bssid,
+		enum tQDF_ADAPTER_MODE dev_mode, int power);
 QDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
 QDF_STATUS sme_hide_ssid(tHalHandle hHal, uint8_t sessionId,
 		uint8_t ssidHidden);
@@ -738,7 +738,7 @@ int16_t sme_get_ht_config(tHalHandle hHal, uint8_t session_id,
 		uint16_t ht_capab);
 #ifdef QCA_HT_2040_COEX
 QDF_STATUS sme_notify_ht2040_mode(tHalHandle hHal, uint16_t staId,
-		struct cdf_mac_addr macAddrSTA,
+		struct qdf_mac_addr macAddrSTA,
 		uint8_t sessionId,
 		uint8_t channel_type);
 QDF_STATUS sme_set_ht2040_mode(tHalHandle hHal, uint8_t sessionId,
@@ -775,11 +775,11 @@ QDF_STATUS sme_set_auto_shutdown_cb(tHalHandle hHal, void (*pCallbackfn)(void));
 QDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_value);
 #endif
 QDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
-		struct cdf_mac_addr bssid, chan_params_t *ch_params,
+		struct qdf_mac_addr bssid, chan_params_t *ch_params,
 		tCsrRoamProfile *profile);
 QDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal,
-		struct cdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
-QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct cdf_mac_addr bssid,
+		struct qdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
+QDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct qdf_mac_addr bssid,
 		uint8_t targetChannel, uint8_t csaIeReqd,
 		chan_params_t *ch_params);
 QDF_STATUS sme_init_thermal_info(tHalHandle hHal,

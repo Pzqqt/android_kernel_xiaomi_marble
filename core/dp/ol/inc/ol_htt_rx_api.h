@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,7 +41,7 @@
 /* #include <osapi_linux.h>     / * uint16_t, etc. * / */
 #include <osdep.h>              /* uint16_t, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_types.h>          /* bool */
+#include <qdf_types.h>          /* bool */
 
 #include <htt.h>                /* HTT_RX_IND_MPDU_STATUS */
 #include <ol_htt_api.h>         /* htt_pdev_handle */

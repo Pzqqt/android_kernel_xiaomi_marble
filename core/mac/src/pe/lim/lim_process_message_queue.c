@@ -65,7 +65,7 @@
 #include "lim_ft.h"
 #endif
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "cds_packet.h"
 #include "cdf_memory.h"
 
@@ -261,7 +261,7 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 	if (pMac->lim.gLimSmeState == eLIM_SME_OFFLINE_STATE) {
 		/* Defer processsing this message */
 		if (lim_defer_msg(pMac, limMsg) != TX_SUCCESS) {
-			CDF_TRACE(CDF_MODULE_ID_PE, LOGE,
+			CDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 					FL("Unable to Defer Msg"));
 			lim_log_session_states(pMac);
 			lim_handle_defer_msg_error(pMac, limMsg);
@@ -316,7 +316,7 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 			       )
 			/* Defer processsing this message */
 			if (lim_defer_msg(pMac, limMsg) != TX_SUCCESS) {
-				CDF_TRACE(CDF_MODULE_ID_PE, LOGE,
+				CDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 					FL("Unable to Defer Msg"));
 				lim_log_session_states(pMac);
 				lim_handle_defer_msg_error(pMac, limMsg);
@@ -426,7 +426,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	result->ap.ssid[frame->ssId.length] = '\0';
 	cdf_mem_copy((uint8_t *) &result->ap.bssid.bytes,
 			(uint8_t *) hdr->bssId,
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 	/* Copy IE fields */
 	cdf_mem_copy((uint8_t *) &result->ap.ieData,
 			body + SIR_MAC_B_PR_SSID_OFFSET, ie_len);
@@ -598,12 +598,12 @@ static void lim_handle_unknown_a2_index_frames(tpAniSirGlobal mac_ctx,
 	mac_hdr = WMA_GET_RX_MPDUHEADER3A(rx_pkt_buffer);
 
 	if (lim_is_group_addr(mac_hdr->addr2)) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_HIGH,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_HIGH,
 			FL("Ignoring A2 Invalid Packet received for MC/BC:"));
 		lim_print_mac_addr(mac_ctx, mac_hdr->addr2, LOG2);
 		return;
 	}
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			FL("type=0x%x, subtype=0x%x"),
 		mac_hdr->fc.type, mac_hdr->fc.subType);
 	/* Currently only following type and subtype are handled.
@@ -663,7 +663,7 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 		if ((type == SIR_MAC_MGMT_FRAME)
 		    && (fc.type == SIR_MAC_MGMT_FRAME)
 		    && (sub_type == SIR_MAC_MGMT_RESERVED15)) {
-			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_HIGH,
+			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_HIGH,
 				FL
 				("rcvd frm match for SIR_MAC_MGMT_RESERVED15"));
 			match = true;
@@ -695,7 +695,7 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 	}
 
 	if (match) {
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			FL("rcvd frame match with registered frame params"));
 		/* Indicate this to SME */
 		lim_send_sme_mgmt_frame_ind(mac_ctx, hdr->fc.subType,
@@ -761,7 +761,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 		FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
 		fc.protVer, fc.type, fc.subType,
 		WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR, pHdr,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR, pHdr,
 			   WMA_GET_RX_MPDU_HEADER_LEN(pRxPacketInfo));
 #endif
 	if (pMac->fEnableDebugLog & 0x1) {
@@ -1218,7 +1218,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		 */
 		if (lim_defer_msg(mac_ctx, msg) != TX_SUCCESS) {
 			if (!(mac_ctx->lim.deferredMsgCnt & 0xF))
-				CDF_TRACE(CDF_MODULE_ID_PE, LOGE,
+				CDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 					FL("Unable to Defer Msg"));
 			lim_log_session_states(mac_ctx);
 			lim_print_msg_name(mac_ctx, LOGE, msg->type);
@@ -1280,10 +1280,10 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		lim_handle80211_frames(mac_ctx, &new_msg, &defer_msg);
 
 		if (defer_msg == true) {
-			CDF_TRACE(CDF_MODULE_ID_PE, LOG1,
+			CDF_TRACE(QDF_MODULE_ID_PE, LOG1,
 					FL("Defer Msg type=%x"), msg->type);
 			if (lim_defer_msg(mac_ctx, msg) != TX_SUCCESS) {
-				CDF_TRACE(CDF_MODULE_ID_PE, LOGE,
+				CDF_TRACE(QDF_MODULE_ID_PE, LOGE,
 						FL("Unable to Defer Msg"));
 				lim_log_session_states(mac_ctx);
 				cds_pkt_return_packet(body_ptr);
@@ -1402,7 +1402,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 			session_entry = &mac_ctx->lim.gpSession[i];
 			if ((session_entry != NULL) && (session_entry->valid) &&
-				(session_entry->pePersona == CDF_P2P_GO_MODE)) {
+				(session_entry->pePersona == QDF_P2P_GO_MODE)) {
 				/* Save P2P NOA start attribute for Go persona*/
 				p2p_go_exists = 1;
 				cdf_mem_copy(&session_entry->p2pGoPsNoaStartInd,
@@ -1410,7 +1410,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				qdf_status =
 					session_entry->p2pGoPsNoaStartInd.status;
 				if (qdf_status != QDF_STATUS_SUCCESS)
-					CDF_TRACE(CDF_MODULE_ID_PE, LOGW,
+					CDF_TRACE(QDF_MODULE_ID_PE, LOGW,
 						FL(
 						"GO NOA start status %d by FW"),
 						qdf_status);
@@ -1419,7 +1419,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		}
 
 		if (p2p_go_exists == 0)
-			CDF_TRACE(CDF_MODULE_ID_PE, LOGW,
+			CDF_TRACE(QDF_MODULE_ID_PE, LOGW,
 				FL(
 				"GO is removed by the time NOA start recvd"));
 
@@ -1470,7 +1470,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			session_entry = &mac_ctx->lim.gpSession[i];
 			if ((session_entry != NULL) && (session_entry->valid)
 				&& (session_entry->pePersona ==
-				CDF_P2P_GO_MODE)) { /* Save P2P attr for Go */
+				QDF_P2P_GO_MODE)) { /* Save P2P attr for Go */
 					cdf_mem_copy(
 						&session_entry->p2pGoPsUpdate,
 						msg->bodyptr,
@@ -1600,7 +1600,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case SIR_HAL_TDLS_SHOULD_DISCOVER:
 	case SIR_HAL_TDLS_SHOULD_TEARDOWN:
 	case SIR_HAL_TDLS_PEER_DISCONNECTED:
-		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 			("%s received tdls event: 0x%x"), __func__, msg->type);
 		lim_send_sme_tdls_event_notify(mac_ctx, msg->type,
 					(void *)msg->bodyptr);
@@ -2080,10 +2080,10 @@ void lim_log_session_states(tpAniSirGlobal mac_ctx)
 
 	for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 		if (mac_ctx->lim.gpSession[i].valid) {
-			CDF_TRACE(CDF_MODULE_ID_PE, LOG1,
+			CDF_TRACE(QDF_MODULE_ID_PE, LOG1,
 				FL("sysRole(%d) Session (%d)"),
 				mac_ctx->lim.gLimSystemRole, i);
-			CDF_TRACE(CDF_MODULE_ID_PE, LOG1,
+			CDF_TRACE(QDF_MODULE_ID_PE, LOG1,
 				FL("SME: Curr %s,Prev %s,MLM: Curr %s,Prev %s"),
 				lim_sme_state_str(
 				mac_ctx->lim.gpSession[i].limSmeState),

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,7 @@
  */
 
 #include "cdf_trace.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_main.h"
 
@@ -69,7 +69,7 @@ hdd_trace_dump(void *mac, tp_cdf_trace_record record, uint16_t index)
  */
 void hdd_trace_init(void)
 {
-	cdf_trace_register(CDF_MODULE_ID_HDD, hdd_trace_dump);
+	cdf_trace_register(QDF_MODULE_ID_HDD, hdd_trace_dump);
 }
 
 #endif /* ifdef HDD_TRACE_RECORD */

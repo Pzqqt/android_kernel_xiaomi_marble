@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,7 +71,7 @@ int nl_srv_init(void)
 	if (nl_srv_sock != NULL) {
 		memset(nl_srv_msg_handler, 0, sizeof(nl_srv_msg_handler));
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "NLINK: netlink_kernel_create failed");
 		retcode = -ECONNREFUSED;
 	}
@@ -103,7 +103,7 @@ int nl_srv_register(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler)
 	    msg_handler != NULL) {
 		nl_srv_msg_handler[msg_type - WLAN_NL_MSG_BASE] = msg_handler;
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: nl_srv_register failed for msg_type %d",
 			  msg_type);
 		retcode = -EINVAL;
@@ -123,7 +123,7 @@ int nl_srv_unregister(tWlanNlModTypes msg_type, nl_srv_msg_callback msg_handler)
 	    (nl_srv_msg_handler[msg_type - WLAN_NL_MSG_BASE] == msg_handler)) {
 		nl_srv_msg_handler[msg_type - WLAN_NL_MSG_BASE] = NULL;
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: nl_srv_unregister failed for msg_type %d",
 			  msg_type);
 		retcode = -EINVAL;
@@ -147,7 +147,7 @@ int nl_srv_ucast(struct sk_buff *skb, int dst_pid, int flag)
 		err = netlink_unicast(nl_srv_sock, skb, dst_pid, flag);
 
 	if (err < 0)
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: netlink_unicast to pid[%d] failed, ret[0x%X]",
 			  dst_pid, err);
 
@@ -174,7 +174,7 @@ int nl_srv_bcast(struct sk_buff *skb)
 					WLAN_NLINK_MCAST_GRP_ID, flags);
 
 	if (err < 0) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: netlink_broadcast failed err = %d", err);
 	}
 	return err;
@@ -207,7 +207,7 @@ static void nl_srv_rcv_skb(struct sk_buff *skb)
 		nlh = (struct nlmsghdr *)skb->data;
 
 		if (nlh->nlmsg_len < sizeof(*nlh) || skb->len < nlh->nlmsg_len) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 				  "NLINK: Invalid "
 				  "Netlink message: skb[%p], len[%d], nlhdr[%p], nlmsg_len[%d]",
 				  skb, skb->len, nlh, nlh->nlmsg_len);
@@ -232,7 +232,7 @@ static void nl_srv_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 
 	/* Only requests are handled by kernel now */
 	if (!(nlh->nlmsg_flags & NLM_F_REQUEST)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: Received Invalid NL Req type [%x]",
 			  nlh->nlmsg_flags);
 		return;
@@ -242,7 +242,7 @@ static void nl_srv_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 
 	/* Unknown message */
 	if (type < WLAN_NL_MSG_BASE || type >= WLAN_NL_MSG_MAX) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: Received Invalid NL Msg type [%x]", type);
 		return;
 	}
@@ -252,13 +252,13 @@ static void nl_srv_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 	 * Drop any message with invalid length
 	 */
 	if (nlh->nlmsg_len < NLMSG_LENGTH(sizeof(tAniMsgHdr))) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: Received NL Msg with invalid len[%x]",
 			  nlh->nlmsg_len);
 		return;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "NLINK: Received NL msg type [%d]", type);
 
 	/* turn type into dispatch table offset */
@@ -268,7 +268,7 @@ static void nl_srv_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
 	if (nl_srv_msg_handler[type] != NULL) {
 		(nl_srv_msg_handler[type])(skb);
 	} else {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_WARN,
 			  "NLINK: No handler for Netlink Msg [0x%X]", type);
 	}
 }
@@ -282,7 +282,7 @@ static void nl_srv_rcv_msg(struct sk_buff *skb, struct nlmsghdr *nlh)
  * Return: Return -EPERM if the service is not initialized
  *
  */
-int nl_srv_is_initialized()
+int nl_srv_is_initialized(void)
 {
 	if (nl_srv_sock)
 		return 0;

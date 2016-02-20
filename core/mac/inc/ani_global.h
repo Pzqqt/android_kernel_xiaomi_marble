@@ -34,7 +34,7 @@
 typedef struct sAniSirGlobal *tpAniSirGlobal;
 #endif
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "sir_common.h"
 #include "ani_system_defs.h"
 #include "sys_def.h"

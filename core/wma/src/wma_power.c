@@ -46,7 +46,7 @@
 #include "wlan_tgt_def_config.h"
 
 #include "cdf_nbuf.h"
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "cdf_memory.h"
 #include "ol_txrx_types.h"
@@ -125,7 +125,7 @@ int32_t wmi_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 	tp_wma_handle wma;
 	struct wma_txrx_node *iface;
 
-	wma = cds_get_context(CDF_MODULE_ID_WMA);
+	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
 		WMA_LOGE("%s: wma is NULL", __func__);
 		return -EIO;
@@ -415,8 +415,8 @@ void wma_set_tx_power(WMA_HANDLE handle,
 	int ret = -1;
 	void *pdev;
 
-	if (tx_pwr_params->dev_mode == CDF_SAP_MODE ||
-	    tx_pwr_params->dev_mode == CDF_P2P_GO_MODE) {
+	if (tx_pwr_params->dev_mode == QDF_SAP_MODE ||
+	    tx_pwr_params->dev_mode == QDF_P2P_GO_MODE) {
 		pdev = wma_find_vdev_by_addr(wma_handle,
 					     tx_pwr_params->bssId.bytes,
 					     &vdev_id);
@@ -638,7 +638,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 	int32_t ret;
 	uint32_t cfg_data_val = 0;
 	/* get mac to acess CFG data base */
-	struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t rx_wake_policy;
 	uint32_t tx_wake_threshold;
 	uint32_t pspoll_count;
@@ -655,7 +655,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 	/* Set Tx/Rx Data InActivity Timeout   */
 	if (wlan_cfg_get_int(mac, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT");
 		cfg_data_val = POWERSAVE_DEFAULT_INACTIVITY_TIME;
 	}
@@ -668,7 +668,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 
 		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
 				     &cfg_data_val) != eSIR_SUCCESS) {
-			CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for WNI_CFG_MAX_PS_POLL");
 		}
 		if (cfg_data_val)
@@ -681,7 +681,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 		/* Ps Poll Wake Policy */
 		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
 				     &cfg_data_val) != eSIR_SUCCESS) {
-			CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for WNI_CFG_MAX_PS_POLL");
 		}
 		if (cfg_data_val) {
@@ -771,7 +771,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 	/* Set Listen Interval */
 	if (wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get value for WNI_CFG_LISTEN_INTERVAL");
 		cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 	}
@@ -802,7 +802,7 @@ int32_t wma_set_qpower_force_sleep(tp_wma_handle wma, uint32_t vdev_id,
 	int32_t ret;
 	uint32_t cfg_data_val = 0;
 	/* get mac to acess CFG data base */
-	struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t pspoll_count = WMA_DEFAULT_MAX_PSPOLL_BEFORE_WAKE;
 
 	WMA_LOGE("Set QPower Force(1)/Normal(0) Sleep vdevId %d val %d",
@@ -816,7 +816,7 @@ int32_t wma_set_qpower_force_sleep(tp_wma_handle wma, uint32_t vdev_id,
 	/* Get Configured Ps Poll Count */
 	if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get value for WNI_CFG_MAX_PS_POLL");
 	}
 	if (cfg_data_val) {
@@ -883,7 +883,7 @@ int32_t wma_set_qpower_force_sleep(tp_wma_handle wma, uint32_t vdev_id,
 	/* Set Listen Interval */
 	if (wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to get value for WNI_CFG_LISTEN_INTERVAL");
 		cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 	}
@@ -1405,7 +1405,7 @@ int wma_pdev_temperature_evt_handler(void *handle, uint8_t *event,
 	sme_msg.bodyptr = NULL;
 	sme_msg.bodyval = wmi_event->value;
 
-	qdf_status = cds_mq_post_message(CDF_MODULE_ID_SME, &sme_msg);
+	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post get temperature ind msg"));
 	}
@@ -2183,13 +2183,13 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 		int32_t ret;
 		uint32_t cfg_data_val = 0;
 		/* get mac to acess CFG data base */
-		struct sAniSirGlobal *mac = cds_get_context(CDF_MODULE_ID_PE);
+		struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 		/* Set Listen Interval */
 		if ((NULL == mac) || (wlan_cfg_get_int(mac,
 						       WNI_CFG_LISTEN_INTERVAL,
 						       &cfg_data_val) !=
 				      eSIR_SUCCESS)) {
-			CDF_TRACE(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for listen interval");
 			cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 		}
@@ -2263,7 +2263,7 @@ QDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value)
 {
 	int ret = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle =
-			(tp_wma_handle)cds_get_context(CDF_MODULE_ID_WMA);
+			(tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
@@ -2293,7 +2293,7 @@ QDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value)
 {
 	int ret = QDF_STATUS_SUCCESS;
 	tp_wma_handle wma_handle =
-			(tp_wma_handle)cds_get_context(CDF_MODULE_ID_WMA);
+			(tp_wma_handle)cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma_handle) {
 		WMA_LOGE("%s: wma_handle is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;

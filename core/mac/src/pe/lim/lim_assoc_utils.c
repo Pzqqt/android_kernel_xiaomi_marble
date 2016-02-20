@@ -60,7 +60,7 @@
 #endif
 #include "lim_session.h"
 
-#include "cdf_types.h"
+#include "qdf_types.h"
 #include "wma_types.h"
 #include "lim_types.h"
 
@@ -681,7 +681,7 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
  * Return: None
  */
 void
-lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct cdf_mac_addr sta_dsaddr,
+lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		     uint16_t staDsAssocId, tLimMlmStaContext mlmStaContext,
 		     tSirResultCodes statusCode, tpPESession psessionEntry)
 {
@@ -735,7 +735,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct cdf_mac_addr sta_dsaddr,
 			mlmStaContext.cleanupTrigger);
 
 		cdf_mem_copy((uint8_t *) &mlmDisassocCnf.peerMacAddr,
-			     (uint8_t *) sta_dsaddr.bytes, CDF_MAC_ADDR_SIZE);
+			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
 		mlmDisassocCnf.resultCode = statusCode;
 		mlmDisassocCnf.disassocTrigger = mlmStaContext.cleanupTrigger;
 		/* Update PE session Id */
@@ -775,7 +775,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct cdf_mac_addr sta_dsaddr,
 			FL("Lim Posting PURGE_STA_IND to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
 		cdf_mem_copy((uint8_t *) &mlmPurgeStaInd.peerMacAddr,
-			     (uint8_t *) sta_dsaddr.bytes, CDF_MAC_ADDR_SIZE);
+			     (uint8_t *) sta_dsaddr.bytes, QDF_MAC_ADDR_SIZE);
 		mlmPurgeStaInd.reasonCode =
 			(uint8_t) mlmStaContext.disassocReason;
 		mlmPurgeStaInd.aid = staDsAssocId;
@@ -1547,10 +1547,10 @@ tSirRetStatus lim_populate_vht_mcs_set(tpAniSirGlobal mac_ctx,
 		return eSIR_SUCCESS;
 
 	rates->vhtTxHighestDataRate =
-		CDF_MIN(rates->vhtTxHighestDataRate,
+		QDF_MIN(rates->vhtTxHighestDataRate,
 			peer_vht_caps->txSupDataRate);
 	rates->vhtRxHighestDataRate =
-		CDF_MIN(rates->vhtRxHighestDataRate,
+		QDF_MIN(rates->vhtRxHighestDataRate,
 			peer_vht_caps->rxHighSupDataRate);
 
 	if (mac_ctx->roam.configParam.enable2x2) {
@@ -2816,7 +2816,7 @@ tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 	msg_q.bodyptr = add_sta_params;
 	msg_q.bodyval = 0;
 
-	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 			"Sending WMA_ADD_STA_REQ (aid %d)",
 			 add_sta_params->assocId);
 	MTRACE(mac_trace_msg_tx(mac_ctx, session_entry->peSessionId,
@@ -3090,7 +3090,7 @@ lim_add_sta_self(tpAniSirGlobal pMac, uint16_t staIdx, uint8_t updateSta,
 		lim_log(pMac, LOGP, FL("Couldn't get LISTEN_INTERVAL"));
 	pAddStaParams->listenInterval = (uint16_t) listenInterval;
 
-	if (CDF_P2P_CLIENT_MODE == psessionEntry->pePersona) {
+	if (QDF_P2P_CLIENT_MODE == psessionEntry->pePersona) {
 		pAddStaParams->p2pCapableSta = 1;
 	}
 
@@ -3393,7 +3393,7 @@ lim_check_and_announce_join_success(tpAniSirGlobal mac_ctx,
 	lim_deactivate_and_change_timer(mac_ctx,
 		eLIM_PERIODIC_JOIN_PROBE_REQ_TIMER);
 
-	if (CDF_P2P_CLIENT_MODE == session_entry->pePersona &&
+	if (QDF_P2P_CLIENT_MODE == session_entry->pePersona &&
 		beacon_probe_rsp->P2PProbeRes.NoticeOfAbsence.present) {
 
 		noa_duration_from_beacon = (uint32_t *)
@@ -4218,7 +4218,7 @@ tSirRetStatus lim_sta_send_add_bss(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	/* update persona */
 	pAddBssParams->halPersona = (uint8_t) psessionEntry->pePersona;
 
-	if (CDF_P2P_CLIENT_MODE == psessionEntry->pePersona)
+	if (QDF_P2P_CLIENT_MODE == psessionEntry->pePersona)
 		pAddBssParams->staContext.p2pCapableSta = 1;
 
 	pAddBssParams->bSpectrumMgtEnabled = psessionEntry->spectrumMgtEnabled;
@@ -4841,7 +4841,7 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 				 tpPESession psessionEntry)
 {
 	uint16_t staDsAssocId = 0;
-	struct cdf_mac_addr sta_dsaddr;
+	struct qdf_mac_addr sta_dsaddr;
 	tLimMlmStaContext mlmStaContext;
 
 	if (pStaDs == NULL) {
@@ -4850,7 +4850,7 @@ lim_prepare_and_send_del_sta_cnf(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	}
 	staDsAssocId = pStaDs->assocId;
 	cdf_mem_copy((uint8_t *) sta_dsaddr.bytes,
-		     pStaDs->staAddr, CDF_MAC_ADDR_SIZE);
+		     pStaDs->staAddr, QDF_MAC_ADDR_SIZE);
 
 	mlmStaContext = pStaDs->mlmStaContext;
 	if (LIM_IS_AP_ROLE(psessionEntry) ||

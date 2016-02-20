@@ -93,7 +93,7 @@ typedef struct sSirFTUpdateKeyInfo {
 	uint16_t messageType;
 	uint16_t length;
 	uint32_t smeSessionId;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	tSirKeyMaterial keyMaterial;
 } tSirFTUpdateKeyInfo, *tpSirFTUpdateKeyInfo;
 

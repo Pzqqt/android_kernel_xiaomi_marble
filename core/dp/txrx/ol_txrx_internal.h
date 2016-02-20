@@ -103,14 +103,14 @@ extern unsigned g_txrx_print_level;
 #ifdef TXRX_PRINT_ENABLE
 
 #include <stdarg.h>             /* va_list */
-#include <cdf_types.h>          /* cdf_vprint */
+#include <qdf_types.h>          /* qdf_vprint */
 
 /* Supress 4296 - expression is always true
 * It will fire if level is TXRX_PRINT_LEVEL_FATAL_ERR (0)
 * because g_txrx_print_level is unsigned */
 #define ol_txrx_print(level, fmt, ...)  {		\
 		if (level <= g_txrx_print_level)	\
-			cdf_print(fmt, ## __VA_ARGS__); }
+			qdf_print(fmt, ## __VA_ARGS__); }
 #define TXRX_PRINT(level, fmt, ...) \
 	ol_txrx_print(level, "TXRX: " fmt, ## __VA_ARGS__)
 
@@ -118,7 +118,7 @@ extern unsigned g_txrx_print_level;
 
 #define ol_txrx_print_verbose(fmt, ...) {		  \
 	if (TXRX_PRINT_LEVEL_INFO3 <= g_txrx_print_level) \
-		cdf_print(fmt, ## __VA_ARGS__); }
+		qdf_print(fmt, ## __VA_ARGS__); }
 #define TXRX_PRINT_VERBOSE(fmt, ...) \
 	ol_txrx_print_verbose("TXRX: " fmt, ## __VA_ARGS__)
 #else
@@ -141,7 +141,7 @@ extern unsigned g_txrx_print_level;
 #endif
 
 #if DEBUG_CREDIT
-#define TX_CREDIT_DEBUG_PRINT(fmt, ...) cdf_print(fmt, ## __VA_ARGS__)
+#define TX_CREDIT_DEBUG_PRINT(fmt, ...) qdf_print(fmt, ## __VA_ARGS__)
 #else
 #define TX_CREDIT_DEBUG_PRINT(fmt, ...)
 #endif
@@ -149,11 +149,11 @@ extern unsigned g_txrx_print_level;
 /*--- tx scheduler debug printouts ---*/
 
 #ifdef HOST_TX_SCHED_DEBUG
-#define TX_SCHED_DEBUG_PRINT(fmt, ...) cdf_print(fmt, ## __VA_ARGS__)
+#define TX_SCHED_DEBUG_PRINT(fmt, ...) qdf_print(fmt, ## __VA_ARGS__)
 #else
 #define TX_SCHED_DEBUG_PRINT(fmt, ...)
 #endif
-#define TX_SCHED_DEBUG_PRINT_ALWAYS(fmt, ...) cdf_print(fmt, ## __VA_ARGS__)
+#define TX_SCHED_DEBUG_PRINT_ALWAYS(fmt, ...) qdf_print(fmt, ## __VA_ARGS__)
 
 #define OL_TXRX_LIST_APPEND(head, tail, elem) \
 	do {						\
@@ -381,7 +381,7 @@ ol_txrx_frms_dump(const char *name,
 	uint8_t *p;
 
 	if (name) {
-		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO, "%s\n",
+		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO, "%s\n",
 			  name);
 	}
 	while (frm) {
@@ -435,7 +435,7 @@ ol_txrx_frms_dump(const char *name,
 				ip_prot = ipv6_hdr->next_hdr;
 				tcp_offset = l2_hdr_size + IPV6_HDR_LEN;
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_INFO,
 					  "frame %p non-IP ethertype (%x)\n",
 					  frm, ethtype);
@@ -451,12 +451,12 @@ ol_txrx_frms_dump(const char *name,
 					(tcp_hdr->seq_num[1] << 16) |
 					(tcp_hdr->seq_num[1] << 8) |
 					(tcp_hdr->seq_num[1] << 0);
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_INFO,
 					  "frame %p: TCP seq num = %d\n", frm,
 					  tcp_seq_num);
 #else
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_INFO,
 					  "frame %p: TCP seq num = %d\n", frm,
 					  ((*(p + tcp_offset + 4)) << 24) |
@@ -465,7 +465,7 @@ ol_txrx_frms_dump(const char *name,
 					  (*(p + tcp_offset + 7)));
 #endif
 			} else {
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_INFO,
 					  "frame %p non-TCP IP protocol (%x)\n",
 					  frm, ip_prot);
@@ -502,12 +502,12 @@ NOT_IP_TCP:
 				i += frag_bytes;
 			}
 
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 				  "frame %p data (%p), hex dump of bytes 0-%d of %d:\n",
 				frm, p, len_lim - 1, (int)cdf_nbuf_len(frm));
 			p = local_buf;
 			while (len_lim > 16) {
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_INFO,
 					  "  "        /* indent */
 					  "%02x %02x %02x %02x %02x %02x %02x %02x "
@@ -521,15 +521,15 @@ NOT_IP_TCP:
 				p += 16;
 				len_lim -= 16;
 			}
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 				  "  " /* indent */);
 			while (len_lim > 0) {
-				CDF_TRACE(CDF_MODULE_ID_TXRX,
+				CDF_TRACE(QDF_MODULE_ID_TXRX,
 					  CDF_TRACE_LEVEL_INFO, "%02x ", *p);
 				p++;
 				len_lim--;
 			}
-			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
 				  "\n");
 		}
 		frm = cdf_nbuf_next(frm);

@@ -55,7 +55,7 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 		status =
 			cdf_mc_timer_init(&pSession->ftSmeContext.
 					  preAuthReassocIntvlTimer,
-					  CDF_TIMER_TYPE_SW,
+					  QDF_TIMER_TYPE_SW,
 					  sme_preauth_reassoc_intvl_timer_callback,
 					  (void *)pSession->ftSmeContext.pUsrCtx);
 
@@ -449,7 +449,7 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 		return;
 
 	/* All or nothing - proceed only if both BSSID and FT IE fit */
-	if ((CDF_MAC_ADDR_SIZE +
+	if ((QDF_MAC_ADDR_SIZE +
 	     pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length) >
 	    ft_ies_ip_len) {
 		sme_release_global_lock(&pMac->sme);
@@ -458,14 +458,14 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 	/* hdd needs to pack the bssid also along with the */
 	/* auth response to supplicant */
 	cdf_mem_copy(ft_ies, pSession->ftSmeContext.preAuthbssId,
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	/* Copy the auth resp FTIEs */
-	cdf_mem_copy(&(ft_ies[CDF_MAC_ADDR_SIZE]),
+	cdf_mem_copy(&(ft_ies[QDF_MAC_ADDR_SIZE]),
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies,
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length);
 
-	*ft_ies_length = CDF_MAC_ADDR_SIZE +
+	*ft_ies_length = QDF_MAC_ADDR_SIZE +
 			 pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length;
 
 	pSession->ftSmeContext.FTState = eFT_REASSOC_REQ_WAIT;
@@ -548,7 +548,7 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 	tCsrRoamSession *pSession = NULL;
 
 	if (pMac == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("pMac is NULL"));
 		return;
 	}
@@ -584,7 +584,7 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 		pSession->ftSmeContext.setFTPTKState = false;
 
 		cdf_mem_zero(pSession->ftSmeContext.preAuthbssId,
-			     CDF_MAC_ADDR_SIZE);
+			     QDF_MAC_ADDR_SIZE);
 		pSession->ftSmeContext.FTState = eFT_START_READY;
 	}
 }

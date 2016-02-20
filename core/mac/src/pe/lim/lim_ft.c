@@ -125,7 +125,7 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac, tpPESession psessionEntry
 		if (pReAssocSessionEntry->valid &&
 		    pReAssocSessionEntry->limSmeState ==
 		    eLIM_SME_WT_REASSOC_STATE) {
-			CDF_TRACE(CDF_MODULE_ID_PE,
+			CDF_TRACE(QDF_MODULE_ID_PE,
 				  CDF_TRACE_LEVEL_DEBUG,
 				  FL("Deleting Preauth session(%d)"),
 				  pReAssocSessionEntry->peSessionId);
@@ -941,7 +941,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 		lim_get_max_tx_power(regMax, localPowerConstraint,
 				     pMac->roam.configParam.nTxPowerCap);
 #else
-	pftSessionEntry->maxTxPower = CDF_MIN(regMax, (localPowerConstraint));
+	pftSessionEntry->maxTxPower = QDF_MIN(regMax, (localPowerConstraint));
 #endif
 
 	lim_log(pMac, LOG1,

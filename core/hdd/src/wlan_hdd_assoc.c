@@ -516,8 +516,8 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 
 	ftEvent.target_ap = ftIe;
 
-	ftEvent.ies = (u8 *) (ftIe + CDF_MAC_ADDR_SIZE);
-	ftEvent.ies_len = auth_resp_len - CDF_MAC_ADDR_SIZE;
+	ftEvent.ies = (u8 *) (ftIe + QDF_MAC_ADDR_SIZE);
+	ftEvent.ies_len = auth_resp_len - QDF_MAC_ADDR_SIZE;
 
 	hddLog(LOG1, FL("ftEvent.ies_len %zu"), ftEvent.ies_len);
 	hddLog(LOG1, FL("ftEvent.ric_ies_len %zu"), ftEvent.ric_ies_len);
@@ -664,7 +664,7 @@ hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
 		 */
 		cdf_mem_zero(&buff[strLen + 1], IW_CUSTOM_MAX - (strLen + 1));
 		currentLen =
-			CDF_MIN(totalIeLen, IW_CUSTOM_MAX - (strLen + 1) - 1);
+			QDF_MIN(totalIeLen, IW_CUSTOM_MAX - (strLen + 1) - 1);
 		cdf_mem_copy(&buff[strLen + 1], pBeaconIes + currentOffset,
 			     currentLen);
 		currentOffset += currentLen;
@@ -699,7 +699,7 @@ static void hdd_send_association_event(struct net_device *dev,
 	union iwreq_data wrqu;
 	int we_event;
 	char *msg;
-	struct cdf_mac_addr peerMacAddr;
+	struct qdf_mac_addr peerMacAddr;
 
 	/* Added to find the auth type on the fly at run time */
 	/* rather than with cfg to see if FT is enabled */
@@ -893,9 +893,9 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
 {
 	/* Remove staId, bssId and peerMacAddress */
 	pHddStaCtx->conn_info.staId[0] = 0;
-	cdf_mem_zero(&pHddStaCtx->conn_info.bssId, CDF_MAC_ADDR_SIZE);
+	cdf_mem_zero(&pHddStaCtx->conn_info.bssId, QDF_MAC_ADDR_SIZE);
 	cdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[0],
-		     CDF_MAC_ADDR_SIZE);
+		     QDF_MAC_ADDR_SIZE);
 
 	/* Clear all security settings */
 	pHddStaCtx->conn_info.authType = eCSR_AUTH_TYPE_OPEN_SYSTEM;
@@ -1107,7 +1107,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 			 */
 			pHddStaCtx->conn_info.staId[i] = 0;
 			cdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[i],
-				sizeof(struct cdf_mac_addr));
+				sizeof(struct qdf_mac_addr));
 			if (sta_id < (WLAN_MAX_STA_COUNT + 3))
 				pHddCtx->sta_to_adapter[sta_id] = NULL;
 		}
@@ -1162,7 +1162,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
  */
 void hdd_set_peer_authorized_event(uint32_t vdev_id)
 {
-	hdd_context_t *hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
+	hdd_context_t *hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	hdd_adapter_t *adapter = NULL;
 
 	adapter = hdd_get_adapter_by_vdev(hdd_ctx, vdev_id);
@@ -1188,7 +1188,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 {
 	struct ol_txrx_peer_t *peer;
 	QDF_STATUS err;
-	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (!pdev) {
 		hdd_err("Failed to get txrx context");
@@ -1263,7 +1263,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					uint8_t staId,
-					struct cdf_mac_addr *pPeerMacAddress,
+					struct qdf_mac_addr *pPeerMacAddress,
 					tSirBssDescription *pBssDesc)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
@@ -1437,7 +1437,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			roam_profile.SSID.length);
 	ssid_ie_len = 2 + roam_profile.SSID.length;
 	hdd_notice("SSIDIE:");
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
 			   buf_ssid_ie, ssid_ie_len);
 	final_req_ie = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
 	if (final_req_ie == NULL)
@@ -1450,7 +1450,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	cdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
 		IW_GENERIC_IE_MAX - (ssid_ie_len + reqRsnLength));
 	hdd_notice("Req RSN IE:");
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
 	cfg80211_roamed_bss(dev, bss,
 			final_req_ie, (ssid_ie_len + reqRsnLength),
@@ -1461,7 +1461,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		pCsrRoamInfo->nAssocReqLength);
 
 	hdd_notice("ReAssoc Req IE dump");
-	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
 		assoc_req_ies, pCsrRoamInfo->nAssocReqLength);
 
 	wlan_hdd_send_roam_auth_event(pHddCtx, pCsrRoamInfo->bssid.bytes,
@@ -1666,9 +1666,9 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 	tCsrRoamInfo roamInfo;
 	roamInfo.fAuthRequired = false;
 	cdf_mem_copy(roamInfo.bssid.bytes,
-		     pHddStaCtx->roam_info.bssid, CDF_MAC_ADDR_SIZE);
+		     pHddStaCtx->roam_info.bssid, QDF_MAC_ADDR_SIZE);
 	cdf_mem_copy(roamInfo.peerMac.bytes,
-		     pHddStaCtx->roam_info.peerMac, CDF_MAC_ADDR_SIZE);
+		     pHddStaCtx->roam_info.peerMac, QDF_MAC_ADDR_SIZE);
 
 	cdf_ret_status =
 			hdd_roam_set_key_complete_handler(pAdapter,
@@ -1950,7 +1950,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						hdd_notice(
 							"Reassoc Req IE dump");
 						CDF_TRACE_HEX_DUMP(
-							CDF_MODULE_ID_HDD,
+							QDF_MODULE_ID_HDD,
 							CDF_TRACE_LEVEL_DEBUG,
 							pFTAssocReq,
 							assocReqlen);
@@ -1986,11 +1986,11 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						cdf_mem_copy(pHddStaCtx->
 							     roam_info.bssid,
 							     pRoamInfo->bssid.bytes,
-							     CDF_MAC_ADDR_SIZE);
+							     QDF_MAC_ADDR_SIZE);
 						cdf_mem_copy(pHddStaCtx->
 							     roam_info.peerMac,
 							     pRoamInfo->peerMac.bytes,
-							     CDF_MAC_ADDR_SIZE);
+							     QDF_MAC_ADDR_SIZE);
 						pHddStaCtx->roam_info.roamId =
 							roamId;
 						pHddStaCtx->roam_info.
@@ -2340,8 +2340,8 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 			(hdd_context_t *) pAdapter->pHddCtx;
 		hdd_station_ctx_t *hdd_sta_ctx =
 			WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
-		struct cdf_mac_addr broadcastMacAddr =
-			CDF_MAC_ADDR_BROADCAST_INITIALIZER;
+		struct qdf_mac_addr broadcastMacAddr =
+			QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 		if (NULL == pRoamInfo) {
 			CDF_ASSERT(0);
@@ -2464,7 +2464,7 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
  *	false otherwise.
  */
 static bool roam_save_ibss_station(hdd_station_ctx_t *pHddStaCtx, uint8_t staId,
-				  struct cdf_mac_addr *peerMacAddress)
+				  struct qdf_mac_addr *peerMacAddress)
 {
 	bool fSuccess = false;
 	int idx = 0;
@@ -3077,7 +3077,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				cdf_mem_zero(&pHddCtx->
 					     tdlsConnInfo[staIdx].
 					     peerMac,
-					     CDF_MAC_ADDR_SIZE);
+					     QDF_MAC_ADDR_SIZE);
 				status = QDF_STATUS_SUCCESS;
 				break;
 			}
@@ -3138,7 +3138,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 					     &pHddCtx->
 					     tdlsConnInfo[staIdx].
 					     peerMac.bytes,
-					     CDF_MAC_ADDR_SIZE);
+					     QDF_MAC_ADDR_SIZE);
 				smeTdlsPeerStateParams.peerState =
 					eSME_TDLS_PEER_STATE_TEARDOWN;
 
@@ -3171,7 +3171,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				cdf_mem_zero(&pHddCtx->
 					     tdlsConnInfo[staIdx].
 					     peerMac,
-					     CDF_MAC_ADDR_SIZE);
+					     QDF_MAC_ADDR_SIZE);
 				pHddCtx->tdlsConnInfo[staIdx].staId = 0;
 				pHddCtx->tdlsConnInfo[staIdx].
 				sessionId = 255;
@@ -3184,12 +3184,12 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 	case eCSR_ROAM_RESULT_TDLS_SHOULD_DISCOVER:
 	{
 		/* ignore TDLS_SHOULD_DISCOVER if any concurrency detected */
-		if (((1 << CDF_STA_MODE) != pHddCtx->concurrency_mode) ||
-		    (pHddCtx->no_of_active_sessions[CDF_STA_MODE] > 1)) {
+		if (((1 << QDF_STA_MODE) != pHddCtx->concurrency_mode) ||
+		    (pHddCtx->no_of_active_sessions[QDF_STA_MODE] > 1)) {
 			hddLog(LOG2,
 				FL("concurrency detected. ignore SHOULD_DISCOVER concurrency_mode: 0x%x, active_sessions: %d"),
 				 pHddCtx->concurrency_mode,
-				 pHddCtx->no_of_active_sessions[CDF_STA_MODE]);
+				 pHddCtx->no_of_active_sessions[QDF_STA_MODE]);
 			status = QDF_STATUS_E_FAILURE;
 			break;
 		}
@@ -3498,9 +3498,9 @@ hdd_indicate_cckm_pre_auth(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo)
 	pos += nBytes;
 	freeBytes -= nBytes;
 
-	cdf_mem_copy(pos, pRoamInfo->bssid.bytes, CDF_MAC_ADDR_SIZE);
-	pos += CDF_MAC_ADDR_SIZE;
-	freeBytes -= CDF_MAC_ADDR_SIZE;
+	cdf_mem_copy(pos, pRoamInfo->bssid.bytes, QDF_MAC_ADDR_SIZE);
+	pos += QDF_MAC_ADDR_SIZE;
+	freeBytes -= QDF_MAC_ADDR_SIZE;
 
 	nBytes = snprintf(pos, freeBytes, " %u:%u",
 			  pRoamInfo->timestamp[0], pRoamInfo->timestamp[1]);
@@ -3861,7 +3861,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	MTRACE(cdf_trace(CDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
+	MTRACE(cdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
 				pAdapter->sessionId, roamStatus));
 
 	switch (roamStatus) {
@@ -4388,7 +4388,7 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 			 * in the bssid.
 			 */
 			cdf_mem_copy(PMKIDCache[i].BSSID.bytes,
-				     bssid, CDF_MAC_ADDR_SIZE);
+				     bssid, QDF_MAC_ADDR_SIZE);
 			cdf_mem_copy(PMKIDCache[i].PMKID,
 				     dot11RSNIE.pmkid[i], CSR_RSN_PMKID_SIZE);
 		}
@@ -5381,7 +5381,7 @@ static int __iw_set_ap_address(struct net_device *dev,
 	pMacAddress = (uint8_t *) wrqu->ap_addr.sa_data;
 	hddLog(LOG1, FL(" " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMacAddress));
 	cdf_mem_copy(pHddStaCtx->conn_info.bssId.bytes, pMacAddress,
-		     sizeof(struct cdf_mac_addr));
+		     sizeof(struct qdf_mac_addr));
 	EXIT();
 
 	return 0;
@@ -5440,7 +5440,7 @@ static int __iw_get_ap_address(struct net_device *dev,
 	    eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState) {
 		cdf_mem_copy(wrqu->ap_addr.sa_data,
 				pHddStaCtx->conn_info.bssId.bytes,
-				CDF_MAC_ADDR_SIZE);
+				QDF_MAC_ADDR_SIZE);
 	} else {
 		memset(wrqu->ap_addr.sa_data, 0, sizeof(wrqu->ap_addr.sa_data));
 	}

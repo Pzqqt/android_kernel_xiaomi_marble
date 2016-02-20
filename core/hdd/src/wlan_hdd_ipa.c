@@ -322,7 +322,7 @@ struct ipa_uc_pending_event {
 	hdd_adapter_t *adapter;
 	enum ipa_wlan_event type;
 	uint8_t sta_id;
-	uint8_t mac_addr[CDF_MAC_ADDR_SIZE];
+	uint8_t mac_addr[QDF_MAC_ADDR_SIZE];
 };
 
 /**
@@ -359,7 +359,7 @@ static uint8_t vdev_to_iface[CSR_ROAM_SESSION_MAX];
  * @rx_destructor_call: IPA Rx packet destructor count
  */
 struct uc_rt_debug_info {
-	v_TIME_t time;
+	unsigned long time;
 	uint64_t ipa_excep_count;
 	uint64_t rx_drop_count;
 	uint64_t net_sent_count;
@@ -443,30 +443,30 @@ struct hdd_ipa_priv {
 	cdf_mutex_t ipa_lock;
 
 	/* CE resources */
-	cdf_dma_addr_t ce_sr_base_paddr;
+	qdf_dma_addr_t ce_sr_base_paddr;
 	uint32_t ce_sr_ring_size;
-	cdf_dma_addr_t ce_reg_paddr;
+	qdf_dma_addr_t ce_reg_paddr;
 
 	/* WLAN TX:IPA->WLAN */
-	cdf_dma_addr_t tx_comp_ring_base_paddr;
+	qdf_dma_addr_t tx_comp_ring_base_paddr;
 	uint32_t tx_comp_ring_size;
 	uint32_t tx_num_alloc_buffer;
 
 	/* WLAN RX:WLAN->IPA */
-	cdf_dma_addr_t rx_rdy_ring_base_paddr;
+	qdf_dma_addr_t rx_rdy_ring_base_paddr;
 	uint32_t rx_rdy_ring_size;
-	cdf_dma_addr_t rx_proc_done_idx_paddr;
+	qdf_dma_addr_t rx_proc_done_idx_paddr;
 	void *rx_proc_done_idx_vaddr;
 
 	/* WLAN RX2:WLAN->IPA */
-	cdf_dma_addr_t rx2_rdy_ring_base_paddr;
+	qdf_dma_addr_t rx2_rdy_ring_base_paddr;
 	uint32_t rx2_rdy_ring_size;
-	cdf_dma_addr_t rx2_proc_done_idx_paddr;
+	qdf_dma_addr_t rx2_proc_done_idx_paddr;
 	void *rx2_proc_done_idx_vaddr;
 
 	/* IPA UC doorbell registers paddr */
-	cdf_dma_addr_t tx_comp_doorbell_paddr;
-	cdf_dma_addr_t rx_ready_doorbell_paddr;
+	qdf_dma_addr_t tx_comp_doorbell_paddr;
+	qdf_dma_addr_t rx_ready_doorbell_paddr;
 };
 
 /**
@@ -507,13 +507,13 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 	(((struct hdd_ipa_cld_hdr *) (_data))->iface_id)
 
 #define HDD_IPA_LOG(LVL, fmt, args ...) \
-	CDF_TRACE(CDF_MODULE_ID_HDD, LVL, \
+	CDF_TRACE(QDF_MODULE_ID_HDD, LVL, \
 		  "%s:%d: "fmt, __func__, __LINE__, ## args)
 
 #define HDD_IPA_DBG_DUMP(_lvl, _prefix, _buf, _len) \
 	do { \
-		CDF_TRACE(CDF_MODULE_ID_HDD, _lvl, "%s:", _prefix); \
-		CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_HDD, _lvl, _buf, _len); \
+		CDF_TRACE(QDF_MODULE_ID_HDD, _lvl, "%s:", _prefix); \
+		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, _lvl, _buf, _len); \
 	} while (0)
 
 #define HDD_IPA_IS_CONFIG_ENABLED(_hdd_ctx, _mask) \
@@ -902,7 +902,7 @@ static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
 	struct hdd_ipa_priv *hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
 	cdf_mutex_init(&hdd_ipa->rt_debug_lock);
-	cdf_mc_timer_init(&hdd_ipa->rt_debug_fill_timer, CDF_TIMER_TYPE_SW,
+	cdf_mc_timer_init(&hdd_ipa->rt_debug_fill_timer, QDF_TIMER_TYPE_SW,
 		hdd_ipa_uc_rt_debug_host_fill, (void *)hdd_ctx);
 	hdd_ipa->rt_buf_fill_index = 0;
 	cdf_mem_zero(hdd_ipa->rt_bug_buffer,
@@ -923,7 +923,7 @@ static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
 			"%s: IPA RT debug is not enabled", __func__);
 		return;
 	}
-	cdf_mc_timer_init(&hdd_ipa->rt_debug_timer, CDF_TIMER_TYPE_SW,
+	cdf_mc_timer_init(&hdd_ipa->rt_debug_timer, QDF_TIMER_TYPE_SW,
 		hdd_ipa_uc_rt_debug_handler, (void *)hdd_ctx);
 	cdf_mc_timer_start(&hdd_ipa->rt_debug_timer,
 		HDD_IPA_UC_RT_DEBUG_PERIOD);
@@ -1422,7 +1422,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		(HDD_IPA_UC_STAT_REASON_DEBUG == hdd_ipa->stat_req_reason)) {
 
 		/* STATs from host */
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CE ====\n"
 			  "CE RING BASE: 0x%llx\n"
 			  "CE RING SIZE: %d\n"
@@ -1430,7 +1430,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  (unsigned long long)hdd_ipa->ce_sr_base_paddr,
 			  hdd_ipa->ce_sr_ring_size,
 			  (unsigned long long)hdd_ipa->ce_reg_paddr);
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST TX ====\n"
 			  "COMP RING BASE: 0x%llx\n"
 			  "COMP RING SIZE: %d\n"
@@ -1440,7 +1440,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  hdd_ipa->tx_comp_ring_size,
 			  hdd_ipa->tx_num_alloc_buffer,
 			  (unsigned long long)hdd_ipa->tx_comp_doorbell_paddr);
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST RX ====\n"
 			  "IND RING BASE: 0x%llx\n"
 			  "IND RING SIZE: %d\n"
@@ -1456,7 +1456,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_bcmc,
 			  (unsigned long long)hdd_ipa->stats.num_tx_bcmc_err);
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CONTROL ====\n"
 			  "SAP NUM STAs: %d\n"
 			  "STA CONNECTED: %d\n"
@@ -1476,7 +1476,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		/* STATs from FW */
 		uc_fw_stat = (struct ipa_uc_fw_stats *)
 			     ((uint8_t *)op_msg + sizeof(struct op_msg_type));
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_FW TX ====\n"
 			  "COMP RING BASE: 0x%x\n"
 			  "COMP RING SIZE: %d\n"
@@ -1497,7 +1497,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  uc_fw_stat->tx_pkts_enqueued,
 			  uc_fw_stat->tx_pkts_completed,
 			  uc_fw_stat->tx_is_suspend, uc_fw_stat->tx_reserved);
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_FW RX ====\n"
 			  "IND RING BASE: 0x%x\n"
 			  "IND RING SIZE: %d\n"
@@ -1528,7 +1528,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  uc_fw_stat->rx_is_suspend, uc_fw_stat->rx_reserved);
 		/* STATs from IPA */
 		ipa_get_wdi_stats(&ipa_stat);
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC IPA TX ====\n"
 			  "NUM PROCD : %d\n"
 			  "CE DBELL : 0x%x\n"
@@ -1564,7 +1564,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  num_bam_int_in_non_runnning_state,
 			  ipa_stat.tx_ch_stats.num_qmb_int_handled);
 
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC IPA RX ====\n"
 			  "MAX OST PKT : %d\n"
 			  "NUM PKT PRCSD : %d\n"
@@ -1813,7 +1813,7 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 
 	pipe_in.u.dl.comp_ring_base_pa = ipa_ctxt->tx_comp_ring_base_paddr;
 	pipe_in.u.dl.comp_ring_size =
-		ipa_ctxt->tx_comp_ring_size * sizeof(cdf_dma_addr_t);
+		ipa_ctxt->tx_comp_ring_size * sizeof(qdf_dma_addr_t);
 	pipe_in.u.dl.ce_ring_base_pa = ipa_ctxt->ce_sr_base_paddr;
 	pipe_in.u.dl.ce_door_bell_pa = ipa_ctxt->ce_reg_paddr;
 	pipe_in.u.dl.ce_ring_size = ipa_ctxt->ce_sr_ring_size;
@@ -3675,7 +3675,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		pending_event->type = type;
 		cdf_mem_copy(pending_event->mac_addr,
 			mac_addr,
-			CDF_MAC_ADDR_SIZE);
+			QDF_MAC_ADDR_SIZE);
 		qdf_list_insert_back(&hdd_ipa->pending_event,
 				&pending_event->node);
 
@@ -4023,7 +4023,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	ghdd_ipa = hdd_ipa;
 	hdd_ipa->hdd_ctx = hdd_ctx;
 	hdd_ipa->num_iface = 0;
-	ol_txrx_ipa_uc_get_resource(cds_get_context(CDF_MODULE_ID_TXRX),
+	ol_txrx_ipa_uc_get_resource(cds_get_context(QDF_MODULE_ID_TXRX),
 				&hdd_ipa->ce_sr_base_paddr,
 				&hdd_ipa->ce_sr_ring_size,
 				&hdd_ipa->ce_reg_paddr,

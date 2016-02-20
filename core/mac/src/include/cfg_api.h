@@ -57,7 +57,7 @@ typedef enum eCfgStatusTypes {
 
 /* WEP key mapping table row structure */
 typedef struct {
-	uint8_t keyMappingAddr[CDF_MAC_ADDR_SIZE];
+	uint8_t keyMappingAddr[QDF_MAC_ADDR_SIZE];
 	uint32_t wepOn;
 	uint8_t key[SIR_MAC_KEY_LENGTH];
 	uint32_t status;

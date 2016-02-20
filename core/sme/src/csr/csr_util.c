@@ -256,10 +256,10 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 }
 
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
-			     struct cdf_mac_addr *pBssId)
+			     struct qdf_mac_addr *pBssId)
 {
 	cdf_mem_copy(pBssId, &pSirBssDesc->bssId[0],
-			sizeof(struct cdf_mac_addr));
+			sizeof(struct qdf_mac_addr));
 	return true;
 }
 
@@ -268,8 +268,8 @@ bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	bool fEqual = false;
-	struct cdf_mac_addr bssId1;
-	struct cdf_mac_addr bssId2;
+	struct qdf_mac_addr bssId1;
+	struct qdf_mac_addr bssId2;
 
 	do {
 		if (!pSirBssDesc1)
@@ -422,9 +422,9 @@ bool csr_is_session_client_and_connected(tpAniSirGlobal pMac, uint8_t sessionId)
 		pSession = CSR_GET_SESSION(pMac, sessionId);
 		if (NULL != pSession->pCurRoamProfile) {
 			if ((pSession->pCurRoamProfile->csrPersona ==
-			     CDF_STA_MODE)
+			     QDF_STA_MODE)
 			    || (pSession->pCurRoamProfile->csrPersona ==
-				CDF_P2P_CLIENT_MODE))
+				QDF_P2P_CLIENT_MODE))
 				return true;
 		}
 	}
@@ -445,7 +445,7 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
 {
 	tCsrRoamSession *session = NULL;
 	uint8_t i = 0;
-	enum tCDF_ADAPTER_MODE persona;
+	enum tQDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
@@ -454,12 +454,12 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
 		if (NULL == session->pCurRoamProfile)
 			continue;
 		persona = session->pCurRoamProfile->csrPersona;
-		if ((((persona == CDF_STA_MODE) ||
-			(persona == CDF_P2P_CLIENT_MODE)) &&
+		if ((((persona == QDF_STA_MODE) ||
+			(persona == QDF_P2P_CLIENT_MODE)) &&
 			(session->connectState ==
 				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) ||
-			(((persona == CDF_P2P_GO_MODE) ||
-				(persona == CDF_SAP_MODE))
+			(((persona == QDF_P2P_GO_MODE) ||
+				(persona == QDF_SAP_MODE))
 				 && (session->connectState !=
 					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)))
 			return session->connectedProfile.operationChannel;
@@ -675,7 +675,7 @@ static void csr_handle_conc_chnl_overlap_for_sap_go(tpAniSirGlobal mac_ctx,
 		}
 	} else if (*sap_ch == 0 &&
 			(session->pCurRoamProfile->csrPersona ==
-					CDF_SAP_MODE)) {
+					QDF_SAP_MODE)) {
 		*sap_ch = session->connectedProfile.operationChannel;
 		csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.HTProfile,
@@ -731,9 +731,9 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 		session = CSR_GET_SESSION(mac_ctx, i);
 		if (NULL == session->pCurRoamProfile)
 			continue;
-		if (((session->pCurRoamProfile->csrPersona == CDF_STA_MODE) ||
+		if (((session->pCurRoamProfile->csrPersona == QDF_STA_MODE) ||
 			(session->pCurRoamProfile->csrPersona ==
-				CDF_P2P_CLIENT_MODE)) &&
+				QDF_P2P_CLIENT_MODE)) &&
 			(session->connectState ==
 				eCSR_ASSOC_STATE_TYPE_INFRA_ASSOCIATED)) {
 			intf_ch = session->connectedProfile.operationChannel;
@@ -741,9 +741,9 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 				&session->connectedProfile.HTProfile,
 				intf_ch, &intf_cfreq, &intf_hbw);
 		} else if (((session->pCurRoamProfile->csrPersona ==
-					CDF_P2P_GO_MODE) ||
+					QDF_P2P_GO_MODE) ||
 				(session->pCurRoamProfile->csrPersona ==
-					CDF_SAP_MODE)) &&
+					QDF_SAP_MODE)) &&
 				(session->connectState !=
 					eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
 				if (session->ch_switch_in_progress)
@@ -827,7 +827,7 @@ bool csr_is_sta_session_connected(tpAniSirGlobal mac_ctx)
 			pSession = CSR_GET_SESSION(mac_ctx, i);
 
 			if ((NULL != pSession->pCurRoamProfile) &&
-				(CDF_STA_MODE ==
+				(QDF_STA_MODE ==
 					pSession->pCurRoamProfile->csrPersona))
 				return true;
 		}
@@ -849,7 +849,7 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 {
 	uint32_t i;
 	tCsrRoamSession *pSession = NULL;
-	enum tCDF_ADAPTER_MODE persona;
+	enum tQDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (CSR_IS_SESSION_VALID(pMac, i)
@@ -857,8 +857,8 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 			pSession = CSR_GET_SESSION(pMac, i);
 			persona = pSession->pCurRoamProfile->csrPersona;
 			if ((NULL != pSession->pCurRoamProfile) &&
-				((CDF_P2P_CLIENT_MODE == persona) ||
-				(CDF_P2P_GO_MODE == persona))) {
+				((QDF_P2P_CLIENT_MODE == persona) ||
+				(QDF_P2P_GO_MODE == persona))) {
 				return true;
 			}
 		}
@@ -1880,10 +1880,10 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
  */
 QDF_STATUS
 csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
-			      enum tCDF_ADAPTER_MODE cur_bss_persona)
+			      enum tQDF_ADAPTER_MODE cur_bss_persona)
 {
 	uint32_t sessionid = 0;
-	enum tCDF_ADAPTER_MODE bss_persona;
+	enum tQDF_ADAPTER_MODE bss_persona;
 	eCsrConnectState connect_state, temp;
 	tCsrRoamSession *roam_session;
 
@@ -1897,19 +1897,19 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 		connect_state = roam_session->connectState;
 
 		switch (cur_bss_persona) {
-		case CDF_STA_MODE:
-			CDF_TRACE(CDF_MODULE_ID_SME,
+		case QDF_STA_MODE:
+			CDF_TRACE(QDF_MODULE_ID_SME,
 					CDF_TRACE_LEVEL_INFO,
 					FL("** STA session **"));
 			return QDF_STATUS_SUCCESS;
 
-		case CDF_SAP_MODE:
+		case QDF_SAP_MODE:
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-			if ((bss_persona == CDF_IBSS_MODE)
+			if ((bss_persona == QDF_IBSS_MODE)
 				&& (connect_state != temp)) {
 				/* allow IBSS+SAP for Emulation only */
 #ifndef QCA_WIFI_3_0_EMU
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("Can't start SAP"));
 				return QDF_STATUS_E_FAILURE;
@@ -1917,44 +1917,44 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 			}
 			break;
 
-		case CDF_P2P_GO_MODE:
+		case QDF_P2P_GO_MODE:
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-			if ((bss_persona == CDF_IBSS_MODE)
+			if ((bss_persona == QDF_IBSS_MODE)
 					&& (connect_state != temp)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("Can't start SAP"));
 				return QDF_STATUS_E_FAILURE;
 			}
 			break;
-		case CDF_IBSS_MODE:
-			if ((bss_persona == CDF_IBSS_MODE) &&
+		case QDF_IBSS_MODE:
+			if ((bss_persona == QDF_IBSS_MODE) &&
 				(connect_state ==
 					eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("IBSS mode already exist"));
 				return QDF_STATUS_E_FAILURE;
-			} else if (((bss_persona == CDF_P2P_GO_MODE) ||
-					(bss_persona == CDF_SAP_MODE)) &&
+			} else if (((bss_persona == QDF_P2P_GO_MODE) ||
+					(bss_persona == QDF_SAP_MODE)) &&
 					(connect_state !=
 					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
 				/* allow IBSS+SAP for Emulation only */
 #ifndef QCA_WIFI_3_0_EMU
-				CDF_TRACE(CDF_MODULE_ID_SME,
+				CDF_TRACE(QDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
 						FL("Can't start GO/SAP"));
 				return QDF_STATUS_E_FAILURE;
 #endif
 			}
 			break;
-		case CDF_P2P_CLIENT_MODE:
-			CDF_TRACE(CDF_MODULE_ID_SME,
+		case QDF_P2P_CLIENT_MODE:
+			CDF_TRACE(QDF_MODULE_ID_SME,
 				CDF_TRACE_LEVEL_INFO,
 				FL("**P2P-Client session**"));
 			return QDF_STATUS_SUCCESS;
 		default:
-			CDF_TRACE(CDF_MODULE_ID_SME,
+			CDF_TRACE(QDF_MODULE_ID_SME,
 				CDF_TRACE_LEVEL_ERROR,
 				FL("Persona not handled = %d"),
 				cur_bss_persona);
@@ -1988,7 +1988,7 @@ QDF_STATUS csr_update_mcc_p2p_beacon_interval(tpAniSirGlobal mac_ctx)
 		 * change the BI of the P2P-GO
 		 */
 		roam_session = &mac_ctx->roam.roamSession[session_id];
-		if (roam_session->bssParams.bssPersona != CDF_P2P_GO_MODE)
+		if (roam_session->bssParams.bssPersona != QDF_P2P_GO_MODE)
 			continue;
 		/*
 		 * Handle different BI scneario based on the
@@ -2072,7 +2072,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 					uint8_t channelId,
 					uint16_t *beaconInterval,
 					uint32_t cursessionId,
-					enum tCDF_ADAPTER_MODE currBssPersona)
+					enum tQDF_ADAPTER_MODE currBssPersona)
 {
 	uint32_t sessionId = 0;
 	uint16_t new_beaconInterval = 0;
@@ -2089,12 +2089,12 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 			}
 
 			switch (currBssPersona) {
-			case CDF_STA_MODE:
+			case QDF_STA_MODE:
 				if (pMac->roam.roamSession[sessionId].
 					pCurRoamProfile &&
 				   (pMac->roam.roamSession[sessionId].
 					pCurRoamProfile->csrPersona ==
-				    CDF_P2P_CLIENT_MODE)) {
+				    QDF_P2P_CLIENT_MODE)) {
 					/* check for P2P client mode */
 					sms_log(pMac, LOG1,
 						FL
@@ -2108,7 +2108,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 				 */
 				else if (pMac->roam.roamSession[sessionId].
 					 bssParams.bssPersona ==
-					 CDF_SAP_MODE) {
+					 QDF_SAP_MODE) {
 					if (pMac->roam.roamSession[sessionId].
 					    bssParams.operationChn !=
 					    channelId) {
@@ -2119,7 +2119,7 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 					}
 				} else if (pMac->roam.roamSession[sessionId].
 						bssParams.bssPersona ==
-						CDF_P2P_GO_MODE) {
+						QDF_P2P_GO_MODE) {
 					/*
 					 * Check for P2P go scenario
 					 * if GO in MCC support different
@@ -2229,19 +2229,19 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 				}
 				break;
 
-			case CDF_P2P_CLIENT_MODE:
+			case QDF_P2P_CLIENT_MODE:
 				if (pMac->roam.roamSession[sessionId].
 					pCurRoamProfile &&
 				   (pMac->roam.roamSession[sessionId].
 					pCurRoamProfile->csrPersona ==
-					CDF_STA_MODE)) {
+					QDF_STA_MODE)) {
 					/* check for P2P client mode */
 					sms_log(pMac, LOG1,
 						FL
 							(" Ignore Beacon Interval Validation..."));
 				} else if (pMac->roam.roamSession[sessionId].
 						bssParams.bssPersona ==
-						CDF_P2P_GO_MODE) {
+						QDF_P2P_GO_MODE) {
 					/* Check for P2P go scenario */
 					if ((pMac->roam.roamSession[sessionId].
 					     bssParams.operationChn !=
@@ -2258,20 +2258,20 @@ QDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
 				}
 				break;
 
-			case CDF_SAP_MODE:
-			case CDF_IBSS_MODE:
+			case QDF_SAP_MODE:
+			case QDF_IBSS_MODE:
 				break;
 
-			case CDF_P2P_GO_MODE:
+			case QDF_P2P_GO_MODE:
 			{
 				if (pMac->roam.roamSession[sessionId].
 					pCurRoamProfile &&
 				   ((pMac->roam.roamSession[sessionId].
 					pCurRoamProfile->csrPersona ==
-					CDF_P2P_CLIENT_MODE) ||
+					QDF_P2P_CLIENT_MODE) ||
 				    (pMac->roam.roamSession[sessionId].
 					pCurRoamProfile->csrPersona ==
-					CDF_STA_MODE))) {
+					QDF_STA_MODE))) {
 					/* check for P2P_client scenario */
 					if ((pMac->roam.
 					     roamSession[sessionId].
@@ -2902,7 +2902,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 		apProfileMFPRequired = (pRSNIe->RSN_Cap[0] >> 6) & 0x1;
 		if (*pFilterMFPEnabled && *pFilterMFPCapable
 		    && *pFilterMFPRequired && (apProfileMFPCapable == 0)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  "AP is not capable to make PMF connection");
 			return false;
 		} else if (*pFilterMFPEnabled && *pFilterMFPCapable &&
@@ -2915,7 +2915,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 			 * so if AP is not capable of PMF then drop it.
 			 * Don't try to connect with it.
 			 */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  "we need PMF connection & AP isn't capable to make PMF connection");
 			return false;
 		} else if (!(*pFilterMFPCapable) &&
@@ -2926,12 +2926,12 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 			 * requires mandatory PMF connections and we are not
 			 * capable so this AP is not good choice to connect
 			 */
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  "AP needs PMF connection and we are not capable of pmf connection");
 			return false;
 		} else if (!(*pFilterMFPEnabled) && *pFilterMFPCapable &&
 			   (apProfileMFPCapable == 1)) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				  "we don't need PMF connection even though both parties are capable");
 			return false;
 		}
@@ -2987,7 +2987,7 @@ bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
 				MAC_ADDR_ARRAY(pBSSId));
 			if (cdf_mem_compare
 			    (pBSSId, pSession->PmkidCacheInfo[Index].BSSID.bytes,
-			    sizeof(struct cdf_mac_addr))) {
+			    sizeof(struct qdf_mac_addr))) {
 				/* match found */
 				fMatchFound = true;
 				break;
@@ -3324,7 +3324,7 @@ bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
 				MAC_ADDR_ARRAY(pBSSId));
 			if (cdf_mem_compare
 			    (pBSSId, pSession->BkidCacheInfo[Index].BSSID.bytes,
-				    sizeof(struct cdf_mac_addr))) {
+				    sizeof(struct qdf_mac_addr))) {
 				/* match found */
 				fMatchFound = true;
 				break;
@@ -4329,15 +4329,15 @@ bool csr_is_ssid_in_list(tHalHandle hHal, tSirMacSSid *pSsid,
 	return fMatch;
 }
 
-bool csr_is_bssid_match(tHalHandle hHal, struct cdf_mac_addr *pProfBssid,
-			struct cdf_mac_addr *BssBssid)
+bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
+			struct qdf_mac_addr *BssBssid)
 {
 	bool fMatch = false;
-	struct cdf_mac_addr ProfileBssid;
+	struct qdf_mac_addr ProfileBssid;
 
 	/* for efficiency of the MAC_ADDRESS functions, move the */
 	/* Bssid's into MAC_ADDRESS structs. */
-	cdf_mem_copy(&ProfileBssid, pProfBssid, sizeof(struct cdf_mac_addr));
+	cdf_mem_copy(&ProfileBssid, pProfBssid, sizeof(struct qdf_mac_addr));
 
 	do {
 
@@ -4724,9 +4724,9 @@ bool csr_match_bss(tHalHandle hal, tSirBssDescription *bss_descr,
 	/* Check for Blacklist BSSID's and avoid connections */
 	blacklist_check = false;
 	for (i = 0; i < roam_params->num_bssid_avoid_list; i++) {
-		if (cdf_is_macaddr_equal((struct cdf_mac_addr *)
+		if (cdf_is_macaddr_equal((struct qdf_mac_addr *)
 					&roam_params->bssid_avoid_list[i],
-				(struct cdf_mac_addr *)bss_descr->bssId)) {
+				(struct qdf_mac_addr *)bss_descr->bssId)) {
 			blacklist_check = true;
 			break;
 		}
@@ -4754,16 +4754,16 @@ bool csr_match_bss(tHalHandle hal, tSirBssDescription *bss_descr,
 	p2p_macaddr = ie_ptr->P2PBeaconProbeRes.P2PDeviceInfo.P2PDeviceAddress;
 	for (i = 0; i < filter->BSSIDs.numOfBSSIDs; i++) {
 		check = csr_is_bssid_match(mac_ctx,
-				(struct cdf_mac_addr *)&filter->BSSIDs.bssid[i],
-				(struct cdf_mac_addr *)bss_descr->bssId);
+				(struct qdf_mac_addr *)&filter->BSSIDs.bssid[i],
+				(struct qdf_mac_addr *)bss_descr->bssId);
 		if (check)
 			break;
 
 		if (filter->p2pResult && ie_ptr->P2PBeaconProbeRes.present) {
 			check = csr_is_bssid_match(mac_ctx,
-					(struct cdf_mac_addr *)
+					(struct qdf_mac_addr *)
 						&filter->BSSIDs.bssid[i],
-					(struct cdf_mac_addr *)p2p_macaddr);
+					(struct qdf_mac_addr *)p2p_macaddr);
 			if (check)
 				break;
 		}
@@ -5696,16 +5696,16 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
  *
  * This function is to return the persona of a session
  *
- * Reture: enum tCDF_ADAPTER_MODE persona
+ * Reture: enum tQDF_ADAPTER_MODE persona
  */
-enum tCDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
+enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 						uint32_t session_id)
 {
 	tCsrRoamSession *session = NULL;
 
 	session = CSR_GET_SESSION(pmac, session_id);
 	if (NULL == session || NULL == session->pCurRoamProfile)
-		return CDF_MAX_NO_OF_MODE;
+		return QDF_MAX_NO_OF_MODE;
 
 	return session->pCurRoamProfile->csrPersona;
 }
