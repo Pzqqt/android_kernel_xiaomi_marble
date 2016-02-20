@@ -3584,20 +3584,32 @@ typedef struct sSirScanOffloadReq {
 	  -----------------------------*/
 } tSirScanOffloadReq, *tpSirScanOffloadReq;
 
-typedef enum sSirScanEventType {
-	SCAN_EVENT_STARTED = 0x1,       /* Scan command accepted by FW */
-	SCAN_EVENT_COMPLETED = 0x2,     /* Scan has been completed by FW */
-	SCAN_EVENT_BSS_CHANNEL = 0x4,   /* FW is going to move to HOME ch */
-	SCAN_EVENT_FOREIGN_CHANNEL = 0x8,   /* FW going to move to FORIEGN ch */
-	SCAN_EVENT_DEQUEUED = 0x10,     /* scan request got dequeued */
-	SCAN_EVENT_PREEMPTED = 0x20,    /* preempted by high priority scan */
-	SCAN_EVENT_START_FAILED = 0x40, /* scan start failed */
-	SCAN_EVENT_RESTARTED = 0x80,    /*scan restarted */
-	SCAN_EVENT_MAX = 0x8000
-} tSirScanEventType;
+/**
+ * lim_scan_event_type - scan event types used in LIM
+ * @LIM_SCAN_EVENT_STARTED - scan command accepted by FW
+ * @LIM_SCAN_EVENT_COMPLETED - scan has been completed by FW
+ * @LIM_SCAN_EVENT_BSS_CHANNEL - FW is going to move to HOME channel
+ * @LIM_SCAN_EVENT_FOREIGN_CHANNEL - FW is going to move to FORIEGN channel
+ * @LIM_SCAN_EVENT_DEQUEUED - scan request got dequeued
+ * @LIM_SCAN_EVENT_PREEMPTED - preempted by other high priority scan
+ * @LIM_SCAN_EVENT_START_FAILED - scan start failed
+ * @LIM_SCAN_EVENT_RESTARTED - scan restarted
+ * @LIM_SCAN_EVENT_MAX - max value for event type
+*/
+enum lim_scan_event_type {
+	LIM_SCAN_EVENT_STARTED = 0x1,
+	LIM_SCAN_EVENT_COMPLETED = 0x2,
+	LIM_SCAN_EVENT_BSS_CHANNEL = 0x4,
+	LIM_SCAN_EVENT_FOREIGN_CHANNEL = 0x8,
+	LIM_SCAN_EVENT_DEQUEUED = 0x10,
+	LIM_SCAN_EVENT_PREEMPTED = 0x20,
+	LIM_SCAN_EVENT_START_FAILED = 0x40,
+	LIM_SCAN_EVENT_RESTARTED = 0x80,
+	LIM_SCAN_EVENT_MAX = 0x8000
+};
 
 typedef struct sSirScanOffloadEvent {
-	tSirScanEventType event;
+	enum lim_scan_event_type event;
 	tSirResultCodes reasonCode;
 	uint32_t chanFreq;
 	uint32_t requestor;

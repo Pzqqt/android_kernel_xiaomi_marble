@@ -4158,10 +4158,10 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 		  "scan_id = %u, scan_requestor_id 0x%x", pScanEvent->scanId,
 		  pScanEvent->requestor);
 	switch (pScanEvent->event) {
-	case SCAN_EVENT_STARTED:
+	case LIM_SCAN_EVENT_STARTED:
 		break;
-	case SCAN_EVENT_START_FAILED:
-	case SCAN_EVENT_COMPLETED:
+	case LIM_SCAN_EVENT_START_FAILED:
+	case LIM_SCAN_EVENT_COMPLETED:
 		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			lim_send_sme_roc_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
 					 QDF_STATUS_SUCCESS,
@@ -4189,7 +4189,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 			lim_send_scan_offload_complete(pMac, pScanEvent);
 		}
 		break;
-	case SCAN_EVENT_FOREIGN_CHANNEL:
+	case LIM_SCAN_EVENT_FOREIGN_CHANNEL:
 		if (ROC_SCAN_REQUESTOR_ID == pScanEvent->requestor) {
 			/*Send Ready on channel indication to SME */
 			if (pMac->lim.gpLimRemainOnChanReq) {
@@ -4208,9 +4208,9 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 					pScanEvent->scanId);
 		}
 		break;
-	case SCAN_EVENT_BSS_CHANNEL:
-	case SCAN_EVENT_DEQUEUED:
-	case SCAN_EVENT_PREEMPTED:
+	case LIM_SCAN_EVENT_BSS_CHANNEL:
+	case LIM_SCAN_EVENT_DEQUEUED:
+	case LIM_SCAN_EVENT_PREEMPTED:
 	default:
 		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  "Received unhandled scan event %u",

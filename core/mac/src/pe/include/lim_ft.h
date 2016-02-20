@@ -63,7 +63,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 				    tpPESession psessionEntry);
 void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
 void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
-				tSirScanEventType event,
+				enum lim_scan_event_type event,
 				uint8_t session_id,
 				uint32_t scan_id);
 tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
