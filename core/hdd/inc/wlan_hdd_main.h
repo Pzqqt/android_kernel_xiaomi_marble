@@ -1450,6 +1450,24 @@ void wlan_hdd_send_status_pkg(hdd_adapter_t *pAdapter,
 void wlan_hdd_send_version_pkg(uint32_t fw_version,
 			       uint32_t chip_id, const char *chip_name);
 void wlan_hdd_send_all_scan_intf_info(hdd_context_t *pHddCtx);
+#else
+static inline void wlan_hdd_send_status_pkg(hdd_adapter_t *pAdapter,
+					    hdd_station_ctx_t *pHddStaCtx,
+					    uint8_t is_on, uint8_t is_connected)
+{
+	return;
+}
+
+static inline void wlan_hdd_send_version_pkg(uint32_t fw_version, uint32_t
+					     chip_id, const char *chip_name)
+{
+	return;
+}
+
+static inline void wlan_hdd_send_all_scan_intf_info(hdd_context_t *pHddCtx)
+{
+	return;
+}
 #endif
 void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len);
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
