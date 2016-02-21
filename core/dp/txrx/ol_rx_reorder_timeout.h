@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,9 +46,9 @@ void ol_rx_reorder_timeout_peer_cleanup(struct ol_txrx_peer_t *peer);
 #define OL_RX_REORDER_TIMEOUT_PEER_TID_INIT(peer, tid) \
 	(peer)->tids_rx_reorder[(tid)].timeout.active = 0
 #define OL_RX_REORDER_TIMEOUT_MUTEX_LOCK(pdev) \
-	cdf_spin_lock(&(pdev)->rx.mutex)
+	qdf_spin_lock(&(pdev)->rx.mutex)
 #define OL_RX_REORDER_TIMEOUT_MUTEX_UNLOCK(pdev) \
-	cdf_spin_unlock(&(pdev)->rx.mutex)
+	qdf_spin_unlock(&(pdev)->rx.mutex)
 
 #else
 

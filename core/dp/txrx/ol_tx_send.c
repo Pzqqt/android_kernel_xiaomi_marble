@@ -26,7 +26,7 @@
  */
 
 #include <qdf_atomic.h>         /* qdf_atomic_inc, etc. */
-#include <cdf_lock.h>           /* cdf_os_spinlock */
+#include <qdf_lock.h>           /* cdf_os_spinlock */
 #include <qdf_time.h>           /* qdf_system_ticks, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
 #include <cdf_net_types.h>      /* ADF_NBUF_TX_EXT_TID_INVALID */
@@ -114,15 +114,15 @@
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {	\
 			if (qdf_atomic_read(&vdev->os_q_paused) &&	\
 			    (vdev->tx_fl_hwm != 0)) {			\
-				cdf_spin_lock(&pdev->tx_mutex);		\
+				qdf_spin_lock(&pdev->tx_mutex);		\
 				if (pdev->tx_desc.num_free >		\
 				    vdev->tx_fl_hwm) {			\
 					qdf_atomic_set(&vdev->os_q_paused, 0); \
-					cdf_spin_unlock(&pdev->tx_mutex); \
+					qdf_spin_unlock(&pdev->tx_mutex); \
 					ol_txrx_flow_control_cb(vdev, true);\
 				}					\
 				else {					\
-					cdf_spin_unlock(&pdev->tx_mutex); \
+					qdf_spin_unlock(&pdev->tx_mutex); \
 				}					\
 			}						\
 		}							\
@@ -504,7 +504,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		tx_desc->status = status;
 		netbuf = tx_desc->netbuf;
 
-		cdf_runtime_pm_put();
+		qdf_runtime_pm_put();
 		cdf_nbuf_trace_update(netbuf, trace_str);
 		/* Per SDU update of byte count */
 		byte_cnt += cdf_nbuf_len(netbuf);
@@ -529,11 +529,11 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 
 	/* One shot protected access to pdev freelist, when setup */
 	if (lcl_freelist) {
-		cdf_spin_lock(&pdev->tx_mutex);
+		qdf_spin_lock(&pdev->tx_mutex);
 		tx_desc_last->next = pdev->tx_desc.freelist;
 		pdev->tx_desc.freelist = lcl_freelist;
 		pdev->tx_desc.num_free += (uint16_t) num_msdus;
-		cdf_spin_unlock(&pdev->tx_mutex);
+		qdf_spin_unlock(&pdev->tx_mutex);
 	} else {
 		ol_tx_desc_frame_list_free(pdev, &tx_descs,
 					   status != htt_tx_status_ok);
@@ -634,10 +634,10 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 	}
 
 	if (lcl_freelist) {
-		cdf_spin_lock(&pdev->tx_mutex);
+		qdf_spin_lock(&pdev->tx_mutex);
 		tx_desc_last->next = pdev->tx_desc.freelist;
 		pdev->tx_desc.freelist = lcl_freelist;
-		cdf_spin_unlock(&pdev->tx_mutex);
+		qdf_spin_unlock(&pdev->tx_mutex);
 	} else {
 		ol_tx_desc_frame_list_free(pdev, &tx_descs,
 					   htt_tx_status_discard);
@@ -697,7 +697,7 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
 
 	cdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
 
-	cdf_spin_lock_bh(&pdev->tx_delay.mutex);
+	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = 1 - pdev->tx_delay.cats[category].in_progress_idx;
 
 	data = &pdev->tx_delay.cats[category].copies[index];
@@ -729,7 +729,7 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
 		*queue_delay_microsec = 0;
 	}
 
-	cdf_spin_unlock_bh(&pdev->tx_delay.mutex);
+	qdf_spin_unlock_bh(&pdev->tx_delay.mutex);
 }
 
 void
@@ -741,7 +741,7 @@ ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
 
 	cdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
 
-	cdf_spin_lock_bh(&pdev->tx_delay.mutex);
+	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = 1 - pdev->tx_delay.cats[category].in_progress_idx;
 
 	data = &pdev->tx_delay.cats[category].copies[index];
@@ -755,7 +755,7 @@ ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
 	}
 	report_bin_values[i] = data->hist_bins_queue[j];        /* overflow */
 
-	cdf_spin_unlock_bh(&pdev->tx_delay.mutex);
+	qdf_spin_unlock_bh(&pdev->tx_delay.mutex);
 }
 
 #ifdef QCA_COMPUTE_TX_DELAY_PER_TID
@@ -917,7 +917,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 	}
 
 	/* since we may switch the ping-pong index, provide mutex w. readers */
-	cdf_spin_lock_bh(&pdev->tx_delay.mutex);
+	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = pdev->tx_delay.cats[cat].in_progress_idx;
 
 	data = &pdev->tx_delay.cats[cat].copies[index];
@@ -962,7 +962,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 			     sizeof(pdev->tx_delay.cats[cat].copies[index]));
 	}
 
-	cdf_spin_unlock_bh(&pdev->tx_delay.mutex);
+	qdf_spin_unlock_bh(&pdev->tx_delay.mutex);
 }
 
 #endif /* QCA_COMPUTE_TX_DELAY */

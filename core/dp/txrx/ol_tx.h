@@ -33,7 +33,7 @@
 #define _OL_TX__H_
 
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include <ol_txrx_api.h>        /* ol_txrx_vdev_handle */
 
 #include <ol_txrx_types.h>      /* ol_tx_desc_t, ol_txrx_msdu_info_t */

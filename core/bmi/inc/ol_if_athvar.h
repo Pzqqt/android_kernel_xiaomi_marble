@@ -33,7 +33,7 @@
 
 #include <osapi_linux.h>
 #include "qdf_types.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "wmi_unified_api.h"
 #include "htc_api.h"
 #include "bmi_msg.h"

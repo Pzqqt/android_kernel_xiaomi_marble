@@ -308,7 +308,7 @@ void epping_destroy_adapter(epping_adapter_t *pAdapter)
 	pEpping_ctx = pAdapter->pEpping_ctx;
 	epping_unregister_adapter(pAdapter);
 
-	cdf_spinlock_destroy(&pAdapter->data_lock);
+	qdf_spinlock_destroy(&pAdapter->data_lock);
 	qdf_timer_free(&pAdapter->epping_timer);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 
@@ -367,7 +367,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	cdf_mem_copy(dev->dev_addr, (void *)macAddr, sizeof(tSirMacAddr));
 	cdf_mem_copy(pAdapter->macAddressCurrent.bytes,
 		     macAddr, sizeof(tSirMacAddr));
-	cdf_spinlock_init(&pAdapter->data_lock);
+	qdf_spinlock_create(&pAdapter->data_lock);
 	cdf_nbuf_queue_init(&pAdapter->nodrop_queue);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 	qdf_timer_init(epping_get_cdf_ctx(), &pAdapter->epping_timer,

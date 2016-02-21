@@ -519,7 +519,7 @@ struct beacon_info {
 	uint16_t noa_sub_ie_len;
 	uint8_t *noa_ie;
 	uint16_t p2p_ie_offset;
-	cdf_spinlock_t lock;
+	qdf_spinlock_t lock;
 };
 
 /**
@@ -1227,9 +1227,9 @@ typedef struct {
 	struct wma_txrx_node *interfaces;
 	pdev_cli_config_t pdevconfig;
 	qdf_list_t vdev_resp_queue;
-	cdf_spinlock_t vdev_respq_lock;
+	qdf_spinlock_t vdev_respq_lock;
 	qdf_list_t wma_hold_req_queue;
-	cdf_spinlock_t wma_hold_req_q_lock;
+	qdf_spinlock_t wma_hold_req_q_lock;
 	uint32_t ht_cap_info;
 #ifdef WLAN_FEATURE_11AC
 	uint32_t vht_cap_info;
@@ -1266,12 +1266,12 @@ typedef struct {
 	struct ieee80211com *dfs_ic;
 
 #ifdef FEATURE_WLAN_SCAN_PNO
-	cdf_wake_lock_t pno_wake_lock;
+	qdf_wake_lock_t pno_wake_lock;
 #endif
 #ifdef FEATURE_WLAN_EXTSCAN
-	cdf_wake_lock_t extscan_wake_lock;
+	qdf_wake_lock_t extscan_wake_lock;
 #endif
-	cdf_wake_lock_t wow_wake_lock;
+	qdf_wake_lock_t wow_wake_lock;
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
 	cdf_mc_timer_t wma_scan_comp_timer;
@@ -1327,7 +1327,7 @@ typedef struct {
 		uint16_t num_free;
 		union wmi_desc_elem_t *array;
 		union wmi_desc_elem_t *freelist;
-		cdf_spinlock_t wmi_desc_pool_lock;
+		qdf_spinlock_t wmi_desc_pool_lock;
 	} wmi_desc_pool;
 	uint8_t max_scan;
 	struct wmi_init_cmd saved_wmi_init_cmd;
@@ -1349,8 +1349,8 @@ typedef struct {
 	QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr);
-	cdf_wake_lock_t wmi_cmd_rsp_wake_lock;
-	cdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
+	qdf_wake_lock_t wmi_cmd_rsp_wake_lock;
+	qdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	uint32_t fine_time_measurement_cap;
 	struct wma_ini_config ini_config;
 } t_wma_handle, *tp_wma_handle;

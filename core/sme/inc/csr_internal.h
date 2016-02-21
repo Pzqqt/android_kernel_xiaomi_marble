@@ -34,7 +34,7 @@
 #define CSRINTERNAL_H__
 
 #include "qdf_status.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 
 #include "cdf_mc_timer.h"
 #include "csr_support.h"

@@ -30,7 +30,7 @@
 
 #include <osdep.h>              /* uint16_t, dma_addr_t */
 #include <qdf_types.h>          /* qdf_device_t */
-#include <cdf_lock.h>           /* cdf_spinlock_t */
+#include <qdf_lock.h>           /* qdf_spinlock_t */
 #include <qdf_timer.h>		/* qdf_timer_t */
 #include <qdf_atomic.h>         /* qdf_atomic_inc */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
@@ -41,7 +41,7 @@
 
 #define DEBUG_DMA_DONE
 
-#define HTT_TX_MUTEX_TYPE cdf_spinlock_t
+#define HTT_TX_MUTEX_TYPE qdf_spinlock_t
 
 #ifdef QCA_TX_HTT2_SUPPORT
 #ifndef HTC_TX_HTT2_MAX_SIZE

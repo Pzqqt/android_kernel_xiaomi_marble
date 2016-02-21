@@ -37,7 +37,7 @@
 /*--------------------------------------------------------------------------
   Include Files
   ------------------------------------------------------------------------*/
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
 #include "qdf_types.h"

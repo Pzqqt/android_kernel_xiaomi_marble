@@ -1855,7 +1855,7 @@ void cds_init_log_completion(void)
 	/* Attempting to initialize an already initialized lock
 	 * results in a failure. This must be ok here.
 	 */
-	cdf_spinlock_init(&p_cds_context->bug_report_lock);
+	qdf_spinlock_create(&p_cds_context->bug_report_lock);
 }
 
 /**
@@ -1877,7 +1877,7 @@ void cds_deinit_log_completion(void)
 		return;
 	}
 
-	cdf_spinlock_destroy(&p_cds_context->bug_report_lock);
+	qdf_spinlock_destroy(&p_cds_context->bug_report_lock);
 }
 
 /**
@@ -1904,12 +1904,12 @@ QDF_STATUS cds_set_log_completion(uint32_t is_fatal,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_spinlock_acquire(&p_cds_context->bug_report_lock);
+	qdf_spinlock_acquire(&p_cds_context->bug_report_lock);
 	p_cds_context->log_complete.is_fatal = is_fatal;
 	p_cds_context->log_complete.indicator = indicator;
 	p_cds_context->log_complete.reason_code = reason_code;
 	p_cds_context->log_complete.is_report_in_progress = true;
-	cdf_spinlock_release(&p_cds_context->bug_report_lock);
+	qdf_spinlock_release(&p_cds_context->bug_report_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1936,12 +1936,12 @@ void cds_get_log_completion(uint32_t *is_fatal,
 		return;
 	}
 
-	cdf_spinlock_acquire(&p_cds_context->bug_report_lock);
+	qdf_spinlock_acquire(&p_cds_context->bug_report_lock);
 	*is_fatal =  p_cds_context->log_complete.is_fatal;
 	*indicator = p_cds_context->log_complete.indicator;
 	*reason_code = p_cds_context->log_complete.reason_code;
 	p_cds_context->log_complete.is_report_in_progress = false;
-	cdf_spinlock_release(&p_cds_context->bug_report_lock);
+	qdf_spinlock_release(&p_cds_context->bug_report_lock);
 }
 
 /**

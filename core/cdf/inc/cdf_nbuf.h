@@ -35,7 +35,7 @@
 #include <cdf_util.h>
 #include <qdf_types.h>
 #include <cdf_net_types.h>
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include <i_cdf_nbuf.h>
 #include <asm/cacheflush.h>
 

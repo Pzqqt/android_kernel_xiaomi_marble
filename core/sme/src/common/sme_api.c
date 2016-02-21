@@ -116,7 +116,7 @@ QDF_STATUS sme_acquire_global_lock(tSmeStruct *psSme)
 
 	if (psSme) {
 		if (QDF_IS_STATUS_SUCCESS
-			    (cdf_mutex_acquire(&psSme->lkSmeGlobalLock))) {
+			    (qdf_mutex_acquire(&psSme->lkSmeGlobalLock))) {
 			status = QDF_STATUS_SUCCESS;
 		}
 	}
@@ -130,7 +130,7 @@ QDF_STATUS sme_release_global_lock(tSmeStruct *psSme)
 
 	if (psSme) {
 		if (QDF_IS_STATUS_SUCCESS
-			    (cdf_mutex_release(&psSme->lkSmeGlobalLock))) {
+			    (qdf_mutex_release(&psSme->lkSmeGlobalLock))) {
 			status = QDF_STATUS_SUCCESS;
 		}
 	}
@@ -477,7 +477,7 @@ static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 	cdf_mem_free(pMac->sme.smeCmdActiveList.cmdTimeoutTimer);
 	pMac->sme.smeCmdActiveList.cmdTimeoutTimer = NULL;
 
-	status = cdf_mutex_acquire(&pMac->sme.lkSmeGlobalLock);
+	status = qdf_mutex_acquire(&pMac->sme.lkSmeGlobalLock);
 	if (status != QDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE,
 			FL("Failed to acquire the lock status = %d"), status);
@@ -486,7 +486,7 @@ static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 
 	free_sme_cmds(pMac);
 
-	status = cdf_mutex_release(&pMac->sme.lkSmeGlobalLock);
+	status = qdf_mutex_release(&pMac->sme.lkSmeGlobalLock);
 	if (status != QDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE,
 			FL("Failed to release the lock status = %d"), status);
@@ -1048,7 +1048,7 @@ QDF_STATUS sme_open(tHalHandle hHal)
 
 	pMac->sme.state = SME_STATE_STOP;
 	pMac->sme.currDeviceMode = QDF_STA_MODE;
-	if (!QDF_IS_STATUS_SUCCESS(cdf_mutex_init(
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
 					&pMac->sme.lkSmeGlobalLock))) {
 		sms_log(pMac, LOGE, FL("sme_open failed init lock"));
 		return  QDF_STATUS_E_FAILURE;
@@ -2899,7 +2899,7 @@ QDF_STATUS sme_close(tHalHandle hHal)
 	free_sme_cmd_list(pMac);
 
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cdf_mutex_destroy(&pMac->sme.lkSmeGlobalLock))) {
+		    (qdf_mutex_destroy(&pMac->sme.lkSmeGlobalLock))) {
 		fail_status = QDF_STATUS_E_FAILURE;
 	}
 

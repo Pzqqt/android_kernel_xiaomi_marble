@@ -39,7 +39,7 @@
   ------------------------------------------------------------------------*/
 #include "csr_api.h"
 #include "cds_mq.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "qdf_types.h"
 #include "sir_api.h"
 #include "cds_reg_service.h"

@@ -611,10 +611,10 @@ NOT_IP_TCP:
 #ifdef QCA_ENABLE_OL_TXRX_PEER_STATS
 #define OL_TXRX_PEER_STATS_UPDATE_BASE(peer, tx_or_rx, type, msdu) \
 	do { \
-		cdf_spin_lock_bh(&peer->vdev->pdev->peer_stat_mutex); \
+		qdf_spin_lock_bh(&peer->vdev->pdev->peer_stat_mutex); \
 		peer->stats.tx_or_rx.frms.type += 1; \
 		peer->stats.tx_or_rx.bytes.type += cdf_nbuf_len(msdu); \
-		cdf_spin_unlock_bh(&peer->vdev->pdev->peer_stat_mutex);	\
+		qdf_spin_unlock_bh(&peer->vdev->pdev->peer_stat_mutex);	\
 	} while (0)
 #define OL_TXRX_PEER_STATS_UPDATE(peer, tx_or_rx, msdu)	\
 	do { \
@@ -648,9 +648,9 @@ NOT_IP_TCP:
 #define OL_RX_PEER_STATS_UPDATE(peer, msdu) \
 	OL_TXRX_PEER_STATS_UPDATE(peer, rx, msdu)
 #define OL_TXRX_PEER_STATS_MUTEX_INIT(pdev) \
-	cdf_spinlock_init(&pdev->peer_stat_mutex)
+	qdf_spinlock_create(&pdev->peer_stat_mutex)
 #define OL_TXRX_PEER_STATS_MUTEX_DESTROY(pdev) \
-	cdf_spinlock_destroy(&pdev->peer_stat_mutex)
+	qdf_spinlock_destroy(&pdev->peer_stat_mutex)
 #else
 #define OL_TX_PEER_STATS_UPDATE(peer, msdu)     /* no-op */
 #define OL_RX_PEER_STATS_UPDATE(peer, msdu)     /* no-op */

@@ -40,7 +40,7 @@
 #include <qdf_atomic.h>         /* qdf_atomic_t */
 #include <wdi_event_api.h>      /* wdi_event_subscribe */
 #include <qdf_timer.h>		/* qdf_timer_t */
-#include <cdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* cdf_spinlock */
 #include <pktlog.h>             /* ol_pktlog_dev_handle */
 #include <ol_txrx_stats.h>
 #include <txrx.h>
@@ -76,8 +76,8 @@
 #define OL_TXRX_MGMT_TYPE_BASE htt_pkt_num_types
 #define OL_TXRX_MGMT_NUM_TYPES 8
 
-#define OL_TX_MUTEX_TYPE cdf_spinlock_t
-#define OL_RX_MUTEX_TYPE cdf_spinlock_t
+#define OL_TX_MUTEX_TYPE qdf_spinlock_t
+#define OL_RX_MUTEX_TYPE qdf_spinlock_t
 
 /* TXRX Histogram defines */
 #define TXRX_DATA_HISTROGRAM_GRANULARITY      1000
@@ -374,7 +374,7 @@ struct ol_txrx_pool_stats {
  */
 struct ol_tx_flow_pool_t {
 	TAILQ_ENTRY(ol_tx_flow_pool_t) flow_pool_list_elem;
-	cdf_spinlock_t flow_pool_lock;
+	qdf_spinlock_t flow_pool_lock;
 	uint8_t flow_pool_id;
 	uint16_t flow_pool_size;
 	uint16_t avail_desc;
@@ -530,7 +530,7 @@ struct ol_txrx_pdev_t {
 			struct ol_tx_reorder_cat_timeout_t
 				access_cats[TXRX_NUM_WMM_AC];
 		} reorder_timeout;
-		cdf_spinlock_t mutex;
+		qdf_spinlock_t mutex;
 	} rx;
 
 	/* rx proc function */
@@ -559,7 +559,7 @@ struct ol_txrx_pdev_t {
 		union ol_tx_desc_list_elem_t *freelist;
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
 		uint8_t num_invalid_bin;
-		cdf_spinlock_t flow_pool_list_lock;
+		qdf_spinlock_t flow_pool_list_lock;
 		TAILQ_HEAD(flow_pool_list_t, ol_tx_flow_pool_t) flow_pool_list;
 #endif
 		uint32_t page_size;
@@ -686,7 +686,7 @@ struct ol_txrx_pdev_t {
 	} tx_queue;
 
 #ifdef QCA_ENABLE_OL_TXRX_PEER_STATS
-	cdf_spinlock_t peer_stat_mutex;
+	qdf_spinlock_t peer_stat_mutex;
 #endif
 
 	int rssi_update_shift;
@@ -695,7 +695,7 @@ struct ol_txrx_pdev_t {
 	struct {
 		ol_txrx_local_peer_id_t pool[OL_TXRX_NUM_LOCAL_PEER_IDS + 1];
 		ol_txrx_local_peer_id_t freelist;
-		cdf_spinlock_t lock;
+		qdf_spinlock_t lock;
 		ol_txrx_peer_handle map[OL_TXRX_NUM_LOCAL_PEER_IDS];
 	} local_peer_ids;
 #endif
@@ -708,7 +708,7 @@ struct ol_txrx_pdev_t {
 #define QCA_TX_DELAY_NUM_CATEGORIES 1
 #endif
 	struct {
-		cdf_spinlock_t mutex;
+		qdf_spinlock_t mutex;
 		struct {
 			struct ol_tx_delay_data copies[2]; /* ping-pong */
 			int in_progress_idx;
@@ -726,7 +726,7 @@ struct ol_txrx_pdev_t {
 #endif /* QCA_COMPUTE_TX_DELAY */
 
 	struct {
-		cdf_spinlock_t mutex;
+		qdf_spinlock_t mutex;
 		/* timer used to monitor the throttle "on" phase and
 		   "off" phase */
 		qdf_timer_t phase_timer;
@@ -832,7 +832,7 @@ struct ol_txrx_vdev_t {
 			int depth;
 		} txq;
 		uint32_t paused_reason;
-		cdf_spinlock_t mutex;
+		qdf_spinlock_t mutex;
 		qdf_timer_t timer;
 		int max_q_depth;
 		bool is_q_paused;
@@ -845,7 +845,7 @@ struct ol_txrx_vdev_t {
 	qdf_atomic_t os_q_paused;
 	uint16_t tx_fl_lwm;
 	uint16_t tx_fl_hwm;
-	cdf_spinlock_t flow_control_lock;
+	qdf_spinlock_t flow_control_lock;
 	ol_txrx_tx_flow_control_fp osif_flow_control_cb;
 	void *osif_fc_ctx;
 	uint16_t wait_on_peer_id;
@@ -924,9 +924,9 @@ struct ol_txrx_peer_t {
 	 * for all systems.
 	 */
 	enum ol_txrx_peer_state state;
-	cdf_spinlock_t peer_info_lock;
+	qdf_spinlock_t peer_info_lock;
 	ol_rx_callback_fp osif_rx;
-	cdf_spinlock_t bufq_lock;
+	qdf_spinlock_t bufq_lock;
 	struct list_head cached_bufq;
 
 	ol_tx_filter_func tx_filter;

@@ -108,7 +108,7 @@
 void hdd_hostapd_channel_wakelock_init(hdd_context_t *pHddCtx)
 {
 	/* Initialize the wakelock */
-	cdf_wake_lock_init(&pHddCtx->sap_dfs_wakelock, "sap_dfs_wakelock");
+	qdf_wake_lock_create(&pHddCtx->sap_dfs_wakelock, "sap_dfs_wakelock");
 	atomic_set(&pHddCtx->sap_dfs_ref_cnt, 0);
 }
 
@@ -142,7 +142,7 @@ void hdd_hostapd_channel_allow_suspend(hdd_adapter_t *pAdapter,
 		if (atomic_dec_and_test(&pHddCtx->sap_dfs_ref_cnt)) {
 			hddLog(LOGE, FL("DFS: allowing suspend (chan %d)"),
 			       channel);
-			cdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
+			qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
 					      WIFI_POWER_EVENT_WAKELOCK_DFS);
 		}
 	}
@@ -178,7 +178,7 @@ void hdd_hostapd_channel_prevent_suspend(hdd_adapter_t *pAdapter,
 		if (atomic_inc_return(&pHddCtx->sap_dfs_ref_cnt) == 1) {
 			hddLog(LOGE, FL("DFS: preventing suspend (chan %d)"),
 			       channel);
-			cdf_wake_lock_acquire(&pHddCtx->sap_dfs_wakelock,
+			qdf_wake_lock_acquire(&pHddCtx->sap_dfs_wakelock,
 					      WIFI_POWER_EVENT_WAKELOCK_DFS);
 		}
 	}
@@ -195,7 +195,7 @@ void hdd_hostapd_channel_wakelock_deinit(hdd_context_t *pHddCtx)
 {
 	if (atomic_read(&pHddCtx->sap_dfs_ref_cnt)) {
 		/* Release wakelock */
-		cdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
+		qdf_wake_lock_release(&pHddCtx->sap_dfs_wakelock,
 				      WIFI_POWER_EVENT_WAKELOCK_DRIVER_EXIT);
 		/* Reset the reference count */
 		atomic_set(&pHddCtx->sap_dfs_ref_cnt, 0);
@@ -203,7 +203,7 @@ void hdd_hostapd_channel_wakelock_deinit(hdd_context_t *pHddCtx)
 	}
 
 	/* Destroy lock */
-	cdf_wake_lock_destroy(&pHddCtx->sap_dfs_wakelock);
+	qdf_wake_lock_destroy(&pHddCtx->sap_dfs_wakelock);
 }
 
 /**
@@ -1386,7 +1386,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 		wlan_hdd_auto_shutdown_enable(pHddCtx, false);
 #endif
-		cdf_wake_lock_timeout_acquire(&pHddCtx->sap_wake_lock,
+		qdf_wake_lock_timeout_acquire(&pHddCtx->sap_wake_lock,
 					      HDD_SAP_WAKE_LOCK_DURATION,
 					      WIFI_POWER_EVENT_WAKELOCK_SAP);
 		{

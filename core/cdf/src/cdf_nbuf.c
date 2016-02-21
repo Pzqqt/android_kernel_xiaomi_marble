@@ -45,7 +45,7 @@
 #include <cdf_memory.h>
 #include <cdf_trace.h>
 #include <qdf_status.h>
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 
 /* Packet Counter */
 static uint32_t nbuf_tx_mgmt[NBUF_TX_PKT_STATE_MAX];

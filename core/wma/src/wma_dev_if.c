@@ -310,10 +310,10 @@ static struct wma_target_req *wma_find_req(tp_wma_handle wma,
 	qdf_list_node_t *node1 = NULL, *node2 = NULL;
 	QDF_STATUS status;
 
-	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->wma_hold_req_queue,
 						      &node2)) {
-		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGE(FL("unable to get msg node from request queue"));
 		return NULL;
 	}
@@ -329,7 +329,7 @@ static struct wma_target_req *wma_find_req(tp_wma_handle wma,
 		found = true;
 		status = qdf_list_remove_node(&wma->wma_hold_req_queue, node1);
 		if (QDF_STATUS_SUCCESS != status) {
-			cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+			qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 			WMA_LOGD(FL("Failed to remove request for vdev_id %d type %d"),
 				 vdev_id, type);
 			return NULL;
@@ -339,7 +339,7 @@ static struct wma_target_req *wma_find_req(tp_wma_handle wma,
 			qdf_list_peek_next(&wma->wma_hold_req_queue, node1,
 					   &node2));
 
-	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	if (!found) {
 		WMA_LOGE(FL("target request not found for vdev_id %d type %d"),
 			 vdev_id, type);
@@ -371,10 +371,10 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 	qdf_list_node_t *node1 = NULL, *node2 = NULL;
 	QDF_STATUS status;
 
-	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->wma_hold_req_queue,
 						      &node2)) {
-		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGE(FL("unable to get msg node from request queue"));
 		return NULL;
 	}
@@ -390,7 +390,7 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 		found = true;
 		status = qdf_list_remove_node(&wma->wma_hold_req_queue, node1);
 		if (QDF_STATUS_SUCCESS != status) {
-			cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+			qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 			WMA_LOGD(FL("Failed to remove request. vdev_id %d type %d"),
 				 vdev_id, msg_type);
 			return NULL;
@@ -400,7 +400,7 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 			qdf_list_peek_next(&wma->wma_hold_req_queue, node1,
 					   &node2));
 
-	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	if (!found) {
 		WMA_LOGE(FL("target request not found for vdev_id %d type %d"),
 			 vdev_id, msg_type);
@@ -430,10 +430,10 @@ static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
 	qdf_list_node_t *node1 = NULL, *node2 = NULL;
 	QDF_STATUS status;
 
-	cdf_spin_lock_bh(&wma->vdev_respq_lock);
+	qdf_spin_lock_bh(&wma->vdev_respq_lock);
 	if (QDF_STATUS_SUCCESS != qdf_list_peek_front(&wma->vdev_resp_queue,
 						      &node2)) {
-		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 		WMA_LOGE(FL("unable to get target req from vdev resp queue"));
 		return NULL;
 	}
@@ -449,7 +449,7 @@ static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
 		found = true;
 		status = qdf_list_remove_node(&wma->vdev_resp_queue, node1);
 		if (QDF_STATUS_SUCCESS != status) {
-			cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+			qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 			WMA_LOGD(FL("Failed to target req for vdev_id %d type %d"),
 				 vdev_id, type);
 			return NULL;
@@ -459,7 +459,7 @@ static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
 			qdf_list_peek_next(&wma->vdev_resp_queue,
 					   node1, &node2));
 
-	cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 	if (!found) {
 		WMA_LOGP(FL("target request not found for vdev_id %d type %d"),
 			 vdev_id, type);
@@ -632,11 +632,11 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	/* Acquire wake lock only when you expect a response from firmware */
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				    WMI_SERVICE_SYNC_DELETE_CMDS)) {
-		cdf_wake_lock_timeout_acquire(
+		qdf_wake_lock_timeout_acquire(
 					 &wma_handle->wmi_cmd_rsp_wake_lock,
 					 WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION,
 					 WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-		cdf_runtime_pm_prevent_suspend(
+		qdf_runtime_pm_prevent_suspend(
 					wma_handle->wmi_cmd_rsp_runtime_lock);
 	}
 	WMA_LOGD("Call txrx detach with callback for vdev %d", vdev_id);
@@ -811,7 +811,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			goto send_fail_resp;
 		}
 		bcn->seq_no = MIN_SW_SEQ;
-		cdf_spinlock_init(&bcn->lock);
+		qdf_spinlock_create(&bcn->lock);
 		qdf_atomic_set(&wma->interfaces[resp_event->vdev_id].bss_status,
 			       WMA_BSS_STATUS_STARTED);
 		WMA_LOGD("%s: AP mode (type %d subtype %d) BSS is started",
@@ -927,9 +927,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 
 	if (wma_is_vdev_in_ap_mode(wma, resp_event->vdev_id)) {
-		cdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
+		qdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
 		wma->dfs_ic->disable_phy_err_processing = false;
-		cdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
+		qdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
 	}
 
 	if (resp_event->status == QDF_STATUS_SUCCESS) {
@@ -1403,17 +1403,17 @@ static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 		return;
 
 	/* remove all remote peers of IBSS */
-	cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 
 	temp = NULL;
 	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t, peer_list_elem) {
 		if (temp) {
-			cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
 				wma_remove_peer(wma, temp->mac_addr.raw,
 					vdev_id, temp, false);
 			}
-			cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 		}
 		/* self peer is deleted last */
 		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
@@ -1422,7 +1422,7 @@ static void wma_delete_all_ibss_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 		} else
 			temp = peer;
 	}
-	cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 
 	/* remove IBSS bss peer last */
 	peer = TAILQ_FIRST(&vdev->peer_list);
@@ -1473,18 +1473,18 @@ static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 
 	WMA_LOGE("%s: vdev_id - %d", __func__, vdev_id);
 	/* remove all remote peers of SAP */
-	cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 
 	temp = NULL;
 	TAILQ_FOREACH_REVERSE(peer, &vdev->peer_list, peer_list_t,
 			      peer_list_elem) {
 		if (temp) {
-			cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+			qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 			if (qdf_atomic_read(&temp->delete_in_progress) == 0) {
 				wma_remove_peer(wma, temp->mac_addr.raw,
 						vdev_id, temp, false);
 			}
-			cdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
+			qdf_spin_lock_bh(&vdev->pdev->peer_ref_mutex);
 		}
 		/* self peer is deleted by caller */
 		if (peer == TAILQ_FIRST(&vdev->peer_list)) {
@@ -1494,7 +1494,7 @@ static void wma_delete_all_ap_remote_peers(tp_wma_handle wma, A_UINT32 vdev_id)
 			temp = peer;
 	}
 
-	cdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
+	qdf_spin_unlock_bh(&vdev->pdev->peer_ref_mutex);
 }
 
 #ifdef QCA_IBSS_SUPPORT
@@ -2215,7 +2215,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 				return QDF_STATUS_E_FAILURE;
 			}
 
-			cdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
+			qdf_spin_lock_bh(&wma->dfs_ic->chan_lock);
 			if (isRestart)
 				wma->dfs_ic->disable_phy_err_processing = true;
 
@@ -2223,7 +2223,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			wma->dfs_ic->ic_curchan =
 				wma_dfs_configure_channel(wma->dfs_ic, chan,
 							  chanmode, req);
-			cdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
+			qdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
 
 			wma_unified_dfs_phyerr_filter_offload_enable(wma);
 			dfs->disable_dfs_ch_switch =
@@ -2460,9 +2460,9 @@ int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
 				event->vdev_id);
 		return -EINVAL;
 	}
-	cdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
+	qdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
 				WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-	cdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
+	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
 	/* Send response to upper layers */
 	wma_vdev_detach_callback(req_msg->user_data);
 	cdf_mc_timer_stop(&req_msg->event_timeout);
@@ -2513,9 +2513,9 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	cdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
+	qdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
 				WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-	cdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
+	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
 		/* Cleanup timeout handler */
 	cdf_mc_timer_stop(&req_msg->event_timeout);
 	cdf_mc_timer_destroy(&req_msg->event_timeout);
@@ -2633,15 +2633,15 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	cdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
 			  wma_hold_req_timer, req);
 	cdf_mc_timer_start(&req->event_timeout, timeout);
-	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
 	status = qdf_list_insert_back(&wma->wma_hold_req_queue, &req->node);
 	if (QDF_STATUS_SUCCESS != status) {
-		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGE(FL("Failed add request in queue"));
 		cdf_mem_free(req);
 		return NULL;
 	}
-	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 	return req;
 }
 
@@ -2815,9 +2815,9 @@ void wma_vdev_resp_timer(void *data)
 
 		if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 			 WMI_SERVICE_SYNC_DELETE_CMDS)) {
-			cdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
+			qdf_wake_lock_release(&wma->wmi_cmd_rsp_wake_lock,
 				WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-			cdf_runtime_pm_allow_suspend(
+			qdf_runtime_pm_allow_suspend(
 				wma->wmi_cmd_rsp_runtime_lock);
 		}
 		params->status = QDF_STATUS_E_TIMEOUT;
@@ -2941,17 +2941,17 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 	cdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
 			  wma_vdev_resp_timer, req);
 	cdf_mc_timer_start(&req->event_timeout, timeout);
-	cdf_spin_lock_bh(&wma->vdev_respq_lock);
+	qdf_spin_lock_bh(&wma->vdev_respq_lock);
 	status = qdf_list_insert_back(&wma->vdev_resp_queue, &req->node);
 	if (QDF_STATUS_SUCCESS != status) {
-		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 		WMA_LOGE(FL("Failed add request in queue for vdev_id %d type %d"),
 			 vdev_id, type);
 		cdf_mem_free(req);
 		return NULL;
 	}
 
-	cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 	return req;
 }
 
@@ -4385,10 +4385,10 @@ static void wma_delete_sta_req_ap_mode(tp_wma_handle wma,
 		 * Acquire wake lock and bus lock till
 		 * firmware sends the response
 		 */
-		cdf_wake_lock_timeout_acquire(&wma->wmi_cmd_rsp_wake_lock,
+		qdf_wake_lock_timeout_acquire(&wma->wmi_cmd_rsp_wake_lock,
 				      WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION,
 				      WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
-		cdf_runtime_pm_prevent_suspend(wma->wmi_cmd_rsp_runtime_lock);
+		qdf_runtime_pm_prevent_suspend(wma->wmi_cmd_rsp_runtime_lock);
 		return;
 	}
 

@@ -51,7 +51,7 @@
 #include <cdf_net_types.h>      /* CDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <cdf_util.h>           /* cdf_assert */
-#include <cdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* cdf_spinlock */
 #include <cds_queue.h>          /* TAILQ */
 #include <qdf_time.h>
 #include <qdf_timer.h>
@@ -131,18 +131,18 @@
 #define DFS_EXT_CHAN_LOADING_THRESH     30
 #define DFS_DEFAULT_PRI_MARGIN          6
 #define DFS_DEFAULT_FIXEDPATTERN_PRI_MARGIN       4
-#define ATH_DFSQ_LOCK(_dfs)        cdf_spin_lock_bh((&(_dfs)->dfs_radarqlock))
-#define ATH_DFSQ_UNLOCK(_dfs)      cdf_spin_unlock_bh((&(_dfs)->dfs_radarqlock))
-#define ATH_DFSQ_LOCK_INIT(_dfs)   cdf_spinlock_init(&(_dfs)->dfs_radarqlock)
+#define ATH_DFSQ_LOCK(_dfs)        qdf_spin_lock_bh((&(_dfs)->dfs_radarqlock))
+#define ATH_DFSQ_UNLOCK(_dfs)      qdf_spin_unlock_bh((&(_dfs)->dfs_radarqlock))
+#define ATH_DFSQ_LOCK_INIT(_dfs)   qdf_spinlock_create(&(_dfs)->dfs_radarqlock)
 
-#define ATH_ARQ_LOCK(_dfs)         cdf_spin_lock_bh((&(_dfs)->dfs_arqlock))
-#define ATH_ARQ_UNLOCK(_dfs)       cdf_spin_unlock_bh((&(_dfs)->dfs_arqlock))
-#define ATH_ARQ_LOCK_INIT(_dfs)    cdf_spinlock_init(&(_dfs)->dfs_arqlock)
+#define ATH_ARQ_LOCK(_dfs)         qdf_spin_lock_bh((&(_dfs)->dfs_arqlock))
+#define ATH_ARQ_UNLOCK(_dfs)       qdf_spin_unlock_bh((&(_dfs)->dfs_arqlock))
+#define ATH_ARQ_LOCK_INIT(_dfs)    qdf_spinlock_create(&(_dfs)->dfs_arqlock)
 
-#define ATH_DFSEVENTQ_LOCK(_dfs)   cdf_spin_lock_bh((&(_dfs)->dfs_eventqlock))
-#define ATH_DFSEVENTQ_UNLOCK(_dfs) cdf_spin_unlock_bh((&(_dfs)->dfs_eventqlock))
+#define ATH_DFSEVENTQ_LOCK(_dfs)   qdf_spin_lock_bh((&(_dfs)->dfs_eventqlock))
+#define ATH_DFSEVENTQ_UNLOCK(_dfs) qdf_spin_unlock_bh((&(_dfs)->dfs_eventqlock))
 #define ATH_DFSEVENTQ_LOCK_INIT(_dfs) \
-				   cdf_spinlock_init((&(_dfs)->dfs_eventqlock))
+				   qdf_spinlock_create((&(_dfs)->dfs_eventqlock))
 /* Mask for time stamp from descriptor */
 #define DFS_TSMASK              0xFFFFFFFF
 /* Shift for time stamp from descriptor */
@@ -222,7 +222,7 @@
 #define DFS_ETSI_TYPE3_WAR_PRI_UPPER_LIMIT 435
 #define DFS_ETSI_WAR_VALID_PULSE_DURATION 15
 
-typedef cdf_spinlock_t dfsq_lock_t;
+typedef qdf_spinlock_t dfsq_lock_t;
 
 #ifdef WIN32
 #pragma pack(push, dfs_pulseparams, 1)

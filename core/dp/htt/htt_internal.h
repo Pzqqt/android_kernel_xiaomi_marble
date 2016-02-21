@@ -362,16 +362,16 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 #endif
 
 #define HTT_TX_MUTEX_INIT(_mutex)			\
-	cdf_spinlock_init(_mutex)
+	qdf_spinlock_create(_mutex)
 
 #define HTT_TX_MUTEX_ACQUIRE(_mutex)			\
-	cdf_spin_lock_bh(_mutex)
+	qdf_spin_lock_bh(_mutex)
 
 #define HTT_TX_MUTEX_RELEASE(_mutex)			\
-	cdf_spin_unlock_bh(_mutex)
+	qdf_spin_unlock_bh(_mutex)
 
 #define HTT_TX_MUTEX_DESTROY(_mutex)			\
-	cdf_spinlock_destroy(_mutex)
+	qdf_spinlock_destroy(_mutex)
 
 #define HTT_TX_DESC_PADDR(_pdev, _tx_desc_vaddr)       \
 	((_pdev)->tx_descs.pool_paddr +  (uint32_t)	  \
@@ -381,7 +381,7 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 #ifdef ATH_11AC_TXCOMPACT
 
 #define HTT_TX_NBUF_QUEUE_MUTEX_INIT(_pdev)		\
-	cdf_spinlock_init(&_pdev->txnbufq_mutex)
+	qdf_spinlock_create(&_pdev->txnbufq_mutex)
 
 #define HTT_TX_NBUF_QUEUE_MUTEX_DESTROY(_pdev)	       \
 	HTT_TX_MUTEX_DESTROY(&_pdev->txnbufq_mutex)

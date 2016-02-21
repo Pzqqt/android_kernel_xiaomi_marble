@@ -2275,7 +2275,7 @@ int wmi_desc_pool_init(tp_wma_handle wma_handle, uint32_t pool_size)
 	wma_handle->wmi_desc_pool.array[i].next = NULL;
 	wma_handle->wmi_desc_pool.array[i].wmi_desc.desc_id = i;
 
-	cdf_spinlock_init(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spinlock_create(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 	return 0;
 }
 
@@ -2287,7 +2287,7 @@ int wmi_desc_pool_init(tp_wma_handle wma_handle, uint32_t pool_size)
  */
 void wmi_desc_pool_deinit(tp_wma_handle wma_handle)
 {
-	cdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 	if (wma_handle->wmi_desc_pool.array) {
 		cdf_mem_free(wma_handle->wmi_desc_pool.array);
 		wma_handle->wmi_desc_pool.array = NULL;
@@ -2298,8 +2298,8 @@ void wmi_desc_pool_deinit(tp_wma_handle wma_handle)
 	wma_handle->wmi_desc_pool.freelist = NULL;
 	wma_handle->wmi_desc_pool.pool_size = 0;
 	wma_handle->wmi_desc_pool.num_free = 0;
-	cdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
-	cdf_spinlock_destroy(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spinlock_destroy(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 }
 
 /**
@@ -2312,14 +2312,14 @@ struct wmi_desc_t *wmi_desc_get(tp_wma_handle wma_handle)
 {
 	struct wmi_desc_t *wmi_desc = NULL;
 
-	cdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 	if (wma_handle->wmi_desc_pool.freelist) {
 		wma_handle->wmi_desc_pool.num_free--;
 		wmi_desc = &wma_handle->wmi_desc_pool.freelist->wmi_desc;
 		wma_handle->wmi_desc_pool.freelist =
 			wma_handle->wmi_desc_pool.freelist->next;
 	}
-	cdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 
 	return wmi_desc;
 }
@@ -2333,12 +2333,12 @@ struct wmi_desc_t *wmi_desc_get(tp_wma_handle wma_handle)
  */
 void wmi_desc_put(tp_wma_handle wma_handle, struct wmi_desc_t *wmi_desc)
 {
-	cdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 	((union wmi_desc_elem_t *)wmi_desc)->next =
 		wma_handle->wmi_desc_pool.freelist;
 	wma_handle->wmi_desc_pool.freelist = (union wmi_desc_elem_t *)wmi_desc;
 	wma_handle->wmi_desc_pool.num_free++;
-	cdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
+	qdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 }
 
 #define mgmt_tx_dl_frm_len 64

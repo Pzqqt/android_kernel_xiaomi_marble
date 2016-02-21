@@ -39,7 +39,7 @@
 #endif /* HIF_PCI */
 #include "cds_api.h"
 #include "qdf_status.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "cds_sched.h"
 #include "osdep.h"
 #include "hif.h"

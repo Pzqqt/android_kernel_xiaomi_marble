@@ -76,7 +76,7 @@ struct wmi_unified {
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
 	uint32_t max_event_idx;
 	void *htc_handle;
-	cdf_spinlock_t eventq_lock;
+	qdf_spinlock_t eventq_lock;
 	cdf_nbuf_queue_t event_queue;
 	struct work_struct rx_event_work;
 #ifdef WLAN_OPEN_SOURCE
@@ -85,7 +85,7 @@ struct wmi_unified {
 #endif /* WLAN_OPEN_SOURCE */
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	cdf_spinlock_t wmi_record_lock;
+	qdf_spinlock_t wmi_record_lock;
 #endif /*WMI_INTERFACE_EVENT_LOGGING */
 
 	qdf_atomic_t is_target_suspended;

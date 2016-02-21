@@ -136,7 +136,7 @@ struct sap_avoid_channels_info {
 
 typedef struct sSapContext {
 
-	cdf_mutex_t SapGlobalLock;
+	qdf_mutex_t SapGlobalLock;
 
 	/* Include the current channel of AP */
 	uint32_t channel;

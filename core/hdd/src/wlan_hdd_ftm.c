@@ -252,7 +252,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 		goto err_sched_close;
 	}
 
-	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
+	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 	if (bmi_download_firmware(ol_ctx)) {
 		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
@@ -496,10 +496,10 @@ static QDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 		cds_get_global_context();
 #endif
 
-	CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO, "cds prestart");
+	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO, "cds prestart");
 	if (NULL == p_cds_context->pWMAContext) {
 		CDF_ASSERT(0);
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "%s: WMA NULL context", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -510,7 +510,7 @@ static QDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 	/*call WMA pre start */
 	vStatus = wma_pre_start(p_cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
 			  "Failed to WMA prestart ");
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -535,7 +535,7 @@ static QDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 #if  defined(QCA_WIFI_FTM)
 	vStatus = htc_start(gp_cds_context->htc_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
-		CDF_TRACE(CDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_FATAL,
 			  "Failed to Start HTC");
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
@@ -560,13 +560,13 @@ int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx)
 	QDF_STATUS vStatus = QDF_STATUS_SUCCESS;
 	p_cds_contextType p_cds_context = NULL;
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: Opening CDS", __func__);
 
 	p_cds_context = cds_get_global_context();
 
 	if (NULL == p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Trying to open CDS without a PreOpen", __func__);
 		CDF_ASSERT(0);
 		goto err_cdf_status_failure;
@@ -585,7 +585,7 @@ int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx)
 
 	/* Save the hal context in Adapter */
 	hdd_ctx->hHal =
-		(tHalHandle) cds_get_context(CDF_MODULE_ID_SME);
+		(tHalHandle) cds_get_context(QDF_MODULE_ID_SME);
 
 	if (NULL == hdd_ctx->hHal) {
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: HAL context is null",
@@ -661,13 +661,13 @@ int wlan_hdd_ftm_close(hdd_context_t *hdd_ctx)
 	hdd_adapter_t *adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_FTM);
 	ENTER();
 	if (adapter == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 			  "%s:adapter is NULL", __func__);
 		return -ENXIO;
 	}
 
 	if (WLAN_FTM_STARTED == hdd_ctx->ftm.ftm_state) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Ftm has been started. stopping ftm", __func__);
 		wlan_ftm_stop(hdd_ctx);
 	}
@@ -753,18 +753,18 @@ static int wlan_hdd_ftm_start(hdd_context_t *hdd_ctx)
 		return 0;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: Starting CLD SW", __func__);
 
 	/* We support only one instance for now ... */
 	if (p_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: mismatch in context", __func__);
 		goto err_status_failure;
 	}
 
 	if (p_cds_context->pMACContext == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: MAC NULL context", __func__);
 		goto err_status_failure;
 	}
@@ -785,11 +785,11 @@ static int wlan_hdd_ftm_start(hdd_context_t *hdd_ctx)
 		goto err_status_failure;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: MAC correctly started", __func__);
 
 	if (hdd_ftm_service_registration(hdd_ctx)) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "%s: failed", __func__);
 		goto err_ftm_service_reg;
 	}
@@ -1022,7 +1022,7 @@ QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 		   cdf_mem_malloc(sizeof(*cmd_data));
 
 	if (!cmd_data) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("Failed to allocate FTM command data"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1030,7 +1030,7 @@ QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 	cmd_data->data = cdf_mem_malloc(len);
 
 	if (!cmd_data->data) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  ("Failed to allocate FTM command data buffer"));
 		cdf_mem_free(cmd_data);
 		return QDF_STATUS_E_NOMEM;

@@ -40,7 +40,7 @@
 #include <qdf_list.h>
 #include <cdf_trace.h>
 #include <qdf_event.h>
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include <cds_reg_service.h>
 #include <cds_mq.h>
 #include <cds_packet.h>

@@ -37,7 +37,7 @@
 /* Include Files */
 #include <qdf_types.h>
 #include <qdf_status.h>
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include <i_cdf_mc_timer.h>
 
 #ifdef TIMER_MANAGER
@@ -79,7 +79,7 @@ typedef struct cdf_mc_timer_s {
 	cdf_mc_timer_platform_t platformInfo;
 	cdf_mc_timer_callback_t callback;
 	void *userData;
-	cdf_mutex_t lock;
+	qdf_mutex_t lock;
 	QDF_TIMER_TYPE type;
 	CDF_TIMER_STATE state;
 } cdf_mc_timer_t;

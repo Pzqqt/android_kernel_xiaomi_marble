@@ -28,7 +28,7 @@
 #include <cdf_net_types.h>      /* CDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <cdf_util.h>           /* cdf_assert */
-#include <cdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* cdf_spinlock */
 #ifdef QCA_COMPUTE_TX_DELAY
 #include <qdf_time.h>           /* qdf_system_ticks */
 #endif
@@ -120,13 +120,13 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 {
 	struct ol_tx_desc_t *tx_desc = NULL;
 
-	cdf_spin_lock_bh(&pdev->tx_mutex);
+	qdf_spin_lock_bh(&pdev->tx_mutex);
 	if (pdev->tx_desc.freelist) {
 		tx_desc = ol_tx_get_desc_global_pool(pdev);
 		ol_tx_desc_sanity_checks(pdev, tx_desc);
 		ol_tx_desc_compute_delay(tx_desc);
 	}
-	cdf_spin_unlock_bh(&pdev->tx_mutex);
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
 	return tx_desc;
 }
 
@@ -163,23 +163,23 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_desc_t *tx_desc = NULL;
 
 	if (pool) {
-		cdf_spin_lock_bh(&pool->flow_pool_lock);
+		qdf_spin_lock_bh(&pool->flow_pool_lock);
 		if (pool->avail_desc) {
 			tx_desc = ol_tx_get_desc_flow_pool(pool);
 			if (cdf_unlikely(pool->avail_desc < pool->stop_th)) {
 				pool->status = FLOW_POOL_ACTIVE_PAUSED;
-				cdf_spin_unlock_bh(&pool->flow_pool_lock);
+				qdf_spin_unlock_bh(&pool->flow_pool_lock);
 				/* pause network queues */
 				pdev->pause_cb(vdev->vdev_id,
 					       WLAN_STOP_ALL_NETIF_QUEUE,
 					       WLAN_DATA_FLOW_CONTROL);
 			} else {
-				cdf_spin_unlock_bh(&pool->flow_pool_lock);
+				qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			}
 			ol_tx_desc_sanity_checks(pdev, tx_desc);
 			ol_tx_desc_compute_delay(tx_desc);
 		} else {
-			cdf_spin_unlock_bh(&pool->flow_pool_lock);
+			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			pdev->pool_stats.pkt_drop_no_desc++;
 		}
 	} else {
@@ -229,7 +229,7 @@ ol_tx_desc_alloc_wrapper(struct ol_txrx_pdev_t *pdev,
  */
 void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 {
-	cdf_spin_lock_bh(&pdev->tx_mutex);
+	qdf_spin_lock_bh(&pdev->tx_mutex);
 
 	if (tx_desc->pkt_type == ol_tx_frm_tso) {
 		if (cdf_unlikely(tx_desc->tso_desc == NULL)) {
@@ -244,7 +244,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_timestamp(tx_desc);
 
 	ol_tx_put_desc_global_pool(pdev, tx_desc);
-	cdf_spin_unlock_bh(&pdev->tx_mutex);
+	qdf_spin_unlock_bh(&pdev->tx_mutex);
 }
 
 #else
@@ -271,7 +271,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	ol_tx_desc_reset_pkt_type(tx_desc);
 	ol_tx_desc_reset_timestamp(tx_desc);
 
-	cdf_spin_lock_bh(&pool->flow_pool_lock);
+	qdf_spin_lock_bh(&pool->flow_pool_lock);
 	ol_tx_put_desc_flow_pool(pool, tx_desc);
 	switch (pool->status) {
 	case FLOW_POOL_ACTIVE_PAUSED:
@@ -284,7 +284,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 		break;
 	case FLOW_POOL_INVALID:
 		if (pool->avail_desc == pool->flow_pool_size) {
-			cdf_spin_unlock_bh(&pool->flow_pool_lock);
+			qdf_spin_unlock_bh(&pool->flow_pool_lock);
 			ol_tx_free_invalid_flow_pool(pool);
 			qdf_print("%s %d pool is INVALID State!!\n",
 				 __func__, __LINE__);
@@ -298,7 +298,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 				 __func__, __LINE__);
 		break;
 	};
-	cdf_spin_unlock_bh(&pool->flow_pool_lock);
+	qdf_spin_unlock_bh(&pool->flow_pool_lock);
 
 }
 #endif
@@ -550,13 +550,13 @@ struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 {
 	struct cdf_tso_seg_elem_t *tso_seg = NULL;
 
-	cdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	if (pdev->tso_seg_pool.freelist) {
 		pdev->tso_seg_pool.num_free--;
 		tso_seg = pdev->tso_seg_pool.freelist;
 		pdev->tso_seg_pool.freelist = pdev->tso_seg_pool.freelist->next;
 	}
-	cdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
 
 	return tso_seg;
 }
@@ -576,10 +576,10 @@ struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
 	 struct cdf_tso_seg_elem_t *tso_seg)
 {
-	cdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	tso_seg->next = pdev->tso_seg_pool.freelist;
 	pdev->tso_seg_pool.freelist = tso_seg;
 	pdev->tso_seg_pool.num_free++;
-	cdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
 }
 #endif

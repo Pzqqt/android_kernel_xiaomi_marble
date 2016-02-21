@@ -4502,10 +4502,10 @@ static void __lim_process_sme_register_mgmt_frame_req(tpAniSirGlobal mac_ctx,
 				sme_req->registerFrame, sme_req->frameType,
 				sme_req->matchLen);
 	/* First check whether entry exists already */
-	cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+	qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
 	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
 			    (qdf_list_node_t **) &lim_mgmt_regn);
-	cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
+	qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 
 	while (lim_mgmt_regn != NULL) {
 		if (lim_mgmt_regn->frameType != sme_req->frameType)
@@ -4525,21 +4525,21 @@ static void __lim_process_sme_register_mgmt_frame_req(tpAniSirGlobal mac_ctx,
 			break;
 		}
 skip_match:
-		cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+		qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
 		qdf_status = qdf_list_peek_next(
 				&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
 				(qdf_list_node_t *)lim_mgmt_regn,
 				(qdf_list_node_t **)&next);
-		cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
+		qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 		lim_mgmt_regn = next;
 		next = NULL;
 	}
 	if (match) {
-		cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+		qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
 		qdf_list_remove_node(
 				&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
 				(qdf_list_node_t *)lim_mgmt_regn);
-		cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
+		qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 		cdf_mem_free(lim_mgmt_regn);
 	}
 
@@ -4559,12 +4559,12 @@ skip_match:
 					     sme_req->matchData,
 					     sme_req->matchLen);
 			}
-			cdf_mutex_acquire(
+			qdf_mutex_acquire(
 					&mac_ctx->lim.lim_frame_register_lock);
 			qdf_list_insert_front(&mac_ctx->lim.
 					      gLimMgmtFrameRegistratinQueue,
 					      &lim_mgmt_regn->node);
-			cdf_mutex_release(
+			qdf_mutex_release(
 					&mac_ctx->lim.lim_frame_register_lock);
 		}
 	}

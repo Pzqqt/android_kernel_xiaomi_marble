@@ -757,9 +757,9 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 {
 	int max_to_accept;
 
-	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	if (vdev->ll_pause.paused_reason) {
-		cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+		qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 		return;
 	}
 
@@ -814,14 +814,14 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 			vdev->ll_pause.q_overflow_cnt++;
 	}
 
-	cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 }
 
 static cdf_nbuf_t
 ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 			      cdf_nbuf_t msdu_list, uint8_t start_timer)
 {
-	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	while (msdu_list &&
 	       vdev->ll_pause.txq.depth < vdev->ll_pause.max_q_depth) {
 		cdf_nbuf_t next = cdf_nbuf_next(msdu_list);
@@ -851,7 +851,7 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 					OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
 		vdev->ll_pause.is_q_timer_on = true;
 	}
-	cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 
 	return msdu_list;
 }
@@ -942,17 +942,17 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 		more = 0;
 		TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
 
-			cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+			qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 			if (vdev->ll_pause.txq.depth) {
 				if (vdev->ll_pause.paused_reason) {
-					cdf_spin_unlock_bh(&vdev->ll_pause.
+					qdf_spin_unlock_bh(&vdev->ll_pause.
 							   mutex);
 					continue;
 				}
 
 				tx_msdu = vdev->ll_pause.txq.head;
 				if (NULL == tx_msdu) {
-					cdf_spin_unlock_bh(&vdev->ll_pause.
+					qdf_spin_unlock_bh(&vdev->ll_pause.
 							   mutex);
 					continue;
 				}
@@ -987,22 +987,22 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 			/*check if there are more msdus to transmit */
 			if (vdev->ll_pause.txq.depth)
 				more = 1;
-			cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+			qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 		}
 	} while (more && max_to_send);
 
 	vdev = NULL;
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+		qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 		if (vdev->ll_pause.txq.depth) {
 			qdf_timer_stop(&pdev->tx_throttle.tx_timer);
 			qdf_timer_start(
 				&pdev->tx_throttle.tx_timer,
 				OL_TX_VDEV_PAUSE_QUEUE_SEND_PERIOD_MS);
-			cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+			qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 			return;
 		}
-		cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+		qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 	}
 }
 
@@ -1376,7 +1376,7 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 		c_element->next = NULL;
 	}
 	pdev->tso_seg_pool.pool_size = num_seg;
-	cdf_spinlock_init(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spinlock_create(&pdev->tso_seg_pool.tso_mutex);
 }
 
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
@@ -1385,7 +1385,7 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	struct cdf_tso_seg_elem_t *c_element;
 	struct cdf_tso_seg_elem_t *temp;
 
-	cdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	c_element = pdev->tso_seg_pool.freelist;
 	for (i = 0; i < pdev->tso_seg_pool.pool_size; i++) {
 		temp = c_element->next;
@@ -1398,7 +1398,7 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	pdev->tso_seg_pool.freelist = NULL;
 	pdev->tso_seg_pool.num_free = 0;
 	pdev->tso_seg_pool.pool_size = 0;
-	cdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
-	cdf_spinlock_destroy(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spin_unlock_bh(&pdev->tso_seg_pool.tso_mutex);
+	qdf_spinlock_destroy(&pdev->tso_seg_pool.tso_mutex);
 }
 #endif /* FEATURE_TSO */

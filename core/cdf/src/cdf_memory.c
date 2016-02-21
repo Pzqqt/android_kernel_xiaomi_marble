@@ -35,7 +35,7 @@
 #include "cdf_memory.h"
 #include "cdf_nbuf.h"
 #include "cdf_trace.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "cdf_mc_timer.h"
 
 #if defined(CONFIG_CNSS)
@@ -51,7 +51,7 @@
 #include <linux/stacktrace.h>
 
 qdf_list_t cdf_mem_list;
-cdf_spinlock_t cdf_mem_list_lock;
+qdf_spinlock_t cdf_mem_list_lock;
 
 static uint8_t WLAN_MEM_HEADER[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
 					0x67, 0x68 };
@@ -137,7 +137,7 @@ void cdf_mem_init(void)
 {
 	/* Initalizing the list with maximum size of 60000 */
 	qdf_list_create(&cdf_mem_list, 60000);
-	cdf_spinlock_init(&cdf_mem_list_lock);
+	qdf_spinlock_create(&cdf_mem_list_lock);
 	cdf_net_buf_debug_init();
 	return;
 }
@@ -169,10 +169,10 @@ void cdf_mem_clean(void)
 			  __func__, (int)listSize);
 
 		do {
-			cdf_spin_lock(&cdf_mem_list_lock);
+			qdf_spin_lock(&cdf_mem_list_lock);
 			qdf_status =
 				qdf_list_remove_front(&cdf_mem_list, &pNode);
-			cdf_spin_unlock(&cdf_mem_list_lock);
+			qdf_spin_unlock(&cdf_mem_list_lock);
 			if (QDF_STATUS_SUCCESS == qdf_status) {
 				memStruct = (struct s_cdf_mem_struct *)pNode;
 				/* Take care to log only once multiple memory
@@ -301,10 +301,10 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		cdf_mem_copy((uint8_t *) (memStruct + 1) + size,
 			     &WLAN_MEM_TAIL[0], sizeof(WLAN_MEM_TAIL));
 
-		cdf_spin_lock_irqsave(&cdf_mem_list_lock);
+		qdf_spin_lock_irqsave(&cdf_mem_list_lock);
 		qdf_status = qdf_list_insert_front(&cdf_mem_list,
 						   &memStruct->pNode);
-		cdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
+		qdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
 			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 				  "%s: Unable to insert node into List qdf_status %d",
@@ -338,10 +338,10 @@ void cdf_mem_free(void *ptr)
 			return;
 #endif
 
-		cdf_spin_lock_irqsave(&cdf_mem_list_lock);
+		qdf_spin_lock_irqsave(&cdf_mem_list_lock);
 		qdf_status =
 			qdf_list_remove_node(&cdf_mem_list, &memStruct->pNode);
-		cdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
+		qdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
 
 		if (QDF_STATUS_SUCCESS == qdf_status) {
 			if (0 == cdf_mem_compare(memStruct->header,

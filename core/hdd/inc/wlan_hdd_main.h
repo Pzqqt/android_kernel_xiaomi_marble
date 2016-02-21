@@ -1105,7 +1105,7 @@ struct hdd_context_s {
 	struct wiphy *wiphy;
 	/* TODO Remove this from here. */
 
-	cdf_spinlock_t hdd_adapter_lock;
+	qdf_spinlock_t hdd_adapter_lock;
 	qdf_list_t hddAdapters; /* List of adapters */
 
 	/* One per STA: 1 for BCMC_STA_ID, 1 for each SAP_SELF_STA_ID, 1 for WDS_STAID */
@@ -1163,10 +1163,10 @@ struct hdd_context_s {
 	struct qdf_mac_addr p2pDeviceAddress;
 
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
-	cdf_wake_lock_t rx_wake_lock;
+	qdf_wake_lock_t rx_wake_lock;
 #endif
 
-	cdf_wake_lock_t sap_wake_lock;
+	qdf_wake_lock_t sap_wake_lock;
 
 #ifdef FEATURE_WLAN_TDLS
 	eTDLSSupportMode tdls_mode;
@@ -1202,7 +1202,7 @@ struct hdd_context_s {
 	/* Use below lock to protect access to isSchedScanUpdatePending
 	 * since it will be accessed in two different contexts.
 	 */
-	cdf_spinlock_t sched_scan_lock;
+	qdf_spinlock_t sched_scan_lock;
 
 	/* Flag keeps track of wiphy suspend/resume */
 	bool isWiphySuspended;
@@ -1274,7 +1274,7 @@ struct hdd_context_s {
 	uint8_t skip_acs_scan_status;
 #endif
 
-	cdf_wake_lock_t sap_dfs_wakelock;
+	qdf_wake_lock_t sap_dfs_wakelock;
 	atomic_t sap_dfs_ref_cnt;
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
@@ -1289,9 +1289,9 @@ struct hdd_context_s {
 	unsigned long g_event_flags;
 	/* RoC request queue and work */
 	struct delayed_work roc_req_work;
-	cdf_spinlock_t hdd_roc_req_q_lock;
+	qdf_spinlock_t hdd_roc_req_q_lock;
 	qdf_list_t hdd_roc_req_q;
-	cdf_spinlock_t hdd_scan_req_q_lock;
+	qdf_spinlock_t hdd_scan_req_q_lock;
 	qdf_list_t hdd_scan_req_q;
 	uint8_t miracast_value;
 #ifdef WLAN_NS_OFFLOAD
@@ -1319,7 +1319,7 @@ struct hdd_context_s {
 
 	cdf_mc_timer_t dbs_opportunistic_timer;
 	bool connection_in_progress;
-	cdf_spinlock_t connection_status_lock;
+	qdf_spinlock_t connection_status_lock;
 
 	uint16_t hdd_txrx_hist_idx;
 	struct hdd_tx_rx_histogram hdd_txrx_hist[NUM_TX_RX_HISTOGRAM];

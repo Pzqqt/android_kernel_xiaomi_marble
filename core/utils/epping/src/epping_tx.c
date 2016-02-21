@@ -200,14 +200,14 @@ void epping_tx_timer_expire(epping_adapter_t *pAdapter)
 
 	/* if nodrop queue is not empty, continue to arm timer */
 	if (nodrop_skb) {
-		cdf_spin_lock_bh(&pAdapter->data_lock);
+		qdf_spin_lock_bh(&pAdapter->data_lock);
 		/* if nodrop queue is not empty, continue to arm timer */
 		if (pAdapter->epping_timer_state != EPPING_TX_TIMER_RUNNING) {
 			pAdapter->epping_timer_state = EPPING_TX_TIMER_RUNNING;
 			qdf_timer_mod(&pAdapter->epping_timer,
 					      TX_RETRY_TIMEOUT_IN_MS);
 		}
-		cdf_spin_unlock_bh(&pAdapter->data_lock);
+		qdf_spin_unlock_bh(&pAdapter->data_lock);
 	} else {
 		pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 	}
@@ -288,13 +288,13 @@ tx_fail:
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
 			   "%s: nodrop: %p queued\n", __func__, skb);
 		cdf_nbuf_queue_add(&pAdapter->nodrop_queue, skb);
-		cdf_spin_lock_bh(&pAdapter->data_lock);
+		qdf_spin_lock_bh(&pAdapter->data_lock);
 		if (pAdapter->epping_timer_state != EPPING_TX_TIMER_RUNNING) {
 			pAdapter->epping_timer_state = EPPING_TX_TIMER_RUNNING;
 			qdf_timer_mod(&pAdapter->epping_timer,
 					      TX_RETRY_TIMEOUT_IN_MS);
 		}
-		cdf_spin_unlock_bh(&pAdapter->data_lock);
+		qdf_spin_unlock_bh(&pAdapter->data_lock);
 	}
 
 	return 0;
@@ -325,7 +325,7 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 
 	cdf_nbuf_queue_init(&skb_queue);
 
-	cdf_spin_lock_bh(&pAdapter->data_lock);
+	qdf_spin_lock_bh(&pAdapter->data_lock);
 
 	while (!HTC_QUEUE_EMPTY(pPacketQueue)) {
 		htc_pkt = htc_packet_dequeue(pPacketQueue);
@@ -367,7 +367,7 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 		epping_free_cookie(pAdapter->pEpping_ctx, cookie);
 	}
 
-	cdf_spin_unlock_bh(&pAdapter->data_lock);
+	qdf_spin_unlock_bh(&pAdapter->data_lock);
 
 	/* free all skbs in our local list */
 	while (cdf_nbuf_queue_len(&skb_queue)) {

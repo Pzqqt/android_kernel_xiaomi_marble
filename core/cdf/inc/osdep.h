@@ -30,7 +30,7 @@
 
 #include <qdf_types.h>
 #include <cdf_memory.h>
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include <qdf_time.h>
 #include <qdf_timer.h>
 #include <qdf_defer.h>

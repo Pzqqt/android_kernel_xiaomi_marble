@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,7 +27,7 @@
 
 /*===========================================================================
 
-                     dfs_misc.c
+			dfs_misc.c
 
    OVERVIEW:
 
@@ -41,7 +41,7 @@
 
 /*===========================================================================
 
-                      EDIT HISTORY FOR FILE
+			EDIT HISTORY FOR FILE
 
    This section contains comments describing changes made to the module.
    Notice that changes are listed in reverse chronological order.
@@ -107,9 +107,9 @@ dfs_get_pri_margin(struct ath_dfs *dfs, int is_extchan_detect,
 	else
 		pri_margin = DFS_DEFAULT_PRI_MARGIN;
 
-	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	qdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (IS_CHAN_HT40(dfs->ic->ic_curchan)) {
-		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+		qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		ext_chan_busy = dfs->ic->ic_get_ext_busy(dfs->ic);
 		if (ext_chan_busy >= 0) {
 			dfs->dfs_rinfo.ext_chan_busy_ts =
@@ -134,7 +134,7 @@ dfs_get_pri_margin(struct ath_dfs *dfs, int is_extchan_detect,
 
 		pri_margin -= adjust_pri;
 	} else {
-		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+		qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	}
 	return pri_margin;
 }
@@ -150,9 +150,9 @@ int dfs_get_filter_threshold(struct ath_dfs *dfs, struct dfs_filter *rf,
 
 	thresh = rf->rf_threshold;
 
-	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	qdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (IS_CHAN_HT40(dfs->ic->ic_curchan)) {
-		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+		qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		ext_chan_busy = dfs->ic->ic_get_ext_busy(dfs->ic);
 		if (ext_chan_busy >= 0) {
 			dfs->dfs_rinfo.ext_chan_busy_ts =
@@ -186,7 +186,7 @@ int dfs_get_filter_threshold(struct ath_dfs *dfs, struct dfs_filter *rf,
 
 		thresh += adjust_thresh;
 	} else {
-		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+		qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	}
 	return thresh;
 }
@@ -202,7 +202,7 @@ uint32_t dfs_round(int32_t val)
 	if (rem < 50)
 		return ival;
 	else
-		return (ival + 1);
+		return ival + 1;
 }
 
 struct dfs_ieee80211_channel *ieee80211_get_extchan(struct ieee80211com *ic)
@@ -273,12 +273,12 @@ struct dfs_state *dfs_getchanstate(struct ath_dfs *dfs, uint8_t *index,
 
 			if (index != NULL)
 				*index = (uint8_t) i;
-			return (rs);
+			return rs;
 		}
 	}
 	DFS_DPRINTK(dfs, ATH_DEBUG_DFS2, "%s: No more radar states left.\n",
 		    __func__);
-	return (NULL);
+	return NULL;
 }
 
 #endif /* ATH_SUPPORT_DFS */

@@ -2034,12 +2034,12 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 
 	radar_event = param_tlvs->fixed_param;
 
-	cdf_spin_lock_bh(&ic->chan_lock);
+	qdf_spin_lock_bh(&ic->chan_lock);
 	chan = ic->ic_curchan;
 	if (ic->disable_phy_err_processing) {
 		WMA_LOGD("%s: radar indication done,drop phyerror event",
 			__func__);
-		cdf_spin_unlock_bh(&ic->chan_lock);
+		qdf_spin_unlock_bh(&ic->chan_lock);
 		return 0;
 	}
 
@@ -2047,11 +2047,11 @@ static int wma_unified_dfs_radar_rx_event_handler(void *handle,
 		WMA_LOGE
 			("%s: Invalid DFS Phyerror event. Channel=%d is Non-DFS",
 			__func__, chan->ic_ieee);
-		cdf_spin_unlock_bh(&ic->chan_lock);
+		qdf_spin_unlock_bh(&ic->chan_lock);
 		return 0;
 	}
 
-	cdf_spin_unlock_bh(&ic->chan_lock);
+	qdf_spin_unlock_bh(&ic->chan_lock);
 	dfs->ath_dfs_stats.total_phy_errors++;
 
 	if (dfs->dfs_caps.ath_chip_is_bb_tlv) {
@@ -2890,7 +2890,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		if (node) {
 			WMA_LOGD("NLO match happened");
 			node->nlo_match_evt_received = true;
-			cdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
+			qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 					WMA_PNO_MATCH_WAKE_LOCK_TIMEOUT,
 					WIFI_POWER_EVENT_WAKELOCK_PNO);
 		}
@@ -3065,7 +3065,7 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 	}
 
 	if (wake_lock_duration) {
-		cdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
+		qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
 					      wake_lock_duration,
 					      WIFI_POWER_EVENT_WAKELOCK_WOW);
 		WMA_LOGA("Holding %d msec wake_lock", wake_lock_duration);
@@ -6634,7 +6634,7 @@ void wma_target_suspend_acknowledge(void *context)
 	wma->wow_nack = wow_nack;
 	qdf_event_set(&wma->target_suspend);
 	if (wow_nack)
-		cdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
+		qdf_wake_lock_timeout_acquire(&wma->wow_wake_lock,
 					      WMA_WAKE_LOCK_TIMEOUT,
 					      WIFI_POWER_EVENT_WAKELOCK_WOW);
 }
@@ -7301,7 +7301,7 @@ struct ieee80211com *wma_dfs_attach(struct ieee80211com *dfs_ic)
 	 * and shared DFS code
 	 */
 	dfs_ic->ic_dfs_notify_radar = ieee80211_mark_dfs;
-	cdf_spinlock_init(&dfs_ic->chan_lock);
+	qdf_spinlock_create(&dfs_ic->chan_lock);
 	/* Initializes DFS Data Structures and queues */
 	dfs_attach(dfs_ic);
 
@@ -7318,7 +7318,7 @@ void wma_dfs_detach(struct ieee80211com *dfs_ic)
 {
 	dfs_detach(dfs_ic);
 
-	cdf_spinlock_destroy(&dfs_ic->chan_lock);
+	qdf_spinlock_destroy(&dfs_ic->chan_lock);
 	if (NULL != dfs_ic->ic_curchan) {
 		OS_FREE(dfs_ic->ic_curchan);
 		dfs_ic->ic_curchan = NULL;
@@ -7636,7 +7636,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 	 * But, when DFS test mode is enabled, allow multiple dfs
 	 * radar events to be posted on the same channel.
 	 */
-	cdf_spin_lock_bh(&ic->chan_lock);
+	qdf_spin_lock_bh(&ic->chan_lock);
 	if (!pmac->sap.SapDfsInfo.disable_dfs_ch_switch)
 		wma->dfs_ic->disable_phy_err_processing = true;
 
@@ -7652,7 +7652,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 			WMA_LOGE("%s:Application triggered channel switch in progress!.. drop radar event indiaction to SAP",
 				__func__);
 			cdf_mem_free(radar_event);
-			cdf_spin_unlock_bh(&ic->chan_lock);
+			qdf_spin_unlock_bh(&ic->chan_lock);
 			return 0;
 		}
 
@@ -7670,7 +7670,7 @@ int wma_dfs_indicate_radar(struct ieee80211com *ic,
 		wma_send_msg(wma, WMA_DFS_RADAR_IND, (void *)radar_event, 0);
 		WMA_LOGE("%s:DFS- WMA_DFS_RADAR_IND Message Posted", __func__);
 	}
-	cdf_spin_unlock_bh(&ic->chan_lock);
+	qdf_spin_unlock_bh(&ic->chan_lock);
 
 	return 0;
 }

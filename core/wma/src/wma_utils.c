@@ -2170,20 +2170,20 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 		return NULL;
 	}
 
-	cdf_spin_lock_bh(&beacon->lock);
+	qdf_spin_lock_bh(&beacon->lock);
 
 	buf_size = cdf_nbuf_len(beacon->buf);
 	buf = cdf_mem_malloc(buf_size);
 
 	if (!buf) {
-		cdf_spin_unlock_bh(&beacon->lock);
+		qdf_spin_unlock_bh(&beacon->lock);
 		WMA_LOGE("%s: alloc failed for beacon buf", __func__);
 		return NULL;
 	}
 
 	cdf_mem_copy(buf, cdf_nbuf_data(beacon->buf), buf_size);
 
-	cdf_spin_unlock_bh(&beacon->lock);
+	qdf_spin_unlock_bh(&beacon->lock);
 
 	if (buffer_size)
 		*buffer_size = buf_size;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2002-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2002-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,7 +27,7 @@
 
 /*===========================================================================
 
-                              dfs_fcc_bin5.c
+				dfs_fcc_bin5.c
 
    OVERVIEW:
 
@@ -41,7 +41,7 @@
 
 /*===========================================================================
 
-                      EDIT HISTORY FOR FILE
+			EDIT HISTORY FOR FILE
 
    This section contains comments describing changes made to the module.
    Notice that changes are listed in reverse chronological order.
@@ -95,15 +95,15 @@ dfs_bin5_check_pulse(struct ath_dfs *dfs, struct dfs_event *re,
 			    !!(re->re_flags & DFS_EVENT_CHECKCHIRP),
 			    !!(re->re_flags & DFS_EVENT_HW_CHIRP),
 			    !!(re->re_flags & DFS_EVENT_SW_CHIRP));
-		return (0);
+		return 0;
 	}
 
 	/* Adjust the filter threshold for rssi in non TURBO mode */
-	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	qdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (!(dfs->ic->ic_curchan->ic_flags & CHANNEL_TURBO))
 		b5_rssithresh += br->br_pulse.b5_rssimargin;
 
-	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+	qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 
 	/*
 	 * Check if the pulse is within duration and rssi
@@ -115,7 +115,7 @@ dfs_bin5_check_pulse(struct ath_dfs *dfs, struct dfs_event *re,
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS_BIN5,
 			    "%s: dur=%d, rssi=%d - adding!\n",
 			    __func__, (int)re->re_dur, (int)re->re_rssi);
-		return (1);
+		return 1;
 	}
 
 	DFS_DPRINTK(dfs, ATH_DEBUG_DFS_BIN5,
@@ -124,7 +124,7 @@ dfs_bin5_check_pulse(struct ath_dfs *dfs, struct dfs_event *re,
 		    (unsigned long long)re->re_full_ts,
 		    (int)re->re_dur, (int)re->re_rssi);
 
-	return (0);
+	return 0;
 }
 
 int dfs_bin5_addpulse(struct ath_dfs *dfs, struct dfs_bin5radars *br,
@@ -567,7 +567,7 @@ dfs_check_chirping_merlin(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 	int same_sign;
 	int temp;
 
-	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	qdf_spin_lock_bh(&dfs->ic->chan_lock);
 	if (IS_CHAN_HT40(dfs->ic->ic_curchan)) {
 		num_fft_bytes = NUM_FFT_BYTES_HT40;
 		num_bin_bytes = NUM_BIN_BYTES_HT40;
@@ -598,7 +598,7 @@ dfs_check_chirping_merlin(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 		upper_mag_byte = UPPER_MAG_BYTE_HT20;
 	}
 
-	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+	qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	ptr = (uint8_t *) buf;
 	/*
 	 * sanity check for FFT buffer
@@ -634,7 +634,7 @@ dfs_check_chirping_merlin(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 		max_index_upper[i] =
 			(ptr[fft_start + upper_index_byte] >> 2) + num_subchan_bins;
 
-		cdf_spin_lock_bh(&dfs->ic->chan_lock);
+		qdf_spin_lock_bh(&dfs->ic->chan_lock);
 		if (!IS_CHAN_HT40(dfs->ic->ic_curchan)) {
 			/*
 			 * for HT20 mode indices are 6 bit signed number
@@ -643,7 +643,7 @@ dfs_check_chirping_merlin(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 			max_index_upper[i] = 0;
 		}
 
-		cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+		qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 		/*
 		 * Reconstruct the maximum magnitude for each sub-channel. Also select
 		 * and flag the max overall magnitude between the two sub-channels.

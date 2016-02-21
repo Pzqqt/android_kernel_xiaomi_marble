@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,7 +38,7 @@
 /*---------------------------------------------------------------------------
    Include files
    -------------------------------------------------------------------------*/
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 
 #define WLAN_EPPING_ENABLE_BIT          (1 << 8)
 #define WLAN_EPPING_IRQ_BIT             (1 << 9)

@@ -39,7 +39,7 @@
 
 #include "qdf_types.h"
 #include "cdf_mc_timer.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 
 typedef struct sP2pPsConfig {
 	uint8_t opp_ps;

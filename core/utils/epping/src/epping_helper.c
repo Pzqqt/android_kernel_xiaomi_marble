@@ -72,7 +72,7 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 			     sizeof(struct epping_cookie) *
 			     MAX_COOKIE_SLOT_SIZE);
 	}
-	cdf_spinlock_init(&pEpping_ctx->cookie_lock);
+	qdf_spinlock_create(&pEpping_ctx->cookie_lock);
 
 	for (i = 0; i < MAX_COOKIE_SLOTS_NUM; i++) {
 		struct epping_cookie *cookie_mem = pEpping_ctx->s_cookie_mem[i];
@@ -95,10 +95,10 @@ error:
 void epping_cookie_cleanup(epping_context_t *pEpping_ctx)
 {
 	int i;
-	cdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
+	qdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
 	pEpping_ctx->cookie_list = NULL;
 	pEpping_ctx->cookie_count = 0;
-	cdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
+	qdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
 	for (i = 0; i < MAX_COOKIE_SLOTS_NUM; i++) {
 		if (pEpping_ctx->s_cookie_mem[i]) {
 			cdf_mem_free(pEpping_ctx->s_cookie_mem[i]);
@@ -110,24 +110,24 @@ void epping_cookie_cleanup(epping_context_t *pEpping_ctx)
 void epping_free_cookie(epping_context_t *pEpping_ctx,
 			struct epping_cookie *cookie)
 {
-	cdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
+	qdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
 	cookie->next = pEpping_ctx->cookie_list;
 	pEpping_ctx->cookie_list = cookie;
 	pEpping_ctx->cookie_count++;
-	cdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
+	qdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
 }
 
 struct epping_cookie *epping_alloc_cookie(epping_context_t *pEpping_ctx)
 {
 	struct epping_cookie *cookie;
 
-	cdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
+	qdf_spin_lock_bh(&pEpping_ctx->cookie_lock);
 	cookie = pEpping_ctx->cookie_list;
 	if (cookie != NULL) {
 		pEpping_ctx->cookie_list = cookie->next;
 		pEpping_ctx->cookie_count--;
 	}
-	cdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
+	qdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
 	return cookie;
 }
 

@@ -33,7 +33,7 @@
 #define _OL_TXRX_DBG__H_
 
 #include <athdefs.h>            /* A_STATUS, uint64_t */
-#include <cdf_lock.h>           /* cdf_semaphore_t */
+#include <qdf_lock.h>           /* qdf_semaphore_t */
 #include <htt.h>                /* htt_dbg_stats_type */
 #include <ol_txrx_stats.h>      /* ol_txrx_stats */
 
@@ -70,7 +70,7 @@ struct ol_txrx_stats_req {
 	 */
 	struct {
 		int blocking;
-		cdf_semaphore_t *sem_ptr;
+		qdf_semaphore_t *sem_ptr;
 	} wait;
 };
 

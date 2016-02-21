@@ -47,7 +47,7 @@
 #endif
 #include <cds_mq.h>
 #include <qdf_types.h>
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 
 #define TX_POST_EVENT_MASK               0x001
 #define TX_SUSPEND_EVENT_MASK            0x002
@@ -283,9 +283,9 @@ typedef struct _cds_context_type {
 	uint32_t driver_debug_log_level;
 	uint32_t fw_debug_log_level;
 	struct cds_log_complete log_complete;
-	cdf_spinlock_t bug_report_lock;
+	qdf_spinlock_t bug_report_lock;
 	qdf_event_t connection_update_done_evt;
-	cdf_mutex_t cdf_conc_list_lock;
+	qdf_mutex_t cdf_conc_list_lock;
 
 } cds_context_type, *p_cds_contextType;
 

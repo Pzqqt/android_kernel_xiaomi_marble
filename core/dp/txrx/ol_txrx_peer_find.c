@@ -157,7 +157,7 @@ ol_txrx_peer_find_hash_add(struct ol_txrx_pdev_t *pdev,
 	unsigned index;
 
 	index = ol_txrx_peer_find_hash_index(pdev, &peer->mac_addr);
-	cdf_spin_lock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 	/*
 	 * It is important to add the new peer at the tail of the peer list
 	 * with the bin index.  Together with having the hash_find function
@@ -166,7 +166,7 @@ ol_txrx_peer_find_hash_add(struct ol_txrx_pdev_t *pdev,
 	 * found first.
 	 */
 	TAILQ_INSERT_TAIL(&pdev->peer_hash.bins[index], peer, hash_list_elem);
-	cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 }
 
 struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
@@ -187,7 +187,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = ol_txrx_peer_find_hash_index(pdev, mac_addr);
-	cdf_spin_lock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 	TAILQ_FOREACH(peer, &pdev->peer_hash.bins[index], hash_list_elem) {
 		if (ol_txrx_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) ==
 		    0 && (check_valid == 0 || peer->valid)
@@ -195,11 +195,11 @@ struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
 			/* found it - increment the ref count before releasing
 			   the lock */
 			qdf_atomic_inc(&peer->ref_cnt);
-			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			return peer;
 		}
 	}
-	cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 	return NULL;            /* failure */
 }
 
@@ -220,18 +220,18 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_hash_find(struct ol_txrx_pdev_t *pdev,
 		mac_addr = &local_mac_addr_aligned;
 	}
 	index = ol_txrx_peer_find_hash_index(pdev, mac_addr);
-	cdf_spin_lock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_lock_bh(&pdev->peer_ref_mutex);
 	TAILQ_FOREACH(peer, &pdev->peer_hash.bins[index], hash_list_elem) {
 		if (ol_txrx_peer_find_mac_addr_cmp(mac_addr, &peer->mac_addr) ==
 		    0 && (check_valid == 0 || peer->valid)) {
 			/* found it - increment the ref count before
 			   releasing the lock */
 			qdf_atomic_inc(&peer->ref_cnt);
-			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+			qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			return peer;
 		}
 	}
-	cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+	qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 	return NULL;            /* failure */
 }
 
@@ -256,9 +256,9 @@ ol_txrx_peer_find_hash_remove(struct ol_txrx_pdev_t *pdev,
 	 * peer ref count is decremented to zero, but just before the peer
 	 * object reference is removed from the hash table.
 	 */
-	/* cdf_spin_lock_bh(&pdev->peer_ref_mutex); */
+	/* qdf_spin_lock_bh(&pdev->peer_ref_mutex); */
 	TAILQ_REMOVE(&pdev->peer_hash.bins[index], peer, hash_list_elem);
-	/* cdf_spin_unlock_bh(&pdev->peer_ref_mutex); */
+	/* qdf_spin_unlock_bh(&pdev->peer_ref_mutex); */
 }
 
 void ol_txrx_peer_find_hash_erase(struct ol_txrx_pdev_t *pdev)
@@ -434,7 +434,7 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 {
 	struct ol_txrx_peer_t *peer;
 
-	cdf_spin_lock_bh(&vdev->pdev->last_real_peer_mutex);
+	qdf_spin_lock_bh(&vdev->pdev->last_real_peer_mutex);
 	/*
 	 * Check the TXRX Peer is itself valid And also
 	 * if HTT Peer ID has been setup for this peer
@@ -446,7 +446,7 @@ struct ol_txrx_peer_t *ol_txrx_assoc_peer_find(struct ol_txrx_vdev_t *vdev)
 	} else {
 		peer = NULL;
 	}
-	cdf_spin_unlock_bh(&vdev->pdev->last_real_peer_mutex);
+	qdf_spin_unlock_bh(&vdev->pdev->last_real_peer_mutex);
 	return peer;
 }
 

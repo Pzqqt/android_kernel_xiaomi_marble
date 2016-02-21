@@ -732,7 +732,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	++pAdapter->stats.rx_packets;
 	pAdapter->stats.rx_bytes += skb->len;
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
-	cdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
+	qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
 				      HDD_WAKE_LOCK_DURATION,
 				      WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
 #endif

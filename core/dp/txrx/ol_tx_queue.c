@@ -49,11 +49,11 @@ void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	/* acquire the mutex lock, since we'll be modifying the queues */
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
 
-	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	vdev->ll_pause.paused_reason |= reason;
 	vdev->ll_pause.q_pause_cnt++;
 	vdev->ll_pause.is_q_paused = true;
-	cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 
 	DPTRACE(cdf_dp_trace(NULL, CDF_DP_TRACE_VDEV_PAUSE,
 				NULL, 0));
@@ -66,19 +66,19 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	/* acquire the mutex lock, since we'll be modifying the queues */
 	TX_SCHED_DEBUG_PRINT("Enter %s\n", __func__);
 
-	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	if (vdev->ll_pause.paused_reason & reason) {
 		vdev->ll_pause.paused_reason &= ~reason;
 		if (!vdev->ll_pause.paused_reason) {
 			vdev->ll_pause.is_q_paused = false;
 			vdev->ll_pause.q_unpause_cnt++;
-			cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+			qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 			ol_tx_vdev_ll_pause_queue_send(vdev);
 		} else {
-			cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+			qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 		}
 	} else {
-		cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+		qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 	}
 	DPTRACE(cdf_dp_trace(NULL, CDF_DP_TRACE_VDEV_UNPAUSE,
 				NULL, 0));
@@ -87,7 +87,7 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 
 void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 {
-	cdf_spin_lock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	qdf_timer_stop(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
 	while (vdev->ll_pause.txq.head) {
@@ -103,7 +103,7 @@ void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 	}
 	vdev->ll_pause.txq.tail = NULL;
 	vdev->ll_pause.txq.depth = 0;
-	cdf_spin_unlock_bh(&vdev->ll_pause.mutex);
+	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 }
 
 #endif /* defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) */
@@ -405,7 +405,7 @@ void ol_tx_throttle_init(struct ol_txrx_pdev_t *pdev)
 
 	pdev->tx_throttle.current_throttle_level = THROTTLE_LEVEL_0;
 	pdev->tx_throttle.current_throttle_phase = THROTTLE_PHASE_OFF;
-	cdf_spinlock_init(&pdev->tx_throttle.mutex);
+	qdf_spinlock_create(&pdev->tx_throttle.mutex);
 
 	throttle_period = ol_cfg_throttle_period_ms(pdev->ctrl_pdev);
 

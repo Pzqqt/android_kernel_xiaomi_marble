@@ -69,7 +69,7 @@ typedef struct {
 
 cds_pkt_proto_trace_t *trace_buffer = NULL;
 unsigned int trace_buffer_order = 0;
-cdf_spinlock_t trace_buffer_lock;
+qdf_spinlock_t trace_buffer_lock;
 #endif /* QCA_PKT_PROTO_TRACE */
 
 /**
@@ -193,7 +193,7 @@ void cds_pkt_trace_buf_update(char *event_string)
 
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "%s %d, %s", __func__, __LINE__, event_string);
-	cdf_spinlock_acquire(&trace_buffer_lock);
+	qdf_spinlock_acquire(&trace_buffer_lock);
 	slot = trace_buffer_order % CDS_PKT_TRAC_MAX_TRACE_BUF;
 	trace_buffer[slot].order = trace_buffer_order;
 	trace_buffer[slot].event_time = cdf_mc_timer_get_system_time();
@@ -204,7 +204,7 @@ void cds_pkt_trace_buf_update(char *event_string)
 		     (CDS_PKT_TRAC_MAX_STRING_LEN < strlen(event_string)) ?
 		     CDS_PKT_TRAC_MAX_STRING_LEN : strlen(event_string));
 	trace_buffer_order++;
-	cdf_spinlock_release(&trace_buffer_lock);
+	qdf_spinlock_release(&trace_buffer_lock);
 
 	return;
 }
@@ -217,7 +217,7 @@ void cds_pkt_trace_buf_dump(void)
 {
 	uint32_t slot, idx;
 
-	cdf_spinlock_acquire(&trace_buffer_lock);
+	qdf_spinlock_acquire(&trace_buffer_lock);
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP START Current Timestamp %u",
 		  (unsigned int)cdf_mc_timer_get_system_time());
@@ -245,7 +245,7 @@ void cds_pkt_trace_buf_dump(void)
 
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP END");
-	cdf_spinlock_release(&trace_buffer_lock);
+	qdf_spinlock_release(&trace_buffer_lock);
 
 	return;
 }
@@ -257,7 +257,7 @@ void cds_pkt_trace_buf_dump(void)
 void cds_pkt_proto_trace_init(void)
 {
 	/* Init spin lock to protect global memory */
-	cdf_spinlock_init(&trace_buffer_lock);
+	qdf_spinlock_create(&trace_buffer_lock);
 	trace_buffer_order = 0;
 
 	trace_buffer = cdf_mem_malloc(CDS_PKT_TRAC_MAX_TRACE_BUF *
@@ -278,7 +278,7 @@ void cds_pkt_proto_trace_close(void)
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "%s %d", __func__, __LINE__);
 	cdf_mem_free(trace_buffer);
-	cdf_spinlock_destroy(&trace_buffer_lock);
+	qdf_spinlock_destroy(&trace_buffer_lock);
 
 	return;
 }

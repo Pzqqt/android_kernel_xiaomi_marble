@@ -34,7 +34,7 @@
 #ifndef CSR_LINK_LIST_H__
 #define CSR_LINK_LIST_H__
 
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "cdf_mc_timer.h"
 #include "cds_api.h"
 #include "sir_types.h"
@@ -55,7 +55,7 @@ typedef enum {
 /* This is a circular double link list */
 typedef struct tagDblLinkList {
 	tListElem ListHead;
-	cdf_mutex_t Lock;
+	qdf_mutex_t Lock;
 	uint32_t Count;
 	tHddHandle hHdd;
 	tListFlag Flag;

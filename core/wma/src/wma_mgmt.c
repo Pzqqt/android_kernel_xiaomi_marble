@@ -109,7 +109,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 		return;
 	}
 
-	cdf_spin_lock_bh(&bcn->lock);
+	qdf_spin_lock_bh(&bcn->lock);
 
 	bcn_payload = cdf_nbuf_data(bcn->buf);
 
@@ -207,7 +207,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	if (ret != QDF_STATUS_SUCCESS) {
 		cdf_nbuf_free(wmi_buf);
 		WMA_LOGE("%s: failed map beacon buf to DMA region", __func__);
-		cdf_spin_unlock_bh(&bcn->lock);
+		qdf_spin_unlock_bh(&bcn->lock);
 		return;
 	}
 
@@ -237,7 +237,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 		WMA_LOGE("Failed to send WMI_PDEV_SEND_BCN_CMDID command");
 		wmi_buf_free(wmi_buf);
 	}
-	cdf_spin_unlock_bh(&bcn->lock);
+	qdf_spin_unlock_bh(&bcn->lock);
 }
 
 /**
@@ -2320,7 +2320,7 @@ QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 	}
 	WMA_LOGD("%s: Storing received beacon template buf to local buffer",
 		 __func__);
-	cdf_spin_lock_bh(&bcn->lock);
+	qdf_spin_lock_bh(&bcn->lock);
 
 	/*
 	 * Copy received beacon template content in local buffer.
@@ -2358,7 +2358,7 @@ QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 	cdf_nbuf_put_tail(bcn->buf, len);
 	bcn->len = len;
 
-	cdf_spin_unlock_bh(&bcn->lock);
+	qdf_spin_unlock_bh(&bcn->lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -2419,13 +2419,13 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 		/* Save the adjusted TSF */
 		intf[if_id].tsfadjust = adjusted_tsf[if_id];
 
-		cdf_spin_lock_bh(&bcn->lock);
+		qdf_spin_lock_bh(&bcn->lock);
 		cdf_mem_zero(&bcn_info, sizeof(bcn_info));
 		bcn_info.beacon = cdf_nbuf_data(bcn->buf);
 		bcn_info.p2pIeOffset = bcn->p2p_ie_offset;
 		bcn_info.beaconLength = bcn->len;
 		bcn_info.timIeOffset = bcn->tim_ie_offset;
-		cdf_spin_unlock_bh(&bcn->lock);
+		qdf_spin_unlock_bh(&bcn->lock);
 
 		/* Update beacon template in firmware */
 		wmi_unified_bcn_tmpl_send(wma, if_id, &bcn_info, 0);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,7 +26,7 @@
  */
 
 #include "ath_dfs_structs.h"
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include "cds_ieee80211_common.h"
 
 #define IEEE80211_CHAN_MAX      255
@@ -177,7 +177,7 @@ struct ieee80211_dfs_state {
 	const struct dfs_ieee80211_channel *lastchan;
 	struct dfs_ieee80211_channel *newchan;
 	int cac_timeout_override;
-	uint8_t enable : 1, cac_timer_running : 1, ignore_dfs : 1, ignore_cac : 1;
+	uint8_t enable:1, cac_timer_running:1, ignore_dfs:1, ignore_cac:1;
 };
 
 /**
@@ -262,7 +262,7 @@ typedef struct ieee80211com {
 	uint8_t vdev_id;
 	uint8_t last_radar_found_chan;
 	int32_t dfs_pri_multiplier;
-	cdf_spinlock_t chan_lock;
+	qdf_spinlock_t chan_lock;
 	bool disable_phy_err_processing;
 	DFS_HWBD_ID dfs_hw_bd_id;
 } IEEE80211COM, *PIEEE80211COM;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -72,7 +72,7 @@ struct hdd_lro_desc_entry {
 struct hdd_lro_desc_pool {
 	struct hdd_lro_desc_entry *lro_desc_array;
 	struct list_head lro_free_list_head;
-	cdf_spinlock_t lro_pool_lock;
+	qdf_spinlock_t lro_pool_lock;
 };
 
 /**
@@ -93,7 +93,7 @@ struct hdd_lro_desc_table {
  */
 struct hdd_lro_desc_info {
 	struct hdd_lro_desc_table *lro_hash_table;
-	cdf_spinlock_t lro_hash_lock;
+	qdf_spinlock_t lro_hash_lock;
 	struct hdd_lro_desc_pool lro_desc_pool;
 };
 

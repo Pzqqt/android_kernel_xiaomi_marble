@@ -33,7 +33,7 @@
    ========================================================================== */
 
 #include "csr_link_list.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "cdf_memory.h"
 #include "cdf_trace.h"
 #include "cdf_mc_timer.h"
@@ -146,7 +146,7 @@ void csr_ll_lock(tDblLinkList *pList)
 	}
 
 	if (LIST_FLAG_OPEN == pList->Flag) {
-		cdf_mutex_acquire(&pList->Lock);
+		qdf_mutex_acquire(&pList->Lock);
 	}
 }
 
@@ -160,7 +160,7 @@ void csr_ll_unlock(tDblLinkList *pList)
 	}
 
 	if (LIST_FLAG_OPEN == pList->Flag) {
-		cdf_mutex_release(&pList->Lock);
+		qdf_mutex_release(&pList->Lock);
 	}
 }
 
@@ -231,7 +231,7 @@ QDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList)
 	if (LIST_FLAG_OPEN != pList->Flag) {
 		pList->Count = 0;
 		pList->cmdTimeoutTimer = NULL;
-		qdf_status = cdf_mutex_init(&pList->Lock);
+		qdf_status = qdf_mutex_create(&pList->Lock);
 
 		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			csr_list_init(&pList->ListHead);
@@ -255,7 +255,7 @@ void csr_ll_close(tDblLinkList *pList)
 	if (LIST_FLAG_OPEN == pList->Flag) {
 		/* Make sure the list is empty... */
 		csr_ll_purge(pList, LL_ACCESS_LOCK);
-		cdf_mutex_destroy(&pList->Lock);
+		qdf_mutex_destroy(&pList->Lock);
 		pList->Flag = LIST_FLAG_CLOSE;
 	}
 }

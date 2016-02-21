@@ -33,7 +33,7 @@
 
 /* Include Files */
 #include <cdf_mc_timer.h>
-#include <cdf_lock.h>
+#include <qdf_lock.h>
 #include <cds_api.h>
 #include "wlan_qct_sys.h"
 #include "cds_sched.h"
@@ -48,7 +48,7 @@
 
 /* Static Variable Definitions */
 static unsigned int persistent_timer_count;
-static cdf_mutex_t persistent_timer_count_lock;
+static qdf_mutex_t persistent_timer_count_lock;
 
 /* Function declarations and documenation */
 
@@ -64,14 +64,14 @@ static cdf_mutex_t persistent_timer_count_lock;
 static void try_allowing_sleep(QDF_TIMER_TYPE type)
 {
 	if (QDF_TIMER_TYPE_WAKE_APPS == type) {
-		/* cdf_mutex_acquire(&persistent_timer_count_lock); */
+		/* qdf_mutex_acquire(&persistent_timer_count_lock); */
 		persistent_timer_count--;
 		if (0 == persistent_timer_count) {
 			/* since the number of persistent timers has
 			   decreased from 1 to 0, the timer should allow
 			   sleep sleep_assert_okts( sleepClientHandle ); */
 		}
-		/* cdf_mutex_release(&persistent_timer_count_lock); */
+		/* qdf_mutex_release(&persistent_timer_count_lock); */
 	}
 }
 
@@ -228,13 +228,13 @@ void cdf_timer_module_init(void)
 {
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
 		  "Initializing the CDF timer module");
-	cdf_mutex_init(&persistent_timer_count_lock);
+	qdf_mutex_create(&persistent_timer_count_lock);
 }
 
 #ifdef TIMER_MANAGER
 
 qdf_list_t cdf_timer_list;
-cdf_spinlock_t cdf_timer_list_lock;
+qdf_spinlock_t cdf_timer_list_lock;
 
 static void cdf_timer_clean(void);
 
@@ -248,7 +248,7 @@ static void cdf_timer_clean(void);
 void cdf_mc_timer_manager_init(void)
 {
 	qdf_list_create(&cdf_timer_list, 1000);
-	cdf_spinlock_init(&cdf_timer_list_lock);
+	qdf_spinlock_create(&cdf_timer_list_lock);
 	return;
 }
 
@@ -276,10 +276,10 @@ static void cdf_timer_clean(void)
 			  __func__, (int)listSize);
 
 		do {
-			cdf_spin_lock_irqsave(&cdf_timer_list_lock);
+			qdf_spin_lock_irqsave(&cdf_timer_list_lock);
 			qdf_status =
 				qdf_list_remove_front(&cdf_timer_list, &pNode);
-			cdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
+			qdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
 			if (QDF_STATUS_SUCCESS == qdf_status) {
 				ptimerNode = (cdf_mc_timer_node_t *) pNode;
 				CDF_TRACE(QDF_MODULE_ID_QDF,
@@ -371,10 +371,10 @@ QDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
 	timer->ptimerNode->lineNum = lineNum;
 	timer->ptimerNode->cdf_timer = timer;
 
-	cdf_spin_lock_irqsave(&cdf_timer_list_lock);
+	qdf_spin_lock_irqsave(&cdf_timer_list_lock);
 	qdf_status = qdf_list_insert_front(&cdf_timer_list,
 					   &timer->ptimerNode->pNode);
-	cdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
+	qdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Unable to insert node into List qdf_status %d",
@@ -477,10 +477,10 @@ QDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	cdf_spin_lock_irqsave(&cdf_timer_list_lock);
+	qdf_spin_lock_irqsave(&cdf_timer_list_lock);
 	status = qdf_list_remove_node(&cdf_timer_list,
 				       &timer->ptimerNode->pNode);
-	cdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
+	qdf_spin_unlock_irqrestore(&cdf_timer_list_lock);
 	if (status != QDF_STATUS_SUCCESS) {
 		CDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;

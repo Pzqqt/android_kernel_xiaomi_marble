@@ -570,7 +570,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 
 	skb->protocol = eth_type_trans(skb, skb->dev);
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
-	cdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
+	qdf_wake_lock_timeout_acquire(&pHddCtx->rx_wake_lock,
 				      HDD_WAKE_LOCK_DURATION,
 				      WIFI_POWER_EVENT_WAKELOCK_HOLD_RX);
 #endif

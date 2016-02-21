@@ -1624,13 +1624,13 @@ QDF_STATUS wma_open(void *cds_context,
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
-		cdf_wake_lock_init(&wma_handle->pno_wake_lock, "wlan_pno_wl");
+		qdf_wake_lock_create(&wma_handle->pno_wake_lock, "wlan_pno_wl");
 #endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_EXTSCAN
-		cdf_wake_lock_init(&wma_handle->extscan_wake_lock,
+		qdf_wake_lock_create(&wma_handle->extscan_wake_lock,
 					"wlan_extscan_wl");
 #endif /* FEATURE_WLAN_EXTSCAN */
-		cdf_wake_lock_init(&wma_handle->wow_wake_lock, "wlan_wow_wl");
+		qdf_wake_lock_create(&wma_handle->wow_wake_lock, "wlan_wow_wl");
 	}
 
 	/* attach the wmi */
@@ -1836,10 +1836,10 @@ QDF_STATUS wma_open(void *cds_context,
 
 	qdf_list_create(&wma_handle->vdev_resp_queue,
 		      MAX_ENTRY_VDEV_RESP_QUEUE);
-	cdf_spinlock_init(&wma_handle->vdev_respq_lock);
+	qdf_spinlock_create(&wma_handle->vdev_respq_lock);
 	qdf_list_create(&wma_handle->wma_hold_req_queue,
 		      MAX_ENTRY_HOLD_REQ_QUEUE);
-	cdf_spinlock_init(&wma_handle->wma_hold_req_q_lock);
+	qdf_spinlock_create(&wma_handle->wma_hold_req_q_lock);
 	qdf_atomic_init(&wma_handle->is_wow_bus_suspended);
 	qdf_atomic_init(&wma_handle->scan_id_counter);
 
@@ -1992,10 +1992,10 @@ QDF_STATUS wma_open(void *cds_context,
 				WMI_RSSI_BREACH_EVENTID,
 				wma_rssi_breached_event_handler);
 
-	cdf_wake_lock_init(&wma_handle->wmi_cmd_rsp_wake_lock,
+	qdf_wake_lock_create(&wma_handle->wmi_cmd_rsp_wake_lock,
 				"wlan_fw_rsp_wakelock");
 	wma_handle->wmi_cmd_rsp_runtime_lock =
-			cdf_runtime_lock_init("wlan_fw_rsp_runtime_lock");
+			qdf_runtime_lock_init("wlan_fw_rsp_runtime_lock");
 
 	/* Register peer assoc conf event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -2010,10 +2010,10 @@ QDF_STATUS wma_open(void *cds_context,
 	return QDF_STATUS_SUCCESS;
 
 err_dbglog_init:
-	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
-	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
-	cdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
-	cdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
+	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	qdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
+	qdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
+	qdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
 err_event_init:
 	wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
 					     WMI_DEBUG_PRINT_EVENTID);
@@ -2031,12 +2031,12 @@ err_wma_handle:
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
-		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_EXTSCAN
-		cdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
 #endif /* FEATURE_WLAN_EXTSCAN */
-		cdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
 	}
 	cds_free_context(cds_context, QDF_MODULE_ID_WMA, wma_handle);
 
@@ -2918,9 +2918,9 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 	qdf_list_node_t *node1 = NULL;
 	QDF_STATUS status;
 
-	cdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
 	if (!qdf_list_size(&wma->wma_hold_req_queue)) {
-		cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGI(FL("request queue is empty"));
 		return;
 	}
@@ -2930,7 +2930,7 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 		req_msg = cdf_container_of(node1, struct wma_target_req, node);
 		status = qdf_list_remove_node(&wma->wma_hold_req_queue, node1);
 		if (QDF_STATUS_SUCCESS != status) {
-			cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+			qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 			WMA_LOGE(FL("Failed to remove request for vdev_id %d type %d"),
 				 req_msg->vdev_id, req_msg->type);
 			return;
@@ -2938,7 +2938,7 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 		cdf_mc_timer_destroy(&req_msg->event_timeout);
 		cdf_mem_free(req_msg);
 	}
-	cdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
+	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 }
 
 /**
@@ -2953,9 +2953,9 @@ static void wma_cleanup_vdev_resp(tp_wma_handle wma)
 	qdf_list_node_t *node1 = NULL;
 	QDF_STATUS status;
 
-	cdf_spin_lock_bh(&wma->vdev_respq_lock);
+	qdf_spin_lock_bh(&wma->vdev_respq_lock);
 	if (!qdf_list_size(&wma->vdev_resp_queue)) {
-		cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 		WMA_LOGI(FL("request queue maybe empty"));
 		return;
 	}
@@ -2965,7 +2965,7 @@ static void wma_cleanup_vdev_resp(tp_wma_handle wma)
 		req_msg = cdf_container_of(node1, struct wma_target_req, node);
 		status = qdf_list_remove_node(&wma->vdev_resp_queue, node1);
 		if (QDF_STATUS_SUCCESS != status) {
-			cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+			qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 			WMA_LOGE(FL("Failed to remove request for vdev_id %d type %d"),
 				 req_msg->vdev_id, req_msg->type);
 			return;
@@ -2973,7 +2973,7 @@ static void wma_cleanup_vdev_resp(tp_wma_handle wma)
 		cdf_mc_timer_destroy(&req_msg->event_timeout);
 		cdf_mem_free(req_msg);
 	}
-	cdf_spin_unlock_bh(&wma->vdev_respq_lock);
+	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 }
 
 /**
@@ -3135,12 +3135,12 @@ QDF_STATUS wma_close(void *cds_ctx)
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
-		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
 #ifdef FEATURE_WLAN_EXTSCAN
-		cdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->extscan_wake_lock);
 #endif /* FEATURE_WLAN_EXTSCAN */
-		cdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
+		qdf_wake_lock_destroy(&wma_handle->wow_wake_lock);
 	}
 
 	/* unregister Firmware debug log */
@@ -3161,8 +3161,8 @@ QDF_STATUS wma_close(void *cds_ctx)
 	cdf_event_destroy(&wma_handle->recovery_event);
 	wma_cleanup_vdev_resp(wma_handle);
 	wma_cleanup_hold_req(wma_handle);
-	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
-	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
+	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	qdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
 		cdf_os_mem_free_consistent(wma_handle->qdf_dev,
 					   wma_handle->mem_chunks[idx].len,

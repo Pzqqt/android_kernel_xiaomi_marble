@@ -637,7 +637,7 @@ typedef struct sAniSirLim {
 
 	/* admission control policy information */
 	tLimAdmitPolicyInfo admitPolicyInfo;
-	cdf_mutex_t lkPeGlobalLock;
+	qdf_mutex_t lkPeGlobalLock;
 	uint8_t disableLDPCWithTxbfAP;
 #ifdef FEATURE_WLAN_TDLS
 	uint8_t gLimTDLSBufStaEnabled;
@@ -825,7 +825,7 @@ typedef struct sAniSirLim {
 #endif
 
 	tSirRemainOnChnReq *gpLimRemainOnChanReq;       /* hold remain on chan request in this buf */
-	cdf_mutex_t lim_frame_register_lock;
+	qdf_mutex_t lim_frame_register_lock;
 	qdf_list_t gLimMgmtFrameRegistratinQueue;
 	uint32_t mgmtFrameSessionId;
 

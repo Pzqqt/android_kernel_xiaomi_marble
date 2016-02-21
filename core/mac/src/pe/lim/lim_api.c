@@ -606,7 +606,7 @@ tSirRetStatus lim_initialize(tpAniSirGlobal pMac)
 	rrm_initialize(pMac);
 #endif
 
-	cdf_mutex_init(&pMac->lim.lim_frame_register_lock);
+	qdf_mutex_create(&pMac->lim.lim_frame_register_lock);
 	qdf_list_create(&pMac->lim.gLimMgmtFrameRegistratinQueue, 0);
 
 	/* Initialize the configurations needed by PE */
@@ -656,7 +656,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 	struct mgmt_frm_reg_info *pLimMgmtRegistration = NULL;
 
 	if (QDF_GLOBAL_FTM_MODE != cds_get_conparam()) {
-		cdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
+		qdf_mutex_acquire(&pMac->lim.lim_frame_register_lock);
 		while (qdf_list_remove_front(
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,
 			(qdf_list_node_t **) &pLimMgmtRegistration) ==
@@ -665,7 +665,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 			FL("Fixing leak! Deallocating pLimMgmtRegistration node"));
 			cdf_mem_free(pLimMgmtRegistration);
 		}
-		cdf_mutex_release(&pMac->lim.lim_frame_register_lock);
+		qdf_mutex_release(&pMac->lim.lim_frame_register_lock);
 		qdf_list_destroy(&pMac->lim.gLimMgmtFrameRegistratinQueue);
 	}
 
@@ -766,7 +766,7 @@ tSirRetStatus pe_open(tpAniSirGlobal pMac, tMacOpenParameters *pMacOpenParam)
 	pMac->lim.mgmtFrameSessionId = 0xff;
 	pMac->lim.deferredMsgCnt = 0;
 
-	if (!QDF_IS_STATUS_SUCCESS(cdf_mutex_init(&pMac->lim.lkPeGlobalLock))) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(&pMac->lim.lkPeGlobalLock))) {
 		PELOGE(lim_log(pMac, LOGE, FL("pe lock init failed!"));)
 		status = eSIR_FAILURE;
 		goto pe_open_lock_fail;
@@ -830,7 +830,7 @@ tSirRetStatus pe_close(tpAniSirGlobal pMac)
 	cdf_mem_free(pMac->lim.gpSession);
 	pMac->lim.gpSession = NULL;
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cdf_mutex_destroy(&pMac->lim.lkPeGlobalLock))) {
+		    (qdf_mutex_destroy(&pMac->lim.lkPeGlobalLock))) {
 		return eSIR_FAILURE;
 	}
 	return eSIR_SUCCESS;
@@ -2265,7 +2265,7 @@ QDF_STATUS pe_acquire_global_lock(tAniSirLim *psPe)
 
 	if (psPe) {
 		if (QDF_IS_STATUS_SUCCESS
-			    (cdf_mutex_acquire(&psPe->lkPeGlobalLock))) {
+			    (qdf_mutex_acquire(&psPe->lkPeGlobalLock))) {
 			status = QDF_STATUS_SUCCESS;
 		}
 	}
@@ -2277,7 +2277,7 @@ QDF_STATUS pe_release_global_lock(tAniSirLim *psPe)
 	QDF_STATUS status = QDF_STATUS_E_INVAL;
 	if (psPe) {
 		if (QDF_IS_STATUS_SUCCESS
-			    (cdf_mutex_release(&psPe->lkPeGlobalLock))) {
+			    (qdf_mutex_release(&psPe->lkPeGlobalLock))) {
 			status = QDF_STATUS_SUCCESS;
 		}
 	}

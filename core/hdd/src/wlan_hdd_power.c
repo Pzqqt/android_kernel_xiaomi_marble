@@ -1755,16 +1755,16 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
 			 NO_SESSION, pHddCtx->isWiphySuspended));
-	cdf_spin_lock(&pHddCtx->sched_scan_lock);
+	qdf_spin_lock(&pHddCtx->sched_scan_lock);
 	pHddCtx->isWiphySuspended = false;
 	if (true != pHddCtx->isSchedScanUpdatePending) {
-		cdf_spin_unlock(&pHddCtx->sched_scan_lock);
+		qdf_spin_unlock(&pHddCtx->sched_scan_lock);
 		hddLog(LOG1, FL("Return resume is not due to PNO indication"));
 		return 0;
 	}
 	/* Reset flag to avoid updatating cfg80211 data old results again */
 	pHddCtx->isSchedScanUpdatePending = false;
-	cdf_spin_unlock(&pHddCtx->sched_scan_lock);
+	qdf_spin_unlock(&pHddCtx->sched_scan_lock);
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 

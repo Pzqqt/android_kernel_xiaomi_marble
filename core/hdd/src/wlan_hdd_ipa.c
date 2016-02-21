@@ -241,7 +241,7 @@ struct hdd_ipa_iface_context {
 
 	uint8_t iface_id;       /* This iface ID */
 	uint8_t sta_id;         /* This iface station ID */
-	cdf_spinlock_t interface_lock;
+	qdf_spinlock_t interface_lock;
 	uint32_t ifa_address;
 	struct hdd_ipa_iface_stats stats;
 };
@@ -380,10 +380,10 @@ struct hdd_ipa_priv {
 	 * APIs as it is taken care gracefully. Without this, kernel would throw
 	 * an warning if spin_lock_bh is used while IRQ is disabled
 	 */
-	cdf_spinlock_t rm_lock;
+	qdf_spinlock_t rm_lock;
 	struct uc_rm_work_struct uc_rm_work;
 	struct uc_op_work_struct uc_op_work[HDD_IPA_UC_OPCODE_MAX];
-	cdf_wake_lock_t wake_lock;
+	qdf_wake_lock_t wake_lock;
 	struct delayed_work wake_lock_work;
 	bool wake_lock_released;
 
@@ -392,7 +392,7 @@ struct hdd_ipa_priv {
 	atomic_t tx_ref_cnt;
 	cdf_nbuf_queue_t pm_queue_head;
 	struct work_struct pm_work;
-	cdf_spinlock_t pm_lock;
+	qdf_spinlock_t pm_lock;
 	bool suspended;
 
 	uint32_t pending_hw_desc_cnt;
@@ -423,7 +423,7 @@ struct hdd_ipa_priv {
 	bool pending_cons_req;
 	struct ipa_uc_stas_map assoc_stas_map[WLAN_MAX_STA_COUNT];
 	qdf_list_t pending_event;
-	cdf_mutex_t event_lock;
+	qdf_mutex_t event_lock;
 	bool ipa_pipes_down;
 	uint32_t ipa_tx_packets_diff;
 	uint32_t ipa_rx_packets_diff;
@@ -439,8 +439,8 @@ struct hdd_ipa_priv {
 	struct uc_rt_debug_info rt_bug_buffer[HDD_IPA_UC_RT_DEBUG_BUF_COUNT];
 	unsigned int rt_buf_fill_index;
 	cdf_mc_timer_t rt_debug_fill_timer;
-	cdf_mutex_t rt_debug_lock;
-	cdf_mutex_t ipa_lock;
+	qdf_mutex_t rt_debug_lock;
+	qdf_mutex_t ipa_lock;
 
 	/* CE resources */
 	qdf_dma_addr_t ce_sr_base_paddr;
@@ -724,7 +724,7 @@ static void hdd_ipa_uc_rt_debug_host_fill(void *ctext)
 
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
-	cdf_mutex_acquire(&hdd_ipa->rt_debug_lock);
+	qdf_mutex_acquire(&hdd_ipa->rt_debug_lock);
 	dump_info = &hdd_ipa->rt_bug_buffer[
 		hdd_ipa->rt_buf_fill_index % HDD_IPA_UC_RT_DEBUG_BUF_COUNT];
 
@@ -737,7 +737,7 @@ static void hdd_ipa_uc_rt_debug_host_fill(void *ctext)
 	dump_info->tx_fwd_count = hdd_ipa->ipa_tx_forward;
 	dump_info->rx_destructor_call = hdd_ipa->ipa_rx_destructor_count;
 	hdd_ipa->rt_buf_fill_index++;
-	cdf_mutex_release(&hdd_ipa->rt_debug_lock);
+	qdf_mutex_release(&hdd_ipa->rt_debug_lock);
 
 	cdf_mc_timer_start(&hdd_ipa->rt_debug_fill_timer,
 		HDD_IPA_UC_RT_DEBUG_FILL_INTERVAL);
@@ -773,7 +773,7 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
 	HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 		"     TM     :   EXEP   :   DROP   :   NETS   :   MCBC   :   TXFD   :   DSTR   :   DSCD\n");
 
-	cdf_mutex_acquire(&hdd_ipa->rt_debug_lock);
+	qdf_mutex_acquire(&hdd_ipa->rt_debug_lock);
 	for (dump_count = 0;
 		dump_count < HDD_IPA_UC_RT_DEBUG_BUF_COUNT;
 		dump_count++) {
@@ -788,7 +788,7 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
 			dump_info->rx_destructor_call,
 			dump_info->rx_discard_count);
 	}
-	cdf_mutex_release(&hdd_ipa->rt_debug_lock);
+	qdf_mutex_release(&hdd_ipa->rt_debug_lock);
 	HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 		"======= WLAN-IPA DEBUG BUF DUMP END ========\n");
 }
@@ -874,7 +874,7 @@ static void hdd_ipa_uc_rt_debug_deinit(hdd_context_t *hdd_ctx)
 		cdf_mc_timer_stop(&hdd_ipa->rt_debug_fill_timer);
 	}
 	cdf_mc_timer_destroy(&hdd_ipa->rt_debug_fill_timer);
-	cdf_mutex_destroy(&hdd_ipa->rt_debug_lock);
+	qdf_mutex_destroy(&hdd_ipa->rt_debug_lock);
 
 	if (!hdd_ipa_is_rt_debugging_enabled(hdd_ctx)) {
 		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
@@ -901,7 +901,7 @@ static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
 {
 	struct hdd_ipa_priv *hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
-	cdf_mutex_init(&hdd_ipa->rt_debug_lock);
+	qdf_mutex_create(&hdd_ipa->rt_debug_lock);
 	cdf_mc_timer_init(&hdd_ipa->rt_debug_fill_timer, QDF_TIMER_TYPE_SW,
 		hdd_ipa_uc_rt_debug_host_fill, (void *)hdd_ctx);
 	hdd_ipa->rt_buf_fill_index = 0;
@@ -954,7 +954,7 @@ void hdd_ipa_uc_stat_query(hdd_context_t *pHddCtx,
 		return;
 	}
 
-	cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
 		(false == hdd_ipa->resource_loading)) {
 		*ipa_tx_diff = hdd_ipa->ipa_tx_packets_diff;
@@ -962,7 +962,7 @@ void hdd_ipa_uc_stat_query(hdd_context_t *pHddCtx,
 		HDD_IPA_LOG(LOG1, "STAT Query TX DIFF %d, RX DIFF %d",
 			    *ipa_tx_diff, *ipa_rx_diff);
 	}
-	cdf_mutex_release(&hdd_ipa->ipa_lock);
+	qdf_mutex_release(&hdd_ipa->ipa_lock);
 	return;
 }
 
@@ -990,7 +990,7 @@ void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
 	}
 
 	HDD_IPA_LOG(LOG1, "STAT REQ Reason %d", reason);
-	cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	if ((HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) &&
 		(false == hdd_ipa->resource_loading)) {
 		hdd_ipa->stat_req_reason = reason;
@@ -999,7 +999,7 @@ void hdd_ipa_uc_stat_request(hdd_adapter_t *adapter, uint8_t reason)
 			(int)WMA_VDEV_TXRX_GET_IPA_UC_FW_STATS_CMDID,
 			0, VDEV_CMD);
 	}
-	cdf_mutex_release(&hdd_ipa->ipa_lock);
+	qdf_mutex_release(&hdd_ipa->ipa_lock);
 }
 
 /**
@@ -1255,12 +1255,12 @@ hdd_ipa_uc_rm_notify_handler(void *context, enum ipa_rm_event event)
 	case IPA_RM_RESOURCE_GRANTED:
 		/* Differed RM Granted */
 		hdd_ipa_uc_enable_pipes(hdd_ipa);
-		cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 		if ((false == hdd_ipa->resource_unloading) &&
 			(!hdd_ipa->activated_fw_pipe)) {
 			hdd_ipa_uc_enable_pipes(hdd_ipa);
 		}
-		cdf_mutex_release(&hdd_ipa->ipa_lock);
+		qdf_mutex_release(&hdd_ipa->ipa_lock);
 		break;
 
 	case IPA_RM_RESOURCE_RELEASED:
@@ -1386,7 +1386,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 
 	if ((HDD_IPA_UC_OPCODE_TX_RESUME == msg->op_code) ||
 	    (HDD_IPA_UC_OPCODE_RX_RESUME == msg->op_code)) {
-		cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 		hdd_ipa->activated_fw_pipe++;
 		if (HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) {
 			hdd_ipa->resource_loading = false;
@@ -1397,12 +1397,12 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 						IPA_RM_RESOURCE_WLAN_CONS);
 			hdd_ipa->pending_cons_req = false;
 		}
-		cdf_mutex_release(&hdd_ipa->ipa_lock);
+		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	}
 
 	if ((HDD_IPA_UC_OPCODE_TX_SUSPEND == msg->op_code) ||
 	    (HDD_IPA_UC_OPCODE_RX_SUSPEND == msg->op_code)) {
-		cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 		hdd_ipa->activated_fw_pipe--;
 		if (!hdd_ipa->activated_fw_pipe) {
 			hdd_ipa_uc_disable_pipes(hdd_ipa);
@@ -1415,7 +1415,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			hdd_ipa_uc_proc_pending_event(hdd_ipa);
 			hdd_ipa->pending_cons_req = false;
 		}
-		cdf_mutex_release(&hdd_ipa->ipa_lock);
+		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	}
 
 	if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
@@ -1599,7 +1599,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		/* STATs from FW */
 		uc_fw_stat = (struct ipa_uc_fw_stats *)
 			((uint8_t *)op_msg + sizeof(struct op_msg_type));
-		cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+		qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 		hdd_ipa->ipa_tx_packets_diff = HDD_BW_GET_DIFF(
 			uc_fw_stat->tx_pkts_completed,
 			hdd_ipa->ipa_p_tx_packets);
@@ -1614,7 +1614,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			(uc_fw_stat->rx_num_ind_drop_no_space +
 			uc_fw_stat->rx_num_ind_drop_no_buf +
 			uc_fw_stat->rx_num_pkts_indicated);
-		cdf_mutex_release(&hdd_ipa->ipa_lock);
+		qdf_mutex_release(&hdd_ipa->ipa_lock);
 	} else {
 		HDD_IPA_LOG(LOGE, "INVALID REASON %d",
 			    hdd_ipa->stat_req_reason);
@@ -1789,8 +1789,8 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	cdf_mem_zero(&pipe_out, sizeof(struct ipa_wdi_out_params));
 
 	qdf_list_create(&ipa_ctxt->pending_event, 1000);
-	cdf_mutex_init(&ipa_ctxt->event_lock);
-	cdf_mutex_init(&ipa_ctxt->ipa_lock);
+	qdf_mutex_create(&ipa_ctxt->event_lock);
+	qdf_mutex_create(&ipa_ctxt->ipa_lock);
 
 	/* TX PIPE */
 	pipe_in.sys.ipa_ep_cfg.nat.nat_en = IPA_BYPASS_NAT;
@@ -1945,12 +1945,12 @@ int hdd_ipa_uc_ssr_deinit(void)
 	if (!hdd_ipa->ipa_pipes_down)
 		hdd_ipa_uc_disable_pipes(hdd_ipa);
 
-	cdf_mutex_acquire(&hdd_ipa->ipa_lock);
+	qdf_mutex_acquire(&hdd_ipa->ipa_lock);
 	for (idx = 0; idx < WLAN_MAX_STA_COUNT; idx++) {
 		hdd_ipa->assoc_stas_map[idx].is_reserved = false;
 		hdd_ipa->assoc_stas_map[idx].sta_id = 0xFF;
 	}
-	cdf_mutex_release(&hdd_ipa->ipa_lock);
+	qdf_mutex_release(&hdd_ipa->ipa_lock);
 
 	/* Full IPA driver cleanup not required since wlan driver is now
 	 * unloaded and reloaded after SSR.
@@ -2042,17 +2042,17 @@ static void hdd_ipa_wake_lock_timer_func(struct work_struct *work)
 						    struct hdd_ipa_priv,
 						    wake_lock_work);
 
-	cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 
 	if (hdd_ipa->rm_state != HDD_IPA_RM_RELEASED)
 		goto end;
 
 	hdd_ipa->wake_lock_released = true;
-	cdf_wake_lock_release(&hdd_ipa->wake_lock,
+	qdf_wake_lock_release(&hdd_ipa->wake_lock,
 			      WIFI_POWER_EVENT_WAKELOCK_IPA);
 
 end:
-	cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 }
 
 /**
@@ -2068,26 +2068,26 @@ static int hdd_ipa_rm_request(struct hdd_ipa_priv *hdd_ipa)
 	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 		return 0;
 
-	cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 
 	switch (hdd_ipa->rm_state) {
 	case HDD_IPA_RM_GRANTED:
-		cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 		return 0;
 	case HDD_IPA_RM_GRANT_PENDING:
-		cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 		return -EINPROGRESS;
 	case HDD_IPA_RM_RELEASED:
 		hdd_ipa->rm_state = HDD_IPA_RM_GRANT_PENDING;
 		break;
 	}
 
-	cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 
 	ret = ipa_rm_inactivity_timer_request_resource(
 			IPA_RM_RESOURCE_WLAN_PROD);
 
-	cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 	if (ret == 0) {
 		hdd_ipa->rm_state = HDD_IPA_RM_GRANTED;
 		hdd_ipa->stats.num_rm_grant_imm++;
@@ -2095,11 +2095,11 @@ static int hdd_ipa_rm_request(struct hdd_ipa_priv *hdd_ipa)
 
 	cancel_delayed_work(&hdd_ipa->wake_lock_work);
 	if (hdd_ipa->wake_lock_released) {
-		cdf_wake_lock_acquire(&hdd_ipa->wake_lock,
+		qdf_wake_lock_acquire(&hdd_ipa->wake_lock,
 				      WIFI_POWER_EVENT_WAKELOCK_IPA);
 		hdd_ipa->wake_lock_released = false;
 	}
-	cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 
 	return ret;
 }
@@ -2128,23 +2128,23 @@ static int hdd_ipa_rm_try_release(struct hdd_ipa_priv *hdd_ipa)
 	}
 	spin_unlock_bh(&hdd_ipa->q_lock);
 
-	cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
 	if (!cdf_nbuf_is_queue_empty(&hdd_ipa->pm_queue_head)) {
-		cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 		return -EAGAIN;
 	}
-	cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
-	cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 	switch (hdd_ipa->rm_state) {
 	case HDD_IPA_RM_GRANTED:
 		break;
 	case HDD_IPA_RM_GRANT_PENDING:
-		cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 		return -EINPROGRESS;
 	case HDD_IPA_RM_RELEASED:
-		cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 		return 0;
 	}
 
@@ -2153,12 +2153,12 @@ static int hdd_ipa_rm_try_release(struct hdd_ipa_priv *hdd_ipa)
 	 */
 	hdd_ipa->rm_state = HDD_IPA_RM_RELEASED;
 	hdd_ipa->stats.num_rm_release++;
-	cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 
 	ret =
 		ipa_rm_inactivity_timer_release_resource(IPA_RM_RESOURCE_WLAN_PROD);
 
-	cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 	if (unlikely(ret != 0)) {
 		hdd_ipa->rm_state = HDD_IPA_RM_GRANTED;
 		WARN_ON(1);
@@ -2174,7 +2174,7 @@ static int hdd_ipa_rm_try_release(struct hdd_ipa_priv *hdd_ipa)
 			      msecs_to_jiffies
 				      (HDD_IPA_RX_INACTIVITY_MSEC_DELAY));
 
-	cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 
 	return ret;
 }
@@ -2211,9 +2211,9 @@ static void hdd_ipa_rm_notify(void *user_data, enum ipa_rm_event event,
 			schedule_work(&hdd_ipa->uc_rm_work.work);
 			break;
 		}
-		cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 		hdd_ipa->rm_state = HDD_IPA_RM_GRANTED;
-		cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 		hdd_ipa->stats.num_rm_grant++;
 		break;
 
@@ -2434,7 +2434,7 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 		goto set_perf_failed;
 	}
 
-	cdf_wake_lock_init(&hdd_ipa->wake_lock, "wlan_ipa");
+	qdf_wake_lock_create(&hdd_ipa->wake_lock, "wlan_ipa");
 #ifdef CONFIG_CNSS
 	cnss_init_delayed_work(&hdd_ipa->wake_lock_work,
 			       hdd_ipa_wake_lock_timer_func);
@@ -2442,7 +2442,7 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 	INIT_DELAYED_WORK(&hdd_ipa->wake_lock_work,
 			  hdd_ipa_wake_lock_timer_func);
 #endif
-	cdf_spinlock_init(&hdd_ipa->rm_lock);
+	qdf_spinlock_create(&hdd_ipa->rm_lock);
 	hdd_ipa->rm_state = HDD_IPA_RM_RELEASED;
 	hdd_ipa->wake_lock_released = true;
 	atomic_set(&hdd_ipa->tx_ref_cnt, 0);
@@ -2478,12 +2478,12 @@ static void hdd_ipa_destroy_rm_resource(struct hdd_ipa_priv *hdd_ipa)
 		return;
 
 	cancel_delayed_work_sync(&hdd_ipa->wake_lock_work);
-	cdf_wake_lock_destroy(&hdd_ipa->wake_lock);
+	qdf_wake_lock_destroy(&hdd_ipa->wake_lock);
 
 #ifdef WLAN_OPEN_SOURCE
 	cancel_work_sync(&hdd_ipa->uc_rm_work.work);
 #endif
-	cdf_spinlock_destroy(&hdd_ipa->rm_lock);
+	qdf_spinlock_destroy(&hdd_ipa->rm_lock);
 
 	ipa_rm_inactivity_timer_destroy(IPA_RM_RESOURCE_WLAN_PROD);
 
@@ -2705,13 +2705,13 @@ static void hdd_ipa_send_pkt_to_tl(
 	hdd_adapter_t *adapter = NULL;
 	cdf_nbuf_t skb;
 
-	cdf_spin_lock_bh(&iface_context->interface_lock);
+	qdf_spin_lock_bh(&iface_context->interface_lock);
 	adapter = iface_context->adapter;
 	if (!adapter) {
 		HDD_IPA_LOG(CDF_TRACE_LEVEL_WARN, "Interface Down");
 		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_drop++;
-		cdf_spin_unlock_bh(&iface_context->interface_lock);
+		qdf_spin_unlock_bh(&iface_context->interface_lock);
 		hdd_ipa_rm_try_release(hdd_ipa);
 		return;
 	}
@@ -2722,7 +2722,7 @@ static void hdd_ipa_send_pkt_to_tl(
 	 */
 	if (WLAN_HDD_GET_AP_CTX_PTR(adapter)->dfs_cac_block_tx) {
 		ipa_free_skb(ipa_tx_desc);
-		cdf_spin_unlock_bh(&iface_context->interface_lock);
+		qdf_spin_unlock_bh(&iface_context->interface_lock);
 		iface_context->stats.num_tx_cac_drop++;
 		hdd_ipa_rm_try_release(hdd_ipa);
 		return;
@@ -2731,7 +2731,7 @@ static void hdd_ipa_send_pkt_to_tl(
 	interface_id = adapter->sessionId;
 	++adapter->stats.tx_packets;
 
-	cdf_spin_unlock_bh(&iface_context->interface_lock);
+	qdf_spin_unlock_bh(&iface_context->interface_lock);
 
 	skb = ipa_tx_desc->skb;
 
@@ -2788,10 +2788,10 @@ static void hdd_ipa_pm_send_pkt_to_tl(struct work_struct *work)
 	cdf_nbuf_t skb;
 	uint32_t dequeued = 0;
 
-	cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
 	while (((skb = cdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head)) != NULL)) {
-		cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
 
@@ -2800,10 +2800,10 @@ static void hdd_ipa_pm_send_pkt_to_tl(struct work_struct *work)
 		hdd_ipa_send_pkt_to_tl(pm_tx_cb->iface_context,
 				       pm_tx_cb->ipa_tx_desc);
 
-		cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	}
 
-	cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 	hdd_ipa->stats.num_tx_dequeued += dequeued;
 	if (dequeued > hdd_ipa->stats.num_max_pm_queue)
@@ -2867,7 +2867,7 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 	 */
 	hdd_ipa_rm_request(hdd_ipa);
 
-	cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	/*
 	 * If host is still suspended then queue the packets and these will be
 	 * drained later when resume completes. When packet is arrived here and
@@ -2882,11 +2882,11 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 		cdf_nbuf_queue_add(&hdd_ipa->pm_queue_head, skb);
 		hdd_ipa->stats.num_tx_queued++;
 
-		cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 		return;
 	}
 
-	cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 	/*
 	 * If we are here means, host is not suspended, wait for the work queue
@@ -2921,17 +2921,17 @@ int hdd_ipa_suspend(hdd_context_t *hdd_ctx)
 	if (atomic_read(&hdd_ipa->tx_ref_cnt))
 		return -EAGAIN;
 
-	cdf_spin_lock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->rm_lock);
 
 	if (hdd_ipa->rm_state != HDD_IPA_RM_RELEASED) {
-		cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 		return -EAGAIN;
 	}
-	cdf_spin_unlock_bh(&hdd_ipa->rm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->rm_lock);
 
-	cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	hdd_ipa->suspended = true;
-	cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 	return 0;
 }
@@ -2951,9 +2951,9 @@ int hdd_ipa_resume(hdd_context_t *hdd_ctx)
 
 	schedule_work(&hdd_ipa->pm_work);
 
-	cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	hdd_ipa->suspended = false;
-	cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 	return 0;
 }
@@ -3399,11 +3399,11 @@ static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context)
 
 	hdd_ipa_clean_hdr(iface_context->adapter);
 
-	cdf_spin_lock_bh(&iface_context->interface_lock);
+	qdf_spin_lock_bh(&iface_context->interface_lock);
 	iface_context->adapter->ipa_context = NULL;
 	iface_context->adapter = NULL;
 	iface_context->tl_context = NULL;
-	cdf_spin_unlock_bh(&iface_context->interface_lock);
+	qdf_spin_unlock_bh(&iface_context->interface_lock);
 	iface_context->ifa_address = 0;
 	if (!iface_context->hdd_ipa->num_iface) {
 		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
@@ -3651,7 +3651,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		hdd_err("IPA resource %s inprogress",
 			hdd_ipa->resource_loading ? "load":"unload");
 
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 
 		pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
 		if (pending_event_count >= HDD_IPA_MAX_PENDING_EVENT_COUNT) {
@@ -3666,7 +3666,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		if (!pending_event) {
 			hdd_err("Pending event memory alloc fail");
-			cdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -ENOMEM;
 		}
 
@@ -3679,7 +3679,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_list_insert_back(&hdd_ipa->pending_event,
 				&pending_event->node);
 
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 		return 0;
 	}
 
@@ -3699,7 +3699,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_STA_RX_DATA_OFFLOAD, 1);
 
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
@@ -3710,7 +3710,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			/* Enable IPA UC TX PIPE when STA connected */
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
 			if (ret) {
-				cdf_mutex_release(&hdd_ipa->event_lock);
+				qdf_mutex_release(&hdd_ipa->event_lock);
 				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 					"handle 1st con ret %d", ret);
 				hdd_ipa_uc_offload_enable_disable(adapter,
@@ -3720,7 +3720,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		}
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
-			cdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_STA_RX_DATA_OFFLOAD, 0);
 			goto end;
@@ -3732,7 +3732,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 #endif /* IPA_UC_OFFLOAD */
 		}
 
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 
 		hdd_ipa->sta_connected = 1;
 		break;
@@ -3751,13 +3751,13 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			hdd_ipa_uc_offload_enable_disable(adapter,
 				SIR_AP_RX_DATA_OFFLOAD, 1);
 		}
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, Interface setup failed",
 				msg_ex->name, meta.msg_type);
-			cdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			goto end;
 
 #ifdef IPA_UC_OFFLOAD
@@ -3766,18 +3766,18 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				(adapter->ipa_context))->iface_id;
 #endif /* IPA_UC_OFFLOAD */
 		}
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	case WLAN_STA_DISCONNECT:
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		hdd_ipa_cleanup_iface(adapter->ipa_context);
 
 		if (!hdd_ipa->sta_connected) {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, STA already disconnected",
 				msg_ex->name, meta.msg_type);
-			cdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			return -EINVAL;
 		}
 		hdd_ipa->sta_connected = 0;
@@ -3801,7 +3801,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			vdev_to_iface[adapter->sessionId] = HDD_IPA_MAX_IFACE;
 		}
 
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	case WLAN_AP_DISCONNECT:
@@ -3812,7 +3812,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			return -EINVAL;
 		}
 
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		hdd_ipa_cleanup_iface(adapter->ipa_context);
 		if ((!hdd_ipa->num_iface) &&
 			(HDD_IPA_UC_NUM_WDI_PIPE ==
@@ -3837,7 +3837,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				SIR_AP_RX_DATA_OFFLOAD, 0);
 			vdev_to_iface[adapter->sessionId] = HDD_IPA_MAX_IFACE;
 		}
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	case WLAN_CLIENT_CONNECT_EX:
@@ -3851,13 +3851,13 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			return 0;
 		}
 
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		if (hdd_ipa_uc_find_add_assoc_sta(hdd_ipa,
 				true, sta_id)) {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 				"%s: STA ID %d found, not valid",
 				adapter->dev->name, sta_id);
-			cdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
 
@@ -3867,7 +3867,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		   !hdd_ipa->sta_connected)) {
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
 			if (ret) {
-				cdf_mutex_release(&hdd_ipa->event_lock);
+				qdf_mutex_release(&hdd_ipa->event_lock);
 				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 					    "%s: handle 1st con ret %d",
 					    adapter->dev->name, ret);
@@ -3877,7 +3877,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		hdd_ipa->sap_num_connected_sta++;
 
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 
 		meta.msg_type = type;
 		meta.msg_len = (sizeof(struct ipa_wlan_msg_ex) +
@@ -3922,12 +3922,12 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			return 0;
 		}
 
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
+		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		if (!hdd_ipa_uc_find_add_assoc_sta(hdd_ipa, false, sta_id)) {
 			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
 				    "%s: STA ID %d NOT found, not valid",
 				    msg_ex->name, sta_id);
-			cdf_mutex_release(&hdd_ipa->event_lock);
+			qdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
 		hdd_ipa->sap_num_connected_sta--;
@@ -3939,7 +3939,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			&& (HDD_IPA_UC_NUM_WDI_PIPE ==
 				hdd_ipa->activated_fw_pipe))
 			hdd_ipa_uc_handle_last_discon(hdd_ipa);
-		cdf_mutex_release(&hdd_ipa->event_lock);
+		qdf_mutex_release(&hdd_ipa->event_lock);
 		break;
 
 	default:
@@ -4057,7 +4057,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 			hdd_ipa_adapter_2_client[i].prod_client;
 		iface_context->iface_id = i;
 		iface_context->adapter = NULL;
-		cdf_spinlock_init(&iface_context->interface_lock);
+		qdf_spinlock_create(&iface_context->interface_lock);
 	}
 
 #ifdef CONFIG_CNSS
@@ -4065,7 +4065,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 #else
 	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_send_pkt_to_tl);
 #endif
-	cdf_spinlock_init(&hdd_ipa->pm_lock);
+	qdf_spinlock_create(&hdd_ipa->pm_lock);
 	cdf_nbuf_queue_init(&hdd_ipa->pm_queue_head);
 
 	ret = hdd_ipa_setup_rm(hdd_ipa);
@@ -4102,7 +4102,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 fail_create_sys_pipe:
 	hdd_ipa_destroy_rm_resource(hdd_ipa);
 fail_setup_rm:
-	cdf_spinlock_destroy(&hdd_ipa->pm_lock);
+	qdf_spinlock_destroy(&hdd_ipa->pm_lock);
 fail_get_resource:
 	cdf_mem_free(hdd_ipa);
 	hdd_ctx->hdd_ipa = NULL;
@@ -4161,24 +4161,24 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	cancel_work_sync(&hdd_ipa->pm_work);
 #endif
 
-	cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
 	while (((skb = cdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head)) != NULL)) {
-		cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
 		ipa_free_skb(pm_tx_cb->ipa_tx_desc);
 
-		cdf_spin_lock_bh(&hdd_ipa->pm_lock);
+		qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 	}
-	cdf_spin_unlock_bh(&hdd_ipa->pm_lock);
+	qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
-	cdf_spinlock_destroy(&hdd_ipa->pm_lock);
+	qdf_spinlock_destroy(&hdd_ipa->pm_lock);
 
 	/* destory the interface lock */
 	for (i = 0; i < HDD_IPA_MAX_IFACE; i++) {
 		iface_context = &hdd_ipa->iface_context[i];
-		cdf_spinlock_destroy(&iface_context->interface_lock);
+		qdf_spinlock_destroy(&iface_context->interface_lock);
 	}
 
 	/* This should never hit but still make sure that there are no pending
@@ -4207,8 +4207,8 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
 			    "%s: Disconnect RX PIPE", __func__);
 		ipa_disconnect_wdi_pipe(hdd_ipa->rx_pipe_handle);
-		cdf_mutex_destroy(&hdd_ipa->event_lock);
-		cdf_mutex_destroy(&hdd_ipa->ipa_lock);
+		qdf_mutex_destroy(&hdd_ipa->event_lock);
+		qdf_mutex_destroy(&hdd_ipa->ipa_lock);
 		hdd_ipa_cleanup_pending_event(hdd_ipa);
 
 #ifdef WLAN_OPEN_SOURCE

@@ -147,7 +147,7 @@ static int wlan_hdd_inited;
  */
 DEFINE_SPINLOCK(hdd_context_lock);
 
-static cdf_wake_lock_t wlan_wake_lock;
+static qdf_wake_lock_t wlan_wake_lock;
 
 #define WOW_MAX_FILTER_LISTS 1
 #define WOW_MAX_FILTERS_PER_LIST 4
@@ -3149,10 +3149,10 @@ QDF_STATUS hdd_get_front_adapter(hdd_context_t *hdd_ctx,
 				 hdd_adapter_list_node_t **padapterNode)
 {
 	QDF_STATUS status;
-	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_peek_front(&hdd_ctx->hddAdapters,
 				     (qdf_list_node_t **) padapterNode);
-	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3161,12 +3161,12 @@ QDF_STATUS hdd_get_next_adapter(hdd_context_t *hdd_ctx,
 				hdd_adapter_list_node_t **pNextAdapterNode)
 {
 	QDF_STATUS status;
-	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_peek_next(&hdd_ctx->hddAdapters,
 				    (qdf_list_node_t *) adapterNode,
 				    (qdf_list_node_t **) pNextAdapterNode);
 
-	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3174,10 +3174,10 @@ QDF_STATUS hdd_remove_adapter(hdd_context_t *hdd_ctx,
 			      hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
-	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_remove_node(&hdd_ctx->hddAdapters,
 				      &adapterNode->node);
-	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3185,10 +3185,10 @@ QDF_STATUS hdd_remove_front_adapter(hdd_context_t *hdd_ctx,
 				    hdd_adapter_list_node_t **padapterNode)
 {
 	QDF_STATUS status;
-	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_remove_front(&hdd_ctx->hddAdapters,
 				       (qdf_list_node_t **) padapterNode);
-	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3196,10 +3196,10 @@ QDF_STATUS hdd_add_adapter_back(hdd_context_t *hdd_ctx,
 				hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
-	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_insert_back(&hdd_ctx->hddAdapters,
 				      (qdf_list_node_t *) adapterNode);
-	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3207,10 +3207,10 @@ QDF_STATUS hdd_add_adapter_front(hdd_context_t *hdd_ctx,
 				 hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
-	cdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_insert_front(&hdd_ctx->hddAdapters,
 				       (qdf_list_node_t *) adapterNode);
-	cdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3774,10 +3774,10 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	}
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	/* Destroy the wake lock */
-	cdf_wake_lock_destroy(&hdd_ctx->rx_wake_lock);
+	qdf_wake_lock_destroy(&hdd_ctx->rx_wake_lock);
 #endif
 	/* Destroy the wake lock */
-	cdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
+	qdf_wake_lock_destroy(&hdd_ctx->sap_wake_lock);
 
 	hdd_hostapd_channel_wakelock_deinit(hdd_ctx);
 
@@ -3965,17 +3965,17 @@ QDF_STATUS hdd_post_cds_enable_config(hdd_context_t *hdd_ctx)
 /* wake lock APIs for HDD */
 void hdd_prevent_suspend(uint32_t reason)
 {
-	cdf_wake_lock_acquire(&wlan_wake_lock, reason);
+	qdf_wake_lock_acquire(&wlan_wake_lock, reason);
 }
 
 void hdd_allow_suspend(uint32_t reason)
 {
-	cdf_wake_lock_release(&wlan_wake_lock, reason);
+	qdf_wake_lock_release(&wlan_wake_lock, reason);
 }
 
 void hdd_prevent_suspend_timeout(uint32_t timeout, uint32_t reason)
 {
-	cdf_wake_lock_timeout_acquire(&wlan_wake_lock, timeout, reason);
+	qdf_wake_lock_timeout_acquire(&wlan_wake_lock, timeout, reason);
 }
 
 /**
@@ -5119,10 +5119,10 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 	init_completion(&hdd_ctx->mc_sus_event_var);
 	init_completion(&hdd_ctx->ready_to_suspend);
 
-	cdf_spinlock_init(&hdd_ctx->connection_status_lock);
-	cdf_spinlock_init(&hdd_ctx->sched_scan_lock);
+	qdf_spinlock_create(&hdd_ctx->connection_status_lock);
+	qdf_spinlock_create(&hdd_ctx->sched_scan_lock);
 
-	cdf_spinlock_init(&hdd_ctx->hdd_adapter_lock);
+	qdf_spinlock_create(&hdd_ctx->hdd_adapter_lock);
 	qdf_list_create(&hdd_ctx->hddAdapters, MAX_NUMBER_OF_ADAPTERS);
 
 	wlan_hdd_cfg80211_extscan_init(hdd_ctx);
@@ -5670,10 +5670,10 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	/* Initialize the wake lcok */
-	cdf_wake_lock_init(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
+	qdf_wake_lock_create(&hdd_ctx->rx_wake_lock, "qcom_rx_wakelock");
 #endif
 	/* Initialize the wake lcok */
-	cdf_wake_lock_init(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
+	qdf_wake_lock_create(&hdd_ctx->sap_wake_lock, "qcom_sap_wakelock");
 
 	hdd_hostapd_channel_wakelock_init(hdd_ctx);
 
@@ -5746,9 +5746,9 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				  hdd_ctx->target_hw_version,
 				  hdd_ctx->target_hw_name);
 
-	cdf_spinlock_init(&hdd_ctx->hdd_roc_req_q_lock);
+	qdf_spinlock_create(&hdd_ctx->hdd_roc_req_q_lock);
 	qdf_list_create((&hdd_ctx->hdd_roc_req_q), MAX_ROC_REQ_QUEUE_ENTRY);
-	cdf_spinlock_init(&hdd_ctx->hdd_scan_req_q_lock);
+	qdf_spinlock_create(&hdd_ctx->hdd_scan_req_q_lock);
 	qdf_list_create((&hdd_ctx->hdd_scan_req_q), CFG_MAX_SCAN_COUNT_MAX);
 #ifdef CONFIG_CNSS
 	cnss_init_delayed_work(&hdd_ctx->roc_req_work,
@@ -6809,7 +6809,7 @@ static int __hdd_module_init(void)
 	pr_info("%s: Loading driver v%s\n", WLAN_MODULE_NAME,
 		QWLAN_VERSIONSTR TIMER_MANAGER_STR MEMORY_DEBUG_STR);
 
-	cdf_wake_lock_init(&wlan_wake_lock, "wlan");
+	qdf_wake_lock_create(&wlan_wake_lock, "wlan");
 
 	hdd_set_conparam((uint32_t) con_mode);
 
@@ -6823,7 +6823,7 @@ static int __hdd_module_init(void)
 
 	return 0;
 out:
-	cdf_wake_lock_destroy(&wlan_wake_lock);
+	qdf_wake_lock_destroy(&wlan_wake_lock);
 	return ret;
 }
 
@@ -6839,7 +6839,7 @@ static void __hdd_module_exit(void)
 
 	wlan_hdd_unregister_driver();
 
-	cdf_wake_lock_destroy(&wlan_wake_lock);
+	qdf_wake_lock_destroy(&wlan_wake_lock);
 
 	return;
 }

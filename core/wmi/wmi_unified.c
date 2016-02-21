@@ -863,7 +863,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	wma_log_cmd_id(cmd_id);
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
+	qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/*Record 16 bytes of WMI cmd data - exclude TLV and WMI headers */
 	if (cmd_id == WMI_MGMT_TX_SEND_CMDID) {
 		WMI_MGMT_COMMAND_RECORD(cmd_id,
@@ -873,7 +873,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 					    2));
 	}
 
-	cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
+	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 
 	status = htc_send_pkt(wmi_handle->htc_handle, pkt);
@@ -1027,13 +1027,13 @@ static void wmi_process_fw_event_worker_thread_ctx
 	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 	data = cdf_nbuf_data(evt_buf);
 
-	cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
+	qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/* Exclude 4 bytes of TLV header */
 	WMI_RX_EVENT_RECORD(id, ((uint8_t *) data + 4));
-	cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
-	cdf_spin_lock_bh(&wmi_handle->eventq_lock);
+	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
+	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	cdf_nbuf_queue_add(&wmi_handle->event_queue, evt_buf);
-	cdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	schedule_work(&wmi_handle->rx_event_work);
 	return;
 }
@@ -1127,14 +1127,14 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 			goto end;
 		}
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-		cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
+		qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 		/* Exclude 4 bytes of TLV header */
 		if (id == WMI_MGMT_TX_COMPLETION_EVENTID) {
 			WMI_MGMT_EVENT_RECORD(id, ((uint8_t *) data + 4));
 		} else {
 			WMI_EVENT_RECORD(id, ((uint8_t *) data + 4));
 		}
-		cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
+		qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 		/* Call the WMI registered event handler */
 		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
@@ -1173,14 +1173,14 @@ void wmi_rx_event_work(struct work_struct *work)
 					       rx_event_work);
 	wmi_buf_t buf;
 
-	cdf_spin_lock_bh(&wmi->eventq_lock);
+	qdf_spin_lock_bh(&wmi->eventq_lock);
 	buf = cdf_nbuf_queue_remove(&wmi->event_queue);
-	cdf_spin_unlock_bh(&wmi->eventq_lock);
+	qdf_spin_unlock_bh(&wmi->eventq_lock);
 	while (buf) {
 		__wmi_control_rx(wmi, buf);
-		cdf_spin_lock_bh(&wmi->eventq_lock);
+		qdf_spin_lock_bh(&wmi->eventq_lock);
 		buf = cdf_nbuf_queue_remove(&wmi->event_queue);
-		cdf_spin_unlock_bh(&wmi->eventq_lock);
+		qdf_spin_unlock_bh(&wmi->eventq_lock);
 	}
 }
 
@@ -1218,7 +1218,7 @@ void *wmi_unified_attach(ol_scn_t scn_handle,
 	qdf_atomic_init(&wmi_handle->pending_cmds);
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
 	wmi_runtime_pm_init(wmi_handle);
-	cdf_spinlock_init(&wmi_handle->eventq_lock);
+	qdf_spinlock_create(&wmi_handle->eventq_lock);
 	cdf_nbuf_queue_init(&wmi_handle->event_queue);
 #ifdef CONFIG_CNSS
 	cnss_init_work(&wmi_handle->rx_event_work, wmi_rx_event_work);
@@ -1226,7 +1226,7 @@ void *wmi_unified_attach(ol_scn_t scn_handle,
 	INIT_WORK(&wmi_handle->rx_event_work, wmi_rx_event_work);
 #endif
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	cdf_spinlock_init(&wmi_handle->wmi_record_lock);
+	qdf_spinlock_create(&wmi_handle->wmi_record_lock);
 #endif
 	wmi_handle->wma_process_fw_event_handler_cbk = func;
 	return wmi_handle;
@@ -1237,13 +1237,13 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 	wmi_buf_t buf;
 
 	cds_flush_work(&wmi_handle->rx_event_work);
-	cdf_spin_lock_bh(&wmi_handle->eventq_lock);
+	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
 		cdf_nbuf_free(buf);
 		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
-	cdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	if (wmi_handle != NULL) {
 		OS_FREE(wmi_handle);
 		wmi_handle = NULL;
@@ -1269,13 +1269,13 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 	CDF_TRACE(QDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_INFO,
 		"Enter: %s", __func__);
 	cds_flush_work(&wmi_handle->rx_event_work);
-	cdf_spin_lock_bh(&wmi_handle->eventq_lock);
+	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
 	buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
 		cdf_nbuf_free(buf);
 		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
-	cdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
 		"Done: %s", __func__);
 }
@@ -1298,7 +1298,7 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 		 get_wmi_cmd_string(cmd_id), cmd_id);
 #endif
 
-	cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
+	qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/* Record 16 bytes of WMI cmd tx complete data
 	   - exclude TLV and WMI headers */
 	if (cmd_id == WMI_MGMT_TX_SEND_CMDID) {
@@ -1309,7 +1309,7 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 				((uint32_t *) cdf_nbuf_data(wmi_cmd_buf) + 2));
 	}
 
-	cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
+	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 	cdf_nbuf_free(wmi_cmd_buf);
 	cdf_mem_free(htc_pkt);

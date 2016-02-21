@@ -720,10 +720,10 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
 	hdd_roc_req->pRemainChanCtx = remain_chan_ctx;
 
 	/* Enqueue this RoC request */
-	cdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
 	status = qdf_list_insert_back(&hdd_ctx->hdd_roc_req_q,
 					&hdd_roc_req->node);
-	cdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGP, FL("Not able to enqueue RoC Req context"));
@@ -790,15 +790,15 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 	 * that any pending roc in the queue will be scheduled
 	 * on the current roc completion by scheduling the work queue.
 	 */
-	cdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_roc_req_q_lock);
 	if (list_empty(&hdd_ctx->hdd_roc_req_q.anchor)) {
-		cdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
+		qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
 		hdd_debug("list is empty");
 		return;
 	}
 	status = qdf_list_remove_front(&hdd_ctx->hdd_roc_req_q,
 			(qdf_list_node_t **) &hdd_roc_req);
-	cdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_roc_req_q_lock);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_debug("unable to remove roc element from list");
 		return;
@@ -894,9 +894,9 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		}
 	}
 
-	cdf_spin_lock(&pHddCtx->hdd_roc_req_q_lock);
+	qdf_spin_lock(&pHddCtx->hdd_roc_req_q_lock);
 	size = qdf_list_size(&(pHddCtx->hdd_roc_req_q));
-	cdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
+	qdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
 	if ((isBusy == false) && (!size)) {
 		status = wlan_hdd_execute_remain_on_channel(pAdapter,
 							    pRemainChanCtx);
@@ -1103,14 +1103,14 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 
 	if (0 != status)
 		return status;
-	cdf_spin_lock(&pHddCtx->hdd_roc_req_q_lock);
+	qdf_spin_lock(&pHddCtx->hdd_roc_req_q_lock);
 	list_for_each_safe(tmp, q, &pHddCtx->hdd_roc_req_q.anchor) {
 		curr_roc_req = list_entry(tmp, hdd_roc_req_t, node);
 		if ((uintptr_t) curr_roc_req->pRemainChanCtx == cookie) {
 			qdf_status = qdf_list_remove_node(&pHddCtx->hdd_roc_req_q,
 						      (qdf_list_node_t *)
 						      curr_roc_req);
-			cdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
+			qdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
 			if (qdf_status == QDF_STATUS_SUCCESS) {
 				cdf_mem_free(curr_roc_req->pRemainChanCtx);
 				cdf_mem_free(curr_roc_req);
@@ -1118,7 +1118,7 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 			return 0;
 		}
 	}
-	cdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
+	qdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
 	/* FIXME cancel currently running remain on chan.
 	 * Need to check cookie and cancel accordingly
 	 */

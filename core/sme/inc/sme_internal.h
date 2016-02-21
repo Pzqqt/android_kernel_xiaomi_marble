@@ -38,7 +38,7 @@
   Include Files
   ------------------------------------------------------------------------*/
 #include "qdf_status.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "cdf_trace.h"
 #include "cdf_memory.h"
 #include "qdf_types.h"
@@ -141,7 +141,7 @@ typedef void (*sme_set_thermal_level_callback)(void *context, u_int8_t level);
 
 typedef struct tagSmeStruct {
 	eSmeState state;
-	cdf_mutex_t lkSmeGlobalLock;
+	qdf_mutex_t lkSmeGlobalLock;
 	uint32_t totalSmeCmd;
 	/* following pointer contains array of pointers for tSmeCmd* */
 	void **pSmeCmdBufAddr;

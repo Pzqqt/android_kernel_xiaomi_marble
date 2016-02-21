@@ -388,7 +388,7 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 	 *   Set pulse duration to 20 us
 	 */
 
-	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	qdf_spin_lock_bh(&dfs->ic->chan_lock);
 	freq = ieee80211_chan2freq(dfs->ic, dfs->ic->ic_curchan);
 	freq_centre = dfs->ic->ic_curchan->ic_vhtop_ch_freq_seg1;
 
@@ -399,7 +399,7 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 		rsu->pulse_duration = 20;
 	}
 
-	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+	qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 }
 
 static void
@@ -599,7 +599,7 @@ static int tlv_calc_freq_info(struct ath_dfs *dfs, struct rx_radar_status *rs)
 		return 0;
 	}
 
-	cdf_spin_lock_bh(&dfs->ic->chan_lock);
+	qdf_spin_lock_bh(&dfs->ic->chan_lock);
 	/*
 	 * calculate the channel center frequency for
 	 * 160MHz and 80p80 MHz including the legacy
@@ -644,7 +644,7 @@ static int tlv_calc_freq_info(struct ath_dfs *dfs, struct rx_radar_status *rs)
 		chan_centre += (chan_offset / 2);
 	}
 
-	cdf_spin_unlock_bh(&dfs->ic->chan_lock);
+	qdf_spin_unlock_bh(&dfs->ic->chan_lock);
 	/*
 	 * XXX half/quarter rate support!
 	 */

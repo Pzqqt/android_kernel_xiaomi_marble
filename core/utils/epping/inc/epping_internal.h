@@ -125,7 +125,7 @@ typedef struct epping_context {
 	struct epping_cookie *cookie_list;
 	int cookie_count;
 	struct epping_cookie *s_cookie_mem[MAX_COOKIE_SLOTS_NUM];
-	cdf_spinlock_t cookie_lock;
+	qdf_spinlock_t cookie_lock;
 } epping_context_t;
 
 typedef enum {
@@ -141,7 +141,7 @@ typedef struct epping_adapter_s {
 	struct qdf_mac_addr macAddressCurrent;
 	uint8_t sessionId;
 	/* for mboxping */
-	cdf_spinlock_t data_lock;
+	qdf_spinlock_t data_lock;
 	cdf_nbuf_queue_t nodrop_queue;
 	qdf_timer_t epping_timer;
 	epping_tx_timer_state_t epping_timer_state;

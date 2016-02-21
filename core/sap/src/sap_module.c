@@ -185,7 +185,7 @@ QDF_STATUS wlansap_start(void *pCtx)
 	/* Now configure the auth type in the roaming profile. To open. */
 	pSapCtx->csr_roamProfile.negotiatedAuthType = eCSR_AUTH_TYPE_OPEN_SYSTEM;        /* open is the default */
 
-	if (!QDF_IS_STATUS_SUCCESS(cdf_mutex_init(&pSapCtx->SapGlobalLock))) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(&pSapCtx->SapGlobalLock))) {
 		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "wlansap_start failed init lock");
 		return QDF_STATUS_E_FAULT;
@@ -226,7 +226,7 @@ QDF_STATUS wlansap_stop(void *pCtx)
 
 	sap_free_roam_profile(&pSapCtx->csr_roamProfile);
 
-	if (!QDF_IS_STATUS_SUCCESS(cdf_mutex_destroy(&pSapCtx->SapGlobalLock))) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(&pSapCtx->SapGlobalLock))) {
 		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
 			  "wlansap_stop failed destroy lock");
 		return QDF_STATUS_E_FAULT;
@@ -1891,7 +1891,7 @@ QDF_STATUS sap_acquire_global_lock(ptSapContext pSapCtx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
-	if (QDF_IS_STATUS_SUCCESS(cdf_mutex_acquire(&pSapCtx->SapGlobalLock))) {
+	if (QDF_IS_STATUS_SUCCESS(qdf_mutex_acquire(&pSapCtx->SapGlobalLock))) {
 		qdf_status = QDF_STATUS_SUCCESS;
 	}
 
@@ -1902,7 +1902,7 @@ QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 
-	if (QDF_IS_STATUS_SUCCESS(cdf_mutex_release(&pSapCtx->SapGlobalLock))) {
+	if (QDF_IS_STATUS_SUCCESS(qdf_mutex_release(&pSapCtx->SapGlobalLock))) {
 		qdf_status = QDF_STATUS_SUCCESS;
 	}
 

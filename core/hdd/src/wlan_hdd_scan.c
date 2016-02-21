@@ -538,10 +538,10 @@ static int wlan_hdd_scan_request_enqueue(hdd_adapter_t *adapter,
 	hdd_scan_req->scan_id = scan_id;
 	hdd_scan_req->timestamp = timestamp;
 
-	cdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
 	status = qdf_list_insert_back(&hdd_ctx->hdd_scan_req_q,
 					&hdd_scan_req->node);
-	cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("Failed to enqueue Scan Req");
@@ -575,16 +575,16 @@ QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 	if ((source == NULL) && (timestamp == NULL) && (req == NULL))
 		return QDF_STATUS_E_NULL_VALUE;
 
-	cdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
+	qdf_spin_lock(&hdd_ctx->hdd_scan_req_q_lock);
 
 	if (list_empty(&hdd_ctx->hdd_scan_req_q.anchor)) {
-		cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (QDF_STATUS_SUCCESS !=
 		qdf_list_peek_front(&hdd_ctx->hdd_scan_req_q, &ppNode)) {
-		cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+		qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 		hdd_err("Failed to remove Scan Req from queue");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -600,12 +600,12 @@ QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 				*source = hdd_scan_req->source;
 				*timestamp = hdd_scan_req->timestamp;
 				cdf_mem_free(hdd_scan_req);
-				cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+				qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 				hdd_info("removed Scan id: %d, req = %p",
 					scan_id, req);
 				return QDF_STATUS_SUCCESS;
 			} else {
-				cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+				qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 				hdd_err("Failed to remove node scan id %d",
 					scan_id);
 				return status;
@@ -614,7 +614,7 @@ QDF_STATUS wlan_hdd_scan_request_dequeue(hdd_context_t *hdd_ctx,
 	} while (QDF_STATUS_SUCCESS ==
 		qdf_list_peek_next(&hdd_ctx->hdd_scan_req_q, pNode, &ppNode));
 
-	cdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
+	qdf_spin_unlock(&hdd_ctx->hdd_scan_req_q_lock);
 	hdd_err("Failed to find scan id %d", scan_id);
 	return status;
 }
@@ -673,12 +673,12 @@ hdd_scan_request_callback(tHalHandle halHandle, void *pContext,
 		hdd_err("Got unexpected request struct for Scan id %d",
 			scanId);
 
-	cdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
+	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
 	size = qdf_list_size(&(hddctx->hdd_scan_req_q));
 	if (!size)
 		/* Scan is no longer pending */
 		pAdapter->scan_info.mScanPending = false;
-	cdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
+	qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
 
 	/* notify any applications that may be interested */
 	memset(&wrqu, '\0', sizeof(wrqu));
@@ -1141,14 +1141,14 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 		aborted = true;
 	}
 
-	cdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
+	qdf_spin_lock(&hddctx->hdd_scan_req_q_lock);
 	size = qdf_list_size(&(hddctx->hdd_scan_req_q));
 	if (!size) {
 		/* Scan is no longer pending */
 		pScanInfo->mScanPending = false;
 		complete(&pScanInfo->abortscan_event_var);
 	}
-	cdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
+	qdf_spin_unlock(&hddctx->hdd_scan_req_q_lock);
 	/*
 	 * Scan can be triggred from NL or vendor scan
 	 * - If scan is triggered from NL then cfg80211 scan done should be
@@ -1955,15 +1955,15 @@ hdd_sched_scan_callback(void *callbackContext,
 		return;
 	}
 
-	cdf_spin_lock(&pHddCtx->sched_scan_lock);
+	qdf_spin_lock(&pHddCtx->sched_scan_lock);
 	if (true == pHddCtx->isWiphySuspended) {
 		pHddCtx->isSchedScanUpdatePending = true;
-		cdf_spin_unlock(&pHddCtx->sched_scan_lock);
+		qdf_spin_unlock(&pHddCtx->sched_scan_lock);
 		hddLog(LOG1,
 		       FL("Update cfg80211 scan database after it resume"));
 		return;
 	}
-	cdf_spin_unlock(&pHddCtx->sched_scan_lock);
+	qdf_spin_unlock(&pHddCtx->sched_scan_lock);
 
 	ret = wlan_hdd_cfg80211_update_bss(pHddCtx->wiphy, pAdapter, 0);
 

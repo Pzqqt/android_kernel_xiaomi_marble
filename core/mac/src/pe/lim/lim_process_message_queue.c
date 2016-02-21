@@ -652,10 +652,10 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 	body = WMA_GET_RX_MPDU_DATA(buff_desc);
 	frm_len = WMA_GET_RX_PAYLOAD_LEN(buff_desc);
 
-	cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+	qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
 	qdf_list_peek_front(&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
 			    (qdf_list_node_t **) &mgmt_frame);
-	cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
+	qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 
 	while (mgmt_frame != NULL) {
 		type = (mgmt_frame->frameType >> 2) & 0x03;
@@ -683,13 +683,13 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 			}
 		}
 
-		cdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
+		qdf_mutex_acquire(&mac_ctx->lim.lim_frame_register_lock);
 		qdf_status =
 			qdf_list_peek_next(
 			&mac_ctx->lim.gLimMgmtFrameRegistratinQueue,
 			(qdf_list_node_t *) mgmt_frame,
 			(qdf_list_node_t **) &next_frm);
-		cdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
+		qdf_mutex_release(&mac_ctx->lim.lim_frame_register_lock);
 		mgmt_frame = next_frm;
 		next_frm = NULL;
 	}

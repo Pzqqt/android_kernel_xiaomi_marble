@@ -101,7 +101,7 @@ static void hdd_lro_desc_pool_init(struct hdd_lro_desc_pool *lro_desc_pool,
 		list_add_tail(&lro_desc_pool->lro_desc_array[i].lro_node,
 			 &lro_desc_pool->lro_free_list_head);
 	}
-	cdf_spinlock_init(&lro_desc_pool->lro_pool_lock);
+	qdf_spinlock_create(&lro_desc_pool->lro_pool_lock);
 }
 
 /**
@@ -128,7 +128,7 @@ static void hdd_lro_desc_info_init(struct hdd_lro_s *hdd_info)
 			 lro_hash_table[i].lro_desc_list);
 	}
 
-	cdf_spinlock_init(&hdd_info->lro_desc_info.lro_hash_lock);
+	qdf_spinlock_create(&hdd_info->lro_desc_info.lro_hash_lock);
 }
 
 /**
@@ -142,7 +142,7 @@ static void hdd_lro_desc_info_init(struct hdd_lro_s *hdd_info)
 static void hdd_lro_desc_pool_deinit(struct hdd_lro_desc_pool *lro_desc_pool)
 {
 	INIT_LIST_HEAD(&lro_desc_pool->lro_free_list_head);
-	cdf_spinlock_destroy(&lro_desc_pool->lro_pool_lock);
+	qdf_spinlock_destroy(&lro_desc_pool->lro_pool_lock);
 }
 
 /**
@@ -160,7 +160,7 @@ static void hdd_lro_desc_info_deinit(struct hdd_lro_s *hdd_info)
 	struct hdd_lro_desc_info *desc_info = &hdd_info->lro_desc_info;
 
 	hdd_lro_desc_pool_deinit(&desc_info->lro_desc_pool);
-	cdf_spinlock_destroy(&desc_info->lro_hash_lock);
+	qdf_spinlock_destroy(&desc_info->lro_hash_lock);
 }
 
 /**
@@ -225,7 +225,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	cdf_spin_lock_bh(&desc_info->lro_hash_lock);
+	qdf_spin_lock_bh(&desc_info->lro_hash_lock);
 	/* Check if this flow exists in the descriptor list */
 	list_for_each(ptr, &lro_hash_table->lro_desc_list) {
 		struct net_lro_desc *tmp_lro_desc = NULL;
@@ -234,27 +234,27 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 		if (tmp_lro_desc->active) {
 			if (hdd_lro_tcp_flow_match(tmp_lro_desc, iph, tcph)) {
 				*lro_desc = entry->lro_desc;
-				cdf_spin_unlock_bh(&desc_info->lro_hash_lock);
+				qdf_spin_unlock_bh(&desc_info->lro_hash_lock);
 				return 0;
 			}
 		}
 	}
-	cdf_spin_unlock_bh(&desc_info->lro_hash_lock);
+	qdf_spin_unlock_bh(&desc_info->lro_hash_lock);
 
 	/* no existing flow found, a new LRO desc needs to be allocated */
 	free_pool = adapter->lro_info.lro_desc_info.lro_desc_pool;
-	cdf_spin_lock_bh(&free_pool.lro_pool_lock);
+	qdf_spin_lock_bh(&free_pool.lro_pool_lock);
 	entry = list_first_entry_or_null(
 		 &free_pool.lro_free_list_head,
 		 struct hdd_lro_desc_entry, lro_node);
 	if (NULL == entry) {
 		hdd_err("Could not allocate LRO desc!");
-		cdf_spin_unlock_bh(&free_pool.lro_pool_lock);
+		qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
 		return -ENOMEM;
 	}
 
 	list_del_init(&entry->lro_node);
-	cdf_spin_unlock_bh(&free_pool.lro_pool_lock);
+	qdf_spin_unlock_bh(&free_pool.lro_pool_lock);
 
 	if (NULL == entry->lro_desc) {
 		hdd_err("entry->lro_desc is NULL!\n");
@@ -267,10 +267,10 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	 * lro_desc->active should be 0 and lro_desc->tcp_rcv_tsval
 	 * should be 0 for newly allocated lro descriptors
 	 */
-	cdf_spin_lock_bh(&desc_info->lro_hash_lock);
+	qdf_spin_lock_bh(&desc_info->lro_hash_lock);
 	list_add_tail(&entry->lro_node,
 		 &lro_hash_table->lro_desc_list);
-	cdf_spin_unlock_bh(&desc_info->lro_hash_lock);
+	qdf_spin_unlock_bh(&desc_info->lro_hash_lock);
 	*lro_desc = entry->lro_desc;
 
 	return 0;
@@ -386,14 +386,14 @@ static void hdd_lro_desc_free(struct net_lro_desc *desc,
 
 	entry = &desc_info->lro_desc_pool.lro_desc_array[i];
 
-	cdf_spin_lock_bh(&desc_info->lro_hash_lock);
+	qdf_spin_lock_bh(&desc_info->lro_hash_lock);
 	list_del_init(&entry->lro_node);
-	cdf_spin_unlock_bh(&desc_info->lro_hash_lock);
+	qdf_spin_unlock_bh(&desc_info->lro_hash_lock);
 
-	cdf_spin_lock_bh(&desc_info->lro_desc_pool.lro_pool_lock);
+	qdf_spin_lock_bh(&desc_info->lro_desc_pool.lro_pool_lock);
 	list_add_tail(&entry->lro_node, &desc_info->
 		 lro_desc_pool.lro_free_list_head);
-	cdf_spin_unlock_bh(&desc_info->lro_desc_pool.lro_pool_lock);
+	qdf_spin_unlock_bh(&desc_info->lro_desc_pool.lro_pool_lock);
 }
 
 /**

@@ -136,7 +136,7 @@ static void ol_rx_reorder_timeout(void *arg)
 	time_now_ms = qdf_system_ticks_to_msecs(qdf_system_ticks());
 
 	pdev = rx_reorder_timeout_ac->pdev;
-	cdf_spin_lock(&pdev->rx.mutex);
+	qdf_spin_lock(&pdev->rx.mutex);
 /* TODO: conditionally take mutex lock during regular rx */
 	TAILQ_FOREACH_SAFE(list_elem,
 			   &rx_reorder_timeout_ac->virtual_timer_list,
@@ -165,7 +165,7 @@ static void ol_rx_reorder_timeout(void *arg)
 	if (!TAILQ_EMPTY(&rx_reorder_timeout_ac->virtual_timer_list))
 		ol_rx_reorder_timeout_start(rx_reorder_timeout_ac, time_now_ms);
 
-	cdf_spin_unlock(&pdev->rx.mutex);
+	qdf_spin_unlock(&pdev->rx.mutex);
 }
 
 void ol_rx_reorder_timeout_init(struct ol_txrx_pdev_t *pdev)
