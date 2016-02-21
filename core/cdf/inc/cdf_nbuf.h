@@ -34,7 +34,7 @@
 #define _CDF_NBUF_H
 #include <cdf_util.h>
 #include <qdf_types.h>
-#include <cdf_net_types.h>
+#include <qdf_net_types.h>
 #include <qdf_lock.h>
 #include <i_cdf_nbuf.h>
 #include <asm/cacheflush.h>
@@ -827,15 +827,15 @@ cdf_nbuf_append_ext_list(cdf_nbuf_t head_buf, cdf_nbuf_t ext_list,
  * cdf_nbuf_get_tx_cksum() - gets the tx checksum offload demand
  * @buf: Network buffer
  *
- * Return: cdf_nbuf_tx_cksum_t checksum offload demand for the frame
+ * Return: qdf_nbuf_tx_cksum_t checksum offload demand for the frame
  */
-static inline cdf_nbuf_tx_cksum_t cdf_nbuf_get_tx_cksum(cdf_nbuf_t buf)
+static inline qdf_nbuf_tx_cksum_t cdf_nbuf_get_tx_cksum(cdf_nbuf_t buf)
 {
 	return __cdf_nbuf_get_tx_cksum(buf);
 }
 
 /**
- * cdf_nbuf_set_rx_cksum() - drivers that support hw checksumming use this to
+ * qdf_nbuf_set_rx_cksum() - drivers that support hw checksumming use this to
  *			     indicate checksum info to the stack.
  * @buf: Network buffer
  * @cksum: Checksum
@@ -843,7 +843,7 @@ static inline cdf_nbuf_tx_cksum_t cdf_nbuf_get_tx_cksum(cdf_nbuf_t buf)
  * Return: none
  */
 static inline void
-cdf_nbuf_set_rx_cksum(cdf_nbuf_t buf, cdf_nbuf_rx_cksum_t *cksum)
+qdf_nbuf_set_rx_cksum(cdf_nbuf_t buf, qdf_nbuf_rx_cksum_t *cksum)
 {
 	__cdf_nbuf_set_rx_cksum(buf, cksum);
 }

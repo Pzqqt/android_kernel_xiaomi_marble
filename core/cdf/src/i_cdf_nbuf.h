@@ -519,9 +519,9 @@ static inline void __cdf_nbuf_trim_tail(struct sk_buff *skb, size_t size)
 /*
  * prototypes. Implemented in cdf_nbuf.c
  */
-cdf_nbuf_tx_cksum_t __cdf_nbuf_get_tx_cksum(struct sk_buff *skb);
+qdf_nbuf_tx_cksum_t __cdf_nbuf_get_tx_cksum(struct sk_buff *skb);
 QDF_STATUS __cdf_nbuf_set_rx_cksum(struct sk_buff *skb,
-				   cdf_nbuf_rx_cksum_t *cksum);
+				   qdf_nbuf_rx_cksum_t *cksum);
 uint8_t __cdf_nbuf_get_tid(struct sk_buff *skb);
 void __cdf_nbuf_set_tid(struct sk_buff *skb, uint8_t tid);
 uint8_t __cdf_nbuf_get_exemption_type(struct sk_buff *skb);

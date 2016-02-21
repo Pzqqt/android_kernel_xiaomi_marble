@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#include <cdf_net_types.h>      /* CDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
+#include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <cdf_util.h>           /* cdf_assert */
 #include <qdf_lock.h>           /* cdf_spinlock */
@@ -336,12 +336,12 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	msdu_info->htt.info.vdev_id = vdev->vdev_id;
 	msdu_info->htt.action.cksum_offload = cdf_nbuf_get_tx_cksum(netbuf);
 	switch (cdf_nbuf_get_exemption_type(netbuf)) {
-	case CDF_NBUF_EXEMPT_NO_EXEMPTION:
-	case CDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
+	case QDF_NBUF_EXEMPT_NO_EXEMPTION:
+	case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
 		/* We want to encrypt this frame */
 		msdu_info->htt.action.do_encrypt = 1;
 		break;
-	case CDF_NBUF_EXEMPT_ALWAYS:
+	case QDF_NBUF_EXEMPT_ALWAYS:
 		/* We don't want to encrypt this frame */
 		msdu_info->htt.action.do_encrypt = 0;
 		break;

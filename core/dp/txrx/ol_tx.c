@@ -577,12 +577,12 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 			msdu_info.htt.action.cksum_offload =
 				cdf_nbuf_get_tx_cksum(msdu);
 			switch (cdf_nbuf_get_exemption_type(msdu)) {
-			case CDF_NBUF_EXEMPT_NO_EXEMPTION:
-			case CDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
+			case QDF_NBUF_EXEMPT_NO_EXEMPTION:
+			case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
 				/* We want to encrypt this frame */
 				msdu_info.htt.action.do_encrypt = 1;
 				break;
-			case CDF_NBUF_EXEMPT_ALWAYS:
+			case QDF_NBUF_EXEMPT_ALWAYS:
 				/* We don't want to encrypt this frame */
 				msdu_info.htt.action.do_encrypt = 0;
 				break;
@@ -671,12 +671,12 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.htt.action.cksum_offload =
 			cdf_nbuf_get_tx_cksum(msdu);
 		switch (cdf_nbuf_get_exemption_type(msdu)) {
-		case CDF_NBUF_EXEMPT_NO_EXEMPTION:
-		case CDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
+		case QDF_NBUF_EXEMPT_NO_EXEMPTION:
+		case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
 			/* We want to encrypt this frame */
 			msdu_info.htt.action.do_encrypt = 1;
 			break;
-		case CDF_NBUF_EXEMPT_ALWAYS:
+		case QDF_NBUF_EXEMPT_ALWAYS:
 			/* We don't want to encrypt this frame */
 			msdu_info.htt.action.do_encrypt = 0;
 			break;

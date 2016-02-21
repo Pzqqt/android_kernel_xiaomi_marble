@@ -331,16 +331,16 @@ __cdf_nbuf_unmap_single(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
  * Return: QDF_STATUS
  */
 QDF_STATUS
-__cdf_nbuf_set_rx_cksum(struct sk_buff *skb, cdf_nbuf_rx_cksum_t *cksum)
+__cdf_nbuf_set_rx_cksum(struct sk_buff *skb, qdf_nbuf_rx_cksum_t *cksum)
 {
 	switch (cksum->l4_result) {
-	case CDF_NBUF_RX_CKSUM_NONE:
+	case QDF_NBUF_RX_CKSUM_NONE:
 		skb->ip_summed = CHECKSUM_NONE;
 		break;
-	case CDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY:
+	case QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY:
 		skb->ip_summed = CHECKSUM_UNNECESSARY;
 		break;
-	case CDF_NBUF_RX_CKSUM_TCP_UDP_HW:
+	case QDF_NBUF_RX_CKSUM_TCP_UDP_HW:
 		skb->ip_summed = CHECKSUM_PARTIAL;
 		skb->csum = cksum->val;
 		break;
@@ -358,19 +358,19 @@ __cdf_nbuf_set_rx_cksum(struct sk_buff *skb, cdf_nbuf_rx_cksum_t *cksum)
  *
  * Return: TX checksum value
  */
-cdf_nbuf_tx_cksum_t __cdf_nbuf_get_tx_cksum(struct sk_buff *skb)
+qdf_nbuf_tx_cksum_t __cdf_nbuf_get_tx_cksum(struct sk_buff *skb)
 {
 	switch (skb->ip_summed) {
 	case CHECKSUM_NONE:
-		return CDF_NBUF_TX_CKSUM_NONE;
+		return QDF_NBUF_TX_CKSUM_NONE;
 	case CHECKSUM_PARTIAL:
 		/* XXX ADF and Linux checksum don't map with 1-to-1. This is
 		 * not 100% correct */
-		return CDF_NBUF_TX_CKSUM_TCP_UDP;
+		return QDF_NBUF_TX_CKSUM_TCP_UDP;
 	case CHECKSUM_COMPLETE:
-		return CDF_NBUF_TX_CKSUM_TCP_UDP_IP;
+		return QDF_NBUF_TX_CKSUM_TCP_UDP_IP;
 	default:
-		return CDF_NBUF_TX_CKSUM_NONE;
+		return QDF_NBUF_TX_CKSUM_NONE;
 	}
 }
 
@@ -404,7 +404,7 @@ void __cdf_nbuf_set_tid(struct sk_buff *skb, uint8_t tid)
  */
 uint8_t __cdf_nbuf_get_exemption_type(struct sk_buff *skb)
 {
-	return CDF_NBUF_EXEMPT_NO_EXEMPTION;
+	return QDF_NBUF_EXEMPT_NO_EXEMPTION;
 }
 
 /**

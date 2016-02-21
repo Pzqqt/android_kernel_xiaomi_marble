@@ -48,7 +48,7 @@
  */
 /*DFS New Include Start*/
 
-#include <cdf_net_types.h>      /* CDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
+#include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <cdf_util.h>           /* cdf_assert */
 #include <qdf_lock.h>           /* cdf_spinlock */

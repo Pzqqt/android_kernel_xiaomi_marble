@@ -43,7 +43,7 @@
 #include <ol_cfg.h>             /* wlan_frm_fmt */
 
 #include <htt.h>                /* needed by inline functions */
-#include <cdf_net_types.h>
+#include <qdf_net_types.h>
 #include <ol_htt_api.h>         /* htt_pdev_handle */
 #include <htt_types.h>
 #include <cdf_trace.h>
@@ -281,7 +281,7 @@ struct htt_msdu_info_t {
 		 * 0x2 - L4 checksum only
 		 * 0x3 - L3 header checksum + L4 checksum
 		 */
-		cdf_nbuf_tx_cksum_t cksum_offload;
+		qdf_nbuf_tx_cksum_t cksum_offload;
 	} action;
 };
 

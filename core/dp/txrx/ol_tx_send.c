@@ -29,7 +29,7 @@
 #include <qdf_lock.h>           /* cdf_os_spinlock */
 #include <qdf_time.h>           /* qdf_system_ticks, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_net_types.h>      /* ADF_NBUF_TX_EXT_TID_INVALID */
+#include <qdf_net_types.h>      /* QDF_NBUF_TX_EXT_TID_INVALID */
 
 #include <cds_queue.h>          /* TAILQ */
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -796,7 +796,7 @@ ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 
 	dest_addr = ol_tx_dest_addr_find(pdev, msdu);
 	if (NULL == dest_addr)
-		return ADF_NBUF_TX_EXT_TID_INVALID;
+		return QDF_NBUF_TX_EXT_TID_INVALID;
 
 	is_mcast = IEEE80211_IS_MULTICAST(dest_addr);
 	is_mgmt = tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE;
@@ -839,7 +839,7 @@ ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 		return (ipv6_traffic_class((struct ipv6_hdr_t *)l3_hdr) >> 5) &
 		       0x7;
 	} else {
-		return ADF_NBUF_TX_EXT_TID_INVALID;
+		return QDF_NBUF_TX_EXT_TID_INVALID;
 	}
 }
 #endif
@@ -852,9 +852,9 @@ static int ol_tx_delay_category(struct ol_txrx_pdev_t *pdev, uint16_t msdu_id)
 
 	cdf_nbuf_t msdu = tx_desc->netbuf;
 	tid = cdf_nbuf_get_tid(msdu);
-	if (tid == ADF_NBUF_TX_EXT_TID_INVALID) {
+	if (tid == QDF_NBUF_TX_EXT_TID_INVALID) {
 		tid = ol_tx_delay_tid_from_l3_hdr(pdev, msdu, tx_desc);
-		if (tid == ADF_NBUF_TX_EXT_TID_INVALID) {
+		if (tid == QDF_NBUF_TX_EXT_TID_INVALID) {
 			/* TID could not be determined
 			   (this is not an IP frame?) */
 			return -EINVAL;

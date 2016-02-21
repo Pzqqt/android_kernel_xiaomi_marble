@@ -668,43 +668,43 @@ htt_set_checksum_result_ll(htt_pdev_handle pdev, cdf_nbuf_t msdu,
 	/*
 	 * HW supports TCP & UDP checksum offload for ipv4 and ipv6
 	 */
-	static const cdf_nbuf_l4_rx_cksum_type_t
+	static const qdf_nbuf_l4_rx_cksum_type_t
 		cksum_table[][MAX_PROTO_VAL][MAX_IP_VER] = {
 		{
 			/* non-fragmented IP packet */
 			/* non TCP/UDP packet */
-			{CDF_NBUF_RX_CKSUM_NONE, CDF_NBUF_RX_CKSUM_NONE},
+			{QDF_NBUF_RX_CKSUM_NONE, QDF_NBUF_RX_CKSUM_NONE},
 			/* TCP packet */
-			{CDF_NBUF_RX_CKSUM_TCP, CDF_NBUF_RX_CKSUM_TCPIPV6},
+			{QDF_NBUF_RX_CKSUM_TCP, QDF_NBUF_RX_CKSUM_TCPIPV6},
 			/* UDP packet */
-			{CDF_NBUF_RX_CKSUM_UDP, CDF_NBUF_RX_CKSUM_UDPIPV6},
+			{QDF_NBUF_RX_CKSUM_UDP, QDF_NBUF_RX_CKSUM_UDPIPV6},
 			/* invalid packet type */
-			{CDF_NBUF_RX_CKSUM_NONE, CDF_NBUF_RX_CKSUM_NONE},
+			{QDF_NBUF_RX_CKSUM_NONE, QDF_NBUF_RX_CKSUM_NONE},
 		},
 		{
 			/* fragmented IP packet */
-			{CDF_NBUF_RX_CKSUM_NONE, CDF_NBUF_RX_CKSUM_NONE},
-			{CDF_NBUF_RX_CKSUM_NONE, CDF_NBUF_RX_CKSUM_NONE},
-			{CDF_NBUF_RX_CKSUM_NONE, CDF_NBUF_RX_CKSUM_NONE},
-			{CDF_NBUF_RX_CKSUM_NONE, CDF_NBUF_RX_CKSUM_NONE},
+			{QDF_NBUF_RX_CKSUM_NONE, QDF_NBUF_RX_CKSUM_NONE},
+			{QDF_NBUF_RX_CKSUM_NONE, QDF_NBUF_RX_CKSUM_NONE},
+			{QDF_NBUF_RX_CKSUM_NONE, QDF_NBUF_RX_CKSUM_NONE},
+			{QDF_NBUF_RX_CKSUM_NONE, QDF_NBUF_RX_CKSUM_NONE},
 		}
 	};
 
-	cdf_nbuf_rx_cksum_t cksum = {
+	qdf_nbuf_rx_cksum_t cksum = {
 		cksum_table[rx_msdu->ip_frag][proto][rx_msdu->ipv6_proto],
-		CDF_NBUF_RX_CKSUM_NONE,
+		QDF_NBUF_RX_CKSUM_NONE,
 		0
 	};
 
 	if (cksum.l4_type !=
-	    (cdf_nbuf_l4_rx_cksum_type_t) CDF_NBUF_RX_CKSUM_NONE) {
+	    (qdf_nbuf_l4_rx_cksum_type_t) QDF_NBUF_RX_CKSUM_NONE) {
 		cksum.l4_result =
 			((*(uint32_t *) &rx_desc->attention) &
 			 RX_ATTENTION_0_TCP_UDP_CHKSUM_FAIL_MASK) ?
-			CDF_NBUF_RX_CKSUM_NONE :
-			CDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
+			QDF_NBUF_RX_CKSUM_NONE :
+			QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
 	}
-	cdf_nbuf_set_rx_cksum(msdu, &cksum);
+	qdf_nbuf_set_rx_cksum(msdu, &cksum);
 #undef MAX_IP_VER
 #undef MAX_PROTO_VAL
 }

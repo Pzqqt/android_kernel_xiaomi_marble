@@ -185,7 +185,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 				cdf_nbuf_set_tid(msdu, tid);
 			} else {
 				cdf_nbuf_set_tid(msdu,
-						 ADF_NBUF_TX_EXT_TID_INVALID);
+						 QDF_NBUF_TX_EXT_TID_INVALID);
 			}
 			/*
 			 * This MSDU needs to be forwarded to the tx path.
