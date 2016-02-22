@@ -55,6 +55,10 @@
 #define CONFIG_160MHZ_SUPPORT 0
 #endif
 
+#ifndef SUPPORT_11AX
+#define SUPPORT_11AX 0 /* 11ax not supported by default */
+#endif
+
 typedef enum {
 	MODE_11A = 0,           /* 11a Mode */
 	MODE_11G = 1,           /* 11b/g Mode */
@@ -75,9 +79,29 @@ typedef enum {
 	MODE_11AC_VHT160   = 15,
 #endif
 
+#if SUPPORT_11AX
+	MODE_11AX_HE20 = 16,
+	MODE_11AX_HE40 = 17,
+	MODE_11AX_HE80 = 18,
+	MODE_11AX_HE80_80 = 19,
+	MODE_11AX_HE160 = 20,
+	MODE_11AX_HE20_2G = 21,
+	MODE_11AX_HE40_2G = 22,
+	MODE_11AX_HE80_2G = 23,
+#endif
+
+	/*
+	 * MODE_UNKNOWN should not be used within the host / target interface.
+	 * Thus, it is permissible for ODE_UNKNOWN to be conditionally-defined,
+	 * taking different values when compiling for different targets.
+	 */
+
 	MODE_UNKNOWN,
-	MODE_UNKNOWN_NO_160MHZ_SUPPORT = 14,
-	MODE_UNKNOWN_160MHZ_SUPPORT = 16,
+	MODE_UNKNOWN_NO_160MHZ_SUPPORT = 14, /* not needed? */
+	/* MODE_UNKNOWN_NO_11AX_SUPPORT = 16,*/ /* not needed? */
+	/* MODE_UNKNOWN_11AX_SUPPORT = 24,*/ /* not needed? */
+	MODE_UNKNOWN_160MHZ_SUPPORT = MODE_UNKNOWN, /* not needed? */
+
 	MODE_MAX        = MODE_UNKNOWN,
 	MODE_MAX_NO_160_MHZ_SUPPORT = MODE_UNKNOWN_NO_160MHZ_SUPPORT,
 	MODE_MAX_160_MHZ_SUPPORT    = MODE_UNKNOWN_160MHZ_SUPPORT,
