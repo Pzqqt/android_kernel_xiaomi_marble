@@ -866,3 +866,30 @@ struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn)
 {
 	return &scn->target_info;
 }
+
+#if defined(FEATURE_LRO)
+/**
+ * hif_lro_flush_cb_register - API to register for LRO Flush Callback
+ * @scn: HIF Context
+ * @handler: Function pointer to be called by HIF
+ * @data: Private data to be used by the module registering to HIF
+ *
+ * Return: void
+ */
+void hif_lro_flush_cb_register(struct ol_softc *scn,
+				void (handler)(void *), void *data)
+{
+	ce_lro_flush_cb_register(scn, handler, data);
+}
+
+/**
+ * hif_lro_flush_cb_deregister - API to deregister for LRO Flush Callbacks
+ * @scn: HIF Context
+ *
+ * Return: void
+ */
+void hif_lro_flush_cb_deregister(struct ol_softc *scn)
+{
+	ce_lro_flush_cb_deregister(scn);
+}
+#endif

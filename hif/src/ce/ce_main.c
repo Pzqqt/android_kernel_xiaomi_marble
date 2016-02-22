@@ -1071,17 +1071,43 @@ CDF_STATUS hif_start(struct ol_softc *scn)
 #ifdef WLAN_FEATURE_FASTPATH
 /**
  * hif_enable_fastpath() Update that we have enabled fastpath mode
- * @hif_device: HIF context
+ * @hif_ctx: HIF context
  *
  * For use in data path
  *
  * Retrun: void
  */
-void
-hif_enable_fastpath(struct ol_softc *hif_device)
+void hif_enable_fastpath(struct ol_softc *hif_ctx)
 {
 	HIF_INFO("Enabling fastpath mode\n");
-	hif_device->fastpath_mode_on = 1;
+	hif_ctx->fastpath_mode_on = 1;
+}
+
+/**
+ * hif_is_fastpath_mode_enabled - API to query if fasthpath mode is enabled
+ * @hif_ctx: HIF Context
+ *
+ * For use in data path to skip HTC
+ *
+ * Return: bool
+ */
+bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx)
+{
+	return hif_ctx->fastpath_mode_on;
+}
+
+/**
+ * hif_get_ce_handle - API to get CE handle for FastPath mode
+ * @hif_ctx: HIF Context
+ * @id: CopyEngine Id
+ *
+ * API to return CE handle for fastpath mode
+ *
+ * Return: void
+ */
+void *hif_get_ce_handle(struct ol_softc *hif_ctx, int id)
+{
+	return hif_ctx->ce_id_to_state[id];
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 

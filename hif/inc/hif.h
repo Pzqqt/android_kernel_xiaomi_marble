@@ -407,7 +407,9 @@ CDF_STATUS hif_diag_write_mem(struct ol_softc *scn, uint32_t address,
  * Set the FASTPATH_mode_on flag in sc, for use by data path
  */
 #ifdef WLAN_FEATURE_FASTPATH
-void hif_enable_fastpath(struct ol_softc *hif_dev);
+void hif_enable_fastpath(struct ol_softc *hif_ctx);
+bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx);
+void *hif_get_ce_handle(struct ol_softc *hif_ctx, int);
 #endif
 
 #if defined(HIF_PCI) && !defined(A_SIMOS_DEVHOST)
@@ -655,7 +657,10 @@ void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);
 struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn);
 struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn);
-struct bmi_info *hif_get_bmi_ctx(void *hif_ctx);
+struct bmi_info *hif_get_bmi_ctx(struct ol_softc *scn);
+void hif_lro_flush_cb_register(struct ol_softc *scn,
+			       void (handler)(void *), void *data);
+void hif_lro_flush_cb_deregister(struct ol_softc *scn);
 #ifdef __cplusplus
 }
 #endif
