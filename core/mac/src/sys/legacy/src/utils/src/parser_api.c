@@ -3647,6 +3647,11 @@ sir_parse_beacon_ie(tpAniSirGlobal pMac,
 				&pBies->vendor2_ie.VHTOperation,
 				sizeof(tDot11fIEVHTOperation));
 	}
+	if (pBies->ExtCap.present) {
+		pBeaconStruct->ext_cap.present = 1;
+		qdf_mem_copy(&pBeaconStruct->ext_cap, &pBies->ExtCap,
+				sizeof(tDot11fIEExtCap));
+	}
 	qdf_mem_free(pBies);
 	return eSIR_SUCCESS;
 } /* End sir_parse_beacon_ie. */

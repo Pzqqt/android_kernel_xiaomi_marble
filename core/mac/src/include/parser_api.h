@@ -148,6 +148,7 @@ typedef struct sSirProbeRespBeacon {
 	tDot11fIEVHTCaps VHTCaps;
 	tDot11fIEVHTOperation VHTOperation;
 	tDot11fIEVHTExtBssLoad VHTExtBssLoad;
+	tDot11fIEExtCap ext_cap;
 	tDot11fIEOperatingMode OperatingMode;
 	uint8_t WiderBWChanSwitchAnnPresent;
 	tDot11fIEWiderBWChanSwitchAnn WiderBWChanSwitchAnn;

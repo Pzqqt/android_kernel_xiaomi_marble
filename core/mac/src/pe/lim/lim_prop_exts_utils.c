@@ -215,6 +215,9 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		if (beacon_struct->countryInfoPresent)
 			session->country_info_present = true;
 	}
+	/* Check if Extended caps are present in probe resp or not */
+	if (beacon_struct->ext_cap.present)
+		session->is_ext_caps_present = true;
 	qdf_mem_free(beacon_struct);
 	return;
 } /****** end lim_extract_ap_capability() ******/

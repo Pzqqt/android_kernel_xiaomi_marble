@@ -475,6 +475,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	struct obss_scanparam obss_ht40_scanparam;
 	/* Supported NSS is intersection of self and peer NSS */
 	bool supported_nss_1x1;
+	bool is_ext_caps_present;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

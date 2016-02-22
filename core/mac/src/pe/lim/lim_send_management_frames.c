@@ -1623,7 +1623,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	qdf_mem_set((uint8_t *) frm, sizeof(tDot11fAssocRequest), 0);
 
-	if (add_ie_len) {
+	if (add_ie_len && pe_session->is_ext_caps_present) {
 		qdf_mem_set((uint8_t *) &extr_ext_cap, sizeof(tDot11fIEExtCap),
 			    0);
 		sir_status = lim_strip_extcap_update_struct(mac_ctx,
@@ -1651,7 +1651,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			}
 		}
 	} else {
-		lim_log(mac_ctx, LOG1, FL("No additional IE for Assoc Req"));
+		lim_log(mac_ctx, LOG1,
+		FL("No addn IE or peer dosen't support addnIE for Assoc Req"));
 		extr_ext_flag = false;
 	}
 
@@ -1800,7 +1801,9 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 				&frm->vendor2_ie.VHTCaps);
 		vht_enabled = true;
 	}
-	populate_dot11f_ext_cap(mac_ctx, vht_enabled, &frm->ExtCap, pe_session);
+	if (pe_session->is_ext_caps_present)
+		populate_dot11f_ext_cap(mac_ctx, vht_enabled,
+				&frm->ExtCap, pe_session);
 
 	if (pe_session->pLimJoinReq->is11Rconnection) {
 		tSirBssDescription *bssdescr;
