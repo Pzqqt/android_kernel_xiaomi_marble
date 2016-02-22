@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,7 +89,7 @@ extern "C" {
  * ar6000_internal.h to be included, it may not be defined as yet.
  */
 #define WMI_F_MS(_v, _f)					    \
-	( ((_v) & (_f)) >> (_f ## _S) )
+	(((_v) & (_f)) >> (_f ## _S))
 
 /*
  * This breaks the "good macro practice" of only referencing each
@@ -98,7 +98,7 @@ extern "C" {
 #define WMI_F_RMW(_var, _v, _f)					    \
 	do {							\
 		(_var) &= ~(_f);				    \
-		(_var) |= ( ((_v) << (_f ## _S)) & (_f));	      \
+		(_var) |= (((_v) << (_f ## _S)) & (_f));	      \
 	} while (0)
 
 #define WMI_GET_BITS(_val, _index, _num_bits)                         \
@@ -121,7 +121,7 @@ extern "C" {
 	(((num_entries) / (32 / (bits_per_entry))) +            \
 	(((num_entries) % (32 / (bits_per_entry))) ? 1 : 0))
 
-static INLINE A_UINT32 wmi_packed_arr_get_bits(A_UINT32 * arr,
+static inline A_UINT32 wmi_packed_arr_get_bits(A_UINT32 *arr,
 			A_UINT32 entry_index, A_UINT32 bits_per_entry)
 {
 	A_UINT32 entries_per_uint = (32 / bits_per_entry);
@@ -129,11 +129,11 @@ static INLINE A_UINT32 wmi_packed_arr_get_bits(A_UINT32 * arr,
 	A_UINT32 num_entries_in_prev_uints = (uint_index * entries_per_uint);
 	A_UINT32 index_in_uint = (entry_index - num_entries_in_prev_uints);
 	A_UINT32 start_bit_in_uint = (index_in_uint * bits_per_entry);
-	return ((arr[uint_index] >> start_bit_in_uint) &
-		((1 << bits_per_entry) - 1));
+	return (arr[uint_index] >> start_bit_in_uint) &
+		((1 << bits_per_entry) - 1);
 }
 
-static INLINE void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
+static inline void wmi_packed_arr_set_bits(A_UINT32 *arr, A_UINT32 entry_index,
 			A_UINT32 bits_per_entry, A_UINT32 val)
 {
 	A_UINT32 entries_per_uint = (32 / bits_per_entry);
@@ -156,23 +156,23 @@ typedef struct {
 } wmi_mac_addr;
 
 /** macro to convert MAC address from WMI word format to char array */
-#define WMI_MAC_ADDR_TO_CHAR_ARRAY(pwmi_mac_addr,c_macaddr) do {	       \
+#define WMI_MAC_ADDR_TO_CHAR_ARRAY(pwmi_mac_addr, c_macaddr) do {	       \
 		(c_macaddr)[0] =    ((pwmi_mac_addr)->mac_addr31to0) & 0xff;	 \
-		(c_macaddr)[1] =  ( ((pwmi_mac_addr)->mac_addr31to0) >> 8) & 0xff; \
-		(c_macaddr)[2] =  ( ((pwmi_mac_addr)->mac_addr31to0) >> 16) & 0xff; \
-		(c_macaddr)[3] =  ( ((pwmi_mac_addr)->mac_addr31to0) >> 24) & 0xff;  \
+		(c_macaddr)[1] =  (((pwmi_mac_addr)->mac_addr31to0) >> 8) & 0xff; \
+		(c_macaddr)[2] =  (((pwmi_mac_addr)->mac_addr31to0) >> 16) & 0xff; \
+		(c_macaddr)[3] =  (((pwmi_mac_addr)->mac_addr31to0) >> 24) & 0xff;  \
 		(c_macaddr)[4] =    ((pwmi_mac_addr)->mac_addr47to32) & 0xff;	     \
-		(c_macaddr)[5] =  ( ((pwmi_mac_addr)->mac_addr47to32) >> 8) & 0xff; \
-} while(0)
+		(c_macaddr)[5] =  (((pwmi_mac_addr)->mac_addr47to32) >> 8) & 0xff; \
+} while (0)
 
 /** macro to convert MAC address from char array to WMI word format */
-#define WMI_CHAR_ARRAY_TO_MAC_ADDR(c_macaddr,pwmi_mac_addr)  do { \
+#define WMI_CHAR_ARRAY_TO_MAC_ADDR(c_macaddr, pwmi_mac_addr)  do { \
 		(pwmi_mac_addr)->mac_addr31to0  =				    \
-			( (c_macaddr)[0] | ((c_macaddr)[1] << 8)			   \
-			  | ((c_macaddr)[2] << 16) | ((c_macaddr)[3] << 24) );	       \
+			((c_macaddr)[0] | ((c_macaddr)[1] << 8)			   \
+			  | ((c_macaddr)[2] << 16) | ((c_macaddr)[3] << 24));	       \
 		(pwmi_mac_addr)->mac_addr47to32  =				    \
-			( (c_macaddr)[4] | ((c_macaddr)[5] << 8));	       \
-} while(0)
+			((c_macaddr)[4] | ((c_macaddr)[5] << 8));	       \
+} while (0)
 
 /*
  * wmi command groups.
@@ -978,10 +978,10 @@ typedef enum {
 	WMI_TBTTOFFSET_UPDATE_EVENTID,
 
 	/** event after the first beacon is transmitted following
-	         a change in the template.*/
+	a change in the template.*/
 	WMI_OFFLOAD_BCN_TX_STATUS_EVENTID,
 	/** event after the first probe response is transmitted following
-	         a change in the template.*/
+	a change in the template.*/
 	WMI_OFFLOAD_PROB_RESP_TX_STATUS_EVENTID,
 	/** Event for Mgmt TX completion event */
 	WMI_MGMT_TX_COMPLETION_EVENTID,
@@ -1265,12 +1265,12 @@ typedef enum {
 
 /** channel info consists of 6 bits of channel mode */
 
-#define WMI_SET_CHANNEL_MODE(pwmi_channel,val) do { \
+#define WMI_SET_CHANNEL_MODE(pwmi_channel, val) do { \
 		(pwmi_channel)->info &= 0xffffffc0;	       \
 		(pwmi_channel)->info |= (val);		       \
-} while(0)
+} while (0)
 
-#define WMI_GET_CHANNEL_MODE(pwmi_channel) ((pwmi_channel)->info & 0x0000003f )
+#define WMI_GET_CHANNEL_MODE(pwmi_channel) ((pwmi_channel)->info & 0x0000003f)
 
 #define WMI_CHAN_FLAG_HT40_PLUS   6
 #define WMI_CHAN_FLAG_PASSIVE     7
@@ -1283,48 +1283,48 @@ typedef enum {
 #define WMI_CHAN_FLAG_HALF_RATE     14  /* Indicates half rate channel */
 #define WMI_CHAN_FLAG_QUARTER_RATE  15  /* Indicates quarter rate channel */
 
-#define WMI_SET_CHANNEL_FLAG(pwmi_channel,flag) do { \
+#define WMI_SET_CHANNEL_FLAG(pwmi_channel, flag) do { \
 		(pwmi_channel)->info |=  (1 << flag);	   \
-} while(0)
+} while (0)
 
-#define WMI_GET_CHANNEL_FLAG(pwmi_channel,flag)	  \
+#define WMI_GET_CHANNEL_FLAG(pwmi_channel, flag)	  \
 	(((pwmi_channel)->info & (1 << flag)) >> flag)
 
-#define WMI_SET_CHANNEL_MIN_POWER(pwmi_channel,val) do { \
+#define WMI_SET_CHANNEL_MIN_POWER(pwmi_channel, val) do { \
 		(pwmi_channel)->reg_info_1 &= 0xffffff00;	    \
 		(pwmi_channel)->reg_info_1 |= (val&0xff);	    \
-} while(0)
-#define WMI_GET_CHANNEL_MIN_POWER(pwmi_channel) ((pwmi_channel)->reg_info_1 & 0xff )
+} while (0)
+#define WMI_GET_CHANNEL_MIN_POWER(pwmi_channel) ((pwmi_channel)->reg_info_1 & 0xff)
 
-#define WMI_SET_CHANNEL_MAX_POWER(pwmi_channel,val) do { \
+#define WMI_SET_CHANNEL_MAX_POWER(pwmi_channel, val) do { \
 		(pwmi_channel)->reg_info_1 &= 0xffff00ff;	    \
 		(pwmi_channel)->reg_info_1 |= ((val&0xff) << 8);    \
-} while(0)
-#define WMI_GET_CHANNEL_MAX_POWER(pwmi_channel) ( (((pwmi_channel)->reg_info_1) >> 8) & 0xff )
+} while (0)
+#define WMI_GET_CHANNEL_MAX_POWER(pwmi_channel) ((((pwmi_channel)->reg_info_1) >> 8) & 0xff)
 
-#define WMI_SET_CHANNEL_REG_POWER(pwmi_channel,val) do { \
+#define WMI_SET_CHANNEL_REG_POWER(pwmi_channel, val) do { \
 		(pwmi_channel)->reg_info_1 &= 0xff00ffff;	    \
 		(pwmi_channel)->reg_info_1 |= ((val&0xff) << 16);   \
-} while(0)
-#define WMI_GET_CHANNEL_REG_POWER(pwmi_channel) ( (((pwmi_channel)->reg_info_1) >> 16) & 0xff )
-#define WMI_SET_CHANNEL_REG_CLASSID(pwmi_channel,val) do { \
+} while (0)
+#define WMI_GET_CHANNEL_REG_POWER(pwmi_channel) ((((pwmi_channel)->reg_info_1) >> 16) & 0xff)
+#define WMI_SET_CHANNEL_REG_CLASSID(pwmi_channel, val) do { \
 		(pwmi_channel)->reg_info_1 &= 0x00ffffff;	      \
 		(pwmi_channel)->reg_info_1 |= ((val&0xff) << 24);     \
-} while(0)
-#define WMI_GET_CHANNEL_REG_CLASSID(pwmi_channel) ( (((pwmi_channel)->reg_info_1) >> 24) & 0xff )
+} while (0)
+#define WMI_GET_CHANNEL_REG_CLASSID(pwmi_channel) ((((pwmi_channel)->reg_info_1) >> 24) & 0xff)
 
-#define WMI_SET_CHANNEL_ANTENNA_MAX(pwmi_channel,val) do { \
+#define WMI_SET_CHANNEL_ANTENNA_MAX(pwmi_channel, val) do { \
 		(pwmi_channel)->reg_info_2 &= 0xffffff00;	      \
 		(pwmi_channel)->reg_info_2 |= (val&0xff);	      \
-} while(0)
-#define WMI_GET_CHANNEL_ANTENNA_MAX(pwmi_channel) ((pwmi_channel)->reg_info_2 & 0xff )
+} while (0)
+#define WMI_GET_CHANNEL_ANTENNA_MAX(pwmi_channel) ((pwmi_channel)->reg_info_2 & 0xff)
 
 /* max tx power is in 1 dBm units */
-#define WMI_SET_CHANNEL_MAX_TX_POWER(pwmi_channel,val) do { \
+#define WMI_SET_CHANNEL_MAX_TX_POWER(pwmi_channel, val) do { \
 		(pwmi_channel)->reg_info_2 &= 0xffff00ff;	       \
 		(pwmi_channel)->reg_info_2 |= ((val&0xff)<<8);	       \
-} while(0)
-#define WMI_GET_CHANNEL_MAX_TX_POWER(pwmi_channel) ( (((pwmi_channel)->reg_info_2)>>8) & 0xff )
+} while (0)
+#define WMI_GET_CHANNEL_MAX_TX_POWER(pwmi_channel) ((((pwmi_channel)->reg_info_2)>>8) & 0xff)
 
 
 /** HT Capabilities*/
@@ -1417,7 +1417,7 @@ typedef enum {
 /* Interested readers refer to Rx/Tx MCS Map definition as defined in
    802.11ac
  */
-#define WMI_VHT_MAX_MCS_4_SS_MASK(r,ss)      ((3 & (r)) << (((ss) - 1) << 1))
+#define WMI_VHT_MAX_MCS_4_SS_MASK(r, ss)      ((3 & (r)) << (((ss) - 1) << 1))
 #define WMI_VHT_MAX_SUPP_RATE_MASK           0x1fff0000
 #define WMI_VHT_MAX_SUPP_RATE_MASK_SHIFT     16
 
@@ -2617,10 +2617,10 @@ typedef struct {
  * assumptions; don't be clever with them.
  */
 #define WMI_UNIFIED_FREQ_INFO_GET(hdr, f)				    \
-	( WMI_F_MS( (hdr)->freq_info_1,					\
-		    WMI_UNIFIED_FREQINFO_ ## f ## _LO )				      \
-	  | (WMI_F_MS( (hdr)->freq_info_1,				\
-		       WMI_UNIFIED_FREQINFO_ ## f ## _HI ) << 8) )
+	(WMI_F_MS((hdr)->freq_info_1,					\
+		    WMI_UNIFIED_FREQINFO_ ## f ## _LO)				      \
+	  | (WMI_F_MS((hdr)->freq_info_1,				\
+		       WMI_UNIFIED_FREQINFO_ ## f ## _HI) << 8))
 
 #define WMI_UNIFIED_FREQ_INFO_SET(hdr, f, v)				    \
 	do {								    \
@@ -2638,7 +2638,7 @@ typedef struct {
 #define WMI_UNIFIED_FREQINFO_2_PHYERRCODE_S 16
 
 #define WMI_UNIFIED_RSSI_COMB_GET(hdr)					    \
-	( (int8_t) (WMI_F_MS((hdr)->freq_info_2,			\
+	((int8_t) (WMI_F_MS((hdr)->freq_info_2,			\
 			     WMI_UNIFIED_FREQINFO_2_RSSI_COMB)))
 
 #define WMI_UNIFIED_RSSI_COMB_SET(hdr, v)				    \
@@ -2714,7 +2714,7 @@ typedef struct {
 
 /* PHY ERROR MASK 0 */
 /* bits 1:0 defined but not published */
-#define WMI_PHY_ERROR_MASK0_RADAR                           (1<<2 )
+#define WMI_PHY_ERROR_MASK0_RADAR                           (1<<2)
 /* bits 23:3 defined but not published */
 #define WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT                 (1<<24)
 /* bits 25:24 defined but not published */
@@ -4112,7 +4112,7 @@ typedef struct {
 	A_UINT32 tx_frm_cnt[WLAN_MAX_AC];               /* Total number of packets(per AC) that were successfully transmitted(with and without retries, including multi-cast, broadcast) */
 	A_UINT32 rx_frm_cnt;            /* Total number of packets that were successfully received (after appropriate filter rules including multi-cast, broadcast) */
 	A_UINT32 multiple_retry_cnt[WLAN_MAX_AC];               /*The number of MSDU packets and MMPDU frames per AC
-	                                                           that the 802.11 station successfully transmitted after more than one retransmission attempt */
+								that the 802.11 station successfully transmitted after more than one retransmission attempt */
 	A_UINT32 fail_cnt[WLAN_MAX_AC];         /*Total number packets(per AC) failed to transmit */
 	A_UINT32 rts_fail_cnt;          /*Total number of RTS/CTS sequence failures for transmission of a packet */
 	A_UINT32 rts_succ_cnt;          /*Total number of RTS/CTS sequence success for transmission of a packet */
@@ -4686,11 +4686,11 @@ enum wmi_pkt_type {
 };
 
 typedef struct {
-	A_UINT8 sutxbfee : 1, mutxbfee : 1, sutxbfer : 1, mutxbfer : 1,
+	A_UINT8 sutxbfee:1, mutxbfee:1, sutxbfer:1, mutxbfer:1,
 #if defined(AR900B)
-	txb_sts_cap : 3, implicit_bf : 1;
+	txb_sts_cap:3, implicit_bf:1;
 #else
-	reserved : 4;
+	reserved:4;
 #endif
 } wmi_vdev_txbf_en;
 
@@ -4956,7 +4956,11 @@ enum wmi_sta_ps_param_pspoll_count {
 #define WMI_UAPSD_AC_TYPE_DELI 0
 #define WMI_UAPSD_AC_TYPE_TRIG 1
 
-#define WMI_UAPSD_AC_BIT_MASK(ac,type) (type ==  WMI_UAPSD_AC_TYPE_DELI) ? (1<<(ac<<1)) : (1<<((ac<<1)+1))
+#define WMI_UAPSD_AC_BIT_MASK(ac, type) \
+	do { \
+		(type ==  WMI_UAPSD_AC_TYPE_DELI) ? (1<<(ac<<1)) : \
+		(1<<((ac<<1)+1)) \
+	} while (0)
 
 enum wmi_sta_ps_param_uapsd {
 	WMI_STA_PS_UAPSD_AC0_DELIVERY_EN = (1 << 0),
@@ -5436,7 +5440,7 @@ enum wmi_peer_type {
 	WMI_PEER_TYPE_TDLS = 2,         /* Peer is a TDLS Peer */
 	WMI_PEER_TYPE_OCB = 3, /* Peer is a OCB Peer */
 	WMI_PEER_TYPE_HOST_MAX = 127,           /* Host <-> Target Peer type
-	                                         * is assigned up to 127 */
+						* is assigned up to 127 */
 	/* Reserved from 128 - 255 for
 	 * target internal use.*/
 	WMI_PEER_TYPE_ROAMOFFLOAD_TEMP = 128, /* Temporarily created during offload roam */
@@ -6355,8 +6359,8 @@ typedef struct {
 	A_UINT32 qos_caps;
 	A_UINT32 wmm_caps;
 	A_UINT32 mcsset[ROAM_OFFLOAD_NUM_MCS_SET >> 2];         /* since this 4 byte aligned,
-	                                                         * we don't declare it as
-	                                                         * tlv array */
+								* we don't declare it as
+								* tlv array */
 } wmi_roam_offload_tlv_param;
 
 /* flags for 11i offload */
@@ -6365,11 +6369,11 @@ typedef struct {
 
 #define WMI_SET_ROAM_OFFLOAD_OKC_ENABLED(flag) do { \
 		(flag) |=  (1 << WMI_ROAM_OFFLOAD_FLAG_OKC_ENABLED);	  \
-} while(0)
+} while (0)
 
 #define WMI_SET_ROAM_OFFLOAD_OKC_DISABLED(flag) do { \
 		(flag) &=  ~(1 << WMI_ROAM_OFFLOAD_FLAG_OKC_ENABLED);	   \
-} while(0)
+} while (0)
 
 #define WMI_GET_ROAM_OFFLOAD_OKC_ENABLED(flag)	 \
 	((flag) & (1 << WMI_ROAM_OFFLOAD_FLAG_OKC_ENABLED))
@@ -6428,9 +6432,9 @@ typedef struct {
 #define WMI_ROAM_REASON_DEAUTH    0x2 /** deauth/disassoc received */
 #define WMI_ROAM_REASON_LOW_RSSI  0x3 /** connected AP's low rssi condition detected */
 #define WMI_ROAM_REASON_SUITABLE_AP 0x4 /** found another AP that matches
-	                                   SSID and Security profile in
-	                                   WMI_ROAM_AP_PROFILE, found during scan
-	                                   triggered upon FINAL_BMISS **/
+					SSID and Security profile in
+					WMI_ROAM_AP_PROFILE, found during scan
+					triggered upon FINAL_BMISS **/
 #define WMI_ROAM_REASON_HO_FAILED  0x5  /** LFR3.0 roaming failed, indicate the disconnection to host */
 /* reserved up through 0xF */
 
@@ -6499,14 +6503,14 @@ typedef struct {
 
 #define WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE(flag) do { \
 	(flag) |=  (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE);      \
-	} while(0)
+	} while (0)
 
 #define WMI_CLEAR_ROAM_INVOKE_ADD_CH_TO_CACHE(flag) do { \
 	(flag) &=  ~(1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE);      \
-	} while(0)
+	} while (0)
 
 #define WMI_GET_ROAM_INVOKE_ADD_CH_TO_CACHE(flag)   \
-        ((flag) & (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE))
+	((flag) & (1 << WMI_SET_ROAM_INVOKE_ADD_CH_TO_CACHE))
 
 
 #define WMI_ROAM_INVOKE_SCAN_MODE_FIXED_CH      0   /* scan given channel only */
@@ -6889,7 +6893,7 @@ typedef struct {
 #define WOW_EXTEND_PATTERN_MATCH_CNT         16
 #define WOW_SHORT_PATTERN_MATCH_CNT           8
 #define WOW_DEFAULT_EVT_BUF_SIZE             148        /* Maximum 148 bytes of the data is copied starting from header incase if the match is found.
-	                                                   The 148 comes from (128 - 14 )  payload size  + 8bytes LLC + 26bytes MAC header */
+							The 148 comes from (128 - 14 )  payload size  + 8bytes LLC + 26bytes MAC header */
 #define WOW_DEFAULT_IOAC_PATTERN_SIZE  6
 #define WOW_DEFAULT_IOAC_PATTERN_SIZE_DWORD 2
 #define WOW_DEFAULT_IOAC_RANDOM_SIZE  6
@@ -7612,14 +7616,14 @@ typedef struct {
  */
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals
-	                                   WMITLV_TAG_STRUC_wmi_ba_req_ssn_cmd_sub_struct_param */
+					WMITLV_TAG_STRUC_wmi_ba_req_ssn_cmd_sub_struct_param */
 	wmi_mac_addr peer_macaddr;
 	A_UINT32 tidBitmap;
 } wmi_ba_req_ssn;
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals
-	                                   WMITLV_TAG_STRUC_wmi_ba_req_ssn_cmd_fixed_param */
+					WMITLV_TAG_STRUC_wmi_ba_req_ssn_cmd_fixed_param */
 	/** unique id identifying the VDEV, generated by the caller */
 	A_UINT32 vdev_id;
 	/** Number of requested SSN In the TLV wmi_ba_req_ssn[] */
@@ -7643,7 +7647,7 @@ typedef struct {
  */
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals
-	                                   WMITLV_TAG_STRUC_wmi_ba_req_ssn_event_sub_struct_param */
+					WMITLV_TAG_STRUC_wmi_ba_req_ssn_event_sub_struct_param */
 	wmi_mac_addr peer_macaddr;
 	/* A bool to indicate if ssn is present */
 	A_UINT32 ssn_present_for_tid[WMI_MAX_TC];
@@ -7655,7 +7659,7 @@ typedef struct {
 
 typedef struct {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals
-	                                   WMITLV_TAG_STRUC_wmi_ba_rsp_ssn_event_fixed_param */
+					WMITLV_TAG_STRUC_wmi_ba_rsp_ssn_event_fixed_param */
 	/** unique id identifying the VDEV, generated by the caller */
 	A_UINT32 vdev_id;
 	/** Event status, success or failure of the overall operation */
@@ -7880,7 +7884,7 @@ typedef struct wmi_nlo_event {
  * array will end on a 4-byte boundary.
  * (This 4-byte alignment simplifies endianness-correction byte swapping.)
  */
-A_COMPILE_TIME_ASSERT(check_passpoint_realm_size,(PASSPOINT_REALM_LEN % sizeof(A_UINT32)) == 0);
+A_COMPILE_TIME_ASSERT(check_passpoint_realm_size, (PASSPOINT_REALM_LEN % sizeof(A_UINT32)) == 0);
 
 /*
  * Confirm the product of PASSPOINT_ROAMING_CONSORTIUM_ID_NUM and
@@ -8586,10 +8590,10 @@ typedef struct {
 #define WMI_TDLS_QOS_SP_FLAG           5
 #define WMI_TDLS_QOS_MOREDATA_FLAG     7
 
-#define WMI_TDLS_PEER_SET_QOS_FLAG(ppeer_caps,flag) do { \
+#define WMI_TDLS_PEER_SET_QOS_FLAG(ppeer_caps, flag) do { \
 		(ppeer_caps)->peer_qos |=  (1 << flag);	     \
-} while(0)
-#define WMI_TDLS_PEER_GET_QOS_FLAG(ppeer_caps,flag)   \
+} while (0)
+#define WMI_TDLS_PEER_GET_QOS_FLAG(ppeer_caps, flag)   \
 	(((ppeer_caps)->peer_qos & (1 << flag)) >> flag)
 
 #define WMI_SET_TDLS_PEER_VO_UAPSD(ppeer_caps) \
@@ -8613,9 +8617,9 @@ typedef struct {
 #define WMI_GET_TDLS_PEER_ACK_UAPSD(ppeer_caps)	\
 	WMI_TDLS_PEER_GET_QOS_FLAG(ppeer_caps, WMI_TDLS_QOS_ACK_FLAG)
 /* SP has 2 bits */
-#define WMI_SET_TDLS_PEER_SP_UAPSD(ppeer_caps,val) do {	\
+#define WMI_SET_TDLS_PEER_SP_UAPSD(ppeer_caps, val) do {	\
 		(ppeer_caps)->peer_qos |=  (((val)&0x3) << WMI_TDLS_QOS_SP_FLAG); \
-} while(0)
+} while (0)
 #define WMI_GET_TDLS_PEER_SP_UAPSD(ppeer_caps) \
 	(((ppeer_caps)->peer_qos & (0x3 << WMI_TDLS_QOS_SP_FLAG)) >> WMI_TDLS_QOS_SP_FLAG)
 
@@ -8624,10 +8628,10 @@ typedef struct {
 #define WMI_GET_TDLS_PEER_MORE_DATA_ACK_UAPSD(ppeer_caps) \
 	WMI_TDLS_PEER_GET_QOS_FLAG(ppeer_caps, WMI_TDLS_QOS_MOREDATA_FLAG)
 
-#define WMI_TDLS_SELF_SET_QOS_FLAG(pset_cmd,flag) do { \
+#define WMI_TDLS_SELF_SET_QOS_FLAG(pset_cmd, flag) do { \
 		(pset_cmd)->tdls_puapsd_mask |=  (1 << flag);	   \
-} while(0)
-#define WMI_TDLS_SELF_GET_QOS_FLAG(pset_cmd,flag)   \
+} while (0)
+#define WMI_TDLS_SELF_GET_QOS_FLAG(pset_cmd, flag)   \
 	(((pset_cmd)->tdls_puapsd_mask & (1 << flag)) >> flag)
 
 #define WMI_SET_TDLS_SELF_VO_UAPSD(pset_cmd) \
@@ -8651,9 +8655,9 @@ typedef struct {
 #define WMI_GET_TDLS_SELF_ACK_UAPSD(pset_cmd) \
 	WMI_TDLS_SELF_GET_QOS_FLAG(pset_cmd, WMI_TDLS_QOS_ACK_FLAG)
 /* SP has 2 bits */
-#define WMI_SET_TDLS_SELF_SP_UAPSD(pset_cmd,val) do { \
+#define WMI_SET_TDLS_SELF_SP_UAPSD(pset_cmd, val) do { \
 		(pset_cmd)->tdls_puapsd_mask |=  (((val)&0x3) << WMI_TDLS_QOS_SP_FLAG);	\
-} while(0)
+} while (0)
 #define WMI_GET_TDLS_SELF_SP_UAPSD(pset_cmd) \
 	(((pset_cmd)->tdls_puapsd_mask & (0x3 << WMI_TDLS_QOS_SP_FLAG)) >> WMI_TDLS_QOS_SP_FLAG)
 
@@ -9615,43 +9619,43 @@ typedef struct {
 /**  Bit map definition for basic_config_info starts   */
 #define WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET_S   0
 #define WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET     (0x1f << WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET_S)
-#define WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET_GET(x)     WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET)
-#define WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET_SET(x,z)   WMI_F_RMW(x,(z) & 0x1f,WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET)
+#define WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET_GET(x)     WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET)
+#define WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET_SET(x, z)   WMI_F_RMW(x, (z) & 0x1f, WMI_TPC_CHAINMASK_CONFIG_TPC_OFFSET)
 
 #define WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET_S      5
 #define WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET        (0x1f << WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET_S)
-#define WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET_GET(x)     WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET)
-#define WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET_SET(x,z)   WMI_F_RMW(x, (z) & 0x1f, WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET)
+#define WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET_GET(x)     WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET)
+#define WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET_SET(x, z)   WMI_F_RMW(x, (z) & 0x1f, WMI_TPC_CHAINMASK_CONFIG_ACK_OFFSET)
 
 #define WMI_TPC_CHAINMASK_CONFIG_CHAINMASK_S  10
 #define WMI_TPC_CHAINMASK_CONFIG_CHAINMASK   (0x3 << WMI_TPC_CHAINMASK_CONFIG_CHAINMASK_S)
-#define WMI_TPC_CHAINMASK_CONFIG_CHAINMASK_GET(x)   WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_CHAINMASK)
-#define WMI_TPC_CHAINMASK_CONFIG_CHAINMASK_SET(x,z)  WMI_F_RMW(x, (z)&0x3, WMI_TPC_CHAINMASK_CONFIG_CHAINMASK)
+#define WMI_TPC_CHAINMASK_CONFIG_CHAINMASK_GET(x)   WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_CHAINMASK)
+#define WMI_TPC_CHAINMASK_CONFIG_CHAINMASK_SET(x, z)  WMI_F_RMW(x, (z)&0x3, WMI_TPC_CHAINMASK_CONFIG_CHAINMASK)
 
 #define WMI_TPC_CHAINMASK_CONFIG_BT_S       12
 #define WMI_TPC_CHAINMASK_CONFIG_BT         (0x3 << WMI_TPC_CHAINMASK_CONFIG_BT_S)
-#define WMI_TPC_CHAINMASK_CONFIG_BT_GET(x)     WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_BT)
-#define WMI_TPC_CHAINMASK_CONFIG_BT_SET(x,z)   WMI_F_RMW(x, (z)&0x3, WMI_TPC_CHAINMASK_CONFIG_BT)
+#define WMI_TPC_CHAINMASK_CONFIG_BT_GET(x)     WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_BT)
+#define WMI_TPC_CHAINMASK_CONFIG_BT_SET(x, z)   WMI_F_RMW(x, (z)&0x3, WMI_TPC_CHAINMASK_CONFIG_BT)
 
 #define WMI_TPC_CHAINMASK_CONFIG_STBC_S     14
 #define WMI_TPC_CHAINMASK_CONFIG_STBC       (0x3 << WMI_TPC_CHAINMASK_CONFIG_STBC_S)
-#define WMI_TPC_CHAINMASK_CONFIG_STBC_GET(x)     WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_STBC)
-#define WMI_TPC_CHAINMASK_CONFIG_STBC_SET(x,z)   WMI_F_RMW(x, (z)& 0x3, WMI_TPC_CHAINMASK_CONFIG_STBC)
+#define WMI_TPC_CHAINMASK_CONFIG_STBC_GET(x)     WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_STBC)
+#define WMI_TPC_CHAINMASK_CONFIG_STBC_SET(x, z)   WMI_F_RMW(x, (z) & 0x3, WMI_TPC_CHAINMASK_CONFIG_STBC)
 
 #define WMI_TPC_CHAINMASK_CONFIG_BAND_S     16
 #define WMI_TPC_CHAINMASK_CONFIG_BAND       (0x1 << WMI_TPC_CHAINMASK_CONFIG_BAND_S)
-#define WMI_TPC_CHAINMASK_CONFIG_BAND_GET(x)  WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_BAND)
-#define WMI_TPC_CHAINMASK_CONFIG_BAND_SET(x,z) WMI_F_RMW(x, (z) &0x1, WMI_TPC_CHAINMASK_CONFIG_BAND)
+#define WMI_TPC_CHAINMASK_CONFIG_BAND_GET(x)  WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_BAND)
+#define WMI_TPC_CHAINMASK_CONFIG_BAND_SET(x, z) WMI_F_RMW(x, (z) & 0x1, WMI_TPC_CHAINMASK_CONFIG_BAND)
 
 #define WMI_TPC_CHAINMASK_CONFIG_STREAM_S   17
 #define WMI_TPC_CHAINMASK_CONFIG_STREAM     (0x1 << WMI_TPC_CHAINMASK_CONFIG_STREAM_S)
-#define WMI_TPC_CHAINMASK_CONFIG_STREAM_GET(x)  WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_STREAM)
-#define WMI_TPC_CHAINMASK_CONFIG_STREAM_SET(x,z)  WMI_F_RMW(x, (z)&0x1, WMI_TPC_CHAINMASK_CONFIG_STREAM)
+#define WMI_TPC_CHAINMASK_CONFIG_STREAM_GET(x)  WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_STREAM)
+#define WMI_TPC_CHAINMASK_CONFIG_STREAM_SET(x, z)  WMI_F_RMW(x, (z)&0x1, WMI_TPC_CHAINMASK_CONFIG_STREAM)
 
 #define WMI_TPC_CHAINMASK_CONFIG_PHY_MODE_S     18
 #define WMI_TPC_CHAINMASK_CONFIG_PHY_MODE       (0x7 << WMI_TPC_CHAINMASK_CONFIG_PHY_MODE_S)
-#define WMI_TPC_CHAINMASK_CONFIG_PHY_MODE_GET(x) WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_PHY_MODE)
-#define WMI_TPC_CHAINAMSK_CONFIG_PHY_MODE_SET(x,z)  WMI_F_RMW(x, (z)&0x7, WMI_TPC_CHAINMASK_CONFIG_PHY_MODE)
+#define WMI_TPC_CHAINMASK_CONFIG_PHY_MODE_GET(x) WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_PHY_MODE)
+#define WMI_TPC_CHAINAMSK_CONFIG_PHY_MODE_SET(x, z)  WMI_F_RMW(x, (z)&0x7, WMI_TPC_CHAINMASK_CONFIG_PHY_MODE)
 
 #define WMI_TPC_CHAINMASK_CONFIG_CHANNEL_S     21
 /*
@@ -9661,8 +9665,8 @@ typedef struct {
  */
 #define WMI_TPC_CHAINMASK_CONFIG_CHANNEL_EXIST WMI_TPC_CHAINMASK_CONFIG_CHANNEL
 #define WMI_TPC_CHAINMASK_CONFIG_CHANNEL       (0x1 << WMI_TPC_CHAINMASK_CONFIG_CHANNEL_S)
-#define WMI_TPC_CHAINMASK_CONFIG_CHANNEL_GET(x)  WMI_F_MS(x,WMI_TPC_CHAINMASK_CONFIG_CHANNEL)
-#define WMI_TPC_CHAINMASK_CONFIG_CHANNEL_SET(x,z)  WMI_F_RMW(x, (z)&0x1, WMI_TPC_CHAINMASK_CONFIG_CHANNEL)
+#define WMI_TPC_CHAINMASK_CONFIG_CHANNEL_GET(x)  WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_CHANNEL)
+#define WMI_TPC_CHAINMASK_CONFIG_CHANNEL_SET(x, z)  WMI_F_RMW(x, (z)&0x1, WMI_TPC_CHAINMASK_CONFIG_CHANNEL)
 
 #define WMI_TPC_CHAINMASK_CONFIG_RATE_S  22
 /*
@@ -9673,7 +9677,7 @@ typedef struct {
 #define WMI_TPC_CHAINMASK_CONFIG_RATE_EXIST WMI_TPC_CHAINMASK_CONFIG_RATE
 #define WMI_TPC_CHAINMASK_CONFIG_RATE    (0x1 << WMI_TPC_CHAINMASK_CONFIG_RATE_S)
 #define WMI_TPC_CHAINMASK_CONFIG_RATE_GET(x)   WMI_F_MS(x, WMI_TPC_CHAINMASK_CONFIG_RATE)
-#define WMI_TPC_CHAINMASK_CONFIG_RATE_SET(x,z)  WMI_F_RMW(x, (z)&0x1, WMI_TPC_CHAINMASK_CONFIG_RATE)
+#define WMI_TPC_CHAINMASK_CONFIG_RATE_SET(x, z)  WMI_F_RMW(x, (z)&0x1, WMI_TPC_CHAINMASK_CONFIG_RATE)
 
 /**  Bit map definition for basic_config_info ends   */
 
@@ -9821,9 +9825,9 @@ enum {
     generated whenever firmware roamed to new AP silently and
     (a) If the host is awake, FW sends the event to the host immediately .
     (b) If host is in sleep then either
-        (1) FW waits until  host sends WMI_PDEV_RESUME_CMDID or WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID
+	(1) FW waits until  host sends WMI_PDEV_RESUME_CMDID or WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID
     command to FW (part of host wake up sequence  from low power mode) before sending the event host.
-        (2) data/mgmt frame is received from roamed AP, which needs to return to host
+	(2) data/mgmt frame is received from roamed AP, which needs to return to host
  */
 
 typedef struct {
@@ -10380,7 +10384,7 @@ typedef struct {
 	/** table ID - to allow support for multiple simultaneous tables */
 	A_UINT32    table_id;
 	/** operation mode: start/stop */
-	A_UINT32    mode;    // wmi_extscan_operation_mode
+	A_UINT32    mode;    /* wmi_extscan_operation_mode */
 	/**total number of ssids (in all pages) */
 	A_UINT32    total_entries;
 	/**index of the first ssid entry found in the TLV extscan_hotlist_ssid_entry*/
@@ -10841,17 +10845,17 @@ typedef struct {
  */
 #define WMI_DEBUG_LOG_PARAM_LOG_LEVEL      0x1
 
-#define WMI_DBGLOG_SET_LOG_LEVEL(val,lvl) do { \
+#define WMI_DBGLOG_SET_LOG_LEVEL(val, lvl) do { \
 		(val) |=  (lvl & 0xff);		       \
-} while(0)
+} while (0)
 
 #define WMI_DBGLOG_GET_LOG_LEVEL(val) ((val) & 0xff)
 
-#define WMI_DBGLOG_SET_MODULE_ID(val,mid) do { \
+#define WMI_DBGLOG_SET_MODULE_ID(val, mid) do { \
 		(val) |=  ((mid & 0xffff) << 16);	 \
-} while(0)
+} while (0)
 
-#define WMI_DBGLOG_GET_MODULE_ID(val) (( (val) >> 16) & 0xffff)
+#define WMI_DBGLOG_GET_MODULE_ID(val) (((val) >> 16) & 0xffff)
 
 /**
  * Enable the debug log for a given vdev. Value is vdev id
@@ -10881,17 +10885,17 @@ typedef struct {
 
 #define NUM_MODULES_PER_ENTRY ((sizeof(A_UINT32)) << 3)
 
-#define WMI_MODULE_ENABLE(pmid_bitmap,mod_id) \
-	( (pmid_bitmap)[(mod_id)/NUM_MODULES_PER_ENTRY] |= \
-		  (1 << ((mod_id)%NUM_MODULES_PER_ENTRY)) )
+#define WMI_MODULE_ENABLE(pmid_bitmap, mod_id) \
+	((pmid_bitmap)[(mod_id)/NUM_MODULES_PER_ENTRY] |= \
+		  (1 << ((mod_id)%NUM_MODULES_PER_ENTRY)))
 
-#define WMI_MODULE_DISABLE(pmid_bitmap,mod_id)	   \
-	( (pmid_bitmap)[(mod_id)/NUM_MODULES_PER_ENTRY] &=  \
-		  ( ~(1 << ((mod_id)%NUM_MODULES_PER_ENTRY)) ) )
+#define WMI_MODULE_DISABLE(pmid_bitmap, mod_id)	   \
+	((pmid_bitmap)[(mod_id)/NUM_MODULES_PER_ENTRY] &=  \
+		  (~(1 << ((mod_id)%NUM_MODULES_PER_ENTRY))))
 
-#define WMI_MODULE_IS_ENABLED(pmid_bitmap,mod_id) \
-	( ((pmid_bitmap)[(mod_id)/NUM_MODULES_PER_ENTRY ] &  \
-	   (1 << ((mod_id)%NUM_MODULES_PER_ENTRY)) ) != 0)
+#define WMI_MODULE_IS_ENABLED(pmid_bitmap, mod_id) \
+	(((pmid_bitmap)[(mod_id)/NUM_MODULES_PER_ENTRY] &  \
+	   (1 << ((mod_id)%NUM_MODULES_PER_ENTRY))) != 0)
 
 #define MAX_MODULE_ID_BITMAP_WORDS 16   /* 16*32=512 module ids. should be more than sufficient */
 typedef struct {
@@ -12614,8 +12618,7 @@ typedef struct wmi_bpf_del_vdev_instructions_cmd_s {
 /* NOTE: Make sure these data structures are identical to those	9235
 * defined in sirApi.h */
 
-typedef struct
-{
+typedef struct {
 	/** Arbitration Inter-Frame Spacing. Range: 2-15 */
 	A_UINT32 aifsn;
 	/** Contention Window minimum. Range: 1 - 10 */
@@ -12624,8 +12627,7 @@ typedef struct
 	A_UINT32 cwmax;
 } wmi_qos_params_t;
 
-typedef struct
-{
+typedef struct {
 	/** Channel frequency in MHz */
 	A_UINT32 chan_freq;
 	/** Channel duration in ms */
@@ -12655,7 +12657,7 @@ typedef struct {
 	/** The array of channels */
 	wmi_ocb_channel_t channels[OCB_CHANNEL_MAX];
 	/** 1 to allow off-channel tx, 0 otherwise */
-	A_UINT32 off_channel_tx; // Not supported
+	A_UINT32 off_channel_tx; /* Not supported */
 } wmi_ocb_set_sched_cmd_fixed_param;
 
 typedef struct {

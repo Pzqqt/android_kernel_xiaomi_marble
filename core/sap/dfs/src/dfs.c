@@ -229,9 +229,8 @@ int dfs_attach(struct ieee80211com *ic)
 		return 1;
 	}
 
-	dfs =
-		(struct ath_dfs *)os_malloc(NULL, sizeof(struct ath_dfs),
-					    GFP_ATOMIC);
+	dfs = (struct ath_dfs *)os_malloc(NULL, sizeof(struct ath_dfs),
+						GFP_ATOMIC);
 
 	if (dfs == NULL) {
 		/*DFS_DPRINTK(dfs, ATH_DEBUG_DFS1,

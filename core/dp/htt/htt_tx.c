@@ -525,7 +525,7 @@ void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 	}
 }
 
-/* PUT THESE AS INLINE IN ol_htt_tx_api.h */
+/* PUT THESE AS inline IN ol_htt_tx_api.h */
 
 void htt_tx_desc_flag_postponed(htt_pdev_handle pdev, void *desc)
 {

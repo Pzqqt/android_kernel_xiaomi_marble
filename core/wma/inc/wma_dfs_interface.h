@@ -274,7 +274,7 @@ typedef struct ieee80211com {
  *
  * Return: freqency in MHz
  */
-static INLINE u_int
+static inline u_int
 ieee80211_chan2freq(struct ieee80211com *ic,
 			const struct dfs_ieee80211_channel *c)
 {

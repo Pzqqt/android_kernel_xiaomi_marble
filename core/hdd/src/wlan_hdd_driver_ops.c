@@ -221,7 +221,7 @@ static void hdd_deinit_cds_hif_context(void)
  * Return: 0 on success and errno on failure.
  */
 static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
-			enum ath_hal_bus_type bus_type, bool reinit)
+			enum qdf_bus_type bus_type, bool reinit)
 {
 	QDF_STATUS status;
 	int ret = 0;
@@ -324,7 +324,7 @@ void hdd_init_cdf_ctx(struct device *dev, void *bdev)
  * Return: 0 on successfull probe
  */
 static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
-	enum ath_hal_bus_type bus_type, bool reinit)
+	enum qdf_bus_type bus_type, bool reinit)
 {
 	void *hif_ctx;
 	QDF_STATUS status;
@@ -792,7 +792,7 @@ static int wlan_hdd_pci_probe(struct pci_dev *pdev,
 	const struct pci_device_id *id)
 {
 	return wlan_hdd_probe(&pdev->dev, pdev, (void *)id,
-			HAL_BUS_TYPE_PCI, false);
+			QDF_BUS_TYPE_PCI, false);
 }
 
 /**
@@ -816,7 +816,7 @@ int wlan_hdd_pci_reinit(struct pci_dev *pdev,
 	const struct pci_device_id *id)
 {
 	return wlan_hdd_probe(&pdev->dev, pdev, id,
-			HAL_BUS_TYPE_PCI, true);
+			QDF_BUS_TYPE_PCI, true);
 }
 
 /**
@@ -910,7 +910,7 @@ static int wlan_hdd_pci_runtime_resume(struct pci_dev *pdev)
  */
 static int wlan_hdd_snoc_probe(struct device *dev)
 {
-	return wlan_hdd_probe(dev, NULL, NULL, HAL_BUS_TYPE_SNOC, false);
+	return wlan_hdd_probe(dev, NULL, NULL, QDF_BUS_TYPE_SNOC, false);
 }
 
 /**
@@ -943,7 +943,7 @@ void wlan_hdd_snoc_shutdown(struct device *dev)
  */
 int wlan_hdd_snoc_reinit(struct device *dev)
 {
-	return wlan_hdd_probe(dev, NULL, NULL, HAL_BUS_TYPE_SNOC, true);
+	return wlan_hdd_probe(dev, NULL, NULL, QDF_BUS_TYPE_SNOC, true);
 }
 
 /**

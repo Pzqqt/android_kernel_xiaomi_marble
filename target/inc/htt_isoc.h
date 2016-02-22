@@ -90,13 +90,13 @@ typedef enum htt_isoc_t2h_msg_type {
 #define HTT_ISOC_T2H_MSG_TYPE_GET(msg_addr) \
 	(*((A_UINT8 *) msg_addr))
 
-#ifndef INLINE
+#ifndef inline
 /* target FW */
-#define INLINE __inline
+#define inline __inline
 #define HTT_ISOC_INLINE_DEF
-#endif /* INLINE */
+#endif /* inline */
 
-static INLINE void
+static inline void
 htt_isoc_t2h_field_set(A_UINT32 *msg_addr32,
 		       unsigned offset32,
 		       unsigned mask, unsigned shift, unsigned value)
@@ -113,7 +113,7 @@ htt_isoc_t2h_field_set(A_UINT32 *msg_addr32,
 
 #ifdef HTT_ISOC_INLINE_DEF
 #undef HTT_ISOC_INLINE_DEF
-#undef INLINE
+#undef inline
 #endif
 
 #define HTT_ISOC_T2H_FIELD_GET(msg_addr32, offset32, mask, shift) \

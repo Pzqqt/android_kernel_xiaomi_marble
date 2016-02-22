@@ -835,7 +835,7 @@ static inline qdf_nbuf_tx_cksum_t cdf_nbuf_get_tx_cksum(cdf_nbuf_t buf)
 }
 
 /**
- * qdf_nbuf_set_rx_cksum() - drivers that support hw checksumming use this to
+ * cdf_nbuf_set_rx_cksum() - drivers that support hw checksumming use this to
  *			     indicate checksum info to the stack.
  * @buf: Network buffer
  * @cksum: Checksum
@@ -843,7 +843,7 @@ static inline qdf_nbuf_tx_cksum_t cdf_nbuf_get_tx_cksum(cdf_nbuf_t buf)
  * Return: none
  */
 static inline void
-qdf_nbuf_set_rx_cksum(cdf_nbuf_t buf, qdf_nbuf_rx_cksum_t *cksum)
+cdf_nbuf_set_rx_cksum(cdf_nbuf_t buf, qdf_nbuf_rx_cksum_t *cksum)
 {
 	__cdf_nbuf_set_rx_cksum(buf, cksum);
 }

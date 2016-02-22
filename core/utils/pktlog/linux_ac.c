@@ -201,7 +201,7 @@ void pktlog_cleanup(struct ath_pktlog_info *pl_info)
 
 /* sysctl procfs handler to enable pktlog */
 static int
-ath_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
+qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 {
 	int ret, enable;
 	ol_ath_generic_softc_handle scn;
@@ -227,7 +227,7 @@ ath_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 	ctl->maxlen = sizeof(enable);
 
 	if (write) {
-		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
+		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret == 0)
 			ret = pl_dev->pl_funcs->pktlog_enable(
@@ -236,7 +236,7 @@ ath_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
 			       __func__);
 	} else {
-		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
+		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret)
 			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
@@ -256,7 +256,7 @@ static int get_pktlog_bufsize(struct ol_pktlog_dev_t *pl_dev)
 
 /* sysctl procfs handler to set/get pktlog size */
 static int
-ath_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
+qdf_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 {
 	int ret, size;
 	ol_ath_generic_softc_handle scn;
@@ -282,14 +282,14 @@ ath_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 	ctl->maxlen = sizeof(size);
 
 	if (write) {
-		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
+		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret == 0)
 			ret = pl_dev->pl_funcs->pktlog_setsize(
 					(struct hif_opaque_softc *)scn, size);
 	} else {
 		size = get_pktlog_bufsize(pl_dev);
-		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
+		ret = QDF_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 	}
 

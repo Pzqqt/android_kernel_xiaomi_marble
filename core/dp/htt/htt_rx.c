@@ -704,7 +704,7 @@ htt_set_checksum_result_ll(htt_pdev_handle pdev, cdf_nbuf_t msdu,
 			QDF_NBUF_RX_CKSUM_NONE :
 			QDF_NBUF_RX_CKSUM_TCP_UDP_UNNECESSARY;
 	}
-	qdf_nbuf_set_rx_cksum(msdu, &cksum);
+	cdf_nbuf_set_rx_cksum(msdu, &cksum);
 #undef MAX_IP_VER
 #undef MAX_PROTO_VAL
 }
