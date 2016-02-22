@@ -2864,9 +2864,6 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 			goto send_resp;
 		}
 
-		if (wma->interfaces[req.vdev_id].is_channel_switch)
-			wma->interfaces[req.vdev_id].is_channel_switch = false;
-
 		if (QDF_GLOBAL_MONITOR_MODE == cds_get_conparam())
 			ol_htt_mon_note_chan(pdev, req.chan);
 	}

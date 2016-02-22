@@ -930,11 +930,14 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 		params->smpsMode = host_map_smps_mode(resp_event->smps_mode);
 		params->status = resp_event->status;
+		if (wma->interfaces[resp_event->vdev_id].is_channel_switch) {
+			wma->interfaces[resp_event->vdev_id].is_channel_switch =
+				false;
+		}
 		if (((resp_event->resp_type == WMI_VDEV_RESTART_RESP_EVENT) &&
-		    (iface->type == WMI_VDEV_TYPE_STA)) ||
-		    ((resp_event->resp_type == WMI_VDEV_START_RESP_EVENT) &&
-		     (iface->type == WMI_VDEV_TYPE_MONITOR))) {
-
+			(iface->type == WMI_VDEV_TYPE_STA)) ||
+			((resp_event->resp_type == WMI_VDEV_START_RESP_EVENT) &&
+			 (iface->type == WMI_VDEV_TYPE_MONITOR))) {
 			param.vdev_id = resp_event->vdev_id;
 			param.assoc_id = iface->aid;
 			status = wmi_unified_vdev_up_send(wma->wmi_handle,
@@ -2392,6 +2395,10 @@ void wma_vdev_resp_timer(void *data)
 		params->status = QDF_STATUS_E_TIMEOUT;
 		WMA_LOGA("%s: WMA_SWITCH_CHANNEL_REQ timedout", __func__);
 		wma_send_msg(wma, WMA_SWITCH_CHANNEL_RSP, (void *)params, 0);
+		if (wma->interfaces[tgt_req->vdev_id].is_channel_switch) {
+			wma->interfaces[tgt_req->vdev_id].is_channel_switch =
+				false;
+		}
 	} else if (tgt_req->msg_type == WMA_DELETE_BSS_REQ) {
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) tgt_req->user_data;
