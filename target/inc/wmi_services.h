@@ -148,6 +148,18 @@ typedef enum {
 	WMI_SERVICE_NAN_DATA,             /* FW supports NAN data */
 	WMI_SERVICE_NAN_RTT,              /* FW supports NAN RTT */
 	WMI_SERVICE_11AX,                 /* FW supports 802.11ax */
+	/* WMI_SERVICE_DEPRECATED_REPLACE
+	 * FW supports these new WMI commands, to be used rather than
+	 * deprecated matching commands:
+	 * - WMI_PDEV_SET_PCL_CMDID          (vs. WMI_SOC_SET_PCL_CMDID)
+	 * - WMI_PDEV_SET_HW_MODE_CMDID      (vs. WMI_SOC_SET_HW_MODE_CMDID)
+	 * - WMI_PDEV_SET_MAC_CONFIG_CMDID
+	 *				(vs. WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID)
+	 * - WMI_PDEV_SET_ANTENNA_MODE_CMDID
+	 *				(vs. WMI_SOC_SET_ANTENNA_MODE_CMDID)
+	 * - WMI_VDEV_SET_DSCP_TID_MAP_CMDID (vs. WMI_VDEV_SET_WMM_PARAMS_CMDID)
+	 */
+	WMI_SERVICE_DEPRECATED_REPLACE,
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;

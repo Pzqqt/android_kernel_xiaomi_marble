@@ -223,8 +223,12 @@ typedef enum {
 	WMITLV_TAG_STRUC_WMI_GTK_OFFLOAD_STATUS_EVENT_fixed_param,
 	WMITLV_TAG_STRUC_wmi_igtk_info,
 	WMITLV_TAG_STRUC_wmi_dcs_interference_event_fixed_param,
-	WMITLV_TAG_STRUC_ath_dcs_cw_int,
-	WMITLV_TAG_STRUC_ath_dcs_wlan_int_stat,
+	WMITLV_TAG_STRUC_ath_dcs_cw_int, /* DEPRECATED */
+	WMITLV_TAG_STRUC_wlan_dcs_cw_int = /* alias */
+		WMITLV_TAG_STRUC_ath_dcs_cw_int,
+	WMITLV_TAG_STRUC_ath_dcs_wlan_int_stat, /* DEPRECATED */
+	WMITLV_TAG_STRUC_wlan_dcs_im_tgt_stats_t = /* alias */
+		WMITLV_TAG_STRUC_ath_dcs_wlan_int_stat,
 	WMITLV_TAG_STRUC_wmi_wlan_profile_ctx_t,
 	WMITLV_TAG_STRUC_wmi_wlan_profile_t,
 	WMITLV_TAG_STRUC_wmi_pdev_qvit_event_fixed_param,
@@ -674,6 +678,15 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_ndp_indication_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_ndp_confirm_event_fixed_param,
 	WMITLV_TAG_STRUC_wmi_ndp_end_indication_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_vdev_set_quiet_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_pcl_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_mac_config_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_antenna_mode_cmd_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_response_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_hw_mode_transition_event_fixed_param,
+	WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_response_vdev_mac_entry,
+	WMITLV_TAG_STRUC_wmi_pdev_set_mac_config_response_event_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -944,7 +957,12 @@ typedef enum {
 	OP(WMI_NDI_GET_CAP_REQ_CMDID) \
 	OP(WMI_NDP_INITIATOR_REQ_CMDID) \
 	OP(WMI_NDP_RESPONDER_REQ_CMDID) \
-	OP(WMI_NDP_END_REQ_CMDID)
+	OP(WMI_NDP_END_REQ_CMDID) \
+	OP(WMI_PDEV_SET_PCL_CMDID) \
+	OP(WMI_PDEV_SET_HW_MODE_CMDID) \
+	OP(WMI_PDEV_SET_MAC_CONFIG_CMDID) \
+	OP(WMI_PDEV_SET_ANTENNA_MODE_CMDID) \
+	OP(WMI_VDEV_SET_QUIET_MODE_CMDID)
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -1089,7 +1107,10 @@ typedef enum {
 	OP(WMI_NDP_END_RSP_EVENTID) \
 	OP(WMI_NDP_INDICATION_EVENTID) \
 	OP(WMI_NDP_CONFIRM_EVENTID) \
-	OP(WMI_NDP_END_INDICATION_EVENTID)
+	OP(WMI_NDP_END_INDICATION_EVENTID) \
+	OP(WMI_PDEV_SET_HW_MODE_RESP_EVENTID) \
+	OP(WMI_PDEV_HW_MODE_TRANSITION_EVENTID) \
+	OP(WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID)
 
 /* TLV definitions of WMI commands */
 
@@ -1964,6 +1985,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_PARAM_CMDID);
 
 WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_QUIET_MODE_CMDID);
 
+/* VDev set quiet Cmd */
+#define WMITLV_TABLE_WMI_VDEV_SET_QUIET_MODE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_set_quiet_cmd_fixed_param, wmi_vdev_set_quiet_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+
+WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_QUIET_MODE_CMDID);
+
 /* Vdev create Cmd */
 #define WMITLV_TABLE_WMI_VDEV_CREATE_CMDID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_vdev_create_cmd_fixed_param, wmi_vdev_create_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
@@ -2687,26 +2714,47 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
 
 WMITLV_CREATE_PARAM_STRUC(WMI_ROAM_SUBNET_CHANGE_CONFIG_CMDID);
 
-/* Set the SOC Preferred Channel List (PCL) Cmd */
+/* Set the SOC Preferred Channel List (PCL) Cmd - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_SET_PCL_CMDID(id, op, buf, len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_set_pcl_cmd_fixed_param, wmi_soc_set_pcl_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, channel_list, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_SET_PCL_CMDID);
 
-/* Set the SOC Hardware Mode Cmd */
+/* Set the PDEV Preferred Channel List (PCL) Cmd */
+#define WMITLV_TABLE_WMI_PDEV_SET_PCL_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_pcl_cmd_fixed_param, wmi_pdev_set_pcl_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_UINT32, A_UINT32, channel_weight, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_PCL_CMDID);
+
+/* Set the SOC Hardware Mode Cmd - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_SET_HW_MODE_CMDID(id, op, buf, len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_set_hw_mode_cmd_fixed_param, wmi_soc_set_hw_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_SET_HW_MODE_CMDID);
 
-/* Set the SOC Dual MAC Config Cmd */
+/* Set the PDEV Hardware Mode Cmd */
+#define WMITLV_TABLE_WMI_PDEV_SET_HW_MODE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_cmd_fixed_param, wmi_pdev_set_hw_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_HW_MODE_CMDID);
+
+/* Set the SOC Dual MAC Config Cmd - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID(id, op, buf, len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_set_dual_mac_config_cmd_fixed_param, wmi_soc_set_dual_mac_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID);
 
-/* Set the SOC Antenna Mode Cmd */
+/* Set the PDEV MAC Config Cmd */
+#define WMITLV_TABLE_WMI_PDEV_SET_MAC_CONFIG_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_mac_config_cmd_fixed_param, wmi_pdev_set_mac_config_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_MAC_CONFIG_CMDID);
+
+/* Set the SOC Antenna Mode Cmd - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_SET_ANTENNA_MODE_CMDID(id, op, buf, len) \
     WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_set_antenna_mode_cmd_fixed_param, wmi_soc_set_antenna_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_SET_ANTENNA_MODE_CMDID);
+
+/* Set the PDEV Antenna Mode Cmd */
+#define WMITLV_TABLE_WMI_PDEV_SET_ANTENNA_MODE_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_antenna_mode_cmd_fixed_param, wmi_pdev_set_antenna_mode_cmd_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_ANTENNA_MODE_CMDID);
 
 /************************** TLV definitions of WMI events *******************************/
 
@@ -2980,10 +3028,10 @@ WMITLV_CREATE_PARAM_STRUC(WMI_DIAG_EVENTID);
 WMITLV_CREATE_PARAM_STRUC(WMI_GTK_OFFLOAD_STATUS_EVENTID);
 
 /* DCA interferance Event */
-#define WMITLV_TABLE_WMI_DCS_INTERFERENCE_EVENTID(id,op,buf,len) \
-	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_dcs_interference_event_fixed_param, wmi_dcs_interference_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
-	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, ath_dcs_cw_int, cw_int, WMITLV_SIZE_VAR) \
-	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_ARRAY_STRUC, wlan_dcs_im_tgt_stats_t, wlan_stat, WMITLV_SIZE_VAR)
+#define WMITLV_TABLE_WMI_DCS_INTERFERENCE_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_dcs_interference_event_fixed_param, wmi_dcs_interference_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wlan_dcs_cw_int, cw_int, WMITLV_SIZE_VAR) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wlan_dcs_im_tgt_stats_t, wlan_stat, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_DCS_INTERFERENCE_EVENTID);
 
 /* Profile data Event */
@@ -3412,22 +3460,39 @@ WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_TSF_REPORT_EVENTID);
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_BYTE, A_UINT8, bufp, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_VDEV_SET_IE_CMDID);
 
-/* SOC Set Hardware Mode Response event */
+/* SOC Set Hardware Mode Response event - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_SET_HW_MODE_RESP_EVENTID(id, op, buf, len) \
 WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_set_hw_mode_response_event_fixed_param, wmi_soc_set_hw_mode_response_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_soc_set_hw_mode_response_vdev_mac_entry, wmi_soc_set_hw_mode_response_vdev_mac_mapping, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_SET_HW_MODE_RESP_EVENTID);
 
-/* SOC Hardware Mode Transition event */
+/* PDEV Set Hardware Mode Response event */
+#define WMITLV_TABLE_WMI_PDEV_SET_HW_MODE_RESP_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_hw_mode_response_event_fixed_param, wmi_pdev_set_hw_mode_response_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_set_hw_mode_response_vdev_mac_entry, wmi_pdev_set_hw_mode_response_vdev_mac_mapping, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_HW_MODE_RESP_EVENTID);
+
+/* SOC Hardware Mode Transition event - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_HW_MODE_TRANSITION_EVENTID(id, op, buf, len) \
 WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_hw_mode_transition_event_fixed_param, wmi_soc_hw_mode_transition_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
 WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_soc_set_hw_mode_response_vdev_mac_entry, wmi_soc_set_hw_mode_response_vdev_mac_mapping, WMITLV_SIZE_VAR)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_HW_MODE_TRANSITION_EVENTID);
 
-/* SOC Set Dual MAC Config Response event */
+/* PDEV Hardware Mode Transition event */
+#define WMITLV_TABLE_WMI_PDEV_HW_MODE_TRANSITION_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_hw_mode_transition_event_fixed_param, wmi_pdev_hw_mode_transition_event_fixed_param, fixed_param, WMITLV_SIZE_FIX) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_ARRAY_STRUC, wmi_pdev_set_hw_mode_response_vdev_mac_entry, wmi_pdev_set_hw_mode_response_vdev_mac_mapping, WMITLV_SIZE_VAR)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_HW_MODE_TRANSITION_EVENTID);
+
+/* SOC Set Dual MAC Config Response event - DEPRECATED */
 #define WMITLV_TABLE_WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID(id, op, buf, len) \
 	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_soc_set_dual_mac_config_response_event_fixed_param, wmi_soc_set_dual_mac_config_response_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID);
+
+/* PDEV Set Dual MAC Config Response event */
+#define WMITLV_TABLE_WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_wmi_pdev_set_mac_config_response_event_fixed_param, wmi_pdev_set_mac_config_response_event_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_PDEV_SET_MAC_CONFIG_RESP_EVENTID);
 
 /* Packet Filter configure command*/
 #define WMITLV_TABLE_WMI_PACKET_FILTER_CONFIG_CMDID(id, op, buf, len) \
