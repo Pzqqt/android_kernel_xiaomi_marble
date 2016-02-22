@@ -1308,6 +1308,7 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 	ol_txrx_vdev_register(
 		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
 		 pAdapter, &txrx_ops);
+	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	if (!pRoamInfo->fAuthRequired) {
 		/*
@@ -2872,6 +2873,7 @@ QDF_STATUS hdd_roam_register_tdlssta(hdd_adapter_t *pAdapter,
 	ol_txrx_vdev_register(
 		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
 		 pAdapter, &txrx_ops);
+	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	return qdf_status;
 }

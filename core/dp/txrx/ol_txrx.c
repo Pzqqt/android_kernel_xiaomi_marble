@@ -1198,7 +1198,9 @@ void ol_txrx_vdev_register(ol_txrx_vdev_handle vdev,
 				struct ol_txrx_ops *txrx_ops)
 {
 	vdev->osif_dev = osif_vdev;
+
 	vdev->rx = txrx_ops->rx.rx;
+	txrx_ops->tx.tx = ol_tx_data;
 }
 
 /**

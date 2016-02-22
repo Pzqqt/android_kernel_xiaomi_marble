@@ -132,19 +132,16 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 #endif
 
 /**
- * ol_tx_send_data_frame() - send data frame
- * @sta_id: sta id
+ * ol_tx_data() - send data frame
+ * @vdev: virtual device handle
  * @skb: skb
- * @proto_type: proto type
  *
  * Return: skb/NULL for success
  */
-qdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, qdf_nbuf_t skb,
-				 uint8_t proto_type)
+qdf_nbuf_t ol_tx_data(ol_txrx_vdev_handle vdev, qdf_nbuf_t skb)
 {
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	struct ol_txrx_peer_t *peer;
+	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	qdf_nbuf_t ret;
 	QDF_STATUS status;
 
@@ -159,33 +156,12 @@ qdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, qdf_nbuf_t skb,
 		return skb;
 	}
 
-	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-			"%s:Invalid sta id", __func__);
-		return skb;
-	}
-
-	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
-	if (!peer) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-			"%s:Invalid peer", __func__);
-		return skb;
-	}
-
-	if (peer->state < ol_txrx_peer_state_conn) {
-		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
-			"%s: station to be yet registered..dropping pkt", __func__);
-		return skb;
-	}
-
 	status = qdf_nbuf_map_single(qdf_ctx, skb, QDF_DMA_TO_DEVICE);
 	if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;
 	}
-
-	qdf_nbuf_trace_set_proto_type(skb, proto_type);
 
 	if ((ol_cfg_is_ip_tcp_udp_checksum_offload_enabled(pdev->ctrl_pdev))
 		&& (qdf_nbuf_get_protocol(skb) == htons(ETH_P_IP))
@@ -194,7 +170,7 @@ qdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, qdf_nbuf_t skb,
 
 	/* Terminate the (single-element) list of tx frames */
 	qdf_nbuf_set_next(skb, NULL);
-	ret = OL_TX_LL(peer->vdev, skb);
+	ret = OL_TX_LL(vdev, skb);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: Failed to tx", __func__);

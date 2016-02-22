@@ -171,8 +171,8 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 	struct qdf_mac_addr *pDestMacAddress;
 	uint8_t STAId;
-	uint8_t proto_type = 0;
 #ifdef QCA_PKT_PROTO_TRACE
+	uint8_t proto_type = 0;
 	hdd_context_t *hddCtxt = (hdd_context_t *) pAdapter->pHddCtx;
 #endif /* QCA_PKT_PROTO_TRACE */
 
@@ -196,6 +196,16 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * done.
 	 */
 	if (pHddApCtx->dfs_cac_block_tx) {
+		goto drop_pkt;
+	}
+
+	/*
+	* If a transmit function is not registered, drop packet
+	*/
+	if (!pAdapter->tx_fn) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
+			 "%s: TX function not registered by the data path",
+			 __func__);
 		goto drop_pkt;
 	}
 
@@ -313,8 +323,11 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
-	if (ol_tx_send_data_frame(STAId, skb,
-							  proto_type) != NULL) {
+#ifdef QCA_PKT_PROTO_TRACE
+	qdf_nbuf_trace_set_proto_type(skb, proto_type);
+#endif
+	if (pAdapter->tx_fn(ol_txrx_get_vdev_by_sta_id(STAId),
+		 (qdf_nbuf_t) skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
@@ -706,6 +719,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 	ol_txrx_vdev_register(
 		 ol_txrx_get_vdev_from_vdev_id(pAdapter->sessionId),
 		 pAdapter, &txrx_ops);
+	pAdapter->tx_fn = txrx_ops.tx.tx;
 
 	/* if ( WPA ), tell TL to go to 'connected' and after keys come to the
 	 * driver then go to 'authenticated'.  For all other authentication

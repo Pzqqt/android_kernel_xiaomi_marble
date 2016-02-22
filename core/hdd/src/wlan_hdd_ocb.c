@@ -275,6 +275,7 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	ol_txrx_vdev_register(
 		 ol_txrx_get_vdev_from_vdev_id(adapter->sessionId),
 		 adapter, &txrx_ops);
+	adapter->tx_fn = txrx_ops.tx.tx;
 
 	if (pHddStaCtx->conn_info.staId[0] != 0 &&
 	     pHddStaCtx->conn_info.staId[0] != peer_id) {

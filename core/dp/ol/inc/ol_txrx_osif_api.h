@@ -128,8 +128,7 @@ qdf_nbuf_t ol_txrx_osif_tso_segment(ol_txrx_vdev_handle txrx_vdev,
 				    int max_seg_payload_bytes,
 				    qdf_nbuf_t jumbo_tcp_frame);
 
-qdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, qdf_nbuf_t skb,
-									  uint8_t proto_type);
+qdf_nbuf_t ol_tx_data(ol_txrx_vdev_handle data_vdev, qdf_nbuf_t skb);
 
 #ifdef IPA_OFFLOAD
 qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,

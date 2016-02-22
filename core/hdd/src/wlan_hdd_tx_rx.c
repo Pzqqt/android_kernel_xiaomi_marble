@@ -299,8 +299,8 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	bool granted;
 	uint8_t STAId = WLAN_MAX_STA_COUNT;
 	hdd_station_ctx_t *pHddStaCtx = &pAdapter->sessionCtx.station;
-	uint8_t proto_type = 0;
 #ifdef QCA_PKT_PROTO_TRACE
+	uint8_t proto_type = 0;
 	hdd_context_t *hddCtxt = WLAN_HDD_GET_CTX(pAdapter);
 #endif /* QCA_PKT_PROTO_TRACE */
 
@@ -489,8 +489,32 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
 				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
-	if (ol_tx_send_data_frame(STAId, (qdf_nbuf_t) skb,
-							  proto_type) != NULL) {
+	/* Check if station is connected */
+	if (ol_txrx_peer_state_conn ==
+		 pAdapter->aStaInfo[STAId].tlSTAState) {
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+				 QDF_TRACE_LEVEL_WARN,
+				 "%s: station is not connected..dropping pkt",
+				 __func__);
+				goto drop_pkt;
+	}
+
+#ifdef QCA_PKT_PROTO_TRACE
+	qdf_nbuf_trace_set_proto_type(skb, proto_type);
+#endif
+
+	/*
+	* If a transmit function is not registered, drop packet
+	*/
+	if (!pAdapter->tx_fn) {
+		QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO_HIGH,
+			 "%s: TX function not registered by the data path",
+			 __func__);
+		goto drop_pkt;
+	}
+
+	if (pAdapter->tx_fn(ol_txrx_get_vdev_by_sta_id(STAId),
+		 (qdf_nbuf_t) skb) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);

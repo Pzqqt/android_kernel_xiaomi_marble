@@ -1021,6 +1021,7 @@ struct hdd_adapter_s {
 		 queue_oper_history[WLAN_HDD_MAX_HISTORY_ENTRY];
 	struct hdd_netif_queue_stats queue_oper_stats[WLAN_REASON_TYPE_MAX];
 	struct hdd_lro_s lro_info;
+	ol_txrx_tx_fp tx_fn;
 };
 
 #define WLAN_HDD_GET_STATION_CTX_PTR(pAdapter) (&(pAdapter)->sessionCtx.station)
