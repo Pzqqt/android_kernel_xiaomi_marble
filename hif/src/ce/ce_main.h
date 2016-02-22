@@ -30,7 +30,7 @@
 
 #include "cdf_atomic.h"
 #include "cdf_lock.h"
-#include "hif.h"
+#include "hif_main.h"
 
 #define CE_HTT_T2H_MSG 1
 #define CE_HTT_H2T_MSG 4
@@ -108,7 +108,7 @@ struct ce_tasklet_entry {
 };
 
 struct HIF_CE_state {
-	struct ol_softc ol_sc;
+	struct hif_softc ol_sc;
 	bool started;
 	struct ce_tasklet_entry tasklets[CE_COUNT_MAX];
 	cdf_spinlock_t keep_awake_lock;
@@ -132,5 +132,5 @@ struct HIF_CE_state {
 	/* Copy Engine used for Diagnostic Accesses */
 	struct CE_handle *ce_diag;
 };
-int hif_dump_ce_registers(struct ol_softc *scn);
+int hif_dump_ce_registers(struct hif_softc *scn);
 #endif /* __CE_H__ */

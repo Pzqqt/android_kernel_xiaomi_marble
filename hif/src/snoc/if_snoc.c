@@ -47,7 +47,7 @@
  * This is duplicated here because CONFIG_CNSS can be defined
  * even though it is not used for the snoc bus.
  */
-void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
+void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse ignored",
 			(flag ? "disable" : "enable"));
@@ -58,12 +58,12 @@ void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
  *
  * This function returns true if the target is awake
  *
- * @scn: struct ol_softc
+ * @scn: struct hif_softc
  * @mem: mapped mem base
  *
  * Return: bool
  */
-bool hif_targ_is_awake(struct ol_softc *scn, void *__iomem *mem)
+bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
 {
 	return true;
 }
@@ -78,7 +78,7 @@ bool hif_targ_is_awake(struct ol_softc *scn, void *__iomem *mem)
  * Return: void
  */
 /* Function to reset SoC */
-void hif_reset_soc(void *hif_ctx)
+void hif_reset_soc(struct ol_softc *hif_ctx)
 {
 }
 
@@ -87,14 +87,13 @@ void hif_reset_soc(void *hif_ctx)
  *
  * This function disables isr and kills tasklets
  *
- * @hif_ctx: struct ol_softc
+ * @hif_ctx: struct hif_softc
  *
  * Return: void
  */
-void hif_disable_isr(void *hif_ctx)
+void hif_disable_isr(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx)
 
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
@@ -103,13 +102,13 @@ void hif_disable_isr(void *hif_ctx)
 
 /**
  * hif_dump_snoc_registers(): dump CE debug registers
- * @scn: struct ol_softc
+ * @scn: struct hif_softc
  *
  * This function dumps SNOC debug registers
  *
  * Return: void
  */
-static void hif_dump_snoc_registers(struct ol_softc *scn)
+static void hif_dump_snoc_registers(struct hif_softc *scn)
 {
 	return;
 }
@@ -122,9 +121,10 @@ static void hif_dump_snoc_registers(struct ol_softc *scn)
  *
  * Return: 0 for success or error code
  */
-int hif_dump_registers(struct ol_softc *scn)
+int hif_dump_registers(struct ol_softc *hif_ctx)
 {
 	int status;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx)
 
 	status = hif_dump_ce_registers(scn);
 	if (status)
@@ -143,7 +143,7 @@ int hif_dump_registers(struct ol_softc *scn)
  *
  * Return: 0 for success and non-zero for failure
  */
-int hif_bus_suspend(void *hif_ctx)
+int hif_bus_suspend(struct ol_softc *hif_ctx)
 {
 	return 0;
 }
@@ -156,7 +156,7 @@ int hif_bus_suspend(void *hif_ctx)
  *
  * Return: 0 for success and non-zero for failure
  */
-int hif_bus_resume(void *hif_ctx)
+int hif_bus_resume(struct ol_softc *hif_ctx)
 {
 	return 0;
 }
@@ -166,7 +166,7 @@ int hif_bus_resume(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_enable_power_gating(void *hif_ctx)
+void hif_enable_power_gating(struct ol_softc *hif_ctx)
 {
 }
 
@@ -175,7 +175,7 @@ void hif_enable_power_gating(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_disable_aspm(void *hif_ctx)
+void hif_disable_aspm(struct ol_softc *hif_ctx)
 {
 }
 
@@ -184,7 +184,7 @@ void hif_disable_aspm(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_bus_close(struct ol_softc *scn)
+void hif_bus_close(struct hif_softc *scn)
 {
 }
 
@@ -204,7 +204,7 @@ int hif_bus_get_context_size(void)
  *
  * Return: n/a
  */
-CDF_STATUS hif_bus_open(struct ol_softc *scn, enum ath_hal_bus_type bus_type)
+CDF_STATUS hif_bus_open(struct hif_softc *scn, enum ath_hal_bus_type bus_type)
 {
 	return CDF_STATUS_SUCCESS;
 }
@@ -214,7 +214,7 @@ CDF_STATUS hif_bus_open(struct ol_softc *scn, enum ath_hal_bus_type bus_type)
  *
  * This function is used to query the target type.
  *
- * @ol_sc: ol_softc struct pointer
+ * @ol_sc: hif_softc struct pointer
  * @dev: device pointer
  * @bdev: bus dev pointer
  * @bid: bus id pointer
@@ -223,7 +223,7 @@ CDF_STATUS hif_bus_open(struct ol_softc *scn, enum ath_hal_bus_type bus_type)
  *
  * Return: 0 for success
  */
-int hif_get_target_type(struct ol_softc *ol_sc, struct device *dev,
+int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, uint32_t *hif_type,
 	uint32_t *target_type)
 {
@@ -247,7 +247,7 @@ int hif_get_target_type(struct ol_softc *ol_sc, struct device *dev,
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc,
+CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
 			  const hif_bus_id *bid,
 			  enum hif_enable_type type)
@@ -311,11 +311,11 @@ void hif_disable_bus(void *bdev)
  *
  * This function stops interrupt(s)
  *
- * @scn: struct ol_softc
+ * @scn: struct hif_softc
  *
  * Return: none
  */
-void hif_nointrs(struct ol_softc *scn)
+void hif_nointrs(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	if (scn->request_irq_done) {

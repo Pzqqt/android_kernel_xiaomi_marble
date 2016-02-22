@@ -76,8 +76,8 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info);
 #define BMI_RSP_TO_MILLISEC  1000
 
 
-static int hif_post_recv_buffers(struct ol_softc *scn);
-static void hif_config_rri_on_ddr(struct ol_softc *scn);
+static int hif_post_recv_buffers(struct hif_softc *scn);
+static void hif_config_rri_on_ddr(struct hif_softc *scn);
 
 static void ce_poll_timeout(void *arg)
 {
@@ -117,7 +117,7 @@ static unsigned int roundup_pwr2(unsigned int n)
  * This should be called durring the initialization sequence before
  * interupts are enabled, so we don't have to worry about thread safety.
  */
-struct CE_handle *ce_init(struct ol_softc *scn,
+struct CE_handle *ce_init(struct hif_softc *scn,
 			  unsigned int CE_id, struct CE_attr *attr)
 {
 	struct CE_state *CE_state;
@@ -474,7 +474,7 @@ ce_h2t_tx_ce_cleanup(struct CE_handle *ce_hdl)
 {
 	struct CE_state *ce_state = (struct CE_state *)ce_hdl;
 	struct CE_ring_state *src_ring = ce_state->src_ring;
-	struct ol_softc *sc = ce_state->scn;
+	struct hif_softc *sc = ce_state->scn;
 	uint32_t sw_index, write_index;
 
 	if (sc->fastpath_mode_on && (ce_state->id == CE_HTT_H2T_MSG)) {
@@ -497,7 +497,7 @@ void ce_fini(struct CE_handle *copyeng)
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	unsigned int CE_id = CE_state->id;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	CE_state->state = CE_UNUSED;
 	scn->ce_id_to_state[CE_id] = NULL;
@@ -555,7 +555,7 @@ hif_send_head(struct ol_softc *hif_ctx,
 	      uint8_t pipe, unsigned int transfer_id, unsigned int nbytes,
 	      cdf_nbuf_t nbuf, unsigned int data_attr)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	struct HIF_CE_pipe_info *pipe_info = &(hif_state->pipe_info[pipe]);
 	struct CE_handle *ce_hdl = pipe_info->ce_hdl;
@@ -633,8 +633,10 @@ hif_send_head(struct ol_softc *hif_ctx,
 	return status;
 }
 
-void hif_send_complete_check(struct ol_softc *scn, uint8_t pipe, int force)
+void hif_send_complete_check(struct ol_softc *hif_ctx, uint8_t pipe, int force)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
 	if (!force) {
 		int resources;
 		/*
@@ -644,7 +646,7 @@ void hif_send_complete_check(struct ol_softc *scn, uint8_t pipe, int force)
 		 * reading a CE register, which is a relatively expensive
 		 * operation.
 		 */
-		resources = hif_get_free_queue_number(scn, pipe);
+		resources = hif_get_free_queue_number(hif_ctx, pipe);
 		/*
 		 * If at least 50% of the total resources are still available,
 		 * don't bother checking again yet.
@@ -683,7 +685,7 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 	struct HIF_CE_pipe_info *pipe_info =
 		(struct HIF_CE_pipe_info *)ce_context;
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
 	unsigned int sw_idx = sw_index, hw_idx = hw_index;
 	struct hif_msg_callbacks *msg_callbacks =
 		&hif_state->msg_callbacks_current;
@@ -752,7 +754,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		(struct HIF_CE_pipe_info *)ce_context;
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
 	struct CE_state *ce_state = (struct CE_state *) copyeng;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
 	struct hif_pci_softc *hif_sc = HIF_GET_PCI_SOFTC(hif_state);
 	struct hif_msg_callbacks *msg_callbacks =
 		&hif_state->msg_callbacks_current;
@@ -806,7 +808,7 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 {
 	struct CE_handle *ce_diag = hif_state->ce_diag;
 	int pipe_num;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
 	struct hif_msg_callbacks *hif_msg_callbacks =
 		&hif_state->msg_callbacks_current;
 
@@ -866,7 +868,7 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
  * needs to continue to use BMI msg callbacks. Really, upper layers
  * should not register HTC callbacks until AFTER BMI phase.
  */
-static void hif_msg_callbacks_install(struct ol_softc *scn)
+static void hif_msg_callbacks_install(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
@@ -876,23 +878,23 @@ static void hif_msg_callbacks_install(struct ol_softc *scn)
 }
 
 void
-hif_get_default_pipe(struct ol_softc *scn, uint8_t *ULPipe, uint8_t *DLPipe)
+hif_get_default_pipe(struct ol_softc *hif_hdl, uint8_t *ULPipe, uint8_t *DLPipe)
 {
 	int ul_is_polled, dl_is_polled;
 
-	(void)hif_map_service_to_pipe(scn, HTC_CTRL_RSVD_SVC,
+	(void)hif_map_service_to_pipe(hif_hdl, HTC_CTRL_RSVD_SVC,
 		ULPipe, DLPipe, &ul_is_polled, &dl_is_polled);
 }
 
 /**
  * hif_dump_pipe_debug_count() - Log error count
- * @scn: ol_softc pointer.
+ * @scn: hif_softc pointer.
  *
  * Output the pipe error counts of each pipe to log file
  *
  * Return: N/A
  */
-void hif_dump_pipe_debug_count(struct ol_softc *scn)
+void hif_dump_pipe_debug_count(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num;
@@ -923,7 +925,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
 	struct CE_handle *ce_hdl;
 	cdf_size_t buf_sz;
-	struct ol_softc *scn = HIF_GET_SOFTC(pipe_info->HIF_CE_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(pipe_info->HIF_CE_state);
 	CDF_STATUS ret;
 	uint32_t bufs_posted = 0;
 
@@ -1026,7 +1028,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
  * non-zero if were were unable to completely
  * replenish receive buffers.
  */
-static int hif_post_recv_buffers(struct ol_softc *scn)
+static int hif_post_recv_buffers(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num, rv = 0;
@@ -1050,7 +1052,7 @@ done:
 
 CDF_STATUS hif_start(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	hif_msg_callbacks_install(scn);
@@ -1077,8 +1079,10 @@ CDF_STATUS hif_start(struct ol_softc *hif_ctx)
  */
 void hif_enable_fastpath(struct ol_softc *hif_ctx)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
 	HIF_INFO("Enabling fastpath mode\n");
-	hif_ctx->fastpath_mode_on = 1;
+	scn->fastpath_mode_on = 1;
 }
 
 /**
@@ -1091,7 +1095,9 @@ void hif_enable_fastpath(struct ol_softc *hif_ctx)
  */
 bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx)
 {
-	return hif_ctx->fastpath_mode_on;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->fastpath_mode_on;
 }
 
 /**
@@ -1105,13 +1111,15 @@ bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx)
  */
 void *hif_get_ce_handle(struct ol_softc *hif_ctx, int id)
 {
-	return hif_ctx->ce_id_to_state[id];
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->ce_id_to_state[id];
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
 void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
-	struct ol_softc *scn;
+	struct hif_softc *scn;
 	struct CE_handle *ce_hdl;
 	uint32_t buf_sz;
 	struct HIF_CE_state *hif_state;
@@ -1149,7 +1157,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
 	struct CE_handle *ce_hdl;
 	struct HIF_CE_state *hif_state;
-	struct ol_softc *scn;
+	struct hif_softc *scn;
 	cdf_nbuf_t netbuf;
 	void *per_CE_context;
 	cdf_dma_addr_t CE_data;
@@ -1209,7 +1217,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 void hif_buffer_cleanup(struct HIF_CE_state *hif_state)
 {
 	int pipe_num;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
 
 	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct HIF_CE_pipe_info *pipe_info;
@@ -1222,14 +1230,15 @@ void hif_buffer_cleanup(struct HIF_CE_state *hif_state)
 
 void hif_flush_surprise_remove(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+
 	hif_buffer_cleanup(hif_state);
 }
 
 void hif_stop(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	int pipe_num;
 
@@ -1485,19 +1494,20 @@ static struct service_to_pipe target_service_to_ce_map_wlan_epping[] = {
  * Send an interrupt to the device to wake up the Target CPU
  * so it has an opportunity to notice any changed state.
  */
-void hif_wake_target_cpu(struct ol_softc *scn)
+void hif_wake_target_cpu(struct hif_softc *scn)
 {
 	CDF_STATUS rv;
 	uint32_t core_ctrl;
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
-	rv = hif_diag_read_access(scn,
+	rv = hif_diag_read_access(hif_hdl,
 				  SOC_CORE_BASE_ADDRESS | CORE_CTRL_ADDRESS,
 				  &core_ctrl);
 	CDF_ASSERT(rv == CDF_STATUS_SUCCESS);
 	/* A_INUM_FIRMWARE interrupt to Target CPU */
 	core_ctrl |= CORE_CTRL_CPU_INTR_MASK;
 
-	rv = hif_diag_write_access(scn,
+	rv = hif_diag_write_access(hif_hdl,
 				   SOC_CORE_BASE_ADDRESS | CORE_CTRL_ADDRESS,
 				   core_ctrl);
 	CDF_ASSERT(rv == CDF_STATUS_SUCCESS);
@@ -1507,8 +1517,9 @@ void hif_wake_target_cpu(struct ol_softc *scn)
 static void hif_sleep_entry(void *arg)
 {
 	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)arg;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_state);
 	uint32_t idle_ms;
+
 	if (scn->recovery)
 		return;
 
@@ -1540,12 +1551,12 @@ static void hif_sleep_entry(void *arg)
 #define HIF_HIA_POLLING_DELAY_MS 10
 
 #ifndef HIF_PCI
-int hif_set_hia(struct ol_softc *scn)
+int hif_set_hia(struct hif_softc *scn)
 {
 	return 0;
 }
 #else
-int hif_set_hia(struct ol_softc *scn)
+int hif_set_hia(struct hif_softc *scn)
 {
 	CDF_STATUS rv;
 	uint32_t interconnect_targ_addr = 0;
@@ -1565,7 +1576,8 @@ int hif_set_hia(struct ol_softc *scn)
 	uint32_t chip_id;
 #endif
 	uint32_t pipe_cfg_addr;
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	uint32_t target_type = tgt_info->target_type;
 
 	HIF_TRACE("%s: E", __func__);
@@ -1618,7 +1630,7 @@ int hif_set_hia(struct ol_softc *scn)
 		offsetof(struct host_interest_s, hi_option_flag2));
 #endif
 	/* Supply Target-side CE configuration */
-	rv = hif_diag_read_access(scn, interconnect_targ_addr,
+	rv = hif_diag_read_access(hif_hdl, interconnect_targ_addr,
 			  &pcie_state_targ_addr);
 	if (rv != CDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: interconnect_targ_addr = 0x%0x, ret = %d",
@@ -1633,7 +1645,7 @@ int hif_set_hia(struct ol_softc *scn)
 	pipe_cfg_addr = pcie_state_targ_addr +
 			  offsetof(struct pcie_state_s,
 			  pipe_cfg_addr);
-	rv = hif_diag_read_access(scn,
+	rv = hif_diag_read_access(hif_hdl,
 			  pipe_cfg_addr,
 			  &pipe_cfg_targ_addr);
 	if (rv != CDF_STATUS_SUCCESS) {
@@ -1647,7 +1659,7 @@ int hif_set_hia(struct ol_softc *scn)
 		goto done;
 	}
 
-	rv = hif_diag_write_mem(scn, pipe_cfg_targ_addr,
+	rv = hif_diag_write_mem(hif_hdl, pipe_cfg_targ_addr,
 			(uint8_t *) target_ce_config,
 			target_ce_config_sz);
 
@@ -1656,7 +1668,7 @@ int hif_set_hia(struct ol_softc *scn)
 		goto done;
 	}
 
-	rv = hif_diag_read_access(scn,
+	rv = hif_diag_read_access(hif_hdl,
 			  pcie_state_targ_addr +
 			  offsetof(struct pcie_state_s,
 			   svc_to_pipe_map),
@@ -1671,7 +1683,7 @@ int hif_set_hia(struct ol_softc *scn)
 		goto done;
 	}
 
-	rv = hif_diag_write_mem(scn,
+	rv = hif_diag_write_mem(hif_hdl,
 			svc_to_pipe_map,
 			(uint8_t *) target_service_to_ce_map,
 			target_service_to_ce_map_sz);
@@ -1680,7 +1692,7 @@ int hif_set_hia(struct ol_softc *scn)
 		goto done;
 	}
 
-	rv = hif_diag_read_access(scn,
+	rv = hif_diag_read_access(hif_hdl,
 			pcie_state_targ_addr +
 			offsetof(struct pcie_state_s,
 			config_flags),
@@ -1698,7 +1710,7 @@ int hif_set_hia(struct ol_softc *scn)
 #if (CONFIG_PCIE_ENABLE_AXI_CLK_GATE)
 	pcie_config_flags |= PCIE_CONFIG_FLAG_AXI_CLK_GATE;
 #endif
-	rv = hif_diag_write_mem(scn,
+	rv = hif_diag_write_mem(hif_hdl,
 			pcie_state_targ_addr +
 			offsetof(struct pcie_state_s,
 			config_flags),
@@ -1716,7 +1728,7 @@ int hif_set_hia(struct ol_softc *scn)
 						struct host_interest_s,
 						hi_early_alloc));
 
-	rv = hif_diag_read_access(scn, ealloc_targ_addr,
+	rv = hif_diag_read_access(hif_hdl, ealloc_targ_addr,
 			&ealloc_value);
 	if (rv != CDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: get early alloc val (%d)", __func__, rv);
@@ -1728,7 +1740,7 @@ int hif_set_hia(struct ol_softc *scn)
 		((HI_EARLY_ALLOC_MAGIC << HI_EARLY_ALLOC_MAGIC_SHIFT) &
 		 HI_EARLY_ALLOC_MAGIC_MASK);
 
-	rv = hif_diag_read_access(scn,
+	rv = hif_diag_read_access(hif_hdl,
 			  CHIP_ID_ADDRESS |
 			  RTC_SOC_BASE_ADDRESS, &chip_id);
 	if (rv != CDF_STATUS_SUCCESS) {
@@ -1764,7 +1776,7 @@ int hif_set_hia(struct ol_softc *scn)
 		((banks_switched << HI_EARLY_ALLOC_IRAM_BANKS_SHIFT)
 		 & HI_EARLY_ALLOC_IRAM_BANKS_MASK);
 
-	rv = hif_diag_write_access(scn,
+	rv = hif_diag_write_access(hif_hdl,
 				ealloc_targ_addr,
 				ealloc_value);
 	if (rv != CDF_STATUS_SUCCESS) {
@@ -1779,7 +1791,7 @@ int hif_set_hia(struct ol_softc *scn)
 						struct host_interest_s,
 						hi_option_flag2));
 
-	rv = hif_diag_read_access(scn, flag2_targ_addr,
+	rv = hif_diag_read_access(hif_hdl, flag2_targ_addr,
 			  &flag2_value);
 	if (rv != CDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: get option val (%d)", __func__, rv);
@@ -1787,7 +1799,7 @@ int hif_set_hia(struct ol_softc *scn)
 	}
 
 	flag2_value |= HI_OPTION_EARLY_CFG_DONE;
-	rv = hif_diag_write_access(scn, flag2_targ_addr,
+	rv = hif_diag_write_access(hif_hdl, flag2_targ_addr,
 			   flag2_value);
 	if (rv != CDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: set option val (%d)", __func__, rv);
@@ -1823,7 +1835,8 @@ static int hif_wlan_enable(void)
 		sizeof(struct service_to_pipe);
 	cfg.ce_svc_cfg = (struct ce_svc_pipe_cfg *)target_service_to_ce_map;
 	cfg.num_shadow_reg_cfg = shadow_cfg_sz / sizeof(struct shadow_reg_cfg);
-	cfg.shadow_reg_cfg = (struct icnss_shadow_reg_cfg *) target_shadow_reg_cfg;
+	cfg.shadow_reg_cfg =
+		(struct icnss_shadow_reg_cfg *)	target_shadow_reg_cfg;
 
 	if (CDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
@@ -1840,7 +1853,7 @@ static int hif_wlan_enable(void)
  * Initializes per-device HIF state and notifies the main
  * driver that a new HIF device is present.
  */
-int hif_config_ce(hif_handle_t hif_hdl)
+int hif_config_ce(struct hif_softc *scn)
 {
 	struct HIF_CE_pipe_info *pipe_info;
 	int pipe_num;
@@ -1849,10 +1862,10 @@ int hif_config_ce(hif_handle_t hif_hdl)
 #endif
 	CDF_STATUS rv = CDF_STATUS_SUCCESS;
 	int ret;
-	struct ol_softc *scn = hif_hdl;
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct icnss_soc_info soc_info;
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
+	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
 	/* if epping is enabled we need to use the epping configuration. */
 	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
@@ -1979,7 +1992,7 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	if (rv != CDF_STATUS_SUCCESS)
 		goto err;
 	else
-		init_tasklet_workers(scn);
+		init_tasklet_workers(hif_hdl);
 
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
 
@@ -2043,7 +2056,7 @@ void hif_ipa_get_ce_resource(struct ol_softc *hif_ctx,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct HIF_CE_pipe_info *pipe_info =
 		&(hif_state->pipe_info[HIF_PCI_IPA_UC_ASSIGNED_CE]);
@@ -2126,7 +2139,7 @@ void hif_ipa_get_ce_resource(struct ol_softc *hif_ctx,
 	-----------------------------------------------------------
 */
 
-u32 shadow_sr_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
+u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 {
 	u32 addr = 0;
 
@@ -2155,7 +2168,7 @@ u32 shadow_sr_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
 
 }
 
-u32 shadow_dst_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
+u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 {
 	u32 addr = 0;
 
@@ -2194,16 +2207,17 @@ u32 shadow_dst_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr)
  *
  * Return: none
  */
-void ce_lro_flush_cb_register(struct ol_softc *scn,
+void ce_lro_flush_cb_register(struct hif_softc *scn,
 	 void (handler)(void *), void *data)
 {
 	uint8_t ul, dl;
 	int ul_polled, dl_polled;
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
 	CDF_ASSERT(scn != NULL);
 
 	if (CDF_STATUS_SUCCESS !=
-		 hif_map_service_to_pipe(scn, HTT_DATA_MSG_SVC,
+		 hif_map_service_to_pipe(hif_hdl, HTT_DATA_MSG_SVC,
 			 &ul, &dl, &ul_polled, &dl_polled)) {
 		printk("%s cannot map service to pipe\n", __FUNCTION__);
 		return;
@@ -2224,15 +2238,16 @@ void ce_lro_flush_cb_register(struct ol_softc *scn,
  *
  * Return: none
  */
-void ce_lro_flush_cb_deregister(struct ol_softc *scn)
+void ce_lro_flush_cb_deregister(struct hif_softc *scn)
 {
 	uint8_t ul, dl;
 	int ul_polled, dl_polled;
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
 	CDF_ASSERT(scn != NULL);
 
 	if (CDF_STATUS_SUCCESS !=
-		 hif_map_service_to_pipe(scn, HTT_DATA_MSG_SVC,
+		 hif_map_service_to_pipe(hif_hdl, HTT_DATA_MSG_SVC,
 			 &ul, &dl, &ul_polled, &dl_polled)) {
 		printk("%s cannot map service to pipe\n", __FUNCTION__);
 		return;
@@ -2248,7 +2263,7 @@ void ce_lro_flush_cb_deregister(struct ol_softc *scn)
 /**
  * hif_map_service_to_pipe() - returns  the ce ids pertaining to
  * this service
- * @scn: ol_softc pointer.
+ * @scn: hif_softc pointer.
  * @svc_id: Service ID for which the mapping is needed.
  * @ul_pipe: address of the container in which ul pipe is returned.
  * @dl_pipe: address of the container in which dl pipe is returned.
@@ -2262,12 +2277,11 @@ void ce_lro_flush_cb_deregister(struct ol_softc *scn)
  * Return: Indicates whether this operation was successful.
  */
 
-int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t svc_id,
+int hif_map_service_to_pipe(struct ol_softc *hif_hdl, uint16_t svc_id,
 			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
 			int *dl_is_polled)
 {
 	int status = CDF_STATUS_SUCCESS;
-
 	unsigned int i;
 	struct service_to_pipe element;
 
@@ -2305,7 +2319,7 @@ int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t svc_id,
 }
 
 #ifdef SHADOW_REG_DEBUG
-inline uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct ol_softc *scn,
+inline uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr)
 {
 	uint32_t read_from_hw, srri_from_ddr = 0;
@@ -2324,7 +2338,7 @@ inline uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct ol_softc *scn,
 }
 
 
-inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
+inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr)
 {
 	uint32_t read_from_hw, drri_from_ddr = 0;
@@ -2348,7 +2362,7 @@ inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
 /**
  * hif_get_src_ring_read_index(): Called to get the SRRI
  *
- * @scn: ol_softc pointer
+ * @scn: hif_softc pointer
  * @CE_ctrl_addr: base address of the CE whose RRI is to be read
  *
  * This function returns the SRRI to the caller. For CEs that
@@ -2356,7 +2370,7 @@ inline uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
  *
  * Return: SRRI
  */
-inline unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
+inline unsigned int hif_get_src_ring_read_index(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr)
 {
 	struct CE_attr attr;
@@ -2372,7 +2386,7 @@ inline unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
 /**
  * hif_get_dst_ring_read_index(): Called to get the DRRI
  *
- * @scn: ol_softc pointer
+ * @scn: hif_softc pointer
  * @CE_ctrl_addr: base address of the CE whose RRI is to be read
  *
  * This function returns the DRRI to the caller. For CEs that
@@ -2380,7 +2394,7 @@ inline unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
  *
  * Return: DRRI
  */
-inline unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
+inline unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr)
 {
 	struct CE_attr attr;
@@ -2397,7 +2411,7 @@ inline unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
 /**
  * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
  *
- * @scn: ol_softc pointer
+ * @scn: hif_softc pointer
  *
  * This function allocates non cached memory on ddr and sends
  * the physical address of this memory to the CE hardware. The
@@ -2405,7 +2419,7 @@ inline unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
  *
  * Return: None
  */
-static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
+static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 {
 	unsigned int i;
 	cdf_dma_addr_t paddr_rri_on_ddr;
@@ -2434,14 +2448,14 @@ static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
 /**
  * hif_config_rri_on_ddr(): Configure the RRI on DDR mechanism
  *
- * @scn: ol_softc pointer
+ * @scn: hif_softc pointer
  *
  * This is a dummy implementation for platforms that don't
  * support this functionality.
  *
  * Return: None
  */
-static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
+static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 {
 	return;
 }
@@ -2455,8 +2469,9 @@ static inline void hif_config_rri_on_ddr(struct ol_softc *scn)
  *
  * Return: 0 for success or error code
  */
-int hif_dump_ce_registers(struct ol_softc *scn)
+int hif_dump_ce_registers(struct hif_softc *scn)
 {
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	uint32_t ce_reg_address = CE0_BASE_ADDRESS;
 	uint32_t ce_reg_values[CE_COUNT_MAX][CE_USEFUL_SIZE >> 2];
 	uint32_t ce_reg_word_size = CE_USEFUL_SIZE >> 2;
@@ -2464,7 +2479,7 @@ int hif_dump_ce_registers(struct ol_softc *scn)
 	CDF_STATUS status;
 
 	for (i = 0; i < CE_COUNT_MAX; i++, ce_reg_address += CE_OFFSET) {
-		status = hif_diag_read_mem(scn, ce_reg_address,
+		status = hif_diag_read_mem(hif_hdl, ce_reg_address,
 					   (uint8_t *) &ce_reg_values[i][0],
 					   ce_reg_word_size * sizeof(uint32_t));
 
@@ -2477,6 +2492,5 @@ int hif_dump_ce_registers(struct ol_softc *scn)
 				   (uint8_t *) &ce_reg_values[i][0],
 				   ce_reg_word_size * sizeof(uint32_t));
 	}
-
 	return 0;
 }

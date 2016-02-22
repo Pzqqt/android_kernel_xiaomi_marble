@@ -57,13 +57,13 @@
 
 /**
  * ce_irq_status() - read CE IRQ status
- * @scn: struct ol_softc
+ * @scn: struct hif_softc
  * @ce_id: ce_id
  * @host_status: host_status
  *
  * Return: IRQ status
  */
-static inline void ce_irq_status(struct ol_softc *scn,
+static inline void ce_irq_status(struct hif_softc *scn,
 	int ce_id, uint32_t *host_status)
 {
 	uint32_t offset = HOST_IS_ADDRESS + CE_BASE_ADDRESS(ce_id);
@@ -94,7 +94,7 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 {
 	struct tasklet_work *ce_work = container_of(work, struct tasklet_work,
 						    work);
-	struct ol_softc *scn = ce_work->data;
+	struct hif_softc *scn = ce_work->data;
 	struct HIF_CE_state *hif_ce_state;
 
 	if (NULL == scn) {
@@ -194,7 +194,7 @@ static void ce_tasklet(unsigned long data)
 	struct ce_tasklet_entry *tasklet_entry =
 		(struct ce_tasklet_entry *)data;
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
 	hif_record_ce_desc_event(tasklet_entry->ce_id, HIF_CE_TASKLET_ENTRY,
@@ -260,10 +260,10 @@ void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask)
  *
  * Return: N/A
  */
-void ce_tasklet_kill(struct HIF_CE_state *hif_ce_state)
+void ce_tasklet_kill(struct hif_softc *scn)
 {
 	int i;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+	struct HIF_CE_state *hif_ce_state = HIF_GET_CE_STATE(scn);
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
 		if (hif_ce_state->tasklets[i].inited) {
@@ -283,7 +283,8 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	uint32_t host_status;
 	int ce_id = icnss_get_ce_id(irq);
 
@@ -304,8 +305,8 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 	ce_irq_status(scn, ce_id, &host_status);
 	cdf_atomic_inc(&scn->active_tasklet_cnt);
 	hif_record_ce_desc_event(ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
-	if (hif_napi_enabled(scn, ce_id))
-		hif_napi_schedule(scn, ce_id);
+	if (hif_napi_enabled(hif_hdl, ce_id))
+		hif_napi_schedule(hif_hdl, ce_id);
 	else
 		tasklet_schedule(&tasklet_entry->intr_tq);
 

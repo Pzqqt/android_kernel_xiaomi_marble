@@ -281,7 +281,7 @@ static irqreturn_t icnss_dispatch_one_ce_irq(int ce_id)
  *
  * Return: N/A
  */
-void icnss_dispatch_ce_irq(struct ol_softc *scn)
+void icnss_dispatch_ce_irq(struct hif_softc *scn)
 {
 	uint32_t intr_summary;
 	int id;
@@ -333,7 +333,7 @@ void icnss_dispatch_ce_irq(struct ol_softc *scn)
  */
 int icnss_get_soc_info(void *hif_ctx, struct icnss_soc_info *info)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = hif_ctx;
 
 	if (!scn) {
 		HIF_ERROR("%s: SCN = NULL", __func__);

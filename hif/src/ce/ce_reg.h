@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -247,9 +247,9 @@
 #define CE_DEBUG_SEL_GET(x) (((x) & CE_DEBUG_SEL_MASK) >> CE_DEBUG_SEL_LSB)
 #define CE_DEBUG_SEL_SET(x) (((x) << CE_DEBUG_SEL_LSB) & CE_DEBUG_SEL_MASK)
 
-uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct ol_softc *scn,
+uint32_t DEBUG_CE_SRC_RING_READ_IDX_GET(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr);
-uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
+uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr);
 
 #define BITS0_TO_31(val) ((uint32_t)((uint64_t)(paddr_rri_on_ddr)\
@@ -277,9 +277,9 @@ uint32_t DEBUG_CE_DEST_RING_READ_IDX_GET(struct ol_softc *scn,
 	DRRI_FROM_DDR_ADDR(VADDR_FOR_CE(scn, CE_ctrl_addr))
 #endif
 
-unsigned int hif_get_src_ring_read_index(struct ol_softc *scn,
+unsigned int hif_get_src_ring_read_index(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr);
-unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
+unsigned int hif_get_dst_ring_read_index(struct hif_softc *scn,
 		uint32_t CE_ctrl_addr);
 
 #define CE_SRC_RING_READ_IDX_GET(scn, CE_ctrl_addr)\
@@ -511,8 +511,8 @@ unsigned int hif_get_dst_ring_read_index(struct ol_softc *scn,
 
 #define NUM_SHADOW_REGISTERS 24
 
-u32 shadow_sr_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr);
-u32 shadow_dst_wr_ind_addr(struct ol_softc *scn, u32 ctrl_addr);
+u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr);
+u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr);
 #define CE_SRC_RING_WRITE_IDX_SET(scn, CE_ctrl_addr, n) \
 	A_TARGET_WRITE(scn, shadow_sr_wr_ind_addr(scn, CE_ctrl_addr), n)
 

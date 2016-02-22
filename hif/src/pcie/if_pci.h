@@ -148,10 +148,10 @@ struct hif_pci_softc {
 #endif
 };
 
-bool hif_pci_targ_is_present(struct ol_softc *scn, void *__iomem *mem);
-void icnss_dispatch_ce_irq(struct ol_softc *scn);
-int hif_configure_irq(struct hif_pci_softc *sc);
-void hif_pci_cancel_deferred_target_sleep(struct ol_softc *scn);
+bool hif_pci_targ_is_present(struct hif_softc *scn, void *__iomem *mem);
+void icnss_dispatch_ce_irq(struct hif_softc *scn);
+int hif_configure_irq(struct hif_softc *sc);
+void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn);
 
 /*
  * A firmware interrupt to the Host is indicated by the

@@ -54,7 +54,7 @@
 void hif_dump_target_memory(struct ol_softc *hif_ctx, void *ramdump_base,
 			    uint32_t address, uint32_t size)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint32_t loc = address;
 	uint32_t val = 0;
 	uint32_t j = 0;
@@ -99,7 +99,7 @@ CDF_STATUS
 hif_diag_read_mem(struct ol_softc *hif_ctx, uint32_t address, uint8_t *data,
 		  int nbytes)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	cdf_dma_addr_t buf;
@@ -134,7 +134,7 @@ hif_diag_read_mem(struct ol_softc *hif_ctx, uint32_t address, uint8_t *data,
 
 		while ((nbytes >= 4) &&
 		       (CDF_STATUS_SUCCESS == (status =
-				 hif_diag_read_access(scn, address,
+				 hif_diag_read_access(hif_ctx, address,
 				       (uint32_t *)data)))) {
 
 			nbytes -= sizeof(uint32_t);
@@ -263,11 +263,11 @@ done:
 CDF_STATUS hif_diag_read_access(struct ol_softc *hif_ctx,
 				uint32_t address, uint32_t *data)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (address >= DRAM_BASE_ADDRESS) {
 		/* Assume range doesn't cross this boundary */
-		return hif_diag_read_mem(scn, address, (uint8_t *) data,
+		return hif_diag_read_mem(hif_ctx, address, (uint8_t *) data,
 					 sizeof(uint32_t));
 	} else {
 		A_TARGET_ACCESS_BEGIN_RET(scn);
@@ -281,7 +281,7 @@ CDF_STATUS hif_diag_read_access(struct ol_softc *hif_ctx,
 CDF_STATUS hif_diag_write_mem(struct ol_softc *hif_ctx,
 			      uint32_t address, uint8_t *data, int nbytes)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	cdf_dma_addr_t buf;
@@ -435,13 +435,13 @@ done:
 CDF_STATUS hif_diag_write_access(struct ol_softc *hif_ctx, uint32_t address,
 				 uint32_t data)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (address >= DRAM_BASE_ADDRESS) {
 		/* Assume range doesn't cross this boundary */
 		uint32_t data_buf = data;
 
-		return hif_diag_write_mem(scn, address,
+		return hif_diag_write_mem(hif_ctx, address,
 					  (uint8_t *) &data_buf,
 					  sizeof(uint32_t));
 	} else {

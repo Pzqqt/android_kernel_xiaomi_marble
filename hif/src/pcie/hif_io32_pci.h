@@ -88,27 +88,27 @@
 #define hif_write32_mb(addr, value) \
 	iowrite32((u32)(value), (void __iomem *)(addr))
 
-extern int hif_target_sleep_state_adjust(struct ol_softc *scn,
+extern int hif_target_sleep_state_adjust(struct hif_softc *scn,
 					 bool sleep_ok,
 					 bool wait_for_it);
 
 #if CONFIG_ATH_PCIE_MAX_PERF
 #define A_TARGET_ACCESS_BEGIN(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_END(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_OK(scn) 1
 
 #define A_TARGET_ACCESS_LIKELY(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_UNLIKELY(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_READ(scn, offset) \
@@ -119,27 +119,27 @@ void war_pci_write32(char *addr, u32 offset, u32 value);
 	war_pci_write32(scn->mem, (offset), (value))
 
 #define A_TARGET_ACCESS_BEGIN_RET(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_BEGIN_RET_PTR(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_END_RET(scn)	\
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 		unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_END_RET_EXT(scn, val) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
 #define A_TARGET_ACCESS_END_RET_PTR(scn) \
-	do {struct ol_softc *unused = scn; \
+	do {struct hif_softc *unused = scn; \
 		unused = unused; } while (0)
 
 #else                           /* CONFIG_ATH_PCIE_MAX_PERF */
@@ -227,9 +227,9 @@ do { \
 #endif /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
 
 #ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-extern uint32_t hif_target_read_checked(struct ol_softc *scn,
+extern uint32_t hif_target_read_checked(struct hif_softc *scn,
 					uint32_t offset);
-extern void hif_target_write_checked(struct ol_softc *scn, uint32_t offset,
+extern void hif_target_write_checked(struct hif_softc *scn, uint32_t offset,
 				     uint32_t value);
 #define A_TARGET_READ(scn, offset) \
 	hif_target_read_checked(scn, (offset))
@@ -248,12 +248,12 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
 
 /**
  * ce_irq_enable() - ce_irq_enable
- * @scn: ol_softc
+ * @scn: hif_softc
  * @ce_id: ce_id
  *
  * Return: void
  */
-static inline void ce_irq_enable(struct ol_softc *scn, int ce_id)
+static inline void ce_irq_enable(struct hif_softc *scn, int ce_id)
 {
 	uint32_t tmp = 1 << ce_id;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
@@ -285,23 +285,23 @@ static inline void ce_irq_enable(struct ol_softc *scn, int ce_id)
 }
 /**
  * ce_irq_disable() - ce_irq_disable
- * @scn: ol_softc
+ * @scn: hif_softc
  * @ce_id: ce_id
  *
  * Return: void
  */
-static inline void ce_irq_disable(struct ol_softc *scn, int ce_id)
+static inline void ce_irq_disable(struct hif_softc *scn, int ce_id)
 {
 	/* For Rome only need to wake up target */
 	A_TARGET_ACCESS_BEGIN(scn);
 }
 /**
  * soc_wake_reset() - soc_wake_reset
- * @scn: ol_softc
+ * @scn: hif_softc
  *
  * Return: void
  */
-static inline void soc_wake_reset(struct ol_softc *scn)
+static inline void soc_wake_reset(struct hif_softc *scn)
 {
 	hif_write32_mb(scn->mem +
 		PCIE_LOCAL_BASE_ADDRESS +

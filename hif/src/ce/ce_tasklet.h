@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -30,7 +30,7 @@
 #include "ce_main.h"
 void init_tasklet_workers(struct ol_softc *scn);
 void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask);
-void ce_tasklet_kill(struct HIF_CE_state *hif_ce_state);
+void ce_tasklet_kill(struct hif_softc *scn);
 CDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 CDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 #endif /* __CE_TASKLET_H__ */

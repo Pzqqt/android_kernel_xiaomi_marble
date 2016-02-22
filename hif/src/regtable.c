@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,10 +34,10 @@
 #include "ar6320v2def.h"
 #include "qca6180def.h"
 #include "ol_if_athvar.h"
-#include "hif.h"
+#include "hif_main.h"
 #include "adrastea_reg_def.h"
 
-void target_register_tbl_attach(struct ol_softc *scn, u32 target_type)
+void target_register_tbl_attach(struct hif_softc *scn, u32 target_type)
 {
 	switch (target_type) {
 	case TARGET_TYPE_AR9888:
@@ -65,7 +65,7 @@ void target_register_tbl_attach(struct ol_softc *scn, u32 target_type)
 	}
 }
 
-void hif_register_tbl_attach(struct ol_softc *scn, u32 hif_type)
+void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type)
 {
 	switch (hif_type) {
 	case HIF_TYPE_AR9888:

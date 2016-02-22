@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -70,12 +70,12 @@
 #define Q_TARGET_ACCESS_BEGIN(scn) 0
 #define Q_TARGET_ACCESS_END(scn) 0
 
-static inline void hif_pci_cancel_deferred_target_sleep(struct ol_softc *scn)
+static inline void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn)
 {
 	return;
 }
 
-static inline void hif_target_sleep_state_adjust(struct ol_softc *scn,
+static inline void hif_target_sleep_state_adjust(struct hif_softc *scn,
 						bool sleep_ok, bool wait_for_it)
 {
 	return;
@@ -83,11 +83,11 @@ static inline void hif_target_sleep_state_adjust(struct ol_softc *scn,
 
 /**
  * soc_wake_reset() - soc_wake_reset
- * @scn: ol_softc
+ * @scn: hif_softc
  *
  * Return: void
  */
-static inline void soc_wake_reset(struct ol_softc *scn)
+static inline void soc_wake_reset(struct hif_softc *scn)
 {
 }
 
@@ -131,7 +131,7 @@ static inline uint32_t hif_read32_mb(void __iomem *addr)
 
 #define ADRASTEA_CE_INTR_STATUS 0x002F00AC
 
-static inline void ce_enable_irq_in_individual_register(struct ol_softc *scn,
+static inline void ce_enable_irq_in_individual_register(struct hif_softc *scn,
 		int ce_id)
 {
 	uint32_t offset;
@@ -140,7 +140,7 @@ static inline void ce_enable_irq_in_individual_register(struct ol_softc *scn,
 	hif_read32_mb(scn->mem + offset);
 }
 
-static inline void ce_disable_irq_in_individual_register(struct ol_softc *scn,
+static inline void ce_disable_irq_in_individual_register(struct hif_softc *scn,
 		int ce_id)
 {
 	uint32_t offset;
@@ -149,14 +149,14 @@ static inline void ce_disable_irq_in_individual_register(struct ol_softc *scn,
 	hif_read32_mb(scn->mem + offset);
 }
 
-static inline void ce_read_irq_group_status(struct ol_softc *scn)
+static inline void ce_read_irq_group_status(struct hif_softc *scn)
 {
 	uint32_t group_status = 0;
 	group_status = hif_read32_mb(scn->mem +
 			ADRASTEA_CE_INTR_STATUS);
 }
 
-static inline void ce_clear_irq_group_status(struct ol_softc *scn, int mask)
+static inline void ce_clear_irq_group_status(struct hif_softc *scn, int mask)
 {
 	uint32_t group_status = 0;
 	group_status = hif_read32_mb(scn->mem +
@@ -172,7 +172,7 @@ static inline void ce_clear_irq_group_status(struct ol_softc *scn, int mask)
 /* this will need to be changed when we move to reg set 36
  * because we will have set & clear registers provided
  */
-static inline void ce_enable_irq_in_group_reg(struct ol_softc *scn,
+static inline void ce_enable_irq_in_group_reg(struct hif_softc *scn,
 		int mask)
 {
 	int new_mask = 0;
@@ -190,7 +190,7 @@ static inline void ce_enable_irq_in_group_reg(struct ol_softc *scn,
 /* this will need to be changed when we move to reg set 36
  * because we will have set & clear registers provided
  */
-static inline void ce_disable_irq_in_group_reg(struct ol_softc *scn,
+static inline void ce_disable_irq_in_group_reg(struct hif_softc *scn,
 		int mask)
 {
 	int new_mask = 0;
@@ -207,12 +207,12 @@ static inline void ce_disable_irq_in_group_reg(struct ol_softc *scn,
 
 /**
  * ce_irq_enable() - enable copy engine IRQ
- * @scn: struct ol_softc
+ * @scn: struct hif_softc
  * @ce_id: ce_id
  *
  * Return: N/A
  */
-static inline void ce_irq_enable(struct ol_softc *scn,
+static inline void ce_irq_enable(struct hif_softc *scn,
 		int ce_id)
 {
 	icnss_enable_irq(ce_id);
@@ -222,12 +222,12 @@ static inline void ce_irq_enable(struct ol_softc *scn,
 
 /**
  * ce_irq_disable() - disable copy engine IRQ
- * @scn: struct ol_softc
+ * @scn: struct hif_softc
  * @ce_id: ce_id
  *
  * Return: N/A
  */
-static inline void ce_irq_disable(struct ol_softc *scn, int ce_id)
+static inline void ce_irq_disable(struct hif_softc *scn, int ce_id)
 {
 	ce_disable_irq_in_group_reg(scn, 1<<ce_id);
 	ce_clear_irq_group_status(scn, 1<<ce_id);

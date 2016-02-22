@@ -94,7 +94,8 @@ void hif_napi_enable_irq(struct ol_softc *hif, int id);
 int hif_napi_schedule(struct ol_softc *scn, int ce_id);
 
 /* called by hdd_napi, which is called by kernel */
-int hif_napi_poll(void *hif_ctx, struct napi_struct *napi, int budget);
+int hif_napi_poll(struct ol_softc *hif_ctx,
+			struct napi_struct *napi, int budget);
 
 #ifdef FEATURE_NAPI_DEBUG
 #define NAPI_DEBUG(fmt, ...)			\

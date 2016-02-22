@@ -296,7 +296,7 @@ unsigned int ce_recv_entries_done(struct CE_handle *copyeng);
 /* Data is byte-swapped */
 #define CE_RECV_FLAG_SWAPPED            1
 
-void ce_enable_msi(struct ol_softc *scn,
+void ce_enable_msi(struct hif_softc *scn,
 		   unsigned int CE_id,
 		   uint32_t msi_addr_lo,
 		   uint32_t msi_addr_hi,
@@ -341,7 +341,7 @@ int ce_completed_send_next(struct CE_handle *copyeng,
 /*==================CE Engine Initialization=================================*/
 
 /* Initialize an instance of a CE */
-struct CE_handle *ce_init(struct ol_softc *scn,
+struct CE_handle *ce_init(struct hif_softc *scn,
 			  unsigned int CE_id, struct CE_attr *attr);
 
 /*==================CE Engine Shutdown=======================================*/
@@ -373,18 +373,18 @@ ce_cancel_send_next(struct CE_handle *copyeng,
 void ce_fini(struct CE_handle *copyeng);
 
 /*==================CE Interrupt Handlers====================================*/
-void ce_per_engine_service_any(int irq, struct ol_softc *scn);
-int ce_per_engine_service(struct ol_softc *scn, unsigned int CE_id);
-void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int CE_id);
+void ce_per_engine_service_any(int irq, struct hif_softc *scn);
+int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id);
+void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int CE_id);
 
 /*===================CE cmpl interrupt Enable/Disable =======================*/
-void ce_disable_any_copy_compl_intr_nolock(struct ol_softc *scn);
-void ce_enable_any_copy_compl_intr_nolock(struct ol_softc *scn);
+void ce_disable_any_copy_compl_intr_nolock(struct hif_softc *scn);
+void ce_enable_any_copy_compl_intr_nolock(struct hif_softc *scn);
 
 /* API to check if any of the copy engine pipes has
  * pending frames for prcoessing
  */
-bool ce_get_rx_pending(struct ol_softc *scn);
+bool ce_get_rx_pending(struct hif_softc *scn);
 
 /* CE_attr.flags values */
 #define CE_ATTR_NO_SNOOP             0x01 /* Use NonSnooping PCIe accesses? */
@@ -465,16 +465,17 @@ static inline void ce_pkt_error_count_incr(
 	struct HIF_CE_state *_hif_state,
 	enum ol_ath_hif_pkt_ecodes _hif_ecode)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(_hif_state);
+	struct hif_softc *scn = HIF_GET_SOFTC(_hif_state);
+
 	if (_hif_ecode == HIF_PIPE_NO_RESOURCE)
 		(scn->pkt_stats.hif_pipe_no_resrc_count)
 		+= 1;
 }
 
-bool ce_check_rx_pending(struct ol_softc *scn, int ce_id);
+bool ce_check_rx_pending(struct hif_softc *scn, int ce_id);
 #if defined(FEATURE_LRO)
-void ce_lro_flush_cb_register(struct ol_softc *scn,
+void ce_lro_flush_cb_register(struct hif_softc *scn,
 	 void (handler)(void *), void *data);
-void ce_lro_flush_cb_deregister(struct ol_softc *scn);
+void ce_lro_flush_cb_deregister(struct hif_softc *scn);
 #endif
 #endif /* __COPY_ENGINE_API_H__ */

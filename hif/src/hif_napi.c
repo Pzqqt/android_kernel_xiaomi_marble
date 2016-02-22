@@ -67,7 +67,7 @@ enum napi_decision_vector {
  * = 0: <should never happen>
  * > 0: id of the created object (for multi-NAPI, number of objects created)
  */
-int hif_napi_create(struct ol_softc   *hif,
+int hif_napi_create(struct ol_softc   *hif_ctx,
 		    uint8_t            pipe_id,
 		    int (*poll)(struct napi_struct *, int),
 		    int                budget,
@@ -75,6 +75,7 @@ int hif_napi_create(struct ol_softc   *hif,
 {
 	struct qca_napi_data *napid;
 	struct qca_napi_info *napii;
+	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 
 	NAPI_DEBUG("-->(pipe=%d, budget=%d, scale=%d)\n",
 		   pipe_id, budget, scale);
@@ -143,12 +144,13 @@ int hif_napi_create(struct ol_softc   *hif,
  * 0 <    : error
  * 0 =    : success
  */
-int hif_napi_destroy(struct ol_softc *hif,
+int hif_napi_destroy(struct ol_softc *hif_ctx,
 		     uint8_t          id,
 		     int              force)
 {
 	uint8_t ce = NAPI_ID2PIPE(id);
 	int rc = 0;
+	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 
 	NAPI_DEBUG("-->(id=%d, force=%d)\n", id, force);
 
@@ -222,8 +224,10 @@ int hif_napi_destroy(struct ol_softc *hif,
  * Return:
  *  <addr>: address of the whole HIF NAPI structure
  */
-inline struct qca_napi_data *hif_napi_get_all(struct ol_softc   *hif)
+inline struct qca_napi_data *hif_napi_get_all(struct ol_softc *hif_ctx)
 {
+	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
+
 	return &(hif->napi_data);
 }
 
@@ -246,12 +250,15 @@ inline struct qca_napi_data *hif_napi_get_all(struct ol_softc   *hif)
  *  = 0: NAPI is now disabled
  *  = 1: NAPI is now enabled
  */
-int hif_napi_event(struct ol_softc *hif, enum qca_napi_event event, void *data)
+int hif_napi_event(struct ol_softc *hif_ctx,
+		   enum qca_napi_event event,
+		   void *data)
 {
 	int      rc;
 	uint32_t prev_state;
 	int      i;
 	struct napi_struct *napi;
+	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 
 	NAPI_DEBUG("-->(event=%d, aux=%p)\n", event, data);
 
@@ -332,9 +339,10 @@ int hif_napi_event(struct ol_softc *hif, enum qca_napi_event event, void *data)
  *
  * Return: bool
  */
-int hif_napi_enabled(struct ol_softc *hif, int ce)
+int hif_napi_enabled(struct ol_softc *hif_ctx, int ce)
 {
 	int rc;
+	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 
 	if (-1 == ce)
 		rc = ((hif->napi_data.state == ENABLE_NAPI_MASK));
@@ -354,7 +362,9 @@ int hif_napi_enabled(struct ol_softc *hif, int ce)
  */
 inline void hif_napi_enable_irq(struct ol_softc *hif, int id)
 {
-	ce_irq_enable(hif, NAPI_ID2PIPE(id));
+	struct hif_softc *scn = HIF_GET_SOFTC(hif);
+
+	ce_irq_enable(scn, NAPI_ID2PIPE(id));
 }
 
 
@@ -365,9 +375,10 @@ inline void hif_napi_enable_irq(struct ol_softc *hif, int id)
  *
  * Return: void
  */
-int hif_napi_schedule(struct ol_softc *scn, int ce_id)
+int hif_napi_schedule(struct ol_softc *hif_ctx, int ce_id)
 {
 	int cpu = smp_processor_id();
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	scn->napi_data.napis[ce_id].stats[cpu].napi_schedules++;
 	NAPI_DEBUG("scheduling napi %d (ce:%d)\n",
@@ -398,12 +409,13 @@ int hif_napi_schedule(struct ol_softc *scn, int ce_id)
  * Returns:
  *  int: the amount of work done in this poll ( <= budget)
  */
-int hif_napi_poll(void *hif_ctx, struct napi_struct *napi, int budget)
+int
+hif_napi_poll(struct ol_softc *hif_ctx, struct napi_struct *napi, int budget)
 {
 	int    rc = 0; /* default: no work done, also takes care of error */
 	int    normalized, bucket;
 	int    cpu = smp_processor_id();
-	struct ol_softc      *hif;
+	struct hif_softc      *hif = HIF_GET_SOFTC(hif_ctx);
 	struct qca_napi_info *napi_info;
 	struct CE_state *ce_state;
 
@@ -413,7 +425,6 @@ int hif_napi_poll(void *hif_ctx, struct napi_struct *napi, int budget)
 		container_of(napi, struct qca_napi_info, napi);
 	napi_info->stats[cpu].napi_polls++;
 
-	hif = hif_ctx;
 	if (unlikely(NULL == hif))
 		CDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
 	else {
@@ -449,7 +460,7 @@ int hif_napi_poll(void *hif_ctx, struct napi_struct *napi, int budget)
 		/* enable interrupts */
 		napi_complete(napi);
 		if (NULL != hif) {
-			hif_napi_enable_irq(hif, napi_info->id);
+			hif_napi_enable_irq(hif_ctx, napi_info->id);
 
 			/* support suspend/resume */
 			cdf_atomic_dec(&(hif->active_tasklet_cnt));

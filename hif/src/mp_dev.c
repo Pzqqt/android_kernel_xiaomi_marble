@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -101,13 +101,13 @@ static INLINE uint32_t get_target_reg_bits(void __iomem *mem,
 	return (value >> shift) & bitmask;
 }
 
-void priv_start_cap_chaninfo(struct ol_softc *scn)
+void priv_start_cap_chaninfo(struct hif_softc *scn)
 {
 	set_target_reg_bits(scn->mem, BB_chaninfo_ctrl,
 			    CHANINFO_CTRL_CAPTURE_CHAN_INFO_MASK, 1);
 }
 
-void priv_start_agc(struct ol_softc *scn)
+void priv_start_agc(struct hif_softc *scn)
 {
 	g_priv_dump_ctx.gain_min_offsets_orig =
 		hif_read32_mb(scn->mem + BB_gains_min_offsets);
@@ -116,14 +116,14 @@ void priv_start_agc(struct ol_softc *scn)
 			    0x0f);
 }
 
-void priv_stop_agc(struct ol_softc *scn)
+void priv_stop_agc(struct hif_softc *scn)
 {
 	set_target_reg_bits(scn->mem, BB_gains_min_offsets,
 			    AGC_HISTORY_DUMP_MASK,
 			    0);
 }
 
-void priv_dump_chaninfo(struct ol_softc *scn)
+void priv_dump_chaninfo(struct hif_softc *scn)
 {
 	uint32_t bw, val;
 	uint32_t len, i, tmp;
@@ -256,7 +256,7 @@ void priv_dump_chaninfo(struct ol_softc *scn)
 	HIF_TRACE("%s: X", __func__);
 }
 
-void priv_dump_agc(struct ol_softc *scn)
+void priv_dump_agc(struct hif_softc *scn)
 {
 	int i, len = 30;        /* check this value for Rome and Peregrine */
 	uint32_t chain0, chain1, chain_mask, val;
@@ -310,7 +310,7 @@ void priv_dump_agc(struct ol_softc *scn)
 	return;
 }
 
-void priv_dump_bbwatchdog(struct ol_softc *scn)
+void priv_dump_bbwatchdog(struct hif_softc *scn)
 {
 	uint32_t val;
 

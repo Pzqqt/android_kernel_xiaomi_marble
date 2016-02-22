@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -229,7 +229,7 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 			      unsigned int *sw_idx, unsigned int *hw_idx,
 			      uint32_t *toeplitz_hash_result);
 
-void war_ce_src_ring_write_idx_set(struct ol_softc *scn,
+void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 				   u32 ctrl_addr, unsigned int write_index)
 {
 	if (hif_ce_war1) {
@@ -280,7 +280,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 	unsigned int sw_index = src_ring->sw_index;
 	unsigned int write_index = src_ring->write_index;
 	uint64_t dma_addr = buffer;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	A_TARGET_ACCESS_BEGIN_RET(scn);
 	if (unlikely(CE_RING_DELTA(nentries_mask,
@@ -521,7 +521,8 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		 unsigned int num_msdus, unsigned int transfer_id)
 {
 	struct CE_state *ce_state = (struct CE_state *)copyeng;
-	struct ol_softc *scn = ce_state->scn;
+	struct hif_softc *scn = ce_state->scn;
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct CE_ring_state *src_ring = ce_state->src_ring;
 	u_int32_t ctrl_addr = ce_state->ctrl_addr;
 	unsigned int nentries_mask = src_ring->nentries_mask;
@@ -548,7 +549,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		struct CE_src_desc *shadow_src_desc =
 			CE_SRC_RING_TO_DESC(shadow_base, write_index);
 
-		hif_pm_runtime_get_noresume(scn);
+		hif_pm_runtime_get_noresume(hif_hdl);
 		msdu = msdus[i];
 
 		/*
@@ -621,13 +622,13 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 	if (i) {
 		src_ring->write_index = write_index;
 
-		if (hif_pm_runtime_get(scn) == 0) {
+		if (hif_pm_runtime_get(hif_hdl) == 0) {
 			/* Don't call WAR_XXX from here
 			 * Just call XXX instead, that has the reqd. intel
 			 */
 			war_ce_src_ring_write_idx_set(scn, ctrl_addr,
 					write_index);
-			hif_pm_runtime_put(scn);
+			hif_pm_runtime_put(hif_hdl);
 		}
 	}
 
@@ -656,7 +657,7 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	unsigned int sw_index;
 	int val = 0;
 	uint64_t dma_addr = buffer;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	cdf_spin_lock_bh(&CE_state->ce_index_lock);
 	write_index = dest_ring->write_index;
@@ -716,7 +717,7 @@ ce_send_watermarks_set(struct CE_handle *copyeng,
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	CE_SRC_RING_LOWMARK_SET(scn, ctrl_addr, low_alert_nentries);
 	CE_SRC_RING_HIGHMARK_SET(scn, ctrl_addr, high_alert_nentries);
@@ -729,7 +730,7 @@ ce_recv_watermarks_set(struct CE_handle *copyeng,
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	CE_DEST_RING_LOWMARK_SET(scn, ctrl_addr,
 				low_alert_nentries);
@@ -774,7 +775,7 @@ unsigned int ce_recv_entries_avail(struct CE_handle *copyeng)
  * The caller takes responsibility for any necessary locking.
  */
 unsigned int
-ce_send_entries_done_nolock(struct ol_softc *scn,
+ce_send_entries_done_nolock(struct hif_softc *scn,
 			    struct CE_state *CE_state)
 {
 	struct CE_ring_state *src_ring = CE_state->src_ring;
@@ -806,7 +807,7 @@ unsigned int ce_send_entries_done(struct CE_handle *copyeng)
  * The caller takes responsibility for any necessary locking.
  */
 unsigned int
-ce_recv_entries_done_nolock(struct ol_softc *scn,
+ce_recv_entries_done_nolock(struct hif_softc *scn,
 			    struct CE_state *CE_state)
 {
 	struct CE_ring_state *dest_ring = CE_state->dest_ring;
@@ -945,7 +946,7 @@ ce_revoke_recv_next(struct CE_handle *copyeng,
 	unsigned int sw_index;
 	unsigned int write_index;
 	CDF_STATUS status;
-	struct ol_softc *scn;
+	struct hif_softc *scn;
 
 	CE_state = (struct CE_state *)copyeng;
 	dest_ring = CE_state->dest_ring;
@@ -1012,7 +1013,7 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 	unsigned int nentries_mask = src_ring->nentries_mask;
 	unsigned int sw_index = src_ring->sw_index;
 	unsigned int read_index;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	if (src_ring->hw_index == sw_index) {
 		/*
@@ -1096,7 +1097,7 @@ ce_cancel_send_next(struct CE_handle *copyeng,
 	unsigned int sw_index;
 	unsigned int write_index;
 	CDF_STATUS status;
-	struct ol_softc *scn;
+	struct hif_softc *scn;
 
 	CE_state = (struct CE_state *)copyeng;
 	src_ring = CE_state->src_ring;
@@ -1187,7 +1188,7 @@ ce_completed_send_next(struct CE_handle *copyeng,
  * within it .
  */
 
-void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int ce_id)
+void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 {
 	void *CE_context;
 	void *transfer_context;
@@ -1282,7 +1283,7 @@ void ce_per_engine_servicereap(struct ol_softc *scn, unsigned int ce_id)
  * Returns: number of messages processed
  */
 
-int ce_per_engine_service(struct ol_softc *scn, unsigned int CE_id)
+int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 {
 	struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
@@ -1496,7 +1497,7 @@ more_watermarks:
  * single interrput for all CEs
  */
 
-void ce_per_engine_service_any(int irq, struct ol_softc *scn)
+void ce_per_engine_service_any(int irq, struct hif_softc *scn)
 {
 	int CE_id;
 	uint32_t intr_summary;
@@ -1542,7 +1543,7 @@ ce_per_engine_handler_adjust(struct CE_state *CE_state,
 			     int disable_copy_compl_intr)
 {
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	CE_state->disable_copy_compl_intr = disable_copy_compl_intr;
 	A_TARGET_ACCESS_BEGIN(scn);
@@ -1565,7 +1566,7 @@ ce_per_engine_handler_adjust(struct CE_state *CE_state,
 /*Iterate the CE_state list and disable the compl interrupt
  * if it has been registered already.
  */
-void ce_disable_any_copy_compl_intr_nolock(struct ol_softc *scn)
+void ce_disable_any_copy_compl_intr_nolock(struct hif_softc *scn)
 {
 	int CE_id;
 
@@ -1587,7 +1588,7 @@ void ce_disable_any_copy_compl_intr_nolock(struct ol_softc *scn)
 	A_TARGET_ACCESS_END(scn);
 }
 
-void ce_enable_any_copy_compl_intr_nolock(struct ol_softc *scn)
+void ce_enable_any_copy_compl_intr_nolock(struct hif_softc *scn)
 {
 	int CE_id;
 
@@ -1703,7 +1704,7 @@ ce_watermark_cb_register(struct CE_handle *copyeng,
  */
 void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
 {
-	struct ol_softc *sc = (struct ol_softc *)(hif_sc);
+	struct hif_softc *sc = (struct hif_softc *)(hif_sc);
 	struct CE_state *ce_state = sc->ce_id_to_state[CE_HTT_H2T_MSG];
 
 	cdf_assert_always(ce_state);
@@ -1719,7 +1720,7 @@ void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
-bool ce_get_rx_pending(struct ol_softc *scn)
+bool ce_get_rx_pending(struct hif_softc *scn)
 {
 	int CE_id;
 
@@ -1734,12 +1735,12 @@ bool ce_get_rx_pending(struct ol_softc *scn)
 
 /**
  * ce_check_rx_pending() - ce_check_rx_pending
- * @scn: ol_softc
+ * @scn: hif_softc
  * @ce_id: ce_id
  *
  * Return: bool
  */
-bool ce_check_rx_pending(struct ol_softc *scn, int ce_id)
+bool ce_check_rx_pending(struct hif_softc *scn, int ce_id)
 {
 	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
 	if (cdf_atomic_read(&CE_state->rx_pending))
@@ -1758,7 +1759,7 @@ bool ce_check_rx_pending(struct ol_softc *scn, int ce_id)
  *
  * should be done in the initialization sequence so no locking would be needed
  */
-void ce_enable_msi(struct ol_softc *scn, unsigned int CE_id,
+void ce_enable_msi(struct hif_softc *scn, unsigned int CE_id,
 				   uint32_t msi_addr_lo, uint32_t msi_addr_hi,
 				   uint32_t msi_data)
 {
@@ -1809,7 +1810,7 @@ void ce_ipa_get_resource(struct CE_handle *ce,
 	uint32_t ring_loop;
 	struct CE_src_desc *ce_desc;
 	cdf_dma_addr_t phy_mem_base;
-	struct ol_softc *scn = CE_state->scn;
+	struct hif_softc *scn = CE_state->scn;
 
 	if (CE_RUNNING != CE_state->state) {
 		*ce_sr_base_paddr = 0;

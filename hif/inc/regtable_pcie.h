@@ -972,9 +972,9 @@ typedef struct TGT_REG_TABLE {
 	uint32_t section_size;
 } tgt_reg_table;
 
-struct ol_softc;
-void target_register_tbl_attach(struct ol_softc *scn, u32 target_type);
-void hif_register_tbl_attach(struct ol_softc *scn, u32 hif_type);
+struct hif_softc;
+void target_register_tbl_attach(struct hif_softc *scn, u32 target_type);
+void hif_register_tbl_attach(struct hif_softc *scn, u32 hif_type);
 
 struct host_shadow_regs_s {
 	uint32_t d_A_LOCAL_SHADOW_REG_VALUE_0;

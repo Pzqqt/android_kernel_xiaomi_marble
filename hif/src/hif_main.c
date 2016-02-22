@@ -69,8 +69,9 @@
 #define PCIE_ACCESS_DUMP 4
 #endif
 
-void hif_dump(struct ol_softc *scn, uint8_t cmd_id, bool start)
+void hif_dump(struct ol_softc *hif_ctx, uint8_t cmd_id, bool start)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	switch (cmd_id) {
 	case AGC_DUMP:
 		if (start)
@@ -126,8 +127,10 @@ void hif_shut_down_device(struct ol_softc *scn)
  *
  * Return: void
  */
-void hif_cancel_deferred_target_sleep(struct ol_softc *scn)
+void hif_cancel_deferred_target_sleep(struct ol_softc *hif_ctx)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
 	hif_pci_cancel_deferred_target_sleep(scn);
 }
 
@@ -136,11 +139,11 @@ void hif_cancel_deferred_target_sleep(struct ol_softc *scn)
  *
  * Return the virtual memory base address to the caller
  *
- * @scn: ol_softc
+ * @scn: hif_softc
  *
  * Return: A_target_id_t
  */
-A_target_id_t hif_get_target_id(struct ol_softc *scn)
+A_target_id_t hif_get_target_id(struct hif_softc *scn)
 {
 	return scn->mem;
 }
@@ -153,9 +156,10 @@ A_target_id_t hif_get_target_id(struct ol_softc *scn)
  *
  * Return: void
  */
-void hif_set_target_sleep(struct ol_softc *scn,
+void hif_set_target_sleep(struct ol_softc *hif_ctx,
 		     bool sleep_ok, bool wait_for_it)
 {
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	hif_target_sleep_state_adjust(scn,
 				      sleep_ok, wait_for_it);
 }
@@ -166,7 +170,7 @@ void hif_set_target_sleep(struct ol_softc *scn,
  *
  * Return: bool
  */
-bool hif_target_forced_awake(struct ol_softc *scn)
+bool hif_target_forced_awake(struct hif_softc *scn)
 {
 	A_target_id_t addr = scn->mem;
 	bool awake;
@@ -208,7 +212,7 @@ static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
 #ifndef QCA_WIFI_3_0
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 {
-	struct ol_softc *scn = arg;
+	struct hif_softc *scn = arg;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	uint32_t fw_indicator_address, fw_indicator;
 
@@ -256,7 +260,8 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
  */
 void *hif_get_targetdef(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
 	return scn->targetdef;
 }
 
@@ -274,9 +279,9 @@ void *hif_get_targetdef(struct ol_softc *hif_ctx)
  *
  * Return: n/a
  */
-void hif_vote_link_down(void *hif_ctx)
+void hif_vote_link_down(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	CDF_BUG(scn);
 
 	scn->linkstate_vote--;
@@ -295,9 +300,9 @@ void hif_vote_link_down(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_vote_link_up(void *hif_ctx)
+void hif_vote_link_up(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	CDF_BUG(scn);
 
 	scn->linkstate_vote++;
@@ -317,9 +322,9 @@ void hif_vote_link_up(void *hif_ctx)
  *
  * Return: false if hif will guarantee link up durring suspend.
  */
-bool hif_can_suspend_link(void *hif_ctx)
+bool hif_can_suspend_link(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	CDF_BUG(scn);
 
 	return scn->linkstate_vote == 0;
@@ -396,9 +401,8 @@ cdf_size_t init_buffer_count(cdf_size_t maxSize)
  *
  * Return: int
  */
-int hif_init_cdf_ctx(void *hif_ctx)
+int hif_init_cdf_ctx(struct hif_softc *scn)
 {
-	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
 	cdf_device_t cdf_ctx = scn->cdf_dev;
 
 	cdf_ctx->drv = &scn->aps_osdev;
@@ -413,10 +417,8 @@ int hif_init_cdf_ctx(void *hif_ctx)
  *
  * Return: void
  */
-void hif_deinit_cdf_ctx(void *hif_ctx)
+void hif_deinit_cdf_ctx(struct hif_softc *scn)
 {
-	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
-
 	if (scn == NULL || !scn->cdf_dev)
 		return;
 	scn->cdf_dev = NULL;
@@ -429,9 +431,10 @@ void hif_deinit_cdf_ctx(void *hif_ctx)
  *
  * Return: void
  */
-void hif_save_htc_htt_config_endpoint(void *hif_ctx, int htc_endpoint)
+void
+hif_save_htc_htt_config_endpoint(struct ol_softc *hif_ctx, int htc_endpoint)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (!scn) {
 		HIF_ERROR("%s: error: scn or scn->hif_sc is NULL!",
@@ -486,7 +489,8 @@ void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
  */
 CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 {
-	struct ol_softc *scn;
+	struct ol_softc *hif_hdl;
+	struct hif_softc *scn;
 	v_CONTEXT_t cds_context;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	struct hif_config_info *cfg;
@@ -501,10 +505,11 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 	}
 
 	cdf_mem_zero(scn, bus_context_size);
+	hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	scn->cdf_dev = cdf_ctx;
-	cfg = hif_get_ini_handle(scn);
+	hif_hdl->cdf_dev = cdf_ctx;
+	cfg = hif_get_ini_handle(hif_hdl);
 	cfg->max_no_of_peers = 1;
-	cdf_atomic_init(&scn->wow_done);
 	cdf_atomic_init(&scn->active_tasklet_cnt);
 	cdf_atomic_init(&scn->link_suspended);
 	cdf_atomic_init(&scn->tasklet_from_intr);
@@ -527,9 +532,9 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
  *
  * Return: n/a
  */
-void hif_close(void *hif_ctx)
+void hif_close(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (scn == NULL) {
 		HIF_ERROR("%s: ol_softc is NULL", __func__);
@@ -546,6 +551,16 @@ void hif_close(void *hif_ctx)
 		CDF_MODULE_ID_HIF, hif_ctx);
 }
 
+void hif_init_opaque_handle(struct hif_softc *scn)
+{
+	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+
+	cdf_mem_copy(&hif_hdl->aps_osdev, &scn->aps_osdev,
+				sizeof(hif_hdl->aps_osdev));
+	hif_hdl->cdf_dev = scn->cdf_dev;
+	hif_hdl->targetdef = scn->targetdef;
+}
+
 /**
  * hif_enable(): hif_enable
  * @hif_ctx: hif_ctx
@@ -557,13 +572,13 @@ void hif_close(void *hif_ctx)
  *
  * Return: CDF_STATUS
  */
-CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
+CDF_STATUS hif_enable(struct ol_softc *hif_ctx, struct device *dev,
 					  void *bdev, const hif_bus_id *bid,
 					  enum ath_hal_bus_type bus_type,
 					  enum hif_enable_type type)
 {
 	CDF_STATUS status;
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (scn == NULL) {
 		HIF_ERROR("%s: hif_ctx = NULL", __func__);
@@ -576,6 +591,8 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 				  __func__, status);
 		return status;
 	}
+
+	hif_init_opaque_handle(scn);
 
 	if (ADRASTEA_BU)
 		hif_vote_link_up(hif_ctx);
@@ -595,7 +612,7 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 	 */
 
 #ifdef HIF_PCI
-	status = hif_configure_irq(hif_ctx);
+	status = hif_configure_irq(scn);
 	if (status < 0) {
 		HIF_ERROR("%s: ERROR - configure_IRQ_and_CE failed, status = %d",
 			   __func__, status);
@@ -633,18 +650,18 @@ void hif_wlan_disable(void)
 	icnss_wlan_disable(mode);
 }
 
-void hif_disable(void *hif_ctx, enum hif_disable_type type)
+void hif_disable(struct ol_softc *hif_ctx, enum hif_disable_type type)
 {
-	struct ol_softc *scn = hif_ctx;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (!scn)
 		return;
 
 	hif_nointrs(scn);
 	if (scn->hif_init_done == false)
-		hif_shut_down_device(scn);
+		hif_shut_down_device(hif_ctx);
 	else
-		hif_stop(scn);
+		hif_stop(hif_ctx);
 
 	if (ADRASTEA_BU)
 		hif_vote_link_down(hif_ctx);
@@ -689,9 +706,9 @@ static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
  *
  * Return: n/a
  */
-void hif_crash_shutdown(void *hif_ctx)
+void hif_crash_shutdown(struct ol_softc *hif_ctx)
 {
-	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
 	if (!hif_state)
@@ -711,7 +728,7 @@ void hif_crash_shutdown(void *hif_ctx)
 
 	hif_crash_shutdown_dump_bus_register(hif_ctx);
 
-	if (ol_copy_ramdump(scn))
+	if (ol_copy_ramdump(hif_ctx))
 		goto out;
 
 	HIF_INFO_MED("%s: RAM dump collecting completed!", __func__);
@@ -720,7 +737,7 @@ out:
 	return;
 }
 #else
-void hif_crash_shutdown(void *hif_ctx)
+void hif_crash_shutdown(struct ol_softc *hif_ctx)
 {
 	HIF_INFO_MED("%s: Collecting target RAM dump disabled",
 		__func__);
@@ -750,7 +767,7 @@ int hif_check_fw_reg(struct ol_softc *scn)
  *
  * Return: n/a
  */
-void hif_read_phy_mem_base(struct ol_softc *scn, cdf_dma_addr_t *phy_mem_base)
+void hif_read_phy_mem_base(struct hif_softc *scn, cdf_dma_addr_t *phy_mem_base)
 {
 	*phy_mem_base = scn->mem_pa;
 }
@@ -833,24 +850,29 @@ end:
 
 /**
  * hif_get_ini_handle() - API to get hif_config_param handle
- * @scn: HIF Context
+ * @hif_ctx: HIF Context
  *
  * Return: pointer to hif_config_info
  */
-struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn)
+struct hif_config_info *hif_get_ini_handle(struct ol_softc *hif_ctx)
 {
-	return &scn->hif_config;
+	struct hif_softc *sc = HIF_GET_SOFTC(hif_ctx);
+
+	return &sc->hif_config;
 }
 
 /**
  * hif_get_target_info_handle() - API to get hif_target_info handle
- * @scn: HIF context
+ * @hif_ctx: HIF context
  *
  * Return: Pointer to hif_target_info
  */
-struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn)
+struct hif_target_info *hif_get_target_info_handle(struct ol_softc *hif_ctx)
 {
-	return &scn->target_info;
+	struct hif_softc *sc = HIF_GET_SOFTC(hif_ctx);
+
+	return &sc->target_info;
+
 }
 
 #if defined(FEATURE_LRO)
@@ -879,3 +901,30 @@ void hif_lro_flush_cb_deregister(struct ol_softc *scn)
 	ce_lro_flush_cb_deregister(scn);
 }
 #endif
+
+/**
+ * hif_get_target_status - API to get target status
+ * @hif_ctx: HIF Context
+ *
+ * Return: enum ol_target_status
+ */
+ol_target_status hif_get_target_status(struct ol_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	return scn->target_status;
+}
+
+/**
+ * hif_set_target_status - API to set target status
+ * @hif_ctx: HIF Context
+ * @status: Target Status
+ *
+ * Return: void
+ */
+void hif_set_target_status(struct ol_softc *hif_ctx, ol_target_status status)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	scn->target_status = status;
+}

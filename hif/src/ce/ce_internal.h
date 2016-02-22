@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -100,7 +100,7 @@ struct CE_ring_state {
 
 /* Copy Engine internal state */
 struct CE_state {
-	struct ol_softc *scn;
+	struct hif_softc *scn;
 	unsigned int id;
 	unsigned int attr_flags;  /* CE_ATTR_* */
 	uint32_t ctrl_addr;       /* relative to BAR */
