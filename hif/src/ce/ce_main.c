@@ -539,9 +539,9 @@ void ce_fini(struct CE_handle *copyeng)
 	cdf_mem_free(CE_state);
 }
 
-void hif_detach_htc(struct ol_softc *scn)
+void hif_detach_htc(struct ol_softc *hif_ctx)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
 	cdf_mem_zero(&hif_state->msg_callbacks_pending,
 		  sizeof(hif_state->msg_callbacks_pending));
@@ -551,11 +551,12 @@ void hif_detach_htc(struct ol_softc *scn)
 
 /* Send the first nbytes bytes of the buffer */
 CDF_STATUS
-hif_send_head(struct ol_softc *scn,
+hif_send_head(struct ol_softc *hif_ctx,
 	      uint8_t pipe, unsigned int transfer_id, unsigned int nbytes,
 	      cdf_nbuf_t nbuf, unsigned int data_attr)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	struct HIF_CE_pipe_info *pipe_info = &(hif_state->pipe_info[pipe]);
 	struct CE_handle *ce_hdl = pipe_info->ce_hdl;
 	int bytes = nbytes, nfrags = 0;
@@ -659,9 +660,9 @@ void hif_send_complete_check(struct ol_softc *scn, uint8_t pipe, int force)
 #endif
 }
 
-uint16_t hif_get_free_queue_number(struct ol_softc *scn, uint8_t pipe)
+uint16_t hif_get_free_queue_number(struct ol_softc *hif_ctx, uint8_t pipe)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	struct HIF_CE_pipe_info *pipe_info = &(hif_state->pipe_info[pipe]);
 	uint16_t rv;
 
@@ -682,6 +683,7 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 	struct HIF_CE_pipe_info *pipe_info =
 		(struct HIF_CE_pipe_info *)ce_context;
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
 	unsigned int sw_idx = sw_index, hw_idx = hw_index;
 	struct hif_msg_callbacks *msg_callbacks =
 		&hif_state->msg_callbacks_current;
@@ -692,7 +694,7 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		 * when last fragment is complteted.
 		 */
 		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
-			if (hif_state->scn->target_status
+			if (scn->target_status
 					== OL_TRGET_STATUS_RESET)
 				cdf_nbuf_free(transfer_context);
 			else
@@ -750,19 +752,20 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		(struct HIF_CE_pipe_info *)ce_context;
 	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
 	struct CE_state *ce_state = (struct CE_state *) copyeng;
-	struct ol_softc *scn = hif_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
+	struct hif_pci_softc *hif_sc = HIF_GET_PCI_SOFTC(hif_state);
 	struct hif_msg_callbacks *msg_callbacks =
 		&hif_state->msg_callbacks_current;
 
 	do {
-		hif_pm_runtime_mark_last_busy(scn->hif_sc->dev);
+		hif_pm_runtime_mark_last_busy(hif_sc->dev);
 		cdf_nbuf_unmap_single(scn->cdf_dev,
 				      (cdf_nbuf_t) transfer_context,
 				      CDF_DMA_FROM_DEVICE);
 
 		atomic_inc(&pipe_info->recv_bufs_needed);
 		hif_post_recv_buffers_for_pipe(pipe_info);
-		if (hif_state->scn->target_status == OL_TRGET_STATUS_RESET)
+		if (scn->target_status == OL_TRGET_STATUS_RESET)
 			cdf_nbuf_free(transfer_context);
 		else
 			hif_ce_do_recv(msg_callbacks, transfer_context,
@@ -785,10 +788,10 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 /* TBDXXX: Set CE High Watermark; invoke txResourceAvailHandler in response */
 
 void
-hif_post_init(struct ol_softc *scn, void *unused,
+hif_post_init(struct ol_softc *hif_ctx, void *unused,
 	      struct hif_msg_callbacks *callbacks)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
 #ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
 	spin_lock_init(&pcie_access_log_lock);
@@ -803,7 +806,7 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 {
 	struct CE_handle *ce_diag = hif_state->ce_diag;
 	int pipe_num;
-	struct ol_softc *scn = hif_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
 	struct hif_msg_callbacks *hif_msg_callbacks =
 		&hif_state->msg_callbacks_current;
 
@@ -865,7 +868,7 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
  */
 static void hif_msg_callbacks_install(struct ol_softc *scn)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	cdf_mem_copy(&hif_state->msg_callbacks_current,
 		 &hif_state->msg_callbacks_pending,
@@ -891,14 +894,9 @@ hif_get_default_pipe(struct ol_softc *scn, uint8_t *ULPipe, uint8_t *DLPipe)
  */
 void hif_dump_pipe_debug_count(struct ol_softc *scn)
 {
-	struct HIF_CE_state *hif_state;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num;
 
-	if (scn == NULL) {
-		HIF_ERROR("%s scn is NULL", __func__);
-		return;
-	}
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 	if (hif_state == NULL) {
 		HIF_ERROR("%s hif_state is NULL", __func__);
 		return;
@@ -925,8 +923,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
 	struct CE_handle *ce_hdl;
 	cdf_size_t buf_sz;
-	struct HIF_CE_state *hif_state = pipe_info->HIF_CE_state;
-	struct ol_softc *scn = hif_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(pipe_info->HIF_CE_state);
 	CDF_STATUS ret;
 	uint32_t bufs_posted = 0;
 
@@ -1031,7 +1028,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
  */
 static int hif_post_recv_buffers(struct ol_softc *scn)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int pipe_num, rv = 0;
 
 	A_TARGET_ACCESS_LIKELY(scn);
@@ -1051,9 +1048,10 @@ done:
 	return rv;
 }
 
-CDF_STATUS hif_start(struct ol_softc *scn)
+CDF_STATUS hif_start(struct ol_softc *hif_ctx)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	hif_msg_callbacks_install(scn);
 
@@ -1132,7 +1130,7 @@ void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 		return;
 	}
 
-	scn = hif_state->scn;
+	scn = HIF_GET_SOFTC(hif_state);
 	ce_hdl = pipe_info->ce_hdl;
 
 	if (scn->cdf_dev == NULL) {
@@ -1151,6 +1149,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 {
 	struct CE_handle *ce_hdl;
 	struct HIF_CE_state *hif_state;
+	struct ol_softc *scn;
 	cdf_nbuf_t netbuf;
 	void *per_CE_context;
 	cdf_dma_addr_t CE_data;
@@ -1170,6 +1169,8 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 		return;
 	}
 
+	scn = HIF_GET_SOFTC(hif_state);
+
 	ce_hdl = pipe_info->ce_hdl;
 
 	while (ce_cancel_send_next
@@ -1185,7 +1186,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 			 * by checking whether it's the endpoint
 			 * which they are queued in.
 			 */
-			if (id == hif_state->scn->htc_endpoint)
+			if (id == scn->htc_endpoint)
 				return;
 			/* Indicate the completion to higer
 			 * layer to free the buffer */
@@ -1208,8 +1209,9 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 void hif_buffer_cleanup(struct HIF_CE_state *hif_state)
 {
 	int pipe_num;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
 
-	for (pipe_num = 0; pipe_num < hif_state->scn->ce_count; pipe_num++) {
+	for (pipe_num = 0; pipe_num < scn->ce_count; pipe_num++) {
 		struct HIF_CE_pipe_info *pipe_info;
 
 		pipe_info = &hif_state->pipe_info[pipe_num];
@@ -1218,15 +1220,17 @@ void hif_buffer_cleanup(struct HIF_CE_state *hif_state)
 	}
 }
 
-void hif_flush_surprise_remove(struct ol_softc *scn)
+void hif_flush_surprise_remove(struct ol_softc *hif_ctx)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = hif_ctx;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	hif_buffer_cleanup(hif_state);
 }
 
-void hif_stop(struct ol_softc *scn)
+void hif_stop(struct ol_softc *hif_ctx)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	int pipe_num;
 
 	scn->hif_init_done = false;
@@ -1503,7 +1507,7 @@ void hif_wake_target_cpu(struct ol_softc *scn)
 static void hif_sleep_entry(void *arg)
 {
 	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)arg;
-	struct ol_softc *scn = hif_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_state);
 	uint32_t idle_ms;
 	if (scn->recovery)
 		return;
@@ -1880,8 +1884,6 @@ int hif_config_ce(hif_handle_t hif_hdl)
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
-	hif_state->scn = scn;
-	scn->hif_hdl = hif_state;
 	scn->mem = soc_info.v_addr;
 	scn->mem_pa = soc_info.p_addr;
 	tgt_info->soc_version = soc_info.version;
@@ -2011,7 +2013,6 @@ err:
 		hif_state->sleep_timer_init = false;
 	}
 
-	scn->hif_hdl = NULL;
 	athdiag_procfs_remove();
 	scn->athdiag_procfs_inited = false;
 	HIF_TRACE("%s: X, ret = %d\n", __func__, rv);
@@ -2037,12 +2038,13 @@ err:
  *
  * Return: None
  */
-void hif_ipa_get_ce_resource(struct ol_softc *scn,
+void hif_ipa_get_ce_resource(struct ol_softc *hif_ctx,
 			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	struct HIF_CE_pipe_info *pipe_info =
 		&(hif_state->pipe_info[HIF_PCI_IPA_UC_ASSIGNED_CE]);
 	struct CE_handle *ce_hdl = pipe_info->ce_hdl;

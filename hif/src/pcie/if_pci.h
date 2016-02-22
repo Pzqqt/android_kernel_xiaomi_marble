@@ -117,7 +117,6 @@ struct hif_pci_softc {
 
 	struct device *dev;
 	struct pci_dev *pdev;
-	struct ol_softc *ol_sc;
 	int num_msi_intrs;      /* number of MSI interrupts granted */
 	/* 0 --> using legacy PCI line interrupts */
 	struct tasklet_struct intr_tq;  /* tasklet */

@@ -94,9 +94,10 @@ void hif_reset_soc(void *hif_ctx)
 void hif_disable_isr(void *hif_ctx)
 {
 	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	hif_nointrs(scn);
-	ce_tasklet_kill(scn->hif_hdl);
+	ce_tasklet_kill(scn);
 	cdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 
@@ -316,8 +317,9 @@ void hif_disable_bus(void *bdev)
  */
 void hif_nointrs(struct ol_softc *scn)
 {
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	if (scn->request_irq_done) {
-		ce_unregister_irq(scn->hif_hdl, 0xfff);
+		ce_unregister_irq(hif_state, 0xfff);
 		scn->request_irq_done = false;
 	}
 }

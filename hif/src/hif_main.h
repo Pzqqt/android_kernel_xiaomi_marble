@@ -57,9 +57,6 @@
  */
 #define TARGID_TO_PCI_ADDR(targid) (*((A_target_id_t *)(targid)))
 
-A_target_id_t hif_get_target_id(struct ol_softc *scn);
-bool hif_target_forced_awake(struct ol_softc *scn);
-
 #ifdef QCA_WIFI_3_0
 #define DISABLE_L1SS_STATES 1
 #endif
@@ -101,9 +98,14 @@ bool hif_target_forced_awake(struct ol_softc *scn);
 #define QCA6180_DEVICE_ID (0x041)
 #endif
 
+#define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
+#define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)
+#define HIF_GET_SOFTC(scn) ((struct ol_softc *)scn)
+
 A_target_id_t hif_get_target_id(struct ol_softc *scn);
 void hif_dump_pipe_debug_count(struct ol_softc *scn);
 
+bool hif_target_forced_awake(struct ol_softc *scn);
 bool hif_max_num_receives_reached(unsigned int count);
 int hif_config_ce(hif_handle_t hif_hdl);
 int athdiag_procfs_init(void *scn);

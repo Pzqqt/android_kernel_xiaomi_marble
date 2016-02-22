@@ -101,7 +101,8 @@ static void reschedule_ce_tasklet_work_handler(struct work_struct *work)
 		HIF_ERROR("%s: tasklet scn is null", __func__);
 		return;
 	}
-	hif_ce_state = (struct HIF_CE_state *)scn->hif_hdl;
+
+	hif_ce_state = HIF_GET_CE_STATE(scn);
 
 	if (scn->hif_init_done == false) {
 		HIF_ERROR("%s: wlan driver is unloaded", __func__);
@@ -193,7 +194,7 @@ static void ce_tasklet(unsigned long data)
 	struct ce_tasklet_entry *tasklet_entry =
 		(struct ce_tasklet_entry *)data;
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
-	struct ol_softc *scn = hif_ce_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
 	hif_record_ce_desc_event(tasklet_entry->ce_id, HIF_CE_TASKLET_ENTRY,
@@ -262,7 +263,7 @@ void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 void ce_tasklet_kill(struct HIF_CE_state *hif_ce_state)
 {
 	int i;
-	struct ol_softc *scn = hif_ce_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 
 	for (i = 0; i < CE_COUNT_MAX; i++)
 		if (hif_ce_state->tasklets[i].inited) {
@@ -282,7 +283,7 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 {
 	struct ce_tasklet_entry *tasklet_entry = context;
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
-	struct ol_softc *scn = hif_ce_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	uint32_t host_status;
 	int ce_id = icnss_get_ce_id(irq);
 
@@ -397,7 +398,7 @@ CDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 
 #ifndef HIF_PCI
 	/* move to hif_configure_irq */
-	ce_enable_irq_in_group_reg(hif_ce_state->scn, done_mask);
+	ce_enable_irq_in_group_reg(HIF_GET_SOFTC(hif_ce_state), done_mask);
 #endif
 
 	return CDF_STATUS_SUCCESS;

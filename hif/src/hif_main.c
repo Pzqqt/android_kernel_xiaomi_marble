@@ -112,15 +112,7 @@ void hif_dump(struct ol_softc *scn, uint8_t cmd_id, bool start)
  */
 void hif_shut_down_device(struct ol_softc *scn)
 {
-	if (scn && scn->hif_hdl) {
-		struct HIF_CE_state *hif_state =
-			(struct HIF_CE_state *)scn->hif_hdl;
-
-		hif_stop(scn);
-		cdf_mem_free(hif_state);
-		scn->hif_hdl = NULL;
-	}
-
+	hif_stop(scn);
 }
 
 
@@ -217,7 +209,7 @@ static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 {
 	struct ol_softc *scn = arg;
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	uint32_t fw_indicator_address, fw_indicator;
 
 	A_TARGET_ACCESS_BEGIN_RET(scn);
@@ -262,8 +254,9 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
  *
  * Return: void *
  */
-void *hif_get_targetdef(struct ol_softc *scn)
+void *hif_get_targetdef(struct ol_softc *hif_ctx)
 {
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	return scn->targetdef;
 }
 
@@ -548,10 +541,6 @@ void hif_close(void *hif_ctx)
 		scn->athdiag_procfs_inited = false;
 	}
 
-	if (scn->hif_hdl) {
-		cdf_mem_free(scn->hif_hdl);
-		scn->hif_hdl = NULL;
-	}
 	hif_bus_close(scn);
 	cds_free_context(cds_get_global_context(),
 		CDF_MODULE_ID_HIF, hif_ctx);
@@ -606,7 +595,7 @@ CDF_STATUS hif_enable(void *hif_ctx, struct device *dev,
 	 */
 
 #ifdef HIF_PCI
-	status = hif_configure_irq(scn->hif_sc);
+	status = hif_configure_irq(hif_ctx);
 	if (status < 0) {
 		HIF_ERROR("%s: ERROR - configure_IRQ_and_CE failed, status = %d",
 			   __func__, status);
@@ -702,13 +691,9 @@ static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
  */
 void hif_crash_shutdown(void *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
-	struct HIF_CE_state *hif_state;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
-	if (!scn)
-		return;
-
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 	if (!hif_state)
 		return;
 

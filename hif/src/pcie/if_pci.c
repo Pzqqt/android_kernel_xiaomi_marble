@@ -123,7 +123,7 @@ static inline void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 #else
 void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 {
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 	unsigned int target_enable0, target_enable1;
 	unsigned int target_cause0, target_cause1;
 
@@ -146,8 +146,8 @@ void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
 static irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
-	struct ol_softc *scn = sc->ol_sc;
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(arg);
 	volatile int tmp;
 	uint16_t val;
 	uint32_t bar0;
@@ -278,7 +278,7 @@ static irqreturn_t hif_pci_msi_fw_handler(int irq, void *arg)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
 
-	(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, sc->ol_sc);
+	(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, arg);
 
 	return IRQ_HANDLED;
 }
@@ -302,7 +302,7 @@ bool hif_pci_targ_is_present(struct ol_softc *scn, void *__iomem *mem)
 #if CONFIG_ATH_PCIE_MAX_PERF == 0
 void hif_pci_cancel_deferred_target_sleep(struct ol_softc *scn)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	A_target_id_t pci_addr = scn->mem;
 
 	cdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
@@ -342,7 +342,7 @@ static void hif_pci_device_reset(struct hif_pci_softc *sc)
 	void __iomem *mem = sc->mem;
 	int i;
 	uint32_t val;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	if (!scn->hostdef)
 		return;
@@ -415,7 +415,7 @@ void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 	int i;
 	uint32_t val;
 	uint32_t fw_indicator;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	/* NB: Don't check resetok here.  This form of reset is
 	 * integral to correct operation. */
@@ -531,9 +531,10 @@ void hif_pci_device_warm_reset(struct hif_pci_softc *sc)
 }
 
 #ifndef QCA_WIFI_3_0
-int hif_check_fw_reg(struct ol_softc *scn)
+int hif_check_fw_reg(struct ol_softc *hif_ctx)
 {
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	void __iomem *mem = sc->mem;
 	uint32_t val;
 
@@ -550,12 +551,13 @@ int hif_check_fw_reg(struct ol_softc *scn)
 }
 #endif
 
-int hif_check_soc_status(struct ol_softc *scn)
+int hif_check_soc_status(struct ol_softc *hif_ctx)
 {
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint16_t device_id;
 	uint32_t val;
 	uint16_t timeout_count = 0;
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
 	/* Check device ID from PCIe configuration space for link status */
 	pci_read_config_word(sc->pdev, PCI_DEVICE_ID, &device_id);
@@ -617,7 +619,7 @@ int hif_check_soc_status(struct ol_softc *scn)
  */
 static void hif_dump_pci_registers(struct ol_softc *scn)
 {
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	void __iomem *mem = sc->mem;
 	uint32_t val, i, j;
 	uint32_t wrapper_idx[] = { 1, 2, 3, 4, 5, 6, 7, 8, 9 };
@@ -769,7 +771,6 @@ int hif_dump_registers(struct ol_softc *scn)
  */
 static irqreturn_t ce_per_engine_handler(int irq, void *arg)
 {
-	struct hif_pci_softc *sc = (struct hif_pci_softc *)arg;
 	int CE_id = irq - MSI_ASSIGN_CE_INITIAL;
 
 	/*
@@ -781,7 +782,7 @@ static irqreturn_t ce_per_engine_handler(int irq, void *arg)
 	 * used by firmware.
 	 */
 
-	ce_per_engine_service(sc->ol_sc, CE_id);
+	ce_per_engine_service(arg, CE_id);
 
 	return IRQ_HANDLED;
 }
@@ -792,7 +793,7 @@ static irqreturn_t ce_per_engine_handler(int irq, void *arg)
 static void reschedule_tasklet_work_handler(void *arg)
 {
 	struct hif_pci_softc *sc = arg;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	if (!scn) {
 		HIF_ERROR("%s: ol_softc is NULL", __func__);
@@ -827,7 +828,7 @@ static void hif_init_reschedule_tasklet_work(struct hif_pci_softc *sc) { }
 static void wlan_tasklet(unsigned long data)
 {
 	struct hif_pci_softc *sc = (struct hif_pci_softc *)data;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	if (scn->hif_init_done == false)
 		goto end;
@@ -837,7 +838,7 @@ static void wlan_tasklet(unsigned long data)
 
 	if (!ADRASTEA_BU) {
 		(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, scn);
-		if (sc->ol_sc->target_status == OL_TRGET_STATUS_RESET)
+		if (scn->target_status == OL_TRGET_STATUS_RESET)
 			goto end;
 	}
 
@@ -1042,9 +1043,7 @@ static void hif_pm_runtime_lock_timeout_fn(unsigned long data);
  */
 static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 {
-	struct ol_softc *ol_sc;
-
-	ol_sc = sc->ol_sc;
+	struct ol_softc *ol_sc = HIF_GET_SOFTC(sc);
 
 	if (!ol_sc->enable_runtime_pm) {
 		HIF_INFO("%s: RUNTIME PM is disabled in ini\n", __func__);
@@ -1078,7 +1077,7 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
  */
 static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 {
-	struct ol_softc *ol_sc = sc->ol_sc;
+	struct ol_softc *ol_sc = HIF_GET_PCI_SOFTC(sc);
 
 	if (!ol_sc->enable_runtime_pm)
 		return;
@@ -1148,14 +1147,12 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc) {}
  */
 void hif_enable_power_management(void *hif_ctx)
 {
-	struct hif_pci_softc *pci_ctx;
+	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (hif_ctx == NULL) {
+	if (pci_ctx == NULL) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
-
-	pci_ctx = ((struct ol_softc *)hif_ctx)->hif_sc;
 
 	hif_pm_runtime_start(pci_ctx);
 }
@@ -1170,14 +1167,12 @@ void hif_enable_power_management(void *hif_ctx)
  */
 void hif_disable_power_management(void *hif_ctx)
 {
-	struct hif_pci_softc *pci_ctx;
+	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (hif_ctx == NULL) {
+	if (pci_ctx == NULL) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
 		return;
 	}
-
-	pci_ctx = ((struct ol_softc *)hif_ctx)->hif_sc;
 
 	hif_pm_runtime_stop(pci_ctx);
 }
@@ -1202,10 +1197,8 @@ int hif_bus_get_context_size(void)
  */
 CDF_STATUS hif_bus_open(struct ol_softc *ol_sc, enum ath_hal_bus_type bus_type)
 {
-	struct hif_pci_softc *sc = (struct hif_pci_softc *)ol_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
 
-	ol_sc->hif_sc = (void *)sc;
-	sc->ol_sc = ol_sc;
 	ol_sc->bus_type = bus_type;
 	hif_pm_runtime_open(sc);
 
@@ -1221,18 +1214,9 @@ CDF_STATUS hif_bus_open(struct ol_softc *ol_sc, enum ath_hal_bus_type bus_type)
  */
 void hif_bus_close(struct ol_softc *ol_sc)
 {
-	struct hif_pci_softc *sc;
-
-	if (ol_sc == NULL) {
-		HIF_ERROR("%s: ol_softc is NULL", __func__);
-		return;
-	}
-	sc = ol_sc->hif_sc;
-	if (sc == NULL)
-		return;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
 
 	hif_pm_runtime_close(sc);
-	ol_sc->hif_sc = NULL;
 }
 
 #define BAR_NUM 0
@@ -1244,7 +1228,7 @@ int hif_enable_pci(struct hif_pci_softc *sc,
 	void __iomem *mem;
 	int ret = 0;
 	uint16_t device_id;
-	struct ol_softc *ol_sc = sc->ol_sc;
+	struct ol_softc *ol_sc = HIF_GET_SOFTC(sc);
 
 	pci_read_config_word(pdev,PCI_DEVICE_ID,&device_id);
 	if(device_id != id->device)  {
@@ -1340,12 +1324,7 @@ err_region:
 
 void hif_disable_pci(struct hif_pci_softc *sc)
 {
-	struct ol_softc *ol_sc;
-
-	if (!sc)
-		return;
-
-	ol_sc = sc->ol_sc;
+	struct ol_softc *ol_sc = HIF_GET_SOFTC(sc);
 	if (ol_sc == NULL) {
 		HIF_ERROR("%s: ol_sc = NULL", __func__);
 		return;
@@ -1367,7 +1346,7 @@ int hif_pci_probe_tgt_wakeup(struct hif_pci_softc *sc)
 #ifndef QCA_WIFI_3_0
 	uint32_t fw_indicator;
 #endif
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 	/*
 	 * Verify that the Target was started cleanly.*
 	 * The case where this is most likely is with an AUX-powered
@@ -1431,23 +1410,23 @@ static void wlan_tasklet_msi(unsigned long data)
 {
 	struct hif_tasklet_entry *entry = (struct hif_tasklet_entry *)data;
 	struct hif_pci_softc *sc = (struct hif_pci_softc *) entry->hif_handler;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
-	if (sc->ol_sc->hif_init_done == false)
+	if (scn->hif_init_done == false)
 		goto irq_handled;
 
-	if (cdf_atomic_read(&sc->ol_sc->link_suspended))
+	if (cdf_atomic_read(&scn->link_suspended))
 		goto irq_handled;
 
 	cdf_atomic_inc(&scn->active_tasklet_cnt);
 
 	if (entry->id == HIF_MAX_TASKLET_NUM) {
 		/* the last tasklet is for fw IRQ */
-		(irqreturn_t)hif_fw_interrupt_handler(sc->irq_event, sc->ol_sc);
-		if (sc->ol_sc->target_status == OL_TRGET_STATUS_RESET)
+		(irqreturn_t)hif_fw_interrupt_handler(sc->irq_event, scn);
+		if (scn->target_status == OL_TRGET_STATUS_RESET)
 			goto irq_handled;
-	} else if (entry->id < sc->ol_sc->ce_count) {
-		ce_per_engine_service(sc->ol_sc, entry->id);
+	} else if (entry->id < scn->ce_count) {
+		ce_per_engine_service(scn, entry->id);
 	} else {
 		HIF_ERROR("%s: ERROR - invalid CE_id = %d",
 		       __func__, entry->id);
@@ -1464,7 +1443,7 @@ int hif_configure_msi(struct hif_pci_softc *sc)
 	int ret = 0;
 	int num_msi_desired;
 	int rv = -1;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	HIF_TRACE("%s: E", __func__);
 
@@ -1580,7 +1559,7 @@ if (sc->num_msi_intrs >= 1)
 static int hif_pci_configure_legacy_irq(struct hif_pci_softc *sc)
 {
 	int ret = 0;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	HIF_TRACE("%s: E", __func__);
 
@@ -1618,7 +1597,8 @@ end:
 void hif_nointrs(struct ol_softc *scn)
 {
 	int i;
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 
 	if (scn->request_irq_done == false)
 		return;
@@ -1632,7 +1612,7 @@ void hif_nointrs(struct ol_softc *scn)
 		/* Legacy PCI line interrupt */
 		free_irq(sc->pdev->irq, sc);
 	}
-	ce_unregister_irq(scn->hif_hdl, 0xfff);
+	ce_unregister_irq(hif_state, 0xfff);
 	scn->request_irq_done = false;
 }
 
@@ -1658,7 +1638,7 @@ void hif_disable_bus(void *bdev)
 	if (!sc)
 		return;
 
-	scn = sc->ol_sc;
+	scn = HIF_GET_SOFTC(sc);
 
 	if (ADRASTEA_BU) {
 		hif_write32_mb(sc->mem + PCIE_INTR_ENABLE_ADDRESS, 0);
@@ -1832,19 +1812,15 @@ static int hif_bus_resume_link_up(struct ol_softc *scn)
 static int hif_bus_suspend_link_down(struct ol_softc *scn)
 {
 	struct pci_dev *pdev;
-	struct HIF_CE_state *hif_state;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	int status = 0;
 
-	if (!scn)
-		return -EFAULT;
-
-	pdev = scn->aps_osdev.bdev;
-
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 	if (!hif_state) {
 		HIF_ERROR("%s: hif_state is null", __func__);
 		return -EFAULT;
 	}
+
+	pdev = scn->aps_osdev.bdev;
 
 	disable_irq(pdev->irq);
 
@@ -2186,13 +2162,13 @@ static void hif_free_msi_ctx(struct ol_softc *scn)
 
 void hif_disable_isr(void *ol_sc)
 {
-	struct ol_softc *scn = (struct ol_softc *)ol_sc;
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(ol_sc);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
 	hif_nointrs(ol_sc);
 	hif_free_msi_ctx(scn);
 	/* Cancel the pending tasklet */
-	ce_tasklet_kill(scn->hif_hdl);
+	ce_tasklet_kill(ol_sc);
 	tasklet_kill(&sc->intr_tq);
 	cdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
@@ -2200,8 +2176,8 @@ void hif_disable_isr(void *ol_sc)
 /* Function to reset SoC */
 void hif_reset_soc(void *ol_sc)
 {
-	struct ol_softc *scn = (struct ol_softc *)ol_sc;
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(ol_sc);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
 #if defined(CPU_WARM_RESET_WAR)
@@ -2220,16 +2196,14 @@ void hif_reset_soc(void *ol_sc)
 
 void hif_disable_aspm(void *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
-	struct hif_pci_softc *sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
 	if (NULL == scn) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",
 		       __func__);
 		return;
 	}
-
-	sc = scn->hif_sc;
 
 	/* Disable ASPM when pkt log is enabled */
 	pci_read_config_dword(sc->pdev, 0x80, &sc->lcr_val);
@@ -2245,15 +2219,14 @@ void hif_disable_aspm(void *hif_ctx)
  */
 void hif_enable_power_gating(void *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
-	struct hif_pci_softc *sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
 	if (NULL == scn) {
 		HIF_ERROR("%s: Could not disable ASPM scn is null",
 		       __func__);
 		return;
 	}
-	sc = scn->hif_sc;
 
 	/* Re-enable ASPM after firmware/OTP download is complete */
 	pci_write_config_dword(sc->pdev, 0x80, sc->lcr_val);
@@ -2310,10 +2283,10 @@ int
 hif_target_sleep_state_adjust(struct ol_softc *scn,
 			      bool sleep_ok, bool wait_for_it)
 {
-	struct HIF_CE_state *hif_state = scn->hif_hdl;
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	A_target_id_t pci_addr = scn->mem;
 	static int max_delay;
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	static int debug;
 	struct hif_config_info *cfg = hif_get_ini_handle(scn);
 
@@ -2625,7 +2598,7 @@ void war_pci_write32(char *addr, uint32_t offset, uint32_t value)
 int hif_configure_irq(struct hif_pci_softc *sc)
 {
 	int ret = 0;
-	struct ol_softc *scn = sc->ol_sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(sc);
 
 	HIF_TRACE("%s: E", __func__);
 
@@ -2676,7 +2649,7 @@ void hif_target_sync(struct ol_softc *scn)
 		int fw_ind = 0;
 		HIF_TRACE("%s: Loop checking FW signal", __func__);
 		while (1) {
-			fw_ind = hif_read32_mb(scn->hif_sc->mem +
+			fw_ind = hif_read32_mb(scn->mem +
 					FW_INDICATOR_ADDRESS);
 			if (fw_ind & FW_IND_INITIALIZED)
 				break;
@@ -2718,7 +2691,7 @@ CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc,
 {
 	int ret = 0;
 	uint32_t hif_type, target_type;
-	struct hif_pci_softc *sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
 	uint16_t revision_id;
 	uint32_t lcr_val;
 	int probe_again = 0;
@@ -2733,7 +2706,6 @@ CDF_STATUS hif_enable_bus(struct ol_softc *ol_sc,
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
 		return CDF_STATUS_E_NOMEM;
 	}
-	sc = ol_sc->hif_sc;
 	ol_sc->aps_osdev.bdev = pdev;
 
 	sc->pdev = pdev;
@@ -2772,8 +2744,8 @@ again:
 	HIF_TRACE("%s: hif_type = 0x%x, target_type = 0x%x",
 		  __func__, hif_type, target_type);
 
-	hif_register_tbl_attach(sc->ol_sc, hif_type);
-	target_register_tbl_attach(sc->ol_sc, target_type);
+	hif_register_tbl_attach(ol_sc, hif_type);
+	target_register_tbl_attach(ol_sc, target_type);
 
 	ret = hif_pci_probe_tgt_wakeup(sc);
 	if (ret < 0) {
@@ -2858,13 +2830,9 @@ int hif_get_target_type(struct ol_softc *ol_sc, struct device *dev,
 
 void hif_pm_runtime_get_noresume(void *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
-	struct hif_pci_softc *sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	if (NULL == scn)
-		return;
-
-	sc = scn->hif_sc;
 	if (NULL == sc)
 		return;
 
@@ -2887,8 +2855,8 @@ void hif_pm_runtime_get_noresume(void *hif_ctx)
  */
 int hif_pm_runtime_get(void *hif_ctx)
 {
-	struct ol_softc *scn = hif_ctx;
-	struct hif_pci_softc *sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	int ret;
 	int pm_state;
 
@@ -2897,7 +2865,6 @@ int hif_pm_runtime_get(void *hif_ctx)
 				__func__);
 		return -EFAULT;
 	}
-	sc = scn->hif_sc;
 
 	pm_state = cdf_atomic_read(&sc->pm_state);
 
@@ -2944,8 +2911,8 @@ int hif_pm_runtime_get(void *hif_ctx)
  */
 int hif_pm_runtime_put(void *hif_ctx)
 {
-	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
-	struct hif_pci_softc *sc;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	int pm_state, usage_count;
 	unsigned long flags;
 	char *error = NULL;
@@ -2955,8 +2922,6 @@ int hif_pm_runtime_put(void *hif_ctx)
 				__func__);
 		return -EFAULT;
 	}
-	sc = scn->hif_sc;
-
 	usage_count = atomic_read(&sc->dev->power.usage_count);
 
 	if (usage_count == 1) {

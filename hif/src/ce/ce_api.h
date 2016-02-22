@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,6 +29,8 @@
 #define __COPY_ENGINE_API_H__
 
 #include "ce_main.h"
+#include "hif_main.h"
+
 /* TBDXXX: Use int return values for consistency with Target */
 
 /* TBDXXX: Perhaps merge Host/Target-->common */
@@ -463,8 +465,9 @@ static inline void ce_pkt_error_count_incr(
 	struct HIF_CE_state *_hif_state,
 	enum ol_ath_hif_pkt_ecodes _hif_ecode)
 {
+	struct ol_softc *scn = HIF_GET_SOFTC(_hif_state);
 	if (_hif_ecode == HIF_PIPE_NO_RESOURCE)
-		(_hif_state->scn->pkt_stats.hif_pipe_no_resrc_count)
+		(scn->pkt_stats.hif_pipe_no_resrc_count)
 		+= 1;
 }
 

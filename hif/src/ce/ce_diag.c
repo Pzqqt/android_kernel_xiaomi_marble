@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,9 +51,10 @@
 #include "epping_main.h"
 #include "cds_concurrency.h"
 
-void hif_dump_target_memory(struct ol_softc *scn, void *ramdump_base,
+void hif_dump_target_memory(struct ol_softc *hif_ctx, void *ramdump_base,
 			    uint32_t address, uint32_t size)
 {
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint32_t loc = address;
 	uint32_t val = 0;
 	uint32_t j = 0;
@@ -95,10 +96,11 @@ void hif_dump_target_memory(struct ol_softc *scn, void *ramdump_base,
  */
 
 CDF_STATUS
-hif_diag_read_mem(struct ol_softc *scn, uint32_t address, uint8_t *data,
+hif_diag_read_mem(struct ol_softc *hif_ctx, uint32_t address, uint8_t *data,
 		  int nbytes)
 {
-	struct HIF_CE_state *hif_state;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	cdf_dma_addr_t buf;
 	unsigned int completed_nbytes, orig_nbytes, remaining_bytes;
@@ -114,8 +116,6 @@ hif_diag_read_mem(struct ol_softc *scn, uint32_t address, uint8_t *data,
 	cdf_dma_addr_t ce_phy_addr = address;
 	unsigned int toeplitz_hash_result;
 	unsigned int user_flags = 0;
-
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 
 	transaction_id = (mux_id & MUX_ID_MASK) |
 		 (transaction_id & TRANSACTION_ID_MASK);
@@ -260,12 +260,11 @@ done:
 }
 
 /* Read 4-byte aligned data from Target memory or register */
-CDF_STATUS hif_diag_read_access(struct ol_softc *scn,
+CDF_STATUS hif_diag_read_access(struct ol_softc *hif_ctx,
 				uint32_t address, uint32_t *data)
 {
-	struct HIF_CE_state *hif_state;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 	if (address >= DRAM_BASE_ADDRESS) {
 		/* Assume range doesn't cross this boundary */
 		return hif_diag_read_mem(scn, address, (uint8_t *) data,
@@ -279,10 +278,11 @@ CDF_STATUS hif_diag_read_access(struct ol_softc *scn,
 	}
 }
 
-CDF_STATUS hif_diag_write_mem(struct ol_softc *scn,
+CDF_STATUS hif_diag_write_mem(struct ol_softc *hif_ctx,
 			      uint32_t address, uint8_t *data, int nbytes)
 {
-	struct HIF_CE_state *hif_state;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	cdf_dma_addr_t buf;
 	unsigned int completed_nbytes, orig_nbytes, remaining_bytes;
@@ -299,7 +299,6 @@ CDF_STATUS hif_diag_write_mem(struct ol_softc *scn,
 	unsigned int toeplitz_hash_result;
 	unsigned int user_flags = 0;
 
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 	ce_diag = hif_state->ce_diag;
 	transaction_id = (mux_id & MUX_ID_MASK) |
 		(transaction_id & TRANSACTION_ID_MASK);
@@ -433,12 +432,11 @@ done:
 }
 
 /* Write 4B data to Target memory or register */
-CDF_STATUS
-hif_diag_write_access(struct ol_softc *scn, uint32_t address, uint32_t data)
+CDF_STATUS hif_diag_write_access(struct ol_softc *hif_ctx, uint32_t address,
+				 uint32_t data)
 {
-	struct HIF_CE_state *hif_state;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	hif_state = (struct HIF_CE_state *)scn->hif_hdl;
 	if (address >= DRAM_BASE_ADDRESS) {
 		/* Assume range doesn't cross this boundary */
 		uint32_t data_buf = data;

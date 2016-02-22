@@ -30,7 +30,7 @@
 
 #ifdef HIF_PCI
 
-#include "hif.h"
+#include "hif_main.h"
 #include "regtable.h"
 #include "ce_reg.h"
 #include "cdf_atomic.h"
@@ -256,7 +256,7 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
 static inline void ce_irq_enable(struct ol_softc *scn, int ce_id)
 {
 	uint32_t tmp = 1 << ce_id;
-	struct hif_pci_softc *sc = scn->hif_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
 	cdf_spin_lock_irqsave(&sc->irq_lock);
 	scn->ce_irq_summary &= ~tmp;

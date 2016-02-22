@@ -88,7 +88,7 @@ void hif_bmi_send_done(struct CE_handle *copyeng, void *ce_context,
 {
 	struct BMI_transaction *transaction =
 		(struct BMI_transaction *)transfer_context;
-	struct ol_softc *scn = transaction->hif_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(transaction->hif_state);
 
 #ifdef BMI_RSP_POLLING
 	/*
@@ -124,7 +124,7 @@ void hif_bmi_recv_data(struct CE_handle *copyeng, void *ce_context,
 {
 	struct BMI_transaction *transaction =
 		(struct BMI_transaction *)transfer_context;
-	struct ol_softc *scn = transaction->hif_state->scn;
+	struct ol_softc *scn = HIF_GET_SOFTC(transaction->hif_state);
 
 	transaction->bmi_response_length = nbytes;
 	transaction->bmi_transaction_flags |= BMI_RESP_RECV_DONE;
@@ -137,13 +137,14 @@ void hif_bmi_recv_data(struct CE_handle *copyeng, void *ce_context,
 }
 #endif
 
-CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
+CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *hif_ctx,
 		     uint8_t *bmi_request,
 		     uint32_t request_length,
 		     uint8_t *bmi_response,
 		     uint32_t *bmi_response_lengthp, uint32_t TimeoutMS)
 {
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
+	struct ol_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	struct HIF_CE_pipe_info *send_pipe_info =
 		&(hif_state->pipe_info[BMI_CE_NUM_TO_TARG]);
 	struct CE_handle *ce_send_hdl = send_pipe_info->ce_hdl;

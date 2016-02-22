@@ -223,12 +223,6 @@ struct ol_softc {
 	/* status of target init */
 	WLAN_INIT_STATUS wlan_init_status;
 
-	/* Handles for Lower Layers : filled in at init time */
-	hif_handle_t hif_hdl;
-#ifdef HIF_PCI
-	struct hif_pci_softc *hif_sc;
-#endif
-
 #ifdef WLAN_FEATURE_FASTPATH
 	int fastpath_mode_on; /* Duplicating this for data path efficiency */
 #endif /* WLAN_FEATURE_FASTPATH */
