@@ -201,6 +201,12 @@ QDF_STATUS wlansap_start(void *pCtx, enum tQDF_ADAPTER_MODE mode,
 	}
 
 	hal = (tHalHandle) CDS_GET_HAL_CB(pSapCtx->p_cds_gctx);
+	if (!hal) {
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
+			"%s: Invalid HAL pointer", __func__);
+		return QDF_STATUS_E_INVAL;
+	}
+
 	qdf_ret_status = sap_open_session(hal, pSapCtx, session_id);
 
 	if (QDF_STATUS_SUCCESS != qdf_ret_status) {

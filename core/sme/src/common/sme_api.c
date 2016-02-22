@@ -15130,7 +15130,9 @@ bool sme_is_session_id_valid(tHalHandle hal, uint32_t session_id)
 {
 	tpAniSirGlobal mac = PMAC_STRUCT(hal);
 	if (!mac) {
-		sms_log(mac, LOGE, FL("null mac pointer"));
+		/* Using QDF_TRACE since mac is not available for sms_log */
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
+			"%s: null mac pointer", __func__);
 		return false;
 	}
 
