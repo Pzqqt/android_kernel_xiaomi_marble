@@ -1274,7 +1274,7 @@ typedef struct {
 	qdf_wake_lock_t wow_wake_lock;
 	int wow_nack;
 	qdf_atomic_t is_wow_bus_suspended;
-	cdf_mc_timer_t wma_scan_comp_timer;
+	qdf_mc_timer_t wma_scan_comp_timer;
 	uint8_t dfs_phyerr_filter_offload;
 	bool suitable_ap_hb_failure;
 	ibss_power_save_params wma_ibss_power_save_params;
@@ -1295,7 +1295,7 @@ typedef struct {
 	uint32_t hw_bd_id;
 	uint32_t hw_bd_info[HW_BD_INFO_SIZE];
 	uint32_t miracast_value;
-	cdf_mc_timer_t log_completion_timer;
+	qdf_mc_timer_t log_completion_timer;
 	wma_mgmt_frame_rx_callback mgmt_rx;
 	uint32_t num_dbs_hw_modes;
 	struct dbs_hw_mode_info hw_mode;
@@ -1342,7 +1342,7 @@ typedef struct {
 	 * context. So, processing ready event and extended ready event in
 	 * the serialized MC thread context with a timer.
 	 */
-	cdf_mc_timer_t service_ready_ext_timer;
+	qdf_mc_timer_t service_ready_ext_timer;
 	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 		roam_offload_synch_ind *roam_synch_data,
 		tpSirBssDescription  bss_desc_ptr, uint8_t reason);
@@ -1457,7 +1457,7 @@ struct wma_tx_ack_work_ctx {
  * @type: type
  */
 struct wma_target_req {
-	cdf_mc_timer_t event_timeout;
+	qdf_mc_timer_t event_timeout;
 	qdf_list_node_t node;
 	void *user_data;
 	uint32_t msg_type;

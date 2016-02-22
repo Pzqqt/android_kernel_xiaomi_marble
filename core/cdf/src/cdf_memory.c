@@ -36,7 +36,7 @@
 #include "cdf_nbuf.h"
 #include "cdf_trace.h"
 #include "qdf_lock.h"
-#include "cdf_mc_timer.h"
+#include "qdf_mc_timer.h"
 
 #if defined(CONFIG_CNSS)
 #include <net/cnss.h>
@@ -273,18 +273,18 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		flags = GFP_ATOMIC;
 
 	new_size = size + sizeof(struct s_cdf_mem_struct) + 8;
-	time_before_kzalloc = cdf_mc_timer_get_system_time();
+	time_before_kzalloc = qdf_mc_timer_get_system_time();
 	memStruct = (struct s_cdf_mem_struct *)kzalloc(new_size, flags);
 	/**
 	 * If time taken by kmalloc is greater than
 	 * CDF_GET_MEMORY_TIME_THRESHOLD msec
 	 */
-	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
+	if (qdf_mc_timer_get_system_time() - time_before_kzalloc >=
 					  CDF_GET_MEMORY_TIME_THRESHOLD)
 		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			 "%s: kzalloc took %lu msec for size %zu called from %pS at line %d",
 			 __func__,
-			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
+			 qdf_mc_timer_get_system_time() - time_before_kzalloc,
 			 size, (void *)_RET_IP_, lineNum);
 
 	if (memStruct != NULL) {
@@ -415,18 +415,18 @@ void *cdf_mem_malloc(size_t size)
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
-	time_before_kzalloc = cdf_mc_timer_get_system_time();
+	time_before_kzalloc = qdf_mc_timer_get_system_time();
 	memPtr = kzalloc(size, flags);
 	/**
 	 * If time taken by kmalloc is greater than
 	 * CDF_GET_MEMORY_TIME_THRESHOLD msec
 	 */
-	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
+	if (qdf_mc_timer_get_system_time() - time_before_kzalloc >=
 					   CDF_GET_MEMORY_TIME_THRESHOLD)
 		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 			 "%s: kzalloc took %lu msec for size %zu called from %pS",
 			 __func__,
-			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
+			 qdf_mc_timer_get_system_time() - time_before_kzalloc,
 			 size, (void *)_RET_IP_);
 	return memPtr;
 }

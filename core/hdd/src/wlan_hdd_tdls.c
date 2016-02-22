@@ -463,7 +463,7 @@ static void dump_tdls_state_param_setting(tdlsInfo_t *info)
  */
 static void wlan_hdd_tdls_monitor_timers_stop(tdlsCtx_t *hdd_tdls_ctx)
 {
-	cdf_mc_timer_stop(&hdd_tdls_ctx->peerDiscoveryTimeoutTimer);
+	qdf_mc_timer_stop(&hdd_tdls_ctx->peerDiscoveryTimeoutTimer);
 }
 
 /**
@@ -583,7 +583,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		/* initialize TDLS pAdater context */
 		cdf_mem_zero(pHddTdlsCtx, sizeof(tdlsCtx_t));
 
-		cdf_mc_timer_init(&pHddTdlsCtx->peerDiscoveryTimeoutTimer,
+		qdf_mc_timer_init(&pHddTdlsCtx->peerDiscoveryTimeoutTimer,
 				  QDF_TIMER_TYPE_SW,
 				  wlan_hdd_tdls_discovery_timeout_peer_cb,
 				  pHddTdlsCtx);
@@ -681,7 +681,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	if (NULL == tInfo) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("cdf_mem_alloc failed for tInfo"));
-		cdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
+		qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 		cdf_mem_free(pHddTdlsCtx);
 		return -ENOMEM;
 	}
@@ -725,7 +725,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, true);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
 		cdf_mem_free(tInfo);
-		cdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
+		qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 		cdf_mem_free(pHddTdlsCtx);
 		return -EINVAL;
 	}
@@ -854,8 +854,8 @@ done:
  */
 static void wlan_hdd_tdls_monitor_timers_destroy(tdlsCtx_t *pHddTdlsCtx)
 {
-	cdf_mc_timer_stop(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
-	cdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
+	qdf_mc_timer_stop(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
+	qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 }
 
 /**
@@ -1120,7 +1120,7 @@ int wlan_hdd_tdls_recv_discovery_resp(hdd_adapter_t *pAdapter,
 
 	mutex_unlock(&pHddCtx->tdls_lock);
 	if (0 == pHddTdlsCtx->discovery_sent_cnt) {
-		cdf_mc_timer_stop(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
+		qdf_mc_timer_stop(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 	}
 
 	hddLog(LOG1,
@@ -2836,7 +2836,7 @@ void wlan_hdd_tdls_scan_done_callback(hdd_adapter_t *pAdapter)
  * Return: Void
  */
 void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
-				 cdf_mc_timer_t *timer,
+				 qdf_mc_timer_t *timer,
 				 uint32_t expirationTime)
 {
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
@@ -2848,8 +2848,8 @@ void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
 	}
 
 	if (hdd_conn_is_connected(pHddStaCtx)) {
-		cdf_mc_timer_stop(timer);
-		cdf_mc_timer_start(timer, expirationTime);
+		qdf_mc_timer_stop(timer);
+		qdf_mc_timer_start(timer, expirationTime);
 	}
 }
 

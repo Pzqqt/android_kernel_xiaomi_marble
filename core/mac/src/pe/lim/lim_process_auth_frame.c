@@ -164,7 +164,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		auth_node->fTimerStarted = 0;
 		auth_node->seq_num = ((mac_hdr->seqControl.seqNumHi << 4) |
 						(mac_hdr->seqControl.seqNumLo));
-		auth_node->timestamp = cdf_mc_timer_get_system_ticks();
+		auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 		lim_add_pre_auth_node(mac_ctx, auth_node);
 
 		lim_log(mac_ctx, LOG1, FL("Alloc new data: %p id %d peer "),
@@ -253,7 +253,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 	auth_node->fTimerStarted = 0;
 	auth_node->seq_num = ((mac_hdr->seqControl.seqNumHi << 4) |
 				(mac_hdr->seqControl.seqNumLo));
-	auth_node->timestamp = cdf_mc_timer_get_system_ticks();
+	auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 	lim_add_pre_auth_node(mac_ctx, auth_node);
 	/*
 	 * Send Authenticaton frame with Success
@@ -641,7 +641,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		auth_node->seq_num =
 			((mac_hdr->seqControl.seqNumHi << 4) |
 			 (mac_hdr->seqControl.seqNumLo));
-		auth_node->timestamp = cdf_mc_timer_get_system_ticks();
+		auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 		lim_add_pre_auth_node(mac_ctx, auth_node);
 		lim_restore_from_auth_state(mac_ctx, eSIR_SME_SUCCESS,
 				rx_auth_frm_body->authStatusCode, pe_session);
@@ -1003,7 +1003,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		auth_node->authType = mac_ctx->lim.gpLimMlmAuthReq->authType;
 		auth_node->seq_num = ((mac_hdr->seqControl.seqNumHi << 4) |
 					(mac_hdr->seqControl.seqNumLo));
-		auth_node->timestamp = cdf_mc_timer_get_system_ticks();
+		auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 		lim_add_pre_auth_node(mac_ctx, auth_node);
 		lim_restore_from_auth_state(mac_ctx, eSIR_SME_SUCCESS,
 				rx_auth_frm_body->authStatusCode, pe_session);

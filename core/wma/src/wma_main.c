@@ -1783,7 +1783,7 @@ QDF_STATUS wma_open(void *cds_context,
 		goto err_event_init;
 	}
 
-	qdf_status = cdf_mc_timer_init(&wma_handle->service_ready_ext_timer,
+	qdf_status = qdf_mc_timer_init(&wma_handle->service_ready_ext_timer,
 					QDF_TIMER_TYPE_SW,
 					wma_service_ready_ext_evt_timeout,
 					wma_handle);
@@ -2321,7 +2321,7 @@ static int wma_flush_complete_evt_handler(void *handle,
 	} else if (!reason_code && cds_is_log_report_in_progress() == true) {
 		/* Flush event in response to flush command */
 		WMA_LOGI("Received WMI flush event in response to flush CMD");
-		status = cdf_mc_timer_stop(&wma->log_completion_timer);
+		status = qdf_mc_timer_stop(&wma->log_completion_timer);
 		if (status != QDF_STATUS_SUCCESS)
 			WMA_LOGE("Failed to stop the log completion timeout");
 		cds_logging_set_fw_flush_complete();
@@ -2765,7 +2765,7 @@ QDF_STATUS wma_start(void *cds_ctx)
 	}
 
 	/* Initialize log completion timeout */
-	qdf_status = cdf_mc_timer_init(&wma_handle->log_completion_timer,
+	qdf_status = qdf_mc_timer_init(&wma_handle->log_completion_timer,
 			QDF_TIMER_TYPE_SW,
 			wma_log_completion_timeout,
 			wma_handle);
@@ -2870,7 +2870,7 @@ QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	}
 
 	/* Destroy the timer for log completion */
-	qdf_status = cdf_mc_timer_destroy(&wma_handle->log_completion_timer);
+	qdf_status = qdf_mc_timer_destroy(&wma_handle->log_completion_timer);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to destroy the log completion timer");
 	}
@@ -2935,7 +2935,7 @@ static void wma_cleanup_hold_req(tp_wma_handle wma)
 				 req_msg->vdev_id, req_msg->type);
 			return;
 		}
-		cdf_mc_timer_destroy(&req_msg->event_timeout);
+		qdf_mc_timer_destroy(&req_msg->event_timeout);
 		cdf_mem_free(req_msg);
 	}
 	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
@@ -2970,7 +2970,7 @@ static void wma_cleanup_vdev_resp(tp_wma_handle wma)
 				 req_msg->vdev_id, req_msg->type);
 			return;
 		}
-		cdf_mc_timer_destroy(&req_msg->event_timeout);
+		qdf_mc_timer_destroy(&req_msg->event_timeout);
 		cdf_mem_free(req_msg);
 	}
 	qdf_spin_unlock_bh(&wma->vdev_respq_lock);
@@ -3150,7 +3150,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 
 	/* close the cdf events */
 	cdf_event_destroy(&wma_handle->wma_ready_event);
-	qdf_status = cdf_mc_timer_destroy(&wma_handle->service_ready_ext_timer);
+	qdf_status = qdf_mc_timer_destroy(&wma_handle->service_ready_ext_timer);
 	if (!CDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGP("%s: Failed to destroy service ready ext event timer",
 			__func__);
@@ -4048,7 +4048,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		/* The saved 'buf' will be freed after sending INIT command or
 		 * in other cases as required
 		 */
-		ret = cdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
+		ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
 				WMA_SERVICE_READY_EXT_TIMEOUT);
 		if (!CDF_IS_STATUS_SUCCESS(ret))
 			WMA_LOGP("Failed to start the service ready ext timer");
@@ -4103,7 +4103,7 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 			__func__, ev->default_conc_scan_config_bits,
 			ev->default_fw_config_bits);
 
-	ret = cdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
+	ret = qdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
 	if (!CDF_IS_STATUS_SUCCESS(ret)) {
 		WMA_LOGP("Failed to stop the service ready ext timer");
 		return;
@@ -4681,7 +4681,7 @@ void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle)
 	}
 	WMA_LOGI("Sent WMI_DEBUG_MESG_FLUSH_CMDID to FW");
 
-	status = cdf_mc_timer_start(&wma_handle->log_completion_timer,
+	status = qdf_mc_timer_start(&wma_handle->log_completion_timer,
 			WMA_LOG_COMPLETION_TIMER);
 	if (status != QDF_STATUS_SUCCESS)
 		WMA_LOGE("Failed to start the log completion timer");

@@ -91,7 +91,7 @@ struct hdd_green_ap_ctx {
 	enum hdd_green_ap_ps_state ps_state;
 	enum hdd_green_ap_event ps_event;
 
-	cdf_mc_timer_t ps_timer;
+	qdf_mc_timer_t ps_timer;
 
 	bool egap_support;
 };
@@ -212,7 +212,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 			hdd_wlan_green_ap_update(hdd_ctx,
 						 GREEN_AP_PS_WAIT_STATE,
 						 GREEN_AP_PS_WAIT_EVENT);
-			cdf_mc_timer_start(&green_ap->ps_timer,
+			qdf_mc_timer_start(&green_ap->ps_timer,
 					   green_ap->ps_delay_time);
 		}
 		break;
@@ -229,7 +229,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 				hdd_wlan_green_ap_update(hdd_ctx,
 							 0,
 							 GREEN_AP_PS_WAIT_EVENT);
-				cdf_mc_timer_start(&green_ap->ps_timer,
+				qdf_mc_timer_start(&green_ap->ps_timer,
 						   green_ap->ps_on_time);
 			}
 		} else {
@@ -261,7 +261,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 				goto done;
 			}
 
-			cdf_mc_timer_start(&green_ap->ps_timer,
+			qdf_mc_timer_start(&green_ap->ps_timer,
 					   green_ap->ps_delay_time);
 		}
 		break;
@@ -325,7 +325,7 @@ static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 	green_ap->ps_on_time = GREEN_AP_PS_ON_TIME;
 	green_ap->ps_delay_time = GREEN_AP_PS_DELAY_TIME;
 
-	cdf_mc_timer_init(&green_ap->ps_timer,
+	qdf_mc_timer_init(&green_ap->ps_timer,
 			  QDF_TIMER_TYPE_SW,
 			  hdd_wlan_green_ap_timer_fn, hdd_ctx);
 
@@ -356,12 +356,12 @@ static QDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 	}
 
 	/* check if the timer status is destroyed */
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&green_ap->ps_timer))
-		cdf_mc_timer_stop(&green_ap->ps_timer);
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&green_ap->ps_timer))
+		qdf_mc_timer_stop(&green_ap->ps_timer);
 
 	/* Destroy the Green AP timer */
-	if (!QDF_IS_STATUS_SUCCESS(cdf_mc_timer_destroy(&green_ap->ps_timer)))
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_destroy(&green_ap->ps_timer)))
 		hdd_notice("Cannot deallocate Green-AP's timer");
 
 	/* release memory */

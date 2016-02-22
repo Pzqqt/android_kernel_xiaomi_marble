@@ -36,7 +36,7 @@
 #include "qdf_status.h"
 #include "qdf_lock.h"
 
-#include "cdf_mc_timer.h"
+#include "qdf_mc_timer.h"
 #include "csr_support.h"
 #include "cds_reg_service.h"
 
@@ -374,7 +374,7 @@ typedef struct tagScanCmd {
 	} u;
 	/* This flag will be set while aborting the scan due to band change */
 	bool abortScanDueToBandChange;
-	cdf_mc_timer_t csr_scan_timer;
+	qdf_mc_timer_t csr_scan_timer;
 } tScanCmd;
 
 typedef struct tagRoamCmd {
@@ -677,10 +677,10 @@ typedef struct tagCsrScanStruct {
 	bool fScanEnable;
 	bool fFullScanIssued;
 #ifdef WLAN_AP_STA_CONCURRENCY
-	cdf_mc_timer_t hTimerStaApConcTimer;
+	qdf_mc_timer_t hTimerStaApConcTimer;
 #endif
-	cdf_mc_timer_t hTimerIdleScan;
-	cdf_mc_timer_t hTimerResultCfgAging;
+	qdf_mc_timer_t hTimerIdleScan;
+	qdf_mc_timer_t hTimerResultCfgAging;
 	/*
 	 * changes on every scan, it is used as a flag for whether 11d info is
 	 * found on every scan
@@ -791,7 +791,7 @@ typedef struct tagCsrPeStatsReqInfo {
 	uint32_t statsMask;
 	uint32_t periodicity;
 	bool rspPending;
-	cdf_mc_timer_t hPeStatsTimer;
+	qdf_mc_timer_t hPeStatsTimer;
 	bool timerRunning;
 	uint8_t staId;
 	uint8_t numClient;
@@ -811,7 +811,7 @@ typedef struct tagCsrStatsClientReqInfo {
 	uint32_t statsMask;
 	tCsrPeStatsReqInfo *pPeStaEntry;
 	uint8_t staId;
-	cdf_mc_timer_t timer;
+	qdf_mc_timer_t timer;
 	bool timerExpired;
 	tpAniSirGlobal pMac;    /* TODO: Confirm this change BTAMP */
 	uint8_t sessionId;
@@ -820,7 +820,7 @@ typedef struct tagCsrStatsClientReqInfo {
 typedef struct tagCsrTlStatsReqInfo {
 	uint32_t periodicity;
 	bool timerRunning;
-	cdf_mc_timer_t hTlStatsTimer;
+	qdf_mc_timer_t hTlStatsTimer;
 	uint8_t numClient;
 } tCsrTlStatsReqInfo;
 
@@ -925,7 +925,7 @@ typedef struct tagCsrRoamSession {
 	tCsrTimerInfo roamingTimerInfo;
 	eCsrRoamingReason roamingReason;
 	bool fCancelRoaming;
-	cdf_mc_timer_t hTimerRoaming;
+	qdf_mc_timer_t hTimerRoaming;
 	/* the roamResult that is used when the roaming timer fires */
 	eCsrRoamResult roamResult;
 	/* This is the reason code for join(assoc) failure */
@@ -990,7 +990,7 @@ typedef struct tagCsrRoamStruct {
 	tSirMacChanNum validChannelList[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numValidChannels;       /* total number of channels in CFG */
 	int32_t sPendingCommands;
-	cdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
+	qdf_mc_timer_t hTimerWaitForKey; /* support timeout for WaitForKey */
 	tCsrSummaryStatsInfo summaryStatsInfo;
 	tCsrGlobalClassAStatsInfo classAStatsInfo;
 	tCsrGlobalClassBStatsInfo classBStatsInfo;

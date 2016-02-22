@@ -127,7 +127,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 		     (uint8_t *) pHdr->bssId, sizeof(tSirMacAddr));
 
 	/* Copy Timestamp, Beacon Interval and Capability Info */
-	pBssDescr->scanSysTimeMsec = cdf_mc_timer_get_system_time();
+	pBssDescr->scanSysTimeMsec = qdf_mc_timer_get_system_time();
 
 	pBssDescr->timeStamp[0] = pBPR->timeStamp[0];
 	pBssDescr->timeStamp[1] = pBPR->timeStamp[1];
@@ -189,7 +189,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 		MAC_ADDR_ARRAY(pHdr->bssId), pBssDescr->rssi,
 		pBssDescr->rssi_raw);
 
-	pBssDescr->nReceivedTime = (uint32_t) cdf_mc_timer_get_system_ticks();
+	pBssDescr->nReceivedTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	pBssDescr->tsf_delta = WMA_GET_RX_TSF_DELTA(pRxPacketInfo);
 
 	lim_log(pMac, LOG1, FL("BSSID: "MAC_ADDRESS_STR " tsf_delta = %u"),

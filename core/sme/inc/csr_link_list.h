@@ -35,7 +35,7 @@
 #define CSR_LINK_LIST_H__
 
 #include "qdf_lock.h"
-#include "cdf_mc_timer.h"
+#include "qdf_mc_timer.h"
 #include "cds_api.h"
 #include "sir_types.h"
 
@@ -61,7 +61,7 @@ typedef struct tagDblLinkList {
 	tListFlag Flag;
 	/*command debugging */
 	uint32_t cmdTimeoutDuration;       /* command timeout duration */
-	cdf_mc_timer_t *cmdTimeoutTimer;   /*command timeout Timer */
+	qdf_mc_timer_t *cmdTimeoutTimer;   /*command timeout Timer */
 } tDblLinkList;
 
 /*

@@ -280,7 +280,7 @@ struct _hddTdlsPeer_t;
 typedef struct {
 	struct list_head peer_list[TDLS_PEER_LIST_SIZE];
 	hdd_adapter_t *pAdapter;
-	cdf_mc_timer_t peerDiscoveryTimeoutTimer;
+	qdf_mc_timer_t peerDiscoveryTimeoutTimer;
 	tdls_config_params_t threshold_config;
 	int32_t discovery_peer_cnt;
 	uint32_t discovery_sent_cnt;
@@ -491,7 +491,7 @@ int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
 void wlan_hdd_tdls_scan_done_callback(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_tdls_timer_restart(hdd_adapter_t *pAdapter,
-				 cdf_mc_timer_t *timer,
+				 qdf_mc_timer_t *timer,
 				 uint32_t expirationTime);
 void wlan_hdd_tdls_indicate_teardown(hdd_adapter_t *pAdapter,
 				     hddTdlsPeer_t *curr_peer,

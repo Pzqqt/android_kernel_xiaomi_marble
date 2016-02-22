@@ -7357,7 +7357,7 @@ wlan_hdd_cfg80211_inform_bss_frame(hdd_adapter_t *pAdapter,
 	qie_age->oui_3 = QCOM_OUI3;
 	qie_age->type = QCOM_VENDOR_IE_AGE_TYPE;
 	qie_age->age =
-		cdf_mc_timer_get_system_ticks() - bss_desc->nReceivedTime;
+		qdf_mc_timer_get_system_ticks() - bss_desc->nReceivedTime;
 	qie_age->tsf_delta = bss_desc->tsf_delta;
 #endif
 

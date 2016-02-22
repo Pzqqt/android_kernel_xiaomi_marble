@@ -597,7 +597,7 @@ typedef struct sSapDfsNolInfo {
 } tSapDfsNolInfo;
 
 typedef struct sSapDfsInfo {
-	cdf_mc_timer_t sap_dfs_cac_timer;
+	qdf_mc_timer_t sap_dfs_cac_timer;
 	uint8_t sap_radar_found_status;
 	/*
 	 * New channel to move to when a  Radar is

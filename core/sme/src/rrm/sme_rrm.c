@@ -124,12 +124,12 @@ void rrm_indicate_neighbor_report_result(tpAniSirGlobal pMac, QDF_STATUS qdf_sta
 		false;
 
 	/* Stop the timer if it is already running. The timer should be running only in the SUCCESS case. */
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&pMac->rrm.rrmSmeContext.
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&pMac->rrm.rrmSmeContext.
 					   neighborReqControlInfo.
 					   neighborRspWaitTimer)) {
 		sms_log(pMac, LOG1, FL("No entry in neighbor report cache"));
-		cdf_mc_timer_stop(&pMac->rrm.rrmSmeContext.
+		qdf_mc_timer_stop(&pMac->rrm.rrmSmeContext.
 				  neighborReqControlInfo.neighborRspWaitTimer);
 	}
 	callback =
@@ -608,14 +608,14 @@ static QDF_STATUS sme_rrm_scan_request_callback(tHalHandle halHandle,
 		pSmeRrmContext->currentIndex++; /* Advance the current index. */
 		/* start the timer to issue next request. */
 		/* From timer tick get a random number within 10ms and max randmization interval. */
-		time_tick = cdf_mc_timer_get_system_ticks();
+		time_tick = qdf_mc_timer_get_system_ticks();
 		interval =
 			time_tick % (pSmeRrmContext->randnIntvl - 10 + 1) + 10;
 
 #if defined WLAN_VOWIFI_DEBUG
 		sms_log(pMac, LOGE, "Set timer for interval %d ", interval);
 #endif
-		cdf_mc_timer_start(&pSmeRrmContext->IterMeasTimer, interval);
+		qdf_mc_timer_start(&pSmeRrmContext->IterMeasTimer, interval);
 
 	} else {
 		/* Done with the measurement. Clean up all context and send a message to PE with measurement done flag set. */
@@ -718,7 +718,7 @@ QDF_STATUS sme_rrm_issue_scan_req(tpAniSirGlobal mac_ctx)
 		sms_log(mac_ctx, LOG1, FL("Scan Type(%d) Max Dwell Time(%d)"),
 				scan_req.scanType, scan_req.maxChnTime);
 
-		rrm_scan_timer = cdf_mc_timer_get_system_time();
+		rrm_scan_timer = qdf_mc_timer_get_system_time();
 
 #if defined WLAN_VOWIFI_DEBUG
 		sms_log(mac_ctx, LOGE, FL("For Duration %d "),
@@ -1002,7 +1002,7 @@ QDF_STATUS sme_rrm_neighbor_report_request(tpAniSirGlobal pMac, uint8_t sessionI
 		true;
 
 	/* Start neighbor response wait timer now */
-	cdf_mc_timer_start(&pMac->rrm.rrmSmeContext.neighborReqControlInfo.
+	qdf_mc_timer_start(&pMac->rrm.rrmSmeContext.neighborReqControlInfo.
 			   neighborRspWaitTimer, callbackInfo->timeout);
 
 	return QDF_STATUS_SUCCESS;
@@ -1359,7 +1359,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	pSmeRrmContext->rrmConfig.max_randn_interval = 50;        /* ms */
 
-	qdf_status = cdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
+	qdf_status = qdf_mc_timer_init(&pSmeRrmContext->IterMeasTimer,
 				       QDF_TIMER_TYPE_SW,
 				       rrm_iter_meas_timer_handle, (void *)pMac);
 
@@ -1372,7 +1372,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	}
 
 	qdf_status =
-		cdf_mc_timer_init(&pSmeRrmContext->neighborReqControlInfo.
+		qdf_mc_timer_init(&pSmeRrmContext->neighborReqControlInfo.
 				  neighborRspWaitTimer, QDF_TIMER_TYPE_SW,
 				  rrm_neighbor_rsp_timeout_handler, (void *)pMac);
 
@@ -1414,16 +1414,16 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
 
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&pSmeRrmContext->IterMeasTimer)) {
-		qdf_status = cdf_mc_timer_stop(&pSmeRrmContext->IterMeasTimer);
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&pSmeRrmContext->IterMeasTimer)) {
+		qdf_status = qdf_mc_timer_stop(&pSmeRrmContext->IterMeasTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 				  FL("Timer stop fail"));
 		}
 	}
 
-	qdf_status = cdf_mc_timer_destroy(&pSmeRrmContext->IterMeasTimer);
+	qdf_status = qdf_mc_timer_destroy(&pSmeRrmContext->IterMeasTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
 		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
@@ -1431,12 +1431,12 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 
 	}
 
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&pSmeRrmContext->
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&pSmeRrmContext->
 					   neighborReqControlInfo.
 					   neighborRspWaitTimer)) {
 		qdf_status =
-			cdf_mc_timer_stop(&pSmeRrmContext->neighborReqControlInfo.
+			qdf_mc_timer_stop(&pSmeRrmContext->neighborReqControlInfo.
 					  neighborRspWaitTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
@@ -1445,7 +1445,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	}
 
 	qdf_status =
-		cdf_mc_timer_destroy(&pSmeRrmContext->neighborReqControlInfo.
+		qdf_mc_timer_destroy(&pSmeRrmContext->neighborReqControlInfo.
 				     neighborRspWaitTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,

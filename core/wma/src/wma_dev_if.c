@@ -502,8 +502,8 @@ void wma_vdev_detach_callback(void *ctx)
 		if (req_msg) {
 			WMA_LOGD("%s: Found vdev request for vdev id %d",
 				 __func__, param->session_id);
-			cdf_mc_timer_stop(&req_msg->event_timeout);
-			cdf_mc_timer_destroy(&req_msg->event_timeout);
+			qdf_mc_timer_stop(&req_msg->event_timeout);
+			qdf_mc_timer_destroy(&req_msg->event_timeout);
 			cdf_mem_free(req_msg);
 		}
 	}
@@ -978,7 +978,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	cdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	if (resp_event->status == QDF_STATUS_SUCCESS
@@ -1043,7 +1043,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		wma->interfaces[resp_event->vdev_id].vdev_up)
 		wma_set_sap_keepalive(wma, resp_event->vdev_id);
 
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	cdf_mem_free(req_msg);
 
 	return 0;
@@ -1714,11 +1714,11 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	if (!pdev) {
 		WMA_LOGE("%s: pdev is NULL", __func__);
 		status = -EINVAL;
-		cdf_mc_timer_stop(&req_msg->event_timeout);
+		qdf_mc_timer_stop(&req_msg->event_timeout);
 		goto free_req_msg;
 	}
 
-	cdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
 	if (req_msg->msg_type == WMA_DELETE_BSS_REQ) {
 		tpDeleteBssParams params =
 			(tpDeleteBssParams) req_msg->user_data;
@@ -1813,7 +1813,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		}
 	}
 free_req_msg:
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	cdf_mem_free(req_msg);
 	return status;
 }
@@ -2377,7 +2377,7 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 		return -EINVAL;
 	}
 
-	cdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
 
 	if (req_msg->msg_type == WMA_ADD_STA_REQ) {
 		tpAddStaParams params = (tpAddStaParams)req_msg->user_data;
@@ -2417,7 +2417,7 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 	}
 
 free_req_msg:
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	cdf_mem_free(req_msg);
 
 	return status;
@@ -2465,8 +2465,8 @@ int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
 	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
 	/* Send response to upper layers */
 	wma_vdev_detach_callback(req_msg->user_data);
-	cdf_mc_timer_stop(&req_msg->event_timeout);
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	cdf_mem_free(req_msg);
 
 	return status;
@@ -2517,8 +2517,8 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 				WIFI_POWER_EVENT_WAKELOCK_WMI_CMD_RSP);
 	qdf_runtime_pm_allow_suspend(wma->wmi_cmd_rsp_runtime_lock);
 		/* Cleanup timeout handler */
-	cdf_mc_timer_stop(&req_msg->event_timeout);
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 
 	if (req_msg->type == WMA_DELETE_STA_RSP_START) {
 		del_sta = req_msg->user_data;
@@ -2595,7 +2595,7 @@ void wma_hold_req_timer(void *data)
 		CDF_ASSERT(0);
 	}
 free_tgt_req:
-	cdf_mc_timer_destroy(&tgt_req->event_timeout);
+	qdf_mc_timer_destroy(&tgt_req->event_timeout);
 	cdf_mem_free(tgt_req);
 }
 
@@ -2630,9 +2630,9 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	req->msg_type = msg_type;
 	req->type = type;
 	req->user_data = params;
-	cdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
+	qdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
 			  wma_hold_req_timer, req);
-	cdf_mc_timer_start(&req->event_timeout, timeout);
+	qdf_mc_timer_start(&req->event_timeout, timeout);
 	qdf_spin_lock_bh(&wma->wma_hold_req_q_lock);
 	status = qdf_list_insert_back(&wma->wma_hold_req_queue, &req->node);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -2666,8 +2666,8 @@ void wma_remove_req(tp_wma_handle wma, uint8_t vdev_id,
 		return;
 	}
 
-	cdf_mc_timer_stop(&req_msg->event_timeout);
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	cdf_mem_free(req_msg);
 }
 
@@ -2706,7 +2706,7 @@ void wma_vdev_resp_timer(void *data)
 
 	if (NULL == pdev) {
 		WMA_LOGE("%s: Failed to get pdev", __func__);
-		cdf_mc_timer_stop(&tgt_req->event_timeout);
+		qdf_mc_timer_stop(&tgt_req->event_timeout);
 		goto free_tgt_req;
 	}
 
@@ -2735,7 +2735,7 @@ void wma_vdev_resp_timer(void *data)
 		if (tgt_req->vdev_id > wma->max_bssid) {
 			WMA_LOGE("%s: Invalid vdev_id %d", __func__,
 				 tgt_req->vdev_id);
-			cdf_mc_timer_stop(&tgt_req->event_timeout);
+			qdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
 
@@ -2743,7 +2743,7 @@ void wma_vdev_resp_timer(void *data)
 		if (iface->handle == NULL) {
 			WMA_LOGE("%s vdev id %d is already deleted",
 				 __func__, tgt_req->vdev_id);
-			cdf_mc_timer_stop(&tgt_req->event_timeout);
+			qdf_mc_timer_stop(&tgt_req->event_timeout);
 			goto free_tgt_req;
 		}
 		if (wma_is_vdev_in_ibss_mode(wma, tgt_req->vdev_id))
@@ -2904,7 +2904,7 @@ error0:
 		wma_ocb_set_config_resp(wma, QDF_STATUS_E_TIMEOUT);
 	}
 free_tgt_req:
-	cdf_mc_timer_destroy(&tgt_req->event_timeout);
+	qdf_mc_timer_destroy(&tgt_req->event_timeout);
 	cdf_mem_free(tgt_req);
 }
 
@@ -2938,9 +2938,9 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 	req->msg_type = msg_type;
 	req->type = type;
 	req->user_data = params;
-	cdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
+	qdf_mc_timer_init(&req->event_timeout, QDF_TIMER_TYPE_SW,
 			  wma_vdev_resp_timer, req);
-	cdf_mc_timer_start(&req->event_timeout, timeout);
+	qdf_mc_timer_start(&req->event_timeout, timeout);
 	qdf_spin_lock_bh(&wma->vdev_respq_lock);
 	status = qdf_list_insert_back(&wma->vdev_resp_queue, &req->node);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -2972,8 +2972,8 @@ void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
 	if (!req_msg)
 		return;
 
-	cdf_mc_timer_stop(&req_msg->event_timeout);
-	cdf_mc_timer_destroy(&req_msg->event_timeout);
+	qdf_mc_timer_stop(&req_msg->event_timeout);
+	qdf_mc_timer_destroy(&req_msg->event_timeout);
 	cdf_mem_free(req_msg);
 }
 

@@ -309,7 +309,7 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	tSmeCmd *pCmd;
 	uint32_t cmd_idx;
 	QDF_STATUS qdf_status;
-	cdf_mc_timer_t *cmdTimeoutTimer = NULL;
+	qdf_mc_timer_t *cmdTimeoutTimer = NULL;
 	uint32_t sme_cmd_ptr_ary_sz;
 
 	pMac->sme.totalSmeCmd = SME_TOTAL_COMMAND;
@@ -369,11 +369,11 @@ static QDF_STATUS init_sme_cmd_list(tpAniSirGlobal pMac)
 	/* This timer is only to debug the active list command timeout */
 
 	cmdTimeoutTimer =
-		(cdf_mc_timer_t *) cdf_mem_malloc(sizeof(cdf_mc_timer_t));
+		(qdf_mc_timer_t *) cdf_mem_malloc(sizeof(qdf_mc_timer_t));
 	if (cmdTimeoutTimer) {
 		pMac->sme.smeCmdActiveList.cmdTimeoutTimer = cmdTimeoutTimer;
 		qdf_status =
-			cdf_mc_timer_init(pMac->sme.smeCmdActiveList.
+			qdf_mc_timer_init(pMac->sme.smeCmdActiveList.
 					  cmdTimeoutTimer, QDF_TIMER_TYPE_SW,
 					  active_list_cmd_timeout_handle, (void *)pMac);
 
@@ -473,7 +473,7 @@ static QDF_STATUS free_sme_cmd_list(tpAniSirGlobal pMac)
 	csr_ll_close(&pMac->sme.smeCmdFreeList);
 
 	/*destroy active list command time out timer */
-	cdf_mc_timer_destroy(pMac->sme.smeCmdActiveList.cmdTimeoutTimer);
+	qdf_mc_timer_destroy(pMac->sme.smeCmdActiveList.cmdTimeoutTimer);
 	cdf_mem_free(pMac->sme.smeCmdActiveList.cmdTimeoutTimer);
 	pMac->sme.smeCmdActiveList.cmdTimeoutTimer = NULL;
 
@@ -768,7 +768,7 @@ bool sme_process_scan_queue(tpAniSirGlobal pMac)
 		switch (pCommand->command) {
 		case eSmeCommandScan:
 			sms_log(pMac, LOG1, FL("Processing scan offload cmd."));
-			cdf_mc_timer_start(&pCommand->u.scanCmd.csr_scan_timer,
+			qdf_mc_timer_start(&pCommand->u.scanCmd.csr_scan_timer,
 				CSR_ACTIVE_SCAN_LIST_CMD_TIMEOUT);
 			csr_process_scan_command(pMac, pCommand);
 			break;

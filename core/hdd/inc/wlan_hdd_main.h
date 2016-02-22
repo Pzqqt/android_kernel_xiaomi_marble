@@ -570,7 +570,7 @@ typedef struct hdd_remain_on_chan_ctx {
 	unsigned int duration;
 	u64 cookie;
 	rem_on_channel_request_type_t rem_on_chan_request;
-	cdf_mc_timer_t hdd_remain_on_chan_timer;
+	qdf_mc_timer_t hdd_remain_on_chan_timer;
 	action_pkt_buffer_t action_pkt_buff;
 	bool hdd_remain_on_chan_cancel_in_progress;
 	uint32_t scan_id;
@@ -734,7 +734,7 @@ struct hdd_ap_ctx_s {
 
 	bool apDisableIntraBssFwd;
 
-	cdf_mc_timer_t hdd_ap_inactivity_timer;
+	qdf_mc_timer_t hdd_ap_inactivity_timer;
 
 	uint8_t operatingChannel;
 
@@ -978,7 +978,7 @@ struct hdd_adapter_s {
 	bool is_roc_inprogress;
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-	cdf_mc_timer_t tx_flow_control_timer;
+	qdf_mc_timer_t tx_flow_control_timer;
 	bool tx_flow_timer_initialized;
 	unsigned int tx_flow_low_watermark;
 	unsigned int tx_flow_high_watermark_offset;
@@ -1213,7 +1213,7 @@ struct hdd_context_s {
 #ifdef MSM_PLATFORM
 	/* DDR bus bandwidth compute timer
 	 */
-	cdf_mc_timer_t bus_bw_timer;
+	qdf_mc_timer_t bus_bw_timer;
 	int cur_vote_level;
 	spinlock_t bus_bw_lock;
 	int cur_rx_level;
@@ -1270,7 +1270,7 @@ struct hdd_context_s {
 #endif
 	fw_log_info fw_log_settings;
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-	cdf_mc_timer_t skip_acs_scan_timer;
+	qdf_mc_timer_t skip_acs_scan_timer;
 	uint8_t skip_acs_scan_status;
 #endif
 
@@ -1312,12 +1312,12 @@ struct hdd_context_s {
 #ifdef WLAN_FEATURE_MEMDUMP
 	uint8_t *fw_dump_loc;
 	uint32_t dump_loc_paddr;
-	cdf_mc_timer_t memdump_cleanup_timer;
+	qdf_mc_timer_t memdump_cleanup_timer;
 	struct mutex memdump_lock;
 	bool memdump_in_progress;
 #endif /* WLAN_FEATURE_MEMDUMP */
 
-	cdf_mc_timer_t dbs_opportunistic_timer;
+	qdf_mc_timer_t dbs_opportunistic_timer;
 	bool connection_in_progress;
 	qdf_spinlock_t connection_status_lock;
 

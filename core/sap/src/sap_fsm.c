@@ -1566,15 +1566,15 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 
 		/* Give preference to non-DFS channel */
 		if (!pMac->f_prefer_non_dfs_on_radar) {
-			i = (random_byte + cdf_mc_timer_get_system_ticks()) %
+			i = (random_byte + qdf_mc_timer_get_system_ticks()) %
 				available_ch_cnt;
 			target_channel = availableChannels[i];
 		} else if (avail_non_dfs_chan_count) {
-			i = (random_byte + cdf_mc_timer_get_system_ticks()) %
+			i = (random_byte + qdf_mc_timer_get_system_ticks()) %
 				avail_non_dfs_chan_count;
 			target_channel = avail_non_dfs_chan_list[i];
 		} else {
-			i = (random_byte + cdf_mc_timer_get_system_ticks()) %
+			i = (random_byte + qdf_mc_timer_get_system_ticks()) %
 				avail_dfs_chan_count;
 			target_channel = avail_dfs_chan_list[i];
 		}
@@ -2858,10 +2858,10 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
 		 * as per design CAC timer should be destroyed after stop
 		 */
 		if (pMac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-			cdf_mc_timer_stop(&pMac->sap.SapDfsInfo.
+			qdf_mc_timer_stop(&pMac->sap.SapDfsInfo.
 					  sap_dfs_cac_timer);
 			pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
-			cdf_mc_timer_destroy(
+			qdf_mc_timer_destroy(
 				&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		}
 		pMac->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
@@ -4435,7 +4435,7 @@ void sap_dfs_cac_timer_callback(void *data)
 
 	/* Check to ensure that SAP is in DFS WAIT state */
 	if (sapContext->sapsMachine == eSAP_DFS_CAC_WAIT) {
-		cdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		qdf_mc_timer_destroy(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = false;
 
 		/*
@@ -4473,13 +4473,13 @@ static int sap_stop_dfs_cac_timer(ptSapContext sapContext)
 	}
 	pMac = PMAC_STRUCT(hHal);
 
-	if (CDF_TIMER_STATE_RUNNING !=
-	    cdf_mc_timer_get_current_state(&pMac->sap.SapDfsInfo.
+	if (QDF_TIMER_STATE_RUNNING !=
+	    qdf_mc_timer_get_current_state(&pMac->sap.SapDfsInfo.
 					   sap_dfs_cac_timer)) {
 		return 0;
 	}
 
-	cdf_mc_timer_stop(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
+	qdf_mc_timer_stop(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer);
 	pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
 
 	return 0;
@@ -4549,13 +4549,13 @@ int sap_start_dfs_cac_timer(ptSapContext sapContext)
 		  "sapdfs: SAP_DFS_CHANNEL_CAC_START on CH - %d, CAC TIMEOUT - %d sec",
 		  sapContext->channel, cacTimeOut / 1000);
 
-	cdf_mc_timer_init(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
+	qdf_mc_timer_init(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
 			  QDF_TIMER_TYPE_SW,
 			  sap_dfs_cac_timer_callback, (void *) hHal);
 
 	/*Start the CAC timer */
 	status =
-		cdf_mc_timer_start(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
+		qdf_mc_timer_start(&pMac->sap.SapDfsInfo.sap_dfs_cac_timer,
 				   cacTimeOut);
 	if (status == QDF_STATUS_SUCCESS) {
 		pMac->sap.SapDfsInfo.is_dfs_cac_timer_running = true;

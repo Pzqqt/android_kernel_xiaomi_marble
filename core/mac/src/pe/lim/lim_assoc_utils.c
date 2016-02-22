@@ -911,7 +911,7 @@ lim_reject_association(tpAniSirGlobal mac_ctx, tSirMacAddr peer_addr,
 			auth_node->fTimerStarted = 0;
 			auth_node->mlmState = eLIM_MLM_AUTHENTICATED_STATE;
 			auth_node->authType = (tAniAuthType) auth_type;
-			auth_node->timestamp = cdf_mc_timer_get_system_ticks();
+			auth_node->timestamp = qdf_mc_timer_get_system_ticks();
 			lim_add_pre_auth_node(mac_ctx, auth_node);
 		}
 	}

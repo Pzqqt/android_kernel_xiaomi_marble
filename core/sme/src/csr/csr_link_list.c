@@ -36,7 +36,7 @@
 #include "qdf_lock.h"
 #include "cdf_memory.h"
 #include "cdf_trace.h"
-#include "cdf_mc_timer.h"
+#include "qdf_mc_timer.h"
 
 static inline void csr_list_init(tListElem *pList)
 {
@@ -302,7 +302,7 @@ void csr_ll_insert_head(tDblLinkList *pList, tListElem *pEntry,
 		}
 		if (pList->cmdTimeoutTimer && pList->cmdTimeoutDuration) {
 			/* timer to detect pending command in activelist */
-			cdf_mc_timer_start(pList->cmdTimeoutTimer,
+			qdf_mc_timer_start(pList->cmdTimeoutTimer,
 					   pList->cmdTimeoutDuration);
 		}
 	}
@@ -497,7 +497,7 @@ bool csr_ll_remove_entry(tDblLinkList *pList, tListElem *pEntryToRemove,
 			csr_ll_unlock(pList);
 		}
 		if (pList->cmdTimeoutTimer) {
-			cdf_mc_timer_stop(pList->cmdTimeoutTimer);
+			qdf_mc_timer_stop(pList->cmdTimeoutTimer);
 		}
 	}
 

@@ -46,7 +46,7 @@
 #include <cds_packet.h>
 #include <cds_sched.h>
 #include <qdf_threads.h>
-#include <cdf_mc_timer.h>
+#include <qdf_mc_timer.h>
 #include <cds_pack_align.h>
 #include <crypto/aes.h>
 #include <crypto/hash.h>

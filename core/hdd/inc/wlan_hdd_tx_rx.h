@@ -73,7 +73,7 @@ QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
 void hdd_tx_resume_cb(void *adapter_context, bool tx_resume);
 void hdd_tx_resume_timer_expired_handler(void *adapter_context);
 void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
-		cdf_mc_timer_callback_t timer_callback,
+		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flowControl);
 void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter);
 void hdd_get_tx_resource(hdd_adapter_t *adapter,
@@ -89,7 +89,7 @@ static inline void hdd_tx_resume_timer_expired_handler(void *adapter_context)
 	return;
 }
 static inline void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
-		cdf_mc_timer_callback_t timer_callback,
+		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flowControl)
 {
 	return;

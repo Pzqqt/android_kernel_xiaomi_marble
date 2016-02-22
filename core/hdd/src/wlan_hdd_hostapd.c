@@ -484,7 +484,7 @@ void hdd_hostapd_inactivity_timer_cb(void *usrDataForCallback)
 		pHostapdAdapter = netdev_priv(dev);
 		pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter);
 		qdf_status =
-			cdf_mc_timer_start(&pHddApCtx->hdd_ap_inactivity_timer,
+			qdf_mc_timer_start(&pHddApCtx->hdd_ap_inactivity_timer,
 					(WLAN_HDD_GET_CTX(pHostapdAdapter))->
 					config->nAPAutoShutOff * 1000);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -978,7 +978,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		     nAPAutoShutOff) {
 			/* AP Inactivity timer init and start */
 			qdf_status =
-				cdf_mc_timer_init(&pHddApCtx->
+				qdf_mc_timer_init(&pHddApCtx->
 						  hdd_ap_inactivity_timer,
 						  QDF_TIMER_TYPE_SW,
 						  hdd_hostapd_inactivity_timer_cb,
@@ -988,7 +988,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 					FL("Failed to init inactivity timer"));
 
 			qdf_status =
-				cdf_mc_timer_start(&pHddApCtx->
+				qdf_mc_timer_start(&pHddApCtx->
 						   hdd_ap_inactivity_timer,
 						   (WLAN_HDD_GET_CTX
 						    (pHostapdAdapter))->config->
@@ -1374,9 +1374,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		pHddApCtx->bApActive = true;
 		/* Stop AP inactivity timer */
 		if (pHddApCtx->hdd_ap_inactivity_timer.state ==
-		    CDF_TIMER_STATE_RUNNING) {
+		    QDF_TIMER_STATE_RUNNING) {
 			qdf_status =
-				cdf_mc_timer_stop(&pHddApCtx->
+				qdf_mc_timer_stop(&pHddApCtx->
 						  hdd_ap_inactivity_timer);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOGE,
@@ -1504,9 +1504,9 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		     nAPAutoShutOff)) {
 			if (pHddApCtx->bApActive == false) {
 				if (pHddApCtx->hdd_ap_inactivity_timer.state ==
-				    CDF_TIMER_STATE_STOPPED) {
+				    QDF_TIMER_STATE_STOPPED) {
 					qdf_status =
-						cdf_mc_timer_start(&pHddApCtx->
+						qdf_mc_timer_start(&pHddApCtx->
 								   hdd_ap_inactivity_timer,
 								   (WLAN_HDD_GET_CTX
 								    (pHostapdAdapter))->
@@ -1518,10 +1518,10 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						       FL("Failed to init AP inactivity timer"));
 				} else
 					CDF_ASSERT
-						(cdf_mc_timer_get_current_state
+						(qdf_mc_timer_get_current_state
 							(&pHddApCtx->
 							hdd_ap_inactivity_timer) ==
-						CDF_TIMER_STATE_STOPPED);
+						QDF_TIMER_STATE_STOPPED);
 			}
 		}
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
@@ -1715,8 +1715,8 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		pHddCtx->skip_acs_scan_status = eSAP_SKIP_ACS_SCAN;
 		hddLog(LOG1, FL("Reusing Last ACS scan result for %d sec"),
 		       ACS_SCAN_EXPIRY_TIMEOUT_S);
-		cdf_mc_timer_stop(&pHddCtx->skip_acs_scan_timer);
-		qdf_status = cdf_mc_timer_start(&pHddCtx->skip_acs_scan_timer,
+		qdf_mc_timer_stop(&pHddCtx->skip_acs_scan_timer);
+		qdf_status = qdf_mc_timer_start(&pHddCtx->skip_acs_scan_timer,
 						ACS_SCAN_EXPIRY_TIMEOUT_S *
 						1000);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -1826,10 +1826,10 @@ stopbss:
 		if (0 !=
 		    (WLAN_HDD_GET_CTX(pHostapdAdapter))->config->
 		    nAPAutoShutOff) {
-			if (CDF_TIMER_STATE_RUNNING ==
+			if (QDF_TIMER_STATE_RUNNING ==
 			    pHddApCtx->hdd_ap_inactivity_timer.state) {
 				qdf_status =
-					cdf_mc_timer_stop(&pHddApCtx->
+					qdf_mc_timer_stop(&pHddApCtx->
 							  hdd_ap_inactivity_timer);
 				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 					hddLog(LOGE,
@@ -1838,7 +1838,7 @@ stopbss:
 			}
 
 			qdf_status =
-				cdf_mc_timer_destroy(&pHddApCtx->
+				qdf_mc_timer_destroy(&pHddApCtx->
 						hdd_ap_inactivity_timer);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 				hddLog(LOGE, FL("Failed to Destroy AP inactivity timer"));

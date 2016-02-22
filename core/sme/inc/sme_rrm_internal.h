@@ -65,7 +65,7 @@ typedef struct sRrmNeighborRspCallbackInfo {
 typedef struct sRrmNeighborRequestControlInfo {
 	/* To check whether a neighbor req is already sent & response pending */
 	bool isNeighborRspPending;
-	cdf_mc_timer_t neighborRspWaitTimer;
+	qdf_mc_timer_t neighborRspWaitTimer;
 	tRrmNeighborRspCallbackInfo neighborRspCallbackInfo;
 } tRrmNeighborRequestControlInfo, *tpRrmNeighborRequestControlInfo;
 
@@ -84,7 +84,7 @@ typedef struct sRrmSMEContext {
 	uint16_t duration[SIR_ESE_MAX_MEAS_IE_REQS];
 	uint8_t measMode[SIR_ESE_MAX_MEAS_IE_REQS];
 	struct rrm_config_param rrmConfig;
-	cdf_mc_timer_t IterMeasTimer;
+	qdf_mc_timer_t IterMeasTimer;
 	tDblLinkList neighborReportCache;
 	tRrmNeighborRequestControlInfo neighborReqControlInfo;
 

@@ -1180,11 +1180,11 @@ bool lim_is_assoc_req_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info)
 		return true;
 
 	if (sta_ds->last_assoc_received_time &&
-		((cdf_mc_timer_get_system_ticks() -
+		((qdf_mc_timer_get_system_ticks() -
 			 sta_ds->last_assoc_received_time) < 1000))
 		return true;
 
-	sta_ds->last_assoc_received_time = cdf_mc_timer_get_system_ticks();
+	sta_ds->last_assoc_received_time = qdf_mc_timer_get_system_ticks();
 	return false;
 }
 #endif
@@ -1237,12 +1237,12 @@ bool lim_is_deauth_diassoc_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info)
 			 * AP. So process all deauth/diassoc frames with
 			 * a time difference of 1 sec.
 			 */
-			if ((cdf_mc_timer_get_system_ticks() -
+			if ((qdf_mc_timer_get_system_ticks() -
 				 sta_ds->last_unprot_deauth_disassoc) < 1000)
 				return true;
 
 			sta_ds->last_unprot_deauth_disassoc =
-					cdf_mc_timer_get_system_ticks();
+					qdf_mc_timer_get_system_ticks();
 		} else {
 			/* PMF enabed, Management frames are protected */
 			if (sta_ds->proct_deauh_disassoc_cnt)
@@ -1962,7 +1962,7 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			(uint8_t *) mac_hdr->bssId,
 			sizeof(tSirMacAddr));
 	bss_desc_ptr->nReceivedTime =
-		(uint32_t)cdf_mc_timer_get_system_ticks();
+		(uint32_t)qdf_mc_timer_get_system_ticks();
 	if (parsed_frm_ptr->mdiePresent) {
 		bss_desc_ptr->mdiePresent = parsed_frm_ptr->mdiePresent;
 		cdf_mem_copy((uint8_t *)bss_desc_ptr->mdie,

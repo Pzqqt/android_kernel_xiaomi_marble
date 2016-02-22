@@ -53,7 +53,7 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 		pSession->ftSmeContext.pUsrCtx->sessionId = sessionId;
 
 		status =
-			cdf_mc_timer_init(&pSession->ftSmeContext.
+			qdf_mc_timer_init(&pSession->ftSmeContext.
 					  preAuthReassocIntvlTimer,
 					  QDF_TIMER_TYPE_SW,
 					  sme_preauth_reassoc_intvl_timer_callback,
@@ -84,15 +84,15 @@ void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
 	pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (NULL != pSession) {
 		/* check if the timer is running */
-		if (CDF_TIMER_STATE_RUNNING ==
-		    cdf_mc_timer_get_current_state(&pSession->ftSmeContext.
+		if (QDF_TIMER_STATE_RUNNING ==
+		    qdf_mc_timer_get_current_state(&pSession->ftSmeContext.
 						   preAuthReassocIntvlTimer)) {
-			cdf_mc_timer_stop(&pSession->ftSmeContext.
+			qdf_mc_timer_stop(&pSession->ftSmeContext.
 					  preAuthReassocIntvlTimer);
 		}
 
 		if (QDF_STATUS_SUCCESS !=
-		    cdf_mc_timer_destroy(&pSession->ftSmeContext.
+		    qdf_mc_timer_destroy(&pSession->ftSmeContext.
 					 preAuthReassocIntvlTimer)) {
 			sms_log(pMac, LOGE,
 				FL("preAuthReAssocTimer destroy failed"));

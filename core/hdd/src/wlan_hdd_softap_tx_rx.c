@@ -137,10 +137,10 @@ void hdd_softap_tx_resume_cb(void *adapter_context, bool tx_resume)
 
 	/* Resume TX  */
 	if (true == tx_resume) {
-		if (CDF_TIMER_STATE_STOPPED !=
-		    cdf_mc_timer_get_current_state(&pAdapter->
+		if (QDF_TIMER_STATE_STOPPED !=
+		    qdf_mc_timer_get_current_state(&pAdapter->
 						   tx_flow_control_timer)) {
-			cdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
+			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
 		}
 
 		hddLog(LOG1, FL("Enabling queues"));

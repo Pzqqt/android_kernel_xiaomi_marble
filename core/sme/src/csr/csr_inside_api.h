@@ -68,11 +68,11 @@
 /* This number minus 1 means the number of times a channel is scanned before a BSS is remvoed from */
 /* cache scan result */
 #define CSR_AGING_COUNT     3
-#define CSR_SCAN_GET_RESULT_INTERVAL    (5 * CDF_MC_TIMER_TO_SEC_UNIT)  /* 5 seconds */
-#define CSR_MIC_ERROR_TIMEOUT  (60 * CDF_MC_TIMER_TO_SEC_UNIT)  /* 60 seconds */
-#define CSR_TKIP_COUNTER_MEASURE_TIMEOUT  (60 * CDF_MC_TIMER_TO_SEC_UNIT)       /* 60 seconds */
+#define CSR_SCAN_GET_RESULT_INTERVAL    (5 * QDF_MC_TIMER_TO_SEC_UNIT)  /* 5 seconds */
+#define CSR_MIC_ERROR_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)  /* 60 seconds */
+#define CSR_TKIP_COUNTER_MEASURE_TIMEOUT  (60 * QDF_MC_TIMER_TO_SEC_UNIT)       /* 60 seconds */
 
-#define CSR_SCAN_RESULT_CFG_AGING_INTERVAL    (CDF_MC_TIMER_TO_SEC_UNIT)        /* 1  second */
+#define CSR_SCAN_RESULT_CFG_AGING_INTERVAL    (QDF_MC_TIMER_TO_SEC_UNIT)        /* 1  second */
 /* the following defines are NOT used by palTimer */
 #define CSR_SCAN_AGING_TIME_NOT_CONNECT_NO_PS 50        /* 50 seconds */
 #define CSR_SCAN_AGING_TIME_NOT_CONNECT_W_PS 300        /* 300 seconds */

@@ -40,7 +40,7 @@
    ------------------------------------------------------------------------*/
 #include <cds_packet.h>
 #include <i_cds_packet.h>
-#include <cdf_mc_timer.h>
+#include <qdf_mc_timer.h>
 #include <cdf_trace.h>
 #include <wlan_hdd_main.h>
 #include "cdf_nbuf.h"
@@ -196,7 +196,7 @@ void cds_pkt_trace_buf_update(char *event_string)
 	qdf_spinlock_acquire(&trace_buffer_lock);
 	slot = trace_buffer_order % CDS_PKT_TRAC_MAX_TRACE_BUF;
 	trace_buffer[slot].order = trace_buffer_order;
-	trace_buffer[slot].event_time = cdf_mc_timer_get_system_time();
+	trace_buffer[slot].event_time = qdf_mc_timer_get_system_time();
 	cdf_mem_zero(trace_buffer[slot].event_string,
 		     sizeof(trace_buffer[slot].event_string));
 	cdf_mem_copy(trace_buffer[slot].event_string,
@@ -220,7 +220,7 @@ void cds_pkt_trace_buf_dump(void)
 	qdf_spinlock_acquire(&trace_buffer_lock);
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP START Current Timestamp %u",
-		  (unsigned int)cdf_mc_timer_get_system_time());
+		  (unsigned int)qdf_mc_timer_get_system_time());
 	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
 		  "ORDER :        TIME : EVT");
 	if (CDS_PKT_TRAC_MAX_TRACE_BUF > trace_buffer_order) {

@@ -453,12 +453,12 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 	bool isNonRoamReassoc;
 #ifdef WLAN_FEATURE_11W
-	cdf_mc_timer_t pmfComebackTimer;
+	qdf_mc_timer_t pmfComebackTimer;
 	tComebackTimerInfo pmfComebackTimerInfo;
 #endif /* WLAN_FEATURE_11W */
 	uint8_t  is_key_installed;
 	/* timer for reseting protection fileds at regular intervals */
-	cdf_mc_timer_t protection_fields_reset_timer;
+	qdf_mc_timer_t protection_fields_reset_timer;
 	void *mac_ctx;
 	/*
 	 * variable to store state of various protection struct like

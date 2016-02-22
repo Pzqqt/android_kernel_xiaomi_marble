@@ -3721,8 +3721,8 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 	/* do we need to change the HW mode */
 	if (cds_need_opportunistic_upgrade()) {
 		/* let's start the timer */
-		cdf_mc_timer_stop(&hdd_ctx->dbs_opportunistic_timer);
-		qdf_status = cdf_mc_timer_start(
+		qdf_mc_timer_stop(&hdd_ctx->dbs_opportunistic_timer);
+		qdf_status = qdf_mc_timer_start(
 					&hdd_ctx->dbs_opportunistic_timer,
 					DBS_OPPORTUNISTIC_TIME *
 						1000);
@@ -3888,7 +3888,7 @@ QDF_STATUS cds_init_policy_mgr(void)
 
 	sme_register_hw_mode_trans_cb(hdd_ctx->hHal,
 				cds_hw_mode_transition_cb);
-	status = cdf_mc_timer_init(&hdd_ctx->dbs_opportunistic_timer,
+	status = qdf_mc_timer_init(&hdd_ctx->dbs_opportunistic_timer,
 				   QDF_TIMER_TYPE_SW,
 				   cds_dbs_opportunistic_timer_handler,
 				   (void *)hdd_ctx);

@@ -893,7 +893,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				" recvd.Starting timer to wait timeout=%d."),
 				timeout_value);
 			if (QDF_STATUS_SUCCESS !=
-				cdf_mc_timer_start(
+				qdf_mc_timer_start(
 					&session_entry->pmfComebackTimer,
 					timeout_value)) {
 				lim_log(mac_ctx, LOGE,

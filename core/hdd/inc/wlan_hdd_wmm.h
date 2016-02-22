@@ -178,7 +178,7 @@ typedef struct hdd_wmm_ac_status {
 #ifdef FEATURE_WLAN_ESE
 	uint32_t wmmInactivityTime;
 	uint32_t wmmPrevTrafficCnt;
-	cdf_mc_timer_t wmmInactivityTimer;
+	qdf_mc_timer_t wmmInactivityTimer;
 #endif
 
 } hdd_wmm_ac_status_t;

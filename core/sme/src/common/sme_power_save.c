@@ -1105,7 +1105,7 @@ QDF_STATUS sme_ps_enable_auto_ps_timer(tHalHandle hal_ctx,
 	sms_log(mac_ctx, LOGE, FL("Start auto_ps_timer for %d is_reassoc:%d "),
 			timer_value, is_reassoc);
 
-	qdf_status = cdf_mc_timer_start(&ps_param->auto_ps_enable_timer,
+	qdf_status = qdf_mc_timer_start(&ps_param->auto_ps_enable_timer,
 			timer_value);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		if (QDF_STATUS_E_ALREADY == qdf_status) {
@@ -1130,13 +1130,13 @@ QDF_STATUS sme_ps_disable_auto_ps_timer(tHalHandle hal_ctx,
 	/*
 	 * Stop the auto ps entry timer if runnin
 	 */
-	if (CDF_TIMER_STATE_RUNNING ==
-			cdf_mc_timer_get_current_state(
+	if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
 				&ps_param->auto_ps_enable_timer)) {
 		sms_log(mac_ctx, LOGE,
 				FL("Stop auto_ps_enable_timer Timer for session ID:%d "),
 				session_id);
-		cdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
+		qdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -1171,7 +1171,7 @@ QDF_STATUS sme_ps_open_per_session(tHalHandle hal_ctx, uint32_t session_id)
 
 	sms_log(mac_ctx, LOG1, FL("Enter"));
 	/* Allocate a timer to enable ps automatically */
-	if (!QDF_IS_STATUS_SUCCESS(cdf_mc_timer_init(
+	if (!QDF_IS_STATUS_SUCCESS(qdf_mc_timer_init(
 					&ps_param->auto_ps_enable_timer,
 					QDF_TIMER_TYPE_SW,
 					sme_auto_ps_entry_timer_expired,
@@ -1197,7 +1197,7 @@ void sme_auto_ps_entry_timer_expired(void *data)
 				SME_PS_ENABLE);
 	} else {
 		status =
-			cdf_mc_timer_start(&ps_params->auto_ps_enable_timer,
+			qdf_mc_timer_start(&ps_params->auto_ps_enable_timer,
 					AUTO_PS_ENTRY_TIMER_DEFAULT_VALUE);
 		if (!QDF_IS_STATUS_SUCCESS(status)
 				&& (QDF_STATUS_E_ALREADY != status)) {
@@ -1230,13 +1230,13 @@ QDF_STATUS sme_ps_close_per_session(tHalHandle hal_ctx, uint32_t session_id)
 	/*
 	 * Stop the auto ps entry timer if running
 	 */
-	if (CDF_TIMER_STATE_RUNNING ==
-			cdf_mc_timer_get_current_state(
+	if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
 				&ps_param->auto_ps_enable_timer)) {
-		cdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
+		qdf_mc_timer_stop(&ps_param->auto_ps_enable_timer);
 	}
 	qdf_status =
-		cdf_mc_timer_destroy(&ps_param->auto_ps_enable_timer);
+		qdf_mc_timer_destroy(&ps_param->auto_ps_enable_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		sms_log(mac_ctx, LOGE, FL("Cannot deallocate suto PS timer"));
 	return qdf_status;
@@ -1252,8 +1252,8 @@ QDF_STATUS sme_is_auto_ps_timer_running(tHalHandle hal_ctx,
 	/*
 	 * Check if the auto ps entry timer if running
 	 */
-	if (CDF_TIMER_STATE_RUNNING ==
-			cdf_mc_timer_get_current_state(
+	if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
 				&ps_param->auto_ps_enable_timer)) {
 		status = true;
 	}

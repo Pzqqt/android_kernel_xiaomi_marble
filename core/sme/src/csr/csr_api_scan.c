@@ -171,7 +171,7 @@ QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 	mac_ctx->scan.fFullScanIssued = false;
 	mac_ctx->scan.nBssLimit = CSR_MAX_BSS_SUPPORT;
 #ifdef WLAN_AP_STA_CONCURRENCY
-	status = cdf_mc_timer_init(&mac_ctx->scan.hTimerStaApConcTimer,
+	status = qdf_mc_timer_init(&mac_ctx->scan.hTimerStaApConcTimer,
 				   QDF_TIMER_TYPE_SW,
 				   csr_sta_ap_conc_timer_handler,
 				   mac_ctx);
@@ -181,7 +181,7 @@ QDF_STATUS csr_scan_open(tpAniSirGlobal mac_ctx)
 		return status;
 	}
 #endif
-	status = cdf_mc_timer_init(&mac_ctx->scan.hTimerResultCfgAging,
+	status = qdf_mc_timer_init(&mac_ctx->scan.hTimerResultCfgAging,
 				   QDF_TIMER_TYPE_SW,
 				   csr_scan_result_cfg_aging_timer_handler,
 				   mac_ctx);
@@ -209,9 +209,9 @@ QDF_STATUS csr_scan_close(tpAniSirGlobal pMac)
 	csr_ll_close(&pMac->scan.channelPowerInfoList24);
 	csr_ll_close(&pMac->scan.channelPowerInfoList5G);
 	csr_scan_disable(pMac);
-	cdf_mc_timer_destroy(&pMac->scan.hTimerResultCfgAging);
+	qdf_mc_timer_destroy(&pMac->scan.hTimerResultCfgAging);
 #ifdef WLAN_AP_STA_CONCURRENCY
-	cdf_mc_timer_destroy(&pMac->scan.hTimerStaApConcTimer);
+	qdf_mc_timer_destroy(&pMac->scan.hTimerStaApConcTimer);
 #endif
 	return QDF_STATUS_SUCCESS;
 }
@@ -424,7 +424,7 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	tmp_rq.BSSType = eCSR_BSS_TYPE_ANY;
 	tmp_rq.scan_id = scan_11d_cmd->u.scanCmd.scanID;
 
-	status = cdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
+	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, &scan_11d_cmd);
 
@@ -610,7 +610,7 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 	pTempScanReq = &scan_cmd->u.scanCmd.u.scanRequest;
 	pMac->scan.scanProfile.numOfChannels =
 		pTempScanReq->ChannelInfo.numOfChannels;
-	status = cdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
+	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
 				QDF_TIMER_TYPE_SW,
 				csr_scan_active_list_timeout_handle, scan_cmd);
 	sms_log(pMac, LOG1,
@@ -807,7 +807,7 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		mac_ctx->roam.configParam.nActiveMinChnTime;
 	cmd->u.scanCmd.u.scanRequest.scanType = eSIR_ACTIVE_SCAN;
 	wma_get_scan_id(&cmd->u.scanCmd.scanID);
-	status = cdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
+	status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, &cmd);
 	cmd->u.scanCmd.u.scanRequest.scan_id =
@@ -978,7 +978,7 @@ csr_update_lost_link2_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		cmd->u.scanCmd.scanID;
 	if (!session->pCurRoamProfile)
 		return QDF_STATUS_SUCCESS;
-	status = cdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
+	status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, &cmd);
 	scan_fltr = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
@@ -1113,7 +1113,7 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 			mac_ctx->roam.configParam.nActiveMinChnTime;
 		cmd->u.scanCmd.u.scanRequest.scanType = eSIR_ACTIVE_SCAN;
 		wma_get_scan_id(&cmd->u.scanCmd.scanID);
-		status = cdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
+		status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, &cmd);
 		cmd->u.scanCmd.u.scanRequest.scan_id =
@@ -2858,7 +2858,7 @@ csr_remove_from_tmp_list(tpAniSirGlobal mac_ctx,
 			 * hidden ssid from the profile i.e., forget the SSID
 			 * via GUI that SSID shouldn't see in the profile
 			 */
-			unsigned long time_gap = cdf_mc_timer_get_system_time() -
+			unsigned long time_gap = qdf_mc_timer_get_system_time() -
 									timer;
 			if ((0 == bss_dscp->Result.ssId.length)
 			    && (time_gap <= HIDDEN_TIMER)
@@ -2994,7 +2994,7 @@ tCsrScanResult *csr_scan_append_bss_description(tpAniSirGlobal pMac,
 			 * hidden ssid from the profile i.e., forget the SSID
 			 * via GUI that SSID shouldn't see in the profile
 			 */
-			if ((cdf_mc_timer_get_system_time() - timer) <=
+			if ((qdf_mc_timer_get_system_time() - timer) <=
 			    HIDDEN_TIMER) {
 				pCsrBssDescription->Result.ssId = tmpSsid;
 				pCsrBssDescription->Result.timer = timer;
@@ -4279,7 +4279,7 @@ tCsrScanResult *csr_scan_save_bss_description_to_interim_list(tpAniSirGlobal pMa
 			}
 			pCsrBssDescription->Result.ssId.length = len;
 			pCsrBssDescription->Result.timer =
-				cdf_mc_timer_get_system_time();
+				qdf_mc_timer_get_system_time();
 			cdf_mem_copy(pCsrBssDescription->Result.ssId.ssId,
 				     pIes->SSID.ssid, len);
 		}
@@ -4769,7 +4769,7 @@ bool csr_scan_age_out_bss(tpAniSirGlobal pMac, tCsrScanResult *pResult)
 			   MAC_ADDRESS_STR), pResult->AgingCount,
 			MAC_ADDR_ARRAY(pResult->Result.BssDescriptor.bssId));
 		pResult->Result.BssDescriptor.nReceivedTime =
-			(uint32_t) cdf_mc_timer_get_system_ticks();
+			(uint32_t) qdf_mc_timer_get_system_ticks();
 		return fRet;
 	}
 	sms_log(pMac, LOGW,
@@ -5784,16 +5784,16 @@ QDF_STATUS csr_scan_start_result_cfg_aging_timer(tpAniSirGlobal pMac)
 
 	if (pMac->scan.fScanEnable) {
 		status =
-			cdf_mc_timer_start(&pMac->scan.hTimerResultCfgAging,
+			qdf_mc_timer_start(&pMac->scan.hTimerResultCfgAging,
 					   CSR_SCAN_RESULT_CFG_AGING_INTERVAL /
-					   CDF_MC_TIMER_TO_MS_UNIT);
+					   QDF_MC_TIMER_TO_MS_UNIT);
 	}
 	return status;
 }
 
 QDF_STATUS csr_scan_stop_result_cfg_aging_timer(tpAniSirGlobal pMac)
 {
-	return cdf_mc_timer_stop(&pMac->scan.hTimerResultCfgAging);
+	return qdf_mc_timer_stop(&pMac->scan.hTimerResultCfgAging);
 }
 
 /**
@@ -5811,7 +5811,7 @@ static void csr_scan_result_cfg_aging_timer_handler(void *pv)
 	tCsrScanResult *result;
 	uint32_t ageout_time =
 		mac_ctx->scan.scanResultCfgAgingTime * QDF_TICKS_PER_SECOND/10;
-	uint32_t cur_time = (uint32_t) cdf_mc_timer_get_system_ticks();
+	uint32_t cur_time = (uint32_t) qdf_mc_timer_get_system_ticks();
 	uint8_t *bssId;
 
 	csr_ll_lock(&mac_ctx->scan.scanResultList);
@@ -5821,7 +5821,7 @@ static void csr_scan_result_cfg_aging_timer_handler(void *pv)
 					LL_ACCESS_NOLOCK);
 		result = GET_BASE_ADDR(entry, tCsrScanResult, Link);
 		/*
-		 * cdf_mc_timer_get_system_ticks() returns in 10ms interval.
+		 * qdf_mc_timer_get_system_ticks() returns in 10ms interval.
 		 * so ageout time value also updated to 10ms interval value.
 		 */
 		if ((cur_time - result->Result.BssDescriptor.nReceivedTime) >
@@ -5835,9 +5835,9 @@ static void csr_scan_result_cfg_aging_timer_handler(void *pv)
 		entry = tmp_entry;
 	}
 	csr_ll_unlock(&mac_ctx->scan.scanResultList);
-	cdf_mc_timer_start(&mac_ctx->scan.hTimerResultCfgAging,
+	qdf_mc_timer_start(&mac_ctx->scan.hTimerResultCfgAging,
 			   CSR_SCAN_RESULT_CFG_AGING_INTERVAL /
-			   CDF_MC_TIMER_TO_MS_UNIT);
+			   QDF_MC_TIMER_TO_MS_UNIT);
 }
 
 bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)
@@ -6162,7 +6162,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	wma_get_scan_id(&scan_cmd->u.scanCmd.scanID);
 	cdf_mem_set(&scan_cmd->u.scanCmd.u.scanRequest,
 			sizeof(tCsrScanRequest), 0);
-	status = cdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
+	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, &scan_cmd);
 	scan_req = &scan_cmd->u.scanCmd.u.scanRequest;
@@ -6914,7 +6914,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	pBssDescr->capabilityInfo = *((uint16_t *)&parsed_frm->capabilityInfo);
 	cdf_mem_copy((uint8_t *) &pBssDescr->bssId,
 		     (uint8_t *) macHeader->bssId, sizeof(tSirMacAddr));
-	pBssDescr->nReceivedTime = (uint32_t) cdf_mc_timer_get_system_ticks();
+	pBssDescr->nReceivedTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	sms_log(pMac, LOG2, FL("Bssid= "MAC_ADDRESS_STR" chan= %d, rssi = %d"),
 		MAC_ADDR_ARRAY(pBssDescr->bssId), pBssDescr->channelId,
 		pBssDescr->rssi);

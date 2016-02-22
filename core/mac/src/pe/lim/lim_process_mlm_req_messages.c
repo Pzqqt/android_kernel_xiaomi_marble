@@ -316,7 +316,7 @@ void lim_set_dfs_channel_list(tpAniSirGlobal mac_ctx, uint8_t chan_num,
 						     pass_to_active);
 		}
 		dfs_ch_list->timeStamp[chan_num] =
-					cdf_mc_timer_get_system_time();
+					qdf_mc_timer_get_system_time();
 	} else {
 		lim_log(mac_ctx, LOG1, FL("Channel %d is Active"), chan_num);
 		return;
@@ -2423,8 +2423,8 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 	TX_TIMER *probe_req_timer =
 		&mac_ctx->lim.limTimers.gLimPeriodicProbeReqTimer;
 
-	if (cdf_mc_timer_get_current_state(&probe_req_timer->cdf_timer)
-					   != CDF_TIMER_STATE_STOPPED) {
+	if (qdf_mc_timer_get_current_state(&probe_req_timer->cdf_timer)
+					   != QDF_TIMER_STATE_STOPPED) {
 		lim_log(mac_ctx, LOG1, FL("Invalid state of timer"));
 		return;
 	}

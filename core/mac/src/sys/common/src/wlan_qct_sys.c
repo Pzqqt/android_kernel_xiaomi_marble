@@ -133,7 +133,7 @@ QDF_STATUS sys_stop(v_CONTEXT_t p_cds_context)
 QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	cdf_mc_timer_callback_t timerCB;
+	qdf_mc_timer_callback_t timerCB;
 	tpAniSirGlobal mac_ctx;
 	void *hHal;
 

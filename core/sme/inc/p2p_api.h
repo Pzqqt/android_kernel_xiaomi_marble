@@ -38,7 +38,7 @@
 #define __P2P_API_H__
 
 #include "qdf_types.h"
-#include "cdf_mc_timer.h"
+#include "qdf_mc_timer.h"
 #include "qdf_lock.h"
 
 typedef struct sP2pPsConfig {

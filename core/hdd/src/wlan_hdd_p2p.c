@@ -185,8 +185,8 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	}
 
 	hddLog(LOG1, "Received remain on channel rsp");
-	cdf_mc_timer_stop(&pRemainChanCtx->hdd_remain_on_chan_timer);
-	cdf_mc_timer_destroy(&pRemainChanCtx->hdd_remain_on_chan_timer);
+	qdf_mc_timer_stop(&pRemainChanCtx->hdd_remain_on_chan_timer);
+	qdf_mc_timer_destroy(&pRemainChanCtx->hdd_remain_on_chan_timer);
 
 	cfgState->remain_on_chan_ctx = NULL;
 	/*
@@ -217,7 +217,7 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 			cookie,
 			&pRemainChanCtx->chan,
 			GFP_KERNEL);
-		pAdapter->last_roc_ts = cdf_mc_timer_get_system_time();
+		pAdapter->last_roc_ts = qdf_mc_timer_get_system_time();
 	}
 
 	/* Schedule any pending RoC: Any new roc request during this time
@@ -281,9 +281,9 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 	if (cfgState->remain_on_chan_ctx != NULL) {
 		hddLog(LOGE, "Cancel Existing Remain on Channel");
 
-		if (CDF_TIMER_STATE_RUNNING == cdf_mc_timer_get_current_state(
+		if (QDF_TIMER_STATE_RUNNING == qdf_mc_timer_get_current_state(
 		    &cfgState->remain_on_chan_ctx->hdd_remain_on_chan_timer))
-			cdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
+			qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
 					  hdd_remain_on_chan_timer);
 
 		pRemainChanCtx = cfgState->remain_on_chan_ctx;
@@ -446,8 +446,8 @@ wait:
 		roc_ctx = cfg_state->remain_on_chan_ctx;
 		if (roc_ctx != NULL) {
 			cfg_state->remain_on_chan_ctx = NULL;
-			cdf_mc_timer_stop(&roc_ctx->hdd_remain_on_chan_timer);
-			cdf_mc_timer_destroy(
+			qdf_mc_timer_stop(&roc_ctx->hdd_remain_on_chan_timer);
+			qdf_mc_timer_destroy(
 					&roc_ctx->hdd_remain_on_chan_timer);
 			if (roc_ctx->action_pkt_buff.frame_ptr != NULL
 				&& roc_ctx->action_pkt_buff.frame_length != 0) {
@@ -566,7 +566,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 
 	/* Initialize Remain on chan timer */
 	qdf_status =
-		cdf_mc_timer_init(&pRemainChanCtx->hdd_remain_on_chan_timer,
+		qdf_mc_timer_init(&pRemainChanCtx->hdd_remain_on_chan_timer,
 				  QDF_TIMER_TYPE_SW,
 				  wlan_hdd_remain_on_chan_timeout, pAdapter);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
@@ -622,7 +622,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 			cfgState->remain_on_chan_ctx = NULL;
 			pAdapter->is_roc_inprogress = false;
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-			cdf_mc_timer_destroy(
+			qdf_mc_timer_destroy(
 				&pRemainChanCtx->hdd_remain_on_chan_timer);
 			cdf_mem_free(pRemainChanCtx);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
@@ -658,7 +658,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 			cfgState->remain_on_chan_ctx = NULL;
 			pAdapter->is_roc_inprogress = false;
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-			cdf_mc_timer_destroy(
+			qdf_mc_timer_destroy(
 				&pRemainChanCtx->hdd_remain_on_chan_timer);
 			cdf_mem_free(pRemainChanCtx);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
@@ -875,7 +875,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 			hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter))) {
 			if (pAdapter->last_roc_ts != 0 &&
-				((cdf_mc_timer_get_system_time() -
+				((qdf_mc_timer_get_system_time() -
 					 pAdapter->last_roc_ts) <
 				pHddCtx->config->p2p_listen_defer_interval)) {
 			if (pRemainChanCtx->duration > HDD_P2P_MAX_ROC_DURATION)
@@ -996,7 +996,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 	cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 	hddLog(LOG1, "Ready on chan ind %d", scan_id);
 
-	pAdapter->start_roc_ts = cdf_mc_timer_get_system_time();
+	pAdapter->start_roc_ts = qdf_mc_timer_get_system_time();
 	mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 	pRemainChanCtx = cfgState->remain_on_chan_ctx;
 	if (pRemainChanCtx != NULL) {
@@ -1005,15 +1005,15 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 				 pAdapter->sessionId,
 				 pRemainChanCtx->duration));
 		/* start timer for actual duration */
-		if (CDF_TIMER_STATE_RUNNING ==
-			cdf_mc_timer_get_current_state(
+		if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
 				&pRemainChanCtx->hdd_remain_on_chan_timer)) {
 			hddLog(LOGE, "Timer Started before ready event!!!");
-			cdf_mc_timer_stop(&pRemainChanCtx->
+			qdf_mc_timer_stop(&pRemainChanCtx->
 					  hdd_remain_on_chan_timer);
 		}
 		status =
-			cdf_mc_timer_start(&pRemainChanCtx->
+			qdf_mc_timer_start(&pRemainChanCtx->
 					   hdd_remain_on_chan_timer,
 					   (pRemainChanCtx->duration +
 					    COMPLETE_EVENT_PROPOGATE_TIME));
@@ -1134,7 +1134,7 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	}
 
 	if (NULL != cfgState->remain_on_chan_ctx) {
-		cdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
+		qdf_mc_timer_stop(&cfgState->remain_on_chan_ctx->
 				  hdd_remain_on_chan_timer);
 		if (true ==
 		    pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress) {
@@ -1317,7 +1317,7 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 		if (cfgState->remain_on_chan_ctx) {
 
-			uint32_t current_time = cdf_mc_timer_get_system_time();
+			uint32_t current_time = qdf_mc_timer_get_system_time();
 			int remaining_roc_time =
 				((int) cfgState->remain_on_chan_ctx->duration -
 				(current_time - pAdapter->start_roc_ts));
@@ -1418,15 +1418,15 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 					       [WLAN_HDD_PUBLIC_ACTION_FRAME_BODY_OFFSET])
 		    && cfgState->remain_on_chan_ctx
 		    && cfgState->current_freq == chan->center_freq) {
-			if (CDF_TIMER_STATE_RUNNING ==
-			    cdf_mc_timer_get_current_state(&cfgState->
+			if (QDF_TIMER_STATE_RUNNING ==
+			    qdf_mc_timer_get_current_state(&cfgState->
 						   remain_on_chan_ctx->
 						   hdd_remain_on_chan_timer)) {
-				cdf_mc_timer_stop(&cfgState->
+				qdf_mc_timer_stop(&cfgState->
 						  remain_on_chan_ctx->
 						  hdd_remain_on_chan_timer);
 				status =
-					cdf_mc_timer_start(&cfgState->
+					qdf_mc_timer_start(&cfgState->
 							   remain_on_chan_ctx->
 							   hdd_remain_on_chan_timer,
 							   wait);
@@ -2260,12 +2260,12 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 						if (completion_done
 							    (&pAdapter->
 							    rem_on_chan_ready_event)) {
-							if (CDF_TIMER_STATE_RUNNING == cdf_mc_timer_get_current_state(&pRemainChanCtx->hdd_remain_on_chan_timer)) {
-								cdf_mc_timer_stop
+							if (QDF_TIMER_STATE_RUNNING == qdf_mc_timer_get_current_state(&pRemainChanCtx->hdd_remain_on_chan_timer)) {
+								qdf_mc_timer_stop
 									(&pRemainChanCtx->
 									hdd_remain_on_chan_timer);
 								status =
-									cdf_mc_timer_start
+									qdf_mc_timer_start
 										(&pRemainChanCtx->
 										hdd_remain_on_chan_timer,
 										extend_time);

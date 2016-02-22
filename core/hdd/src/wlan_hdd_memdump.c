@@ -285,7 +285,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	 * User space will not be able to access the dump after this time.
 	 * New request should be issued to get the dump again.
 	 */
-	cdf_mc_timer_start(&hdd_ctx->memdump_cleanup_timer,
+	qdf_mc_timer_start(&hdd_ctx->memdump_cleanup_timer,
 			MEMDUMP_COMPLETION_TIME_MS);
 	hdd_ctx->memdump_in_progress = true;
 
@@ -304,10 +304,10 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 		hdd_ctx->fw_dump_loc = NULL;
 		mutex_unlock(&hdd_ctx->memdump_lock);
 		hdd_ctx->memdump_in_progress = false;
-		if (CDF_TIMER_STATE_RUNNING ==
-			cdf_mc_timer_get_current_state(
+		if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
 				&hdd_ctx->memdump_cleanup_timer)) {
-			cdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
+			qdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
 		}
 		return -EINVAL;
 	}
@@ -447,10 +447,10 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		hdd_ctx->memdump_in_progress = false;
-		if (CDF_TIMER_STATE_RUNNING ==
-			cdf_mc_timer_get_current_state(
+		if (QDF_TIMER_STATE_RUNNING ==
+			qdf_mc_timer_get_current_state(
 				&hdd_ctx->memdump_cleanup_timer)) {
-			cdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
+			qdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
 		}
 		mutex_unlock(&hdd_ctx->memdump_lock);
 	}
@@ -568,7 +568,7 @@ int memdump_init(void)
 
 	init_completion(&fw_dump_context.response_event);
 
-	qdf_status = cdf_mc_timer_init(&hdd_ctx->memdump_cleanup_timer,
+	qdf_status = qdf_mc_timer_init(&hdd_ctx->memdump_cleanup_timer,
 				    QDF_TIMER_TYPE_SW, memdump_cleanup_timer_cb,
 				    (void *)hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -626,12 +626,12 @@ void memdump_deinit(void)
 	}
 	mutex_unlock(&hdd_ctx->memdump_lock);
 
-	if (CDF_TIMER_STATE_RUNNING ==
-	  cdf_mc_timer_get_current_state(&hdd_ctx->memdump_cleanup_timer)) {
-		cdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
+	if (QDF_TIMER_STATE_RUNNING ==
+	  qdf_mc_timer_get_current_state(&hdd_ctx->memdump_cleanup_timer)) {
+		qdf_mc_timer_stop(&hdd_ctx->memdump_cleanup_timer);
 	}
 
-	qdf_status = cdf_mc_timer_destroy(&hdd_ctx->memdump_cleanup_timer);
+	qdf_status = qdf_mc_timer_destroy(&hdd_ctx->memdump_cleanup_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		hddLog(LOGE, FL("Failed to deallocate timer"));
 }

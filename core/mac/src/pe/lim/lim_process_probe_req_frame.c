@@ -79,7 +79,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 	tSirWPSPBCSession *pbc;
 	uint32_t cur_time;
 
-	cur_time = (uint32_t) (cdf_mc_timer_get_system_ticks() /
+	cur_time = (uint32_t) (qdf_mc_timer_get_system_ticks() /
 						QDF_TICKS_PER_SECOND);
 	qdf_zero_macaddr(&addr);
 	cdf_mem_set((uint8_t *) uuid_e, SIR_WPS_UUID_LEN, 0);
@@ -204,7 +204,7 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 	uint32_t curTime;
 
 	curTime =
-		(uint32_t) (cdf_mc_timer_get_system_ticks() /
+		(uint32_t) (qdf_mc_timer_get_system_ticks() /
 			    QDF_TICKS_PER_SECOND);
 
 	PELOG4(lim_log

@@ -290,7 +290,7 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 	int tlen;
 	uint32_t rem;
 
-	rem = do_div(ts, CDF_MC_TIMER_TO_SEC_UNIT);
+	rem = do_div(ts, QDF_MC_TIMER_TO_SEC_UNIT);
 	tlen = scnprintf(tbuf, tbuf_sz, "[%s][%lu.%06lu] ", current->comm,
 			(unsigned long) ts, (unsigned long)rem);
 	return tlen;

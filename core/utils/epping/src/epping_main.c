@@ -206,7 +206,7 @@ int epping_enable(struct device *parent_dev)
 	epping_get_dummy_mac_addr(adapter_macAddr);
 
 	/* Initialize the timer module */
-	cdf_timer_module_init();
+	qdf_timer_module_init();
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {

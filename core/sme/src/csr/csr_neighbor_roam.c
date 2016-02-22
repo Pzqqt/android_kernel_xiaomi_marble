@@ -1537,7 +1537,7 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			}
 
 			/* check the age of the AP */
-			age_ticks = (uint32_t) cdf_mc_timer_get_system_ticks() -
+			age_ticks = (uint32_t) qdf_mc_timer_get_system_ticks() -
 					descr->nReceivedTime;
 			if (age_constraint == true && age_ticks > limit_ticks) {
 				num_dropped++;
@@ -2284,7 +2284,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 			pSession->prevOpChannel =
 				pSession->connectedProfile.operationChannel;
 			pSession->isPrevApInfoValid = true;
-			pSession->roamTS1 = cdf_mc_timer_get_system_time();
+			pSession->roamTS1 = qdf_mc_timer_get_system_time();
 		}
 #endif
 	}
@@ -2330,7 +2330,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 
 	case eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE:
 		/* Stop pre-auth to reassoc interval timer */
-		cdf_mc_timer_stop(&pSession->ftSmeContext.
+		qdf_mc_timer_stop(&pSession->ftSmeContext.
 				preAuthReassocIntvlTimer);
 	case eCSR_NEIGHBOR_ROAM_STATE_PREAUTHENTICATING:
 		CSR_NEIGHBOR_ROAM_STATE_TRANSITION(
@@ -3134,7 +3134,7 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(tpAniSirGlobal pM
 		return;
 
 	/* Stop timer */
-	cdf_mc_timer_stop(&session->ftSmeContext.preAuthReassocIntvlTimer);
+	qdf_mc_timer_stop(&session->ftSmeContext.preAuthReassocIntvlTimer);
 
 	/* Transition to init state */
 	CSR_NEIGHBOR_ROAM_STATE_TRANSITION(pMac, eCSR_NEIGHBOR_ROAM_STATE_INIT,

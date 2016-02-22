@@ -360,7 +360,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	result->num_results = num_results;
 
 	for (i = 0; i < result->num_results; i++) {
-		result->ap[i].ts = cdf_mc_timer_get_system_time();
+		result->ap[i].ts = qdf_mc_timer_get_system_time();
 		result->ap[i].beaconPeriod = frame->beaconInterval;
 		result->ap[i].capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
@@ -411,7 +411,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	result->requestId = 0;
 
 	result->moreData = 0;
-	result->ap.ts = cdf_mc_timer_get_system_time();
+	result->ap.ts = qdf_mc_timer_get_system_time();
 	result->ap.beaconPeriod = frame->beaconInterval;
 	result->ap.capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);

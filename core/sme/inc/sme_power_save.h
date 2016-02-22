@@ -111,7 +111,7 @@ struct ps_params {
 	 * Power Save Offload module will
 	 * try to enable sta mode ps
 	 */
-	cdf_mc_timer_t auto_ps_enable_timer;
+	qdf_mc_timer_t auto_ps_enable_timer;
 
 };
 

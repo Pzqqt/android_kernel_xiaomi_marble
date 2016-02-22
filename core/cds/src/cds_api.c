@@ -89,7 +89,7 @@ void cds_sys_probe_thread_cback(void *pUserData);
  */
 v_CONTEXT_t cds_init(void)
 {
-	cdf_mc_timer_manager_init();
+	qdf_mc_timer_manager_init();
 	cdf_mem_init();
 
 	gp_cds_context = &g_cds_context;
@@ -124,7 +124,7 @@ void cds_deinit(void)
 
 	cdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
 
-	cdf_mc_timer_exit();
+	qdf_mc_timer_manager_exit();
 	cdf_mem_exit();
 
 	return;
@@ -188,7 +188,7 @@ QDF_STATUS cds_open(void)
 	}
 
 	/* Initialize the timer module */
-	cdf_timer_module_init();
+	qdf_timer_module_init();
 
 	/* Initialize bug reporting structure */
 	cds_init_log_completion();
@@ -1453,9 +1453,9 @@ QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
 	 * destroyed after stop
 	 */
 	if (pmac->sap.SapDfsInfo.is_dfs_cac_timer_running) {
-		cdf_mc_timer_stop(&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		qdf_mc_timer_stop(&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
 		pmac->sap.SapDfsInfo.is_dfs_cac_timer_running = 0;
-		cdf_mc_timer_destroy(&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
+		qdf_mc_timer_destroy(&pmac->sap.SapDfsInfo.sap_dfs_cac_timer);
 	}
 
 	qdf_status = mac_close(((p_cds_contextType) cds_context)->pMACContext);

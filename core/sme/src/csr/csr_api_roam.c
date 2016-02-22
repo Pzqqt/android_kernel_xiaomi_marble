@@ -59,9 +59,9 @@
 #define CSR_NUM_IBSS_START_CHANNELS_50      4
 #define CSR_NUM_IBSS_START_CHANNELS_24      3
 /* 5 seconds, for WPA, WPA2, CCKM */
-#define CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD     (15 * CDF_MC_TIMER_TO_SEC_UNIT)
+#define CSR_WAIT_FOR_KEY_TIMEOUT_PERIOD     (15 * QDF_MC_TIMER_TO_SEC_UNIT)
 /* 120 seconds, for WPS */
-#define CSR_WAIT_FOR_WPS_KEY_TIMEOUT_PERIOD (120 * CDF_MC_TIMER_TO_SEC_UNIT)
+#define CSR_WAIT_FOR_WPS_KEY_TIMEOUT_PERIOD (120 * QDF_MC_TIMER_TO_SEC_UNIT)
 
 /*---------------------------------------------------------------------------
    OBIWAN recommends [8 10]% : pick 9%
@@ -918,7 +918,7 @@ QDF_STATUS csr_roam_open(tpAniSirGlobal pMac)
 		pMac->roam.WaitForKeyTimerInfo.sessionId =
 			CSR_SESSION_ID_INVALID;
 		status =
-			cdf_mc_timer_init(&pMac->roam.hTimerWaitForKey,
+			qdf_mc_timer_init(&pMac->roam.hTimerWaitForKey,
 					  QDF_TIMER_TYPE_SW,
 					  csr_roam_wait_for_key_time_out_handler,
 					  &pMac->roam.WaitForKeyTimerInfo);
@@ -929,7 +929,7 @@ QDF_STATUS csr_roam_open(tpAniSirGlobal pMac)
 			break;
 		}
 		status =
-			cdf_mc_timer_init(&pMac->roam.tlStatsReqInfo.hTlStatsTimer,
+			qdf_mc_timer_init(&pMac->roam.tlStatsReqInfo.hTlStatsTimer,
 					  QDF_TIMER_TYPE_SW,
 					  csr_roam_tl_stats_timer_handler, pMac);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -948,10 +948,10 @@ QDF_STATUS csr_roam_close(tpAniSirGlobal pMac)
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
 		csr_roam_close_session(pMac, sessionId, true, NULL, NULL);
 	}
-	cdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
-	cdf_mc_timer_destroy(&pMac->roam.hTimerWaitForKey);
-	cdf_mc_timer_stop(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
-	cdf_mc_timer_destroy(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
+	qdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
+	qdf_mc_timer_destroy(&pMac->roam.hTimerWaitForKey);
+	qdf_mc_timer_stop(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
+	qdf_mc_timer_destroy(&pMac->roam.tlStatsReqInfo.hTlStatsTimer);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1117,8 +1117,8 @@ void csr_release_command_roam(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 
 void csr_release_command_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
-	cdf_mc_timer_stop(&pCommand->u.scanCmd.csr_scan_timer);
-	cdf_mc_timer_destroy(&pCommand->u.scanCmd.csr_scan_timer);
+	qdf_mc_timer_stop(&pCommand->u.scanCmd.csr_scan_timer);
+	qdf_mc_timer_destroy(&pCommand->u.scanCmd.csr_scan_timer);
 	csr_reinit_scan_cmd(pMac, pCommand);
 	csr_release_command(pMac, pCommand);
 }
@@ -9895,7 +9895,7 @@ void csr_send_ese_adjacent_ap_rep_ind(tpAniSirGlobal pMac, tCsrRoamSession *pSes
 		return;
 	}
 
-	roamTS2 = cdf_mc_timer_get_system_time();
+	roamTS2 = qdf_mc_timer_get_system_time();
 	roamInfo.tsmRoamDelay = roamTS2 - pSession->roamTS1;
 	sms_log(pMac, LOG1, "Bssid(" MAC_ADDRESS_STR ") Roaming Delay(%u ms)",
 		MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes),
@@ -10991,7 +10991,7 @@ bool csr_roam_complete_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 	uint32_t roamTime =
 		(uint32_t) (pMac->roam.configParam.nRoamingTime *
 			    QDF_TICKS_PER_SECOND);
-	uint32_t curTime = (uint32_t) cdf_mc_timer_get_system_ticks();
+	uint32_t curTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	if (!pSession) {
 		sms_log(pMac, LOGE, FL("  session %d not found "), sessionId);
@@ -11028,7 +11028,7 @@ bool csr_roam_complete_roaming(tpAniSirGlobal pMac, uint32_t sessionId,
 		pSession->roamResult = roamResult;
 		if (!QDF_IS_STATUS_SUCCESS
 			    (csr_roam_start_roaming_timer
-				    (pMac, sessionId, CDF_MC_TIMER_TO_SEC_UNIT))) {
+				    (pMac, sessionId, QDF_MC_TIMER_TO_SEC_UNIT))) {
 			csr_call_roaming_completion_callback(pMac, pSession, NULL,
 							     0, roamResult);
 			pSession->roamingReason = eCsrNotRoaming;
@@ -11107,15 +11107,15 @@ QDF_STATUS csr_roam_start_roaming_timer(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	sms_log(pMac, LOG1, " csrScanStartRoamingTimer");
 	pSession->roamingTimerInfo.sessionId = (uint8_t) sessionId;
-	status = cdf_mc_timer_start(&pSession->hTimerRoaming,
-				    interval / CDF_MC_TIMER_TO_MS_UNIT);
+	status = qdf_mc_timer_start(&pSession->hTimerRoaming,
+				    interval / QDF_MC_TIMER_TO_MS_UNIT);
 
 	return status;
 }
 
 QDF_STATUS csr_roam_stop_roaming_timer(tpAniSirGlobal pMac, uint32_t sessionId)
 {
-	return cdf_mc_timer_stop
+	return qdf_mc_timer_stop
 			(&pMac->roam.roamSession[sessionId].hTimerRoaming);
 }
 
@@ -11197,8 +11197,8 @@ QDF_STATUS csr_roam_start_wait_for_key_timer(tpAniSirGlobal pMac, uint32_t inter
 		cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD, 0);
 	}
 	sms_log(pMac, LOG1, " csrScanStartWaitForKeyTimer");
-	status = cdf_mc_timer_start(&pMac->roam.hTimerWaitForKey,
-				    interval / CDF_MC_TIMER_TO_MS_UNIT);
+	status = qdf_mc_timer_start(&pMac->roam.hTimerWaitForKey,
+				    interval / QDF_MC_TIMER_TO_MS_UNIT);
 
 	return status;
 }
@@ -11230,7 +11230,7 @@ QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac)
 		cfg_set_int(pMac, WNI_CFG_HEART_BEAT_THRESHOLD,
 				pMac->roam.configParam.HeartbeatThresh24);
 	}
-	return cdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
+	return qdf_mc_timer_stop(&pMac->roam.hTimerWaitForKey);
 }
 
 void csr_roam_completion(tpAniSirGlobal pMac, uint32_t sessionId,
@@ -11397,7 +11397,7 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 					 type) ? eCsrLostlinkRoamingDeauth :
 					eCsrLostlinkRoamingDisassoc;
 				pSession->roamingStartTime =
-					(uint32_t) cdf_mc_timer_get_system_ticks();
+					(uint32_t) qdf_mc_timer_get_system_ticks();
 				csr_roam_call_callback(pMac, sessionId, pRoamInfo,
 						       0, eCSR_ROAM_ROAMING_START,
 						       eCSR_ROAM_RESULT_LOSTLINK);
@@ -14834,7 +14834,7 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 				     sizeof(struct qdf_mac_addr));
 			*pbSessionId = (uint8_t) i;
 			status =
-				cdf_mc_timer_init(&pSession->hTimerRoaming,
+				qdf_mc_timer_init(&pSession->hTimerRoaming,
 						  QDF_TIMER_TYPE_SW,
 						  csr_roam_roaming_timer_handler,
 						  &pSession->roamingTimerInfo);
@@ -14854,7 +14854,7 @@ QDF_STATUS csr_roam_open_session(tpAniSirGlobal pMac,
 				break;
 			}
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
-			status = cdf_mc_timer_init(&pSession->hTimerJoinRetry,
+			status = qdf_mc_timer_init(&pSession->hTimerJoinRetry,
 						   QDF_TIMER_TYPE_SW,
 						   csr_roam_join_retry_timer_handler,
 						   &pSession->
@@ -15050,9 +15050,9 @@ void csr_cleanup_session(tpAniSirGlobal pMac, uint32_t sessionId)
 		csr_free_connect_bss_desc(pMac, sessionId);
 		csr_roam_free_connect_profile(&pSession->connectedProfile);
 		csr_roam_free_connected_info(pMac, &pSession->connectedInfo);
-		cdf_mc_timer_destroy(&pSession->hTimerRoaming);
+		qdf_mc_timer_destroy(&pSession->hTimerRoaming);
 #ifdef FEATURE_WLAN_BTAMP_UT_RF
-		cdf_mc_timer_destroy(&pSession->hTimerJoinRetry);
+		qdf_mc_timer_destroy(&pSession->hTimerJoinRetry);
 #endif
 		purge_sme_session_cmd_list(pMac, sessionId,
 					   &pMac->sme.smeCmdPendingList);
@@ -15275,7 +15275,7 @@ void csr_roam_tl_stats_timer_handler(void *pv)
 		if (pMac->roam.tlStatsReqInfo.periodicity) {
 			/* start timer */
 			status =
-				cdf_mc_timer_start(&pMac->roam.tlStatsReqInfo.
+				qdf_mc_timer_start(&pMac->roam.tlStatsReqInfo.
 						   hTlStatsTimer,
 						   pMac->roam.tlStatsReqInfo.
 						   periodicity);
@@ -15303,7 +15303,7 @@ void csr_roam_pe_stats_timer_handler(void *pv)
 
 		/* Destroy the timer */
 		qdf_status =
-			cdf_mc_timer_destroy(&pPeStatsReqListEntry->hPeStatsTimer);
+			qdf_mc_timer_destroy(&pPeStatsReqListEntry->hPeStatsTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			sms_log(pMac, LOGE,
 				FL
@@ -15332,8 +15332,8 @@ void csr_roam_pe_stats_timer_handler(void *pv)
 		}
 		/* send down a req */
 		if (pPeStatsReqListEntry->periodicity &&
-		    (CDF_TIMER_STATE_STOPPED ==
-		     cdf_mc_timer_get_current_state(&pPeStatsReqListEntry->
+		    (QDF_TIMER_STATE_STOPPED ==
+		     qdf_mc_timer_get_current_state(&pPeStatsReqListEntry->
 						    hPeStatsTimer))) {
 			if (pPeStatsReqListEntry->periodicity <
 					pMac->roam.configParam.
@@ -15344,7 +15344,7 @@ void csr_roam_pe_stats_timer_handler(void *pv)
 			}
 			/* start timer */
 			qdf_status =
-				cdf_mc_timer_start(&pPeStatsReqListEntry->
+				qdf_mc_timer_start(&pPeStatsReqListEntry->
 						   hPeStatsTimer,
 						   pPeStatsReqListEntry->
 						   periodicity);
@@ -15364,8 +15364,8 @@ void csr_roam_pe_stats_timer_handler(void *pv)
 void csr_roam_stats_client_timer_handler(void *pv)
 {
 	tCsrStatsClientReqInfo *pStaEntry = (tCsrStatsClientReqInfo *) pv;
-	if (CDF_TIMER_STATE_STOPPED ==
-	    cdf_mc_timer_get_current_state(&pStaEntry->timer)) {
+	if (QDF_TIMER_STATE_STOPPED ==
+	    qdf_mc_timer_get_current_state(&pStaEntry->timer)) {
 		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 			  FL("roam stats client timer is stopped"));
 	}
@@ -15917,7 +15917,7 @@ csr_deregister_client_request(tpAniSirGlobal mac_ctx,
 	mac_ctx->roam.tlStatsReqInfo.numClient--;
 	if (!mac_ctx->roam.tlStatsReqInfo.numClient) {
 		if (mac_ctx->roam.tlStatsReqInfo.timerRunning) {
-			status = cdf_mc_timer_stop(
+			status = qdf_mc_timer_stop(
 				&mac_ctx->roam.tlStatsReqInfo.hTlStatsTimer);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
 				sms_log(mac_ctx, LOGE,
@@ -15928,9 +15928,9 @@ csr_deregister_client_request(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.tlStatsReqInfo.periodicity = 0;
 		mac_ctx->roam.tlStatsReqInfo.timerRunning = false;
 	}
-	cdf_mc_timer_stop(&ptr_sta_entry->timer);
+	qdf_mc_timer_stop(&ptr_sta_entry->timer);
 	/* Destroy the cdf timer... */
-	status = cdf_mc_timer_destroy(&ptr_sta_entry->timer);
+	status = qdf_mc_timer_destroy(&ptr_sta_entry->timer);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sms_log(mac_ctx, LOGE,
 			FL("failed to destroy Client req timer"));
@@ -15964,7 +15964,7 @@ csr_insert_stats_request_to_list(tpAniSirGlobal mac_ctx,
 	/* Init & start timer if needed */
 	ptr_sta_entry->periodicity = periodicity;
 	if (ptr_sta_entry->periodicity) {
-		status = cdf_mc_timer_init(&ptr_sta_entry->timer,
+		status = qdf_mc_timer_init(&ptr_sta_entry->timer,
 					QDF_TIMER_TYPE_SW,
 					csr_roam_stats_client_timer_handler,
 					ptr_sta_entry);
@@ -15973,7 +15973,7 @@ csr_insert_stats_request_to_list(tpAniSirGlobal mac_ctx,
 				FL("cannot init StatsClient timer"));
 			return QDF_STATUS_E_FAILURE;
 		}
-		status = cdf_mc_timer_start(&ptr_sta_entry->timer,
+		status = qdf_mc_timer_start(&ptr_sta_entry->timer,
 					    ptr_sta_entry->periodicity);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(mac_ctx, LOGE,
@@ -16025,7 +16025,7 @@ csr_get_statistics_from_tl(tpAniSirGlobal mac_ctx,
 
 		if (mac_ctx->roam.tlStatsReqInfo.periodicity) {
 			/* start timer */
-			status = cdf_mc_timer_start(
+			status = qdf_mc_timer_start(
 				&mac_ctx->roam.tlStatsReqInfo.hTlStatsTimer,
 				mac_ctx->roam.tlStatsReqInfo.periodicity);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -17198,7 +17198,7 @@ tCsrPeStatsReqInfo *csr_roam_check_pe_stats_req_list(tpAniSirGlobal pMac,
 			if (!found) {
 
 				qdf_status =
-					cdf_mc_timer_init(&pTempStaEntry->
+					qdf_mc_timer_init(&pTempStaEntry->
 							  hPeStatsTimer,
 							  QDF_TIMER_TYPE_SW,
 							  csr_roam_pe_stats_timer_handler,
@@ -17215,7 +17215,7 @@ tCsrPeStatsReqInfo *csr_roam_check_pe_stats_req_list(tpAniSirGlobal pMac,
 				"csr_roam_check_pe_stats_req_list:peStatsTimer period %d",
 				pTempStaEntry->periodicity);
 			qdf_status =
-				cdf_mc_timer_start(&pTempStaEntry->hPeStatsTimer,
+				qdf_mc_timer_start(&pTempStaEntry->hPeStatsTimer,
 						   pTempStaEntry->periodicity);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				sms_log(pMac, LOGE,
@@ -17266,7 +17266,7 @@ void csr_roam_remove_entry_from_pe_stats_req_list(tpAniSirGlobal pMac,
 		}
 		sms_log(pMac, LOGW, FL("Match found"));
 		if (pTempStaEntry->timerRunning) {
-			qdf_status = cdf_mc_timer_stop(
+			qdf_status = qdf_mc_timer_stop(
 					&pTempStaEntry->hPeStatsTimer);
 			/*
 			 * If we are not able to stop the timer here, just
@@ -17277,7 +17277,7 @@ void csr_roam_remove_entry_from_pe_stats_req_list(tpAniSirGlobal pMac,
 				/* the timer is successfully stopped */
 				pTempStaEntry->timerRunning = false;
 				/* Destroy the timer */
-				qdf_status = cdf_mc_timer_destroy(
+				qdf_status = qdf_mc_timer_destroy(
 						&pTempStaEntry->hPeStatsTimer);
 			} else {
 				/*
@@ -17438,7 +17438,7 @@ QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac)
 		if (!pMac->roam.tlStatsReqInfo.numClient) {
 			if (pMac->roam.tlStatsReqInfo.timerRunning) {
 				status =
-					cdf_mc_timer_stop(&pMac->roam.
+					qdf_mc_timer_stop(&pMac->roam.
 							  tlStatsReqInfo.
 							  hTlStatsTimer);
 				if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -17456,10 +17456,10 @@ QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac)
 			/* Initializing and starting timer only when periodicity is set. */
 			/* So Stop and Destroy timer only when periodicity is set. */
 
-			cdf_mc_timer_stop(&pTempStaEntry->timer);
+			qdf_mc_timer_stop(&pTempStaEntry->timer);
 			/* Destroy the cdf timer... */
 			qdf_status =
-				cdf_mc_timer_destroy(&pTempStaEntry->timer);
+				qdf_mc_timer_destroy(&pTempStaEntry->timer);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				sms_log(pMac, LOGE,
 					FL
@@ -17734,7 +17734,7 @@ void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
 	/* Start the pre-auth reassoc interval timer with a period of 400ms. When this expires,
 	 * actual transition from the current to handoff AP is triggered */
 	status =
-		cdf_mc_timer_start(&pSession->ftSmeContext.preAuthReassocIntvlTimer,
+		qdf_mc_timer_start(&pSession->ftSmeContext.preAuthReassocIntvlTimer,
 				   60);
 	if (QDF_STATUS_SUCCESS != status) {
 		sms_log(pMac, LOGE,
@@ -17960,7 +17960,7 @@ QDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 	pBssDescription = handoffNode.pBssDescription;
 	/* Get the time diff in milli seconds */
 	timer_diff =
-		cdf_mc_timer_get_system_time() - pBssDescription->scanSysTimeMsec;
+		qdf_mc_timer_get_system_time() - pBssDescription->scanSysTimeMsec;
 	/* Convert msec to micro sec timer */
 	timer_diff = (uint32_t) (timer_diff * SYSTEM_TIME_MSEC_TO_USEC);
 	timeStamp[0] = pBssDescription->timeStamp[0];

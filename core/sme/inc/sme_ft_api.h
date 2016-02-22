@@ -71,7 +71,7 @@ typedef struct sFTSMEContext {
 	bool setFTPreAuthState;
 	bool setFTPTKState;
 	/* Time to trigger reassoc once pre-auth is successful */
-	cdf_mc_timer_t preAuthReassocIntvlTimer;
+	qdf_mc_timer_t preAuthReassocIntvlTimer;
 	bool addMDIE;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint32_t r0kh_id_len;

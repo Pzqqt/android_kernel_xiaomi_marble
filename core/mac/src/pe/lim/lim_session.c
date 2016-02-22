@@ -213,7 +213,7 @@ void pe_reset_protection_callback(void *ptr)
 	}
 
 	pe_session_entry->old_protection_state = current_protection_state;
-	if (cdf_mc_timer_start(&pe_session_entry->
+	if (qdf_mc_timer_start(&pe_session_entry->
 				protection_fields_reset_timer,
 				SCH_PROTECTION_RESET_TIME)
 		!= QDF_STATUS_SUCCESS) {
@@ -366,12 +366,12 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	if (eSIR_INFRA_AP_MODE == bssType) {
 		session_ptr->old_protection_state = 0;
 		session_ptr->mac_ctx = (void *)pMac;
-		status = cdf_mc_timer_init(
+		status = qdf_mc_timer_init(
 			&session_ptr->protection_fields_reset_timer,
 			QDF_TIMER_TYPE_SW, pe_reset_protection_callback,
 			(void *)&pMac->lim.gpSession[i]);
 		if (status == QDF_STATUS_SUCCESS) {
-			status = cdf_mc_timer_start(
+			status = qdf_mc_timer_start(
 				&session_ptr->protection_fields_reset_timer,
 				SCH_PROTECTION_RESET_TIME);
 		}
@@ -382,7 +382,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 
 	session_ptr->pmfComebackTimerInfo.pMac = pMac;
 	session_ptr->pmfComebackTimerInfo.sessionID = *sessionId;
-	status = cdf_mc_timer_init(&session_ptr->pmfComebackTimer,
+	status = qdf_mc_timer_init(&session_ptr->pmfComebackTimer,
 			QDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
 			(void *)&session_ptr->pmfComebackTimerInfo);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -550,8 +550,8 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	}
 
 	if (LIM_IS_AP_ROLE(session)) {
-		cdf_mc_timer_stop(&session->protection_fields_reset_timer);
-		cdf_mc_timer_destroy(&session->protection_fields_reset_timer);
+		qdf_mc_timer_stop(&session->protection_fields_reset_timer);
+		qdf_mc_timer_destroy(&session->protection_fields_reset_timer);
 	}
 
 #if defined (WLAN_FEATURE_VOWIFI_11R)
@@ -676,10 +676,10 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		session->addIeParams.probeRespBCNDataLen = 0;
 	}
 #ifdef WLAN_FEATURE_11W
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&session->pmfComebackTimer))
-		cdf_mc_timer_stop(&session->pmfComebackTimer);
-	cdf_mc_timer_destroy(&session->pmfComebackTimer);
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&session->pmfComebackTimer))
+		qdf_mc_timer_stop(&session->pmfComebackTimer);
+	qdf_mc_timer_destroy(&session->pmfComebackTimer);
 #endif
 	session->valid = false;
 

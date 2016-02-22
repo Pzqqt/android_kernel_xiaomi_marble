@@ -3699,38 +3699,38 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	hdd_abort_mac_scan_all_adapters(hdd_ctx);
 
 #ifdef MSM_PLATFORM
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
-		cdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
+		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer))) {
+		    (qdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer))) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("Cannot deallocate Bus bandwidth timer"));
 	}
 #endif
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&hdd_ctx->skip_acs_scan_timer)) {
-		cdf_mc_timer_stop(&hdd_ctx->skip_acs_scan_timer);
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&hdd_ctx->skip_acs_scan_timer)) {
+		qdf_mc_timer_stop(&hdd_ctx->skip_acs_scan_timer);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS
-		    (cdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
+		    (qdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("Cannot deallocate ACS Skip timer"));
 	}
 #endif
-	if (CDF_TIMER_STATE_RUNNING ==
-		cdf_mc_timer_get_current_state(
+	if (QDF_TIMER_STATE_RUNNING ==
+		qdf_mc_timer_get_current_state(
 			&hdd_ctx->dbs_opportunistic_timer)) {
-		cdf_mc_timer_stop(&hdd_ctx->dbs_opportunistic_timer);
+		qdf_mc_timer_stop(&hdd_ctx->dbs_opportunistic_timer);
 	}
 
 	if (!QDF_IS_STATUS_SUCCESS
-			(cdf_mc_timer_destroy(
+			(qdf_mc_timer_destroy(
 				&hdd_ctx->dbs_opportunistic_timer))) {
 		hdd_err("Cannot deallocate dbs opportunistic timer");
 	}
@@ -4339,7 +4339,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 	hdd_ipa_set_perf_level(hdd_ctx, tx_packets, rx_packets);
 	hdd_ipa_uc_stat_request(adapter, 2);
 
-	cdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
+	qdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
 			   hdd_ctx->config->busBandwidthComputeInterval);
 }
 #endif
@@ -5693,7 +5693,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 #endif
 
 #ifdef FEATURE_WLAN_AP_AP_ACS_OPTIMIZE
-	status = cdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
+	status = qdf_mc_timer_init(&hdd_ctx->skip_acs_scan_timer,
 				   QDF_TIMER_TYPE_SW,
 				   hdd_skip_acs_scan_timer_handler,
 				   (void *)hdd_ctx);
@@ -5726,7 +5726,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 #ifdef MSM_PLATFORM
 	spin_lock_init(&hdd_ctx->bus_bw_lock);
-	cdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
+	qdf_mc_timer_init(&hdd_ctx->bus_bw_timer,
 			  QDF_TIMER_TYPE_SW,
 			  hdd_bus_bw_compute_cbk, (void *)hdd_ctx);
 #endif
@@ -6422,11 +6422,11 @@ void hdd_start_bus_bw_compute_timer(hdd_adapter_t *adapter)
 {
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (CDF_TIMER_STATE_RUNNING ==
-	    cdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer))
+	if (QDF_TIMER_STATE_RUNNING ==
+	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer))
 		return;
 
-	cdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
+	qdf_mc_timer_start(&hdd_ctx->bus_bw_timer,
 			   hdd_ctx->config->busBandwidthComputeInterval);
 }
 
@@ -6437,8 +6437,8 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	bool can_stop = true;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
-	if (CDF_TIMER_STATE_RUNNING !=
-	    cdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
+	if (QDF_TIMER_STATE_RUNNING !=
+	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
 		/* trying to stop timer, when not running is not good */
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("bus band width compute timer is not running"));
@@ -6475,7 +6475,7 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	}
 
 	if (can_stop == true)
-		cdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
+		qdf_mc_timer_stop(&hdd_ctx->bus_bw_timer);
 }
 #endif
 

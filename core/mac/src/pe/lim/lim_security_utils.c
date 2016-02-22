@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -273,9 +273,9 @@ lim_delete_open_auth_pre_auth_node(tpAniSirGlobal mac_ctx)
 	while (temp_node != NULL) {
 		if (temp_node->mlmState == eLIM_MLM_AUTHENTICATED_STATE &&
 		    temp_node->authType == eSIR_OPEN_SYSTEM &&
-		    (cdf_mc_timer_get_system_ticks() >
+		    (qdf_mc_timer_get_system_ticks() >
 		    (LIM_OPENAUTH_TIMEOUT + temp_node->timestamp) ||
-		    cdf_mc_timer_get_system_ticks() < temp_node->timestamp)) {
+		    qdf_mc_timer_get_system_ticks() < temp_node->timestamp)) {
 			/* Found node to be deleted */
 			auth_node_freed = true;
 			found_node = temp_node;

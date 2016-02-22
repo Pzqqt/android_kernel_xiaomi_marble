@@ -127,10 +127,10 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
 
 	/* Resume TX  */
 	if (true == tx_resume) {
-		if (CDF_TIMER_STATE_STOPPED !=
-		    cdf_mc_timer_get_current_state(&pAdapter->
+		if (QDF_TIMER_STATE_STOPPED !=
+		    qdf_mc_timer_get_current_state(&pAdapter->
 						   tx_flow_control_timer)) {
-			cdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
+			qdf_mc_timer_stop(&pAdapter->tx_flow_control_timer);
 		}
 		if (qdf_unlikely(hdd_sta_ctx->hdd_ReassocScenario)) {
 			hddLog(LOGW,
@@ -154,11 +154,11 @@ void hdd_tx_resume_cb(void *adapter_context, bool tx_resume)
  * Return: none
  */
 void hdd_register_tx_flow_control(hdd_adapter_t *adapter,
-		cdf_mc_timer_callback_t timer_callback,
+		qdf_mc_timer_callback_t timer_callback,
 		ol_txrx_tx_flow_control_fp flow_control_fp)
 {
 	if (adapter->tx_flow_timer_initialized == false) {
-		cdf_mc_timer_init(&adapter->tx_flow_control_timer,
+		qdf_mc_timer_init(&adapter->tx_flow_control_timer,
 			  QDF_TIMER_TYPE_SW,
 			  timer_callback,
 			  adapter);
@@ -180,8 +180,8 @@ void hdd_deregister_tx_flow_control(hdd_adapter_t *adapter)
 {
 	ol_txrx_deregister_tx_flow_control_cb(adapter->sessionId);
 	if (adapter->tx_flow_timer_initialized == true) {
-		cdf_mc_timer_stop(&adapter->tx_flow_control_timer);
-		cdf_mc_timer_destroy(&adapter->tx_flow_control_timer);
+		qdf_mc_timer_stop(&adapter->tx_flow_control_timer);
+		qdf_mc_timer_destroy(&adapter->tx_flow_control_timer);
 		adapter->tx_flow_timer_initialized = false;
 	}
 }
@@ -207,10 +207,10 @@ void hdd_get_tx_resource(hdd_adapter_t *adapter,
 		wlan_hdd_netif_queue_control(adapter, WLAN_STOP_ALL_NETIF_QUEUE,
 					     WLAN_DATA_FLOW_CONTROL);
 		if ((adapter->tx_flow_timer_initialized == true) &&
-		    (CDF_TIMER_STATE_STOPPED ==
-		    cdf_mc_timer_get_current_state(&adapter->
+		    (QDF_TIMER_STATE_STOPPED ==
+		    qdf_mc_timer_get_current_state(&adapter->
 						    tx_flow_control_timer))) {
-			cdf_mc_timer_start(&adapter->tx_flow_control_timer,
+			qdf_mc_timer_start(&adapter->tx_flow_control_timer,
 					   timer_value);
 			adapter->hdd_stats.hddTxRxStats.txflow_timer_cnt++;
 			adapter->hdd_stats.hddTxRxStats.txflow_pause_cnt++;

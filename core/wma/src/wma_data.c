@@ -2603,7 +2603,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		struct wma_decap_info_t decap_info;
 		struct ieee80211_frame *wh =
 			(struct ieee80211_frame *)cdf_nbuf_data(skb);
-		unsigned long curr_timestamp = cdf_mc_timer_get_system_ticks();
+		unsigned long curr_timestamp = qdf_mc_timer_get_system_ticks();
 
 		if (pdev == NULL) {
 			WMA_LOGE("%s: pdev pointer is not available", __func__);
