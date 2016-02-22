@@ -1383,4 +1383,7 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
 enum tQDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
 						uint32_t session_id);
+void csr_roam_substate_change(tpAniSirGlobal pMac, eCsrRoamSubState NewSubstate,
+			      uint32_t sessionId);
+
 #endif

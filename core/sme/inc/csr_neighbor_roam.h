@@ -320,5 +320,19 @@ static inline void csr_neighbor_roam_send_lfr_metric_event(
 		tSirMacAddr bssid, eRoamCmdStatus status)
 {}
 #endif
+void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
+		tDblLinkList * llist);
+QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
+		uint8_t sessionId);
+QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac);
+uint32_t csr_get_current_ap_rssi(tpAniSirGlobal pMac,
+		tScanResultHandle *pScanResultList, uint8_t sessionId);
+QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
+		uint32_t sessionId, tSirBssDescription *pSirBssDesc,
+		tDot11fBeaconIEs *pIes, tCsrRoamProfile *pProfile);
+QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
+		uint32_t sessionId);
+QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
+		uint32_t sessionId, tCsrRoamProfile *pDstProfile);
 
 #endif /* CSR_NEIGHBOR_ROAM_H */

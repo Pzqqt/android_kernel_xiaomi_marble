@@ -204,7 +204,6 @@ static QDF_STATUS csr_roam_stop_roaming_timer(tpAniSirGlobal pMac,
 					      uint32_t sessionId);
 static void csr_roam_roaming_timer_handler(void *pv);
 QDF_STATUS csr_roam_start_wait_for_key_timer(tpAniSirGlobal pMac, uint32_t interval);
-QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac);
 static void csr_roam_wait_for_key_time_out_handler(void *pv);
 static QDF_STATUS csr_init11d_info(tpAniSirGlobal pMac, tCsr11dinfo *ps11dinfo);
 static QDF_STATUS csr_init_channel_power_list(tpAniSirGlobal pMac,
@@ -220,11 +219,6 @@ QDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac, uint32_t session
 					   uint8_t keyId, uint8_t keyLength,
 					   uint8_t *pKey, uint8_t paeRole,
 					   uint8_t *pKeyRsc);
-static QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
-					     uint32_t sessionId,
-					     tSirBssDescription *pSirBssDesc,
-					     tDot11fBeaconIEs *pIes,
-					     tCsrRoamProfile *pProfile);
 void csr_roamStatisticsTimerHandler(void *pv);
 void csr_roamStatsGlobalClassDTimerHandler(void *pv);
 static void csr_roam_link_up(tpAniSirGlobal pMac, struct qdf_mac_addr bssid);
@@ -8316,22 +8310,6 @@ QDF_STATUS csr_roam_issue_join(tpAniSirGlobal pMac, uint32_t sessionId,
 	return status;
 }
 
-static QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
-					     uint32_t sessionId,
-					     tSirBssDescription *pSirBssDesc,
-					     tDot11fBeaconIEs *pIes,
-					     tCsrRoamProfile *pProfile)
-{
-	csr_roam_state_change(pMac, eCSR_ROAMING_STATE_JOINING, sessionId);
-	/* Set the roaming substate to 'join attempt'... */
-	csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_REASSOC_REQ, sessionId);
-	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
-		  FL(" calling csr_send_join_req_msg (eWNI_SME_REASSOC_REQ)"));
-	/* attempt to Join this BSS... */
-	return csr_send_join_req_msg(pMac, sessionId, pSirBssDesc, pProfile, pIes,
-				     eWNI_SME_REASSOC_REQ);
-}
-
 void csr_roam_reissue_roam_command(tpAniSirGlobal pMac)
 {
 	tListElem *pEntry;
@@ -8499,67 +8477,6 @@ bool csr_is_scan_for_roam_command_active(tpAniSirGlobal pMac)
 	}
 	csr_ll_unlock(&pMac->sme.smeCmdActiveList);
 	return fRet;
-}
-
-QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac, uint32_t sessionId)
-{
-	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	tSmeCmd *pCommand = NULL;
-	bool fHighPriority = true;
-	bool fRemoveCmd = false;
-	tListElem *pEntry;
-	/* Delete the old assoc command. All is setup for reassoc to be serialized */
-	pEntry = csr_ll_peek_head(&pMac->sme.smeCmdActiveList, LL_ACCESS_LOCK);
-	if (pEntry) {
-		pCommand = GET_BASE_ADDR(pEntry, tSmeCmd, Link);
-		if (!pCommand) {
-			sms_log(pMac, LOGE, FL(" fail to get command buffer"));
-			return QDF_STATUS_E_RESOURCES;
-		}
-		if (eSmeCommandRoam == pCommand->command) {
-			if (pCommand->u.roamCmd.roamReason ==
-			    eCsrSmeIssuedAssocToSimilarAP) {
-				fRemoveCmd =
-					csr_ll_remove_entry(&pMac->sme.
-							    smeCmdActiveList, pEntry,
-							    LL_ACCESS_LOCK);
-			} else {
-				sms_log(pMac, LOGE,
-					FL
-						(" Unexpected active roam command present "));
-			}
-			if (fRemoveCmd == false) {
-				/* Implies we did not get the serialized assoc command we */
-				/* were expecting */
-				pCommand = NULL;
-			}
-		}
-	}
-	if (NULL == pCommand) {
-		sms_log(pMac, LOGE,
-			FL
-				(" fail to get command buffer as expected based on previous connect roam command"));
-		return QDF_STATUS_E_RESOURCES;
-	}
-	do {
-		/* Change the substate in case it is wait-for-key */
-		if (CSR_IS_WAIT_FOR_KEY(pMac, sessionId)) {
-			csr_roam_stop_wait_for_key_timer(pMac);
-			csr_roam_substate_change(pMac, eCSR_ROAM_SUBSTATE_NONE,
-						 sessionId);
-		}
-		pCommand->command = eSmeCommandRoam;
-		pCommand->sessionId = (uint8_t) sessionId;
-		pCommand->u.roamCmd.roamReason = eCsrSmeIssuedFTReassoc;
-		status = csr_queue_sme_command(pMac, pCommand, fHighPriority);
-		if (!QDF_IS_STATUS_SUCCESS(status)) {
-			sms_log(pMac, LOGE,
-				FL(" fail to send message status = %d"), status);
-			csr_release_command_roam(pMac, pCommand);
-		}
-	} while (0);
-
-	return status;
 }
 
 static void

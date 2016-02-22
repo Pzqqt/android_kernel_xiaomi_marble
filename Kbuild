@@ -505,7 +505,8 @@ SME_CSR_OBJS := $(SME_SRC_DIR)/csr/csr_api_roam.o \
 		$(SME_SRC_DIR)/csr/csr_cmd_process.o \
 		$(SME_SRC_DIR)/csr/csr_link_list.o \
 		$(SME_SRC_DIR)/csr/csr_neighbor_roam.o \
-		$(SME_SRC_DIR)/csr/csr_util.o
+		$(SME_SRC_DIR)/csr/csr_util.o \
+		$(SME_SRC_DIR)/csr/csr_host_scan_roam.o
 
 ifeq ($(CONFIG_QCOM_TDLS),y)
 SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csr_tdls_process.o
