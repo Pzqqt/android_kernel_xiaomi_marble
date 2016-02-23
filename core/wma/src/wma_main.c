@@ -126,6 +126,62 @@ end:
 }
 
 /**
+ * wma_get_ini_handle() - API to get WMA ini info handle
+ * @wma: WMA Handle
+ *
+ * Returns the pointer to WMA ini structure.
+ * Return: struct wma_ini_config
+ */
+struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma)
+{
+	if (!wma) {
+		WMA_LOGE("%s: Invalid WMA context\n", __func__);
+		return NULL;
+	}
+
+	return &wma->ini_config;
+}
+
+#define MAX_SUPPORTED_PEERS_REV1_1 14
+#define MAX_SUPPORTED_PEERS_REV1_3 32
+#define MIN_NO_OF_PEERS 1
+
+/**
+ * wma_get_number_of_peers_supported - API to query for number of peers
+ * supported
+ * @wma: WMA Handle
+ *
+ * Return: Max Number of Peers Supported
+ */
+static uint8_t wma_get_number_of_peers_supported(tp_wma_handle wma)
+{
+	struct hif_target_info *tgt_info;
+	struct wma_ini_config *cfg = wma_get_ini_handle(wma);
+	uint8_t max_no_of_peers = cfg ? cfg->max_no_of_peers : MIN_NO_OF_PEERS;
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (!scn) {
+		WMA_LOGE("%s: Invalid wma handle", __func__);
+		return 0;
+	}
+
+	tgt_info = hif_get_target_info_handle(scn);
+
+	switch (tgt_info->target_version) {
+	case AR6320_REV1_1_VERSION:
+		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_1)
+			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_1;
+		break;
+	default:
+		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_3)
+			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_3;
+		break;
+	}
+
+	return max_no_of_peers;
+}
+
+/**
  * wma_set_default_tgt_config() - set default tgt config
  * @wma_handle: wma handle
  *
@@ -133,7 +189,6 @@ end:
  */
 static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 {
-	struct ol_softc *scn;
 	uint8_t no_of_peers_supported;
 	wmi_resource_config tgt_cfg = {
 		0,              /* Filling zero for TLV Tag and Length fields */
@@ -180,13 +235,7 @@ static void wma_set_default_tgt_config(tp_wma_handle wma_handle)
 		CFG_TGT_NUM_OCB_SCHEDULES,
 	};
 
-	/* Update the max number of peers */
-	scn = cds_get_context(CDF_MODULE_ID_HIF);
-	if (!scn) {
-		WMA_LOGE("%s: cds_context is NULL", __func__);
-		return;
-	}
-	no_of_peers_supported = ol_get_number_of_peers_supported(scn);
+	no_of_peers_supported = wma_get_number_of_peers_supported(wma_handle);
 	tgt_cfg.num_peers = no_of_peers_supported + CFG_TGT_NUM_VDEV + 2;
 	tgt_cfg.num_tids = (2 * (no_of_peers_supported + CFG_TGT_NUM_VDEV + 2));
 	tgt_cfg.scan_max_pending_req = wma_handle->max_scan;
@@ -1514,6 +1563,21 @@ static void wma_set_nan_enable(tp_wma_handle wma_handle,
 #endif
 
 /**
+ * wma_init_max_no_of_peers - API to initialize wma configuration params
+ * @wma_handle: WMA Handle
+ * @max_peers: Max Peers supported
+ *
+ * Return: void
+ */
+static void wma_init_max_no_of_peers(tp_wma_handle wma_handle,
+				     uint16_t max_peers)
+{
+	struct wma_ini_config *cfg = wma_get_ini_handle(wma_handle);
+
+	cfg->max_no_of_peers = max_peers;
+}
+
+/**
  * wma_open() - Allocate wma context and initialize it.
  * @cds_context:  cds context
  * @wma_tgt_cfg_cb: tgt config callback fun
@@ -1532,7 +1596,6 @@ CDF_STATUS wma_open(void *cds_context,
 	cdf_device_t cdf_dev;
 	void *wmi_handle;
 	CDF_STATUS cdf_status;
-	struct ol_softc *scn;
 	struct txrx_pdev_cfg_param_t olCfg = { 0 };
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -1648,17 +1711,8 @@ CDF_STATUS wma_open(void *cds_context,
 	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
 #endif /* QCA_WIFI_FTM */
-
-	/*TODO: Recheck below parameters */
-	scn = cds_get_context(CDF_MODULE_ID_HIF);
-
-	if (NULL == scn) {
-		WMA_LOGE("%s: Failed to get scn", __func__);
-		cdf_status = CDF_STATUS_E_NOMEM;
-		goto err_scn_context;
-	}
-
-	mac_params->maxStation = ol_get_number_of_peers_supported(scn);
+	wma_init_max_no_of_peers(wma_handle, mac_params->maxStation);
+	mac_params->maxStation = wma_get_number_of_peers_supported(wma_handle);
 
 	mac_params->maxBssId = WMA_MAX_SUPPORTED_BSS;
 	mac_params->frameTransRequired = 0;

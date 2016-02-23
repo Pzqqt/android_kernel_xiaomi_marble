@@ -363,6 +363,7 @@ CDF_STATUS cds_open(void)
 
 	mac_openParms.tx_chain_mask_cck = pHddCtx->config->tx_chain_mask_cck;
 	mac_openParms.self_gen_frm_pwr = pHddCtx->config->self_gen_frm_pwr;
+	mac_openParms.maxStation = pHddCtx->config->maxNumberOfPeers;
 
 	cdf_status = wma_open(gp_cds_context,
 			      hdd_update_tgt_cfg,

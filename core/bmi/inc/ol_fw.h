@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -49,16 +49,10 @@
 
 #ifdef HIF_PCI
 void ol_target_failure(void *instance, CDF_STATUS status);
-uint8_t ol_get_number_of_peers_supported(struct ol_softc *scn);
 #else
 static inline void ol_target_failure(void *instance, CDF_STATUS status)
 {
 	return;
-}
-
-static inline uint8_t ol_get_number_of_peers_supported(struct ol_softc *scn)
-{
-	return 1;
 }
 #endif
 #endif /* _OL_FW_H_ */

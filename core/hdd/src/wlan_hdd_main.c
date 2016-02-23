@@ -7003,7 +7003,6 @@ void hdd_update_hif_config(void *scn, hdd_context_t *hdd_ctx)
 	cfg->enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
 	cfg->enable_uart_print = hdd_ctx->config->enablefwprint;
 	cfg->enable_fw_log = hdd_ctx->config->enable_fw_log;
-	cfg->max_no_of_peers = hdd_ctx->config->maxNumberOfPeers;
 	cfg->enable_ramdump_collection =
 				hdd_ctx->config->is_ramdump_enabled;
 	cfg->enable_lpass_support = hdd_is_lpass_supported(hdd_ctx);

@@ -1035,6 +1035,16 @@ struct wmi_init_cmd {
 };
 
 /**
+ * struct wma_ini_config - Structure to hold wma ini configuration
+ * @max_no_of_peers: Max Number of supported
+ *
+ * Placeholder for WMA ini parameters.
+ */
+struct wma_ini_config {
+	uint8_t max_no_of_peers;
+};
+
+/**
  * struct t_wma_handle - wma context
  * @wmi_handle: wmi handle
  * @htc_handle: htc handle
@@ -1342,6 +1352,7 @@ typedef struct {
 	cdf_wake_lock_t wmi_cmd_rsp_wake_lock;
 	cdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 	uint32_t fine_time_measurement_cap;
+	struct wma_ini_config ini_config;
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -2012,3 +2023,4 @@ void
 wma_indicate_err(enum ol_rx_err_type err_type,
 	 struct ol_error_info *err_info);
 #endif
+struct wma_ini_config *wma_get_ini_handle(tp_wma_handle wma_handle);

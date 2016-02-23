@@ -1635,27 +1635,3 @@ static int ol_target_coredump(void *inst, void *memory_block,
 	}
 	return ret;
 }
-
-#define MAX_SUPPORTED_PEERS_REV1_1 14
-#define MAX_SUPPORTED_PEERS_REV1_3 32
-
-uint8_t ol_get_number_of_peers_supported(struct ol_softc *scn)
-{
-	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
-	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
-	uint8_t max_no_of_peers = ini_cfg->max_no_of_peers;
-
-	switch (tgt_info->target_version) {
-	case AR6320_REV1_1_VERSION:
-		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_1)
-			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_1;
-		break;
-
-	default:
-		if (max_no_of_peers > MAX_SUPPORTED_PEERS_REV1_3)
-			max_no_of_peers = MAX_SUPPORTED_PEERS_REV1_3;
-		break;
-
-	}
-	return max_no_of_peers;
-}
