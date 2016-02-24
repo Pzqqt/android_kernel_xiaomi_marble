@@ -5441,19 +5441,9 @@ int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand)
 				continue;
 			}
 
-			if (CHANNEL_STATE_DISABLE == channelEnabledState ||
-			    CHANNEL_STATE_INVALID == channelEnabledState) {
-				band->channels[j].flags |=
-					IEEE80211_CHAN_DISABLED;
-			} else if (CHANNEL_STATE_DFS == channelEnabledState) {
+			if (CHANNEL_STATE_DISABLE != channelEnabledState)
 				band->channels[j].flags &=
 					~IEEE80211_CHAN_DISABLED;
-				band->channels[j].flags |= IEEE80211_CHAN_RADAR;
-			} else {
-				band->channels[j].flags &=
-					~(IEEE80211_CHAN_DISABLED |
-					  IEEE80211_CHAN_RADAR);
-			}
 		}
 	}
 	return 0;

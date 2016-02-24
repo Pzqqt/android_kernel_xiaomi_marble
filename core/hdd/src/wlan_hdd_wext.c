@@ -92,7 +92,6 @@
 #define HDD_SET_MCBC_FILTERS_TO_FW      1
 #define HDD_DELETE_MCBC_FILTERS_FROM_FW 0
 
-extern int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy, eCsrBand eBand);
 static int ioctl_debug;
 module_param(ioctl_debug, int, S_IRUSR | S_IWUSR | S_IRGRP | S_IROTH);
 

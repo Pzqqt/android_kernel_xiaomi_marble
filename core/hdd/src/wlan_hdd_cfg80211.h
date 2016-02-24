@@ -2433,4 +2433,6 @@ int wlan_hdd_disable_dfs_chan_scan(hdd_context_t *hdd_ctx,
 				   hdd_adapter_t *adapter,
 				   uint32_t no_dfs_flag);
 
+int wlan_hdd_cfg80211_update_band(struct wiphy *wiphy,
+				  eCsrBand eBand);
 #endif

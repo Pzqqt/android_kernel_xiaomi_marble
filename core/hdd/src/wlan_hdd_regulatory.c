@@ -360,14 +360,6 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 
 	for (band_num = 0; band_num < IEEE80211_NUM_BANDS; band_num++) {
 
-		if (band_num == IEEE80211_BAND_2GHZ &&
-		    band_capability == eCSR_BAND_5G)
-			continue;
-
-		else if (band_num == IEEE80211_BAND_5GHZ &&
-			 band_capability == eCSR_BAND_24)
-			continue;
-
 		if (wiphy->bands[band_num] == NULL)
 			continue;
 
@@ -415,6 +407,8 @@ static void hdd_process_regulatory_data(hdd_context_t *hdd_ctx,
 		cds_chan = &(reg_channels[CHAN_ENUM_144]);
 		cds_chan->state = CHANNEL_STATE_DISABLE;
 	}
+
+	wlan_hdd_cfg80211_update_band(wiphy, band_capability);
 }
 
 
@@ -589,7 +583,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 		      struct regulatory_request *request)
 {
 	hdd_context_t *hdd_ctx = wiphy_priv(wiphy);
-	eCsrBand band_capability = eCSR_BAND_ALL;
 	bool vht80_allowed;
 	bool reset = false;
 	uint8_t dfs_reg;
@@ -610,8 +603,6 @@ void hdd_reg_notifier(struct wiphy *wiphy,
 			__func__);
 		return;
 	}
-
-	sme_get_freq_band(hdd_ctx->hHal, &band_capability);
 
 	/* first check if this callback is in response to the driver callback */
 
