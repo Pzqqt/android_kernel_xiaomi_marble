@@ -1581,7 +1581,7 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
 	pSirSmeSetContextRsp->length = sizeof(tSirSmeSetContextRsp);
 	pSirSmeSetContextRsp->statusCode = resultCode;
 
-	cdf_copy_macaddr(&pSirSmeSetContextRsp->peer_macaddr, &peer_macaddr);
+	qdf_copy_macaddr(&pSirSmeSetContextRsp->peer_macaddr, &peer_macaddr);
 
 	/* Update SME session and transaction Id */
 	pSirSmeSetContextRsp->sessionId = smesessionId;
@@ -1769,7 +1769,7 @@ lim_send_sme_delts_rsp(tpAniSirGlobal pMac, tpSirDeltsReq delts, uint32_t status
 	if (psessionEntry != NULL) {
 
 		rsp->aid = delts->aid;
-		cdf_copy_macaddr(&rsp->macaddr, &delts->macaddr);
+		qdf_copy_macaddr(&rsp->macaddr, &delts->macaddr);
 		cdf_mem_copy((uint8_t *) &rsp->rsp, (uint8_t *) &delts->req,
 			     sizeof(tSirDeltsReqInfo));
 	}

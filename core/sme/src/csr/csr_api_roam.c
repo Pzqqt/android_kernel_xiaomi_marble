@@ -3051,7 +3051,7 @@ QDF_STATUS csr_roam_issue_disassociate(tpAniSirGlobal pMac, uint32_t sessionId,
 	    (NewSubstate != eCSR_ROAM_SUBSTATE_DISASSOC_HANDOFF)) {
 		tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 			&pMac->roam.neighborRoamInfo[sessionId];
-		cdf_copy_macaddr(&bssId,
+		qdf_copy_macaddr(&bssId,
 			      pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.
 			      bssid);
 	} else if (pSession->pConnectBssDesc) {
@@ -3189,7 +3189,7 @@ csr_send_mb_tkip_counter_measures_req_msg(tpAniSirGlobal pMac,
 		pMsg->length = sizeof(tSirSmeTkipCntrMeasReq);
 		pMsg->sessionId = sessionId;
 		pMsg->transactionId = 0;
-		cdf_copy_macaddr(&pMsg->bssId, bssId);
+		qdf_copy_macaddr(&pMsg->bssId, bssId);
 		pMsg->bEnable = bEnable;
 		status = cds_send_mb_message_to_mac(pMsg);
 	} while (0);
@@ -6860,7 +6860,7 @@ QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 		goto end;
 	}
 	pDstProfile->BSSIDs.numOfBSSIDs = 1;
-	cdf_copy_macaddr(pDstProfile->BSSIDs.bssid, &pSrcProfile->bssid);
+	qdf_copy_macaddr(pDstProfile->BSSIDs.bssid, &pSrcProfile->bssid);
 
 	if (pSrcProfile->SSID.ssId) {
 		pDstProfile->SSIDs.SSIDList =
@@ -8836,7 +8836,7 @@ void csr_roam_roaming_state_disassoc_rsp_processor(tpAniSirGlobal pMac,
 		/* notify HDD about handoff and provide the BSSID too */
 		roamInfo.reasonCode = eCsrRoamReasonBetterAP;
 
-		cdf_copy_macaddr(&roamInfo.bssid,
+		qdf_copy_macaddr(&roamInfo.bssid,
 			pNeighborRoamInfo->csrNeighborRoamProfile.BSSIDs.bssid);
 
 		csr_roam_call_callback(pMac, sessionId, &roamInfo, 0,
@@ -9046,7 +9046,7 @@ void csr_roaming_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf)
 		roamInfo.staId = (uint8_t) pIbssPeerInd->staId;
 		roamInfo.ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
 		roamInfo.bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
-		cdf_copy_macaddr(&roamInfo.peerMac, &pIbssPeerInd->peer_addr);
+		qdf_copy_macaddr(&roamInfo.peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(pMac, pSmeRsp->sessionId, &roamInfo, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
 				       eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
@@ -9408,7 +9408,7 @@ static QDF_STATUS csr_roam_issue_set_key_command(tpAniSirGlobal pMac,
 		pCommand->u.setKeyCmd.roamId = roamId;
 		pCommand->u.setKeyCmd.encType = pSetKey->encType;
 		pCommand->u.setKeyCmd.keyDirection = pSetKey->keyDirection;
-		cdf_copy_macaddr(&pCommand->u.setKeyCmd.peermac,
+		qdf_copy_macaddr(&pCommand->u.setKeyCmd.peermac,
 				 &pSetKey->peerMac);
 		/* 0 for supplicant */
 		pCommand->u.setKeyCmd.paeRole = pSetKey->paeRole;
@@ -9463,7 +9463,7 @@ QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 	if (eSIR_ED_NONE != edType) {
 		cdf_mem_set(&setKeyEvent,
 			    sizeof(host_event_wlan_security_payload_type), 0);
-		if (cdf_is_macaddr_group(&pCommand->u.setKeyCmd.peermac)) {
+		if (qdf_is_macaddr_group(&pCommand->u.setKeyCmd.peermac)) {
 			setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_GTK_REQ;
 			setKeyEvent.encryptionModeMulticast =
 				(uint8_t) diag_enc_type_from_csr_type(pCommand->u.
@@ -9532,7 +9532,7 @@ QDF_STATUS csr_roam_process_set_key_command(tpAniSirGlobal pMac, tSmeCmd *pComma
 				       eCSR_ROAM_RESULT_FAILURE);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 		if (eSIR_ED_NONE != edType) {
-			if (cdf_is_macaddr_group(
+			if (qdf_is_macaddr_group(
 					&pCommand->u.setKeyCmd.peermac)) {
 				setKeyEvent.eventId =
 					WLAN_SECURITY_EVENT_SET_GTK_RSP;
@@ -9936,7 +9936,7 @@ static QDF_STATUS csr_send_reset_ap_caps_changed(tpAniSirGlobal pMac,
 		cdf_mem_set(pMsg, sizeof(tSirResetAPCapsChange), 0);
 		pMsg->messageType = eWNI_SME_RESET_AP_CAPS_CHANGED;
 		pMsg->length = len;
-		cdf_copy_macaddr(&pMsg->bssId, bssId);
+		qdf_copy_macaddr(&pMsg->bssId, bssId);
 		sms_log(pMac, LOG1,
 			FL("CSR reset caps change for Bssid= " MAC_ADDRESS_STR),
 			MAC_ADDR_ARRAY(pMsg->bssId.bytes));
@@ -10112,9 +10112,9 @@ csr_roam_chk_lnk_disassoc_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		roam_info_ptr->reasonCode = pDisassocInd->reasonCode;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
 		roam_info_ptr->staId = (uint8_t) pDisassocInd->staId;
-		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+		qdf_copy_macaddr(&roam_info_ptr->peerMac,
 				 &pDisassocInd->peer_macaddr);
-		cdf_copy_macaddr(&roam_info_ptr->bssid,
+		qdf_copy_macaddr(&roam_info_ptr->bssid,
 				 &pDisassocInd->bssid);
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 						roam_info_ptr, 0,
@@ -10194,9 +10194,9 @@ csr_roam_chk_lnk_deauth_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		roam_info_ptr->reasonCode = pDeauthInd->reasonCode;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
 		roam_info_ptr->staId = (uint8_t) pDeauthInd->staId;
-		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+		qdf_copy_macaddr(&roam_info_ptr->peerMac,
 				 &pDeauthInd->peer_macaddr);
-		cdf_copy_macaddr(&roam_info_ptr->bssid,
+		qdf_copy_macaddr(&roam_info_ptr->bssid,
 				 &pDeauthInd->bssid);
 		status = csr_roam_call_callback(mac_ctx, sessionId,
 						roam_info_ptr, 0,
@@ -10256,7 +10256,7 @@ csr_roam_chk_lnk_deauth_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (CSR_IS_INFRA_AP(&session->connectedProfile)) {
 		roam_info_ptr = &roam_info;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
-		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+		qdf_copy_macaddr(&roam_info_ptr->peerMac,
 				 &pDeauthRsp->peer_macaddr);
 		roam_info_ptr->reasonCode = eCSR_ROAM_RESULT_FORCED;
 		roam_info_ptr->statusCode = pDeauthRsp->statusCode;
@@ -10290,7 +10290,7 @@ csr_roam_chk_lnk_disassoc_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 	if (CSR_IS_INFRA_AP(&session->connectedProfile)) {
 		roam_info_ptr = &roam_info;
 		roam_info_ptr->u.pConnectedProfile = &session->connectedProfile;
-		cdf_copy_macaddr(&roam_info_ptr->peerMac,
+		qdf_copy_macaddr(&roam_info_ptr->peerMac,
 				 &pDisassocRsp->peer_macaddr);
 		roam_info_ptr->reasonCode = eCSR_ROAM_RESULT_FORCED;
 		roam_info_ptr->statusCode = pDisassocRsp->statusCode;
@@ -10394,7 +10394,7 @@ csr_roam_diag_joined_new_bss(tpAniSirGlobal mac_ctx,
 		return;
 	pIbssLog->eventId = WLAN_IBSS_EVENT_COALESCING;
 	if (pNewBss) {
-		cdf_copy_macaddr(&pIbssLog->bssid, &pNewBss->bssId);
+		qdf_copy_macaddr(&pIbssLog->bssid, &pNewBss->bssId);
 		if (pNewBss->ssId.length)
 			cdf_mem_copy(pIbssLog->ssid, pNewBss->ssId.ssId,
 				     pNewBss->ssId.length);
@@ -10583,7 +10583,7 @@ csr_roam_chk_lnk_ibss_new_peer_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 				 LOG_WLAN_IBSS_C);
 	if (pIbssLog) {
 		pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_JOIN;
-		cdf_copy_macaddr(&pIbssLog->peer_macaddr,
+		qdf_copy_macaddr(&pIbssLog->peer_macaddr,
 				 &pIbssPeerInd->peer_addr);
 		WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
 	}
@@ -10606,7 +10606,7 @@ csr_roam_chk_lnk_ibss_new_peer_ind(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		sms_log(mac_ctx, LOGW, FL("CSR: connected BSS is empty"));
 		goto callback_and_free;
 	}
-	cdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
+	qdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
 	cdf_mem_copy(&roam_info.bssid, session->pConnectBssDesc->bssId,
 		     sizeof(struct qdf_mac_addr));
 	if (pIbssPeerInd->mesgLen > sizeof(tSmeIbssPeerInd)) {
@@ -10692,7 +10692,7 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(tpAniSirGlobal mac_ctx,
 		if (pIbssLog) {
 			pIbssLog->eventId = WLAN_IBSS_EVENT_PEER_LEAVE;
 			if (pIbssPeerInd) {
-				cdf_copy_macaddr(&pIbssLog->peer_macaddr,
+				qdf_copy_macaddr(&pIbssLog->peer_macaddr,
 						 &pIbssPeerInd->peer_addr);
 			}
 			WLAN_HOST_DIAG_LOG_REPORT(pIbssLog);
@@ -10703,7 +10703,7 @@ csr_roam_chk_lnk_ibss_peer_departed_ind(tpAniSirGlobal mac_ctx,
 		roam_info.staId = (uint8_t) pIbssPeerInd->staId;
 		roam_info.ucastSig = (uint8_t) pIbssPeerInd->ucastSig;
 		roam_info.bcastSig = (uint8_t) pIbssPeerInd->bcastSig;
-		cdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
+		qdf_copy_macaddr(&roam_info.peerMac, &pIbssPeerInd->peer_addr);
 		csr_roam_call_callback(mac_ctx, sessionId, &roam_info, 0,
 				       eCSR_ROAM_CONNECT_STATUS_UPDATE,
 				       eCSR_ROAM_RESULT_IBSS_PEER_DEPARTED);
@@ -10723,7 +10723,7 @@ csr_roam_diag_set_ctx_rsp(tpAniSirGlobal mac_ctx,
 		return;
 	cdf_mem_set(&setKeyEvent,
 		    sizeof(host_event_wlan_security_payload_type), 0);
-	if (cdf_is_macaddr_group(&pRsp->peer_macaddr))
+	if (qdf_is_macaddr_group(&pRsp->peer_macaddr))
 		setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_GTK_RSP;
 	else
 		setKeyEvent.eventId = WLAN_SECURITY_EVENT_SET_PTK_RSP;
@@ -10792,12 +10792,12 @@ csr_roam_chk_lnk_set_ctx_rsp(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 					 session->connectedProfile.bssid);
 	}
 	if (eSIR_SME_SUCCESS == pRsp->statusCode) {
-		cdf_copy_macaddr(&roam_info.peerMac, &pRsp->peer_macaddr);
+		qdf_copy_macaddr(&roam_info.peerMac, &pRsp->peer_macaddr);
 		/* Make sure we install the GTK before indicating to HDD as
 		 * authenticated. This is to prevent broadcast packets go out
 		 * after PTK and before GTK.
 		 */
-		if (cdf_is_macaddr_broadcast(&pRsp->peer_macaddr)) {
+		if (qdf_is_macaddr_broadcast(&pRsp->peer_macaddr)) {
 			tpSirSetActiveModeSetBncFilterReq pMsg;
 			pMsg = cdf_mem_malloc(
 				    sizeof(tSirSetActiveModeSetBncFilterReq));
@@ -10859,7 +10859,7 @@ csr_roam_chk_lnk_max_assoc_exceeded(tpAniSirGlobal mac_ctx, tSirSmeRsp *msg_ptr)
 		FL("max assoc have been reached, new peer cannot be accepted"));
 	sessionId = pSmeMaxAssocInd->sessionId;
 	roam_info.sessionId = sessionId;
-	cdf_copy_macaddr(&roam_info.peerMac, &pSmeMaxAssocInd->peer_mac);
+	qdf_copy_macaddr(&roam_info.peerMac, &pSmeMaxAssocInd->peer_mac);
 	csr_roam_call_callback(mac_ctx, sessionId, &roam_info, 0,
 			       eCSR_ROAM_INFRA_IND,
 			       eCSR_ROAM_RESULT_MAX_ASSOC_EXCEEDED);
@@ -11342,13 +11342,13 @@ QDF_STATUS csr_roam_lost_link(tpAniSirGlobal pMac, uint32_t sessionId,
 	roamInfo.reasonCode = pSession->joinFailStatusCode.reasonCode;
 	if (eWNI_SME_DISASSOC_IND == type) {
 		/* staMacAddr */
-		cdf_copy_macaddr(&roamInfo.peerMac,
+		qdf_copy_macaddr(&roamInfo.peerMac,
 				 &pDisassocIndMsg->peer_macaddr);
 		roamInfo.staId = (uint8_t) pDisassocIndMsg->staId;
 		roamInfo.reasonCode = pDisassocIndMsg->reasonCode;
 	} else if (eWNI_SME_DEAUTH_IND == type) {
 		/* staMacAddr */
-		cdf_copy_macaddr(&roamInfo.peerMac,
+		qdf_copy_macaddr(&roamInfo.peerMac,
 				 &pDeauthIndMsg->peer_macaddr);
 		roamInfo.staId = (uint8_t) pDeauthIndMsg->staId;
 		roamInfo.reasonCode = pDeauthIndMsg->reasonCode;
@@ -12838,7 +12838,7 @@ csr_roam_set_pmkid_cache(tpAniSirGlobal pMac, uint32_t sessionId,
 				pmksa->BSSID.bytes, false);
 
 		/* Add entry to the cache */
-		cdf_copy_macaddr(
+		qdf_copy_macaddr(
 		    &pSession->PmkidCacheInfo[pSession->curr_cache_idx].BSSID,
 		    &pmksa->BSSID);
 		cdf_mem_copy(
@@ -12981,7 +12981,7 @@ QDF_STATUS csr_roam_get_pmkid_cache(tpAniSirGlobal pMac, uint32_t sessionId,
 		(i < CSR_MAX_PMKID_ALLOWED)); i++) {
 		/* Fill the valid entries */
 		pmksa = &pSession->PmkidCacheInfo[i];
-		if (!cdf_is_macaddr_zero(&pmksa->BSSID)) {
+		if (!qdf_is_macaddr_zero(&pmksa->BSSID)) {
 			cdf_mem_copy(pPmkidCache, pmksa,
 				     sizeof(tPmkidCacheInfo));
 			pPmkidCache++;
@@ -13127,8 +13127,8 @@ csr_roam_remove_connected_bss_from_scan_cache(tpAniSirGlobal pMac,
 	tDot11fBeaconIEs *pIes;
 	bool fMatch;
 
-	if ((cdf_is_macaddr_zero(&pConnProfile->bssid) ||
-	     cdf_is_macaddr_broadcast(&pConnProfile->bssid)))
+	if ((qdf_is_macaddr_zero(&pConnProfile->bssid) ||
+	     qdf_is_macaddr_broadcast(&pConnProfile->bssid)))
 		return status;
 	/*
 	 * Prepare the filter. Only fill in the necessary fields. Not all fields
@@ -13248,7 +13248,7 @@ static QDF_STATUS csr_roam_start_wds(tpAniSirGlobal pMac, uint32_t sessionId,
 		}
 		cdf_mem_set(&bssConfig, sizeof(tBssConfigParam), 0);
 		/* Assume HDD provide bssid in profile */
-		cdf_copy_macaddr(&pSession->bssParams.bssid,
+		qdf_copy_macaddr(&pSession->bssParams.bssid,
 				 pProfile->BSSIDs.bssid);
 		/* there is no Bss description before we start an WDS so we need */
 		/* to adopt all Bss configuration parameters from the Profile. */
@@ -14055,7 +14055,7 @@ csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac, uint32_t sessionId,
 		return QDF_STATUS_E_NOMEM;
 
 	pMsg->messageType = eWNI_SME_GET_ASSOC_STAS_REQ;
-	cdf_copy_macaddr(&pMsg->bssid, &bssid);
+	qdf_copy_macaddr(&pMsg->bssid, &bssid);
 	pMsg->modId = modId;
 	cdf_mem_copy(pMsg->pUsrContext, pUsrContext, sizeof(void *));
 	cdf_mem_copy(pMsg->pSapEventCallback,
@@ -14089,8 +14089,8 @@ csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
 		cdf_mem_copy(pMsg->pUsrContext, pUsrContext, sizeof(void *));
 		cdf_mem_copy(pMsg->pSapEventCallback, pfnSapEventCallback,
 			     sizeof(void *));
-		cdf_copy_macaddr(&pMsg->bssid, &bssid);
-		cdf_copy_macaddr(&pMsg->remove_mac, &remove_mac);
+		qdf_copy_macaddr(&pMsg->bssid, &bssid);
+		qdf_copy_macaddr(&pMsg->remove_mac, &remove_mac);
 		pMsg->length = sizeof(struct sSirSmeGetWPSPBCSessionsReq);
 		status = cds_send_mb_message_to_mac(pMsg);
 	} while (0);
@@ -14127,7 +14127,7 @@ QDF_STATUS csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessi
 		pMsg->messageType = eWNI_SME_CHNG_MCC_BEACON_INTERVAL;
 		pMsg->length = len;
 
-		cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		sms_log(pMac, LOG1,
 			FL("CSR Attempting to change BI for Bssid= "
 			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMsg->bssid.bytes));
@@ -14169,7 +14169,7 @@ QDF_STATUS csr_set_ht2040_mode(tpAniSirGlobal pMac, uint32_t sessionId,
 		pMsg->messageType = eWNI_SME_SET_HT_2040_MODE;
 		pMsg->length = len;
 
-		cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		sms_log(pMac, LOG1,
 			FL("CSR Attempting to set HT20/40 mode for Bssid= "
 			   MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMsg->bssid.bytes));
@@ -14237,7 +14237,7 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(tpAniSirGlobal pMac,
 		pMsg->messageType = eWNI_SME_DISASSOC_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
 		pMsg->length = sizeof(tSirSmeDisassocCnf);
-		cdf_copy_macaddr(&pMsg->peer_macaddr,
+		qdf_copy_macaddr(&pMsg->peer_macaddr,
 				 &pDisassocInd->peer_macaddr);
 		status = QDF_STATUS_SUCCESS;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -14245,7 +14245,7 @@ QDF_STATUS csr_send_mb_disassoc_cnf_msg(tpAniSirGlobal pMac,
 			break;
 		}
 
-		cdf_copy_macaddr(&pMsg->bssid, &pDisassocInd->bssid);
+		qdf_copy_macaddr(&pMsg->bssid, &pDisassocInd->bssid);
 		status = QDF_STATUS_SUCCESS;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
@@ -14274,13 +14274,13 @@ QDF_STATUS csr_send_mb_deauth_cnf_msg(tpAniSirGlobal pMac,
 		pMsg->messageType = eWNI_SME_DEAUTH_CNF;
 		pMsg->statusCode = eSIR_SME_SUCCESS;
 		pMsg->length = sizeof(tSirSmeDeauthCnf);
-		cdf_copy_macaddr(&pMsg->bssid, &pDeauthInd->bssid);
+		qdf_copy_macaddr(&pMsg->bssid, &pDeauthInd->bssid);
 		status = QDF_STATUS_SUCCESS;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_free(pMsg);
 			break;
 		}
-		cdf_copy_macaddr(&pMsg->peer_macaddr,
+		qdf_copy_macaddr(&pMsg->peer_macaddr,
 				 &pDeauthInd->peer_macaddr);
 		status = QDF_STATUS_SUCCESS;
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -14446,8 +14446,8 @@ QDF_STATUS csr_send_mb_set_context_req_msg(tpAniSirGlobal pMac,
 		pMsg->length = msgLen;
 		pMsg->sessionId = (uint8_t) sessionId;
 		pMsg->transactionId = 0;
-		cdf_copy_macaddr(&pMsg->peer_macaddr, &peer_macaddr);
-		cdf_copy_macaddr(&pMsg->bssid,
+		qdf_copy_macaddr(&pMsg->peer_macaddr, &peer_macaddr);
+		qdf_copy_macaddr(&pMsg->bssid,
 				 &pSession->connectedProfile.bssid);
 
 		/**
@@ -14511,9 +14511,9 @@ QDF_STATUS csr_send_mb_start_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId
 	pMsg->sessionId = sessionId;
 	pMsg->length = sizeof(tSirSmeStartBssReq);
 	pMsg->transactionId = 0;
-	cdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
+	qdf_copy_macaddr(&pMsg->bssid, &pParam->bssid);
 	/* selfMacAddr */
-	cdf_copy_macaddr(&pMsg->self_macaddr, &pSession->selfMacAddr);
+	qdf_copy_macaddr(&pMsg->self_macaddr, &pSession->selfMacAddr);
 	/* beaconInterval */
 	if (pBssDesc && pBssDesc->beaconInterval)
 		wTmp = pBssDesc->beaconInterval;
@@ -14622,7 +14622,7 @@ QDF_STATUS csr_send_mb_stop_bss_req_msg(tpAniSirGlobal pMac, uint32_t sessionId)
 	pMsg->length = sizeof(tSirSmeStopBssReq);
 	pMsg->transactionId = 0;
 	pMsg->reasonCode = 0;
-	cdf_copy_macaddr(&pMsg->bssid, &pSession->connectedProfile.bssid);
+	qdf_copy_macaddr(&pMsg->bssid, &pSession->connectedProfile.bssid);
 	return cds_send_mb_message_to_mac(pMsg);
 }
 
@@ -15155,7 +15155,7 @@ QDF_STATUS csr_roam_get_session_id_from_bssid(tpAniSirGlobal pMac,
 	uint32_t i;
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (CSR_IS_SESSION_VALID(pMac, i)) {
-			if (cdf_is_macaddr_equal(bssid,
+			if (qdf_is_macaddr_equal(bssid,
 				    &pMac->roam.roamSession[i].connectedProfile.
 				    bssid)) {
 				/* Found it */
@@ -15867,7 +15867,7 @@ QDF_STATUS csr_get_tsm_stats(tpAniSirGlobal pMac,
 	pMsg->msgLen = (uint16_t) sizeof(tAniGetTsmStatsReq);
 	pMsg->staId = staId;
 	pMsg->tid = tid;
-	cdf_copy_macaddr(&pMsg->bssId, &bssId);
+	qdf_copy_macaddr(&pMsg->bssId, &bssId);
 	pMsg->tsmStatsCallback = callback;
 	pMsg->pDevContext = pContext;
 	pMsg->p_cds_context = p_cds_context;
@@ -17577,7 +17577,7 @@ QDF_STATUS csr_roam_update_apwpsie(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	pMsg->messageType = eWNI_SME_UPDATE_APWPSIE_REQ;
 	pMsg->transactionId = 0;
-	cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+	qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 	pMsg->sessionId = sessionId;
 	cdf_mem_copy(&pMsg->APWPSIEs, pAPWPSIES, sizeof(tSirAPWPSIEs));
 	pMsg->length = sizeof(*pMsg);
@@ -17605,7 +17605,7 @@ QDF_STATUS csr_roam_update_wparsni_es(tpAniSirGlobal pMac, uint32_t sessionId,
 		cdf_mem_set(pMsg, sizeof(tSirUpdateAPWPARSNIEsReq), 0);
 		pMsg->messageType = eWNI_SME_SET_APWPARSNIEs_REQ;
 		pMsg->transactionId = 0;
-		cdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
+		qdf_copy_macaddr(&pMsg->bssid, &pSession->selfMacAddr);
 		pMsg->sessionId = sessionId;
 		cdf_mem_copy(&pMsg->APWPARSNIEs, pAPSirRSNie,
 			     sizeof(tSirRSNie));
@@ -17838,9 +17838,9 @@ static void csr_ser_des_unpack_diassoc_rsp(uint8_t *pBuf, tSirSmeDisassocRsp *pR
 	if (pBuf && pRsp) {
 		pBuf += 4;      /* skip type and length */
 		pRsp->sessionId = *pBuf++;
-		cdf_get_u16(pBuf, (uint16_t *) &pRsp->transactionId);
+		qdf_get_u16(pBuf, (uint16_t *) &pRsp->transactionId);
 		pBuf += 2;
-		cdf_get_u32(pBuf, (uint32_t *) &pRsp->statusCode);
+		qdf_get_u32(pBuf, (uint32_t *) &pRsp->statusCode);
 		pBuf += 4;
 		cdf_mem_copy(pRsp->peer_macaddr.bytes, pBuf, QDF_MAC_ADDR_SIZE);
 	}
@@ -18086,7 +18086,7 @@ csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 	pModifyAddIEInd->msgType = eWNI_SME_MODIFY_ADDITIONAL_IES;
 	pModifyAddIEInd->msgLen = sizeof(tSirModifyIEsInd);
 
-	cdf_copy_macaddr(&pModifyAddIEInd->modifyIE.bssid, &pModifyIE->bssid);
+	qdf_copy_macaddr(&pModifyAddIEInd->modifyIE.bssid, &pModifyIE->bssid);
 
 	pModifyAddIEInd->modifyIE.smeSessionId = pModifyIE->smeSessionId;
 	pModifyAddIEInd->modifyIE.notify = pModifyIE->notify;
@@ -18152,7 +18152,7 @@ csr_roam_update_add_ies(tpAniSirGlobal pMac,
 	pUpdateAddIEs->msgType = eWNI_SME_UPDATE_ADDITIONAL_IES;
 	pUpdateAddIEs->msgLen = sizeof(tSirUpdateIEsInd);
 
-	cdf_copy_macaddr(&pUpdateAddIEs->updateIE.bssid, &pUpdateIE->bssid);
+	qdf_copy_macaddr(&pUpdateAddIEs->updateIE.bssid, &pUpdateIE->bssid);
 
 	pUpdateAddIEs->updateIE.smeSessionId = pUpdateIE->smeSessionId;
 	pUpdateAddIEs->updateIE.append = pUpdateIE->append;

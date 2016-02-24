@@ -178,13 +178,13 @@ ol_rx_seq_num_check(struct ol_txrx_pdev_t *pdev,
 
 	 /* For mcast packets, we only the dup-detection, not re-order check */
 
-	if (cdf_unlikely(OL_RX_MCAST_TID == tid)) {
+	if (qdf_unlikely(OL_RX_MCAST_TID == tid)) {
 
 		pkt_tid = htt_rx_mpdu_desc_tid(pdev->htt_pdev, rx_mpdu_desc);
 
 		/* Invalid packet TID, expected only for HL */
 		/* Pass the packet on */
-		if (cdf_unlikely(pkt_tid >= OL_TXRX_NUM_EXT_TIDS))
+		if (qdf_unlikely(pkt_tid >= OL_TXRX_NUM_EXT_TIDS))
 			return htt_rx_status_ok;
 
 		retry = htt_rx_mpdu_desc_retry(pdev->htt_pdev, rx_mpdu_desc);
@@ -197,7 +197,7 @@ ol_rx_seq_num_check(struct ol_txrx_pdev_t *pdev,
 		 * or out-of-order check for multicast frames as per discussions & spec
 		 * Hence "seq_num <= last_seq_num" check is not necessary.
 		 */
-		if (cdf_unlikely(retry &&
+		if (qdf_unlikely(retry &&
 			(seq_num == peer->tids_mcast_last_seq[pkt_tid]))) {/* drop mcast */
 			TXRX_STATS_INCR(pdev, priv.rx.err.msdu_mc_dup_drop);
 			return htt_rx_status_err_replay;

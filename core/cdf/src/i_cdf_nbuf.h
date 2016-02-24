@@ -405,7 +405,7 @@ __cdf_nbuf_cat(struct sk_buff *dst, struct sk_buff *src)
 {
 	QDF_STATUS error = 0;
 
-	cdf_assert(dst && src);
+	qdf_assert(dst && src);
 
 	/*
 	 * Since pskb_expand_head unconditionally reallocates the skb->head
@@ -799,7 +799,7 @@ static inline void __cdf_nbuf_set_pktlen(struct sk_buff *skb, uint32_t len)
 				len - skb->len - skb_tailroom(skb),
 				GFP_ATOMIC))) {
 				dev_kfree_skb_any(skb);
-				cdf_assert(0);
+				qdf_assert(0);
 			}
 		}
 		skb_put(skb, (len - skb->len));

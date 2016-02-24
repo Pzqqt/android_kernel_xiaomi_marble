@@ -389,7 +389,7 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 	}
 
 	/* Now copy over the information to the OEM DATA REQ to HAL */
-	cdf_copy_macaddr(&start_oem_data_req->selfMacAddr,
+	qdf_copy_macaddr(&start_oem_data_req->selfMacAddr,
 			 &mac_ctx->lim.gpLimMlmOemDataReq->selfMacAddr);
 
 	start_oem_data_req->data_len =
@@ -1618,7 +1618,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
 	case eLIM_BT_AMP_STA_ROLE:
-		if (!cdf_is_macaddr_equal(&mlm_disassocreq->peer_macaddr,
+		if (!qdf_is_macaddr_equal(&mlm_disassocreq->peer_macaddr,
 				     &curr_bssid)) {
 			lim_log(mac_ctx, LOGW,
 			  FL("received MLM_DISASSOC_REQ with invalid BSS id"));
@@ -1650,7 +1650,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			sme_disassoc_rsp->transactionId = 0;
 			sme_disassoc_rsp->statusCode = eSIR_SME_DEAUTH_STATUS;
 
-			cdf_copy_macaddr(&sme_disassoc_rsp->peer_macaddr,
+			qdf_copy_macaddr(&sme_disassoc_rsp->peer_macaddr,
 					 &mlm_disassocreq->peer_macaddr);
 			msg = (uint32_t *)sme_disassoc_rsp;
 
@@ -2147,7 +2147,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				   session, true);
 	return;
 end:
-	cdf_copy_macaddr(&mlm_deauth_cnf.peer_macaddr,
+	qdf_copy_macaddr(&mlm_deauth_cnf.peer_macaddr,
 			 &mlm_deauth_req->peer_macaddr);
 	mlm_deauth_cnf.deauthTrigger = mlm_deauth_req->deauthTrigger;
 	mlm_deauth_cnf.aid = mlm_deauth_req->aid;
@@ -2271,9 +2271,9 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 * check if TDLS is enabled.
 		 */
 #ifndef FEATURE_WLAN_TDLS
-		if ((!cdf_is_macaddr_broadcast(
+		if ((!qdf_is_macaddr_broadcast(
 				&mlm_set_keys_req->peer_macaddr)) &&
-		    (!cdf_is_macaddr_equal(&mlm_set_keys_req->peer_macaddr,
+		    (!qdf_is_macaddr_equal(&mlm_set_keys_req->peer_macaddr,
 					   &curr_bssid))) {
 			lim_log(mac_ctx, LOGW,
 				FL("Received MLM_SETKEYS_REQ with invalid BSSID"
@@ -2306,7 +2306,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	 * mlm_set_keys_req->key.unicast = 0 -> Multicast/broadcast
 	 * mlm_set_keys_req->key.unicast - 1 -> Unicast keys are being set
 	 */
-	if (cdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
+	if (qdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
 		lim_log(mac_ctx, LOG1, FL("Trying to set Group Keys...%d "),
 			mlm_set_keys_req->sessionId);
 		/*
@@ -2379,7 +2379,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		FL("Trying to set keys for STA Index [%d], using default_key_id [%d]"),
 		sta_idx, default_key_id);
 
-	if (cdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
+	if (qdf_is_macaddr_broadcast(&mlm_set_keys_req->peer_macaddr)) {
 		session->limPrevMlmState = session->limMlmState;
 		session->limMlmState = eLIM_MLM_WT_SET_BSS_KEY_STATE;
 		MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE,

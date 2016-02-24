@@ -554,7 +554,7 @@ static int oem_process_set_cap_req_msg(int oem_cap_len,
 					(struct sme_oem_capability *)oem_cap);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		hdd_err("error updating rm capability, status: %d", status);
-	error_code = cdf_status_to_os_return(status);
+	error_code = qdf_status_to_os_return(status);
 
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), GFP_KERNEL);
 	if (skb == NULL) {

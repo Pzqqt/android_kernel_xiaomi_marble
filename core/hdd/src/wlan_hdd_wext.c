@@ -1350,7 +1350,7 @@ QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 	context.pAdapter = pAdapter;
 	context.magic = LINK_CONTEXT_MAGIC;
 
-	cdf_copy_macaddr(&linkspeed_req->peer_macaddr, &macAddress);
+	qdf_copy_macaddr(&linkspeed_req->peer_macaddr, &macAddress);
 	status = sme_get_link_speed(WLAN_HDD_GET_HAL_CTX(pAdapter),
 				    linkspeed_req,
 				    &context, hdd_get_link_speed_cb);
@@ -1421,7 +1421,7 @@ int wlan_hdd_get_link_speed(hdd_adapter_t *sta_adapter, uint32_t *link_speed)
 		QDF_STATUS status;
 		struct qdf_mac_addr bssid;
 
-		cdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
+		qdf_copy_macaddr(&bssid, &hdd_stactx->conn_info.bssId);
 
 		status = wlan_hdd_get_linkspeed_for_peermac(sta_adapter, bssid);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1554,7 +1554,7 @@ void hdd_clear_roam_profile_ie(hdd_adapter_t *pAdapter)
 	pAdapter->wapi_info.nWapiMode = 0;
 #endif
 
-	cdf_zero_macaddr(&pWextState->req_bssId);
+	qdf_zero_macaddr(&pWextState->req_bssId);
 
 }
 
@@ -4107,7 +4107,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 	if (ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) {
 		/*Key direction for group is RX only */
 		setKey.keyDirection = eSIR_RX_ONLY;
-		cdf_set_macaddr_broadcast(&setKey.peerMac);
+		qdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
 
 		setKey.keyDirection = eSIR_TX_RX;
@@ -5072,7 +5072,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 	{
 		struct qdf_mac_addr bssid;
 
-		cdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
+		qdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
 		if (sme_set_tx_power
 			    (hHal, pAdapter->sessionId, bssid,
 			    pAdapter->device_mode,
@@ -5091,8 +5091,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		hddLog(CDF_TRACE_LEVEL_INFO,
 		       "%s: Setting maximum tx power %d dBm", __func__,
 		       set_value);
-		cdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
-		cdf_copy_macaddr(&selfMac, &pHddStaCtx->conn_info.bssId);
+		qdf_copy_macaddr(&bssid, &pHddStaCtx->conn_info.bssId);
+		qdf_copy_macaddr(&selfMac, &pHddStaCtx->conn_info.bssId);
 
 		if (sme_set_max_tx_power(hHal, bssid, selfMac, set_value)
 		    != QDF_STATUS_SUCCESS) {

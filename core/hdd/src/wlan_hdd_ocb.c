@@ -274,7 +274,7 @@ static int hdd_ocb_register_sta(hdd_adapter_t *adapter)
 	}
 
 	pHddStaCtx->conn_info.staId[0] = peer_id;
-	cdf_copy_macaddr(&pHddStaCtx->conn_info.peerMacAddress[0],
+	qdf_copy_macaddr(&pHddStaCtx->conn_info.peerMacAddress[0],
 			 &adapter->macAddressCurrent);
 
 	return 0;
@@ -531,7 +531,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 		 * First channel uses the adapter's address.
 		 */
 		if (i == 0) {
-			cdf_copy_macaddr(&curr_chan->mac_address,
+			qdf_copy_macaddr(&curr_chan->mac_address,
 				     &adapter->macAddressCurrent);
 		} else {
 			mac_addr = wlan_hdd_get_intf_addr(adapter->pHddCtx);
@@ -877,7 +877,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	 */
 	for (i = 0; i < config->channel_count; i++) {
 		if (i == 0) {
-			cdf_copy_macaddr(&config->channels[i].mac_address,
+			qdf_copy_macaddr(&config->channels[i].mac_address,
 				&adapter->macAddressCurrent);
 		} else {
 			mac_addr = wlan_hdd_get_intf_addr(adapter->pHddCtx);
@@ -888,7 +888,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 			cdf_mem_copy(config->channels[i].mac_address.bytes,
 				mac_addr, QDF_MAC_ADDR_SIZE);
 			/* Save the mac address to release later */
-			cdf_copy_macaddr(&adapter->ocb_mac_address[
+			qdf_copy_macaddr(&adapter->ocb_mac_address[
 				     adapter->ocb_mac_addr_count],
 				     &config->channels[i].mac_address);
 			adapter->ocb_mac_addr_count++;

@@ -108,7 +108,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 
 			return false;
 		} else
-			return ((algoEnable > 0 ? true : false));
+			return algoEnable > 0 ? true : false;
 	} else {
 
 		if (LIM_IS_AP_ROLE(psessionEntry)) {
@@ -138,8 +138,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 		} else
 
 		if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED,
-				     &privacyOptImp) != eSIR_SUCCESS)
-		{
+				     &privacyOptImp) != eSIR_SUCCESS) {
 			/**
 			 * Could not get PrivacyOptionImplemented value
 			 * from CFG. Log error.
@@ -150,7 +149,7 @@ lim_is_auth_algo_supported(tpAniSirGlobal pMac, tAniAuthType authType,
 
 			return false;
 		}
-		return (algoEnable && privacyOptImp);
+		return algoEnable && privacyOptImp;
 	}
 } /****** end lim_is_auth_algo_supported() ******/
 
@@ -775,7 +774,7 @@ void lim_post_sme_set_keys_cnf(tpAniSirGlobal pMac,
 			       tLimMlmSetKeysCnf *mlmSetKeysCnf)
 {
 	/* Prepare and Send LIM_MLM_SETKEYS_CNF */
-	cdf_copy_macaddr(&mlmSetKeysCnf->peer_macaddr,
+	qdf_copy_macaddr(&mlmSetKeysCnf->peer_macaddr,
 			 &pMlmSetKeysReq->peer_macaddr);
 
 	/* Free up buffer allocated for mlmSetKeysReq */
@@ -882,7 +881,8 @@ void lim_send_set_bss_key_req(tpAniSirGlobal pMac,
 
 	lim_log(pMac, LOGW, FL("Sending WMA_SET_BSSKEY_REQ..."));
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
-	if (eSIR_SUCCESS != (retCode = wma_post_ctrl_msg(pMac, &msgQ))) {
+	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	if (eSIR_SUCCESS != retCode) {
 		lim_log(pMac, LOGE,
 			FL("Posting SET_BSSKEY to HAL failed, reason=%X"),
 			retCode);
@@ -964,7 +964,7 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 	pSetStaKeyParams->defWEPIdx = defWEPIdx;
 
 	pSetStaKeyParams->smesessionId = pMlmSetKeysReq->smesessionId;
-	cdf_copy_macaddr(&pSetStaKeyParams->peer_macaddr,
+	qdf_copy_macaddr(&pSetStaKeyParams->peer_macaddr,
 			 &pMlmSetKeysReq->peer_macaddr);
 
 	if (sendRsp == true) {
@@ -1056,7 +1056,8 @@ void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 
 	lim_log(pMac, LOG1, FL("Sending WMA_SET_STAKEY_REQ..."));
 	MTRACE(mac_trace_msg_tx(pMac, sessionEntry->peSessionId, msgQ.type));
-	if (eSIR_SUCCESS != (retCode = wma_post_ctrl_msg(pMac, &msgQ))) {
+	retCode = wma_post_ctrl_msg(pMac, &msgQ);
+	if (eSIR_SUCCESS != retCode) {
 		lim_log(pMac, LOGE,
 			FL("Posting SET_STAKEY to HAL failed, reason=%X"),
 			retCode);

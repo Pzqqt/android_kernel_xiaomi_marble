@@ -135,7 +135,7 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 	} else {
 		if ((eConnectionState_Associated ==
 		     pHddStaCtx->conn_info.connState)
-		    && (cdf_is_macaddr_equal(&pHddStaCtx->gtkOffloadReqParams.bssid,
+		    && (qdf_is_macaddr_equal(&pHddStaCtx->gtkOffloadReqParams.bssid,
 			       &pHddStaCtx->conn_info.bssId))
 		    && (GTK_OFFLOAD_ENABLE ==
 			pHddStaCtx->gtkOffloadReqParams.ulFlags)) {
@@ -387,7 +387,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 			}
 			offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
 			offLoadRequest.enableOrDisable = SIR_OFFLOAD_ENABLE;
-			cdf_copy_macaddr(&offLoadRequest.nsOffloadInfo.self_macaddr,
+			qdf_copy_macaddr(&offLoadRequest.nsOffloadInfo.self_macaddr,
 					 &pAdapter->macAddressCurrent);
 			/* set number of ns offload address count */
 			offLoadRequest.num_ns_offload_count = count;

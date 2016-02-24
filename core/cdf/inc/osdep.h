@@ -77,7 +77,7 @@ typedef struct hal_bus_context {
 
 #if ATH_DEBUG
 #ifndef ASSERT
-#define ASSERT(expr)  cdf_assert(expr)
+#define ASSERT(expr)  qdf_assert(expr)
 #endif
 #else
 #define ASSERT(expr)

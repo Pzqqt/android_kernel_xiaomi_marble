@@ -51,7 +51,7 @@ static inline ol_txrx_vdev_handle ol_txrx_get_vdev_from_vdev_id(uint8_t vdev_id)
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	ol_txrx_vdev_handle vdev = NULL;
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		return NULL;
 	}
 

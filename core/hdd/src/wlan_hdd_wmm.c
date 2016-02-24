@@ -1656,7 +1656,7 @@ void hdd_wmm_classify_pkt(hdd_adapter_t *adapter,
 static
 uint16_t hdd_get_queue_index(uint16_t up, bool is_eapol)
 {
-	if (cdf_unlikely(is_eapol == true))
+	if (qdf_unlikely(is_eapol == true))
 		return HDD_LINUX_AC_HI_PRIO;
 	else
 		return hdd_linux_up_to_ac_map[up];

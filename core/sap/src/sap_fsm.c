@@ -49,7 +49,7 @@
 #include "cds_utils.h"
 #include "cds_ieee80211_common_i.h"
 #include "cds_reg_service.h"
-#include "cdf_util.h"
+#include "qdf_util.h"
 #include "cds_concurrency.h"
 
 /*----------------------------------------------------------------------------
@@ -2488,7 +2488,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		sap_ap_event.sapHddEventCode = eSAP_STA_ASSOC_IND;
 		assoc_ind = &sap_ap_event.sapevt.sapAssocIndication;
 
-		cdf_copy_macaddr(&assoc_ind->staMac, &csr_roaminfo->peerMac);
+		qdf_copy_macaddr(&assoc_ind->staMac, &csr_roaminfo->peerMac);
 		assoc_ind->staId = csr_roaminfo->staId;
 		assoc_ind->status = 0;
 		/* Required for indicating the frames to upper layer */
@@ -2569,7 +2569,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		else
 			sap_ap_event.sapHddEventCode = eSAP_STA_ASSOC_EVENT;
 
-		cdf_copy_macaddr(&reassoc_complete->staMac,
+		qdf_copy_macaddr(&reassoc_complete->staMac,
 				 &csr_roaminfo->peerMac);
 		reassoc_complete->staId = csr_roaminfo->staId;
 		reassoc_complete->statusCode = csr_roaminfo->statusCode;
@@ -2621,7 +2621,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		disassoc_comp =
 			&sap_ap_event.sapevt.sapStationDisassocCompleteEvent;
 
-		cdf_copy_macaddr(&disassoc_comp->staMac,
+		qdf_copy_macaddr(&disassoc_comp->staMac,
 				 &csr_roaminfo->peerMac);
 		disassoc_comp->staId = csr_roaminfo->staId;
 		if (csr_roaminfo->reasonCode == eCSR_ROAM_RESULT_FORCED)
@@ -2638,7 +2638,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		key_complete =
 			&sap_ap_event.sapevt.sapStationSetKeyCompleteEvent;
 		key_complete->status = (eSapStatus) context;
-		cdf_copy_macaddr(&key_complete->peerMacAddr,
+		qdf_copy_macaddr(&key_complete->peerMacAddr,
 				 &csr_roaminfo->peerMac);
 		break;
 
@@ -2707,7 +2707,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 	case eSAP_MAX_ASSOC_EXCEEDED:
 		sap_ap_event.sapHddEventCode = eSAP_MAX_ASSOC_EXCEEDED;
-		cdf_copy_macaddr(&sap_ap_event.sapevt.
+		qdf_copy_macaddr(&sap_ap_event.sapevt.
 				 sapMaxAssocExceeded.macaddr,
 				 &csr_roaminfo->peerMac);
 		break;

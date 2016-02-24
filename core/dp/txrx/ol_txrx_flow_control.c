@@ -28,7 +28,7 @@
 /* OS abstraction libraries */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <cdf_atomic.h>         /* qdf_atomic_read, etc. */
-#include <cdf_util.h>           /* cdf_unlikely */
+#include <qdf_util.h>           /* qdf_unlikely */
 
 /* APIs for other modules */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
@@ -601,7 +601,7 @@ void ol_tx_flow_pool_map_handler(uint8_t flow_id, uint8_t flow_type,
 		"%s: flow_id %d flow_type %d flow_pool_id %d flow_pool_size %d\n",
 		__func__, flow_id, flow_type, flow_pool_id, flow_pool_size);
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			"%s: pdev is NULL", __func__);
 		return;
@@ -659,7 +659,7 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 		"%s: flow_id %d flow_type %d flow_pool_id %d\n",
 		__func__, flow_id, flow_type, flow_pool_id);
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			"%s: pdev is NULL", __func__);
 		return;

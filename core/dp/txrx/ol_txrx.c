@@ -550,7 +550,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			goto uc_attach_fail;
 
 	/* Calculate single element reserved size power of 2 */
-	pdev->tx_desc.desc_reserved_size = cdf_get_pwr2(desc_element_size);
+	pdev->tx_desc.desc_reserved_size = qdf_get_pwr2(desc_element_size);
 	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_desc.desc_pages,
 		pdev->tx_desc.desc_reserved_size, desc_pool_size, 0, true);
 	if ((0 == pdev->tx_desc.desc_pages.num_pages) ||
@@ -1272,7 +1272,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 		return;
 	}
 
-	cdf_assert(cds_ctx);
+	qdf_assert(cds_ctx);
 	qdf_spin_lock_bh(&peer->peer_info_lock);
 	if (peer->state >= ol_txrx_peer_state_conn)
 		data_rx = peer->osif_rx;
@@ -1472,9 +1472,9 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 {
 	struct ol_txrx_peer_t *peer;
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Pdev is NULL");
-		cdf_assert(0);
+		qdf_assert(0);
 		return QDF_STATUS_E_INVAL;
 	}
 
@@ -1686,7 +1686,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 	if (0 == qdf_atomic_read(&(peer->ref_cnt))) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "The Peer is not present anymore\n");
-		cdf_assert(0);
+		qdf_assert(0);
 		return;
 	}
 
@@ -2537,7 +2537,7 @@ A_STATUS
 ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 			ol_txrx_peer_handle peer, ol_txrx_peer_stats_t *stats)
 {
-	cdf_assert(pdev && peer && stats);
+	qdf_assert(pdev && peer && stats);
 	qdf_spin_lock_bh(&pdev->peer_stat_mutex);
 	cdf_mem_copy(stats, &peer->stats, sizeof(*stats));
 	qdf_spin_unlock_bh(&pdev->peer_stat_mutex);
@@ -2831,7 +2831,7 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 {
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)context;
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: Invalid context", __func__);
 		cdf_mem_free(rxpkt);
@@ -2860,11 +2860,11 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 	p_cds_sched_context sched_ctx = get_cds_sched_ctxt();
 	struct cds_ol_rx_pkt *pkt;
 
-	if (cdf_unlikely(!sched_ctx))
+	if (qdf_unlikely(!sched_ctx))
 		return;
 
 	pkt = cds_alloc_ol_rx_pkt(sched_ctx);
-	if (cdf_unlikely(!pkt)) {
+	if (qdf_unlikely(!pkt)) {
 		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: Not able to allocate context", __func__);
 		return;
@@ -2992,11 +2992,11 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 	QDF_STATUS ret;
 	ol_rx_callback_fp data_rx = NULL;
 
-	if (cdf_unlikely(!cds_ctx))
+	if (qdf_unlikely(!cds_ctx))
 		goto free_buf;
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	if (cdf_unlikely(!(peer->state >= ol_txrx_peer_state_conn))) {
+	if (qdf_unlikely(!(peer->state >= ol_txrx_peer_state_conn))) {
 		qdf_spin_unlock_bh(&peer->peer_info_lock);
 		goto free_buf;
 	}
@@ -3354,10 +3354,10 @@ void ol_txrx_lro_flush_handler(void *context,
 {
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)context;
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			 "%s: Invalid context", __func__);
-		cdf_assert(0);
+		qdf_assert(0);
 		return;
 	}
 
@@ -3383,14 +3383,14 @@ void ol_txrx_lro_flush(void *data)
 	struct cds_ol_rx_pkt *pkt;
 	ol_txrx_pdev_handle pdev = (ol_txrx_pdev_handle)data;
 
-	if (cdf_unlikely(!sched_ctx))
+	if (qdf_unlikely(!sched_ctx))
 		return;
 
 	if (!ol_cfg_is_rx_thread_enabled(pdev->ctrl_pdev)) {
 		ol_txrx_lro_flush_handler((void *)pdev, NULL, 0);
 	} else {
 		pkt = cds_alloc_ol_rx_pkt(sched_ctx);
-		if (cdf_unlikely(!pkt)) {
+		if (qdf_unlikely(!pkt)) {
 			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				 "%s: Not able to allocate context", __func__);
 			return;

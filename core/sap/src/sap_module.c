@@ -43,7 +43,7 @@
  * Include Files
  * -------------------------------------------------------------------------*/
 #include "cdf_trace.h"
-#include "cdf_util.h"
+#include "qdf_util.h"
 /* Pick up the sme callback registration API */
 #include "sme_api.h"
 
@@ -3103,7 +3103,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 				     struct tagCsrDelStaParams *pDelStaParams)
 {
 	if (NULL == mac)
-		cdf_set_macaddr_broadcast(&pDelStaParams->peerMacAddr);
+		qdf_set_macaddr_broadcast(&pDelStaParams->peerMacAddr);
 	else
 		cdf_mem_copy(pDelStaParams->peerMacAddr.bytes, mac,
 			     QDF_MAC_ADDR_SIZE);

@@ -553,7 +553,7 @@ static bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 
 	pInfo->mode = hdd_map_device_to_ll_iface_mode(pAdapter->device_mode);
 
-	cdf_copy_macaddr(&pInfo->macAddr, &pAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&pInfo->macAddr, &pAdapter->macAddressCurrent);
 
 	if (((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
 	     (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
@@ -585,7 +585,7 @@ static bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 		if (eConnectionState_Associated ==
 		    pHddStaCtx->conn_info.connState) {
 			pInfo->state = WIFI_ASSOCIATED;
-			cdf_copy_macaddr(&pInfo->bssid,
+			qdf_copy_macaddr(&pInfo->bssid,
 					 &pHddStaCtx->conn_info.bssId);
 			cdf_mem_copy(pInfo->ssid,
 				     pHddStaCtx->conn_info.SSID.SSID.ssId,

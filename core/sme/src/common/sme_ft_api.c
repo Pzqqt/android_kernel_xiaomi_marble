@@ -329,7 +329,7 @@ QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 		}
 	}
 
-	cdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
+	qdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
 	msg->smeSessionId = session_id;
 	sms_log(mac_ctx, LOG1, "BSSID = " MAC_ADDRESS_STR,
 		MAC_ADDR_ARRAY(msg->bssid.bytes));

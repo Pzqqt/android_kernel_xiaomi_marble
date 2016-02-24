@@ -30,7 +30,7 @@
 
 #include <athdefs.h>            /* A_STATUS */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_util.h>           /* cdf_assert */
+#include <qdf_util.h>           /* qdf_assert */
 #include <htc_api.h>            /* HTC_PACKET */
 
 #include <htt_types.h>
@@ -286,23 +286,23 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 #define HTT_ASSERT_LEVEL 3
 #endif
 
-#define HTT_ASSERT_ALWAYS(condition) cdf_assert_always((condition))
+#define HTT_ASSERT_ALWAYS(condition) qdf_assert_always((condition))
 
-#define HTT_ASSERT0(condition) cdf_assert((condition))
+#define HTT_ASSERT0(condition) qdf_assert((condition))
 #if HTT_ASSERT_LEVEL > 0
-#define HTT_ASSERT1(condition) cdf_assert((condition))
+#define HTT_ASSERT1(condition) qdf_assert((condition))
 #else
 #define HTT_ASSERT1(condition)
 #endif
 
 #if HTT_ASSERT_LEVEL > 1
-#define HTT_ASSERT2(condition) cdf_assert((condition))
+#define HTT_ASSERT2(condition) qdf_assert((condition))
 #else
 #define HTT_ASSERT2(condition)
 #endif
 
 #if HTT_ASSERT_LEVEL > 2
-#define HTT_ASSERT3(condition) cdf_assert((condition))
+#define HTT_ASSERT3(condition) qdf_assert((condition))
 #else
 #define HTT_ASSERT3(condition)
 #endif

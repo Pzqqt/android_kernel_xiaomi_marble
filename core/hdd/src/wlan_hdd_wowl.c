@@ -522,7 +522,7 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 	wowParams.ucMagicPktEnable = enable_mp;
 	wowParams.sessionId = pAdapter->sessionId;
 	if (enable_mp) {
-		cdf_copy_macaddr(&wowParams.magic_ptrn,
+		qdf_copy_macaddr(&wowParams.magic_ptrn,
 				 &pAdapter->macAddressCurrent);
 	}
 #ifdef WLAN_WAKEUP_EVENTS

@@ -359,7 +359,7 @@ ol_txrx_peer_find_add_id(struct ol_txrx_pdev_t *pdev,
 		}
 		if (ol_txrx_peer_find_add_id_to_obj(peer, peer_id)) {
 			/* TBDXXX: assert for now */
-			cdf_assert(0);
+			qdf_assert(0);
 		}
 		return;
 	}

@@ -238,7 +238,7 @@ __cdf_nbuf_map(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 #ifdef CDF_OS_DEBUG
 	struct skb_shared_info *sh = skb_shinfo(skb);
 #endif
-	cdf_assert((dir == QDF_DMA_TO_DEVICE)
+	qdf_assert((dir == QDF_DMA_TO_DEVICE)
 		   || (dir == QDF_DMA_FROM_DEVICE));
 
 	/*
@@ -248,7 +248,7 @@ __cdf_nbuf_map(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 	 * (including the bus address for each fragment) and a pointer
 	 * to the underlying sk_buff.
 	 */
-	cdf_assert(sh->nr_frags == 0);
+	qdf_assert(sh->nr_frags == 0);
 
 	return __cdf_nbuf_map_single(osdev, skb, dir);
 
@@ -266,10 +266,10 @@ __cdf_nbuf_map(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 void
 __cdf_nbuf_unmap(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 {
-	cdf_assert((dir == QDF_DMA_TO_DEVICE)
+	qdf_assert((dir == QDF_DMA_TO_DEVICE)
 		   || (dir == QDF_DMA_FROM_DEVICE));
 
-	cdf_assert(((dir == QDF_DMA_TO_DEVICE)
+	qdf_assert(((dir == QDF_DMA_TO_DEVICE)
 		    || (dir == QDF_DMA_FROM_DEVICE)));
 	/*
 	 * Assume there's a single fragment.
@@ -346,7 +346,7 @@ __cdf_nbuf_set_rx_cksum(struct sk_buff *skb, qdf_nbuf_rx_cksum_t *cksum)
 		break;
 	default:
 		pr_err("ADF_NET:Unknown checksum type\n");
-		cdf_assert(0);
+		qdf_assert(0);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -770,7 +770,7 @@ uint8_t __cdf_nbuf_get_tso_cmn_seg_info(struct sk_buff *skb,
 		tso_info->ip_id = ntohs(ipv4_hdr->id);
 		tso_info->ipv4_csum_en = 1;
 		tso_info->tcp_ipv4_csum_en = 1;
-		if (cdf_unlikely(ipv4_hdr->protocol != IPPROTO_TCP)) {
+		if (qdf_unlikely(ipv4_hdr->protocol != IPPROTO_TCP)) {
 			qdf_print("TSO IPV4 proto 0x%x not TCP\n",
 				 ipv4_hdr->protocol);
 			return 1;
@@ -847,7 +847,7 @@ uint32_t __cdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 	memset(&tso_cmn_info, 0x0, sizeof(tso_cmn_info));
 
-	if (cdf_unlikely(__cdf_nbuf_get_tso_cmn_seg_info(skb, &tso_cmn_info))) {
+	if (qdf_unlikely(__cdf_nbuf_get_tso_cmn_seg_info(skb, &tso_cmn_info))) {
 		qdf_print("TSO: error getting common segment info\n");
 		return 0;
 	}

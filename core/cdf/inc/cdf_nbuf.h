@@ -32,7 +32,7 @@
 
 #ifndef _CDF_NBUF_H
 #define _CDF_NBUF_H
-#include <cdf_util.h>
+#include <qdf_util.h>
 #include <qdf_types.h>
 #include <qdf_net_types.h>
 #include <qdf_lock.h>
@@ -347,7 +347,7 @@ cdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size, int reserve,
 	net_buf = __cdf_nbuf_alloc(osdev, size, reserve, align, prio);
 
 	/* Store SKB in internal CDF tracking table */
-	if (cdf_likely(net_buf))
+	if (qdf_likely(net_buf))
 		cdf_net_buf_debug_add_node(net_buf, size, file_name, line_num);
 
 	return net_buf;
@@ -362,7 +362,7 @@ cdf_nbuf_alloc_debug(qdf_device_t osdev, qdf_size_t size, int reserve,
 static inline void cdf_nbuf_free(cdf_nbuf_t net_buf)
 {
 	/* Remove SKB from internal CDF tracking table */
-	if (cdf_likely(net_buf))
+	if (qdf_likely(net_buf))
 		cdf_net_buf_debug_delete_node(net_buf);
 
 	__cdf_nbuf_free(net_buf);

@@ -1118,7 +1118,7 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 			csr_scan_active_list_timeout_handle, &cmd);
 		cmd->u.scanCmd.u.scanRequest.scan_id =
 			cmd->u.scanCmd.scanID;
-		cdf_set_macaddr_broadcast(&cmd->u.scanCmd.u.scanRequest.bssid);
+		qdf_set_macaddr_broadcast(&cmd->u.scanCmd.u.scanRequest.bssid);
 		/* Put to the head of pending queue */
 		status = csr_queue_sme_command(mac_ctx, cmd, true);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -1427,7 +1427,7 @@ static int csr_get_altered_rssi(tpAniSirGlobal mac_ctx, int rssi,
 			cdf_mem_copy(fav_bssid.bytes,
 					&roam_params->bssid_favored[i],
 					QDF_MAC_ADDR_SIZE);
-			if (!cdf_is_macaddr_equal(&fav_bssid, bssid))
+			if (!qdf_is_macaddr_equal(&fav_bssid, bssid))
 				continue;
 			modified_rssi += roam_params->bssid_favored_factor[i];
 			sms_log(mac_ctx, LOG2,
@@ -4308,7 +4308,7 @@ bool csr_is_duplicate_bss_description(tpAniSirGlobal pMac,
 		goto free_ies;
 
 	if (pCap1->ess &&
-	    cdf_is_macaddr_equal((struct qdf_mac_addr *) pSirBssDesc1->bssId,
+	    qdf_is_macaddr_equal((struct qdf_mac_addr *) pSirBssDesc1->bssId,
 				 (struct qdf_mac_addr *) pSirBssDesc2->bssId)
 	    && (fForced
 		|| (cds_chan_to_band(pSirBssDesc1->channelId) ==
@@ -4358,7 +4358,7 @@ bool csr_is_duplicate_bss_description(tpAniSirGlobal pMac,
 	}
 	/* In case of P2P devices, ess and ibss will be set to zero */
 	else if (!pCap1->ess &&
-		cdf_is_macaddr_equal(
+		qdf_is_macaddr_equal(
 			(struct qdf_mac_addr *) pSirBssDesc1->bssId,
 			(struct qdf_mac_addr *) pSirBssDesc2->bssId)) {
 		fMatch = true;
@@ -4782,7 +4782,7 @@ bool csr_scan_age_out_bss(tpAniSirGlobal pMac, tCsrScanResult *pResult)
 	 */
 	if (csr_ll_remove_entry(&pMac->scan.scanResultList, &pResult->Link,
 				LL_ACCESS_NOLOCK)) {
-		if (cdf_is_macaddr_equal(
+		if (qdf_is_macaddr_equal(
 			(struct qdf_mac_addr *) &pResult->Result.BssDescriptor.bssId,
 			(struct qdf_mac_addr *) &pMac->scan.currentCountryBssid)) {
 			sms_log(pMac, LOGW,
@@ -4904,7 +4904,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 	pMsg->bssType = csr_translate_bsstype_to_mac_type(pScanReq->BSSType);
 
 	if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
-		cdf_copy_macaddr(&selfmac,
+		qdf_copy_macaddr(&selfmac,
 			&pMac->roam.roamSession[sessionId].selfMacAddr);
 	} else {
 		/*
@@ -4913,7 +4913,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		 */
 		for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 			if (CSR_IS_SESSION_VALID(pMac, i)) {
-				cdf_copy_macaddr(&selfmac,
+				qdf_copy_macaddr(&selfmac,
 					&pMac->roam.roamSession[i].selfMacAddr);
 				break;
 			}
@@ -4933,13 +4933,13 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 			}
 		}
 	}
-	cdf_copy_macaddr(&pMsg->selfMacAddr, &selfmac);
+	qdf_copy_macaddr(&pMsg->selfMacAddr, &selfmac);
 
-	cdf_copy_macaddr(&pMsg->bssId, &pScanReq->bssid);
-	if (cdf_is_macaddr_zero(&pScanReq->bssid))
-		cdf_set_macaddr_broadcast(&pMsg->bssId);
+	qdf_copy_macaddr(&pMsg->bssId, &pScanReq->bssid);
+	if (qdf_is_macaddr_zero(&pScanReq->bssid))
+		qdf_set_macaddr_broadcast(&pMsg->bssId);
 	else
-		cdf_copy_macaddr(&pMsg->bssId, &pScanReq->bssid);
+		qdf_copy_macaddr(&pMsg->bssId, &pScanReq->bssid);
 	minChnTime = pScanReq->minChnTime;
 	maxChnTime = pScanReq->maxChnTime;
 
@@ -6228,10 +6228,10 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	}
 
 	if (profile->BSSIDs.numOfBSSIDs == 1)
-		cdf_copy_macaddr(&scan_req->bssid,
+		qdf_copy_macaddr(&scan_req->bssid,
 				profile->BSSIDs.bssid);
 	else
-		cdf_set_macaddr_broadcast(&scan_req->bssid);
+		qdf_set_macaddr_broadcast(&scan_req->bssid);
 
 	if (profile->ChannelInfo.numOfChannels) {
 		scan_req->ChannelInfo.ChannelList =

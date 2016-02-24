@@ -358,7 +358,7 @@ __lim_fresh_scan_reqd(tpAniSirGlobal mac_ctx, uint8_t return_fresh_results)
 
 static inline uint8_t __lim_is_sme_assoc_cnf_valid(tpSirSmeAssocCnf pAssocCnf)
 {
-	if (cdf_is_macaddr_group(&pAssocCnf->peer_macaddr))
+	if (qdf_is_macaddr_group(&pAssocCnf->peer_macaddr))
 		return false;
 	else
 		return true;
@@ -1232,7 +1232,7 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
 
-	cdf_copy_macaddr(&pScanOffloadReq->bssId, &pScanReq->bssId);
+	qdf_copy_macaddr(&pScanOffloadReq->bssId, &pScanReq->bssId);
 
 	if (pScanReq->numSsid > SIR_SCAN_MAX_NUM_SSID) {
 		lim_log(pMac, LOGE,
@@ -1251,7 +1251,7 @@ static QDF_STATUS lim_send_hal_start_scan_offload_req(tpAniSirGlobal pMac,
 	}
 
 	pScanOffloadReq->hiddenSsid = pScanReq->hiddenSsid;
-	cdf_copy_macaddr(&pScanOffloadReq->selfMacAddr, &pScanReq->selfMacAddr);
+	qdf_copy_macaddr(&pScanOffloadReq->selfMacAddr, &pScanReq->selfMacAddr);
 	pScanOffloadReq->bssType = pScanReq->bssType;
 	pScanOffloadReq->dot11mode = pScanReq->dot11mode;
 	pScanOffloadReq->scanType = pScanReq->scanType;
@@ -1461,7 +1461,7 @@ static void __lim_process_sme_oem_data_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		return;
 	}
 
-	cdf_copy_macaddr(&pMlmOemDataReq->selfMacAddr,
+	qdf_copy_macaddr(&pMlmOemDataReq->selfMacAddr,
 			 &pOemDataReq->selfMacAddr);
 	pMlmOemDataReq->data_len = pOemDataReq->data_len;
 	cdf_mem_copy(pMlmOemDataReq->data, pOemDataReq->data,
@@ -2538,7 +2538,7 @@ static void __lim_process_sme_disassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBu
 		return;
 	}
 
-	cdf_copy_macaddr(&pMlmDisassocReq->peer_macaddr,
+	qdf_copy_macaddr(&pMlmDisassocReq->peer_macaddr,
 			 &smeDisassocReq.peer_macaddr);
 
 	pMlmDisassocReq->reasonCode = reasonCode;
@@ -2874,7 +2874,7 @@ static void __lim_process_sme_deauth_req(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	cdf_copy_macaddr(&mlm_deauth_req->peer_macaddr,
+	qdf_copy_macaddr(&mlm_deauth_req->peer_macaddr,
 			 &sme_deauth_req.peer_macaddr);
 
 	mlm_deauth_req->reasonCode = reason_code;
@@ -2990,7 +2990,7 @@ __lim_process_sme_set_context_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				"no.of keys exceeded max num of default keys limit"));
 			goto end;
 		}
-		cdf_copy_macaddr(&mlm_set_key_req->peer_macaddr,
+		qdf_copy_macaddr(&mlm_set_key_req->peer_macaddr,
 				 &set_context_req->peer_macaddr);
 
 		cdf_mem_copy((uint8_t *) &mlm_set_key_req->key,
@@ -3211,7 +3211,7 @@ void lim_process_sme_get_wpspbc_sessions(tpAniSirGlobal mac_ctx,
 	sap_event.sapHddEventCode = eSAP_GET_WPSPBC_SESSION_EVENT;
 	sap_get_wpspbc_event->module = QDF_MODULE_ID_PE;
 
-	if (cdf_is_macaddr_zero(&get_wps_pbc_sessions_req.remove_mac)) {
+	if (qdf_is_macaddr_zero(&get_wps_pbc_sessions_req.remove_mac)) {
 		lim_get_wpspbc_sessions(mac_ctx,
 				sap_get_wpspbc_event->addr,
 				sap_get_wpspbc_event->UUID_E,

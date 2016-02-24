@@ -103,7 +103,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 
 	/* First, check whether the PN check applies */
 	rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, msdu_list);
-	cdf_assert(htt_rx_msdu_has_wlan_mcast_flag(pdev->htt_pdev, rx_desc));
+	qdf_assert(htt_rx_msdu_has_wlan_mcast_flag(pdev->htt_pdev, rx_desc));
 	index = htt_rx_msdu_is_wlan_mcast(pdev->htt_pdev, rx_desc) ?
 		txrx_sec_mcast : txrx_sec_ucast;
 	pn_len = pdev->rx_pn[peer->security[index].sec_type].len;

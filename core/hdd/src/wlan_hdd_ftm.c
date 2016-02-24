@@ -127,7 +127,7 @@ static void wlan_hdd_ftm_update_tgt_cfg(void *context, void *param)
 	hdd_context_t *hdd_ctx = (hdd_context_t *) context;
 	struct wma_tgt_cfg *cfg = (struct wma_tgt_cfg *)param;
 
-	if (!cdf_is_macaddr_zero(&cfg->hw_macaddr)) {
+	if (!qdf_is_macaddr_zero(&cfg->hw_macaddr)) {
 		hdd_update_macaddr(hdd_ctx->config, cfg->hw_macaddr);
 	} else {
 		hddLog(CDF_TRACE_LEVEL_ERROR,

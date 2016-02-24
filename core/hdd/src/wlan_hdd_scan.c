@@ -787,7 +787,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 			scanRequest.scanType = eSIR_PASSIVE_SCAN;
 		}
 
-		cdf_set_macaddr_broadcast(&scanRequest.bssid);
+		qdf_set_macaddr_broadcast(&scanRequest.bssid);
 
 		/* set min and max channel time to zero */
 		scanRequest.minChnTime = 0;

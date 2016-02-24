@@ -63,7 +63,7 @@
 #include <ol_txrx_peer_find.h>
 #include <cdf_nbuf.h>
 #include <ieee80211.h>
-#include <cdf_util.h>
+#include <qdf_util.h>
 #include <athdefs.h>
 #include <cdf_memory.h>
 #include <ol_rx_defrag.h>
@@ -160,7 +160,7 @@ ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
 	if (peer) {
 		htt_rx_frag_pop(htt_pdev, rx_frag_ind_msg, &head_msdu,
 				&tail_msdu);
-		cdf_assert(head_msdu == tail_msdu);
+		qdf_assert(head_msdu == tail_msdu);
 		if (ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev)) {
 			rx_mpdu_desc =
 				htt_rx_mpdu_desc_list_next(htt_pdev, head_msdu);
@@ -222,14 +222,14 @@ ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 
 	seq = seq_num & peer->tids_rx_reorder[tid].win_sz_mask;
-	cdf_assert(seq == 0);
+	qdf_assert(seq == 0);
 	rx_reorder_array_elem = &peer->tids_rx_reorder[tid].array[seq];
 
 	mac_hdr = (struct ieee80211_frame *)
 		ol_rx_frag_get_mac_hdr(htt_pdev, frag);
-	rxseq = cdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) >>
+	rxseq = qdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) >>
 		IEEE80211_SEQ_SEQ_SHIFT;
-	fragno = cdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) &
+	fragno = qdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) &
 		IEEE80211_SEQ_FRAG_MASK;
 	more_frag = mac_hdr->i_fc[1] & IEEE80211_FC1_MORE_FRAG;
 
@@ -246,7 +246,7 @@ ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 		fmac_hdr = (struct ieee80211_frame *)
 			ol_rx_frag_get_mac_hdr(htt_pdev,
 					       rx_reorder_array_elem->head);
-		frxseq = cdf_le16_to_cpu(*(uint16_t *) fmac_hdr->i_seq) >>
+		frxseq = qdf_le16_to_cpu(*(uint16_t *) fmac_hdr->i_seq) >>
 			IEEE80211_SEQ_SEQ_SHIFT;
 		if (rxseq != frxseq
 		    || !DEFRAG_IEEE80211_ADDR_EQ(mac_hdr->i_addr1,
@@ -302,13 +302,13 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 	uint8_t last_morefrag = 1, count = 0;
 	cdf_nbuf_t frag_clone;
 
-	cdf_assert(frag);
+	qdf_assert(frag);
 	frag_clone = OL_RX_FRAG_CLONE(frag);
 	frag = frag_clone ? frag_clone : frag;
 
 	mac_hdr = (struct ieee80211_frame *)
 		ol_rx_frag_get_mac_hdr(htt_pdev, frag);
-	fragno = cdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) &
+	fragno = qdf_le16_to_cpu(*(uint16_t *) mac_hdr->i_seq) &
 		IEEE80211_SEQ_FRAG_MASK;
 
 	if (!(*head_addr)) {
@@ -320,7 +320,7 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 	/* For efficiency, compare with tail first */
 	lmac_hdr = (struct ieee80211_frame *)
 		ol_rx_frag_get_mac_hdr(htt_pdev, *tail_addr);
-	lfragno = cdf_le16_to_cpu(*(uint16_t *) lmac_hdr->i_seq) &
+	lfragno = qdf_le16_to_cpu(*(uint16_t *) lmac_hdr->i_seq) &
 		  IEEE80211_SEQ_FRAG_MASK;
 	if (fragno > lfragno) {
 		cdf_nbuf_set_next(*tail_addr, frag);
@@ -331,7 +331,7 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 			cmac_hdr = (struct ieee80211_frame *)
 				ol_rx_frag_get_mac_hdr(htt_pdev, cur);
 			cur_fragno =
-				cdf_le16_to_cpu(*(uint16_t *) cmac_hdr->i_seq) &
+				qdf_le16_to_cpu(*(uint16_t *) cmac_hdr->i_seq) &
 				IEEE80211_SEQ_FRAG_MASK;
 			prev = cur;
 			cur = cdf_nbuf_next(cur);
@@ -356,7 +356,7 @@ ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
 				(struct ieee80211_frame *)
 				ol_rx_frag_get_mac_hdr(htt_pdev, next);
 			next_fragno =
-				cdf_le16_to_cpu(*(uint16_t *) next_hdr->i_seq) &
+				qdf_le16_to_cpu(*(uint16_t *) next_hdr->i_seq) &
 				IEEE80211_SEQ_FRAG_MASK;
 			count++;
 			if (next_fragno != count)
@@ -494,7 +494,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 	wh = (struct ieee80211_frame *)ol_rx_frag_get_mac_hdr(htt_pdev, cur);
 	hdr_space = ol_rx_frag_hdrsize(wh);
 	rx_desc = htt_rx_msdu_desc_retrieve(htt_pdev, frag_list);
-	cdf_assert(htt_rx_msdu_has_wlan_mcast_flag(htt_pdev, rx_desc));
+	qdf_assert(htt_rx_msdu_has_wlan_mcast_flag(htt_pdev, rx_desc));
 	index = htt_rx_msdu_is_wlan_mcast(htt_pdev, rx_desc) ?
 		txrx_sec_mcast : txrx_sec_ucast;
 

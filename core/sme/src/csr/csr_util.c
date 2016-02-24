@@ -282,7 +282,7 @@ bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 		if (!csr_get_bss_id_bss_desc(pMac, pSirBssDesc2, &bssId2))
 			break;
 
-		fEqual = cdf_is_macaddr_equal(&bssId1, &bssId2);
+		fEqual = qdf_is_macaddr_equal(&bssId1, &bssId2);
 	} while (0);
 
 	return fEqual;
@@ -1030,7 +1030,7 @@ static tSirMacCapabilityInfo csr_get_bss_capabilities(tSirBssDescription *
 	tSirMacCapabilityInfo dot11Caps;
 
 	/* tSirMacCapabilityInfo is 16-bit */
-	cdf_get_u16((uint8_t *) &pSirBssDesc->capabilityInfo,
+	qdf_get_u16((uint8_t *) &pSirBssDesc->capabilityInfo,
 		    (uint16_t *) &dot11Caps);
 
 	return dot11Caps;
@@ -4344,13 +4344,13 @@ bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
 		/* Give the profile the benefit of the doubt... accept either all 0 or */
 		/* the real broadcast Bssid (all 0xff) as broadcast Bssids (meaning to */
 		/* match any Bssids). */
-		if (cdf_is_macaddr_zero(&ProfileBssid) ||
-		    cdf_is_macaddr_broadcast(&ProfileBssid)) {
+		if (qdf_is_macaddr_zero(&ProfileBssid) ||
+		    qdf_is_macaddr_broadcast(&ProfileBssid)) {
 			fMatch = true;
 			break;
 		}
 
-		if (cdf_is_macaddr_equal(BssBssid, &ProfileBssid)) {
+		if (qdf_is_macaddr_equal(BssBssid, &ProfileBssid)) {
 			fMatch = true;
 			break;
 		}
@@ -4724,7 +4724,7 @@ bool csr_match_bss(tHalHandle hal, tSirBssDescription *bss_descr,
 	/* Check for Blacklist BSSID's and avoid connections */
 	blacklist_check = false;
 	for (i = 0; i < roam_params->num_bssid_avoid_list; i++) {
-		if (cdf_is_macaddr_equal((struct qdf_mac_addr *)
+		if (qdf_is_macaddr_equal((struct qdf_mac_addr *)
 					&roam_params->bssid_avoid_list[i],
 				(struct qdf_mac_addr *)bss_descr->bssId)) {
 			blacklist_check = true;
@@ -5254,7 +5254,7 @@ tSirResultCodes csr_get_disassoc_rsp_status_code(tSirSmeDisassocRsp *
 	pBuffer += (sizeof(uint16_t) + sizeof(uint16_t) + sizeof(tSirMacAddr));
 	/* tSirResultCodes is an enum, assuming is 32bit */
 	/* If we cannot make this assumption, use copymemory */
-	cdf_get_u32(pBuffer, &ret);
+	qdf_get_u32(pBuffer, &ret);
 
 	return (tSirResultCodes) ret;
 }
@@ -5269,7 +5269,7 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp)
 		 sizeof(uint16_t));
 	/* tSirResultCodes is an enum, assuming is 32bit */
 	/* If we cannot make this assumption, use copymemory */
-	cdf_get_u32(pBuffer, &ret);
+	qdf_get_u32(pBuffer, &ret);
 
 	return (tSirResultCodes) ret;
 }

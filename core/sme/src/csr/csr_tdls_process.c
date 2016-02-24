@@ -478,7 +478,7 @@ QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	cdf_mem_copy(tdlsAddStaReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
 
-	cdf_copy_macaddr(&tdlsAddStaReq->peermac,
+	qdf_copy_macaddr(&tdlsAddStaReq->peermac,
 			 &tdlsAddStaCmdInfo->peermac);
 
 	tdlsAddStaReq->capability = tdlsAddStaCmdInfo->capability;
@@ -548,7 +548,7 @@ QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	cdf_mem_copy(tdlsDelStaReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
 
-	cdf_copy_macaddr(&tdlsDelStaReq->peermac,
+	qdf_copy_macaddr(&tdlsDelStaReq->peermac,
 			 &tdlsDelStaCmdInfo->peermac);
 
 	/* Send the request to PE. */
@@ -637,7 +637,7 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tdlsLinkEstablishReq->sessionId = cmd->sessionId;
 	/* Using dialog as transactionId. This can be used to match response with request */
 	tdlsLinkEstablishReq->transactionId = 0;
-	cdf_copy_macaddr(&tdlsLinkEstablishReq->peermac,
+	qdf_copy_macaddr(&tdlsLinkEstablishReq->peermac,
 			 &tdlsLinkEstablishCmdInfo->peermac);
 	cdf_mem_copy(tdlsLinkEstablishReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
@@ -695,7 +695,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsSendMgmt);
 		break;
 	case eWNI_SME_TDLS_ADD_STA_RSP:
-		cdf_copy_macaddr(&roamInfo.peerMac, &addStaRsp->peermac);
+		qdf_copy_macaddr(&roamInfo.peerMac, &addStaRsp->peermac);
 		roamInfo.staId = addStaRsp->staId;
 		roamInfo.ucastSig = addStaRsp->ucastSig;
 		roamInfo.bcastSig = addStaRsp->bcastSig;
@@ -716,7 +716,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsAddPeer);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_RSP:
-		cdf_copy_macaddr(&roamInfo.peerMac, &delStaRsp->peermac);
+		qdf_copy_macaddr(&roamInfo.peerMac, &delStaRsp->peermac);
 		roamInfo.staId = delStaRsp->staId;
 		roamInfo.statusCode = delStaRsp->statusCode;
 		/*
@@ -731,7 +731,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsDelPeer);
 		break;
 	case eWNI_SME_TDLS_DEL_STA_IND:
-		cdf_copy_macaddr(&roamInfo.peerMac,
+		qdf_copy_macaddr(&roamInfo.peerMac,
 				 &pSirTdlsDelStaInd->peermac);
 		roamInfo.staId = pSirTdlsDelStaInd->staId;
 		roamInfo.reasonCode = pSirTdlsDelStaInd->reasonCode;
@@ -770,7 +770,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 		csr_tdls_remove_sme_cmd(pMac, eSmeCommandTdlsLinkEstablish);
 		break;
 	case eWNI_SME_TDLS_SHOULD_DISCOVER:
-		cdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
+		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
 		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_SHOULD_DISCOVER for peer mac: "
@@ -782,7 +782,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_DISCOVER);
 		break;
 	case eWNI_SME_TDLS_SHOULD_TEARDOWN:
-		cdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
+		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
 		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_SHOULD_TEARDOWN for peer mac: "
@@ -794,7 +794,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 				eCSR_ROAM_RESULT_TDLS_SHOULD_TEARDOWN);
 		break;
 	case eWNI_SME_TDLS_PEER_DISCONNECTED:
-		cdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
+		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
 		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_PEER_DISCONNECTED for peer mac: "

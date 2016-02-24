@@ -1455,7 +1455,7 @@ QDF_STATUS sme_update_roam_params(tHalHandle hal,
 		roam_params_dst->num_bssid_avoid_list =
 			roam_params_src.num_bssid_avoid_list;
 		for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
-			cdf_copy_macaddr(&roam_params_dst->bssid_avoid_list[i],
+			qdf_copy_macaddr(&roam_params_dst->bssid_avoid_list[i],
 					&roam_params_src.bssid_avoid_list[i]);
 		}
 		break;
@@ -5187,7 +5187,7 @@ QDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		pMsg->device_mode = device_mode;
 		cdf_mem_copy(pMsg->adapterMacAddr.bytes, macAddr,
 			     QDF_MAC_ADDR_SIZE);
-		cdf_copy_macaddr(&pMsg->peerMacAddr,
+		qdf_copy_macaddr(&pMsg->peerMacAddr,
 				 &pSession->connectedProfile.bssid);
 
 		cds_message.type = WMA_DHCP_START_IND;
@@ -5258,7 +5258,7 @@ QDF_STATUS sme_dhcp_stop_ind(tHalHandle hHal,
 		pMsg->device_mode = device_mode;
 		cdf_mem_copy(pMsg->adapterMacAddr.bytes, macAddr,
 			     QDF_MAC_ADDR_SIZE);
-		cdf_copy_macaddr(&pMsg->peerMacAddr,
+		qdf_copy_macaddr(&pMsg->peerMacAddr,
 				 &pSession->connectedProfile.bssid);
 
 		cds_message.type = WMA_DHCP_STOP_IND;
@@ -5808,7 +5808,7 @@ QDF_STATUS sme_set_gtk_offload(tHalHandle hHal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&pGtkOffload->bssid,
+	qdf_copy_macaddr(&pGtkOffload->bssid,
 			 &pSession->connectedProfile.bssid);
 
 	*request_buf = *pGtkOffload;
@@ -5861,7 +5861,7 @@ QDF_STATUS sme_get_gtk_offload(tHalHandle hHal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&request_buf->bssid,
+	qdf_copy_macaddr(&request_buf->bssid,
 			 &pSession->connectedProfile.bssid);
 
 	msg.type = WMA_GTK_OFFLOAD_GETINFO_REQ;
@@ -5925,7 +5925,7 @@ QDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
+	qdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
 	cdf_mem_copy(request_buf, request, sizeof(tSirKeepAliveReq));
 
 	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_LOW,
@@ -7308,8 +7308,8 @@ QDF_STATUS sme_8023_multicast_list(tHalHandle hHal, uint8_t sessionId,
 	cdf_mem_copy(request_buf, pMulticastAddrs,
 		     sizeof(tSirRcvFltMcAddrList));
 
-	cdf_copy_macaddr(&request_buf->self_macaddr, &pSession->selfMacAddr);
-	cdf_copy_macaddr(&request_buf->bssid,
+	qdf_copy_macaddr(&request_buf->self_macaddr, &pSession->selfMacAddr);
+	qdf_copy_macaddr(&request_buf->bssid,
 			 &pSession->connectedProfile.bssid);
 
 	msg.type = WMA_8023_MULTICAST_LIST_REQ;
@@ -7361,9 +7361,9 @@ QDF_STATUS sme_receive_filter_set_filter(tHalHandle hHal,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_copy_macaddr(&pRcvPktFilterCfg->self_macaddr,
+	qdf_copy_macaddr(&pRcvPktFilterCfg->self_macaddr,
 			 &pSession->selfMacAddr);
-	cdf_copy_macaddr(&pRcvPktFilterCfg->bssid,
+	qdf_copy_macaddr(&pRcvPktFilterCfg->bssid,
 			 &pSession->connectedProfile.bssid);
 	cdf_mem_copy(request_buf, pRcvPktFilterCfg, allocSize);
 
@@ -7449,9 +7449,9 @@ QDF_STATUS sme_receive_filter_clear_filter(tHalHandle hHal,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&pRcvFltPktClearParam->self_macaddr,
+	qdf_copy_macaddr(&pRcvFltPktClearParam->self_macaddr,
 			 &pSession->selfMacAddr);
-	cdf_copy_macaddr(&pRcvFltPktClearParam->bssid,
+	qdf_copy_macaddr(&pRcvFltPktClearParam->bssid,
 			 &pSession->connectedProfile.bssid);
 
 	cdf_mem_copy(request_buf, pRcvFltPktClearParam,
@@ -7617,8 +7617,8 @@ QDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct qdf_mac_addr pBssid,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&pMaxTxParams->bssId, &pBssid);
-	cdf_copy_macaddr(&pMaxTxParams->selfStaMacAddr, &pSelfMacAddress);
+	qdf_copy_macaddr(&pMaxTxParams->bssId, &pBssid);
+	qdf_copy_macaddr(&pMaxTxParams->selfStaMacAddr, &pSelfMacAddress);
 	pMaxTxParams->power = dB;
 
 	msg.type = WMA_SET_MAX_TX_POWER_REQ;
@@ -7711,7 +7711,7 @@ QDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&pTxParams->bssId, &pBSSId);
+	qdf_copy_macaddr(&pTxParams->bssId, &pBSSId);
 	pTxParams->power = power;       /* unit is dBm */
 	pTxParams->dev_mode = dev_mode;
 	msg.type = WMA_SET_TX_POWER_REQ;

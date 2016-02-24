@@ -2251,7 +2251,7 @@ int wmi_desc_pool_init(tp_wma_handle wma_handle, uint32_t pool_size)
 
 	if (!pool_size) {
 		WMA_LOGE("%s: failed to allocate desc pool", __func__);
-		cdf_assert_always(pool_size);
+		qdf_assert_always(pool_size);
 		return -EINVAL;
 	}
 	WMA_LOGE("%s: initialize desc pool of size %d", __func__, pool_size);
@@ -2923,7 +2923,7 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 	mic_err_ind->length = sizeof(*mic_err_ind);
 	mic_err_ind->sessionId = vdev_id;
-	cdf_copy_macaddr(&mic_err_ind->bssId,
+	qdf_copy_macaddr(&mic_err_ind->bssId,
 		     (struct qdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
 	cdf_mem_copy(mic_err_ind->info.taMacAddr,
 		     (struct qdf_mac_addr *) peer_mac_addr,
@@ -3119,7 +3119,7 @@ wma_indicate_err(
 		mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 		mic_err_ind->length = sizeof(*mic_err_ind);
 		vdev_id = err_info->u.mic_err.vdev_id;
-		cdf_copy_macaddr(&mic_err_ind->bssId,
+		qdf_copy_macaddr(&mic_err_ind->bssId,
 		     (struct qdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
 		WMA_LOGE("MIC error: BSSID:%02x:%02x:%02x:%02x:%02x:%02x\n",
 			 mic_err_ind->bssId.bytes[0], mic_err_ind->bssId.bytes[1],

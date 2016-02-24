@@ -405,7 +405,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		}
 		delPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
 		delPeriodicTxPtrnParams->ucPatternIdBitmap = 1 << pattern_idx;
-		cdf_copy_macaddr(&delPeriodicTxPtrnParams->mac_address,
+		qdf_copy_macaddr(&delPeriodicTxPtrnParams->mac_address,
 				 &pAdapter->macAddressCurrent);
 
 		/* Delete pattern */
@@ -473,7 +473,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	addPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
 	addPeriodicTxPtrnParams->usPtrnIntervalMs = pattern_duration * 500;
 	addPeriodicTxPtrnParams->ucPtrnSize = pattern_len;
-	cdf_copy_macaddr(&addPeriodicTxPtrnParams->mac_address,
+	qdf_copy_macaddr(&addPeriodicTxPtrnParams->mac_address,
 			 &pAdapter->macAddressCurrent);
 
 	/* Extract the pattern */

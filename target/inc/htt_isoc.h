@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,7 +40,7 @@
 #include <a_types.h>            /* A_UINT32, A_UINT8 */
 
 #ifdef ATHR_WIN_NWF
-#pragma warning( disable:4214 ) /* bit field types other than int */
+#pragma warning(disable:4214) /* bit field types other than int */
 #endif
 
 #include "htt_common.h"
@@ -102,7 +102,7 @@ htt_isoc_t2h_field_set(A_UINT32 *msg_addr32,
 		       unsigned mask, unsigned shift, unsigned value)
 {
 	/* sanity check: make sure the value fits within the field */
-	/* cdf_assert(value << shift == (value << shift) | mask); */
+	/* qdf_assert(value << shift == (value << shift) | mask); */
 
 	msg_addr32 += offset32;
 	/* clear the field */
@@ -245,13 +245,13 @@ enum {
  */
 typedef struct htt_isoc_t2h_peer_info_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_INFO */
-		 dpu_idx : 8, bcast_dpu_idx : 8, mgmt_dpu_idx : 8;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_INFO */
+		 dpu_idx:8, bcast_dpu_idx:8, mgmt_dpu_idx:8;
 	/* word 1 */
-	A_UINT32 peer_id : 11, dpu_sig : 7, bcast_dpu_sig : 7, mgmt_dpu_sig : 7;
+	A_UINT32 peer_id:11, dpu_sig:7, bcast_dpu_sig:7, mgmt_dpu_sig:7;
 	/* word 2 */
 	A_UINT32
-		peer_type : 6, rmf_enabled : 1, reserved0 : 1, vdev_id : 8, mac_addr_l16 : 16;
+		peer_type:6, rmf_enabled:1, reserved0:1, vdev_id:8, mac_addr_l16:16;
 	/* word 3 */
 	A_UINT32 mac_addr_u32;
 } htt_isoc_t2h_peer_info_t;
@@ -422,8 +422,8 @@ typedef struct htt_isoc_t2h_peer_info_s {
  */
 typedef struct htt_isoc_t2h_peer_unmap_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_UNMAP */
-		 peer_id : 11, reserved0 : 13;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_UNMAP */
+		 peer_id:11, reserved0:13;
 } htt_isoc_t2h_peer_unmap_t;
 
 /* word 0 */
@@ -512,10 +512,10 @@ enum {
  */
 typedef struct htt_isoc_t2h_addba_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_ADDBA */
-		 win_size : 8, tid : 4, peer_id : 12;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_ADDBA */
+		 win_size:8, tid:4, peer_id:12;
 	/* word 1 */
-	A_UINT32 start_seq_num : 12, status : 1, reserved0 : 19;
+	A_UINT32 start_seq_num:12, status:1, reserved0:19;
 } htt_isoc_t2h_addba_t;
 
 /* word 0 */
@@ -623,8 +623,8 @@ typedef struct htt_isoc_t2h_addba_s {
  */
 typedef struct htt_isoc_t2h_delba_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_DELBA */
-		 status : 1, reserved0 : 7, tid : 4, peer_id : 12;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_DELBA */
+		 status:1, reserved0:7, tid:4, peer_id:12;
 } htt_isoc_t2h_delba_t;
 
 /* word 0 */
@@ -725,8 +725,8 @@ typedef struct htt_isoc_t2h_delba_s {
  */
 typedef struct htt_isoc_t2h_sec_ind_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_SEC_IND */
-		 peer_id : 8, sec_type : 8, is_unicast : 8;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_SEC_IND */
+		 peer_id:8, sec_type:8, is_unicast:8;
 	/* word 1 */
 	A_UINT32 mic_key1;
 	/* word 2 */
@@ -830,8 +830,8 @@ typedef struct htt_isoc_t2h_sec_ind_s {
  */
 typedef struct htt_isoc_t2h_peer_tx_ready_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_TX_READY */
-		 peer_id : 11, reserved0 : 13;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_PEER_TX_READY */
+		 peer_id:11, reserved0:13;
 } htt_isoc_t2h_peer_tx_ready_t;
 
 /* word 0 */
@@ -950,14 +950,14 @@ typedef struct htt_isoc_t2h_peer_tx_ready_s {
  */
 typedef struct htt_isoc_t2h_rx_err_s {
 	/* word 0 */
-	A_UINT32 msg_type : 8,    /* HTT_ISOC_T2H_MSG_TYPE_RX_ERR */
-		 rx_err_type : 8, peer_id : 16;
+	A_UINT32 msg_type:8,    /* HTT_ISOC_T2H_MSG_TYPE_RX_ERR */
+		 rx_err_type:8, peer_id:16;
 	/* word 1 */
 	A_UINT32
-		ext_tid : 5,
-		reserved1 : 1,
-		mcast : 1,
-		l2_hdr_is_80211 : 1, l2_hdr_bytes : 8, sec_hdr_bytes : 8, rx_err_cnt : 8;
+		ext_tid:5,
+		reserved1:1,
+		mcast:1,
+		l2_hdr_is_80211:1, l2_hdr_bytes:8, sec_hdr_bytes:8, rx_err_cnt:8;
 	/* words 2 - M-1: L2 header */
 	/* words M - N: security header */
 } htt_isoc_t2h_rx_err_t;

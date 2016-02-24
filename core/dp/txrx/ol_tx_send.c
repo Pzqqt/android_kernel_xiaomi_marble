@@ -187,7 +187,7 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 				(uint8_t *)(cdf_nbuf_data(msdu)),
 				sizeof(cdf_nbuf_data(msdu))));
 	failed = htt_tx_send_std(pdev->htt_pdev, msdu, id);
-	if (cdf_unlikely(failed)) {
+	if (qdf_unlikely(failed)) {
 		OL_TX_TARGET_CREDIT_INCR_INT(pdev, msdu_credit_consumed);
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc, 1 /* had error */);
 	}
@@ -201,7 +201,7 @@ ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
 	OL_TX_CREDIT_RECLAIM(pdev);
 
 	rejected = htt_tx_send_batch(pdev->htt_pdev, head_msdu, num_msdus);
-	while (cdf_unlikely(rejected)) {
+	while (qdf_unlikely(rejected)) {
 		struct ol_tx_desc_t *tx_desc;
 		uint16_t *msdu_id_storage;
 		cdf_nbuf_t next;
@@ -245,7 +245,7 @@ ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 	struct ol_tx_desc_t *tx_desc;
 
 	tx_desc = ol_tx_desc_find(pdev, msdu_id);
-	cdf_assert(tx_desc);
+	qdf_assert(tx_desc);
 
 	/*
 	 * If the download is done for
@@ -306,7 +306,7 @@ ol_tx_download_done_hl_free(void *txrx_pdev,
 	struct ol_tx_desc_t *tx_desc;
 
 	tx_desc = ol_tx_desc_find(pdev, msdu_id);
-	cdf_assert(tx_desc);
+	qdf_assert(tx_desc);
 
 	ol_tx_download_done_base(pdev, status, msdu, msdu_id);
 
@@ -367,7 +367,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		cdf_nbuf_free((_netbuf));				\
 		((union ol_tx_desc_list_elem_t *)(_tx_desc))->next =	\
 			(_lcl_freelist);				\
-		if (cdf_unlikely(!lcl_freelist)) {			\
+		if (qdf_unlikely(!lcl_freelist)) {			\
 			(_tx_desc_last) = (union ol_tx_desc_list_elem_t *)\
 				(_tx_desc);				\
 		}							\
@@ -383,7 +383,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		cdf_nbuf_free((_netbuf));				\
 		((union ol_tx_desc_list_elem_t *)(_tx_desc))->next =	\
 			(_lcl_freelist);				\
-		if (cdf_unlikely(!lcl_freelist)) {			\
+		if (qdf_unlikely(!lcl_freelist)) {			\
 			(_tx_desc_last) = (union ol_tx_desc_list_elem_t *)\
 				(_tx_desc);				\
 		}							\
@@ -405,7 +405,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 			    _netbuf, _lcl_freelist,			\
 			    _tx_desc_last, _status)			\
 	do {								\
-		if (cdf_likely((_tx_desc)->pkt_type == ol_tx_frm_std)) { \
+		if (qdf_likely((_tx_desc)->pkt_type == ol_tx_frm_std)) { \
 			ol_tx_msdu_complete_single((_pdev), (_tx_desc),\
 						   (_netbuf), (_lcl_freelist), \
 						   (_tx_desc_last));	\
@@ -427,7 +427,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 			    _netbuf, _lcl_freelist,			\
 			    _tx_desc_last, _status)			\
 	do {								\
-		if (cdf_likely((_tx_desc)->pkt_type == ol_tx_frm_std)) { \
+		if (qdf_likely((_tx_desc)->pkt_type == ol_tx_frm_std)) { \
 			ol_tx_msdu_complete_batch((_pdev), (_tx_desc),	\
 						  (_tx_descs), (_status)); \
 		} else {						\
@@ -695,7 +695,7 @@ ol_tx_delay(ol_txrx_pdev_handle pdev,
 	uint32_t avg_delay_ticks;
 	struct ol_tx_delay_data *data;
 
-	cdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
+	qdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
 
 	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = 1 - pdev->tx_delay.cats[category].in_progress_idx;
@@ -739,7 +739,7 @@ ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
 	int index, i, j;
 	struct ol_tx_delay_data *data;
 
-	cdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
+	qdf_assert(category >= 0 && category < QCA_TX_DELAY_NUM_CATEGORIES);
 
 	qdf_spin_lock_bh(&pdev->tx_delay.mutex);
 	index = 1 - pdev->tx_delay.cats[category].in_progress_idx;
@@ -779,7 +779,7 @@ static inline uint8_t *ol_tx_dest_addr_find(struct ol_txrx_pdev_t *pdev,
 		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			  "Invalid standard frame type: %d",
 			  pdev->frame_format);
-		cdf_assert(0);
+		qdf_assert(0);
 		hdr_ptr = NULL;
 	}
 	return hdr_ptr;
@@ -894,7 +894,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 	uint32_t avg_time_ticks;
 	struct ol_tx_delay_data *data;
 
-	cdf_assert(num_msdus > 0);
+	qdf_assert(num_msdus > 0);
 
 	/*
 	 * keep static counters for total packet and lost packets

@@ -3121,7 +3121,7 @@ void cds_dump_concurrency_info(void)
 			    pHddStaCtx->conn_info.connState) {
 				staChannel =
 					pHddStaCtx->conn_info.operationChannel;
-				cdf_copy_macaddr(&staBssid,
+				qdf_copy_macaddr(&staBssid,
 						 &pHddStaCtx->conn_info.bssId);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = staChannel;
@@ -3134,7 +3134,7 @@ void cds_dump_concurrency_info(void)
 			    pHddStaCtx->conn_info.connState) {
 				p2pChannel =
 					pHddStaCtx->conn_info.operationChannel;
-				cdf_copy_macaddr(&p2pBssid,
+				qdf_copy_macaddr(&p2pBssid,
 						&pHddStaCtx->conn_info.bssId);
 				p2pMode = "CLI";
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
@@ -3149,7 +3149,7 @@ void cds_dump_concurrency_info(void)
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
 				p2pChannel = hdd_ap_ctx->operatingChannel;
-				cdf_copy_macaddr(&p2pBssid,
+				qdf_copy_macaddr(&p2pBssid,
 						 &adapter->macAddressCurrent);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = p2pChannel;
@@ -3164,7 +3164,7 @@ void cds_dump_concurrency_info(void)
 			    && hostapd_state->qdf_status ==
 			    QDF_STATUS_SUCCESS) {
 				apChannel = hdd_ap_ctx->operatingChannel;
-				cdf_copy_macaddr(&apBssid,
+				qdf_copy_macaddr(&apBssid,
 						&adapter->macAddressCurrent);
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 				targetChannel = apChannel;

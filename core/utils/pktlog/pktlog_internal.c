@@ -276,8 +276,8 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		printk("Invalid pdev in %s\n", __func__);
 		return A_ERROR;
 	}
-	cdf_assert(txrx_pdev->pl_dev);
-	cdf_assert(data);
+	qdf_assert(txrx_pdev->pl_dev);
+	qdf_assert(data);
 	pl_dev = txrx_pdev->pl_dev;
 
 	pl_tgt_hdr = (uint32_t *) data;
@@ -358,11 +358,11 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		 * Add capability to include the fmr hdr for remote frames
 		 */
 		txctl_log.priv.frm_hdr = frm_hdr;
-		cdf_assert(txctl_log.priv.txdesc_ctl);
+		qdf_assert(txctl_log.priv.txdesc_ctl);
 		cdf_mem_copy((void *)&txctl_log.priv.txdesc_ctl,
 			     ((void *)data + sizeof(struct ath_pktlog_hdr)),
 			     pl_hdr.size);
-		cdf_assert(txctl_log.txdesc_hdr_ctl);
+		qdf_assert(txctl_log.txdesc_hdr_ctl);
 		cdf_mem_copy(txctl_log.txdesc_hdr_ctl, &txctl_log.priv,
 			     sizeof(txctl_log.priv));
 		/* Add Protocol information and HT specific information */
@@ -370,8 +370,8 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		size_t log_size = sizeof(frm_hdr) + pl_hdr.size;
 		void *txdesc_hdr_ctl = (void *)
 		pktlog_getbuf(pl_dev, pl_info, log_size, &pl_hdr);
-		cdf_assert(txdesc_hdr_ctl);
-		cdf_assert(pl_hdr.size < (370 * sizeof(u_int32_t)));
+		qdf_assert(txdesc_hdr_ctl);
+		qdf_assert(pl_hdr.size < (370 * sizeof(u_int32_t)));
 
 		cdf_mem_copy(txdesc_hdr_ctl, &frm_hdr, sizeof(frm_hdr));
 		cdf_mem_copy((char *)txdesc_hdr_ctl + sizeof(frm_hdr),
@@ -386,7 +386,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 
 		txstat_log.ds_status = (void *)
 				       pktlog_getbuf(pl_dev, pl_info, log_size, &pl_hdr);
-		cdf_assert(txstat_log.ds_status);
+		qdf_assert(txstat_log.ds_status);
 		cdf_mem_copy(txstat_log.ds_status,
 			     ((void *)data + sizeof(struct ath_pktlog_hdr)),
 			     pl_hdr.size);
@@ -431,10 +431,10 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 				msdu_id += 1;
 			}
 			tx_desc = ol_tx_desc_find(txrx_pdev, tx_desc_id);
-			cdf_assert(tx_desc);
+			qdf_assert(tx_desc);
 			netbuf = tx_desc->netbuf;
 			htt_tx_desc = (uint32_t *) tx_desc->htt_tx_desc;
-			cdf_assert(htt_tx_desc);
+			qdf_assert(htt_tx_desc);
 
 			cdf_nbuf_peek_header(netbuf, &addr, &len);
 

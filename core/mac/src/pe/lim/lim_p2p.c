@@ -98,10 +98,10 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	msg.bodyptr = pScanOffloadReq;
 	msg.bodyval = 0;
 
-	cdf_copy_macaddr(&pScanOffloadReq->selfMacAddr,
+	qdf_copy_macaddr(&pScanOffloadReq->selfMacAddr,
 			 &pRemOnChnReq->selfMacAddr);
 
-	cdf_set_macaddr_broadcast(&pScanOffloadReq->bssId);
+	qdf_set_macaddr_broadcast(&pScanOffloadReq->bssId);
 	pScanOffloadReq->scanType = eSIR_PASSIVE_SCAN;
 	pScanOffloadReq->p2pScanType = P2P_SCAN_TYPE_LISTEN;
 	pScanOffloadReq->minChannelTime = pRemOnChnReq->duration;

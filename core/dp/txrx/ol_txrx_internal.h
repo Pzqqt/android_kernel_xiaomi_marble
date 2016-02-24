@@ -28,7 +28,7 @@
 #ifndef _OL_TXRX_INTERNAL__H_
 #define _OL_TXRX_INTERNAL__H_
 
-#include <cdf_util.h>               /* cdf_assert */
+#include <qdf_util.h>               /* qdf_assert */
 #include <cdf_nbuf.h>               /* cdf_nbuf_t */
 #include <cdf_memory.h>             /* cdf_mem_set */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
@@ -63,13 +63,13 @@
 #else                           /* #ifdef __KLOCWORK__ */
 
 #if TXRX_ASSERT_LEVEL > 0
-#define TXRX_ASSERT1(condition) cdf_assert((condition))
+#define TXRX_ASSERT1(condition) qdf_assert((condition))
 #else
 #define TXRX_ASSERT1(condition)
 #endif
 
 #if TXRX_ASSERT_LEVEL > 1
-#define TXRX_ASSERT2(condition) cdf_assert((condition))
+#define TXRX_ASSERT2(condition) qdf_assert((condition))
 #else
 #define TXRX_ASSERT2(condition)
 #endif
@@ -632,10 +632,10 @@ NOT_IP_TCP:
 				dest_addr = (uint8_t *) &(frm->i_addr3[0]); \
 			} \
 		} \
-		if (cdf_unlikely(IEEE80211_IS_BROADCAST(dest_addr))) { \
+		if (qdf_unlikely(IEEE80211_IS_BROADCAST(dest_addr))) { \
 			OL_TXRX_PEER_STATS_UPDATE_BASE(peer, tx_or_rx,	\
 						       bcast, msdu);	\
-		} else if (cdf_unlikely(IEEE80211_IS_MULTICAST(dest_addr))) { \
+		} else if (qdf_unlikely(IEEE80211_IS_MULTICAST(dest_addr))) { \
 			OL_TXRX_PEER_STATS_UPDATE_BASE(peer, tx_or_rx,	\
 						       mcast, msdu);	\
 		} else { \

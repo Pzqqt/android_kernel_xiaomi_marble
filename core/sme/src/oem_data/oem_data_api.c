@@ -38,7 +38,7 @@
 #include "cds_mq.h"
 #include "sme_inside.h"
 #include "sms_debug.h"
-#include "cdf_util.h"
+#include "qdf_util.h"
 
 #include "csr_support.h"
 
@@ -229,7 +229,7 @@ QDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 	msgLen = (uint16_t) (sizeof(*pMsg) + pOemDataReq->data_len);
 	pMsg->messageType = eWNI_SME_OEM_DATA_REQ;
 	pMsg->messageLen = msgLen;
-	cdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
+	qdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
 	pMsg->data_len = pOemDataReq->data_len;
 	pMsg->data = pOemDataReq->data;
 	/* Incoming buffer ptr saved, set to null to avoid free by caller */

@@ -261,7 +261,7 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("hif_enable error = %d, reinit = %d",
 			status, reinit);
-		ret = cdf_status_to_os_return(status);
+		ret = qdf_status_to_os_return(status);
 		goto err_napi_destroy;
 	}
 
@@ -563,7 +563,7 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 	if (err)
 		goto done;
 
-	err = cdf_status_to_os_return(
+	err = qdf_status_to_os_return(
 			ol_txrx_bus_suspend());
 	if (err)
 		goto done;

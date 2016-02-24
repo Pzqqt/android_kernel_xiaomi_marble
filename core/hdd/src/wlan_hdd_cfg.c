@@ -3943,7 +3943,7 @@ static void update_mac_from_string(hdd_context_t *pHddCtx,
 			if (res < 0)
 				break;
 		}
-		if (res == 0 && !cdf_is_macaddr_zero(&macaddr[i])) {
+		if (res == 0 && !qdf_is_macaddr_zero(&macaddr[i])) {
 			cdf_mem_copy((uint8_t *) &pHddCtx->config->
 				     intfMacAddr[i].bytes[0],
 				     (uint8_t *) &macaddr[i].bytes[0],

@@ -27,7 +27,7 @@
 
 #include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_util.h>           /* cdf_assert */
+#include <qdf_util.h>           /* qdf_assert */
 #include <qdf_lock.h>           /* cdf_spinlock */
 #ifdef QCA_COMPUTE_TX_DELAY
 #include <qdf_time.h>           /* qdf_system_ticks */
@@ -55,7 +55,7 @@ static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "%s Potential tx_desc corruption pkt_type:0x%x pdev:0x%p",
 				   __func__, tx_desc->pkt_type, pdev);
-		cdf_assert(0);
+		qdf_assert(0);
 	}
 	if ((uint32_t *) tx_desc->htt_tx_desc <
 		    g_dbg_htt_desc_start_addr
@@ -64,7 +64,7 @@ static inline void ol_tx_desc_sanity_checks(struct ol_txrx_pdev_t *pdev,
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "%s Potential htt_desc curruption:0x%p pdev:0x%p\n",
 				   __func__, tx_desc->htt_tx_desc, pdev);
-			cdf_assert(0);
+			qdf_assert(0);
 	}
 }
 static inline void ol_tx_desc_reset_pkt_type(struct ol_tx_desc_t *tx_desc)
@@ -77,7 +77,7 @@ static inline void ol_tx_desc_compute_delay(struct ol_tx_desc_t *tx_desc)
 	if (tx_desc->entry_timestamp_ticks != 0xffffffff) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "%s Timestamp:0x%x\n",
 				   __func__, tx_desc->entry_timestamp_ticks);
-		cdf_assert(0);
+		qdf_assert(0);
 	}
 	tx_desc->entry_timestamp_ticks = qdf_system_ticks();
 }
@@ -166,7 +166,7 @@ struct ol_tx_desc_t *ol_tx_desc_alloc(struct ol_txrx_pdev_t *pdev,
 		qdf_spin_lock_bh(&pool->flow_pool_lock);
 		if (pool->avail_desc) {
 			tx_desc = ol_tx_get_desc_flow_pool(pool);
-			if (cdf_unlikely(pool->avail_desc < pool->stop_th)) {
+			if (qdf_unlikely(pool->avail_desc < pool->stop_th)) {
 				pool->status = FLOW_POOL_ACTIVE_PAUSED;
 				qdf_spin_unlock_bh(&pool->flow_pool_lock);
 				/* pause network queues */
@@ -203,7 +203,7 @@ ol_tx_desc_alloc_wrapper(struct ol_txrx_pdev_t *pdev,
 			 struct ol_txrx_vdev_t *vdev,
 			 struct ol_txrx_msdu_info_t *msdu_info)
 {
-	if (cdf_unlikely(msdu_info->htt.info.frame_type == htt_pkt_type_mgmt))
+	if (qdf_unlikely(msdu_info->htt.info.frame_type == htt_pkt_type_mgmt))
 		return ol_tx_desc_alloc(pdev, vdev, pdev->mgmt_pool);
 	else
 		return ol_tx_desc_alloc(pdev, vdev, vdev->pool);
@@ -232,10 +232,10 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 	qdf_spin_lock_bh(&pdev->tx_mutex);
 
 	if (tx_desc->pkt_type == ol_tx_frm_tso) {
-		if (cdf_unlikely(tx_desc->tso_desc == NULL)) {
+		if (qdf_unlikely(tx_desc->tso_desc == NULL)) {
 			qdf_print("%s %d TSO desc is NULL!\n",
 				 __func__, __LINE__);
-			cdf_assert(0);
+			qdf_assert(0);
 		} else {
 			ol_tso_free_segment(pdev, tx_desc->tso_desc);
 		}
@@ -261,7 +261,7 @@ void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc)
 
 #if defined(FEATURE_TSO)
 	if (tx_desc->pkt_type == ol_tx_frm_tso) {
-		if (cdf_unlikely(tx_desc->tso_desc == NULL))
+		if (qdf_unlikely(tx_desc->tso_desc == NULL))
 			qdf_print("%s %d TSO desc is NULL!\n",
 				 __func__, __LINE__);
 		else
@@ -346,7 +346,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 		msdu_info->htt.action.do_encrypt = 0;
 		break;
 	default:
-		cdf_assert(0);
+		qdf_assert(0);
 		break;
 	}
 

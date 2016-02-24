@@ -40,7 +40,7 @@
 
 static inline uint16_t *ol_tx_msdu_id_storage(cdf_nbuf_t msdu)
 {
-	cdf_assert(cdf_nbuf_headroom(msdu) >= (sizeof(uint16_t) * 2 - 1));
+	qdf_assert(cdf_nbuf_headroom(msdu) >= (sizeof(uint16_t) * 2 - 1));
 	return (uint16_t *) (((qdf_size_t) (cdf_nbuf_head(msdu) + 1)) & ~0x1);
 }
 

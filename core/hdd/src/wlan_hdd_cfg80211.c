@@ -3603,7 +3603,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	hddLog(LOG1, "input src mac address: "MAC_ADDRESS_STR,
 			MAC_ADDR_ARRAY(add_req->mac_address.bytes));
 
-	if (!cdf_is_macaddr_equal(&add_req->mac_address,
+	if (!qdf_is_macaddr_equal(&add_req->mac_address,
 				  &adapter->macAddressCurrent)) {
 		hdd_err("input src mac address and connected ap bssid are different");
 		goto fail;
@@ -3718,7 +3718,7 @@ wlan_hdd_del_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		return -ENOMEM;
 	}
 
-	cdf_copy_macaddr(&del_req->mac_address, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&del_req->mac_address, &adapter->macAddressCurrent);
 	hdd_info(MAC_ADDRESS_STR, MAC_ADDR_ARRAY(del_req->mac_address.bytes));
 	del_req->ucPtrnId = pattern_id;
 	hddLog(LOG1, FL("Request Id: %u Pattern id: %d"),
@@ -4376,7 +4376,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 
 		for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT; sta_id++) {
 			if (adapter->aStaInfo[sta_id].isUsed &&
-			    !cdf_is_macaddr_broadcast(
+			    !qdf_is_macaddr_broadcast(
 				&adapter->aStaInfo[sta_id].macAddrSTA) &&
 			    cdf_mem_compare(
 				&adapter->aStaInfo[sta_id].macAddrSTA.bytes,
@@ -5681,7 +5681,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	setKey.keyDirection = eSIR_TX_RX;       /* Key Directionn both TX and RX */
 	setKey.paeRole = 0;     /* the PAE role */
 	if (!mac_addr || is_broadcast_ether_addr(mac_addr)) {
-		cdf_set_macaddr_broadcast(&setKey.peerMac);
+		qdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
 		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
@@ -6725,7 +6725,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 			  "%s- %d: setting Broadcast key", __func__, __LINE__);
 		setKey.keyDirection = eSIR_RX_ONLY;
-		cdf_set_macaddr_broadcast(&setKey.peerMac);
+		qdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
 		/* set pairwise key */
 		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
@@ -6867,7 +6867,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 			)
 		    ) {
 			setKey.keyDirection = eSIR_RX_ONLY;
-			cdf_set_macaddr_broadcast(&setKey.peerMac);
+			qdf_set_macaddr_broadcast(&setKey.peerMac);
 
 			hddLog(LOG2,
 			       FL("Set key peerMac "MAC_ADDRESS_STR" direction %d"),
@@ -7128,7 +7128,7 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 
 			setKey.keyDirection = eSIR_TX_RX;
 
-			cdf_copy_macaddr(&setKey.peerMac,
+			qdf_copy_macaddr(&setKey.peerMac,
 					 &pHddStaCtx->conn_info.bssId);
 
 			if (Keys->KeyLength[key_index] == CSR_WEP40_KEY_LEN &&
@@ -9433,7 +9433,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 				FL("ccmCfgStInt failed for WNI_CFG_IBSS_AUTO_BSSID"));
 			return -EIO;
 		}
-		cdf_copy_macaddr(&bssid, &pHddCtx->config->IbssBssid);
+		qdf_copy_macaddr(&bssid, &pHddCtx->config->IbssBssid);
 	}
 	if ((params->beacon_interval > CFG_BEACON_INTERVAL_MIN)
 	    && (params->beacon_interval <= CFG_BEACON_INTERVAL_MAX))
@@ -9863,7 +9863,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			return 0;
 		}
 
-		if (cdf_is_macaddr_broadcast((struct qdf_mac_addr *) mac)) {
+		if (qdf_is_macaddr_broadcast((struct qdf_mac_addr *) mac)) {
 			uint16_t i;
 			for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 				if ((pAdapter->aStaInfo[i].isUsed) &&
@@ -10525,7 +10525,7 @@ int __wlan_hdd_cfg80211_set_rekey_data(struct wiphy *wiphy,
 	       NL80211_KCK_LEN);
 	memcpy(pHddStaCtx->gtkOffloadReqParams.aKEK, data->kek,
 	       NL80211_KEK_LEN);
-	cdf_copy_macaddr(&pHddStaCtx->gtkOffloadReqParams.bssid,
+	qdf_copy_macaddr(&pHddStaCtx->gtkOffloadReqParams.bssid,
 			 &pHddStaCtx->conn_info.bssId);
 	{
 		/* changing from big to little endian since driver

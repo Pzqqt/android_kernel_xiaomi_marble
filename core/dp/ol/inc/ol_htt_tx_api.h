@@ -565,8 +565,8 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 	pkt_type = msdu_info->info.l2_hdr_type;
 
-	if (cdf_likely(pdev->cfg.ce_classify_enabled)) {
-		if (cdf_likely(pkt_type == htt_pkt_type_eth2 ||
+	if (qdf_likely(pdev->cfg.ce_classify_enabled)) {
+		if (qdf_likely(pkt_type == htt_pkt_type_eth2 ||
 			pkt_type == htt_pkt_type_ethernet))
 			cdf_nbuf_tx_info_get(msdu, pkt_type, pkt_subtype,
 				     hw_classify);
@@ -693,7 +693,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	 */
 	cdf_nbuf_set_frag_is_wordstream(msdu, 0, 1);
 
-	if (cdf_likely(pdev->cfg.ce_classify_enabled &&
+	if (qdf_likely(pdev->cfg.ce_classify_enabled &&
 		(msdu_info->info.l2_hdr_type != htt_pkt_type_mgmt))) {
 		uint32_t pkt_offset = cdf_nbuf_get_frag_len(msdu, 0);
 		data_attr = hw_classify << QDF_CE_TX_CLASSIFY_BIT_S;
@@ -830,7 +830,7 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		*word32++ = 0;
 		*word32++ = 0;
 
-		cdf_assert_always(word32 == (uint32_t *)
+		qdf_assert_always(word32 == (uint32_t *)
 				&(((struct msdu_ext_desc_t *)desc)->frags[0]));
 
 		/* Each fragment consumes 2 DWORDS */

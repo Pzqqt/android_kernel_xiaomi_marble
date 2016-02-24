@@ -1723,7 +1723,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 
 	memset(&params, 0, sizeof(tSirAppType1Params));
 	params.vdev_id = adapter->sessionId;
-	cdf_copy_macaddr(&params.wakee_mac_addr, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&params.wakee_mac_addr, &adapter->macAddressCurrent);
 
 	params.id_length = strlen(id);
 	cdf_mem_copy(params.identification_id, id, params.id_length);
@@ -2426,7 +2426,7 @@ int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 	rateUpdate.mcastDataRate24GHzTxFlag = 1;
 	rateUpdate.mcastDataRate5GHz = targetRate;
 	rateUpdate.bcastDataRate = -1;
-	cdf_copy_macaddr(&rateUpdate.bssid, &pAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&rateUpdate.bssid, &pAdapter->macAddressCurrent);
 	hddLog(LOG1,
 		FL("MC Target rate %d, mac = %pM, dev_mode %s(%d)"),
 		rateUpdate.mcastDataRate24GHz, rateUpdate.bssid.bytes,
@@ -4982,9 +4982,9 @@ static int drv_cmd_max_tx_power(hdd_adapter_t *adapter,
 	       && QDF_STATUS_SUCCESS == qdf_status) {
 		adapter = pAdapterNode->pAdapter;
 		/* Assign correct self MAC address */
-		cdf_copy_macaddr(&bssid,
+		qdf_copy_macaddr(&bssid,
 				 &adapter->macAddressCurrent);
-		cdf_copy_macaddr(&selfMac,
+		qdf_copy_macaddr(&selfMac,
 				 &adapter->macAddressCurrent);
 
 		hddLog(CDF_TRACE_LEVEL_INFO,

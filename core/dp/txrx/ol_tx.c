@@ -28,7 +28,7 @@
 /* OS abstraction libraries */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <qdf_atomic.h>         /* qdf_atomic_read, etc. */
-#include <cdf_util.h>           /* cdf_unlikely */
+#include <qdf_util.h>           /* qdf_unlikely */
 
 /* APIs for other modules */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
@@ -73,7 +73,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		struct ol_txrx_pdev_t *pdev = vdev->pdev;		\
 		(msdu_info)->htt.info.frame_type = pdev->htt_pkt_type;	\
 		tx_desc = ol_tx_desc_ll(pdev, vdev, msdu, msdu_info);	\
-		if (cdf_unlikely(!tx_desc)) {				\
+		if (qdf_unlikely(!tx_desc)) {				\
 			TXRX_STATS_MSDU_LIST_INCR(			\
 				pdev, tx.dropped.host_reject, msdu);	\
 			return msdu; /* the list of unaccepted MSDUs */	\
@@ -151,12 +151,12 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	cdf_nbuf_t ret;
 	QDF_STATUS status;
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
-	if (cdf_unlikely(!cdf_ctx)) {
+	if (qdf_unlikely(!cdf_ctx)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			"%s:cdf_ctx is null", __func__);
 		return skb;
@@ -182,7 +182,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	}
 
 	status = cdf_nbuf_map_single(cdf_ctx, skb, QDF_DMA_TO_DEVICE);
-	if (cdf_unlikely(status != QDF_STATUS_SUCCESS)) {
+	if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
 		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;
@@ -222,7 +222,7 @@ cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	cdf_nbuf_t ret;
 
-	if (cdf_unlikely(!pdev)) {
+	if (qdf_unlikely(!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			"%s: pdev is NULL", __func__);
 		return skb;
@@ -269,7 +269,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
-		if (cdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
+		if (qdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
 			qdf_print("ol_tx_prepare_tso failed\n");
 			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
 				 tx.dropped.host_reject, msdu);
@@ -404,7 +404,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	u_int32_t num_frags, i;
 
 	tx_desc = ol_tx_desc_alloc_wrapper(pdev, vdev, msdu_info);
-	if (cdf_unlikely(!tx_desc))
+	if (qdf_unlikely(!tx_desc))
 		return NULL;
 
 	tx_desc->netbuf = msdu;
@@ -491,7 +491,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	/*
 	 * TODO : Can we remove this check and always download a fixed length ?
 	 * */
-	if (cdf_unlikely(cdf_nbuf_len(msdu) < pkt_download_len))
+	if (qdf_unlikely(cdf_nbuf_len(msdu) < pkt_download_len))
 		pkt_download_len = cdf_nbuf_len(msdu);
 
 	/* Fill the HTC header information */
@@ -539,7 +539,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
-		if (cdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
+		if (qdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
 			qdf_print("ol_tx_prepare_tso failed\n");
 			TXRX_STATS_MSDU_LIST_INCR(vdev->pdev,
 				 tx.dropped.host_reject, msdu);
@@ -588,7 +588,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 				break;
 			default:
 				msdu_info.htt.action.do_encrypt = 1;
-				cdf_assert(0);
+				qdf_assert(0);
 				break;
 			}
 
@@ -596,7 +596,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 						  pkt_download_len, ep_id,
 						  &msdu_info);
 
-			if (cdf_likely(tx_desc)) {
+			if (qdf_likely(tx_desc)) {
 				/*
 				 * If debug display is enabled, show the meta
 				 * data being downloaded to the target via the
@@ -682,7 +682,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 			break;
 		default:
 			msdu_info.htt.action.do_encrypt = 1;
-			cdf_assert(0);
+			qdf_assert(0);
 			break;
 		}
 
@@ -690,7 +690,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 					  pkt_download_len, ep_id,
 					  &msdu_info);
 
-		if (cdf_likely(tx_desc)) {
+		if (qdf_likely(tx_desc)) {
 			/*
 			 * If debug display is enabled, show the meta-data being
 			 * downloaded to the target via the HTT tx descriptor.
@@ -734,7 +734,7 @@ ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	struct hif_opaque_softc *hif_device =
 		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
 
-	if (cdf_likely(hif_device && hif_is_fastpath_mode_enabled(hif_device)))
+	if (qdf_likely(hif_device && hif_is_fastpath_mode_enabled(hif_device)))
 		msdu_list = ol_tx_ll_fast(vdev, msdu_list);
 	else
 		msdu_list = ol_tx_ll(vdev, msdu_list);
@@ -870,7 +870,7 @@ cdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 
 	paused_reason = vdev->ll_pause.paused_reason;
 	if (paused_reason) {
-		if (cdf_unlikely((paused_reason &
+		if (qdf_unlikely((paused_reason &
 				  OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED) ==
 				 paused_reason)) {
 			eth_type = (((struct ethernet_hdr_t *)

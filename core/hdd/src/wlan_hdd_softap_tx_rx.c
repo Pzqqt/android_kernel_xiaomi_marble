@@ -200,8 +200,8 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	pDestMacAddress = (struct qdf_mac_addr *) skb->data;
 
-	if (cdf_is_macaddr_broadcast(pDestMacAddress) ||
-	    cdf_is_macaddr_group(pDestMacAddress)) {
+	if (qdf_is_macaddr_broadcast(pDestMacAddress) ||
+	    qdf_is_macaddr_group(pDestMacAddress)) {
 		/* The BC/MC station ID is assigned during BSS
 		 * starting phase.  SAP will return the station ID
 		 * used for BC/MC traffic.
@@ -450,7 +450,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId,
 
 	pAdapter->aStaInfo[STAId].isUsed = true;
 	pAdapter->aStaInfo[STAId].isDeauthInProgress = false;
-	cdf_copy_macaddr(&pAdapter->aStaInfo[STAId].macAddrSTA, pmacAddrSTA);
+	qdf_copy_macaddr(&pAdapter->aStaInfo[STAId].macAddrSTA, pmacAddrSTA);
 
 	spin_unlock_bh(&pAdapter->staInfo_lock);
 	return QDF_STATUS_SUCCESS;
@@ -866,7 +866,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 	}
 
 	if (false ==
-	    cdf_is_macaddr_equal(&pAdapter->aStaInfo[ucSTAId].macAddrSTA,
+	    qdf_is_macaddr_equal(&pAdapter->aStaInfo[ucSTAId].macAddrSTA,
 				 pDestMacAddress)) {
 		CDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
 			  "%s: Station MAC address does not matching",

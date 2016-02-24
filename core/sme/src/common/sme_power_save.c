@@ -257,7 +257,7 @@ QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	hal_wowl_params->ucMagicPktEnable = sme_wowl_params->ucMagicPktEnable;
 	hal_wowl_params->ucPatternFilteringEnable =
 		sme_wowl_params->ucPatternFilteringEnable;
-	cdf_copy_macaddr(&hal_wowl_params->magic_ptrn,
+	qdf_copy_macaddr(&hal_wowl_params->magic_ptrn,
 			 &sme_wowl_params->magic_ptrn);
 
 #ifdef WLAN_WAKEUP_EVENTS
@@ -989,7 +989,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
+	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
 	cdf_mem_copy(request_buf, request, sizeof(tSirHostOffloadReq));
 
@@ -1031,7 +1031,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
+	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
 	request_buf = cdf_mem_malloc(sizeof(*request_buf));
 	if (NULL == request_buf) {

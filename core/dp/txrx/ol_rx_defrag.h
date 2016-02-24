@@ -30,7 +30,7 @@
 
 #include <cdf_nbuf.h>
 #include <cds_ieee80211_common.h>
-#include <cdf_util.h>
+#include <qdf_util.h>
 #include <qdf_types.h>
 #include <cdf_memory.h>
 #include <ol_txrx_internal.h>

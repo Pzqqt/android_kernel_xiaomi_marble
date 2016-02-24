@@ -26,7 +26,7 @@
  */
 
 #include <cdf_nbuf.h>               /* cdf_nbuf_t, etc. */
-#include <cdf_util.h>               /* cdf_os_cpu_to_le64 */
+#include <qdf_util.h>               /* qdf_cpu_to_le64 */
 #include <qdf_types.h>              /* bool */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
 
@@ -636,10 +636,10 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 				     (uint8_t *) rx_pn,
 				     sizeof(union htt_rx_pn_t));
 			peer->tids_last_pn[i].pn128[1] =
-				cdf_os_cpu_to_le64(
+				qdf_cpu_to_le64(
 					peer->tids_last_pn[i].pn128[1]);
 			peer->tids_last_pn[i].pn128[0] =
-				cdf_os_cpu_to_le64(
+				qdf_cpu_to_le64(
 					peer->tids_last_pn[i].pn128[0]);
 		}
 	}
@@ -1243,7 +1243,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	} else {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 			   "%s: Invalid pdev passed!\n", __func__);
-		cdf_assert_always(pdev);
+		qdf_assert_always(pdev);
 		return;
 	}
 
@@ -1258,7 +1258,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	 * corresponding rx MSDU network buffer.
 	 */
 	status = htt_rx_amsdu_pop(htt_pdev, rx_ind_msg, &head_msdu, &tail_msdu);
-	if (cdf_unlikely(0 == status)) {
+	if (qdf_unlikely(0 == status)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
 			   "%s: Pop status is 0, returning here\n", __func__);
 		return;

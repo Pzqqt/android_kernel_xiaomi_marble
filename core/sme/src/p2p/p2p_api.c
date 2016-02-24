@@ -79,7 +79,7 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 		cdf_mem_set(pMsg, sizeof(tSirRemainOnChnReq), 0);
 		pMsg->messageType = eWNI_SME_REMAIN_ON_CHANNEL_REQ;
 		pMsg->length = (uint16_t) len;
-		cdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
+		qdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
 		pMsg->chnNum = p2pRemainonChn->u.remainChlCmd.chn;
 		pMsg->phyMode = p2pRemainonChn->u.remainChlCmd.phyMode;
 		pMsg->duration = p2pRemainonChn->u.remainChlCmd.duration;

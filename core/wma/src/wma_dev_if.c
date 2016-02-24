@@ -86,7 +86,7 @@ void *wma_find_vdev_by_addr(tp_wma_handle wma, uint8_t *addr,
 	uint8_t i;
 
 	for (i = 0; i < wma->max_bssid; i++) {
-		if (cdf_is_macaddr_equal(
+		if (qdf_is_macaddr_equal(
 			(struct qdf_mac_addr *) wma->interfaces[i].addr,
 			(struct qdf_mac_addr *) addr) == true) {
 			*vdev_id = i;
@@ -167,7 +167,7 @@ void *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 	int i;
 
 	for (i = 0; i < wma->max_bssid; i++) {
-		if (cdf_is_macaddr_equal(
+		if (qdf_is_macaddr_equal(
 			(struct qdf_mac_addr *) wma->interfaces[i].bssid,
 			(struct qdf_mac_addr *) bssid) == true) {
 			*vdev_id = i;
@@ -320,7 +320,7 @@ static struct wma_target_req *wma_find_req(tp_wma_handle wma,
 
 	do {
 		node1 = node2;
-		req_msg = cdf_container_of(node1, struct wma_target_req, node);
+		req_msg = qdf_container_of(node1, struct wma_target_req, node);
 		if (req_msg->vdev_id != vdev_id)
 			continue;
 		if (req_msg->type != type)
@@ -381,7 +381,7 @@ static struct wma_target_req *wma_find_remove_req_msgtype(tp_wma_handle wma,
 
 	do {
 		node1 = node2;
-		req_msg = cdf_container_of(node1, struct wma_target_req, node);
+		req_msg = qdf_container_of(node1, struct wma_target_req, node);
 		if (req_msg->vdev_id != vdev_id)
 			continue;
 		if (req_msg->msg_type != msg_type)
@@ -440,7 +440,7 @@ static struct wma_target_req *wma_find_vdev_req(tp_wma_handle wma,
 
 	do {
 		node1 = node2;
-		req_msg = cdf_container_of(node1, struct wma_target_req, node);
+		req_msg = qdf_container_of(node1, struct wma_target_req, node);
 		if (req_msg->vdev_id != vdev_id)
 			continue;
 		if (req_msg->type != type)
@@ -1525,7 +1525,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 		return;
 	}
 
-	cdf_copy_macaddr(
+	qdf_copy_macaddr(
 		(struct qdf_mac_addr *) &(add_sta_self_param.self_mac_addr),
 		(struct qdf_mac_addr *) &(vdev->mac_addr));
 	add_sta_self_param.session_id = vdev_id;
@@ -3234,7 +3234,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		}
 
 		/* remove the non-ibss vdev */
-		cdf_copy_macaddr(
+		qdf_copy_macaddr(
 			(struct qdf_mac_addr *) &(del_sta_param.self_mac_addr),
 			(struct qdf_mac_addr *) &(vdev->mac_addr));
 		del_sta_param.session_id = vdev_id;
@@ -3243,7 +3243,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		wma_vdev_detach(wma, &del_sta_param, 0);
 
 		/* create new vdev for ibss */
-		cdf_copy_macaddr((struct qdf_mac_addr *) &
+		qdf_copy_macaddr((struct qdf_mac_addr *) &
 			 (add_sta_self_param.self_mac_addr),
 			 (struct qdf_mac_addr *) &(add_bss->selfMacAddr));
 		add_sta_self_param.session_id = vdev_id;

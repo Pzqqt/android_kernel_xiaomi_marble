@@ -3111,7 +3111,7 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 	}
 	return QDF_STATUS_SUCCESS;
 end:
-	cdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr,
+	qdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr,
 			 &pMlmDeauthReq->peer_macaddr);
 	mlmDeauthCnf.deauthTrigger = pMlmDeauthReq->deauthTrigger;
 	mlmDeauthCnf.aid = pMlmDeauthReq->aid;

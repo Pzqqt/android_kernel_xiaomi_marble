@@ -1494,7 +1494,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			extSetStaKeyParam;
 
 		cdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
-		cdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
+		qdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
 				 &pKeyInfo->bssid);
 		pMlmSetKeysReq->sessionId = psessionEntry->peSessionId;
 		pMlmSetKeysReq->smesessionId = psessionEntry->smeSessionId;
@@ -1545,7 +1545,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			       FL("BSSID = " MAC_ADDRESS_STR),
 			       MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));)
 
-		cdf_copy_macaddr(&pAddBssParams->extSetStaKeyParam.peer_macaddr,
+		qdf_copy_macaddr(&pAddBssParams->extSetStaKeyParam.peer_macaddr,
 				 &pKeyInfo->bssid);
 
 		pAddBssParams->extSetStaKeyParam.sendRsp = false;

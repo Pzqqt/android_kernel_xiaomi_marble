@@ -81,7 +81,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 
 	cur_time = (uint32_t) (cdf_mc_timer_get_system_ticks() /
 						QDF_TICKS_PER_SECOND);
-	cdf_zero_macaddr(&addr);
+	qdf_zero_macaddr(&addr);
 	cdf_mem_set((uint8_t *) uuid_e, SIR_WPS_UUID_LEN, 0);
 	for (pbc = session->pAPWPSPBCSession; pbc; pbc = pbc->next) {
 		if (cur_time > pbc->timestamp + SIR_WPS_PBC_WALK_TIME)
@@ -89,7 +89,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 		count++;
 		if (count > 1)
 			break;
-		cdf_copy_macaddr(&addr, &pbc->addr);
+		qdf_copy_macaddr(&addr, &pbc->addr);
 		cdf_mem_copy((uint8_t *) uuid_e, (uint8_t *) pbc->uuid_e,
 				SIR_WPS_UUID_LEN);
 	}
@@ -159,7 +159,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
 	prev = pbc = session_entry->pAPWPSPBCSession;
 
 	while (pbc) {
-		if (cdf_is_macaddr_equal(&pbc->addr, &remove_mac)) {
+		if (qdf_is_macaddr_equal(&pbc->addr, &remove_mac)) {
 			prev->next = pbc->next;
 			if (pbc == session_entry->pAPWPSPBCSession)
 				session_entry->pAPWPSPBCSession = pbc->next;

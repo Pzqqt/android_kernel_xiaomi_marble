@@ -330,7 +330,7 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 		/* Save the BSSID for the connection */
 		if (eCSR_BSS_TYPE_INFRASTRUCTURE == eBssType) {
 			CDF_ASSERT(pRoamInfo->pBssDesc);
-			cdf_copy_macaddr(&pHddStaCtx->conn_info.bssId,
+			qdf_copy_macaddr(&pHddStaCtx->conn_info.bssId,
 					 &pRoamInfo->bssid);
 
 			/*
@@ -345,7 +345,7 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 					pRoamInfo->staId;
 			}
 		} else if (eCSR_BSS_TYPE_IBSS == eBssType) {
-			cdf_copy_macaddr(&pHddStaCtx->conn_info.bssId,
+			qdf_copy_macaddr(&pHddStaCtx->conn_info.bssId,
 					 &pRoamInfo->bssid);
 		} else {
 			/*
@@ -771,7 +771,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		}
 		if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
 			tSirSmeChanInfo chan_info;
-			cdf_copy_macaddr(&peerMacAddr,
+			qdf_copy_macaddr(&peerMacAddr,
 					 &pHddStaCtx->conn_info.bssId);
 			chan_info.chan_id = pCsrRoamInfo->chan_info.chan_id;
 			chan_info.mhz = pCsrRoamInfo->chan_info.mhz;
@@ -824,7 +824,7 @@ static void hdd_send_association_event(struct net_device *dev,
 #endif
 
 		if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
-			cdf_copy_macaddr(&peerMacAddr,
+			qdf_copy_macaddr(&peerMacAddr,
 					 &pHddStaCtx->conn_info.bssId);
 
 			/* send peer status indication to oem app */
@@ -1575,7 +1575,7 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 		if (WLAN_HDD_IBSS == pAdapter->device_mode) {
 			uint8_t staId;
 
-			if (cdf_is_macaddr_broadcast(&pRoamInfo->peerMac)) {
+			if (qdf_is_macaddr_broadcast(&pRoamInfo->peerMac)) {
 				pHddStaCtx->roam_info.roamingState =
 					HDD_ROAM_STATE_NONE;
 			} else {
@@ -2473,7 +2473,7 @@ static bool roam_save_ibss_station(hdd_station_ctx_t *pHddStaCtx, uint8_t staId,
 		if (0 == pHddStaCtx->conn_info.staId[idx]) {
 			pHddStaCtx->conn_info.staId[idx] = staId;
 
-			cdf_copy_macaddr(&pHddStaCtx->conn_info.
+			qdf_copy_macaddr(&pHddStaCtx->conn_info.
 					 peerMacAddress[idx], peerMacAddress);
 
 			fSuccess = true;
@@ -2506,7 +2506,7 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 		if (staId == pHddStaCtx->conn_info.staId[idx]) {
 			pHddStaCtx->conn_info.staId[idx] = 0;
 
-			cdf_zero_macaddr(&pHddStaCtx->conn_info.
+			qdf_zero_macaddr(&pHddStaCtx->conn_info.
 					 peerMacAddress[idx]);
 
 			fSuccess = true;
@@ -2540,13 +2540,13 @@ static bool roam_remove_ibss_station(hdd_adapter_t *pAdapter, uint8_t staId)
 			if (pHddStaCtx->conn_info.staId[valid_idx] != 0) {
 				pHddStaCtx->conn_info.staId[0] =
 					pHddStaCtx->conn_info.staId[valid_idx];
-				cdf_copy_macaddr(&pHddStaCtx->conn_info.
+				qdf_copy_macaddr(&pHddStaCtx->conn_info.
 						 peerMacAddress[0],
 						 &pHddStaCtx->conn_info.
 						 peerMacAddress[valid_idx]);
 
 				pHddStaCtx->conn_info.staId[valid_idx] = 0;
-				cdf_zero_macaddr(&pHddStaCtx->conn_info.
+				qdf_zero_macaddr(&pHddStaCtx->conn_info.
 						 peerMacAddress[valid_idx]);
 			}
 		}
@@ -2731,7 +2731,7 @@ roam_roam_connect_status_update_handler(hdd_adapter_t *pAdapter,
 		    pHddStaCtx->ibss_enc_key.encType) {
 			pHddStaCtx->ibss_enc_key.keyDirection =
 				eSIR_TX_RX;
-			cdf_copy_macaddr(&pHddStaCtx->ibss_enc_key.peerMac,
+			qdf_copy_macaddr(&pHddStaCtx->ibss_enc_key.peerMac,
 					 &pRoamInfo->peerMac);
 
 			hddLog(LOG2, "New peer joined set PTK encType=%d",
@@ -2972,7 +2972,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 						  MAC_ADDR_ARRAY
 							  (pRoamInfo->peerMac.bytes));
 
-					cdf_copy_macaddr(&pHddCtx->
+					qdf_copy_macaddr(&pHddCtx->
 							 tdlsConnInfo
 							 [staIdx].
 							 peerMac,

@@ -150,7 +150,7 @@ void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	enum netif_reason_type netif_reason;
 
-	if (cdf_unlikely((!pdev) || (!pdev->pause_cb))) {
+	if (qdf_unlikely((!pdev) || (!pdev->pause_cb))) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "%s: invalid pdev\n", __func__);
 		return;
@@ -175,7 +175,7 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	enum netif_reason_type netif_reason;
 
-	if (cdf_unlikely((!pdev) || (!pdev->pause_cb))) {
+	if (qdf_unlikely((!pdev) || (!pdev->pause_cb))) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 				   "%s: invalid pdev\n", __func__);
 		return;

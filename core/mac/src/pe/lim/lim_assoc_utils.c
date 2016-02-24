@@ -755,7 +755,7 @@ lim_send_del_sta_cnf(tpAniSirGlobal pMac, struct qdf_mac_addr sta_dsaddr,
 		lim_log(pMac, LOGW,
 			FL("Lim Posting DEAUTH_CNF to Sme. Trigger: %d"),
 			mlmStaContext.cleanupTrigger);
-		cdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr, &sta_dsaddr);
+		qdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr, &sta_dsaddr);
 		mlmDeauthCnf.resultCode = statusCode;
 		mlmDeauthCnf.deauthTrigger = mlmStaContext.cleanupTrigger;
 		/* PE session Id */

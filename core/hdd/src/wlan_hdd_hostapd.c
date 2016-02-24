@@ -1577,7 +1577,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			     WPSPBCProbeReq.probeReqIE,
 			     pHddApCtx->WPSPBCProbeReq.probeReqIELen);
 
-		cdf_copy_macaddr(&pHddApCtx->WPSPBCProbeReq.peer_macaddr,
+		qdf_copy_macaddr(&pHddApCtx->WPSPBCProbeReq.peer_macaddr,
 			     &pSapEvent->sapevt.sapPBCProbeReqEvent.
 			     WPSPBCProbeReq.peer_macaddr);
 		hddLog(LOG1, "WPS PBC probe req " MAC_ADDRESS_STR,
@@ -2453,7 +2453,7 @@ static __iw_softap_setparam(struct net_device *dev,
 		struct hdd_config *pConfig = hdd_ctx->config;
 
 		hddLog(LOG1, "MC Target rate %d", set_value);
-		cdf_copy_macaddr(&rateUpdate.bssid,
+		qdf_copy_macaddr(&rateUpdate.bssid,
 				 &pHostapdAdapter->macAddressCurrent);
 		rateUpdate.nss = (pConfig->enable2x2 == 0) ? 0 : 1;
 		rateUpdate.dev_mode = pHostapdAdapter->device_mode;
@@ -3360,8 +3360,8 @@ static __iw_softap_set_max_tx_power(struct net_device *dev,
 		return ret;
 
 	/* Assign correct slef MAC address */
-	cdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
-	cdf_copy_macaddr(&selfMac, &pHostapdAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&selfMac, &pHostapdAdapter->macAddressCurrent);
 
 	set_value = value[0];
 	if (QDF_STATUS_SUCCESS !=
@@ -3410,7 +3410,7 @@ static __iw_softap_set_tx_power(struct net_device *dev,
 	if (NULL == value)
 		return -ENOMEM;
 
-	cdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&bssid, &pHostapdAdapter->macAddressCurrent);
 
 	set_value = value[0];
 	if (QDF_STATUS_SUCCESS !=
@@ -3857,7 +3857,7 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 	cdf_mem_copy(&WPSPBCProbeReqIEs.probeReqIE,
 		     pHddApCtx->WPSPBCProbeReq.probeReqIE,
 		     WPSPBCProbeReqIEs.probeReqIELen);
-	cdf_copy_macaddr(&WPSPBCProbeReqIEs.macaddr,
+	qdf_copy_macaddr(&WPSPBCProbeReqIEs.macaddr,
 			 &pHddApCtx->WPSPBCProbeReq.peer_macaddr);
 	if (copy_to_user(wrqu->data.pointer,
 			 (void *)&WPSPBCProbeReqIEs,
@@ -4036,7 +4036,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 	if (ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) {
 		/*Key direction for group is RX only */
 		setKey.keyDirection = eSIR_RX_ONLY;
-		cdf_set_macaddr_broadcast(&setKey.peerMac);
+		qdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
 
 		setKey.keyDirection = eSIR_TX_RX;
@@ -5362,9 +5362,9 @@ int __iw_get_softap_linkspeed(struct net_device *dev,
 	if (wrqu->data.length < 17 || !QDF_IS_STATUS_SUCCESS(status)) {
 		for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
 			if (pHostapdAdapter->aStaInfo[i].isUsed &&
-			    (!cdf_is_macaddr_broadcast
+			    (!qdf_is_macaddr_broadcast
 				  (&pHostapdAdapter->aStaInfo[i].macAddrSTA))) {
-				cdf_copy_macaddr(
+				qdf_copy_macaddr(
 					&macAddress,
 					&pHostapdAdapter->aStaInfo[i].
 					 macAddrSTA);
@@ -6907,7 +6907,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 					      WLAN_EID_OVERLAP_BSS_SCAN_PARAM);
 	}
 #endif
-	cdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
+	qdf_copy_macaddr(&updateIE.bssid, &adapter->macAddressCurrent);
 	updateIE.smeSessionId = adapter->sessionId;
 
 	if (test_bit(SOFTAP_BSS_STARTED, &adapter->event_flags)) {
@@ -7993,7 +7993,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	cdf_copy_macaddr(&updateIE.bssid, &pAdapter->macAddressCurrent);
+	qdf_copy_macaddr(&updateIE.bssid, &pAdapter->macAddressCurrent);
 	updateIE.smeSessionId = pAdapter->sessionId;
 	updateIE.ieBufferlength = 0;
 	updateIE.pAdditionIEBuffer = NULL;

@@ -1299,7 +1299,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 
 	/* This can be extended to other configurations like ht, vht cap... */
 
-	if (!cdf_is_macaddr_zero(&cfg->hw_macaddr)) {
+	if (!qdf_is_macaddr_zero(&cfg->hw_macaddr)) {
 		hdd_update_macaddr(hdd_ctx->config, cfg->hw_macaddr);
 	} else {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
@@ -2767,7 +2767,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 		return;
 	}
 
-	cdf_copy_macaddr(&updateIE.bssid, bssid);
+	qdf_copy_macaddr(&updateIE.bssid, bssid);
 	updateIE.smeSessionId = pHostapdAdapter->sessionId;
 	updateIE.ieBufferlength = 0;
 	updateIE.pAdditionIEBuffer = NULL;
@@ -2942,7 +2942,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 						     adapter->device_mode,
 							adapter->sessionId);
 
-			cdf_copy_macaddr(&updateIE.bssid,
+			qdf_copy_macaddr(&updateIE.bssid,
 					 &adapter->macAddressCurrent);
 			updateIE.smeSessionId = adapter->sessionId;
 			updateIE.ieBufferlength = 0;
@@ -5389,7 +5389,7 @@ static int hdd_init_thermal_info(hdd_context_t *hdd_ctx)
 	status = sme_init_thermal_info(hdd_ctx->hHal, thermal_param);
 
 	if (!QDF_IS_STATUS_SUCCESS(status))
-		return cdf_status_to_os_return(status);
+		return qdf_status_to_os_return(status);
 
 	sme_add_set_thermal_level_callback(hdd_ctx->hHal,
 					   hdd_set_thermal_level_cb);

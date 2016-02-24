@@ -1044,7 +1044,7 @@ static inline void
 ol_tx_delay_hist(ol_txrx_pdev_handle pdev, uint16_t *bin_values, int category)
 {
 	/* no-op version if QCA_COMPUTE_TX_DELAY is not set */
-	cdf_assert(bin_values);
+	qdf_assert(bin_values);
 	cdf_mem_zero(bin_values,
 		     QCA_TX_DELAY_HIST_REPORT_BINS * sizeof(*bin_values));
 }

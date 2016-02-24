@@ -698,7 +698,7 @@ void csr_neighbor_roam_reset_report_scan_state_control_info(tpAniSirGlobal pMac,
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
 
-	cdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
+	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
 #ifdef FEATURE_WLAN_ESE
 	pNeighborRoamInfo->isESEAssoc = false;
 	pNeighborRoamInfo->isVOAdmitted = false;
@@ -1228,7 +1228,7 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 
 		/* Populate the BSSID from handoff info received from HDD */
 		for (i = 0; i < pScanFilter->BSSIDs.numOfBSSIDs; i++) {
-			cdf_copy_macaddr(&pScanFilter->BSSIDs.bssid[i],
+			qdf_copy_macaddr(&pScanFilter->BSSIDs.bssid[i],
 				 &nbr_roam_info->handoffReqInfo.bssid);
 		}
 	}
@@ -2279,7 +2279,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 			cdf_mem_copy(&pSession->prevApSSID,
 				&pSession->connectedProfile.SSID,
 				sizeof(tSirMacSSid));
-			cdf_copy_macaddr(&pSession->prevApBssid,
+			qdf_copy_macaddr(&pSession->prevApBssid,
 					&pSession->connectedProfile.bssid);
 			pSession->prevOpChannel =
 				pSession->connectedProfile.operationChannel;
@@ -2392,7 +2392,7 @@ static void csr_neighbor_roam_info_ctx_init(
 	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
 		(pMac, eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 
-	cdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
+	qdf_copy_macaddr(&ngbr_roam_info->currAPbssid,
 			&session->connectedProfile.bssid);
 	ngbr_roam_info->currAPoperationChannel =
 		session->connectedProfile.operationChannel;
@@ -2547,7 +2547,7 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 		msg->length = sizeof(uint8_t);
 		msg->seesionId = session_id;
 		status = cds_send_mb_message_to_mac(msg);
-		cdf_copy_macaddr(&roamInfo.peerMac,
+		qdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
 		roamInfo.roamSynchInProgress =
 			session->roam_synch_in_progress;
@@ -2764,7 +2764,7 @@ QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 		pMac->roam.configParam.neighborRoamConfig.
 			nhi_rssi_scan_rssi_ub;
 
-	cdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
+	qdf_zero_macaddr(&pNeighborRoamInfo->currAPbssid);
 	pNeighborRoamInfo->currentNeighborLookupThreshold =
 		pNeighborRoamInfo->cfgParams.neighborLookupThreshold;
 	pNeighborRoamInfo->currentOpportunisticThresholdDiff =
@@ -3281,7 +3281,7 @@ QDF_STATUS csr_neighbor_roam_process_handoff_req(
 
 	/* Populate the BSSID from handoff info received from HDD */
 	for (i = 0; i < profile->BSSIDs.numOfBSSIDs; i++) {
-		cdf_copy_macaddr(&profile->BSSIDs.bssid[i],
+		qdf_copy_macaddr(&profile->BSSIDs.bssid[i],
 				&roam_ctrl_info->handoffReqInfo.bssid);
 	}
 

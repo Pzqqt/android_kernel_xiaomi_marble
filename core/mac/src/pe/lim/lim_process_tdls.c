@@ -2862,7 +2862,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 	}
 	pTdlsLinkEstablishReqRsp->statusCode = status;
 	if (peermac)
-		cdf_copy_macaddr(&pTdlsLinkEstablishReqRsp->peermac, peermac);
+		qdf_copy_macaddr(&pTdlsLinkEstablishReqRsp->peermac, peermac);
 
 	pTdlsLinkEstablishReqRsp->sessionId = sessionId;
 	mmhMsg.type = eWNI_SME_TDLS_LINK_ESTABLISH_RSP;
@@ -2898,7 +2898,7 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 	} else
 		pDelSta->staId = STA_INVALID_IDX;
 
-	cdf_copy_macaddr(&pDelSta->peermac, &peerMac);
+	qdf_copy_macaddr(&pDelSta->peermac, &peerMac);
 
 	pDelSta->length = sizeof(tSirTdlsDelStaRsp);
 	pDelSta->messageType = eWNI_SME_TDLS_DEL_STA_RSP;

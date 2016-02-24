@@ -585,8 +585,8 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal pMac,
 			      tpSirSmeDisassocReq pDisassocReq,
 			      tpPESession psessionEntry)
 {
-	if (cdf_is_macaddr_group(&pDisassocReq->peer_macaddr) &&
-	    !cdf_is_macaddr_broadcast(&pDisassocReq->peer_macaddr))
+	if (qdf_is_macaddr_group(&pDisassocReq->peer_macaddr) &&
+	    !qdf_is_macaddr_broadcast(&pDisassocReq->peer_macaddr))
 		return false;
 
 	return true;
@@ -618,7 +618,7 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal pMac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
 			      tpPESession psessionEntry)
 {
-	if (cdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
+	if (qdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
 		return false;
 
 	return true;
@@ -648,8 +648,8 @@ uint8_t
 lim_is_sme_deauth_req_valid(tpAniSirGlobal pMac, tpSirSmeDeauthReq pDeauthReq,
 			    tpPESession psessionEntry)
 {
-	if (cdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
-	    !cdf_is_macaddr_broadcast(&pDeauthReq->peer_macaddr))
+	if (qdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
+	    !qdf_is_macaddr_broadcast(&pDeauthReq->peer_macaddr))
 		return false;
 
 	return true;
@@ -699,8 +699,8 @@ uint8_t lim_is_sme_scan_req_valid(tpAniSirGlobal pMac, tpSirSmeScanReq pScanReq)
 		lim_log(pMac, LOGE, FL("Invalid BSS Type"));
 		valid = false;
 	}
-	if (cdf_is_macaddr_group(&pScanReq->bssId) &&
-		!cdf_is_macaddr_broadcast(&pScanReq->bssId)) {
+	if (qdf_is_macaddr_group(&pScanReq->bssId) &&
+		!qdf_is_macaddr_broadcast(&pScanReq->bssId)) {
 		valid = false;
 		lim_log(pMac, LOGE,
 			FL("BSSID is group addr and is not Broadcast Addr"));
@@ -923,5 +923,5 @@ uint8_t *lim_get_bss_id_from_sme_join_req_msg(uint8_t *pBuf)
 
 	pBuf += sizeof(uint16_t);       /* skip length of BSS description */
 
-	return (pBuf);
+	return pBuf;
 } /*** end lim_get_bss_id_from_sme_join_req_msg() ***/

@@ -417,7 +417,7 @@ static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 	for (i = 0; i < pdev->tx_descs.desc_pages.num_pages; i++) {
 		page_info = pdev->tx_descs.desc_pages.dma_pages + i;
 		if (!page_info->page_v_addr_start) {
-			cdf_assert(0);
+			qdf_assert(0);
 			return 0;
 		}
 		if ((target_vaddr >= page_info->page_v_addr_start) &&
@@ -647,7 +647,7 @@ cdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
 {
 	qdf_print("*** %s curently only applies for HL systems\n", __func__);
-	cdf_assert(0);
+	qdf_assert(0);
 	return head_msdu;
 
 }
@@ -670,7 +670,7 @@ htt_tx_send_nonstd(htt_pdev_handle pdev,
 		+ HTT_TX_HDR_SIZE_802_1Q
 		+ HTT_TX_HDR_SIZE_LLC_SNAP
 		+ ol_cfg_tx_download_size(pdev->ctrl_pdev);
-	cdf_assert(download_len <= pdev->download_len);
+	qdf_assert(download_len <= pdev->download_len);
 	return htt_tx_send_std(pdev, msdu, msdu_id);
 }
 

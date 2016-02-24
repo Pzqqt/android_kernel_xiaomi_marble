@@ -193,7 +193,7 @@ static int htt_rx_ring_size(struct htt_pdev_t *pdev)
 	else if (size > HTT_RX_RING_SIZE_MAX)
 		size = HTT_RX_RING_SIZE_MAX;
 
-	size = cdf_get_pwr2(size);
+	size = qdf_get_pwr2(size);
 	return size;
 }
 
@@ -290,7 +290,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 		}
 		paddr = cdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 		if (pdev->cfg.is_full_reorder_offload) {
-			if (cdf_unlikely
+			if (qdf_unlikely
 				    (htt_rx_hash_list_insert(pdev, paddr,
 							     rx_netbuf))) {
 				qdf_print("%s: hash insert failed!\n",
@@ -812,7 +812,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 
 	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
 
-	if (cdf_unlikely(HTT_T2H_MSG_TYPE_RX_FRAG_IND == msg_type)) {
+	if (qdf_unlikely(HTT_T2H_MSG_TYPE_RX_FRAG_IND == msg_type)) {
 		num_msdu_bytes = HTT_RX_FRAG_IND_FW_RX_DESC_BYTES_GET(
 			*(msg_word + HTT_RX_FRAG_IND_HDR_PREFIX_SIZE32));
 	} else {
@@ -867,7 +867,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		 */
 
 #ifdef DEBUG_DMA_DONE
-		if (cdf_unlikely(!((*(uint32_t *) &rx_desc->attention)
+		if (qdf_unlikely(!((*(uint32_t *) &rx_desc->attention)
 				   & RX_ATTENTION_0_MSDU_DONE_MASK))) {
 
 			int dbg_iter = MAX_DONE_BIT_CHECK_ITER;
@@ -890,7 +890,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 				dbg_iter--;
 			}
 
-			if (cdf_unlikely(!((*(uint32_t *) &rx_desc->attention)
+			if (qdf_unlikely(!((*(uint32_t *) &rx_desc->attention)
 					   & RX_ATTENTION_0_MSDU_DONE_MASK))) {
 
 #ifdef HTT_RX_RESTORE
@@ -929,7 +929,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 		 * upload.)
 		 */
 		if (pdev->rx_ind_msdu_byte_idx < num_msdu_bytes) {
-			if (cdf_unlikely
+			if (qdf_unlikely
 				    (HTT_T2H_MSG_TYPE_RX_FRAG_IND == msg_type))
 				byte_offset =
 					HTT_ENDIAN_BYTE_IDX_SWAP
@@ -957,7 +957,7 @@ htt_rx_amsdu_pop_ll(htt_pdev_handle pdev,
 			 * the RX_IND message format, then the following
 			 * assertion can be restored.
 			 */
-			/* cdf_assert((rx_ind_data[byte_offset] &
+			/* qdf_assert((rx_ind_data[byte_offset] &
 			   FW_RX_DESC_EXT_M) == 0); */
 			pdev->rx_ind_msdu_byte_idx += 1;
 			/* or more, if there's ext data */
@@ -1121,7 +1121,7 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 	paddr = HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*curr_msdu);
 	*head_buf = *tail_buf = buf = htt_rx_in_order_netbuf_pop(pdev, paddr);
 
-	if (cdf_unlikely(NULL == buf)) {
+	if (qdf_unlikely(NULL == buf)) {
 		qdf_print("%s: netbuf pop failed!\n", __func__);
 		return 0;
 	}
@@ -1194,7 +1194,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 		pdev,
 		HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*msg_word));
 
-	if (cdf_unlikely(NULL == msdu)) {
+	if (qdf_unlikely(NULL == msdu)) {
 		qdf_print("%s: netbuf pop failed!\n", __func__);
 		*tail_msdu = NULL;
 		return 0;
@@ -1243,7 +1243,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 
 		msdu_count--;
 
-		if (cdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
+		if (qdf_unlikely((*((u_int8_t *) &rx_desc->fw_desc.u.val)) &
 				    FW_RX_DESC_MIC_ERR_M)) {
 			u_int8_t tid =
 				HTT_RX_IN_ORD_PADDR_IND_EXT_TID_GET(
@@ -1273,7 +1273,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 					pdev,
 					HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(
 						*msg_word));
-				if (cdf_unlikely(NULL == next)) {
+				if (qdf_unlikely(NULL == next)) {
 					qdf_print("%s: netbuf pop failed!\n",
 								 __func__);
 					*tail_msdu = NULL;
@@ -1305,7 +1305,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 			next = htt_rx_in_order_netbuf_pop(
 				pdev,
 				HTT_RX_IN_ORD_PADDR_IND_PADDR_GET(*msg_word));
-			if (cdf_unlikely(NULL == next)) {
+			if (qdf_unlikely(NULL == next)) {
 				qdf_print("%s: netbuf pop failed!\n",
 					  __func__);
 				*tail_msdu = NULL;
@@ -1960,7 +1960,7 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 				(char *)
 				pdev->rx_ring.hash_table[i].freepool.next -
 				pdev->rx_ring.listnode_offset);
-		if (cdf_unlikely(NULL == hash_element)) {
+		if (qdf_unlikely(NULL == hash_element)) {
 			HTT_ASSERT_ALWAYS(0);
 			return 1;
 		}
@@ -1968,7 +1968,7 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 		htt_list_remove(pdev->rx_ring.hash_table[i].freepool.next);
 	} else {
 		hash_element = cdf_mem_malloc(sizeof(struct htt_rx_hash_entry));
-		if (cdf_unlikely(NULL == hash_element)) {
+		if (qdf_unlikely(NULL == hash_element)) {
 			HTT_ASSERT_ALWAYS(0);
 			return 1;
 		}

@@ -1428,7 +1428,7 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 	int section_len = 0;
 
 	if (!reg_table) {
-		cdf_assert(0);
+		qdf_assert(0);
 		return section_len;
 	}
 

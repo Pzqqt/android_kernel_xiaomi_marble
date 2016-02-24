@@ -155,7 +155,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			qdf_print
 			      ("*** Incompatible host/target HTT versions!");
 		/* abort if the target is incompatible with the host */
-		cdf_assert(pdev->tgt_ver.major ==
+		qdf_assert(pdev->tgt_ver.major ==
 			   HTT_CURRENT_VERSION_MAJOR);
 		if (pdev->tgt_ver.minor != HTT_CURRENT_VERSION_MINOR) {
 			qdf_print("*** Warning: host/target HTT versions are ");
@@ -437,7 +437,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			if (!peer) {
 				qdf_print("%s: invalid peer id %d\n",
 					 __func__, peer_id);
-				cdf_assert(0);
+				qdf_assert(0);
 				break;
 			}
 			vdev = peer->vdev;
@@ -496,7 +496,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		return;
 	}
 #ifdef HTT_RX_RESTORE
-	if (cdf_unlikely(pdev->rx_ring.rx_reset)) {
+	if (qdf_unlikely(pdev->rx_ring.rx_reset)) {
 		qdf_print("rx restore ..\n");
 		cdf_nbuf_free(htt_t2h_msg);
 		return;
@@ -522,7 +522,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		uint16_t peer_id;
 		uint8_t tid;
 
-		if (cdf_unlikely(pdev->cfg.is_full_reorder_offload)) {
+		if (qdf_unlikely(pdev->cfg.is_full_reorder_offload)) {
 			qdf_print("HTT_T2H_MSG_TYPE_RX_IND not supported ");
 			qdf_print("with full reorder offload\n");
 			break;
@@ -649,7 +649,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		uint8_t tid;
 		uint8_t offload_ind, frag_ind;
 
-		if (cdf_unlikely(!pdev->cfg.is_full_reorder_offload)) {
+		if (qdf_unlikely(!pdev->cfg.is_full_reorder_offload)) {
 			qdf_print("HTT_T2H_MSG_TYPE_RX_IN_ORD_PADDR_IND not ");
 			qdf_print("supported when full reorder offload is ");
 			qdf_print("disabled in the configuration.\n");
@@ -666,7 +666,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 			  __func__, __LINE__, peer_id, tid, offload_ind,
 			  frag_ind);
 #endif
-		if (cdf_unlikely(frag_ind)) {
+		if (qdf_unlikely(frag_ind)) {
 			ol_rx_frag_indication_handler(pdev->txrx_pdev,
 						      htt_t2h_msg,
 						      peer_id, tid);
