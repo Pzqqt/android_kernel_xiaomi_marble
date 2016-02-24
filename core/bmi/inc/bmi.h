@@ -41,6 +41,27 @@ struct ol_context;
 CDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx);
 void ol_cds_free(void);
 
+/**
+ * struct hif_config_info - Place Holder for hif confiruation
+ * @enable_uart_print: UART Print
+ * @enable_self_recovery: Self Recovery
+ * @enable_fw_log:      To Enable FW LOG
+ * @enable_lpass_support: LPASS support
+ * @enable_ramdump_collection: Ramdump Collection
+ *
+ * Structure for holding ini parameters.
+ */
+
+struct ol_config_info {
+	bool enable_uart_print;
+	bool enable_self_recovery;
+	bool enable_fw_log;
+	bool enable_lpass_support;
+	bool enable_ramdump_collection;
+};
+
+void ol_init_ini_config(struct ol_context *ol_ctx,
+			struct ol_config_info *cfg);
 #ifdef HIF_PCI
 void bmi_cleanup(struct ol_context *scn);
 CDF_STATUS bmi_done(struct ol_context *ol_ctx);

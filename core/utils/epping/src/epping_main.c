@@ -181,7 +181,6 @@ int epping_enable(struct device *parent_dev)
 	HTC_INIT_INFO htcInfo;
 	struct ol_softc *scn;
 	tSirMacAddr adapter_macAddr;
-	struct hif_config_info *cfg;
 	struct hif_target_info *tgt_info;
 	struct ol_context *ol_ctx;
 
@@ -215,11 +214,6 @@ int epping_enable(struct device *parent_dev)
 			  "%s: scn is null!", __func__);
 		return -1;
 	}
-
-	cfg = hif_get_ini_handle(scn);
-
-	cfg->enable_uart_print = 0;
-	cfg->enable_fw_log = 0;
 
 	tgt_info = hif_get_target_info_handle(scn);
 

@@ -105,6 +105,7 @@ extern int hdd_hostapd_stop(struct net_device *dev);
 #include "cds_concurrency.h"
 #include "wlan_hdd_green_ap.h"
 #include "platform_icnss.h"
+#include "bmi.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
@@ -6989,23 +6990,57 @@ static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
 #endif
 
 /**
- * hdd_update_hif_config() - Initialize HIF ini parameters
- * @scn: HIF Context
- * @hdd_ctx: HDD Context
+ * hdd_update_ol_config - API to update ol configuration parameters
+ * @hdd_ctx: HDD context
  *
- * API is used to initialize all HIF configuration parameters
  * Return: void
  */
-void hdd_update_hif_config(void *scn, hdd_context_t *hdd_ctx)
+static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
 {
-	struct hif_config_info *cfg = hif_get_ini_handle(scn);
+	struct ol_config_info cfg;
+	struct ol_context *ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
 
-	cfg->enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
-	cfg->enable_uart_print = hdd_ctx->config->enablefwprint;
-	cfg->enable_fw_log = hdd_ctx->config->enable_fw_log;
-	cfg->enable_ramdump_collection =
-				hdd_ctx->config->is_ramdump_enabled;
-	cfg->enable_lpass_support = hdd_is_lpass_supported(hdd_ctx);
+	if (!ol_ctx)
+		return;
+
+	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
+	cfg.enable_uart_print = hdd_ctx->config->enablefwprint;
+	cfg.enable_fw_log = hdd_ctx->config->enable_fw_log;
+	cfg.enable_ramdump_collection = hdd_ctx->config->is_ramdump_enabled;
+	cfg.enable_lpass_support = hdd_is_lpass_supported(hdd_ctx);
+
+	ol_init_ini_config(ol_ctx, &cfg);
+}
+
+/**
+ * hdd_update_hif_config - API to update HIF configuration parameters
+ * @hdd_ctx: HDD Context
+ *
+ * Return: void
+ */
+static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
+{
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_config_info cfg;
+
+	if (!scn)
+		return;
+
+	cfg.enable_self_recovery = hdd_ctx->config->enableSelfRecovery;
+	hif_init_ini_config(scn, &cfg);
+}
+
+/**
+ * hdd_update_config() - Initialize driver per module ini parameters
+ * @hdd_ctx: HDD Context
+ *
+ * API is used to initialize all driver per module configuration parameters
+ * Return: void
+ */
+void hdd_update_config(hdd_context_t *hdd_ctx)
+{
+	hdd_update_ol_config(hdd_ctx);
+	hdd_update_hif_config(hdd_ctx);
 }
 
 /* Register the module init/exit functions */

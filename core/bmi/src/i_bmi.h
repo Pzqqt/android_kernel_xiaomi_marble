@@ -155,10 +155,11 @@ struct bmi_info {
  */
 struct ol_context {
 	struct bmi_info bmi;
+	struct ol_config_info cfg_info;
 	uint8_t *cal_in_flash;
 	cdf_device_t cdf_dev;
-	struct ol_softc *scn;
 	cdf_work_t ramdump_work;
+	struct ol_softc *scn;
 	struct targetdef_t {
 		struct targetdef_s *targetdef;
 	} tgt_def;
@@ -187,4 +188,5 @@ CDF_STATUS bmi_done_local(struct ol_context *ol_ctx);
 CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx);
 CDF_STATUS ol_configure_target(struct ol_context *ol_ctx);
 void ramdump_work_handler(void *arg);
+struct ol_config_info *ol_get_ini_handle(struct ol_context *ol_ctx);
 #endif

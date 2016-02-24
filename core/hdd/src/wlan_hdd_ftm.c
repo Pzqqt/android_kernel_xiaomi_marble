@@ -309,7 +309,7 @@ static CDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 		goto err_htc_close;
 	}
 #if  defined(QCA_WIFI_FTM)
-	hdd_update_hif_config(pHifContext, hdd_ctx);
+	hdd_update_config(hdd_ctx);
 
 	pHtcContext = cds_get_context(CDF_MODULE_ID_HTC);
 	if (!pHtcContext) {

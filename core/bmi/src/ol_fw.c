@@ -527,14 +527,14 @@ int ol_copy_ramdump(struct ol_softc *scn)
 	return ret;
 }
 
-void ramdump_work_handler(void *ol_context)
+void ramdump_work_handler(void *data)
 {
 	int ret;
 	uint32_t host_interest_address;
 	uint32_t dram_dump_values[4];
 	uint32_t target_type;
 	struct hif_target_info *tgt_info;
-	struct ol_context *ol_ctx = ol_context;
+	struct ol_context *ol_ctx = data;
 	struct ol_softc *ramdump_scn = ol_ctx->scn;
 
 	if (!ramdump_scn) {
@@ -612,7 +612,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 	struct ol_context *ol_ctx = instance;
 	struct ol_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
-	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
+	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	int ret;
 	ol_target_status target_status =
 			hif_get_target_status(scn);
@@ -672,7 +672,7 @@ CDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 #endif
 	struct ol_softc *scn = ol_ctx->scn;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
-	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
+	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
 
 	/* Tell target which HTC version it is used */
@@ -813,7 +813,8 @@ CDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 	return CDF_STATUS_SUCCESS;
 }
 
-static int ol_check_dataset_patch(struct ol_softc *scn, uint32_t *address)
+static int
+ol_check_dataset_patch(struct ol_softc *scn, uint32_t *address)
 {
 	/* Check if patch file needed for this target type/version. */
 	return 0;
@@ -1209,7 +1210,7 @@ CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	int status = !EOK;
 	CDF_STATUS ret;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
-	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
+	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
 	uint32_t target_version = tgt_info->target_version;
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
@@ -1310,8 +1311,8 @@ CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 
 	/* Apply the patches */
 	if (ol_check_dataset_patch(scn, &address)) {
-		if ((ol_transfer_bin_file(ol_ctx, ATH_PATCH_FILE, address, false))
-		    != EOK) {
+		if ((ol_transfer_bin_file(ol_ctx, ATH_PATCH_FILE, address,
+				false)) != EOK) {
 			return -1;
 		}
 		bmi_write_memory(hif_hia_item_address(target_type,
@@ -1546,17 +1547,16 @@ void ol_dump_target_memory(struct ol_softc *scn, void *memory_block)
 	}
 }
 
-/**---------------------------------------------------------------------------
-*   \brief  ol_target_coredump
-*
-*   Function to perform core dump for the target
-*
-*   \param:   scn - ol_softc handler
-*             memory_block - non-NULL reserved memory location
-*             block_len - size of the dump to collect
-*
-*   \return:  None
-* --------------------------------------------------------------------------*/
+/**
+ * ol_target_coredump() - API to collect target ramdump
+ * @inst - private context
+ * @memory_block - non-NULL reserved memory location
+ * @block_len - size of the dump to collect
+ *
+ * Function to perform core dump for the target.
+ *
+ * Return: int
+ */
 static int ol_target_coredump(void *inst, void *memory_block,
 					uint32_t block_len)
 {
@@ -1632,4 +1632,28 @@ static int ol_target_coredump(void *inst, void *memory_block,
 		}
 	}
 	return ret;
+}
+
+/**
+ * ol_get_ini_handle() - API to get Ol INI configuration
+ * @ol_ctx: OL Context
+ *
+ * Return: pointer to OL configuration
+ */
+struct ol_config_info *ol_get_ini_handle(struct ol_context *ol_ctx)
+{
+	return &ol_ctx->cfg_info;
+}
+
+/**
+ * ol_init_ini_config() - API to initialize INI configuration
+ * @ol_ctx: OL Context
+ * @cfg: OL ini configuration
+ *
+ * Return: void
+ */
+void ol_init_ini_config(struct ol_context *ol_ctx,
+			struct ol_config_info *cfg)
+{
+	cdf_mem_copy(&ol_ctx->cfg_info, cfg, sizeof(struct ol_config_info));
 }

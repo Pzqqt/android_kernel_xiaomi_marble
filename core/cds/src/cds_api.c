@@ -172,8 +172,8 @@ CDF_STATUS cds_open(void)
 	tMacOpenParameters mac_openParms;
 	cdf_device_t cdf_ctx;
 	HTC_INIT_INFO htcInfo;
-	struct ol_softc *scn;
 	struct ol_context *ol_ctx;
+	struct ol_softc *scn;
 	void *HTCHandle;
 	hdd_context_t *pHddCtx;
 
@@ -255,7 +255,7 @@ CDF_STATUS cds_open(void)
 		goto err_sched_close;
 	}
 
-	hdd_update_hif_config(scn, pHddCtx);
+	hdd_update_config(pHddCtx);
 
 	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
 	/* Initialize BMI and Download firmware */
