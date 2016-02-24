@@ -464,7 +464,6 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 	struct hif_softc *scn;
 	v_CONTEXT_t cds_context;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	struct hif_config_info *cfg;
 	int bus_context_size = hif_bus_get_context_size();
 
 	cds_context = cds_get_global_context();
@@ -478,7 +477,6 @@ CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
 	cdf_mem_zero(scn, bus_context_size);
 	hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	scn->cdf_dev = cdf_ctx;
-	cfg = hif_get_ini_handle(hif_hdl);
 	cdf_atomic_init(&scn->active_tasklet_cnt);
 	cdf_atomic_init(&scn->link_suspended);
 	cdf_atomic_init(&scn->tasklet_from_intr);
@@ -871,7 +869,7 @@ ol_target_status hif_get_target_status(struct ol_softc *hif_ctx)
 }
 
 /**
- * hif_set_target_status - API to set target status
+ * hif_set_target_status() - API to set target status
  * @hif_ctx: HIF Context
  * @status: Target Status
  *
@@ -882,4 +880,18 @@ void hif_set_target_status(struct ol_softc *hif_ctx, ol_target_status status)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	scn->target_status = status;
+}
+
+/**
+ * hif_init_ini_config() - API to initialize HIF configuration parameters
+ * @hif_ctx: HIF Context
+ * @cfg: HIF Configuration
+ *
+ * Return: void
+ */
+void hif_init_ini_config(struct ol_softc *hif_ctx, struct hif_config_info *cfg)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+
+	cdf_mem_copy(&scn->hif_config, cfg, sizeof(struct hif_config_info));
 }

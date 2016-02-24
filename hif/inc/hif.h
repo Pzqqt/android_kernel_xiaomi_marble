@@ -146,21 +146,13 @@ struct qca_napi_data {
 };
 
 /**
- * struct hif_config_info - Place Holder for hif configuration
- * @enable_uart_print: UART Print
+ * struct hif_config_info - Place Holder for hif confiruation
  * @enable_self_recovery: Self Recovery
- * @enable_fw_log: To Enable FW LOG
- * @enable_lpass_support: LPASS support
- * @enable_ramdump_collection: Ramdump Collection
  *
- * Structure for holding ini parameters.
+ * Structure for holding hif ini parameters.
  */
 struct hif_config_info {
-	bool enable_uart_print;
 	bool enable_self_recovery;
-	bool enable_fw_log;
-	bool enable_lpass_support;
-	bool enable_ramdump_collection;
 };
 
 /**
@@ -555,6 +547,7 @@ struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn);
 struct ramdump_info *hif_get_ramdump_ctx(struct ol_softc *hif_ctx);
 ol_target_status hif_get_target_status(struct ol_softc *hif_ctx);
 void hif_set_target_status(struct ol_softc *hif_ctx, ol_target_status);
+void hif_init_ini_config(struct ol_softc *hif_ctx, struct hif_config_info *cfg);
 #ifdef __cplusplus
 }
 #endif
