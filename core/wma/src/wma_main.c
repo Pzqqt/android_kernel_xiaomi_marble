@@ -158,7 +158,7 @@ static uint8_t wma_get_number_of_peers_supported(tp_wma_handle wma)
 	struct hif_target_info *tgt_info;
 	struct wma_ini_config *cfg = wma_get_ini_handle(wma);
 	uint8_t max_no_of_peers = cfg ? cfg->max_no_of_peers : MIN_NO_OF_PEERS;
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 
 	if (!scn) {
 		WMA_LOGE("%s: Invalid wma handle", __func__);
@@ -4605,7 +4605,7 @@ void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
 void wma_set_wifi_start_packet_stats(void *wma_handle,
 		struct sir_wifi_start_log *start_log)
 {
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	uint32_t log_state;
 
 	if (!start_log) {

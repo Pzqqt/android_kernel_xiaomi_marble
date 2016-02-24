@@ -59,7 +59,7 @@ bmi_command_test(uint32_t command, uint32_t address, uint8_t *data,
 CDF_STATUS bmi_init(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	if (!scn) {
@@ -148,7 +148,7 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 						struct ol_context *ol_ctx)
 {
 	int status = 0;
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
@@ -199,7 +199,7 @@ CDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 	uint8_t data[10], out[10];
 	uint32_t address;
 	int32_t ret;
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 
 	if (NO_BMI)
 		return CDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
@@ -232,7 +232,7 @@ end:
 CDF_STATUS bmi_read_soc_register(uint32_t address, uint32_t *param,
 						struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset, param_len;
@@ -277,7 +277,7 @@ CDF_STATUS bmi_read_soc_register(uint32_t address, uint32_t *param,
 CDF_STATUS bmi_write_soc_register(uint32_t address, uint32_t param,
 					struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -326,7 +326,7 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 	uint32_t offset;
 	uint32_t remaining, txlen;
 	const uint32_t header = sizeof(cid) + sizeof(length);
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -374,7 +374,7 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 }
 
 CDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
-				 uint32_t length, struct ol_bmi_context *ol_ctx)
+				 uint32_t length, struct ol_context *ol_ctx)
 {
 	uint32_t cid;
 	int status;
@@ -382,7 +382,7 @@ CDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
 	const uint32_t header = sizeof(cid) + sizeof(address) + sizeof(length);
 	uint8_t aligned_buf[BMI_DATASZ_MAX + 4];
 	uint8_t *src;
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t remaining, txlen;
@@ -446,7 +446,7 @@ bmilz_stream_start(uint32_t address, struct ol_context *ol_ctx)
 	uint32_t cid;
 	int status;
 	uint32_t offset;
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;

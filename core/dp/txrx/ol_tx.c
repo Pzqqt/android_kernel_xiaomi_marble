@@ -694,8 +694,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 static inline cdf_nbuf_t
 ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 {
-	struct ol_softc *hif_device =
-		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *hif_device =
+		(struct hif_opaque_softc *)cds_get_context(CDF_MODULE_ID_HIF);
 
 	if (cdf_likely(hif_device && hif_is_fastpath_mode_enabled(hif_device)))
 		msdu_list = ol_tx_ll_fast(vdev, msdu_list);

@@ -74,8 +74,8 @@ static struct ath_pktlog_info *g_pktlog_info;
 
 static struct proc_dir_entry *g_pktlog_pde;
 
-static int pktlog_attach(struct ol_softc *sc);
-static void pktlog_detach(struct ol_softc *sc);
+static int pktlog_attach(struct hif_opaque_softc *sc);
+static void pktlog_detach(struct hif_opaque_softc *sc);
 static int pktlog_open(struct inode *i, struct file *f);
 static int pktlog_release(struct inode *i, struct file *f);
 static int pktlog_mmap(struct file *f, struct vm_area_struct *vma);
@@ -93,7 +93,7 @@ static struct file_operations pktlog_fops = {
  * Linux implementation of helper functions
  */
 
-static struct ol_pktlog_dev_t *get_pl_handle(struct ol_softc *scn)
+static struct ol_pktlog_dev_t *get_pl_handle(struct hif_opaque_softc *scn)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle;
 	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
@@ -102,7 +102,7 @@ static struct ol_pktlog_dev_t *get_pl_handle(struct ol_softc *scn)
 	return pdev_txrx_handle->pl_dev;
 }
 
-void ol_pl_set_name(ol_softc_handle scn, net_device_handle dev)
+void ol_pl_set_name(hif_opaque_softc_handle scn, net_device_handle dev)
 {
 	ol_txrx_pdev_handle pdev_txrx_handle;
 	pdev_txrx_handle = cds_get_context(CDF_MODULE_ID_TXRX);
@@ -110,14 +110,14 @@ void ol_pl_set_name(ol_softc_handle scn, net_device_handle dev)
 		pdev_txrx_handle->pl_dev->name = dev->name;
 }
 
-void pktlog_disable_adapter_logging(struct ol_softc *scn)
+void pktlog_disable_adapter_logging(struct hif_opaque_softc *scn)
 {
 	struct ol_pktlog_dev_t *pl_dev = get_pl_handle(scn);
 	if (pl_dev)
 		pl_dev->pl_info->log_state = 0;
 }
 
-int pktlog_alloc_buf(struct ol_softc *scn)
+int pktlog_alloc_buf(struct hif_opaque_softc *scn)
 {
 	uint32_t page_cnt;
 	unsigned long vaddr;
@@ -159,7 +159,7 @@ int pktlog_alloc_buf(struct ol_softc *scn)
 	return 0;
 }
 
-void pktlog_release_buf(struct ol_softc *scn)
+void pktlog_release_buf(struct hif_opaque_softc *scn)
 {
 	unsigned long page_cnt;
 	unsigned long vaddr;
@@ -214,7 +214,7 @@ ath_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 		return -EINVAL;
 	}
 
-	pl_dev = get_pl_handle((struct ol_softc *)scn);
+	pl_dev = get_pl_handle((struct hif_opaque_softc *)scn);
 
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog context\n", __func__);
@@ -229,8 +229,8 @@ ath_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret == 0)
-			ret = pl_dev->pl_funcs->pktlog_enable((struct ol_softc
-							       *)scn, enable);
+			ret = pl_dev->pl_funcs->pktlog_enable(
+					(struct hif_opaque_softc *)scn, enable);
 		else
 			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
 			       __func__);
@@ -269,7 +269,7 @@ ath_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 		return -EINVAL;
 	}
 
-	pl_dev = get_pl_handle((struct ol_softc *)scn);
+	pl_dev = get_pl_handle((struct hif_opaque_softc *)scn);
 
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog handle\n", __func__);
@@ -284,8 +284,8 @@ ath_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
 					       lenp, ppos);
 		if (ret == 0)
-			ret = pl_dev->pl_funcs->pktlog_setsize((struct ol_softc
-								*)scn, size);
+			ret = pl_dev->pl_funcs->pktlog_setsize(
+					(struct hif_opaque_softc *)scn, size);
 	} else {
 		size = get_pktlog_bufsize(pl_dev);
 		ret = ATH_SYSCTL_PROC_DOINTVEC(ctl, write, filp, buffer,
@@ -299,7 +299,7 @@ ath_sysctl_decl(ath_sysctl_pktlog_size, ctl, write, filp, buffer, lenp, ppos)
 }
 
 /* Register sysctl table */
-static int pktlog_sysctl_register(struct ol_softc *scn)
+static int pktlog_sysctl_register(struct hif_opaque_softc *scn)
 {
 	struct ol_pktlog_dev_t *pl_dev = get_pl_handle(scn);
 	struct ath_pktlog_info_lnx *pl_info_lnx;
@@ -403,7 +403,7 @@ static int pktlog_sysctl_register(struct ol_softc *scn)
  * Initialize logging for system or adapter
  * Parameter scn should be NULL for system wide logging
  */
-static int pktlog_attach(struct ol_softc *scn)
+static int pktlog_attach(struct hif_opaque_softc *scn)
 {
 	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info_lnx *pl_info_lnx;
@@ -488,7 +488,7 @@ static void pktlog_sysctl_unregister(struct ol_pktlog_dev_t *pl_dev)
 	}
 }
 
-static void pktlog_detach(struct ol_softc *scn)
+static void pktlog_detach(struct hif_opaque_softc *scn)
 {
 	struct ol_pktlog_dev_t *pl_dev = (struct ol_pktlog_dev_t *)
 					 get_pl_handle(scn);
@@ -1008,7 +1008,9 @@ int pktlogmod_init(void *context)
 	}
 
 	/* Attach packet log */
-	if ((ret = pktlog_attach((struct ol_softc *)context)))
+	ret = pktlog_attach((struct hif_opaque_softc *)context);
+
+	if (ret)
 		goto attach_fail;
 
 	return ret;
@@ -1021,7 +1023,7 @@ attach_fail:
 
 void pktlogmod_exit(void *context)
 {
-	struct ol_softc *scn = (struct ol_softc *)context;
+	struct hif_opaque_softc *scn = (struct hif_opaque_softc *)context;
 	struct ol_pktlog_dev_t *pl_dev;
 
 	if (!scn)

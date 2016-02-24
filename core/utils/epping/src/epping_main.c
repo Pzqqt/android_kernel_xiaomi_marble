@@ -179,7 +179,7 @@ int epping_enable(struct device *parent_dev)
 	cds_context_type *p_cds_context = NULL;
 	cdf_device_t cdf_ctx;
 	HTC_INIT_INFO htcInfo;
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	tSirMacAddr adapter_macAddr;
 	struct hif_target_info *tgt_info;
 	struct ol_context *ol_ctx;

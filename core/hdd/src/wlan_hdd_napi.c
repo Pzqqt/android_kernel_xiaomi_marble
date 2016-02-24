@@ -54,7 +54,7 @@ static struct qca_napi_data *hdd_napi_ctx;
 struct qca_napi_data *hdd_napi_get_all(void)
 {
 	struct qca_napi_data *rp = NULL;
-	struct ol_softc *hif;
+	struct hif_opaque_softc *hif;
 
 	NAPI_DEBUG("-->\n");
 
@@ -103,7 +103,7 @@ static uint32_t hdd_napi_get_map(void)
  */
 int hdd_napi_create(void)
 {
-	struct ol_softc *hif_ctx;
+	struct hif_opaque_softc *hif_ctx;
 	uint8_t ul, dl;
 	int     ul_polled, dl_polled;
 	int     rc = 0;
@@ -164,7 +164,7 @@ int hdd_napi_destroy(int force)
 
 	NAPI_DEBUG("--> (force=%d)\n", force);
 	if (hdd_napi_map) {
-		struct ol_softc *hif_ctx;
+		struct hif_opaque_softc *hif_ctx;
 
 		hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 		if (unlikely(NULL == hif_ctx))
@@ -207,7 +207,7 @@ int hdd_napi_destroy(int force)
  */
 int hdd_napi_enabled(int id)
 {
-	struct ol_softc *hif;
+	struct hif_opaque_softc *hif;
 	int rc = 0; /* NOT enabled */
 
 	hif = cds_get_context(CDF_MODULE_ID_HIF);
@@ -239,7 +239,7 @@ int hdd_napi_enabled(int id)
 int hdd_napi_event(enum qca_napi_event event, void *data)
 {
 	int rc = -EFAULT;  /* assume err */
-	struct ol_softc *hif;
+	struct hif_opaque_softc *hif;
 
 	NAPI_DEBUG("-->(event=%d, aux=%p)\n", event, data);
 

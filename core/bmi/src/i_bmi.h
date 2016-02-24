@@ -159,7 +159,7 @@ struct ol_context {
 	uint8_t *cal_in_flash;
 	cdf_device_t cdf_dev;
 	cdf_work_t ramdump_work;
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	struct targetdef_t {
 		struct targetdef_s *targetdef;
 	} tgt_def;

@@ -283,8 +283,8 @@ static void ol_txrx_local_peer_id_cleanup(struct ol_txrx_pdev_t *pdev)
  *
  * Return: void
  */
-static inline void
-setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
+static inline void setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
+						struct ol_txrx_pdev_t *pdev)
 {
 	/*
 	 * Before the HTT attach, set up the CE handles
@@ -296,8 +296,8 @@ setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
 }
 
 #else  /* not WLAN_FEATURE_FASTPATH */
-static inline void
-setup_fastpath_ce_handles(struct ol_softc *osc, struct ol_txrx_pdev_t *pdev)
+static inline void setup_fastpath_ce_handles(struct hif_opaque_softc *osc,
+						struct ol_txrx_pdev_t *pdev)
 {
 }
 #endif /* WLAN_FEATURE_FASTPATH */
@@ -500,7 +500,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	uint16_t fail_idx = 0;
 	int ret = 0;
 	uint16_t desc_pool_size;
-	struct ol_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
 
 	uint16_t desc_element_size = sizeof(union ol_tx_desc_list_elem_t);
 	union ol_tx_desc_list_elem_t *c_element;
@@ -959,7 +959,7 @@ A_STATUS ol_txrx_pdev_attach_target(ol_txrx_pdev_handle pdev)
 void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 {
 	int i;
-	struct ol_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *osc =  cds_get_context(CDF_MODULE_ID_HIF);
 
 	/*checking to ensure txrx pdev structure is not NULL */
 	if (!pdev) {
@@ -3415,8 +3415,8 @@ void ol_txrx_lro_flush(void *data)
  */
 void ol_register_lro_flush_cb(void (handler)(void *), void *data)
 {
-	struct ol_softc *hif_device =
-		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *hif_device =
+		(struct hif_opaque_softc *)cds_get_context(CDF_MODULE_ID_HIF);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 
 	pdev->lro_info.lro_flush_cb = handler;
@@ -3436,8 +3436,8 @@ void ol_register_lro_flush_cb(void (handler)(void *), void *data)
  */
 void ol_deregister_lro_flush_cb(void)
 {
-	struct ol_softc *hif_device =
-		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *hif_device =
+		(struct hif_opaque_softc *)cds_get_context(CDF_MODULE_ID_HIF);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(CDF_MODULE_ID_TXRX);
 
 	hif_lro_flush_cb_deregister(hif_device);

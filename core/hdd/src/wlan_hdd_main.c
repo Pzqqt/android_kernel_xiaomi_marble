@@ -7020,7 +7020,7 @@ static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
  */
 static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
 {
-	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
 	struct hif_config_info cfg;
 
 	if (!scn)

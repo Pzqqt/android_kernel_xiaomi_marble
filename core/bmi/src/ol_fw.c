@@ -136,7 +136,7 @@ static int
 __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				  uint32_t address, bool compressed)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	int status = EOK;
 	const char *filename = NULL;
 	const struct firmware *fw_entry;
@@ -503,7 +503,7 @@ static inline void ol_get_ramdump_mem(struct ramdump_info *info)
 static inline void ol_get_ramdump_mem(struct ramdump_info *info) { }
 #endif
 
-int ol_copy_ramdump(struct ol_softc *scn)
+int ol_copy_ramdump(struct hif_opaque_softc *scn)
 {
 	int ret = -1;
 
@@ -535,7 +535,7 @@ void ramdump_work_handler(void *data)
 	uint32_t target_type;
 	struct hif_target_info *tgt_info;
 	struct ol_context *ol_ctx = data;
-	struct ol_softc *ramdump_scn = ol_ctx->scn;
+	struct hif_opaque_softc *ramdump_scn = ol_ctx->scn;
 
 	if (!ramdump_scn) {
 		BMI_ERR("%s:Ramdump_scn is null:", __func__);
@@ -601,7 +601,7 @@ static void fw_indication_work_handler(struct work_struct *fw_indication)
 
 static DECLARE_WORK(fw_indication_work, fw_indication_work_handler);
 
-void ol_schedule_fw_indication_work(struct ol_softc *scn)
+void ol_schedule_fw_indication_work(struct hif_opaque_softc *scn)
 {
 	schedule_work(&fw_indication_work);
 }
@@ -610,7 +610,7 @@ void ol_schedule_fw_indication_work(struct ol_softc *scn)
 void ol_target_failure(void *instance, CDF_STATUS status)
 {
 	struct ol_context *ol_ctx = instance;
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	int ret;
@@ -670,7 +670,7 @@ CDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 	struct cnss_platform_cap cap;
 	int ret;
 #endif
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	uint32_t target_type = tgt_info->target_type;
@@ -814,7 +814,7 @@ CDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 }
 
 static int
-ol_check_dataset_patch(struct ol_softc *scn, uint32_t *address)
+ol_check_dataset_patch(struct hif_opaque_softc *scn, uint32_t *address)
 {
 	/* Check if patch file needed for this target type/version. */
 	return 0;
@@ -888,7 +888,7 @@ CDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
 
 CDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 {
-	struct ol_softc *hif = ol_ctx->scn;
+	struct hif_opaque_softc *hif = ol_ctx->scn;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	uint32_t addr = 0;
 	uint32_t reg_val = 0;
@@ -1205,7 +1205,7 @@ void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
 
 CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t param, address = 0;
 	int status = !EOK;
 	CDF_STATUS ret;
@@ -1385,7 +1385,7 @@ CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	return status;
 }
 
-int ol_diag_read(struct ol_softc *scn, uint8_t *buffer,
+int ol_diag_read(struct hif_opaque_softc *scn, uint8_t *buffer,
 		 uint32_t pos, size_t count)
 {
 	int result = 0;
@@ -1457,7 +1457,7 @@ static int ol_ath_get_reg_table(uint32_t target_version,
 	return section_len;
 }
 
-static int ol_diag_read_reg_loc(struct ol_softc *scn, uint8_t *buffer,
+static int ol_diag_read_reg_loc(struct hif_opaque_softc *scn, uint8_t *buffer,
 				uint32_t buffer_len)
 {
 	int i, len, section_len, fill_len;
@@ -1523,7 +1523,7 @@ out:
 	return result;
 }
 
-void ol_dump_target_memory(struct ol_softc *scn, void *memory_block)
+void ol_dump_target_memory(struct hif_opaque_softc *scn, void *memory_block)
 {
 	char *buffer_loc = memory_block;
 	u_int32_t section_count = 0;
@@ -1560,7 +1560,7 @@ void ol_dump_target_memory(struct ol_softc *scn, void *memory_block)
 static int ol_target_coredump(void *inst, void *memory_block,
 					uint32_t block_len)
 {
-	struct ol_softc *scn = (struct ol_softc *)inst;
+	struct hif_opaque_softc *scn = (struct hif_opaque_softc *)inst;
 	int8_t *buffer_loc = memory_block;
 	int result = 0;
 	int ret = 0;

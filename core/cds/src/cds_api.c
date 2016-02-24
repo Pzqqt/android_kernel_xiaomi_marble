@@ -173,7 +173,7 @@ CDF_STATUS cds_open(void)
 	cdf_device_t cdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	struct ol_context *ol_ctx;
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	void *HTCHandle;
 	hdd_context_t *pHddCtx;
 

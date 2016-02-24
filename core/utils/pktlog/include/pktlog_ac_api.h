@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -42,11 +42,11 @@ struct ol_pktlog_dev_t;
 typedef struct ol_pktlog_dev_t *ol_pktlog_dev_handle;
 
 /**
- * @typedef ol_softc_handle
- * @brief opaque handle for ol_softc
+ * @typedef hif_opaque_softc_handle
+ * @brief opaque handle for hif_opaque_softc
  */
-struct ol_softc;
-typedef struct ol_softc *ol_softc_handle;
+struct hif_opaque_softc;
+typedef struct hif_opaque_softc *hif_opaque_softc_handle;
 
 /**
  * @typedef net_device_handle
@@ -55,9 +55,10 @@ typedef struct ol_softc *ol_softc_handle;
 struct net_device;
 typedef struct net_device *net_device_handle;
 
-void ol_pl_set_name(ol_softc_handle scn, net_device_handle dev);
+void ol_pl_set_name(hif_opaque_softc_handle scn, net_device_handle dev);
 
-void ol_pl_sethandle(ol_pktlog_dev_handle *pl_handle, ol_softc_handle scn);
+void ol_pl_sethandle(ol_pktlog_dev_handle *pl_handle,
+		     hif_opaque_softc_handle scn);
 
 /* Packet log state information */
 #ifndef _PKTLOG_INFO

@@ -34,7 +34,7 @@ CDF_STATUS
 bmi_read_memory(uint32_t address,
 		uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -109,7 +109,7 @@ bmi_read_memory(uint32_t address,
 CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 						struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -184,7 +184,7 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 CDF_STATUS
 bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -246,7 +246,7 @@ bmi_no_command(struct ol_context *ol_ctx)
 CDF_STATUS
 bmi_firmware_download(struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	CDF_STATUS status;
 	struct bmi_target_info targ_info;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
@@ -285,7 +285,7 @@ bmi_firmware_download(struct ol_context *ol_ctx)
 
 CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 {
-	struct ol_softc *scn = ol_ctx->scn;
+	struct hif_opaque_softc *scn = ol_ctx->scn;
 	int status;
 	uint32_t cid;
 	struct bmi_info *info;

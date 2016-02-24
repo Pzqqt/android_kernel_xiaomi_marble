@@ -796,7 +796,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 {
 	HTC_PACKET *pkt;
 	A_STATUS status;
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	uint16_t htc_tag = 0;
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {

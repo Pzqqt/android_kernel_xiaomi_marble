@@ -3541,7 +3541,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 	wmi_buf_t buf;
 	int32_t len;
 	int ret;
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	int host_credits;
 	int wmi_pending_cmds;
 #ifdef CONFIG_CNSS
@@ -6536,7 +6536,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	wmi_pdev_suspend_cmd_fixed_param *cmd;
 	wmi_buf_t wmibuf;
 	uint32_t len = sizeof(*cmd);
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 	int ret;
 #ifdef CONFIG_CNSS
 	tpAniSirGlobal pmac = cds_get_context(CDF_MODULE_ID_PE);
