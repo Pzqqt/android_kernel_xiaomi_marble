@@ -461,7 +461,7 @@ err_htc_close:
 	}
 
 err_bmi_close:
-	bmi_cleanup(scn);
+	bmi_cleanup(ol_ctx);
 
 err_sched_close:
 	cds_sched_close(gp_cds_context);

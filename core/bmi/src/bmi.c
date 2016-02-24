@@ -39,27 +39,28 @@
 
 static CDF_STATUS
 bmi_command_test(uint32_t command, uint32_t address, uint8_t *data,
-				uint32_t length, struct ol_softc *scn)
+				uint32_t length, struct ol_context *ol_ctx)
 {
 	switch (command) {
 	case BMI_NO_COMMAND:
-		return bmi_no_command(scn);
+		return bmi_no_command(ol_ctx);
 	case BMI_WRITE_MEMORY:
-		return bmi_write_memory(address, data, length, scn);
+		return bmi_write_memory(address, data, length, ol_ctx);
 	case BMI_READ_MEMORY:
-		return bmi_read_memory(address, data, length, scn);
+		return bmi_read_memory(address, data, length, ol_ctx);
 	case BMI_EXECUTE:
-		return bmi_execute(address, (uint32_t *)data, scn);
+		return bmi_execute(address, (uint32_t *)data, ol_ctx);
 	default:
 		break;
 	}
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS bmi_init(struct ol_softc *scn)
+CDF_STATUS bmi_init(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info;
-	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	struct ol_softc *scn = ol_ctx->scn;
+	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn Context");
@@ -102,10 +103,11 @@ end:
 	return CDF_STATUS_E_NOMEM;
 }
 
-void bmi_cleanup(struct ol_softc *scn)
+void bmi_cleanup(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
-	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	if (!cdf_dev->dev) {
 		BMI_ERR("%s: Invalid Device Pointer", __func__);
@@ -131,23 +133,24 @@ void bmi_cleanup(struct ol_softc *scn)
 CDF_STATUS bmi_done(struct ol_context *ol_ctx)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	struct ol_softc *scn = ol_ctx->scn;
 
 	if (NO_BMI)
 		return status;
 
-	status = bmi_done_local(scn);
+	status = bmi_done_local(ol_ctx);
 
 	if (status != CDF_STATUS_SUCCESS)
 		BMI_ERR("BMI_DONE Failed status:%d", status);
+
 	return status;
 }
 
 CDF_STATUS
 bmi_get_target_info(struct bmi_target_info *targ_info,
-						struct ol_softc *scn)
+						struct ol_context *ol_ctx)
 {
 	int status = 0;
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
@@ -214,23 +217,24 @@ CDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx)
 		BMI_DBG("ret:%d writing data:%s\n", ret, data);
 		address = bmi_get_test_addr();
 
-		if (bmi_init(scn) != CDF_STATUS_SUCCESS) {
+		if (bmi_init(ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_WARN("BMI_INIT Failed; No Memory!");
 			goto end;
 		}
-		bmi_command_test(BMI_NO_COMMAND, address, data, 9, scn);
-		bmi_command_test(BMI_WRITE_MEMORY, address, data, 9, scn);
-		bmi_command_test(BMI_READ_MEMORY, address, out, 9, scn);
+		bmi_command_test(BMI_NO_COMMAND, address, data, 9, ol_ctx);
+		bmi_command_test(BMI_WRITE_MEMORY, address, data, 9, ol_ctx);
+		bmi_command_test(BMI_READ_MEMORY, address, out, 9, ol_ctx);
 		BMI_DBG("Output:%s", out);
 	}
 #endif
 end:
-	return bmi_firmware_download(scn);
+	return bmi_firmware_download(ol_ctx);
 }
 
-CDF_STATUS
-bmi_read_soc_register(uint32_t address, uint32_t *param, struct ol_softc *scn)
+CDF_STATUS bmi_read_soc_register(uint32_t address, uint32_t *param,
+						struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset, param_len;
@@ -272,9 +276,10 @@ bmi_read_soc_register(uint32_t address, uint32_t *param, struct ol_softc *scn)
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
-bmi_write_soc_register(uint32_t address, uint32_t param, struct ol_softc *scn)
+CDF_STATUS bmi_write_soc_register(uint32_t address, uint32_t param,
+					struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -316,13 +321,14 @@ bmi_write_soc_register(uint32_t address, uint32_t param, struct ol_softc *scn)
 }
 
 CDF_STATUS
-bmilz_data(uint8_t *buffer, uint32_t length, struct ol_softc *scn)
+bmilz_data(uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 {
 	uint32_t cid;
 	int status;
 	uint32_t offset;
 	uint32_t remaining, txlen;
 	const uint32_t header = sizeof(cid) + sizeof(length);
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -437,11 +443,12 @@ bmi_sign_stream_start(uint32_t address,
 }
 
 CDF_STATUS
-bmilz_stream_start(uint32_t address, struct ol_softc *scn)
+bmilz_stream_start(uint32_t address, struct ol_context *ol_ctx)
 {
 	uint32_t cid;
 	int status;
 	uint32_t offset;
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -476,14 +483,14 @@ bmilz_stream_start(uint32_t address, struct ol_softc *scn)
 
 CDF_STATUS
 bmi_fast_download(uint32_t address, uint8_t *buffer,
-		  uint32_t length, struct ol_softc *scn)
+		  uint32_t length, struct ol_context *ol_ctx)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	uint32_t last_word = 0;
 	uint32_t last_word_offset = length & ~0x3;
 	uint32_t unaligned_bytes = length & 0x3;
 
-	status = bmilz_stream_start(address, scn);
+	status = bmilz_stream_start(address, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS)
 		goto end;
 
@@ -492,20 +499,20 @@ bmi_fast_download(uint32_t address, uint8_t *buffer,
 		cdf_mem_copy(&last_word, &buffer[last_word_offset],
 						unaligned_bytes);
 
-	status = bmilz_data(buffer, last_word_offset, scn);
+	status = bmilz_data(buffer, last_word_offset, ol_ctx);
 
 	if (status != CDF_STATUS_SUCCESS)
 		goto end;
 
 	if (unaligned_bytes)
-		status = bmilz_data((uint8_t *) &last_word, 4, scn);
+		status = bmilz_data((uint8_t *) &last_word, 4, ol_ctx);
 
 	if (status != CDF_STATUS_SUCCESS)
 		/*
 		 * Close compressed stream and open a new (fake) one.
 		 * This serves mainly to flush Target caches.
 		 */
-		status = bmilz_stream_start(0x00, scn);
+		status = bmilz_stream_start(0x00, ol_ctx);
 end:
 	return status;
 }

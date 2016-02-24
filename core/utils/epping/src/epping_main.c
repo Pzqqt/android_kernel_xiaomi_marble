@@ -232,7 +232,7 @@ int epping_enable(struct device *parent_dev)
 	if (bmi_download_firmware(ol_ctx)) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
-		bmi_cleanup(scn);
+		bmi_cleanup(ol_ctx);
 		return -1;
 	}
 #endif
@@ -249,7 +249,7 @@ int epping_enable(struct device *parent_dev)
 	if (!p_cds_context->htc_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);
-		bmi_cleanup(scn);
+		bmi_cleanup(ol_ctx);
 		return -1;
 	}
 	pEpping_ctx->HTCHandle =
@@ -306,6 +306,6 @@ int epping_enable(struct device *parent_dev)
 error_end:
 	htc_destroy(p_cds_context->htc_ctx);
 	p_cds_context->htc_ctx = NULL;
-	bmi_cleanup(scn);
+	bmi_cleanup(ol_ctx);
 	return -1;
 }

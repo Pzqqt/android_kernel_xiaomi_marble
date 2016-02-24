@@ -34,8 +34,9 @@
 #define BMI_LOAD_IMAGE              18
 
 CDF_STATUS
-bmi_no_command(struct ol_softc *scn)
+bmi_no_command(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t length;
@@ -77,8 +78,9 @@ bmi_no_command(struct ol_softc *scn)
 }
 
 CDF_STATUS
-bmi_done_local(struct ol_softc *scn)
+bmi_done_local(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t length;
@@ -86,7 +88,7 @@ bmi_done_local(struct ol_softc *scn)
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
 	cdf_dma_addr_t rsp = info->bmi_rsp_da;
 
@@ -145,7 +147,7 @@ CDF_STATUS
 bmi_write_memory(uint32_t address,
 		uint8_t *buffer,
 		uint32_t length,
-		struct ol_softc *scn)
+		struct ol_context *ol_ctx)
 {
 	uint32_t cid;
 	int status;
@@ -156,6 +158,7 @@ bmi_write_memory(uint32_t address,
 	const uint32_t header = sizeof(cid) + sizeof(address) + sizeof(length);
 	uint8_t aligned_buffer[BMI_DATASZ_MAX];
 	uint8_t *src;
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
@@ -222,8 +225,9 @@ bmi_write_memory(uint32_t address,
 
 CDF_STATUS
 bmi_read_memory(uint32_t address, uint8_t *buffer,
-		uint32_t length, struct ol_softc *scn)
+		uint32_t length, struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint8_t ret = 0;
@@ -296,9 +300,9 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 }
 
 CDF_STATUS
-bmi_execute(uint32_t address, uint32_t *param,
-					struct ol_softc *scn)
+bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t length;
@@ -343,13 +347,14 @@ bmi_execute(uint32_t address, uint32_t *param,
 
 static CDF_STATUS
 bmi_load_image(dma_addr_t address,
-		uint32_t size, struct ol_softc *scn)
+		uint32_t size, struct ol_context *ol_ctx)
 {
 	uint32_t cid;
 	CDF_STATUS status;
 	uint32_t offset;
 	uint32_t length;
 	uint8_t ret = 0;
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = hif_get_bmi_ctx(scn);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
@@ -405,8 +410,9 @@ bmi_load_image(dma_addr_t address,
 	return CDF_STATUS_SUCCESS;
 }
 
-static CDF_STATUS bmi_enable(struct ol_softc *scn)
+static CDF_STATUS bmi_enable(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	struct bmi_target_info targ_info;
 	struct image_desc_info image_desc_info;
 	CDF_STATUS status;
@@ -426,7 +432,7 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
-	status = bmi_get_target_info(&targ_info, scn);
+	status = bmi_get_target_info(&targ_info, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS)
 			return status;
 
@@ -443,7 +449,7 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 
 	status = bmi_load_image(image_desc_info.bdata_addr,
 				image_desc_info.bdata_size,
-				scn);
+				ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Load board data failed! status:%d", status);
 		return status;
@@ -451,27 +457,28 @@ static CDF_STATUS bmi_enable(struct ol_softc *scn)
 
 	status = bmi_load_image(image_desc_info.fw_addr,
 				image_desc_info.fw_size,
-				scn);
+				ol_ctx);
 	if (status != CDF_STATUS_SUCCESS)
 		BMI_ERR("Load fw image failed! status:%d", status);
 
 	return status;
 }
 
-CDF_STATUS bmi_firmware_download(struct ol_softc *scn)
+CDF_STATUS bmi_firmware_download(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	CDF_STATUS status;
 
 	if (NO_BMI)
 		return CDF_STATUS_SUCCESS;
 
-	status = bmi_init(scn);
+	status = bmi_init(ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI_INIT Failed status:%d", status);
 		goto end;
 	}
 
-	status = bmi_enable(scn);
+	status = bmi_enable(ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI_ENABLE failed status:%d\n", status);
 		goto err_bmi_enable;
@@ -479,7 +486,7 @@ CDF_STATUS bmi_firmware_download(struct ol_softc *scn)
 
 	return status;
 err_bmi_enable:
-	bmi_cleanup(scn);
+	bmi_cleanup(ol_ctx);
 end:
 	return status;
 }

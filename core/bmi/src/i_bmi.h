@@ -134,25 +134,23 @@ struct ol_context {
 };
 
 CDF_STATUS bmi_execute(uint32_t address, uint32_t *param,
-						struct ol_softc *scn);
-CDF_STATUS bmi_init(struct ol_softc *scn);
-CDF_STATUS bmi_no_command(struct ol_softc *scn);
-CDF_STATUS bmi_read_memory(uint32_t address,
-		uint8_t *buffer, uint32_t length, struct ol_softc *scn);
-CDF_STATUS bmi_write_memory(uint32_t address,
-		uint8_t *buffer, uint32_t length, struct ol_softc *scn);
-CDF_STATUS bmi_fast_download(uint32_t address,
-		uint8_t *buffer, uint32_t length, struct ol_softc *scn);
+				struct ol_context *ol_ctx);
+CDF_STATUS bmi_init(struct ol_context *ol_ctx);
+CDF_STATUS bmi_no_command(struct ol_context *ol_ctx);
+CDF_STATUS bmi_read_memory(uint32_t address, uint8_t *buffer, uint32_t length,
+					struct ol_context *ol_ctx);
+CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
+					struct ol_context *ol_ctx);
+CDF_STATUS bmi_fast_download(uint32_t address, uint8_t *buffer, uint32_t length,
+					struct ol_context *ol_ctx);
 CDF_STATUS bmi_read_soc_register(uint32_t address,
-				uint32_t *param, struct ol_softc *scn);
-CDF_STATUS bmi_write_soc_register(uint32_t address,
-				uint32_t param, struct ol_softc *scn);
-CDF_STATUS bmi_get_target_info(
-		struct bmi_target_info *targ_info, struct ol_softc *scn);
-
-CDF_STATUS bmi_firmware_download(struct ol_softc *scn);
-CDF_STATUS bmi_done_local(struct ol_softc *scn);
-
-CDF_STATUS ol_download_firmware(struct ol_softc *scn);
-CDF_STATUS ol_configure_target(struct ol_softc *scn);
+				uint32_t *param, struct ol_context *ol_ctx);
+CDF_STATUS bmi_write_soc_register(uint32_t address, uint32_t param,
+					struct ol_context *ol_ctx);
+CDF_STATUS bmi_get_target_info(struct bmi_target_info *targ_info,
+				struct ol_context *ol_ctx);
+CDF_STATUS bmi_firmware_download(struct ol_context *ol_ctx);
+CDF_STATUS bmi_done_local(struct ol_context *ol_ctx);
+CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx);
+CDF_STATUS ol_configure_target(struct ol_context *ol_ctx);
 #endif

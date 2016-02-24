@@ -132,9 +132,11 @@ end:
 }
 #endif
 
-static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
+static int
+__ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				  uint32_t address, bool compressed)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	int status = EOK;
 	const char *filename = NULL;
 	const struct firmware *fw_entry;
@@ -324,7 +326,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 		/* Determine where in Target RAM to write Board Data */
 		bmi_read_memory(HOST_INTEREST_ITEM_ADDRESS(target_type,
 							   hi_board_ext_data),
-				(uint8_t *) &board_ext_address, 4, scn);
+				(uint8_t *) &board_ext_address, 4, ol_ctx);
 		BMI_INFO("Board extended Data download address: 0x%x",
 		       board_ext_address);
 
@@ -340,7 +342,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 			status = bmi_write_memory(board_ext_address,
 					(uint8_t *)(temp_eeprom +
 					board_data_size),
-					board_ext_data_size, scn);
+					board_ext_data_size, ol_ctx);
 
 			if (status != EOK)
 				goto end;
@@ -350,7 +352,7 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 			bmi_write_memory(
 				HOST_INTEREST_ITEM_ADDRESS(target_type,
 					hi_board_ext_data_config),
-					(uint8_t *)&param, 4, scn);
+					(uint8_t *)&param, 4, ol_ctx);
 
 			fw_entry_size = board_data_size;
 		}
@@ -397,16 +399,16 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	if (compressed) {
 		status = bmi_fast_download(address,
 					   (uint8_t *) fw_entry->data + bin_off,
-					   bin_len, scn);
+					   bin_len, ol_ctx);
 	} else {
 		if (file == ATH_BOARD_DATA_FILE && fw_entry->data) {
 			status = bmi_write_memory(address,
 						  (uint8_t *) temp_eeprom,
-						  fw_entry_size, scn);
+						  fw_entry_size, ol_ctx);
 		} else {
 			status = bmi_write_memory(address,
 						  (uint8_t *) fw_entry->data
-						  + bin_off, bin_len, scn);
+						  + bin_off, bin_len, ol_ctx);
 		}
 	}
 
@@ -426,16 +428,16 @@ static int __ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	if (compressed) {
 		status = bmi_fast_download(address,
 					   (uint8_t *) fw_entry->data,
-					   fw_entry_size, scn);
+					   fw_entry_size, ol_ctx);
 	} else {
 		if (file == ATH_BOARD_DATA_FILE && fw_entry->data) {
 			status = bmi_write_memory(address,
 						  (uint8_t *) temp_eeprom,
-						  fw_entry_size, scn);
+						  fw_entry_size, ol_ctx);
 		} else {
 			status = bmi_write_memory(address,
 						  (uint8_t *) fw_entry->data,
-						  fw_entry_size, scn);
+						  fw_entry_size, ol_ctx);
 		}
 	}
 #endif /* QCA_SIGNED_SPLIT_BINARY_SUPPORT */
@@ -458,7 +460,8 @@ end:
 	return status;
 }
 
-static int ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
+static int
+ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 				uint32_t address, bool compressed)
 {
 	int ret;
@@ -468,7 +471,7 @@ static int ol_transfer_bin_file(struct ol_softc *scn, ATH_BIN_FILE file,
 	cnss_lock_pm_sem();
 #endif
 
-	ret = __ol_transfer_bin_file(scn, file, address, compressed);
+	ret = __ol_transfer_bin_file(ol_ctx, file, address, compressed);
 
 #ifdef CONFIG_CNSS
 	cnss_release_pm_sem();
@@ -667,13 +670,14 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 	return;
 }
 
-CDF_STATUS ol_configure_target(struct ol_softc *scn)
+CDF_STATUS ol_configure_target(struct ol_context *ol_ctx)
 {
 	uint32_t param;
 #ifdef CONFIG_CNSS
 	struct cnss_platform_cap cap;
 	int ret;
 #endif
+	struct ol_softc *scn = ol_ctx->scn;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
@@ -683,7 +687,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	if (bmi_write_memory(
 		hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_app_host_interest)),
-		(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
+		(uint8_t *) &param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 		BMI_ERR("bmi_write_memory for htc version failed");
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -692,7 +696,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	{
 		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
-			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *)&param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("bmi_read_memory for setting fwmode failed");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -714,7 +718,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		if (bmi_write_memory(
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
-			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *)&param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI WRITE for setting fwmode failed");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -725,7 +729,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		/* set the firmware to disable CDC max perf WAR */
 		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *) &param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI READ for setting cdc max perf failed");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -734,7 +738,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		if (bmi_write_memory(
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *)&param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("setting cdc max perf failed");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -750,7 +754,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	if (!ret && cap.cap_flag & CNSS_HAS_EXTERNAL_SWREG) {
 		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *)&param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("bmi_read_memory for setting"
 				"external SWREG failed");
 			return CDF_STATUS_E_FAILURE;
@@ -760,7 +764,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		if (bmi_write_memory(
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *)&param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI WRITE for setting external SWREG fail");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -771,7 +775,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	if (ini_cfg->enable_lpass_support) {
 		if (bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *) &param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI READ:Setting LPASS Support failed");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -780,7 +784,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		if (bmi_write_memory(
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag2)),
-			(uint8_t *)&param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *)&param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("BMI_READ for setting LPASS Support fail");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -797,7 +801,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 		if (bmi_write_memory(
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_be)),
-			(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
+			(uint8_t *) &param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 			BMI_ERR("setting host CPU BE mode failed");
 			return CDF_STATUS_E_FAILURE;
 		}
@@ -808,7 +812,7 @@ CDF_STATUS ol_configure_target(struct ol_softc *scn)
 	if (bmi_write_memory(
 		hif_hia_item_address(target_type,
 		offsetof(struct host_interest_s, hi_fw_swap)),
-		(uint8_t *) &param, 4, scn) != CDF_STATUS_SUCCESS) {
+		(uint8_t *) &param, 4, ol_ctx) != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI WRITE failed setting FW data/desc swap flags");
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -888,8 +892,9 @@ CDF_STATUS ol_fw_populate_clk_settings(A_refclk_speed_t refclk,
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
+CDF_STATUS ol_patch_pll_switch(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	uint32_t addr = 0;
 	uint32_t reg_val = 0;
@@ -926,7 +931,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	}
 
 	addr = (RTC_SOC_BASE_ADDRESS | EFUSE_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read EFUSE Addr");
 		goto end;
@@ -943,7 +948,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 1---- */
 	reg_val = 0;
 	addr = (RTC_SOC_BASE_ADDRESS | BB_PLL_CONFIG_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read PLL_CONFIG Addr");
 		goto end;
@@ -953,14 +958,14 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	reg_val &= ~(BB_PLL_CONFIG_FRAC_MASK | BB_PLL_CONFIG_OUTDIV_MASK);
 	reg_val |= (BB_PLL_CONFIG_FRAC_SET(clock_s.wlan_pll.rnfrac) |
 		    BB_PLL_CONFIG_OUTDIV_SET(clock_s.wlan_pll.outdiv));
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write PLL_CONFIG Addr");
 		goto end;
 	}
 
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back PLL_CONFIG Addr");
 		goto end;
@@ -970,7 +975,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 2---- */
 	reg_val = 0;
 	addr = (RTC_WMAC_BASE_ADDRESS | WLAN_PLL_SETTLE_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read PLL_SETTLE Addr");
 		goto end;
@@ -979,14 +984,14 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 
 	reg_val &= ~WLAN_PLL_SETTLE_TIME_MASK;
 	reg_val |= WLAN_PLL_SETTLE_TIME_SET(clock_s.pll_settling_time);
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write PLL_SETTLE Addr");
 		goto end;
 	}
 
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back PLL_SETTLE Addr");
 		goto end;
@@ -996,7 +1001,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 3---- */
 	reg_val = 0;
 	addr = (RTC_SOC_BASE_ADDRESS | SOC_CORE_CLK_CTRL_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read CLK_CTRL Addr");
 		goto end;
@@ -1005,14 +1010,14 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 
 	reg_val &= ~SOC_CORE_CLK_CTRL_DIV_MASK;
 	reg_val |= SOC_CORE_CLK_CTRL_DIV_SET(1);
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write CLK_CTRL Addr");
 		goto end;
 	}
 
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back CLK_CTRL Addr");
 		goto end;
@@ -1022,7 +1027,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 4----- */
 	mem_val = 1;
 	status = bmi_write_memory(cmnos_core_clk_div_addr,
-				  (uint8_t *) &mem_val, 4, scn);
+				  (uint8_t *) &mem_val, 4, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write CLK_DIV Addr");
 		goto end;
@@ -1031,7 +1036,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 5----- */
 	reg_val = 0;
 	addr = (RTC_WMAC_BASE_ADDRESS | WLAN_PLL_CONTROL_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read PLL_CTRL Addr");
 		goto end;
@@ -1043,14 +1048,14 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	reg_val |= (WLAN_PLL_CONTROL_REFDIV_SET(clock_s.wlan_pll.refdiv) |
 		    WLAN_PLL_CONTROL_DIV_SET(clock_s.wlan_pll.div) |
 		    WLAN_PLL_CONTROL_NOPWD_SET(1));
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write PLL_CTRL Addr");
 		goto end;
 	}
 
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back PLL_CTRL Addr");
 		goto end;
@@ -1062,7 +1067,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	do {
 		reg_val = 0;
 		status = bmi_read_soc_register((RTC_WMAC_BASE_ADDRESS |
-				RTC_SYNC_STATUS_OFFSET), &reg_val, scn);
+				RTC_SYNC_STATUS_OFFSET), &reg_val, ol_ctx);
 		if (status != CDF_STATUS_SUCCESS) {
 			BMI_ERR("Failed to read RTC_SYNC_STATUS Addr");
 			goto end;
@@ -1072,7 +1077,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 7------- */
 	reg_val = 0;
 	addr = (RTC_WMAC_BASE_ADDRESS | WLAN_PLL_CONTROL_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read PLL_CTRL Addr for CTRL_BYPASS");
 		goto end;
@@ -1081,14 +1086,14 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 
 	reg_val &= ~WLAN_PLL_CONTROL_BYPASS_MASK;
 	reg_val |= WLAN_PLL_CONTROL_BYPASS_SET(0);
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write PLL_CTRL Addr for CTRL_BYPASS");
 		goto end;
 	}
 
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back PLL_CTRL Addr for CTRL_BYPASS");
 		goto end;
@@ -1099,7 +1104,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	do {
 		reg_val = 0;
 		status = bmi_read_soc_register((RTC_WMAC_BASE_ADDRESS |
-				RTC_SYNC_STATUS_OFFSET), &reg_val, scn);
+				RTC_SYNC_STATUS_OFFSET), &reg_val, ol_ctx);
 		if (status != CDF_STATUS_SUCCESS) {
 			BMI_ERR("Failed to read SYNC_STATUS Addr");
 			goto end;
@@ -1109,7 +1114,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 9-------- */
 	reg_val = 0;
 	addr = (RTC_SOC_BASE_ADDRESS | SOC_CPU_CLOCK_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read CPU_CLK Addr");
 		goto end;
@@ -1118,14 +1123,14 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 
 	reg_val &= ~SOC_CPU_CLOCK_STANDARD_MASK;
 	reg_val |= SOC_CPU_CLOCK_STANDARD_SET(1);
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write CPU_CLK Addr");
 		goto end;
 	}
 
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back CPU_CLK Addr");
 		goto end;
@@ -1135,7 +1140,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 10------- */
 	reg_val = 0;
 	addr = (RTC_WMAC_BASE_ADDRESS | WLAN_PLL_CONTROL_OFFSET);
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read PLL_CTRL Addr for NOPWD");
 		goto end;
@@ -1143,13 +1148,13 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	BMI_DBG("Step 10a: %8X", reg_val);
 
 	reg_val &= ~WLAN_PLL_CONTROL_NOPWD_MASK;
-	status = bmi_write_soc_register(addr, reg_val, scn);
+	status = bmi_write_soc_register(addr, reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write PLL_CTRL Addr for NOPWD");
 		goto end;
 	}
 	reg_val = 0;
-	status = bmi_read_soc_register(addr, &reg_val, scn);
+	status = bmi_read_soc_register(addr, &reg_val, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to read back PLL_CTRL Addr for NOPWD");
 		goto end;
@@ -1159,7 +1164,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 	/* ------Step 11------- */
 	mem_val = 1;
 	status = bmi_write_memory(cmnos_cpu_pll_init_done_addr,
-				  (uint8_t *) &mem_val, 4, scn);
+				  (uint8_t *) &mem_val, 4, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write PLL_INIT Addr");
 		goto end;
@@ -1167,7 +1172,7 @@ CDF_STATUS ol_patch_pll_switch(struct ol_softc *scn)
 
 	mem_val = TARGET_CPU_FREQ;
 	status = bmi_write_memory(cmnos_cpu_speed_addr,
-				  (uint8_t *) &mem_val, 4, scn);
+				  (uint8_t *) &mem_val, 4, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to write CPU_SPEED Addr");
 		goto end;
@@ -1181,15 +1186,11 @@ end:
 /* AXI Start Address */
 #define TARGET_ADDR (0xa0000)
 
-void ol_transfer_codeswap_struct(struct ol_softc *scn)
+void ol_transfer_codeswap_struct(struct ol_context *ol_ctx)
 {
 	struct codeswap_codeseg_info wlan_codeswap;
 	CDF_STATUS rv;
 
-	if (!scn) {
-		BMI_ERR("%s: ol_softc is null", __func__);
-		return;
-	}
 	if (cnss_get_codeswap_struct(&wlan_codeswap)) {
 		BMI_ERR("%s: failed to get codeswap structure", __func__);
 		return;
@@ -1197,7 +1198,7 @@ void ol_transfer_codeswap_struct(struct ol_softc *scn)
 
 	rv = bmi_write_memory(TARGET_ADDR,
 			      (uint8_t *) &wlan_codeswap, sizeof(wlan_codeswap),
-			      scn);
+			      ol_ctx);
 
 	if (rv != CDF_STATUS_SUCCESS) {
 		BMI_ERR("Failed to Write 0xa0000 to Target");
@@ -1207,8 +1208,9 @@ void ol_transfer_codeswap_struct(struct ol_softc *scn)
 }
 #endif
 
-CDF_STATUS ol_download_firmware(struct ol_softc *scn)
+CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t param, address = 0;
 	int status = !EOK;
 	CDF_STATUS ret;
@@ -1230,14 +1232,16 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 	/* Determine where in Target RAM to write Board Data */
 	bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_board_data)),
-			(uint8_t *)&address, 4, scn);
+			(uint8_t *)&address, 4, ol_ctx);
 
 	if (!address) {
 		address = AR6004_REV5_BOARD_DATA_ADDRESS;
 		BMI_DBG("%s: Target address not known! Using 0x%x",
 						__func__, address);
 	}
-	ret = ol_patch_pll_switch(scn);
+
+	ret = ol_patch_pll_switch(ol_ctx);
+
 	if (ret != CDF_STATUS_SUCCESS) {
 		BMI_ERR("pll switch failed. status %d", ret);
 		return ret;
@@ -1245,7 +1249,7 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 
 	if (bmi_ctx->cal_in_flash) {
 		/* Write EEPROM or Flash data to Target RAM */
-		status = ol_transfer_bin_file(scn, ATH_FLASH_FILE,
+		status = ol_transfer_bin_file(ol_ctx, ATH_FLASH_FILE,
 						address, false);
 	}
 
@@ -1256,11 +1260,11 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s,
 				hi_board_data_initialized)),
-				(uint8_t *) &param, 4, scn);
+				(uint8_t *) &param, 4, ol_ctx);
 	} else {
 		/* Flash is either not available or invalid */
-		if (ol_transfer_bin_file
-			    (scn, ATH_BOARD_DATA_FILE, address, false) != EOK) {
+		if (ol_transfer_bin_file(ol_ctx, ATH_BOARD_DATA_FILE, address,
+							false) != EOK) {
 			return -1;
 		}
 
@@ -1270,7 +1274,7 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 			hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s,
 				hi_board_data_initialized)),
-				(uint8_t *) &param, 4, scn);
+				(uint8_t *) &param, 4, ol_ctx);
 
 		/* Transfer One Time Programmable data */
 		address = BMI_SEGMENTED_WRITE_ADDR;
@@ -1278,26 +1282,26 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 				__func__, address);
 
 #ifdef CONFIG_CNSS
-		ol_transfer_codeswap_struct(scn);
+		ol_transfer_codeswap_struct(ol_ctx);
 #endif
-		status = ol_transfer_bin_file(scn, ATH_OTP_FILE,
+		status = ol_transfer_bin_file(ol_ctx, ATH_OTP_FILE,
 						address, true);
 		/* Execute the OTP code only if entry found and downloaded */
 		if (status == EOK) {
 			param = 0;
 #ifndef FEATURE_BMI_2
-			bmi_execute(address, &param, scn);
+			bmi_execute(address, &param, ol_ctx);
 #endif
 		} else if (status < 0) {
 			return status;
 		}
 	}
 
-	if (ol_transfer_bin_file(scn, ATH_SETUP_FILE,
+	if (ol_transfer_bin_file(ol_ctx, ATH_SETUP_FILE,
 		BMI_SEGMENTED_WRITE_ADDR, true) == EOK) {
 		param = 0;
 #ifndef FEATURE_BMI_2
-		bmi_execute(address, &param, scn);
+		bmi_execute(address, &param, ol_ctx);
 #endif
 	}
 
@@ -1305,20 +1309,20 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 	 * TODO point to target specific files in runtime
 	 */
 	address = BMI_SEGMENTED_WRITE_ADDR;
-	if (ol_transfer_bin_file(scn, ATH_FIRMWARE_FILE,
+	if (ol_transfer_bin_file(ol_ctx, ATH_FIRMWARE_FILE,
 				address, true) != EOK) {
 		return -1;
 	}
 
 	/* Apply the patches */
 	if (ol_check_dataset_patch(scn, &address)) {
-		if ((ol_transfer_bin_file(scn, ATH_PATCH_FILE, address, false))
+		if ((ol_transfer_bin_file(ol_ctx, ATH_PATCH_FILE, address, false))
 		    != EOK) {
 			return -1;
 		}
 		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_dset_list_head)),
-			(uint8_t *) &address, 4, scn);
+			(uint8_t *) &address, 4, ol_ctx);
 	}
 
 	if (ini_cfg->enable_uart_print ||
@@ -1343,11 +1347,11 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 
 		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_dbg_uart_txpin)),
-			(uint8_t *)&param, 4, scn);
+			(uint8_t *)&param, 4, ol_ctx);
 		param = 1;
 		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_serial_enable)),
-			(uint8_t *)&param, 4, scn);
+			(uint8_t *)&param, 4, ol_ctx);
 	} else {
 		/*
 		 * Explicitly setting UART prints to zero as target turns it on
@@ -1356,18 +1360,18 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		param = 0;
 		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_serial_enable)),
-			(uint8_t *)&param, 4, scn);
+			(uint8_t *)&param, 4, ol_ctx);
 	}
 
 	if (ini_cfg->enable_fw_log) {
 		bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
-			(uint8_t *)&param, 4, scn);
+			(uint8_t *)&param, 4, ol_ctx);
 
 		param &= ~(HI_OPTION_DISABLE_DBGLOG);
 		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
-			(uint8_t *)&param, 4, scn);
+			(uint8_t *)&param, 4, ol_ctx);
 	} else {
 		/*
 		 * Explicitly setting fwlog prints to zero as target turns it on
@@ -1375,12 +1379,12 @@ CDF_STATUS ol_download_firmware(struct ol_softc *scn)
 		 */
 		bmi_read_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
-			(uint8_t *)&param, 4, scn);
+			(uint8_t *)&param, 4, ol_ctx);
 
 		param |= HI_OPTION_DISABLE_DBGLOG;
 		bmi_write_memory(hif_hia_item_address(target_type,
 			offsetof(struct host_interest_s, hi_option_flag)),
-			(uint8_t *) &param, 4, scn);
+			(uint8_t *) &param, 4, ol_ctx);
 	}
 
 	return status;

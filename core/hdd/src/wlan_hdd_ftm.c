@@ -382,7 +382,7 @@ err_htc_close:
 	}
 
 err_bmi_close:
-	bmi_cleanup(pHifContext);
+	bmi_cleanup(ol_ctx);
 #endif /* QCA_WIFI_FTM */
 
 err_sched_close:

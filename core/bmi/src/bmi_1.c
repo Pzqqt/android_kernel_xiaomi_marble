@@ -32,8 +32,9 @@
 
 CDF_STATUS
 bmi_read_memory(uint32_t address,
-		uint8_t *buffer, uint32_t length, struct ol_softc *scn)
+		uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -105,10 +106,10 @@ bmi_read_memory(uint32_t address,
 	return CDF_STATUS_SUCCESS;
 }
 
-CDF_STATUS
-bmi_write_memory(uint32_t address,
-		 uint8_t *buffer, uint32_t length, struct ol_softc *scn)
+CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
+						struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -181,8 +182,9 @@ bmi_write_memory(uint32_t address,
 }
 
 CDF_STATUS
-bmi_execute(uint32_t address, A_UINT32 *param, struct ol_softc *scn)
+bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	uint32_t cid;
 	int status;
 	uint32_t offset;
@@ -236,28 +238,29 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_softc *scn)
 }
 
 inline CDF_STATUS
-bmi_no_command(struct ol_softc *scn)
+bmi_no_command(struct ol_context *ol_ctx)
 {
 	return CDF_STATUS_SUCCESS;
 }
 
 CDF_STATUS
-bmi_firmware_download(struct ol_softc *scn)
+bmi_firmware_download(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	CDF_STATUS status;
 	struct bmi_target_info targ_info;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 
 	cdf_mem_zero(&targ_info, sizeof(targ_info));
 	/* Initialize BMI */
-	status = bmi_init(scn);
+	status = bmi_init(ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Initialization Failed err:%d", status);
 		return status;
 	}
 
 	/* Get target information */
-	status = bmi_get_target_info(&targ_info, scn);
+	status = bmi_get_target_info(&targ_info, ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Target Info get failed: status:%d", status);
 		return status;
@@ -267,25 +270,26 @@ bmi_firmware_download(struct ol_softc *scn)
 	tgt_info->target_version = targ_info.target_ver;
 
 	/* Configure target */
-	status = ol_configure_target(scn);
+	status = ol_configure_target(ol_ctx);
 	if (status != CDF_STATUS_SUCCESS) {
 		BMI_ERR("BMI Configure Target Failed status:%d", status);
 		return status;
 	}
 
-	status = ol_download_firmware(scn);
+	status = ol_download_firmware(ol_ctx);
 	if (status != CDF_STATUS_SUCCESS)
 		BMI_ERR("BMI Download Firmware Failed Status:%d", status);
 
 	return status;
 }
 
-CDF_STATUS bmi_done_local(struct ol_softc *scn)
+CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 {
+	struct ol_softc *scn = ol_ctx->scn;
 	int status;
 	uint32_t cid;
 	struct bmi_info *info;
-	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
 	cdf_dma_addr_t cmd, rsp;
 
 	if (!scn) {

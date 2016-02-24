@@ -42,11 +42,11 @@ CDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx);
 void ol_cds_free(void);
 
 #ifdef HIF_PCI
-void bmi_cleanup(struct ol_softc *scn);
+void bmi_cleanup(struct ol_context *scn);
 CDF_STATUS bmi_done(struct ol_context *ol_ctx);
 CDF_STATUS bmi_download_firmware(struct ol_context *ol_ctx);
 #else
-static inline void bmi_cleanup(struct ol_softc *scn)
+static inline void bmi_cleanup(struct ol_context *scn)
 {
 	return;
 }
