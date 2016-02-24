@@ -54,9 +54,9 @@ static struct proc_dir_entry *proc_file, *proc_dir;
 
 static void *get_hif_hdl_from_file(struct file *file)
 {
-	struct ol_softc *scn;
+	struct hif_opaque_softc *scn;
 
-	scn = (struct ol_softc *)PDE_DATA(file_inode(file));
+	scn = (struct hif_opaque_softc *)PDE_DATA(file_inode(file));
 	return (void *)scn;
 }
 

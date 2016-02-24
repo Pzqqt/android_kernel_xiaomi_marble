@@ -37,7 +37,7 @@
 
 
 /* CLD headers */
-#include <hif.h> /* struct ol_softc; */
+#include <hif.h> /* struct hif_opaque_softc; */
 
 /**
  * common stuff
@@ -69,32 +69,32 @@ enum qca_napi_event {
  * where FEATURE_NAPI is defined
  */
 
-int hif_napi_create(struct ol_softc   *hif,
+int hif_napi_create(struct hif_opaque_softc   *hif,
 		    uint8_t            pipe_id,
 		    int (*poll)(struct napi_struct *, int),
 		    int                budget,
 		    int                scale);
-int hif_napi_destroy(struct ol_softc  *hif,
+int hif_napi_destroy(struct hif_opaque_softc  *hif,
 		     uint8_t           id,
 		     int               force);
 
-struct qca_napi_data *hif_napi_get_all(struct ol_softc   *hif);
+struct qca_napi_data *hif_napi_get_all(struct hif_opaque_softc   *hif);
 
-int hif_napi_event(struct ol_softc     *hif,
+int hif_napi_event(struct hif_opaque_softc     *hif,
 		   enum  qca_napi_event event,
 		   void                *data);
 
 /* called from the ISR within hif, so, ce is known */
-int hif_napi_enabled(struct ol_softc *hif, int ce);
+int hif_napi_enabled(struct hif_opaque_softc *hif, int ce);
 
 /* called from hdd (napi_poll), using napi id as a selector */
-void hif_napi_enable_irq(struct ol_softc *hif, int id);
+void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id);
 
 /* called by ce_tasklet.c::ce_irq_handler */
-int hif_napi_schedule(struct ol_softc *scn, int ce_id);
+int hif_napi_schedule(struct hif_opaque_softc *scn, int ce_id);
 
 /* called by hdd_napi, which is called by kernel */
-int hif_napi_poll(struct ol_softc *hif_ctx,
+int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 			struct napi_struct *napi, int budget);
 
 #ifdef FEATURE_NAPI_DEBUG
@@ -115,35 +115,36 @@ int hif_napi_poll(struct ol_softc *hif_ctx,
 
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
 
-static inline int hif_napi_create(struct ol_softc   *hif,
+static inline int hif_napi_create(struct hif_opaque_softc   *hif,
 				  uint8_t            pipe_id,
 				  int (*poll)(struct napi_struct *, int),
 				  int                budget,
 				  int                scale)
 { return -EPERM; }
 
-static inline int hif_napi_destroy(struct ol_softc  *hif,
+static inline int hif_napi_destroy(struct hif_opaque_softc  *hif,
 				   uint8_t           id,
 				   int               force)
 { return -EPERM; }
 
-static inline struct qca_napi_data *hif_napi_get_all(struct ol_softc   *hif)
+static inline struct qca_napi_data *hif_napi_get_all(
+				struct hif_opaque_softc *hif)
 { return NULL; }
 
-static inline int hif_napi_event(struct ol_softc     *hif,
+static inline int hif_napi_event(struct hif_opaque_softc     *hif,
 				 enum  qca_napi_event event,
 				 void                *data)
 { return -EPERM; }
 
 /* called from the ISR within hif, so, ce is known */
-static inline int hif_napi_enabled(struct ol_softc *hif, int ce)
+static inline int hif_napi_enabled(struct hif_opaque_softc *hif, int ce)
 { return 0; }
 
 /* called from hdd (napi_poll), using napi id as a selector */
-static inline void hif_napi_enable_irq(struct ol_softc *hif, int id)
+static inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)
 { return; }
 
-static inline int hif_napi_schedule(struct ol_softc *hif, int ce_id)
+static inline int hif_napi_schedule(struct hif_opaque_softc *hif, int ce_id)
 { return 0; }
 
 static inline int hif_napi_poll(struct napi_struct *napi, int budget)

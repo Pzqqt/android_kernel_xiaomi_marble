@@ -137,7 +137,7 @@ void hif_bmi_recv_data(struct CE_handle *copyeng, void *ce_context,
 }
 #endif
 
-CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *hif_ctx,
+CDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *hif_ctx,
 				cdf_dma_addr_t bmi_cmd_da,
 				cdf_dma_addr_t bmi_rsp_da,
 				uint8_t *bmi_request,

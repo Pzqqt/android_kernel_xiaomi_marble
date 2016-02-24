@@ -51,8 +51,9 @@
 #include "epping_main.h"
 #include "cds_concurrency.h"
 
-void hif_dump_target_memory(struct ol_softc *hif_ctx, void *ramdump_base,
-			    uint32_t address, uint32_t size)
+void
+hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,
+						uint32_t address, uint32_t size)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	uint32_t loc = address;
@@ -96,8 +97,8 @@ void hif_dump_target_memory(struct ol_softc *hif_ctx, void *ramdump_base,
  */
 
 CDF_STATUS
-hif_diag_read_mem(struct ol_softc *hif_ctx, uint32_t address, uint8_t *data,
-		  int nbytes)
+hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
+					uint8_t *data, int nbytes)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -260,7 +261,7 @@ done:
 }
 
 /* Read 4-byte aligned data from Target memory or register */
-CDF_STATUS hif_diag_read_access(struct ol_softc *hif_ctx,
+CDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
 				uint32_t address, uint32_t *data)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -278,7 +279,7 @@ CDF_STATUS hif_diag_read_access(struct ol_softc *hif_ctx,
 	}
 }
 
-CDF_STATUS hif_diag_write_mem(struct ol_softc *hif_ctx,
+CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 			      uint32_t address, uint8_t *data, int nbytes)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -432,8 +433,8 @@ done:
 }
 
 /* Write 4B data to Target memory or register */
-CDF_STATUS hif_diag_write_access(struct ol_softc *hif_ctx, uint32_t address,
-				 uint32_t data)
+CDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
+				 uint32_t address, uint32_t data)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 

@@ -171,7 +171,7 @@ struct hif_target_info {
 	uint32_t soc_version;
 };
 
-struct ol_softc {
+struct hif_opaque_softc {
 };
 
 typedef enum {
@@ -235,7 +235,7 @@ struct htc_callbacks {
 };
 
 /* This API detaches the HTC layer from the HIF device */
-void hif_detach_htc(struct ol_softc *scn);
+void hif_detach_htc(struct hif_opaque_softc *scn);
 
 /****************************************************************/
 /* BMI and Diag window abstraction                              */
@@ -250,7 +250,7 @@ void hif_detach_htc(struct ol_softc *scn);
 /*
  * API to handle HIF-specific BMI message exchanges, this API is synchronous
  * and only allowed to be called from a context that can block (sleep) */
-CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
+CDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
 				cdf_dma_addr_t cmd, cdf_dma_addr_t rsp,
 				uint8_t *pSendMessage, uint32_t Length,
 				uint8_t *pResponseMessage,
@@ -266,11 +266,11 @@ CDF_STATUS hif_exchange_bmi_msg(struct ol_softc *scn,
  *
  * hif_diag_read_mem reads an arbitrary length of arbitrarily aligned memory.
  */
-CDF_STATUS hif_diag_read_access(struct ol_softc *scn, uint32_t address,
+CDF_STATUS hif_diag_read_access(struct hif_opaque_softc *scn, uint32_t address,
 			 uint32_t *data);
-CDF_STATUS hif_diag_read_mem(struct ol_softc *scn, uint32_t address,
+CDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn, uint32_t address,
 		      uint8_t *data, int nbytes);
-void hif_dump_target_memory(struct ol_softc *scn, void *ramdump_base,
+void hif_dump_target_memory(struct hif_opaque_softc *scn, void *ramdump_base,
 			    uint32_t address, uint32_t size);
 /*
  * APIs to handle HIF specific diagnostic write accesses. These APIs are
@@ -283,18 +283,18 @@ void hif_dump_target_memory(struct ol_softc *scn, void *ramdump_base,
  *
  * hif_diag_write_mem writes an arbitrary length of arbitrarily aligned memory.
  */
-CDF_STATUS hif_diag_write_access(struct ol_softc *scn, uint32_t address,
-			  uint32_t data);
-CDF_STATUS hif_diag_write_mem(struct ol_softc *scn, uint32_t address,
+CDF_STATUS hif_diag_write_access(struct hif_opaque_softc *scn, uint32_t address,
+				 uint32_t data);
+CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
 		       uint8_t *data, int nbytes);
 
 /*
  * Set the FASTPATH_mode_on flag in sc, for use by data path
  */
 #ifdef WLAN_FEATURE_FASTPATH
-void hif_enable_fastpath(struct ol_softc *hif_ctx);
-bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx);
-void *hif_get_ce_handle(struct ol_softc *hif_ctx, int);
+void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx);
+bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx);
+void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int);
 #endif
 
 #if defined(HIF_PCI) && !defined(A_SIMOS_DEVHOST)
@@ -369,7 +369,7 @@ void *hif_get_ce_handle(struct ol_softc *hif_ctx, int);
 #endif
 
 #ifdef IPA_OFFLOAD
-void hif_ipa_get_ce_resource(struct ol_softc *scn,
+void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
 			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr);
@@ -387,7 +387,7 @@ void hif_ipa_get_ce_resource(struct ol_softc *scn,
  *
  * Return: None
  */
-static inline void hif_ipa_get_ce_resource(struct ol_softc *scn,
+static inline void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
 			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr)
@@ -432,122 +432,128 @@ typedef struct pci_device_id hif_bus_id;
 typedef struct device hif_bus_id;
 #endif
 
-void hif_post_init(struct ol_softc *scn, void *hHTC,
+void hif_post_init(struct hif_opaque_softc *scn, void *hHTC,
 		   struct hif_msg_callbacks *callbacks);
-CDF_STATUS hif_start(struct ol_softc *scn);
-void hif_stop(struct ol_softc *scn);
-void hif_flush_surprise_remove(struct ol_softc *scn);
-void hif_dump(struct ol_softc *scn, uint8_t CmdId, bool start);
-CDF_STATUS hif_send_head(struct ol_softc *scn, uint8_t PipeID,
+CDF_STATUS hif_start(struct hif_opaque_softc *scn);
+void hif_stop(struct hif_opaque_softc *scn);
+void hif_flush_surprise_remove(struct hif_opaque_softc *scn);
+void hif_dump(struct hif_opaque_softc *scn, uint8_t CmdId, bool start);
+CDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
 				  uint32_t transferID, uint32_t nbytes,
 				  cdf_nbuf_t wbuf, uint32_t data_attr);
-void hif_send_complete_check(struct ol_softc *scn, uint8_t PipeID,
+void hif_send_complete_check(struct hif_opaque_softc *scn, uint8_t PipeID,
 			     int force);
-void hif_cancel_deferred_target_sleep(struct ol_softc *scn);
-void hif_get_default_pipe(struct ol_softc *scn, uint8_t *ULPipe,
+void hif_cancel_deferred_target_sleep(struct hif_opaque_softc *scn);
+void hif_get_default_pipe(struct hif_opaque_softc *scn, uint8_t *ULPipe,
 			  uint8_t *DLPipe);
-int hif_map_service_to_pipe(struct ol_softc *scn, uint16_t svc_id,
+int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,
 			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
 			int *dl_is_polled);
-uint16_t hif_get_free_queue_number(struct ol_softc *scn, uint8_t PipeID);
-void *hif_get_targetdef(struct ol_softc *scn);
+uint16_t
+hif_get_free_queue_number(struct hif_opaque_softc *scn, uint8_t PipeID);
+void *hif_get_targetdef(struct hif_opaque_softc *scn);
 uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset);
-void hif_set_target_sleep(struct ol_softc *scn, bool sleep_ok,
+void hif_set_target_sleep(struct hif_opaque_softc *scn, bool sleep_ok,
 		     bool wait_for_it);
-int hif_check_fw_reg(struct ol_softc *scn);
-int hif_check_soc_status(struct ol_softc *scn);
-void hif_disable_isr(struct ol_softc *scn);
-void hif_reset_soc(struct ol_softc *scn);
-void hif_disable_aspm(struct ol_softc *);
-void
-hif_save_htc_htt_config_endpoint(struct ol_softc *hif_ctx, int htc_endpoint);
+int hif_check_fw_reg(struct hif_opaque_softc *scn);
+int hif_check_soc_status(struct hif_opaque_softc *scn);
+void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
+		     const char **target_name);
+void hif_disable_isr(struct hif_opaque_softc *scn);
+void hif_reset_soc(struct hif_opaque_softc *scn);
+void hif_disable_aspm(struct hif_opaque_softc *);
+void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
+				      int htc_endpoint);
 CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type);
-void hif_close(struct ol_softc *hif_ctx);
-CDF_STATUS hif_enable(struct ol_softc *hif_ctx, struct device *dev, void *bdev,
-	const hif_bus_id *bid, enum ath_hal_bus_type bus_type,
-	enum hif_enable_type type);
-void hif_disable(struct ol_softc *hif_ctx, enum hif_disable_type type);
-void hif_enable_power_gating(struct ol_softc *hif_ctx);
+void hif_close(struct hif_opaque_softc *hif_ctx);
+CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
+		      void *bdev, const hif_bus_id *bid,
+		      enum ath_hal_bus_type bus_type,
+		      enum hif_enable_type type);
+void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type);
+void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx);
 
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
-int hif_pm_runtime_get(struct ol_softc *hif_ctx);
-void hif_pm_runtime_get_noresume(struct ol_softc *hif_ctx);
-int hif_pm_runtime_put(struct ol_softc *hif_ctx);
+int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx);
+void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx);
+int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx);
 struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name);
-void hif_runtime_lock_deinit(struct ol_softc *hif_ctx,
+void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 			struct hif_pm_runtime_lock *lock);
-int hif_pm_runtime_prevent_suspend(struct ol_softc *ol_sc,
+int hif_pm_runtime_prevent_suspend(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock);
-int hif_pm_runtime_allow_suspend(struct ol_softc *ol_sc,
+int hif_pm_runtime_allow_suspend(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock);
-int hif_pm_runtime_prevent_suspend_timeout(struct ol_softc *ol_sc,
+int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock, unsigned int delay);
 #else
 struct hif_pm_runtime_lock {
 	const char *name;
 };
 
-static inline void hif_pm_runtime_get_noresume(struct ol_softc *hif_ctx)
+static inline void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
 {}
 
-static inline int hif_pm_runtime_get(struct ol_softc *hif_ctx)
+static inline int hif_pm_runtime_get(struct hif_opaque_softc *hif_ctx)
 { return 0; }
-static inline int hif_pm_runtime_put(struct ol_softc *hif_ctx)
+static inline int hif_pm_runtime_put(struct hif_opaque_softc *hif_ctx)
 { return 0; }
 static inline struct hif_pm_runtime_lock *hif_runtime_lock_init(
 		const char *name)
 { return NULL; }
 static inline void
-hif_runtime_lock_deinit(struct ol_softc *hif_ctx,
+hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 			struct hif_pm_runtime_lock *lock) {}
 
-static inline int hif_pm_runtime_prevent_suspend(struct ol_softc *ol_sc,
+static inline int hif_pm_runtime_prevent_suspend(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock)
 { return 0; }
-static inline int hif_pm_runtime_allow_suspend(struct ol_softc *ol_sc,
+static inline int hif_pm_runtime_allow_suspend(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock)
 { return 0; }
 static inline int
-hif_pm_runtime_prevent_suspend_timeout(struct ol_softc *ol_sc,
+hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 		struct hif_pm_runtime_lock *lock, unsigned int delay)
 { return 0; }
 #endif
 
-void hif_enable_power_management(struct ol_softc *hif_ctx);
-void hif_disable_power_management(struct ol_softc *hif_ctx);
+void hif_enable_power_management(struct hif_opaque_softc *hif_ctx);
+void hif_disable_power_management(struct hif_opaque_softc *hif_ctx);
 
-void hif_vote_link_down(struct ol_softc *);
-void hif_vote_link_up(struct ol_softc *);
-bool hif_can_suspend_link(struct ol_softc *);
+void hif_vote_link_down(struct hif_opaque_softc *);
+void hif_vote_link_up(struct hif_opaque_softc *);
+bool hif_can_suspend_link(struct hif_opaque_softc *);
 
-int hif_bus_resume(struct ol_softc *);
-int hif_bus_suspend(struct ol_softc *);
+int hif_bus_resume(struct hif_opaque_softc *);
+int hif_bus_suspend(struct hif_opaque_softc *);
 
 #ifdef FEATURE_RUNTIME_PM
-int hif_pre_runtime_suspend(struct ol_softc *hif_ctx);
-void hif_pre_runtime_resume(struct ol_softc *hif_ctx);
-int hif_runtime_suspend(struct ol_softc *hif_ctx);
-int hif_runtime_resume(struct ol_softc *hif_ctx);
-void hif_process_runtime_suspend_success(struct ol_softc *);
-void hif_process_runtime_suspend_failure(struct ol_softc *);
-void hif_process_runtime_resume_success(struct ol_softc *);
+int hif_pre_runtime_suspend(struct hif_opaque_softc *hif_ctx);
+void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx);
+int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx);
+int hif_runtime_resume(struct hif_opaque_softc *hif_ctx);
+void hif_process_runtime_suspend_success(struct hif_opaque_softc *);
+void hif_process_runtime_suspend_failure(struct hif_opaque_softc *);
+void hif_process_runtime_resume_success(struct hif_opaque_softc *);
 #endif
 
-int hif_dump_registers(struct ol_softc *scn);
-int ol_copy_ramdump(struct ol_softc *scn);
-void hif_crash_shutdown(struct ol_softc *hif_ctx);
-void hif_get_hw_info(struct ol_softc *scn, u32 *version, u32 *revision,
+int hif_dump_registers(struct hif_opaque_softc *scn);
+int ol_copy_ramdump(struct hif_opaque_softc *scn);
+void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx);
+void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);
-void hif_lro_flush_cb_register(struct ol_softc *scn,
+void hif_lro_flush_cb_register(struct hif_opaque_softc *scn,
 			       void (handler)(void *), void *data);
-void hif_lro_flush_cb_deregister(struct ol_softc *scn);
-struct hif_target_info *hif_get_target_info_handle(struct ol_softc *scn);
-struct hif_config_info *hif_get_ini_handle(struct ol_softc *scn);
-struct ramdump_info *hif_get_ramdump_ctx(struct ol_softc *hif_ctx);
-ol_target_status hif_get_target_status(struct ol_softc *hif_ctx);
-void hif_set_target_status(struct ol_softc *hif_ctx, ol_target_status);
-void hif_init_ini_config(struct ol_softc *hif_ctx, struct hif_config_info *cfg);
+void hif_lro_flush_cb_deregister(struct hif_opaque_softc *scn);
+struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
+						   scn);
+struct hif_config_info *hif_get_ini_handle(struct hif_opaque_softc *scn);
+struct ramdump_info *hif_get_ramdump_ctx(struct hif_opaque_softc *hif_ctx);
+ol_target_status hif_get_target_status(struct hif_opaque_softc *hif_ctx);
+void hif_set_target_status(struct hif_opaque_softc *hif_ctx, ol_target_status);
+void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
+			 struct hif_config_info *cfg);
 #ifdef __cplusplus
 }
 #endif

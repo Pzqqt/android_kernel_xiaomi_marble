@@ -142,7 +142,7 @@ static void init_tasklet_work(struct work_struct *work,
  *
  * Return: N/A
  */
-void init_tasklet_workers(struct ol_softc *scn)
+void init_tasklet_workers(struct hif_opaque_softc *scn)
 {
 	uint32_t id;
 
@@ -284,7 +284,7 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 	struct ce_tasklet_entry *tasklet_entry = context;
 	struct HIF_CE_state *hif_ce_state = tasklet_entry->hif_ce_state;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	uint32_t host_status;
 	int ce_id = icnss_get_ce_id(irq);
 

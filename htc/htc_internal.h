@@ -153,7 +153,7 @@ enum ol_ath_htc_pkt_ecodes {
 };
 /* our HTC target state */
 typedef struct _HTC_TARGET {
-	struct ol_softc *hif_dev;
+	struct hif_opaque_softc *hif_dev;
 	HTC_ENDPOINT endpoint[ENDPOINT_MAX];
 	cdf_spinlock_t HTCLock;
 	cdf_spinlock_t HTCRxLock;

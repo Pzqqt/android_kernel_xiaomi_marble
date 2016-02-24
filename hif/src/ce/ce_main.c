@@ -539,7 +539,7 @@ void ce_fini(struct CE_handle *copyeng)
 	cdf_mem_free(CE_state);
 }
 
-void hif_detach_htc(struct ol_softc *hif_ctx)
+void hif_detach_htc(struct hif_opaque_softc *hif_ctx)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
@@ -551,7 +551,7 @@ void hif_detach_htc(struct ol_softc *hif_ctx)
 
 /* Send the first nbytes bytes of the buffer */
 CDF_STATUS
-hif_send_head(struct ol_softc *hif_ctx,
+hif_send_head(struct hif_opaque_softc *hif_ctx,
 	      uint8_t pipe, unsigned int transfer_id, unsigned int nbytes,
 	      cdf_nbuf_t nbuf, unsigned int data_attr)
 {
@@ -633,7 +633,8 @@ hif_send_head(struct ol_softc *hif_ctx,
 	return status;
 }
 
-void hif_send_complete_check(struct ol_softc *hif_ctx, uint8_t pipe, int force)
+void hif_send_complete_check(struct hif_opaque_softc *hif_ctx, uint8_t pipe,
+								int force)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
@@ -662,7 +663,8 @@ void hif_send_complete_check(struct ol_softc *hif_ctx, uint8_t pipe, int force)
 #endif
 }
 
-uint16_t hif_get_free_queue_number(struct ol_softc *hif_ctx, uint8_t pipe)
+uint16_t
+hif_get_free_queue_number(struct hif_opaque_softc *hif_ctx, uint8_t pipe)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 	struct HIF_CE_pipe_info *pipe_info = &(hif_state->pipe_info[pipe]);
@@ -790,7 +792,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 /* TBDXXX: Set CE High Watermark; invoke txResourceAvailHandler in response */
 
 void
-hif_post_init(struct ol_softc *hif_ctx, void *unused,
+hif_post_init(struct hif_opaque_softc *hif_ctx, void *unused,
 	      struct hif_msg_callbacks *callbacks)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
@@ -877,8 +879,8 @@ static void hif_msg_callbacks_install(struct hif_softc *scn)
 		 sizeof(hif_state->msg_callbacks_pending));
 }
 
-void
-hif_get_default_pipe(struct ol_softc *hif_hdl, uint8_t *ULPipe, uint8_t *DLPipe)
+void hif_get_default_pipe(struct hif_opaque_softc *hif_hdl, uint8_t *ULPipe,
+							uint8_t *DLPipe)
 {
 	int ul_is_polled, dl_is_polled;
 
@@ -1050,7 +1052,7 @@ done:
 	return rv;
 }
 
-CDF_STATUS hif_start(struct ol_softc *hif_ctx)
+CDF_STATUS hif_start(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -1077,7 +1079,7 @@ CDF_STATUS hif_start(struct ol_softc *hif_ctx)
  *
  * Retrun: void
  */
-void hif_enable_fastpath(struct ol_softc *hif_ctx)
+void hif_enable_fastpath(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
@@ -1093,7 +1095,7 @@ void hif_enable_fastpath(struct ol_softc *hif_ctx)
  *
  * Return: bool
  */
-bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx)
+bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
@@ -1109,7 +1111,7 @@ bool hif_is_fastpath_mode_enabled(struct ol_softc *hif_ctx)
  *
  * Return: void
  */
-void *hif_get_ce_handle(struct ol_softc *hif_ctx, int id)
+void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int id)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
@@ -1228,7 +1230,7 @@ void hif_buffer_cleanup(struct HIF_CE_state *hif_state)
 	}
 }
 
-void hif_flush_surprise_remove(struct ol_softc *hif_ctx)
+void hif_flush_surprise_remove(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -1236,7 +1238,7 @@ void hif_flush_surprise_remove(struct ol_softc *hif_ctx)
 	hif_buffer_cleanup(hif_state);
 }
 
-void hif_stop(struct ol_softc *hif_ctx)
+void hif_stop(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
@@ -1498,7 +1500,7 @@ void hif_wake_target_cpu(struct hif_softc *scn)
 {
 	CDF_STATUS rv;
 	uint32_t core_ctrl;
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 
 	rv = hif_diag_read_access(hif_hdl,
 				  SOC_CORE_BASE_ADDRESS | CORE_CTRL_ADDRESS,
@@ -1576,7 +1578,7 @@ int hif_set_hia(struct hif_softc *scn)
 	uint32_t chip_id;
 #endif
 	uint32_t pipe_cfg_addr;
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 	uint32_t target_type = tgt_info->target_type;
 
@@ -1863,7 +1865,7 @@ int hif_config_ce(struct hif_softc *scn)
 	CDF_STATUS rv = CDF_STATUS_SUCCESS;
 	int ret;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct icnss_soc_info soc_info;
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
@@ -2051,7 +2053,7 @@ err:
  *
  * Return: None
  */
-void hif_ipa_get_ce_resource(struct ol_softc *hif_ctx,
+void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_ctx,
 			     cdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
 			     cdf_dma_addr_t *ce_reg_paddr)
@@ -2207,12 +2209,12 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
  *
  * Return: none
  */
-void ce_lro_flush_cb_register(struct hif_softc *scn,
+void ce_lro_flush_cb_register(struct hif_opaque_softc *hif_hdl,
 	 void (handler)(void *), void *data)
 {
 	uint8_t ul, dl;
 	int ul_polled, dl_polled;
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
 	CDF_ASSERT(scn != NULL);
 
@@ -2238,11 +2240,11 @@ void ce_lro_flush_cb_register(struct hif_softc *scn,
  *
  * Return: none
  */
-void ce_lro_flush_cb_deregister(struct hif_softc *scn)
+void ce_lro_flush_cb_deregister(struct hif_opaque_softc *hif_hdl)
 {
 	uint8_t ul, dl;
 	int ul_polled, dl_polled;
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
 
 	CDF_ASSERT(scn != NULL);
 
@@ -2277,7 +2279,7 @@ void ce_lro_flush_cb_deregister(struct hif_softc *scn)
  * Return: Indicates whether this operation was successful.
  */
 
-int hif_map_service_to_pipe(struct ol_softc *hif_hdl, uint16_t svc_id,
+int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 			uint8_t *ul_pipe, uint8_t *dl_pipe, int *ul_is_polled,
 			int *dl_is_polled)
 {
@@ -2463,7 +2465,7 @@ static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
 
 /**
  * hif_dump_ce_registers() - dump ce registers
- * @scn: ol_softc pointer.
+ * @scn: hif_opaque_softc pointer.
  *
  * Output the copy engine registers
  *
@@ -2471,7 +2473,7 @@ static inline void hif_config_rri_on_ddr(struct hif_softc *scn)
  */
 int hif_dump_ce_registers(struct hif_softc *scn)
 {
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	uint32_t ce_reg_address = CE0_BASE_ADDRESS;
 	uint32_t ce_reg_values[CE_COUNT_MAX][CE_USEFUL_SIZE >> 2];
 	uint32_t ce_reg_word_size = CE_USEFUL_SIZE >> 2;

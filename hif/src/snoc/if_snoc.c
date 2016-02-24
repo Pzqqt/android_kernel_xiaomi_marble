@@ -78,7 +78,7 @@ bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
  * Return: void
  */
 /* Function to reset SoC */
-void hif_reset_soc(struct ol_softc *hif_ctx)
+void hif_reset_soc(struct hif_opaque_softc *hif_ctx)
 {
 }
 
@@ -91,7 +91,7 @@ void hif_reset_soc(struct ol_softc *hif_ctx)
  *
  * Return: void
  */
-void hif_disable_isr(struct ol_softc *hif_ctx)
+void hif_disable_isr(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx)
 
@@ -115,13 +115,13 @@ static void hif_dump_snoc_registers(struct hif_softc *scn)
 
 /**
  * hif_dump_registers(): dump bus debug registers
- * @scn: struct ol_softc
+ * @scn: struct hif_opaque_softc
  *
  * This function dumps hif bus debug registers
- *
+  *
  * Return: 0 for success or error code
  */
-int hif_dump_registers(struct ol_softc *hif_ctx)
+int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
 {
 	int status;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx)
@@ -143,7 +143,7 @@ int hif_dump_registers(struct ol_softc *hif_ctx)
  *
  * Return: 0 for success and non-zero for failure
  */
-int hif_bus_suspend(struct ol_softc *hif_ctx)
+int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
 {
 	return 0;
 }
@@ -156,7 +156,7 @@ int hif_bus_suspend(struct ol_softc *hif_ctx)
  *
  * Return: 0 for success and non-zero for failure
  */
-int hif_bus_resume(struct ol_softc *hif_ctx)
+int hif_bus_resume(struct hif_opaque_softc *hif_ctx)
 {
 	return 0;
 }
@@ -166,7 +166,7 @@ int hif_bus_resume(struct ol_softc *hif_ctx)
  *
  * Return: n/a
  */
-void hif_enable_power_gating(struct ol_softc *hif_ctx)
+void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx)
 {
 }
 
@@ -175,7 +175,7 @@ void hif_enable_power_gating(struct ol_softc *hif_ctx)
  *
  * Return: n/a
  */
-void hif_disable_aspm(struct ol_softc *hif_ctx)
+void hif_disable_aspm(struct hif_opaque_softc *hif_ctx)
 {
 }
 

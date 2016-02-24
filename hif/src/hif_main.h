@@ -101,7 +101,7 @@
 #define HIF_GET_PCI_SOFTC(scn) ((struct hif_pci_softc *)scn)
 #define HIF_GET_CE_STATE(scn) ((struct HIF_CE_state *)scn)
 #define HIF_GET_SOFTC(scn) ((struct hif_softc *)scn)
-#define GET_HIF_OPAQUE_HDL(scn) ((struct ol_softc *)scn)
+#define GET_HIF_OPAQUE_HDL(scn) ((struct hif_opaque_softc *)scn)
 
 struct hif_ce_stats {
 	int hif_pipe_no_resrc_count;
@@ -109,7 +109,7 @@ struct hif_ce_stats {
 };
 
 struct hif_softc {
-	struct ol_softc osc;
+	struct hif_opaque_softc osc;
 	struct hif_config_info hif_config;
 	struct hif_target_info target_info;
 	void __iomem *mem;

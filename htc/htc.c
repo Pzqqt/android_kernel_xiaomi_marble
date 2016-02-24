@@ -832,26 +832,26 @@ void *htc_get_targetdef(HTC_HANDLE htc_handle)
 
 /**
  * htc_set_target_to_sleep() - set target to sleep
- * @context: ol_softc context
+ * @context: hif_opaque_softc context
  *
  * Return: none
  */
 void htc_set_target_to_sleep(void *context)
 {
-	struct ol_softc *scn = (struct ol_softc *)context;
+	struct hif_opaque_softc *scn = (struct hif_opaque_softc *)context;
 
 	hif_set_target_sleep(scn, true, false);
 }
 
 /**
  * htc_cancel_deferred_target_sleep() - cancel deferred target sleep
- * @context: ol_softc context
+ * @context: hif_opaque_softc context
  *
  * Return: none
  */
 void htc_cancel_deferred_target_sleep(void *context)
 {
-	struct ol_softc *scn = (struct ol_softc *)context;
+	struct hif_opaque_softc *scn = (struct hif_opaque_softc *)context;
 	hif_cancel_deferred_target_sleep(scn);
 }
 

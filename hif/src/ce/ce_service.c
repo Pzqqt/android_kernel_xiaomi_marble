@@ -522,7 +522,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 {
 	struct CE_state *ce_state = (struct CE_state *)copyeng;
 	struct hif_softc *scn = ce_state->scn;
-	struct ol_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct CE_ring_state *src_ring = ce_state->src_ring;
 	u_int32_t ctrl_addr = ce_state->ctrl_addr;
 	unsigned int nentries_mask = src_ring->nentries_mask;

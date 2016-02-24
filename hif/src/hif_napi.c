@@ -67,7 +67,7 @@ enum napi_decision_vector {
  * = 0: <should never happen>
  * > 0: id of the created object (for multi-NAPI, number of objects created)
  */
-int hif_napi_create(struct ol_softc   *hif_ctx,
+int hif_napi_create(struct hif_opaque_softc   *hif_ctx,
 		    uint8_t            pipe_id,
 		    int (*poll)(struct napi_struct *, int),
 		    int                budget,
@@ -144,7 +144,7 @@ int hif_napi_create(struct ol_softc   *hif_ctx,
  * 0 <    : error
  * 0 =    : success
  */
-int hif_napi_destroy(struct ol_softc *hif_ctx,
+int hif_napi_destroy(struct hif_opaque_softc *hif_ctx,
 		     uint8_t          id,
 		     int              force)
 {
@@ -224,7 +224,7 @@ int hif_napi_destroy(struct ol_softc *hif_ctx,
  * Return:
  *  <addr>: address of the whole HIF NAPI structure
  */
-inline struct qca_napi_data *hif_napi_get_all(struct ol_softc *hif_ctx)
+inline struct qca_napi_data *hif_napi_get_all(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
 
@@ -250,7 +250,7 @@ inline struct qca_napi_data *hif_napi_get_all(struct ol_softc *hif_ctx)
  *  = 0: NAPI is now disabled
  *  = 1: NAPI is now enabled
  */
-int hif_napi_event(struct ol_softc *hif_ctx, enum qca_napi_event event,
+int hif_napi_event(struct hif_opaque_softc *hif_ctx, enum qca_napi_event event,
 		   void *data)
 {
 	int      rc;
@@ -338,7 +338,7 @@ int hif_napi_event(struct ol_softc *hif_ctx, enum qca_napi_event event,
  *
  * Return: bool
  */
-int hif_napi_enabled(struct ol_softc *hif_ctx, int ce)
+int hif_napi_enabled(struct hif_opaque_softc *hif_ctx, int ce)
 {
 	int rc;
 	struct hif_softc *hif = HIF_GET_SOFTC(hif_ctx);
@@ -359,7 +359,7 @@ int hif_napi_enabled(struct ol_softc *hif_ctx, int ce)
  *
  * Return: void
  */
-inline void hif_napi_enable_irq(struct ol_softc *hif, int id)
+inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif);
 
@@ -374,7 +374,7 @@ inline void hif_napi_enable_irq(struct ol_softc *hif, int id)
  *
  * Return: void
  */
-int hif_napi_schedule(struct ol_softc *hif_ctx, int ce_id)
+int hif_napi_schedule(struct hif_opaque_softc *hif_ctx, int ce_id)
 {
 	int cpu = smp_processor_id();
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -408,8 +408,8 @@ int hif_napi_schedule(struct ol_softc *hif_ctx, int ce_id)
  * Returns:
  *  int: the amount of work done in this poll ( <= budget)
  */
-int
-hif_napi_poll(struct ol_softc *hif_ctx, struct napi_struct *napi, int budget)
+int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
+								int budget)
 {
 	int    rc = 0; /* default: no work done, also takes care of error */
 	int    normalized, bucket;
