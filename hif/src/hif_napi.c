@@ -33,7 +33,6 @@
 
 #include <string.h> /* memset */
 
-#include <cds_api.h>
 #include <hif_napi.h>
 #include <hif_debug.h>
 #include <hif_io32.h>

@@ -40,7 +40,6 @@
 #include "epping_main.h"
 #include "hif_main.h"
 #include "hif_debug.h"
-#include "cds_concurrency.h"
 
 #ifdef IPA_OFFLOAD
 #ifdef QCA_WIFI_3_0
@@ -127,22 +126,32 @@ static int get_next_record_index(cdf_atomic_t *table_index, int array_size)
 
 /**
  * hif_record_ce_desc_event() - record ce descriptor events
+ * @scn: hif_softc
  * @ce_id: which ce is the event occuring on
  * @type: what happened
  * @descriptor: pointer to the descriptor posted/completed
  * @memory: virtual address of buffer related to the descriptor
  * @index: index that the descriptor was/will be at.
  */
-void hif_record_ce_desc_event(int ce_id, enum hif_ce_event_type type,
-		union ce_desc *descriptor, void *memory, int index)
+void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
+				enum hif_ce_event_type type,
+				union ce_desc *descriptor,
+				void *memory, int index)
 {
+	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
 	int record_index = get_next_record_index(
 			&hif_ce_desc_history_index[ce_id], HIF_CE_HISTORY_MAX);
 
 	struct hif_ce_desc_event *event =
 		&hif_ce_desc_history[ce_id][record_index];
 	event->type = type;
-	event->time = cds_get_monotonic_boottime();
+
+	if (cbk && cbk->get_monotonic_boottime)
+		event->time = cbk->get_monotonic_boottime();
+	else
+		event->time = ((uint64_t)cdf_system_ticks_to_msecs(
+						cdf_system_ticks()) * 1000);
+
 	if (descriptor != NULL)
 		event->descriptor = *descriptor;
 	else
@@ -163,7 +172,7 @@ void ce_init_ce_desc_event_log(int ce_id, int size)
 	cdf_atomic_init(&hif_ce_desc_history_index[ce_id]);
 }
 #else
-void hif_record_ce_desc_event(
+void hif_record_ce_desc_event(struct hif_softc *scn,
 		int ce_id, enum hif_ce_event_type type,
 		union ce_desc *descriptor, void *memory,
 		int index)
@@ -343,7 +352,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 		/* src_ring->write index hasn't been updated event though
 		 * the register has allready been written to.
 		 */
-		hif_record_ce_desc_event(CE_state->id, event_type,
+		hif_record_ce_desc_event(scn, CE_state->id, event_type,
 			(union ce_desc *) shadow_src_desc, per_transfer_context,
 			src_ring->write_index);
 
@@ -687,7 +696,7 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 		dest_ring->per_transfer_context[write_index] =
 			per_recv_context;
 
-		hif_record_ce_desc_event(CE_state->id, HIF_RX_DESC_POST,
+		hif_record_ce_desc_event(scn, CE_state->id, HIF_RX_DESC_POST,
 				(union ce_desc *) dest_desc, per_recv_context,
 				write_index);
 
@@ -857,7 +866,7 @@ ce_completed_recv_next_nolock(struct CE_state *CE_state,
 	struct CE_ring_state *dest_ring = CE_state->dest_ring;
 	unsigned int nentries_mask = dest_ring->nentries_mask;
 	unsigned int sw_index = dest_ring->sw_index;
-
+	struct hif_softc *scn = CE_state->scn;
 	struct CE_dest_desc *dest_ring_base =
 		(struct CE_dest_desc *)dest_ring->base_addr_owner_space;
 	struct CE_dest_desc *dest_desc =
@@ -881,7 +890,7 @@ ce_completed_recv_next_nolock(struct CE_state *CE_state,
 		goto done;
 	}
 
-	hif_record_ce_desc_event(CE_state->id, HIF_RX_DESC_COMPLETION,
+	hif_record_ce_desc_event(scn, CE_state->id, HIF_RX_DESC_COMPLETION,
 			(union ce_desc *) dest_desc,
 			dest_ring->per_transfer_context[sw_index],
 			sw_index);
@@ -1047,7 +1056,8 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 		struct CE_src_desc *src_desc =
 			CE_SRC_RING_TO_DESC(src_ring_base, sw_index);
 #endif
-		hif_record_ce_desc_event(CE_state->id, HIF_TX_DESC_COMPLETION,
+		hif_record_ce_desc_event(scn, CE_state->id,
+				HIF_TX_DESC_COMPLETION,
 				(union ce_desc *) shadow_src_desc,
 				src_ring->per_transfer_context[sw_index],
 				sw_index);
@@ -1200,7 +1210,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
 
 	A_TARGET_ACCESS_BEGIN(scn);
-	hif_record_ce_desc_event(ce_id, HIF_CE_REAP_ENTRY,
+	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_ENTRY,
 			NULL, NULL, 0);
 
 	/* Since this function is called from both user context and
@@ -1257,7 +1267,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 
 	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
-	hif_record_ce_desc_event(ce_id, HIF_CE_REAP_EXIT,
+	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_EXIT,
 			NULL, NULL, 0);
 	A_TARGET_ACCESS_END(scn);
 }
@@ -1298,6 +1308,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	unsigned int more_snd_comp_cnt = 0;
 	unsigned int sw_idx, hw_idx;
 	uint32_t toeplitz_hash_result;
+	uint32_t mode = hif_get_conparam(scn);
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
 		HIF_ERROR("[premature rc=0]\n");
@@ -1375,7 +1386,7 @@ more_completions:
 			 &toeplitz_hash_result) == CDF_STATUS_SUCCESS) {
 
 			if (CE_id != CE_HTT_H2T_MSG ||
-			    WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+			    WLAN_IS_EPPING_ENABLED(mode)) {
 				cdf_spin_unlock(&CE_state->ce_index_lock);
 				CE_state->send_cb((struct CE_handle *)CE_state,
 						  CE_context, transfer_context,
@@ -1447,7 +1458,7 @@ more_watermarks:
 	 * we find no more events to process.
 	 */
 	if (CE_state->recv_cb && ce_recv_entries_done_nolock(scn, CE_state)) {
-		if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()) ||
+		if (WLAN_IS_EPPING_ENABLED(mode) ||
 		    more_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
 			goto more_completions;
 		} else {
@@ -1461,7 +1472,7 @@ more_watermarks:
 	}
 
 	if (CE_state->send_cb && ce_send_entries_done_nolock(scn, CE_state)) {
-		if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()) ||
+		if (WLAN_IS_EPPING_ENABLED(mode) ||
 		    more_snd_comp_cnt++ < CE_TXRX_COMP_CHECK_THRESHOLD) {
 			goto more_completions;
 		} else {

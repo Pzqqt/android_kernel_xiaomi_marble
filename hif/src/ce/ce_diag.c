@@ -43,13 +43,11 @@
 #include "hif_main.h"
 #include "ce_api.h"
 #include "cdf_trace.h"
-#include "cds_api.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
 #include "hif_debug.h"
 #include "epping_main.h"
-#include "cds_concurrency.h"
 
 void
 hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,

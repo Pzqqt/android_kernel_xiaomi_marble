@@ -46,9 +46,7 @@
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
 #include <osapi_linux.h>
-#include "cds_api.h"
 #include "cdf_status.h"
-#include "cds_sched.h"
 #include "wma_api.h"
 #include "cdf_atomic.h"
 #include "wlan_hdd_power.h"
@@ -70,7 +68,6 @@
 #include "if_pci_internal.h"
 #include "icnss_stub.h"
 #include "ce_tasklet.h"
-#include "cds_concurrency.h"
 
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000
@@ -1045,14 +1042,14 @@ static void hif_pm_runtime_lock_timeout_fn(unsigned long data);
 static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 {
 	struct hif_softc *ol_sc = HIF_GET_SOFTC(sc);
+	uint32_t mode = hif_get_con_param(ol_sc);
 
 	if (!ol_sc->enable_runtime_pm) {
 		HIF_INFO("%s: RUNTIME PM is disabled in ini\n", __func__);
 		return;
 	}
 
-	if (cds_get_conparam() == CDF_FTM_MODE ||
-			WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (mode == CDF_FTM_MODE || WLAN_IS_EPPING_ENABLED(mode)) {
 		HIF_INFO("%s: RUNTIME PM is disabled for FTM/EPPING mode\n",
 				__func__);
 		return;
@@ -1079,12 +1076,12 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 {
 	struct hif_softc *ol_sc = HIF_GET_PCI_SOFTC(sc);
+	uint32_t mode = hif_get_conparam(ol_sc);
 
 	if (!ol_sc->enable_runtime_pm)
 		return;
 
-	if (cds_get_conparam() == CDF_FTM_MODE ||
-			WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+	if (mode == CDF_FTM_MODE || WLAN_IS_EPPING_ENABLED(mode))
 		return;
 
 	cnss_runtime_exit(sc->dev);
@@ -2248,6 +2245,71 @@ static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc)
 static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc) {};
 #endif
 
+/**
+ * hif_log_soc_wakeup_timeout() - API to log PCIe and SOC Info
+ * @sc: HIF PCIe Context
+ *
+ * API to log PCIe Config space and SOC info when SOC wakeup timeout happens
+ *
+ * Return: Failure to caller
+ */
+static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
+{
+	uint16_t val;
+	uint32_t bar;
+	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(sc);
+	struct hif_softc *scn = HIF_GET_SOFTC(sc);
+	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(sc);
+	struct hif_config_info *cfg = hif_get_ini_handle(hif_hdl);
+	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+	A_target_id_t pci_addr = scn->mem;
+
+	HIF_ERROR("%s: keep_awake_count = %d",
+			__func__, hif_state->keep_awake_count);
+
+	pci_read_config_word(sc->pdev, PCI_VENDOR_ID, &val);
+
+	HIF_ERROR("%s: PCI Vendor ID = 0x%04x", __func__, val);
+
+	pci_read_config_word(sc->pdev, PCI_DEVICE_ID, &val);
+
+	HIF_ERROR("%s: PCI Device ID = 0x%04x", __func__, val);
+
+	pci_read_config_word(sc->pdev, PCI_COMMAND, &val);
+
+	HIF_ERROR("%s: PCI Command = 0x%04x", __func__, val);
+
+	pci_read_config_word(sc->pdev, PCI_STATUS, &val);
+
+	HIF_ERROR("%s: PCI Status = 0x%04x", __func__, val);
+
+	pci_read_config_dword(sc->pdev, PCI_BASE_ADDRESS_0, &bar);
+
+	HIF_ERROR("%s: PCI BAR 0 = 0x%08x", __func__, bar);
+
+	HIF_ERROR("%s: SOC_WAKE_ADDR 0%08x", __func__,
+			hif_read32_mb(pci_addr + PCIE_LOCAL_BASE_ADDRESS +
+						PCIE_SOC_WAKE_ADDRESS));
+
+	HIF_ERROR("%s: RTC_STATE_ADDR 0x%08x", __func__,
+			hif_read32_mb(pci_addr + PCIE_LOCAL_BASE_ADDRESS +
+							RTC_STATE_ADDRESS));
+
+	HIF_ERROR("%s:error, wakeup target", __func__);
+	hif_msm_pcie_debug_info(sc);
+
+	if (!cfg->enable_self_recovery)
+		CDF_BUG(0);
+
+	scn->recovery = true;
+
+	if (cbk->set_recovery_in_progress)
+		cbk->set_recovery_in_progress(cbk->context, true);
+
+	cnss_wlan_pci_link_down();
+	return -EACCES;
+}
+
 /*
  * For now, we use simple on-demand sleep/wake.
  * Some possible improvements:
@@ -2293,10 +2355,7 @@ hif_target_sleep_state_adjust(struct hif_softc *scn,
 	A_target_id_t pci_addr = scn->mem;
 	static int max_delay;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
-
 	static int debug;
-	struct hif_config_info *cfg = hif_get_ini_handle(hif_hdl);
 
 	if (scn->recovery)
 		return -EACCES;
@@ -2364,62 +2423,9 @@ hif_target_sleep_state_adjust(struct hif_softc *scn,
 					    (scn, pci_addr)) {
 					break;
 				}
-				if (tot_delay > PCIE_SLEEP_ADJUST_TIMEOUT) {
-					uint16_t val;
-					uint32_t bar;
 
-					HIF_ERROR("%s: keep_awake_count = %d",
-					       __func__,
-					       hif_state->keep_awake_count);
-
-					pci_read_config_word(sc->pdev,
-							     PCI_VENDOR_ID,
-							     &val);
-					HIF_ERROR("%s: PCI Vendor ID = 0x%04x",
-					       __func__, val);
-
-					pci_read_config_word(sc->pdev,
-							     PCI_DEVICE_ID,
-							     &val);
-					HIF_ERROR("%s: PCI Device ID = 0x%04x",
-					       __func__, val);
-
-					pci_read_config_word(sc->pdev,
-							     PCI_COMMAND, &val);
-					HIF_ERROR("%s: PCI Command = 0x%04x",
-					       __func__, val);
-
-					pci_read_config_word(sc->pdev,
-							     PCI_STATUS, &val);
-					HIF_ERROR("%s: PCI Status = 0x%04x",
-					       __func__, val);
-
-					pci_read_config_dword(sc->pdev,
-						PCI_BASE_ADDRESS_0, &bar);
-					HIF_ERROR("%s: PCI BAR 0 = 0x%08x",
-					       __func__, bar);
-
-					HIF_ERROR("%s: SOC_WAKE_ADDR 0%08x",
-						__func__,
-						hif_read32_mb(pci_addr +
-						PCIE_LOCAL_BASE_ADDRESS
-						+ PCIE_SOC_WAKE_ADDRESS));
-					HIF_ERROR("%s: RTC_STATE_ADDR 0x%08x",
-						__func__,
-						hif_read32_mb(pci_addr +
-						PCIE_LOCAL_BASE_ADDRESS
-						+ RTC_STATE_ADDRESS));
-
-					HIF_ERROR("%s:error, wakeup target",
-						__func__);
-					hif_msm_pcie_debug_info(sc);
-					if (!cfg->enable_self_recovery)
-						CDF_BUG(0);
-					scn->recovery = true;
-					cds_set_recovery_in_progress(true);
-					cnss_wlan_pci_link_down();
-					return -EACCES;
-				}
+				if (tot_delay > PCIE_SLEEP_ADJUST_TIMEOUT)
+					return hif_log_soc_wakeup_timeout(sc);
 
 				OS_DELAY(curr_delay);
 				tot_delay += curr_delay;
@@ -2708,13 +2714,13 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 	const struct pci_device_id *id = bid;
 	struct hif_target_info *tgt_info;
 
-	HIF_TRACE("%s: con_mode = 0x%x, device_id = 0x%x",
-		  __func__, cds_get_conparam(), id->device);
-
 	if (!ol_sc) {
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
 		return CDF_STATUS_E_NOMEM;
 	}
+
+	HIF_TRACE("%s: con_mode = 0x%x, device_id = 0x%x",
+		  __func__, hif_get_conparam(ol_sc), id->device);
 
 	sc->pdev = pdev;
 	sc->dev = &pdev->dev;
@@ -3179,13 +3185,13 @@ int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 	unsigned long flags;
 	struct hif_pm_runtime_lock *context = lock;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (hif_is_load_or_unload_in_progress(sc)) {
 		HIF_ERROR("%s: Load/unload in progress, ignore!",
 				__func__);
 		return -EINVAL;
 	}
 
-	if (cds_is_logp_in_progress()) {
+	if (hif_is_recovery_in_progress(sc)) {
 		HIF_ERROR("%s: LOGP in progress, ignore!", __func__);
 		return -EINVAL;
 	}

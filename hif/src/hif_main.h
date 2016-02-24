@@ -144,14 +144,15 @@ struct hif_softc {
 #ifdef FEATURE_NAPI
 	struct qca_napi_data napi_data;
 #endif /* FEATURE_NAPI */
-
+	struct hif_callbacks callbacks;
+	uint32_t hif_con_param;
 };
 
 A_target_id_t hif_get_target_id(struct hif_softc *scn);
 void hif_dump_pipe_debug_count(struct hif_softc *scn);
 
 bool hif_target_forced_awake(struct hif_softc *scn);
-bool hif_max_num_receives_reached(unsigned int count);
+bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count);
 int hif_config_ce(struct hif_softc *scn);
 int athdiag_procfs_init(void *scn);
 void athdiag_procfs_remove(void);
@@ -179,4 +180,9 @@ void hif_disable_bus(struct hif_softc *scn);
 void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
 int hif_bus_get_context_size(void);
 void hif_read_phy_mem_base(struct hif_softc *scn, cdf_dma_addr_t *bar_value);
+uint32_t hif_get_conparam(struct hif_softc *scn);
+struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn);
+bool hif_is_driver_unloading(struct hif_softc *scn);
+bool hif_is_load_or_unload_in_progress(struct hif_softc *scn);
+bool hif_is_recovery_in_progress(struct hif_softc *scn);
 #endif /* __HIF_MAIN_H__ */

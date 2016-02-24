@@ -234,6 +234,15 @@ struct htc_callbacks {
 	int (*dsrHandler)(void *context);
 };
 
+struct hif_callbacks {
+	void *context;
+	void (*set_recovery_in_progress)(void *context, uint8_t val);
+	uint64_t (*get_monotonic_boottime)(void);
+	bool (*is_recovery_in_progress)(void *context);
+	bool (*is_load_unload_in_progress)(void *context);
+	bool (*is_driver_unloading)(void *context);
+};
+
 /* This API detaches the HTC layer from the HIF device */
 void hif_detach_htc(struct hif_opaque_softc *scn);
 
@@ -464,7 +473,9 @@ void hif_reset_soc(struct hif_opaque_softc *scn);
 void hif_disable_aspm(struct hif_opaque_softc *);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 				      int htc_endpoint);
-CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type);
+struct hif_opaque_softc *hif_open(cdf_device_t cdf_ctx, uint32_t mode,
+				  enum ath_hal_bus_type bus_type,
+				  struct hif_callbacks *cbk);
 void hif_close(struct hif_opaque_softc *hif_ctx);
 CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		      void *bdev, const hif_bus_id *bid,

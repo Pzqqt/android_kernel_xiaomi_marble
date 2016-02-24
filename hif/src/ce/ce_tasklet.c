@@ -35,7 +35,6 @@
 #include "cdf_lock.h"
 #include "cdf_types.h"
 #include "cdf_status.h"
-#include "cds_api.h"
 #include "regtable.h"
 #include "hif.h"
 #include "hif_io32.h"
@@ -197,8 +196,8 @@ static void ce_tasklet(unsigned long data)
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ce_state);
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
-	hif_record_ce_desc_event(tasklet_entry->ce_id, HIF_CE_TASKLET_ENTRY,
-			NULL, NULL, 0);
+	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
+			HIF_CE_TASKLET_ENTRY, NULL, NULL, 0);
 
 	if (cdf_atomic_read(&scn->link_suspended)) {
 		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
@@ -218,7 +217,7 @@ static void ce_tasklet(unsigned long data)
 		 * Enable the interrupt only when there is no pending frames in
 		 * any of the Copy Engine pipes.
 		 */
-		hif_record_ce_desc_event(tasklet_entry->ce_id,
+		hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 				HIF_CE_TASKLET_RESCHEDULE, NULL, NULL, 0);
 		ce_schedule_tasklet(tasklet_entry);
 		return;
@@ -227,11 +226,12 @@ static void ce_tasklet(unsigned long data)
 	if (scn->target_status != OL_TRGET_STATUS_RESET)
 		ce_irq_enable(scn, tasklet_entry->ce_id);
 
-	hif_record_ce_desc_event(tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
-			NULL, NULL, 0);
+	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
+				 NULL, NULL, 0);
 
 	cdf_atomic_dec(&scn->active_tasklet_cnt);
 }
+
 /**
  * ce_tasklet_init() - ce_tasklet_init
  * @hif_ce_state: hif_ce_state
@@ -304,7 +304,7 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 	ce_irq_disable(scn, ce_id);
 	ce_irq_status(scn, ce_id, &host_status);
 	cdf_atomic_inc(&scn->active_tasklet_cnt);
-	hif_record_ce_desc_event(ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
+	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	if (hif_napi_enabled(hif_hdl, ce_id))
 		hif_napi_schedule(hif_hdl, ce_id);
 	else

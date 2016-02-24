@@ -47,7 +47,6 @@
 #include "ce_tasklet.h"
 #include "cdf_trace.h"
 #include "cdf_status.h"
-#include "cds_api.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
@@ -59,8 +58,6 @@
 #else
 #include <soc/qcom/icnss.h>
 #endif
-
-#include "cds_concurrency.h"
 
 #define AGC_DUMP         1
 #define CHANINFO_DUMP    2
@@ -367,15 +364,16 @@ uint32_t hif_hia_item_address(uint32_t target_type, uint32_t item_offset)
 
 /**
  * hif_max_num_receives_reached() - check max receive is reached
+ * @scn: HIF Context
  * @count: unsigned int.
  *
  * Output check status as bool
  *
  * Return: bool
  */
-bool hif_max_num_receives_reached(unsigned int count)
+bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count)
 {
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+	if (WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)))
 		return count > 120;
 	else
 		return count > MAX_NUM_OF_RECEIVES;
@@ -455,41 +453,48 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 
 /**
  * hif_open(): hif_open
+ * @cdf_ctx: CDF Context
+ * @mode: Driver Mode
+ * @bus_type: Bus Type
+ * @cbk: CDS Callbacks
  *
- * Return: scn
+ * API to open HIF Context
+ *
+ * Return: HIF Opaque Pointer
  */
-CDF_STATUS hif_open(cdf_device_t cdf_ctx, enum ath_hal_bus_type bus_type)
+struct hif_opaque_softc *hif_open(cdf_device_t cdf_ctx, uint32_t mode,
+				  enum ath_hal_bus_type bus_type,
+				  struct hif_callbacks *cbk)
 {
-	struct hif_opaque_softc *hif_hdl;
 	struct hif_softc *scn;
-	v_CONTEXT_t cds_context;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	int bus_context_size = hif_bus_get_context_size();
 
-	cds_context = cds_get_global_context();
-	status = cds_alloc_context(cds_context, CDF_MODULE_ID_HIF,
-				(void **)&scn, bus_context_size);
-	if (status != CDF_STATUS_SUCCESS) {
-		HIF_ERROR("%s: cannot alloc ol_sc", __func__);
-		return status;
+	scn = (struct hif_softc *)cdf_mem_malloc(bus_context_size);
+	if (!scn) {
+		HIF_ERROR("%s: cannot alloc memory for HIF context of size:%d",
+						__func__, bus_context_size);
+		return GET_HIF_OPAQUE_HDL(scn);
 	}
 
 	cdf_mem_zero(scn, bus_context_size);
-	hif_hdl = GET_HIF_OPAQUE_HDL(scn);
+
 	scn->cdf_dev = cdf_ctx;
+	scn->hif_con_param = mode;
 	cdf_atomic_init(&scn->active_tasklet_cnt);
 	cdf_atomic_init(&scn->link_suspended);
 	cdf_atomic_init(&scn->tasklet_from_intr);
-	scn->linkstate_vote = 0;
+	cdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_callbacks));
 
 	status = hif_bus_open(scn, bus_type);
 	if (status != CDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hif_bus_open error = %d, bus_type = %d",
 				  __func__, status, bus_type);
-		cds_free_context(cds_context, CDF_MODULE_ID_HIF, scn);
+		cdf_mem_free(scn);
+		scn = NULL;
 	}
 
-	return status;
+	return GET_HIF_OPAQUE_HDL(scn);
 }
 
 /**
@@ -513,8 +518,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_bus_close(scn);
-	cds_free_context(cds_get_global_context(),
-		CDF_MODULE_ID_HIF, hif_ctx);
+	cdf_mem_free(scn);
 }
 
 /**
@@ -583,20 +587,21 @@ CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 
 /**
  * hif_wlan_disable(): call the platform driver to disable wlan
+ * @scn: HIF Context
  *
  * This function passes the con_mode to platform driver to disable
  * wlan.
  *
  * Return: void
  */
-void hif_wlan_disable(void)
+void hif_wlan_disable(struct hif_softc *scn)
 {
 	enum icnss_driver_mode mode;
-	uint32_t con_mode = cds_get_conparam();
+	uint32_t con_mode = hif_get_conparam(scn);
 
 	if (CDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-	else if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+	else if (WLAN_IS_EPPING_ENABLED(con_mode))
 		mode = ICNSS_EPPING;
 	else
 		mode = ICNSS_MISSION;
@@ -622,7 +627,7 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
 
 	hif_disable_bus(scn);
 
-	hif_wlan_disable();
+	hif_wlan_disable(scn);
 
 	scn->notice_send = false;
 
@@ -674,7 +679,7 @@ void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 		return;
 	}
 
-	if (cds_is_load_or_unload_in_progress()) {
+	if (hif_is_load_or_unload_in_progress(scn)) {
 		HIF_ERROR("%s: Load/unload is in progress, ignore!", __func__);
 		return;
 	}
@@ -897,4 +902,79 @@ void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	cdf_mem_copy(&scn->hif_config, cfg, sizeof(struct hif_config_info));
+}
+
+/**
+ * hif_get_conparam() - API to get driver mode in HIF
+ * @scn: HIF Context
+ *
+ * Return: driver mode of operation
+ */
+uint32_t hif_get_conparam(struct hif_softc *scn)
+{
+	if (!scn)
+		return 0;
+
+	return scn->hif_con_param;
+}
+
+/**
+ * hif_get_callbacks_handle() - API to get callbacks Handle
+ * @scn: HIF Context
+ *
+ * Return: pointer to HIF Callbacks
+ */
+struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn)
+{
+	return &scn->callbacks;
+}
+
+/**
+ * hif_is_driver_unloading() - API to query upper layers if driver is unloading
+ * @scn: HIF Context
+ *
+ * Return: True/False
+ */
+bool hif_is_driver_unloading(struct hif_softc *scn)
+{
+	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (cbk && cbk->is_driver_unloading)
+		return cbk->is_driver_unloading(cbk->context);
+
+	return false;
+}
+
+/**
+ * hif_is_load_or_unload_in_progress() - API to query upper layers if
+ * load/unload in progress
+ * @scn: HIF Context
+ *
+ * Return: True/False
+ */
+bool hif_is_load_or_unload_in_progress(struct hif_softc *scn)
+{
+	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (cbk && cbk->is_load_unload_in_progress)
+		return cbk->is_load_unload_in_progress(cbk->context);
+
+	return false;
+}
+
+/**
+ * hif_is_recovery_in_progress() - API to query upper layers if recovery in
+ * progress
+ * @scn: HIF Context
+ *
+ * Return: True/False
+ */
+bool hif_is_recovery_in_progress(struct hif_softc *scn)
+{
+	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+
+	if (cbk && cbk->is_recovery_in_progress)
+		return cbk->is_recovery_in_progress(cbk->context);
+
+	return false;
 }

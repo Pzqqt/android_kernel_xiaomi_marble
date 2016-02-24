@@ -32,7 +32,6 @@
 #include <hif.h>
 #include "regtable.h"
 #include "hif_debug.h"
-#include "cds_api.h"
 #include "cdf_status.h"
 #include "qwlan_version.h"
 #include <net/cnss.h>

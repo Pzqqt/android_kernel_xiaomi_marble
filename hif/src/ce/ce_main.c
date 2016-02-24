@@ -45,7 +45,6 @@
 #endif
 #include "ce_api.h"
 #include "cdf_trace.h"
-#include "cds_api.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
@@ -61,7 +60,6 @@
 #include <soc/qcom/icnss.h>
 #endif
 #include "qwlan_version.h"
-#include "cds_concurrency.h"
 
 #define CE_POLL_TIMEOUT 10      /* ms */
 
@@ -760,6 +758,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 	struct hif_pci_softc *hif_sc = HIF_GET_PCI_SOFTC(hif_state);
 	struct hif_msg_callbacks *msg_callbacks =
 		&hif_state->msg_callbacks_current;
+	uint32_t count;
 
 	do {
 		hif_pm_runtime_mark_last_busy(hif_sc->dev);
@@ -778,8 +777,8 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		/* Set up force_break flag if num of receices reaches
 		 * MAX_NUM_OF_RECEIVES */
 		ce_state->receive_count++;
-		if (cdf_unlikely(hif_max_num_receives_reached(
-				ce_state->receive_count))) {
+		count = ce_state->receive_count;
+		if (cdf_unlikely(hif_max_num_receives_reached(scn, count))) {
 			ce_state->force_break = 1;
 			break;
 		}
@@ -1525,7 +1524,7 @@ static void hif_sleep_entry(void *arg)
 	if (scn->recovery)
 		return;
 
-	if (cds_is_driver_unloading())
+	if (hif_is_driver_unloading(scn))
 		return;
 
 	cdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
@@ -1818,17 +1817,18 @@ done:
 
 /**
  * hif_wlan_enable(): call the platform driver to enable wlan
+ * @scn: HIF Context
  *
  * This function passes the con_mode and CE configuration to
  * platform driver to enable wlan.
  *
  * Return: void
  */
-static int hif_wlan_enable(void)
+static int hif_wlan_enable(struct hif_softc *scn)
 {
 	struct icnss_wlan_enable_cfg cfg;
 	enum icnss_driver_mode mode;
-	uint32_t con_mode = cds_get_conparam();
+	uint32_t con_mode = hif_get_conparam(scn);
 
 	cfg.num_ce_tgt_cfg = target_ce_config_sz /
 		sizeof(struct CE_pipe_config);
@@ -1842,7 +1842,7 @@ static int hif_wlan_enable(void)
 
 	if (CDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-	else if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+	else if (WLAN_IS_EPPING_ENABLED(con_mode))
 		mode = ICNSS_EPPING;
 	else
 		mode = ICNSS_MISSION;
@@ -1859,6 +1859,7 @@ int hif_config_ce(struct hif_softc *scn)
 {
 	struct HIF_CE_pipe_info *pipe_info;
 	int pipe_num;
+	uint32_t mode = hif_get_conparam(scn);
 #ifdef ADRASTEA_SHADOW_REGISTERS
 	int i;
 #endif
@@ -1870,8 +1871,8 @@ int hif_config_ce(struct hif_softc *scn)
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(hif_hdl);
 
 	/* if epping is enabled we need to use the epping configuration. */
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
-		if (WLAN_IS_EPPING_IRQ(cds_get_conparam()))
+	if (WLAN_IS_EPPING_ENABLED(mode)) {
+		if (WLAN_IS_EPPING_IRQ(mode))
 			host_ce_config = host_ce_config_wlan_epping_irq;
 		else
 			host_ce_config = host_ce_config_wlan_epping_poll;
@@ -1883,7 +1884,7 @@ int hif_config_ce(struct hif_softc *scn)
 			sizeof(target_service_to_ce_map_wlan_epping);
 	}
 
-	ret = hif_wlan_enable();
+	ret = hif_wlan_enable(scn);
 
 	if (ret) {
 		HIF_ERROR("%s: hif_wlan_enable error = %d", __func__, ret);
@@ -2286,11 +2287,12 @@ int hif_map_service_to_pipe(struct hif_opaque_softc *hif_hdl, uint16_t svc_id,
 	int status = CDF_STATUS_SUCCESS;
 	unsigned int i;
 	struct service_to_pipe element;
-
 	struct service_to_pipe *tgt_svc_map_to_use;
 	size_t sz_tgt_svc_map_to_use;
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	uint32_t mode = hif_get_conparam(scn);
 
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (WLAN_IS_EPPING_ENABLED(mode)) {
 		tgt_svc_map_to_use = target_service_to_ce_map_wlan_epping;
 		sz_tgt_svc_map_to_use =
 			sizeof(target_service_to_ce_map_wlan_epping);

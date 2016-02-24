@@ -316,8 +316,10 @@ enum hif_ce_event_type {
 };
 
 void ce_init_ce_desc_event_log(int ce_id, int size);
-void hif_record_ce_desc_event(int ce_id, enum hif_ce_event_type type,
-		union ce_desc *descriptor, void *memory, int index);
+void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
+			      enum hif_ce_event_type type,
+			      union ce_desc *descriptor, void *memory,
+			      int index);
 
 enum ce_sendlist_type_e {
 	CE_SIMPLE_BUFFER_TYPE,
