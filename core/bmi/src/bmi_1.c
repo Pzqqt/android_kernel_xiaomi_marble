@@ -39,7 +39,7 @@ bmi_read_memory(uint32_t address,
 	int status;
 	uint32_t offset;
 	uint32_t remaining, rxlen;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t align;
@@ -117,7 +117,7 @@ CDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 	const uint32_t header = sizeof(cid) + sizeof(address) + sizeof(length);
 	uint8_t aligned_buffer[BMI_DATASZ_MAX];
 	uint8_t *src;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
 	cdf_dma_addr_t rsp = info->bmi_rsp_da;
@@ -189,7 +189,7 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 	int status;
 	uint32_t offset;
 	uint32_t param_len;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
@@ -303,7 +303,7 @@ CDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 		return CDF_STATUS_NOT_INITIALIZED;
 	}
 
-	info = hif_get_bmi_ctx(scn);
+	info = GET_BMI_CONTEXT(ol_ctx);
 	if (info->bmi_done) {
 		BMI_DBG("bmi_done_local skipped");
 		return CDF_STATUS_E_PERM;

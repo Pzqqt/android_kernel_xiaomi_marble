@@ -150,8 +150,8 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 #endif
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
-	struct bmi_info *bmi_ctx = hif_get_bmi_ctx(scn);
-	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
+	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	switch (file) {
 	default:
@@ -376,7 +376,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 			status = bmi_sign_stream_start(address,
 						(uint8_t *)fw_entry->data,
-						sizeof(SIGN_HEADER_T), scn);
+						sizeof(SIGN_HEADER_T), ol_ctx);
 			if (status != EOK) {
 				BMI_ERR("unable to start sign stream");
 				status = CDF_STATUS_E_FAILURE;
@@ -419,7 +419,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		if (bin_len > 0) {
 			status = bmi_sign_stream_start(0,
 					(uint8_t *)fw_entry->data +
-					bin_off, bin_len, scn);
+					bin_off, bin_len, ol_ctx);
 			if (status != EOK)
 				BMI_ERR("sign stream error");
 		}
@@ -1212,7 +1212,7 @@ CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 	uint32_t target_version = tgt_info->target_version;
-	struct bmi_info *bmi_ctx = hif_get_bmi_ctx(scn);
+	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
 
 #ifdef CONFIG_CNSS
 	if (0 != cnss_get_fw_files_for_target(&bmi_ctx->fw_files,
@@ -1241,7 +1241,7 @@ CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx)
 		return ret;
 	}
 
-	if (bmi_ctx->cal_in_flash) {
+	if (ol_ctx->cal_in_flash) {
 		/* Write EEPROM or Flash data to Target RAM */
 		status = ol_transfer_bin_file(ol_ctx, ATH_FLASH_FILE,
 						address, false);

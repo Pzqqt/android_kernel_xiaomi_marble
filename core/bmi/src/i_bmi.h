@@ -122,14 +122,40 @@ typedef enum _ATH_BIN_FILE {
 #endif
 
 /**
+ * struct bmi_info - Structure to hold BMI Specific information
+ * @bmi_cmd_buff - BMI Command Buffer
+ * @bmi_rsp_buff - BMI Response Buffer
+ * @bmi_cmd_da - BMI Command Physical address
+ * @bmi_rsp_da - BMI Response Physical address
+ * @bmi_done - Flag to check if BMI Phase is complete
+ * @fw_files - FW files
+ *
+ */
+struct bmi_info {
+	uint8_t *bmi_cmd_buff;
+	uint8_t *bmi_rsp_buff;
+	dma_addr_t bmi_cmd_da;
+	dma_addr_t bmi_rsp_da;
+	bool bmi_done;
+#ifdef CONFIG_CNSS
+	struct cnss_fw_files fw_files;
+#endif
+};
+
+/**
  * struct ol_context - Structure to hold OL context
+ * @bmi: BMI info
+ * @cal_in_flash: For Firmware Flash Download
  * @cdf_dev: CDF Device
  * @scn: HIF Context
  * @ramdump_work: WorkQueue for Ramdump collection
+ * @tgt_def: Target Defnition pointer
  *
  * Structure to hold all ol BMI/Ramdump info
  */
 struct ol_context {
+	struct bmi_info bmi;
+	uint8_t *cal_in_flash;
 	cdf_device_t cdf_dev;
 	struct ol_softc *scn;
 	cdf_work_t ramdump_work;
@@ -137,6 +163,8 @@ struct ol_context {
 		struct targetdef_s *targetdef;
 	} tgt_def;
 };
+
+#define GET_BMI_CONTEXT(ol_ctx) ((struct bmi_info *)ol_ctx)
 
 CDF_STATUS bmi_execute(uint32_t address, uint32_t *param,
 				struct ol_context *ol_ctx);

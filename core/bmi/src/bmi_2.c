@@ -41,7 +41,7 @@ bmi_no_command(struct ol_context *ol_ctx)
 	int status;
 	uint32_t length;
 	uint8_t ret = 0;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -85,7 +85,7 @@ bmi_done_local(struct ol_context *ol_ctx)
 	int status;
 	uint32_t length;
 	uint8_t ret = 0;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
@@ -159,7 +159,7 @@ bmi_write_memory(uint32_t address,
 	uint8_t aligned_buffer[BMI_DATASZ_MAX];
 	uint8_t *src;
 	struct ol_softc *scn = ol_ctx->scn;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -233,7 +233,7 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 	uint8_t ret = 0;
 	uint32_t offset;
 	uint32_t remaining, rxlen, rsp_len, total_len;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	/* note we reuse the same buffer to receive on */
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
@@ -307,7 +307,7 @@ bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 	int status;
 	uint32_t length;
 	uint8_t ret = 0;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -355,7 +355,7 @@ bmi_load_image(dma_addr_t address,
 	uint32_t length;
 	uint8_t ret = 0;
 	struct ol_softc *scn = ol_ctx->scn;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	cdf_dma_addr_t cmd = info->bmi_cmd_da;
@@ -417,7 +417,7 @@ static CDF_STATUS bmi_enable(struct ol_context *ol_ctx)
 	struct image_desc_info image_desc_info;
 	CDF_STATUS status;
 	struct hif_target_info *tgt_info;
-	struct bmi_info *info = hif_get_bmi_ctx(scn);
+	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");
