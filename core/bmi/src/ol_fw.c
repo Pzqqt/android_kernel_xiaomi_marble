@@ -482,8 +482,6 @@ ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 #if  defined(CONFIG_CNSS)
 
-static struct ol_softc *ramdump_scn;
-
 /**
  * struct ramdump_info: Structure to hold ramdump information
  * @base: Base address for Ramdump collection
@@ -529,18 +527,20 @@ int ol_copy_ramdump(struct ol_softc *scn)
 	return ret;
 }
 
-static void ramdump_work_handler(struct work_struct *ramdump)
+void ramdump_work_handler(void *ol_context)
 {
 	int ret;
 	uint32_t host_interest_address;
 	uint32_t dram_dump_values[4];
 	uint32_t target_type;
 	struct hif_target_info *tgt_info;
+	struct ol_context *ol_ctx = ol_context;
+	struct ol_softc *ramdump_scn = ol_ctx->scn;
+
 	if (!ramdump_scn) {
 		BMI_ERR("%s:Ramdump_scn is null:", __func__);
 		goto out_fail;
 	}
-
 	tgt_info = hif_get_target_info_handle(ramdump_scn);
 	target_type = tgt_info->target_type;
 #ifdef DEBUG
@@ -594,14 +594,6 @@ out_fail:
 	return;
 }
 
-static DECLARE_WORK(ramdump_work, ramdump_work_handler);
-
-void ol_schedule_ramdump_work(struct ol_softc *scn)
-{
-	ramdump_scn = scn;
-	schedule_work(&ramdump_work);
-}
-
 static void fw_indication_work_handler(struct work_struct *fw_indication)
 {
 	cnss_device_self_recovery();
@@ -617,7 +609,8 @@ void ol_schedule_fw_indication_work(struct ol_softc *scn)
 
 void ol_target_failure(void *instance, CDF_STATUS status)
 {
-	struct ol_softc *scn = (struct ol_softc *)instance;
+	struct ol_context *ol_ctx = instance;
+	struct ol_softc *scn = ol_ctx->scn;
 	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
 	struct hif_config_info *ini_cfg = hif_get_ini_handle(scn);
 	int ret;
@@ -662,7 +655,7 @@ void ol_target_failure(void *instance, CDF_STATUS status)
 #if  defined(CONFIG_CNSS)
 	/* Collect the RAM dump through a workqueue */
 	if (ini_cfg->enable_ramdump_collection)
-		ol_schedule_ramdump_work(scn);
+		cdf_schedule_work(&ol_ctx->ramdump_work);
 	else
 		pr_debug("%s: athdiag read for target reg\n", __func__);
 #endif

@@ -266,14 +266,14 @@ CDF_STATUS cds_open(void)
 		goto err_bmi_close;
 	}
 
-	htcInfo.pContext = gp_cds_context->pHIFContext;
+	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
 	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	/* Create HTC */
 	gp_cds_context->htc_ctx =
-		htc_create(htcInfo.pContext, &htcInfo, cdf_ctx);
+		htc_create(scn, &htcInfo, cdf_ctx);
 	if (!gp_cds_context->htc_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);

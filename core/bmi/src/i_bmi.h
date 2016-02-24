@@ -125,12 +125,14 @@ typedef enum _ATH_BIN_FILE {
  * struct ol_context - Structure to hold OL context
  * @cdf_dev: CDF Device
  * @scn: HIF Context
+ * @ramdump_work: WorkQueue for Ramdump collection
  *
  * Structure to hold all ol BMI/Ramdump info
  */
 struct ol_context {
 	cdf_device_t cdf_dev;
 	struct ol_softc *scn;
+	cdf_work_t ramdump_work;
 };
 
 CDF_STATUS bmi_execute(uint32_t address, uint32_t *param,
@@ -148,9 +150,10 @@ CDF_STATUS bmi_read_soc_register(uint32_t address,
 CDF_STATUS bmi_write_soc_register(uint32_t address, uint32_t param,
 					struct ol_context *ol_ctx);
 CDF_STATUS bmi_get_target_info(struct bmi_target_info *targ_info,
-				struct ol_context *ol_ctx);
+			       struct ol_context *ol_ctx);
 CDF_STATUS bmi_firmware_download(struct ol_context *ol_ctx);
 CDF_STATUS bmi_done_local(struct ol_context *ol_ctx);
 CDF_STATUS ol_download_firmware(struct ol_context *ol_ctx);
 CDF_STATUS ol_configure_target(struct ol_context *ol_ctx);
+void ramdump_work_handler(void *arg);
 #endif

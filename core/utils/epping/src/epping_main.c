@@ -239,13 +239,13 @@ int epping_enable(struct device *parent_dev)
 	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
 		   "%s: bmi_download_firmware done", __func__);
 
-	htcInfo.pContext = p_cds_context->pHIFContext;
+	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = epping_target_suspend_acknowledge;
 	cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
 
 	/* Create HTC */
-	p_cds_context->htc_ctx = htc_create(htcInfo.pContext, &htcInfo, cdf_ctx);
+	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, cdf_ctx);
 	if (!p_cds_context->htc_ctx) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);
