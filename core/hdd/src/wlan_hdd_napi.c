@@ -60,7 +60,7 @@ struct qca_napi_data *hdd_napi_get_all(void)
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
-		CDF_ASSERT(NULL != hif); /* WARN */
+		QDF_ASSERT(NULL != hif); /* WARN */
 	else
 		rp = hif_napi_get_all(hif);
 
@@ -112,7 +112,7 @@ int hdd_napi_create(void)
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif_ctx)) {
-		CDF_ASSERT(NULL != hif_ctx);
+		QDF_ASSERT(NULL != hif_ctx);
 		rc = -EFAULT;
 	} else {
 		/*
@@ -168,7 +168,7 @@ int hdd_napi_destroy(int force)
 
 		hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 		if (unlikely(NULL == hif_ctx))
-			CDF_ASSERT(NULL != hif_ctx);
+			QDF_ASSERT(NULL != hif_ctx);
 		else
 			for (i = 0; i < CE_COUNT_MAX; i++)
 				if (hdd_napi_map & (0x01 << i)) {
@@ -189,7 +189,7 @@ int hdd_napi_destroy(int force)
 	 * to be removed
 	 */
 	if (force)
-		CDF_ASSERT(hdd_napi_map == 0);
+		QDF_ASSERT(hdd_napi_map == 0);
 	if (0 == hdd_napi_map)
 		hdd_napi_ctx = NULL;
 
@@ -212,7 +212,7 @@ int hdd_napi_enabled(int id)
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
-		CDF_ASSERT(hif != NULL); /* WARN_ON; rc = 0 */
+		QDF_ASSERT(hif != NULL); /* WARN_ON; rc = 0 */
 	else if (-1 == id)
 		rc = hif_napi_enabled(hif, id);
 	else
@@ -245,7 +245,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 
 	hif = cds_get_context(QDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
-		CDF_ASSERT(hif != NULL);
+		QDF_ASSERT(hif != NULL);
 	else
 		rc = hif_napi_event(hif, event, data);
 

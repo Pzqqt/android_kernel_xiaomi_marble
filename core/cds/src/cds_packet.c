@@ -41,7 +41,7 @@
 #include <cds_packet.h>
 #include <i_cds_packet.h>
 #include <qdf_mc_timer.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 #include <wlan_hdd_main.h>
 #include "cdf_nbuf.h"
 #include "cdf_memory.h"
@@ -115,7 +115,7 @@ cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 	/* Validate the parameter pointers */
 	if (unlikely((pPacket == NULL) || (pPacketSize == NULL)) ||
 	    (pPacket->pkt_buf == NULL)) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "VPKT [%d]: NULL pointer", __LINE__);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -191,7 +191,7 @@ void cds_pkt_trace_buf_update(char *event_string)
 {
 	uint32_t slot;
 
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 		  "%s %d, %s", __func__, __LINE__, event_string);
 	qdf_spinlock_acquire(&trace_buffer_lock);
 	slot = trace_buffer_order % CDS_PKT_TRAC_MAX_TRACE_BUF;
@@ -218,14 +218,14 @@ void cds_pkt_trace_buf_dump(void)
 	uint32_t slot, idx;
 
 	qdf_spinlock_acquire(&trace_buffer_lock);
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP START Current Timestamp %u",
 		  (unsigned int)qdf_mc_timer_get_system_time());
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "ORDER :        TIME : EVT");
 	if (CDS_PKT_TRAC_MAX_TRACE_BUF > trace_buffer_order) {
 		for (slot = 0; slot < trace_buffer_order; slot++) {
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%5d :%12u : %s",
 				  trace_buffer[slot].order,
 				  (unsigned int)trace_buffer[slot].event_time,
@@ -236,14 +236,14 @@ void cds_pkt_trace_buf_dump(void)
 			slot =
 				(trace_buffer_order +
 				 idx) % CDS_PKT_TRAC_MAX_TRACE_BUF;
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%5d :%12u : %s", trace_buffer[slot].order,
 				  (unsigned int)trace_buffer[slot].event_time,
 				  trace_buffer[slot].event_string);
 		}
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "PACKET TRACE DUMP END");
 	qdf_spinlock_release(&trace_buffer_lock);
 
@@ -275,7 +275,7 @@ void cds_pkt_proto_trace_init(void)
    ---------------------------------------------------------------------------*/
 void cds_pkt_proto_trace_close(void)
 {
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "%s %d", __func__, __LINE__);
 	cdf_mem_free(trace_buffer);
 	qdf_spinlock_destroy(&trace_buffer_lock);

@@ -152,7 +152,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	QDF_STATUS status;
 
 	if (qdf_unlikely(!pdev)) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
@@ -163,27 +163,27 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	}
 
 	if (sta_id >= WLAN_MAX_STA_COUNT) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s:Invalid sta id", __func__);
 		return skb;
 	}
 
 	peer = ol_txrx_peer_find_by_local_id(pdev, sta_id);
 	if (!peer) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s:Invalid peer", __func__);
 		return skb;
 	}
 
 	if (peer->state < ol_txrx_peer_state_conn) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: station to be yet registered..dropping pkt", __func__);
 		return skb;
 	}
 
 	status = cdf_nbuf_map_single(cdf_ctx, skb, QDF_DMA_TO_DEVICE);
 	if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;
 	}
@@ -199,7 +199,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	cdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_LL(peer->vdev, skb);
 	if (ret) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: Failed to tx", __func__);
 		cdf_nbuf_unmap_single(cdf_ctx, ret, QDF_DMA_TO_DEVICE);
 		return ret;
@@ -826,8 +826,8 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
 	       vdev->ll_pause.txq.depth < vdev->ll_pause.max_q_depth) {
 		cdf_nbuf_t next = cdf_nbuf_next(msdu_list);
 		NBUF_UPDATE_TX_PKT_COUNT(msdu_list, NBUF_TX_PKT_TXRX_ENQUEUE);
-		DPTRACE(cdf_dp_trace(msdu_list,
-				CDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
+		DPTRACE(qdf_dp_trace(msdu_list,
+				QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
 				(uint8_t *)(cdf_nbuf_data(msdu_list)),
 				sizeof(cdf_nbuf_data(msdu_list))));
 

@@ -1063,20 +1063,20 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 
 	if (!wma) {
 		WMA_LOGE("%s:NULL wma ptr. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* First step is to confirm if MCC is active */
 	if (!lim_is_in_mcc(pMac)) {
 		WMA_LOGE("%s: MCC is not active. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Confirm MCC adaptive scheduler feature is disabled */
@@ -1090,7 +1090,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 	} else {
 		WMA_LOGE("%s: Failed to get value for MCC_ADAPTIVE_SCHED, "
 			 "Exit w/o setting latency", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* If 0ms latency is provided, then FW will set to a default.
@@ -1135,7 +1135,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 		WMA_LOGE("%s: Failed to send MCC Channel Time Latency command",
 			 __func__);
 		cdf_nbuf_free(buf);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1187,20 +1187,20 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 
 	if (!wma) {
 		WMA_LOGE("%s:NULL wma ptr. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	/* First step is to confirm if MCC is active */
 	if (!lim_is_in_mcc(pMac)) {
 		WMA_LOGD("%s: MCC is not active. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1216,7 +1216,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 	} else {
 		WMA_LOGE("%s: Failed to retrieve "
 			 "WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED. Exit", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1236,7 +1236,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 	buf = wmi_buf_alloc(wma->wmi_handle, len);
 	if (!buf) {
 		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
@@ -1267,7 +1267,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 	if (ret) {
 		WMA_LOGE("Failed to send MCC Channel Time Quota command");
 		cdf_nbuf_free(buf);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;

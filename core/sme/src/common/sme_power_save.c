@@ -53,7 +53,7 @@ QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(
 				QDF_MODULE_ID_WMA, &msg)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: Posting message %d failed",
 				__func__, type);
 		cdf_mem_free(body);
@@ -87,7 +87,7 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 	status = sme_post_ps_msg_to_wma(WMA_ENTER_PS_REQ, enable_ps_req_params);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		FL("Message WMA_ENTER_PS_REQ Successfully sent to WMA"));
 	return QDF_STATUS_SUCCESS;
 }
@@ -118,7 +118,7 @@ QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 	status = sme_post_ps_msg_to_wma(WMA_EXIT_PS_REQ, disable_ps_req_params);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Message WMA_EXIT_PS_REQ Successfully sent to WMA"));
 	return QDF_STATUS_SUCCESS;
 }
@@ -190,7 +190,7 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		    FL("Msg WMA_ENABLE_UAPSD_REQ Successfully sent to WMA"));
 	return QDF_STATUS_SUCCESS;
 }
@@ -222,7 +222,7 @@ QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		return QDF_STATUS_E_FAILURE;
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		FL("Message WMA_DISABLE_UAPSD_REQ Successfully sent to WMA"));
 	return QDF_STATUS_SUCCESS;
 }
@@ -329,7 +329,7 @@ QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 
 	if (QDF_STATUS_SUCCESS == sme_post_ps_msg_to_wma(WMA_WOWL_ENTER_REQ,
 							hal_wowl_params)){
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Msg WMA_WOWL_ENTER_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
 	} else
@@ -364,7 +364,7 @@ QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 
 	if (QDF_STATUS_SUCCESS == sme_post_ps_msg_to_wma(WMA_WOWL_EXIT_REQ,
 							hal_wowl_msg)){
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Msg WMA_WOWL_EXIT_REQ Successfully sent to WMA"));
 		return QDF_STATUS_SUCCESS;
 	}
@@ -391,7 +391,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		sms_log(mac_ctx, LOGE, "Invalid Session_id %x", session_id);
 		return eSIR_FAILURE;
 	}
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Power Save command %d"), command);
 	switch (command) {
 	case SME_PS_ENABLE:
@@ -420,7 +420,7 @@ QDF_STATUS sme_ps_process_command(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		break;
 	}
 	if (status != QDF_STATUS_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to enter in PS, Command: %d"), command);
 	}
 	return status;
@@ -699,14 +699,14 @@ sme_prepare_probe_req_template(tpAniSirGlobal mac_ctx,
 	 */
 	status = dot11f_get_packed_probe_request_size(mac_ctx, &pr, &payload);
 	if (DOT11F_FAILED(status)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to calculate the packed size for a Probe Request (0x%08x)."),
 				  status);
 
 		/* We'll fall back on the worst case scenario: */
 		payload = sizeof(tDot11fProbeRequest);
 	} else if (DOT11F_WARNED(status)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("There were warnings while calculating the packed size for a Probe Request (0x%08x)."),
 			  status);
 	}
@@ -722,7 +722,7 @@ sme_prepare_probe_req_template(tpAniSirGlobal mac_ctx,
 					     self_mac_addr);
 
 	if (eSIR_SUCCESS != sir_status) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		FL("Failed to populate the buffer descriptor for a Probe Request (%d)."),
 			sir_status);
 		return sir_status;      /* allocated! */
@@ -732,11 +732,11 @@ sme_prepare_probe_req_template(tpAniSirGlobal mac_ctx,
 					    sizeof(tSirMacMgmtHdr),
 					    payload, &payload);
 	if (DOT11F_FAILED(status)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to pack a Probe Request (0x%08x).", status);
 		return eSIR_FAILURE;    /* allocated! */
 	} else if (DOT11F_WARNED(status)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "There were warnings while packing a Probe Request");
 	}
 
@@ -764,11 +764,11 @@ void sme_set_pno_channel_prediction(tpSirPNOScanReq request_buf,
 		mac_ctx->roam.configParam.stationary_thresh;
 	request_buf->channel_prediction_full_scan =
 		mac_ctx->roam.configParam.channel_prediction_full_scan;
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("channel_prediction: %d, top_k_num_of_channels: %d"),
 			request_buf->pno_channel_prediction,
 			request_buf->top_k_num_of_channels);
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			FL("stationary_thresh: %d, ch_predict_full_scan: %d"),
 			request_buf->stationary_thresh,
 			request_buf->channel_prediction_full_scan);
@@ -786,11 +786,11 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 	uint8_t uc_dot11_mode;
 
 	if (NULL == session) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: session is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			"%s: SSID = 0x%08x%08x%08x%08x%08x%08x%08x%08x, 0x%08x%08x%08x%08x%08x%08x%08x%08x", __func__,
 			*((uint32_t *) &request->aNetworks[0].ssId.ssId[0]),
 			*((uint32_t *) &request->aNetworks[0].ssId.ssId[4]),
@@ -810,14 +810,14 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 			*((uint32_t *) &request->aNetworks[1].ssId.ssId[28]));
 
 	if (!session) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: session is NULL", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	request_buf = cdf_mem_malloc(sizeof(tSirPNOScanReq));
 	if (NULL == request_buf) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to allocate memory for PNO request"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -854,13 +854,13 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 					request->us24GProbeTemplateLen);
 			request_buf->us24GProbeTemplateLen +=
 				request->us24GProbeTemplateLen;
-			CDF_TRACE(QDF_MODULE_ID_SME,
-				CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME,
+				QDF_TRACE_LEVEL_INFO,
 				FL("request->us24GProbeTemplateLen = %d"),
 				request->us24GProbeTemplateLen);
 		} else {
-			CDF_TRACE(QDF_MODULE_ID_SME,
-				CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME,
+				QDF_TRACE_LEVEL_INFO,
 				FL("Extra ie discarded on 2.4G, IE len = %d"),
 				request->us24GProbeTemplateLen);
 		}
@@ -887,11 +887,11 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 					request->us5GProbeTemplateLen);
 			request_buf->us5GProbeTemplateLen +=
 				request->us5GProbeTemplateLen;
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				FL("request_buf->us5GProbeTemplateLen = %d"),
 				request->us5GProbeTemplateLen);
 		} else {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				FL("Extra IE discarded on 5G, IE length = %d"),
 				request->us5GProbeTemplateLen);
 		}
@@ -933,7 +933,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 	msg.bodyptr = request_buf;
 	if (!QDF_IS_STATUS_SUCCESS
 			(cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post WMA_SET_PNO_REQ message to WMA"));
 		cdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
@@ -945,7 +945,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 	mac_ctx->sme.preferred_network_found_ind_cb_ctx =
 		callback_context;
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO, "-%s", __func__);
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "-%s", __func__);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -969,7 +969,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal_ctx);
 	tCsrRoamSession *session = CSR_GET_SESSION(mac_ctx, session_id);
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			"%s: IP address = %d.%d.%d.%d", __func__,
 			request->params.hostIpv4Addr[0],
 			request->params.hostIpv4Addr[1],
@@ -977,14 +977,14 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 			request->params.hostIpv4Addr[3]);
 
 	if (NULL == session) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: SESSION not Found", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	request_buf = cdf_mem_malloc(sizeof(tSirHostOffloadReq));
 	if (NULL == request_buf) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		   FL("Not able to allocate memory for host offload request"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -998,7 +998,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 	msg.bodyptr = request_buf;
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		      FL("Not able to post WMA_SET_HOST_OFFLOAD msg to WMA"));
 		cdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
@@ -1035,7 +1035,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 
 	request_buf = cdf_mem_malloc(sizeof(*request_buf));
 	if (NULL == request_buf) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to allocate memory for NS offload request"));
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -1046,7 +1046,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 	msg.bodyptr = request_buf;
 	if (QDF_STATUS_SUCCESS !=
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post SIR_HAL_SET_HOST_OFFLOAD message to HAL"));
 		cdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;

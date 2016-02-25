@@ -63,7 +63,7 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 			cdf_mem_malloc(sizeof(struct epping_cookie) *
 				       MAX_COOKIE_SLOT_SIZE);
 		if (pEpping_ctx->s_cookie_mem == NULL) {
-			EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 				   "%s: no mem for cookie (idx = %d)", __func__,
 				   i);
 			goto error;
@@ -175,7 +175,7 @@ void epping_log_packet(epping_adapter_t *pAdapter,
 		       EPPING_HEADER *eppingHdr, int ret, const char *str)
 {
 	if (eppingHdr->Cmd_h & EPPING_LOG_MASK) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: cmd = %d, seqNo = %u, flag = 0x%x, ret = %d, "
 			   "txCount = %lu, txDrop =  %lu, txBytes = %lu,"
 			   "rxCount = %lu, rxDrop = %lu, rxBytes = %lu\n",
@@ -192,7 +192,7 @@ void epping_log_packet(epping_adapter_t *pAdapter,
 
 void epping_log_stats(epping_adapter_t *pAdapter, const char *str)
 {
-	EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+	EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 		   "%s: txCount = %lu, txDrop = %lu, tx_bytes = %lu, "
 		   "rxCount = %lu, rxDrop = %lu, rx_bytes = %lu, tx_acks = %u\n",
 		   str,

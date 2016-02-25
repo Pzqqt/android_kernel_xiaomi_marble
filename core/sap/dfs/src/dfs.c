@@ -313,7 +313,7 @@ int dfs_attach(struct ieee80211com *ic)
 			dfs->events = NULL;
 			OS_FREE(dfs);
 			ic->ic_dfs = NULL;
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			    "%s[%d]: pulse buffer allocation failed",
 			    __func__, __LINE__);
 			return 1;
@@ -606,7 +606,7 @@ int dfs_radar_enable(struct ieee80211com *ic,
 	 * 0 on success.
 	 */
 	if (DFS_STATUS_FAIL == radar_filters_init_status) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: DFS Radar Filters Initialization Failed",
 			  __func__, __LINE__);
 		return -EIO;

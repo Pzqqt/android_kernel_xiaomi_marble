@@ -2946,8 +2946,8 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 				param_buf->wow_packet_buffer + 4,
 				wow_buf_pkt_len,
 				WOW_REASON_PATTERN_MATCH_FOUND);
-			cdf_trace_hex_dump(QDF_MODULE_ID_WMA,
-					   CDF_TRACE_LEVEL_DEBUG,
+			qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
+					   QDF_TRACE_LEVEL_DEBUG,
 					   param_buf->wow_packet_buffer + 4,
 					   wow_buf_pkt_len);
 		} else {
@@ -2970,8 +2970,8 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 			cdf_mem_copy((uint8_t *) &wow_buf_pkt_len,
 				     param_buf->wow_packet_buffer, 4);
 			WMA_LOGD("wow_packet_buffer dump");
-			cdf_trace_hex_dump(QDF_MODULE_ID_WMA,
-					   CDF_TRACE_LEVEL_DEBUG,
+			qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
+					   QDF_TRACE_LEVEL_DEBUG,
 					   param_buf->wow_packet_buffer,
 					   wow_buf_pkt_len);
 			if (wow_buf_pkt_len >= sizeof(param)) {
@@ -3003,8 +3003,8 @@ int wma_wow_wakeup_host_event(void *handle, uint8_t *event,
 		    cdf_mem_copy((u_int8_t *) &wow_buf_pkt_len,
 				param_buf->wow_packet_buffer, 4);
 		    WMA_LOGD("wow_packet_buffer dump");
-				cdf_trace_hex_dump(QDF_MODULE_ID_WMA,
-				CDF_TRACE_LEVEL_DEBUG,
+				qdf_trace_hex_dump(QDF_MODULE_ID_WMA,
+				QDF_TRACE_LEVEL_DEBUG,
 				param_buf->wow_packet_buffer, wow_buf_pkt_len);
 		    if (wow_buf_pkt_len >= sizeof(param)) {
 			param.fixed_param = (wmi_peer_sta_kickout_event_fixed_param *)
@@ -3252,11 +3252,11 @@ static QDF_STATUS wma_send_wow_patterns_to_fw(tp_wma_handle wma,
 		 bitmap_pattern->pattern_offset, user);
 
 	WMA_LOGI("Pattern : ");
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		&bitmap_pattern->patternbuf[0], bitmap_pattern->pattern_len);
 
 	WMA_LOGI("Mask : ");
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		&bitmap_pattern->bitmaskbuf[0], bitmap_pattern->pattern_len);
 
 	buf_ptr += sizeof(WOW_BITMAP_PATTERN_T);
@@ -3615,10 +3615,10 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
-				CDF_BUG(0);
+				QDF_BUG(0);
 			}
 #else
-			CDF_BUG(0);
+			QDF_BUG(0);
 #endif /* CONFIG_CNSS */
 		} else {
 			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
@@ -3643,7 +3643,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 			 wmi_pending_cmds);
 		htc_dump_counter_info(wma->htc_handle);
 		if (!cds_is_driver_recovering())
-			CDF_BUG(0);
+			QDF_BUG(0);
 		else
 			WMA_LOGE("%s: SSR in progress, ignore no credit issue",
 				 __func__);
@@ -3656,7 +3656,7 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 
 	if (scn == NULL) {
 		WMA_LOGE("%s: Failed to get HIF context", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAULT;
 	}
 
@@ -4306,10 +4306,10 @@ static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
-				CDF_BUG(0);
+				QDF_BUG(0);
 			}
 #else
-			CDF_BUG(0);
+			QDF_BUG(0);
 #endif /* CONFIG_CNSS */
 		} else {
 			WMA_LOGE("%s: SSR in progress, ignore resume timeout",
@@ -4840,9 +4840,9 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	pTsmRspParams =
 		(tpAniGetTsmStatsRsp) cdf_mem_malloc(sizeof(tAniGetTsmStatsRsp));
 	if (NULL == pTsmRspParams) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: CDF MEM Alloc Failure", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		cdf_mem_free(pTsmStatsMsg);
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -6593,7 +6593,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 			if (pmac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
-				CDF_BUG(0);
+				QDF_BUG(0);
 			}
 		} else {
 			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
@@ -6606,7 +6606,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 
 	if (scn == NULL) {
 		WMA_LOGE("%s: Failed to get HIF context", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return -EFAULT;
 	}
 
@@ -6691,10 +6691,10 @@ int wma_resume_target(WMA_HANDLE handle)
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
-				CDF_BUG(0);
+				QDF_BUG(0);
 			}
 #else
-			CDF_BUG(0);
+			QDF_BUG(0);
 #endif /* CONFIG_CNSS */
 		} else {
 			WMA_LOGE("%s: SSR in progress, ignore resume timeout",

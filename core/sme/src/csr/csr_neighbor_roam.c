@@ -66,7 +66,7 @@ static QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal pMac,
 	mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState = \
 		mac_ctx->roam.neighborRoamInfo[session].neighborRoamState; \
 	mac_ctx->roam.neighborRoamInfo[session].neighborRoamState = newstate; \
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG, \
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, \
 		FL("Sessionid (%d) NeighborRoam transition from %s to %s"), \
 		session, csr_neighbor_roam_state_to_string( \
 		mac_ctx->roam.neighborRoamInfo[session].prevNeighborRoamState),\
@@ -876,7 +876,7 @@ static QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal mac_ctx,
 
 	if (false != neighbor_roam_info->FTRoamInfo.preauthRspPending) {
 		/* This must not be true here */
-		CDF_ASSERT(neighbor_roam_info->FTRoamInfo.preauthRspPending ==
+		QDF_ASSERT(neighbor_roam_info->FTRoamInfo.preauthRspPending ==
 			   false);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1170,7 +1170,7 @@ csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
 		(pMac, eCSR_NEIGHBOR_ROAM_STATE_PREAUTH_DONE, session_id)
 	neighbor_roam_info_ptr->FTRoamInfo.numPreAuthRetries = 0;
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  "LFR3:Entry added to Auth Done List");
 
 	return QDF_STATUS_SUCCESS;
@@ -1201,7 +1201,7 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 	struct roam_ext_params *roam_params;
 	uint8_t num_ch = 0;
 
-	CDF_ASSERT(pScanFilter != NULL);
+	QDF_ASSERT(pScanFilter != NULL);
 	if (pScanFilter == NULL)
 		return QDF_STATUS_E_FAILURE;
 
@@ -1232,7 +1232,7 @@ csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 				 &nbr_roam_info->handoffReqInfo.bssid);
 		}
 	}
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("No of Allowed SSID List:%d"),
 		roam_params->num_ssid_allowed_list);
 	if (roam_params->num_ssid_allowed_list) {
@@ -1445,7 +1445,7 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			if (NULL == scan_result)
 				break;
 			descr = &scan_result->BssDescriptor;
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				  FL("Scan result: BSSID " MAC_ADDRESS_STR
 				     " (Rssi %ld, Ch:%d)"),
 				  MAC_ADDR_ARRAY(descr->bssId),
@@ -1458,8 +1458,8 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 				 * currently associated AP. Do not have this
 				 * in the roamable AP list
 				 */
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_INFO,
 					  "SKIP-currently associated AP");
 				continue;
 			}
@@ -1474,8 +1474,8 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					sizeof(tSirMacAddr)))
 			     || (descr->channelId !=
 				 n_roam_info->handoffReqInfo.channel))) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_INFO,
 					  "SKIP-not a candidate AP for OS requested roam");
 				continue;
 			}
@@ -1508,15 +1508,15 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					n_roam_info->MinQBssLoadRequired);
 			if (voadmitted && qpresent &&
 			    (qavail < n_roam_info->MinQBssLoadRequired)) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_INFO,
 					"BSSID : " MAC_ADDRESS_STR " has no bandwidth, ignoring",
 					MAC_ADDR_ARRAY(descr->bssId));
 				continue;
 			}
 			if (voadmitted && !qpresent) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_INFO,
 					"BSSID : " MAC_ADDRESS_STR " has no QBSS LOAD IE, ignoring",
 					MAC_ADDR_ARRAY(descr->bssId));
 				continue;
@@ -1541,8 +1541,8 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					descr->nReceivedTime;
 			if (age_constraint == true && age_ticks > limit_ticks) {
 				num_dropped++;
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					CDF_TRACE_LEVEL_WARN,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_WARN,
 					FL("Old AP (probe rsp/beacon) skipped.")
 					);
 				continue;
@@ -1587,7 +1587,7 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 		 * iterations and no candidate were found
 		 */
 		if (age_constraint == false) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: No roam able candidates found",
 				  __func__);
 			break;
@@ -1713,7 +1713,7 @@ QDF_STATUS csr_neighbor_roam_channels_filter_by_current_band(tpAniSirGlobal pMac
 		return QDF_STATUS_E_INVAL;
 
 	if (inputNumOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wrong Number of Input Channels %d",
 			  __func__, inputNumOfChannels);
 		return QDF_STATUS_E_INVAL;
@@ -1774,13 +1774,13 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_INVAL;
 
 	if (inputNumOfChannels > WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wrong Number of Input Channels %d",
 			  __func__, inputNumOfChannels);
 		return QDF_STATUS_E_INVAL;
 	}
 	if (outputNumOfChannels >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Wrong Number of Output Channels %d",
 			  __func__, outputNumOfChannels);
 		return QDF_STATUS_E_INVAL;
@@ -1793,8 +1793,8 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 		}
 		if (j == outputNumOfChannels) {
 			if (pInputChannelList[i]) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					  QDF_TRACE_LEVEL_INFO,
 					  "%s: [INFOLOG] Adding extra %d to Neighbor channel list",
 					  __func__, pInputChannelList[i]);
 				pOutputChannelList[numChannels] =
@@ -1803,7 +1803,7 @@ QDF_STATUS csr_neighbor_roam_merge_channel_lists(tpAniSirGlobal pMac,
 			}
 		}
 		if (numChannels >= WNI_CFG_VALID_CHANNEL_LIST_LEN) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "%s: Merge Neighbor channel list reached Max "
 				  "limit %d", __func__, numChannels);
 			break;
@@ -1885,8 +1885,8 @@ QDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(tpAniSirGloba
 					    get_rf_band(pNeighborBssDesc->
 							pNeighborBssDescription->
 							channel)) {
-						CDF_TRACE(QDF_MODULE_ID_SME,
-							  CDF_TRACE_LEVEL_INFO,
+						QDF_TRACE(QDF_MODULE_ID_SME,
+							  QDF_TRACE_LEVEL_INFO,
 							  "%s: [INFOLOG] Adding %d to Neighbor channel list (Same band)\n",
 							  __func__,
 							  pNeighborBssDesc->
@@ -1899,8 +1899,8 @@ QDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(tpAniSirGloba
 						numChannels++;
 					}
 				} else {
-					CDF_TRACE(QDF_MODULE_ID_SME,
-						  CDF_TRACE_LEVEL_INFO,
+					QDF_TRACE(QDF_MODULE_ID_SME,
+						  QDF_TRACE_LEVEL_INFO,
 						  "%s: [INFOLOG] Adding %d to Neighbor channel list\n",
 						  __func__,
 						  pNeighborBssDesc->
@@ -2212,7 +2212,7 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ctx)
 	 * clear all the whitelist parameters and remaining
 	 * needs to be retained across connections.
 	 */
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		FL("Roaming parameters are reset"));
 	roam_params = &mac_ctx->roam.configParam.roam_params;
 	roam_params->num_ssid_allowed_list = 0;
@@ -2246,7 +2246,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGE, FL("pSession is NULL"));
 		return QDF_STATUS_E_FAILURE;
 	}
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Disconn ind on session %d in state %d from bss :"
 			MAC_ADDRESS_STR), sessionId,
 			pNeighborRoamInfo->neighborRoamState,
@@ -2454,7 +2454,7 @@ static void csr_neighbor_roam_info_ctx_init(
 		 * down to firmware.Do not send the START command for
 		 * other session connections.*/
 		if (!csr_roam_is_sta_mode(pMac, session_id)) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 				"Wrong Mode %d",
 				session->connectedProfile.BSSType);
 			return;
@@ -2463,8 +2463,8 @@ static void csr_neighbor_roam_info_ctx_init(
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		if (session->roam_synch_in_progress) {
 			if (pMac->roam.pReassocResp != NULL) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-					CDF_TRACE_LEVEL_DEBUG,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_DEBUG,
 					"Free Reassoc Rsp");
 				cdf_mem_free(pMac->roam.pReassocResp);
 				pMac->roam.pReassocResp = NULL;
@@ -2535,11 +2535,11 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(
 	if (session->roam_synch_in_progress &&
 		(eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
 		session->roam_synch_data->authStatus)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			"LFR3:csr_neighbor_roam_indicate_connect");
 		msg = cdf_mem_malloc(sizeof(tSirSetActiveModeSetBncFilterReq));
 		if (msg == NULL) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"LFR3:Mem Alloc failed for beacon Filter Req");
 			return QDF_STATUS_E_NOMEM;
 		}
@@ -2905,7 +2905,7 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 	uint32_t roamid = 0;
 	QDF_STATUS status;
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG, "%s session_id=%d",
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG, "%s session_id=%d",
 		  __func__, session_id);
 
 	if (neighbor_roam_info->neighborRoamState !=
@@ -2919,11 +2919,11 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 
 	if (false == csr_neighbor_roam_get_handoff_ap_info(mac_ctx,
 			&handoff_node, session_id)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		FL("failed to obtain handoff AP"));
 		return;
 	}
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("HANDOFF CANDIDATE BSSID "MAC_ADDRESS_STR),
 		  MAC_ADDR_ARRAY(handoff_node.pBssDescription->bssId));
 
@@ -2949,7 +2949,7 @@ void csr_neighbor_roam_request_handoff(tpAniSirGlobal mac_ctx,
 	status = csr_roam_copy_connected_profile(mac_ctx, session_id,
 			&neighbor_roam_info->csrNeighborRoamProfile);
 	if (QDF_STATUS_SUCCESS != status) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("csr_roam_copy_connected_profile failed %d"),
 			status);
 		return;
@@ -3037,7 +3037,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 	tpCsrNeighborRoamBSSInfo bss_node = NULL;
 
 	if (NULL == hand_off_node) {
-		CDF_ASSERT(NULL != hand_off_node);
+		QDF_ASSERT(NULL != hand_off_node);
 		return false;
 	}
 	if (ngbr_roam_info->is11rAssoc) {
@@ -3124,7 +3124,7 @@ void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(tpAniSirGlobal pM
 	tCsrRoamSession *session = CSR_GET_SESSION(pMac, sessionId);
 
 	if (!session) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 			  FL("session is NULL"));
 		return;
 	}

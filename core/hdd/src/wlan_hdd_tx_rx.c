@@ -313,7 +313,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitCalled;
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			"Recovery in progress, dropping the packet");
 		++pAdapter->stats.tx_dropped;
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
@@ -334,11 +334,11 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		    (qdf_is_macaddr_broadcast(pDestMacAddress) ||
 		     qdf_is_macaddr_group(pDestMacAddress))) {
 			STAId = pHddStaCtx->broadcast_ibss_staid;
-			CDF_TRACE(QDF_MODULE_ID_HDD_DATA,
-				  CDF_TRACE_LEVEL_INFO_LOW, "%s: BC/MC packet",
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+				  QDF_TRACE_LEVEL_INFO_LOW, "%s: BC/MC packet",
 				  __func__);
 		} else if (STAId == HDD_WLAN_INVALID_STA_ID) {
-			CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 				  "%s: Received Unicast frame with invalid staID",
 				  __func__);
 			++pAdapter->stats.tx_dropped;
@@ -350,7 +350,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if (WLAN_HDD_OCB != pAdapter->device_mode &&
 			eConnectionState_Associated !=
 				pHddStaCtx->conn_info.connState) {
-			CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 				FL("Tx frame in not associated state in %d context"),
 				pAdapter->device_mode);
 			++pAdapter->stats.tx_dropped;
@@ -391,7 +391,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[ac];
 #ifdef HDD_WMM_DEBUG
-	CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_FATAL,
 		  "%s: Classified as ac %d up %d", __func__, ac, up);
 #endif /* HDD_WMM_DEBUG */
 
@@ -479,19 +479,19 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	NBUF_CB_TX_PACKET_TRACK(skb) = NBUF_TX_PKT_DATA_TRACK;
 	NBUF_UPDATE_TX_PKT_COUNT(skb, NBUF_TX_PKT_HDD);
 
-	cdf_dp_trace_set_track(skb);
-	DPTRACE(cdf_dp_trace(skb, CDF_DP_TRACE_HDD_PACKET_PTR_RECORD,
+	qdf_dp_trace_set_track(skb);
+	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_PTR_RECORD,
 				(uint8_t *)skb->data, sizeof(skb->data)));
-	DPTRACE(cdf_dp_trace(skb, CDF_DP_TRACE_HDD_PACKET_RECORD,
+	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
 				(uint8_t *)skb->data, cdf_nbuf_len(skb)));
-	if (cdf_nbuf_len(skb) > CDF_DP_TRACE_RECORD_SIZE)
-		DPTRACE(cdf_dp_trace(skb, CDF_DP_TRACE_HDD_PACKET_RECORD,
-				(uint8_t *)&skb->data[CDF_DP_TRACE_RECORD_SIZE],
-				(cdf_nbuf_len(skb)-CDF_DP_TRACE_RECORD_SIZE)));
+	if (cdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
+				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
+				(cdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
 	if (ol_tx_send_data_frame(STAId, (cdf_nbuf_t) skb,
 							  proto_type) != NULL) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
 			  __func__, STAId);
 		goto drop_pkt;
@@ -502,12 +502,12 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 drop_pkt:
 
-	DPTRACE(cdf_dp_trace(skb, CDF_DP_TRACE_DROP_PACKET_RECORD,
+	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
 				(uint8_t *)skb->data, cdf_nbuf_len(skb)));
-	if (cdf_nbuf_len(skb) > CDF_DP_TRACE_RECORD_SIZE)
-		DPTRACE(cdf_dp_trace(skb, CDF_DP_TRACE_DROP_PACKET_RECORD,
-				(uint8_t *)&skb->data[CDF_DP_TRACE_RECORD_SIZE],
-				(cdf_nbuf_len(skb)-CDF_DP_TRACE_RECORD_SIZE)));
+	if (cdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
+				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
+				(cdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
 	++pAdapter->stats.tx_dropped;
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
@@ -556,10 +556,10 @@ static void __hdd_tx_timeout(struct net_device *dev)
 	struct netdev_queue *txq;
 	int i = 0;
 
-	CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 		  "%s: Transmission timeout occurred jiffies %lu trans_start %lu",
 		  __func__, jiffies, dev->trans_start);
-	DPTRACE(cdf_dp_trace(NULL, CDF_DP_TRACE_HDD_TX_TIMEOUT,
+	DPTRACE(qdf_dp_trace(NULL, QDF_DP_TRACE_HDD_TX_TIMEOUT,
 				NULL, 0));
 
 	/* Getting here implies we disabled the TX queues for too
@@ -571,12 +571,12 @@ static void __hdd_tx_timeout(struct net_device *dev)
 
 	for (i = 0; i < NUM_TX_QUEUES; i++) {
 		txq = netdev_get_tx_queue(dev, i);
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 			  "Queue%d status: %d txq->trans_start %lu",
 			   i, netif_tx_queue_stopped(txq), txq->trans_start);
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 		  "carrier state: %d", netif_carrier_ok(dev));
 }
 
@@ -609,9 +609,9 @@ QDF_STATUS hdd_init_tx_rx(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  FL("pAdapter is NULL"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -630,9 +630,9 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  FL("pAdapter is NULL"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -666,14 +666,14 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 
 	/* Sanity check on inputs */
 	if ((NULL == cds_context) || (NULL == rxBuf)) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Null params being passed", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	pHddCtx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (NULL == pHddCtx) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -690,7 +690,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	skb = (struct sk_buff *)rxBuf;
 
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_FATAL,
 			  "Magic cookie(%x) for adapter sanity verification is invalid",
 			  pAdapter->magic);
 		return QDF_STATUS_E_FAILURE;
@@ -700,7 +700,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	if ((pHddStaCtx->conn_info.proxyARPService) &&
 	    cfg80211_is_gratuitous_arp_unsolicited_na(skb)) {
 		++pAdapter->hdd_stats.hddTxRxStats.rxDropped[cpu_index];
-		CDF_TRACE(QDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,
 			  "%s: Dropping HS 2.0 Gratuitous ARP or Unsolicited NA",
 			  __func__);
 		/* Remove SKB from internal tracking table before submitting

@@ -122,7 +122,7 @@ static void wma_service_ready_ext_evt_timeout(void *data)
 	}
 end:
 	/* Panic so that we can debug why FW is not responding */
-	CDF_BUG(0);
+	QDF_BUG(0);
 }
 
 /**
@@ -2087,7 +2087,7 @@ QDF_STATUS wma_pre_start(void *cds_ctx)
 	qdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &wma_msg);
 	if (QDF_STATUS_SUCCESS != qdf_status) {
 		WMA_LOGP("%s: Failed to post WNI_CFG_DNLD_REQ msg", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		qdf_status = QDF_STATUS_E_FAILURE;
 	}
 end:
@@ -2117,7 +2117,7 @@ void wma_send_msg(tp_wma_handle wma_handle, uint16_t msg_type,
 	if (QDF_STATUS_SUCCESS != status) {
 		if (NULL != body_ptr)
 			cdf_mem_free(body_ptr);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 	return;
 }
@@ -3610,7 +3610,7 @@ static wmi_buf_t wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
 
 	/* allocate memory requested by FW */
 	if (ev->num_mem_reqs > WMI_MAX_MEM_REQS) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		cdf_nbuf_free(buf);
 		return NULL;
 	}
@@ -4148,7 +4148,7 @@ void wma_rx_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	param_buf = (WMI_READY_EVENTID_param_tlvs *) cmd_param_info;
 	if (!(wma_handle && param_buf)) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
@@ -4225,7 +4225,7 @@ void wma_setneedshutdown(void *cds_ctx)
 
 	if (NULL == wma_handle) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
@@ -4249,7 +4249,7 @@ bool wma_needshutdown(void *cds_ctx)
 
 	if (NULL == wma_handle) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return false;
 	}
 
@@ -4704,7 +4704,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	WMA_LOGI("%s: Enter", __func__);
 	if (NULL == msg) {
 		WMA_LOGE("msg is NULL");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;
 	}
@@ -4716,7 +4716,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 
 	if (NULL == wma_handle) {
 		WMA_LOGP("%s: wma_handle is NULL", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		cdf_mem_free(msg->bodyptr);
 		qdf_status = QDF_STATUS_E_INVAL;
 		goto end;

@@ -45,7 +45,7 @@
 #include "csr_internal.h"
 #include "lim_global.h"
 #include "cdf_memory.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "wma_if.h"
 
 #ifdef TRACE_RECORD
@@ -746,7 +746,7 @@ void mac_trace(tpAniSirGlobal mac_ctx, uint8_t code,
 void mac_trace_new(tpAniSirGlobal mac_ctx, uint8_t module, uint8_t code,
 		   uint16_t session, uint32_t data)
 {
-	cdf_trace(module, code, session, data);
+	qdf_trace(module, code, session, data);
 }
 
 #endif

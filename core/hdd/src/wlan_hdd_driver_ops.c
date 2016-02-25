@@ -581,10 +581,10 @@ static int __wlan_hdd_bus_suspend(pm_message_t state)
 
 resume_wma:
 	status = wma_bus_resume();
-	CDF_BUG(!status);
+	QDF_BUG(!status);
 resume_oltxrx:
 	status = ol_txrx_bus_resume();
-	CDF_BUG(!status);
+	QDF_BUG(!status);
 done:
 	hdd_err("suspend done, status = %d", err);
 	return err;
@@ -636,13 +636,13 @@ static int __wlan_hdd_bus_resume(void)
 	}
 
 	status = hif_bus_resume(hif_ctx);
-	CDF_BUG(!status);
+	QDF_BUG(!status);
 
 	status = wma_bus_resume();
-	CDF_BUG(!status);
+	QDF_BUG(!status);
 
 	status = ol_txrx_bus_resume();
-	CDF_BUG(!status);
+	QDF_BUG(!status);
 
 	hdd_info("resume done");
 	return status;
@@ -710,11 +710,11 @@ static int __wlan_hdd_runtime_suspend(void)
 	return status;
 
 resume_hif:
-	CDF_BUG(!hif_runtime_resume(hif_ctx));
+	QDF_BUG(!hif_runtime_resume(hif_ctx));
 resume_wma:
-	CDF_BUG(!wma_runtime_resume());
+	QDF_BUG(!wma_runtime_resume());
 resume_htc:
-	CDF_BUG(!htc_runtime_resume());
+	QDF_BUG(!htc_runtime_resume());
 process_failure:
 	hif_process_runtime_suspend_failure(hif_ctx);
 	return status;
@@ -753,10 +753,10 @@ static int __wlan_hdd_runtime_resume(void)
 	void *hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
 
 	hif_pre_runtime_resume(hif_ctx);
-	CDF_BUG(!cnss_auto_resume());
-	CDF_BUG(!hif_runtime_resume(hif_ctx));
-	CDF_BUG(!wma_runtime_resume());
-	CDF_BUG(!htc_runtime_resume());
+	QDF_BUG(!cnss_auto_resume());
+	QDF_BUG(!hif_runtime_resume(hif_ctx));
+	QDF_BUG(!wma_runtime_resume());
+	QDF_BUG(!htc_runtime_resume());
 	hif_process_runtime_resume_success(hif_ctx);
 	return 0;
 }

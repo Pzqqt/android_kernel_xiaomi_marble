@@ -117,11 +117,11 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 			mac_ctx->lim.htCapabilityPresentInBeacon = 0;
 
 #ifdef WLAN_FEATURE_11AC
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
 			  "beacon.VHTCaps.present = %d BSS_VHT_Capable:%d",
 			  beacon_struct->VHTCaps.present,
 			  IS_BSS_VHT_CAPABLE(beacon_struct->VHTCaps));
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
 			  "***beacon.SU Beamformer Capable*****=%d",
 			  beacon_struct->VHTCaps.suBeamFormerCap);
 

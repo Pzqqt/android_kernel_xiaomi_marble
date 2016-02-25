@@ -127,31 +127,31 @@ uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 
 	/* Put a check for the free builds */
 	if (TX_AIRGO_TMR_SIGNATURE != timer_ptr->tmrSignature) {
-		CDF_ASSERT(timer_ptr->tmrSignature == 0);
+		QDF_ASSERT(timer_ptr->tmrSignature == 0);
 
 		return TX_TIMER_ERROR;
 
 	}
 	/* Check for an uninitialized timer */
-	CDF_ASSERT(0 != strlen(TIMER_NAME));
+	QDF_ASSERT(0 != strlen(TIMER_NAME));
 
-	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 		  "Timer %s being activated\n", TIMER_NAME);
 
 	status = qdf_mc_timer_start(&timer_ptr->cdf_timer,
 				    timer_ptr->initScheduleTimeInMsecs);
 
 	if (QDF_STATUS_SUCCESS == status) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 			  "Timer %s now activated\n", TIMER_NAME);
 		return TX_SUCCESS;
 	} else if (QDF_STATUS_E_ALREADY == status) {
 		/* starting timer fails because timer is already started; this is okay */
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 			  "Timer %s is already running\n", TIMER_NAME);
 		return TX_SUCCESS;
 	} else {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "Timer %s fails to activate\n", TIMER_NAME);
 		return TX_TIMER_ERROR;
 	}
@@ -179,7 +179,7 @@ uint32_t tx_timer_change(TX_TIMER *timer_ptr,
 {
 	/* Put a check for the free builds */
 	if (TX_AIRGO_TMR_SIGNATURE != timer_ptr->tmrSignature) {
-		CDF_ASSERT(timer_ptr->tmrSignature == 0);
+		QDF_ASSERT(timer_ptr->tmrSignature == 0);
 		return TX_TIMER_ERROR;
 	}
 	/* changes cannot be applied until timer stops running */
@@ -217,7 +217,7 @@ uint32_t tx_timer_change_context(TX_TIMER *timer_ptr,
 
 	/* Put a check for the free builds */
 	if (TX_AIRGO_TMR_SIGNATURE != timer_ptr->tmrSignature) {
-		CDF_ASSERT(timer_ptr->tmrSignature == 0);
+		QDF_ASSERT(timer_ptr->tmrSignature == 0);
 
 		return TX_TIMER_ERROR;
 	}
@@ -252,16 +252,16 @@ static void tx_main_timer_func(void *functionContext)
 	TX_TIMER *timer_ptr = (TX_TIMER *) functionContext;
 
 	if (NULL == timer_ptr) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
 	if (NULL == timer_ptr->pExpireFunc) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 		  "Timer %s triggered", TIMER_NAME);
 
 	/* Now call the actual timer function, taking the function pointer, */
@@ -276,7 +276,7 @@ static void tx_main_timer_func(void *functionContext)
 		timer_ptr->rescheduleTimeInMsecs = 0;
 
 		if (QDF_STATUS_SUCCESS != status) {
-			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_WARN,
+			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_WARN,
 				  "Unable to reschedule timer %s; status=%d",
 				  TIMER_NAME, status);
 		}
@@ -297,17 +297,17 @@ uint32_t tx_timer_create_intern_debug(void *pMacGlobal,
 	QDF_STATUS status;
 
 	if (NULL == expiration_function) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "NULL timer expiration");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return TX_TIMER_ERROR;
 	}
 
 	if (NULL == name_ptr) {
 
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "NULL name pointer for timer");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return TX_TIMER_ERROR;
 	}
 	if (!initScheduleTimeInTicks)
@@ -338,13 +338,13 @@ uint32_t tx_timer_create_intern_debug(void *pMacGlobal,
 					tx_main_timer_func, (void *) timer_ptr,
 					fileName, lineNum);
 	if (QDF_STATUS_SUCCESS != status) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "Cannot create timer for %s\n", TIMER_NAME);
 		return TX_TIMER_ERROR;
 	}
 
 	if (0 != rescheduleTimeInTicks) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 			  "Creating periodic timer for %s\n", TIMER_NAME);
 	}
 	/* Activate this timer if required */
@@ -396,13 +396,13 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
 	status = qdf_mc_timer_init(&timer_ptr->cdf_timer, QDF_TIMER_TYPE_SW,
 				   tx_main_timer_func, (void *) timer_ptr);
 	if (QDF_STATUS_SUCCESS != status) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
 			  "Cannot create timer for %s\n", TIMER_NAME);
 		return TX_TIMER_ERROR;
 	}
 
 	if (0 != rescheduleTimeInTicks) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 			  "Creating periodic timer for %s\n", TIMER_NAME);
 	}
 	/* Activate this timer if required */
@@ -434,7 +434,7 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
 uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 {
 	QDF_STATUS vStatus;
-	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 		  "tx_timer_deactivate() called for timer %s\n", TIMER_NAME);
 
 	/* Put a check for the free builds */
@@ -444,7 +444,7 @@ uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 	/* if the timer is not running then we do not need to do anything here */
 	vStatus = qdf_mc_timer_stop(&timer_ptr->cdf_timer);
 	if (QDF_STATUS_SUCCESS != vStatus) {
-		CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO_HIGH,
+		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "Unable to stop timer %s; status =%d\n",
 			  TIMER_NAME, vStatus);
 	}
@@ -455,7 +455,7 @@ uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 
 uint32_t tx_timer_delete(TX_TIMER *timer_ptr)
 {
-	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 		  "tx_timer_delete() called for timer %s\n", TIMER_NAME);
 
 	/* Put a check for the free builds */
@@ -485,7 +485,7 @@ uint32_t tx_timer_delete(TX_TIMER *timer_ptr)
  */
 bool tx_timer_running(TX_TIMER *timer_ptr)
 {
-	CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 		  "tx_timer_running() called for timer %s\n", TIMER_NAME);
 
 	/* Put a check for the free builds */

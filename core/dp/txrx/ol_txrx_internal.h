@@ -381,7 +381,7 @@ ol_txrx_frms_dump(const char *name,
 	uint8_t *p;
 
 	if (name) {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO, "%s\n",
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO, "%s\n",
 			  name);
 	}
 	while (frm) {
@@ -435,8 +435,8 @@ ol_txrx_frms_dump(const char *name,
 				ip_prot = ipv6_hdr->next_hdr;
 				tcp_offset = l2_hdr_size + IPV6_HDR_LEN;
 			} else {
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO,
 					  "frame %p non-IP ethertype (%x)\n",
 					  frm, ethtype);
 				goto NOT_IP_TCP;
@@ -451,13 +451,13 @@ ol_txrx_frms_dump(const char *name,
 					(tcp_hdr->seq_num[1] << 16) |
 					(tcp_hdr->seq_num[1] << 8) |
 					(tcp_hdr->seq_num[1] << 0);
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO,
 					  "frame %p: TCP seq num = %d\n", frm,
 					  tcp_seq_num);
 #else
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO,
 					  "frame %p: TCP seq num = %d\n", frm,
 					  ((*(p + tcp_offset + 4)) << 24) |
 					  ((*(p + tcp_offset + 5)) << 16) |
@@ -465,8 +465,8 @@ ol_txrx_frms_dump(const char *name,
 					  (*(p + tcp_offset + 7)));
 #endif
 			} else {
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO,
 					  "frame %p non-TCP IP protocol (%x)\n",
 					  frm, ip_prot);
 			}
@@ -502,13 +502,13 @@ NOT_IP_TCP:
 				i += frag_bytes;
 			}
 
-			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "frame %p data (%p), hex dump of bytes 0-%d of %d:\n",
 				frm, p, len_lim - 1, (int)cdf_nbuf_len(frm));
 			p = local_buf;
 			while (len_lim > 16) {
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO,
 					  "  "        /* indent */
 					  "%02x %02x %02x %02x %02x %02x %02x %02x "
 					  "%02x %02x %02x %02x %02x %02x %02x %02x\n",
@@ -521,15 +521,15 @@ NOT_IP_TCP:
 				p += 16;
 				len_lim -= 16;
 			}
-			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "  " /* indent */);
 			while (len_lim > 0) {
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO, "%02x ", *p);
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO, "%02x ", *p);
 				p++;
 				len_lim--;
 			}
-			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "\n");
 		}
 		frm = cdf_nbuf_next(frm);

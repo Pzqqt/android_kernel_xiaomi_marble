@@ -44,7 +44,7 @@
 #include "wlan_hdd_hostapd.h"
 #include "cds_concurrency.h"
 #include "qdf_types.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 
 #include <net/addrconf.h>
 #include <linux/wireless.h>
@@ -6292,7 +6292,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 		 */
 		if (false == are_cc_channels_same) {
 			if (true == cds_is_sta_connection_pending()) {
-				MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+				MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 					TRACE_CODE_HDD_CLEAR_JOIN_REQ,
 					sta_adapter->sessionId, *roam_id));
 				ret = sme_clear_joinreq_param(
@@ -6305,7 +6305,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 				cds_change_sta_conn_pending_status(false);
 				cds_info("===>Clear pending join req");
 			}
-			MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+			MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 					TRACE_CODE_HDD_STORE_JOIN_REQ,
 					sta_adapter->sessionId, *roam_id));
 			/* store the scan cache here */

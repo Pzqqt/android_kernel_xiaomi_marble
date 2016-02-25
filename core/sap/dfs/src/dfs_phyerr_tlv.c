@@ -154,52 +154,52 @@ radar_summary_print(struct ath_dfs *dfs,
 	else
 		is_chip_oversampling = PERE_IS_OVERSAMPLING(dfs);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "\n ############ Radar Summary ############\n");
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - pulsedur = %d micro seconds\n", __func__,
 		  rsu->pulse_duration);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - rssi = %d dbm\n", __func__,
 		  rsu->rssi);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - ischirp = %d\n", __func__,
 		  rsu->is_chirp);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - sidx = %d\n", __func__,
 		  rsu->sidx);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - delta_peak = %d\n", __func__,
 		  rsu->delta_peak);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - delta_diff = %d\n", __func__,
 		  rsu->delta_diff);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - raw tsf = %d\n", __func__,
 		  rsu->raw_tsf);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - tsf_offset = %d micro seconds\n",
 		  __func__, rsu->tsf_offset);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: Radar Summary - cooked tsf = %d\n", __func__,
 		  (rsu->raw_tsf - rsu->tsf_offset));
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s: frequency offset = %d.%d MHz (oversampling = %d)\n",
 		  __func__, (int) (rsu->freq_offset / 1000),
 		  (int) abs(rsu->freq_offset % 1000),
 		  is_chip_oversampling);
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "\n ###################################\n");
 }
 
@@ -223,12 +223,12 @@ radar_summary_parse(struct ath_dfs *dfs, const char *buf, size_t len,
 	 */
 	if ((dfs->ic->dfs_hw_bd_id ==  DFS_HWBD_QCA6174) &&
 	    (len < sizeof(rs))) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 		  "%s: DFS-2 radar summary len = (%zu) wrong, expected = (%zu)",
 		  __func__, len, sizeof(rs));
 	} else if ((dfs->ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) &&
 		(len < sizeof(dfs3_rs))) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 		  "%s: DFS-3 radar summary len = (%zu) wrong, expected = (%zu)",
 		  __func__, len, sizeof(dfs3_rs));
 	}
@@ -859,7 +859,7 @@ dfs_process_phyerr_bb_tlv(struct ath_dfs *dfs, void *buf, uint16_t datalen,
 		 * in noisy environments.
 		 */
 		if (!(invalid_phyerr_count & 0xFF)) {
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_DEBUG,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG,
 				"%s[%d]:parse failed invalid phyerror cnt = %d",
 				__func__, __LINE__, invalid_phyerr_count);
 		}

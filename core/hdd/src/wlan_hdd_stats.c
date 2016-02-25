@@ -235,7 +235,7 @@ static bool put_wifi_rate_stat(tpSirWifiRateStat stats,
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_RATE_RETRIES_LONG,
 			   stats->retriesLong)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 		return false;
 	}
@@ -268,7 +268,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 	    nla_put_u32(vendor_event,
 			   QCA_WLAN_VENDOR_ATTR_LL_STATS_PEER_INFO_NUM_RATES,
 			   stats->numRate)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 		goto error;
 	}
@@ -294,7 +294,7 @@ static bool put_wifi_peer_info(tpSirWifiPeerInfo stats,
 
 			if (false ==
 			    put_wifi_rate_stat(pRateStats, vendor_event)) {
-				hddLog(CDF_TRACE_LEVEL_ERROR,
+				hddLog(QDF_TRACE_LEVEL_ERROR,
 				       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 				return false;
 			}
@@ -362,7 +362,7 @@ static bool put_wifi_wmm_ac_stat(tpSirWifiWmmAcStat stats,
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_WMM_AC_CONTENTION_NUM_SAMPLES,
 			stats->contentionNumSamples)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 		return false;
 	}
@@ -407,7 +407,7 @@ static bool put_wifi_interface_info(tpSirWifiInterfaceInfo stats,
 	    nla_put(vendor_event,
 		    QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_INFO_COUNTRY_STR,
 		    WNI_CFG_COUNTRY_CODE_LEN, stats->countryStr)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 		return false;
 	}
@@ -433,7 +433,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 
 	if (false == put_wifi_interface_info(&pWifiIfaceStat->info,
 					     vendor_event)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 		return false;
 
@@ -482,7 +482,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 	    nla_put_u64(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_AVERAGE_TSF_OFFSET,
 			average_tsf_offset)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 		return false;
 	}
@@ -500,7 +500,7 @@ static bool put_wifi_iface_stats(tpSirWifiIfaceStat pWifiIfaceStat,
 		if (false ==
 		    put_wifi_wmm_ac_stat(&pWifiIfaceStat->AccessclassStats[i],
 					 vendor_event)) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("put_wifi_wmm_ac_stat Fail"));
 			return false;
 		}
@@ -565,7 +565,7 @@ static bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 		}
 		if (eConnectionState_Connecting ==
 		    pHddStaCtx->conn_info.connState) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       "%s: Session ID %d, Connection is in progress",
 			       __func__, pAdapter->sessionId);
 			pInfo->state = WIFI_ASSOCIATING;
@@ -576,7 +576,7 @@ static bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 			staMac =
 				(uint8_t *) &(pAdapter->macAddressCurrent.
 					      bytes[0]);
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       "%s: client " MAC_ADDRESS_STR
 			       " is in the middle of WPS/EAPOL exchange.",
 			       __func__, MAC_ADDR_ARRAY(staMac));
@@ -638,7 +638,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 	if (0 != status)
 		return;
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 	       "LL_STATS_PEER_ALL : numPeers %u, more data = %u",
 	       pWifiPeerStat->numPeers, more_data);
 
@@ -668,7 +668,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_IFACE_NUM_PEERS,
 			pWifiPeerStat->numPeers)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: QCA_WLAN_VENDOR_ATTR put fail", __func__);
 
 		kfree_skb(vendor_event);
@@ -700,7 +700,7 @@ static void hdd_link_layer_process_peer_stats(hdd_adapter_t *pAdapter,
 
 			if (false ==
 			    put_wifi_peer_info(pWifiPeerInfo, vendor_event)) {
-				hddLog(CDF_TRACE_LEVEL_ERROR,
+				hddLog(QDF_TRACE_LEVEL_ERROR,
 				       FL("put_wifi_peer_info fail"));
 				kfree_skb(vendor_event);
 				return;
@@ -765,15 +765,15 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 				LL_STATS_EVENT_BUF_SIZE);
 
 	if (!vendor_event) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("cfg80211_vendor_cmd_alloc_reply_skb failed"));
 		return;
 	}
 
-	hddLog(CDF_TRACE_LEVEL_INFO, "WMI_LINK_STATS_IFACE Data");
+	hddLog(QDF_TRACE_LEVEL_INFO, "WMI_LINK_STATS_IFACE Data");
 
 	if (false == hdd_get_interface_info(pAdapter, &pWifiIfaceStat->info)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("hdd_get_interface_info get fail"));
 		kfree_skb(vendor_event);
 		return;
@@ -781,7 +781,7 @@ static void hdd_link_layer_process_iface_stats(hdd_adapter_t *pAdapter,
 
 	if (false ==
 	    put_wifi_iface_stats(pWifiIfaceStat, num_peers, vendor_event)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("put_wifi_iface_stats fail"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("put_wifi_iface_stats fail"));
 		kfree_skb(vendor_event);
 		return;
 	}
@@ -822,7 +822,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 	if (0 != status)
 		return;
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 	       "LL_STATS_RADIO"
 	       " number of radios = %u"
 	       " radio is %d onTime is %u"
@@ -903,7 +903,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 	    nla_put_u32(vendor_event,
 			QCA_WLAN_VENDOR_ATTR_LL_STATS_RADIO_NUM_CHANNELS,
 			pWifiRadioStat->numChannels)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("QCA_WLAN_VENDOR_ATTR put fail"));
 
 		kfree_skb(vendor_event);
@@ -957,7 +957,7 @@ static void hdd_link_layer_process_radio_stats(hdd_adapter_t *pAdapter,
 			    nla_put_u32(vendor_event,
 					   QCA_WLAN_VENDOR_ATTR_LL_STATS_CHANNEL_CCA_BUSY_TIME,
 					   pWifiChannelStats->ccaBusyTime)) {
-				hddLog(CDF_TRACE_LEVEL_ERROR,
+				hddLog(QDF_TRACE_LEVEL_ERROR,
 				       FL("nla_put failed"));
 				kfree_skb(vendor_event);
 				return;
@@ -994,7 +994,7 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 	status = wlan_hdd_validate_context(pHddCtx);
 
 	if (0 != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("HDD context is not valid"));
 		return;
 	}
 
@@ -1002,19 +1002,19 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 					   linkLayerStatsResults->ifaceId);
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: vdev_id %d does not exist with host",
 			  __func__, linkLayerStatsResults->ifaceId);
 		return;
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s: Link Layer Indication indType: %d", __func__, indType);
 
 	switch (indType) {
 	case SIR_HAL_LL_STATS_RESULTS_RSP:
 	{
-		hddLog(CDF_TRACE_LEVEL_INFO,
+		hddLog(QDF_TRACE_LEVEL_INFO,
 			"LL_STATS RESP paramID = 0x%x, ifaceId = %u, respId= %u , moreResultToFollow = %u, num radio = %u result = %p",
 			linkLayerStatsResults->paramId,
 			linkLayerStatsResults->ifaceId,
@@ -1092,7 +1092,7 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 		break;
 	}
 	default:
-		hddLog(CDF_TRACE_LEVEL_ERROR, "invalid event type %d", indType);
+		hddLog(QDF_TRACE_LEVEL_ERROR, "invalid event type %d", indType);
 		break;
 	}
 
@@ -1156,20 +1156,20 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_MAX,
 		      (struct nlattr *)data,
 		      data_len, qca_wlan_vendor_ll_set_policy)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("maximum attribute not present"));
 		return -EINVAL;
 	}
 
 	if (!tb_vendor
 	    [QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_MPDU_SIZE_THRESHOLD]) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("MPDU size Not present"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("MPDU size Not present"));
 		return -EINVAL;
 	}
 
 	if (!tb_vendor
 	    [QCA_WLAN_VENDOR_ATTR_LL_STATS_SET_CONFIG_AGGRESSIVE_STATS_GATHERING]) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Stats Gathering Not Present"));
 		return -EINVAL;
 	}
@@ -1187,7 +1187,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 
 	LinkLayerStatsSetReq.staId = pAdapter->sessionId;
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 		"LL_STATS_SET reqId = %d, staId = %d, mpduSizeThreshold = %d, Statistics Gathering  = %d",
 		LinkLayerStatsSetReq.reqId, LinkLayerStatsSetReq.staId,
 		LinkLayerStatsSetReq.mpduSizeThreshold,
@@ -1195,7 +1195,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 
 	if (QDF_STATUS_SUCCESS != sme_ll_stats_set_req(pHddCtx->hHal,
 						       &LinkLayerStatsSetReq)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, "%s:"
+		hddLog(QDF_TRACE_LEVEL_ERROR, "%s:"
 		       "sme_ll_stats_set_req Failed", __func__);
 		return -EINVAL;
 	}
@@ -1287,17 +1287,17 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_MAX,
 		      (struct nlattr *)data,
 		      data_len, qca_wlan_vendor_ll_get_policy)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("max attribute not present"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("max attribute not present"));
 		return -EINVAL;
 	}
 
 	if (!tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_ID]) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("Request Id Not present"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Request Id Not present"));
 		return -EINVAL;
 	}
 
 	if (!tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_GET_CONFIG_REQ_MASK]) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("Req Mask Not present"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Req Mask Not present"));
 		return -EINVAL;
 	}
 
@@ -1310,7 +1310,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	LinkLayerStatsGetReq.staId = pAdapter->sessionId;
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 		"LL_STATS_GET reqId = %d, staId = %d, paramIdMask = %d",
 		LinkLayerStatsGetReq.reqId,
 		LinkLayerStatsGetReq.staId,
@@ -1325,7 +1325,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	if (QDF_STATUS_SUCCESS != sme_ll_stats_get_req(pHddCtx->hHal,
 						       &LinkLayerStatsGetReq)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, "%s:"
+		hddLog(QDF_TRACE_LEVEL_ERROR, "%s:"
 		       "sme_ll_stats_get_req Failed", __func__);
 		return -EINVAL;
 	}
@@ -1411,7 +1411,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 		return -EINVAL;
 
 	if (!pAdapter->isLinkLayerStatsSet) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       "%s: isLinkLayerStatsSet : %d",
 		       __func__, pAdapter->isLinkLayerStatsSet);
 		return -EINVAL;
@@ -1420,14 +1420,14 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 	if (nla_parse(tb_vendor, QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_MAX,
 		      (struct nlattr *)data,
 		      data_len, qca_wlan_vendor_ll_clr_policy)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("STATS_CLR_MAX is not present"));
 		return -EINVAL;
 	}
 
 	if (!tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_CONFIG_REQ_MASK] ||
 	    !tb_vendor[QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_CONFIG_STOP_REQ]) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Error in LL_STATS CLR CONFIG PARA"));
 		return -EINVAL;
 	}
@@ -1447,7 +1447,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 
 	LinkLayerStatsClearReq.staId = pAdapter->sessionId;
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 		"LL_STATS_CLEAR reqId = %d, staId = %d, statsClearReqMask = 0x%X, stopReq  = %d",
 		LinkLayerStatsClearReq.reqId,
 		LinkLayerStatsClearReq.staId,
@@ -1468,7 +1468,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 			    nla_put_u32(temp_skbuff,
 					QCA_WLAN_VENDOR_ATTR_LL_STATS_CLR_CONFIG_STOP_RSP,
 					stopReq)) {
-				hddLog(CDF_TRACE_LEVEL_ERROR,
+				hddLog(QDF_TRACE_LEVEL_ERROR,
 				       FL("LL_STATS_CLR put fail"));
 				kfree_skb(temp_skbuff);
 				return -EINVAL;
@@ -1607,7 +1607,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	status = wlan_hdd_validate_context(pHddCtx);
 
 	if (0 != status) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is not valid", __func__);
 		return;
 	}
@@ -1615,7 +1615,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	pAdapter = hdd_get_adapter_by_vdev(pHddCtx, data->vdev_id);
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: vdev_id %d does not exist with host",
 			  __func__, data->vdev_id);
 		return;
@@ -1630,7 +1630,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 						   GFP_KERNEL);
 
 	if (!vendor_event) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: cfg80211_vendor_event_alloc failed", __func__);
 		return;
 	}
@@ -1638,7 +1638,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 	ret_val = nla_put_u32(vendor_event, QCA_WLAN_VENDOR_ATTR_IFINDEX,
 			      pAdapter->dev->ifindex);
 	if (ret_val) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: QCA_WLAN_VENDOR_ATTR_IFINDEX put fail",
 			  __func__);
 		kfree_skb(vendor_event);
@@ -1650,7 +1650,7 @@ static void wlan_hdd_cfg80211_stats_ext_callback(void *ctx,
 			  data->event_data_len, data->event_data);
 
 	if (ret_val) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: QCA_WLAN_VENDOR_ATTR_STATS_EXT put fail",
 			  __func__);
 		kfree_skb(vendor_event);
@@ -2161,7 +2161,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			sinfo->txrate.mcs, sinfo->txrate.flags,
 			sinfo->tx_packets, sinfo->rx_packets);
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_GET_STA,
 			 pAdapter->sessionId, maxRate));
 	EXIT();
@@ -2272,7 +2272,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 	wlan_hdd_get_snr(pAdapter, &snr);
 	wlan_hdd_get_rssi(pAdapter, &rssi);
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_DUMP_SURVEY,
 			 pAdapter->sessionId, pAdapter->device_mode));
 

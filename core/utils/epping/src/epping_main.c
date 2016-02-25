@@ -85,12 +85,12 @@ static struct epping_context *g_epping_ctx;
  */
 int epping_open(void)
 {
-	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
 
 	g_epping_ctx = cdf_mem_malloc(sizeof(*g_epping_ctx));
 
 	if (g_epping_ctx == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_ERROR,
+		EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
 				"%s: cannot alloc epping context", __func__);
 		return -ENOMEM;
 	}
@@ -113,7 +113,7 @@ void epping_disable(void)
 
 	pEpping_ctx = g_epping_ctx;
 	if (pEpping_ctx == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: error: pEpping_ctx  = NULL", __func__);
 		return;
 	}
@@ -141,7 +141,7 @@ void epping_close(void)
 
 
 	if (g_epping_ctx == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: error: g_epping_ctx  = NULL", __func__);
 		return;
 	}
@@ -156,7 +156,7 @@ static void epping_target_suspend_acknowledge(void *context)
 	int wow_nack = *((int *)context);
 
 	if (NULL == g_epping_ctx) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_ctx is NULL", __func__);
 		return;
 	}
@@ -184,12 +184,12 @@ int epping_enable(struct device *parent_dev)
 	struct hif_target_info *tgt_info;
 	struct ol_context *ol_ctx;
 
-	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
 
 	p_cds_context = cds_get_global_context();
 
 	if (p_cds_context == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed cds_get_global_context", __func__);
 		ret = -1;
 		return ret;
@@ -197,7 +197,7 @@ int epping_enable(struct device *parent_dev)
 
 	pEpping_ctx = g_epping_ctx;
 	if (pEpping_ctx == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed to get pEpping_ctx", __func__);
 		ret = -1;
 		return ret;
@@ -210,7 +210,7 @@ int epping_enable(struct device *parent_dev)
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
 	if (!scn) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: scn is null!", __func__);
 		return -1;
 	}
@@ -224,13 +224,13 @@ int epping_enable(struct device *parent_dev)
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */
 	if (bmi_download_firmware(ol_ctx)) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: BMI failed to download target", __func__);
 		bmi_cleanup(ol_ctx);
 		return -1;
 	}
 #endif
-	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 		   "%s: bmi_download_firmware done", __func__);
 
 	htcInfo.pContext = ol_ctx;
@@ -241,7 +241,7 @@ int epping_enable(struct device *parent_dev)
 	/* Create HTC */
 	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, cdf_ctx);
 	if (!p_cds_context->htc_ctx) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);
 		bmi_cleanup(ol_ctx);
 		return -1;
@@ -249,35 +249,35 @@ int epping_enable(struct device *parent_dev)
 	pEpping_ctx->HTCHandle =
 		cds_get_context(QDF_MODULE_ID_HTC);
 	if (pEpping_ctx->HTCHandle == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: HTCHandle is NULL", __func__);
 		return -1;
 	}
 
 	if (bmi_done(ol_ctx)) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Failed to complete BMI phase", __func__);
 		goto error_end;
 	}
 
 	/* start HIF */
 	if (htc_wait_target(pEpping_ctx->HTCHandle) != A_OK) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_wait_target error", __func__);
 		goto error_end;
 	}
-	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: HTC ready", __func__);
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: HTC ready", __func__);
 
 	ret = epping_connect_service(pEpping_ctx);
 	if (ret != 0) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_wait_targetdone", __func__);
 		goto error_end;
 	}
 	if (htc_start(pEpping_ctx->HTCHandle) != A_OK) {
 		goto error_end;
 	}
-	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: HTC started", __func__);
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: HTC started", __func__);
 
 	/* init the tx cookie resource */
 	ret = epping_cookie_init(pEpping_ctx);
@@ -287,14 +287,14 @@ int epping_enable(struct device *parent_dev)
 								 QDF_STA_MODE);
 	}
 	if (ret < 0 || pEpping_ctx->epping_adapter == NULL) {
-		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
+		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: epping_add_adaptererror error", __func__);
 		htc_stop(pEpping_ctx->HTCHandle);
 		epping_cookie_cleanup(pEpping_ctx);
 		goto error_end;
 	}
 
-	EPPING_LOG(CDF_TRACE_LEVEL_INFO_HIGH, "%s: Exit", __func__);
+	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: Exit", __func__);
 	return ret;
 
 error_end:

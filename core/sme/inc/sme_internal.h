@@ -39,7 +39,7 @@
   ------------------------------------------------------------------------*/
 #include "qdf_status.h"
 #include "qdf_lock.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "cdf_memory.h"
 #include "qdf_types.h"
 #include "host_diag_core_event.h"

@@ -74,7 +74,7 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 	if (NULL == pMsg)
 		goto error;
 	else {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO, "%s call",
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s call",
 			  __func__);
 		cdf_mem_set(pMsg, sizeof(tSirRemainOnChnReq), 0);
 		pMsg->messageType = eWNI_SME_REMAIN_ON_CHANNEL_REQ;
@@ -311,7 +311,7 @@ QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 	tSirMbMsgP2p *pMsg;
 	uint16_t msgLen;
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
 		  " %s sends action frame", __func__);
 	msgLen = (uint16_t) ((sizeof(tSirMbMsgP2p)) + len);
 	pMsg = cdf_mem_malloc(msgLen);

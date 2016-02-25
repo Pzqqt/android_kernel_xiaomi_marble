@@ -43,7 +43,7 @@
 
 #include "lim_trace.h"
 #include "lim_timer_utils.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 
 #ifdef LIM_TRACE_RECORD
 uint32_t g_mgmt_frame_stats[14];
@@ -106,10 +106,10 @@ static uint8_t *__lim_trace_get_mgmt_drop_reason_string(uint16_t dropReason)
 
 void lim_trace_init(tpAniSirGlobal pMac)
 {
-	cdf_trace_register(QDF_MODULE_ID_PE, (tp_cdf_trace_cb) &lim_trace_dump);
+	qdf_trace_register(QDF_MODULE_ID_PE, (tp_qdf_trace_cb) &lim_trace_dump);
 }
 
-void lim_trace_dump(tpAniSirGlobal pMac, tp_cdf_trace_record pRecord,
+void lim_trace_dump(tpAniSirGlobal pMac, tp_qdf_trace_record pRecord,
 		    uint16_t recIndex)
 {
 

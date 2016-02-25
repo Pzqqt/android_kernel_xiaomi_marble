@@ -117,7 +117,7 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 	uint16_t total_len;
 
 	if (cds_is_load_or_unload_in_progress()) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 			  "%s: Unloading/Loading in Progress. Ignore!!!",
 			  __func__);
 		return;
@@ -134,7 +134,7 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 		pBuf = (uint8_t *) cdf_mem_malloc(total_len);
 
 		if (!pBuf) {
-			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "cdf_mem_malloc failed");
 			return;
 		}
@@ -214,7 +214,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 	uint16_t total_len;
 
 	if (cds_is_load_or_unload_in_progress()) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 			  "%s: Unloading/Loading in Progress. Ignore!!!",
 			  __func__);
 		return;
@@ -229,7 +229,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 		pBuf = (uint8_t *) cdf_mem_malloc(total_len);
 
 		if (!pBuf) {
-			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "cdf_mem_malloc failed");
 			return;
 		}
@@ -250,7 +250,7 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 
 		if (ptt_sock_send_msg_to_app
 			    (wmsg, 0, ANI_NL_MSG_PUMAC, INVALID_PID) < 0) {
-			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "Ptt Socket error sending message to the app!!");
 			cdf_mem_free((void *)wmsg);
 			return;

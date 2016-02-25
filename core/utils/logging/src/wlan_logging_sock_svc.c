@@ -41,7 +41,7 @@
 #include <host_diag_core_event.h>
 
 #define LOGGING_TRACE(level, args ...) \
-	CDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
+	QDF_TRACE(QDF_MODULE_ID_HDD, level, ## args)
 
 /* Global variables */
 
@@ -119,7 +119,7 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	static int nlmsg_seq;
 
 	if (radio < 0 || radio > ANI_MAX_RADIOS) {
-		LOGGING_TRACE(CDF_TRACE_LEVEL_ERROR,
+		LOGGING_TRACE(QDF_TRACE_LEVEL_ERROR,
 			      "%s: invalid radio id [%d]", __func__, radio);
 		return -EINVAL;
 	}
@@ -128,7 +128,7 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	tot_msg_len = NLMSG_SPACE(payload_len);
 	skb = dev_alloc_skb(tot_msg_len);
 	if (skb == NULL) {
-		LOGGING_TRACE(CDF_TRACE_LEVEL_ERROR,
+		LOGGING_TRACE(QDF_TRACE_LEVEL_ERROR,
 			      "%s: dev_alloc_skb() failed for msg size[%d]",
 			      __func__, tot_msg_len);
 		return -ENOMEM;
@@ -136,7 +136,7 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	nlh = nlmsg_put(skb, pid, nlmsg_seq++, src_mod, payload_len,
 			NLM_F_REQUEST);
 	if (NULL == nlh) {
-		LOGGING_TRACE(CDF_TRACE_LEVEL_ERROR,
+		LOGGING_TRACE(QDF_TRACE_LEVEL_ERROR,
 			      "%s: nlmsg_put() failed for msg size[%d]",
 			      __func__, tot_msg_len);
 		kfree_skb(skb);
@@ -146,7 +146,7 @@ static int wlan_send_sock_msg_to_app(tAniHdr *wmsg, int radio,
 	wnl = (tAniNlHdr *) nlh;
 	wnl->radio = radio;
 	memcpy(&wnl->wmsg, wmsg, wmsg_length);
-	LOGGING_TRACE(CDF_TRACE_LEVEL_INFO,
+	LOGGING_TRACE(QDF_TRACE_LEVEL_INFO,
 		      "%s: Sending Msg Type [0x%X] to pid[%d]\n",
 		      __func__, be16_to_cpu(wmsg->type), pid);
 
@@ -183,10 +183,10 @@ static void set_default_logtoapp_log_level(void)
 	/* module id 0 is reserved */
 	for (i = 1; i < QDF_MODULE_ID_MAX; i++) {
 		if (is_data_path_module(i))
-			cdf_trace_set_module_trace_level(i,
-					CDF_DATA_PATH_TRACE_LEVEL);
+			qdf_trace_set_module_trace_level(i,
+					QDF_DATA_PATH_TRACE_LEVEL);
 		else
-			cdf_trace_set_value(i, CDF_TRACE_LEVEL_ALL, true);
+			qdf_trace_set_value(i, QDF_TRACE_LEVEL_ALL, true);
 	}
 }
 
@@ -195,12 +195,12 @@ static void clear_default_logtoapp_log_level(void)
 	int module;
 
 	for (module = 0; module < QDF_MODULE_ID_MAX; module++) {
-		cdf_trace_set_value(module, CDF_TRACE_LEVEL_NONE, false);
-		cdf_trace_set_value(module, CDF_TRACE_LEVEL_FATAL, true);
-		cdf_trace_set_value(module, CDF_TRACE_LEVEL_ERROR, true);
+		qdf_trace_set_value(module, QDF_TRACE_LEVEL_NONE, false);
+		qdf_trace_set_value(module, QDF_TRACE_LEVEL_FATAL, true);
+		qdf_trace_set_value(module, QDF_TRACE_LEVEL_ERROR, true);
 	}
 
-	cdf_trace_set_value(QDF_MODULE_ID_RSV4, CDF_TRACE_LEVEL_NONE,
+	qdf_trace_set_value(QDF_MODULE_ID_RSV4, QDF_TRACE_LEVEL_NONE,
 			    false);
 }
 
@@ -297,7 +297,7 @@ static int wlan_add_user_log_time_stamp(char *tbuf, size_t tbuf_sz, uint64_t ts)
 }
 #endif
 
-int wlan_log_to_user(CDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
+int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 {
 	/* Add the current time stamp */
 	char *ptr;
@@ -352,13 +352,13 @@ int wlan_log_to_user(CDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	/* Assumption here is that we receive logs which is always less than
 	 * MAX_LOGMSG_LENGTH, where we can accomodate the
 	 *   tAniNlHdr + [context][timestamp] + log
-	 * CDF_ASSERT if we cannot accomodate the the complete log into
+	 * QDF_ASSERT if we cannot accomodate the the complete log into
 	 * the available buffer.
 	 *
 	 * Continue and copy logs to the available length and discard the rest.
 	 */
 	if (MAX_LOGMSG_LENGTH < (sizeof(tAniNlHdr) + total_log_len)) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		total_log_len = MAX_LOGMSG_LENGTH - sizeof(tAniNlHdr) - 2;
 	}
 
@@ -378,8 +378,8 @@ int wlan_log_to_user(CDF_TRACE_LEVEL log_level, char *to_be_sent, int length)
 	}
 
 	if (gwlan_logging.log_fe_to_console
-	    && ((CDF_TRACE_LEVEL_FATAL == log_level)
-		|| (CDF_TRACE_LEVEL_ERROR == log_level))) {
+	    && ((QDF_TRACE_LEVEL_FATAL == log_level)
+		|| (QDF_TRACE_LEVEL_ERROR == log_level))) {
 		pr_info("%s\n", to_be_sent);
 	}
 
@@ -509,7 +509,7 @@ void send_flush_completion_to_user(void)
 	cds_get_log_completion(&is_fatal, &indicator, &reason_code);
 
 	/* Error on purpose, so that it will get logged in the kmsg */
-	LOGGING_TRACE(CDF_TRACE_LEVEL_ERROR,
+	LOGGING_TRACE(QDF_TRACE_LEVEL_ERROR,
 			"%s: Sending flush done to userspace", __func__);
 
 	wlan_report_log_completion(is_fatal, indicator, reason_code);
@@ -616,7 +616,7 @@ static int wlan_logging_proc_sock_rx_msg(struct sk_buff *skb)
 	type = wnl->nlh.nlmsg_type;
 
 	if (radio < 0 || radio > ANI_MAX_RADIOS) {
-		LOGGING_TRACE(CDF_TRACE_LEVEL_ERROR,
+		LOGGING_TRACE(QDF_TRACE_LEVEL_ERROR,
 			      "%s: invalid radio id [%d]\n", __func__, radio);
 		return -EINVAL;
 	}
@@ -644,7 +644,7 @@ static int wlan_logging_proc_sock_rx_msg(struct sk_buff *skb)
 	ret = wlan_send_sock_msg_to_app(&wnl->wmsg, 0,
 					ANI_NL_MSG_LOG, wnl->nlh.nlmsg_pid);
 	if (ret < 0) {
-		LOGGING_TRACE(CDF_TRACE_LEVEL_ERROR,
+		LOGGING_TRACE(QDF_TRACE_LEVEL_ERROR,
 			      "wlan_send_sock_msg_to_app: failed");
 	}
 

@@ -661,7 +661,7 @@ void lim_cleanup(tpAniSirGlobal pMac)
 			&pMac->lim.gLimMgmtFrameRegistratinQueue,
 			(qdf_list_node_t **) &pLimMgmtRegistration) ==
 			QDF_STATUS_SUCCESS) {
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			FL("Fixing leak! Deallocating pLimMgmtRegistration node"));
 			cdf_mem_free(pLimMgmtRegistration);
 		}
@@ -1857,16 +1857,16 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 
 	if (roam_offload_synch_ind_ptr->beaconProbeRespLength <=
 			SIR_MAC_HDR_LEN_3A) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR, "%s: very"
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR, "%s: very"
 		"few bytes in synchInd beacon / probe resp frame! length=%d",
 		__func__, roam_offload_synch_ind_ptr->beaconProbeRespLength);
 		cdf_mem_free(parsed_frm_ptr);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 		"LFR3:Beacon/Prb Rsp:%d", roam_offload_synch_ind_ptr->isBeacon);
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 	bcn_proberesp_ptr, roam_offload_synch_ind_ptr->beaconProbeRespLength);
 	if (roam_offload_synch_ind_ptr->isBeacon) {
 		if (sir_parse_beacon_ie(pMac, parsed_frm_ptr,
@@ -1875,7 +1875,7 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			roam_offload_synch_ind_ptr->beaconProbeRespLength -
 			SIR_MAC_HDR_LEN_3A) != eSIR_SUCCESS ||
 			!parsed_frm_ptr->ssidPresent) {
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			"Parse error Beacon, length=%d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
 			cdf_mem_free(parsed_frm_ptr);
@@ -1887,7 +1887,7 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 			roam_offload_synch_ind_ptr->beaconProbeRespLength -
 			SIR_MAC_HDR_LEN_3A, parsed_frm_ptr) != eSIR_SUCCESS ||
 			!parsed_frm_ptr->ssidPresent) {
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			"Parse error ProbeResponse, length=%d",
 			roam_offload_synch_ind_ptr->beaconProbeRespLength);
 			cdf_mem_free(parsed_frm_ptr);
@@ -1969,11 +1969,11 @@ QDF_STATUS lim_roam_fill_bss_descr(tpAniSirGlobal pMac,
 				(uint8_t *)parsed_frm_ptr->mdie,
 				SIR_MDIE_SIZE);
 	}
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"LFR3:%s:BssDescr Info:", __func__);
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			bss_desc_ptr->bssId, sizeof(tSirMacAddr));
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"chan=%d, rssi=%d", bss_desc_ptr->channelId,
 			bss_desc_ptr->rssi);
 	if (ie_len) {
@@ -2015,10 +2015,10 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 		return status;
 	}
 	lim_log(mac_ctx, LOGE, FL("LFR3:Received WMA_ROAM_OFFLOAD_SYNCH_IND"));
-	lim_log(mac_ctx, CDF_TRACE_LEVEL_DEBUG, FL("LFR3:auth=%d, vdevId=%d"),
+	lim_log(mac_ctx, QDF_TRACE_LEVEL_DEBUG, FL("LFR3:auth=%d, vdevId=%d"),
 		roam_sync_ind_ptr->authStatus, roam_sync_ind_ptr->roamedVdevId);
 	lim_print_mac_addr(mac_ctx, roam_sync_ind_ptr->bssid.bytes,
-			CDF_TRACE_LEVEL_DEBUG);
+			QDF_TRACE_LEVEL_DEBUG);
 	session_ptr = pe_find_session_by_sme_session_id(mac_ctx,
 				roam_sync_ind_ptr->roamedVdevId);
 	if (session_ptr == NULL) {
@@ -2104,7 +2104,7 @@ QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 			mac_ctx->roam.reassocRespLen);
 
 	lim_log(mac_ctx, LOG1, FL("LFR3:the reassoc resp frame data:"));
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			mac_ctx->roam.pReassocResp,
 			mac_ctx->roam.reassocRespLen);
 	ft_session_ptr->bRoamSynchInProgress = true;

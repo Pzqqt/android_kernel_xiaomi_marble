@@ -91,7 +91,7 @@ lim_send_sme_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 	sme_rsp = cdf_mem_malloc(sizeof(tSirSmeRsp));
 	if (NULL == sme_rsp) {
 		/* Buffer not available. Log error */
-		CDF_TRACE(QDF_MODULE_ID_PE, LOGP,
+		QDF_TRACE(QDF_MODULE_ID_PE, LOGP,
 			FL("call to AllocateMemory failed for eWNI_SME_*_RSP"));
 		return;
 	}
@@ -149,7 +149,7 @@ lim_send_sme_roc_rsp(tpAniSirGlobal mac_ctx, uint16_t msg_type,
 
 	sme_rsp = cdf_mem_malloc(sizeof(struct sir_roc_rsp));
 	if (NULL == sme_rsp) {
-		CDF_TRACE(QDF_MODULE_ID_PE, LOGP,
+		QDF_TRACE(QDF_MODULE_ID_PE, LOGP,
 			FL("call to AllocateMemory failed for eWNI_SME_*_RSP"));
 		return;
 	}

@@ -33,15 +33,15 @@
 #include <wlan_nlink_srv.h>
 #include <qdf_types.h>
 #include <qdf_status.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 #include <wlan_nlink_common.h>
 #include <wlan_ptt_sock_svc.h>
 #include <qdf_types.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 
 #define PTT_SOCK_DEBUG
 #ifdef PTT_SOCK_DEBUG
-#define PTT_TRACE(level, args ...) CDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
+#define PTT_TRACE(level, args ...) QDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
 #else
 #define PTT_TRACE(level, args ...)
 #endif
@@ -56,13 +56,13 @@ static void ptt_sock_dump_buf(const unsigned char *pbuf, int cnt)
 	int i;
 	for (i = 0; i < cnt; i++) {
 		if ((i % 16) == 0)
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO,
 				  "\n%p:", pbuf);
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO, " %02X",
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO, " %02X",
 			  *pbuf);
 		pbuf++;
 	}
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_INFO, "\n");
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO, "\n");
 }
 #endif
 
@@ -90,7 +90,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	static int nlmsg_seq;
 
 	if (radio < 0 || radio > ANI_MAX_RADIOS) {
-		PTT_TRACE(CDF_TRACE_LEVEL_ERROR, "%s: invalid radio id [%d]\n",
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "%s: invalid radio id [%d]\n",
 			  __func__, radio);
 		return -EINVAL;
 	}
@@ -98,7 +98,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	tot_msg_len = NLMSG_SPACE(payload_len);
 	skb = dev_alloc_skb(tot_msg_len);
 	if (skb  == NULL) {
-		PTT_TRACE(CDF_TRACE_LEVEL_ERROR,
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
 			  "%s: dev_alloc_skb() failed for msg size[%d]\n",
 			  __func__, tot_msg_len);
 		return -ENOMEM;
@@ -107,7 +107,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 		nlmsg_put(skb, pid, nlmsg_seq++, src_mod, payload_len,
 			  NLM_F_REQUEST);
 	if (NULL == nlh) {
-		PTT_TRACE(CDF_TRACE_LEVEL_ERROR,
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
 			  "%s: nlmsg_put() failed for msg size[%d]\n", __func__,
 			  tot_msg_len);
 		kfree_skb(skb);
@@ -116,7 +116,7 @@ int ptt_sock_send_msg_to_app(tAniHdr *wmsg, int radio, int src_mod, int pid)
 	wnl = (tAniNlHdr *) nlh;
 	wnl->radio = radio;
 	memcpy(&wnl->wmsg, wmsg, wmsg_length);
-	PTT_TRACE(CDF_TRACE_LEVEL_INFO,
+	PTT_TRACE(QDF_TRACE_LEVEL_INFO,
 		  "%s: Sending Msg Type [0x%X] to pid[%d]\n", __func__,
 		  be16_to_cpu(wmsg->type), pid);
 #ifdef PTT_SOCK_DEBUG_VERBOSE
@@ -151,7 +151,7 @@ static void ptt_sock_proc_reg_req(tAniHdr *wmsg, int radio)
 	rspmsg.wniHdr.length = cpu_to_be16(sizeof(rspmsg));
 	if (ptt_sock_send_msg_to_app((tAniHdr *) &rspmsg.wniHdr, radio,
 				     ANI_NL_MSG_PUMAC, ptt_pid) < 0) {
-		PTT_TRACE(CDF_TRACE_LEVEL_ERROR,
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
 			  "%s: Error sending ANI_MSG_APP_REG_RSP to pid[%d]\n",
 			  __func__, ptt_pid);
 	}
@@ -165,13 +165,13 @@ static void ptt_proc_pumac_msg(struct sk_buff *skb, tAniHdr *wmsg, int radio)
 	u16 ani_msg_type = be16_to_cpu(wmsg->type);
 	switch (ani_msg_type) {
 	case ANI_MSG_APP_REG_REQ:
-		PTT_TRACE(CDF_TRACE_LEVEL_INFO,
+		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
 			  "%s: Received ANI_MSG_APP_REG_REQ [0x%X]\n", __func__,
 			  ani_msg_type);
 		ptt_sock_proc_reg_req(wmsg, radio);
 		break;
 	default:
-		PTT_TRACE(CDF_TRACE_LEVEL_ERROR,
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR,
 			  "%s: Received Unknown Msg Type[0x%X]\n", __func__,
 			  ani_msg_type);
 		break;
@@ -191,13 +191,13 @@ static int ptt_sock_rx_nlink_msg(struct sk_buff *skb)
 	type = wnl->nlh.nlmsg_type;
 	switch (type) {
 	case ANI_NL_MSG_PUMAC:  /* Message from the PTT socket APP */
-		PTT_TRACE(CDF_TRACE_LEVEL_INFO,
+		PTT_TRACE(QDF_TRACE_LEVEL_INFO,
 			  "%s: Received ANI_NL_MSG_PUMAC Msg [0x%X]\n",
 			  __func__, type);
 		ptt_proc_pumac_msg(skb, &wnl->wmsg, radio);
 		break;
 	default:
-		PTT_TRACE(CDF_TRACE_LEVEL_ERROR, "%s: Unknown NL Msg [0x%X]\n",
+		PTT_TRACE(QDF_TRACE_LEVEL_ERROR, "%s: Unknown NL Msg [0x%X]\n",
 			  __func__, type);
 		break;
 	}

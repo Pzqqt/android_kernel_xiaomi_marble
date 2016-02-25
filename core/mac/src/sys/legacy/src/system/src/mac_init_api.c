@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -58,7 +58,7 @@ tSirRetStatus mac_start(tHalHandle hHal, void *pHalMacStartParams)
 	tpAniSirGlobal pMac = (tpAniSirGlobal) hHal;
 
 	if (NULL == pMac) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		status = eSIR_FAILURE;
 		return status;
 	}

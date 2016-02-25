@@ -183,7 +183,7 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 	msdu_credit_consumed = ol_tx_send_base(pdev, tx_desc, msdu);
 	id = ol_tx_desc_id(pdev, tx_desc);
 	NBUF_UPDATE_TX_PKT_COUNT(msdu, NBUF_TX_PKT_TXRX);
-	DPTRACE(cdf_dp_trace(msdu, CDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
+	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
 				(uint8_t *)(cdf_nbuf_data(msdu)),
 				sizeof(cdf_nbuf_data(msdu))));
 	failed = htt_tx_send_std(pdev->htt_pdev, msdu, id);
@@ -776,7 +776,7 @@ static inline uint8_t *ol_tx_dest_addr_find(struct ol_txrx_pdev_t *pdev,
 	} else if (pdev->frame_format == wlan_frm_fmt_802_3) {
 		hdr_ptr = datap;
 	} else {
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			  "Invalid standard frame type: %d",
 			  pdev->frame_format);
 		qdf_assert(0);

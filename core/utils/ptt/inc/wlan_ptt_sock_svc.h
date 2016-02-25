@@ -34,7 +34,7 @@
 #include <wlan_nlink_srv.h>
 #include <qdf_types.h>
 #include <qdf_status.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 #include <wlan_nlink_common.h>
 /*
  * Quarky Message Format:

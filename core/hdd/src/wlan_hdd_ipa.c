@@ -507,13 +507,13 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 	(((struct hdd_ipa_cld_hdr *) (_data))->iface_id)
 
 #define HDD_IPA_LOG(LVL, fmt, args ...) \
-	CDF_TRACE(QDF_MODULE_ID_HDD, LVL, \
+	QDF_TRACE(QDF_MODULE_ID_HDD, LVL, \
 		  "%s:%d: "fmt, __func__, __LINE__, ## args)
 
 #define HDD_IPA_DBG_DUMP(_lvl, _prefix, _buf, _len) \
 	do { \
-		CDF_TRACE(QDF_MODULE_ID_HDD, _lvl, "%s:", _prefix); \
-		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, _lvl, _buf, _len); \
+		QDF_TRACE(QDF_MODULE_ID_HDD, _lvl, "%s:", _prefix); \
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, _lvl, _buf, _len); \
 	} while (0)
 
 #define HDD_IPA_IS_CONFIG_ENABLED(_hdd_ctx, _mask) \
@@ -717,7 +717,7 @@ static void hdd_ipa_uc_rt_debug_host_fill(void *ctext)
 		return;
 
 	if (!hdd_ctx->hdd_ipa || !hdd_ipa_uc_is_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA UC is not enabled", __func__);
 		return;
 	}
@@ -763,14 +763,14 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
 
 	hdd_ipa = hdd_ctx->hdd_ipa;
 	if (!hdd_ipa || !hdd_ipa_uc_is_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA UC is not enabled", __func__);
 		return;
 	}
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 		"========= WLAN-IPA DEBUG BUF DUMP ==========\n");
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 		"     TM     :   EXEP   :   DROP   :   NETS   :   MCBC   :   TXFD   :   DSTR   :   DSCD\n");
 
 	qdf_mutex_acquire(&hdd_ipa->rt_debug_lock);
@@ -780,7 +780,7 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
 		dump_index = (hdd_ipa->rt_buf_fill_index + dump_count) %
 			HDD_IPA_UC_RT_DEBUG_BUF_COUNT;
 		dump_info = &hdd_ipa->rt_bug_buffer[dump_index];
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"%12lu:%10llu:%10llu:%10llu:%10llu:%10llu:%10llu:%10llu\n",
 			dump_info->time, dump_info->ipa_excep_count,
 			dump_info->rx_drop_count, dump_info->net_sent_count,
@@ -789,7 +789,7 @@ void hdd_ipa_uc_rt_debug_host_dump(hdd_context_t *hdd_ctx)
 			dump_info->rx_discard_count);
 	}
 	qdf_mutex_release(&hdd_ipa->rt_debug_lock);
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 		"======= WLAN-IPA DEBUG BUF DUMP END ========\n");
 }
 
@@ -813,7 +813,7 @@ static void hdd_ipa_uc_rt_debug_handler(void *ctext)
 		return;
 
 	if (!hdd_ipa_is_rt_debugging_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA RT debug is not enabled", __func__);
 		return;
 	}
@@ -824,7 +824,7 @@ static void hdd_ipa_uc_rt_debug_handler(void *ctext)
 	dummy_ptr = kmalloc(HDD_IPA_UC_DEBUG_DUMMY_MEM_SIZE,
 		GFP_KERNEL | GFP_ATOMIC);
 	if (!dummy_ptr) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_FATAL,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL,
 			"%s: Dummy alloc fail", __func__);
 		hdd_ipa_uc_rt_debug_host_dump(hdd_ctx);
 		hdd_ipa_uc_stat_request(
@@ -849,7 +849,7 @@ static void hdd_ipa_uc_rt_debug_handler(void *ctext)
 void hdd_ipa_uc_rt_debug_destructor(struct sk_buff *skb)
 {
 	if (!ghdd_ipa) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"%s: invalid hdd context", __func__);
 		return;
 	}
@@ -877,7 +877,7 @@ static void hdd_ipa_uc_rt_debug_deinit(hdd_context_t *hdd_ctx)
 	qdf_mutex_destroy(&hdd_ipa->rt_debug_lock);
 
 	if (!hdd_ipa_is_rt_debugging_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA RT debug is not enabled", __func__);
 		return;
 	}
@@ -919,7 +919,7 @@ static void hdd_ipa_uc_rt_debug_init(hdd_context_t *hdd_ctx)
 
 	/* Reatime debug enable on feature enable */
 	if (!hdd_ipa_is_rt_debugging_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA RT debug is not enabled", __func__);
 		return;
 	}
@@ -1023,7 +1023,7 @@ static bool hdd_ipa_uc_find_add_assoc_sta(struct hdd_ipa_priv *hdd_ipa,
 		}
 	}
 	if (sta_add && sta_found) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: STA ID %d already exist, cannot add",
 			    __func__, sta_id);
 		return sta_found;
@@ -1038,7 +1038,7 @@ static bool hdd_ipa_uc_find_add_assoc_sta(struct hdd_ipa_priv *hdd_ipa,
 		}
 	}
 	if (!sta_add && !sta_found) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: STA ID %d does not exist, cannot delete",
 			    __func__, sta_id);
 		return sta_found;
@@ -1069,19 +1069,19 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	p_cds_contextType cds_ctx = hdd_ipa->hdd_ctx->pcds_context;
 
 	/* ACTIVATE TX PIPE */
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: Enable TX PIPE(tx_pipe_handle=%d)",
 			__func__, hdd_ipa->tx_pipe_handle);
 	result = ipa_enable_wdi_pipe(hdd_ipa->tx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Enable TX PIPE fail, code %d",
 			    __func__, result);
 		return result;
 	}
 	result = ipa_resume_wdi_pipe(hdd_ipa->tx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Resume TX PIPE fail, code %d",
 			    __func__, result);
 		return result;
@@ -1089,19 +1089,19 @@ static int hdd_ipa_uc_enable_pipes(struct hdd_ipa_priv *hdd_ipa)
 	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, true, true);
 
 	/* ACTIVATE RX PIPE */
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: Enable RX PIPE(rx_pipe_handle=%d)",
 			__func__, hdd_ipa->rx_pipe_handle);
 	result = ipa_enable_wdi_pipe(hdd_ipa->rx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Enable RX PIPE fail, code %d",
 			    __func__, result);
 		return result;
 	}
 	result = ipa_resume_wdi_pipe(hdd_ipa->rx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Resume RX PIPE fail, code %d",
 			    __func__, result);
 		return result;
@@ -1123,33 +1123,33 @@ static int hdd_ipa_uc_disable_pipes(struct hdd_ipa_priv *hdd_ipa)
 
 	hdd_ipa->ipa_pipes_down = true;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Disable RX PIPE", __func__);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable RX PIPE", __func__);
 	result = ipa_suspend_wdi_pipe(hdd_ipa->rx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Suspend RX PIPE fail, code %d",
 			    __func__, result);
 		return result;
 	}
 	result = ipa_disable_wdi_pipe(hdd_ipa->rx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Disable RX PIPE fail, code %d",
 			    __func__, result);
 		return result;
 	}
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Disable TX PIPE", __func__);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable TX PIPE", __func__);
 	result = ipa_suspend_wdi_pipe(hdd_ipa->tx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Suspend TX PIPE fail, code %d",
 			    __func__, result);
 		return result;
 	}
 	result = ipa_disable_wdi_pipe(hdd_ipa->tx_pipe_handle);
 	if (result) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: Disable TX PIPE fail, code %d",
 			    __func__, result);
 		return result;
@@ -1178,7 +1178,7 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 			 * enable pipe immediately
 			 */
 			if (hdd_ipa_uc_enable_pipes(hdd_ipa)) {
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					"%s: IPA WDI Pipe activation failed",
 					__func__);
 				hdd_ipa->resource_loading = false;
@@ -1190,7 +1190,7 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 		 * Just enabled all the PIPEs
 		 */
 		if (hdd_ipa_uc_enable_pipes(hdd_ipa)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "%s: IPA WDI Pipe activation failed",
 				    __func__);
 			hdd_ipa->resource_loading = false;
@@ -1199,7 +1199,7 @@ static int hdd_ipa_uc_handle_first_con(struct hdd_ipa_priv *hdd_ipa)
 		hdd_ipa->resource_loading = false;
 	}
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s: IPA WDI Pipes activated successfully", __func__);
 	return 0;
 }
@@ -1215,9 +1215,9 @@ static void hdd_ipa_uc_handle_last_discon(struct hdd_ipa_priv *hdd_ipa)
 	p_cds_contextType cds_ctx = hdd_ipa->hdd_ctx->pcds_context;
 
 	hdd_ipa->resource_unloading = true;
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Disable FW RX PIPE", __func__);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable FW RX PIPE", __func__);
 	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, false, false);
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Disable FW TX PIPE", __func__);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Disable FW TX PIPE", __func__);
 	ol_txrx_ipa_uc_set_active(cds_ctx->pdev_txrx_ctx, false, true);
 }
 
@@ -1241,14 +1241,14 @@ hdd_ipa_uc_rm_notify_handler(void *context, enum ipa_rm_event event)
 	 */
 	status = wlan_hdd_validate_context(hdd_ipa->hdd_ctx);
 	if (0 != status) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
 		return;
 	}
 
 	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 		return;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s, event code %d",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s, event code %d",
 		    __func__, event);
 
 	switch (event) {
@@ -1269,7 +1269,7 @@ hdd_ipa_uc_rm_notify_handler(void *context, enum ipa_rm_event event)
 		break;
 
 	default:
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s, invalid event code %d", __func__, event);
 		break;
 	}
@@ -1296,7 +1296,7 @@ static void hdd_ipa_uc_rm_notify_defer(struct work_struct *work)
 
 	cds_ssr_protect(__func__);
 	event = uc_rm_work->event;
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 		"%s, posted event %d", __func__, event);
 
 	hdd_ipa_uc_rm_notify_handler(hdd_ipa, event);
@@ -1317,10 +1317,10 @@ static void hdd_ipa_uc_proc_pending_event(struct hdd_ipa_priv *hdd_ipa)
 	struct ipa_uc_pending_event *pending_event = NULL;
 
 	pending_event_count = qdf_list_size(&hdd_ipa->pending_event);
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 		"%s, Pending Event Count %d", __func__, pending_event_count);
 	if (!pending_event_count) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			"%s, No Pending Event", __func__);
 		return;
 	}
@@ -1357,12 +1357,12 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (!op_msg || !usr_ctxt) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "%s, INVALID ARG", __func__);
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "%s, INVALID ARG", __func__);
 		return;
 	}
 
 	if (HDD_IPA_UC_OPCODE_MAX <= msg->op_code) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s, INVALID OPCODE %d", __func__, msg->op_code);
 		return;
 	}
@@ -1374,14 +1374,14 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 	 */
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
 		cdf_mem_free(op_msg);
 		return;
 	}
 
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_DEBUG,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
 		    "%s, OPCODE %s", __func__, op_string[msg->op_code]);
 
 	if ((HDD_IPA_UC_OPCODE_TX_RESUME == msg->op_code) ||
@@ -1422,7 +1422,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		(HDD_IPA_UC_STAT_REASON_DEBUG == hdd_ipa->stat_req_reason)) {
 
 		/* STATs from host */
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CE ====\n"
 			  "CE RING BASE: 0x%llx\n"
 			  "CE RING SIZE: %d\n"
@@ -1430,7 +1430,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  (unsigned long long)hdd_ipa->ce_sr_base_paddr,
 			  hdd_ipa->ce_sr_ring_size,
 			  (unsigned long long)hdd_ipa->ce_reg_paddr);
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST TX ====\n"
 			  "COMP RING BASE: 0x%llx\n"
 			  "COMP RING SIZE: %d\n"
@@ -1440,7 +1440,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  hdd_ipa->tx_comp_ring_size,
 			  hdd_ipa->tx_num_alloc_buffer,
 			  (unsigned long long)hdd_ipa->tx_comp_doorbell_paddr);
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST RX ====\n"
 			  "IND RING BASE: 0x%llx\n"
 			  "IND RING SIZE: %d\n"
@@ -1456,7 +1456,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_bcmc,
 			  (unsigned long long)hdd_ipa->stats.num_tx_bcmc_err);
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CONTROL ====\n"
 			  "SAP NUM STAs: %d\n"
 			  "STA CONNECTED: %d\n"
@@ -1476,7 +1476,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		/* STATs from FW */
 		uc_fw_stat = (struct ipa_uc_fw_stats *)
 			     ((uint8_t *)op_msg + sizeof(struct op_msg_type));
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_FW TX ====\n"
 			  "COMP RING BASE: 0x%x\n"
 			  "COMP RING SIZE: %d\n"
@@ -1497,7 +1497,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  uc_fw_stat->tx_pkts_enqueued,
 			  uc_fw_stat->tx_pkts_completed,
 			  uc_fw_stat->tx_is_suspend, uc_fw_stat->tx_reserved);
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_FW RX ====\n"
 			  "IND RING BASE: 0x%x\n"
 			  "IND RING SIZE: %d\n"
@@ -1528,7 +1528,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  uc_fw_stat->rx_is_suspend, uc_fw_stat->rx_reserved);
 		/* STATs from IPA */
 		ipa_get_wdi_stats(&ipa_stat);
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC IPA TX ====\n"
 			  "NUM PROCD : %d\n"
 			  "CE DBELL : 0x%x\n"
@@ -1564,7 +1564,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  num_bam_int_in_non_runnning_state,
 			  ipa_stat.tx_ch_stats.num_qmb_int_handled);
 
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC IPA RX ====\n"
 			  "MAX OST PKT : %d\n"
 			  "NUM PKT PRCSD : %d\n"
@@ -1658,7 +1658,7 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	ipa_offload_enable_disable.vdev_id = adapter->sessionId;
 	ipa_offload_enable_disable.enable = enable;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 		"%s: offload_type=%d, vdev_id=%d, enable=%d", __func__,
 		ipa_offload_enable_disable.offload_type,
 		ipa_offload_enable_disable.vdev_id,
@@ -1667,7 +1667,7 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	if (QDF_STATUS_SUCCESS !=
 		sme_ipa_offload_enable_disable(WLAN_HDD_GET_HAL_CTX(adapter),
 			adapter->sessionId, &ipa_offload_enable_disable)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"%s: Failure to enable IPA offload \
 			(offload_type=%d, vdev_id=%d, enable=%d)", __func__,
 			ipa_offload_enable_disable.offload_type,
@@ -1693,7 +1693,7 @@ static void hdd_ipa_uc_fw_op_event_handler(struct work_struct *work)
 
 	msg = uc_op_work->msg;
 	uc_op_work->msg = NULL;
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 			"%s, posted msg %d", __func__, msg->op_code);
 
 	hdd_ipa_uc_op_cb(msg, hdd_ipa->hdd_ctx);
@@ -1720,7 +1720,7 @@ static void hdd_ipa_uc_op_event_handler(uint8_t *op_msg, void *hdd_ctx)
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
 		goto end;
 	}
 
@@ -1731,7 +1731,7 @@ static void hdd_ipa_uc_op_event_handler(uint8_t *op_msg, void *hdd_ctx)
 		goto end;
 
 	if (HDD_IPA_UC_OPCODE_MAX <= msg->op_code) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "%s: Invalid OP Code (%d)",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "%s: Invalid OP Code (%d)",
 				__func__, msg->op_code);
 		goto end;
 	}
@@ -1806,7 +1806,7 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	pipe_in.sys.ipa_ep_cfg.hdr_ext.hdr_little_endian = true;
 	pipe_in.sys.notify = hdd_ipa_i2w_cb;
 	if (!hdd_ipa_is_rm_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "%s: IPA RM DISABLED, IPA AWAKE", __func__);
 		pipe_in.sys.keep_ipa_awake = true;
 	}
@@ -1825,7 +1825,7 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	ipa_ctxt->tx_comp_doorbell_paddr = pipe_out.uc_door_bell_pa;
 	/* WLAN TX PIPE Handle */
 	ipa_ctxt->tx_pipe_handle = pipe_out.clnt_hdl;
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 		    "TX : CRBPA 0x%x, CRS %d, CERBPA 0x%x, CEDPA 0x%x,"
 		    " CERZ %d, NB %d, CDBPAD 0x%x",
 		    (unsigned int)pipe_in.u.dl.comp_ring_base_pa,
@@ -1847,7 +1847,7 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 				   sizeof(struct sps_iovec);
 	pipe_in.sys.notify = hdd_ipa_w2i_cb;
 	if (!hdd_ipa_is_rm_enabled(hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: IPA RM DISABLED, IPA AWAKE", __func__);
 		pipe_in.sys.keep_ipa_awake = true;
 	}
@@ -1859,7 +1859,7 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 	ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
 	ipa_ctxt->rx_ready_doorbell_paddr = pipe_out.uc_door_bell_pa;
 	ipa_ctxt->rx_pipe_handle = pipe_out.clnt_hdl;
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 		    "RX : RRBPA 0x%x, RRS %d, PDIPA 0x%x, RDY_DB_PAD 0x%x",
 		    (unsigned int)pipe_in.u.ul.rdy_ring_base_pa,
 		    pipe_in.u.ul.rdy_ring_size,
@@ -1902,11 +1902,11 @@ void hdd_ipa_uc_force_pipe_shutdown(hdd_context_t *hdd_ctx)
 
 	hdd_ipa = (struct hdd_ipa_priv *)hdd_ctx->hdd_ipa;
 	if (false == hdd_ipa->ipa_pipes_down) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				"IPA pipes are not down yet, force shutdown");
 		hdd_ipa_uc_disable_pipes(hdd_ipa);
 	} else {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"IPA pipes are down, do nothing");
 	}
 
@@ -2198,7 +2198,7 @@ static void hdd_ipa_rm_notify(void *user_data, enum ipa_rm_event event,
 	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 		return;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "Evt: %d", event);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "Evt: %d", event);
 
 	switch (event) {
 	case IPA_RM_RESOURCE_GRANTED:
@@ -2218,12 +2218,12 @@ static void hdd_ipa_rm_notify(void *user_data, enum ipa_rm_event event,
 		break;
 
 	case IPA_RM_RESOURCE_RELEASED:
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "RM Release");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "RM Release");
 		hdd_ipa->resource_unloading = false;
 		break;
 
 	default:
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "Unknown RM Evt: %d", event);
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Unknown RM Evt: %d", event);
 		break;
 	}
 }
@@ -2254,13 +2254,13 @@ static int hdd_ipa_rm_cons_request(void)
 	int ret = 0;
 
 	if (ghdd_ipa->resource_loading) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_FATAL,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL,
 			    "%s: IPA resource loading in progress",
 			    __func__);
 		ghdd_ipa->pending_cons_req = true;
 		ret = -EINPROGRESS;
 	} else if (ghdd_ipa->resource_unloading) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_FATAL,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL,
 				"%s: IPA resource unloading in progress",
 				__func__);
 		ghdd_ipa->pending_cons_req = true;
@@ -2316,14 +2316,14 @@ int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
 		hdd_ipa->curr_prod_bw, next_prod_bw);
 
 	if (hdd_ipa->curr_cons_bw != next_cons_bw) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "Requesting CONS perf curr: %d, next: %d",
 			    hdd_ipa->curr_cons_bw, next_cons_bw);
 		profile.max_supported_bandwidth_mbps = next_cons_bw;
 		ret = ipa_rm_set_perf_profile(IPA_RM_RESOURCE_WLAN_CONS,
 					      &profile);
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "RM CONS set perf profile failed: %d", ret);
 
 			return ret;
@@ -2333,14 +2333,14 @@ int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
 	}
 
 	if (hdd_ipa->curr_prod_bw != next_prod_bw) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "Requesting PROD perf curr: %d, next: %d",
 			    hdd_ipa->curr_prod_bw, next_prod_bw);
 		profile.max_supported_bandwidth_mbps = next_prod_bw;
 		ret = ipa_rm_set_perf_profile(IPA_RM_RESOURCE_WLAN_PROD,
 					      &profile);
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "RM PROD set perf profile failed: %d", ret);
 			return ret;
 		}
@@ -2396,7 +2396,7 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 
 	ret = ipa_rm_create_resource(&create_params);
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "Create RM resource failed: %d", ret);
 		goto setup_rm_fail;
 	}
@@ -2409,7 +2409,7 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 
 	ret = ipa_rm_create_resource(&create_params);
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "Create RM CONS resource failed: %d", ret);
 		goto delete_prod;
 	}
@@ -2420,7 +2420,7 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 	ret = ipa_rm_inactivity_timer_init(IPA_RM_RESOURCE_WLAN_PROD,
 					   HDD_IPA_RX_INACTIVITY_MSEC_DELAY);
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "Timer init failed: %d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Timer init failed: %d",
 			    ret);
 		goto timer_init_failed;
 	}
@@ -2429,7 +2429,7 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 	ret = hdd_ipa_set_perf_level(hdd_ipa->hdd_ctx, 0, 0);
 
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "Set perf level failed: %d", ret);
 		goto set_perf_failed;
 	}
@@ -2489,12 +2489,12 @@ static void hdd_ipa_destroy_rm_resource(struct hdd_ipa_priv *hdd_ipa)
 
 	ret = ipa_rm_delete_resource(IPA_RM_RESOURCE_WLAN_PROD);
 	if (ret)
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "RM PROD resource delete failed %d", ret);
 
 	ret = ipa_rm_delete_resource(IPA_RM_RESOURCE_WLAN_CONS);
 	if (ret)
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "RM CONS resource delete failed %d", ret);
 }
 
@@ -2515,7 +2515,7 @@ static void hdd_ipa_send_skb_to_network(cdf_nbuf_t skb,
 	unsigned int cpu_index;
 
 	if (!adapter || adapter->magic != WLAN_HDD_ADAPTER_MAGIC) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_LOW, "Invalid adapter: 0x%p",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_LOW, "Invalid adapter: 0x%p",
 			    adapter);
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 		cdf_nbuf_free(skb);
@@ -2575,7 +2575,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = vdev_to_iface[session_id];
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 				"IPA_RECEIVE: session_id=%u, iface_id=%u",
 				session_id, iface_id);
 		} else {
@@ -2583,10 +2583,10 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		}
 
 		if (iface_id >= HDD_IPA_MAX_IFACE) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "IPA_RECEIVE: Invalid iface_id: %u",
 				    iface_id);
-			HDD_IPA_DBG_DUMP(CDF_TRACE_LEVEL_INFO_HIGH,
+			HDD_IPA_DBG_DUMP(QDF_TRACE_LEVEL_INFO_HIGH,
 				"w2i -- skb", skb->data, 8);
 			HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 			cdf_nbuf_free(skb);
@@ -2596,7 +2596,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		iface_context = &hdd_ipa->iface_context[iface_id];
 		adapter = iface_context->adapter;
 
-		HDD_IPA_DBG_DUMP(CDF_TRACE_LEVEL_DEBUG,
+		HDD_IPA_DBG_DUMP(QDF_TRACE_LEVEL_DEBUG,
 				"w2i -- skb", skb->data, 8);
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			hdd_ipa->stats.num_rx_excep++;
@@ -2625,7 +2625,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 
 			if (fw_desc & HDD_IPA_FW_RX_DESC_FORWARD_M) {
 				HDD_IPA_LOG(
-					CDF_TRACE_LEVEL_DEBUG,
+					QDF_TRACE_LEVEL_DEBUG,
 					"Forward packet to Tx (fw_desc=%d)",
 					fw_desc);
 				copy = cdf_nbuf_copy(skb);
@@ -2636,7 +2636,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 						adapter->dev);
 					if (ret) {
 						HDD_IPA_LOG(
-							CDF_TRACE_LEVEL_DEBUG,
+							QDF_TRACE_LEVEL_DEBUG,
 							"Forward packet tx fail");
 						hdd_ipa->stats.
 							num_tx_bcmc_err++;
@@ -2654,7 +2654,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			}
 
 		} else {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO_HIGH,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_HIGH,
 				"Intra-BSS FWD is disabled-skip forward to Tx");
 		}
 
@@ -2662,7 +2662,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 		break;
 
 	default:
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "w2i cb wrong event: 0x%x", evt);
 		return;
 	}
@@ -2678,7 +2678,7 @@ void hdd_ipa_nbuf_cb(cdf_nbuf_t skb)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_DEBUG, "%p", wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "%p", wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
 	/* FIXME: This is broken; PRIV_DATA is now 31 bits */
 	ipa_free_skb((struct ipa_rx_data *)wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
 
@@ -2708,7 +2708,7 @@ static void hdd_ipa_send_pkt_to_tl(
 	qdf_spin_lock_bh(&iface_context->interface_lock);
 	adapter = iface_context->adapter;
 	if (!adapter) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_WARN, "Interface Down");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_WARN, "Interface Down");
 		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_drop++;
 		qdf_spin_unlock_bh(&iface_context->interface_lock);
@@ -2757,7 +2757,7 @@ static void hdd_ipa_send_pkt_to_tl(
 	skb = ol_tx_send_ipa_data_frame(iface_context->tl_context,
 					 ipa_tx_desc->skb);
 	if (skb) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_DEBUG, "TLSHIM tx fail");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "TLSHIM tx fail");
 		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_err++;
 		hdd_ipa_rm_try_release(hdd_ipa);
@@ -2848,7 +2848,7 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 	 */
 	status = wlan_hdd_validate_context(hdd_ipa->hdd_ctx);
 	if (0 != status) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "HDD context is not valid");
 		ipa_free_skb(ipa_tx_desc);
 		iface_context->stats.num_tx_drop++;
 		return;
@@ -2856,7 +2856,7 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 
 	skb = ipa_tx_desc->skb;
 
-	HDD_IPA_DBG_DUMP(CDF_TRACE_LEVEL_DEBUG, "i2w", skb->data, 8);
+	HDD_IPA_DBG_DUMP(QDF_TRACE_LEVEL_DEBUG, "i2w", skb->data, 8);
 
 	/*
 	 * If PROD resource is not requested here then there may be cases where
@@ -3010,7 +3010,7 @@ static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 
 		ret = ipa_setup_sys_pipe(ipa, &(hdd_ipa->sys_pipe[i].conn_hdl));
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "Failed for pipe %d"
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Failed for pipe %d"
 				    " ret: %d", i, ret);
 			goto setup_sys_pipe_fail;
 		}
@@ -3043,7 +3043,7 @@ static int hdd_ipa_setup_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 
 		ret = ipa_setup_sys_pipe(ipa, &(hdd_ipa->sys_pipe[i].conn_hdl));
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					"Failed for RX pipe: %d", ret);
 			goto setup_sys_pipe_fail;
 		}
@@ -3078,7 +3078,7 @@ static void hdd_ipa_teardown_sys_pipe(struct hdd_ipa_priv *hdd_ipa)
 				ipa_teardown_sys_pipe(hdd_ipa->sys_pipe[i].
 						      conn_hdl);
 			if (ret)
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "Failed: %d",
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Failed: %d",
 					    ret);
 
 			hdd_ipa->sys_pipe[i].conn_hdl_valid = 0;
@@ -3116,7 +3116,7 @@ static int hdd_ipa_register_interface(struct hdd_ipa_priv *hdd_ipa,
 	tx_prop =
 		cdf_mem_malloc(sizeof(struct ipa_ioc_tx_intf_prop) * num_prop);
 	if (!tx_prop) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "tx_prop allocation failed");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "tx_prop allocation failed");
 		goto register_interface_fail;
 	}
 
@@ -3124,7 +3124,7 @@ static int hdd_ipa_register_interface(struct hdd_ipa_priv *hdd_ipa,
 	rx_prop =
 		cdf_mem_malloc(sizeof(struct ipa_ioc_rx_intf_prop) * num_prop);
 	if (!rx_prop) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "rx_prop allocation failed");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "rx_prop allocation failed");
 		goto register_interface_fail;
 	}
 
@@ -3208,16 +3208,16 @@ static void hdd_ipa_remove_header(char *name)
 	strlcpy(hdrlookup.name, name, sizeof(hdrlookup.name));
 	ret = ipa_get_hdr(&hdrlookup);
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "Hdr deleted already %s, %d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "Hdr deleted already %s, %d",
 			    name, ret);
 		return;
 	}
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "hdl: 0x%x", hdrlookup.hdl);
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "hdl: 0x%x", hdrlookup.hdl);
 	len = sizeof(struct ipa_ioc_del_hdr) + sizeof(struct ipa_hdr_del) * 1;
 	ipa_hdr = (struct ipa_ioc_del_hdr *)cdf_mem_malloc(len);
 	if (ipa_hdr == NULL) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "ipa_hdr allocation failed");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "ipa_hdr allocation failed");
 		return;
 	}
 	ipa_hdr->num_hdls = 1;
@@ -3226,7 +3226,7 @@ static void hdd_ipa_remove_header(char *name)
 	ipa_hdr->hdl[0].status = -1;
 	ret = ipa_del_hdr(ipa_hdr);
 	if (ret != 0)
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "Delete header failed: %d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "Delete header failed: %d",
 			    ret);
 
 	cdf_mem_free(ipa_hdr);
@@ -3253,14 +3253,14 @@ static int hdd_ipa_add_header_info(struct hdd_ipa_priv *hdd_ipa,
 
 	ifname = adapter->dev->name;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "Add Partial hdr: %s, %pM",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "Add Partial hdr: %s, %pM",
 		    ifname, mac_addr);
 
 	/* dynamically allocate the memory to add the hdrs */
 	ipa_hdr = cdf_mem_malloc(sizeof(struct ipa_ioc_add_hdr)
 				 + sizeof(struct ipa_hdr_add));
 	if (!ipa_hdr) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "%s: ipa_hdr allocation failed", ifname);
 		ret = -ENOMEM;
 		goto end;
@@ -3274,7 +3274,7 @@ static int hdd_ipa_add_header_info(struct hdd_ipa_priv *hdd_ipa,
 		memcpy(uc_tx_hdr, &ipa_uc_tx_hdr, HDD_IPA_UC_WLAN_TX_HDR_LEN);
 		memcpy(uc_tx_hdr->eth.h_source, mac_addr, ETH_ALEN);
 		uc_tx_hdr->ipa_hd.vdev_id = iface_context->adapter->sessionId;
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_DEBUG,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG,
 			"ifname=%s, vdev_id=%d",
 			ifname, uc_tx_hdr->ipa_hd.vdev_id);
 		snprintf(ipa_hdr->hdr[0].name, IPA_RESOURCE_NAME_MAX, "%s%s",
@@ -3308,12 +3308,12 @@ static int hdd_ipa_add_header_info(struct hdd_ipa_priv *hdd_ipa,
 		ret = ipa_add_hdr(ipa_hdr);
 	}
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "%s IPv4 add hdr failed: %d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "%s IPv4 add hdr failed: %d",
 			    ifname, ret);
 		goto end;
 	}
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: IPv4 hdr_hdl: 0x%x",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: IPv4 hdr_hdl: 0x%x",
 		    ipa_hdr->hdr[0].name, ipa_hdr->hdr[0].hdr_hdl);
 
 	if (hdd_ipa_is_ipv6_enabled(hdd_ipa->hdd_ctx)) {
@@ -3332,12 +3332,12 @@ static int hdd_ipa_add_header_info(struct hdd_ipa_priv *hdd_ipa,
 
 		ret = ipa_add_hdr(ipa_hdr);
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "%s: IPv6 add hdr failed: %d", ifname, ret);
 			goto clean_ipv4_hdr;
 		}
 
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: IPv6 hdr_hdl: 0x%x",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: IPv6 hdr_hdl: 0x%x",
 			    ipa_hdr->hdr[0].name, ipa_hdr->hdr[0].hdr_hdl);
 	}
 
@@ -3381,7 +3381,7 @@ static void hdd_ipa_clean_hdr(hdd_adapter_t *adapter)
 	/* unregister the interface with IPA */
 	ret = ipa_deregister_intf(adapter->dev->name);
 	if (ret)
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "%s: ipa_deregister_intf fail: %d",
 			    adapter->dev->name, ret);
 }
@@ -3406,7 +3406,7 @@ static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context)
 	qdf_spin_unlock_bh(&iface_context->interface_lock);
 	iface_context->ifa_address = 0;
 	if (!iface_context->hdd_ipa->num_iface) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"NUM INTF 0, Invalid");
 		CDF_ASSERT(0);
 	}
@@ -3444,7 +3444,7 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 	}
 
 	if (iface_context == NULL) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "All the IPA interfaces are in use");
 		ret = -ENOMEM;
 		goto end;
@@ -3456,7 +3456,7 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 	tl_context = ol_txrx_get_vdev_by_sta_id(sta_id);
 
 	if (tl_context == NULL) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "Not able to get TL context sta_id: %d", sta_id);
 		ret = -EINVAL;
 		goto end;
@@ -3527,7 +3527,7 @@ int hdd_ipa_send_mcc_scc_msg(hdd_context_t *pHddCtx, bool mcc_mode)
 			pAdapter = adapter_node->pAdapter;
 			if (pAdapter->device_mode == WLAN_HDD_INFRA_STATION ||
 				pAdapter->device_mode == WLAN_HDD_SOFTAP) {
-				hddLog(CDF_TRACE_LEVEL_INFO,
+				hddLog(QDF_TRACE_LEVEL_INFO,
 					"MCC->SCC: Flush TxRx queue(d_mode=%d)",
 					pAdapter->device_mode);
 				hdd_deinit_tx_rx(pAdapter);
@@ -3617,7 +3617,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	struct ipa_wlan_msg_ex *msg_ex = NULL;
 	int ret;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: %s evt, MAC: %pM sta_id: %d",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: %s evt, MAC: %pM sta_id: %d",
 		    adapter->dev->name, hdd_ipa_wlan_event_to_str(type),
 		    mac_addr, sta_id);
 
@@ -3628,7 +3628,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		return -EINVAL;
 
 	if (!hdd_ipa || !hdd_ipa_is_enabled(hdd_ipa->hdd_ctx)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "IPA OFFLOAD NOT ENABLED");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "IPA OFFLOAD NOT ENABLED");
 		return -EINVAL;
 	}
 
@@ -3702,7 +3702,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, IPA UC OFFLOAD NOT ENABLED",
 				msg_ex->name, meta.msg_type);
 		} else if ((!hdd_ipa->sap_num_connected_sta) &&
@@ -3711,7 +3711,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
 			if (ret) {
 				qdf_mutex_release(&hdd_ipa->event_lock);
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					"handle 1st con ret %d", ret);
 				hdd_ipa_uc_offload_enable_disable(adapter,
 					SIR_STA_RX_DATA_OFFLOAD, 0);
@@ -3754,7 +3754,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		ret = hdd_ipa_setup_iface(hdd_ipa, adapter, sta_id);
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, Interface setup failed",
 				msg_ex->name, meta.msg_type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
@@ -3774,7 +3774,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		hdd_ipa_cleanup_iface(adapter->ipa_context);
 
 		if (!hdd_ipa->sta_connected) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, STA already disconnected",
 				msg_ex->name, meta.msg_type);
 			qdf_mutex_release(&hdd_ipa->event_lock);
@@ -3782,7 +3782,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		}
 		hdd_ipa->sta_connected = 0;
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: IPA UC OFFLOAD NOT ENABLED",
 				msg_ex->name);
 		} else {
@@ -3806,7 +3806,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 	case WLAN_AP_DISCONNECT:
 		if (!adapter->ipa_context) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, SAP already disconnected",
 				msg_ex->name, meta.msg_type);
 			return -EINVAL;
@@ -3826,7 +3826,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 				 */
 				hdd_ipa_uc_disable_pipes(hdd_ipa);
 			} else {
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					"NO INTF left but still pipe clean up");
 				hdd_ipa_uc_handle_last_discon(hdd_ipa);
 			}
@@ -3841,11 +3841,11 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		break;
 
 	case WLAN_CLIENT_CONNECT_EX:
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%d %d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%d %d",
 			    adapter->dev->ifindex, sta_id);
 
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 				"%s: Evt: %d, IPA UC OFFLOAD NOT ENABLED",
 				adapter->dev->name, meta.msg_type);
 			return 0;
@@ -3854,7 +3854,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		if (hdd_ipa_uc_find_add_assoc_sta(hdd_ipa,
 				true, sta_id)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				"%s: STA ID %d found, not valid",
 				adapter->dev->name, sta_id);
 			qdf_mutex_release(&hdd_ipa->event_lock);
@@ -3868,7 +3868,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
 			if (ret) {
 				qdf_mutex_release(&hdd_ipa->event_lock);
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+				HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 					    "%s: handle 1st con ret %d",
 					    adapter->dev->name, ret);
 				return ret;
@@ -3885,7 +3885,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		msg_ex = cdf_mem_malloc(meta.msg_len);
 
 		if (msg_ex == NULL) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "msg_ex allocation failed");
 			return -ENOMEM;
 		}
@@ -3906,7 +3906,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		ret = ipa_send_msg(&meta, msg_ex, hdd_ipa_msg_free_fn);
 
 		if (ret) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Evt: %d : %d",
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Evt: %d : %d",
 				    msg_ex->name, meta.msg_type, ret);
 			cdf_mem_free(msg_ex);
 			return ret;
@@ -3916,7 +3916,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 	case WLAN_CLIENT_DISCONNECT:
 		if (!hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 					"%s: IPA UC OFFLOAD NOT ENABLED",
 					msg_ex->name);
 			return 0;
@@ -3924,7 +3924,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 		qdf_mutex_acquire(&hdd_ipa->event_lock);
 		if (!hdd_ipa_uc_find_add_assoc_sta(hdd_ipa, false, sta_id)) {
-			HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+			HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 				    "%s: STA ID %d NOT found, not valid",
 				    msg_ex->name, sta_id);
 			qdf_mutex_release(&hdd_ipa->event_lock);
@@ -3949,7 +3949,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	meta.msg_len = sizeof(struct ipa_wlan_msg);
 	msg = cdf_mem_malloc(meta.msg_len);
 	if (msg == NULL) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR, "msg allocation failed");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR, "msg allocation failed");
 		return -ENOMEM;
 	}
 
@@ -3957,13 +3957,13 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	strlcpy(msg->name, adapter->dev->name, IPA_RESOURCE_NAME_MAX);
 	memcpy(msg->mac_addr, mac_addr, ETH_ALEN);
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Evt: %d",
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Evt: %d",
 		    msg->name, meta.msg_type);
 
 	ret = ipa_send_msg(&meta, msg, hdd_ipa_msg_free_fn);
 
 	if (ret) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO, "%s: Evt: %d fail:%d",
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO, "%s: Evt: %d fail:%d",
 			    msg->name, meta.msg_type, ret);
 		cdf_mem_free(msg);
 		return ret;
@@ -4015,7 +4015,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 
 	hdd_ipa = cdf_mem_malloc(sizeof(*hdd_ipa));
 	if (!hdd_ipa) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_FATAL, "hdd_ipa allocation failed");
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL, "hdd_ipa allocation failed");
 		goto fail_return;
 	}
 
@@ -4042,7 +4042,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	    (0 == hdd_ipa->tx_comp_ring_base_paddr) ||
 	    (0 == hdd_ipa->rx_rdy_ring_base_paddr) ||
 	    (0 == hdd_ipa->rx2_rdy_ring_base_paddr)) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_FATAL,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL,
 			"IPA UC resource alloc fail");
 		goto fail_get_resource;
 	}
@@ -4185,7 +4185,7 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	 * descriptor in IPA hardware
 	 */
 	if (hdd_ipa->pending_hw_desc_cnt != 0) {
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "IPA Pending write done: %d Waiting!",
 			    hdd_ipa->pending_hw_desc_cnt);
 
@@ -4193,7 +4193,7 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 			usleep_range(100, 100);
 		}
 
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			    "IPA Pending write done: desc: %d %s(%d)!",
 			    hdd_ipa->pending_hw_desc_cnt,
 			    hdd_ipa->pending_hw_desc_cnt == 0 ? "completed"
@@ -4201,10 +4201,10 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	}
 	if (hdd_ipa_uc_is_enabled(hdd_ctx)) {
 		hdd_ipa_uc_rt_debug_deinit(hdd_ctx);
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "%s: Disconnect TX PIPE", __func__);
 		ipa_disconnect_wdi_pipe(hdd_ipa->tx_pipe_handle);
-		HDD_IPA_LOG(CDF_TRACE_LEVEL_INFO,
+		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO,
 			    "%s: Disconnect RX PIPE", __func__);
 		ipa_disconnect_wdi_pipe(hdd_ipa->rx_pipe_handle);
 		qdf_mutex_destroy(&hdd_ipa->event_lock);

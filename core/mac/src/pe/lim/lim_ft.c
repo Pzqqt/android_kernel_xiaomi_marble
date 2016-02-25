@@ -125,8 +125,8 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac, tpPESession psessionEntry
 		if (pReAssocSessionEntry->valid &&
 		    pReAssocSessionEntry->limSmeState ==
 		    eLIM_SME_WT_REASSOC_STATE) {
-			CDF_TRACE(QDF_MODULE_ID_PE,
-				  CDF_TRACE_LEVEL_DEBUG,
+			QDF_TRACE(QDF_MODULE_ID_PE,
+				  QDF_TRACE_LEVEL_DEBUG,
 				  FL("Deleting Preauth session(%d)"),
 				  pReAssocSessionEntry->peSessionId);
 			pe_delete_session(pMac, pReAssocSessionEntry);
@@ -1062,7 +1062,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 	ft_pre_auth_rsp = (tpSirFTPreAuthRsp) cdf_mem_malloc(rsp_len);
 	if (NULL == ft_pre_auth_rsp) {
 		lim_log(mac_ctx, LOGE, "Failed to allocate memory");
-		CDF_ASSERT(ft_pre_auth_rsp != NULL);
+		QDF_ASSERT(ft_pre_auth_rsp != NULL);
 		return;
 	}
 	cdf_mem_zero(ft_pre_auth_rsp, rsp_len);

@@ -1030,12 +1030,12 @@ rrm_calculate_neighbor_ap_roam_score(tpAniSirGlobal mac_ctx,
 	uint8_t session_id;
 #endif
 	if (NULL == nbr_report_desc) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
 	if (NULL == nbr_report_desc->pNeighborBssDescription) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
@@ -1112,11 +1112,11 @@ void rrm_store_neighbor_rpt_by_roam_score(tpAniSirGlobal pMac,
 	tRrmNeighborReportDesc *pTempNeighborReportDesc;
 
 	if (NULL == pNeighborReportDesc) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 	if (NULL == pNeighborReportDesc->pNeighborBssDescription) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 
@@ -1278,7 +1278,7 @@ end:
 QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 				 void *pMsgBuf)
 {
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  FL(" Msg = %d for RRM measurement"), msg_type);
 
 	/* switch on the msg type & make the state transition accordingly */
@@ -1293,7 +1293,7 @@ QDF_STATUS sme_rrm_msg_processor(tpAniSirGlobal pMac, uint16_t msg_type,
 
 	default:
 		/* err msg */
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("sme_rrm_msg_processor:unknown msg type = %d"),
 			  msg_type);
 
@@ -1365,7 +1365,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to init timer");
 
 		return QDF_STATUS_E_FAILURE;
@@ -1378,7 +1378,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to init timer");
 
 		return QDF_STATUS_E_FAILURE;
@@ -1389,7 +1389,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 	cdf_ret_status =
 		csr_ll_open(pMac->hHdd, &pSmeRrmContext->neighborReportCache);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to open neighbor cache result");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1418,7 +1418,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	    qdf_mc_timer_get_current_state(&pSmeRrmContext->IterMeasTimer)) {
 		qdf_status = qdf_mc_timer_stop(&pSmeRrmContext->IterMeasTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  FL("Timer stop fail"));
 		}
 	}
@@ -1426,7 +1426,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 	qdf_status = qdf_mc_timer_destroy(&pSmeRrmContext->IterMeasTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("Fail to destroy timer"));
 
 	}
@@ -1439,7 +1439,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 			qdf_mc_timer_stop(&pSmeRrmContext->neighborReqControlInfo.
 					  neighborRspWaitTimer);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 				  FL("Timer stop fail"));
 		}
 	}
@@ -1448,7 +1448,7 @@ QDF_STATUS rrm_close(tpAniSirGlobal pMac)
 		qdf_mc_timer_destroy(&pSmeRrmContext->neighborReqControlInfo.
 				     neighborRspWaitTimer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  FL("Fail to destroy timer"));
 
 	}

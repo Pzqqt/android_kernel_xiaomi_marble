@@ -303,7 +303,7 @@ csr_scan_2g_only_request(tpAniSirGlobal mac_ctx,
 {
 	uint8_t idx, lst_sz = 0;
 
-	CDF_ASSERT(scan_cmd && scan_req);
+	QDF_ASSERT(scan_cmd && scan_req);
 	/* To silence the KW tool null check is added */
 	if ((scan_cmd == NULL) || (scan_req == NULL)) {
 		sms_log(mac_ctx, LOGE,
@@ -388,7 +388,7 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	if (csr_session == NULL) {
 		sms_log(mac_ctx, LOGE, FL("session %d not found"),
 			session_id);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -492,7 +492,7 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 
 	if (scan_req == NULL) {
 		sms_log(pMac, LOGE, FL("scan_req is NULL"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return status;
 	}
 
@@ -1739,7 +1739,7 @@ csr_prefer_5ghz(tpAniSirGlobal pMac, tCsrScanResultFilter *pFilter)
 	pMac->scan.inScanResultBestAPRssi = -128;
 	roam_params = &pMac->roam.configParam.roam_params;
 #ifdef WLAN_DEBUG_ROAM_OFFLOAD
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("nSelect5GHzMargin"));
 #endif
 	csr_ll_lock(&pMac->scan.scanResultList);
@@ -1809,7 +1809,7 @@ csr_save_ies(tpAniSirGlobal pMac,
 	*fMatch = csr_match_bss(pMac, &pBssDesc->Result.BssDescriptor,
 			       pFilter, auth, uc, mc, &pIes);
 #ifdef WLAN_DEBUG_ROAM_OFFLOAD
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_DEBUG,
 		  FL("csr_match_bss fmatch %d"), *fMatch);
 #endif
 	if (NULL == pIes)
@@ -2006,7 +2006,7 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 	}
 
 	if (QDF_STATUS_E_FAILURE == status)
-		sms_log(pMac, CDF_TRACE_LEVEL_ERROR,
+		sms_log(pMac, QDF_TRACE_LEVEL_ERROR,
 			FL("Retrieving pcl failed from HDD"));
 	pEntry = csr_ll_peek_head(&pMac->scan.scanResultList, LL_ACCESS_NOLOCK);
 	while (pEntry) {
@@ -2949,7 +2949,7 @@ static tCsrScanResult *csr_scan_save_bss_description(tpAniSirGlobal pMac,
 			     pBSSDescription, cbBSSDesc);
 #if defined(CDF_ENSBALED)
 		if (NULL != pCsrBssDescription->Result.pvIes) {
-			CDF_ASSERT(pCsrBssDescription->Result.pvIes == NULL);
+			QDF_ASSERT(pCsrBssDescription->Result.pvIes == NULL);
 			return NULL;
 		}
 #endif
@@ -3322,7 +3322,7 @@ bool csr_elected_country_info(tpAniSirGlobal pMac)
 		 * pick random.we can put some more intelligence - TBD
 		 */
 		if (maxVotes < pMac->scan.votes11d[i].votes) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  " Votes for Country %c%c : %d\n",
 				  pMac->scan.votes11d[i].countryCode[0],
 				  pMac->scan.votes11d[i].countryCode[1],
@@ -3341,7 +3341,7 @@ bool csr_elected_country_info(tpAniSirGlobal pMac)
 		cdf_mem_copy(pMac->scan.countryCode11d,
 		       pMac->scan.votes11d[j].countryCode,
 		       WNI_CFG_COUNTRY_CODE_LEN);
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			  "Selected Country is %c%c With count %d\n",
 			  pMac->scan.votes11d[j].countryCode[0],
 			  pMac->scan.votes11d[j].countryCode[1],
@@ -6300,15 +6300,15 @@ void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac, uint8_t *pChannelList,
 	uint32_t dataLen = sizeof(uint8_t) * NumChannels;
 	QDF_STATUS status;
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  "%s: dump valid channel list(NumChannels(%d))",
 		  __func__, NumChannels);
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			   pChannelList, NumChannels);
 	cfg_set_str(pMac, WNI_CFG_VALID_CHANNEL_LIST, pChannelList,
 			dataLen);
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  "Scan offload is enabled, update default chan list");
 	/*
 	 * disable fcc constraint since new country code
@@ -6317,7 +6317,7 @@ void csr_set_cfg_valid_channel_list(tpAniSirGlobal pMac, uint8_t *pChannelList,
 	pMac->scan.fcc_constraint = false;
 	status = csr_update_channel_list(pMac);
 	if (QDF_STATUS_SUCCESS != status) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "failed to update the supported channel list");
 	}
 	return;
@@ -6507,10 +6507,10 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 				}
 
 			}
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "%s: dump scan control list", __func__);
-			CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME,
-					   CDF_TRACE_LEVEL_INFO, pControlList,
+			QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_SME,
+					   QDF_TRACE_LEVEL_INFO, pControlList,
 					   len);
 
 			cfg_set_str(pMac, WNI_CFG_SCAN_CONTROL_LIST,
@@ -7118,7 +7118,7 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 		(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
 	scan_res_ptr = cdf_mem_malloc(sizeof(tCsrScanResult) + length);
 	if (scan_res_ptr == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				" fail to allocate memory for frame");
 		return QDF_STATUS_E_NOMEM;
 	}
@@ -7133,7 +7133,7 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 						pMac, &scan_res_ptr->Result.
 						BssDescriptor,
 						&ies_local_ptr)))) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s:Cannot Parse IEs", __func__);
 		csr_free_scan_result_entry(pMac, scan_res_ptr);
 		return QDF_STATUS_E_RESOURCES;
@@ -7143,7 +7143,7 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 			&scan_res_ptr->Result.BssDescriptor,
 			ies_local_ptr, &tmpSsid, &timer, true);
 	if (CSR_SCAN_IS_OVER_BSS_LIMIT(pMac)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s:BSS Limit Exceed", __func__);
 		if ((scan_res_ptr->Result.pvIes == NULL) && ies_local_ptr)
 			cdf_mem_free(ies_local_ptr);
@@ -7174,12 +7174,12 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 	tScanResultList *bss_list = (tScanResultList *)result_handle;
 
 	if (NULL == bss_list) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("Empty bss_list"));
 		return NULL;
 	}
 	if (csr_ll_is_list_empty(&bss_list->List, LL_ACCESS_NOLOCK)) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("bss_list->List is empty"));
 		cdf_mem_free(bss_list);
 		return NULL;
@@ -7215,12 +7215,12 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	if (scan_cmd == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Scan Timeout: Scan command is NULL"));
 		return;
 	}
 	if (hal_ctx == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("HAL Context is NULL"));
 		return;
 	}

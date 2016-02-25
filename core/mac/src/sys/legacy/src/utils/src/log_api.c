@@ -45,7 +45,7 @@
 #include "utils_global.h"
 #include "mac_init_api.h"
 
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 
 #ifdef ANI_OS_TYPE_ANDROID
 #include <linux/kernel.h>
@@ -132,25 +132,25 @@ void log_dbg(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 #endif
 }
 
-CDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel)
+QDF_TRACE_LEVEL get_vos_debug_level(uint32_t debugLevel)
 {
 	switch (debugLevel) {
 	case LOGP:
-		return CDF_TRACE_LEVEL_FATAL;
+		return QDF_TRACE_LEVEL_FATAL;
 	case LOGE:
-		return CDF_TRACE_LEVEL_ERROR;
+		return QDF_TRACE_LEVEL_ERROR;
 	case LOGW:
-		return CDF_TRACE_LEVEL_WARN;
+		return QDF_TRACE_LEVEL_WARN;
 	case LOG1:
-		return CDF_TRACE_LEVEL_INFO;
+		return QDF_TRACE_LEVEL_INFO;
 	case LOG2:
-		return CDF_TRACE_LEVEL_INFO_HIGH;
+		return QDF_TRACE_LEVEL_INFO_HIGH;
 	case LOG3:
-		return CDF_TRACE_LEVEL_INFO_MED;
+		return QDF_TRACE_LEVEL_INFO_MED;
 	case LOG4:
-		return CDF_TRACE_LEVEL_INFO_LOW;
+		return QDF_TRACE_LEVEL_INFO_LOW;
 	default:
-		return CDF_TRACE_LEVEL_INFO_LOW;
+		return QDF_TRACE_LEVEL_INFO_LOW;
 	}
 }
 
@@ -183,7 +183,7 @@ static inline QDF_MODULE_ID get_vos_module_id(uint8_t modId)
 void log_debug(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 	       const char *pStr, va_list marker)
 {
-	CDF_TRACE_LEVEL cdf_debug_level;
+	QDF_TRACE_LEVEL cdf_debug_level;
 	QDF_MODULE_ID cdf_module_id;
 	char logBuffer[LOG_SIZE];
 
@@ -191,10 +191,10 @@ void log_debug(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 	cdf_module_id = get_vos_module_id(modId);
 
 	vsnprintf(logBuffer, LOG_SIZE - 1, pStr, marker);
-	CDF_TRACE(cdf_module_id, cdf_debug_level, "%s", logBuffer);
+	QDF_TRACE(cdf_module_id, cdf_debug_level, "%s", logBuffer);
 
 	/* The caller must check loglevel */
-	CDF_ASSERT((debugLevel <=
+	QDF_ASSERT((debugLevel <=
 		    pMac->utils.gLogDbgLevel[LOG_INDEX_FOR_MODULE(modId)])
 		   && (LOGP != debugLevel));
 } /*** end log_debug() ***/

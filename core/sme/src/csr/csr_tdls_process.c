@@ -114,7 +114,7 @@ QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 		if (NULL == tdlsSendMgmtCmdInfo->buf) {
 			status = QDF_STATUS_E_NOMEM;
 			sms_log(pMac, LOGE, FL("Alloc Failed"));
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 			return status;
 		}
 		cdf_mem_copy(tdlsSendMgmtCmdInfo->buf, tdlsSendMgmt->buf,
@@ -361,7 +361,7 @@ QDF_STATUS tdls_send_message(tpAniSirGlobal pMac, uint16_t msg_type,
 	pMsg->type = msg_type;
 	pMsg->msgLen = (uint16_t) (msg_size);
 
-	CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		  ("sending msg = %d"), pMsg->type);
 	/* Send message. */
 	if (cds_send_mb_message_to_mac(pMsg) != QDF_STATUS_SUCCESS) {
@@ -399,7 +399,7 @@ QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return status;
 	}
 	tdlsSendMgmtReq->sessionId = cmd->sessionId;
@@ -467,7 +467,7 @@ QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return status;
 	}
 	tdlsAddStaReq->sessionId = cmd->sessionId;
@@ -538,7 +538,7 @@ QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return status;
 	}
 	tdlsDelStaReq->sessionId = cmd->sessionId;
@@ -631,7 +631,7 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 
 	if (tdlsLinkEstablishReq == NULL) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_NOMEM;
 	}
 	tdlsLinkEstablishReq->sessionId = cmd->sessionId;
@@ -772,7 +772,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 	case eWNI_SME_TDLS_SHOULD_DISCOVER:
 		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_SHOULD_DISCOVER for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
 				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
@@ -784,7 +784,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 	case eWNI_SME_TDLS_SHOULD_TEARDOWN:
 		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_SHOULD_TEARDOWN for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
 				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),
@@ -796,7 +796,7 @@ QDF_STATUS tdls_msg_processor(tpAniSirGlobal pMac, uint16_t msgType,
 	case eWNI_SME_TDLS_PEER_DISCONNECTED:
 		qdf_copy_macaddr(&roamInfo.peerMac, &tevent->peermac);
 		roamInfo.reasonCode = tevent->peer_reason;
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				"%s: eWNI_SME_TDLS_PEER_DISCONNECTED for peer mac: "
 				MAC_ADDRESS_STR " peer_reason: %d",
 				__func__, MAC_ADDR_ARRAY(tevent->peermac.bytes),

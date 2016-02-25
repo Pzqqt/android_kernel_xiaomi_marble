@@ -655,7 +655,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 	/* Set Tx/Rx Data InActivity Timeout   */
 	if (wlan_cfg_get_int(mac, WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_PS_DATA_INACTIVITY_TIMEOUT");
 		cfg_data_val = POWERSAVE_DEFAULT_INACTIVITY_TIME;
 	}
@@ -668,7 +668,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 
 		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
 				     &cfg_data_val) != eSIR_SUCCESS) {
-			CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for WNI_CFG_MAX_PS_POLL");
 		}
 		if (cfg_data_val)
@@ -681,7 +681,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 		/* Ps Poll Wake Policy */
 		if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
 				     &cfg_data_val) != eSIR_SUCCESS) {
-			CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for WNI_CFG_MAX_PS_POLL");
 		}
 		if (cfg_data_val) {
@@ -771,7 +771,7 @@ static int32_t wma_set_force_sleep(tp_wma_handle wma,
 	/* Set Listen Interval */
 	if (wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get value for WNI_CFG_LISTEN_INTERVAL");
 		cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 	}
@@ -816,7 +816,7 @@ int32_t wma_set_qpower_force_sleep(tp_wma_handle wma, uint32_t vdev_id,
 	/* Get Configured Ps Poll Count */
 	if (wlan_cfg_get_int(mac, WNI_CFG_MAX_PS_POLL,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get value for WNI_CFG_MAX_PS_POLL");
 	}
 	if (cfg_data_val) {
@@ -883,7 +883,7 @@ int32_t wma_set_qpower_force_sleep(tp_wma_handle wma, uint32_t vdev_id,
 	/* Set Listen Interval */
 	if (wlan_cfg_get_int(mac, WNI_CFG_LISTEN_INTERVAL,
 			     &cfg_data_val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get value for WNI_CFG_LISTEN_INTERVAL");
 		cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 	}
@@ -2189,7 +2189,7 @@ static void wma_set_vdev_resume_dtim(tp_wma_handle wma, uint8_t vdev_id)
 						       WNI_CFG_LISTEN_INTERVAL,
 						       &cfg_data_val) !=
 				      eSIR_SUCCESS)) {
-			CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 				  "Failed to get value for listen interval");
 			cfg_data_val = POWERSAVE_DEFAULT_LISTEN_INTERVAL;
 		}

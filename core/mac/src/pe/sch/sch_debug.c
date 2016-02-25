@@ -37,14 +37,14 @@
  *
  */
 
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "sch_debug.h"
 #define LOG_SIZE 256
 
 void sch_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 {
 
-	CDF_TRACE_LEVEL cdf_debug_level;
+	QDF_TRACE_LEVEL cdf_debug_level;
 	char logBuffer[LOG_SIZE];
 	va_list marker;
 
@@ -54,7 +54,7 @@ void sch_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 	/* extracting arguments from pstring */
 	va_start(marker, pString);
 	vsnprintf(logBuffer, LOG_SIZE, pString, marker);
-	CDF_TRACE(QDF_MODULE_ID_PE, cdf_debug_level, "%s", logBuffer);
+	QDF_TRACE(QDF_MODULE_ID_PE, cdf_debug_level, "%s", logBuffer);
 	va_end(marker);
 }
 

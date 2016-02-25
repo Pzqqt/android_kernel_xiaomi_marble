@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,7 +40,7 @@
 
 #include "lim_global.h"
 #include "mac_trace.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #ifdef LIM_TRACE_RECORD
 
 #define LIM_TRACE_GET_SSN(data)    (((data) >> 16) & 0xff)
@@ -85,7 +85,7 @@ void limTraceUpdateMgmtStat(tpAniSirGlobal pMac, uint8_t subtype);
 void lim_trace_dumpMgmtStat(tpAniSirGlobal pMac, uint8_t subtype);
 uint8_t *lim_trace_get_mlm_state_string(uint32_t mlmState);
 uint8_t *lim_trace_get_sme_state_string(uint32_t smeState);
-void lim_trace_dump(tpAniSirGlobal pMac, tp_cdf_trace_record pRecord,
+void lim_trace_dump(tpAniSirGlobal pMac, tp_qdf_trace_record pRecord,
 		    uint16_t recIndex);
 void mac_trace_msg_tx(tpAniSirGlobal pMac, uint8_t session, uint32_t data);
 void mac_trace_msg_rx(tpAniSirGlobal pMac, uint8_t session, uint32_t data);

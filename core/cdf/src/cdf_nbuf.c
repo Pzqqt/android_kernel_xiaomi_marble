@@ -43,7 +43,7 @@
 #include <qdf_types.h>
 #include <cdf_nbuf.h>
 #include <cdf_memory.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 #include <qdf_status.h>
 #include <qdf_lock.h>
 
@@ -536,7 +536,7 @@ void cdf_net_buf_debug_exit(void)
 		while (p_node) {
 			p_prev = p_node;
 			p_node = p_node->p_next;
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				  "SKB buf memory Leak@ File %s, @Line %d, size %zu\n",
 				  p_prev->file_name, p_prev->line_num,
 				  p_prev->size);
@@ -632,10 +632,10 @@ void cdf_net_buf_debug_add_node(cdf_nbuf_t net_buf, size_t size,
 	p_node = cdf_net_buf_debug_look_up(net_buf);
 
 	if (p_node) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Double allocation of skb ! Already allocated from %s %d",
 			  p_node->file_name, p_node->line_num);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		goto done;
 	} else {
 		p_node = (CDF_NBUF_TRACK *) cdf_mem_malloc(sizeof(*p_node));
@@ -647,10 +647,10 @@ void cdf_net_buf_debug_add_node(cdf_nbuf_t net_buf, size_t size,
 			p_node->p_next = gp_cdf_net_buf_track_tbl[i];
 			gp_cdf_net_buf_track_tbl[i] = p_node;
 		} else {
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "Mem alloc failed ! Could not track skb from %s %d of size %zu",
 				  file_name, line_num, size);
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 		}
 	}
 
@@ -706,10 +706,10 @@ void cdf_net_buf_debug_delete_node(cdf_nbuf_t net_buf)
 
 done:
 	if (!found) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Unallocated buffer ! Double free of net_buf %p ?",
 			  net_buf);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 
 	spin_unlock_irqrestore(&g_cdf_net_buf_track_lock, irq_flag);

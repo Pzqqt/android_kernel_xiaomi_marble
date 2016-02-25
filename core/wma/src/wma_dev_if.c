@@ -113,7 +113,7 @@ bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id)
 
 	if (vdev_id > wma->max_bssid) {
 		WMA_LOGP("%s: Invalid vdev_id %hu", __func__, vdev_id);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return false;
 	}
 
@@ -142,7 +142,7 @@ bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id)
 
 	if (vdev_id > wma->max_bssid) {
 		WMA_LOGP("%s: Invalid vdev_id %hu", __func__, vdev_id);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return false;
 	}
 
@@ -2587,12 +2587,12 @@ void wma_hold_req_timer(void *data)
 		 * Assert in development build only.
 		 * Send response in production builds.
 		 */
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		wma_send_msg(wma, WMA_DELETE_STA_RSP, (void *)params, 0);
 	} else if ((tgt_req->msg_type == WMA_DELETE_STA_REQ) &&
 		(tgt_req->type == WMA_DEL_P2P_SELF_STA_RSP_START)) {
 		WMA_LOGA(FL("wma delete sta p2p request timed out"));
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 free_tgt_req:
 	qdf_mc_timer_destroy(&tgt_req->event_timeout);

@@ -34,7 +34,7 @@
  *
  */
 
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "qdf_types.h"
 #include "wlan_hdd_trace.h"
 #include "wlan_hdd_main.h"
@@ -48,7 +48,7 @@
  * Return: none
  */
 static void
-hdd_trace_dump(void *mac, tp_cdf_trace_record record, uint16_t index)
+hdd_trace_dump(void *mac, tp_qdf_trace_record record, uint16_t index)
 {
 	if (TRACE_CODE_HDD_RX_SME_MSG == record->code)
 		hddLog(LOGE, "%04d    %012llu  S%d    %-14s  %-30s(0x%x) ",
@@ -69,7 +69,7 @@ hdd_trace_dump(void *mac, tp_cdf_trace_record record, uint16_t index)
  */
 void hdd_trace_init(void)
 {
-	cdf_trace_register(QDF_MODULE_ID_HDD, hdd_trace_dump);
+	qdf_trace_register(QDF_MODULE_ID_HDD, hdd_trace_dump);
 }
 
 #endif /* ifdef HDD_TRACE_RECORD */

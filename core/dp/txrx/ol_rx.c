@@ -75,10 +75,10 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 
 static void ol_rx_restore_handler(struct work_struct *htt_rx)
 {
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		  "Enter: %s", __func__);
 	cnss_device_self_recovery();
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 		  "Exit: %s", __func__);
 }
 
@@ -91,7 +91,7 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, cdf_nbuf_t head_msdu,
 
 	while (head_msdu) {
 		next = cdf_nbuf_next(head_msdu);
-		CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 			  "freeing %p\n", head_msdu);
 		cdf_nbuf_free(head_msdu);
 		head_msdu = next;

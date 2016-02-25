@@ -35,7 +35,7 @@
 #include "csr_link_list.h"
 #include "qdf_lock.h"
 #include "cdf_memory.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "qdf_mc_timer.h"
 
 static inline void csr_list_init(tListElem *pList)
@@ -107,7 +107,7 @@ void csr_list_insert_entry(tListElem *pEntry, tListElem *pNewEntry)
 {
 	tListElem *pLast;
 	if (!pEntry) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pEntry is Null", __func__);
 		return;
 	}
@@ -124,7 +124,7 @@ uint32_t csr_ll_count(tDblLinkList *pList)
 	uint32_t c = 0;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return c;
 	}
@@ -140,7 +140,7 @@ void csr_ll_lock(tDblLinkList *pList)
 {
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -154,7 +154,7 @@ void csr_ll_unlock(tDblLinkList *pList)
 {
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -169,7 +169,7 @@ bool csr_ll_is_list_empty(tDblLinkList *pList, bool fInterlocked)
 	bool fEmpty = true;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return fEmpty;
 	}
@@ -194,7 +194,7 @@ bool csr_ll_find_entry(tDblLinkList *pList, tListElem *pEntryToFind)
 	tListElem *pEntry;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return fFound;
 	}
@@ -223,7 +223,7 @@ QDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList)
 	QDF_STATUS qdf_status;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -247,7 +247,7 @@ QDF_STATUS csr_ll_open(tHddHandle hHdd, tDblLinkList *pList)
 void csr_ll_close(tDblLinkList *pList)
 {
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -264,7 +264,7 @@ void csr_ll_insert_tail(tDblLinkList *pList, tListElem *pEntry,
 			bool fInterlocked)
 {
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -286,7 +286,7 @@ void csr_ll_insert_head(tDblLinkList *pList, tListElem *pEntry,
 {
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -312,7 +312,7 @@ void csr_ll_insert_entry(tDblLinkList *pList, tListElem *pEntry,
 			 tListElem *pNewEntry, bool fInterlocked)
 {
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -334,7 +334,7 @@ tListElem *csr_ll_remove_tail(tDblLinkList *pList, bool fInterlocked)
 	tListElem *pEntry = NULL;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return pEntry;
 	}
@@ -362,7 +362,7 @@ tListElem *csr_ll_peek_tail(tDblLinkList *pList, bool fInterlocked)
 	tListElem *pEntry = NULL;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return pEntry;
 	}
@@ -388,7 +388,7 @@ tListElem *csr_ll_remove_head(tDblLinkList *pList, bool fInterlocked)
 	tListElem *pEntry = NULL;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return pEntry;
 	}
@@ -416,7 +416,7 @@ tListElem *csr_ll_peek_head(tDblLinkList *pList, bool fInterlocked)
 	tListElem *pEntry = NULL;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return pEntry;
 	}
@@ -442,7 +442,7 @@ void csr_ll_purge(tDblLinkList *pList, bool fInterlocked)
 	tListElem *pEntry;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return;
 	}
@@ -468,7 +468,7 @@ bool csr_ll_remove_entry(tDblLinkList *pList, tListElem *pEntryToRemove,
 	tListElem *pEntry;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return fFound;
 	}
@@ -510,7 +510,7 @@ tListElem *csr_ll_next(tDblLinkList *pList, tListElem *pEntry,
 	tListElem *pNextEntry = NULL;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return pNextEntry;
 	}
@@ -543,7 +543,7 @@ tListElem *csr_ll_previous(tDblLinkList *pList, tListElem *pEntry,
 	tListElem *pNextEntry = NULL;
 
 	if (!pList) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Error!! pList is Null", __func__);
 		return pNextEntry;
 	}

@@ -2816,7 +2816,7 @@ tSirRetStatus lim_add_ft_sta_self(tpAniSirGlobal mac_ctx, uint16_t assoc_id,
 	msg_q.bodyptr = add_sta_params;
 	msg_q.bodyval = 0;
 
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"Sending WMA_ADD_STA_REQ (aid %d)",
 			 add_sta_params->assocId);
 	MTRACE(mac_trace_msg_tx(mac_ctx, session_entry->peSessionId,

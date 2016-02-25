@@ -221,7 +221,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 
 	if (!lro_hash_table) {
 		hdd_err("Invalid hash entry");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return -EINVAL;
 	}
 

@@ -72,11 +72,11 @@
 #define A_MEMCMP(addr1, addr2, len)     memcmp((addr1), (addr2), (len))
 
 #define A_LOGGER(mask, mod, args ...) \
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, ## args)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 #define A_PRINTF(args ...) \
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, ## args)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 #define A_PRINTF_LOG(args ...) \
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR, ## args)
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR, ## args)
 #define A_SNPRINTF(buf, len, args ...)   snprintf (buf, len, args)
 
 /*

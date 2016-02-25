@@ -413,9 +413,9 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 	buf_ptr = buf_ptr + sizeof(wmi_wlan_profile_ctx_t) + WMI_TLV_HDR_SIZE;
 	profile_data = (wmi_wlan_profile_t *) buf_ptr;
 	entries = profile_ctx->bin_count;
-	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 				"Profile data stats\n");
-	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 		"TOT: %d\n"
 		"tx_msdu_cnt: %d\n"
 		"tx_mpdu_cnt: %d\n"
@@ -434,7 +434,7 @@ int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 	for (i = 0; i < entries; i++) {
 		if (i == WMI_WLAN_PROFILE_MAX_BIN_CNT)
 			break;
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			"Profile ID: %d\n"
 			"Profile Count: %d\n"
 			"Profile TOT: %d\n"
@@ -1591,7 +1591,7 @@ QDF_STATUS wma_wni_cfg_dnld(tp_wma_handle wma_handle)
 
 	if (NULL == mac) {
 		WMA_LOGP("%s: Invalid context", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2038,7 +2038,7 @@ static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
 	stats_rsp_params = (tAniGetPEStatsRsp *) cdf_mem_malloc(len);
 	if (!stats_rsp_params) {
 		WMA_LOGE("memory allocation failed for tAniGetPEStatsRsp");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return NULL;
 	}
 

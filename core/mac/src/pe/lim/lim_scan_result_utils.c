@@ -98,7 +98,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 
 	if (SIR_MAC_B_PR_SSID_OFFSET > WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo)) {
-		CDF_ASSERT(WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) >=
+		QDF_ASSERT(WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo) >=
 			   SIR_MAC_B_PR_SSID_OFFSET);
 		return QDF_STATUS_E_FAILURE;
 	}

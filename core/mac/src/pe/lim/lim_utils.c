@@ -593,7 +593,7 @@ static void lim_deactivate_del_sta(tpAniSirGlobal mac_ctx, uint32_t bss_entry,
 		if (NULL == sta_ds)
 			continue;
 
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				FL("Deleting pmfSaQueryTimer for staid[%d]"),
 				sta_ds->staIndex);
 		tx_timer_deactivate(&sta_ds->pmfSaQueryTimer);
@@ -735,7 +735,7 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 	 * the pmfSaQueryTimer for it
 	 */
 	if (cds_is_driver_recovering()) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 				FL("SSR is detected, proceed to clean up pmfSaQueryTimer"));
 		for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
 						bss_entry++) {
@@ -6812,7 +6812,7 @@ bool lim_validate_received_frame_a1_addr(tpAniSirGlobal mac_ctx,
 		tSirMacAddr a1, tpPESession session)
 {
 	if (mac_ctx == NULL || session == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 				"mac or session context is null");
 		/* let main routine handle it */
 		return true;

@@ -71,7 +71,7 @@
 #endif
 #include "wlan_hdd_trace.h"
 #include "qdf_types.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "wlan_hdd_cfg.h"
 #include "cds_concurrency.h"
 #include "wlan_hdd_green_ap.h"
@@ -219,7 +219,7 @@ static int __hdd_hostapd_open(struct net_device *dev)
 
 	ENTER();
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_HOSTAPD_OPEN_REQUEST, NO_SESSION, 0));
 
 	if (cds_is_load_or_unload_in_progress()) {
@@ -589,7 +589,7 @@ static void hdd_issue_stored_joinreq(hdd_adapter_t *sta_adapter,
 	hal_handle = WLAN_HDD_GET_HAL_CTX(sta_adapter);
 
 	if (true ==  cds_is_sta_connection_pending()) {
-		MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+		MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 				TRACE_CODE_HDD_ISSUE_JOIN_REQ,
 				sta_adapter->sessionId, roam_id));
 		if (QDF_STATUS_SUCCESS !=
@@ -1517,7 +1517,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 						hddLog(LOGE,
 						       FL("Failed to init AP inactivity timer"));
 				} else
-					CDF_ASSERT
+					QDF_ASSERT
 						(qdf_mc_timer_get_current_state
 							(&pHddApCtx->
 							hdd_ap_inactivity_timer) ==
@@ -2207,7 +2207,7 @@ static int __iw_softap_set_two_ints_getnone(struct net_device *dev,
 		hdd_info("WE_DUMP_DP_TRACE: %d %d",
 		       value[1], value[2]);
 		if (value[1] == DUMP_DP_TRACE)
-			cdf_dp_trace_dump_all(value[2]);
+			qdf_dp_trace_dump_all(value[2]);
 		break;
 	case QCSAP_ENABLE_FW_PROFILE:
 		hddLog(LOG1, "QCSAP_ENABLE_FW_PROFILE: %d %d",
@@ -3020,7 +3020,7 @@ static __iw_softap_getparam(struct net_device *dev,
 
 	case QCSAP_PARAM_GET_WLAN_DBG:
 	{
-		cdf_trace_display();
+		qdf_trace_display();
 		*value = 0;
 		break;
 	}
@@ -3248,7 +3248,7 @@ int __iw_softap_modify_acl(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx =  hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Vos Context is NULL", __func__);
 		return -EINVAL;
 	}
@@ -3557,7 +3557,7 @@ static __iw_softap_disassoc_sta(struct net_device *dev,
 	ENTER();
 
 	if (!capable(CAP_NET_ADMIN)) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			FL("permission check failed"));
 		return -EPERM;
 	}
@@ -3780,7 +3780,7 @@ int __iw_get_genie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: vos context is not valid ", __func__);
 		return -EINVAL;
 	}
@@ -4009,7 +4009,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: pVosContext is NULL", __func__);
 		return -EINVAL;
 	}
@@ -4455,7 +4455,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 	ENTER();
 
 	if (!capable(CAP_NET_ADMIN)) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			FL("permission check failed"));
 		return -EPERM;
 	}
@@ -4468,7 +4468,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: HDD context is not valid ", __func__);
 		return -EINVAL;
 	}
@@ -5067,7 +5067,7 @@ __iw_softap_stopbss(struct net_device *dev,
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOGE,
 				       FL("wait for single_event failed!!"));
-				CDF_ASSERT(0);
+				QDF_ASSERT(0);
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pHostapdAdapter->event_flags);
@@ -5139,7 +5139,7 @@ QDF_STATUS hdd_softap_get_sta_info(hdd_adapter_t *pAdapter, uint8_t *pBuf,
 	ENTER();
 
 	if (NULL == pAdapter) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Adapter is NULL", __func__);
 		return -EINVAL;
 	}
@@ -5254,7 +5254,7 @@ static int __iw_set_ap_genie(struct net_device *dev,
 #ifndef WLAN_FEATURE_MBSSID
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: CDF Context is NULL", __func__);
 		return -EINVAL;
 	}
@@ -6046,7 +6046,7 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 
 	qdf_status = qdf_event_create(&phostapdBuf->cdf_stop_bss_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: Hostapd HDD stop bss event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
@@ -6352,7 +6352,7 @@ static int wlan_hdd_set_channel(struct wiphy *wiphy,
 	}
 	pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SET_CHANNEL,
 			 pAdapter->sessionId, channel_type));
 
@@ -7812,7 +7812,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 #else
 		wlansap_stop_bss(p_cds_context);
 #endif
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return -EINVAL;
 	}
 	/* Succesfully started Bss update the state bit. */
@@ -7877,7 +7877,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_STOP_AP,
 			 pAdapter->sessionId, pAdapter->device_mode));
 
@@ -7918,7 +7918,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 				if (!rc) {
 					hddLog(LOGE,
 					       FL("Timeout occurred while waiting for abortscan"));
-					CDF_ASSERT(pScanInfo->mScanPending);
+					QDF_ASSERT(pScanInfo->mScanPending);
 				}
 			}
 		}
@@ -7976,7 +7976,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOGE,
 				       FL("HDD cdf wait for single_event failed!!"));
-				CDF_ASSERT(0);
+				QDF_ASSERT(0);
 			}
 		}
 		clear_bit(SOFTAP_BSS_STARTED, &pAdapter->event_flags);
@@ -8105,7 +8105,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_START_AP, pAdapter->sessionId,
 			 params->beacon_interval));
 	if (WLAN_HDD_ADAPTER_MAGIC != pAdapter->magic) {
@@ -8263,7 +8263,7 @@ static int __wlan_hdd_cfg80211_change_beacon(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_CHANGE_BEACON,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	hddLog(LOG1, FL("Device_mode %s(%d)"),

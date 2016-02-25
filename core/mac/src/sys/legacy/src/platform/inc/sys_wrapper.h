@@ -49,7 +49,7 @@ extern "C" {
 #include "sys_def.h"
 #include "qdf_mc_timer.h"
 #include "qdf_types.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "cdf_memory.h"
 
 /* Interlocked Compare Exchange related definitions */

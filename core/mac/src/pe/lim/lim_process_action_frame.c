@@ -1604,7 +1604,7 @@ static void __lim_process_sa_query_response_action_frame(tpAniSirGlobal pMac,
 	pHdr = WMA_GET_RX_MAC_HEADER(pRxPacketInfo);
 	frameLen = WMA_GET_RX_PAYLOAD_LEN(pRxPacketInfo);
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 		  ("SA Query Response received..."));
 
 	/* When a station, supplicant handles SA Query Response.
@@ -2050,7 +2050,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
 			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 				  ("Public Action TDLS Discovery RSP .."));
 			lim_send_sme_mgmt_frame_ind(mac_ctx,
 				mac_hdr->fc.subType, (uint8_t *) mac_hdr,

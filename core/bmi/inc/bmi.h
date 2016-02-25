@@ -33,7 +33,7 @@
 #ifndef _BMI_H_
 #define _BMI_H_
 #include "bmi_msg.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "ol_if_athvar.h"
 #include "hif.h"
 

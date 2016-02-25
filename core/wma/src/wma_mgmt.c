@@ -2090,7 +2090,7 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	if (pdev)
 		ol_txrx_set_wmm_param(pdev, ol_tx_wmm_param);
 	else
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 
 	return QDF_STATUS_SUCCESS;
 

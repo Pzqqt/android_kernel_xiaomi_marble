@@ -56,7 +56,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_stats.h"
 #include "qdf_types.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 
 #include <net/addrconf.h>
 #include <linux/wireless.h>
@@ -333,14 +333,14 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	if (NULL == hdd_ctx) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("HDD Context Null Pointer"));
-		CDF_ASSERT(0);
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("HDD Context Null Pointer"));
+		QDF_ASSERT(0);
 		return NOTIFY_DONE;
 	}
 	if (cds_is_driver_recovering())
 		return NOTIFY_DONE;
 
-	hddLog(CDF_TRACE_LEVEL_INFO, FL("%s New Net Device State = %lu"),
+	hddLog(QDF_TRACE_LEVEL_INFO, FL("%s New Net Device State = %lu"),
 	       dev->name, state);
 
 	switch (state) {
@@ -378,7 +378,7 @@ static int __hdd_netdev_notifier_call(struct notifier_block *nb,
 				       FL("Timeout occurred while waiting for abortscan"));
 			}
 		} else {
-			hddLog(CDF_TRACE_LEVEL_INFO,
+			hddLog(QDF_TRACE_LEVEL_INFO,
 			       FL("Scan is not Pending from user"));
 		}
 		break;
@@ -484,7 +484,7 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
  */
 static void hdd_cdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 {
-	CDF_TRACE_LEVEL level;
+	QDF_TRACE_LEVEL level;
 
 	/*
 	 * if the bitmask is the default value, then a bitmask was not
@@ -496,13 +496,13 @@ static void hdd_cdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 	}
 
 	/* a mask was specified.  start by disabling all logging */
-	cdf_trace_set_value(moduleId, CDF_TRACE_LEVEL_NONE, 0);
+	qdf_trace_set_value(moduleId, QDF_TRACE_LEVEL_NONE, 0);
 
 	/* now cycle through the bitmask until all "set" bits are serviced */
-	level = CDF_TRACE_LEVEL_FATAL;
+	level = QDF_TRACE_LEVEL_FATAL;
 	while (0 != bitmask) {
 		if (bitmask & 1) {
-			cdf_trace_set_value(moduleId, level, 1);
+			qdf_trace_set_value(moduleId, level, 1);
 		}
 		level++;
 		bitmask >>= 1;
@@ -544,13 +544,13 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 	struct hdd_config *cfg_param = NULL;
 
 	if (NULL == hdd_ctx) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("HDD Context is null !!"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("HDD Context is null !!"));
 		return;
 	}
 
 	adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_INFRA_STATION);
 	if (NULL == adapter) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("adapter is null !!"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("adapter is null !!"));
 		return;
 	}
 
@@ -558,7 +558,7 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 
 	cfg_param = hdd_ctx->config;
 	if (NULL == cfg_param) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("cfg_params not available !!"));
 		return;
 	}
@@ -569,7 +569,7 @@ void hdd_checkandupdate_phymode(hdd_context_t *hdd_ctx)
 		if ((eCSR_DOT11_MODE_AUTO == phyMode) ||
 		    (eCSR_DOT11_MODE_11ac == phyMode) ||
 		    (eCSR_DOT11_MODE_11ac_ONLY == phyMode)) {
-			hddLog(CDF_TRACE_LEVEL_INFO,
+			hddLog(QDF_TRACE_LEVEL_INFO,
 			       FL("Setting phymode to 11n!!"));
 			sme_set_phy_mode(WLAN_HDD_GET_HAL_CTX(adapter),
 					 eCSR_DOT11_MODE_11n);
@@ -627,7 +627,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	if (hdd_ctx == NULL) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("HDD context is null"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -637,7 +637,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssATIMWinSize,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WMA_VDEV_IBSS_SET_ATIM_WINDOW_SIZE failed %d"), ret);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -647,7 +647,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->isIbssPowerSaveAllowed,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WMA_VDEV_IBSS_SET_POWER_SAVE_ALLOWED failed %d"),
 		       ret);
 		return QDF_STATUS_E_FAILURE;
@@ -658,7 +658,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->
 				  isIbssPowerCollapseAllowed, VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WMA_VDEV_IBSS_SET_POWER_COLLAPSE_ALLOWED failed %d"),
 		       ret);
 		return QDF_STATUS_E_FAILURE;
@@ -669,7 +669,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->isIbssAwakeOnTxRx,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WMA_VDEV_IBSS_SET_AWAKE_ON_TX_RX failed %d"), ret);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -679,7 +679,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssInactivityCount,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WMA_VDEV_IBSS_SET_INACTIVITY_TIME failed %d"), ret);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -689,7 +689,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssTxSpEndInactivityTime,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "WMA_VDEV_IBSS_SET_TXSP_END_INACTIVITY_TIME failed %d"
 			 ),
@@ -702,7 +702,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssPsWarmupTime,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WMA_VDEV_IBSS_PS_SET_WARMUP_TIME_SECS failed %d"),
 		       ret);
 		return QDF_STATUS_E_FAILURE;
@@ -713,7 +713,7 @@ QDF_STATUS hdd_set_ibss_power_save_params(hdd_adapter_t *adapter)
 				  hdd_ctx->config->ibssPs1RxChainInAtimEnable,
 				  VDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "WMA_VDEV_IBSS_PS_SET_1RX_CHAIN_IN_ATIM_WINDOW failed %d"
 			 ),
@@ -767,7 +767,7 @@ void hdd_update_macaddr(struct hdd_config *config,
 		/* Set locally administered bit */
 		config->intfMacAddr[i].bytes[0] |= 0x02;
 		config->intfMacAddr[i].bytes[3] = macaddr_b3;
-		hddLog(CDF_TRACE_LEVEL_INFO, "config->intfMacAddr[%d]: "
+		hddLog(QDF_TRACE_LEVEL_INFO, "config->intfMacAddr[%d]: "
 		       MAC_ADDRESS_STR, i,
 		       MAC_ADDR_ARRAY(config->intfMacAddr[i].bytes));
 	}
@@ -793,7 +793,7 @@ static void hdd_update_tgt_services(hdd_context_t *hdd_ctx,
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* PNO offload */
-	hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 	       FL("PNO Capability in f/w = %d"), cfg->pno_offload);
 	if (cfg->pno_offload)
 		config->PnoOffload = true;
@@ -834,7 +834,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_MPDU_DENSITY, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get MPDU DENSITY"));
 		value = 0;
 	}
@@ -849,14 +849,14 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 					 cfg->mpdu_density);
 
 		if (status == QDF_STATUS_E_FAILURE)
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set MPDU DENSITY to CCM"));
 	}
 
 	/* get the HT capability info */
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, &val32);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get HT capability info"));
 		return;
 	}
@@ -914,13 +914,13 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 	val32 = val16;
 	status = sme_cfg_set_int(hdd_ctx->hHal, WNI_CFG_HT_CAP_INFO, val32);
 	if (status != QDF_STATUS_SUCCESS)
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("could not set HT capability to CCM"));
 #define WLAN_HDD_RX_MCS_ALL_NSTREAM_RATES 0xff
 	value = SIZE_OF_SUPPORTED_MCS_SET;
 	if (sme_cfg_get_str(hdd_ctx->hHal, WNI_CFG_SUPPORTED_MCS_SET, mcs_set,
 			    &value) == QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_INFO, FL("Read MCS rate set"));
+		hddLog(QDF_TRACE_LEVEL_INFO, FL("Read MCS rate set"));
 
 		if (pconfig->enable2x2) {
 			for (value = 0; value < cfg->num_rf_chains; value++)
@@ -933,7 +933,7 @@ static void hdd_update_tgt_ht_cap(hdd_context_t *hdd_ctx,
 						mcs_set,
 						SIZE_OF_SUPPORTED_MCS_SET);
 			if (status == QDF_STATUS_E_FAILURE)
-				hddLog(CDF_TRACE_LEVEL_FATAL,
+				hddLog(QDF_TRACE_LEVEL_FATAL,
 				       FL("could not set MCS SET to CCM"));
 		}
 	}
@@ -957,7 +957,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("could not get MPDU LENGTH"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("could not get MPDU LENGTH"));
 		value = 0;
 	}
 
@@ -972,7 +972,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_max_mpdu);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set VHT MAX MPDU LENGTH"));
 		}
 	}
@@ -983,7 +983,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get MPDU LENGTH"));
 		value = 0;
 	}
@@ -994,7 +994,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT LDPC CODING CAP"));
 		value = 0;
 	}
@@ -1006,7 +1006,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_rx_ldpc);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set VHT LDPC CODING CAP to CCM"));
 		}
 	}
@@ -1016,7 +1016,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				&value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get SHORT GI 80MHZ"));
 		value = 0;
 	}
@@ -1028,7 +1028,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_short_gi_80);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set SHORT GI 80MHZ to CCM"));
 		}
 	}
@@ -1039,7 +1039,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get SHORT GI 80 & 160"));
 		value = 0;
 	}
@@ -1048,7 +1048,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXSTBC, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT TX STBC"));
 		value = 0;
 	}
@@ -1059,7 +1059,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_tx_stbc);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set the VHT TX STBC to CCM"));
 		}
 	}
@@ -1068,7 +1068,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_RXSTBC, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT RX STBC"));
 		value = 0;
 	}
@@ -1079,7 +1079,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_rx_stbc);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set the VHT RX STBC to CCM"));
 		}
 	}
@@ -1089,7 +1089,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT SU BEAMFORMER CAP"));
 		value = 0;
 	}
@@ -1101,7 +1101,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_su_bformer);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set VHT SU BEAMFORMER CAP"));
 		}
 	}
@@ -1115,7 +1115,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 pconfig->enableTxBF);
 
 	if (status == QDF_STATUS_E_FAILURE) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("could not set VHT SU BEAMFORMEE CAP"));
 	}
 
@@ -1124,7 +1124,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT MU BEAMFORMER CAP"));
 		value = 0;
 	}
@@ -1136,7 +1136,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_mu_bformer);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL(
 				  "could not set the VHT MU BEAMFORMER CAP to CCM"
 				 ));
@@ -1148,7 +1148,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT MU BEAMFORMEE CAP"));
 		value = 0;
 	}
@@ -1160,7 +1160,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_mu_bformee);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set VHT MU BEAMFORMER CAP"));
 		}
 	}
@@ -1170,7 +1170,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 				 &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT AMPDU LEN"));
 		value = 0;
 	}
@@ -1189,7 +1189,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_max_ampdu_len_exp);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set the VHT AMPDU LEN EXP"));
 		}
 	}
@@ -1198,7 +1198,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 	status = sme_cfg_get_int(hdd_ctx->hHal, WNI_CFG_VHT_TXOP_PS, &value);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("could not get VHT TXOP PS"));
 		value = 0;
 	}
@@ -1209,7 +1209,7 @@ static void hdd_update_tgt_vht_cap(hdd_context_t *hdd_ctx,
 					 cfg->vht_txop_ps);
 
 		if (status == QDF_STATUS_E_FAILURE) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("could not set the VHT TXOP PS"));
 		}
 	}
@@ -1288,7 +1288,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	else if ((hdd_ctx->config->nBandCapability != eCSR_BAND_ALL) &&
 		 (temp_band_cap != eCSR_BAND_ALL) &&
 		 (hdd_ctx->config->nBandCapability != temp_band_cap)) {
-		hddLog(CDF_TRACE_LEVEL_WARN,
+		hddLog(QDF_TRACE_LEVEL_WARN,
 		       FL("ini BandCapability not supported by the target"));
 	}
 
@@ -1302,7 +1302,7 @@ void hdd_update_tgt_cfg(void *context, void *param)
 	if (!qdf_is_macaddr_zero(&cfg->hw_macaddr)) {
 		hdd_update_macaddr(hdd_ctx->config, cfg->hw_macaddr);
 	} else {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "Invalid MAC passed from target, using MAC from ini file"
 			  MAC_ADDRESS_STR),
@@ -1441,7 +1441,7 @@ static int __hdd_open(struct net_device *dev)
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	int ret;
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_OPEN_REQUEST,
 			 adapter->sessionId, adapter->device_mode));
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -1497,7 +1497,7 @@ static int __hdd_stop(struct net_device *dev)
 
 	ENTER();
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_STOP_REQUEST,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_STOP_REQUEST,
 			 adapter->sessionId, adapter->device_mode));
 
 	ret = wlan_hdd_validate_context(hdd_ctx);
@@ -1506,14 +1506,14 @@ static int __hdd_stop(struct net_device *dev)
 
 	/* Nothing to be done if the interface is not opened */
 	if (false == test_bit(DEVICE_IFACE_OPENED, &adapter->event_flags)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("NETDEV Interface is not OPENED"));
 		return -ENODEV;
 	}
 
 	/* Make sure the interface is marked as closed */
 	clear_bit(DEVICE_IFACE_OPENED, &adapter->event_flags);
-	hddLog(CDF_TRACE_LEVEL_INFO, FL("Disabling OS Tx queues"));
+	hddLog(QDF_TRACE_LEVEL_INFO, FL("Disabling OS Tx queues"));
 
 	/*
 	 * Disable TX on the interface, after this hard_start_xmit() will not
@@ -1734,15 +1734,15 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 		return;
 
 	if (dev->flags & IFF_ALLMULTI) {
-		hddLog(CDF_TRACE_LEVEL_INFO,
+		hddLog(QDF_TRACE_LEVEL_INFO,
 		       FL("allow all multicast frames"));
 		adapter->mc_addr_list.mc_cnt = 0;
 	} else {
 		mc_count = netdev_mc_count(dev);
-		hddLog(CDF_TRACE_LEVEL_INFO,
+		hddLog(QDF_TRACE_LEVEL_INFO,
 		       FL("mc_count = %u"), mc_count);
 		if (mc_count > WLAN_HDD_MAX_MC_ADDR_LIST) {
-			hddLog(CDF_TRACE_LEVEL_INFO,
+			hddLog(QDF_TRACE_LEVEL_INFO,
 			       FL(
 				  "No free filter available; allow all multicast frames"
 				 ));
@@ -1776,7 +1776,7 @@ static void __hdd_set_multicast_list(struct net_device *dev)
 			       ETH_ALEN);
 			memcpy(&(adapter->mc_addr_list.addr[i][0]), ha->addr,
 			       ETH_ALEN);
-			hddLog(CDF_TRACE_LEVEL_INFO,
+			hddLog(QDF_TRACE_LEVEL_INFO,
 			       FL("mlist[%d] = " MAC_ADDRESS_STR), i,
 			       MAC_ADDR_ARRAY(adapter->mc_addr_list.addr[i]));
 			i++;
@@ -1942,19 +1942,19 @@ QDF_STATUS hdd_register_interface(hdd_adapter_t *adapter,
 	if (rtnl_held) {
 		if (strnchr(pWlanDev->name, strlen(pWlanDev->name), '%')) {
 			if (dev_alloc_name(pWlanDev, pWlanDev->name) < 0) {
-				hddLog(CDF_TRACE_LEVEL_ERROR,
+				hddLog(QDF_TRACE_LEVEL_ERROR,
 				       FL("Failed:dev_alloc_name"));
 				return QDF_STATUS_E_FAILURE;
 			}
 		}
 		if (register_netdevice(pWlanDev)) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("Failed:register_netdev"));
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
 		if (register_netdev(pWlanDev)) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("Failed:register_netdev"));
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -1969,12 +1969,12 @@ static QDF_STATUS hdd_sme_close_session_callback(void *pContext)
 	hdd_adapter_t *adapter = pContext;
 
 	if (NULL == adapter) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("NULL adapter"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("NULL adapter"));
 		return QDF_STATUS_E_INVAL;
 	}
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("Invalid magic"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("Invalid magic"));
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
@@ -2163,7 +2163,7 @@ void hdd_cleanup_actionframe(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 			&adapter->tx_action_cnf_event,
 			msecs_to_jiffies(ACTION_FRAME_TX_TIMEOUT));
 		if (!rc) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("HDD Wait for Action Confirmation Failed!!"));
 			/*
 			 * Inform tx status as FAILURE to upper layer and free
@@ -2299,7 +2299,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		 * Max limit reached on the number of vdevs configured by the
 		 * host. Return error
 		 */
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "Unable to add virtual intf: currentVdevCnt=%d,hostConfiguredVdevCnt=%d"
 			 ),
@@ -2309,7 +2309,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 	if (macAddr == NULL) {
 		/* Not received valid macAddr */
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "Unable to add virtual intf: Not able to get valid mac address"
 			 ));
@@ -2317,7 +2317,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	}
 	status = hdd_check_for_existing_macaddr(hdd_ctx, macAddr);
 	if (QDF_STATUS_E_FAILURE == status) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "Duplicate MAC addr: " MAC_ADDRESS_STR
 		       " already exists",
 		       MAC_ADDR_ARRAY(macAddr));
@@ -2337,7 +2337,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			hdd_alloc_station_adapter(hdd_ctx, macAddr, iface_name);
 
 		if (NULL == adapter) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("failed to allocate adapter for session %d"),
 			       session_type);
 			return NULL;
@@ -2409,7 +2409,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			hdd_wlan_create_ap_dev(hdd_ctx, macAddr,
 					       (uint8_t *) iface_name);
 		if (NULL == adapter) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("failed to allocate adapter for session %d"),
 			       session_type);
 			return NULL;
@@ -2444,7 +2444,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			hdd_alloc_station_adapter(hdd_ctx, macAddr, iface_name);
 
 		if (NULL == adapter) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("failed to allocate adapter for session %d"),
 			       session_type);
 			return NULL;
@@ -2469,10 +2469,10 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	break;
 	default:
 	{
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("Invalid session type %d"),
 		       session_type);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return NULL;
 	}
 	}
@@ -2508,7 +2508,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 
 		/* Initialize the WoWL service */
 		if (!hdd_init_wowl(adapter)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL("hdd_init_wowl failed"));
 			goto err_lro_cleanup;
 		}
@@ -2516,7 +2516,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 		/* Adapter successfully added. Increment the vdev count */
 		hdd_ctx->current_intf_count++;
 
-		hddLog(CDF_TRACE_LEVEL_DEBUG, FL("current_intf_count=%d"),
+		hddLog(QDF_TRACE_LEVEL_DEBUG, FL("current_intf_count=%d"),
 		       hdd_ctx->current_intf_count);
 
 		cds_check_and_restart_sap_with_non_dfs_acs();
@@ -2539,7 +2539,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 					  VDEV_CMD);
 
 		if (ret != 0) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("DTIM 1 chain set failed %d"), ret);
 			goto err_lro_cleanup;
 		}
@@ -2549,7 +2549,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 					  hdd_ctx->config->txchainmask1x1,
 					  PDEV_CMD);
 		if (ret != 0) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("WMI_PDEV_PARAM_TX_CHAIN_MASK set failed %d"),
 			       ret);
 			goto err_lro_cleanup;
@@ -2559,7 +2559,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 					  hdd_ctx->config->rxchainmask1x1,
 					  PDEV_CMD);
 		if (ret != 0) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("WMI_PDEV_PARAM_RX_CHAIN_MASK set failed %d"),
 			       ret);
 			goto err_lro_cleanup;
@@ -2575,7 +2575,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 					  PDEV_CMD);
 
 		if (ret != 0) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("WMI_PDEV_PARAM_HYST_EN set failed %d"),
 			       ret);
 			goto err_lro_cleanup;
@@ -2673,7 +2673,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 
 	status = hdd_get_front_adapter(hdd_ctx, &pCurrent);
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(CDF_TRACE_LEVEL_WARN, FL("adapter list empty %d"),
+		hddLog(QDF_TRACE_LEVEL_WARN, FL("adapter list empty %d"),
 		       status);
 		return status;
 	}
@@ -2821,7 +2821,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 					msecs_to_jiffies
 						(WLAN_WAIT_TIME_DISCONNECT));
 				if (!rc) {
-					hddLog(CDF_TRACE_LEVEL_ERROR,
+					hddLog(QDF_TRACE_LEVEL_ERROR,
 					       FL(
 						  "wait on disconnect_comp_var failed"
 						 ));
@@ -2893,7 +2893,7 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			 * is no sap restart work pending.
 			 */
 			cds_flush_work(&hdd_ctx->sap_start_work);
-			hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 			       FL("Canceled the pending SAP restart work"));
 			cds_change_sap_restart_required_status(false);
 		}
@@ -3119,11 +3119,11 @@ QDF_STATUS hdd_start_all_adapters(hdd_context_t *hdd_ctx)
 
 		case WLAN_HDD_P2P_GO:
 #ifdef MSM_PLATFORM
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("[SSR] send stop ap to supplicant"));
 			cfg80211_ap_stopped(adapter->dev, GFP_KERNEL);
 #else
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("[SSR] send restart supplicant"));
 			/* event supplicant to restart */
 			cfg80211_del_sta(adapter->dev,
@@ -3259,7 +3259,7 @@ hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *hdd_ctx,
 		adapterNode = pNext;
 	}
 
-	hddLog(CDF_TRACE_LEVEL_ERROR,
+	hddLog(QDF_TRACE_LEVEL_ERROR,
 	       FL("vdev_id %d does not exist with host"), vdev_id);
 
 	return NULL;
@@ -3517,7 +3517,7 @@ static void hdd_disable_ftm(hdd_context_t *hdd_ctx)
 
 	if (hdd_ftm_stop(hdd_ctx)) {
 		hdd_alert("hdd_ftm_stop Failed!");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 
 	hdd_ctx->ftm.ftm_state = WLAN_FTM_STOPPED;
@@ -3706,7 +3706,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	if (!QDF_IS_STATUS_SUCCESS
 		    (qdf_mc_timer_destroy(&hdd_ctx->bus_bw_timer))) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Cannot deallocate Bus bandwidth timer"));
 	}
 #endif
@@ -3719,7 +3719,7 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 
 	if (!QDF_IS_STATUS_SUCCESS
 		    (qdf_mc_timer_destroy(&hdd_ctx->skip_acs_scan_timer))) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Cannot deallocate ACS Skip timer"));
 	}
 #endif
@@ -3756,9 +3756,9 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	/* Stop all the modules */
 	qdf_status = cds_disable(p_cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("Failed to stop CDS"));
-		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 
 	/*
@@ -3768,9 +3768,9 @@ void hdd_wlan_exit(hdd_context_t *hdd_ctx)
 	 */
 	qdf_status = cds_sched_close(p_cds_context);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("Failed to close CDS Scheduler"));
-		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 	}
 #ifdef WLAN_FEATURE_HOLD_RX_WAKELOCK
 	/* Destroy the wake lock */
@@ -3825,7 +3825,7 @@ void __hdd_wlan_exit(void)
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
 	if (!hdd_ctx) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("Invalid HDD Context"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("Invalid HDD Context"));
 		EXIT();
 		return;
 	}
@@ -3951,7 +3951,7 @@ QDF_STATUS hdd_post_cds_enable_config(hdd_context_t *hdd_ctx)
 	 */
 	cdf_ret_status = sme_hdd_ready_ind(hdd_ctx->hHal);
 	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "sme_hdd_ready_ind() failed with status code %08d [x%08x]"
 			 ),
@@ -4013,7 +4013,7 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 		vstatus = sme_get_wcnss_wlan_compiled_version(hdd_ctx->hHal,
 							      &versionCompiled);
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL(
 				  "unable to retrieve WCNSS WLAN compiled version"
 				 ));
@@ -4023,7 +4023,7 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 		vstatus = sme_get_wcnss_wlan_reported_version(hdd_ctx->hHal,
 							      &versionReported);
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL(
 				  "unable to retrieve WCNSS WLAN reported version"
 				 ));
@@ -4058,7 +4058,7 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 							 versionString,
 							 sizeof(versionString));
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL(
 				  "unable to retrieve WCNSS software version string"
 				 ));
@@ -4072,7 +4072,7 @@ void hdd_exchange_version_and_caps(hdd_context_t *hdd_ctx)
 							 versionString,
 							 sizeof(versionString));
 		if (!QDF_IS_STATUS_SUCCESS(vstatus)) {
-			hddLog(CDF_TRACE_LEVEL_FATAL,
+			hddLog(QDF_TRACE_LEVEL_FATAL,
 			       FL(
 				  "unable to retrieve WCNSS hardware version string"
 				 ));
@@ -4153,7 +4153,7 @@ static QDF_STATUS wlan_hdd_regulatory_init(hdd_context_t *hdd_ctx)
 	 */
 	status = cds_regulatory_init();
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("cds_init_wiphy failed"));
 		return status;
 	}
@@ -4178,7 +4178,7 @@ static QDF_STATUS wlan_hdd_regulatory_init(hdd_context_t *hdd_ctx)
 
 	/* registration of wiphy dev with cfg80211 */
 	if (0 > wlan_hdd_cfg80211_register(wiphy)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("wiphy register failed"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("wiphy register failed"));
 		status = QDF_STATUS_E_FAILURE;
 	}
 
@@ -4211,7 +4211,7 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 							next_vote_level;
 
 	if (hdd_ctx->cur_vote_level != next_vote_level) {
-		hddLog(CDF_TRACE_LEVEL_DEBUG,
+		hddLog(QDF_TRACE_LEVEL_DEBUG,
 		       FL(
 			  "trigger level %d, tx_packets: %lld, rx_packets: %lld"
 			 ),
@@ -4233,7 +4233,7 @@ void hdd_cnss_request_bus_bandwidth(hdd_context_t *hdd_ctx,
 								next_rx_level;
 
 	if (hdd_ctx->cur_rx_level != next_rx_level) {
-		hddLog(CDF_TRACE_LEVEL_DEBUG,
+		hddLog(QDF_TRACE_LEVEL_DEBUG,
 		       FL("TCP DELACK trigger level %d, average_rx: %llu"),
 		       next_rx_level, temp_rx);
 		hdd_ctx->cur_rx_level = next_rx_level;
@@ -4329,7 +4329,7 @@ static void hdd_bus_bw_compute_cbk(void *priv)
 	rx_packets += (uint64_t)ipa_rx_packets;
 
 	if (!connected) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("bus bandwidth timer running in disconnected state"));
 		return;
 	}
@@ -4355,24 +4355,24 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 	int i;
 
 #ifdef MSM_PLATFORM
-	hddLog(CDF_TRACE_LEVEL_ERROR, "BW Interval: %d curr_index %d",
+	hddLog(QDF_TRACE_LEVEL_ERROR, "BW Interval: %d curr_index %d",
 		hdd_ctx->config->busBandwidthComputeInterval,
 		hdd_ctx->hdd_txrx_hist_idx);
-	hddLog(CDF_TRACE_LEVEL_ERROR,
+	hddLog(QDF_TRACE_LEVEL_ERROR,
 		"BW High TH: %d BW Med TH: %d BW Low TH: %d",
 		hdd_ctx->config->busBandwidthHighThreshold,
 		hdd_ctx->config->busBandwidthMediumThreshold,
 		hdd_ctx->config->busBandwidthLowThreshold);
-	hddLog(CDF_TRACE_LEVEL_ERROR, "TCP DEL High TH: %d TCP DEL Low TH: %d",
+	hddLog(QDF_TRACE_LEVEL_ERROR, "TCP DEL High TH: %d TCP DEL Low TH: %d",
 		hdd_ctx->config->tcpDelackThresholdHigh,
 		hdd_ctx->config->tcpDelackThresholdLow);
 #endif
 
-	hddLog(CDF_TRACE_LEVEL_ERROR,
+	hddLog(QDF_TRACE_LEVEL_ERROR,
 		"index, total_rx, interval_rx, total_tx, interval_tx, next_vote_level, next_rx_level, next_tx_level");
 
 	for (i = 0; i < NUM_TX_RX_HISTOGRAM; i++) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"%d: %llu, %llu, %llu, %llu, %d, %d, %d",
 			i, hdd_ctx->hdd_txrx_hist[i].total_rx,
 			hdd_ctx->hdd_txrx_hist[i].interval_rx,
@@ -4415,33 +4415,33 @@ void wlan_hdd_display_netif_queue_history(hdd_context_t *hdd_ctx)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Session_id %d device mode %d current index %d",
 			adapter->sessionId, adapter->device_mode,
 			adapter->history_index);
 
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Netif queue operation statistics:");
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Current pause_map value %x", adapter->pause_map);
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"  reason_type: pause_cnt: unpause_cnt");
 
 		for (i = 0; i < WLAN_REASON_TYPE_MAX; i++) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 				"%s: %d: %d",
 				hdd_reason_type_to_string(i),
 				adapter->queue_oper_stats[i].pause_count,
 				adapter->queue_oper_stats[i].unpause_count);
 		}
 
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"Netif queue operation history:");
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 			"index: time: action_type: reason_type: pause_map");
 
 		for (i = 0; i < WLAN_HDD_MAX_HISTORY_ENTRY; i++) {
-			hddLog(CDF_TRACE_LEVEL_ERROR,
+			hddLog(QDF_TRACE_LEVEL_ERROR,
 				"%d: %u: %s: %s: %x",
 				i, qdf_system_ticks_to_msecs(
 					adapter->queue_oper_history[i].time),
@@ -4630,13 +4630,13 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 		if (!is_unsafe) {
 			safe_channels[safe_channel_count] =
 			  CDS_CHANNEL_NUM(i);
-			hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 			       FL("safe channel %d"),
 			       safe_channels[safe_channel_count]);
 			safe_channel_count++;
 		}
 	}
-	hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 	       FL("perferred range %d - %d"),
 		ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch,
 		ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch);
@@ -4645,7 +4645,7 @@ static uint8_t hdd_find_prefd_safe_chnl(hdd_context_t *hdd_ctxt,
 			ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.start_ch
 		    && safe_channels[i] <=
 			ap_adapter->sessionCtx.ap.sapConfig.acs_cfg.end_ch) {
-			hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+			hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 			       FL("safe channel %d is in perferred range"),
 			       safe_channels[i]);
 			return 1;
@@ -4735,7 +4735,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 	/* Basic sanity */
 	if (!hdd_context || !indi_param) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("Invalid arguments"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("Invalid arguments"));
 		return;
 	}
 
@@ -4744,7 +4744,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	cds_context = hdd_ctxt->pcds_context;
 
 	/* Make unsafe channel list */
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 	       FL("band count %d"),
 	       ch_avoid_indi->avoid_range_count);
 
@@ -4829,7 +4829,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 		}
 	}
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 	       FL("number of unsafe channels is %d "),
 	       hdd_ctxt->unsafe_channel_count);
 
@@ -4847,7 +4847,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 	for (channel_loop = 0;
 	     channel_loop < hdd_ctxt->unsafe_channel_count; channel_loop++) {
-		hddLog(CDF_TRACE_LEVEL_INFO,
+		hddLog(QDF_TRACE_LEVEL_INFO,
 		       FL("channel %d is not safe "),
 		       hdd_ctxt->unsafe_channel_list[channel_loop]);
 	}
@@ -4869,7 +4869,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 				hostapd_adapter)))
 				return;
 
-			hddLog(CDF_TRACE_LEVEL_INFO,
+			hddLog(QDF_TRACE_LEVEL_INFO,
 			       FL(
 				  "Current operation channel %d, sessionCtx.ap.sapConfig.channel %d"
 				 ),
@@ -4888,7 +4888,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 						sapConfig.acs_cfg.acs_mode
 								 == true) &&
 					!restart_sap_in_progress) {
-					hddLog(CDF_TRACE_LEVEL_INFO,
+					hddLog(QDF_TRACE_LEVEL_INFO,
 					       FL("Restarting SAP"));
 					wlan_hdd_send_svc_nlink_msg
 						(WLAN_SVC_LTE_COEX_IND, NULL, 0);
@@ -4926,14 +4926,14 @@ static void hdd_init_channel_avoidance(hdd_context_t *hdd_ctx)
 				     &(hdd_ctx->unsafe_channel_count),
 				     sizeof(uint16_t) * NUM_20MHZ_RF_CHANNELS);
 
-	hddLog(CDF_TRACE_LEVEL_INFO, FL("num of unsafe channels is %d"),
+	hddLog(QDF_TRACE_LEVEL_INFO, FL("num of unsafe channels is %d"),
 	       hdd_ctx->unsafe_channel_count);
 
 	unsafe_channel_count = QDF_MIN((uint16_t)hdd_ctx->unsafe_channel_count,
 				       (uint16_t)NUM_20MHZ_RF_CHANNELS);
 
 	for (index = 0; index < unsafe_channel_count; index++) {
-		hddLog(CDF_TRACE_LEVEL_INFO, FL("channel %d is not safe"),
+		hddLog(QDF_TRACE_LEVEL_INFO, FL("channel %d is not safe"),
 		       hdd_ctx->unsafe_channel_list[index]);
 
 	}
@@ -5472,7 +5472,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	status = cds_open();
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cds_open failed"));
 		goto err_hdd_free_context;
 	}
 
@@ -5481,13 +5481,13 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	hdd_ctx->hHal = cds_get_context(QDF_MODULE_ID_SME);
 
 	if (NULL == hdd_ctx->hHal) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("HAL context is null"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("HAL context is null"));
 		goto err_cds_close;
 	}
 
 	status = cds_pre_enable(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_pre_enable failed"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cds_pre_enable failed"));
 		goto err_cds_close;
 	}
 
@@ -5496,7 +5496,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = wlan_hdd_regulatory_init(hdd_ctx);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("Failed to init channel list"));
 		goto err_cds_close;
 	}
@@ -5518,7 +5518,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	status = hdd_set_sme_config(hdd_ctx);
 
 	if (QDF_STATUS_SUCCESS != status) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("Failed hdd_set_sme_config"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("Failed hdd_set_sme_config"));
 		goto err_wiphy_unregister;
 	}
 
@@ -5526,27 +5526,27 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				  hdd_ctx->config->tx_chain_mask_1ss,
 				  PDEV_CMD);
 	if (0 != ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: WMI_PDEV_PARAM_TX_CHAIN_MASK_1SS failed %d",
 		       __func__, ret);
 	}
 
 	status = hdd_set_sme_chan_list(hdd_ctx);
 	if (status != QDF_STATUS_SUCCESS) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("Failed to init channel list"));
 		goto err_wiphy_unregister;
 	}
 
 	/* Apply the cfg.ini to cfg.dat */
 	if (false == hdd_update_config_dat(hdd_ctx)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("config update failed"));
 		goto err_wiphy_unregister;
 	}
 
 	if (QDF_STATUS_SUCCESS != hdd_update_mac_config(hdd_ctx)) {
-		hddLog(CDF_TRACE_LEVEL_WARN,
+		hddLog(QDF_TRACE_LEVEL_WARN,
 		       FL("can't update mac config, using MAC from ini file"));
 	}
 
@@ -5574,7 +5574,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 	 */
 	status = cds_enable(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("cds_enable failed"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cds_enable failed"));
 		goto err_ipa_cleanup;
 	}
 
@@ -5582,7 +5582,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	status = hdd_post_cds_enable_config(hdd_ctx);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("hdd_post_cds_enable_config failed"));
 		goto err_cds_disable;
 	}
@@ -5629,7 +5629,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 
 	/* Initialize the nlink service */
 	if (nl_srv_init() != 0) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, FL("nl_srv_init failed"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("nl_srv_init failed"));
 		goto err_close_adapter;
 	}
 
@@ -5824,15 +5824,15 @@ err_wiphy_unregister:
 err_cds_close:
 	status = cds_sched_close(hdd_ctx->pcds_context);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
+		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       FL("Failed to close CDS Scheduler"));
-		CDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
+		QDF_ASSERT(QDF_IS_STATUS_SUCCESS(status));
 	}
 	cds_close(hdd_ctx->pcds_context);
 
 err_hdd_free_context:
 	hdd_free_context(hdd_ctx);
-	CDF_BUG(1);
+	QDF_BUG(1);
 
 	return -EIO;
 
@@ -6144,7 +6144,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 	skb = alloc_skb(NLMSG_SPACE(WLAN_NL_MAX_PAYLOAD), flags);
 
 	if (skb == NULL) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("alloc_skb failed"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("alloc_skb failed"));
 		return;
 	}
 
@@ -6183,7 +6183,7 @@ void wlan_hdd_send_svc_nlink_msg(int type, void *data, int len)
 		break;
 
 	default:
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("WLAN SVC: Attempt to send unknown nlink message %d"),
 		       type);
 		kfree_skb(skb);
@@ -6226,7 +6226,7 @@ void wlan_hdd_send_version_pkg(uint32_t fw_version,
 
 	ret = cnss_get_platform_cap(&cap);
 	if (ret) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("platform capability info from CNSS not available"));
 		return;
 	}
@@ -6256,7 +6256,7 @@ void wlan_hdd_send_all_scan_intf_info(hdd_context_t *hdd_ctx)
 	QDF_STATUS status;
 
 	if (!hdd_ctx) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("NULL pointer for hdd_ctx"));
 		return;
 	}
@@ -6440,7 +6440,7 @@ void hdd_stop_bus_bw_compute_timer(hdd_adapter_t *adapter)
 	if (QDF_TIMER_STATE_RUNNING !=
 	    qdf_mc_timer_get_current_state(&hdd_ctx->bus_bw_timer)) {
 		/* trying to stop timer, when not running is not good */
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("bus band width compute timer is not running"));
 		return;
 	}
@@ -6517,14 +6517,14 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 			(channel_id < SIR_11A_CHANNEL_BEGIN)) {
 			if (hdd_ap_ctx->operatingChannel != channel_id) {
 				*concurrent_chnl_same = false;
-				hddLog(CDF_TRACE_LEVEL_INFO_MED,
+				hddLog(QDF_TRACE_LEVEL_INFO_MED,
 					FL("channels are different"));
 			}
 		} else if ((WLAN_HDD_P2P_GO == device_mode) &&
 				(channel_id >= SIR_11A_CHANNEL_BEGIN)) {
 			if (hdd_ap_ctx->operatingChannel != channel_id) {
 				*concurrent_chnl_same = false;
-				hddLog(CDF_TRACE_LEVEL_INFO_MED,
+				hddLog(QDF_TRACE_LEVEL_INFO_MED,
 					FL("channels are different"));
 			}
 		}
@@ -6536,7 +6536,7 @@ QDF_STATUS wlan_hdd_check_custom_con_channel_rules(hdd_adapter_t *sta_adapter,
 		 * Return the status as failure so caller function could know
 		 * that scan look up is failed.
 		 */
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Finding AP from scan cache failed"));
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6563,7 +6563,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 #endif
 
 	if (NULL == ap_adapter) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("ap_adapter is NULL here"));
 		return;
 	}
@@ -6571,7 +6571,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 	hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(ap_adapter);
 	hdd_ctx = WLAN_HDD_GET_CTX(ap_adapter);
 	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("HDD context is not valid"));
 		return;
 	}
@@ -6591,7 +6591,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 #endif
 		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
-		hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+		hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 		       FL("Now doing SAP STOPBSS"));
 		qdf_event_reset(&hostapd_state->cdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
@@ -6601,7 +6601,7 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 							   BSS_WAIT_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				mutex_unlock(&hdd_ctx->sap_lock);
-				hddLog(CDF_TRACE_LEVEL_ERROR,
+				hddLog(QDF_TRACE_LEVEL_ERROR,
 				       FL("SAP Stop Failed"));
 				return;
 			}
@@ -6609,10 +6609,10 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 		clear_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 		cds_decr_session_set_pcl(ap_adapter->device_mode,
 						ap_adapter->sessionId);
-		hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+		hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 		       FL("SAP Stop Success"));
 	} else {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Can't stop ap because its not started"));
 	}
 	mutex_unlock(&hdd_ctx->sap_lock);
@@ -6636,7 +6636,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	tsap_Config_t *sap_config;
 
 	if (NULL == ap_adapter) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("ap_adapter is NULL here"));
 		return;
 	}
@@ -6652,7 +6652,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 	sap_config = &ap_adapter->sessionCtx.ap.sapConfig;
 
 	if (0 != wlan_hdd_validate_context(hdd_ctx)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
+		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("HDD context is not valid"));
 		return;
 	}
@@ -6672,15 +6672,15 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 			      != QDF_STATUS_SUCCESS)
 		goto end;
 
-	hddLog(CDF_TRACE_LEVEL_INFO_HIGH,
+	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 	       FL("Waiting for SAP to start"));
 	qdf_status = qdf_wait_single_event(&hostapd_state->cdf_event,
 					BSS_WAIT_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(CDF_TRACE_LEVEL_ERROR, FL("SAP Start failed"));
+		hddLog(QDF_TRACE_LEVEL_ERROR, FL("SAP Start failed"));
 		goto end;
 	}
-	hddLog(CDF_TRACE_LEVEL_INFO_HIGH, FL("SAP Start Success"));
+	hddLog(QDF_TRACE_LEVEL_INFO_HIGH, FL("SAP Start Success"));
 	set_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags);
 	cds_incr_active_session(ap_adapter->device_mode,
 					ap_adapter->sessionId);

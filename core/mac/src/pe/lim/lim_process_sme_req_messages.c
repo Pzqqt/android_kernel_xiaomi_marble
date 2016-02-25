@@ -694,7 +694,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Store Persona */
 		session->pePersona = sme_start_bss_req->bssPersona;
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("PE PERSONA=%d"), session->pePersona);
 
 		/* Update the phymode */
@@ -713,7 +713,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			IS_DOT11_MODE_HT(session->dot11mode);
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("*****session->vhtCapability = %d"),
 			  session->vhtCapability);
 		session->txLdpcIniFeatureEnabled =
@@ -820,7 +820,7 @@ __lim_handle_sme_start_bss_request(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			sme_start_bss_req->sec_ch_offset;
 		session->htRecommendedTxWidthSet =
 			(session->htSecondaryChannelOffset) ? 1 : 0;
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("cbMode %u"), sme_start_bss_req->cbMode);
 		if (session->vhtCapability || session->htCapability) {
 			chanwidth = sme_start_bss_req->vht_channel_width;
@@ -1692,7 +1692,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/*Store Persona */
 		session->pePersona = sme_join_req->staPersona;
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("PE PERSONA=%d cbMode %u"),
 			  session->pePersona, sme_join_req->cbMode);
 		if (mac_ctx->roam.configParam.enable2x2)
@@ -1702,7 +1702,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #ifdef WLAN_FEATURE_11AC
 		session->vhtCapability =
 			IS_DOT11_MODE_VHT(session->dot11mode);
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
 			  "***__lim_process_sme_join_req: vhtCapability=%d****",
 			  session->vhtCapability);
 		if (session->vhtCapability) {
@@ -1718,7 +1718,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->enableVhtGid =
 				sme_join_req->enableVhtGid;
 
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
 				  FL("***txBFIniFeatureEnabled=%d***"),
 				  session->txBFIniFeatureEnabled);
 			if (wlan_cfg_get_int(mac_ctx,
@@ -1743,7 +1743,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				ret_code = eSIR_LOGP_EXCEPTION;
 				goto end;
 			}
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO_MED,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO_MED,
 				  "%s: txBFCsnValue=%d", __func__,
 				  sme_join_req->txBFCsnValue);
 			session->txbf_csn_value = sme_join_req->txBFCsnValue;
@@ -3414,7 +3414,7 @@ __lim_handle_sme_stop_bss_request(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		} else {
 			lim_log(pMac, LOGE,
 				FL("lim_del_sta failed with Status : %d"), status);
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 		}
 	}
 	/* send a delBss to HAL and wait for a response */
@@ -4998,7 +4998,7 @@ static void lim_process_sme_start_beacon_req(tpAniSirGlobal pMac, uint32_t *pMsg
 		 * Tx right after the WMA_ADD_BSS_RSP.
 		 */
 		lim_apply_configuration(pMac, psessionEntry);
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  FL("Start Beacon with ssid %s Ch %d"),
 			  psessionEntry->ssId.ssId,
 			  psessionEntry->currentOperChannel);
@@ -5263,8 +5263,8 @@ static void lim_process_modify_add_ies(tpAniSirGlobal mac_ctx,
 	case eUPDATE_IE_ASSOC_RESP:
 		/* assoc resp IE */
 		if (add_ie_params->assocRespDataLen == 0) {
-			CDF_TRACE(QDF_MODULE_ID_PE,
-					CDF_TRACE_LEVEL_ERROR, FL(
+			QDF_TRACE(QDF_MODULE_ID_PE,
+					QDF_TRACE_LEVEL_ERROR, FL(
 				"assoc resp add ie not present %d"),
 				add_ie_params->assocRespDataLen);
 		}

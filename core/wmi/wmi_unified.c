@@ -173,7 +173,7 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
 	wmi_buf_t wmi_buf;
 
 	if (roundup(len + WMI_MIN_HEAD_ROOM, 4) > wmi_handle->max_msg_len) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return NULL;
 	}
 
@@ -206,7 +206,7 @@ wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint16_t len)
 	wmi_buf_t wmi_buf;
 
 	if (roundup(len + WMI_MIN_HEAD_ROOM, 4) > wmi_handle->max_msg_len) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return NULL;
 	}
 
@@ -807,7 +807,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	     (WMI_PDEV_RESUME_CMDID != cmd_id))) {
 		pr_err("%s: Target is suspended  could not send WMI command\n",
 		       __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return -EBUSY;
 	}
 
@@ -840,7 +840,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 		htc_dump_counter_info(wmi_handle->htc_handle);
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		pr_err("%s: MAX 1024 WMI Pending cmds reached.\n", __func__);
-		CDF_BUG(0);
+		QDF_BUG(0);
 		return -EBUSY;
 	}
 
@@ -1266,7 +1266,7 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 {
 	wmi_buf_t buf;
 
-	CDF_TRACE(QDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_WMI, QDF_TRACE_LEVEL_INFO,
 		"Enter: %s", __func__);
 	cds_flush_work(&wmi_handle->rx_event_work);
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
@@ -1276,7 +1276,7 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
-	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		"Done: %s", __func__);
 }
 

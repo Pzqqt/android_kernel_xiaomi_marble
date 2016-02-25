@@ -28,7 +28,7 @@
 #if !defined(__SME_POWER_SAVE_H)
 #define __SME_POWER_SAVE_H
 #include "qdf_lock.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "cdf_memory.h"
 #include "qdf_types.h"
 #include "ani_system_defs.h"

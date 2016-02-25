@@ -135,8 +135,8 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			return;
 #ifdef FEATURE_WLAN_ESE
 		if (session->isESEconnection)
-			CDF_TRACE(QDF_MODULE_ID_PE,
-				  CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_PE,
+				  QDF_TRACE_LEVEL_INFO,
 				  FL("[INFOLOG]ESE 11g erpPresent=%d useProtection=%d nonErpPresent=%d"),
 				  bcn_struct->erpPresent,
 				  bcn_struct->erpIEInfo.useProtection,
@@ -162,7 +162,7 @@ ap_beacon_process_24_ghz(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if (tmp_exp) {
 #ifdef FEATURE_WLAN_ESE
 		if (session->isESEconnection) {
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 				  FL("[INFOLOG]ESE 11g erpPresent=%d useProtection=%d nonErpPresent=%d"),
 				  bcn_struct->erpPresent,
 				  bcn_struct->erpIEInfo.useProtection,

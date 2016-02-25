@@ -302,7 +302,7 @@ void lim_process_mlm_start_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			(cds_get_channel_state(channelId) !=
 			 CHANNEL_STATE_DFS))) {
 			/* Configure beacon and send beacons to HAL */
-			CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 					FL("Start Beacon with ssid %s Ch %d"),
 					psessionEntry->ssId.ssId,
 					psessionEntry->currentOperChannel);
@@ -840,7 +840,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (session->bRoamSynchInProgress) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			FL("LFR3:Re-set the LIM Ctxt Roam Synch In Progress"));
 		session->bRoamSynchInProgress = false;
 	}
@@ -850,7 +850,7 @@ void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		lim_mlm_reassoc_cnf->resultCode);
 	if (lim_mlm_reassoc_cnf->resultCode == eSIR_SME_SUCCESS) {
 		/* Successful Reassociation */
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  FL("*** Reassociated with new BSS ***"));
 
 		session->limSmeState = eLIM_SME_LINK_EST_STATE;
@@ -2752,7 +2752,7 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 						    psessionEntry);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 } else {
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 		  "LFR3:Do not activate timer and dont send the reassoc req");
 }
 #endif
@@ -2876,7 +2876,7 @@ lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (psessionEntry->bRoamSynchInProgress) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  "LFR3:Prepare and save pAddStaReq in pMac for post-assoc-rsp");
 		lim_process_assoc_rsp_frame(pMac, pMac->roam.pReassocResp,
 					    LIM_REASSOC, psessionEntry);
@@ -2976,7 +2976,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		goto end;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (session_entry->bRoamSynchInProgress)
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			"LFR3:lim_process_sta_mlm_add_bss_rsp");
 #endif
 
@@ -4132,7 +4132,7 @@ void lim_send_sme_scan_cache_updated_ind(uint8_t sessionId)
 
 	if (!QDF_IS_STATUS_SUCCESS
 		    (cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)))
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Not able to post WMA_SME_SCAN_CACHE_UPDATED message to WMA",
 			  __func__);
 }
@@ -4154,7 +4154,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 {
 	tSirScanOffloadEvent *pScanEvent = (tSirScanOffloadEvent *) buf;
 
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 		  "scan_id = %u, scan_requestor_id 0x%x", pScanEvent->scanId,
 		  pScanEvent->requestor);
 	switch (pScanEvent->event) {
@@ -4212,7 +4212,7 @@ void lim_process_rx_scan_event(tpAniSirGlobal pMac, void *buf)
 	case SCAN_EVENT_DEQUEUED:
 	case SCAN_EVENT_PREEMPTED:
 	default:
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_DEBUG,
 			  "Received unhandled scan event %u",
 			  pScanEvent->event);
 	}

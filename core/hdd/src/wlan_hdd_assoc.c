@@ -304,7 +304,7 @@ hdd_conn_save_connected_bss_type(hdd_station_ctx_t *pHddStaCtx,
 	      so CSR should never send this back to us.*/
 	case eCSR_BSS_TYPE_ANY:
 	default:
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		break;
 	}
 }
@@ -324,12 +324,12 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	eCsrEncryptionType encryptType = eCSR_ENCRYPT_TYPE_NONE;
 
-	CDF_ASSERT(pRoamInfo);
+	QDF_ASSERT(pRoamInfo);
 
 	if (pRoamInfo) {
 		/* Save the BSSID for the connection */
 		if (eCSR_BSS_TYPE_INFRASTRUCTURE == eBssType) {
-			CDF_ASSERT(pRoamInfo->pBssDesc);
+			QDF_ASSERT(pRoamInfo->pBssDesc);
 			qdf_copy_macaddr(&pHddStaCtx->conn_info.bssId,
 					 &pRoamInfo->bssid);
 
@@ -352,14 +352,14 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 			 * can't happen. We need a valid IBSS or Infra setting
 			 * in the BSSDescription or we can't function.
 			 */
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 		}
 
 		/* notify WMM */
 		hdd_wmm_connect(pAdapter, pRoamInfo, eBssType);
 
 		if (!pRoamInfo->u.pConnectedProfile) {
-			CDF_ASSERT(pRoamInfo->u.pConnectedProfile);
+			QDF_ASSERT(pRoamInfo->u.pConnectedProfile);
 		} else {
 			/* Get Multicast Encryption Type */
 			encryptType =
@@ -1437,7 +1437,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			roam_profile.SSID.length);
 	ssid_ie_len = 2 + roam_profile.SSID.length;
 	hdd_notice("SSIDIE:");
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   buf_ssid_ie, ssid_ie_len);
 	final_req_ie = kmalloc(IW_GENERIC_IE_MAX, GFP_KERNEL);
 	if (final_req_ie == NULL)
@@ -1450,7 +1450,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	cdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
 		IW_GENERIC_IE_MAX - (ssid_ie_len + reqRsnLength));
 	hdd_notice("Req RSN IE:");
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 			   final_req_ie, (ssid_ie_len + reqRsnLength));
 	cfg80211_roamed_bss(dev, bss,
 			final_req_ie, (ssid_ie_len + reqRsnLength),
@@ -1461,7 +1461,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 		pCsrRoamInfo->nAssocReqLength);
 
 	hdd_notice("ReAssoc Req IE dump");
-	CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_DEBUG,
+	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
 		assoc_req_ies, pCsrRoamInfo->nAssocReqLength);
 
 	wlan_hdd_send_roam_auth_event(pHddCtx, pCsrRoamInfo->bssid.bytes,
@@ -1949,9 +1949,9 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 
 						hdd_notice(
 							"Reassoc Req IE dump");
-						CDF_TRACE_HEX_DUMP(
+						QDF_TRACE_HEX_DUMP(
 							QDF_MODULE_ID_HDD,
-							CDF_TRACE_LEVEL_DEBUG,
+							QDF_TRACE_LEVEL_DEBUG,
 							pFTAssocReq,
 							assocReqlen);
 
@@ -2344,7 +2344,7 @@ static void hdd_roam_ibss_indication_handler(hdd_adapter_t *pAdapter,
 			QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 
 		if (NULL == pRoamInfo) {
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 			return;
 		}
 
@@ -3861,7 +3861,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD, TRACE_CODE_HDD_RX_SME_MSG,
 				pAdapter->sessionId, roamStatus));
 
 	switch (roamStatus) {

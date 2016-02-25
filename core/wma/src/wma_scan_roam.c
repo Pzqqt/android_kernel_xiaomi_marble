@@ -1964,7 +1964,7 @@ QDF_STATUS wma_roam_scan_filter(tp_wma_handle wma_handle,
 			roam_params->ssid_allowed_list[i].length);
 		ssid_ptr->ssid_len = roam_params->ssid_allowed_list[i].length;
 		WMA_LOGD("%s: SSID length=%d", __func__, ssid_ptr->ssid_len);
-		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				(uint8_t *)ssid_ptr->ssid,
 				ssid_ptr->ssid_len);
 		ssid_ptr++;
@@ -2285,8 +2285,8 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 			    cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 				cdf_mem_free(scan_offload_rsp);
-				CDF_TRACE(QDF_MODULE_ID_WMA,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_WMA,
+					  QDF_TRACE_LEVEL_INFO,
 					  "%s: Failed to post Scan Offload Rsp to UMAC",
 					  __func__);
 			}
@@ -2589,13 +2589,13 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		cdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     key->replay_counter, SIR_REPLAY_CTR_LEN);
 		WMA_LOGD("%s: KCK dump", __func__);
-		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   key->kck, SIR_KCK_KEY_LEN);
 		WMA_LOGD("%s: KEK dump", __func__);
-		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   key->kek, SIR_KEK_KEY_LEN);
 		WMA_LOGD("%s: Key Replay Counter dump", __func__);
-		CDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_DEBUG,
+		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
 				   key->replay_counter, SIR_REPLAY_CTR_LEN);
 	}
 }
@@ -2720,7 +2720,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	if (!roam_synch_ind_ptr) {
 		WMA_LOGE("%s: failed to allocate memory for roam_synch_event",
 			 __func__);
-		CDF_ASSERT(roam_synch_ind_ptr != NULL);
+		QDF_ASSERT(roam_synch_ind_ptr != NULL);
 		return -ENOMEM;
 	}
 	cdf_mem_zero(roam_synch_ind_ptr, len);
@@ -2739,8 +2739,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	roam_synch_ind_ptr->join_rsp = cdf_mem_malloc(sizeof(tSirSmeJoinRsp));
 	if ((NULL == roam_synch_ind_ptr->join_rsp) || (NULL == bss_desc_ptr)) {
 		WMA_LOGE("LFR3: mem alloc failed!");
-		CDF_ASSERT(bss_desc_ptr != NULL);
-		CDF_ASSERT(roam_synch_ind_ptr->join_rsp != NULL);
+		QDF_ASSERT(bss_desc_ptr != NULL);
+		QDF_ASSERT(roam_synch_ind_ptr->join_rsp != NULL);
 		status =  -ENOMEM;
 		goto cleanup_label;
 	}
@@ -2843,12 +2843,12 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (!pMac) {
 		WMA_LOGE("%s:NULL pMac ptr. Exiting", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_PRIVACY_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_PRIVACY_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2857,7 +2857,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (val)
 		selfCaps.privacy = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_SHORT_PREAMBLE, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_SHORT_PREAMBLE");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2868,28 +2868,28 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	selfCaps.channelAgility = 0;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED,
 			     &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11G_SHORT_SLOT_TIME_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.shortSlotTime = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_11H_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_11H_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.spectrumMgt = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_QOS_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_QOS_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (val)
 		selfCaps.qos = 1;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_APSD_ENABLED, &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_APSD_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2900,7 +2900,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_BLOCK_ACK_ENABLED, &val) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_BLOCK_ACK_ENABLED");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2913,7 +2913,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_CAP_INFO, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_HT_CAP_INFO");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2922,7 +2922,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_HT_AMPDU_PARAMS, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_HT_AMPDU_PARAMS");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2934,13 +2934,13 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	if (wlan_cfg_get_str(pMac, WNI_CFG_SUPPORTED_MCS_SET,
 			     (uint8_t *) roam_offload_params->mcsset,
 			     &val) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_SUPPORTED_MCS_SET");
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (wlan_cfg_get_int(pMac, WNI_CFG_EXT_HT_CAP_INFO, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_EXT_HT_CAP_INFO");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2950,7 +2950,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 		uHTCapabilityInfo.nCfgValue16 & 0xFFFF;
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_TX_BF_CAP, &nCfgValue) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_TX_BF_CAP");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2958,7 +2958,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	nCfgValue8 = (uint8_t) nCfgValue;
 	roam_offload_params->ht_txbf = nCfgValue8 & 0xFF;
 	if (wlan_cfg_get_int(pMac, WNI_CFG_AS_CAP, &nCfgValue) != eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_AS_CAP");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2969,7 +2969,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 	/* QOS Info */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_MAX_SP_LENGTH, &nCfgValue) !=
 	    eSIR_SUCCESS) {
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  "Failed to get WNI_CFG_MAX_SP_LENGTH");
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -6671,13 +6671,13 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 
 	cds_msg.type = eWNI_SME_CANDIDATE_FOUND_IND;
 	cds_msg.bodyptr = candidate_ind;
-	CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
 		  FL("posting candidate ind to SME"));
 
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
 		cdf_mem_free(candidate_ind);
-		CDF_TRACE(QDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to post candidate ind to SME"));
 	}
 }

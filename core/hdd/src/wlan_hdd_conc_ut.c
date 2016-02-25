@@ -36,7 +36,7 @@
 #include "cds_concurrency.h"
 #include "wlan_hdd_conc_ut.h"
 #include "qdf_types.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "cds_utils.h"
 #include "cds_reg_service.h"
 #include "wma_types.h"

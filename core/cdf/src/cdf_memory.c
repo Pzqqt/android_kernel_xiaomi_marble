@@ -34,7 +34,7 @@
 /* Include Files */
 #include "cdf_memory.h"
 #include "cdf_nbuf.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #include "qdf_lock.h"
 #include "qdf_mc_timer.h"
 
@@ -111,7 +111,7 @@ static inline void cdf_mem_save_stack_trace(struct s_cdf_mem_struct *mem_struct)
 static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
 					     *mem_struct)
 {
-	CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 		  "Call stack for the source of leaked memory:");
 
 	print_stack_trace(&mem_struct->trace, 1);
@@ -164,7 +164,7 @@ void cdf_mem_clean(void)
 		unsigned int prev_mleak_sz = 0;
 		unsigned int mleak_cnt = 0;
 
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: List is not Empty. listSize %d ",
 			  __func__, (int)listSize);
 
@@ -182,8 +182,8 @@ void cdf_mem_clean(void)
 					memStruct->lineNum)
 				    || (prev_mleak_sz != memStruct->size)) {
 					if (mleak_cnt != 0) {
-						CDF_TRACE(QDF_MODULE_ID_QDF,
-							  CDF_TRACE_LEVEL_FATAL,
+						QDF_TRACE(QDF_MODULE_ID_QDF,
+							  QDF_TRACE_LEVEL_FATAL,
 							  "%d Time Memory Leak@ File %s, @Line %d, size %d",
 							  mleak_cnt,
 							  prev_mleak_file,
@@ -203,7 +203,7 @@ void cdf_mem_clean(void)
 
 		/* Print last memory leak from the module */
 		if (mleak_cnt) {
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				  "%d Time memory Leak@ File %s, @Line %d, size %d",
 				  mleak_cnt, prev_mleak_file,
 				  prev_mleak_lineNum, prev_mleak_sz);
@@ -252,7 +252,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	unsigned long  time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!!",
 			  __func__, size);
 		return NULL;
@@ -281,7 +281,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	 */
 	if (qdf_mc_timer_get_system_time() - time_before_kzalloc >=
 					  CDF_GET_MEMORY_TIME_THRESHOLD)
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			 "%s: kzalloc took %lu msec for size %zu called from %pS at line %d",
 			 __func__,
 			 qdf_mc_timer_get_system_time() - time_before_kzalloc,
@@ -306,7 +306,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 						   &memStruct->pNode);
 		qdf_spin_unlock_irqrestore(&cdf_mem_list_lock);
 		if (QDF_STATUS_SUCCESS != qdf_status) {
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s: Unable to insert node into List qdf_status %d",
 				  __func__, qdf_status);
 		}
@@ -347,30 +347,30 @@ void cdf_mem_free(void *ptr)
 			if (0 == cdf_mem_compare(memStruct->header,
 						 &WLAN_MEM_HEADER[0],
 						 sizeof(WLAN_MEM_HEADER))) {
-				CDF_TRACE(QDF_MODULE_ID_QDF,
-					  CDF_TRACE_LEVEL_FATAL,
+				QDF_TRACE(QDF_MODULE_ID_QDF,
+					  QDF_TRACE_LEVEL_FATAL,
 					  "Memory Header is corrupted. MemInfo: Filename %s, LineNum %d",
 					  memStruct->fileName,
 					  (int)memStruct->lineNum);
-				CDF_BUG(0);
+				QDF_BUG(0);
 			}
 			if (0 ==
 			    cdf_mem_compare((uint8_t *) ptr + memStruct->size,
 					    &WLAN_MEM_TAIL[0],
 					    sizeof(WLAN_MEM_TAIL))) {
-				CDF_TRACE(QDF_MODULE_ID_QDF,
-					  CDF_TRACE_LEVEL_FATAL,
+				QDF_TRACE(QDF_MODULE_ID_QDF,
+					  QDF_TRACE_LEVEL_FATAL,
 					  "Memory Trailer is corrupted. MemInfo: Filename %s, LineNum %d",
 					  memStruct->fileName,
 					  (int)memStruct->lineNum);
-				CDF_BUG(0);
+				QDF_BUG(0);
 			}
 			kfree((void *)memStruct);
 		} else {
-			CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				  "%s: Unallocated memory (double free?)",
 				  __func__);
-			CDF_BUG(0);
+			QDF_BUG(0);
 		}
 	}
 }
@@ -396,7 +396,7 @@ void *cdf_mem_malloc(size_t size)
 	unsigned long  time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!",
 			  __func__, size);
 		return NULL;
@@ -423,7 +423,7 @@ void *cdf_mem_malloc(size_t size)
 	 */
 	if (qdf_mc_timer_get_system_time() - time_before_kzalloc >=
 					   CDF_GET_MEMORY_TIME_THRESHOLD)
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			 "%s: kzalloc took %lu msec for size %zu called from %pS",
 			 __func__,
 			 qdf_mc_timer_get_system_time() - time_before_kzalloc,
@@ -618,7 +618,7 @@ void cdf_mem_multi_pages_free(qdf_device_t osdev,
 void cdf_mem_set(void *ptr, uint32_t numBytes, uint32_t value)
 {
 	if (ptr == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter ptr", __func__);
 		return;
 	}
@@ -646,7 +646,7 @@ void cdf_mem_zero(void *ptr, uint32_t numBytes)
 	}
 
 	if (ptr == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter ptr", __func__);
 		return;
 	}
@@ -678,10 +678,10 @@ void cdf_mem_copy(void *pDst, const void *pSrc, uint32_t numBytes)
 	}
 
 	if ((pDst == NULL) || (pSrc == NULL)) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, source:%p destination:%p",
 			  __func__, pSrc, pDst);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 	memcpy(pDst, pSrc, numBytes);
@@ -708,10 +708,10 @@ void cdf_mem_move(void *pDst, const void *pSrc, uint32_t numBytes)
 	}
 
 	if ((pDst == NULL) || (pSrc == NULL)) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, source:%p destination:%p",
 			  __func__, pSrc, pDst);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return;
 	}
 	memmove(pDst, pSrc, numBytes);
@@ -740,10 +740,10 @@ bool cdf_mem_compare(const void *pMemory1, const void *pMemory2,
 	}
 
 	if ((pMemory1 == NULL) || (pMemory2 == NULL)) {
-		CDF_TRACE(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s called with NULL parameter, p1:%p p2:%p",
 			  __func__, pMemory1, pMemory2);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		return false;
 	}
 	return memcmp(pMemory1, pMemory2, numBytes) ? false : true;

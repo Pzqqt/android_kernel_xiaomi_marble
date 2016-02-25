@@ -81,7 +81,7 @@
 		if (((dfs) == NULL) ||				     \
 		    ((dfs) != NULL &&				       \
 		     ((_m) & (dfs)->dfs_debug_mask))) {		       \
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_DEBUG, \
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_DEBUG, \
 				 _fmt, __VA_ARGS__);	\
 		}						     \
 } while (0)

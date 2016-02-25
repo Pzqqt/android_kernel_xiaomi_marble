@@ -137,8 +137,8 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 					&sessionid);
 			if (pe_session &&
 				(pe_session->pePersona == QDF_SAP_MODE)) {
-				CDF_TRACE(QDF_MODULE_ID_SYS,
-					CDF_TRACE_LEVEL_INFO_HIGH,
+				QDF_TRACE(QDF_MODULE_ID_SYS,
+					QDF_TRACE_LEVEL_INFO_HIGH,
 					FL("CAC timer is running, dropping the mgmt frame"));
 				goto fail;
 			}
@@ -152,7 +152,7 @@ sys_bbt_process_message_core(tpAniSirGlobal mac_ctx, tpSirMsgQ msg,
 			(!lim_is_system_in_scan_state(mac_ctx)) &&
 			(GET_LIM_PROCESS_DEFD_MESGS(mac_ctx) != true) &&
 			!mac_ctx->lim.gLimSystemInScanLearnMode) {
-			CDF_TRACE(QDF_MODULE_ID_SYS, CDF_TRACE_LEVEL_INFO_HIGH,
+			QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO_HIGH,
 				FL("dropping received beacon in deffered state"));
 			goto fail;
 		}

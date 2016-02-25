@@ -120,9 +120,9 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 
 	if (cdf_mem_compare(hash, digest, SHA256_DIGEST_SIZE) != 0) {
 		BMI_ERR("Hash Mismatch");
-		cdf_trace_hex_dump(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+		qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				   digest, SHA256_DIGEST_SIZE);
-		cdf_trace_hex_dump(QDF_MODULE_ID_QDF, CDF_TRACE_LEVEL_FATAL,
+		qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				   hash, SHA256_DIGEST_SIZE);
 		ret = QDF_STATUS_E_FAILURE;
 	}

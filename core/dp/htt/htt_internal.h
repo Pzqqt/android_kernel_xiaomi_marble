@@ -537,7 +537,7 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 				 sizeof(struct rx_buf_debug));
 	if (!pdev->rx_buff_list) {
 		qdf_print("HTT: debug RX buffer allocation failed\n");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 }
 /**

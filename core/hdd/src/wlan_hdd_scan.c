@@ -766,11 +766,11 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 						     scanReq->essid_len);
 				} else {
 					scanRequest.SSIDs.numOfSSIDs = 0;
-					CDF_TRACE(QDF_MODULE_ID_HDD,
-						  CDF_TRACE_LEVEL_ERROR,
+					QDF_TRACE(QDF_MODULE_ID_HDD,
+						  QDF_TRACE_LEVEL_ERROR,
 						  "%s: Unable to allocate memory",
 						  __func__);
-					CDF_ASSERT(0);
+					QDF_ASSERT(0);
 				}
 			}
 		}
@@ -833,7 +833,7 @@ static int __iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 				  pAdapter->sessionId, &scanRequest,
 				  &hdd_scan_request_callback, dev);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,
 			  "%s:sme_scan_request  fail %d!!!", __func__, status);
 		goto error;
 	}
@@ -904,12 +904,12 @@ static int __iw_get_scan(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s: enter buffer length %d!!!", __func__,
 		  (wrqu->data.length) ? wrqu->data.length : IW_SCAN_MAX_DATA);
 
 	if (true == pAdapter->scan_info.mScanPending) {
-		CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_FATAL,
 			  "%s:mScanPending is true !!!", __func__);
 		return -EAGAIN;
 	}
@@ -945,7 +945,7 @@ static int __iw_get_scan(struct net_device *dev,
 
 	sme_scan_result_purge(hHal, pResult);
 
-	CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s: exit total %d BSS reported !!!", __func__, i);
 	EXIT();
 	return status;
@@ -1110,14 +1110,14 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	if (0 != ret)
 		return QDF_STATUS_E_INVAL;
 
-	hddLog(CDF_TRACE_LEVEL_INFO,
+	hddLog(QDF_TRACE_LEVEL_INFO,
 		"%s called with hal = %p, pContext = %p, ID = %d, status = %d",
 		__func__, halHandle, pContext, (int)scanId, (int)status);
 
 	pScanInfo->mScanPendingCounter = 0;
 
 	if (pScanInfo->mScanPending != true) {
-		CDF_ASSERT(pScanInfo->mScanPending);
+		QDF_ASSERT(pScanInfo->mScanPending);
 		goto allow_suspend;
 	}
 
@@ -1131,7 +1131,7 @@ static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 	ret = wlan_hdd_cfg80211_update_bss((WLAN_HDD_GET_CTX(pAdapter))->wiphy,
 					   pAdapter, scan_time);
 	if (0 > ret)
-		hddLog(CDF_TRACE_LEVEL_INFO, "%s: NO SCAN result", __func__);
+		hddLog(QDF_TRACE_LEVEL_INFO, "%s: NO SCAN result", __func__);
 
 	/*
 	 * cfg80211_scan_done informing NL80211 about completion
@@ -1250,7 +1250,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCAN,
 			 pAdapter->sessionId, request->n_channels));
 
@@ -1450,7 +1450,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	 */
 
 	if (request->n_channels != WLAN_HDD_P2P_SINGLE_CHANNEL_SCAN) {
-		hddLog(CDF_TRACE_LEVEL_DEBUG, "Flushing P2P Results");
+		hddLog(QDF_TRACE_LEVEL_DEBUG, "Flushing P2P Results");
 		sme_scan_flush_p2p_result(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					   pAdapter->sessionId);
 	}
@@ -1505,7 +1505,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 			/* no_cck will be set during p2p find to disable 11b rates */
 			if (request->no_cck) {
-				hddLog(CDF_TRACE_LEVEL_INFO,
+				hddLog(QDF_TRACE_LEVEL_INFO,
 				       "%s: This is a P2P Search", __func__);
 				scan_req.p2pSearch = 1;
 
@@ -2059,7 +2059,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EBUSY;
 	}
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_START,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	/*
@@ -2132,8 +2132,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 						&& (CHANNEL_STATE_DFS ==
 						cds_get_channel_state(
 						    channels_allowed[indx]))) {
-						CDF_TRACE(QDF_MODULE_ID_HDD,
-						    CDF_TRACE_LEVEL_INFO,
+						QDF_TRACE(QDF_MODULE_ID_HDD,
+						    QDF_TRACE_LEVEL_INFO,
 						    "%s : Dropping DFS channel : %d",
 						     __func__,
 						    channels_allowed[indx]);
@@ -2157,7 +2157,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		 * then ignore the PNO request
 		 */
 		if (num_ignore_dfs_ch == request->n_channels) {
-			CDF_TRACE(QDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 				"%s : All requested channels are DFS channels",
 				 __func__);
 			ret = -EINVAL;
@@ -2355,7 +2355,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	pPnoRequest->enable = 0;        /* Disable PNO */
 	pPnoRequest->ucNetworksCount = 0;
 
-	MTRACE(cdf_trace(QDF_MODULE_ID_HDD,
+	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_SCHED_SCAN_STOP,
 			 pAdapter->sessionId, pAdapter->device_mode));
 	status = sme_set_preferred_network_list(hHal, pPnoRequest,

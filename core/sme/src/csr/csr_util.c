@@ -1185,7 +1185,7 @@ eCsrMediaAccessType csr_get_qo_s_from_bss_desc(tHalHandle hHal,
 	eCsrMediaAccessType qosType = eCSR_MEDIUM_ACCESS_DCF;
 
 	if (NULL == pIes) {
-		CDF_ASSERT(pIes != NULL);
+		QDF_ASSERT(pIes != NULL);
 		return qosType;
 	}
 
@@ -1259,7 +1259,7 @@ QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
 			}
 		} else {
 			sms_log(pMac, LOGE, FL(" failed to allocate memory"));
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 			return QDF_STATUS_E_NOMEM;
 		}
 	}
@@ -1898,8 +1898,8 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 
 		switch (cur_bss_persona) {
 		case QDF_STA_MODE:
-			CDF_TRACE(QDF_MODULE_ID_SME,
-					CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME,
+					QDF_TRACE_LEVEL_INFO,
 					FL("** STA session **"));
 			return QDF_STATUS_SUCCESS;
 
@@ -1909,8 +1909,8 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 				&& (connect_state != temp)) {
 				/* allow IBSS+SAP for Emulation only */
 #ifndef QCA_WIFI_3_0_EMU
-				CDF_TRACE(QDF_MODULE_ID_SME,
-						CDF_TRACE_LEVEL_ERROR,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_ERROR,
 						FL("Can't start SAP"));
 				return QDF_STATUS_E_FAILURE;
 #endif
@@ -1921,8 +1921,8 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
 			if ((bss_persona == QDF_IBSS_MODE)
 					&& (connect_state != temp)) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-						CDF_TRACE_LEVEL_ERROR,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_ERROR,
 						FL("Can't start SAP"));
 				return QDF_STATUS_E_FAILURE;
 			}
@@ -1931,8 +1931,8 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 			if ((bss_persona == QDF_IBSS_MODE) &&
 				(connect_state ==
 					eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED)) {
-				CDF_TRACE(QDF_MODULE_ID_SME,
-						CDF_TRACE_LEVEL_ERROR,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_ERROR,
 						FL("IBSS mode already exist"));
 				return QDF_STATUS_E_FAILURE;
 			} else if (((bss_persona == QDF_P2P_GO_MODE) ||
@@ -1941,21 +1941,21 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
 				/* allow IBSS+SAP for Emulation only */
 #ifndef QCA_WIFI_3_0_EMU
-				CDF_TRACE(QDF_MODULE_ID_SME,
-						CDF_TRACE_LEVEL_ERROR,
+				QDF_TRACE(QDF_MODULE_ID_SME,
+						QDF_TRACE_LEVEL_ERROR,
 						FL("Can't start GO/SAP"));
 				return QDF_STATUS_E_FAILURE;
 #endif
 			}
 			break;
 		case QDF_P2P_CLIENT_MODE:
-			CDF_TRACE(QDF_MODULE_ID_SME,
-				CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME,
+				QDF_TRACE_LEVEL_INFO,
 				FL("**P2P-Client session**"));
 			return QDF_STATUS_SUCCESS;
 		default:
-			CDF_TRACE(QDF_MODULE_ID_SME,
-				CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SME,
+				QDF_TRACE_LEVEL_ERROR,
 				FL("Persona not handled = %d"),
 				cur_bss_persona);
 			break;
@@ -2902,7 +2902,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 		apProfileMFPRequired = (pRSNIe->RSN_Cap[0] >> 6) & 0x1;
 		if (*pFilterMFPEnabled && *pFilterMFPCapable
 		    && *pFilterMFPRequired && (apProfileMFPCapable == 0)) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "AP is not capable to make PMF connection");
 			return false;
 		} else if (*pFilterMFPEnabled && *pFilterMFPCapable &&
@@ -2915,7 +2915,7 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 			 * so if AP is not capable of PMF then drop it.
 			 * Don't try to connect with it.
 			 */
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "we need PMF connection & AP isn't capable to make PMF connection");
 			return false;
 		} else if (!(*pFilterMFPCapable) &&
@@ -2926,12 +2926,12 @@ csr_is_pmf_capabilities_in_rsn_match(tHalHandle hHal,
 			 * requires mandatory PMF connections and we are not
 			 * capable so this AP is not good choice to connect
 			 */
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "AP needs PMF connection and we are not capable of pmf connection");
 			return false;
 		} else if (!(*pFilterMFPEnabled) && *pFilterMFPCapable &&
 			   (apProfileMFPCapable == 1)) {
-			CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 				  "we don't need PMF connection even though both parties are capable");
 			return false;
 		}

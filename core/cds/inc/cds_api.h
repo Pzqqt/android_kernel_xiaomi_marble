@@ -38,7 +38,7 @@
 #include <qdf_status.h>
 #include <cdf_memory.h>
 #include <qdf_list.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 #include <qdf_event.h>
 #include <qdf_lock.h>
 #include <cds_reg_service.h>

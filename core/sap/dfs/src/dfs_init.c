@@ -75,7 +75,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 	int i, j;
 
 	if (dfs == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: sc_dfs is NULL", __func__, __LINE__);
 		return;
 	}
@@ -86,7 +86,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 		pl = dfs->pulses;
 
 	if (pl == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]:  pl==NULL, dfs=%p", __func__, __LINE__, dfs);
 		return;
 	}
@@ -103,7 +103,7 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 		}
 	} else {
 		if (dfs->dfs_b5radars == NULL) {
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				"%s[%d]: pl==NULL, b5radars=%p", __func__, __LINE__,
 				dfs->dfs_b5radars);
 			return;
@@ -220,7 +220,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 	uint32_t b5_maxdur;
 
 	if (dfs == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: dfs is NULL", __func__, __LINE__);
 		return DFS_STATUS_FAIL;
 	}
@@ -234,7 +234,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 	 * the rest of the radar configuration as suspect.
 	 */
 	if (radar_info == NULL || radar_info->dfsdomain == 0) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: Unknown dfs domain %d ",
 			  __func__, __LINE__, dfs->dfsdomain);
 		/* Disable radar detection since we don't have a radar domain */
@@ -245,7 +245,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 		return DFS_STATUS_SUCCESS;
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s[%d]:dfsdomain=%d, numradars=%d, numb5radars=%d",
 		  __func__, __LINE__, radar_info->dfsdomain,
 		  radar_info->numradars, radar_info->numb5radars);
@@ -368,12 +368,12 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 		rf->rf_threshold = dfs_radars[p].rp_threshold;
 		rf->rf_filterlen = rf->rf_maxpri * rf->rf_numpulses;
 
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  "%s[%d]: minprf = %d maxprf = %d pulsevar = %d thresh=%d",
 			  __func__, __LINE__, dfs_radars[p].rp_pulsefreq,
 			  dfs_radars[p].rp_max_pulsefreq,
 			  dfs_radars[p].rp_pulsevar, rf->rf_threshold);
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  "%s[%d]:minpri = %d maxpri = %d filterlen = %d filterID = %d",
 			  __func__, __LINE__, rf->rf_minpri, rf->rf_maxpri,
 			  rf->rf_filterlen, rf->rf_pulseid);
@@ -405,7 +405,7 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 						sizeof(struct dfs_bin5radars),
 						GFP_KERNEL);
 		if (dfs->dfs_b5radars_ext_seg == NULL) {
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  "%s:Fail allocate memory for ext bin5 radars",
 				  __func__);
 			goto bad4;
@@ -456,10 +456,10 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 		dfs_round((int32_t) ((max_pulsedur * 100 / 80) * 100));
 	/* relax the max pulse duration a little bit due to inaccuracy caused by chirping. */
 	dfs->dfs_rinfo.rn_maxpulsedur = dfs->dfs_rinfo.rn_maxpulsedur + 20;
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s[%d]: DFS min filter rssiThresh = %d",
 		  __func__, __LINE__, min_rssithresh);
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "%s[%d]:DFS max pulse dur = %d ticks",
 		  __func__, __LINE__, dfs->dfs_rinfo.rn_maxpulsedur);
 	return DFS_STATUS_SUCCESS;

@@ -66,21 +66,21 @@
 #define CDS_CHAN_15_FREQ       (2512)
 #define CDS_CHAN_170_FREQ      (5852)
 
-#define cds_log(level, args...) CDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
+#define cds_log(level, args...) QDF_TRACE(QDF_MODULE_ID_QDF, level, ## args)
 #define cds_logfl(level, format, args...) cds_log(level, FL(format), ## args)
 
 #define cds_alert(format, args...) \
-		cds_logfl(CDF_TRACE_LEVEL_FATAL, format, ## args)
+		cds_logfl(QDF_TRACE_LEVEL_FATAL, format, ## args)
 #define cds_err(format, args...) \
-		cds_logfl(CDF_TRACE_LEVEL_ERROR, format, ## args)
+		cds_logfl(QDF_TRACE_LEVEL_ERROR, format, ## args)
 #define cds_warn(format, args...) \
-		cds_logfl(CDF_TRACE_LEVEL_WARN, format, ## args)
+		cds_logfl(QDF_TRACE_LEVEL_WARN, format, ## args)
 #define cds_notice(format, args...) \
-		cds_logfl(CDF_TRACE_LEVEL_INFO, format, ## args)
+		cds_logfl(QDF_TRACE_LEVEL_INFO, format, ## args)
 #define cds_info(format, args...) \
-		cds_logfl(CDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
+		cds_logfl(QDF_TRACE_LEVEL_INFO_HIGH, format, ## args)
 #define cds_debug(format, args...) \
-		cds_logfl(CDF_TRACE_LEVEL_DEBUG, format, ## args)
+		cds_logfl(QDF_TRACE_LEVEL_DEBUG, format, ## args)
 /*--------------------------------------------------------------------------
    Type declarations
    ------------------------------------------------------------------------*/

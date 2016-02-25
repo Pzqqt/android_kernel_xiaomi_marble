@@ -1354,7 +1354,7 @@ __lim_ibss_search_and_delete_peer(tpAniSirGlobal pMac,
 	 * we set IBSS state to inactive.
 	 */
 	if (0 == pMac->lim.gLimNumIbssPeers) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 			  "Last STA from IBSS walked out");
 		psessionEntry->limIbssActive = false;
 	}

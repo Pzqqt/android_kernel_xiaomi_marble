@@ -137,7 +137,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 	struct dfs_delayline *dl;
 
 	if (dfs == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s[%d]: dfs is NULL", __func__, __LINE__);
 		return 0;
 	}
@@ -216,7 +216,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 
 		if (event == NULL) {
 			empty = 1;
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  "%s[%d]: event is NULL ", __func__, __LINE__);
 			break;
 		}
@@ -404,7 +404,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			dfs->radar_log[i].dur = re.re_dur;
 			dfs->dfs_event_log_count++;
 		}
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			  "%s[%d]:xxxxx ts =%u re.re_dur=%u re.re_rssi =%u diff =%u pl->pl_lastelem.p_time=%llu xxxxx",
 			  __func__, __LINE__, (uint32_t) this_ts, re.re_dur,
 			  re.re_rssi, diff_ts,
@@ -436,7 +436,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			 (diff_ts > 500 || diff_ts <= 305) &&
 			 (re.sidx == -4)) {
 
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			"\n%s: Rejecting on Peak Index = %d,re.re_dur = %d,diff_ts = %d\n",
 			__func__, re.sidx, re.re_dur, diff_ts);
 
@@ -465,16 +465,16 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 		     re.re_dur < DFS_TYPE4_WAR_PULSE_DURATION_UPPER_LIMIT) &&
 		    (diff_ts > DFS_TYPE4_WAR_PRI_LOWER_LIMIT &&
 		     diff_ts < DFS_TYPE4_WAR_PRI_UPPER_LIMIT)) {
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				"%s:chan->ic_flags=0x%x, MHz separation=%d\n",
 				__func__, chan->ic_flags,
 				chan->ic_pri_freq_center_freq_mhz_separation);
 
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				"%s: Peak Idx =%d,re.re_dur =%d,diff_ts =%d\n",
 				__func__, re.sidx, re.re_dur, diff_ts);
 
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				"\n%s: Modify pulse dur to fit valid range \n",
 				__func__);
 
@@ -502,16 +502,16 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 			diff_ts < DFS_ETSI_TYPE2_WAR_PRI_UPPER_LIMIT) ||
 		     (diff_ts > DFS_ETSI_TYPE3_WAR_PRI_LOWER_LIMIT &&
 			diff_ts < DFS_ETSI_TYPE3_WAR_PRI_UPPER_LIMIT))) {
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				"\n%s:chan->ic_flags=0x%x,MHz Separation=%d\n",
 				__func__, chan->ic_flags,
 				chan->ic_pri_freq_center_freq_mhz_separation);
 
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				"%s:Peak Index =%d,re.re_dur =%d,diff_ts =%d\n",
 				__func__, re.sidx, re.re_dur, diff_ts);
 
-			CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 				"%s:Modify ETSI pulse dur to valid range \n",
 				__func__);
 
@@ -598,8 +598,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 					    "%s : Rejecting on rssi rssi=%u thresh=%u",
 					    __func__, re.re_rssi,
 					    ft->ft_rssithresh);
-				CDF_TRACE(QDF_MODULE_ID_SAP,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_INFO,
 					  "%s[%d]: Rejecting on rssi rssi=%u thresh=%u",
 					  __func__, __LINE__, re.re_rssi,
 					  ft->ft_rssithresh);
@@ -623,8 +623,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 					    __func__,
 					    (unsigned long long)deltaT,
 					    ft->ft_minpri);
-				CDF_TRACE(QDF_MODULE_ID_SAP,
-					  CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SAP,
+					  QDF_TRACE_LEVEL_INFO,
 					  "%s[%d]:Rejecting on pri pri=%lld minpri=%u",
 					  __func__, __LINE__,
 					  (unsigned long long)deltaT,
@@ -657,8 +657,8 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 							    (unsigned long long)
 							    deltaT,
 							    rf->rf_minpri);
-						CDF_TRACE(QDF_MODULE_ID_SAP,
-							  CDF_TRACE_LEVEL_INFO,
+						QDF_TRACE(QDF_MODULE_ID_SAP,
+							  QDF_TRACE_LEVEL_INFO,
 							  "%s[%d]:filterID= %d::Rejecting on individual filter min PRI deltaT=%lld rf->rf_minpri=%u",
 							  __func__, __LINE__,
 							  rf->rf_pulseid,
@@ -680,9 +680,9 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 								    deltaT,
 								    rf->
 								    rf_minpri);
-							CDF_TRACE
+							QDF_TRACE
 								(QDF_MODULE_ID_SAP,
-								CDF_TRACE_LEVEL_INFO,
+								QDF_TRACE_LEVEL_INFO,
 								"%s[%d]:filterID= %d :: Rejecting on individual filter max PRI deltaT=%lld rf->rf_minpri=%u",
 								__func__, __LINE__,
 								rf->rf_pulseid,
@@ -719,9 +719,9 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 								    deltaT,
 								    rf->
 								    rf_minpri);
-							CDF_TRACE
+							QDF_TRACE
 								(QDF_MODULE_ID_SAP,
-								CDF_TRACE_LEVEL_INFO,
+								QDF_TRACE_LEVEL_INFO,
 								"%s[%d]:filterID= %d :: Rejecting on individual filter max PRI deltaT=%lld rf->rf_minpri=%u",
 								__func__, __LINE__,
 								rf->rf_pulseid,
@@ -770,7 +770,7 @@ int dfs_process_radarevent(struct ath_dfs *dfs,
 					    "Found on channel minDur = %d, filterId = %d",
 					    ft->ft_mindur,
 					    rf != NULL ? rf->rf_pulseid : -1);
-				CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+				QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 					"%s[%d]:### Found on channel minDur = %d, filterId = %d  seg_id = %d ###",
 					__func__, __LINE__, ft->ft_mindur,
 					rf != NULL ? rf->rf_pulseid : -1,
@@ -798,7 +798,7 @@ dfsfound:
 		 */
 		dfs->ic->ic_curchan->ic_radar_found_segid = seg_id;
 
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 		  "%s[%d]:### RADAR FOUND ON CHANNEL %d (%d MHz),seg_id=%d ###",
 		  __func__, __LINE__, thischan->ic_ieee,
 		  thischan->ic_freq, seg_id);
@@ -861,7 +861,7 @@ dfsfound:
 		dfs->dfs_phyerr_freq_max = 0;
 		dfs->dfs_phyerr_w53_counter = 0;
 	}
-	/* CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO, "IN FUNC %s[%d]: retval = %d ",__func__,__LINE__,retval); */
+	/* QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO, "IN FUNC %s[%d]: retval = %d ",__func__,__LINE__,retval); */
 	return retval;
 /* #endif */
 /*        return 1; */

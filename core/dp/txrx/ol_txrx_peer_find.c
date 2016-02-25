@@ -457,26 +457,26 @@ void ol_txrx_peer_find_display(ol_txrx_pdev_handle pdev, int indent)
 {
 	int i, max_peers;
 
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "%*speer map:\n", indent, " ");
 	max_peers = ol_cfg_max_peer_id(pdev->ctrl_pdev) + 1;
 	for (i = 0; i < max_peers; i++) {
 		if (pdev->peer_id_to_obj_map[i]) {
-			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 				  "%*sid %d -> %p\n",
 				  indent + 4, " ", i,
 				  pdev->peer_id_to_obj_map[i]);
 		}
 	}
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "%*speer hash table:\n", indent, " ");
 	for (i = 0; i <= pdev->peer_hash.mask; i++) {
 		if (!TAILQ_EMPTY(&pdev->peer_hash.bins[i])) {
 			struct ol_txrx_peer_t *peer;
 			TAILQ_FOREACH(peer, &pdev->peer_hash.bins[i],
 				      hash_list_elem) {
-				CDF_TRACE(QDF_MODULE_ID_TXRX,
-					  CDF_TRACE_LEVEL_INFO_LOW,
+				QDF_TRACE(QDF_MODULE_ID_TXRX,
+					  QDF_TRACE_LEVEL_INFO_LOW,
 					  "%*shash idx %d -> %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
 					indent + 4, " ", i, peer,
 					peer->mac_addr.raw[0],

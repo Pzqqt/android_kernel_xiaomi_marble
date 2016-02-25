@@ -46,7 +46,7 @@
 #include <qdf_net_types.h>
 #include <ol_htt_api.h>         /* htt_pdev_handle */
 #include <htt_types.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 
 /* Remove these macros when they get added to htt.h. */
 #ifndef HTT_TX_DESC_EXTENSION_GET
@@ -287,35 +287,35 @@ struct htt_msdu_info_t {
 
 static inline void htt_msdu_info_dump(struct htt_msdu_info_t *msdu_info)
 {
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "HTT MSDU info object (%p)\n", msdu_info);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  ethertype: %#x\n", msdu_info->info.ethertype);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  peer_id: %d\n", msdu_info->info.peer_id);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  vdev_id: %d\n", msdu_info->info.vdev_id);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  ext_tid: %d\n", msdu_info->info.ext_tid);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  l2_hdr_type: %d\n", msdu_info->info.l2_hdr_type);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  frame_type: %d\n", msdu_info->info.frame_type);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  frame_subtype: %d\n", msdu_info->info.frame_subtype);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  is_unicast: %u\n", msdu_info->info.is_unicast);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  l3_hdr_offset: %u\n", msdu_info->info.l3_hdr_offset);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  use 6 Mbps: %d\n", msdu_info->action.use_6mbps);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  do_encrypt: %d\n", msdu_info->action.do_encrypt);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  do_tx_complete: %d\n", msdu_info->action.do_tx_complete);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  is_unicast: %u\n", msdu_info->info.is_unicast);
-	CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
+	QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO_LOW,
 		  "  is_unicast: %u\n", msdu_info->info.is_unicast);
 }
 
@@ -573,7 +573,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 		ce_pkt_type = htt_to_ce_pkt_type[pkt_type];
 		if (0xffffffff == ce_pkt_type) {
-			CDF_TRACE(QDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_DEBUG,
+			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_DEBUG,
 			"Invalid HTT pkt type %d\n", pkt_type);
 			return;
 		}
@@ -844,7 +844,7 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 		*word32 |= (frag_len << 16);
 	} else {
 		/* For Helium+, this block cannot exist */
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 #else /* !defined(HELIUMPLUS_PADDR64) */
 	{

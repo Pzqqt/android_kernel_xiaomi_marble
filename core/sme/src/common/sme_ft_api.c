@@ -548,7 +548,7 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 	tCsrRoamSession *pSession = NULL;
 
 	if (pMac == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL("pMac is NULL"));
 		return;
 	}

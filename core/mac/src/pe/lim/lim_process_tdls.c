@@ -2417,7 +2417,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 
 		if (NULL == pStaDs) {
 			lim_log(pMac, LOGE, FL("add hash entry failed"));
-			CDF_ASSERT(0);
+			QDF_ASSERT(0);
 			return eSIR_FAILURE;
 		}
 	}
@@ -2433,7 +2433,7 @@ static tSirRetStatus lim_tdls_setup_add_sta(tpAniSirGlobal pMac,
 
 	if (eSIR_SUCCESS != status) {
 		/* should not fail */
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 	return status;
 }
@@ -2529,7 +2529,7 @@ QDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg,
 	       MAC_ADDR_ARRAY(pAddStaParams->staMac));
 
 	if (pAddStaParams->status != QDF_STATUS_SUCCESS) {
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 		lim_log(pMac, LOGE, FL("Add sta failed "));
 		status = eSIR_FAILURE;
 		goto add_sta_error;
@@ -2754,7 +2754,7 @@ tSirRetStatus lim_process_sme_tdls_mgmt_send_req(tpAniSirGlobal mac_ctx,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(session_entry)) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("send mgmt received in wrong system Role %d"),
 			  GET_LIM_SYSTEM_ROLE(session_entry));
 		goto lim_tdls_send_mgmt_error;
@@ -2937,7 +2937,7 @@ tSirRetStatus lim_process_sme_tdls_add_sta_req(tpAniSirGlobal pMac,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  "send mgmt received in wrong system Role %d",
 			  GET_LIM_SYSTEM_ROLE(psessionEntry));
 		goto lim_tdls_add_sta_error;
@@ -3005,7 +3005,7 @@ tSirRetStatus lim_process_sme_tdls_del_sta_req(tpAniSirGlobal pMac,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  "Del sta received in wrong system Role %d",
 			  GET_LIM_SYSTEM_ROLE(psessionEntry));
 		goto lim_tdls_del_sta_error;
@@ -3103,13 +3103,13 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 	uint32_t self_num_chan = WNI_CFG_VALID_CHANNEL_LIST_LEN;
 	uint8_t self_supp_chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 
-	CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_INFO,
 		  FL("Send Mgmt Recieved"));
 
 	session_entry = pe_find_session_by_bssid(mac_ctx, tdls_req->bssid.bytes,
 						 &session_id);
 	if (NULL == session_entry) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("PE Session does not exist for sme session_id %d"),
 			  tdls_req->sessionId);
 		lim_send_sme_tdls_link_establish_req_rsp(mac_ctx,
@@ -3120,7 +3120,7 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 
 	/* check if we are in proper state to work as TDLS client */
 	if (!LIM_IS_STA_ROLE(session_entry)) {
-		CDF_TRACE(QDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_PE, QDF_TRACE_LEVEL_ERROR,
 			  FL("TDLS Link Establish Request received in wrong system Role %d"),
 			  GET_LIM_SYSTEM_ROLE(session_entry));
 		goto lim_tdls_link_establish_error;

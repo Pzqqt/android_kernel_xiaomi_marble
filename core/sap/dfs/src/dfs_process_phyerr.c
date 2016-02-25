@@ -463,7 +463,7 @@ static void dump_phyerr_contents(const char *d, int len)
 	 * Print the final line if we didn't print it above.
 	 */
 	if (n != 0)
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO, "%s: %s\n",
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO, "%s: %s\n",
 			  __func__, buf);
 #endif /* def CONFIG_ENABLE_DUMP_PHYERR_CONTENTS */
 }
@@ -480,7 +480,7 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 	int empty;
 
 	if (dfs == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: sc_dfs is NULL\n", __func__);
 		return;
 	}
@@ -509,7 +509,7 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		dump_phyerr_contents(buf, datalen);
 
 	if (chan == NULL) {
-		CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "%s: chan is NULL\n", __func__);
 		return;
 	}
@@ -588,7 +588,7 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		}
 	}
 
-	CDF_TRACE(QDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
+	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 		  "\n %s: Frequency at which the phyerror was injected = %d",
 		  __func__, e.freq);
 	/*

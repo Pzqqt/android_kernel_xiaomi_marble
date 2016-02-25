@@ -35,14 +35,14 @@
 
 #include <wlan_nlink_srv.h>
 #include <qdf_status.h>
-#include <cdf_trace.h>
+#include <qdf_trace.h>
 #include <wlan_nlink_common.h>
 
 int wlan_logging_sock_init_svc(void);
 int wlan_logging_sock_deinit_svc(void);
 int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf);
 int wlan_logging_sock_deactivate_svc(void);
-int wlan_log_to_user(CDF_TRACE_LEVEL log_level, char *to_be_sent, int length);
+int wlan_log_to_user(QDF_TRACE_LEVEL log_level, char *to_be_sent, int length);
 void wlan_logging_set_per_pkt_stats(void);
 void wlan_logging_set_log_level(void);
 void wlan_logging_set_fw_flush_complete(void);
