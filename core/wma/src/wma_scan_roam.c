@@ -627,91 +627,74 @@ QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_buf_t buf;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	wmi_scan_chan_list_cmd_fixed_param *cmd;
-	int status, i;
-	uint8_t *buf_ptr;
-	wmi_channel *chan_info;
-	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	int i;
+	struct scan_chan_list_params scan_ch_param = {0};
+	wmi_channel *tchan_info;
 
-	len += sizeof(wmi_channel) * chan_list->numChan;
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("Failed to allocate memory");
-		qdf_status = QDF_STATUS_E_NOMEM;
-		goto end;
+	scan_ch_param.chan_info = qdf_mem_malloc(sizeof(wmi_channel) *
+				 chan_list->numChan);
+	if (NULL == scan_ch_param.chan_info) {
+		WMA_LOGE("%s: Failed to allocate channel info", __func__);
+		return QDF_STATUS_E_NOMEM;
 	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_scan_chan_list_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_scan_chan_list_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_scan_chan_list_cmd_fixed_param));
-
-	WMA_LOGD("no of channels = %d, len = %d", chan_list->numChan, len);
-
-	cmd->num_scan_chans = chan_list->numChan;
-	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_scan_chan_list_cmd_fixed_param)),
-		       WMITLV_TAG_ARRAY_STRUC,
-		       sizeof(wmi_channel) * chan_list->numChan);
-	chan_info = (wmi_channel *) (buf_ptr + sizeof(*cmd) + WMI_TLV_HDR_SIZE);
+	qdf_mem_zero(scan_ch_param.chan_info, sizeof(wmi_channel) *
+				 chan_list->numChan);
+	WMA_LOGD("no of channels = %d", chan_list->numChan);
+	tchan_info = scan_ch_param.chan_info;
+	scan_ch_param.num_scan_chans = chan_list->numChan;
 
 	for (i = 0; i < chan_list->numChan; ++i) {
-		WMITLV_SET_HDR(&chan_info->tlv_header,
-			       WMITLV_TAG_STRUC_wmi_channel,
-			       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-		chan_info->mhz =
+		tchan_info->mhz =
 			cds_chan_to_freq(chan_list->chanParam[i].chanId);
-		chan_info->band_center_freq1 = chan_info->mhz;
-		chan_info->band_center_freq2 = 0;
+		tchan_info->band_center_freq1 =
+					  tchan_info->mhz;
+		tchan_info->band_center_freq2 = 0;
 
-		WMA_LOGD("chan[%d] = %u", i, chan_info->mhz);
+		WMA_LOGD("chan[%d] = %u", i, tchan_info->mhz);
 		if (chan_list->chanParam[i].dfsSet) {
-			WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_PASSIVE);
+			WMI_SET_CHANNEL_FLAG(tchan_info, WMI_CHAN_FLAG_PASSIVE);
 			WMA_LOGI("chan[%d] DFS[%d]\n",
 				 chan_list->chanParam[i].chanId,
 				 chan_list->chanParam[i].dfsSet);
 		}
 
-		if (chan_info->mhz < WMA_2_4_GHZ_MAX_FREQ)
-			WMI_SET_CHANNEL_MODE(chan_info, MODE_11G);
+		if (tchan_info->mhz < WMA_2_4_GHZ_MAX_FREQ)
+			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11G);
 		else
-			WMI_SET_CHANNEL_MODE(chan_info, MODE_11A);
+			WMI_SET_CHANNEL_MODE(tchan_info, MODE_11A);
 
 		if (chan_list->chanParam[i].half_rate)
-			WMI_SET_CHANNEL_FLAG(chan_info,
+			WMI_SET_CHANNEL_FLAG(tchan_info,
 				WMI_CHAN_FLAG_HALF_RATE);
 		else if (chan_list->chanParam[i].quarter_rate)
-			WMI_SET_CHANNEL_FLAG(chan_info,
+			WMI_SET_CHANNEL_FLAG(tchan_info,
 				WMI_CHAN_FLAG_QUARTER_RATE);
 
-		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info,
+		WMI_SET_CHANNEL_MAX_TX_POWER(tchan_info,
 					     chan_list->chanParam[i].pwr);
 
-		WMI_SET_CHANNEL_REG_POWER(chan_info,
+		WMI_SET_CHANNEL_REG_POWER(tchan_info,
 					  chan_list->chanParam[i].pwr);
-		WMA_LOGD("Channel TX power[%d] = %u: %d", i, chan_info->mhz,
+		WMA_LOGD("Channel TX power[%d] = %u: %d", i, tchan_info->mhz,
 			 chan_list->chanParam[i].pwr);
 		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
 		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
 		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
-		chan_info++;
+		tchan_info++;
 	}
 
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				      WMI_SCAN_CHAN_LIST_CMDID);
+	qdf_status = wmi_unified_scan_chan_list_cmd_send(wma_handle->wmi_handle,
+				&scan_ch_param);
 
-	if (status != EOK) {
-		qdf_status = QDF_STATUS_E_FAILURE;
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
-		wmi_buf_free(buf);
 	}
-end:
+
+	qdf_mem_free(scan_ch_param.chan_info);
+
 	return qdf_status;
 }
-
 
 /**
  * wma_roam_scan_offload_mode() - send roam scan mode request to fw
