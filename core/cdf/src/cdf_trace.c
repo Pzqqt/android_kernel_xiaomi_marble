@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -757,13 +757,13 @@ void cdf_dp_trace_set_track(cdf_nbuf_t nbuf)
 	if (g_cdf_dp_trace_data.proto_bitmap != 0) {
 		if (cds_pkt_get_proto_type(nbuf,
 			g_cdf_dp_trace_data.proto_bitmap, 0)) {
-			CDF_NBUF_SET_DP_TRACE(nbuf, 1);
+			NBUF_CB_TX_DP_TRACE(nbuf) = 1;
 		}
 	}
 	if ((g_cdf_dp_trace_data.no_of_record != 0) &&
 		(g_cdf_dp_trace_data.count %
 			g_cdf_dp_trace_data.no_of_record == 0)) {
-		CDF_NBUF_SET_DP_TRACE(nbuf, 1);
+		NBUF_CB_TX_DP_TRACE(nbuf) = 1;
 	}
 	spin_unlock_bh(&l_dp_trace_lock);
 	return;
@@ -793,7 +793,7 @@ static void dump_hex_trace(uint8_t *buf, uint8_t buf_len)
  *
  * Return: None
  */
-void cdf_dp_display_record(struct cdf_dp_trace_record_s *pRecord ,
+void cdf_dp_display_record(struct cdf_dp_trace_record_s *pRecord,
 				uint16_t recIndex)
 {
 	cdf_print("INDEX: %04d TIME: %012llu CODE: %02d\n", recIndex,
@@ -857,14 +857,14 @@ void cdf_dp_trace(cdf_nbuf_t nbuf, enum CDF_DP_TRACE_ID code,
 	}
 
 	/* Return when the packet is not a data packet */
-	if (NBUF_GET_PACKET_TRACK(nbuf) != NBUF_TX_PKT_DATA_TRACK)
+	if (NBUF_CB_TX_PACKET_TRACK(nbuf) != NBUF_TX_PKT_DATA_TRACK)
 		return;
 
 	/* Return when nbuf is not marked for dp tracing or
 	 * verbosity does not allow
 	 */
-	if (cdf_dp_trace_enable_track(code) == false ||
-			!CDF_NBUF_GET_DP_TRACE(nbuf))
+	if ((cdf_dp_trace_enable_track(code) == false) ||
+	    !NBUF_CB_TX_DP_TRACE(nbuf))
 		return;
 
 	/* Acquire the lock so that only one thread at a time can fill the ring

@@ -188,7 +188,7 @@ static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev)
  * htt_tx_frag_alloc() - Allocate single fragment descriptor from the pool
  * @pdev:		htt device instance pointer
  * @index:		Descriptor index
- * @frag_paddr_lo:	Fragment descriptor physical address
+ * @frag_paddr:	        Fragment descriptor physical address
  * @frag_ptr:		Fragment descriptor virtual address
  *
  * This function will free fragment descriptor
@@ -196,7 +196,7 @@ static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev)
  * Return: None
  */
 int htt_tx_frag_alloc(htt_pdev_handle pdev,
-	u_int16_t index, u_int32_t *frag_paddr_lo, void **frag_ptr)
+	u_int16_t index, cdf_dma_addr_t *frag_paddr, void **frag_ptr)
 {
 	uint16_t frag_page_index;
 	uint16_t frag_elem_index;
@@ -223,7 +223,7 @@ int htt_tx_frag_alloc(htt_pdev_handle pdev,
 		return 1;
 	}
 
-	*frag_paddr_lo = dma_page->page_p_addr +
+	*frag_paddr = dma_page->page_p_addr +
 		frag_elem_index * pdev->frag_descs.size;
 	return 0;
 }
@@ -436,7 +436,7 @@ static cdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 
 /*--- descriptor allocation functions ---------------------------------------*/
 
-void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo,
+void *htt_tx_desc_alloc(htt_pdev_handle pdev, cdf_dma_addr_t *paddr,
 			uint16_t index)
 {
 	struct htt_host_tx_desc_t *htt_host_tx_desc;    /* includes HTC hdr */
@@ -477,7 +477,7 @@ void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo,
 	 * Include the headroom for the HTC frame header when specifying the
 	 * physical address for the HTT tx descriptor.
 	 */
-	*paddr_lo = (uint32_t)htt_tx_get_paddr(pdev, (char *)htt_host_tx_desc);
+	*paddr = (cdf_dma_addr_t)htt_tx_get_paddr(pdev, (char *)htt_host_tx_desc);
 	/*
 	 * The allocated tx descriptor space includes headroom for a
 	 * HTC frame header.  Hide this headroom, so that we don't have
@@ -504,8 +504,8 @@ void htt_tx_desc_free(htt_pdev_handle pdev, void *tx_desc)
 
 void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 				 void *htt_tx_desc,
-				 uint32_t paddr,
-				 uint32_t frag_desc_paddr_lo,
+				 cdf_dma_addr_t paddr,
+				 cdf_dma_addr_t frag_desc_paddr,
 				 int reset)
 {
 	uint32_t *fragmentation_descr_field_ptr;
@@ -515,7 +515,7 @@ void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 		HTT_TX_DESC_FRAGS_DESC_PADDR_OFFSET_DWORD;
 	if (reset) {
 #if defined(HELIUMPLUS_PADDR64)
-		*fragmentation_descr_field_ptr = frag_desc_paddr_lo;
+		*fragmentation_descr_field_ptr = frag_desc_paddr;
 #else
 		*fragmentation_descr_field_ptr =
 			htt_tx_get_paddr(pdev, htt_tx_desc) + HTT_TX_DESC_LEN;
@@ -812,7 +812,8 @@ int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
 }
 
 #endif /*ATH_11AC_TXCOMPACT */
-#ifdef HTT_DBG
+
+#if defined(HTT_DBG)
 void htt_tx_desc_display(void *tx_desc)
 {
 	struct htt_tx_msdu_desc_t *htt_tx_desc;
@@ -820,32 +821,28 @@ void htt_tx_desc_display(void *tx_desc)
 	htt_tx_desc = (struct htt_tx_msdu_desc_t *)tx_desc;
 
 	/* only works for little-endian */
-	cdf_print("HTT tx desc (@ %p):\n", htt_tx_desc);
-	cdf_print("  msg type = %d\n", htt_tx_desc->msg_type);
-	cdf_print("  pkt subtype = %d\n", htt_tx_desc->pkt_subtype);
-	cdf_print("  pkt type = %d\n", htt_tx_desc->pkt_type);
-	cdf_print("  vdev ID = %d\n", htt_tx_desc->vdev_id);
-	cdf_print("  ext TID = %d\n", htt_tx_desc->ext_tid);
-	cdf_print("  postponed = %d\n", htt_tx_desc->postponed);
+	cdf_print("HTT tx desc (@ %p):", htt_tx_desc);
+	cdf_print("  msg type = %d", htt_tx_desc->msg_type);
+	cdf_print("  pkt subtype = %d", htt_tx_desc->pkt_subtype);
+	cdf_print("  pkt type = %d", htt_tx_desc->pkt_type);
+	cdf_print("  vdev ID = %d", htt_tx_desc->vdev_id);
+	cdf_print("  ext TID = %d", htt_tx_desc->ext_tid);
+	cdf_print("  postponed = %d", htt_tx_desc->postponed);
+	cdf_print("  extension = %d", htt_tx_desc->extension);
+	cdf_print("  cksum_offload = %d", htt_tx_desc->cksum_offload);
+	cdf_print("  tx_compl_req= %d", htt_tx_desc->tx_compl_req);
+	cdf_print("  length = %d", htt_tx_desc->len);
+	cdf_print("  id = %d", htt_tx_desc->id);
 #if HTT_PADDR64
-	cdf_print("  reserved_dword0_bits28 = %d\n", htt_tx_desc->reserved_dword0_bits28);
-	cdf_print("  cksum_offload = %d\n", htt_tx_desc->cksum_offload);
-	cdf_print("  tx_compl_req= %d\n", htt_tx_desc->tx_compl_req);
-#else /* !HTT_PADDR64 */
-	cdf_print("  batch more = %d\n", htt_tx_desc->more_in_batch);
-#endif /* HTT_PADDR64 */
-	cdf_print("  length = %d\n", htt_tx_desc->len);
-	cdf_print("  id = %d\n", htt_tx_desc->id);
-#if HTT_PADDR64
-	cdf_print("  frag desc addr.lo = %#x\n",
+	cdf_print("  frag desc addr.lo = %#x",
 		  htt_tx_desc->frags_desc_ptr.lo);
-	cdf_print("  frag desc addr.hi = %#x\n",
+	cdf_print("  frag desc addr.hi = %#x",
 		  htt_tx_desc->frags_desc_ptr.hi);
-	cdf_print("  peerid = %d\n", htt_tx_desc->peerid);
-	cdf_print("  chanfreq = %d\n", htt_tx_desc->chanfreq);
 #else /* ! HTT_PADDR64 */
-	cdf_print("  frag desc addr = %#x\n", htt_tx_desc->frags_desc_ptr);
+	cdf_print("  frag desc addr = %#x", htt_tx_desc->frags_desc_ptr);
 #endif /* HTT_PADDR64 */
+	cdf_print("  peerid = %d", htt_tx_desc->peerid);
+	cdf_print("  chanfreq = %d", htt_tx_desc->chanfreq);
 }
 #endif
 
@@ -900,7 +897,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 				tx_buffer_count) << 16;
 
 		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = cdf_nbuf_get_frag_paddr_lo(buffer_vaddr, 0);
+		buffer_paddr = cdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 		*header_ptr = (uint32_t) (buffer_paddr +
 						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
@@ -928,7 +925,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 {
 	unsigned int tx_buffer_count;
 	cdf_nbuf_t buffer_vaddr;
-	uint32_t buffer_paddr;
+	cdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
 #define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 20
@@ -960,7 +957,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 				tx_buffer_count) << 16;
 
 		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = cdf_nbuf_get_frag_paddr_lo(buffer_vaddr, 0);
+		buffer_paddr = cdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 
 		/* Frag Desc Pointer */
@@ -1063,8 +1060,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 free_tx_comp_base:
 	cdf_os_mem_free_consistent(pdev->osdev,
-				   ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->
-								ctrl_pdev) * 4,
+				   tx_comp_ring_size,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
 				   cdf_get_dma_mem_context((&pdev->
@@ -1101,7 +1097,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	if (pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
 		cdf_os_mem_free_consistent(
 			pdev->osdev,
-			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) * 4,
+			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) * sizeof(cdf_nbuf_t),
 			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 			pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
 			cdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.

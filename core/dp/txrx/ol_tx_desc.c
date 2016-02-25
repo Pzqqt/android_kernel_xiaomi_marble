@@ -307,11 +307,11 @@ extern void
 dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 
 void
-dump_pkt(cdf_nbuf_t nbuf, uint32_t nbuf_paddr, int len)
+dump_pkt(cdf_nbuf_t nbuf, cdf_dma_addr_t nbuf_paddr, int len)
 {
-	cdf_print("%s: Pkt: VA 0x%p PA 0x%x len %d\n", __func__,
+	cdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
 		  cdf_nbuf_data(nbuf), nbuf_paddr, len);
-	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_NONE, 16, 4,
+	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_ADDRESS, 16, 4,
 		       cdf_nbuf_data(nbuf), len, true);
 }
 
@@ -381,8 +381,8 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	 */
 	num_frags = cdf_nbuf_get_num_frags(netbuf);
 	/* num_frags are expected to be 2 max */
-	num_frags = (num_frags > CVG_NBUF_MAX_EXTRA_FRAGS)
-		? CVG_NBUF_MAX_EXTRA_FRAGS
+	num_frags = (num_frags > NBUF_CB_TX_MAX_EXTRA_FRAGS)
+		? NBUF_CB_TX_MAX_EXTRA_FRAGS
 		: num_frags;
 #if defined(HELIUMPLUS_PADDR64)
 	/*
@@ -405,17 +405,20 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	} else {
 		for (i = 1; i < num_frags; i++) {
 			cdf_size_t frag_len;
-			uint32_t frag_paddr;
-
+			cdf_dma_addr_t frag_paddr;
+#ifdef HELIUMPLUS_DEBUG
+			void *frag_vaddr;
+			frag_vaddr = cdf_nbuf_get_frag_vaddr(netbuf, i);
+#endif
 			frag_len = cdf_nbuf_get_frag_len(netbuf, i);
-			frag_paddr = cdf_nbuf_get_frag_paddr_lo(netbuf, i);
+			frag_paddr = cdf_nbuf_get_frag_paddr(netbuf, i);
 #if defined(HELIUMPLUS_PADDR64)
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc, i - 1,
 				 frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
-			cdf_print("%s:%d: htt_fdesc=%p frag_paddr=%u len=%zu\n",
-					  __func__, __LINE__, tx_desc->htt_frag_desc,
-					  frag_paddr, frag_len);
+			cdf_print("%s:%d: htt_fdesc=%p frag=%d frag_vaddr=0x%p frag_paddr=0x%llx len=%zu\n",
+				  __func__, __LINE__, tx_desc->htt_frag_desc,
+				  i-1, frag_vaddr, frag_paddr, frag_len);
 			dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
 #else /* ! defined(HELIUMPLUSPADDR64) */
@@ -485,10 +488,10 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 	/* check the frame type to see what kind of special steps are needed */
 	if ((tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) &&
 		   (tx_desc->pkt_type != 0xff)) {
-		uint32_t frag_desc_paddr_lo = 0;
+		cdf_dma_addr_t frag_desc_paddr = 0;
 
 #if defined(HELIUMPLUS_PADDR64)
-		frag_desc_paddr_lo = tx_desc->htt_frag_desc_paddr;
+		frag_desc_paddr = tx_desc->htt_frag_desc_paddr;
 		/* FIX THIS -
 		 * The FW currently has trouble using the host's fragments
 		 * table for management frames.  Until this is fixed,
@@ -501,12 +504,12 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 #if defined(HELIUMPLUS_DEBUG)
 		cdf_print("%s %d: Frag Descriptor Reset [%d] to 0x%x\n",
 			  __func__, __LINE__, tx_desc->id,
-			  frag_desc_paddr_lo);
+			  frag_desc_paddr);
 #endif /* HELIUMPLUS_DEBUG */
 #endif /* HELIUMPLUS_PADDR64 */
 		htt_tx_desc_frags_table_set(pdev->htt_pdev,
 					    tx_desc->htt_tx_desc, 0,
-					    frag_desc_paddr_lo, 1);
+					    frag_desc_paddr, 1);
 
 		mgmt_type = tx_desc->pkt_type - OL_TXRX_MGMT_TYPE_BASE;
 		/*

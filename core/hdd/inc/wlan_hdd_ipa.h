@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,6 +39,19 @@
 
 #ifdef IPA_OFFLOAD
 /* Include files */
+#include <wlan_hdd_assoc.h> /* hdd_context_t */
+
+/**
+ * FIXME: Temporary hack - until IPA functionality gets restored
+ *
+ */
+typedef void (*hdd_ipa_nbuf_cb_fn)(cdf_nbuf_t);
+void hdd_ipa_nbuf_cb(cdf_nbuf_t skb);  /* Fwd declare */
+static inline hdd_ipa_nbuf_cb_fn wlan_hdd_stub_ipa_fn(void)
+{
+	return hdd_ipa_nbuf_cb;
+};
+
 CDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx);
 CDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx);
 CDF_STATUS hdd_ipa_process_rxt(void *cds_context, cdf_nbuf_t rxBuf,

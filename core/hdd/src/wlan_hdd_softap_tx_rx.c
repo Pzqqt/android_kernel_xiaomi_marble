@@ -258,7 +258,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[ac];
 
 #if defined (IPA_OFFLOAD)
-	if (!(NBUF_OWNER_ID(skb) == IPA_NBUF_OWNER_ID)) {
+	if (!cdf_nbuf_ipa_owned_get(skb)) {
 #endif
 		/* Check if the buffer has enough header room */
 		skb = skb_unshare(skb, GFP_ATOMIC);
@@ -299,7 +299,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	/* Zero out skb's context buffer for the driver to use */
 	cdf_mem_set(skb->cb, sizeof(skb->cb), 0);
-	NBUF_SET_PACKET_TRACK(skb, NBUF_TX_PKT_DATA_TRACK);
+	NBUF_CB_TX_PACKET_TRACK(skb) = NBUF_TX_PKT_DATA_TRACK;
 	NBUF_UPDATE_TX_PKT_COUNT(skb, NBUF_TX_PKT_HDD);
 
 	cdf_dp_trace_set_track(skb);

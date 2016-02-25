@@ -288,8 +288,9 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		while (segments) {
 
 			if (msdu_info.tso_info.curr_seg)
-				NBUF_MAPPED_PADDR_LO(msdu) = msdu_info.tso_info.
-					curr_seg->seg.tso_frags[0].paddr_low_32;
+				NBUF_CB_PADDR(msdu) =
+					msdu_info.tso_info.curr_seg->
+					seg.tso_frags[0].paddr_low_32;
 
 			segments--;
 
@@ -317,7 +318,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 					 msdu_info.tso_info.curr_seg->next;
 			}
 
-			cdf_nbuf_dec_num_frags(msdu);
+			cdf_nbuf_reset_num_frags(msdu);
 
 			if (msdu_info.tso_info.is_tso) {
 				TXRX_STATS_TSO_INC_SEG(vdev->pdev);
@@ -437,8 +438,9 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 
 	num_frags = cdf_nbuf_get_num_frags(msdu);
 	/* num_frags are expected to be 2 max */
-	num_frags = (num_frags > CVG_NBUF_MAX_EXTRA_FRAGS) ?
-		CVG_NBUF_MAX_EXTRA_FRAGS : num_frags;
+	num_frags = (num_frags > NBUF_CB_TX_MAX_EXTRA_FRAGS)
+		? NBUF_CB_TX_MAX_EXTRA_FRAGS
+		: num_frags;
 #if defined(HELIUMPLUS_PADDR64)
 	/*
 	 * Use num_frags - 1, since 1 frag is used to store
@@ -459,17 +461,17 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	} else {
 		for (i = 1; i < num_frags; i++) {
 			cdf_size_t frag_len;
-			u_int32_t frag_paddr;
+			cdf_dma_addr_t frag_paddr;
 
 			frag_len = cdf_nbuf_get_frag_len(msdu, i);
-			frag_paddr = cdf_nbuf_get_frag_paddr_lo(msdu, i);
+			frag_paddr = cdf_nbuf_get_frag_paddr(msdu, i);
 #if defined(HELIUMPLUS_PADDR64)
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
 					 i - 1, frag_paddr, frag_len);
 #if defined(HELIUMPLUS_DEBUG)
-			cdf_print("%s:%d: htt_fdesc=%p frag_paddr=%u len=%zu\n",
+			cdf_print("%s:%d: htt_fdesc=%p frag=%d frag_paddr=0x%0llx len=%zu",
 				  __func__, __LINE__, tx_desc->htt_frag_desc,
-				  frag_paddr, frag_len);
+				  i-1, frag_paddr, frag_len);
 			dump_pkt(netbuf, frag_paddr, 64);
 #endif /* HELIUMPLUS_DEBUG */
 #else /* ! defined(HELIUMPLUSPADDR64) */
@@ -556,7 +558,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		while (segments) {
 
 			if (msdu_info.tso_info.curr_seg)
-				NBUF_MAPPED_PADDR_LO(msdu) = msdu_info.tso_info.
+				NBUF_CB_PADDR(msdu) = msdu_info.tso_info.
 					curr_seg->seg.tso_frags[0].paddr_low_32;
 
 			segments--;
@@ -617,7 +619,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 				}
 
 				if (msdu_info.tso_info.is_tso) {
-					cdf_nbuf_dec_num_frags(msdu);
+					cdf_nbuf_reset_num_frags(msdu);
 					TXRX_STATS_TSO_INC_SEG(vdev->pdev);
 					TXRX_STATS_TSO_INC_SEG_IDX(vdev->pdev);
 				}
@@ -1195,10 +1197,10 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 
 	cdf_print("OL TX Descriptor 0x%p msdu_id %d\n",
 		 tx_desc, tx_desc->id);
-	cdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%x\n",
+	cdf_print("HTT TX Descriptor vaddr: 0x%p paddr: 0x%llx",
 		 tx_desc->htt_tx_desc, tx_desc->htt_tx_desc_paddr);
-	cdf_print("%s %d: Fragment Descriptor 0x%p\n",
-		 __func__, __LINE__, tx_desc->htt_frag_desc);
+	cdf_print("%s %d: Fragment Descriptor 0x%p (paddr=0x%llx)",
+		 __func__, __LINE__, tx_desc->htt_frag_desc, tx_desc->htt_frag_desc_paddr);
 
 	/* it looks from htt_tx_desc_frag() that tx_desc->htt_frag_desc
 	   is already de-referrable (=> in virtual address space) */
@@ -1308,7 +1310,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 		htt_tx_desc_frags_table_set(
 			pdev->htt_pdev,
 			tx_desc->htt_tx_desc,
-			cdf_nbuf_get_frag_paddr_lo(tx_mgmt_frm, 1),
+			cdf_nbuf_get_frag_paddr(tx_mgmt_frm, 1),
 			0, 0);
 #if defined(HELIUMPLUS_PADDR64) && defined(HELIUMPLUS_DEBUG)
 		dump_frag_desc(
@@ -1326,8 +1328,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 	tx_desc->pkt_type = type + OL_TXRX_MGMT_TYPE_BASE;
 
 	htt_tx_desc_set_chanfreq(tx_desc->htt_tx_desc, chanfreq);
-	NBUF_SET_PACKET_TRACK(tx_desc->netbuf, NBUF_TX_PKT_MGMT_TRACK);
-	ol_tx_send_nonstd(pdev, tx_desc, tx_mgmt_frm,
+	NBUF_CB_TX_PACKET_TRACK(tx_desc->netbuf) = NBUF_TX_PKT_MGMT_TRACK;	ol_tx_send_nonstd(pdev, tx_desc, tx_mgmt_frm,
 			  htt_pkt_type_mgmt);
 
 	return 0;               /* accepted the tx mgmt frame */

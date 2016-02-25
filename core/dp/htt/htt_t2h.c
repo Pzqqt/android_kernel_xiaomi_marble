@@ -147,19 +147,19 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		pdev->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 		pdev->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
 		cdf_print
-			("target uses HTT version %d.%d; host uses %d.%d\n",
+			("target uses HTT version %d.%d; host uses %d.%d",
 			pdev->tgt_ver.major, pdev->tgt_ver.minor,
 			HTT_CURRENT_VERSION_MAJOR,
 			HTT_CURRENT_VERSION_MINOR);
 		if (pdev->tgt_ver.major != HTT_CURRENT_VERSION_MAJOR)
 			cdf_print
-			      ("*** Incompatible host/target HTT versions!\n");
+			      ("*** Incompatible host/target HTT versions!");
 		/* abort if the target is incompatible with the host */
 		cdf_assert(pdev->tgt_ver.major ==
 			   HTT_CURRENT_VERSION_MAJOR);
 		if (pdev->tgt_ver.minor != HTT_CURRENT_VERSION_MINOR) {
 			cdf_print("*** Warning: host/target HTT versions are ");
-			cdf_print(" different, though compatible!\n");
+			cdf_print(" different, though compatible!");
 		}
 		break;
 	}
@@ -293,7 +293,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			cdf_runtime_pm_put();
 			HTT_TX_SCHED(pdev);
 		} else {
-			cdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication\n");
+			cdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication");
 		}
 		break;
 	}
@@ -510,7 +510,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
 
 #if defined(HELIUMPLUS_DEBUG)
-	cdf_print("%s %d: msg_word 0x%x msg_type %d\n",
+	cdf_print("%s %d: msg_word 0x%x msg_type %d",
 		  __func__, __LINE__, *msg_word, msg_type);
 #endif
 

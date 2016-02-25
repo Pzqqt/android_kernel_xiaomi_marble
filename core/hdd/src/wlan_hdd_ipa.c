@@ -469,6 +469,30 @@ struct hdd_ipa_priv {
 	cdf_dma_addr_t rx_ready_doorbell_paddr;
 };
 
+/**
+ * FIXME: The following conversion routines will are just stubs.
+ *        They will be implemented fully by another update.
+ *        The stubs will let the compile go ahead, and functionality
+ *        is broken.
+ * This should be OK and IPA is not enabled yet
+ */
+void *wlan_hdd_stub_priv_to_addr(uint32_t priv)
+{
+	void    *vaddr;
+	uint32_t ipa_priv = priv;
+
+	vaddr = &ipa_priv; /* just to use the var */
+	vaddr = NULL;
+	return vaddr;
+}
+
+uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
+{
+	uint32_t       ipa_priv = 0;
+
+	BUG_ON(ptr == NULL);
+	return ipa_priv;
+}
 #define HDD_IPA_WLAN_CLD_HDR_LEN        sizeof(struct hdd_ipa_cld_hdr)
 #define HDD_IPA_UC_WLAN_CLD_HDR_LEN     0
 #define HDD_IPA_WLAN_TX_HDR_LEN         sizeof(struct hdd_ipa_tx_hdr)
@@ -2650,12 +2674,13 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
  *
  * Return: None
  */
-static void hdd_ipa_nbuf_cb(cdf_nbuf_t skb)
+void hdd_ipa_nbuf_cb(cdf_nbuf_t skb)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 
-	HDD_IPA_LOG(CDF_TRACE_LEVEL_DEBUG, "%lx", NBUF_OWNER_PRIV_DATA(skb));
-	ipa_free_skb((struct ipa_rx_data *)NBUF_OWNER_PRIV_DATA(skb));
+	HDD_IPA_LOG(CDF_TRACE_LEVEL_DEBUG, "%p", wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
+	/* FIXME: This is broken; PRIV_DATA is now 31 bits */
+	ipa_free_skb((struct ipa_rx_data *)wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
 
 	hdd_ipa->stats.num_tx_comp_cnt++;
 
@@ -2711,18 +2736,21 @@ static void hdd_ipa_send_pkt_to_tl(
 	skb = ipa_tx_desc->skb;
 
 	cdf_mem_set(skb->cb, sizeof(skb->cb), 0);
-	NBUF_OWNER_ID(skb) = IPA_NBUF_OWNER_ID;
-	NBUF_CALLBACK_FN(skb) = hdd_ipa_nbuf_cb;
+	cdf_nbuf_ipa_owned_set(skb);
+	/* FIXME: This is broken. No such field in cb any more:
+	   NBUF_CALLBACK_FN(skb) = hdd_ipa_nbuf_cb; */
 	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
-		NBUF_MAPPED_PADDR_LO(skb) = ipa_tx_desc->dma_addr
-			+ HDD_IPA_WLAN_FRAG_HEADER
-			+ HDD_IPA_WLAN_IPA_HEADER;
+		cdf_nbuf_mapped_paddr_set(skb,
+					  ipa_tx_desc->dma_addr
+					  + HDD_IPA_WLAN_FRAG_HEADER
+					  + HDD_IPA_WLAN_IPA_HEADER);
 		ipa_tx_desc->skb->len -=
 			HDD_IPA_WLAN_FRAG_HEADER + HDD_IPA_WLAN_IPA_HEADER;
 	} else
-		NBUF_MAPPED_PADDR_LO(skb) = ipa_tx_desc->dma_addr;
+		cdf_nbuf_mapped_paddr_set(skb, ipa_tx_desc->dma_addr);
 
-	NBUF_OWNER_PRIV_DATA(skb) = (unsigned long)ipa_tx_desc;
+	/* FIXME: This is broken: priv_data is 31 bits */
+	cdf_nbuf_ipa_priv_set(skb, wlan_hdd_stub_addr_to_priv(ipa_tx_desc));
 
 	adapter->stats.tx_bytes += ipa_tx_desc->skb->len;
 

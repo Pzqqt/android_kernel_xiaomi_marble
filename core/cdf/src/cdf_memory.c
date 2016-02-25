@@ -483,6 +483,8 @@ void cdf_mem_multi_pages_alloc(cdf_device_t osdev,
 	void **cacheable_pages = NULL;
 	uint16_t i;
 
+	CDF_BUG(PAGE_SIZE >= element_size);
+
 	pages->num_element_per_page = PAGE_SIZE / element_size;
 	if (!pages->num_element_per_page) {
 		cdf_print("Invalid page %d or element size %d",

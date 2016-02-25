@@ -357,7 +357,7 @@ uint16_t htt_tx_compl_desc_id(void *iterator, int num);
  * @param[OUT] paddr_lo - physical address of the HTT descriptor
  * @return success -> descriptor handle, -OR- failure -> NULL
  */
-void *htt_tx_desc_alloc(htt_pdev_handle pdev, uint32_t *paddr_lo,
+void *htt_tx_desc_alloc(htt_pdev_handle pdev, cdf_dma_addr_t *paddr,
 			uint16_t index);
 
 /**
@@ -381,10 +381,10 @@ void htt_tx_desc_free(htt_pdev_handle htt_pdev, void *htt_tx_desc);
  * @return success 0
  */
 int htt_tx_frag_alloc(htt_pdev_handle pdev,
-	u_int16_t index, u_int32_t *frag_paddr_lo, void **frag_ptr);
+	u_int16_t index, cdf_dma_addr_t *frag_paddr, void **frag_ptr);
 #else
 static inline int htt_tx_frag_alloc(htt_pdev_handle pdev,
-	u_int16_t index, u_int32_t *frag_paddr_lo, void **frag_ptr)
+	u_int16_t index, cdf_dma_addr_t *frag_paddr, void **frag_ptr)
 {
 	*frag_ptr = NULL;
 	return 0;
@@ -530,7 +530,7 @@ static inline
 void
 htt_tx_desc_init(htt_pdev_handle pdev,
 		 void *htt_tx_desc,
-		 uint32_t htt_tx_desc_paddr_lo,
+		 cdf_dma_addr_t htt_tx_desc_paddr,
 		 uint16_t msdu_id,
 		 cdf_nbuf_t msdu, struct htt_msdu_info_t *msdu_info,
 		 struct cdf_tso_info_t *tso_info,
@@ -681,8 +681,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	/* store a link to the HTT tx descriptor within the netbuf */
 	cdf_nbuf_frag_push_head(msdu, sizeof(struct htt_host_tx_desc_t),
 				(char *)htt_host_tx_desc, /* virtual addr */
-				htt_tx_desc_paddr_lo,
-				0 /* phys addr MSBs - n/a */);
+				htt_tx_desc_paddr);
 
 	/*
 	 * Indicate that the HTT header (and HTC header) is a meta-data
@@ -762,15 +761,14 @@ htt_tx_desc_num_frags(htt_pdev_handle pdev, void *desc, uint32_t num_frags)
 	 */
 #if defined(HELIUMPLUS_PADDR64)
 	if (HTT_WIFI_IP(pdev, 2, 0)) {
+		struct msdu_ext_frag_desc *fdesc;
+
 		/** Skip TSO related 4 dwords WIFI2.0*/
-		desc = (void *)&(((struct msdu_ext_desc_t *)desc)->frag_ptr0);
-		/* Frag ptr is 48 bit wide so clear the next dword as well */
-		*((uint32_t *)(((char *)desc) + (num_frags << 3))) = 0;
-		*((uint32_t *)
-		  (((char *)desc) + (num_frags << 3) + sizeof(uint32_t))) = 0;
-		/* TODO: OKA: remove the magic constants */
+		fdesc = (struct msdu_ext_frag_desc *)
+			&(((struct msdu_ext_desc_t *)desc)->frags[0]);
+		fdesc[num_frags].u.desc64 = 0;
 	} else {
-		/* XXXOKA -- Looks like a bug, called with htt_frag_desc */
+		/* This piece of code should never be executed on HELIUMPLUS */
 		*((u_int32_t *)
 		  (((char *) desc) + HTT_TX_DESC_LEN + num_frags * 8)) = 0;
 	}
@@ -809,54 +807,65 @@ static inline
 void
 htt_tx_desc_frag(htt_pdev_handle pdev,
 		 void *desc,
-		 int frag_num, uint32_t frag_phys_addr, uint16_t frag_len)
+		 int frag_num, cdf_dma_addr_t frag_phys_addr, uint16_t frag_len)
 {
-	u_int32_t *word;
-
+	uint32_t *word32;
 #if defined(HELIUMPLUS_PADDR64)
+	uint64_t  *word64;
+
 	if (HTT_WIFI_IP(pdev, 2, 0)) {
-		word = (u_int32_t *)(desc);
+		word32 = (u_int32_t *)(desc);
 		/* Initialize top 6 words of TSO flags per packet */
-		*word++ = 0;
-		*word++ = 0;
-		*word++ = 0;
+		*word32++ = 0;
+		*word32++ = 0;
+		*word32++ = 0;
 		if (((struct txrx_pdev_cfg_t *)(pdev->ctrl_pdev))
 		    ->ip_tcp_udp_checksum_offload)
-			*word |= (IPV4_CSUM_EN | TCP_IPV4_CSUM_EN |
+			*word32 |= (IPV4_CSUM_EN | TCP_IPV4_CSUM_EN |
 					TCP_IPV6_CSUM_EN | UDP_IPV4_CSUM_EN |
 					UDP_IPV6_CSUM_EN);
 		else
-			*word = 0;
-		word++;
-		*word++ = 0;
-		*word++ = 0;
+			*word32 = 0;
+		word32++;
+		*word32++ = 0;
+		*word32++ = 0;
 
-		cdf_assert_always(word == &(((struct msdu_ext_desc_t *)
-					     desc)->frag_ptr0));
+		cdf_assert_always(word32 == (uint32_t *)
+				&(((struct msdu_ext_desc_t *)desc)->frags[0]));
 
 		/* Each fragment consumes 2 DWORDS */
-		word += (frag_num << 1);
-		*word = frag_phys_addr;
-
-		word++;
-		*word = (frag_len<<16);
-
+		word32 += (frag_num << 1);
+		word64 = (uint64_t *)word32;
+		*word64 = frag_phys_addr;
+		/* The frag_phys address is 37 bits. So, the higher 16 bits will be
+		   for len */
+		word32++;
+		*word32 &= 0x0000ffff;
+		*word32 |= (frag_len << 16);
 	} else {
 		/* For Helium+, this block cannot exist */
 		CDF_ASSERT(0);
 	}
 #else /* !defined(HELIUMPLUS_PADDR64) */
-	word = (uint32_t *) (((char *)desc) + HTT_TX_DESC_LEN + frag_num * 8);
-	*word = frag_phys_addr;
-	word++;
-	*word = frag_len;
+	{
+		uint64_t u64  = (uint64_t)frag_phys_addr;
+		uint32_t u32l = (u64 & 0xffffffff);
+		uint32_t u32h = (uint32_t)((u64 >> 32) & 0x1f);
+		uint64_t *word64;
+
+		word32 = (uint32_t *) (((char *)desc) + HTT_TX_DESC_LEN + frag_num * 8);
+		word64 = (uint64_t *)word32;
+		*word32 = u32l;
+		word32++;
+		*word32 = (u32h << 16) | frag_len;
+	}
 #endif /* defined(HELIUMPLUS_PADDR64) */
 }
 
 void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 				 void *desc,
-				 uint32_t paddr,
-				 uint32_t frag_desc_paddr_lo,
+				 cdf_dma_addr_t paddr,
+				 cdf_dma_addr_t frag_desc_paddr,
 				 int reset);
 
 /**

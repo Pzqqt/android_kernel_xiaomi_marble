@@ -126,7 +126,7 @@ typedef __cdf_size_t cdf_size_t;
 typedef __cdf_dma_map_t cdf_dma_map_t;
 
 /**
- * tyepdef cdf_dma_addr_t - DMA address.
+ * typedef cdf_dma_addr_t - DMA address.
  */
 typedef __cdf_dma_addr_t cdf_dma_addr_t;
 

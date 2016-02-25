@@ -67,14 +67,14 @@
 static int hdd_lro_get_skb_header(struct sk_buff *skb, void **ip_hdr,
 	void **tcpudp_hdr, u64 *hdr_flags, void *priv)
 {
-	if (NBUF_IPV6_PROTO(skb)) {
+	if (NBUF_CB_RX_IPV6_PROTO(skb)) {
 		hdr_flags = 0;
 		return -EINVAL;
 	}
 
 	*hdr_flags |= (LRO_IPV4 | LRO_TCP);
 	(*ip_hdr) = skb->data;
-	(*tcpudp_hdr) = skb->data + NBUF_TCP_OFFSET(skb);
+	(*tcpudp_hdr) = skb->data + NBUF_CB_RX_TCP_OFFSET(skb);
 	return 0;
 }
 
@@ -215,7 +215,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 	struct hdd_lro_desc_info *desc_info = &adapter->lro_info.lro_desc_info;
 
 	*lro_desc = NULL;
-	i = NBUF_FLOW_ID_TOEPLITZ(skb) & LRO_DESC_TABLE_SZ_MASK;
+	i = NBUF_CB_RX_FLOW_ID_TOEPLITZ(skb) & LRO_DESC_TABLE_SZ_MASK;
 
 	lro_hash_table = &desc_info->lro_hash_table[i];
 
@@ -321,7 +321,7 @@ static bool hdd_lro_eligible(hdd_adapter_t *adapter, struct sk_buff *skb,
 {
 	struct net_lro_desc *lro_desc = NULL;
 	int hw_lro_eligible =
-		 NBUF_LRO_ELIGIBLE(skb) && (!NBUF_TCP_PURE_ACK(skb));
+		 NBUF_CB_RX_LRO_ELIGIBLE(skb) && (!NBUF_CB_RX_TCP_PURE_ACK(skb));
 
 	if (!hw_lro_eligible)
 		return false;
@@ -624,12 +624,12 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 	enum hdd_lro_rx_status status = HDD_LRO_NO_RX;
 
 	if ((adapter->dev->features & NETIF_F_LRO) &&
-		 NBUF_TCP_PROTO(skb)) {
+		 NBUF_CB_RX_TCP_PROTO(skb)) {
 		struct iphdr *iph;
 		struct tcphdr *tcph;
 		struct net_lro_desc *lro_desc = NULL;
 		iph = (struct iphdr *)skb->data;
-		tcph = (struct tcphdr *)(skb->data + NBUF_TCP_OFFSET(skb));
+		tcph = (struct tcphdr *)(skb->data + NBUF_CB_RX_TCP_OFFSET(skb));
 		if (hdd_lro_eligible(adapter, skb, iph, tcph, &lro_desc)) {
 			struct net_lro_info hdd_lro_info;
 
@@ -637,11 +637,11 @@ enum hdd_lro_rx_status hdd_lro_rx(hdd_context_t *hdd_ctx,
 
 			hdd_lro_info.lro_desc = lro_desc;
 			hdd_lro_info.lro_eligible = 1;
-			hdd_lro_info.tcp_ack_num = NBUF_TCP_ACK_NUM(skb);
+			hdd_lro_info.tcp_ack_num = NBUF_CB_RX_TCP_ACK_NUM(skb);
 			hdd_lro_info.tcp_data_csum =
-				 csum_unfold(htons(NBUF_TCP_CHKSUM(skb)));
-			hdd_lro_info.tcp_seq_num = NBUF_TCP_SEQ_NUM(skb);
-			hdd_lro_info.tcp_win = NBUF_TCP_WIN(skb);
+				 csum_unfold(htons(NBUF_CB_RX_TCP_CHKSUM(skb)));
+			hdd_lro_info.tcp_seq_num = NBUF_CB_RX_TCP_SEQ_NUM(skb);
+			hdd_lro_info.tcp_win = NBUF_CB_RX_TCP_WIN(skb);
 
 			lro_receive_skb_ext(adapter->lro_info.lro_mgr, skb,
 				 (void *)adapter, &hdd_lro_info);

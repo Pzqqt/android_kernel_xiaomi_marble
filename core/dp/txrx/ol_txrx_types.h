@@ -69,8 +69,8 @@
 #define OL_TX_NUM_TIDS    18
 #define OL_RX_MCAST_TID   18  /* Mcast TID only between f/w & host */
 
-#define OL_TX_VDEV_MCAST_BCAST    0 // HTT_TX_EXT_TID_MCAST_BCAST
-#define OL_TX_VDEV_DEFAULT_MGMT   1 // HTT_TX_EXT_TID_DEFALT_MGMT
+#define OL_TX_VDEV_MCAST_BCAST    0 /* HTT_TX_EXT_TID_MCAST_BCAST */
+#define OL_TX_VDEV_DEFAULT_MGMT   1 /* HTT_TX_EXT_TID_DEFALT_MGMT */
 #define OL_TX_VDEV_NUM_QUEUES     2
 
 #define OL_TXRX_MGMT_TYPE_BASE htt_pkt_num_types
@@ -130,9 +130,9 @@ struct ol_tx_desc_t {
 	cdf_nbuf_t netbuf;
 	void *htt_tx_desc;
 	uint16_t id;
-	uint32_t htt_tx_desc_paddr;
+	cdf_dma_addr_t htt_tx_desc_paddr;
 	void *htt_frag_desc; /* struct msdu_ext_desc_t * */
-	uint32_t htt_frag_desc_paddr;
+	cdf_dma_addr_t htt_frag_desc_paddr;
 	cdf_atomic_t ref_cnt;
 	enum htt_tx_status status;
 

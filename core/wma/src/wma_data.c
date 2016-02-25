@@ -2394,7 +2394,7 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 	bufp += WMI_TLV_HDR_SIZE;
 	cdf_mem_copy(bufp, pData, bufp_len);
 	cdf_nbuf_map_single(cdf_ctx, tx_frame, CDF_DMA_TO_DEVICE);
-	dma_addr = cdf_nbuf_get_frag_paddr_lo(tx_frame, 0);
+	dma_addr = cdf_nbuf_get_frag_paddr(tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
 #if defined(HELIUMPLUS_PADDR64)
 	cmd->paddr_hi = (uint32_t)((dma_addr >> 32) & 0x1F);

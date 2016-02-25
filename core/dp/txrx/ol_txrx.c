@@ -588,8 +588,8 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	for (i = 0; i < desc_pool_size; i++) {
 		void *htt_tx_desc;
 		void *htt_frag_desc = NULL;
-		uint32_t frag_paddr_lo = 0;
-		uint32_t paddr_lo;
+		cdf_dma_addr_t frag_paddr = 0;
+		cdf_dma_addr_t paddr;
 
 		if (i == (desc_pool_size - 1))
 			c_element->next = NULL;
@@ -597,7 +597,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			c_element->next = (union ol_tx_desc_list_elem_t *)
 				ol_tx_desc_find(pdev, i + 1);
 
-		htt_tx_desc = htt_tx_desc_alloc(pdev->htt_pdev, &paddr_lo, i);
+		htt_tx_desc = htt_tx_desc_alloc(pdev->htt_pdev, &paddr, i);
 		if (!htt_tx_desc) {
 			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_FATAL,
 				  "%s: failed to alloc HTT tx desc (%d of %d)",
@@ -607,9 +607,9 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		}
 
 		c_element->tx_desc.htt_tx_desc = htt_tx_desc;
-		c_element->tx_desc.htt_tx_desc_paddr = paddr_lo;
+		c_element->tx_desc.htt_tx_desc_paddr = paddr;
 		ret = htt_tx_frag_alloc(pdev->htt_pdev,
-			i, &frag_paddr_lo, &htt_frag_desc);
+					i, &frag_paddr, &htt_frag_desc);
 		if (ret) {
 			CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 				"%s: failed to alloc HTT frag dsc (%d/%d)",
@@ -623,10 +623,10 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 			   of the frag descriptor */
 			memset(htt_frag_desc, 0, 6 * sizeof(uint32_t));
 			c_element->tx_desc.htt_frag_desc = htt_frag_desc;
-			c_element->tx_desc.htt_frag_desc_paddr = frag_paddr_lo;
+			c_element->tx_desc.htt_frag_desc_paddr = frag_paddr;
 		}
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_INFO_LOW,
-			"%s:%d - %d FRAG VA 0x%p FRAG PA 0x%x",
+			"%s:%d - %d FRAG VA 0x%p FRAG PA 0x%llx",
 			__func__, __LINE__, i,
 			c_element->tx_desc.htt_frag_desc,
 			c_element->tx_desc.htt_frag_desc_paddr);
@@ -1814,7 +1814,7 @@ void ol_txrx_peer_detach(ol_txrx_peer_handle peer)
 	/* htt_rx_reorder_log_print(vdev->pdev->htt_pdev); */
 
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-		   "%s:peer %p (%02x:%02x:%02x:%02x:%02x:%02x)\n",
+		   "%s:peer %p (%02x:%02x:%02x:%02x:%02x:%02x)",
 		   __func__, peer,
 		   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 		   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
@@ -1851,7 +1851,7 @@ ol_txrx_peer_find_by_addr(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac_addr)
 	peer = ol_txrx_peer_find_hash_find(pdev, peer_mac_addr, 0, 0);
 	if (peer) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			   "%s: Delete extra reference %p\n", __func__, peer);
+			   "%s: Delete extra reference %p", __func__, peer);
 		/* release the extra reference */
 		ol_txrx_peer_unref_delete(peer);
 	}

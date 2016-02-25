@@ -163,6 +163,7 @@ static inline int cdf_nbuf_get_num_frags(cdf_nbuf_t buf)
  */
 static inline int cdf_nbuf_get_frag_len(cdf_nbuf_t buf, int frag_num)
 {
+	BUG_ON(frag_num >= NBUF_CB_TX_MAX_EXTRA_FRAGS);
 	return __cdf_nbuf_get_frag_len(buf, frag_num);
 }
 
@@ -176,19 +177,21 @@ static inline int cdf_nbuf_get_frag_len(cdf_nbuf_t buf, int frag_num)
 static inline unsigned char *cdf_nbuf_get_frag_vaddr(cdf_nbuf_t buf,
 						     int frag_num)
 {
+	BUG_ON(frag_num >= NBUF_CB_TX_MAX_EXTRA_FRAGS);
 	return __cdf_nbuf_get_frag_vaddr(buf, frag_num);
 }
 
 /**
- * cdf_nbuf_get_frag_paddr_lo() - get fragment physical address low order bytes
+ * cdf_nbuf_get_frag_paddr() - get fragment physical address
  * @buf: Network buffer
  * @frag_num: Fragment number
  *
- * Return: Fragment physical address lo
+ * Return: Fragment physical address
  */
-static inline uint32_t cdf_nbuf_get_frag_paddr_lo(cdf_nbuf_t buf, int frag_num)
+static inline cdf_dma_addr_t cdf_nbuf_get_frag_paddr(cdf_nbuf_t buf, int frag_num)
 {
-	return __cdf_nbuf_get_frag_paddr_lo(buf, frag_num);
+	BUG_ON(frag_num >= NBUF_CB_TX_MAX_EXTRA_FRAGS);
+	return __cdf_nbuf_get_frag_paddr(buf, frag_num);
 }
 
 /**
@@ -200,6 +203,7 @@ static inline uint32_t cdf_nbuf_get_frag_paddr_lo(cdf_nbuf_t buf, int frag_num)
  */
 static inline int cdf_nbuf_get_frag_is_wordstream(cdf_nbuf_t buf, int frag_num)
 {
+	BUG_ON(frag_num >= NBUF_CB_TX_MAX_EXTRA_FRAGS);
 	return __cdf_nbuf_get_frag_is_wordstream(buf, frag_num);
 }
 
@@ -214,7 +218,77 @@ static inline int cdf_nbuf_get_frag_is_wordstream(cdf_nbuf_t buf, int frag_num)
 static inline void
 cdf_nbuf_set_frag_is_wordstream(cdf_nbuf_t buf, int frag_num, int is_wordstream)
 {
+	BUG_ON(frag_num >= NBUF_CB_TX_MAX_EXTRA_FRAGS);
 	__cdf_nbuf_set_frag_is_wordstream(buf, frag_num, is_wordstream);
+}
+
+/**
+ * cdf_nbuf_ipa_owned_get - gets the ipa_owned flag
+ * @buf: Network buffer
+ *
+ * Return: none
+ */
+static inline int cdf_nbuf_ipa_owned_get(cdf_nbuf_t buf)
+{
+	return __cdf_nbuf_ipa_owned_get(buf);
+}
+
+/**
+ * cdf_nbuf_ipa_owned_set - sets the ipa_owned flag
+ * @buf: Network buffer
+ *
+ * Return: none
+ */
+static inline void cdf_nbuf_ipa_owned_set(cdf_nbuf_t buf)
+{
+	__cdf_nbuf_ipa_owned_set(buf);
+}
+
+/**
+ * cdf_nbuf_ipa_priv_get - gets the ipa_priv field
+ * @buf: Network buffer
+ *
+ * Return: none
+ */
+static inline int cdf_nbuf_ipa_priv_get(cdf_nbuf_t buf)
+{
+	return __cdf_nbuf_ipa_priv_get(buf);
+}
+
+/**
+ * cdf_nbuf_ipa_priv_set - sets the ipa_priv field
+ * @buf: Network buffer
+ *
+ * Return: none
+ */
+static inline void cdf_nbuf_ipa_priv_set(cdf_nbuf_t buf, uint32_t priv)
+{
+	BUG_ON(priv & 0x80000000); /* priv is 31 bits only */
+	__cdf_nbuf_ipa_priv_set(buf, priv);
+}
+
+/**
+ * cdf_nbuf_mapped_paddr_get - gets the paddr of nbuf->data
+ * @buf: Network buffer
+ *
+ * Return: none
+ */
+static inline cdf_dma_addr_t
+cdf_nbuf_mapped_paddr_get(cdf_nbuf_t buf)
+{
+	return __cdf_nbuf_mapped_paddr_get(buf);
+}
+
+/**
+ * cdf_nbuf_mapped_paddr_set - sets the paddr of nbuf->data
+ * @buf: Network buffer
+ *
+ * Return: none
+ */
+static inline void
+cdf_nbuf_mapped_paddr_set(cdf_nbuf_t buf, cdf_dma_addr_t paddr)
+{
+	__cdf_nbuf_mapped_paddr_set(buf, paddr);
 }
 
 /**
@@ -231,10 +305,9 @@ static inline void
 cdf_nbuf_frag_push_head(cdf_nbuf_t buf,
 			int frag_len,
 			char *frag_vaddr,
-			uint32_t frag_paddr_lo, uint32_t frag_paddr_hi)
+			cdf_dma_addr_t frag_paddr)
 {
-	__cdf_nbuf_frag_push_head(buf, frag_len, frag_vaddr, frag_paddr_lo,
-				  frag_paddr_hi);
+	__cdf_nbuf_frag_push_head(buf, frag_len, frag_vaddr, frag_paddr);
 }
 
 #ifdef MEMORY_DEBUG
@@ -926,14 +999,14 @@ static inline void cdf_invalidate_range(void *start, void *end)
 
 #if defined(FEATURE_TSO)
 /**
- * cdf_nbuf_dec_num_frags() - decrement the number of fragments
+ * cdf_nbuf_reset_num_frags() - resets the number of frags to 0 (valid range: 0..1)
  * @buf: Network buffer
  *
  * Return: Number of fragments
  */
-static inline int cdf_nbuf_dec_num_frags(cdf_nbuf_t buf)
+static inline int cdf_nbuf_reset_num_frags(cdf_nbuf_t buf)
 {
-	return __cdf_nbuf_dec_num_frags(buf);
+	return __cdf_nbuf_reset_num_frags(buf);
 }
 
 /**

@@ -174,8 +174,30 @@ struct ipa_uc_rx_ring_elem_t {
 };
 
 #if defined(HELIUMPLUS_PADDR64)
+/**
+ * msdu_ext_frag_desc:
+ * semantically, this is an array of 6 of 2-tuples of
+ * a 48-bit physical address and a 16 bit len field
+ * with the following layout:
+ * 31               16       8       0
+ * |        p t r - l o w 3 2         |
+ * | len             | ptr-7/16       |
+ */
+struct msdu_ext_frag_desc {
+	union {
+		uint64_t desc64;
+		struct {
+			uint32_t ptr_low;
+			uint32_t ptr_hi:16,
+				len:16;
+		} frag32;
+	} u;
+};
+
 struct msdu_ext_desc_t {
 	struct cdf_tso_flags_t tso_flags;
+	struct msdu_ext_frag_desc frags[6];
+/*
 	u_int32_t frag_ptr0;
 	u_int32_t frag_len0;
 	u_int32_t frag_ptr1;
@@ -188,6 +210,7 @@ struct msdu_ext_desc_t {
 	u_int32_t frag_len4;
 	u_int32_t frag_ptr5;
 	u_int32_t frag_len5;
+*/
 };
 #endif  /* defined(HELIUMPLUS_PADDR64) */
 

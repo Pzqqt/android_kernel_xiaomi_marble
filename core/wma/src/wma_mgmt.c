@@ -220,7 +220,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	cmd->vdev_id = vdev_id;
 	cmd->data_len = bcn->len;
 	cmd->frame_ctrl = *((A_UINT16 *) wh->i_fc);
-	cmd->frag_ptr = cdf_nbuf_get_frag_paddr_lo(bcn->buf, 0);
+	cmd->frag_ptr = cdf_nbuf_get_frag_paddr(bcn->buf, 0);
 
 	/* notify Firmware of DTM and mcast/bcast traffic */
 	if (tim_ie->dtim_count == 0) {

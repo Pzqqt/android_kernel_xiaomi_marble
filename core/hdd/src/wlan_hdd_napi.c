@@ -56,7 +56,7 @@ struct qca_napi_data *hdd_napi_get_all(void)
 	struct qca_napi_data *rp = NULL;
 	struct hif_opaque_softc *hif;
 
-	NAPI_DEBUG("-->\n");
+	NAPI_DEBUG("-->");
 
 	hif = cds_get_context(CDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
@@ -64,7 +64,7 @@ struct qca_napi_data *hdd_napi_get_all(void)
 	else
 		rp = hif_napi_get_all(hif);
 
-	NAPI_DEBUG("<-- [addr=%p]\n", rp);
+	NAPI_DEBUG("<-- [addr=%p]", rp);
 	return rp;
 }
 
@@ -78,14 +78,14 @@ static uint32_t hdd_napi_get_map(void)
 {
 	uint32_t map = 0;
 
-	NAPI_DEBUG("-->\n");
+	NAPI_DEBUG("-->");
 	/* cache once, use forever */
 	if (hdd_napi_ctx == NULL)
 		hdd_napi_ctx = hdd_napi_get_all();
 	if (hdd_napi_ctx != NULL)
 		map = hdd_napi_ctx->ce_map;
 
-	NAPI_DEBUG("<--[map=0x%08x]\n", map);
+	NAPI_DEBUG("<-- [map=0x%08x]", map);
 	return map;
 }
 
@@ -108,7 +108,7 @@ int hdd_napi_create(void)
 	int     ul_polled, dl_polled;
 	int     rc = 0;
 
-	NAPI_DEBUG("-->\n");
+	NAPI_DEBUG("-->");
 
 	hif_ctx = cds_get_context(CDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif_ctx)) {
@@ -140,7 +140,7 @@ int hdd_napi_create(void)
 			}
 		}
 	}
-	NAPI_DEBUG("<-- [rc=%d]\n", rc);
+	NAPI_DEBUG("<-- [rc=%d]", rc);
 
 	return rc;
 }
@@ -162,7 +162,7 @@ int hdd_napi_destroy(int force)
 	int i;
 	uint32_t hdd_napi_map = hdd_napi_get_map();
 
-	NAPI_DEBUG("--> (force=%d)\n", force);
+	NAPI_DEBUG("--> (force=%d)", force);
 	if (hdd_napi_map) {
 		struct hif_opaque_softc *hif_ctx;
 
@@ -193,7 +193,7 @@ int hdd_napi_destroy(int force)
 	if (0 == hdd_napi_map)
 		hdd_napi_ctx = NULL;
 
-	NAPI_DEBUG("<-- [rc=%d]\n", rc);
+	NAPI_DEBUG("<-- [rc=%d]", rc);
 	return rc;
 }
 
@@ -241,7 +241,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 	int rc = -EFAULT;  /* assume err */
 	struct hif_opaque_softc *hif;
 
-	NAPI_DEBUG("-->(event=%d, aux=%p)\n", event, data);
+	NAPI_DEBUG("-->(event=%d, aux=%p)", event, data);
 
 	hif = cds_get_context(CDF_MODULE_ID_HIF);
 	if (unlikely(NULL == hif))
@@ -249,7 +249,7 @@ int hdd_napi_event(enum qca_napi_event event, void *data)
 	else
 		rc = hif_napi_event(hif, event, data);
 
-	NAPI_DEBUG("<--[rc=%d]\n", rc);
+	NAPI_DEBUG("<--[rc=%d]", rc);
 	return rc;
 }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -107,7 +107,8 @@
 #endif
 
 /* De -initialization function of the rx buffer hash table. This function will
-   free up the hash table which includes freeing all the pending rx buffers*/
+ *   free up the hash table which includes freeing all the pending rx buffers
+ */
 void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 {
 
@@ -228,7 +229,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 
 	idx = *(pdev->rx_ring.alloc_idx.vaddr);
 	while (num > 0) {
-		uint32_t paddr;
+		cdf_dma_addr_t paddr;
 		cdf_nbuf_t rx_netbuf;
 		int headroom;
 
@@ -287,7 +288,7 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 			cdf_nbuf_free(rx_netbuf);
 			goto fail;
 		}
-		paddr = cdf_nbuf_get_frag_paddr_lo(rx_netbuf, 0);
+		paddr = cdf_nbuf_get_frag_paddr(rx_netbuf, 0);
 		if (pdev->cfg.is_full_reorder_offload) {
 			if (cdf_unlikely
 				    (htt_rx_hash_list_insert(pdev, paddr,
@@ -309,11 +310,9 @@ void htt_rx_ring_fill_n(struct htt_pdev_t *pdev, int num)
 			pdev->rx_ring.buf.netbufs_ring[idx] = rx_netbuf;
 		}
 #if HTT_PADDR64
-		pdev->rx_ring.buf.paddrs_ring[idx] = 0;
-		pdev->rx_ring.buf.paddrs_ring[idx] = (uint32_t)paddr;
-#else
-		pdev->rx_ring.buf.paddrs_ring[idx] = paddr;
+		paddr &= 0x1fffffffff; /* trim out higher than 37 bits */
 #endif /* HTT_PADDR64 */
+		pdev->rx_ring.buf.paddrs_ring[idx] = paddr;
 		pdev->rx_ring.fill_cnt++;
 
 		num--;
@@ -388,7 +387,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 							   memctx));
 
 	cdf_os_mem_free_consistent(pdev->osdev,
-				   pdev->rx_ring.size * sizeof(uint32_t),
+				   pdev->rx_ring.size * sizeof(cdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
 				   cdf_get_dma_mem_context((&pdev->rx_ring.buf),
@@ -2130,11 +2129,8 @@ void htt_rx_hash_dump_table(struct htt_pdev_t *pdev)
 int htt_rx_attach(struct htt_pdev_t *pdev)
 {
 	cdf_dma_addr_t paddr;
-#if HTT_PADDR64
-	uint32_t ring_elem_size = sizeof(uint64_t);
-#else
-	uint32_t ring_elem_size = sizeof(uint32_t);
-#endif /* HTT_PADDR64 */
+	uint32_t ring_elem_size = sizeof(cdf_dma_addr_t);
+
 	pdev->rx_ring.size = htt_rx_ring_size(pdev);
 	HTT_ASSERT2(CDF_IS_PWR2(pdev->rx_ring.size));
 	pdev->rx_ring.size_mask = pdev->rx_ring.size - 1;
@@ -2243,10 +2239,10 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	}
 
 	htt_rx_offload_msdu_pop = htt_rx_offload_msdu_pop_ll;
-        htt_rx_mpdu_desc_retry = htt_rx_mpdu_desc_retry_ll;
+	htt_rx_mpdu_desc_retry = htt_rx_mpdu_desc_retry_ll;
 	htt_rx_mpdu_desc_seq_num = htt_rx_mpdu_desc_seq_num_ll;
 	htt_rx_mpdu_desc_pn = htt_rx_mpdu_desc_pn_ll;
-        htt_rx_mpdu_desc_tid = htt_rx_mpdu_desc_tid_ll;
+	htt_rx_mpdu_desc_tid = htt_rx_mpdu_desc_tid_ll;
 	htt_rx_msdu_desc_completes_mpdu = htt_rx_msdu_desc_completes_mpdu_ll;
 	htt_rx_msdu_first_msdu_flag = htt_rx_msdu_first_msdu_flag_ll;
 	htt_rx_msdu_has_wlan_mcast_flag = htt_rx_msdu_has_wlan_mcast_flag_ll;
@@ -2262,7 +2258,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 
 fail3:
 	cdf_os_mem_free_consistent(pdev->osdev,
-				   pdev->rx_ring.size * sizeof(uint32_t),
+				   pdev->rx_ring.size * sizeof(cdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
 				   cdf_get_dma_mem_context((&pdev->rx_ring.buf),
