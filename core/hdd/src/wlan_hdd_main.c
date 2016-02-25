@@ -3272,10 +3272,10 @@ QDF_STATUS hdd_get_front_adapter(hdd_context_t *hdd_ctx,
 				 hdd_adapter_list_node_t **padapterNode)
 {
 	QDF_STATUS status;
-	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_peek_front(&hdd_ctx->hddAdapters,
 				     (qdf_list_node_t **) padapterNode);
-	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3284,12 +3284,12 @@ QDF_STATUS hdd_get_next_adapter(hdd_context_t *hdd_ctx,
 				hdd_adapter_list_node_t **pNextAdapterNode)
 {
 	QDF_STATUS status;
-	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_peek_next(&hdd_ctx->hddAdapters,
 				    (qdf_list_node_t *) adapterNode,
 				    (qdf_list_node_t **) pNextAdapterNode);
 
-	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3297,10 +3297,10 @@ QDF_STATUS hdd_remove_adapter(hdd_context_t *hdd_ctx,
 			      hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
-	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_remove_node(&hdd_ctx->hddAdapters,
 				      &adapterNode->node);
-	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3308,10 +3308,10 @@ QDF_STATUS hdd_remove_front_adapter(hdd_context_t *hdd_ctx,
 				    hdd_adapter_list_node_t **padapterNode)
 {
 	QDF_STATUS status;
-	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_remove_front(&hdd_ctx->hddAdapters,
 				       (qdf_list_node_t **) padapterNode);
-	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3319,10 +3319,10 @@ QDF_STATUS hdd_add_adapter_back(hdd_context_t *hdd_ctx,
 				hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
-	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_insert_back(&hdd_ctx->hddAdapters,
 				      (qdf_list_node_t *) adapterNode);
-	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
@@ -3330,10 +3330,10 @@ QDF_STATUS hdd_add_adapter_front(hdd_context_t *hdd_ctx,
 				 hdd_adapter_list_node_t *adapterNode)
 {
 	QDF_STATUS status;
-	qdf_spin_lock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_lock_bh(&hdd_ctx->hdd_adapter_lock);
 	status = qdf_list_insert_front(&hdd_ctx->hddAdapters,
 				       (qdf_list_node_t *) adapterNode);
-	qdf_spin_unlock(&hdd_ctx->hdd_adapter_lock);
+	qdf_spin_unlock_bh(&hdd_ctx->hdd_adapter_lock);
 	return status;
 }
 
