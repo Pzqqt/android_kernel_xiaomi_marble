@@ -324,4 +324,28 @@ int32_t wmi_unified_pdev_utf_cmd_send(void *wmi_hdl,
 int32_t wmi_unified_dbglog_cmd_send(void *wmi_hdl,
 				struct dbglog_params *param);
 
+int32_t wmi_mgmt_unified_cmd_send(void *wmi_hdl,
+				struct wmi_mgmt_params *param);
+
+int32_t wmi_unified_modem_power_state(void *wmi_hdl,
+		uint32_t param_value);
+
+int32_t wmi_unified_set_sta_ps_mode(void *wmi_hdl,
+			       uint32_t vdev_id, uint8_t val);
+int32_t
+wmi_unified_set_sta_uapsd_auto_trig_cmd(void *wmi_hdl,
+				struct sta_uapsd_trig_params *param);
+
+int32_t wmi_unified_get_temperature(void *wmi_hdl);
+
+int32_t wmi_unified_set_p2pgo_oppps_req(void *wmi_hdl,
+		struct p2p_ps_params *oppps);
+
+int32_t wmi_unified_set_p2pgo_noa_req_cmd(void *wmi_hdl,
+			struct p2p_ps_params *noa);
+
+int32_t wmi_unified_set_smps_params(void *wmi_hdl, uint8_t vdev_id,
+			       int value);
+
+int32_t wmi_unified_set_mimops(void *wmi_hdl, uint8_t vdev_id, int value);
 #endif /* _WMI_UNIFIED_API_H_ */
