@@ -151,23 +151,18 @@ int32_t (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
 				struct packet_enable_params *param);
 
 int32_t (*send_beacon_send_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct beacon_params *param);
 
 int32_t (*send_peer_assoc_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct peer_assoc_params *param);
 
 int32_t (*send_scan_start_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_start_params *param);
 
 int32_t (*send_scan_stop_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_stop_params *param);
 
 int32_t (*send_scan_chan_list_cmd)(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_chan_list_params *param);
 };
 

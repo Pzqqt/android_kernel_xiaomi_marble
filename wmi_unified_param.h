@@ -34,14 +34,12 @@
 #define _WMI_UNIFIED_PARAM_H_
 #include "wmi_unified.h"
 #define IEEE80211_ADDR_LEN  6  /* size of 802.11 address */
-#define MAX_UTF_EVENT_LENGTH    2048
 #define WMI_MAC_MAX_SSID_LENGTH              32
 #define WMI_SCAN_MAX_NUM_SSID                0x0A
 #define mgmt_tx_dl_frm_len 64
 #define WMI_SMPS_MASK_LOWER_16BITS 0xFF
 #define WMI_SMPS_MASK_UPPER_3BITS 0x7
 #define WMI_SMPS_PARAM_VALUE_S 29
-#define MAX_WMI_UTF_LEN         252
 /**
  * struct vdev_create_params - vdev create cmd parameter
  * @if_id: interface id
@@ -527,6 +525,43 @@ struct wmi_mgmt_params {
 	void *pdata;
 	struct wmi_desc_t *wmi_desc;
 	void *cdf_ctx;
+};
+
+/**
+ * struct p2p_ps_params - P2P powersave related params
+ * @opp_ps: opportunistic power save
+ * @ctwindow: CT window
+ * @count: count
+ * @duration: duration
+ * @interval: interval
+ * @single_noa_duration: single shot noa duration
+ * @ps_selection: power save selection
+ * @session_id: session id
+ */
+struct p2p_ps_params {
+	uint8_t opp_ps;
+	uint32_t ctwindow;
+	uint8_t count;
+	uint32_t duration;
+	uint32_t interval;
+	uint32_t single_noa_duration;
+	uint8_t ps_selection;
+	uint8_t session_id;
+};
+
+
+/**
+ * struct ta_uapsd_trig_params - uapsd trigger parameter
+ * @vdevid: vdev id
+ * @peer_addr: peer address
+ * @auto_triggerparam: trigger parameters
+ * @num_ac: no of access category
+ */
+struct sta_uapsd_trig_params {
+		uint32_t vdevid;
+		uint8_t peer_addr[IEEE80211_ADDR_LEN];
+		uint8_t *auto_triggerparam;
+		uint32_t num_ac;
 };
 #endif /* _WMI_UNIFIED_PARAM_H_ */
 
