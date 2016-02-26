@@ -428,7 +428,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev);
 
 void htt_rx_detach(struct htt_pdev_t *pdev);
 
-int htt_htc_attach(struct htt_pdev_t *pdev);
+int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id);
 
 void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt);
 #ifdef WLAN_FEATURE_FASTPATH

@@ -217,7 +217,7 @@ struct htt_pdev_t {
 	HTC_HANDLE htc_pdev;
 	qdf_device_t osdev;
 
-	HTC_ENDPOINT_ID htc_endpoint;
+	HTC_ENDPOINT_ID htc_tx_endpoint;
 
 #ifdef QCA_TX_HTT2_SUPPORT
 	HTC_ENDPOINT_ID htc_tx_htt2_endpoint;
@@ -388,7 +388,7 @@ struct htt_pdev_t {
 };
 
 #define HTT_EPID_GET(_htt_pdev_hdl)  \
-	(((struct htt_pdev_t *)(_htt_pdev_hdl))->htc_endpoint)
+	(((struct htt_pdev_t *)(_htt_pdev_hdl))->htc_tx_endpoint)
 
 #if defined(HELIUMPLUS_PADDR64)
 #define HTT_WIFI_IP(pdev, x, y) (((pdev)->wifi_ip_ver.major == (x)) &&	\

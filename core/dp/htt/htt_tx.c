@@ -573,7 +573,7 @@ void htt_tx_sched(htt_pdev_handle pdev)
 
 		not_accepted =
 			htc_send_data_pkt(pdev->htc_pdev, msdu,
-					  pdev->htc_endpoint,
+					  pdev->htc_tx_endpoint,
 					  download_len);
 		if (not_accepted) {
 			HTT_TX_NBUF_QUEUE_INSERT_HEAD(pdev, msdu);
@@ -616,8 +616,8 @@ int htt_tx_send_std(htt_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t msdu_id)
 	}
 
 	qdf_nbuf_trace_update(msdu, "HT:T:");
-	if (htc_send_data_pkt
-		    (pdev->htc_pdev, msdu, pdev->htc_endpoint, download_len)) {
+	if (htc_send_data_pkt(pdev->htc_pdev, msdu,
+			      pdev->htc_tx_endpoint, download_len)) {
 		HTT_TX_NBUF_QUEUE_ADD(pdev, msdu);
 	}
 
@@ -689,10 +689,10 @@ htt_tx_htt2_get_ep_id(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 	    (qdf_nbuf_len(msdu) < pdev->htc_tx_htt2_max_size))
 		return pdev->htc_tx_htt2_endpoint;
 	else
-		return pdev->htc_endpoint;
+		return pdev->htc_tx_endpoint;
 }
 #else
-#define htt_tx_htt2_get_ep_id(pdev, msdu)     (pdev->htc_endpoint)
+#define htt_tx_htt2_get_ep_id(pdev, msdu)     (pdev->htc_tx_endpoint)
 #endif /* QCA_TX_HTT2_SUPPORT */
 
 static inline int

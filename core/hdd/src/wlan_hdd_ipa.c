@@ -451,7 +451,7 @@ struct hdd_ipa_priv {
 };
 
 /**
- * FIXME: The following conversion routines will are just stubs.
+ * FIXME: The following conversion routines are just stubs.
  *        They will be implemented fully by another update.
  *        The stubs will let the compile go ahead, and functionality
  *        is broken.

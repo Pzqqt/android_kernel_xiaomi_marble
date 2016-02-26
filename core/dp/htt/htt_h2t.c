@@ -136,7 +136,7 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	/* fill in the message contents */
 	msg_word = (u_int32_t *) qdf_nbuf_data(msg);
 
-	memset(msg_word, 0 , sizeof(struct htt_tx_frag_desc_bank_cfg_t));
+	memset(msg_word, 0, sizeof(struct htt_tx_frag_desc_bank_cfg_t));
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
 	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
@@ -172,7 +172,7 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 		htt_h2t_send_complete_free_netbuf,
 		qdf_nbuf_data(msg),
 		qdf_nbuf_len(msg),
-		pdev->htc_endpoint,
+		pdev->htc_tx_endpoint,
 		1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -229,7 +229,7 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg), qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -414,7 +414,7 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -504,7 +504,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       htc_tag); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -560,7 +560,7 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -627,7 +627,7 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -785,8 +785,8 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
-			       1); /* tag - not relevant here */
+			       pdev->htc_tx_endpoint,
+			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
 
@@ -841,7 +841,8 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 
 	msg_word++;
 	*msg_word = 0;
-	HTT_WDI_IPA_CFG_TX_COMP_RING_SIZE_SET(*msg_word,
+	HTT_WDI_IPA_CFG_TX_COMP_RING_SIZE_SET(
+		*msg_word,
 		(unsigned int)ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev));
 
 	msg_word++;
@@ -878,7 +879,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -951,7 +952,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);
@@ -1011,7 +1012,7 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 			       htt_h2t_send_complete_free_netbuf,
 			       qdf_nbuf_data(msg),
 			       qdf_nbuf_len(msg),
-			       pdev->htc_endpoint,
+			       pdev->htc_tx_endpoint,
 			       1); /* tag - not relevant here */
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msg);

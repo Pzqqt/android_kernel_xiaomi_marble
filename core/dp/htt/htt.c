@@ -44,6 +44,7 @@
 
 #include <htt_internal.h>
 #include <ol_htt_tx_api.h>
+#include <cds_api.h>
 #include "hif.h"
 
 #define HTT_HTC_PKT_POOL_INIT_SIZE 100  /* enough for a large A-MPDU */
@@ -193,10 +194,19 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	 */
 /* AR6004 don't need HTT layer. */
 #ifndef AR6004_HW
-	if (htt_htc_attach(pdev))
+	if (htt_htc_attach(pdev, HTT_DATA_MSG_SVC))
 		goto fail2;
+	if (htt_htc_attach(pdev, HTT_DATA2_MSG_SVC))
+		;
+	/* TODO: enable the following line once FW is ready */
+	/* goto fail2; */
+	if (htt_htc_attach(pdev, HTT_DATA3_MSG_SVC))
+		;
+	/* TODO: enable the following line once FW is ready */
+	/* goto fail2; */
 	if (hif_ce_fastpath_cb_register(htt_t2h_msg_handler_fast, pdev))
 		qdf_print("failed to register fastpath callback\n");
+
 #endif
 
 	return pdev;
@@ -393,7 +403,43 @@ int htt_pkt_dl_len_get(struct htt_pdev_t *htt_dev)
 }
 #endif
 
-int htt_htc_attach(struct htt_pdev_t *pdev)
+static inline
+int htt_update_endpoint(struct htt_pdev_t *pdev,
+			uint16_t service_id, HTC_ENDPOINT_ID ep)
+{
+	struct hif_opaque_softc *hif_ctx;
+	uint8_t ul = 0xff, dl = 0xff;
+	int     ul_polled, dl_polled;
+	int     tx_service = 0;
+	int     rc = 0;
+
+	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
+	if (qdf_unlikely(NULL == hif_ctx)) {
+		QDF_ASSERT(NULL != hif_ctx);
+		qdf_print("%s:%d: assuming non-tx service.",
+			  __func__, __LINE__);
+	} else {
+		ul = dl = 0xff;
+		if (QDF_STATUS_SUCCESS !=
+		    hif_map_service_to_pipe(hif_ctx, service_id,
+					    &ul, &dl,
+					    &ul_polled, &dl_polled))
+			qdf_print("%s:%d: assuming non-tx srv.",
+				  __func__, __LINE__);
+		else
+			tx_service = (ul != 0xff);
+	}
+	if (tx_service) {
+		/* currently we have only one OUT htt tx service */
+		QDF_BUG(service_id == HTT_DATA_MSG_SVC);
+
+		pdev->htc_tx_endpoint = ep;
+		rc = 1;
+	}
+		return rc;
+}
+
+int htt_htc_attach(struct htt_pdev_t *pdev, uint16_t service_id)
 {
 	HTC_SERVICE_CONNECT_REQ connect;
 	HTC_SERVICE_CONNECT_RESP response;
@@ -428,14 +474,14 @@ int htt_htc_attach(struct htt_pdev_t *pdev)
 #endif
 
 	/* connect to control service */
-	connect.service_id = HTT_DATA_MSG_SVC;
+	connect.service_id = service_id;
 
 	status = htc_connect_service(pdev->htc_pdev, &connect, &response);
 
 	if (status != A_OK)
 		return -EIO;       /* failure */
 
-	pdev->htc_endpoint = response.Endpoint;
+	htt_update_endpoint(pdev, service_id, response.Endpoint);
 
 	return 0;               /* success */
 }
