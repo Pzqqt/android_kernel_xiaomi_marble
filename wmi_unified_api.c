@@ -501,14 +501,13 @@ int32_t wmi_unified_packet_log_enable_send(void *wmi_hdl,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t wmi_unified_beacon_send_cmd(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct beacon_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_beacon_send_cmd)
 		return wmi_handle->ops->send_beacon_send_cmd(wmi_handle,
-				  macaddr, param);
+				  param);
 
 	return CDF_STATUS_E_FAILURE;
 }
@@ -522,14 +521,13 @@ int32_t wmi_unified_beacon_send_cmd(void *wmi_hdl,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t wmi_unified_peer_assoc_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct peer_assoc_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_peer_assoc_cmd)
 		return wmi_handle->ops->send_peer_assoc_cmd(wmi_handle,
-				  macaddr, param);
+				  param);
 
 	return CDF_STATUS_E_FAILURE;
 }
@@ -543,14 +541,13 @@ int32_t wmi_unified_peer_assoc_send(void *wmi_hdl,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t wmi_unified_scan_start_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_start_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_scan_start_cmd)
 		return wmi_handle->ops->send_scan_start_cmd(wmi_handle,
-				  macaddr, param);
+				  param);
 
 	return CDF_STATUS_E_FAILURE;
 }
@@ -564,14 +561,13 @@ int32_t wmi_unified_scan_start_cmd_send(void *wmi_hdl,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t wmi_unified_scan_stop_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_stop_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_scan_stop_cmd)
 		return wmi_handle->ops->send_scan_stop_cmd(wmi_handle,
-				  macaddr, param);
+				  param);
 
 	return CDF_STATUS_E_FAILURE;
 }
@@ -585,14 +581,13 @@ int32_t wmi_unified_scan_stop_cmd_send(void *wmi_hdl,
  *  Return: 0  on success and -ve on failure.
  */
 int32_t wmi_unified_scan_chan_list_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_chan_list_params *param)
 {
 	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
 
 	if (wmi_handle->ops->send_scan_chan_list_cmd)
 		return wmi_handle->ops->send_scan_chan_list_cmd(wmi_handle,
-				  macaddr, param);
+				  param);
 
 	return CDF_STATUS_E_FAILURE;
 }
