@@ -292,11 +292,9 @@ wmi_unified_pdev_param_send(void *wmi_hdl,
 				uint8_t mac_id);
 
 int32_t wmi_unified_beacon_send_cmd(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct beacon_params *param);
 
 int32_t wmi_unified_peer_assoc_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct peer_assoc_params *param);
 
 int32_t wmi_unified_sta_ps_cmd_send(void *wmi_hdl,
@@ -307,15 +305,12 @@ int32_t wmi_unified_ap_ps_cmd_send(void *wmi_hdl,
 				struct ap_ps_params *param);
 
 int32_t wmi_unified_scan_start_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_start_params *param);
 
 int32_t wmi_unified_scan_stop_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_stop_params *param);
 
 int32_t wmi_unified_scan_chan_list_cmd_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_chan_list_params *param);
 
 

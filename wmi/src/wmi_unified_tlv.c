@@ -592,7 +592,7 @@ int32_t send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 		cmd->suspend_opt = WMI_PDEV_SUSPEND;
 	ret = wmi_unified_cmd_send(wmi_handle, wmibuf, len,
 				 WMI_PDEV_SUSPEND_CMDID);
-	if (ret < 0) {
+	if (ret) {
 		cdf_nbuf_free(wmibuf);
 		WMA_LOGE("Failed to send WMI_PDEV_SUSPEND_CMDID command");
 	}
@@ -793,7 +793,7 @@ int32_t send_crash_inject_cmd_tlv(wmi_unified_t wmi_handle,
 
 	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
 		WMI_FORCE_FW_HANG_CMDID);
-	if (ret < 0) {
+	if (ret) {
 		WMA_LOGE("%s: Failed to send set param command, ret = %d",
 			 __func__, ret);
 		wmi_buf_free(buf);
@@ -917,7 +917,32 @@ int32_t send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct stats_request_params *param)
 {
-	return 0;
+	int32_t ret;
+	wmi_request_stats_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(wmi_request_stats_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return -CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_request_stats_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_request_stats_cmd_fixed_param));
+	cmd->stats_id = param->stats_id;
+	cmd->vdev_id = param->vdev_id;
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_REQUEST_STATS_CMDID);
+	if (ret) {
+		WMA_LOGE("Failed to send status request to fw =%d", ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
 }
 
 /**
@@ -938,74 +963,420 @@ int32_t send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 /**
  *  send_beacon_send_cmd_tlv() - WMI beacon send function
  *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
  *  @param param    : pointer to hold beacon send cmd parameter
  *
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct beacon_params *param)
 {
+	int32_t ret;
+	wmi_bcn_tmpl_cmd_fixed_param *cmd;
+	wmi_bcn_prb_info *bcn_prb_info;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	uint32_t wmi_buf_len;
+
+	wmi_buf_len = sizeof(wmi_bcn_tmpl_cmd_fixed_param) +
+		      sizeof(wmi_bcn_prb_info) + WMI_TLV_HDR_SIZE +
+		      param->tmpl_len_aligned;
+	wmi_buf = wmi_buf_alloc(wmi_handle, wmi_buf_len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+	cmd = (wmi_bcn_tmpl_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_bcn_tmpl_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_bcn_tmpl_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->tim_ie_offset = param->tim_ie_offset;
+	cmd->buf_len = param->tmpl_len;
+	buf_ptr += sizeof(wmi_bcn_tmpl_cmd_fixed_param);
+
+	bcn_prb_info = (wmi_bcn_prb_info *) buf_ptr;
+	WMITLV_SET_HDR(&bcn_prb_info->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_bcn_prb_info,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_bcn_prb_info));
+	bcn_prb_info->caps = 0;
+	bcn_prb_info->erp = 0;
+	buf_ptr += sizeof(wmi_bcn_prb_info);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, param->tmpl_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cdf_mem_copy(buf_ptr, param->frm, param->tmpl_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle,
+				   wmi_buf, wmi_buf_len, WMI_BCN_TMPL_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to send bcn tmpl: %d", __func__, ret);
+		wmi_buf_free(wmi_buf);
+	}
 	return 0;
 }
 
 /**
  *  send_peer_assoc_cmd_tlv() - WMI peer assoc function
  *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
  *  @param param    : pointer to peer assoc parameter
  *
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct peer_assoc_params *param)
 {
-	return 0;
+	wmi_peer_assoc_complete_cmd_fixed_param *cmd;
+	wmi_vht_rate_set *mcs;
+	wmi_buf_t buf;
+	int32_t len;
+	uint8_t *buf_ptr;
+	int ret;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
+	      (param->num_peer_legacy_rates * sizeof(uint8_t)) +
+	      WMI_TLV_HDR_SIZE +
+	      (param->num_peer_ht_rates * sizeof(uint8_t)) +
+	      sizeof(wmi_vht_rate_set);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_peer_assoc_complete_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_assoc_complete_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_peer_assoc_complete_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->peer_new_assoc = param->peer_new_assoc;
+	cmd->peer_associd = param->peer_associd;
+	cmd->peer_flags = param->peer_flags;
+	cmd->peer_rate_caps = param->peer_rate_caps;
+	cmd->peer_caps = param->peer_caps;
+	cmd->peer_listen_intval = param->peer_listen_intval;
+	cmd->peer_ht_caps = param->peer_ht_caps;
+	cmd->peer_max_mpdu = param->peer_max_mpdu;
+	cmd->peer_mpdu_density = param->peer_mpdu_density;
+	cmd->num_peer_legacy_rates = param->num_peer_legacy_rates;
+	cmd->num_peer_ht_rates = param->num_peer_ht_rates;
+	cmd->peer_vht_caps = param->peer_vht_caps;
+	cmd->peer_phymode = param->peer_phymode;
+
+	/* Update peer legacy rate information */
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+				   param->num_peer_legacy_rates);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cmd->num_peer_legacy_rates = param->num_peer_legacy_rates;
+	cdf_mem_copy(buf_ptr, param->peer_legacy_rates.rates,
+		     param->peer_legacy_rates.num_rates);
+
+	/* Update peer HT rate information */
+	buf_ptr += param->num_peer_legacy_rates;
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+			  param->num_peer_ht_rates);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cmd->num_peer_ht_rates = param->num_peer_ht_rates;
+	cdf_mem_copy(buf_ptr, param->peer_ht_rates.rates,
+				 param->peer_ht_rates.num_rates);
+
+	/* VHT Rates */
+	buf_ptr += param->num_peer_ht_rates;
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_STRUC_wmi_vht_rate_set,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
+
+	cmd->peer_nss = param->peer_nss;
+	mcs = (wmi_vht_rate_set *) buf_ptr;
+	if (param->vht_capable) {
+		mcs->rx_max_rate = param->rx_max_rate;
+		mcs->rx_mcs_set = param->rx_mcs_set;
+		mcs->tx_max_rate = param->tx_max_rate;
+		mcs->tx_mcs_set = param->tx_mcs_set;
+	}
+
+	WMA_LOGD("%s: vdev_id %d associd %d peer_flags %x rate_caps %x "
+		 "peer_caps %x listen_intval %d ht_caps %x max_mpdu %d "
+		 "nss %d phymode %d peer_mpdu_density %d "
+		 "cmd->peer_vht_caps %x", __func__,
+		 cmd->vdev_id, cmd->peer_associd, cmd->peer_flags,
+		 cmd->peer_rate_caps, cmd->peer_caps,
+		 cmd->peer_listen_intval, cmd->peer_ht_caps,
+		 cmd->peer_max_mpdu, cmd->peer_nss, cmd->peer_phymode,
+		 cmd->peer_mpdu_density,
+		 cmd->peer_vht_caps);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_PEER_ASSOC_CMDID);
+	if (ret != EOK) {
+		WMA_LOGP("%s: Failed to send peer assoc command ret = %d",
+			 __func__, ret);
+		cdf_nbuf_free(buf);
+	}
+
+	return ret;
 }
 
 /**
  *  send_scan_start_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
  *  @param param    : pointer to hold scan start cmd parameter
  *
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct scan_start_params *param)
+				struct scan_start_params *params)
 {
-	return 0;
+	int32_t ret = 0;
+	int32_t i;
+	wmi_buf_t wmi_buf;
+	wmi_start_scan_cmd_fixed_param *cmd;
+	uint8_t *buf_ptr;
+	uint32_t *tmp_ptr;
+	wmi_ssid *ssid = NULL;
+	wmi_mac_addr *bssid;
+	int len = sizeof(*cmd);
+
+	/* Length TLV placeholder for array of uint32_t */
+	len += WMI_TLV_HDR_SIZE;
+	/* calculate the length of buffer required */
+	if (params->num_chan)
+		len += params->num_chan * sizeof(uint32_t);
+
+	/* Length TLV placeholder for array of wmi_ssid structures */
+	len += WMI_TLV_HDR_SIZE;
+	if (params->num_ssids)
+		len += params->num_ssids * sizeof(wmi_ssid);
+
+	/* Length TLV placeholder for array of wmi_mac_addr structures */
+	len += WMI_TLV_HDR_SIZE;
+	len += sizeof(wmi_mac_addr);
+
+	/* Length TLV placeholder for array of bytes */
+	len += WMI_TLV_HDR_SIZE;
+	if (params->ie_len)
+		len += roundup(params->ie_len, sizeof(uint32_t));
+
+	/* Allocate the memory */
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGP("%s: failed to allocate memory for start scan cmd",
+			 __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+	cmd = (wmi_start_scan_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_start_scan_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_start_scan_cmd_fixed_param));
+
+	cmd->scan_id = params->scan_id;
+	cmd->scan_req_id = params->scan_req_id;
+	cmd->vdev_id = params->vdev_id;
+	cmd->scan_priority = params->scan_priority;
+	cmd->notify_scan_events = params->notify_scan_events;
+	cmd->dwell_time_active = params->dwell_time_active;
+	cmd->dwell_time_passive = params->dwell_time_passive;
+	cmd->min_rest_time = params->min_rest_time;
+	cmd->max_rest_time = params->max_rest_time;
+	cmd->repeat_probe_time = params->repeat_probe_time;
+	cmd->probe_spacing_time = params->probe_spacing_time;
+	cmd->idle_time = params->idle_time;
+	cmd->max_scan_time = params->max_scan_time;
+	cmd->probe_delay = params->probe_delay;
+	cmd->scan_ctrl_flags = params->scan_ctrl_flags;
+	cmd->burst_duration = params->burst_duration;
+	cmd->num_chan = params->num_chan;
+	cmd->num_bssid = params->num_bssid;
+	cmd->num_ssids = params->num_ssids;
+	cmd->ie_len = params->ie_len;
+	cmd->n_probes = params->n_probes;
+	buf_ptr += sizeof(*cmd);
+	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	for (i = 0; i < params->num_chan; ++i)
+		tmp_ptr[i] = params->chan_list[i];
+
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_UINT32,
+		       (params->num_chan * sizeof(uint32_t)));
+	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_chan * sizeof(uint32_t));
+	if (params->num_ssids > SIR_SCAN_MAX_NUM_SSID) {
+		WMA_LOGE("Invalid value for numSsid");
+		goto error;
+	}
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+	       (params->num_ssids * sizeof(wmi_ssid)));
+
+	if (params->num_ssids) {
+		ssid = (wmi_ssid *) (buf_ptr + WMI_TLV_HDR_SIZE);
+		for (i = 0; i < params->num_ssids; ++i) {
+			ssid->ssid_len = params->ssid[i].length;
+			cdf_mem_copy(ssid->ssid, params->ssid[i].mac_ssid,
+				     params->ssid[i].length);
+			ssid++;
+		}
+	}
+	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_ssids * sizeof(wmi_ssid));
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
+		       (params->num_bssid * sizeof(wmi_mac_addr)));
+	bssid = (wmi_mac_addr *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(params->mac_add_bytes, bssid);
+	buf_ptr += WMI_TLV_HDR_SIZE + (params->num_bssid * sizeof(wmi_mac_addr));
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, params->ie_len_with_pad);
+	if (params->ie_len) {
+		cdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
+			     (uint8_t *) params->ie_base +
+			     (params->uie_fieldOffset), params->ie_len);
+	}
+	buf_ptr += WMI_TLV_HDR_SIZE + params->ie_len_with_pad;
+
+	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
+				      len, WMI_START_SCAN_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to start scan: %d", __func__, ret);
+		wmi_buf_free(wmi_buf);
+	}
+	return ret;
+error:
+	cdf_nbuf_free(wmi_buf);
+	return CDF_STATUS_E_FAILURE;
 }
 
 /**
  *  send_scan_stop_cmd_tlv() - WMI scan start function
  *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
  *  @param param    : pointer to hold scan start cmd parameter
  *
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct scan_stop_params *param)
 {
-	return 0;
+	wmi_stop_scan_cmd_fixed_param *cmd;
+	int ret;
+	int len = sizeof(*cmd);
+	wmi_buf_t wmi_buf;
+
+	/* Allocate the memory */
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGP("%s: failed to allocate memory for stop scan cmd",
+			 __func__);
+		ret = -ENOMEM;
+		goto error;
+	}
+
+	cmd = (wmi_stop_scan_cmd_fixed_param *) wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_stop_scan_cmd_fixed_param));
+	cmd->vdev_id = param->vdev_id;
+	cmd->requestor = param->requestor;
+	cmd->scan_id = param->scan_id;
+	/* stop the scan with the corresponding scan_id */
+	cmd->req_type = param->req_type;
+	ret = wmi_unified_cmd_send(wmi_handle, wmi_buf,
+				      len, WMI_STOP_SCAN_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to send stop scan: %d", __func__, ret);
+		wmi_buf_free(wmi_buf);
+	}
+
+error:
+	return ret;
 }
 
 /**
  *  send_scan_chan_list_cmd_tlv() - WMI scan channel list function
  *  @param wmi_handle      : handle to WMI.
- *  @param macaddr        : MAC address
  *  @param param    : pointer to hold scan channel list parameter
  *
  *  Return: 0  on success and -ve on failure.
  */
 int32_t send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct scan_chan_list_params *param)
+				struct scan_chan_list_params *chan_list)
+{
+	wmi_buf_t buf;
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	wmi_scan_chan_list_cmd_fixed_param *cmd;
+	int status, i;
+	uint8_t *buf_ptr;
+	wmi_channel *chan_info, *tchan_info;
+	uint16_t len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+
+	len += sizeof(wmi_channel) * chan_list->num_scan_chans;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("Failed to allocate memory");
+		cdf_status = CDF_STATUS_E_NOMEM;
+		goto end;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_scan_chan_list_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_scan_chan_list_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_scan_chan_list_cmd_fixed_param));
+
+	WMA_LOGD("no of channels = %d, len = %d", chan_list->num_scan_chans, len);
+
+	cmd->num_scan_chans = chan_list->num_scan_chans;
+	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_scan_chan_list_cmd_fixed_param)),
+		       WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_channel) * chan_list->num_scan_chans);
+	chan_info = (wmi_channel *) (buf_ptr + sizeof(*cmd) + WMI_TLV_HDR_SIZE);
+	tchan_info = chan_list->chan_info;
+
+	for (i = 0; i < chan_list->num_scan_chans; ++i) {
+		WMITLV_SET_HDR(&chan_info->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_channel,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
+		chan_info->mhz = tchan_info->mhz;
+		chan_info->band_center_freq1 =
+				 tchan_info->band_center_freq1;
+		chan_info->band_center_freq2 =
+				tchan_info->band_center_freq2;
+		chan_info->info = tchan_info->info;
+		chan_info->reg_info_1 = tchan_info->reg_info_1;
+		chan_info->reg_info_2 = tchan_info->reg_info_2;
+		WMA_LOGD("chan[%d] = %u", i, chan_info->mhz);
+
+		/*TODO: Set WMI_SET_CHANNEL_MIN_POWER */
+		/*TODO: Set WMI_SET_CHANNEL_ANTENNA_MAX */
+		/*TODO: WMI_SET_CHANNEL_REG_CLASSID */
+		tchan_info++;
+		chan_info++;
+	}
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_SCAN_CHAN_LIST_CMDID);
+
+	if (status != EOK) {
+		cdf_status = CDF_STATUS_E_FAILURE;
+		WMA_LOGE("Failed to send WMI_SCAN_CHAN_LIST_CMDID");
+		wmi_buf_free(buf);
+	}
+end:
+	return cdf_status;
+}
+
+/**
+ *  send_mgmt_cmd_tlv() - WMI scan start function
+ *  @wmi_handle      : handle to WMI.
+ *  @param    : pointer to hold mgmt cmd parameter
+ *
+ *  Return: 0  on success and -ve on failure.
+ */
+int32_t send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+				struct wmi_mgmt_params *param)
 {
 	return 0;
 }
