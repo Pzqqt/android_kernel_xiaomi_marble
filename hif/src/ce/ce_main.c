@@ -115,6 +115,10 @@ static struct shadow_reg_cfg target_shadow_reg_cfg_map[] = {
 	{ 2, ADRASTEA_DST_WR_INDEX_OFFSET},
 	{ 7, ADRASTEA_DST_WR_INDEX_OFFSET},
 	{ 8, ADRASTEA_DST_WR_INDEX_OFFSET},
+#ifdef QCA_WIFI_3_0_ADRASTEA
+	{ 9, ADRASTEA_DST_WR_INDEX_OFFSET},
+	{ 10, ADRASTEA_DST_WR_INDEX_OFFSET},
+#endif
 };
 
 static struct shadow_reg_cfg target_shadow_reg_cfg_epping[] = {
@@ -286,6 +290,18 @@ static struct service_to_pipe target_service_to_ce_map_wlan[] = {
 		PIPEDIR_OUT,    /* in = DL = target -> host */
 		5,
 	},
+#if defined(QCA_WIFI_3_0_ADRASTEA)
+	{
+		HTT_DATA2_MSG_SVC,
+		PIPEDIR_IN,    /* in = DL = target -> host */
+		9,
+	},
+	{
+		HTT_DATA3_MSG_SVC,
+		PIPEDIR_IN,    /* in = DL = target -> host */
+		10,
+	},
+#endif
 	/* (Additions here) */
 
 	{                       /* Must be last */
@@ -2083,8 +2099,9 @@ void hif_ipa_get_ce_resource(struct hif_opaque_softc *hif_ctx,
 u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 {
 	u32 addr = 0;
+	u32 ce = COPY_ENGINE_ID(ctrl_addr);
 
-	switch (COPY_ENGINE_ID(ctrl_addr)) {
+	switch (ce) {
 	case 0:
 		addr = SHADOW_VALUE0;
 		break;
@@ -2101,10 +2118,8 @@ u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 		addr = SHADOW_VALUE7;
 		break;
 	default:
-		HIF_ERROR("invalid CE ctrl_addr %d",
-			COPY_ENGINE_ID(ctrl_addr));
+		HIF_ERROR("invalid CE ctrl_addr (CE=%d)", ce);
 		QDF_ASSERT(0);
-
 	}
 	return addr;
 
@@ -2113,8 +2128,9 @@ u32 shadow_sr_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 {
 	u32 addr = 0;
+	u32 ce = COPY_ENGINE_ID(ctrl_addr);
 
-	switch (COPY_ENGINE_ID(ctrl_addr)) {
+	switch (ce) {
 	case 1:
 		addr = SHADOW_VALUE13;
 		break;
@@ -2130,9 +2146,14 @@ u32 shadow_dst_wr_ind_addr(struct hif_softc *scn, u32 ctrl_addr)
 	case 8:
 		addr = SHADOW_VALUE20;
 		break;
+	case 9:
+		addr = SHADOW_VALUE21;
+		break;
+	case 10:
+		addr = SHADOW_VALUE22;
+		break;
 	default:
-		HIF_ERROR("invalid CE ctrl_addr %d",
-			COPY_ENGINE_ID(ctrl_addr));
+		HIF_ERROR("invalid CE ctrl_addr (CE=%d)", ce);
 		QDF_ASSERT(0);
 	}
 

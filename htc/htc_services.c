@@ -219,10 +219,12 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 						 rsp_msg_serv_id,
 						 rsp_msg_status));
 				status = A_EPROTO;
+/* TODO: restore the ifdef when FW supports services 301 and 302 (HTT_MSG_DATA[23]_MSG_SVC)
 #ifdef QCA_TX_HTT2_SUPPORT
+*/
 				/* Keep work and not to block the control message. */
 				target->CtrlResponseProcessing = false;
-#endif /* QCA_TX_HTT2_SUPPORT */
+/*#endif */ /* QCA_TX_HTT2_SUPPORT */
 				break;
 			}
 
