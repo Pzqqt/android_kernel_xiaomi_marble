@@ -2224,18 +2224,11 @@ QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	int ret;
 
-	/*Check if packet log is enabled in cfg.ini */
-	if (!cds_is_packet_log_enabled()) {
-		WMA_LOGE("%s:pkt log is not enabled in cfg.ini", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
 	ret = wmi_unified_pktlog_wmi_send_cmd(wma_handle->wmi_handle,
-					   params->pktlog_event,
-					   params->cmd_id);
+			params->pktlog_event,
+			params->cmd_id, params->user_triggered);
 	if (ret)
 		return QDF_STATUS_E_FAILURE;
-
 
 	return QDF_STATUS_SUCCESS;
 }

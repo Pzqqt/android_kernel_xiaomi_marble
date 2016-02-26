@@ -3603,6 +3603,39 @@ static iw_softap_set_max_tx_power(struct net_device *dev,
 }
 
 int
+static __iw_softap_set_pktlog(struct net_device *dev,
+				    struct iw_request_info *info,
+				    union iwreq_data *wrqu, char *extra)
+{
+	hdd_adapter_t *pHostapdAdapter = netdev_priv(dev);
+	hdd_context_t *hdd_ctx;
+	int *value = (int *)extra;
+
+	ENTER_DEV(dev);
+
+	if (NULL == value)
+		return -ENOMEM;
+
+	hdd_ctx = WLAN_HDD_GET_CTX(pHostapdAdapter);
+	return hdd_process_pktlog_command(hdd_ctx, value[0]);
+}
+
+int
+static iw_softap_set_pktlog(struct net_device *dev,
+				  struct iw_request_info *info,
+				  union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __iw_softap_set_pktlog(dev, info, wrqu, extra);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
+
+int
 static __iw_softap_set_tx_power(struct net_device *dev,
 				struct iw_request_info *info,
 				union iwreq_data *wrqu, char *extra)
@@ -6096,6 +6129,12 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		0, "setTxMaxPower"
 	}
 	,
+	{
+		QCSAP_IOCTL_SET_PKTLOG,
+		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		0, "pktlog"
+	}
+	,
 	/* Set HDD CFG Ini param */
 	{
 		QCSAP_IOCTL_SET_INI_CFG,
@@ -6195,6 +6234,8 @@ static const iw_handler hostapd_private[] = {
 		iw_softap_set_tx_power,
 	[QCSAP_IOCTL_SET_MAX_TX_POWER - SIOCIWFIRSTPRIV] =
 		iw_softap_set_max_tx_power,
+	[QCSAP_IOCTL_SET_PKTLOG - SIOCIWFIRSTPRIV] =
+		iw_softap_set_pktlog,
 	[QCSAP_IOCTL_SET_INI_CFG - SIOCIWFIRSTPRIV] =
 		iw_softap_set_ini_cfg,
 	[QCSAP_IOCTL_GET_INI_CFG - SIOCIWFIRSTPRIV] =

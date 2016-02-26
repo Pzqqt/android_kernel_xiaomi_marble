@@ -66,10 +66,13 @@ extern void pktlog_release_buf(struct hif_opaque_softc *scn);
 ssize_t pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 		struct ath_pktlog_info *pl_info, bool *read_complete);
 int pktlog_send_per_pkt_stats_to_user(void);
+A_STATUS
+wdi_pktlog_unsubscribe(struct ol_txrx_pdev_t *txrx_pdev, uint32_t log_state);
 
 struct ol_pl_arch_dep_funcs {
 	void (*pktlog_init)(struct hif_opaque_softc *scn);
-	int (*pktlog_enable)(struct hif_opaque_softc *scn, int32_t log_state);
+	int (*pktlog_enable)(struct hif_opaque_softc *scn, int32_t log_state,
+				bool ini, uint8_t user);
 	int (*pktlog_setsize)(struct hif_opaque_softc *scn, int32_t log_state);
 	int (*pktlog_disable)(struct hif_opaque_softc *scn);
 };
@@ -82,6 +85,8 @@ struct ol_pl_os_dep_funcs {
 struct ath_pktlog_wmi_params {
 	WMI_PKTLOG_EVENT pktlog_event;
 	WMI_CMD_ID cmd_id;
+	bool ini_triggered;
+	uint8_t user_triggered;
 };
 
 extern struct ol_pl_arch_dep_funcs ol_pl_funcs;
@@ -93,7 +98,8 @@ struct ol_pktlog_dev_t {
 	struct ath_pktlog_info *pl_info;
 	ol_ath_generic_softc_handle scn;
 	char *name;
-	bool tgt_pktlog_enabled;
+	bool tgt_pktlog_alloced;
+	bool is_pktlog_cb_subscribed;
 	bool mt_pktlog_enabled;
 	uint32_t htc_err_cnt;
 	uint8_t htc_endpoint;
@@ -124,7 +130,8 @@ extern struct ol_pktlog_dev_t ol_pl_dev;
 void pktlog_callback(void *pdev, enum WDI_EVENT event, void *log_data);
 
 void pktlog_init(struct hif_opaque_softc *scn);
-int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state);
+int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+		 bool, uint8_t);
 int pktlog_setsize(struct hif_opaque_softc *scn, int32_t log_state);
 int pktlog_disable(struct hif_opaque_softc *scn);
 int pktlogmod_init(void *context);
@@ -153,7 +160,8 @@ static inline void pktlog_init(struct hif_opaque_softc *scn)
 {
 	return;
 }
-static int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
+static int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+			 bool ini, uint8_t user)
 {
 	return 0;
 }

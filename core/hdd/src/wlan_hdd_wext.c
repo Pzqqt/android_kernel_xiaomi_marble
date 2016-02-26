@@ -165,7 +165,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_TXRX_FWSTATS_RESET           41
 #define WE_SET_MAX_TX_POWER_2_4   42
 #define WE_SET_MAX_TX_POWER_5_0   43
-/* 44 is unused */
+#define WE_SET_PKTLOG                   44
 /* Private ioctl for packet powe save */
 #define  WE_PPS_PAID_MATCH              45
 #define  WE_PPS_GID_MATCH               46
@@ -5158,6 +5158,11 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 		break;
 	}
+	case WE_SET_PKTLOG:
+	{
+		hdd_process_pktlog_command(hdd_ctx, set_value);
+		break;
+	}
 	case WE_SET_HIGHER_DTIM_TRANSITION:
 	{
 		if (!((set_value == false) || (set_value == true))) {
@@ -9894,6 +9899,11 @@ static const struct iw_priv_args we_private_args[] = {
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 0,
 	 "setTxMaxPower5G"},
+
+	{WE_SET_PKTLOG,
+	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+	 0,
+	 "pktlog"},
 
 	/* SAP has TxMax whereas STA has MaxTx, adding TxMax for STA
 	 * as well to keep same syntax as in SAP. Now onwards, STA

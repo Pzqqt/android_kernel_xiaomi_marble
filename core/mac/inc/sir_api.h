@@ -3174,11 +3174,15 @@ typedef struct {
  *                 statistics, connectivity etc.
  * @verbose_level: Verbose level which can be 0,1,2,3
  * @flag:          Flag field for future use
+ * @ini_triggered: triggered using ini
+ * @user_triggered: triggered by user
  */
 struct sir_wifi_start_log {
 	uint32_t ring_id;
 	uint32_t verbose_level;
 	uint32_t flag;
+	bool ini_triggered;
+	uint8_t user_triggered;
 };
 
 

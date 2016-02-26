@@ -1690,6 +1690,20 @@ static inline QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
 }
 #endif
 
+#if !defined(REMOVE_PKT_LOG)
+int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value);
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable, uint8_t);
+#else
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable, uint8_t)
+{
+	return 0;
+}
+int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value)
+{
+	return 0;
+}
+#endif /* REMOVE_PKT_LOG */
+
 #ifdef FEATURE_TSO
 /**
  * hdd_set_tso_flags() - enable TSO flags in the network device
@@ -1805,14 +1819,5 @@ static inline void hdd_enable_fastpath(struct hdd_config *hdd_cfg,
 }
 #endif
 void hdd_wlan_update_target_info(hdd_context_t *hdd_ctx, void *context);
-
-#if !defined(REMOVE_PKT_LOG)
-int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable);
-#else
-int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable)
-{
-	return 0;
-}
-#endif /* REMOVE_PKT_LOG */
 
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

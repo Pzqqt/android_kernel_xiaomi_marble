@@ -5333,10 +5333,12 @@ void wma_set_wifi_start_packet_stats(void *wma_handle,
 		ATH_PKTLOG_TEXT | ATH_PKTLOG_SW_EVENT;
 
 	if (start_log->verbose_level == WLAN_LOG_LEVEL_ACTIVE) {
-		pktlog_enable(scn, log_state);
+		pktlog_enable(scn, log_state, start_log->ini_triggered,
+					start_log->user_triggered);
 		WMA_LOGI("%s: Enabling per packet stats", __func__);
 	} else {
-		pktlog_enable(scn, 0);
+		pktlog_enable(scn, 0, start_log->ini_triggered,
+				start_log->user_triggered);
 		WMA_LOGI("%s: Disabling per packet stats", __func__);
 	}
 }

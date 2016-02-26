@@ -6704,6 +6704,47 @@ static inline void hdd_release_rtnl_lock(void) { }
 #endif
 
 #if !defined(REMOVE_PKT_LOG)
+
+/**
+ * hdd_process_pktlog_command() - process pktlog command
+ * @hdd_ctx: hdd context
+ * @set_value: value set by user
+ *
+ * Return: 0 for success or error.
+ */
+int hdd_process_pktlog_command(hdd_context_t *hdd_ctx, uint32_t set_value)
+{
+	int ret;
+	bool enable;
+	uint8_t user_triggered = 0;
+
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (0 != ret)
+		return ret;
+
+	hdd_info("set pktlog %d", set_value);
+
+	if (set_value > 2) {
+		hdd_err("invalid pktlog value %d", set_value);
+		return -EINVAL;
+	}
+
+	/*
+	 * set_value = 0 then disable packetlog
+	 * set_value = 1 enable packetlog forcefully
+	 * set_vlaue = 2 then disable packetlog if disabled through ini or
+	 *                     enable packetlog with AUTO type.
+	 */
+	enable = ((set_value > 0) && cds_is_packet_log_enabled()) ?
+			 true : false;
+
+	if (1 == set_value) {
+		enable = true;
+		user_triggered = 1;
+	}
+
+	return hdd_pktlog_enable_disable(hdd_ctx, enable, user_triggered);
+}
 /**
  * hdd_pktlog_enable_disable() - Enable/Disable packet logging
  * @hdd_ctx: HDD context
@@ -6711,7 +6752,8 @@ static inline void hdd_release_rtnl_lock(void) { }
  *
  * Return: 0 on success; error number otherwise
  */
-int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable)
+int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable,
+				uint8_t user_triggered)
 {
 	struct sir_wifi_start_log start_log;
 	QDF_STATUS status;
@@ -6719,6 +6761,9 @@ int hdd_pktlog_enable_disable(hdd_context_t *hdd_ctx, bool enable)
 	start_log.ring_id = RING_ID_PER_PACKET_STATS;
 	start_log.verbose_level =
 			enable ? WLAN_LOG_LEVEL_ACTIVE : WLAN_LOG_LEVEL_OFF;
+	start_log.ini_triggered = cds_is_packet_log_enabled();
+	start_log.user_triggered = user_triggered;
+
 	status = sme_wifi_start_logger(hdd_ctx->hHal, start_log);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hdd_err("sme_wifi_start_logger failed(err=%d)", status);
@@ -7537,7 +7582,7 @@ int hdd_wlan_startup(struct device *dev)
 
 
 	if (cds_is_packet_log_enabled())
-		hdd_pktlog_enable_disable(hdd_ctx, true);
+		hdd_pktlog_enable_disable(hdd_ctx, true, 0);
 
 	ret = hdd_register_notifiers(hdd_ctx);
 	if (ret)

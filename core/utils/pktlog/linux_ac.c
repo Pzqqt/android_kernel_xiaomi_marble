@@ -231,7 +231,8 @@ qdf_sysctl_decl(ath_sysctl_pktlog_enable, ctl, write, filp, buffer, lenp, ppos)
 					       lenp, ppos);
 		if (ret == 0)
 			ret = pl_dev->pl_funcs->pktlog_enable(
-					(struct hif_opaque_softc *)scn, enable);
+					(struct hif_opaque_softc *)scn, enable,
+						cds_is_packet_log_enabled(), 0);
 		else
 			printk(PKTLOG_TAG "%s:proc_dointvec failed\n",
 			       __func__);
@@ -438,7 +439,7 @@ static int pktlog_attach(struct hif_opaque_softc *scn)
 	 * initialize log info
 	 * might be good to move to pktlog_init
 	 */
-	/* pl_dev->tgt_pktlog_enabled = false; */
+	/* pl_dev->tgt_pktlog_alloced = false; */
 	pl_info_lnx->proc_entry = NULL;
 	pl_info_lnx->sysctl_header = NULL;
 
@@ -491,10 +492,18 @@ static void pktlog_sysctl_unregister(struct ol_pktlog_dev_t *pl_dev)
 
 static void pktlog_detach(struct hif_opaque_softc *scn)
 {
-	struct ol_pktlog_dev_t *pl_dev = (struct ol_pktlog_dev_t *)
-					 get_pl_handle(scn);
+	struct ol_txrx_pdev_t *txrx_pdev;
+	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
 
+	txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
+	if (!txrx_pdev) {
+		printk("%s: Invalid txrx_pdev context\n", __func__);
+		ASSERT(0);
+		return;
+	}
+
+	pl_dev = txrx_pdev->pl_dev;
 	if (!pl_dev) {
 		printk("%s: Invalid pktlog context\n", __func__);
 		ASSERT(0);
@@ -506,8 +515,10 @@ static void pktlog_detach(struct hif_opaque_softc *scn)
 	pktlog_sysctl_unregister(pl_dev);
 	pktlog_cleanup(pl_info);
 
-	if (pl_info->buf)
+	if (pl_info->buf) {
 		pktlog_release_buf(scn);
+		pl_dev->tgt_pktlog_alloced = false;
+	}
 
 	if (pl_dev) {
 		kfree(pl_info);
@@ -1034,15 +1045,7 @@ void pktlogmod_exit(void *context)
 
 	if (!pl_dev || g_pktlog_pde == NULL)
 		return;
-	/*
-	 *  Disable firmware side pktlog function
-	 */
-	if (pl_dev->tgt_pktlog_enabled) {
-		if (pl_dev->pl_funcs->pktlog_enable(scn, 0)) {
-			printk("%s: cannot disable pktlog in the target\n",
-			       __func__);
-		}
-	}
+
 	pktlog_detach(scn);
 	/*
 	 *  pdev kill needs to be implemented

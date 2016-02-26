@@ -74,7 +74,8 @@ void ol_pl_sethandle(ol_pktlog_dev_handle *pl_handle,
 }
 
 static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
-				    WMI_CMD_ID cmd_id)
+				    WMI_CMD_ID cmd_id, bool ini_triggered,
+				    uint8_t user_triggered)
 {
 	cds_msg_t msg = { 0 };
 	QDF_STATUS status;
@@ -87,6 +88,8 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 
 	param->cmd_id = cmd_id;
 	param->pktlog_event = event_types;
+	param->ini_triggered = ini_triggered;
+	param->user_triggered = user_triggered;
 
 	msg.type = WMA_PKTLOG_ENABLE_REQ;
 	msg.bodyptr = param;
@@ -102,8 +105,9 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 	return A_OK;
 }
 
-static inline A_STATUS pktlog_enable_tgt(struct hif_opaque_softc *_scn,
-					 uint32_t log_state)
+static inline A_STATUS
+pktlog_enable_tgt(struct hif_opaque_softc *_scn, uint32_t log_state,
+		 bool ini_triggered, uint8_t user_triggered)
 {
 	uint32_t types = 0;
 
@@ -122,7 +126,8 @@ static inline A_STATUS pktlog_enable_tgt(struct hif_opaque_softc *_scn,
 	if (log_state & ATH_PKTLOG_SW_EVENT)
 		types |= WMI_PKTLOG_EVENT_SW;
 
-	return pktlog_wma_post_msg(types, WMI_PDEV_PKTLOG_ENABLE_CMDID);
+	return pktlog_wma_post_msg(types, WMI_PDEV_PKTLOG_ENABLE_CMDID,
+				   ini_triggered, user_triggered);
 }
 
 static inline A_STATUS
@@ -248,7 +253,7 @@ void pktlog_callback(void *pdev, enum WDI_EVENT event, void *log_data)
 	}
 }
 
-static inline A_STATUS
+A_STATUS
 wdi_pktlog_unsubscribe(struct ol_txrx_pdev_t *txrx_pdev, uint32_t log_state)
 {
 	if (log_state & ATH_PKTLOG_TX) {
@@ -308,16 +313,17 @@ int pktlog_disable(struct hif_opaque_softc *scn)
 	pl_dev = txrx_pdev->pl_dev;
 	pl_info = pl_dev->pl_info;
 
-	if (pktlog_wma_post_msg(0, WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
+	if (pktlog_wma_post_msg(0, WMI_PDEV_PKTLOG_DISABLE_CMDID, 0, 0)) {
 		printk("Failed to disable pktlog in target\n");
 		return -1;
 	}
 
-	if (wdi_pktlog_unsubscribe(txrx_pdev, pl_info->log_state)) {
+	if (pl_dev->is_pktlog_cb_subscribed &&
+		wdi_pktlog_unsubscribe(txrx_pdev, pl_info->log_state)) {
 		printk("Cannot unsubscribe pktlog from the WDI\n");
 		return -1;
 	}
-
+	pl_dev->is_pktlog_cb_subscribed = false;
 	return 0;
 }
 
@@ -358,7 +364,8 @@ void pktlog_init(struct hif_opaque_softc *scn)
 	PKTLOG_SW_EVENT_SUBSCRIBER.callback = pktlog_callback;
 }
 
-int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
+int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state,
+		 bool ini_triggered, uint8_t user_triggered)
 {
 	struct ol_pktlog_dev_t *pl_dev;
 	struct ath_pktlog_info *pl_info;
@@ -390,7 +397,7 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
 	if (!pl_info)
 		return 0;
 
-	if (log_state != 0 && !pl_dev->tgt_pktlog_enabled) {
+	if (!pl_dev->tgt_pktlog_alloced) {
 		if (pl_info->buf == NULL) {
 			error = pktlog_alloc_buf(scn);
 
@@ -418,25 +425,25 @@ int pktlog_enable(struct hif_opaque_softc *scn, int32_t log_state)
 		pl_info->start_time_thruput = os_get_timestamp();
 		pl_info->start_time_per = pl_info->start_time_thruput;
 
+		pl_dev->tgt_pktlog_alloced = true;
+	}
+
+	if (log_state != 0) {
 		/* WDI subscribe */
-		if (wdi_pktlog_subscribe(txrx_pdev, log_state)) {
+		if ((!pl_dev->is_pktlog_cb_subscribed) &&
+			wdi_pktlog_subscribe(txrx_pdev, log_state)) {
 			printk("Unable to subscribe to the WDI %s\n", __func__);
 			return -1;
 		}
+		pl_dev->is_pktlog_cb_subscribed = true;
 		/* WMI command to enable pktlog on the firmware */
-		if (pktlog_enable_tgt(scn, log_state)) {
+		if (pktlog_enable_tgt(scn, log_state, ini_triggered,
+				user_triggered)) {
 			printk("Device cannot be enabled, %s\n", __func__);
 			return -1;
-		} else {
-			pl_dev->tgt_pktlog_enabled = true;
 		}
-	} else if (!log_state && pl_dev->tgt_pktlog_enabled) {
+	} else {
 		pl_dev->pl_funcs->pktlog_disable(scn);
-		pl_dev->tgt_pktlog_enabled = false;
-		if (wdi_pktlog_unsubscribe(txrx_pdev, pl_info->log_state)) {
-			printk("Cannot unsubscribe pktlog from the WDI\n");
-			return -1;
-		}
 	}
 
 	pl_info->log_state = log_state;
@@ -470,8 +477,17 @@ int pktlog_setsize(struct hif_opaque_softc *scn, int32_t size)
 		return -EINVAL;
 	}
 
-	if (pl_info->buf != NULL)
+	if (pl_info->buf != NULL) {
+		if (pl_dev->is_pktlog_cb_subscribed &&
+			wdi_pktlog_unsubscribe(pdev_txrx_handle,
+					 pl_info->log_state)) {
+			printk("Cannot unsubscribe pktlog from the WDI\n");
+			return -EFAULT;
+		}
 		pktlog_release_buf(scn);
+		pl_dev->is_pktlog_cb_subscribed = false;
+		pl_dev->tgt_pktlog_alloced = false;
+	}
 
 	if (size != 0)
 		pl_info->buf_size = size;
