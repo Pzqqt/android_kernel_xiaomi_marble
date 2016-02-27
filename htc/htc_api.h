@@ -290,16 +290,18 @@ typedef struct _HTC_ENDPOINT_STATS {
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    @desc: Create an instance of HTC over the underlying HIF device
    @function name: htc_create
-   @input:  HifDevice - hif device handle,
-   pInfo - initialization information
+   @input: HifDevice - hif device handle,
+	   pInfo - initialization information
+	   osdev - QDF device structure
+	   con_mode - driver connection mode
    @output:
    @return: HTC_HANDLE on success, NULL on failure
    @notes:
    @example:
    @see also: htc_destroy
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-HTC_HANDLE htc_create(void *HifDevice,
-		      HTC_INIT_INFO *pInfo, qdf_device_t osdev);
+HTC_HANDLE htc_create(void *HifDevice, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
+		      uint32_t con_mode);
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    @desc: Get the underlying HIF device handle
    @function name: htc_get_hif_device
@@ -702,8 +704,10 @@ do {									\
 void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credit);
 void htc_dump_counter_info(HTC_HANDLE HTCHandle);
 void *htc_get_targetdef(HTC_HANDLE htc_handle);
-int htc_runtime_suspend(void);
-int htc_runtime_resume(void);
+#ifdef FEATURE_RUNTIME_PM
+int htc_runtime_suspend(HTC_HANDLE htc_ctx);
+int htc_runtime_resume(HTC_HANDLE htc_ctx);
+#endif
 
 /* Disable ASPM : Disable PCIe low power */
 bool htc_can_suspend_link(HTC_HANDLE HTCHandle);

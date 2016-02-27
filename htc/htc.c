@@ -25,15 +25,11 @@
  * to the Linux Foundation.
  */
 
-#include "ol_if_athvar.h"
 #include "htc_debug.h"
 #include "htc_internal.h"
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_print */
 #include <hif.h>
-#include "epping_main.h"
-#include "cds_concurrency.h"
-#include <cds_api.h>
 
 #ifdef DEBUG
 static ATH_DEBUG_MASK_DESCRIPTION g_htc_debug_description[] = {
@@ -190,8 +186,58 @@ static void htc_cleanup(HTC_TARGET *target)
 	qdf_mem_free(target);
 }
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * htc_runtime_pm_init(): runtime pm related intialization
+ *
+ * need to initialize a work item.
+ */
+static void htc_runtime_pm_init(HTC_TARGET *target)
+{
+	qdf_create_work(0, &target->queue_kicker, htc_kick_queues, target);
+}
+
+/**
+ * htc_runtime_suspend() - runtime suspend HTC
+ *
+ * @htc_ctx: HTC context pointer
+ *
+ * This is a dummy function for symmetry.
+ *
+ * Return: 0 for success
+ */
+int htc_runtime_suspend(HTC_HANDLE htc_ctx)
+{
+	return 0;
+}
+
+/**
+ * htc_runtime_resume(): resume htc
+ *
+ * The htc message queue needs to be kicked off after
+ * a runtime resume.  Otherwise messages would get stuck.
+ *
+ * @htc_ctx: HTC context pointer
+ *
+ * Return: 0 for success;
+ */
+int htc_runtime_resume(HTC_HANDLE htc_ctx)
+{
+	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_ctx);
+
+	if (target == NULL)
+		return 0;
+
+	qdf_sched_work(0, &target->queue_kicker);
+	return 0;
+}
+#else
+static inline void htc_runtime_pm_init(HTC_TARGET *target) { }
+#endif
+
 /* registered target arrival callback from the HIF layer */
-HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev)
+HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
+		      uint32_t con_mode)
 {
 	struct hif_msg_callbacks htcCallbacks;
 	HTC_ENDPOINT *pEndpoint = NULL;
@@ -224,6 +270,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev)
 		A_MEMCPY(&target->HTCInitInfo, pInfo, sizeof(HTC_INIT_INFO));
 		target->host_handle = pInfo->pContext;
 		target->osdev = osdev;
+		target->con_mode = con_mode;
 
 		reset_endpoint_states(target);
 
@@ -337,7 +384,7 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 	pEntry->service_id = WMI_CONTROL_SVC;
 	pEntry->CreditAllocation = credits;
 
-	if (WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+	if (HTC_IS_EPPING_ENABLED(target->con_mode)) {
 		/* endpoint ping is a testing tool directly on top of HTC in
 		 * both target and host sides.
 		 * In target side, the endppint ping fw has no wlan stack and the
@@ -680,59 +727,6 @@ void htc_stop(HTC_HANDLE HTCHandle)
 	reset_endpoint_states(target);
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_stop\n"));
-}
-
-/**
- * htc_runtime_pm_init(): runtime pm related intialization
- *
- * need to initialize a work item.
- */
-void htc_runtime_pm_init(HTC_TARGET *target)
-{
-	qdf_create_work(0, &target->queue_kicker, htc_kick_queues, target);
-}
-
-/**
- * htc_runtime_suspend(): ensure htc is ready to suspend
- *
- * htc is ready to suspend if there are no pending pactets
- * in the txrx queues.
- *
- * Return: 0 on success or -EBUSY if there are queued packets.
- */
-int htc_runtime_suspend(void)
-{
-	ol_txrx_pdev_handle txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-
-	if (txrx_pdev == NULL) {
-		HTC_ERROR("%s: txrx context null", __func__);
-		return QDF_STATUS_E_FAULT;
-	}
-
-	if (ol_txrx_get_tx_pending(txrx_pdev))
-		return -EBUSY;
-	else
-		return 0;
-}
-
-/**
- * htc_runtime_resume(): resume htc
- *
- * The htc message queue needs to be kicked off after
- * a runtime resume.  Otherwise messages would get stuck.
- *
- * Return: 0 for success;
- */
-int htc_runtime_resume(void)
-{
-	HTC_HANDLE htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
-	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_ctx);
-
-	if (target == NULL)
-		return 0;
-
-	qdf_sched_work(0, &target->queue_kicker);
-	return 0;
 }
 
 void htc_dump_credit_states(HTC_HANDLE HTCHandle)

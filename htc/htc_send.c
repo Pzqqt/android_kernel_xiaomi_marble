@@ -29,7 +29,6 @@
 #include "htc_internal.h"
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_mem.h>         /* qdf_mem_malloc */
-#include "epping_main.h"
 
 /* #define USB_HIF_SINGLE_PIPE_DATA_SCHED */
 /* #ifdef USB_HIF_SINGLE_PIPE_DATA_SCHED */
@@ -1788,6 +1787,7 @@ void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID)
 	htc_try_send(target, pEndpoint, NULL);
 }
 
+#ifdef FEATURE_RUNTIME_PM
 /**
  * htc_kick_queues(): resumes tx transactions of suspended endpoints
  * @context: pointer to the htc target context
@@ -1816,6 +1816,7 @@ void htc_kick_queues(void *context)
 		htc_try_send(target, endpoint, NULL);
 	}
 }
+#endif
 
 /* flush endpoint TX queue */
 void htc_flush_endpoint_tx(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint,

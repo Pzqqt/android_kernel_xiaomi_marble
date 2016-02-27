@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -27,9 +27,7 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
-#include "cds_api.h"
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include "epping_main.h"
 
 /* HTC Control message receive timeout msec */
 #define HTC_CONTROL_RX_TIMEOUT     3000

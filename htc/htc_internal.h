@@ -78,6 +78,8 @@ extern "C" {
 
 #define HTC_CREDIT_HISTORY_MAX              1024
 
+#define HTC_IS_EPPING_ENABLED(_x)           ((_x) == QDF_GLOBAL_EPPING_MODE)
+
 typedef enum {
 	HTC_REQUEST_CREDIT,
 	HTC_PROCESS_CREDIT_REPORT,
@@ -183,6 +185,7 @@ typedef struct _HTC_TARGET {
 	A_UINT32 TX_comp_cnt;
 	A_UINT8 MaxMsgsPerHTCBundle;
 	qdf_work_t queue_kicker;
+	uint32_t con_mode;
 } HTC_TARGET;
 
 #define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
@@ -250,8 +253,9 @@ void htc_process_credit_rpt(HTC_TARGET *target,
 			    int NumEntries, HTC_ENDPOINT_ID FromEndpoint);
 void htc_fw_event_handler(void *context, QDF_STATUS status);
 void htc_send_complete_check_cleanup(void *context);
-void htc_runtime_pm_init(HTC_TARGET *target);
+#ifdef FEATURE_RUNTIME_PM
 void htc_kick_queues(void *context);
+#endif
 
 void htc_credit_record(htc_credit_exchange_type type, uint32_t tx_credit,
 		       uint32_t htc_tx_queue_depth);
