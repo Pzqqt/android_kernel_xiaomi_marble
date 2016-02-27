@@ -239,7 +239,8 @@ int epping_enable(struct device *parent_dev)
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
-	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, qdf_ctx);
+	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, qdf_ctx,
+					    cds_get_conparam());
 	if (!p_cds_context->htc_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);

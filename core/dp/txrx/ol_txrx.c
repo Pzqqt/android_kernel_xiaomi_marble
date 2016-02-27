@@ -1918,6 +1918,38 @@ QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout)
 #define SUSPEND_DRAIN_WAIT 3000
 #endif
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * ol_txrx_runtime_suspend() - ensure TXRX is ready to runtime suspend
+ * @txrx_pdev: TXRX pdev context
+ *
+ * TXRX is ready to runtime suspend if there are no pending packets
+ * in the tx queue.
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS ol_txrx_runtime_suspend(ol_txrx_pdev_handle txrx_pdev)
+{
+	if (ol_txrx_get_tx_pending(txrx_pdev))
+		return QDF_STATUS_E_BUSY;
+	else
+		return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * ol_txrx_runtime_resume() - ensure TXRX is ready to runtime resume
+ * @txrx_pdev: TXRX pdev context
+ *
+ * This is a dummy function for symmetry.
+ *
+ * Return: QDF_STATUS_SUCCESS
+ */
+QDF_STATUS ol_txrx_runtime_resume(ol_txrx_pdev_handle txrx_pdev)
+{
+	return QDF_STATUS_SUCCESS;
+}
+#endif
+
 /**
  * ol_txrx_bus_suspend() - bus suspend
  *

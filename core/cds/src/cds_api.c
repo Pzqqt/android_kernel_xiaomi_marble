@@ -55,7 +55,7 @@
 #include "ol_fw.h"
 #include "ol_if_athvar.h"
 #include "hif.h"
-
+#include "cds_concurrency.h"
 #include "cds_utils.h"
 #include "wlan_logging_sock_svc.h"
 #include "wma.h"
@@ -273,7 +273,7 @@ QDF_STATUS cds_open(void)
 
 	/* Create HTC */
 	gp_cds_context->htc_ctx =
-		htc_create(scn, &htcInfo, qdf_ctx);
+		htc_create(scn, &htcInfo, qdf_ctx, cds_get_conparam());
 	if (!gp_cds_context->htc_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);

@@ -674,6 +674,10 @@ ol_txrx_set_monitor_mode_vap(ol_txrx_pdev_handle pdev,
  */
 void ol_txrx_set_curchan(ol_txrx_pdev_handle pdev, uint32_t chan_mhz);
 
+#ifdef FEATURE_RUNTIME_PM
+QDF_STATUS ol_txrx_runtime_suspend(ol_txrx_pdev_handle txrx_pdev);
+QDF_STATUS ol_txrx_runtime_resume(ol_txrx_pdev_handle txrx_pdev);
+#endif
 QDF_STATUS ol_txrx_bus_suspend(void);
 QDF_STATUS ol_txrx_bus_resume(void);
 QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
