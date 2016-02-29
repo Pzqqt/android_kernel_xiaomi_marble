@@ -41,7 +41,12 @@
 #define MAX_NUMBER_OF_CONC_CONNECTIONS 3
 #define MAX_NUM_CHAN    128
 #define DBS_OPPORTUNISTIC_TIME    10
-#define CONNECTION_UPDATE_TIMEOUT 500
+#ifdef QCA_WIFI_3_0_EMU
+#define CONNECTION_UPDATE_TIMEOUT 3000
+#else
+#define CONNECTION_UPDATE_TIMEOUT 1000
+#endif
+
 
 /**
  * enum cds_max_rx_ss - Maximum number of receive spatial streams
