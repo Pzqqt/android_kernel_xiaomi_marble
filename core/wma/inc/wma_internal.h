@@ -395,10 +395,8 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
 QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 			struct sir_ipa_offload_enable_disable *ipa_offload);
 
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 void wma_process_unit_test_cmd(WMA_HANDLE handle,
 				      t_wma_unit_test_cmd * wma_utest);
-#endif
 
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui);
 

@@ -177,28 +177,95 @@ QDF_STATUS csr_neighbor_roam_indicate_connect(tpAniSirGlobal pMac,
 		uint8_t sessionId, QDF_STATUS status);
 QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 		uint8_t sessionId);
-bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal pMac,
-		uint8_t sessionId);
-void csr_neighbor_roam_request_handoff(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId);
 void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId);
-void csr_neighbor_roam_purge_preauth_failed_list(tpAniSirGlobal pMac);
 QDF_STATUS csr_neighbor_roam_transit_to_cfg_chan_scan(tpAniSirGlobal pMac,
 		uint8_t sessionId);
 QDF_STATUS csrNeighborRoamTransitionToPreauthDone(tpAniSirGlobal pMac);
 QDF_STATUS csr_neighbor_roam_prepare_scan_profile_filter(tpAniSirGlobal pMac,
 		tCsrScanResultFilter *pScanFilter, uint8_t sessionId);
-bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
-		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal pMac,
 		uint8_t sessionId, tSirRetStatus limStatus);
 bool csr_neighbor_roam_is11r_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(
 		tpAniSirGlobal pMac, uint8_t sessionId);
+#ifdef WLAN_FEATURE_HOST_ROAM
 void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
 		tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_neighbor_roam_state_preauth_done(tpAniSirGlobal pMac,
 		uint8_t sessionId);
+QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
+		uint32_t sessionId);
+void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
+		tDblLinkList *llist);
+bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
+		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId);
+QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
+		uint32_t sessionId, tSirBssDescription *pSirBssDesc,
+		tDot11fBeaconIEs *pIes, tCsrRoamProfile *pProfile);
+void csr_neighbor_roam_request_handoff(tpAniSirGlobal pMac, uint8_t sessionId);
+QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(tpAniSirGlobal pMac,
+		void *pMsg);
+QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
+		uint8_t sessionId);
+bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal pMac,
+		uint8_t sessionId);
+void csr_neighbor_roam_reset_preauth_control_info(
+		tpAniSirGlobal mac_ctx, uint8_t session_id);
+void csr_neighbor_roam_purge_preauth_failed_list(tpAniSirGlobal pMac);
+#else
+static inline bool csr_neighbor_roam_state_preauth_done(tpAniSirGlobal pMac,
+		uint8_t sessionId)
+{
+	return false;
+}
+static inline QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
+		uint32_t sessionId)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+static inline QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
+		uint32_t sessionId, tSirBssDescription *pSirBssDesc,
+		tDot11fBeaconIEs *pIes, tCsrRoamProfile *pProfile)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+static inline QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(
+		tpAniSirGlobal pMac, void *pMsg)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+static inline QDF_STATUS csr_neighbor_roam_process_scan_complete(
+		tpAniSirGlobal pMac, uint8_t sessionId)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+static inline void csr_neighbor_roam_tranistion_preauth_done_to_disconnected(
+		tpAniSirGlobal pMac, uint8_t sessionId)
+{}
+static inline void csr_neighbor_roam_free_roamable_bss_list(
+		tpAniSirGlobal mac_ctx, tDblLinkList *llist)
+{}
+static inline void csr_neighbor_roam_request_handoff(tpAniSirGlobal pMac,
+		uint8_t sessionId)
+{}
+static inline void csr_neighbor_roam_reset_preauth_control_info(
+		tpAniSirGlobal mac_ctx, uint8_t session_id)
+{}
+static inline void csr_neighbor_roam_purge_preauth_failed_list(
+		tpAniSirGlobal pMac)
+{}
+static inline bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
+		tpCsrNeighborRoamBSSInfo pHandoffNode, uint8_t sessionId)
+{
+	return false;
+}
+static inline bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal pMac,
+		uint8_t sessionId)
+{
+	return false;
+}
+#endif
 bool csr_neighbor_middle_of_roaming(tpAniSirGlobal pMac, uint8_t sessionId);
 QDF_STATUS csr_neighbor_roam_set_lookup_rssi_threshold(tpAniSirGlobal pMac,
 		uint8_t sessionId, uint8_t neighborLookupRssiThreshold);
@@ -270,10 +337,16 @@ void csr_roam_reset_roam_params(tpAniSirGlobal mac_ptr);
 #define REASON_ROAM_SCAN_HI_RSSI_DELAY_CHANGED      32
 #define REASON_ROAM_SCAN_HI_RSSI_UB_CHANGED         33
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac, uint8_t sessionId,
 		uint8_t command, uint8_t reason);
-QDF_STATUS csr_neighbor_roam_candidate_found_ind_hdlr(tpAniSirGlobal pMac,
-		void *pMsg);
+#else
+static inline QDF_STATUS csr_roam_offload_scan(tpAniSirGlobal pMac,
+		uint8_t sessionId, uint8_t command, uint8_t reason)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 QDF_STATUS csr_neighbor_roam_handoff_req_hdlr(tpAniSirGlobal pMac, void *pMsg);
 QDF_STATUS csr_neighbor_roam_proceed_with_handoff_req(tpAniSirGlobal pMac,
 		uint8_t sessionId);
@@ -294,6 +367,11 @@ QDF_STATUS csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 void csr_roam_synch_callback(tpAniSirGlobal mac,
 	roam_offload_synch_ind *roam_synch_data,
 	tpSirBssDescription  bss_desc_ptr, uint8_t reason);
+#else
+static inline void csr_roam_synch_callback(tpAniSirGlobal mac,
+	roam_offload_synch_ind *roam_synch_data,
+	tpSirBssDescription  bss_desc_ptr, uint8_t reason)
+{}
 #endif
 void csr_neighbor_roam_state_transition(tpAniSirGlobal mac_ctx,
 		uint8_t newstate, uint8_t session);
@@ -307,8 +385,6 @@ void csr_neighbor_roam_free_neighbor_roam_bss_node(tpAniSirGlobal pMac,
 		tpCsrNeighborRoamBSSInfo neighborRoamBSSNode);
 QDF_STATUS csr_neighbor_roam_issue_preauth_req(tpAniSirGlobal pMac,
 		uint8_t sessionId);
-void csr_neighbor_roam_reset_preauth_control_info(
-		tpAniSirGlobal mac_ctx, uint8_t session_id);
 bool csr_neighbor_roam_is_preauth_candidate(tpAniSirGlobal pMac,
 		    uint8_t sessionId, tSirMacAddr bssId);
 #ifdef FEATURE_WLAN_LFR_METRICS
@@ -320,18 +396,9 @@ static inline void csr_neighbor_roam_send_lfr_metric_event(
 		tSirMacAddr bssid, eRoamCmdStatus status)
 {}
 #endif
-void csr_neighbor_roam_free_roamable_bss_list(tpAniSirGlobal mac_ctx,
-		tDblLinkList * llist);
-QDF_STATUS csr_neighbor_roam_process_scan_complete(tpAniSirGlobal pMac,
-		uint8_t sessionId);
 QDF_STATUS csr_roam_stop_wait_for_key_timer(tpAniSirGlobal pMac);
 uint32_t csr_get_current_ap_rssi(tpAniSirGlobal pMac,
 		tScanResultHandle *pScanResultList, uint8_t sessionId);
-QDF_STATUS csr_roam_issue_reassociate(tpAniSirGlobal pMac,
-		uint32_t sessionId, tSirBssDescription *pSirBssDesc,
-		tDot11fBeaconIEs *pIes, tCsrRoamProfile *pProfile);
-QDF_STATUS csr_roam_issue_reassociate_cmd(tpAniSirGlobal pMac,
-		uint32_t sessionId);
 QDF_STATUS csr_roam_copy_connected_profile(tpAniSirGlobal pMac,
 		uint32_t sessionId, tCsrRoamProfile *pDstProfile);
 

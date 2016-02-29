@@ -585,9 +585,21 @@ uint8_t lim_get_80Mhz_center_channel(uint8_t primary_channel);
 void lim_update_obss_scanparams(tpPESession session,
 			tDot11fIEOBSSScanParameters *scan_params);
 void lim_init_obss_params(tpAniSirGlobal mac_ctx, tpPESession session);
+#ifdef WLAN_FEATURE_HOST_ROAM
 uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx);
 void lim_delete_timers_host_roam(tpAniSirGlobal mac_ctx);
 void lim_deactivate_and_change_timer_host_roam(tpAniSirGlobal mac_ctx,
 		uint32_t timer_id);
+#else
+static inline uint32_t lim_create_timers_host_roam(tpAniSirGlobal mac_ctx)
+{
+	return 0;
+}
+static inline void lim_delete_timers_host_roam(tpAniSirGlobal mac_ctx)
+{}
+static inline void lim_deactivate_and_change_timer_host_roam(
+		tpAniSirGlobal mac_ctx, uint32_t timer_id)
+{}
+#endif
 
 #endif /* __LIM_UTILS_H */

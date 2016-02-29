@@ -170,6 +170,13 @@ bool lim_is_assoc_req_for_drop(tpAniSirGlobal mac, uint8_t *rx_pkt_info);
 QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
 	tpSirBssDescription  bss_desc_ptr);
+#else
+static inline QDF_STATUS pe_roam_synch_callback(tpAniSirGlobal mac_ctx,
+	struct sSirSmeRoamOffloadSynchInd *roam_sync_ind_ptr,
+	tpSirBssDescription  bss_desc_ptr)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
 #endif
 #define limGetQosMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limQosEnabled)
 #define limGetWmeMode(psessionEntry, pVal) (*(pVal) = (psessionEntry)->limWmeEnabled)

@@ -45,45 +45,91 @@
    ------------------------------------------------------------------------*/
 void lim_ft_open(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry);
-void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac, tpPESession psessionEntry);
+#ifdef WLAN_FEATURE_HOST_ROAM
+void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
+		tpPESession psessionEntry);
 int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac, tpSirMsgQ pMsg);
+void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
+void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
+		tpPESession psessionEntry);
 void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, QDF_STATUS status,
-			     uint32_t *data, tpPESession psessionEntry);
-void limPerformPostFTPreAuth(tpAniSirGlobal pMac, QDF_STATUS status,
-			     uint32_t *data, tpPESession psessionEntry);
-void limFTResumeLinkCb(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *data);
+		uint32_t *data, tpPESession psessionEntry);
 void lim_post_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
-			      uint8_t *auth_rsp, uint16_t auth_rsp_length,
-			      tpPESession psessionEntry);
+		uint8_t *auth_rsp, uint16_t auth_rsp_length,
+		tpPESession psessionEntry);
 void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
-				uint8_t *auth_rsp, uint16_t auth_rsp_len,
-				tpPESession psessionEntry);
-void lim_process_mlm_reassoc_cnf(tpAniSirGlobal, uint32_t *);
+		uint8_t *auth_rsp, uint16_t auth_rsp_len,
+		tpPESession psessionEntry);
+tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
+		tpPESession psessionEntry);
+void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx, uint32_t *msg);
 void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
 		tpSirMsgQ limMsgQ, tpPESession psessionEntry);
-void lim_process_mlm_reassoc_req(tpAniSirGlobal, uint32_t *);
-void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
-				    tpPESession psessionEntry);
-void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac);
+void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg);
 void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
 				enum lim_scan_event_type event,
 				uint8_t session_id,
 				uint32_t scan_id);
-tSirRetStatus lim_ft_setup_auth_session(tpAniSirGlobal pMac,
-					tpPESession psessionEntry);
+QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
+		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
+#else
+static inline void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac,
+		tpPESession psessionEntry)
+{}
+static inline void lim_process_ft_preauth_rsp_timeout(tpAniSirGlobal pMac)
+{}
+static inline void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac,
+		uint32_t *pMsgBuf, tpPESession psessionEntry)
+{}
+static inline void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac,
+		tSirRetStatus status, uint8_t *auth_rsp,
+		uint16_t auth_rsp_len, tpPESession psessionEntry)
+{}
+static inline void lim_process_mlm_reassoc_cnf(tpAniSirGlobal mac_ctx,
+		uint32_t *msg)
+{}
+static inline void lim_process_sta_mlm_add_bss_rsp_ft(tpAniSirGlobal pMac,
+		tpSirMsgQ limMsgQ, tpPESession psessionEntry)
+{}
+static inline void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx,
+		uint32_t *msg)
+{}
+static inline void lim_preauth_scan_event_handler(tpAniSirGlobal mac_ctx,
+		enum lim_scan_event_type event,
+		uint8_t session_id, uint32_t scan_id)
+{}
+static inline int lim_process_ft_pre_auth_req(tpAniSirGlobal pMac,
+		tpSirMsgQ pMsg)
+{
+	return 0;
+}
+#endif
 
-bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
-tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
-void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
-void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal pMac);
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 void lim_fill_ft_session(tpAniSirGlobal pMac,
 		tpSirBssDescription pbssDescription,
 		tpPESession pftSessionEntry,
 		tpPESession psessionEntry);
-tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
-		uint8_t updateEntry,
+void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac, uint8_t updateEntry,
 		tpPESession pftSessionEntry,
 		tpSirBssDescription bssDescription);
 QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 		uint8_t session_id, tSirFTPreAuthReq *ft_preauth_req);
+#else
+static inline void lim_fill_ft_session(tpAniSirGlobal pMac,
+		tpSirBssDescription pbssDescription,
+		tpPESession pftSessionEntry,
+		tpPESession psessionEntry)
+{}
+static inline void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
+		uint8_t updateEntry, tpPESession pftSessionEntry,
+		tpSirBssDescription bssDescription)
+{}
+#endif
+
+bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf);
+tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac,
+		uint32_t *pMsgBuf);
+void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg);
+void lim_ft_cleanup_all_ft_sessions(tpAniSirGlobal pMac);
 #endif /* __LIMFT_H__ */

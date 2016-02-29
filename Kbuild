@@ -41,6 +41,8 @@ ifeq ($(KERNEL_BUILD), 0)
 	CONFIG_MOBILE_ROUTER := y
 	endif
 
+	#Flag to enable Legacy Fast Roaming2(LFR2)
+	CONFIG_QCACLD_WLAN_LFR2 := y
 	#Flag to enable Legacy Fast Roaming3(LFR3)
 	CONFIG_QCACLD_WLAN_LFR3 := y
 
@@ -401,10 +403,8 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_admit_control.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_api.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_assoc_utils.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_reassoc_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_debug.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ft.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_ft_preauth.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ibss_peer_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_link_monitoring_algo.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_p2p.o \
@@ -417,7 +417,6 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_deauth_frame.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_disassoc_frame.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_message_queue.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_process_mlm_host_roam.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_mlm_req_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_mlm_rsp_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_process_probe_req_frame.o \
@@ -427,7 +426,6 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_scan_result_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_security_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_management_frames.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_send_frames_host_roam.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_send_sme_rsp_messages.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_ser_des_utils.o \
@@ -436,12 +434,19 @@ MAC_LIM_OBJS := $(MAC_SRC_DIR)/pe/lim/lim_aid_mgmt.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_sme_req_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_sta_hash_api.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_timer_utils.o \
-		$(MAC_SRC_DIR)/pe/lim/lim_roam_timer_utils.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_trace.o \
 		$(MAC_SRC_DIR)/pe/lim/lim_utils.o
 
 ifeq ($(CONFIG_QCOM_TDLS),y)
 MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_tdls.o
+endif
+
+ifeq ($(CONFIG_QCACLD_WLAN_LFR2),y)
+	MAC_LIM_OBJS += $(MAC_SRC_DIR)/pe/lim/lim_process_mlm_host_roam.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_send_frames_host_roam.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_roam_timer_utils.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_ft_preauth.o \
+		$(MAC_SRC_DIR)/pe/lim/lim_reassoc_utils.o
 endif
 
 MAC_SCH_OBJS := $(MAC_SRC_DIR)/pe/sch/sch_api.o \
@@ -500,13 +505,18 @@ SME_INC := 	-I$(WLAN_ROOT)/$(SME_INC_DIR) \
 		-I$(WLAN_ROOT)/$(SME_SRC_DIR)/csr
 
 SME_CSR_OBJS := $(SME_SRC_DIR)/csr/csr_api_roam.o \
-		$(SME_SRC_DIR)/csr/csr_roam_preauth.o \
 		$(SME_SRC_DIR)/csr/csr_api_scan.o \
 		$(SME_SRC_DIR)/csr/csr_cmd_process.o \
 		$(SME_SRC_DIR)/csr/csr_link_list.o \
 		$(SME_SRC_DIR)/csr/csr_neighbor_roam.o \
 		$(SME_SRC_DIR)/csr/csr_util.o \
+
+
+ifeq ($(CONFIG_QCACLD_WLAN_LFR2),y)
+SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csr_roam_preauth.o \
 		$(SME_SRC_DIR)/csr/csr_host_scan_roam.o
+endif
+
 
 ifeq ($(CONFIG_QCOM_TDLS),y)
 SME_CSR_OBJS += $(SME_SRC_DIR)/csr/csr_tdls_process.o
@@ -1017,6 +1027,10 @@ endif
 
 ifeq ($(CONFIG_QCACLD_WLAN_LFR3),y)
 CDEFINES += -DWLAN_FEATURE_ROAM_OFFLOAD
+endif
+
+ifeq ($(CONFIG_QCACLD_WLAN_LFR2),y)
+CDEFINES += -DWLAN_FEATURE_HOST_ROAM
 endif
 
 ifeq ($(CONFIG_PRIMA_WLAN_OKC),y)

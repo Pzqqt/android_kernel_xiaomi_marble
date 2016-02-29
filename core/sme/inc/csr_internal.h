@@ -1008,10 +1008,8 @@ typedef struct tagCsrRoamStruct {
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
 	uint32_t deauthRspStatus;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t *pReassocResp;          /* reassociation response from new AP */
 	uint16_t reassocRespLen;        /* length of reassociation response */
-#endif
 } tCsrRoamStruct;
 
 #define GET_NEXT_ROAM_ID(pRoamStruct)  (((pRoamStruct)->nextRoamId + 1 == 0) ? \
@@ -1300,8 +1298,16 @@ bool csr_is_channel_present_in_list(uint8_t *pChannelList, int numChannels,
 		uint8_t channel);
 QDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList, int numChannels,
 		uint8_t channel);
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 QDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
 		tpSirRoamOffloadScanRsp scanOffloadRsp);
+#else
+static inline QDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
+		tpSirRoamOffloadScanRsp scanOffloadRsp)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 QDF_STATUS csr_handoff_request(tpAniSirGlobal pMac, uint8_t sessionId,
 		tCsrHandoffRequest *pHandoffInfo);
 bool csr_roam_is_sta_mode(tpAniSirGlobal pMac, uint32_t sessionId);
@@ -1325,6 +1331,11 @@ QDF_STATUS csr_roam_modify_add_ies(tpAniSirGlobal pMac, tSirModifyIE *pModifyIE,
 QDF_STATUS
 csr_roam_update_add_ies(tpAniSirGlobal pMac,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
+		struct sSirSmeRoamOffloadSynchInd *roam_synch_ind_ptr,
+		tpSirBssDescription  bss_desc_ptr);
+void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf);
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
 void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
 		roam_offload_synch_ind *roam_synch_ind_ptr,
@@ -1335,11 +1346,6 @@ static inline void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
 		eCsrDiagWlanStatusEventReason reason)
 {}
 #endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
-		roam_offload_synch_ind *roam_synch_ind_ptr,
-		tpSirBssDescription  bss_desc_ptr);
-void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf);
 #endif
 bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,
 		tCsrRoamProfile *profile,

@@ -119,6 +119,7 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	qdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext), 0);
 }
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /*------------------------------------------------------------------
  *
  * Create the new Add Bss Req to the new AP.
@@ -126,10 +127,9 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
  * The newly created ft Session entry is passed to this function
  *
  *------------------------------------------------------------------*/
-tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
-					 uint8_t updateEntry,
-					 tpPESession pftSessionEntry,
-					 tpSirBssDescription bssDescription)
+void lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
+		uint8_t updateEntry, tpPESession pftSessionEntry,
+		tpSirBssDescription bssDescription)
 {
 	tpAddBssParams pAddBssParams = NULL;
 	tAddStaParams *sta_ctx;
@@ -139,14 +139,14 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(pftSessionEntry)) {
 		lim_log(pMac, LOGE, FL("psessionEntry is not in STA mode"));
-		return eSIR_FAILURE;
+		return;
 	}
 
 	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == pBeaconStruct) {
 		lim_log(pMac, LOGE,
 			FL("Unable to allocate memory for creating ADD_BSS"));
-		return eSIR_MEM_ALLOC_FAILED;
+		return;
 	}
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
 	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
@@ -154,7 +154,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		qdf_mem_free(pBeaconStruct);
 		lim_log(pMac, LOGP,
 			FL("Unable to allocate memory for creating ADD_BSS"));
-		return eSIR_MEM_ALLOC_FAILED;
+		return;
 	}
 
 	qdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams), 0);
@@ -457,7 +457,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	pAddBssParams->sessionId = pftSessionEntry->peSessionId;
 
 	/* Set a new state for MLME */
-	if (!pftSessionEntry->bRoamSynchInProgress) {
+	if (!lim_is_roam_synch_in_progress(pftSessionEntry)) {
 		pftSessionEntry->limMlmState =
 			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE;
 		MTRACE(mac_trace
@@ -469,12 +469,14 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 
 	pftSessionEntry->ftPEContext.pAddBssReq = pAddBssParams;
 
-	lim_log(pMac, LOG1, FL("Saving SIR_HAL_ADD_BSS_REQ for pre-auth ap..."));
+	lim_log(pMac, LOG1, FL("Saving SIR_HAL_ADD_BSS_REQ for pre-auth ap."));
 
 	qdf_mem_free(pBeaconStruct);
-	return 0;
+	return;
 }
+#endif
 
+#if defined(WLAN_FEATURE_HOST_ROAM) || defined(WLAN_FEATURE_ROAM_OFFLOAD)
 /*------------------------------------------------------------------
  *
  * Setup the new session for the pre-auth AP.
@@ -667,7 +669,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 		regMax, localPowerConstraint,
 		pMac->roam.configParam.nTxPowerCap,
 		pftSessionEntry->maxTxPower);
-	if (!psessionEntry->bRoamSynchInProgress) {
+	if (!lim_is_roam_synch_in_progress(psessionEntry)) {
 		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
 		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
 		MTRACE(mac_trace(pMac,
@@ -692,6 +694,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 
 	qdf_mem_free(pBeaconStruct);
 }
+#endif
 
 /*------------------------------------------------------------------
  *

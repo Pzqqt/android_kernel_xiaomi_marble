@@ -154,12 +154,11 @@ typedef enum {
 #endif /* FEATURE_WLAN_EXTSCAN */
 
 #define SIR_KRK_KEY_LEN 16
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define SIR_BTK_KEY_LEN 32
 #define SIR_KCK_KEY_LEN 16
 #define SIR_KEK_KEY_LEN 16
 #define SIR_REPLAY_CTR_LEN 8
-
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 #define SIR_UAPSD_BITOFFSET_ACVO     0
 #define SIR_UAPSD_BITOFFSET_ACVI     1
 #define SIR_UAPSD_BITOFFSET_ACBK     2
@@ -4006,7 +4005,6 @@ typedef struct {
 	uint8_t event_data[];
 } tSirNanEvent, *tpSirNanEvent;
 #endif
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 typedef struct sSirSmeRoamOffloadSynchInd {
 	uint16_t messageType;   /*eWNI_SME_ROAM_OFFLOAD_SYNCH_IND */
 	uint16_t length;
@@ -4034,6 +4032,7 @@ typedef struct sSirSmeRoamOffloadSynchInd {
 	tpSirBssDescription  bss_desc_ptr;
 } roam_offload_synch_ind;
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 typedef struct sSirSmeRoamOffloadSynchCnf {
 	uint8_t sessionId;
 } tSirSmeRoamOffloadSynchCnf, *tpSirSmeRoamOffloadSynchCnf;

@@ -2184,7 +2184,7 @@ __wlan_hdd_cfg80211_get_features(struct wiphy *wiphy,
 		return -EPERM;
 	}
 
-	if (hdd_ctx_ptr->config->isRoamOffloadEnabled) {
+	if (is_roaming_offload_enabled(hdd_ctx_ptr)) {
 		hddLog(LOG1, FL("Key Mgmt Offload is supported"));
 		wlan_hdd_cfg80211_set_feature(feature_flags,
 				QCA_WLAN_VENDOR_FEATURE_KEY_MGMT_OFFLOAD);
@@ -2889,6 +2889,7 @@ static int wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 
 	return ret;
 }
+#endif
 
 static const struct nla_policy qca_wlan_vendor_get_wifi_info_policy[
 			QCA_WLAN_VENDOR_ATTR_WIFI_INFO_GET_MAX + 1] = {
@@ -3086,6 +3087,7 @@ wlan_hdd_cfg80211_get_logger_supp_feature(struct wiphy *wiphy,
 	return ret;
 }
 
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
  * wlan_hdd_send_roam_auth_event() - Send the roamed and authorized event
  * @hdd_ctx_ptr: pointer to HDD Context.
@@ -3126,7 +3128,7 @@ int wlan_hdd_send_roam_auth_event(hdd_context_t *hdd_ctx_ptr, uint8_t *bssid,
 		return -EINVAL;
 	}
 
-	if (!hdd_ctx_ptr->config->isRoamOffloadEnabled ||
+	if (!is_roaming_offload_enabled(hdd_ctx_ptr) ||
 			!roam_info_ptr->roamSynchInProgress)
 		return 0;
 
@@ -3221,7 +3223,7 @@ nla_put_failure:
 	kfree_skb(skb);
 	return -EINVAL;
 }
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+#endif
 
 static const struct nla_policy
 wlan_hdd_wifi_config_policy[QCA_WLAN_VENDOR_ATTR_CONFIG_MAX + 1] = {

@@ -608,7 +608,7 @@ lim_cleanup_rx_path(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	pStaDs->valid = 0;
 	lim_send_sme_tsm_ie_ind(pMac, psessionEntry, 0, 0, 0);
 	/* Any roaming related changes should be above this line */
-	if (psessionEntry->bRoamSynchInProgress)
+	if (lim_is_roam_synch_in_progress(psessionEntry))
 		return eSIR_SUCCESS;
 	pStaDs->mlmStaContext.mlmState = eLIM_MLM_WT_DEL_STA_RSP_STATE;
 

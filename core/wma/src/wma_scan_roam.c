@@ -2103,51 +2103,6 @@ cleanup_label:
 }
 
 /**
- * wma_rssi_breached_event_handler() - rssi breached event handler
- * @handle: wma handle
- * @cmd_param_info: event handler data
- * @len: length of @cmd_param_info
- *
- * Return: 0 on success; error number otherwise
- */
-int wma_rssi_breached_event_handler(void *handle,
-				u_int8_t  *cmd_param_info, u_int32_t len)
-{
-	WMI_RSSI_BREACH_EVENTID_param_tlvs *param_buf;
-	wmi_rssi_breach_event_fixed_param  *event;
-	struct rssi_breach_event  rssi;
-	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
-
-	if (!mac) {
-		WMA_LOGE("%s: Invalid mac context", __func__);
-		return -EINVAL;
-	}
-	if (!mac->sme.rssi_threshold_breached_cb) {
-		WMA_LOGE("%s: Callback not registered", __func__);
-		return -EINVAL;
-	}
-	param_buf = (WMI_RSSI_BREACH_EVENTID_param_tlvs *)cmd_param_info;
-	if (!param_buf) {
-		WMA_LOGE("%s: Invalid rssi breached event", __func__);
-		return -EINVAL;
-	}
-	event = param_buf->fixed_param;
-
-	rssi.request_id = event->request_id;
-	rssi.session_id = event->vdev_id;
-	rssi.curr_rssi = event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
-	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->bssid, rssi.curr_bssid.bytes);
-
-	WMA_LOGD("%s: req_id: %u vdev_id: %d curr_rssi: %d", __func__,
-		rssi.request_id, rssi.session_id, rssi.curr_rssi);
-	WMA_LOGI("%s: curr_bssid: %pM", __func__, rssi.curr_bssid.bytes);
-
-	mac->sme.rssi_threshold_breached_cb(mac->hHdd, &rssi);
-	WMA_LOGD("%s: Invoke HDD rssi breached callback", __func__);
-	return 0;
-}
-
-/**
  * wma_roam_scan_fill_self_caps() - fill capabilities
  * @wma_handle: wma handle
  * @roam_offload_params: offload parameters
@@ -2350,6 +2305,51 @@ void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts)
 	return;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
+
+/**
+ * wma_rssi_breached_event_handler() - rssi breached event handler
+ * @handle: wma handle
+ * @cmd_param_info: event handler data
+ * @len: length of @cmd_param_info
+ *
+ * Return: 0 on success; error number otherwise
+ */
+int wma_rssi_breached_event_handler(void *handle,
+				u_int8_t  *cmd_param_info, u_int32_t len)
+{
+	WMI_RSSI_BREACH_EVENTID_param_tlvs *param_buf;
+	wmi_rssi_breach_event_fixed_param  *event;
+	struct rssi_breach_event  rssi;
+	tpAniSirGlobal mac = cds_get_context(QDF_MODULE_ID_PE);
+
+	if (!mac) {
+		WMA_LOGE("%s: Invalid mac context", __func__);
+		return -EINVAL;
+	}
+	if (!mac->sme.rssi_threshold_breached_cb) {
+		WMA_LOGE("%s: Callback not registered", __func__);
+		return -EINVAL;
+	}
+	param_buf = (WMI_RSSI_BREACH_EVENTID_param_tlvs *)cmd_param_info;
+	if (!param_buf) {
+		WMA_LOGE("%s: Invalid rssi breached event", __func__);
+		return -EINVAL;
+	}
+	event = param_buf->fixed_param;
+
+	rssi.request_id = event->request_id;
+	rssi.session_id = event->vdev_id;
+	rssi.curr_rssi = event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
+	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->bssid, rssi.curr_bssid.bytes);
+
+	WMA_LOGD("%s: req_id: %u vdev_id: %d curr_rssi: %d", __func__,
+		rssi.request_id, rssi.session_id, rssi.curr_rssi);
+	WMA_LOGI("%s: curr_bssid: %pM", __func__, rssi.curr_bssid.bytes);
+
+	mac->sme.rssi_threshold_breached_cb(mac->hHdd, &rssi);
+	WMA_LOGD("%s: Invoke HDD rssi breached callback", __func__);
+	return 0;
+}
 
 /**
  * wma_process_unit_test_cmd() - send unit test command to fw.

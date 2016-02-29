@@ -458,11 +458,20 @@ void lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal, tSirMacAddr, tpAniSSID, short
 void lim_send_auth_mgmt_frame(tpAniSirGlobal, tSirMacAuthFrameBody *, tSirMacAddr,
 			      uint8_t, tpPESession, bool wait_for_ack);
 void lim_send_assoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmAssocReq *, tpPESession);
+#ifdef WLAN_FEATURE_HOST_ROAM
+void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal pMac,
+		tLimMlmReassocReq *pMlmReassocReq, tpPESession psessionEntry);
 void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal, tLimMlmReassocReq *,
 				     tpPESession);
-void lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal pMac,
-						 tLimMlmReassocReq *pMlmReassocReq,
-						 tpPESession psessionEntry);
+#else
+static inline void lim_send_reassoc_req_with_ft_ies_mgmt_frame(
+		tpAniSirGlobal pMac, tLimMlmReassocReq *pMlmReassocReq,
+		tpPESession psessionEntry)
+{}
+static inline void lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
+		tLimMlmReassocReq *reassoc_req, tpPESession pe_session)
+{}
+#endif
 void lim_send_delts_req_action_frame(tpAniSirGlobal pMac, tSirMacAddr peer,
 				     uint8_t wmmTspecPresent,
 				     tSirMacTSInfo * pTsinfo,

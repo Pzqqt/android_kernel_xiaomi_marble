@@ -4640,6 +4640,10 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 		FL("Not able to post ROAM_INVOKE_CMD message to WMA"));
 	}
 }
+#else
+static inline void hdd_wma_send_fastreassoc_cmd(int sessionId,
+		tSirMacAddr bssid, int channel)
+{}
 #endif
 static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 				hdd_context_t *hdd_ctx,
@@ -4713,13 +4717,11 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 		hddLog(LOGE, FL("Invalid Channel [%d]"), channel);
 		return -EINVAL;
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (hdd_ctx->config->isRoamOffloadEnabled) {
+	if (is_roaming_offload_enabled(hdd_ctx)) {
 		hdd_wma_send_fastreassoc_cmd((int)adapter->sessionId,
 					targetApBssid, (int)channel);
 		goto exit;
 	}
-#endif
 	/* Proceed with reassoc */
 	handoffInfo.channel = channel;
 	handoffInfo.src = FASTREASSOC;

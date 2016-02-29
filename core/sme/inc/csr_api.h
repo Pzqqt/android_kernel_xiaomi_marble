@@ -1573,9 +1573,16 @@ typedef void (*tCsrTsmStatsCallback)(tAniTrafStrmMetrics tsmMetrics,
 				     uint32_t staId, void *pContext);
 #endif /* FEATURE_WLAN_ESE */
 typedef void (*tCsrSnrCallback)(int8_t snr, uint32_t staId, void *pContext);
-
+#ifdef WLAN_FEATURE_HOST_ROAM
 QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal, uint32_t sessionId,
-					 tpSirBssDescription pBssDescription);
+		tpSirBssDescription pBssDescription);
+#else
+static inline QDF_STATUS csr_roam_issue_ft_preauth_req(tHalHandle hHal,
+		uint32_t sessionId, tpSirBssDescription pBssDescription)
+{
+	return QDF_STATUS_E_NOSUPPORT;
+}
+#endif
 QDF_STATUS csr_set_band(tHalHandle hHal, uint8_t sessionId, eCsrBand eBand);
 eCsrBand csr_get_current_band(tHalHandle hHal);
 typedef void (*csr_readyToSuspendCallback)(void *pContext, bool suspended);

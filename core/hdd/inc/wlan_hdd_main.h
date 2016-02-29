@@ -1645,4 +1645,17 @@ static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
 static inline void hdd_set_tso_flags(hdd_context_t *hdd_ctx,
 	 struct net_device *wlan_dev){}
 #endif /* FEATURE_TSO */
+
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+static inline bool is_roaming_offload_enabled(hdd_context_t *hdd_ctx)
+{
+	return hdd_ctx->config->isRoamOffloadEnabled;
+}
+#else
+static inline bool is_roaming_offload_enabled(hdd_context_t *hdd_ctx)
+{
+	return false;
+}
+#endif
+
 #endif /* end #if !defined(WLAN_HDD_MAIN_H) */

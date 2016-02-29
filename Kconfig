@@ -115,4 +115,8 @@ config FEATURE_WLAN_MCC_TO_SCC_SWITCH
 	bool "Enable MCC to SCC Switch Logic"
 	default n
 
+config QCACLD_WLAN_LFR2
+	bool "Enable the WLAN Legacy Fast Roaming feature Version 2"
+	default n
+
 endif # QCA_CLD_WLAN

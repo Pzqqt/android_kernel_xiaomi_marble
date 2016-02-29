@@ -997,12 +997,18 @@ QDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
 QDF_STATUS
 csr_send_chng_mcc_beacon_interval(tpAniSirGlobal pMac, uint32_t sessionId);
 
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_ft_pre_auth_rsp_processor
-    \brief csr function that handles pre auth response from LIM
-   ---------------------------------------------------------------------------*/
+#ifdef WLAN_FEATURE_HOST_ROAM
 void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
-					tpSirFTPreAuthRsp pFTPreAuthRsp);
+		tpSirFTPreAuthRsp pFTPreAuthRsp);
+void csr_release_command_preauth(tpAniSirGlobal mac_ctx, tSmeCmd *command);
+#else
+static inline void csr_roam_ft_pre_auth_rsp_processor(tHalHandle hHal,
+		tpSirFTPreAuthRsp pFTPreAuthRsp)
+{}
+static inline void csr_release_command_preauth(tpAniSirGlobal mac_ctx,
+		tSmeCmd *command)
+{}
+#endif
 
 #if defined(FEATURE_WLAN_ESE)
 void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
@@ -1058,4 +1064,3 @@ bool is_disconnect_pending(tpAniSirGlobal mac_ctx,
 void csr_scan_active_list_timeout_handle(void *userData);
 QDF_STATUS csr_prepare_disconnect_command(tpAniSirGlobal mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);
-void csr_release_command_preauth(tpAniSirGlobal mac_ctx, tSmeCmd *command);

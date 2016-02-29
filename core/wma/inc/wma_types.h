@@ -698,11 +698,24 @@ QDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
 
 QDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
 QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr, uint8_t reason),
 		QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr));
+#else
+static inline CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+			roam_offload_synch_ind *roam_synch_data,
+			tpSirBssDescription  bss_desc_ptr, uint8_t reason),
+		CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+			roam_offload_synch_ind *roam_synch_data,
+			tpSirBssDescription  bss_desc_ptr))
+{
+	return CDF_STATUS_E_NOSUPPORT;
+}
+#endif
 
 #endif

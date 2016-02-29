@@ -535,16 +535,14 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	tSchBeaconStruct *beacon;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t sme_sessionid = 0;
-#endif
 	tCsrRoamSession *roam_session;
+#endif
 
 	/* Initialize status code to success. */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session_entry->bRoamSynchInProgress)
+	if (lim_is_roam_synch_in_progress(session_entry))
 		hdr = (tpSirMacMgmtHdr) mac_ctx->roam.pReassocResp;
 	else
-#endif
-	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	sme_sessionid = session_entry->smeSessionId;
 #endif
@@ -587,21 +585,17 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		qdf_mem_free(beacon);
 		return;
 	}
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session_entry->bRoamSynchInProgress) {
+	if (lim_is_roam_synch_in_progress(session_entry)) {
 		hdr = (tpSirMacMgmtHdr) mac_ctx->roam.pReassocResp;
 		frame_len = mac_ctx->roam.reassocRespLen - SIR_MAC_HDR_LEN_3A;
 	} else {
-#endif
-	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
-	frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-}
-#endif
+		hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
+		frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
+	}
 	if (((subtype == LIM_ASSOC) &&
 		(session_entry->limMlmState != eLIM_MLM_WT_ASSOC_RSP_STATE)) ||
 		((subtype == LIM_REASSOC) &&
-		 !session_entry->bRoamSynchInProgress &&
+		 !lim_is_roam_synch_in_progress(session_entry) &&
 		((session_entry->limMlmState != eLIM_MLM_WT_REASSOC_RSP_STATE)
 		&& (session_entry->limMlmState !=
 		eLIM_MLM_WT_FT_REASSOC_RSP_STATE)
@@ -667,12 +661,10 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	/* Get pointer to Re/Association Response frame body */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session_entry->bRoamSynchInProgress)
+	if (lim_is_roam_synch_in_progress(session_entry))
 		body = mac_ctx->roam.pReassocResp + SIR_MAC_HDR_LEN_3A;
 	else
-#endif
-	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
+		body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
 	/* parse Re/Association Response frame. */
 	if (sir_convert_assoc_resp_frame2_struct(mac_ctx, body,
 		frame_len, assoc_rsp) == eSIR_FAILURE) {
@@ -853,7 +845,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	if (!((session_entry->bssType == eSIR_BTAMP_STA_MODE) ||
 		((session_entry->bssType == eSIR_BTAMP_AP_MODE) &&
 		LIM_IS_BT_AMP_STA_ROLE(session_entry)) ||
-		session_entry->bRoamSynchInProgress)) {
+		lim_is_roam_synch_in_progress(session_entry))) {
 		if (lim_set_link_state
 			(mac_ctx, eSIR_LINK_POSTASSOC_STATE,
 			session_entry->bssId,
@@ -909,7 +901,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		}
 		if ((session_entry->limMlmState ==
 		    eLIM_MLM_WT_FT_REASSOC_RSP_STATE) ||
-			session_entry->bRoamSynchInProgress) {
+			lim_is_roam_synch_in_progress(session_entry)) {
 			lim_log(mac_ctx, LOG1, FL("Sending self sta"));
 			lim_update_assoc_sta_datas(mac_ctx, sta_ds, assoc_rsp,
 				session_entry);
@@ -920,17 +912,14 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				session_entry->gLimEdcaParams,
 				session_entry);
 			/* Send the active EDCA parameters to HAL */
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-			if (!session_entry->bRoamSynchInProgress) {
-#endif
-			lim_send_edca_params(mac_ctx,
-				session_entry->gLimEdcaParamsActive,
-				sta_ds->bssId);
-			lim_add_ft_sta_self(mac_ctx, (assoc_rsp->aid & 0x3FFF),
-				session_entry);
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		}
-#endif
+			if (!lim_is_roam_synch_in_progress(session_entry)) {
+				lim_send_edca_params(mac_ctx,
+					session_entry->gLimEdcaParamsActive,
+					sta_ds->bssId);
+				lim_add_ft_sta_self(mac_ctx,
+					(assoc_rsp->aid & 0x3FFF),
+					session_entry);
+			}
 			qdf_mem_free(beacon);
 			return;
 		}
