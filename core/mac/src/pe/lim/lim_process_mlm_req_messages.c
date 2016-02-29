@@ -2978,7 +2978,7 @@ void lim_complete_mlm_scan(tpAniSirGlobal mac_ctx, tSirResultCodes ret_code)
  */
 void lim_set_channel(tpAniSirGlobal mac_ctx, uint8_t channel,
 		     uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
-		     enum ch_width ch_width, int8_t max_tx_power,
+		     enum phy_ch_width ch_width, int8_t max_tx_power,
 		     uint8_t pe_session_id)
 {
 	tpPESession pe_session;

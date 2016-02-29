@@ -246,7 +246,7 @@ const char *hdd_device_mode_to_string(uint8_t device_mode)
  */
 int hdd_validate_channel_and_bandwidth(hdd_adapter_t *adapter,
 		uint32_t chan_number,
-		enum ch_width chan_bw)
+		enum phy_ch_width chan_bw)
 {
 	uint8_t chan[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t len = WNI_CFG_VALID_CHANNEL_LIST_LEN, i;
@@ -433,7 +433,7 @@ static int curr_con_mode;
  * Return: Converted channel width. In case of non matching NL channel width,
  * CH_WIDTH_MAX will be returned.
  */
-enum ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
+enum phy_ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 {
 	switch (ch_width) {
 	case NL80211_CHAN_WIDTH_20_NOHT:
@@ -449,11 +449,13 @@ enum ch_width hdd_map_nl_chan_width(enum nl80211_chan_width ch_width)
 	case NL80211_CHAN_WIDTH_160:
 		return CH_WIDTH_160MHZ;
 	case NL80211_CHAN_WIDTH_5:
+		return CH_WIDTH_5MHZ;
 	case NL80211_CHAN_WIDTH_10:
+		return CH_WIDTH_10MHZ;
 	default:
 		hdd_err("Invalid channel width %d, setting to default",
 				ch_width);
-		return CH_WIDTH_MAX;
+		return CH_WIDTH_INVALID;
 	}
 }
 

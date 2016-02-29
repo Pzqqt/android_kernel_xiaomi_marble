@@ -2398,7 +2398,7 @@ lim_send_sme_ap_channel_switch_resp(tpAniSirGlobal pMac,
 	tpSwitchChannelParams pSmeSwithChnlParams;
 	uint8_t channelId;
 	bool is_ch_dfs = false;
-	enum ch_width ch_width;
+	enum phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
 
 	pSmeSwithChnlParams = (tSwitchChannelParams *)

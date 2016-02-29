@@ -481,23 +481,6 @@ enum dfs_region {
 };
 
 /**
- * enum ch_width - channel width
- * @CH_WIDTH_20MHZ: channel width 20 MHz
- * @CH_WIDTH_40MHZ: channel width 40 MHz
- * @CH_WIDTH_80MHZ: channel width 80MHz
- * @CH_WIDTH_160MHZ: channel width 160 MHz
- * @CH_WIDTH_80P80MHZ: channel width 160MHz(80+80)
- */
-enum ch_width {
-	CH_WIDTH_20MHZ = 0,
-	CH_WIDTH_40MHZ = 1,
-	CH_WIDTH_80MHZ = 2,
-	CH_WIDTH_160MHZ = 3,
-	CH_WIDTH_80P80MHZ = 4,
-	CH_WIDTH_MAX
-};
-
-/**
  * enum offset_t: channel offset
  * @BW20: 20 mhz channel
  * @BW40_LOW_PRIMARY: lower channel in 40 mhz
@@ -549,7 +532,7 @@ struct country_code_to_reg_dmn {
  * @center_freq_seg1: center freq for segment 1
  */
 struct ch_params_s {
-	enum ch_width ch_width;
+	enum phy_ch_width ch_width;
 	uint8_t sec_ch_offset;
 	uint8_t center_freq_seg0;
 	uint8_t center_freq_seg1;

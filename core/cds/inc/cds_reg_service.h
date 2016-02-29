@@ -248,24 +248,25 @@ struct regulatory {
 };
 
 /**
- * enum chan_width: channel width
- *
- * @CHAN_WIDTH_0MHZ: channel disabled or invalid
- * @CHAN_WIDTH_5MHZ: channel width 5 MHZ
- * @CHAN_WIDTH_10MHZ: channel width 10 MHZ
- * @CHAN_WIDTH_20MHZ: channel width 20 MHZ
- * @CHAN_WIDTH_40MHZ: channel width 40 MHZ
- * @CHAN_WIDTH_80MHZ: channel width 80MHZ
- * @CHAN_WIDTH_160MHZ: channel width 160 MHZ
+ * phy_ch_width - channel width
+ * @CH_WIDTH_20MHZ: channel width 20 MHz
+ * @CH_WIDTH_40MHZ: channel width 40 MHz
+ * @CH_WIDTH_80MHZ: channel width 80MHz
+ * @CH_WIDTH_160MHZ: channel width 160 MHz
+ * @CH_WIDTH_80P80MHZ: channel width 160MHz(80+80)
+ * @CH_WIDTH_5MHZ: channel width 5MHz
+ * @CH_WIDTH_10MHZ: channel width 10MHz
  */
-enum channel_width {
-	CHAN_WIDTH_0MHZ,
-	CHAN_WIDTH_5MHZ,
-	CHAN_WIDTH_10MHZ,
-	CHAN_WIDTH_20MHZ,
-	CHAN_WIDTH_40MHZ,
-	CHAN_WIDTH_80MHZ,
-	CHAN_WIDTH_160MHZ
+enum phy_ch_width {
+	CH_WIDTH_20MHZ = 0,
+	CH_WIDTH_40MHZ = 1,
+	CH_WIDTH_80MHZ = 2,
+	CH_WIDTH_160MHZ = 3,
+	CH_WIDTH_80P80MHZ = 4,
+	CH_WIDTH_5MHZ = 5,
+	CH_WIDTH_10MHZ = 6,
+	CH_WIDTH_INVALID = 7,
+	CH_WIDTH_MAX
 };
 
 extern const struct chan_map chan_mapping[NUM_CHANNELS];
@@ -287,8 +288,9 @@ QDF_STATUS cds_put_dfs_region(uint8_t dfs_region);
 
 bool cds_is_dsrc_channel(uint16_t);
 enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
-						enum channel_width chan_width);
-enum channel_width cds_get_max_channel_bw(uint32_t chan_num);
+					   enum phy_ch_width chan_width);
+
+enum phy_ch_width cds_get_max_channel_bw(uint32_t chan_num);
 
 QDF_STATUS cds_set_reg_domain(void *client_ctxt, v_REGDOMAIN_t reg_domain);
 QDF_STATUS cds_put_default_country(uint8_t *def_country);

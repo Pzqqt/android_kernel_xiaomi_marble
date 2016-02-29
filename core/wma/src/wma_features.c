@@ -677,7 +677,7 @@ QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
  *
  * Return: return phy mode
  */
-WLAN_PHY_MODE wma_chan_to_mode(u8 chan, enum ch_width chan_width,
+WLAN_PHY_MODE wma_chan_to_mode(u8 chan, enum phy_ch_width chan_width,
 				      u8 vht_capable, u8 dot11_mode)
 {
 	WLAN_PHY_MODE phymode = MODE_UNKNOWN;

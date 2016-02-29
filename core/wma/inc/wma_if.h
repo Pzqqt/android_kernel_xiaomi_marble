@@ -499,7 +499,7 @@ typedef struct {
 	uint8_t halPersona;
 	uint8_t bSpectrumMgtEnabled;
 	uint8_t vhtCapable;
-	enum ch_width ch_width;
+	enum phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg0;
 	uint8_t ch_center_freq_seg1;
 	uint8_t reassocReq;     /* Set only during roaming reassociation */
@@ -910,7 +910,7 @@ typedef struct {
 	uint16_t smpsMode;
 	uint8_t isDfsChannel;
 	uint8_t vhtCapable;
-	enum ch_width ch_width;
+	enum phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg0;
 	uint8_t ch_center_freq_seg1;
 	uint8_t dot11_mode;

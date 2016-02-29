@@ -3866,7 +3866,7 @@ typedef struct sSirChanChangeRequest {
 	uint16_t messageLen;
 	uint8_t targetChannel;
 	uint8_t sec_ch_offset;
-	enum ch_width ch_width;
+	enum phy_ch_width ch_width;
 	uint8_t center_freq_seg_0;
 	uint8_t center_freq_seg_1;
 	uint8_t bssid[QDF_MAC_ADDR_SIZE];

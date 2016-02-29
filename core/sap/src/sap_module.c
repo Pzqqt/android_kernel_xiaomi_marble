@@ -1470,7 +1470,7 @@ static QDF_STATUS wlansap_update_csa_channel_params(ptSapContext sap_context,
  */
 QDF_STATUS
 wlansap_set_channel_change_with_csa(void *p_cds_gctx, uint32_t targetChannel,
-				    enum ch_width target_bw)
+					enum phy_ch_width target_bw)
 {
 
 	ptSapContext sapContext = NULL;

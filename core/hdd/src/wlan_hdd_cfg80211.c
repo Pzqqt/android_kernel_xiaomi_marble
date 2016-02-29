@@ -11274,7 +11274,7 @@ static int __wlan_hdd_cfg80211_channel_switch(struct wiphy *wiphy,
 	uint8_t channel;
 	uint16_t freq;
 	int ret;
-	enum ch_width ch_width;
+	enum phy_ch_width ch_width;
 
 	hddLog(LOG1, FL("Set Freq %d"),
 		  csa_params->chandef.chan->center_freq);

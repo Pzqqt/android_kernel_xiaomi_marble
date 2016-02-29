@@ -2005,7 +2005,7 @@ int hdd_softap_unpack_ie(tHalHandle halHandle,
  * Return: 0 for success, non zero for failure
  */
 int hdd_softap_set_channel_change(struct net_device *dev, int target_channel,
-				 enum ch_width target_bw)
+				 enum phy_ch_width target_bw)
 {
 	QDF_STATUS status;
 	int ret = 0;

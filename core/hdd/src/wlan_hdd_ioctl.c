@@ -7432,7 +7432,7 @@ static int drv_cmd_set_channel_switch(hdd_adapter_t *adapter,
 	int status;
 	uint32_t chan_number = 0, chan_bw = 0;
 	uint8_t *value = command;
-	enum ch_width width;
+	enum phy_ch_width width;
 
 	if ((adapter->device_mode != QDF_P2P_GO_MODE) &&
 		(adapter->device_mode != QDF_SAP_MODE)) {

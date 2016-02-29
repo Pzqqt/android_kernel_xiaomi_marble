@@ -209,7 +209,7 @@ enum channel_state cds_get_channel_state(uint32_t chan_num)
  * Return: channel state
  */
 enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
-					   enum channel_width ch_width)
+					   enum phy_ch_width ch_width)
 {
 	enum channel_enum chan_enum;
 	bool bw_enabled = false;
@@ -219,21 +219,21 @@ enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
 		return CHANNEL_STATE_INVALID;
 
 	if (reg_channels[chan_enum].state) {
-		if (CHAN_WIDTH_5MHZ == ch_width)
+		if (CH_WIDTH_5MHZ == ch_width)
 			bw_enabled = 1;
-		else if (CHAN_WIDTH_10MHZ == ch_width)
+		else if (CH_WIDTH_10MHZ == ch_width)
 			bw_enabled = !(reg_channels[chan_enum].flags &
 				       IEEE80211_CHAN_NO_10MHZ);
-		else if (CHAN_WIDTH_20MHZ == ch_width)
+		else if (CH_WIDTH_20MHZ == ch_width)
 			bw_enabled = !(reg_channels[chan_enum].flags &
 				       IEEE80211_CHAN_NO_20MHZ);
-		else if (CHAN_WIDTH_40MHZ == ch_width)
+		else if (CH_WIDTH_40MHZ == ch_width)
 			bw_enabled = !(reg_channels[chan_enum].flags &
 				       IEEE80211_CHAN_NO_HT40);
-		else if (CHAN_WIDTH_80MHZ == ch_width)
+		else if (CH_WIDTH_80MHZ == ch_width)
 			bw_enabled = !(reg_channels[chan_enum].flags &
 				       IEEE80211_CHAN_NO_80MHZ);
-		else if (CHAN_WIDTH_160MHZ == ch_width)
+		else if (CH_WIDTH_160MHZ == ch_width)
 			bw_enabled = !(reg_channels[chan_enum].flags &
 				       IEEE80211_CHAN_NO_160MHZ);
 	}
@@ -250,10 +250,10 @@ enum channel_state cds_get_bonded_channel_state(uint32_t chan_num,
  *
  * Return: channel_width
  */
-enum channel_width cds_get_max_channel_bw(uint32_t chan_num)
+enum phy_ch_width cds_get_max_channel_bw(uint32_t chan_num)
 {
 	enum channel_enum chan_enum;
-	enum channel_width chan_bw = CHAN_WIDTH_0MHZ;
+	enum phy_ch_width chan_bw = CH_WIDTH_INVALID;
 
 	chan_enum = cds_get_channel_enum(chan_num);
 
@@ -262,25 +262,23 @@ enum channel_width cds_get_max_channel_bw(uint32_t chan_num)
 
 		if (!(reg_channels[chan_enum].flags &
 		      IEEE80211_CHAN_NO_160MHZ))
-			chan_bw = CHAN_WIDTH_160MHZ;
+			chan_bw = CH_WIDTH_160MHZ;
 		else if (!(reg_channels[chan_enum].flags &
 			   IEEE80211_CHAN_NO_80MHZ))
-			chan_bw = CHAN_WIDTH_80MHZ;
+			chan_bw = CH_WIDTH_80MHZ;
 		else if (!(reg_channels[chan_enum].flags &
 			   IEEE80211_CHAN_NO_HT40))
-			chan_bw = CHAN_WIDTH_40MHZ;
+			chan_bw = CH_WIDTH_40MHZ;
 		else if (!(reg_channels[chan_enum].flags &
 			   IEEE80211_CHAN_NO_20MHZ))
-			chan_bw = CHAN_WIDTH_20MHZ;
+			chan_bw = CH_WIDTH_20MHZ;
 		else if (!(reg_channels[chan_enum].flags &
 			   IEEE80211_CHAN_NO_10MHZ))
-			chan_bw = CHAN_WIDTH_10MHZ;
+			chan_bw = CH_WIDTH_10MHZ;
 		else
-			chan_bw = CHAN_WIDTH_5MHZ;
+			chan_bw = CH_WIDTH_5MHZ;
 	}
-
 	return chan_bw;
-
 }
 
 /**
