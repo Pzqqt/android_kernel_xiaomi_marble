@@ -59,11 +59,11 @@ typedef struct sk_buff *__cdf_nbuf_t;
 #define NBUF_CB_TX_MAX_EXTRA_FRAGS 2
 
 /*
- * Make sure that cdf_dma_addr_t in the cb block is always 64 bit aligned
+ * Make sure that qdf_dma_addr_t in the cb block is always 64 bit aligned
  */
 typedef union {
 	uint64_t       u64;
-	cdf_dma_addr_t dma_addr;
+	qdf_dma_addr_t dma_addr;
 } cdf_paddr_t;
 
 /**

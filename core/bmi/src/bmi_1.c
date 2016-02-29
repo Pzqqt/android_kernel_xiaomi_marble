@@ -43,8 +43,8 @@ bmi_read_memory(uint32_t address,
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t align;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_DBG("command disallowed");
@@ -119,8 +119,8 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 	uint8_t *src;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -193,8 +193,8 @@ bmi_execute(uint32_t address, A_UINT32 *param, struct ol_context *ol_ctx)
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -289,8 +289,8 @@ QDF_STATUS bmi_done_local(struct ol_context *ol_ctx)
 	int status;
 	uint32_t cid;
 	struct bmi_info *info;
-	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
-	cdf_dma_addr_t cmd, rsp;
+	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_dma_addr_t cmd, rsp;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn context");

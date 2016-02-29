@@ -357,7 +357,7 @@ uint16_t htt_tx_compl_desc_id(void *iterator, int num);
  * @param[OUT] paddr_lo - physical address of the HTT descriptor
  * @return success -> descriptor handle, -OR- failure -> NULL
  */
-void *htt_tx_desc_alloc(htt_pdev_handle pdev, cdf_dma_addr_t *paddr,
+void *htt_tx_desc_alloc(htt_pdev_handle pdev, qdf_dma_addr_t *paddr,
 			uint16_t index);
 
 /**
@@ -381,10 +381,10 @@ void htt_tx_desc_free(htt_pdev_handle htt_pdev, void *htt_tx_desc);
  * @return success 0
  */
 int htt_tx_frag_alloc(htt_pdev_handle pdev,
-	u_int16_t index, cdf_dma_addr_t *frag_paddr, void **frag_ptr);
+	u_int16_t index, qdf_dma_addr_t *frag_paddr, void **frag_ptr);
 #else
 static inline int htt_tx_frag_alloc(htt_pdev_handle pdev,
-	u_int16_t index, cdf_dma_addr_t *frag_paddr, void **frag_ptr)
+	u_int16_t index, qdf_dma_addr_t *frag_paddr, void **frag_ptr)
 {
 	*frag_ptr = NULL;
 	return 0;
@@ -530,7 +530,7 @@ static inline
 void
 htt_tx_desc_init(htt_pdev_handle pdev,
 		 void *htt_tx_desc,
-		 cdf_dma_addr_t htt_tx_desc_paddr,
+		 qdf_dma_addr_t htt_tx_desc_paddr,
 		 uint16_t msdu_id,
 		 cdf_nbuf_t msdu, struct htt_msdu_info_t *msdu_info,
 		 struct qdf_tso_info_t *tso_info,
@@ -807,7 +807,7 @@ static inline
 void
 htt_tx_desc_frag(htt_pdev_handle pdev,
 		 void *desc,
-		 int frag_num, cdf_dma_addr_t frag_phys_addr, uint16_t frag_len)
+		 int frag_num, qdf_dma_addr_t frag_phys_addr, uint16_t frag_len)
 {
 	uint32_t *word32;
 #if defined(HELIUMPLUS_PADDR64)
@@ -864,8 +864,8 @@ htt_tx_desc_frag(htt_pdev_handle pdev,
 
 void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 				 void *desc,
-				 cdf_dma_addr_t paddr,
-				 cdf_dma_addr_t frag_desc_paddr,
+				 qdf_dma_addr_t paddr,
+				 qdf_dma_addr_t frag_desc_paddr,
 				 int reset);
 
 /**

@@ -177,7 +177,7 @@ int epping_enable(struct device *parent_dev)
 	int ret = 0;
 	epping_context_t *pEpping_ctx = NULL;
 	cds_context_type *p_cds_context = NULL;
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	struct hif_opaque_softc *scn;
 	tSirMacAddr adapter_macAddr;
@@ -220,7 +220,7 @@ int epping_enable(struct device *parent_dev)
 	/* store target type and target version info in hdd ctx */
 	pEpping_ctx->target_type = tgt_info->target_type;
 
-	ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
+	ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 #ifndef FEATURE_BMI_2
 	/* Initialize BMI and Download firmware */
 	if (bmi_download_firmware(ol_ctx)) {
@@ -236,10 +236,10 @@ int epping_enable(struct device *parent_dev)
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = epping_target_suspend_acknowledge;
-	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
-	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, cdf_ctx);
+	p_cds_context->htc_ctx = htc_create(scn, &htcInfo, qdf_ctx);
 	if (!p_cds_context->htc_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);

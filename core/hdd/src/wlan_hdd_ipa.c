@@ -1422,7 +1422,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		(HDD_IPA_UC_STAT_REASON_DEBUG == hdd_ipa->stat_req_reason)) {
 
 		/* STATs from host */
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CE ====\n"
 			  "CE RING BASE: 0x%llx\n"
 			  "CE RING SIZE: %d\n"
@@ -1430,7 +1430,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  (unsigned long long)hdd_ipa->ce_sr_base_paddr,
 			  hdd_ipa->ce_sr_ring_size,
 			  (unsigned long long)hdd_ipa->ce_reg_paddr);
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST TX ====\n"
 			  "COMP RING BASE: 0x%llx\n"
 			  "COMP RING SIZE: %d\n"
@@ -1440,7 +1440,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  hdd_ipa->tx_comp_ring_size,
 			  hdd_ipa->tx_num_alloc_buffer,
 			  (unsigned long long)hdd_ipa->tx_comp_doorbell_paddr);
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST RX ====\n"
 			  "IND RING BASE: 0x%llx\n"
 			  "IND RING SIZE: %d\n"
@@ -1456,7 +1456,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_bcmc,
 			  (unsigned long long)hdd_ipa->stats.num_tx_bcmc_err);
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CONTROL ====\n"
 			  "SAP NUM STAs: %d\n"
 			  "STA CONNECTED: %d\n"
@@ -1476,7 +1476,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		/* STATs from FW */
 		uc_fw_stat = (struct ipa_uc_fw_stats *)
 			     ((uint8_t *)op_msg + sizeof(struct op_msg_type));
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_FW TX ====\n"
 			  "COMP RING BASE: 0x%x\n"
 			  "COMP RING SIZE: %d\n"
@@ -1497,7 +1497,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  uc_fw_stat->tx_pkts_enqueued,
 			  uc_fw_stat->tx_pkts_completed,
 			  uc_fw_stat->tx_is_suspend, uc_fw_stat->tx_reserved);
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_FW RX ====\n"
 			  "IND RING BASE: 0x%x\n"
 			  "IND RING SIZE: %d\n"
@@ -1528,7 +1528,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  uc_fw_stat->rx_is_suspend, uc_fw_stat->rx_reserved);
 		/* STATs from IPA */
 		ipa_get_wdi_stats(&ipa_stat);
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC IPA TX ====\n"
 			  "NUM PROCD : %d\n"
 			  "CE DBELL : 0x%x\n"
@@ -1564,7 +1564,7 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  num_bam_int_in_non_runnning_state,
 			  ipa_stat.tx_ch_stats.num_qmb_int_handled);
 
-		CDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC IPA RX ====\n"
 			  "MAX OST PKT : %d\n"
 			  "NUM PKT PRCSD : %d\n"
@@ -3408,7 +3408,7 @@ static void hdd_ipa_cleanup_iface(struct hdd_ipa_iface_context *iface_context)
 	if (!iface_context->hdd_ipa->num_iface) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_ERROR,
 			"NUM INTF 0, Invalid");
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 	iface_context->hdd_ipa->num_iface--;
 }

@@ -130,9 +130,9 @@ struct ol_tx_desc_t {
 	cdf_nbuf_t netbuf;
 	void *htt_tx_desc;
 	uint16_t id;
-	cdf_dma_addr_t htt_tx_desc_paddr;
+	qdf_dma_addr_t htt_tx_desc_paddr;
 	void *htt_frag_desc; /* struct msdu_ext_desc_t * */
-	cdf_dma_addr_t htt_frag_desc_paddr;
+	qdf_dma_addr_t htt_frag_desc_paddr;
 	qdf_atomic_t ref_cnt;
 	enum htt_tx_status status;
 

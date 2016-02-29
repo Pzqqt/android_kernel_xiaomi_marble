@@ -456,11 +456,11 @@ void htt_pkt_log_init(struct ol_txrx_pdev_t *handle, void *scn)
 	if (handle->pkt_log_init)
 		return;
 
-	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
+	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 			!WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
 		ol_pl_sethandle(&handle->pl_dev, scn);
 		if (pktlogmod_init(scn))
-			cdf_print("%s: pktlogmod_init failed", __func__);
+			qdf_print("%s: pktlogmod_init failed", __func__);
 		else
 			handle->pkt_log_init = true;
 	}
@@ -475,7 +475,7 @@ void htt_pkt_log_init(struct ol_txrx_pdev_t *handle, void *scn)
  */
 void htt_pktlogmod_exit(struct ol_txrx_pdev_t *handle, void *scn)
 {
-	if (scn && cds_get_conparam() != CDF_GLOBAL_FTM_MODE &&
+	if (scn && cds_get_conparam() != QDF_GLOBAL_FTM_MODE &&
 		!WLAN_IS_EPPING_ENABLED(cds_get_conparam()) &&
 			handle->pkt_log_init) {
 		pktlogmod_exit(scn);
@@ -1193,7 +1193,7 @@ ol_txrx_vdev_detach(ol_txrx_vdev_handle vdev,
 		cdf_nbuf_t next = cdf_nbuf_next(vdev->ll_pause.txq.head);
 		cdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
 		cdf_nbuf_unmap(pdev->osdev, vdev->ll_pause.txq.head,
-			       CDF_DMA_TO_DEVICE);
+			       QDF_DMA_TO_DEVICE);
 		cdf_nbuf_tx_free(vdev->ll_pause.txq.head, NBUF_PKT_ERROR);
 		vdev->ll_pause.txq.head = next;
 	}

@@ -307,7 +307,7 @@ extern void
 dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 
 void
-dump_pkt(cdf_nbuf_t nbuf, cdf_dma_addr_t nbuf_paddr, int len)
+dump_pkt(cdf_nbuf_t nbuf, qdf_dma_addr_t nbuf_paddr, int len)
 {
 	qdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
 		  cdf_nbuf_data(nbuf), nbuf_paddr, len);
@@ -405,7 +405,7 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	} else {
 		for (i = 1; i < num_frags; i++) {
 			qdf_size_t frag_len;
-			cdf_dma_addr_t frag_paddr;
+			qdf_dma_addr_t frag_paddr;
 #ifdef HELIUMPLUS_DEBUG
 			void *frag_vaddr;
 			frag_vaddr = cdf_nbuf_get_frag_vaddr(netbuf, i);
@@ -488,7 +488,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 	/* check the frame type to see what kind of special steps are needed */
 	if ((tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) &&
 		   (tx_desc->pkt_type != 0xff)) {
-		cdf_dma_addr_t frag_desc_paddr = 0;
+		qdf_dma_addr_t frag_desc_paddr = 0;
 
 #if defined(HELIUMPLUS_PADDR64)
 		frag_desc_paddr = tx_desc->htt_frag_desc_paddr;

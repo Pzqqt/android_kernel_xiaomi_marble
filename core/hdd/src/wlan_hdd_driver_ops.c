@@ -226,13 +226,13 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	QDF_STATUS status;
 	int ret = 0;
 	struct hif_opaque_softc *hif_ctx;
-	cdf_device_t cdf_ctx = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	struct hif_callbacks cbk;
 	uint32_t mode = cds_get_conparam();
 
 	hdd_hif_init_cds_callbacks(dev, &cbk);
 
-	hif_ctx = hif_open(cdf_ctx, mode, bus_type, &cbk);
+	hif_ctx = hif_open(qdf_ctx, mode, bus_type, &cbk);
 	if (!hif_ctx) {
 		hdd_err("hif_open error");
 		return -ENOMEM;
@@ -304,7 +304,7 @@ static void hdd_hif_close(void *hif_ctx)
  */
 void hdd_init_cdf_ctx(struct device *dev, void *bdev)
 {
-	cdf_device_t cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	qdf_device_t cdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	cdf_dev->dev = dev;
 	cdf_dev->drv_hdl = bdev;
@@ -329,7 +329,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	void *hif_ctx;
 	QDF_STATUS status;
 	int ret = 0;
-	cdf_device_t cdf_dev;
+	qdf_device_t cdf_dev;
 	uint32_t mode = cds_get_conparam();
 
 	pr_info("%s: %sprobing driver v%s\n", WLAN_MODULE_NAME,
@@ -369,7 +369,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		goto err_epping_close;
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	cdf_dev = cds_get_context(CDF_MODULE_ID_CDF_DEVICE);
+	cdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	status = ol_cds_init(cdf_dev, hif_ctx);
 

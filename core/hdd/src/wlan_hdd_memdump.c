@@ -69,7 +69,7 @@ static void memdump_cleanup_timer_cb(void *data)
 	hdd_context_t *hdd_ctx = data;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 
 	status = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != status) {
@@ -82,15 +82,15 @@ static void memdump_cleanup_timer_cb(void *data)
 		return;
 	}
 
-	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!cdf_ctx) {
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return;
 	}
 
 	paddr = hdd_ctx->dump_loc_paddr;
 	mutex_lock(&hdd_ctx->memdump_lock);
-	cdf_os_mem_free_consistent(cdf_ctx,
+	cdf_os_mem_free_consistent(qdf_ctx,
 		FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 	hdd_ctx->fw_dump_loc = NULL;
 	hdd_ctx->memdump_in_progress = false;
@@ -204,7 +204,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	uint8_t loop;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 	unsigned long rc;
 	struct hdd_fw_dump_context *context;
 
@@ -214,8 +214,8 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 		return status;
 	}
 
-	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!cdf_ctx) {
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return -EINVAL;
 	}
@@ -235,7 +235,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	mutex_lock(&hdd_ctx->memdump_lock);
 	if (!hdd_ctx->fw_dump_loc) {
 		hdd_ctx->fw_dump_loc = cdf_os_mem_alloc_consistent(
-			cdf_ctx, FW_MEM_DUMP_SIZE, &paddr, dma_ctx);
+			qdf_ctx, FW_MEM_DUMP_SIZE, &paddr, dma_ctx);
 		if (!hdd_ctx->fw_dump_loc) {
 			mutex_unlock(&hdd_ctx->memdump_lock);
 			hddLog(LOGE, FL("cdf_os_mem_alloc_consistent failed"));
@@ -299,7 +299,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	if (QDF_STATUS_SUCCESS != sme_status) {
 		hddLog(LOGE, FL("sme_fw_mem_dump Failed"));
 		mutex_lock(&hdd_ctx->memdump_lock);
-		cdf_os_mem_free_consistent(cdf_ctx,
+		cdf_os_mem_free_consistent(qdf_ctx,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		mutex_unlock(&hdd_ctx->memdump_lock);
@@ -395,7 +395,7 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 	hdd_context_t *hdd_ctx;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 
 	hdd_ctx = memdump_get_file_data(file);
 
@@ -405,8 +405,8 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 		hddLog(LOGE, FL("HDD context is not valid"));
 		return -EINVAL;
 	}
-	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!cdf_ctx) {
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return -EINVAL;
 	}
@@ -443,7 +443,7 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 	if (*pos >= FW_MEM_DUMP_SIZE) {
 		paddr = hdd_ctx->dump_loc_paddr;
 		mutex_lock(&hdd_ctx->memdump_lock);
-		cdf_os_mem_free_consistent(cdf_ctx,
+		cdf_os_mem_free_consistent(qdf_ctx,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		hdd_ctx->memdump_in_progress = false;
@@ -593,7 +593,7 @@ void memdump_deinit(void)
 	hdd_context_t *hdd_ctx;
 	qdf_dma_addr_t paddr;
 	qdf_dma_addr_t dma_ctx = 0;
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 	QDF_STATUS qdf_status;
 
 	hdd_ctx = cds_get_context(QDF_MODULE_ID_HDD);
@@ -607,8 +607,8 @@ void memdump_deinit(void)
 		return;
 	}
 
-	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	if (!cdf_ctx) {
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	if (!qdf_ctx) {
 		hddLog(LOGE, FL("CDF context is NULL"));
 		return;
 	}
@@ -619,7 +619,7 @@ void memdump_deinit(void)
 	mutex_lock(&hdd_ctx->memdump_lock);
 	if (hdd_ctx->fw_dump_loc) {
 		paddr = hdd_ctx->dump_loc_paddr;
-		cdf_os_mem_free_consistent(cdf_ctx,
+		cdf_os_mem_free_consistent(qdf_ctx,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		hdd_ctx->memdump_in_progress = false;

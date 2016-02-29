@@ -188,7 +188,7 @@ static inline unsigned char *cdf_nbuf_get_frag_vaddr(cdf_nbuf_t buf,
  *
  * Return: Fragment physical address
  */
-static inline cdf_dma_addr_t cdf_nbuf_get_frag_paddr(cdf_nbuf_t buf, int frag_num)
+static inline qdf_dma_addr_t cdf_nbuf_get_frag_paddr(cdf_nbuf_t buf, int frag_num)
 {
 	BUG_ON(frag_num >= NBUF_CB_TX_MAX_EXTRA_FRAGS);
 	return __cdf_nbuf_get_frag_paddr(buf, frag_num);
@@ -273,7 +273,7 @@ static inline void cdf_nbuf_ipa_priv_set(cdf_nbuf_t buf, uint32_t priv)
  *
  * Return: none
  */
-static inline cdf_dma_addr_t
+static inline qdf_dma_addr_t
 cdf_nbuf_mapped_paddr_get(cdf_nbuf_t buf)
 {
 	return __cdf_nbuf_mapped_paddr_get(buf);
@@ -286,7 +286,7 @@ cdf_nbuf_mapped_paddr_get(cdf_nbuf_t buf)
  * Return: none
  */
 static inline void
-cdf_nbuf_mapped_paddr_set(cdf_nbuf_t buf, cdf_dma_addr_t paddr)
+cdf_nbuf_mapped_paddr_set(cdf_nbuf_t buf, qdf_dma_addr_t paddr)
 {
 	__cdf_nbuf_mapped_paddr_set(buf, paddr);
 }
@@ -305,7 +305,7 @@ static inline void
 cdf_nbuf_frag_push_head(cdf_nbuf_t buf,
 			int frag_len,
 			char *frag_vaddr,
-			cdf_dma_addr_t frag_paddr)
+			qdf_dma_addr_t frag_paddr)
 {
 	__cdf_nbuf_frag_push_head(buf, frag_len, frag_vaddr, frag_paddr);
 }

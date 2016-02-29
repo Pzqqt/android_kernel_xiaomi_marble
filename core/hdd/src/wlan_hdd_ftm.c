@@ -176,7 +176,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	tMacOpenParameters mac_openParms;
 	p_cds_contextType gp_cds_context = (p_cds_contextType) p_cds_context;
 #if  defined(QCA_WIFI_FTM)
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 	HTC_INIT_INFO htcInfo;
 	void *pHifContext = NULL;
 	void *pHtcContext = NULL;
@@ -262,11 +262,11 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	htcInfo.pContext = ol_ctx;
 	htcInfo.TargetFailure = ol_target_failure;
 	htcInfo.TargetSendSuspendComplete = wma_target_suspend_acknowledge;
-	cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
 	/* Create HTC */
 	gp_cds_context->htc_ctx =
-		htc_create(pHifContext, &htcInfo, cdf_ctx);
+		htc_create(pHifContext, &htcInfo, qdf_ctx);
 	if (!gp_cds_context->htc_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 			  "%s: Failed to Create HTC", __func__);

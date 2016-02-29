@@ -60,7 +60,7 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	struct hif_opaque_softc *scn = ol_ctx->scn;
-	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn Context");
@@ -105,7 +105,7 @@ end:
 void bmi_cleanup(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
-	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	if (!cdf_dev->dev) {
 		BMI_ERR("%s: Invalid Device Pointer", __func__);
@@ -153,8 +153,8 @@ bmi_get_target_info(struct bmi_target_info *targ_info,
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t cid, length;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("BMI Phase is Already Done");
@@ -239,8 +239,8 @@ QDF_STATUS bmi_read_soc_register(uint32_t address, uint32_t *param,
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
 	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
@@ -284,8 +284,8 @@ QDF_STATUS bmi_write_soc_register(uint32_t address, uint32_t param,
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(param);
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(size));
 	cdf_mem_set(bmi_cmd_buff, 0, size);
@@ -329,8 +329,8 @@ bmilz_data(uint8_t *buffer, uint32_t length, struct ol_context *ol_ctx)
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
@@ -386,8 +386,8 @@ QDF_STATUS bmi_sign_stream_start(uint32_t address, uint8_t *buffer,
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint32_t remaining, txlen;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
 	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
@@ -449,8 +449,8 @@ bmilz_stream_start(uint32_t address, struct ol_context *ol_ctx)
 	struct hif_opaque_softc *scn = ol_ctx->scn;
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
 	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
@@ -522,7 +522,7 @@ end:
  *
  * Return: Success/Failure
  */
-QDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx)
+QDF_STATUS ol_cds_init(qdf_device_t cdf_dev, void *hif_ctx)
 {
 	struct ol_context *ol_info;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -543,7 +543,7 @@ QDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx)
 	ol_info->scn = hif_ctx;
 	ol_info->tgt_def.targetdef = hif_get_targetdef(hif_ctx);
 
-	cdf_create_work(&ol_info->ramdump_work, ramdump_work_handler, ol_info);
+	qdf_create_work(cdf_dev, &ol_info->ramdump_work, ramdump_work_handler, ol_info);
 
 	return status;
 }

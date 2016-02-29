@@ -218,7 +218,7 @@ void __cdf_nbuf_free(struct sk_buff *skb)
 {
 	if (cdf_nbuf_ipa_owned_get(skb))
 		/* IPA cleanup function will need to be called here */
-		CDF_BUG(1);
+		QDF_BUG(1);
 	else
 		dev_kfree_skb_any(skb);
 }
@@ -289,7 +289,7 @@ __cdf_nbuf_unmap(qdf_device_t osdev, struct sk_buff *skb, qdf_dma_dir_t dir)
 QDF_STATUS
 __cdf_nbuf_map_single(qdf_device_t osdev, cdf_nbuf_t buf, qdf_dma_dir_t dir)
 {
-	cdf_dma_addr_t paddr;
+	qdf_dma_addr_t paddr;
 
 /* tempory hack for simulation */
 #ifdef A_SIMOS_DEVHOST
@@ -802,7 +802,7 @@ uint8_t __cdf_nbuf_get_tso_cmn_seg_info(struct sk_buff *skb,
  *
  * Return: N/A
 */
-static inline void cdf_dmaaddr_to_32s(cdf_dma_addr_t dmaaddr,
+static inline void cdf_dmaaddr_to_32s(qdf_dma_addr_t dmaaddr,
 				      uint32_t *lo, uint32_t *hi)
 {
 	if (sizeof(dmaaddr) > sizeof(uint32_t)) {
@@ -834,7 +834,7 @@ uint32_t __cdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 
 	/* segment specific */
 	char *tso_frag_vaddr;
-	cdf_dma_addr_t tso_frag_paddr = 0;
+	qdf_dma_addr_t tso_frag_paddr = 0;
 	uint32_t       tso_frag_paddr_lo, tso_frag_paddr_hi;
 	uint32_t num_seg = 0;
 	struct cdf_tso_seg_elem_t *curr_seg;
@@ -917,7 +917,7 @@ uint32_t __cdf_nbuf_get_tso_info(qdf_device_t osdev, struct sk_buff *skb,
 		curr_seg->seg.tso_frags[0].length = tso_cmn_info.eit_hdr_len;
 		tso_info->total_len = curr_seg->seg.tso_frags[0].length;
 		{
-			cdf_dma_addr_t mapped;
+			qdf_dma_addr_t mapped;
 			uint32_t       lo, hi;
 
 			mapped = dma_map_single(osdev->dev, tso_cmn_info.eit_hdr,

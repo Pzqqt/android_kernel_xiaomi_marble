@@ -145,7 +145,7 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 				 uint8_t proto_type)
 {
-	void *cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_txrx_peer_t *peer;
 	cdf_nbuf_t ret;
@@ -156,9 +156,9 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 			"%s:pdev is null", __func__);
 		return skb;
 	}
-	if (qdf_unlikely(!cdf_ctx)) {
+	if (qdf_unlikely(!qdf_ctx)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
-			"%s:cdf_ctx is null", __func__);
+			"%s:qdf_ctx is null", __func__);
 		return skb;
 	}
 
@@ -181,7 +181,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 		return skb;
 	}
 
-	status = cdf_nbuf_map_single(cdf_ctx, skb, QDF_DMA_TO_DEVICE);
+	status = cdf_nbuf_map_single(qdf_ctx, skb, QDF_DMA_TO_DEVICE);
 	if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
@@ -201,7 +201,7 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: Failed to tx", __func__);
-		cdf_nbuf_unmap_single(cdf_ctx, ret, QDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap_single(qdf_ctx, ret, QDF_DMA_TO_DEVICE);
 		return ret;
 	}
 
@@ -461,7 +461,7 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	} else {
 		for (i = 1; i < num_frags; i++) {
 			qdf_size_t frag_len;
-			cdf_dma_addr_t frag_paddr;
+			qdf_dma_addr_t frag_paddr;
 
 			frag_len = cdf_nbuf_get_frag_len(msdu, i);
 			frag_paddr = cdf_nbuf_get_frag_paddr(msdu, i);

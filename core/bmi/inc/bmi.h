@@ -38,7 +38,7 @@
 #include "hif.h"
 
 struct ol_context;
-QDF_STATUS ol_cds_init(cdf_device_t cdf_dev, void *hif_ctx);
+QDF_STATUS ol_cds_init(qdf_device_t cdf_dev, void *hif_ctx);
 void ol_cds_free(void);
 
 /**

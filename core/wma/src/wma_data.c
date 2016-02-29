@@ -2354,7 +2354,7 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 	int32_t cmd_len;
 	uint64_t dma_addr;
 	struct wmi_desc_t *wmi_desc = NULL;
-	void *cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	uint8_t *bufp;
 	int32_t bufp_len = (frmLen < mgmt_tx_dl_frm_len) ? frmLen :
 		mgmt_tx_dl_frm_len;
@@ -2393,7 +2393,7 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 							    sizeof(uint32_t)));
 	bufp += WMI_TLV_HDR_SIZE;
 	cdf_mem_copy(bufp, pData, bufp_len);
-	cdf_nbuf_map_single(cdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
+	cdf_nbuf_map_single(qdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
 	dma_addr = cdf_nbuf_get_frag_paddr(tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
 #if defined(HELIUMPLUS_PADDR64)

@@ -44,8 +44,8 @@ bmi_no_command(struct ol_context *ol_ctx)
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed: BMI DONE ALREADY");
@@ -88,9 +88,9 @@ bmi_done_local(struct ol_context *ol_ctx)
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -159,8 +159,8 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -235,8 +235,8 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 	/* note we reuse the same buffer to receive on */
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
 	uint32_t size = sizeof(cid) + sizeof(address) + sizeof(length);
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -307,8 +307,8 @@ bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	if (info->bmi_done) {
 		BMI_ERR("Command disallowed");
@@ -355,8 +355,8 @@ bmi_load_image(dma_addr_t address,
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	cdf_dma_addr_t cmd = info->bmi_cmd_da;
-	cdf_dma_addr_t rsp = info->bmi_rsp_da;
+	qdf_dma_addr_t cmd = info->bmi_cmd_da;
+	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
 	uint32_t addr_h, addr_l;
 

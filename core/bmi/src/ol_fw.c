@@ -151,7 +151,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
-	cdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
 
 	switch (file) {
 	default:
@@ -611,13 +611,13 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 {
 	struct ol_context *ol_ctx = instance;
 	struct hif_opaque_softc *scn = ol_ctx->scn;
-	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	struct ol_config_info *ini_cfg = ol_get_ini_handle(ol_ctx);
 	int ret;
 	ol_target_status target_status =
 			hif_get_target_status(scn);
 
-	cdf_event_set(&wma->recovery_event);
+	qdf_event_set(&wma->recovery_event);
 
 	if (OL_TRGET_STATUS_RESET == target_status) {
 		BMI_ERR("Target is already asserted, ignore!");
@@ -655,7 +655,7 @@ void ol_target_failure(void *instance, QDF_STATUS status)
 #if  defined(CONFIG_CNSS)
 	/* Collect the RAM dump through a workqueue */
 	if (ini_cfg->enable_ramdump_collection)
-		cdf_schedule_work(&ol_ctx->ramdump_work);
+		qdf_sched_work(0, &ol_ctx->ramdump_work);
 	else
 		pr_debug("%s: athdiag read for target reg\n", __func__);
 #endif

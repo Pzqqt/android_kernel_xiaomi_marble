@@ -265,11 +265,11 @@ typedef struct _cds_context_type {
 
 	void *g_ol_context;
 	/*
-	 * cdf_ctx will be used by cdf
+	 * qdf_ctx will be used by cdf
 	 * while allocating dma memory
 	 * to access dev information.
 	 */
-	qdf_device_t cdf_ctx;
+	qdf_device_t qdf_ctx;
 
 	void *pdev_txrx_ctx;
 

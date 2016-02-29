@@ -196,7 +196,7 @@ static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev)
  * Return: None
  */
 int htt_tx_frag_alloc(htt_pdev_handle pdev,
-	u_int16_t index, cdf_dma_addr_t *frag_paddr, void **frag_ptr)
+	u_int16_t index, qdf_dma_addr_t *frag_paddr, void **frag_ptr)
 {
 	uint16_t frag_page_index;
 	uint16_t frag_elem_index;
@@ -436,7 +436,7 @@ static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 
 /*--- descriptor allocation functions ---------------------------------------*/
 
-void *htt_tx_desc_alloc(htt_pdev_handle pdev, cdf_dma_addr_t *paddr,
+void *htt_tx_desc_alloc(htt_pdev_handle pdev, qdf_dma_addr_t *paddr,
 			uint16_t index)
 {
 	struct htt_host_tx_desc_t *htt_host_tx_desc;    /* includes HTC hdr */
@@ -477,7 +477,7 @@ void *htt_tx_desc_alloc(htt_pdev_handle pdev, cdf_dma_addr_t *paddr,
 	 * Include the headroom for the HTC frame header when specifying the
 	 * physical address for the HTT tx descriptor.
 	 */
-	*paddr = (cdf_dma_addr_t)htt_tx_get_paddr(pdev, (char *)htt_host_tx_desc);
+	*paddr = (qdf_dma_addr_t)htt_tx_get_paddr(pdev, (char *)htt_host_tx_desc);
 	/*
 	 * The allocated tx descriptor space includes headroom for a
 	 * HTC frame header.  Hide this headroom, so that we don't have
@@ -504,8 +504,8 @@ void htt_tx_desc_free(htt_pdev_handle pdev, void *tx_desc)
 
 void htt_tx_desc_frags_table_set(htt_pdev_handle pdev,
 				 void *htt_tx_desc,
-				 cdf_dma_addr_t paddr,
-				 cdf_dma_addr_t frag_desc_paddr,
+				 qdf_dma_addr_t paddr,
+				 qdf_dma_addr_t frag_desc_paddr,
 				 int reset)
 {
 	uint32_t *fragmentation_descr_field_ptr;
@@ -925,7 +925,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 {
 	unsigned int tx_buffer_count;
 	cdf_nbuf_t buffer_vaddr;
-	cdf_dma_addr_t buffer_paddr;
+	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
 #define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 20

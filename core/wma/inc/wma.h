@@ -1197,7 +1197,7 @@ typedef struct {
 #endif
 	bool wmi_ready;
 	uint32_t wlan_init_status;
-	qdf_device_t cdf_dev;
+	qdf_device_t qdf_dev;
 	uint32_t phy_capability;
 	uint32_t max_frag_entry;
 	uint32_t wmi_service_bitmap[WMI_SERVICE_BM_SIZE];

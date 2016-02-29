@@ -69,7 +69,7 @@
 /* Data definitions */
 static cds_context_type g_cds_context;
 static p_cds_contextType gp_cds_context;
-static struct __qdf_device g_cdf_ctx;
+static struct __qdf_device g_qdf_ctx;
 
 /* Debug variable to detect MC thread stuck */
 static atomic_t cds_wrapper_empty_count;
@@ -94,8 +94,8 @@ v_CONTEXT_t cds_init(void)
 
 	gp_cds_context = &g_cds_context;
 
-	gp_cds_context->qdf_ctx = &g_cdf_ctx;
-	cdf_mem_zero(&g_cdf_ctx, sizeof(g_cdf_ctx));
+	gp_cds_context->qdf_ctx = &g_qdf_ctx;
+	cdf_mem_zero(&g_qdf_ctx, sizeof(g_qdf_ctx));
 
 	qdf_trace_spin_lock_init();
 
@@ -487,7 +487,6 @@ err_probe_event:
 QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
 	void *scn;
 	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO, "cds prestart");
@@ -593,7 +592,6 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
  */
 QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	tSirRetStatus sirStatus = eSIR_SUCCESS;
 	p_cds_contextType p_cds_context = (p_cds_contextType) cds_context;
@@ -759,7 +757,6 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
  */
 QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 {
-	QDF_STATUS qdf_status;
 	QDF_STATUS qdf_status;
 
 	qdf_status = wma_wmi_work_close(cds_context);
@@ -1432,7 +1429,6 @@ void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper)
  */
 QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
 {
-	QDF_STATUS qdf_status;
 	QDF_STATUS qdf_status;
 	tpAniSirGlobal pmac = (((p_cds_contextType)cds_context)->pMACContext);
 

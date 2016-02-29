@@ -157,8 +157,8 @@ struct ol_context {
 	struct bmi_info bmi;
 	struct ol_config_info cfg_info;
 	uint8_t *cal_in_flash;
-	cdf_device_t cdf_dev;
-	cdf_work_t ramdump_work;
+	qdf_device_t cdf_dev;
+	qdf_work_t ramdump_work;
 	struct hif_opaque_softc *scn;
 	struct targetdef_t {
 		struct targetdef_s *targetdef;

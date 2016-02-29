@@ -1596,7 +1596,6 @@ QDF_STATUS wma_open(void *cds_context,
 	qdf_device_t qdf_dev;
 	void *wmi_handle;
 	QDF_STATUS qdf_status;
-	QDF_STATUS qdf_status;
 	struct txrx_pdev_cfg_param_t olCfg = { 0 };
 
 	WMA_LOGD("%s: Enter", __func__);
@@ -1683,7 +1682,7 @@ QDF_STATUS wma_open(void *cds_context,
 	ol_cfg_set_flow_control_parameters(&olCfg, mac_params);
 
 	((p_cds_contextType) cds_context)->cfg_ctx =
-		ol_pdev_cfg_attach(((p_cds_contextType) cds_context)->cdf_ctx,
+		ol_pdev_cfg_attach(((p_cds_contextType) cds_context)->qdf_ctx,
 				   olCfg);
 	if (!(((p_cds_contextType) cds_context)->cfg_ctx)) {
 		WMA_LOGP("%s: failed to init cfg handle", __func__);
@@ -1777,7 +1776,7 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->new_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->saved_wmi_init_cmd.buf = NULL;
 
-	qdf_status = cdf_event_init(&wma_handle->wma_ready_event);
+	qdf_status = qdf_event_create(&wma_handle->wma_ready_event);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: wma_ready_event initialization failed", __func__);
 		goto err_event_init;
@@ -1787,12 +1786,12 @@ QDF_STATUS wma_open(void *cds_context,
 					QDF_TIMER_TYPE_SW,
 					wma_service_ready_ext_evt_timeout,
 					wma_handle);
-	if (!CDF_IS_STATUS_SUCCESS(qdf_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Failed to initialize service ready ext timeout");
 		goto err_event_init;
 	}
 
-	qdf_status = cdf_event_init(&wma_handle->target_suspend);
+	qdf_status = qdf_event_create(&wma_handle->target_suspend);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: target suspend event initialization failed",
 			 __func__);
@@ -1800,35 +1799,35 @@ QDF_STATUS wma_open(void *cds_context,
 	}
 
 	/* Init Tx Frame Complete event */
-	qdf_status = cdf_event_init(&wma_handle->tx_frm_download_comp_event);
-	if (!CDF_IS_STATUS_SUCCESS(qdf_status)) {
+	qdf_status = qdf_event_create(&wma_handle->tx_frm_download_comp_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGP("%s: failed to init tx_frm_download_comp_event",
 			 __func__);
 		goto err_event_init;
 	}
 
 	/* Init tx queue empty check event */
-	qdf_status = cdf_event_init(&wma_handle->tx_queue_empty_event);
-	if (!CDF_IS_STATUS_SUCCESS(qdf_status)) {
+	qdf_status = qdf_event_create(&wma_handle->tx_queue_empty_event);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGP("%s: failed to init tx_queue_empty_event", __func__);
 		goto err_event_init;
 	}
 
-	qdf_status = cdf_event_init(&wma_handle->wma_resume_event);
+	qdf_status = qdf_event_create(&wma_handle->wma_resume_event);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: wma_resume_event initialization failed",
 			 __func__);
 		goto err_event_init;
 	}
 
-	qdf_status = cdf_event_init(&wma_handle->runtime_suspend);
+	qdf_status = qdf_event_create(&wma_handle->runtime_suspend);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: runtime_suspend event initialization failed",
 			 __func__);
 		goto err_event_init;
 	}
 
-	qdf_status = cdf_event_init(&wma_handle->recovery_event);
+	qdf_status = qdf_event_create(&wma_handle->recovery_event);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: recovery event initialization failed", __func__);
 		goto err_event_init;
@@ -3149,16 +3148,16 @@ QDF_STATUS wma_close(void *cds_ctx)
 		WMA_LOGP("%s: dbglog_deinit failed", __func__);
 
 	/* close the cdf events */
-	cdf_event_destroy(&wma_handle->wma_ready_event);
+	qdf_event_destroy(&wma_handle->wma_ready_event);
 	qdf_status = qdf_mc_timer_destroy(&wma_handle->service_ready_ext_timer);
-	if (!CDF_IS_STATUS_SUCCESS(qdf_status))
+	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 		WMA_LOGP("%s: Failed to destroy service ready ext event timer",
 			__func__);
 
-	cdf_event_destroy(&wma_handle->target_suspend);
-	cdf_event_destroy(&wma_handle->wma_resume_event);
-	cdf_event_destroy(&wma_handle->runtime_suspend);
-	cdf_event_destroy(&wma_handle->recovery_event);
+	qdf_event_destroy(&wma_handle->target_suspend);
+	qdf_event_destroy(&wma_handle->wma_resume_event);
+	qdf_event_destroy(&wma_handle->runtime_suspend);
+	qdf_event_destroy(&wma_handle->recovery_event);
 	wma_cleanup_vdev_resp(wma_handle);
 	wma_cleanup_hold_req(wma_handle);
 	qdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
@@ -4050,7 +4049,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		 */
 		ret = qdf_mc_timer_start(&wma_handle->service_ready_ext_timer,
 				WMA_SERVICE_READY_EXT_TIMEOUT);
-		if (!CDF_IS_STATUS_SUCCESS(ret))
+		if (!QDF_IS_STATUS_SUCCESS(ret))
 			WMA_LOGP("Failed to start the service ready ext timer");
 
 		WMA_LOGA("%s: WMA waiting for WMI_SERVICE_READY_EXT_EVENTID",
@@ -4104,7 +4103,7 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 			ev->default_fw_config_bits);
 
 	ret = qdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
-	if (!CDF_IS_STATUS_SUCCESS(ret)) {
+	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		WMA_LOGP("Failed to stop the service ready ext timer");
 		return;
 	}
@@ -4204,7 +4203,7 @@ void wma_rx_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 
 	wma_update_hdd_cfg(wma_handle);
 
-	cdf_event_set(&wma_handle->wma_ready_event);
+	qdf_event_set(&wma_handle->wma_ready_event);
 
 	WMA_LOGD("Exit");
 }
@@ -4269,7 +4268,7 @@ QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 	QDF_STATUS qdf_status;
 
 	/* wait until WMI_READY_EVENTID received from FW */
-	qdf_status = cdf_wait_single_event(&(wma_handle->wma_ready_event),
+	qdf_status = qdf_wait_single_event(&(wma_handle->wma_ready_event),
 					   WMA_READY_EVENTID_TIMEOUT);
 
 	if (QDF_STATUS_SUCCESS != qdf_status) {
@@ -4742,7 +4741,7 @@ QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WNI_CFG_DNLD_REQ:
 		WMA_LOGA("McThread: WNI_CFG_DNLD_REQ");
 		qdf_status = wma_wni_cfg_dnld(wma_handle);
-		if (CDF_IS_STATUS_SUCCESS(qdf_status)) {
+		if (QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_wma_complete_cback(cds_context);
 		} else {
 			WMA_LOGD("config download failure");

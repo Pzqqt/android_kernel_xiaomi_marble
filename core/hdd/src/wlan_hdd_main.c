@@ -6819,7 +6819,7 @@ static int __hdd_module_init(void)
 		goto out;
 	}
 
-	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
+	pr_info("%s: qdf driver loaded\n", WLAN_MODULE_NAME);
 
 	return 0;
 out:
@@ -6993,7 +6993,7 @@ static inline bool hdd_is_lpass_supported(hdd_context_t *hdd_ctx)
 static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
 {
 	struct ol_config_info cfg;
-	struct ol_context *ol_ctx = cds_get_context(CDF_MODULE_ID_BMI);
+	struct ol_context *ol_ctx = cds_get_context(QDF_MODULE_ID_BMI);
 
 	if (!ol_ctx)
 		return;
@@ -7015,7 +7015,7 @@ static void hdd_update_ol_config(hdd_context_t *hdd_ctx)
  */
 static void hdd_update_hif_config(hdd_context_t *hdd_ctx)
 {
-	struct hif_opaque_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_opaque_softc *scn = cds_get_context(QDF_MODULE_ID_HIF);
 	struct hif_config_info cfg;
 
 	if (!scn)
