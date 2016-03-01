@@ -28,7 +28,7 @@
 #include <qdf_atomic.h>         /* qdf_atomic_inc, etc. */
 #include <qdf_lock.h>           /* cdf_os_spinlock */
 #include <qdf_time.h>           /* qdf_system_ticks, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_net_types.h>      /* QDF_NBUF_TX_EXT_TID_INVALID */
 
 #include <cds_queue.h>          /* TAILQ */
@@ -133,15 +133,15 @@
 
 static inline uint16_t
 ol_tx_send_base(struct ol_txrx_pdev_t *pdev,
-		struct ol_tx_desc_t *tx_desc, cdf_nbuf_t msdu)
+		struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu)
 {
 	int msdu_credit_consumed;
 
-	TX_CREDIT_DEBUG_PRINT("TX %d bytes\n", cdf_nbuf_len(msdu));
+	TX_CREDIT_DEBUG_PRINT("TX %d bytes\n", qdf_nbuf_len(msdu));
 	TX_CREDIT_DEBUG_PRINT(" <HTT> Decrease credit %d - 1 = %d, len:%d.\n",
 			      qdf_atomic_read(&pdev->target_tx_credit),
 			      qdf_atomic_read(&pdev->target_tx_credit) - 1,
-			      cdf_nbuf_len(msdu));
+			      qdf_nbuf_len(msdu));
 
 	msdu_credit_consumed = htt_tx_msdu_credit(msdu);
 	OL_TX_TARGET_CREDIT_DECR_INT(pdev, msdu_credit_consumed);
@@ -174,7 +174,7 @@ ol_tx_send_base(struct ol_txrx_pdev_t *pdev,
 
 void
 ol_tx_send(struct ol_txrx_pdev_t *pdev,
-	   struct ol_tx_desc_t *tx_desc, cdf_nbuf_t msdu)
+	   struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu)
 {
 	int msdu_credit_consumed;
 	uint16_t id;
@@ -182,10 +182,10 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 
 	msdu_credit_consumed = ol_tx_send_base(pdev, tx_desc, msdu);
 	id = ol_tx_desc_id(pdev, tx_desc);
-	NBUF_UPDATE_TX_PKT_COUNT(msdu, NBUF_TX_PKT_TXRX);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_TXRX);
 	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_TXRX_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(msdu)),
-				sizeof(cdf_nbuf_data(msdu))));
+				(uint8_t *)(qdf_nbuf_data(msdu)),
+				sizeof(qdf_nbuf_data(msdu))));
 	failed = htt_tx_send_std(pdev->htt_pdev, msdu, id);
 	if (qdf_unlikely(failed)) {
 		OL_TX_TARGET_CREDIT_INCR_INT(pdev, msdu_credit_consumed);
@@ -195,18 +195,18 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 
 void
 ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
-		 cdf_nbuf_t head_msdu, int num_msdus)
+		 qdf_nbuf_t head_msdu, int num_msdus)
 {
-	cdf_nbuf_t rejected;
+	qdf_nbuf_t rejected;
 	OL_TX_CREDIT_RECLAIM(pdev);
 
 	rejected = htt_tx_send_batch(pdev->htt_pdev, head_msdu, num_msdus);
 	while (qdf_unlikely(rejected)) {
 		struct ol_tx_desc_t *tx_desc;
 		uint16_t *msdu_id_storage;
-		cdf_nbuf_t next;
+		qdf_nbuf_t next;
 
-		next = cdf_nbuf_next(rejected);
+		next = qdf_nbuf_next(rejected);
 		msdu_id_storage = ol_tx_msdu_id_storage(rejected);
 		tx_desc = ol_tx_desc_find(pdev, *msdu_id_storage);
 
@@ -220,7 +220,7 @@ ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
 void
 ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 		  struct ol_tx_desc_t *tx_desc,
-		  cdf_nbuf_t msdu, enum htt_pkt_type pkt_type)
+		  qdf_nbuf_t msdu, enum htt_pkt_type pkt_type)
 {
 	int msdu_credit_consumed;
 	uint16_t id;
@@ -228,7 +228,7 @@ ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 
 	msdu_credit_consumed = ol_tx_send_base(pdev, tx_desc, msdu);
 	id = ol_tx_desc_id(pdev, tx_desc);
-	NBUF_UPDATE_TX_PKT_COUNT(msdu, NBUF_TX_PKT_TXRX);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_TXRX);
 	failed = htt_tx_send_nonstd(pdev->htt_pdev, msdu, id, pkt_type);
 	if (failed) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -240,7 +240,7 @@ ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 
 static inline void
 ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
-			 A_STATUS status, cdf_nbuf_t msdu, uint16_t msdu_id)
+			 A_STATUS status, qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 	struct ol_tx_desc_t *tx_desc;
 
@@ -283,7 +283,7 @@ ol_tx_download_done_base(struct ol_txrx_pdev_t *pdev,
 
 void
 ol_tx_download_done_ll(void *pdev,
-		       A_STATUS status, cdf_nbuf_t msdu, uint16_t msdu_id)
+		       A_STATUS status, qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 	ol_tx_download_done_base((struct ol_txrx_pdev_t *)pdev, status, msdu,
 				 msdu_id);
@@ -292,7 +292,7 @@ ol_tx_download_done_ll(void *pdev,
 void
 ol_tx_download_done_hl_retain(void *txrx_pdev,
 			      A_STATUS status,
-			      cdf_nbuf_t msdu, uint16_t msdu_id)
+			      qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 	struct ol_txrx_pdev_t *pdev = txrx_pdev;
 	ol_tx_download_done_base(pdev, status, msdu, msdu_id);
@@ -300,7 +300,7 @@ ol_tx_download_done_hl_retain(void *txrx_pdev,
 
 void
 ol_tx_download_done_hl_free(void *txrx_pdev,
-			    A_STATUS status, cdf_nbuf_t msdu, uint16_t msdu_id)
+			    A_STATUS status, qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 	struct ol_txrx_pdev_t *pdev = txrx_pdev;
 	struct ol_tx_desc_t *tx_desc;
@@ -363,8 +363,8 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		qdf_atomic_init(&(_tx_desc)->ref_cnt);			\
 		/* restore orginal hdr offset */			\
 		OL_TX_RESTORE_HDR((_tx_desc), (_netbuf));		\
-		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), QDF_DMA_TO_DEVICE); \
-		cdf_nbuf_free((_netbuf));				\
+		qdf_nbuf_unmap((_pdev)->osdev, (_netbuf), QDF_DMA_TO_DEVICE); \
+		qdf_nbuf_free((_netbuf));				\
 		((union ol_tx_desc_list_elem_t *)(_tx_desc))->next =	\
 			(_lcl_freelist);				\
 		if (qdf_unlikely(!lcl_freelist)) {			\
@@ -379,8 +379,8 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 	do {								\
 		/* restore orginal hdr offset */			\
 		OL_TX_RESTORE_HDR((_tx_desc), (_netbuf));		\
-		cdf_nbuf_unmap((_pdev)->osdev, (_netbuf), QDF_DMA_TO_DEVICE); \
-		cdf_nbuf_free((_netbuf));				\
+		qdf_nbuf_unmap((_pdev)->osdev, (_netbuf), QDF_DMA_TO_DEVICE); \
+		qdf_nbuf_free((_netbuf));				\
 		((union ol_tx_desc_list_elem_t *)(_tx_desc))->next =	\
 			(_lcl_freelist);				\
 		if (qdf_unlikely(!lcl_freelist)) {			\
@@ -488,7 +488,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 	char *trace_str;
 
 	uint32_t byte_cnt = 0;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 
 	union ol_tx_desc_list_elem_t *lcl_freelist = NULL;
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
@@ -505,9 +505,9 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 		netbuf = tx_desc->netbuf;
 
 		qdf_runtime_pm_put();
-		cdf_nbuf_trace_update(netbuf, trace_str);
+		qdf_nbuf_trace_update(netbuf, trace_str);
 		/* Per SDU update of byte count */
-		byte_cnt += cdf_nbuf_len(netbuf);
+		byte_cnt += qdf_nbuf_len(netbuf);
 		if (OL_TX_DESC_NO_REFS(tx_desc)) {
 			ol_tx_statistics(
 				pdev->ctrl_pdev,
@@ -518,7 +518,7 @@ ol_tx_completion_handler(ol_txrx_pdev_handle pdev,
 			ol_tx_msdu_complete(pdev, tx_desc, tx_descs, netbuf,
 					    lcl_freelist, tx_desc_last, status);
 		}
-		NBUF_UPDATE_TX_PKT_COUNT(netbuf, NBUF_TX_PKT_FREE);
+		QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 #ifdef QCA_SUPPORT_TXDESC_SANITY_CHECKS
 		tx_desc->pkt_type = 0xff;
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -561,15 +561,15 @@ ol_tx_single_completion_handler(ol_txrx_pdev_handle pdev,
 				enum htt_tx_status status, uint16_t tx_desc_id)
 {
 	struct ol_tx_desc_t *tx_desc;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 
 	tx_desc = ol_tx_desc_find(pdev, tx_desc_id);
 	tx_desc->status = status;
 	netbuf = tx_desc->netbuf;
 
-	NBUF_UPDATE_TX_PKT_COUNT(netbuf, NBUF_TX_PKT_FREE);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_FREE);
 	/* Do one shot statistics */
-	TXRX_STATS_UPDATE_TX_STATS(pdev, status, 1, cdf_nbuf_len(netbuf));
+	TXRX_STATS_UPDATE_TX_STATS(pdev, status, 1, qdf_nbuf_len(netbuf));
 
 	if (OL_TX_DESC_NO_REFS(tx_desc)) {
 		ol_tx_desc_frame_free_nonstd(pdev, tx_desc,
@@ -599,7 +599,7 @@ ol_tx_inspect_handler(ol_txrx_pdev_handle pdev,
 	struct ol_tx_desc_t *tx_desc;
 	union ol_tx_desc_list_elem_t *lcl_freelist = NULL;
 	union ol_tx_desc_list_elem_t *tx_desc_last = NULL;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	ol_tx_desc_list tx_descs;
 	TAILQ_INIT(&tx_descs);
 
@@ -760,10 +760,10 @@ ol_tx_delay_hist(ol_txrx_pdev_handle pdev,
 
 #ifdef QCA_COMPUTE_TX_DELAY_PER_TID
 static inline uint8_t *ol_tx_dest_addr_find(struct ol_txrx_pdev_t *pdev,
-					    cdf_nbuf_t tx_nbuf)
+					    qdf_nbuf_t tx_nbuf)
 {
 	uint8_t *hdr_ptr;
-	void *datap = cdf_nbuf_data(tx_nbuf);
+	void *datap = qdf_nbuf_data(tx_nbuf);
 
 	if (pdev->frame_format == wlan_frm_fmt_raw) {
 		/* adjust hdr_ptr to RA */
@@ -787,7 +787,7 @@ static inline uint8_t *ol_tx_dest_addr_find(struct ol_txrx_pdev_t *pdev,
 
 static uint8_t
 ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
-			    cdf_nbuf_t msdu, struct ol_tx_desc_t *tx_desc)
+			    qdf_nbuf_t msdu, struct ol_tx_desc_t *tx_desc)
 {
 	uint16_t ethertype;
 	uint8_t *dest_addr, *l3_hdr;
@@ -810,14 +810,14 @@ ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 
 	if (pdev->frame_format == wlan_frm_fmt_802_3) {
 		struct ethernet_hdr_t *enet_hdr;
-		enet_hdr = (struct ethernet_hdr_t *)cdf_nbuf_data(msdu);
+		enet_hdr = (struct ethernet_hdr_t *)qdf_nbuf_data(msdu);
 		l2_hdr_size = sizeof(struct ethernet_hdr_t);
 		ethertype =
 			(enet_hdr->ethertype[0] << 8) | enet_hdr->ethertype[1];
 		if (!IS_ETHERTYPE(ethertype)) {
 			struct llc_snap_hdr_t *llc_hdr;
 			llc_hdr = (struct llc_snap_hdr_t *)
-				  (cdf_nbuf_data(msdu) + l2_hdr_size);
+				  (qdf_nbuf_data(msdu) + l2_hdr_size);
 			l2_hdr_size += sizeof(struct llc_snap_hdr_t);
 			ethertype =
 				(llc_hdr->ethertype[0] << 8) | llc_hdr->
@@ -826,13 +826,13 @@ ol_tx_delay_tid_from_l3_hdr(struct ol_txrx_pdev_t *pdev,
 	} else {
 		struct llc_snap_hdr_t *llc_hdr;
 		l2_hdr_size = sizeof(struct ieee80211_frame);
-		llc_hdr = (struct llc_snap_hdr_t *)(cdf_nbuf_data(msdu)
+		llc_hdr = (struct llc_snap_hdr_t *)(qdf_nbuf_data(msdu)
 						    + l2_hdr_size);
 		l2_hdr_size += sizeof(struct llc_snap_hdr_t);
 		ethertype =
 			(llc_hdr->ethertype[0] << 8) | llc_hdr->ethertype[1];
 	}
-	l3_hdr = cdf_nbuf_data(msdu) + l2_hdr_size;
+	l3_hdr = qdf_nbuf_data(msdu) + l2_hdr_size;
 	if (ETHERTYPE_IPV4 == ethertype) {
 		return (((struct ipv4_hdr_t *)l3_hdr)->tos >> 5) & 0x7;
 	} else if (ETHERTYPE_IPV6 == ethertype) {
@@ -850,8 +850,8 @@ static int ol_tx_delay_category(struct ol_txrx_pdev_t *pdev, uint16_t msdu_id)
 	struct ol_tx_desc_t *tx_desc = ol_tx_desc_find(pdev, msdu_id);
 	uint8_t tid;
 
-	cdf_nbuf_t msdu = tx_desc->netbuf;
-	tid = cdf_nbuf_get_tid(msdu);
+	qdf_nbuf_t msdu = tx_desc->netbuf;
+	tid = qdf_nbuf_get_tid(msdu);
 	if (tid == QDF_NBUF_TX_EXT_TID_INVALID) {
 		tid = ol_tx_delay_tid_from_l3_hdr(pdev, msdu, tx_desc);
 		if (tid == QDF_NBUF_TX_EXT_TID_INVALID) {

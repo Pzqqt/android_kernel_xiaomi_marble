@@ -47,11 +47,11 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter,
 QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter,
 				       uint8_t STAId);
 QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
-				    cdf_nbuf_t rxBufChain,
+				    qdf_nbuf_t rxBufChain,
 				    uint8_t staId);
 #ifdef IPA_OFFLOAD
 QDF_STATUS hdd_softap_rx_mul_packet_cbk(void *cds_context,
-					cdf_nbuf_t rx_buf_list, uint8_t staId);
+					qdf_nbuf_t rx_buf_list, uint8_t staId);
 #endif /* IPA_OFFLOAD */
 
 QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter,

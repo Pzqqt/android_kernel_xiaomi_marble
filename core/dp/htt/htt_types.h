@@ -33,7 +33,7 @@
 #include <qdf_lock.h>           /* qdf_spinlock_t */
 #include <qdf_timer.h>		/* qdf_timer_t */
 #include <qdf_atomic.h>         /* qdf_atomic_inc */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <htc_api.h>            /* HTC_PACKET */
 
 #include <ol_ctrl_api.h>        /* ol_pdev_handle */
@@ -83,9 +83,9 @@ struct htt_host_tx_desc_t {
 };
 
 struct htt_tx_mgmt_desc_buf {
-	cdf_nbuf_t msg_buf;
+	qdf_nbuf_t msg_buf;
 	A_BOOL is_inuse;
-	cdf_nbuf_t mgmt_frm;
+	qdf_nbuf_t mgmt_frm;
 };
 
 struct htt_tx_mgmt_desc_ctxt {
@@ -100,7 +100,7 @@ struct htt_list_node {
 
 struct htt_rx_hash_entry {
 	A_UINT32 paddr;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	A_UINT8 fromlist;
 	struct htt_list_node listnode;
 #ifdef RX_HASH_DEBUG
@@ -133,7 +133,7 @@ struct htt_ipa_uc_tx_resource_t {
 	struct uc_shared_mem_t tx_comp_base;
 
 	uint32_t tx_comp_idx_paddr;
-	cdf_nbuf_t *tx_buf_pool_vaddr_strg;
+	qdf_nbuf_t *tx_buf_pool_vaddr_strg;
 	uint32_t alloc_tx_buf_cnt;
 };
 
@@ -229,7 +229,7 @@ struct htt_pdev_t {
 
 #ifdef ATH_11AC_TXCOMPACT
 	HTT_TX_MUTEX_TYPE txnbufq_mutex;
-	cdf_nbuf_queue_t txnbufq;
+	qdf_nbuf_queue_t txnbufq;
 	struct htt_htc_pkt_union *htt_htc_pkt_misclist;
 #endif
 
@@ -259,7 +259,7 @@ struct htt_pdev_t {
 			 * The host SW uses this netbufs ring to locate the nw
 			 * buffer objects whose data buffers the HW has filled.
 			 */
-			cdf_nbuf_t *netbufs_ring;
+			qdf_nbuf_t *netbufs_ring;
 			/*
 			 * Ring of buffer addresses -
 			 * This ring holds the "physical" device address of the
@@ -370,7 +370,7 @@ struct htt_pdev_t {
 
 	int download_len;
 	void (*tx_send_complete_part2)(void *pdev, A_STATUS status,
-				       cdf_nbuf_t msdu, uint16_t msdu_id);
+				       qdf_nbuf_t msdu, uint16_t msdu_id);
 
 	HTT_TX_MUTEX_TYPE htt_tx_mutex;
 

@@ -368,7 +368,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	/* Get TL AC corresponding to Qdisc queue index/AC. */
 	ac = hdd_qdisc_ac_to_tl_ac[skb->queue_mapping];
 
-	if (!cdf_nbuf_ipa_owned_get(skb)) {
+	if (!qdf_nbuf_ipa_owned_get(skb)) {
 		/* Check if the buffer has enough header room */
 		skb = skb_unshare(skb, GFP_ATOMIC);
 		if (!skb)
@@ -476,20 +476,20 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	/* Zero out skb's context buffer for the driver to use */
 	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
-	NBUF_CB_TX_PACKET_TRACK(skb) = NBUF_TX_PKT_DATA_TRACK;
-	NBUF_UPDATE_TX_PKT_COUNT(skb, NBUF_TX_PKT_HDD);
+	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
 
 	qdf_dp_trace_set_track(skb);
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_PTR_RECORD,
 				(uint8_t *)skb->data, sizeof(skb->data)));
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
-				(uint8_t *)skb->data, cdf_nbuf_len(skb)));
-	if (cdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+				(uint8_t *)skb->data, qdf_nbuf_len(skb)));
+	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
 		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-				(cdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
+				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
-	if (ol_tx_send_data_frame(STAId, (cdf_nbuf_t) skb,
+	if (ol_tx_send_data_frame(STAId, (qdf_nbuf_t) skb,
 							  proto_type) != NULL) {
 		QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_WARN,
 			  "%s: Failed to send packet to txrx for staid:%d",
@@ -503,11 +503,11 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 drop_pkt:
 
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
-				(uint8_t *)skb->data, cdf_nbuf_len(skb)));
-	if (cdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+				(uint8_t *)skb->data, qdf_nbuf_len(skb)));
+	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
 		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-				(cdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
+				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
 	++pAdapter->stats.tx_dropped;
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
@@ -642,7 +642,7 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
 /**
  * hdd_rx_packet_cbk() - Receive packet handler
  * @cds_context: pointer to CDS context
- * @rxBuf: pointer to rx cdf_nbuf
+ * @rxBuf: pointer to rx qdf_nbuf
  * @staId: Station Id
  *
  * Receive callback registered with TL.  TL will call this to notify
@@ -652,7 +652,7 @@ QDF_STATUS hdd_deinit_tx_rx(hdd_adapter_t *pAdapter)
  * Return: QDF_STATUS_E_FAILURE if any errors encountered,
  *	   QDF_STATUS_SUCCESS otherwise
  */
-QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
+QDF_STATUS hdd_rx_packet_cbk(void *cds_context, qdf_nbuf_t rxBuf, uint8_t staId)
 {
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_context_t *pHddCtx = NULL;
@@ -706,7 +706,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 		/* Remove SKB from internal tracking table before submitting
 		 * it to stack
 		 */
-		cdf_nbuf_free(skb);
+		qdf_nbuf_free(skb);
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -740,7 +740,7 @@ QDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 	/* Remove SKB from internal tracking table before submitting
 	 * it to stack
 	 */
-	cdf_net_buf_debug_release_skb(rxBuf);
+	qdf_net_buf_debug_release_skb(rxBuf);
 
 	if (HDD_LRO_NO_RX ==
 		 hdd_lro_rx(pHddCtx, pAdapter, skb)) {

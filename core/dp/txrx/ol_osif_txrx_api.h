@@ -32,7 +32,7 @@
 #ifndef _OL_OSIF_TXRX_API_H_
 #define _OL_OSIF_TXRX_API_H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 /**
  * @brief Call tx completion handler to release the buffers

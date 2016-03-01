@@ -46,7 +46,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -971,7 +971,7 @@ QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_PEER_GET_ESTIMATED_LINKSPEED_CMDID)) {
 		WMA_LOGE("%s: failed to send link speed command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -1131,7 +1131,7 @@ int32_t wmi_unified_pdev_green_ap_ps_enable_cmd(wmi_unified_t wmi_handle,
 	if (wmi_unified_cmd_send(wmi_handle, buf, len,
 				 WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID)) {
 		WMA_LOGE("Set Green AP PS param Failed val %d", value);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	return 0;
@@ -1179,7 +1179,7 @@ int32_t wmi_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
 		if (ret) {
 			WMA_LOGE("PROFILE_TRIGGER cmd Failed with value %d",
 					value1);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return ret;
 		}
 		break;
@@ -1203,7 +1203,7 @@ int32_t wmi_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
 		if (ret) {
 			WMA_LOGE("PROFILE_DATA cmd Failed for id %d value %d",
 					value1, value2);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return ret;
 		}
 		break;
@@ -1229,7 +1229,7 @@ int32_t wmi_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
 		if (ret) {
 			WMA_LOGE("HIST_INTVL cmd Failed for id %d value %d",
 					value1, value2);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return ret;
 		}
 		break;
@@ -1256,7 +1256,7 @@ int32_t wmi_unified_fw_profiling_cmd(wmi_unified_t wmi_handle,
 		if (ret) {
 			WMA_LOGE("enable cmd Failed for id %d value %d",
 					value1, value2);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return ret;
 		}
 		break;
@@ -1937,7 +1937,7 @@ void wma_start_oem_data_req(tp_wma_handle wma_handle,
 
 	if (ret != EOK) {
 		WMA_LOGE(FL(":wmi cmd send failed"));
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 
 out:
@@ -4460,7 +4460,7 @@ void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg)
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				 WMI_VDEV_WMM_DELTS_CMDID)) {
 		WMA_LOGP("%s: Failed to send vdev DELTS command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (msg->setRICparams == true)
@@ -4529,7 +4529,7 @@ void wma_aggr_qos_req(tp_wma_handle wma,
 					__func__);
 				pAggrQosRspMsg->status[i] =
 					QDF_STATUS_E_FAILURE;
-				cdf_nbuf_free(buf);
+				qdf_nbuf_free(buf);
 			}
 		}
 	}
@@ -4592,7 +4592,7 @@ void wma_add_ts_req(tp_wma_handle wma, tAddTsParams *msg)
 				 WMI_VDEV_WMM_ADDTS_CMDID)) {
 		WMA_LOGP("%s: Failed to send vdev ADDTS command", __func__);
 		msg->status = QDF_STATUS_E_FAILURE;
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (msg->setRICparams == true)
@@ -5486,7 +5486,7 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 				   &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev id for %pM", __func__,
 			 pAddPeriodicTxPtrnParams->mac_address.bytes);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_INVAL;
 	}
 	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
@@ -5518,7 +5518,7 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 				 WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMDID)) {
 		WMA_LOGE("%s: failed to add pattern set state command",
 			 __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5557,7 +5557,7 @@ QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 				   &vdev_id)) {
 		WMA_LOGE("%s: Failed to find vdev id for %pM", __func__,
 			 pDelPeriodicTxPtrnParams->mac_address.bytes);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_INVAL;
 	}
 	cmd = (WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param *)
@@ -5576,7 +5576,7 @@ QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMDID)) {
 		WMA_LOGE("%s: failed to send del pattern command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -6316,7 +6316,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 				 WMI_PDEV_SET_REGDOMAIN_CMDID)) {
 		WMA_LOGP("%s: Failed to send pdev set regdomain command",
 			 __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 
 	if ((((reg_dmn & ~COUNTRY_ERD_FLAG) == CTRY_JAPAN) ||
@@ -6577,7 +6577,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, wmibuf, len,
 				 WMI_PDEV_SUSPEND_CMDID);
 	if (ret < 0) {
-		cdf_nbuf_free(wmibuf);
+		qdf_nbuf_free(wmibuf);
 		return ret;
 	}
 
@@ -6913,7 +6913,7 @@ int wma_set_tdls_offchan_mode(WMA_HANDLE handle,
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 		WMI_TDLS_SET_OFFCHAN_MODE_CMDID)) {
 		WMA_LOGP(FL("failed to send tdls off chan command"));
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		ret = -EIO;
 	}
 
@@ -7021,7 +7021,7 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_TDLS_SET_STATE_CMDID)) {
 		WMA_LOGP("%s: failed to send tdls set state command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		ret = -EIO;
 		goto end_fw_tdls_state;
 	}
@@ -7223,7 +7223,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 				 WMI_TDLS_PEER_UPDATE_CMDID)) {
 		WMA_LOGE("%s: failed to send tdls peer update state command",
 			 __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		ret = -EIO;
 		goto end_tdls_peer_state;
 	}

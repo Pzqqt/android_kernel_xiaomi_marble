@@ -39,7 +39,7 @@
 #include <osdep.h>              /* uint32_t, offsetof, etc. */
 #include <qdf_types.h>          /* qdf_dma_addr_t */
 #include <qdf_mem.h>         /* qdf_mem_alloc_consistent et al */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_time.h>           /* qdf_mdelay */
 
 #include <htt.h>                /* htt_tx_msdu_desc_t */
@@ -548,7 +548,7 @@ void htt_tx_desc_flag_batch_more(htt_pdev_handle pdev, void *desc)
    because of No CE desc*/
 void htt_tx_sched(htt_pdev_handle pdev)
 {
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 	int download_len = pdev->download_len;
 	int packet_len;
 
@@ -556,7 +556,7 @@ void htt_tx_sched(htt_pdev_handle pdev)
 	while (msdu != NULL) {
 		int not_accepted;
 		/* packet length includes HTT tx desc frag added above */
-		packet_len = cdf_nbuf_len(msdu);
+		packet_len = qdf_nbuf_len(msdu);
 		if (packet_len < download_len) {
 			/*
 			 * This case of packet length being less than the
@@ -583,7 +583,7 @@ void htt_tx_sched(htt_pdev_handle pdev)
 	}
 }
 
-int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
+int htt_tx_send_std(htt_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 
 	int download_len = pdev->download_len;
@@ -591,7 +591,7 @@ int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
 	int packet_len;
 
 	/* packet length includes HTT tx desc frag added above */
-	packet_len = cdf_nbuf_len(msdu);
+	packet_len = qdf_nbuf_len(msdu);
 	if (packet_len < download_len) {
 		/*
 		 * This case of packet length being less than the nominal
@@ -605,17 +605,17 @@ int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
 		download_len = packet_len;
 	}
 
-	NBUF_UPDATE_TX_PKT_COUNT(msdu, NBUF_TX_PKT_HTT);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_HTT);
 	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_HTT_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(msdu)),
-				sizeof(cdf_nbuf_data(msdu))));
-	if (cdf_nbuf_queue_len(&pdev->txnbufq) > 0) {
+				(uint8_t *)(qdf_nbuf_data(msdu)),
+				sizeof(qdf_nbuf_data(msdu))));
+	if (qdf_nbuf_queue_len(&pdev->txnbufq) > 0) {
 		HTT_TX_NBUF_QUEUE_ADD(pdev, msdu);
 		htt_tx_sched(pdev);
 		return 0;
 	}
 
-	cdf_nbuf_trace_update(msdu, "HT:T:");
+	qdf_nbuf_trace_update(msdu, "HT:T:");
 	if (htc_send_data_pkt
 		    (pdev->htc_pdev, msdu, pdev->htc_endpoint, download_len)) {
 		HTT_TX_NBUF_QUEUE_ADD(pdev, msdu);
@@ -643,8 +643,8 @@ void
 htt_tx_resume_handler(void *context) { }
 #endif
 
-cdf_nbuf_t
-htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
+qdf_nbuf_t
+htt_tx_send_batch(htt_pdev_handle pdev, qdf_nbuf_t head_msdu, int num_msdus)
 {
 	qdf_print("*** %s curently only applies for HL systems\n", __func__);
 	qdf_assert(0);
@@ -654,7 +654,7 @@ htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
 
 int
 htt_tx_send_nonstd(htt_pdev_handle pdev,
-		   cdf_nbuf_t msdu,
+		   qdf_nbuf_t msdu,
 		   uint16_t msdu_id, enum htt_pkt_type pkt_type)
 {
 	int download_len;
@@ -678,15 +678,15 @@ htt_tx_send_nonstd(htt_pdev_handle pdev,
 
 #ifdef QCA_TX_HTT2_SUPPORT
 static inline HTC_ENDPOINT_ID
-htt_tx_htt2_get_ep_id(htt_pdev_handle pdev, cdf_nbuf_t msdu)
+htt_tx_htt2_get_ep_id(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 {
 	/*
 	 * TX HTT2 service mainly for small sized frame and check if
 	 * this candidate frame allow or not.
 	 */
 	if ((pdev->htc_tx_htt2_endpoint != ENDPOINT_UNUSED) &&
-	    cdf_nbuf_get_tx_parallel_dnload_frm(msdu) &&
-	    (cdf_nbuf_len(msdu) < pdev->htc_tx_htt2_max_size))
+	    qdf_nbuf_get_tx_parallel_dnload_frm(msdu) &&
+	    (qdf_nbuf_len(msdu) < pdev->htc_tx_htt2_max_size))
 		return pdev->htc_tx_htt2_endpoint;
 	else
 		return pdev->htc_endpoint;
@@ -697,7 +697,7 @@ htt_tx_htt2_get_ep_id(htt_pdev_handle pdev, cdf_nbuf_t msdu)
 
 static inline int
 htt_tx_send_base(htt_pdev_handle pdev,
-		 cdf_nbuf_t msdu,
+		 qdf_nbuf_t msdu,
 		 uint16_t msdu_id, int download_len, uint8_t more_data)
 {
 	struct htt_host_tx_desc_t *htt_host_tx_desc;
@@ -711,7 +711,7 @@ htt_tx_send_base(htt_pdev_handle pdev,
 	 * Retrieve it so we can provide its HTC header space to HTC.
 	 */
 	htt_host_tx_desc = (struct htt_host_tx_desc_t *)
-			   cdf_nbuf_get_frag_vaddr(msdu, 0);
+			   qdf_nbuf_get_frag_vaddr(msdu, 0);
 
 	pkt = htt_htc_pkt_alloc(pdev);
 	if (!pkt)
@@ -721,7 +721,7 @@ htt_tx_send_base(htt_pdev_handle pdev,
 	pkt->pdev_ctxt = pdev->txrx_pdev;
 
 	/* packet length includes HTT tx desc frag added above */
-	packet_len = cdf_nbuf_len(msdu);
+	packet_len = qdf_nbuf_len(msdu);
 	if (packet_len < download_len) {
 		/*
 		 * This case of packet length being less than the nominal
@@ -746,23 +746,23 @@ htt_tx_send_base(htt_pdev_handle pdev,
 
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&pkt->htc_pkt, msdu);
 
-	cdf_nbuf_trace_update(msdu, "HT:T:");
-	NBUF_UPDATE_TX_PKT_COUNT(msdu, NBUF_TX_PKT_HTT);
+	qdf_nbuf_trace_update(msdu, "HT:T:");
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu, QDF_NBUF_TX_PKT_HTT);
 	DPTRACE(qdf_dp_trace(msdu, QDF_DP_TRACE_HTT_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(msdu)),
-				sizeof(cdf_nbuf_data(msdu))));
+				(uint8_t *)(qdf_nbuf_data(msdu)),
+				sizeof(qdf_nbuf_data(msdu))));
 	htc_send_data_pkt(pdev->htc_pdev, &pkt->htc_pkt, more_data);
 
 	return 0;               /* success */
 }
 
-cdf_nbuf_t
-htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
+qdf_nbuf_t
+htt_tx_send_batch(htt_pdev_handle pdev, qdf_nbuf_t head_msdu, int num_msdus)
 {
-	cdf_nbuf_t rejected = NULL;
+	qdf_nbuf_t rejected = NULL;
 	uint16_t *msdu_id_storage;
 	uint16_t msdu_id;
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 	/*
 	 * FOR NOW, iterate through the batch, sending the frames singly.
 	 * Eventually HTC and HIF should be able to accept a batch of
@@ -770,14 +770,14 @@ htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
 	 */
 	msdu = head_msdu;
 	while (num_msdus--) {
-		cdf_nbuf_t next_msdu = cdf_nbuf_next(msdu);
+		qdf_nbuf_t next_msdu = qdf_nbuf_next(msdu);
 		msdu_id_storage = ol_tx_msdu_id_storage(msdu);
 		msdu_id = *msdu_id_storage;
 
 		/* htt_tx_send_base returns 0 as success and 1 as failure */
 		if (htt_tx_send_base(pdev, msdu, msdu_id, pdev->download_len,
 				     num_msdus)) {
-			cdf_nbuf_set_next(msdu, rejected);
+			qdf_nbuf_set_next(msdu, rejected);
 			rejected = msdu;
 		}
 		msdu = next_msdu;
@@ -787,7 +787,7 @@ htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
 
 int
 htt_tx_send_nonstd(htt_pdev_handle pdev,
-		   cdf_nbuf_t msdu,
+		   qdf_nbuf_t msdu,
 		   uint16_t msdu_id, enum htt_pkt_type pkt_type)
 {
 	int download_len;
@@ -806,7 +806,7 @@ htt_tx_send_nonstd(htt_pdev_handle pdev,
 	return htt_tx_send_base(pdev, msdu, msdu_id, download_len, 0);
 }
 
-int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
+int htt_tx_send_std(htt_pdev_handle pdev, qdf_nbuf_t msdu, uint16_t msdu_id)
 {
 	return htt_tx_send_base(pdev, msdu, msdu_id, pdev->download_len, 0);
 }
@@ -865,7 +865,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 			 unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
-	cdf_nbuf_t buffer_vaddr;
+	qdf_nbuf_t buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
@@ -876,7 +876,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	/* Allocate TX buffers as many as possible */
 	for (tx_buffer_count = 0;
 	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
-		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
+		buffer_vaddr = qdf_nbuf_alloc(pdev->osdev,
 					      uc_tx_buf_sz, 0, 4, false);
 		if (!buffer_vaddr) {
 			qdf_print("%s: TX BUF alloc fail, loop index: %d",
@@ -885,8 +885,8 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		}
 
 		/* Init buffer */
-		qdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
-		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
+		qdf_mem_zero(qdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		header_ptr = (uint32_t *) qdf_nbuf_data(buffer_vaddr);
 
 		/* HTT control header */
 		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
@@ -896,8 +896,8 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
 
-		cdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = cdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
+		qdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
+		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 		*header_ptr = (uint32_t) (buffer_paddr +
 						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
@@ -924,7 +924,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 			 unsigned int uc_tx_partition_base)
 {
 	unsigned int tx_buffer_count;
-	cdf_nbuf_t buffer_vaddr;
+	qdf_nbuf_t buffer_vaddr;
 	qdf_dma_addr_t buffer_paddr;
 	uint32_t *header_ptr;
 	uint32_t *ring_vaddr;
@@ -936,7 +936,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 	/* Allocate TX buffers as many as possible */
 	for (tx_buffer_count = 0;
 	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
-		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
+		buffer_vaddr = qdf_nbuf_alloc(pdev->osdev,
 					      uc_tx_buf_sz, 0, 4, false);
 		if (!buffer_vaddr) {
 			qdf_print("%s: TX BUF alloc fail, loop index: %d",
@@ -945,8 +945,8 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		}
 
 		/* Init buffer */
-		qdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
-		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
+		qdf_mem_zero(qdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		header_ptr = (uint32_t *) qdf_nbuf_data(buffer_vaddr);
 
 		/* HTT control header */
 		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
@@ -956,8 +956,8 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		*header_ptr |= ((uint16_t) uc_tx_partition_base +
 				tx_buffer_count) << 16;
 
-		cdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = cdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
+		qdf_nbuf_map(pdev->osdev, buffer_vaddr, QDF_DMA_BIDIRECTIONAL);
+		buffer_paddr = qdf_nbuf_get_frag_paddr(buffer_vaddr, 0);
 		header_ptr++;
 
 		/* Frag Desc Pointer */
@@ -1019,7 +1019,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	}
 
 	/* Allocate TX COMP Ring */
-	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(cdf_nbuf_t);
+	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(qdf_nbuf_t);
 	pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr =
 		qdf_mem_alloc_consistent(
 			pdev->osdev, pdev->osdev->dev,
@@ -1035,15 +1035,15 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 	/* Allocate TX BUF vAddress Storage */
 	pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg =
-		(cdf_nbuf_t *) qdf_mem_malloc(uc_tx_buf_cnt *
-					      sizeof(cdf_nbuf_t));
+		(qdf_nbuf_t *) qdf_mem_malloc(uc_tx_buf_cnt *
+					      sizeof(qdf_nbuf_t));
 	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg) {
 		qdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
 	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg,
-		     uc_tx_buf_cnt * sizeof(cdf_nbuf_t));
+		     uc_tx_buf_cnt * sizeof(qdf_nbuf_t));
 
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
 		pdev, uc_tx_buf_sz, uc_tx_buf_cnt, uc_tx_partition_base);
@@ -1090,7 +1090,8 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	if (pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
 		qdf_mem_free_consistent(
 			pdev->osdev,
-			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) * sizeof(cdf_nbuf_t),
+			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) *
+							sizeof(qdf_nbuf_t),
 			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 			pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
 			qdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
@@ -1101,11 +1102,11 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	/* Free each single buffer */
 	for (idx = 0; idx < pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt; idx++) {
 		if (pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[idx]) {
-			cdf_nbuf_unmap(pdev->osdev,
+			qdf_nbuf_unmap(pdev->osdev,
 				       pdev->ipa_uc_tx_rsc.
 				       tx_buf_pool_vaddr_strg[idx],
 				       QDF_DMA_FROM_DEVICE);
-			cdf_nbuf_free(pdev->ipa_uc_tx_rsc.
+			qdf_nbuf_free(pdev->ipa_uc_tx_rsc.
 				      tx_buf_pool_vaddr_strg[idx]);
 		}
 	}

@@ -47,7 +47,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -1492,7 +1492,7 @@ int wma_process_fw_event_handler(struct wmi_unified *wmi_handle,
 	params_buf = qdf_mem_malloc(sizeof(wma_process_fw_event_params));
 	if (!params_buf) {
 		WMA_LOGE("%s: Failed alloc memory for params_buf", __func__);
-		cdf_nbuf_free(evt_buf);
+		qdf_nbuf_free(evt_buf);
 		return -ENOMEM;
 	}
 
@@ -1507,7 +1507,7 @@ int wma_process_fw_event_handler(struct wmi_unified *wmi_handle,
 		cds_mq_post_message(CDS_MQ_ID_WMA, &cds_msg)) {
 		WMA_LOGP("%s: Failed to post WMA_PROCESS_FW_EVENT msg",
 			 __func__);
-		cdf_nbuf_free(evt_buf);
+		qdf_nbuf_free(evt_buf);
 		qdf_mem_free(params_buf);
 		return -EFAULT;
 	}
@@ -3013,9 +3013,9 @@ QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 
 		if (bcn) {
 			if (bcn->dma_mapped)
-				cdf_nbuf_unmap_single(wma_handle->qdf_dev,
+				qdf_nbuf_unmap_single(wma_handle->qdf_dev,
 					bcn->buf, QDF_DMA_TO_DEVICE);
-			cdf_nbuf_free(bcn->buf);
+			qdf_nbuf_free(bcn->buf);
 			qdf_mem_free(bcn);
 			wma_handle->interfaces[i].beacon = NULL;
 		}
@@ -3609,7 +3609,7 @@ static wmi_buf_t wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
 	/* allocate memory requested by FW */
 	if (ev->num_mem_reqs > WMI_MAX_MEM_REQS) {
 		QDF_ASSERT(0);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return NULL;
 	}
 
@@ -5487,7 +5487,7 @@ QDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				WMI_SOC_SET_PCL_CMDID)) {
 		WMA_LOGE("%s: Failed to send WMI_SOC_SET_PCL_CMDID", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5549,7 +5549,7 @@ QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
 				WMI_SOC_SET_HW_MODE_CMDID)) {
 		WMA_LOGE("%s: Failed to send WMI_SOC_SET_HW_MODE_CMDID",
 			__func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		goto fail;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5620,7 +5620,7 @@ QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 				WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID)) {
 		WMA_LOGE("%s: Failed to send WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID",
 				__func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 	return QDF_STATUS_SUCCESS;
 }

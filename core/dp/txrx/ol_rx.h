@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,18 +28,18 @@
 #ifndef _OL_RX__H_
 #define _OL_RX__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
 
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
-	      struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t head_msdu);
+	      struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t head_msdu);
 
 void
 ol_rx_discard(struct ol_txrx_vdev_t *vdev,
-	      struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t head_msdu);
+	      struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t head_msdu);
 
-void ol_rx_frames_free(htt_pdev_handle htt_pdev, cdf_nbuf_t frames);
+void ol_rx_frames_free(htt_pdev_handle htt_pdev, qdf_nbuf_t frames);
 
 void ol_rx_peer_init(struct ol_txrx_pdev_t *pdev, struct ol_txrx_peer_t *peer);
 
@@ -49,7 +49,7 @@ ol_rx_peer_cleanup(struct ol_txrx_vdev_t *vdev, struct ol_txrx_peer_t *peer);
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 		       struct ol_txrx_peer_t *peer,
-		       unsigned tid, cdf_nbuf_t head_msdu);
+		       unsigned tid, qdf_nbuf_t head_msdu);
 
 void
 ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
@@ -62,6 +62,6 @@ ol_rx_mic_error_handler(
 	u_int8_t tid,
 	u_int16_t peer_id,
 	void *msdu_desc,
-	cdf_nbuf_t msdu);
+	qdf_nbuf_t msdu);
 
 #endif /* _OL_RX__H_ */

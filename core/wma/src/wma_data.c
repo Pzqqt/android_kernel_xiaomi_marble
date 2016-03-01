@@ -45,7 +45,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -846,7 +846,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
  * Return: none
  */
 void
-wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
+wma_data_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 {
 	ol_txrx_pdev_handle pdev;
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
@@ -897,8 +897,8 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 
 free_nbuf:
 	/* unmap and freeing the tx buf as txrx is not taking care */
-	cdf_nbuf_unmap_single(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
-	cdf_nbuf_free(netbuf);
+	qdf_nbuf_unmap_single(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_free(netbuf);
 }
 
 /**
@@ -1026,7 +1026,7 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 	if (ret) {
 		WMA_LOGP("%s: Failed to send enable/disable MCC"
 			 " adaptive scheduler command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -1134,7 +1134,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 	if (ret) {
 		WMA_LOGE("%s: Failed to send MCC Channel Time Latency command",
 			 __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1266,7 +1266,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 				   WMI_RESMGR_SET_CHAN_TIME_QUOTA_CMDID);
 	if (ret) {
 		WMA_LOGE("Failed to send MCC Channel Time Quota command");
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -1540,9 +1540,9 @@ wma_mgmt_tx_comp_conf_ind(tp_wma_handle wma_handle, uint8_t sub_type,
  * Return: none
  */
 static void
-wma_mgmt_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
+wma_mgmt_tx_ack_comp_hdlr(void *wma_context, qdf_nbuf_t netbuf, int32_t status)
 {
-	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (cdf_nbuf_data(netbuf));
+	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(netbuf));
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_context;
 
 	if (wma_handle && wma_handle->umac_ota_ack_cb[pFc->subType]) {
@@ -1583,7 +1583,7 @@ wma_mgmt_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
  * Return: none
  */
 static void
-wma_mgmt_tx_dload_comp_hldr(void *wma_context, cdf_nbuf_t netbuf,
+wma_mgmt_tx_dload_comp_hldr(void *wma_context, qdf_nbuf_t netbuf,
 			    int32_t status)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -2004,7 +2004,7 @@ QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 				      WMI_THERMAL_MGMT_CMDID);
 	if (status) {
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		WMA_LOGE("%s:Failed to send thermal mgmt command", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2141,7 +2141,7 @@ int wma_thermal_mgmt_evt_handler(void *handle, uint8_t *event,
  *
  * Return: none
  */
-static void wma_decap_to_8023(cdf_nbuf_t msdu, struct wma_decap_info_t *info)
+static void wma_decap_to_8023(qdf_nbuf_t msdu, struct wma_decap_info_t *info)
 {
 	struct llc_snap_hdr_t *llc_hdr;
 	uint16_t ether_type;
@@ -2151,7 +2151,7 @@ static void wma_decap_to_8023(cdf_nbuf_t msdu, struct wma_decap_info_t *info)
 	uint8_t *buf;
 	struct ethernet_hdr_t *ethr_hdr;
 
-	buf = (uint8_t *) cdf_nbuf_data(msdu);
+	buf = (uint8_t *) qdf_nbuf_data(msdu);
 	llc_hdr = (struct llc_snap_hdr_t *)buf;
 	ether_type = (llc_hdr->ethertype[0] << 8) | llc_hdr->ethertype[1];
 	/* do llc remove if needed */
@@ -2171,9 +2171,9 @@ static void wma_decap_to_8023(cdf_nbuf_t msdu, struct wma_decap_info_t *info)
 		}
 	}
 	if (l2_hdr_space > ETHERNET_HDR_LEN) {
-		buf = cdf_nbuf_pull_head(msdu, l2_hdr_space - ETHERNET_HDR_LEN);
+		buf = qdf_nbuf_pull_head(msdu, l2_hdr_space - ETHERNET_HDR_LEN);
 	} else if (l2_hdr_space < ETHERNET_HDR_LEN) {
-		buf = cdf_nbuf_push_head(msdu, ETHERNET_HDR_LEN - l2_hdr_space);
+		buf = qdf_nbuf_push_head(msdu, ETHERNET_HDR_LEN - l2_hdr_space);
 	}
 
 	/* mpdu hdr should be present in info,re-create ethr_hdr based on mpdu hdr */
@@ -2211,9 +2211,9 @@ static void wma_decap_to_8023(cdf_nbuf_t msdu, struct wma_decap_info_t *info)
 		ethr_hdr->ethertype[1] = (ether_type) & 0xff;
 	} else {
 		uint32_t pktlen =
-			cdf_nbuf_len(msdu) - sizeof(ethr_hdr->ethertype);
+			qdf_nbuf_len(msdu) - sizeof(ethr_hdr->ethertype);
 		ether_type = (uint16_t) pktlen;
-		ether_type = cdf_nbuf_len(msdu) - sizeof(struct ethernet_hdr_t);
+		ether_type = qdf_nbuf_len(msdu) - sizeof(struct ethernet_hdr_t);
 		ethr_hdr->ethertype[0] = (ether_type >> 8) & 0xff;
 		ethr_hdr->ethertype[1] = (ether_type) & 0xff;
 	}
@@ -2393,8 +2393,8 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 							    sizeof(uint32_t)));
 	bufp += WMI_TLV_HDR_SIZE;
 	qdf_mem_copy(bufp, pData, bufp_len);
-	cdf_nbuf_map_single(qdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
-	dma_addr = cdf_nbuf_get_frag_paddr(tx_frame, 0);
+	qdf_nbuf_map_single(qdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
+	dma_addr = qdf_nbuf_get_frag_paddr(tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
 #if defined(HELIUMPLUS_PADDR64)
 	cmd->paddr_hi = (uint32_t)((dma_addr >> 32) & 0x1F);
@@ -2447,7 +2447,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	int32_t is_high_latency;
 	ol_txrx_vdev_handle txrx_vdev;
 	enum frame_index tx_frm_index = GENERIC_NODOWNLD_NOACK_COMP_INDEX;
-	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (cdf_nbuf_data(tx_frame));
+	tpSirMacFrameCtl pFc = (tpSirMacFrameCtl) (qdf_nbuf_data(tx_frame));
 	uint8_t use_6mbps = 0;
 	uint8_t downld_comp_required = 0;
 	uint16_t chanfreq;
@@ -2495,7 +2495,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		WMA_LOGE("No Support to send other frames except 802.11 Mgmt/Data");
 		return QDF_STATUS_E_FAILURE;
 	}
-	mHdr = (tpSirMacMgmtHdr)cdf_nbuf_data(tx_frame);
+	mHdr = (tpSirMacMgmtHdr)qdf_nbuf_data(tx_frame);
 #ifdef WLAN_FEATURE_11W
 	if ((iface && iface->rmfEnabled) &&
 	    (frmType == TXRX_FRM_802_11_MGMT) &&
@@ -2503,7 +2503,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	     pFc->subType == SIR_MAC_MGMT_DEAUTH ||
 	     pFc->subType == SIR_MAC_MGMT_ACTION)) {
 		struct ieee80211_frame *wh =
-			(struct ieee80211_frame *)cdf_nbuf_data(tx_frame);
+			(struct ieee80211_frame *)qdf_nbuf_data(tx_frame);
 		if (!IEEE80211_IS_BROADCAST(wh->i_addr1) &&
 		    !IEEE80211_IS_MULTICAST(wh->i_addr1)) {
 			if (pFc->wep) {
@@ -2586,7 +2586,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 	    (pFc->subType == SIR_MAC_MGMT_PROBE_RSP)) {
 		uint64_t adjusted_tsf_le;
 		struct ieee80211_frame *wh =
-			(struct ieee80211_frame *)cdf_nbuf_data(tx_frame);
+			(struct ieee80211_frame *)qdf_nbuf_data(tx_frame);
 
 		/* Make the TSF offset negative to match TSF in beacons */
 		adjusted_tsf_le = cpu_to_le64(0ULL -
@@ -2595,14 +2595,14 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		A_MEMCPY(&wh[1], &adjusted_tsf_le, sizeof(adjusted_tsf_le));
 	}
 	if (frmType == TXRX_FRM_802_11_DATA) {
-		cdf_nbuf_t ret;
-		cdf_nbuf_t skb = (cdf_nbuf_t) tx_frame;
+		qdf_nbuf_t ret;
+		qdf_nbuf_t skb = (qdf_nbuf_t) tx_frame;
 		ol_txrx_pdev_handle pdev =
 			cds_get_context(QDF_MODULE_ID_TXRX);
 
 		struct wma_decap_info_t decap_info;
 		struct ieee80211_frame *wh =
-			(struct ieee80211_frame *)cdf_nbuf_data(skb);
+			(struct ieee80211_frame *)qdf_nbuf_data(skb);
 		unsigned long curr_timestamp = qdf_mc_timer_get_system_ticks();
 
 		if (pdev == NULL) {
@@ -2645,7 +2645,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		/* Take out 802.11 header from skb */
 		decap_info.hdr_len = wma_ieee80211_hdrsize(wh);
 		qdf_mem_copy(decap_info.hdr, wh, decap_info.hdr_len);
-		cdf_nbuf_pull_head(skb, decap_info.hdr_len);
+		qdf_nbuf_pull_head(skb, decap_info.hdr_len);
 
 		/*  Decapsulate to 802.3 format */
 		wma_decap_to_8023(skb, &decap_info);
@@ -2654,7 +2654,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 
 		/* Do the DMA Mapping */
-		cdf_nbuf_map_single(pdev->osdev, skb, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_map_single(pdev->osdev, skb, QDF_DMA_TO_DEVICE);
 
 		/* Terminate the (single-element) list of tx frames */
 		skb->next = NULL;
@@ -2671,7 +2671,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 		if (ret) {
 			WMA_LOGE("TxRx Rejected. Fail to do Tx");
-			cdf_nbuf_unmap_single(pdev->osdev, skb,
+			qdf_nbuf_unmap_single(pdev->osdev, skb,
 					      QDF_DMA_TO_DEVICE);
 			/* Call Download Cb so that umac can free the buffer */
 			if (tx_frm_download_comp_cb)
@@ -2718,7 +2718,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 						NBUF_PKT_TRAC_TYPE_MGMT_ACTION);
 			if (proto_type & NBUF_PKT_TRAC_TYPE_MGMT_ACTION)
 				cds_pkt_trace_buf_update("WM:T:MACT");
-			cdf_nbuf_trace_set_proto_type(tx_frame, proto_type);
+			qdf_nbuf_trace_set_proto_type(tx_frame, proto_type);
 #endif /* QCA_PKT_PROTO_TRACE */
 		} else {
 			if (downld_comp_required)
@@ -2893,7 +2893,7 @@ QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
  */
 void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	       uint8_t *peer_mac_addr, int tid, uint32_t tsf32,
-	       enum ol_rx_err_type err_type, cdf_nbuf_t rx_frame,
+	       enum ol_rx_err_type err_type, qdf_nbuf_t rx_frame,
 	       uint64_t *pn, uint8_t key_id)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
@@ -2909,9 +2909,9 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	if (err_type != OL_RX_ERR_TKIP_MIC)
 		return;
 
-	if (cdf_nbuf_len(rx_frame) < sizeof(*eth_hdr))
+	if (qdf_nbuf_len(rx_frame) < sizeof(*eth_hdr))
 		return;
-	eth_hdr = (struct ether_header *)cdf_nbuf_data(rx_frame);
+	eth_hdr = (struct ether_header *)qdf_nbuf_data(rx_frame);
 	mic_err_ind = qdf_mem_malloc(sizeof(*mic_err_ind));
 	if (!mic_err_ind) {
 		WMA_LOGE("%s: Failed to allocate memory for MIC indication message",
@@ -3069,7 +3069,7 @@ QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
 		 sizeof(*cmd), WMI_LRO_CONFIG_CMDID);
 	if (status) {
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		WMA_LOGE("%s:Failed to send WMI_LRO_CONFIG_CMDID", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}

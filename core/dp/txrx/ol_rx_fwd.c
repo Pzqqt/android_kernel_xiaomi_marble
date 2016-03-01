@@ -26,7 +26,7 @@
  */
 
 /* standard header files */
-#include <cdf_nbuf.h>           /* cdf_nbuf_map */
+#include <qdf_nbuf.h>           /* qdf_nbuf_map */
 #include <qdf_mem.h>         /* qdf_mem_cmp */
 
 /* external header files */
@@ -48,7 +48,7 @@
  * Check that this Packet is suitable for forwarding. If yes, then
  * prepare the new 802.11 header.
  */
-static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
+static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 {
 	struct ieee80211_frame *mac_header;
 	unsigned char tmp_addr[IEEE80211_ADDR_LEN];
@@ -57,7 +57,7 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 	unsigned char fromds;
 	unsigned char tods;
 
-	mac_header = (struct ieee80211_frame *)(cdf_nbuf_data(msdu));
+	mac_header = (struct ieee80211_frame *)(qdf_nbuf_data(msdu));
 	TXRX_ASSERT1(mac_header);
 
 	type = mac_header->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
@@ -107,7 +107,7 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 	}
 }
 
-static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
+static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 
@@ -118,8 +118,8 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 	 * Map the netbuf, so it's accessible to the DMA that
 	 * sends it to the target.
 	 */
-	cdf_nbuf_map_single(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
-	cdf_nbuf_set_next(msdu, NULL);  /* add NULL terminator */
+	qdf_nbuf_map_single(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_set_next(msdu, NULL);  /* add NULL terminator */
 
 	msdu = OL_TX_LL(vdev, msdu);
 
@@ -129,19 +129,19 @@ static inline void ol_rx_fwd_to_tx(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 		 * We could store the frame and try again later,
 		 * but the simplest solution is to discard the frames.
 		 */
-		cdf_nbuf_unmap_single(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
-		cdf_nbuf_tx_free(msdu, NBUF_PKT_ERROR);
+		qdf_nbuf_unmap_single(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_tx_free(msdu, QDF_NBUF_PKT_ERROR);
 	}
 }
 
 void
 ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
-		struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t msdu_list)
+		struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
-	cdf_nbuf_t deliver_list_head = NULL;
-	cdf_nbuf_t deliver_list_tail = NULL;
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t deliver_list_head = NULL;
+	qdf_nbuf_t deliver_list_tail = NULL;
+	qdf_nbuf_t msdu;
 
 	msdu = msdu_list;
 	while (msdu) {
@@ -151,7 +151,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 		 * Remember the next list elem, because our processing
 		 * may cause the MSDU to get linked into a different list.
 		 */
-		msdu_list = cdf_nbuf_next(msdu);
+		msdu_list = qdf_nbuf_next(msdu);
 
 		rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, msdu);
 
@@ -182,9 +182,9 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 			 * Fw will take care of filling proper tid.
 			 */
 			if (tid != HTT_NON_QOS_TID) {
-				cdf_nbuf_set_tid(msdu, tid);
+				qdf_nbuf_set_tid(msdu, tid);
 			} else {
-				cdf_nbuf_set_tid(msdu,
+				qdf_nbuf_set_tid(msdu,
 						 QDF_NBUF_TX_EXT_TID_INVALID);
 			}
 			/*
@@ -195,14 +195,14 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 			 */
 			if (htt_rx_msdu_discard(pdev->htt_pdev, rx_desc)) {
 				htt_rx_msdu_desc_free(pdev->htt_pdev, msdu);
-				cdf_net_buf_debug_release_skb(msdu);
+				qdf_net_buf_debug_release_skb(msdu);
 				ol_rx_fwd_to_tx(tx_vdev, msdu);
 				msdu = NULL;    /* already handled this MSDU */
 				TXRX_STATS_ADD(pdev,
 					 pub.rx.intra_bss_fwd.packets_fwd, 1);
 			} else {
-				cdf_nbuf_t copy;
-				copy = cdf_nbuf_copy(msdu);
+				qdf_nbuf_t copy;
+				copy = qdf_nbuf_copy(msdu);
 				if (copy)
 					ol_rx_fwd_to_tx(tx_vdev, copy);
 				TXRX_STATS_ADD(pdev,
@@ -221,7 +221,7 @@ ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 	}
 	if (deliver_list_head) {
 		/* add NULL terminator */
-		cdf_nbuf_set_next(deliver_list_tail, NULL);
+		qdf_nbuf_set_next(deliver_list_tail, NULL);
 		if (ol_cfg_is_full_reorder_offload(pdev->ctrl_pdev)) {
 			ol_rx_in_order_deliver(vdev, peer, tid,
 					       deliver_list_head);

@@ -28,7 +28,7 @@
 #ifndef _OL_TXRX__H_
 #define _OL_TXRX__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
 #include <ol_ctrl_api.h>        /* ol_pdev_handle */
 #include "cds_sched.h"

@@ -45,8 +45,8 @@
  * FIXME: Temporary hack - until IPA functionality gets restored
  *
  */
-typedef void (*hdd_ipa_nbuf_cb_fn)(cdf_nbuf_t);
-void hdd_ipa_nbuf_cb(cdf_nbuf_t skb);  /* Fwd declare */
+typedef void (*hdd_ipa_nbuf_cb_fn)(qdf_nbuf_t);
+void hdd_ipa_nbuf_cb(qdf_nbuf_t skb);  /* Fwd declare */
 static inline hdd_ipa_nbuf_cb_fn wlan_hdd_stub_ipa_fn(void)
 {
 	return hdd_ipa_nbuf_cb;
@@ -54,7 +54,7 @@ static inline hdd_ipa_nbuf_cb_fn wlan_hdd_stub_ipa_fn(void)
 
 QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx);
 QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx);
-QDF_STATUS hdd_ipa_process_rxt(void *cds_context, cdf_nbuf_t rxBuf,
+QDF_STATUS hdd_ipa_process_rxt(void *cds_context, qdf_nbuf_t rxBuf,
 	uint8_t sta_id);
 int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 	enum ipa_wlan_event type, uint8_t *mac_addr);
@@ -86,7 +86,7 @@ static inline QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 }
 
 static inline QDF_STATUS hdd_ipa_process_rxt(void *cds_context,
-	cdf_nbuf_t rxBuf, uint8_t sta_id)
+	qdf_nbuf_t rxBuf, uint8_t sta_id)
 {
 	return QDF_STATUS_SUCCESS;
 }

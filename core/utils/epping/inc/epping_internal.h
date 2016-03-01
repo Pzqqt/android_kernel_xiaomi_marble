@@ -96,7 +96,7 @@ typedef struct {
 	struct task_struct *pid;
 	void *arg;
 	bool done;
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 	HTC_ENDPOINT_ID eid;
 	struct semaphore sem;
 	bool inited;
@@ -142,7 +142,7 @@ typedef struct epping_adapter_s {
 	uint8_t sessionId;
 	/* for mboxping */
 	qdf_spinlock_t data_lock;
-	cdf_nbuf_queue_t nodrop_queue;
+	qdf_nbuf_queue_t nodrop_queue;
 	qdf_timer_t epping_timer;
 	epping_tx_timer_state_t epping_timer_state;
 	bool registered;
@@ -168,7 +168,7 @@ void epping_set_kperf_flag(epping_adapter_t *pAdapter,
 /* epping_tx signatures */
 void epping_tx_timer_expire(epping_adapter_t *pAdapter);
 void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue);
-int epping_tx_send(cdf_nbuf_t skb, epping_adapter_t *pAdapter);
+int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *pAdapter);
 
 #ifdef HIF_SDIO
 HTC_SEND_FULL_ACTION epping_tx_queue_full(void *Context, HTC_PACKET *pPacket);
@@ -192,6 +192,6 @@ void epping_register_tx_copier(HTC_ENDPOINT_ID eid,
 void epping_unregister_tx_copier(HTC_ENDPOINT_ID eid,
 				 epping_context_t *pEpping_ctx);
 void epping_tx_copier_schedule(epping_context_t *pEpping_ctx,
-			       HTC_ENDPOINT_ID eid, cdf_nbuf_t skb);
+			       HTC_ENDPOINT_ID eid, qdf_nbuf_t skb);
 #endif /* HIF_PCI */
 #endif /* end #ifndef EPPING_INTERNAL_H */

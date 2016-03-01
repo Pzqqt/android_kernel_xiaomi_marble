@@ -32,7 +32,7 @@
 #ifndef _OL_TXRX_TYPES__H_
 #define _OL_TXRX_TYPES__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* cdf_nbuf_t */
 #include <qdf_mem.h>
 #include <cds_queue.h>          /* TAILQ */
 #include <a_types.h>            /* A_UINT8 */
@@ -127,7 +127,7 @@ enum ol_tx_frm_type {
 };
 
 struct ol_tx_desc_t {
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	void *htt_tx_desc;
 	uint16_t id;
 	qdf_dma_addr_t htt_tx_desc_paddr;
@@ -536,7 +536,7 @@ struct ol_txrx_pdev_t {
 	/* rx proc function */
 	void (*rx_opt_proc)(struct ol_txrx_vdev_t *vdev,
 			    struct ol_txrx_peer_t *peer,
-			    unsigned tid, cdf_nbuf_t msdu_list);
+			    unsigned tid, qdf_nbuf_t msdu_list);
 
 	/* tx data delivery notification callback function */
 	struct {
@@ -827,8 +827,8 @@ struct ol_txrx_vdev_t {
 
 	struct {
 		struct {
-			cdf_nbuf_t head;
-			cdf_nbuf_t tail;
+			qdf_nbuf_t head;
+			qdf_nbuf_t tail;
 			int depth;
 		} txq;
 		uint32_t paused_reason;
@@ -877,8 +877,8 @@ struct ol_txrx_vdev_t {
 };
 
 struct ol_rx_reorder_array_elem_t {
-	cdf_nbuf_t head;
-	cdf_nbuf_t tail;
+	qdf_nbuf_t head;
+	qdf_nbuf_t tail;
 };
 
 struct ol_rx_reorder_t {
@@ -967,7 +967,7 @@ struct ol_txrx_peer_t {
 	 */
 	void (*rx_opt_proc)(struct ol_txrx_vdev_t *vdev,
 			    struct ol_txrx_peer_t *peer,
-			    unsigned tid, cdf_nbuf_t msdu_list);
+			    unsigned tid, qdf_nbuf_t msdu_list);
 
 #ifdef QCA_ENABLE_OL_TXRX_PEER_STATS
 	ol_txrx_peer_stats_t stats;

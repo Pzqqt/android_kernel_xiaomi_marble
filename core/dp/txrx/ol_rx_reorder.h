@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,7 +28,7 @@
 #ifndef _OL_RX_REORDER__H_
 #define _OL_RX_REORDER__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 
 #include <ol_txrx_api.h>        /* ol_txrx_peer_t, etc. */
 
@@ -39,7 +39,7 @@ ol_rx_reorder_store(struct ol_txrx_pdev_t *pdev,
 		    struct ol_txrx_peer_t *peer,
 		    unsigned tid,
 		    unsigned reorder_array_index,
-		    cdf_nbuf_t head_msdu, cdf_nbuf_t tail_msdu);
+		    qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu);
 
 void
 ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,

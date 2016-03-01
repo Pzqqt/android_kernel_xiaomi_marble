@@ -40,7 +40,7 @@
 
 /* #include <osapi_linux.h>     / * uint16_t, etc. * / */
 #include <osdep.h>              /* uint16_t, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* bool */
 
 #include <htt.h>                /* HTT_RX_IND_MPDU_STATUS */
@@ -109,7 +109,7 @@ PREPACK struct ocb_rx_stats_hdr_t {
  *      -OR-
  *      0 - the message's rx flush command is invalid and should be ignored
  */
-int htt_rx_ind_flush(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
+int htt_rx_ind_flush(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg);
 
 /**
  * @brief Return the sequence number starting the range of MPDUs to flush.
@@ -138,7 +138,7 @@ int htt_rx_ind_flush(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
  */
 void
 htt_rx_ind_flush_seq_num_range(htt_pdev_handle pdev,
-			       cdf_nbuf_t rx_ind_msg,
+			       qdf_nbuf_t rx_ind_msg,
 			       unsigned *seq_num_start, unsigned *seq_num_end);
 
 /**
@@ -160,7 +160,7 @@ htt_rx_ind_flush_seq_num_range(htt_pdev_handle pdev,
  *      -OR-
  *      0 - the message's rx release command is invalid and should be ignored
  */
-int htt_rx_ind_release(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
+int htt_rx_ind_release(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg);
 
 /**
  * @brief Return the sequence number starting the range of MPDUs to release.
@@ -189,7 +189,7 @@ int htt_rx_ind_release(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
  */
 void
 htt_rx_ind_release_seq_num_range(htt_pdev_handle pdev,
-				 cdf_nbuf_t rx_ind_msg,
+				 qdf_nbuf_t rx_ind_msg,
 				 unsigned *seq_num_start,
 				 unsigned *seq_num_end);
 
@@ -234,7 +234,7 @@ enum htt_rx_status {
  */
 void
 htt_rx_ind_mpdu_range_info(htt_pdev_handle pdev,
-			   cdf_nbuf_t rx_ind_msg,
+			   qdf_nbuf_t rx_ind_msg,
 			   int mpdu_range_num,
 			   enum htt_rx_status *status, int *mpdu_count);
 
@@ -248,27 +248,27 @@ htt_rx_ind_mpdu_range_info(htt_pdev_handle pdev,
  * @return RSSI in dBm, or HTT_INVALID_RSSI
  */
 int16_t
-htt_rx_ind_rssi_dbm(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
+htt_rx_ind_rssi_dbm(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg);
 
 int16_t
-htt_rx_ind_rssi_dbm_chain(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
+htt_rx_ind_rssi_dbm_chain(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
 			  int8_t chain);
 
 void
-htt_rx_ind_legacy_rate(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
+htt_rx_ind_legacy_rate(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
 		       uint8_t *legacy_rate, uint8_t *legacy_rate_sel);
 
 
 void
-htt_rx_ind_timestamp(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
+htt_rx_ind_timestamp(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
 		     uint32_t *timestamp_microsec,
 		     uint8_t *timestamp_submicrosec);
 
 uint32_t
-htt_rx_ind_tsf32(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
+htt_rx_ind_tsf32(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg);
 
 uint8_t
-htt_rx_ind_ext_tid(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
+htt_rx_ind_ext_tid(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg);
 
 
 /*==================== rx MPDU descriptor access methods ====================*/
@@ -654,13 +654,13 @@ extern bool
  */
 extern int
 (*htt_rx_amsdu_pop)(htt_pdev_handle pdev,
-		    cdf_nbuf_t rx_ind_msg,
-		    cdf_nbuf_t *head_msdu, cdf_nbuf_t *tail_msdu);
+		    qdf_nbuf_t rx_ind_msg,
+		    qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu);
 
 extern int
 (*htt_rx_frag_pop)(htt_pdev_handle pdev,
-		   cdf_nbuf_t rx_ind_msg,
-		   cdf_nbuf_t *head_msdu, cdf_nbuf_t *tail_msdu);
+		   qdf_nbuf_t rx_ind_msg,
+		   qdf_nbuf_t *head_msdu, qdf_nbuf_t *tail_msdu);
 
 /**
  * @brief Return a linked list of buffers holding one MSDU
@@ -685,12 +685,12 @@ extern int
  */
 extern int
 (*htt_rx_offload_msdu_pop)(htt_pdev_handle pdev,
-			   cdf_nbuf_t offload_deliver_msg,
+			   qdf_nbuf_t offload_deliver_msg,
 			   int *vdev_id,
 			   int *peer_id,
 			   int *tid,
 			   uint8_t *fw_desc,
-			   cdf_nbuf_t *head_buf, cdf_nbuf_t *tail_buf);
+			   qdf_nbuf_t *head_buf, qdf_nbuf_t *tail_buf);
 
 /**
  * @brief Return the rx descriptor for the next rx MPDU.
@@ -713,7 +713,7 @@ extern int
  *      by an rx ind msg
  */
 extern void *
-(*htt_rx_mpdu_desc_list_next)(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg);
+(*htt_rx_mpdu_desc_list_next)(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg);
 
 /**
  * @brief Retrieve a previously-stored rx descriptor from a MSDU buffer.
@@ -727,7 +727,7 @@ extern void *
  * @return the corresponding abstract rx MSDU descriptor
  */
 extern void *
-(*htt_rx_msdu_desc_retrieve)(htt_pdev_handle pdev, cdf_nbuf_t msdu);
+(*htt_rx_msdu_desc_retrieve)(htt_pdev_handle pdev, qdf_nbuf_t msdu);
 
 /**
  * @brief Free both an rx MSDU descriptor and the associated MSDU buffer.
@@ -749,7 +749,7 @@ extern void *
  * @param rx_msdu_desc - rx descriptor for the MSDU being freed
  * @param msdu - rx frame buffer for the MSDU being freed
  */
-void htt_rx_desc_frame_free(htt_pdev_handle htt_pdev, cdf_nbuf_t msdu);
+void htt_rx_desc_frame_free(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu);
 
 /**
  * @brief Look up and free the rx descriptor for a MSDU.
@@ -766,7 +766,7 @@ void htt_rx_desc_frame_free(htt_pdev_handle htt_pdev, cdf_nbuf_t msdu);
  * @param htt_pdev - the HTT instance the rx data was received on
  * @param msdu - rx frame buffer for the rx MSDU descriptor being freed
  */
-void htt_rx_msdu_desc_free(htt_pdev_handle htt_pdev, cdf_nbuf_t msdu);
+void htt_rx_msdu_desc_free(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu);
 
 /**
  * @brief Add new MSDU buffers for the target to fill.
@@ -805,9 +805,9 @@ void htt_rx_msdu_buff_replenish(htt_pdev_handle pdev);
  *      list, else operates on a cloned nbuf
  * @return network buffer handle to the MPDU
  */
-cdf_nbuf_t
+qdf_nbuf_t
 htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
-				cdf_nbuf_t head_msdu,
+				qdf_nbuf_t head_msdu,
 				struct ieee80211_rx_status *rx_status,
 				unsigned clone_not_reqd);
 
@@ -822,7 +822,7 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
  */
 void
 htt_rx_frag_ind_flush_seq_num_range(htt_pdev_handle pdev,
-				    cdf_nbuf_t rx_frag_ind_msg,
+				    qdf_nbuf_t rx_frag_ind_msg,
 				    int *seq_num_start, int *seq_num_end);
 /**
  * @brief Return the HL rx desc size
@@ -837,7 +837,7 @@ uint16_t htt_rx_msdu_rx_desc_size_hl(htt_pdev_handle pdev, void *msdu_desc);
  * @param msdu - network buffer handle
  * @param vowstats - handle to vow ext stats.
  */
-void htt_rx_get_vowext_stats(cdf_nbuf_t msdu, struct vow_extstats *vowstats);
+void htt_rx_get_vowext_stats(qdf_nbuf_t msdu, struct vow_extstats *vowstats);
 
 /**
  * @brief parses the offload message passed by the target.
@@ -859,5 +859,5 @@ htt_rx_offload_paddr_msdu_pop_ll(htt_pdev_handle pdev,
 				 int *peer_id,
 				 int *tid,
 				 uint8_t *fw_desc,
-				 cdf_nbuf_t *head_buf, cdf_nbuf_t *tail_buf);
+				 qdf_nbuf_t *head_buf, qdf_nbuf_t *tail_buf);
 #endif /* _OL_HTT_RX_API__H_ */

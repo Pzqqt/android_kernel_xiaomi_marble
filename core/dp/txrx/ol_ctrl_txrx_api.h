@@ -34,7 +34,7 @@
 
 /* #include <osapi_linux.h>      / * uint8_t * / */
 #include <osdep.h>              /* uint8_t */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <ol_ctrl_api.h>            /* ol_vdev_handle */
 #include <ol_txrx_api.h>            /* ol_txrx_peer_handle, etc. */
@@ -106,7 +106,7 @@ ol_rx_err(ol_pdev_handle pdev,
 	  int tid,
 	  uint32_t tsf32,
 	  enum ol_rx_err_type err_type,
-	  cdf_nbuf_t rx_frame, uint64_t *pn, uint8_t key_id);
+	  qdf_nbuf_t rx_frame, uint64_t *pn, uint8_t key_id);
 
 enum ol_rx_notify_type {
 	OL_RX_NOTIFY_IPV4_IGMP,
@@ -138,7 +138,7 @@ ol_rx_notify(ol_pdev_handle pdev,
 	     uint8_t *peer_mac_addr,
 	     int tid,
 	     uint32_t tsf32,
-	     enum ol_rx_notify_type notify_type, cdf_nbuf_t rx_frame);
+	     enum ol_rx_notify_type notify_type, qdf_nbuf_t rx_frame);
 
 /**
  * @brief Indicate when a paused STA has tx data available.

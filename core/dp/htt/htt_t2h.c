@@ -38,7 +38,7 @@
 #include <wma.h>
 #include <htc_api.h>            /* HTC_PACKET */
 #include <htt.h>                /* HTT_T2H_MSG_TYPE, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <ol_htt_rx_api.h>
 #include <ol_htt_tx_api.h>
@@ -86,16 +86,16 @@ static uint8_t *htt_t2h_mac_addr_deswizzle(uint8_t *tgt_mac_addr,
 #endif
 }
 
-static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, cdf_nbuf_t msg)
+static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, qdf_nbuf_t msg)
 {
 	uint32_t *msg_word;
 	unsigned num_msdu_bytes;
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 	struct htt_host_rx_desc_base *rx_desc;
 	int start_idx;
 	uint8_t *p_fw_msdu_rx_desc = 0;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 	num_msdu_bytes = HTT_RX_FRAG_IND_FW_RX_DESC_BYTES_GET(
 		*(msg_word + HTT_RX_FRAG_IND_HDR_PREFIX_SIZE32));
 	/*
@@ -123,22 +123,22 @@ static void htt_rx_frag_set_last_msdu(struct htt_pdev_t *pdev, cdf_nbuf_t msg)
 	 */
 	start_idx = pdev->rx_ring.sw_rd_idx.msdu_payld;
 	msdu = pdev->rx_ring.buf.netbufs_ring[start_idx];
-	cdf_nbuf_set_pktlen(msdu, HTT_RX_BUF_SIZE);
-	cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
+	qdf_nbuf_set_pktlen(msdu, HTT_RX_BUF_SIZE);
+	qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 	rx_desc = htt_rx_desc(msdu);
 	*((uint8_t *) &rx_desc->fw_desc.u.val) = *p_fw_msdu_rx_desc;
 	rx_desc->msdu_end.last_msdu = 1;
-	cdf_nbuf_map(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
+	qdf_nbuf_map(pdev->osdev, msdu, QDF_DMA_FROM_DEVICE);
 }
 
 /* Target to host Msg/event  handler  for low priority messages*/
-void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
+void htt_t2h_lp_msg_handler(void *context, qdf_nbuf_t htt_t2h_msg)
 {
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
 	uint32_t *msg_word;
 	enum htt_t2h_msg_type msg_type;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(htt_t2h_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
 	switch (msg_type) {
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
@@ -473,7 +473,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		break;
 	};
 	/* Free the indication buffer */
-	cdf_nbuf_free(htt_t2h_msg);
+	qdf_nbuf_free(htt_t2h_msg);
 }
 
 /* Generic Target to host Msg/event  handler  for low priority messages
@@ -484,7 +484,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 {
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
-	cdf_nbuf_t htt_t2h_msg = (cdf_nbuf_t) pkt->pPktContext;
+	qdf_nbuf_t htt_t2h_msg = (qdf_nbuf_t) pkt->pPktContext;
 	uint32_t *msg_word;
 	enum htt_t2h_msg_type msg_type;
 
@@ -492,21 +492,21 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	if (pkt->Status != A_OK) {
 		if (pkt->Status != A_ECANCELED)
 			pdev->stats.htc_err_cnt++;
-		cdf_nbuf_free(htt_t2h_msg);
+		qdf_nbuf_free(htt_t2h_msg);
 		return;
 	}
 #ifdef HTT_RX_RESTORE
 	if (qdf_unlikely(pdev->rx_ring.rx_reset)) {
 		qdf_print("rx restore ..\n");
-		cdf_nbuf_free(htt_t2h_msg);
+		qdf_nbuf_free(htt_t2h_msg);
 		return;
 	}
 #endif
 
 	/* confirm alignment */
-	HTT_ASSERT3((((unsigned long)cdf_nbuf_data(htt_t2h_msg)) & 0x3) == 0);
+	HTT_ASSERT3((((unsigned long)qdf_nbuf_data(htt_t2h_msg)) & 0x3) == 0);
 
-	msg_word = (uint32_t *) cdf_nbuf_data(htt_t2h_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(htt_t2h_msg);
 	msg_type = HTT_T2H_MSG_TYPE_GET(*msg_word);
 
 #if defined(HELIUMPLUS_DEBUG)
@@ -686,7 +686,7 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 	};
 
 	/* Free the indication buffer */
-	cdf_nbuf_free(htt_t2h_msg);
+	qdf_nbuf_free(htt_t2h_msg);
 }
 
 /*--- target->host HTT message Info Element access methods ------------------*/
@@ -717,43 +717,43 @@ uint16_t htt_tx_compl_desc_id(void *iterator, int num)
 
 /*--- rx indication message ---*/
 
-int htt_rx_ind_flush(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
+int htt_rx_ind_flush(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
 	uint32_t *msg_word;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
 	return HTT_RX_IND_FLUSH_VALID_GET(*msg_word);
 }
 
 void
 htt_rx_ind_flush_seq_num_range(htt_pdev_handle pdev,
-			       cdf_nbuf_t rx_ind_msg,
+			       qdf_nbuf_t rx_ind_msg,
 			       unsigned *seq_num_start, unsigned *seq_num_end)
 {
 	uint32_t *msg_word;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
 	msg_word++;
 	*seq_num_start = HTT_RX_IND_FLUSH_SEQ_NUM_START_GET(*msg_word);
 	*seq_num_end = HTT_RX_IND_FLUSH_SEQ_NUM_END_GET(*msg_word);
 }
 
-int htt_rx_ind_release(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
+int htt_rx_ind_release(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
 	uint32_t *msg_word;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
 	return HTT_RX_IND_REL_VALID_GET(*msg_word);
 }
 
 void
 htt_rx_ind_release_seq_num_range(htt_pdev_handle pdev,
-				 cdf_nbuf_t rx_ind_msg,
+				 qdf_nbuf_t rx_ind_msg,
 				 unsigned *seq_num_start, unsigned *seq_num_end)
 {
 	uint32_t *msg_word;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
 	msg_word++;
 	*seq_num_start = HTT_RX_IND_REL_SEQ_NUM_START_GET(*msg_word);
 	*seq_num_end = HTT_RX_IND_REL_SEQ_NUM_END_GET(*msg_word);
@@ -761,13 +761,13 @@ htt_rx_ind_release_seq_num_range(htt_pdev_handle pdev,
 
 void
 htt_rx_ind_mpdu_range_info(struct htt_pdev_t *pdev,
-			   cdf_nbuf_t rx_ind_msg,
+			   qdf_nbuf_t rx_ind_msg,
 			   int mpdu_range_num,
 			   enum htt_rx_status *status, int *mpdu_count)
 {
 	uint32_t *msg_word;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(rx_ind_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_ind_msg);
 	msg_word += pdev->rx_mpdu_range_offset_words + mpdu_range_num;
 	*status = HTT_RX_IND_MPDU_STATUS_GET(*msg_word);
 	*mpdu_count = HTT_RX_IND_MPDU_COUNT_GET(*msg_word);
@@ -783,13 +783,13 @@ htt_rx_ind_mpdu_range_info(struct htt_pdev_t *pdev,
  *
  * Return: RSSI in dBm, or HTT_INVALID_RSSI
  */
-int16_t htt_rx_ind_rssi_dbm(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
+int16_t htt_rx_ind_rssi_dbm(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
 	int8_t rssi;
 	uint32_t *msg_word;
 
 	msg_word = (uint32_t *)
-		   (cdf_nbuf_data(rx_ind_msg) +
+		   (qdf_nbuf_data(rx_ind_msg) +
 		    HTT_RX_IND_FW_RX_PPDU_DESC_BYTE_OFFSET);
 
 	/* check if the RX_IND message contains valid rx PPDU start info */
@@ -813,7 +813,7 @@ int16_t htt_rx_ind_rssi_dbm(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
  * Return: RSSI, or HTT_INVALID_RSSI
  */
 int16_t
-htt_rx_ind_rssi_dbm_chain(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
+htt_rx_ind_rssi_dbm_chain(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
 		      int8_t chain)
 {
 	int8_t rssi;
@@ -823,7 +823,7 @@ htt_rx_ind_rssi_dbm_chain(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
 		return HTT_RSSI_INVALID;
 
 	msg_word = (uint32_t *)
-		(cdf_nbuf_data(rx_ind_msg) +
+		(qdf_nbuf_data(rx_ind_msg) +
 		 HTT_RX_IND_FW_RX_PPDU_DESC_BYTE_OFFSET);
 
 	/* check if the RX_IND message contains valid rx PPDU start info */
@@ -869,13 +869,13 @@ htt_rx_ind_rssi_dbm_chain(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
  * Return the data rate provided in a rx indication message.
  */
 void
-htt_rx_ind_legacy_rate(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
+htt_rx_ind_legacy_rate(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
 		       uint8_t *legacy_rate, uint8_t *legacy_rate_sel)
 {
 	uint32_t *msg_word;
 
 	msg_word = (uint32_t *)
-		(cdf_nbuf_data(rx_ind_msg) +
+		(qdf_nbuf_data(rx_ind_msg) +
 		 HTT_RX_IND_FW_RX_PPDU_DESC_BYTE_OFFSET);
 
 	/* check if the RX_IND message contains valid rx PPDU start info */
@@ -901,14 +901,14 @@ htt_rx_ind_legacy_rate(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
  * Return the timestamp provided in a rx indication message.
  */
 void
-htt_rx_ind_timestamp(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
+htt_rx_ind_timestamp(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg,
 		     uint32_t *timestamp_microsec,
 		     uint8_t *timestamp_submicrosec)
 {
 	uint32_t *msg_word;
 
 	msg_word = (uint32_t *)
-		(cdf_nbuf_data(rx_ind_msg) +
+		(qdf_nbuf_data(rx_ind_msg) +
 		 HTT_RX_IND_FW_RX_PPDU_DESC_BYTE_OFFSET);
 
 	/* check if the RX_IND message contains valid rx PPDU start info */
@@ -934,12 +934,12 @@ htt_rx_ind_timestamp(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg,
  * Return: TSF timestamp
  */
 uint32_t
-htt_rx_ind_tsf32(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
+htt_rx_ind_tsf32(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
 	uint32_t *msg_word;
 
 	msg_word = (uint32_t *)
-		(cdf_nbuf_data(rx_ind_msg) +
+		(qdf_nbuf_data(rx_ind_msg) +
 		 HTT_RX_IND_FW_RX_PPDU_DESC_BYTE_OFFSET);
 
 	/* check if the RX_IND message contains valid rx PPDU start info */
@@ -959,12 +959,12 @@ htt_rx_ind_tsf32(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
  * Return: Extended TID
  */
 uint8_t
-htt_rx_ind_ext_tid(htt_pdev_handle pdev, cdf_nbuf_t rx_ind_msg)
+htt_rx_ind_ext_tid(htt_pdev_handle pdev, qdf_nbuf_t rx_ind_msg)
 {
 	uint32_t *msg_word;
 
 	msg_word = (uint32_t *)
-		(cdf_nbuf_data(rx_ind_msg));
+		(qdf_nbuf_data(rx_ind_msg));
 
 	return HTT_RX_IND_EXT_TID_GET(*msg_word);
 }
@@ -987,12 +987,12 @@ htt_t2h_dbg_stats_hdr_parse(uint8_t *stats_info_list,
 
 void
 htt_rx_frag_ind_flush_seq_num_range(htt_pdev_handle pdev,
-				    cdf_nbuf_t rx_frag_ind_msg,
+				    qdf_nbuf_t rx_frag_ind_msg,
 				    int *seq_num_start, int *seq_num_end)
 {
 	uint32_t *msg_word;
 
-	msg_word = (uint32_t *) cdf_nbuf_data(rx_frag_ind_msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(rx_frag_ind_msg);
 	msg_word++;
 	*seq_num_start = HTT_RX_FRAG_IND_FLUSH_SEQ_NUM_START_GET(*msg_word);
 	*seq_num_end = HTT_RX_FRAG_IND_FLUSH_SEQ_NUM_END_GET(*msg_word);

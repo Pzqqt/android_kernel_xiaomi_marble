@@ -39,7 +39,7 @@
 #define WMI_UNIFIED_MAX_EVENT 0x100
 #define WMI_MAX_CMDS  1024
 
-typedef cdf_nbuf_t wmi_buf_t;
+typedef qdf_nbuf_t wmi_buf_t;
 
 #ifdef WMI_INTERFACE_EVENT_LOGGING
 
@@ -77,7 +77,7 @@ struct wmi_unified {
 	uint32_t max_event_idx;
 	void *htc_handle;
 	qdf_spinlock_t eventq_lock;
-	cdf_nbuf_queue_t event_queue;
+	qdf_nbuf_queue_t event_queue;
 	struct work_struct rx_event_work;
 #ifdef WLAN_OPEN_SOURCE
 	struct fwdebug dbglog;

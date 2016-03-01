@@ -312,11 +312,11 @@ void epping_destroy_adapter(epping_adapter_t *pAdapter)
 	qdf_timer_free(&pAdapter->epping_timer);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 
-	while (cdf_nbuf_queue_len(&pAdapter->nodrop_queue)) {
-		cdf_nbuf_t tmp_nbuf = NULL;
-		tmp_nbuf = cdf_nbuf_queue_remove(&pAdapter->nodrop_queue);
+	while (qdf_nbuf_queue_len(&pAdapter->nodrop_queue)) {
+		qdf_nbuf_t tmp_nbuf = NULL;
+		tmp_nbuf = qdf_nbuf_queue_remove(&pAdapter->nodrop_queue);
 		if (tmp_nbuf)
-			cdf_nbuf_free(tmp_nbuf);
+			qdf_nbuf_free(tmp_nbuf);
 	}
 
 	free_netdev(dev);
@@ -368,7 +368,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	qdf_mem_copy(pAdapter->macAddressCurrent.bytes,
 		     macAddr, sizeof(tSirMacAddr));
 	qdf_spinlock_create(&pAdapter->data_lock);
-	cdf_nbuf_queue_init(&pAdapter->nodrop_queue);
+	qdf_nbuf_queue_init(&pAdapter->nodrop_queue);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 	qdf_timer_init(epping_get_cdf_ctx(), &pAdapter->epping_timer,
 		epping_timer_expire, dev, QDF_TIMER_TYPE_SW);

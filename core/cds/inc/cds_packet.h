@@ -54,11 +54,11 @@
 struct cds_pkt_t;
 typedef struct cds_pkt_t cds_pkt_t;
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 
-#define CDS_PKT_TRAC_TYPE_EAPOL   NBUF_PKT_TRAC_TYPE_EAPOL
-#define CDS_PKT_TRAC_TYPE_DHCP    NBUF_PKT_TRAC_TYPE_DHCP
-#define CDS_PKT_TRAC_TYPE_MGMT_ACTION    NBUF_PKT_TRAC_TYPE_MGMT_ACTION /* Managment action frame */
+#define CDS_PKT_TRAC_TYPE_EAPOL   QDF_NBUF_PKT_TRAC_TYPE_EAPOL
+#define CDS_PKT_TRAC_TYPE_DHCP    QDF_NBUF_PKT_TRAC_TYPE_DHCP
+#define CDS_PKT_TRAC_TYPE_MGMT_ACTION    QDF_NBUF_PKT_TRAC_TYPE_MGMT_ACTION
 
 #define CDS_PKT_TRAC_DUMP_CMD     9999
 

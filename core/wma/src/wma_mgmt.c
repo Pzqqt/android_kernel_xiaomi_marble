@@ -46,7 +46,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -111,7 +111,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 
 	qdf_spin_lock_bh(&bcn->lock);
 
-	bcn_payload = cdf_nbuf_data(bcn->buf);
+	bcn_payload = qdf_nbuf_data(bcn->buf);
 
 	tim_ie = (struct beacon_tim_ie *)(&bcn_payload[bcn->tim_ie_offset]);
 
@@ -200,12 +200,12 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	}
 
 	if (bcn->dma_mapped) {
-		cdf_nbuf_unmap_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_unmap_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
 		bcn->dma_mapped = 0;
 	}
-	ret = cdf_nbuf_map_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
+	ret = qdf_nbuf_map_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
 	if (ret != QDF_STATUS_SUCCESS) {
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		WMA_LOGE("%s: failed map beacon buf to DMA region", __func__);
 		qdf_spin_unlock_bh(&bcn->lock);
 		return;
@@ -220,7 +220,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	cmd->vdev_id = vdev_id;
 	cmd->data_len = bcn->len;
 	cmd->frame_ctrl = *((A_UINT16 *) wh->i_fc);
-	cmd->frag_ptr = cdf_nbuf_get_frag_paddr(bcn->buf, 0);
+	cmd->frag_ptr = qdf_nbuf_get_frag_paddr(bcn->buf, 0);
 
 	/* notify Firmware of DTM and mcast/bcast traffic */
 	if (tim_ie->dtim_count == 0) {
@@ -653,7 +653,7 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				 WMI_PMF_OFFLOAD_SET_SA_QUERY_CMDID)) {
 		WMA_LOGE(FL("Failed to offload STA SA Query"));
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 
 	WMA_LOGD(FL("Exit :"));
@@ -723,7 +723,7 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 			WMA_LOGE("%s: received null pointer, hostv4addr:%p "
 			   "destv4addr:%p destmac:%p ", __func__,
 			   hostv4addr, destv4addr, destmac);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return;
 		}
 		cmd->method = WMI_STA_KEEPALIVE_METHOD_UNSOLICITED_ARP_RESPONSE;
@@ -739,7 +739,7 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				 WMI_STA_KEEPALIVE_CMDID)) {
 		WMA_LOGE("Failed to set KeepAlive");
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 
 	WMA_LOGD("%s: Exit", __func__);
@@ -1069,7 +1069,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 			WMA_LOGE
 				("Set WMI_VDEV_PARAM_DROP_UNENCRY Param status:%d\n",
 				ret);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return ret;
 		}
 	}
@@ -1164,7 +1164,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	if (ret != EOK) {
 		WMA_LOGP("%s: Failed to send peer assoc command ret = %d",
 			 __func__, ret);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 	return ret;
 }
@@ -1519,7 +1519,7 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		/* TODO: MFP ? */
 		WMA_LOGE("%s:Invalid encryption type:%d", __func__,
 			 key_params->key_type);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return NULL;
 	}
 
@@ -1680,7 +1680,7 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					      WMI_VDEV_INSTALL_KEY_CMDID);
 		if (status) {
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
 			key_info->status = QDF_STATUS_E_FAILURE;
@@ -1872,7 +1872,7 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					      WMI_VDEV_INSTALL_KEY_CMDID);
 		if (status) {
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
 		}
@@ -1991,7 +1991,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					      WMI_VDEV_INSTALL_KEY_CMDID);
 		if (status) {
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
 			key_info->status = QDF_STATUS_E_FAILURE;
@@ -2327,8 +2327,8 @@ QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 	 * this will be send to target on the reception of SWBA
 	 * event from target.
 	 */
-	cdf_nbuf_trim_tail(bcn->buf, cdf_nbuf_len(bcn->buf));
-	memcpy(cdf_nbuf_data(bcn->buf),
+	qdf_nbuf_trim_tail(bcn->buf, qdf_nbuf_len(bcn->buf));
+	memcpy(qdf_nbuf_data(bcn->buf),
 	       bcn_info->beacon + 4 /* Exclude beacon length field */,
 	       len);
 	if (bcn_info->timIeOffset > 3) {
@@ -2342,7 +2342,7 @@ QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 	} else {
 		bcn->p2p_ie_offset = bcn_info->p2pIeOffset;
 	}
-	bcn_payload = cdf_nbuf_data(bcn->buf);
+	bcn_payload = qdf_nbuf_data(bcn->buf);
 	if (bcn->tim_ie_offset) {
 		tim_ie =
 			(struct beacon_tim_ie *)(&bcn_payload[bcn->tim_ie_offset]);
@@ -2355,7 +2355,7 @@ QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 		tim_ie->tim_bitctl = 0;
 	}
 
-	cdf_nbuf_put_tail(bcn->buf, len);
+	qdf_nbuf_put_tail(bcn->buf, len);
 	bcn->len = len;
 
 	qdf_spin_unlock_bh(&bcn->lock);
@@ -2421,7 +2421,7 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 
 		qdf_spin_lock_bh(&bcn->lock);
 		qdf_mem_zero(&bcn_info, sizeof(bcn_info));
-		bcn_info.beacon = cdf_nbuf_data(bcn->buf);
+		bcn_info.beacon = qdf_nbuf_data(bcn->buf);
 		bcn_info.p2pIeOffset = bcn->p2p_ie_offset;
 		bcn_info.beaconLength = bcn->len;
 		bcn_info.timIeOffset = bcn->tim_ie_offset;
@@ -2701,7 +2701,7 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 	}
 
 	if (wmi_desc->nbuf)
-		cdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
+		qdf_nbuf_unmap_single(pdev->osdev, wmi_desc->nbuf,
 				      QDF_DMA_TO_DEVICE);
 	if (wmi_desc->tx_cmpl_cb)
 		wmi_desc->tx_cmpl_cb(wma_handle->mac_context,
@@ -3012,13 +3012,13 @@ static
 int wma_process_bip(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface,
 	struct ieee80211_frame *wh,
-	cdf_nbuf_t wbuf
+	qdf_nbuf_t wbuf
 )
 {
 	uint16_t key_id;
 	uint8_t *efrm;
 
-	efrm = cdf_nbuf_data(wbuf) + cdf_nbuf_len(wbuf);
+	efrm = qdf_nbuf_data(wbuf) + qdf_nbuf_len(wbuf);
 	key_id = (uint16_t)*(efrm - cds_get_mmie_size() + 2);
 
 	if (!((key_id == WMA_IGTK_KEY_INDEX_4)
@@ -3032,14 +3032,14 @@ int wma_process_bip(tp_wma_handle wma_handle,
 		 * if 11w offload is enabled then mmie validation is performed
 		 * in firmware, host just need to trim the mmie.
 		 */
-		cdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
+		qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
 	} else {
 		if (cds_is_mmie_valid(iface->key.key,
 			iface->key.key_id[key_id - WMA_IGTK_KEY_INDEX_4].ipn,
 			(uint8_t *) wh, efrm)) {
 			WMA_LOGE(FL("Protected BC/MC frame MMIE validation successful"));
 			/* Remove MMIE */
-			cdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
+			qdf_nbuf_trim_tail(wbuf, cds_get_mmie_size());
 		} else {
 			WMA_LOGE(FL("BC/MC MIC error or MMIE not present, dropping the frame"));
 			return -EINVAL;
@@ -3063,7 +3063,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 	struct wma_txrx_node *iface,
 	struct ieee80211_frame *wh,
 	cds_pkt_t *rx_pkt,
-	cdf_nbuf_t wbuf)
+	qdf_nbuf_t wbuf)
 {
 	uint8_t *orig_hdr;
 	uint8_t *ccmp;
@@ -3076,7 +3076,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			return -EINVAL;
 		}
 
-		orig_hdr = (uint8_t *) cdf_nbuf_data(wbuf);
+		orig_hdr = (uint8_t *) qdf_nbuf_data(wbuf);
 		/* Pointer to head of CCMP header */
 		ccmp = orig_hdr + sizeof(*wh);
 		if (wma_is_ccmp_pn_replay_attack(
@@ -3092,13 +3092,13 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		qdf_mem_move(orig_hdr +
 			IEEE80211_CCMP_HEADERLEN, wh,
 			sizeof(*wh));
-		cdf_nbuf_pull_head(wbuf,
+		qdf_nbuf_pull_head(wbuf,
 			IEEE80211_CCMP_HEADERLEN);
-			cdf_nbuf_trim_tail(wbuf, IEEE80211_CCMP_MICLEN);
+			qdf_nbuf_trim_tail(wbuf, IEEE80211_CCMP_MICLEN);
 
 		rx_pkt->pkt_meta.mpdu_hdr_ptr =
-				cdf_nbuf_data(wbuf);
-		rx_pkt->pkt_meta.mpdu_len = cdf_nbuf_len(wbuf);
+				qdf_nbuf_data(wbuf);
+		rx_pkt->pkt_meta.mpdu_len = qdf_nbuf_len(wbuf);
 		rx_pkt->pkt_meta.mpdu_data_len =
 		rx_pkt->pkt_meta.mpdu_len -
 		rx_pkt->pkt_meta.mpdu_hdr_len;
@@ -3143,7 +3143,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	struct wma_txrx_node *iface = NULL;
 	uint8_t vdev_id = WMA_INVALID_VDEV_ID;
 	cds_pkt_t *rx_pkt;
-	cdf_nbuf_t wbuf;
+	qdf_nbuf_t wbuf;
 	struct ieee80211_frame *wh;
 	uint8_t mgt_type, mgt_subtype;
 	int status;
@@ -3217,7 +3217,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	rx_pkt->pkt_meta.roamCandidateInd = 0;
 
 	/* Why not just use rx_event->hdr.buf_len? */
-	wbuf = cdf_nbuf_alloc(NULL, roundup(hdr->buf_len, 4), 0, 4, false);
+	wbuf = qdf_nbuf_alloc(NULL, roundup(hdr->buf_len, 4), 0, 4, false);
 	if (!wbuf) {
 		WMA_LOGE("%s: Failed to allocate wbuf for mgmt rx len(%u)",
 			    __func__, hdr->buf_len);
@@ -3225,11 +3225,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -ENOMEM;
 	}
 
-	cdf_nbuf_put_tail(wbuf, hdr->buf_len);
-	cdf_nbuf_set_protocol(wbuf, ETH_P_CONTROL);
-	wh = (struct ieee80211_frame *)cdf_nbuf_data(wbuf);
+	qdf_nbuf_put_tail(wbuf, hdr->buf_len);
+	qdf_nbuf_set_protocol(wbuf, ETH_P_CONTROL);
+	wh = (struct ieee80211_frame *)qdf_nbuf_data(wbuf);
 
-	rx_pkt->pkt_meta.mpdu_hdr_ptr = cdf_nbuf_data(wbuf);
+	rx_pkt->pkt_meta.mpdu_hdr_ptr = qdf_nbuf_data(wbuf);
 	rx_pkt->pkt_meta.mpdu_data_ptr = rx_pkt->pkt_meta.mpdu_hdr_ptr +
 					 rx_pkt->pkt_meta.mpdu_hdr_len;
 	rx_pkt->pkt_meta.tsf_delta = hdr->tsf_delta;

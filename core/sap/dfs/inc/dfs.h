@@ -49,7 +49,7 @@
 /*DFS New Include Start*/
 
 #include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_util.h>           /* qdf_assert */
 #include <qdf_lock.h>           /* cdf_spinlock */
 #include <cds_queue.h>          /* TAILQ */

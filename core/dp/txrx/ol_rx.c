@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#include <cdf_nbuf.h>               /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>               /* qdf_nbuf_t, etc. */
 #include <qdf_util.h>               /* qdf_cpu_to_le64 */
 #include <qdf_types.h>              /* bool */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
@@ -68,7 +68,7 @@
 #endif
 
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
-			cdf_nbuf_t rx_buf_list);
+			qdf_nbuf_t rx_buf_list);
 
 
 #ifdef HTT_RX_RESTORE
@@ -84,16 +84,16 @@ static void ol_rx_restore_handler(struct work_struct *htt_rx)
 
 static DECLARE_WORK(ol_rx_restore_work, ol_rx_restore_handler);
 
-void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, cdf_nbuf_t head_msdu,
-			   cdf_nbuf_t tail_msdu)
+void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, qdf_nbuf_t head_msdu,
+			   qdf_nbuf_t tail_msdu)
 {
-	cdf_nbuf_t next;
+	qdf_nbuf_t next;
 
 	while (head_msdu) {
-		next = cdf_nbuf_next(head_msdu);
+		next = qdf_nbuf_next(head_msdu);
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 			  "freeing %p\n", head_msdu);
-		cdf_nbuf_free(head_msdu);
+		qdf_nbuf_free(head_msdu);
 		head_msdu = next;
 	}
 
@@ -106,7 +106,7 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, cdf_nbuf_t head_msdu,
 #endif
 
 static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
-				   void *rx_mpdu_desc, cdf_nbuf_t msdu)
+				   void *rx_mpdu_desc, qdf_nbuf_t msdu)
 {
 	uint8_t a1[IEEE80211_ADDR_LEN];
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
@@ -166,7 +166,7 @@ ol_rx_rssi_avg(struct ol_txrx_pdev_t *pdev, int16_t rssi_old, int16_t rssi_new)
 }
 
 static void
-ol_rx_ind_rssi_update(struct ol_txrx_peer_t *peer, cdf_nbuf_t rx_ind_msg)
+ol_rx_ind_rssi_update(struct ol_txrx_peer_t *peer, qdf_nbuf_t rx_ind_msg)
 {
 	struct ol_txrx_pdev_t *pdev = peer->vdev->pdev;
 	peer->rssi_dbm = ol_rx_rssi_avg(pdev, peer->rssi_dbm,
@@ -192,12 +192,12 @@ ol_rx_mpdu_rssi_update(struct ol_txrx_peer_t *peer, void *rx_mpdu_desc)
 #endif /* QCA_SUPPORT_PEER_DATA_RX_RSSI */
 
 void discard_msdus(htt_pdev_handle htt_pdev,
-		   cdf_nbuf_t head_msdu,
-		   cdf_nbuf_t tail_msdu)
+		   qdf_nbuf_t head_msdu,
+		   qdf_nbuf_t tail_msdu)
 {
 	while (1) {
-		cdf_nbuf_t next;
-		next = cdf_nbuf_next(
+		qdf_nbuf_t next;
+		next = qdf_nbuf_next(
 			head_msdu);
 		htt_rx_desc_frame_free
 			(htt_pdev,
@@ -212,12 +212,12 @@ void discard_msdus(htt_pdev_handle htt_pdev,
 }
 
 void chain_msdus(htt_pdev_handle htt_pdev,
-		 cdf_nbuf_t head_msdu,
-		 cdf_nbuf_t tail_msdu)
+		 qdf_nbuf_t head_msdu,
+		 qdf_nbuf_t tail_msdu)
 {
 	while (1) {
-		cdf_nbuf_t next;
-		next = cdf_nbuf_next(head_msdu);
+		qdf_nbuf_t next;
+		next = qdf_nbuf_next(head_msdu);
 		htt_rx_desc_frame_free(
 			htt_pdev,
 			head_msdu);
@@ -232,8 +232,8 @@ void process_reorder(ol_txrx_pdev_handle pdev,
 		     void *rx_mpdu_desc,
 		     uint8_t tid,
 		     struct ol_txrx_peer_t *peer,
-		     cdf_nbuf_t head_msdu,
-		     cdf_nbuf_t tail_msdu,
+		     qdf_nbuf_t head_msdu,
+		     qdf_nbuf_t tail_msdu,
 		     int num_mpdu_ranges,
 		     int num_pdus,
 		     bool rx_ind_release
@@ -310,7 +310,7 @@ void process_reorder(ol_txrx_pdev_handle pdev,
 
 void
 ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
-			 cdf_nbuf_t rx_ind_msg,
+			 qdf_nbuf_t rx_ind_msg,
 			 uint16_t peer_id, uint8_t tid, int num_mpdu_ranges)
 {
 	int mpdu_range, i;
@@ -383,7 +383,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 
 	if (htt_rx_ind_release(pdev->htt_pdev, rx_ind_msg)) {
 		/* the ind info of release is saved here and do release at the
-		 * end. This is for the reason of in HL case, the cdf_nbuf_t
+		 * end. This is for the reason of in HL case, the qdf_nbuf_t
 		 * for msg and payload are the same buf. And the buf will be
 		 * changed during processing */
 		rx_ind_release = true;
@@ -398,7 +398,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 	for (mpdu_range = 0; mpdu_range < num_mpdu_ranges; mpdu_range++) {
 		enum htt_rx_status status;
 		int i, num_mpdus;
-		cdf_nbuf_t head_msdu, tail_msdu, msdu;
+		qdf_nbuf_t head_msdu, tail_msdu, msdu;
 		void *rx_mpdu_desc;
 
 #ifdef DEBUG_DMA_DONE
@@ -558,8 +558,8 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
 				}
 				while (1) {
 					/* Free the nbuf */
-					cdf_nbuf_t next;
-					next = cdf_nbuf_next(msdu);
+					qdf_nbuf_t next;
+					next = qdf_nbuf_next(msdu);
 					htt_rx_desc_frame_free(htt_pdev, msdu);
 					if (msdu == tail_msdu)
 						break;
@@ -649,7 +649,7 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 
 #include <cds_ieee80211_common.h>
 
-static void transcap_nwifi_to_8023(cdf_nbuf_t msdu)
+static void transcap_nwifi_to_8023(qdf_nbuf_t msdu)
 {
 	struct ieee80211_frame *wh;
 	uint32_t hdrsize;
@@ -661,7 +661,7 @@ static void transcap_nwifi_to_8023(cdf_nbuf_t msdu)
 	uint8_t a3[IEEE80211_ADDR_LEN];
 	uint8_t fc1;
 
-	wh = (struct ieee80211_frame *)cdf_nbuf_data(msdu);
+	wh = (struct ieee80211_frame *)qdf_nbuf_data(msdu);
 	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
 	qdf_mem_copy(a2, wh->i_addr2, IEEE80211_ADDR_LEN);
 	qdf_mem_copy(a3, wh->i_addr3, IEEE80211_ADDR_LEN);
@@ -669,17 +669,17 @@ static void transcap_nwifi_to_8023(cdf_nbuf_t msdu)
 	/* Native Wifi header is 80211 non-QoS header */
 	hdrsize = sizeof(struct ieee80211_frame);
 
-	llchdr = (struct llc *)(((uint8_t *) cdf_nbuf_data(msdu)) + hdrsize);
+	llchdr = (struct llc *)(((uint8_t *) qdf_nbuf_data(msdu)) + hdrsize);
 	ether_type = llchdr->llc_un.type_snap.ether_type;
 
 	/*
 	 * Now move the data pointer to the beginning of the mac header :
 	 * new-header = old-hdr + (wifhdrsize + llchdrsize - ethhdrsize)
 	 */
-	cdf_nbuf_pull_head(msdu,
+	qdf_nbuf_pull_head(msdu,
 			   (hdrsize + sizeof(struct llc) -
 			    sizeof(struct ether_header)));
-	eth_hdr = (struct ether_header *)(cdf_nbuf_data(msdu));
+	eth_hdr = (struct ether_header *)(qdf_nbuf_data(msdu));
 	switch (fc1) {
 	case IEEE80211_FC1_DIR_NODS:
 		qdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
@@ -705,7 +705,7 @@ void ol_rx_notify(ol_pdev_handle pdev,
 		  uint8_t *peer_mac_addr,
 		  int tid,
 		  uint32_t tsf32,
-		  enum ol_rx_notify_type notify_type, cdf_nbuf_t rx_frame)
+		  enum ol_rx_notify_type notify_type, qdf_nbuf_t rx_frame)
 {
 	/*
 	 * NOTE: This is used in qca_main for AP mode to handle IGMP
@@ -732,14 +732,14 @@ void ol_rx_notify(ol_pdev_handle pdev,
 void
 ol_rx_inspect(struct ol_txrx_vdev_t *vdev,
 	      struct ol_txrx_peer_t *peer,
-	      unsigned tid, cdf_nbuf_t msdu, void *rx_desc)
+	      unsigned tid, qdf_nbuf_t msdu, void *rx_desc)
 {
 	ol_txrx_pdev_handle pdev = vdev->pdev;
 	uint8_t *data, *l3_hdr;
 	uint16_t ethertype;
 	int offset;
 
-	data = cdf_nbuf_data(msdu);
+	data = qdf_nbuf_data(msdu);
 	if (pdev->frame_format == wlan_frm_fmt_native_wifi) {
 		offset = SIZEOF_80211_HDR + LLC_SNAP_HDR_OFFSET_ETHERTYPE;
 		l3_hdr = data + SIZEOF_80211_HDR + LLC_SNAP_HDR_LEN;
@@ -764,10 +764,10 @@ ol_rx_inspect(struct ol_txrx_vdev_t *vdev,
 
 void
 ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
-				  cdf_nbuf_t msg, int msdu_cnt)
+				  qdf_nbuf_t msg, int msdu_cnt)
 {
 	int vdev_id, peer_id, tid;
-	cdf_nbuf_t head_buf, tail_buf, buf;
+	qdf_nbuf_t head_buf, tail_buf, buf;
 	struct ol_txrx_peer_t *peer;
 	uint8_t fw_desc;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
@@ -782,8 +782,8 @@ ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
 		} else {
 			buf = head_buf;
 			while (1) {
-				cdf_nbuf_t next;
-				next = cdf_nbuf_next(buf);
+				qdf_nbuf_t next;
+				next = qdf_nbuf_next(buf);
 				htt_rx_desc_frame_free(htt_pdev, buf);
 				if (buf == tail_buf)
 					break;
@@ -801,7 +801,7 @@ ol_rx_mic_error_handler(
 	u_int8_t tid,
 	u_int16_t peer_id,
 	void *msdu_desc,
-	cdf_nbuf_t msdu)
+	qdf_nbuf_t msdu)
 {
 	union htt_rx_pn_t pn = {0};
 	u_int8_t key_id = 0;
@@ -836,7 +836,7 @@ ol_rx_mic_error_handler(
  */
 bool
 ol_rx_filter(struct ol_txrx_vdev_t *vdev,
-	     struct ol_txrx_peer_t *peer, cdf_nbuf_t msdu, void *rx_desc)
+	     struct ol_txrx_peer_t *peer, qdf_nbuf_t msdu, void *rx_desc)
 {
 #define FILTER_STATUS_REJECT 1
 #define FILTER_STATUS_ACCEPT 0
@@ -867,7 +867,7 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 			offset = ETHERNET_ADDR_LEN * 2;
 		}
 		/* get header info from msdu */
-		wh = cdf_nbuf_data(msdu);
+		wh = qdf_nbuf_data(msdu);
 
 		/* get ether type */
 		ether_type = (wh[offset] << 8) | wh[offset + 1];
@@ -963,13 +963,13 @@ ol_rx_filter(struct ol_txrx_vdev_t *vdev,
 
 void
 ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
-	      struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t msdu_list)
+	      struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list)
 {
 	ol_txrx_pdev_handle pdev = vdev->pdev;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
-	cdf_nbuf_t deliver_list_head = NULL;
-	cdf_nbuf_t deliver_list_tail = NULL;
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t deliver_list_head = NULL;
+	qdf_nbuf_t deliver_list_tail = NULL;
+	qdf_nbuf_t msdu;
 	bool filter = false;
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 	struct ol_rx_decap_info_t info;
@@ -984,7 +984,7 @@ ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 	while (msdu) {
 		void *rx_desc;
 		int discard, inspect, dummy_fwd;
-		cdf_nbuf_t next = cdf_nbuf_next(msdu);
+		qdf_nbuf_t next = qdf_nbuf_next(msdu);
 
 		rx_desc = htt_rx_msdu_desc_retrieve(pdev->htt_pdev, msdu);
 
@@ -1002,7 +1002,7 @@ ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 				   peer->mac_addr.raw[0], peer->mac_addr.raw[1],
 				   peer->mac_addr.raw[2], peer->mac_addr.raw[3],
 				   peer->mac_addr.raw[4], peer->mac_addr.raw[5],
-				   cdf_nbuf_len(msdu));
+				   qdf_nbuf_len(msdu));
 			goto DONE;
 		}
 #endif
@@ -1028,13 +1028,13 @@ DONE:
 					  ol_txrx_frm_dump_tcp_seq |
 					  ol_txrx_frm_dump_contents,
 					  0 /* don't print contents */);
-			cdf_nbuf_free(msdu);
+			qdf_nbuf_free(msdu);
 			/* If discarding packet is last packet of the delivery
 			   list, NULL terminator should be added
 			   for delivery list. */
 			if (next == NULL && deliver_list_head) {
 				/* add NULL terminator */
-				cdf_nbuf_set_next(deliver_list_tail, NULL);
+				qdf_nbuf_set_next(deliver_list_tail, NULL);
 			}
 		} else {
 			/*
@@ -1117,9 +1117,9 @@ DONE:
 					rx_header.tsf32 = peer->last_pkt_tsf;
 					rx_header.ext_tid = peer->last_pkt_tid;
 
-					cdf_nbuf_push_head(msdu,
+					qdf_nbuf_push_head(msdu,
 						sizeof(rx_header));
-					qdf_mem_copy(cdf_nbuf_data(msdu),
+					qdf_mem_copy(qdf_nbuf_data(msdu),
 						&rx_header, sizeof(rx_header));
 
 					/* Construct the ethernet header with
@@ -1128,9 +1128,9 @@ DONE:
 					   RX stats header. */
 					eth_header.ether_type = QDF_SWAP_U16(
 						ETHERTYPE_OCB_RX);
-					cdf_nbuf_push_head(msdu,
+					qdf_nbuf_push_head(msdu,
 							   sizeof(eth_header));
-					qdf_mem_copy(cdf_nbuf_data(msdu),
+					qdf_mem_copy(qdf_nbuf_data(msdu),
 							&eth_header,
 							 sizeof(eth_header));
 				}
@@ -1150,7 +1150,7 @@ DONE:
 
 #if defined(PERE_IP_HDR_ALIGNMENT_WAR)
 	if (pdev->host_80211_enable)
-		for (msdu = deliver_list_head; msdu; msdu = cdf_nbuf_next(msdu))
+		for (msdu = deliver_list_head; msdu; msdu = qdf_nbuf_next(msdu))
 			transcap_nwifi_to_8023(msdu);
 #endif
 
@@ -1164,15 +1164,15 @@ DONE:
 
 void
 ol_rx_discard(struct ol_txrx_vdev_t *vdev,
-	      struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t msdu_list)
+	      struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list)
 {
 	ol_txrx_pdev_handle pdev = vdev->pdev;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 
 	while (msdu_list) {
-		cdf_nbuf_t msdu = msdu_list;
+		qdf_nbuf_t msdu = msdu_list;
 
-		msdu_list = cdf_nbuf_next(msdu_list);
+		msdu_list = qdf_nbuf_next(msdu_list);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "discard rx %p from partly-deleted peer %p "
 			   "(%02x:%02x:%02x:%02x:%02x:%02x)\n",
@@ -1214,12 +1214,12 @@ ol_rx_peer_cleanup(struct ol_txrx_vdev_t *vdev, struct ol_txrx_peer_t *peer)
 /*
  * Free frames including both rx descriptors and buffers
  */
-void ol_rx_frames_free(htt_pdev_handle htt_pdev, cdf_nbuf_t frames)
+void ol_rx_frames_free(htt_pdev_handle htt_pdev, qdf_nbuf_t frames)
 {
-	cdf_nbuf_t next, frag = frames;
+	qdf_nbuf_t next, frag = frames;
 
 	while (frag) {
-		next = cdf_nbuf_next(frag);
+		next = qdf_nbuf_next(frag);
 		htt_rx_desc_frame_free(htt_pdev, frag);
 		frag = next;
 	}
@@ -1227,7 +1227,7 @@ void ol_rx_frames_free(htt_pdev_handle htt_pdev, cdf_nbuf_t frames)
 
 void
 ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
-				  cdf_nbuf_t rx_ind_msg,
+				  qdf_nbuf_t rx_ind_msg,
 				  uint16_t peer_id,
 				  uint8_t tid, uint8_t is_offload)
 {
@@ -1235,7 +1235,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 	struct ol_txrx_peer_t *peer = NULL;
 	htt_pdev_handle htt_pdev = NULL;
 	int status;
-	cdf_nbuf_t head_msdu, tail_msdu = NULL;
+	qdf_nbuf_t head_msdu, tail_msdu = NULL;
 
 	if (pdev) {
 		peer = ol_txrx_peer_find_by_id(pdev, peer_id);
@@ -1271,7 +1271,7 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 
 	/* Send the chain of MSDUs to the OS */
 	/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
-	cdf_nbuf_set_next(tail_msdu, NULL);
+	qdf_nbuf_set_next(tail_msdu, NULL);
 
 	/* Pktlog */
 #ifdef WDI_EVENT_ENABLE
@@ -1287,8 +1287,8 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 			   "%s: Couldn't find peer from ID 0x%x\n",
 			   __func__, peer_id);
 		while (head_msdu) {
-			cdf_nbuf_t msdu = head_msdu;
-			head_msdu = cdf_nbuf_next(head_msdu);
+			qdf_nbuf_t msdu = head_msdu;
+			head_msdu = qdf_nbuf_next(head_msdu);
 			htt_rx_desc_frame_free(htt_pdev, msdu);
 		}
 		return;
@@ -1301,9 +1301,9 @@ ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
 void
 ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 		       struct ol_txrx_peer_t *peer,
-		       unsigned tid, cdf_nbuf_t msdu_list)
+		       unsigned tid, qdf_nbuf_t msdu_list)
 {
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 
 	msdu = msdu_list;
 	/*
@@ -1314,7 +1314,7 @@ ol_rx_in_order_deliver(struct ol_txrx_vdev_t *vdev,
 	 */
 
 	while (msdu) {
-		cdf_nbuf_t next = cdf_nbuf_next(msdu);
+		qdf_nbuf_t next = qdf_nbuf_next(msdu);
 
 		OL_RX_PEER_STATS_UPDATE(peer, msdu);
 		OL_RX_ERR_STATISTICS_1(vdev->pdev, vdev, peer, rx_desc,
@@ -1338,7 +1338,7 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 					uint32_t *msg_word)
 {
 	int vdev_id, peer_id, tid;
-	cdf_nbuf_t head_buf, tail_buf, buf;
+	qdf_nbuf_t head_buf, tail_buf, buf;
 	struct ol_txrx_peer_t *peer;
 	uint8_t fw_desc;
 	int msdu_iter = 0;
@@ -1355,8 +1355,8 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
 		} else {
 			buf = head_buf;
 			while (1) {
-				cdf_nbuf_t next;
-				next = cdf_nbuf_next(buf);
+				qdf_nbuf_t next;
+				next = qdf_nbuf_next(buf);
 				htt_rx_desc_frame_free(htt_pdev, buf);
 				if (buf == tail_buf)
 					break;
@@ -1376,7 +1376,7 @@ ol_rx_offload_paddr_deliver_ind_handler(htt_pdev_handle htt_pdev,
  * @param msdu - network buffer handle
  * @param pdev - handle to htt dev.
  */
-void ol_ath_add_vow_extstats(htt_pdev_handle pdev, cdf_nbuf_t msdu)
+void ol_ath_add_vow_extstats(htt_pdev_handle pdev, qdf_nbuf_t msdu)
 {
 	/* FIX THIS:
 	 * txrx should not be directly using data types (scn)
@@ -1393,7 +1393,7 @@ void ol_ath_add_vow_extstats(htt_pdev_handle pdev, cdf_nbuf_t msdu)
 		int offset;
 		struct vow_extstats vowstats;
 
-		data = cdf_nbuf_data(msdu);
+		data = qdf_nbuf_data(msdu);
 
 		offset = ETHERNET_ADDR_LEN * 2;
 		l3_hdr = data + ETHERNET_HDR_LEN;

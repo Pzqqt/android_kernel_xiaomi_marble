@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,19 +28,19 @@
 #ifndef _OL_RX_FWD_H_
 #define _OL_RX_FWD_H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 
 #include <ol_txrx_api.h>        /* ol_txrx_peer_t, etc. */
 
-cdf_nbuf_t
+qdf_nbuf_t
 ol_rx_fwd_mcast_check_sta(struct ol_txrx_vdev_t *vdev,
 			  struct ol_txrx_peer_t *peer,
-			  cdf_nbuf_t msdu, void *rx_desc, int is_wlan_mcast);
+			  qdf_nbuf_t msdu, void *rx_desc, int is_wlan_mcast);
 
-cdf_nbuf_t
+qdf_nbuf_t
 ol_rx_fwd_mcast_check_ap(struct ol_txrx_vdev_t *vdev,
 			 struct ol_txrx_peer_t *peer,
-			 cdf_nbuf_t msdu, void *rx_desc, int is_wlan_mcast);
+			 qdf_nbuf_t msdu, void *rx_desc, int is_wlan_mcast);
 
 /**
  * @brief Check if rx frames should be transmitted over WLAN.
@@ -70,6 +70,6 @@ ol_rx_fwd_mcast_check_ap(struct ol_txrx_vdev_t *vdev,
 void
 ol_rx_fwd_check(struct ol_txrx_vdev_t *vdev,
 		struct ol_txrx_peer_t *peer,
-		unsigned tid, cdf_nbuf_t msdu_list);
+		unsigned tid, qdf_nbuf_t msdu_list);
 
 #endif /* _OL_RX_FWD_H_ */

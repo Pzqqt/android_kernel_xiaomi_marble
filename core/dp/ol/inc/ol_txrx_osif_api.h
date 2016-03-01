@@ -32,7 +32,7 @@
 #ifndef _OL_TXRX_OSIF_API__H_
 #define _OL_TXRX_OSIF_API__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <ol_osif_api.h>        /* ol_osif_vdev_handle */
 #include <ol_txrx_api.h>        /* ol_txrx_pdev_handle, etc. */
@@ -46,21 +46,21 @@
  */
 struct ol_rx_cached_buf {
 	struct list_head list;
-	cdf_nbuf_t buf;
+	qdf_nbuf_t buf;
 };
 
 /**
  * @typedef ol_txrx_rx_fp
  * @brief receive function to hand batches of data frames from txrx to OS shim
  */
-typedef void (*ol_txrx_rx_fp)(void *osif_dev, cdf_nbuf_t msdus);
+typedef void (*ol_txrx_rx_fp)(void *osif_dev, qdf_nbuf_t msdus);
 
 /**
  * @typedef ol_txrx_tx_fp
  * @brief top-level transmit function
  */
-typedef cdf_nbuf_t (*ol_txrx_tx_fp)(ol_txrx_vdev_handle data_vdev,
-				    cdf_nbuf_t msdu_list);
+typedef qdf_nbuf_t (*ol_txrx_tx_fp)(ol_txrx_vdev_handle data_vdev,
+				    qdf_nbuf_t msdu_list);
 
 /**
  * @typedef ol_txrx_tx_non_std_fp
@@ -82,9 +82,9 @@ typedef cdf_nbuf_t (*ol_txrx_tx_fp)(ol_txrx_vdev_handle data_vdev,
  * @param tx_spec - what non-standard operations to apply to the tx frame
  * @param msdu_list - tx frame(s), in a null-terminated list
  */
-typedef cdf_nbuf_t (*ol_txrx_tx_non_std_fp)(ol_txrx_vdev_handle data_vdev,
+typedef qdf_nbuf_t (*ol_txrx_tx_non_std_fp)(ol_txrx_vdev_handle data_vdev,
 					    enum ol_tx_spec tx_spec,
-					    cdf_nbuf_t msdu_list);
+					    qdf_nbuf_t msdu_list);
 
 struct txrx_rx_metainfo;
 
@@ -111,7 +111,7 @@ struct ol_txrx_desc_type {
 
 
 typedef QDF_STATUS (*ol_rx_callback_fp)(void *p_cds_gctx,
-					 cdf_nbuf_t pDataBuff,
+					 qdf_nbuf_t pDataBuff,
 					 uint8_t ucSTAId);
 
 typedef void (*ol_tx_pause_callback_fp)(uint8_t vdev_id,
@@ -250,16 +250,16 @@ ol_txrx_osif_vdev_register(ol_txrx_vdev_handle txrx_vdev,
  *      NULL if the segmentation fails, - OR -
  *      a NULL-terminated list of segment network buffers
  */
-cdf_nbuf_t ol_txrx_osif_tso_segment(ol_txrx_vdev_handle txrx_vdev,
+qdf_nbuf_t ol_txrx_osif_tso_segment(ol_txrx_vdev_handle txrx_vdev,
 				    int max_seg_payload_bytes,
-				    cdf_nbuf_t jumbo_tcp_frame);
+				    qdf_nbuf_t jumbo_tcp_frame);
 
-cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
+qdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, qdf_nbuf_t skb,
 									  uint8_t proto_type);
 
 #ifdef IPA_OFFLOAD
-cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
-			cdf_nbuf_t skb);
+qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
+			qdf_nbuf_t skb);
 #endif
 
 QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
@@ -272,7 +272,7 @@ QDF_STATUS ol_txrx_change_peer_state(uint8_t sta_id,
 				     bool roam_synch_in_progress);
 
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
-			cdf_nbuf_t rx_buf_list);
+			qdf_nbuf_t rx_buf_list);
 
 void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 			     bool drop);

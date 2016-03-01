@@ -38,8 +38,8 @@
 #include "wmi.h"
 #include "htc_api.h"
 
-typedef cdf_nbuf_t wmi_buf_t;
-#define wmi_buf_data(_buf) cdf_nbuf_data(_buf)
+typedef qdf_nbuf_t wmi_buf_t;
+#define wmi_buf_data(_buf) qdf_nbuf_data(_buf)
 
 /**
  * attach for unified WMI

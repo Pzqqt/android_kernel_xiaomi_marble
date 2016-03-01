@@ -45,7 +45,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -752,7 +752,7 @@ static int32_t wmi_unified_peer_delete_send(wmi_unified_t wmi,
 
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_DELETE_CMDID)) {
 		WMA_LOGP("%s: Failed to send peer delete command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	WMA_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
@@ -801,7 +801,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			goto send_fail_resp;
 		}
 		qdf_mem_zero(bcn, sizeof(*bcn));
-		bcn->buf = cdf_nbuf_alloc(NULL, WMA_BCN_BUF_MAX_SIZE, 0,
+		bcn->buf = qdf_nbuf_alloc(NULL, WMA_BCN_BUF_MAX_SIZE, 0,
 					  sizeof(uint32_t), 0);
 		if (!bcn->buf) {
 			WMA_LOGE("%s: No memory allocated for beacon buffer",
@@ -1125,7 +1125,7 @@ int32_t wmi_unified_peer_flush_tids_send(wmi_unified_t wmi,
 
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_FLUSH_TIDS_CMDID)) {
 		WMA_LOGP("%s: Failed to send flush tid command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	WMA_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
@@ -1267,7 +1267,7 @@ static int wmi_unified_peer_create_send(wmi_unified_t wmi,
 
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_CREATE_CMDID)) {
 		WMA_LOGP("%s: failed to send WMI_PEER_CREATE_CMDID", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	WMA_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
@@ -1369,7 +1369,7 @@ static int wmi_unified_vdev_down_send(wmi_unified_t wmi, uint8_t vdev_id)
 	cmd->vdev_id = vdev_id;
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_DOWN_CMDID)) {
 		WMA_LOGP("%s: Failed to send vdev down", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	WMA_LOGE("%s: vdev_id %d", __func__, vdev_id);
@@ -1651,7 +1651,7 @@ void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
 		WMA_LOGE("%s: Failed to send vdev restart command", __func__);
 		qdf_atomic_set(&intr[sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 }
 
@@ -1779,9 +1779,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 			WMA_LOGD("%s: Freeing beacon struct %p, "
 				 "template memory %p", __func__, bcn, bcn->buf);
 			if (bcn->dma_mapped)
-				cdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
+				qdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
 						      QDF_DMA_TO_DEVICE);
-			cdf_nbuf_free(bcn->buf);
+			qdf_nbuf_free(bcn->buf);
 			qdf_mem_free(bcn);
 			wma->interfaces[resp_event->vdev_id].beacon = NULL;
 		}
@@ -2211,7 +2211,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 					" Failed to send VDEV START command",
 					__func__, __LINE__);
 
-				cdf_nbuf_free(buf);
+				qdf_nbuf_free(buf);
 				return QDF_STATUS_E_FAILURE;
 			}
 
@@ -2326,7 +2326,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	if (ret < 0) {
 		WMA_LOGP("%s: Failed to send vdev start command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2787,9 +2787,9 @@ void wma_vdev_resp_timer(void *data)
 			WMA_LOGD("%s: Freeing beacon struct %p, "
 				 "template memory %p", __func__, bcn, bcn->buf);
 			if (bcn->dma_mapped)
-				cdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
+				qdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
 						      QDF_DMA_TO_DEVICE);
-			cdf_nbuf_free(bcn->buf);
+			qdf_nbuf_free(bcn->buf);
 			qdf_mem_free(bcn);
 			wma->interfaces[tgt_req->vdev_id].beacon = NULL;
 		}
@@ -3758,7 +3758,7 @@ int wmi_unified_vdev_up_send(wmi_unified_t wmi,
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(bssid, &cmd->vdev_bssid);
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_UP_CMDID)) {
 		WMA_LOGP("%s: Failed to send vdev up command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	return 0;
@@ -4617,7 +4617,7 @@ int32_t wmi_unified_vdev_stop_send(wmi_unified_t wmi, uint8_t vdev_id)
 	cmd->vdev_id = vdev_id;
 	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_STOP_CMDID)) {
 		WMA_LOGP("%s: Failed to send vdev stop command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	return 0;

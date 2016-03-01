@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_atomic.h>         /* qdf_atomic_read, etc. */
 #include <ol_cfg.h>             /* ol_cfg_addba_retry */
 #include <htt.h>                /* HTT_TX_EXT_TID_MGMT */
@@ -91,14 +91,14 @@ void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 	qdf_timer_stop(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
 	while (vdev->ll_pause.txq.head) {
-		cdf_nbuf_t next =
-			cdf_nbuf_next(vdev->ll_pause.txq.head);
-		cdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
-		cdf_nbuf_unmap(vdev->pdev->osdev,
+		qdf_nbuf_t next =
+			qdf_nbuf_next(vdev->ll_pause.txq.head);
+		qdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
+		qdf_nbuf_unmap(vdev->pdev->osdev,
 			       vdev->ll_pause.txq.head,
 			       QDF_DMA_TO_DEVICE);
-		cdf_nbuf_tx_free(vdev->ll_pause.txq.head,
-				 NBUF_PKT_ERROR);
+		qdf_nbuf_tx_free(vdev->ll_pause.txq.head,
+				 QDF_NBUF_PKT_ERROR);
 		vdev->ll_pause.txq.head = next;
 	}
 	vdev->ll_pause.txq.tail = NULL;

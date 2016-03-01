@@ -25,7 +25,7 @@
  * to the Linux Foundation.
  */
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <ol_htt_rx_api.h>      /* htt_rx_pn_t, etc. */
 #include <ol_ctrl_txrx_api.h>   /* ol_rx_err */
@@ -41,7 +41,7 @@
 		if (!head) {						\
 			head = mpdu;					\
 		} else {						\
-			cdf_nbuf_set_next(tail, mpdu);			\
+			qdf_nbuf_set_next(tail, mpdu);			\
 		}							\
 		tail = mpdu_tail;					\
 	} while (0)
@@ -80,16 +80,16 @@ int ol_rx_pn_wapi_cmp(union htt_rx_pn_t *new_pn,
 	return pn_is_replay;
 }
 
-cdf_nbuf_t
+qdf_nbuf_t
 ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid, cdf_nbuf_t msdu_list)
+		    unsigned tid, qdf_nbuf_t msdu_list)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	union htt_rx_pn_t *last_pn;
-	cdf_nbuf_t out_list_head = NULL;
-	cdf_nbuf_t out_list_tail = NULL;
-	cdf_nbuf_t mpdu;
+	qdf_nbuf_t out_list_head = NULL;
+	qdf_nbuf_t out_list_tail = NULL;
+	qdf_nbuf_t mpdu;
 	int index;              /* unicast vs. multicast */
 	int pn_len;
 	void *rx_desc;
@@ -114,7 +114,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 	last_pn = &peer->tids_last_pn[tid];
 	mpdu = msdu_list;
 	while (mpdu) {
-		cdf_nbuf_t mpdu_tail, next_mpdu;
+		qdf_nbuf_t mpdu_tail, next_mpdu;
 		union htt_rx_pn_t new_pn;
 		int pn_is_replay = 0;
 
@@ -148,7 +148,7 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 		}
 
 		if (pn_is_replay) {
-			cdf_nbuf_t msdu;
+			qdf_nbuf_t msdu;
 			static uint32_t last_pncheck_print_time /* = 0 */;
 			int log_level;
 			uint32_t current_time_ms;
@@ -198,10 +198,10 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 				  mpdu, NULL, 0);
 			/* free all MSDUs within this MPDU */
 			do {
-				cdf_nbuf_t next_msdu;
+				qdf_nbuf_t next_msdu;
 				OL_RX_ERR_STATISTICS_1(pdev, vdev, peer,
 						       rx_desc, OL_RX_ERR_PN);
-				next_msdu = cdf_nbuf_next(msdu);
+				next_msdu = qdf_nbuf_next(msdu);
 				htt_rx_desc_frame_free(pdev->htt_pdev, msdu);
 				if (msdu == mpdu_tail)
 					break;
@@ -228,14 +228,14 @@ ol_rx_pn_check_base(struct ol_txrx_vdev_t *vdev,
 	}
 	/* make sure the list is null-terminated */
 	if (out_list_tail)
-		cdf_nbuf_set_next(out_list_tail, NULL);
+		qdf_nbuf_set_next(out_list_tail, NULL);
 
 	return out_list_head;
 }
 
 void
 ol_rx_pn_check(struct ol_txrx_vdev_t *vdev,
-	       struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t msdu_list)
+	       struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t msdu_list)
 {
 	msdu_list = ol_rx_pn_check_base(vdev, peer, tid, msdu_list);
 	ol_rx_fwd_check(vdev, peer, tid, msdu_list);
@@ -244,7 +244,7 @@ ol_rx_pn_check(struct ol_txrx_vdev_t *vdev,
 void
 ol_rx_pn_check_only(struct ol_txrx_vdev_t *vdev,
 		    struct ol_txrx_peer_t *peer,
-		    unsigned tid, cdf_nbuf_t msdu_list)
+		    unsigned tid, qdf_nbuf_t msdu_list)
 {
 	msdu_list = ol_rx_pn_check_base(vdev, peer, tid, msdu_list);
 	ol_rx_deliver(vdev, peer, tid, msdu_list);

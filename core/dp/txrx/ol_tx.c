@@ -26,7 +26,7 @@
  */
 
 /* OS abstraction libraries */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_atomic.h>         /* qdf_atomic_read, etc. */
 #include <qdf_util.h>           /* qdf_unlikely */
 
@@ -56,7 +56,7 @@
 #include <htt_internal.h>
 #include <htt_types.h>        /* htc_endpoint */
 
-int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
+int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		 unsigned int num_msdus, unsigned int transfer_id);
 #endif  /* WLAN_FEATURE_FASTPATH */
 
@@ -91,11 +91,11 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
  * Return: 0 - success, >0 - error
  */
 static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
-	 cdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info)
+	 qdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info)
 {
 	msdu_info->tso_info.curr_seg = NULL;
-	if (cdf_nbuf_is_tso(msdu)) {
-		int num_seg = cdf_nbuf_get_tso_num_seg(msdu);
+	if (qdf_nbuf_is_tso(msdu)) {
+		int num_seg = qdf_nbuf_get_tso_num_seg(msdu);
 		msdu_info->tso_info.tso_seg_list = NULL;
 		msdu_info->tso_info.num_segs = num_seg;
 		while (num_seg) {
@@ -121,7 +121,7 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 				return 1;
 			}
 		}
-		cdf_nbuf_get_tso_info(vdev->pdev->osdev,
+		qdf_nbuf_get_tso_info(vdev->pdev->osdev,
 			msdu, &(msdu_info->tso_info));
 		msdu_info->tso_info.curr_seg =
 			msdu_info->tso_info.tso_seg_list;
@@ -142,13 +142,13 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
  *
  * Return: skb/NULL for success
  */
-cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
+qdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, qdf_nbuf_t skb,
 				 uint8_t proto_type)
 {
 	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	struct ol_txrx_pdev_t *pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 	struct ol_txrx_peer_t *peer;
-	cdf_nbuf_t ret;
+	qdf_nbuf_t ret;
 	QDF_STATUS status;
 
 	if (qdf_unlikely(!pdev)) {
@@ -181,27 +181,27 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
 		return skb;
 	}
 
-	status = cdf_nbuf_map_single(qdf_ctx, skb, QDF_DMA_TO_DEVICE);
+	status = qdf_nbuf_map_single(qdf_ctx, skb, QDF_DMA_TO_DEVICE);
 	if (qdf_unlikely(status != QDF_STATUS_SUCCESS)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: nbuf map failed", __func__);
 		return skb;
 	}
 
-	cdf_nbuf_trace_set_proto_type(skb, proto_type);
+	qdf_nbuf_trace_set_proto_type(skb, proto_type);
 
 	if ((ol_cfg_is_ip_tcp_udp_checksum_offload_enabled(pdev->ctrl_pdev))
-		&& (cdf_nbuf_get_protocol(skb) == htons(ETH_P_IP))
-		&& (cdf_nbuf_get_ip_summed(skb) == CHECKSUM_PARTIAL))
-		cdf_nbuf_set_ip_summed(skb, CHECKSUM_COMPLETE);
+		&& (qdf_nbuf_get_protocol(skb) == htons(ETH_P_IP))
+		&& (qdf_nbuf_get_ip_summed(skb) == CHECKSUM_PARTIAL))
+		qdf_nbuf_set_ip_summed(skb, CHECKSUM_COMPLETE);
 
 	/* Terminate the (single-element) list of tx frames */
-	cdf_nbuf_set_next(skb, NULL);
+	qdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_LL(peer->vdev, skb);
 	if (ret) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_WARN,
 			"%s: Failed to tx", __func__);
-		cdf_nbuf_unmap_single(qdf_ctx, ret, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_unmap_single(qdf_ctx, ret, QDF_DMA_TO_DEVICE);
 		return ret;
 	}
 
@@ -216,11 +216,11 @@ cdf_nbuf_t ol_tx_send_data_frame(uint8_t sta_id, cdf_nbuf_t skb,
  *
  * Return: skb/ NULL is for success
  */
-cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
-			cdf_nbuf_t skb)
+qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
+			qdf_nbuf_t skb)
 {
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
-	cdf_nbuf_t ret;
+	qdf_nbuf_t ret;
 
 	if (qdf_unlikely(!pdev)) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -229,12 +229,12 @@ cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 	}
 
 	if ((ol_cfg_is_ip_tcp_udp_checksum_offload_enabled(pdev->ctrl_pdev))
-		&& (cdf_nbuf_get_protocol(skb) == htons(ETH_P_IP))
-		&& (cdf_nbuf_get_ip_summed(skb) == CHECKSUM_PARTIAL))
-		cdf_nbuf_set_ip_summed(skb, CHECKSUM_COMPLETE);
+		&& (qdf_nbuf_get_protocol(skb) == htons(ETH_P_IP))
+		&& (qdf_nbuf_get_ip_summed(skb) == CHECKSUM_PARTIAL))
+		qdf_nbuf_set_ip_summed(skb, CHECKSUM_COMPLETE);
 
 	/* Terminate the (single-element) list of tx frames */
-	cdf_nbuf_set_next(skb, NULL);
+	qdf_nbuf_set_next(skb, NULL);
 	ret = OL_TX_LL((struct ol_txrx_vdev_t *)vdev, skb);
 	if (ret) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_WARN,
@@ -248,9 +248,9 @@ cdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
 
 
 #if defined(FEATURE_TSO)
-cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
-	cdf_nbuf_t msdu = msdu_list;
+	qdf_nbuf_t msdu = msdu_list;
 	struct ol_txrx_msdu_info_t msdu_info;
 
 	msdu_info.htt.info.l2_hdr_type = vdev->pdev->htt_pkt_type;
@@ -262,11 +262,11 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	 * within the list.
 	 */
 	while (msdu) {
-		cdf_nbuf_t next;
+		qdf_nbuf_t next;
 		struct ol_tx_desc_t *tx_desc;
 		int segments = 1;
 
-		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
+		msdu_info.htt.info.ext_tid = qdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
 		if (qdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
@@ -283,7 +283,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		 * ol_tx_send function, so store the next pointer before the
 		 * tx_send call.
 		 */
-		next = cdf_nbuf_next(msdu);
+		next = qdf_nbuf_next(msdu);
 		/* init the current segment to the 1st segment in the list */
 		while (segments) {
 
@@ -301,7 +301,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 			* receiving tx completion for all segments of an nbuf
 			*/
 			if (segments)
-				cdf_nbuf_inc_users(msdu);
+				qdf_nbuf_inc_users(msdu);
 
 			ol_tx_prepare_ll(tx_desc, vdev, msdu, &msdu_info);
 
@@ -318,7 +318,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 					 msdu_info.tso_info.curr_seg->next;
 			}
 
-			cdf_nbuf_reset_num_frags(msdu);
+			qdf_nbuf_reset_num_frags(msdu);
 
 			if (msdu_info.tso_info.is_tso) {
 				TXRX_STATS_TSO_INC_SEG(vdev->pdev);
@@ -336,9 +336,9 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 }
 #else /* TSO */
 
-cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
-	cdf_nbuf_t msdu = msdu_list;
+	qdf_nbuf_t msdu = msdu_list;
 	struct ol_txrx_msdu_info_t msdu_info;
 
 	msdu_info.htt.info.l2_hdr_type = vdev->pdev->htt_pkt_type;
@@ -351,10 +351,10 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	 * within the list.
 	 */
 	while (msdu) {
-		cdf_nbuf_t next;
+		qdf_nbuf_t next;
 		struct ol_tx_desc_t *tx_desc;
 
-		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
+		msdu_info.htt.info.ext_tid = qdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 		ol_tx_prepare_ll(tx_desc, vdev, msdu, &msdu_info);
 
@@ -368,7 +368,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		 * ol_tx_send function, so store the next pointer before the
 		 * tx_send call.
 		 */
-		next = cdf_nbuf_next(msdu);
+		next = qdf_nbuf_next(msdu);
 		ol_tx_send(vdev->pdev, tx_desc, msdu);
 		msdu = next;
 	}
@@ -394,7 +394,7 @@ cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
  */
 static inline struct ol_tx_desc_t *
 ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
-		      ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu,
+		      ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu,
 		      uint32_t pkt_download_len, uint32_t ep_id,
 		      struct ol_txrx_msdu_info_t *msdu_info)
 {
@@ -436,10 +436,10 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 			 &msdu_info->htt, &msdu_info->tso_info,
 			NULL, vdev->opmode == wlan_op_mode_ocb);
 
-	num_frags = cdf_nbuf_get_num_frags(msdu);
+	num_frags = qdf_nbuf_get_num_frags(msdu);
 	/* num_frags are expected to be 2 max */
-	num_frags = (num_frags > NBUF_CB_TX_MAX_EXTRA_FRAGS)
-		? NBUF_CB_TX_MAX_EXTRA_FRAGS
+	num_frags = (num_frags > QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS)
+		? QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS
 		: num_frags;
 #if defined(HELIUMPLUS_PADDR64)
 	/*
@@ -463,8 +463,8 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 			qdf_size_t frag_len;
 			qdf_dma_addr_t frag_paddr;
 
-			frag_len = cdf_nbuf_get_frag_len(msdu, i);
-			frag_paddr = cdf_nbuf_get_frag_paddr(msdu, i);
+			frag_len = qdf_nbuf_get_frag_len(msdu, i);
+			frag_paddr = qdf_nbuf_get_frag_paddr(msdu, i);
 #if defined(HELIUMPLUS_PADDR64)
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc,
 					 i - 1, frag_paddr, frag_len);
@@ -491,8 +491,8 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
 	/*
 	 * TODO : Can we remove this check and always download a fixed length ?
 	 * */
-	if (qdf_unlikely(cdf_nbuf_len(msdu) < pkt_download_len))
-		pkt_download_len = cdf_nbuf_len(msdu);
+	if (qdf_unlikely(qdf_nbuf_len(msdu) < pkt_download_len))
+		pkt_download_len = qdf_nbuf_len(msdu);
 
 	/* Fill the HTC header information */
 	/*
@@ -513,10 +513,10 @@ ol_tx_prepare_ll_fast(struct ol_txrx_pdev_t *pdev,
  *
  * Return: on success return NULL, pointer to nbuf when it fails to send.
  */
-cdf_nbuf_t
-ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+qdf_nbuf_t
+ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
-	cdf_nbuf_t msdu = msdu_list;
+	qdf_nbuf_t msdu = msdu_list;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	uint32_t pkt_download_len =
 		((struct htt_pdev_t *)(pdev->htt_pdev))->download_len;
@@ -532,11 +532,11 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	 * within the list.
 	 */
 	while (msdu) {
-		cdf_nbuf_t next;
+		qdf_nbuf_t next;
 		struct ol_tx_desc_t *tx_desc;
 		int segments = 1;
 
-		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
+		msdu_info.htt.info.ext_tid = qdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
 		if (qdf_unlikely(ol_tx_prepare_tso(vdev, msdu, &msdu_info))) {
@@ -553,7 +553,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 		 * inside the ce_send_fast function, so store the next
 		 * pointer before the ce_send call.
 		 */
-		next = cdf_nbuf_next(msdu);
+		next = qdf_nbuf_next(msdu);
 		/* init the current segment to the 1st segment in the list */
 		while (segments) {
 
@@ -570,13 +570,13 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 			* receiving tx completion for all segments of an nbuf
 			*/
 			if (segments)
-				cdf_nbuf_inc_users(msdu);
+				qdf_nbuf_inc_users(msdu);
 
 			msdu_info.htt.info.frame_type = pdev->htt_pkt_type;
 			msdu_info.htt.info.vdev_id = vdev->vdev_id;
 			msdu_info.htt.action.cksum_offload =
-				cdf_nbuf_get_tx_cksum(msdu);
-			switch (cdf_nbuf_get_exemption_type(msdu)) {
+				qdf_nbuf_get_tx_cksum(msdu);
+			switch (qdf_nbuf_get_exemption_type(msdu)) {
 			case QDF_NBUF_EXEMPT_NO_EXEMPTION:
 			case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
 				/* We want to encrypt this frame */
@@ -619,7 +619,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 				}
 
 				if (msdu_info.tso_info.is_tso) {
-					cdf_nbuf_reset_num_frags(msdu);
+					qdf_nbuf_reset_num_frags(msdu);
 					TXRX_STATS_TSO_INC_SEG(vdev->pdev);
 					TXRX_STATS_TSO_INC_SEG_IDX(vdev->pdev);
 				}
@@ -640,10 +640,10 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	return NULL; /* all MSDUs were accepted */
 }
 #else
-cdf_nbuf_t
-ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+qdf_nbuf_t
+ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
-	cdf_nbuf_t msdu = msdu_list;
+	qdf_nbuf_t msdu = msdu_list;
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	uint32_t pkt_download_len =
 		((struct htt_pdev_t *)(pdev->htt_pdev))->download_len;
@@ -660,17 +660,17 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	 * within the list.
 	 */
 	while (msdu) {
-		cdf_nbuf_t next;
+		qdf_nbuf_t next;
 		struct ol_tx_desc_t *tx_desc;
 
-		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
+		msdu_info.htt.info.ext_tid = qdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 
 		msdu_info.htt.info.frame_type = pdev->htt_pkt_type;
 		msdu_info.htt.info.vdev_id = vdev->vdev_id;
 		msdu_info.htt.action.cksum_offload =
-			cdf_nbuf_get_tx_cksum(msdu);
-		switch (cdf_nbuf_get_exemption_type(msdu)) {
+			qdf_nbuf_get_tx_cksum(msdu);
+		switch (qdf_nbuf_get_exemption_type(msdu)) {
 		case QDF_NBUF_EXEMPT_NO_EXEMPTION:
 		case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
 			/* We want to encrypt this frame */
@@ -701,7 +701,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 			 * inside the ce_send_fast function, so store the next
 			 * pointer before the ce_send call.
 			 */
-			next = cdf_nbuf_next(msdu);
+			next = qdf_nbuf_next(msdu);
 			if ((0 == ce_send_fast(pdev->ce_tx_hdl, &msdu, 1,
 					       ep_id))) {
 				/* The packet could not be sent */
@@ -728,8 +728,8 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
  * ol_tx_ll_wrapper() wrapper to ol_tx_ll
  *
  */
-static inline cdf_nbuf_t
-ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+static inline qdf_nbuf_t
+ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	struct hif_opaque_softc *hif_device =
 		(struct hif_opaque_softc *)cds_get_context(QDF_MODULE_ID_HIF);
@@ -742,8 +742,8 @@ ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 	return msdu_list;
 }
 #else
-static inline cdf_nbuf_t
-ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+static inline qdf_nbuf_t
+ol_tx_ll_wrapper(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	return ol_tx_ll(vdev, msdu_list);
 }
@@ -778,17 +778,17 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 	max_to_accept = vdev->pdev->tx_desc.num_free -
 		OL_TX_VDEV_PAUSE_QUEUE_SEND_MARGIN;
 	while (max_to_accept > 0 && vdev->ll_pause.txq.depth) {
-		cdf_nbuf_t tx_msdu;
+		qdf_nbuf_t tx_msdu;
 		max_to_accept--;
 		vdev->ll_pause.txq.depth--;
 		tx_msdu = vdev->ll_pause.txq.head;
 		if (tx_msdu) {
-			vdev->ll_pause.txq.head = cdf_nbuf_next(tx_msdu);
+			vdev->ll_pause.txq.head = qdf_nbuf_next(tx_msdu);
 			if (NULL == vdev->ll_pause.txq.head)
 				vdev->ll_pause.txq.tail = NULL;
-			cdf_nbuf_set_next(tx_msdu, NULL);
-			NBUF_UPDATE_TX_PKT_COUNT(tx_msdu,
-						NBUF_TX_PKT_TXRX_DEQUEUE);
+			qdf_nbuf_set_next(tx_msdu, NULL);
+			QDF_NBUF_UPDATE_TX_PKT_COUNT(tx_msdu,
+						QDF_NBUF_TX_PKT_TXRX_DEQUEUE);
 			tx_msdu = ol_tx_ll_wrapper(vdev, tx_msdu);
 			/*
 			 * It is unexpected that ol_tx_ll would reject the frame
@@ -799,9 +799,9 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 			 * For simplicity, just drop the frame.
 			 */
 			if (tx_msdu) {
-				cdf_nbuf_unmap(vdev->pdev->osdev, tx_msdu,
+				qdf_nbuf_unmap(vdev->pdev->osdev, tx_msdu,
 					       QDF_DMA_TO_DEVICE);
-				cdf_nbuf_tx_free(tx_msdu, NBUF_PKT_ERROR);
+				qdf_nbuf_tx_free(tx_msdu, QDF_NBUF_PKT_ERROR);
 			}
 		}
 	}
@@ -817,33 +817,34 @@ static void ol_tx_vdev_ll_pause_queue_send_base(struct ol_txrx_vdev_t *vdev)
 	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 }
 
-static cdf_nbuf_t
+static qdf_nbuf_t
 ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
-			      cdf_nbuf_t msdu_list, uint8_t start_timer)
+			      qdf_nbuf_t msdu_list, uint8_t start_timer)
 {
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
 	while (msdu_list &&
 	       vdev->ll_pause.txq.depth < vdev->ll_pause.max_q_depth) {
-		cdf_nbuf_t next = cdf_nbuf_next(msdu_list);
-		NBUF_UPDATE_TX_PKT_COUNT(msdu_list, NBUF_TX_PKT_TXRX_ENQUEUE);
+		qdf_nbuf_t next = qdf_nbuf_next(msdu_list);
+		QDF_NBUF_UPDATE_TX_PKT_COUNT(msdu_list,
+					     QDF_NBUF_TX_PKT_TXRX_ENQUEUE);
 		DPTRACE(qdf_dp_trace(msdu_list,
 				QDF_DP_TRACE_TXRX_QUEUE_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(msdu_list)),
-				sizeof(cdf_nbuf_data(msdu_list))));
+				(uint8_t *)(qdf_nbuf_data(msdu_list)),
+				sizeof(qdf_nbuf_data(msdu_list))));
 
 		vdev->ll_pause.txq.depth++;
 		if (!vdev->ll_pause.txq.head) {
 			vdev->ll_pause.txq.head = msdu_list;
 			vdev->ll_pause.txq.tail = msdu_list;
 		} else {
-			cdf_nbuf_set_next(vdev->ll_pause.txq.tail, msdu_list);
+			qdf_nbuf_set_next(vdev->ll_pause.txq.tail, msdu_list);
 		}
 		vdev->ll_pause.txq.tail = msdu_list;
 
 		msdu_list = next;
 	}
 	if (vdev->ll_pause.txq.tail)
-		cdf_nbuf_set_next(vdev->ll_pause.txq.tail, NULL);
+		qdf_nbuf_set_next(vdev->ll_pause.txq.tail, NULL);
 
 	if (start_timer) {
 		qdf_timer_stop(&vdev->ll_pause.timer);
@@ -860,7 +861,7 @@ ol_tx_vdev_pause_queue_append(struct ol_txrx_vdev_t *vdev,
  * Store up the tx frame in the vdev's tx queue if the vdev is paused.
  * If there are too many frames in the tx queue, reject it.
  */
-cdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
+qdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 {
 	uint16_t eth_type;
 	uint32_t paused_reason;
@@ -874,10 +875,10 @@ cdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 				  OL_TXQ_PAUSE_REASON_PEER_UNAUTHORIZED) ==
 				 paused_reason)) {
 			eth_type = (((struct ethernet_hdr_t *)
-				     cdf_nbuf_data(msdu_list))->
+				     qdf_nbuf_data(msdu_list))->
 				    ethertype[0] << 8) |
 				   (((struct ethernet_hdr_t *)
-				     cdf_nbuf_data(msdu_list))->ethertype[1]);
+				     qdf_nbuf_data(msdu_list))->ethertype[1]);
 			if (ETHERTYPE_IS_EAPOL_WAPI(eth_type)) {
 				msdu_list = ol_tx_ll_wrapper(vdev, msdu_list);
 				return msdu_list;
@@ -918,7 +919,7 @@ cdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list)
 void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 {
 	int max_to_send;        /* tracks how many frames have been sent */
-	cdf_nbuf_t tx_msdu;
+	qdf_nbuf_t tx_msdu;
 	struct ol_txrx_vdev_t *vdev = NULL;
 	uint8_t more;
 
@@ -961,12 +962,12 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 				vdev->ll_pause.txq.depth--;
 
 				vdev->ll_pause.txq.head =
-					cdf_nbuf_next(tx_msdu);
+					qdf_nbuf_next(tx_msdu);
 
 				if (NULL == vdev->ll_pause.txq.head)
 					vdev->ll_pause.txq.tail = NULL;
 
-				cdf_nbuf_set_next(tx_msdu, NULL);
+				qdf_nbuf_set_next(tx_msdu, NULL);
 				tx_msdu = ol_tx_ll_wrapper(vdev, tx_msdu);
 				/*
 				 * It is unexpected that ol_tx_ll would reject
@@ -978,10 +979,10 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 				 * For simplicity, just drop the frame.
 				 */
 				if (tx_msdu) {
-					cdf_nbuf_unmap(pdev->osdev, tx_msdu,
+					qdf_nbuf_unmap(pdev->osdev, tx_msdu,
 						       QDF_DMA_TO_DEVICE);
-					cdf_nbuf_tx_free(tx_msdu,
-							 NBUF_PKT_ERROR);
+					qdf_nbuf_tx_free(tx_msdu,
+							 QDF_NBUF_PKT_ERROR);
 				}
 			}
 			/*check if there are more msdus to transmit */
@@ -1038,11 +1039,11 @@ static inline uint8_t ol_txrx_tx_raw_subtype(enum ol_tx_spec tx_spec)
 	return sub_type;
 }
 
-cdf_nbuf_t
+qdf_nbuf_t
 ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
-		 enum ol_tx_spec tx_spec, cdf_nbuf_t msdu_list)
+		 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
-	cdf_nbuf_t msdu = msdu_list;
+	qdf_nbuf_t msdu = msdu_list;
 	htt_pdev_handle htt_pdev = vdev->pdev->htt_pdev;
 	struct ol_txrx_msdu_info_t msdu_info;
 
@@ -1056,10 +1057,10 @@ ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
 	 * within the list.
 	 */
 	while (msdu) {
-		cdf_nbuf_t next;
+		qdf_nbuf_t next;
 		struct ol_tx_desc_t *tx_desc;
 
-		msdu_info.htt.info.ext_tid = cdf_nbuf_get_tid(msdu);
+		msdu_info.htt.info.ext_tid = qdf_nbuf_get_tid(msdu);
 		msdu_info.peer = NULL;
 		msdu_info.tso_info.is_tso = 0;
 
@@ -1070,7 +1071,7 @@ ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
 		 * ol_tx_send function, so store the next pointer before the
 		 * tx_send call.
 		 */
-		next = cdf_nbuf_next(msdu);
+		next = qdf_nbuf_next(msdu);
 
 		if (tx_spec != ol_tx_spec_std) {
 			if (tx_spec & ol_tx_spec_no_free) {
@@ -1126,26 +1127,26 @@ ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
  * parse_ocb_tx_header() - Function to check for OCB
  * TX control header on a packet and extract it if present
  *
- * @msdu:   Pointer to OS packet (cdf_nbuf_t)
+ * @msdu:   Pointer to OS packet (qdf_nbuf_t)
  */
 #define OCB_HEADER_VERSION     1
-bool parse_ocb_tx_header(cdf_nbuf_t msdu,
+bool parse_ocb_tx_header(qdf_nbuf_t msdu,
 			struct ocb_tx_ctrl_hdr_t *tx_ctrl)
 {
 	struct ether_header *eth_hdr_p;
 	struct ocb_tx_ctrl_hdr_t *tx_ctrl_hdr;
 
 	/* Check if TX control header is present */
-	eth_hdr_p = (struct ether_header *) cdf_nbuf_data(msdu);
+	eth_hdr_p = (struct ether_header *) qdf_nbuf_data(msdu);
 	if (eth_hdr_p->ether_type != QDF_SWAP_U16(ETHERTYPE_OCB_TX))
 		/* TX control header is not present. Nothing to do.. */
 		return true;
 
 	/* Remove the ethernet header */
-	cdf_nbuf_pull_head(msdu, sizeof(struct ether_header));
+	qdf_nbuf_pull_head(msdu, sizeof(struct ether_header));
 
 	/* Parse the TX control header */
-	tx_ctrl_hdr = (struct ocb_tx_ctrl_hdr_t *) cdf_nbuf_data(msdu);
+	tx_ctrl_hdr = (struct ocb_tx_ctrl_hdr_t *) qdf_nbuf_data(msdu);
 
 	if (tx_ctrl_hdr->version == OCB_HEADER_VERSION) {
 		if (tx_ctrl)
@@ -1157,13 +1158,13 @@ bool parse_ocb_tx_header(cdf_nbuf_t msdu,
 	}
 
 	/* Remove the TX control header */
-	cdf_nbuf_pull_head(msdu, tx_ctrl_hdr->length);
+	qdf_nbuf_pull_head(msdu, tx_ctrl_hdr->length);
 	return true;
 }
 
-cdf_nbuf_t
+qdf_nbuf_t
 ol_tx_non_std(ol_txrx_vdev_handle vdev,
-	      enum ol_tx_spec tx_spec, cdf_nbuf_t msdu_list)
+	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)
 {
 	return ol_tx_non_std_ll(vdev, tx_spec, msdu_list);
 }
@@ -1230,7 +1231,7 @@ void dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc)
 
 int
 ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
-		  cdf_nbuf_t tx_mgmt_frm,
+		  qdf_nbuf_t tx_mgmt_frm,
 		  uint8_t type, uint8_t use_6mbps, uint16_t chanfreq)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
@@ -1287,7 +1288,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 
 	tx_msdu_info.peer = NULL;
 
-	cdf_nbuf_map_single(pdev->osdev, tx_mgmt_frm, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_map_single(pdev->osdev, tx_mgmt_frm, QDF_DMA_TO_DEVICE);
 	/* For LL tx_comp_req is not used so initialized to 0 */
 	tx_msdu_info.htt.action.tx_comp_req = 0;
 	tx_desc = ol_tx_desc_ll(pdev, vdev, tx_mgmt_frm, &tx_msdu_info);
@@ -1310,7 +1311,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 		htt_tx_desc_frags_table_set(
 			pdev->htt_pdev,
 			tx_desc->htt_tx_desc,
-			cdf_nbuf_get_frag_paddr(tx_mgmt_frm, 1),
+			qdf_nbuf_get_frag_paddr(tx_mgmt_frm, 1),
 			0, 0);
 #if defined(HELIUMPLUS_PADDR64) && defined(HELIUMPLUS_DEBUG)
 		dump_frag_desc(
@@ -1319,7 +1320,7 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 #endif /* defined(HELIUMPLUS_PADDR64) */
 	}
 	if (!tx_desc) {
-		cdf_nbuf_unmap_single(pdev->osdev, tx_mgmt_frm,
+		qdf_nbuf_unmap_single(pdev->osdev, tx_mgmt_frm,
 				      QDF_DMA_TO_DEVICE);
 		return -EINVAL;       /* can't accept the tx mgmt frame */
 	}
@@ -1328,7 +1329,9 @@ ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
 	tx_desc->pkt_type = type + OL_TXRX_MGMT_TYPE_BASE;
 
 	htt_tx_desc_set_chanfreq(tx_desc->htt_tx_desc, chanfreq);
-	NBUF_CB_TX_PACKET_TRACK(tx_desc->netbuf) = NBUF_TX_PKT_MGMT_TRACK;	ol_tx_send_nonstd(pdev, tx_desc, tx_mgmt_frm,
+	QDF_NBUF_CB_TX_PACKET_TRACK(tx_desc->netbuf) =
+				QDF_NBUF_TX_PKT_MGMT_TRACK;
+	ol_tx_send_nonstd(pdev, tx_desc, tx_mgmt_frm,
 			  htt_pkt_type_mgmt);
 
 	return 0;               /* accepted the tx mgmt frame */
@@ -1339,8 +1342,8 @@ void ol_txrx_sync(ol_txrx_pdev_handle pdev, uint8_t sync_cnt)
 	htt_h2t_sync_msg(pdev->htt_pdev, sync_cnt);
 }
 
-cdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
-			  cdf_nbuf_t msdu, uint16_t peer_id)
+qdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
+			  qdf_nbuf_t msdu, uint16_t peer_id)
 {
 	struct ol_tx_desc_t *tx_desc;
 	struct ol_txrx_msdu_info_t msdu_info;

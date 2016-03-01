@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -32,7 +32,7 @@
 #ifndef _OL_TX_SEND__H_
 #define _OL_TX_SEND__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <ol_txrx_types.h>      /* ol_tx_send_t */
 
 /**
@@ -52,7 +52,7 @@ void ol_tx_discard_target_frms(ol_txrx_pdev_handle pdev);
  */
 void
 ol_tx_send(struct ol_txrx_pdev_t *pdev,
-	   struct ol_tx_desc_t *tx_desc, cdf_nbuf_t msdu);
+	   struct ol_tx_desc_t *tx_desc, qdf_nbuf_t msdu);
 
 /**
  * @brief Send a tx batch download to the target.
@@ -67,7 +67,7 @@ ol_tx_send(struct ol_txrx_pdev_t *pdev,
 
 int
 ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
-		 cdf_nbuf_t msdu_list, int num_msdus);
+		 qdf_nbuf_t msdu_list, int num_msdus);
 
 /**
  * @brief Send a tx frame with a non-std header or payload type to the target.
@@ -82,5 +82,5 @@ ol_tx_send_batch(struct ol_txrx_pdev_t *pdev,
 void
 ol_tx_send_nonstd(struct ol_txrx_pdev_t *pdev,
 		  struct ol_tx_desc_t *tx_desc,
-		  cdf_nbuf_t msdu, enum htt_pkt_type pkt_type);
+		  qdf_nbuf_t msdu, enum htt_pkt_type pkt_type);
 #endif /* _OL_TX_SEND__H_ */

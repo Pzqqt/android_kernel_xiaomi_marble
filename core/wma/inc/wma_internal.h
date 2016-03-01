@@ -156,7 +156,7 @@ void wma_send_msg(tp_wma_handle wma_handle, uint16_t msg_type,
 			 void *body_ptr, uint32_t body_val);
 
 void wma_data_tx_ack_comp_hdlr(void *wma_context,
-				      cdf_nbuf_t netbuf, int32_t status);
+				      qdf_nbuf_t netbuf, int32_t status);
 
 QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 				    int value);

@@ -83,7 +83,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint)
 		   __func__, buffersToRefill, Endpoint);
 
 	for (RxBuffers = 0; RxBuffers < buffersToRefill; RxBuffers++) {
-		osBuf = cdf_nbuf_alloc(NULL, AR6000_BUFFER_SIZE,
+		osBuf = qdf_nbuf_alloc(NULL, AR6000_BUFFER_SIZE,
 				       AR6000_MIN_HEAD_ROOM, 4, false);
 		if (NULL == osBuf) {
 			break;
@@ -93,7 +93,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint)
 		pPacket = (HTC_PACKET *) (A_NETBUF_HEAD(osBuf));
 		/* set re-fill info */
 		SET_HTC_PACKET_INFO_RX_REFILL(pPacket, osBuf,
-					      cdf_nbuf_data(osBuf),
+					      qdf_nbuf_data(osBuf),
 					      AR6000_BUFFER_SIZE, Endpoint);
 		SET_HTC_PACKET_NET_BUF_CONTEXT(pPacket, osBuf);
 		/* add to queue */
@@ -123,9 +123,9 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 
 	if (status != A_OK) {
 		if (status != A_ECANCELED) {
-			printk("%s: RX ERR (%d) \n", __func__, status);
+			printk("%s: RX ERR (%d)\n", __func__, status);
 		}
-		cdf_nbuf_free(pktSkb);
+		qdf_nbuf_free(pktSkb);
 		return;
 	}
 
@@ -135,7 +135,7 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 			A_NETBUF_PULL(pktSkb, EPPING_ALIGNMENT_PAD);
 		}
 		if (enb_rx_dump)
-			epping_hex_dump((void *)cdf_nbuf_data(pktSkb),
+			epping_hex_dump((void *)qdf_nbuf_data(pktSkb),
 					pktSkb->len, __func__);
 		pktSkb->dev = dev;
 		if ((pktSkb->dev->flags & IFF_UP) == IFF_UP) {
@@ -155,7 +155,7 @@ void epping_rx(void *ctx, HTC_PACKET *pPacket)
 			}
 		} else {
 			++pAdapter->stats.rx_dropped;
-			cdf_nbuf_free(pktSkb);
+			qdf_nbuf_free(pktSkb);
 		}
 	}
 }

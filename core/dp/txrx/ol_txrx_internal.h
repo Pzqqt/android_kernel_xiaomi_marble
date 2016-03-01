@@ -29,7 +29,7 @@
 #define _OL_TXRX_INTERNAL__H_
 
 #include <qdf_util.h>               /* qdf_assert */
-#include <cdf_nbuf.h>               /* cdf_nbuf_t */
+#include <qdf_nbuf.h>               /* cdf_nbuf_t */
 #include <qdf_mem.h>             /* qdf_mem_set */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
 #include <ol_htt_rx_api.h>          /* htt_rx_msdu_desc_completes_mpdu, etc. */
@@ -160,7 +160,7 @@ extern unsigned g_txrx_print_level;
 		if (!(head)) {				    \
 			(head) = (elem);			\
 		} else {				    \
-			cdf_nbuf_set_next((tail), (elem));	\
+			qdf_nbuf_set_next((tail), (elem));	\
 		}					    \
 		(tail) = (elem);			    \
 	} while (0)
@@ -168,10 +168,10 @@ extern unsigned g_txrx_print_level;
 static inline void
 ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 		     void *mpdu_list,
-		     cdf_nbuf_t *mpdu_tail, cdf_nbuf_t *next_mpdu)
+		     qdf_nbuf_t *mpdu_tail, qdf_nbuf_t *next_mpdu)
 {
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 
 	/*
 	 * For now, we use a simply flat list of MSDUs.
@@ -181,12 +181,12 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 	msdu = mpdu_list;
 	while (!htt_rx_msdu_desc_completes_mpdu
 		       (htt_pdev, htt_rx_msdu_desc_retrieve(htt_pdev, msdu))) {
-		msdu = cdf_nbuf_next(msdu);
+		msdu = qdf_nbuf_next(msdu);
 		TXRX_ASSERT2(msdu);
 	}
 	/* msdu now points to the last MSDU within the first MPDU */
 	*mpdu_tail = msdu;
-	*next_mpdu = cdf_nbuf_next(msdu);
+	*next_mpdu = qdf_nbuf_next(msdu);
 }
 
 /*--- txrx stats macros ---*/
@@ -203,7 +203,7 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 #define TXRX_STATS_MSDU_INCR(pdev, field, netbuf) \
 	do { \
 		TXRX_STATS_INCR((pdev), pub.field.pkts); \
-		TXRX_STATS_ADD((pdev), pub.field.bytes, cdf_nbuf_len(netbuf)); \
+		TXRX_STATS_ADD((pdev), pub.field.bytes, qdf_nbuf_len(netbuf)); \
 	} while (0)
 
 /* conditional defs based on verbosity level */
@@ -211,10 +211,10 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 
 #define TXRX_STATS_MSDU_LIST_INCR(pdev, field, netbuf_list) \
 	do { \
-		cdf_nbuf_t tmp_list = netbuf_list; \
+		qdf_nbuf_t tmp_list = netbuf_list; \
 		while (tmp_list) { \
 			TXRX_STATS_MSDU_INCR(pdev, field, tmp_list); \
-			tmp_list = cdf_nbuf_next(tmp_list); \
+			tmp_list = qdf_nbuf_next(tmp_list); \
 		} \
 	} while (0)
 
@@ -373,7 +373,7 @@ enum ol_txrx_frm_dump_options {
 static inline void
 ol_txrx_frms_dump(const char *name,
 		  struct ol_txrx_pdev_t *pdev,
-		  cdf_nbuf_t frm,
+		  qdf_nbuf_t frm,
 		  enum ol_txrx_frm_dump_options display_options, int max_len)
 {
 #define TXRX_FRM_DUMP_MAX_LEN 128
@@ -385,7 +385,7 @@ ol_txrx_frms_dump(const char *name,
 			  name);
 	}
 	while (frm) {
-		p = cdf_nbuf_data(frm);
+		p = qdf_nbuf_data(frm);
 		if (display_options & ol_txrx_frm_dump_tcp_seq) {
 			int tcp_offset;
 			int l2_hdr_size;
@@ -475,8 +475,8 @@ NOT_IP_TCP:
 		if (display_options & ol_txrx_frm_dump_contents) {
 			int i, frag_num, len_lim;
 			len_lim = max_len;
-			if (len_lim > cdf_nbuf_len(frm))
-				len_lim = cdf_nbuf_len(frm);
+			if (len_lim > qdf_nbuf_len(frm))
+				len_lim = qdf_nbuf_len(frm);
 			if (len_lim > TXRX_FRM_DUMP_MAX_LEN)
 				len_lim = TXRX_FRM_DUMP_MAX_LEN;
 
@@ -489,11 +489,11 @@ NOT_IP_TCP:
 			while (i < len_lim) {
 				int frag_bytes;
 				frag_bytes =
-					cdf_nbuf_get_frag_len(frm, frag_num);
+					qdf_nbuf_get_frag_len(frm, frag_num);
 				if (frag_bytes > len_lim - i)
 					frag_bytes = len_lim - i;
 				if (frag_bytes > 0) {
-					p = cdf_nbuf_get_frag_vaddr(frm,
+					p = qdf_nbuf_get_frag_vaddr(frm,
 								    frag_num);
 					qdf_mem_copy(&local_buf[i], p,
 						     frag_bytes);
@@ -504,7 +504,7 @@ NOT_IP_TCP:
 
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "frame %p data (%p), hex dump of bytes 0-%d of %d:\n",
-				frm, p, len_lim - 1, (int)cdf_nbuf_len(frm));
+				frm, p, len_lim - 1, (int)qdf_nbuf_len(frm));
 			p = local_buf;
 			while (len_lim > 16) {
 				QDF_TRACE(QDF_MODULE_ID_TXRX,
@@ -532,7 +532,7 @@ NOT_IP_TCP:
 			QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_INFO,
 				  "\n");
 		}
-		frm = cdf_nbuf_next(frm);
+		frm = qdf_nbuf_next(frm);
 	}
 }
 #else
@@ -571,7 +571,7 @@ NOT_IP_TCP:
 		if (ol_cfg_frame_type(pdev->ctrl_pdev) ==		\
 		    wlan_frm_fmt_native_wifi) {				\
 			/* For windows, it is always native wifi header .*/ \
-			wh = (struct ieee80211_frame *)cdf_nbuf_data(rx_msdu); \
+			wh = (struct ieee80211_frame *)qdf_nbuf_data(rx_msdu); \
 		}							\
 		ol_rx_err_inv_peer_statistics(pdev->ctrl_pdev,		\
 					      wh, OL_RX_ERR_UNKNOWN_PEER); \
@@ -613,7 +613,7 @@ NOT_IP_TCP:
 	do { \
 		qdf_spin_lock_bh(&peer->vdev->pdev->peer_stat_mutex); \
 		peer->stats.tx_or_rx.frms.type += 1; \
-		peer->stats.tx_or_rx.bytes.type += cdf_nbuf_len(msdu); \
+		peer->stats.tx_or_rx.bytes.type += qdf_nbuf_len(msdu); \
 		qdf_spin_unlock_bh(&peer->vdev->pdev->peer_stat_mutex);	\
 	} while (0)
 #define OL_TXRX_PEER_STATS_UPDATE(peer, tx_or_rx, msdu)	\
@@ -622,10 +622,10 @@ NOT_IP_TCP:
 		struct ol_txrx_pdev_t *pdev = vdev->pdev; \
 		uint8_t *dest_addr; \
 		if (pdev->frame_format == wlan_frm_fmt_802_3) {	\
-			dest_addr = cdf_nbuf_data(msdu); \
+			dest_addr = qdf_nbuf_data(msdu); \
 		} else { /* 802.11 format */ \
 			struct ieee80211_frame *frm; \
-			frm = (struct ieee80211_frame *) cdf_nbuf_data(msdu); \
+			frm = (struct ieee80211_frame *) qdf_nbuf_data(msdu); \
 			if (vdev->opmode == wlan_op_mode_ap) { \
 				dest_addr = (uint8_t *) &(frm->i_addr1[0]); \
 			} else { \

@@ -258,7 +258,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitClassifiedAC[ac];
 
 #if defined (IPA_OFFLOAD)
-	if (!cdf_nbuf_ipa_owned_get(skb)) {
+	if (!qdf_nbuf_ipa_owned_get(skb)) {
 #endif
 		/* Check if the buffer has enough header room */
 		skb = skb_unshare(skb, GFP_ATOMIC);
@@ -299,18 +299,18 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 
 	/* Zero out skb's context buffer for the driver to use */
 	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
-	NBUF_CB_TX_PACKET_TRACK(skb) = NBUF_TX_PKT_DATA_TRACK;
-	NBUF_UPDATE_TX_PKT_COUNT(skb, NBUF_TX_PKT_HDD);
+	QDF_NBUF_CB_TX_PACKET_TRACK(skb) = QDF_NBUF_TX_PKT_DATA_TRACK;
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(skb, QDF_NBUF_TX_PKT_HDD);
 
 	qdf_dp_trace_set_track(skb);
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_PTR_RECORD,
 				(uint8_t *)skb->data, sizeof(skb->data)));
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
-				(uint8_t *)skb->data, cdf_nbuf_len(skb)));
-	if (cdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+				(uint8_t *)skb->data, qdf_nbuf_len(skb)));
+	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
 		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_HDD_PACKET_RECORD,
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-				(cdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
+				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
 	if (ol_tx_send_data_frame(STAId, skb,
 							  proto_type) != NULL) {
@@ -327,11 +327,11 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 drop_pkt:
 
 	DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
-				(uint8_t *)skb->data, cdf_nbuf_len(skb)));
-	if (cdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
+				(uint8_t *)skb->data, qdf_nbuf_len(skb)));
+	if (qdf_nbuf_len(skb) > QDF_DP_TRACE_RECORD_SIZE)
 		DPTRACE(qdf_dp_trace(skb, QDF_DP_TRACE_DROP_PACKET_RECORD,
 				(uint8_t *)&skb->data[QDF_DP_TRACE_RECORD_SIZE],
-				(cdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
+				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 	kfree_skb(skb);
 
 drop_pkt_accounting:
@@ -490,7 +490,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId)
 /**
  * hdd_softap_rx_packet_cbk() - Receive packet handler
  * @cds_context: pointer to CDS context
- * @rxBuf: pointer to rx cdf_nbuf
+ * @rxBuf: pointer to rx qdf_nbuf
  * @staId: Station Id
  *
  * Receive callback registered with TL.  TL will call this to notify
@@ -501,7 +501,7 @@ QDF_STATUS hdd_softap_deinit_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId)
  *	   QDF_STATUS_SUCCESS otherwise
  */
 QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
-				    cdf_nbuf_t rxBuf, uint8_t staId)
+				    qdf_nbuf_t rxBuf, uint8_t staId)
 {
 	hdd_adapter_t *pAdapter = NULL;
 	int rxstat;
@@ -578,7 +578,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 	/* Remove SKB from internal tracking table before submitting
 	 * it to stack
 	 */
-	cdf_net_buf_debug_release_skb(rxBuf);
+	qdf_net_buf_debug_release_skb(rxBuf);
 
 	if (hdd_napi_enabled(HDD_NAPI_ANY) && !pHddCtx->config->enableRxThread)
 		rxstat = netif_receive_skb(skb);

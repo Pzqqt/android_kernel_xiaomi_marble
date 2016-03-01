@@ -45,7 +45,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -154,7 +154,7 @@ int32_t wmi_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 				 WMI_STA_POWERSAVE_PARAM_CMDID)) {
 		WMA_LOGE("Set Sta Ps param Failed vdevId %d Param %d val %d",
 			 vdev_id, param, value);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	/* Store the PS Status */
@@ -578,7 +578,7 @@ int32_t wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
 				 WMI_STA_POWERSAVE_MODE_CMDID)) {
 		WMA_LOGE("Set Sta Mode Ps Failed vdevId %d val %d",
 			 vdev_id, val);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return -EIO;
 	}
 	return 0;
@@ -1526,7 +1526,7 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 	} else {                /* NoA is not present in previous beacon */
 		WMA_LOGD("%s: NoA not present in previous beacon, add it"
 			 "bcn->len %u", __func__, bcn->len);
-		buf = cdf_nbuf_data(bcn->buf);
+		buf = qdf_nbuf_data(bcn->buf);
 		bcn->noa_ie = buf + bcn->len;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -61,6 +61,6 @@ struct vow_extstats {
  * @param msdu - network buffer handle
  * @param pdev - handle to htt dev.
  */
-void ol_ath_add_vow_extstats(htt_pdev_handle pdev, cdf_nbuf_t msdu);
+void ol_ath_add_vow_extstats(htt_pdev_handle pdev, qdf_nbuf_t msdu);
 
 #endif /* _VOW_DEFINES__H_ */

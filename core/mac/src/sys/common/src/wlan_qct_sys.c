@@ -35,6 +35,7 @@
 #include "wma_types.h"
 #include "sme_api.h"
 #include "mac_init_api.h"
+#include "qdf_trace.h"
 
 /*
  * Cookie for SYS messages.  Note that anyone posting a SYS Message
@@ -72,6 +73,7 @@ QDF_STATUS sys_build_message_header(SYS_MSG_ID sysMsgId, cds_msg_t *pMsg)
  *
  * Return: none
  */
+#ifdef QDF_ENABLE_TRACING
 void sys_stop_complete_cb(void *pUserData)
 {
 	qdf_event_t *pStopEvt = (qdf_event_t *) pUserData;
@@ -80,6 +82,12 @@ void sys_stop_complete_cb(void *pUserData)
 	QDF_ASSERT(QDF_IS_STATUS_SUCCESS(qdf_status));
 
 }
+#else
+void sys_stop_complete_cb(void *pUserData)
+{
+	return;
+}
+#endif
 
 /**
  * sys_stop() - To post stop message to system module

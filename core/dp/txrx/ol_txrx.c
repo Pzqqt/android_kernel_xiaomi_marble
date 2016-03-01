@@ -30,7 +30,7 @@
 #include <osdep.h>              /* uint32_t, etc. */
 #include <qdf_mem.h>         /* qdf_mem_malloc,free */
 #include <qdf_types.h>          /* qdf_device_t, qdf_print */
-#include <qdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* qdf_spinlock */
 #include <qdf_atomic.h>         /* qdf_atomic_read */
 
 /* Required for WLAN_FEATURE_FASTPATH */
@@ -1190,11 +1190,11 @@ ol_txrx_vdev_detach(ol_txrx_vdev_handle vdev,
 	qdf_timer_free(&vdev->ll_pause.timer);
 	vdev->ll_pause.is_q_timer_on = false;
 	while (vdev->ll_pause.txq.head) {
-		cdf_nbuf_t next = cdf_nbuf_next(vdev->ll_pause.txq.head);
-		cdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
-		cdf_nbuf_unmap(pdev->osdev, vdev->ll_pause.txq.head,
+		qdf_nbuf_t next = qdf_nbuf_next(vdev->ll_pause.txq.head);
+		qdf_nbuf_set_next(vdev->ll_pause.txq.head, NULL);
+		qdf_nbuf_unmap(pdev->osdev, vdev->ll_pause.txq.head,
 			       QDF_DMA_TO_DEVICE);
-		cdf_nbuf_tx_free(vdev->ll_pause.txq.head, NBUF_PKT_ERROR);
+		qdf_nbuf_tx_free(vdev->ll_pause.txq.head, QDF_NBUF_PKT_ERROR);
 		vdev->ll_pause.txq.head = next;
 	}
 	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
@@ -1287,12 +1287,12 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 		list_del(&cache_buf->list);
 		qdf_spin_unlock_bh(&peer->bufq_lock);
 		if (drop) {
-			cdf_nbuf_free(cache_buf->buf);
+			qdf_nbuf_free(cache_buf->buf);
 		} else {
 			/* Flush the cached frames to HDD */
 			ret = data_rx(cds_ctx, cache_buf->buf, peer->local_id);
 			if (ret != QDF_STATUS_SUCCESS)
-				cdf_nbuf_free(cache_buf->buf);
+				qdf_nbuf_free(cache_buf->buf);
 		}
 		qdf_mem_free(cache_buf);
 		qdf_spin_lock_bh(&peer->bufq_lock);
@@ -2939,7 +2939,7 @@ void ol_txrx_display_stats(uint16_t value)
 		ol_tx_dump_flow_pool_info();
 		break;
 	case WLAN_TXRX_DESC_STATS:
-		cdf_nbuf_tx_desc_count_display();
+		qdf_nbuf_tx_desc_count_display();
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -2967,7 +2967,7 @@ void ol_txrx_clear_stats(uint16_t value)
 		ol_tx_clear_flow_pool_stats();
 		break;
 	case WLAN_TXRX_DESC_STATS:
-		cdf_nbuf_tx_desc_count_clear();
+		qdf_nbuf_tx_desc_count_clear();
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
@@ -2984,10 +2984,10 @@ void ol_txrx_clear_stats(uint16_t value)
  * Return: None
  */
 static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
-			  cdf_nbuf_t buf_list)
+			  qdf_nbuf_t buf_list)
 {
 	void *cds_ctx = cds_get_global_context();
-	cdf_nbuf_t buf, next_buf;
+	qdf_nbuf_t buf, next_buf;
 	QDF_STATUS ret;
 	ol_rx_callback_fp data_rx = NULL;
 
@@ -3012,12 +3012,12 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 
 	buf = buf_list;
 	while (buf) {
-		next_buf = cdf_nbuf_queue_next(buf);
-		cdf_nbuf_set_next(buf, NULL);   /* Add NULL terminator */
+		next_buf = qdf_nbuf_queue_next(buf);
+		qdf_nbuf_set_next(buf, NULL);   /* Add NULL terminator */
 		ret = data_rx(cds_ctx, buf, peer->local_id);
 		if (ret != QDF_STATUS_SUCCESS) {
 			TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Frame Rx to HDD failed");
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 		}
 		buf = next_buf;
 	}
@@ -3027,8 +3027,8 @@ free_buf:
 	TXRX_PRINT(TXRX_PRINT_LEVEL_WARN, "%s:Dropping frames", __func__);
 	buf = buf_list;
 	while (buf) {
-		next_buf = cdf_nbuf_queue_next(buf);
-		cdf_nbuf_free(buf);
+		next_buf = qdf_nbuf_queue_next(buf);
+		qdf_nbuf_free(buf);
 		buf = next_buf;
 	}
 }
@@ -3041,12 +3041,12 @@ free_buf:
  * Return: None
  */
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
-			cdf_nbuf_t rx_buf_list)
+			qdf_nbuf_t rx_buf_list)
 {
 	/* Firmware data path active response will use shim RX thread
 	 * T2H MSG running on SIRQ context,
 	 * IPA kernel module API should not be called on SIRQ CTXT */
-	cdf_nbuf_t buf, next_buf;
+	qdf_nbuf_t buf, next_buf;
 	ol_rx_callback_fp data_rx = NULL;
 	ol_txrx_pdev_handle pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -3069,15 +3069,15 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 		struct ol_rx_cached_buf *cache_buf;
 		buf = rx_buf_list;
 		while (buf) {
-			next_buf = cdf_nbuf_queue_next(buf);
+			next_buf = qdf_nbuf_queue_next(buf);
 			cache_buf = qdf_mem_malloc(sizeof(*cache_buf));
 			if (!cache_buf) {
 				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 					"Failed to allocate buf to cache the rx frames");
-				cdf_nbuf_free(buf);
+				qdf_nbuf_free(buf);
 			} else {
 				/* Add NULL terminator */
-				cdf_nbuf_set_next(buf, NULL);
+				qdf_nbuf_set_next(buf, NULL);
 				cache_buf->buf = buf;
 				qdf_spin_lock_bh(&peer->bufq_lock);
 				list_add_tail(&cache_buf->list,
@@ -3126,8 +3126,8 @@ drop_rx_buf:
 	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Dropping rx packets");
 	buf = rx_buf_list;
 	while (buf) {
-		next_buf = cdf_nbuf_queue_next(buf);
-		cdf_nbuf_free(buf);
+		next_buf = qdf_nbuf_queue_next(buf);
+		qdf_nbuf_free(buf);
 		buf = next_buf;
 	}
 }
@@ -3137,7 +3137,7 @@ drop_rx_buf:
  * @rxcb: rx callback
  * @sta_desc: sta descriptor
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
 				 struct ol_txrx_desc_type *sta_desc)
@@ -3187,7 +3187,7 @@ QDF_STATUS ol_txrx_register_peer(ol_rx_callback_fp rxcb,
  * ol_txrx_clear_peer() - clear peer
  * @sta_id: sta id
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 {
@@ -3320,7 +3320,7 @@ exit:
  * ol_txrx_register_pause_cb() - register pause callback
  * @pause_cb: pause callback
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
 {

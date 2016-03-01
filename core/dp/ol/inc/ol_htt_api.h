@@ -36,7 +36,7 @@
 #define _OL_HTT_API__H_
 
 #include <qdf_types.h>          /* qdf_device_t */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <athdefs.h>            /* A_STATUS */
 #include <htc_api.h>            /* HTC_HANDLE */
 #include <ol_ctrl_api.h>        /* ol_pdev_handle */

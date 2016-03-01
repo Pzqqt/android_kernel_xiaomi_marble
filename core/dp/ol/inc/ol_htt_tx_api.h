@@ -39,7 +39,7 @@
 
 /* #include <osapi_linux.h>    / * uint16_t, etc. * / */
 #include <osdep.h>              /* uint16_t, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <ol_cfg.h>             /* wlan_frm_fmt */
 
 #include <htt.h>                /* needed by inline functions */
@@ -256,13 +256,13 @@ struct htt_msdu_info_t {
 		   uint8_t *dest_addr;
 		 */
 
-		uint8_t l3_hdr_offset;  /* wrt cdf_nbuf_data(msdu), in bytes */
+		uint8_t l3_hdr_offset;  /* wrt qdf_nbuf_data(msdu), in bytes */
 
 		/* l4_hdr_offset is not currently used.
 		 * It could be used to specify to a TCP/UDP checksum computation
 		 * engine where the TCP/UDP header starts.
 		 */
-		/* uint8_t l4_hdr_offset; - wrt cdf_nbuf_data(msdu), in bytes */
+		/* uint8_t l4_hdr_offset; - wrt qdf_nbuf_data(msdu), in bytes */
 	} info;
 	/* the action sub-struct specifies how to process the MSDU */
 	struct {
@@ -419,7 +419,7 @@ void htt_tx_pending_discard(htt_pdev_handle pdev);
  *  function assumes the tx frame is the default frame type, as specified
  *  by ol_cfg_frame_type.  "Raw" frames need to be transmitted through the
  *  alternate htt_tx_send_nonstd function.
- *  The tx descriptor has already been attached to the cdf_nbuf object during
+ *  The tx descriptor has already been attached to the qdf_nbuf object during
  *  a preceding call to htt_tx_desc_init.
  *
  * @param htt_pdev - the handle of the physical device sending the tx data
@@ -428,7 +428,7 @@ void htt_tx_pending_discard(htt_pdev_handle pdev);
  * @return 0 -> success, -OR- 1 -> failure
  */
 int
-htt_tx_send_std(htt_pdev_handle htt_pdev, cdf_nbuf_t msdu, uint16_t msdu_id);
+htt_tx_send_std(htt_pdev_handle htt_pdev, qdf_nbuf_t msdu, uint16_t msdu_id);
 
 /**
  * @brief Download a Batch Of Tx MSDUs
@@ -442,9 +442,9 @@ htt_tx_send_std(htt_pdev_handle htt_pdev, cdf_nbuf_t msdu, uint16_t msdu_id);
  * @param num_msdus - The total Number of MSDU's provided for batch tx
  * @return null-terminated linked-list of unaccepted frames
  */
-cdf_nbuf_t
+qdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle htt_pdev,
-		  cdf_nbuf_t head_msdu, int num_msdus);
+		  qdf_nbuf_t head_msdu, int num_msdus);
 
 /* The htt scheduler for queued packets in htt
  * htt when unable to send to HTC because of lack of resource
@@ -459,7 +459,7 @@ void htt_tx_sched(htt_pdev_handle pdev);
  */
 int
 htt_tx_send_nonstd(htt_pdev_handle htt_pdev,
-		   cdf_nbuf_t msdu,
+		   qdf_nbuf_t msdu,
 		   uint16_t msdu_id, enum htt_pkt_type pkt_type);
 
 /**
@@ -532,7 +532,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		 void *htt_tx_desc,
 		 qdf_dma_addr_t htt_tx_desc_paddr,
 		 uint16_t msdu_id,
-		 cdf_nbuf_t msdu, struct htt_msdu_info_t *msdu_info,
+		 qdf_nbuf_t msdu, struct htt_msdu_info_t *msdu_info,
 		 struct qdf_tso_info_t *tso_info,
 		 struct ocb_tx_ctrl_hdr_t *tx_ctrl,
 		 uint8_t is_dsrc)
@@ -568,7 +568,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	if (qdf_likely(pdev->cfg.ce_classify_enabled)) {
 		if (qdf_likely(pkt_type == htt_pkt_type_eth2 ||
 			pkt_type == htt_pkt_type_ethernet))
-			cdf_nbuf_tx_info_get(msdu, pkt_type, pkt_subtype,
+			qdf_nbuf_tx_info_get(msdu, pkt_type, pkt_subtype,
 				     hw_classify);
 
 		ce_pkt_type = htt_to_ce_pkt_type[pkt_type];
@@ -611,7 +611,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	if (tso_info->is_tso)
 		HTT_TX_DESC_FRM_LEN_SET(local_word1, tso_info->total_len);
 	else
-		HTT_TX_DESC_FRM_LEN_SET(local_word1, cdf_nbuf_len(msdu));
+		HTT_TX_DESC_FRM_LEN_SET(local_word1, qdf_nbuf_len(msdu));
 
 	HTT_TX_DESC_FRM_ID_SET(local_word1, msdu_id);
 	*word1 = local_word1;
@@ -659,8 +659,8 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 
 		local_desc_ext.is_dsrc = (is_dsrc != 0);
 
-		cdf_nbuf_push_head(msdu, sizeof(local_desc_ext));
-		qdf_mem_copy(cdf_nbuf_data(msdu), &local_desc_ext,
+		qdf_nbuf_push_head(msdu, sizeof(local_desc_ext));
+		qdf_mem_copy(qdf_nbuf_data(msdu), &local_desc_ext,
 				sizeof(local_desc_ext));
 	}
 
@@ -675,11 +675,11 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	 * Setting the flag for this final fragment suffices for specifying
 	 * all fragments provided by the OS rather than added by the driver.
 	 */
-	cdf_nbuf_set_frag_is_wordstream(msdu, cdf_nbuf_get_num_frags(msdu) - 1,
+	qdf_nbuf_set_frag_is_wordstream(msdu, qdf_nbuf_get_num_frags(msdu) - 1,
 					0);
 
 	/* store a link to the HTT tx descriptor within the netbuf */
-	cdf_nbuf_frag_push_head(msdu, sizeof(struct htt_host_tx_desc_t),
+	qdf_nbuf_frag_push_head(msdu, sizeof(struct htt_host_tx_desc_t),
 				(char *)htt_host_tx_desc, /* virtual addr */
 				htt_tx_desc_paddr);
 
@@ -691,17 +691,17 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 	 * the host is big-endian, to convert to the target's little-endian
 	 * format.
 	 */
-	cdf_nbuf_set_frag_is_wordstream(msdu, 0, 1);
+	qdf_nbuf_set_frag_is_wordstream(msdu, 0, 1);
 
 	if (qdf_likely(pdev->cfg.ce_classify_enabled &&
 		(msdu_info->info.l2_hdr_type != htt_pkt_type_mgmt))) {
-		uint32_t pkt_offset = cdf_nbuf_get_frag_len(msdu, 0);
+		uint32_t pkt_offset = qdf_nbuf_get_frag_len(msdu, 0);
 		data_attr = hw_classify << QDF_CE_TX_CLASSIFY_BIT_S;
 		data_attr |= ce_pkt_type << QDF_CE_TX_PKT_TYPE_BIT_S;
 		data_attr |= pkt_offset  << QDF_CE_TX_PKT_OFFSET_BIT_S;
 	}
 
-	cdf_nbuf_data_attr_set(msdu, data_attr);
+	qdf_nbuf_data_attr_set(msdu, data_attr);
 }
 
 /**
@@ -909,9 +909,9 @@ void htt_tx_mgmt_desc_pool_alloc(struct htt_pdev_t *pdev, A_UINT32 num_elems);
  * @param  - pointer to the mamangement from UMAC
  * @return - pointer the allocated mgmt descriptor
  */
-cdf_nbuf_t
+qdf_nbuf_t
 htt_tx_mgmt_desc_alloc(struct htt_pdev_t *pdev, A_UINT32 *desc_id,
-		       cdf_nbuf_t mgmt_frm);
+		       qdf_nbuf_t mgmt_frm);
 
 /** htt_tx_mgmt_desc_free
  * @description - releases the management descriptor back to the pool

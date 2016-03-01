@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -29,7 +29,7 @@
 #define _WDI_EVENT_H_
 
 #include "athdefs.h"
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #define WDI_EVENT_BASE 0x100    /* Event starting number */
 
 enum WDI_EVENT {
@@ -45,7 +45,7 @@ enum WDI_EVENT {
 };
 
 struct wdi_event_rx_peer_invalid_msg {
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 	struct ieee80211_frame *wh;
 	uint8_t vdev_id;
 };

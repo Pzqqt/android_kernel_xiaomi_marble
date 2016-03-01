@@ -27,7 +27,7 @@
 
 /*=== header file includes ===*/
 /* generic utilities */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <qdf_mem.h>         /* qdf_mem_malloc */
 
 #include <ieee80211.h>          /* IEEE80211_SEQ_MAX */
@@ -86,7 +86,7 @@ static char g_log2ceil[] = {
 #define OL_RX_REORDER_LIST_APPEND(head_msdu, tail_msdu, rx_reorder_array_elem) \
 	do {								\
 		if (tail_msdu) {					\
-			cdf_nbuf_set_next(tail_msdu,			\
+			qdf_nbuf_set_next(tail_msdu,			\
 					  rx_reorder_array_elem->head); \
 		}							\
 	} while (0)
@@ -223,14 +223,14 @@ void
 ol_rx_reorder_store(struct ol_txrx_pdev_t *pdev,
 		    struct ol_txrx_peer_t *peer,
 		    unsigned tid,
-		    unsigned idx, cdf_nbuf_t head_msdu, cdf_nbuf_t tail_msdu)
+		    unsigned idx, qdf_nbuf_t head_msdu, qdf_nbuf_t tail_msdu)
 {
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
 
 	idx &= peer->tids_rx_reorder[tid].win_sz_mask;
 	rx_reorder_array_elem = &peer->tids_rx_reorder[tid].array[idx];
 	if (rx_reorder_array_elem->head) {
-		cdf_nbuf_set_next(rx_reorder_array_elem->tail, head_msdu);
+		qdf_nbuf_set_next(rx_reorder_array_elem->tail, head_msdu);
 	} else {
 		rx_reorder_array_elem->head = head_msdu;
 		OL_RX_REORDER_MPDU_CNT_INCR(&peer->tids_rx_reorder[tid], 1);
@@ -246,8 +246,8 @@ ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 	unsigned idx;
 	unsigned win_sz, win_sz_mask;
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
-	cdf_nbuf_t head_msdu;
-	cdf_nbuf_t tail_msdu;
+	qdf_nbuf_t head_msdu;
+	qdf_nbuf_t tail_msdu;
 
 	OL_RX_REORDER_IDX_START_SELF_SELECT(peer, tid, &idx_start);
 	/* may get reset below */
@@ -305,7 +305,7 @@ ol_rx_reorder_release(struct ol_txrx_vdev_t *vdev,
 						  head_msdu));
 		peer->tids_last_seq[tid] = seq_num;
 		/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
-		cdf_nbuf_set_next(tail_msdu, NULL);
+		qdf_nbuf_set_next(tail_msdu, NULL);
 		peer->rx_opt_proc(vdev, peer, tid, head_msdu);
 	}
 	/*
@@ -327,8 +327,8 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 	unsigned win_sz;
 	uint8_t win_sz_mask;
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
-	cdf_nbuf_t head_msdu = NULL;
-	cdf_nbuf_t tail_msdu = NULL;
+	qdf_nbuf_t head_msdu = NULL;
+	qdf_nbuf_t tail_msdu = NULL;
 
 	pdev = vdev->pdev;
 	win_sz = peer->tids_rx_reorder[tid].win_sz;
@@ -371,7 +371,7 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 				rx_reorder_array_elem->tail = NULL;
 				continue;
 			}
-			cdf_nbuf_set_next(tail_msdu,
+			qdf_nbuf_set_next(tail_msdu,
 					  rx_reorder_array_elem->head);
 			tail_msdu = rx_reorder_array_elem->tail;
 			rx_reorder_array_elem->head =
@@ -390,13 +390,13 @@ ol_rx_reorder_flush(struct ol_txrx_vdev_t *vdev,
 			htt_rx_msdu_desc_retrieve(htt_pdev, head_msdu));
 		peer->tids_last_seq[tid] = seq_num;
 		/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
-		cdf_nbuf_set_next(tail_msdu, NULL);
+		qdf_nbuf_set_next(tail_msdu, NULL);
 		if (action == htt_rx_flush_release) {
 			peer->rx_opt_proc(vdev, peer, tid, head_msdu);
 		} else {
 			do {
-				cdf_nbuf_t next;
-				next = cdf_nbuf_next(head_msdu);
+				qdf_nbuf_t next;
+				next = qdf_nbuf_next(head_msdu);
 				htt_rx_desc_frame_free(pdev->htt_pdev,
 						       head_msdu);
 				head_msdu = next;
@@ -596,8 +596,8 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 	struct ol_txrx_peer_t *peer;
 	struct ol_rx_reorder_array_elem_t *rx_reorder_array_elem;
 	unsigned win_sz_mask;
-	cdf_nbuf_t head_msdu = NULL;
-	cdf_nbuf_t tail_msdu = NULL;
+	qdf_nbuf_t head_msdu = NULL;
+	qdf_nbuf_t tail_msdu = NULL;
 	htt_pdev_handle htt_pdev = pdev->htt_pdev;
 	int seq_num, i = 0;
 
@@ -630,7 +630,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 
 		if (rx_reorder_array_elem->head) {
 			if (pn_ie_cnt && seq_num == (int)(pn_ie[i])) {
-				cdf_nbuf_t msdu, next_msdu, mpdu_head,
+				qdf_nbuf_t msdu, next_msdu, mpdu_head,
 					   mpdu_tail;
 				static uint32_t last_pncheck_print_time;
 				/* Do not need to initialize as C does it */
@@ -691,7 +691,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 
 				/* free all MSDUs within this MPDU */
 				do {
-					next_msdu = cdf_nbuf_next(msdu);
+					next_msdu = qdf_nbuf_next(msdu);
 					htt_rx_desc_frame_free(htt_pdev, msdu);
 					if (msdu == mpdu_tail)
 						break;
@@ -704,7 +704,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 					head_msdu = rx_reorder_array_elem->head;
 					tail_msdu = rx_reorder_array_elem->tail;
 				} else {
-					cdf_nbuf_set_next(
+					qdf_nbuf_set_next(
 						tail_msdu,
 						rx_reorder_array_elem->head);
 					tail_msdu = rx_reorder_array_elem->tail;
@@ -718,7 +718,7 @@ ol_rx_pn_ind_handler(ol_txrx_pdev_handle pdev,
 
 	if (head_msdu) {
 		/* rx_opt_proc takes a NULL-terminated list of msdu netbufs */
-		cdf_nbuf_set_next(tail_msdu, NULL);
+		qdf_nbuf_set_next(tail_msdu, NULL);
 		peer->rx_opt_proc(vdev, peer, tid, head_msdu);
 	}
 }

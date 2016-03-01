@@ -32,7 +32,7 @@
 
 #include <htc_api.h>            /* HTC_PACKET */
 #include <htt.h>                /* HTT_T2H_MSG_TYPE, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_mem.h>         /* qdf_mem_set */
 #include <ol_fw_tx_dbg.h>       /* ol_fw_tx_dbg_ppdu_base */
 

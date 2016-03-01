@@ -29,10 +29,9 @@
 #define TXRX_H
 
 #include "cds_api.h"
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "csr_api.h"
 #include "sap_api.h"
-#include "cdf_nbuf.h"
 #include "ol_txrx_osif_api.h"
 
 /* wait on peer deletion timeout value in milliseconds */
@@ -117,11 +116,11 @@ typedef void (*ol_txrx_vdev_delete_cb)(void *context);
  * @typedef ol_txrx_tx_fp
  * @brief top-level transmit function
  */
-typedef cdf_nbuf_t
-(*ol_txrx_tx_fp)(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu_list);
+typedef qdf_nbuf_t
+(*ol_txrx_tx_fp)(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu_list);
 
 typedef void
-(*ol_txrx_mgmt_tx_cb)(void *ctxt, cdf_nbuf_t tx_mgmt_frm, int had_error);
+(*ol_txrx_mgmt_tx_cb)(void *ctxt, qdf_nbuf_t tx_mgmt_frm, int had_error);
 
 /* If RSSI realm is changed, send notification to Clients, SME, HDD */
 typedef QDF_STATUS (*wlan_txrx_rssi_cross_thresh)(void *adapter, u8 rssi,
@@ -141,7 +140,7 @@ struct wlan_txrx_ind_req {
 
 
 /* Rx callback registered with txrx */
-typedef int (*wlan_txrx_cb_type)(void *g_cdsctx, cdf_nbuf_t buf, u8 sta_id,
+typedef int (*wlan_txrx_cb_type)(void *g_cdsctx, qdf_nbuf_t buf, u8 sta_id,
 				 struct txrx_rx_metainfo *rx_meta_info);
 
 static inline int wlan_txrx_get_rssi(void *g_cdsctx, u8 sta_id, int8_t *rssi)

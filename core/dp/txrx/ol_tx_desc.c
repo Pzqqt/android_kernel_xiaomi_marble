@@ -26,7 +26,7 @@
  */
 
 #include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_util.h>           /* qdf_assert */
 #include <qdf_lock.h>           /* cdf_spinlock */
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -307,12 +307,12 @@ extern void
 dump_frag_desc(char *msg, struct ol_tx_desc_t *tx_desc);
 
 void
-dump_pkt(cdf_nbuf_t nbuf, qdf_dma_addr_t nbuf_paddr, int len)
+dump_pkt(qdf_nbuf_t nbuf, qdf_dma_addr_t nbuf_paddr, int len)
 {
 	qdf_print("%s: Pkt: VA 0x%p PA 0x%llx len %d\n", __func__,
-		  cdf_nbuf_data(nbuf), nbuf_paddr, len);
+		  qdf_nbuf_data(nbuf), nbuf_paddr, len);
 	print_hex_dump(KERN_DEBUG, "Pkt:   ", DUMP_PREFIX_ADDRESS, 16, 4,
-		       cdf_nbuf_data(nbuf), len, true);
+		       qdf_nbuf_data(nbuf), len, true);
 }
 
 const uint32_t htt_to_ce_pkt_type[] = {
@@ -326,7 +326,7 @@ const uint32_t htt_to_ce_pkt_type[] = {
 
 struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 				   struct ol_txrx_vdev_t *vdev,
-				   cdf_nbuf_t netbuf,
+				   qdf_nbuf_t netbuf,
 				   struct ol_txrx_msdu_info_t *msdu_info)
 {
 	struct ol_tx_desc_t *tx_desc;
@@ -334,8 +334,8 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	uint32_t num_frags;
 
 	msdu_info->htt.info.vdev_id = vdev->vdev_id;
-	msdu_info->htt.action.cksum_offload = cdf_nbuf_get_tx_cksum(netbuf);
-	switch (cdf_nbuf_get_exemption_type(netbuf)) {
+	msdu_info->htt.action.cksum_offload = qdf_nbuf_get_tx_cksum(netbuf);
+	switch (qdf_nbuf_get_exemption_type(netbuf)) {
 	case QDF_NBUF_EXEMPT_NO_EXEMPTION:
 	case QDF_NBUF_EXEMPT_ON_KEY_MAPPING_KEY_UNAVAILABLE:
 		/* We want to encrypt this frame */
@@ -379,10 +379,10 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 	 * Skip the prefix fragment (HTT tx descriptor) that was added
 	 * during the call to htt_tx_desc_init above.
 	 */
-	num_frags = cdf_nbuf_get_num_frags(netbuf);
+	num_frags = qdf_nbuf_get_num_frags(netbuf);
 	/* num_frags are expected to be 2 max */
-	num_frags = (num_frags > NBUF_CB_TX_MAX_EXTRA_FRAGS)
-		? NBUF_CB_TX_MAX_EXTRA_FRAGS
+	num_frags = (num_frags > QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS)
+		? QDF_NBUF_CB_TX_MAX_EXTRA_FRAGS
 		: num_frags;
 #if defined(HELIUMPLUS_PADDR64)
 	/*
@@ -408,10 +408,10 @@ struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 			qdf_dma_addr_t frag_paddr;
 #ifdef HELIUMPLUS_DEBUG
 			void *frag_vaddr;
-			frag_vaddr = cdf_nbuf_get_frag_vaddr(netbuf, i);
+			frag_vaddr = qdf_nbuf_get_frag_vaddr(netbuf, i);
 #endif
-			frag_len = cdf_nbuf_get_frag_len(netbuf, i);
-			frag_paddr = cdf_nbuf_get_frag_paddr(netbuf, i);
+			frag_len = qdf_nbuf_get_frag_len(netbuf, i);
+			frag_paddr = qdf_nbuf_get_frag_paddr(netbuf, i);
 #if defined(HELIUMPLUS_PADDR64)
 			htt_tx_desc_frag(pdev->htt_pdev, tx_desc->htt_frag_desc, i - 1,
 				 frag_paddr, frag_len);
@@ -438,25 +438,25 @@ void ol_tx_desc_frame_list_free(struct ol_txrx_pdev_t *pdev,
 				ol_tx_desc_list *tx_descs, int had_error)
 {
 	struct ol_tx_desc_t *tx_desc, *tmp;
-	cdf_nbuf_t msdus = NULL;
+	qdf_nbuf_t msdus = NULL;
 
 	TAILQ_FOREACH_SAFE(tx_desc, tx_descs, tx_desc_list_elem, tmp) {
-		cdf_nbuf_t msdu = tx_desc->netbuf;
+		qdf_nbuf_t msdu = tx_desc->netbuf;
 
 		qdf_atomic_init(&tx_desc->ref_cnt);   /* clear the ref cnt */
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 		/* restore original hdr offset */
 		OL_TX_RESTORE_HDR(tx_desc, msdu);
 #endif
-		cdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_unmap(pdev->osdev, msdu, QDF_DMA_TO_DEVICE);
 		/* free the tx desc */
 		ol_tx_desc_free(pdev, tx_desc);
 		/* link the netbuf into a list to free as a batch */
-		cdf_nbuf_set_next(msdu, msdus);
+		qdf_nbuf_set_next(msdu, msdus);
 		msdus = msdu;
 	}
 	/* free the netbufs as a batch */
-	cdf_nbuf_tx_free(msdus, had_error);
+	qdf_nbuf_tx_free(msdus, had_error);
 }
 
 void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
@@ -472,11 +472,11 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 	OL_TX_RESTORE_HDR(tx_desc, (tx_desc->netbuf));
 #endif
 	trace_str = (had_error) ? "OT:C:F:" : "OT:C:S:";
-	cdf_nbuf_trace_update(tx_desc->netbuf, trace_str);
+	qdf_nbuf_trace_update(tx_desc->netbuf, trace_str);
 	if (tx_desc->pkt_type == ol_tx_frm_no_free) {
 		/* free the tx desc but don't unmap or free the frame */
 		if (pdev->tx_data_callback.func) {
-			cdf_nbuf_set_next(tx_desc->netbuf, NULL);
+			qdf_nbuf_set_next(tx_desc->netbuf, NULL);
 			pdev->tx_data_callback.func(pdev->tx_data_callback.ctxt,
 						    tx_desc->netbuf, had_error);
 			ol_tx_desc_free(pdev, tx_desc);
@@ -484,7 +484,7 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 		}
 		/* let the code below unmap and free the frame */
 	}
-	cdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, QDF_DMA_TO_DEVICE);
+	qdf_nbuf_unmap(pdev->osdev, tx_desc->netbuf, QDF_DMA_TO_DEVICE);
 	/* check the frame type to see what kind of special steps are needed */
 	if ((tx_desc->pkt_type >= OL_TXRX_MGMT_TYPE_BASE) &&
 		   (tx_desc->pkt_type != 0xff)) {
@@ -524,11 +524,11 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
 			ota_ack_cb(ctxt, tx_desc->netbuf, had_error);
 		}
 		/* free the netbuf */
-		cdf_nbuf_free(tx_desc->netbuf);
+		qdf_nbuf_free(tx_desc->netbuf);
 	} else {
 		/* single regular frame */
-		cdf_nbuf_set_next(tx_desc->netbuf, NULL);
-		cdf_nbuf_tx_free(tx_desc->netbuf, had_error);
+		qdf_nbuf_set_next(tx_desc->netbuf, NULL);
+		qdf_nbuf_tx_free(tx_desc->netbuf, had_error);
 	}
 	/* free the tx desc */
 	ol_tx_desc_free(pdev, tx_desc);

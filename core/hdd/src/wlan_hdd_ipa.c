@@ -376,7 +376,7 @@ struct hdd_ipa_priv {
 	uint8_t num_iface;
 	enum hdd_ipa_rm_state rm_state;
 	/*
-	 * IPA driver can send RM notifications with IRQ disabled so using cdf
+	 * IPA driver can send RM notifications with IRQ disabled so using qdf
 	 * APIs as it is taken care gracefully. Without this, kernel would throw
 	 * an warning if spin_lock_bh is used while IRQ is disabled
 	 */
@@ -390,7 +390,7 @@ struct hdd_ipa_priv {
 	enum ipa_client_type prod_client;
 
 	atomic_t tx_ref_cnt;
-	cdf_nbuf_queue_t pm_queue_head;
+	qdf_nbuf_queue_t pm_queue_head;
 	struct work_struct pm_work;
 	qdf_spinlock_t pm_lock;
 	bool suspended;
@@ -2130,7 +2130,7 @@ static int hdd_ipa_rm_try_release(struct hdd_ipa_priv *hdd_ipa)
 
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
-	if (!cdf_nbuf_is_queue_empty(&hdd_ipa->pm_queue_head)) {
+	if (!qdf_nbuf_is_queue_empty(&hdd_ipa->pm_queue_head)) {
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 		return -EAGAIN;
 	}
@@ -2508,7 +2508,7 @@ static void hdd_ipa_destroy_rm_resource(struct hdd_ipa_priv *hdd_ipa)
  *
  * Return: None
  */
-static void hdd_ipa_send_skb_to_network(cdf_nbuf_t skb,
+static void hdd_ipa_send_skb_to_network(qdf_nbuf_t skb,
 	hdd_adapter_t *adapter)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
@@ -2518,13 +2518,13 @@ static void hdd_ipa_send_skb_to_network(cdf_nbuf_t skb,
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_INFO_LOW, "Invalid adapter: 0x%p",
 			    adapter);
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-		cdf_nbuf_free(skb);
+		qdf_nbuf_free(skb);
 		return;
 	}
 
 	if (cds_is_driver_unloading()) {
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-		cdf_nbuf_free(skb);
+		qdf_nbuf_free(skb);
 		return;
 	}
 
@@ -2559,11 +2559,11 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 {
 	struct hdd_ipa_priv *hdd_ipa = NULL;
 	hdd_adapter_t *adapter = NULL;
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 	uint8_t iface_id;
 	uint8_t session_id;
 	struct hdd_ipa_iface_context *iface_context;
-	cdf_nbuf_t copy;
+	qdf_nbuf_t copy;
 	uint8_t fw_desc;
 	int ret;
 
@@ -2571,7 +2571,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 
 	switch (evt) {
 	case IPA_RECEIVE:
-		skb = (cdf_nbuf_t) data;
+		skb = (qdf_nbuf_t) data;
 		if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx)) {
 			session_id = (uint8_t)skb->cb[0];
 			iface_id = vdev_to_iface[session_id];
@@ -2589,7 +2589,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			HDD_IPA_DBG_DUMP(QDF_TRACE_LEVEL_INFO_HIGH,
 				"w2i -- skb", skb->data, 8);
 			HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
-			cdf_nbuf_free(skb);
+			qdf_nbuf_free(skb);
 			return;
 		}
 
@@ -2628,7 +2628,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 					QDF_TRACE_LEVEL_DEBUG,
 					"Forward packet to Tx (fw_desc=%d)",
 					fw_desc);
-				copy = cdf_nbuf_copy(skb);
+				copy = qdf_nbuf_copy(skb);
 				if (copy) {
 					hdd_ipa->ipa_tx_forward++;
 					ret = hdd_softap_hard_start_xmit(
@@ -2649,7 +2649,7 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
 			if (fw_desc & HDD_IPA_FW_RX_DESC_DISCARD_M) {
 				HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 				hdd_ipa->ipa_rx_discard++;
-				cdf_nbuf_free(skb);
+				qdf_nbuf_free(skb);
 				break;
 			}
 
@@ -2674,13 +2674,15 @@ static void hdd_ipa_w2i_cb(void *priv, enum ipa_dp_evt_type evt,
  *
  * Return: None
  */
-void hdd_ipa_nbuf_cb(cdf_nbuf_t skb)
+void hdd_ipa_nbuf_cb(qdf_nbuf_t skb)
 {
 	struct hdd_ipa_priv *hdd_ipa = ghdd_ipa;
 
-	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "%p", wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
+	HDD_IPA_LOG(QDF_TRACE_LEVEL_DEBUG, "%p",
+		wlan_hdd_stub_priv_to_addr(QDF_NBUF_CB_TX_IPA_PRIV(skb)));
 	/* FIXME: This is broken; PRIV_DATA is now 31 bits */
-	ipa_free_skb((struct ipa_rx_data *)wlan_hdd_stub_priv_to_addr(NBUF_CB_TX_IPA_PRIV(skb)));
+	ipa_free_skb((struct ipa_rx_data *)
+		wlan_hdd_stub_priv_to_addr(QDF_NBUF_CB_TX_IPA_PRIV(skb)));
 
 	hdd_ipa->stats.num_tx_comp_cnt++;
 
@@ -2703,7 +2705,7 @@ static void hdd_ipa_send_pkt_to_tl(
 	struct hdd_ipa_priv *hdd_ipa = iface_context->hdd_ipa;
 	uint8_t interface_id;
 	hdd_adapter_t *adapter = NULL;
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 
 	qdf_spin_lock_bh(&iface_context->interface_lock);
 	adapter = iface_context->adapter;
@@ -2736,21 +2738,21 @@ static void hdd_ipa_send_pkt_to_tl(
 	skb = ipa_tx_desc->skb;
 
 	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
-	cdf_nbuf_ipa_owned_set(skb);
+	qdf_nbuf_ipa_owned_set(skb);
 	/* FIXME: This is broken. No such field in cb any more:
 	   NBUF_CALLBACK_FN(skb) = hdd_ipa_nbuf_cb; */
 	if (hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)) {
-		cdf_nbuf_mapped_paddr_set(skb,
+		qdf_nbuf_mapped_paddr_set(skb,
 					  ipa_tx_desc->dma_addr
 					  + HDD_IPA_WLAN_FRAG_HEADER
 					  + HDD_IPA_WLAN_IPA_HEADER);
 		ipa_tx_desc->skb->len -=
 			HDD_IPA_WLAN_FRAG_HEADER + HDD_IPA_WLAN_IPA_HEADER;
 	} else
-		cdf_nbuf_mapped_paddr_set(skb, ipa_tx_desc->dma_addr);
+		qdf_nbuf_mapped_paddr_set(skb, ipa_tx_desc->dma_addr);
 
 	/* FIXME: This is broken: priv_data is 31 bits */
-	cdf_nbuf_ipa_priv_set(skb, wlan_hdd_stub_addr_to_priv(ipa_tx_desc));
+	qdf_nbuf_ipa_priv_set(skb, wlan_hdd_stub_addr_to_priv(ipa_tx_desc));
 
 	adapter->stats.tx_bytes += ipa_tx_desc->skb->len;
 
@@ -2785,12 +2787,13 @@ static void hdd_ipa_pm_send_pkt_to_tl(struct work_struct *work)
 						    struct hdd_ipa_priv,
 						    pm_work);
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb = NULL;
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 	uint32_t dequeued = 0;
 
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
-	while (((skb = cdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head)) != NULL)) {
+	while (((skb = qdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head))
+								!= NULL)) {
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
@@ -2825,13 +2828,13 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 	struct hdd_ipa_priv *hdd_ipa = NULL;
 	struct ipa_rx_data *ipa_tx_desc;
 	struct hdd_ipa_iface_context *iface_context;
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb = NULL;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	iface_context = (struct hdd_ipa_iface_context *)priv;
 	if (evt != IPA_RECEIVE) {
-		skb = (cdf_nbuf_t) data;
+		skb = (qdf_nbuf_t) data;
 		dev_kfree_skb_any(skb);
 		iface_context->stats.num_tx_drop++;
 		return;
@@ -2879,7 +2882,7 @@ static void hdd_ipa_i2w_cb(void *priv, enum ipa_dp_evt_type evt,
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;
 		pm_tx_cb->iface_context = iface_context;
 		pm_tx_cb->ipa_tx_desc = ipa_tx_desc;
-		cdf_nbuf_queue_add(&hdd_ipa->pm_queue_head, skb);
+		qdf_nbuf_queue_add(&hdd_ipa->pm_queue_head, skb);
 		hdd_ipa->stats.num_tx_queued++;
 
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
@@ -4066,7 +4069,7 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	INIT_WORK(&hdd_ipa->pm_work, hdd_ipa_pm_send_pkt_to_tl);
 #endif
 	qdf_spinlock_create(&hdd_ipa->pm_lock);
-	cdf_nbuf_queue_init(&hdd_ipa->pm_queue_head);
+	qdf_nbuf_queue_init(&hdd_ipa->pm_queue_head);
 
 	ret = hdd_ipa_setup_rm(hdd_ipa);
 	if (ret)
@@ -4140,7 +4143,7 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 	struct hdd_ipa_priv *hdd_ipa = hdd_ctx->hdd_ipa;
 	int i;
 	struct hdd_ipa_iface_context *iface_context = NULL;
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 	struct hdd_ipa_pm_tx_cb *pm_tx_cb = NULL;
 
 	if (!hdd_ipa_is_enabled(hdd_ctx))
@@ -4163,7 +4166,8 @@ QDF_STATUS hdd_ipa_cleanup(hdd_context_t *hdd_ctx)
 
 	qdf_spin_lock_bh(&hdd_ipa->pm_lock);
 
-	while (((skb = cdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head)) != NULL)) {
+	while (((skb = qdf_nbuf_queue_remove(&hdd_ipa->pm_queue_head))
+								!= NULL)) {
 		qdf_spin_unlock_bh(&hdd_ipa->pm_lock);
 
 		pm_tx_cb = (struct hdd_ipa_pm_tx_cb *)skb->cb;

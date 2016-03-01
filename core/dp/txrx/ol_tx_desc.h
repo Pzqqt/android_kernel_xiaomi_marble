@@ -33,7 +33,7 @@
 #define _OL_TX_DESC__H_
 
 #include <cds_queue.h>          /* TAILQ_HEAD */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <ol_txrx_types.h>      /* ol_tx_desc_t */
 #include <ol_txrx_internal.h>   /*TXRX_ASSERT2 */
 
@@ -63,7 +63,7 @@ ol_tx_desc_alloc_wrapper(struct ol_txrx_pdev_t *pdev,
  */
 struct ol_tx_desc_t *ol_tx_desc_ll(struct ol_txrx_pdev_t *pdev,
 				   struct ol_txrx_vdev_t *vdev,
-				   cdf_nbuf_t netbuf,
+				   qdf_nbuf_t netbuf,
 				   struct ol_txrx_msdu_info_t *msdu_info);
 
 /**

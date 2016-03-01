@@ -43,7 +43,7 @@
 #include <qdf_mc_timer.h>
 #include <qdf_trace.h>
 #include <wlan_hdd_main.h>
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_mem.h"
 
 #define TX_PKT_MIN_HEADROOM          (64)
@@ -83,8 +83,8 @@ QDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
 		return QDF_STATUS_E_INVAL;
 	}
 
-	/* Free up the Adf nbuf */
-	cdf_nbuf_free(packet->pkt_buf);
+	/* Free up the qdf nbuf */
+	qdf_nbuf_free(packet->pkt_buf);
 
 	packet->pkt_buf = NULL;
 
@@ -120,7 +120,7 @@ cds_pkt_get_packet_length(cds_pkt_t *pPacket, uint16_t *pPacketSize)
 		return QDF_STATUS_E_INVAL;
 	}
 	/* return the requested information */
-	*pPacketSize = cdf_nbuf_len(pPacket->pkt_buf);
+	*pPacketSize = qdf_nbuf_len(pPacket->pkt_buf);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -265,7 +265,7 @@ void cds_pkt_proto_trace_init(void)
 
 	/* Register callback function to NBUF
 	 * Lower layer event also will be reported to here */
-	cdf_nbuf_reg_trace_cb(cds_pkt_trace_buf_update);
+	qdf_nbuf_reg_trace_cb(cds_pkt_trace_buf_update);
 	return;
 }
 
@@ -293,18 +293,18 @@ QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 				  uint8_t *file_name, uint32_t line_num)
 {
 	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
-	cdf_nbuf_t nbuf;
+	qdf_nbuf_t nbuf;
 
-	nbuf =
-		cdf_nbuf_alloc_debug(NULL, roundup(size + TX_PKT_MIN_HEADROOM, 4),
-				     TX_PKT_MIN_HEADROOM, sizeof(uint32_t), false,
+	nbuf = qdf_nbuf_alloc_debug(NULL,
+		roundup(size + TX_PKT_MIN_HEADROOM, 4),
+		TX_PKT_MIN_HEADROOM, sizeof(uint32_t), false,
 				     file_name, line_num);
 
 	if (nbuf != NULL) {
-		cdf_nbuf_put_tail(nbuf, size);
-		cdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
+		qdf_nbuf_put_tail(nbuf, size);
+		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
-		*data = cdf_nbuf_data(nbuf);
+		*data = qdf_nbuf_data(nbuf);
 		cdf_ret_status = QDF_STATUS_SUCCESS;
 	}
 
@@ -318,16 +318,16 @@ QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
 {
 	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
-	cdf_nbuf_t nbuf;
+	qdf_nbuf_t nbuf;
 
-	nbuf = cdf_nbuf_alloc(NULL, roundup(size + TX_PKT_MIN_HEADROOM, 4),
+	nbuf = qdf_nbuf_alloc(NULL, roundup(size + TX_PKT_MIN_HEADROOM, 4),
 			      TX_PKT_MIN_HEADROOM, sizeof(uint32_t), false);
 
 	if (nbuf != NULL) {
-		cdf_nbuf_put_tail(nbuf, size);
-		cdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
+		qdf_nbuf_put_tail(nbuf, size);
+		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
-		*data = cdf_nbuf_data(nbuf);
+		*data = qdf_nbuf_data(nbuf);
 		cdf_ret_status = QDF_STATUS_SUCCESS;
 	}
 
@@ -341,5 +341,5 @@ QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
    ---------------------------------------------------------------------------*/
 void cds_packet_free(void *pPacket)
 {
-	cdf_nbuf_free((cdf_nbuf_t) pPacket);
+	qdf_nbuf_free((qdf_nbuf_t) pPacket);
 }

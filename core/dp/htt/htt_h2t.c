@@ -43,7 +43,7 @@
  */
 
 #include <qdf_mem.h>         /* qdf_mem_copy */
-#include <cdf_nbuf.h>           /* cdf_nbuf_map_single */
+#include <qdf_nbuf.h>           /* qdf_nbuf_map_single */
 #include <htc_api.h>            /* HTC_PACKET */
 #include <htc.h>                /* HTC_HDR_ALIGNMENT_PADDING */
 #include <htt.h>                /* HTT host->target msg defs */
@@ -62,25 +62,25 @@
 
 static void
 htt_h2t_send_complete_free_netbuf(void *pdev, A_STATUS status,
-				  cdf_nbuf_t netbuf, uint16_t msdu_id)
+				  qdf_nbuf_t netbuf, uint16_t msdu_id)
 {
-	cdf_nbuf_free(netbuf);
+	qdf_nbuf_free(netbuf);
 }
 
 void htt_h2t_send_complete(void *context, HTC_PACKET *htc_pkt)
 {
 	void (*send_complete_part2)(void *pdev, A_STATUS status,
-				    cdf_nbuf_t msdu, uint16_t msdu_id);
+				    qdf_nbuf_t msdu, uint16_t msdu_id);
 	struct htt_pdev_t *pdev = (struct htt_pdev_t *)context;
 	struct htt_htc_pkt *htt_pkt;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 
 	send_complete_part2 = htc_pkt->pPktContext;
 
 	htt_pkt = container_of(htc_pkt, struct htt_htc_pkt, htc_pkt);
 
 	/* process (free or keep) the netbuf that held the message */
-	netbuf = (cdf_nbuf_t) htc_pkt->pNetBufContext;
+	netbuf = (qdf_nbuf_t) htc_pkt->pNetBufContext;
 	if (send_complete_part2 != NULL) {
 		send_complete_part2(htt_pkt->pdev_ctxt, htc_pkt->Status, netbuf,
 				    htt_pkt->msdu_id);
@@ -101,7 +101,7 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	A_STATUS rc = A_OK;
 
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	u_int32_t *msg_word;
 	struct htt_tx_frag_desc_bank_cfg_t *bank_cfg;
 
@@ -115,7 +115,7 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	pkt->msdu_id = HTT_TX_COMPL_INV_MSDU_ID;
 	pkt->pdev_ctxt = NULL; /* not used during send-done callback */
 
-	msg = cdf_nbuf_alloc(
+	msg = qdf_nbuf_alloc(
 		pdev->osdev,
 		HTT_MSG_BUF_SIZE(sizeof(struct htt_tx_frag_desc_bank_cfg_t)),
 		/* reserve room for the HTC header */
@@ -131,14 +131,14 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	 * separately during the below call to adf_nbuf_push_head.
 	 * The contribution from the HTC header is added separately inside HTC.
 	 */
-	cdf_nbuf_put_tail(msg, sizeof(struct htt_tx_frag_desc_bank_cfg_t));
+	qdf_nbuf_put_tail(msg, sizeof(struct htt_tx_frag_desc_bank_cfg_t));
 
 	/* fill in the message contents */
-	msg_word = (u_int32_t *) cdf_nbuf_data(msg);
+	msg_word = (u_int32_t *) qdf_nbuf_data(msg);
 
 	memset(msg_word, 0 , sizeof(struct htt_tx_frag_desc_bank_cfg_t));
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_FRAG_DESC_BANK_CFG);
@@ -170,8 +170,8 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 	SET_HTC_PACKET_INFO_TX(
 		&pkt->htc_pkt,
 		htt_h2t_send_complete_free_netbuf,
-		cdf_nbuf_data(msg),
-		cdf_nbuf_len(msg),
+		qdf_nbuf_data(msg),
+		qdf_nbuf_len(msg),
 		pdev->htc_endpoint,
 		1); /* tag - not relevant here */
 
@@ -187,7 +187,7 @@ A_STATUS htt_h2t_frag_desc_bank_cfg_msg(struct htt_pdev_t *pdev)
 A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 
 	pkt = htt_htc_pkt_alloc(pdev);
@@ -201,7 +201,7 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for the HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_VER_REQ_BYTES),
+	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_VER_REQ_BYTES),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     true);
 	if (!msg) {
@@ -212,23 +212,23 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 	/*
 	 * Set the length of the message.
 	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
-	 * separately during the below call to cdf_nbuf_push_head.
+	 * separately during the below call to qdf_nbuf_push_head.
 	 * The contribution from the HTC header is added separately inside HTC.
 	 */
-	cdf_nbuf_put_tail(msg, HTT_VER_REQ_BYTES);
+	qdf_nbuf_put_tail(msg, HTT_VER_REQ_BYTES);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_VERSION_REQ);
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg), cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg), qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       1); /* tag - not relevant here */
 
@@ -247,7 +247,7 @@ A_STATUS htt_h2t_ver_req_msg(struct htt_pdev_t *pdev)
 A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 	int enable_ctrl_data, enable_mgmt_data,
 	    enable_null_data, enable_phy_data, enable_hdr,
@@ -264,7 +264,7 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for the HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev,
+	msg = qdf_nbuf_alloc(pdev->osdev,
 			     HTT_MSG_BUF_SIZE(HTT_RX_RING_CFG_BYTES(1)),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     true);
@@ -275,16 +275,16 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 	/*
 	 * Set the length of the message.
 	 * The contribution from the HTC_HDR_ALIGNMENT_PADDING is added
-	 * separately during the below call to cdf_nbuf_push_head.
+	 * separately during the below call to qdf_nbuf_push_head.
 	 * The contribution from the HTC header is added separately inside HTC.
 	 */
-	cdf_nbuf_put_tail(msg, HTT_RX_RING_CFG_BYTES(1));
+	qdf_nbuf_put_tail(msg, HTT_RX_RING_CFG_BYTES(1));
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_RX_RING_CFG);
@@ -414,8 +414,8 @@ A_STATUS htt_h2t_rx_ring_cfg_msg_ll(struct htt_pdev_t *pdev)
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
@@ -437,7 +437,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 		      uint8_t cfg_stat_type, uint32_t cfg_val, uint64_t cookie)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 	uint16_t htc_tag = 1;
 
@@ -463,7 +463,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 
-	msg = cdf_nbuf_alloc(pdev->osdev,
+	msg = qdf_nbuf_alloc(pdev->osdev,
 			     HTT_MSG_BUF_SIZE(HTT_H2T_STATS_REQ_MSG_SZ),
 			     /* reserve room for HTC header */
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
@@ -473,13 +473,13 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 		return -EINVAL;      /* failure */
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_H2T_STATS_REQ_MSG_SZ);
+	qdf_nbuf_put_tail(msg, HTT_H2T_STATS_REQ_MSG_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_STATS_REQ);
@@ -504,8 +504,8 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       htc_tag); /* tag - not relevant here */
 
@@ -524,7 +524,7 @@ htt_h2t_dbg_stats_get(struct htt_pdev_t *pdev,
 A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 
 	pkt = htt_htc_pkt_alloc(pdev);
@@ -538,7 +538,7 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_H2T_SYNC_MSG_SZ),
+	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_H2T_SYNC_MSG_SZ),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     false);
 	if (!msg) {
@@ -546,13 +546,13 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 		return A_NO_MEMORY;
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_H2T_SYNC_MSG_SZ);
+	qdf_nbuf_put_tail(msg, HTT_H2T_SYNC_MSG_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_SYNC);
@@ -560,8 +560,8 @@ A_STATUS htt_h2t_sync_msg(struct htt_pdev_t *pdev, uint8_t sync_cnt)
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
@@ -582,7 +582,7 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 		     int max_subfrms_ampdu, int max_subfrms_amsdu)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 
 	pkt = htt_htc_pkt_alloc(pdev);
@@ -596,7 +596,7 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_AGGR_CFG_MSG_SZ),
+	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_AGGR_CFG_MSG_SZ),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     false);
 	if (!msg) {
@@ -604,13 +604,13 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 		return -EINVAL;      /* failure */
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_AGGR_CFG_MSG_SZ);
+	qdf_nbuf_put_tail(msg, HTT_AGGR_CFG_MSG_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_H2T_MSG_TYPE_SET(*msg_word, HTT_H2T_MSG_TYPE_AGGR_CFG);
@@ -627,8 +627,8 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
@@ -657,7 +657,7 @@ htt_h2t_aggr_cfg_msg(struct htt_pdev_t *pdev,
 int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 
 	pkt = htt_htc_pkt_alloc(pdev);
@@ -671,7 +671,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_WDI_IPA_CFG_SZ),
+	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_WDI_IPA_CFG_SZ),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     false);
 	if (!msg) {
@@ -679,13 +679,13 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 		return A_NO_MEMORY;
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_CFG_SZ);
+	qdf_nbuf_put_tail(msg, HTT_WDI_IPA_CFG_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_TX_PKT_POOL_SIZE_SET(*msg_word,
@@ -734,8 +734,8 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       HTC_TX_PACKET_TAG_RUNTIME_PUT);
 
@@ -749,7 +749,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 
 	pkt = htt_htc_pkt_alloc(pdev);
@@ -763,7 +763,7 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_WDI_IPA_CFG_SZ),
+	msg = qdf_nbuf_alloc(pdev->osdev, HTT_MSG_BUF_SIZE(HTT_WDI_IPA_CFG_SZ),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     false);
 	if (!msg) {
@@ -771,13 +771,13 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 		return -A_NO_MEMORY;
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_CFG_SZ);
+	qdf_nbuf_put_tail(msg, HTT_WDI_IPA_CFG_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_WDI_IPA_CFG_TX_PKT_POOL_SIZE_SET(*msg_word,
@@ -878,8 +878,8 @@ int htt_h2t_ipa_uc_rsc_cfg_msg(struct htt_pdev_t *pdev)
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       1); /* tag - not relevant here */
 
@@ -904,7 +904,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 			      bool uc_active, bool is_tx)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 	uint8_t active_target = 0;
 
@@ -919,7 +919,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev,
+	msg = qdf_nbuf_alloc(pdev->osdev,
 			     HTT_MSG_BUF_SIZE(HTT_WDI_IPA_OP_REQUEST_SZ),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     false);
@@ -928,13 +928,13 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 		return -A_NO_MEMORY;
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_OP_REQUEST_SZ);
+	qdf_nbuf_put_tail(msg, HTT_WDI_IPA_OP_REQUEST_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	if (uc_active && is_tx)
@@ -951,8 +951,8 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       1); /* tag - not relevant here */
 
@@ -973,7 +973,7 @@ int htt_h2t_ipa_uc_set_active(struct htt_pdev_t *pdev,
 int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 {
 	struct htt_htc_pkt *pkt;
-	cdf_nbuf_t msg;
+	qdf_nbuf_t msg;
 	uint32_t *msg_word;
 
 	pkt = htt_htc_pkt_alloc(pdev);
@@ -987,7 +987,7 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 	pkt->pdev_ctxt = NULL;  /* not used during send-done callback */
 
 	/* reserve room for HTC header */
-	msg = cdf_nbuf_alloc(pdev->osdev,
+	msg = qdf_nbuf_alloc(pdev->osdev,
 			     HTT_MSG_BUF_SIZE(HTT_WDI_IPA_OP_REQUEST_SZ),
 			     HTC_HEADER_LEN + HTC_HDR_ALIGNMENT_PADDING, 4,
 			     false);
@@ -996,13 +996,13 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 		return -A_NO_MEMORY;
 	}
 	/* set the length of the message */
-	cdf_nbuf_put_tail(msg, HTT_WDI_IPA_OP_REQUEST_SZ);
+	qdf_nbuf_put_tail(msg, HTT_WDI_IPA_OP_REQUEST_SZ);
 
 	/* fill in the message contents */
-	msg_word = (uint32_t *) cdf_nbuf_data(msg);
+	msg_word = (uint32_t *) qdf_nbuf_data(msg);
 
 	/* rewind beyond alignment pad to get to the HTC header reserved area */
-	cdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
+	qdf_nbuf_push_head(msg, HTC_HDR_ALIGNMENT_PADDING);
 
 	*msg_word = 0;
 	HTT_WDI_IPA_OP_REQUEST_OP_CODE_SET(*msg_word,
@@ -1011,8 +1011,8 @@ int htt_h2t_ipa_uc_get_stats(struct htt_pdev_t *pdev)
 
 	SET_HTC_PACKET_INFO_TX(&pkt->htc_pkt,
 			       htt_h2t_send_complete_free_netbuf,
-			       cdf_nbuf_data(msg),
-			       cdf_nbuf_len(msg),
+			       qdf_nbuf_data(msg),
+			       qdf_nbuf_len(msg),
 			       pdev->htc_endpoint,
 			       1); /* tag - not relevant here */
 

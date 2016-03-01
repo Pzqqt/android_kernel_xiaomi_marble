@@ -29,7 +29,7 @@
 #define _HTT_INTERNAL__H_
 
 #include <athdefs.h>            /* A_STATUS */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_util.h>           /* qdf_assert */
 #include <htc_api.h>            /* HTC_PACKET */
 
@@ -133,10 +133,10 @@ struct rx_buf_debug {
 	bool     in_use;
 };
 #endif
-static inline struct htt_host_rx_desc_base *htt_rx_desc(cdf_nbuf_t msdu)
+static inline struct htt_host_rx_desc_base *htt_rx_desc(qdf_nbuf_t msdu)
 {
 	return (struct htt_host_rx_desc_base *)
-	       (((size_t) (cdf_nbuf_head(msdu) + HTT_RX_DESC_ALIGN_MASK)) &
+	       (((size_t) (qdf_nbuf_head(msdu) + HTT_RX_DESC_ALIGN_MASK)) &
 		~HTT_RX_DESC_ALIGN_MASK);
 }
 
@@ -191,7 +191,7 @@ static inline void htt_print_rx_desc_lro(struct htt_host_rx_desc_base *rx_desc)
  *
  * Return: none
  */
-static inline void htt_rx_extract_lro_info(cdf_nbuf_t msdu,
+static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 	 struct htt_host_rx_desc_base *rx_desc)
 {
 	NBUF_CB_RX_LRO_ELIGIBLE(msdu) = rx_desc->msdu_end.lro_eligible;
@@ -212,7 +212,7 @@ static inline void htt_rx_extract_lro_info(cdf_nbuf_t msdu,
 #else
 static inline void htt_print_rx_desc_lro(struct htt_host_rx_desc_base *rx_desc)
 {}
-static inline void htt_rx_extract_lro_info(cdf_nbuf_t msdu,
+static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 	 struct htt_host_rx_desc_base *rx_desc) {}
 #endif /* FEATURE_LRO */
 
@@ -388,19 +388,19 @@ static inline void htt_print_rx_desc(struct htt_host_rx_desc_base *rx_desc)
 
 #define HTT_TX_NBUF_QUEUE_REMOVE(_pdev, _msdu)	do {	\
 	HTT_TX_MUTEX_ACQUIRE(&_pdev->txnbufq_mutex);	\
-	_msdu =  cdf_nbuf_queue_remove(&_pdev->txnbufq);\
+	_msdu =  qdf_nbuf_queue_remove(&_pdev->txnbufq);\
 	HTT_TX_MUTEX_RELEASE(&_pdev->txnbufq_mutex);    \
 	} while (0)
 
 #define HTT_TX_NBUF_QUEUE_ADD(_pdev, _msdu) do {	\
 	HTT_TX_MUTEX_ACQUIRE(&_pdev->txnbufq_mutex);	\
-	cdf_nbuf_queue_add(&_pdev->txnbufq, _msdu);     \
+	qdf_nbuf_queue_add(&_pdev->txnbufq, _msdu);     \
 	HTT_TX_MUTEX_RELEASE(&_pdev->txnbufq_mutex);    \
 	} while (0)
 
 #define HTT_TX_NBUF_QUEUE_INSERT_HEAD(_pdev, _msdu) do {   \
 	HTT_TX_MUTEX_ACQUIRE(&_pdev->txnbufq_mutex);	   \
-	cdf_nbuf_queue_insert_head(&_pdev->txnbufq, _msdu);\
+	qdf_nbuf_queue_insert_head(&_pdev->txnbufq, _msdu);\
 	HTT_TX_MUTEX_RELEASE(&_pdev->txnbufq_mutex);       \
 	} while (0)
 #else
@@ -463,9 +463,9 @@ void htt_htc_disable_aspm(struct htt_pdev_t *pdev);
 
 int
 htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
-			cdf_nbuf_t netbuf);
+			qdf_nbuf_t netbuf);
 
-cdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr);
+qdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr);
 
 #ifdef IPA_OFFLOAD
 int
@@ -551,7 +551,7 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 static inline
 void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
 				uint32_t paddr,
-				cdf_nbuf_t rx_netbuf)
+				qdf_nbuf_t rx_netbuf)
 {
 	if (pdev->rx_buff_list) {
 		pdev->rx_buff_list[pdev->rx_buff_index].paddr =
@@ -574,7 +574,7 @@ void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
  */
 static inline
 void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
-				cdf_nbuf_t netbuf)
+				qdf_nbuf_t netbuf)
 {
 	uint32_t index;
 
@@ -609,13 +609,13 @@ void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 static inline
 void htt_rx_dbg_rxbuf_set(struct htt_pdev_t *pdev,
 				uint32_t paddr,
-				cdf_nbuf_t rx_netbuf)
+				qdf_nbuf_t rx_netbuf)
 {
 	return;
 }
 static inline
 void htt_rx_dbg_rxbuf_reset(struct htt_pdev_t *pdev,
-				cdf_nbuf_t netbuf)
+				qdf_nbuf_t netbuf)
 {
 	return;
 }

@@ -27,7 +27,7 @@
 
 /*=== header file includes ===*/
 /* generic utilities */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_timer.h>
 #include <qdf_time.h>
 

@@ -32,7 +32,7 @@
 #ifndef _OL_TX_QUEUE__H_
 #define _OL_TX_QUEUE__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <ol_txrx_types.h>      /* ol_txrx_vdev_t, etc. */
 #include <qdf_types.h>          /* bool */
 

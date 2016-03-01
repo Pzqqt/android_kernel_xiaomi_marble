@@ -46,7 +46,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -724,7 +724,7 @@ QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 	return QDF_STATUS_SUCCESS;
 error:
 	if (buf)
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 error1:
 	return qdf_status;
 }
@@ -3076,7 +3076,7 @@ void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts)
 			 __func__);
 		if (is_add_ts)
 			((tAddTsParams *) msg)->status = QDF_STATUS_E_FAILURE;
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 	}
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
@@ -3135,7 +3135,7 @@ void wma_process_unit_test_cmd(WMA_HANDLE handle,
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_UNIT_TEST_CMDID)) {
 		WMA_LOGP("%s: failed to send unit test command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return;
 	}
 	return;
@@ -3215,7 +3215,7 @@ void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 				 WMI_ROAM_SYNCH_COMPLETE)) {
 		WMA_LOGP("%s: failed to send roam synch confirmation",
 			 __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return;
 	}
 	return;
@@ -5405,7 +5405,7 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf,
 				 len, WMI_EXTSCAN_START_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wma->interfaces[pstart->sessionId].extscan_in_progress = true;
@@ -5460,7 +5460,7 @@ QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_STOP_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	wma->interfaces[pstopcmd->sessionId].extscan_in_progress = false;
@@ -5609,7 +5609,7 @@ QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 		if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					 WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
 			WMA_LOGE("%s: failed to send command", __func__);
-			cdf_nbuf_free(buf);
+			qdf_nbuf_free(buf);
 			return QDF_STATUS_E_FAILURE;
 		}
 		index = index + min_entries;
@@ -5718,7 +5718,7 @@ QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5849,7 +5849,7 @@ QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				 WMI_EXTSCAN_CONFIGURE_WLAN_CHANGE_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5918,7 +5918,7 @@ QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_CONFIGURE_WLAN_CHANGE_MONITOR_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5972,7 +5972,7 @@ QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_GET_CACHED_RESULTS_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -6024,7 +6024,7 @@ QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_EXTSCAN_GET_CAPABILITIES_CMDID)) {
 		WMA_LOGE("%s: failed to  command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -6531,7 +6531,7 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 	if (wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, len,
 				 WMI_SCAN_PROB_REQ_OUI_CMDID)) {
 		WMA_LOGE("%s: failed to send command", __func__);
-		cdf_nbuf_free(wmi_buf);
+		qdf_nbuf_free(wmi_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;

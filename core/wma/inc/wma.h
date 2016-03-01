@@ -509,7 +509,7 @@ struct scan_param {
  * @lock: lock
  */
 struct beacon_info {
-	cdf_nbuf_t buf;
+	qdf_nbuf_t buf;
 	uint32_t len;
 	uint8_t dma_mapped;
 	uint32_t tim_ie_offset;
@@ -991,7 +991,7 @@ struct dbs_hw_mode_info {
 struct wmi_desc_t {
 	pWMATxRxCompFunc tx_cmpl_cb;
 	pWMAAckFnTxComp  ota_post_proc_cb;
-	cdf_nbuf_t	 nbuf;
+	qdf_nbuf_t	 nbuf;
 	uint32_t	 desc_id;
 };
 
@@ -1216,7 +1216,7 @@ typedef struct {
 	pWMAAckFnTxComp umac_ota_ack_cb[SIR_MAC_MGMT_RESERVED15];
 	pWMAAckFnTxComp umac_data_ota_ack_cb;
 	unsigned long last_umac_data_ota_timestamp;
-	cdf_nbuf_t last_umac_data_nbuf;
+	qdf_nbuf_t last_umac_data_nbuf;
 	bool needShutdown;
 	uint32_t num_mem_chunks;
 	struct wma_mem_chunk mem_chunks[MAX_MEM_CHUNKS];

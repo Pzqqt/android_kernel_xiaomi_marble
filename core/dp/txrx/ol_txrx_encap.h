@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,7 +34,7 @@
 
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 
-#include <cdf_nbuf.h>               /* cdf_nbuf_t */
+#include <qdf_nbuf.h>               /* qdf_nbuf_t */
 #include <cds_ieee80211_common.h>   /* ieee80211_qosframe_htc_addr4 */
 #include <ol_txrx_types.h>          /* ol_tx_desc_t, ol_txrx_msdu_info_t */
 
@@ -48,7 +48,7 @@
  *  with or without QOS control field based on peer's QOS capabilites.
  * @param vdev - handle to vdev object
  * @param tx_desc - tx desc struct,some fields will be updated.
- * @param msdu - cdf_nbuf_t
+ * @param msdu - qdf_nbuf_t
  * @param msdu_info - informations from tx classification.
  * @return
  *     A_OK: encap operation sucessful
@@ -57,7 +57,7 @@
 A_STATUS
 ol_tx_encap(struct ol_txrx_vdev_t *vdev,
 	    struct ol_tx_desc_t *tx_desc,
-	    cdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info);
+	    qdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info);
 
 struct ol_rx_decap_info_t {
 	uint8_t hdr[sizeof(struct ieee80211_qosframe_htc_addr4)];
@@ -75,7 +75,7 @@ struct ol_rx_decap_info_t {
  *  if Target haven't done that.
  * @param vdev - handle to vdev object
  * @param peer - the peer object.
- * @param msdu - cdf_nbuf_t
+ * @param msdu - qdf_nbuf_t
  * @param info - ol_rx_decap_info_t: context info for decap
  * @return
  *     A_OK: decap operation sucessful
@@ -84,12 +84,12 @@ struct ol_rx_decap_info_t {
 A_STATUS
 ol_rx_decap(struct ol_txrx_vdev_t *vdev,
 	    struct ol_txrx_peer_t *peer,
-	    cdf_nbuf_t msdu, struct ol_rx_decap_info_t *info);
+	    qdf_nbuf_t msdu, struct ol_rx_decap_info_t *info);
 
 static inline A_STATUS
 OL_TX_ENCAP(struct ol_txrx_vdev_t *vdev,
 	    struct ol_tx_desc_t *tx_desc,
-	    cdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info)
+	    qdf_nbuf_t msdu, struct ol_txrx_msdu_info_t *msdu_info)
 {
 	if (vdev->pdev->sw_tx_encap)
 		return ol_tx_encap(vdev, tx_desc, msdu, msdu_info);
@@ -99,7 +99,7 @@ OL_TX_ENCAP(struct ol_txrx_vdev_t *vdev,
 static inline A_STATUS
 OL_RX_DECAP(struct ol_txrx_vdev_t *vdev,
 	    struct ol_txrx_peer_t *peer,
-	    cdf_nbuf_t msdu, struct ol_rx_decap_info_t *info)
+	    qdf_nbuf_t msdu, struct ol_rx_decap_info_t *info)
 {
 	if (vdev->pdev->sw_rx_decap)
 		return ol_rx_decap(vdev, peer, msdu, info);
@@ -109,7 +109,7 @@ OL_RX_DECAP(struct ol_txrx_vdev_t *vdev,
 #define OL_TX_RESTORE_HDR(__tx_desc, __msdu)  \
 	do {								\
 		if (__tx_desc->orig_l2_hdr_bytes != 0)			\
-			cdf_nbuf_push_head(__msdu,			\
+			qdf_nbuf_push_head(__msdu,			\
 					   __tx_desc->orig_l2_hdr_bytes); \
 	} while (0)
 #else

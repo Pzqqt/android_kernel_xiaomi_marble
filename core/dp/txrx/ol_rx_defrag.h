@@ -28,7 +28,7 @@
 #ifndef _OL_RX_DEFRAG_H_
 #define _OL_RX_DEFRAG_H_
 
-#include <cdf_nbuf.h>
+#include <qdf_nbuf.h>
 #include <cds_ieee80211_common.h>
 #include <qdf_util.h>
 #include <qdf_types.h>
@@ -54,16 +54,16 @@ enum {
 };
 
 #define ol_rx_defrag_copydata(buf, offset, len, _to) \
-	cdf_nbuf_copy_bits(buf, offset, len, _to)
+	qdf_nbuf_copy_bits(buf, offset, len, _to)
 
 #define ol_rx_defrag_len(buf) \
-	cdf_nbuf_len(buf)
+	qdf_nbuf_len(buf)
 
 void
 ol_rx_fraglist_insert(htt_pdev_handle htt_pdev,
-		      cdf_nbuf_t *head_addr,
-		      cdf_nbuf_t *tail_addr,
-		      cdf_nbuf_t frag, uint8_t *all_frag_present);
+		      qdf_nbuf_t *head_addr,
+		      qdf_nbuf_t *tail_addr,
+		      qdf_nbuf_t frag, uint8_t *all_frag_present);
 
 void ol_rx_defrag_waitlist_add(struct ol_txrx_peer_t *peer, unsigned tid);
 
@@ -73,33 +73,33 @@ void ol_rx_defrag_waitlist_flush(struct ol_txrx_pdev_t *pdev);
 
 void
 ol_rx_defrag(ol_txrx_pdev_handle pdev,
-	     struct ol_txrx_peer_t *peer, unsigned tid, cdf_nbuf_t frag_list);
+	     struct ol_txrx_peer_t *peer, unsigned tid, qdf_nbuf_t frag_list);
 
 int
 ol_rx_frag_tkip_decap(ol_txrx_pdev_handle pdev,
-		      cdf_nbuf_t msdu, uint16_t hdrlen);
+		      qdf_nbuf_t msdu, uint16_t hdrlen);
 
 int
 ol_rx_frag_wep_decap(ol_txrx_pdev_handle pdev,
-		     cdf_nbuf_t nbuf, uint16_t hdrlen);
+		     qdf_nbuf_t nbuf, uint16_t hdrlen);
 
-void ol_rx_defrag_nwifi_to_8023(ol_txrx_pdev_handle pdev, cdf_nbuf_t msdu);
+void ol_rx_defrag_nwifi_to_8023(ol_txrx_pdev_handle pdev, qdf_nbuf_t msdu);
 
 void
 ol_rx_defrag_qos_decap(ol_txrx_pdev_handle pdev,
-		       cdf_nbuf_t nbuf, uint16_t hdrlen);
+		       qdf_nbuf_t nbuf, uint16_t hdrlen);
 
 int
 ol_rx_frag_tkip_demic(ol_txrx_pdev_handle pdev,
-		      const uint8_t *key, cdf_nbuf_t msdu, uint16_t hdrlen);
+		      const uint8_t *key, qdf_nbuf_t msdu, uint16_t hdrlen);
 
 int
 ol_rx_frag_ccmp_decap(ol_txrx_pdev_handle pdev,
-		      cdf_nbuf_t nbuf, uint16_t hdrlen);
+		      qdf_nbuf_t nbuf, uint16_t hdrlen);
 
 int
 ol_rx_frag_ccmp_demic(ol_txrx_pdev_handle pdev,
-		      cdf_nbuf_t wbuf, uint16_t hdrlen);
+		      qdf_nbuf_t wbuf, uint16_t hdrlen);
 
 uint16_t ol_rx_frag_hdrsize(const void *data);
 
@@ -108,16 +108,16 @@ void ol_rx_defrag_michdr(const struct ieee80211_frame *wh0, uint8_t hdr[]);
 void
 ol_rx_reorder_store_frag(ol_txrx_pdev_handle pdev,
 			 struct ol_txrx_peer_t *peer,
-			 unsigned tid, uint16_t seq_num, cdf_nbuf_t frag);
+			 unsigned tid, uint16_t seq_num, qdf_nbuf_t frag);
 
-cdf_nbuf_t
+qdf_nbuf_t
 ol_rx_defrag_decap_recombine(htt_pdev_handle htt_pdev,
-			     cdf_nbuf_t frag_list, uint16_t hdrsize);
+			     qdf_nbuf_t frag_list, uint16_t hdrsize);
 
 int
 ol_rx_defrag_mic(ol_txrx_pdev_handle pdev,
 		 const uint8_t *key,
-		 cdf_nbuf_t wbuf,
+		 qdf_nbuf_t wbuf,
 		 uint16_t off, uint16_t data_len, uint8_t mic[]);
 
 void
@@ -167,16 +167,16 @@ static inline void put_le32(uint8_t *p, uint32_t v)
 	p[3] = (v >> 24) & 0xff;
 }
 
-static inline uint8_t ol_rx_defrag_concat(cdf_nbuf_t dst, cdf_nbuf_t src)
+static inline uint8_t ol_rx_defrag_concat(qdf_nbuf_t dst, qdf_nbuf_t src)
 {
 	/*
-	 * Inside cdf_nbuf_cat, if it is necessary to reallocate dst
+	 * Inside qdf_nbuf_cat, if it is necessary to reallocate dst
 	 * to provide space for src, the headroom portion is copied from
 	 * the original dst buffer to the larger new dst buffer.
 	 * (This is needed, because the headroom of the dst buffer
 	 * contains the rx desc.)
 	 */
-	if (cdf_nbuf_cat(dst, src))
+	if (qdf_nbuf_cat(dst, src))
 		return OL_RX_DEFRAG_ERR;
 
 	return OL_RX_DEFRAG_OK;

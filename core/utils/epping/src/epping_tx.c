@@ -56,11 +56,11 @@
 static bool enb_tx_dump;
 
 void epping_tx_dup_pkt(epping_adapter_t *pAdapter,
-		       HTC_ENDPOINT_ID eid, cdf_nbuf_t skb)
+		       HTC_ENDPOINT_ID eid, qdf_nbuf_t skb)
 {
 	struct epping_cookie *cookie = NULL;
 	int skb_len, ret;
-	cdf_nbuf_t new_skb;
+	qdf_nbuf_t new_skb;
 
 	cookie = epping_alloc_cookie(pAdapter->pEpping_ctx);
 	if (cookie == NULL) {
@@ -69,25 +69,25 @@ void epping_tx_dup_pkt(epping_adapter_t *pAdapter,
 			   __func__);
 		return;
 	}
-	new_skb = cdf_nbuf_copy(skb);
+	new_skb = qdf_nbuf_copy(skb);
 	if (!new_skb) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
-			   "%s: cdf_nbuf_copy returns no resource\n", __func__);
+			   "%s: qdf_nbuf_copy returns no resource\n", __func__);
 		epping_free_cookie(pAdapter->pEpping_ctx, cookie);
 		return;
 	}
 	SET_HTC_PACKET_INFO_TX(&cookie->HtcPkt,
-			       cookie, cdf_nbuf_data(skb),
-			       cdf_nbuf_len(new_skb), eid, 0);
+			       cookie, qdf_nbuf_data(skb),
+			       qdf_nbuf_len(new_skb), eid, 0);
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&cookie->HtcPkt, new_skb);
-	skb_len = (int)cdf_nbuf_len(new_skb);
+	skb_len = (int)qdf_nbuf_len(new_skb);
 	/* send the packet */
 	ret = htc_send_pkt(pAdapter->pEpping_ctx->HTCHandle, &cookie->HtcPkt);
 	if (ret != A_OK) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: htc_send_pkt failed, ret = %d\n", __func__, ret);
 		epping_free_cookie(pAdapter->pEpping_ctx, cookie);
-		cdf_nbuf_free(new_skb);
+		qdf_nbuf_free(new_skb);
 		return;
 	}
 	pAdapter->stats.tx_bytes += skb_len;
@@ -99,9 +99,9 @@ void epping_tx_dup_pkt(epping_adapter_t *pAdapter,
 	}
 }
 
-static int epping_tx_send_int(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
+static int epping_tx_send_int(qdf_nbuf_t skb, epping_adapter_t *pAdapter)
 {
-	EPPING_HEADER *eppingHdr = (EPPING_HEADER *) cdf_nbuf_data(skb);
+	EPPING_HEADER *eppingHdr = (EPPING_HEADER *) qdf_nbuf_data(skb);
 	HTC_ENDPOINT_ID eid = ENDPOINT_UNUSED;
 	struct epping_cookie *cookie = NULL;
 	A_UINT8 ac = 0;
@@ -143,7 +143,7 @@ static int epping_tx_send_int(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
 		epping_set_kperf_flag(pAdapter, eid, tmpHdr.CmdBuffer_t[0]);
 	}
 	SET_HTC_PACKET_INFO_TX(&cookie->HtcPkt,
-			       cookie, cdf_nbuf_data(skb), cdf_nbuf_len(skb),
+			       cookie, qdf_nbuf_data(skb), qdf_nbuf_len(skb),
 			       eid, 0);
 	SET_HTC_PACKET_NET_BUF_CONTEXT(&cookie->HtcPkt, skb);
 	skb_len = skb->len;
@@ -170,25 +170,25 @@ static int epping_tx_send_int(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
 
 void epping_tx_timer_expire(epping_adapter_t *pAdapter)
 {
-	cdf_nbuf_t nodrop_skb;
+	qdf_nbuf_t nodrop_skb;
 
 	EPPING_LOG(QDF_TRACE_LEVEL_INFO, "%s: queue len: %d\n", __func__,
-		   cdf_nbuf_queue_len(&pAdapter->nodrop_queue));
+		   qdf_nbuf_queue_len(&pAdapter->nodrop_queue));
 
-	if (!cdf_nbuf_queue_len(&pAdapter->nodrop_queue)) {
+	if (!qdf_nbuf_queue_len(&pAdapter->nodrop_queue)) {
 		/* nodrop queue is empty so no need to arm timer */
 		pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
 		return;
 	}
 
 	/* try to flush nodrop queue */
-	while ((nodrop_skb = cdf_nbuf_queue_remove(&pAdapter->nodrop_queue))) {
+	while ((nodrop_skb = qdf_nbuf_queue_remove(&pAdapter->nodrop_queue))) {
 		if (epping_tx_send_int(nodrop_skb, pAdapter)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 				   "%s: nodrop: %p xmit fail in timer\n",
 				   __func__, nodrop_skb);
 			/* fail to xmit so put the nodrop packet to the nodrop queue */
-			cdf_nbuf_queue_insert_head(&pAdapter->nodrop_queue,
+			qdf_nbuf_queue_insert_head(&pAdapter->nodrop_queue,
 						   nodrop_skb);
 			break;
 		} else {
@@ -213,19 +213,19 @@ void epping_tx_timer_expire(epping_adapter_t *pAdapter)
 	}
 }
 
-int epping_tx_send(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
+int epping_tx_send(qdf_nbuf_t skb, epping_adapter_t *pAdapter)
 {
-	cdf_nbuf_t nodrop_skb;
+	qdf_nbuf_t nodrop_skb;
 	EPPING_HEADER *eppingHdr;
 	A_UINT8 ac = 0;
 
-	eppingHdr = (EPPING_HEADER *) cdf_nbuf_data(skb);
+	eppingHdr = (EPPING_HEADER *) qdf_nbuf_data(skb);
 
 	if (!IS_EPPING_PACKET(eppingHdr)) {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Recived non endpoint ping packets\n", __func__);
 		/* no packet to send, cleanup */
-		cdf_nbuf_free(skb);
+		qdf_nbuf_free(skb);
 		return -ENOMEM;
 	}
 
@@ -236,7 +236,7 @@ int epping_tx_send(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: ac %d is not mapped to mboxping service\n",
 			   __func__, ac);
-		cdf_nbuf_free(skb);
+		qdf_nbuf_free(skb);
 		return -ENOMEM;
 	}
 
@@ -252,13 +252,13 @@ int epping_tx_send(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
 	 */
 
 	/* check the nodrop queue first */
-	while ((nodrop_skb = cdf_nbuf_queue_remove(&pAdapter->nodrop_queue))) {
+	while ((nodrop_skb = qdf_nbuf_queue_remove(&pAdapter->nodrop_queue))) {
 		if (epping_tx_send_int(nodrop_skb, pAdapter)) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 				   "%s: nodrop: %p xmit fail\n", __func__,
 				   nodrop_skb);
 			/* fail to xmit so put the nodrop packet to the nodrop queue */
-			cdf_nbuf_queue_insert_head(&pAdapter->nodrop_queue,
+			qdf_nbuf_queue_insert_head(&pAdapter->nodrop_queue,
 						   nodrop_skb);
 			/* no cookie so free the current skb */
 			goto tx_fail;
@@ -278,7 +278,7 @@ int epping_tx_send(cdf_nbuf_t skb, epping_adapter_t *pAdapter)
 tx_fail:
 	if (!IS_EPING_PACKET_NO_DROP(eppingHdr)) {
 		/* allow to drop the skb so drop it */
-		cdf_nbuf_free(skb);
+		qdf_nbuf_free(skb);
 		++pAdapter->stats.tx_dropped;
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: Tx skb %p dropped, stats.tx_dropped = %ld\n",
@@ -287,7 +287,7 @@ tx_fail:
 	} else {
 		EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
 			   "%s: nodrop: %p queued\n", __func__, skb);
-		cdf_nbuf_queue_add(&pAdapter->nodrop_queue, skb);
+		qdf_nbuf_queue_add(&pAdapter->nodrop_queue, skb);
 		qdf_spin_lock_bh(&pAdapter->data_lock);
 		if (pAdapter->epping_timer_state != EPPING_TX_TIMER_RUNNING) {
 			pAdapter->epping_timer_state = EPPING_TX_TIMER_RUNNING;
@@ -317,13 +317,13 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 	struct net_device *dev = pAdapter->dev;
 	A_STATUS status;
 	HTC_ENDPOINT_ID eid;
-	cdf_nbuf_t pktSkb;
+	qdf_nbuf_t pktSkb;
 	struct epping_cookie *cookie;
 	A_BOOL flushing = false;
-	cdf_nbuf_queue_t skb_queue;
+	qdf_nbuf_queue_t skb_queue;
 	HTC_PACKET *htc_pkt;
 
-	cdf_nbuf_queue_init(&skb_queue);
+	qdf_nbuf_queue_init(&skb_queue);
 
 	qdf_spin_lock_bh(&pAdapter->data_lock);
 
@@ -337,13 +337,13 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 		cookie = htc_pkt->pPktContext;
 
 		ASSERT(pktSkb);
-		ASSERT(htc_pkt->pBuffer == cdf_nbuf_data(pktSkb));
+		ASSERT(htc_pkt->pBuffer == qdf_nbuf_data(pktSkb));
 
 		/* add this to the list, use faster non-lock API */
-		cdf_nbuf_queue_add(&skb_queue, pktSkb);
+		qdf_nbuf_queue_add(&skb_queue, pktSkb);
 
 		if (A_SUCCESS(status)) {
-			ASSERT(htc_pkt->ActualLength == cdf_nbuf_len(pktSkb));
+			ASSERT(htc_pkt->ActualLength == qdf_nbuf_len(pktSkb));
 		}
 		EPPING_LOG(QDF_TRACE_LEVEL_INFO,
 			   "%s skb=%p data=%p len=0x%x eid=%d ",
@@ -370,12 +370,12 @@ void epping_tx_complete_multiple(void *ctx, HTC_PACKET_QUEUE *pPacketQueue)
 	qdf_spin_unlock_bh(&pAdapter->data_lock);
 
 	/* free all skbs in our local list */
-	while (cdf_nbuf_queue_len(&skb_queue)) {
+	while (qdf_nbuf_queue_len(&skb_queue)) {
 		/* use non-lock version */
-		pktSkb = cdf_nbuf_queue_remove(&skb_queue);
+		pktSkb = qdf_nbuf_queue_remove(&skb_queue);
 		if (pktSkb == NULL)
 			break;
-		cdf_nbuf_free(pktSkb);
+		qdf_nbuf_free(pktSkb);
 		pEpping_ctx->total_tx_acks++;
 	}
 

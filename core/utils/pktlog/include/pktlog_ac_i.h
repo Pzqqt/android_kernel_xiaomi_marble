@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -59,7 +59,7 @@ char *pktlog_getbuf(struct ol_pktlog_dev_t *pl_dev,
 
 A_STATUS process_tx_info(struct ol_txrx_pdev_t *pdev, void *data);
 A_STATUS process_rx_info(void *pdev, void *data);
-A_STATUS process_rx_info_remote(void *pdev, cdf_nbuf_t amsdu);
+A_STATUS process_rx_info_remote(void *pdev, qdf_nbuf_t amsdu);
 A_STATUS process_rate_find(void *pdev, void *data);
 A_STATUS process_rate_update(void *pdev, void *data);
 

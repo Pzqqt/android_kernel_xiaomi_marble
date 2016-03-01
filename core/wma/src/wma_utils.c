@@ -45,7 +45,7 @@
 #include "ol_txrx_ctrl_api.h"
 #include "wlan_tgt_def_config.h"
 
-#include "cdf_nbuf.h"
+#include "qdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
 #include "qdf_mem.h"
@@ -2172,7 +2172,7 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 
 	qdf_spin_lock_bh(&beacon->lock);
 
-	buf_size = cdf_nbuf_len(beacon->buf);
+	buf_size = qdf_nbuf_len(beacon->buf);
 	buf = qdf_mem_malloc(buf_size);
 
 	if (!buf) {
@@ -2181,7 +2181,7 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 		return NULL;
 	}
 
-	qdf_mem_copy(buf, cdf_nbuf_data(beacon->buf), buf_size);
+	qdf_mem_copy(buf, qdf_nbuf_data(beacon->buf), buf_size);
 
 	qdf_spin_unlock_bh(&beacon->lock);
 

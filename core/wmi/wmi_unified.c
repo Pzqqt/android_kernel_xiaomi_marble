@@ -177,7 +177,7 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
 		return NULL;
 	}
 
-	wmi_buf = cdf_nbuf_alloc_debug(NULL,
+	wmi_buf = qdf_nbuf_alloc_debug(NULL,
 				       roundup(len + WMI_MIN_HEAD_ROOM, 4),
 				       WMI_MIN_HEAD_ROOM, 4, false, file_name,
 				       line_num);
@@ -186,19 +186,19 @@ wmi_buf_alloc_debug(wmi_unified_t wmi_handle, uint16_t len, uint8_t *file_name,
 		return NULL;
 
 	/* Clear the wmi buffer */
-	OS_MEMZERO(cdf_nbuf_data(wmi_buf), len);
+	OS_MEMZERO(qdf_nbuf_data(wmi_buf), len);
 
 	/*
 	 * Set the length of the buffer to match the allocation size.
 	 */
-	cdf_nbuf_set_pktlen(wmi_buf, len);
+	qdf_nbuf_set_pktlen(wmi_buf, len);
 
 	return wmi_buf;
 }
 
 void wmi_buf_free(wmi_buf_t net_buf)
 {
-	cdf_nbuf_free(net_buf);
+	qdf_nbuf_free(net_buf);
 }
 #else
 wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint16_t len)
@@ -210,24 +210,24 @@ wmi_buf_t wmi_buf_alloc(wmi_unified_t wmi_handle, uint16_t len)
 		return NULL;
 	}
 
-	wmi_buf = cdf_nbuf_alloc(NULL, roundup(len + WMI_MIN_HEAD_ROOM, 4),
+	wmi_buf = qdf_nbuf_alloc(NULL, roundup(len + WMI_MIN_HEAD_ROOM, 4),
 				WMI_MIN_HEAD_ROOM, 4, false);
 	if (!wmi_buf)
 		return NULL;
 
 	/* Clear the wmi buffer */
-	OS_MEMZERO(cdf_nbuf_data(wmi_buf), len);
+	OS_MEMZERO(qdf_nbuf_data(wmi_buf), len);
 
 	/*
 	 * Set the length of the buffer to match the allocation size.
 	 */
-	cdf_nbuf_set_pktlen(wmi_buf, len);
+	qdf_nbuf_set_pktlen(wmi_buf, len);
 	return wmi_buf;
 }
 
 void wmi_buf_free(wmi_buf_t net_buf)
 {
-	cdf_nbuf_free(net_buf);
+	qdf_nbuf_free(net_buf);
 }
 #endif
 
@@ -813,7 +813,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 
 	/* Do sanity check on the TLV parameter structure */
 	{
-		void *buf_ptr = (void *)cdf_nbuf_data(buf);
+		void *buf_ptr = (void *)qdf_nbuf_data(buf);
 
 		if (wmitlv_check_command_tlv_params(NULL, buf_ptr, len, cmd_id)
 		    != 0) {
@@ -824,13 +824,13 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 		}
 	}
 
-	if (cdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR)) == NULL) {
+	if (qdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR)) == NULL) {
 		pr_err("%s, Failed to send cmd %x, no memory\n",
 		       __func__, cmd_id);
 		return -ENOMEM;
 	}
 
-	WMI_SET_FIELD(cdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
+	WMI_SET_FIELD(qdf_nbuf_data(buf), WMI_CMD_HDR, COMMANDID, cmd_id);
 
 	qdf_atomic_inc(&wmi_handle->pending_cmds);
 	if (qdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
@@ -854,7 +854,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 
 	SET_HTC_PACKET_INFO_TX(pkt,
 			       NULL,
-			       cdf_nbuf_data(buf), len + sizeof(WMI_CMD_HDR),
+			       qdf_nbuf_data(buf), len + sizeof(WMI_CMD_HDR),
 				/* htt_host_data_dl_len(buf)+20 */
 			       wmi_handle->wmi_endpoint_id, htc_tag);
 
@@ -867,9 +867,9 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 	/*Record 16 bytes of WMI cmd data - exclude TLV and WMI headers */
 	if (cmd_id == WMI_MGMT_TX_SEND_CMDID) {
 		WMI_MGMT_COMMAND_RECORD(cmd_id,
-					((uint32_t *)cdf_nbuf_data(buf) + 2));
+					((uint32_t *)qdf_nbuf_data(buf) + 2));
 	} else {
-		WMI_COMMAND_RECORD(cmd_id, ((uint32_t *) cdf_nbuf_data(buf) +
+		WMI_COMMAND_RECORD(cmd_id, ((uint32_t *) qdf_nbuf_data(buf) +
 					    2));
 	}
 
@@ -956,9 +956,9 @@ static int wmi_unified_event_rx(struct wmi_unified *wmi_handle,
 
 	ASSERT(evt_buf != NULL);
 
-	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
+	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 
-	if (cdf_nbuf_pull_head(evt_buf, sizeof(WMI_CMD_HDR)) == NULL)
+	if (qdf_nbuf_pull_head(evt_buf, sizeof(WMI_CMD_HDR)) == NULL)
 		goto end;
 
 	idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
@@ -968,15 +968,15 @@ static int wmi_unified_event_rx(struct wmi_unified *wmi_handle,
 		goto end;
 	}
 
-	event = cdf_nbuf_data(evt_buf);
-	len = cdf_nbuf_len(evt_buf);
+	event = qdf_nbuf_data(evt_buf);
+	len = qdf_nbuf_len(evt_buf);
 
 	/* Call the WMI registered event handler */
 	status = wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
 						 event, len);
 
 end:
-	cdf_nbuf_free(evt_buf);
+	qdf_nbuf_free(evt_buf);
 	return status;
 }
 #endif /* 0 */
@@ -1024,15 +1024,15 @@ static void wmi_process_fw_event_worker_thread_ctx
 	uint8_t *data;
 
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
-	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
-	data = cdf_nbuf_data(evt_buf);
+	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
+	data = qdf_nbuf_data(evt_buf);
 
 	qdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
 	/* Exclude 4 bytes of TLV header */
 	WMI_RX_EVENT_RECORD(id, ((uint8_t *) data + 4));
 	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
-	cdf_nbuf_queue_add(&wmi_handle->event_queue, evt_buf);
+	qdf_nbuf_queue_add(&wmi_handle->event_queue, evt_buf);
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	schedule_work(&wmi_handle->rx_event_work);
 	return;
@@ -1049,7 +1049,7 @@ void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	uint32_t id;
 
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
-	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
+	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 	switch (id) {
 	/*Event will be handled in tasklet ctx*/
 	case WMI_TX_PAUSE_EVENTID:
@@ -1090,13 +1090,13 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	void *wmi_cmd_struct_ptr = NULL;
 	int tlv_ok_status = 0;
 
-	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
+	id = WMI_GET_FIELD(qdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 
-	if (cdf_nbuf_pull_head(evt_buf, sizeof(WMI_CMD_HDR)) == NULL)
+	if (qdf_nbuf_pull_head(evt_buf, sizeof(WMI_CMD_HDR)) == NULL)
 		goto end;
 
-	data = cdf_nbuf_data(evt_buf);
-	len = cdf_nbuf_len(evt_buf);
+	data = qdf_nbuf_data(evt_buf);
+	len = qdf_nbuf_len(evt_buf);
 
 	/* Validate and pad(if necessary) the TLVs */
 	tlv_ok_status = wmitlv_check_and_pad_event_tlvs(wmi_handle->scn_handle,
@@ -1164,7 +1164,7 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	}
 end:
 	wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
-	cdf_nbuf_free(evt_buf);
+	qdf_nbuf_free(evt_buf);
 }
 
 void wmi_rx_event_work(struct work_struct *work)
@@ -1174,12 +1174,12 @@ void wmi_rx_event_work(struct work_struct *work)
 	wmi_buf_t buf;
 
 	qdf_spin_lock_bh(&wmi->eventq_lock);
-	buf = cdf_nbuf_queue_remove(&wmi->event_queue);
+	buf = qdf_nbuf_queue_remove(&wmi->event_queue);
 	qdf_spin_unlock_bh(&wmi->eventq_lock);
 	while (buf) {
 		__wmi_control_rx(wmi, buf);
 		qdf_spin_lock_bh(&wmi->eventq_lock);
-		buf = cdf_nbuf_queue_remove(&wmi->event_queue);
+		buf = qdf_nbuf_queue_remove(&wmi->event_queue);
 		qdf_spin_unlock_bh(&wmi->eventq_lock);
 	}
 }
@@ -1219,7 +1219,7 @@ void *wmi_unified_attach(ol_scn_t scn_handle,
 	qdf_atomic_init(&wmi_handle->is_target_suspended);
 	wmi_runtime_pm_init(wmi_handle);
 	qdf_spinlock_create(&wmi_handle->eventq_lock);
-	cdf_nbuf_queue_init(&wmi_handle->event_queue);
+	qdf_nbuf_queue_init(&wmi_handle->event_queue);
 #ifdef CONFIG_CNSS
 	cnss_init_work(&wmi_handle->rx_event_work, wmi_rx_event_work);
 #else
@@ -1238,10 +1238,10 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 
 	cds_flush_work(&wmi_handle->rx_event_work);
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
-	buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
+	buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
-		cdf_nbuf_free(buf);
-		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
+		qdf_nbuf_free(buf);
+		buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	if (wmi_handle != NULL) {
@@ -1270,10 +1270,10 @@ wmi_unified_remove_work(struct wmi_unified *wmi_handle)
 		"Enter: %s", __func__);
 	cds_flush_work(&wmi_handle->rx_event_work);
 	qdf_spin_lock_bh(&wmi_handle->eventq_lock);
-	buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
+	buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	while (buf) {
-		cdf_nbuf_free(buf);
-		buf = cdf_nbuf_queue_remove(&wmi_handle->event_queue);
+		qdf_nbuf_free(buf);
+		buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
 	QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_INFO,
@@ -1290,7 +1290,7 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 
 	ASSERT(wmi_cmd_buf);
 #ifdef WMI_INTERFACE_EVENT_LOGGING
-	cmd_id = WMI_GET_FIELD(cdf_nbuf_data(wmi_cmd_buf),
+	cmd_id = WMI_GET_FIELD(qdf_nbuf_data(wmi_cmd_buf),
 			       WMI_CMD_HDR, COMMANDID);
 
 #ifdef QCA_WIFI_3_0_EMU
@@ -1303,15 +1303,15 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	   - exclude TLV and WMI headers */
 	if (cmd_id == WMI_MGMT_TX_SEND_CMDID) {
 		WMI_MGMT_COMMAND_TX_CMP_RECORD(cmd_id,
-				((uint32_t *) cdf_nbuf_data(wmi_cmd_buf) + 2));
+				((uint32_t *) qdf_nbuf_data(wmi_cmd_buf) + 2));
 	} else {
 		WMI_COMMAND_TX_CMP_RECORD(cmd_id,
-				((uint32_t *) cdf_nbuf_data(wmi_cmd_buf) + 2));
+				((uint32_t *) qdf_nbuf_data(wmi_cmd_buf) + 2));
 	}
 
 	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
-	cdf_nbuf_free(wmi_cmd_buf);
+	qdf_nbuf_free(wmi_cmd_buf);
 	qdf_mem_free(htc_pkt);
 	qdf_atomic_dec(&wmi_handle->pending_cmds);
 }

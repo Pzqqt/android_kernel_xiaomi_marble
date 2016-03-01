@@ -32,18 +32,18 @@
 #ifndef _OL_TX__H_
 #define _OL_TX__H_
 
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_lock.h>
 #include <ol_txrx_api.h>        /* ol_txrx_vdev_handle */
 
 #include <ol_txrx_types.h>      /* ol_tx_desc_t, ol_txrx_msdu_info_t */
 
-cdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list);
+qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #ifdef WLAN_FEATURE_FASTPATH
-cdf_nbuf_t ol_tx_ll_fast(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list);
+qdf_nbuf_t ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 #endif
 
-cdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, cdf_nbuf_t msdu_list);
+qdf_nbuf_t ol_tx_ll_queue(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list);
 
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 #define OL_TX_LL ol_tx_ll_queue
@@ -65,14 +65,14 @@ void ol_tx_pdev_ll_pause_queue_send_all(struct ol_txrx_pdev_t *pdev)
 	return;
 }
 #endif
-cdf_nbuf_t
+qdf_nbuf_t
 ol_tx_non_std_ll(ol_txrx_vdev_handle data_vdev,
-		 enum ol_tx_spec tx_spec, cdf_nbuf_t msdu_list);
+		 enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 
-cdf_nbuf_t
-ol_tx_reinject(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu, uint16_t peer_id);
+qdf_nbuf_t
+ol_tx_reinject(struct ol_txrx_vdev_t *vdev, qdf_nbuf_t msdu, uint16_t peer_id);
 
-void ol_txrx_mgmt_tx_complete(void *ctxt, cdf_nbuf_t netbuf, int err);
+void ol_txrx_mgmt_tx_complete(void *ctxt, qdf_nbuf_t netbuf, int err);
 
 
 #if defined(FEATURE_TSO)

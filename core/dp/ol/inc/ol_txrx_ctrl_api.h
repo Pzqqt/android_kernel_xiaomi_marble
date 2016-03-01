@@ -33,7 +33,7 @@
 #define _OL_TXRX_CTRL_API__H_
 
 #include <athdefs.h>            /* A_STATUS */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_device_t */
 #include <htc_api.h>            /* HTC_HANDLE */
 
@@ -543,7 +543,7 @@ ol_txrx_vdev_detach(ol_txrx_vdev_handle data_vdev,
 void ol_txrx_pdev_detach(ol_txrx_pdev_handle data_pdev, int force);
 
 typedef void
-(*ol_txrx_data_tx_cb)(void *ctxt, cdf_nbuf_t tx_frm, int had_error);
+(*ol_txrx_data_tx_cb)(void *ctxt, qdf_nbuf_t tx_frm, int had_error);
 
 /**
  * @brief Store a delivery notification callback for specific data frames.
@@ -583,12 +583,12 @@ ol_txrx_data_tx_cb_set(ol_txrx_vdev_handle data_vdev,
  * @param tx_spec - what non-standard handling to apply to the tx data frames
  * @param msdu_list - NULL-terminated list of tx MSDUs
  */
-cdf_nbuf_t
+qdf_nbuf_t
 ol_tx_non_std(ol_txrx_vdev_handle data_vdev,
-	      enum ol_tx_spec tx_spec, cdf_nbuf_t msdu_list);
+	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
 
 typedef void
-(*ol_txrx_mgmt_tx_cb)(void *ctxt, cdf_nbuf_t tx_mgmt_frm, int had_error);
+(*ol_txrx_mgmt_tx_cb)(void *ctxt, qdf_nbuf_t tx_mgmt_frm, int had_error);
 
 /**
  * @brief Store a callback for delivery notifications for management frames.
@@ -634,7 +634,7 @@ ol_txrx_mgmt_tx_cb_set(ol_txrx_pdev_handle pdev,
  */
 int
 ol_txrx_mgmt_send(ol_txrx_vdev_handle vdev,
-		  cdf_nbuf_t tx_mgmt_frm,
+		  qdf_nbuf_t tx_mgmt_frm,
 		  uint8_t type, uint8_t use_6mbps, uint16_t chanfreq);
 
 /**

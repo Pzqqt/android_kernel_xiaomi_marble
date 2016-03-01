@@ -34,14 +34,14 @@
 
 #include <htt.h>                /* HTT_TX_COMPL_IND_STAT */
 #include <athdefs.h>            /* A_STATUS */
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 
 #include <ol_txrx_api.h>        /* ol_txrx_pdev_handle */
 
-static inline uint16_t *ol_tx_msdu_id_storage(cdf_nbuf_t msdu)
+static inline uint16_t *ol_tx_msdu_id_storage(qdf_nbuf_t msdu)
 {
-	qdf_assert(cdf_nbuf_headroom(msdu) >= (sizeof(uint16_t) * 2 - 1));
-	return (uint16_t *) (((qdf_size_t) (cdf_nbuf_head(msdu) + 1)) & ~0x1);
+	qdf_assert(qdf_nbuf_headroom(msdu) >= (sizeof(uint16_t) * 2 - 1));
+	return (uint16_t *) (((qdf_size_t) (qdf_nbuf_head(msdu) + 1)) & ~0x1);
 }
 
 /**
@@ -59,7 +59,7 @@ static inline uint16_t *ol_tx_msdu_id_storage(cdf_nbuf_t msdu)
  */
 void
 ol_tx_download_done_ll(void *pdev,
-		       A_STATUS status, cdf_nbuf_t msdu, uint16_t msdu_id);
+		       A_STATUS status, qdf_nbuf_t msdu, uint16_t msdu_id);
 
 /**
  * @brief Tx MSDU download completion for HL system without tx completion msgs
@@ -75,7 +75,7 @@ ol_tx_download_done_ll(void *pdev,
  */
 void
 ol_tx_download_done_hl_free(void *pdev,
-			    A_STATUS status, cdf_nbuf_t msdu, uint16_t msdu_id);
+			    A_STATUS status, qdf_nbuf_t msdu, uint16_t msdu_id);
 
 /**
  * @brief Tx MSDU download completion for HL system with tx completion msgs
@@ -96,7 +96,7 @@ ol_tx_download_done_hl_free(void *pdev,
 void
 ol_tx_download_done_hl_retain(void *pdev,
 			      A_STATUS status,
-			      cdf_nbuf_t msdu, uint16_t msdu_id);
+			      qdf_nbuf_t msdu, uint16_t msdu_id);
 
 /*
  * For now, make the host HTT -> host txrx tx completion status
@@ -233,7 +233,7 @@ void ol_tx_target_credit_update(struct ol_txrx_pdev_t *pdev, int credit_delta);
  */
 void
 ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
-			 cdf_nbuf_t rx_ind_msg,
+			 qdf_nbuf_t rx_ind_msg,
 			 uint16_t peer_id, uint8_t tid, int num_mpdu_ranges);
 
 /**
@@ -253,7 +253,7 @@ ol_rx_indication_handler(ol_txrx_pdev_handle pdev,
  * @param tid - what (extended) traffic type the rx data is
  */
 void ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
-				   cdf_nbuf_t rx_frag_ind_msg,
+				   qdf_nbuf_t rx_frag_ind_msg,
 				   uint16_t peer_id, uint8_t tid);
 
 /**
@@ -277,7 +277,7 @@ void ol_rx_frag_indication_handler(ol_txrx_pdev_handle pdev,
  */
 void
 ol_rx_offload_deliver_ind_handler(ol_txrx_pdev_handle pdev,
-				  cdf_nbuf_t msg, int msdu_cnt);
+				  qdf_nbuf_t msg, int msdu_cnt);
 
 /**
  * @brief Process a peer map message sent by the target.
@@ -572,7 +572,7 @@ ol_txrx_peer_qoscapable_get(struct ol_txrx_pdev_t *txrx_pdev, uint16_t peer_id);
  */
 void
 ol_rx_in_order_indication_handler(ol_txrx_pdev_handle pdev,
-				  cdf_nbuf_t rx_ind_msg,
+				  qdf_nbuf_t rx_ind_msg,
 				  uint16_t peer_id,
 				  uint8_t tid, uint8_t is_offload);
 

@@ -1392,7 +1392,7 @@ wmi_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
 				      len, WMI_DBGLOG_CFG_CMDID);
 
 	if (status != A_OK)
-		cdf_nbuf_free(buf);
+		qdf_nbuf_free(buf);
 
 	return status;
 }
