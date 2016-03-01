@@ -370,11 +370,11 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 {
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx;
+	struct netdev_queue *txq;
+	int i;
 
 	DPTRACE(qdf_dp_trace(NULL, QDF_DP_TRACE_HDD_SOFTAP_TX_TIMEOUT,
 				NULL, 0));
-	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
-		  "%s: Transmission timeout occurred", __func__);
 	/* Getting here implies we disabled the TX queues for too
 	 * long. Queues are disabled either because of disassociation
 	 * or low resource scenarios. In case of disassociation it is
@@ -387,6 +387,24 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 			 "%s: Recovery in Progress. Ignore!!!", __func__);
 		return;
 	}
+
+	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_ERROR,
+		  "%s: Transmission timeout occurred jiffies %lu trans_start %lu"
+			, __func__, jiffies, dev->trans_start);
+
+	for (i = 0; i < NUM_TX_QUEUES; i++) {
+		txq = netdev_get_tx_queue(dev, i);
+		QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
+			  QDF_TRACE_LEVEL_ERROR,
+			  "Queue%d status: %d txq->trans_start %lu",
+			  i, netif_tx_queue_stopped(txq), txq->trans_start);
+	}
+
+	wlan_hdd_display_netif_queue_history(hdd_ctx);
+	ol_tx_dump_flow_pool_info();
+	QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_ERROR,
+			"carrier state: %d", netif_carrier_ok(dev));
+
 }
 
 /**
