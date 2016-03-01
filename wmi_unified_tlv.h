@@ -24,7 +24,8 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-
+#ifndef _WMI_UNIFIED_TLV_H_
+#define _WMI_UNIFIED_TLV_H_
 #include <osdep.h>
 #include "a_types.h"
 #include "wmi_unified_param.h"
@@ -153,3 +154,26 @@ int32_t send_set_smps_params_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
 int32_t send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
 			uint8_t vdev_id, int value);
 
+int32_t send_ocb_set_utc_time_cmd_tlv(wmi_unified_t wmi_handle,
+				struct ocb_utc_param *utc);
+
+int send_ocb_start_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
+	struct ocb_timing_advert_param *timing_advert);
+
+int send_ocb_stop_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
+	struct ocb_timing_advert_param *timing_advert);
+
+int send_ocb_get_tsf_timer_cmd_tlv(wmi_unified_t wmi_handle,
+			  uint8_t vdev_id);
+
+int32_t send_dcc_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
+		     struct dcc_get_stats_param *get_stats_param);
+
+int32_t send_dcc_clear_stats_cmd_tlv(wmi_unified_t wmi_handle,
+				uint32_t vdev_id, uint32_t dcc_stats_bitmap);
+
+int send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
+		       struct dcc_update_ndl_param *update_ndl_param);
+
+int32_t send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
+		struct ocb_config_param *config, uint32_t *ch_mhz);

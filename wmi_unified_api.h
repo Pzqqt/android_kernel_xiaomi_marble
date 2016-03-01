@@ -348,4 +348,31 @@ int32_t wmi_unified_set_smps_params(void *wmi_hdl, uint8_t vdev_id,
 			       int value);
 
 int32_t wmi_unified_set_mimops(void *wmi_hdl, uint8_t vdev_id, int value);
+
+int32_t wmi_unified_ocb_set_utc_time(void *wmi_hdl,
+				struct ocb_utc_param *utc);
+
+int32_t wmi_unified_ocb_start_timing_advert(void *wmi_hdl,
+	struct ocb_timing_advert_param *timing_advert);
+
+int32_t wmi_unified_ocb_stop_timing_advert(void *wmi_hdl,
+	struct ocb_timing_advert_param *timing_advert);
+
+int32_t wmi_unified_ocb_set_config(void *wmi_hdl,
+		   struct ocb_config_param *config, uint32_t *ch_mhz);
+
+int32_t wmi_unified_ocb_get_tsf_timer(void *wmi_hdl,
+			  uint8_t vdev_id);
+
+int wmi_unified_ocb_start_timing_advert(void *wmi_hdl,
+	struct ocb_timing_advert_param *timing_advert);
+
+int32_t wmi_unified_ocb_set_utc_time_cmd(void *wmi_hdl,
+			  struct ocb_utc_param *utc);
+int32_t wmi_unified_dcc_get_stats_cmd(void *wmi_hdl,
+		     struct dcc_get_stats_param *get_stats_param);
+int32_t wmi_unified_dcc_clear_stats(void *wmi_hdl,
+				uint32_t vdev_id, uint32_t dcc_stats_bitmap);
+int32_t wmi_unified_dcc_update_ndl(void *wmi_hdl,
+		       struct dcc_update_ndl_param *update_ndl_param);
 #endif /* _WMI_UNIFIED_API_H_ */
