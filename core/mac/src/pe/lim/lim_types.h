@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -309,7 +309,7 @@ typedef struct sLimMlmAuthCnf {
 } tLimMlmAuthCnf, *tpLimMlmAuthCnf;
 
 typedef struct sLimMlmDeauthReq {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	uint16_t deauthTrigger;
 	uint16_t aid;
@@ -318,7 +318,7 @@ typedef struct sLimMlmDeauthReq {
 } tLimMlmDeauthReq, *tpLimMlmDeauthReq;
 
 typedef struct sLimMlmDeauthCnf {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	tSirResultCodes resultCode;
 	uint16_t deauthTrigger;
 	uint16_t aid;
@@ -333,7 +333,7 @@ typedef struct sLimMlmDeauthInd {
 } tLimMlmDeauthInd, *tpLimMlmDeauthInd;
 
 typedef struct sLimMlmDisassocReq {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t reasonCode;
 	uint16_t disassocTrigger;
 	uint16_t aid;
@@ -371,7 +371,7 @@ typedef struct sLimMlmPurgeStaInd {
 } tLimMlmPurgeStaInd, *tpLimMlmPurgeStaInd;
 
 typedef struct sLimMlmSetKeysCnf {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint16_t resultCode;
 	uint16_t aid;
 	uint8_t sessionId;
@@ -422,9 +422,6 @@ void lim_init_mlm(tpAniSirGlobal);
 
 /* Function to cleanup MLM state machine */
 void lim_cleanup_mlm(tpAniSirGlobal);
-
-/* Function to cleanup LMM state machine */
-void lim_cleanup_lmm(tpAniSirGlobal);
 
 /* Management frame handling functions */
 void lim_process_beacon_frame(tpAniSirGlobal, uint8_t *, tpPESession);
@@ -500,17 +497,9 @@ tSirRetStatus lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	tSirMacAddr peer, uint8_t mode, uint8_t new_op_class,
 	uint8_t new_channel, uint8_t count, tpPESession session_entry);
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 						     tSirMacAddr peer, uint8_t nMode,
 						     tpPESession psessionEntry);
-tSirRetStatus lim_send_vht_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
-						     tSirMacAddr peer,
-						     uint8_t nChanWidth,
-						     uint8_t nNewChannel,
-						     uint8_t ncbMode,
-						     tpPESession psessionEntry);
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI
 tSirRetStatus lim_send_neighbor_report_request_frame(tpAniSirGlobal,
@@ -542,11 +531,6 @@ void lim_send_sme_mgmt_tx_completion(tpAniSirGlobal pMac, tpPESession psessionEn
 tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 				    tpPESession session_entry);
 CDF_STATUS lim_process_tdls_add_sta_rsp(tpAniSirGlobal pMac, void *msg, tpPESession);
-tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
-					   tSirMacAddr peerMac, uint16_t reason,
-					   uint8_t responder,
-					   tpPESession psessionEntry,
-					   uint8_t *addIe, uint16_t addIeLen);
 #else
 static inline tSirRetStatus lim_delete_tdls_peers(tpAniSirGlobal mac_ctx,
 						tpPESession session_entry)
@@ -574,7 +558,7 @@ uint32_t lim_defer_msg(tpAniSirGlobal, tSirMsgQ *);
 /* / Function that Switches the Channel and sets the CB Mode */
 void lim_set_channel(tpAniSirGlobal pMac, uint8_t channel,
 		uint8_t ch_center_freq_seg0, uint8_t ch_center_freq_seg1,
-		phy_ch_width ch_width, tPowerdBm maxTxPower,
+		phy_ch_width ch_width, int8_t maxTxPower,
 		uint8_t peSessionId);
 
 
@@ -815,12 +799,14 @@ void
 lim_send_vdev_restart(tpAniSirGlobal pMac, tpPESession psessionEntry,
 		      uint8_t sessionId);
 
-void lim_get_wpspbc_sessions(tpAniSirGlobal pMac, uint8_t *addr, uint8_t *uuid_e,
-			     eWPSPBCOverlap *overlap, tpPESession psessionEntry);
+void lim_get_wpspbc_sessions(tpAniSirGlobal pMac, struct cdf_mac_addr addr,
+			uint8_t *uuid_e, eWPSPBCOverlap *overlap,
+			tpPESession psessionEntry);
 void limWPSPBCTimeout(tpAniSirGlobal pMac, tpPESession psessionEntry);
 void lim_wpspbc_close(tpAniSirGlobal pMac, tpPESession psessionEntry);
-void lim_remove_pbc_sessions(tpAniSirGlobal pMac, tSirMacAddr pRemoveMac,
-			     tpPESession psessionEntry);
+void lim_remove_pbc_sessions(tpAniSirGlobal pMac,
+				struct cdf_mac_addr pRemoveMac,
+				tpPESession psessionEntry);
 
 #define LIM_WPS_OVERLAP_TIMER_MS                 10000
 void

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,7 +104,7 @@ typedef struct {
 } epping_poll_t;
 #endif
 
-typedef struct epping_context_s {
+typedef struct epping_context {
 	int32_t con_mode;
 	char *pwlan_module_name;
 	uint32_t target_type;
@@ -135,7 +135,7 @@ typedef enum {
 
 typedef struct epping_adapter_s {
 	epping_context_t *pEpping_ctx;
-	tCDF_CON_MODE device_mode;
+	enum tCDF_ADAPTER_MODE device_mode;
 	/** Handle to the network device */
 	struct net_device *dev;
 	struct cdf_mac_addr macAddressCurrent;
@@ -183,7 +183,7 @@ void epping_refill(void *ctx, HTC_ENDPOINT_ID Endpoint);
 /* epping_txrx signatures */
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     tCDF_CON_MODE device_mode);
+				     enum tCDF_ADAPTER_MODE device_mode);
 void epping_destroy_adapter(epping_adapter_t *pAdapter);
 int epping_connect_service(epping_context_t *pEpping_ctx);
 #ifdef HIF_PCI

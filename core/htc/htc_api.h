@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,6 +65,9 @@ struct ol_ath_htc_stats {
 	int htc_pkt_q_empty_count;
 	int htc_send_q_empty_count;
 };
+
+/* To resume HTT Tx queue during runtime resume */
+typedef void (*HTC_EP_RESUME_TX_QUEUE)(void *);
 
 /* per service connection send completion */
 typedef void (*HTC_EP_SEND_PKT_COMPLETE)(void *, HTC_PACKET *);
@@ -151,6 +154,7 @@ typedef struct _HTC_EP_CALLBACKS {
 	                                                                   indications (EpTxComplete must be NULL) */
 	HTC_EP_RECV_PKT_MULTIPLE EpRecvPktMultiple;             /* OPTIONAL completion handler for multiple
 	                                                           recv packet indications (EpRecv must be NULL) */
+	HTC_EP_RESUME_TX_QUEUE ep_resume_tx_queue;
 	int RecvAllocThreshold;         /* if EpRecvAllocThresh is non-NULL, HTC will compare the
 	                                   threshold value to the current recv packet length and invoke
 	                                   the EpRecvAllocThresh callback to acquire a packet buffer */
@@ -163,7 +167,7 @@ typedef struct _HTC_EP_CALLBACKS {
 
 /* service connection information */
 typedef struct _HTC_SERVICE_CONNECT_REQ {
-	HTC_SERVICE_ID ServiceID;               /* service ID to connect to */
+	HTC_SERVICE_ID service_id;               /* service ID to connect to */
 	A_UINT16 ConnectionFlags;               /* connection flags, see htc protocol definition */
 	A_UINT8 *pMetaData;             /* ptr to optional service-specific meta-data */
 	A_UINT8 MetaDataLength;         /* optional meta data length */
@@ -189,7 +193,7 @@ typedef struct _HTC_SERVICE_CONNECT_RESP {
 typedef struct _HTC_ENDPOINT_CREDIT_DIST {
 	struct _HTC_ENDPOINT_CREDIT_DIST *pNext;
 	struct _HTC_ENDPOINT_CREDIT_DIST *pPrev;
-	HTC_SERVICE_ID ServiceID;               /* Service ID (set by HTC) */
+	HTC_SERVICE_ID service_id;               /* Service ID (set by HTC) */
 	HTC_ENDPOINT_ID Endpoint;               /* endpoint for this distribution struct (set by HTC) */
 	A_UINT32 DistFlags;             /* distribution flags, distribution function can
 	                                   set default activity using SET_EP_ACTIVE() macro */
@@ -694,6 +698,8 @@ void htc_dump_counter_info(HTC_HANDLE HTCHandle);
 void *htc_get_targetdef(HTC_HANDLE htc_handle);
 void htc_set_target_to_sleep(void *context);
 void htc_cancel_deferred_target_sleep(void *context);
+int htc_runtime_suspend(void);
+int htc_runtime_resume(void);
 
 /* Disable ASPM : Disable PCIe low power */
 void htc_disable_aspm(void);

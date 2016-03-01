@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,7 +34,6 @@
 	transitions and Legacy roaming for Android platform.
    ========================================================================== */
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "wma_types.h"
 #include "cds_mq.h"
 #include "csr_inside_api.h"
@@ -646,11 +645,9 @@ static void csr_neighbor_roam_reset_preauth_control_info(tpAniSirGlobal pMac,
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	pNeighborRoamInfo->is11rAssoc = false;
 	/* Purge pre-auth fail list */
 	csr_neighbor_roam_purge_preauth_failed_list(pMac);
-#endif
 
 	pNeighborRoamInfo->FTRoamInfo.preauthRspPending = false;
 	pNeighborRoamInfo->FTRoamInfo.numPreAuthRetries = 0;
@@ -1042,6 +1039,7 @@ CDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 	} else {
 		tpCsrNeighborRoamBSSInfo neighbor_bss_node = NULL;
 		tListElem *entry;
+		bool is_dis_pending = false;
 
 		sms_log(mac_ctx, LOGE,
 			FL("Preauth failed retry number %d, status = 0x%x"),
@@ -1095,11 +1093,17 @@ CDF_STATUS csr_neighbor_roam_preauth_rsp_handler(tpAniSirGlobal mac_ctx,
 				mac_ctx, neighbor_bss_node);
 		}
 NEXT_PREAUTH:
+		is_dis_pending = is_disconnect_pending(mac_ctx, session_id);
+		if (is_dis_pending) {
+			sms_log(mac_ctx, LOGE,
+				FL("Disconnect in progress, Abort preauth"));
+			goto ABORT_PREAUTH;
+		}
 		/* Issue preauth request for the same/next entry */
 		if (CDF_STATUS_SUCCESS == csr_neighbor_roam_issue_preauth_req(
 						mac_ctx, session_id))
 			goto DEQ_PREAUTH;
-
+ABORT_PREAUTH:
 		if (csr_roam_is_roam_offload_scan_enabled(mac_ctx)) {
 			if (neighbor_roam_info->uOsRequestedHandoff) {
 				neighbor_roam_info->uOsRequestedHandoff = 0;
@@ -1121,7 +1125,7 @@ DEQ_PREAUTH:
 	csr_dequeue_roam_command(mac_ctx, eCsrPerformPreauth);
 	return preauth_processed;
 }
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
+#endif /* WLAN_FEATURE_VOWIFI_11R */
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 /**
@@ -1474,7 +1478,6 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					  "SKIP-currently associated AP");
 				continue;
 			}
-#ifdef FEATURE_WLAN_LFR
 			/*
 			 * In case of reassoc requested by upper layer, look
 			 * for exact match of bssid & channel. csr cache might
@@ -1491,7 +1494,6 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					  "SKIP-not a candidate AP for OS requested roam");
 				continue;
 			}
-#endif
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
 			if ((n_roam_info->is11rAssoc) &&
@@ -1538,7 +1540,6 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 			}
 #endif /* FEATURE_WLAN_ESE */
 
-#ifdef FEATURE_WLAN_LFR
 			/*
 			 * If we are supporting legacy roaming, and
 			 * if the candidate is on the "pre-auth failed" list,
@@ -1551,7 +1552,6 @@ csr_neighbor_roam_process_scan_results(tpAniSirGlobal mac_ctx,
 					FL("BSSID present in pre-auth fail list.. Ignoring"));
 				continue;
 			}
-#endif /* FEATURE_WLAN_LFR */
 
 			/* check the age of the AP */
 			age_ticks = (uint32_t) cdf_mc_timer_get_system_ticks() -
@@ -2013,7 +2013,6 @@ CDF_STATUS csr_neighbor_roam_create_chan_list_from_neighbor_report(tpAniSirGloba
 }
 #endif /* WLAN_FEATURE_VOWIFI_11R */
 
-#ifdef FEATURE_WLAN_LFR
 /**
  * csr_neighbor_roam_is_ssid_and_security_match() - to match ssid/security
  * @pMac: Pointer to mac context
@@ -2211,7 +2210,6 @@ csr_neighbor_roam_prepare_non_occupied_channel_list(tpAniSirGlobal pMac,
 	*pOutputNumOfChannels = outputNumOfChannels;
 	return CDF_STATUS_SUCCESS;
 }
-#endif /* FEATURE_WLAN_LFR */
 
 /**
  * csr_roam_reset_roam_params - API to reset the roaming parameters
@@ -2256,10 +2254,8 @@ CDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 {
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 			&pMac->roam.neighborRoamInfo[sessionId];
-#ifdef FEATURE_WLAN_LFR
 	tCsrRoamConnectedProfile *pPrevProfile =
 			&pNeighborRoamInfo->prevConnProfile;
-#endif
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 	tCsrRoamSession *roam_session = NULL;
 
@@ -2272,14 +2268,12 @@ CDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
 			MAC_ADDRESS_STR), sessionId,
 			pNeighborRoamInfo->neighborRoamState,
 			MAC_ADDR_ARRAY(pSession->connectedProfile.bssid.bytes));
-#ifdef FEATURE_WLAN_LFR
 	/*
 	 * Free the current previous profile and move
 	 * the current profile to prev profile.
 	 */
-	csr_roam_free_connect_profile(pMac, pPrevProfile);
+	csr_roam_free_connect_profile(pPrevProfile);
 	csr_roam_copy_connect_profile(pMac, sessionId, pPrevProfile);
-#endif
 	/*
 	 * clear the roaming parameters that are per connection.
 	 * For a new connection, they have to be programmed again.
@@ -2403,11 +2397,8 @@ static void csr_neighbor_roam_info_ctx_init(
 		&pMac->roam.neighborRoamInfo[session_id];
 	tCsrRoamSession *session = &pMac->roam.roamSession[session_id];
 
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	int init_ft_flag = false;
-#endif
 
-#ifdef FEATURE_WLAN_LFR
 	/*
 	 * Initialize the occupied list ONLY if we are
 	 * transitioning from INIT state to CONNECTED state.
@@ -2415,7 +2406,6 @@ static void csr_neighbor_roam_info_ctx_init(
 	if (eCSR_NEIGHBOR_ROAM_STATE_INIT ==
 		ngbr_roam_info->neighborRoamState)
 		csr_init_occupied_channels_list(pMac, session_id);
-#endif
 	CSR_NEIGHBOR_ROAM_STATE_TRANSITION
 		(pMac, eCSR_NEIGHBOR_ROAM_STATE_CONNECTED, session_id);
 
@@ -2436,13 +2426,11 @@ static void csr_neighbor_roam_info_ctx_init(
 	ngbr_roam_info->currentRoamBeaconRssiWeight =
 		ngbr_roam_info->cfgParams.nRoamBeaconRssiWeight;
 
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	/**
 	 * Now we can clear the preauthDone that
 	 * was saved as we are connected afresh */
 	csr_neighbor_roam_free_roamable_bss_list(pMac,
 		&ngbr_roam_info->FTRoamInfo.preAuthDoneList);
-#endif
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	/* Based on the auth scheme tell if we are 11r */
@@ -2470,12 +2458,9 @@ static void csr_neighbor_roam_info_ctx_init(
 		FL("isESEAssoc is = %d ft = %d"),
 		ngbr_roam_info->isESEAssoc, init_ft_flag);
 #endif
-#ifdef FEATURE_WLAN_LFR
 	/* If "Legacy Fast Roaming" is enabled */
 	if (csr_roam_is_fast_roam_enabled(pMac, session_id))
 		init_ft_flag = true;
-#endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	if (init_ft_flag == false)
 		return;
 	/* Initialize all the data structures needed for the 11r FT Preauth */
@@ -2495,7 +2480,7 @@ static void csr_neighbor_roam_info_ctx_init(
 		}
 		ngbr_roam_info->uOsRequestedHandoff = 0;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (session->roamOffloadSynchParams.bRoamSynchInProgress) {
+		if (session->roam_synch_in_progress) {
 			if (pMac->roam.pReassocResp != NULL) {
 				CDF_TRACE(CDF_MODULE_ID_SME,
 					CDF_TRACE_LEVEL_DEBUG,
@@ -2503,16 +2488,12 @@ static void csr_neighbor_roam_info_ctx_init(
 				cdf_mem_free(pMac->roam.pReassocResp);
 				pMac->roam.pReassocResp = NULL;
 			}
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
-				"LFR3:Send SynchCnf auth, authenticated");
-			csr_roam_offload_send_synch_cnf(pMac, session_id);
 		} else
 #endif
 			csr_roam_offload_scan(pMac, session_id,
 				ROAM_SCAN_OFFLOAD_START,
 				REASON_CONNECT);
 	}
-#endif
 }
 
 /**
@@ -2570,9 +2551,9 @@ CDF_STATUS csr_neighbor_roam_indicate_connect(
 		return CDF_STATUS_SUCCESS;
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (session->roamOffloadSynchParams.bRoamSynchInProgress &&
+	if (session->roam_synch_in_progress &&
 		(eSIR_ROAM_AUTH_STATUS_AUTHENTICATED ==
-		session->roamOffloadSynchParams.authStatus)) {
+		session->roam_synch_data->authStatus)) {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_DEBUG,
 			"LFR3:csr_neighbor_roam_indicate_connect");
 		msg = cdf_mem_malloc(sizeof(tSirSetActiveModeSetBncFilterReq));
@@ -2588,10 +2569,15 @@ CDF_STATUS csr_neighbor_roam_indicate_connect(
 		cdf_copy_macaddr(&roamInfo.peerMac,
 			&session->connectedProfile.bssid);
 		roamInfo.roamSynchInProgress =
-			session->roamOffloadSynchParams.bRoamSynchInProgress;
+			session->roam_synch_in_progress;
 		csr_roam_call_callback(pMac, session_id, &roamInfo, 0,
 			eCSR_ROAM_SET_KEY_COMPLETE,
 			eCSR_ROAM_RESULT_AUTHENTICATED);
+		csr_neighbor_roam_reset_init_state_control_info(pMac,
+			session_id);
+		csr_neighbor_roam_info_ctx_init(pMac, session_id);
+
+		return status;
 	}
 #endif
 
@@ -2812,10 +2798,8 @@ CDF_STATUS csr_neighbor_roam_init(tpAniSirGlobal pMac, uint8_t sessionId)
 		pNeighborRoamInfo->cfgParams.nRoamBmissFinalBcnt;
 	pNeighborRoamInfo->currentRoamBeaconRssiWeight =
 		pNeighborRoamInfo->cfgParams.nRoamBeaconRssiWeight;
-#ifdef FEATURE_WLAN_LFR
 	cdf_mem_set(&pNeighborRoamInfo->prevConnProfile,
 		    sizeof(tCsrRoamConnectedProfile), 0);
-#endif
 
 	status = csr_ll_open(pMac->hHdd, &pNeighborRoamInfo->roamableAPList);
 	if (CDF_STATUS_SUCCESS != status) {
@@ -2906,9 +2890,7 @@ void csr_neighbor_roam_close(tpAniSirGlobal pMac, uint8_t sessionId)
 
 	/* Free the profile.. */
 	csr_release_profile(pMac, &pNeighborRoamInfo->csrNeighborRoamProfile);
-#ifdef FEATURE_WLAN_LFR
-	csr_roam_free_connect_profile(pMac, &pNeighborRoamInfo->prevConnProfile);
-#endif
+	csr_roam_free_connect_profile(&pNeighborRoamInfo->prevConnProfile);
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	pNeighborRoamInfo->FTRoamInfo.currentNeighborRptRetryNum = 0;
 	pNeighborRoamInfo->FTRoamInfo.numBssFromNeighborReport = 0;
@@ -3046,7 +3028,7 @@ bool csr_neighbor_roam_is_handoff_in_progress(tpAniSirGlobal pMac, uint8_t sessi
 	return false;
 }
 
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(WLAN_FEATURE_NEIGHBOR_ROAMING)
+#if defined(WLAN_FEATURE_VOWIFI_11R)
 /* ---------------------------------------------------------------------------
 
     \fn csr_neighbor_roam_is11r_assoc
@@ -3116,7 +3098,6 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 			preAuthDoneList));
 	} else
 #endif
-#ifdef FEATURE_WLAN_LFR
 	if (csr_roam_is_fast_roam_enabled(pMac, session_id)) {
 		/* Always the BSS info in the head is the handoff candidate */
 		bss_node =
@@ -3127,9 +3108,7 @@ bool csr_neighbor_roam_get_handoff_ap_info(tpAniSirGlobal pMac,
 			FL("Number of Handoff candidates = %d"),
 			csr_ll_count(
 				&ngbr_roam_info->FTRoamInfo.preAuthDoneList));
-	} else
-#endif
-	{
+	} else {
 		bss_node =
 			csr_neighbor_roam_next_roamable_ap(pMac,
 				&ngbr_roam_info->roamableAPList,
@@ -3553,4 +3532,3 @@ CDF_STATUS csr_neighbor_roam_start_lfr_scan(tpAniSirGlobal pMac, uint8_t session
 
 	return CDF_STATUS_SUCCESS;
 }
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -987,13 +987,11 @@ CDF_STATUS sme_qos_csr_event_ind(tpAniSirGlobal pMac,
 			sme_qos_process_preauth_success_ind(pMac, sessionId,
 							    pEvent_info);
 		break;
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	case SME_QOS_CSR_SET_KEY_SUCCESS_IND:
 		status =
 			sme_qos_process_set_key_success_ind(pMac, sessionId,
 							    pEvent_info);
 		break;
-#endif
 #endif
 	default:
 		/* Err msg */
@@ -2879,7 +2877,6 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 	return status;
 }
 
-#if defined(FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /* This is a dummy function now. But the purpose of me adding this was to
  * delay the TSPEC processing till SET_KEY completes. This function can be
  * used to do any SME_QOS processing after the SET_KEY. As of now, it is
@@ -2894,7 +2891,6 @@ CDF_STATUS sme_qos_process_set_key_success_ind(tpAniSirGlobal pMac,
 	(void)sme_qos_process_buffered_cmd(sessionId);
 	return CDF_STATUS_SUCCESS;
 }
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 /**
@@ -3476,7 +3472,7 @@ CDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 	aggr_req->sessionId = session_id;
 	aggr_req->timeout = 0;
 	aggr_req->rspReqd = true;
-	cdf_mem_copy(&aggr_req->bssId[0],
+	cdf_mem_copy(&aggr_req->bssid.bytes[0],
 		     &session->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct cdf_mac_addr));
 
@@ -3826,20 +3822,20 @@ CDF_STATUS sme_qos_process_ft_reassoc_rsp_ev(tpAniSirGlobal mac_ctx,
 				 csr_conn_info->nAssocRspLength));
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	if (!csr_session->roamOffloadSynchParams.bRoamSynchInProgress) {
+	if (!csr_session->roam_synch_in_progress) {
 #endif
-	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
-		ac_info = &qos_session->ac_info[ac];
-		sme_qos_find_matching_tspec(mac_ctx, sessionid, ac,
-			ac_info, ric_data_desc, &ric_rsplen);
-	}
+		for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
+			ac_info = &qos_session->ac_info[ac];
+			sme_qos_find_matching_tspec(mac_ctx, sessionid, ac,
+					ac_info, ric_data_desc, &ric_rsplen);
+		}
 
-	if (ric_rsplen) {
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
-			  FL("RIC Response still follows despite traversing "
-			  "through all ACs. Remaining len = %d"), ric_rsplen);
-		CDF_ASSERT(0);
-	}
+		if (ric_rsplen) {
+			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+				FL("RIC Resp still follows . Rem len = %d"),
+				ric_rsplen);
+			CDF_ASSERT(0);
+		}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	} else {
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
@@ -3969,7 +3965,7 @@ CDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 		cdf_mem_free(pMsg);
 		return CDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&pMsg->bssId[0],
+	cdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct cdf_mac_addr));
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -4079,7 +4075,7 @@ CDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 		cdf_mem_free(pMsg);
 		return CDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&pMsg->bssId[0],
+	cdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct cdf_mac_addr));
 

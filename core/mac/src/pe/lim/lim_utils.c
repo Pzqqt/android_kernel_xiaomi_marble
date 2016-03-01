@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -63,10 +63,6 @@
 #include "wni_cfg.h"
 #endif
 #define ASCII_SPACE_CHARACTER 0x20
-
-#define SUCCESS 1
-
-#define MAX_BA_WINDOW_SIZE_FOR_CISCO 25
 
 /** -------------------------------------------------------------
    \fn lim_delete_dialogue_token_list
@@ -738,7 +734,7 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 	 * each STA associated per BSSId and deactivate/delete
 	 * the pmfSaQueryTimer for it
 	 */
-	if (cds_is_logp_in_progress()) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("SSR is detected, proceed to clean up pmfSaQueryTimer"));
 		for (bss_entry = 0; bss_entry < mac_ctx->lim.maxBssId;
@@ -752,31 +748,6 @@ void lim_cleanup_mlm(tpAniSirGlobal mac_ctx)
 #endif
 
 } /*** end lim_cleanup_mlm() ***/
-
-/**
- * lim_cleanup_lmm()
- *
- ***FUNCTION:
- * This function is called to cleanup any resources
- * allocated by LMM sub-module.
- *
- ***PARAMS:
- *
- ***LOGIC:
- *
- ***ASSUMPTIONS:
- * NA
- *
- ***NOTE:
- * NA
- *
- * @param  pMac      Pointer to Global MAC structure
- * @return None
- */
-
-void lim_cleanup_lmm(tpAniSirGlobal pMac)
-{
-} /*** end lim_cleanup_lmm() ***/
 
 /**
  * lim_is_addr_bc()
@@ -2712,8 +2683,8 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, CDF_STATUS status,
 	pSirSmeSwitchChInd->newChannelId =
 		psessionEntry->gLimChannelSwitch.primaryChannel;
 	pSirSmeSwitchChInd->sessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(pSirSmeSwitchChInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
 
@@ -2767,7 +2738,7 @@ void lim_switch_primary_channel(tpAniSirGlobal pMac, uint8_t newChannel,
 		return;
 	}
 	lim_send_switch_chnl_params(pMac, newChannel, 0, 0, CH_WIDTH_20MHZ,
-				    (tPowerdBm) localPwrConstraint,
+				    localPwrConstraint,
 				    psessionEntry->peSessionId, false);
 #endif
 	return;
@@ -2839,11 +2810,13 @@ void lim_switch_primary_secondary_channel(tpAniSirGlobal pMac,
 			psessionEntry->currentOperChannel, newChannel);
 		psessionEntry->currentOperChannel = newChannel;
 	}
-	if (psessionEntry->htSecondaryChannelOffset != subband) {
+	if (psessionEntry->htSecondaryChannelOffset !=
+			psessionEntry->gLimChannelSwitch.sec_ch_offset) {
 		lim_log(pMac, LOGW,
 			FL("switch old sec chnl %d --> new sec chnl %d "),
 			psessionEntry->htSecondaryChannelOffset, subband);
-		psessionEntry->htSecondaryChannelOffset = subband;
+		psessionEntry->htSecondaryChannelOffset =
+			psessionEntry->gLimChannelSwitch.sec_ch_offset;
 		if (psessionEntry->htSecondaryChannelOffset ==
 		    PHY_SINGLE_CHANNEL_CENTERED) {
 			psessionEntry->htSupportedChannelWidthSet =
@@ -4947,6 +4920,20 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 		return;
 	}
 
+	/*
+	 * Do not try to switch channel if RoC is in progress. RoC code path
+	 * uses pMac->lim.gpLimRemainOnChanReq to notify the upper layers that
+	 * the device has started listening on the channel requested as part of
+	 * RoC, if we set pMac->lim.gpLimRemainOnChanReq to NULL as we do below
+	 * then the upper layers will think that the channel change is not
+	 * successful and the RoC from the upper layer perspective will never
+	 * end...
+	 */
+	if (pMac->lim.gpLimRemainOnChanReq) {
+		lim_log(pMac, LOGE, FL("RoC is in progress"));
+		return;
+	}
+
 	if (psessionEntry->htSecondaryChannelOffset !=
 	    (uint8_t) pHTInfo->secondaryChannelOffset
 	    || psessionEntry->htRecommendedTxWidthSet !=
@@ -4988,7 +4975,7 @@ void lim_update_sta_run_time_ht_switch_chnl_params(tpAniSirGlobal pMac,
 		lim_send_switch_chnl_params(pMac, (uint8_t) pHTInfo->primaryChannel,
 					    center_freq, 0,
 					    psessionEntry->htRecommendedTxWidthSet,
-					    (tPowerdBm) localPwrConstraint,
+					    (int8_t)localPwrConstraint,
 					    psessionEntry->peSessionId,
 					    true);
 #endif
@@ -5224,7 +5211,7 @@ lim_validate_delts_req(tpAniSirGlobal mac_ctx, tpSirDeltsReq delts_req,
 					&psession_entry->dph.dphHashTable);
 		else
 			sta = dph_lookup_hash_entry(mac_ctx,
-						delts_req->macAddr,
+						delts_req->macaddr.bytes,
 						&associd,
 						&psession_entry->dph.
 							dphHashTable);
@@ -7172,4 +7159,41 @@ lim_get_80Mhz_center_channel(uint8_t primary_channel)
 		return (149+161)/2;
 
 	return INVALID_CHANNEL_ID;
+}
+
+/**
+ * lim_scan_type_to_string(): converts scan type enum to string.
+ * @scan_type: enum value of scan_type.
+ *
+ * Return: Printable string for scan_type
+ */
+const char *lim_scan_type_to_string(const uint8_t scan_type)
+{
+	switch (scan_type) {
+	CASE_RETURN_STRING(eSIR_PASSIVE_SCAN);
+	CASE_RETURN_STRING(eSIR_ACTIVE_SCAN);
+	CASE_RETURN_STRING(eSIR_BEACON_TABLE);
+	default:
+		return "Unknown scan_type";
+	}
+}
+
+/**
+ * lim_bss_type_to_string(): converts bss type enum to string.
+ * @bss_type: enum value of bss_type.
+ *
+ * Return: Printable string for bss_type
+ */
+const char *lim_bss_type_to_string(const uint16_t bss_type)
+{
+	switch (bss_type) {
+	CASE_RETURN_STRING(eSIR_INFRASTRUCTURE_MODE);
+	CASE_RETURN_STRING(eSIR_INFRA_AP_MODE);
+	CASE_RETURN_STRING(eSIR_IBSS_MODE);
+	CASE_RETURN_STRING(eSIR_BTAMP_STA_MODE);
+	CASE_RETURN_STRING(eSIR_BTAMP_AP_MODE);
+	CASE_RETURN_STRING(eSIR_AUTO_MODE);
+	default:
+		return "Unknown bss_type";
+	}
 }

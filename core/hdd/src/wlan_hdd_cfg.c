@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -45,7 +45,6 @@
 #include <wlan_hdd_misc.h>
 #include <wlan_hdd_napi.h>
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 static void
 cb_notify_set_roam_prefer5_g_hz(hdd_context_t *pHddCtx, unsigned long notifyId)
 {
@@ -95,7 +94,6 @@ cb_notify_set_roam_scan_home_away_time(hdd_context_t *pHddCtx, unsigned long not
 					    pHddCtx->config->nRoamScanHomeAwayTime,
 					    true);
 }
-#endif
 
 #ifdef FEATURE_WLAN_OKC
 static void
@@ -106,7 +104,6 @@ cb_notify_set_okc_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyId
 }
 #endif
 
-#ifdef FEATURE_WLAN_LFR
 static void
 notify_is_fast_roam_ini_feature_enabled(hdd_context_t *pHddCtx,
 					unsigned long notifyId)
@@ -126,7 +123,6 @@ notify_is_mawc_ini_feature_enabled(hdd_context_t *pHddCtx, unsigned long notifyI
 	sme_update_is_mawc_ini_feature_enabled(pHddCtx->hHal,
 					       pHddCtx->config->MAWCEnabled);
 }
-#endif
 
 #ifdef FEATURE_WLAN_ESE
 static void
@@ -149,7 +145,6 @@ cb_notify_set_fw_rssi_monitoring(hdd_context_t *pHddCtx, unsigned long notifyId)
 					     fEnableFwRssiMonitoring);
 }
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 static void cb_notify_set_opportunistic_scan_threshold_diff(hdd_context_t *pHddCtx,
 							    unsigned long notifyId)
 {
@@ -274,8 +269,6 @@ cb_notify_set_dfs_scan_mode(hdd_context_t *pHddCtx, unsigned long notifyId)
 	sme_update_dfs_scan_mode(pHddCtx->hHal, 0,
 				 pHddCtx->config->allowDFSChannelRoam);
 }
-
-#endif
 
 static void cb_notify_set_enable_ssr(hdd_context_t *pHddCtx,
 				     unsigned long notifyId)
@@ -430,13 +423,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			    VAR_FLAGS_OPTIONAL,
 			    (void *)CFG_POWER_USAGE_DEFAULT),
 
-	REG_VARIABLE(CFG_ENABLE_LOGP_NAME, WLAN_PARAM_Integer,
-		     struct hdd_config, fIsLogpEnabled,
-		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
-		     CFG_ENABLE_LOGP_DEFAULT,
-		     CFG_ENABLE_LOGP_MIN,
-		     CFG_ENABLE_LOGP_MAX),
-
 	REG_VARIABLE(CFG_ENABLE_IMPS_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, fIsImpsEnabled,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -499,6 +485,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_MAX_RX_AMPDU_FACTOR_DEFAULT,
 		     CFG_MAX_RX_AMPDU_FACTOR_MIN,
 		     CFG_MAX_RX_AMPDU_FACTOR_MAX),
+
+	REG_VARIABLE(CFG_HT_MPDU_DENSITY_NAME, WLAN_PARAM_Integer,
+		     struct hdd_config, ht_mpdu_density,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK ,
+		     CFG_HT_MPDU_DENSITY_DEFAULT,
+		     CFG_HT_MPDU_DENSITY_MIN,
+		     CFG_HT_MPDU_DENSITY_MAX),
 
 	REG_VARIABLE(CFG_FIXED_RATE_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, TxRate,
@@ -1021,7 +1014,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     cb_notify_set_ese_feature_enabled, 0),
 #endif /* FEATURE_WLAN_ESE */
 
-#ifdef FEATURE_WLAN_LFR
 	/* flag to turn ON/OFF Legacy Fast Roaming */
 	REG_DYNAMIC_VARIABLE(CFG_LFR_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isFastRoamIniFeatureEnabled,
@@ -1043,9 +1035,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_LFR_MAWC_FEATURE_ENABLED_MAX,
 			     notify_is_mawc_ini_feature_enabled, 0),
 
-#endif /* FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	/* flag to turn ON/OFF 11r and ESE FastTransition */
 	REG_DYNAMIC_VARIABLE(CFG_FAST_TRANSITION_ENABLED_NAME,
 			     WLAN_PARAM_Integer,
@@ -1076,7 +1065,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ENABLE_WES_MODE_NAME_MIN,
 			     CFG_ENABLE_WES_MODE_NAME_MAX,
 			     cb_notify_set_wes_mode, 0),
-#endif
 #ifdef FEATURE_WLAN_OKC
 	REG_DYNAMIC_VARIABLE(CFG_OKC_FEATURE_ENABLED_NAME, WLAN_PARAM_Integer,
 			     struct hdd_config, isOkcIniFeatureEnabled,
@@ -1343,7 +1331,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_FT_RESOURCE_REQ_MAX),
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	REG_DYNAMIC_VARIABLE(CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME,
 			     WLAN_PARAM_Integer,
 			     struct hdd_config, nNeighborScanPeriod,
@@ -1531,8 +1518,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ROAM_SCAN_HI_RSSI_UB_MAX,
 			     cb_notify_set_roam_scan_hi_rssi_scan_params,
 			     eCSR_HI_RSSI_SCAN_RSSI_UB_ID),
-
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 
 	REG_VARIABLE(CFG_QOS_WMM_BURST_SIZE_DEFN_NAME, WLAN_PARAM_Integer,
 		     struct hdd_config, burstSizeDefinition,
@@ -1926,7 +1911,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_LINK_SPEED_RSSI_LOW_MAX,
 			     NULL, 0),
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	REG_DYNAMIC_VARIABLE(CFG_ROAM_PREFER_5GHZ, WLAN_PARAM_Integer,
 			     struct hdd_config, nRoamPrefer5GHz,
 			     VAR_FLAGS_OPTIONAL |
@@ -1962,8 +1946,6 @@ REG_TABLE_ENTRY g_registry_table[] = {
 			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN,
 			     CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX,
 			     cb_notify_set_roam_scan_home_away_time, 0),
-
-#endif
 
 	REG_VARIABLE(CFG_P2P_DEVICE_ADDRESS_ADMINISTRATED_NAME,
 		     WLAN_PARAM_Integer,
@@ -2232,6 +2214,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MIN,
 		     CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MAX),
 
+	REG_VARIABLE(CFG_TDLS_IDLE_TIMEOUT, WLAN_PARAM_Integer,
+		     struct hdd_config, tdls_idle_timeout,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TDLS_IDLE_TIMEOUT_DEFAULT,
+		     CFG_TDLS_IDLE_TIMEOUT_MIN,
+		     CFG_TDLS_IDLE_TIMEOUT_MAX),
+
 	REG_VARIABLE(CFG_TDLS_IDLE_PACKET_THRESHOLD, WLAN_PARAM_Integer,
 		     struct hdd_config, fTDLSIdlePacketThreshold,
 		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
@@ -2344,6 +2333,14 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_TDLS_SCAN_ENABLE_DEFAULT,
 		     CFG_TDLS_SCAN_ENABLE_MIN,
 		     CFG_TDLS_SCAN_ENABLE_MAX),
+
+	REG_VARIABLE(CFG_TDLS_PEER_KICKOUT_THRESHOLD, WLAN_PARAM_Integer,
+		     struct hdd_config, tdls_peer_kickout_threshold,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_TDLS_PEER_KICKOUT_THRESHOLD_DEFAULT,
+		     CFG_TDLS_PEER_KICKOUT_THRESHOLD_MIN,
+		     CFG_TDLS_PEER_KICKOUT_THRESHOLD_MAX),
+
 #endif
 
 #ifdef WLAN_SOFTAP_VSTA_FEATURE
@@ -2417,6 +2414,13 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_DEFAULT,
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MIN,
 		     CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX),
+
+	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_SAP_MODE, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_txbf_sap_mode,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT,
+		     CFG_VHT_ENABLE_TXBF_SAP_MODE_MIN,
+		     CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX),
 
 	REG_VARIABLE(CFG_VHT_ENABLE_TXBF_IN_20MHZ, WLAN_PARAM_Integer,
 		     struct hdd_config, enableTxBFin20MHz,
@@ -3093,6 +3097,30 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_ENABLE_GREEN_AP_FEATURE_DEFAULT,
 		     CFG_ENABLE_GREEN_AP_FEATURE_MIN,
 		     CFG_ENABLE_GREEN_AP_FEATURE_MAX),
+	REG_VARIABLE(CFG_ENABLE_EGAP_ENABLE_FEATURE, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_egap,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_EGAP_ENABLE_FEATURE_DEFAULT,
+		     CFG_ENABLE_EGAP_ENABLE_FEATURE_MIN,
+		     CFG_ENABLE_EGAP_ENABLE_FEATURE_MAX),
+	REG_VARIABLE(CFG_ENABLE_EGAP_INACT_TIME_FEATURE, WLAN_PARAM_Integer,
+		     struct hdd_config, egap_inact_time,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_EGAP_INACT_TIME_FEATURE_DEFAULT,
+		     CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MIN,
+		     CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MAX),
+	REG_VARIABLE(CFG_ENABLE_EGAP_WAIT_TIME_FEATURE, WLAN_PARAM_Integer,
+		     struct hdd_config, egap_wait_time,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_DEFAULT,
+		     CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MIN,
+		     CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MAX),
+	REG_VARIABLE(CFG_ENABLE_EGAP_FLAGS_FEATURE, WLAN_PARAM_Integer,
+		     struct hdd_config, egap_feature_flag,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_EGAP_FLAGS_FEATURE_DEFAULT,
+		     CFG_ENABLE_EGAP_FLAGS_FEATURE_MIN,
+		     CFG_ENABLE_EGAP_FLAGS_FEATURE_MAX),
 #endif
 
 	REG_VARIABLE(CFG_IGNORE_CAC_NAME, WLAN_PARAM_Integer,
@@ -3617,6 +3645,31 @@ REG_TABLE_ENTRY g_registry_table[] = {
 		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT,
 		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MIN,
 		     CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX),
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	REG_VARIABLE(CFG_ENABLE_LFR_SUBNET_DETECTION, WLAN_PARAM_Integer,
+		     struct hdd_config, enable_lfr_subnet_detection,
+		     VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		     CFG_ENABLE_LFR_SUBNET_DEFAULT,
+		     CFG_ENABLE_LFR_SUBNET_MIN,
+		     CFG_ENABLE_LFR_SUBNET_MAX),
+#endif
+
+	REG_VARIABLE(CFG_INFORM_BSS_RSSI_RAW_NAME, WLAN_PARAM_Integer,
+		struct hdd_config, inform_bss_rssi_raw,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_INFORM_BSS_RSSI_RAW_DEFAULT,
+		CFG_INFORM_BSS_RSSI_RAW_MIN,
+		CFG_INFORM_BSS_RSSI_RAW_MAX),
+
+#ifdef QCA_WIFI_3_0_EMU
+	REG_VARIABLE(CFG_ENABLE_M2M_LIMITATION, WLAN_PARAM_Integer,
+		struct hdd_config, enable_m2m_limitation,
+		VAR_FLAGS_OPTIONAL | VAR_FLAGS_RANGE_CHECK_ASSUME_DEFAULT,
+		CFG_ENABLE_LFR_SUBNET_DEFAULT,
+		CFG_ENABLE_LFR_SUBNET_MIN,
+		CFG_ENABLE_LFR_SUBNET_MAX),
+#endif
 
 };
 
@@ -4581,22 +4634,18 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  "Name = [gTxPowerCap] Value = [%u] dBm ",
 		  pHddCtx->config->nTxPowerCap);
 #endif
-#ifdef FEATURE_WLAN_LFR
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [FastRoamEnabled] Value = [%u] ",
 		  pHddCtx->config->isFastRoamIniFeatureEnabled);
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [MAWCEnabled] Value = [%u] ",
 		  pHddCtx->config->MAWCEnabled);
-#endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [RoamRssiDiff] Value = [%u] ",
 		  pHddCtx->config->RoamRssiDiff);
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [isWESModeEnabled] Value = [%u] ",
 		  pHddCtx->config->isWESModeEnabled);
-#endif
 #ifdef FEATURE_WLAN_OKC
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [OkcEnabled] Value = [%u] ",
@@ -4725,7 +4774,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 		  pHddCtx->config->fFTResourceReqSupported);
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [nNeighborLookupRssiThreshold] Value = [%u] ",
 		  pHddCtx->config->nNeighborLookupRssiThreshold);
@@ -4780,7 +4828,6 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [nhi_rssi_scan_rssi_ub] Value = [%u] ",
 		  pHddCtx->config->nhi_rssi_scan_rssi_ub);
-#endif
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [burstSizeDefinition] Value = [0x%x] ",
 		  pHddCtx->config->burstSizeDefinition);
@@ -5010,6 +5057,18 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "Name = [gEnableGreenAp] Value = [%u] ",
 		  pHddCtx->config->enableGreenAP);
+	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [gEenableEGAP] Value = [%u] ",
+		  pHddCtx->config->enable_egap);
+	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [gEGAPInactTime] Value = [%u] ",
+		  pHddCtx->config->egap_inact_time);
+	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [gEGAPWaitTime] Value = [%u] ",
+		  pHddCtx->config->egap_wait_time);
+	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
+		  "Name = [gEGAPFeatures] Value = [%u] ",
+		  pHddCtx->config->egap_feature_flag);
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO_HIGH,
@@ -5167,6 +5226,16 @@ void hdd_cfg_print(hdd_context_t *pHddCtx)
 	hddLog(LOGE, "Name = [%s] Value = [%d]",
 		CFG_FIRST_SCAN_BUCKET_THRESHOLD_NAME,
 		pHddCtx->config->first_scan_bucket_threshold);
+	hddLog(LOGE, "Name = [%s] Value = [%u]",
+		CFG_HT_MPDU_DENSITY_NAME,
+		pHddCtx->config->ht_mpdu_density);
+
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	hddLog(LOGE, "Name = [%s] Value = [%d]",
+		CFG_ENABLE_LFR_SUBNET_DETECTION,
+		pHddCtx->config->enable_lfr_subnet_detection);
+#endif
 }
 
 
@@ -5429,20 +5498,14 @@ eCsrPhyMode hdd_cfg_xlate_to_csr_phy_mode(eHddDot11Mode dot11Mode)
  */
 CDF_STATUS hdd_set_idle_ps_config(hdd_context_t *pHddCtx, uint32_t val)
 {
-	struct hdd_config *pConfig = pHddCtx->config;
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 
 	hddLog(LOG1, "hdd_set_idle_ps_config: Enter Val %d", val);
 
-	if (pConfig->fIsImpsEnabled) {
-		status = sme_set_idle_powersave_config(pHddCtx->pcds_context,
-						pHddCtx->hHal, val);
-		if (CDF_STATUS_SUCCESS != status) {
-			hddLog(LOGE, "Fail to Set Idle PS Config val %d", val);
-		}
-	} else {
-		hddLog(LOG1, "hdd_set_idle_ps_config: IMPS not enabled in ini");
-	}
+	status = sme_set_idle_powersave_config(pHddCtx->pcds_context,
+			pHddCtx->hHal, val);
+	if (CDF_STATUS_SUCCESS != status)
+		hddLog(LOGE, "Fail to Set Idle PS Config val %d", val);
 	return status;
 }
 
@@ -5465,10 +5528,11 @@ static void hdd_set_fine_time_meas_cap(hdd_context_t *hdd_ctx,
 
 	/* Make sure only supported capabilities are enabled in INI */
 	capability &= CFG_FINE_TIME_MEAS_CAPABILITY_MAX;
-	sme_config->fine_time_meas_cap = capability;
+	sme_config->csrConfig.fine_time_meas_cap = capability;
 
 	hddLog(LOG1, FL("fine time meas capability - INI: %04x Enabled: %04x"),
-		config->fine_time_meas_cap, sme_config->fine_time_meas_cap);
+		config->fine_time_meas_cap,
+		sme_config->csrConfig.fine_time_meas_cap);
 
 	return;
 }
@@ -5592,6 +5656,14 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 		fStatus = false;
 		hddLog(LOGE,
 		       "Could not pass on WNI_CFG_HT_AMPDU_PARAMS_MAX_RX_AMPDU_FACTOR to CFG");
+	}
+
+	if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_MPDU_DENSITY,
+			    pConfig->ht_mpdu_density) ==
+			CDF_STATUS_E_FAILURE) {
+		fStatus = false;
+		hddLog(LOGE,
+		       "Could not pass on WNI_CFG_MPDU_DENSITY to CFG");
 	}
 
 	if (sme_cfg_set_int
@@ -6283,14 +6355,15 @@ bool hdd_update_config_dat(hdd_context_t *pHddCtx)
 void hdd_set_pno_channel_prediction_config(
 		tpSmeConfigParams sme_config, hdd_context_t *hdd_ctx)
 {
-	sme_config->dual_mac_feature_disable =
+	sme_config->csrConfig.dual_mac_feature_disable =
 		hdd_ctx->config->dual_mac_feature_disable;
-	sme_config->pno_channel_prediction =
+	sme_config->csrConfig.pno_channel_prediction =
 		hdd_ctx->config->pno_channel_prediction;
-	sme_config->top_k_num_of_channels =
+	sme_config->csrConfig.top_k_num_of_channels =
 		hdd_ctx->config->top_k_num_of_channels;
-	sme_config->stationary_thresh = hdd_ctx->config->stationary_thresh;
-	sme_config->channel_prediction_full_scan =
+	sme_config->csrConfig.stationary_thresh =
+		hdd_ctx->config->stationary_thresh;
+	sme_config->csrConfig.channel_prediction_full_scan =
 		hdd_ctx->config->channel_prediction_full_scan;
 }
 #endif
@@ -6403,6 +6476,8 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 #ifdef WLAN_FEATURE_11AC
 	smeConfig->csrConfig.nVhtChannelWidth = pConfig->vhtChannelWidth;
 	smeConfig->csrConfig.enableTxBF = pConfig->enableTxBF;
+	smeConfig->csrConfig.enable_txbf_sap_mode =
+		pConfig->enable_txbf_sap_mode;
 	smeConfig->csrConfig.txBFCsnValue = pConfig->txBFCsnValue;
 	smeConfig->csrConfig.enable2x2 = pConfig->enable2x2;
 	smeConfig->csrConfig.enableVhtFor24GHz = pConfig->enableVhtFor24GHzBand;
@@ -6429,20 +6504,16 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.nTxPowerCap = pConfig->nTxPowerCap;
 	smeConfig->csrConfig.fEnableBypass11d = pConfig->enableBypass11d;
 	smeConfig->csrConfig.fEnableDFSChnlScan = pConfig->enableDFSChnlScan;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	smeConfig->csrConfig.nRoamPrefer5GHz = pConfig->nRoamPrefer5GHz;
 	smeConfig->csrConfig.nRoamIntraBand = pConfig->nRoamIntraBand;
 	smeConfig->csrConfig.nProbes = pConfig->nProbes;
 
 	smeConfig->csrConfig.nRoamScanHomeAwayTime =
 		pConfig->nRoamScanHomeAwayTime;
-#endif
 	smeConfig->csrConfig.fFirstScanOnly2GChnl =
 		pConfig->enableFirstScan2GOnly;
 
-	/* FIXME 11d config is hardcoded */
-	if (CDF_SAP_MODE != hdd_get_conparam())
-		smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
+	smeConfig->csrConfig.Csr11dinfo.Channels.numChannels = 0;
 
 	hdd_set_power_save_offload_config(pHddCtx);
 
@@ -6450,11 +6521,9 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.csr11rConfig.IsFTResourceReqSupported =
 		pConfig->fFTResourceReqSupported;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	smeConfig->csrConfig.isFastRoamIniFeatureEnabled =
 		pConfig->isFastRoamIniFeatureEnabled;
 	smeConfig->csrConfig.MAWCEnabled = pConfig->MAWCEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	smeConfig->csrConfig.isEseIniFeatureEnabled =
 		pConfig->isEseIniFeatureEnabled;
@@ -6462,12 +6531,10 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pConfig->isFastTransitionEnabled = true;
 	}
 #endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	smeConfig->csrConfig.isFastTransitionEnabled =
 		pConfig->isFastTransitionEnabled;
 	smeConfig->csrConfig.RoamRssiDiff = pConfig->RoamRssiDiff;
 	smeConfig->csrConfig.isWESModeEnabled = pConfig->isWESModeEnabled;
-#endif
 	smeConfig->csrConfig.isRoamOffloadScanEnabled =
 		pConfig->isRoamOffloadScanEnabled;
 	smeConfig->csrConfig.bFastRoamInConIniFeatureEnabled =
@@ -6477,7 +6544,6 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		/* Disable roaming in concurrency if roam scan offload is disabled */
 		smeConfig->csrConfig.bFastRoamInConIniFeatureEnabled = 0;
 	}
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	smeConfig->csrConfig.neighborRoamConfig.nNeighborLookupRssiThreshold =
 		pConfig->nNeighborLookupRssiThreshold;
 	smeConfig->csrConfig.neighborRoamConfig.delay_before_vdev_stop =
@@ -6518,7 +6584,6 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		pConfig->nhi_rssi_scan_delay;
 	smeConfig->csrConfig.neighborRoamConfig.nhi_rssi_scan_rssi_ub =
 		pConfig->nhi_rssi_scan_rssi_ub;
-#endif
 	smeConfig->csrConfig.addTSWhenACMIsOff = pConfig->AddTSWhenACMIsOff;
 	smeConfig->csrConfig.fValidateList = pConfig->fValidateScanList;
 	smeConfig->csrConfig.allowDFSChannelRoam = pConfig->allowDFSChannelRoam;
@@ -6553,17 +6618,18 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 #ifdef FEATURE_WLAN_SCAN_PNO
 	/* Update PNO offoad status */
-	smeConfig->pnoOffload = pHddCtx->config->PnoOffload;
+	smeConfig->csrConfig.pnoOffload = pHddCtx->config->PnoOffload;
 #endif
 
 	/* Update maximum interfaces information */
-	smeConfig->max_intf_count = pHddCtx->max_intf_count;
+	smeConfig->csrConfig.max_intf_count = pHddCtx->max_intf_count;
 
-	smeConfig->fEnableDebugLog = pHddCtx->config->gEnableDebugLog;
+	smeConfig->csrConfig.fEnableDebugLog = pHddCtx->config->gEnableDebugLog;
 
-	smeConfig->enable5gEBT = pHddCtx->config->enable5gEBT;
+	smeConfig->csrConfig.enable5gEBT = pHddCtx->config->enable5gEBT;
 
-	smeConfig->enableSelfRecovery = pHddCtx->config->enableSelfRecovery;
+	smeConfig->csrConfig.enableSelfRecovery =
+			pHddCtx->config->enableSelfRecovery;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	smeConfig->csrConfig.isRoamOffloadEnabled =
 		pHddCtx->config->isRoamOffloadEnabled;
@@ -6575,25 +6641,25 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 	smeConfig->csrConfig.is_sta_connection_in_5gz_enabled =
 		pHddCtx->config->is_sta_connection_in_5gz_enabled;
 
-	smeConfig->f_sta_miracast_mcc_rest_time_val =
+	smeConfig->csrConfig.f_sta_miracast_mcc_rest_time_val =
 		pHddCtx->config->sta_miracast_mcc_rest_time_val;
 
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	smeConfig->sap_channel_avoidance =
+	smeConfig->csrConfig.sap_channel_avoidance =
 		pHddCtx->config->sap_channel_avoidance;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 
-	smeConfig->f_prefer_non_dfs_on_radar =
+	smeConfig->csrConfig.f_prefer_non_dfs_on_radar =
 		pHddCtx->config->prefer_non_dfs_on_radar;
 
-	smeConfig->is_ps_enabled = pHddCtx->config->is_ps_enabled;
+	smeConfig->csrConfig.is_ps_enabled = pHddCtx->config->is_ps_enabled;
 	hdd_set_fine_time_meas_cap(pHddCtx, smeConfig);
 
 	cds_set_multicast_logging(pHddCtx->config->multicast_host_fw_msgs);
 
 	smeConfig->csrConfig.sendDeauthBeforeCon = pConfig->sendDeauthBeforeCon;
 
-	smeConfig->policy_manager_enabled =
+	smeConfig->csrConfig.policy_manager_enabled =
 			pHddCtx->config->policy_manager_enabled;
 	smeConfig->csrConfig.max_scan_count =
 			pHddCtx->config->max_scan_count;
@@ -6603,11 +6669,11 @@ CDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		(pHddCtx->config->dot11p_mode != WLAN_HDD_11P_DISABLED);
 	hdd_set_pno_channel_prediction_config(smeConfig, pHddCtx);
 
-	smeConfig->early_stop_scan_enable =
+	smeConfig->csrConfig.early_stop_scan_enable =
 		pHddCtx->config->early_stop_scan_enable;
-	smeConfig->early_stop_scan_min_threshold =
+	smeConfig->csrConfig.early_stop_scan_min_threshold =
 		pHddCtx->config->early_stop_scan_min_threshold;
-	smeConfig->early_stop_scan_max_threshold =
+	smeConfig->csrConfig.early_stop_scan_max_threshold =
 		pHddCtx->config->early_stop_scan_max_threshold;
 	smeConfig->csrConfig.first_scan_bucket_threshold =
 		pHddCtx->config->first_scan_bucket_threshold;

@@ -140,7 +140,7 @@ CDF_INLINE_FN bool cdf_is_macaddr_equal(struct cdf_mac_addr *pMacAddr1,
  *
  *
  * Return:  true if the MacAddress is all Zeros
- *	flase if the MacAddress is not all Zeros.
+ *	false if the MacAddress is not all Zeros.
  *
  */
 CDF_INLINE_FN bool cdf_is_macaddr_zero(struct cdf_mac_addr *pMacAddr)

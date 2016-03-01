@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -65,7 +65,8 @@ typedef struct tagComebackTimerInfo {
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
    ------------------------------------------------------------------------*/
-#define NUM_WEP_KEYS 4
+/* Maximum Number of WEP KEYS */
+#define MAX_WEP_KEYS 4
 
 /* Maximum allowable size of a beacon frame */
 #define SCH_MAX_BEACON_SIZE    512
@@ -251,7 +252,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 
 	uint8_t privacy;
 	tAniAuthType authType;
-	tSirKeyMaterial WEPKeyMaterial[NUM_WEP_KEYS];
+	tSirKeyMaterial WEPKeyMaterial[MAX_WEP_KEYS];
 
 	tDot11fIERSN gStartBssRSNIe;
 	tDot11fIEWPA gStartBssWPAIe;
@@ -275,10 +276,11 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 #endif
 	uint32_t lim11hEnable;
 
-	tPowerdBm maxTxPower;   /* MIN (Regulatory and local power constraint) */
-	tCDF_CON_MODE pePersona;
+	int8_t maxTxPower;   /* MIN (Regulatory and local power constraint) */
+	enum tCDF_ADAPTER_MODE pePersona;
+
 #if defined WLAN_FEATURE_VOWIFI
-	tPowerdBm txMgmtPower;
+	int8_t txMgmtPower;
 #endif
 
 #ifdef WLAN_FEATURE_VOWIFI_11R
@@ -328,6 +330,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	phy_ch_width ch_width;
 	uint8_t ch_center_freq_seg1;
 	uint8_t txBFIniFeatureEnabled;
+	uint8_t txbf_csn_value;
 	uint8_t txMuBformee;
 	uint8_t enableVhtpAid;
 	uint8_t enableVhtGid;
@@ -483,6 +486,7 @@ typedef struct sPESession       /* Added to Support BT-AMP */
 	/* flag to indicate country code in beacon */
 	uint8_t country_info_present;
 	uint8_t nss;
+	bool add_bss_failed;
 } tPESession, *tpPESession;
 
 /*-------------------------------------------------------------------------

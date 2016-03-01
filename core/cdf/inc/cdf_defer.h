@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -96,7 +96,6 @@ static inline void cdf_destroy_bh(cdf_handle_t hdl, cdf_bh_t *bh)
 /**
  * cdf_create_work() - create a work/task queue, This runs in non-interrupt
  *		       context, so can be preempted by H/W & S/W intr
- * @hdl:	OS handle
  * @work:	Work instance
  * @func:	Deferred function to run at bottom half non-interrupt
  *		context
@@ -105,34 +104,20 @@ static inline void cdf_destroy_bh(cdf_handle_t hdl, cdf_bh_t *bh)
  * Return: None
  */
 static inline void
-cdf_create_work(cdf_handle_t hdl, cdf_work_t *work,
+cdf_create_work(cdf_work_t *work,
 		cdf_defer_fn_t func, void *arg)
 {
-	__cdf_init_work(hdl, work, func, arg);
+	__cdf_init_work(work, func, arg);
 }
 
 /**
  * cdf_sched_work() - schedule a deferred task on non-interrupt context
- * @hdl:	OS handle
  * @work:	Work instance
  *
  * Return: None
  */
-static inline void cdf_sched_work(cdf_handle_t hdl, cdf_work_t *work)
+static inline void cdf_schedule_work(cdf_work_t *work)
 {
-	__cdf_sched_work(hdl, work);
+	__cdf_schedule_work(work);
 }
-
-/**
- * cdf_destroy_work() -  destroy the deferred task (synchronous)
- * @hdl:	OS handle
- * @work:	Work instance
- *
- * Return: None
- */
-static inline void cdf_destroy_work(cdf_handle_t hdl, cdf_work_t *work)
-{
-	__cdf_disable_work(hdl, work);
-}
-
 #endif /*__CDF_DEFER_H*/

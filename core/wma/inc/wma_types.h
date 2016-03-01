@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -123,9 +123,14 @@
 
 #define WMA_GET_RX_RFBAND(pRxMeta) 0
 
-#define WMA_MAX_TXPOWER_INVALID		127
-#define WMA_GET_RX_RSSI_DB(pRxMeta) \
-	(((t_packetmeta *)pRxMeta)->rssi)
+#define WMA_MAX_TXPOWER_INVALID        127
+/* rssi value normalized to noise floor of -96 dBm */
+#define WMA_GET_RX_RSSI_NORMALIZED(pRxMeta) \
+		       (((t_packetmeta *)pRxMeta)->rssi)
+
+/* raw rssi based on actual noise floor in hardware */
+#define WMA_GET_RX_RSSI_RAW(pRxMeta) \
+		       (((t_packetmeta *)pRxMeta)->rssi_raw)
 
 /* WMA Messages */
 #define WMA_MSG_TYPES_BEGIN            SIR_HAL_MSG_TYPES_BEGIN
@@ -257,6 +262,9 @@
 #define WMA_WLAN_RESUME_REQ           SIR_HAL_WLAN_RESUME_REQ
 #define WMA_MSG_TYPES_END    SIR_HAL_MSG_TYPES_END
 
+#define WMA_RUNTIME_PM_SUSPEND_IND	SIR_HAL_RUNTIME_PM_SUSPEND_IND
+#define WMA_RUNTIME_PM_RESUME_IND	SIR_HAL_RUNTIME_PM_RESUME_IND
+
 #ifdef WLAN_FEATURE_VOWIFI_11R
 #define WMA_AGGR_QOS_REQ               SIR_HAL_AGGR_QOS_REQ
 #define WMA_AGGR_QOS_RSP               SIR_HAL_AGGR_QOS_RSP
@@ -280,7 +288,6 @@
 #define WMA_ROAM_SCAN_OFFLOAD_REQ   SIR_HAL_ROAM_SCAN_OFFLOAD_REQ
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-#define WMA_ROAM_OFFLOAD_SYNCH_CNF  SIR_HAL_ROAM_OFFLOAD_SYNCH_CNF
 #define WMA_ROAM_OFFLOAD_SYNCH_IND  SIR_HAL_ROAM_OFFLOAD_SYNCH_IND
 #define WMA_ROAM_OFFLOAD_SYNCH_FAIL SIR_HAL_ROAM_OFFLOAD_SYNCH_FAIL
 #endif
@@ -444,9 +451,11 @@
 #define WMA_DCC_GET_STATS_CMD                SIR_HAL_DCC_GET_STATS_CMD
 #define WMA_DCC_CLEAR_STATS_CMD              SIR_HAL_DCC_CLEAR_STATS_CMD
 #define WMA_DCC_UPDATE_NDL_CMD               SIR_HAL_DCC_UPDATE_NDL_CMD
-#define WMA_SET_IE_INFO                       SIR_HAL_SET_IE_INFO
+#define WMA_SET_IE_INFO                      SIR_HAL_SET_IE_INFO
 
-#define WMA_LRO_CONFIG_CMD                    SIR_HAL_LRO_CONFIG_CMD
+#define WMA_LRO_CONFIG_CMD                   SIR_HAL_LRO_CONFIG_CMD
+#define WMA_GW_PARAM_UPDATE_REQ              SIR_HAL_GATEWAY_PARAM_UPDATE_REQ
+#define WMA_SET_EGAP_CONF_PARAMS             SIR_HAL_SET_EGAP_CONF_PARAMS
 
 /* Bit 6 will be used to control BD rate for Management frames */
 #define HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME 0x40
@@ -617,11 +626,15 @@ struct ar6k_testmode_cmd_data {
  * @WMA_TDLS_PEER_STATE_PEERING: peer is making connection
  * @WMA_TDLS_PEER_STATE_CONNECTED: peer is connected
  * @WMA_TDLS_PEER_STATE_TEARDOWN: peer is teardown
+ * @WMA_TDLS_PEER_ADD_MAC_ADDR: add peer into connection table
+ * @WMA_TDLS_PEER_REMOVE_MAC_ADDR: remove peer from connection table
  */
 typedef enum {
 	WMA_TDLS_PEER_STATE_PEERING,
 	WMA_TDLS_PEER_STATE_CONNECTED,
 	WMA_TDLS_PEER_STATE_TEARDOWN,
+	WMA_TDLS_PEER_ADD_MAC_ADDR,
+	WMA_TDLS_PEER_REMOVE_MAC_ADDR,
 } WMA_TdlsPeerState;
 
 /**
@@ -674,6 +687,12 @@ CDF_STATUS wma_register_mgmt_frm_client(void *p_cds_gctx,
 				wma_mgmt_frame_rx_callback mgmt_rx_cb);
 
 CDF_STATUS wma_de_register_mgmt_frm_client(void *p_cds_gctx);
-
+CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+			roam_offload_synch_ind *roam_synch_data,
+			tpSirBssDescription  bss_desc_ptr, uint8_t reason),
+		CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+			roam_offload_synch_ind *roam_synch_data,
+			tpSirBssDescription  bss_desc_ptr));
 
 #endif

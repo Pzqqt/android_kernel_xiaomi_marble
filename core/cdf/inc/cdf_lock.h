@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -261,6 +261,16 @@ CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason);
  * CDF status fialure :	if wake lock was not acquired
  */
 CDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock);
+
+struct hif_pm_runtime_lock;
+typedef struct hif_pm_runtime_lock *cdf_runtime_lock_t;
+
+CDF_STATUS cdf_runtime_pm_get(void);
+CDF_STATUS cdf_runtime_pm_put(void);
+CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock);
+CDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock);
+cdf_runtime_lock_t cdf_runtime_lock_init(const char *name);
+void cdf_runtime_lock_deinit(cdf_runtime_lock_t lock);
 
 /**
  * cdf_spinlock_acquire() - acquires a spin lock

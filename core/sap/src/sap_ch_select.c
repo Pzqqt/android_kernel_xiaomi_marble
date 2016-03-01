@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -114,20 +114,6 @@ sapSafeChannelType safe_channels[NUM_20MHZ_RF_CHANNELS] = {
 	,                       /* RF_CHAN_13, */
 	{14, true}
 	,                       /* RF_CHAN_14, */
-	{240, true}
-	,                       /* RF_CHAN_240, */
-	{244, true}
-	,                       /* RF_CHAN_244, */
-	{248, true}
-	,                       /* RF_CHAN_248, */
-	{252, true}
-	,                       /* RF_CHAN_252, */
-	{208, true}
-	,                       /* RF_CHAN_208, */
-	{212, true}
-	,                       /* RF_CHAN_212, */
-	{216, true}
-	,                       /* RF_CHAN_216, */
 	{36, true}
 	,                       /* RF_CHAN_36, */
 	{40, true}
@@ -434,8 +420,7 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
 	}
 
 	/* Try to find unsafe channel */
-#if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE) || \
-	defined(WLAN_FEATURE_MBSSID)
+#if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	for (i = 0; i < NUM_20MHZ_RF_CHANNELS; i++) {
 		if (pSapCtx->dfs_ch_disable == true) {
 			if (CDS_IS_DFS_CH(safe_channels[i].channelNumber)) {
@@ -501,16 +486,8 @@ void sap_update_unsafe_channel_list(ptSapContext pSapCtx)
     NULL
    ============================================================================*/
 
-void sap_cleanup_channel_list(
-#ifdef WLAN_FEATURE_MBSSID
-	void *p_cds_gctx
-#else
-	void
-#endif
-	) {
-#ifndef WLAN_FEATURE_MBSSID
-	void *p_cds_gctx = cds_get_global_context();
-#endif
+void sap_cleanup_channel_list(void *p_cds_gctx)
+{
 	ptSapContext pSapCtx;
 
 	CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_INFO,
@@ -647,7 +624,7 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 
 	pChans = pMac->scan.base_channels.channelList;
 
-#if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE) || defined(WLAN_FEATURE_MBSSID)
+#if defined(FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE)
 	if (pSapCtx->dfs_ch_disable == true)
 		include_dfs_ch = false;
 #endif
@@ -2039,7 +2016,7 @@ uint8_t sap_select_channel(tHalHandle halHandle, ptSapContext pSapCtx,
 			if ((safe_channels[i].channelNumber >= startChannelNum)
 			    && (safe_channels[i].channelNumber <=
 				endChannelNum)) {
-				CHANNEL_STATE channel_type =
+				enum channel_state channel_type =
 					cds_get_channel_state(safe_channels[i].
 						channelNumber);
 

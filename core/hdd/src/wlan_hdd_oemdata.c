@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -46,52 +46,6 @@
 #include "wma.h"
 
 static struct hdd_context_s *p_hdd_ctx;
-
-/**
- * hdd_oem_data_req_callback() - OEM Data request callback handler
- * @hHal: MAC handle
- * @pContext: User context.  For this callback the net device was registered
- * @oemDataReqID: The ID of the request
- * @oemDataReqStatus: Status of the request
- *
- * This function reports the results of the request to user space
- *
- * Return: CDF_STATUS enumeration
- */
-static CDF_STATUS hdd_oem_data_req_callback(tHalHandle hHal,
-					    void *pContext,
-					    uint32_t oemDataReqID,
-					    eOemDataReqStatus oemDataReqStatus)
-{
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	struct net_device *dev = (struct net_device *)pContext;
-	union iwreq_data wrqu;
-	char buffer[IW_CUSTOM_MAX + 1];
-
-	memset(&wrqu, '\0', sizeof(wrqu));
-	memset(buffer, '\0', sizeof(buffer));
-
-	if (oemDataReqStatus == eOEM_DATA_REQ_FAILURE) {
-		snprintf(buffer, IW_CUSTOM_MAX, "QCOM: OEM-DATA-REQ-FAILED");
-		hddLog(LOGW, "%s: oem data req %d failed", __func__,
-		       oemDataReqID);
-	} else if (oemDataReqStatus == eOEM_DATA_REQ_INVALID_MODE) {
-		snprintf(buffer, IW_CUSTOM_MAX,
-			 "QCOM: OEM-DATA-REQ-INVALID-MODE");
-		hddLog(LOGW,
-		       "%s: oem data req %d failed because the driver is in invalid mode (IBSS|AP)",
-		       __func__, oemDataReqID);
-	} else {
-		snprintf(buffer, IW_CUSTOM_MAX, "QCOM: OEM-DATA-REQ-SUCCESS");
-	}
-
-	wrqu.data.pointer = buffer;
-	wrqu.data.length = strlen(buffer);
-
-	wireless_send_event(dev, IWEVCUSTOM, &wrqu, buffer);
-
-	return status;
-}
 
 /**
  * iw_get_oem_data_cap() - Get OEM Data Capabilities
@@ -420,7 +374,14 @@ static CDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 
 	cdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
 
-	cdf_mem_copy((&oemDataReqConfig)->oemDataReq, oemData, oemDataLen);
+	oemDataReqConfig.data = cdf_mem_malloc(oemDataLen);
+	if (!oemDataReqConfig.data) {
+		hddLog(LOGE, FL("malloc failed for data req buffer"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	oemDataReqConfig.data_len = oemDataLen;
+	cdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: calling sme_oem_data_req", __func__);
@@ -428,8 +389,11 @@ static CDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 	status = sme_oem_data_req(p_hdd_ctx->hHal,
 				  pAdapter->sessionId,
 				  &oemDataReqConfig,
-				  &oemDataReqID,
-				  &hdd_oem_data_req_callback, pAdapter->dev);
+				  &oemDataReqID);
+
+	cdf_mem_free(oemDataReqConfig.data);
+	oemDataReqConfig.data = NULL;
+
 	return status;
 }
 

@@ -96,7 +96,7 @@ static int is_unique_pri(uint32_t highestpri, uint32_t midpri,
 }
 
 int dfs_staggered_check(struct ath_dfs *dfs, struct dfs_filter *rf,
-			uint32_t deltaT, uint32_t width)
+			uint32_t deltaT, uint32_t width, int seg_id)
 {
 	uint32_t refpri, refdur, searchpri = 0, deltapri;       /* , averagerefpri; */
 	uint32_t n, i, primargin, durmargin;
@@ -112,7 +112,11 @@ int dfs_staggered_check(struct ath_dfs *dfs, struct dfs_filter *rf,
 	uint32_t midscore = 0, midscoreindex = 0, midpri = 0;
 	uint32_t highestscore = 0, highestscoreindex = 0, highestpri = 0;
 
-	dl = &rf->rf_dl;
+	if (dfs->ic->ic_curchan->ic_80p80_both_dfs)
+		dl = (seg_id == 0) ? &rf->rf_dl : &rf->rf_dl_ext_seg;
+	else
+		dl = &rf->rf_dl;
+
 	if (dl->dl_numelems < (rf->rf_threshold - 1)) {
 		DFS_DPRINTK(dfs, ATH_DEBUG_DFS2,
 			    "numelems %d < threshold for filter %d\n",

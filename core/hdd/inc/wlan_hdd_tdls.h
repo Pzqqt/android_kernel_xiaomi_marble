@@ -34,20 +34,6 @@
 
 #ifdef FEATURE_WLAN_TDLS
 
-#define TDLS_SUB_DISCOVERY_PERIOD   100
-
-#define TDLS_MAX_DISCOVER_REQS_PER_TIMER 1
-
-#define TDLS_DISCOVERY_PERIOD       3600000
-
-#define TDLS_TX_STATS_PERIOD        3600000
-
-#define TDLS_IMPLICIT_TRIGGER_PKT_THRESHOLD     100
-
-#define TDLS_RX_IDLE_TIMEOUT        5000
-
-#define TDLS_RSSI_TRIGGER_HYSTERESIS 50
-
 /*
  * Before UpdateTimer expires, we want to timeout discovery response
  * should not be more than 2000.
@@ -115,9 +101,6 @@ typedef struct {
  */
 typedef struct {
 	struct wiphy *wiphy;
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-	struct net_device *dev;
-#endif
 	struct cfg80211_scan_request *scan_request;
 	int magic;
 	int attempt;
@@ -134,12 +117,15 @@ typedef struct {
  * @eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY: suppress implicit trigger,
  *			but respond to the peer
  * @eTDLS_SUPPORT_ENABLED: implicit trigger
+ * @eTDLS_SUPPORT_EXTERNAL_CONTROL: External control means implicit
+ *     trigger but only to a peer mac configured by user space.
  */
 typedef enum {
 	eTDLS_SUPPORT_NOT_ENABLED = 0,
 	eTDLS_SUPPORT_DISABLED,
 	eTDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY,
 	eTDLS_SUPPORT_ENABLED,
+	eTDLS_SUPPORT_EXTERNAL_CONTROL,
 } eTDLSSupportMode;
 
 /**
@@ -394,6 +380,9 @@ typedef struct {
  * @puapsd_mask: puapsd mask
  * @puapsd_inactivity_time: puapsd inactivity time
  * @puapsd_rx_frame_threshold: puapsd rx frame threshold
+ * @teardown_notification_ms: tdls teardown notification interval
+ * @tdls_peer_kickout_threshold: tdls packets threshold
+ *    for peer kickout operation
  */
 typedef struct {
 	uint32_t vdev_id;
@@ -409,6 +398,8 @@ typedef struct {
 	uint32_t puapsd_mask;
 	uint32_t puapsd_inactivity_time;
 	uint32_t puapsd_rx_frame_threshold;
+	uint32_t teardown_notification_ms;
+	uint32_t tdls_peer_kickout_threshold;
 } tdlsInfo_t;
 
 int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter);
@@ -492,15 +483,9 @@ hddTdlsPeer_t *wlan_hdd_tdls_is_progress(hdd_context_t *pHddCtx,
 
 int wlan_hdd_tdls_copy_scan_context(hdd_context_t *pHddCtx,
 				    struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				    struct net_device *dev,
-#endif
 				    struct cfg80211_scan_request *request);
 
 int wlan_hdd_tdls_scan_callback(hdd_adapter_t *pAdapter, struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				struct net_device *dev,
-#endif
 				struct cfg80211_scan_request *request);
 
 void wlan_hdd_tdls_scan_done_callback(hdd_adapter_t *pAdapter);
@@ -522,6 +507,10 @@ int wlan_hdd_tdls_set_extctrl_param(hdd_adapter_t *pAdapter,
 				    uint32_t op_class, uint32_t min_bandwidth);
 int wlan_hdd_tdls_set_force_peer(hdd_adapter_t *pAdapter, const uint8_t *mac,
 				 bool forcePeer);
+
+int wlan_hdd_tdls_update_peer_mac(hdd_adapter_t *adapter,
+				const uint8_t *mac,
+				uint32_t peer_state);
 
 int wlan_hdd_tdls_extctrl_deconfig_peer(hdd_adapter_t *pAdapter,
 					const uint8_t *peer);
@@ -618,6 +607,7 @@ int hdd_set_tdls_offchannel(hdd_context_t *hdd_ctx, int offchannel);
 int hdd_set_tdls_secoffchanneloffset(hdd_context_t *hdd_ctx, int offchanoffset);
 int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode);
 int hdd_set_tdls_scan_type(hdd_context_t *hdd_ctx, int val);
+void hdd_tdls_pre_init(hdd_context_t *hdd_ctx);
 
 #else
 static inline void hdd_tdls_notify_mode_change(hdd_adapter_t *adapter,
@@ -631,6 +621,8 @@ wlan_hdd_tdls_disable_offchan_and_teardown_links(hdd_context_t *hddctx)
 static inline void wlan_hdd_tdls_exit(hdd_adapter_t *adapter)
 {
 }
+
+static inline void hdd_tdls_pre_init(hdd_context_t *hdd_ctx) { }
 #endif /* End of FEATURE_WLAN_TDLS */
 
 #endif /* __HDD_TDLS_H */

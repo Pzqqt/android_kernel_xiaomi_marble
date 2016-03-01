@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1014,6 +1014,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 
 	if (WLAN_HDD_ADAPTER_MAGIC != adapter->magic) {
 		hdd_err("Invalid adapter magic");
+		cdf_mem_free(req);
 		return;
 	}
 	skb = cfg80211_vendor_event_alloc(hddctx->wiphy, NULL,
@@ -1023,6 +1024,7 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 
 	if (!skb) {
 		hdd_err("skb alloc failed");
+		cdf_mem_free(req);
 		return;
 	}
 
@@ -1067,10 +1069,12 @@ static void hdd_vendor_scan_callback(hdd_adapter_t *adapter,
 		goto nla_put_failure;
 
 	cfg80211_vendor_event(skb, GFP_KERNEL);
+	cdf_mem_free(req);
 	return;
 
 nla_put_failure:
 	kfree_skb(skb);
+	cdf_mem_free(req);
 	return;
 }
 
@@ -1223,15 +1227,10 @@ static void wlan_hdd_cfg80211_scan_block_cb(struct work_struct *work)
  * Return: 0 for success, non zero for failure
  */
 static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				    struct net_device *dev,
-#endif
 				    struct cfg80211_scan_request *request,
 				    uint8_t source)
 {
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 	struct net_device *dev = request->wdev->netdev;
-#endif
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	hdd_wext_state_t *pwextBuf = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
@@ -1246,7 +1245,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -1328,9 +1327,6 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 	 * (return -EBUSY)
 	 */
 	status = wlan_hdd_tdls_scan_callback(pAdapter, wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-						dev,
-#endif
 					request);
 	if (status <= 0) {
 		if (!status)
@@ -1345,7 +1341,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 #endif
 
 	/* Check if scan is allowed at this point of time */
-	if (cds_is_connection_in_progress(pHddCtx)) {
+	if (cds_is_connection_in_progress()) {
 		hddLog(LOGE, FL("Scan not allowed"));
 		return -EBUSY;
 	}
@@ -1598,17 +1594,11 @@ free_mem:
  * Return: 0 for success, non zero for failure
  */
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-			   struct net_device *dev,
-#endif
 			   struct cfg80211_scan_request *request)
 {
 	int ret;
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_scan(wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-				       dev,
-#endif
 				request, NL_SCAN);
 	cds_ssr_unprotect(__func__);
 	return ret;
@@ -1965,15 +1955,15 @@ hdd_sched_scan_callback(void *callbackContext,
 		return;
 	}
 
-	spin_lock(&pHddCtx->schedScan_lock);
+	cdf_spin_lock(&pHddCtx->sched_scan_lock);
 	if (true == pHddCtx->isWiphySuspended) {
 		pHddCtx->isSchedScanUpdatePending = true;
-		spin_unlock(&pHddCtx->schedScan_lock);
+		cdf_spin_unlock(&pHddCtx->sched_scan_lock);
 		hddLog(LOG1,
 		       FL("Update cfg80211 scan database after it resume"));
 		return;
 	}
-	spin_unlock(&pHddCtx->schedScan_lock);
+	cdf_spin_unlock(&pHddCtx->sched_scan_lock);
 
 	ret = wlan_hdd_cfg80211_update_bss(pHddCtx->wiphy, pAdapter, 0);
 
@@ -2041,7 +2031,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2199,12 +2189,8 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		/*Copying list of valid channel into request */
 		memcpy(pPnoRequest->aNetworks[i].aChannels, valid_ch, num_ch);
 		pPnoRequest->aNetworks[i].ucChannelCount = num_ch;
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0)
 		pPnoRequest->aNetworks[i].rssiThreshold =
 			request->match_sets[i].rssi_thold;
-#else
-		pPnoRequest->aNetworks[i].rssiThreshold = 0;    /* Default value */
-#endif
 	}
 
 	for (i = 0; i < request->n_ssids; i++) {
@@ -2320,7 +2306,7 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2332,8 +2318,8 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 		return -ENODEV;
 	}
 
-	/* The return 0 is intentional when isLogpInProgress and
-	 * isLoadUnloadInProgress. We did observe a crash due to a return of
+	/* The return 0 is intentional when Recovery and Load/Unload in
+	 * progress. We did observe a crash due to a return of
 	 * failure in sched_scan_stop , especially for a case where the unload
 	 * of the happens at the same time. The function __cfg80211_stop_sched_scan
 	 * was clearing rdev->sched_scan_req only when the sched_scan_stop returns
@@ -2341,13 +2327,15 @@ static int __wlan_hdd_cfg80211_sched_scan_stop(struct wiphy *wiphy,
 	 * clean up of the second interface will have the dev pointer corresponding
 	 * to the first one leading to a crash.
 	 */
-	if (pHddCtx->isLogpInProgress) {
-		hddLog(LOGE, FL("LOGP in Progress. Ignore!!!"));
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return ret;
 	}
 
-	if ((pHddCtx->isLoadInProgress) || (pHddCtx->isUnloadInProgress)) {
-		hddLog(LOGE, FL("Unloading/Loading in Progress. Ignore!!!"));
+	if (cds_is_load_or_unload_in_progress()) {
+		hdd_err("Unload/Load in Progress, state: 0x%x.  Ignore!!!",
+			cds_get_driver_state());
 		return ret;
 	}
 

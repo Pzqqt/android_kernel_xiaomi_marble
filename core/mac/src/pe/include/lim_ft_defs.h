@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -41,7 +41,6 @@
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
    ------------------------------------------------------------------------*/
-#define SIR_MDIE_SIZE               3   /* MD ID(2 bytes), Capability(1 byte) */
 #define MAX_FTIE_SIZE             384   /* Max size limited to 384, on acct. of IW custom events */
 
 /*--------------------------------------------------------------------------
@@ -89,7 +88,7 @@ typedef struct sSirFTUpdateKeyInfo {
 	uint16_t messageType;
 	uint16_t length;
 	uint32_t smeSessionId;
-	tSirMacAddr bssId;
+	struct cdf_mac_addr bssid;
 	tSirKeyMaterial keyMaterial;
 } tSirFTUpdateKeyInfo, *tpSirFTUpdateKeyInfo;
 

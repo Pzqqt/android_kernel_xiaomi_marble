@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -36,6 +36,7 @@
 #include "cdf_nbuf.h"
 #include "cdf_trace.h"
 #include "cdf_lock.h"
+#include "cdf_mc_timer.h"
 
 #if defined(CONFIG_CNSS)
 #include <net/cnss.h>
@@ -47,6 +48,7 @@
 
 #ifdef MEMORY_DEBUG
 #include <cdf_list.h>
+#include <linux/stacktrace.h>
 
 cdf_list_t cdf_mem_list;
 cdf_spinlock_t cdf_mem_list_lock;
@@ -56,16 +58,23 @@ static uint8_t WLAN_MEM_HEADER[] = { 0x61, 0x62, 0x63, 0x64, 0x65, 0x66,
 static uint8_t WLAN_MEM_TAIL[] = { 0x80, 0x81, 0x82, 0x83, 0x84, 0x85,
 					0x86, 0x87 };
 
+#define CDF_MEM_MAX_STACK_TRACE 16
+
 struct s_cdf_mem_struct {
 	cdf_list_node_t pNode;
 	char *fileName;
 	unsigned int lineNum;
 	unsigned int size;
+#ifdef WLAN_OPEN_SOURCE
+	unsigned long stack_trace[CDF_MEM_MAX_STACK_TRACE];
+	struct stack_trace trace;
+#endif
 	uint8_t header[8];
 };
 #endif
 
 /* Preprocessor Definitions and Constants */
+#define CDF_GET_MEMORY_TIME_THRESHOLD 3000
 
 /* Type Declarations */
 
@@ -73,6 +82,51 @@ struct s_cdf_mem_struct {
 
 /* External Function implementation */
 #ifdef MEMORY_DEBUG
+#ifdef WLAN_OPEN_SOURCE
+/**
+ * cdf_mem_save_stack_trace() - Save stack trace of the caller
+ * @mem_struct: Pointer to the memory structure where to save the stack trace
+ *
+ * Return: None
+ */
+static inline void cdf_mem_save_stack_trace(struct s_cdf_mem_struct *mem_struct)
+{
+	struct stack_trace *trace = &mem_struct->trace;
+
+	trace->nr_entries = 0;
+	trace->max_entries = CDF_MEM_MAX_STACK_TRACE;
+	trace->entries = mem_struct->stack_trace;
+	trace->skip = 2;
+
+	save_stack_trace(trace);
+}
+
+/**
+ * cdf_mem_print_stack_trace() - Print saved stack trace
+ * @mem_struct: Pointer to the memory structure which has the saved stack trace
+ *              to be printed
+ *
+ * Return: None
+ */
+static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
+					     *mem_struct)
+{
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+		  "Call stack for the source of leaked memory:");
+
+	print_stack_trace(&mem_struct->trace, 1);
+}
+#else
+static inline void cdf_mem_save_stack_trace(struct s_cdf_mem_struct *mem_struct)
+{
+
+}
+static inline void cdf_mem_print_stack_trace(struct s_cdf_mem_struct
+					     *mem_struct)
+{
+
+}
+#endif
 
 /**
  * cdf_mem_init() - initialize cdf memory debug functionality
@@ -142,6 +196,7 @@ void cdf_mem_clean(void)
 					mleak_cnt = 0;
 				}
 				mleak_cnt++;
+				cdf_mem_print_stack_trace(memStruct);
 				kfree((void *)memStruct);
 			}
 		} while (cdf_status == CDF_STATUS_SUCCESS);
@@ -194,6 +249,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 	void *memPtr = NULL;
 	uint32_t new_size;
 	int flags = GFP_KERNEL;
+	unsigned long  time_before_kzalloc;
 
 	if (size > (1024 * 1024) || size == 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
@@ -217,8 +273,19 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		flags = GFP_ATOMIC;
 
 	new_size = size + sizeof(struct s_cdf_mem_struct) + 8;
-
+	time_before_kzalloc = cdf_mc_timer_get_system_time();
 	memStruct = (struct s_cdf_mem_struct *)kzalloc(new_size, flags);
+	/**
+	 * If time taken by kmalloc is greater than
+	 * CDF_GET_MEMORY_TIME_THRESHOLD msec
+	 */
+	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
+					  CDF_GET_MEMORY_TIME_THRESHOLD)
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			 "%s: kzalloc took %lu msec for size %zu called from %pS at line %d",
+			 __func__,
+			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
+			 size, (void *)_RET_IP_, lineNum);
 
 	if (memStruct != NULL) {
 		CDF_STATUS cdf_status;
@@ -226,6 +293,7 @@ void *cdf_mem_malloc_debug(size_t size, char *fileName, uint32_t lineNum)
 		memStruct->fileName = fileName;
 		memStruct->lineNum = lineNum;
 		memStruct->size = size;
+		cdf_mem_save_stack_trace(memStruct);
 
 		cdf_mem_copy(&memStruct->header[0],
 			     &WLAN_MEM_HEADER[0], sizeof(WLAN_MEM_HEADER));
@@ -324,9 +392,9 @@ void cdf_mem_free(void *ptr)
 void *cdf_mem_malloc(size_t size)
 {
 	int flags = GFP_KERNEL;
-#ifdef CONFIG_WCNSS_MEM_PRE_ALLOC
-	void *pmem;
-#endif
+	void *memPtr = NULL;
+	unsigned long  time_before_kzalloc;
+
 	if (size > (1024 * 1024) || size == 0) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: called with invalid arg; passed in %zu !!",
@@ -336,6 +404,7 @@ void *cdf_mem_malloc(size_t size)
 
 #if defined(CONFIG_CNSS) && defined(CONFIG_WCNSS_MEM_PRE_ALLOC)
 	if (size > WCNSS_PRE_ALLOC_GET_THRESHOLD) {
+		void *pmem;
 		pmem = wcnss_prealloc_get(size);
 		if (NULL != pmem) {
 			memset(pmem, 0, size);
@@ -346,8 +415,20 @@ void *cdf_mem_malloc(size_t size)
 
 	if (in_interrupt() || irqs_disabled() || in_atomic())
 		flags = GFP_ATOMIC;
-
-	return kzalloc(size, flags);
+	time_before_kzalloc = cdf_mc_timer_get_system_time();
+	memPtr = kzalloc(size, flags);
+	/**
+	 * If time taken by kmalloc is greater than
+	 * CDF_GET_MEMORY_TIME_THRESHOLD msec
+	 */
+	if (cdf_mc_timer_get_system_time() - time_before_kzalloc >=
+					   CDF_GET_MEMORY_TIME_THRESHOLD)
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			 "%s: kzalloc took %lu msec for size %zu called from %pS",
+			 __func__,
+			 cdf_mc_timer_get_system_time() - time_before_kzalloc,
+			 size, (void *)_RET_IP_);
+	return memPtr;
 }
 
 /**

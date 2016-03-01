@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@ uint32_t limComputeAvg(tpAniSirGlobal, uint32_t, uint32_t);
 
 /* / Function to extract AP's HCF capability from IE fields */
 void lim_extract_ap_capability(tpAniSirGlobal, uint8_t *, uint16_t, uint8_t *,
-			       uint16_t *, uint8_t *, tPowerdBm *, tpPESession);
+			       uint16_t *, uint8_t *, int8_t *, tpPESession);
 
 tStaRateMode lim_get_sta_peer_type(tpAniSirGlobal, tpDphHashNode, tpPESession);
 #ifdef WLAN_FEATURE_11AC

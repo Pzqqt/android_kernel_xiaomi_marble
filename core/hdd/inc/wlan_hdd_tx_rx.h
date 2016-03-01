@@ -42,24 +42,9 @@
 
 #define HDD_ETHERTYPE_802_1_X              0x888E
 #define HDD_ETHERTYPE_802_1_X_FRAME_OFFSET 12
-#define HDD_ETHERTYPE_802_1_X_SIZE         2
 #ifdef FEATURE_WLAN_WAPI
 #define HDD_ETHERTYPE_WAI                  0x88b4
 #endif
-
-#define HDD_80211_HEADER_LEN      24
-#define HDD_80211_HEADER_QOS_CTL  2
-#define HDD_LLC_HDR_LEN           6
-#define HDD_FRAME_TYPE_MASK       0x0c
-#define HDD_FRAME_SUBTYPE_MASK    0xf0
-#define HDD_FRAME_TYPE_DATA       0x08
-#define HDD_FRAME_TYPE_MGMT       0x00
-#define HDD_FRAME_SUBTYPE_QOSDATA 0x80
-#define HDD_FRAME_SUBTYPE_DEAUTH  0xC0
-#define HDD_FRAME_SUBTYPE_DISASSOC 0xA0
-#define HDD_DEST_ADDR_OFFSET      6
-
-#define HDD_MAC_HDR_SIZE          6
 
 #define HDD_PSB_CFG_INVALID                   0xFF
 #define HDD_PSB_CHANGED                       0xFF
@@ -67,8 +52,6 @@
 #define SME_QOS_UAPSD_CFG_BE_CHANGED_MASK     0xF2
 #define SME_QOS_UAPSD_CFG_VI_CHANGED_MASK     0xF4
 #define SME_QOS_UAPSD_CFG_VO_CHANGED_MASK     0xF8
-
-#define HDD_ETH_HEADER_LEN     14
 
 int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev);
 void hdd_tx_timeout(struct net_device *dev);

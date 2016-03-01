@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2014,2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -380,7 +380,6 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 				 uint16_t sessionId, uint32_t rxChannel,
 				 tpPESession psessionEntry, int8_t rxRssi)
 {
-	tSirMsgQ mmhMsg;
 	tpSirSmeMgmtFrameInd pSirSmeMgmtFrame = NULL;
 	uint16_t length;
 
@@ -394,8 +393,7 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	}
 	cdf_mem_set((void *)pSirSmeMgmtFrame, length, 0);
 
-	pSirSmeMgmtFrame->mesgType = eWNI_SME_MGMT_FRM_IND;
-	pSirSmeMgmtFrame->mesgLen = length;
+	pSirSmeMgmtFrame->frame_len = frameLen;
 	pSirSmeMgmtFrame->sessionId = sessionId;
 	pSirSmeMgmtFrame->frameType = frameType;
 	pSirSmeMgmtFrame->rxRssi = rxRssi;
@@ -404,11 +402,12 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	cdf_mem_zero(pSirSmeMgmtFrame->frameBuf, frameLen);
 	cdf_mem_copy(pSirSmeMgmtFrame->frameBuf, frame, frameLen);
 
-	mmhMsg.type = eWNI_SME_MGMT_FRM_IND;
-	mmhMsg.bodyptr = pSirSmeMgmtFrame;
-	mmhMsg.bodyval = 0;
-
-	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
+	if (pMac->mgmt_frame_ind_cb)
+		pMac->mgmt_frame_ind_cb(pSirSmeMgmtFrame);
+	else
+		lim_log(pMac, LOGW,
+			FL("Management indication callback not registered!!"));
+	cdf_mem_free(pSirSmeMgmtFrame);
 	return;
 }
 

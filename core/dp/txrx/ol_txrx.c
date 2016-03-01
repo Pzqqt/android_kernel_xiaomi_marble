@@ -313,9 +313,11 @@ void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
 		cdf_print("%s: pdev is NULL\n", __func__);
 		return;
 	}
-	pdev->num_msdu_desc = num_msdu_desc + TX_FLOW_MGMT_POOL_SIZE;
-	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global pool size: %d = %d + %d\n",
-		pdev->num_msdu_desc, num_msdu_desc, TX_FLOW_MGMT_POOL_SIZE);
+	pdev->num_msdu_desc = num_msdu_desc;
+	if (!ol_tx_get_is_mgmt_over_wmi_enabled())
+		pdev->num_msdu_desc += TX_FLOW_MGMT_POOL_SIZE;
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR, "Global pool size: %d\n",
+		pdev->num_msdu_desc);
 	return;
 }
 
@@ -330,6 +332,32 @@ uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 {
 	return pdev->num_msdu_desc;
 }
+
+/**
+ * ol_tx_get_total_free_desc() - get total free descriptors
+ * @pdev: pdev handle
+ *
+ * Return: total free descriptors
+ */
+static inline
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
+{
+	struct ol_tx_flow_pool_t *pool = NULL;
+	uint32_t free_desc;
+
+	free_desc = pdev->tx_desc.num_free;
+	cdf_spin_lock_bh(&pdev->tx_desc.flow_pool_list_lock);
+	TAILQ_FOREACH(pool, &pdev->tx_desc.flow_pool_list,
+					 flow_pool_list_elem) {
+		cdf_spin_lock_bh(&pool->flow_pool_lock);
+		free_desc += pool->avail_desc;
+		cdf_spin_unlock_bh(&pool->flow_pool_lock);
+	}
+	cdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
+
+	return free_desc;
+}
+
 #else
 /**
  * ol_tx_get_desc_global_pool_size() - get global pool size
@@ -342,6 +370,19 @@ uint32_t ol_tx_get_desc_global_pool_size(struct ol_txrx_pdev_t *pdev)
 {
 	return ol_cfg_target_tx_credit(pdev->ctrl_pdev);
 }
+
+/**
+ * ol_tx_get_total_free_desc() - get total free descriptors
+ * @pdev: pdev handle
+ *
+ * Return: total free descriptors
+ */
+static inline
+uint32_t ol_tx_get_total_free_desc(struct ol_txrx_pdev_t *pdev)
+{
+	return pdev->tx_desc.num_free;
+}
+
 #endif
 
 /**
@@ -1643,11 +1684,6 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 		/* check whether the parent vdev has no peers left */
 		if (TAILQ_EMPTY(&vdev->peer_list)) {
 			/*
-			 * Now that there are no references to the peer, we can
-			 * release the peer reference lock.
-			 */
-			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
-			/*
 			 * Check if the parent vdev was waiting for its peers
 			 * to be deleted, in order for it to be deleted too.
 			 */
@@ -1656,6 +1692,12 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 					vdev->delete.callback;
 				void *vdev_delete_context =
 					vdev->delete.context;
+
+				/*
+				 * Now that there are no references to the peer,
+				 * we can release the peer reference lock.
+				 */
+				cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 
 				TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 					   "%s: deleting vdev object %p "
@@ -1672,9 +1714,12 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 				cdf_mem_free(vdev);
 				if (vdev_delete_cb)
 					vdev_delete_cb(vdev_delete_context);
+			} else {
+				cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 			}
-		} else
+		} else {
 			cdf_spin_unlock_bh(&pdev->peer_ref_mutex);
+		}
 
 		/*
 		 * 'array' is allocated in addba handler and is supposed to be
@@ -1853,7 +1898,7 @@ int ol_txrx_get_tx_pending(ol_txrx_pdev_handle pdev_handle)
 
 	total = ol_tx_get_desc_global_pool_size(pdev);
 
-	return total - pdev->tx_desc.num_free;
+	return total - ol_tx_get_total_free_desc(pdev);
 }
 
 void ol_txrx_discard_tx_pending(ol_txrx_pdev_handle pdev_handle)
@@ -1920,7 +1965,8 @@ ol_txrx_fw_stats_cfg(ol_txrx_vdev_handle vdev,
 }
 
 A_STATUS
-ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req)
+ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
+			bool response_expected)
 {
 	struct ol_txrx_pdev_t *pdev = vdev->pdev;
 	uint64_t cookie;
@@ -1960,6 +2006,9 @@ ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req)
 	if (req->wait.blocking)
 		while (cdf_semaphore_acquire(pdev->osdev, req->wait.sem_ptr))
 			;
+
+	if (response_expected == false)
+		cdf_mem_free(non_volatile_req);
 
 	return A_OK;
 }
@@ -2728,16 +2777,20 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	if (cdf_unlikely(!pdev)) {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: Invalid context", __func__);
+		cdf_mem_free(rxpkt);
 		return;
 	}
 
-	if (pdev->ipa_uc_op_cb)
+	if (pdev->ipa_uc_op_cb) {
 		pdev->ipa_uc_op_cb(rxpkt, pdev->osif_dev);
-	else
+	} else {
 		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
 			      "%s: ipa_uc_op_cb NULL", __func__);
+		cdf_mem_free(rxpkt);
+	}
 }
 
+#ifdef QCA_CONFIG_SMP
 /**
  * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
  * @pdev: handle to the HTT instance
@@ -2766,6 +2819,20 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
 	pkt->staId = 0;
 	cds_indicate_rxpkt(sched_ctx, pkt);
 }
+#else
+void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev,
+				uint8_t *op_msg)
+{
+	if (pdev->ipa_uc_op_cb) {
+		pdev->ipa_uc_op_cb(op_msg, pdev->osif_dev);
+	} else {
+		CDF_TRACE(CDF_MODULE_ID_TXRX, CDF_TRACE_LEVEL_ERROR,
+		    "%s: IPA callback function is not registered", __func__);
+		cdf_mem_free(op_msg);
+		return;
+	}
+}
+#endif
 
 /**
  * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function

@@ -89,9 +89,9 @@ extern "C" {
 #define TX_AIRGO_TMR_SIGNATURE   0xDEADBEEF
 
 #ifdef TIMER_MANAGER
-#define  tx_timer_create(a, b, c, d, e, f, g)   tx_timer_create_intern_debug((void *)pMac, a, b, c, d, e, f, g, __FILE__, __LINE__)
+#define  tx_timer_create(a, b, c, d, e, f, g, h)    tx_timer_create_intern_debug((void *)a, b, c, d, e, f, g, h, __FILE__, __LINE__)
 #else
-#define  tx_timer_create(a, b, c, d, e, f, g)   tx_timer_create_intern((void *)pMac, a, b, c, d, e, f, g)
+#define  tx_timer_create(a, b, c, d, e, f, g, h)    tx_timer_create_intern((void *)a, b, c, d, e, f, g, h)
 #endif
 
 /*--------------------------------------------------------------------*/

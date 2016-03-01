@@ -56,12 +56,7 @@ static void *get_hif_hdl_from_file(struct file *file)
 {
 	struct ol_softc *scn;
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 10, 0))
 	scn = (struct ol_softc *)PDE_DATA(file_inode(file));
-#else
-	scn = (struct ol_softc *)(
-		PDE(file->f_path.dentry->d_inode)->data);
-#endif
 	return (void *)scn;
 }
 

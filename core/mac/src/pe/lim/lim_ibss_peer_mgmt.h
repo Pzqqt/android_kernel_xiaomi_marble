@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,8 +38,6 @@
 
 #include "sir_common.h"
 #include "lim_utils.h"
-
-#define IBSS_STATIONS_USED_DURING_INIT 4        /* (broadcast + self + p2p + softap) */
 
 void lim_ibss_init(tpAniSirGlobal);
 void lim_ibss_delete(tpAniSirGlobal, tpPESession psessionEntry);

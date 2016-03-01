@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1202,6 +1202,18 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 				FL("Populate HT IEs in Assoc Response"));
 			populate_dot11f_ht_caps(mac_ctx, pe_session,
 				&frm.HTCaps);
+			/*
+			 * Check the STA capability and
+			 * update the HTCaps accordingly
+			 */
+			frm.HTCaps.supportedChannelWidthSet = (
+				sta->htSupportedChannelWidthSet <
+				     pe_session->htSupportedChannelWidthSet) ?
+				      sta->htSupportedChannelWidthSet :
+				       pe_session->htSupportedChannelWidthSet;
+			if (!frm.HTCaps.supportedChannelWidthSet)
+				frm.HTCaps.shortGI40MHz = 0;
+
 			populate_dot11f_ht_info(mac_ctx, &frm.HTInfo,
 				pe_session);
 		}
@@ -1713,7 +1725,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session);
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (mac_ctx->rrm.rrmPEContext.rrmEnable)
+	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
+	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
 		populate_dot11f_rrm_ie(mac_ctx, &frm->RRMEnabledCap,
 			pe_session);
 #endif
@@ -1930,7 +1943,8 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	    )
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
-	if (pe_session->pePersona == CDF_P2P_CLIENT_MODE)
+	if (pe_session->pePersona == CDF_P2P_CLIENT_MODE ||
+		pe_session->pePersona == CDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -2090,7 +2104,8 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		pe_session);
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (mac_ctx->rrm.rrmPEContext.rrmEnable)
+	if (mac_ctx->rrm.rrmPEContext.rrmEnable &&
+	    SIR_MAC_GET_RRM(pe_session->limCurrentBssCaps))
 		populate_dot11f_rrm_ie(mac_ctx, &frm.RRMEnabledCap, pe_session);
 #endif
 
@@ -2357,6 +2372,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	if (NULL != pe_session->assocReq) {
 		cdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
+		pe_session->assocReqLen = 0;
 	}
 	if (ft_ies_length) {
 		pe_session->assocReq = cdf_mem_malloc(ft_ies_length);
@@ -2560,7 +2576,8 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 				       &frm.ExtSuppRates, psessionEntry);
 
 #if defined WLAN_FEATURE_VOWIFI
-	if (pMac->rrm.rrmPEContext.rrmEnable)
+	if (pMac->rrm.rrmPEContext.rrmEnable &&
+	    SIR_MAC_GET_RRM(psessionEntry->limCurrentBssCaps))
 		populate_dot11f_rrm_ie(pMac, &frm.RRMEnabledCap, psessionEntry);
 #endif
 	/* The join request *should* contain zero or one of the WPA and RSN */
@@ -2710,9 +2727,9 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	if (psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) {
+	if (psessionEntry->pePersona == CDF_P2P_CLIENT_MODE ||
+		psessionEntry->pePersona == CDF_STA_MODE)
 		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-	}
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_REASSOC_START_EVENT,
@@ -3015,9 +3032,9 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		tx_flag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 
 
-	if (session->pePersona == CDF_P2P_CLIENT_MODE)
+	if (session->pePersona == CDF_P2P_CLIENT_MODE ||
+		session->pePersona == CDF_STA_MODE)
 		tx_flag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-
 
 	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
 			 session->peSessionId, mac_hdr->fc.subType));
@@ -3064,7 +3081,9 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 		}
 
 		pStaDs =
-			dph_lookup_hash_entry(pMac, pMlmDeauthReq->peerMacAddr, &aid,
+			dph_lookup_hash_entry(pMac,
+					      pMlmDeauthReq->peer_macaddr.bytes,
+					      &aid,
 					      &psessionEntry->dph.dphHashTable);
 		if (pStaDs == NULL) {
 			mlmDeauthCnf.resultCode = eSIR_SME_INVALID_PARAMETERS;
@@ -3074,15 +3093,52 @@ CDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 		/* / Receive path cleanup with dummy packet */
 		lim_ft_cleanup_pre_auth_info(pMac, psessionEntry);
 		lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
+#ifdef WLAN_FEATURE_VOWIFI_11R
+	if ((psessionEntry->limSystemRole == eLIM_STA_ROLE) &&
+		(
+#ifdef FEATURE_WLAN_ESE
+		(psessionEntry->isESEconnection) ||
+#endif
+#ifdef FEATURE_WLAN_LFR
+		(psessionEntry->isFastRoamIniFeatureEnabled) ||
+#endif
+		(psessionEntry->is11Rconnection))) {
+		PELOGE(lim_log(pMac, LOGE,
+			FL("FT Preauth Session (%p,%d) Cleanup Deauth reason %d Trigger = %d"),
+				psessionEntry, psessionEntry->peSessionId,
+				pMlmDeauthReq->reasonCode,
+				pMlmDeauthReq->deauthTrigger););
+		lim_ft_cleanup(pMac, psessionEntry);
+	} else {
+		PELOGE(lim_log(pMac, LOGE,
+			FL("No FT Preauth Session Cleanup in role %d"
+#ifdef FEATURE_WLAN_ESE
+			" isESE %d"
+#endif
+#ifdef FEATURE_WLAN_LFR
+			" isLFR %d"
+#endif
+			" is11r %d, Deauth reason %d Trigger = %d"),
+			psessionEntry->limSystemRole,
+#ifdef FEATURE_WLAN_ESE
+			psessionEntry->isESEconnection,
+#endif
+#ifdef FEATURE_WLAN_LFR
+			psessionEntry->isFastRoamIniFeatureEnabled,
+#endif
+			psessionEntry->is11Rconnection,
+			pMlmDeauthReq->reasonCode,
+			pMlmDeauthReq->deauthTrigger););
+	}
+#endif
 		/* / Free up buffer allocated for mlmDeauthReq */
 		cdf_mem_free(pMlmDeauthReq);
 		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
 	}
 	return CDF_STATUS_SUCCESS;
 end:
-	cdf_mem_copy((uint8_t *) &mlmDeauthCnf.peerMacAddr,
-		     (uint8_t *) pMlmDeauthReq->peerMacAddr,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&mlmDeauthCnf.peer_macaddr,
+			 &pMlmDeauthReq->peer_macaddr);
 	mlmDeauthCnf.deauthTrigger = pMlmDeauthReq->deauthTrigger;
 	mlmDeauthCnf.aid = pMlmDeauthReq->aid;
 	mlmDeauthCnf.sessionId = pMlmDeauthReq->sessionId;
@@ -3133,7 +3189,7 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 		}
 
 		sta_ds = dph_lookup_hash_entry(mac_ctx,
-				disassoc_req->peerMacAddr, &aid,
+				disassoc_req->peer_macaddr.bytes, &aid,
 				&pe_session->dph.dphHashTable);
 		if (sta_ds == NULL) {
 			lim_log(mac_ctx, LOGE, FL("StaDs Null"));
@@ -3197,8 +3253,8 @@ CDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 	}
 end:
 	cdf_mem_copy((uint8_t *) &disassoc_cnf.peerMacAddr,
-		     (uint8_t *) disassoc_req->peerMacAddr,
-		     sizeof(tSirMacAddr));
+		     (uint8_t *) disassoc_req->peer_macaddr.bytes,
+		     CDF_MAC_ADDR_SIZE);
 	disassoc_cnf.aid = disassoc_req->aid;
 	disassoc_cnf.disassocTrigger = disassoc_req->disassocTrigger;
 
@@ -3345,10 +3401,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	if ((psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) ||
-	    (psessionEntry->pePersona == CDF_P2P_GO_MODE)) {
-		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-	}
+	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 
 	if (waitForAck) {
 		MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
@@ -3525,10 +3578,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
 	}
 
-	if ((psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) ||
-	    (psessionEntry->pePersona == CDF_P2P_GO_MODE)) {
-		txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
-	}
+	txFlag |= HAL_USE_PEER_STA_REQUESTED_MASK;
 #ifdef FEATURE_WLAN_TDLS
 	pStaDs =
 		dph_lookup_hash_entry(pMac, peer, &aid,
@@ -4225,7 +4275,6 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	return eSIR_SUCCESS;
 } /* End lim_send_extended_chan_switch_action_frame */
 
-#ifdef WLAN_FEATURE_11AC
 tSirRetStatus
 lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 				       tSirMacAddr peer,
@@ -4334,140 +4383,6 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 
 	return eSIR_SUCCESS;
 }
-
-/**
- * \brief Send a VHT Channel Switch Announcement
- *
- *
- * \param pMac Pointer to the global MAC datastructure
- *
- * \param peer MAC address to which this frame will be sent
- *
- * \param nChanWidth
- *
- * \param nNewChannel
- *
- *
- * \return eSIR_SUCCESS on success, eSIR_FAILURE else
- *
- *
- */
-
-tSirRetStatus
-lim_send_vht_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
-				       tSirMacAddr peer,
-				       uint8_t nChanWidth,
-				       uint8_t nNewChannel,
-				       uint8_t ncbMode, tpPESession psessionEntry)
-{
-	tDot11fChannelSwitch frm;
-	uint8_t *pFrame;
-	tpSirMacMgmtHdr pMacHdr;
-	uint32_t nBytes, nPayload, nStatus;     /* , nCfg; */
-	void *pPacket;
-	CDF_STATUS cdf_status;
-	uint8_t txFlag = 0;
-
-	uint8_t smeSessionId = 0;
-
-	if (psessionEntry == NULL) {
-		PELOGE(lim_log(pMac, LOGE, FL("Session entry is NULL!!!"));)
-		return eSIR_FAILURE;
-	}
-	smeSessionId = psessionEntry->smeSessionId;
-
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
-
-	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
-	frm.Action.action = SIR_MAC_ACTION_CHANNEL_SWITCH_ID;
-	frm.ChanSwitchAnn.switchMode = 1;
-	frm.ChanSwitchAnn.newChannel = nNewChannel;
-	frm.ChanSwitchAnn.switchCount = 1;
-	frm.sec_chan_offset_ele.secondaryChannelOffset =
-						lim_get_htcb_state(ncbMode);
-	frm.sec_chan_offset_ele.present = 1;
-	frm.WiderBWChanSwitchAnn.newChanWidth = nChanWidth;
-	frm.WiderBWChanSwitchAnn.newCenterChanFreq0 =
-		lim_get_center_channel(pMac, nNewChannel, ncbMode, nChanWidth);
-	frm.WiderBWChanSwitchAnn.newCenterChanFreq1 = 0;
-	frm.ChanSwitchAnn.present = 1;
-	frm.WiderBWChanSwitchAnn.present = 1;
-
-	nStatus = dot11f_get_packed_channel_switch_size(pMac, &frm, &nPayload);
-	if (DOT11F_FAILED(nStatus)) {
-		lim_log(pMac, LOGP, FL("Failed to calculate the packed size f"
-				       "or a Channel Switch (0x%08x)."),
-			nStatus);
-		/* We'll fall back on the worst case scenario: */
-		nPayload = sizeof(tDot11fChannelSwitch);
-	} else if (DOT11F_WARNED(nStatus)) {
-		lim_log(pMac, LOGW, FL("There were warnings while calculating "
-				       "the packed size for a Channel Switch (0x"
-				       "%08x)."), nStatus);
-	}
-
-	nBytes = nPayload + sizeof(tSirMacMgmtHdr);
-
-	cdf_status =
-		cds_packet_alloc((uint16_t) nBytes, (void **)&pFrame,
-				 (void **)&pPacket);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-		lim_log(pMac, LOGP, FL("Failed to allocate %d bytes for a TPC"
-				       " Report."), nBytes);
-		return eSIR_FAILURE;
-	}
-	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
-
-	/* Next, we fill out the buffer descriptor: */
-	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
-		SIR_MAC_MGMT_ACTION, peer, psessionEntry->selfMacAddr);
-	pMacHdr = (tpSirMacMgmtHdr) pFrame;
-	cdf_mem_copy((uint8_t *) pMacHdr->bssId,
-		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
-	nStatus = dot11f_pack_channel_switch(pMac, &frm, pFrame +
-					     sizeof(tSirMacMgmtHdr),
-					     nPayload, &nPayload);
-	if (DOT11F_FAILED(nStatus)) {
-		lim_log(pMac, LOGE,
-			FL("Failed to pack a Channel Switch (0x%08x)."),
-			nStatus);
-		cds_packet_free((void *)pPacket);
-		return eSIR_FAILURE;    /* allocated! */
-	} else if (DOT11F_WARNED(nStatus)) {
-		lim_log(pMac, LOGW, FL("There were warnings while packing a C"
-				       "hannel Switch (0x%08x)."), nStatus);
-	}
-
-	if ((SIR_BAND_5_GHZ == lim_get_rf_band(psessionEntry->currentOperChannel))
-	    || (psessionEntry->pePersona == CDF_P2P_CLIENT_MODE) ||
-	    (psessionEntry->pePersona == CDF_P2P_GO_MODE)
-	    ) {
-		txFlag |= HAL_USE_BD_RATE2_FOR_MANAGEMENT_FRAME;
-	}
-
-	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_MGMT,
-			 psessionEntry->peSessionId, pMacHdr->fc.subType));
-	cdf_status = wma_tx_frame(pMac, pPacket, (uint16_t) nBytes,
-				TXRX_FRM_802_11_MGMT,
-				ANI_TXDIR_TODS,
-				7, lim_tx_complete, pFrame, txFlag,
-				smeSessionId, 0);
-	MTRACE(cdf_trace(CDF_MODULE_ID_PE, TRACE_CODE_TX_COMPLETE,
-			 psessionEntry->peSessionId, cdf_status));
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-		lim_log(pMac, LOGE,
-			FL("Failed to send a Channel Switch (%X)!"),
-			cdf_status);
-		/* Pkt will be freed up by the callback */
-		return eSIR_FAILURE;
-	}
-
-	return eSIR_SUCCESS;
-
-} /* End lim_send_vht_channel_switch_mgmt_frame. */
-
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI
 

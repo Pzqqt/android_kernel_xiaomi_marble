@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -97,7 +97,6 @@ uint8_t csr_wapi_oui[][CSR_WAPI_OUI_SIZE] = {
 uint8_t csr_wme_info_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 uint8_t csr_wme_parm_oui[CSR_WME_OUI_SIZE] = { 0x00, 0x50, 0xf2, 0x02 };
 
-
 /* ////////////////////////////////////////////////////////////////////// */
 
 /**
@@ -179,14 +178,61 @@ const char *get_e_roam_cmd_status_str(eRoamCmdStatus val)
 {
 	switch (val) {
 		CASE_RETURN_STR(eCSR_ROAM_CANCELLED);
+		CASE_RETURN_STR(eCSR_ROAM_FAILED);
 		CASE_RETURN_STR(eCSR_ROAM_ROAMING_START);
 		CASE_RETURN_STR(eCSR_ROAM_ROAMING_COMPLETION);
+		CASE_RETURN_STR(eCSR_ROAM_CONNECT_COMPLETION);
 		CASE_RETURN_STR(eCSR_ROAM_ASSOCIATION_START);
 		CASE_RETURN_STR(eCSR_ROAM_ASSOCIATION_COMPLETION);
 		CASE_RETURN_STR(eCSR_ROAM_DISASSOCIATED);
+		CASE_RETURN_STR(eCSR_ROAM_ASSOCIATION_FAILURE);
 		CASE_RETURN_STR(eCSR_ROAM_SHOULD_ROAM);
 		CASE_RETURN_STR(eCSR_ROAM_SCAN_FOUND_NEW_BSS);
 		CASE_RETURN_STR(eCSR_ROAM_LOSTLINK);
+		CASE_RETURN_STR(eCSR_ROAM_LOSTLINK_DETECTED);
+		CASE_RETURN_STR(eCSR_ROAM_MIC_ERROR_IND);
+		CASE_RETURN_STR(eCSR_ROAM_IBSS_IND);
+		CASE_RETURN_STR(eCSR_ROAM_CONNECT_STATUS_UPDATE);
+		CASE_RETURN_STR(eCSR_ROAM_GEN_INFO);
+		CASE_RETURN_STR(eCSR_ROAM_SET_KEY_COMPLETE);
+		CASE_RETURN_STR(eCSR_ROAM_IBSS_LEAVE);
+		CASE_RETURN_STR(eCSR_ROAM_INFRA_IND);
+		CASE_RETURN_STR(eCSR_ROAM_WPS_PBC_PROBE_REQ_IND);
+#ifdef WLAN_FEATURE_VOWIFI_11R
+		CASE_RETURN_STR(eCSR_ROAM_FT_RESPONSE);
+#endif
+		CASE_RETURN_STR(eCSR_ROAM_FT_START);
+		CASE_RETURN_STR(eCSR_ROAM_REMAIN_CHAN_READY);
+		CASE_RETURN_STR(eCSR_ROAM_SEND_ACTION_CNF);
+		CASE_RETURN_STR(eCSR_ROAM_SESSION_OPENED);
+		CASE_RETURN_STR(eCSR_ROAM_FT_REASSOC_FAILED);
+#ifdef FEATURE_WLAN_LFR
+		CASE_RETURN_STR(eCSR_ROAM_PMK_NOTIFY);
+#endif
+#ifdef FEATURE_WLAN_LFR_METRICS
+		CASE_RETURN_STR(eCSR_ROAM_PREAUTH_INIT_NOTIFY);
+		CASE_RETURN_STR(eCSR_ROAM_PREAUTH_STATUS_SUCCESS);
+		CASE_RETURN_STR(eCSR_ROAM_PREAUTH_STATUS_FAILURE);
+		CASE_RETURN_STR(eCSR_ROAM_HANDOVER_SUCCESS);
+#endif
+#ifdef FEATURE_WLAN_TDLS
+		CASE_RETURN_STR(eCSR_ROAM_TDLS_STATUS_UPDATE);
+		CASE_RETURN_STR(eCSR_ROAM_RESULT_MGMT_TX_COMPLETE_IND);
+#endif
+		CASE_RETURN_STR(eCSR_ROAM_DISCONNECT_ALL_P2P_CLIENTS);
+		CASE_RETURN_STR(eCSR_ROAM_SEND_P2P_STOP_BSS);
+#ifdef WLAN_FEATURE_11W
+		CASE_RETURN_STR(eCSR_ROAM_UNPROT_MGMT_FRAME_IND);
+#endif
+#ifdef WLAN_FEATURE_RMC
+		CASE_RETURN_STR(eCSR_ROAM_IBSS_PEER_INFO_COMPLETE);
+#endif
+#if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
+		CASE_RETURN_STR(eCSR_ROAM_TSM_IE_IND);
+		CASE_RETURN_STR(eCSR_ROAM_CCKM_PREAUTH_NOTIFY);
+		CASE_RETURN_STR(eCSR_ROAM_ESE_ADJ_AP_REPORT_IND);
+		CASE_RETURN_STR(eCSR_ROAM_ESE_BCN_REPORT_IND);
+#endif /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 	default:
 		return "unknown";
 	}
@@ -403,7 +449,7 @@ uint8_t csr_get_concurrent_operation_channel(tpAniSirGlobal mac_ctx)
 {
 	tCsrRoamSession *session = NULL;
 	uint8_t i = 0;
-	tCDF_CON_MODE persona;
+	enum tCDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
@@ -704,7 +750,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 					CDF_SAP_MODE)) &&
 				(session->connectState !=
 					eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
-				if (pSession->ch_switch_in_progress)
+				if (session->ch_switch_in_progress)
 					continue;
 
 				csr_handle_conc_chnl_overlap_for_sap_go(mac_ctx,
@@ -807,7 +853,7 @@ bool csr_is_p2p_session_connected(tpAniSirGlobal pMac)
 {
 	uint32_t i;
 	tCsrRoamSession *pSession = NULL;
-	tCDF_CON_MODE persona;
+	enum tCDF_ADAPTER_MODE persona;
 
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (CSR_IS_SESSION_VALID(pMac, i)
@@ -893,22 +939,6 @@ bool csr_is_ibss_started(tpAniSirGlobal pMac)
 	return fRc;
 }
 
-bool csr_is_btamp_started(tpAniSirGlobal pMac)
-{
-	uint32_t i;
-	bool fRc = false;
-
-	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
-		if (CSR_IS_SESSION_VALID(pMac, i)
-		    && csr_is_conn_state_connected_wds(pMac, i)) {
-			fRc = true;
-			break;
-		}
-	}
-
-	return fRc;
-}
-
 bool csr_is_concurrent_session_running(tpAniSirGlobal pMac)
 {
 	uint32_t sessionId, noOfCocurrentSession = 0;
@@ -952,11 +982,6 @@ bool csr_is_infra_ap_started(tpAniSirGlobal pMac)
 
 	return fRc;
 
-}
-
-bool csr_is_btamp(tpAniSirGlobal pMac, uint32_t sessionId)
-{
-	return csr_is_conn_state_connected_wds(pMac, sessionId);
 }
 
 bool csr_is_conn_state_disconnected(tpAniSirGlobal pMac, uint32_t sessionId)
@@ -1861,10 +1886,10 @@ bool csr_is_profile_rsn(tCsrRoamProfile *pProfile)
  */
 CDF_STATUS
 csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
-			      tCDF_CON_MODE cur_bss_persona)
+			      enum tCDF_ADAPTER_MODE cur_bss_persona)
 {
 	uint32_t sessionid = 0;
-	tCDF_CON_MODE bss_persona;
+	enum tCDF_ADAPTER_MODE bss_persona;
 	eCsrConnectState connect_state, temp;
 	tCsrRoamSession *roam_session;
 
@@ -1886,37 +1911,20 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 
 		case CDF_SAP_MODE:
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-#ifndef WLAN_FEATURE_MBSSID
-			if ((bss_persona == CDF_SAP_MODE) &&
-					(connect_state !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
+			if ((bss_persona == CDF_IBSS_MODE)
+				&& (connect_state != temp)) {
+				/* allow IBSS+SAP for Emulation only */
+#ifndef QCA_WIFI_3_0_EMU
 				CDF_TRACE(CDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
-						FL("sap mode already exist"));
+						FL("Can't start SAP"));
 				return CDF_STATUS_E_FAILURE;
-			} else
 #endif
-				if ((bss_persona == CDF_IBSS_MODE)
-					&& (connect_state != temp)) {
-					CDF_TRACE(CDF_MODULE_ID_SME,
-							CDF_TRACE_LEVEL_ERROR,
-							FL("Can't start GO"));
-					return CDF_STATUS_E_FAILURE;
-				}
+			}
 			break;
 
 		case CDF_P2P_GO_MODE:
 			temp = eCSR_ASSOC_STATE_TYPE_IBSS_DISCONNECTED;
-#ifndef WLAN_FEATURE_MBSSID
-			if ((bss_persona == CDF_P2P_GO_MODE) &&
-					(connect_state !=
-					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
-				CDF_TRACE(CDF_MODULE_ID_SME,
-						CDF_TRACE_LEVEL_ERROR,
-						FL("GO mode already exists"));
-				return CDF_STATUS_E_FAILURE;
-			}
-#endif
 			if ((bss_persona == CDF_IBSS_MODE)
 					&& (connect_state != temp)) {
 				CDF_TRACE(CDF_MODULE_ID_SME,
@@ -1926,7 +1934,8 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 			}
 			break;
 		case CDF_IBSS_MODE:
-			if ((bss_persona == CDF_IBSS_MODE) && (connect_state !=
+			if ((bss_persona == CDF_IBSS_MODE) &&
+				(connect_state ==
 					eCSR_ASSOC_STATE_TYPE_IBSS_CONNECTED)) {
 				CDF_TRACE(CDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
@@ -1936,10 +1945,13 @@ csr_isconcurrentsession_valid(tpAniSirGlobal mac_ctx, uint32_t cur_sessionid,
 					(bss_persona == CDF_SAP_MODE)) &&
 					(connect_state !=
 					 eCSR_ASSOC_STATE_TYPE_NOT_CONNECTED)) {
+				/* allow IBSS+SAP for Emulation only */
+#ifndef QCA_WIFI_3_0_EMU
 				CDF_TRACE(CDF_MODULE_ID_SME,
 						CDF_TRACE_LEVEL_ERROR,
-						FL("Can't start GO"));
+						FL("Can't start GO/SAP"));
 				return CDF_STATUS_E_FAILURE;
+#endif
 			}
 			break;
 		case CDF_P2P_CLIENT_MODE:
@@ -2062,10 +2074,11 @@ uint16_t csr_calculate_mcc_beacon_interval(tpAniSirGlobal pMac, uint16_t sta_bi,
 	return go_fbi;
 }
 
-CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
-					    uint16_t *beaconInterval,
-					    uint32_t cursessionId,
-					    tCDF_CON_MODE currBssPersona)
+CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac,
+					uint8_t channelId,
+					uint16_t *beaconInterval,
+					uint32_t cursessionId,
+					enum tCDF_ADAPTER_MODE currBssPersona)
 {
 	uint32_t sessionId = 0;
 	uint16_t new_beaconInterval = 0;
@@ -2252,6 +2265,7 @@ CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channel
 				break;
 
 			case CDF_SAP_MODE:
+			case CDF_IBSS_MODE:
 				break;
 
 			case CDF_P2P_GO_MODE:
@@ -3713,16 +3727,13 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 	do {
 		if (!csr_is_profile_rsn(pProfile))
 			break;
-#ifdef FEATURE_WLAN_LFR
 		if (csr_roam_is_fast_roam_enabled(pMac, sessionId)) {
 			/* If "Legacy Fast Roaming" is enabled ALWAYS rebuild the RSN IE from */
 			/* scratch. So it contains the current PMK-IDs */
 			cbRsnIe =
 				csr_construct_rsn_ie(pMac, sessionId, pProfile,
 						     pSirBssDesc, pIes, pRsnIe);
-		} else
-#endif
-		if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
+		} else if (pProfile->nRSNReqIELength && pProfile->pRSNReqIE) {
 			/* If you have one started away, re-use it. */
 			if (SIR_MAC_WPA_IE_MAX_LENGTH >=
 			    pProfile->nRSNReqIELength) {
@@ -4371,12 +4382,6 @@ bool csr_is_bss_type_ibss(eCsrRoamBssType bssType)
 		 || eCSR_BSS_TYPE_IBSS == bssType);
 }
 
-bool csr_is_bss_type_wds(eCsrRoamBssType bssType)
-{
-	return (bool)
-		(eCSR_BSS_TYPE_WDS_STA == bssType
-		 || eCSR_BSS_TYPE_WDS_AP == bssType);
-}
 
 bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
 				tSirBssDescription *pSirBssDesc)
@@ -4389,10 +4394,8 @@ bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
 			break;
 
 		case eCSR_BSS_TYPE_INFRASTRUCTURE:
-		case eCSR_BSS_TYPE_WDS_STA:
 			if (!csr_is_infra_bss_desc(pSirBssDesc))
 				fMatch = false;
-
 			break;
 
 		case eCSR_BSS_TYPE_IBSS:
@@ -4401,8 +4404,6 @@ bool csr_is_bss_type_caps_match(eCsrRoamBssType bssType,
 				fMatch = false;
 
 			break;
-
-		case eCSR_BSS_TYPE_WDS_AP:      /* For WDS AP, no need to match anything */
 		default:
 			fMatch = false;
 			break;
@@ -5284,7 +5285,7 @@ tSirResultCodes csr_get_de_auth_rsp_status_code(tSirSmeDeauthRsp *pSmeRsp)
 tSirScanType csr_get_scan_type(tpAniSirGlobal pMac, uint8_t chnId)
 {
 	tSirScanType scanType = eSIR_PASSIVE_SCAN;
-	CHANNEL_STATE channelEnabledType;
+	enum channel_state channelEnabledType;
 
 	channelEnabledType = cds_get_channel_state(chnId);
 	if (CHANNEL_STATE_ENABLE == channelEnabledType) {
@@ -5316,12 +5317,6 @@ tSirBssType csr_translate_bsstype_to_mac_type(eCsrRoamBssType csrtype)
 	case eCSR_BSS_TYPE_IBSS:
 	case eCSR_BSS_TYPE_START_IBSS:
 		ret = eSIR_IBSS_MODE;
-		break;
-	case eCSR_BSS_TYPE_WDS_AP:
-		ret = eSIR_BTAMP_AP_MODE;
-		break;
-	case eCSR_BSS_TYPE_WDS_STA:
-		ret = eSIR_BTAMP_STA_MODE;
 		break;
 	case eCSR_BSS_TYPE_INFRA_AP:
 		ret = eSIR_INFRA_AP_MODE;
@@ -5400,13 +5395,14 @@ eCsrCfgDot11Mode csr_get_cfg_dot11_mode_from_csr_phy_mode(tCsrRoamProfile *pProf
 	return cfgDot11Mode;
 }
 
-CDF_STATUS csr_get_regulatory_domain_for_country
-	(tpAniSirGlobal pMac,
-	uint8_t *pCountry,
-	v_REGDOMAIN_t *pDomainId, v_CountryInfoSource_t source) {
+CDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal pMac,
+						 uint8_t *pCountry,
+						 v_REGDOMAIN_t *pDomainId,
+						 enum country_src source)
+{
 	CDF_STATUS status = CDF_STATUS_E_INVAL;
 	CDF_STATUS cdf_status;
-	country_code_t countryCode;
+	uint8_t countryCode[CDS_COUNTRY_CODE_LEN + 1];
 	v_REGDOMAIN_t domainId;
 
 	if (pCountry) {
@@ -5539,9 +5535,8 @@ uint16_t sme_chn_to_freq(uint8_t chanNum)
 	int i;
 
 	for (i = 0; i < NUM_RF_CHANNELS; i++) {
-		if (rf_channels[i].channelNum == chanNum) {
-			return rf_channels[i].targetFreq;
-		}
+		if (CDS_CHANNEL_NUM(i) == chanNum)
+			return CDS_CHANNEL_FREQ(i);
 	}
 
 	return 0;
@@ -5570,7 +5565,6 @@ void csr_disconnect_all_active_sessions(tpAniSirGlobal pMac)
 	}
 }
 
-#ifdef FEATURE_WLAN_LFR
 bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 				    int numChannels, uint8_t channel)
 {
@@ -5588,6 +5582,27 @@ bool csr_is_channel_present_in_list(uint8_t *pChannelList,
 	}
 
 	return false;
+}
+
+/**
+ * sme_request_type_to_string(): converts scan request enum to string.
+ * @request_type: scan request type enum.
+ *
+ * Return: Printable string for request_type
+ */
+const char *sme_request_type_to_string(const uint8_t request_type)
+{
+	switch (request_type) {
+	CASE_RETURN_STRING(eCSR_SCAN_REQUEST_11D_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_REQUEST_FULL_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_IDLE_MODE_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_HO_PROBE_SCAN);
+	CASE_RETURN_STRING(eCSR_SCAN_P2P_DISCOVERY);
+	CASE_RETURN_STRING(eCSR_SCAN_SOFTAP_CHANNEL_RANGE);
+	CASE_RETURN_STRING(eCSR_SCAN_P2P_FIND_PEER);
+	default:
+		return "Unknown Scan Request Type";
+	}
 }
 
 CDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
@@ -5609,7 +5624,6 @@ CDF_STATUS csr_add_to_channel_list_front(uint8_t *pChannelList,
 
 	return CDF_STATUS_SUCCESS;
 }
-#endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 /**
  * csr_diag_event_report() - send PE diag event
@@ -5681,4 +5695,25 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 	}
 
 	return true;
+}
+
+/**
+ * csr_get_session_persona() - get persona of a session
+ * @pmac: pointer to global MAC context
+ * @session_id: session id
+ *
+ * This function is to return the persona of a session
+ *
+ * Reture: enum tCDF_ADAPTER_MODE persona
+ */
+enum tCDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
+						uint32_t session_id)
+{
+	tCsrRoamSession *session = NULL;
+
+	session = CSR_GET_SESSION(pmac, session_id);
+	if (NULL == session || NULL == session->pCurRoamProfile)
+		return CDF_MAX_NO_OF_MODE;
+
+	return session->pCurRoamProfile->csrPersona;
 }

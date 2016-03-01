@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -160,7 +160,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_TXRX_FWSTATS_RESET           41
 #define WE_SET_MAX_TX_POWER_2_4   42
 #define WE_SET_MAX_TX_POWER_5_0   43
-#define WE_SET_POWER_GATING       44
+/* 44 is unused */
 /* Private ioctl for packet powe save */
 #define  WE_PPS_PAID_MATCH              45
 #define  WE_PPS_GID_MATCH               46
@@ -247,7 +247,7 @@ static const hdd_freq_chan_map_t freq_chan_map[] = {
 #define WE_GET_AMSDU         28
 #define WE_GET_TXPOW_2G      29
 #define WE_GET_TXPOW_5G      30
-#define WE_GET_POWER_GATING  31
+/* 31 is unused */
 #define WE_GET_PPS_PAID_MATCH           32
 #define WE_GET_PPS_GID_MATCH            33
 #define WE_GET_PPS_EARLY_TIM_CLEAR      34
@@ -1109,9 +1109,9 @@ CDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 		       "%s: Invalid context, pAdapter", __func__);
 		return CDF_STATUS_E_FAULT;
 	}
-	if ((WLAN_HDD_GET_CTX(pAdapter))->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s:LOGP in Progress. Ignore!!!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			cds_get_driver_state());
 		/* return a cached value */
 		*rssi_value = pAdapter->rssi;
 		return CDF_STATUS_SUCCESS;
@@ -2248,9 +2248,9 @@ static int __iw_get_bitrate(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if ((WLAN_HDD_GET_CTX(pAdapter))->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_FATAL,
-			  "%s:LOGP in Progress. Ignore!!!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_alert("Recovery in Progress. State: 0x%x Ignore!!!",
+			  cds_get_driver_state());
 		return status;
 	}
 
@@ -3352,9 +3352,9 @@ CDF_STATUS wlan_hdd_get_class_astats(hdd_adapter_t *pAdapter)
 		hddLog(CDF_TRACE_LEVEL_ERROR, "%s: pAdapter is NULL", __func__);
 		return CDF_STATUS_E_FAULT;
 	}
-	if ((WLAN_HDD_GET_CTX(pAdapter))->isLogpInProgress) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
-			  "%s:LOGP in Progress. Ignore!!!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return CDF_STATUS_SUCCESS;
 	}
 
@@ -5698,16 +5698,6 @@ static int __iw_setint_getnone(struct net_device *dev,
 		break;
 	}
 
-	case WE_SET_POWER_GATING:
-	{
-		hddLog(LOG1, "WMI_PDEV_PARAM_POWER_GATING_SLEEP val %d",
-		       set_value);
-		ret = wma_cli_set_command(pAdapter->sessionId,
-					  WMI_PDEV_PARAM_POWER_GATING_SLEEP,
-					  (set_value) ? true : false, PDEV_CMD);
-		break;
-	}
-
 	/* Firmware debug log */
 	case WE_DBGLOG_LOG_LEVEL:
 	{
@@ -6681,15 +6671,6 @@ static int __iw_setnone_getint(struct net_device *dev,
 		break;
 	}
 
-	case WE_GET_POWER_GATING:
-	{
-		hddLog(LOG1, "GET WMI_PDEV_PARAM_POWER_GATING_SLEEP");
-		*value = wma_cli_get_command(pAdapter->sessionId,
-					     WMI_PDEV_PARAM_POWER_GATING_SLEEP,
-					     PDEV_CMD);
-		break;
-	}
-
 	case WE_GET_PPS_PAID_MATCH:
 	{
 		hddLog(LOG1, "GET WMI_VDEV_PPS_PAID_MATCH");
@@ -6894,9 +6875,7 @@ static int __iw_set_three_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d %d", value[1], value[2], value[3]);
-		cds_set_dual_mac_scan_config(hdd_ctx,
-				value[1], value[2],
-				value[3]);
+		cds_set_dual_mac_scan_config(value[1], value[2], value[3]);
 		break;
 	default:
 		hddLog(LOGE, "%s: Invalid IOCTL command %d", __func__, sub_cmd);
@@ -7712,7 +7691,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_clist> is called\n"));
-		cds_incr_connection_count_utfw(hdd_ctx, apps_args[0],
+		cds_incr_connection_count_utfw(apps_args[0],
 			apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5], apps_args[6],
 			apps_args[7]);
@@ -7723,7 +7702,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_dlist> is called\n"));
-		cds_decr_connection_count_utfw(hdd_ctx, apps_args[0],
+		cds_decr_connection_count_utfw(apps_args[0],
 			apps_args[1]);
 	}
 	break;
@@ -7732,7 +7711,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_ulist> is called\n"));
-		cds_update_connection_info_utfw(hdd_ctx, apps_args[0],
+		cds_update_connection_info_utfw(apps_args[0],
 			apps_args[1], apps_args[2], apps_args[3],
 			apps_args[4], apps_args[5], apps_args[6],
 			apps_args[7]);
@@ -7764,7 +7743,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_pcl> is called\n"));
 
-		cds_get_pcl(hdd_ctx, apps_args[0],
+		cds_get_pcl(apps_args[0],
 				pcl, &pcl_len);
 		pr_info("PCL list for role[%d] is {", apps_args[0]);
 		for (i = 0 ; i < pcl_len; i++)
@@ -7780,7 +7759,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_cinfo> is called\n"));
-		conn_info = cds_get_conn_info(hdd_ctx, &len);
+		conn_info = cds_get_conn_info(&len);
 		pr_info("+-----------------------------+\n");
 		for (i = 0; i < len; i++) {
 			pr_info("|table_index[%d]\t\t|\n", i);
@@ -7806,7 +7785,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		if (apps_args[0] == 0) {
 			hddLog(LOGE,
 				FL("set hw mode for single mac\n"));
-			cds_soc_set_hw_mode(hdd_ctx,
+			cds_soc_set_hw_mode(
 					pAdapter->sessionId,
 					HW_MODE_SS_2x2,
 					HW_MODE_80_MHZ,
@@ -7817,7 +7796,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		} else if (apps_args[0] == 1) {
 			hddLog(LOGE,
 				FL("set hw mode for dual mac\n"));
-			cds_soc_set_hw_mode(hdd_ctx,
+			cds_soc_set_hw_mode(
 					pAdapter->sessionId,
 					HW_MODE_SS_1x1,
 					HW_MODE_80_MHZ,
@@ -7845,7 +7824,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		bool allow;
 		hddLog(LOGE,
 			FL("<iwpriv wlan0 pm_query_allow> is called\n"));
-		allow = cds_allow_concurrency(hdd_ctx,
+		allow = cds_allow_concurrency(
 				apps_args[0], apps_args[1], apps_args[2]);
 		pr_info("allow %d {0 = don't allow, 1 = allow}", allow);
 	}
@@ -8604,10 +8583,8 @@ static int __iw_set_keepalive_params(struct net_device *dev,
 		       request->destIpv4Addr[0], request->destIpv4Addr[1],
 		       request->destIpv4Addr[2], request->destIpv4Addr[3]);
 
-		hdd_info("Dest MAC address: %d:%d:%d:%d:%d:%d",
-		       request->destMacAddr[0], request->destMacAddr[1],
-		       request->destMacAddr[2], request->destMacAddr[3],
-		       request->destMacAddr[4], request->destMacAddr[5]);
+		hdd_info("Dest MAC address: "MAC_ADDRESS_STR,
+		       MAC_ADDR_ARRAY(request->dest_macaddr.bytes));
 		break;
 	}
 
@@ -9534,8 +9511,7 @@ static int __iw_set_two_ints_getnone(struct net_device *dev,
 			return -EPERM;
 		}
 		hdd_debug("%d %d", value[1], value[2]);
-		cds_set_dual_mac_fw_mode_config(hdd_ctx,
-				value[1], value[2]);
+		cds_set_dual_mac_fw_mode_config(value[1], value[2]);
 		break;
 	case WE_DUMP_DP_TRACE_LEVEL:
 		hdd_info("WE_DUMP_DP_TRACE_LEVEL: %d %d",
@@ -9917,11 +9893,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 "txpow5g"},
 
-	{WE_SET_POWER_GATING,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 0,
-	 "pwrgating"},
-
 	/* Sub-cmds DBGLOG specific commands */
 	{WE_DBGLOG_LOG_LEVEL,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
@@ -10274,11 +10245,6 @@ static const struct iw_priv_args we_private_args[] = {
 	 0,
 	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 	 "get_txpow5g"},
-
-	{WE_GET_POWER_GATING,
-	 0,
-	 IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
-	 "get_pwrgating"},
 
 	{WE_GET_PPS_PAID_MATCH,
 	 0,

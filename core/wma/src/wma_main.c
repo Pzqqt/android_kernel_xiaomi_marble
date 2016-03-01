@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -321,9 +321,6 @@ int wma_cli_get_command(int vdev_id, int param_id, int vpdev)
 			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT5G:
 			ret = wma->pdevconfig.txpow5g;
-			break;
-		case WMI_PDEV_PARAM_POWER_GATING_SLEEP:
-			ret = wma->pdevconfig.pwrgating;
 			break;
 		case WMI_PDEV_PARAM_BURST_ENABLE:
 			ret = wma->pdevconfig.burst_enable;
@@ -1361,9 +1358,6 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 		case WMI_PDEV_PARAM_BURST_DUR:
 			wma->pdevconfig.burst_dur = privcmd->param_value;
 			break;
-		case WMI_PDEV_PARAM_POWER_GATING_SLEEP:
-			wma->pdevconfig.pwrgating = privcmd->param_value;
-			break;
 		case WMI_PDEV_PARAM_TXPOWER_LIMIT2G:
 			wma->pdevconfig.txpow2g = privcmd->param_value;
 			if ((pMac->roam.configParam.bandCapability ==
@@ -1564,7 +1558,7 @@ CDF_STATUS wma_open(void *cds_context,
 
 	cdf_mem_zero(wma_handle, sizeof(t_wma_handle));
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_init(&wma_handle->pno_wake_lock, "wlan_pno_wl");
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -1651,7 +1645,7 @@ CDF_STATUS wma_open(void *cds_context,
 		goto err_wmi_handle;
 	}
 #if defined(QCA_WIFI_FTM)
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		wma_utf_attach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 
@@ -1772,6 +1766,13 @@ CDF_STATUS wma_open(void *cds_context,
 		goto err_event_init;
 	}
 
+	cdf_status = cdf_event_init(&wma_handle->runtime_suspend);
+	if (cdf_status != CDF_STATUS_SUCCESS) {
+		WMA_LOGP("%s: runtime_suspend event initialization failed",
+			 __func__);
+		goto err_event_init;
+	}
+
 	cdf_status = cdf_event_init(&wma_handle->recovery_event);
 	if (cdf_status != CDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: recovery event initialization failed", __func__);
@@ -1823,6 +1824,10 @@ CDF_STATUS wma_open(void *cds_context,
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_OEM_ERROR_REPORT_EVENTID,
 					   wma_oem_error_report_event_callback);
+
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_OEM_RESPONSE_EVENTID,
+					   wma_oem_data_response_handler);
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 	/*
 	 * Register appropriate DFS phyerr event handler for
@@ -1932,14 +1937,26 @@ CDF_STATUS wma_open(void *cds_context,
 				WMI_RSSI_BREACH_EVENTID,
 				wma_rssi_breached_event_handler);
 
+	cdf_wake_lock_init(&wma_handle->wmi_cmd_rsp_wake_lock,
+				"wlan_fw_rsp_wakelock");
+	wma_handle->wmi_cmd_rsp_runtime_lock =
+			cdf_runtime_lock_init("wlan_fw_rsp_runtime_lock");
+
 	/* Register peer assoc conf event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_ASSOC_CONF_EVENTID,
 					   wma_peer_assoc_conf_handler);
-
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_VDEV_DELETE_RESP_EVENTID,
+					   wma_vdev_delete_handler);
+	wmi_unified_register_event_handler(wma_handle->wmi_handle,
+					   WMI_PEER_DELETE_RESP_EVENTID,
+					   wma_peer_delete_handler);
 	return CDF_STATUS_SUCCESS;
 
 err_dbglog_init:
+	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	cdf_spinlock_destroy(&wma_handle->vdev_respq_lock);
 	cdf_spinlock_destroy(&wma_handle->wma_hold_req_q_lock);
 err_event_init:
@@ -1957,7 +1974,7 @@ err_wmi_handle:
 
 err_wma_handle:
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -2682,7 +2699,7 @@ CDF_STATUS wma_start(void *cds_ctx)
 	 * Tx mgmt attach requires TXRX context which is not created
 	 * in FTM mode. So skip the TX mgmt attach.
 	 */
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		goto end;
 #endif /* QCA_WIFI_FTM */
 
@@ -2785,7 +2802,7 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	 * Tx mgmt detach requires TXRX context which is not created
 	 * in FTM mode. So skip the TX mgmt detach.
 	 */
-	if (cds_get_conparam() == CDF_FTM_MODE) {
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 		cdf_status = CDF_STATUS_SUCCESS;
 		goto end;
 	}
@@ -2804,7 +2821,7 @@ CDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 	}
 
 	/* There's no need suspend target which is already down during SSR. */
-	if (!cds_is_logp_in_progress()) {
+	if (!cds_is_driver_recovering()) {
 #ifdef HIF_USB
 		/* Suspend the target and enable interrupt */
 		if (wma_suspend_target(wma_handle, 0))
@@ -2953,6 +2970,17 @@ CDF_STATUS wma_wmi_service_close(void *cds_ctx)
 			cdf_mem_free(wma_handle->interfaces[i].handle);
 			wma_handle->interfaces[i].handle = NULL;
 		}
+
+		if (wma_handle->interfaces[i].addBssStaContext) {
+			cdf_mem_free(wma_handle->
+				     interfaces[i].addBssStaContext);
+			wma_handle->interfaces[i].addBssStaContext = NULL;
+		}
+
+		if (wma_handle->interfaces[i].del_staself_req) {
+			cdf_mem_free(wma_handle->interfaces[i].del_staself_req);
+			wma_handle->interfaces[i].del_staself_req = NULL;
+		}
 	}
 
 	cdf_mem_free(wma_handle->interfaces);
@@ -3050,7 +3078,7 @@ CDF_STATUS wma_close(void *cds_ctx)
 		wma_handle->saved_wmi_init_cmd.buf = NULL;
 	}
 
-	if (cds_get_conparam() != CDF_FTM_MODE) {
+	if (cds_get_conparam() != CDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		cdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -3074,9 +3102,12 @@ CDF_STATUS wma_close(void *cds_ctx)
 
 	cdf_event_destroy(&wma_handle->target_suspend);
 	cdf_event_destroy(&wma_handle->wma_resume_event);
+	cdf_event_destroy(&wma_handle->runtime_suspend);
 	cdf_event_destroy(&wma_handle->recovery_event);
 	wma_cleanup_vdev_resp(wma_handle);
 	wma_cleanup_hold_req(wma_handle);
+	cdf_wake_lock_destroy(&wma_handle->wmi_cmd_rsp_wake_lock);
+	cdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
 		cdf_os_mem_free_consistent(wma_handle->cdf_dev,
 					   wma_handle->mem_chunks[idx].len,
@@ -3089,7 +3120,7 @@ CDF_STATUS wma_close(void *cds_ctx)
 
 #if defined(QCA_WIFI_FTM)
 	/* Detach UTF and unregister the handler */
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		wma_utf_detach(wma_handle);
 #endif /* QCA_WIFI_FTM */
 
@@ -3465,6 +3496,7 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
 	tgt_cfg.lpss_support = wma_handle->lpss_support;
 #endif /* WLAN_FEATURE_LPSS */
 	tgt_cfg.ap_arpns_support = wma_handle->ap_arpns_support;
+	wma_setup_egap_support(&tgt_cfg, wma_handle);
 	wma_handle->tgt_cfg_update_cb(hdd_ctx, &tgt_cfg);
 }
 
@@ -3776,7 +3808,6 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	wma_handle->num_rf_chains = ev->num_rf_chains;
 
 	wma_handle->target_fw_version = ev->fw_build_vers;
-	ol_tx_set_desc_global_pool_size(ev->num_msdu_desc);
 	wma_handle->new_hw_mode_index = ev->default_dbs_hw_mode_index;
 
 	WMA_LOGD("%s: Firmware default hw mode index : %d",
@@ -3798,6 +3829,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 			     sizeof(wma_handle->hw_bd_info));
 		WMA_LOGE("%s: Board version is unknown!", __func__);
 	}
+	wma_handle->dfs_ic->dfs_hw_bd_id = wma_handle->hw_bd_id;
 
 	/* TODO: Recheck below line to dump service ready event */
 	/* dbg_print_wmi_service_11ac(ev); */
@@ -3810,6 +3842,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	ol_tx_set_is_mgmt_over_wmi_enabled(
 		WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				       WMI_SERVICE_MGMT_TX_WMI));
+	ol_tx_set_desc_global_pool_size(ev->num_msdu_desc);
 
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -3899,6 +3932,9 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 			("Failed to register WMI_TBTTOFFSET_UPDATE_EVENTID callback");
 		return;
 	}
+
+	/* register the Enhanced Green AP event handler */
+	wma_register_egap_event_handle(wma_handle);
 
 	/* Initialize the log supported event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -4861,9 +4897,19 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_WOWL_EXIT_REQ:
 		wma_wow_exit(wma_handle, (tpSirHalWowlExitParams) msg->bodyptr);
 		break;
+
+	case WMA_RUNTIME_PM_SUSPEND_IND:
+		wma_calculate_and_update_conn_state(wma_handle);
+		wma_suspend_req(wma_handle, CDF_RUNTIME_SUSPEND);
+		break;
+
+	case WMA_RUNTIME_PM_RESUME_IND:
+		wma_resume_req(wma_handle, CDF_RUNTIME_SUSPEND);
+		break;
+
 	case WMA_WLAN_SUSPEND_IND:
-		wma_suspend_req(wma_handle,
-				(tpSirWlanSuspendParam) msg->bodyptr);
+		wma_update_conn_state(wma_handle, msg->bodyval);
+		wma_suspend_req(wma_handle, CDF_SYSTEM_SUSPEND);
 		break;
 	case WMA_8023_MULTICAST_LIST_REQ:
 		wma_process_mcbc_set_filter_req(wma_handle,
@@ -5002,7 +5048,7 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		cdf_mem_free(msg->bodyptr);
 		break;
 	case WMA_WLAN_RESUME_REQ:
-		wma_resume_req(wma_handle);
+		wma_resume_req(wma_handle, CDF_SYSTEM_SUSPEND);
 		break;
 
 #ifdef WLAN_FEATURE_STATS_EXT
@@ -5127,11 +5173,6 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 		cdf_mem_free(msg->bodyptr);
 		break;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	case WMA_ROAM_OFFLOAD_SYNCH_CNF:
-		wma_process_roam_synch_complete(wma_handle,
-			(tSirSmeRoamOffloadSynchCnf *)msg->bodyptr);
-		cdf_mem_free(msg->bodyptr);
-		break;
 	case WMA_ROAM_OFFLOAD_SYNCH_FAIL:
 		wma_process_roam_synch_fail(wma_handle,
 			(struct roam_offload_synch_fail *)msg->bodyptr);
@@ -5284,6 +5325,15 @@ CDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 	case WMA_LRO_CONFIG_CMD:
 		wma_lro_config_cmd(wma_handle,
 			(struct wma_lro_config_cmd_t *)msg->bodyptr);
+		cdf_mem_free(msg->bodyptr);
+		break;
+	case WMA_GW_PARAM_UPDATE_REQ:
+		wma_set_gateway_params(wma_handle,
+			(struct gateway_param_update_req *)msg->bodyptr);
+		break;
+	case WMA_SET_EGAP_CONF_PARAMS:
+		wma_send_egap_conf_params(wma_handle,
+			(struct egap_conf_params *)msg->bodyptr);
 		cdf_mem_free(msg->bodyptr);
 		break;
 	default:

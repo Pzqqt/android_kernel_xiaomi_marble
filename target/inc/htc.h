@@ -196,7 +196,8 @@ typedef PREPACK struct {
 /* connect service
  * direction : host-to-target */
 typedef PREPACK struct {
-	A_UINT32 MessageID : 16, ServiceID : 16;    /* service ID of the service to connect to */
+	/* service ID of the service to connect to */
+	A_UINT32 MessageID:16, service_id:16;
 	A_UINT32 ConnectionFlags : 16,    /* connection flags */
 #define HTC_CONNECT_FLAGS_REDUCE_CREDIT_DRIBBLE (1 << 2)
 	/* reduce credit dribbling when
@@ -238,7 +239,8 @@ typedef PREPACK struct {
 /* connect response
  * direction : target-to-host */
 typedef PREPACK struct {
-	A_UINT32 MessageID : 16, ServiceID : 16;    /* service ID that the connection request was made */
+	/* service ID that the connection request was made */
+	A_UINT32 MessageID:16, service_id:16;
 	A_UINT32 Status : 8,      /* service connection status */
 		 EndpointID : 8, /* assigned endpoint ID */
 		 MaxMsgSize : 16; /* maximum expected message size on this endpoint */

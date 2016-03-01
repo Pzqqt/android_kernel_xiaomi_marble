@@ -737,6 +737,15 @@ dfs_process_phyerr(struct ieee80211com *ic, void *buf, uint16_t datalen,
 		event->re_chanindex = dfs->dfs_curchan_radindex;
 		event->re_flags = 0;
 		event->sidx = e.sidx;
+		/*
+		 * Copy the segment ID of the phyerror
+		 * from the radar summary report only
+		 * if SAP is operating in 80p80 mode
+		 * and both primary and extension segments
+		 * are DFS.
+		 */
+		if (chan->ic_80p80_both_dfs)
+			event->radar_80p80_segid = e.radar_80p80_segid;
 
 		/*
 		 * Handle chirp flags.

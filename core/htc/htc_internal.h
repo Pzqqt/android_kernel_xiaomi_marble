@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -96,8 +96,12 @@ typedef struct {
 
 typedef struct _HTC_ENDPOINT {
 	HTC_ENDPOINT_ID Id;
-	HTC_SERVICE_ID ServiceID;               /* service ID this endpoint is bound to
-	                                           non-zero value means this endpoint is in use */
+
+	/* service ID this endpoint is bound to
+	 * non-zero value means this endpoint is in use
+	 */
+	HTC_SERVICE_ID service_id;
+
 	HTC_EP_CALLBACKS EpCallBacks;           /* callbacks associated with this endpoint */
 	HTC_PACKET_QUEUE TxQueue;               /* HTC frame buffer TX queue */
 	int MaxTxQueueDepth;            /* max depth of the TX queue before we need to
@@ -123,19 +127,19 @@ typedef struct _HTC_ENDPOINT {
 	int TxCreditSize;               /* size in bytes of each credit (set by HTC) */
 	int TxCreditsPerMaxMsg;         /* credits required per max message (precalculated) */
 #ifdef HTC_EP_STAT_PROFILING
-	HTC_ENDPOINT_STATS EndPointStats;               /* endpoint statistics */
+	HTC_ENDPOINT_STATS endpoint_stats;     /* endpoint statistics */
 #endif
 	A_BOOL TxCreditFlowEnabled;
 } HTC_ENDPOINT;
 
 #ifdef HTC_EP_STAT_PROFILING
-#define INC_HTC_EP_STAT(p,stat,count) (p)->EndPointStats.stat += (count);
+#define INC_HTC_EP_STAT(p, stat, count) ((p)->endpoint_stats.stat += (count))
 #else
-#define INC_HTC_EP_STAT(p,stat,count)
+#define INC_HTC_EP_STAT(p, stat, count)
 #endif
 
 typedef struct {
-	A_UINT16 ServiceID;
+	A_UINT16 service_id;
 	A_UINT8 CreditAllocation;
 } HTC_SERVICE_TX_CREDIT_ALLOCATION;
 
@@ -150,7 +154,7 @@ enum ol_ath_htc_pkt_ecodes {
 /* our HTC target state */
 typedef struct _HTC_TARGET {
 	struct ol_softc *hif_dev;
-	HTC_ENDPOINT EndPoint[ENDPOINT_MAX];
+	HTC_ENDPOINT endpoint[ENDPOINT_MAX];
 	cdf_spinlock_t HTCLock;
 	cdf_spinlock_t HTCRxLock;
 	cdf_spinlock_t HTCTxLock;
@@ -180,6 +184,7 @@ typedef struct _HTC_TARGET {
 	A_UINT32 ce_send_cnt;
 	A_UINT32 TX_comp_cnt;
 	A_UINT8 MaxMsgsPerHTCBundle;
+	cdf_work_t queue_kicker;
 } HTC_TARGET;
 
 #define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
@@ -233,7 +238,7 @@ void htc_recv_init(HTC_TARGET *target);
 A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);
 void htc_free_control_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket);
 HTC_PACKET *htc_alloc_control_tx_packet(HTC_TARGET *target);
-A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 ServiceID);
+A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 service_id);
 void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID);
 void htc_control_rx_complete(void *Context, HTC_PACKET *pPacket);
 void htc_process_credit_rpt(HTC_TARGET *target,
@@ -241,6 +246,8 @@ void htc_process_credit_rpt(HTC_TARGET *target,
 			    int NumEntries, HTC_ENDPOINT_ID FromEndpoint);
 void htc_fw_event_handler(void *context, CDF_STATUS status);
 void htc_send_complete_check_cleanup(void *context);
+void htc_runtime_pm_init(HTC_TARGET *target);
+void htc_kick_queues(void *context);
 
 void htc_credit_record(htc_credit_exchange_type type, uint32_t tx_credit,
 		       uint32_t htc_tx_queue_depth);

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -50,10 +50,6 @@
 #define TKIP_COUNTER_MEASURE_STOPED  0
 /* Timeout (in ms) for Link to Up before Registering Station */
 #define ASSOC_LINKUP_TIMEOUT 60
-
-/* In pronto case, IBSS owns the first peer for bss peer.
-   In Rome case, IBSS uses the 2nd peer as bss peer */
-#define IBSS_BROADCAST_STAID 1
 
 /* Type Declarations */
 /**
@@ -256,4 +252,13 @@ CDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 				 uint8_t sta_id,
 				 enum ol_txrx_peer_state sta_state,
 				 bool roam_synch_in_progress);
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo);
+#else
+static inline bool hdd_is_roam_sync_in_progress(tCsrRoamInfo *roaminfo)
+{
+	return false;
+}
+#endif
+
 #endif

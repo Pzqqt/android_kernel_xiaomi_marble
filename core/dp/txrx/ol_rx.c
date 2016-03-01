@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -98,7 +98,7 @@ void ol_rx_trigger_restore(htt_pdev_handle htt_pdev, cdf_nbuf_t head_msdu,
 	}
 
 	if (!htt_pdev->rx_ring.htt_rx_restore) {
-		cds_set_logp_in_progress(true);
+		cds_set_recovery_in_progress(true);
 		htt_pdev->rx_ring.htt_rx_restore = 1;
 		schedule_work(&ol_rx_restore_work);
 	}

@@ -243,6 +243,9 @@ extern void hif_target_write_checked(struct ol_softc *scn, uint32_t offset,
 #endif
 #endif /* CONFIG_ATH_PCIE_MAX_PERF */
 
+
+irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
+
 /**
  * ce_irq_enable() - ce_irq_enable
  * @scn: ol_softc
@@ -276,6 +279,9 @@ static inline void ce_irq_enable(struct ol_softc *scn, int ce_id)
 	if (scn->hif_init_done == true)
 		A_TARGET_ACCESS_END(scn);
 	cdf_spin_unlock_irqrestore(&scn->irq_lock);
+
+	/* check for missed firmware crash */
+	hif_fw_interrupt_handler(0, scn);
 }
 /**
  * ce_irq_disable() - ce_irq_disable

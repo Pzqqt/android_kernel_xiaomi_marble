@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -271,48 +271,53 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 				sme_join_rsp->beaconLength);
 			cdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
+			session_entry->bcnLen = 0;
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx, LOG1, FL("Beacon=%d"),
-				session_entry->bcnLen);
+				sme_join_rsp->beaconLength);
 #endif
 		}
 		if (session_entry->assocReq != NULL) {
 			sme_join_rsp->assocReqLength =
 				session_entry->assocReqLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen, session_entry->assocReq,
+				sme_join_rsp->beaconLength,
+				session_entry->assocReq,
 				sme_join_rsp->assocReqLength);
 			cdf_mem_free(session_entry->assocReq);
 			session_entry->assocReq = NULL;
+			session_entry->assocReqLen = 0;
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(mac_ctx,
 				LOG1, FL("AssocReq=%d"),
-				session_entry->assocReqLen);
+				sme_join_rsp->assocReqLength);
 #endif
 		}
 		if (session_entry->assocRsp != NULL) {
 			sme_join_rsp->assocRspLength =
 				session_entry->assocRspLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen +
-				session_entry->assocReqLen,
+				sme_join_rsp->beaconLength +
+				sme_join_rsp->assocReqLength,
 				session_entry->assocRsp,
 				sme_join_rsp->assocRspLength);
 			cdf_mem_free(session_entry->assocRsp);
 			session_entry->assocRsp = NULL;
+			session_entry->assocRspLen = 0;
 		}
 #ifdef WLAN_FEATURE_VOWIFI_11R
 		if (session_entry->ricData != NULL) {
 			sme_join_rsp->parsedRicRspLen =
 				session_entry->RICDataLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen +
-				session_entry->assocReqLen +
-				session_entry->assocRspLen,
+				sme_join_rsp->beaconLength +
+				sme_join_rsp->assocReqLength +
+				sme_join_rsp->assocRspLength,
 				session_entry->ricData,
 				sme_join_rsp->parsedRicRspLen);
 			cdf_mem_free(session_entry->ricData);
 			session_entry->ricData = NULL;
+			session_entry->RICDataLen = 0;
 			lim_log(mac_ctx, LOG1, FL("RicLength=%d"),
 				sme_join_rsp->parsedRicRspLen);
 		}
@@ -322,22 +327,23 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			sme_join_rsp->tspecIeLen =
 				session_entry->tspecLen;
 			cdf_mem_copy(sme_join_rsp->frames +
-				session_entry->bcnLen +
-				session_entry->assocReqLen +
-				session_entry->assocRspLen +
-				session_entry->RICDataLen,
+				sme_join_rsp->beaconLength +
+				sme_join_rsp->assocReqLength +
+				sme_join_rsp->assocRspLength +
+				sme_join_rsp->parsedRicRspLen,
 				session_entry->tspecIes,
 				sme_join_rsp->tspecIeLen);
 			cdf_mem_free(session_entry->tspecIes);
 			session_entry->tspecIes = NULL;
+			session_entry->tspecLen = 0;
 			lim_log(mac_ctx, LOG1, FL("ESE-TspecLen=%d"),
-				session_entry->tspecLen);
+				sme_join_rsp->tspecIeLen);
 		}
 #endif
 		sme_join_rsp->aid = session_entry->limAID;
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 		lim_log(mac_ctx, LOG1, FL("AssocRsp=%d"),
-			session_entry->assocRspLen);
+			sme_join_rsp->assocRspLength);
 #endif
 		sme_join_rsp->vht_channel_width =
 			session_entry->ch_width;
@@ -367,25 +373,30 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 		if (session_entry->beacon != NULL) {
 			cdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
+			session_entry->bcnLen = 0;
 		}
 		if (session_entry->assocReq != NULL) {
 			cdf_mem_free(session_entry->assocReq);
 			session_entry->assocReq = NULL;
+			session_entry->assocReqLen = 0;
 		}
 		if (session_entry->assocRsp != NULL) {
 			cdf_mem_free(session_entry->assocRsp);
 			session_entry->assocRsp = NULL;
+			session_entry->assocRspLen = 0;
 		}
 #ifdef WLAN_FEATURE_VOWIFI_11R
 		if (session_entry->ricData != NULL) {
 			cdf_mem_free(session_entry->ricData);
 			session_entry->ricData = NULL;
+			session_entry->RICDataLen = 0;
 		}
 #endif
 #ifdef FEATURE_WLAN_ESE
 		if (session_entry->tspecIes != NULL) {
 			cdf_mem_free(session_entry->tspecIes);
 			session_entry->tspecIes = NULL;
+			session_entry->tspecLen = 0;
 		}
 #endif
 	}
@@ -687,9 +698,6 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 	lim_sys_process_mmh_msg_api(pMac, &mmhMsg, ePROT);
 } /*** end lim_send_sme_start_bss_rsp() ***/
 
-#define LIM_MAX_NUM_OF_SCAN_RESULTS_REPORTED  20
-#define LIM_SIZE_OF_EACH_BSS  400       /* this is a rough estimate */
-
 /**
  * lim_send_sme_scan_rsp() - Send scan response to SME
  * @pMac:         Pointer to Global MAC structure
@@ -833,7 +841,7 @@ void lim_send_sme_oem_data_rsp(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	pSirSmeOemDataRsp->length = msgLength;
 	pSirSmeOemDataRsp->messageType = eWNI_SME_OEM_DATA_RSP;
 #endif
-
+	pSirSmeOemDataRsp->target_rsp = pMlmOemDataRsp->target_rsp;
 	cdf_mem_copy(pSirSmeOemDataRsp->oemDataRsp, pMlmOemDataRsp->oemDataRsp,
 		     OEM_DATA_RSP_SIZE);
 
@@ -1055,11 +1063,11 @@ lim_send_sme_disassoc_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 	pSirSmeDisassocInd->statusCode = pStaDs->mlmStaContext.disassocReason;
 	pSirSmeDisassocInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
-	cdf_mem_copy(pSirSmeDisassocInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDisassocInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(pSirSmeDisassocInd->peerMacAddr, pStaDs->staAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDisassocInd->peer_macaddr.bytes, pStaDs->staAddr,
+		     CDF_MAC_ADDR_SIZE);
 
 	pSirSmeDisassocInd->staId = pStaDs->staIndex;
 
@@ -1117,14 +1125,17 @@ lim_send_sme_deauth_ind(tpAniSirGlobal pMac, tpDphHashNode pStaDs,
 			(tSirResultCodes) pStaDs->mlmStaContext.disassocReason;
 	}
 	/* BSSID */
-	cdf_mem_copy(pSirSmeDeauthInd->bssId, psessionEntry->bssId,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDeauthInd->bssid.bytes, psessionEntry->bssId,
+		     CDF_MAC_ADDR_SIZE);
 	/* peerMacAddr */
-	cdf_mem_copy(pSirSmeDeauthInd->peerMacAddr, pStaDs->staAddr,
-		     sizeof(tSirMacAddr));
+	cdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, pStaDs->staAddr,
+		     CDF_MAC_ADDR_SIZE);
 	pSirSmeDeauthInd->reasonCode = pStaDs->mlmStaContext.disassocReason;
 
 	pSirSmeDeauthInd->staId = pStaDs->staIndex;
+	if (eSIR_MAC_PEER_STA_REQ_LEAVING_BSS_REASON ==
+		pStaDs->mlmStaContext.disassocReason)
+		pSirSmeDeauthInd->rssi = pStaDs->del_sta_ctx_rssi;
 
 	mmhMsg.type = eWNI_SME_DEAUTH_IND;
 	mmhMsg.bodyptr = pSirSmeDeauthInd;
@@ -1390,7 +1401,7 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		pSirSmeDeauthRsp->sessionId = smesessionId;
 		pSirSmeDeauthRsp->transactionId = smetransactionId;
 
-		pBuf = (uint8_t *) pSirSmeDeauthRsp->peerMacAddr;
+		pBuf = (uint8_t *) pSirSmeDeauthRsp->peer_macaddr.bytes;
 		cdf_mem_copy(pBuf, peerMacAddr, sizeof(tSirMacAddr));
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
@@ -1440,8 +1451,8 @@ lim_send_sme_deauth_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMacAddr,
 		pBuf += sizeof(tSirMacAddr);
 
 		/* peerMacAddr */
-		cdf_mem_copy(pSirSmeDeauthInd->peerMacAddr, peerMacAddr,
-			     sizeof(tSirMacAddr));
+		cdf_mem_copy(pSirSmeDeauthInd->peer_macaddr.bytes, peerMacAddr,
+			     CDF_MAC_ADDR_SIZE);
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM    /* FEATURE_WLAN_DIAG_SUPPORT */
 		lim_diag_event_report(pMac, WLAN_PE_DIAG_DEAUTH_IND_EVENT,
@@ -1554,13 +1565,11 @@ lim_send_sme_wm_status_change_ntf(tpAniSirGlobal mac_ctx,
  */
 void
 lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
-			     tSirMacAddr peerMacAddr, uint16_t aid,
+			     struct cdf_mac_addr peer_macaddr, uint16_t aid,
 			     tSirResultCodes resultCode,
 			     tpPESession psessionEntry, uint8_t smesessionId,
 			     uint16_t smetransactionId)
 {
-
-	uint8_t *pBuf;
 	tSirMsgQ mmhMsg;
 	tSirSmeSetContextRsp *pSirSmeSetContextRsp;
 
@@ -1578,10 +1587,7 @@ lim_send_sme_set_context_rsp(tpAniSirGlobal pMac,
 	pSirSmeSetContextRsp->length = sizeof(tSirSmeSetContextRsp);
 	pSirSmeSetContextRsp->statusCode = resultCode;
 
-	pBuf = pSirSmeSetContextRsp->peerMacAddr;
-
-	cdf_mem_copy(pBuf, (uint8_t *) peerMacAddr, sizeof(tSirMacAddr));
-	pBuf += sizeof(tSirMacAddr);
+	cdf_copy_macaddr(&pSirSmeSetContextRsp->peer_macaddr, &peer_macaddr);
 
 	/* Update SME session and transaction Id */
 	pSirSmeSetContextRsp->sessionId = smesessionId;
@@ -1769,8 +1775,7 @@ lim_send_sme_delts_rsp(tpAniSirGlobal pMac, tpSirDeltsReq delts, uint32_t status
 	if (psessionEntry != NULL) {
 
 		rsp->aid = delts->aid;
-		cdf_mem_copy((uint8_t *) &rsp->macAddr[0],
-			     (uint8_t *) &delts->macAddr[0], 6);
+		cdf_copy_macaddr(&rsp->macaddr, &delts->macaddr);
 		cdf_mem_copy((uint8_t *) &rsp->rsp, (uint8_t *) &delts->req,
 			     sizeof(tSirDeltsReqInfo));
 	}
@@ -1974,8 +1979,8 @@ lim_send_sme_ibss_peer_ind(tpAniSirGlobal pMac,
 	cdf_mem_set((void *)pNewPeerInd, (sizeof(tSmeIbssPeerInd) + beaconLen),
 		    0);
 
-	cdf_mem_copy((uint8_t *) pNewPeerInd->peerAddr,
-		     peerMacAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) pNewPeerInd->peer_addr.bytes,
+		     peerMacAddr, CDF_MAC_ADDR_SIZE);
 	pNewPeerInd->staId = staIndex;
 	pNewPeerInd->ucastSig = ucastIdx;
 	pNewPeerInd->bcastSig = bcastIdx;
@@ -2013,9 +2018,10 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	uint8_t session_id;
 	uint16_t aid = 0;
 	uint16_t chan_space = 0;
-	int cb_mode = 0;
+	chan_params_t ch_params;
 
 	tLimWiderBWChannelSwitchInfo *chnl_switch_info = NULL;
+	tLimChannelSwitchInfo *lim_ch_switch = NULL;
 
 	if (!csa_params) {
 		lim_log(mac_ctx, LOGE, FL("limMsgQ body ptr is NULL"));
@@ -2047,6 +2053,7 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		 */
 		lim_delete_tdls_peers(mac_ctx, session_entry);
 
+		lim_ch_switch = &session_entry->gLimChannelSwitch;
 		session_entry->gLimChannelSwitch.switchMode =
 			csa_params->switchmode;
 		/* timer already started by firmware, switch immediately */
@@ -2056,7 +2063,8 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		session_entry->gLimChannelSwitch.state =
 			eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
 		session_entry->gLimChannelSwitch.ch_width = CH_WIDTH_20MHZ;
-
+		lim_ch_switch->sec_ch_offset =
+			session_entry->htSecondaryChannelOffset;
 		session_entry->gLimChannelSwitch.ch_center_freq_seg0 = 0;
 		session_entry->gLimChannelSwitch.ch_center_freq_seg1 = 0;
 		chnl_switch_info =
@@ -2094,20 +2102,17 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				} else {
 					chnl_switch_info->newChanWidth =
 								CH_WIDTH_20MHZ;
-					session_entry->gLimChannelSwitch.state =
+					lim_ch_switch->state =
 					    eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
 				}
 
-				cb_mode = lim_select_cb_mode_for_sta(
-						session_entry,
-						csa_params->channel,
-						chan_space);
-
+				ch_params.ch_width =
+					chnl_switch_info->newChanWidth;
+				cds_set_ch_params(csa_params->channel,
+						eCSR_DOT11_MODE_11ac,
+						&ch_params);
 				chnl_switch_info->newCenterChanFreq0 =
-				lim_get_center_channel(mac_ctx,
-					    csa_params->channel,
-					    cb_mode,
-					    chnl_switch_info->newChanWidth);
+					ch_params.center_freq_seg0;
 				/*
 				* This is not applicable for 20/40/80 MHz.
 				* Only used when we support 80+80 MHz operation.
@@ -2115,7 +2120,10 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				* center channel frequency index of 80 MHz
 				* channel offrequency segment 1.
 				*/
-				chnl_switch_info->newCenterChanFreq1 = 0;
+				chnl_switch_info->newCenterChanFreq1 =
+					ch_params.center_freq_seg1;
+				lim_ch_switch->sec_ch_offset =
+					ch_params.sec_ch_offset;
 
 			}
 			session_entry->gLimChannelSwitch.ch_center_freq_seg0 =
@@ -2133,56 +2141,47 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 					mac_ctx->scan.countryCodeCurrent,
 					csa_params->channel,
 					csa_params->new_op_class);
-				session_entry->gLimChannelSwitch.state =
+				lim_ch_switch->state =
 				    eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 				if (chan_space == 40) {
-					session_entry->
-					    gLimChannelSwitch.ch_width =
+					lim_ch_switch->ch_width =
 								CH_WIDTH_40MHZ;
 					chnl_switch_info->newChanWidth =
 								CH_WIDTH_40MHZ;
-					cb_mode = lim_select_cb_mode_for_sta(
-							session_entry,
-							csa_params->channel,
-							chan_space);
-					if (cb_mode ==
-					    PHY_DOUBLE_CHANNEL_LOW_PRIMARY) {
-						session_entry->
-						    gLimChannelSwitch.
-						    ch_center_freq_seg0 =
-							csa_params->channel + 2;
-					} else if (cb_mode ==
-					    PHY_DOUBLE_CHANNEL_HIGH_PRIMARY) {
-						session_entry->
-						    gLimChannelSwitch.
-						    ch_center_freq_seg0 =
-							csa_params->channel - 2;
-					}
-
+					ch_params.ch_width =
+						chnl_switch_info->newChanWidth;
+					cds_set_ch_params(csa_params->channel,
+							eCSR_DOT11_MODE_11n,
+							&ch_params);
+					lim_ch_switch->ch_center_freq_seg0 =
+						ch_params.center_freq_seg0;
+					lim_ch_switch->sec_ch_offset =
+						ch_params.sec_ch_offset;
 				} else {
-					session_entry->
-					    gLimChannelSwitch.ch_width =
+					lim_ch_switch->ch_width =
 								CH_WIDTH_20MHZ;
 					chnl_switch_info->newChanWidth =
 								CH_WIDTH_40MHZ;
-					session_entry->gLimChannelSwitch.state =
+					lim_ch_switch->state =
 					    eLIM_CHANNEL_SWITCH_PRIMARY_ONLY;
+					lim_ch_switch->sec_ch_offset =
+						PHY_SINGLE_CHANNEL_CENTERED;
 				}
-
-
-			}
-
-			if (csa_params->sec_chan_offset) {
-				session_entry->gLimChannelSwitch.ch_width =
-					CH_WIDTH_40MHZ;
-				session_entry->gLimChannelSwitch.state =
-				     eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
 			} else {
-				session_entry->htSupportedChannelWidthSet =
-					WNI_CFG_CHANNEL_BONDING_MODE_DISABLE;
-				session_entry->htRecommendedTxWidthSet =
-				    session_entry->htSupportedChannelWidthSet;
+				lim_ch_switch->ch_width =
+					CH_WIDTH_40MHZ;
+				lim_ch_switch->state =
+				     eLIM_CHANNEL_SWITCH_PRIMARY_AND_SECONDARY;
+				ch_params.ch_width = CH_WIDTH_40MHZ;
+				cds_set_ch_params(csa_params->channel,
+						eCSR_DOT11_MODE_11n,
+						&ch_params);
+				lim_ch_switch->ch_center_freq_seg0 =
+					ch_params.center_freq_seg0;
+				lim_ch_switch->sec_ch_offset =
+					ch_params.sec_ch_offset;
 			}
+
 		}
 		lim_log(mac_ctx, LOG1, FL("new ch width = %d"),
 			session_entry->gLimChannelSwitch.ch_width);
@@ -2198,13 +2197,13 @@ void lim_handle_csa_offload_msg(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		cdf_mem_set(csa_offload_ind, sizeof(tSmeCsaOffloadInd), 0);
 		csa_offload_ind->mesgType = eWNI_SME_CSA_OFFLOAD_EVENT;
 		csa_offload_ind->mesgLen = sizeof(tSmeCsaOffloadInd);
-		cdf_mem_copy(csa_offload_ind->bssId, session_entry->bssId,
-			sizeof(tSirMacAddr));
+		cdf_mem_copy(csa_offload_ind->bssid.bytes, session_entry->bssId,
+				CDF_MAC_ADDR_SIZE);
 		mmh_msg.type = eWNI_SME_CSA_OFFLOAD_EVENT;
 		mmh_msg.bodyptr = csa_offload_ind;
 		mmh_msg.bodyval = 0;
 		lim_log(mac_ctx, LOG1,
-			FL("Sending eWNI_SME_CSA_OFFLOAD_EVENT to SME. "));
+			FL("Sending eWNI_SME_CSA_OFFLOAD_EVENT to SME."));
 		MTRACE(mac_trace_msg_tx
 			(mac_ctx, session_entry->peSessionId, mmh_msg.type));
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -2291,8 +2290,8 @@ void lim_send_sme_max_assoc_exceeded_ntf(tpAniSirGlobal pMac, tSirMacAddr peerMa
 		return;
 	}
 	cdf_mem_set((void *)pSmeMaxAssocInd, sizeof(tSmeMaxAssocInd), 0);
-	cdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peerMac,
-		     (uint8_t *) peerMacAddr, sizeof(tSirMacAddr));
+	cdf_mem_copy((uint8_t *) pSmeMaxAssocInd->peer_mac.bytes,
+		     (uint8_t *) peerMacAddr, CDF_MAC_ADDR_SIZE);
 	pSmeMaxAssocInd->mesgType = eWNI_SME_MAX_ASSOC_EXCEEDED;
 	pSmeMaxAssocInd->mesgLen = sizeof(tSmeMaxAssocInd);
 	pSmeMaxAssocInd->sessionId = smesessionId;

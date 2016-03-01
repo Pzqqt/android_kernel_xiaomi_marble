@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -95,9 +95,9 @@ void lim_print_msg_name(tpAniSirGlobal pMac, uint16_t logLevel, uint32_t msgType
 
 #if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
 extern tSirRetStatus lim_send_set_max_tx_power_req(tpAniSirGlobal pMac,
-		tPowerdBm txPower,
+		int8_t txPower,
 		tpPESession pSessionEntry);
-extern uint8_t lim_get_max_tx_power(tPowerdBm regMax, tPowerdBm apTxPower,
+extern uint8_t lim_get_max_tx_power(int8_t regMax, int8_t apTxPower,
 		uint8_t iniTxPower);
 #endif
 uint8_t lim_is_addr_bc(tSirMacAddr);
@@ -293,59 +293,6 @@ is_entering_mimo_ps(tSirMacHTMIMOPowerSaveState curState,
 		return true;
 	return false;
 }
-
-/**
- * lim_select_cb_mode_for_sta() - return cb_mode based on current session
- * @session_entry: Session entry
- * @channel: channel
- * @chan_bw: channel bandwidth
- *
- * Given a value of channel and bandwidth this API will return the value of
- * cb_mode on basis of channel, bandwidth ht/vht capabilities
- *
- * Return: cb_mode
- *
- */
-
-static inline int lim_select_cb_mode_for_sta(tpPESession session_entry,
-				uint8_t channel, uint8_t chan_bw)
-{
-	if (session_entry->vhtCapability && chan_bw) {
-		if (channel == 36 || channel == 52 || channel == 100 ||
-				channel == 116 || channel == 149) {
-			return PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_LOW - 1;
-		} else if (channel == 40 || channel == 56 || channel == 104 ||
-				channel == 120 || channel == 153) {
-			return PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_LOW - 1;
-		} else if (channel == 44 || channel == 60 || channel == 108 ||
-				channel == 124 || channel == 157) {
-			return PHY_QUADRUPLE_CHANNEL_20MHZ_LOW_40MHZ_HIGH - 1;
-		} else if (channel == 48 || channel == 64 || channel == 112 ||
-				channel == 128 || channel == 161) {
-			return PHY_QUADRUPLE_CHANNEL_20MHZ_HIGH_40MHZ_HIGH - 1;
-		} else if (channel == 165) {
-			return PHY_SINGLE_CHANNEL_CENTERED;
-		}
-	} else if (session_entry->htSupportedChannelWidthSet) {
-		if (channel == 40 || channel == 48 || channel == 56 ||
-			channel == 64 || channel == 104 || channel == 112 ||
-			channel == 120 || channel == 128 || channel == 136 ||
-			channel == 144 || channel == 153 || channel == 161) {
-			return PHY_DOUBLE_CHANNEL_LOW_PRIMARY;
-		} else if (channel == 36 || channel == 44 || channel == 52 ||
-				channel == 60 || channel == 100 ||
-				channel == 108 || channel == 116 ||
-				channel == 124 || channel == 132 ||
-				channel == 140 || channel == 149 ||
-				channel == 157) {
-			return PHY_DOUBLE_CHANNEL_HIGH_PRIMARY;
-		} else if (channel == 165) {
-			return PHY_SINGLE_CHANNEL_CENTERED;
-		}
-	}
-	return PHY_SINGLE_CHANNEL_CENTERED;
-}
-
 
 static inline int lim_select_cb_mode(tDphHashNode *pStaDs,
 		tpPESession psessionEntry, uint8_t channel,

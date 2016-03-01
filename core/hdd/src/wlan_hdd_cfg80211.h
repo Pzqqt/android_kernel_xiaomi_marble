@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -249,6 +249,9 @@ typedef enum {
  * @QCA_NL80211_VENDOR_SUBCMD_TRIGGER_SCAN: venodr scan command
  * @QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE: vendor scan complete
  * @QCA_NL80211_VENDOR_SUBCMD_OTA_TEST: enable OTA test
+ * @QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG: set gateway parameters
+ * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE: set tx power by percentage
+ * @QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB: reduce tx power by DB
  */
 
 enum qca_nl80211_vendor_subcmds {
@@ -350,6 +353,8 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* subcommand to get link properties */
 	QCA_NL80211_VENDOR_SUBCMD_LINK_PROPERTIES = 101,
+	/* LFR Subnet Detection */
+	QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG = 102,
 
 	/* DBS subcommands */
 	QCA_NL80211_VENDOR_SUBCMD_GET_PREFERRED_FREQ_LIST = 103,
@@ -361,6 +366,10 @@ enum qca_nl80211_vendor_subcmds {
 
 	/* OTA test subcommand */
 	QCA_NL80211_VENDOR_SUBCMD_OTA_TEST = 108,
+	/* Tx power scaling subcommands */
+	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE = 109,
+	/* Tx power scaling in db subcommands */
+	QCA_NL80211_VENDOR_SUBCMD_SET_TXPOWER_SCALE_DECR_DB = 115,
 
 };
 
@@ -420,6 +429,8 @@ enum qca_nl80211_vendor_subcmds {
  * @QCA_NL80211_VENDOR_SUBCMD_SCAN_INDEX: vendor scan index
  * @QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX:
  *	vendor scan complete event  index
+ * @QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG_INDEX:
+ *	update gateway parameters index
  */
 
 enum qca_nl80211_vendor_subcmds_index {
@@ -488,6 +499,7 @@ enum qca_nl80211_vendor_subcmds_index {
 	QCA_NL80211_VENDOR_SUBCMD_DCC_STATS_EVENT_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_SCAN_INDEX,
 	QCA_NL80211_VENDOR_SUBCMD_SCAN_DONE_INDEX,
+	QCA_NL80211_VENDOR_SUBCMD_GW_PARAM_CONFIG_INDEX,
 };
 
 /**
@@ -1548,6 +1560,7 @@ enum qca_wlan_vendor_attr_set_no_dfs_flag {
  * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR: Replay Counter
  * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK: KCK of the PTK
  * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK: KEK of the PTK
+ * @QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_SUBNET_STATUS: subnet change status
  */
 enum qca_wlan_vendor_attr_roam_auth {
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_INVALID = 0,
@@ -1558,6 +1571,7 @@ enum qca_wlan_vendor_attr_roam_auth {
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_KEY_REPLAY_CTR,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KCK,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_PTK_KEK,
+	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_SUBNET_STATUS,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AFTER_LAST,
 	QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_MAX =
 		QCA_WLAN_VENDOR_ATTR_ROAM_AUTH_AFTER_LAST - 1
@@ -2166,6 +2180,23 @@ enum qca_vendor_attr_probable_oper_channel {
 };
 
 /**
+ * enum qca_wlan_vendor_attr_gw_param_config - gateway param config
+ * @QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_INVALID: Invalid
+ * @QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_GW_MAC_ADDR: gateway mac addr
+ * @QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV4_ADDR: ipv4 addr
+ * @QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV6_ADDR: ipv6 addr
+ */
+enum qca_wlan_vendor_attr_gw_param_config {
+	QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_INVALID = 0,
+	QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_GW_MAC_ADDR,
+	QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV4_ADDR,
+	QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_IPV6_ADDR,
+	QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_MAX =
+		QCA_WLAN_VENDOR_ATTR_GW_PARAM_CONFIG_AFTER_LAST - 1,
+};
+
+/**
  * enum drv_dbs_capability - DBS capability
  * @DRV_DBS_CAPABILITY_DISABLED: DBS disabled
  * @DRV_DBS_CAPABILITY_1X1: 1x1
@@ -2194,14 +2225,45 @@ enum qca_vendor_attr_ota_test {
 	QCA_WLAN_VENDOR_ATTR_OTA_TEST_AFTER_LAST - 1
 };
 
+/** enum qca_vendor_attr_txpower_scale - vendor sub commands index
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE: scaling value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_AFTER_LAST: last value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX: max value
+ */
+enum qca_vendor_attr_txpower_scale {
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_INVALID,
+	/* 8-bit unsigned value to indicate the scaling of tx power */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_MAX =
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_AFTER_LAST - 1
+};
+
+/**
+ * enum qca_vendor_attr_txpower_scale_decr_db - vendor sub commands index
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_INVALID: invalid value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB: scaling value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST: last value
+ * @QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX: max value
+ */
+enum qca_vendor_attr_txpower_scale_decr_db {
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_INVALID,
+	/* 8-bit unsigned value to indicate the scaling of tx power */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB,
+	/* keep last */
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST,
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_MAX =
+	QCA_WLAN_VENDOR_ATTR_TXPOWER_SCALE_DECR_DB_AFTER_LAST - 1
+};
+
 struct cfg80211_bss *wlan_hdd_cfg80211_update_bss_db(hdd_adapter_t *pAdapter,
 						tCsrRoamInfo *pRoamInfo);
 
-#ifdef FEATURE_WLAN_LFR
 int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
 					tCsrRoamInfo *pRoamInfo,
 					int index, bool preauth);
-#endif
 
 #ifdef FEATURE_WLAN_LFR_METRICS
 CDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
@@ -2222,12 +2284,9 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 				    const uint8_t *mac_addr, const uint8_t *key,
 				    int key_Len);
 #endif
-struct wiphy *wlan_hdd_cfg80211_wiphy_alloc(int priv_size);
+hdd_context_t *hdd_cfg80211_wiphy_alloc(int priv_size);
 
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-			   struct net_device *dev,
-#endif
 			   struct cfg80211_scan_request *request);
 
 int wlan_hdd_cfg80211_init(struct device *dev,
@@ -2240,13 +2299,8 @@ void wlan_hdd_cfg80211_register_frames(hdd_adapter_t *pAdapter);
 
 void wlan_hdd_cfg80211_deregister_frames(hdd_adapter_t *pAdapter);
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 9, 0))
 void hdd_reg_notifier(struct wiphy *wiphy,
 				 struct regulatory_request *request);
-#else
-int hdd_reg_notifier(struct wiphy *wiphy,
-				struct regulatory_request *request);
-#endif
 
 extern void hdd_conn_set_connection_state(hdd_adapter_t *pAdapter,
 					  eConnectionState connState);

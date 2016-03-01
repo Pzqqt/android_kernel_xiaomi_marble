@@ -141,6 +141,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 	switch (msg_type) {
 	case HTT_T2H_MSG_TYPE_VERSION_CONF:
 	{
+		cdf_runtime_pm_put();
 		pdev->tgt_ver.major = HTT_VER_CONF_MAJOR_GET(*msg_word);
 		pdev->tgt_ver.minor = HTT_VER_CONF_MINOR_GET(*msg_word);
 		cdf_print
@@ -287,6 +288,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			ol_tx_single_completion_handler(pdev->txrx_pdev,
 							compl_msg->status,
 							compl_msg->desc_id);
+			cdf_runtime_pm_put();
 			HTT_TX_SCHED(pdev);
 		} else {
 			cdf_print("Ignoring HTT_T2H_MSG_TYPE_MGMT_TX_COMPL_IND indication\n");
@@ -302,6 +304,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		cookie |= ((uint64_t) (*(msg_word + 2))) << 32;
 
 		stats_info_list = (uint8_t *) (msg_word + 3);
+		cdf_runtime_pm_put();
 		ol_txrx_fw_stats_handler(pdev->txrx_pdev, cookie,
 					 stats_info_list);
 		break;
@@ -357,6 +360,7 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		uint8_t *op_msg_buffer;
 		uint8_t *msg_start_ptr;
 
+		cdf_runtime_pm_put();
 		msg_start_ptr = (uint8_t *) msg_word;
 		op_code =
 			HTT_WDI_IPA_OP_RESPONSE_OP_CODE_GET(*msg_word);
@@ -475,6 +479,11 @@ void htt_t2h_msg_handler(void *context, HTC_PACKET *pkt)
 		peer_id = HTT_RX_IND_PEER_ID_GET(*msg_word);
 		tid = HTT_RX_IND_EXT_TID_GET(*msg_word);
 
+		if (tid >= OL_TXRX_NUM_EXT_TIDS) {
+			cdf_print("HTT_T2H_MSG_TYPE_RX_IND, invalid tid %d\n",
+				tid);
+			break;
+		}
 		num_msdu_bytes =
 			HTT_RX_IND_FW_RX_DESC_BYTES_GET(
 				*(msg_word + 2 + HTT_RX_PPDU_DESC_SIZE32));

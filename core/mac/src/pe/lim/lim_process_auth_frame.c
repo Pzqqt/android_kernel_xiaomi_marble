@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -190,7 +190,7 @@ lim_process_auth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		   "Frame Received: BSSID: " MAC_ADDRESS_STR " (RSSI %d)"),
 		psessionEntry->peSessionId, GET_LIM_SYSTEM_ROLE(psessionEntry),
 		psessionEntry->limMlmState, MAC_ADDR_ARRAY(pHdr->bssId),
-		(uint) abs((int8_t) WMA_GET_RX_RSSI_DB(pRxPacketInfo)));
+		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(pRxPacketInfo)));
 
 	pBody = WMA_GET_RX_MPDU_DATA(pRxPacketInfo);
 
@@ -507,17 +507,15 @@ lim_process_auth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			if (pMlmDisassocReq
 			    &&
 			    (cdf_mem_compare
-				     ((uint8_t *) pHdr->sa,
-				     (uint8_t *) &pMlmDisassocReq->peerMacAddr,
-				     sizeof(tSirMacAddr)))) {
+				((uint8_t *) pHdr->sa,
+				&pMlmDisassocReq->peer_macaddr.bytes,
+				CDF_MAC_ADDR_SIZE))) {
 				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("TODO:Ack for disassoc "
-						  "frame is pending Issue delsta for "
-						  MAC_ADDRESS_STR),
-					       MAC_ADDR_ARRAY(pMlmDisassocReq->
-							      peerMacAddr));
-				       )
+				   (pMac, LOGE,
+				    FL("TODO:Ack for disassoc frame is pending Issue delsta for "
+					  MAC_ADDRESS_STR),
+				       MAC_ADDR_ARRAY(pMlmDisassocReq->
+						      peer_macaddr.bytes));)
 				lim_process_disassoc_ack_timeout(pMac);
 				isConnected = eSIR_FALSE;
 			}
@@ -527,15 +525,14 @@ lim_process_auth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			    &&
 			    (cdf_mem_compare
 				     ((uint8_t *) pHdr->sa,
-				     (uint8_t *) &pMlmDeauthReq->peerMacAddr,
-				     sizeof(tSirMacAddr)))) {
+				     (uint8_t *) &pMlmDeauthReq->peer_macaddr.bytes,
+				     CDF_MAC_ADDR_SIZE))) {
 				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("TODO:Ack for deauth frame "
-						  "is pending Issue delsta for "
-						  MAC_ADDRESS_STR),
-					       MAC_ADDR_ARRAY(pMlmDeauthReq->
-							      peerMacAddr));
+				      (pMac, LOGE,
+				       FL("TODO:Ack for deauth frame is pending Issue delsta for "
+					  MAC_ADDRESS_STR),
+					  MAC_ADDR_ARRAY(pMlmDeauthReq->
+							 peer_macaddr.bytes));
 				       )
 				lim_process_deauth_ack_timeout(pMac);
 				isConnected = eSIR_FALSE;
@@ -1775,7 +1772,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 	lim_log(pMac, LOG1,
 		FL("Auth Frame Received: BSSID " MAC_ADDRESS_STR " (RSSI %d)"),
 		MAC_ADDR_ARRAY(pHdr->bssId),
-		(uint) abs((int8_t) WMA_GET_RX_RSSI_DB(pBd)));
+		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(pBd)));
 
 	/* Auth frame has come on a new BSS, however, we need to find the session
 	 * from where the auth-req was sent to the new AP

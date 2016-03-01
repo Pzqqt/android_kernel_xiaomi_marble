@@ -168,7 +168,7 @@ void htc_disable_recv(HTC_HANDLE HTCHandle)
 int htc_get_num_recv_buffers(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
-	HTC_ENDPOINT *pEndpoint = &target->EndPoint[Endpoint];
+	HTC_ENDPOINT *pEndpoint = &target->endpoint[Endpoint];
 	return HTC_PACKET_QUEUE_DEPTH(&pEndpoint->RxBufferHoldQueue);
 }
 
@@ -315,7 +315,7 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 			break;
 		}
 
-		pEndpoint = &target->EndPoint[htc_ep_id];
+		pEndpoint = &target->endpoint[htc_ep_id];
 
 		/*
 		 * If this endpoint that received a message from the target has
@@ -531,7 +531,7 @@ A_STATUS htc_add_receive_pkt_multiple(HTC_HANDLE HTCHandle,
 			 HTC_PACKET_QUEUE_DEPTH(pPktQueue),
 			 pFirstPacket->BufferLength));
 
-	pEndpoint = &target->EndPoint[pFirstPacket->Endpoint];
+	pEndpoint = &target->endpoint[pFirstPacket->Endpoint];
 
 	LOCK_HTC_RX(target);
 

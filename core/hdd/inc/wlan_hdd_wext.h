@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -142,12 +142,6 @@ typedef enum {
 
 /** Maximum Length of WPA/RSN IE */
 #define MAX_WPA_RSN_IE_LEN 40
-
-/** Maximum Number of WEP KEYS */
-#define MAX_WEP_KEYS 4
-
-/** Ether Address Length */
-#define ETHER_ADDR_LEN 6
 
 /** Enable 11d */
 #define ENABLE_11D  1

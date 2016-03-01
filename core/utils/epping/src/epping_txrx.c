@@ -342,7 +342,7 @@ static struct net_device_ops epping_drv_ops = {
 
 epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 				     tSirMacAddr macAddr,
-				     tCDF_CON_MODE device_mode)
+				     enum tCDF_ADAPTER_MODE device_mode)
 {
 	struct net_device *dev;
 	epping_adapter_t *pAdapter;
@@ -415,7 +415,7 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 #endif
 
 	/* connect to service */
-	connect.ServiceID = WMI_DATA_BE_SVC;
+	connect.service_id = WMI_DATA_BE_SVC;
 	status = htc_connect_service(pEpping_ctx->HTCHandle, &connect, &response);
 	if (status != EOK) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,
@@ -429,7 +429,7 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 	pEpping_ctx->EppingEndpoint[0] = response.Endpoint;
 
 #if defined(HIF_PCI) || defined(HIF_USB)
-	connect.ServiceID = WMI_DATA_BK_SVC;
+	connect.service_id = WMI_DATA_BK_SVC;
 	status = htc_connect_service(pEpping_ctx->HTCHandle, &connect, &response);
 	if (status != EOK) {
 		EPPING_LOG(CDF_TRACE_LEVEL_FATAL,

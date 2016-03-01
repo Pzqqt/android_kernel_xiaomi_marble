@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -88,9 +88,7 @@
 #define CSR_BSS_CAP_VALUE_VHT    2
 #define CSR_BSS_CAP_VALUE_WMM   1
 #define CSR_BSS_CAP_VALUE_UAPSD 1
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 #define CSR_BSS_CAP_VALUE_5GHZ  2
-#endif
 #define CSR_DEFAULT_ROAMING_TIME 10     /* 10 seconds */
 
 #define CSR_ROAMING_DFS_CHANNEL_DISABLED           (0)
@@ -106,7 +104,6 @@
 
 #define CSR_MAX_BSSID_COUNT     ((CSR_ACTIVE_LIST_CMD_TIMEOUT_VALUE/4000) * 3)
 #define CSR_CUSTOM_CONC_GO_BI    100
-#define MIN_11P_CHANNEL (rf_channels[MIN_5_9GHZ_CHANNEL].channelNum)
 
 typedef enum {
 	eCsrNextScanNothing,
@@ -137,7 +134,6 @@ typedef enum {
 	eCsrStartBssFailure,
 	eCsrSilentlyStopRoaming,
 	eCsrSilentlyStopRoamingSaveState,
-	eCsrJoinWdsFailure,
 	eCsrJoinFailureDueToConcurrency,
 
 } eCsrRoamCompleteResult;
@@ -199,7 +195,6 @@ typedef struct {
 						(eCsrForcedDisassocMICFailure == \
 						  (pCommand)->u.roamCmd.roamReason)))
 
-extern const tRfChannelProps rf_channels[NUM_RF_CHANNELS];
 eCsrRoamState csr_roam_state_change(tpAniSirGlobal pMac,
 				    eCsrRoamState NewRoamState, uint8_t sessionId);
 CDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac, void *pMsgBuf);
@@ -401,7 +396,7 @@ CDF_STATUS csr_get_cfg_valid_channels(tpAniSirGlobal pMac, uint8_t *pChannels,
 				      uint32_t *pNumChan);
 void csr_roam_ccm_cfg_set_callback(tpAniSirGlobal pMac, int32_t result);
 
-tPowerdBm csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
+int8_t csr_get_cfg_max_tx_power(tpAniSirGlobal pMac, uint8_t channel);
 
 /* To free the last roaming profile */
 void csr_free_roam_profile(tpAniSirGlobal pMac, uint32_t sessionId);
@@ -589,7 +584,7 @@ CDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry);
 CDF_STATUS csr_get_regulatory_domain_for_country(tpAniSirGlobal pMac,
 						 uint8_t *pCountry,
 						 v_REGDOMAIN_t *pDomainId,
-						 v_CountryInfoSource_t source);
+						 enum country_src source);
 
 /* some support functions */
 bool csr_is11d_supported(tpAniSirGlobal pMac);
@@ -841,14 +836,7 @@ CDF_STATUS csr_roam_get_connect_profile(tpAniSirGlobal pMac, uint32_t sessionId,
 CDF_STATUS csr_roam_get_connect_state(tpAniSirGlobal pMac, uint32_t sessionId,
 				      eCsrConnectState *pState);
 
-/* ---------------------------------------------------------------------------
-    \fn csr_roam_free_connect_profile
-    \brief To free and reinitialize the profile return previous by csr_roam_get_connect_profile.
-    \param pProfile - pointer to a caller allocated structure tCsrRoamConnectedProfile
-    \return CDF_STATUS.
-   -------------------------------------------------------------------------------*/
-CDF_STATUS csr_roam_free_connect_profile(tpAniSirGlobal pMac,
-					 tCsrRoamConnectedProfile *pProfile);
+void csr_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 
 /* ---------------------------------------------------------------------------
     \fn csr_apply_channel_and_power_list
@@ -974,7 +962,7 @@ CDF_STATUS csr_roam_get_associated_stas(tpAniSirGlobal pMac, uint32_t sessionId,
 CDF_STATUS csr_send_mb_get_associated_stas_req_msg(tpAniSirGlobal pMac,
 						   uint32_t sessionId,
 						   CDF_MODULE_ID modId,
-						   tSirMacAddr bssId,
+						   struct cdf_mac_addr bssId,
 						   void *pUsrContext,
 						   void *pfnSapEventCallback,
 						   uint8_t *pAssocStasBuf);
@@ -993,8 +981,10 @@ CDF_STATUS csr_roam_get_wps_session_overlap(tpAniSirGlobal pMac, uint32_t sessio
 					    void *pfnSapEventCallback,
 					    struct cdf_mac_addr pRemoveMac);
 
-CDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac, uint32_t sessionId,
-					   tSirMacAddr bssId, void *pUsrContext,
+CDF_STATUS csr_send_mb_get_wpspbc_sessions(tpAniSirGlobal pMac,
+					   uint32_t sessionId,
+					   struct cdf_mac_addr bssId,
+					   void *pUsrContext,
 					   void *pfnSapEventCallback,
 					   struct cdf_mac_addr pRemoveMac);
 
@@ -1026,7 +1016,6 @@ CDF_STATUS csr_roam_enqueue_preauth(tpAniSirGlobal pMac, uint32_t sessionId,
 				    tpSirBssDescription pBssDescription,
 				    eCsrRoamReason reason, bool fImmediate);
 CDF_STATUS csr_dequeue_roam_command(tpAniSirGlobal pMac, eCsrRoamReason reason);
-#ifdef FEATURE_WLAN_LFR
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId);
 bool csr_neighbor_roam_is_new_connected_profile(tpAniSirGlobal pMac,
 						uint8_t sessionId);
@@ -1034,7 +1023,6 @@ bool csr_neighbor_roam_connected_profile_match(tpAniSirGlobal pMac,
 					       uint8_t sessionId,
 					       tCsrScanResult *pResult,
 					       tDot11fBeaconIEs *pIes);
-#endif
 
 CDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 						uint32_t sessionId,
@@ -1068,6 +1056,8 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 				  tSirBssDescription *bss_descr);
 void csr_release_scan_command(tpAniSirGlobal pMac, tSmeCmd *pCommand,
 			      eCsrScanStatus scanStatus);
+bool is_disconnect_pending(tpAniSirGlobal mac_ctx,
+				   uint8_t sessionid);
 void csr_scan_active_list_timeout_handle(void *userData);
 CDF_STATUS csr_prepare_disconnect_command(tpAniSirGlobal mac,
 			uint32_t session_id, tSmeCmd **sme_cmd);

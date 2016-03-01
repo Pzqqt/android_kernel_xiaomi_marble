@@ -822,8 +822,6 @@ static void __lim_process_add_ts_rsp(tpAniSirGlobal mac_ctx,
 		lim_send_sme_tsm_ie_ind(mac_ctx, session, addts.tsmIE.tsid,
 					addts.tsmIE.state,
 					addts.tsmIE.msmt_interval);
-#else
-		limActivateTSMStatsTimer(mac_ctx, session);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	}
 #endif
@@ -1099,8 +1097,6 @@ static void __lim_process_del_ts_req(tpAniSirGlobal mac_ctx,
 #ifdef FEATURE_WLAN_ESE
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	lim_send_sme_tsm_ie_ind(mac_ctx, session, 0, 0, 0);
-#else
-	lim_deactivate_and_change_timer(mac_ctx, eLIM_TSM_TIMER);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 #endif
 }
@@ -1899,7 +1895,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 		case SIR_MAC_WNM_BSS_TM_RESPONSE:
 		case SIR_MAC_WNM_NOTIF_REQUEST:
 		case SIR_MAC_WNM_NOTIF_RESPONSE:
-			rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			/* Forward to the SME to HDD to wpa_supplicant */
 			lim_send_sme_mgmt_frame_ind(mac_ctx,
@@ -2060,7 +2056,7 @@ void lim_process_action_frame(tpAniSirGlobal mac_ctx,
 
 			mac_hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 			frame_len = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-			rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+			rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_INFO,
 				  ("Public Action TDLS Discovery RSP .."));
 			lim_send_sme_mgmt_frame_ind(mac_ctx,

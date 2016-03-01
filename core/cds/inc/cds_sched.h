@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -250,14 +250,9 @@ typedef struct _cds_context_type {
 	/* MAC Module Context  */
 	void *pMACContext;
 
-#ifndef WLAN_FEATURE_MBSSID
-	/* SAP Context */
-	void *pSAPContext;
-#endif
-
 	cdf_event_t ProbeEvent;
 
-	volatile uint8_t isLogpInProgress;
+	uint32_t driver_state;
 
 	cdf_event_t wmaCompleteEvent;
 
@@ -268,7 +263,6 @@ typedef struct _cds_context_type {
 
 	void *htc_ctx;
 
-	void *epping_ctx;
 	/*
 	 * cdf_ctx will be used by cdf
 	 * while allocating dma memory
@@ -281,8 +275,6 @@ typedef struct _cds_context_type {
 	/* Configuration handle used to get system configuration */
 	void *cfg_ctx;
 
-	volatile uint8_t isLoadUnloadInProgress;
-
 	bool is_wakelock_log_enabled;
 	uint32_t wakelock_log_level;
 	uint32_t connectivity_log_level;
@@ -292,6 +284,7 @@ typedef struct _cds_context_type {
 	struct cds_log_complete log_complete;
 	cdf_spinlock_t bug_report_lock;
 	cdf_event_t connection_update_done_evt;
+	cdf_mutex_t cdf_conc_list_lock;
 
 } cds_context_type, *p_cds_contextType;
 
@@ -444,8 +437,7 @@ void cdf_timer_module_init(void);
 void cds_ssr_protect_init(void);
 void cds_ssr_protect(const char *caller_func);
 void cds_ssr_unprotect(const char *caller_func);
-bool cds_is_ssr_ready(const char *caller_func);
-
-#define cds_wait_for_work_thread_completion(func) cds_is_ssr_ready(func)
+bool cds_wait_for_external_threads_completion(const char *caller_func);
+int cds_get_gfp_flags(void);
 
 #endif /* #if !defined __CDS_SCHED_H */

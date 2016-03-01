@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -117,6 +117,8 @@ CDF_STATUS wma_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId);
 CDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 					  uint8_t *pVersion,
 					  uint32_t versionBufferSize);
+int wma_runtime_suspend(void);
+int wma_runtime_resume(void);
 int wma_bus_suspend(void);
 int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 void wma_target_suspend_acknowledge(void *context);
@@ -124,7 +126,7 @@ int wma_bus_resume(void);
 int wma_resume_target(WMA_HANDLE handle);
 CDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);
 CDF_STATUS wma_disable_d0wow_in_fw(WMA_HANDLE handle);
-int wma_is_wow_mode_selected(WMA_HANDLE handle);
+bool wma_is_wow_mode_selected(WMA_HANDLE handle);
 CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle);
 CDF_STATUS wma_enable_d0wow_in_fw(WMA_HANDLE handle);
 bool wma_check_scan_in_progress(WMA_HANDLE handle);
@@ -219,4 +221,22 @@ struct wma_lro_config_cmd_t {
 int wma_lro_init(struct wma_lro_config_cmd_t *lro_config);
 #endif
 bool wma_is_scan_simultaneous_capable(void);
+
+#ifdef FEATURE_GREEN_AP
+void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle);
+void wma_register_egap_event_handle(WMA_HANDLE handle);
+CDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
+				     struct egap_conf_params *egap_params);
+#else
+static inline void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg,
+					  WMA_HANDLE handle) {}
+static inline void wma_register_egap_event_handle(WMA_HANDLE handle) {}
+static inline CDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
+				     struct egap_conf_params *egap_params)
+{
+	return CDF_STATUS_E_NOSUPPORT;
+}
+#endif
+CDF_STATUS wma_set_tx_power_scale(uint8_t vdev_id, int value);
+CDF_STATUS wma_set_tx_power_scale_decr_db(uint8_t vdev_id, int value);
 #endif

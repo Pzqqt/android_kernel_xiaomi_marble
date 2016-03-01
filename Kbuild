@@ -130,6 +130,9 @@ ifeq ($(KERNEL_BUILD), 0)
 			CONFIG_WLAN_LRO := n
 		endif
 	endif
+
+	# Flag to enable LFR Subnet Detection
+	CONFIG_LFR_SUBNET_DETECTION := y
 endif
 
 ifneq ($(CONFIG_MOBILE_ROUTER), y)
@@ -250,10 +253,6 @@ CONFIG_FEATURE_SECURE_FIRMWARE := 0
 #Flag to enable Stats Ext implementation
 CONFIG_FEATURE_STATS_EXT := 1
 
-#Flag to force the inclusion of the 802.11p channels because support
-#for these channels has not yet been added to the kernel.
-CONFIG_STATICALLY_ADD_11P_CHANNELS := n
-
 ifeq ($(CONFIG_CFG80211),y)
 HAVE_CFG80211 := 1
 else
@@ -336,6 +335,10 @@ endif
 
 ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 HDD_OBJS += $(HDD_SRC_DIR)/wlan_hdd_memdump.o
+endif
+
+ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
+HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_subnet_detect.o
 endif
 
 ########### HOST DIAG LOG ###########
@@ -907,6 +910,10 @@ CDEFINES += -DADRASTEA_SHADOW_REGISTERS
 CDEFINES += -DADRASTEA_RRI_ON_DDR
 endif
 
+ifneq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS) $(CONFIG_CNSS_ADRASTEA)))
+CDEFINES += -DQCA_WIFI_2_0
+endif
+
 ifeq ($(CONFIG_WLAN_FASTPATH), y)
 CDEFINES +=	-DWLAN_FEATURE_FASTPATH
 endif
@@ -1266,6 +1273,16 @@ ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
 CDEFINES += -DWLAN_FEATURE_RX_FULL_REORDER_OL
 endif
 
+# Enable athdiag procfs debug support for adrastea
+ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
+CDEFINES += -DCONFIG_ATH_PROCFS_DIAG_SUPPORT
+endif
+
+# Enable 11AC TX compact feature for adrastea
+ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))
+CDEFINES += -DATH_11AC_TXCOMPACT
+endif
+
 # NOTE: CONFIG_64BIT_PADDR requires CONFIG_HELIUMPLUS
 ifeq (y,$(filter y,$(CONFIG_CNSS_EOS) $(CONFIG_ICNSS)))
 CONFIG_HELIUMPLUS := y
@@ -1275,6 +1292,7 @@ CONFIG_FEATURE_TSO_DEBUG := y
 ifeq ($(CONFIG_HELIUMPLUS),y)
 CDEFINES += -DHELIUMPLUS_PADDR64
 CDEFINES += -DHELIUMPLUS
+CDEFINES += -DAR900B
 ifeq ($(CONFIG_64BIT_PADDR),y)
 CDEFINES += -DHTT_PADDR64
 endif
@@ -1308,8 +1326,8 @@ ifeq ($(CONFIG_WLAN_FEATURE_MEMDUMP),y)
 CDEFINES += -DWLAN_FEATURE_MEMDUMP
 endif
 
-ifeq ($(CONFIG_STATICALLY_ADD_11P_CHANNELS),y)
-CDEFINES += -DFEATURE_STATICALLY_ADD_11P_CHANNELS
+ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
+CDEFINES += -DFEATURE_LFR_SUBNET_DETECTION
 endif
 
 KBUILD_CPPFLAGS += $(CDEFINES)

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -387,8 +387,8 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 			}
 			offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
 			offLoadRequest.enableOrDisable = SIR_OFFLOAD_ENABLE;
-			cdf_mem_copy(&offLoadRequest.nsOffloadInfo.selfMacAddr,
-				&pAdapter->macAddressCurrent.bytes, SIR_MAC_ADDR_LEN);
+			cdf_copy_macaddr(&offLoadRequest.nsOffloadInfo.self_macaddr,
+					 &pAdapter->macAddressCurrent);
 			/* set number of ns offload address count */
 			offLoadRequest.num_ns_offload_count = count;
 			/* Configure the Firmware with this */
@@ -511,15 +511,18 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 
 	hdd_conf_gtk_offload(pAdapter, fenable);
 
-	/* Configure ARP/NS offload during cfg80211 suspend/resume only
-	 * if active mode offload is disabled
+	/* Configure ARP/NS offload during cfg80211 suspend/resume and
+	 * Enable MC address filtering during cfg80211 suspend
+	 * only if active mode offload is disabled
 	 */
 	if (!pHddCtx->config->active_mode_offload) {
+		hdd_info("configuring unconfigured active mode offloads");
 		hdd_conf_arp_offload(pAdapter, fenable);
+		wlan_hdd_set_mc_addr_list(pAdapter, fenable);
+
 		if (pHddCtx->config->fhostNSOffload)
 			hdd_conf_ns_offload(pAdapter, fenable);
 	}
-	EXIT();
 	EXIT();
 	return;
 }
@@ -967,6 +970,23 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 #endif
 
 /**
+ * hdd_update_mcastbcast_filter(): cache multi and broadcast filter for suspend
+ * @hdd_ctx: hdd context
+ *
+ * Cache the configured filter to be used in suspend resume.
+ */
+static void hdd_update_mcastbcast_filter(hdd_context_t *hdd_ctx)
+{
+	if (false == hdd_ctx->sus_res_mcastbcast_filter_valid) {
+		hdd_ctx->sus_res_mcastbcast_filter =
+			hdd_ctx->configuredMcastBcastFilter;
+		hdd_ctx->sus_res_mcastbcast_filter_valid = true;
+		hdd_info("configuredMCastBcastFilter saved = %d",
+			hdd_ctx->configuredMcastBcastFilter);
+	}
+}
+
+/**
  * hdd_conf_suspend_ind() - Send Suspend notification
  * @pHddCtx: HDD Global context
  * @pAdapter: adapter being suspended
@@ -975,69 +995,26 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
  *
  * Return: None.
  */
-static void hdd_conf_suspend_ind(hdd_context_t *pHddCtx,
-				 hdd_adapter_t *pAdapter,
+static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
+				uint32_t conn_state_mask,
 				 void (*callback)(void *callbackContext,
 						  bool suspended),
 				 void *callbackContext)
 {
 	CDF_STATUS cdf_ret_status = CDF_STATUS_E_FAILURE;
-	tpSirWlanSuspendParam wlanSuspendParam =
-		cdf_mem_malloc(sizeof(tSirWlanSuspendParam));
 
-	if (false == pHddCtx->sus_res_mcastbcast_filter_valid) {
-		pHddCtx->sus_res_mcastbcast_filter =
-			pHddCtx->configuredMcastBcastFilter;
-		pHddCtx->sus_res_mcastbcast_filter_valid = true;
-		hddLog(CDF_TRACE_LEVEL_INFO, "offload: hdd_conf_suspend_ind");
-		hddLog(CDF_TRACE_LEVEL_INFO,
-		       "configuredMCastBcastFilter saved = %d",
-		       pHddCtx->configuredMcastBcastFilter);
+	hdd_info("%s: send wlan suspend indication", __func__);
 
-	}
-
-	if (NULL == wlanSuspendParam) {
-		hddLog(CDF_TRACE_LEVEL_FATAL,
-		       "%s: cdf_mem_alloc failed ", __func__);
-		return;
-	}
-
-	hddLog(CDF_TRACE_LEVEL_INFO,
-	       "%s: send wlan suspend indication", __func__);
-
-	/* Configure supported OffLoads */
-	hdd_conf_hostoffload(pAdapter, true);
-	wlanSuspendParam->configuredMcstBcstFilterSetting =
-		pHddCtx->configuredMcastBcastFilter;
-
-	/* Enable MC address filtering during cfg80211 suspend if active mode
-	 * mode offload is disabled in INI
-	 */
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_info("enable mc address filtering");
-		wlan_hdd_set_mc_addr_list(pAdapter, true);
-	}
-
-	if ((eConnectionState_Associated ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState) ||
-	    (eConnectionState_IbssConnected ==
-	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState))
-		wlanSuspendParam->connectedState = true;
-	else
-		wlanSuspendParam->connectedState = false;
-
-	wlanSuspendParam->sessionId = pAdapter->sessionId;
 	cdf_ret_status =
-		sme_configure_suspend_ind(pHddCtx->hHal, wlanSuspendParam,
+		sme_configure_suspend_ind(pHddCtx->hHal, conn_state_mask,
 					  callback, callbackContext);
+
 	if (CDF_STATUS_SUCCESS == cdf_ret_status) {
 		pHddCtx->hdd_mcastbcast_filter_set = true;
 	} else {
 		hddLog(CDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_suspend_ind returned failure %d"),
 		       cdf_ret_status);
-
-		cdf_mem_free(wlanSuspendParam);
 	}
 }
 
@@ -1077,14 +1054,27 @@ static void hdd_conf_resume_ind(hdd_adapter_t *pAdapter)
 	       "offload: in hdd_conf_resume_ind, restoring configuredMcastBcastFilter");
 	hddLog(CDF_TRACE_LEVEL_INFO, "configuredMcastBcastFilter = %d",
 	       pHddCtx->configuredMcastBcastFilter);
+}
 
-	/* Disable MC address filtering during cfg80211 suspend if active mode
-	 * mode offload is disabled in INI
-	 */
-	if (!pHddCtx->config->active_mode_offload) {
-		hdd_info("disable mc address filtering");
-		wlan_hdd_set_mc_addr_list(pAdapter, false);
-	}
+/**
+ * hdd_update_conn_state_mask(): record info needed by wma_suspend_req
+ * @adapter: adapter to get info from
+ * @conn_state_mask: mask of connection info
+ *
+ * currently only need to send connection info.
+ */
+static void
+hdd_update_conn_state_mask(hdd_adapter_t *adapter, uint32_t *conn_state_mask)
+{
+
+	eConnectionState connState;
+	hdd_station_ctx_t *sta_ctx;
+	sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
+	connState = sta_ctx->conn_info.connState;
+
+	if (connState == eConnectionState_Associated ||
+			connState == eConnectionState_IbssConnected)
+		*conn_state_mask |= (1 << adapter->sessionId);
 }
 
 /**
@@ -1103,9 +1093,9 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 	CDF_STATUS status;
 	hdd_adapter_t *pAdapter = NULL;
 	hdd_adapter_list_node_t *pAdapterNode = NULL, *pNext = NULL;
+	uint32_t conn_state_mask = 0;
 
-	hddLog(CDF_TRACE_LEVEL_INFO, "%s: WLAN being suspended by OS",
-	       __func__);
+	hdd_info("%s: WLAN being suspended by OS", __func__);
 
 	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
@@ -1114,11 +1104,13 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 		return;
 	}
 
-	if (pHddCtx->isLogpInProgress) {
-		hddLog(CDF_TRACE_LEVEL_ERROR,
-		       "%s: Ignore suspend wlan, LOGP in progress!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_err("Recovery in Progress. State: 0x%x Ignore suspend!!!",
+			 cds_get_driver_state());
 		return;
 	}
+
+	hdd_update_mcastbcast_filter(pHddCtx);
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && CDF_STATUS_SUCCESS == status) {
@@ -1129,19 +1121,18 @@ hdd_suspend_wlan(void (*callback)(void *callbackContext, bool suspended),
 		wlan_hdd_netif_queue_control(pAdapter, WLAN_NETIF_TX_DISABLE,
 					   WLAN_CONTROL_PATH);
 
-		/* Send suspend notification down to firmware.
-		 *
-		 * N.B.: Keep this suspend indication at the end
-		 * (before processing next adaptor). This indication
-		 * is considered as trigger point to start WOW (if wow
-		 * is enabled).
-		 */
-		hdd_conf_suspend_ind(pHddCtx, pAdapter, callback,
-				     callbackContext);
+		/* Configure supported OffLoads */
+		hdd_conf_hostoffload(pAdapter, true);
+
+		hdd_update_conn_state_mask(pAdapter, &conn_state_mask);
 
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
+
 		pAdapterNode = pNext;
 	}
+
+	hdd_send_suspend_ind(pHddCtx, conn_state_mask, callback,
+			callbackContext);
 
 	pHddCtx->hdd_wlan_suspended = true;
 
@@ -1170,9 +1161,9 @@ static void hdd_resume_wlan(void)
 		return;
 	}
 
-	if (pHddCtx->isLogpInProgress) {
-		hddLog(CDF_TRACE_LEVEL_INFO,
-		       "%s: Ignore resume wlan, LOGP in progress!", __func__);
+	if (cds_is_driver_recovering()) {
+		hdd_warn("Recovery in Progress. State: 0x%x Ignore resume!!!",
+			 cds_get_driver_state());
 		return;
 	}
 
@@ -1304,8 +1295,7 @@ CDF_STATUS hdd_wlan_shutdown(void)
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	pHddCtx->isLogpInProgress = true;
-	cds_set_logp_in_progress(true);
+	cds_set_recovery_in_progress(true);
 
 	cds_clear_concurrent_session_count();
 
@@ -1448,7 +1438,7 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	hdd_set_conparam(0);
 
 	/* Re-open CDS, it is a re-open b'se control transport was never closed. */
-	cdf_status = cds_open(&p_cds_context, 0);
+	cdf_status = cds_open();
 	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
 		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: cds_open failed", __func__);
 		goto err_re_init;
@@ -1462,18 +1452,21 @@ CDF_STATUS hdd_wlan_re_init(void *hif_sc)
 		goto err_cds_close;
 	}
 
-	/* Set the SME configuration parameters. */
-	cdf_status = hdd_set_sme_config(pHddCtx);
-	if (CDF_STATUS_SUCCESS != cdf_status) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Failed hdd_set_sme_config",
-		       __func__);
+	cdf_status = cds_pre_enable(pHddCtx->pcds_context);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		hdd_alert("cds_pre_enable failed");
 		goto err_cds_close;
 	}
 
-	cdf_status = cds_pre_enable(pHddCtx->pcds_context);
-	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: cds_pre_enable failed",
-		       __func__);
+	/*
+	 * Note that the cds_pre_enable() sequence triggers the cfg download.
+	 * The cfg download must occur before we update the SME config
+	 * since the SME config operation must access the cfg database.
+	 * Set the SME configuration parameters.
+	 */
+	cdf_status = hdd_set_sme_config(pHddCtx);
+	if (CDF_STATUS_SUCCESS != cdf_status) {
+		hdd_alert("Failed hdd_set_sme_config");
 		goto err_cds_close;
 	}
 
@@ -1638,9 +1631,8 @@ err_cds_close:
 		wiphy_unregister(pHddCtx->wiphy);
 		wiphy_free(pHddCtx->wiphy);
 
-		if (!CDF_IS_STATUS_SUCCESS(cdf_mutex_destroy(
-					&pHddCtx->hdd_conc_list_lock))) {
-			hdd_err("Failed to destroy hdd_conc_list_lock");
+		if (!CDF_IS_STATUS_SUCCESS(cds_deinit_policy_mgr())) {
+			hdd_err("Failed to deinit policy manager");
 			/* Proceed and complete the clean up */
 		}
 	}
@@ -1652,7 +1644,6 @@ err_re_init:
 	return -EPERM;
 
 success:
-	pHddCtx->isLogpInProgress = false;
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -1738,7 +1729,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -1767,16 +1758,16 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	MTRACE(cdf_trace(CDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_CFG80211_RESUME_WLAN,
 			 NO_SESSION, pHddCtx->isWiphySuspended));
-	spin_lock(&pHddCtx->schedScan_lock);
+	cdf_spin_lock(&pHddCtx->sched_scan_lock);
 	pHddCtx->isWiphySuspended = false;
 	if (true != pHddCtx->isSchedScanUpdatePending) {
-		spin_unlock(&pHddCtx->schedScan_lock);
+		cdf_spin_unlock(&pHddCtx->sched_scan_lock);
 		hddLog(LOG1, FL("Return resume is not due to PNO indication"));
 		return 0;
 	}
 	/* Reset flag to avoid updatating cfg80211 data old results again */
 	pHddCtx->isSchedScanUpdatePending = false;
-	spin_unlock(&pHddCtx->schedScan_lock);
+	cdf_spin_unlock(&pHddCtx->sched_scan_lock);
 
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 
@@ -1874,7 +1865,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2094,7 +2085,7 @@ static int __wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2175,9 +2166,7 @@ int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 					   struct wireless_dev *wdev,
-#endif
 					   enum nl80211_tx_power_setting type,
 					   int dbm)
 {
@@ -2189,7 +2178,7 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2248,18 +2237,14 @@ static int __wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  enum nl80211_tx_power_setting type,
 				  int dbm)
 {
 	int ret;
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_set_txpower(wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 					      wdev,
-#endif
 					      type, dbm);
 	cds_ssr_unprotect(__func__);
 
@@ -2275,9 +2260,7 @@ int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
  * Return: 0 for success, non-zero for failure
  */
 static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  int *dbm)
 {
 
@@ -2287,7 +2270,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -2327,18 +2310,14 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
  * Return: 0 for success, error number on failure.
  */
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0) || defined(WITH_BACKPORTS)
 					 struct wireless_dev *wdev,
-#endif
 					 int *dbm)
 {
 	int ret;
 
 	cds_ssr_protect(__func__);
 	ret = __wlan_hdd_cfg80211_get_txpower(wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0) || defined(WITH_BACKPORTS)
 						wdev,
-#endif
 						dbm);
 	cds_ssr_unprotect(__func__);
 

@@ -1,5 +1,5 @@
 /*
- * copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -110,9 +110,8 @@ void bmi_cleanup(struct ol_softc *scn)
 CDF_STATUS bmi_done(struct ol_softc *scn)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	hif_claim_device(scn, scn);
 
-	if (IHELIUM_NO_BMI)
+	if (NO_BMI)
 		return status;
 
 	status = bmi_done_local(scn);
@@ -175,7 +174,7 @@ CDF_STATUS bmi_download_firmware(struct ol_softc *scn)
 	uint32_t address;
 	int32_t ret;
 
-	if (IHELIUM_NO_BMI)
+	if (NO_BMI)
 		return CDF_STATUS_SUCCESS; /* no BMI for Q6 bring up */
 
 	if (!scn) {

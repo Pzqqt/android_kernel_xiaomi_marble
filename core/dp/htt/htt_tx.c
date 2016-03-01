@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -252,8 +252,6 @@ static inline void htt_tx_desc_get_size(struct htt_pdev_t *pdev)
 		+ (ol_cfg_netbuf_frags_max(pdev->ctrl_pdev) + 1) * 8
 		   /* 2x uint32_t */
 		+ 4; /* uint32_t fragmentation list terminator */
-	if (pdev->tx_descs.size < sizeof(uint32_t *))
-		pdev->tx_descs.size = sizeof(uint32_t *);
 }
 
 /**
@@ -320,6 +318,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	uint16_t num_page, num_desc_per_page;
 
 	htt_tx_desc_get_size(pdev);
+
 	/*
 	 * Make sure tx_descs.size is a multiple of 4-bytes.
 	 * It should be, but round up just to be sure.
@@ -626,6 +625,24 @@ int htt_tx_send_std(htt_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t msdu_id)
 
 }
 
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * htt_tx_resume_handler() - resume callback for the htt endpoint
+ * @context: a pointer to the htt context
+ *
+ * runs htt_tx_sched.
+ */
+void htt_tx_resume_handler(void *context)
+{
+	struct htt_pdev_t *pdev =  (struct htt_pdev_t *) context;
+
+	htt_tx_sched(pdev);
+}
+#else
+void
+htt_tx_resume_handler(void *context) { }
+#endif
+
 cdf_nbuf_t
 htt_tx_send_batch(htt_pdev_handle pdev, cdf_nbuf_t head_msdu, int num_msdus)
 {
@@ -833,6 +850,149 @@ void htt_tx_desc_display(void *tx_desc)
 #endif
 
 #ifdef IPA_OFFLOAD
+#ifdef QCA_WIFI_2_0
+/**
+ * htt_tx_ipa_uc_wdi_tx_buf_alloc() - Alloc WDI TX buffers
+ * @pdev: htt context
+ * @uc_tx_buf_sz: TX buffer size
+ * @uc_tx_buf_cnt: TX Buffer count
+ * @uc_tx_partition_base: IPA UC TX partition base value
+ *
+ * Allocate WDI TX buffers. Also note Rome supports only WDI 1.0.
+ *
+ * Return: 0 success
+ */
+int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
+			 unsigned int uc_tx_buf_sz,
+			 unsigned int uc_tx_buf_cnt,
+			 unsigned int uc_tx_partition_base)
+{
+	unsigned int tx_buffer_count;
+	cdf_nbuf_t buffer_vaddr;
+	cdf_dma_addr_t buffer_paddr;
+	uint32_t *header_ptr;
+	uint32_t *ring_vaddr;
+#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 16
+#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET 32
+
+	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
+	/* Allocate TX buffers as many as possible */
+	for (tx_buffer_count = 0;
+	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
+		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
+					      uc_tx_buf_sz, 0, 4, false);
+		if (!buffer_vaddr) {
+			cdf_print("%s: TX BUF alloc fail, loop index: %d",
+				  __func__, tx_buffer_count);
+			return tx_buffer_count;
+		}
+
+		/* Init buffer */
+		cdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
+
+		/* HTT control header */
+		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
+		header_ptr++;
+
+		/* PKT ID */
+		*header_ptr |= ((uint16_t) uc_tx_partition_base +
+				tx_buffer_count) << 16;
+
+		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
+		buffer_paddr = cdf_nbuf_get_frag_paddr_lo(buffer_vaddr, 0);
+		header_ptr++;
+		*header_ptr = (uint32_t) (buffer_paddr +
+						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
+		header_ptr++;
+		*header_ptr = 0xFFFFFFFF;
+
+		/* FRAG Header */
+		header_ptr++;
+		*header_ptr = buffer_paddr + IPA_UC_TX_BUF_FRAG_HDR_OFFSET;
+
+		*ring_vaddr = buffer_paddr;
+		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
+			buffer_vaddr;
+		/* Memory barrier to ensure actual value updated */
+
+		ring_vaddr++;
+	}
+	return tx_buffer_count;
+}
+#else
+int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
+			 unsigned int uc_tx_buf_sz,
+			 unsigned int uc_tx_buf_cnt,
+			 unsigned int uc_tx_partition_base)
+{
+	unsigned int tx_buffer_count;
+	cdf_nbuf_t buffer_vaddr;
+	uint32_t buffer_paddr;
+	uint32_t *header_ptr;
+	uint32_t *ring_vaddr;
+#define IPA_UC_TX_BUF_FRAG_DESC_OFFSET 20
+#define IPA_UC_TX_BUF_FRAG_HDR_OFFSET 64
+#define IPA_UC_TX_BUF_TSO_HDR_SIZE 6
+
+	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
+	/* Allocate TX buffers as many as possible */
+	for (tx_buffer_count = 0;
+	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
+		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
+					      uc_tx_buf_sz, 0, 4, false);
+		if (!buffer_vaddr) {
+			cdf_print("%s: TX BUF alloc fail, loop index: %d",
+				  __func__, tx_buffer_count);
+			return tx_buffer_count;
+		}
+
+		/* Init buffer */
+		cdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
+
+		/* HTT control header */
+		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
+		header_ptr++;
+
+		/* PKT ID */
+		*header_ptr |= ((uint16_t) uc_tx_partition_base +
+				tx_buffer_count) << 16;
+
+		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
+		buffer_paddr = cdf_nbuf_get_frag_paddr_lo(buffer_vaddr, 0);
+		header_ptr++;
+
+		/* Frag Desc Pointer */
+		/* 64bits descriptor, Low 32bits */
+		*header_ptr = (uint32_t) (buffer_paddr +
+						IPA_UC_TX_BUF_FRAG_DESC_OFFSET);
+		header_ptr++;
+
+		/* 64bits descriptor, high 32bits */
+		*header_ptr = 0;
+		header_ptr++;
+
+		/* chanreq, peerid */
+		*header_ptr = 0xFFFFFFFF;
+		header_ptr++;
+
+		/* FRAG Header */
+		/* 6 words TSO header */
+		header_ptr += IPA_UC_TX_BUF_TSO_HDR_SIZE;
+		*header_ptr = buffer_paddr + IPA_UC_TX_BUF_FRAG_HDR_OFFSET;
+
+		*ring_vaddr = buffer_paddr;
+		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
+			buffer_vaddr;
+		/* Memory barrier to ensure actual value updated */
+
+		ring_vaddr += 2;
+	}
+	return tx_buffer_count;
+}
+#endif
+
 /**
  * htt_tx_ipa_uc_attach() - attach htt ipa uc tx resource
  * @pdev: htt context
@@ -848,11 +1008,6 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 			 unsigned int uc_tx_buf_cnt,
 			 unsigned int uc_tx_partition_base)
 {
-	unsigned int tx_buffer_count;
-	cdf_nbuf_t buffer_vaddr;
-	cdf_dma_addr_t buffer_paddr;
-	uint32_t *header_ptr;
-	uint32_t *ring_vaddr;
 	int return_code = 0;
 	unsigned int tx_comp_ring_size;
 
@@ -900,61 +1055,9 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	cdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg,
 		     uc_tx_buf_cnt * sizeof(cdf_nbuf_t));
 
-	ring_vaddr = pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr;
-	/* Allocate TX buffers as many as possible */
-	for (tx_buffer_count = 0;
-	     tx_buffer_count < (uc_tx_buf_cnt - 1); tx_buffer_count++) {
-		buffer_vaddr = cdf_nbuf_alloc(pdev->osdev,
-					      uc_tx_buf_sz, 0, 4, false);
-		if (!buffer_vaddr) {
-			cdf_print("%s: TX BUF alloc fail, loop index: %d",
-				  __func__, tx_buffer_count);
-			return 0;
-		}
+	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
+		pdev, uc_tx_buf_sz, uc_tx_buf_cnt, uc_tx_partition_base);
 
-		/* Init buffer */
-		cdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
-		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
-
-		/* HTT control header */
-		*header_ptr = HTT_IPA_UC_OFFLOAD_TX_HEADER_DEFAULT;
-		header_ptr++;
-
-		/* PKT ID */
-		*header_ptr |= ((uint16_t) uc_tx_partition_base +
-				tx_buffer_count) << 16;
-
-		cdf_nbuf_map(pdev->osdev, buffer_vaddr, CDF_DMA_BIDIRECTIONAL);
-		buffer_paddr = cdf_nbuf_get_frag_paddr_lo(buffer_vaddr, 0);
-		header_ptr++;
-
-		/* Frag Desc Pointer */
-		/* 64bits descriptor, Low 32bits */
-		*header_ptr = (uint32_t) (buffer_paddr + 20);
-		header_ptr++;
-
-		/* 64bits descriptor, high 32bits */
-		*header_ptr = 0;
-		header_ptr++;
-
-		/* chanreq, peerid */
-		*header_ptr = 0xFFFFFFFF;
-		header_ptr++;
-
-		/* FRAG Header */
-		/* 6 words TSO header */
-		header_ptr += 6;
-		*header_ptr = buffer_paddr + 64;
-
-		*ring_vaddr = buffer_paddr;
-		pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg[tx_buffer_count] =
-			buffer_vaddr;
-		/* Memory barrier to ensure actual value updated */
-
-		ring_vaddr += 2;
-	}
-
-	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = tx_buffer_count;
 
 	return 0;
 

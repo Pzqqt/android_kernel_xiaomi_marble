@@ -203,6 +203,9 @@ static void ce_tasklet(unsigned long data)
 	struct ol_softc *scn = hif_ce_state->scn;
 	struct CE_state *CE_state = scn->ce_id_to_state[tasklet_entry->ce_id];
 
+	hif_record_ce_desc_event(tasklet_entry->ce_id, HIF_CE_TASKLET_ENTRY,
+			NULL, NULL, 0);
+
 	if (cdf_atomic_read(&scn->link_suspended)) {
 		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
 				__func__, tasklet_entry->ce_id);
@@ -221,12 +224,17 @@ static void ce_tasklet(unsigned long data)
 		 * Enable the interrupt only when there is no pending frames in
 		 * any of the Copy Engine pipes.
 		 */
+		hif_record_ce_desc_event(tasklet_entry->ce_id,
+				HIF_CE_TASKLET_RESCHEDULE, NULL, NULL, 0);
 		ce_schedule_tasklet(tasklet_entry);
 		return;
 	}
 
 	if (scn->target_status != OL_TRGET_STATUS_RESET)
 		ce_irq_enable(scn, tasklet_entry->ce_id);
+
+	hif_record_ce_desc_event(tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
+			NULL, NULL, 0);
 
 	cdf_atomic_dec(&scn->active_tasklet_cnt);
 }
@@ -301,6 +309,7 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 	ce_irq_disable(scn, ce_id);
 	ce_irq_status(scn, ce_id, &host_status);
 	cdf_atomic_inc(&scn->active_tasklet_cnt);
+	hif_record_ce_desc_event(ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	if (hif_napi_enabled(scn, ce_id))
 		hif_napi_schedule(scn, ce_id);
 	else

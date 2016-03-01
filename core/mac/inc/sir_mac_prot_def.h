@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -493,39 +493,7 @@
 #define SIR_MAC_IPV6_ADDR_LEN               16
 #define SIR_IPV6_ADDR_VALID                 1
 #endif /* WLAN_NS_OFFLOAD */
-#define SIR_MAC_ARP_OFFLOAD_SIZE        1
 
-/* total length of an Info element including T/L fields */
-#define EID_LEN(eid) (2 + (eid))
-
-/* support for radar Detect, Channel Switch */
-#define CHANNEL_SWITCH_MAX_FRAME_SIZE               256
-
-/* Length of Channel Switch related message */
-#define SIR_SME_CHANNEL_SWITCH_SIZE \
-	(sizeof(uint8_t) + 2 * sizeof(uint16_t) + sizeof(uint32_t) +\
-	sizeof(ePhyChanBondState))
-#define SIR_CHANNEL_SWITCH_IE_SIZE         EID_LEN(SIR_MAC_CHNL_SWITCH_ANN_EID_MIN)
-
-/* Measurement Request/Report messages */
-#define SIR_MEAS_REQ_FIELD_SIZE                11
-#define SIR_MEAS_REQ_IE_SIZE                   (5 + SIR_MEAS_REQ_FIELD_SIZE)
-#define SIR_MEAS_REQ_ACTION_FRAME_SIZE         (3 + SIR_MEAS_REQ_IE_SIZE)
-#define SIR_MEAS_MAX_FRAME_SIZE                256
-#define SIR_MEAS_REPORT_MIN_FRAME_SIZE         (3 + EID_LEN(SIR_MAC_MEAS_RPT_EID_MIN))
-
-#define SIR_MAC_SET_MEAS_REQ_ENABLE(x)         (((uint8_t) x) | 2)
-#define SIR_MAC_SET_MEAS_REQ_REQUEST(x)        (((uint8_t) x) | 4)
-#define SIR_MAC_SET_MEAS_REQ_REPORT(x)         (((uint8_t) x) | 8)
-
-#define SIR_MAC_SET_MEAS_REPORT_LATE(x)        (((uint8_t) x) | 1)
-#define SIR_MAC_SET_MEAS_REPORT_INCAPABLE(x)   (((uint8_t) x) | 2)
-#define SIR_MAC_SET_MEAS_REPORT_REFUSE(x)      (((uint8_t) x) | 4)
-
-/* Length of TPC Request Action Frame */
-#define SIR_TPC_REQ_ACTION_FRAME_SIZE          (3 + EID_LEN(SIR_MAC_TPC_REQ_EID_MIN))
-#define SIR_TPC_REPORT_ACTION_FRAME_SIZE       (3 + EID_LEN(SIR_MAC_TPC_RPT_EID_MIN))
-#define SIR_TPC_MAX_FRAME_SIZE                 256
 /* ----------------------------------------------------------------------------- */
 
 /* OFFSET definitions for fixed fields in Management frames */

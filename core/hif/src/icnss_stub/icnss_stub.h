@@ -121,6 +121,7 @@ struct icnss_soc_info {
 int icnss_wlan_enable(struct icnss_wlan_enable_cfg *config,
 	enum icnss_driver_mode mode, const char *host_version);
 int icnss_wlan_disable(enum icnss_driver_mode mode);
+int icnss_set_fw_debug_mode(bool mode);
 int icnss_ce_request_irq(int ce_id,
 	irqreturn_t (*handler)(int ce_id, void *arg),
 	unsigned long flags, const char *name, void *context);

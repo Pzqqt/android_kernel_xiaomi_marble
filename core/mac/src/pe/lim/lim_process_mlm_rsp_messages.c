@@ -1328,7 +1328,7 @@ void lim_process_mlm_deauth_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			pMac->lim.gLimRspReqd = false;
 	}
 	/* On STA or on BASIC AP, send SME_DEAUTH_RSP to host */
-	lim_send_sme_deauth_ntf(pMac, pMlmDeauthCnf->peerMacAddr,
+	lim_send_sme_deauth_ntf(pMac, pMlmDeauthCnf->peer_macaddr.bytes,
 				resultCode,
 				pMlmDeauthCnf->deauthTrigger,
 				aid, psessionEntry->smeSessionId,
@@ -1482,14 +1482,14 @@ void lim_process_mlm_set_keys_cnf(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		if (LIM_IS_AP_ROLE(psessionEntry) ||
 			LIM_IS_BT_AMP_AP_ROLE(psessionEntry)) {
 			sta_ds = dph_lookup_hash_entry(pMac,
-				pMlmSetKeysCnf->peerMacAddr,
+				pMlmSetKeysCnf->peer_macaddr.bytes,
 				&aid, &psessionEntry->dph.dphHashTable);
 			if (sta_ds != NULL)
 				sta_ds->is_key_installed = 1;
 		}
 	}
 	lim_send_sme_set_context_rsp(pMac,
-				     pMlmSetKeysCnf->peerMacAddr,
+				     pMlmSetKeysCnf->peer_macaddr,
 				     1,
 				     (tSirResultCodes) pMlmSetKeysCnf->resultCode,
 				     psessionEntry, psessionEntry->smeSessionId,
@@ -1546,12 +1546,19 @@ lim_handle_sme_join_result(tpAniSirGlobal mac_ctx,
 			 * to SME
 			 */
 			lim_cleanup_rx_path(mac_ctx, sta_ds, session_entry);
+			/* Cleanup if add bss failed */
+			if (session_entry->add_bss_failed) {
+				dph_delete_hash_entry(mac_ctx,
+					 sta_ds->staAddr, sta_ds->assocId,
+					 &session_entry->dph.dphHashTable);
+				goto error;
+			}
 			cdf_mem_free(session_entry->pLimJoinReq);
 			session_entry->pLimJoinReq = NULL;
 			return;
 		}
 	}
-
+error:
 	cdf_mem_free(session_entry->pLimJoinReq);
 	session_entry->pLimJoinReq = NULL;
 	/* Delete teh session if JOIN failure occurred. */
@@ -1624,9 +1631,17 @@ lim_handle_sme_reaasoc_result(tpAniSirGlobal pMac, tSirResultCodes resultCode,
 			pStaDs->mlmStaContext.resultCode = resultCode;
 			pStaDs->mlmStaContext.protStatusCode = protStatusCode;
 			lim_cleanup_rx_path(pMac, pStaDs, psessionEntry);
+			/* Cleanup if add bss failed */
+			if (psessionEntry->add_bss_failed) {
+				dph_delete_hash_entry(pMac,
+					 pStaDs->staAddr, pStaDs->assocId,
+					 &psessionEntry->dph.dphHashTable);
+				goto error;
+			}
 			return;
 		}
 	}
+error:
 	/* Delete teh session if REASSOC failure occurred. */
 	if (resultCode != eSIR_SME_SUCCESS) {
 		if (NULL != psessionEntry) {
@@ -2166,46 +2181,43 @@ void lim_process_sta_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
 		lim_log(pMac, LOGE, FL("Encountered NULL Pointer"));
 		goto end;
 	}
-	if (CDF_STATUS_SUCCESS == pDelStaParams->status) {
-		pStaDs =
-			dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
-					   &psessionEntry->dph.dphHashTable);
-		if (pStaDs == NULL) {
-			/* TODO: any response to be sent out here ? */
-			lim_log(pMac, LOGE, FL("DPH Entry for STA %X missing."),
+	lim_log(pMac, LOG1, FL("Del STA RSP received. Status:%d AssocID:%d"),
+			pDelStaParams->status, pDelStaParams->assocId);
+
+	if (CDF_STATUS_SUCCESS != pDelStaParams->status)
+		lim_log(pMac, LOGE, FL(
+			"Del STA failed! Status:%d, proceeding with Del BSS"),
+			pDelStaParams->status);
+
+	pStaDs = dph_get_hash_entry(pMac, DPH_STA_HASH_INDEX_PEER,
+			&psessionEntry->dph.dphHashTable);
+	if (pStaDs == NULL) {
+		lim_log(pMac, LOGE, FL("DPH Entry for STA %X missing."),
 				pDelStaParams->assocId);
-			statusCode = eSIR_SME_REFUSED;
-			goto end;
-		}
-		if (eLIM_MLM_WT_DEL_STA_RSP_STATE != psessionEntry->limMlmState) {
-			/* TODO: any response to be sent out here ? */
-			lim_log(pMac, LOGE,
-				FL
-					("Received unexpected WMA_DELETE_STA_RSP in state %s"),
-				lim_mlm_state_str(psessionEntry->limMlmState));
-			statusCode = eSIR_SME_REFUSED;
-			goto end;
-		}
-		PELOG1(lim_log
-			       (pMac, LOG1, FL("STA AssocID %d MAC "), pStaDs->assocId);
-		       lim_print_mac_addr(pMac, pStaDs->staAddr, LOG1);
-		       )
-		lim_log(pMac, LOGW,
-			FL("DEL_STA_RSP received for assocID: %X"),
-			pDelStaParams->assocId);
-		/* we must complete all cleanup related to delSta before calling limDelBSS. */
-		if (0 != limMsgQ->bodyptr) {
-			cdf_mem_free(pDelStaParams);
-			limMsgQ->bodyptr = NULL;
-		}
-		statusCode =
-			(tSirResultCodes) lim_del_bss(pMac, pStaDs, 0, psessionEntry);
-		return;
-	} else {
-		lim_log(pMac, LOGE, FL("DEL_STA failed for sta Id %d"),
-			pDelStaParams->staIdx);
 		statusCode = eSIR_SME_REFUSED;
+		goto end;
 	}
+	if (eLIM_MLM_WT_DEL_STA_RSP_STATE != psessionEntry->limMlmState) {
+		lim_log(pMac, LOGE, FL(
+			"Received unexpected WDA_DELETE_STA_RSP in state %s"),
+			lim_mlm_state_str(psessionEntry->limMlmState));
+		statusCode = eSIR_SME_REFUSED;
+		goto end;
+	}
+	lim_log(pMac, LOG1, FL("STA AssocID %d MAC "), pStaDs->assocId);
+	lim_print_mac_addr(pMac, pStaDs->staAddr, LOG1);
+	/*
+	 * we must complete all cleanup related to delSta before
+	 * calling limDelBSS.
+	 */
+	if (0 != limMsgQ->bodyptr) {
+		cdf_mem_free(pDelStaParams);
+		limMsgQ->bodyptr = NULL;
+	}
+	/* Proceed to do DelBSS even if DelSta resulted in failure */
+	statusCode = (tSirResultCodes)lim_del_bss(pMac, pStaDs, 0,
+			psessionEntry);
+	return;
 end:
 	if (0 != limMsgQ->bodyptr) {
 		cdf_mem_free(pDelStaParams);
@@ -3056,6 +3068,7 @@ lim_process_sta_mlm_add_bss_rsp(tpAniSirGlobal mac_ctx,
 		else
 			mlm_assoc_cnf.resultCode =
 				(tSirResultCodes) eSIR_SME_REFUSED;
+		session_entry->add_bss_failed = true;
 	}
 
 	if (mlm_assoc_cnf.resultCode != eSIR_SME_SUCCESS) {
@@ -3257,9 +3270,8 @@ void lim_process_mlm_set_sta_key_rsp(tpAniSirGlobal mac_ctx,
 			(tpLimMlmSetKeysReq) mac_ctx->lim.gpLimMlmSetKeysReq;
 		/* Prepare and Send LIM_MLM_SETKEYS_CNF */
 		if (NULL != lpLimMlmSetKeysReq) {
-			cdf_mem_copy((uint8_t *) &mlm_set_key_cnf.peerMacAddr,
-				(uint8_t *) lpLimMlmSetKeysReq->peerMacAddr,
-				sizeof(tSirMacAddr));
+			cdf_copy_macaddr(&mlm_set_key_cnf.peer_macaddr,
+					 &lpLimMlmSetKeysReq->peer_macaddr);
 			/*
 			 * Free the buffer cached for the global
 			 * mac_ctx->lim.gpLimMlmSetKeysReq
@@ -3346,9 +3358,8 @@ void lim_process_mlm_set_bss_key_rsp(tpAniSirGlobal mac_ctx,
 
 	/* Prepare and Send LIM_MLM_SETKEYS_CNF */
 	if (NULL != set_key_req) {
-		cdf_mem_copy((uint8_t *) &set_key_cnf.peerMacAddr,
-			(uint8_t *) set_key_req->peerMacAddr,
-			sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&set_key_cnf.peer_macaddr,
+				 &set_key_req->peer_macaddr);
 		/*
 		 * Free the buffer cached for the
 		 * global mac_ctx->lim.gpLimMlmSetKeysReq

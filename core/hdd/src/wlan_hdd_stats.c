@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1100,12 +1100,12 @@ static void wlan_hdd_cfg80211_link_layer_stats_callback(void *ctx,
 }
 
 /**
- * wlan_hdd_cfg80211_link_layer_stats_init() - initialize link layer stats
+ * hdd_cfg80211_link_layer_stats_init() - Initialize link layer stats
  * @pHddCtx: Pointer to hdd context
  *
  * Return: None
  */
-void wlan_hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
+void hdd_cfg80211_link_layer_stats_init(hdd_context_t *pHddCtx)
 {
 	sme_set_link_layer_stats_ind_cb(pHddCtx->hHal,
 					wlan_hdd_cfg80211_link_layer_stats_callback);
@@ -1144,7 +1144,7 @@ __wlan_hdd_cfg80211_ll_stats_set(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1270,7 +1270,7 @@ __wlan_hdd_cfg80211_ll_stats_get(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1401,7 +1401,7 @@ __wlan_hdd_cfg80211_ll_stats_clear(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1546,7 +1546,7 @@ static int __wlan_hdd_cfg80211_stats_ext_request(struct wiphy *wiphy,
 	if (ret_val)
 		return ret_val;
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hdd_err("Command not allowed in FTM mode");
 		return -EPERM;
 	}
@@ -1723,7 +1723,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -1753,7 +1753,7 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #ifdef WLAN_FEATURE_LPSS
 	if (!pAdapter->rssi_send) {
 		pAdapter->rssi_send = true;
-		if (pHddCtx->isUnloadInProgress != true)
+		if (cds_is_driver_unloading())
 			wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 1);
 	}
 #endif
@@ -1779,13 +1779,12 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 			pAdapter->hdd_stats.ClassA_stat.mcs_index = 0;
 		}
 	}
-#ifdef LINKSPEED_DEBUG_ENABLED
-	pr_info("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d\n",
-		sinfo->signal, pCfg->reportMaxLinkSpeed, myRate,
-		(int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
-		(int)pCfg->linkSpeedRssiLow, (int)rate_flags,
-		(int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
-#endif /* LINKSPEED_DEBUG_ENABLED */
+
+	hdd_info("RSSI %d, RLMS %u, rate %d, rssi high %d, rssi mid %d, rssi low %d, rate_flags 0x%x, MCS %d",
+		 sinfo->signal, pCfg->reportMaxLinkSpeed, myRate,
+		 (int)pCfg->linkSpeedRssiHigh, (int)pCfg->linkSpeedRssiMid,
+		 (int)pCfg->linkSpeedRssiLow, (int)rate_flags,
+		 (int)pAdapter->hdd_stats.ClassA_stat.mcs_index);
 
 	if (eHDD_LINK_SPEED_REPORT_ACTUAL != pCfg->reportMaxLinkSpeed) {
 		/* we do not want to necessarily report the current speed */
@@ -2118,6 +2117,13 @@ static int __wlan_hdd_cfg80211_get_station(struct wiphy *wiphy,
 #endif /* LINKSPEED_DEBUG_ENABLED */
 		}
 	}
+
+	if (rate_flags & eHAL_TX_RATE_LEGACY)
+		hdd_info("Reporting legacy rate %d", sinfo->txrate.legacy);
+	else
+		hdd_info("Reporting MCS rate %d flags 0x%x",
+			 sinfo->txrate.mcs, sinfo->txrate.flags);
+
 	sinfo->filled |= STATION_INFO_TX_BITRATE;
 
 	sinfo->tx_bytes = pAdapter->stats.tx_bytes;
@@ -2224,7 +2230,7 @@ static int __wlan_hdd_cfg80211_dump_survey(struct wiphy *wiphy,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}

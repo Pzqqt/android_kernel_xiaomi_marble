@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -394,14 +394,6 @@ typedef struct osdrv_callbacks {
  */
 int hif_init(OSDRV_CALLBACKS *callbacks);
 
-/*
- * This API claims the HIF device and provides a context for handling removal.
- * The device removal callback is only called when the OSDRV layer claims
- * a device.  The claimed context must be non-NULL */
-void hif_claim_device(struct ol_softc *scn, void *claimedContext);
-/* release the claimed device */
-void hif_release_device(struct ol_softc *scn);
-
 /* This API detaches the HTC layer from the HIF device */
 void hif_detach_htc(struct ol_softc *scn);
 
@@ -635,18 +627,76 @@ void hif_disable_isr(void *scn);
 void hif_reset_soc(void *scn);
 void hif_disable_aspm(void);
 void hif_save_htc_htt_config_endpoint(int htc_endpoint);
-CDF_STATUS hif_open(void);
+CDF_STATUS hif_open(enum ath_hal_bus_type bus_type);
 void hif_close(void *hif_ctx);
 CDF_STATUS hif_enable(void *hif_ctx, struct device *dev, void *bdev,
 	const hif_bus_id *bid, enum ath_hal_bus_type bus_type,
 	enum hif_enable_type type);
 void hif_disable(void *hif_ctx, enum hif_disable_type type);
 void hif_enable_power_gating(void *hif_ctx);
-int hif_bus_resume(void);
-int hif_bus_suspend(void);
+
+#ifdef FEATURE_RUNTIME_PM
+struct hif_pm_runtime_lock;
+int hif_pm_runtime_get(void *hif_ctx);
+void hif_pm_runtime_get_noresume(void *hif_ctx);
+int hif_pm_runtime_put(void *hif_ctx);
+struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name);
+void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock);
+int hif_pm_runtime_prevent_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock);
+int hif_pm_runtime_allow_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock);
+int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
+		struct hif_pm_runtime_lock *lock, unsigned int delay);
+#else
+struct hif_pm_runtime_lock {
+	const char *name;
+};
+
+static inline void hif_pm_runtime_get_noresume(void *hif_ctx)
+{}
+
+static inline int hif_pm_runtime_get(void *hif_ctx)
+{ return 0; }
+static inline int hif_pm_runtime_put(void *hif_ctx)
+{ return 0; }
+static inline struct hif_pm_runtime_lock *hif_runtime_lock_init(
+		const char *name)
+{ return NULL; }
+static inline void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *lock)
+{}
+
+static inline int hif_pm_runtime_prevent_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock)
+{ return 0; }
+static inline int hif_pm_runtime_allow_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *lock)
+{ return 0; }
+static inline int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
+		struct hif_pm_runtime_lock *lock, unsigned int delay)
+{ return 0; }
+#endif
+
+void hif_enable_power_management(void *hif_ctx);
+void hif_disable_power_management(void *hif_ctx);
+
 void hif_vote_link_down(void);
 void hif_vote_link_up(void);
 bool hif_can_suspend_link(void);
+
+int hif_bus_resume(void);
+int hif_bus_suspend(void);
+
+#ifdef FEATURE_RUNTIME_PM
+int hif_pre_runtime_suspend(void);
+void hif_pre_runtime_resume(void);
+int hif_runtime_suspend(void);
+int hif_runtime_resume(void);
+void hif_process_runtime_suspend_success(void);
+void hif_process_runtime_suspend_failure(void);
+void hif_process_runtime_resume_success(void);
+#endif
+
 int dump_ce_register(struct ol_softc *scn);
 int ol_copy_ramdump(struct ol_softc *scn);
 void hif_pktlogmod_exit(void *hif_ctx);

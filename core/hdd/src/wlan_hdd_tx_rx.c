@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -305,16 +305,16 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 #endif /* QCA_PKT_PROTO_TRACE */
 
 #ifdef QCA_WIFI_FTM
-	if (hdd_get_conparam() == CDF_FTM_MODE) {
+	if (hdd_get_conparam() == CDF_GLOBAL_FTM_MODE) {
 		kfree_skb(skb);
 		return NETDEV_TX_OK;
 	}
 #endif
 
 	++pAdapter->hdd_stats.hddTxRxStats.txXmitCalled;
-	if (cds_is_logp_in_progress()) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_WARN,
-			"LOPG in progress, dropping the packet");
+			"Recovery in progress, dropping the packet");
 		++pAdapter->stats.tx_dropped;
 		++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
 		kfree_skb(skb);
@@ -333,7 +333,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		if ((STAId == HDD_WLAN_INVALID_STA_ID) &&
 		    (cdf_is_macaddr_broadcast(pDestMacAddress) ||
 		     cdf_is_macaddr_group(pDestMacAddress))) {
-			STAId = IBSS_BROADCAST_STAID;
+			STAId = pHddStaCtx->broadcast_ibss_staid;
 			CDF_TRACE(CDF_MODULE_ID_HDD_DATA,
 				  CDF_TRACE_LEVEL_INFO_LOW, "%s: BC/MC packet",
 				  __func__);
@@ -347,6 +347,17 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			return NETDEV_TX_OK;
 		}
 	} else {
+		if (WLAN_HDD_OCB != pAdapter->device_mode &&
+			eConnectionState_Associated !=
+				pHddStaCtx->conn_info.connState) {
+			CDF_TRACE(CDF_MODULE_ID_HDD_DATA, CDF_TRACE_LEVEL_INFO,
+				FL("Tx frame in not associated state in %d context"),
+				pAdapter->device_mode);
+			++pAdapter->stats.tx_dropped;
+			++pAdapter->hdd_stats.hddTxRxStats.txXmitDropped;
+			kfree_skb(skb);
+			return NETDEV_TX_OK;
+		}
 		STAId = pHddStaCtx->conn_info.staId[0];
 	}
 
@@ -733,7 +744,8 @@ CDF_STATUS hdd_rx_packet_cbk(void *cds_context, cdf_nbuf_t rxBuf, uint8_t staId)
 
 	if (HDD_LRO_NO_RX ==
 		 hdd_lro_rx(pHddCtx, pAdapter, skb)) {
-		if (hdd_napi_enabled(HDD_NAPI_ANY))
+		if (hdd_napi_enabled(HDD_NAPI_ANY) &&
+		    !pHddCtx->config->enableRxThread)
 			rxstat = netif_receive_skb(skb);
 		else
 			rxstat = netif_rx_ni(skb);

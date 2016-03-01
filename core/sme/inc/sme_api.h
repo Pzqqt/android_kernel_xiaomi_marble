@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,8 +71,6 @@
 
 #define SME_INVALID_COUNTRY_CODE "XX"
 
-#define SME_2_4_GHZ_MAX_FREQ    3000
-
 #define SME_SET_CHANNEL_REG_POWER(reg_info_1, val) do {	\
 	reg_info_1 &= 0xff00ffff;	      \
 	reg_info_1 |= ((val & 0xff) << 16);   \
@@ -95,44 +93,6 @@ typedef struct _smeConfigParams {
 #if defined WLAN_FEATURE_VOWIFI
 	struct rrm_config_param rrmConfig;
 #endif
-#if defined FEATURE_WLAN_LFR
-	uint8_t isFastRoamIniFeatureEnabled;
-	uint8_t MAWCEnabled;
-#endif
-#if defined FEATURE_WLAN_ESE
-	uint8_t isEseIniFeatureEnabled;
-#endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
-	uint8_t isFastTransitionEnabled;
-	uint8_t RoamRssiDiff;
-	bool isWESModeEnabled;
-#endif
-	uint8_t isAmsduSupportInAMPDU;
-	bool pnoOffload;
-	uint8_t fEnableDebugLog;
-	uint8_t max_intf_count;
-	bool enable5gEBT;
-	bool enableSelfRecovery;
-	uint32_t f_sta_miracast_mcc_rest_time_val;
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	bool sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-	uint8_t f_prefer_non_dfs_on_radar;
-	bool is_ps_enabled;
-	bool policy_manager_enabled;
-	uint32_t fine_time_meas_cap;
-	uint32_t dual_mac_feature_disable;
-#ifdef FEATURE_WLAN_SCAN_PNO
-	bool pno_channel_prediction;
-	uint8_t top_k_num_of_channels;
-	uint8_t stationary_thresh;
-	uint32_t channel_prediction_full_scan;
-#endif
-	bool early_stop_scan_enable;
-	int8_t early_stop_scan_min_threshold;
-	int8_t early_stop_scan_max_threshold;
-	int8_t first_scan_bucket_threshold;
 } tSmeConfigParams, *tpSmeConfigParams;
 
 #ifdef FEATURE_WLAN_TDLS
@@ -156,10 +116,20 @@ typedef struct _smeTdlsPeerCapParams {
 	uint8_t opClassForPrefOffChan;
 } tSmeTdlsPeerCapParams;
 
+/**
+ * eSmeTdlsPeerState - tdls peer state
+ * @eSME_TDLS_PEER_STATE_PEERING: tdls connection in progress
+ * @eSME_TDLS_PEER_STATE_CONNECTED: tdls peer is connected
+ * @eSME_TDLS_PEER_STATE_TEARDOWN: tdls peer is tear down
+ * @eSME_TDLS_PEER_ADD_MAC_ADDR: add peer mac into connection table
+ * @eSME_TDLS_PEER_REMOVE_MAC_ADDR: remove peer mac from connection table
+ */
 typedef enum {
 	eSME_TDLS_PEER_STATE_PEERING,
 	eSME_TDLS_PEER_STATE_CONNECTED,
-	eSME_TDLS_PEER_STATE_TEARDOWN
+	eSME_TDLS_PEER_STATE_TEARDOWN,
+	eSME_TDLS_PEER_ADD_MAC_ADDR,
+	eSME_TDLS_PEER_REMOVE_MAC_ADDR,
 } eSmeTdlsPeerState;
 
 typedef struct _smeTdlsPeerStateParams {
@@ -222,7 +192,7 @@ typedef enum {
   ------------------------------------------------------------------------*/
 CDF_STATUS sme_open(tHalHandle hHal);
 CDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
-		COUNTRY_CODE_SOURCE cc_src);
+		enum country_src cc_src);
 CDF_STATUS sme_close(tHalHandle hHal);
 CDF_STATUS sme_start(tHalHandle hHal);
 CDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType);
@@ -230,7 +200,8 @@ CDF_STATUS sme_open_session(tHalHandle hHal, csr_roam_completeCallback callback,
 		void *pContext, uint8_t *pSelfMacAddr,
 		uint8_t *pbSessionId, uint32_t type,
 		uint32_t subType);
-void sme_set_curr_device_mode(tHalHandle hHal, tCDF_CON_MODE currDeviceMode);
+void sme_set_curr_device_mode(tHalHandle hHal,
+		enum tCDF_ADAPTER_MODE currDeviceMode);
 CDF_STATUS sme_close_session(tHalHandle hHal, uint8_t sessionId,
 		csr_roamSessionCloseCallback callback,
 		void *pContext);
@@ -238,11 +209,11 @@ CDF_STATUS sme_update_roam_params(tHalHandle hHal, uint8_t session_id,
 		struct roam_ext_params roam_params_src, int update_param);
 #ifdef FEATURE_WLAN_SCAN_PNO
 void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tpSmeConfigParams sme_config,
+		tHalHandle hal, tCsrConfigParam * csr_config,
 		uint8_t copy_from_to);
 #else
 static inline void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tpSmeConfigParams sme_config,
+		tHalHandle hal, tCsrConfigParam *csr_config,
 		uint8_t copy_from_to)
 {}
 #endif
@@ -322,8 +293,7 @@ CDF_STATUS sme_roam_get_connect_state(tHalHandle hHal, uint8_t sessionId,
 		eCsrConnectState *pState);
 CDF_STATUS sme_roam_get_connect_profile(tHalHandle hHal, uint8_t sessionId,
 		tCsrRoamConnectedProfile *pProfile);
-CDF_STATUS sme_roam_free_connect_profile(tHalHandle hHal,
-		tCsrRoamConnectedProfile *pProfile);
+void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile);
 CDF_STATUS sme_roam_set_pmkid_cache(tHalHandle hHal, uint8_t sessionId,
 		tPmkidCacheInfo *pPMKIDCache,
 		uint32_t numItems,
@@ -386,6 +356,12 @@ extern CDF_STATUS sme_register11d_scan_done_callback(tHalHandle hHal,
 #ifdef FEATURE_OEM_DATA_SUPPORT
 extern CDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
 		sme_send_oem_data_rsp_msg callback);
+#else
+static inline CDF_STATUS sme_register_oem_data_rsp_callback(tHalHandle h_hal,
+		sme_send_oem_data_rsp_msg callback)
+{
+	return CDF_STATUS_SUCCESS;
+}
 #endif
 
 extern CDF_STATUS sme_wow_add_pattern(tHalHandle hHal,
@@ -433,9 +409,7 @@ CDF_STATUS sme_change_country_code(tHalHandle hHal,
 		tAniBool countryFromUserSpace,
 		tAniBool sendRegHint);
 CDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
-		uint8_t *pCountry,
-		v_REGDOMAIN_t reg_domain);
-
+					   uint8_t *pCountry);
 CDF_STATUS sme_dhcp_start_ind(tHalHandle hHal,
 		uint8_t device_mode,
 		uint8_t *macAddr, uint8_t sessionId);
@@ -467,9 +441,7 @@ CDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
 CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 		uint8_t sessionId,
 		tOemDataReqConfig *,
-		uint32_t *pOemDataReqID,
-		oem_data_oem_data_reqCompleteCallback callback,
-		void *pContext);
+		uint32_t *pOemDataReqID);
 #endif /*FEATURE_OEM_DATA_SUPPORT */
 CDF_STATUS sme_roam_update_apwpsie(tHalHandle, uint8_t sessionId,
 		tSirAPWPSIEs * pAPWPSIES);
@@ -492,7 +464,7 @@ CDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
 		tpSirWlanSetRxpFilters wlanRxpFilterParam);
 CDF_STATUS sme_ConfigureAppsCpuWakeupState(tHalHandle hHal, bool isAppsAwake);
 CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
-		tpSirWlanSuspendParam wlanSuspendParam,
+		uint32_t conn_state_mask,
 		csr_readyToSuspendCallback,
 		void *callbackContext);
 CDF_STATUS sme_configure_resume_req(tHalHandle hHal,
@@ -557,7 +529,7 @@ CDF_STATUS sme_set_max_tx_power(tHalHandle hHal, struct cdf_mac_addr pBssid,
 CDF_STATUS sme_set_max_tx_power_per_band(eCsrBand band, int8_t db);
 CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
 		struct cdf_mac_addr bssid,
-		tCDF_CON_MODE dev_mode, int power);
+		enum tCDF_ADAPTER_MODE dev_mode, int power);
 CDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr);
 CDF_STATUS sme_hide_ssid(tHalHandle hHal, uint8_t sessionId,
 		uint8_t ssidHidden);
@@ -566,8 +538,6 @@ CDF_STATUS sme_set_tm_level(tHalHandle hHal, uint16_t newTMLevel,
 void sme_feature_caps_exchange(tHalHandle hHal);
 void sme_disable_feature_capablity(uint8_t feature_index);
 void sme_reset_power_values_for5_g(tHalHandle hHal);
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 CDF_STATUS sme_update_roam_prefer5_g_hz(tHalHandle hHal, bool nRoamPrefer5GHz);
 CDF_STATUS sme_set_roam_intra_band(tHalHandle hHal, const bool nRoamIntraBand);
 CDF_STATUS sme_update_roam_scan_n_probes(tHalHandle hHal, uint8_t sessionId,
@@ -588,9 +558,7 @@ CDF_STATUS sme_update_wes_mode(tHalHandle hHal, bool isWESModeEnabled,
 		uint8_t sessionId);
 CDF_STATUS sme_set_roam_scan_control(tHalHandle hHal, uint8_t sessionId,
 		bool roamScanControl);
-#endif /* (WLAN_FEATURE_VOWIFI_11R)||(FEATURE_WLAN_ESE)||(FEATURE_WLAN_LFR) */
 
-#ifdef FEATURE_WLAN_LFR
 CDF_STATUS sme_update_is_fast_roam_ini_feature_enabled(tHalHandle hHal,
 		uint8_t sessionId,
 		const bool
@@ -602,14 +570,12 @@ CDF_STATUS sme_start_roaming(tHalHandle hHal, uint8_t sessionId,
 		uint8_t reason);
 CDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 		bool bFastRoamInConIniFeatureEnabled);
-#endif /* FEATURE_WLAN_LFR */
 #ifdef FEATURE_WLAN_ESE
 CDF_STATUS sme_update_is_ese_feature_enabled(tHalHandle hHal, uint8_t sessionId,
 		const bool isEseIniFeatureEnabled);
 #endif /* FEATURE_WLAN_ESE */
 CDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
 		bool fEnableFwRssiMonitoring);
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 CDF_STATUS sme_set_roam_rescan_rssi_diff(tHalHandle hHal,
 		uint8_t sessionId,
 		const uint8_t nRoamRescanRssiDiff);
@@ -659,9 +625,6 @@ uint8_t sme_get_roam_bmiss_final_bcnt(tHalHandle hHal);
 CDF_STATUS sme_set_roam_beacon_rssi_weight(tHalHandle hHal, uint8_t sessionId,
 		const uint8_t nRoamBeaconRssiWeight);
 uint8_t sme_get_roam_beacon_rssi_weight(tHalHandle hHal);
-#endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-		defined(FEATURE_WLAN_LFR)
 uint8_t sme_get_roam_rssi_diff(tHalHandle hHal);
 CDF_STATUS sme_change_roam_scan_channel_list(tHalHandle hHal, uint8_t sessionId,
 		uint8_t *pChannelList,
@@ -679,7 +642,6 @@ bool sme_get_wes_mode(tHalHandle hHal);
 bool sme_get_roam_scan_control(tHalHandle hHal);
 bool sme_get_is_lfr_feature_enabled(tHalHandle hHal);
 bool sme_get_is_ft_feature_enabled(tHalHandle hHal);
-#endif
 CDF_STATUS sme_update_roam_scan_offload_enabled(tHalHandle hHal,
 		bool nRoamScanOffloadEnabled);
 uint8_t sme_is_feature_supported_by_fw(uint8_t featEnumValue);
@@ -794,12 +756,13 @@ CDF_STATUS sme_set_auto_shutdown_cb(tHalHandle hHal, void (*pCallbackfn)(void));
 CDF_STATUS sme_set_auto_shutdown_timer(tHalHandle hHal, uint32_t timer_value);
 #endif
 CDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
-		struct cdf_mac_addr bssid, uint32_t cb_mode,
+		struct cdf_mac_addr bssid, chan_params_t *ch_params,
 		tCsrRoamProfile *profile);
 CDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal,
 		struct cdf_mac_addr bssid, uint8_t dfsCacWaitStatus);
 CDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct cdf_mac_addr bssid,
-		uint8_t targetChannel, uint8_t csaIeReqd, uint8_t ch_bandwidth);
+		uint8_t targetChannel, uint8_t csaIeReqd,
+		chan_params_t *ch_params);
 CDF_STATUS sme_init_thermal_info(tHalHandle hHal,
 		tSmeThermalParams thermalParam);
 CDF_STATUS sme_set_thermal_level(tHalHandle hHal, uint8_t level);
@@ -813,6 +776,7 @@ CDF_STATUS sme_modify_add_ie(tHalHandle hHal,
 CDF_STATUS sme_update_add_ie(tHalHandle hHal,
 		tSirUpdateIE *pUpdateIE, eUpdateIEsType updateType);
 CDF_STATUS sme_update_connect_debug(tHalHandle hHal, uint32_t set_value);
+const char *sme_request_type_to_string(const uint8_t request_type);
 CDF_STATUS sme_ap_disable_intra_bss_fwd(tHalHandle hHal, uint8_t sessionId,
 		bool disablefwd);
 uint32_t sme_get_channel_bonding_mode5_g(tHalHandle hHal);
@@ -873,6 +837,12 @@ sme_set_ssid_hotlist(tHalHandle hal,
 
 CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 		void (*pExtScanIndCb)(void *, const uint16_t, void *));
+#else
+static inline CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
+		void (*pExtScanIndCb)(void *, const uint16_t, void *))
+{
+	return CDF_STATUS_SUCCESS;
+}
 #endif /* FEATURE_WLAN_EXTSCAN */
 CDF_STATUS sme_abort_roam_scan(tHalHandle hHal, uint8_t sessionId);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -980,6 +950,9 @@ CDF_STATUS sme_set_rssi_monitoring(tHalHandle hal,
 CDF_STATUS sme_set_rssi_threshold_breached_cb(tHalHandle hal,
 			void (*cb)(void *, struct rssi_breach_event *));
 
+CDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
+			sir_mgmt_frame_ind_callback callback);
+
 CDF_STATUS sme_update_nss(tHalHandle h_hal, uint8_t nss);
 
 bool sme_is_any_session_in_connected_state(tHalHandle h_hal);
@@ -1067,4 +1040,23 @@ sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 }
 #endif
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+CDF_STATUS sme_gateway_param_update(tHalHandle hHal,
+				struct gateway_param_update_req *request);
+#endif
+
+#ifdef FEATURE_GREEN_AP
+CDF_STATUS sme_send_egap_conf_params(uint32_t enable,
+				     uint32_t inactivity_time,
+				     uint32_t wait_time,
+				     uint32_t flags);
+#else
+static inline CDF_STATUS sme_send_egap_conf_params(uint32_t enable,
+						   uint32_t inactivity_time,
+						   uint32_t wait_time,
+						   uint32_t flags)
+{
+	return CDF_STATUS_E_NOSUPPORT;
+}
+#endif
 #endif /* #if !defined( __SME_API_H ) */

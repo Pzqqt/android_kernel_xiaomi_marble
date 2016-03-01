@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,25 +25,13 @@
  * to the Linux Foundation.
  */
 
-#ifndef QWLAN_VERSION_H
-#define QWLAN_VERSION_H
-/*===========================================================================
+#ifndef _PLATFORM_ICNSS_H_
+#define _PLATFORM_ICNSS_H_
 
-   FILE:
-   qwlan_version.h
+#ifdef HIF_PCI
+#include "icnss_stub.h"
+#else
+#include <soc/qcom/icnss.h>
+#endif
 
-   BRIEF DESCRIPTION:
-   WLAN Host Version file.
-   Build number automaticly updated by build scripts.
-
-   ===========================================================================*/
-
-#define QWLAN_VERSION_MAJOR            5
-#define QWLAN_VERSION_MINOR            0
-#define QWLAN_VERSION_PATCH            0
-#define QWLAN_VERSION_EXTRA            ""
-#define QWLAN_VERSION_BUILD            160
-
-#define QWLAN_VERSIONSTR               "5.0.0.160"
-
-#endif /* QWLAN_VERSION_H */
+#endif

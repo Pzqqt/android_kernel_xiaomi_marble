@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,25 +25,20 @@
  * to the Linux Foundation.
  */
 
-#ifndef QWLAN_VERSION_H
-#define QWLAN_VERSION_H
-/*===========================================================================
+#ifndef __WLAN_HDD_SUBNET_DETECT_H
+#define __WLAN_HDD_SUBNET_DETECT_H
 
-   FILE:
-   qwlan_version.h
+/**
+ * DOC: wlan_hdd_subnet_detect.h
+ *
+ * WLAN Host Device Driver subnet detect API specification
+ */
 
-   BRIEF DESCRIPTION:
-   WLAN Host Version file.
-   Build number automaticly updated by build scripts.
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+struct wiphy;
+struct wireless_dev;
 
-   ===========================================================================*/
-
-#define QWLAN_VERSION_MAJOR            5
-#define QWLAN_VERSION_MINOR            0
-#define QWLAN_VERSION_PATCH            0
-#define QWLAN_VERSION_EXTRA            ""
-#define QWLAN_VERSION_BUILD            160
-
-#define QWLAN_VERSIONSTR               "5.0.0.160"
-
-#endif /* QWLAN_VERSION_H */
+int wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
+	struct wireless_dev *wdev, const void *data, int data_len);
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+#endif /* __WLAN_HDD_SUBNET_DETECT_H */

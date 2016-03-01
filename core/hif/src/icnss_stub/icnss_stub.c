@@ -93,6 +93,17 @@ int icnss_wlan_disable(enum icnss_driver_mode mode)
 	return 0;
 }
 
+/**
+ * icnss_set_fw_debug_mode() - icnss_set_fw_debug_mode
+ * @mode: fw debug mode, 0 for QXDM, 1 for WMI
+ *
+ * Return: int
+ */
+int icnss_set_fw_debug_mode(bool mode)
+{
+	return 0;
+}
+
 #else
 
 /**
@@ -166,6 +177,22 @@ int icnss_wlan_disable(enum icnss_driver_mode con_mode)
 
 	cnss_wlan_disable(mode);
 	return 0;
+}
+
+/**
+ * icnss_set_fw_debug_mode() - call the platform driver to set fw
+ * debug mode
+ * @mode: fw debug mode, 0 for QXDM, 1 for WMI
+ *
+ * This function passes the fw debug mode to platform driver.
+ * cnss_set_fw_debug_mode has been hacked to do a qmi handshake with fw.
+ * This is not needed for rome.
+ *
+ * Return: int
+ */
+int icnss_set_fw_debug_mode(bool mode)
+{
+	return cnss_set_fw_debug_mode(mode);
 }
 #endif
 

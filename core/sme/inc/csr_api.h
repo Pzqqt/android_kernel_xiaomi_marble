@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -39,21 +39,6 @@
 #include "csr_link_list.h"
 
 #define CSR_INVALID_SCANRESULT_HANDLE       (NULL)
-
-typedef enum {
-	CH_WIDTH_20MHZ = 0,
-	CH_WIDTH_40MHZ = 1,
-	CH_WIDTH_80MHZ = 2,
-	CH_WIDTH_160MHZ = 3,
-	CH_WIDTH_80P80MHZ = 4
-} phy_ch_width;
-
-typedef struct ch_params_s {
-	phy_ch_width ch_width;
-	uint8_t sec_ch_offset;
-	uint8_t center_freq_seg0;
-	uint8_t center_freq_seg1;
-} chan_params_t;
 
 typedef enum {
 	/* never used */
@@ -145,10 +130,8 @@ typedef enum {
 	eCSR_DOT11_MODE_11g_ONLY = 0x0020,
 	eCSR_DOT11_MODE_11n_ONLY = 0x0040,
 	eCSR_DOT11_MODE_11b_ONLY = 0x0080,
-#ifdef WLAN_FEATURE_11AC
 	eCSR_DOT11_MODE_11ac = 0x0100,
 	eCSR_DOT11_MODE_11ac_ONLY = 0x0200,
-#endif
 	/*
 	 * This is for WIFI test. It is same as eWNIAPI_MAC_PROTOCOL_ALL
 	 * except when it starts IBSS in 11B of 2.4GHz
@@ -166,8 +149,6 @@ typedef enum {
 	eCSR_BSS_TYPE_INFRA_AP,   /* SoftAP AP */
 	eCSR_BSS_TYPE_IBSS,       /* IBSS network we'll NOT start */
 	eCSR_BSS_TYPE_START_IBSS, /* IBSS network we'll start if no partners */
-	eCSR_BSS_TYPE_WDS_AP,     /* BT-AMP AP */
-	eCSR_BSS_TYPE_WDS_STA,    /* BT-AMP station */
 	eCSR_BSS_TYPE_ANY,        /* any BSS type (IBSS or Infrastructure).*/
 } eCsrRoamBssType;
 
@@ -410,7 +391,7 @@ typedef struct tagCsrScanResultFilter {
 	 */
 	uint8_t scan_filter_for_roam;
 	struct sCsrChannel_ pcl_channels;
-	tCDF_CON_MODE csrPersona;
+	enum tCDF_ADAPTER_MODE csrPersona;
 } tCsrScanResultFilter;
 
 typedef struct sCsrChnPower_ {
@@ -475,8 +456,6 @@ typedef enum {
 	eCSR_ROAM_GEN_INFO,
 	eCSR_ROAM_SET_KEY_COMPLETE,
 	eCSR_ROAM_IBSS_LEAVE,   /* IBSS indications. */
-	/* BSS in WDS mode status indication */
-	eCSR_ROAM_WDS_IND,
 	/* BSS in SoftAP mode status indication */
 	eCSR_ROAM_INFRA_IND,
 	eCSR_ROAM_WPS_PBC_PROBE_REQ_IND,
@@ -484,15 +463,12 @@ typedef enum {
 	eCSR_ROAM_FT_RESPONSE,
 #endif
 	eCSR_ROAM_FT_START,
-	eCSR_ROAM_INDICATE_MGMT_FRAME,
 	eCSR_ROAM_REMAIN_CHAN_READY,
 	eCSR_ROAM_SEND_ACTION_CNF,
 	/* this mean error happens before assoc_start/roam_start is called. */
 	eCSR_ROAM_SESSION_OPENED,
 	eCSR_ROAM_FT_REASSOC_FAILED,
-#ifdef FEATURE_WLAN_LFR
 	eCSR_ROAM_PMK_NOTIFY,
-#endif
 	/*
 	 * Following 4 enums are used by FEATURE_WLAN_LFR_METRICS
 	 * but they are needed for compilation even when
@@ -588,20 +564,6 @@ typedef enum {
 #ifdef FEATURE_WLAN_WAPI
 	eCSR_ROAM_RESULT_NEW_WAPI_BSS,
 #endif /* FEATURE_WLAN_WAPI */
-	/* WDS started successfully */
-	eCSR_ROAM_RESULT_WDS_STARTED,
-	/* WDS start failed */
-	eCSR_ROAM_RESULT_WDS_START_FAILED,
-	/* WDS stopped */
-	eCSR_ROAM_RESULT_WDS_STOPPED,
-	/* WDS joined successfully in STA mode */
-	eCSR_ROAM_RESULT_WDS_ASSOCIATED,
-	/* A station joined WDS AP */
-	eCSR_ROAM_RESULT_WDS_ASSOCIATION_IND,
-	/* WDS join failed in STA mode */
-	eCSR_ROAM_RESULT_WDS_NOT_ASSOCIATED,
-	/* WDS disassociated */
-	eCSR_ROAM_RESULT_WDS_DISASSOCIATED,
 	/* INFRA started successfully */
 	eCSR_ROAM_RESULT_INFRA_STARTED,
 	/* INFRA start failed */
@@ -682,6 +644,8 @@ typedef enum {
 	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTED,
 	/* Participating in a Infra network and connected to a peer */
 	eCSR_ASSOC_STATE_TYPE_INFRA_CONNECTED,
+	/* Disconnecting with AP or stop connecting process */
+	eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING,
 
 } eCsrConnectState;
 
@@ -832,7 +796,6 @@ typedef enum {
 	eCSR_HDD
 } eCsrStatsRequesterType;
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 /**
  * enum csr_hi_rssi_scan_id - Parameter ids for hi rssi scan feature
  *
@@ -847,7 +810,6 @@ enum csr_hi_rssi_scan_id {
 	eCSR_HI_RSSI_SCAN_DELAY_ID,
 	eCSR_HI_RSSI_SCAN_RSSI_UB_ID
 };
-#endif
 
 typedef struct tagPmkidCandidateInfo {
 	struct cdf_mac_addr BSSID;
@@ -896,12 +858,6 @@ typedef struct tagCsrRoamModifyProfileFields {
 } tCsrRoamModifyProfileFields;
 
 typedef struct tagCsrRoamProfile {
-	/*
-	 * For eCSR_BSS_TYPE_WDS_AP. There must be one SSID in SSIDs.
-	 * For eCSR_BSS_TYPE_WDS_STA. There must be two SSIDs.
-	 * Index 0 is the SSID of the WDS-AP that we need to join.
-	 * Index 1 is the SSID for self BSS.
-	 */
 	tCsrSSIDs SSIDs;
 	tCsrBSSIDs BSSIDs;
 	/* this is bit mask of all the needed phy mode defined in eCsrPhyMode */
@@ -979,7 +935,7 @@ typedef struct tagCsrRoamProfile {
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsrMobilityDomainInfo MDID;
 #endif
-	tCDF_CON_MODE csrPersona;
+	enum tCDF_ADAPTER_MODE csrPersona;
 	uint8_t disableDFSChSwitch;
 	/* addIe params */
 	tSirAddIeParams addIeParams;
@@ -1061,7 +1017,6 @@ typedef struct tagCsr11rConfigParams {
 } tCsr11rConfigParams;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 typedef struct tagCsrNeighborRoamConfigParams {
 
 	uint32_t nNeighborScanTimerPeriod;
@@ -1083,7 +1038,6 @@ typedef struct tagCsrNeighborRoamConfigParams {
 	uint32_t nhi_rssi_scan_delay;
 	int32_t nhi_rssi_scan_rssi_ub;
 } tCsrNeighborRoamConfigParams;
-#endif
 
 typedef struct tagCsrConfigParam {
 	uint32_t FragmentationThreshold;
@@ -1174,19 +1128,12 @@ typedef struct tagCsrConfigParam {
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
 	uint8_t MAWCEnabled;
-#endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tCsrNeighborRoamConfigParams neighborRoamConfig;
-#endif
 	/*
 	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for that AC
 	 * This is mandated by WMM-AC certification
@@ -1219,6 +1166,7 @@ typedef struct tagCsrConfigParam {
 #ifdef WLAN_FEATURE_11AC
 	uint32_t nVhtChannelWidth;
 	uint8_t enableTxBF;
+	uint8_t enable_txbf_sap_mode;
 	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
@@ -1234,8 +1182,6 @@ typedef struct tagCsrConfigParam {
 	 * To enable/disable scanning only 2.4Ghz channels on first scan
 	 */
 	bool fFirstScanOnly2GChnl;
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	defined(FEATURE_WLAN_LFR)
 	bool nRoamPrefer5GHz;
 	bool nRoamIntraBand;
 	uint8_t nProbes;
@@ -1243,7 +1189,6 @@ typedef struct tagCsrConfigParam {
 
 	bool isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
-#endif
 	uint8_t scanCfgAgingTime;
 	uint8_t enableTxLdpc;
 	uint8_t isAmsduSupportInAMPDU;
@@ -1275,6 +1220,20 @@ typedef struct tagCsrConfigParam {
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
+	bool pnoOffload;
+	uint8_t fEnableDebugLog;
+	uint8_t max_intf_count;
+	bool enable5gEBT;
+	bool enableSelfRecovery;
+	uint32_t f_sta_miracast_mcc_rest_time_val;
+#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
+	bool sap_channel_avoidance;
+#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
+	uint8_t f_prefer_non_dfs_on_radar;
+	bool is_ps_enabled;
+	bool policy_manager_enabled;
+	uint32_t fine_time_meas_cap;
+	uint32_t dual_mac_feature_disable;
 } tCsrConfigParam;
 
 /* Tush */
@@ -1375,6 +1334,7 @@ typedef struct tagCsrRoamInfo {
 	uint8_t kck[SIR_KCK_KEY_LEN];
 	uint8_t kek[SIR_KEK_KEY_LEN];
 	uint8_t replay_ctr[SIR_REPLAY_CTR_LEN];
+	uint8_t subnet_change_status;
 #endif
 	tSirSmeChanInfo chan_info;
 	uint8_t target_channel;
@@ -1603,20 +1563,10 @@ typedef CDF_STATUS (*csr_roamSessionCloseCallback)(void *pContext);
 					 (pProfile)->BSSType)
 #define CSR_IS_ANY_BSS_TYPE(pProfile) (eCSR_BSS_TYPE_ANY == \
 				       (pProfile)->BSSType)
-#define CSR_IS_WDS_AP(pProfile)   (eCSR_BSS_TYPE_WDS_AP == (pProfile)->BSSType)
-#define CSR_IS_WDS_STA(pProfile)  (eCSR_BSS_TYPE_WDS_STA == (pProfile)->BSSType)
-#define CSR_IS_WDS(pProfile)      (CSR_IS_WDS_AP(pProfile) || \
-				   CSR_IS_WDS_STA(pProfile))
 #define CSR_IS_INFRA_AP(pProfile) (eCSR_BSS_TYPE_INFRA_AP ==  \
 				   (pProfile)->BSSType)
 #define CSR_IS_CONN_INFRA_AP(pProfile)  (eCSR_BSS_TYPE_INFRA_AP == \
 					 (pProfile)->BSSType)
-#define CSR_IS_CONN_WDS_AP(pProfile)    (eCSR_BSS_TYPE_WDS_AP == \
-					 (pProfile)->BSSType)
-#define CSR_IS_CONN_WDS_STA(pProfile)   (eCSR_BSS_TYPE_WDS_STA == \
-					 (pProfile)->BSSType)
-#define CSR_IS_CONN_WDS(pProfile)	(CSR_IS_WDS_AP(pProfile) || \
-					 CSR_IS_WDS_STA(pProfile))
 #define CSR_IS_CLOSE_SESSION_COMMAND(pCommand) \
 	((pCommand)->command == eSmeCommandDelStaSession)
 
@@ -1655,4 +1605,12 @@ CDF_STATUS csr_roam_issue_ft_roam_offload_synch(tHalHandle hHal,
 		uint32_t sessionId, tSirBssDescription *pBssDescription);
 #endif
 typedef void (*tCsrLinkStatusCallback)(uint8_t status, void *pContext);
+#ifdef FEATURE_WLAN_TDLS
+void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info, tpSirSmeJoinRsp join_rsp);
+#else
+static inline void csr_roam_fill_tdls_info(tCsrRoamInfo *roam_info,
+		tpSirSmeJoinRsp join_rsp)
+{}
+#endif
+
 #endif

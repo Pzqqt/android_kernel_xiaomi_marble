@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -243,6 +243,11 @@
 #define WMA_PEER_ASSOC_CNF_START 0x01
 #define WMA_PEER_ASSOC_TIMEOUT (3000) /* 3 seconds */
 
+#define WMA_DELETE_STA_RSP_START 0x02
+#define WMA_DELETE_STA_TIMEOUT (6000) /* 6 seconds */
+
+#define WMA_DEL_P2P_SELF_STA_RSP_START 0x03
+
 #define WMA_VDEV_START_REQUEST_TIMEOUT (3000)   /* 3 seconds */
 #define WMA_VDEV_STOP_REQUEST_TIMEOUT  (3000)   /* 3 seconds */
 
@@ -300,6 +305,7 @@
 #define WMA_AUTO_SHUTDOWN_WAKE_LOCK_DURATION    (5 * 1000)     /* in msec */
 #endif
 #define WMA_BMISS_EVENT_WAKE_LOCK_DURATION      (4 * 1000)     /* in msec */
+#define WMA_FW_RSP_EVENT_WAKE_LOCK_DURATION      (3 * 1000)  /* in msec */
 
 #define WMA_TXMIC_LEN 8
 #define WMA_RXMIC_LEN 8
@@ -408,18 +414,21 @@ typedef enum {
 
 #ifdef FEATURE_WLAN_TDLS
 /**
- * enum t_wma_tdls_mode: TDLS mode
+ * enum t_wma_tdls_mode - TDLS mode
  * @WMA_TDLS_SUPPORT_NOT_ENABLED: tdls is disable
  * @WMA_TDLS_SUPPORT_DISABLED: suppress implicit trigger and not respond to peer
  * @WMA_TDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY: suppress implicit trigger,
  *                                          but respond to the peer
  * @WMA_TDLS_SUPPORT_ENABLED: implicit trigger
+ * @WMA_TDLS_SUPPORT_ACTIVE_EXTERNAL_CONTROL: External control means
+ *    implicit trigger but only to a peer mac configured by user space.
  */
 typedef enum {
 	WMA_TDLS_SUPPORT_NOT_ENABLED = 0,
 	WMA_TDLS_SUPPORT_DISABLED,
 	WMA_TDLS_SUPPORT_EXPLICIT_TRIGGER_ONLY,
 	WMA_TDLS_SUPPORT_ENABLED,
+	WMA_TDLS_SUPPORT_ACTIVE_EXTERNAL_CONTROL,
 } t_wma_tdls_mode;
 
 /**
@@ -638,7 +647,6 @@ typedef struct {
  * @rxchainmask: rx chain mask
  * @txpow2g: tx power limit for 2GHz
  * @txpow5g: tx power limit for 5GHz
- * @pwrgating: enable/disable power gating sleep
  * @burst_enable: is burst enable/disable
  * @burst_dur: burst duration
  *
@@ -658,7 +666,6 @@ typedef struct {
 	uint32_t rxchainmask;
 	uint32_t txpow2g;
 	uint32_t txpow5g;
-	uint32_t pwrgating;
 	uint32_t burst_enable;
 	uint32_t burst_dur;
 } pdev_cli_config_t;
@@ -735,7 +742,6 @@ struct wma_wow {
 	bool deauth_enable;
 	bool disassoc_enable;
 	bool bmiss_enable;
-	bool gtk_pdev_enable;
 	bool gtk_err_enable[WMA_MAX_SUPPORTED_BSS];
 #ifdef FEATURE_WLAN_LPHB
 	/* currently supports only vdev 0.
@@ -903,8 +909,8 @@ struct wma_txrx_node {
 	uint8_t nss;
 	bool is_channel_switch;
 	uint16_t pause_bitmap;
-	tPowerdBm tx_power;
-	tPowerdBm max_tx_power;
+	int8_t tx_power;
+	int8_t max_tx_power;
 	uint32_t nwType;
 #if defined WLAN_FEATURE_VOWIFI_11R
 	void *staKeyParams;
@@ -1082,6 +1088,7 @@ struct wmi_init_cmd {
  * @final_abi_vers: The final ABI version to be used for communicating
  * @target_fw_version: Target f/w build version
  * @lpss_support: LPSS feature is supported in target or not
+ * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
  * @wlan_init_status: wlan init status
  * @cdf_dev: cdf device
@@ -1187,6 +1194,8 @@ struct wmi_init_cmd {
  * handle of other modules.
  * @saved_wmi_init_cmd: Saved WMI INIT command
  * @service_ready_ext_evt: Wait event for service ready ext
+ * @wmi_cmd_rsp_wake_lock: wmi command response wake lock
+ * @wmi_cmd_rsp_runtime_lock: wmi command response bus lock
  */
 typedef struct {
 	void *wmi_handle;
@@ -1196,6 +1205,7 @@ typedef struct {
 	cdf_event_t wma_ready_event;
 	cdf_event_t wma_resume_event;
 	cdf_event_t target_suspend;
+	cdf_event_t runtime_suspend;
 	cdf_event_t recovery_event;
 	uint16_t max_station;
 	uint16_t max_bssid;
@@ -1210,6 +1220,9 @@ typedef struct {
 	uint8_t lpss_support;
 #endif
 	uint8_t ap_arpns_support;
+#ifdef FEATURE_GREEN_AP
+	bool egap_support;
+#endif
 	bool wmi_ready;
 	uint32_t wlan_init_status;
 	cdf_device_t cdf_dev;
@@ -1362,6 +1375,14 @@ typedef struct {
 	 * the serialized MC thread context with a timer.
 	 */
 	cdf_mc_timer_t service_ready_ext_timer;
+	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr, uint8_t reason);
+	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr);
+	cdf_wake_lock_t wmi_cmd_rsp_wake_lock;
+	cdf_runtime_lock_t wmi_cmd_rsp_runtime_lock;
 } t_wma_handle, *tp_wma_handle;
 
 /**
@@ -1786,6 +1807,9 @@ typedef enum {
  * @puapsd_mask: uapsd mask
  * @puapsd_inactivity_time: uapsd inactivity time
  * @puapsd_rx_frame_threshold: uapsd rx frame threshold
+ * @teardown_notification_ms: tdls teardown notification interval
+ * @tdls_peer_kickout_threshold: tdls packet threshold for
+ *    peer kickout operation
  */
 typedef struct wma_tdls_params {
 	uint32_t vdev_id;
@@ -1801,6 +1825,8 @@ typedef struct wma_tdls_params {
 	uint32_t puapsd_mask;
 	uint32_t puapsd_inactivity_time;
 	uint32_t puapsd_rx_frame_threshold;
+	uint32_t teardown_notification_ms;
+	uint32_t tdls_peer_kickout_threshold;
 } t_wma_tdls_params;
 
 /**
@@ -2001,6 +2027,17 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
 void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
 uint32_t wma_get_vht_ch_width(void);
+
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+					struct gateway_param_update_req *req);
+#else
+static inline CDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
+					struct gateway_param_update_req *req)
+{
+	return CDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
 
 #if defined(FEATURE_LRO)
 CDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,

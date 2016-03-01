@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -388,7 +388,8 @@ lim_is_sme_start_bss_req_valid(tpAniSirGlobal mac_ctx,
 	tSirMacRateSet *opr_rates = &start_bss_req->operationalRateSet;
 
 	PELOG1(lim_log(mac_ctx, LOG1,
-	       FL("Parsed START_BSS_REQ fields are bssType=%d, channelId=%d, SSID len=%d, rsnIE len=%d, nwType=%d, rateset len=%d"),
+	       FL("Parsed START_BSS_REQ fields are bssType=%s (%d), channelId=%d, SSID len=%d, rsnIE len=%d, nwType=%d, rateset len=%d"),
+	       lim_bss_type_to_string(start_bss_req->bssType),
 	       start_bss_req->bssType, start_bss_req->channelId,
 	       start_bss_req->ssId.length, start_bss_req->rsnIE.length,
 	       start_bss_req->nwType, opr_rates->numRates);)
@@ -584,8 +585,8 @@ lim_is_sme_disassoc_req_valid(tpAniSirGlobal pMac,
 			      tpSirSmeDisassocReq pDisassocReq,
 			      tpPESession psessionEntry)
 {
-	if (lim_is_group_addr(pDisassocReq->peerMacAddr) &&
-	    !lim_is_addr_bc(pDisassocReq->peerMacAddr))
+	if (cdf_is_macaddr_group(&pDisassocReq->peer_macaddr) &&
+	    !cdf_is_macaddr_broadcast(&pDisassocReq->peer_macaddr))
 		return false;
 
 	return true;
@@ -617,7 +618,7 @@ lim_is_sme_disassoc_cnf_valid(tpAniSirGlobal pMac,
 			      tpSirSmeDisassocCnf pDisassocCnf,
 			      tpPESession psessionEntry)
 {
-	if (lim_is_group_addr(pDisassocCnf->peerMacAddr))
+	if (cdf_is_macaddr_group(&pDisassocCnf->peer_macaddr))
 		return false;
 
 	return true;
@@ -647,8 +648,8 @@ uint8_t
 lim_is_sme_deauth_req_valid(tpAniSirGlobal pMac, tpSirSmeDeauthReq pDeauthReq,
 			    tpPESession psessionEntry)
 {
-	if (lim_is_group_addr(pDeauthReq->peerMacAddr) &&
-	    !lim_is_addr_bc(pDeauthReq->peerMacAddr))
+	if (cdf_is_macaddr_group(&pDeauthReq->peer_macaddr) &&
+	    !cdf_is_macaddr_broadcast(&pDeauthReq->peer_macaddr))
 		return false;
 
 	return true;

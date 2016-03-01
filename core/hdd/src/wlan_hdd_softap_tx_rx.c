@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -168,7 +168,6 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	sme_ac_enum_type ac = SME_AC_BE;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) netdev_priv(dev);
 	hdd_ap_ctx_t *pHddApCtx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
-	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	struct cdf_mac_addr *pDestMacAddress;
 	uint8_t STAId;
 	uint8_t proto_type = 0;
@@ -181,9 +180,9 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	 * context may not be reinitialized at this time which may
 	 * lead to a crash.
 	 */
-	if (pHddCtx->isLogpInProgress) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_INFO_HIGH,
-			  "%s: LOGP in Progress. Ignore!!!", __func__);
+			  "%s: Recovery in Progress. Ignore!!!", __func__);
 		goto drop_pkt;
 	}
 
@@ -368,9 +367,9 @@ static void __hdd_softap_tx_timeout(struct net_device *dev)
 	 * recovery here
 	 */
 	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	if (hdd_ctx->isLogpInProgress) {
+	if (cds_is_driver_recovering()) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
-			 "%s: LOGP in Progress. Ignore!!!", __func__);
+			 "%s: Recovery in Progress. Ignore!!!", __func__);
 		return;
 	}
 }
@@ -581,7 +580,7 @@ CDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
 	 */
 	cdf_net_buf_debug_release_skb(rxBuf);
 
-	if (hdd_napi_enabled(HDD_NAPI_ANY))
+	if (hdd_napi_enabled(HDD_NAPI_ANY) && !pHddCtx->config->enableRxThread)
 		rxstat = netif_receive_skb(skb);
 	else
 		rxstat = netif_rx_ni(skb);
@@ -810,10 +809,10 @@ CDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 	/* bss deregister is not allowed during wlan driver loading or
 	 * unloading
 	 */
-	if ((pHddCtx->isLoadInProgress) || (pHddCtx->isUnloadInProgress)) {
+	if (cds_is_load_or_unload_in_progress()) {
 		CDF_TRACE(CDF_MODULE_ID_HDD_SAP_DATA, CDF_TRACE_LEVEL_ERROR,
-			  "%s:Loading_unloading in Progress. Ignore!!!",
-			  __func__);
+			  "%s: Loading_unloading in Progress, state: 0x%x. Ignore!!!",
+			  __func__, cds_get_driver_state());
 		return CDF_STATUS_E_PERM;
 	}
 

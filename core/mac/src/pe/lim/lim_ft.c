@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -370,35 +370,28 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 	    psessionEntry->ftPEContext.pFTPreAuthReq) {
 		/* Only 11r assoc has FT IEs */
 		if (psessionEntry->ftPEContext.pFTPreAuthReq->ft_ies == NULL) {
-			PELOGE(lim_log(pMac, LOGE,
-				       "%s: FTIEs for Auth Req Seq 1 is absent",
-				       __func__);
-			       )
+			lim_log(pMac, LOGE,
+				FL("FTIEs for Auth Req Seq 1 is absent"));
 			goto preauth_fail;
 		}
 	}
 
 	if (status != CDF_STATUS_SUCCESS) {
-		PELOGE(lim_log(pMac, LOGE,
-			       "%s: Change channel not successful for FT pre-auth",
-			       __func__);
-		       )
+		lim_log(pMac, LOGE,
+			FL(" Change channel not successful for FT pre-auth"));
 		goto preauth_fail;
 	}
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-		PELOGE(lim_log
-			       (pMac, LOGE, FL("psessionEntry is not in STA mode"));
-		       )
+		lim_log(pMac, LOGE, FL("psessionEntry is not in STA mode"));
 #endif
 		return;
 	}
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-	PELOG2(lim_log(pMac, LOG2, "Entered wait auth2 state for FT"
-		       " (old session %p)", psessionEntry);
-	       )
+	lim_log(pMac, LOG2, "Entered wait auth2 state for FT (old session %p)",
+				 psessionEntry);
 #endif
 	if (psessionEntry->is11Rconnection) {
 		/* Now we are on the right channel and need to send out Auth1 and
@@ -423,15 +416,15 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 	if (TX_SUCCESS !=
 	    tx_timer_activate(&pMac->lim.limTimers.gLimFTPreAuthRspTimer)) {
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-		PELOGE(lim_log(pMac, LOGE, FL("FT Auth Rsp Timer Start Failed"));)
+		lim_log(pMac, LOGE, FL("FT Auth Rsp Timer Start Failed"));
 #endif
+		goto preauth_fail;
 	}
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_TIMER_ACTIVATE, psessionEntry->peSessionId,
-		       eLIM_FT_PREAUTH_RSP_TIMER));
+	MTRACE(mac_trace(pMac, TRACE_CODE_TIMER_ACTIVATE,
+		psessionEntry->peSessionId, eLIM_FT_PREAUTH_RSP_TIMER));
 
 #if defined WLAN_FEATURE_VOWIFI_11R_DEBUG
-	PELOG1(lim_log(pMac, LOG1, FL("FT Auth Rsp Timer Started"));)
+	lim_log(pMac, LOG1, FL("FT Auth Rsp Timer Started"));
 #endif
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 	lim_diag_event_report(pMac, WLAN_PE_DIAG_ROAM_AUTH_START_EVENT,
@@ -439,8 +432,8 @@ void lim_perform_ft_pre_auth(tpAniSirGlobal pMac, CDF_STATUS status,
 #endif
 
 	lim_send_auth_mgmt_frame(pMac, &authFrame,
-				 psessionEntry->ftPEContext.pFTPreAuthReq->
-				 preAuthbssId, LIM_NO_WEP_IN_FC, psessionEntry);
+		 psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
+		 LIM_NO_WEP_IN_FC, psessionEntry);
 
 	return;
 
@@ -820,11 +813,14 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	pAddBssParams->sessionId = pftSessionEntry->peSessionId;
 
 	/* Set a new state for MLME */
-
-	pftSessionEntry->limMlmState = eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE;
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_MLM_STATE, pftSessionEntry->peSessionId,
-		       eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
+	if (!pftSessionEntry->bRoamSynchInProgress) {
+		pftSessionEntry->limMlmState =
+			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE;
+		MTRACE(mac_trace
+			(pMac, TRACE_CODE_MLM_STATE,
+			pftSessionEntry->peSessionId,
+			eLIM_MLM_WT_ADD_BSS_RSP_FT_REASSOC_STATE));
+	}
 	pAddBssParams->halPersona = (uint8_t) pftSessionEntry->pePersona;
 
 	pftSessionEntry->ftPEContext.pAddBssReq = pAddBssParams;
@@ -848,8 +844,8 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 			 tpPESession pftSessionEntry, tpPESession psessionEntry)
 {
 	uint8_t currentBssUapsd;
-	tPowerdBm localPowerConstraint;
-	tPowerdBm regMax;
+	int8_t localPowerConstraint;
+	int8_t regMax;
 	tSchBeaconStruct *pBeaconStruct;
 	uint32_t selfDot11Mode;
 	ePhyChanBondState cbEnabledMode;
@@ -1047,13 +1043,14 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 		regMax, localPowerConstraint, pMac->roam.configParam.nTxPowerCap,
 		pftSessionEntry->maxTxPower);
 #endif
-
-	pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
-	pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
-	MTRACE(mac_trace
-		       (pMac, TRACE_CODE_SME_STATE, pftSessionEntry->peSessionId,
-		       pftSessionEntry->limSmeState));
-
+	if (!psessionEntry->bRoamSynchInProgress) {
+		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
+		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
+		MTRACE(mac_trace(pMac,
+				TRACE_CODE_SME_STATE,
+				pftSessionEntry->peSessionId,
+				pftSessionEntry->limSmeState));
+	}
 	pftSessionEntry->encryptType = psessionEntry->encryptType;
 #ifdef WLAN_FEATURE_11W
 	pftSessionEntry->limRmfEnabled = psessionEntry->limRmfEnabled;
@@ -1615,13 +1612,14 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 	pKeyInfo = (tSirFTUpdateKeyInfo *) pMsgBuf;
 
-	psessionEntry = pe_find_session_by_bssid(pMac, pKeyInfo->bssId, &sessionId);
+	psessionEntry = pe_find_session_by_bssid(pMac, pKeyInfo->bssid.bytes,
+						 &sessionId);
 	if (NULL == psessionEntry) {
 		PELOGE(lim_log(pMac, LOGE,
 			       "%s: Unable to find session for the following bssid",
 			       __func__);
 		       )
-		lim_print_mac_addr(pMac, pKeyInfo->bssId, LOGE);
+		lim_print_mac_addr(pMac, pKeyInfo->bssid.bytes, LOGE);
 		return false;
 	}
 
@@ -1642,8 +1640,8 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			extSetStaKeyParam;
 
 		cdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
-		cdf_mem_copy(pMlmSetKeysReq->peerMacAddr, pKeyInfo->bssId,
-			     sizeof(tSirMacAddr));
+		cdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
+				 &pKeyInfo->bssid);
 		pMlmSetKeysReq->sessionId = psessionEntry->peSessionId;
 		pMlmSetKeysReq->smesessionId = psessionEntry->smeSessionId;
 		pMlmSetKeysReq->edType = pKeyInfo->keyMaterial.edType;
@@ -1691,11 +1689,10 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 
 		PELOG1(lim_log(pMac, LOG1,
 			       FL("BSSID = " MAC_ADDRESS_STR),
-			       MAC_ADDR_ARRAY(pKeyInfo->bssId));
-		       )
+			       MAC_ADDR_ARRAY(pKeyInfo->bssid.bytes));)
 
-		sir_copy_mac_addr(pAddBssParams->extSetStaKeyParam.peerMacAddr,
-				  pKeyInfo->bssId);
+		cdf_copy_macaddr(&pAddBssParams->extSetStaKeyParam.peer_macaddr,
+				 &pKeyInfo->bssid);
 
 		pAddBssParams->extSetStaKeyParam.sendRsp = false;
 
@@ -1857,8 +1854,8 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	psessionEntry =
-		pe_find_session_by_bssid(pMac, aggrQosReq->bssId, &sessionId);
+	psessionEntry = pe_find_session_by_bssid(pMac, aggrQosReq->bssid.bytes,
+						 &sessionId);
 
 	if (psessionEntry == NULL) {
 		PELOGE(lim_log
@@ -1881,7 +1878,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		return eSIR_FAILURE;
 	}
 
-	pSta = dph_lookup_hash_entry(pMac, aggrQosReq->bssId, &aid,
+	pSta = dph_lookup_hash_entry(pMac, aggrQosReq->bssid.bytes, &aid,
 				     &psessionEntry->dph.dphHashTable);
 	if (pSta == NULL) {
 		PELOGE(lim_log(pMac, LOGE,

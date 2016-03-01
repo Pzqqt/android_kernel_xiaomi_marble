@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -51,9 +51,6 @@
 #include "dot11f.h"
 #include "wma_if.h"
 
-/* / Maximum number of scan hash table entries */
-#define LIM_MAX_NUM_OF_SCAN_RESULTS 256
-
 /* Sending Disassociate frames threshold */
 #define LIM_SEND_DISASSOC_FRAME_THRESHOLD       2
 #define LIM_HASH_MISS_TIMER_MS                  10000
@@ -73,9 +70,6 @@
 #define GET_TIM_WAIT_COUNT(LIntrvl) \
 	((LIntrvl * LIM_TIM_WAIT_COUNT_FACTOR) > LIM_MIN_TIM_WAIT_COUNT ? \
 	(LIntrvl * LIM_TIM_WAIT_COUNT_FACTOR) : LIM_MIN_TIM_WAIT_COUNT)
-
-#define IS_5G_BAND(__rfBand)     ((__rfBand & 0x3) == 0x2)
-#define IS_24G_BAND(__rfBand)    ((__rfBand & 0x3) == 0x1)
 
 #define LIM_MAX_CSA_IE_UPDATES    (5)
 
@@ -307,10 +301,12 @@ struct tLimScanResultNode {
 /* OEM Data related structure definitions */
 typedef struct sLimMlmOemDataReq {
 	struct cdf_mac_addr selfMacAddr;
-	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
+	uint8_t data_len;
+	uint8_t *data;
 } tLimMlmOemDataReq, *tpLimMlmOemDataReq;
 
 typedef struct sLimMlmOemDataRsp {
+	bool target_rsp;
 	uint8_t oemDataRsp[OEM_DATA_RSP_SIZE];
 } tLimMlmOemDataRsp, *tpLimMlmOemDataRsp;
 #endif
@@ -510,6 +506,7 @@ typedef struct sLimChannelSwitchInfo {
 	uint8_t primaryChannel;
 	uint8_t ch_center_freq_seg0;
 	uint8_t ch_center_freq_seg1;
+	uint8_t sec_ch_offset;
 	phy_ch_width ch_width;
 	int8_t switchCount;
 	uint32_t switchTimeoutValue;

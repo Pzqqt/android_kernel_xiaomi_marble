@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -288,6 +288,19 @@ uint8_t static def_msg_decision(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		    (limMsg->type != WMA_START_OEM_DATA_RSP) &&
 #endif
 		    (limMsg->type != WMA_ADD_TS_RSP) &&
+		    /*
+		     * LIM won't process any defer queue commands if gLimAddtsSent is
+		     * set to TRUE. gLimAddtsSent will be set TRUE to while sending
+		     * ADDTS REQ. Say, when deferring is enabled, if
+		     * SIR_LIM_ADDTS_RSP_TIMEOUT is posted (because of not receiving ADDTS
+		     * RSP) then this command will be added to defer queue and as
+		     * gLimAddtsSent is set TRUE LIM will never process any commands from
+		     * defer queue, including SIR_LIM_ADDTS_RSP_TIMEOUT. Hence allowing
+		     * SIR_LIM_ADDTS_RSP_TIMEOUT command to be processed with deferring
+		     * enabled, so that this will be processed immediately and sets
+		     * gLimAddtsSent to FALSE.
+		     */
+		    (limMsg->type != SIR_LIM_ADDTS_RSP_TIMEOUT) &&
 		    /* Allow processing of RX frames while awaiting reception
 		     * of ADD TS response over the air. This logic particularly
 		     * handles the case when host sends ADD BA request to FW
@@ -352,7 +365,7 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 		result->ap[i].capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
 		result->ap[i].channel = WMA_GET_RX_CH(rx_pkt_info);
-		result->ap[i].rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+		result->ap[i].rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 		result->ap[i].rtt = 0;
 		result->ap[i].rtt_sd = 0;
 		result->ap[i].ieLength = ie_len;
@@ -403,7 +416,7 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	result->ap.capability =
 			lim_get_u16((uint8_t *) &frame->capabilityInfo);
 	result->ap.channel = WMA_GET_RX_CH(rx_pkt_info);
-	result->ap.rssi = WMA_GET_RX_RSSI_DB(rx_pkt_info);
+	result->ap.rssi = WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info);
 	result->ap.rtt = 0;
 	result->ap.rtt_sd = 0;
 	result->ap.ieLength = ie_len;
@@ -804,8 +817,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 		if (fc.subType == SIR_MAC_MGMT_AUTH) {
 #ifdef WLAN_FEATURE_VOWIFI_11R_DEBUG
 			lim_log(pMac, LOG1,
-				FL
-					("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
+				FL("ProtVersion %d, Type %d, Subtype %d rateIndex=%d"),
 				fc.protVer, fc.type, fc.subType,
 				WMA_GET_RX_MAC_RATE_IDX(pRxPacketInfo));
 			lim_print_mac_addr(pMac, pHdr->bssId, LOG1);
@@ -813,31 +825,28 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 			if (lim_process_auth_frame_no_session
 				    (pMac, pRxPacketInfo,
 				    limMsg->bodyptr) == eSIR_SUCCESS) {
-				lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT,
-					     pRxPacketInfo, limMsg->bodyptr);
-				return;
+				goto end;
 			}
 		}
 #endif
+		/* Public action frame can be received from non-assoc stations*/
 		if ((fc.subType != SIR_MAC_MGMT_PROBE_RSP) &&
 		    (fc.subType != SIR_MAC_MGMT_BEACON) &&
 		    (fc.subType != SIR_MAC_MGMT_PROBE_REQ)
-		    && (fc.subType != SIR_MAC_MGMT_ACTION)      /* Public action frame can be received from non-associated stations. */
-		    ) {
+		    && (fc.subType != SIR_MAC_MGMT_ACTION)) {
 
-			if ((psessionEntry =
-				     pe_find_session_by_peer_sta(pMac, pHdr->sa,
-								 &sessionId)) == NULL) {
-				lim_log(pMac, LOG1,
-					FL
-						("session does not exist for given bssId"));
-				lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT,
-					     pRxPacketInfo, limMsg->bodyptr);
-				return;
-			} else
-				lim_log(pMac, LOG1,
-					"SessionId:%d Session Exist for given Bssid",
+			psessionEntry = pe_find_session_by_peer_sta(pMac,
+						pHdr->sa, &sessionId);
+			if (psessionEntry == NULL) {
+				lim_log(pMac, LOG3,
+					FL("session does not exist for bssId"));
+				lim_print_mac_addr(pMac, pHdr->sa, LOG3);
+				goto end;
+			} else {
+				lim_log(pMac, LOG3,
+					"SessionId:%d exists for given Bssid",
 					psessionEntry->peSessionId);
+			}
 		}
 		/*  For p2p resp frames search for valid session with DA as */
 		/*  BSSID will be SA and session will be present with DA only */
@@ -850,9 +859,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 	/* Check if frame is registered by HDD */
 	if (lim_check_mgmt_registered_frames(pMac, pRxPacketInfo, psessionEntry)) {
 		lim_log(pMac, LOG1, FL("Received frame is passed to SME"));
-		lim_pkt_free(pMac, TXRX_FRM_802_11_MGMT, pRxPacketInfo,
-			     limMsg->bodyptr);
-		return;
+		goto end;
 	}
 
 	if (fc.protVer != SIR_MAC_PROTOCOL_VERSION) {   /* Received Frame with non-zero Protocol Version */
@@ -864,7 +871,7 @@ lim_handle80211_frames(tpAniSirGlobal pMac, tpSirMsgQ limMsg, uint8_t *pDeferMsg
 #ifdef WLAN_DEBUG
 		pMac->lim.numProtErr++;
 #endif
-		return;
+		goto end;
 	}
 
 /* Chance of crashing : to be done BT-AMP ........happens when broadcast probe req is received */
@@ -1360,6 +1367,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 	case eWNI_SME_GET_TSM_STATS_REQ:
 #endif  /* FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
+	case eWNI_SME_REGISTER_MGMT_FRAME_CB:
 	case eWNI_SME_EXT_CHANGE_CHANNEL:
 	/* These messages are from HDD.No need to respond to HDD */
 		lim_process_normal_hdd_msg(mac_ctx, msg, false);
@@ -1495,28 +1503,14 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		cdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	case WMA_ROAM_OFFLOAD_SYNCH_IND:
-		lim_roam_offload_synch_ind(mac_ctx, msg);
-		/* bodyPtr is freed after handling
-		 * eWNI_SME_ROAM_OFFLOAD_SYNCH_IND in sme_ProcessMsg */
-		break;
-#endif
 	case SIR_LIM_ADDTS_RSP_TIMEOUT:
 		lim_process_sme_req_messages(mac_ctx, msg);
 		break;
 #ifdef FEATURE_WLAN_ESE
-	case SIR_LIM_ESE_TSM_TIMEOUT:
-#ifndef FEATURE_WLAN_ESE_UPLOAD
-		limProcessTsmTimeoutHandler(mac_ctx, msg);
-#endif /* FEATURE_WLAN_ESE_UPLOAD */
-		break;
 	case WMA_TSM_STATS_RSP:
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 		lim_send_sme_pe_ese_tsm_rsp(mac_ctx,
 			(tAniGetTsmStatsRsp *) msg->bodyptr);
-#else
-		limProcessHalEseTsmRsp(mac_ctx, msg);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 		break;
 #endif

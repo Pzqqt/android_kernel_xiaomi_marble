@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1237,21 +1237,11 @@ hdd_ipa_uc_rm_notify_handler(void *context, enum ipa_rm_event event)
 			hdd_ipa_uc_enable_pipes(hdd_ipa);
 		}
 		cdf_mutex_release(&hdd_ipa->ipa_lock);
-		if (hdd_ipa->pending_cons_req) {
-			ipa_rm_notify_completion(IPA_RM_RESOURCE_GRANTED,
-						 IPA_RM_RESOURCE_WLAN_CONS);
-		}
-		hdd_ipa->pending_cons_req = false;
 		break;
 
 	case IPA_RM_RESOURCE_RELEASED:
 		/* Differed RM Released */
 		hdd_ipa->resource_unloading = false;
-		if (hdd_ipa->pending_cons_req) {
-			ipa_rm_notify_completion(IPA_RM_RESOURCE_RELEASED,
-						 IPA_RM_RESOURCE_WLAN_CONS);
-		}
-		hdd_ipa->pending_cons_req = false;
 		break;
 
 	default:
@@ -1377,6 +1367,11 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		if (HDD_IPA_UC_NUM_WDI_PIPE == hdd_ipa->activated_fw_pipe) {
 			hdd_ipa->resource_loading = false;
 			hdd_ipa_uc_proc_pending_event(hdd_ipa);
+			if (hdd_ipa->pending_cons_req)
+				ipa_rm_notify_completion(
+						IPA_RM_RESOURCE_GRANTED,
+						IPA_RM_RESOURCE_WLAN_CONS);
+			hdd_ipa->pending_cons_req = false;
 		}
 		cdf_mutex_release(&hdd_ipa->ipa_lock);
 	}
@@ -1387,16 +1382,14 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 		hdd_ipa->activated_fw_pipe--;
 		if (!hdd_ipa->activated_fw_pipe) {
 			hdd_ipa_uc_disable_pipes(hdd_ipa);
-			if ((hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx)) &&
-			(!ipa_rm_release_resource(IPA_RM_RESOURCE_WLAN_PROD))) {
-				/* Sync return success from IPA
-				* Enable/resume all the PIPEs */
-				hdd_ipa->resource_unloading = false;
-				hdd_ipa_uc_proc_pending_event(hdd_ipa);
-			} else {
-				hdd_ipa->resource_unloading = false;
-				hdd_ipa_uc_proc_pending_event(hdd_ipa);
-			}
+			if (hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
+				ipa_rm_release_resource(
+					IPA_RM_RESOURCE_WLAN_PROD);
+			/* Sync return success from IPA
+			* Enable/resume all the PIPEs */
+			hdd_ipa->resource_unloading = false;
+			hdd_ipa_uc_proc_pending_event(hdd_ipa);
+			hdd_ipa->pending_cons_req = false;
 		}
 		cdf_mutex_release(&hdd_ipa->ipa_lock);
 	}
@@ -1410,19 +1403,19 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  "CE RING BASE: 0x%llx\n"
 			  "CE RING SIZE: %d\n"
 			  "CE REG ADDR : 0x%llx",
-			  hdd_ipa->ce_sr_base_paddr,
+			  (unsigned long long)hdd_ipa->ce_sr_base_paddr,
 			  hdd_ipa->ce_sr_ring_size,
-			  hdd_ipa->ce_reg_paddr);
+			  (unsigned long long)hdd_ipa->ce_reg_paddr);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST TX ====\n"
 			  "COMP RING BASE: 0x%llx\n"
 			  "COMP RING SIZE: %d\n"
 			  "NUM ALLOC BUF: %d\n"
 			  "COMP RING DBELL : 0x%llx",
-			  hdd_ipa->tx_comp_ring_base_paddr,
+			  (unsigned long long)hdd_ipa->tx_comp_ring_base_paddr,
 			  hdd_ipa->tx_comp_ring_size,
 			  hdd_ipa->tx_num_alloc_buffer,
-			  hdd_ipa->tx_comp_doorbell_paddr);
+			  (unsigned long long)hdd_ipa->tx_comp_doorbell_paddr);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST RX ====\n"
 			  "IND RING BASE: 0x%llx\n"
@@ -1432,13 +1425,13 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  "NUM EXCP PKT : %llu\n"
 			  "NUM TX BCMC : %llu\n"
 			  "NUM TX BCMC ERR : %llu",
-			  hdd_ipa->rx_rdy_ring_base_paddr,
+			  (unsigned long long)hdd_ipa->rx_rdy_ring_base_paddr,
 			  hdd_ipa->rx_rdy_ring_size,
-			  hdd_ipa->rx_ready_doorbell_paddr,
-			  hdd_ipa->rx_proc_done_idx_paddr,
+			  (unsigned long long)hdd_ipa->rx_ready_doorbell_paddr,
+			  (unsigned long long)hdd_ipa->rx_proc_done_idx_paddr,
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_bcmc,
-			  hdd_ipa->stats.num_tx_bcmc_err);
+			  (unsigned long long)hdd_ipa->stats.num_tx_bcmc_err);
 		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CONTROL ====\n"
 			  "SAP NUM STAs: %d\n"
@@ -1733,6 +1726,28 @@ end:
 }
 
 /**
+ * hdd_ipa_init_uc_op_work - init ipa uc op work
+ * @work: struct work_struct
+ * @work_handler: work_handler
+ *
+ * Return: none
+ */
+#ifdef CONFIG_CNSS
+static void hdd_ipa_init_uc_op_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	cnss_init_work(work, work_handler);
+}
+#else
+static void hdd_ipa_init_uc_op_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	INIT_WORK(work, work_handler);
+}
+#endif
+
+
+/**
  * hdd_ipa_uc_ol_init() - Initialize IPA uC offload
  * @hdd_ctx: Global HDD context
  *
@@ -1835,7 +1850,7 @@ static CDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 				  hdd_ipa_uc_op_event_handler, (void *)hdd_ctx);
 
 	for (i = 0; i < HDD_IPA_UC_OPCODE_MAX; i++) {
-		cnss_init_work(&ipa_ctxt->uc_op_work[i].work,
+		hdd_ipa_init_uc_op_work(&ipa_ctxt->uc_op_work[i].work,
 			hdd_ipa_uc_fw_op_event_handler);
 		ipa_ctxt->uc_op_work[i].msg = NULL;
 	}
@@ -2313,6 +2328,27 @@ int hdd_ipa_set_perf_level(hdd_context_t *hdd_ctx, uint64_t tx_packets,
 }
 
 /**
+ * hdd_ipa_init_uc_rm_work - init ipa uc resource manager work
+ * @work: struct work_struct
+ * @work_handler: work_handler
+ *
+ * Return: none
+ */
+#ifdef CONFIG_CNSS
+static void  hdd_ipa_init_uc_rm_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	cnss_init_work(work, work_handler);
+}
+#else
+static void hdd_ipa_init_uc_rm_work(struct work_struct *work,
+					work_func_t work_handler)
+{
+	INIT_WORK(work, work_handler);
+}
+#endif
+
+/**
  * hdd_ipa_setup_rm() - Setup IPA resource management
  * @hdd_ipa: Global HDD IPA context
  *
@@ -2326,7 +2362,8 @@ static int hdd_ipa_setup_rm(struct hdd_ipa_priv *hdd_ipa)
 	if (!hdd_ipa_is_rm_enabled(hdd_ipa->hdd_ctx))
 		return 0;
 
-	cnss_init_work(&hdd_ipa->uc_rm_work.work, hdd_ipa_uc_rm_notify_defer);
+	hdd_ipa_init_uc_rm_work(&hdd_ipa->uc_rm_work.work,
+		hdd_ipa_uc_rm_notify_defer);
 	memset(&create_params, 0, sizeof(create_params));
 	create_params.name = IPA_RM_RESOURCE_WLAN_PROD;
 	create_params.reg_params.user_data = hdd_ipa;
@@ -2461,7 +2498,7 @@ static void hdd_ipa_send_skb_to_network(cdf_nbuf_t skb,
 		return;
 	}
 
-	if (hdd_ipa->hdd_ctx->isUnloadInProgress) {
+	if (cds_is_driver_unloading()) {
 		HDD_IPA_INCREASE_INTERNAL_DROP_COUNT(hdd_ipa);
 		cdf_nbuf_free(skb);
 		return;
@@ -3752,7 +3789,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 		if ((!hdd_ipa->num_iface) &&
 			(HDD_IPA_UC_NUM_WDI_PIPE ==
 				hdd_ipa->activated_fw_pipe)) {
-			if (hdd_ipa->hdd_ctx->isUnloadInProgress) {
+			if (cds_is_driver_unloading()) {
 				/*
 				 * We disable WDI pipes directly here since
 				 * IPA_OPCODE_TX/RX_SUSPEND message will not be
@@ -3795,6 +3832,23 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			cdf_mutex_release(&hdd_ipa->event_lock);
 			return 0;
 		}
+
+		/* Enable IPA UC Data PIPEs when first STA connected */
+		if ((0 == hdd_ipa->sap_num_connected_sta) &&
+		   (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) ||
+		   !hdd_ipa->sta_connected)) {
+			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
+			if (ret) {
+				cdf_mutex_release(&hdd_ipa->event_lock);
+				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
+					    "%s: handle 1st con ret %d",
+					    adapter->dev->name, ret);
+				return ret;
+			}
+		}
+
+		hdd_ipa->sap_num_connected_sta++;
+
 		cdf_mutex_release(&hdd_ipa->event_lock);
 
 		meta.msg_type = type;
@@ -3830,27 +3884,6 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 			return ret;
 		}
 		hdd_ipa->stats.num_send_msg++;
-
-		cdf_mutex_acquire(&hdd_ipa->event_lock);
-		/* Enable IPA UC Data PIPEs when first STA connected */
-		if ((0 == hdd_ipa->sap_num_connected_sta)
-			&& (!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx)
-			|| !hdd_ipa->sta_connected)) {
-			ret = hdd_ipa_uc_handle_first_con(hdd_ipa);
-			if (ret) {
-				cdf_mutex_release(&hdd_ipa->event_lock);
-				HDD_IPA_LOG(CDF_TRACE_LEVEL_ERROR,
-					    "%s: handle 1st con ret %d",
-					    adapter->dev->name, ret);
-				return ret;
-			}
-		}
-
-		hdd_ipa->sap_num_connected_sta++;
-		hdd_ipa->pending_cons_req = false;
-
-		cdf_mutex_release(&hdd_ipa->event_lock);
-
 		return ret;
 
 	case WLAN_CLIENT_DISCONNECT:

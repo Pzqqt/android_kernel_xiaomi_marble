@@ -411,11 +411,11 @@ CDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tdlsSendMgmtReq->responder = tdlsSendMgmtCmdInfo->responder;
 	tdlsSendMgmtReq->peerCapability = tdlsSendMgmtCmdInfo->peerCapability;
 
-	cdf_mem_copy(tdlsSendMgmtReq->bssid,
-		     pSession->pConnectBssDesc->bssId, sizeof(tSirMacAddr));
+	cdf_mem_copy(tdlsSendMgmtReq->bssid.bytes,
+		     pSession->pConnectBssDesc->bssId, CDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(tdlsSendMgmtReq->peerMac,
-		     tdlsSendMgmtCmdInfo->peerMac, sizeof(tSirMacAddr));
+	cdf_mem_copy(tdlsSendMgmtReq->peer_mac.bytes,
+		     tdlsSendMgmtCmdInfo->peerMac, CDF_MAC_ADDR_SIZE);
 
 	if (tdlsSendMgmtCmdInfo->len && tdlsSendMgmtCmdInfo->buf) {
 		cdf_mem_copy(tdlsSendMgmtReq->addIe, tdlsSendMgmtCmdInfo->buf,

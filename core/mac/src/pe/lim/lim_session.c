@@ -384,6 +384,15 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 			CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_ERROR,
 				FL("cannot create or start protectionFieldsResetTimer\n"));
 	}
+
+	session_ptr->pmfComebackTimerInfo.pMac = pMac;
+	session_ptr->pmfComebackTimerInfo.sessionID = *sessionId;
+	status = cdf_mc_timer_init(&session_ptr->pmfComebackTimer,
+			CDF_TIMER_TYPE_SW, lim_pmf_comeback_timer_callback,
+			(void *)&session_ptr->pmfComebackTimerInfo);
+	if (!CDF_IS_STATUS_SUCCESS(status))
+		lim_log(pMac, LOGE, FL("cannot init pmf comeback timer."));
+
 	return &pMac->lim.gpSession[i];
 }
 
@@ -527,6 +536,12 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	uint16_t n;
 	TX_TIMER *timer_ptr;
 
+	if (!session || (session && !session->valid)) {
+		CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
+			  FL("session is not valid"));
+		return;
+	}
+
 	CDF_TRACE(CDF_MODULE_ID_PE, CDF_TRACE_LEVEL_DEBUG,
 		FL("Trying to delete PE session %d Opmode %d BssIdx %d BSSID: "MAC_ADDRESS_STR),
 		session->peSessionId, session->operMode,
@@ -586,16 +601,19 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	if (session->beacon != NULL) {
 		cdf_mem_free(session->beacon);
 		session->beacon = NULL;
+		session->bcnLen = 0;
 	}
 
 	if (session->assocReq != NULL) {
 		cdf_mem_free(session->assocReq);
 		session->assocReq = NULL;
+		session->assocReqLen = 0;
 	}
 
 	if (session->assocRsp != NULL) {
 		cdf_mem_free(session->assocRsp);
 		session->assocRsp = NULL;
+		session->assocRspLen = 0;
 	}
 
 	if (session->parsedAssocReq != NULL) {
@@ -665,9 +683,10 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 		session->addIeParams.probeRespBCNDataLen = 0;
 	}
 #ifdef WLAN_FEATURE_11W
-	/* if PMF connection */
-	if (session->limRmfEnabled)
-		cdf_mc_timer_destroy(&session->pmfComebackTimer);
+	if (CDF_TIMER_STATE_RUNNING ==
+	    cdf_mc_timer_get_current_state(&session->pmfComebackTimer))
+		cdf_mc_timer_stop(&session->pmfComebackTimer);
+	cdf_mc_timer_destroy(&session->pmfComebackTimer);
 #endif
 	session->valid = false;
 

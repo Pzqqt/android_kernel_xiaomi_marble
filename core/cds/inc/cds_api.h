@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -55,13 +55,139 @@
  */
 #define CDS_WMA_TIMEOUT  (15000)
 
-CDF_STATUS cds_alloc_global_context(v_CONTEXT_t *p_cds_context);
+/**
+ * enum cds_driver_state - Driver state
+ * @CDS_DRIVER_STATE_UNINITIALIZED: Driver is in uninitialized state.
+ * CDS_DRIVER_STATE_LOADED: Driver is loaded and functional.
+ * CDS_DRIVER_STATE_LOADING: Driver probe is in progress.
+ * CDS_DRIVER_STATE_UNLOADING: Driver remove is in progress.
+ * CDS_DRIVER_STATE_RECOVERING: Recovery in progress.
+ */
+enum cds_driver_state {
+	CDS_DRIVER_STATE_UNINITIALIZED	= 0,
+	CDS_DRIVER_STATE_LOADED		= BIT(0),
+	CDS_DRIVER_STATE_LOADING	= BIT(1),
+	CDS_DRIVER_STATE_UNLOADING	= BIT(2),
+	CDS_DRIVER_STATE_RECOVERING	= BIT(3),
+};
 
-CDF_STATUS cds_free_global_context(v_CONTEXT_t *p_cds_context);
+#define __CDS_IS_DRIVER_STATE(_state, _mask) (((_state) & (_mask)) == (_mask))
+
+void cds_set_driver_state(enum cds_driver_state);
+void cds_clear_driver_state(enum cds_driver_state);
+enum cds_driver_state cds_get_driver_state(void);
+
+/**
+ * cds_is_driver_loading() - Is driver load in progress
+ *
+ * Return: true if driver is loading and false otherwise.
+ */
+static inline bool cds_is_driver_loading(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADING);
+}
+
+/**
+ * cds_is_driver_unloading() - Is driver unload in progress
+ *
+ * Return: true if driver is unloading and false otherwise.
+ */
+static inline bool cds_is_driver_unloading(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_UNLOADING);
+}
+
+/**
+ * cds_is_driver_recovering() - Is recovery in progress
+ *
+ * Return: true if recovery in progress  and false otherwise.
+ */
+static inline bool cds_is_driver_recovering(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_RECOVERING);
+}
+
+/**
+ * cds_is_load_or_unload_in_progress() - Is driver load OR unload in progress
+ *
+ * Return: true if driver is loading OR unloading and false otherwise.
+ */
+static inline bool cds_is_load_or_unload_in_progress(void)
+{
+	enum cds_driver_state state = cds_get_driver_state();
+
+	return __CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_LOADING) ||
+		__CDS_IS_DRIVER_STATE(state, CDS_DRIVER_STATE_UNLOADING);
+}
+
+/**
+ * cds_set_recovery_in_progress() - Set recovery in progress
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_recovery_in_progress(uint8_t value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_RECOVERING);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_RECOVERING);
+}
+
+/**
+ * cds_set_load_in_progress() - Set load in progress
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_load_in_progress(uint8_t value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_LOADING);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_LOADING);
+}
+
+/**
+ * cds_set_driver_loaded() - Set load completed
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_driver_loaded(uint8_t value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_LOADED);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_LOADED);
+}
+
+/**
+ * cds_set_unload_in_progress() - Set unload in progress
+ * @value: value to set
+ *
+ * Return: none
+ */
+static inline void cds_set_unload_in_progress(uint8_t value)
+{
+	if (value)
+		cds_set_driver_state(CDS_DRIVER_STATE_UNLOADING);
+	else
+		cds_clear_driver_state(CDS_DRIVER_STATE_UNLOADING);
+}
+
+v_CONTEXT_t cds_init(void);
+void cds_deinit(void);
 
 CDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context);
 
-CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize);
+CDF_STATUS cds_open(void);
 
 CDF_STATUS cds_enable(v_CONTEXT_t cds_context);
 
@@ -77,21 +203,13 @@ void *cds_get_context(CDF_MODULE_ID moduleId);
 
 v_CONTEXT_t cds_get_global_context(void);
 
-uint8_t cds_is_logp_in_progress(void);
-void cds_set_logp_in_progress(uint8_t value);
-
-uint8_t cds_is_load_unload_in_progress(void);
-uint8_t cds_is_unload_in_progress(void);
-
-void cds_set_load_unload_in_progress(uint8_t value);
-
 CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 			     void **ppModuleContext, uint32_t size);
 
 CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 			    void *pModuleContext);
 
-CDF_STATUS cds_get_vdev_types(tCDF_CON_MODE mode, uint32_t *type,
+CDF_STATUS cds_get_vdev_types(enum tCDF_ADAPTER_MODE mode, uint32_t *type,
 			      uint32_t *subType);
 
 void cds_flush_work(void *work);

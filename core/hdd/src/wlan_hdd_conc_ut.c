@@ -1,5 +1,5 @@
 /*
- * Copyright (c)2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2015-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -633,7 +633,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 	CDF_STATUS ret;
 
 	/* flush the entire table first */
-	ret = cds_init_policy_mgr(hdd_ctx);
+	ret = cds_init_policy_mgr();
 	if (!CDF_IS_STATUS_SUCCESS(ret)) {
 		hdd_err("Policy manager initialization failed");
 		return;
@@ -641,7 +641,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 
 	for (sub_type = 0; sub_type < CDS_MAX_NUM_OF_MODE; sub_type++) {
 		/* validate one connection is created or no */
-		if (cds_get_connection_count(hdd_ctx) != 0) {
+		if (cds_get_connection_count() != 0) {
 			hddLog(LOGE,
 				FL("Test failed - No. of connection is not 0"));
 			return;
@@ -651,7 +651,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 		pcl_type = get_pcl_from_first_conn_table(sub_type, system_pref);
 
 		/* check PCL value for second connection is correct or no */
-		cds_get_pcl(hdd_ctx, sub_type, pcl, &pcl_len);
+		cds_get_pcl(sub_type, pcl, &pcl_len);
 		status = wlan_hdd_validate_pcl(hdd_ctx,
 				pcl_type, pcl, pcl_len, 0, 0,
 				reason, sizeof(reason));
@@ -688,7 +688,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 		type = wlan_hdd_valid_type_of_persona(sub_type);
 
 		/* flush the entire table first */
-		ret = cds_init_policy_mgr(hdd_ctx);
+		ret = cds_init_policy_mgr();
 		if (!CDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
@@ -697,11 +697,11 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 		/* sub_type mapping between HDD and WMA are different */
 		wlan_hdd_map_subtypes_hdd_wma(&dummy_type, &sub_type);
 		/* add first connection as STA */
-		cds_incr_connection_count_utfw(hdd_ctx, vdevid, tx_stream,
+		cds_incr_connection_count_utfw(vdevid, tx_stream,
 				rx_stream, chain_mask, type, dummy_type,
 				channel_id, mac_id);
 		/* validate one connection is created or no */
-		if (cds_get_connection_count(hdd_ctx) != 1) {
+		if (cds_get_connection_count() != 1) {
 			hddLog(LOGE,
 				FL("Test failed - No. of connection is not 1"));
 			return;
@@ -710,8 +710,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 		while (next_sub_type < CDS_MAX_NUM_OF_MODE) {
 			/* get the PCL value & check the channels accordingly */
 			second_index =
-				cds_get_second_connection_pcl_table_index(
-						hdd_ctx);
+				cds_get_second_connection_pcl_table_index();
 			if (CDS_MAX_ONE_CONNECTION_MODE == second_index) {
 				/* not valid combination*/
 				hddLog(LOGE, FL("couldn't find index for 2nd connection pcl table"));
@@ -724,7 +723,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 					next_sub_type, system_pref,
 					wma_is_hw_dbs_capable());
 			/* check PCL for second connection is correct or no */
-			cds_get_pcl(hdd_ctx, next_sub_type, pcl, &pcl_len);
+			cds_get_pcl(next_sub_type, pcl, &pcl_len);
 			status = wlan_hdd_validate_pcl(hdd_ctx,
 					pcl_type, pcl, pcl_len, channel_id, 0,
 					reason, sizeof(reason));
@@ -787,7 +786,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 
 		type_1 = wlan_hdd_valid_type_of_persona(sub_type_1);
 		/* flush the entire table first */
-		ret = cds_init_policy_mgr(hdd_ctx);
+		ret = cds_init_policy_mgr();
 		if (!CDF_IS_STATUS_SUCCESS(ret)) {
 			hdd_err("Policy manager initialization failed");
 			return;
@@ -796,11 +795,11 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 		/* sub_type mapping between HDD and WMA are different */
 		wlan_hdd_map_subtypes_hdd_wma(&dummy_type_1, &sub_type_1);
 		/* add first connection as STA */
-		cds_incr_connection_count_utfw(hdd_ctx, vdevid_1,
+		cds_incr_connection_count_utfw(vdevid_1,
 			tx_stream_1, rx_stream_1, chain_mask_1, type_1,
 			dummy_type_1, channel_id_1, mac_id_1);
 		/* validate one connection is created or no */
-		if (cds_get_connection_count(hdd_ctx) != 1) {
+		if (cds_get_connection_count() != 1) {
 			hddLog(LOGE,
 				FL("Test fail - No. of connection not 1"));
 			return;
@@ -812,11 +811,11 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 			/* sub_type mapping between HDD and WMA are different */
 			wlan_hdd_map_subtypes_hdd_wma(&dummy_type_2,
 					&sub_type_2);
-			cds_incr_connection_count_utfw(hdd_ctx, vdevid_2,
+			cds_incr_connection_count_utfw(vdevid_2,
 				tx_stream_2, rx_stream_2, chain_mask_2, type_2,
 				dummy_type_2, channel_id_2, mac_id_2);
 			/* validate two connections are created or no */
-			if (cds_get_connection_count(hdd_ctx) != 2) {
+			if (cds_get_connection_count() != 2) {
 				hddLog(LOGE,
 					FL("Test fail - No. connection not 2"));
 				return;
@@ -824,8 +823,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 			next_sub_type = CDS_STA_MODE;
 			while (next_sub_type < CDS_MAX_NUM_OF_MODE) {
 				third_index =
-				  cds_get_third_connection_pcl_table_index(
-								hdd_ctx);
+				  cds_get_third_connection_pcl_table_index();
 				if (CDS_MAX_TWO_CONNECTION_MODE ==
 						third_index) {
 					/* not valid combination */
@@ -839,7 +837,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 					   third_index, next_sub_type,
 					   system_pref,
 					   wma_is_hw_dbs_capable());
-				cds_get_pcl(hdd_ctx, next_sub_type,
+				cds_get_pcl(next_sub_type,
 						pcl, &pcl_len);
 				status = wlan_hdd_validate_pcl(hdd_ctx,
 						pcl_type, pcl, pcl_len,
@@ -858,7 +856,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 				next_sub_type++;
 			}
 			/* remove entry to make a room for next iteration */
-			cds_decr_connection_count(hdd_ctx, vdevid_2);
+			cds_decr_connection_count(vdevid_2);
 		}
 		next_sub_type = CDS_STA_MODE;
 	}

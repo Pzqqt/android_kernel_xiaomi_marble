@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -69,11 +69,7 @@ extern "C" {
 #define       MAX_TEXT_SIZE                32
 
 #define       MAX_CHANNEL_LIST_LEN         256
-#ifdef WLAN_FEATURE_MBSSID
 #define       CDF_MAX_NO_OF_SAP_MODE       2    /* max # of SAP */
-#else
-#define       CDF_MAX_NO_OF_SAP_MODE       1    /* max # of SAP */
-#endif
 #define       SAP_MAX_NUM_SESSION          5
 #define       SAP_MAX_OBSS_STA_CNT         1    /* max # of OBSS STA */
 #define       SAP_ACS_WEIGHT_MAX           (4444)
@@ -158,7 +154,6 @@ typedef enum {
 	eSAP_GET_WPSPBC_SESSION_EVENT,
 	/* Event send on WPS PBC probe request is received */
 	eSAP_WPS_PBC_PROBE_REQ_EVENT,
-	eSAP_INDICATE_MGMT_FRAME,
 	eSAP_REMAIN_CHAN_READY,
 	eSAP_SEND_ACTION_CNF,
 	eSAP_DISCONNECT_ALL_P2P_CLIENT,
@@ -448,8 +443,6 @@ typedef struct sap_Event_s {
 		tSap_GetWPSPBCSessionEvent sapGetWPSPBCSessionEvent;
 		/*eSAP_WPS_PBC_PROBE_REQ_EVENT */
 		tSap_WPSPBCProbeReqEvent sapPBCProbeReqEvent;
-		/*eSAP_INDICATE_MGMT_FRAME */
-		tSap_ManagementFrameInfo sapManagementFrameInfo;
 		/* eSAP_SEND_ACTION_CNF */
 		tSap_SendActionCnf sapActionCnf;
 		/* eSAP_UNKNOWN_STA_JOIN */
@@ -539,7 +532,7 @@ typedef struct sap_Config {
 	uint32_t ap_table_max_size;
 	uint32_t ap_table_expiration_time;
 	uint32_t ht_op_mode_fixed;
-	tCDF_CON_MODE persona; /* Tells us which persona its GO or AP for now */
+	enum tCDF_ADAPTER_MODE persona; /* Tells us which persona, GO or AP */
 	uint8_t disableDFSChSwitch;
 	bool enOverLapCh;
 #ifdef WLAN_FEATURE_11W
@@ -628,10 +621,9 @@ typedef struct sSapDfsInfo {
 	 * New channel width and new channel bonding mode
 	 * will only be updated via channel fallback mechanism
 	 */
-	uint8_t orig_cbMode;
-	uint8_t orig_chanWidth;
-	uint8_t new_chanWidth;
-	uint8_t new_cbMode;
+	phy_ch_width orig_chanWidth;
+	phy_ch_width new_chanWidth;
+	chan_params_t new_ch_params;
 
 	/*
 	 * INI param to enable/disable SAP W53
@@ -671,7 +663,7 @@ typedef struct sSapDfsInfo {
 typedef struct tagSapCtxList {
 	uint8_t sessionID;
 	void *pSapContext;
-	tCDF_CON_MODE sapPersona;
+	enum tCDF_ADAPTER_MODE sapPersona;
 } tSapCtxList, tpSapCtxList;
 
 typedef struct tagSapStruct {
@@ -798,8 +790,7 @@ typedef struct sap_SoftapStats_s {
 	uint32_t pktCounterRssi[MAX_NUM_RSSI];
 #endif
 } tSap_SoftapStats, *tpSap_SoftapStats;
-/* Channel/Frequency table */
-extern const tRfChannelProps rf_channels[NUM_RF_CHANNELS];
+
 #ifdef FEATURE_WLAN_CH_AVOID
 /* Store channel safety information */
 typedef struct {
@@ -807,23 +798,14 @@ typedef struct {
 	bool isSafe;
 } sapSafeChannelType;
 #endif /* FEATURE_WLAN_CH_AVOID */
-#ifdef WLAN_FEATURE_MBSSID
 void sap_cleanup_channel_list(void *sapContext);
-#else
-void sap_cleanup_channel_list(void);
-#endif
 void sapCleanupAllChannelList(void);
 CDF_STATUS wlansap_set_wps_ie(void *p_cds_gctx, tSap_WPSIE *pWPSIe);
 CDF_STATUS wlansap_update_wps_ie(void *p_cds_gctx);
 CDF_STATUS wlansap_stop_Wps(void *p_cds_gctx);
 CDF_STATUS wlansap_get_wps_state(void *p_cds_gctx, bool *pbWPSState);
 
-#ifdef WLAN_FEATURE_MBSSID
-void *
-#else
-CDF_STATUS
-#endif
-wlansap_open(void *p_cds_gctx);
+void *wlansap_open(void *p_cds_gctx);
 CDF_STATUS wlansap_start(void *p_cds_gctx);
 CDF_STATUS wlansap_stop(void *p_cds_gctx);
 CDF_STATUS wlansap_close(void *p_cds_gctx);
@@ -845,7 +827,7 @@ CDF_STATUS wlansap_disassoc_sta(void *p_cds_gctx,
 CDF_STATUS wlansap_deauth_sta(void *p_cds_gctx,
 			struct tagCsrDelStaParams *pDelStaParams);
 CDF_STATUS wlansap_set_channel_change_with_csa(void *p_cds_gctx,
-			uint32_t targetChannel);
+			uint32_t targetChannel, phy_ch_width target_bw);
 CDF_STATUS wlansap_set_key_sta(void *p_cds_gctx,
 	tCsrRoamSetKey *pSetKeyInfo);
 CDF_STATUS wlansap_get_assoc_stations(void *p_cds_gctx,
@@ -924,6 +906,7 @@ CDF_STATUS wlansap_acs_chselect(void *pvos_gctx,
 		tpWLAN_SAPEventCB pacs_event_callback,
 		tsap_Config_t *pconfig,
 		void *pusr_context);
+eCsrPhyMode wlansap_get_phymode(void *pctx);
 #ifdef __cplusplus
 }
 #endif

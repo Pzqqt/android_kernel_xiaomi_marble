@@ -259,12 +259,9 @@ void cds_pkt_proto_trace_init(void)
 	/* Init spin lock to protect global memory */
 	cdf_spinlock_init(&trace_buffer_lock);
 	trace_buffer_order = 0;
-	trace_buffer =
-		cdf_mem_malloc(CDS_PKT_TRAC_MAX_TRACE_BUF *
-			       sizeof(cds_pkt_proto_trace_t));
-	cdf_mem_zero((void *)trace_buffer,
-		     CDS_PKT_TRAC_MAX_TRACE_BUF *
-		     sizeof(cds_pkt_proto_trace_t));
+
+	trace_buffer = cdf_mem_malloc(CDS_PKT_TRAC_MAX_TRACE_BUF *
+				      sizeof(cds_pkt_proto_trace_t));
 
 	/* Register callback function to NBUF
 	 * Lower layer event also will be reported to here */

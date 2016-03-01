@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -138,6 +138,21 @@
 #define CFG_MAX_RX_AMPDU_FACTOR_MAX            WNI_CFG_MAX_RX_AMPDU_FACTOR_STAMAX
 #define CFG_MAX_RX_AMPDU_FACTOR_DEFAULT        WNI_CFG_MAX_RX_AMPDU_FACTOR_STADEF
 
+/* Configuration option for HT MPDU density (Table 8-125 802.11-2012)
+ * 0 for no restriction
+ * 1 for 1/4 micro sec
+ * 2 for 1/2 micro sec
+ * 3 for 1 micro sec
+ * 4 for 2 micro sec
+ * 5 for 4 micro sec
+ * 6 for 8 micro sec
+ * 7 for 16 micro sec
+ */
+#define CFG_HT_MPDU_DENSITY_NAME               "ght_mpdu_density"
+#define CFG_HT_MPDU_DENSITY_MIN                WNI_CFG_MPDU_DENSITY_STAMIN
+#define CFG_HT_MPDU_DENSITY_MAX                WNI_CFG_MPDU_DENSITY_STAMAX
+#define CFG_HT_MPDU_DENSITY_DEFAULT            WNI_CFG_MPDU_DENSITY_STADEF
+
 /* Configuration added to enable/disable CTS2SELF in */
 /* Adaptive RX drain feature */
 #define CFG_ENABLE_ADAPT_RX_DRAIN_NAME     "gEnableAdaptRxDrain"
@@ -230,7 +245,6 @@ typedef enum {
 #define CFG_RSSI_CATEGORY_GAP_MAX              (100)
 #define CFG_RSSI_CATEGORY_GAP_DEFAULT          (5)
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 #define CFG_ROAM_PREFER_5GHZ                   "gRoamPrefer5GHz"
 #define CFG_ROAM_PREFER_5GHZ_MIN              (0)
 #define CFG_ROAM_PREFER_5GHZ_MAX              (1)
@@ -244,7 +258,6 @@ typedef enum {
 #define CFG_ROAM_INTRA_BAND_MIN               (0)
 #define CFG_ROAM_INTRA_BAND_MAX               (1)
 #define CFG_ROAM_INTRA_BAND_DEFAULT           (0)
-#endif
 
 #define CFG_SHORT_PREAMBLE_NAME                "gShortPreamble"
 #define CFG_SHORT_PREAMBLE_MIN                 WNI_CFG_SHORT_PREAMBLE_STAMIN
@@ -618,7 +631,6 @@ typedef enum {
 #define CFG_ESE_FEATURE_ENABLED_DEFAULT                     (0) /* disabled */
 #endif /* FEATURE_WLAN_ESE */
 
-#ifdef FEATURE_WLAN_LFR
 #define CFG_LFR_FEATURE_ENABLED_NAME                       "FastRoamEnabled"
 #define CFG_LFR_FEATURE_ENABLED_MIN                         (0)
 #define CFG_LFR_FEATURE_ENABLED_MAX                         (1)
@@ -628,9 +640,7 @@ typedef enum {
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MIN                    (0)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_MAX                    (1)
 #define CFG_LFR_MAWC_FEATURE_ENABLED_DEFAULT                (0) /* disabled */
-#endif /* FEATURE_WLAN_LFR */
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /* This flag will control fasttransition in case of 11r and ese. */
 /* Basically with this the whole neighbor roam, pre-auth, reassoc */
 /* can be turned ON/OFF. */
@@ -669,8 +679,6 @@ typedef enum {
 #define CFG_ROAM_SCAN_HOME_AWAY_TIME_MAX                    (300)
 #define CFG_ROAM_SCAN_HOME_AWAY_TIME_DEFAULT                (CFG_ROAM_SCAN_HOME_AWAY_TIME_MIN)
 /* disabled by default */
-
-#endif /* (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR) */
 
 #ifdef FEATURE_WLAN_OKC
 #define CFG_OKC_FEATURE_ENABLED_NAME                       "OkcEnabled"
@@ -832,11 +840,6 @@ typedef enum {
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_MAX                  (1)
 #define CFG_QOS_IMPLICIT_SETUP_ENABLED_DEFAULT              (1)
 
-#define CFG_ENABLE_LOGP_NAME                                "gEnableLogp"
-#define CFG_ENABLE_LOGP_MIN                                 (0)
-#define CFG_ENABLE_LOGP_MAX                                 (1)
-#define CFG_ENABLE_LOGP_DEFAULT                             (0)
-
 #if defined WLAN_FEATURE_VOWIFI_11R
 #define CFG_FT_RESOURCE_REQ_NAME                        "gFTResourceReqSupported"
 #define CFG_FT_RESOURCE_REQ_MIN                         (0)
@@ -869,7 +872,6 @@ typedef enum {
 #define CFG_BCN_EARLY_TERM_WAKE_MAX                  (255)
 #define CFG_BCN_EARLY_TERM_WAKE_DEFAULT              (3)
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_NAME             "gNeighborScanTimerPeriod"
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MIN              (3)
 #define CFG_NEIGHBOR_SCAN_TIMER_PERIOD_MAX              (300)
@@ -949,7 +951,6 @@ typedef enum {
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MIN                 (0)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_MAX                 (16)
 #define CFG_ROAM_BEACON_RSSI_WEIGHT_DEFAULT             (14)
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 
 #define CFG_QOS_WMM_BURST_SIZE_DEFN_NAME                        "burstSizeDefinition"
 #define CFG_QOS_WMM_BURST_SIZE_DEFN_MIN                         (0)
@@ -1246,6 +1247,29 @@ typedef enum {
 #define CFG_ENABLE_GREEN_AP_FEATURE_MIN     (0)
 #define CFG_ENABLE_GREEN_AP_FEATURE_MAX     (1)
 #define CFG_ENABLE_GREEN_AP_FEATURE_DEFAULT (1)
+
+/* Enhanced Green AP (EGAP) flags/params */
+#define CFG_ENABLE_EGAP_ENABLE_FEATURE             "gEnableEGAP"
+#define CFG_ENABLE_EGAP_ENABLE_FEATURE_MIN         (0)
+#define CFG_ENABLE_EGAP_ENABLE_FEATURE_MAX         (1)
+#define CFG_ENABLE_EGAP_ENABLE_FEATURE_DEFAULT     (0)
+
+#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE         "gEGAPInactTime"
+#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MIN     (0)
+#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE_MAX     (5000)
+#define CFG_ENABLE_EGAP_INACT_TIME_FEATURE_DEFAULT (1000)
+
+#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE          "gEGAPWaitTime"
+#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MIN      (0)
+#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_MAX      (5000)
+#define CFG_ENABLE_EGAP_WAIT_TIME_FEATURE_DEFAULT  (100)
+
+#define CFG_ENABLE_EGAP_FLAGS_FEATURE              "gEGAPFeatures"
+#define CFG_ENABLE_EGAP_FLAGS_FEATURE_MIN          (0)
+#define CFG_ENABLE_EGAP_FLAGS_FEATURE_MAX          (15)
+#define CFG_ENABLE_EGAP_FLAGS_FEATURE_DEFAULT      (7)
+/* end Enhanced Green AP flags/params */
+
 #endif
 
 #ifdef FEATURE_WLAN_FORCE_SAP_SCC
@@ -1538,22 +1562,35 @@ typedef enum {
 #define CFG_TDLS_TX_STATS_PERIOD                    "gTDLSTxStatsPeriod"
 #define CFG_TDLS_TX_STATS_PERIOD_MIN                (10)
 #define CFG_TDLS_TX_STATS_PERIOD_MAX                (4294967295UL)
-#define CFG_TDLS_TX_STATS_PERIOD_DEFAULT            (5000)
+#define CFG_TDLS_TX_STATS_PERIOD_DEFAULT            (500)
 
 #define CFG_TDLS_TX_PACKET_THRESHOLD                "gTDLSTxPacketThreshold"
 #define CFG_TDLS_TX_PACKET_THRESHOLD_MIN            (0)
 #define CFG_TDLS_TX_PACKET_THRESHOLD_MAX            (4294967295UL)
-#define CFG_TDLS_TX_PACKET_THRESHOLD_DEFAULT        (100)
+#define CFG_TDLS_TX_PACKET_THRESHOLD_DEFAULT        (10)
 
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT              "gTDLSMaxDiscoveryAttempt"
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MIN          (1)
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT_MAX          (100)
 #define CFG_TDLS_MAX_DISCOVERY_ATTEMPT_DEFAULT      (5)
 
+/*  teardown notification interval (gTDLSIdleTimeout) should be multiple of
+ *  setup notification (gTDLSTxStatsPeriod) interval.
+ *  e.g.
+ *       if setup notification (gTDLSTxStatsPeriod) interval = 500, then
+ *       teardown notification (gTDLSIdleTimeout) interval should be 1000,
+ *       1500, 2000, 2500...
+ */
+#define CFG_TDLS_IDLE_TIMEOUT                       "gTDLSIdleTimeout"
+#define CFG_TDLS_IDLE_TIMEOUT_MIN                   (500)
+#define CFG_TDLS_IDLE_TIMEOUT_MAX                   (40000)
+#define CFG_TDLS_IDLE_TIMEOUT_DEFAULT               (5000)
+
+
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD              "gTDLSIdlePacketThreshold"
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_MIN          (0)
 #define CFG_TDLS_IDLE_PACKET_THRESHOLD_MAX          (40000)
-#define CFG_TDLS_IDLE_PACKET_THRESHOLD_DEFAULT      (5)
+#define CFG_TDLS_IDLE_PACKET_THRESHOLD_DEFAULT      (3)
 
 #define CFG_TDLS_RSSI_TRIGGER_THRESHOLD             "gTDLSRSSITriggerThreshold"
 #define CFG_TDLS_RSSI_TRIGGER_THRESHOLD_MIN         (-120)
@@ -1641,6 +1678,20 @@ typedef enum {
 #define CFG_TDLS_SCAN_ENABLE_MIN                   (0)
 #define CFG_TDLS_SCAN_ENABLE_MAX                   (1)
 #define CFG_TDLS_SCAN_ENABLE_DEFAULT               (0)
+
+/* TDLS peer kickout threshold to fw
+ *     Firmware will use this value to determine, when to send TDLS
+ *     peer kick out event to host.
+ *     E.g.
+ *        if peer kick out threshold is 10, then firmware will wait for 10
+ *        consecutive packet failures and then send TDLS kickout
+ *        notification to host driver
+ */
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD            "gTDLSPeerKickoutThreshold"
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD_MIN        (10)
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD_MAX        (5000)
+#define CFG_TDLS_PEER_KICKOUT_THRESHOLD_DEFAULT    (96)
+
 #endif
 
 /* Enable/Disable LPWR Image(cMEM uBSP) Transition */
@@ -1680,6 +1731,15 @@ typedef enum {
 #define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MIN     (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STAMIN)
 #define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_MAX     (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STAMAX)
 #define CFG_VHT_SU_BEAMFORMEE_CAP_FEATURE_DEFAULT (WNI_CFG_VHT_SU_BEAMFORMEE_CAP_STADEF)
+
+/*
+ * Enable / Disable Tx beamformee in SAP mode
+ * Default: Disable
+ */
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE         "gEnableTxBFeeSAP"
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE_MIN     (0)
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE_MAX     (1)
+#define CFG_VHT_ENABLE_TXBF_SAP_MODE_DEFAULT (0)
 
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED         "gTxBFCsnValue"
 #define CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_MIN     (WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED_STAMIN)
@@ -1887,7 +1947,11 @@ typedef enum {
 #define CFG_ENABLE_FW_LOG_NAME                   "gEnablefwlog"
 #define CFG_ENABLE_FW_LOG_DISABLE                (0)
 #define CFG_ENABLE_FW_LOG_ENABLE                 (1)
+#ifdef QCA_WIFI_3_0_ADRASTEA
 #define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_DISABLE)
+#else
+#define CFG_ENABLE_FW_LOG_DEFAULT                (CFG_ENABLE_FW_LOG_ENABLE)
+#endif
 
 /*
  * Enable/Disable SSR for USB
@@ -2776,6 +2840,43 @@ enum dot11p_mode {
 #define CFG_FIRST_SCAN_BUCKET_THRESHOLD_MAX       (-30)
 #define CFG_FIRST_SCAN_BUCKET_THRESHOLD_DEFAULT   (-30)
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/*
+ * Enable IP subnet detection during legacy fast roming version 3.
+ * Legacy fast roaming could roam across IP subnets without host
+ * processors' knowledge. This feature enables firmware to wake up
+ * the host processor if it successfully determines change in the IP subnet.
+ * Change in IP subnet could potentially cause disruption in IP connnectivity
+ * if IP address is not refreshed.
+ */
+#define CFG_ENABLE_LFR_SUBNET_DETECTION    "gLFRSubnetDetectionEnable"
+#define CFG_ENABLE_LFR_SUBNET_MIN          (0)
+#define CFG_ENABLE_LFR_SUBNET_MAX          (1)
+#define CFG_ENABLE_LFR_SUBNET_DEFAULT      (1)
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+/* Option to report rssi in cfg80211_inform_bss_frame()
+ * 0 = use rssi value based on noise floor = -96 dBm
+ * 1 = use rssi value based on actual noise floor in hardware
+ */
+#define CFG_INFORM_BSS_RSSI_RAW_NAME               "gInformBssRssiRaw"
+#define CFG_INFORM_BSS_RSSI_RAW_MIN                (0)
+#define CFG_INFORM_BSS_RSSI_RAW_MAX                (1)
+#define CFG_INFORM_BSS_RSSI_RAW_DEFAULT            (1)
+
+#ifdef QCA_WIFI_3_0_EMU
+/*
+ * On M2M emulation platform we have a fixed mapping between macs, hence
+ * vdev transition & MCC support is not possible on this platform. But MPR
+ * platform doesn't have these limitations. This config allows at runtime
+ * enable/disable vdev transition & MCC support depending on the platform
+ * it is running on
+ */
+#define CFG_ENABLE_M2M_LIMITATION              "gEnableM2MLimitation"
+#define CFG_ENABLE_M2M_LIMITATION_MIN          (0)
+#define CFG_ENABLE_M2M_LIMITATION_MAX          (1)
+#define CFG_ENABLE_M2M_LIMITATION_DEFAULT      (1)
+#endif /* QCA_WIFI_3_0_EMU */
+
 /*---------------------------------------------------------------------------
    Type declarations
    -------------------------------------------------------------------------*/
@@ -2794,7 +2895,6 @@ struct hdd_config {
 	bool fSupplicantCountryCodeHasPriority;
 	uint32_t HeartbeatThresh24;
 	char PowerUsageControl[4];
-	bool fIsLogpEnabled;
 	bool fIsImpsEnabled;
 	bool is_ps_enabled;
 	uint32_t nBmpsModListenInterval;
@@ -2850,7 +2950,6 @@ struct hdd_config {
 	bool fFTResourceReqSupported;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	uint16_t nNeighborScanPeriod;
 	uint8_t nNeighborLookupRssiThreshold;
 	uint8_t delay_before_vdev_stop;
@@ -2869,7 +2968,6 @@ struct hdd_config {
 	uint32_t nhi_rssi_scan_rssi_delta;
 	uint32_t nhi_rssi_scan_delay;
 	int32_t nhi_rssi_scan_rssi_ub;
-#endif
 
 	/* Additional Handoff params */
 	uint32_t nRoamingTime;
@@ -2922,19 +3020,15 @@ struct hdd_config {
 	uint32_t InfraUapsdBeSuspIntv;
 	uint32_t InfraUapsdBkSrvIntv;
 	uint32_t InfraUapsdBkSuspIntv;
-#ifdef FEATURE_WLAN_LFR
 	bool isFastRoamIniFeatureEnabled;
 	bool MAWCEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint32_t InfraInactivityInterval;
 	bool isEseIniFeatureEnabled;
 #endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	bool isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
 #ifdef FEATURE_WLAN_OKC
 	bool isOkcIniFeatureEnabled;
 #endif
@@ -3043,12 +3137,10 @@ struct hdd_config {
 	int32_t linkSpeedRssiHigh;
 	int32_t linkSpeedRssiMid;
 	int32_t linkSpeedRssiLow;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	bool nRoamPrefer5GHz;
 	bool nRoamIntraBand;
 	uint8_t nProbes;
 	uint16_t nRoamScanHomeAwayTime;
-#endif
 	uint8_t enableMCC;
 	uint8_t allowMCCGODiffBI;
 	bool isP2pDeviceAddrAdministrated;
@@ -3058,6 +3150,7 @@ struct hdd_config {
 	uint8_t vhtRxMCS;
 	uint8_t vhtTxMCS;
 	bool enableTxBF;
+	bool enable_txbf_sap_mode;
 	uint8_t txBFCsnValue;
 	bool enable_su_tx_bformer;
 	uint8_t vhtRxMCS2x2;
@@ -3087,6 +3180,7 @@ struct hdd_config {
 	uint32_t fTDLSTxStatsPeriod;
 	uint32_t fTDLSTxPacketThreshold;
 	uint32_t fTDLSMaxDiscoveryAttempt;
+	uint32_t tdls_idle_timeout;
 	uint32_t fTDLSIdlePacketThreshold;
 	int32_t fTDLSRSSITriggerThreshold;
 	int32_t fTDLSRSSITeardownThreshold;
@@ -3104,6 +3198,7 @@ struct hdd_config {
 	uint8_t fTDLSPrefOffChanNum;
 	uint8_t fTDLSPrefOffChanBandwidth;
 	uint8_t enable_tdls_scan;
+	uint32_t tdls_peer_kickout_threshold;
 #endif
 #ifdef WLAN_SOFTAP_VSTA_FEATURE
 	bool fEnableVSTASupport;
@@ -3247,6 +3342,10 @@ struct hdd_config {
 
 #ifdef FEATURE_GREEN_AP
 	bool enableGreenAP;
+	bool enable_egap;
+	uint32_t egap_feature_flag;
+	uint32_t egap_inact_time;
+	uint32_t egap_wait_time;
 #endif
 	uint8_t force_sap_acs;
 	uint8_t force_sap_acs_st_ch;
@@ -3355,6 +3454,14 @@ struct hdd_config {
 	int8_t early_stop_scan_min_threshold;
 	int8_t early_stop_scan_max_threshold;
 	int8_t first_scan_bucket_threshold;
+	uint8_t ht_mpdu_density;
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+	bool enable_lfr_subnet_detection;
+#endif
+	uint8_t inform_bss_rssi_raw;
+#ifdef QCA_WIFI_3_0_EMU
+	bool enable_m2m_limitation;
+#endif
 };
 
 #define VAR_OFFSET(_Struct, _Var) (offsetof(_Struct, _Var))
@@ -3444,7 +3551,7 @@ typedef enum {
 typedef struct tREG_TABLE_ENTRY {
 
 	char *RegName;          /* variable name in the qcom_cfg.ini file */
-	WLAN_PARAMETER_TYPE RegType;    /* variable type in the hdd_config_t structure */
+	WLAN_PARAMETER_TYPE RegType;    /* variable type in hdd_config struct */
 	unsigned long Flags;    /* Specify optional parms and if RangeCheck is performed */
 	unsigned short VarOffset;       /* offset to field from the base address of the structure */
 	unsigned short VarSize; /* size (in bytes) of the field */

@@ -351,11 +351,10 @@ CDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 		}
 	}
 
-	cdf_mem_copy(&msg->bssId[0],
-			&ftkey_info->peerMac.bytes[0], CDF_MAC_ADDR_SIZE);
+	cdf_copy_macaddr(&msg->bssid, &ftkey_info->peerMac);
 	msg->smeSessionId = session_id;
 	sms_log(mac_ctx, LOG1, "BSSID = " MAC_ADDRESS_STR,
-		MAC_ADDR_ARRAY(msg->bssId));
+		MAC_ADDR_ARRAY(msg->bssid.bytes));
 	status = cds_send_mb_message_to_mac(msg);
 
 	return status;
@@ -561,14 +560,12 @@ void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
  *------------------------------------------------------------------------*/
 void sme_preauth_reassoc_intvl_timer_callback(void *context)
 {
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tFTRoamCallbackUsrCtx *pUsrCtx = (tFTRoamCallbackUsrCtx *) context;
 
 	if (pUsrCtx) {
 		csr_neighbor_roam_request_handoff(pUsrCtx->pMac,
 						  pUsrCtx->sessionId);
 	}
-#endif
 	return;
 }
 

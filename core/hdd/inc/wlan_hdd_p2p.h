@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -38,7 +38,6 @@
 #define WAIT_CANCEL_REM_CHAN    1000
 #define WAIT_REM_CHAN_READY     1000
 #define WAIT_CHANGE_CHANNEL_FOR_OFFCHANNEL_TX 3000
-#define ESTIMATED_ROC_DUR_REQD_FOR_ACTION_TX 20
 #define COMPLETE_EVENT_PROPOGATE_TIME 10
 
 #ifdef QCA_WIFI_3_0_EMU
@@ -61,18 +60,8 @@
 #define P2P_ROC_DURATION_MULTIPLIER_GO_ABSENT    5
 #endif
 
-#ifdef WLAN_FEATURE_11W
-#define WLAN_HDD_SET_WEP_FRM_FC(__fc__)     ((__fc__) = ((__fc__) | 0x40))
-#endif /* WLAN_FEATURE_11W */
-
 #define HDD_P2P_MAX_ROC_DURATION 1000
 #define MAX_ROC_REQ_QUEUE_ENTRY 10
-
-enum hdd_rx_flags {
-	HDD_RX_FLAG_DECRYPTED = 1 << 0,
-	HDD_RX_FLAG_MMIC_STRIPPED = 1 << 1,
-	HDD_RX_FLAG_IV_STRIPPED = 1 << 2,
-};
 
 #define P2P_POWER_SAVE_TYPE_OPPORTUNISTIC        (1 << 0)
 #define P2P_POWER_SAVE_TYPE_PERIODIC_NOA         (1 << 1)
@@ -103,38 +92,23 @@ typedef struct p2p_app_setP2pPs {
 } p2p_app_setP2pPs_t;
 
 int wlan_hdd_cfg80211_remain_on_channel(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 					struct wireless_dev *wdev,
-#else
-					struct net_device *dev,
-#endif
 					struct ieee80211_channel *chan,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-					enum nl80211_channel_type channel_type,
-#endif
 					unsigned int duration, u64 *cookie);
 
 int wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 					       struct wireless_dev *wdev,
-#else
-					       struct net_device *dev,
-#endif
 					       u64 cookie);
 
 int wlan_hdd_cfg80211_mgmt_tx_cancel_wait(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 					  struct wireless_dev *wdev,
-#else
-					  struct net_device *dev,
-#endif
 					  u64 cookie);
 
 int hdd_set_p2p_ps(struct net_device *dev, void *msgData);
 int hdd_set_p2p_opps(struct net_device *dev, uint8_t *command);
 int hdd_set_p2p_noa(struct net_device *dev, uint8_t *command);
 
-void hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
+void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 			     uint32_t nFrameLength, uint8_t *pbFrames,
 			     uint8_t frameType, uint32_t rxChan, int8_t rxRssi);
 
@@ -147,54 +121,22 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter);
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		     struct cfg80211_mgmt_tx_params *params, u64 *cookie);
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
+#else
 int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		     struct ieee80211_channel *chan, bool offchan,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-		     enum nl80211_channel_type channel_type,
-		     bool channel_type_valid,
-#endif
 		     unsigned int wait,
 		     const u8 *buf, size_t len, bool no_cck,
 		     bool dont_wait_for_ack, u64 *cookie);
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 3, 0))
-int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct net_device *dev,
-		     struct ieee80211_channel *chan, bool offchan,
-		     enum nl80211_channel_type channel_type,
-		     bool channel_type_valid, unsigned int wait,
-		     const u8 *buf, size_t len, bool no_cck,
-		     bool dont_wait_for_ack, u64 *cookie);
-#else
-int wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct net_device *dev,
-		     struct ieee80211_channel *chan, bool offchan,
-		     enum nl80211_channel_type channel_type,
-		     bool channel_type_valid, unsigned int wait,
-		     const u8 *buf, size_t len, u64 *cookie);
 #endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 7, 0))
 struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 					       const char *name,
 					       enum nl80211_iftype type,
 					       u32 *flags,
 					       struct vif_params *params);
-#elif (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
-struct wireless_dev *wlan_hdd_add_virtual_intf(struct wiphy *wiphy, char *name,
-					       enum nl80211_iftype type,
-					       u32 *flags,
-					       struct vif_params *params);
-#else
-struct net_device *wlan_hdd_add_virtual_intf(struct wiphy *wiphy, char *name,
-					     enum nl80211_iftype type,
-					     u32 *flags,
-					     struct vif_params *params);
-#endif
 
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct wireless_dev *wdev);
-#else
-int wlan_hdd_del_virtual_intf(struct wiphy *wiphy, struct net_device *dev);
-#endif
+
 
 void wlan_hdd_cleanup_remain_on_channel_ctx(hdd_adapter_t *pAdapter);
 

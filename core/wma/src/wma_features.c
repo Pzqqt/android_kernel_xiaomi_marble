@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -980,6 +980,125 @@ CDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
 #ifdef FEATURE_GREEN_AP
 
 /**
+ * wma_egap_info_status_event() - egap info status event
+ * @handle:	pointer to wma handler
+ * @event:	pointer to event
+ * @len:	len of the event
+ *
+ * Return:	0 for success, otherwise appropriate error code
+ */
+static int wma_egap_info_status_event(void *handle, u_int8_t *event,
+				      uint32_t len)
+{
+	WMI_TX_PAUSE_EVENTID_param_tlvs *param_buf;
+	wmi_ap_ps_egap_info_event_fixed_param  *egap_info_event;
+	wmi_ap_ps_egap_info_chainmask_list *chainmask_event;
+	u_int8_t *buf_ptr;
+
+	param_buf = (WMI_TX_PAUSE_EVENTID_param_tlvs *)event;
+	if (!param_buf) {
+		WMA_LOGE("Invalid EGAP Info status event buffer");
+		return -EINVAL;
+	}
+
+	egap_info_event = (wmi_ap_ps_egap_info_event_fixed_param  *)
+				param_buf->fixed_param;
+	buf_ptr = (uint8_t *)egap_info_event;
+	buf_ptr += sizeof(wmi_ap_ps_egap_info_event_fixed_param);
+	chainmask_event = (wmi_ap_ps_egap_info_chainmask_list *)buf_ptr;
+
+	WMA_LOGI("mac_id: %d, status: %d, tx_mask: %x, rx_mask: %d",
+		 chainmask_event->mac_id,
+		 egap_info_event->status,
+		 chainmask_event->tx_chainmask,
+		 chainmask_event->rx_chainmask);
+	return 0;
+}
+
+/**
+ * wma_send_egap_conf_params() - send wmi cmd of egap configuration params
+ * @wma_handle:	 wma handler
+ * @egap_params: pointer to egap_params
+ *
+ * Return:	 0 for success, otherwise appropriate error code
+ */
+CDF_STATUS wma_send_egap_conf_params(WMA_HANDLE handle,
+				     struct egap_conf_params *egap_params)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	wmi_ap_ps_egap_param_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t err;
+
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send ap_ps_egap cmd");
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_ap_ps_egap_param_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_ap_ps_egap_param_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			       wmi_ap_ps_egap_param_cmd_fixed_param));
+
+	cmd->enable = egap_params->enable;
+	cmd->inactivity_time = egap_params->inactivity_time;
+	cmd->wait_time = egap_params->wait_time;
+	cmd->flags = egap_params->flags;
+	err = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
+				   sizeof(*cmd), WMI_AP_PS_EGAP_PARAM_CMDID);
+	if (err) {
+		WMA_LOGE("Failed to send ap_ps_egap cmd");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * wma_setup_egap_support() - setup the EGAP support flag
+ * @tgt_cfg:  pointer to hdd target configuration
+ * @egap_support: EGAP support flag
+ *
+ * Return:	  None
+ */
+void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+
+	if (tgt_cfg && wma_handle)
+		tgt_cfg->egap_support = wma_handle->egap_support;
+}
+
+/**
+ * wma_register_egap_event_handle() - register the EGAP event handle
+ * @wma_handle:	wma handler
+ *
+ * Return:	None
+ */
+void wma_register_egap_event_handle(WMA_HANDLE handle)
+{
+	tp_wma_handle wma_handle = (tp_wma_handle) handle;
+	int status;
+
+	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
+				   WMI_SERVICE_EGAP)) {
+		status = wmi_unified_register_event_handler(
+						   wma_handle->wmi_handle,
+						   WMI_AP_PS_EGAP_INFO_EVENTID,
+						   wma_egap_info_status_event);
+		if (status) {
+			WMA_LOGE("Failed to register Enhance Green AP event");
+			wma_handle->egap_support = false;
+		} else {
+			WMA_LOGI("Set the Enhance Green AP event handler");
+			wma_handle->egap_support = true;
+		}
+	} else
+		wma_handle->egap_support = false;
+}
+
+/**
  * wmi_unified_pdev_green_ap_ps_enable_cmd() - enable green ap powersave command
  * @wmi_handle: wmi handle
  * @value: value
@@ -1580,6 +1699,7 @@ int wma_oem_capability_event_callback(void *handle,
 	}
 
 	cdf_mem_zero(pStartOemDataRsp, sizeof(tStartOemDataRsp));
+	pStartOemDataRsp->target_rsp = true;
 	msg_subtype = (uint32_t *) (&pStartOemDataRsp->oemDataRsp[0]);
 	*msg_subtype = WMI_OEM_CAPABILITY_RSP;
 	cdf_mem_copy(&pStartOemDataRsp->oemDataRsp[4], data, datalen);
@@ -1641,6 +1761,7 @@ int wma_oem_measurement_report_event_callback(void *handle,
 	}
 
 	cdf_mem_zero(pStartOemDataRsp, sizeof(tStartOemDataRsp));
+	pStartOemDataRsp->target_rsp = true;
 	msg_subtype = (uint32_t *) (&pStartOemDataRsp->oemDataRsp[0]);
 	*msg_subtype = WMI_OEM_MEASUREMENT_RSP;
 	cdf_mem_copy(&pStartOemDataRsp->oemDataRsp[4], data, datalen);
@@ -1701,6 +1822,7 @@ int wma_oem_error_report_event_callback(void *handle,
 	}
 
 	cdf_mem_zero(pStartOemDataRsp, sizeof(tStartOemDataRsp));
+	pStartOemDataRsp->target_rsp = true;
 	msg_subtype = (uint32_t *) (&pStartOemDataRsp->oemDataRsp[0]);
 	*msg_subtype = WMI_OEM_ERROR_REPORT_RSP;
 	cdf_mem_copy(&pStartOemDataRsp->oemDataRsp[4], data, datalen);
@@ -1709,6 +1831,59 @@ int wma_oem_error_report_event_callback(void *handle,
 		 __func__, datalen);
 
 	wma_send_msg(wma, WMA_START_OEM_DATA_RSP, (void *)pStartOemDataRsp, 0);
+	return 0;
+}
+
+/**
+ * wma_oem_data_response_handler() - OEM data response event handler
+ * @handle: wma handle
+ * @datap: data ptr
+ * @len: data length
+ *
+ * Return: 0 for success or error code
+ */
+int wma_oem_data_response_handler(void *handle,
+				  uint8_t *datap, uint32_t len)
+{
+	tp_wma_handle wma = (tp_wma_handle) handle;
+	WMI_OEM_RESPONSE_EVENTID_param_tlvs *param_buf;
+	uint8_t *data;
+	uint32_t datalen;
+	tStartOemDataRsp *oem_data_rsp;
+
+	param_buf = (WMI_OEM_RESPONSE_EVENTID_param_tlvs *) datap;
+	if (!param_buf) {
+		WMA_LOGE(FL("Received NULL buf ptr from FW"));
+		return -ENOMEM;
+	}
+
+	data = param_buf->data;
+	datalen = param_buf->num_data;
+
+	if (!data) {
+		WMA_LOGE(FL("Received NULL data from FW"));
+		return -EINVAL;
+	}
+
+	if (datalen > OEM_DATA_RSP_SIZE) {
+		WMA_LOGE(FL("Received data len %d exceeds max value %d"),
+			 datalen, OEM_DATA_RSP_SIZE);
+		return -EINVAL;
+	}
+
+	oem_data_rsp = cdf_mem_malloc(sizeof(*oem_data_rsp));
+	if (!oem_data_rsp) {
+		WMA_LOGE(FL("Failed to alloc oem_data_rsp"));
+		return -ENOMEM;
+	}
+
+	cdf_mem_zero(oem_data_rsp, sizeof(tStartOemDataRsp));
+	oem_data_rsp->target_rsp = true;
+	cdf_mem_copy(&oem_data_rsp->oemDataRsp[0], data, datalen);
+
+	WMA_LOGI(FL("Sending WMA_START_OEM_DATA_RSP, data len %d"), datalen);
+
+	wma_send_msg(wma, WMA_START_OEM_DATA_RSP, (void *)oem_data_rsp, 0);
 	return 0;
 }
 
@@ -1725,51 +1900,53 @@ void wma_start_oem_data_req(tp_wma_handle wma_handle,
 	wmi_buf_t buf;
 	uint8_t *cmd;
 	int ret = 0;
-	uint32_t *msg_subtype;
 	tStartOemDataRsp *pStartOemDataRsp;
 
-	WMA_LOGD("%s: Send OEM Data Request to target", __func__);
+	WMA_LOGD(FL("Send OEM Data Request to target"));
 
-	if (!startOemDataReq) {
-		WMA_LOGE("%s: startOemDataReq is null", __func__);
+	if (!startOemDataReq && !startOemDataReq->data) {
+		WMA_LOGE(FL("startOemDataReq is null"));
 		goto out;
 	}
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
-		WMA_LOGE("%s: WMA is closed, can not send Oem data request cmd",
-			 __func__);
+		WMA_LOGE(FL("WMA - closed, can not send Oem data request cmd"));
 		return;
 	}
 
 	buf = wmi_buf_alloc(wma_handle->wmi_handle,
-			    (OEM_DATA_REQ_SIZE + WMI_TLV_HDR_SIZE));
+			    (startOemDataReq->data_len + WMI_TLV_HDR_SIZE));
 	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
 		goto out;
 	}
 
 	cmd = (uint8_t *) wmi_buf_data(buf);
 
-	WMITLV_SET_HDR(cmd, WMITLV_TAG_ARRAY_BYTE, OEM_DATA_REQ_SIZE);
+	WMITLV_SET_HDR(cmd, WMITLV_TAG_ARRAY_BYTE, startOemDataReq->data_len);
 	cmd += WMI_TLV_HDR_SIZE;
-	cdf_mem_copy(cmd, &startOemDataReq->oemDataReq[0], OEM_DATA_REQ_SIZE);
+	cdf_mem_copy(cmd, startOemDataReq->data,
+		     startOemDataReq->data_len);
 
-	WMA_LOGI("%s: Sending OEM Data Request to target, data len (%d)",
-		 __func__, OEM_DATA_REQ_SIZE);
+	WMA_LOGI(FL("Sending OEM Data Request to target, data len %d"),
+		 startOemDataReq->data_len);
 
 	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				   (OEM_DATA_REQ_SIZE +
+				   (startOemDataReq->data_len +
 				    WMI_TLV_HDR_SIZE), WMI_OEM_REQ_CMDID);
 
 	if (ret != EOK) {
-		WMA_LOGE("%s:wmi cmd send failed", __func__);
+		WMA_LOGE(FL(":wmi cmd send failed"));
 		cdf_nbuf_free(buf);
 	}
 
 out:
 	/* free oem data req buffer received from UMAC */
-	if (startOemDataReq)
+	if (startOemDataReq) {
+		if (startOemDataReq->data)
+			cdf_mem_free(startOemDataReq->data);
 		cdf_mem_free(startOemDataReq);
+	}
 
 	/* Now send data resp back to PE/SME with message sub-type of
 	 * WMI_OEM_INTERNAL_RSP. This is required so that PE/SME clears
@@ -1784,8 +1961,7 @@ out:
 		return;
 	}
 	cdf_mem_zero(pStartOemDataRsp, sizeof(tStartOemDataRsp));
-	msg_subtype = (uint32_t *) (&pStartOemDataRsp->oemDataRsp[0]);
-	*msg_subtype = WMI_OEM_INTERNAL_RSP;
+	pStartOemDataRsp->target_rsp = false;
 
 	WMA_LOGI("%s: Sending WMA_START_OEM_DATA_RSP to clear up PE/SME pending cmd",
 		__func__);
@@ -2005,10 +2181,12 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	cdf_size_t n;
 	A_UINT64 tsf64 = 0;
 	int phy_err_code = 0;
+	A_UINT32 phy_err_mask = 0;
 	int error = 0;
 	tpAniSirGlobal mac_ctx =
 		(tpAniSirGlobal)cds_get_context(CDF_MODULE_ID_PE);
 	bool enable_log = false;
+	int max_dfs_buf_length = 0;
 
 	if (NULL == mac_ctx) {
 		WMA_LOGE("%s: mac_ctx is NULL", __func__);
@@ -2035,10 +2213,19 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 			 __func__, sizeof(*pe_hdr), datalen);
 		return 0;
 	}
-	if (pe_hdr->buf_len > DFS_MAX_BUF_LENGHT) {
+	/*
+	 * The max buffer lenght is larger for DFS-3 than DFS-2.
+	 * So, accordingly use the correct max buffer size.
+	 */
+	if (wma->hw_bd_id != WMI_HWBD_QCA6174)
+		max_dfs_buf_length = DFS3_MAX_BUF_LENGTH;
+	else
+		max_dfs_buf_length = DFS_MAX_BUF_LENGTH;
+
+	if (pe_hdr->buf_len > max_dfs_buf_length) {
 		WMA_LOGE("%s: Received Invalid Phyerror event buffer length = %d"
 			"Maximum allowed buf length = %d", __func__,
-			pe_hdr->buf_len, DFS_MAX_BUF_LENGHT);
+			pe_hdr->buf_len, max_dfs_buf_length);
 
 		return 0;
 	}
@@ -2050,6 +2237,21 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 	 */
 	tsf64 = pe_hdr->tsf_l32;
 	tsf64 |= (((uint64_t) pe_hdr->tsf_u32) << 32);
+
+	/*
+	 * Check the HW board ID to figure out
+	 * if DFS-3 is supported. In DFS-3
+	 * phyerror mask indicates the type of
+	 * phyerror, whereas in DFS-2 phyerrorcode
+	 * indicates the type of phyerror. If the
+	 * board is NOT WMI_HWBD_QCA6174, for now
+	 * assume that it supports DFS-3.
+	 */
+	if (wma->hw_bd_id != WMI_HWBD_QCA6174) {
+		phy_err_mask = pe_hdr->rsPhyErrMask0;
+		WMA_LOGD("%s: DFS-3 phyerror mask = 0x%x",
+			  __func__, phy_err_mask);
+	}
 
 	/*
 	 * Loop over the bufp, extracting out phyerrors
@@ -2095,14 +2297,30 @@ static int wma_unified_phyerr_rx_event_handler(void *handle,
 			error = 1;
 			break;
 		}
-		phy_err_code = WMI_UNIFIED_PHYERRCODE_GET(&ev->hdr);
+		/*
+		 * If the board id is WMI_HWBD_QCA6174
+		 * then it supports only DFS-2. So, fetch
+		 * phyerror code in order to know the type
+		 * of phyerror.
+		 */
+		if (wma->hw_bd_id == WMI_HWBD_QCA6174) {
+			phy_err_code = WMI_UNIFIED_PHYERRCODE_GET(&ev->hdr);
+			WMA_LOGD("%s: DFS-2 phyerror code = 0x%x",
+				  __func__, phy_err_code);
+		}
 
 		/*
-		 * If the phyerror category matches,
+		 * phy_err_code is set for DFS-2 and phy_err_mask
+		 * is set for DFS-3. Checking both to support
+		 * compatability for older platforms.
+		 * If the phyerror or phyerrmask category matches,
 		 * pass radar events to the dfs pattern matching code.
 		 * Don't pass radar events with no buffer payload.
 		 */
-		if (phy_err_code == 0x5 || phy_err_code == 0x24) {
+		if (((phy_err_mask & WMI_PHY_ERROR_MASK0_RADAR) ||
+		     (phy_err_mask & WMI_PHY_ERROR_MASK0_FALSE_RADAR_EXT)) ||
+		    (phy_err_code == WMA_DFS2_PHYERROR_CODE ||
+		     phy_err_code == WMA_DFS2_FALSE_RADAR_EXT)) {
 			if (ev->hdr.buf_len > 0) {
 				/* Calling in to the DFS module to process the phyerr */
 				dfs_process_phyerr(ic, &ev->bufp[0],
@@ -3215,12 +3433,7 @@ void wma_register_wow_default_patterns(WMA_HANDLE handle, uint8_t vdev_id)
 	iface = &wma->interfaces[vdev_id];
 
 	if (iface->ptrn_match_enable) {
-		if (wma_is_vdev_in_ap_mode(wma, vdev_id)
-#ifdef QCA_IBSS_SUPPORT
-			||
-			wma_is_vdev_in_ibss_mode(wma, vdev_id)
-#endif
-			) {
+		if (wma_is_vdev_in_beaconning_mode(wma, vdev_id)) {
 			/* Configure SAP/GO/IBSS mode default wow patterns */
 			WMA_LOGI("Config SAP specific default wow patterns vdev_id %d",
 				 vdev_id);
@@ -3397,7 +3610,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		WMA_LOGE("Credits:%d; Pending_Cmds: %d",
 			 wmi_get_host_credits(wma->wmi_handle),
 			 wmi_get_pending_cmds(wma->wmi_handle));
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
@@ -3429,7 +3642,7 @@ CDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 			 "cannot resume back", __func__, host_credits,
 			 wmi_pending_cmds);
 		htc_dump_counter_info(wma->htc_handle);
-		if (!cds_is_logp_in_progress())
+		if (!cds_is_driver_recovering())
 			CDF_BUG(0);
 		else
 			WMA_LOGE("%s: SSR in progress, ignore no credit issue",
@@ -3461,17 +3674,20 @@ error:
 /**
  * wma_resume_req() - clear configured wow patterns in fw
  * @wma: wma handle
+ * @type: type of suspend
  *
  * Return: CDF status
  */
-CDF_STATUS wma_resume_req(tp_wma_handle wma)
+CDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type)
 {
-	wma->no_of_resume_ind++;
+	if (type == CDF_SYSTEM_SUSPEND) {
+		wma->no_of_resume_ind++;
 
-	if (wma->no_of_resume_ind < wma_get_vdev_count(wma))
-		return CDF_STATUS_SUCCESS;
+		if (wma->no_of_resume_ind < wma_get_vdev_count(wma))
+			return CDF_STATUS_SUCCESS;
 
-	wma->no_of_resume_ind = 0;
+		wma->no_of_resume_ind = 0;
+	}
 
 	/* Reset the DTIM Parameters */
 	wma_set_resume_dtim(wma);
@@ -3479,6 +3695,8 @@ CDF_STATUS wma_resume_req(tp_wma_handle wma)
 	wma_set_wow_bus_suspend(wma, 0);
 	/* unpause the vdev if left paused and hif_pci_suspend fails */
 	wma_unpause_vdev(wma);
+
+	wmi_set_runtime_pm_inprogress(wma->wmi_handle, false);
 
 	return CDF_STATUS_SUCCESS;
 }
@@ -3716,152 +3934,253 @@ CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 	return CDF_STATUS_SUCCESS;
 }
 
-#ifdef FEATURE_WLAN_EXTSCAN
 /**
- * wma_is_extscan_in_progress(): check if extscan is in progress
- * @wma: wma handle
+ * wma_calculate_and_update_conn_state(): calculate each interfaces conn state
+ * @wma: validated wma handle
  *
- * Return: true is extscan in progress, false otherwise.
+ * Identifies any vdev that is up and not in ap mode as connected.
+ * stores this in the interfaces conn_state varible.
  */
-static bool wma_is_extscan_in_progress(tp_wma_handle wma)
+void wma_calculate_and_update_conn_state(tp_wma_handle wma)
 {
 	int i;
-
 	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].extscan_in_progress) {
-			WMA_LOGD("Extscan is in progress, enabling wow");
-			return true;
-		}
+		wma->interfaces[i].conn_state =
+			!!(wma->interfaces[i].vdev_up &&
+					!wma_is_vdev_in_ap_mode(wma, i));
+	}
+}
+
+/**
+ * wma_update_conn_state(): synchronize wma & hdd
+ * @wma: wma handle
+ * @conn_state: boolean array to populate
+ * @len: validation parameter
+ *
+ * populate interfaces conn_state with true if the interface
+ * is a connected client and wow will configure a pattern.
+ */
+void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask)
+{
+	int i;
+	for (i = 0; i < wma->max_bssid; i++) {
+		if (conn_mask & (1 << i))
+			wma->interfaces[i].conn_state = true;
+		else
+			wma->interfaces[i].conn_state = false;
 	}
 
+	if (wma->wow.magic_ptrn_enable)
+		return;
+
+	for (i = 0; i < wma->max_bssid; i++) {
+		if (!wma->interfaces[i].ptrn_match_enable)
+			wma->interfaces[i].conn_state = false;
+	}
+}
+
+/**
+ * wma_is_beaconning_vdev_up(): check if a beaconning vdev is up
+ * @wma: wma handle
+ *
+ * Return TRUE if beaconning vdev is up
+ */
+static inline
+bool wma_is_beaconning_vdev_up(tp_wma_handle wma)
+{
+	int i;
+	for (i = 0; i < wma->max_bssid; i++) {
+		if (wma_is_vdev_in_beaconning_mode(wma, i)
+				&& wma->interfaces[i].vdev_up)
+			return true;
+	}
 	return false;
 }
+
+/**
+ * wma_support_wow_for_beaconing: wow query for beaconning
+ * @wma: wma handle
+ *
+ * Need to configure wow to enable beaconning offload when
+ * a beaconing vdev is up and beaonning offload is configured.
+ *
+ * Return: true if we need to enable wow for beaconning offload
+ */
+static inline
+bool wma_support_wow_for_beaconing(tp_wma_handle wma)
+{
+	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
+				WMI_SERVICE_BEACON_OFFLOAD)) {
+		if (wma_is_beaconning_vdev_up(wma))
+			return true;
+	}
+	return false;
+}
+
+#ifdef FEATURE_WLAN_SCAN_PNO
+/**
+ * wma_is_pnoscan_in_progress(): check if a pnoscan is in progress
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool wma_is_pnoscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return wma->interfaces[vdev_id].pno_in_progress;
+}
+
+/**
+ * wma_is_pnoscan_match_found(): check if a scan match was found
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: TRUE/FALSE
+ */
+static inline
+bool wma_is_pnoscan_match_found(tp_wma_handle wma, int vdev_id)
+{
+	return wma->interfaces[vdev_id].nlo_match_evt_received;
+}
 #else
-static bool wma_is_extscan_in_progress(tp_wma_handle wma)
+/**
+ * wma_is_pnoscan_in_progress(): dummy
+ *
+ * Return: False since no pnoscan cannot be in progress
+ * when feature flag is not defined.
+ */
+bool wma_is_pnoscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return FALSE;
+}
+
+/**
+ * wma_is_pnoscan_match_found(): dummy
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: False since no pnoscan cannot occur
+ * when feature flag is not defined.
+ */
+static inline
+bool wma_is_pnoscan_match_found(tp_wma_handle wma, int vdev_id)
+{
+	return FALSE;
+}
+#endif
+
+#ifdef FEATURE_WLAN_EXTSCAN
+static inline
+/**
+ * wma_is_extscan_in_progress(): check if an extscan is in progress
+ * @wma: wma handle
+ * @vdev_id: vdev_id
+ *
+ * Return: TRUE/FALSvE
+ */
+bool wma_is_extscan_in_progress(tp_wma_handle wma, int vdev_id)
+{
+	return wma->interfaces[vdev_id].extscan_in_progress;
+}
+#else
+/**
+ * wma_is_extscan_in_progress(): dummy
+ *
+ * Return: False since no extscan can be in progress
+ * when feature flag is not defined.
+ */
+bool wma_is_extscan_in_progress(tp_wma_handle wma, int vdev_id)
 {
 	return false;
 }
 #endif
 
 /**
- * wma_suspend_req() -  Handles suspend indication request received from umac.
+ * wma_is_wow_applicable(): should enable wow
  * @wma: wma handle
- * @info: suspend params
  *
- * Return: CDF status
+ *  Enable WOW if any one of the condition meets,
+ *  1) Is any one of vdev in beaconning mode (in AP mode) ?
+ *  2) Is any one of vdev in connected state (in STA mode) ?
+ *  3) Is PNO in progress in any one of vdev ?
+ *  4) Is Extscan in progress in any one of vdev ?
+ *
+ * Return: true if wma needs to configure wow.
  */
-CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
+bool wma_is_wow_applicable(tp_wma_handle wma)
 {
-	struct wma_txrx_node *iface;
-	bool pno_in_progress = false;
-	uint8_t i, vdev_id = 0;
-	bool extscan_in_progress = false, pno_matched = false;
-	bool enable_wow = false;
-
-	wma->no_of_suspend_ind++;
-
-	if (info->sessionId > wma->max_bssid) {
-		WMA_LOGE("Invalid vdev id (%d)", info->sessionId);
-		cdf_mem_free(info);
-		return CDF_STATUS_E_INVAL;
+	int vdev_id;
+	if (wma_support_wow_for_beaconing(wma)) {
+		WMA_LOGD("vdev is in beaconning mode, enabling wow");
+		return true;
 	}
 
-	iface = &wma->interfaces[info->sessionId];
-	if (!iface) {
-		WMA_LOGD("vdev %d node is not found", info->sessionId);
-		cdf_mem_free(info);
-		return CDF_STATUS_SUCCESS;
-	}
-
-	if (!wma->wow.magic_ptrn_enable && !iface->ptrn_match_enable) {
-		cdf_mem_free(info);
-
-		if (wma->no_of_suspend_ind == wma_get_vdev_count(wma)) {
-			WMA_LOGD("Both magic and pattern byte match are disabled");
-			wma->no_of_suspend_ind = 0;
-			goto send_ready_to_suspend;
-		}
-
-		return CDF_STATUS_SUCCESS;
-	}
-
-	iface->conn_state = (info->connectedState) ? true : false;
-
-	/*
-	 * Once WOW is enabled in FW, host can't send anymore
-	 * data to fw. umac sends suspend indication on each
-	 * vdev during platform suspend. WMA has to wait until
-	 * suspend indication received on last vdev before
-	 * enabling wow in fw.
-	 */
-	if (wma->no_of_suspend_ind < wma_get_vdev_count(wma)) {
-		cdf_mem_free(info);
-		return CDF_STATUS_SUCCESS;
-	}
-
-	wma->no_of_suspend_ind = 0;
-	wma->wow.gtk_pdev_enable = 0;
-	/*
-	 * Enable WOW if any one of the condition meets,
-	 *  1) Is any one of vdev in beaconning mode (in AP mode) ?
-	 *  2) Is any one of vdev in connected state (in STA mode) ?
-	 *  3) Is PNO in progress in any one of vdev ?
-	 *  4) Is Extscan in progress in any one of vdev ?
-	 */
-	for (i = 0; i < wma->max_bssid; i++) {
-		if ((wma_is_vdev_in_ap_mode(wma, i)
-#ifdef QCA_IBSS_SUPPORT
-		     || wma_is_vdev_in_ibss_mode(wma, i)
-#endif /* QCA_IBSS_SUPPORT */
-		     ) && wma->interfaces[i].vdev_up &&
-		    WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
-					   WMI_SERVICE_BEACON_OFFLOAD)) {
-			WMA_LOGD("vdev %d is in beaconning mode, enabling wow",
-				 i);
-			enable_wow = true;
-		}
-	}
-	for (i = 0; i < wma->max_bssid; i++) {
-		if (wma->interfaces[i].conn_state)
-			enable_wow = true;
-#ifdef FEATURE_WLAN_SCAN_PNO
-		if (wma->interfaces[i].pno_in_progress) {
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		if (wma->interfaces[vdev_id].conn_state) {
+			WMA_LOGD("STA is connected, enabling wow");
+			return true;
+		} else if (wma_is_pnoscan_in_progress(wma, vdev_id)) {
 			WMA_LOGD("PNO is in progress, enabling wow");
-			enable_wow = true;
-			pno_in_progress = true;
-			vdev_id = i;
-			if (wma->interfaces[i].nlo_match_evt_received)
-				pno_matched = true;
-			break;
+			return true;
+		} else if (wma_is_extscan_in_progress(wma, vdev_id)) {
+			WMA_LOGD("EXT is in progress, enabling wow");
+			return true;
 		}
-#endif /* FEATURE_WLAN_SCAN_PNO */
-	}
-	extscan_in_progress = wma_is_extscan_in_progress(wma);
-	if (extscan_in_progress)
-		enable_wow = true;
-
-	for (i = 0; i < wma->max_bssid; i++) {
-		wma->wow.gtk_pdev_enable |= wma->wow.gtk_err_enable[i];
-		WMA_LOGD("VDEV_ID:%d, gtk_err_enable[%d]:%d, gtk_pdev_enable:%d", i,
-			i, wma->wow.gtk_err_enable[i], wma->wow.gtk_pdev_enable);
 	}
 
-	if (!enable_wow) {
-		WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
-		cdf_mem_free(info);
-		goto send_ready_to_suspend;
+	WMA_LOGD("All vdev are in disconnected state and pno/extscan is not in progress, skipping wow");
+	return true;
+}
+
+/**
+ * wma_configure_dynamic_wake_events(): configure dyanmic wake events
+ * @wma: wma handle
+ *
+ * Some wake events need to be enabled dynamically.  Controll those here.
+ *
+ * Return: none
+ */
+void wma_configure_dynamic_wake_events(tp_wma_handle wma)
+{
+	int vdev_id;
+	int enable_mask;
+	int disable_mask;
+
+	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
+		enable_mask = 0;
+		disable_mask = 0;
+
+		if (wma_is_pnoscan_in_progress(wma, vdev_id)) {
+			if (wma_is_pnoscan_match_found(wma, vdev_id))
+				enable_mask |=
+					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
+			else
+				disable_mask |=
+					(1 << WOW_NLO_SCAN_COMPLETE_EVENT);
+		}
+
+		if (enable_mask != 0)
+			wma_enable_disable_wakeup_event(wma, vdev_id,
+					enable_mask, true);
+		if (disable_mask != 0)
+			wma_enable_disable_wakeup_event(wma, vdev_id,
+					disable_mask, false);
 	}
+}
 
-	WMA_LOGE("WOW Suspend");
-
-	/*
-	 * At this point, suspend indication is received on
-	 * last vdev. It's the time to enable wow in fw.
-	 */
 #ifdef FEATURE_WLAN_LPHB
-	/* LPHB cache, if any item was enabled, should be
-	 * applied.
-	 */
+/**
+ * wma_apply_lphb(): apply cached LPHB settings
+ * @wma: wma handle
+ *
+ * LPHB cache, if any item was enabled, should be
+ * applied.
+ */
+static inline
+void wma_apply_lphb(tp_wma_handle wma)
+{
+	int i;
 	WMA_LOGD("%s: checking LPHB cache", __func__);
 	for (i = 0; i < 2; i++) {
 		if (wma->wow.lphb_cache[i].params.lphbEnableReq.enable) {
@@ -3871,22 +4190,49 @@ CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info)
 					       false);
 		}
 	}
+}
+#else
+void wma_apply_lphb(tp_wma_handle wma) {}
 #endif /* FEATURE_WLAN_LPHB */
 
-	if (pno_matched)
-		wma_enable_disable_wakeup_event(wma, vdev_id,
-				(1 << WOW_NLO_SCAN_COMPLETE_EVENT),
-				pno_matched);
+static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
+		enum cdf_suspend_type type)
+{
+	if (type == CDF_SYSTEM_SUSPEND)
+		wma_send_status_to_suspend_ind(wma, true);
+	else if (type == CDF_RUNTIME_SUSPEND)
+		cdf_event_set(&wma->runtime_suspend);
+}
 
-	wma->wow.wow_enable = true;
-	wma->wow.wow_enable_cmd_sent = false;
+/**
+ * wma_suspend_req() -  Handles suspend indication request received from umac.
+ * @wma: wma handle
+ * @type: type of suspend
+ *
+ * The type controlls how we notify the indicator that the indication has
+ * been processed
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type)
+{
+	if (type == CDF_RUNTIME_SUSPEND)
+		wmi_set_runtime_pm_inprogress(wma->wmi_handle, true);
 
-	cdf_mem_free(info);
+	if (wma_is_wow_applicable(wma)) {
+		WMA_LOGE("WOW Suspend");
+		wma_apply_lphb(wma);
 
-send_ready_to_suspend:
+		wma_configure_dynamic_wake_events(wma);
+
+		wma->wow.wow_enable = true;
+		wma->wow.wow_enable_cmd_sent = false;
+	}
+
 	/* Set the Suspend DTIM Parameters */
 	wma_set_suspend_dtim(wma);
-	wma_send_status_to_suspend_ind(wma, true);
+
+	wma_notify_suspend_req_procesed(wma, type);
 
 	/* to handle race between hif_pci_suspend and
 	 * unpause/pause tx handler
@@ -3955,7 +4301,7 @@ static CDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 		WMA_LOGP("%s: Pending commands %d credits %d", __func__,
 			 wmi_get_pending_cmds(wma->wmi_handle),
 			 wmi_get_host_credits(wma->wmi_handle));
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
@@ -4067,7 +4413,7 @@ bool static wma_is_nan_enabled(tp_wma_handle wma)
  *
  * Return: true is wow mode is needed else false
  */
-int wma_is_wow_mode_selected(WMA_HANDLE handle)
+bool wma_is_wow_mode_selected(WMA_HANDLE handle)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
 
@@ -4469,8 +4815,6 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	tpAniGetTsmStatsReq pStats = (tpAniGetTsmStatsReq) pTsmStatsMsg;
 	tpAniGetTsmStatsRsp pTsmRspParams = NULL;
-#else
-	tpTSMStats pStats = (tpTSMStats) pTsmStatsMsg;
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	int tid = pStats->tid;
 	/*
@@ -4506,8 +4850,6 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	pTsmRspParams->rc = eSIR_FAILURE;
 	pTsmRspParams->tsmStatsReq = pStats;
 	pTsmMetric = &pTsmRspParams->tsmMetrics;
-#else
-	pTsmMetric = (tpAniTrafStrmMetrics)&(pStats->tsmMetrics);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	/* populate pTsmMetric */
 	pTsmMetric->UplinkPktQueueDly = queue_delay_microsec;
@@ -4527,8 +4869,6 @@ CDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 	/* post this message to LIM/PE */
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 	wma_send_msg(wma_handler, WMA_TSM_STATS_RSP, (void *)pTsmRspParams, 0);
-#else
-	wma_send_msg(wma_handler, WMA_TSM_STATS_RSP, (void *)pTsmStatsMsg, 0);
 #endif /* FEATURE_WLAN_ESE_UPLOAD */
 	return CDF_STATUS_SUCCESS;
 }
@@ -4916,15 +5256,15 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 	uint32_t count = 0, num_ns_ext_tuples = 0;
 
 	/* Get the vdev id */
-	if (!wma_find_vdev_by_bssid(wma, pHostOffloadParams->bssId, &vdev_id)) {
+	if (!wma_find_vdev_by_bssid(wma, pHostOffloadParams->bssid.bytes,
+					&vdev_id)) {
 		WMA_LOGE("vdev handle is invalid for %pM",
-			 pHostOffloadParams->bssId);
+			 pHostOffloadParams->bssid.bytes);
 		cdf_mem_free(pHostOffloadParams);
 		return CDF_STATUS_E_INVAL;
 	}
 
 	if (!wma->interfaces[vdev_id].vdev_up) {
-
 		WMA_LOGE("vdev %d is not up skipping arp/ns offload", vdev_id);
 		cdf_mem_free(pHostOffloadParams);
 		return CDF_STATUS_E_FAILURE;
@@ -4932,7 +5272,6 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 
 	if (!bArpOnly)
 		count = pHostOffloadParams->num_ns_offload_count;
-
 
 	len = sizeof(WMI_SET_ARP_NS_OFFLOAD_CMD_fixed_param) + WMI_TLV_HDR_SIZE +       /* TLV place holder size for array of NS tuples */
 	      WMI_MAX_NS_OFFLOADS * sizeof(WMI_NS_OFFLOAD_TUPLE) + WMI_TLV_HDR_SIZE +   /* TLV place holder size for array of ARP tuples */
@@ -5016,8 +5355,8 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 			 * local MAC address rather than the tuple
 			 */
 			WMI_CHAR_ARRAY_TO_MAC_ADDR(pHostOffloadParams->
-						   nsOffloadInfo.selfMacAddr,
-						   &ns_tuple->target_mac);
+					nsOffloadInfo.self_macaddr.bytes,
+					&ns_tuple->target_mac);
 #endif /* WLAN_NS_OFFLOAD */
 			if ((ns_tuple->target_mac.mac_addr31to0 != 0) ||
 			    (ns_tuple->target_mac.mac_addr47to32 != 0)) {
@@ -5081,7 +5420,8 @@ CDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 
 				/* target MAC is optional, check if it is valid, if this is not valid,
 				 * the target will use the known local MAC address rather than the tuple */
-				 WMI_CHAR_ARRAY_TO_MAC_ADDR(pHostOffloadParams->nsOffloadInfo.selfMacAddr,
+				 WMI_CHAR_ARRAY_TO_MAC_ADDR(
+					pHostOffloadParams->nsOffloadInfo.self_macaddr.bytes,
 					&ns_tuple->target_mac);
 #endif
 				if ((ns_tuple->target_mac.mac_addr31to0 != 0) ||
@@ -5419,7 +5759,7 @@ int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
 			       (wmi_extwow_set_app_type1_params_cmd_fixed_param));
 
 	cmd->vdev_id = appType1Params->vdev_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType1Params->wakee_mac_addr,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType1Params->wakee_mac_addr.bytes,
 				   &cmd->wakee_mac);
 	cdf_mem_copy(cmd->ident, appType1Params->identification_id, 8);
 	cmd->ident_len = appType1Params->id_length;
@@ -5429,7 +5769,7 @@ int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
 	WMA_LOGD("%s: vdev_id %d wakee_mac_addr %pM "
 		 "identification_id %.8s id_length %u "
 		 "password %.16s pass_length %u",
-		 __func__, cmd->vdev_id, appType1Params->wakee_mac_addr,
+		 __func__, cmd->vdev_id, appType1Params->wakee_mac_addr.bytes,
 		 cmd->ident, cmd->ident_len, cmd->passwd, cmd->passwd_len);
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
@@ -5492,7 +5832,7 @@ int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 	cmd->keepalive_max = appType2Params->keepalive_max;
 	cmd->keepalive_inc = appType2Params->keepalive_inc;
 
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType2Params->gateway_mac,
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType2Params->gateway_mac.bytes,
 				   &cmd->gateway_mac);
 	cmd->tcp_tx_timeout_val = appType2Params->tcp_tx_timeout_val;
 	cmd->tcp_rx_timeout_val = appType2Params->tcp_rx_timeout_val;
@@ -5504,7 +5844,7 @@ int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 		 "tcp_ack_seq %u keepalive_init %u keepalive_min %u "
 		 "keepalive_max %u keepalive_inc %u "
 		 "tcp_tx_timeout_val %u tcp_rx_timeout_val %u",
-		 __func__, cmd->vdev_id, appType2Params->gateway_mac,
+		 __func__, cmd->vdev_id, appType2Params->gateway_mac.bytes,
 		 cmd->rc4_key, cmd->rc4_key_len,
 		 cmd->ip_id, cmd->ip_device_ip, cmd->ip_server_ip,
 		 cmd->tcp_src_port, cmd->tcp_dst_port, cmd->tcp_seq,
@@ -5996,6 +6336,118 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 }
 
 /**
+ * wma_post_runtime_resume_msg() - post the resume request
+ * @handle: validated wma handle
+ *
+ * request the MC thread unpaus the vdev and set resume dtim
+ *
+ * Return: cdf status of the mq post
+ */
+static CDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
+{
+	cds_msg_t resume_msg;
+
+	resume_msg.bodyptr = NULL;
+	resume_msg.type    = WMA_RUNTIME_PM_RESUME_IND;
+	return cds_mq_post_message(CDF_MODULE_ID_WMA, &resume_msg);
+}
+
+/**
+ * wma_post_runtime_suspend_msg() - post the suspend request
+ * @handle: validated wma handle
+ *
+ * Requests for offloads to be configured for runtime suspend
+ * on the MC thread
+ *
+ * Return CDF_STATUS_E_AGAIN in case of timeout or CDF_STATUS_SUCCESS
+ */
+static CDF_STATUS wma_post_runtime_suspend_msg(WMA_HANDLE handle)
+{
+	cds_msg_t cds_msg;
+	CDF_STATUS cdf_status;
+	tp_wma_handle wma = (tp_wma_handle) handle;
+
+	cdf_event_reset(&wma->runtime_suspend);
+
+	cds_msg.bodyptr = NULL;
+	cds_msg.type    = WMA_RUNTIME_PM_SUSPEND_IND;
+	cdf_status = cds_mq_post_message(CDF_MODULE_ID_WMA, &cds_msg);
+
+	if (cdf_status != CDF_STATUS_SUCCESS)
+		goto failure;
+
+	if (cdf_wait_single_event(&wma->runtime_suspend,
+			WMA_TGT_SUSPEND_COMPLETE_TIMEOUT) !=
+			CDF_STATUS_SUCCESS) {
+		WMA_LOGE("Failed to get runtime suspend event");
+		goto failure;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+failure:
+	return CDF_STATUS_E_AGAIN;
+}
+
+/**
+ * __wma_bus_suspend(): handles bus suspend for wma
+ * @type: is this suspend part of runtime suspend or system suspend?
+ *
+ * Bails if a scan is in progress.
+ * Calls the appropriate handlers based on configuration and event.
+ *
+ * Return: 0 for success or error code
+ */
+static int __wma_bus_suspend(enum cdf_suspend_type type)
+{
+	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
+	if (NULL == handle) {
+		WMA_LOGE("%s: wma context is NULL", __func__);
+		return -EFAULT;
+	}
+
+	if (wma_check_scan_in_progress(handle)) {
+		WMA_LOGE("%s: Scan in progress. Aborting suspend", __func__);
+		return -EBUSY;
+	}
+
+	if (type == CDF_RUNTIME_SUSPEND) {
+		CDF_STATUS status = wma_post_runtime_suspend_msg(handle);
+		if (status)
+			return cdf_status_to_os_return(status);
+	}
+
+	if (type == CDF_SYSTEM_SUSPEND)
+		WMA_LOGE("%s: wow mode selected %d", __func__,
+				wma_is_wow_mode_selected(handle));
+
+	if (wma_is_wow_mode_selected(handle)) {
+		CDF_STATUS status = wma_enable_wow_in_fw(handle);
+		return cdf_status_to_os_return(status);
+	}
+
+	return wma_suspend_target(handle, 0);
+}
+
+/**
+ * wma_runtime_suspend() - handles runtime suspend request from hdd
+ *
+ * Calls the appropriate handler based on configuration and event.
+ * Last busy marking should prevent race conditions between processing
+ * of asyncronous fw events and the running of runtime suspend.
+ * (eg. last busy marking should guarantee that any auth requests have
+ * been processed)
+ * Events comming from the host are not protected, but aren't expected
+ * to be an issue.
+ *
+ * Return: 0 for success or error code
+ */
+int wma_runtime_suspend(void)
+{
+	return __wma_bus_suspend(CDF_RUNTIME_SUSPEND);
+}
+
+/**
  * wma_bus_suspend() - handles bus suspend request from hdd
  *
  * Calls the appropriate handler based on configuration and event
@@ -6004,24 +6456,52 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
  */
 int wma_bus_suspend(void)
 {
+
+	return __wma_bus_suspend(CDF_RUNTIME_SUSPEND);
+}
+
+/**
+ * __wma_bus_resume() - bus resume for wma
+ *
+ * does the part of the bus resume common to bus and system suspend
+ *
+ * Return: os error code.
+ */
+int __wma_bus_resume(WMA_HANDLE handle)
+{
+	bool wow_mode = wma_is_wow_mode_selected(handle);
+	CDF_STATUS status;
+
+	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
+
+	if (!wow_mode)
+		return wma_resume_target(handle);
+
+	status = wma_disable_wow_in_fw(handle);
+	return cdf_status_to_os_return(status);
+}
+
+/**
+ * wma_runtime_resume() - do the runtime resume operation for wma
+ *
+ * Return: os error code.
+ */
+int wma_runtime_resume(void)
+{
+	int ret;
+	CDF_STATUS status;
 	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
 	}
 
-	WMA_LOGE("%s: wow mode selected %d", __func__,
-	       wma_is_wow_mode_selected(handle));
+	ret = __wma_bus_resume(handle);
+	if (ret)
+		return ret;
 
-	if (wma_check_scan_in_progress(handle)) {
-		WMA_LOGE("%s: Scan in progress. Aborting suspend", __func__);
-		return -EBUSY;
-	}
-
-	if (wma_is_wow_mode_selected(handle))
-		return cdf_status_to_os_return(wma_enable_wow_in_fw(handle));
-
-	return wma_suspend_target(handle, 0);
+	status = wma_post_runtime_resume_msg(handle);
+	return cdf_status_to_os_return(status);
 }
 
 /**
@@ -6035,19 +6515,12 @@ int wma_bus_suspend(void)
 int wma_bus_resume(void)
 {
 	WMA_HANDLE handle = cds_get_context(CDF_MODULE_ID_WMA);
-	int wow_mode;
 	if (NULL == handle) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
 		return -EFAULT;
 	}
 
-	wow_mode = wma_is_wow_mode_selected(handle);
-	WMA_LOGE("%s: wow mode %d", __func__, wow_mode);
-
-	if (!wow_mode)
-		return wma_resume_target(handle);
-
-	return cdf_status_to_os_return(wma_disable_wow_in_fw(handle));
+	return __wma_bus_resume(handle);
 }
 
 /**
@@ -6116,7 +6589,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 		WMA_LOGE("Failed to get ACK from firmware for pdev suspend");
 		wmi_set_target_suspend(wma_handle->wmi_handle, false);
 #ifdef CONFIG_CNSS
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 			if (pmac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
 			} else {
@@ -6213,7 +6686,7 @@ int wma_resume_target(WMA_HANDLE handle)
 		WMA_LOGP("%s: Pending commands %d credits %d", __func__,
 			wmi_get_pending_cmds(wma->wmi_handle),
 			wmi_get_host_credits(wma->wmi_handle));
-		if (!cds_is_logp_in_progress()) {
+		if (!cds_is_driver_recovering()) {
 #ifdef CONFIG_CNSS
 			if (pMac->sme.enableSelfRecovery) {
 				cds_trigger_recovery();
@@ -6492,6 +6965,8 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 		cmd->state = WMI_TDLS_ENABLE_PASSIVE;
 	} else if (WMA_TDLS_SUPPORT_ENABLED == tdls_mode) {
 		cmd->state = WMI_TDLS_ENABLE_ACTIVE;
+	} else if (WMA_TDLS_SUPPORT_ACTIVE_EXTERNAL_CONTROL == tdls_mode) {
+		cmd->state = WMI_TDLS_ENABLE_ACTIVE_EXTERNAL_CONTROL;
 	} else {
 		cmd->state = WMI_TDLS_DISABLE;
 	}
@@ -6509,6 +6984,10 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 	cmd->tdls_puapsd_inactivity_time_ms = wma_tdls->puapsd_inactivity_time;
 	cmd->tdls_puapsd_rx_frame_threshold =
 		wma_tdls->puapsd_rx_frame_threshold;
+	cmd->teardown_notification_ms =
+		wma_tdls->teardown_notification_ms;
+	cmd->tdls_peer_kickout_threshold =
+		wma_tdls->tdls_peer_kickout_threshold;
 
 	WMA_LOGD("%s: tdls_mode: %d, state: %d, "
 		 "notification_interval_ms: %d, "
@@ -6521,7 +7000,9 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 		 "tdls_peer_traffic_response_timeout: %d, "
 		 "tdls_puapsd_mask: 0x%x, "
 		 "tdls_puapsd_inactivity_time: %d, "
-		 "tdls_puapsd_rx_frame_threshold: %d ",
+		 "tdls_puapsd_rx_frame_threshold: %d, "
+		 "teardown_notification_ms: %d, "
+		 "tdls_peer_kickout_threshold: %d",
 		 __func__, tdls_mode, cmd->state,
 		 cmd->notification_interval_ms,
 		 cmd->tx_discovery_threshold,
@@ -6533,7 +7014,9 @@ int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams)
 		 cmd->tdls_peer_traffic_response_timeout_ms,
 		 cmd->tdls_puapsd_mask,
 		 cmd->tdls_puapsd_inactivity_time_ms,
-		 cmd->tdls_puapsd_rx_frame_threshold);
+		 cmd->tdls_puapsd_rx_frame_threshold,
+		 cmd->teardown_notification_ms,
+		 cmd->tdls_peer_kickout_threshold);
 
 	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
 				 WMI_TDLS_SET_STATE_CMDID)) {
@@ -6616,6 +7099,12 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
 		break;
 	case WMA_TDLS_PEER_STATE_TEARDOWN:
 		cmd->peer_state = WMI_TDLS_PEER_STATE_TEARDOWN;
+		break;
+	case  WMA_TDLS_PEER_ADD_MAC_ADDR:
+		cmd->peer_state = WMI_TDLS_PEER_ADD_MAC_ADDR;
+		break;
+	case  WMA_TDLS_PEER_REMOVE_MAC_ADDR:
+		cmd->peer_state = WMI_TDLS_PEER_REMOVE_MAC_ADDR;
 		break;
 	}
 
@@ -6941,6 +7430,8 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 						struct wma_vdev_start_req
 						*req)
 {
+	uint8_t ext_channel;
+
 	if (dfs_ic == NULL) {
 		WMA_LOGE("%s: DFS ic is Invalid", __func__);
 		return NULL;
@@ -6973,23 +7464,57 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 	    (dfs_ic->ic_curchan->ic_ieee <= WMA_11A_CHANNEL_END)) {
 		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_5GHZ;
 	}
-	if (CH_WIDTH_80MHZ == req->chan_width) {
-		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_VHT80;
-	}
-	if (CH_WIDTH_40MHZ == req->chan_width) {
+
+	switch (req->chan_width) {
+	case CH_WIDTH_20MHZ:
+		dfs_ic->ic_curchan->ic_flags |=
+				(req->vht_capable ? IEEE80211_CHAN_VHT20 :
+							IEEE80211_CHAN_HT20);
+		break;
+	case CH_WIDTH_40MHZ:
 		if (req->chan < req->ch_center_freq_seg0)
-			dfs_ic->ic_curchan->ic_flags |= (req->vht_capable ?
+			dfs_ic->ic_curchan->ic_flags |=
+					(req->vht_capable ?
 					IEEE80211_CHAN_VHT40PLUS :
 					IEEE80211_CHAN_HT40PLUS);
 		else
-			dfs_ic->ic_curchan->ic_flags |= (req->vht_capable ?
+			dfs_ic->ic_curchan->ic_flags |=
+					(req->vht_capable ?
 					IEEE80211_CHAN_VHT40MINUS :
 					IEEE80211_CHAN_HT40MINUS);
-	} else if (CH_WIDTH_20MHZ == req->chan_width) {
+		break;
+	case CH_WIDTH_80MHZ:
+		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_VHT80;
+		break;
+	case CH_WIDTH_80P80MHZ:
+		ext_channel = cds_freq_to_chan(chan->band_center_freq2);
 		dfs_ic->ic_curchan->ic_flags |=
-			(req->vht_capable ? IEEE80211_CHAN_VHT20 :
-						IEEE80211_CHAN_HT20);
+					IEEE80211_CHAN_VHT80P80;
+		dfs_ic->ic_curchan->ic_freq_ext =
+						chan->band_center_freq2;
+		dfs_ic->ic_curchan->ic_ieee_ext = ext_channel;
+
+		/* verify both the 80MHz are DFS bands or not */
+		if ((CHANNEL_STATE_DFS ==
+			cds_get_bonded_channel_state(req->chan ,
+						CH_WIDTH_80MHZ)) &&
+			(CHANNEL_STATE_DFS ==
+				cds_get_bonded_channel_state(
+					ext_channel - 6 ,
+					CH_WIDTH_80MHZ)))
+			dfs_ic->ic_curchan->ic_80p80_both_dfs = true;
+		break;
+	case CH_WIDTH_160MHZ:
+		dfs_ic->ic_curchan->ic_flags |=
+					IEEE80211_CHAN_VHT160;
+		break;
+	default:
+		WMA_LOGE(
+		    "%s: Recieved a wrong channel width %d",
+		    __func__, req->chan_width);
+		break;
 	}
+
 	dfs_ic->ic_curchan->ic_flagext |= IEEE80211_CHAN_DFS;
 
 	if (req->oper_mode == BSS_OPERATIONAL_MODE_AP) {

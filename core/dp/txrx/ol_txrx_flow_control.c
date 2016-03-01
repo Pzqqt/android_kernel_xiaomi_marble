@@ -430,6 +430,9 @@ int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
 		cdf_spin_unlock_bh(&pool->flow_pool_lock);
 
 		pdev->tx_desc.num_invalid_bin++;
+		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+			"%s: invalid pool created %d\n",
+			 __func__, pdev->tx_desc.num_invalid_bin);
 		if (pdev->tx_desc.num_invalid_bin > MAX_INVALID_BIN)
 			ASSERT(0);
 
@@ -477,6 +480,9 @@ int ol_tx_free_invalid_flow_pool(struct ol_tx_flow_pool_t *pool)
 	cdf_spin_unlock_bh(&pool->flow_pool_lock);
 
 	pdev->tx_desc.num_invalid_bin--;
+	TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
+		"%s: invalid pool deleted %d\n",
+		 __func__, pdev->tx_desc.num_invalid_bin);
 
 	return ol_tx_delete_flow_pool(pool);
 }

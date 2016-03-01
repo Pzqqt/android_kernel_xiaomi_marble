@@ -66,7 +66,7 @@ extern int domainoverride;
  * (eg on a non-DFS channel, with radar PHY errors still showing up.)
  * In that case, just drop out early.
  */
-void dfs_reset_alldelaylines(struct ath_dfs *dfs)
+void dfs_reset_alldelaylines(struct ath_dfs *dfs, int seg_id)
 {
 	struct dfs_filtertype *ft = NULL;
 	struct dfs_filter *rf;
@@ -79,7 +79,11 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs)
 			  "%s[%d]: sc_dfs is NULL", __func__, __LINE__);
 		return;
 	}
-	pl = dfs->pulses;
+
+	if (dfs->ic->dfs_hw_bd_id != DFS_HWBD_QCA6174)
+		pl = (seg_id == 0) ? dfs->pulses : dfs->pulses_ext_seg;
+	else
+		pl = dfs->pulses;
 
 	if (pl == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -87,13 +91,24 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs)
 		return;
 	}
 
-	if (dfs->dfs_b5radars == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
-			  "%s[%d]: pl==NULL, b5radars=%p", __func__, __LINE__,
-			  dfs->dfs_b5radars);
-		return;
+	if (dfs->ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		if (((seg_id == 0) ?
+		    dfs->dfs_b5radars : dfs->dfs_b5radars_ext_seg) == NULL) {
+			DFS_DPRINTK(dfs, ATH_DEBUG_DFS,
+				    "%s: pl==NULL, b5radars=%p\n",
+				    __func__,
+				    (seg_id == 0) ? dfs->dfs_b5radars :
+						    dfs->dfs_b5radars_ext_seg);
+			return;
+		}
+	} else {
+		if (dfs->dfs_b5radars == NULL) {
+			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+				"%s[%d]: pl==NULL, b5radars=%p", __func__, __LINE__,
+				dfs->dfs_b5radars);
+			return;
+		}
 	}
-
 	/* reset the pulse log */
 	pl->pl_firstelem = pl->pl_numelems = 0;
 	pl->pl_lastelem = DFS_MAX_PULSE_BUFFER_MASK;
@@ -104,7 +119,13 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs)
 			if (NULL != ft) {
 				for (j = 0; j < ft->ft_numfilters; j++) {
 					rf = &(ft->ft_filters[j]);
-					dl = &(rf->rf_dl);
+					if (dfs->ic->dfs_hw_bd_id !=
+							DFS_HWBD_QCA6174)
+						dl = (seg_id == 0) ?
+							&(rf->rf_dl) :
+							&(rf->rf_dl_ext_seg);
+					else
+						dl = &(rf->rf_dl);
 					if (dl != NULL) {
 						OS_MEMZERO(dl,
 							   sizeof(struct
@@ -118,12 +139,34 @@ void dfs_reset_alldelaylines(struct ath_dfs *dfs)
 		}
 	}
 	for (i = 0; i < dfs->dfs_rinfo.rn_numbin5radars; i++) {
-		OS_MEMZERO(&(dfs->dfs_b5radars[i].br_elems[0]),
-			   sizeof(struct dfs_bin5elem) * DFS_MAX_B5_SIZE);
-		dfs->dfs_b5radars[i].br_firstelem = 0;
-		dfs->dfs_b5radars[i].br_numelems = 0;
-		dfs->dfs_b5radars[i].br_lastelem =
-			(0xFFFFFFFF) & DFS_MAX_B5_MASK;
+		if (dfs->ic->dfs_hw_bd_id != DFS_HWBD_QCA6174) {
+			if (seg_id == DFS_80P80_SEG0) {
+				OS_MEMZERO(&(dfs->dfs_b5radars[i].br_elems[0]),
+				    sizeof(struct dfs_bin5elem) *
+							DFS_MAX_B5_SIZE);
+				dfs->dfs_b5radars[i].br_firstelem = 0;
+				dfs->dfs_b5radars[i].br_numelems = 0;
+				dfs->dfs_b5radars[i].br_lastelem =
+						(0xFFFFFFFF) & DFS_MAX_B5_MASK;
+			} else {
+				OS_MEMZERO(
+				    &(dfs->dfs_b5radars_ext_seg[i].br_elems[0]),
+				    sizeof(struct dfs_bin5elem)*
+				    DFS_MAX_B5_SIZE);
+				dfs->dfs_b5radars_ext_seg[i].br_firstelem = 0;
+				dfs->dfs_b5radars_ext_seg[i].br_numelems = 0;
+				dfs->dfs_b5radars_ext_seg[i].br_lastelem =
+						(0xFFFFFFFF)&DFS_MAX_B5_MASK;
+			}
+
+		} else {
+			OS_MEMZERO(&(dfs->dfs_b5radars[i].br_elems[0]),
+				sizeof(struct dfs_bin5elem) * DFS_MAX_B5_SIZE);
+			dfs->dfs_b5radars[i].br_firstelem = 0;
+			dfs->dfs_b5radars[i].br_numelems = 0;
+			dfs->dfs_b5radars[i].br_lastelem =
+						(0xFFFFFFFF) & DFS_MAX_B5_MASK;
+		}
 	}
 }
 
@@ -135,16 +178,6 @@ void dfs_reset_delayline(struct dfs_delayline *dl)
 {
 	OS_MEMZERO(&(dl->dl_elems[0]), sizeof(dl->dl_elems));
 	dl->dl_lastelem = (0xFFFFFFFF) & DFS_MAX_DL_MASK;
-}
-
-void dfs_reset_filter_delaylines(struct dfs_filtertype *dft)
-{
-	int i;
-	struct dfs_filter *df;
-	for (i = 0; i < DFS_MAX_NUM_RADAR_FILTERS; i++) {
-		df = &dft->ft_filters[i];
-		dfs_reset_delayline(&(df->rf_dl));
-	}
 }
 
 void dfs_reset_radarq(struct ath_dfs *dfs)
@@ -183,6 +216,8 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 	struct dfs_bin5pulse *b5pulses = NULL;
 	int32_t min_rssithresh = DFS_MAX_RSSI_VALUE;
 	uint32_t max_pulsedur = 0;
+	uint32_t b5_rssithresh;
+	uint32_t b5_maxdur;
 
 	if (dfs == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
@@ -299,6 +334,10 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 		}
 		rf = &(ft->ft_filters[ft->ft_numfilters++]);
 		dfs_reset_delayline(&rf->rf_dl);
+
+		if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)
+			dfs_reset_delayline(&rf->rf_dl_ext_seg);
+
 		numpulses = dfs_radars[p].rp_numpulses;
 
 		rf->rf_numpulses = numpulses;
@@ -359,9 +398,24 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 			    __func__);
 		goto bad4;
 	}
+
+	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		dfs->dfs_b5radars_ext_seg =
+			(struct dfs_bin5radars *)os_malloc(NULL, numb5radars *
+						sizeof(struct dfs_bin5radars),
+						GFP_KERNEL);
+		if (dfs->dfs_b5radars_ext_seg == NULL) {
+			CDF_TRACE(CDF_MODULE_ID_SAP, CDF_TRACE_LEVEL_ERROR,
+				  "%s:Fail allocate memory for ext bin5 radars",
+				  __func__);
+			goto bad4;
+		}
+	}
+
 	for (n = 0; n < numb5radars; n++) {
 		dfs->dfs_b5radars[n].br_pulse = b5pulses[n];
-		dfs->dfs_b5radars[n].br_pulse.b5_timewindow *= 1000000;
+		dfs->dfs_b5radars[n].br_pulse.b5_timewindow *=
+					DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER;
 		if (dfs->dfs_b5radars[n].br_pulse.b5_rssithresh <
 		    min_rssithresh)
 			min_rssithresh =
@@ -369,7 +423,30 @@ int dfs_init_radar_filters(struct ieee80211com *ic,
 		if (dfs->dfs_b5radars[n].br_pulse.b5_maxdur > max_pulsedur)
 			max_pulsedur = dfs->dfs_b5radars[n].br_pulse.b5_maxdur;
 	}
-	dfs_reset_alldelaylines(dfs);
+
+	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174) {
+		for (n = 0; n < numb5radars; n++) {
+			dfs->dfs_b5radars_ext_seg[n].br_pulse = b5pulses[n];
+			dfs->dfs_b5radars_ext_seg[n].br_pulse.b5_timewindow *=
+					DFS_BIN5_TIME_WINDOW_UNITS_MULTIPLIER;
+			b5_rssithresh =
+			    dfs->dfs_b5radars_ext_seg[n].br_pulse.b5_rssithresh;
+			if (b5_rssithresh < min_rssithresh)
+				min_rssithresh = b5_rssithresh;
+
+			b5_maxdur =
+			    dfs->dfs_b5radars_ext_seg[n].br_pulse.b5_maxdur;
+			if (b5_maxdur > max_pulsedur)
+				max_pulsedur = b5_maxdur;
+
+		}
+	}
+
+	dfs_reset_alldelaylines(dfs, DFS_80P80_SEG0);
+
+	if (ic->dfs_hw_bd_id !=  DFS_HWBD_QCA6174)
+		dfs_reset_alldelaylines(dfs, DFS_80P80_SEG1);
+
 	dfs_reset_radarq(dfs);
 	dfs->dfs_curchan_radindex = -1;
 	dfs->dfs_extchan_radindex = -1;

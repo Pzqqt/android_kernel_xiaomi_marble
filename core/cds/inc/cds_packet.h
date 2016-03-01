@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -109,6 +109,9 @@ void cds_pkt_proto_trace_init(void);
 
    ---------------------------------------------------------------------------*/
 void cds_pkt_proto_trace_close(void);
+#else
+static inline void cds_pkt_proto_trace_init(void) { }
+static inline void cds_pkt_proto_trace_close(void) {}
 #endif /* QCA_PKT_PROTO_TRACE */
 
 /**

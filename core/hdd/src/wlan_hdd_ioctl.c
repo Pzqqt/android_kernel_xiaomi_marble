@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -34,6 +34,7 @@
 #include "wlan_hdd_power.h"
 #include "wlan_hdd_driver_ops.h"
 #include "cds_concurrency.h"
+#include "wlan_hdd_hostapd.h"
 
 #include "wlan_hdd_p2p.h"
 #include <linux/ctype.h>
@@ -260,7 +261,6 @@ CDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 }
 #endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 static void hdd_get_band_helper(hdd_context_t *hdd_ctx, int *pBand)
 {
 	eCsrBand band = -1;
@@ -520,9 +520,6 @@ static int hdd_parse_reassoc_command_v1_data(const uint8_t *pValue,
 	return 0;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_ESE FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /**
  * hdd_reassoc() - perform a userspace-directed reassoc
  * @adapter:	Adapter upon which the command was received
@@ -695,9 +692,6 @@ static int hdd_parse_reassoc(hdd_adapter_t *adapter, const char *command)
 	return ret;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_ESE FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /**
  * hdd_sendactionframe() - send a userspace-supplied action frame
  * @adapter:	Adapter upon which the command was received
@@ -836,15 +830,9 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	ret = wlan_hdd_mgmt_tx(NULL, &adapter->wdev, &params, &cookie);
 #else
 	ret = wlan_hdd_mgmt_tx(NULL,
-#if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 6, 0))
 			       &(adapter->wdev),
-#else
-			       adapter->dev,
-#endif
 			       &chan, 0,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-			       NL80211_CHAN_HT20, 1,
-#endif
+
 			       dwell_time, frame, frame_len, 1, 1, &cookie);
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0) */
 
@@ -979,9 +967,6 @@ hdd_parse_sendactionframe(hdd_adapter_t *adapter, const char *command)
 	return ret;
 }
 
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_ESE FEATURE_WLAN_LFR */
-
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /**
  * hdd_parse_channellist() - HDD Parse channel list
  * @pValue:		Pointer to input channel list
@@ -1277,7 +1262,6 @@ hdd_parse_set_roam_scan_channels(hdd_adapter_t *adapter, const char *command)
 
 	return ret;
 }
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_LFR */
 
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
 /**
@@ -1723,7 +1707,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	char id[20], password[20];
 	tSirAppType1Params params;
-	int rc, i;
+	int rc;
 
 	rc = wlan_hdd_validate_context(hdd_ctx);
 	if (0 != rc) {
@@ -1739,9 +1723,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 
 	memset(&params, 0, sizeof(tSirAppType1Params));
 	params.vdev_id = adapter->sessionId;
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		params.wakee_mac_addr[i] =
-			adapter->macAddressCurrent.bytes[i];
+	cdf_copy_macaddr(&params.wakee_mac_addr, &adapter->macAddressCurrent);
 
 	params.id_length = strlen(id);
 	cdf_mem_copy(params.identification_id, id, params.id_length);
@@ -1750,7 +1732,7 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 
 	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
 		  "%s: %d %pM %.8s %u %.16s %u",
-		  __func__, params.vdev_id, params.wakee_mac_addr,
+		  __func__, params.vdev_id, params.wakee_mac_addr.bytes,
 		  params.identification_id, params.id_length,
 		  params.password, params.pass_length);
 
@@ -1782,7 +1764,7 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	char mac_addr[20], rc4_key[20];
-	unsigned int gateway_mac[6], i;
+	unsigned int gateway_mac[CDF_MAC_ADDR_SIZE];
 	tSirAppType2Params params;
 	int ret;
 
@@ -1831,8 +1813,8 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	for (i = 0; i < ETHER_ADDR_LEN; i++)
-		params.gateway_mac[i] = (uint8_t) gateway_mac[i];
+	cdf_mem_copy(&params.gateway_mac.bytes, (uint8_t *) &gateway_mac,
+			CDF_MAC_ADDR_SIZE);
 
 	params.rc4_key_len = strlen(rc4_key);
 	cdf_mem_copy(params.rc4_key, rc4_key, params.rc4_key_len);
@@ -2120,15 +2102,15 @@ static void hdd_get_link_status_cb(uint8_t status, void *context)
 static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 {
 
-	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	hdd_station_ctx_t *pHddStaCtx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 	struct statsContext context;
 	CDF_STATUS hstatus;
 	unsigned long rc;
 
-	if (hdd_ctx->isLogpInProgress) {
-		hddLog(LOGW, FL("LOGP in Progress. Ignore!!!"));
+	if (cds_is_driver_recovering()) {
+		hdd_warn("Recovery in Progress. State: 0x%x Ignore!!!",
+			 cds_get_driver_state());
 		return 0;
 	}
 
@@ -4669,7 +4651,7 @@ static int drv_cmd_miracast(hdd_adapter_t *adapter,
 		return -EBUSY;
 	}
 
-	if (cds_is_mcc_in_24G(pHddCtx))
+	if (cds_is_mcc_in_24G())
 		return cds_set_mas(adapter, filterType);
 
 exit:
@@ -5307,6 +5289,12 @@ static int drv_cmd_tdls_off_channel(hdd_adapter_t *adapter,
 	ret = sscanf(value, "%d", &set_value);
 	if (ret != 1)
 		return -EINVAL;
+
+	if (CDS_IS_DFS_CH(set_value)) {
+		hdd_err("DFS channel %d is passed for hdd_set_tdls_offchannel",
+		    set_value);
+		return -EINVAL;
+	}
 
 	hddLog(LOG1, FL("Tdls offchannel num: %d"), set_value);
 
@@ -5956,6 +5944,123 @@ static int drv_cmd_set_fcc_channel(hdd_adapter_t *adapter,
 	return ret;
 }
 
+/**
+ * hdd_parse_set_channel_switch_command() - Parse and validate CHANNEL_SWITCH
+ * command
+ * @value: Pointer to the command
+ * @chan_number: Pointer to the channel number
+ * @chan_bw: Pointer to the channel bandwidth
+ *
+ * Parses and provides the channel number and channel width from the input
+ * command which is expected to be of the format: CHANNEL_SWITCH <CH> <BW>
+ * <CH> is channel number to move (where 1 = channel 1, 149 = channel 149, ...)
+ * <BW> is bandwidth to move (where 20 = BW 20, 40 = BW 40, 80 = BW 80)
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int hdd_parse_set_channel_switch_command(uint8_t *value,
+					 uint32_t *chan_number,
+					 uint32_t *chan_bw)
+{
+	const uint8_t *in_ptr = value;
+	int ret;
+
+	in_ptr = strnchr(value, strlen(value), SPACE_ASCII_VALUE);
+
+	/* no argument after the command */
+	if (NULL == in_ptr) {
+		hdd_err("No argument after the command");
+		return -EINVAL;
+	}
+
+	/* no space after the command */
+	if (SPACE_ASCII_VALUE != *in_ptr) {
+		hdd_err("No space after the command ");
+		return -EINVAL;
+	}
+
+	/* remove empty spaces and move the next argument */
+	while ((SPACE_ASCII_VALUE == *in_ptr) && ('\0' != *in_ptr))
+		in_ptr++;
+
+	/* no argument followed by spaces */
+	if ('\0' == *in_ptr) {
+		hdd_err("No argument followed by spaces");
+		return -EINVAL;
+	}
+
+	/* get the two arguments: channel number and bandwidth */
+	ret = sscanf(in_ptr, "%u %u", chan_number, chan_bw);
+	if (ret != 2) {
+		hdd_err("Arguments retrieval from cmd string failed");
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+/**
+ * drv_cmd_set_channel_switch() - Switch SAP/P2P-GO operating channel
+ * @adapter: HDD adapter
+ * @hdd_ctx: HDD context
+ * @command: Pointer to the input command CHANNEL_SWITCH
+ * @command_len: Command len
+ * @priv_data: Private data
+ *
+ * Handles private IOCTL CHANNEL_SWITCH command to switch the operating channel
+ * of SAP/P2P-GO
+ *
+ * Return: 0 for success, non-zero for failure
+ */
+static int drv_cmd_set_channel_switch(hdd_adapter_t *adapter,
+				   hdd_context_t *hdd_ctx,
+				   uint8_t *command,
+				   uint8_t command_len,
+				   hdd_priv_data_t *priv_data)
+{
+	struct net_device *dev = adapter->dev;
+	int status;
+	uint32_t chan_number = 0, chan_bw = 0;
+	uint8_t *value = command;
+	phy_ch_width width;
+
+	if ((adapter->device_mode != WLAN_HDD_P2P_GO) &&
+		(adapter->device_mode != WLAN_HDD_SOFTAP)) {
+		hdd_err("IOCTL CHANNEL_SWITCH not supported for mode %d",
+			adapter->device_mode);
+		return -EINVAL;
+	}
+
+	status = hdd_parse_set_channel_switch_command(value,
+							&chan_number, &chan_bw);
+	if (status) {
+		hdd_err("Invalid CHANNEL_SWITCH command");
+		return status;
+	}
+
+	if ((chan_bw != 20) && (chan_bw != 40) && (chan_bw != 80)) {
+		hdd_err("BW %d is not allowed for CHANNEL_SWITCH", chan_bw);
+		return -EINVAL;
+	}
+
+	if (chan_bw == 80)
+		width = CH_WIDTH_80MHZ;
+	else if (chan_bw == 40)
+		width = CH_WIDTH_40MHZ;
+	else
+		width = CH_WIDTH_20MHZ;
+
+	hdd_info("CH:%d BW:%d", chan_number, chan_bw);
+
+	status = hdd_softap_set_channel_change(dev, chan_number, width);
+	if (status) {
+		hdd_err("Set channel change fail");
+		return status;
+	}
+
+	return 0;
+}
+
 /*
  * The following table contains all supported WLAN HDD
  * IOCTL driver commands and the handler for each of them.
@@ -5971,23 +6076,16 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"SET_AP_WPS_P2P_IE",         drv_cmd_dummy},
 	{"BTCOEXSCAN",                drv_cmd_dummy},
 	{"RXFILTER",                  drv_cmd_dummy},
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	{"SETROAMTRIGGER",            drv_cmd_set_roam_trigger},
 	{"GETROAMTRIGGER",            drv_cmd_get_roam_trigger},
 	{"SETROAMSCANPERIOD",         drv_cmd_set_roam_scan_period},
 	{"GETROAMSCANPERIOD",         drv_cmd_get_roam_scan_period},
 	{"SETROAMSCANREFRESHPERIOD",  drv_cmd_set_roam_scan_refresh_period},
 	{"GETROAMSCANREFRESHPERIOD",  drv_cmd_get_roam_scan_refresh_period},
-#ifdef FEATURE_WLAN_LFR
 	{"SETROAMMODE",               drv_cmd_set_roam_mode},
 	{"GETROAMMODE",               drv_cmd_get_roam_mode},
-#endif
-#endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	{"SETROAMDELTA",              drv_cmd_set_roam_delta},
 	{"GETROAMDELTA",              drv_cmd_get_roam_delta},
-#endif
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	{"GETBAND",                   drv_cmd_get_band},
 	{"SETROAMSCANCHANNELS",       drv_cmd_set_roam_scan_channels},
 	{"GETROAMSCANCHANNELS",       drv_cmd_get_roam_scan_channels},
@@ -6015,10 +6113,7 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"GETOPPORTUNISTICRSSIDIFF",  drv_cmd_get_opportunistic_rssi_diff},
 	{"SETROAMRESCANRSSIDIFF",     drv_cmd_set_roam_rescan_rssi_diff},
 	{"GETROAMRESCANRSSIDIFF",     drv_cmd_get_roam_rescan_rssi_diff},
-#endif /* WLAN_FEATURE_VOWIFI_11R || FEATURE_WLAN_ESE || FEATURE_WLAN_LFR */
-#ifdef FEATURE_WLAN_LFR
 	{"SETFASTROAM",               drv_cmd_set_fast_roam},
-#endif
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	{"SETFASTTRANSITION",         drv_cmd_set_fast_transition},
 	{"FASTREASSOC",               drv_cmd_fast_reassoc},
@@ -6070,6 +6165,7 @@ static const hdd_drv_cmd_t hdd_drv_cmds[] = {
 	{"RXFILTER-REMOVE",           drv_cmd_rx_filter_remove},
 	{"RXFILTER-ADD",              drv_cmd_rx_filter_add},
 	{"SET_FCC_CHANNEL",           drv_cmd_set_fcc_channel},
+	{"CHANNEL_SWITCH",            drv_cmd_set_channel_switch},
 };
 
 /**
@@ -6141,7 +6237,7 @@ static int hdd_driver_command(hdd_adapter_t *adapter,
 
 	ENTER();
 
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		hddLog(LOGE, FL("Command not allowed in FTM mode"));
 		return -EINVAL;
 	}
@@ -6279,7 +6375,7 @@ static int __hdd_ioctl(struct net_device *dev, struct ifreq *ifr, int cmd)
 		goto exit;
 	}
 #if  defined(QCA_WIFI_FTM) && defined(LINUX_QCMBR)
-	if (CDF_FTM_MODE == hdd_get_conparam()) {
+	if (CDF_GLOBAL_FTM_MODE == hdd_get_conparam()) {
 		if (SIOCIOCTLTX99 == cmd) {
 			ret = wlan_hdd_qcmbr_unified_ioctl(adapter, ifr);
 			goto exit;

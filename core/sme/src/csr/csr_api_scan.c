@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1181,6 +1181,13 @@ CDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal pMac,
 		status = csr_scan_get_result(pMac, pScanFilter, &hBSSList);
 		if (!CDF_IS_STATUS_SUCCESS(status))
 			break;
+		if (pMac->roam.roamSession[sessionId].connectState ==
+				eCSR_ASSOC_STATE_TYPE_INFRA_DISCONNECTING) {
+			sms_log(pMac, LOGE,
+				FL("upper layer issued disconnetion"));
+			status = CDF_STATUS_E_FAILURE;
+			break;
+		}
 		status = csr_roam_issue_connect(pMac, sessionId, pProfile,
 						hBSSList, eCsrHddIssued,
 						pCommand->u.scanCmd.roamId,
@@ -1467,13 +1474,11 @@ static uint32_t csr_get_bss_cap_value(tpAniSirGlobal pMac,
 				      tDot11fBeaconIEs *pIes)
 {
 	uint32_t ret = CSR_BSS_CAP_VALUE_NONE;
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 	if (CSR_IS_ROAM_PREFER_5GHZ(pMac) || CSR_IS_SELECT_5G_PREFERRED(pMac)) {
 		if ((pBssDesc) && CDS_IS_CHANNEL_5GHZ(pBssDesc->channelId)) {
 			ret += CSR_BSS_CAP_VALUE_5GHZ;
 		}
 	}
-#endif
 	/*
 	 * if strict select 5GHz is non-zero then ignore the capability checking
 	 */
@@ -1579,7 +1584,6 @@ static bool csr_is_better_bss(tpAniSirGlobal mac_ctx,
 	return ret;
 }
 
-#ifdef FEATURE_WLAN_LFR
 /* Add the channel to the occupiedChannels array */
 static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 					      tCsrScanResult *pResult,
@@ -1611,17 +1615,14 @@ static void csr_scan_add_to_occupied_channels(tpAniSirGlobal pMac,
 				CSR_BG_SCAN_OCCUPIED_CHANNEL_LIST_LEN;
 	}
 }
-#endif
 
 /* Put the BSS into the scan result list */
 /* pIes can not be NULL */
 static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 				tDot11fBeaconIEs *pIes, uint32_t sessionId)
 {
-#ifdef FEATURE_WLAN_LFR
 	tpCsrNeighborRoamControlInfo pNeighborRoamInfo =
 		&pMac->roam.neighborRoamInfo[sessionId];
-#endif
 
 	struct cdf_mac_addr bssid;
 	uint8_t channel_id = pResult->Result.BssDescriptor.channelId;
@@ -1635,7 +1636,6 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 				&pResult->Result.BssDescriptor, pIes);
 	csr_ll_insert_tail(&pMac->scan.scanResultList, &pResult->Link,
 			   LL_ACCESS_LOCK);
-#ifdef FEATURE_WLAN_LFR
 	if (0 == pNeighborRoamInfo->cfgParams.channelInfo.numOfChannels) {
 		/*
 		 * Build the occupied channel list, only if
@@ -1644,7 +1644,6 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 		csr_scan_add_to_occupied_channels(pMac, pResult, sessionId,
 				&pMac->scan.occupiedChannels[sessionId], pIes);
 	}
-#endif
 }
 
 static void
@@ -1998,9 +1997,9 @@ csr_parse_scan_results(tpAniSirGlobal pMac,
 	csr_ll_lock(&pMac->scan.scanResultList);
 
 	if (pFilter) {
-		if (cds_map_concurrency_mode(pMac->hHdd,
+		if (cds_map_concurrency_mode(
 					&pFilter->csrPersona, &new_mode)) {
-			status = cds_get_pcl(pMac->hHdd, new_mode,
+			status = cds_get_pcl(new_mode,
 				&pFilter->pcl_channels.channelList[0], &len);
 			pFilter->pcl_channels.numChannels = (uint8_t)len;
 		}
@@ -2170,13 +2169,13 @@ void csr_scan_flush_bss_entry(tpAniSirGlobal pMac,
 	while (pEntry != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
 		if (cdf_mem_compare(pBssDesc->Result.BssDescriptor.bssId,
-			pCsaOffloadInd->bssId, sizeof(tSirMacAddr))) {
+			pCsaOffloadInd->bssid.bytes, CDF_MAC_ADDR_SIZE)) {
 			pFreeElem = pEntry;
 			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
 			csr_ll_remove_entry(pList, pFreeElem, LL_ACCESS_NOLOCK);
 			csr_free_scan_result_entry(pMac, pBssDesc);
 			sms_log(pMac, LOG1, FL("Removed BSS entry:%pM"),
-				pCsaOffloadInd->bssId);
+				pCsaOffloadInd->bssid.bytes);
 			continue;
 		}
 
@@ -2466,14 +2465,6 @@ CDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 					eCSR_ROAM_INFRA_IND,
 					eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF);
 	}
-	if (CSR_IS_WDS_AP(pRoamInfo->u.pConnectedProfile)) {
-		cdf_sleep(100);
-		pMac->roam.roamSession[sessionId].connectState =
-			eCSR_ASSOC_STATE_TYPE_WDS_CONNECTED;
-		status = csr_roam_call_callback(pMac, sessionId, pRoamInfo, 0,
-				eCSR_ROAM_WDS_IND,
-				eCSR_ROAM_RESULT_WDS_ASSOCIATION_IND);
-	}
 	return status;
 }
 
@@ -2522,7 +2513,6 @@ bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 	tListElem *pEntry;
 	tCsrScanResult *scan_entry;
 	bool fRC = false;
-	int8_t scan_entry_rssi = 0;
 
 	/*
 	 * Walk through all the chained BssDescriptions. If we find a chained
@@ -2542,17 +2532,31 @@ bool csr_remove_dup_bss_description(tpAniSirGlobal pMac,
 		if (csr_is_duplicate_bss_description(pMac,
 			&scan_entry->Result.BssDescriptor,
 			bss_dscp, pIes, fForced)) {
-			/*
-			 * Following is mathematically a = (aX + b(100-X))/100
-			 * where:
-			 * a = bss_dscp->rssi, b = scan_entry_rssi
-			 * and X = CSR_SCAN_RESULT_RSSI_WEIGHT
-			 */
-			scan_entry_rssi = scan_entry->Result.BssDescriptor.rssi;
-			bss_dscp->rssi = (int8_t) ((((int32_t) bss_dscp->rssi *
-						CSR_SCAN_RESULT_RSSI_WEIGHT) +
-				((int32_t) scan_entry_rssi *
-				 (100 - CSR_SCAN_RESULT_RSSI_WEIGHT))) / 100);
+			if (bss_dscp->rx_channel == bss_dscp->channelId) {
+				/*
+				 * Update rssi values only if beacon is
+				 * received on the same channel that was
+				 * sent on.
+				 */
+				int32_t rssi_new, rssi_old;
+				const int32_t weight =
+						CSR_SCAN_RESULT_RSSI_WEIGHT;
+
+				rssi_new = (int32_t) bss_dscp->rssi;
+				rssi_old = (int32_t) scan_entry->
+						Result.BssDescriptor.rssi;
+				rssi_new = ((rssi_new * weight) +
+					     rssi_old * (100 - weight)) / 100;
+				bss_dscp->rssi = (int8_t) rssi_new;
+
+				rssi_new = (int32_t) bss_dscp->rssi_raw;
+				rssi_old = (int32_t) scan_entry->
+						Result.BssDescriptor.rssi_raw;
+				rssi_new = ((rssi_new * weight) +
+					     rssi_old * (100 - weight)) / 100;
+				bss_dscp->rssi_raw = (int8_t) rssi_new;
+			}
+
 			/* Remove the old entry from the list */
 			if (csr_ll_remove_entry
 				    (&pMac->scan.scanResultList, pEntry,
@@ -3054,13 +3058,13 @@ CDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 		if ((CDS_IS_CHANNEL_24GHZ(pChannelSet->firstChannel)) &&
 		    ((pChannelSet->firstChannel +
 		      (pChannelSet->numChannels - 1)) <=
-		     CDS_MAX_24GHz_CHANNEL_NUMBER)) {
+		     CDS_MAX_24GHZ_CHANNEL_NUMBER)) {
 			pChannelSet->interChannelOffset = 1;
 			f2GHzInfoFound = true;
 		} else if ((CDS_IS_CHANNEL_5GHZ(pChannelSet->firstChannel))
 		    && ((pChannelSet->firstChannel +
 		      ((pChannelSet->numChannels - 1) * 4)) <=
-		     CDS_MAX_5GHz_CHANNEL_NUMBER)) {
+		     CDS_MAX_5GHZ_CHANNEL_NUMBER)) {
 			pChannelSet->interChannelOffset = 4;
 			f2GHzInfoFound = false;
 		} else {
@@ -3200,7 +3204,7 @@ static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
 		     Index < pMac->scan.base_channels.numChannels;
 		     Index++) {
 			p11dLog->TxPwr[Index] = CDF_MIN(
-				pMac->scan.defaultPowerTable[Index].pwr,
+				pMac->scan.defaultPowerTable[Index].power,
 				pMac->roam.configParam.nTxPowerCap);
 		}
 	}
@@ -3267,7 +3271,7 @@ void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode)
 
 	if (!CDF_IS_STATUS_SUCCESS(csr_get_regulatory_domain_for_country(pMac,
 						pCountryCode, NULL,
-						COUNTRY_QUERY))) {
+						SOURCE_QUERY))) {
 		pCountryCode[0] = '0';
 		pCountryCode[1] = '0';
 	}
@@ -3363,8 +3367,8 @@ CDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
 	if (pCountry) {
 
 		status = csr_get_regulatory_domain_for_country(pMac, pCountry,
-							       &domainId,
-							       COUNTRY_USER);
+							     &domainId,
+							     SOURCE_USERSPACE);
 		if (CDF_IS_STATUS_SUCCESS(status)) {
 			cdf_mem_copy(pMac->scan.countryCodeCurrent,
 				     pCountry,
@@ -3380,7 +3384,7 @@ CDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
 /* Upon return, *pNumChn has the number of channels assigned. */
 void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 				uint32_t *num_ch,
-				tChannelListWithPower *chn_pwr_info)
+				struct channel_power *chn_pwr_info)
 {
 	tListElem *entry;
 	uint32_t chn_idx = 0, idx;
@@ -3392,10 +3396,10 @@ void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 		ch_set = GET_BASE_ADDR(entry, tCsrChannelPowerInfo, link);
 		for (idx = 0; (idx < ch_set->numChannels)
 				&& (chn_idx < *num_ch); idx++) {
-			chn_pwr_info[chn_idx].chanId =
+			chn_pwr_info[chn_idx].chan_num =
 				(uint8_t) (ch_set->firstChannel
 				 + (idx * ch_set->interChannelOffset));
-			chn_pwr_info[chn_idx++].pwr = ch_set->txPower;
+			chn_pwr_info[chn_idx++].power = ch_set->txPower;
 		}
 		entry = csr_ll_next(list, entry, LL_ACCESS_LOCK);
 	}
@@ -3408,7 +3412,7 @@ void csr_get_channel_power_info(tpAniSirGlobal pMac, tDblLinkList *list,
 void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 {
 	host_log_802_11d_pkt_type *p11dLog;
-	tChannelListWithPower chnPwrInfo[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	struct channel_power chnPwrInfo[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t nChnInfo = WNI_CFG_VALID_CHANNEL_LIST_LEN, nTmp;
 
 	WLAN_HOST_DIAG_LOG_ALLOC(p11dLog, host_log_802_11d_pkt_type,
@@ -3438,9 +3442,9 @@ void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 		     nChnInfo < WNI_CFG_VALID_CHANNEL_LIST_LEN;
 		     nChnInfo++) {
 			if (p11dLog->Channels[nTmp] ==
-			    chnPwrInfo[nChnInfo].chanId) {
+			    chnPwrInfo[nChnInfo].chan_num) {
 				p11dLog->TxPwr[nTmp] =
-					chnPwrInfo[nChnInfo].pwr;
+					chnPwrInfo[nChnInfo].power;
 				break;
 			}
 		}
@@ -3472,7 +3476,7 @@ void csr_apply_country_information(tpAniSirGlobal pMac)
 	    || 0 == pMac->scan.channelOf11dInfo)
 		return;
 	status = csr_get_regulatory_domain_for_country(pMac,
-			pMac->scan.countryCode11d, &domainId, COUNTRY_QUERY);
+			pMac->scan.countryCode11d, &domainId, SOURCE_QUERY);
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		return;
 	/* Check whether we need to enforce default domain */
@@ -3518,7 +3522,7 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		    WNI_CFG_VALID_CHANNEL_LIST_LEN, 0);
 	ch_info_start = chan_info;
 	for (idx = 0; idx < max_ch_idx; idx++) {
-		ch = pMac->scan.defaultPowerTable[idx].chanId;
+		ch = pMac->scan.defaultPowerTable[idx].chan_num;
 		tmp_bool =  (fill_5f && CDS_IS_CHANNEL_5GHZ(ch))
 			|| (!fill_5f && CDS_IS_CHANNEL_24GHZ(ch));
 		if (!tmp_bool)
@@ -3530,10 +3534,10 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		}
 
 		chan_info->firstChanNum =
-			pMac->scan.defaultPowerTable[idx].chanId;
+			pMac->scan.defaultPowerTable[idx].chan_num;
 		chan_info->numChannels = 1;
 		chan_info->maxTxPower =
-			CDF_MIN(pMac->scan.defaultPowerTable[idx].pwr,
+			CDF_MIN(pMac->scan.defaultPowerTable[idx].power,
 				pMac->roam.configParam.nTxPowerCap);
 		chan_info++;
 		count++;
@@ -3575,9 +3579,6 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 	tDot11fBeaconIEs *pIesLocal = pIes;
 	bool useVoting = false;
 
-	if (CDF_SAP_MODE == cds_get_conparam())
-		return CDF_STATUS_SUCCESS;
-
 	if ((NULL == pSirBssDesc) && (NULL == pIes))
 		useVoting = true;
 
@@ -3597,7 +3598,7 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 			goto free_ie;
 		status = csr_get_regulatory_domain_for_country(pMac,
 				pIesLocal->Country.country, &domainId,
-				COUNTRY_QUERY);
+				SOURCE_QUERY);
 		if (CDF_IS_STATUS_SUCCESS(status)
 		    && (domainId == REGDOMAIN_WORLD))
 			goto free_ie;
@@ -3609,7 +3610,7 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 		pCountryCodeSelected = pMac->scan.countryCodeElected;
 
 	status = csr_get_regulatory_domain_for_country(pMac,
-				pCountryCodeSelected, &domainId, COUNTRY_IE);
+				pCountryCodeSelected, &domainId, SOURCE_11D);
 	if (status != CDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE, FL("fail to get regId %d"), domainId);
 		fRet = false;
@@ -4869,11 +4870,15 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 			pScanReqParam->fUniqueResult, pScanReqParam->freshScan,
 			pScanReqParam->hiddenSsid);
 		sms_log(pMac, LOG1,
-			FL("scanType = %u BSSType = %u numOfSSIDs = %d"
-			   " numOfChannels = %d requestType = %d p2pSearch = %d\n"),
-			pScanReq->scanType, pScanReq->BSSType,
+			FL("scanType = %s (%u) BSSType = %s (%u) numOfSSIDs = %d"
+			   " numOfChannels = %d requestType = %s (%d) p2pSearch = %d\n"),
+			lim_scan_type_to_string(pScanReq->scanType),
+			pScanReq->scanType,
+			lim_bss_type_to_string(pScanReq->BSSType),
+			pScanReq->BSSType,
 			pScanReq->SSIDs.numOfSSIDs,
 			pScanReq->ChannelInfo.numOfChannels,
+			sme_request_type_to_string(pScanReq->requestType),
 			pScanReq->requestType, pScanReq->p2pSearch);
 		return CDF_STATUS_E_NOMEM;
 	}
@@ -4945,9 +4950,7 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 	 * mode we need to send out a directed probe
 	 */
 	if ((eSIR_PASSIVE_SCAN != scanType)
-	    && (eCSR_SCAN_P2P_DISCOVERY !=
-		pScanReq->requestType)
-	    && (eCSR_BSS_TYPE_WDS_STA != pScanReq->BSSType)
+	    && (eCSR_SCAN_P2P_DISCOVERY != pScanReq->requestType)
 	    && (false == pMac->scan.fEnableBypass11d)) {
 		scanType = pMac->scan.curScanType;
 		if (eSIR_PASSIVE_SCAN == pMac->scan.curScanType) {
@@ -5016,10 +5019,12 @@ CDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 
 send_scan_req:
 	sms_log(pMac, LOG1,
-		FL("scanId %d domainIdCurrent %d scanType %d bssType %d requestType %d numChannels %d"),
-		pMsg->scan_id, pMac->scan.domainIdCurrent, pMsg->scanType,
-		pMsg->bssType, pScanReq->requestType,
-		pMsg->channelList.numChannels);
+		FL("scanId %d domainIdCurrent %d scanType %s (%d) bssType %s (%d) requestType %s (%d) numChannels %d"),
+		pMsg->scan_id, pMac->scan.domainIdCurrent,
+		lim_scan_type_to_string(pMsg->scanType), pMsg->scanType,
+		lim_bss_type_to_string(pMsg->bssType), pMsg->bssType,
+		sme_request_type_to_string(pScanReq->requestType),
+		pScanReq->requestType, pMsg->channelList.numChannels);
 
 	for (i = 0; i < pMsg->channelList.numChannels; i++) {
 		sms_log(pMac, LOG1, FL("channelNumber[%d]= %d"), i,
@@ -5179,7 +5184,7 @@ csr_issue_user_scan(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 		j = 0;
 		for (i = 0; i < len; i++) {
 			new_ch_info.ChannelList[j++] = ch_lst[i];
-			if (CDS_MAX_24GHz_CHANNEL_NUMBER >= ch_lst[i])
+			if (CDS_MAX_24GHZ_CHANNEL_NUMBER >= ch_lst[i])
 				new_ch_info.ChannelList[j++] = ch_lst[i];
 		}
 		if (NULL !=
@@ -5251,7 +5256,8 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 		 * that is the only way to find p2p peers.
 		 * This can happen only if band is set to 5Ghz mode.
 		 */
-		if (src_req->ChannelInfo.ChannelList[index] < MIN_11P_CHANNEL &&
+		if (src_req->ChannelInfo.ChannelList[index] <
+		    CDS_MIN_11P_CHANNEL &&
 			((csr_roam_is_valid_channel(mac_ctx,
 			src_req->ChannelInfo.ChannelList[index])) ||
 			((eCSR_SCAN_P2P_DISCOVERY == src_req->requestType) &&
@@ -5264,14 +5270,14 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 							ChannelList
 							[index])))
 			) {
-#ifdef FEATURE_WLAN_LFR
 				sms_log(mac_ctx, LOG2,
-					FL(" reqType=%d, numOfChannels=%d, ignoring DFS channel %d"),
+					FL(" reqType= %s (%d), numOfChannels=%d, ignoring DFS channel %d"),
+					sme_request_type_to_string(
+						src_req->requestType),
 					src_req->requestType,
 					src_req->ChannelInfo.numOfChannels,
 					src_req->ChannelInfo.ChannelList
 						[index]);
-#endif
 				continue;
 			}
 
@@ -5281,6 +5287,98 @@ static void csr_scan_copy_request_valid_channels_only(tpAniSirGlobal mac_ctx,
 		}
 	}
 	dst_req->ChannelInfo.numOfChannels = new_index;
+}
+
+/**
+ * csr_scan_filter_ibss_chnl_band() - filter all channels which matches IBSS
+ *                                    channel's band
+ * @mac_ctx: pointer to mac context
+ * @ibss_channel: Given IBSS channel
+ * @dst_req: destination scan request
+ *
+ * when ever IBSS connection already exist, STA should not scan the channels
+ * which fall under same band as IBSS channel's band. this routine will filter
+ * out those channels
+ *
+ * Return: true if success otherwise false for any failure
+ */
+static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
+			uint8_t ibss_channel, tCsrScanRequest *dst_req) {
+	uint8_t valid_chnl_list[WNI_CFG_VALID_CHANNEL_LIST_LEN] = {0};
+	uint32_t filter_chnl_len = 0, i = 0;
+	uint32_t valid_chnl_len = WNI_CFG_VALID_CHANNEL_LIST_LEN;
+
+	if (ibss_channel == 0) {
+		sms_log(mac_ctx, LOG1,
+			FL("Nothing to filter as no IBSS session"));
+		return true;
+	}
+
+	if (!dst_req) {
+		sms_log(mac_ctx, LOGE,
+			FL("No valid scan requests"));
+		return false;
+	}
+	/*
+	 * In case of concurrent IBSS session exist, scan only
+	 * those channels which are not in IBSS channel's band.
+	 * In case if no-concurrent IBSS session exist then scan
+	 * full band
+	 */
+	if ((dst_req->ChannelInfo.numOfChannels == 0)) {
+		csr_get_cfg_valid_channels(mac_ctx, valid_chnl_list,
+				&valid_chnl_len);
+	} else {
+		valid_chnl_len = (WNI_CFG_VALID_CHANNEL_LIST_LEN >
+					dst_req->ChannelInfo.numOfChannels) ?
+					dst_req->ChannelInfo.numOfChannels :
+					WNI_CFG_VALID_CHANNEL_LIST_LEN;
+		cdf_mem_copy(valid_chnl_list, dst_req->ChannelInfo.ChannelList,
+				valid_chnl_len);
+	}
+	for (i = 0; i < valid_chnl_len; i++) {
+		/*
+		 * Don't allow DSRC channel when IBSS concurrent connection
+		 * is up
+		 */
+		if (valid_chnl_list[i] >= CDS_MIN_11P_CHANNEL)
+			continue;
+		if (CDS_IS_CHANNEL_5GHZ(ibss_channel) &&
+			CDS_IS_CHANNEL_24GHZ(valid_chnl_list[i])) {
+			valid_chnl_list[filter_chnl_len] =
+					valid_chnl_list[i];
+			filter_chnl_len++;
+		} else if (CDS_IS_CHANNEL_24GHZ(ibss_channel) &&
+			CDS_IS_CHANNEL_5GHZ(valid_chnl_list[i])) {
+			valid_chnl_list[filter_chnl_len] =
+					valid_chnl_list[i];
+			filter_chnl_len++;
+		}
+	}
+	if (filter_chnl_len == 0) {
+		sms_log(mac_ctx, LOGE,
+			FL("there no channels to scan due to IBSS session"));
+		return false;
+	}
+
+	if (dst_req->ChannelInfo.ChannelList) {
+		cdf_mem_free(dst_req->ChannelInfo.ChannelList);
+		dst_req->ChannelInfo.ChannelList = NULL;
+		dst_req->ChannelInfo.numOfChannels = 0;
+	}
+
+	dst_req->ChannelInfo.ChannelList =
+			cdf_mem_malloc(filter_chnl_len *
+				sizeof(*dst_req->ChannelInfo.ChannelList));
+	dst_req->ChannelInfo.numOfChannels = filter_chnl_len;
+	if (NULL == dst_req->ChannelInfo.ChannelList) {
+		sms_log(mac_ctx, LOGE,
+			FL("Memory allocation failed"));
+		return false;
+	}
+	cdf_mem_copy(dst_req->ChannelInfo.ChannelList, valid_chnl_list,
+			filter_chnl_len);
+	return true;
 }
 
 /**
@@ -5301,7 +5399,9 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	uint32_t len = sizeof(mac_ctx->roam.validChannelList);
 	uint32_t index = 0;
 	uint32_t new_index = 0;
-	CHANNEL_STATE channel_state;
+	enum channel_state channel_state;
+	uint8_t ibss_channel = 0;
+
 	bool skip_dfs_chnl =
 			mac_ctx->roam.configParam.initial_scan_no_dfs_chnl ||
 				!mac_ctx->scan.fEnableDFSChnlScan;
@@ -5356,7 +5456,7 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 							ChannelInfo.
 							ChannelList[index]);
 				if (src_req->ChannelInfo.ChannelList[index] <
-						MIN_11P_CHANNEL &&
+						CDS_MIN_11P_CHANNEL &&
 					((CHANNEL_STATE_ENABLE ==
 						channel_state) ||
 					((CHANNEL_STATE_DFS == channel_state) &&
@@ -5387,7 +5487,7 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 			for (index = 0; index < src_req->ChannelInfo.
 					numOfChannels; index++) {
 				if (src_req->ChannelInfo.ChannelList[index] <
-						MIN_11P_CHANNEL) {
+						CDS_MIN_11P_CHANNEL) {
 					dst_req->ChannelInfo.
 						ChannelList[new_index] =
 						src_req->ChannelInfo.
@@ -5399,6 +5499,26 @@ CDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 				new_index;
 		}
 	} /* Allocate memory for Channel List */
+
+	/*
+	 * If IBSS concurrent connection exist, and if the scan
+	 * request comes from STA adapter then we need to filter
+	 * out IBSS channel's band otherwise it will cause issue
+	 * in IBSS+STA concurrency
+	 */
+	if (true == cds_is_ibss_conn_exist(&ibss_channel)) {
+		sms_log(mac_ctx, LOG1,
+			FL("Conc IBSS exist, channel list will be modified"));
+	}
+
+	if ((ibss_channel > 0) &&
+		(false == csr_scan_filter_ibss_chnl_band(mac_ctx,
+				ibss_channel, dst_req))) {
+		sms_log(mac_ctx, LOGE,
+			FL("Can't filter channels due to IBSS"));
+		goto complete;
+	}
+
 	if (src_req->SSIDs.numOfSSIDs == 0) {
 		dst_req->SSIDs.numOfSSIDs = 0;
 		dst_req->SSIDs.SSIDList = NULL;
@@ -5551,9 +5671,7 @@ static void csr_sta_ap_conc_timer_handler(void *pv)
 
 	if ((num_chn > numchan_combinedconc) &&
 		((csr_is_sta_session_connected(mac_ctx) &&
-#ifdef FEATURE_WLAN_LFR
 		(csr_is_concurrent_infra_connected(mac_ctx)) &&
-#endif
 		(scan_cmd->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
 		(csr_is_p2p_session_connected(mac_ctx)))) {
 			cdf_mem_set(&scan_req, sizeof(tCsrScanRequest), 0);
@@ -6003,10 +6121,6 @@ CDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	tCsrSSIDs *ssids = NULL;
 
 	sms_log(mac_ctx, LOG2, FL("called"));
-
-	/* For WDS, we use the index 0. There must be at least one in there */
-	if (CSR_IS_WDS_STA(profile) && num_ssid)
-		num_ssid = 1;
 
 	if (!(mac_ctx->scan.fScanEnable) && (num_ssid != 1)) {
 		sms_log(mac_ctx, LOGE,
@@ -6845,7 +6959,6 @@ CDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
 
-#ifdef FEATURE_WLAN_LFR
 void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 {
 	tListElem *pEntry = NULL;
@@ -6898,7 +7011,6 @@ void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 	} /* while */
 	csr_ll_unlock(&pMac->scan.scanResultList);
 }
-#endif
 
 CDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 					       uint32_t sessionId,
@@ -6991,7 +7103,8 @@ void update_cckmtsf(uint32_t *timeStamp0, uint32_t *timeStamp1,
  */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 CDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
-				roam_offload_synch_ind *roam_sync_ind_ptr)
+		roam_offload_synch_ind *roam_sync_ind_ptr,
+		tpSirBssDescription  bss_desc_ptr)
 {
 	uint32_t length = 0;
 	bool dup_bss;
@@ -7012,7 +7125,7 @@ CDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 
 	cdf_mem_zero(scan_res_ptr, sizeof(tCsrScanResult) + length);
 	cdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
-			roam_sync_ind_ptr->bss_desc_ptr,
+			bss_desc_ptr,
 			(sizeof(tSirBssDescription) + length));
 	ies_local_ptr = (tDot11fBeaconIEs *)(scan_res_ptr->Result.pvIes);
 	if (!ies_local_ptr &&

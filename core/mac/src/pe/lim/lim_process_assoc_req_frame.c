@@ -288,8 +288,9 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			MAC_ADDRESS_STR), psessionEntry->peSessionId,
 			subType, GET_LIM_SYSTEM_ROLE(psessionEntry),
 			MAC_ADDR_ARRAY(pHdr->sa));
-		} else {
-			/*
+		} else if (!pStaDs->rmfEnabled) {
+			/* Do this only for non PMF case.
+			 *
 			 * STA might have missed the assoc response,
 			 * so it is sending assoc request frame again.
 			 */
@@ -417,7 +418,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	updateContext = false;
 
-	if (lim_cmp_s_sid(pMac, &pAssocReq->ssId, psessionEntry) == false) {
+	if (lim_cmp_ssid(&pAssocReq->ssId, psessionEntry) == false) {
 		lim_log(pMac, LOGE,
 			FL("Received %s Req with unmatched ssid ( Received"
 			   " SSID: %.*s current SSID: %.*s ) from "
@@ -1460,7 +1461,7 @@ sendIndToSme:
 	if (WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STAMIN > retryInterval) {
 		retryInterval = WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL_STADEF;
 	}
-	if (tx_timer_create(&pStaDs->pmfSaQueryTimer, "PMF SA Query timer",
+	if (tx_timer_create(pMac, &pStaDs->pmfSaQueryTimer, "PMF SA Query timer",
 			    lim_pmf_sa_query_timer_handler, timerId.value,
 			    SYS_MS_TO_TICKS((retryInterval * 1024) / 1000),
 			    0, TX_NO_ACTIVATE) != TX_SUCCESS) {

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -89,6 +89,7 @@ CDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal)
 
 		/* initialize all the variables to null */
 		cdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
+
 	} while (0);
 
 	return CDF_STATUS_SUCCESS;
@@ -108,8 +109,13 @@ void oem_data_release_oem_data_req_command(tpAniSirGlobal pMac,
 	/* First take this command out of the active list */
 	if (csr_ll_remove_entry
 		    (&pMac->sme.smeCmdActiveList, &pOemDataCmd->Link, LL_ACCESS_LOCK)) {
-		cdf_mem_set(&(pOemDataCmd->u.oemDataCmd), sizeof(tOemDataCmd),
-			    0);
+		if (pOemDataCmd->u.oemDataCmd.oemDataReq.data) {
+			cdf_mem_free(
+			    pOemDataCmd->u.oemDataCmd.oemDataReq.data);
+			pOemDataCmd->u.oemDataCmd.oemDataReq.data =
+			    NULL;
+		}
+		cdf_mem_zero(&(pOemDataCmd->u.oemDataCmd), sizeof(tOemDataCmd));
 
 		/* Now put this command back on the avilable command list */
 		sme_release_command(pMac, pOemDataCmd);
@@ -124,20 +130,17 @@ void oem_data_release_oem_data_req_command(tpAniSirGlobal pMac,
     \brief Request an OEM DATA RSP
     \param sessionId - Id of session to be used
     \param pOemDataReqID - pointer to an object to get back the request ID
-    \param callback - a callback function that is called upon finish
-    \param pContext - a pointer passed in for the callback
     \return CDF_STATUS
    -------------------------------------------------------------------------------*/
 CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 				 uint8_t sessionId,
 				 tOemDataReqConfig *oemDataReqConfig,
-				 uint32_t *pOemDataReqID,
-				 oem_data_oem_data_reqCompleteCallback callback,
-				 void *pContext)
+				 uint32_t *pOemDataReqID)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	tSmeCmd *pOemDataCmd = NULL;
+	tOemDataReq *cmd_req, *mac_req;
 
 	do {
 		if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
@@ -146,14 +149,27 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 		}
 
 		pMac->oemData.oemDataReqConfig.sessionId = sessionId;
-		pMac->oemData.callback = callback;
-		pMac->oemData.pContext = pContext;
 		pMac->oemData.oemDataReqID = *(pOemDataReqID);
 
-		cdf_mem_copy((void *)(pMac->oemData.oemDataReqConfig.
-				      oemDataReq),
-			     (void *)(oemDataReqConfig->oemDataReq),
-			     OEM_DATA_REQ_SIZE);
+		pMac->oemData.oemDataReqConfig.data_len =
+				oemDataReqConfig->data_len;
+
+		if (pMac->oemData.oemDataReqConfig.data) {
+			cdf_mem_free(pMac->oemData.oemDataReqConfig.data);
+			pMac->oemData.oemDataReqConfig.data = NULL;
+		}
+
+		pMac->oemData.oemDataReqConfig.data =
+			cdf_mem_malloc(pMac->oemData.oemDataReqConfig.data_len);
+		if (!pMac->oemData.oemDataReqConfig.data) {
+			sms_log(pMac, LOGE, FL("memory alloc failed"));
+			status = CDF_STATUS_E_NOMEM;
+			break;
+		}
+
+		cdf_mem_copy((void *)(pMac->oemData.oemDataReqConfig.data),
+			     (void *)(oemDataReqConfig->data),
+			     oemDataReqConfig->data_len);
 
 		pMac->oemData.oemDataReqActive = false;
 
@@ -162,18 +178,26 @@ CDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 		/* fill up the command before posting it. */
 		if (pOemDataCmd) {
 			pOemDataCmd->command = eSmeCommandOemDataReq;
-			pOemDataCmd->u.oemDataCmd.callback = callback;
-			pOemDataCmd->u.oemDataCmd.pContext = pContext;
 			pOemDataCmd->u.oemDataCmd.oemDataReqID =
 				pMac->oemData.oemDataReqID;
 
+
+			cmd_req = &(pOemDataCmd->u.oemDataCmd.oemDataReq);
+			mac_req = &(pMac->oemData.oemDataReqConfig);
 			/* set the oem data request */
-			pOemDataCmd->u.oemDataCmd.oemDataReq.sessionId =
-				pMac->oemData.oemDataReqConfig.sessionId;
-			cdf_mem_copy((void *)(pOemDataCmd->u.oemDataCmd.
-					      oemDataReq.oemDataReq),
-				     (void *)(pMac->oemData.oemDataReqConfig.
-					      oemDataReq), OEM_DATA_REQ_SIZE);
+			cmd_req->sessionId = mac_req->sessionId;
+			cmd_req->data_len =  mac_req->data_len;
+			cmd_req->data = cdf_mem_malloc(cmd_req->data_len);
+
+			if (!cmd_req->data) {
+				sms_log(pMac, LOGE, FL("memory alloc failed"));
+				status = CDF_STATUS_E_NOMEM;
+				break;
+			}
+
+			cdf_mem_copy((void *)(cmd_req->data),
+				     (void *)(mac_req->data),
+				     cmd_req->data_len);
 		} else {
 			status = CDF_STATUS_E_FAILURE;
 			break;
@@ -207,25 +231,36 @@ CDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tSirOemDataReq *pMsg;
-	uint16_t msgLen;
 	tCsrRoamSession *pSession =
 		CSR_GET_SESSION(pMac, pOemDataReq->sessionId);
+	uint16_t msgLen;
 
 	sms_log(pMac, LOGW, "OEM_DATA: entering Function %s", __func__);
 
-	msgLen = (uint16_t) (sizeof(tSirOemDataReq));
+	if (!pOemDataReq) {
+		sms_log(pMac, LOGE, FL("oem data req is NULL"));
+		return CDF_STATUS_E_INVAL;
+	}
 
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = cdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg) {
 		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
 		return CDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_set(pMsg, msgLen, 0);
+	pMsg->data = cdf_mem_malloc(pOemDataReq->data_len);
+	if (!pMsg->data) {
+		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
+		cdf_mem_free(pMsg);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	msgLen = (uint16_t) (sizeof(*pMsg) + pOemDataReq->data_len);
 	pMsg->messageType = eWNI_SME_OEM_DATA_REQ;
 	pMsg->messageLen = msgLen;
 	cdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
-	cdf_mem_copy(pMsg->oemDataReq, pOemDataReq->oemDataReq,
-		     OEM_DATA_REQ_SIZE);
+	pMsg->data_len = pOemDataReq->data_len;
+	cdf_mem_copy(pMsg->data, pOemDataReq->data,
+		     pOemDataReq->data_len);
 	sms_log(pMac, LOGW, "OEM_DATA: sending message to pe%s", __func__);
 	status = cds_send_mb_message_to_mac(pMsg);
 
@@ -298,7 +333,7 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 	tListElem *pEntry = NULL;
 	tSmeCmd *pCommand = NULL;
 	tSirOemDataRsp *pOemDataRsp = NULL;
-	uint32_t *msgSubType;
+	tOemDataReq *req;
 
 	pMac = PMAC_STRUCT(hHal);
 
@@ -327,6 +362,9 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 					    &pCommand->Link, LL_ACCESS_LOCK)) {
 					cdf_mem_set(&(pCommand->u.oemDataCmd),
 						    sizeof(tOemDataCmd), 0);
+					req =
+					   &(pCommand->u.oemDataCmd.oemDataReq);
+					cdf_mem_free(req->data);
 					sme_release_command(pMac, pCommand);
 				}
 			}
@@ -334,21 +372,18 @@ CDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 
 		pOemDataRsp = (tSirOemDataRsp *) pMsg;
 
-		/* check if message is to be forwarded to oem application or not */
-		msgSubType = (uint32_t *) (&pOemDataRsp->oemDataRsp[0]);
-		if (*msgSubType != OEM_MESSAGE_SUBTYPE_INTERNAL) {
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
-				  "%s: calling send_oem_data_rsp_msg, msgSubType(0x%x)",
-				  __func__, *msgSubType);
-			if (pMac->oemData.oem_data_rsp_callback != NULL) {
-				pMac->oemData.oem_data_rsp_callback(
-						sizeof(tOemDataRsp),
-						&pOemDataRsp->oemDataRsp[0]);
-			}
-		} else
-			CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO,
-				  "%s: received internal oem data resp, msgSubType (0x%x)",
-				  __func__, *msgSubType);
+		/* Send to upper layer only if rsp is from target */
+		if (pOemDataRsp->target_rsp) {
+			sms_log(pMac, LOG1,
+				FL("received target oem data resp"));
+			if (pMac->oemData.oem_data_rsp_callback != NULL)
+				 pMac->oemData.oem_data_rsp_callback(
+					sizeof(tOemDataRsp),
+					&pOemDataRsp->oemDataRsp[0]);
+		} else {
+			sms_log(pMac, LOG1,
+				FL("received internal oem data resp"));
+		}
 	} while (0);
 
 	return status;
@@ -369,12 +404,10 @@ CDF_STATUS oem_data_is_oem_data_req_allowed(tHalHandle hHal)
 
 	for (sessionId = 0; sessionId < CSR_ROAM_SESSION_MAX; sessionId++) {
 		if (CSR_IS_SESSION_VALID(pMac, sessionId)) {
-			/* co-exist with IBSS or BT-AMP mode is not supported */
-			if (csr_is_conn_state_ibss(pMac, sessionId)
-			    || csr_is_btamp(pMac, sessionId)) {
-				/* co-exist with IBSS or BT-AMP mode is not supported */
+			/* co-exist with IBSS mode is not supported */
+			if (csr_is_conn_state_ibss(pMac, sessionId)) {
 				sms_log(pMac, LOGW,
-					"OEM DATA REQ is not allowed due to IBSS|BTAMP exist in session %d",
+					"OEM DATA REQ is not allowed due to IBSS exist in session %d",
 					sessionId);
 				status = CDF_STATUS_CSR_WRONG_STATE;
 				break;

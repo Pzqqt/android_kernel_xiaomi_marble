@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -35,7 +35,6 @@
 #ifndef CSR_NEIGHBOR_ROAM_H
 #define CSR_NEIGHBOR_ROAM_H
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "sme_api.h"
 
 #define ROAM_AP_AGE_LIMIT_MS                     10000
@@ -127,7 +126,6 @@ typedef struct sCsr11rAssocNeighborInfo {
 } tCsr11rAssocNeighborInfo, *tpCsr11rAssocNeighborInfo;
 #endif /* WLAN_FEATURE_VOWIFI_11R */
 
-#ifdef FEATURE_WLAN_LFR
 typedef enum {
 	eFirstEmptyScan = 1,
 	eSecondEmptyScan,
@@ -141,7 +139,6 @@ typedef enum {
 	DEFAULT_SCAN = 0,
 	SPLIT_SCAN_OCCUPIED_LIST = 1,
 } eNeighborRoamScanMode;
-#endif
 
 /* Complete control information for neighbor roam algorithm */
 typedef struct sCsrNeighborRoamControlInfo {
@@ -165,7 +162,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	bool isVOAdmitted;
 	uint16_t MinQBssLoadRequired;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	/*
 	 * Previous connected profile.
 	 * If the new profile does not match previous we re-initialize
@@ -176,7 +172,6 @@ typedef struct sCsrNeighborRoamControlInfo {
 	uint8_t uOsRequestedHandoff;
 	/* handoff related info came with upper layer's req for reassoc */
 	tCsrHandoffRequest handoffReqInfo;
-#endif
 	uint8_t currentRoamBmissFirstBcnt;
 	uint8_t currentRoamBmissFinalBcnt;
 	uint8_t currentRoamBeaconRssiWeight;
@@ -302,10 +297,10 @@ CDF_STATUS csr_roam_read_tsf(tpAniSirGlobal pMac, uint8_t *pTimestamp,
 		const uint8_t sessionId);
 #endif /*FEATURE_WLAN_ESE && FEATURE_WLAN_ESE_UPLOAD */
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-CDF_STATUS csr_roam_offload_send_synch_cnf(tpAniSirGlobal pMac,
-		uint8_t sessionId);
 CDF_STATUS csr_neighbor_roam_offload_update_preauth_list(tpAniSirGlobal pMac,
 		roam_offload_synch_ind *roam_synch_ind_ptr, uint8_t sessionId);
+void csr_roam_synch_callback(tpAniSirGlobal mac,
+	roam_offload_synch_ind *roam_synch_data,
+	tpSirBssDescription  bss_desc_ptr, uint8_t reason);
 #endif
-#endif /* WLAN_FEATURE_NEIGHBOR_ROAMING */
 #endif /* CSR_NEIGHBOR_ROAM_H */

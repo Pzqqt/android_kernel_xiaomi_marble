@@ -224,10 +224,6 @@ typedef struct tagRoamingTimerInfo {
 	 ((pIes)->WMMParams.qosInfo & SME_QOS_AP_SUPPORTS_APSD)) || \
 	 ((pIes)->WMMInfoAp.present && (pIes)->WMMInfoAp.uapsd))
 
-/* This macro returns the total len needed of Tlv with with len bytes of data */
-#define GET_TLV_MSG_LEN(len) \
-	GET_ROUND_UP((sizeof(tCsrCfgMsgTlvHdr) + (len)), sizeof(uint32_t))
-
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
 		struct cdf_mac_addr *pBssId);
 bool csr_is_bss_id_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
@@ -311,7 +307,6 @@ bool csr_is_security_match(tHalHandle hHal, tCsrAuthList *authType,
 		eCsrEncryptionType *negotiatedMCCipher);
 bool csr_is_bss_type_match(eCsrRoamBssType bssType1, eCsrRoamBssType bssType2);
 bool csr_is_bss_type_ibss(eCsrRoamBssType bssType);
-bool csr_is_bss_type_wds(eCsrRoamBssType bssType);
 /*
  * ppIes can be NULL. If caller want to get the *ppIes allocated by
  * this function, pass in *ppIes = NULL. Caller needs to free the memory
@@ -361,11 +356,11 @@ CDF_STATUS csr_reassoc(tpAniSirGlobal pMac, uint32_t sessionId,
 		uint32_t *pRoamId, bool fForce);
 
 CDF_STATUS csr_isconcurrentsession_valid(tpAniSirGlobal pMac,
-		uint32_t cursessionId, tCDF_CON_MODE currBssPersona);
+		uint32_t cursessionId, enum tCDF_ADAPTER_MODE currBssPersona);
 /* BeaconInterval validation for MCC support */
 CDF_STATUS csr_validate_mcc_beacon_interval(tpAniSirGlobal pMac, uint8_t channelId,
 		uint16_t *beaconInterval, uint32_t cursessionId,
-		tCDF_CON_MODE currBssPersona);
+		enum tCDF_ADAPTER_MODE currBssPersona);
 #ifdef WLAN_FEATURE_VOWIFI_11R
 bool csr_is_profile11r(tCsrRoamProfile *pProfile);
 bool csr_is_auth_type11r(eCsrAuthType AuthType, uint8_t mdiePresent);

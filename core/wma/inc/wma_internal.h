@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -77,8 +77,15 @@
 #define MKK       0x40
 #define ETSI      0x30
 
-/* Maximum Buffer length allowed for DFS phyerrors */
-#define DFS_MAX_BUF_LENGHT 4096
+/* Maximum Buffer length allowed for DFS-2 phyerrors */
+#define DFS_MAX_BUF_LENGTH 4096
+
+/*
+ * Maximum Buffer length allowed for DFS-3 phyerrors
+ * When 160MHz is supported the Max length of phyerrors
+ * is larger than the legacy phyerrors.
+ */
+#define DFS3_MAX_BUF_LENGTH 4436
 
 #define WMI_DEFAULT_NOISE_FLOOR_DBM (-96)
 
@@ -111,27 +118,29 @@
 
 /**
  * struct index_data_rate_type - non vht data rate type
- * @beacon_rate_index: Beacon rate index
- * @supported_rate: Supported rate table
+ * @mcs_index: mcs rate index
+ * @ht20_rate: HT20 supported rate table
+ * @ht40_rate: HT40 supported rate table
  */
 struct index_data_rate_type {
-	uint8_t beacon_rate_index;
-	uint16_t supported_rate[4];
+	uint8_t  mcs_index;
+	uint16_t ht20_rate[2];
+	uint16_t ht40_rate[2];
 };
 
 #ifdef WLAN_FEATURE_11AC
 /**
  * struct index_vht_data_rate_type - vht data rate type
- * @beacon_rate_index: Beacon rate index
- * @supported_VHT80_rate: VHT80 rate
- * @supported_VHT40_rate: VHT40 rate
- * @supported_VHT20_rate: VHT20 rate
+ * @mcs_index: mcs rate index
+ * @ht20_rate: VHT20 supported rate table
+ * @ht40_rate: VHT40 supported rate table
+ * @ht80_rate: VHT80 supported rate table
  */
 struct index_vht_data_rate_type {
-	uint8_t beacon_rate_index;
-	uint16_t supported_VHT80_rate[2];
-	uint16_t supported_VHT40_rate[2];
-	uint16_t supported_VHT20_rate[2];
+	uint8_t mcs_index;
+	uint16_t ht20_rate[2];
+	uint16_t ht40_rate[2];
+	uint16_t ht80_rate[2];
 };
 #endif
 
@@ -413,8 +422,18 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event, uint32_t len);
 #endif
 
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void wma_process_roam_synch_complete(WMA_HANDLE handle,
-				     tSirSmeRoamOffloadSynchCnf *synchcnf);
+void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id);
+static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
+		uint8_t vdev_id)
+{
+	return wma->interfaces[vdev_id].roam_synch_in_progress;
+}
+#else
+static inline bool wma_is_roam_synch_in_progress(tp_wma_handle wma,
+		uint8_t vdev_id)
+{
+	return false;
+}
 #endif
 
 /*
@@ -461,7 +480,37 @@ bool wma_is_vdev_in_ap_mode(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef QCA_IBSS_SUPPORT
 bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+#else
+/**
+ * wma_is_vdev_in_ibss_mode(): dummy function
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Return false since no vdev can be in ibss mode without ibss support
+ */
+static inline
+bool wma_is_vdev_in_ibss_mode(tp_wma_handle wma, uint8_t vdev_id);
+{
+	return false;
+}
 #endif
+
+/**
+ * wma_is_vdev_in_beaconning_mode() - check if vdev is in a beaconning mode
+ * @wma: wma handle
+ * @vdev_id: vdev id
+ *
+ * Helper function to know whether given vdev id
+ * is in a beaconning mode or not.
+ *
+ * Return: True if vdev needs to beacon.
+ */
+static inline
+bool wma_is_vdev_in_beaconning_mode(tp_wma_handle wma, uint8_t vdev_id)
+{
+	return wma_is_vdev_in_ap_mode(wma, vdev_id) ||
+		wma_is_vdev_in_ibss_mode(wma, vdev_id);
+}
 
 /**
  * wma_find_bssid_by_vdev_id() - Get the BSS ID corresponding to the vdev ID
@@ -908,6 +957,9 @@ int wma_oem_measurement_report_event_callback(void *handle, uint8_t *datap,
 
 int wma_oem_error_report_event_callback(void *handle, uint8_t *datap,
 					uint32_t len);
+
+int wma_oem_data_response_handler(void *handle, uint8_t *datap,
+				  uint32_t len);
 #endif
 
 void wma_register_dfs_event_handler(tp_wma_handle wma_handle);
@@ -936,7 +988,7 @@ static inline int wma_get_wow_bus_suspend(tp_wma_handle wma)
 	return cdf_atomic_read(&wma->is_wow_bus_suspended);
 }
 
-CDF_STATUS wma_resume_req(tp_wma_handle wma);
+CDF_STATUS wma_resume_req(tp_wma_handle wma, enum cdf_suspend_type type);
 
 CDF_STATUS wma_wow_add_pattern(tp_wma_handle wma,
 			struct wow_add_pattern *ptrn);
@@ -948,7 +1000,10 @@ CDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info);
 
 CDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info);
 
-CDF_STATUS wma_suspend_req(tp_wma_handle wma, tpSirWlanSuspendParam info);
+CDF_STATUS wma_suspend_req(tp_wma_handle wma, enum cdf_suspend_type type);
+void wma_calculate_and_update_conn_state(tp_wma_handle wma);
+void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
+void wma_update_conn_state(tp_wma_handle wma, uint32_t conn_mask);
 
 void wma_del_ts_req(tp_wma_handle wma, tDelTsParams *msg);
 
@@ -1114,5 +1169,11 @@ CDF_STATUS wma_process_set_ie_info(tp_wma_handle wma,
 				   struct vdev_ie_info *ie_info);
 int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 				uint32_t len);
+int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
+				uint32_t len);
 
+int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
+				uint32_t len);
+void wma_remove_req(tp_wma_handle wma, uint8_t vdev_id,
+			    uint8_t type);
 #endif

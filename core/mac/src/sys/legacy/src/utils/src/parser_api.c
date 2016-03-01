@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1002,6 +1002,8 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 			CFG_GET_INT(nStatus, pMac,
 				    WNI_CFG_VHT_MU_BEAMFORMEE_CAP, nCfgValue);
 			pDot11f->muBeamformeeCap = (nCfgValue & 0x0001);
+			pDot11f->csnofBeamformerAntSup =
+				psessionEntry->txbf_csn_value;
 		} else {
 			pDot11f->muBeamformeeCap = 0;
 		}
@@ -1037,11 +1039,13 @@ populate_dot11f_vht_caps(tpAniSirGlobal pMac,
 		CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_SU_BEAMFORMER_CAP,
 				nCfgValue);
 		pDot11f->suBeamFormerCap = (nCfgValue & 0x0001);
+
+		nCfgValue = 0;
+		CFG_GET_INT(nStatus, pMac,
+				WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
+				nCfgValue);
+		pDot11f->csnofBeamformerAntSup = (nCfgValue & 0x0007);
 	}
-	nCfgValue = 0;
-	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_CSN_BEAMFORMEE_ANT_SUPPORTED,
-		    nCfgValue);
-	pDot11f->csnofBeamformerAntSup = (nCfgValue & 0x0007);
 
 	nCfgValue = 0;
 	CFG_GET_INT(nStatus, pMac, WNI_CFG_VHT_NUM_SOUNDING_DIMENSIONS,

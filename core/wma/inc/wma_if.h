@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -317,7 +317,7 @@ typedef struct {
 	uint16_t ht_caps;
 	uint32_t vht_caps;
 	tSirNwType nwType;
-	tPowerdBm maxTxPower;
+	int8_t maxTxPower;
 	uint8_t atimIePresent;
 	uint32_t peerAtimWindowLength;
 	uint8_t nonRoamReassoc;
@@ -373,7 +373,7 @@ typedef struct {
 	tSirKeys key[SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS];
 	uint8_t singleTidRc;
 	uint8_t smesessionId;
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	CDF_STATUS status;
 	uint8_t sessionId;
 	uint8_t sendRsp;
@@ -390,7 +390,7 @@ typedef struct {
  * @key: key data
  */
 typedef struct sLimMlmSetKeysReq {
-	tSirMacAddr peerMacAddr;
+	struct cdf_mac_addr peer_macaddr;
 	uint8_t sessionId;      /* Added For BT-AMP Support */
 	uint8_t smesessionId;   /* Added for drivers based on wmi interface */
 	uint16_t aid;
@@ -487,8 +487,8 @@ typedef struct {
 	uint8_t respReqd;
 	uint8_t sessionId;
 #if defined WLAN_FEATURE_VOWIFI
-	tPowerdBm txMgmtPower;
-	tPowerdBm maxTxPower;
+	int8_t txMgmtPower;
+	int8_t maxTxPower;
 #endif /* WLAN_FEATURE_VOWIFI */
 
 #if defined WLAN_FEATURE_VOWIFI_11R
@@ -592,6 +592,7 @@ typedef enum eSmpsModeValue {
  * @bssId: mac address
  * @addr2: mac address
  * @reasonCode: reason code
+ * @rssi: rssi value during disconnection
  */
 typedef struct {
 	uint16_t assocId;
@@ -599,6 +600,7 @@ typedef struct {
 	tSirMacAddr bssId;
 	tSirMacAddr addr2;
 	uint16_t reasonCode;
+	int8_t rssi;
 } tDeleteStaContext, *tpDeleteStaContext;
 
 /**
@@ -613,7 +615,7 @@ typedef struct {
 	CDF_STATUS status;
 #if defined WLAN_FEATURE_VOWIFI
 	uint32_t startTSF[2];
-	tPowerdBm txMgmtPower;
+	int8_t txMgmtPower;
 #endif /* WLAN_FEATURE_VOWIFI */
 } tStartScanParams, *tpStartScanParams;
 
@@ -678,7 +680,8 @@ typedef struct {
 typedef struct {
 	struct cdf_mac_addr selfMacAddr;
 	CDF_STATUS status;
-	uint8_t oemDataReq[OEM_DATA_REQ_SIZE];
+	uint8_t data_len;
+	uint8_t *data;
 } tStartOemDataReq, *tpStartOemDataReq;
 
 /**
@@ -686,6 +689,7 @@ typedef struct {
  * @oemDataRsp: OEM Data response
  */
 typedef struct {
+	bool target_rsp;
 	uint8_t oemDataRsp[OEM_DATA_RSP_SIZE];
 } tStartOemDataRsp, *tpStartOemDataRsp;
 #endif /* FEATURE_OEM_DATA_SUPPORT */
@@ -896,8 +900,8 @@ typedef struct {
 #endif /* WLAN_FEATURE_VOWIFI  */
 	uint8_t peSessionId;
 #if defined WLAN_FEATURE_VOWIFI
-	tPowerdBm txMgmtPower;
-	tPowerdBm maxTxPower;
+	int8_t txMgmtPower;
+	int8_t maxTxPower;
 #endif /* WLAN_FEATURE_VOWIFI */
 	tSirMacAddr selfStaMacAddr;
 	/* the request has power constraints, this should be applied only to
@@ -1158,8 +1162,8 @@ typedef struct sMaxTxPowerParams {
 	 * In response,
 	 * power == tx power used for management frames.
 	 */
-	tPowerdBm power;
-	tCDF_CON_MODE dev_mode;
+	int8_t power;
+	enum tCDF_ADAPTER_MODE dev_mode;
 } tMaxTxPowerParams, *tpMaxTxPowerParams;
 
 /**
@@ -1169,7 +1173,7 @@ typedef struct sMaxTxPowerParams {
  */
 typedef struct sMaxTxPowerPerBandParams {
 	eCsrBand bandInfo;
-	tPowerdBm power;
+	int8_t power;
 } tMaxTxPowerPerBandParams, *tpMaxTxPowerPerBandParams;
 
 /**
@@ -1183,7 +1187,7 @@ typedef struct sMaxTxPowerPerBandParams {
  */
 struct add_sta_self_params {
 	tSirMacAddr self_mac_addr;
-	tCDF_CON_MODE curr_device_mode;
+	enum tCDF_ADAPTER_MODE curr_device_mode;
 	uint32_t type;
 	uint32_t sub_type;
 	uint8_t session_id;
@@ -1281,6 +1285,16 @@ struct del_sta_self_params {
 	tSirMacAddr self_mac_addr;
 	uint8_t session_id;
 	uint32_t status;
+};
+
+/**
+ * struct del_sta_self_rsp_params - Del Sta Self response params
+ * @self_sta_param: sta params
+ * @generate_rsp: generate response to upper layers
+ */
+struct del_sta_self_rsp_params {
+	struct del_sta_self_params *self_sta_param;
+	uint8_t generate_rsp;
 };
 
 /**

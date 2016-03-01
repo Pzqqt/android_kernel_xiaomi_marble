@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -71,7 +71,7 @@ typedef enum {
 	PHY_CHANNEL_BONDING_STATE_MAX = 11
 } ePhyChanBondState;
 
-#define MAX_BONDED_CHANNELS 4
+#define MAX_BONDED_CHANNELS 8
 
 typedef enum {
 	MCC = 0,
@@ -579,6 +579,10 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_EXIT_PS_REQ                  (SIR_HAL_ITC_MSG_TYPES_BEGIN + 236)
 #define SIR_HAL_ENABLE_UAPSD_REQ             (SIR_HAL_ITC_MSG_TYPES_BEGIN + 237)
 #define SIR_HAL_DISABLE_UAPSD_REQ            (SIR_HAL_ITC_MSG_TYPES_BEGIN + 238)
+#define SIR_HAL_GATEWAY_PARAM_UPDATE_REQ    (SIR_HAL_ITC_MSG_TYPES_BEGIN + 239)
+
+#define SIR_HAL_RUNTIME_PM_SUSPEND_IND	(SIR_HAL_ITC_MSG_TYPES_BEGIN + 308)
+#define SIR_HAL_RUNTIME_PM_RESUME_IND	(SIR_HAL_ITC_MSG_TYPES_BEGIN + 309)
 
 #define SIR_HAL_SET_EPNO_LIST_REQ          (SIR_HAL_ITC_MSG_TYPES_BEGIN + 313)
 #define SIR_HAL_SET_PASSPOINT_LIST_REQ     (SIR_HAL_ITC_MSG_TYPES_BEGIN + 316)
@@ -604,6 +608,8 @@ typedef struct sSirMbMsgP2p {
 #define SIR_HAL_SET_IE_INFO                 (SIR_HAL_ITC_MSG_TYPES_BEGIN + 334)
 
 #define SIR_HAL_LRO_CONFIG_CMD              (SIR_HAL_ITC_MSG_TYPES_BEGIN + 335)
+
+#define SIR_HAL_SET_EGAP_CONF_PARAMS        (SIR_HAL_ITC_MSG_TYPES_BEGIN + 336)
 
 #define SIR_HAL_MSG_TYPES_END                (SIR_HAL_MSG_TYPES_BEGIN + 0x1FF)
 
@@ -680,9 +686,8 @@ typedef struct sSirMbMsgP2p {
 
 #define SIR_LIM_BEACON_GEN_IND          (SIR_LIM_TIMEOUT_MSG_START + 0x23)
 #define SIR_LIM_PERIODIC_PROBE_REQ_TIMEOUT    (SIR_LIM_TIMEOUT_MSG_START + 0x24)
-#ifdef FEATURE_WLAN_ESE
-#define SIR_LIM_ESE_TSM_TIMEOUT        (SIR_LIM_TIMEOUT_MSG_START + 0x25)
-#endif
+
+/* currently unused                     (SIR_LIM_TIMEOUT_MSG_START + 0x25) */
 
 #define SIR_LIM_DISASSOC_ACK_TIMEOUT       (SIR_LIM_TIMEOUT_MSG_START + 0x26)
 #define SIR_LIM_DEAUTH_ACK_TIMEOUT       (SIR_LIM_TIMEOUT_MSG_START + 0x27)

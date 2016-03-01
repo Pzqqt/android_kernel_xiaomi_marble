@@ -67,7 +67,7 @@ void lim_send_sme_deauth_ind(tpAniSirGlobal, tpDphHashNode,
 			     tpPESession psessionEntry);
 void lim_send_sme_wm_status_change_ntf(tpAniSirGlobal, tSirSmeStatusChangeCode,
 				       uint32_t *, uint16_t, uint8_t);
-void lim_send_sme_set_context_rsp(tpAniSirGlobal, tSirMacAddr, uint16_t,
+void lim_send_sme_set_context_rsp(tpAniSirGlobal, struct cdf_mac_addr, uint16_t,
 				  tSirResultCodes, tpPESession, uint8_t, uint16_t);
 void lim_send_sme_neighbor_bss_ind(tpAniSirGlobal, tLimScanResultNode *);
 void lim_handle_delete_bss_rsp(tpAniSirGlobal pMac, tpSirMsgQ MsgQ);

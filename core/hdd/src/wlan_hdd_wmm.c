@@ -81,10 +81,6 @@
 
 #define WLAN_HDD_MAX_DSCP 0x3f
 
-/* DHCP Port number */
-#define DHCP_SOURCE_PORT 0x4400
-#define DHCP_DESTINATION_PORT 0x4300
-
 #define HDD_WMM_UP_TO_AC_MAP_SIZE 8
 
 const uint8_t hdd_wmm_up_to_ac_map[] = {

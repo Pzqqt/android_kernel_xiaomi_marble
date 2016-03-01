@@ -51,9 +51,6 @@ int iw_set_scan(struct net_device *dev, struct iw_request_info *info,
 		union iwreq_data *wrqu, char *extra);
 
 int wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 6, 0))
-			   struct net_device *dev,
-#endif
 			   struct cfg80211_scan_request *request);
 
 #ifdef FEATURE_WLAN_SCAN_PNO

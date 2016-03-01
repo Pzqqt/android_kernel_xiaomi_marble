@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -165,6 +165,9 @@ struct CE_handle *ce_init(struct ol_softc *scn,
 		CDF_ASSERT(CE_state->src_sz_max == attr->src_sz_max);
 	else
 		CE_state->src_sz_max = attr->src_sz_max;
+
+	ce_init_ce_desc_event_log(CE_id,
+			attr->src_nentries + attr->dest_nentries);
 
 	/* source ring setup */
 	nentries = attr->src_nentries;
@@ -691,9 +694,9 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
 			if (hif_state->scn->target_status
 					== OL_TRGET_STATUS_RESET)
-				return;
-
-			msg_callbacks->txCompletionHandler(
+				cdf_nbuf_free(transfer_context);
+			else
+				msg_callbacks->txCompletionHandler(
 					msg_callbacks->Context,
 					transfer_context, transfer_id,
 					toeplitz_hash_result);
@@ -752,6 +755,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		&hif_state->msg_callbacks_current;
 
 	do {
+		hif_pm_runtime_mark_last_busy(scn->hif_sc->dev);
 		cdf_nbuf_unmap_single(scn->cdf_dev,
 				      (cdf_nbuf_t) transfer_context,
 				      CDF_DMA_FROM_DEVICE);
@@ -759,9 +763,9 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 		atomic_inc(&pipe_info->recv_bufs_needed);
 		hif_post_recv_buffers_for_pipe(pipe_info);
 		if (hif_state->scn->target_status == OL_TRGET_STATUS_RESET)
-			return;
-
-		hif_ce_do_recv(msg_callbacks, transfer_context,
+			cdf_nbuf_free(transfer_context);
+		else
+			hif_ce_do_recv(msg_callbacks, transfer_context,
 				nbytes, pipe_info);
 
 		/* Set up force_break flag if num of receices reaches
@@ -775,6 +779,7 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 	} while (ce_completed_recv_next(copyeng, &ce_context, &transfer_context,
 					&CE_data, &nbytes, &transfer_id,
 					&flags) == CDF_STATUS_SUCCESS);
+
 }
 
 /* TBDXXX: Set CE High Watermark; invoke txResourceAvailHandler in response */
@@ -841,7 +846,11 @@ int hif_completion_thread_startup(struct HIF_CE_state *hif_state)
 					    hif_pci_ce_recv_data, pipe_info,
 					    attr.flags & CE_ATTR_DISABLE_INTR);
 		}
+
+		if (attr.src_nentries)
+			cdf_spinlock_init(&pipe_info->completion_freeq_lock);
 	}
+
 	A_TARGET_ACCESS_UNLIKELY(scn);
 	return 0;
 }
@@ -861,20 +870,6 @@ static void hif_msg_callbacks_install(struct ol_softc *scn)
 	cdf_mem_copy(&hif_state->msg_callbacks_current,
 		 &hif_state->msg_callbacks_pending,
 		 sizeof(hif_state->msg_callbacks_pending));
-}
-
-void hif_claim_device(struct ol_softc *scn, void *claimedContext)
-{
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
-
-	hif_state->claimedContext = claimedContext;
-}
-
-void hif_release_device(struct ol_softc *scn)
-{
-	struct HIF_CE_state *hif_state = (struct HIF_CE_state *)scn->hif_hdl;
-
-	hif_state->claimedContext = NULL;
 }
 
 void
@@ -1161,7 +1156,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 			 * htt_h2t_rx_ring_cfg_msg_ll() have already been
 			 * freed in htt_htc_misc_pkt_pool_free() in
 			 * wlantl_close(), so do not free them here again
-			 * by checking whether it's the EndPoint
+			 * by checking whether it's the endpoint
 			 * which they are queued in.
 			 */
 			if (id == hif_state->scn->htc_endpoint)
@@ -1487,7 +1482,7 @@ static void hif_sleep_entry(void *arg)
 	if (scn->recovery)
 		return;
 
-	if (cds_is_unload_in_progress())
+	if (cds_is_driver_unloading())
 		return;
 
 	cdf_spin_lock_irqsave(&hif_state->keep_awake_lock);
@@ -1543,7 +1538,7 @@ int hif_set_hia(struct ol_softc *scn)
 
 	HIF_TRACE("%s: E", __func__);
 
-	if (IHELIUM_BU || ADRASTEA_BU)
+	if (ADRASTEA_BU)
 		return CDF_STATUS_SUCCESS;
 
 #ifdef QCA_WIFI_3_0
@@ -1799,26 +1794,15 @@ static int hif_wlan_enable(void)
 	cfg.num_shadow_reg_cfg = shadow_cfg_sz / sizeof(struct shadow_reg_cfg);
 	cfg.shadow_reg_cfg = (struct icnss_shadow_reg_cfg *) target_shadow_reg_cfg;
 
-	switch (con_mode) {
-	case CDF_FTM_MODE:
+	if (CDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
-		break;
-	case CDF_EPPING_MODE:
+	else if (WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
 		mode = ICNSS_EPPING;
-		break;
-	default:
+	else
 		mode = ICNSS_MISSION;
-		break;
-	}
+
 	return icnss_wlan_enable(&cfg, mode, QWLAN_VERSIONSTR);
 }
-
-#if ((!defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)) || defined(CONFIG_ICNSS))
-static inline void cnss_pcie_notify_q6(void)
-{
-	return;
-}
-#endif
 
 /*
  * Called from PCI layer whenever a new PCI device is probed.
@@ -1857,11 +1841,6 @@ int hif_config_ce(hif_handle_t hif_hdl)
 	if (ret) {
 		HIF_ERROR("%s: hif_wlan_enable error = %d", __func__, ret);
 		return CDF_STATUS_NOT_INITIALIZED;
-	}
-	if (IHELIUM_BU) {
-		cnss_pcie_notify_q6();
-		HIF_TRACE("%s: cnss_pcie_notify_q6 done, notice_send= %d",
-			  __func__, scn->notice_send);
 	}
 
 	scn->notice_send = true;

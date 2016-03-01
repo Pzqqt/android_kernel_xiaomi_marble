@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,7 +40,6 @@
 #include "sme_api.h"
 #include "mac_init_api.h"
 #include "wlan_qct_sys.h"
-#include "wlan_hdd_misc.h"
 #include "i_cds_packet.h"
 #include "cds_reg_service.h"
 #include "wma_types.h"
@@ -80,70 +79,56 @@ static uint8_t cds_multicast_logging;
 void cds_sys_probe_thread_cback(void *pUserData);
 
 /**
- * cds_alloc_global_context() - allocate CDS global context
- * @p_cds_context: A pointer to where to store the CDS Context
+ * cds_init() - Initialize CDS
  *
- * cds_alloc_global_context() function allocates the CDS global Context,
- * but does not initialize all the members. This overal initialization will
- * happen at cds_open().
+ * This function allocates the resource required for CDS, but does not
+ * initialize all the members. This overall initialization will happen at
+ * cds_open().
  *
- * Return: CDF status
+ * Return: Global context on success and NULL on failure.
  */
-CDF_STATUS cds_alloc_global_context(v_CONTEXT_t *p_cds_context)
+v_CONTEXT_t cds_init(void)
 {
-	if (p_cds_context == NULL)
-		return CDF_STATUS_E_FAILURE;
+	cdf_mc_timer_manager_init();
+	cdf_mem_init();
 
-	/* allocate the CDS Context */
-	*p_cds_context = NULL;
 	gp_cds_context = &g_cds_context;
-
-	cdf_mem_zero(gp_cds_context, sizeof(cds_context_type));
-	*p_cds_context = gp_cds_context;
 
 	gp_cds_context->cdf_ctx = &g_cdf_ctx;
 	cdf_mem_zero(&g_cdf_ctx, sizeof(g_cdf_ctx));
 
-	/* initialize the spinlock */
 	cdf_trace_spin_lock_init();
-	/* it is the right time to initialize MTRACE structures */
+
 #if defined(TRACE_RECORD)
 	cdf_trace_init();
 #endif
-
 	cdf_dp_trace_init();
-	return CDF_STATUS_SUCCESS;
-} /* cds_alloc_global_context() */
+
+	cds_ssr_protect_init();
+
+	return gp_cds_context;
+}
 
 /**
- * cds_free_global_context() - free CDS global context
- * @p_cds_context: A pointer to where the CDS Context was stored
+ * cds_deinit() - Deinitialize CDS
  *
- * cds_free_global_context() function frees the CDS Context.
- *
- * Return: CDF status
+ * This function frees the CDS resources
  */
-CDF_STATUS cds_free_global_context(v_CONTEXT_t *p_cds_context)
+void cds_deinit(void)
 {
-	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
-		  "%s: De-allocating the CDS Context", __func__);
+	if (gp_cds_context == NULL)
+		return;
 
-	if ((p_cds_context == NULL) || (*p_cds_context == NULL)) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: vOS Context is Null", __func__);
-		return CDF_STATUS_E_FAILURE;
-	}
-
-	if (gp_cds_context != *p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: Context mismatch", __func__);
-		return CDF_STATUS_E_FAILURE;
-	}
 	gp_cds_context->cdf_ctx = NULL;
-	*p_cds_context = gp_cds_context = NULL;
+	gp_cds_context = NULL;
 
-	return CDF_STATUS_SUCCESS;
-} /* cds_free_global_context() */
+	cdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
+
+	cdf_mc_timer_exit();
+	cdf_mem_exit();
+
+	return;
+}
 
 #ifdef WLAN_FEATURE_NAN
 /**
@@ -167,8 +152,6 @@ static void cds_set_nan_enable(tMacOpenParameters *param,
 
 /**
  * cds_open() - open the CDS Module
- * @p_cds_context: A pointer to where the CDS Context was stored
- * @hddContextSize: Size of the HDD context to allocate.
  *
  * cds_open() function opens the CDS Scheduler
  * Upon successful initialization:
@@ -181,7 +164,7 @@ static void cds_set_nan_enable(tMacOpenParameters *param,
  *
  * Return: CDF status
  */
-CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize)
+CDF_STATUS cds_open(void)
 {
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
 	int iter = 0;
@@ -461,8 +444,6 @@ CDF_STATUS cds_open(v_CONTEXT_t *p_cds_context, uint32_t hddContextSize)
 
 	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: CDS successfully Opened", __func__);
-
-	*p_cds_context = gp_cds_context;
 
 	return CDF_STATUS_SUCCESS;
 
@@ -851,6 +832,9 @@ CDF_STATUS cds_close(v_CONTEXT_t cds_context)
 	}
 
 	cds_deinit_log_completion();
+
+	gp_cds_context->pHDDContext = NULL;
+
 	return CDF_STATUS_SUCCESS;
 }
 
@@ -878,14 +862,6 @@ void *cds_get_context(CDF_MODULE_ID moduleId)
 	}
 
 	switch (moduleId) {
-#ifndef WLAN_FEATURE_MBSSID
-	case CDF_MODULE_ID_SAP:
-	{
-		pModContext = gp_cds_context->pSAPContext;
-		break;
-	}
-#endif
-
 	case CDF_MODULE_ID_HDD:
 	{
 		pModContext = gp_cds_context->pHDDContext;
@@ -983,113 +959,67 @@ v_CONTEXT_t cds_get_global_context(void)
 } /* cds_get_global_context() */
 
 /**
- * cds_is_logp_in_progress() - check if ssr/self recovery is going on
+ * cds_get_driver_state() - Get current driver state
  *
- * Return: true if ssr/self recvoery is going on else false
+ * This API returns current driver state stored in global context.
+ *
+ * Return: Driver state enum
  */
-uint8_t cds_is_logp_in_progress(void)
+enum cds_driver_state cds_get_driver_state(void)
 {
 	if (gp_cds_context == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			  "%s: global cds context is NULL", __func__);
-		return 1;
+
+		return CDS_DRIVER_STATE_UNINITIALIZED;
 	}
 
-	return gp_cds_context->isLogpInProgress;
+	return gp_cds_context->driver_state;
 }
 
 /**
- * cds_set_logp_in_progress() - set ssr/self recovery in progress
- * @value: value to set
+ * cds_set_driver_state() - Set current driver state
+ * @state:	Driver state to be set to.
  *
- * Return: none
+ * This API sets driver state to state. This API only sets the state and doesn't
+ * clear states, please make sure to use cds_clear_driver_state to clear any
+ * state if required.
+ *
+ * Return: None
  */
-void cds_set_logp_in_progress(uint8_t value)
+void cds_set_driver_state(enum cds_driver_state state)
 {
-	hdd_context_t *pHddCtx = NULL;
-
 	if (gp_cds_context == NULL) {
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
+			  "%s: global cds context is NULL: %x", __func__,
+			  state);
+
 		return;
 	}
-	gp_cds_context->isLogpInProgress = value;
 
-	/* HDD uses it's own context variable to check if SSR in progress,
-	 * instead of modifying all HDD APIs set the HDD context variable
-	 * here
-	 */
-	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
-	if (!pHddCtx) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
-			  "%s: HDD context is Null", __func__);
+	gp_cds_context->driver_state |= state;
+}
+
+/**
+ * cds_clear_driver_state() - Clear current driver state
+ * @state:	Driver state to be cleared.
+ *
+ * This API clears driver state. This API only clears the state, please make
+ * sure to use cds_set_driver_state to set any new states.
+ *
+ * Return: None
+ */
+void cds_clear_driver_state(enum cds_driver_state state)
+{
+	if (gp_cds_context == NULL) {
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "%s: global cds context is NULL: %x", __func__,
+			  state);
+
 		return;
 	}
-	pHddCtx->isLogpInProgress = value;
-}
 
-/**
- * cds_is_load_unload_in_progress() - check if driver load/unload in progress
- *
- * Return: true if load/unload is going on else false
- */
-uint8_t cds_is_load_unload_in_progress(void)
-{
-	if (gp_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
-		return 0;
-	}
-
-	return gp_cds_context->isLoadUnloadInProgress;
-}
-
-/**
- * cds_is_unload_in_progress() - check if driver unload in
- * progress
- *
- * Return: true if unload is going on else false
- */
-uint8_t cds_is_unload_in_progress(void)
-{
-	hdd_context_t *hdd_ctx = NULL;
-	if (gp_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
-		return 0;
-	}
-	hdd_ctx = cds_get_context(CDF_MODULE_ID_HDD);
-
-	if (hdd_ctx == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: HDD context is NULL", __func__);
-		return 0;
-	}
-
-	return hdd_ctx->isUnloadInProgress;
-}
-
-/**
- * cds_set_load_unload_in_progress() - set load/unload in progress
- * @value: value to set
- *
- * Return: none
- */
-void cds_set_load_unload_in_progress(uint8_t value)
-{
-	if (gp_cds_context == NULL) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-			  "%s: global cds context is NULL", __func__);
-		return;
-	}
-	gp_cds_context->isLoadUnloadInProgress = value;
-
-#ifdef CONFIG_CNSS
-	if (value)
-		cnss_set_driver_status(CNSS_LOAD_UNLOAD);
-	else
-		cnss_set_driver_status(CNSS_INITIALIZED);
-#endif
+	gp_cds_context->driver_state &= ~state;
 }
 
 /**
@@ -1125,15 +1055,6 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	}
 
 	switch (moduleID) {
-
-#ifndef WLAN_FEATURE_MBSSID
-	case CDF_MODULE_ID_SAP:
-	{
-		pGpModContext = &(gp_cds_context->pSAPContext);
-		break;
-	}
-#endif
-
 	case CDF_MODULE_ID_WMA:
 	{
 		pGpModContext = &(gp_cds_context->pWMAContext);
@@ -1147,10 +1068,6 @@ CDF_STATUS cds_alloc_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	}
 
 	case CDF_MODULE_ID_EPPING:
-	{
-		pGpModContext = &(gp_cds_context->epping_ctx);
-		break;
-	}
 	case CDF_MODULE_ID_SME:
 	case CDF_MODULE_ID_PE:
 	case CDF_MODULE_ID_HDD:
@@ -1221,14 +1138,6 @@ CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 	}
 
 	switch (moduleID) {
-#ifndef WLAN_FEATURE_MBSSID
-	case CDF_MODULE_ID_SAP:
-	{
-		pGpModContext = &(gp_cds_context->pSAPContext);
-		break;
-	}
-#endif
-
 	case CDF_MODULE_ID_WMA:
 	{
 		pGpModContext = &(gp_cds_context->pWMAContext);
@@ -1241,18 +1150,13 @@ CDF_STATUS cds_free_context(void *p_cds_context, CDF_MODULE_ID moduleID,
 		break;
 	}
 
-	case CDF_MODULE_ID_EPPING:
-	{
-		pGpModContext = &(gp_cds_context->epping_ctx);
-		break;
-	}
-
 	case CDF_MODULE_ID_TXRX:
 	{
 		pGpModContext = &(gp_cds_context->pdev_txrx_ctx);
 		break;
 	}
 
+	case CDF_MODULE_ID_EPPING:
 	case CDF_MODULE_ID_HDD:
 	case CDF_MODULE_ID_SME:
 	case CDF_MODULE_ID_PE:
@@ -1568,7 +1472,7 @@ CDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
  *
  * Return: WMI vdev type
  */
-CDF_STATUS cds_get_vdev_types(tCDF_CON_MODE mode, uint32_t *type,
+CDF_STATUS cds_get_vdev_types(enum tCDF_ADAPTER_MODE mode, uint32_t *type,
 			      uint32_t *sub_type)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
@@ -1598,7 +1502,8 @@ CDF_STATUS cds_get_vdev_types(tCDF_CON_MODE mode, uint32_t *type,
 		*type = WMI_VDEV_TYPE_OCB;
 		break;
 	default:
-		hddLog(CDF_TRACE_LEVEL_ERROR, "Invalid device mode %d", mode);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+			  "Invalid device mode %d", mode);
 		status = CDF_STATUS_E_INVAL;
 		break;
 	}
@@ -1679,12 +1584,12 @@ void cds_trigger_recovery(void)
 		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"CRASH_INJECT command is timed out!");
  #ifdef CONFIG_CNSS
-		if (cds_is_logp_in_progress()) {
+		if (cds_is_driver_recovering()) {
 			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
-				"LOGP is in progress, ignore!");
+				"Recovery is in progress, ignore!");
 			return;
 		}
-		cds_set_logp_in_progress(true);
+		cds_set_recovery_in_progress(true);
 		cnss_schedule_recovery_work();
  #endif
 
@@ -1726,7 +1631,7 @@ void cds_set_wakelock_logging(bool value)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"cds context is Invald");
 		return;
 	}
@@ -1747,7 +1652,7 @@ bool cds_is_wakelock_enabled(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"cds context is Invald");
 		return false;
 	}
@@ -1771,7 +1676,7 @@ void cds_set_ring_log_level(uint32_t ring_id, uint32_t log_level)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invald", __func__);
 		return;
 	}
@@ -1824,7 +1729,7 @@ enum wifi_driver_log_level cds_get_ring_log_level(uint32_t ring_id)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invald", __func__);
 		return WLAN_LOG_LEVEL_OFF;
 	}
@@ -1886,7 +1791,7 @@ void cds_init_log_completion(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return;
 	}
@@ -1915,7 +1820,7 @@ void cds_deinit_log_completion(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return;
 	}
@@ -1942,7 +1847,7 @@ CDF_STATUS cds_set_log_completion(uint32_t is_fatal,
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
@@ -1974,7 +1879,7 @@ void cds_get_log_completion(uint32_t *is_fatal,
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return;
 	}
@@ -2000,7 +1905,7 @@ bool cds_is_log_report_in_progress(void)
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return true;
 	}
@@ -2030,13 +1935,13 @@ CDF_STATUS cds_flush_logs(uint32_t is_fatal,
 
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: cds context is Invalid", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
 
 	if (cds_is_log_report_in_progress() == true) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: Bug report already in progress - dropping! type:%d, indicator=%d reason_code=%d",
 				__func__, is_fatal, indicator, reason_code);
 		return CDF_STATUS_E_FAILURE;
@@ -2044,18 +1949,18 @@ CDF_STATUS cds_flush_logs(uint32_t is_fatal,
 
 	status = cds_set_log_completion(is_fatal, indicator, reason_code);
 	if (CDF_STATUS_SUCCESS != status) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"%s: Failed to set log trigger params", __func__);
 		return CDF_STATUS_E_FAILURE;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
 			"%s: Triggering bug report: type:%d, indicator=%d reason_code=%d",
 			__func__, is_fatal, indicator, reason_code);
 
 	ret = sme_send_flush_logs_cmd_to_fw(p_cds_context->pMACContext);
 	if (0 != ret) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 				"%s: Failed to send flush FW log", __func__);
 		cds_init_log_completion();
 		return CDF_STATUS_E_FAILURE;

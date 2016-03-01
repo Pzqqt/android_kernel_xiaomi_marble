@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -63,8 +63,6 @@
 extern tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb);
 
 #define LOG_SIZE 256
-#define READ_MEMORY_DUMP_CMD     9
-#define TL_INIT_STATE            0
 
 static tSelfRecoveryStats g_self_recovery_stats;
 /* TxMB Functions */
@@ -76,8 +74,6 @@ extern void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand);
 extern CDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 						    tSmeCmd *p2pRemainonChn);
 extern CDF_STATUS sme_remain_on_chn_rsp(tpAniSirGlobal pMac, uint8_t *pMsg);
-extern CDF_STATUS sme_mgmt_frm_ind(tHalHandle hHal,
-				   tpSirSmeMgmtFrameInd pSmeMgmtFrm);
 extern CDF_STATUS sme_remain_on_chn_ready(tHalHandle hHal, uint8_t *pMsg);
 extern CDF_STATUS sme_send_action_cnf(tHalHandle hHal, uint8_t *pMsg);
 
@@ -1049,9 +1045,6 @@ CDF_STATUS sme_open(tHalHandle hHal)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-#ifndef WLAN_FEATURE_MBSSID
-	void *p_cds_gctx = cds_get_global_context();
-#endif
 
 	pMac->sme.state = SME_STATE_STOP;
 	pMac->sme.currDeviceMode = CDF_STA_MODE;
@@ -1096,18 +1089,6 @@ CDF_STATUS sme_open(tHalHandle hHal)
 	status = init_sme_cmd_list(pMac);
 	if (!CDF_IS_STATUS_SUCCESS(status))
 		return status;
-#ifndef WLAN_FEATURE_MBSSID
-	if (NULL == p_cds_gctx) {
-		sms_log(pMac, LOGE, FL("p_cds_gctx is NULL"));
-		return CDF_STATUS_E_FAILURE;
-	}
-	status = wlansap_open(p_cds_gctx);
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE, FL("wlansap_open failed, status=%d"),
-			status);
-		return status;
-	}
-#endif
 
 #if defined WLAN_FEATURE_VOWIFI
 	status = rrm_open(pMac);
@@ -1125,11 +1106,11 @@ CDF_STATUS sme_open(tHalHandle hHal)
  * sme_init_chan_list, triggers channel setup based on country code.
  */
 CDF_STATUS sme_init_chan_list(tHalHandle hal, uint8_t *alpha2,
-			      COUNTRY_CODE_SOURCE cc_src)
+			      enum country_src cc_src)
 {
 	tpAniSirGlobal pmac = PMAC_STRUCT(hal);
 
-	if ((cc_src == COUNTRY_CODE_SET_BY_USER) &&
+	if ((cc_src == SOURCE_USERSPACE) &&
 	    (pmac->roam.configParam.fSupplicantCountryCodeHasPriority)) {
 		pmac->roam.configParam.Is11dSupportEnabled = false;
 	}
@@ -1403,47 +1384,6 @@ CDF_STATUS sme_update_config(tHalHandle hHal, tpSmeConfigParams pSmeConfigParams
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  "Could not pass on WNI_CFG_SCAN_IN_POWERSAVE to CFG");
 	}
-	pMac->isCoalesingInIBSSAllowed =
-		pSmeConfigParams->csrConfig.isCoalesingInIBSSAllowed;
-
-	/* update p2p offload status */
-	pMac->pnoOffload = pSmeConfigParams->pnoOffload;
-
-	pMac->fEnableDebugLog = pSmeConfigParams->fEnableDebugLog;
-
-	/* update interface configuration */
-	pMac->sme.max_intf_count = pSmeConfigParams->max_intf_count;
-
-	pMac->enable5gEBT = pSmeConfigParams->enable5gEBT;
-	pMac->sme.enableSelfRecovery = pSmeConfigParams->enableSelfRecovery;
-
-	pMac->f_sta_miracast_mcc_rest_time_val =
-		pSmeConfigParams->f_sta_miracast_mcc_rest_time_val;
-
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-	pMac->sap.sap_channel_avoidance =
-		pSmeConfigParams->sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-
-	pMac->f_prefer_non_dfs_on_radar =
-		pSmeConfigParams->f_prefer_non_dfs_on_radar;
-
-	pMac->sme.ps_global_info.ps_enabled =
-		pSmeConfigParams->is_ps_enabled;
-
-	pMac->policy_manager_enabled = pSmeConfigParams->policy_manager_enabled;
-	pMac->fine_time_meas_cap = pSmeConfigParams->fine_time_meas_cap;
-	pMac->dual_mac_feature_disable =
-				pSmeConfigParams->dual_mac_feature_disable;
-	sme_update_roam_pno_channel_prediction_config(pMac, pSmeConfigParams,
-			SME_CONFIG_TO_ROAM_CONFIG);
-	pMac->roam.configParam.early_stop_scan_enable =
-		pSmeConfigParams->early_stop_scan_enable;
-	pMac->roam.configParam.early_stop_scan_min_threshold =
-		pSmeConfigParams->early_stop_scan_min_threshold;
-	pMac->roam.configParam.early_stop_scan_max_threshold =
-		pSmeConfigParams->early_stop_scan_max_threshold;
-
 	return status;
 }
 
@@ -1511,13 +1451,12 @@ CDF_STATUS sme_update_roam_params(tHalHandle hal,
 		break;
 	case REASON_ROAM_SET_BLACKLIST_BSSID:
 		cdf_mem_set(&roam_params_dst->bssid_avoid_list, 0,
-			sizeof(tSirMacAddr) * MAX_BSSID_AVOID_LIST);
+			CDF_MAC_ADDR_SIZE * MAX_BSSID_AVOID_LIST);
 		roam_params_dst->num_bssid_avoid_list =
 			roam_params_src.num_bssid_avoid_list;
 		for (i = 0; i < roam_params_dst->num_bssid_avoid_list; i++) {
-			cdf_mem_copy(&roam_params_dst->bssid_avoid_list[i],
-				&roam_params_src.bssid_avoid_list[i],
-				sizeof(tSirMacAddr));
+			cdf_copy_macaddr(&roam_params_dst->bssid_avoid_list[i],
+					&roam_params_src.bssid_avoid_list[i]);
 		}
 		break;
 	case REASON_ROAM_GOOD_RSSI_CHANGED:
@@ -1699,6 +1638,7 @@ CDF_STATUS sme_hdd_ready_ind(tHalHandle hHal)
 		Msg.messageType = eWNI_SME_SYS_READY_IND;
 		Msg.length = sizeof(tSirSmeReadyReq);
 		Msg.add_bssdescr_cb = csr_scan_process_single_bssdescr;
+		Msg.csr_roam_synch_cb = csr_roam_synch_callback;
 
 
 		if (eSIR_FAILURE != u_mac_post_ctrl_msg(hHal, (tSirMbMsg *) &Msg)) {
@@ -1758,17 +1698,6 @@ CDF_STATUS sme_start(tHalHandle hHal)
 				status);
 			break;
 		}
-
-#ifndef WLAN_FEATURE_MBSSID
-		status = wlansap_start(cds_get_global_context());
-		if (!CDF_IS_STATUS_SUCCESS(status)) {
-			sms_log(pMac, LOGE,
-				"wlansap_start failed during smeStart with status=%d",
-				status);
-			break;
-		}
-#endif
-
 		pMac->sme.state = SME_STATE_START;
 	} while (0);
 
@@ -1804,6 +1733,7 @@ static CDF_STATUS sme_handle_scan_req(tpAniSirGlobal mac_ctx,
 			FL("scan request failed. session_id %d"), session_id);
 	}
 	csr_scan_free_request(mac_ctx, scan_msg->scan_param);
+	cdf_mem_free(scan_msg->scan_param);
 	return status;
 }
 
@@ -2247,11 +2177,6 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	}
 	switch (pMsg->type) {
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-	case eWNI_SME_ROAM_OFFLOAD_SYNCH_IND:
-		csr_process_roam_offload_synch_ind(pMac,
-				(roam_offload_synch_ind *) pMsg->bodyptr);
-		cdf_mem_free(pMsg->bodyptr);
-		break;
 	case eWNI_SME_HO_FAIL_IND:
 		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
 			  FL("LFR3: Rcvd eWNI_SME_HO_FAIL_IND"));
@@ -2347,15 +2272,6 @@ CDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 	case eWNI_SME_REMAIN_ON_CHN_RDY_IND:
 		if (pMsg->bodyptr) {
 			status = sme_remain_on_chn_ready(pMac, pMsg->bodyptr);
-			cdf_mem_free(pMsg->bodyptr);
-		} else {
-			sms_log(pMac, LOGE, FL("Empty message for %d"),
-				pMsg->type);
-		}
-		break;
-	case eWNI_SME_MGMT_FRM_IND:
-		if (pMsg->bodyptr) {
-			sme_mgmt_frm_ind(pMac, pMsg->bodyptr);
 			cdf_mem_free(pMsg->bodyptr);
 		} else {
 			sms_log(pMac, LOGE, FL("Empty message for %d"),
@@ -2888,16 +2804,6 @@ CDF_STATUS sme_stop(tHalHandle hHal, tHalStopType stopType)
 	CDF_STATUS fail_status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-#ifndef WLAN_FEATURE_MBSSID
-	status = wlansap_stop(cds_get_global_context());
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			"wlansap_stop failed during smeStop with status=%d",
-			status);
-		fail_status = status;
-	}
-#endif
-
 	p2p_stop(hHal);
 
 	status = csr_stop(pMac, stopType);
@@ -2954,16 +2860,6 @@ CDF_STATUS sme_close(tHalHandle hHal)
 			status);
 		fail_status = status;
 	}
-#ifndef WLAN_FEATURE_MBSSID
-	status = wlansap_close(cds_get_global_context());
-	if (!CDF_IS_STATUS_SUCCESS(status)) {
-		sms_log(pMac, LOGE,
-			"WLANSAP_close failed during sme close with status=%d",
-			status);
-		fail_status = status;
-	}
-#endif
-
 #ifndef WLAN_MDM_CODE_REDUCTION_OPT
 	status = sme_qos_close(pMac);
 	if (!CDF_IS_STATUS_SUCCESS(status)) {
@@ -3094,6 +2990,7 @@ CDF_STATUS sme_scan_request(tHalHandle hal, uint8_t session_id,
 		sms_log(mac_ctx, LOGE,
 			" sme_scan_req failed to post msg");
 		csr_scan_free_request(mac_ctx, scan_msg->scan_param);
+		cdf_mem_free(scan_msg->scan_param);
 		cdf_mem_free(scan_msg);
 		status = CDF_STATUS_E_FAILURE;
 	}
@@ -4034,31 +3931,20 @@ CDF_STATUS sme_roam_get_connect_profile(tHalHandle hHal, uint8_t sessionId,
 	return status;
 }
 
-/* ---------------------------------------------------------------------------
-    \fn sme_roam_free_connect_profile
-    \brief a wrapper function to request CSR to free and reinitialize the
-	profile returned previously by csr_roam_get_connect_profile.
-    This is a synchronous call.
-    \param pProfile - pointer to a caller allocated structure
-		      tCsrRoamConnectedProfile
-    \return CDF_STATUS.
-   ---------------------------------------------------------------------------*/
-CDF_STATUS sme_roam_free_connect_profile(tHalHandle hHal,
-					 tCsrRoamConnectedProfile *pProfile)
+/**
+ * sme_roam_free_connect_profile - a wrapper function to request CSR to free and
+ * reinitialize the profile returned previously by csr_roam_get_connect_profile.
+ *
+ * @profile - pointer to a caller allocated structure tCsrRoamConnectedProfile
+ *
+ * Return: none
+ */
+void sme_roam_free_connect_profile(tCsrRoamConnectedProfile *profile)
 {
-	CDF_STATUS status = CDF_STATUS_E_FAILURE;
-	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-
 	MTRACE(cdf_trace(CDF_MODULE_ID_SME,
 			 TRACE_CODE_SME_RX_HDD_ROAM_FREE_CONNECTPROFILE,
 			 NO_SESSION, 0));
-	status = sme_acquire_global_lock(&pMac->sme);
-	if (CDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_free_connect_profile(pMac, pProfile);
-		sme_release_global_lock(&pMac->sme);
-	}
-
-	return status;
+	csr_roam_free_connect_profile(profile);
 }
 
 /* ---------------------------------------------------------------------------
@@ -4316,32 +4202,9 @@ CDF_STATUS sme_get_config_param(tHalHandle hHal, tSmeConfigParams *pParam)
 			sme_release_global_lock(&pMac->sme);
 			return status;
 		}
-#ifdef FEATURE_AP_MCC_CH_AVOIDANCE
-		pParam->sap_channel_avoidance = pMac->sap.sap_channel_avoidance;
-#endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
-		pParam->max_intf_count = pMac->sme.max_intf_count;
-		pParam->enableSelfRecovery = pMac->sme.enableSelfRecovery;
-		pParam->pnoOffload = pMac->pnoOffload;
-		pParam->f_prefer_non_dfs_on_radar =
-						pMac->f_prefer_non_dfs_on_radar;
-		pParam->policy_manager_enabled = pMac->policy_manager_enabled;
-		pParam->fine_time_meas_cap = pMac->fine_time_meas_cap;
-		pParam->dual_mac_feature_disable =
-						pMac->dual_mac_feature_disable;
-		pParam->is_ps_enabled = pMac->sme.ps_global_info.ps_enabled;
-		pParam->pnoOffload = pMac->pnoOffload;
-		pParam->fEnableDebugLog = pMac->fEnableDebugLog;
-		pParam->enable5gEBT = pMac->enable5gEBT;
-		pParam->f_sta_miracast_mcc_rest_time_val =
-			pMac->f_sta_miracast_mcc_rest_time_val;
-		sme_update_roam_pno_channel_prediction_config(pMac, pParam,
-				ROAM_CONFIG_TO_SME_CONFIG);
-		pParam->early_stop_scan_enable =
-			pMac->roam.configParam.early_stop_scan_enable;
-		pParam->early_stop_scan_min_threshold =
-			pMac->roam.configParam.early_stop_scan_min_threshold;
-		pParam->early_stop_scan_max_threshold =
-			pMac->roam.configParam.early_stop_scan_max_threshold;
+		cdf_mem_copy(&pParam->rrmConfig,
+				&pMac->rrm.rrmSmeContext.rrmConfig,
+				sizeof(pMac->rrm.rrmSmeContext.rrmConfig));
 		sme_release_global_lock(&pMac->sme);
 	}
 
@@ -5170,8 +5033,7 @@ CDF_STATUS sme_change_country_code(tHalHandle hHal,
 
    -----------------------------------------------------------------------------*/
 CDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
-					   uint8_t *pCountry,
-					   v_REGDOMAIN_t reg_domain)
+					   uint8_t *pCountry)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -5200,8 +5062,7 @@ CDF_STATUS sme_generic_change_country_code(tHalHandle hHal,
 		pMsg->msgLen =
 			(uint16_t) sizeof(tAniGenericChangeCountryCodeReq);
 		cdf_mem_copy(pMsg->countryCode, pCountry, 2);
-		pMsg->domain_index = reg_domain;
-		pMsg->countryCode[2] = ' '; /* For ASCII space */
+		pMsg->countryCode[2] = ' ';
 
 		msg.type = eWNI_SME_GENERIC_CHANGE_COUNTRY_CODE;
 		msg.bodyptr = pMsg;
@@ -5603,16 +5464,12 @@ CDF_STATUS sme_scan_get_bkid_candidate_list(tHalHandle hHal, uint32_t sessionId,
     \brief a wrapper function for OEM DATA REQ
     \param sessionId - session id to be used.
     \param pOemDataReqId - pointer to an object to get back the request ID
-    \param callback - a callback function that is called upon finish
-    \param pContext - a pointer passed in for the callback
     \return CDF_STATUS
    ---------------------------------------------------------------------------*/
 CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 			    uint8_t sessionId,
 			    tOemDataReqConfig *pOemDataReqConfig,
-			    uint32_t *pOemDataReqID,
-			    oem_data_oem_data_reqCompleteCallback callback,
-			    void *pContext)
+			    uint32_t *pOemDataReqID)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
@@ -5632,8 +5489,8 @@ CDF_STATUS sme_oem_data_req(tHalHandle hHal,
 
 			status =
 				oem_data_oem_data_req(hHal, sessionId,
-						      pOemDataReqConfig, pOemDataReqID,
-						      callback, pContext);
+						      pOemDataReqConfig,
+						      pOemDataReqID);
 
 			/* release the lock for the sme object */
 			sme_release_global_lock(&pMac->sme);
@@ -6016,8 +5873,7 @@ CDF_STATUS sme_set_keep_alive(tHalHandle hHal, uint8_t session_id,
 		return CDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(request->bssId, pSession->connectedProfile.bssid.bytes,
-		     sizeof(tSirMacAddr));
+	cdf_copy_macaddr(&request->bssid, &pSession->connectedProfile.bssid);
 	cdf_mem_copy(request_buf, request, sizeof(tSirKeepAliveReq));
 
 	CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_LOW,
@@ -6132,6 +5988,48 @@ CDF_STATUS sme_get_operation_channel(tHalHandle hHal, uint32_t *pChannel,
 	}
 	return CDF_STATUS_E_FAILURE;
 } /* sme_get_operation_channel ends here */
+
+/**
+ * sme_register_mgmt_frame_ind_callback() - Register a callback for
+ * management frame indication to PE.
+ *
+ * @hal: hal pointer
+ * @callback: callback pointer to be registered
+ *
+ * This function is used to register a callback for management
+ * frame indication to PE.
+ *
+ * Return: Success if msg is posted to PE else Failure.
+ */
+CDF_STATUS sme_register_mgmt_frame_ind_callback(tHalHandle hal,
+				sir_mgmt_frame_ind_callback callback)
+{
+	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
+	struct sir_sme_mgmt_frame_cb_req *msg;
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+
+	sms_log(mac_ctx, LOG1, FL(": ENTER"));
+
+	if (CDF_STATUS_SUCCESS ==
+			sme_acquire_global_lock(&mac_ctx->sme)) {
+		msg = cdf_mem_malloc(sizeof(*msg));
+		if (NULL == msg) {
+			sms_log(mac_ctx, LOGE,
+				FL("Not able to allocate memory for eWNI_SME_REGISTER_MGMT_FRAME_CB"));
+			sme_release_global_lock(&mac_ctx->sme);
+			return CDF_STATUS_E_NOMEM;
+		}
+		cdf_mem_set(msg, sizeof(*msg), 0);
+		msg->message_type = eWNI_SME_REGISTER_MGMT_FRAME_CB;
+		msg->length          = sizeof(*msg);
+
+		msg->callback = callback;
+		status = cds_send_mb_message_to_mac(msg);
+		sme_release_global_lock(&mac_ctx->sme);
+		return status;
+	}
+	return CDF_STATUS_E_FAILURE;
+}
 
 /* ---------------------------------------------------------------------------
 
@@ -6539,7 +6437,7 @@ CDF_STATUS sme_configure_rxp_filter(tHalHandle hHal,
 
    --------------------------------------------------------------------------- */
 CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
-				     tpSirWlanSuspendParam wlanSuspendParam,
+				     uint32_t conn_state_mask,
 				     csr_readyToSuspendCallback callback,
 				     void *callback_context)
 {
@@ -6558,7 +6456,7 @@ CDF_STATUS sme_configure_suspend_ind(tHalHandle hHal,
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		/* serialize the req through MC thread */
-		cds_message.bodyptr = wlanSuspendParam;
+		cds_message.bodyval = conn_state_mask;
 		cds_message.type = WMA_WLAN_SUSPEND_IND;
 		cdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
@@ -6873,7 +6771,7 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
 #ifdef FEATURE_WLAN_SCAN_PNO
 /**
  * sme_update_roam_pno_channel_prediction_config() - Update PNO config
- * @sme_config:      config from SME context
+ * @csr_config:      config from SME context
  * @hal:             Global Hal handle
  * @copy_from_to:    Used to specify the source and destination
  *
@@ -6883,27 +6781,27 @@ uint16_t sme_check_concurrent_channel_overlap(tHalHandle hHal, uint16_t sap_ch,
  * Return: None
  */
 void sme_update_roam_pno_channel_prediction_config(
-		tHalHandle hal, tpSmeConfigParams sme_config,
+		tHalHandle hal, tCsrConfigParam *csr_config,
 		uint8_t copy_from_to)
 {
 	tpAniSirGlobal mac_ctx = PMAC_STRUCT(hal);
 	if (copy_from_to == SME_CONFIG_TO_ROAM_CONFIG) {
 		mac_ctx->roam.configParam.pno_channel_prediction =
-			sme_config->pno_channel_prediction;
+			csr_config->pno_channel_prediction;
 		mac_ctx->roam.configParam.top_k_num_of_channels =
-			sme_config->top_k_num_of_channels;
+			csr_config->top_k_num_of_channels;
 		mac_ctx->roam.configParam.stationary_thresh =
-			sme_config->stationary_thresh;
+			csr_config->stationary_thresh;
 		mac_ctx->roam.configParam.channel_prediction_full_scan =
-			sme_config->channel_prediction_full_scan;
+			csr_config->channel_prediction_full_scan;
 	} else if (copy_from_to == ROAM_CONFIG_TO_SME_CONFIG) {
-		sme_config->pno_channel_prediction =
+		csr_config->pno_channel_prediction =
 			mac_ctx->roam.configParam.pno_channel_prediction;
-		sme_config->top_k_num_of_channels =
+		csr_config->top_k_num_of_channels =
 			mac_ctx->roam.configParam.top_k_num_of_channels;
-		sme_config->stationary_thresh =
+		csr_config->stationary_thresh =
 			mac_ctx->roam.configParam.stationary_thresh;
-		sme_config->channel_prediction_full_scan =
+		csr_config->channel_prediction_full_scan =
 			mac_ctx->roam.configParam.channel_prediction_full_scan;
 	}
 
@@ -7038,7 +6936,7 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 	tAniChangeCountryCodeReq *pMsg;
 	v_REGDOMAIN_t domainIdIoctl;
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
-	static country_code_t default_country;
+	static uint8_t default_country[CDS_COUNTRY_CODE_LEN + 1];
 	pMsg = (tAniChangeCountryCodeReq *) pMsgBuf;
 
 	/*
@@ -7101,7 +6999,8 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 	status = csr_get_regulatory_domain_for_country(pMac,
 						       pMac->scan.countryCodeCurrent,
 						       (v_REGDOMAIN_t *) &
-						       domainIdIoctl, COUNTRY_QUERY);
+						       domainIdIoctl,
+						       SOURCE_QUERY);
 	if (status != CDF_STATUS_SUCCESS) {
 		sms_log(pMac, LOGE, FL("  fail to get regId %d"), domainIdIoctl);
 		return status;
@@ -7142,7 +7041,7 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
 }
 
 /**
- * sme_handle_change_country_code_by_user() - handles country ch req
+ * sme_handle_generic_change_country_code() - handles country ch req
  * @mac_ctx:    mac global context
  * @msg:        request msg packet
  *
@@ -7154,17 +7053,18 @@ CDF_STATUS sme_handle_change_country_code(tpAniSirGlobal pMac, void *pMsgBuf)
  * Return: status of operation
  */
 CDF_STATUS
-sme_handle_change_country_code_by_user(tpAniSirGlobal mac_ctx,
-				       tAniGenericChangeCountryCodeReq *msg)
+sme_handle_generic_change_country_code(tpAniSirGlobal mac_ctx,
+				       void *pMsgBuf)
 {
 	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	v_REGDOMAIN_t reg_domain_id;
+	v_REGDOMAIN_t reg_domain_id = 0;
 	bool is_11d_country = false;
 	bool supplicant_priority =
 		mac_ctx->roam.configParam.fSupplicantCountryCodeHasPriority;
+	tAniGenericChangeCountryCodeReq *msg = pMsgBuf;
 
 	sms_log(mac_ctx, LOG1, FL(" called"));
-	reg_domain_id = (v_REGDOMAIN_t) msg->domain_index;
+
 	if (memcmp(msg->countryCode, mac_ctx->scan.countryCode11d,
 		   CDS_COUNTRY_CODE_LEN) == 0) {
 		is_11d_country = true;
@@ -7188,15 +7088,16 @@ sme_handle_change_country_code_by_user(tpAniSirGlobal mac_ctx,
 		    && (mac_ctx->scan.countryCode11d[1] == 0))
 			status = csr_get_regulatory_domain_for_country(mac_ctx,
 					"00", (v_REGDOMAIN_t *) &reg_domain_id,
-					COUNTRY_IE);
+					SOURCE_11D);
 		else
 			status = csr_get_regulatory_domain_for_country(mac_ctx,
 					mac_ctx->scan.countryCode11d,
 					(v_REGDOMAIN_t *) &reg_domain_id,
-					COUNTRY_IE);
+					SOURCE_11D);
 
 		return CDF_STATUS_E_FAILURE;
 	}
+
 	/* if Supplicant country code has priority, disable 11d */
 	if (!is_11d_country && supplicant_priority)
 		mac_ctx->roam.configParam.Is11dSupportEnabled = false;
@@ -7253,64 +7154,6 @@ sme_handle_change_country_code_by_user(tpAniSirGlobal mac_ctx,
 	return CDF_STATUS_SUCCESS;
 }
 
-/* ---------------------------------------------------------------------------
-
-    \fn sme_handle_change_country_code_by_core
-
-    \brief Update Country code in the driver if set by kernel as world
-
-    If 11D is enabled, we update the country code after every scan & notify kernel.
-    This is to make sure kernel & driver are in sync in case of CC found in
-    driver but not in kernel database
-
-    \param pMac - The handle returned by mac_open.
-    \param pMsg - Carrying new CC set in kernel
-
-    \return CDF_STATUS
-
-   -------------------------------------------------------------------------------*/
-CDF_STATUS sme_handle_change_country_code_by_core(tpAniSirGlobal pMac,
-						  tAniGenericChangeCountryCodeReq *
-						  pMsg)
-{
-	CDF_STATUS status;
-
-	sms_log(pMac, LOG1, FL(" called"));
-
-	/* this is to make sure kernel & driver are in sync in case of CC found in */
-	/* driver but not in kernel database */
-	if (('0' == pMsg->countryCode[0]) && ('0' == pMsg->countryCode[1])) {
-		sms_log(pMac, LOGW,
-			FL
-				("Setting countryCode11d & countryCodeCurrent to world CC"));
-		cdf_mem_copy(pMac->scan.countryCode11d, pMsg->countryCode,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-		cdf_mem_copy(pMac->scan.countryCodeCurrent, pMsg->countryCode,
-			     WNI_CFG_COUNTRY_CODE_LEN);
-	}
-
-	status = wma_set_reg_domain(pMac, REGDOMAIN_WORLD);
-
-	if (status != CDF_STATUS_SUCCESS) {
-		sms_log(pMac, LOGE, FL("  fail to set regId"));
-		return status;
-	} else {
-		status = csr_get_channel_and_power_list(pMac);
-		if (status != CDF_STATUS_SUCCESS) {
-			sms_log(pMac, LOGE, FL("  fail to get Channels "));
-		} else {
-			csr_apply_channel_and_power_list(pMac);
-		}
-	}
-	/* Country code  Changed, Purge Only scan result
-	 * which does not have channel number belong to 11d
-	 * channel list
-	 */
-	csr_scan_filter_results(pMac);
-	sms_log(pMac, LOG1, FL(" returned"));
-	return CDF_STATUS_SUCCESS;
-}
-
 static bool
 sme_search_in_base_ch_lst(tpAniSirGlobal mac_ctx, uint8_t curr_ch)
 {
@@ -7362,42 +7205,6 @@ void sme_disconnect_connected_sessions(tpAniSirGlobal mac_ctx)
 					    eCSR_DISCONNECT_REASON_UNSPECIFIED);
 		}
 	}
-}
-
-/* ---------------------------------------------------------------------------
-
-    \fn sme_handle_generic_change_country_code
-
-    \brief Change Country code, Reg Domain and channel list
-
-    If Supplicant country code is priority than 11d is disabled.
-    If 11D is enabled, we update the country code after every scan.
-    Hence when Supplicant country code is priority, we don't need 11D info.
-    Country code from kernel is set as current country code.
-
-    \param pMac - The handle returned by mac_open.
-    \param pMsgBuf - message buffer
-
-    \return CDF_STATUS
-
-   -------------------------------------------------------------------------------*/
-CDF_STATUS sme_handle_generic_change_country_code(tpAniSirGlobal pMac,
-						  void *pMsgBuf)
-{
-	tAniGenericChangeCountryCodeReq *pMsg;
-	v_REGDOMAIN_t reg_domain_id;
-
-	sms_log(pMac, LOG1, FL(" called"));
-	pMsg = (tAniGenericChangeCountryCodeReq *) pMsgBuf;
-	reg_domain_id = (v_REGDOMAIN_t) pMsg->domain_index;
-
-	if (REGDOMAIN_COUNT == reg_domain_id) {
-		sme_handle_change_country_code_by_core(pMac, pMsg);
-	} else {
-		sme_handle_change_country_code_by_user(pMac, pMsg);
-	}
-	sms_log(pMac, LOG1, FL(" returned"));
-	return CDF_STATUS_SUCCESS;
 }
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
@@ -7827,8 +7634,8 @@ CDF_STATUS sme_set_custom_mac_addr(tSirMacAddr customMacAddr)
    \- return CDF_STATUS
    ---------------------------------------------------------------------------*/
 CDF_STATUS sme_set_tx_power(tHalHandle hHal, uint8_t sessionId,
-			    struct cdf_mac_addr pBSSId,
-			    tCDF_CON_MODE dev_mode, int dBm)
+			   struct cdf_mac_addr pBSSId,
+			   enum tCDF_ADAPTER_MODE dev_mode, int dBm)
 {
 	cds_msg_t msg;
 	tpMaxTxPowerParams pTxParams = NULL;
@@ -8019,7 +7826,6 @@ void sme_reset_power_values_for5_g(tHalHandle hHal)
 	csr_apply_power2_current(pMac);    /* Store the channel+power info in the global place: Cfg */
 }
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 /* ---------------------------------------------------------------------------
     \fn sme_update_roam_prefer5_g_hz
     \brief  enable/disable Roam prefer 5G runtime option
@@ -8388,9 +8194,7 @@ CDF_STATUS sme_set_roam_scan_control(tHalHandle hHal, uint8_t sessionId,
 	}
 	return status;
 }
-#endif /* (WLAN_FEATURE_VOWIFI_11R) || (FEATURE_WLAN_ESE) || (FEATURE_WLAN_LFR) */
 
-#ifdef FEATURE_WLAN_LFR
 /*--------------------------------------------------------------------------
    \brief sme_update_is_fast_roam_ini_feature_enabled() - enable/disable LFR
 	support at runtime
@@ -8540,7 +8344,6 @@ CDF_STATUS sme_update_enable_fast_roam_in_concurrency(tHalHandle hHal,
 
 	return status;
 }
-#endif /* FEATURE_WLAN_LFR */
 
 #ifdef FEATURE_WLAN_ESE
 /*--------------------------------------------------------------------------
@@ -8618,7 +8421,6 @@ CDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
 	return cdf_ret_status;
 }
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 /* ---------------------------------------------------------------------------
     \fn     sme_set_roam_opportunistic_scan_threshold_diff
     \brief  Update Opportunistic Scan threshold diff
@@ -9432,9 +9234,7 @@ uint16_t sme_get_neighbor_scan_period(tHalHandle hHal, uint8_t sessionId)
 	       neighborScanPeriod;
 }
 
-#endif
 
-#if  defined (WLAN_FEATURE_VOWIFI_11R) || defined (FEATURE_WLAN_ESE) || defined(FEATURE_WLAN_LFR)
 
 /*--------------------------------------------------------------------------
    \brief sme_get_roam_rssi_diff() - get Roam rssi diff
@@ -9680,7 +9480,6 @@ bool sme_get_roam_scan_control(tHalHandle hHal)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	return pMac->roam.configParam.nRoamScanControl;
 }
-#endif
 
 /*--------------------------------------------------------------------------
    \brief sme_get_is_lfr_feature_enabled() - get LFR feature enabled or not
@@ -9692,12 +9491,8 @@ bool sme_get_roam_scan_control(tHalHandle hHal)
    --------------------------------------------------------------------------*/
 bool sme_get_is_lfr_feature_enabled(tHalHandle hHal)
 {
-#ifdef FEATURE_WLAN_LFR
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	return pMac->roam.configParam.isFastRoamIniFeatureEnabled;
-#else
-	return false;
-#endif
 }
 
 /*--------------------------------------------------------------------------
@@ -10018,6 +9813,14 @@ CDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
 	case eSME_TDLS_PEER_STATE_TEARDOWN:
 		pTdlsPeerStateParams->peerState =
 			WMA_TDLS_PEER_STATE_TEARDOWN;
+		break;
+
+	case eSME_TDLS_PEER_ADD_MAC_ADDR:
+		pTdlsPeerStateParams->peerState = WMA_TDLS_PEER_ADD_MAC_ADDR;
+		break;
+
+	case eSME_TDLS_PEER_REMOVE_MAC_ADDR:
+		pTdlsPeerStateParams->peerState = WMA_TDLS_PEER_REMOVE_MAC_ADDR;
 		break;
 
 	default:
@@ -10437,7 +10240,8 @@ ePhyChanBondState sme_get_cb_phy_state_from_cb_ini_value(uint32_t cb_ini_value)
    \param currDeviceMode - Current operating device mode.
    --------------------------------------------------------------------------*/
 
-void sme_set_curr_device_mode(tHalHandle hHal, tCDF_CON_MODE currDeviceMode)
+void sme_set_curr_device_mode(tHalHandle hHal,
+				enum tCDF_ADAPTER_MODE currDeviceMode)
 {
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	pMac->sme.currDeviceMode = currDeviceMode;
@@ -11723,12 +11527,12 @@ CDF_STATUS sme_get_reg_info(tHalHandle hHal, uint8_t chanId,
 		return status;
 
 	for (i = 0; i < WNI_CFG_VALID_CHANNEL_LIST_LEN; i++) {
-		if (pMac->scan.defaultPowerTable[i].chanId == chanId) {
+		if (pMac->scan.defaultPowerTable[i].chan_num == chanId) {
 			SME_SET_CHANNEL_REG_POWER(*regInfo1,
-				pMac->scan.defaultPowerTable[i].pwr);
+				pMac->scan.defaultPowerTable[i].power);
 
 			SME_SET_CHANNEL_MAX_TX_POWER(*regInfo2,
-				pMac->scan.defaultPowerTable[i].pwr);
+				pMac->scan.defaultPowerTable[i].power);
 			found = true;
 			break;
 		}
@@ -11976,32 +11780,28 @@ CDF_STATUS sme_set_mas(uint32_t val)
 	return CDF_STATUS_SUCCESS;
 }
 
-/* -------------------------------------------------------------------------
-   \fn sme_roam_channel_change_req
-   \brief API to Indicate Channel change to new target channel
-   \param hHal - The handle returned by mac_open
-   \param targetChannel - New Channel to move the SAP to.
-   \return CDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * sme_roam_channel_change_req() - Channel change to new target channel
+ * @hHal: handle returned by mac_open
+ * @bssid: mac address of BSS
+ * @ch_params: target channel information
+ * @profile: CSR profile
+ *
+ * API to Indicate Channel change to new target channel
+ *
+ * Return: CDF_STATUS
+ */
 CDF_STATUS sme_roam_channel_change_req(tHalHandle hHal,
-	struct cdf_mac_addr bssid, uint32_t cb_mode, tCsrRoamProfile *profile)
+	struct cdf_mac_addr bssid, chan_params_t *ch_params,
+	tCsrRoamProfile *profile)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
-	uint8_t ch_mode;
-
-	ch_mode = (profile->ChannelInfo.ChannelList[0] <=
-			CSR_MAX_2_4_GHZ_SUPPORTED_CHANNELS) ?
-			pMac->roam.configParam.channelBondingMode24GHz :
-			pMac->roam.configParam.channelBondingMode5GHz;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 
-		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_INFO_MED,
-			  FL("sapdfs: requested cbmode=[%d] & new negotiated cbmode[%d]"),
-			  cb_mode, ch_mode);
-		status = csr_roam_channel_change_req(pMac, bssid, ch_mode,
+		status = csr_roam_channel_change_req(pMac, bssid, ch_params,
 				profile);
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -12090,25 +11890,26 @@ CDF_STATUS sme_roam_start_beacon_req(tHalHandle hHal, struct cdf_mac_addr bssid,
 	return status;
 }
 
-/* -------------------------------------------------------------------------
-   \fn sme_roam_csa_ie_request
-   \brief API to request CSA IE transmission from PE
-   \param hHal - The handle returned by mac_open
-   \param pDfsCsaReq - CSA IE request
-   \param bssid - SAP bssid
-   \param ch_bandwidth - Channel offset
-   \return CDF_STATUS
-   ---------------------------------------------------------------------------*/
+/**
+ * sme_roam_csa_ie_request() - request CSA IE transmission from PE
+ * @hHal: handle returned by mac_open
+ * @bssid: SAP bssid
+ * @targetChannel: target channel information
+ * @csaIeReqd: CSA IE Request
+ * @ch_params: channel information
+ *
+ * Return: CDF_STATUS
+ */
 CDF_STATUS sme_roam_csa_ie_request(tHalHandle hHal, struct cdf_mac_addr bssid,
 				uint8_t targetChannel, uint8_t csaIeReqd,
-				uint8_t ch_bandwidth)
+				chan_params_t *ch_params)
 {
 	CDF_STATUS status = CDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
-		status = csr_roam_send_chan_sw_ie_request(pMac, bssid, targetChannel,
-				csaIeReqd, ch_bandwidth);
+		status = csr_roam_send_chan_sw_ie_request(pMac, bssid,
+				targetChannel, csaIeReqd, ch_params);
 		sme_release_global_lock(&pMac->sme);
 	}
 	return status;
@@ -12237,12 +12038,23 @@ CDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
 	cds_msg_t cds_message;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	tSirTxPowerLimit *tx_power_limit;
+
+	tx_power_limit = cdf_mem_malloc(sizeof(*tx_power_limit));
+	if (!tx_power_limit) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			  "%s: Memory allocation for TxPowerLimit failed!",
+			  __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	*tx_power_limit = *psmetx;
 
 	status = sme_acquire_global_lock(&pMac->sme);
 	if (CDF_IS_STATUS_SUCCESS(status)) {
 		cds_message.type = WMA_TX_POWER_LIMIT;
 		cds_message.reserved = 0;
-		cds_message.bodyptr = psmetx;
+		cds_message.bodyptr = tx_power_limit;
 
 		cdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
 		if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
@@ -12250,7 +12062,7 @@ CDF_STATUS sme_txpower_limit(tHalHandle hHal, tSirTxPowerLimit *psmetx)
 				  "%s: not able to post WMA_TX_POWER_LIMIT",
 				  __func__);
 			status = CDF_STATUS_E_FAILURE;
-			cdf_mem_free(psmetx);
+			cdf_mem_free(tx_power_limit);
 		}
 		sme_release_global_lock(&pMac->sme);
 	}
@@ -13269,14 +13081,6 @@ CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
 	}
 	return status;
 }
-
-#else
-CDF_STATUS sme_ext_scan_register_callback(tHalHandle hHal,
-		  void (*pExtScanIndCb)(void *, const uint16_t, void *))
-{
-	return CDF_STATUS_SUCCESS;
-}
-
 #endif /* FEATURE_WLAN_EXTSCAN */
 
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
@@ -14699,6 +14503,47 @@ CDF_STATUS sme_soc_set_dual_mac_config(tHalHandle hal,
 	return CDF_STATUS_SUCCESS;
 }
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/**
+ * sme_gateway_param_update() - to update gateway parameters with WMA
+ * @Hal: hal handle
+ * @gw_params: request parameters from HDD
+ *
+ * Return: CDF_STATUS
+ *
+ * This routine will update gateway parameters to WMA
+ */
+CDF_STATUS sme_gateway_param_update(tHalHandle Hal,
+			      struct gateway_param_update_req *gw_params)
+{
+	CDF_STATUS cdf_status;
+	cds_msg_t cds_message;
+	struct gateway_param_update_req *request_buf;
+
+	request_buf = cdf_mem_malloc(sizeof(*request_buf));
+	if (NULL == request_buf) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			FL("Not able to allocate memory for gw param update request"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	*request_buf = *gw_params;
+
+	cds_message.type = WMA_GW_PARAM_UPDATE_REQ;
+	cds_message.reserved = 0;
+	cds_message.bodyptr = request_buf;
+	cdf_status = cds_mq_post_message(CDS_MQ_ID_WMA, &cds_message);
+	if (!CDF_IS_STATUS_SUCCESS(cdf_status)) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			FL("Not able to post WMA_GW_PARAM_UPDATE_REQ message to HAL"));
+		cdf_mem_free(request_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+#endif /* FEATURE_LFR_SUBNET_DETECTION */
+
 /**
  * sme_set_peer_authorized() - call peer authorized callback
  * @peer_addr: peer mac address
@@ -14918,5 +14763,47 @@ void sme_get_opclass(tHalHandle hal, uint8_t channel, uint8_t bw_offset,
 				mac_ctx->scan.countryCodeCurrent,
 				channel, BWALL);
 	}
+}
+#endif
+
+#ifdef FEATURE_GREEN_AP
+/**
+ * sme_send_egap_conf_params() - set the enhanced green ap configuration params
+ * @enable: enable/disable the enhanced green ap feature
+ * @inactivity_time: inactivity timeout value
+ * @wait_time: wait timeout value
+ * @flag: feature flag in bitmasp
+ *
+ * Return: Return CDF_STATUS, otherwise appropriate failure code
+ */
+CDF_STATUS sme_send_egap_conf_params(uint32_t enable, uint32_t inactivity_time,
+				     uint32_t wait_time, uint32_t flags)
+{
+	cds_msg_t message;
+	CDF_STATUS status;
+	struct egap_conf_params *egap_params;
+
+	egap_params = cdf_mem_malloc(sizeof(*egap_params));
+	if (NULL == egap_params) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+				"%s: fail to alloc egap_params", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	egap_params->enable = enable;
+	egap_params->inactivity_time = inactivity_time;
+	egap_params->wait_time = wait_time;
+	egap_params->flags = flags;
+
+	message.type = WMA_SET_EGAP_CONF_PARAMS;
+	message.bodyptr = egap_params;
+	status = cds_mq_post_message(CDF_MODULE_ID_WMA, &message);
+	if (!CDF_IS_STATUS_SUCCESS(status)) {
+		CDF_TRACE(CDF_MODULE_ID_SME, CDF_TRACE_LEVEL_ERROR,
+			"%s: Not able to post msg to WMA!", __func__);
+
+		cdf_mem_free(egap_params);
+	}
+	return status;
 }
 #endif

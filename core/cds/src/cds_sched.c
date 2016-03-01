@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -120,7 +120,7 @@ cds_cpu_hotplug_notify(struct notifier_block *block,
 	if ((NULL == pSchedContext) || (NULL == pSchedContext->ol_rx_thread))
 		return NOTIFY_OK;
 
-	if (cds_is_load_unload_in_progress())
+	if (cds_is_load_or_unload_in_progress())
 		return NOTIFY_OK;
 
 	num_cpus = num_possible_cpus();
@@ -342,10 +342,6 @@ static int cds_mc_thread(void *Arg)
 	}
 	set_user_nice(current, -2);
 
-#if (LINUX_VERSION_CODE < KERNEL_VERSION(3, 8, 0))
-	daemonize("MC_Thread");
-#endif
-
 	/* Ack back to the context from which the main controller thread
 	 * has been created
 	 */
@@ -357,15 +353,15 @@ static int cds_mc_thread(void *Arg)
 	/* Get the Global CDS Context */
 	p_cds_context = cds_get_global_context();
 	if (!p_cds_context) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: Global CDS context is Null",
-		       __func__);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			  "%s: Global CDS context is Null", __func__);
 		return 0;
 	}
 
 	pHddCtx = cds_get_context(CDF_MODULE_ID_HDD);
 	if (!pHddCtx) {
-		hddLog(CDF_TRACE_LEVEL_FATAL, "%s: HDD context is Null",
-		       __func__);
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_FATAL,
+			  "%s: HDD context is Null", __func__);
 		return 0;
 	}
 
@@ -1147,7 +1143,7 @@ static void cds_print_external_threads(void)
 
 	while (i < MAX_SSR_PROTECT_LOG) {
 		if (!ssr_protect_log[i].free) {
-			CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+			CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"PID %d is stuck at %s", ssr_protect_log[i].pid,
 			ssr_protect_log[i].func);
 		}
@@ -1190,7 +1186,7 @@ void cds_ssr_protect(const char *caller_func)
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
 
 	if (!status)
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 		"Could not track PID %d call %s: log is full",
 		current->pid, caller_func);
 }
@@ -1229,19 +1225,19 @@ void cds_ssr_unprotect(const char *caller_func)
 	spin_unlock_irqrestore(&ssr_protect_lock, irq_flags);
 
 	if (!status)
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
 			"Untracked call %s", caller_func);
 }
 
 /**
- * cds_is_ssr_ready() - check if the calling execution can proceed with ssr
- *
+ * cds_wait_for_external_threads_completion() - wait for external threads
+ *					completion before proceeding further
  * @caller_func: name of calling function.
  *
  * Return: true if there is no active entry points in driver
  *	   false if there is at least one active entry in driver
  */
-bool cds_is_ssr_ready(const char *caller_func)
+bool cds_wait_for_external_threads_completion(const char *caller_func)
 {
 	int count = MAX_SSR_WAIT_ITERATIONS;
 
@@ -1263,8 +1259,24 @@ bool cds_is_ssr_ready(const char *caller_func)
 		return false;
 	}
 
-	CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_INFO,
-		  "Allowing SSR for %s", caller_func);
+	CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_INFO,
+		  "Allowing SSR/Driver unload for %s", caller_func);
 
 	return true;
+}
+
+/**
+ * cds_get_gfp_flags(): get GFP flags
+ *
+ * Based on the scheduled context, return GFP flags
+ * Return: gfp flags
+ */
+int cds_get_gfp_flags(void)
+{
+	int flags = GFP_KERNEL;
+
+	if (in_interrupt() || in_atomic() || irqs_disabled())
+		flags = GFP_ATOMIC;
+
+	return flags;
 }

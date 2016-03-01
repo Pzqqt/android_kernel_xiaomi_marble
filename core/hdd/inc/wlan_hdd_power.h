@@ -39,18 +39,6 @@
 #ifdef WLAN_FEATURE_PACKET_FILTERING
 
 #define HDD_MAX_CMP_PER_PACKET_FILTER     5
-#define HDD_FILTER_IPV6_MC_UC             1
-#define HDD_FILTER_IPV6_MC                0
-#define HDD_FILTER_ID_IPV6_MC             10
-#define HDD_FILTER_ID_IPV6_UC             11
-
-#define HDD_IPV6_MC_CMP_DATA              0x33
-#define HDD_IPV6_UC_CMP_DATA              0x01
-#define HDD_IPV6_CMP_DATA_0               0x86
-#define HDD_IPV6_CMP_DATA_1               0xDD
-
-#define HDD_WLAN_MAC_ADDR_LEN             6
-#define HDD_MAX_NUM_MULTICAST_ADDRESS     10
 
 /**
  * enum pkt_filter_protocol_layer - packet filter protocol layer
@@ -167,14 +155,10 @@ void hdd_ipv6_notifier_work_queue(struct work_struct *work);
 #endif
 
 int wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  int *dbm);
 int wlan_hdd_cfg80211_set_txpower(struct wiphy *wiphy,
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 8, 0)
 				  struct wireless_dev *wdev,
-#endif
 				  enum nl80211_tx_power_setting type,
 				  int dbm);
 int wlan_hdd_cfg80211_set_power_mgmt(struct wiphy *wiphy,

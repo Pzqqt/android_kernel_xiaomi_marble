@@ -1784,8 +1784,7 @@ __lim_ibss_peer_inactivity_handler(tpAniSirGlobal pMac,
 
 	/* delete the peer for which heartbeat is observed */
 	__lim_ibss_search_and_delete_peer(pMac, psessionEntry,
-					  peerInactivityInd->peerAddr);
-
+					  peerInactivityInd->peer_addr.bytes);
 }
 
 /** -------------------------------------------------------------

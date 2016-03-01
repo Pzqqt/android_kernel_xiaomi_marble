@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -40,9 +40,7 @@
 #include "csr_support.h"
 #include "cds_reg_service.h"
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 #include "csr_neighbor_roam.h"
-#endif
 
 #include "sir_types.h"
 
@@ -51,11 +49,6 @@
 /* define scan return criteria. LIM should use these define as well */
 #define CSR_SCAN_RETURN_AFTER_ALL_CHANNELS          (0)
 #define CSR_SCAN_RETURN_AFTER_FIRST_MATCH           (0x01)
-#define CSR_SCAN_RETURN_AFTER_5_BAND_11d_FOUND      (0x80)
-#define CSR_SCAN_RETURN_AFTER_24_BAND_11d_FOUND     (0x40)
-#define CSR_SCAN_RETURN_AFTER_EITHER_BAND_11d_FOUND \
-	(CSR_SCAN_RETURN_AFTER_5_BAND_11d_FOUND | \
-	 CSR_SCAN_RETURN_AFTER_24_BAND_11d_FOUND)
 #define CSR_NUM_RSSI_CAT        15
 #define CSR_ROAM_SCAN_CHANNEL_SWITCH_TIME        3
 
@@ -75,6 +68,10 @@
 
 #define CSR_IS_SESSION_ANY(sessionId) (sessionId == SME_SESSION_ID_ANY)
 #define CSR_MAX_NUM_COUNTRY_CODE  100
+#define CSR_IS_DFS_CH_ROAM_ALLOWED(mac_ctx) \
+	( \
+	  (((mac_ctx)->roam.configParam.allowDFSChannelRoam) ? true : false) \
+	)
 #define CSR_IS_SELECT_5GHZ_MARGIN(pMac) \
 	( \
 	  (((pMac)->roam.configParam.nSelect5GHzMargin) ? true : false) \
@@ -84,8 +81,6 @@
 	  (((pMac)->roam.configParam.roam_params.is_5g_pref_enabled) ? \
 	   true : false) \
 	)
-#if defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) || \
-	 defined(FEATURE_WLAN_LFR)
 #define CSR_IS_ROAM_PREFER_5GHZ(pMac)	\
 	( \
 	  (((pMac)->roam.configParam.nRoamPrefer5GHz) ? true : false) \
@@ -94,7 +89,6 @@
 	( \
 	  (((pMac)->roam.configParam.nRoamIntraBand) ? true : false) \
 	)
-#endif
 #define CSR_IS_FASTROAM_IN_CONCURRENCY_INI_FEATURE_ENABLED(pMac) \
 	( \
 	  (((pMac)->roam.configParam.bFastRoamInConIniFeatureEnabled) ? \
@@ -352,7 +346,7 @@ typedef struct tagCsrRoamStartBssParams {
 	uint8_t ApUapsdEnable;
 	uint8_t ssidHidden;
 	uint8_t wps_state;
-	tCDF_CON_MODE bssPersona;
+	enum tCDF_ADAPTER_MODE bssPersona;
 	uint16_t nRSNIELength;  /* If 0, pRSNIE is ignored. */
 	uint8_t *pRSNIE;        /* If not null, it has IE byte stream for RSN */
 	/* Flag used to indicate update beaconInterval */
@@ -415,7 +409,7 @@ typedef struct tagSetKeyCmd {
 	eCsrEncryptionType encType;
 	eCsrAuthType authType;
 	tAniKeyDirection keyDirection;  /* Tx, Rx or Tx-and-Rx */
-	tSirMacAddr peerMac;    /* Peer's MAC address. ALL 1's for group key */
+	struct cdf_mac_addr peermac;    /* Peer's MAC address. ALL 1's for group key */
 	uint8_t paeRole;        /* 0 for supplicant */
 	uint8_t keyId;          /* Kye index */
 	uint8_t keyLength;      /* Number of bytes containing the key in pKey */
@@ -435,7 +429,7 @@ typedef struct tagWmStatusChangeCmd {
 typedef struct tagAddStaForSessionCmd {
 	/* Session self mac addr */
 	tSirMacAddr selfMacAddr;
-	tCDF_CON_MODE currDeviceMode;
+	enum tCDF_ADAPTER_MODE currDeviceMode;
 	uint32_t type;
 	uint32_t subType;
 	uint8_t sessionId;
@@ -469,7 +463,6 @@ typedef struct tagCsr11rConfig {
 } tCsr11rConfig;
 #endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 typedef struct tagCsrNeighborRoamConfig {
 	uint32_t nNeighborScanTimerPeriod;
 	uint8_t nNeighborLookupRssiThreshold;
@@ -490,7 +483,6 @@ typedef struct tagCsrNeighborRoamConfig {
 	uint32_t nhi_rssi_scan_delay;
 	int32_t nhi_rssi_scan_rssi_ub;
 } tCsrNeighborRoamConfig;
-#endif
 
 typedef struct tagCsrConfig {
 	uint32_t agingCount;
@@ -575,17 +567,13 @@ typedef struct tagCsrConfig {
 #ifdef WLAN_FEATURE_VOWIFI_11R
 	tCsr11rConfig csr11rConfig;
 #endif
-#ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
 	uint8_t MAWCEnabled;
 	uint8_t isRoamOffloadScanEnabled;
 	bool bFastRoamInConIniFeatureEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) \
-	|| defined(FEATURE_WLAN_LFR)
 	uint8_t isFastTransitionEnabled;
 	uint8_t RoamRssiDiff;
 	bool nRoamPrefer5GHz;
@@ -594,11 +582,8 @@ typedef struct tagCsrConfig {
 	bool nRoamScanControl;
 	uint8_t nProbes;
 	uint16_t nRoamScanHomeAwayTime;
-#endif
 
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tCsrNeighborRoamConfig neighborRoamConfig;
-#endif
 
 	/*
 	 * Instead of Reassoc, send ADDTS/DELTS even when ACM is off for
@@ -616,6 +601,7 @@ typedef struct tagCsrConfig {
 #ifdef WLAN_FEATURE_11AC
 	uint32_t nVhtChannelWidth;
 	uint8_t txBFEnable;
+	uint8_t enable_txbf_sap_mode;
 	uint8_t txBFCsnValue;
 	uint8_t enable2x2;
 	bool enableVhtFor24GHz;
@@ -707,8 +693,8 @@ typedef struct tagCsrScanStruct {
 	uint8_t scanResultCfgAgingTime;
 	tSirScanType curScanType;
 	tCsrChannel channels11d;
-	tChannelListWithPower defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
-	tChannelListWithPower
+	struct channel_power defaultPowerTable[WNI_CFG_VALID_CHANNEL_LIST_LEN];
+	struct channel_power
 			defaultPowerTable40MHz[WNI_CFG_VALID_CHANNEL_LIST_LEN];
 	uint32_t numChannelsDefault;
 	tCsrChannel base_channels;  /* The channel base to work on */
@@ -861,8 +847,7 @@ typedef struct tagCsrRoamOffloadSynchStruct {
 	uint8_t nss;            /* no of spatial streams */
 	uint16_t chainMask;     /* chainmask */
 	uint16_t smpsMode;      /* smps.mode */
-	tSirMacAddr bssid;      /* MAC address of roamed AP */
-	bool bRoamSynchInProgress;              /* a roam offload synch */
+	struct cdf_mac_addr bssid;      /* MAC address of roamed AP */
 	tCsrRoamOffloadAuthStatus authStatus;   /* auth status */
 	uint8_t kck[SIR_KCK_KEY_LEN];
 	uint8_t kek[SIR_KEK_KEY_LEN];
@@ -983,6 +968,7 @@ typedef struct tagCsrRoamSession {
 	uint8_t psk_pmk[SIR_ROAM_SCAN_PSK_SIZE];
 	size_t pmk_len;
 	uint8_t RoamKeyMgmtOffloadEnabled;
+	roam_offload_synch_ind *roam_synch_data;
 #endif
 #if defined WLAN_FEATURE_VOWIFI_11R
 	tftSMEContext ftSmeContext;
@@ -991,6 +977,7 @@ typedef struct tagCsrRoamSession {
 	uint8_t join_bssid_count;
 	struct csr_roam_stored_profile stored_roam_profile;
 	bool ch_switch_in_progress;
+	bool roam_synch_in_progress;
 } tCsrRoamSession;
 
 typedef struct tagCsrRoamStruct {
@@ -1027,20 +1014,13 @@ typedef struct tagCsrRoamStruct {
 	tCsrTimerInfo WaitForKeyTimerInfo;
 	tCsrRoamSession *roamSession;
 	uint32_t transactionId;  /* Current transaction ID for internal use. */
-#ifdef WLAN_FEATURE_NEIGHBOR_ROAMING
 	tCsrNeighborRoamControlInfo neighborRoamInfo[CSR_ROAM_SESSION_MAX];
-#endif
-#ifdef FEATURE_WLAN_LFR
 	uint8_t isFastRoamIniFeatureEnabled;
-#endif
 #ifdef FEATURE_WLAN_ESE
 	uint8_t isEseIniFeatureEnabled;
 #endif
-#if  defined(WLAN_FEATURE_VOWIFI_11R) || defined(FEATURE_WLAN_ESE) \
-	|| defined(FEATURE_WLAN_LFR)
 	uint8_t RoamRssiDiff;
 	bool isWESModeEnabled;
-#endif
 	uint32_t deauthRspStatus;
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	uint8_t *pReassocResp;          /* reassociation response from new AP */
@@ -1207,6 +1187,13 @@ typedef struct tagCsrRoamStruct {
 			(eCsrLostLink2 == (pCommand)->u.roamCmd.roamReason) || \
 			(eCsrLostLink3 == (pCommand)->u.roamCmd.roamReason))
 
+#ifdef FEATURE_LFR_SUBNET_DETECTION
+/* bit-4 and bit-5 indicate the subnet status */
+#define CSR_GET_SUBNET_STATUS(roam_reason) (((roam_reason) & 0x30) >> 4)
+#else
+#define CSR_GET_SUBNET_STATUS(roam_reason) (0)
+#endif
+
 CDF_STATUS csr_get_channel_and_power_list(tpAniSirGlobal pMac);
 CDF_STATUS csrScanFilter11dResult(tpAniSirGlobal pMac);
 
@@ -1243,8 +1230,6 @@ bool csr_is_concurrent_infra_connected(tpAniSirGlobal pMac);
 bool csr_is_concurrent_session_running(tpAniSirGlobal pMac);
 bool csr_is_infra_ap_started(tpAniSirGlobal pMac);
 bool csr_is_ibss_started(tpAniSirGlobal pMac);
-bool csr_is_btamp_started(tpAniSirGlobal pMac);
-bool csr_is_btamp(tpAniSirGlobal pMac, uint32_t sessionId);
 bool csr_is_valid_mc_concurrent_session(tpAniSirGlobal pMac, uint32_t sessionId,
 		tSirBssDescription *pBssDesc);
 bool csr_is_conn_state_connected_infra_ap(tpAniSirGlobal pMac,
@@ -1334,7 +1319,6 @@ bool csr_neighbor_roam_is_ese_assoc(tpAniSirGlobal pMac, uint8_t sessionId);
 /* Remove this code once SLM_Sessionization is supported */
 void csr_disconnect_all_active_sessions(tpAniSirGlobal pMac);
 
-#ifdef FEATURE_WLAN_LFR
 /* Returns whether "Legacy Fast Roaming" is enabled...or not */
 bool csr_roam_is_fast_roam_enabled(tpAniSirGlobal pMac, uint32_t sessionId);
 bool csr_roam_is_roam_offload_scan_enabled(tpAniSirGlobal pMac);
@@ -1347,11 +1331,10 @@ CDF_STATUS csr_roam_offload_scan_rsp_hdlr(tpAniSirGlobal pMac,
 CDF_STATUS csr_handoff_request(tpAniSirGlobal pMac, uint8_t sessionId,
 		tCsrHandoffRequest *pHandoffInfo);
 bool csr_roam_is_sta_mode(tpAniSirGlobal pMac, uint32_t sessionId);
-#endif
 
 /* Post Channel Change Indication */
 CDF_STATUS csr_roam_channel_change_req(tpAniSirGlobal pMac,
-		struct cdf_mac_addr bssid, uint8_t cb_mode,
+		struct cdf_mac_addr bssid, chan_params_t *ch_params,
 		tCsrRoamProfile *profile);
 
 /* Post Beacon Tx Start Indication */
@@ -1360,7 +1343,8 @@ CDF_STATUS csr_roam_start_beacon_req(tpAniSirGlobal pMac,
 
 CDF_STATUS
 csr_roam_send_chan_sw_ie_request(tpAniSirGlobal pMac, struct cdf_mac_addr bssid,
-		uint8_t targetChannel, uint8_t csaIeReqd, uint8_t ch_bandwidth);
+		uint8_t targetChannel, uint8_t csaIeReqd,
+		chan_params_t *ch_params);
 CDF_STATUS
 csr_roam_modify_add_ies(tpAniSirGlobal pMac,
 		tSirModifyIE *pModifyIE, eUpdateIEsType updateType);
@@ -1378,10 +1362,9 @@ static inline void csr_roaming_report_diag_event(tpAniSirGlobal mac_ctx,
 {}
 #endif
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
-void csr_process_roam_offload_synch_ind(tHalHandle hHal,
-		roam_offload_synch_ind * roam_synch_ind_ptr);
 CDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
-		roam_offload_synch_ind *roam_synch_ind_ptr);
+		roam_offload_synch_ind *roam_synch_ind_ptr,
+		tpSirBssDescription  bss_desc_ptr);
 void csr_process_ho_fail_ind(tpAniSirGlobal pMac, void *pMsgBuf);
 #endif
 bool csr_store_joinreq_param(tpAniSirGlobal mac_ctx,
@@ -1424,4 +1407,6 @@ CDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal pMac,
 
 bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		bool do_release_reacquire_lock);
+enum tCDF_ADAPTER_MODE csr_get_session_persona(tpAniSirGlobal pmac,
+						uint32_t session_id);
 #endif

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -341,7 +341,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		}
 
 		p_inactivity->staIdx = peer_id;
-		cdf_mem_copy(p_inactivity->peerAddr, macaddr,
+		cdf_mem_copy(p_inactivity->peer_addr.bytes, macaddr,
 			     IEEE80211_ADDR_LEN);
 		wma_send_msg(wma, WMA_IBSS_PEER_INACTIVITY_IND,
 			     (void *)p_inactivity, 0);
@@ -440,6 +440,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	cdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,
 		     IEEE80211_ADDR_LEN);
 	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
+	del_sta_ctx->rssi = kickout_event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
 	wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND, (void *)del_sta_ctx,
 		     0);
 
@@ -953,9 +954,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	 * be the new peer address
 	 */
 	if ((wma_is_vdev_in_ap_mode(wma, params->smesessionId))
-#ifdef QCA_IBSS_SUPPORT
 	    || (wma_is_vdev_in_ibss_mode(wma, params->smesessionId))
-#endif /* QCA_IBSS_SUPPORT */
 #ifdef FEATURE_WLAN_TDLS
 	    || (STA_ENTRY_TDLS_PEER == params->staType)
 #endif /* FEATURE_WLAN_TDLS */
@@ -1110,7 +1109,18 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_vht_rate_set));
 
 	cmd->peer_nss = peer_nss;
-
+	/*
+	 * Because of DBS a vdev may come up in any of the two MACs with
+	 * different capabilities. STBC capab should be fetched for given
+	 * hard_mode->MAC_id combo. It is planned that firmware should provide
+	 * these dev capabilities. But for now number of tx streams can be used
+	 * to identify if Tx STBC needs to be disabled.
+	 */
+	if (intr->tx_streams < 2) {
+		cmd->peer_vht_caps &= ~(1 << SIR_MAC_VHT_CAP_TXSTBC);
+		WMA_LOGD("Num tx_streams: %d, Disabled txSTBC",
+			 intr->tx_streams);
+	}
 	WMA_LOGD("peer_nss %d peer_ht_rates.num_rates %d ", cmd->peer_nss,
 		 peer_ht_rates.num_rates);
 
@@ -1447,8 +1457,14 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	case eSIR_ED_WEP104:
 		cmd->key_cipher = WMI_CIPHER_WEP;
 		if (key_params->unicast &&
-		    cmd->key_ix == key_params->def_key_idx)
+		    cmd->key_ix == key_params->def_key_idx) {
+			WMA_LOGD("STA Mode: cmd->key_flags |= TX_USAGE");
 			cmd->key_flags |= TX_USAGE;
+		} else if ((mode == wlan_op_mode_ap) &&
+			(cmd->key_ix == key_params->def_key_idx)) {
+			WMA_LOGD("AP Mode: cmd->key_flags |= TX_USAGE");
+			cmd->key_flags |= TX_USAGE;
+		}
 		break;
 	case eSIR_ED_TKIP:
 		cmd->key_txmic_len = WMA_TXMIC_LEN;
@@ -1790,7 +1806,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
  */
 static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 				   tpSetBssKeyParams key_info,
-				   uint8_t *peerMacAddr)
+				   struct cdf_mac_addr peer_macaddr)
 {
 	struct wma_set_key_params key_params;
 	wmi_buf_t buf;
@@ -1800,7 +1816,6 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	ol_txrx_vdev_handle txrx_vdev;
 
 	WMA_LOGD("BSS key setup for peer");
-	ASSERT(NULL != peerMacAddr);
 	txrx_vdev = wma_find_vdev_by_id(wma_handle, key_info->smesessionId);
 	if (!txrx_vdev) {
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
@@ -1815,7 +1830,8 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 	key_params.unicast = false;
 	ASSERT(wlan_op_mode_ibss == txrx_vdev->opmode);
 
-	cdf_mem_copy(key_params.peer_mac, peerMacAddr, IEEE80211_ADDR_LEN);
+	cdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
+			IEEE80211_ADDR_LEN);
 
 	if (key_info->numKeys == 0 &&
 	    (key_info->encType == eSIR_ED_WEP40 ||
@@ -1895,7 +1911,8 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		goto out;
 	}
 
-	peer = ol_txrx_find_peer_by_addr(txrx_pdev, key_info->peerMacAddr,
+	peer = ol_txrx_find_peer_by_addr(txrx_pdev,
+					 key_info->peer_macaddr.bytes,
 					 &peer_id);
 	if (!peer) {
 		WMA_LOGE("%s:Invalid peer for key setting", __func__);
@@ -1936,7 +1953,8 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	key_params.unicast = true;
 	key_params.def_key_idx = key_info->defWEPIdx;
 	cdf_mem_copy((void *)key_params.peer_mac,
-		     (const void *)key_info->peerMacAddr, IEEE80211_ADDR_LEN);
+		     (const void *)key_info->peer_macaddr.bytes,
+		     IEEE80211_ADDR_LEN);
 	for (i = 0; i < num_keys; i++) {
 		if (key_params.key_type != eSIR_ED_NONE &&
 		    !key_info->key[i].keyLength)
@@ -1986,7 +2004,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 	 */
 	if (wlan_op_mode_ibss == txrx_vdev->opmode) {
 		wma_set_ibsskey_helper(wma_handle, &wma_handle->ibsskey_info,
-				       key_info->peerMacAddr);
+				       key_info->peer_macaddr);
 	}
 
 	/* TODO: Should we wait till we get HTT_T2H_MSG_TYPE_SEC_IND? */
@@ -2611,7 +2629,8 @@ void wma_set_keepalive_req(tp_wma_handle wma,
 			       keepalive->packetType,
 			       keepalive->timePeriod,
 			       keepalive->hostIpv4Addr,
-			       keepalive->destIpv4Addr, keepalive->destMacAddr);
+			       keepalive->destIpv4Addr,
+			       keepalive->dest_macaddr.bytes);
 
 	cdf_mem_free(keepalive);
 }
@@ -2940,7 +2959,7 @@ wma_is_ccmp_pn_replay_attack(void *cds_ctx, struct ieee80211_frame *wh,
 		return true;
 	}
 
-	vdev = wma_find_vdev_by_addr(cds_ctx, wh->i_addr2, &vdev_id);
+	vdev = wma_find_vdev_by_bssid(cds_ctx, wh->i_addr3, &vdev_id);
 	if (!vdev) {
 		WMA_LOGE("%s: Failed to find vdev", __func__);
 		return true;
@@ -3096,7 +3115,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 			if (0 != wma_process_bip(wma_handle, iface, wh, wbuf)) {
 					cds_pkt_return_packet(rx_pkt);
 					return -EINVAL;
-				}
+			}
 		} else {
 			WMA_LOGE("Rx unprotected unicast mgmt frame");
 			rx_pkt->pkt_meta.dpuFeedback =
@@ -3122,7 +3141,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	WMI_MGMT_RX_EVENTID_param_tlvs *param_tlvs = NULL;
 	wmi_mgmt_rx_hdr *hdr = NULL;
 	struct wma_txrx_node *iface = NULL;
-	uint8_t vdev_id;
+	uint8_t vdev_id = WMA_INVALID_VDEV_ID;
 	cds_pkt_t *rx_pkt;
 	cdf_nbuf_t wbuf;
 	struct ieee80211_frame *wh;
@@ -3157,7 +3176,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -ENOMEM;
 	}
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("Load/Unload in progress");
 		return -EINVAL;
 	}
@@ -3170,10 +3189,21 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	 */
 	rx_pkt->pkt_meta.channel = hdr->channel;
 	rx_pkt->pkt_meta.scan_src = hdr->flags;
-	/*Get the absolute rssi value from the current rssi value
-	 *the sinr value is hardcoded into 0 in the core stack*/
-	rx_pkt->pkt_meta.rssi = hdr->snr + WMA_TGT_NOISE_FLOOR_DBM;
+
+	/*
+	 * Get the rssi value from the current snr value
+	 * using standard noise floor of -96.
+	 */
+	rx_pkt->pkt_meta.rssi = hdr->snr + WMA_NOISE_FLOOR_DBM_DEFAULT;
 	rx_pkt->pkt_meta.snr = hdr->snr;
+
+	/* If absolute rssi is available from firmware, use it */
+	if (hdr->rssi != 0)
+		rx_pkt->pkt_meta.rssi_raw = hdr->rssi;
+	else
+		rx_pkt->pkt_meta.rssi_raw = rx_pkt->pkt_meta.rssi;
+
+
 	/*
 	 * FIXME: Assigning the local timestamp as hw timestamp is not
 	 * available. Need to see if pe/lim really uses this data.
@@ -3232,6 +3262,11 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	cdf_mem_copy(wh, param_tlvs->bufp, hdr->buf_len);
 #endif
 
+	WMA_LOGD(
+		FL("BSSID: "MAC_ADDRESS_STR" snr = %d, rssi = %d, rssi_raw = %d"),
+			MAC_ADDR_ARRAY(wh->i_addr3),
+			hdr->snr, rx_pkt->pkt_meta.rssi,
+			rx_pkt->pkt_meta.rssi_raw);
 	if (!wma_handle->mgmt_rx) {
 		WMA_LOGE("Not registered for Mgmt rx, dropping the frame");
 		cds_pkt_return_packet(rx_pkt);
@@ -3242,22 +3277,25 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	mgt_type = (wh)->i_fc[0] & IEEE80211_FC0_TYPE_MASK;
 	mgt_subtype = (wh)->i_fc[0] & IEEE80211_FC0_SUBTYPE_MASK;
 
-	iface = wma_find_vdev_by_addr(wma_handle, wh->i_addr3, &vdev_id);
-	rx_pkt->pkt_meta.sessionId = vdev_id;
-
 #ifdef WLAN_FEATURE_11W
 	if (mgt_type == IEEE80211_FC0_TYPE_MGT &&
 	    (mgt_subtype == IEEE80211_FC0_SUBTYPE_DISASSOC ||
 	     mgt_subtype == IEEE80211_FC0_SUBTYPE_DEAUTH ||
 	     mgt_subtype == IEEE80211_FC0_SUBTYPE_ACTION)) {
-		if (iface && iface->rmfEnabled) {
-			status = wma_process_rmf_frame(wma_handle,
-				iface, wh, rx_pkt, wbuf);
-			if (status != 0)
-				return status;
+		if (wma_find_vdev_by_bssid(
+			wma_handle, wh->i_addr3, &vdev_id)) {
+			iface = &(wma_handle->interfaces[vdev_id]);
+			if (iface->rmfEnabled) {
+				status = wma_process_rmf_frame(wma_handle,
+					iface, wh, rx_pkt, wbuf);
+				if (status != 0)
+					return status;
+			}
 		}
 	}
 #endif /* WLAN_FEATURE_11W */
+	rx_pkt->pkt_meta.sessionId =
+		(vdev_id == WMA_INVALID_VDEV_ID ? 0 : vdev_id);
 	wma_handle->mgmt_rx(wma_handle, rx_pkt);
 	return 0;
 }
@@ -3273,7 +3311,7 @@ CDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 	tp_wma_handle wma_handle;
 
 #ifdef QCA_WIFI_FTM
-	if (cds_get_conparam() == CDF_FTM_MODE)
+	if (cds_get_conparam() == CDF_GLOBAL_FTM_MODE)
 		return CDF_STATUS_SUCCESS;
 #endif
 
@@ -3292,6 +3330,37 @@ CDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 	return CDF_STATUS_SUCCESS;
 }
 
+/**
+ * wma_register_roaming_callbacks() - Register roaming callbacks
+ * @cds_ctx: CDS Context
+ * @csr_roam_synch_cb: CSR roam synch callback routine pointer
+ * @pe_roam_synch_cb: PE roam synch callback routine pointer
+ *
+ * Register the SME and PE callback routines with WMA for
+ * handling roaming
+ *
+ * Return: Success or Failure Status
+ */
+CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+	void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr, uint8_t reason),
+	CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		roam_offload_synch_ind *roam_synch_data,
+		tpSirBssDescription  bss_desc_ptr))
+{
+
+	tp_wma_handle wma = cds_get_context(CDF_MODULE_ID_WMA);
+
+	if (!wma) {
+		WMA_LOGE("%s: Failed to get WMA context", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+	wma->csr_roam_synch_cb = csr_roam_synch_cb;
+	wma->pe_roam_synch_cb = pe_roam_synch_cb;
+	WMA_LOGD("Registered roam synch callbacks with WMA successfully");
+	return CDF_STATUS_SUCCESS;
+}
 /**
  * wma_register_mgmt_frm_client() - register management frame callback
  * @cds_ctx: cds context

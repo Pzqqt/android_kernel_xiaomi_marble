@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -806,7 +806,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 	tp_wma_handle wma_handle;
 	pWMAAckFnTxComp ack_cb;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("%s: Driver load/unload in progress", __func__);
 		return;
 	}
@@ -888,11 +888,10 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 			ack_work->sub_type = 0;
 			ack_work->status = status;
 
-			cdf_create_work(0, &ack_work->ack_cmp_work,
+			cdf_create_work(&ack_work->ack_cmp_work,
 					wma_data_tx_ack_work_handler,
 					ack_work);
-			/* Schedule the Work */
-			cdf_sched_work(0, &ack_work->ack_cmp_work);
+			cdf_schedule_work(&ack_work->ack_cmp_work);
 		}
 	}
 
@@ -1320,16 +1319,15 @@ void wma_set_linkstate(tp_wma_handle wma, tpLinkStateParams params)
 	}
 
 	if (params->state == eSIR_LINK_PREASSOC_STATE) {
-#ifdef WLAN_FEATURE_ROAM_OFFLOAD
-		if (wma->interfaces[vdev_id].roam_synch_in_progress) {
+		if (wma_is_roam_synch_in_progress(wma, vdev_id))
 			roam_synch_in_progress = true;
-		}
-#endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 		status = wma_create_peer(wma, pdev, vdev, params->bssid,
 				WMI_PEER_TYPE_DEFAULT, vdev_id,
 				roam_synch_in_progress);
 		if (status != CDF_STATUS_SUCCESS)
-			params->status = false;
+			WMA_LOGE("%s: Unable to create peer", __func__);
+		if (roam_synch_in_progress)
+			return;
 	} else {
 		WMA_LOGD("%s, vdev_id: %d, pausing tx_ll_queue for VDEV_STOP",
 			 __func__, vdev_id);
@@ -1482,7 +1480,7 @@ static void wma_mgmt_tx_ack_work_handler(void *ack_work)
 	tp_wma_handle wma_handle;
 	pWMAAckFnTxComp ack_cb;
 
-	if (cds_is_load_unload_in_progress()) {
+	if (cds_is_load_or_unload_in_progress()) {
 		WMA_LOGE("%s: Driver load/unload in progress", __func__);
 		return;
 	}
@@ -1564,12 +1562,11 @@ wma_mgmt_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 				ack_work->sub_type = pFc->subType;
 				ack_work->status = status;
 
-				cdf_create_work(0, &ack_work->ack_cmp_work,
+				cdf_create_work(&ack_work->ack_cmp_work,
 						wma_mgmt_tx_ack_work_handler,
 						ack_work);
 
-				/* Schedule the Work */
-				cdf_sched_work(0, &ack_work->ack_cmp_work);
+				cdf_schedule_work(&ack_work->ack_cmp_work);
 			}
 		}
 	}

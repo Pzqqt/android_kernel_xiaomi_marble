@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -43,6 +43,8 @@
 #include "bmi_msg.h"            /* TARGET_TYPE_ */
 #include "regtable.h"
 #include "ol_fw.h"
+#include <linux/debugfs.h>
+#include <linux/seq_file.h>
 #include <osapi_linux.h>
 #include "cds_api.h"
 #include "cdf_status.h"
@@ -100,63 +102,18 @@ struct ce_irq_reg_table {
 	uint32_t irq_status;
 };
 
-#if !defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)
+#if !defined(QCA_WIFI_3_0_ADRASTEA)
 static inline void cnss_intr_notify_q6(void)
 {
 }
 #endif
 
-#if !defined(QCA_WIFI_3_0_IHELIUM) && !defined(QCA_WIFI_3_0_ADRASTEA)
+#if !defined(QCA_WIFI_3_0_ADRASTEA)
 static inline void *cnss_get_target_smem(void)
 {
 	return NULL;
 }
 #endif
-
-void hif_pci_route_target_interrupt(struct hif_pci_softc *sc)
-{
-	uint32_t target_cause0, target_cause1, target_cause2;
-	uint32_t *target_smem;
-	struct ol_softc *scn = sc->ol_sc;
-
-	target_smem = (uint32_t *)cnss_get_target_smem();
-	if (!target_smem)
-		return;
-
-	/* disable interrupts */
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_0_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_1_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_2_ADDRESS, 0);
-	/* read cause */
-	target_cause0 = hif_read32_mb(sc->mem +
-				      A_SOC_CORE_SCRATCH_3_ADDRESS);
-	target_cause1 = hif_read32_mb(sc->mem +
-				      A_SOC_CORE_SCRATCH_4_ADDRESS);
-	target_cause2 = hif_read32_mb(sc->mem +
-				      A_SOC_CORE_SCRATCH_5_ADDRESS);
-	/* clear cause registers */
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_3_ADDRESS, 0xffffffff);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_4_ADDRESS, 0xffffffff);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_5_ADDRESS, 0xffffffff);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_3_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_4_ADDRESS, 0);
-	hif_write32_mb(sc->mem +
-		       A_SOC_CORE_SCRATCH_5_ADDRESS, 0);
-	/* copy cause value to Q6 */
-	*target_smem = target_cause0;
-	*(target_smem + 1) = target_cause1;
-	*(target_smem + 2) = target_cause2;
-	if (scn->notice_send)
-		cnss_intr_notify_q6();
-}
 
 #ifndef QCA_WIFI_3_0_ADRASTEA
 static inline void hif_pci_route_adrastea_interrupt(struct hif_pci_softc *sc)
@@ -220,18 +177,6 @@ static irqreturn_t hif_pci_interrupt_handler(int irq, void *arg)
 		hif_write32_mb(sc->mem +
 			      (SOC_CORE_BASE_ADDRESS |
 			       PCIE_INTR_ENABLE_ADDRESS), 0);
-		if (IHELIUM_BU) {
-			if (!hif_read32_mb(sc->mem + PCIE_INTR_CAUSE_ADDRESS)) {
-				hif_pci_route_target_interrupt(sc);
-
-				hif_write32_mb(sc->mem +
-					       (SOC_CORE_BASE_ADDRESS |
-						PCIE_INTR_ENABLE_ADDRESS),
-					       HOST_GROUP0_MASK);
-
-				return IRQ_HANDLED;
-			}
-		}
 
 		hif_write32_mb(sc->mem +
 			      (SOC_CORE_BASE_ADDRESS | PCIE_INTR_CLR_ADDRESS),
@@ -850,7 +795,7 @@ static void wlan_tasklet(unsigned long data)
 	if (cdf_atomic_read(&scn->link_suspended))
 		goto end;
 
-	if (!IHELIUM_BU && !ADRASTEA_BU) {
+	if (!ADRASTEA_BU) {
 		(irqreturn_t) hif_fw_interrupt_handler(sc->irq_event, scn);
 		if (sc->ol_sc->target_status == OL_TRGET_STATUS_RESET)
 			goto end;
@@ -859,6 +804,342 @@ static void wlan_tasklet(unsigned long data)
 end:
 	cdf_atomic_set(&scn->tasklet_from_intr, 0);
 	cdf_atomic_dec(&scn->active_tasklet_cnt);
+}
+
+#ifdef FEATURE_RUNTIME_PM
+#define HIF_PCI_RUNTIME_PM_STATS(_s, _sc, _name) \
+	seq_printf(_s, "%30s: %u\n", #_name, _sc->pm_stats._name)
+
+/**
+ * hif_pci_runtime_pm_warn() - Runtime PM Debugging API
+ * @sc: hif_pci_softc context
+ * @msg: log message
+ *
+ * log runtime pm stats when something seems off.
+ *
+ * Return: void
+ */
+void hif_pci_runtime_pm_warn(struct hif_pci_softc *sc, const char *msg)
+{
+	struct hif_pm_runtime_lock *ctx;
+
+	HIF_ERROR("%s: usage_count: %d, pm_state: %d, prevent_suspend_cnt: %d",
+			msg, atomic_read(&sc->dev->power.usage_count),
+			atomic_read(&sc->pm_state),
+			sc->prevent_suspend_cnt);
+
+	HIF_ERROR("runtime_status: %d, runtime_error: %d, disable_depth: %d autosuspend_delay: %d",
+			sc->dev->power.runtime_status,
+			sc->dev->power.runtime_error,
+			sc->dev->power.disable_depth,
+			sc->dev->power.autosuspend_delay);
+
+	HIF_ERROR("runtime_get: %u, runtime_put: %u, request_resume: %u",
+			sc->pm_stats.runtime_get, sc->pm_stats.runtime_put,
+			sc->pm_stats.request_resume);
+
+	HIF_ERROR("allow_suspend: %u, prevent_suspend: %u",
+			sc->pm_stats.allow_suspend,
+			sc->pm_stats.prevent_suspend);
+
+	HIF_ERROR("prevent_suspend_timeout: %u, allow_suspend_timeout: %u",
+			sc->pm_stats.prevent_suspend_timeout,
+			sc->pm_stats.allow_suspend_timeout);
+
+	HIF_ERROR("Suspended: %u, resumed: %u count",
+			sc->pm_stats.suspended,
+			sc->pm_stats.resumed);
+
+	HIF_ERROR("suspend_err: %u, runtime_get_err: %u",
+			sc->pm_stats.suspend_err,
+			sc->pm_stats.runtime_get_err);
+
+	HIF_ERROR("Active Wakeup Sources preventing Runtime Suspend: ");
+
+	list_for_each_entry(ctx, &sc->prevent_suspend_list, list) {
+		HIF_ERROR("source %s; timeout %d ms", ctx->name, ctx->timeout);
+	}
+
+	WARN_ON(1);
+}
+
+/**
+ * hif_pci_pm_runtime_debugfs_show(): show debug stats for runtimepm
+ * @s: file to print to
+ * @data: unused
+ *
+ * debugging tool added to the debug fs for displaying runtimepm stats
+ *
+ * Return: 0
+ */
+static int hif_pci_pm_runtime_debugfs_show(struct seq_file *s, void *data)
+{
+	struct hif_pci_softc *sc = s->private;
+	static const char * const autopm_state[] = {"NONE", "ON", "INPROGRESS",
+		"SUSPENDED"};
+	unsigned int msecs_age;
+	int pm_state = atomic_read(&sc->pm_state);
+	unsigned long timer_expires, flags;
+	struct hif_pm_runtime_lock *ctx;
+
+	seq_printf(s, "%30s: %s\n", "Runtime PM state",
+			autopm_state[pm_state]);
+	seq_printf(s, "%30s: %pf\n", "Last Resume Caller",
+			sc->pm_stats.last_resume_caller);
+
+	if (pm_state == HIF_PM_RUNTIME_STATE_SUSPENDED) {
+		msecs_age = jiffies_to_msecs(
+				jiffies - sc->pm_stats.suspend_jiffies);
+		seq_printf(s, "%30s: %d.%03ds\n", "Suspended Since",
+				msecs_age / 1000, msecs_age % 1000);
+	}
+
+	seq_printf(s, "%30s: %d\n", "PM Usage count",
+			atomic_read(&sc->dev->power.usage_count));
+
+	seq_printf(s, "%30s: %u\n", "prevent_suspend_cnt",
+			sc->prevent_suspend_cnt);
+
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, suspended);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, suspend_err);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, resumed);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, runtime_get);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, runtime_put);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, request_resume);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, prevent_suspend);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, allow_suspend);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, prevent_suspend_timeout);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, allow_suspend_timeout);
+	HIF_PCI_RUNTIME_PM_STATS(s, sc, runtime_get_err);
+
+	timer_expires = sc->runtime_timer_expires;
+	if (timer_expires > 0) {
+		msecs_age = jiffies_to_msecs(timer_expires - jiffies);
+		seq_printf(s, "%30s: %d.%03ds\n", "Prevent suspend timeout",
+				msecs_age / 1000, msecs_age % 1000);
+	}
+
+	spin_lock_irqsave(&sc->runtime_lock, flags);
+	if (list_empty(&sc->prevent_suspend_list)) {
+		spin_unlock_irqrestore(&sc->runtime_lock, flags);
+		return 0;
+	}
+
+	seq_printf(s, "%30s: ", "Active Wakeup_Sources");
+	list_for_each_entry(ctx, &sc->prevent_suspend_list, list) {
+		seq_printf(s, "%s", ctx->name);
+		if (ctx->timeout)
+			seq_printf(s, "(%d ms)", ctx->timeout);
+		seq_puts(s, " ");
+	}
+	seq_puts(s, "\n");
+	spin_unlock_irqrestore(&sc->runtime_lock, flags);
+
+	return 0;
+}
+#undef HIF_PCI_RUNTIME_PM_STATS
+
+/**
+ * hif_pci_autopm_open() - open a debug fs file to access the runtime pm stats
+ * @inode
+ * @file
+ *
+ * Return: linux error code of single_open.
+ */
+static int hif_pci_runtime_pm_open(struct inode *inode, struct file *file)
+{
+	return single_open(file, hif_pci_pm_runtime_debugfs_show,
+			inode->i_private);
+}
+
+#ifdef WLAN_OPEN_SOURCE
+static const struct file_operations hif_pci_runtime_pm_fops = {
+	.owner          = THIS_MODULE,
+	.open           = hif_pci_runtime_pm_open,
+	.release        = single_release,
+	.read           = seq_read,
+	.llseek         = seq_lseek,
+};
+
+/**
+ * hif_runtime_pm_debugfs_create() - creates runtimepm debugfs entry
+ * @sc: pci context
+ *
+ * creates a debugfs entry to debug the runtime pm feature.
+ */
+static void hif_runtime_pm_debugfs_create(struct hif_pci_softc *sc)
+{
+	sc->pm_dentry = debugfs_create_file("cnss_runtime_pm",
+					S_IRUSR, NULL, sc,
+					&hif_pci_runtime_pm_fops);
+}
+/**
+ * hif_runtime_pm_debugfs_remove() - removes runtimepm debugfs entry
+ * @sc: pci context
+ *
+ * removes the debugfs entry to debug the runtime pm feature.
+ */
+static void hif_runtime_pm_debugfs_remove(struct hif_pci_softc *sc)
+{
+	debugfs_remove(sc->pm_dentry);
+}
+#else
+static inline void hif_runtime_pm_debugfs_create(struct hif_pci_softc *sc)
+{
+}
+static inline void hif_runtime_pm_debugfs_remove(struct hif_pci_softc *sc)
+{
+}
+#endif
+
+static void hif_pm_runtime_lock_timeout_fn(unsigned long data);
+
+/**
+ * hif_pm_runtime_start(): start the runtime pm
+ * @sc: pci context
+ *
+ * After this call, runtime pm will be active.
+ */
+static void hif_pm_runtime_start(struct hif_pci_softc *sc)
+{
+	struct ol_softc *ol_sc;
+
+	ol_sc = sc->ol_sc;
+
+	if (!ol_sc->enable_runtime_pm) {
+		HIF_INFO("%s: RUNTIME PM is disabled in ini\n", __func__);
+		return;
+	}
+
+	if (cds_get_conparam() == CDF_FTM_MODE ||
+			WLAN_IS_EPPING_ENABLED(cds_get_conparam())) {
+		HIF_INFO("%s: RUNTIME PM is disabled for FTM/EPPING mode\n",
+				__func__);
+		return;
+	}
+
+	setup_timer(&sc->runtime_timer, hif_pm_runtime_lock_timeout_fn,
+			(unsigned long)sc);
+
+	HIF_INFO("%s: Enabling RUNTIME PM, Delay: %d ms", __func__,
+			ol_sc->runtime_pm_delay);
+
+	cnss_runtime_init(sc->dev, ol_sc->runtime_pm_delay);
+	cdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_ON);
+	hif_runtime_pm_debugfs_create(sc);
+}
+
+/**
+ * hif_pm_runtime_stop(): stop runtime pm
+ * @sc: pci context
+ *
+ * Turns off runtime pm and frees corresponding resources
+ * that were acquired by hif_runtime_pm_start().
+ */
+static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
+{
+	struct ol_softc *ol_sc = sc->ol_sc;
+
+	if (!ol_sc->enable_runtime_pm)
+		return;
+
+	if (cds_get_conparam() == CDF_FTM_MODE ||
+			WLAN_IS_EPPING_ENABLED(cds_get_conparam()))
+		return;
+
+	cnss_runtime_exit(sc->dev);
+	cnss_pm_runtime_request(sc->dev, CNSS_PM_RUNTIME_RESUME);
+
+	cdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
+
+	hif_runtime_pm_debugfs_remove(sc);
+	del_timer_sync(&sc->runtime_timer);
+	/* doesn't wait for penting trafic unlike cld-2.0 */
+}
+
+/**
+ * hif_pm_runtime_open(): initialize runtime pm
+ * @sc: pci data structure
+ *
+ * Early initialization
+ */
+static void hif_pm_runtime_open(struct hif_pci_softc *sc)
+{
+	spin_lock_init(&sc->runtime_lock);
+
+	cdf_atomic_init(&sc->pm_state);
+	sc->prevent_linkdown_lock =
+		hif_runtime_lock_init("linkdown suspend disabled");
+	cdf_atomic_set(&sc->pm_state, HIF_PM_RUNTIME_STATE_NONE);
+	INIT_LIST_HEAD(&sc->prevent_suspend_list);
+}
+
+/**
+ * hif_pm_runtime_close(): close runtime pm
+ * @sc: pci bus handle
+ *
+ * ensure runtime_pm is stopped before closing the driver
+ */
+static void hif_pm_runtime_close(struct hif_pci_softc *sc)
+{
+	if (cdf_atomic_read(&sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE)
+		return;
+	else
+		hif_pm_runtime_stop(sc);
+}
+
+
+#else
+
+static void hif_pm_runtime_close(struct hif_pci_softc *sc) {}
+static void hif_pm_runtime_open(struct hif_pci_softc *sc) {}
+static void hif_pm_runtime_start(struct hif_pci_softc *sc) {}
+static void hif_pm_runtime_stop(struct hif_pci_softc *sc) {}
+#endif
+
+/**
+ * hif_enable_power_management(): enable power management
+ * @hif_ctx: hif context
+ *
+ * Currently only does runtime pm.  Eventually this function could
+ * consolidate other power state features such as only letting
+ * the soc sleep after the driver finishes loading and re-enabling
+ * aspm (hif_enable_power_gating).
+ */
+void hif_enable_power_management(void *hif_ctx)
+{
+	struct hif_pci_softc *pci_ctx;
+
+	if (hif_ctx == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+
+	pci_ctx = ((struct ol_softc *)hif_ctx)->hif_sc;
+
+	hif_pm_runtime_start(pci_ctx);
+}
+
+/**
+ * hif_disable_power_management(): disable power management
+ * @hif_ctx: hif context
+ *
+ * Currently disables runtime pm. Should be updated to behave
+ * if runtime pm is not started. Should be updated to take care
+ * of aspm and soc sleep for driver load.
+ */
+void hif_disable_power_management(void *hif_ctx)
+{
+	struct hif_pci_softc *pci_ctx;
+
+	if (hif_ctx == NULL) {
+		HIF_ERROR("%s, hif_ctx null", __func__);
+		return;
+	}
+
+	pci_ctx = ((struct ol_softc *)hif_ctx)->hif_sc;
+
+	hif_pm_runtime_stop(pci_ctx);
 }
 
 #define ATH_PCI_PROBE_RETRY_MAX 3
@@ -881,6 +1162,9 @@ CDF_STATUS hif_bus_open(struct ol_softc *ol_sc, enum ath_hal_bus_type bus_type)
 	ol_sc->hif_sc = (void *)sc;
 	sc->ol_sc = ol_sc;
 	ol_sc->bus_type = bus_type;
+	hif_pm_runtime_open(sc);
+
+	cdf_spinlock_init(&ol_sc->irq_lock);
 
 	return CDF_STATUS_SUCCESS;
 }
@@ -901,6 +1185,8 @@ void hif_bus_close(struct ol_softc *ol_sc)
 	sc = ol_sc->hif_sc;
 	if (sc == NULL)
 		return;
+
+	hif_pm_runtime_close(sc);
 	cdf_mem_free(sc);
 	ol_sc->hif_sc = NULL;
 }
@@ -928,14 +1214,12 @@ int hif_enable_pci(struct hif_pci_softc *sc,
 	/* FIXME: temp. commenting out assign_resource
 	 * call for dev_attach to work on 2.6.38 kernel
 	 */
-#if LINUX_VERSION_CODE >= KERNEL_VERSION(3, 0, 0) && \
-    !defined(__LINUX_ARM_ARCH__)
+#if (!defined(__LINUX_ARM_ARCH__))
 	if (pci_assign_resource(pdev, BAR_NUM)) {
 		HIF_ERROR("%s: pci_assign_resource error", __func__);
 		return -EIO;
 	}
 #endif
-
 	if (pci_enable_device(pdev)) {
 		HIF_ERROR("%s: pci_enable_device error",
 			   __func__);
@@ -1362,6 +1646,30 @@ void hif_disable_bus(void *bdev)
 #define OL_ATH_PCI_PM_CONTROL 0x44
 
 #ifdef CONFIG_CNSS
+
+#ifdef RUNTIME_PM
+/**
+ * hif_runtime_prevent_linkdown() - prevent or allow a runtime pm from occuring
+ * @scn: hif context
+ * @flag: prevent linkdown if true otherwise allow
+ *
+ * this api should only be called as part of bus prevent linkdown
+ */
+static void hif_runtime_prevent_linkdown(struct ol_softc *scn, bool flag)
+{
+	struct hif_pci_softc *sc = scn->hif_sc;
+
+	if (flag)
+		hif_pm_runtime_prevent_suspend(scn, sc->prevent_linkdown_lock);
+	else
+		hif_pm_runtime_allow_suspend(scn, sc->prevent_linkdown_lock);
+}
+#else
+static void hif_runtime_prevent_linkdown(struct ol_softc *scn, bool flag)
+{
+}
+#endif
+
 /**
  * hif_bus_prevent_linkdown(): allow or permit linkdown
  * @flag: true prevents linkdown, false allows
@@ -1371,10 +1679,11 @@ void hif_disable_bus(void *bdev)
  *
  * Return: n/a
  */
-void hif_bus_prevent_linkdown(bool flag)
+void hif_bus_prevent_linkdown(struct ol_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse",
 			(flag ? "disable" : "enable"));
+	hif_runtime_prevent_linkdown(scn, flag);
 	cnss_wlan_pm_control(flag);
 }
 #endif
@@ -1538,9 +1847,10 @@ static int hif_bus_resume_link_down(void)
 
 /**
  * hif_bus_suspend(): prepare hif for suspend
+ *
  * chose suspend type based on link suspend voting.
  *
- * Return: linux status
+ * Return: 0 for success and non-zero error code for failure
  */
 int hif_bus_suspend(void)
 {
@@ -1551,10 +1861,11 @@ int hif_bus_suspend(void)
 }
 
 /**
- * hif_bus_suspend(): prepare hif for suspend
+ * hif_bus_resume(): prepare hif for resume
+ *
  * chose suspend type based on link suspend voting.
  *
- * Return: linux status
+ * Return: 0 for success and non-zero error code for failure
  */
 int hif_bus_resume(void)
 {
@@ -1562,6 +1873,254 @@ int hif_bus_resume(void)
 		return hif_bus_resume_link_down();
 	else
 		return hif_bus_resume_link_up();
+}
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * __hif_runtime_pm_set_state(): utility function
+ * @state: state to set
+ *
+ * indexes into the runtime pm state and sets it.
+ */
+static void __hif_runtime_pm_set_state(enum hif_pm_runtime_state state)
+{
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_pci_softc *sc;
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: HIF_CTX not initialized",
+		       __func__);
+		return;
+	}
+
+	sc = scn->hif_sc;
+	cdf_atomic_set(&sc->pm_state, state);
+
+}
+#endif
+
+#ifdef FEATURE_RUNTIME_PM
+/**
+ * hif_runtime_pm_set_state_inprogress(): adjust runtime pm state
+ *
+ * Notify hif that a runtime pm opperation has started
+ */
+static void hif_runtime_pm_set_state_inprogress(void)
+{
+	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_INPROGRESS);
+}
+
+/**
+ * hif_runtime_pm_set_state_on():  adjust runtime pm state
+ *
+ * Notify hif that a the runtime pm state should be on
+ */
+static void hif_runtime_pm_set_state_on(void)
+{
+	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_ON);
+}
+
+/**
+ * hif_runtime_pm_set_state_suspended():  adjust runtime pm state
+ *
+ * Notify hif that a runtime suspend attempt has been completed successfully
+ */
+static void hif_runtime_pm_set_state_suspended(void)
+{
+	__hif_runtime_pm_set_state(HIF_PM_RUNTIME_STATE_SUSPENDED);
+}
+
+static inline struct hif_pci_softc *get_sc(void)
+{
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not disable ASPM scn is null",
+		       __func__);
+		return NULL;
+	}
+
+	return scn->hif_sc;
+}
+
+/**
+ * hif_log_runtime_suspend_success() - log a successful runtime suspend
+ */
+static void hif_log_runtime_suspend_success(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+	if (sc == NULL)
+		return;
+
+	sc->pm_stats.suspended++;
+	sc->pm_stats.suspend_jiffies = jiffies;
+}
+
+/**
+ * hif_log_runtime_suspend_failure() - log a failed runtime suspend
+ *
+ * log a failed runtime suspend
+ * mark last busy to prevent immediate runtime suspend
+ */
+static void hif_log_runtime_suspend_failure(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+	if (sc == NULL)
+		return;
+
+	sc->pm_stats.suspend_err++;
+}
+
+/**
+ * hif_log_runtime_resume_success() - log a successful runtime resume
+ *
+ * log a successfull runtime resume
+ * mark last busy to prevent immediate runtime suspend
+ */
+static void hif_log_runtime_resume_success(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+	if (sc == NULL)
+		return;
+
+	sc->pm_stats.resumed++;
+}
+
+/**
+ * hif_process_runtime_suspend_failure() - bookkeeping of suspend failure
+ *
+ * Record the failure.
+ * mark last busy to delay a retry.
+ * adjust the runtime_pm state.
+ */
+void hif_process_runtime_suspend_failure(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+
+	hif_log_runtime_suspend_failure();
+	if (sc != NULL)
+		hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_runtime_pm_set_state_on();
+}
+
+/**
+ * hif_pre_runtime_suspend() - bookkeeping before beginning runtime suspend
+ *
+ * Makes sure that the pci link will be taken down by the suspend opperation.
+ * If the hif layer is configured to leave the bus on, runtime suspend will
+ * not save any power.
+ *
+ * Set the runtime suspend state to in progress.
+ *
+ * return -EINVAL if the bus won't go down.  otherwise return 0
+ */
+int hif_pre_runtime_suspend(void)
+{
+	if (!hif_can_suspend_link()) {
+		HIF_ERROR("Runtime PM not supported for link up suspend");
+		return -EINVAL;
+	}
+
+	hif_runtime_pm_set_state_inprogress();
+	return 0;
+}
+
+/**
+ * hif_process_runtime_suspend_success() - bookkeeping of suspend success
+ *
+ * Record the success.
+ * adjust the runtime_pm state
+ */
+void hif_process_runtime_suspend_success(void)
+{
+	hif_runtime_pm_set_state_suspended();
+	hif_log_runtime_suspend_success();
+}
+
+/**
+ * hif_pre_runtime_resume() - bookkeeping before beginning runtime resume
+ *
+ * update the runtime pm state.
+ */
+void hif_pre_runtime_resume(void)
+{
+	hif_runtime_pm_set_state_inprogress();
+}
+
+/**
+ * hif_process_runtime_resume_success() - bookkeeping after a runtime resume
+ *
+ * record the success.
+ * adjust the runtime_pm state
+ */
+void hif_process_runtime_resume_success(void)
+{
+	struct hif_pci_softc *sc = get_sc();
+
+	hif_log_runtime_resume_success();
+	if (sc != NULL)
+		hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_runtime_pm_set_state_on();
+}
+#endif
+
+/**
+ * hif_runtime_suspend() - do the bus suspend part of a runtime suspend
+ *
+ * Return: 0 for success and non-zero error code for failure
+ */
+int hif_runtime_suspend(void)
+{
+	return hif_bus_suspend();
+}
+
+#ifdef WLAN_FEATURE_FASTPATH
+/**
+ * hif_fastpath_resume() - resume fastpath for runtimepm
+ *
+ * ensure that the fastpath write index register is up to date
+ * since runtime pm may cause ce_send_fast to skip the register
+ * write.
+ */
+static void hif_fastpath_resume(void)
+{
+	struct ol_softc *scn =
+		(struct ol_softc *)cds_get_context(CDF_MODULE_ID_HIF);
+	struct CE_state *ce_state;
+
+	if (!scn)
+		return;
+
+	if (scn->fastpath_mode_on) {
+		if (Q_TARGET_ACCESS_BEGIN(scn)) {
+			ce_state = scn->ce_id_to_state[CE_HTT_H2T_MSG];
+			cdf_spin_lock_bh(&ce_state->ce_index_lock);
+
+			/*war_ce_src_ring_write_idx_set */
+			CE_SRC_RING_WRITE_IDX_SET(scn, ce_state->ctrl_addr,
+					ce_state->src_ring->write_index);
+			cdf_spin_unlock_bh(&ce_state->ce_index_lock);
+			Q_TARGET_ACCESS_END(scn);
+		}
+	}
+}
+#else
+static void hif_fastpath_resume(void) {}
+#endif
+
+
+/**
+ * hif_runtime_resume() - do the bus resume part of a runtime resume
+ *
+ *  Return: 0 for success and non-zero error code for failure
+ */
+int hif_runtime_resume(void)
+{
+	int status = hif_bus_resume();
+
+	hif_fastpath_resume();
+
+	return status;
 }
 
 void hif_disable_isr(void *ol_sc)
@@ -1824,7 +2383,7 @@ hif_target_sleep_state_adjust(struct ol_softc *scn,
 					if (!sc->ol_sc->enable_self_recovery)
 						CDF_BUG(0);
 					scn->recovery = true;
-					cds_set_logp_in_progress(true);
+					cds_set_recovery_in_progress(true);
 					cnss_wlan_pci_link_down();
 					return -EACCES;
 				}
@@ -2238,3 +2797,477 @@ int hif_get_target_type(struct ol_softc *ol_sc, struct device *dev,
 	return hif_get_device_type(id->device, revision_id,
 			hif_type, target_type);
 }
+
+#ifdef FEATURE_RUNTIME_PM
+
+void hif_pm_runtime_get_noresume(void *hif_ctx)
+{
+	struct ol_softc *scn = hif_ctx;
+	struct hif_pci_softc *sc;
+
+	if (NULL == scn)
+		return;
+
+	sc = scn->hif_sc;
+	if (NULL == sc)
+		return;
+
+	sc->pm_stats.runtime_get++;
+	pm_runtime_get_noresume(sc->dev);
+}
+
+/**
+ * hif_pm_runtime_get() - do a get opperation on the device
+ *
+ * A get opperation will prevent a runtime suspend untill a
+ * corresponding put is done.  This api should be used when sending
+ * data.
+ *
+ * CONTRARY TO THE REGULAR RUNTIME PM, WHEN THE BUS IS SUSPENDED,
+ * THIS API WILL ONLY REQUEST THE RESUME AND NOT TO A GET!!!
+ *
+ * return: success if the bus is up and a get has been issued
+ *   otherwise an error code.
+ */
+int hif_pm_runtime_get(void *hif_ctx)
+{
+	struct ol_softc *scn = hif_ctx;
+	struct hif_pci_softc *sc;
+	int ret;
+	int pm_state;
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not do runtime get, scn is null",
+				__func__);
+		return -EFAULT;
+	}
+	sc = scn->hif_sc;
+
+	pm_state = cdf_atomic_read(&sc->pm_state);
+
+	if (pm_state  == HIF_PM_RUNTIME_STATE_ON ||
+			pm_state == HIF_PM_RUNTIME_STATE_NONE) {
+		sc->pm_stats.runtime_get++;
+		ret = __hif_pm_runtime_get(sc->dev);
+
+		/* Get can return 1 if the device is already active, just return
+		 * success in that case
+		 */
+		if (ret > 0)
+			ret = 0;
+
+		if (ret)
+			hif_pm_runtime_put(hif_ctx);
+
+		if (ret && ret != -EINPROGRESS) {
+			sc->pm_stats.runtime_get_err++;
+			HIF_ERROR("%s: Runtime Get PM Error in pm_state:%d ret: %d",
+				__func__, cdf_atomic_read(&sc->pm_state), ret);
+		}
+
+		return ret;
+	}
+
+	sc->pm_stats.request_resume++;
+	sc->pm_stats.last_resume_caller = (void *)_RET_IP_;
+	ret = hif_pm_request_resume(sc->dev);
+
+	return -EAGAIN;
+}
+
+/**
+ * hif_pm_runtime_put() - do a put opperation on the device
+ *
+ * A put opperation will allow a runtime suspend after a corresponding
+ * get was done.  This api should be used when sending data.
+ *
+ * This api will return a failure if runtime pm is stopped
+ * This api will return failure if it would decrement the usage count below 0.
+ *
+ * return: CDF_STATUS_SUCCESS if the put is performed
+ */
+int hif_pm_runtime_put(void *hif_ctx)
+{
+	struct ol_softc *scn = (struct ol_softc *)hif_ctx;
+	struct hif_pci_softc *sc;
+	int pm_state, usage_count;
+	unsigned long flags;
+	char *error = NULL;
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not do runtime put, scn is null",
+				__func__);
+		return -EFAULT;
+	}
+	sc = scn->hif_sc;
+
+	usage_count = atomic_read(&sc->dev->power.usage_count);
+
+	if (usage_count == 1) {
+		pm_state = cdf_atomic_read(&sc->pm_state);
+
+		if (pm_state == HIF_PM_RUNTIME_STATE_NONE)
+			error = "Ignoring unexpected put when runtime pm is disabled";
+
+	} else if (usage_count == 0) {
+		error = "PUT Without a Get Operation";
+	}
+
+	if (error) {
+		spin_lock_irqsave(&sc->runtime_lock, flags);
+		hif_pci_runtime_pm_warn(sc, error);
+		spin_unlock_irqrestore(&sc->runtime_lock, flags);
+		return -EINVAL;
+	}
+
+	sc->pm_stats.runtime_put++;
+
+	hif_pm_runtime_mark_last_busy(sc->dev);
+	hif_pm_runtime_put_auto(sc->dev);
+
+	return 0;
+}
+
+
+/**
+ * __hif_pm_runtime_prevent_suspend() - prevent runtime suspend for a protocol reason
+ * @hif_sc: pci context
+ * @lock: runtime_pm lock being acquired
+ *
+ * Return 0 if successful.
+ */
+static int __hif_pm_runtime_prevent_suspend(struct hif_pci_softc
+		*hif_sc, struct hif_pm_runtime_lock *lock)
+{
+	int ret = 0;
+
+	/*
+	 * We shouldn't be setting context->timeout to zero here when
+	 * context is active as we will have a case where Timeout API's
+	 * for the same context called back to back.
+	 * eg: echo "1=T:10:T:20" > /d/cnss_runtime_pm
+	 * Set context->timeout to zero in hif_pm_runtime_prevent_suspend
+	 * API to ensure the timeout version is no more active and
+	 * list entry of this context will be deleted during allow suspend.
+	 */
+	if (lock->active)
+		return 0;
+
+	ret = __hif_pm_runtime_get(hif_sc->dev);
+
+	/**
+	 * The ret can be -EINPROGRESS, if Runtime status is RPM_RESUMING or
+	 * RPM_SUSPENDING. Any other negative value is an error.
+	 * We shouldn't be do runtime_put here as in later point allow
+	 * suspend gets called with the the context and there the usage count
+	 * is decremented, so suspend will be prevented.
+	 */
+
+	if (ret < 0 && ret != -EINPROGRESS) {
+		hif_sc->pm_stats.runtime_get_err++;
+		hif_pci_runtime_pm_warn(hif_sc,
+				"Prevent Suspend Runtime PM Error");
+	}
+
+	hif_sc->prevent_suspend_cnt++;
+
+	lock->active = true;
+
+	list_add_tail(&lock->list, &hif_sc->prevent_suspend_list);
+
+	hif_sc->pm_stats.prevent_suspend++;
+
+	HIF_ERROR("%s: in pm_state:%d ret: %d", __func__,
+			cdf_atomic_read(&hif_sc->pm_state), ret);
+
+	return ret;
+}
+
+static int __hif_pm_runtime_allow_suspend(struct hif_pci_softc *hif_sc,
+		struct hif_pm_runtime_lock *lock)
+{
+	int ret = 0;
+	int usage_count;
+
+	if (hif_sc->prevent_suspend_cnt == 0)
+		return ret;
+
+	if (!lock->active)
+		return ret;
+
+	usage_count = atomic_read(&hif_sc->dev->power.usage_count);
+
+	/*
+	 * During Driver unload, platform driver increments the usage
+	 * count to prevent any runtime suspend getting called.
+	 * So during driver load in HIF_PM_RUNTIME_STATE_NONE state the
+	 * usage_count should be one. Ideally this shouldn't happen as
+	 * context->active should be active for allow suspend to happen
+	 * Handling this case here to prevent any failures.
+	 */
+	if ((cdf_atomic_read(&hif_sc->pm_state) == HIF_PM_RUNTIME_STATE_NONE
+				&& usage_count == 1) || usage_count == 0) {
+		hif_pci_runtime_pm_warn(hif_sc,
+				"Allow without a prevent suspend");
+		return -EINVAL;
+	}
+
+	list_del(&lock->list);
+
+	hif_sc->prevent_suspend_cnt--;
+
+	lock->active = false;
+	lock->timeout = 0;
+
+	hif_pm_runtime_mark_last_busy(hif_sc->dev);
+	ret = hif_pm_runtime_put_auto(hif_sc->dev);
+
+	HIF_ERROR("%s: in pm_state:%d ret: %d", __func__,
+			cdf_atomic_read(&hif_sc->pm_state), ret);
+
+	hif_sc->pm_stats.allow_suspend++;
+	return ret;
+}
+
+/**
+ * hif_pm_runtime_lock_timeout_fn() - callback the runtime lock timeout
+ * @data: calback data that is the pci context
+ *
+ * if runtime locks are aquired with a timeout, this function releases
+ * the locks when the last runtime lock expires.
+ *
+ * dummy implementation until lock acquisition is implemented.
+ */
+static void hif_pm_runtime_lock_timeout_fn(unsigned long data)
+{
+	struct hif_pci_softc *hif_sc = (struct hif_pci_softc *)data;
+	unsigned long flags;
+	unsigned long timer_expires;
+	struct hif_pm_runtime_lock *context, *temp;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+
+	timer_expires = hif_sc->runtime_timer_expires;
+
+	/* Make sure we are not called too early, this should take care of
+	 * following case
+	 *
+	 * CPU0                         CPU1 (timeout function)
+	 * ----                         ----------------------
+	 * spin_lock_irq
+	 *                              timeout function called
+	 *
+	 * mod_timer()
+	 *
+	 * spin_unlock_irq
+	 *                              spin_lock_irq
+	 */
+	if (timer_expires > 0 && !time_after(timer_expires, jiffies)) {
+		hif_sc->runtime_timer_expires = 0;
+		list_for_each_entry_safe(context, temp,
+				&hif_sc->prevent_suspend_list, list) {
+			if (context->timeout) {
+				__hif_pm_runtime_allow_suspend(hif_sc, context);
+				hif_sc->pm_stats.allow_suspend_timeout++;
+			}
+		}
+	}
+
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+}
+
+int hif_pm_runtime_prevent_suspend(void *ol_sc,
+		struct hif_pm_runtime_lock *data)
+{
+	struct ol_softc *sc = (struct ol_softc *)ol_sc;
+	struct hif_pci_softc *hif_sc = sc->hif_sc;
+	struct hif_pm_runtime_lock *context = data;
+	unsigned long flags;
+
+	if (!sc->enable_runtime_pm)
+		return 0;
+
+	if (!context)
+		return -EINVAL;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+	context->timeout = 0;
+	__hif_pm_runtime_prevent_suspend(hif_sc, context);
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+
+	return 0;
+}
+
+int hif_pm_runtime_allow_suspend(void *ol_sc, struct hif_pm_runtime_lock *data)
+{
+	struct ol_softc *sc = (struct ol_softc *)ol_sc;
+	struct hif_pci_softc *hif_sc = sc->hif_sc;
+	struct hif_pm_runtime_lock *context = data;
+
+	unsigned long flags;
+
+	if (!sc->enable_runtime_pm)
+		return 0;
+
+	if (!context)
+		return -EINVAL;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+
+	__hif_pm_runtime_allow_suspend(hif_sc, context);
+
+	/* The list can be empty as well in cases where
+	 * we have one context in the list and the allow
+	 * suspend came before the timer expires and we delete
+	 * context above from the list.
+	 * When list is empty prevent_suspend count will be zero.
+	 */
+	if (hif_sc->prevent_suspend_cnt == 0 &&
+			hif_sc->runtime_timer_expires > 0) {
+		del_timer(&hif_sc->runtime_timer);
+		hif_sc->runtime_timer_expires = 0;
+	}
+
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+
+	return 0;
+}
+
+/**
+ * hif_pm_runtime_prevent_suspend_timeout() - Prevent runtime suspend timeout
+ * @ol_sc: HIF context
+ * @lock: which lock is being acquired
+ * @delay: Timeout in milliseconds
+ *
+ * Prevent runtime suspend with a timeout after which runtime suspend would be
+ * allowed. This API uses a single timer to allow the suspend and timer is
+ * modified if the timeout is changed before timer fires.
+ * If the timeout is less than autosuspend_delay then use mark_last_busy instead
+ * of starting the timer.
+ *
+ * It is wise to try not to use this API and correct the design if possible.
+ *
+ * Return: 0 on success and negative error code on failure
+ */
+int hif_pm_runtime_prevent_suspend_timeout(void *ol_sc,
+		struct hif_pm_runtime_lock *lock, unsigned int delay)
+{
+	struct ol_softc *sc = (struct ol_softc *)ol_sc;
+	struct hif_pci_softc *hif_sc = sc->hif_sc;
+	int ret = 0;
+	unsigned long expires;
+	unsigned long flags;
+	struct hif_pm_runtime_lock *context = lock;
+
+	if (cds_is_load_unload_in_progress()) {
+		HIF_ERROR("%s: Load/unload in progress, ignore!",
+				__func__);
+		return -EINVAL;
+	}
+
+	if (cds_is_logp_in_progress()) {
+		HIF_ERROR("%s: LOGP in progress, ignore!", __func__);
+		return -EINVAL;
+	}
+
+	if (!sc->enable_runtime_pm)
+		return 0;
+
+	if (!context)
+		return -EINVAL;
+
+	/*
+	 * Don't use internal timer if the timeout is less than auto suspend
+	 * delay.
+	 */
+	if (delay <= hif_sc->dev->power.autosuspend_delay) {
+		hif_pm_request_resume(hif_sc->dev);
+		hif_pm_runtime_mark_last_busy(hif_sc->dev);
+		return ret;
+	}
+
+	expires = jiffies + msecs_to_jiffies(delay);
+	expires += !expires;
+
+	spin_lock_irqsave(&hif_sc->runtime_lock, flags);
+
+	context->timeout = delay;
+	ret = __hif_pm_runtime_prevent_suspend(hif_sc, context);
+	hif_sc->pm_stats.prevent_suspend_timeout++;
+
+	/* Modify the timer only if new timeout is after already configured
+	 * timeout
+	 */
+	if (time_after(expires, hif_sc->runtime_timer_expires)) {
+		mod_timer(&hif_sc->runtime_timer, expires);
+		hif_sc->runtime_timer_expires = expires;
+	}
+
+	spin_unlock_irqrestore(&hif_sc->runtime_lock, flags);
+
+	HIF_ERROR("%s: pm_state: %d delay: %dms ret: %d\n", __func__,
+			cdf_atomic_read(&hif_sc->pm_state), delay, ret);
+
+	return ret;
+}
+
+/**
+ * hif_runtime_lock_init() - API to initialize Runtime PM context
+ * @name: Context name
+ *
+ * This API initalizes the Runtime PM context of the caller and
+ * return the pointer.
+ *
+ * Return: void *
+ */
+struct hif_pm_runtime_lock *hif_runtime_lock_init(const char *name)
+{
+	struct hif_pm_runtime_lock *context;
+
+	context = cdf_mem_malloc(sizeof(*context));
+	if (!context) {
+		HIF_ERROR("%s: No memory for Runtime PM wakelock context\n",
+				__func__);
+		return NULL;
+	}
+
+	context->name = name ? name : "Default";
+	return context;
+}
+
+/**
+ * hif_runtime_lock_deinit() - This API frees the runtime pm ctx
+ * @data: Runtime PM context
+ *
+ * Return: void
+ */
+void hif_runtime_lock_deinit(struct hif_pm_runtime_lock *data)
+{
+	unsigned long flags;
+	struct hif_pm_runtime_lock *context = data;
+	struct ol_softc *scn = cds_get_context(CDF_MODULE_ID_HIF);
+	struct hif_pci_softc *sc;
+
+	if (!scn)
+		return;
+
+	sc = scn->hif_sc;
+
+	if (!sc)
+		return;
+
+	if (!context)
+		return;
+
+	/*
+	 * Ensure to delete the context list entry and reduce the usage count
+	 * before freeing the context if context is active.
+	 */
+	spin_lock_irqsave(&sc->runtime_lock, flags);
+	__hif_pm_runtime_allow_suspend(sc, context);
+	spin_unlock_irqrestore(&sc->runtime_lock, flags);
+
+	cdf_mem_free(context);
+}
+
+#endif /* FEATURE_RUNTIME_PM */

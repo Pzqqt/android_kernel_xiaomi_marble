@@ -275,6 +275,50 @@ struct CE_dest_desc {
 
 #define CE_SENDLIST_ITEMS_MAX 12
 
+/**
+ * union ce_desc - unified data type for ce descriptors
+ *
+ * Both src and destination descriptors follow the same format.
+ * They use different data structures for different access symantics.
+ * Here we provice a unifying data type.
+ */
+union ce_desc {
+	struct CE_src_desc src_desc;
+	struct CE_dest_desc dest_desc;
+};
+
+/**
+ * enum hif_ce_event_type - HIF copy engine event type
+ * @HIF_RX_DESC_POST: event recorded before updating write index of RX ring.
+ * @HIF_RX_DESC_COMPLETION: event recorded before updating sw index of RX ring.
+ * @HIF_TX_GATHER_DESC_POST: post gather desc. (no write index update)
+ * @HIF_TX_DESC_POST: event recorded before updating write index of TX ring.
+ * @HIF_TX_DESC_COMPLETION: event recorded before updating sw index of TX ring.
+ * @HIF_IRQ_EVENT: event recorded in the irq before scheduling the bh
+ * @HIF_CE_TASKLET_ENTRY: records the start of the ce_tasklet
+ * @HIF_CE_TASKLET_RESCHEDULE: records the rescheduling of the wlan_tasklet
+ * @HIF_CE_TASKLET_EXIT: records the exit of the wlan tasklet without reschedule
+ * @HIF_CE_REAP_ENTRY: records when we process completion outside of a bh
+ * @HIF_CE_REAP_EXIT:  records when we process completion outside of a bh
+ */
+enum hif_ce_event_type {
+	HIF_RX_DESC_POST,
+	HIF_RX_DESC_COMPLETION,
+	HIF_TX_GATHER_DESC_POST,
+	HIF_TX_DESC_POST,
+	HIF_TX_DESC_COMPLETION,
+	HIF_IRQ_EVENT,
+	HIF_CE_TASKLET_ENTRY,
+	HIF_CE_TASKLET_RESCHEDULE,
+	HIF_CE_TASKLET_EXIT,
+	HIF_CE_REAP_ENTRY,
+	HIF_CE_REAP_EXIT,
+};
+
+void ce_init_ce_desc_event_log(int ce_id, int size);
+void hif_record_ce_desc_event(int ce_id, enum hif_ce_event_type type,
+		union ce_desc *descriptor, void *memory, int index);
+
 enum ce_sendlist_type_e {
 	CE_SIMPLE_BUFFER_TYPE,
 	/* TBDXXX: CE_RX_DESC_LIST, */

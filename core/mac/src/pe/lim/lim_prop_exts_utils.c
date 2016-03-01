@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -77,7 +77,7 @@
 void
 lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	uint16_t ie_len, uint8_t *qos_cap, uint16_t *prop_cap, uint8_t *uapsd,
-	tPowerdBm *local_constraint, tpPESession session)
+	int8_t *local_constraint, tpPESession session)
 {
 	tSirProbeRespBeacon *beacon_struct;
 #if !defined WLAN_FEATURE_VOWIFI
@@ -103,7 +103,8 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	if (sir_parse_beacon_ie(mac_ctx, beacon_struct, p_ie,
 		(uint32_t) ie_len) == eSIR_SUCCESS) {
 		if (beacon_struct->wmeInfoPresent
-		    || beacon_struct->wmeEdcaPresent)
+		    || beacon_struct->wmeEdcaPresent
+		    || beacon_struct->HTCaps.present)
 			LIM_BSS_CAPS_SET(WME, *qos_cap);
 		if (LIM_BSS_CAPS_GET(WME, *qos_cap)
 		    && beacon_struct->wsmCapablePresent)

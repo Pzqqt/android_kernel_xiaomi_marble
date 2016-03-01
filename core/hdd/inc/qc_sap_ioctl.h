@@ -109,7 +109,7 @@ struct sQcSapreq_wscie {
  * Retrieve the WPS PBC Probe Request IEs.
  */
 typedef struct sQcSapreq_WPSPBCProbeReqIES {
-	uint8_t macaddr[QCSAP_ADDR_LEN];
+	struct cdf_mac_addr macaddr;
 	uint16_t probeReqIELen;
 	uint8_t probeReqIE[512];
 } sQcSapreq_WPSPBCProbeReqIES_t;
