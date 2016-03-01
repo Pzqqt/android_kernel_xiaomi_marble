@@ -177,3 +177,20 @@ int send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
 
 int32_t send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 		struct ocb_config_param *config, uint32_t *ch_mhz);
+int32_t send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
+	 struct wmi_lro_config_cmd_t *wmi_lro_cmd);
+
+int32_t send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+				struct thermal_cmd_params *thermal_info);
+
+int32_t send_set_mcc_channel_time_quota_cmd_tlv
+	(wmi_unified_t wmi_handle,
+	uint32_t adapter_1_chan_freq,
+	uint32_t adapter_1_quota, uint32_t adapter_2_chan_freq);
+
+int32_t send_set_mcc_channel_time_latency_cmd_tlv
+	(wmi_unified_t wmi_handle,
+	uint32_t mcc_channel_freq, uint32_t mcc_channel_time_latency);
+
+int32_t send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
+		   wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler);
