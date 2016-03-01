@@ -44,7 +44,6 @@ void
 ol_tx_packet_count(ol_txrx_pdev_handle pdev,
 		 uint16_t *out_packet_count,
 		 uint16_t *out_packet_loss_count, int category);
-
 void ol_tx_set_compute_interval(ol_txrx_pdev_handle pdev,
 		 uint32_t interval);
 #else
