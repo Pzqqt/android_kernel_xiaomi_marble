@@ -28,7 +28,7 @@
 #include "htc_debug.h"
 #include "htc_internal.h"
 #include "cds_api.h"
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include "epping_main.h"
 
 /* HTC Control message receive timeout msec */
@@ -209,17 +209,17 @@ void free_htc_packet_container(HTC_TARGET *target, HTC_PACKET *pPacket)
 }
 
 #ifdef RX_SG_SUPPORT
-cdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
+qdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 {
-	cdf_nbuf_t skb;
+	qdf_nbuf_t skb;
 	uint8_t *anbdata;
 	uint8_t *anbdata_new;
 	uint32_t anblen;
-	cdf_nbuf_t new_skb = NULL;
+	qdf_nbuf_t new_skb = NULL;
 	uint32_t sg_queue_len;
-	cdf_nbuf_queue_t *rx_sg_queue = &target->RxSgQueue;
+	qdf_nbuf_queue_t *rx_sg_queue = &target->RxSgQueue;
 
-	sg_queue_len = cdf_nbuf_queue_len(rx_sg_queue);
+	sg_queue_len = qdf_nbuf_queue_len(rx_sg_queue);
 
 	if (sg_queue_len <= 1) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
@@ -227,7 +227,7 @@ cdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 		goto _failed;
 	}
 
-	new_skb = cdf_nbuf_alloc(target->ExpRxSgTotalLen, 0, 4, false);
+	new_skb = qdf_nbuf_alloc(target->ExpRxSgTotalLen, 0, 4, false);
 	if (new_skb == NULL) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 				("rx_sg_to_single_netbuf: can't allocate %u size netbuf\n",
@@ -235,16 +235,16 @@ cdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 		goto _failed;
 	}
 
-	cdf_nbuf_peek_header(new_skb, &anbdata_new, &anblen);
+	qdf_nbuf_peek_header(new_skb, &anbdata_new, &anblen);
 
-	skb = cdf_nbuf_queue_remove(rx_sg_queue);
+	skb = qdf_nbuf_queue_remove(rx_sg_queue);
 	do {
-		cdf_nbuf_peek_header(skb, &anbdata, &anblen);
-		qdf_mem_copy(anbdata_new, anbdata, cdf_nbuf_len(skb));
-		cdf_nbuf_put_tail(new_skb, cdf_nbuf_len(skb));
-		anbdata_new += cdf_nbuf_len(skb);
-		cdf_nbuf_free(skb);
-		skb = cdf_nbuf_queue_remove(rx_sg_queue);
+		qdf_nbuf_peek_header(skb, &anbdata, &anblen);
+		qdf_mem_copy(anbdata_new, anbdata, qdf_nbuf_len(skb));
+		qdf_nbuf_put_tail(new_skb, qdf_nbuf_len(skb));
+		anbdata_new += qdf_nbuf_len(skb);
+		qdf_nbuf_free(skb);
+		skb = qdf_nbuf_queue_remove(rx_sg_queue);
 	} while (skb != NULL);
 
 	RESET_RX_SG_CONFIG(target);
@@ -252,16 +252,15 @@ cdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 
 _failed:
 
-	while ((skb = cdf_nbuf_queue_remove(rx_sg_queue)) != NULL) {
-		cdf_nbuf_free(skb);
-	}
+	while ((skb = qdf_nbuf_queue_remove(rx_sg_queue)) != NULL)
+		qdf_nbuf_free(skb);
 
 	RESET_RX_SG_CONFIG(target);
 	return NULL;
 }
 #endif
 
-QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
+QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				   uint8_t pipeID)
 {
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -278,8 +277,8 @@ QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 #ifdef RX_SG_SUPPORT
 	LOCK_HTC_RX(target);
 	if (target->IsRxSgInprogress) {
-		target->CurRxSgTotalLen += cdf_nbuf_len(netbuf);
-		cdf_nbuf_queue_add(&target->RxSgQueue, netbuf);
+		target->CurRxSgTotalLen += qdf_nbuf_len(netbuf);
+		qdf_nbuf_queue_add(&target->RxSgQueue, netbuf);
 		if (target->CurRxSgTotalLen == target->ExpRxSgTotalLen) {
 			netbuf = rx_sg_to_single_netbuf(target);
 			if (netbuf == NULL) {
@@ -295,8 +294,8 @@ QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 	UNLOCK_HTC_RX(target);
 #endif
 
-	netdata = cdf_nbuf_data(netbuf);
-	netlen = cdf_nbuf_len(netbuf);
+	netdata = qdf_nbuf_data(netbuf);
+	netlen = qdf_nbuf_len(netbuf);
 
 	HtcHdr = (HTC_FRAME_HDR *) netdata;
 
@@ -333,8 +332,8 @@ QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 #ifdef RX_SG_SUPPORT
 			LOCK_HTC_RX(target);
 			target->IsRxSgInprogress = true;
-			cdf_nbuf_queue_init(&target->RxSgQueue);
-			cdf_nbuf_queue_add(&target->RxSgQueue, netbuf);
+			qdf_nbuf_queue_init(&target->RxSgQueue);
+			qdf_nbuf_queue_add(&target->RxSgQueue, netbuf);
 			target->ExpRxSgTotalLen = (payloadLen + HTC_HDR_LENGTH);
 			target->CurRxSgTotalLen += netlen;
 			UNLOCK_HTC_RX(target);
@@ -404,9 +403,9 @@ QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 			int wow_nack = 0;
 
 			/* remove HTC header */
-			cdf_nbuf_pull_head(netbuf, HTC_HDR_LENGTH);
-			netdata = cdf_nbuf_data(netbuf);
-			netlen = cdf_nbuf_len(netbuf);
+			qdf_nbuf_pull_head(netbuf, HTC_HDR_LENGTH);
+			netdata = qdf_nbuf_data(netbuf);
+			netlen = qdf_nbuf_len(netbuf);
 
 			htc_msg = (HTC_UNKNOWN_MSG *) netdata;
 			message_id =
@@ -465,7 +464,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 				break;
 			}
 
-			cdf_nbuf_free(netbuf);
+			qdf_nbuf_free(netbuf);
 			netbuf = NULL;
 			break;
 		}
@@ -482,11 +481,11 @@ QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 		pPacket->Status = QDF_STATUS_SUCCESS;
 		pPacket->Endpoint = htc_ep_id;
 		pPacket->pPktContext = netbuf;
-		pPacket->pBuffer = cdf_nbuf_data(netbuf) + HTC_HDR_LENGTH;
+		pPacket->pBuffer = qdf_nbuf_data(netbuf) + HTC_HDR_LENGTH;
 		pPacket->ActualLength = netlen - HTC_HEADER_LEN - trailerlen;
 
-		cdf_nbuf_pull_head(netbuf, HTC_HEADER_LEN);
-		cdf_nbuf_set_pktlen(netbuf, pPacket->ActualLength);
+		qdf_nbuf_pull_head(netbuf, HTC_HEADER_LEN);
+		qdf_nbuf_set_pktlen(netbuf, pPacket->ActualLength);
 
 		recv_packet_completion(target, pEndpoint, pPacket);
 		/* recover the packet container */
@@ -500,7 +499,7 @@ _out:
 #endif
 
 	if (netbuf != NULL) {
-		cdf_nbuf_free(netbuf);
+		qdf_nbuf_free(netbuf);
 	}
 
 	return status;

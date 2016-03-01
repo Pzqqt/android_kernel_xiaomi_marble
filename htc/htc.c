@@ -28,7 +28,7 @@
 #include "ol_if_athvar.h"
 #include "htc_debug.h"
 #include "htc_internal.h"
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_print */
 #include <hif.h>
 #include "epping_main.h"
@@ -62,11 +62,11 @@ static void reset_endpoint_states(HTC_TARGET *target);
 
 static void destroy_htc_tx_ctrl_packet(HTC_PACKET *pPacket)
 {
-	cdf_nbuf_t netbuf;
-	netbuf = (cdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("free ctrl netbuf :0x%p \n", netbuf));
+	qdf_nbuf_t netbuf;
+	netbuf = (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("free ctrl netbuf :0x%p\n", netbuf));
 	if (netbuf != NULL) {
-		cdf_nbuf_free(netbuf);
+		qdf_nbuf_free(netbuf);
 	}
 
 	qdf_mem_free(pPacket);
@@ -75,7 +75,7 @@ static void destroy_htc_tx_ctrl_packet(HTC_PACKET *pPacket)
 static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 {
 	HTC_PACKET *pPacket = NULL;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 
 	do {
 		pPacket = (HTC_PACKET *) qdf_mem_malloc(sizeof(HTC_PACKET));
@@ -83,8 +83,8 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 			break;
 		}
 		A_MEMZERO(pPacket, sizeof(HTC_PACKET));
-		netbuf =
-			cdf_nbuf_alloc(osdev, HTC_CONTROL_BUFFER_SIZE, 20, 4, true);
+		netbuf = qdf_nbuf_alloc(osdev,
+				HTC_CONTROL_BUFFER_SIZE, 20, 4, true);
 		if (NULL == netbuf) {
 			qdf_mem_free(pPacket);
 			pPacket = NULL;
@@ -146,7 +146,7 @@ void htc_dump(HTC_HANDLE HTCHandle, uint8_t CmdId, bool start)
 static void htc_cleanup(HTC_TARGET *target)
 {
 	HTC_PACKET *pPacket;
-	/* cdf_nbuf_t netbuf; */
+	/* qdf_nbuf_t netbuf; */
 
 	if (target->hif_dev != NULL) {
 		hif_detach_htc(target->hif_dev);
@@ -173,9 +173,9 @@ static void htc_cleanup(HTC_TARGET *target)
 		if (NULL == pPacket) {
 			break;
 		}
-		netbuf = (cdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
+		netbuf = (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
 		if (netbuf != NULL) {
-			cdf_nbuf_free(netbuf);
+			qdf_nbuf_free(netbuf);
 		}
 
 		qdf_mem_free(pPacket);
@@ -535,7 +535,7 @@ static void reset_endpoint_states(HTC_TARGET *target)
 
 A_STATUS htc_start(HTC_HANDLE HTCHandle)
 {
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	A_STATUS status = A_OK;
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_SETUP_COMPLETE_EX_MSG *pSetupComp;
@@ -558,11 +558,11 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 		}
 
 		netbuf =
-			(cdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pSendPacket);
+		   (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pSendPacket);
 		/* assemble setup complete message */
-		cdf_nbuf_put_tail(netbuf, sizeof(HTC_SETUP_COMPLETE_EX_MSG));
+		qdf_nbuf_put_tail(netbuf, sizeof(HTC_SETUP_COMPLETE_EX_MSG));
 		pSetupComp =
-			(HTC_SETUP_COMPLETE_EX_MSG *) cdf_nbuf_data(netbuf);
+			(HTC_SETUP_COMPLETE_EX_MSG *) qdf_nbuf_data(netbuf);
 		A_MEMZERO(pSetupComp, sizeof(HTC_SETUP_COMPLETE_EX_MSG));
 
 		HTC_SET_FIELD(pSetupComp, HTC_SETUP_COMPLETE_EX_MSG,
@@ -610,11 +610,11 @@ void htc_flush_surprise_remove(HTC_HANDLE HTCHandle)
 	int i;
 	HTC_ENDPOINT *pEndpoint;
 #ifdef RX_SG_SUPPORT
-	cdf_nbuf_t netbuf;
-	cdf_nbuf_queue_t *rx_sg_queue = &target->RxSgQueue;
+	qdf_nbuf_t netbuf;
+	qdf_nbuf_queue_t *rx_sg_queue = &target->RxSgQueue;
 #endif
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+htc_flush_surprise_remove \n"));
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+htc_flush_surprise_remove\n"));
 
 	/* cleanup endpoints */
 	for (i = 0; i < ENDPOINT_MAX; i++) {
@@ -627,9 +627,8 @@ void htc_flush_surprise_remove(HTC_HANDLE HTCHandle)
 
 #ifdef RX_SG_SUPPORT
 	LOCK_HTC_RX(target);
-	while ((netbuf = cdf_nbuf_queue_remove(rx_sg_queue)) != NULL) {
-		cdf_nbuf_free(netbuf);
-	}
+	while ((netbuf = qdf_nbuf_queue_remove(rx_sg_queue)) != NULL)
+		qdf_nbuf_free(netbuf);
 	RESET_RX_SG_CONFIG(target);
 	UNLOCK_HTC_RX(target);
 #endif
@@ -646,11 +645,11 @@ void htc_stop(HTC_HANDLE HTCHandle)
 	int i;
 	HTC_ENDPOINT *pEndpoint;
 #ifdef RX_SG_SUPPORT
-	cdf_nbuf_t netbuf;
-	cdf_nbuf_queue_t *rx_sg_queue = &target->RxSgQueue;
+	qdf_nbuf_t netbuf;
+	qdf_nbuf_queue_t *rx_sg_queue = &target->RxSgQueue;
 #endif
 
-	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+htc_stop \n"));
+	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+htc_stop\n"));
 
 	/* cleanup endpoints */
 	for (i = 0; i < ENDPOINT_MAX; i++) {
@@ -674,9 +673,8 @@ void htc_stop(HTC_HANDLE HTCHandle)
 
 #ifdef RX_SG_SUPPORT
 	LOCK_HTC_RX(target);
-	while ((netbuf = cdf_nbuf_queue_remove(rx_sg_queue)) != NULL) {
-		cdf_nbuf_free(netbuf);
-	}
+	while ((netbuf = qdf_nbuf_queue_remove(rx_sg_queue)) != NULL)
+		qdf_nbuf_free(netbuf);
 	RESET_RX_SG_CONFIG(target);
 	UNLOCK_HTC_RX(target);
 #endif

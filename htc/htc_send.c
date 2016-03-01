@@ -27,7 +27,7 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_mem.h>         /* qdf_mem_malloc */
 #include "epping_main.h"
 
@@ -133,9 +133,9 @@ void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credits
 static inline void restore_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
 	if (pPacket->PktInfo.AsTx.Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
-		cdf_nbuf_t netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-		cdf_nbuf_unmap(target->osdev, netbuf, QDF_DMA_TO_DEVICE);
-		cdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
+		qdf_nbuf_t netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
+		qdf_nbuf_unmap(target->osdev, netbuf, QDF_DMA_TO_DEVICE);
+		qdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
 		pPacket->PktInfo.AsTx.Flags &= ~HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 	}
 
@@ -205,11 +205,11 @@ HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target)
 {
 	HTC_PACKET *pPacket;
 	HTC_PACKET_QUEUE *pQueueSave;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	LOCK_HTC_TX(target);
 	if (NULL == target->pBundleFreeList) {
 		UNLOCK_HTC_TX(target);
-		netbuf = cdf_nbuf_alloc(NULL,
+		netbuf = qdf_nbuf_alloc(NULL,
 					target->MaxMsgsPerHTCBundle *
 					target->TargetCreditSize, 0, 4, false);
 		AR_DEBUG_ASSERT(netbuf);
@@ -219,25 +219,25 @@ HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target)
 		pPacket = qdf_mem_malloc(sizeof(HTC_PACKET));
 		AR_DEBUG_ASSERT(pPacket);
 		if (!pPacket) {
-			cdf_nbuf_free(netbuf);
+			qdf_nbuf_free(netbuf);
 			return NULL;
 		}
 		pQueueSave = qdf_mem_malloc(sizeof(HTC_PACKET_QUEUE));
 		AR_DEBUG_ASSERT(pQueueSave);
 		if (!pQueueSave) {
-			cdf_nbuf_free(netbuf);
+			qdf_nbuf_free(netbuf);
 			qdf_mem_free(pPacket);
 			return NULL;
 		}
 		INIT_HTC_PACKET_QUEUE(pQueueSave);
 		pPacket->pContext = pQueueSave;
 		SET_HTC_PACKET_NET_BUF_CONTEXT(pPacket, netbuf);
-		pPacket->pBuffer = cdf_nbuf_data(netbuf);
-		pPacket->BufferLength = cdf_nbuf_len(netbuf);
+		pPacket->pBuffer = qdf_nbuf_data(netbuf);
+		pPacket->BufferLength = qdf_nbuf_len(netbuf);
 
 		/* store the original head room so that we can restore this when we "free" the packet */
 		/* free packet puts the packet back on the free list */
-		pPacket->netbufOrigHeadRoom = cdf_nbuf_headroom(netbuf);
+		pPacket->netbufOrigHeadRoom = qdf_nbuf_headroom(netbuf);
 		return pPacket;
 	}
 	/* already done malloc - restore from free list */
@@ -257,7 +257,7 @@ HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target)
 void free_htc_bundle_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
 	A_UINT32 curentHeadRoom;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	HTC_PACKET_QUEUE *pQueueSave;
 
 	netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
@@ -272,14 +272,14 @@ void free_htc_bundle_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 	/* and eventually HIF ends up doing another malloc big enough to store the */
 	/* data + its header */
 
-	curentHeadRoom = cdf_nbuf_headroom(netbuf);
-	cdf_nbuf_pull_head(netbuf,
+	curentHeadRoom = qdf_nbuf_headroom(netbuf);
+	qdf_nbuf_pull_head(netbuf,
 			   pPacket->netbufOrigHeadRoom - curentHeadRoom);
-	cdf_nbuf_trim_tail(netbuf, cdf_nbuf_len(netbuf));
+	qdf_nbuf_trim_tail(netbuf, qdf_nbuf_len(netbuf));
 
 	/* restore the pBuffer pointer. HIF changes this */
-	pPacket->pBuffer = cdf_nbuf_data(netbuf);
-	pPacket->BufferLength = cdf_nbuf_len(netbuf);
+	pPacket->pBuffer = qdf_nbuf_data(netbuf);
+	pPacket->BufferLength = qdf_nbuf_len(netbuf);
 
 	/* restore queue */
 	pQueueSave = (HTC_PACKET_QUEUE *) pPacket->pContext;
@@ -307,12 +307,12 @@ static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 {
 	qdf_size_t data_len;
 	A_STATUS status;
-	cdf_nbuf_t bundleBuf;
+	qdf_nbuf_t bundleBuf;
 	uint32_t data_attr = 0;
 
 	bundleBuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacketTx);
-	data_len = pBundleBuffer - cdf_nbuf_data(bundleBuf);
-	cdf_nbuf_put_tail(bundleBuf, data_len);
+	data_len = pBundleBuffer - qdf_nbuf_data(bundleBuf);
+	qdf_nbuf_put_tail(bundleBuf, data_len);
 	SET_HTC_PACKET_INFO_TX(pPacketTx,
 			       target,
 			       pBundleBuffer,
@@ -342,7 +342,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 				     HTC_PACKET_QUEUE *pPktQueue)
 {
 	int i, frag_count, nbytes;
-	cdf_nbuf_t netbuf, bundleBuf;
+	qdf_nbuf_t netbuf, bundleBuf;
 	unsigned char *pBundleBuffer = NULL;
 	HTC_PACKET *pPacket = NULL, *pPacketTx = NULL;
 	HTC_FRAME_HDR *pHtcHdr;
@@ -361,7 +361,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 		return;
 	}
 	bundleBuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacketTx);
-	pBundleBuffer = cdf_nbuf_data(bundleBuf);
+	pBundleBuffer = qdf_nbuf_data(bundleBuf);
 	pQueueSave = (HTC_PACKET_QUEUE *) pPacketTx->pContext;
 	while (1) {
 		pPacket = htc_packet_dequeue(pPktQueue);
@@ -401,13 +401,13 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 				return;
 			}
 			bundleBuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacketTx);
-			pBundleBuffer = cdf_nbuf_data(bundleBuf);
+			pBundleBuffer = qdf_nbuf_data(bundleBuf);
 			pQueueSave = (HTC_PACKET_QUEUE *) pPacketTx->pContext;
 		}
 
 		bundlesSpaceRemaining -= transferLength;
 		netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-		pHtcHdr = (HTC_FRAME_HDR *) cdf_nbuf_get_frag_vaddr(netbuf, 0);
+		pHtcHdr = (HTC_FRAME_HDR *) qdf_nbuf_get_frag_vaddr(netbuf, 0);
 		HTC_WRITE32(pHtcHdr,
 			    SM(pPacket->ActualLength,
 			       HTC_FRAME_HDR_PAYLOADLEN) | SM(pPacket->PktInfo.
@@ -421,12 +421,12 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 			       HTC_FRAME_HDR_CONTROLBYTES1) | SM(creditPad,
 								 HTC_FRAME_HDR_RESERVED));
 		pHtcHdr->reserved = creditPad;
-		frag_count = cdf_nbuf_get_num_frags(netbuf);
+		frag_count = qdf_nbuf_get_num_frags(netbuf);
 		nbytes = pPacket->ActualLength + HTC_HDR_LENGTH;
 		for (i = 0; i < frag_count && nbytes > 0; i++) {
-			int frag_len = cdf_nbuf_get_frag_len(netbuf, i);
+			int frag_len = qdf_nbuf_get_frag_len(netbuf, i);
 			unsigned char *frag_addr =
-				cdf_nbuf_get_frag_vaddr(netbuf, i);
+				qdf_nbuf_get_frag_vaddr(netbuf, i);
 			if (frag_len > nbytes) {
 				frag_len = nbytes;
 			}
@@ -437,7 +437,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 		HTC_PACKET_ENQUEUE(pQueueSave, pPacket);
 		pBundleBuffer += creditPad;
 	}
-	if (pBundleBuffer != cdf_nbuf_data(bundleBuf)) {
+	if (pBundleBuffer != qdf_nbuf_data(bundleBuf)) {
 		/* send out remaining buffer */
 		htc_send_bundled_netbuf(target, pEndpoint, pBundleBuffer,
 					pPacketTx);
@@ -453,7 +453,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 				  HTC_PACKET_QUEUE *pPktQueue)
 {
 	A_STATUS status = A_OK;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	HTC_PACKET *pPacket = NULL;
 	uint16_t payloadLen;
 	HTC_FRAME_HDR *pHtcHdr;
@@ -492,9 +492,8 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			payloadLen = pPacket->ActualLength;
 			/* setup HTC frame header */
 
-			pHtcHdr =
-				(HTC_FRAME_HDR *) cdf_nbuf_get_frag_vaddr(netbuf,
-									  0);
+			pHtcHdr = (HTC_FRAME_HDR *)
+				qdf_nbuf_get_frag_vaddr(netbuf, 0);
 			AR_DEBUG_ASSERT(pHtcHdr);
 
 			HTC_WRITE32(pHtcHdr,
@@ -520,7 +519,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			 */
 			if (pPacket->PktInfo.AsTx.
 			    Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
-				cdf_nbuf_map(target->osdev,
+				qdf_nbuf_map(target->osdev,
 					     GET_HTC_PACKET_NET_BUF_CONTEXT
 						     (pPacket), QDF_DMA_TO_DEVICE);
 			}
@@ -868,9 +867,9 @@ void get_htc_send_packets(HTC_TARGET *target,
 
 		/*
 		 * FIX THIS:
-		 * For now, avoid calling cdf_nbuf_get_num_frags before calling
-		 * cdf_nbuf_map, because the MacOS version of cdf_nbuf_t doesn't
-		 * support cdf_nbuf_get_num_frags until after cdf_nbuf_map has
+		 * For now, avoid calling qdf_nbuf_get_num_frags before calling
+		 * qdf_nbuf_map, because the MacOS version of qdf_nbuf_t doesn't
+		 * support qdf_nbuf_get_num_frags until after qdf_nbuf_map has
 		 * been done.
 		 * Assume that the non-data netbufs, i.e. the WMI message netbufs,
 		 * consist of a single fragment.
@@ -879,7 +878,7 @@ void get_htc_send_packets(HTC_TARGET *target,
 			(pPacket->PktInfo.AsTx.
 			 Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) ? 1
 			/* WMI messages are in a single-fragment network buffer */ :
-			cdf_nbuf_get_num_frags(GET_HTC_PACKET_NET_BUF_CONTEXT
+			qdf_nbuf_get_num_frags(GET_HTC_PACKET_NET_BUF_CONTEXT
 						       (pPacket));
 		Resources -= num_frags;
 	}
@@ -998,7 +997,7 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 							  pPacket);
 					/* put it in the send queue */
 					/* add HTC_FRAME_HDR space reservation again */
-					cdf_nbuf_push_head
+					qdf_nbuf_push_head
 						(GET_HTC_PACKET_NET_BUF_CONTEXT
 							(pPacket), sizeof(HTC_FRAME_HDR));
 
@@ -1230,7 +1229,7 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_ENDPOINT *pEndpoint;
 	HTC_PACKET *pPacket;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	HTC_FRAME_HDR *pHtcHdr;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
@@ -1265,9 +1264,9 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 		netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
 		AR_DEBUG_ASSERT(netbuf);
 
-		cdf_nbuf_push_head(netbuf, sizeof(HTC_FRAME_HDR));
+		qdf_nbuf_push_head(netbuf, sizeof(HTC_FRAME_HDR));
 		/* setup HTC frame header */
-		pHtcHdr = (HTC_FRAME_HDR *) cdf_nbuf_get_frag_vaddr(netbuf, 0);
+		pHtcHdr = (HTC_FRAME_HDR *) qdf_nbuf_get_frag_vaddr(netbuf, 0);
 		AR_DEBUG_ASSERT(pHtcHdr);
 		HTC_WRITE32(pHtcHdr,
 			    SM(pPacket->ActualLength,
@@ -1289,7 +1288,7 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 		 * mapped.  This only applies to non-data frames, since data frames
 		 * were already mapped as they entered into the driver.
 		 */
-		cdf_nbuf_map(target->osdev,
+		qdf_nbuf_map(target->osdev,
 			     GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
 			     QDF_DMA_TO_DEVICE);
 
@@ -1349,7 +1348,7 @@ A_STATUS htc_send_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket)
 
 #ifdef ATH_11AC_TXCOMPACT
 
-A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, cdf_nbuf_t netbuf, int Epid,
+A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 			   int ActualLength)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
@@ -1380,10 +1379,10 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, cdf_nbuf_t netbuf, int Epid,
 	if (hif_pm_runtime_get(target->hif_dev))
 		return A_ERROR;
 
-	pHtcHdr = (HTC_FRAME_HDR *) cdf_nbuf_get_frag_vaddr(netbuf, 0);
+	pHtcHdr = (HTC_FRAME_HDR *) qdf_nbuf_get_frag_vaddr(netbuf, 0);
 	AR_DEBUG_ASSERT(pHtcHdr);
 
-	data_attr = cdf_nbuf_data_attr_get(netbuf);
+	data_attr = qdf_nbuf_data_attr_get(netbuf);
 
 	HTC_WRITE32(pHtcHdr, SM(ActualLength, HTC_FRAME_HDR_PAYLOADLEN) |
 		    SM(Epid, HTC_FRAME_HDR_ENDPOINTID));
@@ -1409,10 +1408,10 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, cdf_nbuf_t netbuf, int Epid,
 
 	pEndpoint->SeqNo++;
 
-	NBUF_UPDATE_TX_PKT_COUNT(netbuf, NBUF_TX_PKT_HTC);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_HTC);
 	DPTRACE(qdf_dp_trace(netbuf, QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(netbuf)),
-				sizeof(cdf_nbuf_data(netbuf))));
+				(uint8_t *)(qdf_nbuf_data(netbuf)),
+				sizeof(qdf_nbuf_data(netbuf))));
 	status = hif_send_head(target->hif_dev,
 			       pEndpoint->UL_PipeID,
 			       pEndpoint->Id, ActualLength, netbuf, data_attr);
@@ -1429,7 +1428,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	HTC_ENDPOINT *pEndpoint;
 	HTC_FRAME_HDR *pHtcHdr;
 	HTC_PACKET_QUEUE sendQueue;
-	cdf_nbuf_t netbuf = NULL;
+	qdf_nbuf_t netbuf = NULL;
 	int tx_resources;
 	A_STATUS status = A_OK;
 	uint32_t data_attr = 0;
@@ -1440,7 +1439,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 
 		/* add HTC_FRAME_HDR in the initial fragment */
 		netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-		pHtcHdr = (HTC_FRAME_HDR *) cdf_nbuf_get_frag_vaddr(netbuf, 0);
+		pHtcHdr = (HTC_FRAME_HDR *) qdf_nbuf_get_frag_vaddr(netbuf, 0);
 		AR_DEBUG_ASSERT(pHtcHdr);
 
 		HTC_WRITE32(pHtcHdr,
@@ -1544,10 +1543,10 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 		get_htc_send_packets(target, pEndpoint, &sendQueue, tx_resources);
 		UNLOCK_HTC_TX(target);
 	}
-	NBUF_UPDATE_TX_PKT_COUNT(netbuf, NBUF_TX_PKT_HTC);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(netbuf, QDF_NBUF_TX_PKT_HTC);
 	DPTRACE(qdf_dp_trace(netbuf, QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(netbuf)),
-				sizeof(cdf_nbuf_data(netbuf))));
+				(uint8_t *)(qdf_nbuf_data(netbuf)),
+				sizeof(qdf_nbuf_data(netbuf))));
 
 	/* send what we can */
 	while (true) {
@@ -1629,15 +1628,16 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 #endif /*ATH_11AC_TXCOMPACT */
 
 /*
- * In the adapted HIF layer, cdf_nbuf_t are passed between HIF and HTC, since upper layers expects
- * HTC_PACKET containers we use the completed netbuf and lookup its corresponding HTC packet buffer
- * from a lookup list.
- * This is extra overhead that can be fixed by re-aligning HIF interfaces with HTC.
+ * In the adapted HIF layer, qdf_nbuf_t are passed between HIF and HTC,
+ * since upper layers expects HTC_PACKET containers we use the completed netbuf
+ * and lookup its corresponding HTC packet buffer from a lookup list.
+ * This is extra overhead that can be fixed by re-aligning HIF interfaces
+ * with HTC.
  *
  */
 static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 					HTC_ENDPOINT *pEndpoint,
-					cdf_nbuf_t netbuf)
+					qdf_nbuf_t netbuf)
 {
 	HTC_PACKET *pPacket = NULL;
 	HTC_PACKET *pFoundPacket = NULL;
@@ -1655,7 +1655,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 		UNLOCK_HTC_TX(target);
 		return NULL;
 	}
-	if (netbuf == (cdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket)) {
+	if (netbuf == (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket)) {
 		UNLOCK_HTC_TX(target);
 		return pPacket;
 	} else {
@@ -1679,7 +1679,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 		}
 		/* check for removal */
 		if (netbuf ==
-		    (cdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket)) {
+		    (qdf_nbuf_t) GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket)) {
 			/* found it */
 			HTC_PACKET_REMOVE(&lookupQueue, pPacket);
 			pFoundPacket = pPacket;
@@ -1698,7 +1698,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 }
 
 QDF_STATUS htc_tx_completion_handler(void *Context,
-				   cdf_nbuf_t netbuf, unsigned int EpID,
+				   qdf_nbuf_t netbuf, unsigned int EpID,
 				   uint32_t toeplitz_hash_result)
 {
 	HTC_TARGET *target = (HTC_TARGET *) Context;

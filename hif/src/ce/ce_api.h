@@ -149,7 +149,7 @@ int ce_send(struct CE_handle *copyeng,
 		unsigned int user_flags);
 
 #ifdef WLAN_FEATURE_FASTPATH
-int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
+int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		 unsigned int num_msdus, unsigned int transfer_id);
 
 #endif

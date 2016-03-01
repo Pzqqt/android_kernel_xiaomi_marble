@@ -27,7 +27,7 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
-#include <cdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include "hif.h"
 
 /* use credit flow control over HTC */
@@ -66,7 +66,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 	HTC_ENDPOINT_ID assignedEndpoint = ENDPOINT_MAX;
 	HTC_ENDPOINT *pEndpoint;
 	unsigned int maxMsgSize = 0;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	A_UINT8 txAlloc;
 	int length;
 	A_BOOL disableCreditFlowCtrl = false;
@@ -109,16 +109,16 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			}
 
 			netbuf =
-				(cdf_nbuf_t)
+				(qdf_nbuf_t)
 				GET_HTC_PACKET_NET_BUF_CONTEXT(pSendPacket);
 			length =
 				sizeof(HTC_CONNECT_SERVICE_MSG) +
 				pConnectReq->MetaDataLength;
 
 			/* assemble connect service message */
-			cdf_nbuf_put_tail(netbuf, length);
+			qdf_nbuf_put_tail(netbuf, length);
 			pConnectMsg =
-				(HTC_CONNECT_SERVICE_MSG *) cdf_nbuf_data(netbuf);
+			    (HTC_CONNECT_SERVICE_MSG *) qdf_nbuf_data(netbuf);
 
 			if (NULL == pConnectMsg) {
 				AR_DEBUG_ASSERT(0);

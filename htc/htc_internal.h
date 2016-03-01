@@ -35,7 +35,7 @@ extern "C" {
 #include <athdefs.h>
 #include "a_types.h"
 #include "osapi_linux.h"
-#include <cdf_nbuf.h>
+#include <qdf_nbuf.h>
 #include <qdf_types.h>
 #include <qdf_lock.h>
 #include <qdf_timer.h>
@@ -173,7 +173,7 @@ typedef struct _HTC_TARGET {
 		ServiceTxAllocTable[HTC_MAX_SERVICE_ALLOC_ENTRIES];
 	int TargetCreditSize;
 #ifdef RX_SG_SUPPORT
-	cdf_nbuf_queue_t RxSgQueue;
+	qdf_nbuf_queue_t RxSgQueue;
 	A_BOOL IsRxSgInprogress;
 	A_UINT32 CurRxSgTotalLen;               /* current total length */
 	A_UINT32 ExpRxSgTotalLen;               /* expected total length */
@@ -227,9 +227,9 @@ typedef struct _HTC_TARGET {
 	} while (0);
 /* internal HTC functions */
 
-QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
+QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				   uint8_t pipeID);
-QDF_STATUS htc_tx_completion_handler(void *Context, cdf_nbuf_t netbuf,
+QDF_STATUS htc_tx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				   unsigned int transferID, uint32_t toeplitz_hash_result);
 
 HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target);

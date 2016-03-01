@@ -468,12 +468,12 @@ ce_sendlist_send(struct CE_handle *copyeng,
 					transfer_id, item->flags,
 					item->user_flags);
 		QDF_ASSERT(status == QDF_STATUS_SUCCESS);
-		NBUF_UPDATE_TX_PKT_COUNT((cdf_nbuf_t)per_transfer_context,
-					NBUF_TX_PKT_CE);
-		DPTRACE(qdf_dp_trace((cdf_nbuf_t)per_transfer_context,
+		QDF_NBUF_UPDATE_TX_PKT_COUNT((qdf_nbuf_t)per_transfer_context,
+					QDF_NBUF_TX_PKT_CE);
+		DPTRACE(qdf_dp_trace((qdf_nbuf_t)per_transfer_context,
 			QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
-			(uint8_t *)(((cdf_nbuf_t)per_transfer_context)->data),
-			sizeof(((cdf_nbuf_t)per_transfer_context)->data)));
+			(uint8_t *)(((qdf_nbuf_t)per_transfer_context)->data),
+			sizeof(((qdf_nbuf_t)per_transfer_context)->data)));
 	} else {
 		/*
 		 * Probably not worth the additional complexity to support
@@ -526,7 +526,7 @@ ce_buffer_addr_hi_set(struct CE_src_desc *shadow_src_desc,
  * Return: No. of packets that could be sent
  */
 
-int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
+int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 		 unsigned int num_msdus, unsigned int transfer_id)
 {
 	struct CE_state *ce_state = (struct CE_state *)copyeng;
@@ -538,7 +538,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 	unsigned int write_index;
 	unsigned int sw_index;
 	unsigned int frag_len;
-	cdf_nbuf_t msdu;
+	qdf_nbuf_t msdu;
 	int i;
 	uint64_t dma_addr;
 	uint32_t user_flags = 0;
@@ -567,14 +567,14 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		 * structure instead?
 		 */
 		/* HTT/HTC header can be passed as a argument */
-		dma_addr = cdf_nbuf_get_frag_paddr(msdu, 0);
+		dma_addr = qdf_nbuf_get_frag_paddr(msdu, 0);
 		shadow_src_desc->buffer_addr = (uint32_t)(dma_addr &
 							  0xFFFFFFFF);
-		user_flags = cdf_nbuf_data_attr_get(msdu) & DESC_DATA_FLAG_MASK;
+		user_flags = qdf_nbuf_data_attr_get(msdu) & DESC_DATA_FLAG_MASK;
 		ce_buffer_addr_hi_set(shadow_src_desc, dma_addr, user_flags);
 
 		shadow_src_desc->meta_data = transfer_id;
-		shadow_src_desc->nbytes = cdf_nbuf_get_frag_len(msdu, 0);
+		shadow_src_desc->nbytes = qdf_nbuf_get_frag_len(msdu, 0);
 
 		/*
 		 * HTC HTT header is a word stream, so byte swap if CE byte
@@ -600,7 +600,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		 * Now fill out the ring descriptor for the actual data
 		 * packet
 		 */
-		dma_addr = cdf_nbuf_get_frag_paddr(msdu, 1);
+		dma_addr = qdf_nbuf_get_frag_paddr(msdu, 1);
 		shadow_src_desc->buffer_addr = (uint32_t)(dma_addr &
 							  0xFFFFFFFF);
 		/*
@@ -611,7 +611,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		shadow_src_desc->meta_data = transfer_id;
 
 		/* get actual packet length */
-		frag_len = cdf_nbuf_get_frag_len(msdu, 1);
+		frag_len = qdf_nbuf_get_frag_len(msdu, 1);
 
 		/* only read download_len once */
 		shadow_src_desc->nbytes =  ce_state->download_len;

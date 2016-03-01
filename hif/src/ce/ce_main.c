@@ -556,7 +556,7 @@ void hif_detach_htc(struct hif_opaque_softc *hif_ctx)
 QDF_STATUS
 hif_send_head(struct hif_opaque_softc *hif_ctx,
 	      uint8_t pipe, unsigned int transfer_id, unsigned int nbytes,
-	      cdf_nbuf_t nbuf, unsigned int data_attr)
+	      qdf_nbuf_t nbuf, unsigned int data_attr)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
@@ -567,7 +567,7 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 	int status, i = 0;
 	unsigned int mux_id = 0;
 
-	QDF_ASSERT(nbytes <= cdf_nbuf_len(nbuf));
+	QDF_ASSERT(nbytes <= qdf_nbuf_len(nbuf));
 
 	transfer_id =
 		(mux_id & MUX_ID_MASK) |
@@ -586,8 +586,8 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 		qdf_dma_addr_t frag_paddr;
 		int frag_bytes;
 
-		frag_paddr = cdf_nbuf_get_frag_paddr(nbuf, nfrags);
-		frag_bytes = cdf_nbuf_get_frag_len(nbuf, nfrags);
+		frag_paddr = qdf_nbuf_get_frag_paddr(nbuf, nfrags);
+		frag_bytes = qdf_nbuf_get_frag_len(nbuf, nfrags);
 		/*
 		 * Clear the packet offset for all but the first CE desc.
 		 */
@@ -597,7 +597,7 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 		status = ce_sendlist_buf_add(&sendlist, frag_paddr,
 				    frag_bytes >
 				    bytes ? bytes : frag_bytes,
-				    cdf_nbuf_get_frag_is_wordstream
+				    qdf_nbuf_get_frag_is_wordstream
 				    (nbuf,
 				    nfrags) ? 0 :
 				    CE_SEND_FLAG_SWAP_DISABLE,
@@ -626,10 +626,10 @@ hif_send_head(struct hif_opaque_softc *hif_ctx,
 		return A_ERROR;
 	}
 
-	NBUF_UPDATE_TX_PKT_COUNT(nbuf, NBUF_TX_PKT_HIF);
+	QDF_NBUF_UPDATE_TX_PKT_COUNT(nbuf, QDF_NBUF_TX_PKT_HIF);
 	DPTRACE(qdf_dp_trace(nbuf, QDF_DP_TRACE_HIF_PACKET_PTR_RECORD,
-				(uint8_t *)(cdf_nbuf_data(nbuf)),
-				sizeof(cdf_nbuf_data(nbuf))));
+				(uint8_t *)(qdf_nbuf_data(nbuf)),
+				sizeof(qdf_nbuf_data(nbuf))));
 	status = ce_sendlist_send(ce_hdl, nbuf, &sendlist, transfer_id);
 	QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 
@@ -703,7 +703,7 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
 		if (transfer_context != CE_SENDLIST_ITEM_CTXT) {
 			if (scn->target_status
 					== OL_TRGET_STATUS_RESET)
-				cdf_nbuf_free(transfer_context);
+				qdf_nbuf_free(transfer_context);
 			else
 				msg_callbacks->txCompletionHandler(
 					msg_callbacks->Context,
@@ -734,17 +734,17 @@ hif_pci_ce_send_done(struct CE_handle *copyeng, void *ce_context,
  * return: None
  */
 static inline void hif_ce_do_recv(struct hif_msg_callbacks *msg_callbacks,
-		cdf_nbuf_t netbuf, int nbytes,
+		qdf_nbuf_t netbuf, int nbytes,
 		struct HIF_CE_pipe_info *pipe_info) {
 	if (nbytes <= pipe_info->buf_sz) {
-		cdf_nbuf_set_pktlen(netbuf, nbytes);
+		qdf_nbuf_set_pktlen(netbuf, nbytes);
 		msg_callbacks->
 			rxCompletionHandler(msg_callbacks->Context,
 					netbuf, pipe_info->pipe_num);
 	} else {
 		HIF_ERROR("%s: Invalid Rx msg buf:%p nbytes:%d",
 				__func__, netbuf, nbytes);
-		cdf_nbuf_free(netbuf);
+		qdf_nbuf_free(netbuf);
 	}
 }
 
@@ -767,14 +767,14 @@ hif_pci_ce_recv_data(struct CE_handle *copyeng, void *ce_context,
 
 	do {
 		hif_pm_runtime_mark_last_busy(hif_sc->dev);
-		cdf_nbuf_unmap_single(scn->qdf_dev,
-				      (cdf_nbuf_t) transfer_context,
+		qdf_nbuf_unmap_single(scn->qdf_dev,
+				      (qdf_nbuf_t) transfer_context,
 				      QDF_DMA_FROM_DEVICE);
 
 		atomic_inc(&pipe_info->recv_bufs_needed);
 		hif_post_recv_buffers_for_pipe(pipe_info);
 		if (scn->target_status == OL_TRGET_STATUS_RESET)
-			cdf_nbuf_free(transfer_context);
+			qdf_nbuf_free(transfer_context);
 		else
 			hif_ce_do_recv(msg_callbacks, transfer_context,
 				nbytes, pipe_info);
@@ -946,13 +946,13 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 	qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
 	while (atomic_read(&pipe_info->recv_bufs_needed) > 0) {
 		qdf_dma_addr_t CE_data;      /* CE space buffer address */
-		cdf_nbuf_t nbuf;
+		qdf_nbuf_t nbuf;
 		int status;
 
 		atomic_dec(&pipe_info->recv_bufs_needed);
 		qdf_spin_unlock_bh(&pipe_info->recv_bufs_needed_lock);
 
-		nbuf = cdf_nbuf_alloc(scn->qdf_dev, buf_sz, 0, 4, false);
+		nbuf = qdf_nbuf_alloc(scn->qdf_dev, buf_sz, 0, 4, false);
 		if (!nbuf) {
 			qdf_spin_lock_bh(&pipe_info->recv_bufs_needed_lock);
 			pipe_info->nbuf_alloc_err_count++;
@@ -968,12 +968,12 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 		}
 
 		/*
-		 * cdf_nbuf_peek_header(nbuf, &data, &unused);
+		 * qdf_nbuf_peek_header(nbuf, &data, &unused);
 		 * CE_data = dma_map_single(dev, data, buf_sz, );
 		 * DMA_FROM_DEVICE);
 		 */
 		ret =
-			cdf_nbuf_map_single(scn->qdf_dev, nbuf,
+			qdf_nbuf_map_single(scn->qdf_dev, nbuf,
 					    QDF_DMA_FROM_DEVICE);
 
 		if (unlikely(ret != QDF_STATUS_SUCCESS)) {
@@ -985,12 +985,12 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 				 __func__, pipe_info->pipe_num,
 				 atomic_read(&pipe_info->recv_bufs_needed),
 				pipe_info->nbuf_dma_err_count);
-			cdf_nbuf_free(nbuf);
+			qdf_nbuf_free(nbuf);
 			atomic_inc(&pipe_info->recv_bufs_needed);
 			return 1;
 		}
 
-		CE_data = cdf_nbuf_get_frag_paddr(nbuf, 0);
+		CE_data = qdf_nbuf_get_frag_paddr(nbuf, 0);
 
 		qdf_mem_dma_sync_single_for_device(scn->qdf_dev, CE_data,
 					       buf_sz, DMA_FROM_DEVICE);
@@ -1006,7 +1006,7 @@ static int hif_post_recv_buffers_for_pipe(struct HIF_CE_pipe_info *pipe_info)
 				atomic_read(&pipe_info->recv_bufs_needed),
 				pipe_info->nbuf_ce_enqueue_err_count);
 			atomic_inc(&pipe_info->recv_bufs_needed);
-			cdf_nbuf_free(nbuf);
+			qdf_nbuf_free(nbuf);
 			return 1;
 		}
 
@@ -1129,7 +1129,7 @@ void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 	struct CE_handle *ce_hdl;
 	uint32_t buf_sz;
 	struct HIF_CE_state *hif_state;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	qdf_dma_addr_t CE_data;
 	void *per_CE_context;
 
@@ -1153,9 +1153,9 @@ void hif_recv_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 	while (ce_revoke_recv_next
 		       (ce_hdl, &per_CE_context, (void **)&netbuf,
 			&CE_data) == QDF_STATUS_SUCCESS) {
-		cdf_nbuf_unmap_single(scn->qdf_dev, netbuf,
+		qdf_nbuf_unmap_single(scn->qdf_dev, netbuf,
 				      QDF_DMA_FROM_DEVICE);
-		cdf_nbuf_free(netbuf);
+		qdf_nbuf_free(netbuf);
 	}
 }
 
@@ -1164,7 +1164,7 @@ void hif_send_buffer_cleanup_on_pipe(struct HIF_CE_pipe_info *pipe_info)
 	struct CE_handle *ce_hdl;
 	struct HIF_CE_state *hif_state;
 	struct hif_softc *scn;
-	cdf_nbuf_t netbuf;
+	qdf_nbuf_t netbuf;
 	void *per_CE_context;
 	qdf_dma_addr_t CE_data;
 	unsigned int nbytes;
