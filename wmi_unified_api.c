@@ -769,3 +769,157 @@ wmi_unified_set_sta_uapsd_auto_trig_cmd(void *wmi_hdl,
 
 	return CDF_STATUS_E_FAILURE;
 }
+
+/**
+ * wmi_unified_ocb_start_timing_advert() - start sending the timing advertisement
+ *			   frames on a channel
+ * @wmi_handle: pointer to the wmi handle
+ * @timing_advert: pointer to the timing advertisement struct
+ *
+ * Return: 0 on succes
+ */
+int32_t wmi_unified_ocb_start_timing_advert(void *wmi_hdl,
+	struct ocb_timing_advert_param *timing_advert)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_ocb_start_timing_advert_cmd)
+		return wmi_handle->ops->send_ocb_start_timing_advert_cmd(wmi_handle,
+				timing_advert);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_ocb_stop_timing_advert() - stop sending the timing advertisement
+ *			frames on a channel
+ * @wmi_handle: pointer to the wmi handle
+ * @timing_advert: pointer to the timing advertisement struct
+ *
+ * Return: 0 on succes
+ */
+int32_t wmi_unified_ocb_stop_timing_advert(void *wmi_hdl,
+	struct ocb_timing_advert_param *timing_advert)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_ocb_stop_timing_advert_cmd)
+		return wmi_handle->ops->send_ocb_stop_timing_advert_cmd(wmi_handle,
+					timing_advert);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_ocb_set_utc_time_cmd() - get ocb tsf timer val
+ * @wmi_handle: pointer to the wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 on succes
+ */
+int32_t wmi_unified_ocb_set_utc_time_cmd(void *wmi_hdl,
+			struct ocb_utc_param *utc)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_ocb_set_utc_time_cmd)
+		return wmi_handle->ops->send_ocb_set_utc_time_cmd(wmi_handle,
+				utc);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_ocb_get_tsf_timer() - get ocb tsf timer val
+ * @wmi_handle: pointer to the wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 on succes
+ */
+int32_t wmi_unified_ocb_get_tsf_timer(void *wmi_hdl,
+			uint8_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_ocb_get_tsf_timer_cmd)
+		return wmi_handle->ops->send_ocb_get_tsf_timer_cmd(wmi_handle,
+					vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_dcc_get_stats_cmd() - get the DCC channel stats
+ * @wmi_handle: pointer to the wmi handle
+ * @get_stats_param: pointer to the dcc stats
+ *
+ * Return: 0 on succes
+ */
+int32_t wmi_unified_dcc_get_stats_cmd(void *wmi_hdl,
+			struct dcc_get_stats_param *get_stats_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_dcc_get_stats_cmd)
+		return wmi_handle->ops->send_dcc_get_stats_cmd(wmi_handle,
+					get_stats_param);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_dcc_clear_stats() - command to clear the DCC stats
+ * @wmi_handle: pointer to the wmi handle
+ * @clear_stats_param: parameters to the command
+ *
+ * Return: 0 on succes
+ */
+int32_t wmi_unified_dcc_clear_stats(void *wmi_hdl,
+			uint32_t vdev_id, uint32_t dcc_stats_bitmap)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_dcc_clear_stats_cmd)
+		return wmi_handle->ops->send_dcc_clear_stats_cmd(wmi_handle,
+					vdev_id, dcc_stats_bitmap);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_dcc_update_ndl() - command to update the NDL data
+ * @wmi_handle: pointer to the wmi handle
+ * @update_ndl_param: pointer to the request parameters
+ *
+ * Return: 0 on success
+ */
+int32_t wmi_unified_dcc_update_ndl(void *wmi_hdl,
+			struct dcc_update_ndl_param *update_ndl_param)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_dcc_update_ndl_cmd)
+		return wmi_handle->ops->send_dcc_update_ndl_cmd(wmi_handle,
+					update_ndl_param);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_ocb_set_config() - send the OCB config to the FW
+ * @wmi_handle: pointer to the wmi handle
+ * @config: the OCB configuration
+ *
+ * Return: 0 on success
+ */
+int32_t wmi_unified_ocb_set_config(void *wmi_hdl,
+			struct ocb_config_param *config, uint32_t *ch_mhz)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_ocb_set_config_cmd)
+		return wmi_handle->ops->send_ocb_set_config_cmd(wmi_handle,
+					config, ch_mhz);
+
+	return CDF_STATUS_E_FAILURE;
+}
