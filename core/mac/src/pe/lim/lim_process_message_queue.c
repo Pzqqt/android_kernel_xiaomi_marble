@@ -67,7 +67,7 @@
 
 #include "qdf_types.h"
 #include "cds_packet.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 
 void lim_log_session_states(tpAniSirGlobal pMac);
 static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx,
@@ -101,7 +101,7 @@ static void lim_process_dual_mac_cfg_resp(tpAniSirGlobal mac, void *body)
 
 	len = sizeof(*param);
 
-	param = cdf_mem_malloc(len);
+	param = qdf_mem_malloc(len);
 	if (!param) {
 		lim_log(mac, LOGE, FL("Fail to allocate memory"));
 		/* Memory allocation for param failed.
@@ -155,7 +155,7 @@ static void lim_process_set_hw_mode_resp(tpAniSirGlobal mac, void *body)
 
 	len = sizeof(*param);
 
-	param = cdf_mem_malloc(len);
+	param = qdf_mem_malloc(len);
 	if (!param) {
 		lim_log(mac, LOGE, FL("Fail to allocate memory"));
 		/* Memory allocation for param failed.
@@ -218,7 +218,7 @@ static void lim_process_hw_mode_trans_ind(tpAniSirGlobal mac, void *body)
 
 	len = sizeof(*param);
 
-	param = cdf_mem_malloc(len);
+	param = qdf_mem_malloc(len);
 	if (!param) {
 		lim_log(mac, LOGE, FL("Fail to allocate memory"));
 		return;
@@ -345,14 +345,14 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	len = sizeof(*result) + (num_results * sizeof(tSirWifiScanResult)) +
 		ie_len;
 
-	result = cdf_mem_malloc(len);
+	result = qdf_mem_malloc(len);
 	if (NULL == result) {
 		lim_log(pmac, LOGE, FL("Memory allocation failed"));
 		return;
 	}
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
-	cdf_mem_zero(result, sizeof(*result) + ie_len);
+	qdf_mem_zero(result, sizeof(*result) + ie_len);
 
 	/* Received frame does not have request id, hence set 0 */
 	result->request_id = 0;
@@ -369,14 +369,14 @@ __lim_pno_match_fwd_bcn_probepsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 		result->ap[i].rtt = 0;
 		result->ap[i].rtt_sd = 0;
 		result->ap[i].ieLength = ie_len;
-		cdf_mem_copy((uint8_t *) &result->ap[i].ssid[0],
+		qdf_mem_copy((uint8_t *) &result->ap[i].ssid[0],
 			(uint8_t *) frame->ssId.ssId, frame->ssId.length);
 		result->ap[i].ssid[frame->ssId.length] = '\0';
-		cdf_mem_copy((uint8_t *) &result->ap[i].bssid,
+		qdf_mem_copy((uint8_t *) &result->ap[i].bssid,
 				(uint8_t *) hdr->bssId,
 				sizeof(tSirMacAddr));
 		/* Copy IE fields */
-		cdf_mem_copy((uint8_t *) &result->ap[i].ieData,
+		qdf_mem_copy((uint8_t *) &result->ap[i].ieData,
 				body + SIR_MAC_B_PR_SSID_OFFSET, ie_len);
 	}
 
@@ -398,14 +398,14 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	tSirMsgQ                     mmh_msg;
 	tpSirMacMgmtHdr              hdr;
 
-	result = cdf_mem_malloc(sizeof(*result) + ie_len);
+	result = qdf_mem_malloc(sizeof(*result) + ie_len);
 	if (NULL == result) {
 		lim_log(pmac, LOGE, FL("Memory allocation failed"));
 		return;
 	}
 	hdr = WMA_GET_RX_MAC_HEADER(rx_pkt_info);
 	body = WMA_GET_RX_MPDU_DATA(rx_pkt_info);
-	cdf_mem_zero(result, sizeof(*result) + ie_len);
+	qdf_mem_zero(result, sizeof(*result) + ie_len);
 
 	/* Received frame does not have request id, hence set 0 */
 	result->requestId = 0;
@@ -421,14 +421,14 @@ __lim_ext_scan_forward_bcn_probe_rsp(tpAniSirGlobal pmac, uint8_t *rx_pkt_info,
 	result->ap.rtt_sd = 0;
 	result->ap.ieLength = ie_len;
 
-	cdf_mem_copy((uint8_t *) &result->ap.ssid[0],
+	qdf_mem_copy((uint8_t *) &result->ap.ssid[0],
 			(uint8_t *) frame->ssId.ssId, frame->ssId.length);
 	result->ap.ssid[frame->ssId.length] = '\0';
-	cdf_mem_copy((uint8_t *) &result->ap.bssid.bytes,
+	qdf_mem_copy((uint8_t *) &result->ap.bssid.bytes,
 			(uint8_t *) hdr->bssId,
 			QDF_MAC_ADDR_SIZE);
 	/* Copy IE fields */
-	cdf_mem_copy((uint8_t *) &result->ap.ieData,
+	qdf_mem_copy((uint8_t *) &result->ap.ieData,
 			body + SIR_MAC_B_PR_SSID_OFFSET, ie_len);
 
 	mmh_msg.type = msg_type;
@@ -454,7 +454,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
 		return;
 	}
 
-	frame = cdf_mem_malloc(sizeof(*frame));
+	frame = qdf_mem_malloc(sizeof(*frame));
 	if (NULL == frame) {
 		lim_log(pmac, LOGE, FL("Memory allocation failed"));
 		return;
@@ -471,13 +471,13 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
 		status = sir_convert_probe_frame2_struct(pmac, body,
 							frm_len, frame);
 	} else {
-		cdf_mem_free(frame);
+		qdf_mem_free(frame);
 		return;
 	}
 
 	if (status != eSIR_SUCCESS) {
 		lim_log(pmac, LOGE, FL("Frame parsing failed"));
-		cdf_mem_free(frame);
+		qdf_mem_free(frame);
 		return;
 	}
 
@@ -491,7 +491,7 @@ __lim_process_ext_scan_beacon_probe_rsp(tpAniSirGlobal pmac,
 					(frm_len - SIR_MAC_B_PR_SSID_OFFSET),
 					eWNI_SME_EPNO_NETWORK_FOUND_IND);
 
-	cdf_mem_free(frame);
+	qdf_mem_free(frame);
 }
 #endif
 
@@ -675,8 +675,8 @@ lim_check_mgmt_registered_frames(tpAniSirGlobal mac_ctx, uint8_t *buff_desc,
 				break;
 			}
 			if (mgmt_frame->matchLen <= frm_len &&
-				cdf_mem_compare(mgmt_frame->matchData, body,
-				mgmt_frame->matchLen)) {
+				(!qdf_mem_cmp(mgmt_frame->matchData, body,
+				mgmt_frame->matchLen))) {
 				/* found match! */
 				match = true;
 				break;
@@ -1027,7 +1027,7 @@ QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	tSirRetStatus rc = eSIR_SUCCESS;
 	tAbortScanParams *pAbortScanParams;
 
-	pAbortScanParams = cdf_mem_malloc(sizeof(tAbortScanParams));
+	pAbortScanParams = qdf_mem_malloc(sizeof(tAbortScanParams));
 	if (NULL == pAbortScanParams) {
 		lim_log(pMac, LOGP,
 			FL("Memory allocation failed for AbortScanParams"));
@@ -1044,7 +1044,7 @@ QDF_STATUS lim_send_stop_scan_offload_req(tpAniSirGlobal pMac,
 	rc = wma_post_ctrl_msg(pMac, &msg);
 	if (rc != eSIR_SUCCESS) {
 		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure"));
-		cdf_mem_free(pAbortScanParams);
+		qdf_mem_free(pAbortScanParams);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1120,7 +1120,7 @@ void lim_oem_data_rsp_handle_resume_link_rsp(tpAniSirGlobal pMac, QDF_STATUS sta
 	}
 
 	if (NULL != pMac->lim.gpLimMlmOemDataReq) {
-		cdf_mem_free(pMac->lim.gpLimMlmOemDataReq);
+		qdf_mem_free(pMac->lim.gpLimMlmOemDataReq);
 		pMac->lim.gpLimMlmOemDataReq = NULL;
 	}
 	/* "Failure" status doesn't mean that Oem Data Rsp did not happen */
@@ -1188,7 +1188,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 #endif
 	tSirMbMsgP2p *p2p_msg = NULL;
 	if (ANI_DRIVER_TYPE(mac_ctx) == eDRIVER_TYPE_MFG) {
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		return;
 	}
@@ -1256,7 +1256,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			QDF_ASSERT(0);
 			break;
 		}
-		cdf_mem_copy((uint8_t *) &new_msg,
+		qdf_mem_copy((uint8_t *) &new_msg,
 			(uint8_t *) msg, sizeof(tSirMsgQ));
 		body_ptr = (cds_pkt_t *) new_msg.bodyptr;
 		cds_pkt_get_packet_length(body_ptr, &pkt_len);
@@ -1323,7 +1323,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			scan_id = req_msg->scan_id;
 			lim_process_abort_scan_ind(mac_ctx, session_id,
 				scan_id, USER_SCAN_REQUESTOR_ID);
-			cdf_mem_free((void *)msg->bodyptr);
+			qdf_mem_free((void *)msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
 		break;
@@ -1373,20 +1373,20 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 
 	case eWNI_PMC_SMPS_STATE_IND:
 		if (msg->bodyptr) {
-			cdf_mem_free(msg->bodyptr);
+			qdf_mem_free(msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
 		break;
 	case eWNI_SME_SEND_ACTION_FRAME_IND:
 		lim_send_p2p_action_frame(mac_ctx, msg);
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_ABORT_REMAIN_ON_CHAN_IND:
 		p2p_msg = (tSirMbMsgP2p *) msg->bodyptr;
 		lim_process_abort_scan_ind(mac_ctx, p2p_msg->sessionId,
 			p2p_msg->scan_id, ROC_SCAN_REQUESTOR_ID);
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case SIR_HAL_P2P_NOA_START_IND:
@@ -1405,7 +1405,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				(session_entry->pePersona == QDF_P2P_GO_MODE)) {
 				/* Save P2P NOA start attribute for Go persona*/
 				p2p_go_exists = 1;
-				cdf_mem_copy(&session_entry->p2pGoPsNoaStartInd,
+				qdf_mem_copy(&session_entry->p2pGoPsNoaStartInd,
 					msg->bodyptr, sizeof(tSirP2PNoaStart));
 				qdf_status =
 					session_entry->p2pGoPsNoaStartInd.status;
@@ -1426,7 +1426,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		/* We received the NOA start indication. Now we can send down
 		 * the SME request which requires off-channel operation */
 		lim_process_regd_defd_sme_req_after_noa_start(mac_ctx);
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 #ifdef FEATURE_WLAN_TDLS
@@ -1437,7 +1437,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		if (session_entry == NULL) {
 				lim_log(mac_ctx, LOG1,
 					FL("No session exist for given bssId"));
-				cdf_mem_free(msg->bodyptr);
+				qdf_mem_free(msg->bodyptr);
 				msg->bodyptr = NULL;
 				return;
 			}
@@ -1446,7 +1446,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			if (sta_ds == NULL) {
 				lim_log(mac_ctx, LOG1,
 					FL("No sta_ds exist for given staId"));
-				cdf_mem_free(msg->bodyptr);
+				qdf_mem_free(msg->bodyptr);
 				msg->bodyptr = NULL;
 				return;
 			}
@@ -1458,7 +1458,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				lim_send_sme_tdls_del_sta_ind(mac_ctx, sta_ds,
 					session_entry, tdls_ind->reasonCode);
 			}
-			cdf_mem_free(msg->bodyptr);
+			qdf_mem_free(msg->bodyptr);
 			msg->bodyptr = NULL;
 		break;
 #endif
@@ -1471,7 +1471,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			if ((session_entry != NULL) && (session_entry->valid)
 				&& (session_entry->pePersona ==
 				QDF_P2P_GO_MODE)) { /* Save P2P attr for Go */
-					cdf_mem_copy(
+					qdf_mem_copy(
 						&session_entry->p2pGoPsUpdate,
 						msg->bodyptr,
 						sizeof(tSirP2PNoaAttr));
@@ -1493,12 +1493,12 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 					break;
 			}
 		}
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case WMA_MISSED_BEACON_IND:
 		lim_ps_offload_handle_missed_beacon_ind(mac_ctx, msg);
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case SIR_LIM_ADDTS_RSP_TIMEOUT:
@@ -1634,7 +1634,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 	case WMA_SET_MIMOPS_RSP:
 	case WMA_SET_TX_POWER_RSP:
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case WMA_SET_MAX_TX_POWER_RSP:
@@ -1642,7 +1642,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		rrm_set_max_tx_power_rsp(mac_ctx, msg);
 #endif
 		if (msg->bodyptr != NULL) {
-			cdf_mem_free((void *)msg->bodyptr);
+			qdf_mem_free((void *)msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
 		break;
@@ -1652,7 +1652,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		/* message from HAL indicating addr2 mismatch interrupt occurred
 		 * msg->bodyptr contains only pointer to 48-bit addr2 field
 		 */
-		cdf_mem_free((void *)(msg->bodyptr));
+		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
 #ifdef WLAN_FEATURE_VOWIFI_11R
@@ -1677,7 +1677,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			link_state_param->callback(mac_ctx,
 				link_state_param->callbackArg,
 				link_state_param->status);
-		cdf_mem_free((void *)(msg->bodyptr));
+		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_SET_BCN_FILTER_REQ:
@@ -1688,7 +1688,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 			 eSIR_SUCCESS))
 			lim_log(mac_ctx, LOGE,
 				FL("Failied to send Beacon Filter Info "));
-		cdf_mem_free((void *)(msg->bodyptr));
+		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
 #ifdef FEATURE_WLAN_TDLS
@@ -1711,7 +1711,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 				session_entry->smeSessionId, NULL, NULL,
 				tdls_link_params->status);
 		}
-		cdf_mem_free((void *)(msg->bodyptr));
+		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
 #endif
@@ -1720,7 +1720,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 	case WMA_IBSS_PEER_INACTIVITY_IND:
 		lim_process_ibss_peer_inactivity(mac_ctx, msg->bodyptr);
-		cdf_mem_free((void *)(msg->bodyptr));
+		qdf_mem_free((void *)(msg->bodyptr));
 		msg->bodyptr = NULL;
 		break;
 	case WMA_DFS_RADAR_IND:
@@ -1731,7 +1731,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	case WMA_DFS_BEACON_TX_SUCCESS_IND:
 		lim_process_beacon_tx_success_ind(mac_ctx, msg->type,
 				(void *)msg->bodyptr);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case WMA_DISASSOC_TX_COMP:
@@ -1742,7 +1742,7 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 		break;
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	case WMA_UPDATE_Q2Q_IE_IND:
-		cdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
+		qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
 		beacon_params.paramChangeBitmap = 0;
 		for (i = 0; i < mac_ctx->lim.maxBssId; i++) {
 			vdev_id = ((uint8_t *)msg->bodyptr)[i];
@@ -1778,65 +1778,65 @@ void lim_process_messages(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 					session_entry);
 			}
 		}
-		cdf_mem_free(msg->bodyptr);
+		qdf_mem_free(msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 #endif /* FEATURE_AP_MCC_CH_AVOIDANCE */
 	case eWNI_SME_NSS_UPDATE_REQ:
 	case eWNI_SME_DFS_BEACON_CHAN_SW_IE_REQ:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_CHANNEL_CHANGE_REQ:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_START_BEACON_REQ:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_UPDATE_ADDITIONAL_IES:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_MODIFY_ADDITIONAL_IES:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 #ifdef QCA_HT_2040_COEX
 	case eWNI_SME_SET_HT_2040_MODE:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 #endif
 	case SIR_HAL_SOC_SET_HW_MODE_RESP:
 		lim_process_set_hw_mode_resp(mac_ctx, msg->bodyptr);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case SIR_HAL_SOC_HW_MODE_TRANS_IND:
 		lim_process_hw_mode_trans_ind(mac_ctx, msg->bodyptr);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case SIR_HAL_SOC_DUAL_MAC_CFG_RESP:
 		lim_process_dual_mac_cfg_resp(mac_ctx, msg->bodyptr);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	case eWNI_SME_SET_IE_REQ:
 		lim_process_sme_req_messages(mac_ctx, msg);
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		break;
 	default:
-		cdf_mem_free((void *)msg->bodyptr);
+		qdf_mem_free((void *)msg->bodyptr);
 		msg->bodyptr = NULL;
 		/* Unwanted messages */
 		/* Log error */
@@ -1882,7 +1882,7 @@ void lim_process_deferred_message_queue(tpAniSirGlobal pMac)
 	size = pMac->lim.gLimDeferredMsgQ.size;
 	if (size > 0) {
 		while ((readMsg = lim_read_deferred_msg_q(pMac)) != NULL) {
-			cdf_mem_copy((uint8_t *) &limMsg,
+			qdf_mem_copy((uint8_t *) &limMsg,
 				     (uint8_t *) readMsg, sizeof(tSirMsgQ));
 			size--;
 			lim_process_messages(pMac, &limMsg);
@@ -1949,7 +1949,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx, tSirMsgQ *msg,
 #endif
 			lim_log_session_states(mac_ctx);
 			/* Release body */
-			cdf_mem_free(msg->bodyptr);
+			qdf_mem_free(msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
 	} else {
@@ -1968,7 +1968,7 @@ static void lim_process_normal_hdd_msg(tpAniSirGlobal mac_ctx, tSirMsgQ *msg,
 			 * Release body. limProcessSmeReqMessage consumed the
 			 * buffer. We can free it.
 			 */
-			cdf_mem_free(msg->bodyptr);
+			qdf_mem_free(msg->bodyptr);
 			msg->bodyptr = NULL;
 		}
 	}

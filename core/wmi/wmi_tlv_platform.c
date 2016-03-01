@@ -30,7 +30,7 @@
  */
 
 #include "ol_if_athvar.h"
-#include <cdf_memory.h>         /* cdf_mem_malloc,free, etc. */
+#include <qdf_mem.h>         /* qdf_mem_malloc,free, etc. */
 #include <osdep.h>
 #include "htc_api.h"
 #include "wmi.h"
@@ -54,5 +54,5 @@
 	{ \
 		(ptr) = os_malloc(NULL, (numBytes), GFP_ATOMIC); \
 	}
-#define wmi_tlv_os_mem_free   cdf_mem_free
+#define wmi_tlv_os_mem_free   qdf_mem_free
 #endif

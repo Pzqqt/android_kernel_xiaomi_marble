@@ -377,7 +377,7 @@ hdd_conn_save_connect_info(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo,
 			    pRoamInfo->u.pConnectedProfile->operationChannel;
 
 			/* Save the ssid for the connection */
-			cdf_mem_copy(&pHddStaCtx->conn_info.SSID.SSID,
+			qdf_mem_copy(&pHddStaCtx->conn_info.SSID.SSID,
 				     &pRoamInfo->u.pConnectedProfile->SSID,
 				     sizeof(tSirMacSSid));
 
@@ -489,8 +489,8 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 #endif
 
 #if defined(KERNEL_SUPPORT_11R_CFG80211)
-	cdf_mem_zero(ftIe, DOT11F_IE_FTINFO_MAX_LEN);
-	cdf_mem_zero(ricIe, DOT11F_IE_RICDESCRIPTOR_MAX_LEN);
+	qdf_mem_zero(ftIe, DOT11F_IE_FTINFO_MAX_LEN);
+	qdf_mem_zero(ricIe, DOT11F_IE_RICDESCRIPTOR_MAX_LEN);
 
 	sme_get_rici_es(pHddCtx->hHal, pAdapter->sessionId, (u8 *) ricIe,
 			DOT11F_IE_RICDESCRIPTOR_MAX_LEN, &ric_ies_length);
@@ -535,7 +535,7 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 		hddLog(LOGE, FL("kmalloc unable to allocate memory"));
 		return;
 	}
-	cdf_mem_zero(buff, IW_CUSTOM_MAX);
+	qdf_mem_zero(buff, IW_CUSTOM_MAX);
 
 	/* Sme needs to send the RIC IEs first */
 	str_len = strlcpy(buff, "RIC=", IW_CUSTOM_MAX);
@@ -551,7 +551,7 @@ static void hdd_send_ft_event(hdd_adapter_t *pAdapter)
 	}
 
 	/* Sme needs to provide the Auth Resp */
-	cdf_mem_zero(buff, IW_CUSTOM_MAX);
+	qdf_mem_zero(buff, IW_CUSTOM_MAX);
 	str_len = strlcpy(buff, "AUTH=", IW_CUSTOM_MAX);
 	sme_get_ft_pre_auth_response(pHddCtx->hHal, pAdapter->sessionId,
 				     (u8 *) &buff[str_len],
@@ -650,7 +650,7 @@ hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
 		hddLog(LOGE, FL("kmalloc unable to allocate memory"));
 		return;
 	}
-	cdf_mem_zero(buff, IW_CUSTOM_MAX);
+	qdf_mem_zero(buff, IW_CUSTOM_MAX);
 
 	strLen = strlcpy(buff, "BEACONIEs=", IW_CUSTOM_MAX);
 	currentLen = strLen + 1;
@@ -662,10 +662,10 @@ hdd_send_update_beacon_ies_event(hdd_adapter_t *pAdapter,
 		 * into chunks of CUSTOM event max size and send it to
 		 * supplicant. Changes are done in supplicant to handle this.
 		 */
-		cdf_mem_zero(&buff[strLen + 1], IW_CUSTOM_MAX - (strLen + 1));
+		qdf_mem_zero(&buff[strLen + 1], IW_CUSTOM_MAX - (strLen + 1));
 		currentLen =
 			QDF_MIN(totalIeLen, IW_CUSTOM_MAX - (strLen + 1) - 1);
-		cdf_mem_copy(&buff[strLen + 1], pBeaconIes + currentOffset,
+		qdf_mem_copy(&buff[strLen + 1], pBeaconIes + currentOffset,
 			     currentLen);
 		currentOffset += currentLen;
 		totalIeLen -= currentLen;
@@ -893,8 +893,8 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
 {
 	/* Remove staId, bssId and peerMacAddress */
 	pHddStaCtx->conn_info.staId[0] = 0;
-	cdf_mem_zero(&pHddStaCtx->conn_info.bssId, QDF_MAC_ADDR_SIZE);
-	cdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[0],
+	qdf_mem_zero(&pHddStaCtx->conn_info.bssId, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[0],
 		     QDF_MAC_ADDR_SIZE);
 
 	/* Clear all security settings */
@@ -902,14 +902,14 @@ static void hdd_conn_remove_connect_info(hdd_station_ctx_t *pHddStaCtx)
 	pHddStaCtx->conn_info.mcEncryptionType = eCSR_ENCRYPT_TYPE_NONE;
 	pHddStaCtx->conn_info.ucEncryptionType = eCSR_ENCRYPT_TYPE_NONE;
 
-	cdf_mem_zero(&pHddStaCtx->conn_info.Keys, sizeof(tCsrKeys));
-	cdf_mem_zero(&pHddStaCtx->ibss_enc_key, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&pHddStaCtx->conn_info.Keys, sizeof(tCsrKeys));
+	qdf_mem_zero(&pHddStaCtx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 
 	/* Set not-connected state */
 	pHddStaCtx->conn_info.connDot11DesiredBssType = eCSR_BSS_TYPE_ANY;
 	pHddStaCtx->conn_info.proxyARPService = 0;
 
-	cdf_mem_zero(&pHddStaCtx->conn_info.SSID, sizeof(tCsrSSIDInfo));
+	qdf_mem_zero(&pHddStaCtx->conn_info.SSID, sizeof(tCsrSSIDInfo));
 }
 
 /**
@@ -1106,7 +1106,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 			 * reset are done in hdd_connRemoveConnectInfo.
 			 */
 			pHddStaCtx->conn_info.staId[i] = 0;
-			cdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[i],
+			qdf_mem_zero(&pHddStaCtx->conn_info.peerMacAddress[i],
 				sizeof(struct qdf_mac_addr));
 			if (sta_id < (WLAN_MAX_STA_COUNT + 3))
 				pHddCtx->sta_to_adapter[sta_id] = NULL;
@@ -1409,12 +1409,12 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	/* Send the Assoc Resp, the supplicant needs this for initial Auth */
 	len = pCsrRoamInfo->nAssocRspLength - FT_ASSOC_RSP_IES_OFFSET;
 	rspRsnLength = len;
-	cdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
-	cdf_mem_zero(rspRsnIe + len, IW_GENERIC_IE_MAX - len);
+	qdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
+	qdf_mem_zero(rspRsnIe + len, IW_GENERIC_IE_MAX - len);
 
 	chan = ieee80211_get_channel(pAdapter->wdev.wiphy,
 				     (int)pCsrRoamInfo->pBssDesc->channelId);
-	cdf_mem_zero(&roam_profile, sizeof(tCsrRoamConnectedProfile));
+	qdf_mem_zero(&roam_profile, sizeof(tCsrRoamConnectedProfile));
 	sme_roam_get_connect_profile(hal_handle, pAdapter->sessionId,
 		&roam_profile);
 	bss = cfg80211_get_bss(pAdapter->wdev.wiphy, chan,
@@ -1433,7 +1433,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	buf_ptr++;
 	*buf_ptr = roam_profile.SSID.length; /*len of ssid*/
 	buf_ptr++;
-	cdf_mem_copy(buf_ptr, &roam_profile.SSID.ssId[0],
+	qdf_mem_copy(buf_ptr, &roam_profile.SSID.ssId[0],
 			roam_profile.SSID.length);
 	ssid_ie_len = 2 + roam_profile.SSID.length;
 	hdd_notice("SSIDIE:");
@@ -1443,11 +1443,11 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 	if (final_req_ie == NULL)
 		goto done;
 	buf_ptr = final_req_ie;
-	cdf_mem_copy(buf_ptr, buf_ssid_ie, ssid_ie_len);
+	qdf_mem_copy(buf_ptr, buf_ssid_ie, ssid_ie_len);
 	buf_ptr += ssid_ie_len;
-	cdf_mem_copy(buf_ptr, reqRsnIe, reqRsnLength);
-	cdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
-	cdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
+	qdf_mem_copy(buf_ptr, reqRsnIe, reqRsnLength);
+	qdf_mem_copy(rspRsnIe, pFTAssocRsp, len);
+	qdf_mem_zero(final_req_ie + (ssid_ie_len + reqRsnLength),
 		IW_GENERIC_IE_MAX - (ssid_ie_len + reqRsnLength));
 	hdd_notice("Req RSN IE:");
 	QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_DEBUG,
@@ -1456,7 +1456,7 @@ static void hdd_send_re_assoc_event(struct net_device *dev,
 			final_req_ie, (ssid_ie_len + reqRsnLength),
 			rspRsnIe, rspRsnLength, GFP_KERNEL);
 
-	cdf_mem_copy(assoc_req_ies,
+	qdf_mem_copy(assoc_req_ies,
 		(u8 *)pCsrRoamInfo->pbFrames + pCsrRoamInfo->nBeaconLength,
 		pCsrRoamInfo->nAssocReqLength);
 
@@ -1665,9 +1665,9 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamInfo roamInfo;
 	roamInfo.fAuthRequired = false;
-	cdf_mem_copy(roamInfo.bssid.bytes,
+	qdf_mem_copy(roamInfo.bssid.bytes,
 		     pHddStaCtx->roam_info.bssid, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(roamInfo.peerMac.bytes,
+	qdf_mem_copy(roamInfo.peerMac.bytes,
 		     pHddStaCtx->roam_info.peerMac, QDF_MAC_ADDR_SIZE);
 
 	cdf_ret_status =
@@ -1983,11 +1983,11 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 						pRoamInfo->fAuthRequired =
 							false;
 
-						cdf_mem_copy(pHddStaCtx->
+						qdf_mem_copy(pHddStaCtx->
 							     roam_info.bssid,
 							     pRoamInfo->bssid.bytes,
 							     QDF_MAC_ADDR_SIZE);
-						cdf_mem_copy(pHddStaCtx->
+						qdf_mem_copy(pHddStaCtx->
 							     roam_info.peerMac,
 							     pRoamInfo->peerMac.bytes,
 							     QDF_MAC_ADDR_SIZE);
@@ -2161,7 +2161,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				qdf_status, qdf_status);
 		}
 #ifdef WLAN_FEATURE_11W
-		cdf_mem_zero(&pAdapter->hdd_stats.hddPmfStats,
+		qdf_mem_zero(&pAdapter->hdd_stats.hddPmfStats,
 			     sizeof(pAdapter->hdd_stats.hddPmfStats));
 #endif
 	} else {
@@ -3074,7 +3074,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				pHddCtx->tdlsConnInfo[staIdx].staId = 0;
 				pHddCtx->tdlsConnInfo[staIdx].
 				sessionId = 255;
-				cdf_mem_zero(&pHddCtx->
+				qdf_mem_zero(&pHddCtx->
 					     tdlsConnInfo[staIdx].
 					     peerMac,
 					     QDF_MAC_ADDR_SIZE);
@@ -3127,13 +3127,13 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 							    tdlsConnInfo
 							    [staIdx].
 							    staId);
-				cdf_mem_zero(&smeTdlsPeerStateParams,
+				qdf_mem_zero(&smeTdlsPeerStateParams,
 					     sizeof
 					     (smeTdlsPeerStateParams));
 				smeTdlsPeerStateParams.vdevId =
 					pHddCtx->tdlsConnInfo[staIdx].
 					sessionId;
-				cdf_mem_copy(&smeTdlsPeerStateParams.
+				qdf_mem_copy(&smeTdlsPeerStateParams.
 					     peerMacAddr,
 					     &pHddCtx->
 					     tdlsConnInfo[staIdx].
@@ -3168,7 +3168,7 @@ hdd_roam_tdls_status_update_handler(hdd_adapter_t *pAdapter,
 				wlan_hdd_tdls_decrement_peer_count
 					(pAdapter);
 
-				cdf_mem_zero(&pHddCtx->
+				qdf_mem_zero(&pHddCtx->
 					     tdlsConnInfo[staIdx].
 					     peerMac,
 					     QDF_MAC_ADDR_SIZE);
@@ -3498,7 +3498,7 @@ hdd_indicate_cckm_pre_auth(hdd_adapter_t *pAdapter, tCsrRoamInfo *pRoamInfo)
 	pos += nBytes;
 	freeBytes -= nBytes;
 
-	cdf_mem_copy(pos, pRoamInfo->bssid.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(pos, pRoamInfo->bssid.bytes, QDF_MAC_ADDR_SIZE);
 	pos += QDF_MAC_ADDR_SIZE;
 	freeBytes -= QDF_MAC_ADDR_SIZE;
 
@@ -3685,7 +3685,7 @@ hdd_indicate_ese_bcn_report_ind(const hdd_adapter_t *pAdapter,
 			freeBytes -= nBytes;
 
 			/* Copy total Beacon report data length */
-			cdf_mem_copy(pos, (char *)&tot_bcn_ieLen,
+			qdf_mem_copy(pos, (char *)&tot_bcn_ieLen,
 				     sizeof(tot_bcn_ieLen));
 			pos += sizeof(tot_bcn_ieLen);
 			freeBytes -= sizeof(tot_bcn_ieLen);
@@ -3767,7 +3767,7 @@ hdd_indicate_ese_bcn_report_ind(const hdd_adapter_t *pAdapter,
 					       bcnRepBssInfo[i +
 							     lastSent].
 					       bcnReportFields);
-				cdf_mem_copy(pos,
+				qdf_mem_copy(pos,
 					     (char *)&pRoamInfo->
 					     pEseBcnReportRsp->bcnRepBssInfo[i +
 									     lastSent].
@@ -3779,12 +3779,12 @@ hdd_indicate_ese_bcn_report_ind(const hdd_adapter_t *pAdapter,
 				len =
 					pRoamInfo->pEseBcnReportRsp->
 					bcnRepBssInfo[i + lastSent].ieLen;
-				cdf_mem_copy(pos, (char *)&len, sizeof(len));
+				qdf_mem_copy(pos, (char *)&len, sizeof(len));
 				pos += sizeof(len);
 				freeBytes -= sizeof(len);
 
 				/* copy IE from scan results */
-				cdf_mem_copy(pos,
+				qdf_mem_copy(pos,
 					     (char *)pRoamInfo->
 					     pEseBcnReportRsp->bcnRepBssInfo[i +
 									     lastSent].
@@ -4387,9 +4387,9 @@ static int32_t hdd_process_genie(hdd_adapter_t *pAdapter,
 			 * For right now, I assume setASSOCIATE() has passed
 			 * in the bssid.
 			 */
-			cdf_mem_copy(PMKIDCache[i].BSSID.bytes,
+			qdf_mem_copy(PMKIDCache[i].BSSID.bytes,
 				     bssid, QDF_MAC_ADDR_SIZE);
-			cdf_mem_copy(PMKIDCache[i].PMKID,
+			qdf_mem_copy(PMKIDCache[i].PMKID,
 				     dot11RSNIE.pmkid[i], CSR_RSN_PMKID_SIZE);
 		}
 
@@ -4468,7 +4468,7 @@ int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType)
 	u8 bssid[ETH_ALEN];        /* MAC address of assoc peer */
 	/* MAC address of assoc peer */
 	/* But, this routine is only called when we are NOT associated. */
-	cdf_mem_copy(bssid,
+	qdf_mem_copy(bssid,
 		     pWextState->roamProfile.BSSIDs.bssid,
 		     sizeof(bssid));
 	if (pWextState->WPARSNIE[0] == DOT11F_EID_RSN
@@ -4759,9 +4759,9 @@ static int __iw_set_essid(struct net_device *dev,
 	pWextState->roamProfile.SSIDs.SSIDList->SSID.length =
 		wrqu->essid.length;
 
-	cdf_mem_zero(pWextState->roamProfile.SSIDs.SSIDList->SSID.ssId,
+	qdf_mem_zero(pWextState->roamProfile.SSIDs.SSIDList->SSID.ssId,
 		     sizeof(pWextState->roamProfile.SSIDs.SSIDList->SSID.ssId));
-	cdf_mem_copy((void *)(pWextState->roamProfile.SSIDs.SSIDList->SSID.
+	qdf_mem_copy((void *)(pWextState->roamProfile.SSIDs.SSIDList->SSID.
 			      ssId), extra, wrqu->essid.length);
 	if (IW_AUTH_WPA_VERSION_WPA == pWextState->wpaVersion
 	    || IW_AUTH_WPA_VERSION_WPA2 == pWextState->wpaVersion) {
@@ -5380,7 +5380,7 @@ static int __iw_set_ap_address(struct net_device *dev,
 
 	pMacAddress = (uint8_t *) wrqu->ap_addr.sa_data;
 	hddLog(LOG1, FL(" " MAC_ADDRESS_STR), MAC_ADDR_ARRAY(pMacAddress));
-	cdf_mem_copy(pHddStaCtx->conn_info.bssId.bytes, pMacAddress,
+	qdf_mem_copy(pHddStaCtx->conn_info.bssId.bytes, pMacAddress,
 		     sizeof(struct qdf_mac_addr));
 	EXIT();
 
@@ -5438,7 +5438,7 @@ static int __iw_get_ap_address(struct net_device *dev,
 
 	if (pHddStaCtx->conn_info.connState == eConnectionState_Associated ||
 	    eConnectionState_IbssConnected == pHddStaCtx->conn_info.connState) {
-		cdf_mem_copy(wrqu->ap_addr.sa_data,
+		qdf_mem_copy(wrqu->ap_addr.sa_data,
 				pHddStaCtx->conn_info.bssId.bytes,
 				QDF_MAC_ADDR_SIZE);
 	} else {

@@ -49,7 +49,7 @@
 #include "cdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
@@ -117,10 +117,10 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 
 	if (tim_info->tim_changed) {
 		if (tim_info->tim_num_ps_pending)
-			cdf_mem_copy(&tim_ie->tim_bitmap, tim_info->tim_bitmap,
+			qdf_mem_copy(&tim_ie->tim_bitmap, tim_info->tim_bitmap,
 				     WMA_TIM_SUPPORTED_PVB_LENGTH);
 		else
-			cdf_mem_zero(&tim_ie->tim_bitmap,
+			qdf_mem_zero(&tim_ie->tim_bitmap,
 				     WMA_TIM_SUPPORTED_PVB_LENGTH);
 		/*
 		 * Currently we support fixed number of
@@ -161,7 +161,7 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	bcn->seq_no++;
 
 	if (WMI_UNIFIED_NOA_ATTR_IS_MODIFIED(p2p_noa_info)) {
-		cdf_mem_zero(&noa_ie, sizeof(noa_ie));
+		qdf_mem_zero(&noa_ie, sizeof(noa_ie));
 
 		noa_ie.index =
 			(uint8_t) WMI_UNIFIED_NOA_ATTR_INDEX_GET(p2p_noa_info);
@@ -334,14 +334,14 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	switch (kickout_event->reason) {
 	case WMI_PEER_STA_KICKOUT_REASON_IBSS_DISCONNECT:
 		p_inactivity = (tpSirIbssPeerInactivityInd)
-			       cdf_mem_malloc(sizeof(tSirIbssPeerInactivityInd));
+			       qdf_mem_malloc(sizeof(tSirIbssPeerInactivityInd));
 		if (!p_inactivity) {
 			WMA_LOGE("CDF MEM Alloc Failed for tSirIbssPeerInactivity");
 			return -ENOMEM;
 		}
 
 		p_inactivity->staIdx = peer_id;
-		cdf_mem_copy(p_inactivity->peer_addr.bytes, macaddr,
+		qdf_mem_copy(p_inactivity->peer_addr.bytes, macaddr,
 			     IEEE80211_ADDR_LEN);
 		wma_send_msg(wma, WMA_IBSS_PEER_INACTIVITY_IND,
 			     (void *)p_inactivity, 0);
@@ -351,7 +351,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 #ifdef FEATURE_WLAN_TDLS
 	case WMI_PEER_STA_KICKOUT_REASON_TDLS_DISCONNECT:
 		del_sta_ctx = (tpDeleteStaContext)
-			cdf_mem_malloc(sizeof(tDeleteStaContext));
+			qdf_mem_malloc(sizeof(tDeleteStaContext));
 		if (!del_sta_ctx) {
 			WMA_LOGE("%s: mem alloc failed for tDeleteStaContext for TDLS peer: %pM",
 				__func__, macaddr);
@@ -359,8 +359,8 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		}
 
 		del_sta_ctx->staId = peer_id;
-		cdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
-		cdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].bssid,
+		qdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].bssid,
 			     IEEE80211_ADDR_LEN);
 		del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 		wma_send_msg(wma, SIR_LIM_DELETE_STA_CONTEXT_IND,
@@ -374,7 +374,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		    (wma->interfaces[vdev_id].sub_type == 0 ||
 		     wma->interfaces[vdev_id].sub_type ==
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
-		    cdf_mem_compare(wma->interfaces[vdev_id].bssid,
+		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
 				    macaddr, IEEE80211_ADDR_LEN)) {
 			/*
 			 * KICKOUT event is for current station-AP connection.
@@ -400,7 +400,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		    (wma->interfaces[vdev_id].sub_type == 0 ||
 		     wma->interfaces[vdev_id].sub_type ==
 		     WMI_UNIFIED_VDEV_SUBTYPE_P2P_CLIENT) &&
-		    cdf_mem_compare(wma->interfaces[vdev_id].bssid,
+		    !qdf_mem_cmp(wma->interfaces[vdev_id].bssid,
 				    macaddr, IEEE80211_ADDR_LEN)) {
 			/*
 			 * KICKOUT event is for current station-AP connection.
@@ -429,15 +429,15 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	 * default action is to send delete station context indication to LIM
 	 */
 	del_sta_ctx =
-		(tpDeleteStaContext) cdf_mem_malloc(sizeof(tDeleteStaContext));
+		(tpDeleteStaContext) qdf_mem_malloc(sizeof(tDeleteStaContext));
 	if (!del_sta_ctx) {
 		WMA_LOGE("CDF MEM Alloc Failed for tDeleteStaContext");
 		return -ENOMEM;
 	}
 
 	del_sta_ctx->staId = peer_id;
-	cdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
-	cdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,
+	qdf_mem_copy(del_sta_ctx->addr2, macaddr, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(del_sta_ctx->bssId, wma->interfaces[vdev_id].addr,
 		     IEEE80211_ADDR_LEN);
 	del_sta_ctx->reasonCode = HAL_DEL_STA_REASON_CODE_KEEP_ALIVE;
 	del_sta_ctx->rssi = kickout_event->rssi + WMA_TGT_NOISE_FLOOR_DBM;
@@ -498,7 +498,7 @@ int wma_unified_bcntx_status_event_handler(void *handle,
 	}
 
 	beacon_tx_complete_ind = (tSirFirstBeaconTxCompleteInd *)
-			cdf_mem_malloc(sizeof(tSirFirstBeaconTxCompleteInd));
+			qdf_mem_malloc(sizeof(tSirFirstBeaconTxCompleteInd));
 	if (!beacon_tx_complete_ind) {
 		WMA_LOGE("%s: Failed to alloc beacon_tx_complete_ind",
 			 __func__);
@@ -727,9 +727,9 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 			return;
 		}
 		cmd->method = WMI_STA_KEEPALIVE_METHOD_UNSOLICITED_ARP_RESPONSE;
-		cdf_mem_copy(&arp_rsp->sender_prot_addr, hostv4addr,
+		qdf_mem_copy(&arp_rsp->sender_prot_addr, hostv4addr,
 			     SIR_IPV4_ADDR_LEN);
-		cdf_mem_copy(&arp_rsp->target_prot_addr, destv4addr,
+		qdf_mem_copy(&arp_rsp->target_prot_addr, destv4addr,
 			     SIR_IPV4_ADDR_LEN);
 		WMI_CHAR_ARRAY_TO_MAC_ADDR(destmac, &arp_rsp->dest_mac_addr);
 	} else {
@@ -857,8 +857,8 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		return -EINVAL;
 	}
 
-	cdf_mem_zero(&peer_legacy_rates, sizeof(wmi_rate_set));
-	cdf_mem_zero(&peer_ht_rates, sizeof(wmi_rate_set));
+	qdf_mem_zero(&peer_legacy_rates, sizeof(wmi_rate_set));
+	qdf_mem_zero(&peer_ht_rates, sizeof(wmi_rate_set));
 
 	phymode = wma_peer_phymode(nw_type, params->staType,
 				   params->htCapable,
@@ -923,7 +923,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 		/* TODO: Do we really need this? */
 		WMA_LOGW("Peer is marked as HT capable but supported mcs rate is 0");
 		peer_ht_rates.num_rates = sizeof(temp_ni_rates);
-		cdf_mem_copy((uint8_t *) peer_ht_rates.rates, temp_ni_rates,
+		qdf_mem_copy((uint8_t *) peer_ht_rates.rates, temp_ni_rates,
 			     peer_ht_rates.num_rates);
 	}
 
@@ -1093,7 +1093,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, num_peer_legacy_rates);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	cmd->num_peer_legacy_rates = peer_legacy_rates.num_rates;
-	cdf_mem_copy(buf_ptr, peer_legacy_rates.rates,
+	qdf_mem_copy(buf_ptr, peer_legacy_rates.rates,
 		     peer_legacy_rates.num_rates);
 
 	/* Update peer HT rate information */
@@ -1101,7 +1101,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, num_peer_ht_rates);
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	cmd->num_peer_ht_rates = peer_ht_rates.num_rates;
-	cdf_mem_copy(buf_ptr, peer_ht_rates.rates, peer_ht_rates.num_rates);
+	qdf_mem_copy(buf_ptr, peer_ht_rates.rates, peer_ht_rates.num_rates);
 
 	/* VHT Rates */
 	buf_ptr += num_peer_ht_rates;
@@ -1499,9 +1499,9 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		cmd->key_txmic_len = WMA_TXMIC_LEN;
 		cmd->key_rxmic_len = WMA_RXMIC_LEN;
 
-		cdf_mem_copy(&cmd->wpi_key_rsc_counter, &rx_iv,
+		qdf_mem_copy(&cmd->wpi_key_rsc_counter, &rx_iv,
 			     WPI_IV_LEN);
-		cdf_mem_copy(&cmd->wpi_key_tsc_counter, &tx_iv,
+		qdf_mem_copy(&cmd->wpi_key_tsc_counter, &tx_iv,
 			     WPI_IV_LEN);
 		cmd->key_cipher = WMI_CIPHER_WAPI;
 		break;
@@ -1549,7 +1549,7 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		}
 	}
 #else
-	cdf_mem_copy((void *)key_data,
+	qdf_mem_copy((void *)key_data,
 		     (const void *)key_params->key_data, key_params->key_len);
 #endif /* BIG_ENDIAN_HOST */
 	cmd->key_len = key_params->key_len;
@@ -1559,12 +1559,12 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		iface = &wma_handle->interfaces[key_params->vdev_id];
 		if (iface) {
 			iface->key.key_length = key_params->key_len;
-			cdf_mem_copy(iface->key.key,
+			qdf_mem_copy(iface->key.key,
 				     (const void *)key_params->key_data,
 				     iface->key.key_length);
 			if ((cmd->key_ix == WMA_IGTK_KEY_INDEX_4) ||
 			    (cmd->key_ix == WMA_IGTK_KEY_INDEX_5))
-				cdf_mem_zero(iface->key.key_id[cmd->key_ix -
+				qdf_mem_zero(iface->key.key_id[cmd->key_ix -
 						    WMA_IGTK_KEY_INDEX_4].ipn,
 					     CMAC_IPN_LEN);
 		}
@@ -1614,22 +1614,22 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		if (wma_handle->ibss_started > 0)
 			goto out;
 		WMA_LOGD("Caching IBSS Key");
-		cdf_mem_copy(&wma_handle->ibsskey_info, key_info,
+		qdf_mem_copy(&wma_handle->ibsskey_info, key_info,
 			     sizeof(tSetBssKeyParams));
 	}
 
-	cdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_set(&key_params, sizeof(key_params), 0);
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
 	if (txrx_vdev->opmode == wlan_op_mode_sta) {
-		cdf_mem_copy(key_params.peer_mac,
+		qdf_mem_copy(key_params.peer_mac,
 			wma_handle->interfaces[key_info->smesessionId].bssid,
 			IEEE80211_ADDR_LEN);
 	} else {
 		/* vdev mac address will be passed for all other modes */
-		cdf_mem_copy(key_params.peer_mac, txrx_vdev->mac_addr.raw,
+		qdf_mem_copy(key_params.peer_mac, txrx_vdev->mac_addr.raw,
 			     IEEE80211_ADDR_LEN);
 		WMA_LOGA("BSS Key setup with vdev_mac %pM\n",
 			 txrx_vdev->mac_addr.raw);
@@ -1654,14 +1654,14 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 
 		key_params.key_len = key_info->key[i].keyLength;
 		if (key_info->encType == eSIR_ED_TKIP) {
-			cdf_mem_copy(key_params.key_data,
+			qdf_mem_copy(key_params.key_data,
 				     key_info->key[i].key, 16);
-			cdf_mem_copy(&key_params.key_data[16],
+			qdf_mem_copy(&key_params.key_data[16],
 				     &key_info->key[i].key[24], 8);
-			cdf_mem_copy(&key_params.key_data[24],
+			qdf_mem_copy(&key_params.key_data[24],
 				     &key_info->key[i].key[16], 8);
 		} else
-			cdf_mem_copy((void *)key_params.key_data,
+			qdf_mem_copy((void *)key_params.key_data,
 				     (const void *)key_info->key[i].key,
 				     key_info->key[i].keyLength);
 
@@ -1823,14 +1823,14 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 		return;
 	}
 
-	cdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_set(&key_params, sizeof(key_params), 0);
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = false;
 	ASSERT(wlan_op_mode_ibss == txrx_vdev->opmode);
 
-	cdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
+	qdf_mem_copy(key_params.peer_mac, peer_macaddr.bytes,
 			IEEE80211_ADDR_LEN);
 
 	if (key_info->numKeys == 0 &&
@@ -1847,14 +1847,14 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 		key_params.key_idx = key_info->key[i].keyId;
 		key_params.key_len = key_info->key[i].keyLength;
 		if (key_info->encType == eSIR_ED_TKIP) {
-			cdf_mem_copy(key_params.key_data,
+			qdf_mem_copy(key_params.key_data,
 				     key_info->key[i].key, 16);
-			cdf_mem_copy(&key_params.key_data[16],
+			qdf_mem_copy(&key_params.key_data[16],
 				     &key_info->key[i].key[24], 8);
-			cdf_mem_copy(&key_params.key_data[24],
+			qdf_mem_copy(&key_params.key_data[24],
 				     &key_info->key[i].key[16], 8);
 		} else
-			cdf_mem_copy((void *)key_params.key_data,
+			qdf_mem_copy((void *)key_params.key_data,
 				     (const void *)key_info->key[i].key,
 				     key_info->key[i].keyLength);
 
@@ -1946,13 +1946,13 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 			}
 		}
 	}
-	cdf_mem_set(&key_params, sizeof(key_params), 0);
+	qdf_mem_set(&key_params, sizeof(key_params), 0);
 	key_params.vdev_id = key_info->smesessionId;
 	key_params.key_type = key_info->encType;
 	key_params.singl_tid_rc = key_info->singleTidRc;
 	key_params.unicast = true;
 	key_params.def_key_idx = key_info->defWEPIdx;
-	cdf_mem_copy((void *)key_params.peer_mac,
+	qdf_mem_copy((void *)key_params.peer_mac,
 		     (const void *)key_info->peer_macaddr.bytes,
 		     IEEE80211_ADDR_LEN);
 	for (i = 0; i < num_keys; i++) {
@@ -1960,14 +1960,14 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		    !key_info->key[i].keyLength)
 			continue;
 		if (key_info->encType == eSIR_ED_TKIP) {
-			cdf_mem_copy(key_params.key_data,
+			qdf_mem_copy(key_params.key_data,
 				     key_info->key[i].key, 16);
-			cdf_mem_copy(&key_params.key_data[16],
+			qdf_mem_copy(&key_params.key_data[16],
 				     &key_info->key[i].key[24], 8);
-			cdf_mem_copy(&key_params.key_data[24],
+			qdf_mem_copy(&key_params.key_data[24],
 				     &key_info->key[i].key[16], 8);
 		} else
-			cdf_mem_copy(key_params.key_data, key_info->key[i].key,
+			qdf_mem_copy(key_params.key_data, key_info->key[i].key,
 				     key_info->key[i].keyLength);
 		if (key_info->encType == eSIR_ED_WPI) {
 			key_params.key_idx = key_info->key[i].keyId;
@@ -2172,7 +2172,7 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, tmpl_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	cdf_mem_copy(buf_ptr, frm, tmpl_len);
+	qdf_mem_copy(buf_ptr, frm, tmpl_len);
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle,
 				   wmi_buf, wmi_buf_len, WMI_PRB_TMPL_CMDID);
@@ -2273,7 +2273,7 @@ static int wmi_unified_bcn_tmpl_send(tp_wma_handle wma,
 
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, tmpl_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	cdf_mem_copy(buf_ptr, frm, tmpl_len);
+	qdf_mem_copy(buf_ptr, frm, tmpl_len);
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle,
 				   wmi_buf, wmi_buf_len, WMI_BCN_TMPL_CMDID);
@@ -2420,7 +2420,7 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 		intf[if_id].tsfadjust = adjusted_tsf[if_id];
 
 		qdf_spin_lock_bh(&bcn->lock);
-		cdf_mem_zero(&bcn_info, sizeof(bcn_info));
+		qdf_mem_zero(&bcn_info, sizeof(bcn_info));
 		bcn_info.beacon = cdf_nbuf_data(bcn->buf);
 		bcn_info.p2pIeOffset = bcn->p2p_ie_offset;
 		bcn_info.beaconLength = bcn->len;
@@ -2490,7 +2490,7 @@ static int wma_p2p_go_set_beacon_ie(t_wma_handle *wma_handle,
 	buf_ptr += sizeof(wmi_p2p_go_set_beacon_ie_fixed_param);
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_aligned);
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	cdf_mem_copy(buf_ptr, p2pIe, ie_len);
+	qdf_mem_copy(buf_ptr, p2pIe, ie_len);
 
 	WMA_LOGI("%s: Sending WMI_P2P_GO_SET_BEACON_IE", __func__);
 
@@ -2632,7 +2632,7 @@ void wma_set_keepalive_req(tp_wma_handle wma,
 			       keepalive->destIpv4Addr,
 			       keepalive->dest_macaddr.bytes);
 
-	cdf_mem_free(keepalive);
+	qdf_mem_free(keepalive);
 }
 
 /**
@@ -2648,7 +2648,7 @@ void wma_beacon_miss_handler(tp_wma_handle wma, uint32_t vdev_id)
 {
 	tSirSmeMissedBeaconInd *beacon_miss_ind;
 
-	beacon_miss_ind = (tSirSmeMissedBeaconInd *) cdf_mem_malloc
+	beacon_miss_ind = (tSirSmeMissedBeaconInd *) qdf_mem_malloc
 				  (sizeof(tSirSmeMissedBeaconInd));
 
 	if (NULL == beacon_miss_ind) {
@@ -3089,7 +3089,7 @@ int wma_process_rmf_frame(tp_wma_handle wma_handle,
 		/* Strip privacy headers (and trailer)
 		 * for a received frame
 		 */
-		cdf_mem_move(orig_hdr +
+		qdf_mem_move(orig_hdr +
 			IEEE80211_CCMP_HEADERLEN, wh,
 			sizeof(*wh));
 		cdf_nbuf_pull_head(wbuf,
@@ -3170,7 +3170,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	rx_pkt = cdf_mem_malloc(sizeof(*rx_pkt));
+	rx_pkt = qdf_mem_malloc(sizeof(*rx_pkt));
 	if (!rx_pkt) {
 		WMA_LOGE("Failed to allocate rx packet");
 		return -ENOMEM;
@@ -3181,7 +3181,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		return -EINVAL;
 	}
 
-	cdf_mem_zero(rx_pkt, sizeof(*rx_pkt));
+	qdf_mem_zero(rx_pkt, sizeof(*rx_pkt));
 
 	/*
 	 * Fill in meta information needed by pe/lim
@@ -3221,7 +3221,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 	if (!wbuf) {
 		WMA_LOGE("%s: Failed to allocate wbuf for mgmt rx len(%u)",
 			    __func__, hdr->buf_len);
-		cdf_mem_free(rx_pkt);
+		qdf_mem_free(rx_pkt);
 		return -ENOMEM;
 	}
 
@@ -3259,7 +3259,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
 		}
 	}
 #else
-	cdf_mem_copy(wh, param_tlvs->bufp, hdr->buf_len);
+	qdf_mem_copy(wh, param_tlvs->bufp, hdr->buf_len);
 #endif
 
 	WMA_LOGD(

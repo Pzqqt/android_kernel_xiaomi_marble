@@ -308,11 +308,11 @@ static struct sir_ocb_config *hdd_ocb_config_new(int num_channels,
 		ndl_chan_list_len +
 		ndl_active_state_list_len;
 
-	cursor = cdf_mem_malloc(len);
+	cursor = qdf_mem_malloc(len);
 	if (!cursor)
 		goto fail;
 
-	cdf_mem_zero(cursor, len);
+	qdf_mem_zero(cursor, len);
 	ret = cursor;
 	cursor += sizeof(*ret);
 
@@ -333,7 +333,7 @@ static struct sir_ocb_config *hdd_ocb_config_new(int num_channels,
 	return ret;
 
 fail:
-	cdf_mem_free(ret);
+	qdf_mem_free(ret);
 	return NULL;
 }
 
@@ -540,11 +540,11 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 				rc = -EINVAL;
 				goto fail;
 			}
-			cdf_mem_copy(config->channels[
+			qdf_mem_copy(config->channels[
 				     config->channel_count].mac_address.bytes,
 				     mac_addr, sizeof(tSirMacAddr));
 			/* Save the mac address to release later */
-			cdf_mem_copy(adapter->ocb_mac_address[
+			qdf_mem_copy(adapter->ocb_mac_address[
 				     adapter->ocb_mac_addr_count].bytes,
 				     mac_addr, QDF_MAC_ADDR_SIZE);
 			adapter->ocb_mac_addr_count++;
@@ -583,7 +583,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 	rc = 0;
 
 fail:
-	cdf_mem_free(config);
+	qdf_mem_free(config);
 	return rc;
 }
 
@@ -733,12 +733,12 @@ static void wlan_hdd_ocb_config_channel_to_sir_ocb_config_channel(
 {
 	uint32_t i;
 
-	cdf_mem_zero(dest, channel_count * sizeof(*dest));
+	qdf_mem_zero(dest, channel_count * sizeof(*dest));
 
 	for (i = 0; i < channel_count; i++) {
 		dest[i].chan_freq = src[i].chan_freq;
 		dest[i].bandwidth = src[i].bandwidth;
-		cdf_mem_copy(dest[i].qos_params, src[i].qos_params,
+		qdf_mem_copy(dest[i].qos_params, src[i].qos_params,
 			     sizeof(dest[i].qos_params));
 		/*
 		 *  max_pwr and min_pwr are divided by 2 because
@@ -885,7 +885,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 				hddLog(LOGE, FL("Cannot obtain mac address"));
 				goto fail;
 			}
-			cdf_mem_copy(config->channels[i].mac_address.bytes,
+			qdf_mem_copy(config->channels[i].mac_address.bytes,
 				mac_addr, QDF_MAC_ADDR_SIZE);
 			/* Save the mac address to release later */
 			qdf_copy_macaddr(&adapter->ocb_mac_address[
@@ -905,13 +905,13 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 		hddLog(LOGE, FL("SCHEDULE_ARRAY is not the correct size"));
 		goto fail;
 	}
-	cdf_mem_copy(config->schedule, nla_data(sched_array),
+	qdf_mem_copy(config->schedule, nla_data(sched_array),
 		nla_len(sched_array));
 
 	/* Copy the NDL chan array */
 	if (ndl_chan_list_len) {
 		config->dcc_ndl_chan_list_len = ndl_chan_list_len;
-		cdf_mem_copy(config->dcc_ndl_chan_list, nla_data(ndl_chan_list),
+		qdf_mem_copy(config->dcc_ndl_chan_list, nla_data(ndl_chan_list),
 			nla_len(ndl_chan_list));
 	}
 
@@ -919,7 +919,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 	if (ndl_active_state_list_len) {
 		config->dcc_ndl_active_state_list_len =
 			ndl_active_state_list_len;
-		cdf_mem_copy(config->dcc_ndl_active_state_list,
+		qdf_mem_copy(config->dcc_ndl_active_state_list,
 			nla_data(ndl_active_state_list),
 			nla_len(ndl_active_state_list));
 	}
@@ -929,7 +929,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 		hddLog(LOGE, FL("Error while setting OCB config: %d"), rc);
 
 fail:
-	cdf_mem_free(config);
+	qdf_mem_free(config);
 	return rc;
 }
 
@@ -1026,14 +1026,14 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	utc = cdf_mem_malloc(sizeof(*utc));
+	utc = qdf_mem_malloc(sizeof(*utc));
 	if (!utc) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 	utc->vdev_id = adapter->sessionId;
-	cdf_mem_copy(utc->utc_time, nla_data(utc_attr), SIZE_UTC_TIME);
-	cdf_mem_copy(utc->time_error, nla_data(time_error_attr),
+	qdf_mem_copy(utc->utc_time, nla_data(utc_attr), SIZE_UTC_TIME);
+	qdf_mem_copy(utc->time_error, nla_data(time_error_attr),
 		SIZE_UTC_TIME_ERROR);
 
 	if (sme_ocb_set_utc_time(hdd_ctx->hHal, utc) != QDF_STATUS_SUCCESS) {
@@ -1043,7 +1043,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 		rc = 0;
 	}
 
-	cdf_mem_free(utc);
+	qdf_mem_free(utc);
 	return rc;
 }
 
@@ -1109,12 +1109,12 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	timing_advert = cdf_mem_malloc(sizeof(*timing_advert));
+	timing_advert = qdf_mem_malloc(sizeof(*timing_advert));
 	if (!timing_advert) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
-	cdf_mem_zero(timing_advert, sizeof(*timing_advert));
+	qdf_mem_zero(timing_advert, sizeof(*timing_advert));
 	timing_advert->vdev_id = adapter->sessionId;
 
 	/* Parse the netlink message */
@@ -1161,8 +1161,8 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 
 fail:
 	if (timing_advert->template_value)
-		cdf_mem_free(timing_advert->template_value);
-	cdf_mem_free(timing_advert);
+		qdf_mem_free(timing_advert->template_value);
+	qdf_mem_free(timing_advert);
 	return rc;
 }
 
@@ -1229,12 +1229,12 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	timing_advert = cdf_mem_malloc(sizeof(*timing_advert));
+	timing_advert = qdf_mem_malloc(sizeof(*timing_advert));
 	if (!timing_advert) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
-	cdf_mem_zero(timing_advert, sizeof(sizeof(*timing_advert)));
+	qdf_mem_zero(timing_advert, sizeof(sizeof(*timing_advert)));
 	timing_advert->vdev_id = adapter->sessionId;
 
 	/* Parse the netlink message */
@@ -1262,7 +1262,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 	}
 
 fail:
-	cdf_mem_free(timing_advert);
+	qdf_mem_free(timing_advert);
 	return rc;
 }
 
@@ -1477,11 +1477,11 @@ static void hdd_dcc_get_stats_callback(void *context_ptr, void *response_ptr)
 			 * request, delete it
 			 */
 			if (context->adapter->dcc_get_stats_resp) {
-				cdf_mem_free(
+				qdf_mem_free(
 				    context->adapter->dcc_get_stats_resp);
 			}
 			context->adapter->dcc_get_stats_resp =
-				cdf_mem_malloc(sizeof(
+				qdf_mem_malloc(sizeof(
 				    *context->adapter->dcc_get_stats_resp) +
 				    response->channel_stats_array_len);
 			if (context->adapter->dcc_get_stats_resp) {
@@ -1489,7 +1489,7 @@ static void hdd_dcc_get_stats_callback(void *context_ptr, void *response_ptr)
 				*hdd_resp = *response;
 				hdd_resp->channel_stats_array =
 					(void *)hdd_resp + sizeof(*hdd_resp);
-				cdf_mem_copy(hdd_resp->channel_stats_array,
+				qdf_mem_copy(hdd_resp->channel_stats_array,
 					     response->channel_stats_array,
 					     response->channel_stats_array_len);
 				context->status = 0;
@@ -1646,7 +1646,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 end:
 	spin_lock(&hdd_context_lock);
 	context.magic = 0;
-	cdf_mem_free(adapter->dcc_get_stats_resp);
+	qdf_mem_free(adapter->dcc_get_stats_resp);
 	adapter->dcc_get_stats_resp = NULL;
 	spin_unlock(&hdd_context_lock);
 	if (nl_resp)

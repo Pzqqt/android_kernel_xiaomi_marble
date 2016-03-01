@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -54,7 +54,7 @@
 		if (cdf_nbuf_len(msdu) < hdsize) {			\
 			return A_ERROR;					\
 		}							\
-		cdf_mem_copy(localbuf, wh, hdsize);			\
+		qdf_mem_copy(localbuf, wh, hdsize);			\
 		wh = (struct ieee80211_frame *)localbuf;		\
 	} while (0)
 
@@ -73,7 +73,7 @@ ol_tx_copy_native_wifi_header(cdf_nbuf_t msdu,
 	if (cdf_nbuf_len(msdu) < *hdsize)
 		return A_ERROR;
 
-	cdf_mem_copy(localbuf, wh, *hdsize);
+	qdf_mem_copy(localbuf, wh, *hdsize);
 	return A_OK;
 }
 
@@ -123,7 +123,7 @@ ol_tx_encap_from_native_wifi(struct ol_txrx_vdev_t *vdev,
 		/*add ht control field if needed */
 
 		/* copy new hd to bd */
-		cdf_mem_copy((void *)
+		qdf_mem_copy((void *)
 			     htt_tx_desc_mpdu_header(tx_desc->htt_tx_desc,
 						     new_hdsize), localbuf,
 			     new_hdsize);
@@ -147,7 +147,7 @@ ol_tx_encap_from_native_wifi(struct ol_txrx_vdev_t *vdev,
 			wh = (struct ieee80211_frame *)
 			     htt_tx_desc_mpdu_header(tx_desc->htt_tx_desc,
 						     hdsize);
-			cdf_mem_copy((void *)wh, localbuf, hdsize);
+			qdf_mem_copy((void *)wh, localbuf, hdsize);
 			cdf_nbuf_pull_head(msdu, hdsize);
 			tx_msdu_info->htt.info.l3_hdr_offset = hdsize;
 			tx_desc->orig_l2_hdr_bytes = hdsize;
@@ -193,34 +193,34 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 	switch (vdev->opmode) {
 	case wlan_op_mode_ap:
 		/* DA , BSSID , SA */
-		cdf_mem_copy(wh->i_addr1, eth_hdr->dest_addr,
+		qdf_mem_copy(wh->i_addr1, eth_hdr->dest_addr,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(wh->i_addr2, &vdev->mac_addr.raw,
+		qdf_mem_copy(wh->i_addr2, &vdev->mac_addr.raw,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(wh->i_addr3, eth_hdr->src_addr,
+		qdf_mem_copy(wh->i_addr3, eth_hdr->src_addr,
 			     IEEE80211_ADDR_LEN);
 		wh->i_fc[1] = IEEE80211_FC1_DIR_FROMDS;
 		new_hdsize = sizeof(struct ieee80211_frame);
 		break;
 	case wlan_op_mode_ibss:
 		/* DA, SA, BSSID */
-		cdf_mem_copy(wh->i_addr1, eth_hdr->dest_addr,
+		qdf_mem_copy(wh->i_addr1, eth_hdr->dest_addr,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(wh->i_addr2, eth_hdr->src_addr,
+		qdf_mem_copy(wh->i_addr2, eth_hdr->src_addr,
 			     IEEE80211_ADDR_LEN);
 		/* need to check the bssid behaviour for IBSS vdev */
-		cdf_mem_copy(wh->i_addr3, &vdev->mac_addr.raw,
+		qdf_mem_copy(wh->i_addr3, &vdev->mac_addr.raw,
 			     IEEE80211_ADDR_LEN);
 		wh->i_fc[1] = IEEE80211_FC1_DIR_NODS;
 		new_hdsize = sizeof(struct ieee80211_frame);
 		break;
 	case wlan_op_mode_sta:
 		/* BSSID, SA , DA */
-		cdf_mem_copy(wh->i_addr1, &peer->mac_addr.raw,
+		qdf_mem_copy(wh->i_addr1, &peer->mac_addr.raw,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(wh->i_addr2, eth_hdr->src_addr,
+		qdf_mem_copy(wh->i_addr2, eth_hdr->src_addr,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(wh->i_addr3, eth_hdr->dest_addr,
+		qdf_mem_copy(wh->i_addr3, eth_hdr->dest_addr,
 			     IEEE80211_ADDR_LEN);
 		wh->i_fc[1] = IEEE80211_FC1_DIR_TODS;
 		new_hdsize = sizeof(struct ieee80211_frame);
@@ -256,7 +256,7 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 		ether_type =
 			(eth_hdr->ethertype[0] << 8) | (eth_hdr->ethertype[1]);
 		if (ether_type >= IEEE8023_MAX_LEN) {
-			cdf_mem_copy(llc_hdr,
+			qdf_mem_copy(llc_hdr,
 				     ethernet_II_llc_snap_header_prefix,
 				     sizeof
 				     (ethernet_II_llc_snap_header_prefix));
@@ -273,7 +273,7 @@ ol_tx_encap_from_8023(struct ol_txrx_vdev_t *vdev,
 			  do we need to move to BD pdu? */
 		}
 	}
-	cdf_mem_copy((void *)
+	qdf_mem_copy((void *)
 		     htt_tx_desc_mpdu_header(tx_desc->htt_tx_desc,
 					     new_l2_hdsize), localbuf,
 		     new_hdsize);
@@ -325,33 +325,33 @@ ol_rx_decap_to_native_wifi(struct ol_txrx_vdev_t *vdev,
 	wh = (struct ieee80211_frame_addr4 *)cdf_nbuf_push_head(msdu, hdsize);
 	TXRX_ASSERT2(wh != NULL);
 	TXRX_ASSERT2(hdsize <= info->hdr_len);
-	cdf_mem_copy((uint8_t *) wh, info->hdr, hdsize);
+	qdf_mem_copy((uint8_t *) wh, info->hdr, hdsize);
 
 	/* amsdu subfrm handling if ethr_hdr is not NULL  */
 	if (ethr_hdr != NULL) {
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 		case IEEE80211_FC1_DIR_NODS:
-			cdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
+			qdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(wh->i_addr2, ethr_hdr->src_addr,
+			qdf_mem_copy(wh->i_addr2, ethr_hdr->src_addr,
 				     ETHERNET_ADDR_LEN);
 			break;
 		case IEEE80211_FC1_DIR_TODS:
-			cdf_mem_copy(wh->i_addr2, ethr_hdr->src_addr,
+			qdf_mem_copy(wh->i_addr2, ethr_hdr->src_addr,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(wh->i_addr3, ethr_hdr->dest_addr,
+			qdf_mem_copy(wh->i_addr3, ethr_hdr->dest_addr,
 				     ETHERNET_ADDR_LEN);
 			break;
 		case IEEE80211_FC1_DIR_FROMDS:
-			cdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
+			qdf_mem_copy(wh->i_addr1, ethr_hdr->dest_addr,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(wh->i_addr3, ethr_hdr->src_addr,
+			qdf_mem_copy(wh->i_addr3, ethr_hdr->src_addr,
 				     ETHERNET_ADDR_LEN);
 			break;
 		case IEEE80211_FC1_DIR_DSTODS:
-			cdf_mem_copy(wh->i_addr3, ethr_hdr->dest_addr,
+			qdf_mem_copy(wh->i_addr3, ethr_hdr->dest_addr,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(wh->i_addr4, ethr_hdr->src_addr,
+			qdf_mem_copy(wh->i_addr4, ethr_hdr->src_addr,
 				     ETHERNET_ADDR_LEN);
 			break;
 		}
@@ -414,27 +414,27 @@ ol_rx_decap_to_8023(struct ol_txrx_vdev_t *vdev,
 		ethr_hdr = (struct ethernet_hdr_t *)local_buf;
 		switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 		case IEEE80211_FC1_DIR_NODS:
-			cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
+			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
+			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
 				     ETHERNET_ADDR_LEN);
 			break;
 		case IEEE80211_FC1_DIR_TODS:
-			cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
+			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
+			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
 				     ETHERNET_ADDR_LEN);
 			break;
 		case IEEE80211_FC1_DIR_FROMDS:
-			cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
+			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr3,
+			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr3,
 				     ETHERNET_ADDR_LEN);
 			break;
 		case IEEE80211_FC1_DIR_DSTODS:
-			cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
+			qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
 				     ETHERNET_ADDR_LEN);
-			cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr4,
+			qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr4,
 				     ETHERNET_ADDR_LEN);
 			break;
 		}
@@ -451,7 +451,7 @@ ol_rx_decap_to_8023(struct ol_txrx_vdev_t *vdev,
 		ethr_hdr->ethertype[0] = (ether_type >> 8) & 0xff;
 		ethr_hdr->ethertype[1] = (ether_type) & 0xff;
 	}
-	cdf_mem_copy(buf, ethr_hdr, ETHERNET_HDR_LEN);
+	qdf_mem_copy(buf, ethr_hdr, ETHERNET_HDR_LEN);
 }
 
 static inline A_STATUS
@@ -466,7 +466,7 @@ ol_rx_decap_subfrm_amsdu(struct ol_txrx_vdev_t *vdev,
 	subfrm_hdr = (uint8_t *) cdf_nbuf_data(msdu);
 	if (pdev->frame_format == wlan_frm_fmt_native_wifi) {
 		/* decap to native wifi */
-		cdf_mem_copy(ether_hdr, subfrm_hdr, ETHERNET_HDR_LEN);
+		qdf_mem_copy(ether_hdr, subfrm_hdr, ETHERNET_HDR_LEN);
 		cdf_nbuf_pull_head(msdu, ETHERNET_HDR_LEN);
 		ol_rx_decap_to_native_wifi(vdev, msdu, info, ether_hdr);
 	} else if (pdev->frame_format == wlan_frm_fmt_802_3) {
@@ -474,7 +474,7 @@ ol_rx_decap_subfrm_amsdu(struct ol_txrx_vdev_t *vdev,
 			/* remove llc snap hdr if it's necessary according to
 			 * 802.11 table P-3
 			 */
-			cdf_mem_copy(ether_hdr, subfrm_hdr, ETHERNET_HDR_LEN);
+			qdf_mem_copy(ether_hdr, subfrm_hdr, ETHERNET_HDR_LEN);
 			cdf_nbuf_pull_head(msdu, ETHERNET_HDR_LEN);
 			ol_rx_decap_to_8023(vdev, msdu, info, ether_hdr);
 		} else {
@@ -507,7 +507,7 @@ ol_rx_decap_msdu(struct ol_txrx_vdev_t *vdev,
 		if (IEEE80211_QOS_HAS_SEQ(wh)) {
 			info->hdr_len = ol_txrx_ieee80211_hdrsize(wh);
 			TXRX_ASSERT2(info->hdr_len <= sizeof(info->hdr));
-			cdf_mem_copy(info->hdr, /* use info->hdr as temp buf. */
+			qdf_mem_copy(info->hdr, /* use info->hdr as temp buf. */
 				     wh, info->hdr_len);
 			cdf_nbuf_pull_head(msdu, info->hdr_len);
 			ol_rx_decap_to_native_wifi(vdev, msdu, info, NULL);
@@ -517,7 +517,7 @@ ol_rx_decap_msdu(struct ol_txrx_vdev_t *vdev,
 		if (pdev->sw_rx_llc_proc_enable) {
 			info->hdr_len = ol_txrx_ieee80211_hdrsize(wh);
 			TXRX_ASSERT2(info->hdr_len <= sizeof(info->hdr));
-			cdf_mem_copy(info->hdr, /* use info->hdr as temp buf. */
+			qdf_mem_copy(info->hdr, /* use info->hdr as temp buf. */
 				     wh, info->hdr_len);
 			cdf_nbuf_pull_head(msdu, info->hdr_len);
 			/* remove llc snap hdr if it's necessary according to
@@ -564,7 +564,7 @@ ol_rx_decap(struct ol_txrx_vdev_t *vdev,
 					ol_txrx_ieee80211_hdrsize(mpdu_hdr);
 				TXRX_ASSERT2(info->hdr_len <=
 					     sizeof(info->hdr));
-				cdf_mem_copy(info->hdr, mpdu_hdr,
+				qdf_mem_copy(info->hdr, mpdu_hdr,
 					     info->hdr_len);
 				cdf_nbuf_pull_head(msdu, info->hdr_len);
 			}

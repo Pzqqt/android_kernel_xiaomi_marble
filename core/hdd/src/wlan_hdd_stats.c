@@ -587,7 +587,7 @@ static bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 			pInfo->state = WIFI_ASSOCIATED;
 			qdf_copy_macaddr(&pInfo->bssid,
 					 &pHddStaCtx->conn_info.bssId);
-			cdf_mem_copy(pInfo->ssid,
+			qdf_mem_copy(pInfo->ssid,
 				     pHddStaCtx->conn_info.SSID.SSID.ssId,
 				     pHddStaCtx->conn_info.SSID.SSID.length);
 			/*
@@ -597,10 +597,10 @@ static bool hdd_get_interface_info(hdd_adapter_t *pAdapter,
 		}
 	}
 
-	cdf_mem_copy(pInfo->countryStr,
+	qdf_mem_copy(pInfo->countryStr,
 		     pMac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
 
-	cdf_mem_copy(pInfo->apCountryStr,
+	qdf_mem_copy(pInfo->apCountryStr,
 		     pMac->scan.countryCodeCurrent, WNI_CFG_COUNTRY_CODE_LEN);
 
 	return true;

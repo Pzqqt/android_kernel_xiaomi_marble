@@ -28,7 +28,7 @@
 /*=== includes ===*/
 /* header files for OS primitives */
 #include <osdep.h>              /* uint32_t, etc. */
-#include <cdf_memory.h>         /* cdf_mem_malloc, etc. */
+#include <qdf_mem.h>         /* qdf_mem_malloc, etc. */
 #include <qdf_types.h>          /* qdf_device_t, qdf_print */
 /* header files for utilities */
 #include <cds_queue.h>          /* TAILQ */
@@ -119,7 +119,7 @@ static int ol_txrx_peer_find_hash_attach(struct ol_txrx_pdev_t *pdev)
 	pdev->peer_hash.idx_bits = log2;
 	/* allocate an array of TAILQ peer object lists */
 	pdev->peer_hash.bins =
-		cdf_mem_malloc(hash_elems *
+		qdf_mem_malloc(hash_elems *
 			       sizeof(TAILQ_HEAD(anonymous_tail_q,
 						 ol_txrx_peer_t)));
 	if (!pdev->peer_hash.bins)
@@ -133,7 +133,7 @@ static int ol_txrx_peer_find_hash_attach(struct ol_txrx_pdev_t *pdev)
 
 static void ol_txrx_peer_find_hash_detach(struct ol_txrx_pdev_t *pdev)
 {
-	cdf_mem_free(pdev->peer_hash.bins);
+	qdf_mem_free(pdev->peer_hash.bins);
 }
 
 static inline unsigned
@@ -182,7 +182,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_vdev_find_hash(struct ol_txrx_pdev_t *pdev,
 	if (mac_addr_is_aligned) {
 		mac_addr = (union ol_txrx_align_mac_addr_t *)peer_mac_addr;
 	} else {
-		cdf_mem_copy(&local_mac_addr_aligned.raw[0],
+		qdf_mem_copy(&local_mac_addr_aligned.raw[0],
 			     peer_mac_addr, OL_TXRX_MAC_ADDR_LEN);
 		mac_addr = &local_mac_addr_aligned;
 	}
@@ -215,7 +215,7 @@ struct ol_txrx_peer_t *ol_txrx_peer_find_hash_find(struct ol_txrx_pdev_t *pdev,
 	if (mac_addr_is_aligned) {
 		mac_addr = (union ol_txrx_align_mac_addr_t *)peer_mac_addr;
 	} else {
-		cdf_mem_copy(&local_mac_addr_aligned.raw[0],
+		qdf_mem_copy(&local_mac_addr_aligned.raw[0],
 			     peer_mac_addr, OL_TXRX_MAC_ADDR_LEN);
 		mac_addr = &local_mac_addr_aligned;
 	}
@@ -310,7 +310,7 @@ static int ol_txrx_peer_find_map_attach(struct ol_txrx_pdev_t *pdev)
 	/* allocate the peer ID -> peer object map */
 	max_peers = ol_cfg_max_peer_id(pdev->ctrl_pdev) + 1;
 	peer_map_size = max_peers * sizeof(pdev->peer_id_to_obj_map[0]);
-	pdev->peer_id_to_obj_map = cdf_mem_malloc(peer_map_size);
+	pdev->peer_id_to_obj_map = qdf_mem_malloc(peer_map_size);
 	if (!pdev->peer_id_to_obj_map)
 		return 1;       /* failure */
 
@@ -321,14 +321,14 @@ static int ol_txrx_peer_find_map_attach(struct ol_txrx_pdev_t *pdev)
 	 * However, it is convenient for debugging to have all elements
 	 * that are not in use set to 0.
 	 */
-	cdf_mem_set(pdev->peer_id_to_obj_map, peer_map_size, 0);
+	qdf_mem_set(pdev->peer_id_to_obj_map, peer_map_size, 0);
 
 	return 0;               /* success */
 }
 
 static void ol_txrx_peer_find_map_detach(struct ol_txrx_pdev_t *pdev)
 {
-	cdf_mem_free(pdev->peer_id_to_obj_map);
+	qdf_mem_free(pdev->peer_id_to_obj_map);
 }
 
 static inline void

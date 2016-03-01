@@ -29,7 +29,7 @@
 #define __SME_POWER_SAVE_H
 #include "qdf_lock.h"
 #include "qdf_trace.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "qdf_types.h"
 #include "ani_system_defs.h"
 #include "sir_api.h"

@@ -70,13 +70,13 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 		goto error;
 	}
 
-	pMsg = cdf_mem_malloc(len);
+	pMsg = qdf_mem_malloc(len);
 	if (NULL == pMsg)
 		goto error;
 	else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO, "%s call",
 			  __func__);
-		cdf_mem_set(pMsg, sizeof(tSirRemainOnChnReq), 0);
+		qdf_mem_set(pMsg, sizeof(tSirRemainOnChnReq), 0);
 		pMsg->messageType = eWNI_SME_REMAIN_ON_CHANNEL_REQ;
 		pMsg->length = (uint16_t) len;
 		qdf_copy_macaddr(&pMsg->selfMacAddr, &pSession->selfMacAddr);
@@ -88,7 +88,7 @@ QDF_STATUS p2p_process_remain_on_channel_cmd(tpAniSirGlobal pMac,
 			p2pRemainonChn->u.remainChlCmd.isP2PProbeReqAllowed;
 		pMsg->scan_id = p2pRemainonChn->u.remainChlCmd.scan_id;
 		if (pMac->p2pContext.probeRspIeLength)
-			cdf_mem_copy((void *)pMsg->probeRspIe,
+			qdf_mem_copy((void *)pMsg->probeRspIe,
 				     (void *)pMac->p2pContext.probeRspIe,
 				     pMac->p2pContext.probeRspIeLength);
 		status = cds_send_mb_message_to_mac(pMsg);
@@ -196,7 +196,7 @@ QDF_STATUS sme_p2p_open(tHalHandle hHal)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* If static structure is too big, Need to change this function to allocate memory dynamically */
-	cdf_mem_zero(&pMac->p2pContext, sizeof(tp2pContext));
+	qdf_mem_zero(&pMac->p2pContext, sizeof(tp2pContext));
 
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sme_p2p_close(hHal);
@@ -210,7 +210,7 @@ QDF_STATUS p2p_stop(tHalHandle hHal)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	if (pMac->p2pContext.probeRspIe) {
-		cdf_mem_free(pMac->p2pContext.probeRspIe);
+		qdf_mem_free(pMac->p2pContext.probeRspIe);
 		pMac->p2pContext.probeRspIe = NULL;
 	}
 
@@ -224,7 +224,7 @@ QDF_STATUS sme_p2p_close(tHalHandle hHal)
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	if (pMac->p2pContext.probeRspIe) {
-		cdf_mem_free(pMac->p2pContext.probeRspIe);
+		qdf_mem_free(pMac->p2pContext.probeRspIe);
 		pMac->p2pContext.probeRspIe = NULL;
 	}
 
@@ -314,18 +314,18 @@ QDF_STATUS p2p_send_action(tHalHandle hHal, uint8_t sessionId,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_MED,
 		  " %s sends action frame", __func__);
 	msgLen = (uint16_t) ((sizeof(tSirMbMsgP2p)) + len);
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL == pMsg)
 		status = QDF_STATUS_E_NOMEM;
 	else {
-		cdf_mem_set((void *)pMsg, msgLen, 0);
+		qdf_mem_set((void *)pMsg, msgLen, 0);
 		pMsg->type = eWNI_SME_SEND_ACTION_FRAME_IND;
 		pMsg->msgLen = msgLen;
 		pMsg->sessionId = sessionId;
 		pMsg->noack = noack;
 		pMsg->channel_freq = channel_freq;
 		pMsg->wait = (uint16_t) wait;
-		cdf_mem_copy(pMsg->data, pBuf, len);
+		qdf_mem_copy(pMsg->data, pBuf, len);
 		status = cds_send_mb_message_to_mac(pMsg);
 	}
 	return status;
@@ -341,11 +341,11 @@ QDF_STATUS p2p_cancel_remain_on_channel(tHalHandle hHal,
 	/* Need to check session ID to support concurrency */
 
 	msgLen = (uint16_t) (sizeof(tSirMbMsgP2p));
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL == pMsg)
 		status = QDF_STATUS_E_NOMEM;
 	else {
-		cdf_mem_set((void *)pMsg, msgLen, 0);
+		qdf_mem_set((void *)pMsg, msgLen, 0);
 		pMsg->type = eWNI_SME_ABORT_REMAIN_ON_CHAN_IND;
 		pMsg->msgLen = msgLen;
 		pMsg->sessionId = sessionId;
@@ -363,12 +363,12 @@ QDF_STATUS p2p_set_ps(tHalHandle hHal, tP2pPsConfig *pNoA)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
-	pNoAParam = cdf_mem_malloc(sizeof(tP2pPsConfig));
+	pNoAParam = qdf_mem_malloc(sizeof(tP2pPsConfig));
 	if (NULL == pNoAParam)
 		status = QDF_STATUS_E_NOMEM;
 	else {
-		cdf_mem_set(pNoAParam, sizeof(tP2pPsConfig), 0);
-		cdf_mem_copy(pNoAParam, pNoA, sizeof(tP2pPsConfig));
+		qdf_mem_set(pNoAParam, sizeof(tP2pPsConfig), 0);
+		qdf_mem_copy(pNoAParam, pNoA, sizeof(tP2pPsConfig));
 		msg.type = eWNI_SME_UPDATE_NOA;
 		msg.bodyval = 0;
 		msg.bodyptr = pNoAParam;

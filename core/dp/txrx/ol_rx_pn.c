@@ -261,7 +261,7 @@ A_STATUS ol_rx_pn_trace_attach(ol_txrx_pdev_handle pdev)
 	pdev->rx_pn_trace.cnt = 0;
 	pdev->rx_pn_trace.mask = num_elems - 1;
 	pdev->rx_pn_trace.data =
-		cdf_mem_malloc(sizeof(*pdev->rx_pn_trace.data) * num_elems);
+		qdf_mem_malloc(sizeof(*pdev->rx_pn_trace.data) * num_elems);
 	if (!pdev->rx_pn_trace.data)
 		return A_NO_MEMORY;
 	return A_OK;
@@ -269,7 +269,7 @@ A_STATUS ol_rx_pn_trace_attach(ol_txrx_pdev_handle pdev)
 
 void ol_rx_pn_trace_detach(ol_txrx_pdev_handle pdev)
 {
-	cdf_mem_free(pdev->rx_pn_trace.data);
+	qdf_mem_free(pdev->rx_pn_trace.data);
 }
 
 void

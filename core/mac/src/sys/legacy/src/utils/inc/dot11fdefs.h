@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -45,11 +45,11 @@
 
 /* This controls how the "dot11f" code copies memory */
 #define DOT11F_MEMCPY(ctx, dst, src, len) \
-	cdf_mem_copy((uint8_t *)(dst), (uint8_t *)(src), (len))
+	qdf_mem_copy((uint8_t *)(dst), (uint8_t *)(src), (len))
 
 /* This controls how the "dot11f" code compares memory */
 #define DOT11F_MEMCMP(ctx, lhs, rhs, len) \
-	(!cdf_mem_compare((uint8_t *)(lhs), (uint8_t *)(rhs), (len)))
+	(qdf_mem_cmp((uint8_t *)(lhs), (uint8_t *)(rhs), (len)))
 
 #if defined(DBG) && (DBG != 0)
 

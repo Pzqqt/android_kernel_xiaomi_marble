@@ -1340,7 +1340,7 @@ QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: pAdapter is NULL", __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	linkspeed_req = cdf_mem_malloc(sizeof(*linkspeed_req));
+	linkspeed_req = qdf_mem_malloc(sizeof(*linkspeed_req));
 	if (NULL == linkspeed_req) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s Request Buffer Alloc Fail", __func__);
@@ -1358,7 +1358,7 @@ QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: Unable to retrieve statistics for link speed",
 		       __func__);
-		cdf_mem_free(linkspeed_req);
+		qdf_mem_free(linkspeed_req);
 	} else {
 		rc = wait_for_completion_timeout
 			(&context.completion,
@@ -1471,17 +1471,17 @@ void hdd_statistics_cb(void *pStats, void *pContext)
 		/* copy the stats into the cache we keep in the
 		 * adapter instance structure
 		 */
-		cdf_mem_copy(&pStatsCache->summary_stat, pSummaryStats,
+		qdf_mem_copy(&pStatsCache->summary_stat, pSummaryStats,
 			     sizeof(pStatsCache->summary_stat));
-		cdf_mem_copy(&pStatsCache->ClassA_stat, pClassAStats,
+		qdf_mem_copy(&pStatsCache->ClassA_stat, pClassAStats,
 			     sizeof(pStatsCache->ClassA_stat));
-		cdf_mem_copy(&pStatsCache->ClassB_stat, pClassBStats,
+		qdf_mem_copy(&pStatsCache->ClassB_stat, pClassBStats,
 			     sizeof(pStatsCache->ClassB_stat));
-		cdf_mem_copy(&pStatsCache->ClassC_stat, pClassCStats,
+		qdf_mem_copy(&pStatsCache->ClassC_stat, pClassCStats,
 			     sizeof(pStatsCache->ClassC_stat));
-		cdf_mem_copy(&pStatsCache->ClassD_stat, pClassDStats,
+		qdf_mem_copy(&pStatsCache->ClassD_stat, pClassDStats,
 			     sizeof(pStatsCache->ClassD_stat));
-		cdf_mem_copy(&pStatsCache->perStaStats, pPerStaStats,
+		qdf_mem_copy(&pStatsCache->perStaStats, pPerStaStats,
 			     sizeof(pStatsCache->perStaStats));
 	}
 
@@ -2645,7 +2645,7 @@ static int __iw_get_genie(struct net_device *dev,
 		       __func__);
 		return -EFAULT;
 	}
-	cdf_mem_copy(extra, (void *)genIeBytes, length);
+	qdf_mem_copy(extra, (void *)genIeBytes, length);
 	wrqu->data.length = length;
 
 	hddLog(LOG1, "%s: RSN IE of %d bytes returned", __func__,
@@ -2717,7 +2717,7 @@ static int __iw_get_encode(struct net_device *dev,
 	if (pRoamProfile->Keys.KeyLength[keyId] > 0) {
 		dwrq->flags |= IW_ENCODE_ENABLED;
 		dwrq->length = pRoamProfile->Keys.KeyLength[keyId];
-		cdf_mem_copy(extra, &(pRoamProfile->Keys.KeyMaterial[keyId][0]),
+		qdf_mem_copy(extra, &(pRoamProfile->Keys.KeyMaterial[keyId][0]),
 			     pRoamProfile->Keys.KeyLength[keyId]);
 
 		dwrq->flags |= (keyId + 1);
@@ -3884,7 +3884,7 @@ static int __iw_set_encode(struct net_device *dev, struct iw_request_info *info,
 		     || (eCSR_AUTH_TYPE_SHARED_KEY ==
 			 pHddStaCtx->conn_info.authType))) {
 
-			cdf_mem_copy(&pWextState->roamProfile.Keys.
+			qdf_mem_copy(&pWextState->roamProfile.Keys.
 				     KeyMaterial[keyId][0], extra, key_length);
 
 			pWextState->roamProfile.Keys.KeyLength[keyId] =
@@ -3959,7 +3959,7 @@ static int __iw_get_encodeext(struct net_device *dev,
 	if (pRoamProfile->Keys.KeyLength[keyId] > 0) {
 		dwrq->flags |= IW_ENCODE_ENABLED;
 		dwrq->length = pRoamProfile->Keys.KeyLength[keyId];
-		cdf_mem_copy(extra, &(pRoamProfile->Keys.KeyMaterial[keyId][0]),
+		qdf_mem_copy(extra, &(pRoamProfile->Keys.KeyMaterial[keyId][0]),
 			     pRoamProfile->Keys.KeyLength[keyId]);
 	} else {
 		dwrq->flags |= IW_ENCODE_DISABLED;
@@ -4080,7 +4080,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 			    && (ext->key_len <=
 				eCSR_SECURITY_WEP_KEYSIZE_MAX_BYTES)
 			    && key_index < CSR_MAX_NUM_KEY) {
-				cdf_mem_copy(&pRoamProfile->Keys.
+				qdf_mem_copy(&pRoamProfile->Keys.
 					     KeyMaterial[key_index][0],
 					     ext->key, ext->key_len);
 				pRoamProfile->Keys.KeyLength[key_index] =
@@ -4095,13 +4095,13 @@ static int __iw_set_encodeext(struct net_device *dev,
 		return ret;
 	}
 
-	cdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 
 	setKey.keyId = key_index;
 	setKey.keyLength = ext->key_len;
 
 	if (ext->key_len <= CSR_MAX_KEY_LEN) {
-		cdf_mem_copy(&setKey.Key[0], ext->key, ext->key_len);
+		qdf_mem_copy(&setKey.Key[0], ext->key, ext->key_len);
 	}
 
 	if (ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) {
@@ -4111,7 +4111,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 	} else {
 
 		setKey.keyDirection = eSIR_TX_RX;
-		cdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
+		qdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
 			     QDF_MAC_ADDR_SIZE);
 	}
 
@@ -4135,7 +4135,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 
 		setKey.encType = eCSR_ENCRYPT_TYPE_TKIP;
 
-		cdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
+		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
 
 		/* Supplicant sends the 32bytes key in this order
 		 * |--------------|----------|----------|
@@ -4152,13 +4152,13 @@ static int __iw_set_encodeext(struct net_device *dev,
 		 */
 
 		/* Copy the Temporal Key 1 (TK1) */
-		cdf_mem_copy(pKey, ext->key, 16);
+		qdf_mem_copy(pKey, ext->key, 16);
 
 		/* Copy the rx mic first */
-		cdf_mem_copy(&pKey[16], &ext->key[24], 8);
+		qdf_mem_copy(&pKey[16], &ext->key[24], 8);
 
 		/* Copy the tx mic */
-		cdf_mem_copy(&pKey[24], &ext->key[16], 8);
+		qdf_mem_copy(&pKey[24], &ext->key[16], 8);
 
 	}
 	break;
@@ -6247,7 +6247,7 @@ static int __iw_setchar_getnone(struct net_device *dev,
 				neighborReq.ssid.length =
 					(s_priv_data.length - 1) >
 					32 ? 32 : (s_priv_data.length - 1);
-				cdf_mem_copy(neighborReq.ssid.ssId,
+				qdf_mem_copy(neighborReq.ssid.ssId,
 					     pBuffer,
 					     neighborReq.ssid.length);
 			}
@@ -7903,7 +7903,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 			       apps_args[1]);
 			return -EINVAL;
 		}
-		unitTestArgs = cdf_mem_malloc(sizeof(*unitTestArgs));
+		unitTestArgs = qdf_mem_malloc(sizeof(*unitTestArgs));
 		if (NULL == unitTestArgs) {
 			hddLog(LOGE,
 			       FL("cdf_mem_alloc failed for unitTestArgs"));
@@ -7920,7 +7920,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		msg.bodyptr = unitTestArgs;
 		if (QDF_STATUS_SUCCESS !=
 		    cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
-			cdf_mem_free(unitTestArgs);
+			qdf_mem_free(unitTestArgs);
 			QDF_TRACE(QDF_MODULE_ID_HDD,
 				  QDF_TRACE_LEVEL_ERROR,
 				  FL

@@ -260,11 +260,11 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 
 	if (pRemainChanCtx->action_pkt_buff.frame_ptr != NULL
 	    && pRemainChanCtx->action_pkt_buff.frame_length != 0) {
-		cdf_mem_free(pRemainChanCtx->action_pkt_buff.frame_ptr);
+		qdf_mem_free(pRemainChanCtx->action_pkt_buff.frame_ptr);
 		pRemainChanCtx->action_pkt_buff.frame_ptr = NULL;
 		pRemainChanCtx->action_pkt_buff.frame_length = 0;
 	}
-	cdf_mem_free(pRemainChanCtx);
+	qdf_mem_free(pRemainChanCtx);
 	complete(&pAdapter->cancel_rem_on_chan_var);
 	if (QDF_STATUS_SUCCESS != status)
 		complete(&pAdapter->rem_on_chan_ready_event);
@@ -451,12 +451,12 @@ wait:
 					&roc_ctx->hdd_remain_on_chan_timer);
 			if (roc_ctx->action_pkt_buff.frame_ptr != NULL
 				&& roc_ctx->action_pkt_buff.frame_length != 0) {
-				cdf_mem_free(
+				qdf_mem_free(
 					roc_ctx->action_pkt_buff.frame_ptr);
 				roc_ctx->action_pkt_buff.frame_ptr = NULL;
 				roc_ctx->action_pkt_buff.frame_length = 0;
 			}
-			cdf_mem_free(roc_ctx);
+			qdf_mem_free(roc_ctx);
 			adapter->is_roc_inprogress = false;
 		}
 		mutex_unlock(&cfg_state->remain_on_chan_ctx_lock);
@@ -576,7 +576,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 		cfgState->remain_on_chan_ctx = NULL;
 		pAdapter->is_roc_inprogress = false;
 		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
-		cdf_mem_free(pRemainChanCtx);
+		qdf_mem_free(pRemainChanCtx);
 		return -EINVAL;
 	}
 
@@ -624,7 +624,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 			qdf_mc_timer_destroy(
 				&pRemainChanCtx->hdd_remain_on_chan_timer);
-			cdf_mem_free(pRemainChanCtx);
+			qdf_mem_free(pRemainChanCtx);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 			return -EINVAL;
 		}
@@ -660,7 +660,7 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 			mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 			qdf_mc_timer_destroy(
 				&pRemainChanCtx->hdd_remain_on_chan_timer);
-			cdf_mem_free(pRemainChanCtx);
+			qdf_mem_free(pRemainChanCtx);
 			hdd_allow_suspend(WIFI_POWER_EVENT_WAKELOCK_ROC);
 			return -EINVAL;
 		}
@@ -709,7 +709,7 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
 	 * so enqueue this RoC Request and execute sequentially later.
 	 */
 
-	hdd_roc_req = cdf_mem_malloc(sizeof(*hdd_roc_req));
+	hdd_roc_req = qdf_mem_malloc(sizeof(*hdd_roc_req));
 
 	if (NULL == hdd_roc_req) {
 		hddLog(LOGP, FL("malloc failed for roc req context"));
@@ -727,7 +727,7 @@ static int wlan_hdd_roc_request_enqueue(hdd_adapter_t *adapter,
 
 	if (QDF_STATUS_SUCCESS != status) {
 		hddLog(LOGP, FL("Not able to enqueue RoC Req context"));
-		cdf_mem_free(hdd_roc_req);
+		qdf_mem_free(hdd_roc_req);
 		return -EINVAL;
 	}
 
@@ -811,9 +811,9 @@ void wlan_hdd_roc_request_dequeue(struct work_struct *work)
 				FL("dropping RoC request"));
 		wlan_hdd_indicate_roc_drop(hdd_roc_req->pAdapter,
 					   hdd_roc_req->pRemainChanCtx);
-		cdf_mem_free(hdd_roc_req->pRemainChanCtx);
+		qdf_mem_free(hdd_roc_req->pRemainChanCtx);
 	}
-	cdf_mem_free(hdd_roc_req);
+	qdf_mem_free(hdd_roc_req);
 }
 
 static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
@@ -849,7 +849,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		hddLog(LOGE, FL("Connection is in progress"));
 		isBusy = true;
 	}
-	pRemainChanCtx = cdf_mem_malloc(sizeof(hdd_remain_on_chan_ctx_t));
+	pRemainChanCtx = qdf_mem_malloc(sizeof(hdd_remain_on_chan_ctx_t));
 	if (NULL == pRemainChanCtx) {
 		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       "%s: Not able to allocate memory for Channel context",
@@ -857,8 +857,8 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		return -ENOMEM;
 	}
 
-	cdf_mem_zero(pRemainChanCtx, sizeof(*pRemainChanCtx));
-	cdf_mem_copy(&pRemainChanCtx->chan, chan,
+	qdf_mem_zero(pRemainChanCtx, sizeof(*pRemainChanCtx));
+	qdf_mem_copy(&pRemainChanCtx->chan, chan,
 		     sizeof(struct ieee80211_channel));
 	pRemainChanCtx->duration = duration;
 	pRemainChanCtx->dev = dev;
@@ -903,14 +903,14 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 		if (status == -EBUSY) {
 			if (wlan_hdd_roc_request_enqueue(pAdapter,
 							 pRemainChanCtx)) {
-				cdf_mem_free(pRemainChanCtx);
+				qdf_mem_free(pRemainChanCtx);
 				return -EAGAIN;
 			}
 		}
 		return 0;
 	} else {
 		if (wlan_hdd_roc_request_enqueue(pAdapter, pRemainChanCtx)) {
-			cdf_mem_free(pRemainChanCtx);
+			qdf_mem_free(pRemainChanCtx);
 			return -EAGAIN;
 		}
 	}
@@ -1063,7 +1063,7 @@ void hdd_remain_chan_ready_handler(hdd_adapter_t *pAdapter,
 					 frame_length, GFP_ATOMIC);
 #endif /* LINUX_VERSION_CODE */
 
-			cdf_mem_free(pRemainChanCtx->action_pkt_buff.frame_ptr);
+			qdf_mem_free(pRemainChanCtx->action_pkt_buff.frame_ptr);
 			pRemainChanCtx->action_pkt_buff.frame_length = 0;
 			pRemainChanCtx->action_pkt_buff.freq = 0;
 			pRemainChanCtx->action_pkt_buff.frame_ptr = NULL;
@@ -1112,8 +1112,8 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 						      curr_roc_req);
 			qdf_spin_unlock(&pHddCtx->hdd_roc_req_q_lock);
 			if (qdf_status == QDF_STATUS_SUCCESS) {
-				cdf_mem_free(curr_roc_req->pRemainChanCtx);
-				cdf_mem_free(curr_roc_req);
+				qdf_mem_free(curr_roc_req->pRemainChanCtx);
+				qdf_mem_free(curr_roc_req);
 			}
 			return 0;
 		}
@@ -1507,13 +1507,13 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 send_frame:
 
 	if (!noack) {
-		cfgState->buf = cdf_mem_malloc(len);    /* buf; */
+		cfgState->buf = qdf_mem_malloc(len);    /* buf; */
 		if (cfgState->buf == NULL)
 			return -ENOMEM;
 
 		cfgState->len = len;
 
-		cdf_mem_copy(cfgState->buf, buf, len);
+		qdf_mem_copy(cfgState->buf, buf, len);
 
 		mutex_lock(&cfgState->remain_on_chan_ctx_lock);
 
@@ -1685,7 +1685,7 @@ void hdd_send_action_cnf(hdd_adapter_t *pAdapter, bool actionSendSuccess)
 		cfgState->buf, cfgState->len,
 		actionSendSuccess, GFP_KERNEL);
 
-	cdf_mem_free(cfgState->buf);
+	qdf_mem_free(cfgState->buf);
 	cfgState->buf = NULL;
 
 	complete(&pAdapter->tx_action_cnf_event);
@@ -2173,7 +2173,7 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 			/* Public action frame */
 			if ((pbFrames[WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET + 1]
 			     == SIR_MAC_ACTION_VENDOR_SPECIFIC) &&
-			    cdf_mem_compare(&pbFrames
+			    !qdf_mem_cmp(&pbFrames
 					    [WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET
 					     + 2], SIR_MAC_P2P_OUI,
 					    SIR_MAC_P2P_OUI_SIZE)) {
@@ -2297,9 +2297,9 @@ void __hdd_indicate_mgmt_frame(hdd_adapter_t *pAdapter,
 								pRemainChanCtx->
 								action_pkt_buff.
 								frame_ptr =
-									cdf_mem_malloc
+									qdf_mem_malloc
 										(nFrameLength);
-								cdf_mem_copy
+								qdf_mem_copy
 									(pRemainChanCtx->
 									action_pkt_buff.
 									frame_ptr,

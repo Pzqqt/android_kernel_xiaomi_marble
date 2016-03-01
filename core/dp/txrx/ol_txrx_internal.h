@@ -30,7 +30,7 @@
 
 #include <qdf_util.h>               /* qdf_assert */
 #include <cdf_nbuf.h>               /* cdf_nbuf_t */
-#include <cdf_memory.h>             /* cdf_mem_set */
+#include <qdf_mem.h>             /* qdf_mem_set */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
 #include <ol_htt_rx_api.h>          /* htt_rx_msdu_desc_completes_mpdu, etc. */
 
@@ -197,7 +197,7 @@ ol_rx_mpdu_list_next(struct ol_txrx_pdev_t *pdev,
 /* default conditional defs (may be undefed below) */
 
 #define TXRX_STATS_INIT(_pdev) \
-	cdf_mem_set(&((_pdev)->stats), sizeof((_pdev)->stats), 0x0)
+	qdf_mem_set(&((_pdev)->stats), sizeof((_pdev)->stats), 0x0)
 #define TXRX_STATS_ADD(_pdev, _field, _delta) {		\
 		_pdev->stats._field += _delta; }
 #define TXRX_STATS_MSDU_INCR(pdev, field, netbuf) \
@@ -495,7 +495,7 @@ NOT_IP_TCP:
 				if (frag_bytes > 0) {
 					p = cdf_nbuf_get_frag_vaddr(frm,
 								    frag_num);
-					cdf_mem_copy(&local_buf[i], p,
+					qdf_mem_copy(&local_buf[i], p,
 						     frag_bytes);
 				}
 				frag_num++;

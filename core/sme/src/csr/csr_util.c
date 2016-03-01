@@ -258,7 +258,7 @@ const char *get_e_csr_roam_result_str(eCsrRoamResult val)
 bool csr_get_bss_id_bss_desc(tHalHandle hHal, tSirBssDescription *pSirBssDesc,
 			     struct qdf_mac_addr *pBssId)
 {
-	cdf_mem_copy(pBssId, &pSirBssDesc->bssId[0],
+	qdf_mem_copy(pBssId, &pSirBssDesc->bssId[0],
 			sizeof(struct qdf_mac_addr));
 	return true;
 }
@@ -1123,20 +1123,19 @@ bool csr_is_ssid_equal(tHalHandle hHal, tSirBssDescription *pSirBssDesc1,
 			break;
 		if (pIes1->SSID.num_ssid != pIesLocal->SSID.num_ssid)
 			break;
-		cdf_mem_copy(Ssid1.ssId, pIes1->SSID.ssid,
+		qdf_mem_copy(Ssid1.ssId, pIes1->SSID.ssid,
 			     pIes1->SSID.num_ssid);
-		cdf_mem_copy(Ssid2.ssId, pIesLocal->SSID.ssid,
+		qdf_mem_copy(Ssid2.ssId, pIesLocal->SSID.ssid,
 			     pIesLocal->SSID.num_ssid);
 
-		fEqual =
-			cdf_mem_compare(Ssid1.ssId, Ssid2.ssId,
-					pIesLocal->SSID.num_ssid);
+		fEqual = (!qdf_mem_cmp(Ssid1.ssId, Ssid2.ssId,
+					pIesLocal->SSID.num_ssid));
 
 	} while (0);
 	if (pIes1)
-		cdf_mem_free(pIes1);
+		qdf_mem_free(pIes1);
 	if (pIesLocal && !pIes2)
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 
 	return fEqual;
 }
@@ -1172,7 +1171,7 @@ bool csr_is_bss_description_wme(tHalHandle hHal, tSirBssDescription *pSirBssDesc
 	}
 	if ((pIes == NULL) && (NULL != pIesTemp)) {
 		/* we allocate memory here so free it before returning */
-		cdf_mem_free(pIesTemp);
+		qdf_mem_free(pIesTemp);
 	}
 
 	return fWme;
@@ -1246,15 +1245,15 @@ QDF_STATUS csr_get_parsed_bss_description_ies(tHalHandle hHal,
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
 	if (pBssDesc && ppIEStruct) {
-		*ppIEStruct = cdf_mem_malloc(sizeof(tDot11fBeaconIEs));
+		*ppIEStruct = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 		if ((*ppIEStruct) != NULL) {
-			cdf_mem_set((void *)*ppIEStruct,
+			qdf_mem_set((void *)*ppIEStruct,
 				    sizeof(tDot11fBeaconIEs), 0);
 			status =
 				csr_parse_bss_description_ies(hHal, pBssDesc,
 							       *ppIEStruct);
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				cdf_mem_free(*ppIEStruct);
+				qdf_mem_free(*ppIEStruct);
 				*ppIEStruct = NULL;
 			}
 		} else {
@@ -2428,7 +2427,7 @@ bool csr_is_profile_wapi(tCsrRoamProfile *pProfile)
 static bool csr_is_wapi_oui_equal(tpAniSirGlobal pMac, uint8_t *Oui1,
 				  uint8_t *Oui2)
 {
-	return cdf_mem_compare(Oui1, Oui2, CSR_WAPI_OUI_SIZE);
+	return !qdf_mem_cmp(Oui1, Oui2, CSR_WAPI_OUI_SIZE);
 }
 
 static bool csr_is_wapi_oui_match(tpAniSirGlobal pMac,
@@ -2447,7 +2446,7 @@ static bool csr_is_wapi_oui_match(tpAniSirGlobal pMac,
 	}
 
 	if (fYes && Oui) {
-		cdf_mem_copy(Oui, AllCyphers[idx], CSR_WAPI_OUI_SIZE);
+		qdf_mem_copy(Oui, AllCyphers[idx], CSR_WAPI_OUI_SIZE);
 	}
 
 	return fYes;
@@ -2457,7 +2456,7 @@ static bool csr_is_wapi_oui_match(tpAniSirGlobal pMac,
 static bool csr_is_wpa_oui_equal(tpAniSirGlobal pMac, uint8_t *Oui1,
 				 uint8_t *Oui2)
 {
-	return cdf_mem_compare(Oui1, Oui2, CSR_WPA_OUI_SIZE);
+	return !qdf_mem_cmp(Oui1, Oui2, CSR_WPA_OUI_SIZE);
 }
 
 static bool csr_is_oui_match(tpAniSirGlobal pMac,
@@ -2475,7 +2474,7 @@ static bool csr_is_oui_match(tpAniSirGlobal pMac,
 	}
 
 	if (fYes && Oui) {
-		cdf_mem_copy(Oui, AllCyphers[idx], CSR_WPA_OUI_SIZE);
+		qdf_mem_copy(Oui, AllCyphers[idx], CSR_WPA_OUI_SIZE);
 	}
 
 	return fYes;
@@ -2707,13 +2706,13 @@ bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 	if (!rsn_ie->present)
 		goto end;
 	c_mcast_cipher++;
-	cdf_mem_copy(mccipher_arr, rsn_ie->gp_cipher_suite,
+	qdf_mem_copy(mccipher_arr, rsn_ie->gp_cipher_suite,
 			CSR_RSN_OUI_SIZE);
 	c_ucast_cipher =
 		(uint8_t) (rsn_ie->pwise_cipher_suite_count);
 	c_auth_suites = (uint8_t) (rsn_ie->akm_suite_count);
 	for (i = 0; i < c_auth_suites && i < CSR_RSN_MAX_AUTH_SUITES; i++) {
-		cdf_mem_copy((void *)&authsuites[i],
+		qdf_mem_copy((void *)&authsuites[i],
 			(void *)&rsn_ie->akm_suites[i], CSR_RSN_OUI_SIZE);
 	}
 
@@ -2814,14 +2813,14 @@ bool csr_get_rsn_information(tHalHandle hal, tCsrAuthList *auth_type,
 end:
 	if (acceptable_cipher) {
 		if (mcast_cipher)
-			cdf_mem_copy(mcast_cipher, multicast,
+			qdf_mem_copy(mcast_cipher, multicast,
 					CSR_RSN_OUI_SIZE);
 
 		if (ucast_cipher)
-			cdf_mem_copy(ucast_cipher, unicast, CSR_RSN_OUI_SIZE);
+			qdf_mem_copy(ucast_cipher, unicast, CSR_RSN_OUI_SIZE);
 
 		if (auth_suite)
-			cdf_mem_copy(auth_suite, authentication,
+			qdf_mem_copy(auth_suite, authentication,
 					CSR_RSN_OUI_SIZE);
 
 		if (negotiated_authtype)
@@ -2985,7 +2984,7 @@ bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
 			sms_log(pMac, LOG1,
 				"match PMKID " MAC_ADDRESS_STR " to ",
 				MAC_ADDR_ARRAY(pBSSId));
-			if (cdf_mem_compare
+			if (!qdf_mem_cmp
 			    (pBSSId, pSession->PmkidCacheInfo[Index].BSSID.bytes,
 			    sizeof(struct qdf_mac_addr))) {
 				/* match found */
@@ -2997,7 +2996,7 @@ bool csr_lookup_pmkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
 		if (!fMatchFound)
 			break;
 
-		cdf_mem_copy(pPMKId, pSession->PmkidCacheInfo[Index].PMKID,
+		qdf_mem_copy(pPMKId, pSession->PmkidCacheInfo[Index].PMKID,
 			     CSR_RSN_PMKID_SIZE);
 
 		fRC = true;
@@ -3058,12 +3057,12 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 
 		pRSNIe->Version = CSR_RSN_VERSION_SUPPORTED;
 
-		cdf_mem_copy(pRSNIe->MulticastOui, MulticastCypher,
+		qdf_mem_copy(pRSNIe->MulticastOui, MulticastCypher,
 			     sizeof(MulticastCypher));
 
 		pRSNIe->cUnicastCyphers = 1;
 
-		cdf_mem_copy(&pRSNIe->UnicastOui[0], UnicastCypher,
+		qdf_mem_copy(&pRSNIe->UnicastOui[0], UnicastCypher,
 			     sizeof(UnicastCypher));
 
 		pAuthSuite =
@@ -3071,7 +3070,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 					   UnicastOui[pRSNIe->cUnicastCyphers]);
 
 		pAuthSuite->cAuthenticationSuites = 1;
-		cdf_mem_copy(&pAuthSuite->AuthOui[0], AuthSuite,
+		qdf_mem_copy(&pAuthSuite->AuthOui[0], AuthSuite,
 			     sizeof(AuthSuite));
 
 		/* RSN capabilities follows the Auth Suite (two octects) */
@@ -3105,7 +3104,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 					 &(PMKId[0]))) {
 			pPMK->cPMKIDs = 1;
 
-			cdf_mem_copy(pPMK->PMKIDList[0].PMKID, PMKId,
+			qdf_mem_copy(pPMK->PMKIDList[0].PMKID, PMKId,
 				     CSR_RSN_PMKID_SIZE);
 		} else {
 			pPMK->cPMKIDs = 0;
@@ -3116,7 +3115,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			pGroupMgmtCipherSuite =
 				(uint8_t *) pPMK + sizeof(uint16_t) +
 				(pPMK->cPMKIDs * CSR_RSN_PMKID_SIZE);
-			cdf_mem_copy(pGroupMgmtCipherSuite, csr_rsn_oui[07],
+			qdf_mem_copy(pGroupMgmtCipherSuite, csr_rsn_oui[07],
 				     CSR_WPA_OUI_SIZE);
 		}
 #endif
@@ -3150,7 +3149,7 @@ uint8_t csr_construct_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 
 	if (!pIes && pIesLocal) {
 		/* locally allocated */
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	}
 
 	return cbRSNIe;
@@ -3199,12 +3198,12 @@ bool csr_get_wapi_information(tHalHandle hal, tCsrAuthList *auth_type,
 		goto end;
 
 	c_mcast_cipher++;
-	cdf_mem_copy(mccipher_arr, wapi_ie->multicast_cipher_suite,
+	qdf_mem_copy(mccipher_arr, wapi_ie->multicast_cipher_suite,
 			CSR_WAPI_OUI_SIZE);
 	c_ucast_cipher = (uint8_t) (wapi_ie->unicast_cipher_suite_count);
 	c_auth_suites = (uint8_t) (wapi_ie->akm_suite_count);
 	for (i = 0; i < c_auth_suites && i < CSR_WAPI_MAX_AUTH_SUITES; i++)
-		cdf_mem_copy((void *)&authsuites[i],
+		qdf_mem_copy((void *)&authsuites[i],
 			(void *)&wapi_ie->akm_suites[i], CSR_WAPI_OUI_SIZE);
 
 	wapioui_idx = csr_get_oui_index_from_cipher(encr_type);
@@ -3277,12 +3276,12 @@ bool csr_get_wapi_information(tHalHandle hal, tCsrAuthList *auth_type,
 end:
 	if (acceptable_cipher) {
 		if (mcast_cipher)
-			cdf_mem_copy(mcast_cipher, multicast,
+			qdf_mem_copy(mcast_cipher, multicast,
 					CSR_WAPI_OUI_SIZE);
 		if (ucast_cipher)
-			cdf_mem_copy(ucast_cipher, unicast, CSR_WAPI_OUI_SIZE);
+			qdf_mem_copy(ucast_cipher, unicast, CSR_WAPI_OUI_SIZE);
 		if (auth_suite)
-			cdf_mem_copy(auth_suite, authentication,
+			qdf_mem_copy(auth_suite, authentication,
 					CSR_WAPI_OUI_SIZE);
 		if (negotiated_authtype)
 			*negotiated_authtype = neg_authtype;
@@ -3322,7 +3321,7 @@ bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
 		for (Index = 0; Index < pSession->NumBkidCache; Index++) {
 			sms_log(pMac, LOGW, "match BKID " MAC_ADDRESS_STR " to ",
 				MAC_ADDR_ARRAY(pBSSId));
-			if (cdf_mem_compare
+			if (!qdf_mem_cmp
 			    (pBSSId, pSession->BkidCacheInfo[Index].BSSID.bytes,
 				    sizeof(struct qdf_mac_addr))) {
 				/* match found */
@@ -3334,7 +3333,7 @@ bool csr_lookup_bkid(tpAniSirGlobal pMac, uint32_t sessionId, uint8_t *pBSSId,
 		if (!fMatchFound)
 			break;
 
-		cdf_mem_copy(pBKId, pSession->BkidCacheInfo[Index].BKID,
+		qdf_mem_copy(pBKId, pSession->BkidCacheInfo[Index].BKID,
 			     CSR_WAPI_BKID_SIZE);
 
 		fRC = true;
@@ -3383,24 +3382,24 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 		if (!fWapiMatch)
 			break;
 
-		cdf_mem_set(pWapiIe, sizeof(tCsrWapiIe), 0);
+		qdf_mem_set(pWapiIe, sizeof(tCsrWapiIe), 0);
 
 		pWapiIe->IeHeader.ElementID = DOT11F_EID_WAPI;
 
 		pWapiIe->Version = CSR_WAPI_VERSION_SUPPORTED;
 
 		pWapiIe->cAuthenticationSuites = 1;
-		cdf_mem_copy(&pWapiIe->AuthOui[0], AuthSuite,
+		qdf_mem_copy(&pWapiIe->AuthOui[0], AuthSuite,
 			     sizeof(AuthSuite));
 
 		pWapi = (uint8_t *) (&pWapiIe->AuthOui[1]);
 
 		*pWapi = (uint16_t) 1;  /* cUnicastCyphers */
 		pWapi += 2;
-		cdf_mem_copy(pWapi, UnicastCypher, sizeof(UnicastCypher));
+		qdf_mem_copy(pWapi, UnicastCypher, sizeof(UnicastCypher));
 		pWapi += sizeof(UnicastCypher);
 
-		cdf_mem_copy(pWapi, MulticastCypher, sizeof(MulticastCypher));
+		qdf_mem_copy(pWapi, MulticastCypher, sizeof(MulticastCypher));
 		pWapi += sizeof(MulticastCypher);
 
 		/* WAPI capabilities follows the Auth Suite (two octects) */
@@ -3416,7 +3415,7 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 			/* Do we need to change the endianness here */
 			*pWapi = (uint16_t) 1;  /* cBKIDs */
 			pWapi += 2;
-			cdf_mem_copy(pWapi, BKId, CSR_WAPI_BKID_SIZE);
+			qdf_mem_copy(pWapi, BKId, CSR_WAPI_BKID_SIZE);
 		} else {
 			*pWapi = 0;
 			pWapi += 1;
@@ -3442,7 +3441,7 @@ uint8_t csr_construct_wapi_ie(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	if (!pIes && pIesLocal) {
 		/* locally allocated */
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	}
 
 	return cbWapiIe;
@@ -3487,7 +3486,7 @@ bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 	if (!wpa_ie->present)
 		goto end;
 	c_mcast_cipher = 1;
-	cdf_mem_copy(mccipher_arr, wpa_ie->multicast_cipher, CSR_WPA_OUI_SIZE);
+	qdf_mem_copy(mccipher_arr, wpa_ie->multicast_cipher, CSR_WPA_OUI_SIZE);
 	c_ucast_cipher = (uint8_t) (wpa_ie->unicast_cipher_count);
 	c_auth_suites = (uint8_t) (wpa_ie->auth_suite_count);
 
@@ -3558,15 +3557,15 @@ bool csr_get_wpa_cyphers(tpAniSirGlobal mac_ctx, tCsrAuthList *auth_type,
 end:
 	if (acceptable_cipher) {
 		if (mcast_cipher)
-			cdf_mem_copy((uint8_t **) mcast_cipher, multicast,
+			qdf_mem_copy((uint8_t **) mcast_cipher, multicast,
 					CSR_WPA_OUI_SIZE);
 
 		if (ucast_cipher)
-			cdf_mem_copy((uint8_t **) ucast_cipher, unicast,
+			qdf_mem_copy((uint8_t **) ucast_cipher, unicast,
 					CSR_WPA_OUI_SIZE);
 
 		if (auth_suite)
-			cdf_mem_copy((uint8_t **) auth_suite, authentication,
+			qdf_mem_copy((uint8_t **) auth_suite, authentication,
 					CSR_WPA_OUI_SIZE);
 
 		if (negotiated_authtype)
@@ -3630,16 +3629,16 @@ uint8_t csr_construct_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
 
 		pWpaIe->IeHeader.ElementID = SIR_MAC_WPA_EID;
 
-		cdf_mem_copy(pWpaIe->Oui, csr_wpa_oui[01], sizeof(pWpaIe->Oui));
+		qdf_mem_copy(pWpaIe->Oui, csr_wpa_oui[01], sizeof(pWpaIe->Oui));
 
 		pWpaIe->Version = CSR_WPA_VERSION_SUPPORTED;
 
-		cdf_mem_copy(pWpaIe->MulticastOui, MulticastCypher,
+		qdf_mem_copy(pWpaIe->MulticastOui, MulticastCypher,
 			     sizeof(MulticastCypher));
 
 		pWpaIe->cUnicastCyphers = 1;
 
-		cdf_mem_copy(&pWpaIe->UnicastOui[0], UnicastCypher,
+		qdf_mem_copy(&pWpaIe->UnicastOui[0], UnicastCypher,
 			     sizeof(UnicastCypher));
 
 		pAuthSuite =
@@ -3647,7 +3646,7 @@ uint8_t csr_construct_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
 					   UnicastOui[pWpaIe->cUnicastCyphers]);
 
 		pAuthSuite->cAuthenticationSuites = 1;
-		cdf_mem_copy(&pAuthSuite->AuthOui[0], AuthSuite,
+		qdf_mem_copy(&pAuthSuite->AuthOui[0], AuthSuite,
 			     sizeof(AuthSuite));
 
 		/* The WPA capabilities follows the Auth Suite (two octects)-- */
@@ -3669,7 +3668,7 @@ uint8_t csr_construct_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
 
 	if (!pIes && pIesLocal) {
 		/* locally allocated */
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	}
 
 	return cbWpaIe;
@@ -3691,7 +3690,7 @@ uint8_t csr_retrieve_wpa_ie(tHalHandle hHal, tCsrRoamProfile *pProfile,
 			if (SIR_MAC_WPA_IE_MAX_LENGTH >=
 			    pProfile->nWPAReqIELength) {
 				cbWpaIe = (uint8_t) pProfile->nWPAReqIELength;
-				cdf_mem_copy(pWpaIe, pProfile->pWPAReqIE,
+				qdf_mem_copy(pWpaIe, pProfile->pWPAReqIE,
 					     cbWpaIe);
 			} else {
 				sms_log(pMac, LOGW,
@@ -3732,7 +3731,7 @@ uint8_t csr_retrieve_rsn_ie(tHalHandle hHal, uint32_t sessionId,
 			if (SIR_MAC_WPA_IE_MAX_LENGTH >=
 			    pProfile->nRSNReqIELength) {
 				cbRsnIe = (uint8_t) pProfile->nRSNReqIELength;
-				cdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
+				qdf_mem_copy(pRsnIe, pProfile->pRSNReqIE,
 					     cbRsnIe);
 			} else {
 				sms_log(pMac, LOGW,
@@ -3767,7 +3766,7 @@ uint8_t csr_retrieve_wapi_ie(tHalHandle hHal, uint32_t sessionId,
 			if (DOT11F_IE_WAPI_MAX_LEN >=
 			    pProfile->nWAPIReqIELength) {
 				cbWapiIe = (uint8_t) pProfile->nWAPIReqIELength;
-				cdf_mem_copy(pWapiIe, pProfile->pWAPIReqIE,
+				qdf_mem_copy(pWapiIe, pProfile->pWAPIReqIE,
 					     cbWapiIe);
 			} else {
 				sms_log(pMac, LOGW,
@@ -3965,18 +3964,18 @@ bool csr_validate_wep(tpAniSirGlobal mac_ctx, eCsrEncryptionType uc_encry_type,
 
 	/* else we can use the encryption type directly */
 	if (ie_ptr->WPA.present) {
-		match = cdf_mem_compare(ie_ptr->WPA.multicast_cipher,
+		match = (!qdf_mem_cmp(ie_ptr->WPA.multicast_cipher,
 				csr_wpa_oui[csr_get_oui_index_from_cipher(
 					uc_encry_type)],
-				CSR_WPA_OUI_SIZE);
+				CSR_WPA_OUI_SIZE));
 		if (match)
 			goto end;
 	}
 	if (ie_ptr->RSN.present) {
-		match = cdf_mem_compare(ie_ptr->RSN.gp_cipher_suite,
+		match = (!qdf_mem_cmp(ie_ptr->RSN.gp_cipher_suite,
 				csr_rsn_oui[csr_get_oui_index_from_cipher(
 					uc_encry_type)],
-				CSR_RSN_OUI_SIZE);
+				CSR_RSN_OUI_SIZE));
 	}
 
 
@@ -4292,7 +4291,7 @@ bool csr_is_ssid_match(tpAniSirGlobal pMac, uint8_t *ssid1, uint8_t ssid1Len,
 
 		if (ssid1Len != bssSsidLen)
 			break;
-		if (cdf_mem_compare(bssSsid, ssid1, bssSsidLen)) {
+		if (!qdf_mem_cmp(bssSsid, ssid1, bssSsidLen)) {
 			fMatch = true;
 			break;
 		}
@@ -4317,9 +4316,9 @@ bool csr_is_ssid_in_list(tHalHandle hHal, tSirMacSSid *pSsid,
 			    ||
 			    ((pSsidList->SSIDList[i].SSID.length ==
 			      pSsid->length)
-			     && cdf_mem_compare(pSsid->ssId,
+			     && (!qdf_mem_cmp(pSsid->ssId,
 						pSsidList->SSIDList[i].SSID.
-						ssId, pSsid->length))) {
+						ssId, pSsid->length)))) {
 				fMatch = true;
 				break;
 			}
@@ -4337,7 +4336,7 @@ bool csr_is_bssid_match(tHalHandle hHal, struct qdf_mac_addr *pProfBssid,
 
 	/* for efficiency of the MAC_ADDRESS functions, move the */
 	/* Bssid's into MAC_ADDRESS structs. */
-	cdf_mem_copy(&ProfileBssid, pProfBssid, sizeof(struct qdf_mac_addr));
+	qdf_mem_copy(&ProfileBssid, pProfBssid, sizeof(struct qdf_mac_addr));
 
 	do {
 
@@ -4845,7 +4844,7 @@ end:
 	if (ie_dblptr)
 		*ie_dblptr = ie_ptr;
 	else if (ie_ptr)
-		cdf_mem_free(ie_ptr);
+		qdf_mem_free(ie_ptr);
 	return rc;
 }
 
@@ -4933,7 +4932,7 @@ bool csr_match_bss_to_connect_profile(tHalHandle hHal,
 
 	if (!pIes && pIesLocal) {
 		/* locally allocated */
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	}
 
 	return fRC;
@@ -5169,57 +5168,57 @@ void csr_release_profile(tpAniSirGlobal pMac, tCsrRoamProfile *pProfile)
 {
 	if (pProfile) {
 		if (pProfile->BSSIDs.bssid) {
-			cdf_mem_free(pProfile->BSSIDs.bssid);
+			qdf_mem_free(pProfile->BSSIDs.bssid);
 			pProfile->BSSIDs.bssid = NULL;
 		}
 		if (pProfile->SSIDs.SSIDList) {
-			cdf_mem_free(pProfile->SSIDs.SSIDList);
+			qdf_mem_free(pProfile->SSIDs.SSIDList);
 			pProfile->SSIDs.SSIDList = NULL;
 		}
 		if (pProfile->pWPAReqIE) {
-			cdf_mem_free(pProfile->pWPAReqIE);
+			qdf_mem_free(pProfile->pWPAReqIE);
 			pProfile->pWPAReqIE = NULL;
 		}
 		if (pProfile->pRSNReqIE) {
-			cdf_mem_free(pProfile->pRSNReqIE);
+			qdf_mem_free(pProfile->pRSNReqIE);
 			pProfile->pRSNReqIE = NULL;
 		}
 #ifdef FEATURE_WLAN_WAPI
 		if (pProfile->pWAPIReqIE) {
-			cdf_mem_free(pProfile->pWAPIReqIE);
+			qdf_mem_free(pProfile->pWAPIReqIE);
 			pProfile->pWAPIReqIE = NULL;
 		}
 #endif /* FEATURE_WLAN_WAPI */
 
 		if (pProfile->pAddIEScan) {
-			cdf_mem_free(pProfile->pAddIEScan);
+			qdf_mem_free(pProfile->pAddIEScan);
 			pProfile->pAddIEScan = NULL;
 		}
 
 		if (pProfile->pAddIEAssoc) {
-			cdf_mem_free(pProfile->pAddIEAssoc);
+			qdf_mem_free(pProfile->pAddIEAssoc);
 			pProfile->pAddIEAssoc = NULL;
 		}
 		if (pProfile->ChannelInfo.ChannelList) {
-			cdf_mem_free(pProfile->ChannelInfo.ChannelList);
+			qdf_mem_free(pProfile->ChannelInfo.ChannelList);
 			pProfile->ChannelInfo.ChannelList = NULL;
 		}
-		cdf_mem_set(pProfile, sizeof(tCsrRoamProfile), 0);
+		qdf_mem_set(pProfile, sizeof(tCsrRoamProfile), 0);
 	}
 }
 
 void csr_free_scan_filter(tpAniSirGlobal pMac, tCsrScanResultFilter *pScanFilter)
 {
 	if (pScanFilter->BSSIDs.bssid) {
-		cdf_mem_free(pScanFilter->BSSIDs.bssid);
+		qdf_mem_free(pScanFilter->BSSIDs.bssid);
 		pScanFilter->BSSIDs.bssid = NULL;
 	}
 	if (pScanFilter->ChannelInfo.ChannelList) {
-		cdf_mem_free(pScanFilter->ChannelInfo.ChannelList);
+		qdf_mem_free(pScanFilter->ChannelInfo.ChannelList);
 		pScanFilter->ChannelInfo.ChannelList = NULL;
 	}
 	if (pScanFilter->SSIDs.SSIDList) {
-		cdf_mem_free(pScanFilter->SSIDs.SSIDList);
+		qdf_mem_free(pScanFilter->SSIDs.SSIDList);
 		pScanFilter->SSIDs.SSIDList = NULL;
 	}
 }
@@ -5230,7 +5229,7 @@ void csr_free_roam_profile(tpAniSirGlobal pMac, uint32_t sessionId)
 
 	if (pSession->pCurRoamProfile) {
 		csr_release_profile(pMac, pSession->pCurRoamProfile);
-		cdf_mem_free(pSession->pCurRoamProfile);
+		qdf_mem_free(pSession->pCurRoamProfile);
 		pSession->pCurRoamProfile = NULL;
 	}
 }
@@ -5240,7 +5239,7 @@ void csr_free_connect_bss_desc(tpAniSirGlobal pMac, uint32_t sessionId)
 	tCsrRoamSession *pSession = &pMac->roam.roamSession[sessionId];
 
 	if (pSession->pConnectBssDesc) {
-		cdf_mem_free(pSession->pConnectBssDesc);
+		qdf_mem_free(pSession->pConnectBssDesc);
 		pSession->pConnectBssDesc = NULL;
 	}
 }
@@ -5452,7 +5451,7 @@ bool csr_match_country_code(tpAniSirGlobal pMac, uint8_t *pCountry,
 			for (i = 0; i < WNI_CFG_COUNTRY_CODE_LEN - 1; i++) {
 				pCountry[i] = csr_to_upper(pCountry[i]);
 			}
-			if (!cdf_mem_compare(pIes->Country.country, pCountry,
+			if (qdf_mem_cmp(pIes->Country.country, pCountry,
 					     WNI_CFG_COUNTRY_CODE_LEN - 1)) {
 				fRet = false;
 				break;
@@ -5472,7 +5471,7 @@ QDF_STATUS csr_get_modify_profile_fields(tpAniSirGlobal pMac, uint32_t sessionId
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_copy(pModifyProfileFields,
+	qdf_mem_copy(pModifyProfileFields,
 		     &pMac->roam.roamSession[sessionId].connectedProfile.
 		     modifyProfileFields, sizeof(tCsrRoamModifyProfileFields));
 
@@ -5485,7 +5484,7 @@ QDF_STATUS csr_set_modify_profile_fields(tpAniSirGlobal pMac, uint32_t sessionId
 {
 	tCsrRoamSession *pSession = CSR_GET_SESSION(pMac, sessionId);
 
-	cdf_mem_copy(&pSession->connectedProfile.modifyProfileFields,
+	qdf_mem_copy(&pSession->connectedProfile.modifyProfileFields,
 		     pModifyProfileFields, sizeof(tCsrRoamModifyProfileFields));
 
 	return QDF_STATUS_SUCCESS;
@@ -5633,7 +5632,7 @@ void csr_diag_event_report(tpAniSirGlobal pmac, uint16_t event_type,
 {
 	WLAN_HOST_DIAG_EVENT_DEF(diag_event, host_event_wlan_pe_payload_type);
 
-	cdf_mem_zero(&diag_event, sizeof(host_event_wlan_pe_payload_type));
+	qdf_mem_zero(&diag_event, sizeof(host_event_wlan_pe_payload_type));
 
 	/* diag_event.bssid is already all zeroes */
 	diag_event.sme_state = sme_get_lim_sme_state(pmac);

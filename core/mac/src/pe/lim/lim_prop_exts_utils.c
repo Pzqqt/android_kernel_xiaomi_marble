@@ -87,13 +87,13 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 	tSirRetStatus cfg_set_status = eSIR_FAILURE;
 	tSirRetStatus cfg_get_status = eSIR_FAILURE;
 
-	beacon_struct = cdf_mem_malloc(sizeof(tSirProbeRespBeacon));
+	beacon_struct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == beacon_struct) {
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 		return;
 	}
 
-	cdf_mem_set((uint8_t *) beacon_struct, sizeof(tSirProbeRespBeacon), 0);
+	qdf_mem_set((uint8_t *) beacon_struct, sizeof(tSirProbeRespBeacon), 0);
 	*qos_cap = 0;
 	*prop_cap = 0;
 	*uapsd = 0;
@@ -239,7 +239,7 @@ lim_extract_ap_capability(tpAniSirGlobal mac_ctx, uint8_t *p_ie,
 		if (beacon_struct->countryInfoPresent)
 			session->country_info_present = true;
 	}
-	cdf_mem_free(beacon_struct);
+	qdf_mem_free(beacon_struct);
 	return;
 } /****** end lim_extract_ap_capability() ******/
 

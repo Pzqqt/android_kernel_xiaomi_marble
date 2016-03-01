@@ -205,7 +205,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 			  __func__);
 		return QDF_STATUS_E_INVAL;
 	}
-	cdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
+	qdf_mem_zero(pSchedContext, sizeof(cds_sched_context));
 	pSchedContext->pVContext = p_cds_context;
 	vStatus = cds_sched_init_mqs(pSchedContext);
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
@@ -604,7 +604,7 @@ void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 			typeof(*pkt), list);
 		list_del(&pkt->list);
 		spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
-		cdf_mem_free(pkt);
+		qdf_mem_free(pkt);
 		spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 	}
 	spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
@@ -625,7 +625,7 @@ static QDF_STATUS cds_alloc_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext)
 	int i;
 
 	for (i = 0; i < CDS_MAX_OL_RX_PKT; i++) {
-		pkt = cdf_mem_malloc(sizeof(*pkt));
+		pkt = qdf_mem_malloc(sizeof(*pkt));
 		if (!pkt) {
 			QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 				  "%s Vos packet allocation for ol rx thread failed",
@@ -646,7 +646,7 @@ free:
 				 list) {
 		list_del(&pkt->list);
 		spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
-		cdf_mem_free(pkt);
+		qdf_mem_free(pkt);
 		spin_lock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
 	}
 	spin_unlock_bh(&pSchedContext->cds_ol_rx_pkt_freeq_lock);
@@ -1060,7 +1060,7 @@ void cds_sched_flush_mc_mqs(p_cds_sched_context pSchedContext)
 				  "%s: Freeing MC WMA MSG message type %d",
 				  __func__, pMsgWrapper->pVosMsg->type);
 			if (pMsgWrapper->pVosMsg->bodyptr) {
-				cdf_mem_free((void *)pMsgWrapper->
+				qdf_mem_free((void *)pMsgWrapper->
 					     pVosMsg->bodyptr);
 			}
 

@@ -392,7 +392,7 @@ sch_bcn_process_sta_bt_amp_sta(tpAniSirGlobal mac_ctx,
 		return false;
 
 	beaconParams->bssIdx = *bssIdx;
-	cdf_mem_copy((uint8_t *) &session->lastBeaconTimeStamp,
+	qdf_mem_copy((uint8_t *) &session->lastBeaconTimeStamp,
 			(uint8_t *) bcn->timeStamp, sizeof(uint64_t));
 	session->lastBeaconDtimCount = bcn->tim.dtimCount;
 	session->lastBeaconDtimPeriod = bcn->tim.dtimPeriod;
@@ -727,7 +727,7 @@ static void __sch_beacon_process_for_session(tpAniSirGlobal mac_ctx,
 #if defined FEATURE_WLAN_ESE || defined WLAN_FEATURE_VOWIFI
 	int8_t regMax = 0, maxTxPower = 0;
 #endif
-	cdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
+	qdf_mem_zero(&beaconParams, sizeof(tUpdateBeaconParams));
 	beaconParams.paramChangeBitmap = 0;
 
 	if (LIM_IS_IBSS_ROLE(session)) {
@@ -863,7 +863,7 @@ sch_beacon_process(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	tpPESession ap_session = NULL;
 	uint8_t i;
 
-	cdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
+	qdf_mem_zero(&bcn_prm, sizeof(tUpdateBeaconParams));
 	bcn_prm.paramChangeBitmap = 0;
 	mac_ctx->sch.gSchBcnRcvCnt++;
 	/* Convert the beacon frame into a structure */

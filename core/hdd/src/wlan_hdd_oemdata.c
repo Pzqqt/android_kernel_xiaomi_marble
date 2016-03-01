@@ -69,7 +69,7 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 		hdd_err("HDD configuration is null");
 		return -EINVAL;
 	}
-	chan_list = cdf_mem_malloc(sizeof(uint8_t) * OEM_CAP_MAX_NUM_CHANNELS);
+	chan_list = qdf_mem_malloc(sizeof(uint8_t) * OEM_CAP_MAX_NUM_CHANNELS);
 	if (NULL == chan_list) {
 		hdd_err("Memory allocation failed");
 		return -ENOMEM;
@@ -99,7 +99,7 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 					    &chan_list[0], &num_chan);
 	if (QDF_STATUS_SUCCESS != status) {
 		hdd_err("failed to get valid channel list, status: %d", status);
-		cdf_mem_free(chan_list);
+		qdf_mem_free(chan_list);
 		return -EINVAL;
 	}
 
@@ -107,15 +107,15 @@ static int populate_oem_data_cap(hdd_adapter_t *adapter,
 	if (num_chan > OEM_CAP_MAX_NUM_CHANNELS) {
 		hdd_err("Num of channels-%d > length-%d of chan_list",
 			num_chan, OEM_CAP_MAX_NUM_CHANNELS);
-		cdf_mem_free(chan_list);
+		qdf_mem_free(chan_list);
 		return -ENOMEM;
 	}
 
 	data_cap->num_channels = num_chan;
-	cdf_mem_copy(data_cap->channel_list, chan_list,
+	qdf_mem_copy(data_cap->channel_list, chan_list,
 		     sizeof(uint8_t) * num_chan);
 
-	cdf_mem_free(chan_list);
+	qdf_mem_free(chan_list);
 	return 0;
 }
 
@@ -344,7 +344,7 @@ void hdd_send_oem_data_rsp_msg(int length, uint8_t *oemDataRsp)
 	aniHdr->length = length;
 	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + aniHdr->length));
 	oemData = (uint8_t *) ((char *)aniHdr + sizeof(tAniMsgHdr));
-	cdf_mem_copy(oemData, oemDataRsp, length);
+	qdf_mem_copy(oemData, oemDataRsp, length);
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + aniHdr->length)));
 
@@ -387,16 +387,16 @@ static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
+	qdf_mem_zero(&oemDataReqConfig, sizeof(tOemDataReqConfig));
 
-	oemDataReqConfig.data = cdf_mem_malloc(oemDataLen);
+	oemDataReqConfig.data = qdf_mem_malloc(oemDataLen);
 	if (!oemDataReqConfig.data) {
 		hddLog(LOGE, FL("malloc failed for data req buffer"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	oemDataReqConfig.data_len = oemDataLen;
-	cdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
+	qdf_mem_copy(oemDataReqConfig.data, oemData, oemDataLen);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s: calling sme_oem_data_req", __func__);
@@ -406,7 +406,7 @@ static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 				  &oemDataReqConfig,
 				  &oemDataReqID);
 
-	cdf_mem_free(oemDataReqConfig.data);
+	qdf_mem_free(oemDataReqConfig.data);
 	oemDataReqConfig.data = NULL;
 
 	return status;
@@ -510,7 +510,7 @@ static int oem_process_channel_info_req_msg(int numOfChannels, char *chanList)
 			hddChanInfo.reg_info_1 = 0;
 			hddChanInfo.reg_info_2 = 0;
 		}
-		cdf_mem_copy(pHddChanInfo, &hddChanInfo,
+		qdf_mem_copy(pHddChanInfo, &hddChanInfo,
 			     sizeof(tHddChannelInfo));
 	}
 
@@ -575,7 +575,7 @@ static int oem_process_set_cap_req_msg(int oem_cap_len,
 
 	/* message body will contain only status code */
 	buf = (char *)((char *)ani_hdr + sizeof(tAniMsgHdr));
-	cdf_mem_copy(buf, &error_code, ani_hdr->length);
+	qdf_mem_copy(buf, &error_code, ani_hdr->length);
 
 	skb_put(skb, NLMSG_SPACE(sizeof(tAniMsgHdr) + ani_hdr->length));
 
@@ -636,12 +636,12 @@ static int oem_process_get_cap_req_msg(void)
 	nlh->nlmsg_len = NLMSG_LENGTH((sizeof(tAniMsgHdr) + ani_hdr->length));
 
 	buf = (char *)((char *)ani_hdr + sizeof(tAniMsgHdr));
-	cdf_mem_copy(buf, &data_cap, sizeof(data_cap));
+	qdf_mem_copy(buf, &data_cap, sizeof(data_cap));
 
 	buf = (char *) buf +  sizeof(data_cap);
-	cdf_mem_zero(&oem_cap, sizeof(oem_cap));
+	qdf_mem_zero(&oem_cap, sizeof(oem_cap));
 	sme_oem_get_capability(p_hdd_ctx->hHal, &oem_cap);
-	cdf_mem_copy(buf, &oem_cap, sizeof(oem_cap));
+	qdf_mem_copy(buf, &oem_cap, sizeof(oem_cap));
 
 	skb_put(skb, NLMSG_SPACE((sizeof(tAniMsgHdr) + ani_hdr->length)));
 	hdd_info("send rsp to oem-pid:%d for get_capability",
@@ -711,7 +711,7 @@ void hdd_send_peer_status_ind_to_oem_app(struct qdf_mac_addr *peerMac,
 
 	pPeerInfo = (tPeerStatusInfo *) ((char *)aniHdr + sizeof(tAniMsgHdr));
 
-	cdf_mem_copy(pPeerInfo->peer_mac_addr, peerMac->bytes,
+	qdf_mem_copy(pPeerInfo->peer_mac_addr, peerMac->bytes,
 		     sizeof(peerMac->bytes));
 	pPeerInfo->peer_status = peerStatus;
 	pPeerInfo->vdev_id = sessionId;

@@ -28,7 +28,7 @@
 /*=== header file includes ===*/
 /* generic utilities */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
-#include <cdf_memory.h>         /* cdf_mem_malloc */
+#include <qdf_mem.h>         /* qdf_mem_malloc */
 
 #include <ieee80211.h>          /* IEEE80211_SEQ_MAX */
 
@@ -492,9 +492,9 @@ ol_rx_addba_handler(ol_txrx_pdev_handle pdev,
 	round_pwr2_win_sz = OL_RX_REORDER_ROUND_PWR2(win_sz);
 	array_size =
 		round_pwr2_win_sz * sizeof(struct ol_rx_reorder_array_elem_t);
-	rx_reorder->array = cdf_mem_malloc(array_size);
+	rx_reorder->array = qdf_mem_malloc(array_size);
 	TXRX_ASSERT1(rx_reorder->array);
-	cdf_mem_set(rx_reorder->array, array_size, 0x0);
+	qdf_mem_set(rx_reorder->array, array_size, 0x0);
 
 	rx_reorder->win_sz_mask = round_pwr2_win_sz - 1;
 	rx_reorder->num_mpdus = 0;
@@ -529,7 +529,7 @@ ol_rx_delba_handler(ol_txrx_pdev_handle pdev, uint16_t peer_id, uint8_t tid)
 	if (rx_reorder->array != &rx_reorder->base) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "%s, delete reorder array, tid:%d\n", __func__, tid);
-		cdf_mem_free(rx_reorder->array);
+		qdf_mem_free(rx_reorder->array);
 	}
 
 	/* set up the TID with default parameters (ARQ window size = 1) */
@@ -733,7 +733,7 @@ A_STATUS ol_rx_reorder_trace_attach(ol_txrx_pdev_handle pdev)
 	pdev->rx_reorder_trace.idx = 0;
 	pdev->rx_reorder_trace.cnt = 0;
 	pdev->rx_reorder_trace.mask = num_elems - 1;
-	pdev->rx_reorder_trace.data = cdf_mem_malloc(
+	pdev->rx_reorder_trace.data = qdf_mem_malloc(
 		sizeof(*pdev->rx_reorder_trace.data) * num_elems);
 	if (!pdev->rx_reorder_trace.data)
 		return A_NO_MEMORY;
@@ -746,7 +746,7 @@ A_STATUS ol_rx_reorder_trace_attach(ol_txrx_pdev_handle pdev)
 
 void ol_rx_reorder_trace_detach(ol_txrx_pdev_handle pdev)
 {
-	cdf_mem_free(pdev->rx_reorder_trace.data);
+	qdf_mem_free(pdev->rx_reorder_trace.data);
 }
 
 void

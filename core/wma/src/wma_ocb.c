@@ -55,7 +55,7 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	 */
 	if (status == QDF_STATUS_SUCCESS && vdev && req) {
 		if (vdev->ocb_channel_info)
-			cdf_mem_free(vdev->ocb_channel_info);
+			qdf_mem_free(vdev->ocb_channel_info);
 		vdev->ocb_channel_count =
 			req->channel_count;
 		if (req->channel_count) {
@@ -63,10 +63,10 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 			int buf_size = sizeof(*vdev->ocb_channel_info) *
 			    req->channel_count;
 			vdev->ocb_channel_info =
-				cdf_mem_malloc(buf_size);
+				qdf_mem_malloc(buf_size);
 			if (!vdev->ocb_channel_info)
 				return -ENOMEM;
-			cdf_mem_zero(vdev->ocb_channel_info, buf_size);
+			qdf_mem_zero(vdev->ocb_channel_info, buf_size);
 			for (i = 0; i < req->channel_count; i++) {
 				vdev->ocb_channel_info[i].chan_freq =
 					req->channels[i].chan_freq;
@@ -81,10 +81,10 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	}
 
 	/* Free the configuration that was saved in wma_ocb_set_config. */
-	cdf_mem_free(wma_handle->ocb_config_req);
+	qdf_mem_free(wma_handle->ocb_config_req);
 	wma_handle->ocb_config_req = NULL;
 
-	resp = cdf_mem_malloc(sizeof(*resp));
+	resp = qdf_mem_malloc(sizeof(*resp));
 	if (!resp)
 		return -ENOMEM;
 
@@ -96,7 +96,7 @@ int wma_ocb_set_config_resp(tp_wma_handle wma_handle, uint8_t status)
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Fail to post msg to SME"));
-		cdf_mem_free(resp);
+		qdf_mem_free(resp);
 		return -EINVAL;
 	}
 
@@ -121,7 +121,7 @@ static struct sir_ocb_config *copy_sir_ocb_config(struct sir_ocb_config *src)
 		src->dcc_ndl_chan_list_len +
 		src->dcc_ndl_active_state_list_len;
 
-	dst = cdf_mem_malloc(length);
+	dst = qdf_mem_malloc(length);
 	if (!dst)
 		return NULL;
 
@@ -131,19 +131,19 @@ static struct sir_ocb_config *copy_sir_ocb_config(struct sir_ocb_config *src)
 	cursor += sizeof(*dst);
 	dst->channels = cursor;
 	cursor += src->channel_count * sizeof(*dst->channels);
-	cdf_mem_copy(dst->channels, src->channels,
+	qdf_mem_copy(dst->channels, src->channels,
 		     src->channel_count * sizeof(*dst->channels));
 	dst->schedule = cursor;
 	cursor += src->schedule_size * sizeof(*dst->schedule);
-	cdf_mem_copy(dst->schedule, src->schedule,
+	qdf_mem_copy(dst->schedule, src->schedule,
 		     src->schedule_size * sizeof(*dst->schedule));
 	dst->dcc_ndl_chan_list = cursor;
 	cursor += src->dcc_ndl_chan_list_len;
-	cdf_mem_copy(dst->dcc_ndl_chan_list, src->dcc_ndl_chan_list,
+	qdf_mem_copy(dst->dcc_ndl_chan_list, src->dcc_ndl_chan_list,
 		     src->dcc_ndl_chan_list_len);
 	dst->dcc_ndl_active_state_list = cursor;
 	cursor += src->dcc_ndl_active_state_list_len;
-	cdf_mem_copy(dst->dcc_ndl_active_state_list,
+	qdf_mem_copy(dst->dcc_ndl_active_state_list,
 		     src->dcc_ndl_active_state_list,
 		     src->dcc_ndl_active_state_list_len);
 	return dst;
@@ -166,7 +166,7 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 	 * vdev start response message
 	 */
 	if (!wma_handle->interfaces[config_req->session_id].vdev_up) {
-		cdf_mem_zero(&req, sizeof(req));
+		qdf_mem_zero(&req, sizeof(req));
 		/* Enqueue OCB Set Schedule request message */
 		msg = wma_fill_vdev_req(wma_handle, config_req->session_id,
 					WMA_OCB_SET_CONFIG_CMD,
@@ -185,7 +185,7 @@ int wma_ocb_set_config_req(tp_wma_handle wma_handle,
 			req.dot11_mode = WNI_CFG_DOT11_MODE_11A;
 
 		if (wma_handle->ocb_config_req)
-			cdf_mem_free(wma_handle->ocb_config_req);
+			qdf_mem_free(wma_handle->ocb_config_req);
 		wma_handle->ocb_config_req = copy_sir_ocb_config(config_req);
 		req.preferred_rx_streams = 2;
 		req.preferred_tx_streams = 2;
@@ -376,7 +376,7 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	if (config->dcc_ndl_chan_list_len) {
 		ndl_chan = (wmi_dcc_ndl_chan *)buf_ptr;
-		cdf_mem_copy(ndl_chan, config->dcc_ndl_chan_list,
+		qdf_mem_copy(ndl_chan, config->dcc_ndl_chan_list,
 			     config->dcc_ndl_chan_list_len);
 		for (i = 0; i < config->channel_count; i++)
 			WMITLV_SET_HDR(&(ndl_chan[i].tlv_header),
@@ -391,7 +391,7 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	if (active_state_count) {
 		ndl_active_config = (wmi_dcc_ndl_active_state_config *)buf_ptr;
-		cdf_mem_copy(ndl_active_config,
+		qdf_mem_copy(ndl_active_config,
 			config->dcc_ndl_active_state_list,
 			active_state_count * sizeof(*ndl_active_config));
 		for (i = 0; i < active_state_count; ++i)
@@ -424,7 +424,7 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 	 */
 	if (wma_handle->ocb_config_req != config) {
 		if (wma_handle->ocb_config_req)
-			cdf_mem_free(wma_handle->ocb_config_req);
+			qdf_mem_free(wma_handle->ocb_config_req);
 		wma_handle->ocb_config_req = copy_sir_ocb_config(config);
 	}
 
@@ -432,7 +432,7 @@ int wma_ocb_set_config(tp_wma_handle wma_handle, struct sir_ocb_config *config)
 				   WMI_OCB_SET_CONFIG_CMDID);
 	if (ret != EOK) {
 		if (wma_handle->ocb_config_req) {
-			cdf_mem_free(wma_handle->ocb_config_req);
+			qdf_mem_free(wma_handle->ocb_config_req);
 			wma_handle->ocb_config_req = NULL;
 		}
 
@@ -556,7 +556,7 @@ int wma_ocb_start_timing_advert(tp_wma_handle wma_handle,
 	/* Add the timing advert template */
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
 		       len_template);
-	cdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
+	qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
 		     (uint8_t *)timing_advert->template_value,
 		     timing_advert->template_length);
 
@@ -641,7 +641,7 @@ int wma_ocb_get_tsf_timer(tp_wma_handle wma_handle,
 	buf_ptr = (uint8_t *)wmi_buf_data(buf);
 
 	cmd = (wmi_ocb_get_tsf_timer_cmd_fixed_param *)buf_ptr;
-	cdf_mem_zero(cmd, len);
+	qdf_mem_zero(cmd, len);
 	WMITLV_SET_HDR(&cmd->tlv_header,
 		WMITLV_TAG_STRUC_wmi_ocb_get_tsf_timer_cmd_fixed_param,
 		WMITLV_GET_STRUCT_TLVLEN(
@@ -681,7 +681,7 @@ int wma_ocb_get_tsf_timer_resp_event_handler(void *handle, uint8_t *event_buf,
 	fix_param = param_tlvs->fixed_param;
 
 	/* Allocate and populate the response */
-	response = cdf_mem_malloc(sizeof(*response));
+	response = qdf_mem_malloc(sizeof(*response));
 	if (response == NULL)
 		return -ENOMEM;
 	response->vdev_id = fix_param->vdev_id;
@@ -694,7 +694,7 @@ int wma_ocb_get_tsf_timer_resp_event_handler(void *handle, uint8_t *event_buf,
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
-		cdf_mem_free(response);
+		qdf_mem_free(response);
 		return -EINVAL;
 	}
 
@@ -737,7 +737,7 @@ int wma_dcc_get_stats(tp_wma_handle wma_handle,
 	}
 
 	buf_ptr = wmi_buf_data(buf);
-	cdf_mem_zero(buf_ptr, len);
+	qdf_mem_zero(buf_ptr, len);
 
 	/* Populate the WMI command */
 	cmd = (wmi_dcc_get_stats_cmd_fixed_param *)buf_ptr;
@@ -755,7 +755,7 @@ int wma_dcc_get_stats(tp_wma_handle wma_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	channel_stats_array = (wmi_dcc_channel_stats_request *)buf_ptr;
-	cdf_mem_copy(channel_stats_array, get_stats_param->request_array,
+	qdf_mem_copy(channel_stats_array, get_stats_param->request_array,
 		     get_stats_param->request_array_len);
 	for (i = 0; i < cmd->num_channels; i++)
 		WMITLV_SET_HDR(&channel_stats_array[i].tlv_header,
@@ -797,7 +797,7 @@ int wma_dcc_get_stats_resp_event_handler(void *handle, uint8_t *event_buf,
 	fix_param = param_tlvs->fixed_param;
 
 	/* Allocate and populate the response */
-	response = cdf_mem_malloc(sizeof(*response) + fix_param->num_channels *
+	response = qdf_mem_malloc(sizeof(*response) + fix_param->num_channels *
 		sizeof(wmi_dcc_ndl_stats_per_channel));
 	if (response == NULL)
 		return -ENOMEM;
@@ -807,7 +807,7 @@ int wma_dcc_get_stats_resp_event_handler(void *handle, uint8_t *event_buf,
 	response->channel_stats_array_len =
 		fix_param->num_channels * sizeof(wmi_dcc_ndl_stats_per_channel);
 	response->channel_stats_array = ((void *)response) + sizeof(*response);
-	cdf_mem_copy(response->channel_stats_array,
+	qdf_mem_copy(response->channel_stats_array,
 		     param_tlvs->stats_per_channel_list,
 		     response->channel_stats_array_len);
 
@@ -817,7 +817,7 @@ int wma_dcc_get_stats_resp_event_handler(void *handle, uint8_t *event_buf,
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE(FL("Failed to post msg to SME"));
-		cdf_mem_free(response);
+		qdf_mem_free(response);
 		return -EINVAL;
 	}
 
@@ -850,7 +850,7 @@ int wma_dcc_clear_stats(tp_wma_handle wma_handle,
 	}
 
 	buf_ptr = wmi_buf_data(buf);
-	cdf_mem_zero(buf_ptr, len);
+	qdf_mem_zero(buf_ptr, len);
 
 	/* Populate the WMI command */
 	cmd = (wmi_dcc_clear_stats_cmd_fixed_param *)buf_ptr;
@@ -924,7 +924,7 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 	}
 
 	buf_ptr = wmi_buf_data(buf);
-	cdf_mem_zero(buf_ptr, len);
+	qdf_mem_zero(buf_ptr, len);
 
 	/* Populate the WMI command */
 	cmd = (wmi_dcc_update_ndl_cmd_fixed_param *)buf_ptr;
@@ -942,7 +942,7 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	ndl_chan_array = (wmi_dcc_ndl_chan *)buf_ptr;
-	cdf_mem_copy(ndl_chan_array, update_ndl_param->dcc_ndl_chan_list,
+	qdf_mem_copy(ndl_chan_array, update_ndl_param->dcc_ndl_chan_list,
 		     update_ndl_param->dcc_ndl_chan_list_len);
 	for (i = 0; i < cmd->num_channel; i++)
 		WMITLV_SET_HDR(&ndl_chan_array[i].tlv_header,
@@ -956,7 +956,7 @@ int wma_dcc_update_ndl(tp_wma_handle wma_handle,
 	buf_ptr += WMI_TLV_HDR_SIZE;
 
 	ndl_active_state_array = (wmi_dcc_ndl_active_state_config *) buf_ptr;
-	cdf_mem_copy(ndl_active_state_array,
+	qdf_mem_copy(ndl_active_state_array,
 		     update_ndl_param->dcc_ndl_active_state_list,
 		     update_ndl_param->dcc_ndl_active_state_list_len);
 	for (i = 0; i < active_state_count; i++) {
@@ -1001,7 +1001,7 @@ int wma_dcc_update_ndl_resp_event_handler(void *handle, uint8_t *event_buf,
 	param_tlvs = (WMI_DCC_UPDATE_NDL_RESP_EVENTID_param_tlvs *)event_buf;
 	fix_param = param_tlvs->fixed_param;
 	/* Allocate and populate the response */
-	resp = cdf_mem_malloc(sizeof(*resp));
+	resp = qdf_mem_malloc(sizeof(*resp));
 	if (!resp) {
 		WMA_LOGE(FL("Error allocating memory for the response."));
 		return -ENOMEM;
@@ -1015,7 +1015,7 @@ int wma_dcc_update_ndl_resp_event_handler(void *handle, uint8_t *event_buf,
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))	{
 		WMA_LOGE(FL("Failed to post msg to SME"));
-		cdf_mem_free(resp);
+		qdf_mem_free(resp);
 		return -EINVAL;
 	}
 
@@ -1042,7 +1042,7 @@ int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	param_tlvs = (WMI_DCC_STATS_EVENTID_param_tlvs *)event_buf;
 	fix_param = param_tlvs->fixed_param;
 	/* Allocate and populate the response */
-	response = cdf_mem_malloc(sizeof(*response) +
+	response = qdf_mem_malloc(sizeof(*response) +
 	    fix_param->num_channels * sizeof(wmi_dcc_ndl_stats_per_channel));
 	if (response == NULL)
 		return -ENOMEM;
@@ -1051,7 +1051,7 @@ int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	response->channel_stats_array_len =
 		fix_param->num_channels * sizeof(wmi_dcc_ndl_stats_per_channel);
 	response->channel_stats_array = ((void *)response) + sizeof(*response);
-	cdf_mem_copy(response->channel_stats_array,
+	qdf_mem_copy(response->channel_stats_array,
 		     param_tlvs->stats_per_channel_list,
 		     response->channel_stats_array_len);
 
@@ -1061,7 +1061,7 @@ int wma_dcc_stats_event_handler(void *handle, uint8_t *event_buf,
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))	{
 		WMA_LOGE(FL("Failed to post msg to SME"));
-		cdf_mem_free(response);
+		qdf_mem_free(response);
 		return -EINVAL;
 	}
 

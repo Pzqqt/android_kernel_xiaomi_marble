@@ -667,7 +667,7 @@ int wlan_logging_sock_activate_svc(int log_fe_to_console, int num_buf)
 		return -ENOMEM;
 	}
 
-	cdf_mem_zero(gplog_msg, (num_buf * sizeof(struct log_msg)));
+	qdf_mem_zero(gplog_msg, (num_buf * sizeof(struct log_msg)));
 
 	gwlan_logging.log_fe_to_console = !!log_fe_to_console;
 	gwlan_logging.num_buf = num_buf;

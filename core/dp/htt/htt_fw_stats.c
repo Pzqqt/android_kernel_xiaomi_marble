@@ -33,7 +33,7 @@
 #include <htc_api.h>            /* HTC_PACKET */
 #include <htt.h>                /* HTT_T2H_MSG_TYPE, etc. */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_memory.h>         /* cdf_mem_set */
+#include <qdf_mem.h>         /* qdf_mem_set */
 #include <ol_fw_tx_dbg.h>       /* ol_fw_tx_dbg_ppdu_base */
 
 #include <ol_htt_rx_api.h>
@@ -724,8 +724,8 @@ htt_t2h_tx_ppdu_bitmaps_pr(uint32_t *queued_ptr, uint32_t *acked_ptr)
 	char acked_str[HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW + 1];
 	int i, j, word;
 
-	cdf_mem_set(queued_str, HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW, '0');
-	cdf_mem_set(acked_str, HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW, '-');
+	qdf_mem_set(queued_str, HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW, '0');
+	qdf_mem_set(acked_str, HTT_FW_STATS_MAX_BLOCK_ACK_WINDOW, '-');
 	i = 0;
 	for (word = 0; word < 2; word++) {
 		uint32_t queued = *(queued_ptr + word);

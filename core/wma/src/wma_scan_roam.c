@@ -49,7 +49,7 @@
 #include "cdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
@@ -126,7 +126,7 @@ static inline void wma_set_p2p_scan_info(tp_wma_handle wma_handle,
 static inline void wma_reset_p2p_scan_info(tp_wma_handle wma_handle,
 				       uint8_t vdev_id)
 {
-	cdf_mem_zero((void *)&(wma_handle->interfaces[vdev_id].p2p_scan_info),
+	qdf_mem_zero((void *)&(wma_handle->interfaces[vdev_id].p2p_scan_info),
 		     sizeof(struct p2p_scan_param));
 }
 
@@ -484,7 +484,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		ssid = (wmi_ssid *) (buf_ptr + WMI_TLV_HDR_SIZE);
 		for (i = 0; i < scan_req->numSsid; ++i) {
 			ssid->ssid_len = scan_req->ssId[i].length;
-			cdf_mem_copy(ssid->ssid, scan_req->ssId[i].ssId,
+			qdf_mem_copy(ssid->ssid, scan_req->ssId[i].ssId,
 				     scan_req->ssId[i].length);
 			ssid++;
 		}
@@ -513,7 +513,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	ie_len_with_pad = roundup(scan_req->uIEFieldLen, sizeof(uint32_t));
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_with_pad);
 	if (scan_req->uIEFieldLen) {
-		cdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
+		qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
 			     (uint8_t *) scan_req +
 			     (scan_req->uIEFieldOffset), scan_req->uIEFieldLen);
 	}
@@ -522,7 +522,7 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 	*buf_len = len;
 	return QDF_STATUS_SUCCESS;
 error:
-	cdf_mem_free(*buf);
+	qdf_mem_free(*buf);
 	*buf = NULL;
 	return qdf_status;
 }
@@ -657,7 +657,7 @@ error:
 	if (msg_type == WMA_START_SCAN_OFFLOAD_REQ) {
 		scan_event =
 			(tSirScanOffloadEvent *)
-			cdf_mem_malloc(sizeof(tSirScanOffloadEvent));
+			qdf_mem_malloc(sizeof(tSirScanOffloadEvent));
 		if (!scan_event) {
 			WMA_LOGP("%s: Failed to allocate memory for scan rsp",
 				 __func__);
@@ -922,7 +922,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 	roam_scan_mode_fp->vdev_id = vdev_id;
 	/* Fill in scan parameters suitable for roaming scan */
 	buf_ptr += sizeof(wmi_roam_scan_mode_fixed_param);
-	cdf_mem_copy(buf_ptr, scan_cmd_fp,
+	qdf_mem_copy(buf_ptr, scan_cmd_fp,
 		     sizeof(wmi_start_scan_cmd_fixed_param));
 	/* Ensure there is no additional IEs */
 	scan_cmd_fp->ie_len = 0;
@@ -971,10 +971,10 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				buf_ptr += WMI_TLV_HDR_SIZE;
 				roam_offload_ese =
 					(wmi_roam_ese_offload_tlv_param *) buf_ptr;
-				cdf_mem_copy(roam_offload_ese->krk,
+				qdf_mem_copy(roam_offload_ese->krk,
 					     roam_req->KRK,
 					     sizeof(roam_req->KRK));
-				cdf_mem_copy(roam_offload_ese->btk,
+				qdf_mem_copy(roam_offload_ese->btk,
 					     roam_req->BTK,
 					     sizeof(roam_req->BTK));
 				WMITLV_SET_HDR(&roam_offload_ese->tlv_header,
@@ -997,10 +997,10 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 					(wmi_roam_11r_offload_tlv_param *) buf_ptr;
 				roam_offload_11r->r0kh_id_len =
 					roam_req->R0KH_ID_Length;
-				cdf_mem_copy(roam_offload_11r->r0kh_id,
+				qdf_mem_copy(roam_offload_11r->r0kh_id,
 					     roam_req->R0KH_ID,
 					     roam_offload_11r->r0kh_id_len);
-				cdf_mem_copy(roam_offload_11r->psk_msk,
+				qdf_mem_copy(roam_offload_11r->psk_msk,
 					     roam_req->PSK_PMK,
 					     sizeof(roam_req->PSK_PMK));
 				roam_offload_11r->psk_msk_len =
@@ -1040,7 +1040,7 @@ QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 					WMA_LOGE("LFR3:OKC Disabled");
 				}
 
-				cdf_mem_copy(roam_offload_11i->pmk,
+				qdf_mem_copy(roam_offload_11i->pmk,
 					     roam_req->PSK_PMK,
 					     sizeof(roam_req->PSK_PMK));
 				roam_offload_11i->pmk_len = roam_req->pmk_len;
@@ -1571,7 +1571,7 @@ void wma_roam_scan_fill_ap_profile(tp_wma_handle wma_handle,
 				   tSirRoamOffloadScanReq *roam_req,
 				   wmi_ap_profile *ap_profile_p)
 {
-	cdf_mem_zero(ap_profile_p, sizeof(wmi_ap_profile));
+	qdf_mem_zero(ap_profile_p, sizeof(wmi_ap_profile));
 	if (roam_req == NULL) {
 		ap_profile_p->ssid.ssid_len = 0;
 		ap_profile_p->ssid.ssid[0] = 0;
@@ -1583,7 +1583,7 @@ void wma_roam_scan_fill_ap_profile(tp_wma_handle wma_handle,
 	} else {
 		ap_profile_p->ssid.ssid_len =
 			roam_req->ConnectedNetwork.ssId.length;
-		cdf_mem_copy(ap_profile_p->ssid.ssid,
+		qdf_mem_copy(ap_profile_p->ssid.ssid,
 			     roam_req->ConnectedNetwork.ssId.ssId,
 			     ap_profile_p->ssid.ssid_len);
 		ap_profile_p->rsn_authmode =
@@ -1629,7 +1629,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
 		return;
 	}
 
-	cdf_mem_zero(scan_params, sizeof(wmi_start_scan_cmd_fixed_param));
+	qdf_mem_zero(scan_params, sizeof(wmi_start_scan_cmd_fixed_param));
 	scan_params->scan_ctrl_flags = WMI_SCAN_ADD_CCK_RATES |
 				       WMI_SCAN_ADD_OFDM_RATES |
 				       WMI_SCAN_ADD_DS_IE_IN_PROBE_REQ;
@@ -1830,7 +1830,7 @@ QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 	roam_ap_profile_fp->id = 0;
 	buf_ptr += sizeof(wmi_roam_ap_profile_fixed_param);
 
-	cdf_mem_copy(buf_ptr, ap_profile_p, sizeof(wmi_ap_profile));
+	qdf_mem_copy(buf_ptr, ap_profile_p, sizeof(wmi_ap_profile));
 	WMITLV_SET_HDR(buf_ptr,
 		       WMITLV_TAG_STRUC_wmi_ap_profile,
 		       WMITLV_GET_STRUCT_TLVLEN(wmi_ap_profile));
@@ -2134,7 +2134,7 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 		/* roam scan offload is not enabled in firmware.
 		 * Cannot initialize it in the middle of connection.
 		 */
-		cdf_mem_free(roam_req);
+		qdf_mem_free(roam_req);
 		return QDF_STATUS_E_PERM;
 	}
 	switch (roam_req->Command) {
@@ -2265,11 +2265,11 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 			cds_msg_t cds_msg;
 			tSirRoamOffloadScanRsp *scan_offload_rsp;
 			scan_offload_rsp =
-				cdf_mem_malloc(sizeof(*scan_offload_rsp));
+				qdf_mem_malloc(sizeof(*scan_offload_rsp));
 			if (!scan_offload_rsp) {
 				WMA_LOGE("%s: Alloc failed for scan_offload_rsp",
 					__func__);
-				cdf_mem_free(roam_req);
+				qdf_mem_free(roam_req);
 				return QDF_STATUS_E_NOMEM;
 			}
 			cds_msg.type = eWNI_SME_ROAM_SCAN_OFFLOAD_RSP;
@@ -2284,7 +2284,7 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 			if (QDF_STATUS_SUCCESS !=
 			    cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
-				cdf_mem_free(scan_offload_rsp);
+				qdf_mem_free(scan_offload_rsp);
 				QDF_TRACE(QDF_MODULE_ID_WMA,
 					  QDF_TRACE_LEVEL_INFO,
 					  "%s: Failed to post Scan Offload Rsp to UMAC",
@@ -2417,7 +2417,7 @@ QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 	default:
 		break;
 	}
-	cdf_mem_free(roam_req);
+	qdf_mem_free(roam_req);
 	return qdf_status;
 }
 
@@ -2554,7 +2554,7 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 		roam_synch_ind_ptr->beaconProbeRespOffset;
 	roam_synch_ind_ptr->beaconProbeRespLength =
 		synch_event->bcn_probe_rsp_len;
-	cdf_mem_copy(bcn_probersp_ptr, param_buf->bcn_probe_rsp_frame,
+	qdf_mem_copy(bcn_probersp_ptr, param_buf->bcn_probe_rsp_frame,
 		     roam_synch_ind_ptr->beaconProbeRespLength);
 	/* ReAssoc Rsp data */
 	roam_synch_ind_ptr->reassocRespOffset =
@@ -2563,7 +2563,7 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	roam_synch_ind_ptr->reassocRespLength = synch_event->reassoc_rsp_len;
 	reassoc_rsp_ptr = (uint8_t *) roam_synch_ind_ptr +
 			  roam_synch_ind_ptr->reassocRespOffset;
-	cdf_mem_copy(reassoc_rsp_ptr,
+	qdf_mem_copy(reassoc_rsp_ptr,
 		     param_buf->reassoc_rsp_frame,
 		     roam_synch_ind_ptr->reassocRespLength);
 
@@ -2575,18 +2575,18 @@ void wma_fill_roam_synch_buffer(tp_wma_handle wma,
 	roam_synch_ind_ptr->reassoc_req_length = synch_event->reassoc_req_len;
 	reassoc_req_ptr = (uint8_t *) roam_synch_ind_ptr +
 			  roam_synch_ind_ptr->reassoc_req_offset;
-	cdf_mem_copy(reassoc_req_ptr, param_buf->reassoc_req_frame,
+	qdf_mem_copy(reassoc_req_ptr, param_buf->reassoc_req_frame,
 		     roam_synch_ind_ptr->reassoc_req_length);
 
 	chan = (wmi_channel *) param_buf->chan;
 	roam_synch_ind_ptr->chan_freq = chan->mhz;
 	key = (wmi_key_material *) param_buf->key;
 	if (key != NULL) {
-		cdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
+		qdf_mem_copy(roam_synch_ind_ptr->kck, key->kck,
 			     SIR_KCK_KEY_LEN);
-		cdf_mem_copy(roam_synch_ind_ptr->kek, key->kek,
+		qdf_mem_copy(roam_synch_ind_ptr->kek, key->kek,
 			     SIR_KEK_KEY_LEN);
-		cdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
+		qdf_mem_copy(roam_synch_ind_ptr->replay_ctr,
 			     key->replay_counter, SIR_REPLAY_CTR_LEN);
 		WMA_LOGD("%s: KCK dump", __func__);
 		QDF_TRACE_HEX_DUMP(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_DEBUG,
@@ -2620,33 +2620,33 @@ void wma_roam_update_vdev(tp_wma_handle wma,
 	tAddStaParams *add_sta_params;
 	uint8_t vdev_id;
 
-	del_bss_params = cdf_mem_malloc(sizeof(*del_bss_params));
-	del_sta_params = cdf_mem_malloc(sizeof(*del_sta_params));
-	set_link_params = cdf_mem_malloc(sizeof(*set_link_params));
-	add_sta_params = cdf_mem_malloc(sizeof(*add_sta_params));
+	del_bss_params = qdf_mem_malloc(sizeof(*del_bss_params));
+	del_sta_params = qdf_mem_malloc(sizeof(*del_sta_params));
+	set_link_params = qdf_mem_malloc(sizeof(*set_link_params));
+	add_sta_params = qdf_mem_malloc(sizeof(*add_sta_params));
 	if (!del_bss_params || !del_sta_params ||
 		!set_link_params || !add_sta_params) {
 		WMA_LOGE("%s: failed to allocate memory", __func__);
 		return;
 	}
 	vdev_id = roam_synch_ind_ptr->roamedVdevId;
-	cdf_mem_zero(del_bss_params, sizeof(*del_bss_params));
-	cdf_mem_zero(del_sta_params, sizeof(*del_sta_params));
-	cdf_mem_zero(set_link_params, sizeof(*set_link_params));
-	cdf_mem_zero(add_sta_params, sizeof(*add_sta_params));
+	qdf_mem_zero(del_bss_params, sizeof(*del_bss_params));
+	qdf_mem_zero(del_sta_params, sizeof(*del_sta_params));
+	qdf_mem_zero(set_link_params, sizeof(*set_link_params));
+	qdf_mem_zero(add_sta_params, sizeof(*add_sta_params));
 
 	del_bss_params->smesessionId = vdev_id;
 	del_sta_params->smesessionId = vdev_id;
-	cdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
+	qdf_mem_copy(del_bss_params->bssid, wma->interfaces[vdev_id].bssid,
 			IEEE80211_ADDR_LEN);
 	set_link_params->state = eSIR_LINK_PREASSOC_STATE;
-	cdf_mem_copy(set_link_params->selfMacAddr, wma->myaddr,
+	qdf_mem_copy(set_link_params->selfMacAddr, wma->myaddr,
 			IEEE80211_ADDR_LEN);
-	cdf_mem_copy(set_link_params->bssid, roam_synch_ind_ptr->bssid.bytes,
+	qdf_mem_copy(set_link_params->bssid, roam_synch_ind_ptr->bssid.bytes,
 			IEEE80211_ADDR_LEN);
 	add_sta_params->staType = STA_ENTRY_SELF;
 	add_sta_params->smesessionId = vdev_id;
-	cdf_mem_copy(&add_sta_params->bssId, &roam_synch_ind_ptr->bssid.bytes,
+	qdf_mem_copy(&add_sta_params->bssId, &roam_synch_ind_ptr->bssid.bytes,
 			IEEE80211_ADDR_LEN);
 	add_sta_params->staIdx = STA_INVALID_IDX;
 	add_sta_params->assocId = roam_synch_ind_ptr->aid;
@@ -2657,12 +2657,12 @@ void wma_roam_update_vdev(tp_wma_handle wma,
 	wma_add_bss(wma, (tpAddBssParams)roam_synch_ind_ptr->add_bss_params);
 	wma_add_sta(wma, add_sta_params);
 	wma->interfaces[vdev_id].vdev_up = true;
-	cdf_mem_copy(wma->interfaces[vdev_id].bssid,
+	qdf_mem_copy(wma->interfaces[vdev_id].bssid,
 			roam_synch_ind_ptr->bssid.bytes, IEEE80211_ADDR_LEN);
-	cdf_mem_free(del_bss_params);
-	cdf_mem_free(del_sta_params);
-	cdf_mem_free(set_link_params);
-	cdf_mem_free(add_sta_params);
+	qdf_mem_free(del_bss_params);
+	qdf_mem_free(del_sta_params);
+	qdf_mem_free(set_link_params);
+	qdf_mem_free(add_sta_params);
 }
 
 /**
@@ -2716,14 +2716,14 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	      synch_event->bcn_probe_rsp_len + synch_event->reassoc_rsp_len +
 	      synch_event->reassoc_req_len;
 	roam_synch_ind_ptr =
-		(roam_offload_synch_ind *) cdf_mem_malloc(len);
+		(roam_offload_synch_ind *) qdf_mem_malloc(len);
 	if (!roam_synch_ind_ptr) {
 		WMA_LOGE("%s: failed to allocate memory for roam_synch_event",
 			 __func__);
 		QDF_ASSERT(roam_synch_ind_ptr != NULL);
 		return -ENOMEM;
 	}
-	cdf_mem_zero(roam_synch_ind_ptr, len);
+	qdf_mem_zero(roam_synch_ind_ptr, len);
 	wma_fill_roam_synch_buffer(wma, roam_synch_ind_ptr, param_buf);
 
 	 /* 24 byte MAC header and 12 byte to ssid IE */
@@ -2735,8 +2735,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		WMA_LOGE("LFR3: Invalid Beacon Length");
 		goto cleanup_label;
 	}
-	bss_desc_ptr = cdf_mem_malloc(sizeof(tSirBssDescription) + ie_len);
-	roam_synch_ind_ptr->join_rsp = cdf_mem_malloc(sizeof(tSirSmeJoinRsp));
+	bss_desc_ptr = qdf_mem_malloc(sizeof(tSirBssDescription) + ie_len);
+	roam_synch_ind_ptr->join_rsp = qdf_mem_malloc(sizeof(tSirSmeJoinRsp));
 	if ((NULL == roam_synch_ind_ptr->join_rsp) || (NULL == bss_desc_ptr)) {
 		WMA_LOGE("LFR3: mem alloc failed!");
 		QDF_ASSERT(bss_desc_ptr != NULL);
@@ -2744,8 +2744,8 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 		status =  -ENOMEM;
 		goto cleanup_label;
 	}
-	cdf_mem_zero(roam_synch_ind_ptr->join_rsp, sizeof(tSirSmeJoinRsp));
-	cdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
+	qdf_mem_zero(roam_synch_ind_ptr->join_rsp, sizeof(tSirSmeJoinRsp));
+	qdf_mem_zero(bss_desc_ptr, sizeof(tSirBssDescription) + ie_len);
 	wma->pe_roam_synch_cb((tpAniSirGlobal)wma->mac_context,
 			roam_synch_ind_ptr, bss_desc_ptr);
 	wma_roam_update_vdev(wma, roam_synch_ind_ptr);
@@ -2754,11 +2754,11 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 	wma_process_roam_synch_complete(wma, synch_event->vdev_id);
 cleanup_label:
 	if (roam_synch_ind_ptr->join_rsp)
-		cdf_mem_free(roam_synch_ind_ptr->join_rsp);
+		qdf_mem_free(roam_synch_ind_ptr->join_rsp);
 	if (roam_synch_ind_ptr)
-		cdf_mem_free(roam_synch_ind_ptr);
+		qdf_mem_free(roam_synch_ind_ptr);
 	if (bss_desc_ptr)
-		cdf_mem_free(bss_desc_ptr);
+		qdf_mem_free(bss_desc_ptr);
 	wma->interfaces[synch_event->vdev_id].roam_synch_in_progress = false;
 
 	return 0;
@@ -2837,7 +2837,7 @@ QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 		tSirMacExtendedHTCapabilityInfo extHtCapInfo;
 	} uHTCapabilityInfo;
 
-	cdf_mem_set(&macQosInfoSta, sizeof(tSirMacQosInfoStation), 0);
+	qdf_mem_set(&macQosInfoSta, sizeof(tSirMacQosInfoStation), 0);
 	/* Roaming is done only for INFRA STA type.
 	 * So, ess will be one and ibss will be Zero */
 	pMac = cds_get_context(QDF_MODULE_ID_PE);
@@ -3045,10 +3045,10 @@ void wma_set_ric_req(tp_wma_handle wma, void *msg, uint8_t is_add_ts)
 
 	/* Fill the tsinfo in the format expected by firmware */
 #ifndef ANI_LITTLE_BIT_ENDIAN
-	cdf_mem_copy(((uint8_t *) &tspec_param->ts_info) + 1,
+	qdf_mem_copy(((uint8_t *) &tspec_param->ts_info) + 1,
 		     ((uint8_t *) &ptspecIE->tsinfo) + 1, 2);
 #else
-	cdf_mem_copy(((uint8_t *) &tspec_param->ts_info),
+	qdf_mem_copy(((uint8_t *) &tspec_param->ts_info),
 		     ((uint8_t *) &ptspecIE->tsinfo) + 1, 2);
 #endif /* ANI_LITTLE_BIT_ENDIAN */
 
@@ -3156,7 +3156,7 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 	cds_msg_t sme_msg = { 0 };
 	QDF_STATUS qdf_status;
 
-	ho_failure_ind = cdf_mem_malloc(sizeof(tSirSmeHOFailureInd));
+	ho_failure_ind = qdf_mem_malloc(sizeof(tSirSmeHOFailureInd));
 
 	if (NULL == ho_failure_ind) {
 		WMA_LOGE("%s: Memory allocation failure", __func__);
@@ -3170,7 +3170,7 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("Fail to post eWNI_SME_HO_FAIL_IND msg to SME");
-		cdf_mem_free(ho_failure_ind);
+		qdf_mem_free(ho_failure_ind);
 		return;
 	}
 	return;
@@ -3256,7 +3256,7 @@ void wma_set_channel(tp_wma_handle wma, tpSwitchChannelParams params)
 
 	peer = ol_txrx_find_peer_by_addr(pdev, intr[vdev_id].bssid, &peer_id);
 
-	cdf_mem_zero(&req, sizeof(req));
+	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
 	msg = wma_fill_vdev_req(wma, req.vdev_id, WMA_CHNL_SWITCH_REQ,
 				WMA_TARGET_REQ_TYPE_VDEV_START, params,
@@ -3441,7 +3441,7 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 		/* Copy ssid and it's length */
 		nlo_list[i].ssid.valid = true;
 		nlo_list[i].ssid.ssid.ssid_len = pno->aNetworks[i].ssId.length;
-		cdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
+		qdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
 			     pno->aNetworks[i].ssId.ssId,
 			     nlo_list[i].ssid.ssid.ssid_len);
 		WMA_LOGD("index: %d ssid: %.*s len: %d", i,
@@ -3604,7 +3604,7 @@ void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno)
 
 	/* SME expects WMA to free tpSirPNOScanReq memory after
 	 * processing PNO request. */
-	cdf_mem_free(pno);
+	qdf_mem_free(pno);
 }
 
 #if defined(FEATURE_WLAN_ESE) && defined(FEATURE_WLAN_ESE_UPLOAD)
@@ -3795,7 +3795,7 @@ void wma_config_plm(tp_wma_handle wma, tpSirPlmReq plm)
 
 	/* SME expects WMA to free tpSirPlmReq memory after
 	 * processing PLM request. */
-	cdf_mem_free(plm);
+	qdf_mem_free(plm);
 	plm = NULL;
 }
 #endif
@@ -3834,7 +3834,7 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 	WMA_LOGD("Posting PNO completion to umac");
 
 	len = sizeof(tSirPrefNetworkFoundInd);
-	nw_found_ind = (tSirPrefNetworkFoundInd *) cdf_mem_malloc(len);
+	nw_found_ind = (tSirPrefNetworkFoundInd *) qdf_mem_malloc(len);
 
 	if (NULL == nw_found_ind) {
 		WMA_LOGE("%s: Memory allocation failure", __func__);
@@ -3853,7 +3853,7 @@ void wma_scan_cache_updated_ind(tp_wma_handle wma, uint8_t sessionId)
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post PNO completion match event to SME",
 			 __func__);
-		cdf_mem_free(nw_found_ind);
+		qdf_mem_free(nw_found_ind);
 	}
 }
 
@@ -4082,7 +4082,7 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 		WIFI_POWER_EVENT_WAKELOCK_PNO);
 	scan_event =
 		(tSirScanOffloadEvent *)
-		cdf_mem_malloc(sizeof(tSirScanOffloadEvent));
+		qdf_mem_malloc(sizeof(tSirScanOffloadEvent));
 	if (scan_event) {
 		/* Posting scan completion msg would take scan cache result
 		 * from LIM module and update in scan cache maintained in SME.*/
@@ -4090,7 +4090,7 @@ int wma_nlo_scan_cmp_evt_handler(void *handle, uint8_t *event,
 		qdf_wake_lock_timeout_acquire(&wma->pno_wake_lock,
 				WMA_PNO_SCAN_COMPLETE_WAKE_LOCK_TIMEOUT,
 				WIFI_POWER_EVENT_WAKELOCK_PNO);
-		cdf_mem_zero(scan_event, sizeof(tSirScanOffloadEvent));
+		qdf_mem_zero(scan_event, sizeof(tSirScanOffloadEvent));
 		scan_event->reasonCode = eSIR_PNO_SCAN_SUCCESS;
 		scan_event->event = SCAN_EVENT_COMPLETED;
 		scan_event->sessionId = nlo_event->vdev_id;
@@ -4195,7 +4195,7 @@ int wma_extscan_start_stop_event_handler(void *handle,
 		return -EINVAL;
 	}
 	event = param_buf->fixed_param;
-	extscan_ind = cdf_mem_malloc(sizeof(*extscan_ind));
+	extscan_ind = qdf_mem_malloc(sizeof(*extscan_ind));
 	if (!extscan_ind) {
 		WMA_LOGE("%s: extscan memory allocation failed", __func__);
 		return -ENOMEM;
@@ -4250,14 +4250,14 @@ int wma_extscan_start_stop_event_handler(void *handle,
 	default:
 		WMA_LOGE("%s: Unknown event(%d) from target",
 			 __func__, event->status);
-		cdf_mem_free(extscan_ind);
+		qdf_mem_free(extscan_ind);
 		return -EINVAL;
 	}
 	pMac->sme.pExtScanIndCb(pMac->hHdd, event_type, extscan_ind);
 	WMA_LOGD("%s: sending event to umac for requestid %u"
 		 "with status %d", __func__,
 		 extscan_ind->request_id, extscan_ind->status);
-	cdf_mem_free(extscan_ind);
+	qdf_mem_free(extscan_ind);
 	return 0;
 }
 
@@ -4296,10 +4296,10 @@ int wma_extscan_operations_event_handler(void *handle,
 		return -EINVAL;
 	}
 	oprn_event = param_buf->fixed_param;
-	oprn_ind = cdf_mem_malloc(sizeof(*oprn_ind));
+	oprn_ind = qdf_mem_malloc(sizeof(*oprn_ind));
 	if (!oprn_ind) {
 		WMA_LOGE("%s: extscan memory allocation failed", __func__);
-		cdf_mem_free(oprn_ind);
+		qdf_mem_free(oprn_ind);
 		return -ENOMEM;
 	}
 
@@ -4326,14 +4326,14 @@ int wma_extscan_operations_event_handler(void *handle,
 	default:
 		WMA_LOGE("%s: Unknown event(%d) from target",
 			 __func__, oprn_event->event);
-		cdf_mem_free(oprn_ind);
+		qdf_mem_free(oprn_ind);
 		return -EINVAL;
 	}
 	pMac->sme.pExtScanIndCb(pMac->hHdd,
 				eSIR_EXTSCAN_SCAN_PROGRESS_EVENT_IND, oprn_ind);
 	WMA_LOGI("%s: sending scan progress event to hdd", __func__);
 exit_handler:
-	cdf_mem_free(oprn_ind);
+	qdf_mem_free(oprn_ind);
 	return 0;
 }
 
@@ -4371,7 +4371,7 @@ int wma_extscan_table_usage_event_handler(void *handle,
 		return -EINVAL;
 	}
 	event = param_buf->fixed_param;
-	tbl_usg_ind = cdf_mem_malloc(sizeof(*tbl_usg_ind));
+	tbl_usg_ind = qdf_mem_malloc(sizeof(*tbl_usg_ind));
 	if (!tbl_usg_ind) {
 		WMA_LOGE("%s: table usage allocation failed", __func__);
 		return -ENOMEM;
@@ -4383,7 +4383,7 @@ int wma_extscan_table_usage_event_handler(void *handle,
 				eSIR_EXTSCAN_SCAN_RES_AVAILABLE_IND,
 				tbl_usg_ind);
 	WMA_LOGI("%s: sending scan_res available event to hdd", __func__);
-	cdf_mem_free(tbl_usg_ind);
+	qdf_mem_free(tbl_usg_ind);
 	return 0;
 }
 
@@ -4433,7 +4433,7 @@ int wma_extscan_capabilities_event_handler(void *handle,
 		WMA_LOGE("%s: Invalid capabilities list", __func__);
 		return -EINVAL;
 	}
-	dest_capab = cdf_mem_malloc(sizeof(*dest_capab));
+	dest_capab = qdf_mem_malloc(sizeof(*dest_capab));
 	if (!dest_capab) {
 		WMA_LOGE("%s: Allocation failed for capabilities buffer",
 			 __func__);
@@ -4490,7 +4490,7 @@ int wma_extscan_capabilities_event_handler(void *handle,
 	pMac->sme.pExtScanIndCb(pMac->hHdd,
 				eSIR_EXTSCAN_GET_CAPABILITIES_IND, dest_capab);
 	WMA_LOGI("%s: sending capabilities event to hdd", __func__);
-	cdf_mem_free(dest_capab);
+	qdf_mem_free(dest_capab);
 	return 0;
 }
 
@@ -4539,7 +4539,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 		WMA_LOGE("%s: Hotlist AP's list invalid", __func__);
 		return -EINVAL;
 	}
-	dest_hotlist = cdf_mem_malloc(sizeof(*dest_hotlist) +
+	dest_hotlist = qdf_mem_malloc(sizeof(*dest_hotlist) +
 				      sizeof(*dest_ap) * numap);
 	if (!dest_hotlist) {
 		WMA_LOGE("%s: Allocation failed for hotlist buffer", __func__);
@@ -4575,7 +4575,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 		dest_ap->ieLength = src_hotlist->ie_length;
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_hotlist->bssid,
 					   dest_ap->bssid.bytes);
-		cdf_mem_copy(dest_ap->ssid, src_hotlist->ssid.ssid,
+		qdf_mem_copy(dest_ap->ssid, src_hotlist->ssid.ssid,
 			     src_hotlist->ssid.ssid_len);
 		dest_ap->ssid[src_hotlist->ssid.ssid_len] = '\0';
 		dest_ap++;
@@ -4585,7 +4585,7 @@ int wma_extscan_hotlist_match_event_handler(void *handle,
 	pMac->sme.pExtScanIndCb(pMac->hHdd,
 				eSIR_EXTSCAN_HOTLIST_MATCH_IND, dest_hotlist);
 	WMA_LOGI("%s: sending hotlist match event to hdd", __func__);
-	cdf_mem_free(dest_hotlist);
+	qdf_mem_free(dest_hotlist);
 	return 0;
 }
 
@@ -4720,10 +4720,10 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 	for (i = 0; i < t_cached_result->num_scan_ids; i++) {
 		WMA_LOGD("%s: num_results:%d", __func__,
 			t_scan_id_grp->num_results);
-		t_scan_id_grp->ap = cdf_mem_malloc(t_scan_id_grp->num_results *
+		t_scan_id_grp->ap = qdf_mem_malloc(t_scan_id_grp->num_results *
 						sizeof(*ap));
 		if (!t_scan_id_grp->ap) {
-			WMA_LOGD("%s: cdf_mem_malloc failed", __func__);
+			WMA_LOGD("%s: qdf_mem_malloc failed", __func__);
 			return -ENOMEM;
 		}
 
@@ -4746,7 +4746,7 @@ static int wma_group_num_bss_to_scan_id(const u_int8_t *cmd_param_info,
 			WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_hotlist->bssid,
 						   ap->bssid.bytes);
 
-			cdf_mem_copy(ap->ssid, src_hotlist->ssid.ssid,
+			qdf_mem_copy(ap->ssid, src_hotlist->ssid.ssid,
 					src_hotlist->ssid.ssid_len);
 			ap->ssid[src_hotlist->ssid.ssid_len] = '\0';
 			ap++;
@@ -4814,12 +4814,12 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	else
 		moredata = 0;
 
-	dest_cachelist = cdf_mem_malloc(sizeof(*dest_cachelist));
+	dest_cachelist = qdf_mem_malloc(sizeof(*dest_cachelist));
 	if (!dest_cachelist) {
-		WMA_LOGE("%s: cdf_mem_malloc failed", __func__);
+		WMA_LOGE("%s: qdf_mem_malloc failed", __func__);
 		return -ENOMEM;
 	}
-	cdf_mem_zero(dest_cachelist, sizeof(*dest_cachelist));
+	qdf_mem_zero(dest_cachelist, sizeof(*dest_cachelist));
 	dest_cachelist->request_id = event->request_id;
 	dest_cachelist->more_data = moredata;
 
@@ -4828,10 +4828,10 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	dest_cachelist->num_scan_ids = scan_ids_cnt;
 
 	buf_len = sizeof(*dest_result) * scan_ids_cnt;
-	dest_cachelist->result = cdf_mem_malloc(buf_len);
+	dest_cachelist->result = qdf_mem_malloc(buf_len);
 	if (!dest_cachelist->result) {
 		WMA_LOGE("%s: Allocation failed for scanid grouping", __func__);
-		cdf_mem_free(dest_cachelist);
+		qdf_mem_free(dest_cachelist);
 		return -ENOMEM;
 	}
 
@@ -4845,11 +4845,11 @@ int wma_extscan_cached_results_event_handler(void *handle,
 	WMA_LOGI("%s: sending cached results event", __func__);
 	dest_result = dest_cachelist->result;
 	for (i = 0; i < dest_cachelist->num_scan_ids; i++) {
-		cdf_mem_free(dest_result->ap);
+		qdf_mem_free(dest_result->ap);
 		dest_result++;
 	}
-	cdf_mem_free(dest_cachelist->result);
-	cdf_mem_free(dest_cachelist);
+	qdf_mem_free(dest_cachelist->result);
+	qdf_mem_free(dest_cachelist);
 	return 0;
 
 noresults:
@@ -4924,7 +4924,7 @@ int wma_extscan_change_results_event_handler(void *handle,
 	} else {
 		moredata = 0;
 	}
-	dest_chglist = cdf_mem_malloc(sizeof(*dest_chglist) +
+	dest_chglist = qdf_mem_malloc(sizeof(*dest_chglist) +
 				      sizeof(*dest_ap) * numap +
 				      sizeof(int32_t) * rssi_num);
 	if (!dest_chglist) {
@@ -4954,7 +4954,7 @@ int wma_extscan_change_results_event_handler(void *handle,
 				eSIR_EXTSCAN_SIGNIFICANT_WIFI_CHANGE_RESULTS_IND,
 				dest_chglist);
 	WMA_LOGI("%s: sending change monitor results", __func__);
-	cdf_mem_free(dest_chglist);
+	qdf_mem_free(dest_chglist);
 	return 0;
 }
 
@@ -4998,10 +4998,10 @@ int wma_passpoint_match_event_handler(void *handle,
 	event = param_buf->fixed_param;
 	buf_ptr = (uint8_t *)param_buf->fixed_param;
 
-	dest_match = cdf_mem_malloc(sizeof(*dest_match) +
+	dest_match = qdf_mem_malloc(sizeof(*dest_match) +
 				event->ie_length + event->anqp_length);
 	if (!dest_match) {
-		WMA_LOGE("%s: cdf_mem_malloc failed", __func__);
+		WMA_LOGE("%s: qdf_mem_malloc failed", __func__);
 		return -EINVAL;
 	}
 	dest_ap = &dest_match->ap;
@@ -5020,12 +5020,12 @@ int wma_passpoint_match_event_handler(void *handle,
 	dest_ap->capability = event->capability;
 	dest_ap->ieLength = event->ie_length;
 	WMI_MAC_ADDR_TO_CHAR_ARRAY(&event->bssid, dest_ap->bssid.bytes);
-	cdf_mem_copy(dest_ap->ssid, event->ssid.ssid,
+	qdf_mem_copy(dest_ap->ssid, event->ssid.ssid,
 				event->ssid.ssid_len);
 	dest_ap->ssid[event->ssid.ssid_len] = '\0';
-	cdf_mem_copy(dest_ap->ieData, buf_ptr + sizeof(*event) +
+	qdf_mem_copy(dest_ap->ieData, buf_ptr + sizeof(*event) +
 			WMI_TLV_HDR_SIZE, dest_ap->ieLength);
-	cdf_mem_copy(dest_match->anqp, buf_ptr + sizeof(*event) +
+	qdf_mem_copy(dest_match->anqp, buf_ptr + sizeof(*event) +
 			WMI_TLV_HDR_SIZE + dest_ap->ieLength,
 			dest_match->anqp_len);
 
@@ -5033,7 +5033,7 @@ int wma_passpoint_match_event_handler(void *handle,
 				eSIR_PASSPOINT_NETWORK_FOUND_IND,
 				dest_match);
 	WMA_LOGI("%s: sending passpoint match event to hdd", __func__);
-	cdf_mem_free(dest_match);
+	qdf_mem_free(dest_match);
 	return 0;
 }
 
@@ -5085,7 +5085,7 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
 		return -EINVAL;
 	}
 
-	dest_hotlist = cdf_mem_malloc(sizeof(*dest_hotlist) +
+	dest_hotlist = qdf_mem_malloc(sizeof(*dest_hotlist) +
 					sizeof(*dest_ap) * numap);
 	if (!dest_hotlist) {
 		WMA_LOGE("%s: Allocation failed for hotlist buffer",
@@ -5117,7 +5117,7 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
 		dest_ap->ieLength = src_hotlist->ie_length;
 		WMI_MAC_ADDR_TO_CHAR_ARRAY(&src_hotlist->bssid,
 					   dest_ap->bssid.bytes);
-		cdf_mem_copy(dest_ap->ssid, src_hotlist->ssid.ssid,
+		qdf_mem_copy(dest_ap->ssid, src_hotlist->ssid.ssid,
 					src_hotlist->ssid.ssid_len);
 		dest_ap->ssid[src_hotlist->ssid.ssid_len] = '\0';
 		dest_ap++;
@@ -5129,7 +5129,7 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
 			       eSIR_EXTSCAN_HOTLIST_SSID_MATCH_IND,
 			       dest_hotlist);
 	WMA_LOGI("%s: sending hotlist ssid match event", __func__);
-	cdf_mem_free(dest_hotlist);
+	qdf_mem_free(dest_hotlist);
 	return 0;
 }
 
@@ -6190,7 +6190,7 @@ QDF_STATUS wma_set_epno_network_list(tp_wma_handle wma,
 		/* Copy ssid and it's length */
 		nlo_list[i].ssid.valid = true;
 		nlo_list[i].ssid.ssid.ssid_len = req->networks[i].ssid.length;
-		cdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
+		qdf_mem_copy(nlo_list[i].ssid.ssid.ssid,
 			     req->networks[i].ssid.ssId,
 			     nlo_list[i].ssid.ssid.ssid_len);
 		WMA_LOGD("index: %d ssid: %.*s len: %d", i,
@@ -6288,7 +6288,7 @@ QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 			wmi_passpoint_config_cmd_fixed_param));
 		cmd->id = req->networks[i].id;
 		WMA_LOGD("%s: network id: %u", __func__, cmd->id);
-		cdf_mem_copy(cmd->realm, req->networks[i].realm,
+		qdf_mem_copy(cmd->realm, req->networks[i].realm,
 			strlen(req->networks[i].realm) + 1);
 		WMA_LOGD("%s: realm: %s", __func__, cmd->realm);
 		for (j = 0; j < PASSPOINT_ROAMING_CONSORTIUM_ID_NUM; j++) {
@@ -6297,11 +6297,11 @@ QDF_STATUS wma_set_passpoint_network_list(tp_wma_handle wma,
 				j, bytes[0], bytes[1], bytes[2], bytes[3],
 				bytes[4], bytes[5], bytes[6], bytes[7]);
 
-			cdf_mem_copy(&cmd->roaming_consortium_ids[j],
+			qdf_mem_copy(&cmd->roaming_consortium_ids[j],
 				&req->networks[i].roaming_consortium_ids[j],
 				PASSPOINT_ROAMING_CONSORTIUM_ID_LEN);
 		}
-		cdf_mem_copy(cmd->plmn, req->networks[i].plmn,
+		qdf_mem_copy(cmd->plmn, req->networks[i].plmn,
 				PASSPOINT_PLMN_ID_LEN);
 		WMA_LOGD("%s: plmn: %02x:%02x:%02x", __func__,
 			cmd->plmn[0], cmd->plmn[1], cmd->plmn[2]);
@@ -6463,7 +6463,7 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
 				 WMITLV_GET_STRUCT_TLVLEN
 					(wmi_extscan_hotlist_ssid_entry));
 			entry->ssid.ssid_len = request->ssids[i].ssid.length;
-			cdf_mem_copy(entry->ssid.ssid,
+			qdf_mem_copy(entry->ssid.ssid,
 				     request->ssids[i].ssid.ssId,
 				     request->ssids[i].ssid.length);
 			entry->band = request->ssids[i].band;
@@ -6522,7 +6522,7 @@ QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 			       (wmi_scan_prob_req_oui_cmd_fixed_param));
 
 	oui_buf = &cmd->prob_req_oui;
-	cdf_mem_zero(oui_buf, sizeof(cmd->prob_req_oui));
+	qdf_mem_zero(oui_buf, sizeof(cmd->prob_req_oui));
 	*oui_buf = psetoui->oui[0] << 16 | psetoui->oui[1] << 8
 		   | psetoui->oui[2];
 	WMA_LOGD("%s: wma:oui received from hdd %08x", __func__,
@@ -6563,7 +6563,7 @@ int wma_scan_event_callback(WMA_HANDLE handle, uint8_t *data,
 	vdev_id = wmi_event->vdev_id;
 	scan_id = wma_handle->interfaces[vdev_id].scan_info.scan_id;
 
-	scan_event = (tSirScanOffloadEvent *) cdf_mem_malloc
+	scan_event = (tSirScanOffloadEvent *) qdf_mem_malloc
 			     (sizeof(tSirScanOffloadEvent));
 	if (!scan_event) {
 		WMA_LOGE("Memory allocation failed for tSirScanOffloadEvent");
@@ -6658,7 +6658,7 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 		wma_stop_scan(wma, &abortScan);
 	}
 
-	candidate_ind = cdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
+	candidate_ind = qdf_mem_malloc(sizeof(tSirSmeCandidateFoundInd));
 	if (!candidate_ind) {
 		WMA_LOGE("%s: Alloc failed for tSirSmeCandidateFoundInd",
 			__func__);
@@ -6676,7 +6676,7 @@ void wma_roam_better_ap_handler(tp_wma_handle wma, uint32_t vdev_id)
 
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(CDS_MQ_ID_SME,
 						(cds_msg_t *) &cds_msg)) {
-		cdf_mem_free(candidate_ind);
+		qdf_mem_free(candidate_ind);
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
 			  FL("Failed to post candidate ind to SME"));
 	}
@@ -6862,9 +6862,9 @@ QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 			wmi_roam_subnet_change_config_fixed_param));
 
 	cmd->vdev_id = req->session_id;
-	cdf_mem_copy(&cmd->inet_gw_ip_v4_addr, req->ipv4_addr,
+	qdf_mem_copy(&cmd->inet_gw_ip_v4_addr, req->ipv4_addr,
 		QDF_IPV4_ADDR_SIZE);
-	cdf_mem_copy(&cmd->inet_gw_ip_v6_addr, req->ipv6_addr,
+	qdf_mem_copy(&cmd->inet_gw_ip_v6_addr, req->ipv6_addr,
 		QDF_IPV6_ADDR_SIZE);
 	WMI_CHAR_ARRAY_TO_MAC_ADDR(req->gw_mac_addr.bytes,
 		&cmd->inet_gw_mac_addr);

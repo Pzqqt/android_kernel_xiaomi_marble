@@ -1822,7 +1822,7 @@ void cfg_process_mb_msg(tpAniSirGlobal pMac, tSirMbMsg *pMsg)
 	index = CFG_GET_FUNC_INDX(pMsg->type);
 
 	if (index >= QDF_ARRAY_SIZE(g_cfg_func)) {
-		cdf_mem_free(pMsg);
+		qdf_mem_free(pMsg);
 		return;
 	}
 	len = pMsg->msgLen - WNI_CFG_MB_HDR_LEN;
@@ -1832,7 +1832,7 @@ void cfg_process_mb_msg(tpAniSirGlobal pMac, tSirMbMsg *pMsg)
 	g_cfg_func[index] (pMac, len, pParam);
 
 	/* Free up buffer */
-	cdf_mem_free(pMsg);
+	qdf_mem_free(pMsg);
 
 } /*** end cfg_process_mb_msg() ***/
 

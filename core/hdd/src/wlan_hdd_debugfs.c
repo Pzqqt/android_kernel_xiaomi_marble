@@ -349,7 +349,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 
 	/* Get command from user */
 	if (count <= MAX_USER_COMMAND_SIZE_FRAME)
-		cmd = cdf_mem_malloc(count + 1);
+		cmd = qdf_mem_malloc(count + 1);
 	else {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Command length is larger than %d bytes.",
@@ -365,7 +365,7 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	}
 
 	if (copy_from_user(cmd, buf, count)) {
-		cdf_mem_free(cmd);
+		qdf_mem_free(cmd);
 		return -EFAULT;
 	}
 	cmd[count] = '\0';
@@ -396,11 +396,11 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 	/* Delete pattern using index if duration is 0 */
 	if (!pattern_duration) {
 		delPeriodicTxPtrnParams =
-			cdf_mem_malloc(sizeof(tSirDelPeriodicTxPtrn));
+			qdf_mem_malloc(sizeof(tSirDelPeriodicTxPtrn));
 		if (!delPeriodicTxPtrnParams) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  FL("Memory allocation failed!"));
-			cdf_mem_free(cmd);
+			qdf_mem_free(cmd);
 			return -ENOMEM;
 		}
 		delPeriodicTxPtrnParams->ucPtrnId = pattern_idx;
@@ -416,11 +416,11 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 				  "%s: sme_del_periodic_tx_ptrn() failed!",
 				  __func__);
 
-			cdf_mem_free(delPeriodicTxPtrnParams);
+			qdf_mem_free(delPeriodicTxPtrnParams);
 			goto failure;
 		}
-		cdf_mem_free(cmd);
-		cdf_mem_free(delPeriodicTxPtrnParams);
+		qdf_mem_free(cmd);
+		qdf_mem_free(delPeriodicTxPtrnParams);
 		return count;
 	}
 
@@ -462,11 +462,11 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		goto failure;
 	}
 
-	addPeriodicTxPtrnParams = cdf_mem_malloc(sizeof(tSirAddPeriodicTxPtrn));
+	addPeriodicTxPtrnParams = qdf_mem_malloc(sizeof(tSirAddPeriodicTxPtrn));
 	if (!addPeriodicTxPtrnParams) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  FL("Memory allocation failed!"));
-		cdf_mem_free(cmd);
+		qdf_mem_free(cmd);
 		return -ENOMEM;
 	}
 
@@ -493,16 +493,16 @@ static ssize_t __wcnss_patterngen_write(struct file *file,
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_add_periodic_tx_ptrn() failed!", __func__);
 
-		cdf_mem_free(addPeriodicTxPtrnParams);
+		qdf_mem_free(addPeriodicTxPtrnParams);
 		goto failure;
 	}
-	cdf_mem_free(cmd);
-	cdf_mem_free(addPeriodicTxPtrnParams);
+	qdf_mem_free(cmd);
+	qdf_mem_free(addPeriodicTxPtrnParams);
 	EXIT();
 	return count;
 
 failure:
-	cdf_mem_free(cmd);
+	qdf_mem_free(cmd);
 	return -EINVAL;
 }
 

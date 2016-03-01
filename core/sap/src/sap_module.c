@@ -106,7 +106,7 @@ void *wlansap_open(void *p_cds_gctx)
 	ptSapContext pSapCtx = NULL;
 
 	/* dynamically allocate the sapContext */
-	pSapCtx = (ptSapContext) cdf_mem_malloc(sizeof(tSapContext));
+	pSapCtx = (ptSapContext) qdf_mem_malloc(sizeof(tSapContext));
 
 	if (NULL == pSapCtx) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -271,7 +271,7 @@ QDF_STATUS wlansap_close(void *pCtx)
 	/* empty queues/lists/pkts if any */
 	wlansap_clean_cb(pSapCtx, true);
 
-	cdf_mem_free(pSapCtx);
+	qdf_mem_free(pSapCtx);
 
 	return QDF_STATUS_SUCCESS;
 } /* wlansap_close */
@@ -311,7 +311,7 @@ QDF_STATUS wlansap_clean_cb(ptSapContext pSapCtx, uint32_t freeFlag      /* 0 / 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "wlansap_clean_cb");
 
-	cdf_mem_zero(pSapCtx, sizeof(tSapContext));
+	qdf_mem_zero(pSapCtx, sizeof(tSapContext));
 
 	pSapCtx->p_cds_gctx = NULL;
 
@@ -468,9 +468,9 @@ wlansap_set_scan_acs_channel_params(tsap_Config_t *pconfig,
 	psap_ctx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
 
 	/* Save a copy to SAP context */
-	cdf_mem_copy(psap_ctx->csr_roamProfile.BSSIDs.bssid,
+	qdf_mem_copy(psap_ctx->csr_roamProfile.BSSIDs.bssid,
 		pconfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(psap_ctx->self_mac_addr,
+	qdf_mem_copy(psap_ctx->self_mac_addr,
 		pconfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 
 	h_hal = (tHalHandle)CDS_GET_HAL_CB(psap_ctx->p_cds_gctx);
@@ -631,13 +631,13 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 	/* Set the BSSID to your "self MAC Addr" read the mac address
 		from Configuation ITEM received from HDD */
 	pSapCtx->csr_roamProfile.BSSIDs.numOfBSSIDs = 1;
-	cdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
+	qdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
 		     pSapCtx->self_mac_addr, sizeof(struct qdf_mac_addr));
 
 	/* Save a copy to SAP context */
-	cdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
+	qdf_mem_copy(pSapCtx->csr_roamProfile.BSSIDs.bssid,
 		     pConfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(pSapCtx->self_mac_addr,
+	qdf_mem_copy(pSapCtx->self_mac_addr,
 		     pConfig->self_macaddr.bytes, QDF_MAC_ADDR_SIZE);
 
 	/* copy the configuration items to csrProfile */
@@ -678,11 +678,11 @@ QDF_STATUS wlansap_start_bss(void *pCtx,     /* pwextCtx */
 
 	/* Copy MAC filtering settings to sap context */
 	pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
-	cdf_mem_copy(pSapCtx->acceptMacList, pConfig->accept_mac,
+	qdf_mem_copy(pSapCtx->acceptMacList, pConfig->accept_mac,
 		     sizeof(pConfig->accept_mac));
 	pSapCtx->nAcceptMac = pConfig->num_accept_mac;
 	sap_sort_mac_list(pSapCtx->acceptMacList, pSapCtx->nAcceptMac);
-	cdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
+	qdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
 		     sizeof(pConfig->deny_mac));
 	pSapCtx->nDenyMac = pConfig->num_deny_mac;
 	sap_sort_mac_list(pSapCtx->denyMacList, pSapCtx->nDenyMac);
@@ -733,7 +733,7 @@ QDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
 	pSapCtx->eSapMacAddrAclMode = pConfig->SapMacaddr_acl;
 
 	if (eSAP_DENY_UNLESS_ACCEPTED == pSapCtx->eSapMacAddrAclMode) {
-		cdf_mem_copy(pSapCtx->acceptMacList,
+		qdf_mem_copy(pSapCtx->acceptMacList,
 			     pConfig->accept_mac,
 			     sizeof(pConfig->accept_mac));
 		pSapCtx->nAcceptMac = pConfig->num_accept_mac;
@@ -741,7 +741,7 @@ QDF_STATUS wlansap_set_mac_acl(void *pCtx,    /* pwextCtx */
 			       pSapCtx->nAcceptMac);
 	} else if (eSAP_ACCEPT_UNLESS_DENIED ==
 		   pSapCtx->eSapMacAddrAclMode) {
-		cdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
+		qdf_mem_copy(pSapCtx->denyMacList, pConfig->deny_mac,
 			     sizeof(pConfig->deny_mac));
 		pSapCtx->nDenyMac = pConfig->num_deny_mac;
 		sap_sort_mac_list(pSapCtx->denyMacList, pSapCtx->nDenyMac);
@@ -994,7 +994,7 @@ QDF_STATUS wlansap_clear_acl(void *pCtx)
 
 	if (pSapCtx->denyMacList != NULL) {
 		for (i = 0; i < (pSapCtx->nDenyMac - 1); i++) {
-			cdf_mem_zero((pSapCtx->denyMacList + i)->bytes,
+			qdf_mem_zero((pSapCtx->denyMacList + i)->bytes,
 				     QDF_MAC_ADDR_SIZE);
 
 		}
@@ -1004,7 +1004,7 @@ QDF_STATUS wlansap_clear_acl(void *pCtx)
 
 	if (pSapCtx->acceptMacList != NULL) {
 		for (i = 0; i < (pSapCtx->nAcceptMac - 1); i++) {
-			cdf_mem_zero((pSapCtx->acceptMacList + i)->bytes,
+			qdf_mem_zero((pSapCtx->acceptMacList + i)->bytes,
 				     QDF_MAC_ADDR_SIZE);
 
 		}
@@ -1713,7 +1713,7 @@ wlan_sap_getstation_ie_information
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
 			FL("WPAIE len : %x"), *len);
 		if ((buf) && (ie_len >= sap_ctx->nStaWPARSnReqIeLength)) {
-			cdf_mem_copy(buf,
+			qdf_mem_copy(buf,
 				sap_ctx->pStaWpaRsnReqIE,
 				sap_ctx->nStaWPARSnReqIeLength);
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
@@ -1764,13 +1764,13 @@ QDF_STATUS wlansap_set_wps_ie(void *pCtx, tSap_WPSIE *pSap_WPSIe)
 
 	if (sap_acquire_global_lock(pSapCtx) == QDF_STATUS_SUCCESS) {
 		if (pSap_WPSIe->sapWPSIECode == eSAP_WPS_BEACON_IE) {
-			cdf_mem_copy(&pSapCtx->APWPSIEs.SirWPSBeaconIE,
+			qdf_mem_copy(&pSapCtx->APWPSIEs.SirWPSBeaconIE,
 				     &pSap_WPSIe->sapwpsie.
 				     sapWPSBeaconIE,
 				     sizeof(tSap_WPSBeaconIE));
 		} else if (pSap_WPSIe->sapWPSIECode ==
 			   eSAP_WPS_PROBE_RSP_IE) {
-			cdf_mem_copy(&pSapCtx->APWPSIEs.
+			qdf_mem_copy(&pSapCtx->APWPSIEs.
 				     SirWPSProbeRspIE,
 				     &pSap_WPSIe->sapwpsie.
 				     sapWPSProbeRspIE,
@@ -1946,7 +1946,7 @@ QDF_STATUS wlansap_set_wparsn_ies
 	}
 
 	pSapCtx->APWPARSNIEs.length = (uint16_t) WPARSNIEsLen;
-	cdf_mem_copy(pSapCtx->APWPARSNIEs.rsnIEdata, pWPARSNIEs,
+	qdf_mem_copy(pSapCtx->APWPARSNIEs.rsnIEdata, pWPARSNIEs,
 		     WPARSNIEsLen);
 
 	cdf_ret_status =
@@ -2686,14 +2686,14 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		/* initialize the buffer pointer so that pe can copy */
 		if (additionIELength > 0) {
 			bufferLength = additionIELength;
-			pBuffer = cdf_mem_malloc(bufferLength);
+			pBuffer = qdf_mem_malloc(bufferLength);
 			if (NULL == pBuffer) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("Could not allocate the buffer "));
 				return QDF_STATUS_E_NOMEM;
 			}
-			cdf_mem_copy(pBuffer, pAdditionIEBuffer, bufferLength);
+			qdf_mem_copy(pBuffer, pAdditionIEBuffer, bufferLength);
 			bufferValid = true;
 		}
 	}
@@ -2704,7 +2704,7 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			pConfig->probeRespBcnIEsLen = bufferLength;
 			pConfig->pProbeRespBcnIEsBuffer = pBuffer;
 		} else {
-			cdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
+			qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
 			pConfig->probeRespBcnIEsLen = 0;
 			pConfig->pProbeRespBcnIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -2717,7 +2717,7 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			pConfig->probeRespIEsBufferLen = bufferLength;
 			pConfig->pProbeRespIEsBuffer = pBuffer;
 		} else {
-			cdf_mem_free(pConfig->pProbeRespIEsBuffer);
+			qdf_mem_free(pConfig->pProbeRespIEsBuffer);
 			pConfig->probeRespIEsBufferLen = 0;
 			pConfig->pProbeRespIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -2730,7 +2730,7 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 			pConfig->assocRespIEsLen = bufferLength;
 			pConfig->pAssocRespIEsBuffer = pBuffer;
 		} else {
-			cdf_mem_free(pConfig->pAssocRespIEsBuffer);
+			qdf_mem_free(pConfig->pAssocRespIEsBuffer);
 			pConfig->assocRespIEsLen = 0;
 			pConfig->pAssocRespIEsBuffer = NULL;
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -2742,7 +2742,7 @@ wlansap_update_sap_config_add_ie(tsap_Config_t *pConfig,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			  FL("No matching buffer type %d"), updateType);
 		if (pBuffer != NULL)
-			cdf_mem_free(pBuffer);
+			qdf_mem_free(pBuffer);
 		break;
 	}
 
@@ -2761,21 +2761,21 @@ wlansap_reset_sap_config_add_ie(tsap_Config_t *pConfig, eUpdateIEsType updateTyp
 	switch (updateType) {
 	case eUPDATE_IE_ALL:    /*only used to reset */
 	case eUPDATE_IE_PROBE_RESP:
-		cdf_mem_free(pConfig->pProbeRespIEsBuffer);
+		qdf_mem_free(pConfig->pProbeRespIEsBuffer);
 		pConfig->probeRespIEsBufferLen = 0;
 		pConfig->pProbeRespIEsBuffer = NULL;
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
 	case eUPDATE_IE_ASSOC_RESP:
-		cdf_mem_free(pConfig->pAssocRespIEsBuffer);
+		qdf_mem_free(pConfig->pAssocRespIEsBuffer);
 		pConfig->assocRespIEsLen = 0;
 		pConfig->pAssocRespIEsBuffer = NULL;
 		if (eUPDATE_IE_ALL != updateType)
 			break;
 
 	case eUPDATE_IE_PROBE_BCN:
-		cdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
+		qdf_mem_free(pConfig->pProbeRespBcnIEsBuffer);
 		pConfig->probeRespBcnIEsLen = 0;
 		pConfig->pProbeRespBcnIEsBuffer = NULL;
 		if (eUPDATE_IE_ALL != updateType)
@@ -3105,7 +3105,7 @@ void wlansap_populate_del_sta_params(const uint8_t *mac,
 	if (NULL == mac)
 		qdf_set_macaddr_broadcast(&pDelStaParams->peerMacAddr);
 	else
-		cdf_mem_copy(pDelStaParams->peerMacAddr.bytes, mac,
+		qdf_mem_copy(pDelStaParams->peerMacAddr.bytes, mac,
 			     QDF_MAC_ADDR_SIZE);
 
 	if (reason_code == 0)

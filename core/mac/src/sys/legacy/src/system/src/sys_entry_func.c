@@ -78,7 +78,7 @@ tSirRetStatus postPTTMsgApi(tpAniSirGlobal pMac, tSirMsgQ *pMsg);
 tSirRetStatus sys_init_globals(tpAniSirGlobal pMac)
 {
 
-	cdf_mem_set((uint8_t *) &pMac->sys, sizeof(pMac->sys), 0);
+	qdf_mem_set((uint8_t *) &pMac->sys, sizeof(pMac->sys), 0);
 
 	pMac->sys.gSysEnableScanMode = 1;
 	pMac->sys.gSysEnableLinkMonitorMode = 0;

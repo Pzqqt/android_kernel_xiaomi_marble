@@ -33,7 +33,7 @@
 #define _OL_TXRX_TYPES__H_
 
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 #include <cds_queue.h>          /* TAILQ */
 #include <a_types.h>            /* A_UINT8 */
 #include <htt.h>                /* htt_sec_type, htt_pkt_type, etc. */
@@ -566,7 +566,7 @@ struct ol_txrx_pdev_t {
 		uint16_t desc_reserved_size;
 		uint8_t page_divider;
 		uint32_t offset_filter;
-		struct cdf_mem_multi_page_t desc_pages;
+		struct qdf_mem_multi_page_t desc_pages;
 	} tx_desc;
 
 	uint8_t is_mgmt_over_wmi_enabled;

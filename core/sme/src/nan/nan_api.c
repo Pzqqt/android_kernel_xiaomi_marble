@@ -79,7 +79,7 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 	size_t data_len;
 
 	data_len = sizeof(tNanRequest) + input->request_data_len;
-	data = cdf_mem_malloc(data_len);
+	data = qdf_mem_malloc(data_len);
 
 	if (data == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -87,10 +87,10 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_zero(data, data_len);
+	qdf_mem_zero(data, data_len);
 	data->request_data_len = input->request_data_len;
 	if (input->request_data_len) {
-		cdf_mem_copy(data->request_data,
+		qdf_mem_copy(data->request_data,
 			     input->request_data, input->request_data_len);
 	}
 
@@ -102,7 +102,7 @@ QDF_STATUS sme_nan_request(tpNanRequestReq input)
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  FL
 				  ("Not able to post WMA_NAN_REQUEST message to WMA"));
-		cdf_mem_free(data);
+		qdf_mem_free(data);
 		return QDF_STATUS_SUCCESS;
 	}
 

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -78,7 +78,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 		msg->staId, msg->reasonCode);
 
 	if (LIM_IS_IBSS_ROLE(session_entry)) {
-		cdf_mem_free(msg);
+		qdf_mem_free(msg);
 		return;
 	}
 
@@ -89,7 +89,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 		lim_log(mac_ctx, LOGE,
 			FL("Invalid STA limSystemRole=%d"),
 			GET_LIM_SYSTEM_ROLE(session_entry));
-		cdf_mem_free(msg);
+		qdf_mem_free(msg);
 		return;
 	}
 	stads->del_sta_ctx_rssi = msg->rssi;
@@ -100,7 +100,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 	if (stads->staIndex != msg->staId) {
 		lim_log(mac_ctx, LOGE, FL("staid mismatch: %d vs %d "),
 			stads->staIndex, msg->staId);
-		cdf_mem_free(msg);
+		qdf_mem_free(msg);
 		return;
 	}
 
@@ -125,7 +125,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 			lim_log(mac_ctx, LOGE,
 				FL("Inv Del STA staId:%d, assocId:%d"),
 				msg->staId, msg->assocId);
-			cdf_mem_free(msg);
+			qdf_mem_free(msg);
 			return;
 		} else {
 			lim_send_disassoc_mgmt_frame(mac_ctx,
@@ -172,7 +172,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 					"in some transit state, Addr = "
 					MAC_ADDRESS_STR),
 					MAC_ADDR_ARRAY(msg->bssId));
-			cdf_mem_free(msg);
+			qdf_mem_free(msg);
 			return;
 		}
 
@@ -182,7 +182,7 @@ static void lim_delete_sta_util(tpAniSirGlobal mac_ctx, tpDeleteStaContext msg,
 			eLIM_LINK_MONITORING_DEAUTH;
 
 		/* Issue Deauth Indication to SME. */
-		cdf_mem_copy((uint8_t *) &mlm_deauth_ind.peerMacAddr,
+		qdf_mem_copy((uint8_t *) &mlm_deauth_ind.peerMacAddr,
 			     stads->staAddr, sizeof(tSirMacAddr));
 		mlm_deauth_ind.reasonCode =
 			(uint8_t) stads->mlmStaContext.disassocReason;
@@ -229,7 +229,7 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 						 &session_id);
 	if (NULL == session_entry) {
 		lim_log(mac_ctx, LOGE, FL("session does not exist"));
-		cdf_mem_free(msg);
+		qdf_mem_free(msg);
 		return;
 	}
 
@@ -251,7 +251,7 @@ void lim_delete_sta_context(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 		lim_log(mac_ctx, LOGE, FL(" Unknown reason code "));
 		break;
 	}
-	cdf_mem_free(msg);
+	qdf_mem_free(msg);
 	return;
 }
 
@@ -289,7 +289,7 @@ lim_trigger_sta_deletion(tpAniSirGlobal mac_ctx, tpDphHashNode sta_ds,
 	sta_ds->mlmStaContext.disassocReason =
 		eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
 	sta_ds->mlmStaContext.cleanupTrigger = eLIM_LINK_MONITORING_DISASSOC;
-	cdf_mem_copy(&mlm_disassoc_ind.peerMacAddr, sta_ds->staAddr,
+	qdf_mem_copy(&mlm_disassoc_ind.peerMacAddr, sta_ds->staAddr,
 		sizeof(tSirMacAddr));
 	mlm_disassoc_ind.reasonCode =
 		eSIR_MAC_DISASSOC_DUE_TO_INACTIVITY_REASON;
@@ -329,7 +329,8 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 	/* tear down the following sessionEntry */
 	tpPESession psessionEntry;
 
-	if ((psessionEntry = pe_find_session_by_session_id(pMac, sessionId)) == NULL) {
+	psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
+	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGP,
 			FL("Session Does not exist for given sessionID"));
 		return;
@@ -377,7 +378,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 					eLIM_MLM_WT_DEL_STA_RSP_STATE;
 
 		/* / Issue Deauth Indication to SME. */
-		cdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
+		qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
 			     pStaDs->staAddr, sizeof(tSirMacAddr));
 
 	/*
@@ -397,7 +398,7 @@ lim_tear_down_link_with_ap(tpAniSirGlobal pMac, uint8_t sessionId,
 
 		lim_log(pMac, LOGE, FL("HB Failure on MAC "
 			MAC_ADDRESS_STR" Store it on Index %d"),
-			MAC_ADDR_ARRAY(pStaDs->staAddr),apCount);
+			MAC_ADDR_ARRAY(pStaDs->staAddr), apCount);
 
 		sir_copy_mac_addr(pMac->lim.gLimHeartBeatApMac[apCount],
 							pStaDs->staAddr);
@@ -488,8 +489,8 @@ void lim_handle_heart_beat_failure(tpAniSirGlobal mac_ctx,
 			if (curr_chan < SIR_MAX_24G_5G_CHANNEL_RANGE) {
 				lim_covert_channel_scan_type(mac_ctx, curr_chan,
 					false);
-				mac_ctx->lim.dfschannelList.timeStamp[curr_chan]
-					 = 0;
+				mac_ctx->lim.dfschannelList.
+					timeStamp[curr_chan] = 0;
 			}
 			/*
 			 * Connected on DFS channel so should not send the

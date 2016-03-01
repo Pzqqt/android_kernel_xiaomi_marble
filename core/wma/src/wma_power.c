@@ -48,7 +48,7 @@
 #include "cdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
@@ -288,7 +288,7 @@ static int32_t wmi_unified_set_ap_ps_param(void *wma_ctx, uint32_t vdev_id,
 				   sizeof(*cmd), WMI_AP_PS_PEER_PARAM_CMDID);
 	if (err) {
 		WMA_LOGE("Failed to send set_ap_ps_param cmd");
-		cdf_mem_free(buf);
+		qdf_mem_free(buf);
 		return -EIO;
 	}
 	return 0;
@@ -428,14 +428,14 @@ void wma_set_tx_power(WMA_HANDLE handle,
 	if (!pdev) {
 		WMA_LOGE("vdev handle is invalid for %pM",
 			 tx_pwr_params->bssId.bytes);
-		cdf_mem_free(tx_pwr_params);
+		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
 	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
 		WMA_LOGE("%s: vdev id %d is not up for %pM", __func__, vdev_id,
 			 tx_pwr_params->bssId.bytes);
-		cdf_mem_free(tx_pwr_params);
+		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
@@ -471,7 +471,7 @@ void wma_set_tx_power(WMA_HANDLE handle,
 		ret = 0;
 	}
 end:
-	cdf_mem_free(tx_pwr_params);
+	qdf_mem_free(tx_pwr_params);
 	if (ret)
 		WMA_LOGE("Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT");
 }
@@ -503,13 +503,13 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	if (!pdev) {
 		WMA_LOGE("vdev handle is invalid for %pM",
 			 tx_pwr_params->bssId.bytes);
-		cdf_mem_free(tx_pwr_params);
+		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
 	if (!(wma_handle->interfaces[vdev_id].vdev_up)) {
 		WMA_LOGE("%s: vdev id %d is not up", __func__, vdev_id);
-		cdf_mem_free(tx_pwr_params);
+		qdf_mem_free(tx_pwr_params);
 		return;
 	}
 
@@ -535,7 +535,7 @@ void wma_set_max_tx_power(WMA_HANDLE handle,
 	else
 		wma_handle->interfaces[vdev_id].max_tx_power = prev_max_power;
 end:
-	cdf_mem_free(tx_pwr_params);
+	qdf_mem_free(tx_pwr_params);
 	if (ret)
 		WMA_LOGE("%s: Failed to set vdev param WMI_VDEV_PARAM_TX_PWRLIMIT",
 			__func__);
@@ -1173,7 +1173,7 @@ wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, param_len);
 
 	buf_ptr += WMI_TLV_HDR_SIZE;
-	cdf_mem_copy(buf_ptr, autoTriggerparam, param_len);
+	qdf_mem_copy(buf_ptr, autoTriggerparam, param_len);
 
 	/*
 	 * Update tag and length for uapsd auto trigger params (this will take
@@ -1503,7 +1503,7 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 				 "but not present in swba event, "
 				 "So Reset the NoA", __func__);
 			/* TODO: Assuming p2p noa ie is last ie in the beacon */
-			cdf_mem_zero(bcn->noa_ie, (bcn->noa_sub_ie_len +
+			qdf_mem_zero(bcn->noa_ie, (bcn->noa_sub_ie_len +
 						   sizeof(struct p2p_ie)));
 			bcn->len -= (bcn->noa_sub_ie_len +
 				     sizeof(struct p2p_ie));
@@ -1521,7 +1521,7 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 			 "bcn->noa_sub_ie_len %u",
 			 __func__, bcn->len, bcn->noa_sub_ie_len);
 		bcn->len -= (bcn->noa_sub_ie_len + sizeof(struct p2p_ie));
-		cdf_mem_zero(bcn->noa_ie,
+		qdf_mem_zero(bcn->noa_ie,
 			     (bcn->noa_sub_ie_len + sizeof(struct p2p_ie)));
 	} else {                /* NoA is not present in previous beacon */
 		WMA_LOGD("%s: NoA not present in previous beacon, add it"
@@ -1534,7 +1534,7 @@ static void wma_update_beacon_noa_ie(struct beacon_info *bcn,
 	wma_add_p2p_ie(bcn->noa_ie);
 	p2p_ie = (struct p2p_ie *)bcn->noa_ie;
 	p2p_ie->p2p_len += new_noa_sub_ie_len;
-	cdf_mem_copy((bcn->noa_ie + sizeof(struct p2p_ie)), bcn->noa_sub_ie,
+	qdf_mem_copy((bcn->noa_ie + sizeof(struct p2p_ie)), bcn->noa_sub_ie,
 		     new_noa_sub_ie_len);
 
 	bcn->len += (new_noa_sub_ie_len + sizeof(struct p2p_ie));
@@ -1636,14 +1636,14 @@ void wma_update_probe_resp_noa(tp_wma_handle wma_handle,
 			       struct p2p_sub_element_noa *noa_ie)
 {
 	tSirP2PNoaAttr *noa_attr =
-		(tSirP2PNoaAttr *) cdf_mem_malloc(sizeof(tSirP2PNoaAttr));
+		(tSirP2PNoaAttr *) qdf_mem_malloc(sizeof(tSirP2PNoaAttr));
 	WMA_LOGD("Received update NoA event");
 	if (!noa_attr) {
 		WMA_LOGE("Failed to allocate memory for tSirP2PNoaAttr");
 		return;
 	}
 
-	cdf_mem_zero(noa_attr, sizeof(tSirP2PNoaAttr));
+	qdf_mem_zero(noa_attr, sizeof(tSirP2PNoaAttr));
 
 	noa_attr->index = noa_ie->index;
 	noa_attr->oppPsFlag = noa_ie->oppPS;
@@ -1707,7 +1707,7 @@ int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
 
 	if (WMI_UNIFIED_NOA_ATTR_IS_MODIFIED(p2p_noa_info)) {
 
-		cdf_mem_zero(&noa_ie, sizeof(noa_ie));
+		qdf_mem_zero(&noa_ie, sizeof(noa_ie));
 		noa_ie.index =
 			(uint8_t) WMI_UNIFIED_NOA_ATTR_INDEX_GET(p2p_noa_info);
 		noa_ie.oppPS =

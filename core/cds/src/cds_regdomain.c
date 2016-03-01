@@ -641,11 +641,11 @@ uint16_t cds_regdm_get_chanwidth_from_opclass(uint8_t *country,
 	regdm_op_class_map_t *class;
 	uint16_t i;
 
-	if (true == cdf_mem_compare(country, "US", 2))
+	if (true != qdf_mem_cmp(country, "US", 2))
 		class = us_op_class;
-	else if (true == cdf_mem_compare(country, "EU", 2))
+	else if (true != qdf_mem_cmp(country, "EU", 2))
 		class = euro_op_class;
-	else if (true == cdf_mem_compare(country, "JP", 2))
+	else if (true != qdf_mem_cmp(country, "JP", 2))
 		class = japan_op_class;
 	else
 		class = global_op_class;
@@ -675,11 +675,11 @@ uint16_t cds_regdm_get_opclass_from_channel(uint8_t *country, uint8_t channel,
 	regdm_op_class_map_t *class = NULL;
 	uint16_t i = 0;
 
-	if (true == cdf_mem_compare(country, "US", 2)) {
+	if (true != qdf_mem_cmp(country, "US", 2)) {
 		class = us_op_class;
-	} else if (true == cdf_mem_compare(country, "EU", 2)) {
+	} else if (true != qdf_mem_cmp(country, "EU", 2)) {
 		class = euro_op_class;
-	} else if (true == cdf_mem_compare(country, "JP", 2)) {
+	} else if (true != qdf_mem_cmp(country, "JP", 2)) {
 		class = japan_op_class;
 	} else {
 		class = global_op_class;

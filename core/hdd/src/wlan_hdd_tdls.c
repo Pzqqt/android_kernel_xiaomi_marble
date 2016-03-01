@@ -390,7 +390,7 @@ static void wlan_hdd_tdls_free_list(tdlsCtx_t *pHddTdlsCtx)
 		list_for_each_safe(pos, q, head) {
 			tmp = list_entry(pos, hddTdlsPeer_t, node);
 			list_del(pos);
-			cdf_mem_free(tmp);
+			qdf_mem_free(tmp);
 			tmp = NULL;
 		}
 	}
@@ -496,7 +496,7 @@ static void wlan_hdd_tdls_del_non_forced_peers(tdlsCtx_t *hdd_tdls_ctx)
 			peer = list_entry(pos, hddTdlsPeer_t, node);
 			if (false == peer->isForcedPeer) {
 				list_del(pos);
-				cdf_mem_free(peer);
+				qdf_mem_free(peer);
 			} else {
 				peer->link_status = eTDLS_LINK_IDLE;
 				peer->reason = eTDLS_LINK_UNSPECIFIED;
@@ -572,7 +572,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	 * with the memory allocations.
 	 */
 	if (NULL == pAdapter->sessionCtx.station.pHddTdlsCtx) {
-		pHddTdlsCtx = cdf_mem_malloc(sizeof(tdlsCtx_t));
+		pHddTdlsCtx = qdf_mem_malloc(sizeof(tdlsCtx_t));
 
 		if (NULL == pHddTdlsCtx) {
 			pAdapter->sessionCtx.station.pHddTdlsCtx = NULL;
@@ -581,7 +581,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 			return -ENOMEM;
 		}
 		/* initialize TDLS pAdater context */
-		cdf_mem_zero(pHddTdlsCtx, sizeof(tdlsCtx_t));
+		qdf_mem_zero(pHddTdlsCtx, sizeof(tdlsCtx_t));
 
 		qdf_mc_timer_init(&pHddTdlsCtx->peerDiscoveryTimeoutTimer,
 				  QDF_TIMER_TYPE_SW,
@@ -623,7 +623,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	for (staIdx = 0; staIdx < pHddCtx->max_num_tdls_sta; staIdx++) {
 		pHddCtx->tdlsConnInfo[staIdx].staId = 0;
 		pHddCtx->tdlsConnInfo[staIdx].sessionId = 255;
-		cdf_mem_zero(&pHddCtx->tdlsConnInfo[staIdx].peerMac,
+		qdf_mem_zero(&pHddCtx->tdlsConnInfo[staIdx].peerMac,
 			     QDF_MAC_ADDR_SIZE);
 	}
 
@@ -677,12 +677,12 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	 * which would try to acquire sme lock.
 	 */
 	mutex_unlock(&pHddCtx->tdls_lock);
-	tInfo = cdf_mem_malloc(sizeof(tdlsInfo_t));
+	tInfo = qdf_mem_malloc(sizeof(tdlsInfo_t));
 	if (NULL == tInfo) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("cdf_mem_alloc failed for tInfo"));
 		qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
-		cdf_mem_free(pHddTdlsCtx);
+		qdf_mem_free(pHddTdlsCtx);
 		return -ENOMEM;
 	}
 
@@ -724,9 +724,9 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, true);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
-		cdf_mem_free(tInfo);
+		qdf_mem_free(tInfo);
 		qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
-		cdf_mem_free(pHddTdlsCtx);
+		qdf_mem_free(pHddTdlsCtx);
 		return -EINVAL;
 	}
 
@@ -787,7 +787,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 	/* No need to post message during driver unlaod because MC thread is
 	   already shutdown */
 	if (!cds_is_driver_unloading()) {
-		tInfo = cdf_mem_malloc(sizeof(tdlsInfo_t));
+		tInfo = qdf_mem_malloc(sizeof(tdlsInfo_t));
 		if (NULL != tInfo) {
 			tInfo->vdev_id = pAdapter->sessionId;
 			tInfo->tdls_state = eTDLS_SUPPORT_DISABLED;
@@ -827,7 +827,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 			cdf_ret_status =
 				sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, false);
 			if (QDF_STATUS_SUCCESS != cdf_ret_status) {
-				cdf_mem_free(tInfo);
+				qdf_mem_free(tInfo);
 			}
 		} else {
 			hddLog(QDF_TRACE_LEVEL_ERROR,
@@ -838,7 +838,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 	pHddTdlsCtx->magic = 0;
 	pHddTdlsCtx->pAdapter = NULL;
 
-	cdf_mem_free(pHddTdlsCtx);
+	qdf_mem_free(pHddTdlsCtx);
 	pAdapter->sessionCtx.station.pHddTdlsCtx = NULL;
 	pHddTdlsCtx = NULL;
 
@@ -897,7 +897,7 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac)
 	}
 
 	/* not found, allocate and add the list */
-	peer = cdf_mem_malloc(sizeof(hddTdlsPeer_t));
+	peer = qdf_mem_malloc(sizeof(hddTdlsPeer_t));
 	if (NULL == peer) {
 		hddLog(QDF_TRACE_LEVEL_ERROR, "%s peer malloc failed!",
 		       __func__);
@@ -909,7 +909,7 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac)
 	pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 
 	if (NULL == pHddTdlsCtx) {
-		cdf_mem_free(peer);
+		qdf_mem_free(peer);
 		mutex_unlock(&pHddCtx->tdls_lock);
 		hddLog(LOG1, FL("pHddTdlsCtx is NULL"));
 		return NULL;
@@ -918,8 +918,8 @@ hddTdlsPeer_t *wlan_hdd_tdls_get_peer(hdd_adapter_t *pAdapter, const u8 *mac)
 	key = wlan_hdd_tdls_hash_key(mac);
 	head = &pHddTdlsCtx->peer_list[key];
 
-	cdf_mem_zero(peer, sizeof(hddTdlsPeer_t));
-	cdf_mem_copy(peer->peerMac, mac, sizeof(peer->peerMac));
+	qdf_mem_zero(peer, sizeof(hddTdlsPeer_t));
+	qdf_mem_copy(peer->peerMac, mac, sizeof(peer->peerMac));
 	peer->pHddTdlsCtx = pHddTdlsCtx;
 	peer->pref_off_chan_num = pHddCtx->config->fTDLSPrefOffChanNum;
 	peer->op_class_for_pref_off_chan =
@@ -1201,13 +1201,13 @@ int wlan_hdd_tdls_set_peer_caps(hdd_adapter_t *pAdapter,
 	curr_peer->isBufSta = isBufSta;
 	curr_peer->isOffChannelSupported = isOffChannelSupported;
 
-	cdf_mem_copy(curr_peer->supported_channels,
+	qdf_mem_copy(curr_peer->supported_channels,
 		     StaParams->supported_channels,
 		     StaParams->supported_channels_len);
 
 	curr_peer->supported_channels_len = StaParams->supported_channels_len;
 
-	cdf_mem_copy(curr_peer->supported_oper_classes,
+	qdf_mem_copy(curr_peer->supported_oper_classes,
 		     StaParams->supported_oper_classes,
 		     StaParams->supported_oper_classes_len);
 
@@ -1245,14 +1245,14 @@ int wlan_hdd_tdls_get_link_establish_params(hdd_adapter_t *pAdapter,
 	tdlsLinkEstablishParams->isOffChannelSupported =
 		curr_peer->isOffChannelSupported;
 
-	cdf_mem_copy(tdlsLinkEstablishParams->supportedChannels,
+	qdf_mem_copy(tdlsLinkEstablishParams->supportedChannels,
 		     curr_peer->supported_channels,
 		     curr_peer->supported_channels_len);
 
 	tdlsLinkEstablishParams->supportedChannelsLen =
 		curr_peer->supported_channels_len;
 
-	cdf_mem_copy(tdlsLinkEstablishParams->supportedOperClasses,
+	qdf_mem_copy(tdlsLinkEstablishParams->supportedOperClasses,
 		     curr_peer->supported_oper_classes,
 		     curr_peer->supported_oper_classes_len);
 
@@ -1628,7 +1628,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 
 	wlan_hdd_tdls_set_mode(pHddCtx, req_tdls_mode, true);
 
-	tdlsParams = cdf_mem_malloc(sizeof(tdlsInfo_t));
+	tdlsParams = qdf_mem_malloc(sizeof(tdlsInfo_t));
 	if (NULL == tdlsParams) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: cdf_mem_alloc failed for tdlsParams", __func__);
@@ -1667,7 +1667,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 
 	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tdlsParams, true);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
-		cdf_mem_free(tdlsParams);
+		qdf_mem_free(tdlsParams);
 		return -EINVAL;
 	}
 
@@ -1724,7 +1724,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 			hdd_ctx->tdls_mode = eTDLS_SUPPORT_ENABLED;
 	}
 	mutex_unlock(&hdd_ctx->tdls_lock);
-	tdls_param = cdf_mem_malloc(sizeof(*tdls_param));
+	tdls_param = qdf_mem_malloc(sizeof(*tdls_param));
 	if (!tdls_param) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 			FL("memory allocation failed for tdlsParams"));
@@ -1778,7 +1778,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 					       tdls_param,
 					       true);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
-		cdf_mem_free(tdls_param);
+		qdf_mem_free(tdls_param);
 		return;
 	}
 	return;
@@ -1859,7 +1859,7 @@ int wlan_hdd_tdls_update_peer_mac(hdd_adapter_t *adapter, const uint8_t *mac,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 
 	sme_tdls_peer_state_params.vdevId = adapter->sessionId;
-	cdf_mem_copy(&sme_tdls_peer_state_params.peerMacAddr, mac,
+	qdf_mem_copy(&sme_tdls_peer_state_params.peerMacAddr, mac,
 		     sizeof(sme_tdls_peer_state_params.peerMacAddr));
 	sme_tdls_peer_state_params.peerState = peer_state;
 	status = sme_update_tdls_peer_state(hdd_ctx->hHal,
@@ -2436,7 +2436,7 @@ static void __wlan_hdd_tdls_pre_setup(struct work_struct *work)
 		goto done;
 	}
 
-	cdf_mem_copy(&peer_mac, curr_peer->peerMac, sizeof(peer_mac));
+	qdf_mem_copy(&peer_mac, curr_peer->peerMac, sizeof(peer_mac));
 
 	mutex_unlock(&pHddCtx->tdls_lock);
 
@@ -3801,7 +3801,7 @@ static int __wlan_hdd_cfg80211_tdls_mgmt(struct wiphy *wiphy,
 			}
 		}
 	}
-	cdf_mem_copy(peerMac, peer, 6);
+	qdf_mem_copy(peerMac, peer, 6);
 
 	hddLog(LOG1,
 		  "%s: " MAC_ADDRESS_STR
@@ -4272,13 +4272,13 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 			if (QDF_STATUS_SUCCESS == status) {
 				uint8_t i;
 
-				cdf_mem_zero(&smeTdlsPeerStateParams,
+				qdf_mem_zero(&smeTdlsPeerStateParams,
 					     sizeof
 					     (tSmeTdlsPeerStateParams));
 
 				smeTdlsPeerStateParams.vdevId =
 					pAdapter->sessionId;
-				cdf_mem_copy(&smeTdlsPeerStateParams.
+				qdf_mem_copy(&smeTdlsPeerStateParams.
 					     peerMacAddr,
 					     &pTdlsPeer->peerMac,
 					     sizeof(tSirMacAddr));
@@ -4818,7 +4818,7 @@ int hdd_set_tdls_offchannelmode(hdd_adapter_t *adapter, int offchanmode)
 	chan_switch_params.tdls_off_ch_mode = offchanmode;
 	chan_switch_params.is_responder =
 		conn_peer->is_responder;
-	cdf_mem_copy(&chan_switch_params.peer_mac_addr,
+	qdf_mem_copy(&chan_switch_params.peer_mac_addr,
 		     &conn_peer->peerMac,
 		     sizeof(tSirMacAddr));
 	hdd_log(LOG1,

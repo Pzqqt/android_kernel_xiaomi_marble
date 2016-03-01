@@ -508,13 +508,13 @@ void sap_cleanup_channel_list(void *p_cds_gctx)
 
 	pSapCtx->SapChnlList.numChannel = 0;
 	if (pSapCtx->SapChnlList.channelList) {
-		cdf_mem_free(pSapCtx->SapChnlList.channelList);
+		qdf_mem_free(pSapCtx->SapChnlList.channelList);
 		pSapCtx->SapChnlList.channelList = NULL;
 	}
 
 	pSapCtx->SapAllChnlList.numChannel = 0;
 	if (pSapCtx->SapAllChnlList.channelList) {
-		cdf_mem_free(pSapCtx->SapAllChnlList.channelList);
+		qdf_mem_free(pSapCtx->SapAllChnlList.channelList);
 		pSapCtx->SapAllChnlList.channelList = NULL;
 	}
 }
@@ -607,7 +607,7 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 
 	/* Allocate memory for weight computation of 2.4GHz */
 	pSpectCh =
-		(tSapSpectChInfo *) cdf_mem_malloc((pSpectInfoParams->numSpectChans)
+		(tSapSpectChInfo *) qdf_mem_malloc((pSpectInfoParams->numSpectChans)
 						   * sizeof(*pSpectCh));
 
 	if (pSpectCh == NULL) {
@@ -616,7 +616,7 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 		return eSAP_FALSE;
 	}
 
-	cdf_mem_zero(pSpectCh,
+	qdf_mem_zero(pSpectCh,
 		     (pSpectInfoParams->numSpectChans) * sizeof(*pSpectCh));
 
 	/* Initialize the pointers in the DfsParams to the allocated memory */
@@ -1168,7 +1168,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 	tSirProbeRespBeacon *pBeaconStruct;
 	tpAniSirGlobal pMac = (tpAniSirGlobal) halHandle;
 
-	pBeaconStruct = cdf_mem_malloc(sizeof(tSirProbeRespBeacon));
+	pBeaconStruct = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == pBeaconStruct) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "Unable to allocate memory in sap_compute_spect_weight\n");
@@ -1197,7 +1197,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 				(pScanResult->BssDescriptor.length +
 				 sizeof(uint16_t) + sizeof(uint32_t) -
 				 sizeof(tSirBssDescription));
-			cdf_mem_set((uint8_t *) pBeaconStruct,
+			qdf_mem_set((uint8_t *) pBeaconStruct,
 				    sizeof(tSirProbeRespBeacon), 0);
 
 			if ((sir_parse_beacon_ie
@@ -1315,7 +1315,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 		/* ------ Debug Info ------ */
 		pSpectCh++;
 	}
-	cdf_mem_free(pBeaconStruct);
+	qdf_mem_free(pBeaconStruct);
 }
 
 /*==========================================================================
@@ -1341,7 +1341,7 @@ void sap_compute_spect_weight(tSapChSelSpectInfo *pSpectInfoParams,
 void sap_chan_sel_exit(tSapChSelSpectInfo *pSpectInfoParams)
 {
 	/* Free all the allocated memory */
-	cdf_mem_free(pSpectInfoParams->pSpectCh);
+	qdf_mem_free(pSpectInfoParams->pSpectCh);
 }
 
 /*==========================================================================
@@ -1380,11 +1380,11 @@ void sap_sort_chl_weight(tSapChSelSpectInfo *pSpectInfoParams)
 			}
 		}
 		if (minWeightIndex != i) {
-			cdf_mem_copy(&temp, &pSpectCh[minWeightIndex],
+			qdf_mem_copy(&temp, &pSpectCh[minWeightIndex],
 				     sizeof(*pSpectCh));
-			cdf_mem_copy(&pSpectCh[minWeightIndex], &pSpectCh[i],
+			qdf_mem_copy(&pSpectCh[minWeightIndex], &pSpectCh[i],
 				     sizeof(*pSpectCh));
-			cdf_mem_copy(&pSpectCh[i], &temp, sizeof(*pSpectCh));
+			qdf_mem_copy(&pSpectCh[i], &temp, sizeof(*pSpectCh));
 		}
 	}
 }
@@ -1875,11 +1875,11 @@ void sap_sort_chl_weight_all(ptSapContext pSapCtx,
 			}
 		}
 		if (minWeightIndex != i) {
-			cdf_mem_copy(&temp, &pSpectCh[minWeightIndex],
+			qdf_mem_copy(&temp, &pSpectCh[minWeightIndex],
 				     sizeof(*pSpectCh));
-			cdf_mem_copy(&pSpectCh[minWeightIndex], &pSpectCh[i],
+			qdf_mem_copy(&pSpectCh[minWeightIndex], &pSpectCh[i],
 				     sizeof(*pSpectCh));
-			cdf_mem_copy(&pSpectCh[i], &temp, sizeof(*pSpectCh));
+			qdf_mem_copy(&pSpectCh[i], &temp, sizeof(*pSpectCh));
 		}
 	}
 #endif

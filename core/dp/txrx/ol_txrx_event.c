@@ -57,7 +57,7 @@ wdi_event_del_subs(wdi_event_subscribe *wdi_sub, int event_index)
 		}
 		wdi_sub = next;
 	}
-	/* cdf_mem_free(wdi_sub); */
+	/* qdf_mem_free(wdi_sub); */
 }
 
 static inline void
@@ -170,7 +170,7 @@ wdi_event_unsub(struct ol_txrx_pdev_t *txrx_pdev,
 	if (event_cb_sub->priv.next)
 		event_cb_sub->priv.next->priv.prev = event_cb_sub->priv.prev;
 
-	/* cdf_mem_free(event_cb_sub); */
+	/* qdf_mem_free(event_cb_sub); */
 
 	return A_OK;
 }
@@ -186,7 +186,7 @@ A_STATUS wdi_event_attach(struct ol_txrx_pdev_t *txrx_pdev)
 	}
 	/* Separate subscriber list for each event */
 	txrx_pdev->wdi_event_list = (wdi_event_subscribe **)
-				    cdf_mem_malloc(
+				    qdf_mem_malloc(
 					    sizeof(wdi_event_subscribe *) *
 					    WDI_NUM_EVENTS);
 	if (!txrx_pdev->wdi_event_list) {
@@ -221,7 +221,7 @@ A_STATUS wdi_event_detach(struct ol_txrx_pdev_t *txrx_pdev)
 		}
 	}
 	/* txrx_pdev->wdi_event_list would be non-null */
-	cdf_mem_free(txrx_pdev->wdi_event_list);
+	qdf_mem_free(txrx_pdev->wdi_event_list);
 	return A_OK;
 }
 

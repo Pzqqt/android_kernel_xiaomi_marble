@@ -42,7 +42,7 @@
  *      from the host to the target.
  */
 
-#include <cdf_memory.h>         /* cdf_mem_copy */
+#include <qdf_mem.h>         /* qdf_mem_copy */
 #include <cdf_nbuf.h>           /* cdf_nbuf_map_single */
 #include <htc_api.h>            /* HTC_PACKET */
 #include <htc.h>                /* HTC_HDR_ALIGNMENT_PADDING */

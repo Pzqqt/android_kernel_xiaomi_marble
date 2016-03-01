@@ -114,11 +114,11 @@
 #define LIM_MIN_MEM_ASSOC       4
 
 /* / Verifies whether given mac addr matches the CURRENT Bssid */
-#define IS_CURRENT_BSSID(pMac, addr, psessionEntry)  (cdf_mem_compare(addr, \
+#define IS_CURRENT_BSSID(pMac, addr, psessionEntry)  (!qdf_mem_cmp(addr, \
 								      psessionEntry->bssId, \
 								      sizeof(psessionEntry->bssId)))
 /* / Verifies whether given addr matches the REASSOC Bssid */
-#define IS_REASSOC_BSSID(pMac, addr, psessionEntry)  (cdf_mem_compare(addr, \
+#define IS_REASSOC_BSSID(pMac, addr, psessionEntry)  (!qdf_mem_cmp(addr, \
 								      psessionEntry->limReAssocbssId, \
 								      sizeof(psessionEntry->limReAssocbssId)))
 

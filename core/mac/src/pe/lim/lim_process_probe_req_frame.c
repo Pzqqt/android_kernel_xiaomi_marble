@@ -82,7 +82,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 	cur_time = (uint32_t) (qdf_mc_timer_get_system_ticks() /
 						QDF_TICKS_PER_SECOND);
 	qdf_zero_macaddr(&addr);
-	cdf_mem_set((uint8_t *) uuid_e, SIR_WPS_UUID_LEN, 0);
+	qdf_mem_set((uint8_t *) uuid_e, SIR_WPS_UUID_LEN, 0);
 	for (pbc = session->pAPWPSPBCSession; pbc; pbc = pbc->next) {
 		if (cur_time > pbc->timestamp + SIR_WPS_PBC_WALK_TIME)
 			break;
@@ -90,7 +90,7 @@ void lim_get_wpspbc_sessions(tpAniSirGlobal mac_ctx, struct qdf_mac_addr addr,
 		if (count > 1)
 			break;
 		qdf_copy_macaddr(&addr, &pbc->addr);
-		cdf_mem_copy((uint8_t *) uuid_e, (uint8_t *) pbc->uuid_e,
+		qdf_mem_copy((uint8_t *) uuid_e, (uint8_t *) pbc->uuid_e,
 				SIR_WPS_UUID_LEN);
 	}
 	if (count > 1)
@@ -140,7 +140,7 @@ static void lim_remove_timeout_pbc_sessions(tpAniSirGlobal pMac,
 			       SIR_WPS_UUID_LEN);
 		       )
 
-		cdf_mem_free(prev);
+		qdf_mem_free(prev);
 	}
 }
 
@@ -163,7 +163,7 @@ void lim_remove_pbc_sessions(tpAniSirGlobal mac, struct qdf_mac_addr remove_mac,
 			prev->next = pbc->next;
 			if (pbc == session_entry->pAPWPSPBCSession)
 				session_entry->pAPWPSPBCSession = pbc->next;
-			cdf_mem_free(pbc);
+			qdf_mem_free(pbc);
 			return;
 		}
 		prev = pbc;
@@ -220,11 +220,11 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 	pbc = psessionEntry->pAPWPSPBCSession;
 
 	while (pbc) {
-		if (cdf_mem_compare
+		if ((!qdf_mem_cmp
 			    ((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
-			    QDF_MAC_ADDR_SIZE)
-		    && cdf_mem_compare((uint8_t *) pbc->uuid_e,
-				       (uint8_t *) uuid_e, SIR_WPS_UUID_LEN)) {
+			    QDF_MAC_ADDR_SIZE))
+		    && (!qdf_mem_cmp((uint8_t *) pbc->uuid_e,
+				       (uint8_t *) uuid_e, SIR_WPS_UUID_LEN))) {
 			if (prev)
 				prev->next = pbc->next;
 			else
@@ -236,18 +236,18 @@ static void lim_update_pbc_session_entry(tpAniSirGlobal pMac,
 	}
 
 	if (!pbc) {
-		pbc = cdf_mem_malloc(sizeof(tSirWPSPBCSession));
+		pbc = qdf_mem_malloc(sizeof(tSirWPSPBCSession));
 		if (NULL == pbc) {
 			PELOGE(lim_log
 				       (pMac, LOGE, FL("memory allocate failed!"));
 			       )
 			return;
 		}
-		cdf_mem_copy((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
+		qdf_mem_copy((uint8_t *) pbc->addr.bytes, (uint8_t *) addr,
 			     QDF_MAC_ADDR_SIZE);
 
 		if (uuid_e)
-			cdf_mem_copy((uint8_t *) pbc->uuid_e,
+			qdf_mem_copy((uint8_t *) pbc->uuid_e,
 				     (uint8_t *) uuid_e, SIR_WPS_UUID_LEN);
 	}
 
@@ -451,7 +451,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		}
 		ssid.length = session->ssId.length;
 		/* Copy the SSID from sessio entry to local variable */
-		cdf_mem_copy(ssid.ssId, session->ssId.ssId,
+		qdf_mem_copy(ssid.ssId, session->ssId.ssId,
 				session->ssId.length);
 
 		/*
@@ -462,7 +462,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			if (!ssid.length)
 				goto multipleSSIDcheck;
 
-			if (cdf_mem_compare((uint8_t *) &ssid,
+			if (!qdf_mem_cmp((uint8_t *) &ssid,
 						(uint8_t *) &(probe_req.ssId),
 						(uint8_t) (ssid.length + 1))) {
 				lim_send_probe_rsp_mgmt_frame(mac_ctx,
@@ -476,7 +476,7 @@ lim_process_probe_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 					QDF_P2P_GO_MODE) {
 				uint8_t direct_ssid[7] = "DIRECT-";
 				uint8_t direct_ssid_len = 7;
-				if (cdf_mem_compare((uint8_t *) &direct_ssid,
+				if (!qdf_mem_cmp((uint8_t *) &direct_ssid,
 					(uint8_t *) &(probe_req.ssId.ssId),
 					(uint8_t) (direct_ssid_len))) {
 					lim_send_probe_rsp_mgmt_frame(mac_ctx,
@@ -651,7 +651,7 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	tSirSmeProbeReqInd *pSirSmeProbeReqInd;
 	tSirMsgQ msgQ;
 
-	pSirSmeProbeReqInd = cdf_mem_malloc(sizeof(tSirSmeProbeReqInd));
+	pSirSmeProbeReqInd = qdf_mem_malloc(sizeof(tSirSmeProbeReqInd));
 	if (NULL == pSirSmeProbeReqInd) {
 		/* Log error */
 		lim_log(pMac, LOGP,
@@ -668,15 +668,15 @@ lim_send_sme_probe_req_ind(tpAniSirGlobal pMac,
 	pSirSmeProbeReqInd->length = sizeof(tSirSmeProbeReq);
 	pSirSmeProbeReqInd->sessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, psessionEntry->bssId,
+	qdf_mem_copy(pSirSmeProbeReqInd->bssid.bytes, psessionEntry->bssId,
 		     QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peer_macaddr.bytes,
+	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.peer_macaddr.bytes,
 		     peerMacAddr, QDF_MAC_ADDR_SIZE);
 
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIELen =
 		(uint16_t) ProbeReqIELen;
-	cdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIE, pProbeReqIE,
+	qdf_mem_copy(pSirSmeProbeReqInd->WPSPBCProbeReq.probeReqIE, pProbeReqIE,
 		     ProbeReqIELen);
 
 	if (lim_sys_process_mmh_msg_api(pMac, &msgQ, ePROT) != eSIR_SUCCESS) {

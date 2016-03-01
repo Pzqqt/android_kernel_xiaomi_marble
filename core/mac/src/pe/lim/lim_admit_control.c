@@ -433,10 +433,10 @@ lim_tspec_find_by_sta_addr(tpAniSirGlobal pMac,
 	for (ctspec = 0; ctspec < LIM_NUM_TSPEC_MAX; ctspec++, pTspecList++) {
 		if ((pTspecList->inuse)
 		    &&
-		    (cdf_mem_compare
+		    (!qdf_mem_cmp
 			     (pAddr, pTspecList->staAddr, sizeof(pTspecList->staAddr)))
 		    &&
-		    (cdf_mem_compare
+		    (!qdf_mem_cmp
 			     ((uint8_t *) pTspecIE, (uint8_t *) &pTspecList->tspec,
 			     sizeof(tSirMacTspecIE)))) {
 			*ppInfo = pTspecList;
@@ -479,7 +479,7 @@ lim_tspec_find_by_assoc_id(tpAniSirGlobal pMac,
 		if ((pTspecList->inuse)
 		    && (assocId == pTspecList->assocId)
 		    &&
-		    (cdf_mem_compare
+		    (!qdf_mem_cmp
 			     ((uint8_t *) pTspecIE, (uint8_t *) &pTspecList->tspec,
 			     sizeof(tSirMacTspecIE)))) {
 			*ppInfo = pTspecList;
@@ -597,7 +597,7 @@ tSirRetStatus lim_tspec_add(tpAniSirGlobal pMac,
 	/* update the tspec info */
 	pTspecList->tspec = *pTspec;
 	pTspecList->assocId = assocId;
-	cdf_mem_copy(pTspecList->staAddr, pAddr, sizeof(pTspecList->staAddr));
+	qdf_mem_copy(pTspecList->staAddr, pAddr, sizeof(pTspecList->staAddr));
 
 	/* for edca tspec's, we are all done */
 	if (pTspec->tsinfo.traffic.accessPolicy == SIR_MAC_ACCESSPOLICY_EDCA) {
@@ -747,7 +747,7 @@ tSirRetStatus lim_admit_control_add_ts(tpAniSirGlobal pMac, uint8_t *pAddr,
 	}
 	/* fill in a schedule if requested */
 	if (pSch != NULL) {
-		cdf_mem_set((uint8_t *) pSch, sizeof(*pSch), 0);
+		qdf_mem_set((uint8_t *) pSch, sizeof(*pSch), 0);
 		pSch->svcStartTime = pAddts->tspec.svcStartTime;
 		pSch->svcInterval = svcInterval;
 		pSch->maxSvcDuration = (uint16_t) pSch->svcInterval;    /* use SP = SI */
@@ -854,7 +854,7 @@ tSirRetStatus lim_admit_control_delete_sta(tpAniSirGlobal pMac, uint16_t assocId
    -------------------------------------------------------------*/
 tSirRetStatus lim_admit_control_init(tpAniSirGlobal pMac)
 {
-	cdf_mem_set(pMac->lim.tspecInfo,
+	qdf_mem_set(pMac->lim.tspecInfo,
 		    LIM_NUM_TSPEC_MAX * sizeof(tLimTspecInfo), 0);
 	return eSIR_SUCCESS;
 }
@@ -925,16 +925,16 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 
-	pAddTsParam = cdf_mem_malloc(sizeof(tAddTsParams));
+	pAddTsParam = qdf_mem_malloc(sizeof(tAddTsParams));
 	if (NULL == pAddTsParam) {
 		PELOGW(lim_log(pMac, LOGW, FL("AllocateMemory() failed"));)
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	cdf_mem_set((uint8_t *) pAddTsParam, sizeof(tAddTsParams), 0);
+	qdf_mem_set((uint8_t *) pAddTsParam, sizeof(tAddTsParams), 0);
 	pAddTsParam->staIdx = staIdx;
 	pAddTsParam->tspecIdx = tspecIdx;
-	cdf_mem_copy(&pAddTsParam->tspec, &tspecIE, sizeof(tSirMacTspecIE));
+	qdf_mem_copy(&pAddTsParam->tspec, &tspecIE, sizeof(tSirMacTspecIE));
 	pAddTsParam->sessionId = sessionId;
 	pAddTsParam->sme_session_id = psessionEntry->smeSessionId;
 
@@ -960,7 +960,7 @@ lim_send_hal_msg_add_ts(tpAniSirGlobal pMac,
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
 		lim_log(pMac, LOGW, FL("wma_post_ctrl_msg() failed"));
 		SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
-		cdf_mem_free(pAddTsParam);
+		qdf_mem_free(pAddTsParam);
 		return eSIR_FAILURE;
 	}
 	return eSIR_SUCCESS;
@@ -986,7 +986,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 	tpDelTsParams pDelTsParam;
 	tpPESession psessionEntry = NULL;
 
-	pDelTsParam = cdf_mem_malloc(sizeof(tDelTsParams));
+	pDelTsParam = qdf_mem_malloc(sizeof(tDelTsParams));
 	if (NULL == pDelTsParam) {
 		lim_log(pMac, LOGP, FL("AllocateMemory() failed"));
 		return eSIR_MEM_ALLOC_FAILED;
@@ -995,12 +995,12 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 	msg.type = WMA_DEL_TS_REQ;
 	msg.bodyptr = pDelTsParam;
 	msg.bodyval = 0;
-	cdf_mem_set((uint8_t *) pDelTsParam, sizeof(tDelTsParams), 0);
+	qdf_mem_set((uint8_t *) pDelTsParam, sizeof(tDelTsParams), 0);
 
 	/* filling message parameters. */
 	pDelTsParam->staIdx = staIdx;
 	pDelTsParam->tspecIdx = tspecIdx;
-	cdf_mem_copy(&pDelTsParam->bssId, bssId, sizeof(tSirMacAddr));
+	qdf_mem_copy(&pDelTsParam->bssId, bssId, sizeof(tSirMacAddr));
 
 	psessionEntry = pe_find_session_by_session_id(pMac, sessionId);
 	if (psessionEntry == NULL) {
@@ -1019,7 +1019,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	if (pMac->roam.configParam.isRoamOffloadEnabled &&
 	    psessionEntry->is11Rconnection) {
-		cdf_mem_copy(&pDelTsParam->delTsInfo, &delts,
+		qdf_mem_copy(&pDelTsParam->delTsInfo, &delts,
 			     sizeof(tSirDeltsReqInfo));
 		pDelTsParam->setRICparams = 1;
 	}
@@ -1035,7 +1035,7 @@ lim_send_hal_msg_del_ts(tpAniSirGlobal pMac,
 	return eSIR_SUCCESS;
 
 err:
-	cdf_mem_free(pDelTsParam);
+	qdf_mem_free(pDelTsParam);
 	return eSIR_FAILURE;
 }
 
@@ -1134,6 +1134,6 @@ void lim_process_hal_add_ts_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 
 end:
 	if (pAddTsRspMsg != NULL)
-		cdf_mem_free(pAddTsRspMsg);
+		qdf_mem_free(pAddTsRspMsg);
 	return;
 }

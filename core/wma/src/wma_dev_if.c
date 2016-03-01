@@ -48,7 +48,7 @@
 #include "cdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
@@ -504,18 +504,18 @@ void wma_vdev_detach_callback(void *ctx)
 				 __func__, param->session_id);
 			qdf_mc_timer_stop(&req_msg->event_timeout);
 			qdf_mc_timer_destroy(&req_msg->event_timeout);
-			cdf_mem_free(req_msg);
+			qdf_mem_free(req_msg);
 		}
 	}
 	if (iface->addBssStaContext)
-		cdf_mem_free(iface->addBssStaContext);
+		qdf_mem_free(iface->addBssStaContext);
 
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 	if (iface->staKeyParams)
-		cdf_mem_free(iface->staKeyParams);
+		qdf_mem_free(iface->staKeyParams);
 #endif /* WLAN_FEATURE_VOWIFI_11R */
-	cdf_mem_zero(iface, sizeof(*iface));
+	qdf_mem_zero(iface, sizeof(*iface));
 	param->status = QDF_STATUS_SUCCESS;
 	sme_msg.type = eWNI_SME_DEL_STA_SELF_RSP;
 	sme_msg.bodyptr = param;
@@ -524,7 +524,7 @@ void wma_vdev_detach_callback(void *ctx)
 	status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
-		cdf_mem_free(param);
+		qdf_mem_free(param);
 	}
 }
 
@@ -573,7 +573,7 @@ static QDF_STATUS wma_self_peer_remove(tp_wma_handle wma_handle,
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				WMI_SERVICE_SYNC_DELETE_CMDS)) {
 		sta_self_wmi_rsp =
-			cdf_mem_malloc(sizeof(struct del_sta_self_rsp_params));
+			qdf_mem_malloc(sizeof(struct del_sta_self_rsp_params));
 		if (sta_self_wmi_rsp == NULL) {
 			WMA_LOGP(FL("Failed to allocate memory"));
 			return QDF_STATUS_E_NOMEM;
@@ -652,12 +652,12 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	return status;
 out:
 	if (iface->addBssStaContext)
-		cdf_mem_free(iface->addBssStaContext);
+		qdf_mem_free(iface->addBssStaContext);
 #if defined WLAN_FEATURE_VOWIFI_11R
 	if (iface->staKeyParams)
-		cdf_mem_free(iface->staKeyParams);
+		qdf_mem_free(iface->staKeyParams);
 #endif /* WLAN_FEATURE_VOWIFI_11R */
-	cdf_mem_zero(iface, sizeof(*iface));
+	qdf_mem_zero(iface, sizeof(*iface));
 	del_sta_self_req_param->status = status;
 	if (generate_rsp) {
 		sme_msg.type = eWNI_SME_DEL_STA_SELF_RSP;
@@ -667,7 +667,7 @@ out:
 		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_DEL_STA_SELF_RSP");
-			cdf_mem_free(del_sta_self_req_param);
+			qdf_mem_free(del_sta_self_req_param);
 		}
 	}
 	return status;
@@ -698,7 +698,7 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	if (!iface->handle) {
 		WMA_LOGE("handle of vdev_id %d is NULL vdev is already freed",
 			 vdev_id);
-		cdf_mem_free(pdel_sta_self_req_param);
+		qdf_mem_free(pdel_sta_self_req_param);
 		pdel_sta_self_req_param = NULL;
 		return status;
 	}
@@ -791,7 +791,7 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 #endif /* QCA_IBSS_SUPPORT */
 	    ) {
 		wma->interfaces[resp_event->vdev_id].beacon =
-			cdf_mem_malloc(sizeof(struct beacon_info));
+			qdf_mem_malloc(sizeof(struct beacon_info));
 
 		bcn = wma->interfaces[resp_event->vdev_id].beacon;
 		if (!bcn) {
@@ -800,13 +800,13 @@ static void wma_vdev_start_rsp(tp_wma_handle wma,
 			add_bss->status = QDF_STATUS_E_NOMEM;
 			goto send_fail_resp;
 		}
-		cdf_mem_zero(bcn, sizeof(*bcn));
+		qdf_mem_zero(bcn, sizeof(*bcn));
 		bcn->buf = cdf_nbuf_alloc(NULL, WMA_BCN_BUF_MAX_SIZE, 0,
 					  sizeof(uint32_t), 0);
 		if (!bcn->buf) {
 			WMA_LOGE("%s: No memory allocated for beacon buffer",
 				 __func__);
-			cdf_mem_free(bcn);
+			qdf_mem_free(bcn);
 			add_bss->status = QDF_STATUS_E_FAILURE;
 			goto send_fail_resp;
 		}
@@ -858,7 +858,7 @@ void wma_find_mcc_ap(tp_wma_handle wma, uint8_t vdev_id, bool add)
 	uint8_t *ap_vdev_ids = NULL;
 	uint8_t num_ch = 0;
 
-	ap_vdev_ids = cdf_mem_malloc(wma->max_bssid);
+	ap_vdev_ids = qdf_mem_malloc(wma->max_bssid);
 	if (!ap_vdev_ids)
 		return;
 
@@ -1024,7 +1024,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		wma_send_msg(wma, WMA_SWITCH_CHANNEL_RSP, (void *)params, 0);
 	} else if (req_msg->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams bssParams = (tpAddBssParams) req_msg->user_data;
-		cdf_mem_copy(iface->bssid, bssParams->bssId,
+		qdf_mem_copy(iface->bssid, bssParams->bssId,
 				IEEE80211_ADDR_LEN);
 		wma_vdev_start_rsp(wma, bssParams, resp_event);
 	} else if (req_msg->msg_type == WMA_OCB_SET_CONFIG_CMD) {
@@ -1044,7 +1044,7 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		wma_set_sap_keepalive(wma, resp_event->vdev_id);
 
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 
 	return 0;
 }
@@ -1182,7 +1182,7 @@ int wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr, uint32_t param_id,
 				   WMI_PEER_SET_PARAM_CMDID);
 	if (err) {
 		WMA_LOGE("Failed to send set_param cmd");
-		cdf_mem_free(buf);
+		qdf_mem_free(buf);
 		return -EIO;
 	}
 	return 0;
@@ -1323,15 +1323,15 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 
 	/* for each remote ibss peer, clear its keys */
 	if (wma_is_vdev_in_ibss_mode(wma, vdev_id) &&
-	    !cdf_mem_compare(peer_addr, vdev->mac_addr.raw,
+	    qdf_mem_cmp(peer_addr, vdev->mac_addr.raw,
 				IEEE80211_ADDR_LEN)) {
 
 		tSetStaKeyParams key_info;
 		WMA_LOGD("%s: remote ibss peer %pM key clearing\n", __func__,
 			 peer_addr);
-		cdf_mem_set(&key_info, sizeof(key_info), 0);
+		qdf_mem_set(&key_info, sizeof(key_info), 0);
 		key_info.smesessionId = vdev_id;
-		cdf_mem_copy(key_info.peer_macaddr.bytes, peer_addr,
+		qdf_mem_copy(key_info.peer_macaddr.bytes, peer_addr,
 				IEEE80211_ADDR_LEN);
 		key_info.sendRsp = false;
 
@@ -1535,7 +1535,7 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 
 	/* delete old ibss vdev */
 	del_sta_param.session_id = vdev_id;
-	cdf_mem_copy((void *)del_sta_param.self_mac_addr,
+	qdf_mem_copy((void *)del_sta_param.self_mac_addr,
 		     (void *)&(vdev->mac_addr), QDF_MAC_ADDR_SIZE);
 	wma_vdev_detach(wma, &del_sta_param, 0);
 
@@ -1617,7 +1617,7 @@ void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
 
 	cmd->vdev_id = sessionId;
 	cmd->ssid.ssid_len = intr[sessionId].vdev_restart_params.ssid.ssid_len;
-	cdf_mem_copy(cmd->ssid.ssid,
+	qdf_mem_copy(cmd->ssid.ssid,
 		     intr[sessionId].vdev_restart_params.ssid.ssid,
 		     cmd->ssid.ssid_len);
 	cmd->flags = intr[sessionId].vdev_restart_params.flags;
@@ -1782,7 +1782,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 				cdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
 						      QDF_DMA_TO_DEVICE);
 			cdf_nbuf_free(bcn->buf);
-			cdf_mem_free(bcn);
+			qdf_mem_free(bcn);
 			wma->interfaces[resp_event->vdev_id].beacon = NULL;
 		}
 
@@ -1796,7 +1796,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 		 * to send response to UMAC
 		 */
 		if (params->status == QDF_STATUS_FW_MSG_TIMEDOUT) {
-			cdf_mem_free(params);
+			qdf_mem_free(params);
 			WMA_LOGE("%s: DEL BSS from ADD BSS timeout do not send "
 				 "resp to UMAC (vdev id %x)",
 				 __func__, resp_event->vdev_id);
@@ -1814,7 +1814,7 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 	}
 free_req_msg:
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return status;
 }
 
@@ -1911,7 +1911,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	else
 		wma_handle->wow.bmiss_enable = cfg_val ? true : false;
 
-	cdf_mem_copy(wma_handle->interfaces[self_sta_req->session_id].addr,
+	qdf_mem_copy(wma_handle->interfaces[self_sta_req->session_id].addr,
 		     self_sta_req->self_mac_addr,
 		     sizeof(wma_handle->interfaces[self_sta_req->session_id].
 			    addr));
@@ -2063,7 +2063,7 @@ end:
 		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
-			cdf_mem_free(self_sta_req);
+			qdf_mem_free(self_sta_req);
 		}
 	}
 	return txrx_vdev_handle;
@@ -2248,7 +2248,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 				cmd->ssid.ssid_len = req->ssid.length;
 			else
 				cmd->ssid.ssid_len = sizeof(cmd->ssid.ssid);
-			cdf_mem_copy(cmd->ssid.ssid, req->ssid.ssId,
+			qdf_mem_copy(cmd->ssid.ssid, req->ssid.ssId,
 				     cmd->ssid.ssid_len);
 		}
 
@@ -2284,7 +2284,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		intr[req->vdev_id].vdev_restart_params.vdev_id = req->vdev_id;
 		intr[req->vdev_id].vdev_restart_params.ssid.ssid_len =
 			cmd->ssid.ssid_len;
-		cdf_mem_copy(intr[req->vdev_id].vdev_restart_params.ssid.ssid,
+		qdf_mem_copy(intr[req->vdev_id].vdev_restart_params.ssid.ssid,
 			     cmd->ssid.ssid, cmd->ssid.ssid_len);
 		intr[req->vdev_id].vdev_restart_params.flags = cmd->flags;
 		intr[req->vdev_id].vdev_restart_params.requestor_id =
@@ -2418,7 +2418,7 @@ int wma_peer_assoc_conf_handler(void *handle, uint8_t *cmd_param_info,
 
 free_req_msg:
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 
 	return status;
 }
@@ -2467,7 +2467,7 @@ int wma_vdev_delete_handler(void *handle, uint8_t *cmd_param_info,
 	wma_vdev_detach_callback(req_msg->user_data);
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 
 	return status;
 }
@@ -2533,9 +2533,9 @@ int wma_peer_delete_handler(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGD(FL("Calling vdev detach handler"));
 		wma_handle_vdev_detach(wma, data->self_sta_param,
 				data->generate_rsp);
-		cdf_mem_free(data);
+		qdf_mem_free(data);
 	}
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return status;
 }
 
@@ -2596,7 +2596,7 @@ void wma_hold_req_timer(void *data)
 	}
 free_tgt_req:
 	qdf_mc_timer_destroy(&tgt_req->event_timeout);
-	cdf_mem_free(tgt_req);
+	qdf_mem_free(tgt_req);
 }
 
 /**
@@ -2617,7 +2617,7 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	struct wma_target_req *req;
 	QDF_STATUS status;
 
-	req = cdf_mem_malloc(sizeof(*req));
+	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
 		WMA_LOGP(FL("Failed to allocate memory for msg %d vdev %d"),
 			 msg_type, vdev_id);
@@ -2638,7 +2638,7 @@ struct wma_target_req *wma_fill_hold_req(tp_wma_handle wma,
 	if (QDF_STATUS_SUCCESS != status) {
 		qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
 		WMA_LOGE(FL("Failed add request in queue"));
-		cdf_mem_free(req);
+		qdf_mem_free(req);
 		return NULL;
 	}
 	qdf_spin_unlock_bh(&wma->wma_hold_req_q_lock);
@@ -2668,7 +2668,7 @@ void wma_remove_req(tp_wma_handle wma, uint8_t vdev_id,
 
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 }
 
 /**
@@ -2790,7 +2790,7 @@ void wma_vdev_resp_timer(void *data)
 				cdf_nbuf_unmap_single(pdev->osdev, bcn->buf,
 						      QDF_DMA_TO_DEVICE);
 			cdf_nbuf_free(bcn->buf);
-			cdf_mem_free(bcn);
+			qdf_mem_free(bcn);
 			wma->interfaces[tgt_req->vdev_id].beacon = NULL;
 		}
 
@@ -2830,19 +2830,19 @@ void wma_vdev_resp_timer(void *data)
 		status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			WMA_LOGE("Failed to post eWNI_SME_ADD_STA_SELF_RSP");
-			cdf_mem_free(iface->del_staself_req);
+			qdf_mem_free(iface->del_staself_req);
 		}
 		if (iface->addBssStaContext)
-			cdf_mem_free(iface->addBssStaContext);
+			qdf_mem_free(iface->addBssStaContext);
 #if defined WLAN_FEATURE_VOWIFI_11R
 		if (iface->staKeyParams)
-			cdf_mem_free(iface->staKeyParams);
+			qdf_mem_free(iface->staKeyParams);
 #endif /* WLAN_FEATURE_VOWIFI_11R */
-		cdf_mem_zero(iface, sizeof(*iface));
+		qdf_mem_zero(iface, sizeof(*iface));
 	} else if (tgt_req->msg_type == WMA_ADD_BSS_REQ) {
 		tpAddBssParams params = (tpAddBssParams) tgt_req->user_data;
 		tDeleteBssParams *del_bss_params =
-			cdf_mem_malloc(sizeof(tDeleteBssParams));
+			qdf_mem_malloc(sizeof(tDeleteBssParams));
 		if (NULL == del_bss_params) {
 			WMA_LOGE("Failed to allocate memory for del_bss_params");
 			peer = ol_txrx_find_peer_by_addr(pdev, params->bssId,
@@ -2854,7 +2854,7 @@ void wma_vdev_resp_timer(void *data)
 						 QDF_STATUS_FW_MSG_TIMEDOUT;
 		del_bss_params->sessionId = params->sessionId;
 		del_bss_params->bssIdx = params->bssIdx;
-		cdf_mem_copy(del_bss_params->bssid, params->bssId,
+		qdf_mem_copy(del_bss_params->bssid, params->bssId,
 			     sizeof(tSirMacAddr));
 
 		WMA_LOGA("%s: WMA_ADD_BSS_REQ timedout", __func__);
@@ -2905,7 +2905,7 @@ error0:
 	}
 free_tgt_req:
 	qdf_mc_timer_destroy(&tgt_req->event_timeout);
-	cdf_mem_free(tgt_req);
+	qdf_mem_free(tgt_req);
 }
 
 /**
@@ -2926,7 +2926,7 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 	struct wma_target_req *req;
 	QDF_STATUS status;
 
-	req = cdf_mem_malloc(sizeof(*req));
+	req = qdf_mem_malloc(sizeof(*req));
 	if (!req) {
 		WMA_LOGP("%s: Failed to allocate memory for msg %d vdev %d",
 			 __func__, msg_type, vdev_id);
@@ -2947,7 +2947,7 @@ struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
 		qdf_spin_unlock_bh(&wma->vdev_respq_lock);
 		WMA_LOGE(FL("Failed add request in queue for vdev_id %d type %d"),
 			 vdev_id, type);
-		cdf_mem_free(req);
+		qdf_mem_free(req);
 		return NULL;
 	}
 
@@ -2974,7 +2974,7 @@ void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
 
 	qdf_mc_timer_stop(&req_msg->event_timeout);
 	qdf_mc_timer_destroy(&req_msg->event_timeout);
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 }
 
 /**
@@ -3108,7 +3108,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 
 	add_bss->staContext.staIdx = ol_txrx_local_peer_id(peer);
 
-	cdf_mem_zero(&req, sizeof(req));
+	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
 	req.chan = add_bss->currentOperChannel;
 	req.chan_width = add_bss->ch_width;
@@ -3146,7 +3146,7 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.oper_mode = BSS_OPERATIONAL_MODE_AP;
 	req.ssid.length = add_bss->ssId.length;
 	if (req.ssid.length > 0)
-		cdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
+		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
 	status = wma_get_current_hw_mode(&hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -3284,10 +3284,10 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	/* clear leftover ibss keys on bss peer */
 
 	WMA_LOGD("%s: ibss bss key clearing", __func__);
-	cdf_mem_set(&key_info, sizeof(key_info), 0);
+	qdf_mem_set(&key_info, sizeof(key_info), 0);
 	key_info.smesessionId = vdev_id;
 	key_info.numKeys = SIR_MAC_MAX_NUM_OF_DEFAULT_KEYS;
-	cdf_mem_copy(&wma->ibsskey_info, &key_info, sizeof(tSetBssKeyParams));
+	qdf_mem_copy(&wma->ibsskey_info, &key_info, sizeof(tSetBssKeyParams));
 
 	/* start ibss vdev */
 
@@ -3319,7 +3319,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		}
 	}
 
-	cdf_mem_zero(&req, sizeof(req));
+	qdf_mem_zero(&req, sizeof(req));
 	req.vdev_id = vdev_id;
 	req.chan = add_bss->currentOperChannel;
 	req.chan_width = add_bss->ch_width;
@@ -3338,7 +3338,7 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	req.oper_mode = BSS_OPERATIONAL_MODE_IBSS;
 	req.ssid.length = add_bss->ssId.length;
 	if (req.ssid.length > 0)
-		cdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
+		qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 			     add_bss->ssId.length);
 	status = wma_get_current_hw_mode(&hw_mode);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -3425,30 +3425,30 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	if (add_bss->operMode) {
 		/* Save parameters later needed by WMA_ADD_STA_REQ */
 		if (iface->addBssStaContext) {
-			cdf_mem_free(iface->addBssStaContext);
+			qdf_mem_free(iface->addBssStaContext);
 		}
-		iface->addBssStaContext = cdf_mem_malloc(sizeof(tAddStaParams));
+		iface->addBssStaContext = qdf_mem_malloc(sizeof(tAddStaParams));
 		if (!iface->addBssStaContext) {
 			WMA_LOGE("%s Failed to allocat memory", __func__);
 			goto send_fail_resp;
 		}
-		cdf_mem_copy(iface->addBssStaContext, &add_bss->staContext,
+		qdf_mem_copy(iface->addBssStaContext, &add_bss->staContext,
 			     sizeof(tAddStaParams));
 
 #if defined WLAN_FEATURE_VOWIFI_11R
 		if (iface->staKeyParams) {
-			cdf_mem_free(iface->staKeyParams);
+			qdf_mem_free(iface->staKeyParams);
 			iface->staKeyParams = NULL;
 		}
 		if (add_bss->extSetStaKeyParamValid) {
 			iface->staKeyParams =
-				cdf_mem_malloc(sizeof(tSetStaKeyParams));
+				qdf_mem_malloc(sizeof(tSetStaKeyParams));
 			if (!iface->staKeyParams) {
 				WMA_LOGE("%s Failed to allocat memory",
 					 __func__);
 				goto send_fail_resp;
 			}
-			cdf_mem_copy(iface->staKeyParams,
+			qdf_mem_copy(iface->staKeyParams,
 				     &add_bss->extSetStaKeyParam,
 				     sizeof(tSetStaKeyParams));
 		}
@@ -3502,7 +3502,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			add_bss->staContext.staIdx =
 				ol_txrx_local_peer_id(peer);
 
-			cdf_mem_zero(&req, sizeof(req));
+			qdf_mem_zero(&req, sizeof(req));
 			req.vdev_id = vdev_id;
 			req.chan = add_bss->currentOperChannel;
 			req.chan_width = add_bss->ch_width;
@@ -3520,7 +3520,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			req.ssid.length = add_bss->ssId.length;
 			req.oper_mode = BSS_OPERATIONAL_MODE_STA;
 			if (req.ssid.length > 0)
-				cdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
+				qdf_mem_copy(req.ssid.ssId, add_bss->ssId.ssId,
 					     add_bss->ssId.length);
 			status = wma_get_current_hw_mode(&hw_mode);
 			if (!QDF_IS_STATUS_SUCCESS(status))
@@ -3636,7 +3636,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		 * Store the bssid in interface table, bssid will
 		 * be used during group key setting sta mode.
 		 */
-		cdf_mem_copy(iface->bssid, add_bss->bssId, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(iface->bssid, add_bss->bssId, IEEE80211_ADDR_LEN);
 
 	}
 send_bss_resp:
@@ -3645,7 +3645,7 @@ send_bss_resp:
 	add_bss->status = (add_bss->staContext.staIdx < 0) ?
 			  QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
 	add_bss->bssIdx = add_bss->staContext.smesessionId;
-	cdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
+	qdf_mem_copy(add_bss->staContext.staMac, add_bss->bssId,
 		     sizeof(add_bss->staContext.staMac));
 
 	if (!WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
@@ -4031,7 +4031,7 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			 "staIdx: %d, staMac: %pM",
 			 __func__, add_sta->staIdx, add_sta->staMac);
 
-		peerStateParams = cdf_mem_malloc(sizeof(tTdlsPeerStateParams));
+		peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
 		if (!peerStateParams) {
 			WMA_LOGE
 				("%s: Failed to allocate memory for peerStateParams for %pM",
@@ -4040,10 +4040,10 @@ static void wma_add_tdls_sta(tp_wma_handle wma, tpAddStaParams add_sta)
 			goto send_rsp;
 		}
 
-		cdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
+		qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 		peerStateParams->peerState = WMI_TDLS_PEER_STATE_PEERING;
 		peerStateParams->vdevId = vdev->vdev_id;
-		cdf_mem_copy(&peerStateParams->peerMacAddr,
+		qdf_mem_copy(&peerStateParams->peerMacAddr,
 			     &add_sta->staMac, sizeof(tSirMacAddr));
 		wma_update_tdls_peer_state(wma, peerStateParams);
 	} else {
@@ -4438,7 +4438,7 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	peerStateParams = cdf_mem_malloc(sizeof(tTdlsPeerStateParams));
+	peerStateParams = qdf_mem_malloc(sizeof(tTdlsPeerStateParams));
 	if (!peerStateParams) {
 		WMA_LOGE("%s: Failed to allocate memory for peerStateParams for: %pM",
 			__func__, del_sta->staMac);
@@ -4446,10 +4446,10 @@ static void wma_del_tdls_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 		goto send_del_rsp;
 	}
 
-	cdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
+	qdf_mem_zero(peerStateParams, sizeof(*peerStateParams));
 	peerStateParams->peerState = WMA_TDLS_PEER_STATE_TEARDOWN;
 	peerStateParams->vdevId = vdev->vdev_id;
-	cdf_mem_copy(&peerStateParams->peerMacAddr,
+	qdf_mem_copy(&peerStateParams->peerMacAddr,
 		     &del_sta->staMac, sizeof(tSirMacAddr));
 
 	WMA_LOGD("%s: sending tdls_peer_state for peer mac: %pM, "
@@ -4588,7 +4588,7 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 	if (!rsp_requested) {
 		WMA_LOGD("%s: vdev_id %d status %d", __func__,
 			 del_sta->smesessionId, del_sta->status);
-		cdf_mem_free(del_sta);
+		qdf_mem_free(del_sta);
 	}
 }
 
@@ -4662,7 +4662,7 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 		goto out;
 	}
 
-	cdf_mem_zero(wma->interfaces[params->smesessionId].bssid,
+	qdf_mem_zero(wma->interfaces[params->smesessionId].bssid,
 			IEEE80211_ADDR_LEN);
 
 	txrx_vdev = wma_find_vdev_by_id(wma, params->smesessionId);
@@ -4674,12 +4674,12 @@ void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params)
 
 	/*Free the allocated stats response buffer for the the session */
 	if (wma->interfaces[params->smesessionId].stats_rsp) {
-		cdf_mem_free(wma->interfaces[params->smesessionId].stats_rsp);
+		qdf_mem_free(wma->interfaces[params->smesessionId].stats_rsp);
 		wma->interfaces[params->smesessionId].stats_rsp = NULL;
 	}
 
 	if (wma->interfaces[params->smesessionId].psnr_req) {
-		cdf_mem_free(wma->interfaces[params->smesessionId].psnr_req);
+		qdf_mem_free(wma->interfaces[params->smesessionId].psnr_req);
 		wma->interfaces[params->smesessionId].psnr_req = NULL;
 	}
 

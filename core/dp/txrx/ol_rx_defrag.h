@@ -32,7 +32,7 @@
 #include <cds_ieee80211_common.h>
 #include <qdf_util.h>
 #include <qdf_types.h>
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 #include <ol_txrx_internal.h>
 #include <ol_txrx_dbg.h>
 

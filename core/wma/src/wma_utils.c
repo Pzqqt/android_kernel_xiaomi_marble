@@ -48,7 +48,7 @@
 #include "cdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
@@ -356,7 +356,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	alloc_len = sizeof(tSirStatsExtEvent);
 	alloc_len += stats_ext_info->data_len;
 
-	stats_ext_event = (tSirStatsExtEvent *) cdf_mem_malloc(alloc_len);
+	stats_ext_event = (tSirStatsExtEvent *) qdf_mem_malloc(alloc_len);
 	if (NULL == stats_ext_event) {
 		WMA_LOGE("%s: Memory allocation failure", __func__);
 		return -ENOMEM;
@@ -366,7 +366,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 
 	stats_ext_event->vdev_id = stats_ext_info->vdev_id;
 	stats_ext_event->event_data_len = stats_ext_info->data_len;
-	cdf_mem_copy(stats_ext_event->event_data,
+	qdf_mem_copy(stats_ext_event->event_data,
 		     buf_ptr, stats_ext_event->event_data_len);
 
 	cds_msg.type = eWNI_SME_STATS_EXT_EVENT;
@@ -376,7 +376,7 @@ int wma_stats_ext_event_handler(void *handle, uint8_t *event_buf,
 	status = cds_mq_post_message(CDS_MQ_ID_SME, &cds_msg);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Failed to post stats ext event to SME", __func__);
-		cdf_mem_free(stats_ext_event);
+		qdf_mem_free(stats_ext_event);
 		return -EFAULT;
 	}
 
@@ -535,7 +535,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		(fixed_param->num_peers * peer_info_size) +
 		(num_rates * rate_stats_size);
 
-	link_stats_results = cdf_mem_malloc(link_stats_results_size);
+	link_stats_results = qdf_mem_malloc(link_stats_results_size);
 	if (NULL == link_stats_results) {
 		WMA_LOGD("%s: could not allocate mem for stats results-len %zu",
 			 __func__, link_stats_results_size);
@@ -548,7 +548,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 		 fixed_param->request_id, fixed_param->num_peers,
 		 fixed_param->peer_event_number, fixed_param->more_data);
 
-	cdf_mem_zero(link_stats_results, link_stats_results_size);
+	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
 	link_stats_results->paramId = WMI_LINK_STATS_ALL_PEER;
 	link_stats_results->rspId = fixed_param->request_id;
@@ -557,7 +557,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 	link_stats_results->peer_event_number = fixed_param->peer_event_number;
 	link_stats_results->moreResultToFollow = fixed_param->more_data;
 
-	cdf_mem_copy(link_stats_results->results,
+	qdf_mem_copy(link_stats_results->results,
 		     &fixed_param->num_peers, peer_stats_size);
 
 	results = (uint8_t *) link_stats_results->results;
@@ -572,7 +572,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 			 peer_stats->peer_type, peer_stats->capabilities,
 			 peer_stats->num_rates);
 
-		cdf_mem_copy(results + next_res_offset,
+		qdf_mem_copy(results + next_res_offset,
 			     t_peer_stats + next_peer_offset, peer_info_size);
 		next_res_offset += peer_info_size;
 
@@ -588,7 +588,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 				 rate_stats->retries_long);
 			rate_stats++;
 
-			cdf_mem_copy(results + next_res_offset,
+			qdf_mem_copy(results + next_res_offset,
 				     t_rate_stats + next_rate_offset,
 				     rate_stats_size);
 			next_res_offset += rate_stats_size;
@@ -606,7 +606,7 @@ static int wma_unified_link_peer_stats_event_handler(void *handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	WMA_LOGD("%s: Peer Stats event posted to HDD", __func__);
-	cdf_mem_free(link_stats_results);
+	qdf_mem_free(link_stats_results);
 
 	return 0;
 }
@@ -674,7 +674,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	link_stats_results_size = sizeof(*link_stats_results) +
 				  radio_stats_size + (radio_stats->num_channels * chan_stats_size);
 
-	link_stats_results = cdf_mem_malloc(link_stats_results_size);
+	link_stats_results = qdf_mem_malloc(link_stats_results_size);
 	if (NULL == link_stats_results) {
 		WMA_LOGD("%s: could not allocate mem for stats results-len %zu",
 			 __func__, link_stats_results_size);
@@ -699,7 +699,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 		 radio_stats->on_time_pno_scan,
 		 radio_stats->on_time_hs20, radio_stats->num_channels);
 
-	cdf_mem_zero(link_stats_results, link_stats_results_size);
+	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
 	link_stats_results->paramId = WMI_LINK_STATS_RADIO;
 	link_stats_results->rspId = fixed_param->request_id;
@@ -712,7 +712,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 	t_radio_stats = (uint8_t *) radio_stats;
 	t_channel_stats = (uint8_t *) channel_stats;
 
-	cdf_mem_copy(results, t_radio_stats + WMI_TLV_HDR_SIZE,
+	qdf_mem_copy(results, t_radio_stats + WMI_TLV_HDR_SIZE,
 		     radio_stats_size);
 
 	next_res_offset = radio_stats_size;
@@ -729,7 +729,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 			 channel_stats->cca_busy_time);
 		channel_stats++;
 
-		cdf_mem_copy(results + next_res_offset,
+		qdf_mem_copy(results + next_res_offset,
 			     t_channel_stats + next_chan_offset,
 			     chan_stats_size);
 		next_res_offset += chan_stats_size;
@@ -744,7 +744,7 @@ static int wma_unified_link_radio_stats_event_handler(void *handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	WMA_LOGD("%s: Radio Stats event posted to HDD", __func__);
-	cdf_mem_free(link_stats_results);
+	qdf_mem_free(link_stats_results);
 
 	return 0;
 }
@@ -807,7 +807,7 @@ QDF_STATUS wma_process_ll_stats_clear_req
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cdf_mem_zero(buf_ptr, len);
+	qdf_mem_zero(buf_ptr, len);
 	cmd = (wmi_clear_link_stats_cmd_fixed_param *) buf_ptr;
 
 	WMITLV_SET_HDR(&cmd->tlv_header,
@@ -871,7 +871,7 @@ QDF_STATUS wma_process_ll_stats_set_req
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cdf_mem_zero(buf_ptr, len);
+	qdf_mem_zero(buf_ptr, len);
 	cmd = (wmi_start_link_stats_cmd_fixed_param *) buf_ptr;
 
 	WMITLV_SET_HDR(&cmd->tlv_header,
@@ -929,7 +929,7 @@ QDF_STATUS wma_process_ll_stats_get_req
 	}
 
 	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cdf_mem_zero(buf_ptr, len);
+	qdf_mem_zero(buf_ptr, len);
 	cmd = (wmi_request_link_stats_cmd_fixed_param *) buf_ptr;
 
 	WMITLV_SET_HDR(&cmd->tlv_header,
@@ -1024,7 +1024,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	ac_stats_size = sizeof(tSirWifiWmmAcStat);
 	link_stats_results_size = sizeof(*link_stats_results) + link_stats_size;
 
-	link_stats_results = cdf_mem_malloc(link_stats_results_size);
+	link_stats_results = qdf_mem_malloc(link_stats_results_size);
 	if (!link_stats_results) {
 		WMA_LOGD("%s: could not allocate mem for stats results-len %zu",
 			 __func__, link_stats_results_size);
@@ -1057,7 +1057,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 		 link_stats->avg_rx_frms_leaked,
 		 link_stats->rx_leak_window);
 
-	cdf_mem_zero(link_stats_results, link_stats_results_size);
+	qdf_mem_zero(link_stats_results, link_stats_results_size);
 
 	link_stats_results->paramId = WMI_LINK_STATS_IFACE;
 	link_stats_results->rspId = fixed_param->request_id;
@@ -1074,10 +1074,10 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 	roaming_offset = offsetof(tSirWifiInterfaceInfo, roaming);
 	roaming_size = member_size(tSirWifiInterfaceInfo, roaming);
 
-	cdf_mem_copy(results + roaming_offset, &link_stats->roam_state,
+	qdf_mem_copy(results + roaming_offset, &link_stats->roam_state,
 		     roaming_size);
 
-	cdf_mem_copy(results + iface_info_size,
+	qdf_mem_copy(results + iface_info_size,
 		     t_link_stats + WMI_TLV_HDR_SIZE,
 		     link_stats_size - iface_info_size -
 		     WIFI_AC_MAX * ac_stats_size);
@@ -1103,7 +1103,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 			 ac_stats->contention_num_samples);
 		ac_stats++;
 
-		cdf_mem_copy(results + next_res_offset,
+		qdf_mem_copy(results + next_res_offset,
 			     t_ac_stats + next_ac_offset, ac_stats_size);
 		next_res_offset += ac_stats_size;
 		next_ac_offset += sizeof(*ac_stats);
@@ -1117,7 +1117,7 @@ int wma_unified_link_iface_stats_event_handler(void *handle,
 					     WMA_LINK_LAYER_STATS_RESULTS_RSP,
 					     link_stats_results);
 	WMA_LOGD("%s: Iface Stats event posted to HDD", __func__);
-	cdf_mem_free(link_stats_results);
+	qdf_mem_free(link_stats_results);
 
 	return 0;
 }
@@ -1250,7 +1250,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 						pGetRssiReq->pDevContext);
 		}
 
-		cdf_mem_free(pGetRssiReq);
+		qdf_mem_free(pGetRssiReq);
 		wma->pGetRssiReq = NULL;
 	}
 
@@ -1271,7 +1271,7 @@ static void wma_update_vdev_stats(tp_wma_handle wma,
 		qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post snr ind msg", __func__);
-			cdf_mem_free(p_snr_req);
+			qdf_mem_free(p_snr_req);
 		}
 
 		node->psnr_req = NULL;
@@ -1389,7 +1389,7 @@ void wma_post_link_status(tAniGetLinkStatus *pGetLinkStatus,
 	qdf_status = cds_mq_post_message(QDF_MODULE_ID_SME, &sme_msg);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		WMA_LOGE("%s: Fail to post link status ind msg", __func__);
-		cdf_mem_free(pGetLinkStatus);
+		qdf_mem_free(pGetLinkStatus);
 	}
 }
 
@@ -1527,7 +1527,7 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	cds_msg_t sme_msg = { 0 };
 	tSirLinkSpeedInfo *ls_ind =
-		(tSirLinkSpeedInfo *) cdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
+		(tSirLinkSpeedInfo *) qdf_mem_malloc(sizeof(tSirLinkSpeedInfo));
 	if (!ls_ind) {
 		WMA_LOGE("%s: Memory allocation failed.", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
@@ -1541,7 +1541,7 @@ QDF_STATUS wma_send_link_speed(uint32_t link_speed)
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			WMA_LOGE("%s: Fail to post linkspeed ind  msg",
 				 __func__);
-			cdf_mem_free(ls_ind);
+			qdf_mem_free(ls_ind);
 		}
 	}
 	return qdf_status;
@@ -1832,7 +1832,7 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		return -EINVAL;
 	}
-	cdf_mem_zero(&req, sizeof(req));
+	qdf_mem_zero(&req, sizeof(req));
 	req.stats_type_reset_mask = value;
 	ol_txrx_fw_stats_get(vdev, &req, false);
 
@@ -1867,7 +1867,7 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 		WMA_LOGE("%s:Invalid vdev handle", __func__);
 		return -EINVAL;
 	}
-	cdf_mem_zero(&req, sizeof(req));
+	qdf_mem_zero(&req, sizeof(req));
 	req.print.verbose = 1;
 
 	switch (value) {
@@ -2035,14 +2035,14 @@ static tAniGetPEStatsRsp *wma_get_stats_rsp_buf
 		temp_mask >>= 1;
 	}
 
-	stats_rsp_params = (tAniGetPEStatsRsp *) cdf_mem_malloc(len);
+	stats_rsp_params = (tAniGetPEStatsRsp *) qdf_mem_malloc(len);
 	if (!stats_rsp_params) {
 		WMA_LOGE("memory allocation failed for tAniGetPEStatsRsp");
 		QDF_ASSERT(0);
 		return NULL;
 	}
 
-	cdf_mem_zero(stats_rsp_params, len);
+	qdf_mem_zero(stats_rsp_params, len);
 	stats_rsp_params->staId = get_stats_param->staId;
 	stats_rsp_params->statsMask = get_stats_param->statsMask;
 	stats_rsp_params->msgType = WMA_GET_STATISTICS_RSP;
@@ -2081,7 +2081,7 @@ void wma_get_stats_req(WMA_HANDLE handle,
 				 get_stats_param->statsMask);
 			goto end;
 		} else {
-			cdf_mem_free(node->stats_rsp);
+			qdf_mem_free(node->stats_rsp);
 			node->stats_rsp = NULL;
 			node->fw_stats_set = 0;
 		}
@@ -2128,7 +2128,7 @@ failed:
 	wma_send_msg(wma_handle, WMA_GET_STATISTICS_RSP, pGetPEStatsRspParams,
 		     0);
 end:
-	cdf_mem_free(get_stats_param);
+	qdf_mem_free(get_stats_param);
 	WMA_LOGD("%s: Exit", __func__);
 	return;
 }
@@ -2173,7 +2173,7 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 	qdf_spin_lock_bh(&beacon->lock);
 
 	buf_size = cdf_nbuf_len(beacon->buf);
-	buf = cdf_mem_malloc(buf_size);
+	buf = qdf_mem_malloc(buf_size);
 
 	if (!buf) {
 		qdf_spin_unlock_bh(&beacon->lock);
@@ -2181,7 +2181,7 @@ void *wma_get_beacon_buffer_by_vdev_id(uint8_t vdev_id, uint32_t *buffer_size)
 		return NULL;
 	}
 
-	cdf_mem_copy(buf, cdf_nbuf_data(beacon->buf), buf_size);
+	qdf_mem_copy(buf, cdf_nbuf_data(beacon->buf), buf_size);
 
 	qdf_spin_unlock_bh(&beacon->lock);
 
@@ -2276,7 +2276,7 @@ int wma_utf_rsp(tp_wma_handle wma_handle, uint8_t **payload, uint32_t *len)
 		 * The first 4 bytes holds the payload size
 		 * and the actual payload sits next to it
 		 */
-		*payload = (uint8_t *) cdf_mem_malloc((uint32_t) payload_len
+		*payload = (uint8_t *) qdf_mem_malloc((uint32_t) payload_len
 						      + sizeof(A_UINT32));
 		*(A_UINT32 *) &(*payload[0]) =
 			wma_handle->utf_event_info.length;
@@ -2317,7 +2317,7 @@ static void wma_post_ftm_response(tp_wma_handle wma_handle)
 
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("failed to post ftm response to SYS");
-		cdf_mem_free(payload);
+		qdf_mem_free(payload);
 	}
 }
 
@@ -2399,7 +2399,7 @@ wma_process_utf_event(WMA_HANDLE handle, uint8_t *datap, uint32_t dataplen)
 void wma_utf_detach(tp_wma_handle wma_handle)
 {
 	if (wma_handle->utf_event_info.data) {
-		cdf_mem_free(wma_handle->utf_event_info.data);
+		qdf_mem_free(wma_handle->utf_event_info.data);
 		wma_handle->utf_event_info.data = NULL;
 		wma_handle->utf_event_info.length = 0;
 		wmi_unified_unregister_event_handler(wma_handle->wmi_handle,
@@ -2418,7 +2418,7 @@ void wma_utf_attach(tp_wma_handle wma_handle)
 	int ret;
 
 	wma_handle->utf_event_info.data = (unsigned char *)
-					  cdf_mem_malloc(MAX_UTF_EVENT_LENGTH);
+					  qdf_mem_malloc(MAX_UTF_EVENT_LENGTH);
 	wma_handle->utf_event_info.length = 0;
 
 	ret = wmi_unified_register_event_handler(wma_handle->wmi_handle,
@@ -2552,8 +2552,8 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 		WMA_LOGE("FTM command issued in non-FTM mode");
-		cdf_mem_free(msg_buffer->data);
-		cdf_mem_free(msg_buffer);
+		qdf_mem_free(msg_buffer->data);
+		qdf_mem_free(msg_buffer);
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
@@ -2562,8 +2562,8 @@ wma_process_ftm_command(tp_wma_handle wma_handle,
 
 	ret = wma_utf_cmd(wma_handle, data, len);
 
-	cdf_mem_free(msg_buffer->data);
-	cdf_mem_free(msg_buffer);
+	qdf_mem_free(msg_buffer->data);
+	qdf_mem_free(msg_buffer);
 
 	if (ret)
 		return QDF_STATUS_E_FAILURE;

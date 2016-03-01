@@ -44,7 +44,7 @@
 #include "csr_neighbor_roam.h"
 #include "csr_internal.h"
 #include "lim_global.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "qdf_trace.h"
 #include "wma_if.h"
 

@@ -114,14 +114,14 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 	msg.type = pMb->type;
 	msg.bodyval = 0;
 
-	pMbLocal = cdf_mem_malloc(pMb->msgLen);
+	pMbLocal = qdf_mem_malloc(pMb->msgLen);
 	if (!pMbLocal) {
 		WMA_LOGE("Memory allocation failed! Can't send 0x%x\n",
 			 msg.type);
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	cdf_mem_copy((void *)pMbLocal, (void *)pMb, pMb->msgLen);
+	qdf_mem_copy((void *)pMbLocal, (void *)pMb, pMb->msgLen);
 	msg.bodyptr = pMbLocal;
 
 	switch (msg.type & HAL_MMH_MB_MSG_TYPE_MASK) {
@@ -142,12 +142,12 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, tSirMbMsg *pMb)
 		break;
 
 	case SIR_PTT_MSG_TYPES_BEGIN:
-		cdf_mem_free(msg.bodyptr);
+		qdf_mem_free(msg.bodyptr);
 		break;
 
 	default:
 		WMA_LOGD("Unknown message type = 0x%X\n", msg.type);
-		cdf_mem_free(msg.bodyptr);
+		qdf_mem_free(msg.bodyptr);
 		return eSIR_FAILURE;
 	}
 

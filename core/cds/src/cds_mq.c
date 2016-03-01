@@ -209,7 +209,7 @@ QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
 		}
 	}
 
-	cdf_mem_free(pBuf);
+	qdf_mem_free(pBuf);
 
 	return cdf_ret_status;
 }

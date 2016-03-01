@@ -61,7 +61,7 @@ extern void lim_send_set_sta_key_req(tpAniSirGlobal pMac,
 void lim_ft_open(tpAniSirGlobal pMac, tpPESession psessionEntry)
 {
 	if (psessionEntry)
-		cdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext),
+		qdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext),
 			    0);
 }
 
@@ -95,27 +95,27 @@ void lim_ft_cleanup_pre_auth_info(tpAniSirGlobal pMac, tpPESession psessionEntry
 			       psessionEntry->ftPEContext.pFTPreAuthReq);
 		if (psessionEntry->ftPEContext.pFTPreAuthReq->
 		    pbssDescription) {
-			cdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq->
+			qdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq->
 				     pbssDescription);
 			psessionEntry->ftPEContext.pFTPreAuthReq->
 			pbssDescription = NULL;
 		}
-		cdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq);
 		psessionEntry->ftPEContext.pFTPreAuthReq = NULL;
 	}
 
 	if (psessionEntry->ftPEContext.pAddBssReq) {
-		cdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
 		psessionEntry->ftPEContext.pAddBssReq = NULL;
 	}
 
 	if (psessionEntry->ftPEContext.pAddStaReq) {
-		cdf_mem_free(psessionEntry->ftPEContext.pAddStaReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pAddStaReq);
 		psessionEntry->ftPEContext.pAddStaReq = NULL;
 	}
 
 	/* The session is being deleted, cleanup the contents */
-	cdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext), 0);
+	qdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext), 0);
 
 	/* Delete the session created while handling pre-auth response */
 	if (pReAssocSessionEntry) {
@@ -166,27 +166,27 @@ void lim_ft_cleanup(tpAniSirGlobal pMac, tpPESession psessionEntry)
 		if (NULL !=
 		    psessionEntry->ftPEContext.pFTPreAuthReq->
 		    pbssDescription) {
-			cdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq->
+			qdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq->
 				     pbssDescription);
 			psessionEntry->ftPEContext.pFTPreAuthReq->
 			pbssDescription = NULL;
 		}
-		cdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pFTPreAuthReq);
 		psessionEntry->ftPEContext.pFTPreAuthReq = NULL;
 	}
 
 	if (psessionEntry->ftPEContext.pAddBssReq) {
-		cdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
 		psessionEntry->ftPEContext.pAddBssReq = NULL;
 	}
 
 	if (psessionEntry->ftPEContext.pAddStaReq) {
-		cdf_mem_free(psessionEntry->ftPEContext.pAddStaReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pAddStaReq);
 		psessionEntry->ftPEContext.pAddStaReq = NULL;
 	}
 
 	/* The session is being deleted, cleanup the contents */
-	cdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext), 0);
+	qdf_mem_set(&psessionEntry->ftPEContext, sizeof(tftPEContext), 0);
 }
 
 /*
@@ -248,12 +248,12 @@ int lim_process_ft_pre_auth_req(tpAniSirGlobal mac_ctx, tpSirMsgQ msg)
 	/* Indicate that this is the session on which preauth is being done */
 	if (session->ftPEContext.pFTPreAuthReq) {
 		if (session->ftPEContext.pFTPreAuthReq->pbssDescription) {
-			cdf_mem_free(
+			qdf_mem_free(
 			  session->ftPEContext.pFTPreAuthReq->pbssDescription);
 			session->ftPEContext.pFTPreAuthReq->pbssDescription =
 									NULL;
 		}
-		cdf_mem_free(session->ftPEContext.pFTPreAuthReq);
+		qdf_mem_free(session->ftPEContext.pFTPreAuthReq);
 		session->ftPEContext.pFTPreAuthReq = NULL;
 	}
 
@@ -392,22 +392,22 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 
-	pBeaconStruct = cdf_mem_malloc(sizeof(tSchBeaconStruct));
+	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == pBeaconStruct) {
 		lim_log(pMac, LOGE,
 			FL("Unable to allocate memory for creating ADD_BSS"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 	/* Package SIR_HAL_ADD_BSS_REQ message parameters */
-	pAddBssParams = cdf_mem_malloc(sizeof(tAddBssParams));
+	pAddBssParams = qdf_mem_malloc(sizeof(tAddBssParams));
 	if (NULL == pAddBssParams) {
-		cdf_mem_free(pBeaconStruct);
+		qdf_mem_free(pBeaconStruct);
 		lim_log(pMac, LOGP,
 			FL("Unable to allocate memory for creating ADD_BSS"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	cdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams), 0);
+	qdf_mem_set((uint8_t *) pAddBssParams, sizeof(tAddBssParams), 0);
 
 	lim_extract_ap_capabilities(pMac, (uint8_t *) bssDescription->ieFields,
 			lim_get_ielen_from_bss_description(bssDescription),
@@ -418,11 +418,11 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 		lim_decide_sta_protection_on_assoc(pMac, pBeaconStruct,
 						   pftSessionEntry);
 
-	cdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
+	qdf_mem_copy(pAddBssParams->bssId, bssDescription->bssId,
 		     sizeof(tSirMacAddr));
 
 	/* Fill in tAddBssParams selfMacAddr */
-	cdf_mem_copy(pAddBssParams->selfMacAddr, pftSessionEntry->selfMacAddr,
+	qdf_mem_copy(pAddBssParams->selfMacAddr, pftSessionEntry->selfMacAddr,
 		     sizeof(tSirMacAddr));
 
 	pAddBssParams->bssType = pftSessionEntry->bssType;
@@ -445,7 +445,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 
 	pAddBssParams->rateSet.numRates =
 		pBeaconStruct->supportedRates.numRates;
-	cdf_mem_copy(pAddBssParams->rateSet.rate,
+	qdf_mem_copy(pAddBssParams->rateSet.rate,
 		     pBeaconStruct->supportedRates.rate,
 		     pBeaconStruct->supportedRates.numRates);
 
@@ -469,10 +469,10 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	if (IS_DOT11_MODE_HT(pftSessionEntry->dot11mode) &&
 	    (pBeaconStruct->HTCaps.present)) {
 		pAddBssParams->htCapable = pBeaconStruct->HTCaps.present;
-		cdf_mem_copy(&pAddBssParams->staContext.capab_info,
+		qdf_mem_copy(&pAddBssParams->staContext.capab_info,
 			     &pBeaconStruct->capabilityInfo,
 			     sizeof(pAddBssParams->staContext.capab_info));
-		cdf_mem_copy(&pAddBssParams->staContext.ht_caps,
+		qdf_mem_copy(&pAddBssParams->staContext.ht_caps,
 			     (uint8_t *) &pBeaconStruct->HTCaps +
 			     sizeof(uint8_t),
 			     sizeof(pAddBssParams->staContext.ht_caps));
@@ -584,7 +584,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 	{
 		pAddBssParams->staContext.staType = STA_ENTRY_OTHER;
 
-		cdf_mem_copy(pAddBssParams->staContext.bssId,
+		qdf_mem_copy(pAddBssParams->staContext.bssId,
 			     bssDescription->bssId, sizeof(tSirMacAddr));
 		pAddBssParams->staContext.listenInterval =
 			bssDescription->beaconInterval;
@@ -748,7 +748,7 @@ tSirRetStatus lim_ft_prepare_add_bss_req(tpAniSirGlobal pMac,
 
 	lim_log(pMac, LOG1, FL("Saving SIR_HAL_ADD_BSS_REQ for pre-auth ap..."));
 
-	cdf_mem_free(pBeaconStruct);
+	qdf_mem_free(pBeaconStruct);
 	return 0;
 }
 
@@ -769,7 +769,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	uint32_t selfDot11Mode;
 	ePhyChanBondState cbEnabledMode;
 
-	pBeaconStruct = cdf_mem_malloc(sizeof(tSchBeaconStruct));
+	pBeaconStruct = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == pBeaconStruct) {
 		lim_log(pMac, LOGE,
 			FL("No memory for creating lim_fill_ft_session"));
@@ -795,18 +795,18 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 
 	pftSessionEntry->rateSet.numRates =
 		pBeaconStruct->supportedRates.numRates;
-	cdf_mem_copy(pftSessionEntry->rateSet.rate,
+	qdf_mem_copy(pftSessionEntry->rateSet.rate,
 		     pBeaconStruct->supportedRates.rate,
 		     pBeaconStruct->supportedRates.numRates);
 
 	pftSessionEntry->extRateSet.numRates =
 		pBeaconStruct->extendedRates.numRates;
-	cdf_mem_copy(pftSessionEntry->extRateSet.rate,
+	qdf_mem_copy(pftSessionEntry->extRateSet.rate,
 		     pBeaconStruct->extendedRates.rate,
 		     pftSessionEntry->extRateSet.numRates);
 
 	pftSessionEntry->ssId.length = pBeaconStruct->ssId.length;
-	cdf_mem_copy(pftSessionEntry->ssId.ssId, pBeaconStruct->ssId.ssId,
+	qdf_mem_copy(pftSessionEntry->ssId.ssId, pBeaconStruct->ssId.ssId,
 		     pftSessionEntry->ssId.length);
 
 	wlan_cfg_get_int(pMac, WNI_CFG_DOT11_MODE, &selfDot11Mode);
@@ -962,7 +962,7 @@ void lim_fill_ft_session(tpAniSirGlobal pMac,
 	pftSessionEntry->limRmfEnabled = psessionEntry->limRmfEnabled;
 #endif
 
-	cdf_mem_free(pBeaconStruct);
+	qdf_mem_free(pBeaconStruct);
 }
 
 /*------------------------------------------------------------------
@@ -1059,13 +1059,13 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 	tSirMsgQ mmh_msg;
 	uint16_t rsp_len = sizeof(tSirFTPreAuthRsp);
 
-	ft_pre_auth_rsp = (tpSirFTPreAuthRsp) cdf_mem_malloc(rsp_len);
+	ft_pre_auth_rsp = (tpSirFTPreAuthRsp) qdf_mem_malloc(rsp_len);
 	if (NULL == ft_pre_auth_rsp) {
 		lim_log(mac_ctx, LOGE, "Failed to allocate memory");
 		QDF_ASSERT(ft_pre_auth_rsp != NULL);
 		return;
 	}
-	cdf_mem_zero(ft_pre_auth_rsp, rsp_len);
+	qdf_mem_zero(ft_pre_auth_rsp, rsp_len);
 
 	lim_log(mac_ctx, LOG1, FL("Auth Rsp = %p"), ft_pre_auth_rsp);
 	if (session) {
@@ -1073,7 +1073,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 		if (!LIM_IS_STA_ROLE(session)) {
 			lim_log(mac_ctx, LOGE,
 				FL("session is not in STA mode"));
-			cdf_mem_free(ft_pre_auth_rsp);
+			qdf_mem_free(ft_pre_auth_rsp);
 			return;
 		}
 		ft_pre_auth_rsp->smeSessionId = session->smeSessionId;
@@ -1091,7 +1091,7 @@ void lim_post_ft_pre_auth_rsp(tpAniSirGlobal mac_ctx,
 	ft_pre_auth_rsp->ft_ies_length = 0;
 	if ((auth_rsp != NULL) && (auth_rsp_length < MAX_FTIE_SIZE)) {
 		/* Only 11r assoc has FT IEs */
-		cdf_mem_copy(ft_pre_auth_rsp->ft_ies,
+		qdf_mem_copy(ft_pre_auth_rsp->ft_ies,
 			     auth_rsp, auth_rsp_length);
 		ft_pre_auth_rsp->ft_ies_length = auth_rsp_length;
 	}
@@ -1154,7 +1154,7 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 	 */
 	psessionEntry->ftPEContext.saved_auth_rsp_length = 0;
 	if ((auth_rsp != NULL) && (auth_rsp_length < MAX_FTIE_SIZE)) {
-		cdf_mem_copy(psessionEntry->ftPEContext.saved_auth_rsp,
+		qdf_mem_copy(psessionEntry->ftPEContext.saved_auth_rsp,
 			     auth_rsp, auth_rsp_length);
 		psessionEntry->ftPEContext.saved_auth_rsp_length =
 			auth_rsp_length;
@@ -1199,7 +1199,7 @@ void lim_handle_ft_pre_auth_rsp(tpAniSirGlobal pMac, tSirRetStatus status,
 			lim_log(pMac, LOGE, FL("Invalid bss type"));
 		}
 		pftSessionEntry->limPrevSmeState = pftSessionEntry->limSmeState;
-		cdf_mem_copy(&(pftSessionEntry->htConfig),
+		qdf_mem_copy(&(pftSessionEntry->htConfig),
 			     &(psessionEntry->htConfig),
 			     sizeof(psessionEntry->htConfig));
 		pftSessionEntry->limSmeState = eLIM_SME_WT_REASSOC_STATE;
@@ -1270,14 +1270,14 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		lim_log(pMac, LOGE, FL("pAddBssReq is NULL"));
 		return;
 	}
-	pMlmReassocReq = cdf_mem_malloc(sizeof(tLimMlmReassocReq));
+	pMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
 	if (NULL == pMlmReassocReq) {
 		lim_log(pMac, LOGE,
 			FL("call to AllocateMemory failed for mlmReassocReq"));
 		return;
 	}
 
-	cdf_mem_copy(pMlmReassocReq->peerMacAddr,
+	qdf_mem_copy(pMlmReassocReq->peerMacAddr,
 		     psessionEntry->bssId, sizeof(tSirMacAddr));
 
 	if (wlan_cfg_get_int(pMac, WNI_CFG_REASSOCIATION_FAILURE_TIMEOUT,
@@ -1289,7 +1289,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		 */
 		lim_log(pMac, LOGE,
 			FL("could not retrieve ReassocFailureTimeout value"));
-		cdf_mem_free(pMlmReassocReq);
+		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
 
@@ -1299,7 +1299,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 		 * from CFG. Log error.
 		 */
 		lim_log(pMac, LOGE, FL("could not retrieve Capabilities value"));
-		cdf_mem_free(pMlmReassocReq);
+		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
 	pMlmReassocReq->capabilityInfo = caps;
@@ -1314,7 +1314,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	    eSIR_SUCCESS) {
 		lim_log(pMac, LOGP,
 			FL("Couldn't get WNI_CFG_TELE_BCN_WAKEUP_EN"));
-		cdf_mem_free(pMlmReassocReq);
+		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
 
@@ -1327,7 +1327,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 			 */
 			lim_log(pMac, LOGE,
 				FL("could not retrieve ListenInterval"));
-			cdf_mem_free(pMlmReassocReq);
+			qdf_mem_free(pMlmReassocReq);
 			return;
 		}
 	} else {
@@ -1339,14 +1339,14 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 			 */
 			lim_log(pMac, LOGE,
 				FL("could not retrieve ListenInterval"));
-			cdf_mem_free(pMlmReassocReq);
+			qdf_mem_free(pMlmReassocReq);
 			return;
 		}
 	}
 	if (lim_set_link_state
 		    (pMac, eSIR_LINK_PREASSOC_STATE, psessionEntry->bssId,
 		    psessionEntry->selfMacAddr, NULL, NULL) != eSIR_SUCCESS) {
-		cdf_mem_free(pMlmReassocReq);
+		qdf_mem_free(pMlmReassocReq);
 		return;
 	}
 
@@ -1365,7 +1365,7 @@ void lim_process_mlm_ft_reassoc_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf,
 	MTRACE(mac_trace_msg_tx(pMac, psessionEntry->peSessionId, msgQ.type));
 	retCode = wma_post_ctrl_msg(pMac, &msgQ);
 	if (eSIR_SUCCESS != retCode) {
-		cdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
+		qdf_mem_free(psessionEntry->ftPEContext.pAddBssReq);
 		lim_log(pMac, LOGE,
 			FL("Posting ADD_BSS_REQ to HAL failed, reason=%X"),
 			retCode);
@@ -1493,14 +1493,14 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 			&psessionEntry->ftPEContext.PreAuthKeyInfo.
 			extSetStaKeyParam;
 
-		cdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
+		qdf_mem_zero(pMlmSetKeysReq, sizeof(tLimMlmSetKeysReq));
 		qdf_copy_macaddr(&pMlmSetKeysReq->peer_macaddr,
 				 &pKeyInfo->bssid);
 		pMlmSetKeysReq->sessionId = psessionEntry->peSessionId;
 		pMlmSetKeysReq->smesessionId = psessionEntry->smeSessionId;
 		pMlmSetKeysReq->edType = pKeyInfo->keyMaterial.edType;
 		pMlmSetKeysReq->numKeys = pKeyInfo->keyMaterial.numKeys;
-		cdf_mem_copy((uint8_t *) &pMlmSetKeysReq->key,
+		qdf_mem_copy((uint8_t *) &pMlmSetKeysReq->key,
 			     (uint8_t *) &pKeyInfo->keyMaterial.key,
 			     sizeof(tSirKeys));
 
@@ -1523,7 +1523,7 @@ bool lim_process_ft_update_key(tpAniSirGlobal pMac, uint32_t *pMsgBuf)
 		pAddBssParams->extSetStaKeyParamValid = 1;
 		pAddBssParams->extSetStaKeyParam.encType =
 			pKeyInfo->keyMaterial.edType;
-		cdf_mem_copy((uint8_t *) &pAddBssParams->extSetStaKeyParam.key,
+		qdf_mem_copy((uint8_t *) &pAddBssParams->extSetStaKeyParam.key,
 			     (uint8_t *) &pKeyInfo->keyMaterial.key,
 			     sizeof(tSirKeys));
 		if (eSIR_SUCCESS !=
@@ -1602,13 +1602,13 @@ lim_ft_send_aggr_qos_rsp(tpAniSirGlobal pMac, uint8_t rspReqd,
 	if (!rspReqd) {
 		return;
 	}
-	rsp = cdf_mem_malloc(sizeof(tSirAggrQosRsp));
+	rsp = qdf_mem_malloc(sizeof(tSirAggrQosRsp));
 	if (NULL == rsp) {
 		lim_log(pMac, LOGP,
 			FL("AllocateMemory failed for tSirAggrQosRsp"));
 		return;
 	}
-	cdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
+	qdf_mem_set((uint8_t *) rsp, sizeof(*rsp), 0);
 	rsp->messageType = eWNI_SME_FT_AGGR_QOS_RSP;
 	rsp->sessionId = smesessionId;
 	rsp->length = sizeof(*rsp);
@@ -1646,7 +1646,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 			       FL("Cant find session entry for %s"), __func__);
 		       )
 		if (pAggrQosRspMsg != NULL) {
-			cdf_mem_free(pAggrQosRspMsg);
+			qdf_mem_free(pAggrQosRspMsg);
 		}
 		return;
 	}
@@ -1681,7 +1681,7 @@ void lim_process_ft_aggr_qo_s_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 	lim_ft_send_aggr_qos_rsp(pMac, rspReqd, pAggrQosRspMsg,
 				 psessionEntry->smeSessionId);
 	if (pAggrQosRspMsg != NULL) {
-		cdf_mem_free(pAggrQosRspMsg);
+		qdf_mem_free(pAggrQosRspMsg);
 	}
 	return;
 }
@@ -1698,7 +1698,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 	uint8_t sessionId;
 	int i;
 
-	pAggrAddTsParam = cdf_mem_malloc(sizeof(tAggrAddTsParams));
+	pAggrAddTsParam = qdf_mem_malloc(sizeof(tAggrAddTsParams));
 	if (NULL == pAggrAddTsParam) {
 		PELOGE(lim_log(pMac, LOGE, FL("AllocateMemory() failed"));)
 		return eSIR_MEM_ALLOC_FAILED;
@@ -1713,14 +1713,14 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 			       FL("psession Entry Null for sessionId = %d"),
 			       aggrQosReq->sessionId);
 		       )
-		cdf_mem_free(pAggrAddTsParam);
+		qdf_mem_free(pAggrAddTsParam);
 		return eSIR_FAILURE;
 	}
 
 	/* Nothing to be done if the session is not in STA mode */
 	if (!LIM_IS_STA_ROLE(psessionEntry)) {
 		lim_log(pMac, LOGE, FL("psessionEntry is not in STA mode"));
-		cdf_mem_free(pAggrAddTsParam);
+		qdf_mem_free(pAggrAddTsParam);
 		return eSIR_FAILURE;
 	}
 
@@ -1731,11 +1731,11 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 			       FL
 				       ("Station context not found - ignoring AddTsRsp"));
 		       )
-		cdf_mem_free(pAggrAddTsParam);
+		qdf_mem_free(pAggrAddTsParam);
 		return eSIR_FAILURE;
 	}
 
-	cdf_mem_set((uint8_t *) pAggrAddTsParam, sizeof(tAggrAddTsParams), 0);
+	qdf_mem_set((uint8_t *) pAggrAddTsParam, sizeof(tAggrAddTsParams), 0);
 	pAggrAddTsParam->staIdx = psessionEntry->staId;
 	/* Fill in the sessionId specific to PE */
 	pAggrAddTsParam->sessionId = sessionId;
@@ -1815,7 +1815,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 						       ("Adding entry in lim Tspec Table failed "));
 				       )
 				pMac->lim.gLimAddtsSent = false;
-				cdf_mem_free(pAggrAddTsParam);
+				qdf_mem_free(pAggrAddTsParam);
 				return eSIR_FAILURE;
 			}
 
@@ -1845,7 +1845,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 				       (pMac, LOGW, FL("wma_post_ctrl_msg() failed"));
 			       )
 			SET_LIM_PROCESS_DEFD_MESGS(pMac, true);
-			cdf_mem_free(pAggrAddTsParam);
+			qdf_mem_free(pAggrAddTsParam);
 			return eSIR_FAILURE;
 		}
 	}
@@ -1859,7 +1859,7 @@ tSirRetStatus lim_process_ft_aggr_qos_req(tpAniSirGlobal pMac, uint32_t *pMsgBuf
 		lim_ft_send_aggr_qos_rsp(pMac, true, pAggrAddTsParam,
 					 psessionEntry->smeSessionId);
 		if (pAggrAddTsParam != NULL) {
-			cdf_mem_free(pAggrAddTsParam);
+			qdf_mem_free(pAggrAddTsParam);
 		}
 	}
 #endif
@@ -1887,24 +1887,24 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 	tSirRetStatus rc = eSIR_SUCCESS;
 	tSirMsgQ msg;
 
-	scan_offload_req = cdf_mem_malloc(sizeof(tSirScanOffloadReq));
+	scan_offload_req = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
 	if (NULL == scan_offload_req) {
 		lim_log(mac_ctx, LOGE,
 			FL("Memory allocation failed for pScanOffloadReq"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_zero(scan_offload_req, sizeof(tSirScanOffloadReq));
+	qdf_mem_zero(scan_offload_req, sizeof(tSirScanOffloadReq));
 
 	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
 	msg.bodyptr = scan_offload_req;
 	msg.bodyval = 0;
 
-	cdf_mem_copy((uint8_t *) &scan_offload_req->selfMacAddr.bytes,
+	qdf_mem_copy((uint8_t *) &scan_offload_req->selfMacAddr.bytes,
 		     (uint8_t *) ft_preauth_req->self_mac_addr,
 		     sizeof(tSirMacAddr));
 
-	cdf_mem_copy((uint8_t *) &scan_offload_req->bssId.bytes,
+	qdf_mem_copy((uint8_t *) &scan_offload_req->bssId.bytes,
 		     (uint8_t *) ft_preauth_req->currbssId,
 		     sizeof(tSirMacAddr));
 	scan_offload_req->scanType = eSIR_PASSIVE_SCAN;
@@ -1932,7 +1932,7 @@ QDF_STATUS lim_send_preauth_scan_offload(tpAniSirGlobal mac_ctx,
 	rc = wma_post_ctrl_msg(mac_ctx, &msg);
 	if (rc != eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOGE, FL("START_SCAN_OFFLOAD failed %u"), rc);
-		cdf_mem_free(scan_offload_req);
+		qdf_mem_free(scan_offload_req);
 		return QDF_STATUS_E_FAILURE;
 	}
 

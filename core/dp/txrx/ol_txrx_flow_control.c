@@ -172,7 +172,7 @@ void ol_tx_dump_flow_pool_info(void)
 	TAILQ_FOREACH(pool, &pdev->tx_desc.flow_pool_list,
 					 flow_pool_list_elem) {
 		qdf_spin_lock_bh(&pool->flow_pool_lock);
-		cdf_mem_copy(&tmp_pool, pool, sizeof(tmp_pool));
+		qdf_mem_copy(&tmp_pool, pool, sizeof(tmp_pool));
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		qdf_spin_unlock_bh(&pdev->tx_desc.flow_pool_list_lock);
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
@@ -209,7 +209,7 @@ void ol_tx_clear_flow_pool_stats(void)
 						 __func__);
 		return;
 	}
-	cdf_mem_zero(&pdev->pool_stats, sizeof(pdev->pool_stats));
+	qdf_mem_zero(&pdev->pool_stats, sizeof(pdev->pool_stats));
 }
 
 /**
@@ -337,7 +337,7 @@ struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 		return NULL;
 	}
 
-	pool = cdf_mem_malloc(sizeof(*pool));
+	pool = qdf_mem_malloc(sizeof(*pool));
 	if (!pool) {
 		TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 		   "%s: malloc failed\n", __func__);
@@ -423,7 +423,7 @@ int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
 		qdf_spin_unlock_bh(&pool->flow_pool_lock);
 		/* Free flow_pool */
 		qdf_spinlock_destroy(&pool->flow_pool_lock);
-		cdf_mem_free(pool);
+		qdf_mem_free(pool);
 	} else { /* FLOW_POOL_INVALID case*/
 		pool->flow_pool_size -= size;
 		pool->flow_pool_id = INVALID_FLOW_ID;

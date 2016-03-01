@@ -78,7 +78,7 @@ void lim_delete_dialogue_token_list(tpAniSirGlobal pMac)
 		pCurrNode = pMac->lim.pDialogueTokenHead;
 		pMac->lim.pDialogueTokenHead =
 			pMac->lim.pDialogueTokenHead->next;
-		cdf_mem_free(pCurrNode);
+		qdf_mem_free(pCurrNode);
 		pCurrNode = NULL;
 	}
 	pMac->lim.pDialogueTokenTail = NULL;
@@ -956,7 +956,7 @@ uint8_t lim_write_deferred_msg_q(tpAniSirGlobal mac_ctx, tpSirMsgQ lim_msg)
 		mac_ctx->lim.gLimDeferredMsgQ.write = 0;
 
 	/* save the message to the queue and advanced the write pointer */
-	cdf_mem_copy((uint8_t *) &mac_ctx->lim.gLimDeferredMsgQ.
+	qdf_mem_copy((uint8_t *) &mac_ctx->lim.gLimDeferredMsgQ.
 			deferredQueue[mac_ctx->lim.gLimDeferredMsgQ.write++],
 				(uint8_t *) lim_msg, sizeof(tSirMsgQ));
 	return TX_SUCCESS;
@@ -1066,7 +1066,7 @@ void lim_handle_update_olbc_cache(tpAniSirGlobal mac_ctx)
 		return;
 	}
 
-	cdf_mem_set((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams), 0);
+	qdf_mem_set((uint8_t *) &beaconParams, sizeof(tUpdateBeaconParams), 0);
 	beaconParams.bssIdx = psessionEntry->bssIdx;
 
 	beaconParams.paramChangeBitmap = 0;
@@ -1212,7 +1212,7 @@ lim_update_prot_sta_params(tpAniSirGlobal pMac,
 				       LOG1);
 			       )
 
-			if (cdf_mem_compare
+			if (!qdf_mem_cmp
 				    (psessionEntry->protStaCache[i].addr,
 				    peerMacAddr, sizeof(tSirMacAddr))) {
 				PELOG1(lim_log
@@ -1236,7 +1236,7 @@ lim_update_prot_sta_params(tpAniSirGlobal pMac,
 		return;
 	}
 
-	cdf_mem_copy(psessionEntry->protStaCache[i].addr,
+	qdf_mem_copy(psessionEntry->protStaCache[i].addr,
 		     peerMacAddr, sizeof(tSirMacAddr));
 
 	psessionEntry->protStaCache[i].protStaCacheType = protStaCacheType;
@@ -1456,7 +1456,7 @@ lim_update_short_preamble(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 		if (LIM_IS_AP_ROLE(psession_entry) &&
 			(psession_entry->gLimNoShortParams.
 				staNoShortCache[i].active) &&
-			(cdf_mem_compare
+			(!qdf_mem_cmp
 				(psession_entry->gLimNoShortParams.
 				staNoShortCache[i].addr,
 				peer_mac_addr, sizeof(tSirMacAddr))))
@@ -1464,7 +1464,7 @@ lim_update_short_preamble(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 		else if (!LIM_IS_AP_ROLE(psession_entry) &&
 				(mac_ctx->lim.gLimNoShortParams.
 					staNoShortCache[i].active) &&
-			(cdf_mem_compare(mac_ctx->lim.gLimNoShortParams.
+			(!qdf_mem_cmp(mac_ctx->lim.gLimNoShortParams.
 				staNoShortCache[i].addr,
 				peer_mac_addr,
 				sizeof(tSirMacAddr))))
@@ -1503,14 +1503,14 @@ lim_update_short_preamble(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 	}
 
 	if (LIM_IS_AP_ROLE(psession_entry)) {
-		cdf_mem_copy(psession_entry->gLimNoShortParams.
+		qdf_mem_copy(psession_entry->gLimNoShortParams.
 				staNoShortCache[i].addr,
 				peer_mac_addr, sizeof(tSirMacAddr));
 		psession_entry->gLimNoShortParams.staNoShortCache[i].
 							active = true;
 		psession_entry->gLimNoShortParams.numNonShortPreambleSta++;
 	} else {
-		cdf_mem_copy(mac_ctx->lim.gLimNoShortParams.
+		qdf_mem_copy(mac_ctx->lim.gLimNoShortParams.
 					staNoShortCache[i].addr,
 				peer_mac_addr, sizeof(tSirMacAddr));
 		mac_ctx->lim.gLimNoShortParams.staNoShortCache[i].active = true;
@@ -1573,7 +1573,7 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 			if (LIM_IS_AP_ROLE(session_entry) &&
 				session_entry->gLimNoShortSlotParams.
 					staNoShortSlotCache[i].active) {
-				if (cdf_mem_compare(
+				if (!qdf_mem_cmp(
 					session_entry->gLimNoShortSlotParams.
 					staNoShortSlotCache[i].addr,
 					peer_mac_addr, sizeof(tSirMacAddr)))
@@ -1581,7 +1581,7 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 			} else if (!LIM_IS_AP_ROLE(session_entry)) {
 				if (mac_ctx->lim.gLimNoShortSlotParams.
 					staNoShortSlotCache[i].active) {
-					if (cdf_mem_compare(mac_ctx->lim.
+					if (!qdf_mem_cmp(mac_ctx->lim.
 							gLimNoShortSlotParams.
 							staNoShortSlotCache[i].
 							addr, peer_mac_addr,
@@ -1625,7 +1625,7 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 		}
 
 		if (LIM_IS_AP_ROLE(session_entry)) {
-			cdf_mem_copy(session_entry->gLimNoShortSlotParams.
+			qdf_mem_copy(session_entry->gLimNoShortSlotParams.
 					staNoShortSlotCache[i].addr,
 					peer_mac_addr, sizeof(tSirMacAddr));
 			session_entry->gLimNoShortSlotParams.
@@ -1633,7 +1633,7 @@ lim_update_short_slot_time(tpAniSirGlobal mac_ctx, tSirMacAddr peer_mac_addr,
 			session_entry->gLimNoShortSlotParams.
 				numNonShortSlotSta++;
 		} else {
-			cdf_mem_copy(mac_ctx->lim.gLimNoShortSlotParams.
+			qdf_mem_copy(mac_ctx->lim.gLimNoShortSlotParams.
 					staNoShortSlotCache[i].addr,
 					peer_mac_addr, sizeof(tSirMacAddr));
 			mac_ctx->lim.gLimNoShortSlotParams.
@@ -2671,7 +2671,7 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 	}
 
 	mmhMsg.type = eWNI_SME_SWITCH_CHL_IND;
-	pSirSmeSwitchChInd = cdf_mem_malloc(sizeof(tSirSmeSwitchChannelInd));
+	pSirSmeSwitchChInd = qdf_mem_malloc(sizeof(tSirSmeSwitchChannelInd));
 	if (NULL == pSirSmeSwitchChInd) {
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate buffer for buffer descriptor"));
@@ -2683,7 +2683,7 @@ void lim_switch_channel_cback(tpAniSirGlobal pMac, QDF_STATUS status,
 	pSirSmeSwitchChInd->newChannelId =
 		psessionEntry->gLimChannelSwitch.primaryChannel;
 	pSirSmeSwitchChInd->sessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
+	qdf_mem_copy(pSirSmeSwitchChInd->bssid.bytes, psessionEntry->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	mmhMsg.bodyptr = pSirSmeSwitchChInd;
 	mmhMsg.bodyval = 0;
@@ -5139,14 +5139,14 @@ tSirRetStatus lim_process_hal_ind_messages(tpAniSirGlobal pMac, uint32_t msgId,
 		break;
 
 	default:
-		cdf_mem_free(msgParam);
+		qdf_mem_free(msgParam);
 		lim_log(pMac, LOGP, FL("invalid message id = %d received"),
 			msgId);
 		return eSIR_FAILURE;
 	}
 
 	if (lim_post_msg_api(pMac, &msg) != eSIR_SUCCESS) {
-		cdf_mem_free(msgParam);
+		qdf_mem_free(msgParam);
 		lim_log(pMac, LOGP, FL("lim_post_msg_api failed for msgid = %d"),
 			msg.type);
 		return eSIR_FAILURE;
@@ -5302,7 +5302,7 @@ void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
 	tSirMsgQ msg;
 	tpHalIndCB pHalCB;
 
-	pHalCB = cdf_mem_malloc(sizeof(tHalIndCB));
+	pHalCB = qdf_mem_malloc(sizeof(tHalIndCB));
 	if (NULL == pHalCB) {
 		lim_log(pMac, LOGP, FL("AllocateMemory() failed"));
 		return;
@@ -5316,7 +5316,7 @@ void lim_register_hal_ind_call_back(tpAniSirGlobal pMac)
 
 	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msg.type));
 	if (eSIR_SUCCESS != wma_post_ctrl_msg(pMac, &msg)) {
-		cdf_mem_free(pHalCB);
+		qdf_mem_free(pHalCB);
 		lim_log(pMac, LOGP, FL("wma_post_ctrl_msg() failed"));
 	}
 
@@ -5351,7 +5351,7 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGE,
 			FL("session does not exist for given BssId"));
-		cdf_mem_free(limMsg->bodyptr);
+		qdf_mem_free(limMsg->bodyptr);
 		limMsg->bodyptr = NULL;
 		return;
 	}
@@ -5376,19 +5376,19 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 		goto error1;
 	}
 
-	pDelTsReq = cdf_mem_malloc(sizeof(tSirDeltsReq));
+	pDelTsReq = qdf_mem_malloc(sizeof(tSirDeltsReq));
 	if (NULL == pDelTsReq) {
 		PELOGE(lim_log(pMac, LOGE, FL("AllocateMemory() failed"));)
 		goto error1;
 	}
 
-	cdf_mem_set((uint8_t *) pDelTsReq, sizeof(tSirDeltsReq), 0);
+	qdf_mem_set((uint8_t *) pDelTsReq, sizeof(tSirDeltsReq), 0);
 
 	if (pSta->wmeEnabled)
-		cdf_mem_copy(&(pDelTsReq->req.tspec), &(pTspecInfo->tspec),
+		qdf_mem_copy(&(pDelTsReq->req.tspec), &(pTspecInfo->tspec),
 			     sizeof(tSirMacTspecIE));
 	else
-		cdf_mem_copy(&(pDelTsReq->req.tsinfo),
+		qdf_mem_copy(&(pDelTsReq->req.tsinfo),
 			     &(pTspecInfo->tspec.tsinfo),
 			     sizeof(tSirMacTSInfo));
 
@@ -5409,29 +5409,29 @@ void lim_process_del_ts_ind(tpAniSirGlobal pMac, tpSirMsgQ limMsg)
 					&pDelTsReq->req.tspec, psessionEntry);
 
 	/* prepare and send an sme indication to HDD */
-	pDelTsReqInfo = cdf_mem_malloc(sizeof(tSirDeltsReqInfo));
+	pDelTsReqInfo = qdf_mem_malloc(sizeof(tSirDeltsReqInfo));
 	if (NULL == pDelTsReqInfo) {
 		PELOGE(lim_log(pMac, LOGE, FL("AllocateMemory() failed"));)
 		goto error3;
 	}
-	cdf_mem_set((uint8_t *) pDelTsReqInfo, sizeof(tSirDeltsReqInfo), 0);
+	qdf_mem_set((uint8_t *) pDelTsReqInfo, sizeof(tSirDeltsReqInfo), 0);
 
 	if (pSta->wmeEnabled)
-		cdf_mem_copy(&(pDelTsReqInfo->tspec), &(pTspecInfo->tspec),
+		qdf_mem_copy(&(pDelTsReqInfo->tspec), &(pTspecInfo->tspec),
 			     sizeof(tSirMacTspecIE));
 	else
-		cdf_mem_copy(&(pDelTsReqInfo->tsinfo),
+		qdf_mem_copy(&(pDelTsReqInfo->tsinfo),
 			     &(pTspecInfo->tspec.tsinfo),
 			     sizeof(tSirMacTSInfo));
 
 	lim_send_sme_delts_ind(pMac, pDelTsReqInfo, pDelTsReq->aid, psessionEntry);
 
 error3:
-	cdf_mem_free(pDelTsReqInfo);
+	qdf_mem_free(pDelTsReqInfo);
 error2:
-	cdf_mem_free(pDelTsReq);
+	qdf_mem_free(pDelTsReq);
 error1:
-	cdf_mem_free(limMsg->bodyptr);
+	qdf_mem_free(limMsg->bodyptr);
 	limMsg->bodyptr = NULL;
 	return;
 }
@@ -5466,7 +5466,7 @@ lim_post_sm_state_update(tpAniSirGlobal pMac,
 	msgQ.type = WMA_SET_MIMOPS_REQ;
 
 	/* Allocate for WMA_SET_MIMOPS_REQ */
-	pMIMO_PSParams = cdf_mem_malloc(sizeof(tSetMIMOPS));
+	pMIMO_PSParams = qdf_mem_malloc(sizeof(tSetMIMOPS));
 	if (NULL == pMIMO_PSParams) {
 		lim_log(pMac, LOGP, FL(" AllocateMemory failed"));
 		return eSIR_MEM_ALLOC_FAILED;
@@ -5476,7 +5476,7 @@ lim_post_sm_state_update(tpAniSirGlobal pMac,
 	pMIMO_PSParams->staIdx = staIdx;
 	pMIMO_PSParams->fsendRsp = true;
 	pMIMO_PSParams->sessionId = sessionId;
-	cdf_mem_copy(pMIMO_PSParams->peerMac, pPeerStaMac, sizeof(tSirMacAddr));
+	qdf_mem_copy(pMIMO_PSParams->peerMac, pPeerStaMac, sizeof(tSirMacAddr));
 
 	msgQ.bodyptr = pMIMO_PSParams;
 	msgQ.bodyval = 0;
@@ -5490,7 +5490,7 @@ lim_post_sm_state_update(tpAniSirGlobal pMac,
 			FL
 				("Posting WMA_SET_MIMOPS_REQ to HAL failed! Reason = %d"),
 			retCode);
-		cdf_mem_free(pMIMO_PSParams);
+		qdf_mem_free(pMIMO_PSParams);
 		return retCode;
 	}
 
@@ -5536,7 +5536,7 @@ lim_get_b_dfrom_rx_packet(tpAniSirGlobal pMac, void *body, uint32_t **pRxPacketI
 
 void lim_resset_scan_channel_info(tpAniSirGlobal pMac)
 {
-	cdf_mem_set(&pMac->lim.scanChnInfo, sizeof(tLimScanChnInfo), 0);
+	qdf_mem_set(&pMac->lim.scanChnInfo, sizeof(tLimScanChnInfo), 0);
 }
 
 /**
@@ -5663,16 +5663,16 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 	 * Make it to align to 4 byte boundary  */
 	nBytes = (uint8_t) HALMSG_NUMBYTES_STATION_BITMAP(pMac->lim.maxStation);
 
-	pTxCtrlMsg = cdf_mem_malloc(sizeof(*pTxCtrlMsg) + nBytes);
+	pTxCtrlMsg = qdf_mem_malloc(sizeof(*pTxCtrlMsg) + nBytes);
 	if (NULL == pTxCtrlMsg) {
 		lim_log(pMac, LOGP, FL("AllocateMemory() failed"));
 		return;
 	}
 
-	cdf_mem_set((void *)pTxCtrlMsg, (sizeof(*pTxCtrlMsg) + nBytes), 0);
+	qdf_mem_set((void *)pTxCtrlMsg, (sizeof(*pTxCtrlMsg) + nBytes), 0);
 	status = __lim_fill_tx_control_params(pMac, pTxCtrlMsg, type, mode);
 	if (status != QDF_STATUS_SUCCESS) {
-		cdf_mem_free(pTxCtrlMsg);
+		qdf_mem_free(pTxCtrlMsg);
 		lim_log(pMac, LOGP,
 			FL("__lim_fill_tx_control_params failed, status = %d"),
 			status);
@@ -5686,7 +5686,7 @@ void lim_frame_transmission_control(tpAniSirGlobal pMac, tLimQuietTxMode type,
 
 	MTRACE(mac_trace_msg_tx(pMac, NO_SESSION, msgQ.type));
 	if (wma_post_ctrl_msg(pMac, &msgQ) != eSIR_SUCCESS) {
-		cdf_mem_free(pTxCtrlMsg);
+		qdf_mem_free(pTxCtrlMsg);
 		lim_log(pMac, LOGP, FL("Posting Message to HAL failed"));
 		return;
 	}
@@ -6030,7 +6030,7 @@ void lim_process_add_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ)
 	if (psessionEntry == NULL) {
 		lim_log(pMac, LOGP,
 			FL("Session Does not exist for given sessionID"));
-		cdf_mem_free(pAddStaParams);
+		qdf_mem_free(pAddStaParams);
 		return;
 	}
 	psessionEntry->csaOffloadEnable = pAddStaParams->csaOffloadEnable;
@@ -6200,7 +6200,7 @@ void lim_handle_defer_msg_error(tpAniSirGlobal pMac, tpSirMsgQ pLimMsg)
 		cds_pkt_return_packet((cds_pkt_t *) pLimMsg->bodyptr);
 		pLimMsg->bodyptr = NULL;
 	} else if (pLimMsg->bodyptr != NULL) {
-		cdf_mem_free(pLimMsg->bodyptr);
+		qdf_mem_free(pLimMsg->bodyptr);
 		pLimMsg->bodyptr = NULL;
 	}
 
@@ -6224,15 +6224,15 @@ void lim_diag_event_report(tpAniSirGlobal pMac, uint16_t eventType,
 	tSirMacAddr nullBssid = { 0, 0, 0, 0, 0, 0 };
 	WLAN_HOST_DIAG_EVENT_DEF(peEvent, host_event_wlan_pe_payload_type);
 
-	cdf_mem_set(&peEvent, sizeof(host_event_wlan_pe_payload_type), 0);
+	qdf_mem_set(&peEvent, sizeof(host_event_wlan_pe_payload_type), 0);
 
 	if (NULL == pSessionEntry) {
-		cdf_mem_copy(peEvent.bssid, nullBssid, sizeof(tSirMacAddr));
+		qdf_mem_copy(peEvent.bssid, nullBssid, sizeof(tSirMacAddr));
 		peEvent.sme_state = (uint16_t) pMac->lim.gLimSmeState;
 		peEvent.mlm_state = (uint16_t) pMac->lim.gLimMlmState;
 
 	} else {
-		cdf_mem_copy(peEvent.bssid, pSessionEntry->bssId,
+		qdf_mem_copy(peEvent.bssid, pSessionEntry->bssId,
 			     sizeof(tSirMacAddr));
 		peEvent.sme_state = (uint16_t) pSessionEntry->limSmeState;
 		peEvent.mlm_state = (uint16_t) pSessionEntry->limMlmState;
@@ -6291,8 +6291,8 @@ uint8_t lim_build_p2p_ie(tpAniSirGlobal pMac, uint8_t *ie, uint8_t *data,
 
 	ptr[length++] = SIR_MAC_EID_VENDOR;
 	ptr[length++] = ie_len + SIR_MAC_P2P_OUI_SIZE;
-	cdf_mem_copy(&ptr[length], SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE);
-	cdf_mem_copy(&ptr[length + SIR_MAC_P2P_OUI_SIZE], data, ie_len);
+	qdf_mem_copy(&ptr[length], SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE);
+	qdf_mem_copy(&ptr[length + SIR_MAC_P2P_OUI_SIZE], data, ie_len);
 	return ie_len + SIR_P2P_IE_HEADER_LEN;
 }
 
@@ -6306,14 +6306,14 @@ uint8_t lim_get_noa_attr_stream_in_mult_p2p_ies(tpAniSirGlobal pMac,
 
 	if ((noaLen <= (SIR_MAX_NOA_ATTR_LEN + SIR_P2P_IE_HEADER_LEN)) &&
 	    (noaLen >= overFlowLen) && (overFlowLen <= SIR_MAX_NOA_ATTR_LEN)) {
-		cdf_mem_copy(overFlowP2pStream,
+		qdf_mem_copy(overFlowP2pStream,
 			     noaStream + noaLen - overFlowLen, overFlowLen);
 		noaStream[noaLen - overFlowLen] = SIR_MAC_EID_VENDOR;
 		noaStream[noaLen - overFlowLen + 1] =
 			overFlowLen + SIR_MAC_P2P_OUI_SIZE;
-		cdf_mem_copy(noaStream + noaLen - overFlowLen + 2,
+		qdf_mem_copy(noaStream + noaLen - overFlowLen + 2,
 			     SIR_MAC_P2P_OUI, SIR_MAC_P2P_OUI_SIZE);
-		cdf_mem_copy(noaStream + noaLen + 2 + SIR_MAC_P2P_OUI_SIZE -
+		qdf_mem_copy(noaStream + noaLen + 2 + SIR_MAC_P2P_OUI_SIZE -
 			     overFlowLen, overFlowP2pStream, overFlowLen);
 	}
 
@@ -6519,7 +6519,7 @@ bool lim_check_vht_op_mode_change(tpAniSirGlobal pMac, tpPESession psessionEntry
 	tempParam.opMode = chanWidth;
 	tempParam.staId = staId;
 	tempParam.smesessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
+	qdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
 
 	lim_send_mode_update(pMac, &tempParam, psessionEntry);
 
@@ -6534,7 +6534,7 @@ bool lim_set_nss_change(tpAniSirGlobal pMac, tpPESession psessionEntry,
 	tempParam.rxNss = rxNss;
 	tempParam.staId = staId;
 	tempParam.smesessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
+	qdf_mem_copy(tempParam.peer_mac, peerMac, sizeof(tSirMacAddr));
 
 	lim_send_rx_nss_update(pMac, &tempParam, psessionEntry);
 
@@ -6552,7 +6552,7 @@ bool lim_check_membership_user_position(tpAniSirGlobal pMac,
 	tempParamMembership.membership = membership;
 	tempParamMembership.staId = staId;
 	tempParamMembership.smesessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(tempParamMembership.peer_mac, psessionEntry->bssId,
+	qdf_mem_copy(tempParamMembership.peer_mac, psessionEntry->bssId,
 		     sizeof(tSirMacAddr));
 
 	lim_set_membership(pMac, &tempParamMembership, psessionEntry);
@@ -6560,7 +6560,7 @@ bool lim_check_membership_user_position(tpAniSirGlobal pMac,
 	tempParamUserPosition.userPos = userPosition;
 	tempParamUserPosition.staId = staId;
 	tempParamUserPosition.smesessionId = psessionEntry->smeSessionId;
-	cdf_mem_copy(tempParamUserPosition.peer_mac, psessionEntry->bssId,
+	qdf_mem_copy(tempParamUserPosition.peer_mac, psessionEntry->bssId,
 		     sizeof(tSirMacAddr));
 
 	lim_set_user_pos(pMac, &tempParamUserPosition, psessionEntry);
@@ -6690,7 +6690,7 @@ void lim_set_ht_caps(tpAniSirGlobal p_mac, tpPESession p_session_entry,
 		p_ht_cap->lsigTXOPProtection = dot11_ht_cap.lsigTXOPProtection;
 		p_ht_cap->maxRxAMPDUFactor = dot11_ht_cap.maxRxAMPDUFactor;
 		p_ht_cap->mpduDensity = dot11_ht_cap.mpduDensity;
-		cdf_mem_copy((void *)p_ht_cap->supportedMCSSet,
+		qdf_mem_copy((void *)p_ht_cap->supportedMCSSet,
 			(void *)(dot11_ht_cap.supportedMCSSet),
 			sizeof(p_ht_cap->supportedMCSSet));
 		p_ht_cap->pco = dot11_ht_cap.pco;
@@ -6821,7 +6821,7 @@ bool lim_validate_received_frame_a1_addr(tpAniSirGlobal mac_ctx,
 		/* just for fail safe, don't handle MC/BC a1 in this routine */
 		return true;
 	}
-	if (!cdf_mem_compare(a1, session->selfMacAddr, 6)) {
+	if (qdf_mem_cmp(a1, session->selfMacAddr, 6)) {
 		lim_log(mac_ctx, LOGE,
 				FL("Invalid A1 address in received frame"));
 		return false;
@@ -6842,13 +6842,13 @@ bool lim_validate_received_frame_a1_addr(tpAniSirGlobal mac_ctx,
 void lim_check_and_reset_protection_params(tpAniSirGlobal mac_ctx)
 {
 	if (!pe_get_active_session_count(mac_ctx)) {
-		cdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
+		qdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
 			sizeof(mac_ctx->lim.gLimOverlap11gParams));
-		cdf_mem_zero(&mac_ctx->lim.gLimOverlap11aParams,
+		qdf_mem_zero(&mac_ctx->lim.gLimOverlap11aParams,
 			sizeof(mac_ctx->lim.gLimOverlap11aParams));
-		cdf_mem_zero(&mac_ctx->lim.gLimOverlapHt20Params,
+		qdf_mem_zero(&mac_ctx->lim.gLimOverlapHt20Params,
 			sizeof(mac_ctx->lim.gLimOverlapHt20Params));
-		cdf_mem_zero(&mac_ctx->lim.gLimOverlapNonGfParams,
+		qdf_mem_zero(&mac_ctx->lim.gLimOverlapNonGfParams,
 			sizeof(mac_ctx->lim.gLimOverlapNonGfParams));
 
 		mac_ctx->lim.gHTOperMode = eSIR_HT_OP_MODE_PURE;
@@ -6932,7 +6932,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 	}
 
 	/* Allocate memory for the WMI request, and copy the parameter */
-	vdev_ie = cdf_mem_malloc(sizeof(*vdev_ie) + num_bytes);
+	vdev_ie = qdf_mem_malloc(sizeof(*vdev_ie) + num_bytes);
 	if (!vdev_ie) {
 		lim_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
 		return QDF_STATUS_E_NOMEM;
@@ -6949,7 +6949,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1, FL("%d byte is %02x"), i+1, *temp);
 
 	vdev_ie->data = (uint8_t *)vdev_ie + sizeof(*vdev_ie);
-	cdf_mem_copy(vdev_ie->data, ext_cap_data.bytes, num_bytes);
+	qdf_mem_copy(vdev_ie->data, ext_cap_data.bytes, num_bytes);
 
 	msg.type = WMA_SET_IE_INFO;
 	msg.bodyptr = vdev_ie;
@@ -6959,7 +6959,7 @@ QDF_STATUS lim_send_ext_cap_ie(tpAniSirGlobal mac_ctx,
 		cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		lim_log(mac_ctx, LOGE,
 		       FL("Not able to post WMA_SET_IE_INFO to WDA"));
-		cdf_mem_free(vdev_ie);
+		qdf_mem_free(vdev_ie);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -6992,7 +6992,7 @@ tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
 		return eSIR_IGNORE_IE;
 	}
 
-	tempbuf = cdf_mem_malloc(left);
+	tempbuf = qdf_mem_malloc(left);
 	if (NULL == tempbuf) {
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 		return eSIR_MEM_ALLOC_FAILED;
@@ -7006,28 +7006,28 @@ tSirRetStatus lim_strip_extcap_ie(tpAniSirGlobal mac_ctx,
 			lim_log(mac_ctx, LOGE,
 				FL("Invalid IEs eid = %d elem_len=%d left=%d"),
 				elem_id, elem_len, left);
-			cdf_mem_free(tempbuf);
+			qdf_mem_free(tempbuf);
 			return eSIR_FAILURE;
 		}
 		if (!(DOT11F_EID_EXTCAP == elem_id)) {
-			cdf_mem_copy(tempbuf + templen, &ptr[0], elem_len + 2);
+			qdf_mem_copy(tempbuf + templen, &ptr[0], elem_len + 2);
 			templen += (elem_len + 2);
 		} else {
 			if (NULL != extracted_ie) {
-				cdf_mem_set(extracted_ie,
+				qdf_mem_set(extracted_ie,
 					DOT11F_IE_EXTCAP_MAX_LEN + 2, 0);
 				if (elem_len <= DOT11F_IE_EXTCAP_MAX_LEN)
-					cdf_mem_copy(extracted_ie, &ptr[0],
+					qdf_mem_copy(extracted_ie, &ptr[0],
 						     elem_len + 2);
 			}
 		}
 		left -= elem_len;
 		ptr += (elem_len + 2);
 	}
-	cdf_mem_copy(addn_ie, tempbuf, templen);
+	qdf_mem_copy(addn_ie, tempbuf, templen);
 
 	*addn_ielen = templen;
-	cdf_mem_free(tempbuf);
+	qdf_mem_free(tempbuf);
 
 	return eSIR_SUCCESS;
 }
@@ -7064,8 +7064,8 @@ void lim_update_extcap_struct(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	cdf_mem_set((uint8_t *)&out[0], DOT11F_IE_EXTCAP_MAX_LEN, 0);
-	cdf_mem_copy(&out[0], &buf[2], DOT11F_IE_EXTCAP_MAX_LEN);
+	qdf_mem_set((uint8_t *)&out[0], DOT11F_IE_EXTCAP_MAX_LEN, 0);
+	qdf_mem_copy(&out[0], &buf[2], DOT11F_IE_EXTCAP_MAX_LEN);
 
 	if (DOT11F_PARSE_SUCCESS != dot11f_unpack_ie_ext_cap(mac_ctx, &out[0],
 					DOT11F_IE_EXTCAP_MAX_LEN, dst))
@@ -7091,7 +7091,7 @@ tSirRetStatus lim_strip_extcap_update_struct(tpAniSirGlobal mac_ctx,
 	uint8_t extracted_buff[DOT11F_IE_EXTCAP_MAX_LEN + 2];
 	tSirRetStatus status;
 
-	cdf_mem_set((uint8_t *)&extracted_buff[0], DOT11F_IE_EXTCAP_MAX_LEN + 2,
+	qdf_mem_set((uint8_t *)&extracted_buff[0], DOT11F_IE_EXTCAP_MAX_LEN + 2,
 		     0);
 	status = lim_strip_extcap_ie(mac_ctx, addn_ie, addn_ielen,
 				     extracted_buff);

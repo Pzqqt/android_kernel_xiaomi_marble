@@ -130,10 +130,10 @@ static void ol_rx_process_inv_peer(ol_txrx_pdev_handle pdev,
 		return;
 
 	/* ignore frames for non-existent bssids */
-	cdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
 	TAILQ_FOREACH(vdev, &pdev->vdev_list, vdev_list_elem) {
-		if (cdf_mem_compare(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN)
-		    == 0) {
+		if (qdf_mem_cmp(a1, vdev->mac_addr.raw, IEEE80211_ADDR_LEN)
+		    != 0) {
 			break;
 		}
 	}
@@ -618,12 +618,12 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 	peer->security[sec_index].sec_type = sec_type;
 	/* michael key only valid for TKIP
 	   but for simplicity, copy it anyway */
-	cdf_mem_copy(&peer->security[sec_index].michael_key[0],
+	qdf_mem_copy(&peer->security[sec_index].michael_key[0],
 		     michael_key,
 		     sizeof(peer->security[sec_index].michael_key));
 
 	if (sec_type != htt_sec_type_wapi) {
-		cdf_mem_set(peer->tids_last_pn_valid,
+		qdf_mem_set(peer->tids_last_pn_valid,
 			    OL_TXRX_NUM_EXT_TIDS, 0x00);
 	} else if (sec_index == txrx_sec_mcast || peer->tids_last_pn_valid[0]) {
 		for (i = 0; i < OL_TXRX_NUM_EXT_TIDS; i++) {
@@ -632,7 +632,7 @@ ol_rx_sec_ind_handler(ol_txrx_pdev_handle pdev,
 			 * since WAPI PN has to be started with predefined value
 			 */
 			peer->tids_last_pn_valid[i] = 1;
-			cdf_mem_copy((uint8_t *) &peer->tids_last_pn[i],
+			qdf_mem_copy((uint8_t *) &peer->tids_last_pn[i],
 				     (uint8_t *) rx_pn,
 				     sizeof(union htt_rx_pn_t));
 			peer->tids_last_pn[i].pn128[1] =
@@ -662,9 +662,9 @@ static void transcap_nwifi_to_8023(cdf_nbuf_t msdu)
 	uint8_t fc1;
 
 	wh = (struct ieee80211_frame *)cdf_nbuf_data(msdu);
-	cdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
-	cdf_mem_copy(a2, wh->i_addr2, IEEE80211_ADDR_LEN);
-	cdf_mem_copy(a3, wh->i_addr3, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(a1, wh->i_addr1, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(a2, wh->i_addr2, IEEE80211_ADDR_LEN);
+	qdf_mem_copy(a3, wh->i_addr3, IEEE80211_ADDR_LEN);
 	fc1 = wh->i_fc[1] & IEEE80211_FC1_DIR_MASK;
 	/* Native Wifi header is 80211 non-QoS header */
 	hdrsize = sizeof(struct ieee80211_frame);
@@ -682,16 +682,16 @@ static void transcap_nwifi_to_8023(cdf_nbuf_t msdu)
 	eth_hdr = (struct ether_header *)(cdf_nbuf_data(msdu));
 	switch (fc1) {
 	case IEEE80211_FC1_DIR_NODS:
-		cdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
-		cdf_mem_copy(eth_hdr->ether_shost, a2, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->ether_shost, a2, IEEE80211_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
-		cdf_mem_copy(eth_hdr->ether_dhost, a3, IEEE80211_ADDR_LEN);
-		cdf_mem_copy(eth_hdr->ether_shost, a2, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->ether_dhost, a3, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->ether_shost, a2, IEEE80211_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
-		cdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
-		cdf_mem_copy(eth_hdr->ether_shost, a3, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->ether_dhost, a1, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->ether_shost, a3, IEEE80211_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		break;
@@ -973,7 +973,7 @@ ol_rx_deliver(struct ol_txrx_vdev_t *vdev,
 	bool filter = false;
 #ifdef QCA_SUPPORT_SW_TXRX_ENCAP
 	struct ol_rx_decap_info_t info;
-	cdf_mem_set(&info, sizeof(info), 0);
+	qdf_mem_set(&info, sizeof(info), 0);
 #endif
 
 	msdu = msdu_list;
@@ -1070,7 +1070,7 @@ DONE:
 						peer->last_pkt_center_freq;
 					rx_header.rssi_cmb =
 						peer->last_pkt_rssi_cmb;
-					cdf_mem_copy(rx_header.rssi,
+					qdf_mem_copy(rx_header.rssi,
 							peer->last_pkt_rssi,
 							sizeof(rx_header.rssi));
 					if (peer->last_pkt_legacy_rate_sel ==
@@ -1119,7 +1119,7 @@ DONE:
 
 					cdf_nbuf_push_head(msdu,
 						sizeof(rx_header));
-					cdf_mem_copy(cdf_nbuf_data(msdu),
+					qdf_mem_copy(cdf_nbuf_data(msdu),
 						&rx_header, sizeof(rx_header));
 
 					/* Construct the ethernet header with
@@ -1130,7 +1130,7 @@ DONE:
 						ETHERTYPE_OCB_RX);
 					cdf_nbuf_push_head(msdu,
 							   sizeof(eth_header));
-					cdf_mem_copy(cdf_nbuf_data(msdu),
+					qdf_mem_copy(cdf_nbuf_data(msdu),
 							&eth_header,
 							 sizeof(eth_header));
 				}

@@ -163,14 +163,14 @@ void lim_populate_mac_header(tpAniSirGlobal mac_ctx, uint8_t *buf,
 	mac_hdr->fc.subType = sub_type;
 
 	/* Prepare Address 1 */
-	cdf_mem_copy((uint8_t *) mac_hdr->da,
+	qdf_mem_copy((uint8_t *) mac_hdr->da,
 		     (uint8_t *) peer_addr, sizeof(tSirMacAddr));
 
 	/* Prepare Address 2 */
 	sir_copy_mac_addr(mac_hdr->sa, self_mac_addr);
 
 	/* Prepare Address 3 */
-	cdf_mem_copy((uint8_t *) mac_hdr->bssId,
+	qdf_mem_copy((uint8_t *) mac_hdr->bssId,
 		     (uint8_t *) peer_addr, sizeof(tSirMacAddr));
 
 	/* Prepare sequence number */
@@ -255,7 +255,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* The scheme here is to fill out a 'tDot11fProbeRequest' structure */
 	/* and then hand it off to 'dot11f_pack_probe_request' (for */
 	/* serialization).  We start by zero-initializing the structure: */
-	cdf_mem_set((uint8_t *) &pr, sizeof(pr), 0);
+	qdf_mem_set((uint8_t *) &pr, sizeof(pr), 0);
 
 	/* & delegating to assorted helpers: */
 	populate_dot11f_ssid(mac_ctx, ssid, &pr.SSID);
@@ -380,7 +380,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 	/* Paranoia: */
-	cdf_mem_set(frame, bytes, 0);
+	qdf_mem_set(frame, bytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
@@ -400,7 +400,7 @@ lim_send_probe_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 	/* Append any AddIE if present. */
 	if (addn_ielen) {
-		cdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     additional_ie, addn_ielen);
 		payload += addn_ielen;
 	}
@@ -456,7 +456,7 @@ tSirRetStatus lim_get_addn_ie_for_probe_resp(tpAniSirGlobal pMac,
 			return eSIR_FAILURE;
 		}
 
-		tempbuf = cdf_mem_malloc(left);
+		tempbuf = qdf_mem_malloc(left);
 		if (NULL == tempbuf) {
 			PELOGE(lim_log(pMac, LOGE,
 				       FL
@@ -474,23 +474,23 @@ tSirRetStatus lim_get_addn_ie_for_probe_resp(tpAniSirGlobal pMac,
 					FL
 						("****Invalid IEs eid = %d elem_len=%d left=%d*****"),
 					elem_id, elem_len, left);
-				cdf_mem_free(tempbuf);
+				qdf_mem_free(tempbuf);
 				return eSIR_FAILURE;
 			}
 			if (!((SIR_MAC_EID_VENDOR == elem_id) &&
 			      (memcmp
 				       (&ptr[2], SIR_MAC_P2P_OUI,
 				       SIR_MAC_P2P_OUI_SIZE) == 0))) {
-				cdf_mem_copy(tempbuf + tempLen, &ptr[0],
+				qdf_mem_copy(tempbuf + tempLen, &ptr[0],
 					     elem_len + 2);
 				tempLen += (elem_len + 2);
 			}
 			left -= elem_len;
 			ptr += (elem_len + 2);
 		}
-		cdf_mem_copy(addIE, tempbuf, tempLen);
+		qdf_mem_copy(addIE, tempbuf, tempLen);
 		*addnIELen = tempLen;
-		cdf_mem_free(tempbuf);
+		qdf_mem_free(tempbuf);
 	}
 	return eSIR_SUCCESS;
 }
@@ -561,20 +561,20 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	sme_sessionid = pe_session->smeSessionId;
-	frm = cdf_mem_malloc(sizeof(tDot11fProbeResponse));
+	frm = qdf_mem_malloc(sizeof(tDot11fProbeResponse));
 	if (NULL == frm) {
 		lim_log(mac_ctx, LOGE,
 			FL("Unable to allocate memory"));
 		return;
 	}
 
-	cdf_mem_zero(&extracted_ext_cap, sizeof(extracted_ext_cap));
+	qdf_mem_zero(&extracted_ext_cap, sizeof(extracted_ext_cap));
 
 	/*
 	 * Fill out 'frm', after which we'll just hand the struct off to
 	 * 'dot11f_pack_probe_response'.
 	 */
-	cdf_mem_set((uint8_t *) frm, sizeof(tDot11fProbeResponse), 0);
+	qdf_mem_set((uint8_t *) frm, sizeof(tDot11fProbeResponse), 0);
 
 	/*
 	 * Timestamp to be updated by TFP, below.
@@ -720,7 +720,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	if (addn_ie_present) {
 
-		add_ie = cdf_mem_malloc(
+		add_ie = qdf_mem_malloc(
 				pe_session->addIeParams.probeRespDataLen);
 		if (NULL == add_ie) {
 			lim_log(mac_ctx, LOGE,
@@ -728,7 +728,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 			goto err_ret;
 		}
 
-		cdf_mem_copy(add_ie,
+		qdf_mem_copy(add_ie,
 			     pe_session->addIeParams.probeRespData_buff,
 			     pe_session->addIeParams.probeRespDataLen);
 		addn_ie_len = pe_session->addIeParams.probeRespDataLen;
@@ -775,7 +775,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		goto err_ret;
 	}
 	/* Paranoia: */
-	cdf_mem_set(frame, bytes, 0);
+	qdf_mem_set(frame, bytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
@@ -812,13 +812,13 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	mac_ctx->sys.probeRespond++;
 
 	if (mac_ctx->lim.gpLimRemainOnChanReq)
-		cdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     mac_ctx->lim.gpLimRemainOnChanReq->probeRspIe,
 			     (mac_ctx->lim.gpLimRemainOnChanReq->length -
 			      sizeof(tSirRemainOnChnReq)));
 
 	if (addn_ie_present)
-		cdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     &add_ie[0], addn_ie_len);
 
 	if (noalen != 0) {
@@ -829,7 +829,7 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 				total_noalen);
 			goto err_ret;
 		} else {
-			cdf_mem_copy(&frame[bytes - (total_noalen)],
+			qdf_mem_copy(&frame[bytes - (total_noalen)],
 				     &noa_ie[0], total_noalen);
 		}
 	}
@@ -853,16 +853,16 @@ lim_send_probe_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("Could not send Probe Response."));
 
 	if (add_ie != NULL)
-		cdf_mem_free(add_ie);
+		qdf_mem_free(add_ie);
 
-	cdf_mem_free(frm);
+	qdf_mem_free(frm);
 	return;
 
 err_ret:
 	if (add_ie != NULL)
-		cdf_mem_free(add_ie);
+		qdf_mem_free(add_ie);
 	if (frm != NULL)
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 	if (packet != NULL)
 		cds_packet_free((void *)packet);
 	return;
@@ -895,7 +895,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 	smeSessionId = psessionEntry->smeSessionId;
 
 	if (!pAddTS->wmeTspecPresent) {
-		cdf_mem_set((uint8_t *) &AddTSReq, sizeof(AddTSReq), 0);
+		qdf_mem_set((uint8_t *) &AddTSReq, sizeof(AddTSReq), 0);
 
 		AddTSReq.Action.action = SIR_MAC_QOS_ADD_TS_REQ;
 		AddTSReq.DialogToken.token = pAddTS->dialogToken;
@@ -952,7 +952,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 				   " (0x%08x)."), nStatus);
 		}
 	} else {
-		cdf_mem_set((uint8_t *) &WMMAddTSReq, sizeof(WMMAddTSReq), 0);
+		qdf_mem_set((uint8_t *) &WMMAddTSReq, sizeof(WMMAddTSReq), 0);
 
 		WMMAddTSReq.Action.action = SIR_MAC_QOS_ADD_TS_REQ;
 		WMMAddTSReq.DialogToken.token = pAddTS->dialogToken;
@@ -1005,7 +1005,7 @@ lim_send_addts_req_action_frame(tpAniSirGlobal pMac,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -1136,7 +1136,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 	sme_session = pe_session->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	limGetQosMode(pe_session, &qos_mode);
 	limGetWmeMode(pe_session, &wme_mode);
@@ -1257,7 +1257,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 #endif
 	}
 
-	cdf_mem_set((uint8_t *) &beacon_params, sizeof(beacon_params), 0);
+	qdf_mem_set((uint8_t *) &beacon_params, sizeof(beacon_params), 0);
 
 	if (LIM_IS_AP_ROLE(pe_session) &&
 		(pe_session->gLimProtectionControl !=
@@ -1305,11 +1305,11 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		/* Nonzero length indicates Assoc rsp IE available */
 		if (addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN
 		    && (bytes + addn_ie_len) <= SIR_MAX_PACKET_SIZE) {
-			cdf_mem_copy(add_ie,
+			qdf_mem_copy(add_ie,
 				pe_session->addIeParams.assocRespData_buff,
 				pe_session->addIeParams.assocRespDataLen);
 
-			cdf_mem_set((uint8_t *) &extracted_ext_cap,
+			qdf_mem_set((uint8_t *) &extracted_ext_cap,
 				    sizeof(extracted_ext_cap), 0);
 
 			stripoff_len = addn_ie_len;
@@ -1337,7 +1337,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(frame, bytes, 0);
+	qdf_mem_set(frame, bytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
@@ -1379,7 +1379,7 @@ lim_send_assoc_rsp_mgmt_frame(tpAniSirGlobal mac_ctx,
 	lim_print_mac_addr(mac_ctx, mac_hdr->da, LOG1);
 
 	if (addn_ie_len && addn_ie_len <= WNI_CFG_ASSOC_RSP_ADDNIE_DATA_LEN)
-		cdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     &add_ie[0], addn_ie_len);
 
 	if ((SIR_BAND_5_GHZ ==
@@ -1438,7 +1438,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 	smeSessionId = psessionEntry->smeSessionId;
 
 	if (!wmmTspecPresent) {
-		cdf_mem_set((uint8_t *) &DelTS, sizeof(DelTS), 0);
+		qdf_mem_set((uint8_t *) &DelTS, sizeof(DelTS), 0);
 
 		DelTS.Category.category = SIR_MAC_ACTION_QOS_MGMT;
 		DelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
@@ -1458,7 +1458,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 				   " (0x%08x)."), nStatus);
 		}
 	} else {
-		cdf_mem_set((uint8_t *) &WMMDelTS, sizeof(WMMDelTS), 0);
+		qdf_mem_set((uint8_t *) &WMMDelTS, sizeof(WMMDelTS), 0);
 
 		WMMDelTS.Category.category = SIR_MAC_ACTION_WME;
 		WMMDelTS.Action.action = SIR_MAC_QOS_DEL_TS_REQ;
@@ -1492,7 +1492,7 @@ lim_send_delts_req_action_frame(tpAniSirGlobal pMac,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -1621,16 +1621,16 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	add_ie_len = pe_session->pLimJoinReq->addIEAssoc.length;
 	add_ie = pe_session->pLimJoinReq->addIEAssoc.addIEdata;
 
-	frm = cdf_mem_malloc(sizeof(tDot11fAssocRequest));
+	frm = qdf_mem_malloc(sizeof(tDot11fAssocRequest));
 	if (NULL == frm) {
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 		return;
 	}
 
-	cdf_mem_set((uint8_t *) frm, sizeof(tDot11fAssocRequest), 0);
+	qdf_mem_set((uint8_t *) frm, sizeof(tDot11fAssocRequest), 0);
 
 	if (add_ie_len) {
-		cdf_mem_set((uint8_t *) &extr_ext_cap, sizeof(tDot11fIEExtCap),
+		qdf_mem_set((uint8_t *) &extr_ext_cap, sizeof(tDot11fIEExtCap),
 			    0);
 		sir_status = lim_strip_extcap_update_struct(mac_ctx,
 					add_ie, &add_ie_len, &extr_ext_cap);
@@ -1881,11 +1881,11 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 			(uint32_t *) &assoc_cnf);
 
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(frame, bytes, 0);
+	qdf_mem_set(frame, bytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
@@ -1901,7 +1901,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE,
 			FL("Assoc request pack failure (0x%08x)"), status);
 		cds_packet_free((void *)packet);
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return;
 	} else if (DOT11F_WARNED(status)) {
 		lim_log(mac_ctx, LOGW,
@@ -1911,18 +1911,18 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 	lim_log(mac_ctx, LOG1,
 		FL("*** Sending Association Request length %d to "), bytes);
 	if (pe_session->assocReq != NULL) {
-		cdf_mem_free(pe_session->assocReq);
+		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
 	}
 
 	if (add_ie_len) {
-		cdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     add_ie, add_ie_len);
 		payload += add_ie_len;
 	}
 
-	pe_session->assocReq = cdf_mem_malloc(payload);
+	pe_session->assocReq = qdf_mem_malloc(payload);
 	if (NULL == pe_session->assocReq) {
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 	} else {
@@ -1930,7 +1930,7 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 		 * Store the Assoc request. This is sent to csr/hdd in
 		 * join cnf response.
 		 */
-		cdf_mem_copy(pe_session->assocReq,
+		qdf_mem_copy(pe_session->assocReq,
 			     frame + sizeof(tSirMacMgmtHdr), payload);
 		pe_session->assocReqLen = payload;
 	}
@@ -1965,13 +1965,13 @@ lim_send_assoc_req_mgmt_frame(tpAniSirGlobal mac_ctx,
 			FL("Failed to send Association Request (%X)!"),
 			qdf_status);
 		/* Pkt will be freed up by the callback */
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return;
 	}
 	/* Free up buffer allocated for mlm_assoc_req */
-	cdf_mem_free(mlm_assoc_req);
+	qdf_mem_free(mlm_assoc_req);
 	mlm_assoc_req = NULL;
-	cdf_mem_free(frm);
+	qdf_mem_free(frm);
 	return;
 }
 
@@ -2029,7 +2029,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	lim_log(mac_ctx, LOG1,
 		FL("called in state (%d)."), pe_session->limMlmState);
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	caps = mlm_reassoc_req->capabilityInfo;
 #if defined(FEATURE_WLAN_WAPI)
@@ -2053,7 +2053,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	 * The previous ap bssid is stored in the FT Session
 	 * while creating the PE FT Session for reassociation.
 	 */
-	cdf_mem_copy((uint8_t *)frm.CurrentAPAddress.mac,
+	qdf_mem_copy((uint8_t *)frm.CurrentAPAddress.mac,
 			pe_session->prev_ap_bssid, sizeof(tSirMacAddr));
 
 	populate_dot11f_ssid2(mac_ctx, &frm.SSID);
@@ -2286,7 +2286,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		goto end;
 	}
 	/* Paranoia: */
-	cdf_mem_set(frame, bytes + ft_ies_length, 0);
+	qdf_mem_set(frame, bytes + ft_ies_length, 0);
 
 	lim_print_mac_addr(mac_ctx, pe_session->limReAssocbssId, LOG1);
 	/* Next, we fill out the buffer descriptor: */
@@ -2312,18 +2312,18 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		       bytes, payload);
 
 	if (pe_session->assocReq != NULL) {
-		cdf_mem_free(pe_session->assocReq);
+		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
 	}
 
 	if (add_ie_len) {
-		cdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
+		qdf_mem_copy(frame + sizeof(tSirMacMgmtHdr) + payload,
 			     add_ie, add_ie_len);
 		payload += add_ie_len;
 	}
 
-	pe_session->assocReq = cdf_mem_malloc(payload);
+	pe_session->assocReq = qdf_mem_malloc(payload);
 	if (NULL == pe_session->assocReq) {
 		lim_log(mac_ctx, LOGE, FL("Failed to alloc memory"));
 	} else {
@@ -2331,7 +2331,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 		 * Store the Assoc request. This is sent to csr/hdd in
 		 * join cnf response.
 		 */
-		cdf_mem_copy(pe_session->assocReq,
+		qdf_mem_copy(pe_session->assocReq,
 			     frame + sizeof(tSirMacMgmtHdr), payload);
 		pe_session->assocReqLen = payload;
 	}
@@ -2356,12 +2356,12 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	if (NULL != pe_session->assocReq) {
-		cdf_mem_free(pe_session->assocReq);
+		qdf_mem_free(pe_session->assocReq);
 		pe_session->assocReq = NULL;
 		pe_session->assocReqLen = 0;
 	}
 	if (ft_ies_length) {
-		pe_session->assocReq = cdf_mem_malloc(ft_ies_length);
+		pe_session->assocReq = qdf_mem_malloc(ft_ies_length);
 		if (NULL == pe_session->assocReq) {
 			lim_log(mac_ctx,
 				LOGE, FL("Failed to alloc memory for FT IEs"));
@@ -2371,7 +2371,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 			 * Store the FT IEs. This is sent to csr/hdd in
 			 * join cnf response.
 			 */
-			cdf_mem_copy(pe_session->assocReq,
+			qdf_mem_copy(pe_session->assocReq,
 				ft_sme_context->reassoc_ft_ies, ft_ies_length);
 			pe_session->assocReqLen = ft_ies_length;
 		}
@@ -2401,7 +2401,7 @@ lim_send_reassoc_req_with_ft_ies_mgmt_frame(tpAniSirGlobal mac_ctx,
 
 end:
 	/* Free up buffer allocated for mlmAssocReq */
-	cdf_mem_free(mlm_reassoc_req);
+	qdf_mem_free(mlm_reassoc_req);
 	pe_session->pLimMlmReassocReq = NULL;
 
 }
@@ -2413,11 +2413,11 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
 	tLimMlmReassocCnf mlmReassocCnf;        /* keep sme */
 	tLimMlmReassocReq *pTmpMlmReassocReq = NULL;
 	if (NULL == pTmpMlmReassocReq) {
-		pTmpMlmReassocReq = cdf_mem_malloc(sizeof(tLimMlmReassocReq));
+		pTmpMlmReassocReq = qdf_mem_malloc(sizeof(tLimMlmReassocReq));
 		if (NULL == pTmpMlmReassocReq)
 			goto end;
-		cdf_mem_set(pTmpMlmReassocReq, sizeof(tLimMlmReassocReq), 0);
-		cdf_mem_copy(pTmpMlmReassocReq, pMlmReassocReq,
+		qdf_mem_set(pTmpMlmReassocReq, sizeof(tLimMlmReassocReq), 0);
+		qdf_mem_copy(pTmpMlmReassocReq, pMlmReassocReq,
 			     sizeof(tLimMlmReassocReq));
 	}
 	/* Prepare and send Reassociation request frame */
@@ -2447,11 +2447,11 @@ void lim_send_retry_reassoc_req_frame(tpAniSirGlobal pMac,
 end:
 	/* Free up buffer allocated for reassocReq */
 	if (pMlmReassocReq != NULL) {
-		cdf_mem_free(pMlmReassocReq);
+		qdf_mem_free(pMlmReassocReq);
 		pMlmReassocReq = NULL;
 	}
 	if (pTmpMlmReassocReq != NULL) {
-		cdf_mem_free(pTmpMlmReassocReq);
+		qdf_mem_free(pTmpMlmReassocReq);
 		pTmpMlmReassocReq = NULL;
 	}
 	mlmReassocCnf.resultCode = eSIR_SME_FT_REASSOC_FAILURE;
@@ -2500,7 +2500,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	nAddIELen = psessionEntry->pLimReAssocReq->addIEAssoc.length;
 	pAddIE = psessionEntry->pLimReAssocReq->addIEAssoc.addIEdata;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	caps = pMlmReassocReq->capabilityInfo;
 #if defined(FEATURE_WLAN_WAPI)
@@ -2517,7 +2517,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 
 	frm.ListenInterval.interval = pMlmReassocReq->listenInterval;
 
-	cdf_mem_copy((uint8_t *) frm.CurrentAPAddress.mac,
+	qdf_mem_copy((uint8_t *) frm.CurrentAPAddress.mac,
 		     (uint8_t *) psessionEntry->bssId, 6);
 
 	populate_dot11f_ssid2(pMac, &frm.SSID);
@@ -2654,7 +2654,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 		goto end;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -2684,23 +2684,23 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 	       )
 
 	if (psessionEntry->assocReq != NULL) {
-		cdf_mem_free(psessionEntry->assocReq);
+		qdf_mem_free(psessionEntry->assocReq);
 		psessionEntry->assocReq = NULL;
 		psessionEntry->assocReqLen = 0;
 	}
 
 	if (nAddIELen) {
-		cdf_mem_copy(pFrame + sizeof(tSirMacMgmtHdr) + nPayload,
+		qdf_mem_copy(pFrame + sizeof(tSirMacMgmtHdr) + nPayload,
 			     pAddIE, nAddIELen);
 		nPayload += nAddIELen;
 	}
 
-	psessionEntry->assocReq = cdf_mem_malloc(nPayload);
+	psessionEntry->assocReq = qdf_mem_malloc(nPayload);
 	if (NULL == psessionEntry->assocReq) {
 		lim_log(pMac, LOGE, FL("Unable to allocate mem for assoc req"));
 	} else {
 		/* Store the Assoc request. This is sent to csr/hdd in join cnf response. */
-		cdf_mem_copy(psessionEntry->assocReq,
+		qdf_mem_copy(psessionEntry->assocReq,
 			     pFrame + sizeof(tSirMacMgmtHdr), nPayload);
 		psessionEntry->assocReqLen = nPayload;
 	}
@@ -2739,7 +2739,7 @@ lim_send_reassoc_req_mgmt_frame(tpAniSirGlobal pMac,
 
 end:
 	/* Free up buffer allocated for mlmAssocReq */
-	cdf_mem_free(pMlmReassocReq);
+	qdf_mem_free(pMlmReassocReq);
 	psessionEntry->pLimMlmReassocReq = NULL;
 
 } /* lim_send_reassoc_req_mgmt_frame */
@@ -2910,7 +2910,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	cdf_mem_zero(frame, frame_len);
+	qdf_mem_zero(frame, frame_len);
 
 	/* Prepare BD */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
@@ -2921,7 +2921,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	/* Prepare BSSId */
 	if (LIM_IS_AP_ROLE(session) ||
 	    LIM_IS_BT_AMP_AP_ROLE(session))
-		cdf_mem_copy((uint8_t *) mac_hdr->bssId,
+		qdf_mem_copy((uint8_t *) mac_hdr->bssId,
 			     (uint8_t *) session->bssId,
 			     sizeof(tSirMacAddr));
 
@@ -2929,7 +2929,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 	body = frame + sizeof(tSirMacMgmtHdr);
 
 	if (wep_bit == LIM_WEP_IN_FC) {
-		cdf_mem_copy(body, (uint8_t *) auth_frame, body_len);
+		qdf_mem_copy(body, (uint8_t *) auth_frame, body_len);
 
 		lim_log(mac_ctx, LOG1,
 			FL("*** Sending Auth seq# 3 status %d (%d) to"
@@ -2957,7 +2957,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		if (body_len <= (sizeof(auth_frame->type) +
 				sizeof(auth_frame->length) +
 				sizeof(auth_frame->challengeText)))
-			cdf_mem_copy(body, (uint8_t *) &auth_frame->type,
+			qdf_mem_copy(body, (uint8_t *) &auth_frame->type,
 				     body_len);
 
 #if defined WLAN_FEATURE_VOWIFI_11R
@@ -2967,7 +2967,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 		     (session->ftPEContext.pFTPreAuthReq != NULL)) {
 
 			if (ft_ies_length > 0) {
-				cdf_mem_copy(body,
+				qdf_mem_copy(body,
 					session->ftPEContext.
 						pFTPreAuthReq->ft_ies,
 					ft_ies_length);
@@ -2983,7 +2983,7 @@ lim_send_auth_mgmt_frame(tpAniSirGlobal mac_ctx,
 				body++;
 				*body = SIR_MDIE_SIZE;
 				body++;
-				cdf_mem_copy(body,
+				qdf_mem_copy(body,
 					&session->ftPEContext.pFTPreAuthReq->
 						pbssDescription->mdie[0],
 					SIR_MDIE_SIZE);
@@ -3106,7 +3106,7 @@ QDF_STATUS lim_send_deauth_cnf(tpAniSirGlobal pMac)
 	}
 #endif
 		/* / Free up buffer allocated for mlmDeauthReq */
-		cdf_mem_free(pMlmDeauthReq);
+		qdf_mem_free(pMlmDeauthReq);
 		pMac->lim.limDisassocDeauthCnfReq.pMlmDeauthReq = NULL;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -3119,7 +3119,7 @@ end:
 
 	/* Free up buffer allocated */
 	/* for mlmDeauthReq */
-	cdf_mem_free(pMlmDeauthReq);
+	qdf_mem_free(pMlmDeauthReq);
 
 	lim_post_sme_message(pMac,
 			     LIM_MLM_DEAUTH_CNF, (uint32_t *) &mlmDeauthCnf);
@@ -3213,14 +3213,14 @@ QDF_STATUS lim_send_disassoc_cnf(tpAniSirGlobal mac_ctx)
 		}
 #endif
 		/* Free up buffer allocated for mlmDisassocReq */
-		cdf_mem_free(disassoc_req);
+		qdf_mem_free(disassoc_req);
 		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;
 		return QDF_STATUS_SUCCESS;
 	} else {
 		return QDF_STATUS_SUCCESS;
 	}
 end:
-	cdf_mem_copy((uint8_t *) &disassoc_cnf.peerMacAddr,
+	qdf_mem_copy((uint8_t *) &disassoc_cnf.peerMacAddr,
 		     (uint8_t *) disassoc_req->peer_macaddr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 	disassoc_cnf.aid = disassoc_req->aid;
@@ -3231,7 +3231,7 @@ end:
 
 	if (disassoc_req != NULL) {
 		/* / Free up buffer allocated for mlmDisassocReq */
-		cdf_mem_free(disassoc_req);
+		qdf_mem_free(disassoc_req);
 		mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq = NULL;
 	}
 
@@ -3300,7 +3300,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 	}
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Reason.code = nReason;
 
@@ -3327,7 +3327,7 @@ lim_send_disassoc_mgmt_frame(tpAniSirGlobal pMac,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -3479,7 +3479,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 	}
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Reason.code = nReason;
 
@@ -3506,7 +3506,7 @@ lim_send_deauth_mgmt_frame(tpAniSirGlobal pMac,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -3660,7 +3660,7 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 	void *pPacket;
 	QDF_STATUS qdf_status;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_MEASURE_REPORT_ID;
@@ -3717,14 +3717,14 @@ lim_send_meas_report_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
-	cdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
+	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
 #ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
@@ -3790,7 +3790,7 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 	void *pPacket;
 	QDF_STATUS qdf_status;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_TPC_REQUEST_ID;
@@ -3821,14 +3821,14 @@ lim_send_tpc_request_frame(tpAniSirGlobal pMac,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
-	cdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
+	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
 #ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
@@ -3893,7 +3893,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 	void *pPacket;
 	QDF_STATUS qdf_status;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_TPC_REPORT_ID;
@@ -3927,7 +3927,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -3935,7 +3935,7 @@ lim_send_tpc_report_frame(tpAniSirGlobal pMac,
 
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
 
-	cdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
+	qdf_mem_copy(pMacHdr->bssId, psessionEntry->bssId, sizeof(tSirMacAddr));
 
 #ifdef WLAN_FEATURE_11W
 	lim_set_protected_bit(pMac, psessionEntry, peer, pMacHdr);
@@ -4021,7 +4021,7 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 	}
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_SPECTRUM_MGMT;
 	frm.Action.action = SIR_MAC_ACTION_CHANNEL_SWITCH_ID;
@@ -4054,14 +4054,14 @@ lim_send_channel_switch_mgmt_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer,
 		psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
-	cdf_mem_copy((uint8_t *) pMacHdr->bssId,
+	qdf_mem_copy((uint8_t *) pMacHdr->bssId,
 		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
 
 #ifdef WLAN_FEATURE_11W
@@ -4146,7 +4146,7 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 
 	sme_session_id = session_entry->smeSessionId;
 
-	cdf_mem_set(&frm, sizeof(frm), 0);
+	qdf_mem_set(&frm, sizeof(frm), 0);
 
 	frm.Category.category     = SIR_MAC_ACTION_PUBLIC_USAGE;
 	frm.Action.action         = SIR_MAC_ACTION_EXT_CHANNEL_SWITCH_ID;
@@ -4184,13 +4184,13 @@ lim_send_extended_chan_switch_action_frame(tpAniSirGlobal mac_ctx,
 	}
 
 	/* Paranoia*/
-	cdf_mem_set(frame, num_bytes, 0);
+	qdf_mem_set(frame, num_bytes, 0);
 
 	/* Next, we fill out the buffer descriptor */
 	lim_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
 		SIR_MAC_MGMT_ACTION, peer, session_entry->selfMacAddr);
 	mac_hdr = (tpSirMacMgmtHdr) frame;
-	cdf_mem_copy((uint8_t *) mac_hdr->bssId,
+	qdf_mem_copy((uint8_t *) mac_hdr->bssId,
 				   (uint8_t *) session_entry->bssId,
 				   sizeof(tSirMacAddr));
 
@@ -4264,7 +4264,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 	}
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_VHT;
 	frm.Action.action = SIR_MAC_VHT_OPMODE_NOTIFICATION;
@@ -4297,7 +4297,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	if (psessionEntry->pePersona == QDF_SAP_MODE)
@@ -4309,7 +4309,7 @@ lim_send_vht_opmode_notification_frame(tpAniSirGlobal pMac,
 			SIR_MAC_MGMT_ACTION, psessionEntry->bssId,
 			psessionEntry->selfMacAddr);
 	pMacHdr = (tpSirMacMgmtHdr) pFrame;
-	cdf_mem_copy((uint8_t *) pMacHdr->bssId,
+	qdf_mem_copy((uint8_t *) pMacHdr->bssId,
 		     (uint8_t *) psessionEntry->bssId, sizeof(tSirMacAddr));
 	nStatus = dot11f_pack_operating_mode(pMac, &frm, pFrame +
 					     sizeof(tSirMacMgmtHdr),
@@ -4393,7 +4393,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	smeSessionId = psessionEntry->smeSessionId;
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_RRM;
 	frm.Action.action = SIR_MAC_RRM_NEIGHBOR_REQ;
@@ -4429,7 +4429,7 @@ lim_send_neighbor_report_request_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -4543,7 +4543,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 
 	frm.Category.category = SIR_MAC_ACTION_RRM;
 	frm.Action.action = SIR_MAC_RRM_LINK_MEASUREMENT_RPT;
@@ -4588,7 +4588,7 @@ lim_send_link_report_action_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -4701,7 +4701,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 	uint8_t smeSessionId = 0;
 
 	tDot11fRadioMeasurementReport *frm =
-		cdf_mem_malloc(sizeof(tDot11fRadioMeasurementReport));
+		qdf_mem_malloc(sizeof(tDot11fRadioMeasurementReport));
 	if (!frm) {
 		lim_log(pMac, LOGE,
 			FL
@@ -4713,10 +4713,10 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGE,
 			FL
 				("(psession == NULL) in Request to send Beacon Report action frame"));
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return eSIR_FAILURE;
 	}
-	cdf_mem_set((uint8_t *) frm, sizeof(*frm), 0);
+	qdf_mem_set((uint8_t *) frm, sizeof(*frm), 0);
 
 	frm->Category.category = SIR_MAC_ACTION_RRM;
 	frm->Action.action = SIR_MAC_RRM_RADIO_MEASURE_RPT;
@@ -4761,7 +4761,7 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 			nStatus);
 		/* We'll fall back on the worst case scenario: */
 		nPayload = sizeof(tDot11fLinkMeasurementReport);
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return eSIR_FAILURE;
 	} else if (DOT11F_WARNED(nStatus)) {
 		lim_log(pMac, LOGW, FL("There were warnings while calculating "
@@ -4778,11 +4778,11 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 		lim_log(pMac, LOGP,
 			FL("Failed to allocate %d bytes for a Radio Measure "
 			   "Report."), nBytes);
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -4846,15 +4846,15 @@ lim_send_radio_measure_report_action_frame(tpAniSirGlobal pMac,
 		       )
 		statusCode = eSIR_FAILURE;
 		/* Pkt will be freed up by the callback */
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return statusCode;
 	} else {
-		cdf_mem_free(frm);
+		qdf_mem_free(frm);
 		return eSIR_SUCCESS;
 	}
 
 returnAfterError:
-	cdf_mem_free(frm);
+	qdf_mem_free(frm);
 	cds_packet_free((void *)pPacket);
 	return statusCode;
 }
@@ -4895,14 +4895,14 @@ tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *tran
 	uint8_t txFlag = 0;
 	uint8_t smeSessionId = 0;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 	frm.Category.category = SIR_MAC_ACTION_SA_QUERY;
 	/* 11w action  field is :
 	   action: 0 --> SA Query Request action frame
 	   action: 1 --> SA Query Response action frame */
 	frm.Action.action = SIR_MAC_SA_QUERY_REQ;
 	/* 11w SA Query Request transId */
-	cdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
+	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
 
 	nStatus = dot11f_get_packed_sa_query_req_size(pMac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -4927,7 +4927,7 @@ tSirRetStatus lim_send_sa_query_request_frame(tpAniSirGlobal pMac, uint8_t *tran
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,
@@ -5036,7 +5036,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
+	qdf_mem_set((uint8_t *) &frm, sizeof(frm), 0);
 	frm.Category.category = SIR_MAC_ACTION_SA_QUERY;
 	/*11w action  field is :
 	   action: 0 --> SA query request action frame
@@ -5044,7 +5044,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 	frm.Action.action = SIR_MAC_SA_QUERY_RSP;
 	/*11w SA query response transId is same as
 	   SA query request transId */
-	cdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
+	qdf_mem_copy(&frm.TransactionId.transId[0], &transId[0], 2);
 
 	nStatus = dot11f_get_packed_sa_query_rsp_size(pMac, &frm, &nPayload);
 	if (DOT11F_FAILED(nStatus)) {
@@ -5069,7 +5069,7 @@ tSirRetStatus lim_send_sa_query_response_frame(tpAniSirGlobal pMac,
 		return eSIR_FAILURE;
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/* Copy necessary info to BD */
 	lim_populate_mac_header(pMac, pFrame, SIR_MAC_MGMT_FRAME,

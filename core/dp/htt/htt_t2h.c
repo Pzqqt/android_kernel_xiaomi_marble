@@ -370,14 +370,14 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 		len = HTT_WDI_IPA_OP_RESPONSE_RSP_LEN_GET(*msg_word);
 
 		op_msg_buffer =
-			cdf_mem_malloc(sizeof
+			qdf_mem_malloc(sizeof
 				       (struct htt_wdi_ipa_op_response_t) +
 				       len);
 		if (!op_msg_buffer) {
 			qdf_print("OPCODE messsage buffer alloc fail");
 			break;
 		}
-		cdf_mem_copy(op_msg_buffer,
+		qdf_mem_copy(op_msg_buffer,
 			     msg_start_ptr,
 			     sizeof(struct htt_wdi_ipa_op_response_t) +
 			     len);
@@ -445,15 +445,15 @@ void htt_t2h_lp_msg_handler(void *context, cdf_nbuf_t htt_t2h_msg)
 			err_info.u.mic_err.key_id =
 				HTT_RX_OFLD_PKT_ERR_MIC_ERR_KEYID_GET
 				(*(msg_word + 1));
-			cdf_mem_copy(err_info.u.mic_err.da,
+			qdf_mem_copy(err_info.u.mic_err.da,
 				 (uint8_t *)(msg_word + 2),
 				 OL_TXRX_MAC_ADDR_LEN);
-			cdf_mem_copy(err_info.u.mic_err.sa,
+			qdf_mem_copy(err_info.u.mic_err.sa,
 				 (uint8_t *)(msg_word + 4),
 				 OL_TXRX_MAC_ADDR_LEN);
-			cdf_mem_copy(&err_info.u.mic_err.pn,
+			qdf_mem_copy(&err_info.u.mic_err.pn,
 				 (uint8_t *)(msg_word + 6), 6);
-			cdf_mem_copy(err_info.u.mic_err.ta,
+			qdf_mem_copy(err_info.u.mic_err.ta,
 				 peer->mac_addr.raw, OL_TXRX_MAC_ADDR_LEN);
 
 			wma_indicate_err(OL_RX_ERR_TKIP_MIC, &err_info);

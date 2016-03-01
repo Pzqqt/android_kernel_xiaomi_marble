@@ -520,7 +520,7 @@ QDF_STATUS sme_qos_open(tpAniSirGlobal pMac)
 		  "%s: %d: initializing SME-QoS module", __func__, __LINE__);
 	/* init the control block */
 	/* (note that this will make all sessions invalid) */
-	cdf_mem_zero(&sme_qos_cb, sizeof(sme_qos_cb));
+	qdf_mem_zero(&sme_qos_cb, sizeof(sme_qos_cb));
 	sme_qos_cb.pMac = pMac;
 	sme_qos_cb.nextFlowId = SME_QOS_MIN_FLOW_ID;
 	sme_qos_cb.nextDialogToken = SME_QOS_MIN_DIALOG_TOKEN;
@@ -595,7 +595,7 @@ QDF_STATUS sme_qos_close(tpAniSirGlobal pMac)
 
 		/* Clean up the assoc info if already allocated */
 		if (pSession->assocInfo.pBssDesc) {
-			cdf_mem_free(pSession->assocInfo.pBssDesc);
+			qdf_mem_free(pSession->assocInfo.pBssDesc);
 			pSession->assocInfo.pBssDesc = NULL;
 		}
 		/* close the session's buffered command list */
@@ -779,7 +779,7 @@ sme_QosStatusType sme_qos_release_req(tHalHandle hHal, uint32_t QosFlowID)
 
 void qos_release_command(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
-	cdf_mem_zero(&pCommand->u.qosCmd, sizeof(tGenericQosCmd));
+	qdf_mem_zero(&pCommand->u.qosCmd, sizeof(tGenericQosCmd));
 	sme_release_command(pMac, pCommand);
 }
 
@@ -904,7 +904,7 @@ QDF_STATUS sme_qos_validate_params(tpAniSirGlobal pMac,
 		  "%s: %d: validated with status = %d",
 		  __func__, __LINE__, status);
 	if (pIes) {
-		cdf_mem_free(pIes);
+		qdf_mem_free(pIes);
 	}
 	return status;
 }
@@ -1183,7 +1183,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			status)) {
 			/* we received an expected "good" status */
 			/* create an entry in the flow list */
-			pentry = cdf_mem_malloc(sizeof(*pentry));
+			pentry = qdf_mem_malloc(sizeof(*pentry));
 			if (!pentry) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -1214,7 +1214,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 						  ac,
 						  pACInfo->tspec_mask_status);
 					QDF_ASSERT(0);
-					cdf_mem_free(pentry);
+					qdf_mem_free(pentry);
 					return SME_QOS_STATUS_SETUP_FAILURE_RSP;
 				}
 				pACInfo->tspec_mask_status =
@@ -1518,7 +1518,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 			/* create an entry in the flow list */
 			pentry =
 				(sme_QosFlowInfoEntry *)
-				cdf_mem_malloc(sizeof(*pentry));
+				qdf_mem_malloc(sizeof(*pentry));
 			if (!pentry) {
 				QDF_TRACE(QDF_MODULE_ID_SME,
 					  QDF_TRACE_LEVEL_ERROR,
@@ -1556,7 +1556,7 @@ sme_QosStatusType sme_qos_internal_setup_req(tpAniSirGlobal pMac,
 					/* if we are not in handoff, then notify all flows on */
 					/* this AC that the aggregate TSPEC may have changed */
 					if (!pentry->hoRenewal) {
-						cdf_mem_zero(&search_key,
+						qdf_mem_zero(&search_key,
 							     sizeof
 							     (sme_QosSearchInfo));
 						search_key.key.ac_type = ac;
@@ -1681,7 +1681,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked for flow %d", __func__, __LINE__, QosFlowID);
 
-	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 	/* set the key type & the key to be searched in the Flow List */
 	search_key.key.QosFlowID = QosFlowID;
 	search_key.index = SME_QOS_SEARCH_KEY_INDEX_1;
@@ -1790,7 +1790,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 		/* Once we have decided on OTA exchange needed or not we can delete the */
 		/* original one from the List */
 		pNewEntry =
-			(sme_QosFlowInfoEntry *) cdf_mem_malloc(sizeof(*pNewEntry));
+			(sme_QosFlowInfoEntry *) qdf_mem_malloc(sizeof(*pNewEntry));
 		if (!pNewEntry) {
 			QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				  "%s: %d: couldn't allocate memory for the new "
@@ -1855,7 +1855,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 			     == status)) {
 				new_state = SME_QOS_QOS_ON;
 
-				cdf_mem_zero(&search_key,
+				qdf_mem_zero(&search_key,
 					     sizeof(sme_QosSearchInfo));
 				/* delete the original entry in FLOW list which got modified */
 				search_key.key.ac_type = ac;
@@ -1878,7 +1878,7 @@ sme_QosStatusType sme_qos_internal_modify_req(tpAniSirGlobal pMac,
 					if (SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY == status) {
 						status =
 							SME_QOS_STATUS_MODIFY_SETUP_SUCCESS_APSD_SET_ALREADY;
-						cdf_mem_zero(&search_key,
+						qdf_mem_zero(&search_key,
 							     sizeof
 							     (sme_QosSearchInfo));
 						search_key.key.ac_type = ac;
@@ -2031,7 +2031,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked for flow %d", __func__, __LINE__, QosFlowID);
 
-	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 	/* set the key type & the key to be searched in the Flow List */
 	search_key.key.QosFlowID = QosFlowID;
 	search_key.index = SME_QOS_SEARCH_KEY_INDEX_1;
@@ -2115,7 +2115,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 			 * to AP. */
 			if (flow_info->QoSInfo.ts_info.direction ==
 			    SME_QOS_WMM_TS_DIR_BOTH) {
-				cdf_mem_zero(&search_key,
+				qdf_mem_zero(&search_key,
 					     sizeof(sme_QosSearchInfo));
 				/* set the key type & the key to be searched in the Flow List */
 				search_key.key.ac_type = ac;
@@ -2149,7 +2149,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 					    && downlinkFlowsPresent) {
 						/* Need to split the uni-directional flows into SME_QOS_TSPEC_INDEX_0 and SME_QOS_TSPEC_INDEX_1 */
 
-						cdf_mem_zero(&search_key,
+						qdf_mem_zero(&search_key,
 							     sizeof
 							     (sme_QosSearchInfo));
 						/* Mark all downstream flows as using tspec index 1 */
@@ -2281,7 +2281,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 							    pEntry, true);
 					pDeletedFlow = flow_info;
 					if (SME_QOS_STATUS_SETUP_SUCCESS_APSD_SET_ALREADY == status) {
-						cdf_mem_zero(&search_key,
+						qdf_mem_zero(&search_key,
 							     sizeof
 							     (sme_QosSearchInfo));
 						search_key.key.ac_type = ac;
@@ -2551,12 +2551,12 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 			}
 
 			if (false == deltsIssued) {
-				cdf_mem_zero(&pACInfo->
+				qdf_mem_zero(&pACInfo->
 					     curr_QoSInfo[flow_info->
 							  tspec_mask - 1],
 					     sizeof(sme_QosWmmTspecInfo));
 			}
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     requested_QoSInfo[flow_info->tspec_mask -
 						       1],
 				     sizeof(sme_QosWmmTspecInfo));
@@ -2617,7 +2617,7 @@ sme_QosStatusType sme_qos_internal_release_req(tpAniSirGlobal pMac,
 	}
 	/* if we deleted a flow, reclaim the memory */
 	if (pDeletedFlow) {
-		cdf_mem_free(pDeletedFlow);
+		qdf_mem_free(pDeletedFlow);
 	}
 	if ((SME_QOS_STATUS_RELEASE_SUCCESS_RSP == status)) {
 		(void)sme_qos_process_buffered_cmd(sessionId);
@@ -2705,7 +2705,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: On session %d AP doesn't support QoS",
 			  __func__, __LINE__, sessionId);
-		cdf_mem_free(pIes);
+		qdf_mem_free(pIes);
 		/* notify HDD through the synchronous status msg */
 		return SME_QOS_STATUS_SETUP_NOT_QOS_AP_RSP;
 	}
@@ -2870,7 +2870,7 @@ sme_QosStatusType sme_qos_setup(tpAniSirGlobal pMac,
 		}
 	} while (0);
 
-	cdf_mem_free(pIes);
+	qdf_mem_free(pIes);
 	return status;
 }
 
@@ -2912,7 +2912,7 @@ QDF_STATUS sme_qos_ese_save_tspec_response(tpAniSirGlobal pMac, uint8_t sessionI
 
 	ac = sme_qos_u_pto_ac_map[pTspec->user_priority];
 
-	cdf_mem_zero(pAddtsRsp, sizeof(tSirAddtsRsp));
+	qdf_mem_zero(pAddtsRsp, sizeof(tSirAddtsRsp));
 
 	pAddtsRsp->messageType = eWNI_SME_ADDTS_RSP;
 	pAddtsRsp->length = sizeof(tSirAddtsRsp);
@@ -3176,7 +3176,7 @@ QDF_STATUS sme_qos_create_tspec_ricie(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_zero(&ricIE, sizeof(tDot11fIERICDataDesc));
+	qdf_mem_zero(&ricIE, sizeof(tDot11fIERICDataDesc));
 
 	ricIE.present = 1;
 	ricIE.RICData.present = 1;
@@ -3314,7 +3314,7 @@ static QDF_STATUS sme_qos_process_ft_reassoc_req_ev(
 
 				ac_info->requested_QoSInfo[tspec_index] =
 					ac_info->curr_QoSInfo[tspec_index];
-				cdf_mem_zero(
+				qdf_mem_zero(
 					&ac_info->curr_QoSInfo[tspec_index],
 					sizeof(sme_QosWmmTspecInfo));
 				qos_requested = true;
@@ -3407,7 +3407,7 @@ static void sme_qos_fill_aggr_info(int ac_id, int ts_id,
 		session->ac_info[ac_id].addTsRsp[ts_id].rsp.lleTspecPresent;
 	msg->aggrInfo.aggrAddTsInfo[ac_id].numTclas =
 		session->ac_info[ac_id].addTsRsp[ts_id].rsp.numTclas;
-	cdf_mem_copy(msg->aggrInfo.aggrAddTsInfo[ac_id].tclasInfo,
+	qdf_mem_copy(msg->aggrInfo.aggrAddTsInfo[ac_id].tclasInfo,
 		     session->ac_info[ac_id].addTsRsp[ts_id].rsp.tclasInfo,
 		     SIR_MAC_TCLASIE_MAXNUM);
 	msg->aggrInfo.aggrAddTsInfo[ac_id].tclasProc =
@@ -3452,7 +3452,7 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 
 	session = &sme_qos_cb.sessionInfo[session_id];
 
-	aggr_req = (tSirAggrQosReq *) cdf_mem_malloc(sizeof(tSirAggrQosReq));
+	aggr_req = (tSirAggrQosReq *) qdf_mem_malloc(sizeof(tSirAggrQosReq));
 
 	if (!aggr_req) {
 		/* err msg */
@@ -3461,14 +3461,14 @@ QDF_STATUS sme_qos_ft_aggr_qos_req(tpAniSirGlobal mac_ctx, uint8_t session_id)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_zero(aggr_req, sizeof(tSirAggrQosReq));
+	qdf_mem_zero(aggr_req, sizeof(tSirAggrQosReq));
 
 	aggr_req->messageType = eWNI_SME_FT_AGGR_QOS_REQ;
 	aggr_req->length = sizeof(tSirAggrQosReq);
 	aggr_req->sessionId = session_id;
 	aggr_req->timeout = 0;
 	aggr_req->rspReqd = true;
-	cdf_mem_copy(&aggr_req->bssid.bytes[0],
+	qdf_mem_copy(&aggr_req->bssid.bytes[0],
 		     &session->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 
@@ -3519,7 +3519,7 @@ QDF_STATUS sme_qos_process_ftric_response(tpAniSirGlobal pMac, uint8_t sessionId
 		=
 			&sme_qos_cb.sessionInfo[sessionId].ac_info[ac].addTsRsp[tspecIndex];
 
-	cdf_mem_zero(pAddtsRsp, sizeof(tSirAddtsRsp));
+	qdf_mem_zero(pAddtsRsp, sizeof(tSirAddtsRsp));
 
 	pAddtsRsp->messageType = eWNI_SME_ADDTS_RSP;
 	pAddtsRsp->length = sizeof(tSirAddtsRsp);
@@ -3899,7 +3899,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 	}
 
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
-	pMsg = (tSirAddtsReq *) cdf_mem_malloc(sizeof(tSirAddtsReq));
+	pMsg = (tSirAddtsReq *) qdf_mem_malloc(sizeof(tSirAddtsReq));
 	if (!pMsg) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -3907,7 +3907,7 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_zero(pMsg, sizeof(tSirAddtsReq));
+	qdf_mem_zero(pMsg, sizeof(tSirAddtsReq));
 	pMsg->messageType = eWNI_SME_ADDTS_REQ;
 	pMsg->length = sizeof(tSirAddtsReq);
 	pMsg->sessionId = sessionId;
@@ -3956,10 +3956,10 @@ QDF_STATUS sme_qos_add_ts_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
-		cdf_mem_free(pMsg);
+		qdf_mem_free(pMsg);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&pMsg->bssid.bytes[0],
+	qdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -4016,7 +4016,7 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: invoked on session %d for AC %d",
 		  __func__, __LINE__, sessionId, ac);
-	pMsg = (tSirDeltsReq *) cdf_mem_malloc(sizeof(tSirDeltsReq));
+	pMsg = (tSirDeltsReq *) qdf_mem_malloc(sizeof(tSirDeltsReq));
 	if (!pMsg) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -4024,7 +4024,7 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_zero(pMsg, sizeof(tSirDeltsReq));
+	qdf_mem_zero(pMsg, sizeof(tSirDeltsReq));
 	/* get pointer to the TSPEC being deleted */
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];
@@ -4066,10 +4066,10 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: BSS descriptor is NULL so we don't send request to PE",
 			  __func__, __LINE__);
-		cdf_mem_free(pMsg);
+		qdf_mem_free(pMsg);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&pMsg->bssid.bytes[0],
+	qdf_mem_copy(&pMsg->bssid.bytes[0],
 		     &pSession->assocInfo.pBssDesc->bssId[0],
 		     sizeof(struct qdf_mac_addr));
 
@@ -4077,7 +4077,7 @@ QDF_STATUS sme_qos_del_ts_req(tpAniSirGlobal pMac,
 		  "%s: %d: up = %d, tid = %d",
 		  __func__, __LINE__,
 		  pTspecInfo->ts_info.up, pTspecInfo->ts_info.tid);
-	cdf_mem_zero(&pACInfo->curr_QoSInfo[tspec_mask - 1],
+	qdf_mem_zero(&pACInfo->curr_QoSInfo[tspec_mask - 1],
 		     sizeof(sme_QosWmmTspecInfo));
 	if (QDF_IS_STATUS_SUCCESS(cds_send_mb_message_to_mac(pMsg))) {
 		status = QDF_STATUS_SUCCESS;
@@ -4243,7 +4243,7 @@ QDF_STATUS sme_qos_process_del_ts_ind(tpAniSirGlobal pMac, void *pMsgBuf)
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	pACInfo = &pSession->ac_info[ac];
 
-	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 	/* set the key type & the key to be searched in the Flow List */
 	search_key.key.ac_type = ac;
 	search_key.index = SME_QOS_SEARCH_KEY_INDEX_2;
@@ -4516,14 +4516,14 @@ QDF_STATUS sme_qos_handle_handoff_state(tpAniSirGlobal mac_ctx,
 	/* notify HDD with new Service Interval */
 	ac_info->curr_QoSInfo[SME_QOS_TSPEC_INDEX_0] =
 		ac_info->requested_QoSInfo[SME_QOS_TSPEC_INDEX_0];
-	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 	/* set the key type & the key to be searched in the Flow List */
 	search_key.key.ac_type = ac;
 	search_key.index = SME_QOS_SEARCH_KEY_INDEX_2;
 	search_key.sessionId = sessionid;
 	/* notify PMC that reassoc is done for APSD on certain AC?? */
 
-	cdf_mem_zero(&search_key1, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key1, sizeof(sme_QosSearchInfo));
 	/* set the hoRenewal field in control block if needed */
 	search_key1.index = SME_QOS_SEARCH_KEY_INDEX_3;
 	search_key1.key.reason = SME_QOS_REASON_SETUP;
@@ -4554,7 +4554,7 @@ QDF_STATUS sme_qos_handle_handoff_state(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 	ac_info->hoRenewal = false;
-	cdf_mem_zero(&ac_info->requested_QoSInfo[SME_QOS_TSPEC_INDEX_0],
+	qdf_mem_zero(&ac_info->requested_QoSInfo[SME_QOS_TSPEC_INDEX_0],
 		     sizeof(sme_QosWmmTspecInfo));
 
 	return status;
@@ -4712,16 +4712,16 @@ QDF_STATUS sme_qos_process_reassoc_failure_ev(tpAniSirGlobal pMac,
 			if (pACInfo->reassoc_pending) {
 				pACInfo->reassoc_pending = false;
 			}
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     curr_QoSInfo[SME_QOS_TSPEC_INDEX_0],
 				     sizeof(sme_QosWmmTspecInfo));
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     requested_QoSInfo[SME_QOS_TSPEC_INDEX_0],
 				     sizeof(sme_QosWmmTspecInfo));
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     curr_QoSInfo[SME_QOS_TSPEC_INDEX_1],
 				     sizeof(sme_QosWmmTspecInfo));
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     requested_QoSInfo[SME_QOS_TSPEC_INDEX_1],
 				     sizeof(sme_QosWmmTspecInfo));
 			pACInfo->tspec_mask_status = SME_QOS_TSPEC_MASK_CLEAR;
@@ -4902,16 +4902,16 @@ QDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
 		case SME_QOS_HANDOFF:
 			sme_qos_state_transition(sessionId, ac, SME_QOS_INIT);
 			/* need to clean up flows: TODO */
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     curr_QoSInfo[SME_QOS_TSPEC_INDEX_0],
 				     sizeof(sme_QosWmmTspecInfo));
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     requested_QoSInfo[SME_QOS_TSPEC_INDEX_0],
 				     sizeof(sme_QosWmmTspecInfo));
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     curr_QoSInfo[SME_QOS_TSPEC_INDEX_1],
 				     sizeof(sme_QosWmmTspecInfo));
-			cdf_mem_zero(&pACInfo->
+			qdf_mem_zero(&pACInfo->
 				     requested_QoSInfo[SME_QOS_TSPEC_INDEX_1],
 				     sizeof(sme_QosWmmTspecInfo));
 			pACInfo->tspec_mask_status = SME_QOS_TSPEC_MASK_CLEAR;
@@ -4937,7 +4937,7 @@ QDF_STATUS sme_qos_process_handoff_failure_ev(tpAniSirGlobal pMac,
 	pSession->handoffRequested = false;
 	/* clean up the assoc info */
 	if (pSession->assocInfo.pBssDesc) {
-		cdf_mem_free(pSession->assocInfo.pBssDesc);
+		qdf_mem_free(pSession->assocInfo.pBssDesc);
 		pSession->assocInfo.pBssDesc = NULL;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -4997,7 +4997,7 @@ QDF_STATUS sme_qos_process_disconnect_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 	sme_qos_delete_existing_flows(pMac, sessionId);
 	/* clean up the assoc info */
 	if (pSession->assocInfo.pBssDesc) {
-		cdf_mem_free(pSession->assocInfo.pBssDesc);
+		qdf_mem_free(pSession->assocInfo.pBssDesc);
 		pSession->assocInfo.pBssDesc = NULL;
 	}
 	sme_qos_cb.sessionInfo[sessionId].sessionActive = false;
@@ -5046,7 +5046,7 @@ QDF_STATUS sme_qos_process_join_req_ev(tpAniSirGlobal pMac, uint8_t sessionId,
 	}
 	/* clean up the assoc info if already set */
 	if (pSession->assocInfo.pBssDesc) {
-		cdf_mem_free(pSession->assocInfo.pBssDesc);
+		qdf_mem_free(pSession->assocInfo.pBssDesc);
 		pSession->assocInfo.pBssDesc = NULL;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5143,7 +5143,7 @@ QDF_STATUS sme_qos_process_preauth_success_ind(tpAniSirGlobal mac_ctx,
 		ac_info = &qos_session->ac_info[ac];
 		tspec_pending_status = ac_info->tspec_pending;
 		tspec_mask_status = ac_info->tspec_mask_status;
-		cdf_mem_zero(ac_info->ricIdentifier, SME_QOS_TSPEC_INDEX_MAX);
+		qdf_mem_zero(ac_info->ricIdentifier, SME_QOS_TSPEC_INDEX_MAX);
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			  FL("AC %d ==> TSPEC status = %d, tspec pending = %d"),
 			  ac, tspec_mask_status, tspec_pending_status);
@@ -5229,7 +5229,7 @@ QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 	/* set the key type & the key to be searched in the Flow List */
 	search_key.key.ac_type = ac;
 	search_key.index = SME_QOS_SEARCH_KEY_INDEX_2;
@@ -5244,7 +5244,7 @@ QDF_STATUS sme_qos_process_add_ts_failure_rsp(tpAniSirGlobal pMac,
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_zero(&pACInfo->requested_QoSInfo[tspec_pending - 1],
+	qdf_mem_zero(&pACInfo->requested_QoSInfo[tspec_pending - 1],
 		     sizeof(sme_QosWmmTspecInfo));
 
 	if ((!pACInfo->num_flows[0]) && (!pACInfo->num_flows[1])) {
@@ -5473,7 +5473,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 	if ((pACInfo->curr_QoSInfo[pACInfo->tspec_pending - 1].ts_info.
 	     direction == SME_QOS_WMM_TS_DIR_BOTH)
 	    && (pACInfo->num_flows[SME_QOS_TSPEC_INDEX_1] > 0)) {
-		cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+		qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 		/* update tspec_mask for all the flows having SME_QOS_TSPEC_MASK_BIT_2_SET to SME_QOS_TSPEC_MASK_BIT_1_SET */
 		search_key.key.ac_type = ac;
 		search_key.index = SME_QOS_SEARCH_KEY_INDEX_5;
@@ -5483,7 +5483,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 					  SME_QOS_TSPEC_MASK_BIT_1_SET);
 	}
 
-	cdf_mem_zero(&search_key1, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key1, sizeof(sme_QosSearchInfo));
 	/* set the horenewal field in control block if needed */
 	search_key1.index = SME_QOS_SEARCH_KEY_INDEX_3;
 	search_key1.key.reason = SME_QOS_REASON_SETUP;
@@ -5500,7 +5500,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 			}
 		}
 	}
-	cdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
+	qdf_mem_zero(&search_key, sizeof(sme_QosSearchInfo));
 	/* set the key type & the key to be searched in the Flow List */
 	search_key.key.ac_type = ac;
 	search_key.index = SME_QOS_SEARCH_KEY_INDEX_2;
@@ -5518,7 +5518,7 @@ QDF_STATUS sme_qos_process_add_ts_success_rsp(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_FAILURE;
 	}
 	pACInfo->hoRenewal = false;
-	cdf_mem_zero(&pACInfo->requested_QoSInfo[tspec_pending - 1],
+	qdf_mem_zero(&pACInfo->requested_QoSInfo[tspec_pending - 1],
 		     sizeof(sme_QosWmmTspecInfo));
 	/* event: EVENT_WLAN_QOS */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
@@ -5623,7 +5623,7 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&TspecInfo, pCurrent_Tspec_Info,
+	qdf_mem_copy(&TspecInfo, pCurrent_Tspec_Info,
 		     sizeof(sme_QosWmmTspecInfo));
 	TspecInfo.ts_info.psb = pInput_Tspec_Info->ts_info.psb;
 	/*-------------------------------------------------------------------------
@@ -5755,10 +5755,10 @@ QDF_STATUS sme_qos_aggregate_params(sme_QosWmmTspecInfo *pInput_Tspec_Info,
 		TspecInfo.ts_info.burst_size_defn = 1;
 	}
 	if (pUpdated_Tspec_Info) {
-		cdf_mem_copy(pUpdated_Tspec_Info, &TspecInfo,
+		qdf_mem_copy(pUpdated_Tspec_Info, &TspecInfo,
 			     sizeof(sme_QosWmmTspecInfo));
 	} else {
-		cdf_mem_copy(pCurrent_Tspec_Info, &TspecInfo,
+		qdf_mem_copy(pCurrent_Tspec_Info, &TspecInfo,
 			     sizeof(sme_QosWmmTspecInfo));
 	}
 	return QDF_STATUS_SUCCESS;
@@ -5797,7 +5797,7 @@ static QDF_STATUS sme_qos_update_params(uint8_t sessionId,
 			  __func__, __LINE__);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_zero(&Tspec_Info, sizeof(sme_QosWmmTspecInfo));
+	qdf_mem_zero(&Tspec_Info, sizeof(sme_QosWmmTspecInfo));
 	pEntry = csr_ll_peek_head(&sme_qos_cb.flow_list, false);
 	if (!pEntry) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6137,7 +6137,7 @@ bool sme_qos_is_acm(tpAniSirGlobal pMac, tSirBssDescription *pSirBssDesc,
 		  __func__, __LINE__, ret_val, ac);
 	if (NULL == pIes) {
 		/* IEs were allocated locally so free them */
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	}
 	return ret_val;
 }
@@ -6253,7 +6253,7 @@ static QDF_STATUS sme_qos_buffer_existing_flows(tpAniSirGlobal mac_ctx,
 			  FL("Deleting original entry at %p with flowID %d"),
 			  flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, list_entry, true);
-		cdf_mem_free(flow_info);
+		qdf_mem_free(flow_info);
 
 		list_entry = list_nextentry;
 	}
@@ -6304,7 +6304,7 @@ static QDF_STATUS sme_qos_delete_existing_flows(tpAniSirGlobal pMac,
 			/* delete the entry from Flow List */
 			csr_ll_remove_entry(&sme_qos_cb.flow_list, pEntry,
 					    true);
-			cdf_mem_free(flow_info);
+			qdf_mem_free(flow_info);
 		}
 		pEntry = pNextEntry;
 	}
@@ -6329,7 +6329,7 @@ QDF_STATUS sme_qos_buffer_cmd(sme_QosCmdInfo *pcmd, bool insert_head)
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s: %d: Invoked", __func__, __LINE__);
 	pentry =
-		(sme_QosCmdInfoEntry *) cdf_mem_malloc(sizeof(sme_QosCmdInfoEntry));
+		(sme_QosCmdInfoEntry *) qdf_mem_malloc(sizeof(sme_QosCmdInfoEntry));
 	if (!pentry) {
 		/* err msg */
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
@@ -6451,7 +6451,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 			break;
 		}
 		/* buffered command has been processed, reclaim the memory */
-		cdf_mem_free(pcmd);
+		qdf_mem_free(pcmd);
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("cmd buffer empty"));
@@ -6497,7 +6497,7 @@ static QDF_STATUS sme_qos_delete_buffered_requests(tpAniSirGlobal pMac,
 				    true);
 		/* reclaim the memory */
 		pcmd = GET_BASE_ADDR(pEntry, sme_QosCmdInfoEntry, link);
-		cdf_mem_free(pcmd);
+		qdf_mem_free(pcmd);
 		pEntry = pNextEntry;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -6528,20 +6528,20 @@ QDF_STATUS sme_qos_save_assoc_info(sme_QosSessionInfo *pSession,
 	}
 	/* clean up the assoc info if already set */
 	if (pSession->assocInfo.pBssDesc) {
-		cdf_mem_free(pSession->assocInfo.pBssDesc);
+		qdf_mem_free(pSession->assocInfo.pBssDesc);
 		pSession->assocInfo.pBssDesc = NULL;
 	}
 	bssLen = pAssoc_info->pBssDesc->length +
 		 sizeof(pAssoc_info->pBssDesc->length);
 	/* save the bss Descriptor */
-	pBssDesc = (tSirBssDescription *) cdf_mem_malloc(bssLen);
+	pBssDesc = (tSirBssDescription *) qdf_mem_malloc(bssLen);
 	if (!pBssDesc) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "%s: %d: couldn't allocate memory for the bss Descriptor",
 			  __func__, __LINE__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_copy(pBssDesc, pAssoc_info->pBssDesc, bssLen);
+	qdf_mem_copy(pBssDesc, pAssoc_info->pBssDesc, bssLen);
 	pSession->assocInfo.pBssDesc = pBssDesc;
 	/* save the apsd info from assoc */
 	if (pAssoc_info->pProfile) {
@@ -6666,7 +6666,7 @@ QDF_STATUS sme_qos_modify_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 			  __func__, __LINE__, flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, pEntry, true);
 		/* reclaim the memory */
-		cdf_mem_free(flow_info);
+		qdf_mem_free(flow_info);
 		break;
 	default:
 		break;
@@ -6848,7 +6848,7 @@ sme_qos_reassoc_success_ev_fnp(tpAniSirGlobal mac_ctx,
 			flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, entry, true);
 		/* reclaim the memory */
-		cdf_mem_free(flow_info);
+		qdf_mem_free(flow_info);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -6935,7 +6935,7 @@ QDF_STATUS sme_qos_add_ts_failure_fnp(tpAniSirGlobal pMac, tListElem *pEntry)
 			  __func__, __LINE__, flow_info, flow_info->QosFlowID);
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, pEntry, true);
 		/* reclaim the memory */
-		cdf_mem_free(flow_info);
+		qdf_mem_free(flow_info);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -7116,7 +7116,7 @@ QDF_STATUS sme_qos_add_ts_success_fnp(tpAniSirGlobal mac_ctx,
 		/* delete the entry from Flow List */
 		csr_ll_remove_entry(&sme_qos_cb.flow_list, entry, true);
 		/* reclaim the memory */
-		cdf_mem_free(flow_info);
+		qdf_mem_free(flow_info);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -7311,10 +7311,10 @@ void sme_qos_cleanup_ctrl_blk_for_handoff(tpAniSirGlobal pMac, uint8_t sessionId
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
 		pACInfo = &pSession->ac_info[ac];
-		cdf_mem_zero(pACInfo->curr_QoSInfo,
+		qdf_mem_zero(pACInfo->curr_QoSInfo,
 			     sizeof(sme_QosWmmTspecInfo) *
 			     SME_QOS_TSPEC_INDEX_MAX);
-		cdf_mem_zero(pACInfo->requested_QoSInfo,
+		qdf_mem_zero(pACInfo->requested_QoSInfo,
 			     sizeof(sme_QosWmmTspecInfo) *
 			     SME_QOS_TSPEC_INDEX_MAX);
 		pACInfo->num_flows[0] = 0;
@@ -7389,11 +7389,11 @@ bool sme_qos_is_ts_info_ack_policy_valid(tpAniSirGlobal pMac,
 			  "%s: %d: On session %d HT Caps aren't present but application set ack policy to HT ",
 			  __func__, __LINE__, sessionId);
 
-		cdf_mem_free(pIes);
+		qdf_mem_free(pIes);
 		return false;
 	}
 
-	cdf_mem_free(pIes);
+	qdf_mem_free(pIes);
 	return true;
 }
 
@@ -7654,7 +7654,7 @@ static void sme_qos_init_a_cs(tpAniSirGlobal pMac, uint8_t sessionId)
 	sme_QosEdcaAcType ac;
 	pSession = &sme_qos_cb.sessionInfo[sessionId];
 	for (ac = SME_QOS_EDCA_AC_BE; ac < SME_QOS_EDCA_AC_MAX; ac++) {
-		cdf_mem_zero(&pSession->ac_info[ac], sizeof(sme_QosACInfo));
+		qdf_mem_zero(&pSession->ac_info[ac], sizeof(sme_QosACInfo));
 		sme_qos_state_transition(sessionId, ac, SME_QOS_INIT);
 	}
 }

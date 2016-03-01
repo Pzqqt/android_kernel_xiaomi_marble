@@ -90,12 +90,12 @@ void cds_sys_probe_thread_cback(void *pUserData);
 v_CONTEXT_t cds_init(void)
 {
 	qdf_mc_timer_manager_init();
-	cdf_mem_init();
+	qdf_mem_init();
 
 	gp_cds_context = &g_cds_context;
 
 	gp_cds_context->qdf_ctx = &g_qdf_ctx;
-	cdf_mem_zero(&g_qdf_ctx, sizeof(g_qdf_ctx));
+	qdf_mem_zero(&g_qdf_ctx, sizeof(g_qdf_ctx));
 
 	qdf_trace_spin_lock_init();
 
@@ -122,10 +122,10 @@ void cds_deinit(void)
 	gp_cds_context->qdf_ctx = NULL;
 	gp_cds_context = NULL;
 
-	cdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
+	qdf_mem_zero(&g_cds_context, sizeof(g_cds_context));
 
 	qdf_mc_timer_manager_exit();
-	cdf_mem_exit();
+	qdf_mem_exit();
 
 	return;
 }
@@ -292,7 +292,7 @@ QDF_STATUS cds_open(void)
 	*/
 
 	/*Open the WMA module */
-	cdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
+	qdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
 	/* UMA is supported in hardware for performing the
 	** frame translation 802.11 <-> 802.3
 	*/
@@ -630,7 +630,7 @@ QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 		  "%s: wma correctly started", __func__);
 
 	/* Start the MAC */
-	cdf_mem_zero(&halStartParams,
+	qdf_mem_zero(&halStartParams,
 		     sizeof(tHalMacStartParameters));
 
 	/* Start the MAC */
@@ -1103,7 +1103,7 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 
 	/* Dynamically allocate the context for module */
 
-	*ppModuleContext = cdf_mem_malloc(size);
+	*ppModuleContext = qdf_mem_malloc(size);
 
 	if (*ppModuleContext == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
@@ -1114,7 +1114,7 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 	}
 
 	if (moduleID == QDF_MODULE_ID_TLSHIM)
-		cdf_mem_zero(*ppModuleContext, size);
+		qdf_mem_zero(*ppModuleContext, size);
 
 	*pGpModContext = *ppModuleContext;
 
@@ -1236,7 +1236,7 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 	}
 
 	if (pModuleContext != NULL)
-		cdf_mem_free(pModuleContext);
+		qdf_mem_free(pModuleContext);
 
 	*pGpModContext = NULL;
 
@@ -1332,7 +1332,7 @@ QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
 	atomic_set(&cds_wrapper_empty_count, 0);
 
 	/* Copy the message now */
-	cdf_mem_copy((void *)pMsgWrapper->pVosMsg,
+	qdf_mem_copy((void *)pMsgWrapper->pVosMsg,
 		     (void *)pMsg, sizeof(cds_msg_t));
 
 	cds_mq_put(pTargetMq, pMsgWrapper);

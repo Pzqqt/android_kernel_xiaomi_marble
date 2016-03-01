@@ -65,16 +65,16 @@
 #include <ieee80211.h>
 #include <qdf_util.h>
 #include <athdefs.h>
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 #include <ol_rx_defrag.h>
 #include <enet.h>
 #include <qdf_time.h>           /* qdf_system_time */
 
 #define DEFRAG_IEEE80211_ADDR_EQ(a1, a2) \
-	(cdf_mem_compare(a1, a2, IEEE80211_ADDR_LEN) == 0)
+	(qdf_mem_cmp(a1, a2, IEEE80211_ADDR_LEN) != 0)
 
 #define DEFRAG_IEEE80211_ADDR_COPY(dst, src) \
-	cdf_mem_copy(dst, src, IEEE80211_ADDR_LEN)
+	qdf_mem_copy(dst, src, IEEE80211_ADDR_LEN)
 
 #define DEFRAG_IEEE80211_QOS_HAS_SEQ(wh) \
 	(((wh)->i_fc[0] & \
@@ -562,7 +562,7 @@ ol_rx_defrag(ol_txrx_pdev_handle pdev,
 		return;
 
 	if (tkip_demic) {
-		cdf_mem_copy(key,
+		qdf_mem_copy(key,
 			     peer->security[index].michael_key,
 			     sizeof(peer->security[index].michael_key));
 		if (!ol_rx_frag_tkip_demic(pdev, key, msdu, hdr_space)) {
@@ -608,7 +608,7 @@ ol_rx_frag_tkip_decap(ol_txrx_pdev_handle pdev,
 	if (!(ivp[IEEE80211_WEP_IVLEN] & IEEE80211_WEP_EXTIV))
 		return OL_RX_DEFRAG_ERR;
 
-	cdf_mem_move(origHdr + f_tkip.ic_header, origHdr, hdrlen);
+	qdf_mem_move(origHdr + f_tkip.ic_header, origHdr, hdrlen);
 	cdf_nbuf_pull_head(msdu, f_tkip.ic_header);
 	cdf_nbuf_trim_tail(msdu, f_tkip.ic_trailer);
 	return OL_RX_DEFRAG_OK;
@@ -630,7 +630,7 @@ ol_rx_frag_wep_decap(ol_txrx_pdev_handle pdev, cdf_nbuf_t msdu, uint16_t hdrlen)
 			       &rx_desc_old_position,
 			       &ind_old_position, &rx_desc_len);
 	origHdr = (uint8_t *) (cdf_nbuf_data(msdu) + rx_desc_len);
-	cdf_mem_move(origHdr + f_wep.ic_header, origHdr, hdrlen);
+	qdf_mem_move(origHdr + f_wep.ic_header, origHdr, hdrlen);
 	cdf_nbuf_pull_head(msdu, f_wep.ic_header);
 	cdf_nbuf_trim_tail(msdu, f_wep.ic_trailer);
 	return OL_RX_DEFRAG_OK;
@@ -665,7 +665,7 @@ ol_rx_frag_tkip_demic(ol_txrx_pdev_handle pdev, const uint8_t *key,
 
 	ol_rx_defrag_copydata(msdu, pktlen - f_tkip.ic_miclen + rx_desc_len,
 			      f_tkip.ic_miclen, (caddr_t) mic0);
-	if (cdf_mem_compare(mic, mic0, f_tkip.ic_miclen))
+	if (!qdf_mem_cmp(mic, mic0, f_tkip.ic_miclen))
 		return OL_RX_DEFRAG_ERR;
 
 	cdf_nbuf_trim_tail(msdu, f_tkip.ic_miclen);
@@ -694,7 +694,7 @@ ol_rx_frag_ccmp_decap(ol_txrx_pdev_handle pdev,
 	if (!(ivp[IEEE80211_WEP_IVLEN] & IEEE80211_WEP_EXTIV))
 		return OL_RX_DEFRAG_ERR;
 
-	cdf_mem_move(origHdr + f_ccmp.ic_header, origHdr, hdrlen);
+	qdf_mem_move(origHdr + f_ccmp.ic_header, origHdr, hdrlen);
 	cdf_nbuf_pull_head(nbuf, f_ccmp.ic_header);
 
 	return OL_RX_DEFRAG_OK;
@@ -973,9 +973,9 @@ void ol_rx_defrag_nwifi_to_8023(ol_txrx_pdev_handle pdev, cdf_nbuf_t msdu)
 			       &ind_old_position, &rx_desc_len);
 
 	wh_ptr = (struct ieee80211_frame *)(cdf_nbuf_data(msdu) + rx_desc_len);
-	cdf_mem_copy(&wh, wh_ptr, sizeof(wh));
+	qdf_mem_copy(&wh, wh_ptr, sizeof(wh));
 	hdrsize = sizeof(struct ieee80211_frame);
-	cdf_mem_copy(&llchdr, ((uint8_t *) (cdf_nbuf_data(msdu) +
+	qdf_mem_copy(&llchdr, ((uint8_t *) (cdf_nbuf_data(msdu) +
 					    rx_desc_len)) + hdrsize,
 		     sizeof(struct llc_snap_hdr_t));
 
@@ -989,25 +989,25 @@ void ol_rx_defrag_nwifi_to_8023(ol_txrx_pdev_handle pdev, cdf_nbuf_t msdu)
 	eth_hdr = (struct ethernet_hdr_t *)(cdf_nbuf_data(msdu));
 	switch (wh.i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
-		cdf_mem_copy(eth_hdr->dest_addr, wh.i_addr1,
+		qdf_mem_copy(eth_hdr->dest_addr, wh.i_addr1,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, IEEE80211_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
-		cdf_mem_copy(eth_hdr->dest_addr, wh.i_addr3,
+		qdf_mem_copy(eth_hdr->dest_addr, wh.i_addr3,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr2, IEEE80211_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
-		cdf_mem_copy(eth_hdr->dest_addr, wh.i_addr1,
+		qdf_mem_copy(eth_hdr->dest_addr, wh.i_addr1,
 			     IEEE80211_ADDR_LEN);
-		cdf_mem_copy(eth_hdr->src_addr, wh.i_addr3, IEEE80211_ADDR_LEN);
+		qdf_mem_copy(eth_hdr->src_addr, wh.i_addr3, IEEE80211_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
 		break;
 	}
 
-	cdf_mem_copy(eth_hdr->ethertype, llchdr.ethertype,
+	qdf_mem_copy(eth_hdr->ethertype, llchdr.ethertype,
 		     sizeof(llchdr.ethertype));
 }
 
@@ -1038,7 +1038,7 @@ ol_rx_defrag_qos_decap(ol_txrx_pdev_handle pdev,
 
 		/* remove QoS filed from header */
 		hdrlen -= qoslen;
-		cdf_mem_move((uint8_t *) wh + qoslen, wh, hdrlen);
+		qdf_mem_move((uint8_t *) wh + qoslen, wh, hdrlen);
 		wh = (struct ieee80211_frame *)cdf_nbuf_pull_head(nbuf,
 								  rx_desc_len +
 								  qoslen);

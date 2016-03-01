@@ -311,14 +311,14 @@ static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 
 	ENTER();
 
-	green_ap = cdf_mem_malloc(sizeof(*green_ap));
+	green_ap = qdf_mem_malloc(sizeof(*green_ap));
 	if (!green_ap) {
 		hdd_alert("Memory allocation for Green-AP failed!");
 		status = QDF_STATUS_E_NOMEM;
 		goto error;
 	}
 
-	cdf_mem_zero(green_ap, sizeof(*green_ap));
+	qdf_mem_zero(green_ap, sizeof(*green_ap));
 	green_ap->ps_state = GREEN_AP_PS_OFF_STATE;
 	green_ap->ps_event = 0;
 	green_ap->num_nodes = 0;
@@ -365,8 +365,8 @@ static QDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 		hdd_notice("Cannot deallocate Green-AP's timer");
 
 	/* release memory */
-	cdf_mem_zero(green_ap, sizeof(*green_ap));
-	cdf_mem_free(green_ap);
+	qdf_mem_zero(green_ap, sizeof(*green_ap));
+	qdf_mem_free(green_ap);
 	hdd_ctx->green_ap_ctx = NULL;
 
 done:

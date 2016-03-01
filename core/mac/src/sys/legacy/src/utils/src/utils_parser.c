@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -44,21 +44,21 @@
 void convert_ssid(tpAniSirGlobal pMac, tSirMacSSid *pOld, tDot11fIESSID *pNew)
 {
 	pOld->length = pNew->num_ssid;
-	cdf_mem_copy(pOld->ssId, pNew->ssid, pNew->num_ssid);
+	qdf_mem_copy(pOld->ssId, pNew->ssid, pNew->num_ssid);
 }
 
 void convert_supp_rates(tpAniSirGlobal pMac,
 			tSirMacRateSet *pOld, tDot11fIESuppRates *pNew)
 {
 	pOld->numRates = pNew->num_rates;
-	cdf_mem_copy(pOld->rate, pNew->rates, pNew->num_rates);
+	qdf_mem_copy(pOld->rate, pNew->rates, pNew->num_rates);
 }
 
 void convert_ext_supp_rates(tpAniSirGlobal pMac,
 			    tSirMacRateSet *pOld, tDot11fIEExtSuppRates *pNew)
 {
 	pOld->numRates = pNew->num_rates;
-	cdf_mem_copy(pOld->rate, pNew->rates, pNew->num_rates);
+	qdf_mem_copy(pOld->rate, pNew->rates, pNew->num_rates);
 }
 
 void convert_qos_caps(tpAniSirGlobal pMac,
@@ -101,7 +101,7 @@ tSirRetStatus convert_wpa(tpAniSirGlobal pMac,
 	}
 
 	pOld->length = (uint8_t) written - 2;
-	cdf_mem_copy(pOld->info, buffer + 2, pOld->length);
+	qdf_mem_copy(pOld->info, buffer + 2, pOld->length);
 
 	return eSIR_SUCCESS;
 }
@@ -116,7 +116,7 @@ tSirRetStatus convert_wpa_opaque(tpAniSirGlobal pMac,
 	pOld->info[1] = 0x50;
 	pOld->info[2] = 0xf2;
 	pOld->info[3] = 0x01;
-	cdf_mem_copy(pOld->info + 4, pNew->data, pNew->num_data);
+	qdf_mem_copy(pOld->info + 4, pNew->data, pNew->num_data);
 
 	return eSIR_SUCCESS;
 }
@@ -129,7 +129,7 @@ tSirRetStatus convert_wapi_opaque(tpAniSirGlobal pMac,
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array.  Note that we need to explicitly add the OUI! */
 	pOld->length = pNew->num_data;
-	cdf_mem_copy(pOld->info, pNew->data, pNew->num_data);
+	qdf_mem_copy(pOld->info, pNew->data, pNew->num_data);
 
 	return eSIR_SUCCESS;
 }
@@ -149,7 +149,7 @@ tSirRetStatus convert_wsc_opaque(tpAniSirGlobal pMac,
 	pOld->addIEdata[curAddIELen++] = 0x50;
 	pOld->addIEdata[curAddIELen++] = 0xf2;
 	pOld->addIEdata[curAddIELen++] = 0x04;
-	cdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
+	qdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
 
 	return eSIR_SUCCESS;
 }
@@ -168,7 +168,7 @@ tSirRetStatus convert_p2p_opaque(tpAniSirGlobal pMac,
 	pOld->addIEdata[curAddIELen++] = 0x6f;
 	pOld->addIEdata[curAddIELen++] = 0x9A;
 	pOld->addIEdata[curAddIELen++] = 0x09;
-	cdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
+	qdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
 
 	return eSIR_SUCCESS;
 }
@@ -188,7 +188,7 @@ tSirRetStatus convert_wfd_opaque(tpAniSirGlobal pMac,
 	pOld->addIEdata[curAddIELen++] = 0x6f;
 	pOld->addIEdata[curAddIELen++] = 0x9A;
 	pOld->addIEdata[curAddIELen++] = 0x0a;
-	cdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
+	qdf_mem_copy(pOld->addIEdata + curAddIELen, pNew->data, pNew->num_data);
 
 	return eSIR_SUCCESS;
 }
@@ -207,7 +207,7 @@ tSirRetStatus convert_rsn(tpAniSirGlobal pMac,
 	}
 
 	pOld->length = (uint8_t) written - 2;
-	cdf_mem_copy(pOld->info, buffer + 2, pOld->length);
+	qdf_mem_copy(pOld->info, buffer + 2, pOld->length);
 
 	return eSIR_SUCCESS;
 }
@@ -218,7 +218,7 @@ tSirRetStatus convert_rsn_opaque(tpAniSirGlobal pMac,
 	/* This is awful, I know, but the old code just rammed the IE into */
 	/* an opaque array. */
 	pOld->length = pNew->num_data;
-	cdf_mem_copy(pOld->info, pNew->data, pOld->length);
+	qdf_mem_copy(pOld->info, pNew->data, pOld->length);
 
 	return eSIR_SUCCESS;
 }
@@ -239,7 +239,7 @@ void convert_supp_channels(tpAniSirGlobal pMac,
 {
 	pOld->type = 36;
 	pOld->length = (pNew->num_bands * 2);
-	cdf_mem_copy((uint8_t *) pOld->supportedChannels,
+	qdf_mem_copy((uint8_t *) pOld->supportedChannels,
 		     (uint8_t *) pNew->bands, pOld->length);
 }
 
@@ -268,7 +268,7 @@ void convert_tim(tpAniSirGlobal pMac, tSirMacTim *pOld, tDot11fIETIM *pNew)
 	pOld->bitmapControl = pNew->bmpctl;
 	pOld->bitmapLength = pNew->num_vbmp;
 
-	cdf_mem_copy(pOld->bitmap, pNew->vbmp, pNew->num_vbmp);
+	qdf_mem_copy(pOld->bitmap, pNew->vbmp, pNew->num_vbmp);
 }
 
 void convert_country(tpAniSirGlobal pMac,
@@ -276,7 +276,7 @@ void convert_country(tpAniSirGlobal pMac,
 {
 	int i;
 
-	cdf_mem_copy(pOld->countryString, pNew->country, COUNTRY_STRING_LENGTH);
+	qdf_mem_copy(pOld->countryString, pNew->country, COUNTRY_STRING_LENGTH);
 
 	pOld->numIntervals = pNew->num_triplets;
 
@@ -295,7 +295,7 @@ void convert_wmm_params(tpAniSirGlobal pMac,
 	pOld->type = 221;
 	pOld->length = 24;
 
-	cdf_mem_copy((uint8_t *) &pOld->qosInfo, (uint8_t *) &pNew->qosInfo,
+	qdf_mem_copy((uint8_t *) &pOld->qosInfo, (uint8_t *) &pNew->qosInfo,
 		     1);
 
 	pOld->acbe.aci.aifsn = pNew->acbe_aifsn;
@@ -342,7 +342,7 @@ void convert_edca_param(tpAniSirGlobal pMac,
 	pOld->type = 12;
 	pOld->length = 20;
 
-	cdf_mem_copy((uint8_t *) &pOld->qosInfo, (uint8_t *) &pNew->qos, 1);
+	qdf_mem_copy((uint8_t *) &pOld->qosInfo, (uint8_t *) &pNew->qos, 1);
 
 	pOld->acbe.aci.aifsn = pNew->acbe_aifsn;
 	pOld->acbe.aci.acm = pNew->acbe_acm;
@@ -422,9 +422,9 @@ tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
 
 	switch (pNew->classifier_type) {
 	case 0:
-		cdf_mem_copy(pOld->tclasParams.eth.srcAddr,
+		qdf_mem_copy(pOld->tclasParams.eth.srcAddr,
 			     pNew->info.EthParams.source, 6);
-		cdf_mem_copy(pOld->tclasParams.eth.dstAddr,
+		qdf_mem_copy(pOld->tclasParams.eth.dstAddr,
 			     pNew->info.EthParams.dest, 6);
 		pOld->tclasParams.eth.type = pNew->info.EthParams.type;
 		break;
@@ -432,10 +432,10 @@ tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
 		pOld->version = pNew->info.IpParams.version;
 		if (4 == pNew->info.IpParams.version) {
 			pOld->tclasParams.ipv4.version = 4;
-			cdf_mem_copy(pOld->tclasParams.ipv4.srcIpAddr,
+			qdf_mem_copy(pOld->tclasParams.ipv4.srcIpAddr,
 				     pNew->info.IpParams.params.IpV4Params.
 				     source, 4);
-			cdf_mem_copy(pOld->tclasParams.ipv4.dstIpAddr,
+			qdf_mem_copy(pOld->tclasParams.ipv4.dstIpAddr,
 				     pNew->info.IpParams.params.IpV4Params.dest,
 				     4);
 			pOld->tclasParams.ipv4.srcPort =
@@ -450,11 +450,11 @@ tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
 				pNew->info.IpParams.params.IpV4Params.reserved;
 		} else if (6 == pNew->info.IpParams.version) {
 			pOld->tclasParams.ipv6.version = 6;
-			cdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
+			qdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
 				     srcIpAddr,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.source, 16);
-			cdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
+			qdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
 				     dstIpAddr,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.dest, 16);
@@ -462,7 +462,7 @@ tSirRetStatus convert_tclas(tpAniSirGlobal pMac,
 				pNew->info.IpParams.params.IpV6Params.src_port;
 			pOld->tclasParams.ipv6.dstPort =
 				pNew->info.IpParams.params.IpV6Params.dest_port;
-			cdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
+			qdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
 				     flowLabel,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.flow_label, 3);
@@ -526,9 +526,9 @@ tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
 
 	switch (pNew->classifier_type) {
 	case 0:
-		cdf_mem_copy(pOld->tclasParams.eth.srcAddr,
+		qdf_mem_copy(pOld->tclasParams.eth.srcAddr,
 			     pNew->info.EthParams.source, 6);
-		cdf_mem_copy(pOld->tclasParams.eth.dstAddr,
+		qdf_mem_copy(pOld->tclasParams.eth.dstAddr,
 			     pNew->info.EthParams.dest, 6);
 		pOld->tclasParams.eth.type = pNew->info.EthParams.type;
 		break;
@@ -536,10 +536,10 @@ tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
 		pOld->version = pNew->info.IpParams.version;
 		if (4 == pNew->info.IpParams.version) {
 			pOld->tclasParams.ipv4.version = 4;
-			cdf_mem_copy(pOld->tclasParams.ipv4.srcIpAddr,
+			qdf_mem_copy(pOld->tclasParams.ipv4.srcIpAddr,
 				     pNew->info.IpParams.params.IpV4Params.
 				     source, 4);
-			cdf_mem_copy(pOld->tclasParams.ipv4.dstIpAddr,
+			qdf_mem_copy(pOld->tclasParams.ipv4.dstIpAddr,
 				     pNew->info.IpParams.params.IpV4Params.dest,
 				     4);
 			pOld->tclasParams.ipv4.srcPort =
@@ -554,11 +554,11 @@ tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
 				pNew->info.IpParams.params.IpV4Params.reserved;
 		} else if (6 == pNew->info.IpParams.version) {
 			pOld->tclasParams.ipv6.version = 6;
-			cdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
+			qdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
 				     srcIpAddr,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.source, 16);
-			cdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
+			qdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
 				     dstIpAddr,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.dest, 16);
@@ -566,7 +566,7 @@ tSirRetStatus convert_wmmtclas(tpAniSirGlobal pMac,
 				pNew->info.IpParams.params.IpV6Params.src_port;
 			pOld->tclasParams.ipv6.dstPort =
 				pNew->info.IpParams.params.IpV6Params.dest_port;
-			cdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
+			qdf_mem_copy((uint8_t *) pOld->tclasParams.ipv6.
 				     flowLabel,
 				     (uint8_t *) pNew->info.IpParams.params.
 				     IpV6Params.flow_label, 3);
@@ -624,8 +624,9 @@ void convert_wmm_schedule(tpAniSirGlobal pMac,
 }
 
 /**
-    @brief   :    This functions converts the given buffer till given size to Big endian format assuming the
-                     bus is 32 bit. The size should be four byte aligned.
+    @brief   :    This functions converts the given buffer till given size to
+    Big endian format assuming the bus is 32 bit. The size should
+    be four byte aligned.
     @param :    ptr to be converted, size
     @return  :    void
  */
@@ -670,11 +671,11 @@ void create_scan_data_null_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHdr
 	macMgmtHdr->seqControl.fragNum = 0;
 	macMgmtHdr->seqControl.seqNumLo = 0;
 	macMgmtHdr->seqControl.seqNumHi = 2;
-	cdf_mem_copy((void *)&macMgmtHdr->da,
+	qdf_mem_copy((void *)&macMgmtHdr->da,
 		     (void *)bssid, sizeof(tSirMacAddr));
-	cdf_mem_copy((void *)&macMgmtHdr->sa,
+	qdf_mem_copy((void *)&macMgmtHdr->sa,
 		     (void *)selfMacAddr, sizeof(tSirMacAddr));
-	cdf_mem_copy((void *)&macMgmtHdr->bssId,
+	qdf_mem_copy((void *)&macMgmtHdr->bssId,
 		     (void *)bssid, sizeof(tSirMacAddr));
 
 	return;
@@ -697,7 +698,7 @@ void create_scan_cts_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHdr,
 		(uint8_t) (SIR_MAC_MAX_DURATION_MICRO_SECONDS & 0xff);
 	macMgmtHdr->durationHi =
 		(uint8_t) ((SIR_MAC_MAX_DURATION_MICRO_SECONDS & 0xff00) >> 8);
-	cdf_mem_copy((void *)macMgmtHdr->da, (void *)selfMac,
+	qdf_mem_copy((void *)macMgmtHdr->da, (void *)selfMac,
 		     sizeof(tSirMacAddr));
 
 	return;
@@ -754,9 +755,9 @@ void create_init_scan_raw_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHdr,
 		macMgmtHdr->seqControl.fragNum = 0;
 		macMgmtHdr->seqControl.seqNumLo = 0;
 		macMgmtHdr->seqControl.seqNumHi = 2;
-		cdf_mem_copy((void *)&macMgmtHdr->da, (void *)pSta[0].bssId, 6);
-		cdf_mem_copy(&macMgmtHdr->sa, pSta[0].staAddr, 6);
-		cdf_mem_copy((void *)&macMgmtHdr->bssId, (void *)pSta[0].bssId,
+		qdf_mem_copy((void *)&macMgmtHdr->da, (void *)pSta[0].bssId, 6);
+		qdf_mem_copy(&macMgmtHdr->sa, pSta[0].staAddr, 6);
+		qdf_mem_copy((void *)&macMgmtHdr->bssId, (void *)pSta[0].bssId,
 			     6);
 	} else if (role == eSYSTEM_AP_ROLE || role == eSYSTEM_STA_IN_IBSS_ROLE) {
 		macMgmtHdr->fc.type = SIR_MAC_CTRL_FRAME;
@@ -774,7 +775,7 @@ void create_init_scan_raw_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHdr,
 		macMgmtHdr->durationHi =
 			(uint8_t) ((SIR_MAC_MAX_DURATION_MICRO_SECONDS & 0xff00) >>
 				   8);
-		cdf_mem_copy((void *)macMgmtHdr->da, (void *)pSta[0].staAddr,
+		qdf_mem_copy((void *)macMgmtHdr->da, (void *)pSta[0].staAddr,
 			     6);
 	}
 	return;
@@ -813,9 +814,9 @@ void create_finish_scan_raw_frame(tpAniSirGlobal pMac, tSirMacMgmtHdr *macMgmtHd
 		macMgmtHdr->seqControl.fragNum = 0;
 		macMgmtHdr->seqControl.seqNumLo = 0;
 		macMgmtHdr->seqControl.seqNumHi = 2;
-		cdf_mem_copy((void *)macMgmtHdr->da, (void *)pSta[0].bssId, 6);
-		cdf_mem_copy(macMgmtHdr->sa, pSta[0].staAddr, 6);
-		cdf_mem_copy((void *)macMgmtHdr->bssId, (void *)pSta[0].bssId,
+		qdf_mem_copy((void *)macMgmtHdr->da, (void *)pSta[0].bssId, 6);
+		qdf_mem_copy(macMgmtHdr->sa, pSta[0].staAddr, 6);
+		qdf_mem_copy((void *)macMgmtHdr->bssId, (void *)pSta[0].bssId,
 			     6);
 
 	}

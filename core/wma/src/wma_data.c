@@ -48,7 +48,7 @@
 #include "cdf_nbuf.h"
 #include "qdf_types.h"
 #include "ol_txrx_api.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx_peer_find.h"
 
@@ -830,7 +830,7 @@ static void wma_data_tx_ack_work_handler(void *ack_work)
 
 	wma_handle->umac_data_ota_ack_cb = NULL;
 	wma_handle->last_umac_data_nbuf = NULL;
-	cdf_mem_free(work);
+	qdf_mem_free(work);
 	wma_handle->ack_work_ctx = NULL;
 }
 
@@ -881,7 +881,7 @@ wma_data_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 	if (wma_handle && wma_handle->umac_data_ota_ack_cb) {
 		struct wma_tx_ack_work_ctx *ack_work;
 
-		ack_work = cdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
+		ack_work = qdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
 		wma_handle->ack_work_ctx = ack_work;
 		if (ack_work) {
 			ack_work->wma_handle = wma_handle;
@@ -1128,7 +1128,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	chan_latency.chan_mhz = chan1_freq;
 	chan_latency.latency = latency_chan1;
-	cdf_mem_copy(buf_ptr, &chan_latency, sizeof(chan_latency));
+	qdf_mem_copy(buf_ptr, &chan_latency, sizeof(chan_latency));
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				   WMI_RESMGR_SET_CHAN_LATENCY_CMDID);
 	if (ret) {
@@ -1255,12 +1255,12 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 	buf_ptr += WMI_TLV_HDR_SIZE;
 	chan_quota.chan_mhz = chan1_freq;
 	chan_quota.channel_time_quota = quota_chan1;
-	cdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
+	qdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
 	/* Construct channel and quota record for the 2nd MCC mode. */
 	buf_ptr += sizeof(chan_quota);
 	chan_quota.chan_mhz = chan2_freq;
 	chan_quota.channel_time_quota = quota_chan2;
-	cdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
+	qdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
 
 	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
 				   WMI_RESMGR_SET_CHAN_TIME_QUOTA_CMDID);
@@ -1410,7 +1410,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	if (!pdev) {
 		WMA_LOGE("vdev handle is invalid for %pM",
 			 pRateUpdateParams->bssid.bytes);
-		cdf_mem_free(pRateUpdateParams);
+		qdf_mem_free(pRateUpdateParams);
 		return QDF_STATUS_E_INVAL;
 	}
 	short_gi = intr[vdev_id].config.shortgi;
@@ -1446,7 +1446,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 				 mbpsx10_rate, pRateUpdateParams->nss, &rate);
 	if (ret != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("%s: Error, Invalid input rate value", __func__);
-		cdf_mem_free(pRateUpdateParams);
+		qdf_mem_free(pRateUpdateParams);
 		return ret;
 	}
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
@@ -1454,12 +1454,12 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	if (ret) {
 		WMA_LOGE("%s: Failed to Set WMI_VDEV_PARAM_SGI (%d), ret = %d",
 			 __func__, short_gi, ret);
-		cdf_mem_free(pRateUpdateParams);
+		qdf_mem_free(pRateUpdateParams);
 		return QDF_STATUS_E_FAILURE;
 	}
 	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
 					      vdev_id, paramId, rate);
-	cdf_mem_free(pRateUpdateParams);
+	qdf_mem_free(pRateUpdateParams);
 	if (ret) {
 		WMA_LOGE("%s: Failed to Set rate, ret = %d", __func__, ret);
 		return QDF_STATUS_E_FAILURE;
@@ -1497,7 +1497,7 @@ static void wma_mgmt_tx_ack_work_handler(void *ack_work)
 	ack_cb((tpAniSirGlobal) (wma_handle->mac_context),
 	       work->status ? 0 : 1);
 
-	cdf_mem_free(work);
+	qdf_mem_free(work);
 	wma_handle->ack_work_ctx = NULL;
 }
 
@@ -1555,7 +1555,7 @@ wma_mgmt_tx_ack_comp_hdlr(void *wma_context, cdf_nbuf_t netbuf, int32_t status)
 			struct wma_tx_ack_work_ctx *ack_work;
 
 			ack_work =
-				cdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
+				qdf_mem_malloc(sizeof(struct wma_tx_ack_work_ctx));
 
 			if (ack_work) {
 				ack_work->wma_handle = wma_handle;
@@ -2181,27 +2181,27 @@ static void wma_decap_to_8023(cdf_nbuf_t msdu, struct wma_decap_info_t *info)
 	ethr_hdr = (struct ethernet_hdr_t *)local_buf;
 	switch (wh->i_fc[1] & IEEE80211_FC1_DIR_MASK) {
 	case IEEE80211_FC1_DIR_NODS:
-		cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
+		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
 			     ETHERNET_ADDR_LEN);
-		cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
+		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
 			     ETHERNET_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_TODS:
-		cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
+		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
 			     ETHERNET_ADDR_LEN);
-		cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
+		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr2,
 			     ETHERNET_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_FROMDS:
-		cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
+		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr1,
 			     ETHERNET_ADDR_LEN);
-		cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr3,
+		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr3,
 			     ETHERNET_ADDR_LEN);
 		break;
 	case IEEE80211_FC1_DIR_DSTODS:
-		cdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
+		qdf_mem_copy(ethr_hdr->dest_addr, wh->i_addr3,
 			     ETHERNET_ADDR_LEN);
-		cdf_mem_copy(ethr_hdr->src_addr, wh->i_addr4,
+		qdf_mem_copy(ethr_hdr->src_addr, wh->i_addr4,
 			     ETHERNET_ADDR_LEN);
 		break;
 	}
@@ -2217,7 +2217,7 @@ static void wma_decap_to_8023(cdf_nbuf_t msdu, struct wma_decap_info_t *info)
 		ethr_hdr->ethertype[0] = (ether_type >> 8) & 0xff;
 		ethr_hdr->ethertype[1] = (ether_type) & 0xff;
 	}
-	cdf_mem_copy(buf, ethr_hdr, ETHERNET_HDR_LEN);
+	qdf_mem_copy(buf, ethr_hdr, ETHERNET_HDR_LEN);
 }
 
 /**
@@ -2257,7 +2257,7 @@ int wmi_desc_pool_init(tp_wma_handle wma_handle, uint32_t pool_size)
 	WMA_LOGE("%s: initialize desc pool of size %d", __func__, pool_size);
 	wma_handle->wmi_desc_pool.pool_size = pool_size;
 	wma_handle->wmi_desc_pool.num_free = pool_size;
-	wma_handle->wmi_desc_pool.array = cdf_mem_malloc(pool_size *
+	wma_handle->wmi_desc_pool.array = qdf_mem_malloc(pool_size *
 					sizeof(union wmi_desc_elem_t));
 	if (!wma_handle->wmi_desc_pool.array) {
 		WMA_LOGE("%s: failed to allocate desc pool", __func__);
@@ -2289,7 +2289,7 @@ void wmi_desc_pool_deinit(tp_wma_handle wma_handle)
 {
 	qdf_spin_lock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 	if (wma_handle->wmi_desc_pool.array) {
-		cdf_mem_free(wma_handle->wmi_desc_pool.array);
+		qdf_mem_free(wma_handle->wmi_desc_pool.array);
 		wma_handle->wmi_desc_pool.array = NULL;
 	} else {
 		WMA_LOGE("%s: Empty WMI descriptor pool", __func__);
@@ -2392,7 +2392,7 @@ mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
 	WMITLV_SET_HDR(bufp, WMITLV_TAG_ARRAY_BYTE, roundup(bufp_len,
 							    sizeof(uint32_t)));
 	bufp += WMI_TLV_HDR_SIZE;
-	cdf_mem_copy(bufp, pData, bufp_len);
+	qdf_mem_copy(bufp, pData, bufp_len);
 	cdf_nbuf_map_single(qdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
 	dma_addr = cdf_nbuf_get_frag_paddr(tx_frame, 0);
 	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
@@ -2529,9 +2529,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 				 * MAC header and data, Keep the CCMP header and
 				 * trailer as 0's, firmware shall fill this
 				 */
-				cdf_mem_set(pFrame, newFrmLen, 0);
-				cdf_mem_copy(pFrame, wh, sizeof(*wh));
-				cdf_mem_copy(pFrame + sizeof(*wh) +
+				qdf_mem_set(pFrame, newFrmLen, 0);
+				qdf_mem_copy(pFrame, wh, sizeof(*wh));
+				qdf_mem_copy(pFrame + sizeof(*wh) +
 					     IEEE80211_CCMP_HEADERLEN,
 					     pData + sizeof(*wh),
 					     frmLen - sizeof(*wh));
@@ -2560,9 +2560,9 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 * MAC header and data. MMIE field will be
 			 * filled by cds_attach_mmie API
 			 */
-			cdf_mem_set(pFrame, newFrmLen, 0);
-			cdf_mem_copy(pFrame, wh, sizeof(*wh));
-			cdf_mem_copy(pFrame + sizeof(*wh),
+			qdf_mem_set(pFrame, newFrmLen, 0);
+			qdf_mem_copy(pFrame, wh, sizeof(*wh));
+			qdf_mem_copy(pFrame + sizeof(*wh),
 				     pData + sizeof(*wh), frmLen - sizeof(*wh));
 			if (!cds_attach_mmie(iface->key.key,
 					     iface->key.key_id[0].ipn,
@@ -2644,14 +2644,14 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 		/* Take out 802.11 header from skb */
 		decap_info.hdr_len = wma_ieee80211_hdrsize(wh);
-		cdf_mem_copy(decap_info.hdr, wh, decap_info.hdr_len);
+		qdf_mem_copy(decap_info.hdr, wh, decap_info.hdr_len);
 		cdf_nbuf_pull_head(skb, decap_info.hdr_len);
 
 		/*  Decapsulate to 802.3 format */
 		wma_decap_to_8023(skb, &decap_info);
 
 		/* Zero out skb's context buffer for the driver to use */
-		cdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+		qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 
 		/* Do the DMA Mapping */
 		cdf_nbuf_map_single(pdev->osdev, skb, QDF_DMA_TO_DEVICE);
@@ -2912,34 +2912,34 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 	if (cdf_nbuf_len(rx_frame) < sizeof(*eth_hdr))
 		return;
 	eth_hdr = (struct ether_header *)cdf_nbuf_data(rx_frame);
-	mic_err_ind = cdf_mem_malloc(sizeof(*mic_err_ind));
+	mic_err_ind = qdf_mem_malloc(sizeof(*mic_err_ind));
 	if (!mic_err_ind) {
 		WMA_LOGE("%s: Failed to allocate memory for MIC indication message",
 			__func__);
 		return;
 	}
-	cdf_mem_set((void *)mic_err_ind, sizeof(*mic_err_ind), 0);
+	qdf_mem_set((void *)mic_err_ind, sizeof(*mic_err_ind), 0);
 
 	mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 	mic_err_ind->length = sizeof(*mic_err_ind);
 	mic_err_ind->sessionId = vdev_id;
 	qdf_copy_macaddr(&mic_err_ind->bssId,
 		     (struct qdf_mac_addr *) &wma->interfaces[vdev_id].bssid);
-	cdf_mem_copy(mic_err_ind->info.taMacAddr,
+	qdf_mem_copy(mic_err_ind->info.taMacAddr,
 		     (struct qdf_mac_addr *) peer_mac_addr,
 			sizeof(tSirMacAddr));
-	cdf_mem_copy(mic_err_ind->info.srcMacAddr,
+	qdf_mem_copy(mic_err_ind->info.srcMacAddr,
 		     (struct qdf_mac_addr *) eth_hdr->ether_shost,
 			sizeof(tSirMacAddr));
-	cdf_mem_copy(mic_err_ind->info.dstMacAddr,
+	qdf_mem_copy(mic_err_ind->info.dstMacAddr,
 		     (struct qdf_mac_addr *) eth_hdr->ether_dhost,
 			sizeof(tSirMacAddr));
 	mic_err_ind->info.keyId = key_id;
 	mic_err_ind->info.multicast =
 		IEEE80211_IS_MULTICAST(eth_hdr->ether_dhost);
-	cdf_mem_copy(mic_err_ind->info.TSC, pn, SIR_CIPHER_SEQ_CTR_SIZE);
+	qdf_mem_copy(mic_err_ind->info.TSC, pn, SIR_CIPHER_SEQ_CTR_SIZE);
 
-	cdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
+	qdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
 	cds_msg.type = eWNI_SME_MIC_FAILURE_IND;
 	cds_msg.bodyptr = (void *) mic_err_ind;
 
@@ -2947,7 +2947,7 @@ void ol_rx_err(ol_pdev_handle pdev, uint8_t vdev_id,
 		cds_mq_post_message(CDS_MQ_ID_SME, (cds_msg_t *) &cds_msg)) {
 		WMA_LOGE("%s: could not post mic failure indication to SME",
 			 __func__);
-		cdf_mem_free((void *)mic_err_ind);
+		qdf_mem_free((void *)mic_err_ind);
 	}
 }
 
@@ -3107,14 +3107,14 @@ wma_indicate_err(
 			return;
 		}
 
-		mic_err_ind = cdf_mem_malloc(sizeof(*mic_err_ind));
+		mic_err_ind = qdf_mem_malloc(sizeof(*mic_err_ind));
 		if (!mic_err_ind) {
 			WMA_LOGE("%s: MIC indication mem alloc failed",
 					 __func__);
 			return;
 		}
 
-		cdf_mem_set((void *) mic_err_ind, 0,
+		qdf_mem_set((void *) mic_err_ind, 0,
 			 sizeof(*mic_err_ind));
 		mic_err_ind->messageType = eWNI_SME_MIC_FAILURE_IND;
 		mic_err_ind->length = sizeof(*mic_err_ind);
@@ -3125,23 +3125,23 @@ wma_indicate_err(
 			 mic_err_ind->bssId.bytes[0], mic_err_ind->bssId.bytes[1],
 			 mic_err_ind->bssId.bytes[2], mic_err_ind->bssId.bytes[3],
 			 mic_err_ind->bssId.bytes[4], mic_err_ind->bssId.bytes[5]);
-		cdf_mem_copy(mic_err_ind->info.taMacAddr,
+		qdf_mem_copy(mic_err_ind->info.taMacAddr,
 			 (struct qdf_mac_addr *) err_info->u.mic_err.ta,
 			 sizeof(tSirMacAddr));
-		cdf_mem_copy(mic_err_ind->info.srcMacAddr,
+		qdf_mem_copy(mic_err_ind->info.srcMacAddr,
 			 (struct qdf_mac_addr *) err_info->u.mic_err.sa,
 			 sizeof(tSirMacAddr));
-		cdf_mem_copy(mic_err_ind->info.dstMacAddr,
+		qdf_mem_copy(mic_err_ind->info.dstMacAddr,
 			(struct qdf_mac_addr *) err_info->u.mic_err.da,
 			 sizeof(tSirMacAddr));
 		mic_err_ind->info.keyId = err_info->u.mic_err.key_id;
 		mic_err_ind->info.multicast =
 			 IEEE80211_IS_MULTICAST(err_info->u.mic_err.da);
-		cdf_mem_copy(mic_err_ind->info.TSC,
+		qdf_mem_copy(mic_err_ind->info.TSC,
 			 (void *)&err_info->
 			 u.mic_err.pn, SIR_CIPHER_SEQ_CTR_SIZE);
 
-		cdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
+		qdf_mem_set(&cds_msg, sizeof(cds_msg_t), 0);
 		cds_msg.type = eWNI_SME_MIC_FAILURE_IND;
 		cds_msg.bodyptr = (void *) mic_err_ind;
 		if (QDF_STATUS_SUCCESS !=
@@ -3149,7 +3149,7 @@ wma_indicate_err(
 				 (cds_msg_t *) &cds_msg)) {
 			WMA_LOGE("%s: mic failure ind post to SME failed",
 					 __func__);
-			cdf_mem_free((void *)mic_err_ind);
+			qdf_mem_free((void *)mic_err_ind);
 		}
 		break;
 	}

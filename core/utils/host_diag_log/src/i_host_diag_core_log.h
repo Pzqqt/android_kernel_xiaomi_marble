@@ -46,7 +46,7 @@
    Include Files
    ------------------------------------------------------------------------*/
 #include <qdf_types.h>
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 
 /*--------------------------------------------------------------------------
    Preprocessor definitions and constants
@@ -83,9 +83,9 @@ void host_diag_log_submit(void *plog_hdr_ptr);
 
 #define WLAN_HOST_DIAG_LOG_ALLOC(payload_ptr, payload_type, log_code)	\
 	do { \
-		payload_ptr = (payload_type *)cdf_mem_malloc(sizeof(payload_type)); \
+		payload_ptr = (payload_type *)qdf_mem_malloc(sizeof(payload_type)); \
 		if (payload_ptr) { \
-			cdf_mem_zero(payload_ptr, sizeof(payload_type)); \
+			qdf_mem_zero(payload_ptr, sizeof(payload_type)); \
 			host_diag_log_set_code(payload_ptr, log_code); \
 			host_diag_log_set_length(payload_ptr, sizeof(payload_type)); \
 		} \
@@ -98,7 +98,7 @@ void host_diag_log_submit(void *plog_hdr_ptr);
 	do { \
 		if (payload_ptr) { \
 			host_diag_log_submit(payload_ptr); \
-			cdf_mem_free(payload_ptr); \
+			qdf_mem_free(payload_ptr); \
 		} \
 	} while (0)
 
@@ -108,7 +108,7 @@ void host_diag_log_submit(void *plog_hdr_ptr);
 #define WLAN_HOST_DIAG_LOG_FREE(payload_ptr) \
 	do {				\
 		if (payload_ptr) {	      \
-			cdf_mem_free(payload_ptr); \
+			qdf_mem_free(payload_ptr); \
 		}			      \
 	} while (0)
 

@@ -1733,9 +1733,9 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -1778,7 +1778,7 @@ static int __wlan_hdd_cfg80211_extscan_get_capabilities(struct wiphy *wiphy,
 	EXIT();
 	return ret;
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 
@@ -1867,9 +1867,9 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -1923,7 +1923,7 @@ static int __wlan_hdd_cfg80211_extscan_get_cached_results(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 /*
@@ -2015,9 +2015,9 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -2136,7 +2136,7 @@ __wlan_hdd_cfg80211_extscan_set_bssid_hotlist(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 
@@ -2212,9 +2212,9 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -2333,7 +2333,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE,
 		       FL("sme_set_significant_change failed(err=%d)"), status);
-		cdf_mem_free(pReqMsg);
+		qdf_mem_free(pReqMsg);
 		return -EINVAL;
 	}
 
@@ -2356,7 +2356,7 @@ __wlan_hdd_cfg80211_extscan_set_significant_change(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 
@@ -3159,7 +3159,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
 		hddLog(LOGE, FL("memory allocation failed"));
 		return -ENOMEM;
@@ -3279,7 +3279,7 @@ __wlan_hdd_cfg80211_extscan_start(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 /*
@@ -3369,9 +3369,9 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -3418,7 +3418,7 @@ __wlan_hdd_cfg80211_extscan_stop(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 /*
@@ -3496,9 +3496,9 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -3547,7 +3547,7 @@ __wlan_hdd_cfg80211_extscan_reset_bssid_hotlist(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 
@@ -3621,9 +3621,9 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 		return -EINVAL;
 	}
 
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -3650,7 +3650,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		hddLog(LOGE, FL("sme_reset_significant_change failed(err=%d)"),
 			status);
-		cdf_mem_free(pReqMsg);
+		qdf_mem_free(pReqMsg);
 		return -EINVAL;
 	}
 
@@ -3673,7 +3673,7 @@ __wlan_hdd_cfg80211_extscan_reset_significant_change(struct wiphy
 	return retval;
 
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 
@@ -3749,7 +3749,7 @@ static int hdd_extscan_epno_fill_network_list(
 		req_msg->networks[index].ssid.length = ssid_len;
 		hddLog(LOG1, FL("network ssid length %d"), ssid_len);
 		ssid = nla_data(network[QCA_WLAN_VENDOR_ATTR_PNO_SET_LIST_PARAM_EPNO_NETWORK_SSID]);
-		cdf_mem_copy(req_msg->networks[index].ssid.ssId,
+		qdf_mem_copy(req_msg->networks[index].ssid.ssId,
 				ssid, ssid_len);
 		hddLog(LOG1, FL("Ssid (%.*s)"),
 			req_msg->networks[index].ssid.length,
@@ -3845,12 +3845,12 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 
 	len = sizeof(*req_msg) +
 		(num_networks * sizeof(struct wifi_epno_network));
-	req_msg = cdf_mem_malloc(len);
+	req_msg = qdf_mem_malloc(len);
 	if (!req_msg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
-	cdf_mem_zero(req_msg, len);
+	qdf_mem_zero(req_msg, len);
 	req_msg->num_networks = num_networks;
 
 	/* Parse and fetch request Id */
@@ -3875,11 +3875,11 @@ static int __wlan_hdd_cfg80211_set_epno_list(struct wiphy *wiphy,
 	}
 
 	EXIT();
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return 0;
 
 fail:
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return -EINVAL;
 }
 
@@ -3962,7 +3962,7 @@ static int hdd_extscan_passpoint_fill_network_list(
 			hddLog(LOGE, FL("Invalid realm size %d"), len);
 			return -EINVAL;
 		}
-		cdf_mem_copy(req_msg->networks[index].realm,
+		qdf_mem_copy(req_msg->networks[index].realm,
 				nla_data(network[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_NETWORK_PARAM_REALM]),
 				len);
 		hddLog(LOG1, FL("realm len %d"), len);
@@ -4048,10 +4048,10 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 		tb[QCA_WLAN_VENDOR_ATTR_PNO_PASSPOINT_LIST_PARAM_NUM]);
 	hddLog(LOG1, FL("num networks %u"), num_networks);
 
-	req_msg = cdf_mem_malloc(sizeof(*req_msg) +
+	req_msg = qdf_mem_malloc(sizeof(*req_msg) +
 			(num_networks * sizeof(req_msg->networks[0])));
 	if (!req_msg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 	req_msg->num_networks = num_networks;
@@ -4079,11 +4079,11 @@ static int __wlan_hdd_cfg80211_set_passpoint_list(struct wiphy *wiphy,
 	}
 
 	EXIT();
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return 0;
 
 fail:
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return -EINVAL;
 }
 
@@ -4155,9 +4155,9 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	req_msg = cdf_mem_malloc(sizeof(*req_msg));
+	req_msg = qdf_mem_malloc(sizeof(*req_msg));
 	if (!req_msg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -4181,11 +4181,11 @@ static int __wlan_hdd_cfg80211_reset_passpoint_list(struct wiphy *wiphy,
 	}
 
 	EXIT();
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return 0;
 
 fail:
-	cdf_mem_free(req_msg);
+	qdf_mem_free(req_msg);
 	return -EINVAL;
 }
 
@@ -4286,9 +4286,9 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	request = cdf_mem_malloc(sizeof(*request));
+	request = qdf_mem_malloc(sizeof(*request));
 	if (!request) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -4390,7 +4390,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	cdf_mem_free(request);
+	qdf_mem_free(request);
 
 	/* request was sent -- wait for the response */
 	rc = wait_for_completion_timeout(&context->response_event,
@@ -4411,7 +4411,7 @@ __wlan_hdd_cfg80211_extscan_set_ssid_hotlist(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(request);
+	qdf_mem_free(request);
 	return -EINVAL;
 }
 
@@ -4506,9 +4506,9 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	request = cdf_mem_malloc(sizeof(*request));
+	request = qdf_mem_malloc(sizeof(*request));
 	if (!request) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -4540,7 +4540,7 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 		goto fail;
 	}
 
-	cdf_mem_free(request);
+	qdf_mem_free(request);
 
 	/* request was sent -- wait for the response */
 	rc = wait_for_completion_timeout(&context->response_event,
@@ -4561,7 +4561,7 @@ __wlan_hdd_cfg80211_extscan_reset_ssid_hotlist(struct wiphy *wiphy,
 	return retval;
 
 fail:
-	cdf_mem_free(request);
+	qdf_mem_free(request);
 	return -EINVAL;
 }
 

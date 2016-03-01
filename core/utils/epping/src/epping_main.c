@@ -87,7 +87,7 @@ int epping_open(void)
 {
 	EPPING_LOG(QDF_TRACE_LEVEL_INFO_HIGH, "%s: Enter", __func__);
 
-	g_epping_ctx = cdf_mem_malloc(sizeof(*g_epping_ctx));
+	g_epping_ctx = qdf_mem_malloc(sizeof(*g_epping_ctx));
 
 	if (g_epping_ctx == NULL) {
 		EPPING_LOG(QDF_TRACE_LEVEL_ERROR,
@@ -148,7 +148,7 @@ void epping_close(void)
 
 	to_free = g_epping_ctx;
 	g_epping_ctx = NULL;
-	cdf_mem_free(to_free);
+	qdf_mem_free(to_free);
 }
 
 static void epping_target_suspend_acknowledge(void *context)

@@ -281,7 +281,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 #endif /* QCA_WIFI_FTM */
 
 	/*Open the WMA module */
-	cdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
+	qdf_mem_set(&mac_openParms, sizeof(mac_openParms), 0);
 	mac_openParms.driverType = eDRIVER_TYPE_MFG;
 
 	hdd_ctx = (hdd_context_t *) (gp_cds_context->pHDDContext);
@@ -1019,7 +1019,7 @@ QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 	struct ar6k_testmode_cmd_data *cmd_data;
 
 	cmd_data = (struct ar6k_testmode_cmd_data *)
-		   cdf_mem_malloc(sizeof(*cmd_data));
+		   qdf_mem_malloc(sizeof(*cmd_data));
 
 	if (!cmd_data) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
@@ -1027,21 +1027,21 @@ QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cmd_data->data = cdf_mem_malloc(len);
+	cmd_data->data = qdf_mem_malloc(len);
 
 	if (!cmd_data->data) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  ("Failed to allocate FTM command data buffer"));
-		cdf_mem_free(cmd_data);
+		qdf_mem_free(cmd_data);
 		return QDF_STATUS_E_NOMEM;
 	}
 
 	cmd_data->len = len;
-	cdf_mem_copy(cmd_data->data, data, len);
+	qdf_mem_copy(cmd_data->data, data, len);
 
 	if (wlan_ftm_postmsg((uint8_t *) cmd_data, sizeof(*cmd_data))) {
-		cdf_mem_free(cmd_data->data);
-		cdf_mem_free(cmd_data);
+		qdf_mem_free(cmd_data->data);
+		qdf_mem_free(cmd_data);
 		return QDF_STATUS_E_FAILURE;
 	}
 

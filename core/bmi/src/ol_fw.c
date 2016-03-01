@@ -97,7 +97,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 		goto end;
 	}
 
-	if (!cdf_mem_compare(hash, temp, SHA256_DIGEST_SIZE)) {
+	if (qdf_mem_cmp(hash, temp, SHA256_DIGEST_SIZE)) {
 		BMI_INFO("Download FW in non-secure mode:%d", file);
 		goto end;
 	}
@@ -109,7 +109,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 		ret = -1;
 		goto end;
 	}
-	cdf_mem_copy(fw_mem, data, fw_size);
+	qdf_mem_copy(fw_mem, data, fw_size);
 
 	ret = cnss_get_sha_hash(fw_mem, fw_size, "sha256", digest);
 
@@ -118,7 +118,7 @@ static int ol_check_fw_hash(const u8 *data, u32 fw_size, ATH_BIN_FILE file)
 		goto end;
 	}
 
-	if (cdf_mem_compare(hash, digest, SHA256_DIGEST_SIZE) != 0) {
+	if (qdf_mem_cmp(hash, digest, SHA256_DIGEST_SIZE) == 0) {
 		BMI_ERR("Hash Mismatch");
 		qdf_trace_hex_dump(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_FATAL,
 				   digest, SHA256_DIGEST_SIZE);
@@ -299,14 +299,14 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		uint32_t board_ext_address;
 		int32_t board_ext_data_size;
 
-		temp_eeprom = cdf_mem_malloc(fw_entry_size);
+		temp_eeprom = qdf_mem_malloc(fw_entry_size);
 		if (!temp_eeprom) {
 			BMI_ERR("%s: Memory allocation failed", __func__);
 			release_firmware(fw_entry);
 			return QDF_STATUS_E_NOMEM;
 		}
 
-		cdf_mem_copy(temp_eeprom, (uint8_t *) fw_entry->data,
+		qdf_mem_copy(temp_eeprom, (uint8_t *) fw_entry->data,
 			  fw_entry_size);
 
 		switch (target_type) {
@@ -444,7 +444,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 
 end:
 	if (temp_eeprom)
-		cdf_mem_free(temp_eeprom);
+		qdf_mem_free(temp_eeprom);
 
 	if (status != EOK) {
 		BMI_ERR("%s, BMI operation failed: %d", __func__, __LINE__);
@@ -507,7 +507,7 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 {
 	int ret = -1;
 
-	struct ramdump_info *info = cdf_mem_malloc(sizeof(struct ramdump_info));
+	struct ramdump_info *info = qdf_mem_malloc(sizeof(struct ramdump_info));
 
 	if (!info) {
 		BMI_ERR("%s Memory for Ramdump Allocation failed", __func__);
@@ -523,7 +523,7 @@ int ol_copy_ramdump(struct hif_opaque_softc *scn)
 
 	ret = ol_target_coredump(scn, info->base, info->size);
 
-	cdf_mem_free(info);
+	qdf_mem_free(info);
 	return ret;
 }
 
@@ -1655,5 +1655,5 @@ struct ol_config_info *ol_get_ini_handle(struct ol_context *ol_ctx)
 void ol_init_ini_config(struct ol_context *ol_ctx,
 			struct ol_config_info *cfg)
 {
-	cdf_mem_copy(&ol_ctx->cfg_info, cfg, sizeof(struct ol_config_info));
+	qdf_mem_copy(&ol_ctx->cfg_info, cfg, sizeof(struct ol_config_info));
 }

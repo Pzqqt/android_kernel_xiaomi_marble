@@ -1406,7 +1406,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 	} /* end of check for NOL or ACS channels */
 
 	/* valid_chnl_count now have number of valid channels */
-	tmp_ch_lst = cdf_mem_malloc(valid_chnl_count);
+	tmp_ch_lst = qdf_mem_malloc(valid_chnl_count);
 	if (tmp_ch_lst == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("sapdfs: memory alloc failed"));
@@ -1445,12 +1445,12 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 							   nol,
 							   valid_chnl_count,
 							   tmp_ch_lst)) {
-			cdf_mem_free(tmp_ch_lst);
+			qdf_mem_free(tmp_ch_lst);
 			return target_channel;
 		}
 #endif
-		cdf_mem_zero(availableChannels, sizeof(availableChannels));
-		cdf_mem_zero(&channelBitmap, sizeof(channelBitmap));
+		qdf_mem_zero(availableChannels, sizeof(availableChannels));
+		qdf_mem_zero(&channelBitmap, sizeof(channelBitmap));
 		channelBitmap.chanBondingSet[0].startChannel = 36;
 		channelBitmap.chanBondingSet[1].startChannel = 52;
 		channelBitmap.chanBondingSet[2].startChannel = 100;
@@ -1591,7 +1591,7 @@ static uint8_t sap_random_channel_sel(ptSapContext sapContext)
 		break;
 	/* this loop will iterate at max 3 times */
 	} while (1);
-	cdf_mem_free(tmp_ch_lst);
+	qdf_mem_free(tmp_ch_lst);
 	return target_channel;
 }
 
@@ -2049,7 +2049,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 		if (sap_context->acs_cfg->skip_scan_status !=
 						eSAP_SKIP_ACS_SCAN) {
 #endif
-		cdf_mem_zero(&scan_request, sizeof(scan_request));
+		qdf_mem_zero(&scan_request, sizeof(scan_request));
 
 		/*
 		 * Set scanType to Active scan. FW takes care of using passive
@@ -2141,7 +2141,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			if (sap_context->channelList != NULL) {
 				sap_context->channel =
 					sap_context->channelList[0];
-				cdf_mem_free(sap_context->
+				qdf_mem_free(sap_context->
 					channelList);
 				sap_context->channelList = NULL;
 			}
@@ -2315,7 +2315,7 @@ sap_goto_starting
 		4, 5, 6, 7, 8, 9, 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, };
 	sapContext->key_type = 0x05;
 	sapContext->key_length = 32;
-	cdf_mem_copy(sapContext->key_material, key_material, sizeof(key_material));     /* Need a key size define */
+	qdf_mem_copy(sapContext->key_material, key_material, sizeof(key_material));     /* Need a key size define */
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH, "In %s",
 		  __func__);
@@ -2574,14 +2574,14 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		reassoc_complete->staId = csr_roaminfo->staId;
 		reassoc_complete->statusCode = csr_roaminfo->statusCode;
 		reassoc_complete->iesLen = csr_roaminfo->rsnIELen;
-		cdf_mem_copy(reassoc_complete->ies, csr_roaminfo->prsnIE,
+		qdf_mem_copy(reassoc_complete->ies, csr_roaminfo->prsnIE,
 			     csr_roaminfo->rsnIELen);
 
 #ifdef FEATURE_WLAN_WAPI
 		if (csr_roaminfo->wapiIELen) {
 			uint8_t len = reassoc_complete->iesLen;
 			reassoc_complete->iesLen += csr_roaminfo->wapiIELen;
-			cdf_mem_copy(&reassoc_complete->ies[len],
+			qdf_mem_copy(&reassoc_complete->ies[len],
 				     csr_roaminfo->pwapiIE,
 				     csr_roaminfo->wapiIELen);
 		}
@@ -2589,7 +2589,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		if (csr_roaminfo->addIELen) {
 			uint8_t len = reassoc_complete->iesLen;
 			reassoc_complete->iesLen += csr_roaminfo->addIELen;
-			cdf_mem_copy(&reassoc_complete->ies[len],
+			qdf_mem_copy(&reassoc_complete->ies[len],
 				     csr_roaminfo->paddIE,
 				     csr_roaminfo->addIELen);
 		}
@@ -2646,20 +2646,20 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 		sap_ap_event.sapHddEventCode = eSAP_STA_MIC_FAILURE_EVENT;
 		mic_failure = &sap_ap_event.sapevt.sapStationMICFailureEvent;
 
-		cdf_mem_copy(&mic_failure->srcMacAddr,
+		qdf_mem_copy(&mic_failure->srcMacAddr,
 			     csr_roaminfo->u.pMICFailureInfo->srcMacAddr,
 			     sizeof(tSirMacAddr));
-		cdf_mem_copy(&mic_failure->staMac.bytes,
+		qdf_mem_copy(&mic_failure->staMac.bytes,
 			     csr_roaminfo->u.pMICFailureInfo->taMacAddr,
 			     sizeof(tSirMacAddr));
-		cdf_mem_copy(&mic_failure->dstMacAddr.bytes,
+		qdf_mem_copy(&mic_failure->dstMacAddr.bytes,
 			     csr_roaminfo->u.pMICFailureInfo->dstMacAddr,
 			     sizeof(tSirMacAddr));
 		mic_failure->multicast =
 			csr_roaminfo->u.pMICFailureInfo->multicast;
 		mic_failure->IV1 = csr_roaminfo->u.pMICFailureInfo->IV1;
 		mic_failure->keyId = csr_roaminfo->u.pMICFailureInfo->keyId;
-		cdf_mem_copy(mic_failure->TSC,
+		qdf_mem_copy(mic_failure->TSC,
 			     csr_roaminfo->u.pMICFailureInfo->TSC,
 			     SIR_CIPHER_SEQ_CTR_SIZE);
 		break;
@@ -2670,7 +2670,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 	case eSAP_WPS_PBC_PROBE_REQ_EVENT:
 		sap_ap_event.sapHddEventCode = eSAP_WPS_PBC_PROBE_REQ_EVENT;
 
-		cdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
+		qdf_mem_copy(&sap_ap_event.sapevt.sapPBCProbeReqEvent.
 			     WPSPBCProbeReq, csr_roaminfo->u.pWPSPBCProbeReq,
 			     sizeof(tSirWPSPBCProbeReq));
 		break;
@@ -2700,7 +2700,7 @@ QDF_STATUS sap_signal_hdd_event(ptSapContext sap_ctx,
 
 	case eSAP_UNKNOWN_STA_JOIN:
 		sap_ap_event.sapHddEventCode = eSAP_UNKNOWN_STA_JOIN;
-		cdf_mem_copy((void *) sap_ap_event.sapevt.sapUnknownSTAJoin.
+		qdf_mem_copy((void *) sap_ap_event.sapevt.sapUnknownSTAJoin.
 			     macaddr.bytes, (void *) context,
 			     QDF_MAC_ADDR_SIZE);
 		break;
@@ -2866,7 +2866,7 @@ QDF_STATUS sap_close_session(tHalHandle hHal,
 		}
 		pMac->sap.SapDfsInfo.cac_state = eSAP_DFS_DO_NOT_SKIP_CAC;
 		sap_cac_reset_notify(hHal);
-		cdf_mem_zero(&pMac->sap, sizeof(pMac->sap));
+		qdf_mem_zero(&pMac->sap, sizeof(pMac->sap));
 	}
 
 	return qdf_status;
@@ -3746,7 +3746,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 	profile->csrPersona = pconfig_params->persona;
 	profile->disableDFSChSwitch = pconfig_params->disableDFSChSwitch;
 
-	cdf_mem_zero(profile->SSIDs.SSIDList[0].SSID.ssId,
+	qdf_mem_zero(profile->SSIDs.SSIDList[0].SSID.ssId,
 		     sizeof(profile->SSIDs.SSIDList[0].SSID.ssId));
 
 	/* Flag to not broadcast the SSID information */
@@ -3755,7 +3755,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 
 	profile->SSIDs.SSIDList[0].SSID.length =
 		pconfig_params->SSIDinfo.ssid.length;
-	cdf_mem_copy(&profile->SSIDs.SSIDList[0].SSID.ssId,
+	qdf_mem_copy(&profile->SSIDs.SSIDList[0].SSID.ssId,
 		     pconfig_params->SSIDinfo.ssid.ssId,
 		     sizeof(pconfig_params->SSIDinfo.ssid.ssId));
 
@@ -3805,13 +3805,13 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 	profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
 	if (pconfig_params->RSNWPAReqIELength) {
 		profile->pRSNReqIE =
-			cdf_mem_malloc(pconfig_params->RSNWPAReqIELength);
+			qdf_mem_malloc(pconfig_params->RSNWPAReqIELength);
 		if (NULL == profile->pRSNReqIE) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  " %s Fail to alloc memory", __func__);
 			return eSAP_STATUS_FAILURE;
 		}
-		cdf_mem_copy(profile->pRSNReqIE, pconfig_params->RSNWPAReqIE,
+		qdf_mem_copy(profile->pRSNReqIE, pconfig_params->RSNWPAReqIE,
 			     pconfig_params->RSNWPAReqIELength);
 		profile->nRSNReqIELength = pconfig_params->RSNWPAReqIELength;
 	}
@@ -3839,7 +3839,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 
 	/* country code */
 	if (pconfig_params->countryCode[0])
-		cdf_mem_copy(profile->countryCode, pconfig_params->countryCode,
+		qdf_mem_copy(profile->countryCode, pconfig_params->countryCode,
 			     WNI_CFG_COUNTRY_CODE_LEN);
 	profile->ieee80211d = pconfig_params->ieee80211d;
 	/* wps config info */
@@ -3891,7 +3891,7 @@ sapconvert_to_csr_profile(tsap_Config_t *pconfig_params, eCsrRoamBssType bssType
 void sap_free_roam_profile(tCsrRoamProfile *profile)
 {
 	if (profile->pRSNReqIE) {
-		cdf_mem_free(profile->pRSNReqIE);
+		qdf_mem_free(profile->pRSNReqIE);
 		profile->pRSNReqIE = NULL;
 	}
 }
@@ -3911,17 +3911,17 @@ void sap_sort_mac_list(struct qdf_mac_addr *macList, uint8_t size)
 	for (outer = 0; outer < size; outer++) {
 		for (inner = 0; inner < size - 1; inner++) {
 			nRes =
-				cdf_mem_compare2((macList + inner)->bytes,
+				qdf_mem_cmp((macList + inner)->bytes,
 						 (macList + inner + 1)->bytes,
 						 QDF_MAC_ADDR_SIZE);
 			if (nRes > 0) {
-				cdf_mem_copy(temp.bytes,
+				qdf_mem_copy(temp.bytes,
 					     (macList + inner + 1)->bytes,
 					     QDF_MAC_ADDR_SIZE);
-				cdf_mem_copy((macList + inner + 1)->bytes,
+				qdf_mem_copy((macList + inner + 1)->bytes,
 					     (macList + inner)->bytes,
 					     QDF_MAC_ADDR_SIZE);
-				cdf_mem_copy((macList + inner)->bytes,
+				qdf_mem_copy((macList + inner)->bytes,
 					     temp.bytes, QDF_MAC_ADDR_SIZE);
 			}
 		}
@@ -3946,7 +3946,7 @@ sap_search_mac_list(struct qdf_mac_addr *macList,
 	while (nStart <= nEnd) {
 		nMiddle = (nStart + nEnd) / 2;
 		nRes =
-			cdf_mem_compare2(&macList[nMiddle], peerMac,
+			qdf_mem_cmp(&macList[nMiddle], peerMac,
 					 QDF_MAC_ADDR_SIZE);
 
 		if (0 == nRes) {
@@ -3991,18 +3991,18 @@ void sap_add_mac_to_acl(struct qdf_mac_addr *macList,
 
 	for (i = ((*size) - 1); i >= 0; i--) {
 		nRes =
-			cdf_mem_compare2(&macList[i], peerMac, QDF_MAC_ADDR_SIZE);
+			qdf_mem_cmp(&macList[i], peerMac, QDF_MAC_ADDR_SIZE);
 		if (nRes > 0) {
 			/* Move alphabetically greater mac addresses one index down to allow for insertion
 			   of new mac in sorted order */
-			cdf_mem_copy((macList + i + 1)->bytes,
+			qdf_mem_copy((macList + i + 1)->bytes,
 				     (macList + i)->bytes, QDF_MAC_ADDR_SIZE);
 		} else {
 			break;
 		}
 	}
 	/* This should also take care of if the element is the first to be added in the list */
-	cdf_mem_copy((macList + i + 1)->bytes, peerMac, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy((macList + i + 1)->bytes, peerMac, QDF_MAC_ADDR_SIZE);
 	/* increment the list size */
 	(*size)++;
 }
@@ -4030,11 +4030,11 @@ void sap_remove_mac_from_acl(struct qdf_mac_addr *macList,
 	for (i = index; i < ((*size) - 1); i++) {
 		/* Move mac addresses starting from "index" passed one index up to delete the void
 		   created by deletion of a mac address in ACL */
-		cdf_mem_copy((macList + i)->bytes, (macList + i + 1)->bytes,
+		qdf_mem_copy((macList + i)->bytes, (macList + i + 1)->bytes,
 			     QDF_MAC_ADDR_SIZE);
 	}
 	/* The last space should be made empty since all mac addesses moved one step up */
-	cdf_mem_zero((macList + (*size) - 1)->bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero((macList + (*size) - 1)->bytes, QDF_MAC_ADDR_SIZE);
 	/* reduce the list size by 1 */
 	(*size)--;
 }
@@ -4169,7 +4169,7 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 	}
 
 	/* Allocate the max number of channel supported */
-	list = (uint8_t *) cdf_mem_malloc(NUM_5GHZ_CHANNELS +
+	list = (uint8_t *) qdf_mem_malloc(NUM_5GHZ_CHANNELS +
 						NUM_24GHZ_CHANNELS);
 	if (NULL == list) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -4266,7 +4266,7 @@ static QDF_STATUS sap_get_channel_list(ptSapContext sap_ctx,
 		*ch_list = list;
 	} else {
 		*ch_list = NULL;
-		cdf_mem_free(list);
+		qdf_mem_free(list);
 	}
 
 	for (loop_count = 0; loop_count < ch_count; loop_count++) {
@@ -4292,12 +4292,12 @@ static QDF_STATUS sap_get5_g_hz_channel_list(ptSapContext sapContext)
 	}
 
 	if (sapContext->SapAllChnlList.channelList) {
-		cdf_mem_free(sapContext->SapAllChnlList.channelList);
+		qdf_mem_free(sapContext->SapAllChnlList.channelList);
 		sapContext->SapAllChnlList.channelList = NULL;
 	}
 
 	sapContext->SapAllChnlList.channelList =
-		(tChannelInfo *) cdf_mem_malloc(WNI_CFG_VALID_CHANNEL_LIST_LEN *
+		(tChannelInfo *) qdf_mem_malloc(WNI_CFG_VALID_CHANNEL_LIST_LEN *
 						sizeof(tChannelInfo));
 	if (NULL == sapContext->SapAllChnlList.channelList) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,

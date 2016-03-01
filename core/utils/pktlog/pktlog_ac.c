@@ -41,7 +41,7 @@
  */
 
 #ifndef REMOVE_PKT_LOG
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "athdefs.h"
 #include "pktlog_ac_i.h"
 #include "cds_api.h"
@@ -78,7 +78,7 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 	QDF_STATUS status;
 	struct ath_pktlog_wmi_params *param;
 
-	param = cdf_mem_malloc(sizeof(struct ath_pktlog_wmi_params));
+	param = qdf_mem_malloc(sizeof(struct ath_pktlog_wmi_params));
 
 	if (!param)
 		return A_NO_MEMORY;
@@ -93,7 +93,7 @@ static A_STATUS pktlog_wma_post_msg(WMI_PKTLOG_EVENT event_types,
 	status = cds_mq_post_message(CDS_MQ_ID_WMA, &msg);
 
 	if (status != QDF_STATUS_SUCCESS) {
-		cdf_mem_free(param);
+		qdf_mem_free(param);
 		return A_ERROR;
 	}
 

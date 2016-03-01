@@ -543,7 +543,7 @@ uint8_t lim_is_sme_join_req_valid(tpAniSirGlobal pMac, tpSirSmeJoinReq pJoinReq)
 	   Reject Join Req if the Self Mac Address and
 	   the Ap's Mac Address is same
 	 */
-	if (cdf_mem_compare((uint8_t *) pJoinReq->selfMacAddr,
+	if (!qdf_mem_cmp((uint8_t *) pJoinReq->selfMacAddr,
 			    (uint8_t *) pJoinReq->bssDescription.bssId,
 			    (uint8_t) (sizeof(tSirMacAddr)))) {
 		/* Log the event */

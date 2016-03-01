@@ -245,7 +245,7 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 			("Indicating HAL to copy the beacon template [%d bytes] to memory"),
 		size);
 
-	beaconParams = cdf_mem_malloc(sizeof(tSendbeaconParams));
+	beaconParams = qdf_mem_malloc(sizeof(tSendbeaconParams));
 	if (NULL == beaconParams)
 		return eSIR_MEM_ALLOC_FAILED;
 
@@ -255,7 +255,7 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 	msgQ.reserved = 0;
 
 	/* Fill in tSendbeaconParams members */
-	cdf_mem_copy(beaconParams->bssId, psessionEntry->bssId,
+	qdf_mem_copy(beaconParams->bssId, psessionEntry->bssId,
 		     sizeof(psessionEntry->bssId));
 
 	if (LIM_IS_IBSS_ROLE(psessionEntry)) {
@@ -271,7 +271,7 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 		sch_log(pMac, LOGE, FL("Invalid p2pIeOffset:[%d]"),
 			pMac->sch.schObject.p2pIeOffset);
 		QDF_ASSERT(0);
-		cdf_mem_free(beaconParams);
+		qdf_mem_free(beaconParams);
 		return eSIR_FAILURE;
 	}
 	beaconParams->p2pIeOffset = pMac->sch.schObject.p2pIeOffset;
@@ -288,15 +288,15 @@ tSirRetStatus sch_send_beacon_req(tpAniSirGlobal pMac, uint8_t *beaconPayload,
 
 	/* free previous copy of the beacon */
 	if (psessionEntry->beacon) {
-		cdf_mem_free(psessionEntry->beacon);
+		qdf_mem_free(psessionEntry->beacon);
 	}
 
 	psessionEntry->bcnLen = 0;
 	psessionEntry->beacon = NULL;
 
-	psessionEntry->beacon = cdf_mem_malloc(size);
+	psessionEntry->beacon = qdf_mem_malloc(size);
 	if (psessionEntry->beacon != NULL) {
-		cdf_mem_copy(psessionEntry->beacon, beaconPayload, size);
+		qdf_mem_copy(psessionEntry->beacon, beaconPayload, size);
 		psessionEntry->bcnLen = size;
 	}
 
@@ -341,7 +341,7 @@ uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
 	uint32_t offset = 0;
 	uint8_t eid = 0xDD;
 
-	cdf_mem_copy(addIeWoP2pIe, ptr, left);
+	qdf_mem_copy(addIeWoP2pIe, ptr, left);
 	*addnIELenWoP2pIe = left;
 
 	if (addIeWoP2pIe != NULL) {
@@ -354,11 +354,11 @@ uint32_t lim_remove_p2p_ie_from_add_ie(tpAniSirGlobal pMac,
 				return eSIR_FAILURE;
 			}
 			if ((elem_id == eid) &&
-				(cdf_mem_compare(&ptr[2],
+				(!qdf_mem_cmp(&ptr[2],
 					"\x50\x6f\x9a\x09", 4))) {
 				left -= elem_len;
 				ptr += (elem_len + 2);
-				cdf_mem_copy(&addIeWoP2pIe[offset], ptr, left);
+				qdf_mem_copy(&addIeWoP2pIe[offset], ptr, left);
 				*addnIELenWoP2pIe -= (2 + elem_len);
 			} else {
 				left -= elem_len;
@@ -418,7 +418,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		* by the FW, may also have P2P IE which will fail
 		* P2P cert case 6.1.3
 		*/
-		addIeWoP2pIe = cdf_mem_malloc(psessionEntry->addIeParams.
+		addIeWoP2pIe = qdf_mem_malloc(psessionEntry->addIeParams.
 						probeRespDataLen);
 		if (NULL == addIeWoP2pIe) {
 			sch_log(pMac, LOGE,
@@ -429,19 +429,19 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		retStatus = lim_remove_p2p_ie_from_add_ie(pMac, psessionEntry,
 					addIeWoP2pIe, &addnIELenWoP2pIe);
 		if (retStatus != eSIR_SUCCESS) {
-			cdf_mem_free(addIeWoP2pIe);
+			qdf_mem_free(addIeWoP2pIe);
 			return eSIR_FAILURE;
 		}
 
 		/* Probe rsp IE available */
 		/*need to check the data length */
 		addIE =
-			cdf_mem_malloc(addnIELenWoP2pIe);
+			qdf_mem_malloc(addnIELenWoP2pIe);
 		if (NULL == addIE) {
 			sch_log(pMac, LOGE,
 				FL
 					("Unable to get WNI_CFG_PROBE_RSP_ADDNIE_DATA1 length"));
-			cdf_mem_free(addIeWoP2pIe);
+			qdf_mem_free(addIeWoP2pIe);
 			return eSIR_MEM_ALLOC_FAILED;
 		}
 		addnIELen = addnIELenWoP2pIe;
@@ -449,11 +449,11 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		if (addnIELen <= WNI_CFG_PROBE_RSP_ADDNIE_DATA1_LEN && addnIELen
 		    && (nBytes + addnIELen) <= SIR_MAX_PACKET_SIZE) {
 
-			cdf_mem_copy(addIE,
+			qdf_mem_copy(addIE,
 				     addIeWoP2pIe,
 				     addnIELenWoP2pIe);
 		}
-		cdf_mem_free(addIeWoP2pIe);
+		qdf_mem_free(addIeWoP2pIe);
 	}
 
 	if (addnIEPresent) {
@@ -463,7 +463,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 			addnIEPresent = false;  /* Dont include the IE. */
 	}
 	/* Paranoia: */
-	cdf_mem_set(pFrame2Hal, nBytes, 0);
+	qdf_mem_set(pFrame2Hal, nBytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	lim_populate_mac_header(pMac, pFrame2Hal, SIR_MAC_MGMT_FRAME,
@@ -486,7 +486,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 			FL("Failed to pack a Probe Response (0x%08x)."),
 			nStatus);
 
-		cdf_mem_free(addIE);
+		qdf_mem_free(addIE);
 		return retCode; /* allocated! */
 	} else if (DOT11F_WARNED(nStatus)) {
 		sch_log(pMac, LOGE, FL("There were warnings while packing a P"
@@ -494,14 +494,14 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 	}
 
 	if (addnIEPresent) {
-		cdf_mem_copy(&pFrame2Hal[nBytes - addnIELen],
+		qdf_mem_copy(&pFrame2Hal[nBytes - addnIELen],
 			     &addIE[0], addnIELen);
 	}
 
 	/* free the allocated Memory */
-	cdf_mem_free(addIE);
+	qdf_mem_free(addIE);
 
-	pprobeRespParams = cdf_mem_malloc(sizeof(tSendProbeRespParams));
+	pprobeRespParams = qdf_mem_malloc(sizeof(tSendProbeRespParams));
 	if (NULL == pprobeRespParams) {
 		sch_log(pMac, LOGE,
 			FL
@@ -511,7 +511,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 		sir_copy_mac_addr(pprobeRespParams->bssId, psessionEntry->bssId);
 		pprobeRespParams->pProbeRespTemplate = pFrame2Hal;
 		pprobeRespParams->probeRespTemplateLen = nBytes;
-		cdf_mem_copy(pprobeRespParams->ucProxyProbeReqValidIEBmap,
+		qdf_mem_copy(pprobeRespParams->ucProxyProbeReqValidIEBmap,
 			     IeBitmap, (sizeof(uint32_t) * 8));
 		msgQ.type = WMA_SEND_PROBE_RSP_TMPL;
 		msgQ.reserved = 0;
@@ -525,7 +525,7 @@ uint32_t lim_send_probe_rsp_template_to_hal(tpAniSirGlobal pMac,
 				FL
 					("lim_send_probe_rsp_template_to_hal: FAIL bytes %d retcode[%X]"),
 				nBytes, retCode);
-			cdf_mem_free(pprobeRespParams);
+			qdf_mem_free(pprobeRespParams);
 		} else {
 			sch_log(pMac, LOG1,
 				FL
@@ -557,7 +557,7 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal mac_ctx, tSirMacAddr self_addr,
 		{0xFF, 0xFF, 0xFF, 0xFF, 0xFF, 0xFF},
 	};
 
-	cdf_mem_zero((uint8_t *)&frame, sizeof(tDot11fTimingAdvertisementFrame));
+	qdf_mem_zero((uint8_t *)&frame, sizeof(tDot11fTimingAdvertisementFrame));
 
 	/* Populate the TA fields */
 	status = populate_dot11f_timing_advert_frame(mac_ctx, &frame);
@@ -578,12 +578,12 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal mac_ctx, tSirMacAddr self_addr,
 	}
 
 	buf_size = sizeof(tSirMacMgmtHdr) + payload_size;
-	*buf = cdf_mem_malloc(buf_size);
+	*buf = qdf_mem_malloc(buf_size);
 	if (*buf == NULL) {
 		sch_log(mac_ctx, LOGE, FL("Cannot allocate memory"));
 		return eSIR_FAILURE;
 	}
-	cdf_mem_zero(*buf, buf_size);
+	qdf_mem_zero(*buf, buf_size);
 
 	payload_size = 0;
 	status = dot11f_pack_timing_advertisement_frame(mac_ctx, &frame,
@@ -623,6 +623,6 @@ int sch_gen_timing_advert_frame(tpAniSirGlobal mac_ctx, tSirMacAddr self_addr,
 
 fail:
 	if (*buf)
-		cdf_mem_free(*buf);
+		qdf_mem_free(*buf);
 	return status;
 }

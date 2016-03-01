@@ -28,7 +28,7 @@
 #include "sme_power_save.h"
 #include "sme_power_save_api.h"
 #include "sms_debug.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "qdf_types.h"
 #include "wma_types.h"
 #include "wmm_apsd.h"
@@ -56,7 +56,7 @@ QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s: Posting message %d failed",
 				__func__, type);
-		cdf_mem_free(body);
+		qdf_mem_free(body);
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -75,7 +75,7 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 	struct sEnablePsParams *enable_ps_req_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	enable_ps_req_params =  cdf_mem_malloc(sizeof(*enable_ps_req_params));
+	enable_ps_req_params =  qdf_mem_malloc(sizeof(*enable_ps_req_params));
 	if (NULL == enable_ps_req_params) {
 		sms_log(mac_ctx, LOGE,
 			FL("Memory allocation failed for enable_ps_req_params"));
@@ -105,7 +105,7 @@ QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 	struct  sDisablePsParams *disable_ps_req_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	disable_ps_req_params = cdf_mem_malloc(sizeof(*disable_ps_req_params));
+	disable_ps_req_params = qdf_mem_malloc(sizeof(*disable_ps_req_params));
 	if (NULL == disable_ps_req_params) {
 		sms_log(mac_ctx, LOGE,
 			FL("Memory allocation failed for sDisablePsParams"));
@@ -142,7 +142,7 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	enable_uapsd_req_params =
-		cdf_mem_malloc(sizeof(*enable_uapsd_req_params));
+		qdf_mem_malloc(sizeof(*enable_uapsd_req_params));
 	if (NULL == enable_uapsd_req_params) {
 		sms_log(mac_ctx, LOGE,
 			FL("Memory allocation failed for enable_uapsd_req_params"));
@@ -209,7 +209,7 @@ QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	disable_uapsd_req_params =
-		cdf_mem_malloc(sizeof(*disable_uapsd_req_params));
+		qdf_mem_malloc(sizeof(*disable_uapsd_req_params));
 	if (NULL == disable_uapsd_req_params) {
 		sms_log(mac_ctx, LOGE,
 			FL("Memory allocation failed for disable_uapsd_req_params"));
@@ -245,13 +245,13 @@ QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 	sme_wowl_params =
 		&ps_global_info->ps_params[session_id].wowl_enter_params;
 
-	hal_wowl_params = cdf_mem_malloc(sizeof(*hal_wowl_params));
+	hal_wowl_params = qdf_mem_malloc(sizeof(*hal_wowl_params));
 	if (NULL == hal_wowl_params) {
 		sms_log(mac_ctx, LOGP,
 			FL("Fail to allocate memory for Enter Wowl Request"));
 		return  QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_set((uint8_t *) hal_wowl_params, sizeof(*hal_wowl_params), 0);
+	qdf_mem_set((uint8_t *) hal_wowl_params, sizeof(*hal_wowl_params), 0);
 
 	/* fill in the message field */
 	hal_wowl_params->ucMagicPktEnable = sme_wowl_params->ucMagicPktEnable;
@@ -337,7 +337,7 @@ QDF_STATUS sme_ps_enter_wowl_req_params(tpAniSirGlobal mac_ctx,
 
 end:
 	if (hal_wowl_params != NULL)
-		cdf_mem_free(hal_wowl_params);
+		qdf_mem_free(hal_wowl_params);
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -352,13 +352,13 @@ QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		uint32_t session_id)
 {
 	struct sSirHalWowlExitParams *hal_wowl_msg;
-	hal_wowl_msg = cdf_mem_malloc(sizeof(*hal_wowl_msg));
+	hal_wowl_msg = qdf_mem_malloc(sizeof(*hal_wowl_msg));
 	if (NULL == hal_wowl_msg) {
 		sms_log(mac_ctx, LOGP,
 			FL("Fail to allocate memory for WoWLAN Add Bcast Pattern "));
 		return  QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_set((uint8_t *) hal_wowl_msg,
+	qdf_mem_set((uint8_t *) hal_wowl_msg,
 			sizeof(*hal_wowl_msg), 0);
 	hal_wowl_msg->sessionId = session_id;
 
@@ -369,7 +369,7 @@ QDF_STATUS sme_ps_exit_wowl_req_params(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_SUCCESS;
 	}
 	if (hal_wowl_msg != NULL)
-		cdf_mem_free(hal_wowl_msg);
+		qdf_mem_free(hal_wowl_msg);
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -647,13 +647,13 @@ sme_populate_mac_header(tpAniSirGlobal mac_ctx,
 	mac_hdr->fc.subType = sub_type;
 
 	/* Prepare Address 1 */
-	cdf_mem_copy((uint8_t *) mac_hdr->da, (uint8_t *) peer_addr,
+	qdf_mem_copy((uint8_t *) mac_hdr->da, (uint8_t *) peer_addr,
 		     sizeof(tSirMacAddr));
 
 	sir_copy_mac_addr(mac_hdr->sa, self_mac_addr);
 
 	/* Prepare Address 3 */
-	cdf_mem_copy((uint8_t *) mac_hdr->bssId, (uint8_t *) peer_addr,
+	qdf_mem_copy((uint8_t *) mac_hdr->bssId, (uint8_t *) peer_addr,
 		     sizeof(tSirMacAddr));
 	return status_code;
 } /*** sme_populate_mac_header() ***/
@@ -676,7 +676,7 @@ sme_prepare_probe_req_template(tpAniSirGlobal mac_ctx,
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
 	 * serialization).  We start by zero-initializing the structure:
 	 */
-	cdf_mem_set((uint8_t *) &pr, sizeof(pr), 0);
+	qdf_mem_set((uint8_t *) &pr, sizeof(pr), 0);
 
 	populate_dot11f_supp_rates(mac_ctx, channel_num, &pr.SuppRates, NULL);
 
@@ -714,7 +714,7 @@ sme_prepare_probe_req_template(tpAniSirGlobal mac_ctx,
 	bytes = payload + sizeof(tSirMacMgmtHdr);
 
 	/* Prepare outgoing frame */
-	cdf_mem_set(frame, bytes, 0);
+	qdf_mem_set(frame, bytes, 0);
 
 	/* Next, we fill out the buffer descriptor: */
 	sir_status = sme_populate_mac_header(mac_ctx, frame, SIR_MAC_MGMT_FRAME,
@@ -815,14 +815,14 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	request_buf = cdf_mem_malloc(sizeof(tSirPNOScanReq));
+	request_buf = qdf_mem_malloc(sizeof(tSirPNOScanReq));
 	if (NULL == request_buf) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to allocate memory for PNO request"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_copy(request_buf, request, sizeof(tSirPNOScanReq));
+	qdf_mem_copy(request_buf, request, sizeof(tSirPNOScanReq));
 
 	/*Must translate the mode first */
 	uc_dot11_mode = (uint8_t) csr_translate_to_wni_cfg_dot11_mode(mac_ctx,
@@ -847,7 +847,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 				((request_buf->us24GProbeTemplateLen +
 				  request->us24GProbeTemplateLen) <
 				 SIR_PNO_MAX_PB_REQ_SIZE)) {
-			cdf_mem_copy((uint8_t *) &request_buf->
+			qdf_mem_copy((uint8_t *) &request_buf->
 					p24GProbeTemplate +
 					request_buf->us24GProbeTemplateLen,
 					(uint8_t *) &request->p24GProbeTemplate,
@@ -880,7 +880,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 				((request_buf->us5GProbeTemplateLen +
 				  request->us5GProbeTemplateLen) <
 				 SIR_PNO_MAX_PB_REQ_SIZE)) {
-			cdf_mem_copy((uint8_t *) &request_buf->
+			qdf_mem_copy((uint8_t *) &request_buf->
 					p5GProbeTemplate +
 					request_buf->us5GProbeTemplateLen,
 					(uint8_t *) &request->p5GProbeTemplate,
@@ -935,7 +935,7 @@ QDF_STATUS sme_set_ps_preferred_network_list(tHalHandle hal_ctx,
 			(cds_mq_post_message(QDF_MODULE_ID_WMA, &msg))) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post WMA_SET_PNO_REQ message to WMA"));
-		cdf_mem_free(request_buf);
+		qdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -982,7 +982,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	request_buf = cdf_mem_malloc(sizeof(tSirHostOffloadReq));
+	request_buf = qdf_mem_malloc(sizeof(tSirHostOffloadReq));
 	if (NULL == request_buf) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		   FL("Not able to allocate memory for host offload request"));
@@ -991,7 +991,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 
 	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
-	cdf_mem_copy(request_buf, request, sizeof(tSirHostOffloadReq));
+	qdf_mem_copy(request_buf, request, sizeof(tSirHostOffloadReq));
 
 	msg.type = WMA_SET_HOST_OFFLOAD;
 	msg.reserved = 0;
@@ -1000,7 +1000,7 @@ QDF_STATUS sme_set_ps_host_offload(tHalHandle hal_ctx,
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 		      FL("Not able to post WMA_SET_HOST_OFFLOAD msg to WMA"));
-		cdf_mem_free(request_buf);
+		qdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -1033,7 +1033,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 
 	qdf_copy_macaddr(&request->bssid, &session->connectedProfile.bssid);
 
-	request_buf = cdf_mem_malloc(sizeof(*request_buf));
+	request_buf = qdf_mem_malloc(sizeof(*request_buf));
 	if (NULL == request_buf) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to allocate memory for NS offload request"));
@@ -1048,7 +1048,7 @@ QDF_STATUS sme_set_ps_ns_offload(tHalHandle hal_ctx,
 			cds_mq_post_message(QDF_MODULE_ID_WMA, &msg)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			FL("Not able to post SIR_HAL_SET_HOST_OFFLOAD message to HAL"));
-		cdf_mem_free(request_buf);
+		qdf_mem_free(request_buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 

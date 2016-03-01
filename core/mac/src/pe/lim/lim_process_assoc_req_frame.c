@@ -328,7 +328,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	sir_dump_buf(pMac, SIR_LIM_MODULE_ID, LOG2, (uint8_t *) pBody, framelen);
 
-	if (cdf_mem_compare((uint8_t *) pHdr->sa, (uint8_t *) pHdr->da,
+	if (!qdf_mem_cmp((uint8_t *) pHdr->sa, (uint8_t *) pHdr->da,
 			    (uint8_t) (sizeof(tSirMacAddr)))) {
 		lim_log(pMac, LOGE,
 			FL("Rejected Assoc Req frame Since same mac as"
@@ -349,12 +349,12 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		return;
 	}
 	/* Allocate memory for the Assoc Request frame */
-	pAssocReq = cdf_mem_malloc(sizeof(*pAssocReq));
+	pAssocReq = qdf_mem_malloc(sizeof(*pAssocReq));
 	if (NULL == pAssocReq) {
 		lim_log(pMac, LOGP, FL("Allocate Memory failed in assoc_req"));
 		return;
 	}
-	cdf_mem_set((void *)pAssocReq, sizeof(*pAssocReq), 0);
+	qdf_mem_set((void *)pAssocReq, sizeof(*pAssocReq), 0);
 
 	/* Parse Assoc Request frame */
 	if (subType == LIM_ASSOC)
@@ -376,7 +376,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		goto error;
 	}
 
-	pAssocReq->assocReqFrame = cdf_mem_malloc(framelen);
+	pAssocReq->assocReqFrame = qdf_mem_malloc(framelen);
 	if (NULL == pAssocReq->assocReqFrame) {
 		lim_log(pMac, LOGE,
 			FL("Unable to allocate memory for the assoc req, "
@@ -384,7 +384,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		goto error;
 	}
 
-	cdf_mem_copy((uint8_t *) pAssocReq->assocReqFrame,
+	qdf_mem_copy((uint8_t *) pAssocReq->assocReqFrame,
 		     (uint8_t *) pBody, framelen);
 	pAssocReq->assocReqFrameLength = framelen;
 
@@ -417,7 +417,7 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 
 	updateContext = false;
 
-	if (lim_cmp_ssid(&pAssocReq->ssId, psessionEntry) == false) {
+	if (lim_cmp_ssid(&pAssocReq->ssId, psessionEntry) != false) {
 		lim_log(pMac, LOGE,
 			FL("Received %s Req with unmatched ssid ( Received"
 			   " SSID: %.*s current SSID: %.*s ) from "
@@ -684,8 +684,8 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	} /* End if on HT caps turned on in lim. */
 
 	/* Clear the buffers so that frame parser knows that there isn't a previously decoded IE in these buffers */
-	cdf_mem_set((uint8_t *) &Dot11fIERSN, sizeof(Dot11fIERSN), 0);
-	cdf_mem_set((uint8_t *) &Dot11fIEWPA, sizeof(Dot11fIEWPA), 0);
+	qdf_mem_set((uint8_t *) &Dot11fIERSN, sizeof(Dot11fIERSN), 0);
+	qdf_mem_set((uint8_t *) &Dot11fIEWPA, sizeof(Dot11fIEWPA), 0);
 
 	/* if additional IE is present, check if it has WscIE */
 	if (pAssocReq->addIEPresent && pAssocReq->addIE.length)
@@ -1008,8 +1008,8 @@ lim_process_assoc_req_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 #endif
 
 		/* no change in the capability so drop the frame */
-		if ((true ==
-		     cdf_mem_compare(&pStaDs->mlmStaContext.capabilityInfo,
+		if ((true !=
+		     qdf_mem_cmp(&pStaDs->mlmStaContext.capabilityInfo,
 				     &pAssocReq->capabilityInfo,
 				     sizeof(tSirMacCapabilityInfo)))
 		    && (subType == LIM_ASSOC)) {
@@ -1158,11 +1158,11 @@ sendIndToSme:
 		pTempAssocReq = psessionEntry->parsedAssocReq[pStaDs->assocId];
 		if (pTempAssocReq != NULL) {
 			if (pTempAssocReq->assocReqFrame) {
-				cdf_mem_free(pTempAssocReq->assocReqFrame);
+				qdf_mem_free(pTempAssocReq->assocReqFrame);
 				pTempAssocReq->assocReqFrame = NULL;
 				pTempAssocReq->assocReqFrameLength = 0;
 			}
-			cdf_mem_free(pTempAssocReq);
+			qdf_mem_free(pTempAssocReq);
 			pTempAssocReq = NULL;
 		}
 
@@ -1598,12 +1598,12 @@ sendIndToSme:
 error:
 	if (pAssocReq != NULL) {
 		if (pAssocReq->assocReqFrame) {
-			cdf_mem_free(pAssocReq->assocReqFrame);
+			qdf_mem_free(pAssocReq->assocReqFrame);
 			pAssocReq->assocReqFrame = NULL;
 			pAssocReq->assocReqFrameLength = 0;
 		}
 
-		cdf_mem_free(pAssocReq);
+		qdf_mem_free(pAssocReq);
 		/* to avoid double free */
 		if (assoc_req_copied && psessionEntry->parsedAssocReq)
 			psessionEntry->parsedAssocReq[pStaDs->assocId] = NULL;
@@ -1617,12 +1617,12 @@ error:
 				psessionEntry->parsedAssocReq[pStaDs->assocId];
 			if (pTempAssocReq != NULL) {
 				if (pTempAssocReq->assocReqFrame) {
-					cdf_mem_free(pTempAssocReq->
+					qdf_mem_free(pTempAssocReq->
 							assocReqFrame);
 					pTempAssocReq->assocReqFrame = NULL;
 					pTempAssocReq->assocReqFrameLength = 0;
 				}
-				cdf_mem_free(pTempAssocReq);
+				qdf_mem_free(pTempAssocReq);
 				psessionEntry->
 					parsedAssocReq[pStaDs->assocId] = NULL;
 			}
@@ -1656,7 +1656,7 @@ static void lim_fill_assoc_ind_wapi_info(tpAniSirGlobal mac_ctx,
 			assoc_req->wapi.length);
 		assoc_ind->wapiIE.wapiIEdata[0] = SIR_MAC_WAPI_EID;
 		assoc_ind->wapiIE.wapiIEdata[1] = assoc_req->wapi.length;
-		cdf_mem_copy(&assoc_ind->wapiIE.wapiIEdata[2],
+		qdf_mem_copy(&assoc_ind->wapiIE.wapiIEdata[2],
 			assoc_req->wapi.info, assoc_req->wapi.length);
 		assoc_ind->wapiIE.length =
 			2 + assoc_req->wapi.length;
@@ -1780,7 +1780,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 	if (sub_type == LIM_ASSOC || sub_type == LIM_REASSOC) {
 		temp = sizeof(tLimMlmAssocInd);
 
-		assoc_ind = cdf_mem_malloc(temp);
+		assoc_ind = qdf_mem_malloc(temp);
 		if (NULL == assoc_ind) {
 			lim_release_peer_idx(mac_ctx, sta_ds->assocId,
 				session_entry);
@@ -1788,11 +1788,11 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 				FL("AllocateMemory failed for assoc_ind"));
 			return;
 		}
-		cdf_mem_set(assoc_ind, temp, 0);
-		cdf_mem_copy((uint8_t *) assoc_ind->peerMacAddr,
+		qdf_mem_set(assoc_ind, temp, 0);
+		qdf_mem_copy((uint8_t *) assoc_ind->peerMacAddr,
 			(uint8_t *) sta_ds->staAddr, sizeof(tSirMacAddr));
 		assoc_ind->aid = sta_ds->assocId;
-		cdf_mem_copy((uint8_t *) &assoc_ind->ssId,
+		qdf_mem_copy((uint8_t *) &assoc_ind->ssId,
 			(uint8_t *) &(assoc_req->ssId),
 			assoc_req->ssId.length + 1);
 		assoc_ind->sessionId = session_entry->peSessionId;
@@ -1814,7 +1814,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 			assoc_ind->rsnIE.rsnIEdata[0] = SIR_MAC_RSN_EID;
 			assoc_ind->rsnIE.rsnIEdata[1] =
 				assoc_req->rsn.length;
-			cdf_mem_copy(&assoc_ind->rsnIE.rsnIEdata[2],
+			qdf_mem_copy(&assoc_ind->rsnIE.rsnIEdata[2],
 				assoc_req->rsn.info,
 				assoc_req->rsn.length);
 		}
@@ -1840,14 +1840,14 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 				lim_log(mac_ctx, LOGE,
 					FL("rsnIEdata index out of bounds %d"),
 					rsn_len);
-				cdf_mem_free(assoc_ind);
+				qdf_mem_free(assoc_ind);
 				return;
 			}
 			assoc_ind->rsnIE.rsnIEdata[rsn_len] =
 				SIR_MAC_WPA_EID;
 			assoc_ind->rsnIE.rsnIEdata[rsn_len + 1]
 				= assoc_req->wpa.length;
-			cdf_mem_copy(
+			qdf_mem_copy(
 				&assoc_ind->rsnIE.rsnIEdata[rsn_len + 2],
 				assoc_req->wpa.info, assoc_req->wpa.length);
 			assoc_ind->rsnIE.length += 2 + assoc_req->wpa.length;
@@ -1859,7 +1859,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 
 		assoc_ind->addIE.length = 0;
 		if (assoc_req->addIEPresent) {
-			cdf_mem_copy(&assoc_ind->addIE.addIEdata,
+			qdf_mem_copy(&assoc_ind->addIE.addIEdata,
 				assoc_req->addIE.addIEdata,
 				assoc_req->addIE.length);
 			assoc_ind->addIE.length = assoc_req->addIE.length;
@@ -1876,7 +1876,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 					SIR_MAC_HT_CAPABILITIES_EID;
 				assoc_ind->addIE.addIEdata[rsn_len + 1] =
 					DOT11F_IE_HTCAPS_MIN_LEN;
-				cdf_mem_copy(
+				qdf_mem_copy(
 					&assoc_ind->addIE.addIEdata[rsn_len+2],
 					((uint8_t *)&assoc_req->HTCaps) + 1,
 					DOT11F_IE_HTCAPS_MIN_LEN);
@@ -1932,7 +1932,7 @@ void lim_send_mlm_assoc_ind(tpAniSirGlobal mac_ctx,
 			assoc_ind);
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_IND,
 			 (uint32_t *) assoc_ind);
-		cdf_mem_free(assoc_ind);
+		qdf_mem_free(assoc_ind);
 	}
 	return;
 }

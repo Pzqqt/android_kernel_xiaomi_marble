@@ -261,7 +261,7 @@ static int hdd_lro_desc_find(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	cdf_mem_zero((void *)entry->lro_desc, sizeof(struct net_lro_desc));
+	qdf_mem_zero((void *)entry->lro_desc, sizeof(struct net_lro_desc));
 
 	/*
 	 * lro_desc->active should be 0 and lro_desc->tcp_rcv_tsval
@@ -516,7 +516,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	hdd_info("LRO Enabled");
 
 	hdd_lro = &adapter->lro_info;
-	cdf_mem_zero((void *)hdd_lro, sizeof(struct hdd_lro_s));
+	qdf_mem_zero((void *)hdd_lro, sizeof(struct hdd_lro_s));
 	/*
 	* Allocate all the LRO data structures at once and then carve
 	* them up as needed
@@ -526,7 +526,7 @@ int hdd_lro_enable(hdd_context_t *hdd_ctx,
 	desc_pool_sz = (LRO_DESC_POOL_SZ * sizeof(struct hdd_lro_desc_entry));
 	hash_table_sz = (sizeof(struct hdd_lro_desc_table) * LRO_DESC_TABLE_SZ);
 
-	lro_mem_ptr = cdf_mem_malloc(lro_mgr_sz + desc_arr_sz + desc_pool_sz +
+	lro_mem_ptr = qdf_mem_malloc(lro_mgr_sz + desc_arr_sz + desc_pool_sz +
 		 hash_table_sz);
 
 	if (NULL == lro_mem_ptr) {
@@ -597,7 +597,7 @@ void hdd_lro_disable(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter)
 
 	if (adapter->lro_info.lro_mgr) {
 		hdd_lro_desc_info_deinit(&adapter->lro_info);
-		cdf_mem_free(adapter->lro_info.lro_mgr);
+		qdf_mem_free(adapter->lro_info.lro_mgr);
 		adapter->lro_info.lro_mgr = NULL;
 		adapter->lro_info.lro_desc_info.
 			lro_desc_pool.lro_desc_array = NULL;

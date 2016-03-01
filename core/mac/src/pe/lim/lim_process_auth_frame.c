@@ -155,7 +155,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 			return;
 		}
 
-		cdf_mem_copy((uint8_t *) auth_node->peerMacAddr, mac_hdr->sa,
+		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr, mac_hdr->sa,
 				sizeof(tSirMacAddr));
 		auth_node->mlmState = eLIM_MLM_WT_AUTH_FRAME3_STATE;
 		auth_node->authType =
@@ -206,7 +206,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 			lim_log(mac_ctx, LOGE,
 				FL("Challenge text preparation failed"));
 		challenge = auth_node->challengeText;
-		cdf_mem_copy(challenge, (uint8_t *)challenge_txt_arr,
+		qdf_mem_copy(challenge, (uint8_t *)challenge_txt_arr,
 				sizeof(challenge_txt_arr));
 		/*
 		 * Sending Authenticaton frame with challenge.
@@ -217,7 +217,7 @@ static void lim_process_auth_shared_system_algo(tpAniSirGlobal mac_ctx,
 		auth_frame->authStatusCode = eSIR_MAC_SUCCESS_STATUS;
 		auth_frame->type = SIR_MAC_CHALLENGE_TEXT_EID;
 		auth_frame->length = SIR_MAC_AUTH_CHALLENGE_LENGTH;
-		cdf_mem_copy(auth_frame->challengeText,
+		qdf_mem_copy(auth_frame->challengeText,
 				auth_node->challengeText,
 				SIR_MAC_AUTH_CHALLENGE_LENGTH);
 		lim_send_auth_mgmt_frame(mac_ctx, auth_frame,
@@ -245,7 +245,7 @@ static void lim_process_auth_open_system_algo(tpAniSirGlobal mac_ctx,
 	}
 	lim_log(mac_ctx, LOG1, FL("Alloc new data: %p peer "), auth_node);
 	lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
-	cdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
+	qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 			mac_hdr->sa, sizeof(tSirMacAddr));
 	auth_node->mlmState = eLIM_MLM_AUTHENTICATED_STATE;
 	auth_node->authType = (tAniAuthType) rx_auth_frm_body->authAlgoNumber;
@@ -290,9 +290,9 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 		pMlmDisassocReq =
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 		if (pMlmDisassocReq &&
-			cdf_mem_compare((uint8_t *) mac_hdr->sa, (uint8_t *)
+			(!qdf_mem_cmp((uint8_t *) mac_hdr->sa, (uint8_t *)
 				&pMlmDisassocReq->peer_macaddr.bytes,
-				QDF_MAC_ADDR_SIZE)) {
+				QDF_MAC_ADDR_SIZE))) {
 			lim_log(mac_ctx, LOGE,
 				FL("TODO:Ack for disassoc frame is pending Issue delsta for "
 				MAC_ADDRESS_STR),
@@ -304,9 +304,9 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 		pMlmDeauthReq =
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 		if (pMlmDeauthReq &&
-			cdf_mem_compare((uint8_t *) mac_hdr->sa, (uint8_t *)
+			(!qdf_mem_cmp((uint8_t *) mac_hdr->sa, (uint8_t *)
 				&pMlmDeauthReq->peer_macaddr.bytes,
-				QDF_MAC_ADDR_SIZE)) {
+				QDF_MAC_ADDR_SIZE))) {
 			lim_log(mac_ctx, LOGE,
 				FL("TODO:Ack for deauth frame is pending Issue delsta for "
 				MAC_ADDRESS_STR),
@@ -386,10 +386,10 @@ static void lim_process_auth_frame_type1(tpAniSirGlobal mac_ctx,
 						&pe_session->dph.dphHashTable);
 			if (NULL == sta_ds_ptr)
 				continue;
-			if (sta_ds_ptr->valid && cdf_mem_compare(
+			if (sta_ds_ptr->valid && (!qdf_mem_cmp(
 					(uint8_t *)&sta_ds_ptr->staAddr,
 					(uint8_t *) &(mac_hdr->sa),
-					(uint8_t) sizeof(tSirMacAddr)))
+					(uint8_t) sizeof(tSirMacAddr))))
 				break;
 			sta_ds_ptr = NULL;
 		}
@@ -523,7 +523,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		    (rx_auth_frm_body->authStatusCode ==
 				eSIR_MAC_SUCCESS_STATUS) &&
 		    (pe_session->ftPEContext.pFTPreAuthReq != NULL) &&
-		    (cdf_mem_compare(
+		    (!qdf_mem_cmp(
 			pe_session->ftPEContext.pFTPreAuthReq->preAuthbssId,
 			mac_hdr->sa, sizeof(tSirMacAddr)))) {
 
@@ -534,7 +534,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			pe_session->ftPEContext.saved_auth_rsp_length = 0;
 
 			if ((body_ptr != NULL) && (frame_len < MAX_FTIE_SIZE)) {
-				cdf_mem_copy(
+				qdf_mem_copy(
 					pe_session->ftPEContext.saved_auth_rsp,
 					body_ptr, frame_len);
 				pe_session->ftPEContext.saved_auth_rsp_length =
@@ -555,7 +555,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (!cdf_mem_compare((uint8_t *) mac_hdr->sa,
+	if (qdf_mem_cmp((uint8_t *) mac_hdr->sa,
 			(uint8_t *) &mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 			sizeof(tSirMacAddr))) {
 		/*
@@ -632,7 +632,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1,
 			FL("Alloc new data: %p peer"), auth_node);
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
-		cdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
+		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 				sizeof(tSirMacAddr));
 		auth_node->fTimerStarted = 0;
@@ -693,7 +693,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 		if (LIM_IS_AP_ROLE(pe_session)) {
 			tpSirKeys key_ptr =
 				&pe_session->WEPKeyMaterial[key_id].key[0];
-			cdf_mem_copy(defaultkey, key_ptr->key,
+			qdf_mem_copy(defaultkey, key_ptr->key,
 					key_ptr->keyLength);
 		} else if (wlan_cfg_get_str(mac_ctx,
 				(uint16_t)(WNI_CFG_WEP_DEFAULT_KEY_1 + key_id),
@@ -729,7 +729,7 @@ static void lim_process_auth_frame_type2(tpAniSirGlobal mac_ctx,
 			SIR_MAC_CHALLENGE_TEXT_EID;
 		((tpSirMacAuthFrameBody)plainbody)->length =
 			SIR_MAC_AUTH_CHALLENGE_LENGTH;
-		cdf_mem_copy((uint8_t *) (
+		qdf_mem_copy((uint8_t *) (
 			(tpSirMacAuthFrameBody)plainbody)->challengeText,
 			rx_auth_frm_body->challengeText,
 			SIR_MAC_AUTH_CHALLENGE_LENGTH);
@@ -864,7 +864,7 @@ static void lim_process_auth_frame_type3(tpAniSirGlobal mac_ctx,
 		 * Check if received challenge text is same as one sent in
 		 * Authentication frame3
 		 */
-		if (cdf_mem_compare(rx_auth_frm_body->challengeText,
+		if (!qdf_mem_cmp(rx_auth_frm_body->challengeText,
 					auth_node->challengeText,
 					SIR_MAC_AUTH_CHALLENGE_LENGTH)) {
 			/*
@@ -948,7 +948,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		return;
 	}
 
-	if (!cdf_mem_compare((uint8_t *) mac_hdr->sa,
+	if (qdf_mem_cmp((uint8_t *) mac_hdr->sa,
 			(uint8_t *) &mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 			sizeof(tSirMacAddr))) {
 		/*
@@ -996,7 +996,7 @@ static void lim_process_auth_frame_type4(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1, FL("Alloc new data: %p peer "),
 			auth_node);
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG1);
-		cdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
+		qdf_mem_copy((uint8_t *) auth_node->peerMacAddr,
 				mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 				sizeof(tSirMacAddr));
 		auth_node->fTimerStarted = 0;
@@ -1262,7 +1262,7 @@ lim_process_auth_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		if (LIM_IS_AP_ROLE(pe_session)) {
 			tpSirKeys key_ptr;
 			key_ptr = &pe_session->WEPKeyMaterial[key_id].key[0];
-			cdf_mem_copy(defaultkey, key_ptr->key,
+			qdf_mem_copy(defaultkey, key_ptr->key,
 					key_ptr->keyLength);
 			val = key_ptr->keyLength;
 		} else if (wlan_cfg_get_str(mac_ctx,
@@ -1438,7 +1438,7 @@ tSirRetStatus lim_process_auth_frame_no_session(tpAniSirGlobal pMac, uint8_t *pB
 		 (pHdr->seqControl.fragNum)));
 
 	/* Check that its the same bssId we have for preAuth */
-	if (!cdf_mem_compare
+	if (qdf_mem_cmp
 		    (psessionEntry->ftPEContext.pFTPreAuthReq->preAuthbssId,
 		    pHdr->bssId, sizeof(tSirMacAddr))) {
 		lim_log(pMac, LOGE, FL("Error: Same bssid as preauth BSSID"));

@@ -44,7 +44,7 @@
 #include "ol_txrx_types.h"
 #include "ol_htt_tx_api.h"
 #include "ol_tx_desc.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "htt.h"
 #include "htt_internal.h"
 #include "pktlog_ac_i.h"
@@ -327,7 +327,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 								&buf_size);
 			if (data) {
 				process_ieee_hdr(data);
-				cdf_mem_free(data);
+				qdf_mem_free(data);
 			}
 		} else {
 			/*
@@ -359,11 +359,11 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		 */
 		txctl_log.priv.frm_hdr = frm_hdr;
 		qdf_assert(txctl_log.priv.txdesc_ctl);
-		cdf_mem_copy((void *)&txctl_log.priv.txdesc_ctl,
+		qdf_mem_copy((void *)&txctl_log.priv.txdesc_ctl,
 			     ((void *)data + sizeof(struct ath_pktlog_hdr)),
 			     pl_hdr.size);
 		qdf_assert(txctl_log.txdesc_hdr_ctl);
-		cdf_mem_copy(txctl_log.txdesc_hdr_ctl, &txctl_log.priv,
+		qdf_mem_copy(txctl_log.txdesc_hdr_ctl, &txctl_log.priv,
 			     sizeof(txctl_log.priv));
 		/* Add Protocol information and HT specific information */
 #else
@@ -373,8 +373,8 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		qdf_assert(txdesc_hdr_ctl);
 		qdf_assert(pl_hdr.size < (370 * sizeof(u_int32_t)));
 
-		cdf_mem_copy(txdesc_hdr_ctl, &frm_hdr, sizeof(frm_hdr));
-		cdf_mem_copy((char *)txdesc_hdr_ctl + sizeof(frm_hdr),
+		qdf_mem_copy(txdesc_hdr_ctl, &frm_hdr, sizeof(frm_hdr));
+		qdf_mem_copy((char *)txdesc_hdr_ctl + sizeof(frm_hdr),
 					((void *)data + sizeof(struct ath_pktlog_hdr)),
 					 pl_hdr.size);
 #endif /* !defined(HELIUMPLUS) */
@@ -387,7 +387,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		txstat_log.ds_status = (void *)
 				       pktlog_getbuf(pl_dev, pl_info, log_size, &pl_hdr);
 		qdf_assert(txstat_log.ds_status);
-		cdf_mem_copy(txstat_log.ds_status,
+		qdf_mem_copy(txstat_log.ds_status,
 			     ((void *)data + sizeof(struct ath_pktlog_hdr)),
 			     pl_hdr.size);
 	}
@@ -409,7 +409,7 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		cdf_nbuf_t netbuf;
 		uint32_t len;
 
-		cdf_mem_set(&pl_msdu_info, sizeof(pl_msdu_info), 0);
+		qdf_mem_set(&pl_msdu_info, sizeof(pl_msdu_info), 0);
 
 		pl_msdu_info.num_msdu = *msdu_id_info;
 		pl_msdu_info.priv_size = sizeof(uint32_t) *
@@ -473,10 +473,10 @@ A_STATUS process_tx_info(struct ol_txrx_pdev_t *txrx_pdev, void *data)
 		}
 		pl_msdu_info.ath_msdu_info = pktlog_getbuf(pl_dev, pl_info,
 							   log_size, &pl_hdr);
-		cdf_mem_copy((void *)&pl_msdu_info.priv.msdu_id_info,
+		qdf_mem_copy((void *)&pl_msdu_info.priv.msdu_id_info,
 			     ((void *)data + sizeof(struct ath_pktlog_hdr)),
 			     sizeof(pl_msdu_info.priv.msdu_id_info));
-		cdf_mem_copy(pl_msdu_info.ath_msdu_info, &pl_msdu_info.priv,
+		qdf_mem_copy(pl_msdu_info.ath_msdu_info, &pl_msdu_info.priv,
 			     sizeof(pl_msdu_info.priv));
 	}
 	return A_OK;
@@ -528,7 +528,7 @@ A_STATUS process_rx_info_remote(void *pdev, cdf_nbuf_t amsdu)
 #endif /* !defined(HELIUMPLUS) */
 		rxstat_log.rx_desc = (void *)pktlog_getbuf(pl_dev, pl_info,
 							   log_size, &pl_hdr);
-		cdf_mem_copy(rxstat_log.rx_desc, (void *)rx_desc +
+		qdf_mem_copy(rxstat_log.rx_desc, (void *)rx_desc +
 			     sizeof(struct htt_host_fw_desc_base), pl_hdr.size);
 		msdu = cdf_nbuf_next(msdu);
 	}
@@ -567,7 +567,7 @@ A_STATUS process_rx_info(void *pdev, void *data)
 	rxstat_log.rx_desc = (void *)pktlog_getbuf(pl_dev, pl_info,
 						   log_size, &pl_hdr);
 
-	cdf_mem_copy(rxstat_log.rx_desc,
+	qdf_mem_copy(rxstat_log.rx_desc,
 		     (void *)data + sizeof(struct ath_pktlog_hdr), pl_hdr.size);
 
 	return A_OK;
@@ -620,7 +620,7 @@ A_STATUS process_rate_find(void *pdev, void *data)
 	rcf_log.rcFind = (void *)pktlog_getbuf(pl_dev, pl_info,
 					       log_size, &pl_hdr);
 
-	cdf_mem_copy(rcf_log.rcFind,
+	qdf_mem_copy(rcf_log.rcFind,
 				 ((char *)data + sizeof(struct ath_pktlog_hdr)),
 				 pl_hdr.size);
 
@@ -672,7 +672,7 @@ A_STATUS process_rate_update(void *pdev, void *data)
 	 */
 	rcu_log.txRateCtrl = (void *)pktlog_getbuf(pl_dev, pl_info,
 						   log_size, &pl_hdr);
-	cdf_mem_copy(rcu_log.txRateCtrl,
+	qdf_mem_copy(rcu_log.txRateCtrl,
 		     ((char *)data + sizeof(struct ath_pktlog_hdr)),
 		     pl_hdr.size);
 	return A_OK;

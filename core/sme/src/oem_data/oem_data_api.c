@@ -58,7 +58,7 @@ QDF_STATUS oem_data_oem_data_req_open(tHalHandle hHal)
 
 	do {
 		/* initialize all the variables to null */
-		cdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
+		qdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
 		if (!QDF_IS_STATUS_SUCCESS(status)) {
 			sms_log(pMac, LOGE,
 				"oem_data_oem_data_req_open: Cannot allocate memory for the timer function");
@@ -88,7 +88,7 @@ QDF_STATUS oem_data_oem_data_req_close(tHalHandle hHal)
 		}
 
 		/* initialize all the variables to null */
-		cdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
+		qdf_mem_set(&(pMac->oemData), sizeof(tOemDataStruct), 0);
 
 	} while (0);
 
@@ -110,12 +110,12 @@ void oem_data_release_oem_data_req_command(tpAniSirGlobal pMac,
 	if (csr_ll_remove_entry
 		    (&pMac->sme.smeCmdActiveList, &pOemDataCmd->Link, LL_ACCESS_LOCK)) {
 		if (pOemDataCmd->u.oemDataCmd.oemDataReq.data) {
-			cdf_mem_free(
+			qdf_mem_free(
 			    pOemDataCmd->u.oemDataCmd.oemDataReq.data);
 			pOemDataCmd->u.oemDataCmd.oemDataReq.data =
 			    NULL;
 		}
-		cdf_mem_zero(&(pOemDataCmd->u.oemDataCmd), sizeof(tOemDataCmd));
+		qdf_mem_zero(&(pOemDataCmd->u.oemDataCmd), sizeof(tOemDataCmd));
 
 		/* Now put this command back on the avilable command list */
 		sme_release_command(pMac, pOemDataCmd);
@@ -165,7 +165,7 @@ QDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 			/* set the oem data request */
 			cmd_req->sessionId = sessionId;
 			cmd_req->data_len =  oemDataReqConfig->data_len;
-			cmd_req->data = cdf_mem_malloc(cmd_req->data_len);
+			cmd_req->data = qdf_mem_malloc(cmd_req->data_len);
 
 			if (!cmd_req->data) {
 				sms_log(pMac, LOGE, FL("memory alloc failed"));
@@ -173,7 +173,7 @@ QDF_STATUS oem_data_oem_data_req(tHalHandle hHal,
 				break;
 			}
 
-			cdf_mem_copy((void *)(cmd_req->data),
+			qdf_mem_copy((void *)(cmd_req->data),
 				     (void *)(oemDataReqConfig->data),
 				     cmd_req->data_len);
 		} else {
@@ -220,9 +220,9 @@ QDF_STATUS oem_data_send_mb_oem_data_req(tpAniSirGlobal pMac,
 		return QDF_STATUS_E_INVAL;
 	}
 
-	pMsg = cdf_mem_malloc(sizeof(*pMsg));
+	pMsg = qdf_mem_malloc(sizeof(*pMsg));
 	if (NULL == pMsg) {
-		sms_log(pMac, LOGP, FL("cdf_mem_malloc failed"));
+		sms_log(pMac, LOGP, FL("qdf_mem_malloc failed"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -333,11 +333,11 @@ QDF_STATUS sme_handle_oem_data_rsp(tHalHandle hHal, uint8_t *pMsg)
 				if (csr_ll_remove_entry
 					    (&pMac->sme.smeCmdActiveList,
 					    &pCommand->Link, LL_ACCESS_LOCK)) {
-					cdf_mem_set(&(pCommand->u.oemDataCmd),
+					qdf_mem_set(&(pCommand->u.oemDataCmd),
 						    sizeof(tOemDataCmd), 0);
 					req =
 					   &(pCommand->u.oemDataCmd.oemDataReq);
-					cdf_mem_free(req->data);
+					qdf_mem_free(req->data);
 					sme_release_command(pMac, pCommand);
 				}
 			}

@@ -335,7 +335,7 @@ void lim_update_re_assoc_globals(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 				 tpPESession psessionEntry)
 {
 	/* Update the current Bss Information */
-	cdf_mem_copy(psessionEntry->bssId,
+	qdf_mem_copy(psessionEntry->bssId,
 		     psessionEntry->limReAssocbssId, sizeof(tSirMacAddr));
 	psessionEntry->currentOperChannel = psessionEntry->limReassocChannelId;
 	psessionEntry->htSecondaryChannelOffset =
@@ -350,7 +350,7 @@ void lim_update_re_assoc_globals(tpAniSirGlobal pMac, tpSirAssocRsp pAssocRsp,
 	psessionEntry->limCurrentBssPropCap =
 		psessionEntry->limReassocBssPropCap;
 
-	cdf_mem_copy((uint8_t *) &psessionEntry->ssId,
+	qdf_mem_copy((uint8_t *) &psessionEntry->ssId,
 		     (uint8_t *) &psessionEntry->limReassocSSID,
 		     psessionEntry->limReassocSSID.length + 1);
 
@@ -379,7 +379,7 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 	 tpPESession session_entry, tpSirAssocRsp assoc_rsp)
 {
 	if (session_entry->ricData != NULL) {
-		cdf_mem_free(session_entry->ricData);
+		qdf_mem_free(session_entry->ricData);
 		session_entry->ricData = NULL;
 		session_entry->RICDataLen = 0;
 	}
@@ -388,13 +388,13 @@ static void lim_update_ric_data(tpAniSirGlobal mac_ctx,
 			assoc_rsp->num_RICData * sizeof(tDot11fIERICDataDesc);
 		if (session_entry->RICDataLen) {
 			session_entry->ricData =
-				cdf_mem_malloc(session_entry->RICDataLen);
+				qdf_mem_malloc(session_entry->RICDataLen);
 			if (NULL == session_entry->ricData) {
 				lim_log(mac_ctx, LOGE,
 					FL("No memory for RIC data"));
 				session_entry->RICDataLen = 0;
 			} else {
-				cdf_mem_copy(session_entry->ricData,
+				qdf_mem_copy(session_entry->ricData,
 					&assoc_rsp->RICData[0],
 					session_entry->RICDataLen);
 			}
@@ -428,7 +428,7 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 	 tpPESession session_entry, tpSirAssocRsp assoc_rsp)
 {
 	if (session_entry->tspecIes != NULL) {
-		cdf_mem_free(session_entry->tspecIes);
+		qdf_mem_free(session_entry->tspecIes);
 		session_entry->tspecIes = NULL;
 		session_entry->tspecLen = 0;
 	}
@@ -438,13 +438,13 @@ static void lim_update_ese_tspec(tpAniSirGlobal mac_ctx,
 			assoc_rsp->num_tspecs * sizeof(tDot11fIEWMMTSPEC);
 		if (session_entry->tspecLen) {
 			session_entry->tspecIes =
-				cdf_mem_malloc(session_entry->tspecLen);
+				qdf_mem_malloc(session_entry->tspecLen);
 			if (NULL == session_entry->tspecIes) {
 				lim_log(mac_ctx, LOGE,
 					FL("Tspec IE:Fail to allocate memory"));
 				session_entry->tspecLen = 0;
 			} else {
-				cdf_mem_copy(session_entry->tspecIes,
+				qdf_mem_copy(session_entry->tspecIes,
 						&assoc_rsp->TSPECInfo[0],
 						session_entry->tspecLen);
 			}
@@ -496,7 +496,7 @@ static void lim_update_ese_tsm(tpAniSirGlobal mac_ctx,
 			EDCA_AC_VO) {
 			tsm_ctx->tid =
 				assoc_rsp->TSPECInfo[cnt].user_priority;
-			cdf_mem_copy(&tsm_ctx->tsmInfo,
+			qdf_mem_copy(&tsm_ctx->tsmInfo,
 				&assoc_rsp->tsmIE, sizeof(tSirMacESETSMIE));
 #ifdef FEATURE_WLAN_ESE_UPLOAD
 			lim_send_sme_tsm_ie_ind(mac_ctx,
@@ -614,7 +614,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		(uint) abs((int8_t) WMA_GET_RX_RSSI_NORMALIZED(rx_pkt_info)),
 		MAC_ADDR_ARRAY(hdr->sa));
 
-	beacon = cdf_mem_malloc(sizeof(tSchBeaconStruct));
+	beacon = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 	if (NULL == beacon) {
 		lim_log(mac_ctx, LOGE, FL("Unable to allocate memory"));
 		return;
@@ -629,7 +629,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE,
 			FL("Should not recieved Re/Assoc Response in role %d "),
 			GET_LIM_SYSTEM_ROLE(session_entry));
-		cdf_mem_free(beacon);
+		qdf_mem_free(beacon);
 		return;
 	}
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
@@ -667,12 +667,12 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				mac_ctx->lim.retry_packet_cnt++;
 			}
 		}
-		cdf_mem_free(beacon);
+		qdf_mem_free(beacon);
 		return;
 	}
 	sir_copy_mac_addr(current_bssid, session_entry->bssId);
 	if (subtype == LIM_ASSOC) {
-		if (!cdf_mem_compare
+		if (qdf_mem_cmp
 			(hdr->sa, current_bssid, sizeof(tSirMacAddr))) {
 			/*
 			 * Received Association Response frame from an entity
@@ -683,11 +683,11 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				 FL("received AssocRsp from unexpected peer "
 				MAC_ADDRESS_STR),
 				MAC_ADDR_ARRAY(hdr->sa));
-			cdf_mem_free(beacon);
+			qdf_mem_free(beacon);
 			return;
 		}
 	} else {
-		if (!cdf_mem_compare
+		if (qdf_mem_cmp
 			(hdr->sa, session_entry->limReAssocbssId,
 			sizeof(tSirMacAddr))) {
 			/*
@@ -699,16 +699,16 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				FL("received ReassocRsp from unexpected peer "
 				MAC_ADDRESS_STR),
 				MAC_ADDR_ARRAY(hdr->sa));
-			cdf_mem_free(beacon);
+			qdf_mem_free(beacon);
 			return;
 		}
 	}
 
-	assoc_rsp = cdf_mem_malloc(sizeof(*assoc_rsp));
+	assoc_rsp = qdf_mem_malloc(sizeof(*assoc_rsp));
 	if (NULL == assoc_rsp) {
 		lim_log(mac_ctx, LOGP,
 			FL("Allocate Memory failed in AssocRsp"));
-		cdf_mem_free(beacon);
+		qdf_mem_free(beacon);
 		return;
 	}
 	/* Get pointer to Re/Association Response frame body */
@@ -721,18 +721,18 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	/* parse Re/Association Response frame. */
 	if (sir_convert_assoc_resp_frame2_struct(mac_ctx, body,
 		frame_len, assoc_rsp) == eSIR_FAILURE) {
-		cdf_mem_free(assoc_rsp);
+		qdf_mem_free(assoc_rsp);
 		lim_log(mac_ctx, LOGE,
 			FL("Parse error Assoc resp subtype %d," "length=%d"),
 			frame_len, subtype);
-		cdf_mem_free(beacon);
+		qdf_mem_free(beacon);
 		return;
 	}
 
 	if (!assoc_rsp->suppRatesPresent) {
 		lim_log(mac_ctx, LOGE,
 		FL("assoc response does not have supported rate set"));
-		cdf_mem_copy(&assoc_rsp->supportedRates,
+		qdf_mem_copy(&assoc_rsp->supportedRates,
 			&session_entry->rateSet,
 			sizeof(tSirMacRateSet));
 	}
@@ -742,12 +742,12 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGW,
 			FL("session_entry->assocRsp is not NULL freeing it "
 			 "and setting NULL"));
-		cdf_mem_free(session_entry->assocRsp);
+		qdf_mem_free(session_entry->assocRsp);
 		session_entry->assocRsp = NULL;
 		session_entry->assocRspLen = 0;
 	}
 
-	session_entry->assocRsp = cdf_mem_malloc(frame_len);
+	session_entry->assocRsp = qdf_mem_malloc(frame_len);
 	if (NULL == session_entry->assocRsp) {
 		lim_log(mac_ctx, LOGE,
 			FL("Unable to allocate memory for assoc res,len=%d"),
@@ -757,7 +757,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		 * Store the Assoc response. This is sent
 		 * to csr/hdd in join cnf response.
 		 */
-		cdf_mem_copy(session_entry->assocRsp, body, frame_len);
+		qdf_mem_copy(session_entry->assocRsp, body, frame_len);
 		session_entry->assocRspLen = frame_len;
 	}
 
@@ -771,12 +771,12 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 	if (assoc_rsp->FTInfo.R0KH_ID.present) {
 		roam_session->ftSmeContext.r0kh_id_len =
 			assoc_rsp->FTInfo.R0KH_ID.num_PMK_R0_ID;
-		cdf_mem_copy(roam_session->ftSmeContext.r0kh_id,
+		qdf_mem_copy(roam_session->ftSmeContext.r0kh_id,
 			assoc_rsp->FTInfo.R0KH_ID.PMK_R0_ID,
 			roam_session->ftSmeContext.r0kh_id_len);
 	} else {
 		roam_session->ftSmeContext.r0kh_id_len = 0;
-		cdf_mem_zero(roam_session->ftSmeContext.r0kh_id,
+		qdf_mem_zero(roam_session->ftSmeContext.r0kh_id,
 			SIR_ROAM_R0KH_ID_MAX_LEN);
 	}
 #endif
@@ -794,15 +794,15 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		 */
 		lim_log(mac_ctx, LOGE,
 			FL("received Re/AssocRsp frame with IBSS capability"));
-		cdf_mem_free(assoc_rsp);
-		cdf_mem_free(beacon);
+		qdf_mem_free(assoc_rsp);
+		qdf_mem_free(beacon);
 		return;
 	}
 
 	if (cfg_get_capability_info(mac_ctx, &caps, session_entry)
 		!= eSIR_SUCCESS) {
-		cdf_mem_free(assoc_rsp);
-		cdf_mem_free(beacon);
+		qdf_mem_free(assoc_rsp);
+		qdf_mem_free(beacon);
 		lim_log(mac_ctx, LOGP, FL("could not retrieve Capabilities "));
 		return;
 	}
@@ -817,7 +817,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		if ((NULL != mac_ctx->lim.pSessionEntry)
 		    && (NULL !=
 			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq)) {
-			cdf_mem_free(
+			qdf_mem_free(
 			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq);
 			mac_ctx->lim.pSessionEntry->pLimMlmReassocRetryReq =
 				NULL;
@@ -904,8 +904,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				FL("ASSOC resp with try again event recvd. "
 				"But try again time interval IE is wrong."));
 		}
-		cdf_mem_free(beacon);
-		cdf_mem_free(assoc_rsp);
+		qdf_mem_free(beacon);
+		qdf_mem_free(assoc_rsp);
 		return;
 	}
 #endif
@@ -920,8 +920,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			NULL) != eSIR_SUCCESS) {
 			lim_log(mac_ctx, LOGE,
 				FL("Set link state to POSTASSOC failed"));
-			cdf_mem_free(beacon);
-			cdf_mem_free(assoc_rsp);
+			qdf_mem_free(beacon);
+			qdf_mem_free(assoc_rsp);
 			return;
 		}
 	}
@@ -937,7 +937,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		lim_update_ese_tsm(mac_ctx, session_entry, assoc_rsp);
 #endif
 		if (session_entry->pLimMlmJoinReq) {
-			cdf_mem_free(session_entry->pLimMlmJoinReq);
+			qdf_mem_free(session_entry->pLimMlmJoinReq);
 			session_entry->pLimMlmJoinReq = NULL;
 		}
 
@@ -990,7 +990,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 		}
 #endif
-			cdf_mem_free(beacon);
+			qdf_mem_free(beacon);
 			return;
 		}
 
@@ -1023,7 +1023,7 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 				goto assocReject;
 			}
 		}
-		cdf_mem_free(beacon);
+		qdf_mem_free(beacon);
 		return;
 	}
 	lim_log(mac_ctx, LOG1,
@@ -1047,8 +1047,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 		assoc_cnf.protStatusCode = eSIR_SME_SUCCESS;
 		lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 			(uint32_t *) &assoc_cnf);
-		cdf_mem_free(assoc_rsp);
-		cdf_mem_free(beacon);
+		qdf_mem_free(assoc_rsp);
+		qdf_mem_free(beacon);
 		return;
 	}
 	/* Delete Pre-auth context for the associated BSS */
@@ -1084,10 +1084,10 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			      eSIR_SUCCESS, eSIR_SUCCESS);
 #endif
 	if (assoc_rsp->QosMapSet.present)
-		cdf_mem_copy(&session_entry->QosMapSet,
+		qdf_mem_copy(&session_entry->QosMapSet,
 			&assoc_rsp->QosMapSet, sizeof(tSirQosMapSet));
 	 else
-		cdf_mem_zero(&session_entry->QosMapSet, sizeof(tSirQosMapSet));
+		qdf_mem_zero(&session_entry->QosMapSet, sizeof(tSirQosMapSet));
 
 	lim_update_stads_ext_cap(mac_ctx, session_entry, assoc_rsp, sta_ds);
 	/* Update the BSS Entry, this entry was added during preassoc. */
@@ -1095,8 +1095,8 @@ lim_process_assoc_rsp_frame(tpAniSirGlobal mac_ctx,
 			beacon,
 			&session_entry->pLimJoinReq->bssDescription, true,
 			 session_entry)) {
-		cdf_mem_free(assoc_rsp);
-		cdf_mem_free(beacon);
+		qdf_mem_free(assoc_rsp);
+		qdf_mem_free(beacon);
 		return;
 	} else {
 		lim_log(mac_ctx, LOGE, FL("could not update the bss entry"));
@@ -1123,7 +1123,7 @@ assocReject:
 			session_entry->peSessionId,
 			session_entry->limMlmState));
 		if (session_entry->pLimMlmJoinReq) {
-			cdf_mem_free(session_entry->pLimMlmJoinReq);
+			qdf_mem_free(session_entry->pLimMlmJoinReq);
 			session_entry->pLimMlmJoinReq = NULL;
 		}
 		if (subtype == LIM_ASSOC) {
@@ -1144,7 +1144,7 @@ assocReject:
 			session_entry);
 	}
 
-	cdf_mem_free(beacon);
-	cdf_mem_free(assoc_rsp);
+	qdf_mem_free(beacon);
+	qdf_mem_free(assoc_rsp);
 	return;
 }

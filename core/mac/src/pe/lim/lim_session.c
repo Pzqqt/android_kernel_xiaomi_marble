@@ -74,19 +74,19 @@ void pe_init_beacon_params(tpAniSirGlobal pMac, tpPESession psessionEntry)
 	psessionEntry->beaconParams.gHTObssMode = 0;
 
 	/* Number of legacy STAs associated */
-	cdf_mem_set((void *)&psessionEntry->gLim11bParams,
+	qdf_mem_set((void *)&psessionEntry->gLim11bParams,
 		    sizeof(tLimProtStaParams), 0);
-	cdf_mem_set((void *)&psessionEntry->gLim11aParams,
+	qdf_mem_set((void *)&psessionEntry->gLim11aParams,
 		    sizeof(tLimProtStaParams), 0);
-	cdf_mem_set((void *)&psessionEntry->gLim11gParams,
+	qdf_mem_set((void *)&psessionEntry->gLim11gParams,
 		    sizeof(tLimProtStaParams), 0);
-	cdf_mem_set((void *)&psessionEntry->gLimNonGfParams,
+	qdf_mem_set((void *)&psessionEntry->gLimNonGfParams,
 		    sizeof(tLimProtStaParams), 0);
-	cdf_mem_set((void *)&psessionEntry->gLimHt20Params,
+	qdf_mem_set((void *)&psessionEntry->gLimHt20Params,
 		    sizeof(tLimProtStaParams), 0);
-	cdf_mem_set((void *)&psessionEntry->gLimLsigTxopParams,
+	qdf_mem_set((void *)&psessionEntry->gLimLsigTxopParams,
 		    sizeof(tLimProtStaParams), 0);
-	cdf_mem_set((void *)&psessionEntry->gLimOlbcParams,
+	qdf_mem_set((void *)&psessionEntry->gLimOlbcParams,
 		    sizeof(tLimProtStaParams), 0);
 }
 
@@ -133,34 +133,34 @@ void pe_reset_protection_callback(void *ptr)
 		  pe_session_entry->old_protection_state,
 		  current_protection_state);
 
-	cdf_mem_zero(&pe_session_entry->gLimOverlap11gParams,
+	qdf_mem_zero(&pe_session_entry->gLimOverlap11gParams,
 		     sizeof(pe_session_entry->gLimOverlap11gParams));
-	cdf_mem_zero(&pe_session_entry->gLimOverlap11aParams,
+	qdf_mem_zero(&pe_session_entry->gLimOverlap11aParams,
 		     sizeof(pe_session_entry->gLimOverlap11aParams));
-	cdf_mem_zero(&pe_session_entry->gLimOverlapHt20Params,
+	qdf_mem_zero(&pe_session_entry->gLimOverlapHt20Params,
 		     sizeof(pe_session_entry->gLimOverlapHt20Params));
-	cdf_mem_zero(&pe_session_entry->gLimOverlapNonGfParams,
+	qdf_mem_zero(&pe_session_entry->gLimOverlapNonGfParams,
 		     sizeof(pe_session_entry->gLimOverlapNonGfParams));
 
-	cdf_mem_zero(&pe_session_entry->gLimOlbcParams,
+	qdf_mem_zero(&pe_session_entry->gLimOlbcParams,
 		     sizeof(pe_session_entry->gLimOlbcParams));
 
-	cdf_mem_zero(&pe_session_entry->beaconParams,
+	qdf_mem_zero(&pe_session_entry->beaconParams,
 		     sizeof(pe_session_entry->beaconParams));
 
-	cdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
+	qdf_mem_zero(&mac_ctx->lim.gLimOverlap11gParams,
 		     sizeof(mac_ctx->lim.gLimOverlap11gParams));
-	cdf_mem_zero(&mac_ctx->lim.gLimOverlap11aParams,
+	qdf_mem_zero(&mac_ctx->lim.gLimOverlap11aParams,
 		     sizeof(mac_ctx->lim.gLimOverlap11aParams));
-	cdf_mem_zero(&mac_ctx->lim.gLimOverlapHt20Params,
+	qdf_mem_zero(&mac_ctx->lim.gLimOverlapHt20Params,
 		     sizeof(mac_ctx->lim.gLimOverlapHt20Params));
-	cdf_mem_zero(&mac_ctx->lim.gLimOverlapNonGfParams,
+	qdf_mem_zero(&mac_ctx->lim.gLimOverlapNonGfParams,
 		     sizeof(mac_ctx->lim.gLimOverlapNonGfParams));
 
 	old_op_mode = pe_session_entry->htOperMode;
 	pe_session_entry->htOperMode = eSIR_HT_OP_MODE_PURE;
 
-	cdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
+	qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
 	/* index 0, is self node, peers start from 1 */
 	for (i = 1 ; i <= mac_ctx->lim.gLimAssocStaLimit ; i++) {
 		station_hash_node = dph_get_hash_entry(mac_ctx, i,
@@ -181,7 +181,7 @@ void pe_reset_protection_callback(void *ptr)
 			  QDF_TRACE_LEVEL_ERROR,
 			  FL("protection changed, update beacon template\n"));
 		/* update beacon fix params and send update to FW */
-		cdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
+		qdf_mem_zero(&beacon_params, sizeof(tUpdateBeaconParams));
 		beacon_params.bssIdx = pe_session_entry->bssIdx;
 		beacon_params.fShortPreamble =
 				pe_session_entry->beaconParams.fShortPreamble;
@@ -258,20 +258,20 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	}
 
 	session_ptr = &pMac->lim.gpSession[i];
-	cdf_mem_set((void *)session_ptr, sizeof(tPESession), 0);
+	qdf_mem_set((void *)session_ptr, sizeof(tPESession), 0);
 	/* Allocate space for Station Table for this session. */
 	session_ptr->dph.dphHashTable.pHashTable =
-		cdf_mem_malloc(sizeof(tpDphHashNode) * (numSta + 1));
+		qdf_mem_malloc(sizeof(tpDphHashNode) * (numSta + 1));
 	if (NULL == session_ptr->dph.dphHashTable.pHashTable) {
 		lim_log(pMac, LOGE, FL("memory allocate failed!"));
 		return NULL;
 	}
 
 	session_ptr->dph.dphHashTable.pDphNodeArray =
-		cdf_mem_malloc(sizeof(tDphHashNode) * (numSta + 1));
+		qdf_mem_malloc(sizeof(tDphHashNode) * (numSta + 1));
 	if (NULL == session_ptr->dph.dphHashTable.pDphNodeArray) {
 		lim_log(pMac, LOGE, FL("memory allocate failed!"));
-		cdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
+		qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
 		session_ptr->dph.dphHashTable.
 		pHashTable = NULL;
 		return NULL;
@@ -279,17 +279,17 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 
 	session_ptr->dph.dphHashTable.size = numSta + 1;
 	dph_hash_table_class_init(pMac, &session_ptr->dph.dphHashTable);
-	session_ptr->gpLimPeerIdxpool = cdf_mem_malloc(
+	session_ptr->gpLimPeerIdxpool = qdf_mem_malloc(
 		sizeof(*(session_ptr->gpLimPeerIdxpool)) * (numSta + 1));
 	if (NULL == session_ptr->gpLimPeerIdxpool) {
 		lim_log(pMac, LOGE, FL("memory allocate failed!"));
-		cdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
-		cdf_mem_free(session_ptr->dph.dphHashTable.pDphNodeArray);
+		qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
+		qdf_mem_free(session_ptr->dph.dphHashTable.pDphNodeArray);
 		session_ptr->dph.dphHashTable.pHashTable = NULL;
 		session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
 		return NULL;
 	}
-	cdf_mem_set(session_ptr->gpLimPeerIdxpool,
+	qdf_mem_set(session_ptr->gpLimPeerIdxpool,
 		    sizeof(*session_ptr->gpLimPeerIdxpool) * (numSta + 1),
 		    0);
 	session_ptr->freePeerIdxHead = 0;
@@ -318,7 +318,7 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	session_ptr->htRecommendedTxWidthSet = 0;
 	session_ptr->htSecondaryChannelOffset = 0;
 #ifdef FEATURE_WLAN_TDLS
-	cdf_mem_set(session_ptr->peerAIDBitmap,
+	qdf_mem_set(session_ptr->peerAIDBitmap,
 		    sizeof(session_ptr->peerAIDBitmap), 0);
 	session_ptr->tdls_prohibited = false;
 	session_ptr->tdls_chan_swit_prohibited = false;
@@ -334,21 +334,21 @@ pe_create_session(tpAniSirGlobal pMac, uint8_t *bssid, uint8_t *sessionId,
 	    || eSIR_IBSS_MODE == bssType
 	    || eSIR_BTAMP_AP_MODE == bssType) {
 		session_ptr->pSchProbeRspTemplate =
-			cdf_mem_malloc(SCH_MAX_PROBE_RESP_SIZE);
+			qdf_mem_malloc(SCH_MAX_PROBE_RESP_SIZE);
 		session_ptr->pSchBeaconFrameBegin =
-			cdf_mem_malloc(SCH_MAX_BEACON_SIZE);
+			qdf_mem_malloc(SCH_MAX_BEACON_SIZE);
 		session_ptr->pSchBeaconFrameEnd =
-			cdf_mem_malloc(SCH_MAX_BEACON_SIZE);
+			qdf_mem_malloc(SCH_MAX_BEACON_SIZE);
 		if ((NULL == session_ptr->pSchProbeRspTemplate)
 		    || (NULL == session_ptr->pSchBeaconFrameBegin)
 		    || (NULL == session_ptr->pSchBeaconFrameEnd)) {
 			lim_log(pMac, LOGE, FL("memory allocate failed!"));
-			cdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
-			cdf_mem_free(session_ptr->dph.dphHashTable.pDphNodeArray);
-			cdf_mem_free(session_ptr->gpLimPeerIdxpool);
-			cdf_mem_free(session_ptr->pSchProbeRspTemplate);
-			cdf_mem_free(session_ptr->pSchBeaconFrameBegin);
-			cdf_mem_free(session_ptr->pSchBeaconFrameEnd);
+			qdf_mem_free(session_ptr->dph.dphHashTable.pHashTable);
+			qdf_mem_free(session_ptr->dph.dphHashTable.pDphNodeArray);
+			qdf_mem_free(session_ptr->gpLimPeerIdxpool);
+			qdf_mem_free(session_ptr->pSchProbeRspTemplate);
+			qdf_mem_free(session_ptr->pSchBeaconFrameBegin);
+			qdf_mem_free(session_ptr->pSchBeaconFrameEnd);
 
 			session_ptr->dph.dphHashTable.pHashTable = NULL;
 			session_ptr->dph.dphHashTable.pDphNodeArray = NULL;
@@ -559,54 +559,54 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 	lim_ft_cleanup(mac_ctx, session);
 #endif
 	if (session->pLimStartBssReq != NULL) {
-		cdf_mem_free(session->pLimStartBssReq);
+		qdf_mem_free(session->pLimStartBssReq);
 		session->pLimStartBssReq = NULL;
 	}
 
 	if (session->pLimJoinReq != NULL) {
-		cdf_mem_free(session->pLimJoinReq);
+		qdf_mem_free(session->pLimJoinReq);
 		session->pLimJoinReq = NULL;
 	}
 
 	if (session->pLimReAssocReq != NULL) {
-		cdf_mem_free(session->pLimReAssocReq);
+		qdf_mem_free(session->pLimReAssocReq);
 		session->pLimReAssocReq = NULL;
 	}
 
 	if (session->pLimMlmJoinReq != NULL) {
-		cdf_mem_free(session->pLimMlmJoinReq);
+		qdf_mem_free(session->pLimMlmJoinReq);
 		session->pLimMlmJoinReq = NULL;
 	}
 
 	if (session->dph.dphHashTable.pHashTable != NULL) {
-		cdf_mem_free(session->dph.dphHashTable.pHashTable);
+		qdf_mem_free(session->dph.dphHashTable.pHashTable);
 		session->dph.dphHashTable.pHashTable = NULL;
 	}
 
 	if (session->dph.dphHashTable.pDphNodeArray != NULL) {
-		cdf_mem_free(session->dph.dphHashTable.pDphNodeArray);
+		qdf_mem_free(session->dph.dphHashTable.pDphNodeArray);
 		session->dph.dphHashTable.pDphNodeArray = NULL;
 	}
 
 	if (session->gpLimPeerIdxpool != NULL) {
-		cdf_mem_free(session->gpLimPeerIdxpool);
+		qdf_mem_free(session->gpLimPeerIdxpool);
 		session->gpLimPeerIdxpool = NULL;
 	}
 
 	if (session->beacon != NULL) {
-		cdf_mem_free(session->beacon);
+		qdf_mem_free(session->beacon);
 		session->beacon = NULL;
 		session->bcnLen = 0;
 	}
 
 	if (session->assocReq != NULL) {
-		cdf_mem_free(session->assocReq);
+		qdf_mem_free(session->assocReq);
 		session->assocReq = NULL;
 		session->assocReqLen = 0;
 	}
 
 	if (session->assocRsp != NULL) {
-		cdf_mem_free(session->assocRsp);
+		qdf_mem_free(session->assocRsp);
 		session->assocRsp = NULL;
 		session->assocRspLen = 0;
 	}
@@ -620,58 +620,58 @@ void pe_delete_session(tpAniSirGlobal mac_ctx, tpPESession session)
 			tmp_ptr = ((tpSirAssocReq)
 				  (session->parsedAssocReq[i]));
 			if (tmp_ptr->assocReqFrame) {
-				cdf_mem_free(tmp_ptr->assocReqFrame);
+				qdf_mem_free(tmp_ptr->assocReqFrame);
 				tmp_ptr->assocReqFrame = NULL;
 				tmp_ptr->assocReqFrameLength = 0;
 			}
-			cdf_mem_free(session->parsedAssocReq[i]);
+			qdf_mem_free(session->parsedAssocReq[i]);
 			session->parsedAssocReq[i] = NULL;
 		}
 		/* Cleanup the whole block */
-		cdf_mem_free(session->parsedAssocReq);
+		qdf_mem_free(session->parsedAssocReq);
 		session->parsedAssocReq = NULL;
 	}
 	if (NULL != session->limAssocResponseData) {
-		cdf_mem_free(session->limAssocResponseData);
+		qdf_mem_free(session->limAssocResponseData);
 		session->limAssocResponseData = NULL;
 	}
 	if (NULL != session->pLimMlmReassocRetryReq) {
-		cdf_mem_free(session->pLimMlmReassocRetryReq);
+		qdf_mem_free(session->pLimMlmReassocRetryReq);
 		session->pLimMlmReassocRetryReq = NULL;
 	}
 	if (NULL != session->pLimMlmReassocReq) {
-		cdf_mem_free(session->pLimMlmReassocReq);
+		qdf_mem_free(session->pLimMlmReassocReq);
 		session->pLimMlmReassocReq = NULL;
 	}
 
 	if (NULL != session->pSchProbeRspTemplate) {
-		cdf_mem_free(session->pSchProbeRspTemplate);
+		qdf_mem_free(session->pSchProbeRspTemplate);
 		session->pSchProbeRspTemplate = NULL;
 	}
 
 	if (NULL != session->pSchBeaconFrameBegin) {
-		cdf_mem_free(session->pSchBeaconFrameBegin);
+		qdf_mem_free(session->pSchBeaconFrameBegin);
 		session->pSchBeaconFrameBegin = NULL;
 	}
 
 	if (NULL != session->pSchBeaconFrameEnd) {
-		cdf_mem_free(session->pSchBeaconFrameEnd);
+		qdf_mem_free(session->pSchBeaconFrameEnd);
 		session->pSchBeaconFrameEnd = NULL;
 	}
 
 	/* Must free the buffer before peSession invalid */
 	if (NULL != session->addIeParams.probeRespData_buff) {
-		cdf_mem_free(session->addIeParams.probeRespData_buff);
+		qdf_mem_free(session->addIeParams.probeRespData_buff);
 		session->addIeParams.probeRespData_buff = NULL;
 		session->addIeParams.probeRespDataLen = 0;
 	}
 	if (NULL != session->addIeParams.assocRespData_buff) {
-		cdf_mem_free(session->addIeParams.assocRespData_buff);
+		qdf_mem_free(session->addIeParams.assocRespData_buff);
 		session->addIeParams.assocRespData_buff = NULL;
 		session->addIeParams.assocRespDataLen = 0;
 	}
 	if (NULL != session->addIeParams.probeRespBCNData_buff) {
-		cdf_mem_free(session->addIeParams.probeRespBCNData_buff);
+		qdf_mem_free(session->addIeParams.probeRespBCNData_buff);
 		session->addIeParams.probeRespBCNData_buff = NULL;
 		session->addIeParams.probeRespBCNDataLen = 0;
 	}

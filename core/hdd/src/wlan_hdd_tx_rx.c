@@ -475,7 +475,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	++pAdapter->stats.tx_packets;
 
 	/* Zero out skb's context buffer for the driver to use */
-	cdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 	NBUF_CB_TX_PACKET_TRACK(skb) = NBUF_TX_PKT_DATA_TRACK;
 	NBUF_UPDATE_TX_PKT_COUNT(skb, NBUF_TX_PKT_HDD);
 
@@ -531,7 +531,7 @@ QDF_STATUS hdd_ibss_get_sta_id(hdd_station_ctx_t *pHddStaCtx,
 	uint8_t idx;
 
 	for (idx = 0; idx < MAX_IBSS_PEERS; idx++) {
-		if (cdf_mem_compare(&pHddStaCtx->conn_info.peerMacAddress[idx],
+		if (!qdf_mem_cmp(&pHddStaCtx->conn_info.peerMacAddress[idx],
 				    pMacAddress, QDF_MAC_ADDR_SIZE)) {
 			*staId = pHddStaCtx->conn_info.staId[idx];
 			return QDF_STATUS_SUCCESS;
@@ -802,10 +802,10 @@ static int wlan_hdd_get_eapol_params(struct sk_buff *skb,
 	eapol_params->event_sub_type = event_type;
 	eapol_params->eapol_rate = 0;/* As of now, zero */
 
-	cdf_mem_copy(eapol_params->dest_addr,
+	qdf_mem_copy(eapol_params->dest_addr,
 			(skb->data + HDD_EAPOL_DEST_MAC_OFFSET),
 			sizeof(eapol_params->dest_addr));
-	cdf_mem_copy(eapol_params->src_addr,
+	qdf_mem_copy(eapol_params->src_addr,
 			(skb->data + HDD_EAPOL_SRC_MAC_OFFSET),
 			sizeof(eapol_params->src_addr));
 	return 0;
@@ -828,10 +828,10 @@ static void wlan_hdd_event_eapol_log(struct host_event_wlan_eapol eapol_params)
 	wlan_diag_event.eapol_packet_type = eapol_params.eapol_packet_type;
 	wlan_diag_event.eapol_key_info = eapol_params.eapol_key_info;
 	wlan_diag_event.eapol_rate = eapol_params.eapol_rate;
-	cdf_mem_copy(wlan_diag_event.dest_addr,
+	qdf_mem_copy(wlan_diag_event.dest_addr,
 			eapol_params.dest_addr,
 			sizeof(wlan_diag_event.dest_addr));
-	cdf_mem_copy(wlan_diag_event.src_addr,
+	qdf_mem_copy(wlan_diag_event.src_addr,
 			eapol_params.src_addr,
 			sizeof(wlan_diag_event.src_addr));
 

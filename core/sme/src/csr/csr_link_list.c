@@ -34,7 +34,7 @@
 
 #include "csr_link_list.h"
 #include "qdf_lock.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "qdf_trace.h"
 #include "qdf_mc_timer.h"
 

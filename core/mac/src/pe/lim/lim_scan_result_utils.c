@@ -123,7 +123,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 					- sizeof(pBssDescr->length) + ieLen);
 
 	/* Copy BSS Id */
-	cdf_mem_copy((uint8_t *) &pBssDescr->bssId,
+	qdf_mem_copy((uint8_t *) &pBssDescr->bssId,
 		     (uint8_t *) pHdr->bssId, sizeof(tSirMacAddr));
 
 	/* Copy Timestamp, Beacon Interval and Capability Info */
@@ -227,7 +227,7 @@ lim_collect_bss_description(tpAniSirGlobal pMac,
 	}
 #endif
 	/* Copy IE fields */
-	cdf_mem_copy((uint8_t *) &pBssDescr->ieFields,
+	qdf_mem_copy((uint8_t *) &pBssDescr->ieFields,
 		     pBody + SIR_MAC_B_PR_SSID_OFFSET, ieLen);
 
 	/*set channel number in beacon in case it is not present */
@@ -269,7 +269,7 @@ bool lim_is_scan_requested_ssid(tpAniSirGlobal pMac, tSirMacSSid *ssId)
 	uint8_t i = 0;
 
 	for (i = 0; i < pMac->lim.gpLimMlmScanReq->numSsid; i++) {
-		if (true == cdf_mem_compare((uint8_t *) ssId,
+		if (true != qdf_mem_cmp((uint8_t *) ssId,
 					    (uint8_t *) &pMac->lim.
 					    gpLimMlmScanReq->ssId[i],
 					    (uint8_t) (pMac->lim.
@@ -317,7 +317,7 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 	hdr = WMA_GET_RX_MPDUHEADER3A((uint8_t *) rx_packet_info);
 
 	/*  Check For Null BSSID and Skip in case of P2P */
-	if (cdf_mem_compare(bssid_zero, &hdr->addr3, 6))
+	if (!qdf_mem_cmp(bssid_zero, &hdr->addr3, 6))
 		return;
 
 	/*
@@ -388,12 +388,12 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 
 	/* IEs will be overlap ieFields field. Adjust the length accordingly */
 	frame_len = sizeof(*bssdescr) + ie_len - sizeof(bssdescr->ieFields[1]);
-	bssdescr = (tSirBssDescription *) cdf_mem_malloc(frame_len);
+	bssdescr = (tSirBssDescription *) qdf_mem_malloc(frame_len);
 
 	if (NULL == bssdescr) {
 		/* Log error */
 		lim_log(mac_ctx, LOGE,
-			FL("cdf_mem_malloc(length=%d) failed"), frame_len);
+			FL("qdf_mem_malloc(length=%d) failed"), frame_len);
 		return;
 	}
 	/* In scan state, store scan result. */
@@ -422,7 +422,7 @@ lim_check_and_add_bss_description(tpAniSirGlobal mac_ctx,
 		status = QDF_STATUS_E_INVAL;
 	}
 last:
-	cdf_mem_free(bssdescr);
+	qdf_mem_free(bssdescr);
 	return;
 }
 

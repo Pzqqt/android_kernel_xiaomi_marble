@@ -4118,10 +4118,10 @@ cnss_diag_event_report(A_UINT16 event_Id, A_UINT16 length, void *pPayload)
 	event_report_t *pEvent_report;
 	A_UINT16 total_len;
 	total_len = sizeof(event_report_t) + length;
-	pBuf = cdf_mem_malloc(total_len);
+	pBuf = qdf_mem_malloc(total_len);
 	if (!pBuf) {
 		AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-				("%s: cdf_mem_malloc failed \n", __func__));
+				("%s: qdf_mem_malloc failed \n", __func__));
 		return;
 	}
 	pBuf1 = pBuf;
@@ -4133,7 +4133,7 @@ cnss_diag_event_report(A_UINT16 event_Id, A_UINT16 length, void *pPayload)
 	memcpy(pBuf, pPayload, length);
 	send_diag_netlink_data((A_UINT8 *) pBuf1, total_len,
 			       DIAG_TYPE_HOST_MSG);
-	cdf_mem_free((void *)pBuf1);
+	qdf_mem_free((void *)pBuf1);
 	return;
 
 }

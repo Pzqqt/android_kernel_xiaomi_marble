@@ -44,7 +44,7 @@
 #include <qdf_trace.h>
 #include <wlan_hdd_main.h>
 #include "cdf_nbuf.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 
 #define TX_PKT_MIN_HEADROOM          (64)
 
@@ -89,7 +89,7 @@ QDF_STATUS cds_pkt_return_packet(cds_pkt_t *packet)
 	packet->pkt_buf = NULL;
 
 	/* Free up the Rx packet */
-	cdf_mem_free(packet);
+	qdf_mem_free(packet);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -197,9 +197,9 @@ void cds_pkt_trace_buf_update(char *event_string)
 	slot = trace_buffer_order % CDS_PKT_TRAC_MAX_TRACE_BUF;
 	trace_buffer[slot].order = trace_buffer_order;
 	trace_buffer[slot].event_time = qdf_mc_timer_get_system_time();
-	cdf_mem_zero(trace_buffer[slot].event_string,
+	qdf_mem_zero(trace_buffer[slot].event_string,
 		     sizeof(trace_buffer[slot].event_string));
-	cdf_mem_copy(trace_buffer[slot].event_string,
+	qdf_mem_copy(trace_buffer[slot].event_string,
 		     event_string,
 		     (CDS_PKT_TRAC_MAX_STRING_LEN < strlen(event_string)) ?
 		     CDS_PKT_TRAC_MAX_STRING_LEN : strlen(event_string));
@@ -260,7 +260,7 @@ void cds_pkt_proto_trace_init(void)
 	qdf_spinlock_create(&trace_buffer_lock);
 	trace_buffer_order = 0;
 
-	trace_buffer = cdf_mem_malloc(CDS_PKT_TRAC_MAX_TRACE_BUF *
+	trace_buffer = qdf_mem_malloc(CDS_PKT_TRAC_MAX_TRACE_BUF *
 				      sizeof(cds_pkt_proto_trace_t));
 
 	/* Register callback function to NBUF
@@ -277,7 +277,7 @@ void cds_pkt_proto_trace_close(void)
 {
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "%s %d", __func__, __LINE__);
-	cdf_mem_free(trace_buffer);
+	qdf_mem_free(trace_buffer);
 	qdf_spinlock_destroy(&trace_buffer_lock);
 
 	return;

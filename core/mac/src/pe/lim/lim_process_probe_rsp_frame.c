@@ -97,7 +97,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 	lim_log(mac_ctx, LOG1, "SessionId:%d ProbeRsp Frame is received",
 		session_entry->peSessionId);
 
-	probe_rsp = cdf_mem_malloc(sizeof(tSirProbeRespBeacon));
+	probe_rsp = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == probe_rsp) {
 		lim_log(mac_ctx, LOGE,
 			FL
@@ -120,7 +120,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d"), frame_len);
-		cdf_mem_free(probe_rsp);
+		qdf_mem_free(probe_rsp);
 		return;
 	}
 
@@ -138,7 +138,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		!probe_rsp->ssidPresent) {
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d"), frame_len);
-		cdf_mem_free(probe_rsp);
+		qdf_mem_free(probe_rsp);
 		return;
 	}
 	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
@@ -159,14 +159,14 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		 * Hence store it in same buffer.
 		 */
 		if (session_entry->beacon != NULL) {
-			cdf_mem_free(session_entry->beacon);
+			qdf_mem_free(session_entry->beacon);
 			session_entry->beacon = NULL;
 			session_entry->bcnLen = 0;
 		}
 		session_entry->bcnLen =
 			WMA_GET_RX_PAYLOAD_LEN(rx_Packet_info);
 			session_entry->beacon =
-			cdf_mem_malloc(session_entry->bcnLen);
+			qdf_mem_malloc(session_entry->bcnLen);
 		if (NULL == session_entry->beacon) {
 			lim_log(mac_ctx, LOGE,
 				FL("No Memory to store beacon"));
@@ -175,7 +175,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 			 * Store the Beacon/ProbeRsp.
 			 * This is sent to csr/hdd in join cnf response.
 			 */
-			cdf_mem_copy(session_entry->beacon,
+			qdf_mem_copy(session_entry->beacon,
 				     WMA_GET_RX_MPDU_DATA
 					     (rx_Packet_info),
 				     session_entry->bcnLen);
@@ -193,9 +193,9 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 		 * heart beat threshold
 		 */
 		sir_copy_mac_addr(current_bssid, session_entry->bssId);
-		if (!cdf_mem_compare(current_bssid, header->bssId,
+		if (qdf_mem_cmp(current_bssid, header->bssId,
 				sizeof(tSirMacAddr))) {
-			cdf_mem_free(probe_rsp);
+			qdf_mem_free(probe_rsp);
 			return;
 		}
 		if (!LIM_IS_CONNECTION_ACTIVE(session_entry)) {
@@ -294,7 +294,7 @@ lim_process_probe_rsp_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_Packet_info,
 			lim_handle_ibss_coalescing(mac_ctx, probe_rsp,
 					rx_Packet_info, session_entry);
 	}
-	cdf_mem_free(probe_rsp);
+	qdf_mem_free(probe_rsp);
 
 	/* Ignore Probe Response frame in all other states */
 	return;
@@ -318,7 +318,7 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 	tpSirMacMgmtHdr header;
 	tSirProbeRespBeacon *probe_rsp;
 
-	probe_rsp = cdf_mem_malloc(sizeof(tSirProbeRespBeacon));
+	probe_rsp = qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 	if (NULL == probe_rsp) {
 		lim_log(mac_ctx, LOGE,
 			FL("Unable to allocate memory"));
@@ -340,7 +340,7 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 								eSIR_SUCCESS) {
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d"), frame_len);
-		cdf_mem_free(probe_rsp);
+		qdf_mem_free(probe_rsp);
 		return;
 	}
 
@@ -360,12 +360,12 @@ lim_process_probe_rsp_frame_no_session(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOG1,
 			FL("Parse error ProbeResponse, length=%d\n"),
 			frame_len);
-		cdf_mem_free(probe_rsp);
+		qdf_mem_free(probe_rsp);
 		return;
 	}
 	lim_log(mac_ctx, LOG2, FL("Save this probe rsp in LFR cache"));
 	lim_check_and_add_bss_description(mac_ctx, probe_rsp,
 		  rx_packet_info, false, true);
-	cdf_mem_free(probe_rsp);
+	qdf_mem_free(probe_rsp);
 	return;
 }

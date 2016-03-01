@@ -162,7 +162,7 @@ static void hdd_get_tsm_stats_cb(tAniTrafStrmMetrics tsm_metrics,
 
 	/* copy over the tsm stats */
 	adapter->tsmStats.UplinkPktQueueDly = tsm_metrics.UplinkPktQueueDly;
-	cdf_mem_copy(adapter->tsmStats.UplinkPktQueueDlyHist,
+	qdf_mem_copy(adapter->tsmStats.UplinkPktQueueDlyHist,
 		     tsm_metrics.UplinkPktQueueDlyHist,
 		     sizeof(adapter->tsmStats.UplinkPktQueueDlyHist) /
 		     sizeof(adapter->tsmStats.UplinkPktQueueDlyHist[0]));
@@ -246,7 +246,7 @@ QDF_STATUS hdd_get_tsm_stats(hdd_adapter_t *adapter,
 	if (QDF_STATUS_SUCCESS == vstatus) {
 		tsm_metrics->UplinkPktQueueDly =
 			adapter->tsmStats.UplinkPktQueueDly;
-		cdf_mem_copy(tsm_metrics->UplinkPktQueueDlyHist,
+		qdf_mem_copy(tsm_metrics->UplinkPktQueueDlyHist,
 			     adapter->tsmStats.UplinkPktQueueDlyHist,
 			     sizeof(adapter->tsmStats.UplinkPktQueueDlyHist) /
 			     sizeof(adapter->tsmStats.
@@ -472,7 +472,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
 	 * For example, if N = 18, then (18 + 1)/2 = 9 bytes are enough.
 	 * If N = 19, then we need 10 bytes, hence (19 + 1)/2 = 10 bytes
 	 */
-	*pBuf = cdf_mem_malloc((*pBufLen + 1) / 2);
+	*pBuf = qdf_mem_malloc((*pBufLen + 1) / 2);
 	if (NULL == *pBuf) {
 		hddLog(LOGE, FL("cdf_mem_alloc failed"));
 		return -ENOMEM;
@@ -581,7 +581,7 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 
 		handoffInfo.channel = channel;
 		handoffInfo.src = REASSOC;
-		cdf_mem_copy(handoffInfo.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(handoffInfo.bssid.bytes, bssid, QDF_MAC_ADDR_SIZE);
 		sme_handoff_request(hdd_ctx->hHal, adapter->sessionId,
 				    &handoffInfo);
 	}
@@ -757,7 +757,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	if (pVendorSpecific->category ==
 	    SIR_MAC_ACTION_VENDOR_SPECIFIC_CATEGORY) {
 		static const uint8_t Oui[] = { 0x00, 0x00, 0xf0 };
-		if (cdf_mem_compare(pVendorSpecific->Oui, (void *)Oui, 3)) {
+		if (!qdf_mem_cmp(pVendorSpecific->Oui, (void *)Oui, 3)) {
 			/*
 			 * if the channel number is different from operating
 			 * channel then no need to send action frame
@@ -802,22 +802,22 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	}
 
 	frame_len = payload_len + 24;
-	frame = cdf_mem_malloc(frame_len);
+	frame = qdf_mem_malloc(frame_len);
 	if (!frame) {
 		hddLog(LOGE, FL("memory allocation failed"));
 		ret = -ENOMEM;
 		goto exit;
 	}
-	cdf_mem_zero(frame, frame_len);
+	qdf_mem_zero(frame, frame_len);
 
 	hdr = (struct ieee80211_hdr_3addr *)frame;
 	hdr->frame_control =
 		cpu_to_le16(IEEE80211_FTYPE_MGMT | IEEE80211_STYPE_ACTION);
-	cdf_mem_copy(hdr->addr1, bssid, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(hdr->addr2, adapter->macAddressCurrent.bytes,
+	qdf_mem_copy(hdr->addr1, bssid, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(hdr->addr2, adapter->macAddressCurrent.bytes,
 		     QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(hdr->addr3, bssid, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(hdr + 1, payload, payload_len);
+	qdf_mem_copy(hdr->addr3, bssid, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(hdr + 1, payload, payload_len);
 
 #if (LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0))
 	params.chan = &chan;
@@ -836,7 +836,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 			       dwell_time, frame, frame_len, 1, 1, &cookie);
 #endif /* LINUX_VERSION_CODE >= KERNEL_VERSION(3, 14, 0) */
 
-	cdf_mem_free(frame);
+	qdf_mem_free(frame);
 exit:
 	return ret;
 }
@@ -879,7 +879,7 @@ hdd_parse_sendactionframe_v1(hdd_adapter_t *adapter, const char *command)
 	} else {
 		ret = hdd_sendactionframe(adapter, bssid, channel,
 					  dwell_time, payload_len, payload);
-		cdf_mem_free(payload);
+		qdf_mem_free(payload);
 	}
 
 	return ret;
@@ -1582,7 +1582,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int rc;
 
-	cdf_mem_copy(&params, arg_params, sizeof(params));
+	qdf_mem_copy(&params, arg_params, sizeof(params));
 
 	INIT_COMPLETION(hdd_ctx->ready_to_extwow);
 
@@ -1687,7 +1687,7 @@ static int hdd_set_app_type1_params(tHalHandle hHal,
 	tSirAppType1Params params;
 	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	cdf_mem_copy(&params, arg_params, sizeof(params));
+	qdf_mem_copy(&params, arg_params, sizeof(params));
 
 	cdf_ret_status = sme_configure_app_type1_params(hHal, &params);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
@@ -1726,9 +1726,9 @@ static int hdd_set_app_type1_parser(hdd_adapter_t *adapter,
 	qdf_copy_macaddr(&params.wakee_mac_addr, &adapter->macAddressCurrent);
 
 	params.id_length = strlen(id);
-	cdf_mem_copy(params.identification_id, id, params.id_length);
+	qdf_mem_copy(params.identification_id, id, params.id_length);
 	params.pass_length = strlen(password);
-	cdf_mem_copy(params.password, password, params.pass_length);
+	qdf_mem_copy(params.password, password, params.pass_length);
 
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 		  "%s: %d %pM %.8s %u %.16s %u",
@@ -1745,7 +1745,7 @@ static int hdd_set_app_type2_params(tHalHandle hHal,
 	tSirAppType2Params params;
 	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	cdf_mem_copy(&params, arg_params, sizeof(params));
+	qdf_mem_copy(&params, arg_params, sizeof(params));
 
 	cdf_ret_status = sme_configure_app_type2_params(hHal, &params);
 	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
@@ -1813,11 +1813,11 @@ static int hdd_set_app_type2_parser(hdd_adapter_t *adapter,
 		return -EINVAL;
 	}
 
-	cdf_mem_copy(&params.gateway_mac.bytes, (uint8_t *) &gateway_mac,
+	qdf_mem_copy(&params.gateway_mac.bytes, (uint8_t *) &gateway_mac,
 			QDF_MAC_ADDR_SIZE);
 
 	params.rc4_key_len = strlen(rc4_key);
-	cdf_mem_copy(params.rc4_key, rc4_key, params.rc4_key_len);
+	qdf_mem_copy(params.rc4_key, rc4_key, params.rc4_key_len);
 
 	params.vdev_id = adapter->sessionId;
 	params.tcp_src_port = (params.tcp_src_port != 0) ?
@@ -1973,7 +1973,7 @@ static int hdd_set_dwell_time(hdd_adapter_t *adapter, uint8_t *command)
 		return -EINVAL;
 	}
 
-	cdf_mem_zero(&smeConfig, sizeof(smeConfig));
+	qdf_mem_zero(&smeConfig, sizeof(smeConfig));
 	sme_get_config_param(hHal, &smeConfig);
 
 	if (strncmp(command, "SETDWELLTIME ACTIVE MAX", 23) == 0) {
@@ -2374,12 +2374,12 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 	 * For example, if N = 18, then (18 + 1) / 2 = 9 bytes are enough.
 	 * If N = 19, then we need 10 bytes, hence (19 + 1) / 2 = 10 bytes
 	 */
-	*pCckmIe = cdf_mem_malloc((*pCckmIeLen + 1) / 2);
+	*pCckmIe = qdf_mem_malloc((*pCckmIeLen + 1) / 2);
 	if (NULL == *pCckmIe) {
 		hddLog(LOGE, FL("cdf_mem_alloc failed"));
 		return -ENOMEM;
 	}
-	cdf_mem_zero(*pCckmIe, (*pCckmIeLen + 1) / 2);
+	qdf_mem_zero(*pCckmIe, (*pCckmIeLen + 1) / 2);
 	/*
 	 * the buffer received from the upper layer is character buffer,
 	 * we need to prepare the buffer taking 2 characters in to a U8 hex
@@ -4143,7 +4143,7 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 	struct wma_roam_invoke_cmd *fastreassoc;
 	cds_msg_t msg = {0};
 
-	fastreassoc = cdf_mem_malloc(sizeof(*fastreassoc));
+	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
 	if (NULL == fastreassoc) {
 		hddLog(LOGE, FL("cdf_mem_alloc failed for fastreassoc"));
 		return;
@@ -4162,7 +4162,7 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 	msg.bodyptr = fastreassoc;
 	if (QDF_STATUS_SUCCESS != cds_mq_post_message(QDF_MODULE_ID_WMA,
 								&msg)) {
-		cdf_mem_free(fastreassoc);
+		qdf_mem_free(fastreassoc);
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 		FL("Not able to post ROAM_INVOKE_CMD message to WMA"));
 	}
@@ -4217,7 +4217,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 	 * if the target bssid is same as currently associated AP,
 	 * issue reassoc to same AP
 	 */
-	if (true == cdf_mem_compare(targetApBssid,
+	if (true != qdf_mem_cmp(targetApBssid,
 				    pHddStaCtx->conn_info.bssId.bytes,
 				    QDF_MAC_ADDR_SIZE)) {
 		/* Reassoc to same AP, only supported for Open Security*/
@@ -4253,7 +4253,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 #ifdef WLAN_FEATURE_ROAM_SCAN_OFFLOAD
 	handoffInfo.channel = channel;
 	handoffInfo.src = FASTREASSOC;
-	cdf_mem_copy(handoffInfo.bssid, targetApBssid,
+	qdf_mem_copy(handoffInfo.bssid, targetApBssid,
 		     sizeof(tSirMacAddr));
 	sme_handoff_request(hdd_ctx->hHal, adapter->sessionId,
 			    &handoffInfo);
@@ -4275,7 +4275,7 @@ static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	tpSirPlmReq pPlmRequest = NULL;
 
-	pPlmRequest = cdf_mem_malloc(sizeof(tSirPlmReq));
+	pPlmRequest = qdf_mem_malloc(sizeof(tSirPlmReq));
 	if (NULL == pPlmRequest) {
 		ret = -ENOMEM;
 		goto exit;
@@ -4283,7 +4283,7 @@ static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
 
 	status = hdd_parse_plm_cmd(value, pPlmRequest);
 	if (QDF_STATUS_SUCCESS != status) {
-		cdf_mem_free(pPlmRequest);
+		qdf_mem_free(pPlmRequest);
 		pPlmRequest = NULL;
 		ret = -EINVAL;
 		goto exit;
@@ -4292,7 +4292,7 @@ static int drv_cmd_ccx_plm_req(hdd_adapter_t *adapter,
 
 	status = sme_set_plm_request(hdd_ctx->hHal, pPlmRequest);
 	if (QDF_STATUS_SUCCESS != status) {
-		cdf_mem_free(pPlmRequest);
+		qdf_mem_free(pPlmRequest);
 		pPlmRequest = NULL;
 		ret = -EINVAL;
 		goto exit;
@@ -4851,7 +4851,7 @@ static int drv_cmd_set_cckm_ie(hdd_adapter_t *adapter,
 			  "%s: CCKM Ie input length is more than max[%d]",
 			  __func__, DOT11F_IE_RSN_MAX_LEN);
 		if (NULL != cckmIe) {
-			cdf_mem_free(cckmIe);
+			qdf_mem_free(cckmIe);
 			cckmIe = NULL;
 		}
 		ret = -EINVAL;
@@ -4861,7 +4861,7 @@ static int drv_cmd_set_cckm_ie(hdd_adapter_t *adapter,
 	sme_set_cckm_ie(hdd_ctx->hHal, adapter->sessionId,
 			cckmIe, cckmIeLen);
 	if (NULL != cckmIe) {
-		cdf_mem_free(cckmIe);
+		qdf_mem_free(cckmIe);
 		cckmIe = NULL;
 	}
 
@@ -5736,7 +5736,7 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 		hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 
 
-		filter = cdf_mem_malloc(sizeof(*filter));
+		filter = qdf_mem_malloc(sizeof(*filter));
 		if (NULL == filter) {
 			hdd_err("Could not allocate Memory");
 			return -ENOMEM;
@@ -5757,7 +5757,7 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 		}
 		/* Set rx filter */
 		sme_8023_multicast_list(handle, adapter->sessionId, filter);
-		cdf_mem_free(filter);
+		qdf_mem_free(filter);
 	} else {
 		hdd_info("mode %d mc_cnt %d",
 			adapter->device_mode, adapter->mc_addr_list.mc_cnt);

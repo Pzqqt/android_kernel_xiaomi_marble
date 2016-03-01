@@ -58,7 +58,7 @@ bmi_no_command(struct ol_context *ol_ctx)
 	}
 	cid = BMI_NO_COMMAND;
 
-	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
+	qdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(ret);
 
 	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
@@ -69,7 +69,7 @@ bmi_no_command(struct ol_context *ol_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_copy(&ret, bmi_rsp_buff, length);
+	qdf_mem_copy(&ret, bmi_rsp_buff, length);
 	if (ret != 0) {
 		BMI_ERR("bmi no command response error ret 0x%x", ret);
 		return QDF_STATUS_E_FAILURE;
@@ -109,7 +109,7 @@ bmi_done_local(struct ol_context *ol_ctx)
 
 	cid = BMI_DONE;
 
-	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
+	qdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(ret);
 
 	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
@@ -119,7 +119,7 @@ bmi_done_local(struct ol_context *ol_ctx)
 		BMI_ERR("Failed to close BMI on target status:%d", status);
 		return QDF_STATUS_E_FAILURE;
 	}
-	cdf_mem_copy(&ret, bmi_rsp_buff, length);
+	qdf_mem_copy(&ret, bmi_rsp_buff, length);
 
 	if (ret != 0) {
 		BMI_ERR("BMI DONE response failed:%d", ret);
@@ -127,14 +127,14 @@ bmi_done_local(struct ol_context *ol_ctx)
 	}
 
 	if (info->bmi_cmd_buff) {
-		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+		qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 		info->bmi_cmd_buff = NULL;
 		info->bmi_cmd_da = 0;
 	}
 
 	if (info->bmi_rsp_buff) {
-		cdf_os_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+		qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
 				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
 		info->bmi_rsp_buff = NULL;
 		info->bmi_rsp_da = 0;
@@ -173,7 +173,7 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + header));
-	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
+	qdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + header);
 
 	cid = BMI_WRITE_MEMORY;
 	rsp_len = sizeof(ret);
@@ -193,14 +193,14 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 			txlen = (BMI_DATASZ_MAX - header);
 		}
 		offset = 0;
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), &cid, sizeof(cid));
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), &cid, sizeof(cid));
 		offset += sizeof(cid);
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), &address,
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), &address,
 						sizeof(address));
 		offset += sizeof(address);
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), &txlen, sizeof(txlen));
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), &txlen, sizeof(txlen));
 		offset += sizeof(txlen);
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), src, txlen);
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), src, txlen);
 		offset += txlen;
 		status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff,
 						offset, bmi_rsp_buff, &rsp_len,
@@ -209,7 +209,7 @@ QDF_STATUS bmi_write_memory(uint32_t address, uint8_t *buffer, uint32_t length,
 			BMI_ERR("BMI Write Memory Failed status:%d", status);
 			return QDF_STATUS_E_FAILURE;
 		}
-		cdf_mem_copy(&ret, bmi_rsp_buff, rsp_len);
+		qdf_mem_copy(&ret, bmi_rsp_buff, rsp_len);
 		if (ret != 0) {
 			BMI_ERR("BMI Write memory response fail: %x", ret);
 			return QDF_STATUS_E_FAILURE;
@@ -248,8 +248,8 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(BMI_DATASZ_MAX + size));
-	cdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + size);
-	cdf_mem_set(bmi_rsp_buff, 0, BMI_DATASZ_MAX + size);
+	qdf_mem_set(bmi_cmd_buff, 0, BMI_DATASZ_MAX + size);
+	qdf_mem_set(bmi_rsp_buff, 0, BMI_DATASZ_MAX + size);
 
 	cid = BMI_READ_MEMORY;
 	rsp_len = sizeof(ret);
@@ -259,12 +259,12 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 		rxlen = (remaining < BMI_DATASZ_MAX - rsp_len) ? remaining :
 						(BMI_DATASZ_MAX - rsp_len);
 		offset = 0;
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), &cid, sizeof(cid));
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), &cid, sizeof(cid));
 		offset += sizeof(cid);
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), &address,
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), &address,
 						sizeof(address));
 		offset += sizeof(address);
-		cdf_mem_copy(&(bmi_cmd_buff[offset]), &rxlen, sizeof(rxlen));
+		qdf_mem_copy(&(bmi_cmd_buff[offset]), &rxlen, sizeof(rxlen));
 		offset += sizeof(length);
 
 		total_len = rxlen + rsp_len;
@@ -281,14 +281,14 @@ bmi_read_memory(uint32_t address, uint8_t *buffer,
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		cdf_mem_copy(&ret, bmi_rsp_buff, rsp_len);
+		qdf_mem_copy(&ret, bmi_rsp_buff, rsp_len);
 
 		if (ret != 0) {
 			BMI_ERR("bmi read memory response fail %x", ret);
 			return QDF_STATUS_E_FAILURE;
 		}
 
-		cdf_mem_copy(&buffer[length - remaining],
+		qdf_mem_copy(&buffer[length - remaining],
 				(uint8_t *)bmi_rsp_buff	+ rsp_len, rxlen);
 		remaining -= rxlen; address += rxlen;
 	}
@@ -322,7 +322,7 @@ bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 
 	cid = BMI_EXECUTE;
 
-	cdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
+	qdf_mem_copy(bmi_cmd_buff, &cid, sizeof(cid));
 	length = sizeof(ret);
 
 	status = hif_exchange_bmi_msg(scn, cmd, rsp, bmi_cmd_buff, sizeof(cid),
@@ -333,7 +333,7 @@ bmi_execute(uint32_t address, uint32_t *param, struct ol_context *ol_ctx)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_copy(&ret, bmi_rsp_buff, length);
+	qdf_mem_copy(&ret, bmi_rsp_buff, length);
 
 	if (ret != 0) {
 		BMI_ERR("%s: ret 0x%x", __func__, ret);
@@ -371,7 +371,7 @@ bmi_load_image(dma_addr_t address,
 	}
 
 	bmi_assert(BMI_COMMAND_FITS(sizeof(cid) + sizeof(address)));
-	cdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
+	qdf_mem_set(bmi_cmd_buff, 0, sizeof(cid) + sizeof(address));
 
 
 	BMI_DBG("%s: Enter device: 0x%p, size %d", __func__, scn, size);
@@ -379,15 +379,15 @@ bmi_load_image(dma_addr_t address,
 	cid = BMI_LOAD_IMAGE;
 
 	offset = 0;
-	cdf_mem_copy(&(bmi_cmd_buff[offset]), &cid, sizeof(cid));
+	qdf_mem_copy(&(bmi_cmd_buff[offset]), &cid, sizeof(cid));
 	offset += sizeof(cid);
 	addr_l = address & 0xffffffff;
 	addr_h = 0x00;
-	cdf_mem_copy(&(bmi_cmd_buff[offset]), &addr_l, sizeof(addr_l));
+	qdf_mem_copy(&(bmi_cmd_buff[offset]), &addr_l, sizeof(addr_l));
 	offset += sizeof(addr_l);
-	cdf_mem_copy(&(bmi_cmd_buff[offset]), &addr_h, sizeof(addr_h));
+	qdf_mem_copy(&(bmi_cmd_buff[offset]), &addr_h, sizeof(addr_h));
 	offset += sizeof(addr_h);
-	cdf_mem_copy(&(bmi_cmd_buff[offset]), &size, sizeof(size));
+	qdf_mem_copy(&(bmi_cmd_buff[offset]), &size, sizeof(size));
 	offset += sizeof(size);
 	length = sizeof(ret);
 
@@ -399,7 +399,7 @@ bmi_load_image(dma_addr_t address,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_copy(&ret, bmi_rsp_buff, length);
+	qdf_mem_copy(&ret, bmi_rsp_buff, length);
 	if (ret != 0) {
 		BMI_ERR("%s: ret 0x%x", __func__, ret);
 		return QDF_STATUS_E_FAILURE;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -373,7 +373,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				psessionEntry->limMlmState, reasonCode,
 				MAC_ADDR_ARRAY(pHdr->sa));
 			/* / Issue Deauth Indication to SME. */
-			cdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
+			qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
 				     pHdr->sa, sizeof(tSirMacAddr));
 			mlmDeauthInd.reasonCode = reasonCode;
 
@@ -403,7 +403,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 				lim_delete_pre_auth_node(pMac, pHdr->sa);
 
 			if (psessionEntry->pLimMlmJoinReq) {
-				cdf_mem_free(psessionEntry->pLimMlmJoinReq);
+				qdf_mem_free(psessionEntry->pLimMlmJoinReq);
 				psessionEntry->pLimMlmJoinReq = NULL;
 			}
 
@@ -548,7 +548,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	pStaDs->mlmStaContext.cleanupTrigger = eLIM_PEER_ENTITY_DEAUTH;
 
 	/* / Issue Deauth Indication to SME. */
-	cdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
+	qdf_mem_copy((uint8_t *) &mlmDeauthInd.peerMacAddr,
 		     pStaDs->staAddr, sizeof(tSirMacAddr));
 	mlmDeauthInd.reasonCode =
 		(uint8_t) pStaDs->mlmStaContext.disassocReason;
@@ -570,7 +570,7 @@ lim_process_deauth_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 			lim_delete_pre_auth_node(pMac, pHdr->sa);
 
 		if (psessionEntry->limAssocResponseData) {
-			cdf_mem_free(psessionEntry->limAssocResponseData);
+			qdf_mem_free(psessionEntry->limAssocResponseData);
 			psessionEntry->limAssocResponseData = NULL;
 		}
 

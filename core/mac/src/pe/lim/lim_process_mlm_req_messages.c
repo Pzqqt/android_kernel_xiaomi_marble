@@ -373,7 +373,7 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 		goto error;
 	}
 
-	start_oem_data_req = cdf_mem_malloc(sizeof(*start_oem_data_req));
+	start_oem_data_req = qdf_mem_malloc(sizeof(*start_oem_data_req));
 	if (NULL == start_oem_data_req) {
 		lim_log(mac_ctx, LOGE, FL
 			("Could not allocate memory for start_oem_data_req"));
@@ -381,10 +381,10 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 	}
 
 	start_oem_data_req->data =
-		cdf_mem_malloc(mac_ctx->lim.gpLimMlmOemDataReq->data_len);
+		qdf_mem_malloc(mac_ctx->lim.gpLimMlmOemDataReq->data_len);
 	if (!start_oem_data_req->data) {
 		lim_log(mac_ctx, LOGE, FL("memory allocation failed"));
-		cdf_mem_free(start_oem_data_req);
+		qdf_mem_free(start_oem_data_req);
 		goto error;
 	}
 
@@ -394,7 +394,7 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 
 	start_oem_data_req->data_len =
 			mac_ctx->lim.gpLimMlmOemDataReq->data_len;
-	cdf_mem_copy(start_oem_data_req->data,
+	qdf_mem_copy(start_oem_data_req->data,
 		     mac_ctx->lim.gpLimMlmOemDataReq->data,
 		     mac_ctx->lim.gpLimMlmOemDataReq->data_len);
 
@@ -411,8 +411,8 @@ void lim_send_hal_oem_data_req(tpAniSirGlobal mac_ctx)
 		return;
 
 	SET_LIM_PROCESS_DEFD_MESGS(mac_ctx, true);
-	cdf_mem_free(start_oem_data_req->data);
-	cdf_mem_free(start_oem_data_req);
+	qdf_mem_free(start_oem_data_req->data);
+	qdf_mem_free(start_oem_data_req);
 	lim_log(mac_ctx, LOGE,
 		FL("OEM_DATA: posting WMA_START_OEM_DATA_REQ to HAL failed"));
 
@@ -421,7 +421,7 @@ error:
 	MTRACE(mac_trace(mac_ctx, TRACE_CODE_MLM_STATE, NO_SESSION,
 		       mac_ctx->lim.gLimMlmState));
 
-	mlm_oem_data_rsp = cdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
+	mlm_oem_data_rsp = qdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
 	if (NULL == mlm_oem_data_rsp) {
 		lim_log(mac_ctx->hHdd, LOGP, FL
 			("memory allocation for mlm_oem_data_rsp"));
@@ -431,11 +431,11 @@ error:
 
 	if (NULL != mac_ctx->lim.gpLimMlmOemDataReq) {
 		if (NULL != mac_ctx->lim.gpLimMlmOemDataReq->data) {
-			cdf_mem_free(
+			qdf_mem_free(
 				mac_ctx->lim.gpLimMlmOemDataReq->data);
 			mac_ctx->lim.gpLimMlmOemDataReq->data = NULL;
 		}
-		cdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
+		qdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
 		mac_ctx->lim.gpLimMlmOemDataReq = NULL;
 	}
 
@@ -467,8 +467,8 @@ static void mlm_add_sta(tpAniSirGlobal mac_ctx, tpAddStaParams sta_param,
 	wlan_cfg_get_int(mac_ctx, WNI_CFG_DOT11_MODE, &self_dot11mode);
 	sta_param->staType = STA_ENTRY_SELF; /* Identifying self */
 
-	cdf_mem_copy(sta_param->bssId, bssid, sizeof(tSirMacAddr));
-	cdf_mem_copy(sta_param->staMac, session_entry->selfMacAddr,
+	qdf_mem_copy(sta_param->bssId, bssid, sizeof(tSirMacAddr));
+	qdf_mem_copy(sta_param->staMac, session_entry->selfMacAddr,
 		     sizeof(tSirMacAddr));
 
 	/* Configuration related parameters to be changed to support BT-AMP */
@@ -594,7 +594,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	uint32_t retcode;
 
 	/* Package WMA_ADD_BSS_REQ message parameters */
-	addbss_param = cdf_mem_malloc(sizeof(tAddBssParams));
+	addbss_param = qdf_mem_malloc(sizeof(tAddBssParams));
 	if (NULL == addbss_param) {
 		lim_log(mac_ctx, LOGE,
 			FL("Unable to allocate memory during ADD_BSS"));
@@ -602,13 +602,13 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	cdf_mem_set(addbss_param, sizeof(tAddBssParams), 0);
+	qdf_mem_set(addbss_param, sizeof(tAddBssParams), 0);
 	/* Fill in tAddBssParams members */
-	cdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
+	qdf_mem_copy(addbss_param->bssId, mlm_start_req->bssId,
 		     sizeof(tSirMacAddr));
 
 	/* Fill in tAddBssParams selfMacAddr */
-	cdf_mem_copy(addbss_param->selfMacAddr,
+	qdf_mem_copy(addbss_param->selfMacAddr,
 		     session->selfMacAddr, sizeof(tSirMacAddr));
 
 	addbss_param->bssType = mlm_start_req->bssType;
@@ -633,7 +633,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		mlm_start_req->cfParamSet.cfpDurRemaining;
 
 	addbss_param->rateSet.numRates = mlm_start_req->rateSet.numRates;
-	cdf_mem_copy(addbss_param->rateSet.rate, mlm_start_req->rateSet.rate,
+	qdf_mem_copy(addbss_param->rateSet.rate, mlm_start_req->rateSet.rate,
 		     mlm_start_req->rateSet.numRates);
 
 	addbss_param->nwType = mlm_start_req->nwType;
@@ -657,7 +657,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 	addbss_param->sessionId = mlm_start_req->sessionId;
 
 	/* Send the SSID to HAL to enable SSID matching for IBSS */
-	cdf_mem_copy(&(addbss_param->ssId.ssId),
+	qdf_mem_copy(&(addbss_param->ssId.ssId),
 		     mlm_start_req->ssId.ssId, mlm_start_req->ssId.length);
 	addbss_param->ssId.length = mlm_start_req->ssId.length;
 	addbss_param->bHiddenSSIDEn = mlm_start_req->ssidHidden;
@@ -708,7 +708,7 @@ lim_mlm_add_bss(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE,
 			FL("Posting ADD_BSS_REQ to HAL failed, reason=%X"),
 			retcode);
-		cdf_mem_free(addbss_param);
+		qdf_mem_free(addbss_param);
 		return eSIR_SME_HAL_SEND_MESSAGE_FAIL;
 	}
 
@@ -773,7 +773,7 @@ end:
 	mlm_start_cnf.sessionId = mlm_start_req->sessionId;
 
 	/* Free up buffer allocated for LimMlmScanReq */
-	cdf_mem_free(msg_buf);
+	qdf_mem_free(msg_buf);
 
 	/*
 	 * Respond immediately to LIM, only if MLME has not been
@@ -814,12 +814,12 @@ static void lim_process_mlm_oem_data_req(tpAniSirGlobal mac_ctx,
 		 */
 		if (mac_ctx->lim.gpLimMlmOemDataReq) {
 			if (mac_ctx->lim.gpLimMlmOemDataReq->data) {
-				cdf_mem_free(
+				qdf_mem_free(
 				 mac_ctx->lim.gpLimMlmOemDataReq->data);
 				mac_ctx->lim.gpLimMlmOemDataReq->data =
 				 NULL;
 			}
-			cdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
+			qdf_mem_free(mac_ctx->lim.gpLimMlmOemDataReq);
 			mac_ctx->lim.gpLimMlmOemDataReq = NULL;
 		}
 
@@ -838,15 +838,15 @@ static void lim_process_mlm_oem_data_req(tpAniSirGlobal mac_ctx,
 		lim_print_mlm_state(mac_ctx, LOGW, mac_ctx->lim.gLimMlmState);
 
 		/* Free up buffer allocated */
-		cdf_mem_free(msg_buf);
+		qdf_mem_free(msg_buf);
 
 		/* Return Meas confirm with INVALID_PARAMETERS */
-		mlm_oem_data_rsp = cdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
+		mlm_oem_data_rsp = qdf_mem_malloc(sizeof(tLimMlmOemDataRsp));
 		if (mlm_oem_data_rsp != NULL) {
 			mlm_oem_data_rsp->target_rsp = false;
 			lim_post_sme_message(mac_ctx, LIM_MLM_OEM_DATA_CNF,
 					     (uint32_t *) mlm_oem_data_rsp);
-			cdf_mem_free(mlm_oem_data_rsp);
+			qdf_mem_free(mlm_oem_data_rsp);
 		} else {
 			lim_log(mac_ctx, LOGP, FL
 			    ("Could not allocate memory for mlm_oem_data_rsp"));
@@ -1087,7 +1087,7 @@ static void lim_process_mlm_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	}
 
 error:
-	cdf_mem_free(msg);
+	qdf_mem_free(msg);
 	if (session != NULL)
 		session->pLimMlmJoinReq = NULL;
 	mlmjoin_cnf.resultCode = eSIR_SME_RESOURCES_UNAVAILABLE;
@@ -1171,7 +1171,7 @@ static bool lim_is_preauth_ctx_exists(tpAniSirGlobal mac_ctx,
 	      ((stads != NULL) &&
 	       (mac_ctx->lim.gpLimMlmAuthReq->authType ==
 			stads->mlmStaContext.authType)) &&
-	       (cdf_mem_compare(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
+	       (!qdf_mem_cmp(mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 			curr_bssid, sizeof(tSirMacAddr)))) ||
 	      ((preauth_node != NULL) &&
 	       (preauth_node->authType ==
@@ -1303,14 +1303,14 @@ static void lim_process_mlm_auth_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	}
 	return;
 end:
-	cdf_mem_copy((uint8_t *) &mlm_auth_cnf.peerMacAddr,
+	qdf_mem_copy((uint8_t *) &mlm_auth_cnf.peerMacAddr,
 		     (uint8_t *) &mac_ctx->lim.gpLimMlmAuthReq->peerMacAddr,
 		     sizeof(tSirMacAddr));
 
 	mlm_auth_cnf.authType = mac_ctx->lim.gpLimMlmAuthReq->authType;
 	mlm_auth_cnf.sessionId = session_id;
 
-	cdf_mem_free(mac_ctx->lim.gpLimMlmAuthReq);
+	qdf_mem_free(mac_ctx->lim.gpLimMlmAuthReq);
 	mac_ctx->lim.gpLimMlmAuthReq = NULL;
 	lim_log(mac_ctx, LOG1, "SessionId:%d LimPostSme LIM_MLM_AUTH_CNF ",
 		session_id);
@@ -1349,7 +1349,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		lim_log(mac_ctx, LOGP,
 			FL("SessionId:%d Session Does not exist"),
 			mlm_assoc_req->sessionId);
-		cdf_mem_free(mlm_assoc_req);
+		qdf_mem_free(mlm_assoc_req);
 		return;
 	}
 
@@ -1359,7 +1359,7 @@ static void lim_process_mlm_assoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	    !LIM_IS_BT_AMP_AP_ROLE(session_entry)) &&
 		(session_entry->limMlmState == eLIM_MLM_AUTHENTICATED_STATE ||
 		 session_entry->limMlmState == eLIM_MLM_JOINED_STATE) &&
-		(cdf_mem_compare(mlm_assoc_req->peerMacAddr,
+		(!qdf_mem_cmp(mlm_assoc_req->peerMacAddr,
 		 curr_bssId, sizeof(tSirMacAddr))))) {
 		/*
 		 * Received Association request either in invalid state
@@ -1435,7 +1435,7 @@ end:
 	/* Update PE session Id */
 	mlm_assoc_cnf.sessionId = mlm_assoc_req->sessionId;
 	/* Free up buffer allocated for assocReq */
-	cdf_mem_free(mlm_assoc_req);
+	qdf_mem_free(mlm_assoc_req);
 	lim_post_sme_message(mac_ctx, LIM_MLM_ASSOC_CNF,
 			     (uint32_t *) &mlm_assoc_cnf);
 }
@@ -1471,7 +1471,7 @@ static void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 		lim_log(mac_ctx, LOGE,
 			FL("Session Does not exist for given sessionId %d"),
 			reassoc_req->sessionId);
-		cdf_mem_free(reassoc_req);
+		qdf_mem_free(reassoc_req);
 		return;
 	}
 
@@ -1501,7 +1501,7 @@ static void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	}
 
 	if (session->pLimMlmReassocReq)
-		cdf_mem_free(session->pLimMlmReassocReq);
+		qdf_mem_free(session->pLimMlmReassocReq);
 
 	/*
 	 * Hold Re-Assoc request as part of Session, knock-out mac_ctx
@@ -1512,9 +1512,9 @@ static void lim_process_mlm_reassoc_req(tpAniSirGlobal mac_ctx, uint32_t *msg)
 	/* See if we have pre-auth context with new AP */
 	auth_node = lim_search_pre_auth_list(mac_ctx, session->limReAssocbssId);
 
-	if (!auth_node && (!cdf_mem_compare(reassoc_req->peerMacAddr,
+	if (!auth_node && qdf_mem_cmp(reassoc_req->peerMacAddr,
 					    session->bssId,
-					    sizeof(tSirMacAddr)))) {
+					    sizeof(tSirMacAddr))) {
 		/*
 		 * Either pre-auth context does not exist AND
 		 * we are not reassociating with currently
@@ -1559,7 +1559,7 @@ end:
 	/* Update PE sessio Id */
 	reassoc_cnf.sessionId = reassoc_req->sessionId;
 	/* Free up buffer allocated for reassocReq */
-	cdf_mem_free(reassoc_req);
+	qdf_mem_free(reassoc_req);
 	session->pLimReAssocReq = NULL;
 	lim_post_sme_message(mac_ctx, LIM_MLM_REASSOC_CNF,
 			     (uint32_t *) &reassoc_cnf);
@@ -1613,7 +1613,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 		session->limMlmState,
 		MAC_ADDR_ARRAY(mlm_disassocreq->peer_macaddr.bytes));
 
-	cdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
@@ -1630,7 +1630,7 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			 * disassociation
 			 */
 			sme_disassoc_rsp =
-				cdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
+				qdf_mem_malloc(sizeof(tSirSmeDisassocRsp));
 			if (NULL == sme_disassoc_rsp) {
 				lim_log(mac_ctx, LOGP,
 					FL("memory allocation failed for disassoc rsp"));
@@ -1751,13 +1751,13 @@ lim_process_mlm_disassoc_req_ntf(tpAniSirGlobal mac_ctx,
 			goto end;
 		}
 		/* Free up buffer allocated for mlmDisassocReq */
-		cdf_mem_free(mlm_disassocreq);
+		qdf_mem_free(mlm_disassocreq);
 	}
 
 	return;
 
 end:
-	cdf_mem_copy((uint8_t *) &mlm_disassoccnf.peerMacAddr,
+	qdf_mem_copy((uint8_t *) &mlm_disassoccnf.peerMacAddr,
 		     (uint8_t *) mlm_disassocreq->peer_macaddr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 	mlm_disassoccnf.aid = mlm_disassocreq->aid;
@@ -1767,7 +1767,7 @@ end:
 	mlm_disassoccnf.sessionId = mlm_disassocreq->sessionId;
 
 	/* Free up buffer allocated for mlmDisassocReq */
-	cdf_mem_free(mlm_disassocreq);
+	qdf_mem_free(mlm_disassocreq);
 
 	lim_post_sme_message(mac_ctx, LIM_MLM_DISASSOC_CNF,
 			     (uint32_t *) &mlm_disassoccnf);
@@ -1792,10 +1792,10 @@ bool lim_check_disassoc_deauth_ack_pending(tpAniSirGlobal mac_ctx,
 
 	disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 	deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
-	if ((disassoc_req && (cdf_mem_compare((uint8_t *) sta_mac,
+	if ((disassoc_req && (!qdf_mem_cmp((uint8_t *) sta_mac,
 			      (uint8_t *) &disassoc_req->peer_macaddr.bytes,
 			       QDF_MAC_ADDR_SIZE))) ||
-	    (deauth_req && (cdf_mem_compare((uint8_t *) sta_mac,
+	    (deauth_req && (!qdf_mem_cmp((uint8_t *) sta_mac,
 			      (uint8_t *) &deauth_req->peer_macaddr.bytes,
 			       QDF_MAC_ADDR_SIZE)))) {
 		PELOG1(lim_log(mac_ctx, LOG1,
@@ -1826,7 +1826,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 	tLimMlmDeauthReq *mlm_deauth_req;
 	mlm_disassoc_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq;
 	if (mlm_disassoc_req &&
-	    (cdf_mem_compare((uint8_t *) sta_mac,
+	    (!qdf_mem_cmp((uint8_t *) sta_mac,
 			     (uint8_t *) &mlm_disassoc_req->peer_macaddr.bytes,
 			     QDF_MAC_ADDR_SIZE))) {
 		if (clean_rx_path) {
@@ -1837,7 +1837,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 				lim_deactivate_and_change_timer(mac_ctx,
 						eLIM_DISASSOC_ACK_TIMER);
 			}
-			cdf_mem_free(mlm_disassoc_req);
+			qdf_mem_free(mlm_disassoc_req);
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDisassocReq =
 				NULL;
 		}
@@ -1845,7 +1845,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 
 	mlm_deauth_req = mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq;
 	if (mlm_deauth_req &&
-	    (cdf_mem_compare((uint8_t *) sta_mac,
+	    (!qdf_mem_cmp((uint8_t *) sta_mac,
 			     (uint8_t *) &mlm_deauth_req->peer_macaddr.bytes,
 			     QDF_MAC_ADDR_SIZE))) {
 		if (clean_rx_path) {
@@ -1856,7 +1856,7 @@ void lim_clean_up_disassoc_deauth_req(tpAniSirGlobal mac_ctx,
 				lim_deactivate_and_change_timer(mac_ctx,
 						eLIM_DEAUTH_ACK_TIMER);
 			}
-			cdf_mem_free(mlm_deauth_req);
+			qdf_mem_free(mlm_deauth_req);
 			mac_ctx->lim.limDisassocDeauthCnfReq.pMlmDeauthReq =
 				NULL;
 		}
@@ -1947,7 +1947,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE,
 			FL("session does not exist for given sessionId %d"),
 			mlm_deauth_req->sessionId);
-		cdf_mem_free(mlm_deauth_req);
+		qdf_mem_free(mlm_deauth_req);
 		return;
 	}
 	lim_log(mac_ctx, LOG1, FL("Process Deauth Req on sessionID %d Systemrole %d"
@@ -1972,7 +1972,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 		case eLIM_MLM_AUTHENTICATED_STATE:
 		case eLIM_MLM_WT_ASSOC_RSP_STATE:
 		case eLIM_MLM_LINK_ESTABLISHED_STATE:
-			if (!cdf_mem_compare(mlm_deauth_req->peer_macaddr.bytes,
+			if (qdf_mem_cmp(mlm_deauth_req->peer_macaddr.bytes,
 					curr_bssId, QDF_MAC_ADDR_SIZE)) {
 				lim_log(mac_ctx, LOGE,
 					FL("received MLM_DEAUTH_REQ with invalid BSS id "
@@ -1986,7 +1986,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 				 * deauthentication
 				 */
 				sme_deauth_rsp =
-				    cdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
+				    qdf_mem_malloc(sizeof(tSirSmeDeauthRsp));
 				if (NULL == sme_deauth_rsp) {
 					lim_log(mac_ctx, LOGP,
 						FL("memory allocation failed for deauth rsp"));
@@ -2009,7 +2009,7 @@ lim_process_mlm_deauth_req_ntf(tpAniSirGlobal mac_ctx,
 						mlm_deauth_req->sessionId;
 				sme_deauth_rsp->transactionId = 0;
 
-				cdf_mem_copy(sme_deauth_rsp->peer_macaddr.bytes,
+				qdf_mem_copy(sme_deauth_rsp->peer_macaddr.bytes,
 					     mlm_deauth_req->peer_macaddr.bytes,
 					     QDF_MAC_ADDR_SIZE);
 
@@ -2154,7 +2154,7 @@ end:
 	mlm_deauth_cnf.sessionId = mlm_deauth_req->sessionId;
 
 	/* Free up buffer allocated for mlmDeauthReq */
-	cdf_mem_free(mlm_deauth_req);
+	qdf_mem_free(mlm_deauth_req);
 	lim_post_sme_message(mac_ctx,
 			     LIM_MLM_DEAUTH_CNF, (uint32_t *) &mlm_deauth_cnf);
 }
@@ -2261,7 +2261,7 @@ lim_process_mlm_set_keys_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		mlm_set_keys_req->aid, mlm_set_keys_req->edType,
 		mlm_set_keys_req->numKeys);
 	lim_print_mac_addr(mac_ctx, mlm_set_keys_req->peer_macaddr.bytes, LOGW);
-	cdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(curr_bssid.bytes, session->bssId, QDF_MAC_ADDR_SIZE);
 
 	switch (GET_LIM_SYSTEM_ROLE(session)) {
 	case eLIM_STA_ROLE:
@@ -2535,7 +2535,7 @@ static void lim_process_join_failure_timeout(tpAniSirGlobal mac_ctx)
 		mlm_join_cnf.sessionId = session->peSessionId;
 		/* Freeup buffer allocated to join request */
 		if (session->pLimMlmJoinReq) {
-			cdf_mem_free(session->pLimMlmJoinReq);
+			qdf_mem_free(session->pLimMlmJoinReq);
 			session->pLimMlmJoinReq = NULL;
 		}
 		lim_post_sme_message(mac_ctx, LIM_MLM_JOIN_CNF,
@@ -2578,7 +2578,7 @@ static void lim_process_periodic_join_probe_req_timer(tpAniSirGlobal mac_ctx)
 	if ((true ==
 	    tx_timer_running(&mac_ctx->lim.limTimers.gLimJoinFailureTimer))
 		&& (session->limMlmState == eLIM_MLM_WT_JOIN_BEACON_STATE)) {
-		cdf_mem_copy(ssid.ssId, session->ssId.ssId,
+		qdf_mem_copy(ssid.ssId, session->ssId.ssId,
 			     session->ssId.length);
 		ssid.length = session->ssId.length;
 		lim_send_probe_req_mgmt_frame(mac_ctx, &ssid,
@@ -2803,7 +2803,7 @@ lim_process_assoc_failure_timeout(tpAniSirGlobal mac_ctx, uint32_t msg_type)
 		 * MLM state machine
 		 */
 		if (session->pLimMlmJoinReq) {
-			cdf_mem_free(session->pLimMlmJoinReq);
+			qdf_mem_free(session->pLimMlmJoinReq);
 			session->pLimMlmJoinReq = NULL;
 		}
 		/* To remove the preauth node in case of fail to associate */
@@ -2870,7 +2870,7 @@ void lim_complete_mlm_scan(tpAniSirGlobal mac_ctx, tSirResultCodes ret_code)
 	lim_restore_pre_scan_state(mac_ctx);
 	/* Free up mac_ctx->lim.gLimMlmScanReq */
 	if (NULL != mac_ctx->lim.gpLimMlmScanReq) {
-		cdf_mem_free(mac_ctx->lim.gpLimMlmScanReq);
+		qdf_mem_free(mac_ctx->lim.gpLimMlmScanReq);
 		mac_ctx->lim.gpLimMlmScanReq = NULL;
 	}
 

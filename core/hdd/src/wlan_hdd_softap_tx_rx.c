@@ -298,7 +298,7 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 	++pAdapter->stats.tx_packets;
 
 	/* Zero out skb's context buffer for the driver to use */
-	cdf_mem_set(skb->cb, sizeof(skb->cb), 0);
+	qdf_mem_set(skb->cb, sizeof(skb->cb), 0);
 	NBUF_CB_TX_PACKET_TRACK(skb) = NBUF_TX_PKT_DATA_TRACK;
 	NBUF_UPDATE_TX_PKT_COUNT(skb, NBUF_TX_PKT_HDD);
 
@@ -400,12 +400,12 @@ QDF_STATUS hdd_softap_init_tx_rx(hdd_adapter_t *pAdapter)
 
 	uint8_t STAId = 0;
 
-	cdf_mem_zero(&pAdapter->stats, sizeof(struct net_device_stats));
+	qdf_mem_zero(&pAdapter->stats, sizeof(struct net_device_stats));
 
 	spin_lock_init(&pAdapter->staInfo_lock);
 
 	for (STAId = 0; STAId < WLAN_MAX_STA_COUNT; STAId++) {
-		cdf_mem_zero(&pAdapter->aStaInfo[STAId],
+		qdf_mem_zero(&pAdapter->aStaInfo[STAId],
 			     sizeof(hdd_station_info_t));
 	}
 
@@ -446,7 +446,7 @@ QDF_STATUS hdd_softap_init_tx_rx_sta(hdd_adapter_t *pAdapter, uint8_t STAId,
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_zero(&pAdapter->aStaInfo[STAId], sizeof(hdd_station_info_t));
+	qdf_mem_zero(&pAdapter->aStaInfo[STAId], sizeof(hdd_station_info_t));
 
 	pAdapter->aStaInfo[STAId].isUsed = true;
 	pAdapter->aStaInfo[STAId].isDeauthInProgress = false;
@@ -633,7 +633,7 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 
 	if (pAdapter->aStaInfo[staId].isUsed) {
 		spin_lock_bh(&pAdapter->staInfo_lock);
-		cdf_mem_zero(&pAdapter->aStaInfo[staId],
+		qdf_mem_zero(&pAdapter->aStaInfo[staId],
 			     sizeof(hdd_station_info_t));
 		spin_unlock_bh(&pAdapter->staInfo_lock);
 	}
@@ -907,7 +907,7 @@ QDF_STATUS hdd_softap_get_sta_id(hdd_adapter_t *pAdapter,
 	uint8_t i;
 
 	for (i = 0; i < WLAN_MAX_STA_COUNT; i++) {
-		if (cdf_mem_compare
+		if (!qdf_mem_cmp
 			(&pAdapter->aStaInfo[i].macAddrSTA, pMacAddress,
 			QDF_MAC_ADDR_SIZE) && pAdapter->aStaInfo[i].isUsed) {
 			*staId = i;

@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -104,7 +104,7 @@ uint16_t hash_function(tpAniSirGlobal pMac, uint8_t staAddr[], uint16_t numSta)
 	for (i = 0; i < 6; i++)
 		sum += staAddr[i];
 
-	return (sum % numSta);
+	return sum % numSta;
 }
 
 /* --------------------------------------------------------------------- */
@@ -250,7 +250,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 		       (pMac, LOG1, FL("Assoc Id %d, Addr %08X"), assocId, pStaDs);
 	       )
 	/* Clear the STA node except for the next pointer (last 4 bytes) */
-	cdf_mem_set((uint8_t *) pStaDs,
+	qdf_mem_set((uint8_t *) pStaDs,
 		    sizeof(tDphHashNode) - sizeof(tpDphHashNode), 0);
 
 	/* Initialize the assocId */
@@ -261,7 +261,7 @@ tpDphHashNode dph_init_sta_state(tpAniSirGlobal pMac, tSirMacAddr staAddr,
 		pStaDs->staIndex = STA_INVALID_IDX;
 
 	/* Initialize STA mac address */
-	cdf_mem_copy(pStaDs->staAddr, staAddr, sizeof(tSirMacAddr));
+	qdf_mem_copy(pStaDs->staAddr, staAddr, sizeof(tSirMacAddr));
 
 	/* Initialize fragmentation threshold */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_FRAGMENTATION_THRESHOLD, &val) !=

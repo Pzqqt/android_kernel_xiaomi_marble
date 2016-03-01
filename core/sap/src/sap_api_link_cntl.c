@@ -194,7 +194,7 @@ QDF_STATUS wlansap_scan_callback(tHalHandle hal_handle,
 	if (sap_ctx->channelList != NULL) {
 		/* Always free up the memory for channel selection whatever
 		 * the result */
-		cdf_mem_free(sap_ctx->channelList);
+		qdf_mem_free(sap_ctx->channelList);
 		sap_ctx->channelList = NULL;
 	}
 #endif
@@ -394,7 +394,7 @@ wlansap_pre_start_bss_acs_scan_callback(tHalHandle hal_handle, void *pcontext,
 		* channel selection whatever
 		* the result
 		*/
-		cdf_mem_free(sap_ctx->channelList);
+		qdf_mem_free(sap_ctx->channelList);
 		sap_ctx->channelList = NULL;
 	}
 #endif
@@ -745,17 +745,17 @@ wlansap_roam_process_infra_assoc_ind(ptSapContext sap_ctx,
 		  roam_result);
 	sap_ctx->nStaWPARSnReqIeLength = csr_roam_info->rsnIELen;
 	if (sap_ctx->nStaWPARSnReqIeLength)
-		cdf_mem_copy(sap_ctx->pStaWpaRsnReqIE, csr_roam_info->prsnIE,
+		qdf_mem_copy(sap_ctx->pStaWpaRsnReqIE, csr_roam_info->prsnIE,
 			     sap_ctx->nStaWPARSnReqIeLength);
 #ifdef FEATURE_WLAN_WAPI
 	sap_ctx->nStaWAPIReqIeLength = csr_roam_info->wapiIELen;
 	if (sap_ctx->nStaWAPIReqIeLength)
-		cdf_mem_copy(sap_ctx->pStaWapiReqIE, csr_roam_info->pwapiIE,
+		qdf_mem_copy(sap_ctx->pStaWapiReqIE, csr_roam_info->pwapiIE,
 			     sap_ctx->nStaWAPIReqIeLength);
 #endif
 	sap_ctx->nStaAddIeLength = csr_roam_info->addIELen;
 	if (sap_ctx->nStaAddIeLength)
-		cdf_mem_copy(sap_ctx->pStaAddIE, csr_roam_info->paddIE,
+		qdf_mem_copy(sap_ctx->pStaAddIE, csr_roam_info->paddIE,
 			     sap_ctx->nStaAddIeLength);
 	sap_ctx->SapQosCfg.WmmIsEnabled = csr_roam_info->wmmEnabledSta;
 	/* MAC filtering */
@@ -995,13 +995,13 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			  roam_result);
 		sap_ctx->nStaWPARSnReqIeLength = csr_roam_info->rsnIELen;
 		if (sap_ctx->nStaWPARSnReqIeLength)
-			cdf_mem_copy(sap_ctx->pStaWpaRsnReqIE,
+			qdf_mem_copy(sap_ctx->pStaWpaRsnReqIE,
 				     csr_roam_info->prsnIE,
 				     sap_ctx->nStaWPARSnReqIeLength);
 
 		sap_ctx->nStaAddIeLength = csr_roam_info->addIELen;
 		if (sap_ctx->nStaAddIeLength)
-			cdf_mem_copy(sap_ctx->pStaAddIE,
+			qdf_mem_copy(sap_ctx->pStaAddIE,
 				     csr_roam_info->paddIE,
 				     sap_ctx->nStaAddIeLength);
 

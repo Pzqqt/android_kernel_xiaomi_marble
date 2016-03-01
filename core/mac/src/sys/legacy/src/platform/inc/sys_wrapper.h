@@ -50,7 +50,7 @@ extern "C" {
 #include "qdf_mc_timer.h"
 #include "qdf_types.h"
 #include "qdf_trace.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 
 /* Interlocked Compare Exchange related definitions */
 

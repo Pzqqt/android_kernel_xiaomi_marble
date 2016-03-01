@@ -42,7 +42,7 @@
 #endif /* FEATURE_TSO */
 #include <qdf_types.h>
 #include <cdf_nbuf.h>
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 #include <qdf_trace.h>
 #include <qdf_status.h>
 #include <qdf_lock.h>
@@ -443,17 +443,17 @@ void __cdf_nbuf_trace_update(struct sk_buff *buf, char *event_string)
 		return;
 	}
 
-	cdf_mem_zero(string_buf, NBUF_PKT_TRAC_MAX_STRING);
-	cdf_mem_copy(string_buf, event_string, cdf_str_len(event_string));
+	qdf_mem_zero(string_buf, NBUF_PKT_TRAC_MAX_STRING);
+	qdf_mem_copy(string_buf, event_string, cdf_str_len(event_string));
 	if (NBUF_PKT_TRAC_TYPE_EAPOL & cdf_nbuf_trace_get_proto_type(buf)) {
-		cdf_mem_copy(string_buf + cdf_str_len(event_string),
+		qdf_mem_copy(string_buf + cdf_str_len(event_string),
 			     "EPL", NBUF_PKT_TRAC_PROTO_STRING);
 	} else if (NBUF_PKT_TRAC_TYPE_DHCP & cdf_nbuf_trace_get_proto_type(buf)) {
-		cdf_mem_copy(string_buf + cdf_str_len(event_string),
+		qdf_mem_copy(string_buf + cdf_str_len(event_string),
 			     "DHC", NBUF_PKT_TRAC_PROTO_STRING);
 	} else if (NBUF_PKT_TRAC_TYPE_MGMT_ACTION &
 		   cdf_nbuf_trace_get_proto_type(buf)) {
-		cdf_mem_copy(string_buf + cdf_str_len(event_string),
+		qdf_mem_copy(string_buf + cdf_str_len(event_string),
 			     "MACT", NBUF_PKT_TRAC_PROTO_STRING);
 	}
 
@@ -567,7 +567,7 @@ void cdf_net_buf_debug_clean(void)
 		while (p_node) {
 			p_prev = p_node;
 			p_node = p_node->p_next;
-			cdf_mem_free(p_prev);
+			qdf_mem_free(p_prev);
 		}
 	}
 
@@ -638,7 +638,7 @@ void cdf_net_buf_debug_add_node(cdf_nbuf_t net_buf, size_t size,
 		QDF_ASSERT(0);
 		goto done;
 	} else {
-		p_node = (CDF_NBUF_TRACK *) cdf_mem_malloc(sizeof(*p_node));
+		p_node = (CDF_NBUF_TRACK *) qdf_mem_malloc(sizeof(*p_node));
 		if (p_node) {
 			p_node->net_buf = net_buf;
 			p_node->file_name = file_name;
@@ -687,7 +687,7 @@ void cdf_net_buf_debug_delete_node(cdf_nbuf_t net_buf)
 	/* Found at head of the table */
 	if (p_head->net_buf == net_buf) {
 		gp_cdf_net_buf_track_tbl[i] = p_node->p_next;
-		cdf_mem_free((void *)p_node);
+		qdf_mem_free((void *)p_node);
 		found = true;
 		goto done;
 	}
@@ -698,7 +698,7 @@ void cdf_net_buf_debug_delete_node(cdf_nbuf_t net_buf)
 		p_node = p_node->p_next;
 		if ((NULL != p_node) && (p_node->net_buf == net_buf)) {
 			p_prev->p_next = p_node->p_next;
-			cdf_mem_free((void *)p_node);
+			qdf_mem_free((void *)p_node);
 			found = true;
 			break;
 		}

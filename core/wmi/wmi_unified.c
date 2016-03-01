@@ -68,7 +68,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		if (WMI_EVENT_DEBUG_MAX_ENTRY <= g_wmi_command_buf_idx)		\
 			g_wmi_command_buf_idx = 0;				\
 		wmi_command_log_buffer[g_wmi_command_buf_idx].command = a;	\
-		cdf_mem_copy(wmi_command_log_buffer[g_wmi_command_buf_idx].data, b, 16); \
+		qdf_mem_copy(wmi_command_log_buffer[g_wmi_command_buf_idx].data, b, 16); \
 		wmi_command_log_buffer[g_wmi_command_buf_idx].time =		\
 			qdf_get_log_timestamp();					\
 		g_wmi_command_buf_idx++;					\
@@ -78,7 +78,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		if (WMI_EVENT_DEBUG_MAX_ENTRY <= g_wmi_command_tx_cmp_buf_idx)	\
 			g_wmi_command_tx_cmp_buf_idx = 0;			\
 		wmi_command_tx_cmp_log_buffer[g_wmi_command_tx_cmp_buf_idx].command = a; \
-		cdf_mem_copy(wmi_command_tx_cmp_log_buffer			\
+		qdf_mem_copy(wmi_command_tx_cmp_log_buffer			\
 			     [g_wmi_command_tx_cmp_buf_idx].data, b, 16);	     \
 		wmi_command_tx_cmp_log_buffer[g_wmi_command_tx_cmp_buf_idx].time = \
 			qdf_get_log_timestamp();					\
@@ -89,7 +89,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		if (WMI_EVENT_DEBUG_MAX_ENTRY <= g_wmi_event_buf_idx)		\
 			g_wmi_event_buf_idx = 0;				\
 		wmi_event_log_buffer[g_wmi_event_buf_idx].event = a;		\
-		cdf_mem_copy(wmi_event_log_buffer[g_wmi_event_buf_idx].data, b, 16); \
+		qdf_mem_copy(wmi_event_log_buffer[g_wmi_event_buf_idx].data, b, 16); \
 		wmi_event_log_buffer[g_wmi_event_buf_idx].time =		\
 			qdf_get_log_timestamp();					\
 		g_wmi_event_buf_idx++;						\
@@ -99,7 +99,7 @@ struct wmi_event_debug wmi_rx_event_log_buffer[WMI_EVENT_DEBUG_MAX_ENTRY];
 		if (WMI_EVENT_DEBUG_MAX_ENTRY <= g_wmi_rx_event_buf_idx)	\
 			g_wmi_rx_event_buf_idx = 0;					\
 		wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].event = a;	\
-		cdf_mem_copy(wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].data, b, 16); \
+		qdf_mem_copy(wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].data, b, 16); \
 		wmi_rx_event_log_buffer[g_wmi_rx_event_buf_idx].time =		\
 			qdf_get_log_timestamp();					\
 		g_wmi_rx_event_buf_idx++;					\
@@ -126,7 +126,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 		g_wmi_mgmt_command_buf_idx)				     \
 		g_wmi_mgmt_command_buf_idx = 0;				     \
 	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].command = a; \
-	cdf_mem_copy(							     \
+	qdf_mem_copy(							     \
 		wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].data,\
 		b, 16);							     \
 	wmi_mgmt_command_log_buffer[g_wmi_mgmt_command_buf_idx].time =	     \
@@ -140,7 +140,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 		g_wmi_mgmt_command_tx_cmp_buf_idx = 0;			     \
 	wmi_mgmt_command_tx_cmp_log_buffer[g_wmi_mgmt_command_tx_cmp_buf_idx].\
 								command = a; \
-	cdf_mem_copy(wmi_mgmt_command_tx_cmp_log_buffer			     \
+	qdf_mem_copy(wmi_mgmt_command_tx_cmp_log_buffer			     \
 		     [g_wmi_mgmt_command_tx_cmp_buf_idx].data, b, 16);	     \
 	wmi_mgmt_command_tx_cmp_log_buffer[g_wmi_mgmt_command_tx_cmp_buf_idx].\
 									time =\
@@ -152,7 +152,7 @@ wmi_mgmt_event_log_buffer[WMI_MGMT_EVENT_DEBUG_MAX_ENTRY];
 	if (WMI_MGMT_EVENT_DEBUG_MAX_ENTRY <= g_wmi_mgmt_event_buf_idx)       \
 		g_wmi_mgmt_event_buf_idx = 0;				      \
 	wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].event = a;	      \
-	cdf_mem_copy(wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].data,\
+	qdf_mem_copy(wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].data,\
 		     b, 16);						      \
 	wmi_mgmt_event_log_buffer[g_wmi_mgmt_event_buf_idx].time =	      \
 		qdf_get_log_timestamp();				      \
@@ -844,7 +844,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, int len,
 		return -EBUSY;
 	}
 
-	pkt = cdf_mem_malloc(sizeof(*pkt));
+	pkt = qdf_mem_malloc(sizeof(*pkt));
 	if (!pkt) {
 		qdf_atomic_dec(&wmi_handle->pending_cmds);
 		pr_err("%s, Failed to alloc htc packet %x, no memory\n",
@@ -1312,7 +1312,7 @@ void wmi_htc_tx_complete(void *ctx, HTC_PACKET *htc_pkt)
 	qdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
 #endif
 	cdf_nbuf_free(wmi_cmd_buf);
-	cdf_mem_free(htc_pkt);
+	qdf_mem_free(htc_pkt);
 	qdf_atomic_dec(&wmi_handle->pending_cmds);
 }
 

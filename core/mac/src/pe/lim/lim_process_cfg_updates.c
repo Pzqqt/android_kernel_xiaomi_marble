@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -78,7 +78,7 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 	if (pesessionEntry != NULL && LIM_IS_AP_ROLE(pesessionEntry)) {
 		if (pesessionEntry->gLimProtectionControl ==
 		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
-			cdf_mem_set((void *)&pesessionEntry->cfgProtection,
+			qdf_mem_set((void *)&pesessionEntry->cfgProtection,
 				    sizeof(tCfgProtection), 0);
 		else {
 			lim_log(pMac, LOG1,
@@ -112,7 +112,7 @@ void lim_set_cfg_protection(tpAniSirGlobal pMac, tpPESession pesessionEntry)
 
 		if (pMac->lim.gLimProtectionControl ==
 		    WNI_CFG_FORCE_POLICY_PROTECTION_DISABLE)
-			cdf_mem_set((void *)&pMac->lim.cfgProtection,
+			qdf_mem_set((void *)&pMac->lim.cfgProtection,
 				    sizeof(tCfgProtection), 0);
 		else {
 			pMac->lim.cfgProtection.fromlla =

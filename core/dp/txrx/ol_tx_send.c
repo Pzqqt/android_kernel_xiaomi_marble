@@ -958,7 +958,7 @@ ol_tx_delay_compute(struct ol_txrx_pdev_t *pdev,
 		pdev->tx_delay.cats[cat].avg_start_time_ticks = now_ticks;
 		index = 1 - index;
 		pdev->tx_delay.cats[cat].in_progress_idx = index;
-		cdf_mem_zero(&pdev->tx_delay.cats[cat].copies[index],
+		qdf_mem_zero(&pdev->tx_delay.cats[cat].copies[index],
 			     sizeof(pdev->tx_delay.cats[cat].copies[index]));
 	}
 

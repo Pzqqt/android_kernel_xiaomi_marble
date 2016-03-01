@@ -300,7 +300,7 @@ uint32_t lim_create_timers(tpAniSirGlobal pMac)
 		lim_log(pMac, LOGP, FL("could not retrieve mac preauth value"));
 	pMac->lim.gLimPreAuthTimerTable.numEntry = cfgValue;
 	pMac->lim.gLimPreAuthTimerTable.pTable =
-		cdf_mem_malloc(cfgValue * sizeof(tLimPreAuthNode));
+		qdf_mem_malloc(cfgValue * sizeof(tLimPreAuthNode));
 
 	if (pMac->lim.gLimPreAuthTimerTable.pTable == NULL) {
 		lim_log(pMac, LOGP, FL("AllocateMemory failed!"));
@@ -427,7 +427,7 @@ err_timer:
 	tx_timer_delete(&pMac->lim.limTimers.gLimActiveToPassiveChannelTimer);
 
 	if (NULL != pMac->lim.gLimPreAuthTimerTable.pTable) {
-		cdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable);
+		qdf_mem_free(pMac->lim.gLimPreAuthTimerTable.pTable);
 		pMac->lim.gLimPreAuthTimerTable.pTable = NULL;
 	}
 	return TX_TIMER_ERROR;
@@ -471,7 +471,8 @@ void lim_timer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyptr = NULL;
 	msg.bodyval = 0;
 
-	if ((statusCode = lim_post_msg_api(pMac, &msg)) != eSIR_SUCCESS)
+	statusCode = lim_post_msg_api(pMac, &msg);
+	if (statusCode != eSIR_SUCCESS)
 		lim_log(pMac, LOGE,
 			FL("posting message %X to LIM failed, reason=%d"),
 			msg.type, statusCode);
@@ -583,7 +584,7 @@ void lim_assoc_failure_timer_handler(void *mac_global, uint32_t param)
 				FL("Reassoc request retry MAX(%d) reached"),
 				LIM_MAX_REASSOC_RETRY_LIMIT);
 			if (NULL != session->pLimMlmReassocRetryReq) {
-				cdf_mem_free(session->pLimMlmReassocRetryReq);
+				qdf_mem_free(session->pLimMlmReassocRetryReq);
 				session->pLimMlmReassocRetryReq = NULL;
 			}
 		}
@@ -1274,7 +1275,8 @@ void lim_send_disassoc_frame_threshold_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyval = 0;
 	msg.bodyptr = NULL;
 
-	if ((statusCode = lim_post_msg_api(pMac, &msg)) != eSIR_SUCCESS)
+	statusCode = lim_post_msg_api(pMac, &msg);
+	if (statusCode != eSIR_SUCCESS)
 		lim_log(pMac, LOGE,
 			FL("posting to LIM failed, reason=%d"), statusCode);
 
@@ -1308,7 +1310,8 @@ void lim_cnf_wait_tmer_handler(void *pMacGlobal, uint32_t param)
 	msg.bodyval = (uint32_t) param;
 	msg.bodyptr = NULL;
 
-	if ((statusCode = lim_post_msg_api(pMac, &msg)) != eSIR_SUCCESS)
+	statusCode = lim_post_msg_api(pMac, &msg);
+	if (statusCode != eSIR_SUCCESS)
 		lim_log(pMac, LOGE,
 			FL("posting to LIM failed, reason=%d"), statusCode);
 

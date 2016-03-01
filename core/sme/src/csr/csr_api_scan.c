@@ -133,9 +133,9 @@ static void csr_release_scan_cmd_pending_list(tpAniSirGlobal pMac)
 void csr_free_scan_result_entry(tpAniSirGlobal pMac, tCsrScanResult *pResult)
 {
 	if (NULL != pResult->Result.pvIes) {
-		cdf_mem_free(pResult->Result.pvIes);
+		qdf_mem_free(pResult->Result.pvIes);
 	}
-	cdf_mem_free(pResult);
+	qdf_mem_free(pResult);
 }
 
 static QDF_STATUS csr_ll_scan_purge_result(tpAniSirGlobal pMac,
@@ -320,7 +320,7 @@ csr_scan_2g_only_request(tpAniSirGlobal mac_ctx,
 	/* Contsruct valid Supported 2.4 GHz Channel List */
 	if (NULL == scan_req->ChannelInfo.ChannelList) {
 		scan_req->ChannelInfo.ChannelList =
-			cdf_mem_malloc(NUM_24GHZ_CHANNELS);
+			qdf_mem_malloc(NUM_24GHZ_CHANNELS);
 		if (NULL == scan_req->ChannelInfo.ChannelList) {
 			sms_log(mac_ctx, LOGE, FL("Memory allocation failed."));
 			return QDF_STATUS_E_NOMEM;
@@ -400,20 +400,20 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	    && (false == mac_ctx->scan.fEnableBypass11d)))
 		return QDF_STATUS_SUCCESS;
 
-	cdf_mem_set(&tmp_rq, sizeof(tCsrScanRequest), 0);
+	qdf_mem_set(&tmp_rq, sizeof(tCsrScanRequest), 0);
 	scan_11d_cmd = csr_get_command_buffer(mac_ctx);
 	if (!scan_11d_cmd) {
 		sms_log(mac_ctx, LOGE, FL("scan_11d_cmd failed"));
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cdf_mem_set(&scan_11d_cmd->u.scanCmd, sizeof(tScanCmd), 0);
-	pChnInfo->ChannelList = cdf_mem_malloc(numChn);
+	qdf_mem_set(&scan_11d_cmd->u.scanCmd, sizeof(tScanCmd), 0);
+	pChnInfo->ChannelList = qdf_mem_malloc(numChn);
 	if (NULL == pChnInfo->ChannelList) {
 		sms_log(mac_ctx, LOGE, FL("Failed to allocate memory"));
 		return QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_copy(pChnInfo->ChannelList,
+	qdf_mem_copy(pChnInfo->ChannelList,
 		     mac_ctx->scan.base_channels.channelList, numChn);
 
 	pChnInfo->numOfChannels = (uint8_t) numChn;
@@ -461,7 +461,7 @@ csr_issue_11d_scan(tpAniSirGlobal mac_ctx, tSmeCmd *scan_cmd,
 	status = csr_scan_copy_request(mac_ctx,
 			&scan_11d_cmd->u.scanCmd.u.scanRequest, &tmp_rq);
 	/* Free the channel list */
-	cdf_mem_free(pChnInfo->ChannelList);
+	qdf_mem_free(pChnInfo->ChannelList);
 	pChnInfo->ChannelList = NULL;
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE, FL("csr_scan_copy_request failed"));
@@ -531,7 +531,7 @@ QDF_STATUS csr_scan_request(tpAniSirGlobal pMac, uint16_t sessionId,
 		goto release_cmd;
 	}
 
-	cdf_mem_set(&scan_cmd->u.scanCmd, sizeof(tScanCmd), 0);
+	qdf_mem_set(&scan_cmd->u.scanCmd, sizeof(tScanCmd), 0);
 	scan_cmd->command = eSmeCommandScan;
 	scan_cmd->sessionId = sessionId;
 	if (scan_cmd->sessionId >= CSR_ROAM_SESSION_MAX)
@@ -664,12 +664,12 @@ QDF_STATUS csr_issue_roam_after_lostlink_scan(tpAniSirGlobal pMac,
 		goto free_filter;
 	}
 	/* Here is the profile we need to connect to */
-	pScanFilter = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == pScanFilter) {
 		status = QDF_STATUS_E_NOMEM;
 		goto free_filter;
 	}
-	cdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
+	qdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
 	if (NULL == pSession->pCurRoamProfile) {
 		pScanFilter->EncryptionType.numEntries = 1;
 		pScanFilter->EncryptionType.encryptionType[0] =
@@ -679,12 +679,12 @@ QDF_STATUS csr_issue_roam_after_lostlink_scan(tpAniSirGlobal pMac,
 		 * We have to make a copy of pCurRoamProfile because it will
 		 * be free inside csr_roam_issue_connect
 		 */
-		pProfile = cdf_mem_malloc(sizeof(tCsrRoamProfile));
+		pProfile = qdf_mem_malloc(sizeof(tCsrRoamProfile));
 		if (NULL == pProfile) {
 			status = QDF_STATUS_E_NOMEM;
 			goto free_filter;
 		}
-		cdf_mem_set(pProfile, sizeof(tCsrRoamProfile), 0);
+		qdf_mem_set(pProfile, sizeof(tCsrRoamProfile), 0);
 		status = csr_roam_copy_profile(pMac, pProfile,
 					       pSession->pCurRoamProfile);
 		if (!QDF_IS_STATUS_SUCCESS(status))
@@ -715,11 +715,11 @@ free_filter:
 	if (pScanFilter) {
 		/* we need to free memory for filter if profile exists */
 		csr_free_scan_filter(pMac, pScanFilter);
-		cdf_mem_free(pScanFilter);
+		qdf_mem_free(pScanFilter);
 	}
 	if (NULL != pProfile) {
 		csr_release_profile(pMac, pProfile);
-		cdf_mem_free(pProfile);
+		qdf_mem_free(pProfile);
 	}
 	return status;
 }
@@ -818,11 +818,11 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		 * on error: following memory will be released by call to
 		 * csr_release_command_scan in the end
 		 */
-		ssid_list->SSIDList = cdf_mem_malloc(sizeof(tCsrSSIDInfo));
+		ssid_list->SSIDList = qdf_mem_malloc(sizeof(tCsrSSIDInfo));
 		if (NULL == ssid_list->SSIDList)
 			return QDF_STATUS_E_NOMEM;
 		ssid_list->numOfSSIDs = 1;
-		cdf_mem_copy(&ssid_list->SSIDList[0].SSID,
+		qdf_mem_copy(&ssid_list->SSIDList[0].SSID,
 			     &pSession->connectedProfile.SSID,
 			     sizeof(tSirMacSSid));
 	} else {
@@ -832,11 +832,11 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	if (!pSession->pCurRoamProfile)
 		return QDF_STATUS_SUCCESS;
 
-	scan_filter = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	scan_filter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == scan_filter)
 		return QDF_STATUS_E_NOMEM;
 
-	cdf_mem_set(scan_filter, sizeof(tCsrScanResultFilter), 0);
+	qdf_mem_set(scan_filter, sizeof(tCsrScanResultFilter), 0);
 	status = csr_roam_prepare_filter_from_profile(mac_ctx,
 			pSession->pCurRoamProfile, scan_filter);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -846,7 +846,7 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 		&bss_lst)) && bss_lst)) {
 		if (csr_roam_is_channel_valid(mac_ctx,
 			pSession->connectedProfile.operationChannel)) {
-			ch_info->ChannelList = cdf_mem_malloc(1);
+			ch_info->ChannelList = qdf_mem_malloc(1);
 			if (NULL == ch_info->ChannelList) {
 				status = QDF_STATUS_E_NOMEM;
 				goto free_lost_link1_local_mem;
@@ -859,7 +859,7 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	}
 
 	/* on error: this mem will be released by csr_release_command_scan */
-	ch_info->ChannelList = cdf_mem_malloc(WNI_CFG_VALID_CHANNEL_LIST_LEN);
+	ch_info->ChannelList = qdf_mem_malloc(WNI_CFG_VALID_CHANNEL_LIST_LEN);
 	if (NULL == ch_info->ChannelList) {
 		status = QDF_STATUS_E_NOMEM;
 		goto free_lost_link1_local_mem;
@@ -893,7 +893,7 @@ csr_update_lost_link1_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 free_lost_link1_local_mem:
 	if (scan_filter) {
 		csr_free_scan_filter(mac_ctx, scan_filter);
-		cdf_mem_free(scan_filter);
+		qdf_mem_free(scan_filter);
 	}
 	if (bss_lst)
 		csr_scan_result_purge(mac_ctx, bss_lst);
@@ -929,12 +929,12 @@ csr_scan_request_lost_link1(tpAniSirGlobal mac_ctx, uint32_t session_id)
 		status = QDF_STATUS_E_RESOURCES;
 		goto release_lost_link1_cmd;
 	}
-	cdf_mem_set(&cmd->u.scanCmd, sizeof(tScanCmd), 0);
+	qdf_mem_set(&cmd->u.scanCmd, sizeof(tScanCmd), 0);
 	status = csr_update_lost_link1_cmd(mac_ctx, cmd, session, session_id);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto release_lost_link1_cmd;
 
-	cdf_mem_set(&cmd->u.scanCmd.u.scanRequest.bssid,
+	qdf_mem_set(&cmd->u.scanCmd.u.scanRequest.bssid,
 		    sizeof(struct qdf_mac_addr), 0xFF);
 	status = csr_queue_sme_command(mac_ctx, cmd, false);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
@@ -981,11 +981,11 @@ csr_update_lost_link2_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	status = qdf_mc_timer_init(&cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
 			csr_scan_active_list_timeout_handle, &cmd);
-	scan_fltr = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	scan_fltr = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == scan_fltr)
 		return QDF_STATUS_E_NOMEM;
 
-	cdf_mem_set(scan_fltr, sizeof(tCsrScanResultFilter), 0);
+	qdf_mem_set(scan_fltr, sizeof(tCsrScanResultFilter), 0);
 	status = csr_roam_prepare_filter_from_profile(mac_ctx,
 				session->pCurRoamProfile, scan_fltr);
 	if (!QDF_IS_STATUS_SUCCESS(status))
@@ -998,7 +998,7 @@ csr_update_lost_link2_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 	if (!bss_lst)
 		goto free_lost_link2_local_mem;
 
-	ch_info->ChannelList = cdf_mem_malloc(WNI_CFG_VALID_CHANNEL_LIST_LEN);
+	ch_info->ChannelList = qdf_mem_malloc(WNI_CFG_VALID_CHANNEL_LIST_LEN);
 	if (NULL == ch_info->ChannelList) {
 		status = QDF_STATUS_E_NOMEM;
 		goto free_lost_link2_local_mem;
@@ -1020,7 +1020,7 @@ csr_update_lost_link2_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *cmd,
 free_lost_link2_local_mem:
 	if (scan_fltr) {
 		csr_free_scan_filter(mac_ctx, scan_fltr);
-		cdf_mem_free(scan_fltr);
+		qdf_mem_free(scan_fltr);
 	}
 	if (bss_lst)
 		csr_scan_result_purge(mac_ctx, bss_lst);
@@ -1056,12 +1056,12 @@ csr_scan_request_lost_link2(tpAniSirGlobal mac_ctx, uint32_t session_id)
 		status = QDF_STATUS_E_RESOURCES;
 		goto release_lost_link2_cmd;
 	}
-	cdf_mem_set(&cmd->u.scanCmd, sizeof(tScanCmd), 0);
+	qdf_mem_set(&cmd->u.scanCmd, sizeof(tScanCmd), 0);
 	status = csr_update_lost_link2_cmd(mac_ctx, cmd, session_id, session);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto release_lost_link2_cmd;
 
-	cdf_mem_set(&cmd->u.scanCmd.u.scanRequest.bssid,
+	qdf_mem_set(&cmd->u.scanCmd.u.scanRequest.bssid,
 		    sizeof(struct qdf_mac_addr), 0xFF);
 	/* Put to the head in pending queue */
 	status = csr_queue_sme_command(mac_ctx, cmd, true);
@@ -1101,7 +1101,7 @@ csr_scan_request_lost_link3(tpAniSirGlobal mac_ctx, uint32_t session_id)
 			status = QDF_STATUS_E_RESOURCES;
 			break;
 		}
-		cdf_mem_set(&cmd->u.scanCmd, sizeof(tScanCmd), 0);
+		qdf_mem_set(&cmd->u.scanCmd, sizeof(tScanCmd), 0);
 		cmd->command = eSmeCommandScan;
 		cmd->sessionId = (uint8_t) session_id;
 		cmd->u.scanCmd.reason = eCsrScanLostLink3;
@@ -1168,12 +1168,12 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal pMac,
 		}
 		if (pProfile == NULL)
 			break;
-		pScanFilter = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
+		pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 		if (NULL == pScanFilter) {
 			status = QDF_STATUS_E_NOMEM;
 			break;
 		}
-		cdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
+		qdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
 		status = csr_roam_prepare_filter_from_profile(pMac, pProfile,
 							      pScanFilter);
 		if (!QDF_IS_STATUS_SUCCESS(status))
@@ -1206,7 +1206,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid(tpAniSirGlobal pMac,
 	}
 	if (pScanFilter) {
 		csr_free_scan_filter(pMac, pScanFilter);
-		cdf_mem_free(pScanFilter);
+		qdf_mem_free(pScanFilter);
 	}
 	return status;
 }
@@ -1238,7 +1238,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal pMac,
 		char str[36];
 		tSirMacSSid *ptr_ssid =
 		&pCommand->u.scanCmd.u.scanRequest.SSIDs.SSIDList[0].SSID;
-		cdf_mem_copy(str, ptr_ssid->ssId, ptr_ssid->length);
+		qdf_mem_copy(str, ptr_ssid->ssId, ptr_ssid->length);
 		str[ptr_ssid->length] = 0;
 		sms_log(pMac, LOGW, FL("SSID = %s"), str);
 	}
@@ -1270,7 +1270,7 @@ QDF_STATUS csr_scan_handle_search_for_ssid_failure(tpAniSirGlobal pMac,
 	if (pSession->bRefAssocStartCnt > 0) {
 		tCsrRoamInfo *pRoamInfo = NULL, roamInfo;
 
-		cdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
+		qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
 		pRoamInfo = &roamInfo;
 		if (pCommand->u.roamCmd.pRoamBssEntry) {
 			tCsrScanResult *pScanResult = GET_BASE_ADDR(
@@ -1306,7 +1306,7 @@ QDF_STATUS csr_scan_result_purge(tpAniSirGlobal pMac,
 	if (pScanList) {
 		status = csr_ll_scan_purge_result(pMac, &pScanList->List);
 		csr_ll_close(&pScanList->List);
-		cdf_mem_free(pScanList);
+		qdf_mem_free(pScanList);
 	}
 	return status;
 }
@@ -1386,9 +1386,9 @@ static int csr_get_altered_rssi(tpAniSirGlobal mac_ctx, int rssi,
 	struct qdf_mac_addr local_bssid;
 
 	modified_rssi = rssi;
-	cdf_mem_zero(&local_bssid.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(&local_bssid.bytes, QDF_MAC_ADDR_SIZE);
 	if (bssid)
-		cdf_mem_copy(local_bssid.bytes, bssid->bytes,
+		qdf_mem_copy(local_bssid.bytes, bssid->bytes,
 				QDF_MAC_ADDR_SIZE);
 	roam_params = &mac_ctx->roam.configParam.roam_params;
 	/*
@@ -1421,10 +1421,10 @@ static int csr_get_altered_rssi(tpAniSirGlobal mac_ctx, int rssi,
 	 * Check if there are preferred bssid and then apply the
 	 * preferred score
 	 */
-	cdf_mem_zero(&fav_bssid.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_zero(&fav_bssid.bytes, QDF_MAC_ADDR_SIZE);
 	if (bssid && roam_params->num_bssid_favored) {
 		for (i = 0; i < roam_params->num_bssid_favored; i++) {
-			cdf_mem_copy(fav_bssid.bytes,
+			qdf_mem_copy(fav_bssid.bytes,
 					&roam_params->bssid_favored[i],
 					QDF_MAC_ADDR_SIZE);
 			if (!qdf_is_macaddr_equal(&fav_bssid, bssid))
@@ -1526,13 +1526,13 @@ static bool csr_is_better_rssi(tpAniSirGlobal mac_ctx,
 	 * Apply the boost and penlty logic and check
 	 * which is the best RSSI
 	 */
-	cdf_mem_zero(&local_mac.bytes, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(&local_mac.bytes,
+	qdf_mem_zero(&local_mac.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(&local_mac.bytes,
 			&bss1->Result.BssDescriptor.bssId, QDF_MAC_ADDR_SIZE);
 	rssi1 = csr_get_altered_rssi(mac_ctx, rssi1,
 			bss1->Result.BssDescriptor.channelId,
 			&local_mac);
-	cdf_mem_copy(&local_mac.bytes,
+	qdf_mem_copy(&local_mac.bytes,
 			&bss2->Result.BssDescriptor.bssId, QDF_MAC_ADDR_SIZE);
 	rssi2 = csr_get_altered_rssi(mac_ctx, rssi2,
 			bss2->Result.BssDescriptor.channelId,
@@ -1626,8 +1626,8 @@ static void csr_scan_add_result(tpAniSirGlobal pMac, tCsrScanResult *pResult,
 
 	struct qdf_mac_addr bssid;
 	uint8_t channel_id = pResult->Result.BssDescriptor.channelId;
-	cdf_mem_zero(&bssid.bytes, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(bssid.bytes, &pResult->Result.BssDescriptor.bssId,
+	qdf_mem_zero(&bssid.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(bssid.bytes, &pResult->Result.BssDescriptor.bssId,
 			QDF_MAC_ADDR_SIZE);
 	pResult->preferValue = csr_get_bss_prefer_value(pMac,
 				(int)pResult->Result.BssDescriptor.rssi,
@@ -1684,7 +1684,7 @@ csr_parser_scan_result_for_5ghz_preference(tpAniSirGlobal pMac,
 				fMatch = true;
 				sms_log(pMac, LOG1, FL("Security Matched"));
 				if ((pBssDesc->Result.pvIes == NULL) && pIes)
-					cdf_mem_free(pIes);
+					qdf_mem_free(pIes);
 				continue;
 			}
 #ifdef WLAN_FEATURE_11W
@@ -1705,7 +1705,7 @@ csr_parser_scan_result_for_5ghz_preference(tpAniSirGlobal pMac,
 					pIes, NULL, NULL, NULL);
 #endif
 			if ((pBssDesc->Result.pvIes == NULL) && pIes)
-				cdf_mem_free(pIes);
+				qdf_mem_free(pIes);
 			if (fMatch)
 				sms_log(pMac, LOG1, FL("Security Matched"));
 		} /* for loop ends */
@@ -1816,7 +1816,7 @@ csr_save_ies(tpAniSirGlobal pMac,
 		return status;
 	/* Only save it when matching */
 	if (!(*fMatch) && !pBssDesc->Result.pvIes) {
-		cdf_mem_free(pIes);
+		qdf_mem_free(pIes);
 		return status;
 	}
 	if (!pBssDesc->Result.pvIes) {
@@ -1832,16 +1832,16 @@ csr_save_ies(tpAniSirGlobal pMac,
 	 * Only to save parsed IEs if caller provides a filter. Most likely the
 	 * caller is using to for association, hence save the parsed IEs
 	 */
-	*pNewIes = cdf_mem_malloc(sizeof(tDot11fBeaconIEs));
+	*pNewIes = qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 	if (NULL == *pNewIes) {
 		status = QDF_STATUS_E_NOMEM;
 		sms_log(pMac, LOGE, FL("fail to allocate memory for IEs"));
 		/* Need to free memory allocated by csr_match_bss */
 		if (!pBssDesc->Result.pvIes)
-			cdf_mem_free(pIes);
+			qdf_mem_free(pIes);
 		return status;
 	}
-	cdf_mem_copy(*pNewIes, pIes, sizeof(tDot11fBeaconIEs));
+	qdf_mem_copy(*pNewIes, pIes, sizeof(tDot11fBeaconIEs));
 	return status;
 }
 
@@ -1870,17 +1870,17 @@ csr_save_scan_entry(tpAniSirGlobal pMac,
 	bssLen = pBssDesc->Result.BssDescriptor.length +
 		sizeof(pBssDesc->Result.BssDescriptor.length);
 	allocLen = sizeof(tCsrScanResult) + bssLen;
-	pResult = cdf_mem_malloc(allocLen);
+	pResult = qdf_mem_malloc(allocLen);
 	if (NULL == pResult) {
 		status = QDF_STATUS_E_NOMEM;
 		sms_log(pMac, LOGE,
 			FL("fail to allocate memory for scan result, len=%d"),
 			allocLen);
 		if (pNewIes)
-			cdf_mem_free(pNewIes);
+			qdf_mem_free(pNewIes);
 		return status;
 	}
-	cdf_mem_set(pResult, allocLen, 0);
+	qdf_mem_set(pResult, allocLen, 0);
 	pResult->capValue = pBssDesc->capValue;
 	pResult->preferValue = pBssDesc->preferValue;
 	pResult->ucEncryptionType = uc;
@@ -1891,7 +1891,7 @@ csr_save_scan_entry(tpAniSirGlobal pMac,
 	/* save the pIes for later use */
 	pResult->Result.pvIes = pNewIes;
 	/* save bss description */
-	cdf_mem_copy(&pResult->Result.BssDescriptor,
+	qdf_mem_copy(&pResult->Result.BssDescriptor,
 		     &pBssDesc->Result.BssDescriptor,
 		     bssLen);
 	/*
@@ -2059,13 +2059,13 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal pMac,
 
 	csr_prefer_5ghz(pMac, pFilter);
 
-	pRetList = cdf_mem_malloc(sizeof(tScanResultList));
+	pRetList = qdf_mem_malloc(sizeof(tScanResultList));
 	if (NULL == pRetList) {
 		sms_log(pMac, LOGE, FL("pRetList is NULL"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_set(pRetList, sizeof(tScanResultList), 0);
+	qdf_mem_set(pRetList, sizeof(tScanResultList), 0);
 	csr_ll_open(pMac->hHdd, &pRetList->List);
 	pRetList->pCurEntry = NULL;
 	status = csr_parse_scan_results(pMac, pFilter, pRetList, &count);
@@ -2078,7 +2078,7 @@ QDF_STATUS csr_scan_get_result(tpAniSirGlobal pMac,
 		if (0 == count) {
 			/* We are here meaning the there is no match */
 			csr_ll_close(&pRetList->List);
-			cdf_mem_free(pRetList);
+			qdf_mem_free(pRetList);
 			status = QDF_STATUS_E_NULL_VALUE;
 		} else if (phResult) {
 			*phResult = pRetList;
@@ -2140,7 +2140,7 @@ QDF_STATUS csr_scan_flush_selective_result(tpAniSirGlobal pMac, bool flushP2P)
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
 	while (pEntry != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
-		if (flushP2P == cdf_mem_compare(pBssDesc->Result.ssId.ssId,
+		if (flushP2P != qdf_mem_cmp(pBssDesc->Result.ssId.ssId,
 						"DIRECT-", 7)) {
 			pFreeElem = pEntry;
 			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
@@ -2168,7 +2168,7 @@ void csr_scan_flush_bss_entry(tpAniSirGlobal pMac,
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_NOLOCK);
 	while (pEntry != NULL) {
 		pBssDesc = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
-		if (cdf_mem_compare(pBssDesc->Result.BssDescriptor.bssId,
+		if (!qdf_mem_cmp(pBssDesc->Result.BssDescriptor.bssId,
 			pCsaOffloadInd->bssid.bytes, QDF_MAC_ADDR_SIZE)) {
 			pFreeElem = pEntry;
 			pEntry = csr_ll_next(pList, pEntry, LL_ACCESS_NOLOCK);
@@ -2320,11 +2320,11 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 	if (phResult) {
 		*phResult = CSR_INVALID_SCANRESULT_HANDLE;
 	}
-	pRetList = cdf_mem_malloc(sizeof(tScanResultList));
+	pRetList = qdf_mem_malloc(sizeof(tScanResultList));
 	if (NULL == pRetList)
 		status = QDF_STATUS_E_NOMEM;
 	else {
-		cdf_mem_set(pRetList, sizeof(tScanResultList), 0);
+		qdf_mem_set(pRetList, sizeof(tScanResultList), 0);
 		csr_ll_open(pMac->hHdd, &pRetList->List);
 		pRetList->pCurEntry = NULL;
 		csr_ll_lock(&pMac->scan.scanResultList);
@@ -2338,7 +2338,7 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 				pScanResult->Result.BssDescriptor.length +
 				sizeof(pScanResult->Result.BssDescriptor.length);
 			allocLen = sizeof(tCsrScanResult) + bssLen;
-			pResult = cdf_mem_malloc(allocLen);
+			pResult = qdf_mem_malloc(allocLen);
 			if (NULL == pResult)
 				status = QDF_STATUS_E_NOMEM;
 			else
@@ -2350,27 +2350,27 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 				count = 0;
 				break;
 			}
-			cdf_mem_set(pResult, allocLen, 0);
-			cdf_mem_copy(&pResult->Result.BssDescriptor,
+			qdf_mem_set(pResult, allocLen, 0);
+			qdf_mem_copy(&pResult->Result.BssDescriptor,
 				     &pScanResult->Result.BssDescriptor,
 				     bssLen);
 			if (pScanResult->Result.pvIes) {
 				pResult->Result.pvIes =
-					cdf_mem_malloc(sizeof(tDot11fBeaconIEs));
+					qdf_mem_malloc(sizeof(tDot11fBeaconIEs));
 				if (NULL == pResult->Result.pvIes)
 					status = QDF_STATUS_E_NOMEM;
 				else
 					status = QDF_STATUS_SUCCESS;
 				if (!QDF_IS_STATUS_SUCCESS(status)) {
 					/* Free the memory we allocate above first */
-					cdf_mem_free(pResult);
+					qdf_mem_free(pResult);
 					csr_scan_result_purge(pMac,
 							      (tScanResultHandle *)
 							      pRetList);
 					count = 0;
 					break;
 				}
-				cdf_mem_copy(pResult->Result.pvIes,
+				qdf_mem_copy(pResult->Result.pvIes,
 					     pScanResult->Result.pvIes,
 					     sizeof(tDot11fBeaconIEs));
 			}
@@ -2386,7 +2386,7 @@ QDF_STATUS csr_scan_copy_result_list(tpAniSirGlobal pMac, tScanResultHandle hIn,
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			if (0 == count) {
 				csr_ll_close(&pRetList->List);
-				cdf_mem_free(pRetList);
+				qdf_mem_free(pRetList);
 				status = QDF_STATUS_E_NULL_VALUE;
 			} else if (phResult) {
 				*phResult = pRetList;
@@ -2430,7 +2430,7 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 
 	sms_log(pMac, LOG1,
 		FL("Scanning: ASSOC cnf can be given to upper layer"));
-	cdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
+	qdf_mem_set(&roamInfo, sizeof(tCsrRoamInfo), 0);
 	pRoamInfo = &roamInfo;
 	pUpperLayerAssocCnf = (tSirSmeAssocIndToUpperLayerCnf *) pMsgBuf;
 	status = csr_roam_get_session_id_from_bssid(pMac,
@@ -2450,10 +2450,10 @@ QDF_STATUS csr_scanning_state_msg_processor(tpAniSirGlobal pMac,
 	pRoamInfo->prsnIE = pUpperLayerAssocCnf->rsnIE.rsnIEdata;
 	pRoamInfo->addIELen = (uint8_t) pUpperLayerAssocCnf->addIE.length;
 	pRoamInfo->paddIE = pUpperLayerAssocCnf->addIE.addIEdata;
-	cdf_mem_copy(pRoamInfo->peerMac.bytes,
+	qdf_mem_copy(pRoamInfo->peerMac.bytes,
 			pUpperLayerAssocCnf->peerMacAddr,
 			QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(&pRoamInfo->bssid.bytes, pUpperLayerAssocCnf->bssId,
+	qdf_mem_copy(&pRoamInfo->bssid.bytes, pUpperLayerAssocCnf->bssId,
 		     QDF_MAC_ADDR_SIZE);
 	pRoamInfo->wmmEnabledSta = pUpperLayerAssocCnf->wmmEnabledSta;
 	if (CSR_IS_INFRA_AP(pRoamInfo->u.pConnectedProfile)) {
@@ -2491,7 +2491,7 @@ void csr_check_n_save_wsc_ie(tpAniSirGlobal pMac, tSirBssDescription *pNewBssDes
 				/* Founrd it */
 				if ((DOT11F_IE_WSCPROBERES_MAX_LEN - 2) >=
 				    pbIe[1]) {
-					cdf_mem_copy(pNewBssDescr->
+					qdf_mem_copy(pNewBssDescr->
 						     WscIeProbeRsp, pbIe,
 						     pbIe[1] + 2);
 					pNewBssDescr->WscIeLen = pbIe[1] + 2;
@@ -2619,14 +2619,14 @@ QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	/* BSS is capable of doing pre-authentication */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_CSR
-	cdf_mem_set(&secEvent, sizeof(host_event_wlan_security_payload_type),
+	qdf_mem_set(&secEvent, sizeof(host_event_wlan_security_payload_type),
 		    0);
 	secEvent.eventId = WLAN_SECURITY_EVENT_PMKID_CANDIDATE_FOUND;
 	secEvent.encryptionModeMulticast = (uint8_t)diag_enc_type_from_csr_type(
 				pSession->connectedProfile.mcEncryptionType);
 	secEvent.encryptionModeUnicast = (uint8_t)diag_enc_type_from_csr_type(
 				pSession->connectedProfile.EncryptionType);
-	cdf_mem_copy(secEvent.bssid, pSession->connectedProfile.bssid.bytes,
+	qdf_mem_copy(secEvent.bssid, pSession->connectedProfile.bssid.bytes,
 			QDF_MAC_ADDR_SIZE);
 	secEvent.authMode = (uint8_t)diag_auth_type_from_csr_type(
 				pSession->connectedProfile.AuthType);
@@ -2635,7 +2635,7 @@ QDF_STATUS csr_add_pmkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
 
 	pmkid_info = &pSession->PmkidCandidateInfo[pSession->NumPmkidCandidate];
 	/* if yes, then add to PMKIDCandidateList */
-	cdf_mem_copy(pmkid_info->BSSID.bytes, pBssDesc->bssId,
+	qdf_mem_copy(pmkid_info->BSSID.bytes, pBssDesc->bssId,
 			QDF_MAC_ADDR_SIZE);
 	/* Bit 0 offirst byte - PreAuthentication Capability */
 	if ((pIes->RSN.RSN_Cap[0] >> 0) & 0x1)
@@ -2668,7 +2668,7 @@ QDF_STATUS csr_process_bss_desc_for_pmkid_list(tpAniSirGlobal pMac,
 
 	if (!CSR_IS_SESSION_VALID(pMac, sessionId)) {
 		if (!pIes)
-			cdf_mem_free(pIesLocal);
+			qdf_mem_free(pIesLocal);
 		return status;
 	}
 
@@ -2689,7 +2689,7 @@ QDF_STATUS csr_process_bss_desc_for_pmkid_list(tpAniSirGlobal pMac,
 	}
 
 	if (!pIes)
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 
 	return status;
 }
@@ -2717,7 +2717,7 @@ QDF_STATUS csr_add_bkid_candidate_list(tpAniSirGlobal pMac, uint32_t sessionId,
 			if (pSession->NumBkidCandidate < CSR_MAX_BKID_ALLOWED) {
 
 				/* if yes, then add to BKIDCandidateList */
-				cdf_mem_copy(pSession->
+				qdf_mem_copy(pSession->
 					     BkidCandidateInfo[pSession->
 							       NumBkidCandidate].
 					     BSSID.bytes, pBssDesc->bssId,
@@ -2779,7 +2779,7 @@ bool csr_process_bss_desc_for_bkid_list(tpAniSirGlobal pMac,
 		}
 	}
 	if (!pIes)
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	return fRC;
 }
 
@@ -2828,7 +2828,7 @@ csr_remove_from_tmp_list(tpAniSirGlobal mac_ctx,
 		if (CSR_SCAN_IS_OVER_BSS_LIMIT(mac_ctx)) {
 			sms_log(mac_ctx, LOGW, FL("BSS limit reached"));
 			if ((bss_dscp->Result.pvIes == NULL) && local_ie)
-				cdf_mem_free(local_ie);
+				qdf_mem_free(local_ie);
 			csr_free_scan_result_entry(mac_ctx, bss_dscp);
 			/* Continue because there may be duplicated BSS */
 			continue;
@@ -2885,7 +2885,7 @@ csr_remove_from_tmp_list(tpAniSirGlobal mac_ctx,
 		/* append to main list */
 		csr_scan_add_result(mac_ctx, bss_dscp, local_ie, session_id);
 		if ((bss_dscp->Result.pvIes == NULL) && local_ie)
-			cdf_mem_free(local_ie);
+			qdf_mem_free(local_ie);
 	} /* end of loop */
 }
 
@@ -2935,9 +2935,9 @@ static tCsrScanResult *csr_scan_save_bss_description(tpAniSirGlobal pMac,
 
 	cbAllocated = sizeof(tCsrScanResult) + cbBSSDesc;
 
-	pCsrBssDescription = cdf_mem_malloc(cbAllocated);
+	pCsrBssDescription = qdf_mem_malloc(cbAllocated);
 	if (NULL != pCsrBssDescription) {
-		cdf_mem_set(pCsrBssDescription, cbAllocated, 0);
+		qdf_mem_set(pCsrBssDescription, cbAllocated, 0);
 		pCsrBssDescription->AgingCount =
 			(int32_t) pMac->roam.configParam.agingCount;
 		sms_log(pMac, LOGW,
@@ -2945,7 +2945,7 @@ static tCsrScanResult *csr_scan_save_bss_description(tpAniSirGlobal pMac,
 			pCsrBssDescription->AgingCount,
 			MAC_ADDR_ARRAY(pCsrBssDescription->Result.BssDescriptor.
 				       bssId));
-		cdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
+		qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
 			     pBSSDescription, cbBSSDesc);
 #if defined(CDF_ENSBALED)
 		if (NULL != pCsrBssDescription->Result.pvIes) {
@@ -3019,7 +3019,7 @@ void csr_purge_channel_power(tpAniSirGlobal pMac, tDblLinkList *pChannelList)
 					    LL_ACCESS_NOLOCK)) != NULL) {
 		pChannelSet = GET_BASE_ADDR(pEntry, tCsrChannelPowerInfo, link);
 		if (pChannelSet)
-			cdf_mem_free(pChannelSet);
+			qdf_mem_free(pChannelSet);
 	}
 	csr_ll_unlock(pChannelList);
 	return;
@@ -3043,12 +3043,12 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 	pChannelInfo = channelTable;
 	/* atleast 3 bytes have to be remaining  -- from "countryString" */
 	while (i--) {
-		pChannelSet = cdf_mem_malloc(sizeof(tCsrChannelPowerInfo));
+		pChannelSet = qdf_mem_malloc(sizeof(tCsrChannelPowerInfo));
 		if (NULL == pChannelSet) {
 			pChannelInfo++;
 			continue;
 		}
-		cdf_mem_set(pChannelSet, sizeof(tCsrChannelPowerInfo), 0);
+		qdf_mem_set(pChannelSet, sizeof(tCsrChannelPowerInfo), 0);
 		pChannelSet->firstChannel = pChannelInfo->firstChanNum;
 		pChannelSet->numChannels = pChannelInfo->numChannels;
 		/*
@@ -3071,7 +3071,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 			sms_log(pMac, LOGW,
 				FL("Invalid Channel %d Present in Country IE"),
 				pChannelSet->firstChannel);
-			cdf_mem_free(pChannelSet);
+			qdf_mem_free(pChannelSet);
 			return QDF_STATUS_E_FAILURE;
 		}
 		pChannelSet->txPower = QDF_MIN(pChannelInfo->maxTxPower,
@@ -3094,7 +3094,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 				sms_log(pMac, LOGW,
 					FL("Adding 11B/G ch in 11A. 1st ch %d"),
 					pChannelSet->firstChannel);
-				cdf_mem_free(pChannelSet);
+				qdf_mem_free(pChannelSet);
 			}
 		} else {
 			/* 5GHz info found */
@@ -3115,7 +3115,7 @@ QDF_STATUS csr_save_to_channel_power2_g_5_g(tpAniSirGlobal pMac,
 				sms_log(pMac, LOGW,
 					FL("Adding 11A ch in B/G. 1st ch %d"),
 					pChannelSet->firstChannel);
-				cdf_mem_free(pChannelSet);
+				qdf_mem_free(pChannelSet);
 			}
 		}
 		pChannelInfo++; /* move to next entry */
@@ -3129,9 +3129,9 @@ static void csr_clear_dfs_channel_list(tpAniSirGlobal pMac)
 	uint16_t msgLen;
 
 	msgLen = (uint16_t) (sizeof(tSirMbMsg));
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL != pMsg) {
-		cdf_mem_set((void *)pMsg, msgLen, 0);
+		qdf_mem_set((void *)pMsg, msgLen, 0);
 		pMsg->type = eWNI_SME_CLEAR_DFS_CHANNEL_LIST;
 		pMsg->msgLen = msgLen;
 		cds_send_mb_message_to_mac(pMsg);
@@ -3194,10 +3194,10 @@ static void csr_diag_reset_country_information(tpAniSirGlobal pMac)
 		return;
 
 	p11dLog->eventId = WLAN_80211D_EVENT_RESET;
-	cdf_mem_copy(p11dLog->countryCode, pMac->scan.countryCodeCurrent, 3);
+	qdf_mem_copy(p11dLog->countryCode, pMac->scan.countryCodeCurrent, 3);
 	p11dLog->numChannel = pMac->scan.base_channels.numChannels;
 	if (p11dLog->numChannel <= HOST_LOG_MAX_NUM_CHANNEL) {
-		cdf_mem_copy(p11dLog->Channels,
+		qdf_mem_copy(p11dLog->Channels,
 			     pMac->scan.base_channels.channelList,
 			     p11dLog->numChannel);
 		for (Index = 0;
@@ -3238,13 +3238,13 @@ void csr_apply_channel_power_info_wrapper(tpAniSirGlobal pMac)
 	csr_apply_channel_power_info_to_fw(pMac,
 		&pMac->scan.base_channels, pMac->scan.countryCodeCurrent);
 	/* clear the 11d channel list */
-	cdf_mem_set(&pMac->scan.channels11d, sizeof(pMac->scan.channels11d), 0);
+	qdf_mem_set(&pMac->scan.channels11d, sizeof(pMac->scan.channels11d), 0);
 }
 
 void csr_clear_votes_for_country_info(tpAniSirGlobal pMac)
 {
 	pMac->scan.countryCodeCount = 0;
-	cdf_mem_set(pMac->scan.votes11d,
+	qdf_mem_set(pMac->scan.votes11d,
 		    sizeof(tCsrVotes11d) * CSR_MAX_NUM_COUNTRY_CODE, 0);
 }
 
@@ -3286,7 +3286,7 @@ void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode)
 	}
 
 	for (i = 0; i < pMac->scan.countryCodeCount; i++) {
-		match = (cdf_mem_compare(pMac->scan.votes11d[i].countryCode,
+		match = (!qdf_mem_cmp(pMac->scan.votes11d[i].countryCode,
 					 pCountryCode, 2));
 		if (match) {
 			break;
@@ -3296,7 +3296,7 @@ void csr_add_vote_for_country_info(tpAniSirGlobal pMac, uint8_t *pCountryCode)
 	if (match) {
 		pMac->scan.votes11d[i].votes++;
 	} else {
-		cdf_mem_copy(pMac->scan.votes11d[pMac->scan.countryCodeCount].
+		qdf_mem_copy(pMac->scan.votes11d[pMac->scan.countryCodeCount].
 			     countryCode, pCountryCode, 3);
 		pMac->scan.votes11d[pMac->scan.countryCodeCount].votes = 1;
 		pMac->scan.countryCodeCount++;
@@ -3335,10 +3335,10 @@ bool csr_elected_country_info(tpAniSirGlobal pMac)
 
 	}
 	if (fRet) {
-		cdf_mem_copy(pMac->scan.countryCodeElected,
+		qdf_mem_copy(pMac->scan.countryCodeElected,
 		       pMac->scan.votes11d[j].countryCode,
 		       WNI_CFG_COUNTRY_CODE_LEN);
-		cdf_mem_copy(pMac->scan.countryCode11d,
+		qdf_mem_copy(pMac->scan.countryCode11d,
 		       pMac->scan.votes11d[j].countryCode,
 		       WNI_CFG_COUNTRY_CODE_LEN);
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
@@ -3370,7 +3370,7 @@ QDF_STATUS csr_set_country_code(tpAniSirGlobal pMac, uint8_t *pCountry)
 							     &domainId,
 							     SOURCE_USERSPACE);
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			cdf_mem_copy(pMac->scan.countryCodeCurrent,
+			qdf_mem_copy(pMac->scan.countryCodeCurrent,
 				     pCountry,
 				     WNI_CFG_COUNTRY_CODE_LEN);
 			csr_set_cfg_country_code(pMac, pCountry);
@@ -3421,12 +3421,12 @@ void csr_diag_apply_country_info(tpAniSirGlobal mac_ctx)
 		return;
 
 	p11dLog->eventId = WLAN_80211D_EVENT_COUNTRY_SET;
-	cdf_mem_copy(p11dLog->countryCode, mac_ctx->scan.countryCode11d, 3);
+	qdf_mem_copy(p11dLog->countryCode, mac_ctx->scan.countryCode11d, 3);
 	p11dLog->numChannel = mac_ctx->scan.channels11d.numChannels;
 	if (p11dLog->numChannel > HOST_LOG_MAX_NUM_CHANNEL)
 		goto diag_end;
 
-	cdf_mem_copy(p11dLog->Channels,
+	qdf_mem_copy(p11dLog->Channels,
 		     mac_ctx->scan.channels11d.channelList,
 		     p11dLog->numChannel);
 	csr_get_channel_power_info(mac_ctx,
@@ -3513,12 +3513,12 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		pMac->scan.base_channels.numChannels :
 		WNI_CFG_VALID_CHANNEL_LIST_LEN;
 
-	chan_info = cdf_mem_malloc(sizeof(tSirMacChanInfo) *
+	chan_info = qdf_mem_malloc(sizeof(tSirMacChanInfo) *
 				   WNI_CFG_VALID_CHANNEL_LIST_LEN);
 	if (NULL == chan_info)
 		return;
 
-	cdf_mem_set(chan_info, sizeof(tSirMacChanInfo) *
+	qdf_mem_set(chan_info, sizeof(tSirMacChanInfo) *
 		    WNI_CFG_VALID_CHANNEL_LIST_LEN, 0);
 	ch_info_start = chan_info;
 	for (idx = 0; idx < max_ch_idx; idx++) {
@@ -3546,7 +3546,7 @@ void csr_save_channel_power_for_band(tpAniSirGlobal pMac, bool fill_5f)
 		csr_save_to_channel_power2_g_5_g(pMac,
 				count * sizeof(tSirMacChanInfo), ch_info_start);
 	}
-	cdf_mem_free(ch_info_start);
+	qdf_mem_free(ch_info_start);
 }
 
 bool csr_is_supported_channel(tpAniSirGlobal pMac, uint8_t channelId)
@@ -3618,13 +3618,13 @@ bool csr_learn_11dcountry_information(tpAniSirGlobal pMac,
 	}
 
 	/* updating 11d Country Code with Country code selected. */
-	cdf_mem_copy(pMac->scan.countryCode11d, pCountryCodeSelected,
+	qdf_mem_copy(pMac->scan.countryCode11d, pCountryCodeSelected,
 		     WNI_CFG_COUNTRY_CODE_LEN);
 	fRet = true;
 free_ie:
 	if (!pIes && pIesLocal) {
 		/* locally allocated */
-		cdf_mem_free(pIesLocal);
+		qdf_mem_free(pIesLocal);
 	}
 	return fRet;
 }
@@ -3657,9 +3657,9 @@ void csr_reinit_scan_cmd(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	}
 	if (pCommand->u.scanCmd.pToRoamProfile) {
 		csr_release_profile(pMac, pCommand->u.scanCmd.pToRoamProfile);
-		cdf_mem_free(pCommand->u.scanCmd.pToRoamProfile);
+		qdf_mem_free(pCommand->u.scanCmd.pToRoamProfile);
 	}
-	cdf_mem_set(&pCommand->u.scanCmd, sizeof(tScanCmd), 0);
+	qdf_mem_set(&pCommand->u.scanCmd, sizeof(tScanCmd), 0);
 }
 
 eCsrScanCompleteNextCommand csr_scan_get_next_command_state(tpAniSirGlobal pMac,
@@ -3800,15 +3800,15 @@ csr_diag_scan_complete(tpAniSirGlobal pMac,
 				sms_log(pMac, LOGE, FL("fail to parse IEs"));
 				break;
 			}
-			cdf_mem_copy(pScanLog->bssid[n],
+			qdf_mem_copy(pScanLog->bssid[n],
 				pScanResult->BssDescriptor.bssId, 6);
 			if (pIes && pIes->SSID.present &&
 			    HOST_LOG_MAX_SSID_SIZE >= pIes->SSID.num_ssid) {
-				cdf_mem_copy(pScanLog->ssid[n],
+				qdf_mem_copy(pScanLog->ssid[n],
 					pIes->SSID.ssid,
 					pIes->SSID.num_ssid);
 			}
-			cdf_mem_free(pIes);
+			qdf_mem_free(pIes);
 			n++;
 		}
 		c++;
@@ -3846,7 +3846,7 @@ QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status;
 
 	save_cmd->u.scanCmd.pToRoamProfile =
-		cdf_mem_malloc(sizeof(tCsrRoamProfile));
+		qdf_mem_malloc(sizeof(tCsrRoamProfile));
 	if (!save_cmd->u.scanCmd.pToRoamProfile) {
 		sms_log(mac_ctx, LOGE, FL("pToRoamProfile mem fail"));
 		goto error;
@@ -3865,7 +3865,7 @@ QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 	save_cmd->u.scanCmd.u.scanRequest.SSIDs.numOfSSIDs =
 		command->u.scanCmd.u.scanRequest.SSIDs.numOfSSIDs;
 	save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList =
-		cdf_mem_malloc(
+		qdf_mem_malloc(
 			save_cmd->u.scanCmd.u.scanRequest.SSIDs.numOfSSIDs *
 			sizeof(tCsrSSIDInfo));
 	if (!save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList) {
@@ -3873,7 +3873,7 @@ QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 		goto error;
 	}
 
-	cdf_mem_copy(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList,
+	qdf_mem_copy(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList,
 			command->u.scanCmd.u.scanRequest.SSIDs.SSIDList,
 			save_cmd->u.scanCmd.u.scanRequest.SSIDs.numOfSSIDs *
 			sizeof(tCsrSSIDInfo));
@@ -3887,7 +3887,7 @@ QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 	bss_len = scan_result->Result.BssDescriptor.length +
 		sizeof(scan_result->Result.BssDescriptor.length);
 
-	temp = cdf_mem_malloc(sizeof(tCsrScanResult) + bss_len);
+	temp = qdf_mem_malloc(sizeof(tCsrScanResult) + bss_len);
 	if (!temp) {
 		sms_log(mac_ctx, LOGE, FL("bss mem fail"));
 		goto error;
@@ -3902,15 +3902,15 @@ QDF_STATUS csr_save_profile(tpAniSirGlobal mac_ctx,
 	/* pvIes is unsued in success/failure */
 	temp->Result.pvIes = NULL;
 
-	cdf_mem_copy(temp->Result.pvIes,
+	qdf_mem_copy(temp->Result.pvIes,
 			scan_result->Result.pvIes,
 			sizeof(*scan_result->Result.pvIes));
 	temp->Result.ssId.length = scan_result->Result.ssId.length;
-	cdf_mem_copy(temp->Result.ssId.ssId,
+	qdf_mem_copy(temp->Result.ssId.ssId,
 			scan_result->Result.ssId.ssId,
 			sizeof(scan_result->Result.ssId.ssId));
 	temp->Result.timer = scan_result->Result.timer;
-	cdf_mem_copy(&temp->Result.BssDescriptor,
+	qdf_mem_copy(&temp->Result.BssDescriptor,
 			&scan_result->Result.BssDescriptor,
 			sizeof(temp->Result.BssDescriptor));
 	temp->Link.last = temp->Link.next = NULL;
@@ -3921,11 +3921,11 @@ error:
 	csr_scan_handle_search_for_ssid_failure(mac_ctx,
 			command);
 	if (save_cmd->u.roamCmd.pRoamBssEntry)
-		cdf_mem_free(save_cmd->u.roamCmd.pRoamBssEntry);
+		qdf_mem_free(save_cmd->u.roamCmd.pRoamBssEntry);
 	if (save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList)
-		cdf_mem_free(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList);
+		qdf_mem_free(save_cmd->u.scanCmd.u.scanRequest.SSIDs.SSIDList);
 	if (save_cmd->u.scanCmd.pToRoamProfile)
-		cdf_mem_free(save_cmd->u.scanCmd.pToRoamProfile);
+		qdf_mem_free(save_cmd->u.scanCmd.pToRoamProfile);
 
 	return QDF_STATUS_E_FAILURE;
 }
@@ -4003,13 +4003,13 @@ csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand,
 		sms_log(mac_ctx, LOG1, FL("chan: %d session: %d status: %d"),
 					chan, pCommand->sessionId, ret);
 		if (mac_ctx->sme.saved_scan_cmd) {
-			cdf_mem_free(mac_ctx->sme.saved_scan_cmd);
+			qdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 			mac_ctx->sme.saved_scan_cmd = NULL;
 			sms_log(mac_ctx, LOGE,
 				FL("memory should have been free. Check!"));
 		}
 
-		save_cmd = (tSmeCmd *) cdf_mem_malloc(sizeof(*pCommand));
+		save_cmd = (tSmeCmd *) qdf_mem_malloc(sizeof(*pCommand));
 		if (!save_cmd) {
 			sms_log(mac_ctx, LOGE, FL("save_cmd mem fail"));
 			goto error;
@@ -4020,7 +4020,7 @@ csr_handle_nxt_cmd(tpAniSirGlobal mac_ctx, tSmeCmd *pCommand,
 			/* csr_save_profile should report error */
 			sms_log(mac_ctx, LOGE, FL("profile save failed %d"),
 					status);
-			cdf_mem_free(save_cmd);
+			qdf_mem_free(save_cmd);
 			return;
 		}
 
@@ -4032,7 +4032,7 @@ error:
 			csr_scan_handle_search_for_ssid_failure(mac_ctx,
 								pCommand);
 			if (mac_ctx->sme.saved_scan_cmd) {
-				cdf_mem_free(mac_ctx->sme.saved_scan_cmd);
+				qdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 				mac_ctx->sme.saved_scan_cmd = NULL;
 			}
 		} else if ((QDF_STATUS_E_NOSUPPORT == ret) ||
@@ -4040,7 +4040,7 @@ error:
 			sms_log(mac_ctx, LOGE, FL("conn update ret %d"), ret);
 			csr_scan_handle_search_for_ssid(mac_ctx, pCommand);
 			if (mac_ctx->sme.saved_scan_cmd) {
-				cdf_mem_free(mac_ctx->sme.saved_scan_cmd);
+				qdf_mem_free(mac_ctx->sme.saved_scan_cmd);
 				mac_ctx->sme.saved_scan_cmd = NULL;
 			}
 		}
@@ -4256,10 +4256,10 @@ tCsrScanResult *csr_scan_save_bss_description_to_interim_list(tpAniSirGlobal pMa
 
 	sms_log(pMac, LOG4, FL("new BSS description, length %d, cbBSSDesc %d"),
 		cbAllocated, cbBSSDesc);
-	pCsrBssDescription = cdf_mem_malloc(cbAllocated);
+	pCsrBssDescription = qdf_mem_malloc(cbAllocated);
 	if (NULL != pCsrBssDescription) {
-		cdf_mem_set(pCsrBssDescription, cbAllocated, 0);
-		cdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
+		qdf_mem_set(pCsrBssDescription, cbAllocated, 0);
+		qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
 			     pBSSDescription, cbBSSDesc);
 		pCsrBssDescription->AgingCount =
 			(int32_t) pMac->roam.configParam.agingCount;
@@ -4280,7 +4280,7 @@ tCsrScanResult *csr_scan_save_bss_description_to_interim_list(tpAniSirGlobal pMa
 			pCsrBssDescription->Result.ssId.length = len;
 			pCsrBssDescription->Result.timer =
 				qdf_mc_timer_get_system_time();
-			cdf_mem_copy(pCsrBssDescription->Result.ssId.ssId,
+			qdf_mem_copy(pCsrBssDescription->Result.ssId.ssId,
 				     pIes->SSID.ssid, len);
 		}
 		csr_ll_insert_tail(&pMac->scan.tempScanResults,
@@ -4366,10 +4366,10 @@ bool csr_is_duplicate_bss_description(tpAniSirGlobal pMac,
 
 free_ies:
 	if (pIes1)
-		cdf_mem_free(pIes1);
+		qdf_mem_free(pIes1);
 	if ((NULL == pIes2) && pIesTemp)
 		/* locally allocated */
-		cdf_mem_free(pIesTemp);
+		qdf_mem_free(pIesTemp);
 	return fMatch;
 }
 
@@ -4466,7 +4466,7 @@ static bool csr_scan_validate_scan_result(tpAniSirGlobal pMac,
 		if (valid)
 			*ppIes = pIes;
 		else
-			cdf_mem_free(pIes);
+			qdf_mem_free(pIes);
 	}
 	return valid;
 }
@@ -4560,7 +4560,7 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 		csr_update_scantype(mac_ctx, ies, bssdescr->channelId);
 		/* Free the resource */
 		if (ies != NULL)
-			cdf_mem_free(ies);
+			qdf_mem_free(ies);
 	}
 	return QDF_STATUS_SUCCESS;
 }
@@ -4569,13 +4569,13 @@ QDF_STATUS csr_scan_process_single_bssdescr(tpAniSirGlobal mac_ctx,
 bool csr_scan_is_wild_card_scan(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 {
 	uint8_t bssid[QDF_MAC_ADDR_SIZE] = {0};
-	bool f = cdf_mem_compare(pCommand->u.scanCmd.u.scanRequest.bssid.bytes,
+	bool f = qdf_mem_cmp(pCommand->u.scanCmd.u.scanRequest.bssid.bytes,
 				 bssid, sizeof(struct qdf_mac_addr));
 	/*
 	 * It is not a wild card scan if the bssid is not broadcast and
 	 * the number of SSID is 1.
 	 */
-	return (f || (0xff == pCommand->u.scanCmd.u.scanRequest.bssid.bytes[0]))
+	return ((!f) || (0xff == pCommand->u.scanCmd.u.scanRequest.bssid.bytes[0]))
 		&& (pCommand->u.scanCmd.u.scanRequest.SSIDs.numOfSSIDs != 1);
 }
 
@@ -4717,7 +4717,7 @@ QDF_STATUS csr_move_bss_to_head_from_bssid(tpAniSirGlobal pMac,
 	pEntry = csr_ll_peek_head(&pResultList->List, LL_ACCESS_NOLOCK);
 	while (pEntry) {
 		pResult = GET_BASE_ADDR(pEntry, tCsrScanResult, Link);
-		if (cdf_mem_compare(bssid, pResult->Result.BssDescriptor.bssId,
+		if (!qdf_mem_cmp(bssid, pResult->Result.BssDescriptor.bssId,
 				    sizeof(struct qdf_mac_addr))) {
 			status = QDF_STATUS_SUCCESS;
 			csr_ll_remove_entry(&pResultList->List, pEntry,
@@ -4861,7 +4861,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		 pScanReq->ChannelInfo.numOfChannels)) +
 		 (pScanReq->uIEFieldLen);
 
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL == pMsg) {
 		sms_log(pMac, LOGE, FL("memory allocation failed"));
 		sms_log(pMac, LOG1, FL("Failed: SId: %d FirstMatch = %d"
@@ -4883,7 +4883,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_set(pMsg, msgLen, 0);
+	qdf_mem_set(pMsg, msgLen, 0);
 	pMsg->messageType = eWNI_SME_SCAN_REQ;
 	pMsg->length = msgLen;
 	/* ToDO: Fill in session info when we need to do scan base on session */
@@ -4973,7 +4973,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 	if ((pScanReq->SSIDs.numOfSSIDs != 0)
 	    && (eSIR_PASSIVE_SCAN != scanType)) {
 		for (i = 0; i < pMsg->numSsid; i++) {
-			cdf_mem_copy(&pMsg->ssId[i],
+			qdf_mem_copy(&pMsg->ssId[i],
 				     &pScanReq->SSIDs.SSIDList[i].SSID,
 				     sizeof(tSirMacSSid));
 		}
@@ -5000,7 +5000,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 		(uint8_t) pScanReq->ChannelInfo.numOfChannels;
 	if (pScanReq->ChannelInfo.numOfChannels) {
 		/* Assuming the channelNumber is uint8_t (1 byte) */
-		cdf_mem_copy(pMsg->channelList.channelNumber,
+		qdf_mem_copy(pMsg->channelList.channelNumber,
 			     pScanReq->ChannelInfo.ChannelList,
 			     pScanReq->ChannelInfo.numOfChannels);
 	}
@@ -5011,7 +5011,7 @@ QDF_STATUS csr_send_mb_scan_req(tpAniSirGlobal pMac, uint16_t sessionId,
 			(sizeof(pMsg->channelList.channelNumber) *
 			 pScanReq->ChannelInfo.numOfChannels));
 	if (pScanReq->uIEFieldLen != 0) {
-		cdf_mem_copy((uint8_t *) pMsg + pMsg->uIEFieldOffset,
+		qdf_mem_copy((uint8_t *) pMsg + pMsg->uIEFieldOffset,
 			     pScanReq->pIEField, pScanReq->uIEFieldLen);
 	}
 	pMsg->p2pSearch = pScanReq->p2pSearch;
@@ -5037,7 +5037,7 @@ send_scan_req:
 		sms_log(pMac, LOGE,
 			FL("failed to send down scan req with status = %d"),
 			status);
-		cdf_mem_free(pMsg);
+		qdf_mem_free(pMsg);
 	}
 	return status;
 }
@@ -5051,11 +5051,11 @@ QDF_STATUS csr_send_mb_scan_result_req(tpAniSirGlobal pMac,
 	uint16_t msgLen;
 
 	msgLen = (uint16_t) (sizeof(tSirSmeScanReq));
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL == pMsg)
 		return QDF_STATUS_E_NOMEM;
 
-	cdf_mem_set(pMsg, msgLen, 0);
+	qdf_mem_set(pMsg, msgLen, 0);
 	pMsg->messageType = eWNI_SME_SCAN_REQ;
 	pMsg->length = msgLen;
 	pMsg->sessionId = sessionId;
@@ -5104,7 +5104,7 @@ static void csr_diag_scan_channels(tpAniSirGlobal pMac, tSmeCmd *pCommand)
 	(uint8_t) pCommand->u.scanCmd.u.scanRequest.ChannelInfo.numOfChannels;
 	if (pScanLog->numChannel &&
 	    (pScanLog->numChannel < HOST_LOG_MAX_NUM_CHANNEL)) {
-		cdf_mem_copy(pScanLog->channels,
+		qdf_mem_copy(pScanLog->channels,
 		      pCommand->u.scanCmd.u.scanRequest.ChannelInfo.ChannelList,
 		      pScanLog->numChannel);
 	}
@@ -5164,7 +5164,7 @@ csr_issue_user_scan(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 	    && (NULL != cmd->u.scanCmd.u.scanRequest.ChannelInfo.ChannelList)) {
 		len = cmd->u.scanCmd.u.scanRequest.ChannelInfo.numOfChannels;
 		/* allocate twice the channel */
-		new_ch_info.ChannelList = (uint8_t *) cdf_mem_malloc(len * 2);
+		new_ch_info.ChannelList = (uint8_t *) qdf_mem_malloc(len * 2);
 		ch_lst = cmd->u.scanCmd.u.scanRequest.ChannelInfo.ChannelList;
 	} else {
 		/* get the valid channel list to scan all. */
@@ -5174,7 +5174,7 @@ csr_issue_user_scan(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			/* allocate twice the channel */
 			new_ch_info.ChannelList =
-				(uint8_t *) cdf_mem_malloc(len * 2);
+				(uint8_t *) qdf_mem_malloc(len * 2);
 			ch_lst = mac_ctx->roam.validChannelList;
 		}
 	}
@@ -5193,7 +5193,7 @@ csr_issue_user_scan(tpAniSirGlobal mac_ctx, tSmeCmd *cmd)
 			 * ch_lst points to the channellist from the command,
 			 * free it.
 			 */
-			cdf_mem_free(
+			qdf_mem_free(
 			  cmd->u.scanCmd.u.scanRequest.ChannelInfo.ChannelList);
 			cmd->u.scanCmd.u.scanRequest.ChannelInfo.ChannelList =
 			  NULL;
@@ -5333,7 +5333,7 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 					dst_req->ChannelInfo.numOfChannels) ?
 					dst_req->ChannelInfo.numOfChannels :
 					WNI_CFG_VALID_CHANNEL_LIST_LEN;
-		cdf_mem_copy(valid_chnl_list, dst_req->ChannelInfo.ChannelList,
+		qdf_mem_copy(valid_chnl_list, dst_req->ChannelInfo.ChannelList,
 				valid_chnl_len);
 	}
 	for (i = 0; i < valid_chnl_len; i++) {
@@ -5362,13 +5362,13 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 	}
 
 	if (dst_req->ChannelInfo.ChannelList) {
-		cdf_mem_free(dst_req->ChannelInfo.ChannelList);
+		qdf_mem_free(dst_req->ChannelInfo.ChannelList);
 		dst_req->ChannelInfo.ChannelList = NULL;
 		dst_req->ChannelInfo.numOfChannels = 0;
 	}
 
 	dst_req->ChannelInfo.ChannelList =
-			cdf_mem_malloc(filter_chnl_len *
+			qdf_mem_malloc(filter_chnl_len *
 				sizeof(*dst_req->ChannelInfo.ChannelList));
 	dst_req->ChannelInfo.numOfChannels = filter_chnl_len;
 	if (NULL == dst_req->ChannelInfo.ChannelList) {
@@ -5376,7 +5376,7 @@ static bool csr_scan_filter_ibss_chnl_band(tpAniSirGlobal mac_ctx,
 			FL("Memory allocation failed"));
 		return false;
 	}
-	cdf_mem_copy(dst_req->ChannelInfo.ChannelList, valid_chnl_list,
+	qdf_mem_copy(dst_req->ChannelInfo.ChannelList, valid_chnl_list,
 			filter_chnl_len);
 	return true;
 }
@@ -5409,7 +5409,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 	status = csr_scan_free_request(mac_ctx, dst_req);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		goto complete;
-	cdf_mem_copy(dst_req, src_req, sizeof(tCsrScanRequest));
+	qdf_mem_copy(dst_req, src_req, sizeof(tCsrScanRequest));
 	/* Re-initialize the pointers to NULL since we did a copy */
 	dst_req->pIEField = NULL;
 	dst_req->ChannelInfo.ChannelList = NULL;
@@ -5417,7 +5417,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 
 	if (src_req->uIEFieldLen) {
 		dst_req->pIEField =
-			cdf_mem_malloc(src_req->uIEFieldLen);
+			qdf_mem_malloc(src_req->uIEFieldLen);
 		if (NULL == dst_req->pIEField) {
 			status = QDF_STATUS_E_NOMEM;
 			sms_log(mac_ctx, LOGE,
@@ -5425,7 +5425,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 			goto complete;
 		} else {
 			status = QDF_STATUS_SUCCESS;
-			cdf_mem_copy(dst_req->pIEField, src_req->pIEField,
+			qdf_mem_copy(dst_req->pIEField, src_req->pIEField,
 				src_req->uIEFieldLen);
 			dst_req->uIEFieldLen = src_req->uIEFieldLen;
 		}
@@ -5437,7 +5437,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 		dst_req->ChannelInfo.numOfChannels = 0;
 	} else {
 		dst_req->ChannelInfo.ChannelList =
-			cdf_mem_malloc(src_req->ChannelInfo.numOfChannels *
+			qdf_mem_malloc(src_req->ChannelInfo.numOfChannels *
 				sizeof(*dst_req->ChannelInfo.ChannelList));
 		if (NULL == dst_req->ChannelInfo.ChannelList) {
 			status = QDF_STATUS_E_NOMEM;
@@ -5524,7 +5524,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 		dst_req->SSIDs.SSIDList = NULL;
 	} else {
 		dst_req->SSIDs.SSIDList =
-			cdf_mem_malloc(src_req->SSIDs.numOfSSIDs *
+			qdf_mem_malloc(src_req->SSIDs.numOfSSIDs *
 					sizeof(*dst_req->SSIDs.SSIDList));
 		if (NULL == dst_req->SSIDs.SSIDList)
 			status = QDF_STATUS_E_NOMEM;
@@ -5533,7 +5533,7 @@ QDF_STATUS csr_scan_copy_request(tpAniSirGlobal mac_ctx,
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			dst_req->SSIDs.numOfSSIDs =
 				src_req->SSIDs.numOfSSIDs;
-			cdf_mem_copy(dst_req->SSIDs.SSIDList,
+			qdf_mem_copy(dst_req->SSIDs.SSIDList,
 				src_req->SSIDs.SSIDList,
 				src_req->SSIDs.numOfSSIDs *
 				sizeof(*dst_req->SSIDs.SSIDList));
@@ -5562,17 +5562,17 @@ QDF_STATUS csr_scan_free_request(tpAniSirGlobal pMac, tCsrScanRequest *pReq)
 {
 
 	if (pReq->ChannelInfo.ChannelList) {
-		cdf_mem_free(pReq->ChannelInfo.ChannelList);
+		qdf_mem_free(pReq->ChannelInfo.ChannelList);
 		pReq->ChannelInfo.ChannelList = NULL;
 	}
 	pReq->ChannelInfo.numOfChannels = 0;
 	if (pReq->pIEField) {
-		cdf_mem_free(pReq->pIEField);
+		qdf_mem_free(pReq->pIEField);
 		pReq->pIEField = NULL;
 	}
 	pReq->uIEFieldLen = 0;
 	if (pReq->SSIDs.SSIDList) {
-		cdf_mem_free(pReq->SSIDs.SSIDList);
+		qdf_mem_free(pReq->SSIDs.SSIDList);
 		pReq->SSIDs.SSIDList = NULL;
 	}
 	pReq->SSIDs.numOfSSIDs = 0;
@@ -5674,7 +5674,7 @@ static void csr_sta_ap_conc_timer_handler(void *pv)
 		(csr_is_concurrent_infra_connected(mac_ctx)) &&
 		(scan_cmd->u.scanCmd.u.scanRequest.p2pSearch != 1)) ||
 		(csr_is_p2p_session_connected(mac_ctx)))) {
-			cdf_mem_set(&scan_req, sizeof(tCsrScanRequest), 0);
+			qdf_mem_set(&scan_req, sizeof(tCsrScanRequest), 0);
 
 		/* optimize this to use 2 command buffer only */
 		send_scancmd = csr_get_command_buffer(mac_ctx);
@@ -5706,12 +5706,12 @@ static void csr_sta_ap_conc_timer_handler(void *pv)
 		 * to be modified for split scan
 		 */
 		if (scan_req.ChannelInfo.ChannelList != NULL) {
-				cdf_mem_free(scan_req.ChannelInfo.ChannelList);
+				qdf_mem_free(scan_req.ChannelInfo.ChannelList);
 			scan_req.ChannelInfo.ChannelList = NULL;
 		}
 
 		chn_info->numOfChannels = numchan_combinedconc;
-		cdf_mem_copy(&channel_to_scan[0],
+		qdf_mem_copy(&channel_to_scan[0],
 				&scan_cmd->u.scanCmd.u.scanRequest.ChannelInfo.
 				ChannelList[0], chn_info->numOfChannels
 				* sizeof(uint8_t));
@@ -5848,7 +5848,7 @@ bool csr_scan_remove_fresh_scan_command(tpAniSirGlobal pMac, uint8_t sessionId)
 	tDblLinkList localList;
 	tDblLinkList *pCmdList;
 
-	cdf_mem_zero(&localList, sizeof(tDblLinkList));
+	qdf_mem_zero(&localList, sizeof(tDblLinkList));
 	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
 		sms_log(pMac, LOGE, FL(" failed to open list"));
 		return fRet;
@@ -5946,23 +5946,23 @@ QDF_STATUS csr_scan_get_pmkid_candidate_list(tpAniSirGlobal pMac,
 		return status;
 
 	*pNumItems = 0;
-	pScanFilter = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == pScanFilter)
 		return QDF_STATUS_E_NOMEM;
 
-	cdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
+	qdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
 	/* Here is the profile we need to connect to */
 	status = csr_roam_prepare_filter_from_profile(pMac,
 					pSession->pCurRoamProfile, pScanFilter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		cdf_mem_free(pScanFilter);
+		qdf_mem_free(pScanFilter);
 		return status;
 	}
 
 	status = csr_scan_get_result(pMac, pScanFilter, &hBSSList);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		csr_free_scan_filter(pMac, pScanFilter);
-		cdf_mem_free(pScanFilter);
+		qdf_mem_free(pScanFilter);
 		return status;
 	}
 
@@ -5980,14 +5980,14 @@ QDF_STATUS csr_scan_get_pmkid_candidate_list(tpAniSirGlobal pMac,
 
 	if (pSession->NumPmkidCandidate) {
 		*pNumItems = pSession->NumPmkidCandidate;
-		cdf_mem_copy(pPmkidList, pSession->PmkidCandidateInfo,
+		qdf_mem_copy(pPmkidList, pSession->PmkidCandidateInfo,
 			     pSession->NumPmkidCandidate *
 			     sizeof(tPmkidCandidateInfo));
 	}
 
 	csr_scan_result_purge(pMac, hBSSList);
 	csr_free_scan_filter(pMac, pScanFilter);
-	cdf_mem_free(pScanFilter);
+	qdf_mem_free(pScanFilter);
 	return status;
 }
 
@@ -6017,23 +6017,23 @@ QDF_STATUS csr_scan_get_bkid_candidate_list(tpAniSirGlobal pMac,
 		return status;
 
 	*pNumItems = 0;
-	pScanFilter = cdf_mem_malloc(sizeof(tCsrScanResultFilter));
+	pScanFilter = qdf_mem_malloc(sizeof(tCsrScanResultFilter));
 	if (NULL == pScanFilter)
 		return QDF_STATUS_E_NOMEM;
 
-	cdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
+	qdf_mem_set(pScanFilter, sizeof(tCsrScanResultFilter), 0);
 	/* Here is the profile we need to connect to */
 	status = csr_roam_prepare_filter_from_profile(pMac,
 					pSession->pCurRoamProfile, pScanFilter);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		cdf_mem_free(pScanFilter);
+		qdf_mem_free(pScanFilter);
 		return status;
 	}
 
 	status = csr_scan_get_result(pMac, pScanFilter, &hBSSList);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		csr_free_scan_filter(pMac, pScanFilter);
-		cdf_mem_free(pScanFilter);
+		qdf_mem_free(pScanFilter);
 		return status;
 	}
 
@@ -6050,14 +6050,14 @@ QDF_STATUS csr_scan_get_bkid_candidate_list(tpAniSirGlobal pMac,
 
 	if (pSession->NumBkidCandidate) {
 		*pNumItems = pSession->NumBkidCandidate;
-		cdf_mem_copy(pBkidList, pSession->BkidCandidateInfo,
+		qdf_mem_copy(pBkidList, pSession->BkidCandidateInfo,
 			     pSession->NumBkidCandidate *
 			     sizeof(tBkidCandidateInfo));
 	}
 
 	csr_scan_result_purge(pMac, hBSSList);
 	csr_free_scan_filter(pMac, pScanFilter);
-	cdf_mem_free(pScanFilter);
+	qdf_mem_free(pScanFilter);
 	return status;
 }
 #endif /* FEATURE_WLAN_WAPI */
@@ -6137,9 +6137,9 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		goto error;
 	}
 
-	cdf_mem_set(&scan_cmd->u.scanCmd, sizeof(tScanCmd), 0);
+	qdf_mem_set(&scan_cmd->u.scanCmd, sizeof(tScanCmd), 0);
 	scan_cmd->u.scanCmd.pToRoamProfile =
-			cdf_mem_malloc(sizeof(tCsrRoamProfile));
+			qdf_mem_malloc(sizeof(tCsrRoamProfile));
 
 	if (NULL == scan_cmd->u.scanCmd.pToRoamProfile)
 		status = QDF_STATUS_E_NOMEM;
@@ -6160,7 +6160,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 
 	/* let it wrap around */
 	wma_get_scan_id(&scan_cmd->u.scanCmd.scanID);
-	cdf_mem_set(&scan_cmd->u.scanCmd.u.scanRequest,
+	qdf_mem_set(&scan_cmd->u.scanCmd.u.scanRequest,
 			sizeof(tCsrScanRequest), 0);
 	status = qdf_mc_timer_init(&scan_cmd->u.scanCmd.csr_scan_timer,
 			QDF_TIMER_TYPE_SW,
@@ -6179,18 +6179,18 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 	/* Allocate memory for IE field */
 	if (profile->pAddIEScan) {
 		scan_req->pIEField =
-			cdf_mem_malloc(profile->nAddIEScanLength);
+			qdf_mem_malloc(profile->nAddIEScanLength);
 
 		if (NULL == scan_req->pIEField)
 			status = QDF_STATUS_E_NOMEM;
 		else
 			status = QDF_STATUS_SUCCESS;
 
-		cdf_mem_set(scan_req->pIEField,
+		qdf_mem_set(scan_req->pIEField,
 				profile->nAddIEScanLength, 0);
 
 		if (QDF_IS_STATUS_SUCCESS(status)) {
-			cdf_mem_copy(scan_req->pIEField,
+			qdf_mem_copy(scan_req->pIEField,
 					profile->pAddIEScan,
 					profile->nAddIEScanLength);
 			scan_req->uIEFieldLen = profile->nAddIEScanLength;
@@ -6235,7 +6235,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 
 	if (profile->ChannelInfo.numOfChannels) {
 		scan_req->ChannelInfo.ChannelList =
-		    cdf_mem_malloc(sizeof(*scan_req->ChannelInfo.ChannelList) *
+		    qdf_mem_malloc(sizeof(*scan_req->ChannelInfo.ChannelList) *
 					profile->ChannelInfo.numOfChannels);
 
 		if (NULL == scan_req->ChannelInfo.ChannelList)
@@ -6259,7 +6259,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 
 	if (profile->SSIDs.numOfSSIDs) {
 		scan_req->SSIDs.SSIDList =
-			cdf_mem_malloc(profile->SSIDs.numOfSSIDs *
+			qdf_mem_malloc(profile->SSIDs.numOfSSIDs *
 					sizeof(tCsrSSIDInfo));
 
 		if (NULL == scan_req->SSIDs.SSIDList)
@@ -6273,7 +6273,7 @@ QDF_STATUS csr_scan_for_ssid(tpAniSirGlobal mac_ctx, uint32_t session_id,
 		ssids = &scan_req->SSIDs;
 		ssids->numOfSSIDs =  1;
 
-		cdf_mem_copy(scan_req->SSIDs.SSIDList,
+		qdf_mem_copy(scan_req->SSIDs.SSIDList,
 				profile->SSIDs.SSIDList,
 				sizeof(tCsrSSIDInfo));
 	}
@@ -6338,11 +6338,11 @@ void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
 
 	/* allocate maximum space for all channels */
 	dataLen = WNI_CFG_VALID_CHANNEL_LIST_LEN * sizeof(tSirMacChanInfo);
-	pBuf = cdf_mem_malloc(dataLen);
+	pBuf = qdf_mem_malloc(dataLen);
 	if (pBuf == NULL)
 		return;
 
-	cdf_mem_set(pBuf, dataLen, 0);
+	qdf_mem_set(pBuf, dataLen, 0);
 	ch_pwr_set = (tSirMacChanInfo *) (pBuf);
 	pEntry = csr_ll_peek_head(pList, LL_ACCESS_LOCK);
 	/*
@@ -6418,7 +6418,7 @@ void csr_save_tx_power_to_cfg(tpAniSirGlobal pMac, tDblLinkList *pList,
 	if (cbLen)
 		cfg_set_str(pMac, cfgId, (uint8_t *) pBuf, cbLen);
 
-	cdf_mem_free(pBuf);
+	qdf_mem_free(pBuf);
 }
 
 void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
@@ -6427,7 +6427,7 @@ void csr_set_cfg_country_code(tpAniSirGlobal pMac, uint8_t *countryCode)
 	/* v_REGDOMAIN_t DomainId */
 
 	sms_log(pMac, LOG3, FL("Setting Country Code in Cfg %s"), countryCode);
-	cdf_mem_copy(cc, countryCode, WNI_CFG_COUNTRY_CODE_LEN);
+	qdf_mem_copy(cc, countryCode, WNI_CFG_COUNTRY_CODE_LEN);
 
 	/*
 	* don't program the bogus country codes that we created for Korea in the
@@ -6482,9 +6482,9 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 	uint8_t *pControlList = NULL;
 	uint32_t len = WNI_CFG_SCAN_CONTROL_LIST_LEN;
 
-	pControlList = cdf_mem_malloc(WNI_CFG_SCAN_CONTROL_LIST_LEN);
+	pControlList = qdf_mem_malloc(WNI_CFG_SCAN_CONTROL_LIST_LEN);
 	if (pControlList != NULL) {
-		cdf_mem_set((void *)pControlList, WNI_CFG_SCAN_CONTROL_LIST_LEN,
+		qdf_mem_set((void *)pControlList, WNI_CFG_SCAN_CONTROL_LIST_LEN,
 			    0);
 		if (IS_SIR_STATUS_SUCCESS(wlan_cfg_get_str(pMac,
 					WNI_CFG_SCAN_CONTROL_LIST,
@@ -6516,7 +6516,7 @@ void csr_set_cfg_scan_control_list(tpAniSirGlobal pMac, uint8_t *countryCode,
 			cfg_set_str(pMac, WNI_CFG_SCAN_CONTROL_LIST,
 					pControlList, len);
 		} /* Successfully getting scan control list */
-		cdf_mem_free(pControlList);
+		qdf_mem_free(pControlList);
 	} /* AllocateMemory */
 }
 
@@ -6547,7 +6547,7 @@ void csr_remove_cmd_with_session_id_from_pending_list(tpAniSirGlobal pMac,
 	tSmeCmd *pCommand;
 	tListElem *pEntryToRemove;
 
-	cdf_mem_zero(&localList, sizeof(tDblLinkList));
+	qdf_mem_zero(&localList, sizeof(tDblLinkList));
 	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
 		sms_log(pMac, LOGE, FL("failed to open list"));
 		return;
@@ -6597,7 +6597,7 @@ void csr_remove_cmd_from_pending_list(tpAniSirGlobal pMac,
 	tSmeCmd *pCommand;
 	tListElem *pEntryToRemove;
 
-	cdf_mem_zero(&localList, sizeof(tDblLinkList));
+	qdf_mem_zero(&localList, sizeof(tDblLinkList));
 	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
 		sms_log(pMac, LOGE, FL(" failed to open list"));
 		return;
@@ -6655,7 +6655,7 @@ void csr_remove_scan_for_ssid_from_pending_list(tpAniSirGlobal pMac,
 	tSmeCmd *pCommand;
 	tListElem *pEntryToRemove;
 
-	cdf_mem_zero(&localList, sizeof(tDblLinkList));
+	qdf_mem_zero(&localList, sizeof(tDblLinkList));
 	if (!QDF_IS_STATUS_SUCCESS(csr_ll_open(pMac->hHdd, &localList))) {
 		sms_log(pMac, LOGE, FL(" failed to open list"));
 		return;
@@ -6712,13 +6712,13 @@ static void csr_send_scan_abort(tpAniSirGlobal mac_ctx,
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	msg_len = (uint16_t)(sizeof(tSirSmeScanAbortReq));
-	msg = cdf_mem_malloc(msg_len);
+	msg = qdf_mem_malloc(msg_len);
 	if (NULL == msg) {
 		sms_log(mac_ctx, LOGE,
 			FL("Failed to alloc memory for SmeScanAbortReq"));
 		return;
 	}
-	cdf_mem_zero((void *)msg, msg_len);
+	qdf_mem_zero((void *)msg, msg_len);
 	msg->type = eWNI_SME_SCAN_ABORT_IND;
 	msg->msgLen = msg_len;
 	msg->sessionId = session_id;
@@ -6728,7 +6728,7 @@ static void csr_send_scan_abort(tpAniSirGlobal mac_ctx,
 		scan_id, session_id);
 	status = cds_send_mb_message_to_mac(msg);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
-		cdf_mem_free(msg);
+		qdf_mem_free(msg);
 		sms_log(mac_ctx, LOGE,
 			FL("Failed to send abort scan.scan_id %d session %d"),
 			scan_id, session_id);
@@ -6833,7 +6833,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	tpSirMacMgmtHdr macHeader =
 		(tpSirMacMgmtHdr) pPrefNetworkFoundInd->data;
 	parsed_frm =
-	    (tpSirProbeRespBeacon) cdf_mem_malloc(sizeof(tSirProbeRespBeacon));
+	    (tpSirProbeRespBeacon) qdf_mem_malloc(sizeof(tSirProbeRespBeacon));
 
 	if (NULL == parsed_frm) {
 		sms_log(pMac, LOGE, FL("fail to allocate memory for frame"));
@@ -6843,7 +6843,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGE,
 			FL("Incorrect len(%d)"),
 			pPrefNetworkFoundInd->frameLength);
-		cdf_mem_free(parsed_frm);
+		qdf_mem_free(parsed_frm);
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (sir_convert_probe_frame2_struct(pMac,
@@ -6853,7 +6853,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	    || !parsed_frm->ssidPresent) {
 		sms_log(pMac, LOGE, FL("Parse error ProbeResponse, length=%d"),
 			pPrefNetworkFoundInd->frameLength);
-		cdf_mem_free(parsed_frm);
+		qdf_mem_free(parsed_frm);
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* 24 byte MAC header and 12 byte to ssid IE */
@@ -6862,13 +6862,13 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 		uLen = pPrefNetworkFoundInd->frameLength -
 		       (SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
 	}
-	pScanResult = cdf_mem_malloc(sizeof(tCsrScanResult) + uLen);
+	pScanResult = qdf_mem_malloc(sizeof(tCsrScanResult) + uLen);
 	if (NULL == pScanResult) {
 		sms_log(pMac, LOGE, FL("fail to allocate memory for frame"));
-		cdf_mem_free(parsed_frm);
+		qdf_mem_free(parsed_frm);
 		return QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_set(pScanResult, sizeof(tCsrScanResult) + uLen, 0);
+	qdf_mem_set(pScanResult, sizeof(tCsrScanResult) + uLen, 0);
 	pBssDescr = &pScanResult->Result.BssDescriptor;
 	/*
 	 * Length of BSS desription is without length of length itself and
@@ -6912,7 +6912,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	pBssDescr->timeStamp[0] = parsed_frm->timeStamp[0];
 	pBssDescr->timeStamp[1] = parsed_frm->timeStamp[1];
 	pBssDescr->capabilityInfo = *((uint16_t *)&parsed_frm->capabilityInfo);
-	cdf_mem_copy((uint8_t *) &pBssDescr->bssId,
+	qdf_mem_copy((uint8_t *) &pBssDescr->bssId,
 		     (uint8_t *) macHeader->bssId, sizeof(tSirMacAddr));
 	pBssDescr->nReceivedTime = (uint32_t) qdf_mc_timer_get_system_ticks();
 	sms_log(pMac, LOG2, FL("Bssid= "MAC_ADDRESS_STR" chan= %d, rssi = %d"),
@@ -6920,7 +6920,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 		pBssDescr->rssi);
 	/* IEs */
 	if (uLen) {
-		cdf_mem_copy(&pBssDescr->ieFields,
+		qdf_mem_copy(&pBssDescr->ieFields,
 			pPrefNetworkFoundInd->data + (SIR_MAC_HDR_LEN_3A +
 			SIR_MAC_B_PR_SSID_OFFSET), uLen);
 	}
@@ -6930,7 +6930,7 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 	if (!(local_ie || QDF_IS_STATUS_SUCCESS(status))) {
 		sms_log(pMac, LOGE, FL("Cannot parse IEs"));
 		csr_free_scan_result_entry(pMac, pScanResult);
-		cdf_mem_free(parsed_frm);
+		qdf_mem_free(parsed_frm);
 		return QDF_STATUS_E_RESOURCES;
 	}
 
@@ -6943,9 +6943,9 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 		sms_log(pMac, LOGE, FL("BSS limit reached"));
 		/* Free the resources */
 		if ((pScanResult->Result.pvIes == NULL) && local_ie)
-			cdf_mem_free(local_ie);
+			qdf_mem_free(local_ie);
 		csr_free_scan_result_entry(pMac, pScanResult);
-		cdf_mem_free(parsed_frm);
+		qdf_mem_free(parsed_frm);
 		return QDF_STATUS_E_RESOURCES;
 	}
 	/* Add to scan cache */
@@ -6953,8 +6953,8 @@ QDF_STATUS csr_scan_save_preferred_network_found(tpAniSirGlobal pMac,
 			    pPrefNetworkFoundInd->sessionId);
 
 	if ((pScanResult->Result.pvIes == NULL) && local_ie)
-		cdf_mem_free(local_ie);
-	cdf_mem_free(parsed_frm);
+		qdf_mem_free(local_ie);
+	qdf_mem_free(parsed_frm);
 	return QDF_STATUS_SUCCESS;
 }
 #endif /* FEATURE_WLAN_SCAN_PNO */
@@ -7005,7 +7005,7 @@ void csr_init_occupied_channels_list(tpAniSirGlobal pMac, uint8_t sessionId)
 		 * csr_get_parsed_bss_description_ies
 		 */
 		if ((pBssDesc->Result.pvIes == NULL) && pIes)
-			cdf_mem_free(pIes);
+			qdf_mem_free(pIes);
 		pEntry = csr_ll_next(&pMac->scan.scanResultList, pEntry,
 				     LL_ACCESS_NOLOCK);
 	} /* while */
@@ -7046,15 +7046,15 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 		status = QDF_STATUS_E_FAILURE;
 		goto free_mem;
 	}
-	pNewBssDescriptor = cdf_mem_malloc(size);
+	pNewBssDescriptor = qdf_mem_malloc(size);
 	if (NULL == pNewBssDescriptor) {
 		sms_log(pMac, LOGE, FL("memory allocation failed"));
 		status = QDF_STATUS_E_FAILURE;
 		goto free_mem;
 	}
-	cdf_mem_copy(pNewBssDescriptor, pSession->pConnectBssDesc, size);
+	qdf_mem_copy(pNewBssDescriptor, pSession->pConnectBssDesc, size);
 	/* change the BSSID & channel as passed */
-	cdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
+	qdf_mem_copy(pNewBssDescriptor->bssId, bssid.bytes,
 			sizeof(tSirMacAddr));
 	pNewBssDescriptor->channelId = channel;
 	if (NULL == csr_scan_append_bss_description(pMac, pNewBssDescriptor,
@@ -7068,10 +7068,10 @@ QDF_STATUS csr_scan_create_entry_in_scan_cache(tpAniSirGlobal pMac,
 
 free_mem:
 	if (pNewIes) {
-		cdf_mem_free(pNewIes);
+		qdf_mem_free(pNewIes);
 	}
 	if (pNewBssDescriptor) {
-		cdf_mem_free(pNewBssDescriptor);
+		qdf_mem_free(pNewBssDescriptor);
 	}
 	return status;
 }
@@ -7116,15 +7116,15 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 
 	length = roam_sync_ind_ptr->beaconProbeRespLength -
 		(SIR_MAC_HDR_LEN_3A + SIR_MAC_B_PR_SSID_OFFSET);
-	scan_res_ptr = cdf_mem_malloc(sizeof(tCsrScanResult) + length);
+	scan_res_ptr = qdf_mem_malloc(sizeof(tCsrScanResult) + length);
 	if (scan_res_ptr == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				" fail to allocate memory for frame");
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_zero(scan_res_ptr, sizeof(tCsrScanResult) + length);
-	cdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
+	qdf_mem_zero(scan_res_ptr, sizeof(tCsrScanResult) + length);
+	qdf_mem_copy(&scan_res_ptr->Result.BssDescriptor,
 			bss_desc_ptr,
 			(sizeof(tSirBssDescription) + length));
 	ies_local_ptr = (tDot11fBeaconIEs *)(scan_res_ptr->Result.pvIes);
@@ -7146,7 +7146,7 @@ QDF_STATUS csr_scan_save_roam_offload_ap_to_scan_cache(tpAniSirGlobal pMac,
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				"%s:BSS Limit Exceed", __func__);
 		if ((scan_res_ptr->Result.pvIes == NULL) && ies_local_ptr)
-			cdf_mem_free(ies_local_ptr);
+			qdf_mem_free(ies_local_ptr);
 
 		csr_free_scan_result_entry(pMac, scan_res_ptr);
 		return QDF_STATUS_E_RESOURCES;
@@ -7181,7 +7181,7 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 	if (csr_ll_is_list_empty(&bss_list->List, LL_ACCESS_NOLOCK)) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 				FL("bss_list->List is empty"));
-		cdf_mem_free(bss_list);
+		qdf_mem_free(bss_list);
 		return NULL;
 	}
 	first_element = csr_ll_peek_head(&bss_list->List, LL_ACCESS_NOLOCK);
@@ -7189,7 +7189,7 @@ csr_get_bssdescr_from_scan_handle(tScanResultHandle result_handle,
 		scan_result = GET_BASE_ADDR(first_element,
 				tCsrScanResult,
 				Link);
-		cdf_mem_copy(bss_descr,
+		qdf_mem_copy(bss_descr,
 				&scan_result->Result.BssDescriptor,
 				sizeof(tSirBssDescription));
 	}
@@ -7230,13 +7230,13 @@ void csr_scan_active_list_timeout_handle(void *userData)
 		FL("Scan Timeout:Sending abort to Firmware ID %d session %d "),
 		scan_id, scan_cmd->sessionId);
 	msg_len = (uint16_t)(sizeof(tSirSmeScanAbortReq));
-	msg = cdf_mem_malloc(msg_len);
+	msg = qdf_mem_malloc(msg_len);
 	if (NULL == msg) {
 		sms_log(mac_ctx, LOGE,
 			FL("Failed to alloc memory for SmeScanAbortReq"));
 		return;
 	}
-	cdf_mem_zero((void *)msg, msg_len);
+	qdf_mem_zero((void *)msg, msg_len);
 	msg->type = eWNI_SME_SCAN_ABORT_IND;
 	msg->msgLen = msg_len;
 	msg->sessionId = scan_cmd->sessionId;
@@ -7245,7 +7245,7 @@ void csr_scan_active_list_timeout_handle(void *userData)
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		sms_log(mac_ctx, LOGE,
 			FL(" Failed to post message to LIM"));
-		cdf_mem_free(msg);
+		qdf_mem_free(msg);
 	}
 	csr_release_scan_command(mac_ctx, scan_cmd, eCSR_SCAN_FAILURE);
 	return;

@@ -28,7 +28,7 @@
 /*=== includes ===*/
 /* header files for OS primitives */
 #include <osdep.h>              /* uint32_t, etc. */
-#include <cdf_memory.h>         /* cdf_mem_malloc,free */
+#include <qdf_mem.h>         /* qdf_mem_malloc,free */
 #include <qdf_types.h>          /* qdf_device_t, qdf_print */
 #include <qdf_lock.h>           /* cdf_spinlock */
 #include <qdf_atomic.h>         /* qdf_atomic_read */
@@ -404,10 +404,10 @@ ol_txrx_pdev_alloc(ol_pdev_handle ctrl_pdev,
 	struct ol_txrx_pdev_t *pdev;
 	int i;
 
-	pdev = cdf_mem_malloc(sizeof(*pdev));
+	pdev = qdf_mem_malloc(sizeof(*pdev));
 	if (!pdev)
 		goto fail0;
-	cdf_mem_zero(pdev, sizeof(*pdev));
+	qdf_mem_zero(pdev, sizeof(*pdev));
 
 	pdev->cfg.default_tx_comp_req = !ol_cfg_tx_free_at_download(ctrl_pdev);
 
@@ -437,7 +437,7 @@ fail2:
 	ol_txrx_peer_find_detach(pdev);
 
 fail1:
-	cdf_mem_free(pdev);
+	qdf_mem_free(pdev);
 
 fail0:
 	return NULL;
@@ -551,7 +551,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 
 	/* Calculate single element reserved size power of 2 */
 	pdev->tx_desc.desc_reserved_size = qdf_get_pwr2(desc_element_size);
-	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_desc.desc_pages,
+	qdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_desc.desc_pages,
 		pdev->tx_desc.desc_reserved_size, desc_pool_size, 0, true);
 	if ((0 == pdev->tx_desc.desc_pages.num_pages) ||
 		(NULL == pdev->tx_desc.desc_pages.cacheable_pages)) {
@@ -826,7 +826,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 	/*
 	 * Initialize rx PN check characteristics for different security types.
 	 */
-	cdf_mem_set(&pdev->rx_pn[0], sizeof(pdev->rx_pn), 0);
+	qdf_mem_set(&pdev->rx_pn[0], sizeof(pdev->rx_pn), 0);
 
 	/* TKIP: 48-bit TSC, CCMP: 48-bit PN */
 	pdev->rx_pn[htt_sec_type_tkip].len =
@@ -870,7 +870,7 @@ ol_txrx_pdev_attach(ol_txrx_pdev_handle pdev)
 		ol_tx_cfg_max_tx_queue_depth_ll(pdev->ctrl_pdev);
 
 #ifdef QCA_COMPUTE_TX_DELAY
-	cdf_mem_zero(&pdev->tx_delay, sizeof(pdev->tx_delay));
+	qdf_mem_zero(&pdev->tx_delay, sizeof(pdev->tx_delay));
 	qdf_spinlock_create(&pdev->tx_delay.mutex);
 
 	/* initialize compute interval with 5 seconds (ESE default) */
@@ -940,7 +940,7 @@ desc_alloc_fail:
 		htt_tx_desc_free(pdev->htt_pdev,
 			(ol_tx_desc_find(pdev, i))->htt_tx_desc);
 
-	cdf_mem_multi_pages_free(pdev->osdev,
+	qdf_mem_multi_pages_free(pdev->osdev,
 		&pdev->tx_desc.desc_pages, 0, true);
 
 page_alloc_fail:
@@ -1032,7 +1032,7 @@ void ol_txrx_pdev_detach(ol_txrx_pdev_handle pdev, int force)
 		htt_tx_desc_free(pdev->htt_pdev, htt_tx_desc);
 	}
 
-	cdf_mem_multi_pages_free(pdev->osdev,
+	qdf_mem_multi_pages_free(pdev->osdev,
 		&pdev->tx_desc.desc_pages, 0, true);
 	pdev->tx_desc.freelist = NULL;
 
@@ -1079,7 +1079,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	TXRX_ASSERT2(pdev);
 	TXRX_ASSERT2(vdev_mac_addr);
 
-	vdev = cdf_mem_malloc(sizeof(*vdev));
+	vdev = qdf_mem_malloc(sizeof(*vdev));
 	if (!vdev)
 		return NULL;    /* failure */
 
@@ -1093,7 +1093,7 @@ ol_txrx_vdev_attach(ol_txrx_pdev_handle pdev,
 	vdev->drop_unenc = 1;
 	vdev->num_filters = 0;
 
-	cdf_mem_copy(&vdev->mac_addr.raw[0], vdev_mac_addr,
+	qdf_mem_copy(&vdev->mac_addr.raw[0], vdev_mac_addr,
 		     OL_TXRX_MAC_ADDR_LEN);
 
 	TAILQ_INIT(&vdev->peer_list);
@@ -1166,7 +1166,7 @@ void
 ol_txrx_set_privacy_filters(ol_txrx_vdev_handle vdev,
 			    void *filters, uint32_t num)
 {
-	cdf_mem_copy(vdev->privacy_filters, filters,
+	qdf_mem_copy(vdev->privacy_filters, filters,
 		     num * sizeof(struct privacy_exemption));
 	vdev->num_filters = num;
 }
@@ -1247,7 +1247,7 @@ ol_txrx_vdev_detach(ol_txrx_vdev_handle vdev,
 	 * they will be freed once the target sends a tx completion
 	 * message for them.
 	 */
-	cdf_mem_free(vdev);
+	qdf_mem_free(vdev);
 	if (callback)
 		callback(context);
 }
@@ -1294,7 +1294,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 			if (ret != QDF_STATUS_SUCCESS)
 				cdf_nbuf_free(cache_buf->buf);
 		}
-		cdf_mem_free(cache_buf);
+		qdf_mem_free(cache_buf);
 		qdf_spin_lock_bh(&peer->bufq_lock);
 		cache_buf = list_entry((&peer->cached_bufq)->next,
 				typeof(*cache_buf), list);
@@ -1355,14 +1355,14 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 		}
 	}
 
-	peer = cdf_mem_malloc(sizeof(*peer));
+	peer = qdf_mem_malloc(sizeof(*peer));
 	if (!peer)
 		return NULL;    /* failure */
-	cdf_mem_zero(peer, sizeof(*peer));
+	qdf_mem_zero(peer, sizeof(*peer));
 
 	/* store provided params */
 	peer->vdev = vdev;
-	cdf_mem_copy(&peer->mac_addr.raw[0], peer_mac_addr,
+	qdf_mem_copy(&peer->mac_addr.raw[0], peer_mac_addr,
 		     OL_TXRX_MAC_ADDR_LEN);
 
 	INIT_LIST_HEAD(&peer->cached_bufq);
@@ -1411,10 +1411,9 @@ ol_txrx_peer_attach(ol_txrx_pdev_handle pdev,
 	/*
 	 * For every peer MAp message search and set if bss_peer
 	 */
-	differs =
-		cdf_mem_compare(peer->mac_addr.raw, vdev->mac_addr.raw,
+	differs = qdf_mem_cmp(peer->mac_addr.raw, vdev->mac_addr.raw,
 				OL_TXRX_MAC_ADDR_LEN);
-	if (!differs)
+	if (differs)
 		peer->bss_peer = 1;
 
 	/*
@@ -1763,7 +1762,7 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 					   vdev->mac_addr.raw[4],
 					   vdev->mac_addr.raw[5]);
 				/* all peers are gone, go ahead and delete it */
-				cdf_mem_free(vdev);
+				qdf_mem_free(vdev);
 				if (vdev_delete_cb)
 					vdev_delete_cb(vdev_delete_context);
 			} else {
@@ -1787,13 +1786,13 @@ void ol_txrx_peer_unref_delete(ol_txrx_peer_handle peer)
 				TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 					   "%s, delete reorder arr, tid:%d\n",
 					   __func__, i);
-				cdf_mem_free(peer->tids_rx_reorder[i].array);
+				qdf_mem_free(peer->tids_rx_reorder[i].array);
 				ol_rx_reorder_init(&peer->tids_rx_reorder[i],
 						   (uint8_t) i);
 			}
 		}
 
-		cdf_mem_free(peer);
+		qdf_mem_free(peer);
 	} else {
 		qdf_spin_unlock_bh(&pdev->peer_ref_mutex);
 	}
@@ -2034,7 +2033,7 @@ ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
 	 * Allocate a non-transient stats request object.
 	 * (The one provided as an argument is likely allocated on the stack.)
 	 */
-	non_volatile_req = cdf_mem_malloc(sizeof(*non_volatile_req));
+	non_volatile_req = qdf_mem_malloc(sizeof(*non_volatile_req));
 	if (!non_volatile_req)
 		return A_NO_MEMORY;
 
@@ -2051,7 +2050,7 @@ ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
 				  req->stats_type_reset_mask,
 				  HTT_H2T_STATS_REQ_CFG_STAT_TYPE_INVALID, 0,
 				  cookie)) {
-		cdf_mem_free(non_volatile_req);
+		qdf_mem_free(non_volatile_req);
 		return A_ERROR;
 	}
 
@@ -2060,7 +2059,7 @@ ol_txrx_fw_stats_get(ol_txrx_vdev_handle vdev, struct ol_txrx_stats_req *req,
 			;
 
 	if (response_expected == false)
-		cdf_mem_free(non_volatile_req);
+		qdf_mem_free(non_volatile_req);
 
 	return A_OK;
 }
@@ -2105,7 +2104,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < lmt)
 						lmt = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, lmt);
+					qdf_mem_copy(buf, stats_data, lmt);
 				}
 				break;
 			case HTT_DBG_STATS_RX_REORDER:
@@ -2117,7 +2116,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < lmt)
 						lmt = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, lmt);
+					qdf_mem_copy(buf, stats_data, lmt);
 				}
 				break;
 			case HTT_DBG_STATS_RX_RATE_INFO:
@@ -2129,7 +2128,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < lmt)
 						lmt = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, lmt);
+					qdf_mem_copy(buf, stats_data, lmt);
 				}
 				break;
 
@@ -2142,7 +2141,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < lmt)
 						lmt = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, lmt);
+					qdf_mem_copy(buf, stats_data, lmt);
 				}
 				break;
 
@@ -2161,7 +2160,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 						limit = req->base.copy.byte_limit;
 					}
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, limit);
+					qdf_mem_copy(buf, stats_data, limit);
 				}
 				break;
 
@@ -2174,7 +2173,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < limit)
 						limit = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, limit);
+					qdf_mem_copy(buf, stats_data, limit);
 				}
 				break;
 
@@ -2187,7 +2186,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < limit)
 						limit = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, limit);
+					qdf_mem_copy(buf, stats_data, limit);
 				}
 				break;
 
@@ -2200,7 +2199,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < limit)
 						limit = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, limit);
+					qdf_mem_copy(buf, stats_data, limit);
 				}
 				break;
 
@@ -2215,7 +2214,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 					if (req->base.copy.byte_limit < limit)
 						limit = req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, limit);
+					qdf_mem_copy(buf, stats_data, limit);
 				}
 				break;
 
@@ -2231,7 +2230,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 						limit =
 						req->base.copy.byte_limit;
 					buf = req->base.copy.buf + req->offset;
-					cdf_mem_copy(buf, stats_data, limit);
+					qdf_mem_copy(buf, stats_data, limit);
 				}
 				break;
 
@@ -2251,7 +2250,7 @@ ol_txrx_fw_stats_handler(ol_txrx_pdev_handle pdev,
 	if (!more) {
 		if (req->base.wait.blocking)
 			qdf_semaphore_release(req->base.wait.sem_ptr);
-		cdf_mem_free(req);
+		qdf_mem_free(req);
 	}
 }
 
@@ -2511,7 +2510,7 @@ void ol_txrx_stats_display(ol_txrx_pdev_handle pdev)
 
 void ol_txrx_stats_clear(ol_txrx_pdev_handle pdev)
 {
-	cdf_mem_zero(&pdev->stats, sizeof(pdev->stats));
+	qdf_mem_zero(&pdev->stats, sizeof(pdev->stats));
 }
 
 #if defined(ENABLE_TXRX_PROT_ANALYZE)
@@ -2539,7 +2538,7 @@ ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 {
 	qdf_assert(pdev && peer && stats);
 	qdf_spin_lock_bh(&pdev->peer_stat_mutex);
-	cdf_mem_copy(stats, &peer->stats, sizeof(*stats));
+	qdf_mem_copy(stats, &peer->stats, sizeof(*stats));
 	qdf_spin_unlock_bh(&pdev->peer_stat_mutex);
 	return A_OK;
 }
@@ -2834,7 +2833,7 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	if (qdf_unlikely(!pdev)) {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			      "%s: Invalid context", __func__);
-		cdf_mem_free(rxpkt);
+		qdf_mem_free(rxpkt);
 		return;
 	}
 
@@ -2843,7 +2842,7 @@ void ol_txrx_ipa_uc_fw_op_event_handler(void *context,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 			      "%s: ipa_uc_op_cb NULL", __func__);
-		cdf_mem_free(rxpkt);
+		qdf_mem_free(rxpkt);
 	}
 }
 
@@ -2885,7 +2884,7 @@ void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev,
 	} else {
 		QDF_TRACE(QDF_MODULE_ID_TXRX, QDF_TRACE_LEVEL_ERROR,
 		    "%s: IPA callback function is not registered", __func__);
-		cdf_mem_free(op_msg);
+		qdf_mem_free(op_msg);
 		return;
 	}
 }
@@ -3071,7 +3070,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 		buf = rx_buf_list;
 		while (buf) {
 			next_buf = cdf_nbuf_queue_next(buf);
-			cache_buf = cdf_mem_malloc(sizeof(*cache_buf));
+			cache_buf = qdf_mem_malloc(sizeof(*cache_buf));
 			if (!cache_buf) {
 				TXRX_PRINT(TXRX_PRINT_LEVEL_ERR,
 					"Failed to allocate buf to cache the rx frames");

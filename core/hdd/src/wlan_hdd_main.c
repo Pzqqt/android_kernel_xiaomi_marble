@@ -749,10 +749,10 @@ void hdd_update_macaddr(struct hdd_config *config,
 	int8_t i;
 	uint8_t macaddr_b3, tmp_br3;
 
-	cdf_mem_copy(config->intfMacAddr[0].bytes, hw_macaddr.bytes,
+	qdf_mem_copy(config->intfMacAddr[0].bytes, hw_macaddr.bytes,
 		     QDF_MAC_ADDR_SIZE);
 	for (i = 1; i < QDF_MAX_CONCURRENCY_PERSONA; i++) {
-		cdf_mem_copy(config->intfMacAddr[i].bytes, hw_macaddr.bytes,
+		qdf_mem_copy(config->intfMacAddr[i].bytes, hw_macaddr.bytes,
 			     QDF_MAC_ADDR_SIZE);
 		macaddr_b3 = config->intfMacAddr[i].bytes[3];
 		tmp_br3 = ((macaddr_b3 >> 4 & INTF_MACADDR_MASK) + i) &
@@ -1870,7 +1870,7 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		/* Save the pointer to the net_device in the HDD adapter */
 		adapter = (hdd_adapter_t *) netdev_priv(pWlanDev);
 
-		cdf_mem_zero(adapter, sizeof(hdd_adapter_t));
+		qdf_mem_zero(adapter, sizeof(hdd_adapter_t));
 
 		adapter->dev = pWlanDev;
 		adapter->pHddCtx = hdd_ctx;
@@ -1902,9 +1902,9 @@ static hdd_adapter_t *hdd_alloc_station_adapter(hdd_context_t *hdd_ctx,
 		/* Init the net_device structure */
 		strlcpy(pWlanDev->name, name, IFNAMSIZ);
 
-		cdf_mem_copy(pWlanDev->dev_addr, (void *)macAddr,
+		qdf_mem_copy(pWlanDev->dev_addr, (void *)macAddr,
 			     sizeof(tSirMacAddr));
-		cdf_mem_copy(adapter->macAddressCurrent.bytes, macAddr,
+		qdf_mem_copy(adapter->macAddressCurrent.bytes, macAddr,
 			     sizeof(tSirMacAddr));
 		pWlanDev->watchdog_timeo = HDD_TX_TIMEOUT;
 
@@ -2273,7 +2273,7 @@ QDF_STATUS hdd_check_for_existing_macaddr(hdd_context_t *hdd_ctx,
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = adapterNode->pAdapter;
 		if (adapter
-		    && cdf_mem_compare(adapter->macAddressCurrent.bytes,
+		    && !qdf_mem_cmp(adapter->macAddressCurrent.bytes,
 				       macAddr, sizeof(tSirMacAddr))) {
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -2483,7 +2483,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 	if (QDF_STATUS_SUCCESS == status) {
 		/* Add it to the hdd's session list. */
 		pHddAdapterNode =
-			cdf_mem_malloc(sizeof(hdd_adapter_list_node_t));
+			qdf_mem_malloc(sizeof(hdd_adapter_list_node_t));
 		if (NULL == pHddAdapterNode) {
 			status = QDF_STATUS_E_NOMEM;
 		} else {
@@ -2498,7 +2498,7 @@ hdd_adapter_t *hdd_open_adapter(hdd_context_t *hdd_ctx, uint8_t session_type,
 			adapter = NULL;
 		}
 		if (NULL != pHddAdapterNode) {
-			cdf_mem_free(pHddAdapterNode);
+			qdf_mem_free(pHddAdapterNode);
 		}
 		return NULL;
 	}
@@ -2691,7 +2691,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 		hdd_cleanup_adapter(hdd_ctx, adapterNode->pAdapter, rtnl_held);
 
 		hdd_remove_adapter(hdd_ctx, adapterNode);
-		cdf_mem_free(adapterNode);
+		qdf_mem_free(adapterNode);
 		adapterNode = NULL;
 
 		/* Adapter removed. Decrement vdev count */
@@ -2725,7 +2725,7 @@ QDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
 		if (pHddAdapterNode && QDF_STATUS_SUCCESS == status) {
 			hdd_cleanup_adapter(hdd_ctx, pHddAdapterNode->pAdapter,
 					    rtnl_held);
-			cdf_mem_free(pHddAdapterNode);
+			qdf_mem_free(pHddAdapterNode);
 		}
 	} while (NULL != pHddAdapterNode && QDF_STATUS_E_EMPTY != status);
 
@@ -3227,7 +3227,7 @@ hdd_adapter_t *hdd_get_adapter_by_macaddr(hdd_context_t *hdd_ctx,
 		adapter = adapterNode->pAdapter;
 
 		if (adapter
-		    && cdf_mem_compare(adapter->macAddressCurrent.bytes,
+		    && !qdf_mem_cmp(adapter->macAddressCurrent.bytes,
 				       macAddr, sizeof(tSirMacAddr))) {
 			return adapter;
 		}
@@ -3645,7 +3645,7 @@ static void hdd_free_context(hdd_context_t *hdd_ctx)
 	if (QDF_GLOBAL_FTM_MODE != hdd_get_conparam())
 		hdd_logging_sock_deactivate_svc(hdd_ctx);
 
-	cdf_mem_free(hdd_ctx->config);
+	qdf_mem_free(hdd_ctx->config);
 	hdd_ctx->config = NULL;
 
 	wiphy_free(hdd_ctx->wiphy);
@@ -4394,7 +4394,7 @@ void wlan_hdd_display_tx_rx_histogram(hdd_context_t *hdd_ctx)
 void wlan_hdd_clear_tx_rx_histogram(hdd_context_t *hdd_ctx)
 {
 	hdd_ctx->hdd_txrx_hist_idx = 0;
-	cdf_mem_zero(hdd_ctx->hdd_txrx_hist, sizeof(hdd_ctx->hdd_txrx_hist));
+	qdf_mem_zero(hdd_ctx->hdd_txrx_hist, sizeof(hdd_ctx->hdd_txrx_hist));
 }
 
 /**
@@ -4475,9 +4475,9 @@ void wlan_hdd_clear_netif_queue_history(hdd_context_t *hdd_ctx)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		adapter = adapter_node->pAdapter;
 
-		cdf_mem_zero(adapter->queue_oper_stats,
+		qdf_mem_zero(adapter->queue_oper_stats,
 					sizeof(adapter->queue_oper_stats));
-		cdf_mem_zero(adapter->queue_oper_history,
+		qdf_mem_zero(adapter->queue_oper_history,
 					sizeof(adapter->queue_oper_history));
 
 		status = hdd_get_next_adapter(hdd_ctx, adapter_node, &next);
@@ -4749,7 +4749,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 	       ch_avoid_indi->avoid_range_count);
 
 	/* generate vendor specific event */
-	cdf_mem_zero((void *)&hdd_avoid_freq_list, sizeof(tHddAvoidFreqList));
+	qdf_mem_zero((void *)&hdd_avoid_freq_list, sizeof(tHddAvoidFreqList));
 	for (i = 0; i < ch_avoid_indi->avoid_range_count; i++) {
 		hdd_avoid_freq_list.avoidFreqRange[i].startFreq =
 			ch_avoid_indi->avoid_freq_range[i].start_freq;
@@ -4763,7 +4763,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 	/* clear existing unsafe channel cache */
 	hdd_ctxt->unsafe_channel_count = 0;
-	cdf_mem_zero(hdd_ctxt->unsafe_channel_list,
+	qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
 					sizeof(hdd_ctxt->unsafe_channel_list));
 
 	for (range_loop = 0; range_loop < ch_avoid_indi->avoid_range_count;
@@ -4839,7 +4839,7 @@ static void hdd_ch_avoid_cb(void *hdd_context, void *indi_param)
 
 		/* clear existing unsafe channel cache */
 		hdd_ctxt->unsafe_channel_count = 0;
-		cdf_mem_zero(hdd_ctxt->unsafe_channel_list,
+		qdf_mem_zero(hdd_ctxt->unsafe_channel_list,
 			sizeof(hdd_ctxt->unsafe_channel_list));
 
 		return;
@@ -5092,7 +5092,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 
 	hdd_ctx->pcds_context = p_cds_context;
 
-	hdd_ctx->config = cdf_mem_malloc(sizeof(struct hdd_config));
+	hdd_ctx->config = qdf_mem_malloc(sizeof(struct hdd_config));
 	if (hdd_ctx->config == NULL) {
 		hdd_alert("Failed to alloc memory for HDD config!");
 		ret = -ENOMEM;
@@ -5181,7 +5181,7 @@ skip_multicast_logging:
 	return hdd_ctx;
 
 err_free_config:
-	cdf_mem_free(hdd_ctx->config);
+	qdf_mem_free(hdd_ctx->config);
 
 err_free_hdd_context:
 	wiphy_free(hdd_ctx->wiphy);
@@ -5208,7 +5208,7 @@ static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
 
 	if (hdd_ctx->config->isP2pDeviceAddrAdministrated &&
 	    !(hdd_ctx->config->intfMacAddr[0].bytes[0] & 0x02)) {
-		cdf_mem_copy(hdd_ctx->p2pDeviceAddress.bytes,
+		qdf_mem_copy(hdd_ctx->p2pDeviceAddress.bytes,
 			     hdd_ctx->config->intfMacAddr[0].bytes,
 			     sizeof(tSirMacAddr));
 
@@ -5225,7 +5225,7 @@ static int hdd_open_p2p_interface(hdd_context_t *hdd_ctx, bool rtnl_held)
 			return -ENOSPC;
 		}
 
-		cdf_mem_copy(&hdd_ctx->p2pDeviceAddress.bytes[0], p2p_dev_addr,
+		qdf_mem_copy(&hdd_ctx->p2pDeviceAddress.bytes[0], p2p_dev_addr,
 			     QDF_MAC_ADDR_SIZE);
 	}
 
@@ -6819,7 +6819,7 @@ static int __hdd_module_init(void)
 		goto out;
 	}
 
-	pr_info("%s: qdf driver loaded\n", WLAN_MODULE_NAME);
+	pr_info("%s: qdf converged driver loaded\n", WLAN_MODULE_NAME);
 
 	return 0;
 out:

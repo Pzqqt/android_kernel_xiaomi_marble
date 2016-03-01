@@ -151,7 +151,7 @@ void clean_report(hdd_context_t *hdd_ctx)
 {
 	uint32_t idx = 0;
 	while (idx < NUMBER_OF_SCENARIO) {
-		cdf_mem_zero(&report[idx], sizeof(struct report_t));
+		qdf_mem_zero(&report[idx], sizeof(struct report_t));
 		idx++;
 	}
 	report_idx = 0;
@@ -229,12 +229,12 @@ void fill_report(hdd_context_t *hdd_ctx, char *title,
 		MAX_ALLOWED_CHAR_IN_REPORT,
 		reason);
 	if (pcl) {
-		cdf_mem_zero(report[report_idx].pcl,
+		qdf_mem_zero(report[report_idx].pcl,
 				sizeof(report[report_idx].pcl));
 		for (i = 0; i < MAX_NUM_CHAN; i++) {
 			if (pcl[i] == 0)
 				break;
-			cdf_mem_zero(buf, sizeof(buf));
+			qdf_mem_zero(buf, sizeof(buf));
 			snprintf(buf, sizeof(buf), "%d ", pcl[i]);
 			strlcat(report[report_idx].pcl, buf,
 				sizeof(report[report_idx].pcl));
@@ -646,7 +646,7 @@ void wlan_hdd_one_connection_scenario(hdd_context_t *hdd_ctx)
 				FL("Test failed - No. of connection is not 0"));
 			return;
 		}
-		cdf_mem_zero(pcl, sizeof(pcl));
+		qdf_mem_zero(pcl, sizeof(pcl));
 		pcl_len = 0;
 		pcl_type = get_pcl_from_first_conn_table(sub_type, system_pref);
 
@@ -717,7 +717,7 @@ void wlan_hdd_two_connections_scenario(hdd_context_t *hdd_ctx,
 				next_sub_type++;
 				continue;
 			}
-			cdf_mem_zero(pcl, sizeof(pcl));
+			qdf_mem_zero(pcl, sizeof(pcl));
 			pcl_len = 0;
 			pcl_type = get_pcl_from_second_conn_table(second_index,
 					next_sub_type, system_pref,
@@ -830,7 +830,7 @@ void wlan_hdd_three_connections_scenario(hdd_context_t *hdd_ctx,
 					next_sub_type++;
 					continue;
 				}
-				cdf_mem_zero(pcl, sizeof(pcl));
+				qdf_mem_zero(pcl, sizeof(pcl));
 				pcl_len = 0;
 				pcl_type =
 					get_pcl_from_third_conn_table(

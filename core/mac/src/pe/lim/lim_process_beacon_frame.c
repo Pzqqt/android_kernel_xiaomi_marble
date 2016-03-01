@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -83,7 +83,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 		lim_print_mac_addr(mac_ctx, mac_hdr->sa, LOG2);
 
 	/* Expect Beacon in any state as Scan is independent of LIM state */
-	bcn_ptr = cdf_mem_malloc(sizeof(*bcn_ptr));
+	bcn_ptr = qdf_mem_malloc(sizeof(*bcn_ptr));
 	if (NULL == bcn_ptr) {
 		lim_log(mac_ctx, LOGE,
 			FL("Unable to allocate memory"));
@@ -102,7 +102,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			session->limMlmState);
 		lim_print_mlm_state(mac_ctx, LOGW,
 			session->limMlmState);
-		cdf_mem_free(bcn_ptr);
+		qdf_mem_free(bcn_ptr);
 		return;
 	}
 	/*
@@ -113,7 +113,7 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	if ((!session->lastBeaconDtimPeriod) &&
 	    (sir_compare_mac_addr(session->bssId,
 				bcn_ptr->bssid))) {
-		cdf_mem_copy((uint8_t *)&session->lastBeaconTimeStamp,
+		qdf_mem_copy((uint8_t *)&session->lastBeaconTimeStamp,
 			(uint8_t *) bcn_ptr->timeStamp,
 			sizeof(uint64_t));
 		session->lastBeaconDtimCount =
@@ -148,12 +148,12 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	} else if (session->limMlmState ==
 			eLIM_MLM_WT_JOIN_BEACON_STATE) {
 		if (session->beacon != NULL) {
-			cdf_mem_free(session->beacon);
+			qdf_mem_free(session->beacon);
 			session->beacon = NULL;
 			session->bcnLen = 0;
 		}
 		session->bcnLen = WMA_GET_RX_PAYLOAD_LEN(rx_pkt_info);
-		session->beacon = cdf_mem_malloc(session->bcnLen);
+		session->beacon = qdf_mem_malloc(session->bcnLen);
 		if (NULL == session->beacon) {
 			lim_log(mac_ctx, LOGE,
 				FL("fail to alloc mem to store bcn"));
@@ -162,14 +162,14 @@ lim_process_beacon_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 			 * Store the Beacon/ProbeRsp. This is sent to
 			 * csr/hdd in join cnf response.
 			 */
-			cdf_mem_copy(session->beacon,
+			qdf_mem_copy(session->beacon,
 				WMA_GET_RX_MPDU_DATA(rx_pkt_info),
 				session->bcnLen);
 		}
 		lim_check_and_announce_join_success(mac_ctx, bcn_ptr,
 				mac_hdr, session);
 	}
-	cdf_mem_free(bcn_ptr);
+	qdf_mem_free(bcn_ptr);
 	return;
 }
 
@@ -204,7 +204,7 @@ lim_process_beacon_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo)
 	if ((pMac->lim.gLimMlmState == eLIM_MLM_WT_PROBE_RESP_STATE) ||
 	    (pMac->lim.gLimMlmState == eLIM_MLM_PASSIVE_SCAN_STATE) ||
 	    (pMac->lim.gLimMlmState == eLIM_MLM_LEARN_STATE)) {
-		pBeacon = cdf_mem_malloc(sizeof(tSchBeaconStruct));
+		pBeacon = qdf_mem_malloc(sizeof(tSchBeaconStruct));
 		if (NULL == pBeacon) {
 			lim_log(pMac, LOGE,
 				FL
@@ -221,7 +221,7 @@ lim_process_beacon_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo)
 					("Received invalid Beacon in global MLM state %X"),
 				pMac->lim.gLimMlmState);
 			lim_print_mlm_state(pMac, LOGW, pMac->lim.gLimMlmState);
-			cdf_mem_free(pBeacon);
+			qdf_mem_free(pBeacon);
 			return;
 		}
 
@@ -236,7 +236,7 @@ lim_process_beacon_frame_no_session(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo)
 						 &pMac->lim.dfschannelList);
 		} else if (pMac->lim.gLimMlmState == eLIM_MLM_LEARN_STATE) {
 		} /* end of eLIM_MLM_LEARN_STATE) */
-		cdf_mem_free(pBeacon);
+		qdf_mem_free(pBeacon);
 	} /* end of (eLIM_MLM_WT_PROBE_RESP_STATE) || (eLIM_MLM_PASSIVE_SCAN_STATE) */
 	else {
 		lim_log(pMac, LOG1, FL("Rcvd Beacon in unexpected MLM state %s (%d)"),

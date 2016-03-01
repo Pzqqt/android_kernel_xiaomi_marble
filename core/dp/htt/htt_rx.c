@@ -39,7 +39,7 @@
  *      rx ring (applies to LL only).
  */
 
-#include <cdf_memory.h>         /* cdf_mem_malloc,free, etc. */
+#include <qdf_mem.h>         /* qdf_mem_malloc,free, etc. */
 #include <qdf_types.h>          /* qdf_print, bool */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <qdf_timer.h>		/* qdf_timer_free */
@@ -140,13 +140,13 @@ void htt_rx_hash_deinit(struct htt_pdev_t *pdev)
 			list_iter = list_iter->next;
 
 			if (!hash_entry->fromlist)
-				cdf_mem_free(hash_entry);
+				qdf_mem_free(hash_entry);
 		}
 
-		cdf_mem_free(pdev->rx_ring.hash_table[i].entries);
+		qdf_mem_free(pdev->rx_ring.hash_table[i].entries);
 
 	}
-	cdf_mem_free(pdev->rx_ring.hash_table);
+	qdf_mem_free(pdev->rx_ring.hash_table);
 	pdev->rx_ring.hash_table = NULL;
 }
 
@@ -346,7 +346,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 	qdf_timer_free(&pdev->rx_ring.refill_retry_timer);
 
 	if (pdev->cfg.is_full_reorder_offload) {
-		cdf_os_mem_free_consistent(pdev->osdev,
+		qdf_mem_free_consistent(pdev->osdev,
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
 					   pdev->rx_ring.target_idx.paddr,
@@ -375,10 +375,10 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 			sw_rd_idx++;
 			sw_rd_idx &= pdev->rx_ring.size_mask;
 		}
-		cdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
+		qdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
 	}
 
-	cdf_os_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev,
 				   sizeof(uint32_t),
 				   pdev->rx_ring.alloc_idx.vaddr,
 				   pdev->rx_ring.alloc_idx.paddr,
@@ -386,7 +386,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 							    alloc_idx),
 							   memctx));
 
-	cdf_os_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev,
 				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
@@ -1559,7 +1559,7 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 	dest = cdf_nbuf_put_tail(prev_buf, wifi_hdr_len);
 	if (!dest)
 		goto mpdu_stitch_fail;
-	cdf_mem_copy(dest, hdr_desc, wifi_hdr_len);
+	qdf_mem_copy(dest, hdr_desc, wifi_hdr_len);
 	hdr_desc += wifi_hdr_len;
 
 	/* NOTE - This padding is present only in the RAW header status - not
@@ -1602,7 +1602,7 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 		/* Copy this buffers MSDU related status into the prev buffer */
 		dest = cdf_nbuf_put_tail(prev_buf, msdu_llc_len + amsdu_pad);
 		dest += amsdu_pad;
-		cdf_mem_copy(dest, hdr_desc, msdu_llc_len);
+		qdf_mem_copy(dest, hdr_desc, msdu_llc_len);
 
 		/* Push the MSDU buffer beyond the decap header */
 		cdf_nbuf_pull_head(msdu, decap_hdr_pull_bytes);
@@ -1967,7 +1967,7 @@ htt_rx_hash_list_insert(struct htt_pdev_t *pdev, uint32_t paddr,
 
 		htt_list_remove(pdev->rx_ring.hash_table[i].freepool.next);
 	} else {
-		hash_element = cdf_mem_malloc(sizeof(struct htt_rx_hash_entry));
+		hash_element = qdf_mem_malloc(sizeof(struct htt_rx_hash_entry));
 		if (qdf_unlikely(NULL == hash_element)) {
 			HTT_ASSERT_ALWAYS(0);
 			return 1;
@@ -2022,7 +2022,7 @@ cdf_nbuf_t htt_rx_hash_list_lookup(struct htt_pdev_t *pdev, uint32_t paddr)
 						  freepool,
 						  &hash_entry->listnode);
 			else
-				cdf_mem_free(hash_entry);
+				qdf_mem_free(hash_entry);
 
 			htt_rx_dbg_rxbuf_reset(pdev, netbuf);
 			break;
@@ -2052,7 +2052,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 	HTT_ASSERT2(CDF_IS_PWR2(RX_NUM_HASH_BUCKETS));
 
 	pdev->rx_ring.hash_table =
-		cdf_mem_malloc(RX_NUM_HASH_BUCKETS *
+		qdf_mem_malloc(RX_NUM_HASH_BUCKETS *
 			       sizeof(struct htt_rx_hash_bucket));
 
 	if (NULL == pdev->rx_ring.hash_table) {
@@ -2071,7 +2071,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 
 		/* pre-allocate a pool of entries for this bucket */
 		pdev->rx_ring.hash_table[i].entries =
-			cdf_mem_malloc(RX_ENTRIES_SIZE *
+			qdf_mem_malloc(RX_ENTRIES_SIZE *
 				       sizeof(struct htt_rx_hash_entry));
 
 		if (NULL == pdev->rx_ring.hash_table[i].entries) {
@@ -2079,10 +2079,10 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 				(int)i);
 			while (i) {
 				i--;
-				cdf_mem_free(pdev->rx_ring.hash_table[i].
+				qdf_mem_free(pdev->rx_ring.hash_table[i].
 					     entries);
 			}
-			cdf_mem_free(pdev->rx_ring.hash_table);
+			qdf_mem_free(pdev->rx_ring.hash_table);
 			pdev->rx_ring.hash_table = NULL;
 			return 1;
 		}
@@ -2151,12 +2151,9 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 
 		/* allocate the target index */
 		pdev->rx_ring.target_idx.vaddr =
-			 cdf_os_mem_alloc_consistent(pdev->osdev,
+			 qdf_mem_alloc_consistent(pdev->osdev, pdev->osdev->dev,
 				 sizeof(uint32_t),
-				 &paddr,
-				 qdf_get_dma_mem_context(
-					(&pdev->rx_ring.target_idx),
-					 memctx));
+				 &paddr);
 
 		if (!pdev->rx_ring.target_idx.vaddr)
 			goto fail1;
@@ -2165,7 +2162,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 		*pdev->rx_ring.target_idx.vaddr = 0;
 	} else {
 		pdev->rx_ring.buf.netbufs_ring =
-			cdf_mem_malloc(pdev->rx_ring.size * sizeof(cdf_nbuf_t));
+			qdf_mem_malloc(pdev->rx_ring.size * sizeof(cdf_nbuf_t));
 		if (!pdev->rx_ring.buf.netbufs_ring)
 			goto fail1;
 
@@ -2174,25 +2171,18 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	}
 
 	pdev->rx_ring.buf.paddrs_ring =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev,
+		qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev,
 			 pdev->rx_ring.size * ring_elem_size,
-			 &paddr,
-			 qdf_get_dma_mem_context(
-				(&pdev->rx_ring.buf),
-				 memctx));
+			 &paddr);
 	if (!pdev->rx_ring.buf.paddrs_ring)
 		goto fail2;
 
 	pdev->rx_ring.base_paddr = paddr;
 	pdev->rx_ring.alloc_idx.vaddr =
-		 cdf_os_mem_alloc_consistent(
-			pdev->osdev,
-			 sizeof(uint32_t),
-			 &paddr,
-			 qdf_get_dma_mem_context(
-				(&pdev->rx_ring.alloc_idx),
-				 memctx));
+		 qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev,
+			 sizeof(uint32_t), &paddr);
 
 	if (!pdev->rx_ring.alloc_idx.vaddr)
 		goto fail3;
@@ -2257,7 +2247,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	return 0;               /* success */
 
 fail3:
-	cdf_os_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev,
 				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
@@ -2266,7 +2256,7 @@ fail3:
 
 fail2:
 	if (pdev->cfg.is_full_reorder_offload) {
-		cdf_os_mem_free_consistent(pdev->osdev,
+		qdf_mem_free_consistent(pdev->osdev,
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
 					   pdev->rx_ring.target_idx.paddr,
@@ -2276,7 +2266,7 @@ fail2:
 								   memctx));
 		htt_rx_hash_deinit(pdev);
 	} else {
-		cdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
+		qdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
 	}
 
 fail1:
@@ -2301,14 +2291,11 @@ int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 	 *   2bytes: VDEV ID
 	 *   2bytes: length */
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev,
+		qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev,
 			rx_ind_ring_elements *
 			sizeof(struct ipa_uc_rx_ring_elem_t),
-			&pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx2_ind_ring_base),
-						memctx));
+			&pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr);
 	if (!pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
 		qdf_print("%s: RX IND RING alloc fail", __func__);
 		return -ENOBUFS;
@@ -2317,21 +2304,17 @@ int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 	/* RX indication ring size, by bytes */
 	pdev->ipa_uc_rx_rsc.rx2_ind_ring_size =
 		rx_ind_ring_elements * sizeof(struct ipa_uc_rx_ring_elem_t);
-	cdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
+	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
 		pdev->ipa_uc_rx_rsc.rx2_ind_ring_size);
 
 	/* Allocate RX process done index */
 	pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev,
-			4,
-			&pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ipa_prc_done_idx),
-						memctx));
+		qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev, 4,
+			&pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.paddr);
 	if (!pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
 		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
@@ -2341,7 +2324,7 @@ int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 						memctx));
 		return -ENOBUFS;
 	}
-	cdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr, 4);
+	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr, 4);
 	return 0;
 }
 #else
@@ -2369,14 +2352,12 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	 *   2bytes: VDEV ID
 	 *   2bytes: length */
 	pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr =
-		cdf_os_mem_alloc_consistent(
+		qdf_mem_alloc_consistent(
 			pdev->osdev,
+			pdev->osdev->dev,
 			rx_ind_ring_elements *
 			sizeof(struct ipa_uc_rx_ring_elem_t),
-			&pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ind_ring_base),
-						memctx));
+			&pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr);
 	if (!pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr) {
 		qdf_print("%s: RX IND RING alloc fail", __func__);
 		return -ENOBUFS;
@@ -2385,21 +2366,17 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	/* RX indication ring size, by bytes */
 	pdev->ipa_uc_rx_rsc.rx_ind_ring_size =
 		rx_ind_ring_elements * sizeof(struct ipa_uc_rx_ring_elem_t);
-	cdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
+	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
 		pdev->ipa_uc_rx_rsc.rx_ind_ring_size);
 
 	/* Allocate RX process done index */
 	pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev,
-			4,
-			&pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_rx_rsc.
-						 rx_ipa_prc_done_idx),
-						memctx));
+		qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev, 4,
+			&pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.paddr);
 	if (!pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
 		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
@@ -2409,7 +2386,7 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 						memctx));
 		return -ENOBUFS;
 	}
-	cdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr, 4);
+	qdf_mem_zero(pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr, 4);
 
 	ret = htt_rx_ipa_uc_alloc_wdi2_rsc(pdev, rx_ind_ring_elements);
 	return ret;
@@ -2425,7 +2402,7 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 {
 	if (pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
@@ -2436,7 +2413,7 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 	}
 
 	if (pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			4,
 			pdev->ipa_uc_rx_rsc.
@@ -2457,7 +2434,7 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
 	if (pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr) {
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
@@ -2468,7 +2445,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	}
 
 	if (pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			4,
 			pdev->ipa_uc_rx_rsc.

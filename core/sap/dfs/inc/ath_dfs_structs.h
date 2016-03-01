@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -53,7 +53,7 @@
 
 #ifndef _DFS__STRUCTS_H_
 #define _DFS__STRUCTS_H_
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 
 #ifdef ANDROID
 #include <linux/string.h>
@@ -228,7 +228,7 @@ struct ath_dfs_phyerr_param {
 static inline void ath_dfs_phyerr_param_copy(struct ath_dfs_phyerr_param *dst,
 					     struct ath_dfs_phyerr_param *src)
 {
-	cdf_mem_copy(dst, src, sizeof(*dst));
+	qdf_mem_copy(dst, src, sizeof(*dst));
 }
 
 static inline void ath_dfs_phyerr_init_noval(struct ath_dfs_phyerr_param *pe)

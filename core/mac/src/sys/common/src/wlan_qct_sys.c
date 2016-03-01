@@ -212,7 +212,7 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 				QDF_TRACE(QDF_MODULE_ID_SYS,
 						QDF_TRACE_LEVEL_ERROR,
 						FL("Invalid hal"));
-				cdf_mem_free(pMsg->bodyptr);
+				qdf_mem_free(pMsg->bodyptr);
 				break;
 			}
 			mac_ctx = PMAC_STRUCT(hHal);
@@ -220,19 +220,19 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 				QDF_TRACE(QDF_MODULE_ID_SYS,
 						QDF_TRACE_LEVEL_ERROR,
 						FL("Invalid mac context"));
-				cdf_mem_free(pMsg->bodyptr);
+				qdf_mem_free(pMsg->bodyptr);
 				break;
 			}
 			if (NULL == mac_ctx->ftm_msg_processor_callback) {
 				QDF_TRACE(QDF_MODULE_ID_SYS,
 						QDF_TRACE_LEVEL_ERROR,
 						FL("callback pointer is NULL"));
-				cdf_mem_free(pMsg->bodyptr);
+				qdf_mem_free(pMsg->bodyptr);
 				break;
 			}
 			mac_ctx->ftm_msg_processor_callback(
 					(void *)pMsg->bodyptr);
-			cdf_mem_free(pMsg->bodyptr);
+			qdf_mem_free(pMsg->bodyptr);
 			break;
 
 		default:
@@ -251,7 +251,7 @@ QDF_STATUS sys_mc_process_msg(v_CONTEXT_t p_cds_context, cds_msg_t *pMsg)
 		qdf_status = QDF_STATUS_E_BADMSG;
 
 		if (pMsg->bodyptr)
-			cdf_mem_free(pMsg->bodyptr);
+			qdf_mem_free(pMsg->bodyptr);
 	}
 	return qdf_status;
 }
@@ -345,7 +345,7 @@ void sys_process_mmh_msg(tpAniSirGlobal pMac, tSirMsgQ *pMsg)
 		 * It allocate memory for bodyptr free the mem and return
 		 */
 		if (pMsg->bodyptr)
-			cdf_mem_free(pMsg->bodyptr);
+			qdf_mem_free(pMsg->bodyptr);
 	}
 
 }

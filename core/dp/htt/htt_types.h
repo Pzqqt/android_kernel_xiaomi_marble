@@ -355,7 +355,7 @@ struct htt_pdev_t {
 		int size;       /* of each HTT tx desc */
 		uint16_t pool_elems;
 		uint16_t alloc_cnt;
-		struct cdf_mem_multi_page_t desc_pages;
+		struct qdf_mem_multi_page_t desc_pages;
 		uint32_t *freelist;
 		qdf_dma_mem_context(memctx);
 	} tx_descs;
@@ -363,7 +363,7 @@ struct htt_pdev_t {
 	struct {
 		int size; /* of each Fragment/MSDU-Ext descriptor */
 		int pool_elems;
-		struct cdf_mem_multi_page_t desc_pages;
+		struct qdf_mem_multi_page_t desc_pages;
 		qdf_dma_mem_context(memctx);
 	} frag_descs;
 #endif /* defined(HELIUMPLUS_PADDR64) */

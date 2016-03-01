@@ -516,7 +516,7 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 	QDF_STATUS cdf_ret_status;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
-	cdf_mem_zero(&wowParams, sizeof(tSirSmeWowlEnterParams));
+	qdf_mem_zero(&wowParams, sizeof(tSirSmeWowlEnterParams));
 
 	wowParams.ucPatternFilteringEnable = enable_pbm;
 	wowParams.ucMagicPktEnable = enable_mp;

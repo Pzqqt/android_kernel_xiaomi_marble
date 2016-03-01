@@ -150,7 +150,7 @@ tSirRetStatus cfg_init(tpAniSirGlobal pMac)
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 	/* at this point pMac->cfg.gCfgSBuf starts */
-	pMac->cfg.gCfgSBuf = cdf_mem_malloc(combined_buff_size);
+	pMac->cfg.gCfgSBuf = qdf_mem_malloc(combined_buff_size);
 	if (NULL == pMac->cfg.gCfgSBuf) {
 		cfg_log(pMac, LOGE,
 			FL("Failed to allocate memory for cfg array"));
@@ -163,13 +163,13 @@ tSirRetStatus cfg_init(tpAniSirGlobal pMac)
 	/* after max_i_count integers, pMac->cfg.gCfgIBufMax starts */
 	pMac->cfg.gCfgIBufMax = &pMac->cfg.gCfgIBufMin[max_i_count];
 
-	return (eSIR_SUCCESS);
+	return eSIR_SUCCESS;
 }
 
 /* ---------------------------------------------------------------------- */
 void cfg_de_init(tpAniSirGlobal pMac)
 {
-	cdf_mem_free(pMac->cfg.gCfgSBuf);
+	qdf_mem_free(pMac->cfg.gCfgSBuf);
 	pMac->cfg.gCfgIBufMin = NULL;
 	pMac->cfg.gCfgIBufMax = NULL;
 	pMac->cfg.gCfgIBuf = NULL;
@@ -599,7 +599,7 @@ cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
 		goto error;
 	}
 
-	pCountryInfo = cdf_mem_malloc(cfgLength);
+	pCountryInfo = qdf_mem_malloc(cfgLength);
 	if (NULL == pCountryInfo) {
 		cfg_log(pMac, LOGP, FL(" failed to allocate memory"));
 		goto error;
@@ -609,7 +609,7 @@ cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
 	 */
 	if (wlan_cfg_get_str(pMac, cfgId, pCountryInfo, &cfgLength) !=
 	    eSIR_SUCCESS) {
-		cdf_mem_free(pCountryInfo);
+		qdf_mem_free(pCountryInfo);
 		pCountryInfo = NULL;
 
 		cfg_log(pMac, LOGP,
@@ -633,7 +633,7 @@ cfg_get_dot11d_transmit_power(tpAniSirGlobal pMac, uint16_t cfgId,
 
 error:
 	if (NULL != pCountryInfo)
-		cdf_mem_free(pCountryInfo);
+		qdf_mem_free(pCountryInfo);
 
 	return maxTxPwr;
 }
@@ -694,7 +694,7 @@ int8_t cfg_get_regulatory_max_transmit_power(tpAniSirGlobal pMac,
 
 	maxTxPwr = cfg_get_dot11d_transmit_power(pMac, cfgId, cfgLength, channel);
 
-	return (maxTxPwr);
+	return maxTxPwr;
 }
 
 /* --------------------------------------------------------------------- */

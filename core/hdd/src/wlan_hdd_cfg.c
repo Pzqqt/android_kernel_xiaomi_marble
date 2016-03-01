@@ -3944,7 +3944,7 @@ static void update_mac_from_string(hdd_context_t *pHddCtx,
 				break;
 		}
 		if (res == 0 && !qdf_is_macaddr_zero(&macaddr[i])) {
-			cdf_mem_copy((uint8_t *) &pHddCtx->config->
+			qdf_mem_copy((uint8_t *) &pHddCtx->config->
 				     intfMacAddr[i].bytes[0],
 				     (uint8_t *) &macaddr[i].bytes[0],
 				     QDF_MAC_ADDR_SIZE);
@@ -5319,7 +5319,7 @@ QDF_STATUS hdd_update_mac_config(hdd_context_t *pHddCtx)
 
 	update_mac_from_string(pHddCtx, &macTable[0], i);
 
-	cdf_mem_copy(&customMacAddr,
+	qdf_mem_copy(&customMacAddr,
 		     &pHddCtx->config->intfMacAddr[0].bytes[0],
 		     sizeof(tSirMacAddr));
 	sme_set_custom_mac_addr(customMacAddr);
@@ -5370,16 +5370,16 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 
 	hddLog(LOG1, "%s: qcom_cfg.ini Size %zu", __func__, fw->size);
 
-	buffer = (char *)cdf_mem_malloc(fw->size);
+	buffer = (char *)qdf_mem_malloc(fw->size);
 
 	if (NULL == buffer) {
-		hddLog(QDF_TRACE_LEVEL_FATAL, FL("cdf_mem_malloc failure"));
+		hddLog(QDF_TRACE_LEVEL_FATAL, FL("qdf_mem_malloc failure"));
 		release_firmware(fw);
 		return QDF_STATUS_E_NOMEM;
 	}
 	pTemp = buffer;
 
-	cdf_mem_copy((void *)buffer, (void *)fw->data, fw->size);
+	qdf_mem_copy((void *)buffer, (void *)fw->data, fw->size);
 	size = fw->size;
 
 	while (buffer != NULL) {
@@ -5435,7 +5435,7 @@ QDF_STATUS hdd_parse_config_ini(hdd_context_t *pHddCtx)
 
 config_exit:
 	release_firmware(fw);
-	cdf_mem_free(pTemp);
+	qdf_mem_free(pTemp);
 	return qdf_status;
 }
 
@@ -6379,13 +6379,13 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 
 	struct hdd_config *pConfig = pHddCtx->config;
 
-	smeConfig = cdf_mem_malloc(sizeof(*smeConfig));
+	smeConfig = qdf_mem_malloc(sizeof(*smeConfig));
 	if (NULL == smeConfig) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: unable to allocate smeConfig", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
-	cdf_mem_zero(smeConfig, sizeof(*smeConfig));
+	qdf_mem_zero(smeConfig, sizeof(*smeConfig));
 
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "%s bWmmIsEnabled=%d 802_11e_enabled=%d dot11Mode=%d",
@@ -6677,7 +6677,7 @@ QDF_STATUS hdd_set_sme_config(hdd_context_t *pHddCtx)
 		       status);
 	}
 
-	cdf_mem_free(smeConfig);
+	qdf_mem_free(smeConfig);
 	return status;
 }
 

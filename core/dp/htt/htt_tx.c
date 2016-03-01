@@ -38,7 +38,7 @@
  */
 #include <osdep.h>              /* uint32_t, offsetof, etc. */
 #include <qdf_types.h>          /* qdf_dma_addr_t */
-#include <cdf_memory.h>         /* cdf_os_mem_alloc_consistent et al */
+#include <qdf_mem.h>         /* qdf_mem_alloc_consistent et al */
 #include <cdf_nbuf.h>           /* cdf_nbuf_t, etc. */
 #include <qdf_time.h>           /* qdf_mdelay */
 
@@ -134,7 +134,7 @@ static void htt_tx_frag_desc_field_update(struct htt_pdev_t *pdev,
 {
 	unsigned int target_page;
 	unsigned int offset;
-	struct cdf_mem_dma_page_t *dma_page;
+	struct qdf_mem_dma_page_t *dma_page;
 
 	target_page = index / pdev->frag_descs.desc_pages.num_element_per_page;
 	offset = index % pdev->frag_descs.desc_pages.num_element_per_page;
@@ -158,7 +158,7 @@ static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
 	uint16_t desc_pool_elems)
 {
 	pdev->frag_descs.pool_elems = desc_pool_elems;
-	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->frag_descs.desc_pages,
+	qdf_mem_multi_pages_alloc(pdev->osdev, &pdev->frag_descs.desc_pages,
 		pdev->frag_descs.size, desc_pool_elems,
 		qdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
 	if ((0 == pdev->frag_descs.desc_pages.num_pages) ||
@@ -180,7 +180,7 @@ static int htt_tx_frag_desc_attach(struct htt_pdev_t *pdev,
  */
 static void htt_tx_frag_desc_detach(struct htt_pdev_t *pdev)
 {
-	cdf_mem_multi_pages_free(pdev->osdev, &pdev->frag_descs.desc_pages,
+	qdf_mem_multi_pages_free(pdev->osdev, &pdev->frag_descs.desc_pages,
 		qdf_get_dma_mem_context((&pdev->frag_descs), memctx), false);
 }
 
@@ -200,7 +200,7 @@ int htt_tx_frag_alloc(htt_pdev_handle pdev,
 {
 	uint16_t frag_page_index;
 	uint16_t frag_elem_index;
-	struct cdf_mem_dma_page_t *dma_page;
+	struct qdf_mem_dma_page_t *dma_page;
 
 	/** Index should never be 0, since its used by the hardware
 	    to terminate the link. */
@@ -313,7 +313,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 {
 	int i, i_int, pool_size;
 	uint32_t **p;
-	struct cdf_mem_dma_page_t *page_info;
+	struct qdf_mem_dma_page_t *page_info;
 	uint32_t num_link = 0;
 	uint16_t num_page, num_desc_per_page;
 
@@ -328,7 +328,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	pdev->tx_descs.pool_elems = desc_pool_elems;
 	pdev->tx_descs.alloc_cnt = 0;
 	pool_size = pdev->tx_descs.pool_elems * pdev->tx_descs.size;
-	cdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_descs.desc_pages,
+	qdf_mem_multi_pages_alloc(pdev->osdev, &pdev->tx_descs.desc_pages,
 		pdev->tx_descs.size, pdev->tx_descs.pool_elems,
 		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 	if ((0 == pdev->tx_descs.desc_pages.num_pages) ||
@@ -381,7 +381,7 @@ int htt_tx_attach(struct htt_pdev_t *pdev, int desc_pool_elems)
 	return 0;
 
 free_htt_desc:
-	cdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
+	qdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
 		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 out_fail:
 	return -ENOBUFS;
@@ -395,7 +395,7 @@ void htt_tx_detach(struct htt_pdev_t *pdev)
 	}
 
 	htt_tx_frag_desc_detach(pdev);
-	cdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
+	qdf_mem_multi_pages_free(pdev->osdev, &pdev->tx_descs.desc_pages,
 		qdf_get_dma_mem_context((&pdev->tx_descs), memctx), false);
 }
 
@@ -411,7 +411,7 @@ static qdf_dma_addr_t htt_tx_get_paddr(htt_pdev_handle pdev,
 				char *target_vaddr)
 {
 	uint16_t i;
-	struct cdf_mem_dma_page_t *page_info = NULL;
+	struct qdf_mem_dma_page_t *page_info = NULL;
 	uint64_t offset;
 
 	for (i = 0; i < pdev->tx_descs.desc_pages.num_pages; i++) {
@@ -885,7 +885,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		}
 
 		/* Init buffer */
-		cdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		qdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
 		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
 
 		/* HTT control header */
@@ -945,7 +945,7 @@ int htt_tx_ipa_uc_wdi_tx_buf_alloc(struct htt_pdev_t *pdev,
 		}
 
 		/* Init buffer */
-		cdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
+		qdf_mem_zero(cdf_nbuf_data(buffer_vaddr), uc_tx_buf_sz);
 		header_ptr = (uint32_t *) cdf_nbuf_data(buffer_vaddr);
 
 		/* HTT control header */
@@ -1010,13 +1010,9 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 
 	/* Allocate CE Write Index WORD */
 	pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev,
-			4,
-			&pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
-			qdf_get_dma_mem_context(
-				(&pdev->ipa_uc_tx_rsc.tx_ce_idx),
-				memctx));
+		qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev,
+			4, &pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr);
 	if (!pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
 		qdf_print("%s: CE Write Index WORD alloc fail", __func__);
 		return -ENOBUFS;
@@ -1025,31 +1021,28 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	/* Allocate TX COMP Ring */
 	tx_comp_ring_size = uc_tx_buf_cnt * sizeof(cdf_nbuf_t);
 	pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr =
-		cdf_os_mem_alloc_consistent(
-			pdev->osdev,
+		qdf_mem_alloc_consistent(
+			pdev->osdev, pdev->osdev->dev,
 			tx_comp_ring_size,
-			&pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
-			qdf_get_dma_mem_context((&pdev->ipa_uc_tx_rsc.
-						 tx_comp_base),
-						memctx));
+			&pdev->ipa_uc_tx_rsc.tx_comp_base.paddr);
 	if (!pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
 		qdf_print("%s: TX COMP ring alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_ce_idx;
 	}
 
-	cdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr, tx_comp_ring_size);
+	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr, tx_comp_ring_size);
 
 	/* Allocate TX BUF vAddress Storage */
 	pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg =
-		(cdf_nbuf_t *) cdf_mem_malloc(uc_tx_buf_cnt *
+		(cdf_nbuf_t *) qdf_mem_malloc(uc_tx_buf_cnt *
 					      sizeof(cdf_nbuf_t));
 	if (!pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg) {
 		qdf_print("%s: TX BUF POOL vaddr storage alloc fail", __func__);
 		return_code = -ENOBUFS;
 		goto free_tx_comp_base;
 	}
-	cdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg,
+	qdf_mem_zero(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg,
 		     uc_tx_buf_cnt * sizeof(cdf_nbuf_t));
 
 	pdev->ipa_uc_tx_rsc.alloc_tx_buf_cnt = htt_tx_ipa_uc_wdi_tx_buf_alloc(
@@ -1059,7 +1052,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	return 0;
 
 free_tx_comp_base:
-	cdf_os_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev,
 				   tx_comp_ring_size,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
@@ -1068,7 +1061,7 @@ free_tx_comp_base:
 							    tx_comp_base),
 							   memctx));
 free_tx_ce_idx:
-	cdf_os_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev,
 				   4,
 				   pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
@@ -1084,7 +1077,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	uint16_t idx;
 
 	if (pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			4,
 			pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
@@ -1095,7 +1088,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	}
 
 	if (pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
-		cdf_os_mem_free_consistent(
+		qdf_mem_free_consistent(
 			pdev->osdev,
 			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) * sizeof(cdf_nbuf_t),
 			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
@@ -1118,7 +1111,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 	}
 
 	/* Free storage */
-	cdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
+	qdf_mem_free(pdev->ipa_uc_tx_rsc.tx_buf_pool_vaddr_strg);
 
 	return 0;
 }

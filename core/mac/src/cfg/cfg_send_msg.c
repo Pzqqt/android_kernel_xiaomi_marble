@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2012, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -92,7 +92,7 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 		return;
 	}
 	/* Allocate message buffer */
-	pMsg = cdf_mem_malloc(msgLen);
+	pMsg = qdf_mem_malloc(msgLen);
 	if (NULL == pMsg) {
 		PELOGE(cfg_log(pMac, LOGE, FL("Memory allocation failure!"));)
 		return;
@@ -129,7 +129,7 @@ cfg_send_host_msg(tpAniSirGlobal pMac, uint16_t msgType, uint32_t msgLen,
 
 	default:
 		PELOGE(cfg_log(pMac, LOGE, FL("Unknown msg %d!"), (int)msgType);)
-		cdf_mem_free(pMsg);
+		qdf_mem_free(pMsg);
 		return;
 	}
 

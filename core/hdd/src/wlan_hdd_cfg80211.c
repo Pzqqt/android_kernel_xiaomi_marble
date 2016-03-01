@@ -1216,12 +1216,12 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 		 * func for Sec AP and realloc for Pri AP ch list size
 		 */
 		if (sap_config->acs_cfg.ch_list)
-			cdf_mem_free(sap_config->acs_cfg.ch_list);
+			qdf_mem_free(sap_config->acs_cfg.ch_list);
 
-		cdf_mem_copy(&sap_config->acs_cfg,
+		qdf_mem_copy(&sap_config->acs_cfg,
 					&con_sap_config->acs_cfg,
 					sizeof(struct sap_acs_cfg));
-		sap_config->acs_cfg.ch_list = cdf_mem_malloc(
+		sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 					sizeof(uint8_t) *
 					con_sap_config->acs_cfg.ch_list_count);
 		if (!sap_config->acs_cfg.ch_list) {
@@ -1229,7 +1229,7 @@ int wlan_hdd_sap_cfg_dfs_override(hdd_adapter_t *adapter)
 			return -ENOMEM;
 		}
 
-		cdf_mem_copy(sap_config->acs_cfg.ch_list,
+		qdf_mem_copy(sap_config->acs_cfg.ch_list,
 					con_sap_config->acs_cfg.ch_list,
 					con_sap_config->acs_cfg.ch_list_count);
 
@@ -1345,7 +1345,7 @@ static int wlan_hdd_cfg80211_start_acs(hdd_adapter_t *adapter)
 
 	acs_event_callback = hdd_hostapd_sap_event_cb;
 
-	cdf_mem_copy(sap_config->self_macaddr.bytes,
+	qdf_mem_copy(sap_config->self_macaddr.bytes,
 		adapter->macAddressCurrent.bytes, sizeof(struct qdf_mac_addr));
 	hddLog(LOG1, FL("ACS Started for wlan%d"), adapter->dev->ifindex);
 	status = wlansap_acs_chselect(
@@ -1429,7 +1429,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		goto out;
 	}
 	sap_config = &adapter->sessionCtx.ap.sapConfig;
-	cdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
+	qdf_mem_zero(&sap_config->acs_cfg, sizeof(struct sap_acs_cfg));
 
 	status = nla_parse(tb, QCA_WLAN_VENDOR_ATTR_ACS_MAX, data, data_len,
 						NULL);
@@ -1492,13 +1492,13 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 		sap_config->acs_cfg.ch_list_count = nla_len(
 					tb[QCA_WLAN_VENDOR_ATTR_ACS_CH_LIST]);
 		if (sap_config->acs_cfg.ch_list_count) {
-			sap_config->acs_cfg.ch_list = cdf_mem_malloc(
+			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 					sizeof(uint8_t) *
 					sap_config->acs_cfg.ch_list_count);
 			if (sap_config->acs_cfg.ch_list == NULL)
 				goto out;
 
-			cdf_mem_copy(sap_config->acs_cfg.ch_list, tmp,
+			qdf_mem_copy(sap_config->acs_cfg.ch_list, tmp,
 					sap_config->acs_cfg.ch_list_count);
 		}
 	} else if (tb[QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST]) {
@@ -1508,7 +1508,7 @@ static int __wlan_hdd_cfg80211_do_acs(struct wiphy *wiphy,
 			tb[QCA_WLAN_VENDOR_ATTR_ACS_FREQ_LIST]) /
 				sizeof(uint32_t);
 		if (sap_config->acs_cfg.ch_list_count) {
-			sap_config->acs_cfg.ch_list = cdf_mem_malloc(
+			sap_config->acs_cfg.ch_list = qdf_mem_malloc(
 				sap_config->acs_cfg.ch_list_count);
 			if (sap_config->acs_cfg.ch_list == NULL) {
 				hddLog(LOGE, FL("ACS config alloc fail"));
@@ -1962,9 +1962,9 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 		hddLog(LOGE, FL("Invalid ATTR"));
 		return -EINVAL;
 	}
-	pReqMsg = cdf_mem_malloc(sizeof(*pReqMsg));
+	pReqMsg = qdf_mem_malloc(sizeof(*pReqMsg));
 	if (!pReqMsg) {
-		hddLog(LOGE, FL("cdf_mem_malloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 	if (!tb[QCA_WLAN_VENDOR_ATTR_SET_SCANNING_MAC_OUI]) {
@@ -1984,7 +1984,7 @@ __wlan_hdd_cfg80211_set_scanning_mac_oui(struct wiphy *wiphy,
 	}
 	return 0;
 fail:
-	cdf_mem_free(pReqMsg);
+	qdf_mem_free(pReqMsg);
 	return -EINVAL;
 }
 
@@ -2210,7 +2210,7 @@ __wlan_hdd_cfg80211_set_ext_roam_params(struct wiphy *wiphy,
 		goto fail;
 	}
 	session_id = pAdapter->sessionId;
-	cdf_mem_set(&roam_params, sizeof(roam_params), 0);
+	qdf_mem_set(&roam_params, sizeof(roam_params), 0);
 	cmd_type = nla_get_u32(tb[QCA_WLAN_VENDOR_ATTR_ROAMING_SUBCMD]);
 	if (!tb[QCA_WLAN_VENDOR_ATTR_ROAMING_REQ_ID]) {
 		hddLog(LOGE, FL("attr request id failed"));
@@ -2742,8 +2742,8 @@ static int __wlan_hdd_cfg80211_keymgmt_set_key(struct wiphy *wiphy,
 	sme_update_roam_key_mgmt_offload_enabled(hdd_ctx_ptr->hHal,
 			hdd_adapter_ptr->sessionId,
 			true);
-	cdf_mem_zero(&local_pmk, SIR_ROAM_SCAN_PSK_SIZE);
-	cdf_mem_copy(local_pmk, data, data_len);
+	qdf_mem_zero(&local_pmk, SIR_ROAM_SCAN_PSK_SIZE);
+	qdf_mem_copy(local_pmk, data, data_len);
 	sme_roam_set_psk_pmk(WLAN_HDD_GET_HAL_CTX(hdd_adapter_ptr),
 			hdd_adapter_ptr->sessionId, local_pmk, data_len);
 	return 0;
@@ -3564,7 +3564,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		return -ENOTSUPP;
 	}
 
-	add_req = cdf_mem_malloc(sizeof(*add_req));
+	add_req = qdf_mem_malloc(sizeof(*add_req));
 	if (!add_req) {
 		hddLog(LOGE, FL("memory allocation failed"));
 		return -ENOMEM;
@@ -3633,12 +3633,12 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	}
 
 	len = 0;
-	cdf_mem_copy(&add_req->ucPattern[0], dst_addr.bytes, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(&add_req->ucPattern[0], dst_addr.bytes, QDF_MAC_ADDR_SIZE);
 	len += QDF_MAC_ADDR_SIZE;
-	cdf_mem_copy(&add_req->ucPattern[len], add_req->mac_address.bytes,
+	qdf_mem_copy(&add_req->ucPattern[len], add_req->mac_address.bytes,
 			QDF_MAC_ADDR_SIZE);
 	len += QDF_MAC_ADDR_SIZE;
-	cdf_mem_copy(&add_req->ucPattern[len], &eth_type, 2);
+	qdf_mem_copy(&add_req->ucPattern[len], &eth_type, 2);
 	len += 2;
 
 	/*
@@ -3647,7 +3647,7 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	 * | 14 bytes Ethernet (802.3) header | IP header and payload |
 	 * ------------------------------------------------------------
 	 */
-	cdf_mem_copy(&add_req->ucPattern[len],
+	qdf_mem_copy(&add_req->ucPattern[len],
 			nla_data(tb[PARAM_IP_PACKET]),
 			add_req->ucPtrnSize);
 	add_req->ucPtrnSize += len;
@@ -3668,11 +3668,11 @@ wlan_hdd_add_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	}
 
 	EXIT();
-	cdf_mem_free(add_req);
+	qdf_mem_free(add_req);
 	return 0;
 
 fail:
-	cdf_mem_free(add_req);
+	qdf_mem_free(add_req);
 	return -EINVAL;
 }
 
@@ -3712,7 +3712,7 @@ wlan_hdd_del_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 		return -EINVAL;
 	}
 
-	del_req = cdf_mem_malloc(sizeof(*del_req));
+	del_req = qdf_mem_malloc(sizeof(*del_req));
 	if (!del_req) {
 		hddLog(LOGE, FL("memory allocation failed"));
 		return -ENOMEM;
@@ -3732,11 +3732,11 @@ wlan_hdd_del_tx_ptrn(hdd_adapter_t *adapter, hdd_context_t *hdd_ctx,
 	}
 
 	EXIT();
-	cdf_mem_free(del_req);
+	qdf_mem_free(del_req);
 	return 0;
 
 fail:
-	cdf_mem_free(del_req);
+	qdf_mem_free(del_req);
 	return -EINVAL;
 }
 
@@ -4348,7 +4348,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	cdf_mem_copy(peer_mac, nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
+	qdf_mem_copy(peer_mac, nla_data(tb[QCA_WLAN_VENDOR_ATTR_MAC_ADDR]),
 		     QDF_MAC_ADDR_SIZE);
 	hddLog(QDF_TRACE_LEVEL_INFO,
 	       FL("peerMac="MAC_ADDRESS_STR" for device_mode:%d"),
@@ -4359,7 +4359,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 		hdd_sta_ctx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 		if ((hdd_sta_ctx->conn_info.connState !=
 			eConnectionState_Associated) ||
-		    !cdf_mem_compare(hdd_sta_ctx->conn_info.bssId.bytes,
+		    qdf_mem_cmp(hdd_sta_ctx->conn_info.bssId.bytes,
 			peer_mac, QDF_MAC_ADDR_SIZE)) {
 			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       FL("Not Associated to mac "MAC_ADDRESS_STR),
@@ -4378,7 +4378,7 @@ static int __wlan_hdd_cfg80211_get_link_properties(struct wiphy *wiphy,
 			if (adapter->aStaInfo[sta_id].isUsed &&
 			    !qdf_is_macaddr_broadcast(
 				&adapter->aStaInfo[sta_id].macAddrSTA) &&
-			    cdf_mem_compare(
+			    !qdf_mem_cmp(
 				&adapter->aStaInfo[sta_id].macAddrSTA.bytes,
 				peer_mac, QDF_MAC_ADDR_SIZE))
 				break;
@@ -5675,7 +5675,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 		hdd_device_mode_to_string(pAdapter->device_mode),
 		pAdapter->device_mode);
 
-	cdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 	setKey.keyId = key_index;       /* Store Key ID */
 	setKey.encType = eCSR_ENCRYPT_TYPE_WPI; /* SET WAPI Encryption */
 	setKey.keyDirection = eSIR_TX_RX;       /* Key Directionn both TX and RX */
@@ -5683,7 +5683,7 @@ void wlan_hdd_cfg80211_set_key_wapi(hdd_adapter_t *pAdapter, uint8_t key_index,
 	if (!mac_addr || is_broadcast_ether_addr(mac_addr)) {
 		qdf_set_macaddr_broadcast(&setKey.peerMac);
 	} else {
-		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
 	setKey.keyLength = key_Len;
 	pKeyPtr = setKey.Key;
@@ -5802,13 +5802,13 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 	uint8_t srv_ip[IPADDR_NUM_ENTRIES];
 	uint8_t num;
 	uint32_t temp;
-	pDhcpSrvInfo = cdf_mem_malloc(sizeof(*pDhcpSrvInfo));
+	pDhcpSrvInfo = qdf_mem_malloc(sizeof(*pDhcpSrvInfo));
 	if (NULL == pDhcpSrvInfo) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: could not allocate tDhcpSrvOffloadInfo!", __func__);
 		return;
 	}
-	cdf_mem_zero(pDhcpSrvInfo, sizeof(*pDhcpSrvInfo));
+	qdf_mem_zero(pDhcpSrvInfo, sizeof(*pDhcpSrvInfo));
 	pDhcpSrvInfo->vdev_id = pHostapdAdapter->sessionId;
 	pDhcpSrvInfo->dhcpSrvOffloadEnabled = true;
 	pDhcpSrvInfo->dhcpClientNum = pHddCtx->config->dhcpMaxNumClients;
@@ -5845,7 +5845,7 @@ static void wlan_hdd_set_dhcp_server_offload(hdd_adapter_t *pHostapdAdapter)
 	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 	       "%s: enable DHCP Server offload successfully!", __func__);
 end:
-	cdf_mem_free(pDhcpSrvInfo);
+	qdf_mem_free(pDhcpSrvInfo);
 	return;
 }
 #endif /* DHCP_SERVER_OFFLOAD */
@@ -6327,7 +6327,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 	pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 
-	cdf_mem_copy(STAMacAddress.bytes, mac, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(STAMacAddress.bytes, mac, QDF_MAC_ADDR_SIZE);
 
 	if ((pAdapter->device_mode == WLAN_HDD_SOFTAP) ||
 	    (pAdapter->device_mode == WLAN_HDD_P2P_GO)) {
@@ -6442,20 +6442,20 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 					  __func__,
 					  StaParams.supported_channels_len);
 			}
-			cdf_mem_copy(StaParams.supported_oper_classes,
+			qdf_mem_copy(StaParams.supported_oper_classes,
 				     params->supported_oper_classes,
 				     params->supported_oper_classes_len);
 			StaParams.supported_oper_classes_len =
 				params->supported_oper_classes_len;
 
 			if (0 != params->ext_capab_len)
-				cdf_mem_copy(StaParams.extn_capability,
+				qdf_mem_copy(StaParams.extn_capability,
 					     params->ext_capab,
 					     sizeof(StaParams.extn_capability));
 
 			if (NULL != params->ht_capa) {
 				StaParams.htcap_present = 1;
-				cdf_mem_copy(&StaParams.HTCap, params->ht_capa,
+				qdf_mem_copy(&StaParams.HTCap, params->ht_capa,
 					     sizeof(tSirHTCap));
 			}
 
@@ -6477,7 +6477,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 			if (0 != StaParams.supported_rates_len) {
 				int i = 0;
-				cdf_mem_copy(StaParams.supported_rates,
+				qdf_mem_copy(StaParams.supported_rates,
 					     params->supported_rates,
 					     StaParams.supported_rates_len);
 				QDF_TRACE(QDF_MODULE_ID_HDD,
@@ -6494,7 +6494,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 
 			if (NULL != params->vht_capa) {
 				StaParams.vhtcap_present = 1;
-				cdf_mem_copy(&StaParams.VHTCap,
+				qdf_mem_copy(&StaParams.VHTCap,
 					     params->vht_capa,
 					     sizeof(tSirVHTCap));
 			}
@@ -6631,10 +6631,10 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	       __func__, key_index, params->key_len);
 
 	/*extract key idx, key len and key */
-	cdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 	setKey.keyId = key_index;
 	setKey.keyLength = params->key_len;
-	cdf_mem_copy(&setKey.Key[0], params->key, params->key_len);
+	qdf_mem_copy(&setKey.Key[0], params->key, params->key_len);
 
 	switch (params->cipher) {
 	case WLAN_CIPHER_SUITE_WEP40:
@@ -6650,7 +6650,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		u8 *pKey = &setKey.Key[0];
 		setKey.encType = eCSR_ENCRYPT_TYPE_TKIP;
 
-		cdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
+		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
 
 		/*Supplicant sends the 32bytes key in this order
 
@@ -6668,13 +6668,13 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		   <---16bytes---><--8bytes--><--8bytes-->
 		 */
 		/* Copy the Temporal Key 1 (TK1) */
-		cdf_mem_copy(pKey, params->key, 16);
+		qdf_mem_copy(pKey, params->key, 16);
 
 		/*Copy the rx mic first */
-		cdf_mem_copy(&pKey[16], &params->key[24], 8);
+		qdf_mem_copy(&pKey[16], &params->key[24], 8);
 
 		/*Copy the tx mic */
-		cdf_mem_copy(&pKey[24], &params->key[16], 8);
+		qdf_mem_copy(&pKey[24], &params->key[16], 8);
 
 		break;
 	}
@@ -6686,7 +6686,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 #ifdef FEATURE_WLAN_WAPI
 	case WLAN_CIPHER_SUITE_SMS4:
 	{
-		cdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+		qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 		wlan_hdd_cfg80211_set_key_wapi(pAdapter, key_index,
 					       mac_addr, params->key,
 					       params->key_len);
@@ -6731,7 +6731,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
 			  "%s- %d: setting pairwise key", __func__, __LINE__);
 		setKey.keyDirection = eSIR_TX_RX;
-		cdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(setKey.peerMac.bytes, mac_addr, QDF_MAC_ADDR_SIZE);
 	}
 	if ((WLAN_HDD_IBSS == pAdapter->device_mode) && !pairwise) {
 		/* if a key is already installed, block all subsequent ones */
@@ -6754,7 +6754,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		}
 		/*Save the keys here and call sme_roam_set_key for setting
 		   the PTK after peer joins the IBSS network */
-		cdf_mem_copy(&pAdapter->sessionCtx.station.ibss_enc_key,
+		qdf_mem_copy(&pAdapter->sessionCtx.station.ibss_enc_key,
 			     &setKey, sizeof(tCsrRoamSetKey));
 
 		pAdapter->sessionCtx.station.ibss_enc_key_installed = 1;
@@ -6783,10 +6783,10 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		if (pairwise ||
 			eCSR_ENCRYPT_TYPE_WEP40_STATICKEY == setKey.encType ||
 			eCSR_ENCRYPT_TYPE_WEP104_STATICKEY == setKey.encType)
-			cdf_mem_copy(&ap_ctx->wepKey[key_index], &setKey,
+			qdf_mem_copy(&ap_ctx->wepKey[key_index], &setKey,
 				     sizeof(tCsrRoamSetKey));
 		else
-			cdf_mem_copy(&ap_ctx->groupKey, &setKey,
+			qdf_mem_copy(&ap_ctx->groupKey, &setKey,
 				     sizeof(tCsrRoamSetKey));
 
 	} else if ((pAdapter->device_mode == WLAN_HDD_INFRA_STATION) ||
@@ -6812,7 +6812,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 
 		pWextState->roamProfile.Keys.defaultIndex = key_index;
 
-		cdf_mem_copy(&pWextState->roamProfile.Keys.
+		qdf_mem_copy(&pWextState->roamProfile.Keys.
 			     KeyMaterial[key_index][0], params->key,
 			     params->key_len);
 
@@ -7118,11 +7118,11 @@ static int __wlan_hdd_cfg80211_set_default_key(struct wiphy *wiphy,
 			hddLog(LOG2, FL("Default tx key index %d"), key_index);
 
 			Keys->defaultIndex = (u8) key_index;
-			cdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+			qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 			setKey.keyId = key_index;
 			setKey.keyLength = Keys->KeyLength[key_index];
 
-			cdf_mem_copy(&setKey.Key[0],
+			qdf_mem_copy(&setKey.Key[0],
 				     &Keys->KeyMaterial[key_index][0],
 				     Keys->KeyLength[key_index]);
 
@@ -7842,36 +7842,36 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 
 		pRoamProfile->SSIDs.numOfSSIDs = 1;
 		pRoamProfile->SSIDs.SSIDList->SSID.length = ssid_len;
-		cdf_mem_zero(pRoamProfile->SSIDs.SSIDList->SSID.ssId,
+		qdf_mem_zero(pRoamProfile->SSIDs.SSIDList->SSID.ssId,
 			     sizeof(pRoamProfile->SSIDs.SSIDList->SSID.ssId));
-		cdf_mem_copy((void *)(pRoamProfile->SSIDs.SSIDList->SSID.ssId),
+		qdf_mem_copy((void *)(pRoamProfile->SSIDs.SSIDList->SSID.ssId),
 			     ssid, ssid_len);
 
 		if (bssid) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
-			cdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
+			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
 				     bssid, QDF_MAC_ADDR_SIZE);
 			/* Save BSSID in seperate variable as well, as RoamProfile
 			   BSSID is getting zeroed out in the association process. And in
 			   case of join failure we should send valid BSSID to supplicant
 			 */
-			cdf_mem_copy((void *)(pWextState->req_bssId.bytes),
+			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
 					bssid, QDF_MAC_ADDR_SIZE);
 		} else if (bssid_hint) {
 			pRoamProfile->BSSIDs.numOfBSSIDs = 1;
-			cdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
+			qdf_mem_copy((void *)(pRoamProfile->BSSIDs.bssid),
 						bssid_hint, QDF_MAC_ADDR_SIZE);
 			/* Save BSSID in separate variable as well, as
 			   RoamProfile BSSID is getting zeroed out in the
 			   association process. And in case of join failure
 			   we should send valid BSSID to supplicant
 			 */
-			cdf_mem_copy((void *)(pWextState->req_bssId.bytes),
+			qdf_mem_copy((void *)(pWextState->req_bssId.bytes),
 					bssid_hint, QDF_MAC_ADDR_SIZE);
 			hddLog(LOGW, FL(" bssid_hint "MAC_ADDRESS_STR),
 					MAC_ADDR_ARRAY(bssid_hint));
 		} else {
-			cdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
+			qdf_mem_zero((void *)(pRoamProfile->BSSIDs.bssid),
 				     QDF_MAC_ADDR_SIZE);
 		}
 
@@ -8011,12 +8011,12 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 				return 0;
 		}
 
-		sme_config = cdf_mem_malloc(sizeof(*sme_config));
+		sme_config = qdf_mem_malloc(sizeof(*sme_config));
 		if (!sme_config) {
 			hdd_err("unable to allocate sme_config");
 			return -ENOMEM;
 		}
-		cdf_mem_zero(sme_config, sizeof(*sme_config));
+		qdf_mem_zero(sme_config, sizeof(*sme_config));
 		sme_get_config_param(pHddCtx->hHal, sme_config);
 		/* These values are not sessionized. So, any change in these SME
 		 * configs on an older or parallel interface will affect the
@@ -8028,7 +8028,7 @@ int wlan_hdd_cfg80211_connect_start(hdd_adapter_t *pAdapter,
 		sme_config->csrConfig.channelBondingMode24GHz =
 			pHddCtx->config->nChannelBondingMode24GHz;
 		sme_update_config(pHddCtx->hHal, sme_config);
-		cdf_mem_free(sme_config);
+		qdf_mem_free(sme_config);
 
 		status = sme_roam_connect(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					  pAdapter->sessionId, pRoamProfile,
@@ -8704,7 +8704,7 @@ int wlan_hdd_cfg80211_set_privacy(hdd_adapter_t *pAdapter,
 					hddLog(LOG1,
 						FL("setting default wep key, key_idx = %hu key_len %hu"),
 						key_idx, key_len);
-					cdf_mem_copy(&pWextState->roamProfile.
+					qdf_mem_copy(&pWextState->roamProfile.
 						     Keys.
 						     KeyMaterial[key_idx][0],
 						     req->key, key_len);
@@ -9224,7 +9224,7 @@ static int wlan_hdd_cfg80211_set_privacy_ibss(hdd_adapter_t *pAdapter,
 	ENTER();
 
 	pWextState->wpaVersion = IW_AUTH_WPA_VERSION_DISABLED;
-	cdf_mem_zero(&pHddStaCtx->ibss_enc_key, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&pHddStaCtx->ibss_enc_key, sizeof(tCsrRoamSetKey));
 	pHddStaCtx->ibss_enc_key_installed = 0;
 
 	if (params->ie_len && (NULL != params->ie)) {
@@ -9425,7 +9425,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 				FL("ccmCfgStInt failed for WNI_CFG_IBSS_AUTO_BSSID"));
 			return -EIO;
 		}
-		cdf_mem_copy(bssid.bytes, params->bssid, QDF_MAC_ADDR_SIZE);
+		qdf_mem_copy(bssid.bytes, params->bssid, QDF_MAC_ADDR_SIZE);
 	} else if (pHddCtx->config->isCoalesingInIBSSAllowed == 0) {
 		if (sme_cfg_set_int(pHddCtx->hHal, WNI_CFG_IBSS_AUTO_BSSID, 0)
 				== QDF_STATUS_E_FAILURE) {
@@ -9869,7 +9869,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				if ((pAdapter->aStaInfo[i].isUsed) &&
 				    (!pAdapter->aStaInfo[i].
 				     isDeauthInProgress)) {
-					cdf_mem_copy(
+					qdf_mem_copy(
 						mac,
 						pAdapter->aStaInfo[i].
 							macAddrSTA.bytes,
@@ -10162,8 +10162,8 @@ static int __wlan_hdd_cfg80211_set_pmksa(struct wiphy *wiphy,
 
 	halHandle = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
-	cdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(pmk_id.PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
+	qdf_mem_copy(pmk_id.BSSID.bytes, pmksa->bssid, QDF_MAC_ADDR_SIZE);
+	qdf_mem_copy(pmk_id.PMKID, pmksa->pmkid, CSR_RSN_PMKID_SIZE);
 
 	/* Add to the PMKSA ID Cache in CSR */
 	result = sme_roam_set_pmkid_cache(halHandle, pAdapter->sessionId,
@@ -10675,7 +10675,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 					MAC_ADDR_ARRAY(
 						params->mac_addrs[i].addr));
 
-				cdf_mem_copy(&pConfig->accept_mac[i],
+				qdf_mem_copy(&pConfig->accept_mac[i],
 					     params->mac_addrs[i].addr,
 					     sizeof(qcmacaddr));
 			}
@@ -10688,7 +10688,7 @@ static int __wlan_hdd_cfg80211_set_mac_acl(struct wiphy *wiphy,
 					MAC_ADDR_ARRAY(
 						params->mac_addrs[i].addr));
 
-				cdf_mem_copy(&pConfig->deny_mac[i],
+				qdf_mem_copy(&pConfig->deny_mac[i],
 					     params->mac_addrs[i].addr,
 					     sizeof(qcmacaddr));
 			}
@@ -10853,20 +10853,20 @@ static int __wlan_hdd_cfg80211_testmode(struct wiphy *wiphy,
 			return -EINVAL;
 
 		hb_params =
-			(tSirLPHBReq *) cdf_mem_malloc(sizeof(tSirLPHBReq));
+			(tSirLPHBReq *) qdf_mem_malloc(sizeof(tSirLPHBReq));
 		if (NULL == hb_params) {
 			hddLog(LOGE, FL("Request Buffer Alloc Fail"));
 			return -ENOMEM;
 		}
 
-		cdf_mem_copy(hb_params, buf, buf_len);
+		qdf_mem_copy(hb_params, buf, buf_len);
 		smeStatus =
 			sme_lphb_config_req((tHalHandle) (pHddCtx->hHal),
 					    hb_params,
 					    wlan_hdd_cfg80211_lphb_ind_handler);
 		if (QDF_STATUS_SUCCESS != smeStatus) {
 			hddLog(LOGE, "LPHB Config Fail, disable");
-			cdf_mem_free(hb_params);
+			qdf_mem_free(hb_params);
 		}
 		return 0;
 	}
@@ -11016,7 +11016,7 @@ __wlan_hdd_cfg80211_set_ap_channel_width(struct wiphy *wiphy,
 		return status;
 	}
 
-	cdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
+	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
 	sme_get_config_param(pHddCtx->hHal, &sme_config);
 	switch (chandef->width) {
 	case NL80211_CHAN_WIDTH_20:

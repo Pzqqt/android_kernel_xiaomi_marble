@@ -27,7 +27,7 @@
 
 /* standard header files */
 #include <cdf_nbuf.h>           /* cdf_nbuf_map */
-#include <cdf_memory.h>         /* cdf_mem_compare */
+#include <qdf_mem.h>         /* qdf_mem_cmp */
 
 /* external header files */
 #include <ol_cfg.h>                 /* wlan_op_mode_ap, etc. */
@@ -75,9 +75,9 @@ static inline void ol_ap_fwd_check(struct ol_txrx_vdev_t *vdev, cdf_nbuf_t msdu)
 	if (type != IEEE80211_FC0_TYPE_DATA ||
 	    subtype != 0x0 ||
 	    ((tods != 1) || (fromds != 0)) ||
-	    (cdf_mem_compare
+	    (qdf_mem_cmp
 		     (mac_header->i_addr3, vdev->mac_addr.raw,
-		     IEEE80211_ADDR_LEN) == 0)) {
+		     IEEE80211_ADDR_LEN) != 0)) {
 #ifdef DEBUG_HOST_RC
 		TXRX_PRINT(TXRX_PRINT_LEVEL_INFO1,
 			   "Exit: %s | Unnecessary to adjust mac header\n",

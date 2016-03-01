@@ -131,15 +131,15 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 
 		total_len = sizeof(tAniHdr) + sizeof(uint32_t) + data_len;
 
-		pBuf = (uint8_t *) cdf_mem_malloc(total_len);
+		pBuf = (uint8_t *) qdf_mem_malloc(total_len);
 
 		if (!pBuf) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "cdf_mem_malloc failed");
+				  "qdf_mem_malloc failed");
 			return;
 		}
 
-		cdf_mem_zero((void *)pBuf, total_len);
+		qdf_mem_zero((void *)pBuf, total_len);
 
 		wmsg = (tAniHdr *) pBuf;
 		wmsg->type = PTT_MSG_DIAG_CMDS_TYPE;
@@ -154,7 +154,7 @@ void host_diag_log_submit(void *plog_hdr_ptr)
 		memcpy(pBuf, pHdr, data_len);
 		ptt_sock_send_msg_to_app (wmsg, 0, ANI_NL_MSG_PUMAC,
 			INVALID_PID);
-		cdf_mem_free((void *)wmsg);
+		qdf_mem_free((void *)wmsg);
 	}
 	return;
 }
@@ -226,11 +226,11 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 	if (cds_is_multicast_logging()) {
 		total_len = sizeof(tAniHdr) + sizeof(event_report_t) + length;
 
-		pBuf = (uint8_t *) cdf_mem_malloc(total_len);
+		pBuf = (uint8_t *) qdf_mem_malloc(total_len);
 
 		if (!pBuf) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-				  "cdf_mem_malloc failed");
+				  "qdf_mem_malloc failed");
 			return;
 		}
 		wmsg = (tAniHdr *) pBuf;
@@ -252,11 +252,11 @@ void host_diag_event_report_payload(uint16_t event_Id, uint16_t length,
 			    (wmsg, 0, ANI_NL_MSG_PUMAC, INVALID_PID) < 0) {
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "Ptt Socket error sending message to the app!!");
-			cdf_mem_free((void *)wmsg);
+			qdf_mem_free((void *)wmsg);
 			return;
 		}
 
-		cdf_mem_free((void *)wmsg);
+		qdf_mem_free((void *)wmsg);
 	}
 
 	return;

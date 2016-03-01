@@ -532,7 +532,7 @@ static inline int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 static inline
 void htt_rx_dbg_rxbuf_init(struct htt_pdev_t *pdev)
 {
-	pdev->rx_buff_list = cdf_mem_malloc(
+	pdev->rx_buff_list = qdf_mem_malloc(
 				 HTT_RX_RING_BUFF_DBG_LIST *
 				 sizeof(struct rx_buf_debug));
 	if (!pdev->rx_buff_list) {
@@ -598,7 +598,7 @@ static inline
 void htt_rx_dbg_rxbuf_deinit(struct htt_pdev_t *pdev)
 {
 	if (pdev->rx_buff_list)
-		cdf_mem_free(pdev->rx_buff_list);
+		qdf_mem_free(pdev->rx_buff_list);
 }
 #else
 static inline

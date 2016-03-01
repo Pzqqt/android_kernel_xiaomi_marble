@@ -60,7 +60,7 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 	pEpping_ctx->cookie_count = 0;
 	for (i = 0; i < MAX_COOKIE_SLOTS_NUM; i++) {
 		pEpping_ctx->s_cookie_mem[i] =
-			cdf_mem_malloc(sizeof(struct epping_cookie) *
+			qdf_mem_malloc(sizeof(struct epping_cookie) *
 				       MAX_COOKIE_SLOT_SIZE);
 		if (pEpping_ctx->s_cookie_mem == NULL) {
 			EPPING_LOG(QDF_TRACE_LEVEL_FATAL,
@@ -68,7 +68,7 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 				   i);
 			goto error;
 		}
-		cdf_mem_zero(pEpping_ctx->s_cookie_mem[i],
+		qdf_mem_zero(pEpping_ctx->s_cookie_mem[i],
 			     sizeof(struct epping_cookie) *
 			     MAX_COOKIE_SLOT_SIZE);
 	}
@@ -84,7 +84,7 @@ int epping_cookie_init(epping_context_t *pEpping_ctx)
 error:
 	for (i = 0; i < MAX_COOKIE_SLOTS_NUM; i++) {
 		if (pEpping_ctx->s_cookie_mem[i]) {
-			cdf_mem_free(pEpping_ctx->s_cookie_mem[i]);
+			qdf_mem_free(pEpping_ctx->s_cookie_mem[i]);
 			pEpping_ctx->s_cookie_mem[i] = NULL;
 		}
 	}
@@ -101,7 +101,7 @@ void epping_cookie_cleanup(epping_context_t *pEpping_ctx)
 	qdf_spin_unlock_bh(&pEpping_ctx->cookie_lock);
 	for (i = 0; i < MAX_COOKIE_SLOTS_NUM; i++) {
 		if (pEpping_ctx->s_cookie_mem[i]) {
-			cdf_mem_free(pEpping_ctx->s_cookie_mem[i]);
+			qdf_mem_free(pEpping_ctx->s_cookie_mem[i]);
 			pEpping_ctx->s_cookie_mem[i] = NULL;
 		}
 	}

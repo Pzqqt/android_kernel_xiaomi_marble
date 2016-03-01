@@ -63,7 +63,7 @@ QDF_STATUS csr_tdls_remove_sme_cmd(tpAniSirGlobal pMac, eSmeCommandType cmdType)
 		if (cmdType == pCommand->command) {
 			if (csr_ll_remove_entry(&pMac->sme.smeCmdActiveList,
 						pEntry, LL_ACCESS_LOCK)) {
-				cdf_mem_zero(&pCommand->u.tdlsCmd,
+				qdf_mem_zero(&pCommand->u.tdlsCmd,
 					     sizeof(tTdlsCmd));
 				csr_release_command(pMac, pCommand);
 				sme_process_pending_queue(pMac);
@@ -106,18 +106,18 @@ QDF_STATUS csr_tdls_send_mgmt_req(tHalHandle hHal, uint8_t sessionId,
 	tdlsSendMgmtCmdInfo->statusCode = tdlsSendMgmt->statusCode;
 	tdlsSendMgmtCmdInfo->responder = tdlsSendMgmt->responder;
 	tdlsSendMgmtCmdInfo->peerCapability = tdlsSendMgmt->peerCapability;
-	cdf_mem_copy(tdlsSendMgmtCmdInfo->peerMac, tdlsSendMgmt->peerMac,
+	qdf_mem_copy(tdlsSendMgmtCmdInfo->peerMac, tdlsSendMgmt->peerMac,
 			sizeof(tSirMacAddr));
 
 	if ((0 != tdlsSendMgmt->len) && (NULL != tdlsSendMgmt->buf)) {
-		tdlsSendMgmtCmdInfo->buf = cdf_mem_malloc(tdlsSendMgmt->len);
+		tdlsSendMgmtCmdInfo->buf = qdf_mem_malloc(tdlsSendMgmt->len);
 		if (NULL == tdlsSendMgmtCmdInfo->buf) {
 			status = QDF_STATUS_E_NOMEM;
 			sms_log(pMac, LOGE, FL("Alloc Failed"));
 			QDF_ASSERT(0);
 			return status;
 		}
-		cdf_mem_copy(tdlsSendMgmtCmdInfo->buf, tdlsSendMgmt->buf,
+		qdf_mem_copy(tdlsSendMgmtCmdInfo->buf, tdlsSendMgmt->buf,
 				tdlsSendMgmt->len);
 		tdlsSendMgmtCmdInfo->len = tdlsSendMgmt->len;
 	} else {
@@ -158,41 +158,41 @@ QDF_STATUS csr_tdls_change_peer_sta(tHalHandle hHal, uint8_t sessionId,
 
 			tdlsAddStaCmd->sessionId = sessionId;
 
-			cdf_mem_copy(tdlsAddStaCmdInfo->peermac.bytes,
+			qdf_mem_copy(tdlsAddStaCmdInfo->peermac.bytes,
 				     peerMac, QDF_MAC_ADDR_SIZE);
 			tdlsAddStaCmdInfo->capability = pstaParams->capability;
 			tdlsAddStaCmdInfo->uapsdQueues =
 				pstaParams->uapsd_queues;
 			tdlsAddStaCmdInfo->maxSp = pstaParams->max_sp;
-			cdf_mem_copy(tdlsAddStaCmdInfo->extnCapability,
+			qdf_mem_copy(tdlsAddStaCmdInfo->extnCapability,
 				     pstaParams->extn_capability,
 				     sizeof(pstaParams->extn_capability));
 
 			tdlsAddStaCmdInfo->htcap_present =
 				pstaParams->htcap_present;
 			if (pstaParams->htcap_present)
-				cdf_mem_copy(&tdlsAddStaCmdInfo->HTCap,
+				qdf_mem_copy(&tdlsAddStaCmdInfo->HTCap,
 					     &pstaParams->HTCap,
 					     sizeof(pstaParams->HTCap));
 			else
-				cdf_mem_set(&tdlsAddStaCmdInfo->HTCap,
+				qdf_mem_set(&tdlsAddStaCmdInfo->HTCap,
 					    sizeof(pstaParams->HTCap), 0);
 
 			tdlsAddStaCmdInfo->vhtcap_present =
 				pstaParams->vhtcap_present;
 			if (pstaParams->vhtcap_present)
-				cdf_mem_copy(&tdlsAddStaCmdInfo->VHTCap,
+				qdf_mem_copy(&tdlsAddStaCmdInfo->VHTCap,
 					     &pstaParams->VHTCap,
 					     sizeof(pstaParams->VHTCap));
 			else
-				cdf_mem_set(&tdlsAddStaCmdInfo->VHTCap,
+				qdf_mem_set(&tdlsAddStaCmdInfo->VHTCap,
 					    sizeof(pstaParams->VHTCap), 0);
 
 			tdlsAddStaCmdInfo->supportedRatesLen =
 				pstaParams->supported_rates_len;
 
 			if (0 != pstaParams->supported_rates_len)
-				cdf_mem_copy(&tdlsAddStaCmdInfo->supportedRates,
+				qdf_mem_copy(&tdlsAddStaCmdInfo->supportedRates,
 					     pstaParams->supported_rates,
 					     pstaParams->supported_rates_len);
 
@@ -232,7 +232,7 @@ QDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 
 			tdlsLinkEstablishCmd->sessionId = sessionId;
 
-			cdf_mem_copy(tdlsLinkEstablishCmdInfo->peermac.bytes,
+			qdf_mem_copy(tdlsLinkEstablishCmdInfo->peermac.bytes,
 				     peerMac, QDF_MAC_ADDR_SIZE);
 			tdlsLinkEstablishCmdInfo->isBufSta =
 				tdlsLinkEstablishParams->isBufSta;
@@ -244,14 +244,14 @@ QDF_STATUS csr_tdls_send_link_establish_params(tHalHandle hHal,
 				tdlsLinkEstablishParams->uapsdQueues;
 			tdlsLinkEstablishCmdInfo->isOffChannelSupported =
 				tdlsLinkEstablishParams->isOffChannelSupported;
-			cdf_mem_copy(tdlsLinkEstablishCmdInfo->
+			qdf_mem_copy(tdlsLinkEstablishCmdInfo->
 				     supportedChannels,
 				     tdlsLinkEstablishParams->supportedChannels,
 				     tdlsLinkEstablishParams->
 				     supportedChannelsLen);
 			tdlsLinkEstablishCmdInfo->supportedChannelsLen =
 				tdlsLinkEstablishParams->supportedChannelsLen;
-			cdf_mem_copy(tdlsLinkEstablishCmdInfo->
+			qdf_mem_copy(tdlsLinkEstablishCmdInfo->
 				     supportedOperClasses,
 				     tdlsLinkEstablishParams->
 				     supportedOperClasses,
@@ -300,7 +300,7 @@ QDF_STATUS csr_tdls_add_peer_sta(tHalHandle hHal, uint8_t sessionId,
 			tdlsAddStaCmd->sessionId = sessionId;
 			tdlsAddStaCmdInfo->tdlsAddOper = TDLS_OPER_ADD;
 
-			cdf_mem_copy(tdlsAddStaCmdInfo->peermac.bytes,
+			qdf_mem_copy(tdlsAddStaCmdInfo->peermac.bytes,
 				     peerMac, QDF_MAC_ADDR_SIZE);
 
 			tdlsAddStaCmd->command = eSmeCommandTdlsAddPeer;
@@ -336,7 +336,7 @@ QDF_STATUS csr_tdls_del_peer_sta(tHalHandle hHal, uint8_t sessionId,
 
 			tdlsDelStaCmd->sessionId = sessionId;
 
-			cdf_mem_copy(tdlsDelStaCmdInfo->peermac.bytes,
+			qdf_mem_copy(tdlsDelStaCmdInfo->peermac.bytes,
 				     peerMac, QDF_MAC_ADDR_SIZE);
 
 			tdlsDelStaCmd->command = eSmeCommandTdlsDelPeer;
@@ -390,7 +390,7 @@ QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	}
 
 	tdlsSendMgmtReq =
-		cdf_mem_malloc(sizeof(tSirTdlsSendMgmtReq) +
+		qdf_mem_malloc(sizeof(tSirTdlsSendMgmtReq) +
 			       tdlsSendMgmtCmdInfo->len);
 	if (NULL == tdlsSendMgmtReq)
 		status = QDF_STATUS_E_NOMEM;
@@ -411,14 +411,14 @@ QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tdlsSendMgmtReq->responder = tdlsSendMgmtCmdInfo->responder;
 	tdlsSendMgmtReq->peerCapability = tdlsSendMgmtCmdInfo->peerCapability;
 
-	cdf_mem_copy(tdlsSendMgmtReq->bssid.bytes,
+	qdf_mem_copy(tdlsSendMgmtReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy(tdlsSendMgmtReq->peer_mac.bytes,
+	qdf_mem_copy(tdlsSendMgmtReq->peer_mac.bytes,
 		     tdlsSendMgmtCmdInfo->peerMac, QDF_MAC_ADDR_SIZE);
 
 	if (tdlsSendMgmtCmdInfo->len && tdlsSendMgmtCmdInfo->buf) {
-		cdf_mem_copy(tdlsSendMgmtReq->addIe, tdlsSendMgmtCmdInfo->buf,
+		qdf_mem_copy(tdlsSendMgmtReq->addIe, tdlsSendMgmtCmdInfo->buf,
 			     tdlsSendMgmtCmdInfo->len);
 
 	}
@@ -433,7 +433,7 @@ QDF_STATUS csr_tdls_process_send_mgmt(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	}
 	if (tdlsSendMgmtCmdInfo->len && tdlsSendMgmtCmdInfo->buf) {
 		/* Done with the buf. Free it. */
-		cdf_mem_free(tdlsSendMgmtCmdInfo->buf);
+		qdf_mem_free(tdlsSendMgmtCmdInfo->buf);
 		tdlsSendMgmtCmdInfo->buf = NULL;
 		tdlsSendMgmtCmdInfo->len = 0;
 	}
@@ -459,7 +459,7 @@ QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	tdlsAddStaReq = cdf_mem_malloc(sizeof(tSirTdlsAddStaReq));
+	tdlsAddStaReq = qdf_mem_malloc(sizeof(tSirTdlsAddStaReq));
 	if (NULL == tdlsAddStaReq)
 		status = QDF_STATUS_E_NOMEM;
 	else
@@ -475,7 +475,7 @@ QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	/* Using dialog as transactionId. This can be used to match response with request */
 	tdlsAddStaReq->transactionId = 0;
 
-	cdf_mem_copy(tdlsAddStaReq->bssid.bytes,
+	qdf_mem_copy(tdlsAddStaReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
 
 	qdf_copy_macaddr(&tdlsAddStaReq->peermac,
@@ -485,19 +485,19 @@ QDF_STATUS csr_tdls_process_add_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tdlsAddStaReq->uapsd_queues = tdlsAddStaCmdInfo->uapsdQueues;
 	tdlsAddStaReq->max_sp = tdlsAddStaCmdInfo->maxSp;
 
-	cdf_mem_copy(tdlsAddStaReq->extn_capability,
+	qdf_mem_copy(tdlsAddStaReq->extn_capability,
 		     tdlsAddStaCmdInfo->extnCapability, SIR_MAC_MAX_EXTN_CAP);
 	tdlsAddStaReq->htcap_present = tdlsAddStaCmdInfo->htcap_present;
-	cdf_mem_copy(&tdlsAddStaReq->htCap,
+	qdf_mem_copy(&tdlsAddStaReq->htCap,
 		     &tdlsAddStaCmdInfo->HTCap,
 		     sizeof(tdlsAddStaCmdInfo->HTCap));
 	tdlsAddStaReq->vhtcap_present = tdlsAddStaCmdInfo->vhtcap_present;
-	cdf_mem_copy(&tdlsAddStaReq->vhtCap,
+	qdf_mem_copy(&tdlsAddStaReq->vhtCap,
 		     &tdlsAddStaCmdInfo->VHTCap,
 		     sizeof(tdlsAddStaCmdInfo->VHTCap));
 	tdlsAddStaReq->supported_rates_length =
 		tdlsAddStaCmdInfo->supportedRatesLen;
-	cdf_mem_copy(&tdlsAddStaReq->supported_rates,
+	qdf_mem_copy(&tdlsAddStaReq->supported_rates,
 		     tdlsAddStaCmdInfo->supportedRates,
 		     tdlsAddStaCmdInfo->supportedRatesLen);
 
@@ -530,7 +530,7 @@ QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	tdlsDelStaReq = cdf_mem_malloc(sizeof(tSirTdlsDelStaReq));
+	tdlsDelStaReq = qdf_mem_malloc(sizeof(tSirTdlsDelStaReq));
 	if (NULL == tdlsDelStaReq)
 		status = QDF_STATUS_E_NOMEM;
 	else
@@ -545,7 +545,7 @@ QDF_STATUS csr_tdls_process_del_sta(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	/* Using dialog as transactionId. This can be used to match response with request */
 	tdlsDelStaReq->transactionId = 0;
 
-	cdf_mem_copy(tdlsDelStaReq->bssid.bytes,
+	qdf_mem_copy(tdlsDelStaReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
 
 	qdf_copy_macaddr(&tdlsDelStaReq->peermac,
@@ -627,7 +627,7 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	tdlsLinkEstablishReq = cdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReq));
+	tdlsLinkEstablishReq = qdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReq));
 
 	if (tdlsLinkEstablishReq == NULL) {
 		sms_log(pMac, LOGE, FL("alloc failed"));
@@ -639,14 +639,14 @@ QDF_STATUS csr_tdls_process_link_establish(tpAniSirGlobal pMac, tSmeCmd *cmd)
 	tdlsLinkEstablishReq->transactionId = 0;
 	qdf_copy_macaddr(&tdlsLinkEstablishReq->peermac,
 			 &tdlsLinkEstablishCmdInfo->peermac);
-	cdf_mem_copy(tdlsLinkEstablishReq->bssid.bytes,
+	qdf_mem_copy(tdlsLinkEstablishReq->bssid.bytes,
 		     pSession->pConnectBssDesc->bssId, QDF_MAC_ADDR_SIZE);
-	cdf_mem_copy(tdlsLinkEstablishReq->supportedChannels,
+	qdf_mem_copy(tdlsLinkEstablishReq->supportedChannels,
 		     tdlsLinkEstablishCmdInfo->supportedChannels,
 		     tdlsLinkEstablishCmdInfo->supportedChannelsLen);
 	tdlsLinkEstablishReq->supportedChannelsLen =
 		tdlsLinkEstablishCmdInfo->supportedChannelsLen;
-	cdf_mem_copy(tdlsLinkEstablishReq->supportedOperClasses,
+	qdf_mem_copy(tdlsLinkEstablishReq->supportedOperClasses,
 		     tdlsLinkEstablishCmdInfo->supportedOperClasses,
 		     tdlsLinkEstablishCmdInfo->supportedOperClassesLen);
 	tdlsLinkEstablishReq->supportedOperClassesLen =

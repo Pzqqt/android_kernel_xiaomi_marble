@@ -221,9 +221,9 @@ static int epping_set_mac_address(struct net_device *dev, void *addr)
 {
 	epping_adapter_t *pAdapter = netdev_priv(dev);
 	struct sockaddr *psta_mac_addr = addr;
-	cdf_mem_copy(&pAdapter->macAddressCurrent,
+	qdf_mem_copy(&pAdapter->macAddressCurrent,
 		     psta_mac_addr->sa_data, ETH_ALEN);
-	cdf_mem_copy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
+	qdf_mem_copy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 	return 0;
 }
 
@@ -360,12 +360,12 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	}
 
 	pAdapter = netdev_priv(dev);
-	cdf_mem_zero(pAdapter, sizeof(*pAdapter));
+	qdf_mem_zero(pAdapter, sizeof(*pAdapter));
 	pAdapter->dev = dev;
 	pAdapter->pEpping_ctx = pEpping_ctx;
 	pAdapter->device_mode = device_mode;    /* station, SAP, etc */
-	cdf_mem_copy(dev->dev_addr, (void *)macAddr, sizeof(tSirMacAddr));
-	cdf_mem_copy(pAdapter->macAddressCurrent.bytes,
+	qdf_mem_copy(dev->dev_addr, (void *)macAddr, sizeof(tSirMacAddr));
+	qdf_mem_copy(pAdapter->macAddressCurrent.bytes,
 		     macAddr, sizeof(tSirMacAddr));
 	qdf_spinlock_create(&pAdapter->data_lock);
 	cdf_nbuf_queue_init(&pAdapter->nodrop_queue);
@@ -394,8 +394,8 @@ int epping_connect_service(epping_context_t *pEpping_ctx)
 	HTC_SERVICE_CONNECT_REQ connect;
 	HTC_SERVICE_CONNECT_RESP response;
 
-	cdf_mem_zero(&connect, sizeof(connect));
-	cdf_mem_zero(&response, sizeof(response));
+	qdf_mem_zero(&connect, sizeof(connect));
+	qdf_mem_zero(&response, sizeof(response));
 
 	/* these fields are the same for all service endpoints */
 	connect.EpCallbacks.pContext = pEpping_ctx;

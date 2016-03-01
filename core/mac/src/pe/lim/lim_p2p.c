@@ -85,14 +85,14 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	tSirMsgQ msg;
 	tSirRetStatus rc = eSIR_SUCCESS;
 
-	pScanOffloadReq = cdf_mem_malloc(sizeof(tSirScanOffloadReq));
+	pScanOffloadReq = qdf_mem_malloc(sizeof(tSirScanOffloadReq));
 	if (NULL == pScanOffloadReq) {
 		lim_log(pMac, LOGE,
 			FL("Memory allocation failed for pScanOffloadReq"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	cdf_mem_zero(pScanOffloadReq, sizeof(tSirScanOffloadReq));
+	qdf_mem_zero(pScanOffloadReq, sizeof(tSirScanOffloadReq));
 
 	msg.type = WMA_START_SCAN_OFFLOAD_REQ;
 	msg.bodyptr = pScanOffloadReq;
@@ -121,7 +121,7 @@ static QDF_STATUS lim_send_hal_req_remain_on_chan_offload(tpAniSirGlobal pMac,
 	if (rc != eSIR_SUCCESS) {
 		lim_log(pMac, LOGE, FL("wma_post_ctrl_msg() return failure %u"),
 			rc);
-		cdf_mem_free(pScanOffloadReq);
+		qdf_mem_free(pScanOffloadReq);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -145,7 +145,7 @@ int lim_process_remain_on_chnl_req(tpAniSirGlobal pMac, uint32_t *pMsg)
 		/* Post the meessage to Sme */
 		lim_send_sme_rsp(pMac, eWNI_SME_REMAIN_ON_CHN_RSP,
 				 status, msgbuff->sessionId, msgbuff->scan_id);
-		cdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
+		qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
 		pMac->lim.gpLimRemainOnChanReq = NULL;
 	}
 	return false;
@@ -356,7 +356,7 @@ void lim_remain_on_chn_rsp(tpAniSirGlobal pMac, QDF_STATUS status, uint32_t *dat
 			status,
 			MsgRemainonChannel->sessionId, 0);
 
-	cdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
+	qdf_mem_free(pMac->lim.gpLimRemainOnChanReq);
 	pMac->lim.gpLimRemainOnChanReq = NULL;
 
 	pMac->lim.gLimMlmState = pMac->lim.gLimPrevMlmState;
@@ -386,13 +386,13 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 
 	length = sizeof(tSirSmeMgmtFrameInd) + frameLen;
 
-	pSirSmeMgmtFrame = cdf_mem_malloc(length);
+	pSirSmeMgmtFrame = qdf_mem_malloc(length);
 	if (NULL == pSirSmeMgmtFrame) {
 		lim_log(pMac, LOGP,
 			FL("AllocateMemory failed for eWNI_SME_LISTEN_RSP"));
 		return;
 	}
-	cdf_mem_set((void *)pSirSmeMgmtFrame, length, 0);
+	qdf_mem_set((void *)pSirSmeMgmtFrame, length, 0);
 
 	pSirSmeMgmtFrame->frame_len = frameLen;
 	pSirSmeMgmtFrame->sessionId = sessionId;
@@ -400,15 +400,15 @@ void lim_send_sme_mgmt_frame_ind(tpAniSirGlobal pMac, uint8_t frameType,
 	pSirSmeMgmtFrame->rxRssi = rxRssi;
 	pSirSmeMgmtFrame->rxChan = rxChannel;
 
-	cdf_mem_zero(pSirSmeMgmtFrame->frameBuf, frameLen);
-	cdf_mem_copy(pSirSmeMgmtFrame->frameBuf, frame, frameLen);
+	qdf_mem_zero(pSirSmeMgmtFrame->frameBuf, frameLen);
+	qdf_mem_copy(pSirSmeMgmtFrame->frameBuf, frame, frameLen);
 
 	if (pMac->mgmt_frame_ind_cb)
 		pMac->mgmt_frame_ind_cb(pSirSmeMgmtFrame);
 	else
 		lim_log(pMac, LOGW,
 			FL("Management indication callback not registered!!"));
-	cdf_mem_free(pSirSmeMgmtFrame);
+	qdf_mem_free(pSirSmeMgmtFrame);
 	return;
 }
 
@@ -577,8 +577,8 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 		tpSirMacP2PActionFrameHdr action_hdr =
 			(tpSirMacP2PActionFrameHdr) ((uint8_t *)
 			mb_msg->data + ACTION_OFFSET);
-		if (cdf_mem_compare(action_hdr->Oui, SIR_MAC_P2P_OUI,
-			SIR_MAC_P2P_OUI_SIZE) &&
+		if ((!qdf_mem_cmp(action_hdr->Oui, SIR_MAC_P2P_OUI,
+			SIR_MAC_P2P_OUI_SIZE)) &&
 			(SIR_MAC_ACTION_P2P_SUBTYPE_PRESENCE_RSP ==
 			action_hdr->OuiSubType)) {
 
@@ -663,7 +663,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 		return;
 	}
 	/* Paranoia: */
-	cdf_mem_set(frame, msg_len, 0);
+	qdf_mem_set(frame, msg_len, 0);
 
 	/*
 	 * Add sequence number to action frames
@@ -676,14 +676,14 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 		/* Add 2 bytes for length and Arribute field */
 		uint32_t nBytesToCopy = ((p2p_ie + orig_len + 2) -
 			 (uint8_t *) mb_msg->data);
-		cdf_mem_copy(frame, mb_msg->data, nBytesToCopy);
-		cdf_mem_copy((frame + nBytesToCopy), noa_stream, noa_len);
-		cdf_mem_copy((frame + nBytesToCopy + noa_len),
+		qdf_mem_copy(frame, mb_msg->data, nBytesToCopy);
+		qdf_mem_copy((frame + nBytesToCopy), noa_stream, noa_len);
+		qdf_mem_copy((frame + nBytesToCopy + noa_len),
 			mb_msg->data + nBytesToCopy,
 			msg_len - nBytesToCopy - noa_len);
 
 	} else {
-		cdf_mem_copy(frame, mb_msg->data, msg_len);
+		qdf_mem_copy(frame, mb_msg->data, msg_len);
 	}
 
 #ifdef WLAN_FEATURE_11W
@@ -760,14 +760,14 @@ tSirRetStatus __lim_process_sme_no_a_update(tpAniSirGlobal pMac, uint32_t *pMsgB
 
 	pNoA = (tpP2pPsConfig) pMsgBuf;
 
-	pMsgNoA = cdf_mem_malloc(sizeof(tP2pPsConfig));
+	pMsgNoA = qdf_mem_malloc(sizeof(tP2pPsConfig));
 	if (NULL == pMsgNoA) {
 		lim_log(pMac, LOGE,
 			FL("Unable to allocate memory during NoA Update"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	cdf_mem_set((uint8_t *) pMsgNoA, sizeof(tP2pPsConfig), 0);
+	qdf_mem_set((uint8_t *) pMsgNoA, sizeof(tP2pPsConfig), 0);
 	pMsgNoA->opp_ps = pNoA->opp_ps;
 	pMsgNoA->ctWindow = pNoA->ctWindow;
 	pMsgNoA->duration = pNoA->duration;

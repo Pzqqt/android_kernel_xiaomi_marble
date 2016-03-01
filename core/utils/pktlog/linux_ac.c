@@ -583,7 +583,7 @@ int pktlog_send_per_pkt_stats_to_user(void)
 
 	do {
 		pktlog = (struct host_log_pktlog_info *)
-			cdf_mem_malloc(sizeof(struct host_log_pktlog_info) +
+			qdf_mem_malloc(sizeof(struct host_log_pktlog_info) +
 					VOS_LOG_PKT_LOG_SIZE);
 		if (!pktlog) {
 			printk(PKTLOG_TAG " %s: Memory allocation failed\n",
@@ -591,7 +591,7 @@ int pktlog_send_per_pkt_stats_to_user(void)
 			return -ENOMEM;
 		}
 
-		cdf_mem_zero(pktlog, VOS_LOG_PKT_LOG_SIZE);
+		qdf_mem_zero(pktlog, VOS_LOG_PKT_LOG_SIZE);
 		host_diag_log_set_code(pktlog, LOG_WLAN_PKT_LOG_INFO_C);
 
 		pktlog->buf_len = 0;
@@ -643,7 +643,7 @@ int pktlog_send_per_pkt_stats_to_user(void)
 			pktlog->seq_no = pl_info->buf->msg_index++;
 			WLAN_HOST_DIAG_LOG_REPORT(pktlog);
 		} else {
-			cdf_mem_free(pktlog);
+			qdf_mem_free(pktlog);
 		}
 		num_bytes_read += ret_val;
 
@@ -710,7 +710,7 @@ pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 
 	if (*ppos < bufhdr_size) {
 		count = MIN((bufhdr_size - *ppos), rem_len);
-		cdf_mem_copy(buf, ((char *)&log_buf->bufhdr) + *ppos,
+		qdf_mem_copy(buf, ((char *)&log_buf->bufhdr) + *ppos,
 				count);
 		rem_len -= count;
 		ret_val += count;
@@ -756,7 +756,7 @@ pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 			goto rd_done;
 
 		count = MIN(rem_len, (end_offset - ppos_data + 1));
-		cdf_mem_copy(buf + ret_val,
+		qdf_mem_copy(buf + ret_val,
 				log_buf->log_data + ppos_data,
 				count);
 		ret_val += count;
@@ -764,7 +764,7 @@ pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 	} else {
 		if (ppos_data <= fold_offset) {
 			count = MIN(rem_len, (fold_offset - ppos_data + 1));
-			cdf_mem_copy(buf + ret_val,
+			qdf_mem_copy(buf + ret_val,
 					log_buf->log_data + ppos_data,
 					count);
 			ret_val += count;
@@ -780,7 +780,7 @@ pktlog_read_proc_entry(char *buf, size_t nbytes, loff_t *ppos,
 
 		if (ppos_data <= end_offset) {
 			count = MIN(rem_len, (end_offset - ppos_data + 1));
-			cdf_mem_copy(buf + ret_val,
+			qdf_mem_copy(buf + ret_val,
 					log_buf->log_data + ppos_data,
 					count);
 			ret_val += count;

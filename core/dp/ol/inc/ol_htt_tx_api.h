@@ -660,7 +660,7 @@ htt_tx_desc_init(htt_pdev_handle pdev,
 		local_desc_ext.is_dsrc = (is_dsrc != 0);
 
 		cdf_nbuf_push_head(msdu, sizeof(local_desc_ext));
-		cdf_mem_copy(cdf_nbuf_data(msdu), &local_desc_ext,
+		qdf_mem_copy(cdf_nbuf_data(msdu), &local_desc_ext,
 				sizeof(local_desc_ext));
 	}
 

@@ -1149,7 +1149,7 @@ bool parse_ocb_tx_header(cdf_nbuf_t msdu,
 
 	if (tx_ctrl_hdr->version == OCB_HEADER_VERSION) {
 		if (tx_ctrl)
-			cdf_mem_copy(tx_ctrl, tx_ctrl_hdr,
+			qdf_mem_copy(tx_ctrl, tx_ctrl_hdr,
 				sizeof(*tx_ctrl_hdr));
 	} else {
 		/* The TX control header is invalid. */
@@ -1367,11 +1367,11 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 	int i;
 	struct cdf_tso_seg_elem_t *c_element;
 
-	c_element = cdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
+	c_element = qdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
 		c_element->next =
-			cdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
+			qdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
 		c_element = c_element->next;
 		c_element->next = NULL;
 	}
@@ -1389,7 +1389,7 @@ void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 	c_element = pdev->tso_seg_pool.freelist;
 	for (i = 0; i < pdev->tso_seg_pool.pool_size; i++) {
 		temp = c_element->next;
-		cdf_mem_free(c_element);
+		qdf_mem_free(c_element);
 		c_element = temp;
 		if (!c_element)
 			break;

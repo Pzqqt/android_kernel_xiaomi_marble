@@ -55,7 +55,7 @@
 #include <cds_queue.h>          /* TAILQ */
 #include <qdf_time.h>
 #include <qdf_timer.h>
-#include <cdf_memory.h>
+#include <qdf_mem.h>
 #include <osdep.h>
 /*DFS Utility Include END*/
 

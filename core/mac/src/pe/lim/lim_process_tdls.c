@@ -277,12 +277,12 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 	pMacHdr->fc.powerMgmt = 0;
 	pMacHdr->fc.wep = (psessionEntry->encryptType == eSIR_ED_NONE) ? 0 : 1;
 
-	cdf_mem_copy((uint8_t *) pMacHdr->addr1,
+	qdf_mem_copy((uint8_t *) pMacHdr->addr1,
 		     (uint8_t *) addr1, sizeof(tSirMacAddr));
-	cdf_mem_copy((uint8_t *) pMacHdr->addr2,
+	qdf_mem_copy((uint8_t *) pMacHdr->addr2,
 		     (uint8_t *) staMac, sizeof(tSirMacAddr));
 
-	cdf_mem_copy((uint8_t *) pMacHdr->addr3,
+	qdf_mem_copy((uint8_t *) pMacHdr->addr3,
 		     (uint8_t *) (addr3), sizeof(tSirMacAddr));
 
 	lim_log(pMac, LOG1,
@@ -305,7 +305,7 @@ static uint32_t lim_prepare_tdls_frame_header(tpAniSirGlobal pMac, uint8_t *pFra
 	/*
 	 * Now form RFC1042 header
 	 */
-	cdf_mem_copy((uint8_t *) (pFrame + header_offset),
+	qdf_mem_copy((uint8_t *) (pFrame + header_offset),
 		     (uint8_t *) eth_890d_header, sizeof(eth_890d_header));
 
 	header_offset += sizeof(eth_890d_header);
@@ -372,7 +372,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
 	 * serialization).  We start by zero-initializing the structure:
 	 */
-	cdf_mem_set((uint8_t *) &tdlsDisReq, sizeof(tDot11fTDLSDisReq), 0);
+	qdf_mem_set((uint8_t *) &tdlsDisReq, sizeof(tDot11fTDLSDisReq), 0);
 
 	/*
 	 * setup Fixed fields,
@@ -449,7 +449,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 	}
 
 	/* zero out the memory */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -496,7 +496,7 @@ tSirRetStatus lim_send_tdls_dis_req_frame(tpAniSirGlobal pMac,
 
 		/* padding zero if more than 5 bytes are required */
 		if (padLen > MIN_VENDOR_SPECIFIC_IE_SIZE)
-			cdf_mem_set(pFrame + header_offset + nPayload +
+			qdf_mem_set(pFrame + header_offset + nPayload +
 				    MIN_VENDOR_SPECIFIC_IE_SIZE,
 				    padLen - MIN_VENDOR_SPECIFIC_IE_SIZE, 0);
 	}
@@ -626,7 +626,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
 	 * serialization).  We start by zero-initializing the structure:
 	 */
-	cdf_mem_set((uint8_t *) &tdlsDisRsp, sizeof(tDot11fTDLSDisRsp), 0);
+	qdf_mem_set((uint8_t *) &tdlsDisRsp, sizeof(tDot11fTDLSDisRsp), 0);
 
 	/*
 	 * setup Fixed fields,
@@ -729,7 +729,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	}
 
 	/* zero out the memory */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -772,7 +772,7 @@ static tSirRetStatus lim_send_tdls_dis_rsp_frame(tpAniSirGlobal pMac,
 	if (0 != addIeLen) {
 		lim_log(pMac, LOG1,
 			FL("Copy Additional Ie Len = %d"), addIeLen);
-		cdf_mem_copy(pFrame + sizeof(tSirMacMgmtHdr) + nPayload, addIe,
+		qdf_mem_copy(pFrame + sizeof(tSirMacMgmtHdr) + nPayload, addIe,
 			     addIeLen);
 	}
 	lim_log(pMac, LOG1,
@@ -883,7 +883,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	 */
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &tdlsSetupReq, sizeof(tDot11fTDLSSetupReq), 0);
+	qdf_mem_set((uint8_t *) &tdlsSetupReq, sizeof(tDot11fTDLSSetupReq), 0);
 	tdlsSetupReq.Category.category = SIR_MAC_ACTION_TDLS;
 	tdlsSetupReq.Action.action = SIR_MAC_TDLS_SETUP_REQ;
 	tdlsSetupReq.DialogToken.token = dialog;
@@ -1051,7 +1051,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	}
 
 	/* zero out the memory */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -1098,7 +1098,7 @@ tSirRetStatus lim_send_tdls_link_setup_req_frame(tpAniSirGlobal pMac,
 	if (addIeLen != 0) {
 		lim_log(pMac, LOG1, FL("Copy Additional Ie Len = %d"),
 		       addIeLen);
-		cdf_mem_copy(pFrame + header_offset + nPayload, addIe,
+		qdf_mem_copy(pFrame + header_offset + nPayload, addIe,
 			     addIeLen);
 	}
 
@@ -1164,7 +1164,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
 	 * serialization).  We start by zero-initializing the structure:
 	 */
-	cdf_mem_set((uint8_t *) &teardown, sizeof(tDot11fTDLSTeardown), 0);
+	qdf_mem_set((uint8_t *) &teardown, sizeof(tDot11fTDLSTeardown), 0);
 	teardown.Category.category = SIR_MAC_ACTION_TDLS;
 	teardown.Action.action = SIR_MAC_TDLS_TEARDOWN;
 	teardown.Reason.code = reason;
@@ -1236,7 +1236,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	}
 
 	/* zero out the memory */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -1277,7 +1277,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 	if (addIeLen != 0) {
 		lim_log(pMac, LOGW,
 			FL("Copy Additional Ie Len = %d"), addIeLen);
-		cdf_mem_copy(pFrame + header_offset + nPayload, addIe,
+		qdf_mem_copy(pFrame + header_offset + nPayload, addIe,
 			     addIeLen);
 	}
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
@@ -1297,7 +1297,7 @@ tSirRetStatus lim_send_tdls_teardown_frame(tpAniSirGlobal pMac,
 
 		/* padding zero if more than 5 bytes are required */
 		if (padLen > MIN_VENDOR_SPECIFIC_IE_SIZE)
-			cdf_mem_set(pFrame + header_offset + nPayload +
+			qdf_mem_set(pFrame + header_offset + nPayload +
 				    addIeLen + MIN_VENDOR_SPECIFIC_IE_SIZE,
 				    padLen - MIN_VENDOR_SPECIFIC_IE_SIZE, 0);
 	}
@@ -1370,7 +1370,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	 * and then hand it off to 'dot11f_pack_probe_request' (for
 	 * serialization).  We start by zero-initializing the structure:
 	 */
-	cdf_mem_set((uint8_t *) &tdlsSetupRsp, sizeof(tDot11fTDLSSetupRsp), 0);
+	qdf_mem_set((uint8_t *) &tdlsSetupRsp, sizeof(tDot11fTDLSSetupRsp), 0);
 
 	/*
 	 * setup Fixed fields,
@@ -1533,7 +1533,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	}
 
 	/* zero out the memory */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -1578,7 +1578,7 @@ static tSirRetStatus lim_send_tdls_setup_rsp_frame(tpAniSirGlobal pMac,
 	/* follow the order. This should be ok, but we should consider changing this */
 	/* if there is any IOT issue. */
 	if (addIeLen != 0) {
-		cdf_mem_copy(pFrame + header_offset + nPayload, addIe,
+		qdf_mem_copy(pFrame + header_offset + nPayload, addIe,
 			     addIeLen);
 	}
 
@@ -1640,7 +1640,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	 */
 	smeSessionId = psessionEntry->smeSessionId;
 
-	cdf_mem_set((uint8_t *) &tdlsSetupCnf, sizeof(tDot11fTDLSSetupCnf), 0);
+	qdf_mem_set((uint8_t *) &tdlsSetupCnf, sizeof(tDot11fTDLSSetupCnf), 0);
 
 	/*
 	 * setup Fixed fields,
@@ -1740,7 +1740,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	}
 
 	/* zero out the memory */
-	cdf_mem_set(pFrame, nBytes, 0);
+	qdf_mem_set(pFrame, nBytes, 0);
 
 	/*
 	 * IE formation, memory allocation is completed, Now form TDLS discovery
@@ -1776,7 +1776,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 	/* follow the order. This should be ok, but we should consider changing this */
 	/* if there is any IOT issue. */
 	if (addIeLen != 0) {
-		cdf_mem_copy(pFrame + header_offset + nPayload, addIe,
+		qdf_mem_copy(pFrame + header_offset + nPayload, addIe,
 			     addIeLen);
 	}
 #ifndef NO_PAD_TDLS_MIN_8023_SIZE
@@ -1796,7 +1796,7 @@ tSirRetStatus lim_send_tdls_link_setup_cnf_frame(tpAniSirGlobal pMac,
 
 		/* padding zero if more than 5 bytes are required */
 		if (padLen > MIN_VENDOR_SPECIFIC_IE_SIZE)
-			cdf_mem_set(pFrame + header_offset + nPayload +
+			qdf_mem_set(pFrame + header_offset + nPayload +
 				    addIeLen + MIN_VENDOR_SPECIFIC_IE_SIZE,
 				    padLen - MIN_VENDOR_SPECIFIC_IE_SIZE, 0);
 	}
@@ -1913,7 +1913,7 @@ static tSirRetStatus lim_tdls_populate_dot11f_ht_caps(tpAniSirGlobal pMac,
 
 	lim_log(pMac, LOG1, FL("AMPDU Param: %x"), nCfgValue);
 
-	cdf_mem_copy(pDot11f->supportedMCSSet, pTdlsAddStaReq->htCap.suppMcsSet,
+	qdf_mem_copy(pDot11f->supportedMCSSet, pTdlsAddStaReq->htCap.suppMcsSet,
 		     SIZE_OF_SUPPORTED_MCS_SET);
 
 	nCfgValue = pTdlsAddStaReq->htCap.extendedHtCapInfo;
@@ -2157,7 +2157,7 @@ lim_tdls_populate_matching_rate_set(tpAniSirGlobal mac_ctx, tpDphHashNode stads,
 	temp_rate_set.numRates = supp_rates_len;
 
 	rates = &stads->supportedRates;
-	cdf_mem_set((uint8_t *) rates, sizeof(tSirSupportedRates), 0);
+	qdf_mem_set((uint8_t *) rates, sizeof(tSirSupportedRates), 0);
 
 	for (i = 0; i < temp_rate_set2.numRates; i++) {
 		for (j = 0; j < temp_rate_set.numRates; j++) {
@@ -2480,7 +2480,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 	tSirTdlsAddStaRsp *addStaRsp = NULL;
 	mmhMsg.type = eWNI_SME_TDLS_ADD_STA_RSP;
 
-	addStaRsp = cdf_mem_malloc(sizeof(tSirTdlsAddStaRsp));
+	addStaRsp = qdf_mem_malloc(sizeof(tSirTdlsAddStaRsp));
 	if (NULL == addStaRsp) {
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return QDF_STATUS_E_NOMEM;
@@ -2494,7 +2494,7 @@ static QDF_STATUS lim_send_sme_tdls_add_sta_rsp(tpAniSirGlobal pMac,
 		addStaRsp->bcastSig = pStaDs->ucBcastSig;
 	}
 	if (peerMac) {
-		cdf_mem_copy(addStaRsp->peermac.bytes,
+		qdf_mem_copy(addStaRsp->peermac.bytes,
 			     (uint8_t *) peerMac, QDF_MAC_ADDR_SIZE);
 	}
 	if (updateSta)
@@ -2554,7 +2554,7 @@ add_sta_error:
 					       pAddStaParams->staMac,
 					       pAddStaParams->updateSta, pStaDs,
 					       status);
-	cdf_mem_free(pAddStaParams);
+	qdf_mem_free(pAddStaParams);
 	return status;
 }
 
@@ -2677,13 +2677,13 @@ void populate_dot11f_link_iden(tpAniSirGlobal pMac, tpPESession psessionEntry,
 				       (respStaAddr = linkIden->RespStaAddr))
 	: ((respStaAddr = linkIden->InitStaAddr),
 	   (initStaAddr = linkIden->RespStaAddr));
-	cdf_mem_copy((uint8_t *) linkIden->bssid,
+	qdf_mem_copy((uint8_t *) linkIden->bssid,
 		     (uint8_t *) psessionEntry->bssId, QDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy((uint8_t *) initStaAddr,
+	qdf_mem_copy((uint8_t *) initStaAddr,
 		     psessionEntry->selfMacAddr, QDF_MAC_ADDR_SIZE);
 
-	cdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
+	qdf_mem_copy((uint8_t *) respStaAddr, (uint8_t *) peer_mac.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
 	linkIden->present = 1;
@@ -2855,7 +2855,7 @@ void lim_send_sme_tdls_link_establish_req_rsp(tpAniSirGlobal pMac,
 	tSirTdlsLinkEstablishReqRsp *pTdlsLinkEstablishReqRsp = NULL;
 
 	pTdlsLinkEstablishReqRsp =
-		cdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReqRsp));
+		qdf_mem_malloc(sizeof(tSirTdlsLinkEstablishReqRsp));
 	if (NULL == pTdlsLinkEstablishReqRsp) {
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return;
@@ -2885,7 +2885,7 @@ static QDF_STATUS lim_send_sme_tdls_del_sta_rsp(tpAniSirGlobal pMac,
 	tSirTdlsDelStaRsp *pDelSta = NULL;
 	mmhMsg.type = eWNI_SME_TDLS_DEL_STA_RSP;
 
-	pDelSta = cdf_mem_malloc(sizeof(tSirTdlsDelStaRsp));
+	pDelSta = qdf_mem_malloc(sizeof(tSirTdlsDelStaRsp));
 	if (NULL == pDelSta) {
 		lim_log(pMac, LOGE, FL("Failed to allocate memory"));
 		return QDF_STATUS_E_NOMEM;
@@ -3145,14 +3145,14 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 		lim_log(mac_ctx, LOGE, FL("stads is NULL"));
 		goto lim_tdls_link_establish_error;
 	}
-	tdls_req_params = cdf_mem_malloc(sizeof(tTdlsLinkEstablishParams));
+	tdls_req_params = qdf_mem_malloc(sizeof(tTdlsLinkEstablishParams));
 	if (NULL == tdls_req_params) {
 		lim_log(mac_ctx, LOGE,
 			FL("Unable to allocate memory TDLS Link Establish Request"));
 		return eSIR_MEM_ALLOC_FAILED;
 	}
 
-	cdf_mem_set((uint8_t *) tdls_req_params,
+	qdf_mem_set((uint8_t *) tdls_req_params,
 		    sizeof(tTdlsLinkEstablishParams), 0);
 
 	tdls_req_params->staIdx = stads->staIndex;
@@ -3195,7 +3195,7 @@ tSirRetStatus lim_process_sme_tdls_link_establish_req(tpAniSirGlobal mac_ctx,
 		&tdls_req_params->validChannelsLen);
 
 send_tdls_establish_request:
-	cdf_mem_copy(tdls_req_params->validOperClasses,
+	qdf_mem_copy(tdls_req_params->validOperClasses,
 		     tdls_req->supportedOperClasses,
 		     tdls_req->supportedOperClassesLen);
 	tdls_req_params->validOperClassesLen =

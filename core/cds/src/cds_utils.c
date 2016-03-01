@@ -51,7 +51,7 @@
 
 #include "qdf_trace.h"
 #include "cds_utils.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "cds_crypto.h"
 
 #include <linux/err.h>
@@ -298,7 +298,7 @@ static void cds_increase_seq(uint8_t *ipn)
 	if (ipn) {
 		value = (0xffffffffffff) & (*((uint64_t *) ipn));
 		value = value + 1;
-		cdf_mem_copy(ipn, &value, IEEE80211_MMIE_IPNLEN);
+		qdf_mem_copy(ipn, &value, IEEE80211_MMIE_IPNLEN);
 	}
 }
 
@@ -377,9 +377,9 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	 * In case of error, revert back to original IPN
 	 * to do that copy the original IPN into previous_ipn
 	 */
-	cdf_mem_copy(&previous_ipn[0], ipn, IEEE80211_MMIE_IPNLEN);
+	qdf_mem_copy(&previous_ipn[0], ipn, IEEE80211_MMIE_IPNLEN);
 	cds_increase_seq(ipn);
-	cdf_mem_copy(mmie->sequence_number, ipn, IEEE80211_MMIE_IPNLEN);
+	qdf_mem_copy(mmie->sequence_number, ipn, IEEE80211_MMIE_IPNLEN);
 
 	/*
 	 * Calculate MIC and then copy
@@ -412,11 +412,11 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 				 IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	cdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
 
 	/* MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64) */
 	nBytes = AAD_LEN + (frmLen - sizeof(struct ieee80211_frame));
-	input = (uint8_t *) cdf_mem_malloc(nBytes);
+	input = (uint8_t *) qdf_mem_malloc(nBytes);
 	if (NULL == input) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Memory allocation failed", __func__);
@@ -428,26 +428,26 @@ cds_attach_mmie(uint8_t *igtk, uint8_t *ipn, uint16_t key_id,
 	 * Copy the AAD, Management frame body, and
 	 * MMIE with 8 bit MIC zeroed out
 	 */
-	cdf_mem_zero(input, nBytes);
-	cdf_mem_copy(input, aad, AAD_LEN);
+	qdf_mem_zero(input, nBytes);
+	qdf_mem_copy(input, aad, AAD_LEN);
 	/* Copy Management Frame Body and MMIE without MIC */
-	cdf_mem_copy(input + AAD_LEN,
+	qdf_mem_copy(input + AAD_LEN,
 		     (uint8_t *) (efrm -
 				  (frmLen - sizeof(struct ieee80211_frame))),
 		     nBytes - AAD_LEN - CMAC_TLEN);
 
 	cds_cmac_calc_mic(tfm, input, nBytes, mic);
-	cdf_mem_free(input);
+	qdf_mem_free(input);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_INFO_HIGH,
 		  "CMAC(T)= %02X %02X %02X %02X %02X %02X %02X %02X",
 		  mic[0], mic[1], mic[2], mic[3],
 		  mic[4], mic[5], mic[6], mic[7]);
-	cdf_mem_copy(mmie->mic, mic, IEEE80211_MMIE_MICLEN);
+	qdf_mem_copy(mmie->mic, mic, IEEE80211_MMIE_MICLEN);
 
 err_tfm:
 	if (ret) {
-		cdf_mem_copy(ipn, previous_ipn, IEEE80211_MMIE_IPNLEN);
+		qdf_mem_copy(ipn, previous_ipn, IEEE80211_MMIE_IPNLEN);
 	}
 
 	if (tfm)
@@ -485,7 +485,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 
 	/* Validate IPN */
 	rx_ipn = mmie->sequence_number;
-	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) <= 0) {
+	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) != 0) {
 		/* Replay error */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Replay error mmie ipn %02X %02X %02X %02X %02X %02X"
@@ -522,11 +522,11 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	aad[1] = wh->i_fc[1] & ~(IEEE80211_FC1_RETRY | IEEE80211_FC1_PWR_MGT |
 				 IEEE80211_FC1_MORE_DATA);
 	/* A1 || A2 || A3 */
-	cdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
+	qdf_mem_copy(aad + 2, wh->i_addr_all, 3 * IEEE80211_ADDR_LEN);
 
 	/* MIC = AES-128-CMAC(IGTK, AAD || Management Frame Body || MMIE, 64) */
 	nBytes = AAD_LEN + (efrm - (uint8_t *) (wh + 1));
-	input = (uint8_t *) cdf_mem_malloc(nBytes);
+	input = (uint8_t *) qdf_mem_malloc(nBytes);
 	if (NULL == input) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Memory allocation failed");
@@ -535,20 +535,20 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	}
 
 	/* Copy the AAD, MMIE with 8 bit MIC zeroed out */
-	cdf_mem_zero(input, nBytes);
-	cdf_mem_copy(input, aad, AAD_LEN);
-	cdf_mem_copy(input + AAD_LEN, (uint8_t *) (wh + 1),
+	qdf_mem_zero(input, nBytes);
+	qdf_mem_copy(input, aad, AAD_LEN);
+	qdf_mem_copy(input + AAD_LEN, (uint8_t *) (wh + 1),
 		     nBytes - AAD_LEN - CMAC_TLEN);
 
 	cds_cmac_calc_mic(tfm, input, nBytes, mic);
-	cdf_mem_free(input);
+	qdf_mem_free(input);
 
 	QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 		  "CMAC(T)= %02X %02X %02X %02X %02X %02X %02X %02X",
 		  mic[0], mic[1], mic[2], mic[3],
 		  mic[4], mic[5], mic[6], mic[7]);
 
-	if (OS_MEMCMP(mic, mmie->mic, CMAC_TLEN) != 0) {
+	if (OS_MEMCMP(mic, mmie->mic, CMAC_TLEN) == 0) {
 		/* MMIE MIC mismatch */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "BC/MC MGMT frame MMIE MIC check Failed"
@@ -562,7 +562,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 	}
 
 	/* Update IPN */
-	cdf_mem_copy(ipn, rx_ipn, CMAC_IPN_LEN);
+	qdf_mem_copy(ipn, rx_ipn, CMAC_IPN_LEN);
 
 err_tfm:
 	if (tfm)

@@ -40,10 +40,10 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 
 	if (NULL != pSession) {
 		/* Clean up the context */
-		cdf_mem_set(&pSession->ftSmeContext, sizeof(tftSMEContext), 0);
+		qdf_mem_set(&pSession->ftSmeContext, sizeof(tftSMEContext), 0);
 
 		pSession->ftSmeContext.pUsrCtx =
-			cdf_mem_malloc(sizeof(tFTRoamCallbackUsrCtx));
+			qdf_mem_malloc(sizeof(tFTRoamCallbackUsrCtx));
 
 		if (NULL == pSession->ftSmeContext.pUsrCtx) {
 			sms_log(pMac, LOGE, FL("Memory allocation failure"));
@@ -63,7 +63,7 @@ void sme_ft_open(tHalHandle hHal, uint32_t sessionId)
 			sms_log(pMac, LOGE,
 				FL
 					("Preauth Reassoc interval Timer allocation failed"));
-			cdf_mem_free(pSession->ftSmeContext.pUsrCtx);
+			qdf_mem_free(pSession->ftSmeContext.pUsrCtx);
 			pSession->ftSmeContext.pUsrCtx = NULL;
 			return;
 		}
@@ -102,7 +102,7 @@ void sme_ft_close(tHalHandle hHal, uint32_t sessionId)
 			sms_log(pMac, LOG1,
 				FL
 					("Freeing ftSmeContext.pUsrCtx and setting to NULL"));
-			cdf_mem_free(pSession->ftSmeContext.pUsrCtx);
+			qdf_mem_free(pSession->ftSmeContext.pUsrCtx);
 			pSession->ftSmeContext.pUsrCtx = NULL;
 		}
 	}
@@ -165,13 +165,13 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 		if ((session->ftSmeContext.auth_ft_ies) &&
 			(session->ftSmeContext.auth_ft_ies_length)) {
 			/* Free the one we recvd last from supplicant */
-			cdf_mem_free(session->ftSmeContext.auth_ft_ies);
+			qdf_mem_free(session->ftSmeContext.auth_ft_ies);
 			session->ftSmeContext.auth_ft_ies_length = 0;
 			session->ftSmeContext.auth_ft_ies = NULL;
 		}
 		/* Save the FT IEs */
 		session->ftSmeContext.auth_ft_ies =
-					cdf_mem_malloc(ft_ies_length);
+					qdf_mem_malloc(ft_ies_length);
 		if (NULL == session->ftSmeContext.auth_ft_ies) {
 			sms_log(mac_ctx, LOGE,
 				FL("Mem alloc failed for auth_ft_ies"));
@@ -179,7 +179,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 			return;
 		}
 		session->ftSmeContext.auth_ft_ies_length = ft_ies_length;
-		cdf_mem_copy((uint8_t *)session->ftSmeContext.auth_ft_ies,
+		qdf_mem_copy((uint8_t *)session->ftSmeContext.auth_ft_ies,
 				ft_ies, ft_ies_length);
 		session->ftSmeContext.FTState = eFT_AUTH_REQ_READY;
 
@@ -215,12 +215,12 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 		if ((session->ftSmeContext.reassoc_ft_ies) &&
 			(session->ftSmeContext.reassoc_ft_ies_length)) {
 			/* Free the one we recvd last from supplicant */
-			cdf_mem_free(session->ftSmeContext.reassoc_ft_ies);
+			qdf_mem_free(session->ftSmeContext.reassoc_ft_ies);
 			session->ftSmeContext.reassoc_ft_ies_length = 0;
 		}
 		/* Save the FT IEs */
 		session->ftSmeContext.reassoc_ft_ies =
-					cdf_mem_malloc(ft_ies_length);
+					qdf_mem_malloc(ft_ies_length);
 		if (NULL == session->ftSmeContext.reassoc_ft_ies) {
 			sms_log(mac_ctx, LOGE,
 				FL("Mem alloc fail for reassoc_ft_ie"));
@@ -229,7 +229,7 @@ void sme_set_ft_ies(tHalHandle hal_ptr, uint32_t session_id,
 		}
 		session->ftSmeContext.reassoc_ft_ies_length =
 							ft_ies_length;
-		cdf_mem_copy((uint8_t *)session->ftSmeContext.reassoc_ft_ies,
+		qdf_mem_copy((uint8_t *)session->ftSmeContext.reassoc_ft_ies,
 				ft_ies, ft_ies_length);
 
 		session->ftSmeContext.FTState = eFT_SET_KEY_WAIT;
@@ -280,11 +280,11 @@ QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 	}
 	msglen  = sizeof(tSirFTUpdateKeyInfo);
 
-	msg = cdf_mem_malloc(msglen);
+	msg = qdf_mem_malloc(msglen);
 	if (NULL == msg)
 		return QDF_STATUS_E_NOMEM;
 
-	cdf_mem_set(msg, msglen, 0);
+	qdf_mem_set(msg, msglen, 0);
 	msg->messageType = eWNI_SME_FT_UPDATE_KEY;
 	msg->length = msglen;
 
@@ -297,13 +297,13 @@ QDF_STATUS sme_ft_send_update_key_ind(tHalHandle hal, uint32_t session_id,
 	keymaterial->key[0].unicast = (uint8_t) true;
 	keymaterial->key[0].keyDirection = ftkey_info->keyDirection;
 
-	cdf_mem_copy(&keymaterial->key[0].keyRsc,
+	qdf_mem_copy(&keymaterial->key[0].keyRsc,
 			ftkey_info->keyRsc, CSR_MAX_RSC_LEN);
 	keymaterial->key[0].paeRole = ftkey_info->paeRole;
 	keymaterial->key[0].keyLength = ftkey_info->keyLength;
 
 	if (ftkey_info->keyLength && ftkey_info->Key) {
-		cdf_mem_copy(&keymaterial->key[0].key, ftkey_info->Key,
+		qdf_mem_copy(&keymaterial->key[0].key, ftkey_info->Key,
 				ftkey_info->keyLength);
 		if (ftkey_info->keyLength == 16) {
 			sms_log(mac_ctx, LOG1,
@@ -457,11 +457,11 @@ void sme_get_ft_pre_auth_response(tHalHandle hHal, uint32_t sessionId,
 	}
 	/* hdd needs to pack the bssid also along with the */
 	/* auth response to supplicant */
-	cdf_mem_copy(ft_ies, pSession->ftSmeContext.preAuthbssId,
+	qdf_mem_copy(ft_ies, pSession->ftSmeContext.preAuthbssId,
 		     QDF_MAC_ADDR_SIZE);
 
 	/* Copy the auth resp FTIEs */
-	cdf_mem_copy(&(ft_ies[QDF_MAC_ADDR_SIZE]),
+	qdf_mem_copy(&(ft_ies[QDF_MAC_ADDR_SIZE]),
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies,
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ft_ies_length);
 
@@ -507,7 +507,7 @@ void sme_get_rici_es(tHalHandle hHal, uint32_t sessionId, uint8_t *ric_ies,
 		return;
 	}
 
-	cdf_mem_copy(ric_ies,
+	qdf_mem_copy(ric_ies,
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ric_ies,
 		     pSession->ftSmeContext.psavedFTPreAuthRsp->ric_ies_length);
 
@@ -559,7 +559,7 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 			sms_log(pMac, LOG1,
 				FL("Free FT Auth IE %p and set to NULL"),
 				pSession->ftSmeContext.auth_ft_ies);
-			cdf_mem_free(pSession->ftSmeContext.auth_ft_ies);
+			qdf_mem_free(pSession->ftSmeContext.auth_ft_ies);
 			pSession->ftSmeContext.auth_ft_ies = NULL;
 		}
 		pSession->ftSmeContext.auth_ft_ies_length = 0;
@@ -568,7 +568,7 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 			sms_log(pMac, LOG1,
 				FL("Free FT Reassoc IE %p and set to NULL"),
 				pSession->ftSmeContext.reassoc_ft_ies);
-			cdf_mem_free(pSession->ftSmeContext.reassoc_ft_ies);
+			qdf_mem_free(pSession->ftSmeContext.reassoc_ft_ies);
 			pSession->ftSmeContext.reassoc_ft_ies = NULL;
 		}
 		pSession->ftSmeContext.reassoc_ft_ies_length = 0;
@@ -577,13 +577,13 @@ void sme_ft_reset(tHalHandle hHal, uint32_t sessionId)
 			sms_log(pMac, LOG1,
 				FL("Free FtPreAuthRsp %p and set to NULL"),
 				pSession->ftSmeContext.psavedFTPreAuthRsp);
-			cdf_mem_free(pSession->ftSmeContext.psavedFTPreAuthRsp);
+			qdf_mem_free(pSession->ftSmeContext.psavedFTPreAuthRsp);
 			pSession->ftSmeContext.psavedFTPreAuthRsp = NULL;
 		}
 		pSession->ftSmeContext.setFTPreAuthState = false;
 		pSession->ftSmeContext.setFTPTKState = false;
 
-		cdf_mem_zero(pSession->ftSmeContext.preAuthbssId,
+		qdf_mem_zero(pSession->ftSmeContext.preAuthbssId,
 			     QDF_MAC_ADDR_SIZE);
 		pSession->ftSmeContext.FTState = eFT_START_READY;
 	}

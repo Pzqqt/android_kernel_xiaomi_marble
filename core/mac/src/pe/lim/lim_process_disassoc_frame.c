@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2011-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2011-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -360,7 +360,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 	pStaDs->mlmStaContext.disassocReason = (tSirMacReasonCodes) reasonCode;
 
 	/* Issue Disassoc Indication to SME. */
-	cdf_mem_copy((uint8_t *) &mlmDisassocInd.peerMacAddr,
+	qdf_mem_copy((uint8_t *) &mlmDisassocInd.peerMacAddr,
 		     (uint8_t *) pStaDs->staAddr, sizeof(tSirMacAddr));
 	mlmDisassocInd.reasonCode =
 		(uint8_t) pStaDs->mlmStaContext.disassocReason;
@@ -383,7 +383,7 @@ lim_process_disassoc_frame(tpAniSirGlobal pMac, uint8_t *pRxPacketInfo,
 		       )
 
 		if (psessionEntry->limAssocResponseData) {
-			cdf_mem_free(psessionEntry->limAssocResponseData);
+			qdf_mem_free(psessionEntry->limAssocResponseData);
 			psessionEntry->limAssocResponseData = NULL;
 		}
 

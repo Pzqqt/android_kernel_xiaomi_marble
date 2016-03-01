@@ -39,7 +39,7 @@
   ------------------------------------------------------------------------*/
 #include "qdf_lock.h"
 #include "qdf_trace.h"
-#include "cdf_memory.h"
+#include "qdf_mem.h"
 #include "qdf_types.h"
 #include "rrm_global.h"
 

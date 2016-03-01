@@ -80,7 +80,7 @@ ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 {
 	struct txrx_pdev_cfg_t *cfg_ctx;
 
-	cfg_ctx = cdf_mem_malloc(sizeof(*cfg_ctx));
+	cfg_ctx = qdf_mem_malloc(sizeof(*cfg_ctx));
 	if (!cfg_ctx) {
 		printk(KERN_ERR "cfg ctx allocation failed\n");
 		return NULL;

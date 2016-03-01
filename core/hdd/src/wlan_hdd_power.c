@@ -112,7 +112,7 @@ static void hdd_conf_gtk_offload(hdd_adapter_t *pAdapter, bool fenable)
 		     pHddStaCtx->conn_info.connState)
 		    && (GTK_OFFLOAD_ENABLE ==
 			pHddStaCtx->gtkOffloadReqParams.ulFlags)) {
-			cdf_mem_copy(&hddGtkOffloadReqParams,
+			qdf_mem_copy(&hddGtkOffloadReqParams,
 				     &pHddStaCtx->gtkOffloadReqParams,
 				     sizeof(tSirGtkOffloadParams));
 
@@ -317,7 +317,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 				switch (scope) {
 				case IPV6_ADDR_SCOPE_GLOBAL:
 				case IPV6_ADDR_SCOPE_LINKLOCAL:
-					cdf_mem_copy(&selfIPv6Addr[count],
+					qdf_mem_copy(&selfIPv6Addr[count],
 						&ifp->addr.s6_addr,
 						sizeof(ifp->addr.s6_addr));
 					selfIPv6AddrValid[count] =
@@ -335,7 +335,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 				}
 			}
 			/* read_unlock_bh(&in6_dev->lock); */
-			cdf_mem_zero(&offLoadRequest, sizeof(offLoadRequest));
+			qdf_mem_zero(&offLoadRequest, sizeof(offLoadRequest));
 			for (i = 0; i < count; i++) {
 				/* Filling up the request structure
 				 * Filling the selfIPv6Addr with solicited address
@@ -358,7 +358,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 				offLoadRequest.nsOffloadInfo.selfIPv6Addr[i][15] =
 					selfIPv6Addr[i][15];
 				offLoadRequest.nsOffloadInfo.slotIdx = i;
-				cdf_mem_copy(&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i],
+				qdf_mem_copy(&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i],
 					&selfIPv6Addr[i][0], SIR_MAC_IPV6_ADDR_LEN);
 
 				offLoadRequest.nsOffloadInfo.targetIPv6AddrValid[i] =
@@ -377,7 +377,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 						SIR_OFFLOAD_NS_AND_MCAST_FILTER_ENABLE;
 				}
 
-				cdf_mem_copy(&offLoadRequest.params.hostIpv6Addr,
+				qdf_mem_copy(&offLoadRequest.params.hostIpv6Addr,
 					&offLoadRequest.nsOffloadInfo.targetIPv6Addr[i],
 					SIR_MAC_IPV6_ADDR_LEN);
 
@@ -404,7 +404,7 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 		}
 	} else {
 		/* Disable NSOffload */
-		cdf_mem_zero((void *)&offLoadRequest, sizeof(tSirHostOffloadReq));
+		qdf_mem_zero((void *)&offLoadRequest, sizeof(tSirHostOffloadReq));
 		offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
 		offLoadRequest.offloadType =  SIR_IPV6_NS_OFFLOAD;
 
@@ -765,7 +765,7 @@ QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 
 		return QDF_STATUS_SUCCESS;
 	} else {
-		cdf_mem_zero((void *)&offLoadRequest,
+		qdf_mem_zero((void *)&offLoadRequest,
 			     sizeof(tSirHostOffloadReq));
 		offLoadRequest.enableOrDisable = SIR_OFFLOAD_DISABLE;
 		offLoadRequest.offloadType = SIR_IPV4_ARP_REPLY_OFFLOAD;
@@ -834,7 +834,7 @@ void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter)
 {
 	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
 	tpSirWlanSetRxpFilters wlanRxpFilterParam =
-		cdf_mem_malloc(sizeof(tSirWlanSetRxpFilters));
+		qdf_mem_malloc(sizeof(tSirWlanSetRxpFilters));
 	if (NULL == wlanRxpFilterParam) {
 		hddLog(QDF_TRACE_LEVEL_FATAL,
 		       "%s: cdf_mem_alloc failed ", __func__);
@@ -868,7 +868,7 @@ void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter)
 		wlanRxpFilterParam->setMcstBcstFilter);
 
 	if (QDF_STATUS_SUCCESS != cdf_ret_status)
-		cdf_mem_free(wlanRxpFilterParam);
+		qdf_mem_free(wlanRxpFilterParam);
 }
 
 #ifdef WLAN_FEATURE_PACKET_FILTERING
@@ -903,13 +903,13 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 		       FL("gMCAddrListEnable is not enabled in INI"));
 		return;
 	}
-	pMulticastAddrs = cdf_mem_malloc(sizeof(tSirRcvFltMcAddrList));
+	pMulticastAddrs = qdf_mem_malloc(sizeof(tSirRcvFltMcAddrList));
 	if (NULL == pMulticastAddrs) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("Could not allocate Memory"));
 		return;
 	}
-	cdf_mem_zero(pMulticastAddrs, sizeof(tSirRcvFltMcAddrList));
+	qdf_mem_zero(pMulticastAddrs, sizeof(tSirRcvFltMcAddrList));
 	pMulticastAddrs->action = set;
 
 	if (set) {
@@ -964,7 +964,7 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 	       pMulticastAddrs->ulMulticastAddrCnt);
 
 	pAdapter->mc_addr_list.isFilterApplied = set ? true : false;
-	cdf_mem_free(pMulticastAddrs);
+	qdf_mem_free(pMulticastAddrs);
 	return;
 }
 #endif

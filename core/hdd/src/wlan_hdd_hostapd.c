@@ -1572,7 +1572,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 			pSapEvent->sapevt.sapPBCProbeReqEvent.
 			WPSPBCProbeReq.probeReqIELen;
 
-		cdf_mem_copy(pHddApCtx->WPSPBCProbeReq.probeReqIE,
+		qdf_mem_copy(pHddApCtx->WPSPBCProbeReq.probeReqIE,
 			     pSapEvent->sapevt.sapPBCProbeReqEvent.
 			     WPSPBCProbeReq.probeReqIE,
 			     pHddApCtx->WPSPBCProbeReq.probeReqIELen);
@@ -1608,7 +1608,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 				pAssocStasArray++;
 			}
 		}
-		cdf_mem_free(pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas);        /* Release caller allocated memory here */
+		qdf_mem_free(pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas);        /* Release caller allocated memory here */
 		pSapEvent->sapevt.sapAssocStaListEvent.pAssocStas = NULL;
 		return QDF_STATUS_SUCCESS;
 	case eSAP_REMAIN_CHAN_READY:
@@ -2269,7 +2269,7 @@ static QDF_STATUS hdd_print_acl(hdd_adapter_t *pHostapdAdapter)
 #else
 	p_cds_gctx = (WLAN_HDD_GET_CTX(pHostapdAdapter))->pcds_context;
 #endif
-	cdf_mem_zero(&MacList[0], sizeof(MacList));
+	qdf_mem_zero(&MacList[0], sizeof(MacList));
 	if (QDF_STATUS_SUCCESS == wlansap_get_acl_mode(p_cds_gctx, &acl_mode)) {
 		pr_info("******** ACL MODE *********\n");
 		switch (acl_mode) {
@@ -3854,7 +3854,7 @@ int __iw_get_wpspbc_probe_req_ies(struct net_device *dev,
 
 	WPSPBCProbeReqIEs.probeReqIELen =
 		pHddApCtx->WPSPBCProbeReq.probeReqIELen;
-	cdf_mem_copy(&WPSPBCProbeReqIEs.probeReqIE,
+	qdf_mem_copy(&WPSPBCProbeReqIEs.probeReqIE,
 		     pHddApCtx->WPSPBCProbeReq.probeReqIE,
 		     WPSPBCProbeReqIEs.probeReqIELen);
 	qdf_copy_macaddr(&WPSPBCProbeReqIEs.macaddr,
@@ -4024,13 +4024,13 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 	if (!ext->key_len)
 		return ret;
 
-	cdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
+	qdf_mem_zero(&setKey, sizeof(tCsrRoamSetKey));
 
 	setKey.keyId = key_index;
 	setKey.keyLength = ext->key_len;
 
 	if (ext->key_len <= CSR_MAX_KEY_LEN) {
-		cdf_mem_copy(&setKey.Key[0], ext->key, ext->key_len);
+		qdf_mem_copy(&setKey.Key[0], ext->key, ext->key_len);
 	}
 
 	if (ext->ext_flags & IW_ENCODE_EXT_GROUP_KEY) {
@@ -4040,12 +4040,12 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 	} else {
 
 		setKey.keyDirection = eSIR_TX_RX;
-		cdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
+		qdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
 			     QDF_MAC_ADDR_SIZE);
 	}
 	if (ext->ext_flags & IW_ENCODE_EXT_SET_TX_KEY) {
 		setKey.keyDirection = eSIR_TX_DEFAULT;
-		cdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
+		qdf_mem_copy(setKey.peerMac.bytes, ext->addr.sa_data,
 			     QDF_MAC_ADDR_SIZE);
 	}
 
@@ -4071,7 +4071,7 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 
 		setKey.encType = eCSR_ENCRYPT_TYPE_TKIP;
 
-		cdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
+		qdf_mem_zero(pKey, CSR_MAX_KEY_LEN);
 
 		/*Supplicant sends the 32bytes key in this order
 
@@ -4089,13 +4089,13 @@ static int __iw_set_ap_encodeext(struct net_device *dev,
 		   <---16bytes---><--8bytes--><--8bytes-->
 		 */
 		/* Copy the Temporal Key 1 (TK1) */
-		cdf_mem_copy(pKey, ext->key, 16);
+		qdf_mem_copy(pKey, ext->key, 16);
 
 		/*Copy the rx mic first */
-		cdf_mem_copy(&pKey[16], &ext->key[24], 8);
+		qdf_mem_copy(&pKey[16], &ext->key[24], 8);
 
 		/*Copy the tx mic */
-		cdf_mem_copy(&pKey[24], &ext->key[16], 8);
+		qdf_mem_copy(&pKey[24], &ext->key[16], 8);
 
 	}
 	break;
@@ -4494,13 +4494,13 @@ __iw_softap_setwpsie(struct net_device *dev,
 
 	fwps_genie = wps_genie;
 
-	pSap_WPSIe = cdf_mem_malloc(sizeof(tSap_WPSIE));
+	pSap_WPSIe = qdf_mem_malloc(sizeof(tSap_WPSIE));
 	if (NULL == pSap_WPSIe) {
 		hddLog(LOGE, "CDF unable to allocate memory");
 		kfree(fwps_genie);
 		return -ENOMEM;
 	}
-	cdf_mem_zero(pSap_WPSIe, sizeof(tSap_WPSIE));
+	qdf_mem_zero(pSap_WPSIe, sizeof(tSap_WPSIE));
 
 	hddLog(LOG1, FL("WPS IE type[0x%X] IE[0x%X], LEN[%d]"),
 		wps_genie[0], wps_genie[1], wps_genie[2]);
@@ -4511,7 +4511,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 		switch (wps_genie[0]) {
 		case DOT11F_EID_WPA:
 			if (wps_genie[1] < 2 + 4) {
-				cdf_mem_free(pSap_WPSIe);
+				qdf_mem_free(pSap_WPSIe);
 				kfree(fwps_genie);
 				return -EINVAL;
 			} else if (memcmp(&wps_genie[2],
@@ -4623,7 +4623,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSBeaconIE.
 							     UUID_E, pos,
@@ -4654,7 +4654,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						       "UNKNOWN TLV in WPS IE(%x)",
 						       (*pos << 8 |
 							*(pos + 1)));
-						cdf_mem_free(pSap_WPSIe);
+						qdf_mem_free(pSap_WPSIe);
 						kfree(fwps_genie);
 						return -EINVAL;
 					}
@@ -4667,7 +4667,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 
 		default:
 			hddLog(LOGE, FL("Set UNKNOWN IE %X"), wps_genie[0]);
-			cdf_mem_free(pSap_WPSIe);
+			qdf_mem_free(pSap_WPSIe);
 			kfree(fwps_genie);
 			return 0;
 		}
@@ -4677,7 +4677,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 		switch (wps_genie[0]) {
 		case DOT11F_EID_WPA:
 			if (wps_genie[1] < 2 + 4) {
-				cdf_mem_free(pSap_WPSIe);
+				qdf_mem_free(pSap_WPSIe);
 				kfree(fwps_genie);
 				return -EINVAL;
 			} else if (memcmp(&wps_genie[2], "\x00\x50\xf2\x04", 4)
@@ -4806,7 +4806,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pos += 2;
 						length = *pos << 8 | *(pos + 1);
 						pos += 2;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     UUID_E, pos,
@@ -4826,7 +4826,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						Manufacture.num_name =
 							length;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     Manufacture.name,
@@ -4845,7 +4845,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.ModelName.
 						num_text = length;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     ModelName.text,
@@ -4864,7 +4864,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						ModelNumber.num_text =
 							length;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     ModelNumber.text,
@@ -4883,7 +4883,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						sapWPSProbeRspIE.
 						SerialNumber.num_text =
 							length;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     SerialNumber.text,
@@ -4907,7 +4907,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						       PrimaryDeviceCategory);
 						pos += 2;
 
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     PrimaryDeviceOUI,
@@ -4940,7 +4940,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 						pSap_WPSIe->sapwpsie.
 						sapWPSProbeRspIE.DeviceName.
 						num_text = length;
-						cdf_mem_copy(pSap_WPSIe->
+						qdf_mem_copy(pSap_WPSIe->
 							     sapwpsie.
 							     sapWPSProbeRspIE.
 							     DeviceName.text,
@@ -5008,7 +5008,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 #endif
 	}
 
-	cdf_mem_free(pSap_WPSIe);
+	qdf_mem_free(pSap_WPSIe);
 	kfree(fwps_genie);
 	EXIT();
 	return cdf_ret_status;
@@ -6088,8 +6088,8 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 		       FL("WMI_PDEV_PARAM_BURST_ENABLE set failed %d"), ret);
 	}
 	pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
-	cdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
-	cdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
+	qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
+	qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
 						sizeof(struct sap_acs_cfg));
 	return status;
 
@@ -6138,7 +6138,7 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		ether_setup(pWlanHostapdDev);
 
 		/* Initialize the adapter context to zeros. */
-		cdf_mem_zero(pHostapdAdapter, sizeof(hdd_adapter_t));
+		qdf_mem_zero(pHostapdAdapter, sizeof(hdd_adapter_t));
 		pHostapdAdapter->dev = pWlanHostapdDev;
 		pHostapdAdapter->pHddCtx = pHddCtx;
 		pHostapdAdapter->magic = WLAN_HDD_ADAPTER_MAGIC;
@@ -6159,9 +6159,9 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
 		pWlanHostapdDev->mtu = HDD_DEFAULT_MTU;
 		pWlanHostapdDev->tx_queue_len = HDD_NETDEV_TX_QUEUE_LEN;
 
-		cdf_mem_copy(pWlanHostapdDev->dev_addr, (void *)macAddr,
+		qdf_mem_copy(pWlanHostapdDev->dev_addr, (void *)macAddr,
 			     sizeof(tSirMacAddr));
-		cdf_mem_copy(pHostapdAdapter->macAddressCurrent.bytes,
+		qdf_mem_copy(pHostapdAdapter->macAddressCurrent.bytes,
 			     (void *)macAddr, sizeof(tSirMacAddr));
 
 		pHostapdAdapter->offloads_configured = false;
@@ -6305,7 +6305,7 @@ static bool wlan_hdd_get_sap_obss(hdd_adapter_t *pHostapdAdapter)
 	ie = wlan_hdd_cfg80211_get_ie_ptr(beacon->tail, beacon->tail_len,
 						WLAN_EID_HT_CAPABILITY);
 	if (ie && ie[1]) {
-		cdf_mem_copy(ht_cap_ie, &ie[2], DOT11F_IE_HTCAPS_MAX_LEN);
+		qdf_mem_copy(ht_cap_ie, &ie[2], DOT11F_IE_HTCAPS_MAX_LEN);
 		dot11f_unpack_ie_ht_caps((tpAniSirGlobal)hdd_ctx->hHal,
 					ht_cap_ie, ie[1], &dot11_ht_cap_ie);
 		return dot11_ht_cap_ie.supportedChannelWidthSet;
@@ -6464,7 +6464,7 @@ static int wlan_hdd_set_channel(struct wiphy *wiphy,
 			sap_config->channel = channel;
 			sap_config->ch_params.center_freq_seg1 = channel_seg2;
 
-			cdf_mem_zero(&smeConfig, sizeof(smeConfig));
+			qdf_mem_zero(&smeConfig, sizeof(smeConfig));
 			sme_get_config_param(pHddCtx->hHal, &smeConfig);
 			switch (channel_type) {
 			case NL80211_CHAN_HT20:
@@ -6590,7 +6590,7 @@ static int wlan_hdd_add_ie(hdd_adapter_t *pHostapdAdapter, uint8_t *genie,
 	if (pIe) {
 		ielen = pIe[1] + 2;
 		if ((*total_ielen + ielen) <= MAX_GENIE_LEN) {
-			cdf_mem_copy(&genie[*total_ielen], pIe, ielen);
+			qdf_mem_copy(&genie[*total_ielen], pIe, ielen);
 		} else {
 			hddLog(LOGE,
 			       "**Ie Length is too big***");
@@ -6659,7 +6659,7 @@ static void wlan_hdd_add_hostapd_conf_vsie(hdd_adapter_t *pHostapdAdapter,
 				!= 0)) {
 				ielen = ptr[1] + 2;
 				if ((*total_ielen + ielen) <= MAX_GENIE_LEN) {
-					cdf_mem_copy(&genie[*total_ielen], ptr,
+					qdf_mem_copy(&genie[*total_ielen], ptr,
 						     ielen);
 					*total_ielen += ielen;
 				} else {
@@ -6712,7 +6712,7 @@ static void wlan_hdd_add_extra_ie(hdd_adapter_t *pHostapdAdapter,
 		if (temp_ie_id == elem_id) {
 			ielen = ptr[1] + 2;
 			if ((*total_ielen + ielen) <= MAX_GENIE_LEN) {
-				cdf_mem_copy(&genie[*total_ielen], ptr, ielen);
+				qdf_mem_copy(&genie[*total_ielen], ptr, ielen);
 				*total_ielen += ielen;
 			} else {
 				hddLog(LOGE,
@@ -6856,7 +6856,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 	pConfig = &adapter->sessionCtx.ap.sapConfig;
 	beacon = adapter->sessionCtx.ap.beacon;
 
-	genie = cdf_mem_malloc(MAX_GENIE_LEN);
+	genie = qdf_mem_malloc(MAX_GENIE_LEN);
 
 	if (genie == NULL)
 		return -ENOMEM;
@@ -6898,7 +6898,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 #ifdef QCA_HT_2040_COEX
 	if (WLAN_HDD_SOFTAP == adapter->device_mode) {
 		tSmeConfigParams smeConfig;
-		cdf_mem_zero(&smeConfig, sizeof(smeConfig));
+		qdf_mem_zero(&smeConfig, sizeof(smeConfig));
 		sme_get_config_param(WLAN_HDD_GET_HAL_CTX(adapter),
 				     &smeConfig);
 		if (smeConfig.csrConfig.obssEnabled)
@@ -6979,7 +6979,7 @@ int wlan_hdd_cfg80211_update_apies(hdd_adapter_t *adapter)
 	}
 
 done:
-	cdf_mem_free(genie);
+	qdf_mem_free(genie);
 	return ret;
 }
 
@@ -7373,7 +7373,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 						     WLAN_EID_COUNTRY);
 		if (pIe) {
 			pConfig->ieee80211d = 1;
-			cdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
+			qdf_mem_copy(pConfig->countryCode, &pIe[2], 3);
 			sme_set_reg_info(hHal, pConfig->countryCode);
 			sme_apply_channel_power_info_to_fw(hHal);
 		} else {
@@ -7566,7 +7566,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	pConfig->SSIDinfo.ssidHidden = false;
 
 	if (ssid != NULL) {
-		cdf_mem_copy(pConfig->SSIDinfo.ssid.ssId, ssid, ssid_len);
+		qdf_mem_copy(pConfig->SSIDinfo.ssid.ssId, ssid, ssid_len);
 		pConfig->SSIDinfo.ssid.length = ssid_len;
 
 		switch (hidden_ssid) {
@@ -7589,7 +7589,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 		}
 	}
 
-	cdf_mem_copy(pConfig->self_macaddr.bytes,
+	qdf_mem_copy(pConfig->self_macaddr.bytes,
 		     pHostapdAdapter->macAddressCurrent.bytes,
 		     QDF_MAC_ADDR_SIZE);
 
@@ -7633,7 +7633,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			pConfig->num_deny_mac = MAX_ACL_MAC_ADDRESS;
 		acl_entry = (struct qc_mac_acl_entry *)(pIe + 8);
 		for (i = 0; i < pConfig->num_deny_mac; i++) {
-			cdf_mem_copy(&pConfig->deny_mac[i], acl_entry->addr,
+			qdf_mem_copy(&pConfig->deny_mac[i], acl_entry->addr,
 				     sizeof(qcmacaddr));
 			acl_entry++;
 		}
@@ -7660,14 +7660,14 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 			pConfig->num_accept_mac = MAX_ACL_MAC_ADDRESS;
 		acl_entry = (struct qc_mac_acl_entry *)(pIe + 8);
 		for (i = 0; i < pConfig->num_accept_mac; i++) {
-			cdf_mem_copy(&pConfig->accept_mac[i], acl_entry->addr,
+			qdf_mem_copy(&pConfig->accept_mac[i], acl_entry->addr,
 				     sizeof(qcmacaddr));
 			acl_entry++;
 		}
 	}
 
 	wlan_hdd_set_sap_hwmode(pHostapdAdapter);
-	cdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
+	qdf_mem_zero(&sme_config, sizeof(tSmeConfigParams));
 	sme_get_config_param(pHddCtx->hHal, &sme_config);
 	/* Override hostapd.conf wmm_enabled only for 11n and 11AC configs (IOT)
 	 * As per spec 11N/AC STA are QOS STA and may not connect or throughput
@@ -7941,8 +7941,8 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 	}
 	pAdapter->sessionCtx.ap.sapConfig.acs_cfg.acs_mode = false;
 	if (pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list)
-		cdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
-	cdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
+		qdf_mem_free(pAdapter->sessionCtx.ap.sapConfig.acs_cfg.ch_list);
+	qdf_mem_zero(&pAdapter->sessionCtx.ap.sapConfig.acs_cfg,
 						sizeof(struct sap_acs_cfg));
 	hdd_hostapd_stop(dev);
 

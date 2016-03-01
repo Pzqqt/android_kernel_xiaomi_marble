@@ -34,7 +34,7 @@
  *  connecting the HTT service with HTC; and deleting a HTT instance.
  */
 
-#include <cdf_memory.h>         /* cdf_mem_malloc */
+#include <qdf_mem.h>         /* qdf_mem_malloc */
 #include <qdf_types.h>          /* qdf_device_t, qdf_print */
 
 #include <htt.h>                /* htt_tx_msdu_desc_t */
@@ -76,7 +76,7 @@ struct htt_htc_pkt *htt_htc_pkt_alloc(struct htt_pdev_t *pdev)
 	HTT_TX_MUTEX_RELEASE(&pdev->htt_tx_mutex);
 
 	if (pkt == NULL)
-		pkt = cdf_mem_malloc(sizeof(*pkt));
+		pkt = qdf_mem_malloc(sizeof(*pkt));
 
 	return &pkt->u.pkt;     /* not actually a dereference */
 }
@@ -97,7 +97,7 @@ void htt_htc_pkt_pool_free(struct htt_pdev_t *pdev)
 	pkt = pdev->htt_htc_pkt_freelist;
 	while (pkt) {
 		next = pkt->u.next;
-		cdf_mem_free(pkt);
+		qdf_mem_free(pkt);
 		pkt = next;
 	}
 	pdev->htt_htc_pkt_freelist = NULL;
@@ -129,7 +129,7 @@ void htt_htc_misc_pkt_pool_free(struct htt_pdev_t *pdev)
 		netbuf = (cdf_nbuf_t) (pkt->u.pkt.htc_pkt.pNetBufContext);
 		cdf_nbuf_unmap(pdev->osdev, netbuf, QDF_DMA_TO_DEVICE);
 		cdf_nbuf_free(netbuf);
-		cdf_mem_free(pkt);
+		qdf_mem_free(pkt);
 		pkt = next;
 	}
 	pdev->htt_htc_pkt_misclist = NULL;
@@ -152,7 +152,7 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 {
 	struct htt_pdev_t *pdev;
 
-	pdev = cdf_mem_malloc(sizeof(*pdev));
+	pdev = qdf_mem_malloc(sizeof(*pdev));
 	if (!pdev)
 		goto fail1;
 
@@ -161,7 +161,7 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	pdev->txrx_pdev = txrx_pdev;
 	pdev->htc_pdev = htc_pdev;
 
-	cdf_mem_set(&pdev->stats, sizeof(pdev->stats), 0);
+	qdf_mem_set(&pdev->stats, sizeof(pdev->stats), 0);
 	pdev->htt_htc_pkt_freelist = NULL;
 #ifdef ATH_11AC_TXCOMPACT
 	pdev->htt_htc_pkt_misclist = NULL;
@@ -200,7 +200,7 @@ htt_pdev_alloc(ol_txrx_pdev_handle txrx_pdev,
 	return pdev;
 
 fail2:
-	cdf_mem_free(pdev);
+	qdf_mem_free(pdev);
 
 fail1:
 	return NULL;
@@ -235,7 +235,7 @@ htt_attach(struct htt_pdev_t *pdev, int desc_pool_size)
 	/* pre-allocate some HTC_PACKET objects */
 	for (i = 0; i < HTT_HTC_PKT_POOL_INIT_SIZE; i++) {
 		struct htt_htc_pkt_union *pkt;
-		pkt = cdf_mem_malloc(sizeof(*pkt));
+		pkt = qdf_mem_malloc(sizeof(*pkt));
 		if (!pkt)
 			break;
 		htt_htc_pkt_free(pdev, &pkt->u.pkt);
@@ -362,7 +362,7 @@ void htt_detach(htt_pdev_handle pdev)
  */
 void htt_pdev_free(htt_pdev_handle pdev)
 {
-	cdf_mem_free(pdev);
+	qdf_mem_free(pdev);
 }
 
 void htt_detach_target(htt_pdev_handle pdev)
@@ -397,8 +397,8 @@ int htt_htc_attach(struct htt_pdev_t *pdev)
 	HTC_SERVICE_CONNECT_RESP response;
 	A_STATUS status;
 
-	cdf_mem_set(&connect, sizeof(connect), 0);
-	cdf_mem_set(&response, sizeof(response), 0);
+	qdf_mem_set(&connect, sizeof(connect), 0);
+	qdf_mem_set(&response, sizeof(response), 0);
 
 	connect.pMetaData = NULL;
 	connect.MetaDataLength = 0;
