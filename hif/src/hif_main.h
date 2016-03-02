@@ -146,7 +146,7 @@ struct hif_softc {
 #ifdef FEATURE_NAPI
 	struct qca_napi_data napi_data;
 #endif /* FEATURE_NAPI */
-	struct hif_callbacks callbacks;
+	struct hif_driver_state_callbacks callbacks;
 	uint32_t hif_con_param;
 };
 
@@ -183,7 +183,7 @@ void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
 int hif_bus_get_context_size(enum qdf_bus_type bus_type);
 void hif_read_phy_mem_base(struct hif_softc *scn, qdf_dma_addr_t *bar_value);
 uint32_t hif_get_conparam(struct hif_softc *scn);
-struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn);
+struct hif_driver_state_callbacks *hif_get_callbacks_handle(struct hif_softc *scn);
 bool hif_is_driver_unloading(struct hif_softc *scn);
 bool hif_is_load_or_unload_in_progress(struct hif_softc *scn);
 bool hif_is_recovery_in_progress(struct hif_softc *scn);

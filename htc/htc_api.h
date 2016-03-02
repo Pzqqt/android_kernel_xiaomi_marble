@@ -28,7 +28,6 @@
 #ifndef _HTC_API_H_
 #define _HTC_API_H_
 
-#include <athdefs.h>
 #include "osapi_linux.h"
 #include "htc_packet.h"
 #include <htc.h>

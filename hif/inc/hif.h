@@ -33,9 +33,6 @@ extern "C" {
 #endif /* __cplusplus */
 
 /* Header files */
-#include "athdefs.h"
-#include "a_types.h"
-#include "osapi_linux.h"
 #include <qdf_status.h>
 #include "qdf_nbuf.h"
 #include "ol_if_athvar.h"
@@ -234,10 +231,20 @@ struct htc_callbacks {
 	int (*dsrHandler)(void *context);
 };
 
-struct hif_callbacks {
+/**
+ * struct hif_driver_state_callbacks - Callbacks for HIF to query Driver state
+ * @context: Private data context
+ * @set_recovery_in_progress: To Set Driver state for recovery in progress
+ * @is_recovery_in_progress: Query if driver state is recovery in progress
+ * @is_load_unload_in_progress: Query if driver state Load/Unload in Progress
+ * @is_driver_unloading: Query if driver is unloading.
+ *
+ * This Structure provides callback pointer for HIF to query hdd for driver
+ * states.
+ */
+struct hif_driver_state_callbacks {
 	void *context;
 	void (*set_recovery_in_progress)(void *context, uint8_t val);
-	uint64_t (*get_monotonic_boottime)(void);
 	bool (*is_recovery_in_progress)(void *context);
 	bool (*is_load_unload_in_progress)(void *context);
 	bool (*is_driver_unloading)(void *context);
@@ -406,7 +413,7 @@ void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 				      int htc_endpoint);
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 				  enum qdf_bus_type bus_type,
-				  struct hif_callbacks *cbk);
+				  struct hif_driver_state_callbacks *cbk);
 void hif_close(struct hif_opaque_softc *hif_ctx);
 QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		      void *bdev, const hif_bus_id *bid,

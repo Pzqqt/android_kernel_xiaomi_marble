@@ -25,10 +25,6 @@
  * to the Linux Foundation.
  */
 
-#include <osdep.h>
-#include "a_types.h"
-#include <athdefs.h>
-#include "osapi_linux.h"
 #include "hif.h"
 #include "hif_io32.h"
 #include "ce_api.h"
@@ -138,19 +134,13 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 				union ce_desc *descriptor,
 				void *memory, int index)
 {
-	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
 	int record_index = get_next_record_index(
 			&hif_ce_desc_history_index[ce_id], HIF_CE_HISTORY_MAX);
 
 	struct hif_ce_desc_event *event =
 		&hif_ce_desc_history[ce_id][record_index];
 	event->type = type;
-
-	if (cbk && cbk->get_monotonic_boottime)
-		event->time = cbk->get_monotonic_boottime();
-	else
-		event->time = ((uint64_t)qdf_system_ticks_to_msecs(
-						qdf_system_ticks()) * 1000);
+	event->time = qdf_get_monotonic_boottime();
 
 	if (descriptor != NULL)
 		event->descriptor = *descriptor;

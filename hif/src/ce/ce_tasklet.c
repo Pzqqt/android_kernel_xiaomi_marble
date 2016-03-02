@@ -25,13 +25,10 @@
  * to the Linux Foundation.
  */
 
-#include <osdep.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>
 #include <linux/if_arp.h>
-#include "a_types.h"
-#include "athdefs.h"
 #include "qdf_lock.h"
 #include "qdf_types.h"
 #include "qdf_status.h"

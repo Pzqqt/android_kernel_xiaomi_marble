@@ -24,10 +24,6 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
-#include <osdep.h>
-#include "a_types.h"
-#include "athdefs.h"
-#include "osapi_linux.h"
 #include "targcfg.h"
 #include "qdf_lock.h"
 #include "qdf_status.h"

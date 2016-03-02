@@ -29,7 +29,6 @@
 #define HTC_PACKET_H_
 
 #include <osdep.h>
-#include <a_types.h>            /* A_UINT16, etc. */
 #include "dl_list.h"
 
 /* ------ Endpoint IDS ------ */

@@ -25,7 +25,6 @@
  * to the Linux Foundation.
  */
 
-#include <osdep.h>
 #include <linux/pci.h>
 #include <linux/slab.h>
 #include <linux/interrupt.h>
@@ -41,18 +40,13 @@
 #include "ce_api.h"
 #include "ce_internal.h"
 #include "ce_reg.h"
-#include "bmi_msg.h"            /* TARGET_TYPE_ */
 #include "ce_bmi.h"
 #include "regtable.h"
 #include "ol_fw.h"
 #include <linux/debugfs.h>
 #include <linux/seq_file.h>
-#include <osapi_linux.h>
 #include "qdf_status.h"
-#include "wma_api.h"
 #include "qdf_atomic.h"
-#include "wlan_hdd_power.h"
-#include "wlan_hdd_main.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #else
@@ -62,11 +56,6 @@
 #include "mp_dev.h"
 #include "hif_debug.h"
 
-#ifndef REMOVE_PKT_LOG
-#include "ol_txrx_types.h"
-#include "pktlog_ac_api.h"
-#include "pktlog_ac.h"
-#endif
 #include "if_pci_internal.h"
 #include "icnss_stub.h"
 #include "ce_tasklet.h"
@@ -77,14 +66,6 @@
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000
 #define RAMDUMP_EVENT_TIMEOUT 2500
-
-unsigned int msienable = 0;
-module_param(msienable, int, 0644);
-
-
-#ifndef REMOVE_PKT_LOG
-struct ol_pl_os_dep_funcs *g_ol_pl_os_dep_funcs = NULL;
-#endif
 
 /* Setting SOC_GLOBAL_RESET during driver unload causes intermittent
  * PCIe data bus error
@@ -2778,7 +2759,7 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
 	struct hif_softc *scn = HIF_GET_SOFTC(sc);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(sc);
 	struct hif_config_info *cfg = hif_get_ini_handle(hif_hdl);
-	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
 	A_target_id_t pci_addr = scn->mem;
 
 	HIF_ERROR("%s: keep_awake_count = %d",

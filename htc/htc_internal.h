@@ -32,9 +32,6 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include <athdefs.h>
-#include "a_types.h"
-#include "osapi_linux.h"
 #include <qdf_nbuf.h>
 #include <qdf_types.h>
 #include <qdf_lock.h>

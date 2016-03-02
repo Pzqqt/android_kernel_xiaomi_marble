@@ -25,10 +25,6 @@
  * to the Linux Foundation.
  */
 
-#include <osdep.h>
-#include "a_types.h"
-#include "athdefs.h"
-#include "osapi_linux.h"
 #include "targcfg.h"
 #include "qdf_lock.h"
 #include "qdf_status.h"
@@ -407,7 +403,7 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
  */
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 				  enum qdf_bus_type bus_type,
-				  struct hif_callbacks *cbk)
+				  struct hif_driver_state_callbacks *cbk)
 {
 	struct hif_softc *scn;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -432,7 +428,7 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 	qdf_atomic_init(&scn->active_tasklet_cnt);
 	qdf_atomic_init(&scn->link_suspended);
 	qdf_atomic_init(&scn->tasklet_from_intr);
-	qdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_callbacks));
+	qdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_driver_state_callbacks));
 
 	status = hif_bus_open(scn, bus_type);
 	if (status != QDF_STATUS_SUCCESS) {
@@ -891,7 +887,7 @@ uint32_t hif_get_conparam(struct hif_softc *scn)
  *
  * Return: pointer to HIF Callbacks
  */
-struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn)
+struct hif_driver_state_callbacks *hif_get_callbacks_handle(struct hif_softc *scn)
 {
 	return &scn->callbacks;
 }
@@ -904,7 +900,7 @@ struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn)
  */
 bool hif_is_driver_unloading(struct hif_softc *scn)
 {
-	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
 
 	if (cbk && cbk->is_driver_unloading)
 		return cbk->is_driver_unloading(cbk->context);
@@ -921,7 +917,7 @@ bool hif_is_driver_unloading(struct hif_softc *scn)
  */
 bool hif_is_load_or_unload_in_progress(struct hif_softc *scn)
 {
-	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
 
 	if (cbk && cbk->is_load_unload_in_progress)
 		return cbk->is_load_unload_in_progress(cbk->context);
@@ -938,7 +934,7 @@ bool hif_is_load_or_unload_in_progress(struct hif_softc *scn)
  */
 bool hif_is_recovery_in_progress(struct hif_softc *scn)
 {
-	struct hif_callbacks *cbk = hif_get_callbacks_handle(scn);
+	struct hif_driver_state_callbacks *cbk = hif_get_callbacks_handle(scn);
 
 	if (cbk && cbk->is_recovery_in_progress)
 		return cbk->is_recovery_in_progress(cbk->context);
