@@ -62,12 +62,13 @@
 #include "dbglog_host.h"
 /* FIXME: Inclusion of .c looks odd but this is how it is in internal codebase */
 #include "csr_api.h"
-#include "ol_fw.h"
 
 #include "dfs.h"
 #include "wma_internal.h"
 
 #include "wma_ocb.h"
+#include "cdp_txrx_cfg.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 /**
  * wma_find_vdev_by_addr() - find vdev_id from mac address
@@ -3260,7 +3261,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			WMA_LOGD("%s: Update peer(%pM) state into auth",
 				 __func__, add_bss->bssId);
 			ol_txrx_peer_state_update(pdev, add_bss->bssId,
-						  ol_txrx_peer_state_auth);
+						  OL_TXRX_PEER_STATE_AUTH);
 		} else {
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 			ol_txrx_vdev_handle vdev;
@@ -3268,7 +3269,7 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			WMA_LOGD("%s: Update peer(%pM) state into conn",
 				 __func__, add_bss->bssId);
 			ol_txrx_peer_state_update(pdev, add_bss->bssId,
-						  ol_txrx_peer_state_conn);
+						  OL_TXRX_PEER_STATE_CONN);
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 			peer = ol_txrx_find_peer_by_addr(pdev, add_bss->bssId,
 							  &peer_id);
@@ -3433,7 +3434,7 @@ void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
  */
 static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 {
-	enum ol_txrx_peer_state state = ol_txrx_peer_state_conn;
+	enum ol_txrx_peer_state state = OL_TXRX_PEER_STATE_CONN;
 	ol_txrx_pdev_handle pdev;
 	ol_txrx_vdev_handle vdev;
 	ol_txrx_peer_handle peer;
@@ -3813,7 +3814,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	peer = ol_txrx_find_peer_by_addr(pdev, params->bssId, &params->staIdx);
 	if (params->nonRoamReassoc) {
 		ol_txrx_peer_state_update(pdev, params->bssId,
-					  ol_txrx_peer_state_auth);
+					  OL_TXRX_PEER_STATE_AUTH);
 		qdf_atomic_set(&iface->bss_status, WMA_BSS_STATUS_STARTED);
 		iface->aid = params->assocId;
 		goto out;
@@ -3825,7 +3826,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
-	if (peer != NULL && peer->state == ol_txrx_peer_state_disc) {
+	if (peer != NULL && peer->state == OL_TXRX_PEER_STATE_DISC) {
 		/*
 		 * This is the case for reassociation.
 		 * peer state update and peer_assoc is required since it
@@ -3837,12 +3838,12 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			WMA_LOGD("%s: Update peer(%pM) state into auth",
 				 __func__, params->bssId);
 			ol_txrx_peer_state_update(pdev, params->bssId,
-						  ol_txrx_peer_state_auth);
+						  OL_TXRX_PEER_STATE_AUTH);
 		} else {
 			WMA_LOGD("%s: Update peer(%pM) state into conn",
 				 __func__, params->bssId);
 			ol_txrx_peer_state_update(pdev, params->bssId,
-						  ol_txrx_peer_state_conn);
+						  OL_TXRX_PEER_STATE_CONN);
 		}
 
 		if (wma_is_roam_synch_in_progress(wma, params->smesessionId)) {
@@ -3852,7 +3853,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 			 * skipping this operation, we are just executing the
 			 * following which are useful for LFR3.0.*/
 			ol_txrx_peer_state_update(pdev, params->bssId,
-						  ol_txrx_peer_state_auth);
+						  OL_TXRX_PEER_STATE_AUTH);
 			qdf_atomic_set(&iface->bss_status,
 				       WMA_BSS_STATUS_STARTED);
 			iface->aid = params->assocId;

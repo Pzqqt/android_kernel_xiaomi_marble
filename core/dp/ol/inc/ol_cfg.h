@@ -153,18 +153,6 @@ int ol_cfg_rx_pn_check(ol_pdev_handle pdev);
 int ol_cfg_rx_fwd_check(ol_pdev_handle pdev);
 
 /**
- * @brief set rx fwd disable/enable.
- * @details
- *  Choose whether to forward rx frames to tx (where applicable) within the
- *  WLAN driver, or to leave all forwarding up to the operating system.
- *  currently only intra-bss fwd is supported.
- *
- * @param pdev - handle to the physical device
- * @param disable_rx_fwd 1 -> no rx->tx forward -> rx->tx forward
- */
-void ol_set_cfg_rx_fwd_disabled(ol_pdev_handle pdev, uint8_t disalbe_rx_fwd);
-
-/**
  * @brief Check whether rx forwarding is enabled or disabled.
  * @details
  *  Choose whether to forward rx frames to tx (where applicable) within the
@@ -455,11 +443,6 @@ static inline int ol_tx_cfg_max_tx_queue_depth_ll(ol_pdev_handle pdev)
 	 */
 	return 1500;
 }
-
-/**
- * @brief Set packet log config in HTT config based on CFG ini configuration
- */
-void ol_set_cfg_packet_log_enabled(ol_pdev_handle pdev, uint8_t val);
 
 /**
  * @brief Get packet log config from HTT config

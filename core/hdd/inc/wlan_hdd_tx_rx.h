@@ -39,6 +39,7 @@
 #include <cds_api.h>
 #include <linux/skbuff.h>
 #include "ol_txrx_osif_api.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 #define HDD_ETHERTYPE_802_1_X              0x888E
 #define HDD_ETHERTYPE_802_1_X_FRAME_OFFSET 12

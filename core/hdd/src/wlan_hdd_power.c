@@ -69,6 +69,7 @@
 #include "hif.h"
 #include "sme_power_save_api.h"
 #include "cds_concurrency.h"
+#include "cdp_txrx_flow_ctrl_v2.h"
 
 /* Preprocessor definitions and constants */
 #define HDD_SSR_BRING_UP_TIME 30000

@@ -38,6 +38,7 @@
 #include <sme_api.h>
 #include <wlan_defs.h>
 #include "ol_txrx_ctrl_api.h"
+#include "cdp_txrx_peer_ops.h"
 
 /* Preprocessor Definitions and Constants */
 #ifdef FEATURE_WLAN_TDLS

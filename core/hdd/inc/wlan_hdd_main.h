@@ -65,6 +65,7 @@
 #include "ol_txrx_osif_api.h"
 #include "ol_txrx_ctrl_api.h"
 #include <wlan_hdd_lro.h>
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 /*---------------------------------------------------------------------------
    Preprocessor definitions and constants

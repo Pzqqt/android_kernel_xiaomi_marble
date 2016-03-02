@@ -52,8 +52,9 @@
 #include <wlan_hdd_ipa.h>
 
 #include "wlan_hdd_ocb.h"
-
 #include "wlan_hdd_lro.h"
+
+#include "cdp_txrx_peer_ops.h"
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT
 #define HDD_EAPOL_ETHER_TYPE             (0x888E)
@@ -490,7 +491,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 				(qdf_nbuf_len(skb)-QDF_DP_TRACE_RECORD_SIZE)));
 
 	/* Check if station is connected */
-	if (ol_txrx_peer_state_conn ==
+	if (OL_TXRX_PEER_STATE_CONN ==
 		 pAdapter->aStaInfo[STAId].tlSTAState) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA,
 				 QDF_TRACE_LEVEL_WARN,

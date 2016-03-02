@@ -56,6 +56,8 @@
 #include "ol_txrx_ctrl_api.h"
 #include "ol_txrx_types.h"
 #include "ol_txrx.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
+#include "cdp_txrx_peer_ops.h"
 
 /* These are needed to recognize WPA and RSN suite types */
 #define HDD_WPA_OUI_SIZE 4
@@ -1216,7 +1218,7 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 		return QDF_STATUS_SUCCESS;
 #endif
 
-	if (sta_state == ol_txrx_peer_state_auth) {
+	if (sta_state == OL_TXRX_PEER_STATE_AUTH) {
 #ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
 		/* make sure event is reset */
 		INIT_COMPLETION(pAdapter->sta_authorized_event);
@@ -1317,7 +1319,7 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 		 */
 		qdf_status =
 			hdd_change_peer_state(pAdapter, staDesc.sta_id,
-						ol_txrx_peer_state_auth,
+						OL_TXRX_PEER_STATE_AUTH,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 						pRoamInfo->roamSynchInProgress
 #else
@@ -1332,7 +1334,7 @@ static QDF_STATUS hdd_roam_register_sta(hdd_adapter_t *pAdapter,
 			 pHddStaCtx->conn_info.staId[0]);
 		qdf_status =
 			hdd_change_peer_state(pAdapter, staDesc.sta_id,
-						ol_txrx_peer_state_conn,
+						OL_TXRX_PEER_STATE_CONN,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 						pRoamInfo->roamSynchInProgress
 #else
@@ -1529,7 +1531,7 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 	 */
 	ret = hdd_change_peer_state(adapter,
 			hddstactx->conn_info.staId[0],
-			ol_txrx_peer_state_auth,
+			OL_TXRX_PEER_STATE_AUTH,
 			hdd_is_roam_sync_in_progress(roaminfo));
 	hdd_conn_set_authenticated(adapter, true);
 	if ((WLAN_HDD_INFRA_STATION == adapter->device_mode) ||
@@ -2120,7 +2122,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				qdf_status =
 					hdd_change_peer_state(pAdapter,
 						pHddStaCtx->conn_info.staId[0],
-						ol_txrx_peer_state_conn,
+						OL_TXRX_PEER_STATE_CONN,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 						pRoamInfo->roamSynchInProgress
 #else
@@ -2135,7 +2137,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 				qdf_status =
 					hdd_change_peer_state(pAdapter,
 						pHddStaCtx->conn_info.staId[0],
-						ol_txrx_peer_state_auth,
+						OL_TXRX_PEER_STATE_AUTH,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 						pRoamInfo->roamSynchInProgress
 #else

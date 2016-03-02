@@ -49,6 +49,7 @@
 #include <wdi_event.h>
 #include <ol_htt_tx_api.h>
 #include <ol_txrx_peer_find.h>
+#include <cdp_txrx_ipa.h>
 
 /*--- target->host HTT message dispatch function ----------------------------*/
 

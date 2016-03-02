@@ -83,6 +83,7 @@
 #include "wlan_hdd_conc_ut.h"
 #include "wlan_hdd_ocb.h"
 #include "wlan_hdd_napi.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 #ifdef QCA_PKT_PROTO_TRACE
 #include "cds_packet.h"

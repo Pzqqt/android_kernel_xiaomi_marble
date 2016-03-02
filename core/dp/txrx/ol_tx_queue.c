@@ -37,9 +37,26 @@
 #include <ol_tx_queue.h>
 #include <ol_txrx_dbg.h>        /* ENABLE_TX_QUEUE_LOG */
 #include <qdf_types.h>          /* bool */
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
 
+/**
+ * ol_txrx_vdev_pause- Suspend all tx data for the specified virtual device
+ *
+ * @data_vdev - the virtual device being paused
+ * @reason - the reason for which vdev queue is getting paused
+ *
+ * This function applies primarily to HL systems, but also
+ * applies to LL systems that use per-vdev tx queues for MCC or
+ * thermal throttling. As an example, this function could be
+ * used when a single-channel physical device supports multiple
+ * channels by jumping back and forth between the channels in a
+ * time-shared manner.  As the device is switched from channel A
+ * to channel B, the virtual devices that operate on channel A
+ * will be paused.
+ *
+ */
 void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
 {
 	/* TO DO: log the queue pause */
@@ -57,6 +74,16 @@ void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
+/**
+ * ol_txrx_vdev_unpause - Resume tx for the specified virtual device
+ *
+ * @data_vdev - the virtual device being unpaused
+ * @reason - the reason for which vdev queue is getting unpaused
+ *
+ * This function applies primarily to HL systems, but also applies to
+ * LL systems that use per-vdev tx queues for MCC or thermal throttling.
+ *
+ */
 void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 {
 	/* TO DO: log the queue unpause */
@@ -82,6 +109,19 @@ void ol_txrx_vdev_unpause(ol_txrx_vdev_handle vdev, uint32_t reason)
 	TX_SCHED_DEBUG_PRINT("Leave %s\n", __func__);
 }
 
+/**
+ * ol_txrx_vdev_flush - Drop all tx data for the specified virtual device
+ *
+ * @data_vdev - the virtual device being flushed
+ *
+ *  This function applies primarily to HL systems, but also applies to
+ *  LL systems that use per-vdev tx queues for MCC or thermal throttling.
+ *  This function would typically be used by the ctrl SW after it parks
+ *  a STA vdev and then resumes it, but to a new AP.  In this case, though
+ *  the same vdev can be used, any old tx frames queued inside it would be
+ *  stale, and would need to be discarded.
+ *
+ */
 void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 {
 	qdf_spin_lock_bh(&vdev->ll_pause.mutex);
@@ -102,7 +142,11 @@ void ol_txrx_vdev_flush(ol_txrx_vdev_handle vdev)
 	vdev->ll_pause.txq.depth = 0;
 	qdf_spin_unlock_bh(&vdev->ll_pause.mutex);
 }
-
+#else /* defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) */
+void ol_txrx_vdev_flush(ol_txrx_vdev_handle data_vdev)
+{
+	return;
+}
 #endif /* defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) */
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2

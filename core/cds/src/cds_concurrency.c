@@ -64,6 +64,7 @@
 #include "cds_utils.h"
 #include "cds_reg_service.h"
 #include "wlan_hdd_ipa.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 #define CDS_MAX_FEATURE_SET   8
 static struct cds_conc_connection_info
@@ -2645,7 +2646,7 @@ bool cds_is_connection_in_progress(void)
 			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
 				sta_id++) {
 				if (!((adapter->aStaInfo[sta_id].isUsed)
-				    && (ol_txrx_peer_state_conn ==
+				    && (OL_TXRX_PEER_STATE_CONN ==
 				    adapter->aStaInfo[sta_id].tlSTAState)))
 					continue;
 

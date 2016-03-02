@@ -48,56 +48,9 @@ struct ol_rx_cached_buf {
 
 struct txrx_rx_metainfo;
 
-/**
- * struct ol_txrx_desc_type - txrx descriptor type
- * @sta_id: sta id
- * @is_qos_enabled: is station qos enabled
- * @is_wapi_supported: is station wapi supported
- */
-struct ol_txrx_desc_type {
-	uint8_t sta_id;
-	uint8_t is_qos_enabled;
-	uint8_t is_wapi_supported;
-};
-
-
 typedef QDF_STATUS (*ol_rx_callback_fp)(void *p_cds_gctx,
 					 qdf_nbuf_t pDataBuff,
 					 uint8_t ucSTAId);
-
-typedef void (*ol_tx_pause_callback_fp)(uint8_t vdev_id,
-					enum netif_action_type action,
-					enum netif_reason_type reason);
-
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb);
-#else
-static inline
-QDF_STATUS ol_txrx_register_pause_cb(ol_tx_pause_callback_fp pause_cb)
-{
-	return QDF_STATUS_SUCCESS;
-
-}
-#endif
-
-#ifdef QCA_LL_LEGACY_TX_FLOW_CONTROL
-
-int ol_txrx_register_tx_flow_control (uint8_t vdev_id,
-	ol_txrx_tx_flow_control_fp flowControl,
-	void *osif_fc_ctx);
-
-int ol_txrx_deregister_tx_flow_control_cb(uint8_t vdev_id);
-
-void ol_txrx_flow_control_cb(ol_txrx_vdev_handle vdev,
-	bool tx_resume);
-bool
-ol_txrx_get_tx_resource(uint8_t sta_id,
-			unsigned int low_watermark,
-			unsigned int high_watermark_offset);
-
-int
-ol_txrx_ll_set_tx_pause_q_depth(uint8_t vdev_id, int pause_q_depth);
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 /**
  * @brief Divide a jumbo TCP frame into smaller segments.
@@ -130,28 +83,10 @@ qdf_nbuf_t ol_txrx_osif_tso_segment(ol_txrx_vdev_handle txrx_vdev,
 
 qdf_nbuf_t ol_tx_data(ol_txrx_vdev_handle data_vdev, qdf_nbuf_t skb);
 
-#ifdef IPA_OFFLOAD
-qdf_nbuf_t ol_tx_send_ipa_data_frame(void *vdev,
-			qdf_nbuf_t skb);
-#endif
-
-QDF_STATUS ol_txrx_register_peer
-			(struct ol_txrx_desc_type *sta_desc);
-
-QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id);
-
-QDF_STATUS ol_txrx_change_peer_state(uint8_t sta_id,
-				     enum ol_txrx_peer_state sta_state,
-				     bool roam_synch_in_progress);
-
 void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 			qdf_nbuf_t rx_buf_list);
 
 void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 			     bool drop);
 
-#if defined(FEATURE_LRO)
-void ol_register_lro_flush_cb(void (handler)(void *), void *data);
-void ol_deregister_lro_flush_cb(void);
-#endif
 #endif /* _OL_TXRX_OSIF_API__H_ */

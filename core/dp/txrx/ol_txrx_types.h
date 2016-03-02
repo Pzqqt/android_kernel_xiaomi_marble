@@ -49,6 +49,8 @@
 #include "ol_htt_rx_api.h"
 #include "ol_txrx_ctrl_api.h" /* WLAN_MAX_STA_COUNT */
 #include "ol_txrx_osif_api.h" /* ol_rx_callback_fp */
+#include "cdp_txrx_flow_ctrl_v2.h"
+#include "cdp_txrx_peer_ops.h"
 
 /*
  * The target may allocate multiple IDs for a peer.

@@ -71,6 +71,10 @@
 
 #include "wma_ocb.h"
 #include "cds_concurrency.h"
+#include "cdp_txrx_cfg.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
+#include "cdp_txrx_flow_ctrl_v2.h"
+#include "cdp_txrx_ipa.h"
 
 #define WMA_LOG_COMPLETION_TIMER 10000 /* 10 seconds */
 

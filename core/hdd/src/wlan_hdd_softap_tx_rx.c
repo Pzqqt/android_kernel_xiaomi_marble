@@ -39,6 +39,7 @@
 #include <cds_sched.h>
 #include <wlan_hdd_napi.h>
 #include <ol_txrx.h>
+#include <cdp_txrx_peer_ops.h>
 
 #ifdef IPA_OFFLOAD
 #include <wlan_hdd_ipa.h>
@@ -241,15 +242,15 @@ int hdd_softap_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			goto drop_pkt;
 		}
 
-		if ((ol_txrx_peer_state_conn !=
+		if ((OL_TXRX_PEER_STATE_CONN !=
 		     pAdapter->aStaInfo[STAId].tlSTAState)
-		    && (ol_txrx_peer_state_auth !=
+		    && (OL_TXRX_PEER_STATE_AUTH !=
 			pAdapter->aStaInfo[STAId].tlSTAState)) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
 				  QDF_TRACE_LEVEL_WARN,
 				  "%s: Station not connected yet", __func__);
 			goto drop_pkt;
-		} else if (ol_txrx_peer_state_conn ==
+		} else if (OL_TXRX_PEER_STATE_CONN ==
 			   pAdapter->aStaInfo[STAId].tlSTAState) {
 			if (ntohs(skb->protocol) != HDD_ETHERTYPE_802_1_X) {
 				QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA,
@@ -739,9 +740,9 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 		 * transition TL directly to 'Authenticated' state.
 		 */
 		qdf_status = hdd_change_peer_state(pAdapter, staDesc.sta_id,
-						ol_txrx_peer_state_auth, false);
+						OL_TXRX_PEER_STATE_AUTH, false);
 
-		pAdapter->aStaInfo[staId].tlSTAState = ol_txrx_peer_state_auth;
+		pAdapter->aStaInfo[staId].tlSTAState = OL_TXRX_PEER_STATE_AUTH;
 		pAdapter->sessionCtx.ap.uIsAuthenticated = true;
 	} else {
 
@@ -750,8 +751,8 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 			  pAdapter->aStaInfo[staId].ucSTAId);
 
 		qdf_status = hdd_change_peer_state(pAdapter, staDesc.sta_id,
-						ol_txrx_peer_state_conn, false);
-		pAdapter->aStaInfo[staId].tlSTAState = ol_txrx_peer_state_conn;
+						OL_TXRX_PEER_STATE_CONN, false);
+		pAdapter->aStaInfo[staId].tlSTAState = OL_TXRX_PEER_STATE_CONN;
 
 		pAdapter->sessionCtx.ap.uIsAuthenticated = false;
 
@@ -899,7 +900,7 @@ QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 
 	if (QDF_STATUS_SUCCESS == qdf_status) {
 		pAdapter->aStaInfo[ucSTAId].tlSTAState =
-			ol_txrx_peer_state_auth;
+			OL_TXRX_PEER_STATE_AUTH;
 	}
 
 	QDF_TRACE(QDF_MODULE_ID_HDD_SAP_DATA, QDF_TRACE_LEVEL_INFO,

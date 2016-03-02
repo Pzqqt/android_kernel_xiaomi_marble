@@ -65,6 +65,9 @@
 
 #include "dfs.h"
 #include "wma_internal.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
+#include "cdp_txrx_cmn.h"
+#include "cdp_txrx_misc.h"
 
 typedef struct {
 	int32_t rate;
@@ -2429,7 +2432,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 		wma_handle->last_umac_data_nbuf = skb;
 
 		/* Send the Data frame to TxRx in Non Standard Path */
-		ret = ol_tx_non_std(txrx_vdev, ol_tx_spec_no_free, skb);
+		ret = ol_tx_non_std(txrx_vdev, OL_TX_SPEC_NO_FREE, skb);
 
 		if (ret) {
 			WMA_LOGE("TxRx Rejected. Fail to do Tx");

@@ -63,6 +63,8 @@
 #include <ol_tx_desc.h>         /* ol_tx_desc_frame_free */
 #include <ol_tx_queue.h>
 #include <ol_txrx.h>
+#include <cdp_txrx_flow_ctrl_legacy.h>
+#include <cdp_txrx_ipa.h>
 #include "wma.h"
 #ifndef REMOVE_PKT_LOG
 #include "pktlog_ac.h"
@@ -1369,7 +1371,7 @@ void ol_txrx_flush_rx_frames(struct ol_txrx_peer_t *peer,
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
 
-	if (peer->state >= ol_txrx_peer_state_conn)
+	if (peer->state >= OL_TXRX_PEER_STATE_CONN)
 		data_rx = peer->vdev->rx;
 	else
 		drop = true;
@@ -1542,9 +1544,9 @@ ol_txrx_peer_attach(ol_txrx_vdev_handle vdev, uint8_t *peer_mac_addr)
 	 * or else to the "conn" state. For non-open mode, the peer will
 	 * progress to "auth" state once the authentication completes.
 	 */
-	peer->state = ol_txrx_peer_state_invalid;
+	peer->state = OL_TXRX_PEER_STATE_INVALID;
 	ol_txrx_peer_state_update(pdev, peer->mac_addr.raw,
-				  ol_txrx_peer_state_disc);
+				  OL_TXRX_PEER_STATE_DISC);
 
 #ifdef QCA_SUPPORT_PEER_DATA_RX_RSSI
 	peer->rssi_dbm = HTT_RSSI_INVALID;
@@ -1620,14 +1622,14 @@ ol_txrx_peer_state_update(struct ol_txrx_pdev_t *pdev, uint8_t *peer_mac,
 	TXRX_PRINT(TXRX_PRINT_LEVEL_INFO2, "%s: change from %d to %d\n",
 		   __func__, peer->state, state);
 
-	peer->tx_filter = (state == ol_txrx_peer_state_auth)
+	peer->tx_filter = (state == OL_TXRX_PEER_STATE_AUTH)
 		? ol_tx_filter_pass_thru
-		: ((state == ol_txrx_peer_state_conn)
+		: ((state == OL_TXRX_PEER_STATE_CONN)
 		   ? ol_tx_filter_non_auth
 		   : ol_tx_filter_discard);
 
 	if (peer->vdev->pdev->cfg.host_addba) {
-		if (state == ol_txrx_peer_state_auth) {
+		if (state == OL_TXRX_PEER_STATE_AUTH) {
 			int tid;
 			/*
 			 * Pause all regular (non-extended) TID tx queues until
@@ -2103,6 +2105,15 @@ QDF_STATUS ol_txrx_bus_resume(void)
 	return QDF_STATUS_SUCCESS;
 }
 
+/**
+ * ol_txrx_get_tx_pending - Get the number of pending transmit
+ * frames that are awaiting completion.
+ *
+ * @pdev - the data physical device object
+ *  Mainly used in clean up path to make sure all buffers have been freed
+ *
+ * Return: count of pending frames
+ */
 int ol_txrx_get_tx_pending(ol_txrx_pdev_handle pdev_handle)
 {
 	struct ol_txrx_pdev_t *pdev = (ol_txrx_pdev_handle) pdev_handle;
@@ -2908,34 +2919,23 @@ inline void ol_txrx_flow_control_cb(ol_txrx_vdev_handle vdev,
  */
 void
 ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    qdf_dma_addr_t *ce_sr_base_paddr,
-			    uint32_t *ce_sr_ring_size,
-			    qdf_dma_addr_t *ce_reg_paddr,
-			    qdf_dma_addr_t *tx_comp_ring_base_paddr,
-			    uint32_t *tx_comp_ring_size,
-			    uint32_t *tx_num_alloc_buffer,
-			    qdf_dma_addr_t *rx_rdy_ring_base_paddr,
-			    uint32_t *rx_rdy_ring_size,
-			    qdf_dma_addr_t *rx_proc_done_idx_paddr,
-			    void **rx_proc_done_idx_vaddr,
-			    qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
-			    uint32_t *rx2_rdy_ring_size,
-			    qdf_dma_addr_t *rx2_proc_done_idx2_paddr,
-			    void **rx2_proc_done_idx2_vaddr)
+		 struct ol_txrx_ipa_resources *ipa_res)
 {
 	htt_ipa_uc_get_resource(pdev->htt_pdev,
-				ce_sr_base_paddr,
-				ce_sr_ring_size,
-				ce_reg_paddr,
-				tx_comp_ring_base_paddr,
-				tx_comp_ring_size,
-				tx_num_alloc_buffer,
-				rx_rdy_ring_base_paddr,
-				rx_rdy_ring_size, rx_proc_done_idx_paddr,
-				rx_proc_done_idx_vaddr,
-				rx2_rdy_ring_base_paddr,
-				rx2_rdy_ring_size, rx2_proc_done_idx2_paddr,
-				rx2_proc_done_idx2_vaddr);
+				&ipa_res->ce_sr_base_paddr,
+				&ipa_res->ce_sr_ring_size,
+				&ipa_res->ce_reg_paddr,
+				&ipa_res->tx_comp_ring_base_paddr,
+				&ipa_res->tx_comp_ring_size,
+				&ipa_res->tx_num_alloc_buffer,
+				&ipa_res->rx_rdy_ring_base_paddr,
+				&ipa_res->rx_rdy_ring_size,
+				&ipa_res->rx_proc_done_idx_paddr,
+				&ipa_res->rx_proc_done_idx_vaddr,
+				&ipa_res->rx2_rdy_ring_base_paddr,
+				&ipa_res->rx2_rdy_ring_size,
+				&ipa_res->rx2_proc_done_idx_paddr,
+				&ipa_res->rx2_proc_done_idx_vaddr);
 }
 
 /**
@@ -3154,7 +3154,7 @@ static void ol_rx_data_cb(struct ol_txrx_peer_t *peer,
 		goto free_buf;
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	if (qdf_unlikely(!(peer->state >= ol_txrx_peer_state_conn))) {
+	if (qdf_unlikely(!(peer->state >= OL_TXRX_PEER_STATE_CONN))) {
 		qdf_spin_unlock_bh(&peer->peer_info_lock);
 		goto free_buf;
 	}
@@ -3218,7 +3218,7 @@ void ol_rx_data_process(struct ol_txrx_peer_t *peer,
 	qdf_assert(peer->vdev);
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	if (peer->state >= ol_txrx_peer_state_conn)
+	if (peer->state >= OL_TXRX_PEER_STATE_CONN)
 		data_rx = peer->vdev->rx;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
@@ -3323,7 +3323,7 @@ QDF_STATUS ol_txrx_register_peer(struct ol_txrx_desc_type *sta_desc)
 		return QDF_STATUS_E_FAULT;
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
-	peer->state = ol_txrx_peer_state_conn;
+	peer->state = OL_TXRX_PEER_STATE_CONN;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
 	param.qos_capable = sta_desc->is_qos_enabled;
@@ -3382,7 +3382,7 @@ QDF_STATUS ol_txrx_clear_peer(uint8_t sta_id)
 
 	qdf_spin_lock_bh(&peer->peer_info_lock);
 	peer->vdev->rx = NULL;
-	peer->state = ol_txrx_peer_state_disc;
+	peer->state = OL_TXRX_PEER_STATE_DISC;
 	qdf_spin_unlock_bh(&peer->peer_info_lock);
 
 	return QDF_STATUS_SUCCESS;
@@ -3426,7 +3426,7 @@ QDF_STATUS ol_txrx_register_ocb_peer(void *cds_ctx, uint8_t *mac_addr,
 
 	/* Set peer state to connected */
 	ol_txrx_peer_state_update(pdev, peer->mac_addr.raw,
-				  ol_txrx_peer_state_auth);
+				  OL_TXRX_PEER_STATE_AUTH);
 
 	return QDF_STATUS_SUCCESS;
 }

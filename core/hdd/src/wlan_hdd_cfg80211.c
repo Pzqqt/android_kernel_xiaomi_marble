@@ -6335,7 +6335,7 @@ static int __wlan_hdd_change_station(struct wiphy *wiphy,
 			status =
 				hdd_softap_change_sta_state(pAdapter,
 							    &STAMacAddress,
-							    ol_txrx_peer_state_auth);
+							    OL_TXRX_PEER_STATE_AUTH);
 
 			if (status != QDF_STATUS_SUCCESS) {
 				hddLog(QDF_TRACE_LEVEL_INFO,

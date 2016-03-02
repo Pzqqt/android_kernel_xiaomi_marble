@@ -59,54 +59,6 @@
 #define OL_TXQ_PAUSE_REASON_VDEV_STOP         (1 << 3)
 #define OL_TXQ_PAUSE_REASON_THERMAL_MITIGATION (1 << 4)
 
-
-/**
- * enum netif_action_type - Type of actions on netif queues
- * @WLAN_STOP_ALL_NETIF_QUEUE: stop all netif queues
- * @WLAN_START_ALL_NETIF_QUEUE: start all netif queues
- * @WLAN_WAKE_ALL_NETIF_QUEUE: wake all netif queues
- * @WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER: stop all queues and off carrier
- * @WLAN_START_ALL_NETIF_QUEUE_N_CARRIER: start all queues and on carrier
- * @WLAN_NETIF_TX_DISABLE: disable tx
- * @WLAN_NETIF_TX_DISABLE_N_CARRIER: disable tx and off carrier
- * @WLAN_NETIF_CARRIER_ON: on carrier
- * @WLAN_NETIF_CARRIER_OFF: off carrier
- */
-enum netif_action_type {
-	WLAN_STOP_ALL_NETIF_QUEUE,
-	WLAN_START_ALL_NETIF_QUEUE,
-	WLAN_WAKE_ALL_NETIF_QUEUE,
-	WLAN_STOP_ALL_NETIF_QUEUE_N_CARRIER,
-	WLAN_START_ALL_NETIF_QUEUE_N_CARRIER,
-	WLAN_NETIF_TX_DISABLE,
-	WLAN_NETIF_TX_DISABLE_N_CARRIER,
-	WLAN_NETIF_CARRIER_ON,
-	WLAN_NETIF_CARRIER_OFF,
-	WLAN_NETIF_ACTION_TYPE_MAX,
-};
-
-/**
- * enum netif_reason_type - reason for netif queue action
- * @WLAN_CONTROL_PATH: action from control path
- * @WLAN_DATA_FLOW_CONTROL: because of flow control
- * @WLAN_FW_PAUSE: because of firmware pause
- * @WLAN_TX_ABORT: because of tx abort
- * @WLAN_VDEV_STOP: because of vdev stop
- * @WLAN_PEER_UNAUTHORISED: because of peer is unauthorised
- * @WLAN_THERMAL_MITIGATION: because of thermal mitigation
- */
-enum netif_reason_type {
-	WLAN_CONTROL_PATH,
-	WLAN_DATA_FLOW_CONTROL,
-	WLAN_FW_PAUSE,
-	WLAN_TX_ABORT,
-	WLAN_VDEV_STOP,
-	WLAN_PEER_UNAUTHORISED,
-	WLAN_THERMAL_MITIGATION,
-	WLAN_REASON_TYPE_MAX,
-};
-
-
 /* command options for dumpStats*/
 #define WLAN_HDD_STATS        0
 #define WLAN_TXRX_STATS       1
@@ -279,66 +231,6 @@ struct ol_tx_wmm_param_t {
  */
 #define ol_txrx_tx_release(peer, tid_mask, max_frms)    /* no-op */
 
-/**
- * @brief Suspend all tx data for the specified virtual device.
- * @details
- *  This function applies primarily to HL systems, but also applies to
- *  LL systems that use per-vdev tx queues for MCC or thermal throttling.
- *  As an example, this function could be used when a single-channel physical
- *  device supports multiple channels by jumping back and forth between the
- *  channels in a time-shared manner.  As the device is switched from channel
- *  A to channel B, the virtual devices that operate on channel A will be
- *  paused.
- *
- * @param data_vdev - the virtual device being paused
- * @param reason - the reason for which vdev queue is getting paused
- */
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
-void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason);
-#else
-static inline
-void ol_txrx_vdev_pause(ol_txrx_vdev_handle vdev, uint32_t reason)
-{
-	return;
-}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-
-/**
- * @brief Drop all tx data for the specified virtual device.
- * @details
- *  This function applies primarily to HL systems, but also applies to
- *  LL systems that use per-vdev tx queues for MCC or thermal throttling.
- *  This function would typically be used by the ctrl SW after it parks
- *  a STA vdev and then resumes it, but to a new AP.  In this case, though
- *  the same vdev can be used, any old tx frames queued inside it would be
- *  stale, and would need to be discarded.
- *
- * @param data_vdev - the virtual device being flushed
- */
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL)
-void ol_txrx_vdev_flush(ol_txrx_vdev_handle data_vdev);
-#else
-#define ol_txrx_vdev_flush(data_vdev)   /* no-op */
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
-
-/**
- * @brief Resume tx for the specified virtual device.
- * @details
- *  This function applies primarily to HL systems, but also applies to
- *  LL systems that use per-vdev tx queues for MCC or thermal throttling.
- *
- * @param data_vdev - the virtual device being unpaused
- * @param reason - the reason for which vdev queue is getting unpaused
- */
-#if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
-void ol_txrx_vdev_unpause(ol_txrx_vdev_handle data_vdev, uint32_t reason);
-#else
-static inline
-void ol_txrx_vdev_unpause(ol_txrx_vdev_handle data_vdev, uint32_t reason)
-{
-	return;
-}
-#endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 /**
  * @brief Suspend all tx data per thermal event/timer for the
@@ -433,47 +325,12 @@ void
 ol_txrx_data_tx_cb_set(ol_txrx_vdev_handle data_vdev,
 		       ol_txrx_data_tx_cb callback, void *ctxt);
 
-/**
- * @brief Allow the control-path SW to send data frames.
- * @details
- *  Generally, all tx data frames come from the OS shim into the txrx layer.
- *  However, there are rare cases such as TDLS messaging where the UMAC
- *  control-path SW creates tx data frames.
- *  This UMAC SW can call this function to provide the tx data frames to
- *  the txrx layer.
- *  The UMAC SW can request a callback for these data frames after their
- *  transmission completes, by using the ol_txrx_data_tx_cb_set function
- *  to register a tx completion callback, and by specifying
- *  ol_tx_spec_no_free as the tx_spec arg when giving the frames to
- *  ol_tx_non_std.
- *  The MSDUs need to have the appropriate L2 header type (802.3 vs. 802.11),
- *  as specified by ol_cfg_frame_type().
- *
- * @param data_vdev - which vdev should transmit the tx data frames
- * @param tx_spec - what non-standard handling to apply to the tx data frames
- * @param msdu_list - NULL-terminated list of tx MSDUs
- */
-qdf_nbuf_t
-ol_tx_non_std(ol_txrx_vdev_handle data_vdev,
-	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list);
-
 #ifdef FEATURE_RUNTIME_PM
 QDF_STATUS ol_txrx_runtime_suspend(ol_txrx_pdev_handle txrx_pdev);
 QDF_STATUS ol_txrx_runtime_resume(ol_txrx_pdev_handle txrx_pdev);
 #endif
-QDF_STATUS ol_txrx_bus_suspend(void);
-QDF_STATUS ol_txrx_bus_resume(void);
-QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
 
-/**
- * @brief Get the number of pending transmit frames that are awaiting completion.
- * @details
- *  Mainly used in clean up path to make sure all buffers have been free'ed
- *
- * @param pdev - the data physical device object
- * @return - count of pending frames
- */
-int ol_txrx_get_tx_pending(ol_txrx_pdev_handle pdev);
+QDF_STATUS ol_txrx_wait_for_pending_tx(int timeout);
 
 /**
  * @brief Discard all tx frames that are pending in txrx.
@@ -511,33 +368,6 @@ void ol_txrx_set_safemode(ol_txrx_vdev_handle vdev, uint32_t val);
  * @return - void
  */
 void ol_txrx_set_drop_unenc(ol_txrx_vdev_handle vdev, uint32_t val);
-
-enum ol_txrx_peer_state {
-	ol_txrx_peer_state_invalid,
-	ol_txrx_peer_state_disc,        /* initial state */
-	ol_txrx_peer_state_conn,        /* authentication in progress */
-	ol_txrx_peer_state_auth,        /* authentication successful */
-};
-
-/**
- * @brief specify the peer's authentication state
- * @details
- *  Specify the peer's authentication state (none, connected, authenticated)
- *  to allow the data SW to determine whether to filter out invalid data frames.
- *  (In the "connected" state, where security is enabled, but authentication
- *  has not completed, tx and rx data frames other than EAPOL or WAPI should
- *  be discarded.)
- *  This function is only relevant for systems in which the tx and rx filtering
- *  are done in the host rather than in the target.
- *
- * @param data_peer - which peer has changed its state
- * @param state - the new state of the peer
- *
- * Return: QDF Status
- */
-QDF_STATUS
-ol_txrx_peer_state_update(ol_txrx_pdev_handle pdev, uint8_t *peer_addr,
-			  enum ol_txrx_peer_state state);
 
 void
 ol_txrx_peer_keyinstalled_state_update(ol_txrx_peer_handle data_peer,
@@ -633,63 +463,12 @@ ol_txrx_peer_stats_copy(ol_txrx_pdev_handle pdev,
 #define ol_txrx_peer_stats_copy(pdev, peer, stats) A_ERROR      /* failure */
 #endif /* QCA_ENABLE_OL_TXRX_PEER_STATS */
 
-/* Config parameters for txrx_pdev */
-struct txrx_pdev_cfg_param_t {
-	uint8_t is_full_reorder_offload;
-	/* IPA Micro controller data path offload enable flag */
-	uint8_t is_uc_offload_enabled;
-	/* IPA Micro controller data path offload TX buffer count */
-	uint32_t uc_tx_buffer_count;
-	/* IPA Micro controller data path offload TX buffer size */
-	uint32_t uc_tx_buffer_size;
-	/* IPA Micro controller data path offload RX indication ring count */
-	uint32_t uc_rx_indication_ring_count;
-	/* IPA Micro controller data path offload TX partition base */
-	uint32_t uc_tx_partition_base;
-	/* IP, TCP and UDP checksum offload */
-	bool ip_tcp_udp_checksum_offload;
-	/* Rx processing in thread from TXRX */
-	bool enable_rxthread;
-	/* CE classification enabled through INI */
-	bool ce_classify_enabled;
-#ifdef QCA_LL_TX_FLOW_CONTROL_V2
-	/* Threshold to stop queue in percentage */
-	uint32_t tx_flow_stop_queue_th;
-	/* Start queue offset in percentage */
-	uint32_t tx_flow_start_queue_offset;
-#endif
-};
-
-/**
- * @brief Setup configuration parameters
- * @details
- *  Allocation configuration context that will be used across data path
- *
- * @param osdev - OS handle needed as an argument for some OS primitives
- * @return the control device object
- */
-ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
-				  struct txrx_pdev_cfg_param_t cfg_param);
-
 QDF_STATUS ol_txrx_get_vdevid(struct ol_txrx_peer_t *peer, uint8_t *vdev_id);
+
 void *ol_txrx_get_vdev_by_sta_id(uint8_t sta_id);
 
 
 #define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
-#ifdef QCA_SUPPORT_TXRX_LOCAL_PEER_ID
-uint16_t ol_txrx_local_peer_id(ol_txrx_peer_handle peer);
-ol_txrx_peer_handle ol_txrx_find_peer_by_addr(ol_txrx_pdev_handle pdev,
-					      uint8_t *peer_addr,
-					      uint8_t *peer_id);
-ol_txrx_peer_handle
-ol_txrx_find_peer_by_addr_and_vdev(ol_txrx_pdev_handle pdev,
-				   ol_txrx_vdev_handle vdev,
-				   uint8_t *peer_addr, uint8_t *peer_id);
-#else
-#define ol_txrx_local_peer_id(peer) OL_TXRX_INVALID_LOCAL_PEER_ID
-#define ol_txrx_find_peer_by_addr(pdev, peer_addr, peer_id) NULL
-#define ol_txrx_find_peer_by_addr_and_vdev(pdev, vdev, peer_addr, peer_id) NULL
-#endif
 
 #define OL_TXRX_RSSI_INVALID 0xffff
 /**
@@ -718,11 +497,8 @@ int16_t ol_txrx_peer_rssi(ol_txrx_peer_handle peer);
 #define ol_txrx_peer_rssi(peer) OL_TXRX_RSSI_INVALID
 #endif /* QCA_SUPPORT_PEER_DATA_RX_RSSI */
 
-#define OL_TXRX_INVALID_LOCAL_PEER_ID 0xffff
 #if QCA_SUPPORT_TXRX_LOCAL_PEER_ID
-uint16_t ol_txrx_local_peer_id(ol_txrx_peer_handle peer);
 #else
-#define ol_txrx_local_peer_id(peer) OL_TXRX_INVALID_LOCAL_PEER_ID
 #endif
 
 #ifdef QCA_COMPUTE_TX_DELAY
@@ -857,168 +633,6 @@ static inline void ol_tx_throttle_init_period(struct ol_txrx_pdev_t *pdev,
 }
 #endif /* QCA_SUPPORT_TX_THROTTLE */
 
-void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val);
-
-
-#ifdef IPA_OFFLOAD
-void
-ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    qdf_dma_addr_t *ce_sr_base_paddr,
-			    uint32_t *ce_sr_ring_size,
-			    qdf_dma_addr_t *ce_reg_paddr,
-			    qdf_dma_addr_t *tx_comp_ring_base_paddr,
-			    uint32_t *tx_comp_ring_size,
-			    uint32_t *tx_num_alloc_buffer,
-			    qdf_dma_addr_t *rx_rdy_ring_base_paddr,
-			    uint32_t *rx_rdy_ring_size,
-			    qdf_dma_addr_t *rx_proc_done_idx_paddr,
-			    void **rx_proc_done_idx_vaddr,
-			    qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
-			    uint32_t *rx2_rdy_ring_size,
-			    qdf_dma_addr_t *rx2_proc_done_idx_paddr,
-			    void **rx2_proc_done_idx_vaddr);
-
-
-void
-ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr);
-
-void
-ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev, bool uc_active, bool is_tx);
-
-void ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg);
-
-void ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
-				   void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
-							     void *osif_ctxt),
-				   void *osif_dev);
-
-void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev);
-#else
-/**
- * ol_txrx_ipa_uc_get_resource() - Client request resource information
- * @pdev: handle to the HTT instance
- * @ce_sr_base_paddr: copy engine source ring base physical address
- * @ce_sr_ring_size: copy engine source ring size
- * @ce_reg_paddr: copy engine register physical address
- * @tx_comp_ring_base_paddr: tx comp ring base physical address
- * @tx_comp_ring_size: tx comp ring size
- * @tx_num_alloc_buffer: number of allocated tx buffer
- * @rx_rdy_ring_base_paddr: rx ready ring base physical address
- * @rx_rdy_ring_size: rx ready ring size
- * @rx_proc_done_idx_paddr: rx process done index physical address
- * @rx_proc_done_idx_vaddr: rx process done index virtual address
- * @rx2_rdy_ring_base_paddr: rx done ring base physical address
- * @rx2_rdy_ring_size: rx done ring size
- * @rx2_proc_done_idx_paddr: rx done index physical address
- * @rx2_proc_done_idx_vaddr: rx done index virtual address
- *
- *  OL client will reuqest IPA UC related resource information
- *  Resource information will be distributted to IPA module
- *  All of the required resources should be pre-allocated
- *
- * Return: none
- */
-static inline void
-ol_txrx_ipa_uc_get_resource(ol_txrx_pdev_handle pdev,
-			    qdf_dma_addr_t *ce_sr_base_paddr,
-			    uint32_t *ce_sr_ring_size,
-			    qdf_dma_addr_t *ce_reg_paddr,
-			    qdf_dma_addr_t *tx_comp_ring_base_paddr,
-			    uint32_t *tx_comp_ring_size,
-			    uint32_t *tx_num_alloc_buffer,
-			    qdf_dma_addr_t *rx_rdy_ring_base_paddr,
-			    uint32_t *rx_rdy_ring_size,
-			    qdf_dma_addr_t *rx_proc_done_idx_paddr,
-			    void **rx_proc_done_idx_vaddr,
-			    qdf_dma_addr_t *rx2_rdy_ring_base_paddr,
-			    uint32_t *rx2_rdy_ring_size,
-			    qdf_dma_addr_t *rx2_proc_done_idx_paddr,
-			    void **rx2_proc_done_idx_vaddr)
-{
-	return;
-}
-
-/**
- * ol_txrx_ipa_uc_set_doorbell_paddr() - Client set IPA UC doorbell register
- * @pdev: handle to the HTT instance
- * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
- * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
- *
- *  IPA UC let know doorbell register physical address
- *  WLAN firmware will use this physical address to notify IPA UC
- *
- * Return: none
- */
-static inline void
-ol_txrx_ipa_uc_set_doorbell_paddr(ol_txrx_pdev_handle pdev,
-				  qdf_dma_addr_t ipa_tx_uc_doorbell_paddr,
-				  qdf_dma_addr_t ipa_rx_uc_doorbell_paddr)
-{
-	return;
-}
-
-/**
- * ol_txrx_ipa_uc_set_active() - Client notify IPA UC data path active or not
- * @pdev: handle to the HTT instance
- * @ipa_uc_tx_doorbell_paddr: tx comp doorbell physical address
- * @ipa_uc_rx_doorbell_paddr: rx ready doorbell physical address
- *
- *  IPA UC let know doorbell register physical address
- *  WLAN firmware will use this physical address to notify IPA UC
- *
- * Return: none
- */
-static inline void
-ol_txrx_ipa_uc_set_active(ol_txrx_pdev_handle pdev,
-	bool uc_active, bool is_tx)
-{
-	return;
-}
-
-/**
- * ol_txrx_ipa_uc_op_response() - Handle OP command response from firmware
- * @pdev: handle to the HTT instance
- * @op_msg: op response message from firmware
- *
- * Return: none
- */
-static inline void
-ol_txrx_ipa_uc_op_response(ol_txrx_pdev_handle pdev, uint8_t *op_msg)
-{
-	return;
-}
-
-/**
- * ol_txrx_ipa_uc_register_op_cb() - Register OP handler function
- * @pdev: handle to the HTT instance
- * @op_cb: handler function pointer
- * @osif_dev: register client context
- *
- * Return: none
- */
-static inline void
-ol_txrx_ipa_uc_register_op_cb(ol_txrx_pdev_handle pdev,
-				   void (*ipa_uc_op_cb_type)(uint8_t *op_msg,
-							     void *osif_ctxt),
-				   void *osif_dev)
-{
-	return;
-}
-
-/**
- * ol_txrx_ipa_uc_get_stat() - Get firmware wdi status
- * @pdev: handle to the HTT instance
- *
- * Return: none
- */
-static inline void ol_txrx_ipa_uc_get_stat(ol_txrx_pdev_handle pdev)
-{
-	return;
-}
-#endif /* IPA_OFFLOAD */
-
 void ol_txrx_display_stats(uint16_t bitmap);
 void ol_txrx_clear_stats(uint16_t bitmap);
 int ol_txrx_stats(uint8_t vdev_id, char *buffer, unsigned buf_len);
@@ -1056,7 +670,6 @@ void ol_tx_flow_pool_unmap_handler(uint8_t flow_id, uint8_t flow_type,
 struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(uint8_t flow_pool_id,
 						 uint16_t flow_pool_size);
 int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool);
-void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc);
 #else
 
 static inline void ol_tx_register_flow_control(struct ol_txrx_pdev_t *pdev)
@@ -1093,10 +706,6 @@ static inline struct ol_tx_flow_pool_t *ol_tx_create_flow_pool(
 static inline int ol_tx_delete_flow_pool(struct ol_tx_flow_pool_t *pool)
 {
 	return 0;
-}
-static inline void ol_tx_set_desc_global_pool_size(uint32_t num_msdu_desc)
-{
-	return;
 }
 #endif
 

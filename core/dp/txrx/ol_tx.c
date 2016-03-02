@@ -996,18 +996,18 @@ static inline int ol_txrx_tx_is_raw(enum ol_tx_spec tx_spec)
 {
 	return
 		tx_spec &
-		(ol_tx_spec_raw | ol_tx_spec_no_aggr | ol_tx_spec_no_encrypt);
+		(OL_TX_SPEC_RAW | OL_TX_SPEC_NO_AGGR | OL_TX_SPEC_NO_ENCRYPT);
 }
 
 static inline uint8_t ol_txrx_tx_raw_subtype(enum ol_tx_spec tx_spec)
 {
 	uint8_t sub_type = 0x1; /* 802.11 MAC header present */
 
-	if (tx_spec & ol_tx_spec_no_aggr)
+	if (tx_spec & OL_TX_SPEC_NO_AGGR)
 		sub_type |= 0x1 << HTT_TX_MSDU_DESC_RAW_SUBTYPE_NO_AGGR_S;
-	if (tx_spec & ol_tx_spec_no_encrypt)
+	if (tx_spec & OL_TX_SPEC_NO_ENCRYPT)
 		sub_type |= 0x1 << HTT_TX_MSDU_DESC_RAW_SUBTYPE_NO_ENCRYPT_S;
-	if (tx_spec & ol_tx_spec_nwifi_no_encrypt)
+	if (tx_spec & OL_TX_SPEC_NWIFI_NO_ENCRYPT)
 		sub_type |= 0x1 << HTT_TX_MSDU_DESC_RAW_SUBTYPE_NO_ENCRYPT_S;
 	return sub_type;
 }
@@ -1046,12 +1046,12 @@ ol_tx_non_std_ll(ol_txrx_vdev_handle vdev,
 		 */
 		next = qdf_nbuf_next(msdu);
 
-		if (tx_spec != ol_tx_spec_std) {
-			if (tx_spec & ol_tx_spec_no_free) {
-				tx_desc->pkt_type = ol_tx_frm_no_free;
-			} else if (tx_spec & ol_tx_spec_tso) {
-				tx_desc->pkt_type = ol_tx_frm_tso;
-			} else if (tx_spec & ol_tx_spec_nwifi_no_encrypt) {
+		if (tx_spec != OL_TX_SPEC_STD) {
+			if (tx_spec & OL_TX_SPEC_NO_FREE) {
+				tx_desc->pkt_type = OL_TX_SPEC_NO_FREE;
+			} else if (tx_spec & OL_TX_SPEC_TSO) {
+				tx_desc->pkt_type = OL_TX_SPEC_TSO;
+			} else if (tx_spec & OL_TX_SPEC_NWIFI_NO_ENCRYPT) {
 				uint8_t sub_type =
 					ol_txrx_tx_raw_subtype(tx_spec);
 				htt_tx_desc_type(htt_pdev, tx_desc->htt_tx_desc,
@@ -1135,6 +1135,28 @@ bool parse_ocb_tx_header(qdf_nbuf_t msdu,
 	return true;
 }
 
+/**
+ * ol_tx_non_std - Allow the control-path SW to send data frames
+ *
+ * @data_vdev - which vdev should transmit the tx data frames
+ * @tx_spec - what non-standard handling to apply to the tx data frames
+ * @msdu_list - NULL-terminated list of tx MSDUs
+ *
+ * Generally, all tx data frames come from the OS shim into the txrx layer.
+ * However, there are rare cases such as TDLS messaging where the UMAC
+ * control-path SW creates tx data frames.
+ *  This UMAC SW can call this function to provide the tx data frames to
+ *  the txrx layer.
+ *  The UMAC SW can request a callback for these data frames after their
+ *  transmission completes, by using the ol_txrx_data_tx_cb_set function
+ *  to register a tx completion callback, and by specifying
+ *  ol_tx_spec_no_free as the tx_spec arg when giving the frames to
+ *  ol_tx_non_std.
+ *  The MSDUs need to have the appropriate L2 header type (802.3 vs. 802.11),
+ *  as specified by ol_cfg_frame_type().
+ *
+ *  Return: null - success, skb - failure
+ */
 qdf_nbuf_t
 ol_tx_non_std(ol_txrx_vdev_handle vdev,
 	      enum ol_tx_spec tx_spec, qdf_nbuf_t msdu_list)

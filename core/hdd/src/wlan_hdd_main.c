@@ -89,6 +89,7 @@
 #include "cds_regdomain.h"
 
 #include "wlan_hdd_ocb.h"
+#include "cdp_txrx_flow_ctrl_v2.h"
 
 extern int hdd_hostapd_stop(struct net_device *dev);
 #endif /* FEATURE_WLAN_CH_AVOID */

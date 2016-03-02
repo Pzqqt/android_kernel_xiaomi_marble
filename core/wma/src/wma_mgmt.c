@@ -66,6 +66,7 @@
 #include "dfs.h"
 #include "wma_internal.h"
 #include "cds_concurrency.h"
+#include "cdp_txrx_flow_ctrl_legacy.h"
 
 /**
  * wma_send_bcn_buf_ll() - prepare and send beacon buffer to fw for LL
@@ -952,7 +953,7 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 	if (params->wpa_rsn >> 1)
 		cmd->peer_flags |= WMI_PEER_NEED_GTK_2_WAY;
 
-	ol_txrx_peer_state_update(pdev, params->bssId, ol_txrx_peer_state_auth);
+	ol_txrx_peer_state_update(pdev, params->bssId, OL_TXRX_PEER_STATE_AUTH);
 
 #ifdef FEATURE_WLAN_WAPI
 	if (params->encryptType == eSIR_ED_WPI) {

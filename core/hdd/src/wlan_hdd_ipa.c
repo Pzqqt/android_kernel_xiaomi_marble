@@ -54,6 +54,8 @@
 #include "wma.h"
 #include "wma_api.h"
 
+#include "cdp_txrx_ipa.h"
+
 #define HDD_IPA_DESC_BUFFER_RATIO          4
 #define HDD_IPA_IPV4_NAME_EXT              "_ipv4"
 #define HDD_IPA_IPV6_NAME_EXT              "_ipv6"
@@ -441,29 +443,7 @@ struct hdd_ipa_priv {
 	qdf_mc_timer_t rt_debug_fill_timer;
 	qdf_mutex_t rt_debug_lock;
 	qdf_mutex_t ipa_lock;
-
-	/* CE resources */
-	qdf_dma_addr_t ce_sr_base_paddr;
-	uint32_t ce_sr_ring_size;
-	qdf_dma_addr_t ce_reg_paddr;
-
-	/* WLAN TX:IPA->WLAN */
-	qdf_dma_addr_t tx_comp_ring_base_paddr;
-	uint32_t tx_comp_ring_size;
-	uint32_t tx_num_alloc_buffer;
-
-	/* WLAN RX:WLAN->IPA */
-	qdf_dma_addr_t rx_rdy_ring_base_paddr;
-	uint32_t rx_rdy_ring_size;
-	qdf_dma_addr_t rx_proc_done_idx_paddr;
-	void *rx_proc_done_idx_vaddr;
-
-	/* WLAN RX2:WLAN->IPA */
-	qdf_dma_addr_t rx2_rdy_ring_base_paddr;
-	uint32_t rx2_rdy_ring_size;
-	qdf_dma_addr_t rx2_proc_done_idx_paddr;
-	void *rx2_proc_done_idx_vaddr;
-
+	struct ol_txrx_ipa_resources ipa_resource;
 	/* IPA UC doorbell registers paddr */
 	qdf_dma_addr_t tx_comp_doorbell_paddr;
 	qdf_dma_addr_t rx_ready_doorbell_paddr;
@@ -531,13 +511,18 @@ uint32_t wlan_hdd_stub_addr_to_priv(void *ptr)
 
 /* Temporary macro to make a build without IPA V2 */
 #ifdef IPA_V2
-#define HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt)                                    \
-do {                                                                           \
-	pipe_in.u.ul.rdy_ring_rp_va = ipa_ctxt->rx_proc_done_idx_vaddr;        \
-	pipe_in.u.ul.rdy_comp_ring_base_pa = ipa_ctxt->rx2_rdy_ring_base_paddr;\
-	pipe_in.u.ul.rdy_comp_ring_size = ipa_ctxt->rx2_rdy_ring_size;         \
-	pipe_in.u.ul.rdy_comp_ring_wp_pa = ipa_ctxt->rx2_proc_done_idx_paddr;  \
-	pipe_in.u.ul.rdy_comp_ring_wp_va = ipa_ctxt->rx2_proc_done_idx_vaddr;  \
+#define HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt) \
+do { \
+	pipe_in.u.ul.rdy_ring_rp_va = \
+		ipa_ctxt->ipa_resource.rx_proc_done_idx_vaddr; \
+	pipe_in.u.ul.rdy_comp_ring_base_pa = \
+		ipa_ctxt->ipa_resource.rx2_rdy_ring_base_paddr;\
+	pipe_in.u.ul.rdy_comp_ring_size = \
+		ipa_ctxt->ipa_resource.rx2_rdy_ring_size; \
+	pipe_in.u.ul.rdy_comp_ring_wp_pa = \
+		ipa_ctxt->ipa_resource.rx2_proc_done_idx_paddr; \
+	pipe_in.u.ul.rdy_comp_ring_wp_va = \
+		ipa_ctxt->ipa_resource.rx2_proc_done_idx_vaddr; \
 } while (0)
 #else
 /* Do nothing */
@@ -1420,25 +1405,25 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 
 	if ((HDD_IPA_UC_OPCODE_STATS == msg->op_code) &&
 		(HDD_IPA_UC_STAT_REASON_DEBUG == hdd_ipa->stat_req_reason)) {
-
+		struct ol_txrx_ipa_resources *res = &hdd_ipa->ipa_resource;
 		/* STATs from host */
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST CE ====\n"
 			  "CE RING BASE: 0x%llx\n"
 			  "CE RING SIZE: %d\n"
 			  "CE REG ADDR : 0x%llx",
-			  (unsigned long long)hdd_ipa->ce_sr_base_paddr,
-			  hdd_ipa->ce_sr_ring_size,
-			  (unsigned long long)hdd_ipa->ce_reg_paddr);
+			  (unsigned long long)res->ce_sr_base_paddr,
+			  res->ce_sr_ring_size,
+			  (unsigned long long)res->ce_reg_paddr);
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST TX ====\n"
 			  "COMP RING BASE: 0x%llx\n"
 			  "COMP RING SIZE: %d\n"
 			  "NUM ALLOC BUF: %d\n"
 			  "COMP RING DBELL : 0x%llx",
-			  (unsigned long long)hdd_ipa->tx_comp_ring_base_paddr,
-			  hdd_ipa->tx_comp_ring_size,
-			  hdd_ipa->tx_num_alloc_buffer,
+			  (unsigned long long)res->tx_comp_ring_base_paddr,
+			  res->tx_comp_ring_size,
+			  res->tx_num_alloc_buffer,
 			  (unsigned long long)hdd_ipa->tx_comp_doorbell_paddr);
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "==== IPA_UC WLAN_HOST RX ====\n"
@@ -1449,10 +1434,11 @@ static void hdd_ipa_uc_op_cb(struct op_msg_type *op_msg, void *usr_ctxt)
 			  "NUM EXCP PKT : %llu\n"
 			  "NUM TX BCMC : %llu\n"
 			  "NUM TX BCMC ERR : %llu",
-			  (unsigned long long)hdd_ipa->rx_rdy_ring_base_paddr,
-			  hdd_ipa->rx_rdy_ring_size,
+			  (unsigned long long)res->rx_rdy_ring_base_paddr,
+			  res->rx_rdy_ring_size,
 			  (unsigned long long)hdd_ipa->rx_ready_doorbell_paddr,
-			  (unsigned long long)hdd_ipa->rx_proc_done_idx_paddr,
+			  (unsigned long long)hdd_ipa->ipa_resource.
+				 rx_proc_done_idx_paddr,
 			  hdd_ipa->stats.num_rx_excep,
 			  hdd_ipa->stats.num_tx_bcmc,
 			  (unsigned long long)hdd_ipa->stats.num_tx_bcmc_err);
@@ -1811,13 +1797,18 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 		pipe_in.sys.keep_ipa_awake = true;
 	}
 
-	pipe_in.u.dl.comp_ring_base_pa = ipa_ctxt->tx_comp_ring_base_paddr;
+	pipe_in.u.dl.comp_ring_base_pa =
+		 ipa_ctxt->ipa_resource.tx_comp_ring_base_paddr;
 	pipe_in.u.dl.comp_ring_size =
-		ipa_ctxt->tx_comp_ring_size * sizeof(qdf_dma_addr_t);
-	pipe_in.u.dl.ce_ring_base_pa = ipa_ctxt->ce_sr_base_paddr;
-	pipe_in.u.dl.ce_door_bell_pa = ipa_ctxt->ce_reg_paddr;
-	pipe_in.u.dl.ce_ring_size = ipa_ctxt->ce_sr_ring_size;
-	pipe_in.u.dl.num_tx_buffers = ipa_ctxt->tx_num_alloc_buffer;
+		 ipa_ctxt->ipa_resource.tx_comp_ring_size *
+			 sizeof(qdf_dma_addr_t);
+	pipe_in.u.dl.ce_ring_base_pa =
+		 ipa_ctxt->ipa_resource.ce_sr_base_paddr;
+	pipe_in.u.dl.ce_door_bell_pa = ipa_ctxt->ipa_resource.ce_reg_paddr;
+	pipe_in.u.dl.ce_ring_size =
+		 ipa_ctxt->ipa_resource.ce_sr_ring_size;
+	pipe_in.u.dl.num_tx_buffers =
+		 ipa_ctxt->ipa_resource.tx_num_alloc_buffer;
 
 	/* Connect WDI IPA PIPE */
 	ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
@@ -1852,9 +1843,12 @@ static QDF_STATUS hdd_ipa_uc_ol_init(hdd_context_t *hdd_ctx)
 		pipe_in.sys.keep_ipa_awake = true;
 	}
 
-	pipe_in.u.ul.rdy_ring_base_pa = ipa_ctxt->rx_rdy_ring_base_paddr;
-	pipe_in.u.ul.rdy_ring_size = ipa_ctxt->rx_rdy_ring_size;
-	pipe_in.u.ul.rdy_ring_rp_pa = ipa_ctxt->rx_proc_done_idx_paddr;
+	pipe_in.u.ul.rdy_ring_base_pa =
+		 ipa_ctxt->ipa_resource.rx_rdy_ring_base_paddr;
+	pipe_in.u.ul.rdy_ring_size =
+		 ipa_ctxt->ipa_resource.rx_rdy_ring_size;
+	pipe_in.u.ul.rdy_ring_rp_pa =
+		 ipa_ctxt->ipa_resource.rx_proc_done_idx_paddr;
 	HDD_IPA_WDI2_SET(pipe_in, ipa_ctxt);
 	ipa_connect_wdi_pipe(&pipe_in, &pipe_out);
 	ipa_ctxt->rx_ready_doorbell_paddr = pipe_out.uc_door_bell_pa;
@@ -4027,24 +4021,11 @@ QDF_STATUS hdd_ipa_init(hdd_context_t *hdd_ctx)
 	hdd_ipa->hdd_ctx = hdd_ctx;
 	hdd_ipa->num_iface = 0;
 	ol_txrx_ipa_uc_get_resource(cds_get_context(QDF_MODULE_ID_TXRX),
-				&hdd_ipa->ce_sr_base_paddr,
-				&hdd_ipa->ce_sr_ring_size,
-				&hdd_ipa->ce_reg_paddr,
-				&hdd_ipa->tx_comp_ring_base_paddr,
-				&hdd_ipa->tx_comp_ring_size,
-				&hdd_ipa->tx_num_alloc_buffer,
-				&hdd_ipa->rx_rdy_ring_base_paddr,
-				&hdd_ipa->rx_rdy_ring_size,
-				&hdd_ipa->rx_proc_done_idx_paddr,
-				&hdd_ipa->rx_proc_done_idx_vaddr,
-				&hdd_ipa->rx2_rdy_ring_base_paddr,
-				&hdd_ipa->rx2_rdy_ring_size,
-				&hdd_ipa->rx2_proc_done_idx_paddr,
-				&hdd_ipa->rx2_proc_done_idx_vaddr);
-	if ((0 == hdd_ipa->ce_sr_base_paddr) ||
-	    (0 == hdd_ipa->tx_comp_ring_base_paddr) ||
-	    (0 == hdd_ipa->rx_rdy_ring_base_paddr) ||
-	    (0 == hdd_ipa->rx2_rdy_ring_base_paddr)) {
+				&hdd_ipa->ipa_resource);
+	if ((0 == hdd_ipa->ipa_resource.ce_sr_base_paddr) ||
+	    (0 == hdd_ipa->ipa_resource.tx_comp_ring_base_paddr) ||
+	    (0 == hdd_ipa->ipa_resource.rx_rdy_ring_base_paddr) ||
+	    (0 == hdd_ipa->ipa_resource.rx2_rdy_ring_base_paddr)) {
 		HDD_IPA_LOG(QDF_TRACE_LEVEL_FATAL,
 			"IPA UC resource alloc fail");
 		goto fail_get_resource;

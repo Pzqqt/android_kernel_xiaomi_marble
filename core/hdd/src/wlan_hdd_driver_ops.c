@@ -53,6 +53,7 @@
 #include "cds_concurrency.h"
 #include "qwlan_version.h"
 #include "bmi.h"
+#include "cdp_txrx_bus.h"
 
 #ifdef MODULE
 #define WLAN_MODULE_NAME  module_name(THIS_MODULE)
