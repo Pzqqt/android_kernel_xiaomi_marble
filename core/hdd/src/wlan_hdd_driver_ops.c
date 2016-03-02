@@ -143,32 +143,32 @@ static bool hdd_is_load_or_unload_in_progress(void *data)
 }
 
 /**
- * hdd_is_recovery_in_prgress() - API to query if recovery in progress
+ * hdd_is_recovery_in_progress() - API to query if recovery in progress
  * @data: Private Data
  *
  * Return: bool
  */
-static bool hdd_is_recovery_in_prgress(void *data)
+static bool hdd_is_recovery_in_progress(void *data)
 {
 	return cds_is_driver_recovering();
 }
 
 /**
- * hdd_hif_init_cds_callbacks() - API to initialize HIF callbacks
+ * hdd_hif_init_driver_state_callbacks() - API to initialize HIF callbacks
  * @data: Private Data
- * @cbk: callbacks
+ * @cbk: HIF Driver State callbacks
  *
  * HIF should be independent of CDS calls. Pass CDS Callbacks to HIF, HIF will
  * call the callbacks.
  *
  * Return: void
  */
-static void hdd_hif_init_cds_callbacks(void *data, struct hif_callbacks *cbk)
+static void hdd_hif_init_driver_state_callbacks(void *data,
+			struct hif_driver_state_callbacks *cbk)
 {
 	cbk->context = data;
 	cbk->set_recovery_in_progress = hdd_set_recovery_in_progress;
-	cbk->get_monotonic_boottime = cds_get_monotonic_boottime;
-	cbk->is_recovery_in_progress = hdd_is_recovery_in_prgress;
+	cbk->is_recovery_in_progress = hdd_is_recovery_in_progress;
 	cbk->is_load_unload_in_progress = hdd_is_load_or_unload_in_progress;
 	cbk->is_driver_unloading = hdd_is_driver_unloading;
 }
@@ -227,10 +227,10 @@ static int hdd_hif_open(struct device *dev, void *bdev, const hif_bus_id *bid,
 	int ret = 0;
 	struct hif_opaque_softc *hif_ctx;
 	qdf_device_t qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	struct hif_callbacks cbk;
+	struct hif_driver_state_callbacks cbk;
 	uint32_t mode = cds_get_conparam();
 
-	hdd_hif_init_cds_callbacks(dev, &cbk);
+	hdd_hif_init_driver_state_callbacks(dev, &cbk);
 
 	hif_ctx = hif_open(qdf_ctx, mode, bus_type, &cbk);
 	if (!hif_ctx) {

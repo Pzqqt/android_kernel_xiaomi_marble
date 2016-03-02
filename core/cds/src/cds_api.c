@@ -1119,10 +1119,10 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 
 /**
  * cds_set_context() - API to set context in global CDS Context
- * @moduleID: Module ID
+ * @module_id: Module ID
  * @context: Pointer to the Module Context
  *
- * API to set a MODULE Context in gloabl CDS Context
+ * API to set a MODULE Context in global CDS Context
  *
  * Return: QDF_STATUS
  */
@@ -1132,7 +1132,7 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 
 	if (!p_cds_context) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "cds context is Invald");
+			  "cds context is Invalid");
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
@@ -1142,8 +1142,8 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			  "%s: Module ID %i does not have its context "
-			  "allocated by CDS", __func__, module_id);
+			  "%s: Module ID %i does not have its context managed by CDS",
+			  __func__, module_id);
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_INVAL;
 	}
@@ -1615,7 +1615,7 @@ void cds_trigger_recovery(void)
 
 	if (!wma_handle) {
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
-			"WMA context is invald!");
+			  "WMA context is invalid!");
 		return;
 	}
 

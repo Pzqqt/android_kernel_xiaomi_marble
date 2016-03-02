@@ -209,7 +209,7 @@ QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 			    void *pModuleContext);
 
-QDF_STATUS cds_set_context(QDF_MODULE_ID moduleID, void *context);
+QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context);
 
 QDF_STATUS cds_get_vdev_types(enum tQDF_ADAPTER_MODE mode, uint32_t *type,
 			      uint32_t *subType);
