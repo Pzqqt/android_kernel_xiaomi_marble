@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2006-2007, 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2006-2007, 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -1469,80 +1469,6 @@ IE TCLAS (EID_TCLAS)                             // 7.3.2.31
     };
 } // End IE TCLASS
 
-const EID_RRM_BEACON_REPORTING     = 1;
-const EID_RRM_BCN_REPORTING_DETAIL = 2;
-
-IE BeaconReporting (EID_RRM_BEACON_REPORTING)
-{
-     reportingCondition, 1;
-     threshold,          1;
-}
-
-IE BcnReportingDetail (EID_RRM_BCN_REPORTING_DETAIL)
-{
-     reportingDetail, 1;
-}
-
-IE APChannelReport (EID_AP_CHAN_REPORT)
-{
-     regulatoryClass, 1;
-     channelList[0..50];
-}
-
-IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
-{
-    measurement_token, 1;
-
-    // Measurement Request Mode
-    {
-        parallel:          1;
-        enable:            1;
-        request:           1;
-        report:            1;
-        durationMandatory: 1;
-        unused:            3;
-    }
-
-    measurement_type, 1;
-    UNION measurement_request (DISCRIMINATOR measurement_type)
-    {
-       Basic (measurement_type IS 0)
-       {
-           channel_no,       1;
-           meas_start_time[8];
-           meas_duration,    2;
-       }
-       CCA (measurement_type IS 1)
-       {
-           channel_no,       1;
-           meas_start_time[8];
-           meas_duration,    2;
-       }
-       RPIHistogram (measurement_type IS 2)
-       {
-           channel_no,       1;
-           meas_start_time[8];
-           meas_duration,    2;
-       }
-       Beacon (measurement_type IS 5)
-       {
-          regClass,          1;
-          channel,           1;
-          randomization,     2;
-          meas_duration,     2;
-          meas_mode,         1;
-          BSSID[6];
-          OPTIE SSID;
-          OPTIE BeaconReporting;
-          OPTIE BcnReportingDetail;
-          OPTIE RequestedInfo;
-          OPTIE APChannelReport[0..2];
-          //OPTIONAL vendor_specific[1..239];
-       }
-
-    };
-}
-
 const EID_BCN_REPORT_FRAME_BODY    = 1;
 IE BeaconReportFrmBody (EID_BCN_REPORT_FRAME_BODY)
 {
@@ -2059,7 +1985,16 @@ IE ht2040_bss_intolerant_report (EID_20_40_BSS_INTOLERANT_REPORT)
 
 const EID_RRM_NBR_RPT_TSF              =    1;
 const EID_RRM_NBR_CD_COUNTRY           =    2;
-const EID_RRM_NBR_MSMT_PILOT_TX_INFO   =   66;
+
+IE TSFInfo (EID_RRM_NBR_RPT_TSF)
+{
+     TsfOffset, 2;
+     BeaconIntvl, 2;
+}
+IE CondensedCountryStr (EID_RRM_NBR_CD_COUNTRY)
+{
+     countryStr[2];
+}
 
 IE NeighborReport (EID_NEIGHBOR_REPORT)
 {
@@ -2089,20 +2024,9 @@ IE NeighborReport (EID_NEIGHBOR_REPORT)
      regulatoryClass, 1;
      channel,         1;
      PhyType,         1;
-     OPTIE IE TSFInfo (EID_RRM_NBR_RPT_TSF)
-     {
-          TsfOffset, 2;
-          BeaconIntvl, 2;
-     }
-     OPTIE IE CondensedCountryStr (EID_RRM_NBR_CD_COUNTRY)
-     {
-          countryStr[2];
-     }
-     OPTIE IE MeasurementPilot; // (EID_RRM_NBR_MSMT_PILOT_TX_INFO)
-//     {
-//          measurementPilot, 1;
-//          vendorSpecific[0..255]; //Should be an IE. But currently only one level of nesting allowed. Can ignore for now.
-//     }
+     OPTIE IE TSFInfo;
+     OPTIE IE CondensedCountryStr;
+     OPTIE IE MeasurementPilot;
      OPTIE IE RRMEnabledCap;
      OPTIE IE MultiBssid;
      //Ignoring vendor specific.
@@ -2464,6 +2388,155 @@ IE TimeAdvertisement (EID_TIME_ADVERTISEMENT)   // 8.4.2.63
     timing_capabilities, 1;
     time_value[10];
     time_error[5];
+}
+
+const EID_RRM_BEACON_REPORTING     = 1;
+const EID_RRM_BCN_REPORTING_DETAIL = 2;
+
+const SUB_EID_AZIMUTH_REQ = 1;
+const SUB_EID_REQ_MAC_ADDR = 2;
+const SUB_EID_TGT_MAC_ADDR = 3;
+const SUB_EID_MAX_AGE = 4;
+const SUB_EID_NEIGHBOR_RPT = 52;
+
+IE BeaconReporting (EID_RRM_BEACON_REPORTING)
+{
+     reportingCondition, 1;
+     threshold,          1;
+}
+
+IE BcnReportingDetail (EID_RRM_BCN_REPORTING_DETAIL)
+{
+     reportingDetail, 1;
+}
+
+IE APChannelReport (EID_AP_CHAN_REPORT)
+{
+     regulatoryClass, 1;
+     channelList[0..50];
+}
+
+IE azimuth_req (SUB_EID_AZIMUTH_REQ)
+{
+    request,    1;
+}
+
+IE req_mac_addr (SUB_EID_REQ_MAC_ADDR)
+{
+    addr[6];
+}
+
+IE tgt_mac_addr (SUB_EID_TGT_MAC_ADDR)
+{
+    addr[6];
+}
+
+IE max_age (SUB_EID_MAX_AGE)
+{
+    max_age,     2;
+}
+
+IE neighbor_rpt (SUB_EID_NEIGHBOR_RPT)
+{
+    bssid[6];
+    //Bssid Info
+    {
+         APReachability: 2;
+         Security:       1;
+         KeyScope:       1;
+         //Capabilities
+         SpecMgmtCap:    1;
+         QosCap:         1;
+         apsd:           1;
+         rrm:            1;
+    }
+    //Capabilities contd.
+    {
+         DelayedBA:      1;
+         ImmBA:          1;
+    //Capabilities end.
+         MobilityDomain: 1;
+         reserved:       5;
+    }
+         reserved1,      2; //part of BSSID Info.
+    regulatoryClass, 1;
+    channel,         1;
+    PhyType,         1;
+    OPTIE IE TSFInfo;
+    OPTIE IE CondensedCountryStr;
+    OPTIE IE MeasurementPilot;
+    OPTIE IE RRMEnabledCap;
+    OPTIE IE MultiBssid;
+}
+
+IE MeasurementRequest (EID_MEAS_REQUEST)  // 7.3.2.21
+{
+    measurement_token, 1;
+
+    // Measurement Request Mode
+    {
+        parallel:          1;
+        enable:            1;
+        request:           1;
+        report:            1;
+        durationMandatory: 1;
+        unused:            3;
+    }
+
+    measurement_type, 1;
+    UNION measurement_request (DISCRIMINATOR measurement_type)
+    {
+       Basic (measurement_type IS 0)
+       {
+           channel_no,       1;
+           meas_start_time[8];
+           meas_duration,    2;
+       }
+       CCA (measurement_type IS 1)
+       {
+           channel_no,       1;
+           meas_start_time[8];
+           meas_duration,    2;
+       }
+       RPIHistogram (measurement_type IS 2)
+       {
+           channel_no,       1;
+           meas_start_time[8];
+           meas_duration,    2;
+       }
+       Beacon (measurement_type IS 5)
+       {
+          regClass,          1;
+          channel,           1;
+          randomization,     2;
+          meas_duration,     2;
+          meas_mode,         1;
+          BSSID[6];
+          OPTIE SSID;
+          OPTIE BeaconReporting;
+          OPTIE BcnReportingDetail;
+          OPTIE RequestedInfo;
+          OPTIE APChannelReport[0..2];
+          //OPTIONAL vendor_specific[1..239];
+       }
+       lci (measurement_type IS 8)
+       {
+          loc_subject,       1;
+          OPTIE azimuth_req;
+          OPTIE req_mac_addr;
+          OPTIE tgt_mac_addr;
+          OPTIE max_age;
+       }
+       ftmrr (measurement_type IS 16)
+       {
+          random_interval,   2;
+          min_ap_count,      1;
+
+          OPTIE neighbor_rpt;
+          OPTIE max_age;
+       }
+
+    };
 }
 
 /////////////////////////////////////////////////////////////////////////////
