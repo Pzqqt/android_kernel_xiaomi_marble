@@ -28,7 +28,7 @@
 #include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_util.h>           /* qdf_assert */
-#include <qdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* qdf_spinlock */
 #ifdef QCA_COMPUTE_TX_DELAY
 #include <qdf_time.h>           /* qdf_system_ticks */
 #endif
@@ -546,9 +546,9 @@ void ol_tx_desc_frame_free_nonstd(struct ol_txrx_pdev_t *pdev,
  *
  * Return: none
  */
-struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
+struct qdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
 {
-	struct cdf_tso_seg_elem_t *tso_seg = NULL;
+	struct qdf_tso_seg_elem_t *tso_seg = NULL;
 
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	if (pdev->tso_seg_pool.freelist) {
@@ -574,7 +574,7 @@ struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev)
  */
 
 void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
-	 struct cdf_tso_seg_elem_t *tso_seg)
+	 struct qdf_tso_seg_elem_t *tso_seg)
 {
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	tso_seg->next = pdev->tso_seg_pool.freelist;

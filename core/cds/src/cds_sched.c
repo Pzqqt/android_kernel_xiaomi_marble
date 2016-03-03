@@ -184,7 +184,7 @@ static struct notifier_block cds_cpu_hotplug_notifier = {
  *	dispatch messages.
  *
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_sched_open(void *p_cds_context,
 		p_cds_sched_context pSchedContext,
@@ -893,7 +893,7 @@ static int cds_ol_rx_thread(void *arg)
  *	- The Tx thread is closed
  *
  *
- * Return: cdf status
+ * Return: qdf status
  */
 QDF_STATUS cds_sched_close(void *p_cds_context)
 {
@@ -938,7 +938,7 @@ QDF_STATUS cds_sched_close(void *p_cds_context)
  *
  * This api initializes the cds scheduler message queues.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_sched_init_mqs(p_cds_sched_context pSchedContext)
 {

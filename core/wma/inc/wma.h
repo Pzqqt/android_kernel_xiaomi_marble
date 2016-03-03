@@ -1067,7 +1067,7 @@ struct wma_ini_config {
  * @egap_support: Enhanced Green AP support flag
  * @wmi_ready: wmi status flag
  * @wlan_init_status: wlan init status
- * @cdf_dev: cdf device
+ * @qdf_dev: qdf device
  * @phy_capability: PHY Capability from Target
  * @max_frag_entry: Max number of Fragment entry
  * @wmi_service_bitmap: wmi services bitmap received from Target

@@ -473,7 +473,7 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
 }
 
 /**
- * hdd_cdf_trace_enable() - configure initial CDF Trace enable
+ * hdd_qdf_trace_enable() - configure initial QDF Trace enable
  * @moduleId:	Module whose trace level is being configured
  * @bitmask:	Bitmask of log levels to be enabled
  *
@@ -482,7 +482,7 @@ uint8_t wlan_hdd_find_opclass(tHalHandle hal, uint8_t channel,
  *
  * Return: None
  */
-static void hdd_cdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
+static void hdd_qdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 {
 	QDF_TRACE_LEVEL level;
 
@@ -491,7 +491,7 @@ static void hdd_cdf_trace_enable(QDF_MODULE_ID moduleId, uint32_t bitmask)
 	 * specified in cfg.ini, so leave the logging level alone (it
 	 * will remain at the "compiled in" default value)
 	 */
-	if (CFG_CDF_TRACE_ENABLE_DEFAULT == bitmask) {
+	if (CFG_QDF_TRACE_ENABLE_DEFAULT == bitmask) {
 		return;
 	}
 
@@ -1636,7 +1636,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	hdd_adapter_t *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *hdd_ctx;
 	struct sockaddr *psta_mac_addr = addr;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	int ret;
 
 	ENTER();
@@ -1650,7 +1650,7 @@ static int __hdd_set_mac_address(struct net_device *dev, void *addr)
 	memcpy(dev->dev_addr, psta_mac_addr->sa_data, ETH_ALEN);
 
 	EXIT();
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 /**
@@ -1937,7 +1937,7 @@ QDF_STATUS hdd_register_interface(hdd_adapter_t *adapter,
 	struct net_device *pWlanDev = adapter->dev;
 	/* hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station; */
 	/* hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX( adapter ); */
-	/* QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS; */
+	/* QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS; */
 
 	if (rtnl_held) {
 		if (strnchr(pWlanDev->name, strlen(pWlanDev->name), '%')) {
@@ -2015,7 +2015,7 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	struct net_device *pWlanDev = adapter->dev;
 	hdd_station_ctx_t *pHddStaCtx = &adapter->sessionCtx.station;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	uint32_t type, subType;
 	unsigned long rc;
@@ -2029,14 +2029,14 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 		goto error_sme_open;
 	}
 	/* Open a SME session for future operation */
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_open_session(hdd_ctx->hHal, hdd_sme_roam_callback, adapter,
 				 (uint8_t *) &adapter->macAddressCurrent,
 				 &adapter->sessionId, type, subType);
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hddLog(LOGP,
 		       FL("sme_open_session() failed, status code %08d [x%08x]"),
-		       cdf_ret_status, cdf_ret_status);
+		       qdf_ret_status, qdf_ret_status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error_sme_open;
 	}
@@ -2053,11 +2053,11 @@ QDF_STATUS hdd_init_station_mode(hdd_adapter_t *adapter)
 	}
 
 	/* Register wireless extensions */
-	cdf_ret_status = hdd_register_wext(pWlanDev);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	qdf_ret_status = hdd_register_wext(pWlanDev);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		hddLog(LOGP,
 		       FL("hdd_register_wext() failed, status code %08d [x%08x]"),
-		       cdf_ret_status, cdf_ret_status);
+		       qdf_ret_status, qdf_ret_status);
 		status = QDF_STATUS_E_FAILURE;
 		goto error_register_wext;
 	}
@@ -2711,7 +2711,7 @@ QDF_STATUS hdd_close_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
  *
  * Close all open adapters.
  *
- * Return: CDF status code
+ * Return: QDF status code
  */
 QDF_STATUS hdd_close_all_adapters(hdd_context_t *hdd_ctx, bool rtnl_held)
 {
@@ -2783,7 +2783,7 @@ void wlan_hdd_reset_prob_rspies(hdd_adapter_t *pHostapdAdapter)
 QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 			    const bool bCloseSession)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(adapter);
 	union iwreq_data wrqu;
 	tSirUpdateIE updateIE;
@@ -2805,17 +2805,17 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 			if (pWextState->roamProfile.BSSType ==
 			    eCSR_BSS_TYPE_START_IBSS)
-				cdf_ret_status =
+				qdf_ret_status =
 					sme_roam_disconnect(hdd_ctx->hHal,
 							    adapter->sessionId,
 							    eCSR_DISCONNECT_REASON_IBSS_LEAVE);
 			else
-				cdf_ret_status =
+				qdf_ret_status =
 					sme_roam_disconnect(hdd_ctx->hHal,
 							    adapter->sessionId,
 							    eCSR_DISCONNECT_REASON_UNSPECIFIED);
 			/* success implies disconnect command got queued up successfully */
-			if (cdf_ret_status == QDF_STATUS_SUCCESS) {
+			if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 				rc = wait_for_completion_timeout(
 					&adapter->disconnect_comp_var,
 					msecs_to_jiffies
@@ -2921,10 +2921,10 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *hdd_ctx, hdd_adapter_t *adapter,
 				hdd_hostapd_state_t *hostapd_state =
 					WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 				qdf_event_reset(&hostapd_state->
-						cdf_stop_bss_event);
+						qdf_stop_bss_event);
 				qdf_status =
 					qdf_wait_single_event(&hostapd_state->
-							cdf_stop_bss_event,
+							qdf_stop_bss_event,
 							BSS_WAIT_TIMEOUT);
 
 				if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -3943,19 +3943,19 @@ int hdd_wlan_notify_modem_power_state(int state)
  */
 QDF_STATUS hdd_post_cds_enable_config(hdd_context_t *hdd_ctx)
 {
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 
 	/*
 	 * Send ready indication to the HDD.  This will kick off the MAC
 	 * into a 'running' state and should kick off an initial scan.
 	 */
-	cdf_ret_status = sme_hdd_ready_ind(hdd_ctx->hHal);
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	qdf_ret_status = sme_hdd_ready_ind(hdd_ctx->hHal);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL(
 			  "sme_hdd_ready_ind() failed with status code %08d [x%08x]"
 			 ),
-		       cdf_ret_status, cdf_ret_status);
+		       qdf_ret_status, qdf_ret_status);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -5016,42 +5016,42 @@ static void hdd_override_ini_config(hdd_context_t *hdd_ctx)
  */
 static void hdd_set_trace_level_for_each(hdd_context_t *hdd_ctx)
 {
-	hdd_cdf_trace_enable(QDF_MODULE_ID_WMI,
-			     hdd_ctx->config->cdf_trace_enable_wdi);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD,
-			     hdd_ctx->config->cdf_trace_enable_hdd);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_SME,
-			     hdd_ctx->config->cdf_trace_enable_sme);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_PE,
-			     hdd_ctx->config->cdf_trace_enable_pe);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_WMA,
-			     hdd_ctx->config->cdf_trace_enable_wma);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_SYS,
-			     hdd_ctx->config->cdf_trace_enable_sys);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_QDF,
-			     hdd_ctx->config->cdf_trace_enable_cdf);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_SAP,
-			     hdd_ctx->config->cdf_trace_enable_sap);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD_SOFTAP,
-			     hdd_ctx->config->cdf_trace_enable_hdd_sap);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_BMI,
-				hdd_ctx->config->cdf_trace_enable_bmi);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_CFG,
-				hdd_ctx->config->cdf_trace_enable_cfg);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_EPPING,
-				hdd_ctx->config->cdf_trace_enable_epping);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_QDF_DEVICE,
-				hdd_ctx->config->cdf_trace_enable_cdf_devices);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_TXRX,
+	hdd_qdf_trace_enable(QDF_MODULE_ID_WMI,
+			     hdd_ctx->config->qdf_trace_enable_wdi);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD,
+			     hdd_ctx->config->qdf_trace_enable_hdd);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_SME,
+			     hdd_ctx->config->qdf_trace_enable_sme);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_PE,
+			     hdd_ctx->config->qdf_trace_enable_pe);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_WMA,
+			     hdd_ctx->config->qdf_trace_enable_wma);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_SYS,
+			     hdd_ctx->config->qdf_trace_enable_sys);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_QDF,
+			     hdd_ctx->config->qdf_trace_enable_qdf);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_SAP,
+			     hdd_ctx->config->qdf_trace_enable_sap);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_SOFTAP,
+			     hdd_ctx->config->qdf_trace_enable_hdd_sap);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_BMI,
+				hdd_ctx->config->qdf_trace_enable_bmi);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_CFG,
+				hdd_ctx->config->qdf_trace_enable_cfg);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_EPPING,
+				hdd_ctx->config->qdf_trace_enable_epping);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_QDF_DEVICE,
+				hdd_ctx->config->qdf_trace_enable_qdf_devices);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_TXRX,
 				hdd_ctx->config->cfd_trace_enable_txrx);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_HTC,
-				hdd_ctx->config->cdf_trace_enable_htc);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_HIF,
-				hdd_ctx->config->cdf_trace_enable_hif);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD_SAP_DATA,
-				hdd_ctx->config->cdf_trace_enable_hdd_sap_data);
-	hdd_cdf_trace_enable(QDF_MODULE_ID_HDD_DATA,
-				hdd_ctx->config->cdf_trace_enable_hdd_data);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_HTC,
+				hdd_ctx->config->qdf_trace_enable_htc);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_HIF,
+				hdd_ctx->config->qdf_trace_enable_hif);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_SAP_DATA,
+				hdd_ctx->config->qdf_trace_enable_hdd_sap_data);
+	hdd_qdf_trace_enable(QDF_MODULE_ID_HDD_DATA,
+				hdd_ctx->config->qdf_trace_enable_hdd_data);
 
 	hdd_cfg_print(hdd_ctx);
 }
@@ -5168,7 +5168,7 @@ hdd_context_t *hdd_init_context(struct device *dev, void *hif_sc)
 		goto err_free_config;
 
 	/*
-	 * Update CDF trace levels based upon the code. The multicast
+	 * Update QDF trace levels based upon the code. The multicast
 	 * levels of the code need not be set when the logger thread
 	 * is not enabled.
 	 */
@@ -6593,11 +6593,11 @@ void wlan_hdd_stop_sap(hdd_adapter_t *ap_adapter)
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
 		hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 		       FL("Now doing SAP STOPBSS"));
-		qdf_event_reset(&hostapd_state->cdf_stop_bss_event);
+		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(hdd_ap_ctx->
 							sapContext)) {
 			qdf_status = qdf_wait_single_event(&hostapd_state->
-							   cdf_stop_bss_event,
+							   qdf_stop_bss_event,
 							   BSS_WAIT_TIMEOUT);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				mutex_unlock(&hdd_ctx->sap_lock);
@@ -6674,7 +6674,7 @@ void wlan_hdd_start_sap(hdd_adapter_t *ap_adapter)
 
 	hddLog(QDF_TRACE_LEVEL_INFO_HIGH,
 	       FL("Waiting for SAP to start"));
-	qdf_status = qdf_wait_single_event(&hostapd_state->cdf_event,
+	qdf_status = qdf_wait_single_event(&hostapd_state->qdf_event,
 					BSS_WAIT_TIMEOUT);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(QDF_TRACE_LEVEL_ERROR, FL("SAP Start failed"));
@@ -6819,7 +6819,7 @@ static int __hdd_module_init(void)
 		goto out;
 	}
 
-	pr_info("%s: qdf converged driver loaded\n", WLAN_MODULE_NAME);
+	pr_info("%s: driver loaded\n", WLAN_MODULE_NAME);
 
 	return 0;
 out:

@@ -194,18 +194,18 @@ static inline void htt_print_rx_desc_lro(struct htt_host_rx_desc_base *rx_desc)
 static inline void htt_rx_extract_lro_info(qdf_nbuf_t msdu,
 	 struct htt_host_rx_desc_base *rx_desc)
 {
-	NBUF_CB_RX_LRO_ELIGIBLE(msdu) = rx_desc->msdu_end.lro_eligible;
+	QDF_NBUF_CB_RX_LRO_ELIGIBLE(msdu) = rx_desc->msdu_end.lro_eligible;
 	if (rx_desc->msdu_end.lro_eligible) {
-		NBUF_CB_RX_TCP_PURE_ACK(msdu) = rx_desc->msdu_start.tcp_only_ack;
-		NBUF_CB_RX_TCP_CHKSUM(msdu) = rx_desc->msdu_end.tcp_udp_chksum;
-		NBUF_CB_RX_TCP_SEQ_NUM(msdu) = rx_desc->msdu_end.tcp_seq_number;
-		NBUF_CB_RX_TCP_ACK_NUM(msdu) = rx_desc->msdu_end.tcp_ack_number;
-		NBUF_CB_RX_TCP_WIN(msdu) = rx_desc->msdu_end.window_size;
-		NBUF_CB_RX_TCP_PROTO(msdu) = rx_desc->msdu_start.tcp_proto;
-		NBUF_CB_RX_IPV6_PROTO(msdu) = rx_desc->msdu_start.ipv6_proto;
-		NBUF_CB_RX_IP_OFFSET(msdu) = rx_desc->msdu_start.l3_offset;
-		NBUF_CB_RX_TCP_OFFSET(msdu) = rx_desc->msdu_start.l4_offset;
-		NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
+		QDF_NBUF_CB_RX_TCP_PURE_ACK(msdu) = rx_desc->msdu_start.tcp_only_ack;
+		QDF_NBUF_CB_RX_TCP_CHKSUM(msdu) = rx_desc->msdu_end.tcp_udp_chksum;
+		QDF_NBUF_CB_RX_TCP_SEQ_NUM(msdu) = rx_desc->msdu_end.tcp_seq_number;
+		QDF_NBUF_CB_RX_TCP_ACK_NUM(msdu) = rx_desc->msdu_end.tcp_ack_number;
+		QDF_NBUF_CB_RX_TCP_WIN(msdu) = rx_desc->msdu_end.window_size;
+		QDF_NBUF_CB_RX_TCP_PROTO(msdu) = rx_desc->msdu_start.tcp_proto;
+		QDF_NBUF_CB_RX_IPV6_PROTO(msdu) = rx_desc->msdu_start.ipv6_proto;
+		QDF_NBUF_CB_RX_IP_OFFSET(msdu) = rx_desc->msdu_start.l3_offset;
+		QDF_NBUF_CB_RX_TCP_OFFSET(msdu) = rx_desc->msdu_start.l4_offset;
+		QDF_NBUF_CB_RX_FLOW_ID_TOEPLITZ(msdu) =
 			 rx_desc->msdu_start.flow_id_toeplitz;
 	}
 }

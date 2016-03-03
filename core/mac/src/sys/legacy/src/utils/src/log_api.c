@@ -183,15 +183,15 @@ static inline QDF_MODULE_ID get_vos_module_id(uint8_t modId)
 void log_debug(tpAniSirGlobal pMac, uint8_t modId, uint32_t debugLevel,
 	       const char *pStr, va_list marker)
 {
-	QDF_TRACE_LEVEL cdf_debug_level;
-	QDF_MODULE_ID cdf_module_id;
+	QDF_TRACE_LEVEL qdf_debug_level;
+	QDF_MODULE_ID qdf_module_id;
 	char logBuffer[LOG_SIZE];
 
-	cdf_debug_level = get_vos_debug_level(debugLevel);
-	cdf_module_id = get_vos_module_id(modId);
+	qdf_debug_level = get_vos_debug_level(debugLevel);
+	qdf_module_id = get_vos_module_id(modId);
 
 	vsnprintf(logBuffer, LOG_SIZE - 1, pStr, marker);
-	QDF_TRACE(cdf_module_id, cdf_debug_level, "%s", logBuffer);
+	QDF_TRACE(qdf_module_id, qdf_debug_level, "%s", logBuffer);
 
 	/* The caller must check loglevel */
 	QDF_ASSERT((debugLevel <=

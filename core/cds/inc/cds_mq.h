@@ -32,7 +32,7 @@
 
    \file  cds_mq.h
 
-   \brief virtual Operating System Services (CDF) message queue APIs
+   \brief virtual Operating System Services (QDF) message queue APIs
 
    Message Queue Definitions and API
 
@@ -123,7 +123,7 @@ typedef enum {
    will be posted.
 
    \param message - a pointer to a message buffer.  Memory for this message
-   buffer is allocated by the caller and free'd by the CDF after the
+   buffer is allocated by the caller and free'd by the QDF after the
    message is posted to the message queue.  If the consumer of the
    message needs anything in this message, it needs to copy the contents
    before returning from the message queue handler.

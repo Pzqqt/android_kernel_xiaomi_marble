@@ -249,8 +249,8 @@ typedef struct hdd_wext_state_s {
 	/**auth key mgmt */
 	int32_t authKeyMgmt;
 
-	/* cdf event */
-	qdf_event_t hdd_cdf_event;
+	/* qdf event */
+	qdf_event_t hdd_qdf_event;
 
 	qdf_event_t scanevent;
 

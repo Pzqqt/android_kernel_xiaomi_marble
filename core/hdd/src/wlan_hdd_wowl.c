@@ -57,10 +57,10 @@ static inline int find_ptrn_len(const char *ptrn)
 	return len;
 }
 
-static void hdd_wowl_callback(void *pContext, QDF_STATUS cdf_ret_status)
+static void hdd_wowl_callback(void *pContext, QDF_STATUS qdf_ret_status)
 {
 	QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_INFO,
-		  "%s: Return code = (%d)", __func__, cdf_ret_status);
+		  "%s: Return code = (%d)", __func__, qdf_ret_status);
 }
 
 #ifdef WLAN_WAKEUP_EVENTS
@@ -117,7 +117,7 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 {
 	struct wow_add_pattern localPattern;
 	int i, first_empty_slot, len, offset;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	const char *temp;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	uint8_t sessionId = pAdapter->sessionId;
@@ -253,14 +253,14 @@ bool hdd_add_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 		localPattern.session_id = sessionId;
 
 		/* Register the pattern downstream */
-		cdf_ret_status =
+		qdf_ret_status =
 			sme_wow_add_pattern(hHal, &localPattern,
 						   sessionId);
-		if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			/* Add failed, so invalidate the local storage */
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "sme_wowl_add_bcast_pattern failed with error code (%d)",
-				  cdf_ret_status);
+				  qdf_ret_status);
 			kfree(g_hdd_wowl_ptrns[first_empty_slot]);
 			g_hdd_wowl_ptrns[first_empty_slot] = NULL;
 		}
@@ -293,7 +293,7 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 	unsigned char id;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	bool patternFound = false;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	uint8_t sessionId = pAdapter->sessionId;
 	hdd_context_t *pHddCtx = pAdapter->pHddCtx;
 
@@ -311,10 +311,10 @@ bool hdd_del_wowl_ptrn(hdd_adapter_t *pAdapter, const char *ptrn)
 	if (patternFound) {
 		delPattern.pattern_id = id;
 		delPattern.session_id = sessionId;
-		cdf_ret_status =
+		qdf_ret_status =
 			sme_wow_delete_pattern(hHal, &delPattern,
 						   sessionId);
-		if (QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+		if (QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			/* Remove from local storage as well */
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "Deleted pattern with id %d [%s]", id,
@@ -344,7 +344,7 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 			       char *pattern_mask)
 {
 	struct wow_add_pattern localPattern;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 	uint8_t session_id = pAdapter->sessionId;
 	uint16_t pattern_len, mask_len, i;
@@ -429,13 +429,13 @@ bool hdd_add_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx,
 	}
 
 	/* Register the pattern downstream */
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_wow_add_pattern(hHal, &localPattern, session_id);
 
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_wowl_add_bcast_pattern failed with error code (%d).",
-			  __func__, cdf_ret_status);
+			  __func__, qdf_ret_status);
 
 		return false;
 	}
@@ -463,7 +463,7 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 {
 	struct wow_delete_pattern delPattern;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	uint8_t sessionId = pAdapter->sessionId;
 
 	if (pattern_idx > (WOWL_MAX_PTRNS_ALLOWED - 1)) {
@@ -484,13 +484,13 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 
 	delPattern.pattern_id = pattern_idx;
 	delPattern.session_id = sessionId;
-	cdf_ret_status = sme_wow_delete_pattern(hHal, &delPattern,
+	qdf_ret_status = sme_wow_delete_pattern(hHal, &delPattern,
 						    sessionId);
 
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: sme_wowl_del_bcast_pattern failed with error code (%d).",
-			  __func__, cdf_ret_status);
+			  __func__, qdf_ret_status);
 
 		return false;
 	}
@@ -513,7 +513,7 @@ bool hdd_del_wowl_ptrn_debugfs(hdd_adapter_t *pAdapter, uint8_t pattern_idx)
 bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 {
 	tSirSmeWowlEnterParams wowParams;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
 
 	qdf_mem_zero(&wowParams, sizeof(tSirSmeWowlEnterParams));
@@ -534,19 +534,19 @@ bool hdd_enter_wowl(hdd_adapter_t *pAdapter, bool enable_mp, bool enable_pbm)
 #endif /* WLAN_WAKEUP_EVENTS */
 
 	/* Request to put FW into WoWL */
-	cdf_ret_status = sme_enter_wowl(hHal, hdd_wowl_callback, pAdapter,
+	qdf_ret_status = sme_enter_wowl(hHal, hdd_wowl_callback, pAdapter,
 #ifdef WLAN_WAKEUP_EVENTS
 					hdd_wowl_wake_indication_callback,
 					pAdapter,
 #endif /* WLAN_WAKEUP_EVENTS */
 					&wowParams, pAdapter->sessionId);
 
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
-		if (QDF_STATUS_PMC_PENDING != cdf_ret_status) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
+		if (QDF_STATUS_PMC_PENDING != qdf_ret_status) {
 			/* We failed to enter WoWL */
 			QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 				  "sme_enter_wowl failed with error code (%d)",
-				  cdf_ret_status);
+				  qdf_ret_status);
 			return false;
 		}
 	}
@@ -563,15 +563,15 @@ bool hdd_exit_wowl(hdd_adapter_t *pAdapter)
 {
 	tSirSmeWowlExitParams wowParams;
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(pAdapter);
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 
 	wowParams.sessionId = pAdapter->sessionId;
 
-	cdf_ret_status = sme_exit_wowl(hHal, &wowParams);
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	qdf_ret_status = sme_exit_wowl(hHal, &wowParams);
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "sme_exit_wowl failed with error code (%d)",
-			  cdf_ret_status);
+			  qdf_ret_status);
 		return false;
 	}
 

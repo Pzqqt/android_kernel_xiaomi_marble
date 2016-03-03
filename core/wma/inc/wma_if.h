@@ -191,7 +191,7 @@ typedef struct sAniProbeRspStruct {
  * @fShortGI40Mhz: short GI support for 40Mhz packets
  * @fShortGI20Mhz: short GI support for 20Mhz packets
  * @supportedRates: legacy supported rates
- * @status: CDF status
+ * @status: QDF status
  * @staIdx: station index
  * @bssIdx: BSSID of BSS to which the station is associated
  * @updateSta: pdate the existing STA entry, if this flag is set
@@ -517,7 +517,7 @@ typedef struct {
 /**
  * struct tDeleteBssParams - params required for del bss request
  * @bssIdx: BSSID
- * @status: CDF status
+ * @status: QDF status
  * @respReqd: response message to LIM only when this flag is set
  * @sessionId: PE session id
  * @bssid: BSSID mac address
@@ -886,7 +886,7 @@ typedef struct {
  * @maxTxPower: max tx power
  * @selfStaMacAddr: self mac address
  * @bssId: bssid
- * @status: CDF status
+ * @status: QDF status
  * @chainMask: chanin mask
  * @smpsMode: SMPS mode
  * @isDfsChannel: is DFS channel
@@ -982,7 +982,7 @@ typedef struct sLinkStateParams {
  * @staIdx: station index
  * @tspecIdx: TSPEC handler uniquely identifying a TSPEC for a STA in a BSS
  * @tspec: tspec value
- * @status: CDF status
+ * @status: QDF status
  * @sessionId: session id
  * @tsm_interval: TSM interval period passed from lim to WMA
  * @setRICparams: RIC parameters
@@ -1035,7 +1035,7 @@ typedef struct {
  * @staIdx: station index
  * @tspecIdx: TSPEC handler uniquely identifying a TSPEC for a STA in a BSS
  * @tspec: tspec value
- * @status: CDF status
+ * @status: QDF status
  * @sessionId: session id
  */
 typedef struct {

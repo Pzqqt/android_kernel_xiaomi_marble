@@ -302,7 +302,7 @@ static void hdd_wlan_green_ap_timer_fn(void *ctx)
  * hdd_wlan_green_ap_attach() - Attach Green AP context to HDD context
  * @hdd_ctx: Global HDD contect
  *
- * Return: QDF_STATUS_SUCCESS on success, otherwise CDF_STATUS_E_* error
+ * Return: QDF_STATUS_SUCCESS on success, otherwise QDF_STATUS_E_** error
  */
 static QDF_STATUS hdd_wlan_green_ap_attach(struct hdd_context_s *hdd_ctx)
 {
@@ -340,7 +340,7 @@ error:
  * hdd_wlan_green_ap_deattach() - Detach Green AP context from HDD context
  * @hdd_ctx: Global HDD contect
  *
- * Return: QDF_STATUS_SUCCESS on success, otherwise CDF_STATUS_E_* error
+ * Return: QDF_STATUS_SUCCESS on success, otherwise QDF_STATUS_E_** error
  */
 static QDF_STATUS hdd_wlan_green_ap_deattach(struct hdd_context_s *hdd_ctx)
 {

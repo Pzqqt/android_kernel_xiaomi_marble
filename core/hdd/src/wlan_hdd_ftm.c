@@ -154,7 +154,7 @@ static inline void hdd_is_lpass_supported(tMacOpenParameters *mac_openParms,
  * @p_cds_context: pointer to the global CDS context
  * @hddContextSize: Size of the HDD context to allocate.
  *
- * The wlan_ftm_cds_open() function opens the CDF Scheduler
+ * The wlan_ftm_cds_open() function opens the QDF Scheduler
  * Upon successful initialization:
  * - All CDS submodules should have been initialized
  * - The CDS scheduler should have opened
@@ -232,7 +232,7 @@ static QDF_STATUS wlan_ftm_cds_open(v_CONTEXT_t p_cds_context,
 	}
 
 	/* Now Open the CDS Scheduler */
-	vStatus = cds_sched_open(gp_cds_context, &gp_cds_context->cdf_sched,
+	vStatus = cds_sched_open(gp_cds_context, &gp_cds_context->qdf_sched,
 				 sizeof(cds_sched_context));
 
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
@@ -402,10 +402,10 @@ err_probe_event:
 } /* wlan_ftm_cds_open() */
 
 /**
- * wlan_ftm_cds_close() - Close the CDF Module in FTM mode
+ * wlan_ftm_cds_close() - Close the QDF Module in FTM mode
  * @cds_context:  context of cds
  *
- * The wlan_ftm_cds_close() function closes the CDF Module
+ * The wlan_ftm_cds_close() function closes the QDF Module
  *
  * Return: QDF_STATUS_SUCCESS - successfully closed
  */
@@ -484,7 +484,7 @@ static QDF_STATUS wlan_ftm_cds_close(v_CONTEXT_t cds_context)
  * in FTM mode.
  *
  * Return: QDF_STATUS_SUCCESS if pre-start was successful, an
- *	   appropriate CDF_STATUS_E_* error code otherwise
+ *	   appropriate QDF_STATUS_E_** error code otherwise
  */
 static QDF_STATUS cds_ftm_pre_start(v_CONTEXT_t cds_context)
 {
@@ -569,14 +569,14 @@ int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx)
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: Trying to open CDS without a PreOpen", __func__);
 		QDF_ASSERT(0);
-		goto err_cdf_status_failure;
+		goto err_qdf_status_failure;
 	}
 
 	vStatus = wlan_ftm_cds_open(p_cds_context, 0);
 
 	if (!QDF_IS_STATUS_SUCCESS(vStatus)) {
 		hddLog(QDF_TRACE_LEVEL_FATAL, "%s: cds_open failed", __func__);
-		goto err_cdf_status_failure;
+		goto err_qdf_status_failure;
 	}
 
 	/*
@@ -598,7 +598,7 @@ int wlan_hdd_ftm_open(hdd_context_t *hdd_ctx)
 err_ftm_close:
 	wlan_ftm_cds_close(p_cds_context);
 
-err_cdf_status_failure:
+err_qdf_status_failure:
 	return -EPERM;
 }
 
@@ -1012,7 +1012,7 @@ static void wlanqcmbr_mc_process_msg(void *message)
  * @data: FTM testmode command
  * @len: length of @data
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS wlan_hdd_ftm_testmode_cmd(void *data, int len)
 {

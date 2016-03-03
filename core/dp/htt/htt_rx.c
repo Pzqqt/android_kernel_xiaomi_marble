@@ -346,7 +346,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 	qdf_timer_free(&pdev->rx_ring.refill_retry_timer);
 
 	if (pdev->cfg.is_full_reorder_offload) {
-		qdf_mem_free_consistent(pdev->osdev,
+		qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
 					   pdev->rx_ring.target_idx.paddr,
@@ -378,7 +378,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 		qdf_mem_free(pdev->rx_ring.buf.netbufs_ring);
 	}
 
-	qdf_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   sizeof(uint32_t),
 				   pdev->rx_ring.alloc_idx.vaddr,
 				   pdev->rx_ring.alloc_idx.paddr,
@@ -386,7 +386,7 @@ void htt_rx_detach(struct htt_pdev_t *pdev)
 							    alloc_idx),
 							   memctx));
 
-	qdf_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
@@ -1326,7 +1326,7 @@ htt_rx_amsdu_rx_in_order_pop_ll(htt_pdev_handle pdev,
 /* Util fake function that has same prototype as qdf_nbuf_clone that just
  * retures the same nbuf
  */
-qdf_nbuf_t htt_rx_cdf_noclone_buf(qdf_nbuf_t buf)
+qdf_nbuf_t htt_rx_qdf_noclone_buf(qdf_nbuf_t buf)
 {
 	return buf;
 }
@@ -1415,7 +1415,7 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 	 * waste cycles cloning the packets
 	 */
 	clone_nbuf_fn =
-		clone_not_reqd ? htt_rx_cdf_noclone_buf : qdf_nbuf_clone;
+		clone_not_reqd ? htt_rx_qdf_noclone_buf : qdf_nbuf_clone;
 
 	/* The nbuf has been pulled just beyond the status and points to the
 	 * payload
@@ -1625,7 +1625,7 @@ htt_rx_restitch_mpdu_from_msdus(htt_pdev_handle pdev,
 
 	}
 
-	/* TODO: Convert this to suitable cdf routines */
+	/* TODO: Convert this to suitable qdf routines */
 	qdf_nbuf_append_ext_list(mpdu_buf, head_frag_list_cloned,
 				 frag_list_sum_len);
 
@@ -2049,7 +2049,7 @@ int htt_rx_hash_init(struct htt_pdev_t *pdev)
 {
 	int i, j;
 
-	HTT_ASSERT2(CDF_IS_PWR2(RX_NUM_HASH_BUCKETS));
+	HTT_ASSERT2(QDF_IS_PWR2(RX_NUM_HASH_BUCKETS));
 
 	pdev->rx_ring.hash_table =
 		qdf_mem_malloc(RX_NUM_HASH_BUCKETS *
@@ -2132,7 +2132,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	uint32_t ring_elem_size = sizeof(qdf_dma_addr_t);
 
 	pdev->rx_ring.size = htt_rx_ring_size(pdev);
-	HTT_ASSERT2(CDF_IS_PWR2(pdev->rx_ring.size));
+	HTT_ASSERT2(QDF_IS_PWR2(pdev->rx_ring.size));
 	pdev->rx_ring.size_mask = pdev->rx_ring.size - 1;
 
 	/*
@@ -2247,7 +2247,7 @@ int htt_rx_attach(struct htt_pdev_t *pdev)
 	return 0;               /* success */
 
 fail3:
-	qdf_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   pdev->rx_ring.size * sizeof(qdf_dma_addr_t),
 				   pdev->rx_ring.buf.paddrs_ring,
 				   pdev->rx_ring.base_paddr,
@@ -2256,7 +2256,7 @@ fail3:
 
 fail2:
 	if (pdev->cfg.is_full_reorder_offload) {
-		qdf_mem_free_consistent(pdev->osdev,
+		qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 					   sizeof(uint32_t),
 					   pdev->rx_ring.target_idx.vaddr,
 					   pdev->rx_ring.target_idx.paddr,
@@ -2315,7 +2315,7 @@ int htt_rx_ipa_uc_alloc_wdi2_rsc(struct htt_pdev_t *pdev,
 	if (!pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
 		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
@@ -2377,7 +2377,7 @@ int htt_rx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	if (!pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
 		qdf_print("%s: RX PROC DONE IND alloc fail", __func__);
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
@@ -2403,7 +2403,7 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 {
 	if (pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr) {
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx2_ind_ring_base.paddr,
@@ -2414,7 +2414,7 @@ void htt_rx_ipa_uc_free_wdi2_rsc(struct htt_pdev_t *pdev)
 
 	if (pdev->ipa_uc_rx_rsc.rx2_ipa_prc_done_idx.vaddr) {
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			4,
 			pdev->ipa_uc_rx_rsc.
 			rx_ipa_prc_done_idx.vaddr,
@@ -2435,7 +2435,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 {
 	if (pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr) {
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_size,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.vaddr,
 			pdev->ipa_uc_rx_rsc.rx_ind_ring_base.paddr,
@@ -2446,7 +2446,7 @@ int htt_rx_ipa_uc_detach(struct htt_pdev_t *pdev)
 
 	if (pdev->ipa_uc_rx_rsc.rx_ipa_prc_done_idx.vaddr) {
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			4,
 			pdev->ipa_uc_rx_rsc.
 			rx_ipa_prc_done_idx.vaddr,

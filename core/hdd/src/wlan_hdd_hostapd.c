@@ -379,7 +379,7 @@ static int hdd_hostapd_change_mtu(struct net_device *dev, int new_mtu)
 QDF_STATUS hdd_set_sap_ht2040_mode(hdd_adapter_t *pHostapdAdapter,
 				   uint8_t channel_type)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 
 	hddLog(LOGE, FL("change HT20/40 mode"));
@@ -390,10 +390,10 @@ QDF_STATUS hdd_set_sap_ht2040_mode(hdd_adapter_t *pHostapdAdapter,
 			hddLog(LOGE, FL("Hal ctx is null"));
 			return QDF_STATUS_E_FAULT;
 		}
-		cdf_ret_status =
+		qdf_ret_status =
 			sme_set_ht2040_mode(hHal, pHostapdAdapter->sessionId,
 					channel_type, true);
-		if (cdf_ret_status == QDF_STATUS_E_FAILURE) {
+		if (qdf_ret_status == QDF_STATUS_E_FAILURE) {
 			hddLog(LOGE, FL("Failed to change HT20/40 mode"));
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -933,7 +933,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 
 		pHostapdState->qdf_status =
 			pSapEvent->sapevt.sapStartBssCompleteEvent.status;
-		qdf_status = qdf_event_set(&pHostapdState->cdf_event);
+		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)
 		    || pHostapdState->qdf_status) {
@@ -1443,7 +1443,7 @@ QDF_STATUS hdd_hostapd_sap_event_cb(tpSap_Event pSapEvent,
 		hddLog(LOG1, " disassociated " MAC_ADDRESS_STR,
 		       MAC_ADDR_ARRAY(wrqu.addr.sa_data));
 
-		qdf_status = qdf_event_set(&pHostapdState->cdf_event);
+		qdf_status = qdf_event_set(&pHostapdState->qdf_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			hddLog(LOGE, "ERR: Station Deauth event Set failed");
 
@@ -1863,7 +1863,7 @@ stopbss:
 		 * not be touched since they are now subject to being deleted
 		 * by another thread */
 		if (eSAP_STOP_BSS_EVENT == sapEvent)
-			qdf_event_set(&pHostapdState->cdf_stop_bss_event);
+			qdf_event_set(&pHostapdState->qdf_stop_bss_event);
 
 		/* notify userspace that the BSS has stopped */
 		memset(&we_custom_event, '\0', sizeof(we_custom_event));
@@ -4441,7 +4441,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 	v_CONTEXT_t cds_ctx;
 #endif
 	hdd_hostapd_state_t *pHostapdState;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	uint8_t *wps_genie;
 	uint8_t *fwps_genie;
 	uint8_t *pos;
@@ -4496,7 +4496,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 
 	pSap_WPSIe = qdf_mem_malloc(sizeof(tSap_WPSIE));
 	if (NULL == pSap_WPSIe) {
-		hddLog(LOGE, "CDF unable to allocate memory");
+		hddLog(LOGE, "QDF unable to allocate memory");
 		kfree(fwps_genie);
 		return -ENOMEM;
 	}
@@ -4993,11 +4993,11 @@ __iw_softap_setwpsie(struct net_device *dev,
 		} /* switch */
 	}
 #ifdef WLAN_FEATURE_MBSSID
-	cdf_ret_status =
+	qdf_ret_status =
 		wlansap_set_wps_ie(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter),
 				   pSap_WPSIe);
 #else
-	cdf_ret_status = wlansap_set_wps_ie(p_cds_context, pSap_WPSIe);
+	qdf_ret_status = wlansap_set_wps_ie(p_cds_context, pSap_WPSIe);
 #endif
 	pHostapdState = WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 	if (pHostapdState->bCommit && WPSIeType == eQC_WPS_PROBE_RSP_IE) {
@@ -5011,7 +5011,7 @@ __iw_softap_setwpsie(struct net_device *dev,
 	qdf_mem_free(pSap_WPSIe);
 	kfree(fwps_genie);
 	EXIT();
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 static int iw_softap_setwpsie(struct net_device *dev,
@@ -5049,7 +5049,7 @@ __iw_softap_stopbss(struct net_device *dev,
 		hdd_hostapd_state_t *pHostapdState =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(pHostapdAdapter);
 
-		qdf_event_reset(&pHostapdState->cdf_stop_bss_event);
+		qdf_event_reset(&pHostapdState->qdf_stop_bss_event);
 #ifdef WLAN_FEATURE_MBSSID
 		status =
 			wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pHostapdAdapter));
@@ -5061,7 +5061,7 @@ __iw_softap_stopbss(struct net_device *dev,
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
 				qdf_wait_single_event(&pHostapdState->
-						      cdf_stop_bss_event,
+						      qdf_stop_bss_event,
 						      10000);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -5240,7 +5240,7 @@ static int __iw_set_ap_genie(struct net_device *dev,
 	v_CONTEXT_t cds_ctx;
 #endif
 	hdd_context_t *hdd_ctx;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	uint8_t *genie = (uint8_t *)extra;
 	int ret;
 
@@ -5255,7 +5255,7 @@ static int __iw_set_ap_genie(struct net_device *dev,
 	cds_ctx = hdd_ctx->pcds_context;
 	if (NULL == cds_ctx) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  "%s: CDF Context is NULL", __func__);
+			  "%s: QDF Context is NULL", __func__);
 		return -EINVAL;
 	}
 #endif
@@ -5274,12 +5274,12 @@ static int __iw_set_ap_genie(struct net_device *dev,
 		}
 		(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->uPrivacy = 1;
 #ifdef WLAN_FEATURE_MBSSID
-		cdf_ret_status =
+		qdf_ret_status =
 			wlansap_set_wparsn_ies(WLAN_HDD_GET_SAP_CTX_PTR
 						       (pHostapdAdapter), genie,
 					       wrqu->data.length);
 #else
-		cdf_ret_status =
+		qdf_ret_status =
 			wlansap_set_wparsn_ies(cds_ctx, genie,
 					       wrqu->data.length);
 #endif
@@ -5287,11 +5287,11 @@ static int __iw_set_ap_genie(struct net_device *dev,
 
 	default:
 		hddLog(LOGE, FL("Set UNKNOWN IE %X"), genie[0]);
-		cdf_ret_status = 0;
+		qdf_ret_status = 0;
 	}
 
 	EXIT();
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 /**
@@ -6035,16 +6035,16 @@ QDF_STATUS hdd_init_ap_mode(hdd_adapter_t *pAdapter)
 		return status;
 	}
 
-	qdf_status = qdf_event_create(&phostapdBuf->cdf_event);
+	qdf_status = qdf_event_create(&phostapdBuf->qdf_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-		hddLog(LOGE, ("ERROR: Hostapd HDD cdf event init failed!!"));
+		hddLog(LOGE, ("ERROR: Hostapd HDD qdf event init failed!!"));
 #ifdef WLAN_FEATURE_MBSSID
 		wlansap_close(sapContext);
 #endif
 		return qdf_status;
 	}
 
-	qdf_status = qdf_event_create(&phostapdBuf->cdf_stop_bss_event);
+	qdf_status = qdf_event_create(&phostapdBuf->qdf_stop_bss_event);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  ("ERROR: Hostapd HDD stop bss event init failed!!"));
@@ -6189,7 +6189,7 @@ hdd_adapter_t *hdd_wlan_create_ap_dev(hdd_context_t *pHddCtx,
  * @pAdapter: Pointer to hostapd adapter
  * @rtnl_lock_held: RTNL lock held
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS hdd_register_hostapd(hdd_adapter_t *pAdapter,
 				uint8_t rtnl_lock_held) {
@@ -7778,7 +7778,7 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 
 	(WLAN_HDD_GET_AP_CTX_PTR(pHostapdAdapter))->dfs_cac_block_tx = true;
 
-	qdf_event_reset(&pHostapdState->cdf_event);
+	qdf_event_reset(&pHostapdState->qdf_event);
 	status = wlansap_start_bss(
 #ifdef WLAN_FEATURE_MBSSID
 		WLAN_HDD_GET_SAP_CTX_PTR
@@ -7798,13 +7798,13 @@ static int wlan_hdd_cfg80211_start_bss(hdd_adapter_t *pHostapdAdapter,
 	hddLog(LOG1,
 	       FL("Waiting for Scan to complete(auto mode) and BSS to start"));
 
-	qdf_status = qdf_wait_single_event(&pHostapdState->cdf_event, 10000);
+	qdf_status = qdf_wait_single_event(&pHostapdState->qdf_event, 10000);
 
 	wlansap_reset_sap_config_add_ie(pConfig, eUPDATE_IE_ALL);
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 		hddLog(LOGE,
-			FL("ERROR: HDD cdf wait for single_event failed!!"));
+			FL("ERROR: HDD qdf wait for single_event failed!!"));
 		cds_set_connection_in_progress(false);
 		sme_get_command_q_status(hHal);
 #ifdef WLAN_FEATURE_MBSSID
@@ -7961,7 +7961,7 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		hdd_hostapd_state_t *pHostapdState =
 			WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter);
 
-		qdf_event_reset(&pHostapdState->cdf_stop_bss_event);
+		qdf_event_reset(&pHostapdState->qdf_stop_bss_event);
 #ifdef WLAN_FEATURE_MBSSID
 		status = wlansap_stop_bss(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter));
 #else
@@ -7970,12 +7970,12 @@ static int __wlan_hdd_cfg80211_stop_ap(struct wiphy *wiphy,
 		if (QDF_IS_STATUS_SUCCESS(status)) {
 			qdf_status =
 				qdf_wait_single_event(&pHostapdState->
-						      cdf_stop_bss_event,
+						      qdf_stop_bss_event,
 						      10000);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 				hddLog(LOGE,
-				       FL("HDD cdf wait for single_event failed!!"));
+				       FL("HDD qdf wait for single_event failed!!"));
 				QDF_ASSERT(0);
 			}
 		}
@@ -8137,7 +8137,7 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 	if (pHddCtx->config->policy_manager_enabled) {
-		status = cdf_reset_connection_update();
+		status = qdf_reset_connection_update();
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("ERR: clear event failed");
 
@@ -8150,9 +8150,9 @@ static int __wlan_hdd_cfg80211_start_ap(struct wiphy *wiphy,
 		}
 
 		if (QDF_STATUS_SUCCESS == status) {
-			status = cdf_wait_for_connection_update();
+			status = qdf_wait_for_connection_update();
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				hdd_err("ERROR: cdf wait for event failed!!");
+				hdd_err("ERROR: qdf wait for event failed!!");
 				return -EINVAL;
 			}
 		}

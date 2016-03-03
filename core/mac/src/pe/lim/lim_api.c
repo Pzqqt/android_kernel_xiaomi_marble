@@ -1816,7 +1816,7 @@ void lim_fill_join_rsp_ht_caps(tpPESession session, tpSirSmeJoinRsp join_rsp)
 		return;
 	}
 	if (session->cc_switch_mode !=
-			CDF_MCC_TO_SCC_SWITCH_DISABLE) {
+			QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 		ht_profile = &join_rsp->HTProfile;
 		ht_profile->htSupportedChannelWidthSet =
 			session->htSupportedChannelWidthSet;

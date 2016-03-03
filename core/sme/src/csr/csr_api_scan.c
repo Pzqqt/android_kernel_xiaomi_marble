@@ -2947,7 +2947,7 @@ static tCsrScanResult *csr_scan_save_bss_description(tpAniSirGlobal pMac,
 				       bssId));
 		qdf_mem_copy(&pCsrBssDescription->Result.BssDescriptor,
 			     pBSSDescription, cbBSSDesc);
-#if defined(CDF_ENSBALED)
+#if defined(QDF_ENSBALED)
 		if (NULL != pCsrBssDescription->Result.pvIes) {
 			QDF_ASSERT(pCsrBssDescription->Result.pvIes == NULL);
 			return NULL;

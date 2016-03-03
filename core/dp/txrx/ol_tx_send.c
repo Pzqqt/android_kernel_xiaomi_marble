@@ -26,7 +26,7 @@
  */
 
 #include <qdf_atomic.h>         /* qdf_atomic_inc, etc. */
-#include <qdf_lock.h>           /* cdf_os_spinlock */
+#include <qdf_lock.h>           /* qdf_os_spinlock */
 #include <qdf_time.h>           /* qdf_system_ticks, etc. */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_net_types.h>      /* QDF_NBUF_TX_EXT_TID_INVALID */

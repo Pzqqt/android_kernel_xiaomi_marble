@@ -53,7 +53,7 @@ tSirRetStatus u_mac_post_ctrl_msg(void *pSirGlobal, void *pMb);
  *
  * This function initializes the Message queue.
  *
- * Return: cdf status
+ * Return: qdf status
  */
 inline QDF_STATUS cds_mq_init(p_cds_mq_type pMq)
 {
@@ -184,11 +184,11 @@ inline bool cds_is_mq_empty(p_cds_mq_type pMq)
  * cds_send_mb_message_to_mac() - post a message to a message queue
  * @pBuf: Pointer to buffer allocated by caller
  *
- * Return: cdf status
+ * Return: qdf status
  */
 QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	tSirRetStatus sirStatus;
 	v_CONTEXT_t cds_context;
 	void *hHal;
@@ -205,11 +205,11 @@ QDF_STATUS cds_send_mb_message_to_mac(void *pBuf)
 		} else {
 			sirStatus = u_mac_post_ctrl_msg(hHal, pBuf);
 			if (eSIR_SUCCESS == sirStatus)
-				cdf_ret_status = QDF_STATUS_SUCCESS;
+				qdf_ret_status = QDF_STATUS_SUCCESS;
 		}
 	}
 
 	qdf_mem_free(pBuf);
 
-	return cdf_ret_status;
+	return qdf_ret_status;
 }

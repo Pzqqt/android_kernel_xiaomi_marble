@@ -832,12 +832,12 @@ static void hdd_mcbc_filter_modification(hdd_context_t *pHddCtx,
  */
 void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	tpSirWlanSetRxpFilters wlanRxpFilterParam =
 		qdf_mem_malloc(sizeof(tSirWlanSetRxpFilters));
 	if (NULL == wlanRxpFilterParam) {
 		hddLog(QDF_TRACE_LEVEL_FATAL,
-		       "%s: cdf_mem_alloc failed ", __func__);
+		       "%s: qdf_mem_malloc failed ", __func__);
 		return;
 	}
 	hddLog(QDF_TRACE_LEVEL_INFO,
@@ -854,20 +854,20 @@ void hdd_conf_mcastbcast_filter(hdd_context_t *pHddCtx, bool setfilter)
 	}
 
 	wlanRxpFilterParam->setMcstBcstFilter = setfilter;
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_configure_rxp_filter(pHddCtx->hHal, wlanRxpFilterParam);
 
-	if (setfilter && (QDF_STATUS_SUCCESS == cdf_ret_status))
+	if (setfilter && (QDF_STATUS_SUCCESS == qdf_ret_status))
 		pHddCtx->hdd_mcastbcast_filter_set = true;
 
 	hddLog(LOG1,
 		FL("%s to post set/reset filter to lower mac with status %d configuredMcstBcstFilterSetting = %d setMcstBcstFilter = %d"),
-		(QDF_STATUS_SUCCESS != cdf_ret_status) ? "Failed" : "Success",
-		cdf_ret_status,
+		(QDF_STATUS_SUCCESS != qdf_ret_status) ? "Failed" : "Success",
+		qdf_ret_status,
 		wlanRxpFilterParam->configuredMcstBcstFilterSetting,
 		wlanRxpFilterParam->setMcstBcstFilter);
 
-	if (QDF_STATUS_SUCCESS != cdf_ret_status)
+	if (QDF_STATUS_SUCCESS != qdf_ret_status)
 		qdf_mem_free(wlanRxpFilterParam);
 }
 
@@ -1001,20 +1001,20 @@ static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
 						  bool suspended),
 				 void *callbackContext)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	hdd_info("%s: send wlan suspend indication", __func__);
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_configure_suspend_ind(pHddCtx->hHal, conn_state_mask,
 					  callback, callbackContext);
 
-	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == qdf_ret_status) {
 		pHddCtx->hdd_mcastbcast_filter_set = true;
 	} else {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_suspend_ind returned failure %d"),
-		       cdf_ret_status);
+		       qdf_ret_status);
 	}
 }
 
@@ -1027,14 +1027,14 @@ static void hdd_send_suspend_ind(hdd_context_t *pHddCtx,
 static void hdd_conf_resume_ind(hdd_adapter_t *pAdapter)
 {
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
-	cdf_ret_status = sme_configure_resume_req(pHddCtx->hHal, NULL);
+	qdf_ret_status = sme_configure_resume_req(pHddCtx->hHal, NULL);
 
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: sme_configure_resume_req return failure %d",
-		       __func__, cdf_ret_status);
+		       __func__, qdf_ret_status);
 
 	}
 
@@ -1405,7 +1405,7 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	QDF_STATUS qdf_status;
 	v_CONTEXT_t p_cds_context = NULL;
 	hdd_context_t *pHddCtx = NULL;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	hdd_adapter_t *pAdapter;
 	int i;
 
@@ -1488,14 +1488,14 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 
 	/* Set the MAC Address, currently this is used by HAL to add self sta.
 	 * Remove this once self sta is added as part of session open. */
-	cdf_ret_status = cfg_set_str(pHddCtx->hHal, WNI_CFG_STA_ID,
+	qdf_ret_status = cfg_set_str(pHddCtx->hHal, WNI_CFG_STA_ID,
 				     (uint8_t *) &pHddCtx->config->
 				     intfMacAddr[0],
 				     sizeof(pHddCtx->config->intfMacAddr[0]));
-	if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 		hddLog(QDF_TRACE_LEVEL_ERROR, "%s: Failed to set MAC Address. "
-		       "HALStatus is %08d [x%08x]", __func__, cdf_ret_status,
-		       cdf_ret_status);
+		       "HALStatus is %08d [x%08x]", __func__, qdf_ret_status,
+		       qdf_ret_status);
 		goto err_cds_close;
 	}
 

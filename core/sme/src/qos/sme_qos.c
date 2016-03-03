@@ -6366,7 +6366,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 	sme_QosCmdInfoEntry *pcmd = NULL;
 	tListElem *list_elt = NULL;
 	sme_QosStatusType hdd_status = SME_QOS_STATUS_SETUP_FAILURE_RSP;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	sme_QosCmdInfo *qos_cmd = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -6399,7 +6399,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_internal_setup_req failed on session %d"),
 					  session_id);
-				cdf_ret_status = QDF_STATUS_E_FAILURE;
+				qdf_ret_status = QDF_STATUS_E_FAILURE;
 			}
 			break;
 		case SME_QOS_RELEASE_REQ:
@@ -6411,7 +6411,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_internal_release_req failed on session %d"),
 					  session_id);
-				cdf_ret_status = QDF_STATUS_E_FAILURE;
+				qdf_ret_status = QDF_STATUS_E_FAILURE;
 			}
 			break;
 		case SME_QOS_MODIFY_REQ:
@@ -6425,7 +6425,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_internal_modify_req failed on session %d"),
 					  session_id);
-				cdf_ret_status = QDF_STATUS_E_FAILURE;
+				qdf_ret_status = QDF_STATUS_E_FAILURE;
 			}
 			break;
 		case SME_QOS_RESEND_REQ:
@@ -6440,7 +6440,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 					  QDF_TRACE_LEVEL_ERROR,
 					  FL("sme_qos_re_request_add_ts failed on session %d"),
 					  session_id);
-				cdf_ret_status = QDF_STATUS_E_FAILURE;
+				qdf_ret_status = QDF_STATUS_E_FAILURE;
 			}
 			break;
 		default:
@@ -6457,7 +6457,7 @@ static QDF_STATUS sme_qos_process_buffered_cmd(uint8_t session_id)
 			  FL("cmd buffer empty"));
 		qos_session->readyForPowerSave = true;
 	}
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 /*--------------------------------------------------------------------------

@@ -84,13 +84,13 @@ static void memdump_cleanup_timer_cb(void *data)
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("CDF context is NULL"));
+		hddLog(LOGE, FL("QDF context is NULL"));
 		return;
 	}
 
 	paddr = hdd_ctx->dump_loc_paddr;
 	mutex_lock(&hdd_ctx->memdump_lock);
-	qdf_mem_free_consistent(qdf_ctx,
+	qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
 		FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 	hdd_ctx->fw_dump_loc = NULL;
 	hdd_ctx->memdump_in_progress = false;
@@ -216,7 +216,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("CDF context is NULL"));
+		hddLog(LOGE, FL("QDF context is NULL"));
 		return -EINVAL;
 	}
 
@@ -299,7 +299,7 @@ static int __wlan_hdd_cfg80211_get_fw_mem_dump(struct wiphy *wiphy,
 	if (QDF_STATUS_SUCCESS != sme_status) {
 		hddLog(LOGE, FL("sme_fw_mem_dump Failed"));
 		mutex_lock(&hdd_ctx->memdump_lock);
-		qdf_mem_free_consistent(qdf_ctx,
+		qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		mutex_unlock(&hdd_ctx->memdump_lock);
@@ -407,7 +407,7 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 	}
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("CDF context is NULL"));
+		hddLog(LOGE, FL("QDF context is NULL"));
 		return -EINVAL;
 	}
 
@@ -443,7 +443,7 @@ static ssize_t memdump_read(struct file *file, char __user *buf,
 	if (*pos >= FW_MEM_DUMP_SIZE) {
 		paddr = hdd_ctx->dump_loc_paddr;
 		mutex_lock(&hdd_ctx->memdump_lock);
-		qdf_mem_free_consistent(qdf_ctx,
+		qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		hdd_ctx->memdump_in_progress = false;
@@ -609,7 +609,7 @@ void memdump_deinit(void)
 
 	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 	if (!qdf_ctx) {
-		hddLog(LOGE, FL("CDF context is NULL"));
+		hddLog(LOGE, FL("QDF context is NULL"));
 		return;
 	}
 
@@ -619,7 +619,7 @@ void memdump_deinit(void)
 	mutex_lock(&hdd_ctx->memdump_lock);
 	if (hdd_ctx->fw_dump_loc) {
 		paddr = hdd_ctx->dump_loc_paddr;
-		qdf_mem_free_consistent(qdf_ctx,
+		qdf_mem_free_consistent(qdf_ctx, qdf_ctx->dev,
 			FW_MEM_DUMP_SIZE, hdd_ctx->fw_dump_loc, paddr, dma_ctx);
 		hdd_ctx->fw_dump_loc = NULL;
 		hdd_ctx->memdump_in_progress = false;

@@ -635,7 +635,7 @@ static int wlan_logging_proc_sock_rx_msg(struct sk_buff *skb)
 		wake_up_interruptible(&gwlan_logging.wait_queue);
 	} else {
 		/* This is to set the default levels (WLAN logging
-		 * default values not the CDF trace default) when
+		 * default values not the QDF trace default) when
 		 * logger app is registered for the first time.
 		 */
 		gapp_pid = wnl->nlh.nlmsg_pid;

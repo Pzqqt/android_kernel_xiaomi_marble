@@ -292,7 +292,7 @@ void cds_pkt_proto_trace_close(void)
 QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 				  uint8_t *file_name, uint32_t line_num)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	qdf_nbuf_t nbuf;
 
 	nbuf = qdf_nbuf_alloc_debug(NULL,
@@ -305,10 +305,10 @@ QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
 		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
 		*data = qdf_nbuf_data(nbuf);
-		cdf_ret_status = QDF_STATUS_SUCCESS;
+		qdf_ret_status = QDF_STATUS_SUCCESS;
 	}
 
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 #else
 /*---------------------------------------------------------------------------
@@ -317,7 +317,7 @@ QDF_STATUS cds_packet_alloc_debug(uint16_t size, void **data, void **ppPacket,
    ---------------------------------------------------------------------------*/
 QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	qdf_nbuf_t nbuf;
 
 	nbuf = qdf_nbuf_alloc(NULL, roundup(size + TX_PKT_MIN_HEADROOM, 4),
@@ -328,10 +328,10 @@ QDF_STATUS cds_packet_alloc(uint16_t size, void **data, void **ppPacket)
 		qdf_nbuf_set_protocol(nbuf, ETH_P_CONTROL);
 		*ppPacket = nbuf;
 		*data = qdf_nbuf_data(nbuf);
-		cdf_ret_status = QDF_STATUS_SUCCESS;
+		qdf_ret_status = QDF_STATUS_SUCCESS;
 	}
 
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 #endif

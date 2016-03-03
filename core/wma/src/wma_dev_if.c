@@ -678,7 +678,7 @@ out:
  * @pdel_sta_self_req_param: del sta params
  * @generateRsp: generate Response flag
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			struct del_sta_self_params *pdel_sta_self_req_param,
@@ -1284,7 +1284,7 @@ static int wmi_unified_peer_create_send(wmi_unified_t wmi,
  * @vdev_id: vdev id
  * @roam_synch_in_progress: roam in progress
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 			  ol_txrx_vdev_handle vdev,
@@ -2075,7 +2075,7 @@ end:
  * @req: vdev start params
  * @isRestart: isRestart flag
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			  struct wma_vdev_start_req *req, bool isRestart)

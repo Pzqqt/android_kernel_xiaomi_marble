@@ -2370,7 +2370,7 @@ QDF_STATUS csr_neighbor_roam_indicate_disconnect(tpAniSirGlobal pMac,
  * This initializes all the necessary data structures related to the
  * associated AP.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static void csr_neighbor_roam_info_ctx_init(
 		tpAniSirGlobal pMac,
@@ -2481,13 +2481,13 @@ static void csr_neighbor_roam_info_ctx_init(
  * csr_neighbor_roam_indicate_connect()
  * @pMac: mac context
  * @session_id: Session Id
- * @qdf_status: CDF status
+ * @qdf_status: QDF status
  *
  * This function is called by CSR as soon as the station connects to an AP.
  * This initializes all the necessary data structures related to the
  * associated AP and transitions the state to CONNECTED state
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS csr_neighbor_roam_indicate_connect(
 		tpAniSirGlobal pMac, uint8_t session_id,

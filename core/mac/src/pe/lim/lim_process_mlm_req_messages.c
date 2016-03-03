@@ -2423,7 +2423,7 @@ static void lim_process_periodic_probe_req_timer(tpAniSirGlobal mac_ctx)
 	TX_TIMER *probe_req_timer =
 		&mac_ctx->lim.limTimers.gLimPeriodicProbeReqTimer;
 
-	if (qdf_mc_timer_get_current_state(&probe_req_timer->cdf_timer)
+	if (qdf_mc_timer_get_current_state(&probe_req_timer->qdf_timer)
 					   != QDF_TIMER_STATE_STOPPED) {
 		lim_log(mac_ctx, LOG1, FL("Invalid state of timer"));
 		return;

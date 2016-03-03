@@ -143,7 +143,7 @@ static int wma_post_auto_shutdown_msg(void)
  * @wma_handle: wma handle
  * @pGetRssiReq: get RSSI request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
 				void *pGetRssiReq)
@@ -206,7 +206,7 @@ QDF_STATUS wma_send_snr_request(tp_wma_handle wma_handle,
  * wma_get_snr() - get RSSI from fw
  * @psnr_req: request params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_get_snr(tAniGetSnrReq *psnr_req)
 {
@@ -327,7 +327,7 @@ end:
  * @lphb_conf_req: configuration info
  * @by_user: whether this call is from user or cached resent
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_lphb_conf_hbenable(tp_wma_handle wma_handle,
 				  tSirLPHBReq *lphb_conf_req, bool by_user)
@@ -419,7 +419,7 @@ error:
  * @wma_handle: wma handle
  * @lphb_conf_req: lphb config request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_lphb_conf_tcp_params(tp_wma_handle wma_handle,
 				    tSirLPHBReq *lphb_conf_req)
@@ -493,7 +493,7 @@ error:
  * @wma_handle: wma handle
  * @lphb_conf_req: lphb config request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_lphb_conf_tcp_pkt_filter(tp_wma_handle wma_handle,
 					tSirLPHBReq *lphb_conf_req)
@@ -562,7 +562,7 @@ error:
  * @wma_handle: wma handle
  * @lphb_conf_req: lphb config request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_lphb_conf_udp_params(tp_wma_handle wma_handle,
 				    tSirLPHBReq *lphb_conf_req)
@@ -634,7 +634,7 @@ error:
  * @wma_handle: wma handle
  * @lphb_conf_req: lphb config request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_lphb_conf_udp_pkt_filter(tp_wma_handle wma_handle,
 					tSirLPHBReq *lphb_conf_req)
@@ -703,7 +703,7 @@ error:
  * @wma_handle: wma handle
  * @lphb_conf_req: lphb config request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_lphb_conf_req(tp_wma_handle wma_handle,
 				     tSirLPHBReq *lphb_conf_req)
@@ -758,7 +758,7 @@ QDF_STATUS wma_process_lphb_conf_req(tp_wma_handle wma_handle,
  * @wma_handle: wma handle
  * @ta_dhcp_ind: DHCP indication
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS wma_process_dhcp_ind(tp_wma_handle wma_handle,
 				tAniDHCPInd *ta_dhcp_ind)
@@ -922,7 +922,7 @@ WLAN_PHY_MODE wma_chan_to_mode(u8 chan, phy_ch_width chan_width,
  * @handle: wma handle
  * @pLinkSpeed: link speed info
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed)
 {
@@ -1325,7 +1325,7 @@ static int wma_lphb_handler(tp_wma_handle wma, uint8_t *event)
  * @wma: wma handle
  * @vdev_id: vdev id
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_wow_sta_ra_filter(tp_wma_handle wma, uint8_t vdev_id)
 {
@@ -1594,7 +1594,7 @@ int wma_csa_offload_handler(void *handle, uint8_t *event, uint32_t len)
 
 	csa_offload_event = qdf_mem_malloc(sizeof(*csa_offload_event));
 	if (!csa_offload_event) {
-		WMA_LOGE("CDF MEM Alloc Failed for csa_offload_event");
+		WMA_LOGE("QDF MEM Alloc Failed for csa_offload_event");
 		return -EINVAL;
 	}
 
@@ -2498,7 +2498,7 @@ wma_unified_dfs_phyerr_filter_offload_enable(tp_wma_handle wma_handle)
  * @handle: wma handle
  * @params: pktlog params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 				   struct ath_pktlog_wmi_params *params)
@@ -3114,7 +3114,7 @@ static inline void wma_set_wow_bus_suspend(tp_wma_handle wma, int val)
  * @bitmap: Event bitmap
  * @enable: enable/disable
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
 					uint32_t vdev_id,
@@ -3167,7 +3167,7 @@ static QDF_STATUS wma_add_wow_wakeup_event(tp_wma_handle wma,
  * @mask_len: mask length
  * @user: true for user configured pattern and false for default pattern
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_send_wow_patterns_to_fw(tp_wma_handle wma,
 				uint8_t vdev_id, uint8_t ptrn_id,
@@ -3305,7 +3305,7 @@ static QDF_STATUS wma_send_wow_patterns_to_fw(tp_wma_handle wma,
  *
  * Configures default WOW pattern for the given vdev_id which is in AP mode.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
 {
@@ -3345,7 +3345,7 @@ static QDF_STATUS wma_wow_ap(tp_wma_handle wma, uint8_t vdev_id)
  *
  * Configures default WOW pattern for the given vdev_id which is in sta mode.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_wow_sta(tp_wma_handle wma, uint8_t vdev_id)
 {
@@ -3532,7 +3532,7 @@ void wma_enable_disable_wakeup_event(WMA_HANDLE handle,
  * wma_enable_wow_in_fw() - wnable wow in fw
  * @wma: wma handle
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 {
@@ -3676,7 +3676,7 @@ error:
  * @wma: wma handle
  * @type: type of suspend
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type)
 {
@@ -3708,7 +3708,7 @@ QDF_STATUS wma_resume_req(tp_wma_handle wma, enum qdf_suspend_type type)
  * @vdev_id: vdev id
  * @user: true for user pattern and false for default pattern
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_wow_delete_pattern(tp_wma_handle wma, uint8_t ptrn_id,
 					uint8_t vdev_id, bool user)
@@ -3768,7 +3768,7 @@ static QDF_STATUS wma_wow_delete_pattern(tp_wma_handle wma, uint8_t ptrn_id,
  * Target is responsible for caching wow patterns accross multiple
  * suspend/resumes until the pattern is deleted by user
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma, struct wow_add_pattern *ptrn)
 {
@@ -3840,7 +3840,7 @@ QDF_STATUS wma_wow_add_pattern(tp_wma_handle wma, struct wow_add_pattern *ptrn)
  * 2) After deleting all user wow patterns add default wow patterns
  *    specific to that vdev.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
 					struct wow_delete_pattern *pattern)
@@ -3880,7 +3880,7 @@ QDF_STATUS wma_wow_delete_user_pattern(tp_wma_handle wma,
  * Records pattern enable/disable status locally. This choice will
  * take effect when the driver enter into suspend state.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info)
 {
@@ -3912,7 +3912,7 @@ QDF_STATUS wma_wow_enter(tp_wma_handle wma, tpSirHalWowlEnterParams info)
  * @wma: wma handle
  * @info: wow params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_wow_exit(tp_wma_handle wma, tpSirHalWowlExitParams info)
 {
@@ -4212,7 +4212,7 @@ static void wma_notify_suspend_req_procesed(tp_wma_handle wma,
  * The type controlls how we notify the indicator that the indication has
  * been processed
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type)
 {
@@ -4249,7 +4249,7 @@ QDF_STATUS wma_suspend_req(tp_wma_handle wma, enum qdf_suspend_type type)
  * Sends host wakeup indication to FW. On receiving this indication,
  * FW will come out of WOW.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_send_host_wakeup_ind_to_fw(tp_wma_handle wma)
 {
@@ -4801,7 +4801,7 @@ int wma_process_receive_filter_clear_filter_req(tp_wma_handle wma,
  * function fetches stats from data path APIs and post
  * WMA_TSM_STATS_RSP msg back to LIM.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 				     void *pTsmStatsMsg)
@@ -4841,7 +4841,7 @@ QDF_STATUS wma_process_tsm_stats_req(tp_wma_handle wma_handler,
 		(tpAniGetTsmStatsRsp) qdf_mem_malloc(sizeof(tAniGetTsmStatsRsp));
 	if (NULL == pTsmRspParams) {
 		QDF_TRACE(QDF_MODULE_ID_WMA, QDF_TRACE_LEVEL_ERROR,
-			  "%s: CDF MEM Alloc Failure", __func__);
+			  "%s: QDF MEM Alloc Failure", __func__);
 		QDF_ASSERT(0);
 		qdf_mem_free(pTsmStatsMsg);
 		return QDF_STATUS_E_NOMEM;
@@ -4929,7 +4929,7 @@ static int wma_add_clear_mcbc_filter(tp_wma_handle wma_handle, uint8_t vdev_id,
  * @wma_handle: wma handle
  * @mcbc_param: mcbc params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_mcbc_set_filter_req(tp_wma_handle wma_handle,
 					   tSirRcvFltMcAddrList *mcbc_param)
@@ -5060,7 +5060,7 @@ int wma_gtk_offload_status_event(void *handle, uint8_t *event,
  * @vdev_id: vdev id
  * @params: GTK offload parameters
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_send_gtk_offload_req(tp_wma_handle wma, uint8_t vdev_id,
 					   tpSirGtkOffloadParams params)
@@ -5124,7 +5124,7 @@ out:
  * @handle: wma handle
  * @params: GTK offload params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_gtk_offload_req(tp_wma_handle wma,
 				       tpSirGtkOffloadParams params)
@@ -5175,7 +5175,7 @@ out:
  * @wma: wma handle
  * @params: GTK offload params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_gtk_offload_getinfo_req(tp_wma_handle wma,
 				tpSirGtkOffloadGetInfoRspParams params)
@@ -5238,7 +5238,7 @@ out:
  * To configure ARP NS off load data to firmware
  * when target goes to wow mode.
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
 					    tpSirHostOffloadReq
@@ -5451,7 +5451,7 @@ QDF_STATUS wma_enable_arp_ns_offload(tp_wma_handle wma,
  * @handle: wma handle
  * @pAddPeriodicTxPtrnParams: tx ptrn params
  *
- * Retrun: CDF status
+ * Retrun: QDF status
  */
 QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirAddPeriodicTxPtrn *
@@ -5529,7 +5529,7 @@ QDF_STATUS wma_process_add_periodic_tx_ptrn_ind(WMA_HANDLE handle,
  * @handle: wma handle
  * @pDelPeriodicTxPtrnParams: tx ptrn params
  *
- * Retrun: CDF status
+ * Retrun: QDF status
  */
 QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
 						tSirDelPeriodicTxPtrn *
@@ -5588,7 +5588,7 @@ QDF_STATUS wma_process_del_periodic_tx_ptrn_ind(WMA_HANDLE handle,
  * @wma_ptr: wma handle
  * @preq: stats ext params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_stats_ext_req(void *wma_ptr, tpStatsExtRequest preq)
 {
@@ -5733,7 +5733,7 @@ int wma_enable_ext_wow(tp_wma_handle wma, tpSirExtWoWParams params)
  * @wma: wma handle
  * @appType1Params: app type1 params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
 				   tpSirAppType1Params appType1Params)
@@ -5788,7 +5788,7 @@ int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
  * @wma: wma handle
  * @appType2Params: app type2 params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 					  tpSirAppType2Params appType2Params)
@@ -5907,7 +5907,7 @@ int wma_auto_shutdown_event_handler(void *handle, uint8_t *event,
  * @wma: wma handle
  * @auto_sh_cmd: auto shutdown timer value
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 						  tSirAutoShutdownCmdParams *
@@ -5962,7 +5962,7 @@ QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
  * @wma: wma_handle
  * @nan_req: request data which will be non-null
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req)
 {
@@ -6072,7 +6072,7 @@ int wma_process_dhcpserver_offload(tp_wma_handle wma_handle,
  * @wma_handle: wma handle
  * @flashing: flashing request
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_set_led_flashing(tp_wma_handle wma_handle,
 				tSirLedFlashingReq *flashing)
@@ -6206,7 +6206,7 @@ int wma_channel_avoid_evt_handler(void *handle, uint8_t *event,
  * @wma_handle: wma handle
  * @ch_avoid_update_req: channel avoid update params
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 					   tSirChAvoidUpdateReq *
@@ -6259,7 +6259,7 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
  * @clientCtxt: client context
  * @regId: reg id
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_set_reg_domain(void *clientCtxt, v_REGDOMAIN_t regId)
 {
@@ -6341,7 +6341,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
  *
  * request the MC thread unpaus the vdev and set resume dtim
  *
- * Return: cdf status of the mq post
+ * Return: qdf status of the mq post
  */
 static QDF_STATUS wma_post_runtime_resume_msg(WMA_HANDLE handle)
 {

@@ -346,9 +346,9 @@ typedef enum {
 
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 #define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE          "gWlanMccToSccSwitchMode"
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN      (CDF_MCC_TO_SCC_SWITCH_DISABLE)
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX      (CDF_MCC_TO_SCC_SWITCH_FORCE)
-#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT  (CDF_MCC_TO_SCC_SWITCH_DISABLE)
+#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MIN      (QDF_MCC_TO_SCC_SWITCH_DISABLE)
+#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_MAX      (QDF_MCC_TO_SCC_SWITCH_FORCE)
+#define CFG_WLAN_MCC_TO_SCC_SWITCH_MODE_DEFAULT  (QDF_MCC_TO_SCC_SWITCH_DISABLE)
 #endif
 
 #define CFG_DISABLE_PACKET_FILTER "gDisablePacketFilter"
@@ -1278,14 +1278,14 @@ typedef enum {
 #endif /* FEATURE_WLAN_FORCE_SAP_SCC */
 
 /*
- * CDF Trace Enable Control
+ * QDF Trace Enable Control
  * Notes:
  *  the MIN/MAX/DEFAULT values apply for all modules
  *  the DEFAULT value is outside the valid range.  if the DEFAULT
  *    value is not overridden, then no change will be made to the
  *    "built in" default values compiled into the code
  *  values are a bitmap indicating which log levels are to enabled
- *    (must match order of cdf_trace_level enumerations)
+ *    (must match order of qdf_trace_level enumerations)
  *    00000001  FATAL
  *    00000010  ERROR
  *    00000100  WARN
@@ -1298,29 +1298,29 @@ typedef enum {
  *  hence a value of 0xFF would set all bits (enable all logs)
  */
 
-#define CFG_CDF_TRACE_ENABLE_WDI_NAME     "cdf_trace_enable_wdi"
-#define CFG_CDF_TRACE_ENABLE_HDD_NAME     "cdf_trace_enable_hdd"
-#define CFG_CDF_TRACE_ENABLE_SME_NAME     "cdf_trace_enable_sme"
-#define CFG_CDF_TRACE_ENABLE_PE_NAME      "cdf_trace_enable_pe"
-#define CFG_CDF_TRACE_ENABLE_PMC_NAME     "cdf_trace_enable_pmc"
-#define CFG_CDF_TRACE_ENABLE_WMA_NAME     "cdf_trace_enable_wma"
-#define CFG_CDF_TRACE_ENABLE_SYS_NAME     "cdf_trace_enable_sys"
-#define CFG_CDF_TRACE_ENABLE_CDF_NAME     "cdf_trace_enable_cdf"
-#define CFG_CDF_TRACE_ENABLE_SAP_NAME     "cdf_trace_enable_sap"
-#define CFG_CDF_TRACE_ENABLE_HDD_SAP_NAME "cdf_trace_enable_hdd_sap"
-#define CFG_CDF_TRACE_ENABLE_BMI_NAME     "cdf_trace_enable_bmi"
-#define CFG_CDF_TRACE_ENABLE_CFG_NAME     "cdf_trace_enable_cfg"
-#define CFG_CDF_TRACE_ENABLE_EPPING       "cdf_trace_enable_epping"
-#define CFG_CDF_TRACE_ENABLE_CDF_DEVICES  "cdf_trace_enable_cdf_devices"
-#define CFG_CDF_TRACE_ENABLE_TXRX_NAME    "cfd_trace_enable_txrx"
-#define CFG_CDF_TRACE_ENABLE_HTC_NAME     "cdf_trace_enable_htc"
-#define CFG_CDF_TRACE_ENABLE_HIF_NAME     "cdf_trace_enable_hif"
-#define CFG_CDR_TRACE_ENABLE_HDD_SAP_DATA_NAME   "cdf_trace_enable_hdd_sap_data"
-#define CFG_CDF_TRACE_ENABLE_HDD_DATA_NAME       "cdf_trace_enable_hdd_data"
+#define CFG_QDF_TRACE_ENABLE_WDI_NAME     "qdf_trace_enable_wdi"
+#define CFG_QDF_TRACE_ENABLE_HDD_NAME     "qdf_trace_enable_hdd"
+#define CFG_QDF_TRACE_ENABLE_SME_NAME     "qdf_trace_enable_sme"
+#define CFG_QDF_TRACE_ENABLE_PE_NAME      "qdf_trace_enable_pe"
+#define CFG_QDF_TRACE_ENABLE_PMC_NAME     "qdf_trace_enable_pmc"
+#define CFG_QDF_TRACE_ENABLE_WMA_NAME     "qdf_trace_enable_wma"
+#define CFG_QDF_TRACE_ENABLE_SYS_NAME     "qdf_trace_enable_sys"
+#define CFG_QDF_TRACE_ENABLE_QDF_NAME     "qdf_trace_enable_qdf"
+#define CFG_QDF_TRACE_ENABLE_SAP_NAME     "qdf_trace_enable_sap"
+#define CFG_QDF_TRACE_ENABLE_HDD_SAP_NAME "qdf_trace_enable_hdd_sap"
+#define CFG_QDF_TRACE_ENABLE_BMI_NAME     "qdf_trace_enable_bmi"
+#define CFG_QDF_TRACE_ENABLE_CFG_NAME     "qdf_trace_enable_cfg"
+#define CFG_QDF_TRACE_ENABLE_EPPING       "qdf_trace_enable_epping"
+#define CFG_QDF_TRACE_ENABLE_QDF_DEVICES  "qdf_trace_enable_qdf_devices"
+#define CFG_QDF_TRACE_ENABLE_TXRX_NAME    "cfd_trace_enable_txrx"
+#define CFG_QDF_TRACE_ENABLE_HTC_NAME     "qdf_trace_enable_htc"
+#define CFG_QDF_TRACE_ENABLE_HIF_NAME     "qdf_trace_enable_hif"
+#define CFG_CDR_TRACE_ENABLE_HDD_SAP_DATA_NAME   "qdf_trace_enable_hdd_sap_data"
+#define CFG_QDF_TRACE_ENABLE_HDD_DATA_NAME       "qdf_trace_enable_hdd_data"
 
-#define CFG_CDF_TRACE_ENABLE_MIN          (0)
-#define CFG_CDF_TRACE_ENABLE_MAX          (0xff)
-#define CFG_CDF_TRACE_ENABLE_DEFAULT      (0xffff)
+#define CFG_QDF_TRACE_ENABLE_MIN          (0)
+#define CFG_QDF_TRACE_ENABLE_MAX          (0xff)
+#define CFG_QDF_TRACE_ENABLE_DEFAULT      (0xffff)
 
 #define HDD_MCASTBCASTFILTER_FILTER_NONE                       0x00
 #define HDD_MCASTBCASTFILTER_FILTER_ALL_MULTICAST              0x01
@@ -3096,26 +3096,26 @@ struct hdd_config {
 	bool fEnableBeaconEarlyTermination;
 	bool teleBcnWakeupEn;
 
-/* CDF Trace Control*/
-	uint16_t cdf_trace_enable_wdi;
-	uint16_t cdf_trace_enable_hdd;
-	uint16_t cdf_trace_enable_sme;
-	uint16_t cdf_trace_enable_pe;
-	uint16_t cdf_trace_enable_pmc;
-	uint16_t cdf_trace_enable_wma;
-	uint16_t cdf_trace_enable_sys;
-	uint16_t cdf_trace_enable_cdf;
-	uint16_t cdf_trace_enable_sap;
-	uint16_t cdf_trace_enable_hdd_sap;
-	uint16_t cdf_trace_enable_bmi;
-	uint16_t cdf_trace_enable_cfg;
+/* QDF Trace Control*/
+	uint16_t qdf_trace_enable_wdi;
+	uint16_t qdf_trace_enable_hdd;
+	uint16_t qdf_trace_enable_sme;
+	uint16_t qdf_trace_enable_pe;
+	uint16_t qdf_trace_enable_pmc;
+	uint16_t qdf_trace_enable_wma;
+	uint16_t qdf_trace_enable_sys;
+	uint16_t qdf_trace_enable_qdf;
+	uint16_t qdf_trace_enable_sap;
+	uint16_t qdf_trace_enable_hdd_sap;
+	uint16_t qdf_trace_enable_bmi;
+	uint16_t qdf_trace_enable_cfg;
 	uint16_t cfd_trace_enable_txrx;
-	uint16_t cdf_trace_enable_htc;
-	uint16_t cdf_trace_enable_hif;
-	uint16_t cdf_trace_enable_hdd_sap_data;
-	uint16_t cdf_trace_enable_hdd_data;
-	uint16_t cdf_trace_enable_epping;
-	uint16_t cdf_trace_enable_cdf_devices;
+	uint16_t qdf_trace_enable_htc;
+	uint16_t qdf_trace_enable_hif;
+	uint16_t qdf_trace_enable_hdd_sap_data;
+	uint16_t qdf_trace_enable_hdd_data;
+	uint16_t qdf_trace_enable_epping;
+	uint16_t qdf_trace_enable_qdf_devices;
 
 	uint16_t nTeleBcnTransListenInterval;
 	uint16_t nTeleBcnMaxListenInterval;

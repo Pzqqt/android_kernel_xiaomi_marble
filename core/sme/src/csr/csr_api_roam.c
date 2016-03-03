@@ -3134,7 +3134,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
  *
  * CSR function that HDD calls to delete a associated station
  *
- * Return: QDF_STATUS_SUCCESS on success or another CDF_STATUS_* on error
+ * Return: QDF_STATUS_SUCCESS on success or another QDF_STATUS_** on error
  */
 QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 		uint32_t sessionId,
@@ -6080,7 +6080,7 @@ static void csr_roam_process_start_bss_success(tpAniSirGlobal mac_ctx,
 		dst_profile = &session->connectedProfile.HTProfile;
 		src_profile = &start_bss_rsp->HTProfile;
 		if (mac_ctx->roam.configParam.cc_switch_mode
-				!= CDF_MCC_TO_SCC_SWITCH_DISABLE)
+				!= QDF_MCC_TO_SCC_SWITCH_DISABLE)
 			csr_roam_copy_ht_profile(dst_profile, src_profile);
 #endif
 		csr_roam_call_callback(mac_ctx, session_id, &roam_info,
@@ -6389,7 +6389,7 @@ static void csr_roam_process_join_res(tpAniSirGlobal mac_ctx,
 			src_profile = &join_rsp->HTProfile;
 			dst_profile = &conn_profile->HTProfile;
 			if (mac_ctx->roam.configParam.cc_switch_mode
-				!= CDF_MCC_TO_SCC_SWITCH_DISABLE)
+				!= QDF_MCC_TO_SCC_SWITCH_DISABLE)
 				csr_roam_copy_ht_profile(dst_profile,
 						src_profile);
 #endif
@@ -15929,7 +15929,7 @@ csr_deregister_client_request(tpAniSirGlobal mac_ctx,
 		mac_ctx->roam.tlStatsReqInfo.timerRunning = false;
 	}
 	qdf_mc_timer_stop(&ptr_sta_entry->timer);
-	/* Destroy the cdf timer... */
+	/* Destroy the qdf timer... */
 	status = qdf_mc_timer_destroy(&ptr_sta_entry->timer);
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		sms_log(mac_ctx, LOGE,
@@ -17457,7 +17457,7 @@ QDF_STATUS csr_roam_dereg_statistics_req(tpAniSirGlobal pMac)
 			/* So Stop and Destroy timer only when periodicity is set. */
 
 			qdf_mc_timer_stop(&pTempStaEntry->timer);
-			/* Destroy the cdf timer... */
+			/* Destroy the qdf timer... */
 			qdf_status =
 				qdf_mc_timer_destroy(&pTempStaEntry->timer);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -19109,7 +19109,7 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	src_profile = &roam_synch_data->join_rsp->HTProfile;
 	dst_profile = &conn_profile->HTProfile;
 	if (mac_ctx->roam.configParam.cc_switch_mode
-			!= CDF_MCC_TO_SCC_SWITCH_DISABLE)
+			!= QDF_MCC_TO_SCC_SWITCH_DISABLE)
 		csr_roam_copy_ht_profile(dst_profile,
 				src_profile);
 #endif

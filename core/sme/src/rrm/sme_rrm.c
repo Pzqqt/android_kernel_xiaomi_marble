@@ -105,7 +105,7 @@ static void rrm_ll_purge_neighbor_cache(tpAniSirGlobal pMac,
  * rrm_indicate_neighbor_report_result() -calls the callback registered for
  *                                                      neighbor report
  * @pMac: Pointer to the Hal Handle.
- * @qdf_status - QDF_STATUS_SUCCESS/CDF_STATUS_FAILURE based on whether a valid
+ * @qdf_status - QDF_STATUS_SUCCESS/QDF_STATUS_FAILURE based on whether a valid
  *                       report is received or neighbor timer expired
  *
  * This function calls the callback register by the caller while requesting for
@@ -1355,7 +1355,7 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	QDF_STATUS qdf_status;
 	tpRrmSMEContext pSmeRrmContext = &pMac->rrm.rrmSmeContext;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 
 	pSmeRrmContext->rrmConfig.max_randn_interval = 50;        /* ms */
 
@@ -1386,9 +1386,9 @@ QDF_STATUS rrm_open(tpAniSirGlobal pMac)
 
 	pSmeRrmContext->neighborReqControlInfo.isNeighborRspPending = false;
 
-	cdf_ret_status =
+	qdf_ret_status =
 		csr_ll_open(pMac->hHdd, &pSmeRrmContext->neighborReportCache);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "rrm_open: Fail to open neighbor cache result");
 		return QDF_STATUS_E_FAILURE;

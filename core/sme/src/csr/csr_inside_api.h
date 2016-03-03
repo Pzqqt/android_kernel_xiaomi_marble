@@ -928,7 +928,7 @@ QDF_STATUS csr_roam_issue_disassociate_sta_cmd(tpAniSirGlobal pMac,
  *
  * CSR function that HDD calls to issue a deauthenticate station command
  *
- * Return: QDF_STATUS_SUCCESS on success or another CDF_STATUS_* on error
+ * Return: QDF_STATUS_SUCCESS on success or another QDF_STATUS_** on error
  */
 QDF_STATUS csr_roam_issue_deauth_sta_cmd(tpAniSirGlobal pMac,
 		uint32_t sessionId,

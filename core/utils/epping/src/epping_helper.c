@@ -163,12 +163,12 @@ void epping_hex_dump(void *data, int buf_len, const char *str)
 	printk("\n%s: X %s\n", __func__, str);
 }
 
-void *epping_get_cdf_ctx(void)
+void *epping_get_qdf_ctx(void)
 {
-	qdf_device_t *p_cdf_ctx;
+	qdf_device_t *qdf_ctx;
 
-	p_cdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	return p_cdf_ctx;
+	qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	return qdf_ctx;
 }
 
 void epping_log_packet(epping_adapter_t *pAdapter,

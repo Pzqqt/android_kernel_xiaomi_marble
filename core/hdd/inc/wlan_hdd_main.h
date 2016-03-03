@@ -672,8 +672,8 @@ struct hdd_station_ctx {
 #define BSS_START   1
 typedef struct hdd_hostapd_state_s {
 	int bssState;
-	qdf_event_t cdf_event;
-	qdf_event_t cdf_stop_bss_event;
+	qdf_event_t qdf_event;
+	qdf_event_t qdf_stop_bss_event;
 	QDF_STATUS qdf_status;
 	bool bCommit;
 
@@ -1109,7 +1109,7 @@ struct hdd_context_s {
 	qdf_list_t hddAdapters; /* List of adapters */
 
 	/* One per STA: 1 for BCMC_STA_ID, 1 for each SAP_SELF_STA_ID, 1 for WDS_STAID */
-	hdd_adapter_t *sta_to_adapter[WLAN_MAX_STA_COUNT + CDF_MAX_NO_OF_SAP_MODE + 2]; /* One per sta. For quick reference. */
+	hdd_adapter_t *sta_to_adapter[WLAN_MAX_STA_COUNT + QDF_MAX_NO_OF_SAP_MODE + 2]; /* One per sta. For quick reference. */
 
 	/** Pointer for firmware image data */
 	const struct firmware *fw;

@@ -2203,7 +2203,7 @@ static void cds_update_hw_mode_conn_info(uint32_t num_vdev_mac_entries,
 		return;
 	}
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	for (i = 0; i < num_vdev_mac_entries; i++) {
 		conn_index = 0;
 		found = 0;
@@ -2236,7 +2236,7 @@ static void cds_update_hw_mode_conn_info(uint32_t num_vdev_mac_entries,
 			  conc_connection_list[conn_index].rx_spatial_stream);
 		}
 	}
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
 /**
@@ -2432,7 +2432,7 @@ static void cds_soc_set_hw_mode_cb(uint32_t status,
 			vdev_mac_map,
 			hw_mode);
 
-	ret = cdf_set_connection_update();
+	ret = qdf_set_connection_update();
 	if (!QDF_IS_STATUS_SUCCESS(ret))
 		cds_err("ERROR: set connection_update_done event failed");
 
@@ -3533,7 +3533,7 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 	 * Need to aquire mutex as entire functionality in this function
 	 * is in critical section
 	 */
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	switch (mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
@@ -3558,7 +3558,7 @@ void cds_incr_active_session(enum tQDF_ADAPTER_MODE mode,
 		cds_info("Set PCL of STA to FW");
 	}
 	cds_incr_connection_count(session_id);
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
 /**
@@ -3716,7 +3716,7 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 	 * given to the FW. After setting the PCL, we need to restore
 	 * the entry that we have saved before.
 	 */
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	cds_set_pcl_for_existing_combo(CDS_STA_MODE);
 	/* do we need to change the HW mode */
 	if (cds_need_opportunistic_upgrade()) {
@@ -3729,7 +3729,7 @@ void cds_decr_session_set_pcl(enum tQDF_ADAPTER_MODE mode,
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 			cds_err("Failed to start dbs opportunistic timer");
 	}
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return;
 }
@@ -3768,7 +3768,7 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 	 * Need to aquire mutex as entire functionality in this function
 	 * is in critical section
 	 */
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	switch (mode) {
 	case QDF_STA_MODE:
 	case QDF_P2P_CLIENT_MODE:
@@ -3784,7 +3784,7 @@ void cds_decr_active_session(enum tQDF_ADAPTER_MODE mode,
 	cds_info("No.# of active sessions for mode %d = %d",
 		mode, hdd_ctx->no_of_active_sessions[mode]);
 	cds_decr_connection_count(session_id);
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 }
 
 /**
@@ -3807,7 +3807,7 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 		return;
 	}
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	/* if we still need it */
 	action = cds_need_opportunistic_upgrade();
 	if (action) {
@@ -3819,7 +3819,7 @@ void cds_dbs_opportunistic_timer_handler(void *data)
 		cds_next_actions(0, action,
 				CDS_UPDATE_REASON_OPPORTUNISTIC);
 	}
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 }
 
@@ -3841,8 +3841,8 @@ QDF_STATUS cds_deinit_policy_mgr(void)
 		return QDF_STATUS_E_FAILURE;
 	}
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_destroy(
-					&cds_ctx->cdf_conc_list_lock))) {
-		cds_err("Failed to destroy cdf_conc_list_lock");
+					&cds_ctx->qdf_conc_list_lock))) {
+		cds_err("Failed to destroy qdf_conc_list_lock");
 		return QDF_STATUS_E_FAILURE;
 	}
 	return QDF_STATUS_SUCCESS;
@@ -3880,8 +3880,8 @@ QDF_STATUS cds_init_policy_mgr(void)
 	qdf_mem_zero(conc_connection_list, sizeof(conc_connection_list));
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_mutex_create(
-					&cds_ctx->cdf_conc_list_lock))) {
-		cds_err("Failed to init cdf_conc_list_lock");
+					&cds_ctx->qdf_conc_list_lock))) {
+		cds_err("Failed to init qdf_conc_list_lock");
 		/* Lets us not proceed further */
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -3897,7 +3897,7 @@ QDF_STATUS cds_init_policy_mgr(void)
 		return status;
 	}
 
-	status = cdf_init_connection_update();
+	status = qdf_init_connection_update();
 	if (!QDF_IS_STATUS_SUCCESS(status)) {
 		cds_err("connection_update_done_evt init failed");
 		return status;
@@ -4093,7 +4093,7 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 		return status;
 	}
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
 		if (vdev_id == conc_connection_list[conn_index].vdev_id) {
 			/* debug msg */
@@ -4104,7 +4104,7 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 	}
 	if (!found) {
 		/* err msg */
-		qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 		cds_err("can't find vdev_id %d in conc_connection_list",
 			vdev_id);
 		return status;
@@ -4114,7 +4114,7 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 
 	if (NULL == wma_conn_table_entry) {
 		/* err msg*/
-		qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 		cds_err("can't find vdev_id %d in WMA table", vdev_id);
 		return status;
 	}
@@ -4129,7 +4129,7 @@ QDF_STATUS cds_update_connection_info(uint32_t vdev_id)
 			wma_conn_table_entry->tx_streams,
 			wma_conn_table_entry->rx_streams,
 			wma_conn_table_entry->nss, vdev_id, true);
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -4878,7 +4878,7 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 		return status;
 	}
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	/* find the current connection state from conc_connection_list*/
 	num_connections = cds_get_connection_count();
 
@@ -5065,7 +5065,7 @@ bool cds_allow_concurrency(enum cds_con_mode mode,
 	status = true;
 
 done:
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return status;
 }
 
@@ -5572,7 +5572,7 @@ QDF_STATUS cds_current_connections_update(uint32_t session_id,
 	else
 		band = CDS_BAND_5;
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	num_connections = cds_get_connection_count();
 
 	cds_debug("num_connections=%d channel=%d",
@@ -5629,7 +5629,7 @@ QDF_STATUS cds_current_connections_update(uint32_t session_id,
 		reason, session_id);
 
 done:
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return status;
 }
 
@@ -5721,10 +5721,10 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 	/*
 	 * Check if we are ok to request for HW mode change now
 	 */
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	conn_index = cds_get_connection_for_vdev_id(vdev_id);
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS == conn_index) {
-		qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 		cds_err("connection not found for vdev %d", vdev_id);
 		return;
 	}
@@ -5747,7 +5747,7 @@ void cds_nss_update_cb(void *context, uint8_t tx_status, uint8_t vdev_id,
 		cds_next_actions(vdev_id,
 				next_action,
 				CDS_UPDATE_REASON_NSS_UPDATE);
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	return;
 }
 
@@ -6584,7 +6584,7 @@ QDF_STATUS cds_handle_conc_multiport(uint8_t session_id, uint8_t channel)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	status = cdf_reset_connection_update();
+	status = qdf_reset_connection_update();
 	if (!QDF_IS_STATUS_SUCCESS(status))
 		cds_err("clearing event failed");
 
@@ -6692,7 +6692,7 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 	uint16_t intf_ch = 0;
 
 	if ((hdd_ctx->config->WlanMccToSccSwitchMode ==
-				CDF_MCC_TO_SCC_SWITCH_DISABLE)
+				QDF_MCC_TO_SCC_SWITCH_DISABLE)
 			|| !(cds_concurrent_open_sessions_running()
 			    || !(cds_get_concurrency_mode() ==
 					(QDF_STA_MASK | QDF_SAP_MASK))))
@@ -6745,7 +6745,7 @@ void cds_check_concurrent_intf_and_restart_sap(hdd_station_ctx_t *hdd_sta_ctx,
 	}
 
 	if ((hdd_ctx->config->WlanMccToSccSwitchMode
-				!= CDF_MCC_TO_SCC_SWITCH_DISABLE) &&
+				!= QDF_MCC_TO_SCC_SWITCH_DISABLE) &&
 			((0 == hdd_ctx->config->conc_custom_rule1) &&
 			 (0 == hdd_ctx->config->conc_custom_rule2))
 #ifdef FEATURE_WLAN_STA_AP_MODE_DFS_DISABLE
@@ -7053,7 +7053,7 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
  */
 QDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal;
 
 	cds_info("UPDATE Beacon Params");
@@ -7064,11 +7064,11 @@ QDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter)
 			cds_err("Hal ctx is null");
 			return QDF_STATUS_E_FAULT;
 		}
-		cdf_ret_status =
+		qdf_ret_status =
 			sme_change_mcc_beacon_interval(hHal,
 					pHostapdAdapter->
 					sessionId);
-		if (cdf_ret_status == QDF_STATUS_E_FAILURE) {
+		if (qdf_ret_status == QDF_STATUS_E_FAILURE) {
 			cds_err("Failed to update Beacon Params");
 			return QDF_STATUS_E_FAILURE;
 		}
@@ -7289,11 +7289,11 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 #endif
 		hdd_cleanup_actionframe(hdd_ctx, ap_adapter);
 		hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(ap_adapter);
-		qdf_event_reset(&hostapd_state->cdf_stop_bss_event);
+		qdf_event_reset(&hostapd_state->qdf_stop_bss_event);
 		if (QDF_STATUS_SUCCESS == wlansap_stop_bss(sap_ctx)) {
 			qdf_status =
 				qdf_wait_single_event(&hostapd_state->
-						cdf_stop_bss_event,
+						qdf_stop_bss_event,
 						BSS_WAIT_TIMEOUT);
 
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -7322,7 +7322,7 @@ void cds_restart_sap(hdd_adapter_t *ap_adapter)
 
 		cds_info("Waiting for SAP to start");
 		qdf_status =
-			qdf_wait_single_event(&hostapd_state->cdf_event,
+			qdf_wait_single_event(&hostapd_state->qdf_event,
 					BSS_WAIT_TIMEOUT);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			cds_err("SAP Start failed");
@@ -7404,7 +7404,7 @@ QDF_STATUS cds_update_connection_info_utfw(
 		return status;
 	}
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	while (CONC_CONNECTION_LIST_VALID_INDEX(conn_index)) {
 		if (vdev_id == conc_connection_list[conn_index].vdev_id) {
 			/* debug msg */
@@ -7415,7 +7415,7 @@ QDF_STATUS cds_update_connection_info_utfw(
 	}
 	if (!found) {
 		/* err msg */
-		qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 		cds_err("can't find vdev_id %d in conc_connection_list",
 			vdev_id);
 		return status;
@@ -7426,7 +7426,7 @@ QDF_STATUS cds_update_connection_info_utfw(
 			cds_get_mode(type, sub_type),
 			channelid, mac_id, chain_mask, tx_streams,
 			rx_streams, 0, vdev_id, true);
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7453,11 +7453,11 @@ QDF_STATUS cds_incr_connection_count_utfw(
 		return status;
 	}
 
-	qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 	conn_index = cds_get_connection_count();
 	if (MAX_NUMBER_OF_CONC_CONNECTIONS <= conn_index) {
 		/* err msg */
-		qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 		cds_err("exceeded max connection limit %d",
 			MAX_NUMBER_OF_CONC_CONNECTIONS);
 		return status;
@@ -7468,7 +7468,7 @@ QDF_STATUS cds_incr_connection_count_utfw(
 			     cds_get_mode(type, sub_type),
 			     channelid, mac_id, chain_mask, tx_streams,
 			     rx_streams, 0, vdev_id, true);
-	qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+	qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 
 	return QDF_STATUS_SUCCESS;
 }
@@ -7492,9 +7492,9 @@ QDF_STATUS cds_decr_connection_count_utfw(uint32_t del_all,
 			return QDF_STATUS_E_FAILURE;
 		}
 	} else {
-		qdf_mutex_acquire(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_acquire(&cds_ctx->qdf_conc_list_lock);
 		cds_decr_connection_count(vdev_id);
-		qdf_mutex_release(&cds_ctx->cdf_conc_list_lock);
+		qdf_mutex_release(&cds_ctx->qdf_conc_list_lock);
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -7735,14 +7735,14 @@ bool cds_is_sta_active_connection_exists(void)
 }
 
 /**
- * cdf_wait_for_connection_update() - Wait for hw mode command to get processed
+ * qdf_wait_for_connection_update() - Wait for hw mode command to get processed
  *
  * Waits for CONNECTION_UPDATE_TIMEOUT duration until the set hw mode
  * response sets the event connection_update_done_evt
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cdf_wait_for_connection_update(void)
+QDF_STATUS qdf_wait_for_connection_update(void)
 {
 	QDF_STATUS status;
 	p_cds_contextType cds_context;
@@ -7766,13 +7766,13 @@ QDF_STATUS cdf_wait_for_connection_update(void)
 }
 
 /**
- * cdf_reset_connection_update() - Reset connection update event
+ * qdf_reset_connection_update() - Reset connection update event
  *
  * Resets the concurrent connection update event
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cdf_reset_connection_update(void)
+QDF_STATUS qdf_reset_connection_update(void)
 {
 	QDF_STATUS status;
 	p_cds_contextType cds_context;
@@ -7794,13 +7794,13 @@ QDF_STATUS cdf_reset_connection_update(void)
 }
 
 /**
- * cdf_set_connection_update() - Set connection update event
+ * qdf_set_connection_update() - Set connection update event
  *
  * Sets the concurrent connection update event
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cdf_set_connection_update(void)
+QDF_STATUS qdf_set_connection_update(void)
 {
 	QDF_STATUS status;
 	p_cds_contextType cds_context;
@@ -7822,13 +7822,13 @@ QDF_STATUS cdf_set_connection_update(void)
 }
 
 /**
- * cdf_init_connection_update() - Initialize connection update event
+ * qdf_init_connection_update() - Initialize connection update event
  *
  * Initializes the concurrent connection update event
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS cdf_init_connection_update(void)
+QDF_STATUS qdf_init_connection_update(void)
 {
 	QDF_STATUS qdf_status;
 	p_cds_contextType cds_context;

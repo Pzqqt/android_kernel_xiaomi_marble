@@ -650,8 +650,8 @@ void cds_clear_concurrent_session_count(void);
 bool cds_is_multiple_active_sta_sessions(void);
 bool cds_is_sta_active_connection_exists(void);
 bool cds_concurrent_beaconing_sessions_running(void);
-QDF_STATUS cdf_wait_for_connection_update(void);
-QDF_STATUS cdf_reset_connection_update(void);
-QDF_STATUS cdf_set_connection_update(void);
-QDF_STATUS cdf_init_connection_update(void);
+QDF_STATUS qdf_wait_for_connection_update(void);
+QDF_STATUS qdf_reset_connection_update(void);
+QDF_STATUS qdf_set_connection_update(void);
+QDF_STATUS qdf_init_connection_update(void);
 #endif /* __CDS_CONCURRENCY_H */

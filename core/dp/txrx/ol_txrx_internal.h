@@ -29,7 +29,7 @@
 #define _OL_TXRX_INTERNAL__H_
 
 #include <qdf_util.h>               /* qdf_assert */
-#include <qdf_nbuf.h>               /* cdf_nbuf_t */
+#include <qdf_nbuf.h>               /* qdf_nbuf_t */
 #include <qdf_mem.h>             /* qdf_mem_set */
 #include <cds_ieee80211_common.h>   /* ieee80211_frame */
 #include <ol_htt_rx_api.h>          /* htt_rx_msdu_desc_completes_mpdu, etc. */

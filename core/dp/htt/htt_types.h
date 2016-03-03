@@ -195,7 +195,7 @@ struct msdu_ext_frag_desc {
 };
 
 struct msdu_ext_desc_t {
-	struct cdf_tso_flags_t tso_flags;
+	struct qdf_tso_flags_t tso_flags;
 	struct msdu_ext_frag_desc frags[6];
 /*
 	u_int32_t frag_ptr0;

@@ -43,7 +43,7 @@
 
    when        who    what, where, why
    --------    ---    --------------------------------------------------------
-   03/31/09    sho    Remove the use of cdf_timerIsActive flag as it is not
+   03/31/09    sho    Remove the use of qdf_timerIsActive flag as it is not
 			thread-safe
    02/17/08    sho    Fix the timer callback function to work when it is called
 			after the timer has stopped due to a race condition.
@@ -138,7 +138,7 @@ uint32_t tx_timer_activate(TX_TIMER *timer_ptr)
 	QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO,
 		  "Timer %s being activated\n", TIMER_NAME);
 
-	status = qdf_mc_timer_start(&timer_ptr->cdf_timer,
+	status = qdf_mc_timer_start(&timer_ptr->qdf_timer,
 				    timer_ptr->initScheduleTimeInMsecs);
 
 	if (QDF_STATUS_SUCCESS == status) {
@@ -184,7 +184,7 @@ uint32_t tx_timer_change(TX_TIMER *timer_ptr,
 	}
 	/* changes cannot be applied until timer stops running */
 	if (QDF_TIMER_STATE_STOPPED ==
-	    qdf_mc_timer_get_current_state(&timer_ptr->cdf_timer)) {
+	    qdf_mc_timer_get_current_state(&timer_ptr->qdf_timer)) {
 		timer_ptr->initScheduleTimeInMsecs =
 			TX_MSECS_IN_1_TICK * initScheduleTimeInTicks;
 		timer_ptr->rescheduleTimeInMsecs =
@@ -223,7 +223,7 @@ uint32_t tx_timer_change_context(TX_TIMER *timer_ptr,
 	}
 	/* changes cannot be applied until timer stops running */
 	if (QDF_TIMER_STATE_STOPPED ==
-	    qdf_mc_timer_get_current_state(&timer_ptr->cdf_timer)) {
+	    qdf_mc_timer_get_current_state(&timer_ptr->qdf_timer)) {
 		timer_ptr->expireInput = expiration_input;
 		return TX_SUCCESS;
 	} else {
@@ -271,7 +271,7 @@ static void tx_main_timer_func(void *functionContext)
 	/* check if this needs to be rescheduled */
 	if (0 != timer_ptr->rescheduleTimeInMsecs) {
 		QDF_STATUS status;
-		status = qdf_mc_timer_start(&timer_ptr->cdf_timer,
+		status = qdf_mc_timer_start(&timer_ptr->qdf_timer,
 					    timer_ptr->rescheduleTimeInMsecs);
 		timer_ptr->rescheduleTimeInMsecs = 0;
 
@@ -334,7 +334,7 @@ uint32_t tx_timer_create_intern_debug(void *pMacGlobal,
 #endif /* Store the timer name, for Debug build only */
 
 	status =
-		qdf_mc_timer_init_debug(&timer_ptr->cdf_timer, QDF_TIMER_TYPE_SW,
+		qdf_mc_timer_init_debug(&timer_ptr->qdf_timer, QDF_TIMER_TYPE_SW,
 					tx_main_timer_func, (void *) timer_ptr,
 					fileName, lineNum);
 	if (QDF_STATUS_SUCCESS != status) {
@@ -393,7 +393,7 @@ uint32_t tx_timer_create_intern(void *pMacGlobal, TX_TIMER *timer_ptr,
 	strlcpy(timer_ptr->timerName, name_ptr, sizeof(timer_ptr->timerName));
 #endif /* Store the timer name, for Debug build only */
 
-	status = qdf_mc_timer_init(&timer_ptr->cdf_timer, QDF_TIMER_TYPE_SW,
+	status = qdf_mc_timer_init(&timer_ptr->qdf_timer, QDF_TIMER_TYPE_SW,
 				   tx_main_timer_func, (void *) timer_ptr);
 	if (QDF_STATUS_SUCCESS != status) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_ERROR,
@@ -442,7 +442,7 @@ uint32_t tx_timer_deactivate(TX_TIMER *timer_ptr)
 		return TX_TIMER_ERROR;
 	}
 	/* if the timer is not running then we do not need to do anything here */
-	vStatus = qdf_mc_timer_stop(&timer_ptr->cdf_timer);
+	vStatus = qdf_mc_timer_stop(&timer_ptr->qdf_timer);
 	if (QDF_STATUS_SUCCESS != vStatus) {
 		QDF_TRACE(QDF_MODULE_ID_SYS, QDF_TRACE_LEVEL_INFO_HIGH,
 			  "Unable to stop timer %s; status =%d\n",
@@ -463,7 +463,7 @@ uint32_t tx_timer_delete(TX_TIMER *timer_ptr)
 		return TX_TIMER_ERROR;
 	}
 
-	qdf_mc_timer_destroy(&timer_ptr->cdf_timer);
+	qdf_mc_timer_destroy(&timer_ptr->qdf_timer);
 	return TX_SUCCESS;
 } /*** tx_timer_delete() ***/
 
@@ -493,7 +493,7 @@ bool tx_timer_running(TX_TIMER *timer_ptr)
 		return false;
 
 	if (QDF_TIMER_STATE_RUNNING ==
-	    qdf_mc_timer_get_current_state(&timer_ptr->cdf_timer)) {
+	    qdf_mc_timer_get_current_state(&timer_ptr->qdf_timer)) {
 		return true;
 	}
 	return false;

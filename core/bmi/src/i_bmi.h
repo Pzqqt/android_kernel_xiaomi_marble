@@ -146,7 +146,7 @@ struct bmi_info {
  * struct ol_context - Structure to hold OL context
  * @bmi: BMI info
  * @cal_in_flash: For Firmware Flash Download
- * @cdf_dev: QDF Device
+ * @qdf_dev: QDF Device
  * @scn: HIF Context
  * @ramdump_work: WorkQueue for Ramdump collection
  * @tgt_def: Target Defnition pointer
@@ -157,7 +157,7 @@ struct ol_context {
 	struct bmi_info bmi;
 	struct ol_config_info cfg_info;
 	uint8_t *cal_in_flash;
-	qdf_device_t cdf_dev;
+	qdf_device_t qdf_dev;
 	qdf_work_t ramdump_work;
 	struct hif_opaque_softc *scn;
 	struct targetdef_t {

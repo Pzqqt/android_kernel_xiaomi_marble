@@ -60,7 +60,7 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	struct hif_opaque_softc *scn = ol_ctx->scn;
-	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
 	if (!scn) {
 		BMI_ERR("Invalid scn Context");
@@ -68,7 +68,7 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	if (!cdf_dev->dev) {
+	if (!qdf_dev->dev) {
 		BMI_ERR("%s: Invalid Device Pointer", __func__);
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
@@ -77,7 +77,7 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 
 	if (!info->bmi_cmd_buff) {
 		info->bmi_cmd_buff =
-			qdf_mem_alloc_consistent(cdf_dev, cdf_dev->dev, MAX_BMI_CMDBUF_SZ,
+			qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev, MAX_BMI_CMDBUF_SZ,
 							&info->bmi_cmd_da);
 		if (!info->bmi_cmd_buff) {
 			BMI_ERR("No Memory for BMI Command");
@@ -87,7 +87,7 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 
 	if (!info->bmi_rsp_buff) {
 		info->bmi_rsp_buff =
-			qdf_mem_alloc_consistent(cdf_dev, cdf_dev->dev, MAX_BMI_CMDBUF_SZ,
+			qdf_mem_alloc_consistent(qdf_dev, qdf_dev->dev, MAX_BMI_CMDBUF_SZ,
 							&info->bmi_rsp_da);
 		if (!info->bmi_rsp_buff) {
 			BMI_ERR("No Memory for BMI Response");
@@ -96,7 +96,7 @@ QDF_STATUS bmi_init(struct ol_context *ol_ctx)
 	}
 	return QDF_STATUS_SUCCESS;
 end:
-	qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+	qdf_mem_free_consistent(qdf_dev, qdf_dev->dev, MAX_BMI_CMDBUF_SZ,
 				 info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 	info->bmi_cmd_buff = NULL;
 	return QDF_STATUS_E_NOMEM;
@@ -105,22 +105,24 @@ end:
 void bmi_cleanup(struct ol_context *ol_ctx)
 {
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
-	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
-	if (!cdf_dev->dev) {
+	if (!qdf_dev->dev) {
 		BMI_ERR("%s: Invalid Device Pointer", __func__);
 		return;
 	}
 
 	if (info->bmi_cmd_buff) {
-		qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+		qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
+					MAX_BMI_CMDBUF_SZ,
 				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 		info->bmi_cmd_buff = NULL;
 		info->bmi_cmd_da = 0;
 	}
 
 	if (info->bmi_rsp_buff) {
-		qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+		qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
+					MAX_BMI_CMDBUF_SZ,
 				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
 		info->bmi_rsp_buff = NULL;
 		info->bmi_rsp_da = 0;
@@ -517,12 +519,12 @@ end:
 
 /**
  * ol_cds_init() - API to initialize global CDS OL Context
- * @cdf_dev: QDF Device
+ * @qdf_dev: QDF Device
  * @hif_ctx: HIF Context
  *
  * Return: Success/Failure
  */
-QDF_STATUS ol_cds_init(qdf_device_t cdf_dev, void *hif_ctx)
+QDF_STATUS ol_cds_init(qdf_device_t qdf_dev, void *hif_ctx)
 {
 	struct ol_context *ol_info;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
@@ -539,11 +541,11 @@ QDF_STATUS ol_cds_init(qdf_device_t cdf_dev, void *hif_ctx)
 		return status;
 	}
 
-	ol_info->cdf_dev = cdf_dev;
+	ol_info->qdf_dev = qdf_dev;
 	ol_info->scn = hif_ctx;
 	ol_info->tgt_def.targetdef = hif_get_targetdef(hif_ctx);
 
-	qdf_create_work(cdf_dev, &ol_info->ramdump_work, ramdump_work_handler, ol_info);
+	qdf_create_work(qdf_dev, &ol_info->ramdump_work, ramdump_work_handler, ol_info);
 
 	return status;
 }

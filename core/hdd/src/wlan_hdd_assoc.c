@@ -1179,7 +1179,7 @@ void hdd_set_peer_authorized_event(uint32_t vdev_id)
  * @sta_state: peer state
  * @roam_synch_in_progress: roam synch in progress
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 				 uint8_t sta_id,
@@ -1661,7 +1661,7 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
  */
 void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	tCsrRoamInfo roamInfo;
 	roamInfo.fAuthRequired = false;
@@ -1670,13 +1670,13 @@ void hdd_perform_roam_set_key_complete(hdd_adapter_t *pAdapter)
 	qdf_mem_copy(roamInfo.peerMac.bytes,
 		     pHddStaCtx->roam_info.peerMac, QDF_MAC_ADDR_SIZE);
 
-	cdf_ret_status =
+	qdf_ret_status =
 			hdd_roam_set_key_complete_handler(pAdapter,
 					   &roamInfo,
 					   pHddStaCtx->roam_info.roamId,
 					   pHddStaCtx->roam_info.roamStatus,
 					   eCSR_ROAM_RESULT_AUTHENTICATED);
-	if (cdf_ret_status != QDF_STATUS_SUCCESS)
+	if (qdf_ret_status != QDF_STATUS_SUCCESS)
 		hddLog(LOGE, FL("Set Key complete failure"));
 
 	pHddStaCtx->roam_info.deferKeyComplete = false;
@@ -3841,7 +3841,7 @@ QDF_STATUS
 hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		      eRoamCmdStatus roamStatus, eCsrRoamResult roamResult)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	hdd_adapter_t *pAdapter = (hdd_adapter_t *) pContext;
 	hdd_wext_state_t *pWextState = NULL;
 	hdd_station_ctx_t *pHddStaCtx = NULL;
@@ -3881,7 +3881,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		       FL
 		       ("Reassoc Failed with roamStatus: %d roamResult: %d SessionID: %d"),
 		       roamStatus, roamResult, pAdapter->sessionId);
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
 						roamStatus, roamResult);
 		/*
@@ -3917,7 +3917,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		status = hdd_roam_deregister_sta(pAdapter,
 					pHddStaCtx->conn_info.staId[0]);
 		if (!QDF_IS_STATUS_SUCCESS(status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		pHddStaCtx->ft_carrier_on = true;
 		pHddStaCtx->hdd_ReassocScenario = true;
 		hddLog(LOG1,
@@ -3949,7 +3949,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	case eCSR_ROAM_DISASSOCIATED:
 	{
 		hddLog(LOG1, "****eCSR_ROAM_DISASSOCIATED****");
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
 						roamStatus, roamResult);
 		/* Check if Mcast/Bcast Filters are set, if yes clear the filters here */
@@ -3984,7 +3984,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	break;
 	case eCSR_ROAM_IBSS_LEAVE:
 		hddLog(LOG1, "****eCSR_ROAM_IBSS_LEAVE****");
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_dis_connect_handler(pAdapter, pRoamInfo, roamId,
 						roamStatus, roamResult);
 		break;
@@ -3999,7 +3999,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 			hdd_conn_remove_connect_info(
 				WLAN_HDD_GET_STATION_CTX_PTR(pAdapter));
 		}
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_association_completion_handler(pAdapter, pRoamInfo,
 							   roamId, roamStatus,
 							   roamResult);
@@ -4009,7 +4009,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 #endif
 		break;
 	case eCSR_ROAM_ASSOCIATION_FAILURE:
-		cdf_ret_status = hdd_association_completion_handler(pAdapter,
+		qdf_ret_status = hdd_association_completion_handler(pAdapter,
 								    pRoamInfo,
 								    roamId,
 								    roamStatus,
@@ -4021,7 +4021,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		break;
 
 	case eCSR_ROAM_CONNECT_STATUS_UPDATE:
-		cdf_ret_status =
+		qdf_ret_status =
 			roam_roam_connect_status_update_handler(pAdapter,
 								pRoamInfo,
 								roamId,
@@ -4030,7 +4030,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		break;
 
 	case eCSR_ROAM_MIC_ERROR_IND:
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_roam_mic_error_indication_handler(pAdapter,
 							      pRoamInfo,
 							      roamId,
@@ -4040,7 +4040,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 
 	case eCSR_ROAM_SET_KEY_COMPLETE:
 	{
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_roam_set_key_complete_handler(pAdapter, pRoamInfo,
 							  roamId, roamStatus,
 							  roamResult);
@@ -4066,7 +4066,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		if (eCSR_AUTH_TYPE_RSN == pHddStaCtx->conn_info.authType
 				|| hdd_is_8021x_sha256_auth_type(pHddStaCtx)) {
 			/* notify the supplicant of a new candidate */
-			cdf_ret_status =
+			qdf_ret_status =
 				wlan_hdd_cfg80211_pmksa_candidate_notify(
 						pAdapter, pRoamInfo, 1, false);
 		}
@@ -4078,7 +4078,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_preauth(pAdapter,
 							   pRoamInfo)) {
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_PREAUTH_STATUS_SUCCESS:
@@ -4088,7 +4088,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_preauth_status(pAdapter,
 							 pRoamInfo, 1)) {
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_PREAUTH_STATUS_FAILURE:
@@ -4098,7 +4098,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_preauth_status(pAdapter,
 								pRoamInfo, 0)) {
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_HANDOVER_SUCCESS:
@@ -4107,7 +4107,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		if (QDF_STATUS_SUCCESS !=
 		    wlan_hdd_cfg80211_roam_metrics_handover(pAdapter,
 							    pRoamInfo)) {
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 #endif
@@ -4121,7 +4121,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 		break;
 #ifdef FEATURE_WLAN_TDLS
 	case eCSR_ROAM_TDLS_STATUS_UPDATE:
-		cdf_ret_status =
+		qdf_ret_status =
 			hdd_roam_tdls_status_update_handler(pAdapter, pRoamInfo,
 							    roamId,
 							    roamStatus,
@@ -4173,7 +4173,7 @@ hdd_sme_roam_callback(void *pContext, tCsrRoamInfo *pRoamInfo, uint32_t roamId,
 	default:
 		break;
 	}
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 /**

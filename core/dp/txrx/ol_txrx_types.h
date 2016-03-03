@@ -32,7 +32,7 @@
 #ifndef _OL_TXRX_TYPES__H_
 #define _OL_TXRX_TYPES__H_
 
-#include <qdf_nbuf.h>           /* cdf_nbuf_t */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_mem.h>
 #include <cds_queue.h>          /* TAILQ */
 #include <a_types.h>            /* A_UINT8 */
@@ -40,7 +40,7 @@
 #include <qdf_atomic.h>         /* qdf_atomic_t */
 #include <wdi_event_api.h>      /* wdi_event_subscribe */
 #include <qdf_timer.h>		/* qdf_timer_t */
-#include <qdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* qdf_spinlock */
 #include <pktlog.h>             /* ol_pktlog_dev_handle */
 #include <ol_txrx_stats.h>
 #include <txrx.h>
@@ -757,7 +757,7 @@ struct ol_txrx_pdev_t {
 	struct {
 		uint16_t pool_size;
 		uint16_t num_free;
-		struct cdf_tso_seg_elem_t *freelist;
+		struct qdf_tso_seg_elem_t *freelist;
 		/* tso mutex */
 		OL_TX_MUTEX_TYPE tso_mutex;
 	} tso_seg_pool;
@@ -854,7 +854,7 @@ struct ol_txrx_vdev_t {
 	struct {
 		int pool_elems; /* total number of elements in the pool */
 		int alloc_cnt; /* number of allocated elements */
-		uint32_t *freelist; /* free list of cdf_tso_seg_elem_t */
+		uint32_t *freelist; /* free list of qdf_tso_seg_elem_t */
 	} tso_pool_t;
 #endif
 

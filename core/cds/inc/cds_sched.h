@@ -87,7 +87,7 @@ typedef void (*cds_ol_rx_thread_cb)(void *context, void *rxpkt, uint16_t staid);
 #endif
 
 /*
-** CDF Message queue definition.
+** QDF Message queue definition.
 */
 typedef struct _cds_mq_type {
 	/* Lock use to synchronize access to this message queue */
@@ -242,7 +242,7 @@ typedef struct _cds_context_type {
 	cds_mq_type freeVosMq;
 
 	/* Scheduler Context */
-	cds_sched_context cdf_sched;
+	cds_sched_context qdf_sched;
 
 	/* HDD Module Context  */
 	void *pHDDContext;
@@ -265,7 +265,7 @@ typedef struct _cds_context_type {
 
 	void *g_ol_context;
 	/*
-	 * qdf_ctx will be used by cdf
+	 * qdf_ctx will be used by qdf
 	 * while allocating dma memory
 	 * to access dev information.
 	 */
@@ -285,7 +285,7 @@ typedef struct _cds_context_type {
 	struct cds_log_complete log_complete;
 	qdf_spinlock_t bug_report_lock;
 	qdf_event_t connection_update_done_evt;
-	qdf_mutex_t cdf_conc_list_lock;
+	qdf_mutex_t qdf_conc_list_lock;
 
 } cds_context_type, *p_cds_contextType;
 
@@ -369,7 +369,7 @@ void cds_free_ol_rx_pkt_freeq(p_cds_sched_context pSchedContext);
 
      - The Tx thread is created and ready to receive and dispatch messages
 
-   \param  p_cds_context - pointer to the global CDF Context
+   \param  p_cds_context - pointer to the global QDF Context
 
    \param  p_cds_sched_context - pointer to a previously allocated buffer big
    enough to hold a scheduler context.
@@ -407,7 +407,7 @@ QDF_STATUS cds_sched_open(void *p_cds_context,
 
      - The Tx thread is closed
 
-   \param  p_cds_context - pointer to the global CDF Context
+   \param  p_cds_context - pointer to the global QDF Context
 
    \return QDF_STATUS_SUCCESS - Scheduler was successfully initialized and
    is ready to be used.

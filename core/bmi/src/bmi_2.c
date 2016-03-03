@@ -88,7 +88,7 @@ bmi_done_local(struct ol_context *ol_ctx)
 	struct bmi_info *info = GET_BMI_CONTEXT(ol_ctx);
 	uint8_t *bmi_cmd_buff = info->bmi_cmd_buff;
 	uint8_t *bmi_rsp_buff = info->bmi_rsp_buff;
-	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 	qdf_dma_addr_t cmd = info->bmi_cmd_da;
 	qdf_dma_addr_t rsp = info->bmi_rsp_da;
 
@@ -102,7 +102,7 @@ bmi_done_local(struct ol_context *ol_ctx)
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
 
-	if (!cdf_dev->dev) {
+	if (!qdf_dev->dev) {
 		BMI_ERR("%s Invalid Device pointer", __func__);
 		return QDF_STATUS_NOT_INITIALIZED;
 	}
@@ -127,14 +127,16 @@ bmi_done_local(struct ol_context *ol_ctx)
 	}
 
 	if (info->bmi_cmd_buff) {
-		qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+		qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
+					MAX_BMI_CMDBUF_SZ,
 				    info->bmi_cmd_buff, info->bmi_cmd_da, 0);
 		info->bmi_cmd_buff = NULL;
 		info->bmi_cmd_da = 0;
 	}
 
 	if (info->bmi_rsp_buff) {
-		qdf_mem_free_consistent(cdf_dev, MAX_BMI_CMDBUF_SZ,
+		qdf_mem_free_consistent(qdf_dev, qdf_dev->dev,
+					MAX_BMI_CMDBUF_SZ,
 				    info->bmi_rsp_buff, info->bmi_rsp_da, 0);
 		info->bmi_rsp_buff = NULL;
 		info->bmi_rsp_da = 0;

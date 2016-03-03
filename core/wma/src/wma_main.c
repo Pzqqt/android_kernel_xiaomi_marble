@@ -2618,7 +2618,7 @@ fail:
  *               Intialize event handlers and timers.
  * @cds_ctx: cds context
  *
- * Return: 0 on success, CDF Error on failure
+ * Return: 0 on success, QDF Error on failure
  */
 QDF_STATUS wma_start(void *cds_ctx)
 {
@@ -2834,7 +2834,7 @@ end:
  * @cds_ctx: cds context
  * @reason: reason for wma_stop.
  *
- * Return: 0 on success, CDF Error on failure
+ * Return: 0 on success, QDF Error on failure
  */
 QDF_STATUS wma_stop(void *cds_ctx, uint8_t reason)
 {
@@ -2979,7 +2979,7 @@ static void wma_cleanup_vdev_resp(tp_wma_handle wma)
  * wma_wmi_service_close() - close wma wmi service interface.
  * @cds_ctx: cds context
  *
- * Return: 0 on success, CDF Error on failure
+ * Return: 0 on success, QDF Error on failure
  */
 QDF_STATUS wma_wmi_service_close(void *cds_ctx)
 {
@@ -3090,7 +3090,7 @@ QDF_STATUS wma_wmi_work_close(void *cds_ctx)
  *               cleanup resources attached with wma.
  * @cds_ctx: cds context
  *
- * Return: 0 on success, CDF Error on failure
+ * Return: 0 on success, QDF Error on failure
  */
 QDF_STATUS wma_close(void *cds_ctx)
 {
@@ -3147,7 +3147,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 	if (qdf_status != QDF_STATUS_SUCCESS)
 		WMA_LOGP("%s: dbglog_deinit failed", __func__);
 
-	/* close the cdf events */
+	/* close the qdf events */
 	qdf_event_destroy(&wma_handle->wma_ready_event);
 	qdf_status = qdf_mc_timer_destroy(&wma_handle->service_ready_ext_timer);
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status))
@@ -3164,6 +3164,7 @@ QDF_STATUS wma_close(void *cds_ctx)
 	qdf_runtime_lock_deinit(wma_handle->wmi_cmd_rsp_runtime_lock);
 	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
 		qdf_mem_free_consistent(wma_handle->qdf_dev,
+					wma_handle->qdf_dev->dev,
 					   wma_handle->mem_chunks[idx].len,
 					   wma_handle->mem_chunks[idx].vaddr,
 					   wma_handle->mem_chunks[idx].paddr,
@@ -4259,7 +4260,7 @@ bool wma_needshutdown(void *cds_ctx)
  * wma_wait_for_ready_event() - wait for wma ready event
  * @handle: wma handle
  *
- * Return: 0 for success or CDF error
+ * Return: 0 for success or QDF error
  */
 QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
 {
@@ -4284,7 +4285,7 @@ QDF_STATUS wma_wait_for_ready_event(WMA_HANDLE handle)
  * @pps_param: pps params
  * @val : param value
  *
- * Return: 0 for success or CDF error
+ * Return: 0 for success or QDF error
  */
 QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 				    int val)
@@ -4362,7 +4363,7 @@ pkt_pwr_save_config:
  *
  * This function enables/disables the MAS value
  *
- * Return: CDF_SUCCESS for success otherwise failure
+ * Return: QDF_SUCCESS for success otherwise failure
  */
 QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
 		uint32_t *mas_val)
@@ -4394,7 +4395,7 @@ QDF_STATUS wma_process_set_mas(tp_wma_handle wma,
  *
  * This function stores the miracast value in WMA
  *
- * Return: CDF_SUCCESS for success otherwise failure
+ * Return: QDF_SUCCESS for success otherwise failure
  *
  */
 QDF_STATUS wma_process_set_miracast(tp_wma_handle wma, uint32_t *miracast_val)
@@ -4690,7 +4691,7 @@ void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle)
  * @cds_context: cds context
  * @msg: message
  *
- * Return: CDF_SUCCESS for success otherwise failure
+ * Return: QDF_SUCCESS for success otherwise failure
  */
 QDF_STATUS wma_mc_process_msg(void *cds_context, cds_msg_t *msg)
 {

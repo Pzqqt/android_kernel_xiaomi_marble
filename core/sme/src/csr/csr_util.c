@@ -706,7 +706,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 	uint16_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq, sap_cch;
 
 	if (mac_ctx->roam.configParam.cc_switch_mode ==
-			CDF_MCC_TO_SCC_SWITCH_DISABLE)
+			QDF_MCC_TO_SCC_SWITCH_DISABLE)
 		return 0;
 
 	if (sap_ch != 0) {
@@ -756,7 +756,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 	}
 
 	if (intf_ch && sap_ch != intf_ch &&
-			cc_switch_mode != CDF_MCC_TO_SCC_SWITCH_FORCE) {
+			cc_switch_mode != QDF_MCC_TO_SCC_SWITCH_FORCE) {
 		sap_lfreq = sap_cfreq - sap_hbw;
 		sap_hfreq = sap_cfreq + sap_hbw;
 		intf_lfreq = intf_cfreq - intf_hbw;
@@ -777,7 +777,7 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 			(intf_hfreq > sap_lfreq && intf_hfreq < sap_hfreq))))
 			intf_ch = 0;
 	} else if (intf_ch && sap_ch != intf_ch &&
-				cc_switch_mode == CDF_MCC_TO_SCC_SWITCH_FORCE) {
+				cc_switch_mode == QDF_MCC_TO_SCC_SWITCH_FORCE) {
 		if (!((intf_ch < 14 && sap_ch < 14) ||
 			(intf_ch > 14 && sap_ch > 14)))
 			intf_ch = 0;
@@ -5670,7 +5670,7 @@ bool csr_wait_for_connection_update(tpAniSirGlobal mac,
 		}
 	}
 
-	status = cdf_wait_for_connection_update();
+	status = qdf_wait_for_connection_update();
 
 	if (do_release_reacquire_lock == true) {
 		ret = sme_acquire_global_lock(&mac->sme);

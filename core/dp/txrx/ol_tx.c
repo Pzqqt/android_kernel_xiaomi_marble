@@ -99,7 +99,7 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 		msdu_info->tso_info.tso_seg_list = NULL;
 		msdu_info->tso_info.num_segs = num_seg;
 		while (num_seg) {
-			struct cdf_tso_seg_elem_t *tso_seg =
+			struct qdf_tso_seg_elem_t *tso_seg =
 				ol_tso_alloc_segment(vdev->pdev);
 			if (tso_seg) {
 				tso_seg->next =
@@ -108,8 +108,8 @@ static inline uint8_t ol_tx_prepare_tso(ol_txrx_vdev_handle vdev,
 					= tso_seg;
 				num_seg--;
 			} else {
-				struct cdf_tso_seg_elem_t *next_seg;
-				struct cdf_tso_seg_elem_t *free_seg =
+				struct qdf_tso_seg_elem_t *next_seg;
+				struct qdf_tso_seg_elem_t *free_seg =
 					msdu_info->tso_info.tso_seg_list;
 				qdf_print("TSO seg alloc failed!\n");
 				while (free_seg) {
@@ -288,7 +288,7 @@ qdf_nbuf_t ol_tx_ll(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		while (segments) {
 
 			if (msdu_info.tso_info.curr_seg)
-				NBUF_CB_PADDR(msdu) =
+				QDF_NBUF_CB_PADDR(msdu) =
 					msdu_info.tso_info.curr_seg->
 					seg.tso_frags[0].paddr_low_32;
 
@@ -558,7 +558,7 @@ ol_tx_ll_fast(ol_txrx_vdev_handle vdev, qdf_nbuf_t msdu_list)
 		while (segments) {
 
 			if (msdu_info.tso_info.curr_seg)
-				NBUF_CB_PADDR(msdu) = msdu_info.tso_info.
+				QDF_NBUF_CB_PADDR(msdu) = msdu_info.tso_info.
 					curr_seg->seg.tso_frags[0].paddr_low_32;
 
 			segments--;
@@ -1368,13 +1368,13 @@ qdf_nbuf_t ol_tx_reinject(struct ol_txrx_vdev_t *vdev,
 void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 {
 	int i;
-	struct cdf_tso_seg_elem_t *c_element;
+	struct qdf_tso_seg_elem_t *c_element;
 
-	c_element = qdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
+	c_element = qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 	pdev->tso_seg_pool.freelist = c_element;
 	for (i = 0; i < (num_seg - 1); i++) {
 		c_element->next =
-			qdf_mem_malloc(sizeof(struct cdf_tso_seg_elem_t));
+			qdf_mem_malloc(sizeof(struct qdf_tso_seg_elem_t));
 		c_element = c_element->next;
 		c_element->next = NULL;
 	}
@@ -1385,8 +1385,8 @@ void ol_tso_seg_list_init(struct ol_txrx_pdev_t *pdev, uint32_t num_seg)
 void ol_tso_seg_list_deinit(struct ol_txrx_pdev_t *pdev)
 {
 	int i;
-	struct cdf_tso_seg_elem_t *c_element;
-	struct cdf_tso_seg_elem_t *temp;
+	struct qdf_tso_seg_elem_t *c_element;
+	struct qdf_tso_seg_elem_t *temp;
 
 	qdf_spin_lock_bh(&pdev->tso_seg_pool.tso_mutex);
 	c_element = pdev->tso_seg_pool.freelist;

@@ -44,17 +44,17 @@
 void sch_log(tpAniSirGlobal pMac, uint32_t loglevel, const char *pString, ...)
 {
 
-	QDF_TRACE_LEVEL cdf_debug_level;
+	QDF_TRACE_LEVEL qdf_debug_level;
 	char logBuffer[LOG_SIZE];
 	va_list marker;
 
 	/* getting proper Debug level */
-	cdf_debug_level = get_vos_debug_level(loglevel);
+	qdf_debug_level = get_vos_debug_level(loglevel);
 
 	/* extracting arguments from pstring */
 	va_start(marker, pString);
 	vsnprintf(logBuffer, LOG_SIZE, pString, marker);
-	QDF_TRACE(QDF_MODULE_ID_PE, cdf_debug_level, "%s", logBuffer);
+	QDF_TRACE(QDF_MODULE_ID_PE, qdf_debug_level, "%s", logBuffer);
 	va_end(marker);
 }
 

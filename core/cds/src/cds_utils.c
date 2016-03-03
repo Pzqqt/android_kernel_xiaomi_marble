@@ -485,7 +485,7 @@ cds_is_mmie_valid(uint8_t *igtk, uint8_t *ipn, uint8_t *frm, uint8_t *efrm)
 
 	/* Validate IPN */
 	rx_ipn = mmie->sequence_number;
-	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) != 0) {
+	if (OS_MEMCMP(rx_ipn, ipn, CMAC_IPN_LEN) > 0) {
 		/* Replay error */
 		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "Replay error mmie ipn %02X %02X %02X %02X %02X %02X"
@@ -591,7 +591,7 @@ err_tfm:
  * @param keyLen length of key
  * @param digest holds resultant SHA1 HMAC (20B)
  *
- * @return CDF_STATUS_SUCCSS if the operation succeeds
+ * @return QDF_STATUS_SUCCSS if the operation succeeds
  *
  */
 
@@ -753,7 +753,7 @@ QDF_STATUS cds_sha1_hmac_str(uint32_t cryptHandle,      /* Handle */
  * @param keyLen length of key
  * @param digest holds resultant MD5 HMAC (20B)
  *
- * @return CDF_STATUS_SUCCSS if the operation succeeds
+ * @return QDF_STATUS_SUCCSS if the operation succeeds
  *
  */
 struct hmac_md5_result {

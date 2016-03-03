@@ -1052,7 +1052,7 @@ int htt_tx_ipa_uc_attach(struct htt_pdev_t *pdev,
 	return 0;
 
 free_tx_comp_base:
-	qdf_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   tx_comp_ring_size,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_comp_base.paddr,
@@ -1061,7 +1061,7 @@ free_tx_comp_base:
 							    tx_comp_base),
 							   memctx));
 free_tx_ce_idx:
-	qdf_mem_free_consistent(pdev->osdev,
+	qdf_mem_free_consistent(pdev->osdev, pdev->osdev->dev,
 				   4,
 				   pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
 				   pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
@@ -1078,7 +1078,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 
 	if (pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr) {
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			4,
 			pdev->ipa_uc_tx_rsc.tx_ce_idx.vaddr,
 			pdev->ipa_uc_tx_rsc.tx_ce_idx.paddr,
@@ -1089,7 +1089,7 @@ int htt_tx_ipa_uc_detach(struct htt_pdev_t *pdev)
 
 	if (pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr) {
 		qdf_mem_free_consistent(
-			pdev->osdev,
+			pdev->osdev, pdev->osdev->dev,
 			ol_cfg_ipa_uc_tx_max_buf_cnt(pdev->ctrl_pdev) *
 							sizeof(qdf_nbuf_t),
 			pdev->ipa_uc_tx_rsc.tx_comp_base.vaddr,
@@ -1125,7 +1125,7 @@ htt_tx_desc_fill_tso_info(htt_pdev_handle pdev, void *desc,
 {
 	u_int32_t *word;
 	int i;
-	struct cdf_tso_seg_elem_t *tso_seg = tso_info->curr_seg;
+	struct qdf_tso_seg_elem_t *tso_seg = tso_info->curr_seg;
 	struct msdu_ext_desc_t *msdu_ext_desc = (struct msdu_ext_desc_t *)desc;
 
 	word = (u_int32_t *)(desc);

@@ -339,7 +339,7 @@ QDF_STATUS wlansap_clean_cb(ptSapContext pSapCtx, uint32_t freeFlag      /* 0 / 
 
     IN
     callbackContext:  The user passed in a context to identify
-    status:           The cdf_ret_status
+    status : The qdf_ret_status
 
    RETURN VALUE
     None
@@ -1299,7 +1299,7 @@ QDF_STATUS wlansap_disassoc_sta(void *pCtx, const uint8_t *pPeerStaMac)
 QDF_STATUS wlansap_deauth_sta(void *pCtx,
 			      struct tagCsrDelStaParams *pDelStaParams)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 	ptSapContext pSapCtx = CDS_GET_SAP_CB(pCtx);
 
@@ -1313,11 +1313,11 @@ QDF_STATUS wlansap_deauth_sta(void *pCtx,
 		return qdf_status;
 	}
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_roam_deauth_sta(CDS_GET_HAL_CB(pSapCtx->p_cds_gctx),
 				    pSapCtx->sessionId, pDelStaParams);
 
-	if (cdf_ret_status == QDF_STATUS_SUCCESS) {
+	if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 		qdf_status = QDF_STATUS_SUCCESS;
 	}
 	return qdf_status;
@@ -1652,7 +1652,7 @@ QDF_STATUS wlansap_set_key_sta(void *pCtx, tCsrRoamSetKey *pSetKeyInfo)
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 	ptSapContext pSapCtx = NULL;
 	void *hHal = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	uint32_t roamId = 0xFF;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
@@ -1669,11 +1669,11 @@ QDF_STATUS wlansap_set_key_sta(void *pCtx, tCsrRoamSetKey *pSetKeyInfo)
 			  __func__);
 		return QDF_STATUS_E_FAULT;
 	}
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_roam_set_key(hHal, pSapCtx->sessionId, pSetKeyInfo,
 				 &roamId);
 
-	if (cdf_ret_status == QDF_STATUS_SUCCESS)
+	if (qdf_ret_status == QDF_STATUS_SUCCESS)
 		qdf_status = QDF_STATUS_SUCCESS;
 	else
 		qdf_status = QDF_STATUS_E_FAULT;
@@ -1800,7 +1800,7 @@ QDF_STATUS wlansap_update_wps_ie(void *pCtx)
 {
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAULT;
 	ptSapContext pSapCtx = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 
 	QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1822,11 +1822,11 @@ QDF_STATUS wlansap_update_wps_ie(void *pCtx)
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_roam_update_apwpsie(hHal, pSapCtx->sessionId,
 					&pSapCtx->APWPSIEs);
 
-	if (cdf_ret_status == QDF_STATUS_SUCCESS)
+	if (qdf_ret_status == QDF_STATUS_SUCCESS)
 		qdf_status = QDF_STATUS_SUCCESS;
 	else
 		qdf_status = QDF_STATUS_E_FAULT;
@@ -1926,7 +1926,7 @@ QDF_STATUS sap_release_global_lock(ptSapContext pSapCtx)
 QDF_STATUS wlansap_set_wparsn_ies
 	(void *pCtx, uint8_t *pWPARSNIEs, uint32_t WPARSNIEsLen) {
 	ptSapContext pSapCtx = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
@@ -1949,11 +1949,11 @@ QDF_STATUS wlansap_set_wparsn_ies
 	qdf_mem_copy(pSapCtx->APWPARSNIEs.rsnIEdata, pWPARSNIEs,
 		     WPARSNIEsLen);
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_roam_update_apwparsni_es(hHal, pSapCtx->sessionId,
 					     &pSapCtx->APWPARSNIEs);
 
-	if (cdf_ret_status == QDF_STATUS_SUCCESS)
+	if (qdf_ret_status == QDF_STATUS_SUCCESS)
 		return QDF_STATUS_SUCCESS;
 	else
 		return QDF_STATUS_E_FAULT;
@@ -1979,7 +1979,7 @@ QDF_STATUS wlansap_send_action(void *pCtx, const uint8_t *pBuf,
 {
 	ptSapContext pSapCtx = NULL;
 	void *hHal = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
@@ -1996,11 +1996,11 @@ QDF_STATUS wlansap_send_action(void *pCtx, const uint8_t *pBuf,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_send_action(hHal, pSapCtx->sessionId, pBuf, len, 0,
 		0, channel_freq);
 
-	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == qdf_ret_status) {
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2033,7 +2033,7 @@ QDF_STATUS wlansap_remain_on_channel(void *pCtx,
 {
 	ptSapContext pSapCtx = NULL;
 	void *hHal = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
@@ -2050,11 +2050,11 @@ QDF_STATUS wlansap_remain_on_channel(void *pCtx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status = sme_remain_on_channel(hHal, pSapCtx->sessionId,
+	qdf_ret_status = sme_remain_on_channel(hHal, pSapCtx->sessionId,
 				channel, duration, callback, pContext,
 				true, scan_id);
 
-	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == qdf_ret_status) {
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2080,7 +2080,7 @@ QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 {
 	ptSapContext pSapCtx = NULL;
 	void *hHal = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
@@ -2098,11 +2098,11 @@ QDF_STATUS wlansap_cancel_remain_on_channel(void *pCtx,
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_cancel_remain_on_channel(hHal, pSapCtx->sessionId,
 		scan_id);
 
-	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == qdf_ret_status) {
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2131,7 +2131,7 @@ QDF_STATUS wlansap_register_mgmt_frame
 	uint16_t frameType, uint8_t *matchData, uint16_t matchLen) {
 	ptSapContext pSapCtx = NULL;
 	void *hHal = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
@@ -2148,11 +2148,11 @@ QDF_STATUS wlansap_register_mgmt_frame
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status = sme_register_mgmt_frame(hHal, pSapCtx->sessionId,
+	qdf_ret_status = sme_register_mgmt_frame(hHal, pSapCtx->sessionId,
 						 frameType, matchData,
 						 matchLen);
 
-	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == qdf_ret_status) {
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2181,7 +2181,7 @@ QDF_STATUS wlansap_de_register_mgmt_frame
 	uint16_t frameType, uint8_t *matchData, uint16_t matchLen) {
 	ptSapContext pSapCtx = NULL;
 	void *hHal = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pSapCtx = CDS_GET_SAP_CB(pCtx);
 	if (NULL == pSapCtx) {
@@ -2198,11 +2198,11 @@ QDF_STATUS wlansap_de_register_mgmt_frame
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status =
+	qdf_ret_status =
 		sme_deregister_mgmt_frame(hHal, pSapCtx->sessionId, frameType,
 					  matchData, matchLen);
 
-	if (QDF_STATUS_SUCCESS == cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS == qdf_ret_status) {
 		return QDF_STATUS_SUCCESS;
 	}
 
@@ -2243,7 +2243,7 @@ QDF_STATUS
 wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 {
 	ptSapContext sapContext = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal mac_ctx = NULL;
 	eCsrPhyMode phy_mode;
@@ -2278,10 +2278,10 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 	 */
 	sapContext->channel = target_channel;
 	sapContext->csr_roamProfile.ch_params.ch_width = ch_params.ch_width;
-	cdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
+	qdf_ret_status = sme_roam_channel_change_req(hHal, sapContext->bssid,
 				&ch_params, &sapContext->csr_roamProfile);
 
-	if (cdf_ret_status == QDF_STATUS_SUCCESS) {
+	if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 		sap_signal_hdd_event(sapContext, NULL,
 			eSAP_CHANNEL_CHANGE_EVENT,
 			(void *) eSAP_STATUS_SUCCESS);
@@ -2321,7 +2321,7 @@ wlansap_channel_change_request(void *pSapCtx, uint8_t target_channel)
 QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 {
 	ptSapContext sapContext = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	uint8_t dfsCacWaitStatus = 0;
 	tpAniSirGlobal pMac = NULL;
@@ -2345,10 +2345,10 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 	if (pMac->sap.SapDfsInfo.sap_radar_found_status == false) {
 		/* CAC Wait done without any Radar Detection */
 		dfsCacWaitStatus = true;
-		cdf_ret_status = sme_roam_start_beacon_req(hHal,
+		qdf_ret_status = sme_roam_start_beacon_req(hHal,
 							   sapContext->bssid,
 							   dfsCacWaitStatus);
-		if (cdf_ret_status == QDF_STATUS_SUCCESS) {
+		if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 			return QDF_STATUS_SUCCESS;
 		}
 		return QDF_STATUS_E_FAULT;
@@ -2379,7 +2379,7 @@ QDF_STATUS wlansap_start_beacon_req(void *pSapCtx)
 QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 {
 	ptSapContext sapContext = NULL;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	void *hHal = NULL;
 	tpAniSirGlobal pMac = NULL;
 	sapContext = (ptSapContext) pSapCtx;
@@ -2398,13 +2398,13 @@ QDF_STATUS wlansap_dfs_send_csa_ie_request(void *pSapCtx)
 	}
 	pMac = PMAC_STRUCT(hHal);
 
-	cdf_ret_status = sme_roam_csa_ie_request(hHal,
+	qdf_ret_status = sme_roam_csa_ie_request(hHal,
 				sapContext->bssid,
 				pMac->sap.SapDfsInfo.target_channel,
 				pMac->sap.SapDfsInfo.csaIERequired,
 				&pMac->sap.SapDfsInfo.new_ch_params);
 
-	if (cdf_ret_status == QDF_STATUS_SUCCESS) {
+	if (qdf_ret_status == QDF_STATUS_SUCCESS) {
 		return QDF_STATUS_SUCCESS;
 	}
 

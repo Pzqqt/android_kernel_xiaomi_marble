@@ -600,7 +600,7 @@ QDF_STATUS hdd_softap_rx_packet_cbk(void *cds_context,
  * @pAdapter: pointer to adapter context
  * @staId: Station ID to deregister
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
 {
@@ -653,7 +653,7 @@ QDF_STATUS hdd_softap_deregister_sta(hdd_adapter_t *pAdapter, uint8_t staId)
  * @pPeerMacAddress: station MAC address
  * @fWmmEnabled: is WMM enabled for this STA?
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
 				   bool fAuthRequired,
@@ -753,7 +753,7 @@ QDF_STATUS hdd_softap_register_sta(hdd_adapter_t *pAdapter,
  * @pAdapter: pointer to adapter context
  * @fPrivacyBit: should 802.11 privacy bit be set?
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
 				      bool fPrivacyBit)
@@ -784,7 +784,7 @@ QDF_STATUS hdd_softap_register_bc_sta(hdd_adapter_t *pAdapter,
  * hdd_softap_deregister_bc_sta() - Deregister the SoftAP broadcast STA
  * @pAdapter: pointer to adapter context
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_deregister_bc_sta(hdd_adapter_t *pAdapter)
 {
@@ -797,7 +797,7 @@ QDF_STATUS hdd_softap_deregister_bc_sta(hdd_adapter_t *pAdapter)
  * hdd_softap_stop_bss() - Stop the BSS
  * @pAdapter: pointer to adapter context
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
 {
@@ -845,7 +845,7 @@ QDF_STATUS hdd_softap_stop_bss(hdd_adapter_t *pAdapter)
  * @pDestMacAddress: MAC address of the station
  * @state: new state of the station
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS hdd_softap_change_sta_state(hdd_adapter_t *pAdapter,
 				       struct qdf_mac_addr *pDestMacAddress,

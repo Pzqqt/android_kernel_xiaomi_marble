@@ -422,7 +422,7 @@ static int hdd_ocb_set_config_req(hdd_adapter_t *adapter,
 		hdd_ocb_set_config_callback, config);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		hddLog(LOGE, FL("Error calling SME function."));
-		/* Convert from ecdf_status to errno */
+		/* Convert from qdf_status to errno */
 		return -EINVAL;
 	}
 
@@ -1369,7 +1369,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 				   &request);
 	if (rc) {
 		hddLog(LOGE, FL("Error calling SME function"));
-		/* Need to convert from ecdf_status to errno. */
+		/* Need to convert from qdf_status to errno. */
 		return -EINVAL;
 	}
 

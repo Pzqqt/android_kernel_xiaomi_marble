@@ -283,7 +283,7 @@ static void wma_bin_search_rate(wma_search_rate_t *tbl, int32_t tbl_size,
  * @nss: nss
  * @rate: rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_ofdm_cck_mcast_rate(int32_t mbpsx10_rate,
 					       uint8_t nss, uint8_t *rate)
@@ -337,7 +337,7 @@ static void wma_set_ht_vht_mcast_rate(uint32_t shortgi, int32_t mbpsx10_rate,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_ht20_mcast_rate(uint32_t shortgi,
 					   int32_t mbpsx10_rate, uint8_t nss,
@@ -375,7 +375,7 @@ static QDF_STATUS wma_fill_ht20_mcast_rate(uint32_t shortgi,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_ht40_mcast_rate(uint32_t shortgi,
 					   int32_t mbpsx10_rate, uint8_t nss,
@@ -414,7 +414,7 @@ static QDF_STATUS wma_fill_ht40_mcast_rate(uint32_t shortgi,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_vht20_mcast_rate(uint32_t shortgi,
 					    int32_t mbpsx10_rate, uint8_t nss,
@@ -454,7 +454,7 @@ static QDF_STATUS wma_fill_vht20_mcast_rate(uint32_t shortgi,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_vht40_mcast_rate(uint32_t shortgi,
 					    int32_t mbpsx10_rate, uint8_t nss,
@@ -495,7 +495,7 @@ static QDF_STATUS wma_fill_vht40_mcast_rate(uint32_t shortgi,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_vht80_mcast_rate(uint32_t shortgi,
 					    int32_t mbpsx10_rate, uint8_t nss,
@@ -538,7 +538,7 @@ static QDF_STATUS wma_fill_vht80_mcast_rate(uint32_t shortgi,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
 					 uint32_t chwidth, int32_t mbpsx10_rate,
@@ -572,7 +572,7 @@ static QDF_STATUS wma_fill_ht_mcast_rate(uint32_t shortgi,
  * @rate: rate
  * @streaming_rate: streaming rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
 					  uint32_t chwidth,
@@ -610,7 +610,7 @@ static QDF_STATUS wma_fill_vht_mcast_rate(uint32_t shortgi,
  * @nss: nss
  * @rate: rate
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS wma_encode_mc_rate(uint32_t shortgi, uint32_t chwidth,
 				     WLAN_PHY_MODE chanmode, A_UINT32 mhz,
@@ -1041,7 +1041,7 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
  * channel of it and channel number. The info is provided run time using
  * iwpriv command: iwpriv <wlan0 | p2p0> setMccLatency <latency in ms>.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_set_mcc_channel_time_latency
 	(tp_wma_handle wma,
@@ -1155,7 +1155,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
  * checks if MCC mode is active, gets the second mode and its operating chan.
  * Quota for the 2nd role is calculated as 100 - quota of first mode.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_set_mcc_channel_time_quota
 	(tp_wma_handle wma,
@@ -1389,7 +1389,7 @@ void wma_unpause_vdev(tp_wma_handle wma)
  * This function update rate & short GI interval to fw based on params
  * send by SME.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 					    tSirRateUpdateInd *
@@ -1616,7 +1616,7 @@ wma_mgmt_tx_dload_comp_hldr(void *wma_context, qdf_nbuf_t netbuf,
  *
  * attaches tx fn with underlying layer.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
 {
@@ -1651,7 +1651,7 @@ QDF_STATUS wma_tx_attach(tp_wma_handle wma_handle)
  *
  * Deregister with TxRx for Tx Mgmt Download and Ack completion.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_tx_detach(tp_wma_handle wma_handle)
 {
@@ -2433,7 +2433,7 @@ err2:
  * given vdev id.
  * This is blocking call till the downloading of frame is complete.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 			 eFrameType frmType, eFrameTxDir txDir, uint8_t tid,
@@ -2859,7 +2859,7 @@ error:
  *
  * Function fills the rx packet meta info from the the cds packet
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_ds_peek_rx_packet_info(cds_pkt_t *pkt, void **pkt_meta,
 				      bool bSwap)

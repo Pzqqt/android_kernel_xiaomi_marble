@@ -535,7 +535,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	int i;
 	uint8_t staIdx;
 	tdlsInfo_t *tInfo;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pHddCtx)
 		return -EINVAL;
@@ -680,7 +680,7 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 	tInfo = qdf_mem_malloc(sizeof(tdlsInfo_t));
 	if (NULL == tInfo) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       FL("cdf_mem_alloc failed for tInfo"));
+		       FL("qdf_mem_malloc failed for tInfo"));
 		qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 		qdf_mem_free(pHddTdlsCtx);
 		return -ENOMEM;
@@ -722,8 +722,8 @@ int wlan_hdd_tdls_init(hdd_adapter_t *pAdapter)
 		pHddCtx->config->tdls_peer_kickout_threshold;
 	dump_tdls_state_param_setting(tInfo);
 
-	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, true);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	qdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, true);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		qdf_mem_free(tInfo);
 		qdf_mc_timer_destroy(&pHddTdlsCtx->peerDiscoveryTimeoutTimer);
 		qdf_mem_free(pHddTdlsCtx);
@@ -744,7 +744,7 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 	tdlsCtx_t *pHddTdlsCtx;
 	hdd_context_t *pHddCtx;
 	tdlsInfo_t *tInfo;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	if (!pHddCtx) {
@@ -824,14 +824,14 @@ void wlan_hdd_tdls_exit(hdd_adapter_t *pAdapter)
 				pHddCtx->config->tdls_peer_kickout_threshold;
 			dump_tdls_state_param_setting(tInfo);
 
-			cdf_ret_status =
+			qdf_ret_status =
 				sme_update_fw_tdls_state(pHddCtx->hHal, tInfo, false);
-			if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+			if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 				qdf_mem_free(tInfo);
 			}
 		} else {
 			hddLog(QDF_TRACE_LEVEL_ERROR,
-			       "%s: cdf_mem_alloc failed for tInfo", __func__);
+			       "%s: qdf_mem_malloc failed for tInfo", __func__);
 		}
 	}
 
@@ -1591,7 +1591,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	tdlsCtx_t *pHddTdlsCtx = WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter);
 	eTDLSSupportMode req_tdls_mode;
 	tdlsInfo_t *tdlsParams;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	if (NULL == pHddTdlsCtx) {
 		hddLog(LOGE, FL("TDLS not enabled!"));
@@ -1631,7 +1631,7 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 	tdlsParams = qdf_mem_malloc(sizeof(tdlsInfo_t));
 	if (NULL == tdlsParams) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
-		       "%s: cdf_mem_alloc failed for tdlsParams", __func__);
+		       "%s: qdf_mem_malloc failed for tdlsParams", __func__);
 		return -ENOMEM;
 	}
 
@@ -1665,8 +1665,8 @@ int wlan_hdd_tdls_set_params(struct net_device *dev,
 
 	dump_tdls_state_param_setting(tdlsParams);
 
-	cdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tdlsParams, true);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	qdf_ret_status = sme_update_fw_tdls_state(pHddCtx->hHal, tdlsParams, true);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		qdf_mem_free(tdlsParams);
 		return -EINVAL;
 	}
@@ -1697,7 +1697,7 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tdlsCtx_t *hdd_tdls_ctx = WLAN_HDD_GET_TDLS_CTX_PTR(adapter);
 	tdlsInfo_t *tdls_param;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	if (!hdd_tdls_ctx) {
 		/* may be TDLS is not applicable for this adapter */
@@ -1774,10 +1774,10 @@ void wlan_hdd_update_tdls_info(hdd_adapter_t *adapter, bool tdls_prohibited,
 
 	dump_tdls_state_param_setting(tdls_param);
 
-	cdf_ret_status = sme_update_fw_tdls_state(hdd_ctx->hHal,
+	qdf_ret_status = sme_update_fw_tdls_state(hdd_ctx->hHal,
 					       tdls_param,
 					       true);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		qdf_mem_free(tdls_param);
 		return;
 	}
@@ -4157,7 +4157,7 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 	hdd_context_t *pHddCtx = wiphy_priv(wiphy);
 	int status;
 	tSmeTdlsPeerStateParams smeTdlsPeerStateParams;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	hddTdlsPeer_t *pTdlsPeer;
 
 	ENTER();
@@ -4384,12 +4384,12 @@ static int __wlan_hdd_cfg80211_tdls_oper(struct wiphy *wiphy,
 						supported_oper_classes[i];
 				}
 
-				cdf_ret_status =
+				qdf_ret_status =
 					sme_update_tdls_peer_state(pHddCtx->
 								   hHal,
 								   &smeTdlsPeerStateParams);
 				if (QDF_STATUS_SUCCESS !=
-				    cdf_ret_status) {
+				    qdf_ret_status) {
 					QDF_TRACE(QDF_MODULE_ID_HDD,
 						  QDF_TRACE_LEVEL_ERROR,
 						  "%s: sme_update_tdls_peer_state failed for "

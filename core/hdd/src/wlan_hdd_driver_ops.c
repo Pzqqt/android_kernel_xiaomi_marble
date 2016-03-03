@@ -296,18 +296,18 @@ static void hdd_hif_close(void *hif_ctx)
 }
 
 /**
- * hdd_init_cdf_ctx() - API to initialize global CDF Device structure
+ * hdd_init_qdf_ctx() - API to initialize global QDF Device structure
  * @dev: Device Pointer
  * @bdev: Bus Device pointer
  *
  * Return: void
  */
-void hdd_init_cdf_ctx(struct device *dev, void *bdev)
+void hdd_init_qdf_ctx(struct device *dev, void *bdev)
 {
-	qdf_device_t cdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	qdf_device_t qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	cdf_dev->dev = dev;
-	cdf_dev->drv_hdl = bdev;
+	qdf_dev->dev = dev;
+	qdf_dev->drv_hdl = bdev;
 }
 
 /**
@@ -329,7 +329,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 	void *hif_ctx;
 	QDF_STATUS status;
 	int ret = 0;
-	qdf_device_t cdf_dev;
+	qdf_device_t qdf_dev;
 	uint32_t mode = cds_get_conparam();
 
 	pr_info("%s: %sprobing driver v%s\n", WLAN_MODULE_NAME,
@@ -361,7 +361,7 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 			goto err_hdd_deinit;
 	}
 
-	hdd_init_cdf_ctx(dev, bdev);
+	hdd_init_qdf_ctx(dev, bdev);
 
 	ret = hdd_hif_open(dev, bdev, bid, bus_type, reinit);
 
@@ -369,9 +369,9 @@ static int wlan_hdd_probe(struct device *dev, void *bdev, const hif_bus_id *bid,
 		goto err_epping_close;
 
 	hif_ctx = cds_get_context(QDF_MODULE_ID_HIF);
-	cdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+	qdf_dev = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
 
-	status = ol_cds_init(cdf_dev, hif_ctx);
+	status = ol_cds_init(qdf_dev, hif_ctx);
 
 	if (status != QDF_STATUS_SUCCESS) {
 		pr_err("%s No Memory to Create BMI Context\n", __func__);

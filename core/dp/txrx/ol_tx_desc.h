@@ -159,10 +159,10 @@ void *ol_ath_get_bcn_header(ol_pdev_handle pdev, A_UINT32 vdev_id);
 void ol_tx_desc_free(struct ol_txrx_pdev_t *pdev, struct ol_tx_desc_t *tx_desc);
 
 #if defined(FEATURE_TSO)
-struct cdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev);
+struct qdf_tso_seg_elem_t *ol_tso_alloc_segment(struct ol_txrx_pdev_t *pdev);
 
 void ol_tso_free_segment(struct ol_txrx_pdev_t *pdev,
-	 struct cdf_tso_seg_elem_t *tso_seg);
+	 struct qdf_tso_seg_elem_t *tso_seg);
 #else
 #define ol_tso_alloc_segment(pdev) /*no-op*/
 #define ol_tso_free_segment(pdev, tso_seg) /*no-op*/

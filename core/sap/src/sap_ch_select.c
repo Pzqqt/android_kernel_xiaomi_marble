@@ -612,7 +612,7 @@ bool sap_chan_sel_init(tHalHandle halHandle,
 
 	if (pSpectCh == NULL) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
-			  "In %s, CDF_MALLOC_ERR", __func__);
+			  "In %s, QDF_MALLOC_ERR", __func__);
 		return eSAP_FALSE;
 	}
 

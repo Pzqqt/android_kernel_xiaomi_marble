@@ -370,7 +370,7 @@ epping_adapter_t *epping_add_adapter(epping_context_t *pEpping_ctx,
 	qdf_spinlock_create(&pAdapter->data_lock);
 	qdf_nbuf_queue_init(&pAdapter->nodrop_queue);
 	pAdapter->epping_timer_state = EPPING_TX_TIMER_STOPPED;
-	qdf_timer_init(epping_get_cdf_ctx(), &pAdapter->epping_timer,
+	qdf_timer_init(epping_get_qdf_ctx(), &pAdapter->epping_timer,
 		epping_timer_expire, dev, QDF_TIMER_TYPE_SW);
 	dev->type = ARPHRD_IEEE80211;
 	dev->netdev_ops = &epping_drv_ops;

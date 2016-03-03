@@ -151,7 +151,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(scn);
 	uint32_t target_type = tgt_info->target_type;
 	struct bmi_info *bmi_ctx = GET_BMI_CONTEXT(ol_ctx);
-	qdf_device_t cdf_dev = ol_ctx->cdf_dev;
+	qdf_device_t qdf_dev = ol_ctx->qdf_dev;
 
 	switch (file) {
 	default:
@@ -251,7 +251,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 		break;
 	}
 
-	if (request_firmware(&fw_entry, filename, cdf_dev->dev) != 0) {
+	if (request_firmware(&fw_entry, filename, qdf_dev->dev) != 0) {
 		BMI_ERR("%s: Failed to get %s", __func__, filename);
 
 		if (file == ATH_OTP_FILE)
@@ -265,7 +265,7 @@ __ol_transfer_bin_file(struct ol_context *ol_ctx, ATH_BIN_FILE file,
 			BMI_INFO("%s: Trying to load default %s",
 			       __func__, filename);
 			if (request_firmware(&fw_entry, filename,
-						cdf_dev->dev) != 0) {
+						qdf_dev->dev) != 0) {
 				BMI_ERR("%s: Failed to get %s",
 				       __func__, filename);
 				return -1;

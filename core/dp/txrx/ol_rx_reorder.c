@@ -27,7 +27,7 @@
 
 /*=== header file includes ===*/
 /* generic utilities */
-#include <qdf_nbuf.h>           /* cdf_nbuf_t, etc. */
+#include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_mem.h>         /* qdf_mem_malloc */
 
 #include <ieee80211.h>          /* IEEE80211_SEQ_MAX */

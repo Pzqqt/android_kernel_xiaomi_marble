@@ -397,7 +397,7 @@ static const struct ieee80211_iface_limit
 static const struct ieee80211_iface_limit
 	wlan_hdd_ap_iface_limit[] = {
 	{
-		.max = (CDF_MAX_NO_OF_SAP_MODE + SAP_MAX_OBSS_STA_CNT),
+		.max = (QDF_MAX_NO_OF_SAP_MODE + SAP_MAX_OBSS_STA_CNT),
 		.types = BIT(NL80211_IFTYPE_AP),
 	},
 };
@@ -425,7 +425,7 @@ static const struct ieee80211_iface_limit
 		.types = BIT(NL80211_IFTYPE_STATION),
 	},
 	{
-		.max = CDF_MAX_NO_OF_SAP_MODE,
+		.max = QDF_MAX_NO_OF_SAP_MODE,
 		.types = BIT(NL80211_IFTYPE_AP),
 	},
 };
@@ -524,7 +524,7 @@ static struct ieee80211_iface_combination
 	{
 		.limits = wlan_hdd_ap_iface_limit,
 		.num_different_channels = 2,
-		.max_interfaces = (SAP_MAX_OBSS_STA_CNT + CDF_MAX_NO_OF_SAP_MODE),
+		.max_interfaces = (SAP_MAX_OBSS_STA_CNT + QDF_MAX_NO_OF_SAP_MODE),
 		.n_limits = ARRAY_SIZE(wlan_hdd_ap_iface_limit),
 	},
 	/* P2P */
@@ -538,7 +538,7 @@ static struct ieee80211_iface_combination
 	{
 		.limits = wlan_hdd_sta_ap_iface_limit,
 		.num_different_channels = 2,
-		.max_interfaces = (1 + SAP_MAX_OBSS_STA_CNT + CDF_MAX_NO_OF_SAP_MODE),
+		.max_interfaces = (1 + SAP_MAX_OBSS_STA_CNT + QDF_MAX_NO_OF_SAP_MODE),
 		.n_limits = ARRAY_SIZE(wlan_hdd_sta_ap_iface_limit),
 		.beacon_int_infra_match = true,
 	},
@@ -4233,7 +4233,7 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 	}
 
 	if (hdd_ctx->config->policy_manager_enabled) {
-		ret = cdf_reset_connection_update();
+		ret = qdf_reset_connection_update();
 		if (!QDF_IS_STATUS_SUCCESS(ret))
 			hdd_err("clearing event failed");
 
@@ -4253,9 +4253,9 @@ static int __wlan_hdd_cfg80211_set_probable_oper_channel(struct wiphy *wiphy,
 			 * For any other return value it should be a pass
 			 * through
 			 */
-			ret = cdf_wait_for_connection_update();
+			ret = qdf_wait_for_connection_update();
 			if (!QDF_IS_STATUS_SUCCESS(ret)) {
-				hdd_err("ERROR: cdf wait for event failed!!");
+				hdd_err("ERROR: qdf wait for event failed!!");
 				return -EINVAL;
 			}
 
@@ -5500,7 +5500,7 @@ int wlan_hdd_cfg80211_init(struct device *dev,
 }
 
 /*
- * In this function, wiphy structure is updated after CDF
+ * In this function, wiphy structure is updated after QDF
  * initialization. In wlan_hdd_cfg80211_init, only the
  * default values will be initialized. The final initialization
  * of all required members can be done here.
@@ -5857,7 +5857,7 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 	hdd_adapter_t *pAdapter = WLAN_HDD_GET_PRIV_PTR(dev);
 	hdd_context_t *pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 	int ret = 0;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 
 	ENTER();
 
@@ -5889,12 +5889,12 @@ static int __wlan_hdd_cfg80211_change_bss(struct wiphy *wiphy,
 		pAdapter->sessionCtx.ap.apDisableIntraBssFwd =
 			!!params->ap_isolate;
 
-		cdf_ret_status = sme_ap_disable_intra_bss_fwd(pHddCtx->hHal,
+		qdf_ret_status = sme_ap_disable_intra_bss_fwd(pHddCtx->hHal,
 							      pAdapter->sessionId,
 							      pAdapter->sessionCtx.
 							      ap.
 							      apDisableIntraBssFwd);
-		if (!QDF_IS_STATUS_SUCCESS(cdf_ret_status)) {
+		if (!QDF_IS_STATUS_SUCCESS(qdf_ret_status)) {
 			ret = -EINVAL;
 		}
 	}
@@ -6588,7 +6588,7 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 	v_CONTEXT_t p_cds_context = (WLAN_HDD_GET_CTX(pAdapter))->pcds_context;
 #endif
 	hdd_hostapd_state_t *pHostapdState;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	hdd_context_t *pHddCtx;
 	hdd_ap_ctx_t *ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(pAdapter);
 
@@ -6826,13 +6826,13 @@ static int __wlan_hdd_cfg80211_add_key(struct wiphy *wiphy,
 		/* The supplicant may attempt to set the PTK once pre-authentication
 		   is done. Save the key in the UMAC and include it in the ADD BSS
 		   request */
-		cdf_ret_status = sme_ft_update_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
+		qdf_ret_status = sme_ft_update_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
 						   pAdapter->sessionId, &setKey);
-		if (cdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
+		if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
 			hddLog(QDF_TRACE_LEVEL_INFO_MED,
 			       "%s: Update PreAuth Key success", __func__);
 			return 0;
-		} else if (cdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
+		} else if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
 			hddLog(QDF_TRACE_LEVEL_ERROR,
 			       "%s: Update PreAuth Key failed", __func__);
 			return -EINVAL;
@@ -7612,7 +7612,7 @@ int wlan_hdd_cfg80211_pmksa_candidate_notify(hdd_adapter_t *pAdapter,
  *
  * 802.11r/LFR metrics reporting function to report preauth initiation
  *
- * Return: CDF status
+ * Return: QDF status
  */
 #define MAX_LFR_METRICS_EVENT_LENGTH 100
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
@@ -7654,7 +7654,7 @@ QDF_STATUS wlan_hdd_cfg80211_roam_metrics_preauth(hdd_adapter_t *pAdapter,
  *
  * 802.11r/LFR metrics reporting function to report handover initiation
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS
 wlan_hdd_cfg80211_roam_metrics_preauth_status(hdd_adapter_t *pAdapter,
@@ -7704,7 +7704,7 @@ wlan_hdd_cfg80211_roam_metrics_preauth_status(hdd_adapter_t *pAdapter,
  *
  * 802.11r/LFR metrics reporting function to report handover initiation
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wlan_hdd_cfg80211_roam_metrics_handover(hdd_adapter_t *pAdapter,
 						   tCsrRoamInfo *pRoamInfo)
@@ -9369,7 +9369,7 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		return -ECONNREFUSED;
 	}
 	if (pHddCtx->config->policy_manager_enabled) {
-		status = cdf_reset_connection_update();
+		status = qdf_reset_connection_update();
 		if (!QDF_IS_STATUS_SUCCESS(status))
 			hdd_err("ERR: clear event failed");
 
@@ -9382,9 +9382,9 @@ static int __wlan_hdd_cfg80211_join_ibss(struct wiphy *wiphy,
 		}
 
 		if (QDF_STATUS_SUCCESS == status) {
-			status = cdf_wait_for_connection_update();
+			status = qdf_wait_for_connection_update();
 			if (!QDF_IS_STATUS_SUCCESS(status)) {
-				hdd_err("ERROR: cdf wait for event failed!!");
+				hdd_err("ERROR: qdf wait for event failed!!");
 				return -EINVAL;
 			}
 		}
@@ -9891,7 +9891,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 							DFS_CAC_IN_PROGRESS)
 						goto fn_end;
 
-					qdf_event_reset(&hapd_state->cdf_event);
+					qdf_event_reset(&hapd_state->qdf_event);
 					hdd_softap_sta_disassoc(pAdapter,
 								mac);
 					qdf_status =
@@ -9902,7 +9902,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 						isDeauthInProgress = true;
 						qdf_status =
 							qdf_wait_single_event(
-								&hapd_state->cdf_event,
+								&hapd_state->qdf_event,
 								1000);
 						if (!QDF_IS_STATUS_SUCCESS(
 								qdf_status))
@@ -9955,7 +9955,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 			if (pHddCtx->dev_dfs_cac_status == DFS_CAC_IN_PROGRESS)
 				goto fn_end;
 
-			qdf_event_reset(&hapd_state->cdf_event);
+			qdf_event_reset(&hapd_state->qdf_event);
 			hdd_softap_sta_disassoc(pAdapter, mac);
 			qdf_status = hdd_softap_sta_deauth(pAdapter,
 							   pDelStaParams);
@@ -9969,7 +9969,7 @@ int __wlan_hdd_cfg80211_del_station(struct wiphy *wiphy,
 				return -ENOENT;
 			} else {
 				qdf_status = qdf_wait_single_event(
-							&hapd_state->cdf_event,
+							&hapd_state->qdf_event,
 							1000);
 				if (!QDF_IS_STATUS_SUCCESS(qdf_status))
 					hddLog(LOGE,

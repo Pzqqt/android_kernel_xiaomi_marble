@@ -336,7 +336,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 		p_inactivity = (tpSirIbssPeerInactivityInd)
 			       qdf_mem_malloc(sizeof(tSirIbssPeerInactivityInd));
 		if (!p_inactivity) {
-			WMA_LOGE("CDF MEM Alloc Failed for tSirIbssPeerInactivity");
+			WMA_LOGE("QDF MEM Alloc Failed for tSirIbssPeerInactivity");
 			return -ENOMEM;
 		}
 
@@ -431,7 +431,7 @@ int wma_peer_sta_kickout_event_handler(void *handle, u8 *event, u32 len)
 	del_sta_ctx =
 		(tpDeleteStaContext) qdf_mem_malloc(sizeof(tDeleteStaContext));
 	if (!del_sta_ctx) {
-		WMA_LOGE("CDF MEM Alloc Failed for tDeleteStaContext");
+		WMA_LOGE("QDF MEM Alloc Failed for tDeleteStaContext");
 		return -ENOMEM;
 	}
 
@@ -2022,7 +2022,7 @@ out:
  *
  * This function updates EDCA parameters to the target
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 					     tEdcaParams *edca_params)
@@ -2295,7 +2295,7 @@ static int wmi_unified_bcn_tmpl_send(tp_wma_handle wma,
  * This will send to target on the reception of
  * SWBA event.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_store_bcn_tmpl(tp_wma_handle wma, uint8_t vdev_id,
 			      tpSendbeaconParams bcn_info)
@@ -2808,7 +2808,7 @@ void wma_process_update_userpos(tp_wma_handle wma_handle,
  * @ht_capab: ht capablity
  * @value: value of ht param
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 {
@@ -3304,7 +3304,7 @@ static int wma_mgmt_rx_process(void *handle, uint8_t *data,
  * wma_de_register_mgmt_frm_client() - deregister management frame
  * @cds_ctx: cds context
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_de_register_mgmt_frm_client(void *cds_ctx)
 {
@@ -3366,7 +3366,7 @@ QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
  * @cds_ctx: cds context
  * @mgmt_frm_rx: management frame
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_register_mgmt_frm_client(
 	void *cds_ctx, wma_mgmt_frame_rx_callback mgmt_frm_rx)

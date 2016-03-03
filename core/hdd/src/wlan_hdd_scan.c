@@ -1087,7 +1087,7 @@ nla_put_failure:
  * @scanId: Scan Id
  * @status: Scan status
  *
- * Return: CDF status
+ * Return: QDF status
  */
 static QDF_STATUS hdd_cfg80211_scan_done_callback(tHalHandle halHandle,
 					   void *pContext,

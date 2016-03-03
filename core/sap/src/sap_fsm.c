@@ -1962,7 +1962,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 {
 
 	/* Initiate a SCAN request */
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	/* To be initialised if scan is required */
 	tCsrScanRequest scan_request;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
@@ -1997,7 +1997,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
-						CDF_MCC_TO_SCC_SWITCH_DISABLE) {
+						QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 			con_ch = sme_check_concurrent_channel_overlap(h_hal,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
@@ -2025,7 +2025,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 #endif
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
-						CDF_MCC_TO_SCC_SWITCH_DISABLE) {
+						QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 			con_ch = sme_check_concurrent_channel_overlap(h_hal,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,
@@ -2109,7 +2109,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			 * csrScanCompleteCallback callback
 			 * pContext scan_request_id filled up
 			 */
-			cdf_ret_status = sme_scan_request(h_hal,
+			qdf_ret_status = sme_scan_request(h_hal,
 				sap_context->sessionId,
 				&scan_request,
 				&wlansap_pre_start_bss_acs_scan_callback,
@@ -2121,16 +2121,16 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 			 * csrScanCompleteCallback callback,
 			 * pContext scan_request_id filled up
 			 */
-			cdf_ret_status = sme_scan_request(h_hal,
+			qdf_ret_status = sme_scan_request(h_hal,
 				sap_context->sessionId,
 				&scan_request,
 				&wlansap_scan_callback,
 				sap_context);
 		}
-		if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+		if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 				  FL("sme_scan_request  fail %d!!!"),
-				  cdf_ret_status);
+				  qdf_ret_status);
 			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 				  FL("SAP Configuring default channel, Ch=%d"),
 				  sap_context->channel);
@@ -2241,7 +2241,7 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 {
 	uint32_t type, subType;
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	QDF_STATUS status = QDF_STATUS_E_FAILURE;
 	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
 
@@ -2256,16 +2256,16 @@ QDF_STATUS sap_open_session(tHalHandle hHal, ptSapContext sapContext)
 		return QDF_STATUS_E_FAILURE;
 	}
 	/* Open SME Session for Softap */
-	cdf_ret_status = sme_open_session(hHal,
+	qdf_ret_status = sme_open_session(hHal,
 					  &wlansap_roam_callback,
 					  sapContext,
 					  sapContext->self_mac_addr,
 					  &sapContext->sessionId, type, subType);
 
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sme_roam_connect status = %d",
-			  __func__, cdf_ret_status);
+			  __func__, qdf_ret_status);
 
 		return QDF_STATUS_E_FAILURE;
 	}
@@ -2308,7 +2308,7 @@ sap_goto_starting
 	ptWLAN_SAPEvent sapEvent, eCsrRoamBssType bssType) {
 	/* tHalHandle */
 	tHalHandle hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 
 	/*- - - - - - - - TODO:once configs from hdd available - - - - - - - - -*/
 	char key_material[32] = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1, 2, 3,
@@ -2327,12 +2327,12 @@ sap_goto_starting
 		return QDF_STATUS_E_FAULT;
 	}
 
-	cdf_ret_status = sap_open_session(hHal, sapContext);
+	qdf_ret_status = sap_open_session(hHal, sapContext);
 
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sap_open_session status = %d",
-			  __func__, cdf_ret_status);
+			  __func__, qdf_ret_status);
 		return QDF_STATUS_E_FAILURE;
 	}
 
@@ -2363,7 +2363,7 @@ sap_goto_starting
    ============================================================================*/
 QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 {
-	QDF_STATUS cdf_ret_status;
+	QDF_STATUS qdf_ret_status;
 	tHalHandle hHal;
 
 	hHal = CDS_GET_HAL_CB(sapContext->p_cds_gctx);
@@ -2375,11 +2375,11 @@ QDF_STATUS sap_goto_disconnecting(ptSapContext sapContext)
 	}
 
 	sap_free_roam_profile(&sapContext->csr_roamProfile);
-	cdf_ret_status = sme_roam_stop_bss(hHal, sapContext->sessionId);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	qdf_ret_status = sme_roam_stop_bss(hHal, sapContext->sessionId);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  "Error: In %s calling sme_roam_stop_bss status = %d",
-			  __func__, cdf_ret_status);
+			  __func__, qdf_ret_status);
 		return QDF_STATUS_E_FAILURE;
 	}
 

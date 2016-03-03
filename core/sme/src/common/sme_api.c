@@ -8461,16 +8461,16 @@ QDF_STATUS sme_update_is_ese_feature_enabled
 QDF_STATUS sme_update_config_fw_rssi_monitoring(tHalHandle hHal,
 						bool fEnableFwRssiMonitoring)
 {
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 
 	if (sme_cfg_set_int (hHal, WNI_CFG_PS_ENABLE_RSSI_MONITOR,
 						fEnableFwRssiMonitoring) == QDF_STATUS_E_FAILURE) {
-		cdf_ret_status = QDF_STATUS_E_FAILURE;
+		qdf_ret_status = QDF_STATUS_E_FAILURE;
 		QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_ERROR,
 			  "Could not pass on WNI_CFG_PS_RSSI_MONITOR to CFG");
 	}
 
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 /* ---------------------------------------------------------------------------
@@ -9581,7 +9581,7 @@ uint8_t sme_is_feature_supported_by_fw(uint8_t featEnumValue)
 
     \param  peerMac - peer's Mac Adress.
     \param  tdlsLinkEstablishParams - TDLS Peer Link Establishment Parameters
-   \- return CDF_STATUS_SUCCES
+   \- return QDF_STATUS_SUCCES
     -------------------------------------------------------------------------*/
 QDF_STATUS sme_send_tdls_link_establish_params(tHalHandle hHal,
 					       uint8_t sessionId,
@@ -9618,7 +9618,7 @@ QDF_STATUS sme_send_tdls_link_establish_params(tHalHandle hHal,
     \param buf - additional IEs to be included
     \param len - lenght of additional Ies
     \param responder - Tdls request type
-   \- return CDF_STATUS_SUCCES
+   \- return QDF_STATUS_SUCCES
     -------------------------------------------------------------------------*/
 QDF_STATUS sme_send_tdls_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 				    const tSirMacAddr peerMac,
@@ -9660,7 +9660,7 @@ QDF_STATUS sme_send_tdls_mgmt_frame(tHalHandle hHal, uint8_t sessionId,
 
     \param  peerMac - peer's Mac Adress.
     \param  staParams - Peer Station Parameters
-   \- return CDF_STATUS_SUCCES
+   \- return QDF_STATUS_SUCCES
     -------------------------------------------------------------------------*/
 QDF_STATUS sme_change_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				    const tSirMacAddr peerMac,
@@ -9694,7 +9694,7 @@ QDF_STATUS sme_change_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
     \brief  API to Add TDLS peer sta entry.
 
     \param  peerMac - peer's Mac Adress.
-   \- return CDF_STATUS_SUCCES
+   \- return QDF_STATUS_SUCCES
     -------------------------------------------------------------------------*/
 QDF_STATUS sme_add_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				 const tSirMacAddr peerMac)
@@ -9721,7 +9721,7 @@ QDF_STATUS sme_add_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
     \brief  API to Delete TDLS peer sta entry.
 
     \param  peerMac - peer's Mac Adress.
-   \- return CDF_STATUS_SUCCES
+   \- return QDF_STATUS_SUCCES
     -------------------------------------------------------------------------*/
 QDF_STATUS sme_delete_tdls_peer_sta(tHalHandle hHal, uint8_t sessionId,
 				    const tSirMacAddr peerMac)
@@ -9947,7 +9947,7 @@ QDF_STATUS sme_update_tdls_peer_state(tHalHandle hHal,
  *
  * API to set tdls channel switch parameters.
  *
- * Return: QDF_STATUS_SUCCESS on success; another CDF_STATUS_* code otherwise
+ * Return: QDF_STATUS_SUCCESS on success; another QDF_STATUS_** code otherwise
  */
 QDF_STATUS sme_send_tdls_chan_switch_req(tHalHandle hal,
 	sme_tdls_chan_switch_params *ch_switch_params)
@@ -13849,7 +13849,7 @@ QDF_STATUS sme_configure_modulated_dtim(tHalHandle h_hal, uint8_t session_id,
 	if (NULL == iwcmd) {
 		QDF_TRACE(QDF_MODULE_ID_SME,
 			  QDF_TRACE_LEVEL_FATAL,
-			  "%s: cdf_mem_alloc failed", __func__);
+			  "%s: qdf_mem_malloc failed", __func__);
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -14010,7 +14010,7 @@ QDF_STATUS sme_send_flush_logs_cmd_to_fw(tpAniSirGlobal mac)
  * @sessionId: session id
  * @delay_interval: delay interval
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS sme_enable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
 				   sme_ac_enum_type ac, uint8_t tid,
@@ -14077,7 +14077,7 @@ QDF_STATUS sme_enable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
  * @ac: access catagory
  * @sessionId: session id
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS sme_disable_uapsd_for_ac(void *cds_ctx, uint8_t sta_id,
 				       sme_ac_enum_type ac,
@@ -14598,7 +14598,7 @@ QDF_STATUS sme_gateway_param_update(tHalHandle Hal,
  * @auth_cb: auth callback
  * @vdev_id: vdev id
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS sme_set_peer_authorized(uint8_t *peer_addr,
 				   sme_peer_authorized_fp auth_cb,

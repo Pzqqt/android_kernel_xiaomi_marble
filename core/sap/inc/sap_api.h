@@ -69,7 +69,7 @@ extern "C" {
 #define       MAX_TEXT_SIZE                32
 
 #define       MAX_CHANNEL_LIST_LEN         256
-#define       CDF_MAX_NO_OF_SAP_MODE       2    /* max # of SAP */
+#define       QDF_MAX_NO_OF_SAP_MODE       2    /* max # of SAP */
 #define       SAP_MAX_NUM_SESSION          5
 #define       SAP_MAX_OBSS_STA_CNT         1    /* max # of OBSS STA */
 #define       SAP_ACS_WEIGHT_MAX           (4444)

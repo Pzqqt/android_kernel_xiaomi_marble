@@ -171,7 +171,7 @@ static bool wma_is_mcc_24G(WMA_HANDLE handle)
  * Fill individual elements of wmi_start_scan_req and TLV for
  * channel list, bssid, ssid etc.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
@@ -536,7 +536,7 @@ error:
  *
  * Fill wmi_stop_scan_cmd buffer.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 				     wmi_buf_t *buf,
@@ -582,7 +582,7 @@ error:
  *
  * Send start scan command to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 			  tSirScanOffloadReq *scan_req, uint16_t msg_type)
@@ -683,7 +683,7 @@ error:
  *
  * Send stop scan command to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 			 tAbortScanParams *abort_scan_req)
@@ -736,7 +736,7 @@ error1:
  *
  * Function is used to update the support channel list in fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle,
 				   tSirUpdateChanList *chan_list)
@@ -839,7 +839,7 @@ end:
  * send WMI_ROAM_SCAN_MODE TLV to firmware. It has a piggyback
  * of WMI_ROAM_SCAN_MODE.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_mode(tp_wma_handle wma_handle,
 				      wmi_start_scan_cmd_fixed_param *
@@ -1105,7 +1105,7 @@ error:
  *
  * Send WMI_ROAM_SCAN_RSSI_THRESHOLD TLV to firmware
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_rssi_thresh(tp_wma_handle wma_handle,
 	tSirRoamOffloadScanReq *roam_req)
@@ -1258,7 +1258,7 @@ error:
  *
  * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 					     uint32_t scan_period,
@@ -1318,7 +1318,7 @@ error:
  *
  * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 	uint32_t vdev_id,
@@ -1383,7 +1383,7 @@ error:
  *
  * Set roam offload channel list.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t chan_count,
@@ -1798,7 +1798,7 @@ void wma_roam_scan_fill_scan_params(tp_wma_handle wma_handle,
  *
  * Send WMI_ROAM_AP_PROFILE to firmware
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 					    wmi_ap_profile *ap_profile_p,
@@ -2015,7 +2015,7 @@ error:
  *
  * set first & final biss count to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 				   A_INT32 first_bcnt,
@@ -2057,7 +2057,7 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
  *
  * This function set roam offload command to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id)
@@ -2110,7 +2110,7 @@ error:
  *
  * Main routine to handle ROAM commands coming from CSR module.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_process_roam_scan_req(tp_wma_handle wma_handle,
 				     tSirRoamOffloadScanReq *roam_req)
@@ -2817,7 +2817,7 @@ int wma_rssi_breached_event_handler(void *handle,
  *
  * This function fills roam self capablities.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_roam_scan_fill_self_caps(tp_wma_handle wma_handle,
 					wmi_roam_offload_tlv_param *
@@ -3367,7 +3367,7 @@ void wma_set_pno_channel_prediction(uint8_t *buf_ptr,
  * @pno: PNO request
  *
  * This function request FW to start PNO request.
- * Request: CDF status
+ * Request: QDF status
  */
 QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
 {
@@ -3515,7 +3515,7 @@ QDF_STATUS wma_pno_start(tp_wma_handle wma, tpSirPNOScanReq pno)
  *
  * This function request FW to stop ongoing PNO operation.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_pno_stop(tp_wma_handle wma, uint8_t vdev_id)
 {
@@ -3616,7 +3616,7 @@ void wma_config_pno(tp_wma_handle wma, tpSirPNOScanReq pno)
  *
  * This function request FW to start PLM.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
 {
@@ -3712,7 +3712,7 @@ QDF_STATUS wma_plm_start(tp_wma_handle wma, const tpSirPlmReq plm)
  *
  * This function request FW to stop PLM.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_plm_stop(tp_wma_handle wma, const tpSirPlmReq plm)
 {
@@ -5143,7 +5143,7 @@ wma_extscan_hotlist_ssid_match_event_handler(void *handle,
  * This function fills individual elements of extscan request and
  * TLV for buckets, channel list.
  *
- * Return: CDF Status.
+ * Return: QDF Status.
  */
 QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
 					 tSirWifiScanCmdReqParams *pstart,
@@ -5371,7 +5371,7 @@ QDF_STATUS wma_get_buf_extscan_start_cmd(tp_wma_handle wma_handle,
  *
  * This function sends start extscan request to fw.
  *
- * Return: CDF Status.
+ * Return: QDF Status.
  */
 QDF_STATUS wma_start_extscan(tp_wma_handle wma,
 			     tSirWifiScanCmdReqParams *pstart)
@@ -5422,7 +5422,7 @@ QDF_STATUS wma_start_extscan(tp_wma_handle wma,
  *
  * This function sends stop extscan request to fw.
  *
- * Return: CDF Status.
+ * Return: QDF Status.
  */
 QDF_STATUS wma_stop_extscan(tp_wma_handle wma,
 			    tSirExtScanStopReqParams *pstopcmd)
@@ -5505,7 +5505,7 @@ static inline int wma_get_hotlist_entries_per_page(wmi_unified_t wmi_handle,
  * This function fills individual elements for  hotlist request and
  * TLV for bssid entries
  *
- * Return: CDF Status.
+ * Return: QDF Status.
  */
 QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 					   tSirExtScanSetBssidHotListReqParams *
@@ -5626,7 +5626,7 @@ QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
  *
  * This function configures hotlist monitor in fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
 					     tSirExtScanSetBssidHotListReqParams
@@ -5659,7 +5659,7 @@ QDF_STATUS wma_extscan_start_hotlist_monitor(tp_wma_handle wma,
  *
  * This function configures hotlist monitor to stop in fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
 					    tSirExtScanResetBssidHotlistReqParams
@@ -5733,7 +5733,7 @@ QDF_STATUS wma_extscan_stop_hotlist_monitor(tp_wma_handle wma,
  *
  * This function fills elements of change monitor request buffer.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
 						  tSirExtScanSetSigChangeReqParams
@@ -5816,7 +5816,7 @@ QDF_STATUS wma_get_buf_extscan_change_monitor_cmd(tp_wma_handle wma_handle,
  *
  * This function sends start change monitor request to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
 					    tSirExtScanSetSigChangeReqParams *
@@ -5862,7 +5862,7 @@ QDF_STATUS wma_extscan_start_change_monitor(tp_wma_handle wma,
  *
  * This function sends stop change monitor request to fw.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
 					   tSirExtScanResetSignificantChangeReqParams
@@ -5931,7 +5931,7 @@ QDF_STATUS wma_extscan_stop_change_monitor(tp_wma_handle wma,
  *
  * This function send request to fw to get cached results.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
 					  tSirExtScanGetCachedResultsReqParams *
@@ -5985,7 +5985,7 @@ QDF_STATUS wma_extscan_get_cached_results(tp_wma_handle wma,
  *
  * This function send request to fw to get extscan capabilities.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_extscan_get_capabilities(tp_wma_handle wma,
 					tSirGetExtScanCapabilitiesReqParams *
@@ -6494,7 +6494,7 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
  *
  * set scan probe OUI parameters in firmware
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS wma_scan_probe_setoui(tp_wma_handle wma, tSirScanMacOui *psetoui)
 {

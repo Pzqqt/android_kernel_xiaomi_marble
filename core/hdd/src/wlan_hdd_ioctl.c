@@ -474,7 +474,7 @@ hdd_parse_send_action_frame_v1_data(const uint8_t *pValue,
 	 */
 	*pBuf = qdf_mem_malloc((*pBufLen + 1) / 2);
 	if (NULL == *pBuf) {
-		hddLog(LOGE, FL("cdf_mem_alloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 
@@ -1577,7 +1577,7 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 			      tpSirExtWoWParams arg_params)
 {
 	tSirExtWoWParams params;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 	hdd_context_t *hdd_ctx = WLAN_HDD_GET_CTX(adapter);
 	tHalHandle hHal = WLAN_HDD_GET_HAL_CTX(adapter);
 	int rc;
@@ -1586,13 +1586,13 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 
 	INIT_COMPLETION(hdd_ctx->ready_to_extwow);
 
-	cdf_ret_status = sme_configure_ext_wow(hHal, &params,
+	qdf_ret_status = sme_configure_ext_wow(hHal, &params,
 						&wlan_hdd_ready_to_extwow,
 						hdd_ctx);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_ext_wow returned failure %d"),
-		       cdf_ret_status);
+		       qdf_ret_status);
 		return -EPERM;
 	}
 
@@ -1620,11 +1620,11 @@ static int hdd_enable_ext_wow(hdd_adapter_t *adapter,
 					__func__, rc);
 				return rc;
 			}
-			cdf_ret_status = wlan_hdd_bus_suspend(state);
-			if (cdf_ret_status != QDF_STATUS_SUCCESS) {
+			qdf_ret_status = wlan_hdd_bus_suspend(state);
+			if (qdf_ret_status != QDF_STATUS_SUCCESS) {
 				QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 					"%s: wlan_hdd_suspend failed, status = %d",
-					__func__, cdf_ret_status);
+					__func__, qdf_ret_status);
 				wlan_hdd_cfg80211_resume_wlan(hdd_ctx->wiphy);
 				return -EPERM;
 			}
@@ -1685,15 +1685,15 @@ static int hdd_set_app_type1_params(tHalHandle hHal,
 				    tpSirAppType1Params arg_params)
 {
 	tSirAppType1Params params;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	qdf_mem_copy(&params, arg_params, sizeof(params));
 
-	cdf_ret_status = sme_configure_app_type1_params(hHal, &params);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	qdf_ret_status = sme_configure_app_type1_params(hHal, &params);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_app_type1_params returned failure %d"),
-		       cdf_ret_status);
+		       qdf_ret_status);
 		return -EPERM;
 	}
 
@@ -1743,15 +1743,15 @@ static int hdd_set_app_type2_params(tHalHandle hHal,
 				    tpSirAppType2Params arg_params)
 {
 	tSirAppType2Params params;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_E_FAILURE;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 	qdf_mem_copy(&params, arg_params, sizeof(params));
 
-	cdf_ret_status = sme_configure_app_type2_params(hHal, &params);
-	if (QDF_STATUS_SUCCESS != cdf_ret_status) {
+	qdf_ret_status = sme_configure_app_type2_params(hHal, &params);
+	if (QDF_STATUS_SUCCESS != qdf_ret_status) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       FL("sme_configure_app_type2_params returned failure %d"),
-		       cdf_ret_status);
+		       qdf_ret_status);
 		return -EPERM;
 	}
 
@@ -2376,7 +2376,7 @@ static int hdd_parse_get_cckm_ie(uint8_t *pValue, uint8_t **pCckmIe,
 	 */
 	*pCckmIe = qdf_mem_malloc((*pCckmIeLen + 1) / 2);
 	if (NULL == *pCckmIe) {
-		hddLog(LOGE, FL("cdf_mem_alloc failed"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed"));
 		return -ENOMEM;
 	}
 	qdf_mem_zero(*pCckmIe, (*pCckmIeLen + 1) / 2);
@@ -4145,7 +4145,7 @@ static void hdd_wma_send_fastreassoc_cmd(int sessionId, tSirMacAddr bssid,
 
 	fastreassoc = qdf_mem_malloc(sizeof(*fastreassoc));
 	if (NULL == fastreassoc) {
-		hddLog(LOGE, FL("cdf_mem_alloc failed for fastreassoc"));
+		hddLog(LOGE, FL("qdf_mem_malloc failed for fastreassoc"));
 		return;
 	}
 	fastreassoc->vdev_id = sessionId;

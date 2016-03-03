@@ -343,7 +343,7 @@ static void lim_handle_join_rsp_status(tpAniSirGlobal mac_ctx,
 			session_entry->ch_width;
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (session_entry->cc_switch_mode !=
-				CDF_MCC_TO_SCC_SWITCH_DISABLE) {
+				QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 			ht_profile = &sme_join_rsp->HTProfile;
 			ht_profile->htSupportedChannelWidthSet =
 				session_entry->htSupportedChannelWidthSet;
@@ -637,7 +637,7 @@ lim_send_sme_start_bss_rsp(tpAniSirGlobal pMac,
 			size += ieLen - sizeof(uint32_t);
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 			if (psessionEntry->cc_switch_mode
-			    != CDF_MCC_TO_SCC_SWITCH_DISABLE) {
+			    != QDF_MCC_TO_SCC_SWITCH_DISABLE) {
 				pSirSmeRsp->HTProfile.
 				htSupportedChannelWidthSet =
 					psessionEntry->htSupportedChannelWidthSet;

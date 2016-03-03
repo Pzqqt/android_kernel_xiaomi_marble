@@ -158,7 +158,7 @@ void epping_free_cookie(epping_context_t *pEpping_ctx,
 struct epping_cookie *epping_alloc_cookie(epping_context_t *pEpping_ctx);
 void epping_get_dummy_mac_addr(tSirMacAddr macAddr);
 void epping_hex_dump(void *data, int buf_len, const char *str);
-void *epping_get_cdf_ctx(void);
+void *epping_get_qdf_ctx(void);
 void epping_log_packet(epping_adapter_t *pAdapter,
 		       EPPING_HEADER *eppingHdr, int ret, const char *str);
 void epping_log_stats(epping_adapter_t *pAdapter, const char *str);

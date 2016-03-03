@@ -762,7 +762,7 @@ enum ol_txrx_peer_state {
  * @param data_peer - which peer has changed its state
  * @param state - the new state of the peer
  *
- * Return: CDF Status
+ * Return: QDF Status
  */
 QDF_STATUS
 ol_txrx_peer_state_update(ol_txrx_pdev_handle pdev, uint8_t *peer_addr,

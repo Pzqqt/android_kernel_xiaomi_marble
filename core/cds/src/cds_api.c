@@ -162,7 +162,7 @@ static void cds_set_nan_enable(tMacOpenParameters *param,
  * - All the WLAN SW components should have been opened. This includes
  * SYS, MAC, SME, WMA and TL.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_open(void)
 {
@@ -228,7 +228,7 @@ QDF_STATUS cds_open(void)
 	}
 
 	/* Now Open the CDS Scheduler */
-	qdf_status = cds_sched_open(gp_cds_context, &gp_cds_context->cdf_sched,
+	qdf_status = cds_sched_open(gp_cds_context, &gp_cds_context->qdf_sched,
 				    sizeof(cds_sched_context));
 
 	if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -482,7 +482,7 @@ err_probe_event:
  * cds_pre_enable() - pre enable cds
  * @cds_context: CDS context
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
 {
@@ -588,7 +588,7 @@ QDF_STATUS cds_pre_enable(v_CONTEXT_t cds_context)
  * cds_enable() - start/enable cds module
  * @cds_context: CDS context
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_enable(v_CONTEXT_t cds_context)
 {
@@ -714,7 +714,7 @@ err_wma_stop:
  * cds_disable() - stop/disable cds module
  * @cds_context: CDS context
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
 {
@@ -753,7 +753,7 @@ QDF_STATUS cds_disable(v_CONTEXT_t cds_context)
  * cds_close() - close cds module
  * @cds_context: CDS context
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_close(v_CONTEXT_t cds_context)
 {
@@ -1036,7 +1036,7 @@ void cds_clear_driver_state(enum cds_driver_state state)
  * This API allows any user to allocate a user context area within the
  * CDS Global Context.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_alloc_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 			     void **ppModuleContext, uint32_t size)
@@ -1165,7 +1165,7 @@ QDF_STATUS cds_set_context(QDF_MODULE_ID module_id, void *context)
  *  This API allows a user to free the user context area within the
  *  CDS Global Context.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
 			    void *pModuleContext)
@@ -1248,12 +1248,12 @@ QDF_STATUS cds_free_context(void *p_cds_context, QDF_MODULE_ID moduleID,
  * @msgQueueId: identifies the message queue upon which the message
  *	will be posted.
  * @message: a pointer to a message buffer. Memory for this message
- *	buffer is allocated by the caller and free'd by the CDF after the
+ *	buffer is allocated by the caller and free'd by the QDF after the
  *	message is posted to the message queue.  If the consumer of the
  *	message needs anything in this message, it needs to copy the contents
  *	before returning from the message queue handler.
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
 {
@@ -1273,28 +1273,28 @@ QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
 	/* Message Queue ID for messages bound for SME */
 	case CDS_MQ_ID_SME:
 	{
-		pTargetMq = &(gp_cds_context->cdf_sched.smeMcMq);
+		pTargetMq = &(gp_cds_context->qdf_sched.smeMcMq);
 		break;
 	}
 
 	/* Message Queue ID for messages bound for PE */
 	case CDS_MQ_ID_PE:
 	{
-		pTargetMq = &(gp_cds_context->cdf_sched.peMcMq);
+		pTargetMq = &(gp_cds_context->qdf_sched.peMcMq);
 		break;
 	}
 
 	/* Message Queue ID for messages bound for wma */
 	case CDS_MQ_ID_WMA:
 	{
-		pTargetMq = &(gp_cds_context->cdf_sched.wmaMcMq);
+		pTargetMq = &(gp_cds_context->qdf_sched.wmaMcMq);
 		break;
 	}
 
 	/* Message Queue ID for messages bound for the SYS module */
 	case CDS_MQ_ID_SYS:
 	{
-		pTargetMq = &(gp_cds_context->cdf_sched.sysMcMq);
+		pTargetMq = &(gp_cds_context->qdf_sched.sysMcMq);
 		break;
 	}
 
@@ -1337,8 +1337,8 @@ QDF_STATUS cds_mq_post_message(CDS_MQ_ID msgQueueId, cds_msg_t *pMsg)
 
 	cds_mq_put(pTargetMq, pMsgWrapper);
 
-	set_bit(MC_POST_EVENT_MASK, &gp_cds_context->cdf_sched.mcEventFlag);
-	wake_up_interruptible(&gp_cds_context->cdf_sched.mcWaitQueue);
+	set_bit(MC_POST_EVENT_MASK, &gp_cds_context->qdf_sched.mcEventFlag);
+	wake_up_interruptible(&gp_cds_context->qdf_sched.mcWaitQueue);
 
 	return QDF_STATUS_SUCCESS;
 } /* cds_mq_post_message() */
@@ -1425,7 +1425,7 @@ void cds_core_return_msg(void *pVContext, p_cds_msg_wrapper pMsgWrapper)
  * cds_shutdown() - shutdown CDS
  * @cds_context: global cds context
  *
- * Return: CDF status
+ * Return: QDF status
  */
 QDF_STATUS cds_shutdown(v_CONTEXT_t cds_context)
 {

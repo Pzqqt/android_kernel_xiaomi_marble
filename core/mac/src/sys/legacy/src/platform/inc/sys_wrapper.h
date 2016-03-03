@@ -110,7 +110,7 @@ typedef struct TX_TIMER_STRUCT {
 	uint32_t expireInput;
 	uint64_t initScheduleTimeInMsecs;
 	uint64_t rescheduleTimeInMsecs;
-	qdf_mc_timer_t cdf_timer;
+	qdf_mc_timer_t qdf_timer;
 
 	/* Pointer to the MAC global structure, which stores the context for the NIC, */
 	/* for which this timer is supposed to operate. */

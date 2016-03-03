@@ -27,7 +27,7 @@
 
 /* OS abstraction libraries */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
-#include <cdf_atomic.h>         /* qdf_atomic_read, etc. */
+#include <qdf_atomic.h>         /* qdf_atomic_read, etc. */
 #include <qdf_util.h>           /* qdf_unlikely */
 
 /* APIs for other modules */

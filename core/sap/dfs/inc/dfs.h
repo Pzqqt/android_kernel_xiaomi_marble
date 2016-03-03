@@ -51,7 +51,7 @@
 #include <qdf_net_types.h>      /* QDF_NBUF_EXEMPT_NO_EXEMPTION, etc. */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t, etc. */
 #include <qdf_util.h>           /* qdf_assert */
-#include <qdf_lock.h>           /* cdf_spinlock */
+#include <qdf_lock.h>           /* qdf_spinlock */
 #include <cds_queue.h>          /* TAILQ */
 #include <qdf_time.h>
 #include <qdf_timer.h>

@@ -806,7 +806,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	/* State machine event */
 	tWLAN_SAPEvent sap_event;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	tHalHandle hal = CDS_GET_HAL_CB(sap_ctx->p_cds_gctx);
 	tpAniSirGlobal mac_ctx = NULL;
 	uint8_t intf;
@@ -814,8 +814,8 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	if (NULL == hal) {
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
 			  FL("Invalid hal"));
-		cdf_ret_status = QDF_STATUS_E_NOMEM;
-		return cdf_ret_status;
+		qdf_ret_status = QDF_STATUS_E_NOMEM;
+		return qdf_ret_status;
 	}
 
 	mac_ctx = PMAC_STRUCT(hal);
@@ -826,7 +826,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
 			  FL("Calling sme_roam_connect with eCSR_BSS_TYPE_INFRA_AP"));
 		sap_ctx->isSapSessionOpen = eSAP_TRUE;
-		cdf_ret_status = sme_roam_connect(hal, sap_ctx->sessionId,
+		qdf_ret_status = sme_roam_connect(hal, sap_ctx->sessionId,
 						  &sap_ctx->csr_roamProfile,
 						  &sap_ctx->csr_roamId);
 		break;
@@ -843,7 +843,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			/* Handle event */
 			qdf_status = sap_fsm(sap_ctx, &sap_event);
 			if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-				cdf_ret_status = QDF_STATUS_E_FAILURE;
+				qdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_LOSTLINK:
@@ -987,7 +987,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 	switch (roam_result) {
 	case eCSR_ROAM_RESULT_INFRA_ASSOCIATION_IND:
 		wlansap_roam_process_infra_assoc_ind(sap_ctx, roam_result,
-						csr_roam_info, &cdf_ret_status);
+						csr_roam_info, &qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_INFRA_ASSOCIATION_CNF:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1012,7 +1012,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 					eSAP_STA_ASSOC_EVENT,
 					(void *) eSAP_STATUS_SUCCESS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_DISASSOC_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1023,7 +1023,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 					eSAP_STA_DISASSOC_EVENT,
 					(void *) eSAP_STATUS_SUCCESS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_DEAUTH_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1038,7 +1038,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 					eSAP_STA_DISASSOC_EVENT,
 					(void *) eSAP_STATUS_SUCCESS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_MIC_ERROR_GROUP:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1052,7 +1052,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 						eSAP_STA_MIC_FAILURE_EVENT,
 						(void *) NULL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_MIC_ERROR_UNICAST:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1067,7 +1067,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 					  eSAP_STA_MIC_FAILURE_EVENT,
 					  (void *) NULL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		}
 		break;
 	case eCSR_ROAM_RESULT_AUTHENTICATED:
@@ -1079,7 +1079,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 				  eSAP_STA_SET_KEY_EVENT,
 				  (void *) eSAP_STATUS_SUCCESS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_ASSOCIATED:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1106,7 +1106,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		sap_event.u2 = roam_result;
 		qdf_status = sap_fsm(sap_ctx, &sap_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_INFRA_STOPPED:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1120,7 +1120,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		/* Handle event */
 		qdf_status = sap_fsm(sap_ctx, &sap_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_WPS_PBC_PROBE_REQ_IND:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1134,7 +1134,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 						eSAP_WPS_PBC_PROBE_REQ_EVENT,
 						(void *) NULL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	case eCSR_ROAM_RESULT_FORCED:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO_HIGH,
@@ -1172,21 +1172,21 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 						  eSAP_MAX_ASSOC_EXCEEDED,
 						  NULL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 
 		break;
 	case eCSR_ROAM_RESULT_DFS_RADAR_FOUND_IND:
 		wlansap_roam_process_dfs_radar_found(mac_ctx, sap_ctx,
-						&cdf_ret_status);
+						&qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_SUCCESS:
 	case eCSR_ROAM_RESULT_DFS_CHANSW_UPDATE_FAILURE:
 		wlansap_roam_process_dfs_chansw_update_fail(hal, sap_ctx,
-						&cdf_ret_status);
+						&qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_SUCCESS:
 		wlansap_roam_process_ch_change_success(mac_ctx, sap_ctx,
-						csr_roam_info, &cdf_ret_status);
+						csr_roam_info, &qdf_ret_status);
 		break;
 	case eCSR_ROAM_RESULT_CHANNEL_CHANGE_FAILURE:
 		/*
@@ -1201,7 +1201,7 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 		qdf_status = sap_signal_hdd_event(sap_ctx, csr_roam_info,
 				   eSAP_ECSA_CHANGE_CHAN_IND, NULL);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status))
-			cdf_ret_status = QDF_STATUS_E_FAILURE;
+			qdf_ret_status = QDF_STATUS_E_FAILURE;
 		break;
 	default:
 		QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_ERROR,
@@ -1210,5 +1210,5 @@ wlansap_roam_callback(void *ctx, tCsrRoamInfo *csr_roam_info, uint32_t roamId,
 			  roam_result);
 		break;
 	}
-	return cdf_ret_status;
+	return qdf_ret_status;
 }

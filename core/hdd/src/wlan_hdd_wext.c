@@ -1088,7 +1088,7 @@ static void hdd_get_snr_cb(int8_t snr, uint32_t staId, void *pContext)
  * @pAdapter: adapter upon which the measurement is requested
  * @rssi_value: pointer to where the RSSI should be returned
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
 {
@@ -1177,7 +1177,7 @@ QDF_STATUS wlan_hdd_get_rssi(hdd_adapter_t *pAdapter, int8_t *rssi_value)
  * @pAdapter: adapter upon which the measurement is requested
  * @snr: pointer to where the SNR should be returned
  *
- * Return: QDF_STATUS_SUCCESS on success, CDF_STATUS_E_* on error
+ * Return: QDF_STATUS_SUCCESS on success, QDF_STATUS_E_** on error
  */
 QDF_STATUS wlan_hdd_get_snr(hdd_adapter_t *pAdapter, int8_t *snr)
 {
@@ -1327,7 +1327,7 @@ hdd_get_link_speed_cb(tSirLinkSpeedInfo *pLinkSpeed, void *pContext)
  * given peer, and then wait for the callback to be invoked.
  *
  * Return: QDF_STATUS_SUCCESS if linkspeed data is available,
- * otherwise a CDF_STATUS_E_* error.
+ * otherwise a QDF_STATUS_E_** error.
  */
 QDF_STATUS wlan_hdd_get_linkspeed_for_peermac(hdd_adapter_t *pAdapter,
 					      struct qdf_mac_addr macAddress) {
@@ -1487,7 +1487,7 @@ void hdd_statistics_cb(void *pStats, void *pContext)
 
 	if (pAdapter) {
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
-		qdf_status = qdf_event_set(&pWextState->hdd_cdf_event);
+		qdf_status = qdf_event_set(&pWextState->hdd_qdf_event);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(LOGE, FL("qdf_event_set failed"));
 			return;
@@ -2274,7 +2274,7 @@ static int __iw_get_bitrate(struct net_device *dev,
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
 		qdf_status =
-			qdf_wait_single_event(&pWextState->hdd_cdf_event,
+			qdf_wait_single_event(&pWextState->hdd_qdf_event,
 					      WLAN_WAIT_TIME_STATS);
 
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
@@ -4036,7 +4036,7 @@ static int __iw_set_encodeext(struct net_device *dev,
 	hdd_station_ctx_t *pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(pAdapter);
 	hdd_wext_state_t *pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 	hdd_context_t *hdd_ctx;
-	QDF_STATUS cdf_ret_status = QDF_STATUS_SUCCESS;
+	QDF_STATUS qdf_ret_status = QDF_STATUS_SUCCESS;
 	tCsrRoamProfile *pRoamProfile = &pWextState->roamProfile;
 	int ret;
 	struct iw_encode_ext *ext = (struct iw_encode_ext *)extra;
@@ -4187,13 +4187,13 @@ static int __iw_set_encodeext(struct net_device *dev,
 	 * pre-authentication is done. Save the key in the UMAC and
 	 * include it in the ADD BSS request
 	 */
-	cdf_ret_status = sme_ft_update_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
+	qdf_ret_status = sme_ft_update_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					   pAdapter->sessionId, &setKey);
-	if (cdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
+	if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_SUCCESS) {
 		hddLog(QDF_TRACE_LEVEL_INFO_MED,
 		       "%s: Update PreAuth Key success", __func__);
 		return 0;
-	} else if (cdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
+	} else if (qdf_ret_status == QDF_STATUS_FT_PREAUTH_KEY_FAILED) {
 		hddLog(QDF_TRACE_LEVEL_ERROR,
 		       "%s: Update PreAuth Key failed", __func__);
 		return -EINVAL;
@@ -4201,19 +4201,19 @@ static int __iw_set_encodeext(struct net_device *dev,
 
 	pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_SETTING_KEY;
 
-	cdf_ret_status = sme_roam_set_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
+	qdf_ret_status = sme_roam_set_key(WLAN_HDD_GET_HAL_CTX(pAdapter),
 					  pAdapter->sessionId,
 					  &setKey, &roamId);
 
-	if (cdf_ret_status != QDF_STATUS_SUCCESS) {
+	if (qdf_ret_status != QDF_STATUS_SUCCESS) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "[%4d] sme_roam_set_key returned ERROR status= %d",
-			  __LINE__, cdf_ret_status);
+			  __LINE__, qdf_ret_status);
 
 		pHddStaCtx->roam_info.roamingState = HDD_ROAM_STATE_NONE;
 	}
 
-	return cdf_ret_status;
+	return qdf_ret_status;
 }
 
 /**
@@ -7906,7 +7906,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 		unitTestArgs = qdf_mem_malloc(sizeof(*unitTestArgs));
 		if (NULL == unitTestArgs) {
 			hddLog(LOGE,
-			       FL("cdf_mem_alloc failed for unitTestArgs"));
+			       FL("qdf_mem_malloc failed for unitTestArgs"));
 			return -ENOMEM;
 		}
 		unitTestArgs->vdev_id = (int)pAdapter->sessionId;
@@ -8857,7 +8857,7 @@ static int __iw_get_statistics(struct net_device *dev,
 		pWextState = WLAN_HDD_GET_WEXT_STATE_PTR(pAdapter);
 
 		qdf_status =
-			qdf_wait_single_event(&pWextState->hdd_cdf_event,
+			qdf_wait_single_event(&pWextState->hdd_qdf_event,
 					      WLAN_WAIT_TIME_STATS);
 		if (!QDF_IS_STATUS_SUCCESS(qdf_status)) {
 			hddLog(QDF_TRACE_LEVEL_ERROR,
@@ -10770,9 +10770,9 @@ int hdd_register_wext(struct net_device *dev)
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	if (!QDF_IS_STATUS_SUCCESS(qdf_event_create(&pwextBuf->hdd_cdf_event))) {
+	if (!QDF_IS_STATUS_SUCCESS(qdf_event_create(&pwextBuf->hdd_qdf_event))) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
-			  ("ERROR: HDD cdf event init failed!!"));
+			  ("ERROR: HDD qdf event init failed!!"));
 		return QDF_STATUS_E_FAILURE;
 	}
 
