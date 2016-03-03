@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,88 +25,92 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__CDF_LIST_H)
-#define __CDF_LIST_H
 
 /**
- *  DOC: cdf_list.h
- *
- *  Connectivity driver framework (CDF) list APIs
- *
- *  Definitions for CDF Linked Lists API
+ *  DOC: qdf_list.h
+ *  QCA driver framework (QDF) list APIs
+ *  Definitions for QDF Linked Lists API
  *
  *  Lists are implemented as a doubly linked list. An item in a list can
  *  be of any type as long as the datatype contains a field of type
- *  cdf_link_t.
+ *  qdf_link_t.
  *
  *  In general, a list is a doubly linked list of items with a pointer
  *  to the front of the list and a pointer to the end of the list.  The
  *  list items contain a forward and back link.
  *
- *  CDF linked list APIs are NOT thread safe so make sure to use appropriate
+ *  QDF linked list APIs are NOT thread safe so make sure to use appropriate
  *  locking mechanisms to assure operations on the list are thread safe.
  */
 
+#if !defined(__QDF_LIST_H)
+#define __QDF_LIST_H
+
 /* Include Files */
-#include <cdf_types.h>
-#include <cdf_status.h>
-#include <cdf_trace.h>
-#include <linux/list.h>
+#include <qdf_types.h>
+#include <qdf_status.h>
+#include <i_qdf_list.h>
+#include <qdf_trace.h>
 
-/* Preprocessor definitions and constants */
-
-/* Type declarations */
-
-typedef struct list_head cdf_list_node_t;
-
-typedef struct cdf_list_s {
-	cdf_list_node_t anchor;
-	uint32_t count;
-	uint32_t max_size;
-} cdf_list_t;
-
+typedef __qdf_list_node_t qdf_list_node_t;
+typedef __qdf_list_t qdf_list_t;
 /* Function declarations */
+QDF_STATUS qdf_list_insert_front(qdf_list_t *list, qdf_list_node_t *node);
 
-CDF_INLINE_FN void cdf_list_init(cdf_list_t *p_list, uint32_t max_size)
+QDF_STATUS qdf_list_insert_back_size(qdf_list_t *list, qdf_list_node_t *node,
+				     uint32_t *size);
+
+QDF_STATUS qdf_list_remove_front(qdf_list_t *list, qdf_list_node_t **node1);
+
+QDF_STATUS qdf_list_peek_next(qdf_list_t *list,	qdf_list_node_t *node,
+			      qdf_list_node_t **node1);
+
+/**
+ * qdf_list_create() - Initialize list head
+ * @list: object of list
+ * @max_size: max size of the list
+ * Return: none
+ */
+static inline void qdf_list_create(__qdf_list_t *list, uint32_t max_size)
 {
-	INIT_LIST_HEAD(&p_list->anchor);
-	p_list->count = 0;
-	p_list->max_size = max_size;
+	__qdf_list_create(list, max_size);
 }
 
-CDF_INLINE_FN void cdf_list_destroy(cdf_list_t *p_list)
+
+/**
+ * qdf_list_destroy() - Destroy the list
+ * @list: object of list
+ * Return: none
+ */
+static inline void qdf_list_destroy(qdf_list_t *list)
 {
-	if (p_list->count != 0) {
-		CDF_TRACE(CDF_MODULE_ID_HDD, CDF_TRACE_LEVEL_ERROR,
+	if (list->count != 0) {
+		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: list length not equal to zero", __func__);
-		CDF_ASSERT(0);
+		QDF_ASSERT(0);
 	}
 }
 
-CDF_INLINE_FN void cdf_list_size(cdf_list_t *p_list, uint32_t *p_size)
+/**
+ * qdf_list_size() - gives the size of the list
+ * @list: object of list
+ * @size: size of the list
+ * Return: uint32_t
+ */
+static inline uint32_t qdf_list_size(qdf_list_t *list)
 {
-	*p_size = p_list->count;
+	return list->count;
 }
 
-CDF_STATUS cdf_list_insert_front(cdf_list_t *p_list, cdf_list_node_t *p_node);
+QDF_STATUS qdf_list_insert_back(qdf_list_t *list, qdf_list_node_t *node);
 
-CDF_STATUS cdf_list_insert_back(cdf_list_t *p_list, cdf_list_node_t *p_node);
+QDF_STATUS qdf_list_remove_back(qdf_list_t *list, qdf_list_node_t **node1);
 
-CDF_STATUS cdf_list_insert_back_size(cdf_list_t *p_list,
-				     cdf_list_node_t *p_node, uint32_t *p_size);
+QDF_STATUS qdf_list_peek_front(qdf_list_t *list, qdf_list_node_t **node1);
 
-CDF_STATUS cdf_list_remove_front(cdf_list_t *p_list, cdf_list_node_t **pp_node);
+QDF_STATUS qdf_list_remove_node(qdf_list_t *list,
+				qdf_list_node_t *node_to_remove);
 
-CDF_STATUS cdf_list_remove_back(cdf_list_t *p_list, cdf_list_node_t **pp_node);
+bool qdf_list_empty(qdf_list_t *list);
 
-CDF_STATUS cdf_list_peek_front(cdf_list_t *p_list, cdf_list_node_t **pp_node);
-
-CDF_STATUS cdf_list_peek_next(cdf_list_t *p_list, cdf_list_node_t *p_node,
-			      cdf_list_node_t **pp_node);
-
-CDF_STATUS cdf_list_remove_node(cdf_list_t *p_list,
-				cdf_list_node_t *p_node_to_remove);
-
-bool cdf_list_empty(cdf_list_t *list);
-
-#endif /* __CDF_LIST_H */
+#endif /* __QDF_LIST_H */

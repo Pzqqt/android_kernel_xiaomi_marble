@@ -26,39 +26,35 @@
  */
 
 /**
- * DOC: qdf_event.h
- * This file provides OS abstraction for event APIs.
+ * DOC: i_qdf_mc_timer.h
+ * Linux-specific definitions for QDF timers serialized to MC thread
  */
 
-#if !defined(__QDF_EVENT_H)
-#define __QDF_EVENT_H
+#if !defined(__I_QDF_MC_TIMER_H)
+#define __I_QDF_MC_TIMER_H
 
 /* Include Files */
-#include "qdf_status.h"
+#include <qdf_mc_timer.h>
 #include <qdf_types.h>
-#include <i_qdf_event.h>
-#include <qdf_trace.h>
+#include <linux/timer.h>
+#include <linux/time.h>
+#include <linux/jiffies.h>
 
 /* Preprocessor definitions and constants */
+
 #ifdef __cplusplus
 extern "C" {
 #endif /* __cplusplus */
+/* Type declarations */
 
-typedef __qdf_event_t qdf_event_t;
-/* Function declarations and documenation */
-
-QDF_STATUS qdf_event_create(qdf_event_t *event);
-
-QDF_STATUS qdf_event_set(qdf_event_t *event);
-
-QDF_STATUS qdf_event_reset(qdf_event_t *event);
-
-QDF_STATUS qdf_event_destroy(qdf_event_t *event);
-
-QDF_STATUS qdf_wait_single_event(qdf_event_t *event,
-				 uint32_t timeout);
+typedef struct qdf_mc_timer_platform_s {
+	struct timer_list timer;
+	int thread_id;
+	uint32_t cookie;
+	spinlock_t spinlock;
+} qdf_mc_timer_platform_t;
 
 #ifdef __cplusplus
 }
 #endif /* __cplusplus */
-#endif /* __QDF_EVENT_H */
+#endif /* __I_QDF_MC_TIMER_H */

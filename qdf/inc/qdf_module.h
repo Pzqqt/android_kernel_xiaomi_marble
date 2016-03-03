@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,37 +25,44 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__I_CDF_MC_TIMER_H)
-#define __I_CDF_MC_TIMER_H
-
 /**
- * DOC: i_cdf_mc_timer.h
- *
- * Linux-specific definitions for CDF timers serialized to MC thread
+ * @file qdf_module.h
+ * This file abstracts "kernel module" semantics.
  */
 
-/* Include Files */
-#include <cdf_mc_timer.h>
-#include <cdf_types.h>
-#include <linux/timer.h>
-#include <linux/time.h>
-#include <linux/jiffies.h>
+#ifndef _QDF_MODULE_H
+#define _QDF_MODULE_H
 
-/* Preprocessor definitions and constants */
+#include <i_qdf_module.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-/* Type declarations */
+typedef uint32_t (*module_init_func_t)(void);
 
-typedef struct cdf_mc_timer_platform_s {
-	struct timer_list Timer;
-	int threadID;
-	uint32_t cookie;
-	spinlock_t spinlock;
-} cdf_mc_timer_platform_t;
+/**
+ * qdf_virt_module_init - Specify the module's entry point.
+ */
+#define qdf_virt_module_init(_mod_init_func) \
+	__qdf_virt_module_init(_mod_init_func)
 
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-#endif /* __I_CDF_MC_TIMER_H */
+/**
+ * qdf_virt_module_exit - Specify the module's exit point.
+ */
+#define qdf_virt_module_exit(_mod_exit_func) \
+	__qdf_virt_module_exit(_mod_exit_func)
+
+/**
+ * qdf_virt_module_name - Specify the module's name.
+ */
+#define qdf_virt_module_name(_name)      __qdf_virt_module_name(_name)
+
+
+/**
+ * qdf_export_symbol - Export a symbol from a module.
+ */
+#define qdf_export_symbol(_sym)         __qdf_export_symbol(_sym)
+
+/**
+ * qdf_declare_param - Declare a module parameter.
+ */
+#define qdf_declare_param(name, _type) __qdf_declare_param(name, _type)
+
+#endif /*_QDF_MODULE_H*/

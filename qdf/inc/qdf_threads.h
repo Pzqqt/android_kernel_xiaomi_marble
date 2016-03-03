@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,59 +25,22 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__CDF_THREADS_H)
-#define __CDF_THREADS_H
-
 /**
- * DOC:  cdf_threads
- *
- * Connectivity driver framework (CDF) thread related APIs
- *
+ * DOC:  qdf_threads
+ * QCA driver framework (QDF) thread related APIs
  */
 
-/* Include Files */
-#include <cdf_types.h>
+#if !defined(__QDF_THREADS_H)
+#define __QDF_THREADS_H
 
-/* Preprocessor definitions and constants */
-
-/* Type declarations */
+#include <qdf_types.h>
 
 /* Function declarations and documenation */
 
-/**
- *  cdf_sleep() - sleep
- *  @msInterval : Number of milliseconds to suspend the current thread.
- *  A value of 0 may or may not cause the current thread to yield.
- *
- *  This function suspends the execution of the current thread
- *  until the specified time out interval elapses.
- *
- *  Return: nothing
- */
-void cdf_sleep(uint32_t msInterval);
+void qdf_sleep(uint32_t ms_interval);
 
-/**
- *  cdf_sleep_us() - sleep
- *  @usInterval : Number of microseconds to suspend the current thread.
- *  A value of 0 may or may not cause the current thread to yield.
- *
- *  This function suspends the execution of the current thread
- *  until the specified time out interval elapses.
- *
- *  Return : nothing
- */
-void cdf_sleep_us(uint32_t usInterval);
+void qdf_sleep_us(uint32_t us_interval);
 
-/**
- *  cdf_busy_wait() - busy wait
- *  @usInterval : Number of microseconds to busy wait.
- *
- *  This function places the current thread in busy wait until the specified
- *  time out interval elapses. If the interval is greater than 50us on WM, the
- *  behaviour is undefined.
- *
- *  Return : nothing
- */
-void cdf_busy_wait(uint32_t usInterval);
+void qdf_busy_wait(uint32_t us_interval);
 
-#endif /* __CDF_THREADS_H */
+#endif /* __QDF_THREADS_H */

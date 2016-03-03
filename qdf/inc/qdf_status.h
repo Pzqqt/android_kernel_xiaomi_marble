@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,87 +25,104 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__CDF_STATUS_H)
-#define __CDF_STATUS_H
-
 /**
- * DOC:  cdf_status
- *
- * Connectivity driver framework (CDF) status codes
- *
- * Basic status codes/definitions used by CDF
+ * DOC: qdf_status
+ * QCA driver framework (QDF) status codes
+ * Basic status codes/definitions used by QDF
  */
 
+#if !defined(__QDF_STATUS_H)
+#define __QDF_STATUS_H
+
 /**
- * typedef CDF_STATUS - CDF error codes
- * @CDF_STATUS_SUCCESS: success
- * @CDF_STATUS_E_RESOURCES: system resource(other than memory) not available
- * @CDF_STATUS_E_NOMEM: not enough memory
- * @CDF_STATUS_E_AGAIN: try again
- * @CDF_STATUS_E_INVAL: invalid request
- * @CDF_STATUS_E_FAULT: system fault
- * @CDF_STATUS_E_ALREADY: another request already in progress
- * @CDF_STATUS_E_BADMSG: bad message
- * @CDF_STATUS_E_BUSY: device or resource busy
- * @CDF_STATUS_E_CANCELED: request cancelled
- * @CDF_STATUS_E_ABORTED: request aborted
- * @CDF_STATUS_E_NOSUPPORT: request not supported
- * @CDF_STATUS_E_PERM: operation not permitted
- * @CDF_STATUS_E_EMPTY: empty condition
- * @CDF_STATUS_E_EXISTS: existence failure
- * @CDF_STATUS_E_TIMEOUT: operation timeout
- * @CDF_STATUS_E_FAILURE: unknown reason do not use unless nothign else applies
- * @CDF_STATUS_NOT_INITIALIZED: resource not initialized
- * @CDF_STATUS_E_NULL_VALUE: request is null
- * @CDF_STATUS_PMC_PENDING: request pendign in pmc
- * @CDF_STATUS_PMC_DISABLED: pmc is disabled
- * @CDF_STATUS_PMC_NOT_NOW: pmc not ready now
- * @CDF_STATUS_PMC_AC_POWER: pmc ac power
- * @CDF_STATUS_PMC_SYS_ERROR: pmc system error
- * @CDF_STATUS_HEARTBEAT_TMOUT: hearbeat timeout error
- * @CDF_STATUS_NTH_BEACON_DELIVERY: Nth beacon delivery
- * @CDF_STATUS_CSR_WRONG_STATE: csr in wrong state
- * @CDF_STATUS_FT_PREAUTH_KEY_SUCCESS: ft preauth key success
- * @CDF_STATUS_FT_PREAUTH_KEY_FAILED: ft preauth key failed
- * @CDF_STATUS_CMD_NOT_QUEUED: command not queued
- * @CDF_STATUS_FW_MSG_TIMEDOUT: target message timeout
- * @CDF_STATUS_MAX: not a realy value just a place holder for max
+ * typedef QDF_STATUS - QDF error codes
+ * @QDF_STATUS_SUCCESS: success
+ * @QDF_STATUS_E_RESOURCES: system resource(other than memory) not available
+ * @QDF_STATUS_E_NOMEM: not enough memory
+ * @QDF_STATUS_E_AGAIN: try again
+ * @QDF_STATUS_E_INVAL: invalid request
+ * @QDF_STATUS_E_FAULT: system fault
+ * @QDF_STATUS_E_ALREADY: another request already in progress
+ * @QDF_STATUS_E_BADMSG: bad message
+ * @QDF_STATUS_E_BUSY: device or resource busy
+ * @QDF_STATUS_E_CANCELED: request cancelled
+ * @QDF_STATUS_E_ABORTED: request aborted
+ * @QDF_STATUS_E_NOSUPPORT: request not supported
+ * @QDF_STATUS_E_PERM: operation not permitted
+ * @QDF_STATUS_E_EMPTY: empty condition
+ * @QDF_STATUS_E_EXISTS: existence failure
+ * @QDF_STATUS_E_TIMEOUT: operation timeout
+ * @QDF_STATUS_E_FAILURE: unknown reason do not use unless nothign else applies
+ * @QDF_STATUS_E_NOENT: No such file or directory
+ * @QDF_STATUS_E_E2BIG: Arg list too long
+ * @QDF_STATUS_E_NOSPC: no space left on device
+ * @QDF_STATUS_E_ADDRNOTAVAIL: Cannot assign requested address
+ * @QDF_STATUS_E_ENXIO: No such device or address
+ * @QDF_STATUS_E_NETDOWN: network is down
+ * @QDF_STATUS_E_IO: I/O Error
+ * @QDF_STATUS_E_NETRESET: Network dropped connection because of reset
+ * @QDF_STATUS_E_SIG: Exit due to received SIGINT
+ * @QDF_STATUS_NOT_INITIALIZED: resource not initialized
+ * @QDF_STATUS_E_NULL_VALUE: request is null
+ * @QDF_STATUS_PMC_PENDING: request pendign in pmc
+ * @QDF_STATUS_PMC_DISABLED: pmc is disabled
+ * @QDF_STATUS_PMC_NOT_NOW: pmc not ready now
+ * @QDF_STATUS_PMC_AC_POWER: pmc ac power
+ * @QDF_STATUS_PMC_SYS_ERROR: pmc system error
+ * @QDF_STATUS_HEARTBEAT_TMOUT: hearbeat timeout error
+ * @QDF_STATUS_NTH_BEACON_DELIVERY: Nth beacon delivery
+ * @QDF_STATUS_CSR_WRONG_STATE: csr in wrong state
+ * @QDF_STATUS_FT_PREAUTH_KEY_SUCCESS: ft preauth key success
+ * @QDF_STATUS_FT_PREAUTH_KEY_FAILED: ft preauth key failed
+ * @QDF_STATUS_CMD_NOT_QUEUED: command not queued
+ * @QDF_STATUS_FW_MSG_TIMEDOUT: target message timeout
+ * @QDF_STATUS_MAX: not a realy value just a place holder for max
  */
 typedef enum {
-	CDF_STATUS_SUCCESS,
-	CDF_STATUS_E_RESOURCES,
-	CDF_STATUS_E_NOMEM,
-	CDF_STATUS_E_AGAIN,
-	CDF_STATUS_E_INVAL,
-	CDF_STATUS_E_FAULT,
-	CDF_STATUS_E_ALREADY,
-	CDF_STATUS_E_BADMSG,
-	CDF_STATUS_E_BUSY,
-	CDF_STATUS_E_CANCELED,
-	CDF_STATUS_E_ABORTED,
-	CDF_STATUS_E_NOSUPPORT,
-	CDF_STATUS_E_PERM,
-	CDF_STATUS_E_EMPTY,
-	CDF_STATUS_E_EXISTS,
-	CDF_STATUS_E_TIMEOUT,
-	CDF_STATUS_E_FAILURE,
-	CDF_STATUS_NOT_INITIALIZED,
-	CDF_STATUS_E_NULL_VALUE,
-	CDF_STATUS_PMC_PENDING,
-	CDF_STATUS_PMC_DISABLED,
-	CDF_STATUS_PMC_NOT_NOW,
-	CDF_STATUS_PMC_AC_POWER,
-	CDF_STATUS_PMC_SYS_ERROR,
-	CDF_STATUS_HEARTBEAT_TMOUT,
-	CDF_STATUS_NTH_BEACON_DELIVERY,
-	CDF_STATUS_CSR_WRONG_STATE,
-	CDF_STATUS_FT_PREAUTH_KEY_SUCCESS,
-	CDF_STATUS_FT_PREAUTH_KEY_FAILED,
-	CDF_STATUS_CMD_NOT_QUEUED,
-	CDF_STATUS_FW_MSG_TIMEDOUT,
-	CDF_STATUS_MAX
-} CDF_STATUS;
+	QDF_STATUS_SUCCESS,
+	QDF_STATUS_E_RESOURCES,
+	QDF_STATUS_E_NOMEM,
+	QDF_STATUS_E_AGAIN,
+	QDF_STATUS_E_INVAL,
+	QDF_STATUS_E_FAULT,
+	QDF_STATUS_E_ALREADY,
+	QDF_STATUS_E_BADMSG,
+	QDF_STATUS_E_BUSY,
+	QDF_STATUS_E_CANCELED,
+	QDF_STATUS_E_ABORTED,
+	QDF_STATUS_E_NOSUPPORT,
+	QDF_STATUS_E_PERM,
+	QDF_STATUS_E_EMPTY,
+	QDF_STATUS_E_EXISTS,
+	QDF_STATUS_E_TIMEOUT,
+	QDF_STATUS_E_FAILURE,
+	QDF_STATUS_E_NOENT,
+	QDF_STATUS_E_E2BIG,
+	QDF_STATUS_E_NOSPC,
+	QDF_STATUS_E_ADDRNOTAVAIL,
+	QDF_STATUS_E_ENXIO,
+	QDF_STATUS_E_NETDOWN,
+	QDF_STATUS_E_IO,
+	QDF_STATUS_E_NETRESET,
+	QDF_STATUS_E_SIG,
+	QDF_STATUS_NOT_INITIALIZED,
+	QDF_STATUS_E_NULL_VALUE,
+	QDF_STATUS_PMC_PENDING,
+	QDF_STATUS_PMC_DISABLED,
+	QDF_STATUS_PMC_NOT_NOW,
+	QDF_STATUS_PMC_AC_POWER,
+	QDF_STATUS_PMC_SYS_ERROR,
+	QDF_STATUS_HEARTBEAT_TMOUT,
+	QDF_STATUS_NTH_BEACON_DELIVERY,
+	QDF_STATUS_CSR_WRONG_STATE,
+	QDF_STATUS_FT_PREAUTH_KEY_SUCCESS,
+	QDF_STATUS_FT_PREAUTH_KEY_FAILED,
+	QDF_STATUS_CMD_NOT_QUEUED,
+	QDF_STATUS_FW_MSG_TIMEDOUT,
+	QDF_STATUS_MAX
+} QDF_STATUS;
 
-#define CDF_IS_STATUS_SUCCESS(status) (CDF_STATUS_SUCCESS == (status))
+#define QDF_IS_STATUS_SUCCESS(status) (QDF_STATUS_SUCCESS == (status))
+#define QDF_IS_STATUS_ERROR(status) (QDF_STATUS_SUCCESS != (status))
 
-#endif /* if !defined __CDF_STATUS_H */
+#endif /* if !defined __QDF_STATUS_H */

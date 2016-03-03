@@ -25,282 +25,260 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__CDF_LOCK_H)
-#define __CDF_LOCK_H
-
 /**
- *
- * @file  cdf_lock.h
- *
- * @brief Connectivity driver framework (CDF) lock APIs
- *
- * Definitions for CDF locks
- *
+ * @file qdf_lock.h
+ * This file abstracts locking operations.
  */
 
-/* Include Files */
-#include "cdf_status.h"
-#include "i_cdf_lock.h"
+#ifndef _QDF_LOCK_H
+#define _QDF_LOCK_H
 
-/* Preprocessor definitions and constants */
+#include <qdf_types.h>
+#include <i_qdf_lock.h>
 
-/* Type declarations */
+#define WIFI_POWER_EVENT_DEFAULT_WAKELOCK_TIMEOUT 0
+#define WIFI_POWER_EVENT_WAKELOCK_TAKEN 0
+#define WIFI_POWER_EVENT_WAKELOCK_RELEASED 1
+
+/**
+ * qdf_semaphore_acquire_timeout() - Take the semaphore before timeout
+ * @m: semaphore to take
+ * @timeout: maximum time to try to take the semaphore
+ * Return: int
+ */
+static inline int qdf_semaphore_acquire_timeout(struct semaphore *m,
+						unsigned long timeout)
+{
+	return __qdf_semaphore_acquire_timeout(m, timeout);
+}
+
 /**
  * @brief Platform spinlock object
  */
-typedef __cdf_spinlock_t cdf_spinlock_t;
+typedef __qdf_spinlock_t qdf_spinlock_t;
+
 /**
  * @brief Platform mutex object
  */
-typedef __cdf_semaphore_t cdf_semaphore_t;
+typedef __qdf_semaphore_t qdf_semaphore_t;
+typedef __qdf_mutex_t qdf_mutex_t;
 
-/* Function declarations and documenation */
+/* function Declaration */
+QDF_STATUS qdf_mutex_create(qdf_mutex_t *m);
+
+QDF_STATUS qdf_mutex_acquire(qdf_mutex_t *m);
+
+QDF_STATUS qdf_mutex_release(qdf_mutex_t *m);
+
+QDF_STATUS qdf_mutex_destroy(qdf_mutex_t *lock);
 
 /**
- * cdf_semaphore_init() - initialize a semaphore
- * @m:  Semaphore to initialize
- *
- * Return: None
+ * qdf_spinlock_create - Initialize a spinlock
+ * @lock: spinlock object pointer
+ * Retrun: none
  */
-
-static inline void cdf_semaphore_init(cdf_semaphore_t *m)
+static inline void qdf_spinlock_create(qdf_spinlock_t *lock)
 {
-	__cdf_semaphore_init(m);
+	__qdf_spinlock_create(lock);
 }
 
 /**
- * cdf_semaphore_acquire() - take the semaphore
- * @m:  Semaphore to take
- *
- * Return: None
+ * qdf_spinlock_destroy - Delete a spinlock
+ * @lock: spinlock object pointer
+ * Return: none
  */
-static inline int cdf_semaphore_acquire(cdf_device_t osdev, cdf_semaphore_t *m)
+static inline void qdf_spinlock_destroy(qdf_spinlock_t *lock)
 {
-	return __cdf_semaphore_acquire(osdev, m);
+	__qdf_spinlock_destroy(lock);
 }
 
 /**
- * cdf_semaphore_release () - give the semaphore
- * @m:  Semaphore to give
- *
- * Return: None
+ * qdf_spin_trylock_bh() - spin trylock bottomhalf
+ * @lock: spinlock object
+ * Return: int
  */
-static inline void
-cdf_semaphore_release(cdf_device_t osdev, cdf_semaphore_t *m)
+static inline int qdf_spin_trylock_bh(qdf_spinlock_t *lock)
 {
-	__cdf_semaphore_release(osdev, m);
+	return __qdf_spin_trylock_bh(lock);
+}
+
+int qdf_spin_trylock_bh_outline(qdf_spinlock_t *lock);
+
+/**
+ * qdf_spin_lock_bh() - locks the spinlock mutex in soft irq context
+ * @lock: spinlock object pointer
+ * Return: none
+ */
+static inline void qdf_spin_lock_bh(qdf_spinlock_t *lock)
+{
+	__qdf_spin_lock_bh(lock);
+}
+
+void qdf_spin_lock_bh_outline(qdf_spinlock_t *lock);
+
+/**
+ * qdf_spin_unlock_bh() - unlocks the spinlock mutex in soft irq context
+ * @lock: spinlock object pointer
+ * Return: none
+ */
+static inline void qdf_spin_unlock_bh(qdf_spinlock_t *lock)
+{
+	__qdf_spin_unlock_bh(lock);
+}
+
+void qdf_spin_unlock_bh_outline(qdf_spinlock_t *lock);
+
+/**
+ * qdf_spinlock_irq_exec - Execute the input function with spinlock held
+ * and interrupt disabled.
+ * @hdl: OS handle
+ * @lock: spinlock to be held for the critical region
+ * @func: critical region function that to be executed
+ * @context: context of the critical region function
+ * Return: Boolean status returned by the critical region function
+ */
+static inline bool qdf_spinlock_irq_exec(qdf_handle_t hdl,
+					 qdf_spinlock_t *lock,
+					 qdf_irqlocked_func_t func, void *arg)
+{
+	return __qdf_spinlock_irq_exec(hdl, lock, func, arg);
 }
 
 /**
- * cdf_mutex_init() - initialize a CDF lock
- * @lock:	 Pointer to the opaque lock object to initialize
+ * qdf_spin_lock() - Acquire a Spinlock(SMP) & disable Preemption (Preemptive)
+ * @lock: Lock object
  *
- * cdf_mutex_init() function initializes the specified lock. Upon
- * successful initialization, the state of the lock becomes initialized
- * and unlocked.
- *
- * A lock must be initialized by calling cdf_mutex_init() before it
- * may be used in any other lock functions.
- *
- * Attempting to initialize an already initialized lock results in
- * a failure.
- *
- * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
- *	CDF failure reason codes: lock is not initialized and can't be used
+ * Return: none
  */
-CDF_STATUS cdf_mutex_init(cdf_mutex_t *lock);
-
-/**
- * cdf_mutex_acquire () - acquire a CDF lock
- * @lock:	 Pointer to the opaque lock object to acquire
- *
- * A lock object is acquired by calling cdf_mutex_acquire().  If the lock
- * is already locked, the calling thread shall block until the lock becomes
- * available. This operation shall return with the lock object referenced by
- * lock in the locked state with the calling thread as its owner.
- *
- * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
- *	CDF failure reason codes: lock is not initialized and can't be used
- */
-CDF_STATUS cdf_mutex_acquire(cdf_mutex_t *lock);
-
-/**
- * cdf_mutex_release() - release a CDF lock
- * @lock:	 Pointer to the opaque lock object to be released
- *
- * cdf_mutex_release() function shall release the lock object
- * referenced by 'lock'.
- *
- * If a thread attempts to release a lock that it unlocked or is not
- * initialized, an error is returned.
- *
- * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
- *	CDF failure reason codes: lock is not initialized and can't be used
- */
-CDF_STATUS cdf_mutex_release(cdf_mutex_t *lock);
-
-/**
- * cdf_mutex_destroy() - destroy a CDF lock
- * @lock:	 Pointer to the opaque lock object to be destroyed
- *
- * cdf_mutex_destroy() function shall destroy the lock object
- * referenced by lock.  After a successful return from \a cdf_mutex_destroy()
- * the lock object becomes, in effect, uninitialized.
- *
- * A destroyed lock object can be reinitialized using cdf_mutex_init();
- * the results of otherwise referencing the object after it has been destroyed
- * are undefined.  Calls to CDF lock functions to manipulate the lock such
- * as cdf_mutex_acquire() will fail if the lock is destroyed.  Therefore,
- * don't use the lock after it has been destroyed until it has
- * been re-initialized.
- *
- * Return:
- *	CDF_STATUS_SUCCESS:	lock was successfully initialized
- *	CDF failure reason codes: lock is not initialized and can't be used
- */
-CDF_STATUS cdf_mutex_destroy(cdf_mutex_t *lock);
-
-/**
- * cdf_spinlock_init() - initialize a spinlock
- * @lock: Spinlock object pointer
- *
- * Return: None
- */
-static inline void cdf_spinlock_init(cdf_spinlock_t *lock)
+static inline void qdf_spin_lock(qdf_spinlock_t *lock)
 {
-	__cdf_spinlock_init(lock);
+	__qdf_spin_lock(lock);
 }
 
 /**
- * cdf_spinlock_destroy() - delete a spinlock
- * @lock: Spinlock object pointer
+ * qdf_spin_unlock() - Unlock the spinlock and enables the Preemption
+ * @lock: Lock object
  *
- * Return: None
+ * Return: none
  */
-static inline void cdf_spinlock_destroy(cdf_spinlock_t *lock)
+static inline void qdf_spin_unlock(qdf_spinlock_t *lock)
 {
-	__cdf_spinlock_destroy(lock);
+	__qdf_spin_unlock(lock);
 }
 
 /**
- * cdf_spin_lock_bh() - locks the spinlock semaphore in soft irq context
- * @lock: Spinlock object pointer
+ * qdf_spin_lock_irq() - Acquire a Spinlock(SMP) & save the irq state
+ * @lock: Lock object
+ * @flags: flags
  *
- * Return: None
+ * Return: none
  */
-static inline void cdf_spin_lock_bh(cdf_spinlock_t *lock)
+static inline void qdf_spin_lock_irq(qdf_spinlock_t *lock, unsigned long flags)
 {
-	__cdf_spin_lock_bh(lock);
+	__qdf_spin_lock_irq(&lock->spinlock, flags);
 }
 
 /**
- * cdf_spin_lock_bh() - unlocks the spinlock semaphore in soft irq context
- * @lock: Spinlock object pointer
+ * qdf_spin_lock_irqsave() - Acquire a Spinlock (SMP) & disable Preemption
+ * (Preemptive) and disable IRQs
+ * @lock: Lock object
  *
- * Return: None
+ * Return: none
  */
-static inline void cdf_spin_unlock_bh(cdf_spinlock_t *lock)
+static inline void qdf_spin_lock_irqsave(qdf_spinlock_t *lock)
 {
-	__cdf_spin_unlock_bh(lock);
+	__qdf_spin_lock_irqsave(lock);
 }
 
 /**
- * cdf_wake_lock_init() - initializes a CDF wake lock
- * @lock: The wake lock to initialize
- * @name: Name of wake lock
+ * qdf_spin_unlock_irqrestore() - Unlock the spinlock and enables the
+ * Preemption and enable IRQ
+ * @lock: Lock object
  *
- * Return:
- *    CDF status success : if wake lock is initialized
- *    CDF status fialure : if wake lock was not initialized
+ * Return: none
  */
-CDF_STATUS cdf_wake_lock_init(cdf_wake_lock_t *lock, const char *name);
+static inline void qdf_spin_unlock_irqrestore(qdf_spinlock_t *lock)
+{
+	__qdf_spin_unlock_irqrestore(lock);
+}
 
 /**
- * cdf_wake_lock_acquire() - acquires a wake lock
- * @lock:	The wake lock to acquire
- * @reason:	Reason for taking wakelock
+ * qdf_spin_unlock_irq() - Unlock a Spinlock(SMP) & save the restore state
+ * @lock: Lock object
+ * @flags: flags
  *
- * Return:
- *    CDF status success : if wake lock is acquired
- *    CDF status fialure : if wake lock was not acquired
+ * Return: none
  */
-CDF_STATUS cdf_wake_lock_acquire(cdf_wake_lock_t *pLock, uint32_t reason);
+static inline void qdf_spin_unlock_irq(qdf_spinlock_t *lock,
+				       unsigned long flags)
+{
+	__qdf_spin_unlock_irq(&lock->spinlock, flags);
+}
 
 /**
- * cdf_wake_lock_timeout_acquire() - acquires a wake lock with a timeout
- * @lock:	The wake lock to acquire
- * @reason:	Reason for taking wakelock
- *
- * Return:
- *   CDF status success : if wake lock is acquired
- *   CDF status fialure : if wake lock was not acquired
+ * qdf_semaphore_init() - initialize a semaphore
+ * @m: Semaphore to initialize
+ * Return: None
  */
-CDF_STATUS cdf_wake_lock_timeout_acquire(cdf_wake_lock_t *pLock,
+static inline void qdf_semaphore_init(qdf_semaphore_t *m)
+{
+	__qdf_semaphore_init(m);
+}
+
+/**
+ * qdf_semaphore_acquire() - take the semaphore
+ * @m: Semaphore to take
+ * Return: int
+ */
+static inline int qdf_semaphore_acquire(qdf_semaphore_t *m)
+{
+	return __qdf_semaphore_acquire(m);
+}
+
+/**
+ * qdf_semaphore_release() - give the semaphore
+ * @m: Semaphore to give
+ * Return: None
+ */
+static inline void qdf_semaphore_release(qdf_semaphore_t *m)
+{
+	__qdf_semaphore_release(m);
+}
+
+/**
+ * qdf_semaphore_acquire_intr - Take the semaphore, interruptible version
+ * @osdev: OS Device
+ * @m: mutex to take
+ * Return: int
+ */
+static inline int qdf_semaphore_acquire_intr(qdf_semaphore_t *m)
+{
+	return __qdf_semaphore_acquire_intr(m);
+}
+
+QDF_STATUS qdf_wake_lock_create(qdf_wake_lock_t *lock, const char *name);
+
+QDF_STATUS qdf_wake_lock_acquire(qdf_wake_lock_t *lock, uint32_t reason);
+
+QDF_STATUS qdf_wake_lock_timeout_acquire(qdf_wake_lock_t *lock,
 					 uint32_t msec, uint32_t reason);
 
-/**
- * cdf_wake_lock_release() - releases a wake lock
- * @lock:	the wake lock to release
- * @@reason:	Reason for taking wakelock
- *
- * Return:
- *    CDF status success : if wake lock is acquired
- *    CDF status fialure : if wake lock was not acquired
- */
-CDF_STATUS cdf_wake_lock_release(cdf_wake_lock_t *pLock, uint32_t reason);
+QDF_STATUS qdf_wake_lock_release(qdf_wake_lock_t *lock, uint32_t reason);
 
-/**
- * cdf_wake_lock_destroy() - destroys a wake lock
- * @lock:	The wake lock to destroy
- *
- * Return:
- * CDF status success :	if wake lock is acquired
- * CDF status fialure :	if wake lock was not acquired
- */
-CDF_STATUS cdf_wake_lock_destroy(cdf_wake_lock_t *pLock);
+QDF_STATUS qdf_wake_lock_destroy(qdf_wake_lock_t *lock);
 
 struct hif_pm_runtime_lock;
-typedef struct hif_pm_runtime_lock *cdf_runtime_lock_t;
+typedef struct hif_pm_runtime_lock *qdf_runtime_lock_t;
 
-CDF_STATUS cdf_runtime_pm_get(void);
-CDF_STATUS cdf_runtime_pm_put(void);
-CDF_STATUS cdf_runtime_pm_prevent_suspend(cdf_runtime_lock_t lock);
-CDF_STATUS cdf_runtime_pm_allow_suspend(cdf_runtime_lock_t lock);
-cdf_runtime_lock_t cdf_runtime_lock_init(const char *name);
-void cdf_runtime_lock_deinit(cdf_runtime_lock_t lock);
+QDF_STATUS qdf_runtime_pm_get(void);
+QDF_STATUS qdf_runtime_pm_put(void);
+QDF_STATUS qdf_runtime_pm_prevent_suspend(qdf_runtime_lock_t lock);
+QDF_STATUS qdf_runtime_pm_allow_suspend(qdf_runtime_lock_t lock);
+qdf_runtime_lock_t qdf_runtime_lock_init(const char *name);
+void qdf_runtime_lock_deinit(qdf_runtime_lock_t lock);
 
-/**
- * cdf_spinlock_acquire() - acquires a spin lock
- * @lock:	Spin lock to acquire
- *
- * Return:
- *    CDF status success : if wake lock is acquired
- *    CDF status fialure : if wake lock was not acquired
- */
-CDF_STATUS cdf_spinlock_acquire(cdf_spinlock_t *pLock);
+QDF_STATUS qdf_spinlock_acquire(qdf_spinlock_t *lock);
 
-/**
- * cdf_spinlock_release() - release a spin lock
- * @lock:	Spin lock to release
- *
- * Return:
- * CDF status success :	if wake lock is acquired
- * CDF status fialure :	if wake lock was not acquired
- */
-CDF_STATUS cdf_spinlock_release(cdf_spinlock_t *pLock);
+QDF_STATUS qdf_spinlock_release(qdf_spinlock_t *lock);
 
-#define cdf_spin_lock(_lock) __cdf_spin_lock(_lock)
-#define cdf_spin_unlock(_lock) __cdf_spin_unlock(_lock)
-#define cdf_spin_lock_irqsave(_lock) __cdf_spin_lock_irqsave(_lock)
-#define cdf_spin_unlock_irqrestore(_lock) \
-	__cdf_spin_unlock_irqrestore(_lock)
-#define cdf_spin_lock_irq(_pLock, _flags)   __cdf_spin_lock_irq(_pLock, _flags)
-#define cdf_spin_unlock_irq(_pLock, _flags) \
-	__cdf_spin_unlock_irq(_pLock, _flags)
-
-#define cdf_in_softirq() __cdf_in_softirq()
-
-#endif /* __CDF_LOCK_H */
+#endif /* _QDF_LOCK_H */

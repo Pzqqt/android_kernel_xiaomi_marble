@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,122 +25,121 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__CDF_MC_TIMER_H)
-#define __CDF_MC_TIMER_H
-
 /**
- * DOC: cdf_mc_timer
- *
- * Connectivity driver framework timer APIs serialized to MC thread
+ * DOC: qdf_mc_timer
+ * QCA driver framework timer APIs serialized to MC thread
  */
 
+#if !defined(__QDF_MC_TIMER_H)
+#define __QDF_MC_TIMER_H
+
 /* Include Files */
-#include <cdf_types.h>
-#include <cdf_status.h>
-#include <cdf_lock.h>
-#include <i_cdf_mc_timer.h>
+#include <qdf_types.h>
+#include <qdf_status.h>
+#include <qdf_lock.h>
+#include <i_qdf_mc_timer.h>
 
 #ifdef TIMER_MANAGER
-#include <cdf_list.h>
+#include <qdf_list.h>
 #endif
 
 /* Preprocessor definitions and constants */
-#define CDF_TIMER_STATE_COOKIE (0x12)
-#define CDF_MC_TIMER_TO_MS_UNIT   (1000)
-#define CDF_MC_TIMER_TO_SEC_UNIT  (1000000)
+#define QDF_TIMER_STATE_COOKIE (0x12)
+#define QDF_MC_TIMER_TO_MS_UNIT (1000)
+#define QDF_MC_TIMER_TO_SEC_UNIT (1000000)
 
 /* Type declarations */
-/* cdf Timer callback function prototype (well, actually a prototype for
+/* qdf Timer callback function prototype (well, actually a prototype for
    a pointer to this callback function) */
-typedef void (*cdf_mc_timer_callback_t)(void *userData);
+typedef void (*qdf_mc_timer_callback_t)(void *user_data);
 
 typedef enum {
-	CDF_TIMER_STATE_UNUSED = CDF_TIMER_STATE_COOKIE,
-	CDF_TIMER_STATE_STOPPED,
-	CDF_TIMER_STATE_STARTING,
-	CDF_TIMER_STATE_RUNNING,
-} CDF_TIMER_STATE;
+	QDF_TIMER_STATE_UNUSED = QDF_TIMER_STATE_COOKIE,
+	QDF_TIMER_STATE_STOPPED,
+	QDF_TIMER_STATE_STARTING,
+	QDF_TIMER_STATE_RUNNING,
+} QDF_TIMER_STATE;
 
 #ifdef TIMER_MANAGER
-struct cdf_mc_timer_s;
-typedef struct cdf_mc_timer_node_s {
-	cdf_list_node_t pNode;
-	char *fileName;
-	unsigned int lineNum;
-	struct cdf_mc_timer_s *cdf_timer;
-} cdf_mc_timer_node_t;
+struct qdf_mc_timer_s;
+typedef struct qdf_mc_timer_node_s {
+	qdf_list_node_t node;
+	char *file_name;
+	unsigned int line_num;
+	struct qdf_mc_timer_s *qdf_timer;
+} qdf_mc_timer_node_t;
 #endif
 
-typedef struct cdf_mc_timer_s {
+typedef struct qdf_mc_timer_s {
 #ifdef TIMER_MANAGER
-	cdf_mc_timer_node_t *ptimerNode;
+	qdf_mc_timer_node_t *timer_node;
 #endif
+	qdf_mc_timer_platform_t platform_info;
+	qdf_mc_timer_callback_t callback;
+	void *user_data;
+	qdf_mutex_t lock;
+	QDF_TIMER_TYPE type;
+	QDF_TIMER_STATE state;
+} qdf_mc_timer_t;
 
-	cdf_mc_timer_platform_t platformInfo;
-	cdf_mc_timer_callback_t callback;
-	void *userData;
-	cdf_mutex_t lock;
-	CDF_TIMER_TYPE type;
-	CDF_TIMER_STATE state;
-} cdf_mc_timer_t;
+
+void qdf_try_allowing_sleep(QDF_TIMER_TYPE type);
 
 /* Function declarations and documenation */
 #ifdef TIMER_MANAGER
-void cdf_mc_timer_manager_init(void);
-void cdf_mc_timer_exit(void);
+void qdf_mc_timer_manager_init(void);
+void qdf_mc_timer_manager_exit(void);
 #else
 /**
- * cdf_mc_timer_manager_init() - initialize CDF debug timer manager
- *
- * This API initializes CDF timer debug functionality.
+ * qdf_mc_timer_manager_init() - initialize QDF debug timer manager
+ * This API initializes QDF timer debug functionality.
  *
  * Return: none
  */
-static inline void cdf_mc_timer_manager_init(void)
+static inline void qdf_mc_timer_manager_init(void)
 {
 }
 
 /**
- * cdf_mc_timer_exit() - exit CDF timer debug functionality
- *
- * This API exists CDF timer debug functionality
+ * qdf_mc_timer_manager_exit() - exit QDF timer debug functionality
+ * This API exists QDF timer debug functionality
  *
  * Return: none
  */
-static inline void cdf_mc_timer_exit(void)
+static inline void qdf_mc_timer_manager_exit(void)
 {
 }
 #endif
 /**
- * cdf_mc_timer_get_current_state() - get the current state of the timer
- * @pTimer:  Pointer to timer object
+ * qdf_mc_timer_get_current_state() - get the current state of the timer
+ * @timer:  Pointer to timer object
  *
  * Return:
- *	CDF_TIMER_STATE - cdf timer state
+ * QDF_TIMER_STATE - qdf timer state
  */
 
-CDF_TIMER_STATE cdf_mc_timer_get_current_state(cdf_mc_timer_t *pTimer);
+QDF_TIMER_STATE qdf_mc_timer_get_current_state(qdf_mc_timer_t *timer);
 
 /**
- * cdf_mc_timer_init() - initialize a CDF timer
- * @pTimer:	Pointer to timer object
- * @timerType:	Type of timer
- * @callback:	Callback to be called after timer expiry
- * @serData:	User data which will be passed to callback function
+ * qdf_mc_timer_init() - initialize a QDF timer
+ * @timer: Pointer to timer object
+ * @timer_type: Type of timer
+ * @callback: Callback to be called after timer expiry
+ * @ser_data: User data which will be passed to callback function
  *
- * This API initializes a CDF Timer object.
+ * This API initializes a QDF Timer object.
  *
- * cdf_mc_timer_init() initializes a CDF Timer object.  A timer must be
- * initialized by calling cdf_mc_timer_initialize() before it may be used in
+ * qdf_mc_timer_init() initializes a QDF Timer object.  A timer must be
+ * initialized by calling qdf_mc_timer_initialize() before it may be used in
  * any other timer functions.
  *
  * Attempting to initialize timer that is already initialized results in
  * a failure. A destroyed timer object can be re-initialized with a call to
- * cdf_mc_timer_init().  The results of otherwise referencing the object
+ * qdf_mc_timer_init().  The results of otherwise referencing the object
  * after it has been destroyed are undefined.
  *
- *  Calls to CDF timer functions to manipulate the timer such
- *  as cdf_mc_timer_set() will fail if the timer is not initialized or has
+ *  Calls to QDF timer functions to manipulate the timer such
+ *  as qdf_mc_timer_set() will fail if the timer is not initialized or has
  *  been destroyed.  Therefore, don't use the timer after it has been
  *  destroyed until it has been re-initialized.
  *
@@ -149,105 +148,105 @@ CDF_TIMER_STATE cdf_mc_timer_get_current_state(cdf_mc_timer_t *pTimer);
  *  within the tx thread flow.
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
- *	CDF failure status - Timer initialization failed
+ * QDF_STATUS_SUCCESS - Timer is initialized successfully
+ * QDF failure status - Timer initialization failed
  */
 #ifdef TIMER_MANAGER
-#define cdf_mc_timer_init(timer, timerType, callback, userdata)	\
-	cdf_mc_timer_init_debug(timer, timerType, callback, userdata, \
-		__FILE__, __LINE__)
+#define qdf_mc_timer_init(timer, timer_type, callback, userdata) \
+	qdf_mc_timer_init_debug(timer, timer_type, callback, userdata, \
+				__FILE__, __LINE__)
 
-CDF_STATUS cdf_mc_timer_init_debug(cdf_mc_timer_t *timer,
-				   CDF_TIMER_TYPE timerType,
-				   cdf_mc_timer_callback_t callback,
-				   void *userData, char *fileName,
-				   uint32_t lineNum);
+QDF_STATUS qdf_mc_timer_init_debug(qdf_mc_timer_t *timer,
+				   QDF_TIMER_TYPE timer_type,
+				   qdf_mc_timer_callback_t callback,
+				   void *user_data, char *file_name,
+				   uint32_t line_num);
 #else
-CDF_STATUS cdf_mc_timer_init(cdf_mc_timer_t *timer, CDF_TIMER_TYPE timerType,
-			     cdf_mc_timer_callback_t callback,
-			     void *userData);
+QDF_STATUS qdf_mc_timer_init(qdf_mc_timer_t *timer, QDF_TIMER_TYPE timer_type,
+			     qdf_mc_timer_callback_t callback,
+			     void *user_data);
 #endif
 
 /**
- * cdf_mc_timer_destroy() - destroy CDF timer
- * @timer:	Pointer to timer object
+ * qdf_mc_timer_destroy() - destroy QDF timer
+ * @timer: Pointer to timer object
  *
- * cdf_mc_timer_destroy() function shall destroy the timer object.
- * After a successful return from \a cdf_mc_timer_destroy() the timer
+ * qdf_mc_timer_destroy() function shall destroy the timer object.
+ * After a successful return from \a qdf_mc_timer_destroy() the timer
  * object becomes, in effect, uninitialized.
  *
  * A destroyed timer object can be re-initialized by calling
- * cdf_mc_timer_init().  The results of otherwise referencing the object
+ * qdf_mc_timer_init().  The results of otherwise referencing the object
  * after it has been destroyed are undefined.
  *
- * Calls to CDF timer functions to manipulate the timer, such
- * as cdf_mc_timer_set() will fail if the lock is destroyed.  Therefore,
+ * Calls to QDF timer functions to manipulate the timer, such
+ * as qdf_mc_timer_set() will fail if the lock is destroyed.  Therefore,
  * don't use the timer after it has been destroyed until it has
  * been re-initialized.
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
- *	CDF failure status - Timer initialization failed
+ * QDF_STATUS_SUCCESS - Timer is initialized successfully
+ * QDF failure status - Timer initialization failed
  */
-CDF_STATUS cdf_mc_timer_destroy(cdf_mc_timer_t *timer);
+QDF_STATUS qdf_mc_timer_destroy(qdf_mc_timer_t *timer);
 
 /**
- * cdf_mc_timer_start() - start a CDF Timer object
- * @timer:	Pointer to timer object
- * @expirationTime:	Time to expire
+ * qdf_mc_timer_start() - start a QDF Timer object
+ * @timer: Pointer to timer object
+ * @expiration_time: Time to expire
  *
- * cdf_mc_timer_start() function starts a timer to expire after the
+ * qdf_mc_timer_start() function starts a timer to expire after the
  * specified interval, thus running the timer callback function when
  * the interval expires.
  *
  * A timer only runs once (a one-shot timer).  To re-start the
- * timer, cdf_mc_timer_start() has to be called after the timer runs
+ * timer, qdf_mc_timer_start() has to be called after the timer runs
  * or has been cancelled.
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
- *	CDF failure status - Timer initialization failed
+ * QDF_STATUS_SUCCESS - Timer is initialized successfully
+ * QDF failure status - Timer initialization failed
  */
-CDF_STATUS cdf_mc_timer_start(cdf_mc_timer_t *timer, uint32_t expirationTime);
+QDF_STATUS qdf_mc_timer_start(qdf_mc_timer_t *timer, uint32_t expiration_time);
 
 /**
- * cdf_mc_timer_stop() - stop a CDF Timer
- * @timer:	Pointer to timer object
- * cdf_mc_timer_stop() function stops a timer that has been started but
+ * qdf_mc_timer_stop() - stop a QDF Timer
+ * @timer: Pointer to timer object
+ * qdf_mc_timer_stop() function stops a timer that has been started but
  * has not expired, essentially cancelling the 'start' request.
  *
  * After a timer is stopped, it goes back to the state it was in after it
- * was created and can be started again via a call to cdf_mc_timer_start().
+ * was created and can be started again via a call to qdf_mc_timer_start().
  *
  * Return:
- *	CDF_STATUS_SUCCESS - Timer is initialized successfully
- *	CDF failure status - Timer initialization failed
+ * QDF_STATUS_SUCCESS - Timer is initialized successfully
+ * QDF failure status - Timer initialization failed
  */
-CDF_STATUS cdf_mc_timer_stop(cdf_mc_timer_t *timer);
+QDF_STATUS qdf_mc_timer_stop(qdf_mc_timer_t *timer);
 
 /**
- * cdf_mc_timer_get_system_ticks() - get the system time in 10ms ticks
-
- * cdf_mc_timer_get_system_ticks() function returns the current number
+ * qdf_mc_timer_get_system_ticks() - get the system time in 10ms ticks
+ *
+ * qdf_mc_timer_get_system_ticks() function returns the current number
  * of timer ticks in 10msec intervals.  This function is suitable timestamping
  * and calculating time intervals by calculating the difference between two
  * timestamps.
  *
  * Return:
- *	The current system tick count (in 10msec intervals).  This
- *	function cannot fail.
+ * The current system tick count (in 10msec intervals).  This
+ * function cannot fail.
  */
-v_TIME_t cdf_mc_timer_get_system_ticks(void);
+unsigned long qdf_mc_timer_get_system_ticks(void);
 
 /**
- * cdf_mc_timer_get_system_time() - Get the system time in milliseconds
+ * qdf_mc_timer_get_system_time() - Get the system time in milliseconds
  *
- * cdf_mc_timer_get_system_time() function returns the number of milliseconds
+ * qdf_mc_timer_get_system_time() function returns the number of milliseconds
  * that have elapsed since the system was started
  *
  * Return:
- *	The current system time in milliseconds
+ * The current system time in milliseconds
  */
-v_TIME_t cdf_mc_timer_get_system_time(void);
+unsigned long qdf_mc_timer_get_system_time(void);
 
-#endif /* #if !defined __CDF_MC_TIMER_H */
+#endif /* __QDF_MC_TIMER_H */

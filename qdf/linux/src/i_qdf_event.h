@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -25,18 +25,25 @@
  * to the Linux Foundation.
  */
 
-#if !defined(__I_CDF_EVENT_H)
-#define __I_CDF_EVENT_H
-
 /**
- * DOC: i_cdf_event.h
- *
- * Linux-specific definitions for CDF Events
+ * DOC: i_qdf_event.h
+ * This file provides OS dependent event API's.
  */
 
-/* Include Files */
-#include <cdf_types.h>
+#if !defined(__I_QDF_EVENT_H)
+#define __I_QDF_EVENT_H
+
 #include <linux/completion.h>
+
+/**
+ * qdf_event_t - manages events
+ * @complete: instance to completion
+ * @cookie: unsigned int
+ */
+typedef struct qdf_evt {
+	struct completion complete;
+	uint32_t cookie;
+} __qdf_event_t;
 
 /* Preprocessor definitions and constants */
 #define LINUX_EVENT_COOKIE 0x12341234
@@ -45,18 +52,4 @@
 #define INIT_COMPLETION(event) reinit_completion(&event)
 #endif
 
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
-
-/* Type declarations */
-
-typedef struct evt {
-	struct completion complete;
-	uint32_t cookie;
-} cdf_event_t;
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-#endif /* __I_CDF_EVENT_H */
+#endif /*__I_QDF_EVENT_H*/

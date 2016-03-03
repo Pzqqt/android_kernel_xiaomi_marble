@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,177 +26,177 @@
  */
 
 /**
- * DOC: cdf_time
+ * DOC: qdf_time
  * This file abstracts time related functionality.
  */
 
-#ifndef _CDF_OS_TIME_H
-#define _CDF_OS_TIME_H
+#ifndef _QDF_OS_TIME_H
+#define _QDF_OS_TIME_H
 
-#include <i_cdf_time.h>
-#ifdef CONFIG_CNSS
-#include <net/cnss.h>
-#endif
+#include <i_qdf_time.h>
 
-typedef __cdf_time_t cdf_time_t;
+typedef __qdf_time_t qdf_time_t;
 
 /**
- * cdf_system_ticks() - Count the number of ticks elapsed from the time when
- *			the system booted
+ * qdf_system_ticks - Count the number of ticks elapsed from the time when
+ * the system booted
  *
  * Return: ticks
  */
-static inline unsigned long cdf_system_ticks(void)
+static inline unsigned long qdf_system_ticks(void)
 {
-	return __cdf_system_ticks();
+	return __qdf_system_ticks();
 }
 
 /**
- * cdf_system_ticks_to_msecs() - convert ticks to milliseconds
+ * qdf_system_ticks_to_msecs - convert ticks to milliseconds
  * @clock_ticks: Number of ticks
  *
- * Return: Time in milliseconds
+ * Return: unsigned int Time in milliseconds
  */
-static inline uint32_t cdf_system_ticks_to_msecs(unsigned long clock_ticks)
+static inline uint32_t qdf_system_ticks_to_msecs(unsigned long clock_ticks)
 {
-	return __cdf_system_ticks_to_msecs(clock_ticks);
+	return __qdf_system_ticks_to_msecs(clock_ticks);
 }
 
 /**
- * cdf_system_msecs_to_ticks() - convert milliseconds to ticks
+ * qdf_system_msecs_to_ticks - convert milliseconds to ticks
  * @msec: Time in milliseconds
  *
- * Return: number of ticks
+ * Return: unsigned long number of ticks
  */
-static inline unsigned long cdf_system_msecs_to_ticks(uint32_t msecs)
+static inline unsigned long qdf_system_msecs_to_ticks(uint32_t msecs)
 {
-	return __cdf_system_msecs_to_ticks(msecs);
+	return __qdf_system_msecs_to_ticks(msecs);
 }
 
 /**
- * cdf_get_system_uptime() - Return a monotonically increasing time.
+ * qdf_get_system_uptime - Return a monotonically increasing time
  * This increments once per HZ ticks
  *
- * Return: system up time
+ * Return: unsigned long system up time
  */
-static inline unsigned long cdf_get_system_uptime(void)
+static inline unsigned long qdf_get_system_uptime(void)
 {
-	return __cdf_get_system_uptime();
+	return __qdf_get_system_uptime();
 }
 
 /**
- * cdf_get_system_timestamp() - brief Return current timestamp
+ * qdf_get_system_timestamp - Return current timestamp
  *
- * Return: none
+ * Return: unsigned long
  */
-static inline unsigned long cdf_get_system_timestamp(void)
+static inline unsigned long qdf_get_system_timestamp(void)
 {
-	return __cdf_get_system_timestamp();
+	return __qdf_get_system_timestamp();
 }
 
 /**
- * cdf_udelay() - delay in microseconds
+ * qdf_udelay - delay in microseconds
  * @usecs: Number of microseconds to delay
  *
  * Return: none
  */
-static inline void cdf_udelay(int usecs)
+static inline void qdf_udelay(int usecs)
 {
-	__cdf_udelay(usecs);
+	__qdf_udelay(usecs);
 }
 
 /**
- * cdf_mdelay() - Delay in milliseconds.
+ * qdf_mdelay - Delay in milliseconds.
  * @msec: Number of milliseconds to delay
  *
  * Return: none
  */
-static inline void cdf_mdelay(int msecs)
+static inline void qdf_mdelay(int msecs)
 {
-	__cdf_mdelay(msecs);
+	__qdf_mdelay(msecs);
 }
 
-/* Check if _a is later than _b */
-#define cdf_system_time_after(_a, _b)       __cdf_system_time_after(_a, _b)
-
-/* Check if _a is prior to _b */
-#define cdf_system_time_before(_a, _b)      __cdf_system_time_before(_a, _b)
-
-/* Check if _a atleast as recent as _b, if not later */
-#define cdf_system_time_after_eq(_a, _b)    __cdf_system_time_after_eq(_a, _b)
+/**
+ * qdf_system_time_after() - Check if a is later than b
+ * @a: Time stamp value a
+ * @b: Time stamp value b
+ *
+ * Return:
+ * true if a < b else false
+ */
+static inline bool qdf_system_time_after(qdf_time_t a, qdf_time_t b)
+{
+	return __qdf_system_time_after(a, b);
+}
 
 /**
- * enum cdf_timestamp_unit - what unit the cdf timestamp is in
+ * qdf_system_time_before() - Check if a is before b
+ * @a: Time stamp value a
+ * @b: Time stamp value b
+ *
+ * Return:
+ * true if a is before b else false
+ */
+static inline bool qdf_system_time_before(qdf_time_t a, qdf_time_t b)
+{
+	return __qdf_system_time_before(a, b);
+}
+
+/**
+ * qdf_system_time_after_eq() - Check if a atleast as recent as b, if not
+ * later
+ * @a: Time stamp value a
+ * @b: Time stamp value b
+ *
+ * Return:
+ * true if a >= b else false
+ */
+static inline bool qdf_system_time_after_eq(qdf_time_t a, qdf_time_t b)
+{
+	return __qdf_system_time_after_eq(a, b);
+}
+
+/**
+ * enum qdf_timestamp_unit - what unit the qdf timestamp is in
  * @KERNEL_LOG: boottime time in uS (micro seconds)
- * @KERNEL_LOG: QTIME in (1/19200)S
+ * @QTIMER: QTIME in (1/19200)S
  *
  * This enum is used to distinguish which timer source is used.
  */
-enum cdf_timestamp_unit {
+enum qdf_timestamp_unit {
 	KERNEL_LOG,
 	QTIMER,
 };
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
-#define CDF_LOG_TIMESTAMP_UNIT QTIMER
+#define QDF_LOG_TIMESTAMP_UNIT QTIMER
 #else
-#define CDF_LOG_TIMESTAMP_UNIT KERNEL_LOG
+#define QDF_LOG_TIMESTAMP_UNIT KERNEL_LOG
 #endif
 
-#ifdef QCA_WIFI_3_0_ADRASTEA
+
 /**
- * cdf_get_log_timestamp() - get time stamp for logging
- *
+ * qdf_get_log_timestamp - get time stamp for logging
  * For adrastea this API returns QTIMER tick which is needed to synchronize
  * host and fw log timestamps
- *
  * For ROME and other discrete solution this API returns system boot time stamp
  *
  * Return:
- *	QTIMER ticks(19.2MHz) for adrastea
- *	System tick for rome and other future discrete solutions
+ * QTIMER ticks(19.2MHz) for adrastea
+ * System tick for rome and other future discrete solutions
  */
-static inline uint64_t cdf_get_log_timestamp(void)
+static inline uint64_t qdf_get_log_timestamp(void)
 {
-	return __cdf_get_qtimer_ticks();
+	return __qdf_get_log_timestamp();
 }
-#else
-/**
- * cdf_get_log_timestamp() - get time stamp for logging
- *
- * For adrastea this API returns QTIMER tick which is needed to synchronize
- * host and fw log timestamps
- *
- * For ROME and other discrete solution this API returns system boot time stamp
- *
- * Return:
- *	QTIMER ticks(19.2MHz) for adrastea
- *	System tick for rome and other future discrete solutions
- */
-static inline uint64_t cdf_get_log_timestamp(void)
-{
-#ifdef CONFIG_CNSS
-	struct timespec ts;
-
-	cnss_get_boottime(&ts);
-
-	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
-#else
-	return cdf_system_ticks_to_msecs(cdf_system_ticks()) * 1000;
-#endif /* CONFIG_CNSS */
-}
-#endif /* QCA_WIFI_3_0_ADRASTEA */
 
 /**
- * cdf_get_monotonic_boottime() - get monotonic kernel boot time
- * This API is similar to cdf_get_system_boottime but it includes
+ * qdf_get_monotonic_boottime - get monotonic kernel boot time
+ * This API is similar to qdf_get_system_boottime but it includes
  * time spent in suspend.
  *
  * Return: Time in microseconds
  */
-static inline uint64_t cdf_get_monotonic_boottime(void)
+static inline uint64_t qdf_get_monotonic_boottime(void)
 {
-	return __cdf_get_monotonic_boottime();
+	return __qdf_get_monotonic_boottime();
 }
 
 #endif

@@ -26,39 +26,37 @@
  */
 
 /**
- * DOC: qdf_event.h
- * This file provides OS abstraction for event APIs.
+ * DOC: i_qdf_list.h
+ * This file provides OS dependent list API's.
  */
 
-#if !defined(__QDF_EVENT_H)
-#define __QDF_EVENT_H
+#if !defined(__I_QDF_LIST_H)
+#define __I_QDF_LIST_H
 
-/* Include Files */
-#include "qdf_status.h"
-#include <qdf_types.h>
-#include <i_qdf_event.h>
-#include <qdf_trace.h>
+#include <linux/list.h>
+
+/* Type declarations */
+typedef struct list_head __qdf_list_node_t;
 
 /* Preprocessor definitions and constants */
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
 
-typedef __qdf_event_t qdf_event_t;
-/* Function declarations and documenation */
+typedef struct qdf_list_s {
+	__qdf_list_node_t anchor;
+	uint32_t count;
+	uint32_t max_size;
+} __qdf_list_t;
 
-QDF_STATUS qdf_event_create(qdf_event_t *event);
-
-QDF_STATUS qdf_event_set(qdf_event_t *event);
-
-QDF_STATUS qdf_event_reset(qdf_event_t *event);
-
-QDF_STATUS qdf_event_destroy(qdf_event_t *event);
-
-QDF_STATUS qdf_wait_single_event(qdf_event_t *event,
-				 uint32_t timeout);
-
-#ifdef __cplusplus
+/**
+ * __qdf_list_create() - Initialize list head
+ * @list: object of list
+ * @max_size: max size of the list
+ * Return: none
+ */
+static inline void __qdf_list_create(__qdf_list_t *list, uint32_t max_size)
+{
+	INIT_LIST_HEAD(&list->anchor);
+	list->count = 0;
+	list->max_size = max_size;
 }
-#endif /* __cplusplus */
-#endif /* __QDF_EVENT_H */
+
+#endif

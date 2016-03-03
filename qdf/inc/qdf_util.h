@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,249 +26,203 @@
  */
 
 /**
- * DOC: cdf_util.h
- *
+ * DOC: qdf_util.h
  * This file defines utility functions.
  */
 
-#ifndef _CDF_UTIL_H
-#define _CDF_UTIL_H
+#ifndef _QDF_UTIL_H
+#define _QDF_UTIL_H
 
-#include <i_cdf_util.h>
-
-/**
- * cdf_unlikely - Compiler-dependent macro denoting code likely to execute
- * @_expr: expression to be checked
- */
-#define cdf_unlikely(_expr)     __cdf_unlikely(_expr)
+#include <i_qdf_util.h>
 
 /**
- * cdf_likely - Compiler-dependent macro denoting code unlikely to execute
+ * qdf_unlikely - Compiler-dependent macro denoting code likely to execute
  * @_expr: expression to be checked
  */
-#define cdf_likely(_expr)       __cdf_likely(_expr)
+#define qdf_unlikely(_expr)     __qdf_unlikely(_expr)
 
-CDF_INLINE_FN int cdf_status_to_os_return(CDF_STATUS status)
+/**
+ * qdf_likely - Compiler-dependent macro denoting code unlikely to execute
+ * @_expr: expression to be checked
+ */
+#define qdf_likely(_expr)       __qdf_likely(_expr)
+
+/**
+ * qdf_mb - read + write memory barrier.
+ */
+#define qdf_mb()                 __qdf_mb()
+
+/**
+ * qdf_assert - assert "expr" evaluates to false.
+ */
+#ifdef QDF_DEBUG
+#define qdf_assert(expr)         __qdf_assert(expr)
+#else
+#define qdf_assert(expr)
+#endif /* QDF_DEBUG */
+
+/**
+ * qdf_assert_always - alway assert "expr" evaluates to false.
+ */
+#define qdf_assert_always(expr)  __qdf_assert(expr)
+
+/**
+ * qdf_target_assert_always - alway target assert "expr" evaluates to false.
+ */
+#define qdf_target_assert_always(expr)  __qdf_target_assert(expr)
+
+/**
+ * qdf_status_to_os_return - returns the status to OS.
+ * @status: enum QDF_STATUS
+ *
+ * returns: int status success/failure
+ */
+static inline int qdf_status_to_os_return(QDF_STATUS status)
 {
-	return __cdf_status_to_os_return(status);
+	return __qdf_status_to_os_return(status);
 }
 
 /**
- * cdf_assert - assert "expr" evaluates to false
- * @expr: assert expression
+ * qdf_container_of - cast a member of a structure out to the containing
+ * structure
+ * @ptr: the pointer to the member.
+ * @type: the type of the container struct this is embedded in.
+ * @member: the name of the member within the struct.
  */
-#ifdef CDF_OS_DEBUG
-#define cdf_assert(expr)         __cdf_assert(expr)
-#else
-#define cdf_assert(expr)
-#endif /* CDF_OS_DEBUG */
+#define qdf_container_of(ptr, type, member) \
+	 __qdf_container_of(ptr, type, member)
 
 /**
- * @cdf_assert_always- alway assert "expr" evaluates to false
- * @expr: assert expression
- */
-#define cdf_assert_always(expr)  __cdf_assert(expr)
-
-/**
- * cdf_os_cpu_to_le64 - Convert a 64-bit value from CPU byte order to
- *			little-endian byte order
- * @x: value to be converted
- */
-#define cdf_os_cpu_to_le64(x)                   __cdf_os_cpu_to_le64(x)
-
-/**
- * cdf_le16_to_cpu - Convert a 16-bit value from little-endian byte order
- *			to CPU byte order
- * @x: value to be converted
- */
-#define cdf_le16_to_cpu(x)                   __cdf_le16_to_cpu(x)
-
-/**
- * cdf_le32_to_cpu - Convert a 32-bit value from little-endian byte order to
- *			CPU byte order
- * @x: value to be converted
- */
-#define cdf_le32_to_cpu(x)                   __cdf_le32_to_cpu(x)
-
-/**
- * cdf_in_interrupt - returns true if in interrupt context
- */
-#define cdf_in_interrupt          in_interrupt
-
-/**
- * cdf_container_of - cast a member of a structure out to the containing
- *                    structure
- * @ptr:        the pointer to the member.
- * @type:       the type of the container struct this is embedded in.
- * @member:     the name of the member within the struct.
- *
- */
-#define cdf_container_of(ptr, type, member) \
-	 __cdf_container_of(ptr, type, member)
-
-/**
- * cdf_is_pwr2 - test input value is power of 2 integer
- *
+ * qdf_is_pwr2 - test input value is power of 2 integer
  * @value: input integer
- *
  */
-#define CDF_IS_PWR2(value) (((value) ^ ((value)-1)) == ((value) << 1) - 1)
+#define QDF_IS_PWR2(value) (((value) ^ ((value)-1)) == ((value) << 1) - 1)
+
 
 /**
- * cdf_is_macaddr_equal() - compare two CDF MacAddress
- * @pMacAddr1: Pointer to one cdf MacAddress to compare
- * @pMacAddr2: Pointer to the other cdf MacAddress to compare
+ * qdf_is_macaddr_equal() - compare two QDF MacAddress
+ * @mac_addr1: Pointer to one qdf MacAddress to compare
+ * @mac_addr2: Pointer to the other qdf MacAddress to compare
  *
- * This function returns a bool that tells if a two CDF MacAddress'
+ * This function returns a bool that tells if a two QDF MacAddress'
  * are equivalent.
  *
  * Return: true if the MacAddress's are equal
- *	not true if the MacAddress's are not equal
+ * not true if the MacAddress's are not equal
  */
-CDF_INLINE_FN bool cdf_is_macaddr_equal(struct cdf_mac_addr *pMacAddr1,
-					struct cdf_mac_addr *pMacAddr2)
+static inline bool qdf_is_macaddr_equal(struct qdf_mac_addr *mac_addr1,
+					struct qdf_mac_addr *mac_addr2)
 {
-	return 0 == memcmp(pMacAddr1, pMacAddr2, CDF_MAC_ADDR_SIZE);
+	return __qdf_is_macaddr_equal(mac_addr1, mac_addr2);
 }
 
+
 /**
- * cdf_is_macaddr_zero() - check for a MacAddress of all zeros.
- * @pMacAddr - pointer to the struct cdf_mac_addr to check.
+ * qdf_is_macaddr_zero() - check for a MacAddress of all zeros.
+ * @mac_addr: pointer to the struct qdf_mac_addr to check.
  *
  * This function returns a bool that tells if a MacAddress is made up of
  * all zeros.
  *
- *
- * Return:  true if the MacAddress is all Zeros
- *	false if the MacAddress is not all Zeros.
- *
+ * Return: true if the MacAddress is all Zeros
+ * false if the MacAddress is not all Zeros.
  */
-CDF_INLINE_FN bool cdf_is_macaddr_zero(struct cdf_mac_addr *pMacAddr)
+static inline bool qdf_is_macaddr_zero(struct qdf_mac_addr *mac_addr)
 {
-	struct cdf_mac_addr zeroMacAddr = CDF_MAC_ADDR_ZERO_INITIALIZER;
-
-	return cdf_is_macaddr_equal(pMacAddr, &zeroMacAddr);
+	struct qdf_mac_addr zero_mac_addr = QDF_MAC_ADDR_ZERO_INITIALIZER;
+	return qdf_is_macaddr_equal(mac_addr, &zero_mac_addr);
 }
 
 /**
- * cdf_zero_macaddr() - zero out a MacAddress
- * @pMacAddr: pointer to the struct cdf_mac_addr to zero.
+ * qdf_zero_macaddr() - zero out a MacAddress
+ * @mac_addr: pointer to the struct qdf_mac_addr to zero.
  *
- * This function zeros out a CDF MacAddress type.
+ * This function zeros out a QDF MacAddress type.
  *
- * Return: nothing
+ * Return: none
  */
-CDF_INLINE_FN void cdf_zero_macaddr(struct cdf_mac_addr *pMacAddr)
+static inline void qdf_zero_macaddr(struct qdf_mac_addr *mac_addr)
 {
-	memset(pMacAddr, 0, CDF_MAC_ADDR_SIZE);
+	__qdf_zero_macaddr(mac_addr);
 }
 
+
 /**
- * cdf_is_macaddr_group() - check for a MacAddress is a 'group' address
- * @pMacAddr1: pointer to the cdf MacAddress to check
+ * qdf_is_macaddr_group() - check for a MacAddress is a 'group' address
+ * @mac_addr1: pointer to the qdf MacAddress to check
  *
- * This function returns a bool that tells if a the input CDF MacAddress
- * is a "group" address.  Group addresses have the 'group address bit' turned
- * on in the MacAddress.  Group addresses are made up of Broadcast and
+ * This function returns a bool that tells if a the input QDF MacAddress
+ * is a "group" address. Group addresses have the 'group address bit' turned
+ * on in the MacAddress. Group addresses are made up of Broadcast and
  * Multicast addresses.
  *
- * Return:  true if the input MacAddress is a Group address
- *	false if the input MacAddress is not a Group address
+ * Return: true if the input MacAddress is a Group address
+ * false if the input MacAddress is not a Group address
  */
-CDF_INLINE_FN bool cdf_is_macaddr_group(struct cdf_mac_addr *pMacAddr)
+static inline bool qdf_is_macaddr_group(struct qdf_mac_addr *mac_addr)
 {
-	return pMacAddr->bytes[0] & 0x01;
+	return mac_addr->bytes[0] & 0x01;
 }
 
+
 /**
- * cdf_is_macaddr_broadcast() - check for a MacAddress is a broadcast address
+ * qdf_is_macaddr_broadcast() - check for a MacAddress is a broadcast address
+ * @mac_addr: Pointer to the qdf MacAddress to check
  *
- * This function returns a bool that tells if a the input CDF MacAddress
+ * This function returns a bool that tells if a the input QDF MacAddress
  * is a "broadcast" address.
  *
- * @pMacAddr: Pointer to the cdf MacAddress to check
- *
- * Return:  true if the input MacAddress is a broadcast address
- *	false if the input MacAddress is not a broadcast address
+ * Return: true if the input MacAddress is a broadcast address
+ * flase if the input MacAddress is not a broadcast address
  */
-CDF_INLINE_FN bool cdf_is_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
+static inline bool qdf_is_macaddr_broadcast(struct qdf_mac_addr *mac_addr)
 {
-	struct cdf_mac_addr broadcastMacAddr =
-					CDF_MAC_ADDR_BROADCAST_INITIALIZER;
-
-	return cdf_is_macaddr_equal(pMacAddr, &broadcastMacAddr);
+	struct qdf_mac_addr broadcast_mac_addr =
+		QDF_MAC_ADDR_BROADCAST_INITIALIZER;
+	return qdf_is_macaddr_equal(mac_addr, &broadcast_mac_addr);
 }
 
 /**
- * cdf_copy_macaddr() - copy a CDF MacAddress
- * @pDst - pointer to the cdf MacAddress to copy TO (the destination)
- * @pSrc - pointer to the cdf MacAddress to copy FROM (the source)
+ * qdf_copy_macaddr() - copy a QDF MacAddress
+ * @dst_addr: pointer to the qdf MacAddress to copy TO (the destination)
+ * @src_addr: pointer to the qdf MacAddress to copy FROM (the source)
  *
- * This function copies a CDF MacAddress into another CDF MacAddress.
+ * This function copies a QDF MacAddress into another QDF MacAddress.
  *
- *
- * Return: nothing
+ * Return: none
  */
-CDF_INLINE_FN void cdf_copy_macaddr(struct cdf_mac_addr *pDst,
-				    struct cdf_mac_addr *pSrc)
+static inline void qdf_copy_macaddr(struct qdf_mac_addr *dst_addr,
+				    struct qdf_mac_addr *src_addr)
 {
-	*pDst = *pSrc;
+	*dst_addr = *src_addr;
 }
 
 /**
- * cdf_set_macaddr_broadcast() - set a CDF MacAddress to the 'broadcast'
- * @pMacAddr: pointer to the cdf MacAddress to set to broadcast
+ * qdf_set_macaddr_broadcast() - set a QDF MacAddress to the 'broadcast'
+ * @mac_addr: pointer to the qdf MacAddress to set to broadcast
  *
- * This function sets a CDF MacAddress to the 'broadcast' MacAddress. Broadcast
+ * This function sets a QDF MacAddress to the 'broadcast' MacAddress. Broadcast
  * MacAddress contains all 0xFF bytes.
  *
- * Return: nothing
+ * Return: none
  */
-CDF_INLINE_FN void cdf_set_macaddr_broadcast(struct cdf_mac_addr *pMacAddr)
+static inline void qdf_set_macaddr_broadcast(struct qdf_mac_addr *mac_addr)
 {
-	memset(pMacAddr, 0xff, CDF_MAC_ADDR_SIZE);
-}
-
-#if defined(ANI_LITTLE_BYTE_ENDIAN)
-
-/**
- * i_cdf_htonl() - convert from host byte order to network byte order
- * @ul: input to be converted
- *
- * Return: converted network byte order
- */
-CDF_INLINE_FN unsigned long i_cdf_htonl(unsigned long ul)
-{
-	return ((ul & 0x000000ff) << 24) |
-		((ul & 0x0000ff00) << 8) |
-		((ul & 0x00ff0000) >> 8) | ((ul & 0xff000000) >> 24);
+	__qdf_set_macaddr_broadcast(mac_addr);
 }
 
 /**
- * i_cdf_ntohl() - convert network byte order to host byte order
- * @ul: input to be converted
- *
- * Return: converted host byte order
- */
-CDF_INLINE_FN unsigned long i_cdf_ntohl(unsigned long ul)
-{
-	return i_cdf_htonl(ul);
-}
-
-#endif
-
-/**
- * cdf_set_u16() - Assign 16-bit unsigned value to a byte array base on CPU's
- *			endianness.
+ * qdf_set_u16() - Assign 16-bit unsigned value to a byte array base on CPU's
+ * endianness.
  * @ptr: Starting address of a byte array
  * @value: The value to assign to the byte array
  *
  * Caller must validate the byte array has enough space to hold the vlaue
  *
  * Return: The address to the byte after the assignment. This may or may not
- *	be valid. Caller to verify.
+ * be valid. Caller to verify.
  */
-CDF_INLINE_FN uint8_t *cdf_set_u16(uint8_t *ptr, uint16_t value)
+static inline uint8_t *qdf_set_u16(uint8_t *ptr, uint16_t value)
 {
 #if defined(ANI_BIG_BYTE_ENDIAN)
 	*(ptr) = (uint8_t) (value >> 8);
@@ -277,53 +231,51 @@ CDF_INLINE_FN uint8_t *cdf_set_u16(uint8_t *ptr, uint16_t value)
 	*(ptr + 1) = (uint8_t) (value >> 8);
 	*(ptr) = (uint8_t) (value);
 #endif
-
 	return ptr + 2;
 }
 
 /**
- * cdf_get_u16() - Retrieve a 16-bit unsigned value from a byte array base on
- *			CPU's endianness.
+ * qdf_get_u16() - Retrieve a 16-bit unsigned value from a byte array base on
+ * CPU's endianness.
  * @ptr: Starting address of a byte array
- * @pValue: Pointer to a caller allocated buffer for 16 bit value. Value is to
- *		assign to this location.
+ * @value: Pointer to a caller allocated buffer for 16 bit value. Value is to
+ * assign to this location.
  *
  * Caller must validate the byte array has enough space to hold the vlaue
  *
  * Return: The address to the byte after the assignment. This may or may not
- *	be valid. Caller to verify.
+ * be valid. Caller to verify.
  */
-CDF_INLINE_FN uint8_t *cdf_get_u16(uint8_t *ptr, uint16_t *pValue)
+static inline uint8_t *qdf_get_u16(uint8_t *ptr, uint16_t *value)
 {
 #if defined(ANI_BIG_BYTE_ENDIAN)
-	*pValue = (((uint16_t) (*ptr << 8)) | ((uint16_t) (*(ptr + 1))));
+	*value = (((uint16_t) (*ptr << 8)) | ((uint16_t) (*(ptr + 1))));
 #else
-	*pValue = (((uint16_t) (*(ptr + 1) << 8)) | ((uint16_t) (*ptr)));
+	*value = (((uint16_t) (*(ptr + 1) << 8)) | ((uint16_t) (*ptr)));
 #endif
-
 	return ptr + 2;
 }
 
 /**
- * cdf_get_u32() - retrieve a 32-bit unsigned value from a byte array base on
- *			CPU's endianness.
+ * qdf_get_u32() - retrieve a 32-bit unsigned value from a byte array base on
+ * CPU's endianness.
  * @ptr: Starting address of a byte array
- * @pValue: Pointer to a caller allocated buffer for 32 bit value. Value is to
- *		assign to this location.
+ * @value: Pointer to a caller allocated buffer for 32 bit value. Value is to
+ * assign to this location.
  *
  * Caller must validate the byte array has enough space to hold the vlaue
  *
  * Return: The address to the byte after the assignment. This may or may not
- *		be valid. Caller to verify.
+ * be valid. Caller to verify.
  */
-CDF_INLINE_FN uint8_t *cdf_get_u32(uint8_t *ptr, uint32_t *pValue)
+static inline uint8_t *qdf_get_u32(uint8_t *ptr, uint32_t *value)
 {
 #if defined(ANI_BIG_BYTE_ENDIAN)
-	*pValue = ((uint32_t) (*(ptr) << 24) |
+	*value = ((uint32_t) (*(ptr) << 24) |
 		   (uint32_t) (*(ptr + 1) << 16) |
 		   (uint32_t) (*(ptr + 2) << 8) | (uint32_t) (*(ptr + 3)));
 #else
-	*pValue = ((uint32_t) (*(ptr + 3) << 24) |
+	*value = ((uint32_t) (*(ptr + 3) << 24) |
 		   (uint32_t) (*(ptr + 2) << 16) |
 		   (uint32_t) (*(ptr + 1) << 8) | (uint32_t) (*(ptr)));
 #endif
@@ -331,17 +283,91 @@ CDF_INLINE_FN uint8_t *cdf_get_u32(uint8_t *ptr, uint32_t *pValue)
 }
 
 /**
- * cdf_get_pwr2() - get next power of 2 integer from input value
+ * qdf_ntohs - Convert a 16-bit value from network byte order to host byte order
+ */
+#define qdf_ntohs(x)                         __qdf_ntohs(x)
+
+/**
+ * qdf_ntohl - Convert a 32-bit value from network byte order to host byte order
+ */
+#define qdf_ntohl(x)                         __qdf_ntohl(x)
+
+/**
+ * qdf_htons - Convert a 16-bit value from host byte order to network byte order
+ */
+#define qdf_htons(x)                         __qdf_htons(x)
+
+/**
+ * qdf_htonl - Convert a 32-bit value from host byte order to network byte order
+ */
+#define qdf_htonl(x)                         __qdf_htonl(x)
+
+/**
+ * qdf_cpu_to_le16 - Convert a 16-bit value from CPU byte order to
+ * little-endian byte order
+ */
+#define qdf_cpu_to_le16(x)                   __qdf_cpu_to_le16(x)
+
+/**
+ * qdf_cpu_to_le32 - Convert a 32-bit value from CPU byte order to
+ * little-endian byte order
+ */
+#define qdf_cpu_to_le32(x)                   __qdf_cpu_to_le32(x)
+
+/**
+ * qdf_cpu_to_le64 - Convert a 64-bit value from CPU byte order to
+ * little-endian byte order
+ */
+#define qdf_cpu_to_le64(x)                   __qdf_cpu_to_le64(x)
+
+/**
+ * qdf_be32_to_cpu - Convert a 32-bit value from big-endian byte order
+ * to CPU byte order
+ */
+#define qdf_be32_to_cpu(x)                   __qdf_be32_to_cpu(x)
+
+/**
+ * qdf_be64_to_cpu - Convert a 64-bit value from big-endian byte order
+ * to CPU byte order
+ */
+#define qdf_be64_to_cpu(x)                   __qdf_be64_to_cpu(x)
+
+/**
+ * qdf_le32_to_cpu - Convert a 32-bit value from little-endian byte
+ * order to CPU byte order
+ */
+#define qdf_le32_to_cpu(x)                   __qdf_le32_to_cpu(x)
+
+/**
+ * qdf_le64_to_cpu - Convert a 64-bit value from little-endian byte
+ * order to CPU byte order
+ */
+#define qdf_le64_to_cpu(x)                   __qdf_le64_to_cpu(x)
+
+/**
+ * qdf_le16_to_cpu - Convert a 16-bit value from little-endian byte order
+ * to CPU byte order
+ * @x: value to be converted
+ */
+#define qdf_le16_to_cpu(x)                   __qdf_le16_to_cpu(x)
+
+/**
+ * qdf_function - replace with the name of the current function
+ */
+#define qdf_function             __qdf_function
+
+/**
+ * qdf_get_pwr2() - get next power of 2 integer from input value
  * @value: input value to find next power of 2 integer
  *
  * Get next power of 2 integer from input value
  *
  * Return: Power of 2 integer
  */
-CDF_INLINE_FN int cdf_get_pwr2(int value)
+static inline int qdf_get_pwr2(int value)
 {
 	int log2;
-	if (CDF_IS_PWR2(value))
+	if (QDF_IS_PWR2(value))
 		return value;
 
 	log2 = 0;
@@ -352,4 +378,4 @@ CDF_INLINE_FN int cdf_get_pwr2(int value)
 	return 1 << log2;
 }
 
-#endif /*_CDF_UTIL_H*/
+#endif /*_QDF_UTIL_H*/

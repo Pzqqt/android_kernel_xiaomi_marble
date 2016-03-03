@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,93 +26,105 @@
  */
 
 /**
- * DOC: cdf_softirq_timer
+ * DOC: qdf_timer
  * This file abstracts OS timers running in soft IRQ context.
  */
 
-#ifndef _CDF_SOFTIRQ_TIMER_H
-#define _CDF_SOFTIRQ_TIMER_H
+#ifndef _QDF_TIMER_H
+#define _QDF_TIMER_H
 
-#include <cdf_types.h>
-#include <i_cdf_softirq_timer.h>
+#include <qdf_types.h>
+#include <i_qdf_timer.h>
 
 /* Platform timer object */
-typedef __cdf_softirq_timer_t cdf_softirq_timer_t;
+typedef __qdf_timer_t qdf_timer_t;
 
 /**
- * cdf_softirq_timer_init() - initialize a softirq timer
+ * qdf_timer_init() - initialize a timer
  * @hdl: OS handle
  * @timer: Timer object pointer
  * @func: Timer function
  * @arg: Arguement of timer function
  * @type: deferrable or non deferrable timer type
  *
- * Timer type CDF_TIMER_TYPE_SW means its a deferrable sw timer which will
+ * Timer type QDF_TIMER_TYPE_SW means its a deferrable sw timer which will
  * not cause CPU wake upon expiry
- * Timer type CDF_TIMER_TYPE_WAKE_APPS means its a non-deferrable timer which
+ * Timer type QDF_TIMER_TYPE_WAKE_APPS means its a non-deferrable timer which
  * will cause CPU wake up on expiry
  *
  * Return: none
  */
-static inline void
-cdf_softirq_timer_init(cdf_handle_t hdl,
-			cdf_softirq_timer_t *timer,
-			cdf_softirq_timer_func_t func, void *arg,
-			CDF_TIMER_TYPE type)
+static inline void qdf_timer_init(qdf_handle_t hdl, qdf_timer_t *timer,
+				  qdf_timer_func_t func, void *arg,
+				  QDF_TIMER_TYPE type)
 {
-	__cdf_softirq_timer_init(hdl, timer, func, arg, type);
+	__qdf_timer_init(hdl, timer, func, arg, type);
 }
 
 /**
- * cdf_softirq_timer_start() - start a one-shot softirq timer
+ * qdf_timer_start() - start a one-shot timer
  * @timer: Timer object pointer
  * @msec: Expiration period in milliseconds
  *
  * Return: none
  */
 static inline void
-cdf_softirq_timer_start(cdf_softirq_timer_t *timer, int msec)
+qdf_timer_start(qdf_timer_t *timer, int msec)
 {
-	__cdf_softirq_timer_start(timer, msec);
+	__qdf_timer_start(timer, msec);
 }
 
 /**
- * cdf_softirq_timer_mod() - modify existing timer to new timeout value
+ * qdf_timer_mod() - modify existing timer to new timeout value
  * @timer: Timer object pointer
  * @msec: Expiration period in milliseconds
  *
  * Return: none
  */
-static inline void cdf_softirq_timer_mod(cdf_softirq_timer_t *timer, int msec)
+static inline void qdf_timer_mod(qdf_timer_t *timer, int msec)
 {
-	__cdf_softirq_timer_mod(timer, msec);
+	__qdf_timer_mod(timer, msec);
 }
 
 /**
- * cdf_softirq_timer_cancel() - cancel cdf softirq timer
+ * qdf_timer_stop() - cancel qdf timer
  * @timer: Timer object pointer
- * @retval: Timer was cancelled and deactived
- * @retval: Timer was cancelled but already got fired.
+ *
+ * return: bool TRUE Timer was cancelled and deactived
+ * FALSE Timer was cancelled but already got fired.
  *
  * The function will return after any running timer completes.
- *
- * Return: none
  */
-static inline bool cdf_softirq_timer_cancel(cdf_softirq_timer_t *timer)
+static inline bool qdf_timer_stop(qdf_timer_t *timer)
 {
-	return __cdf_softirq_timer_cancel(timer);
+	return __qdf_timer_stop(timer);
 }
+
 
 /**
- * cdf_softirq_timer_free() - free cdf softirq timer
+ * qdf_timer_sync_cancel - Cancel a timer synchronously
+ * The function will return after any running timer completes.
+ * @timer: timer object pointer
+ *
+ * return: bool TRUE timer was cancelled and deactived
+ * FALSE timer was not cancelled
+ */
+static inline bool qdf_timer_sync_cancel(qdf_timer_t *timer)
+{
+	return __qdf_timer_sync_cancel(timer);
+}
+
+
+/**
+ * qdf_timer_free() - free qdf timer
  * @timer: Timer object pointer
  *
  * The function will return after any running timer completes.
  * Return: none
  */
-static inline void cdf_softirq_timer_free(cdf_softirq_timer_t *timer)
+static inline void qdf_timer_free(qdf_timer_t *timer)
 {
-	__cdf_softirq_timer_free(timer);
+	__qdf_timer_free(timer);
 }
 
-#endif
+#endif /* _QDF_TIMER_H */

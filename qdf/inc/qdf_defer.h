@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014, 2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,98 +26,215 @@
  */
 
 /**
- * DOC: cdf_defer.h
- * This file abstracts deferred execution contexts.
+ * DOC: qdf_defer.h
+ * This file abstracts deferred execution API's.
  */
 
-#ifndef __CDF_DEFER_H
-#define __CDF_DEFER_H
+#ifndef __QDF_DEFER_H
+#define __QDF_DEFER_H
 
-#include <cdf_types.h>
-#include <i_cdf_defer.h>
+#include <qdf_types.h>
+#include <i_qdf_defer.h>
 
 /**
- * This implements work queues (worker threads, kernel threads etc.).
+ * TODO This implements work queues (worker threads, kernel threads etc.).
  * Note that there is no cancel on a scheduled work. You cannot free a work
  * item if its queued. You cannot know if a work item is queued or not unless
- * its running, whence you know its not queued.
+ * its running, hence you know its not queued.
  *
  * so if, say, a module is asked to unload itself, how exactly will it make
  * sure that the work's not queued, for OS'es that dont provide such a
  * mechanism??
  */
 
-/* cdf_work_t - representation of a work queue */
-typedef __cdf_work_t cdf_work_t;
+/*
+ * Representation of a work queue.
+ */
+typedef __qdf_work_t     qdf_work_t;
+typedef __qdf_delayed_work_t qdf_delayed_work_t;
+typedef __qdf_workqueue_t     qdf_workqueue_t;
 
-/* cdf_work_t - representation of a bottom half */
-typedef __cdf_bh_t cdf_bh_t;
+/*
+ * Representation of a bottom half.
+ */
+typedef __qdf_bh_t       qdf_bh_t;
 
 /**
- * cdf_create_bh() - this creates the Bottom half deferred handler
- * @hdl:   OS handle
- * @bh:    Bottom instance
- * @func:  Func deferred function to run at bottom half interrupt
- *         context
- * Return: None
+ * qdf_create_bh - creates the bottom half deferred handler
+ * @hdl: os handle
+ * @bh: pointer to bottom
+ * @func: deferred function to run at bottom half interrupt context.
+ * @arg: argument for the deferred function
+ * Return: none
  */
-static inline void
-cdf_create_bh(cdf_handle_t hdl, cdf_bh_t *bh, cdf_defer_fn_t func, void *arg)
+static inline void qdf_create_bh(qdf_handle_t  hdl, qdf_bh_t  *bh,
+				 qdf_defer_fn_t  func, void  *arg)
 {
-	__cdf_init_bh(hdl, bh, func, arg);
+	__qdf_init_bh(hdl, bh, func, arg);
 }
 
 /**
- * cdf_sched_bh() - schedule a bottom half (DPC)
- * @hdl:	OS handle
- * @bh:		Bottom instance
- *
- * Return: None
+ * qdf_sched - schedule a bottom half (DPC)
+ * @hdl: OS handle
+ * @bh: pointer to bottom
+ * Return: none
  */
-static inline void cdf_sched_bh(cdf_handle_t hdl, cdf_bh_t *bh)
+static inline void qdf_sched_bh(qdf_handle_t hdl, qdf_bh_t *bh)
 {
-	__cdf_sched_bh(hdl, bh);
+	__qdf_sched_bh(hdl, bh);
 }
 
 /**
- * cdf_destroy_bh() - destroy a bottom half (DPC)
- * @hdl:	OS handle
- * @bh:		Bottom instance
- *
- * Return: None
+ * qdf_destroy_bh - destroy the bh (synchronous)
+ * @hdl: OS handle
+ * @bh: pointer to bottom
+ * Return: none
  */
-static inline void cdf_destroy_bh(cdf_handle_t hdl, cdf_bh_t *bh)
+static inline void qdf_destroy_bh(qdf_handle_t hdl, qdf_bh_t *bh)
 {
-	__cdf_disable_bh(hdl, bh);
+	__qdf_disable_bh(hdl, bh);
 }
 
 /*********************Non-Interrupt Context deferred Execution***************/
 
 /**
- * cdf_create_work() - create a work/task queue, This runs in non-interrupt
- *		       context, so can be preempted by H/W & S/W intr
- * @work:	Work instance
- * @func:	Deferred function to run at bottom half non-interrupt
- *		context
- * @arg:	Argument for the deferred function
- *
- * Return: None
+ * qdf_create_work - create a work/task queue, This runs in non-interrupt
+ * context, so can be preempted by H/W & S/W intr
+ * @hdl: OS handle
+ * @work: pointer to work
+ * @func: deferred function to run at bottom half non-interrupt context.
+ * @arg: argument for the deferred function
+ * Return: none
  */
-static inline void
-cdf_create_work(cdf_work_t *work,
-		cdf_defer_fn_t func, void *arg)
+static inline void qdf_create_work(qdf_handle_t hdl, qdf_work_t  *work,
+				   qdf_defer_fn_t  func, void  *arg)
 {
-	__cdf_init_work(work, func, arg);
+	__qdf_init_work(hdl, work, func, arg);
 }
 
 /**
- * cdf_sched_work() - schedule a deferred task on non-interrupt context
- * @work:	Work instance
- *
- * Return: None
+ * qdf_create_delayed_work - create a delayed work/task, This runs in
+ * non-interrupt context, so can be preempted by H/W & S/W intr
+ * @hdl: OS handle
+ * @work: pointer to work
+ * @func: deferred function to run at bottom half non-interrupt context.
+ * @arg: argument for the deferred function
+ * Return: none
  */
-static inline void cdf_schedule_work(cdf_work_t *work)
+static inline void qdf_create_delayed_work(qdf_handle_t hdl,
+					   qdf_delayed_work_t  *work,
+					   qdf_defer_fn_t  func, void  *arg)
 {
-	__cdf_schedule_work(work);
+	__qdf_init_delayed_work(hdl, work, func, arg);
 }
-#endif /*__CDF_DEFER_H*/
+
+/**
+ * qdf_create_workqueue - create a workqueue, This runs in non-interrupt
+ * context, so can be preempted by H/W & S/W intr
+ * @name: string
+ * Return: pointer of type qdf_workqueue_t
+ */
+static inline qdf_workqueue_t *qdf_create_workqueue(char *name)
+{
+	return  __qdf_create_workqueue(name);
+}
+
+/**
+ * qdf_queue_work - Queue the work/task
+ * @hdl: OS handle
+ * @wqueue: pointer to workqueue
+ * @work: pointer to work
+ * Return: none
+ */
+static inline void
+qdf_queue_work(qdf_handle_t hdl, qdf_workqueue_t *wqueue, qdf_work_t *work)
+{
+	return  __qdf_queue_work(hdl, wqueue, work);
+}
+
+/**
+ * qdf_queue_delayed_work - Queue the delayed work/task
+ * @hdl: OS handle
+ * @wqueue: pointer to workqueue
+ * @work: pointer to work
+ * @delay: delay interval
+ * Return: none
+ */
+static inline void qdf_queue_delayed_work(qdf_handle_t hdl,
+					  qdf_workqueue_t *wqueue,
+					  qdf_delayed_work_t *work,
+					  uint32_t delay)
+{
+	return  __qdf_queue_delayed_work(hdl, wqueue, work, delay);
+}
+
+/**
+ * qdf_flush_workqueue - flush the workqueue
+ * @hdl: OS handle
+ * @wqueue: pointer to workqueue
+ * Return: none
+ */
+static inline void qdf_flush_workqueue(qdf_handle_t hdl,
+				       qdf_workqueue_t *wqueue)
+{
+	return  __qdf_flush_workqueue(hdl, wqueue);
+}
+
+/**
+ * qdf_destroy_workqueue - Destroy the workqueue
+ * @hdl: OS handle
+ * @wqueue: pointer to workqueue
+ * Return: none
+ */
+static inline void qdf_destroy_workqueue(qdf_handle_t hdl,
+					 qdf_workqueue_t *wqueue)
+{
+	return  __qdf_destroy_workqueue(hdl, wqueue);
+}
+
+/**
+ * qdf_sched_work - Schedule a deferred task on non-interrupt context
+ * @hdl: OS handle
+ * @work: pointer to work
+ * Retrun: none
+ */
+static inline void qdf_sched_work(qdf_handle_t hdl, qdf_work_t *work)
+{
+	__qdf_sched_work(hdl, work);
+}
+
+/**
+ * qdf_flush_work - Flush a deferred task on non-interrupt context
+ * @hdl: OS handle
+ * @work: pointer to work
+ * Return: none
+ */
+static inline void qdf_flush_work(qdf_handle_t hdl, qdf_work_t *work)
+{
+	__qdf_flush_work(hdl, work);
+}
+
+/**
+ * qdf_disable_work - disable the deferred task (synchronous)
+ * @hdl: OS handle
+ * @work: pointer to work
+ * Return: unsigned int
+ */
+static inline uint32_t qdf_disable_work(qdf_handle_t hdl, qdf_work_t *work)
+{
+	return __qdf_disable_work(hdl, work);
+}
+
+
+/**
+ * qdf_destroy_work - destroy the deferred task (synchronous)
+ * @hdl: OS handle
+ * @work: pointer to work
+ * Return: none
+ */
+static inline void qdf_destroy_work(qdf_handle_t hdl, qdf_work_t *work)
+{
+	__qdf_disable_work(hdl, work);
+}
+
+#endif /*_QDF_DEFER_H*/

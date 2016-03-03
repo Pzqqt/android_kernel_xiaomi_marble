@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2012-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,39 +26,43 @@
  */
 
 /**
- * DOC: qdf_event.h
- * This file provides OS abstraction for event APIs.
+ * DOC: i_qdf_module.h
+ * Linux-specific definitions for QDF module API's
  */
 
-#if !defined(__QDF_EVENT_H)
-#define __QDF_EVENT_H
+#include <linux/module.h>
+#include <qdf_perf.h>
 
-/* Include Files */
-#include "qdf_status.h"
-#include <qdf_types.h>
-#include <i_qdf_event.h>
-#include <qdf_trace.h>
+MODULE_AUTHOR("Qualcomm Atheros Inc.");
+MODULE_DESCRIPTION("Qualcomm Atheros Device Framework Module");
+MODULE_LICENSE("Dual BSD/GPL");
 
-/* Preprocessor definitions and constants */
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+#ifndef EXPORT_SYMTAB
+#define EXPORT_SYMTAB
+#endif
 
-typedef __qdf_event_t qdf_event_t;
-/* Function declarations and documenation */
-
-QDF_STATUS qdf_event_create(qdf_event_t *event);
-
-QDF_STATUS qdf_event_set(qdf_event_t *event);
-
-QDF_STATUS qdf_event_reset(qdf_event_t *event);
-
-QDF_STATUS qdf_event_destroy(qdf_event_t *event);
-
-QDF_STATUS qdf_wait_single_event(qdf_event_t *event,
-				 uint32_t timeout);
-
-#ifdef __cplusplus
+/**
+ * qdf_mod_init() - module initialization
+ *
+ * Return: int
+ */
+static int __init
+qdf_mod_init(void)
+{
+	qdf_perfmod_init();
+	return 0;
 }
-#endif /* __cplusplus */
-#endif /* __QDF_EVENT_H */
+module_init(qdf_mod_init);
+
+/**
+ * qdf_mod_exit() - module remove
+ *
+ * Return: int
+ */
+static void __exit
+qdf_mod_exit(void)
+{
+	qdf_perfmod_exit();
+}
+module_exit(qdf_mod_exit);
+

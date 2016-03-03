@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,62 +26,58 @@
  */
 
 /**
- * DOC:  cdf_threads
- *
- * Connectivity driver framework (CDF) thread APIs
- *
+ * DOC: qdf_threads
+ * QCA driver framework (QDF) thread APIs
  */
 
 /* Include Files */
-#include <cdf_threads.h>
-#include <cdf_trace.h>
+#include <qdf_threads.h>
+#include <qdf_types.h>
+#include <qdf_trace.h>
 #include <linux/jiffies.h>
 #include <linux/sched.h>
 #include <linux/delay.h>
 #include <linux/interrupt.h>
 
-/* Preprocessor definitions and constants */
-
-/* Type declarations */
-
 /* Function declarations and documenation */
 
 /**
- *  cdf_sleep() - sleep
- *  @msInterval : Number of milliseconds to suspend the current thread.
+ *  qdf_sleep() - sleep
+ *  @ms_interval : Number of milliseconds to suspend the current thread.
  *  A value of 0 may or may not cause the current thread to yield.
  *
  *  This function suspends the execution of the current thread
  *  until the specified time out interval elapses.
  *
- *  Return: nothing
+ *  Return: none
  */
-void cdf_sleep(uint32_t msInterval)
+void qdf_sleep(uint32_t ms_interval)
 {
 	if (in_interrupt()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		return;
 	}
-	msleep_interruptible(msInterval);
+	msleep_interruptible(ms_interval);
 }
+EXPORT_SYMBOL(qdf_sleep);
 
 /**
- *  cdf_sleep_us() - sleep
- *  @usInterval : Number of microseconds to suspend the current thread.
+ *  qdf_sleep_us() - sleep
+ *  @us_interval : Number of microseconds to suspend the current thread.
  *  A value of 0 may or may not cause the current thread to yield.
  *
  *  This function suspends the execution of the current thread
  *  until the specified time out interval elapses.
  *
- *  Return : nothing
+ *  Return : none
  */
-void cdf_sleep_us(uint32_t usInterval)
+void qdf_sleep_us(uint32_t us_interval)
 {
-	unsigned long timeout = usecs_to_jiffies(usInterval) + 1;
+	unsigned long timeout = usecs_to_jiffies(us_interval) + 1;
 	if (in_interrupt()) {
-		CDF_TRACE(CDF_MODULE_ID_CDF, CDF_TRACE_LEVEL_ERROR,
+		QDF_TRACE(QDF_MODULE_ID_QDF, QDF_TRACE_LEVEL_ERROR,
 			  "%s cannot be called from interrupt context!!!",
 			  __func__);
 		return;
@@ -90,18 +86,20 @@ void cdf_sleep_us(uint32_t usInterval)
 	while (timeout && !signal_pending(current))
 		timeout = schedule_timeout_interruptible(timeout);
 }
+EXPORT_SYMBOL(qdf_sleep_us);
 
 /**
- *  cdf_busy_wait() - busy wait
- *  @usInterval : Number of microseconds to busy wait.
+ *  qdf_busy_wait() - busy wait
+ *  @us_interval : Number of microseconds to busy wait.
  *
  *  This function places the current thread in busy wait until the specified
  *  time out interval elapses. If the interval is greater than 50us on WM, the
  *  behaviour is undefined.
  *
- *  Return : nothing
+ *  Return : none
  */
-void cdf_busy_wait(uint32_t usInterval)
+void qdf_busy_wait(uint32_t us_interval)
 {
-	udelay(usInterval);
+	udelay(us_interval);
 }
+EXPORT_SYMBOL(qdf_busy_wait);

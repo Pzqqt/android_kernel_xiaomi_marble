@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2010-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,39 +26,38 @@
  */
 
 /**
- * DOC: qdf_event.h
- * This file provides OS abstraction for event APIs.
+ * DOC: i_qdf_module.h
+ * Linux-specific definitions for QDF module API's
  */
 
-#if !defined(__QDF_EVENT_H)
-#define __QDF_EVENT_H
+#ifndef _I_QDF_MODULE_H
+#define _I_QDF_MODULE_H
 
-/* Include Files */
-#include "qdf_status.h"
+#include <linux/version.h>
+#include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <qdf_types.h>
-#include <i_qdf_event.h>
-#include <qdf_trace.h>
 
-/* Preprocessor definitions and constants */
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
 
-typedef __qdf_event_t qdf_event_t;
-/* Function declarations and documenation */
+#define __qdf_virt_module_init(_x)  \
+	static int _x##_mod(void) \
+	{                   \
+		uint32_t st;  \
+		st = (_x)();         \
+		if (st != QDF_STATUS_SUCCESS)  \
+			return QDF_STATUS_E_INVAL;            \
+		else                    \
+			return 0;             \
+	}                           \
+	module_init(_x##_mod);
 
-QDF_STATUS qdf_event_create(qdf_event_t *event);
+#define __qdf_virt_module_exit(_x)  module_exit(_x)
 
-QDF_STATUS qdf_event_set(qdf_event_t *event);
+#define __qdf_virt_module_name(_name) MODULE_LICENSE("Proprietary");
 
-QDF_STATUS qdf_event_reset(qdf_event_t *event);
+#define __qdf_export_symbol(_sym) EXPORT_SYMBOL(_sym)
 
-QDF_STATUS qdf_event_destroy(qdf_event_t *event);
+#define __qdf_declare_param(_name, _type) \
+	module_param(_name, _type, 0600)
 
-QDF_STATUS qdf_wait_single_event(qdf_event_t *event,
-				 uint32_t timeout);
-
-#ifdef __cplusplus
-}
-#endif /* __cplusplus */
-#endif /* __QDF_EVENT_H */
+#endif /* _I_QDF_MODULE_H */

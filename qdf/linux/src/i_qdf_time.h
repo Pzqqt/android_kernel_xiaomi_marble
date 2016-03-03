@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2014-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2014-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,13 +26,12 @@
  */
 
 /**
- * DOC: i_cdf_time.h
- *
- * Linux specific CDF timing APIs implementation
+ * DOC: i_qdf_time
+ * This file provides OS dependent time API's.
  */
 
-#ifndef _I_CDF_TIME_H
-#define _I_CDF_TIME_H
+#ifndef _I_QDF_TIME_H
+#define _I_QDF_TIME_H
 
 #include <linux/jiffies.h>
 #include <linux/delay.h>
@@ -41,150 +40,146 @@
 #include <net/cnss.h>
 #endif
 
-typedef unsigned long __cdf_time_t;
+typedef unsigned long __qdf_time_t;
 
 /**
- * __cdf_system_ticks() - get system ticks
+ * __qdf_system_ticks() - get system ticks
  *
  * Return: system tick in jiffies
  */
-static inline __cdf_time_t __cdf_system_ticks(void)
+static inline __qdf_time_t __qdf_system_ticks(void)
 {
 	return jiffies;
 }
 
 /**
- * __cdf_system_ticks_to_msecs() - convert system ticks into milli seconds
+ * __qdf_system_ticks_to_msecs() - convert system ticks into milli seconds
  * @ticks: System ticks
  *
  * Return: system tick converted into milli seconds
  */
-static inline uint32_t __cdf_system_ticks_to_msecs(unsigned long ticks)
+static inline uint32_t __qdf_system_ticks_to_msecs(unsigned long ticks)
 {
 	return jiffies_to_msecs(ticks);
 }
 
 /**
- * __cdf_system_msecs_to_ticks() - convert milli seconds into system ticks
+ * __qdf_system_msecs_to_ticks() - convert milli seconds into system ticks
  * @msecs: Milli seconds
  *
  * Return: milli seconds converted into system ticks
  */
-static inline __cdf_time_t __cdf_system_msecs_to_ticks(uint32_t msecs)
+static inline __qdf_time_t __qdf_system_msecs_to_ticks(uint32_t msecs)
 {
 	return msecs_to_jiffies(msecs);
 }
 
 /**
- * __cdf_get_system_uptime() - get system uptime
+ * __qdf_get_system_uptime() - get system uptime
  *
  * Return: system uptime in jiffies
  */
-static inline __cdf_time_t __cdf_get_system_uptime(void)
+static inline __qdf_time_t __qdf_get_system_uptime(void)
 {
 	return jiffies;
 }
 
-static inline __cdf_time_t __cdf_get_system_timestamp(void)
+static inline __qdf_time_t __qdf_get_system_timestamp(void)
 {
 	return (jiffies / HZ) * 1000 + (jiffies % HZ) * (1000 / HZ);
 }
 
+#ifdef CONFIG_ARM
 /**
- * __cdf_udelay() - delay execution for given microseconds
+ * __qdf_udelay() - delay execution for given microseconds
  * @usecs: Micro seconds to delay
  *
  * Return: none
  */
-static inline void __cdf_udelay(uint32_t usecs)
+static inline void __qdf_udelay(uint32_t usecs)
 {
-#ifdef CONFIG_ARM
 	/*
 	 * This is in support of XScale build.  They have a limit on the udelay
 	 * value, so we have to make sure we don't approach the limit
 	 */
-
 	uint32_t mticks;
 	uint32_t leftover;
 	int i;
-
 	/* slice into 1024 usec chunks (simplifies calculation) */
-
 	mticks = usecs >> 10;
 	leftover = usecs - (mticks << 10);
-
 	for (i = 0; i < mticks; i++)
 		udelay(1024);
-
 	udelay(leftover);
-
+}
 #else
+static inline void __qdf_udelay(uint32_t usecs)
+{
 	/* Normal Delay functions. Time specified in microseconds */
 	udelay(usecs);
-
-#endif
 }
+#endif
 
 /**
- * __cdf_mdelay() - delay execution for given milli seconds
- * @usecs: Milli seconds to delay
+ * __qdf_mdelay() - delay execution for given milliseconds
+ * @usecs: Milliseconds to delay
  *
  * Return: none
  */
-static inline void __cdf_mdelay(uint32_t msecs)
+static inline void __qdf_mdelay(uint32_t msecs)
 {
 	mdelay(msecs);
 }
 
 /**
- * __cdf_system_time_after() - Check if a is later than b
+ * __qdf_system_time_after() - Check if a is later than b
  * @a: Time stamp value a
  * @b: Time stamp value b
  *
  * Return:
- *	true if a < b else false
+ * true if a < b else false
  */
-static inline bool __cdf_system_time_after(__cdf_time_t a, __cdf_time_t b)
+static inline bool __qdf_system_time_after(__qdf_time_t a, __qdf_time_t b)
 {
 	return (long)(b) - (long)(a) < 0;
 }
 
 /**
- * __cdf_system_time_before() - Check if a is before b
+ * __qdf_system_time_before() - Check if a is before b
  * @a: Time stamp value a
  * @b: Time stamp value b
  *
  * Return:
- *	true if a is before b else false
+ * true if a is before b else false
  */
-static inline bool __cdf_system_time_before(__cdf_time_t a, __cdf_time_t b)
+static inline bool __qdf_system_time_before(__qdf_time_t a, __qdf_time_t b)
 {
-	return __cdf_system_time_after(b, a);
+	return __qdf_system_time_after(b, a);
 }
 
 /**
- * __cdf_system_time_before() - Check if a atleast as recent as b, if not
- *				later
+ * __qdf_system_time_after_eq() - Check if a atleast as recent as b, if not
+ * later
  * @a: Time stamp value a
  * @b: Time stamp value b
  *
  * Return:
- *	true if a >= b else false
+ * true if a >= b else false
  */
-static inline bool __cdf_system_time_after_eq(__cdf_time_t a, __cdf_time_t b)
+static inline bool __qdf_system_time_after_eq(__qdf_time_t a, __qdf_time_t b)
 {
 	return (long)(a) - (long)(b) >= 0;
 }
 
 /**
- * __cdf_get_monotonic_boottime() - get monotonic kernel boot time
- * This API is similar to cdf_get_system_boottime but it includes
+ * __qdf_get_monotonic_boottime() - get monotonic kernel boot time
+ * This API is similar to qdf_get_system_boottime but it includes
  * time spent in suspend.
  *
  * Return: Time in microseconds
  */
 #ifdef CONFIG_CNSS
-static inline uint64_t __cdf_get_monotonic_boottime(void)
+static inline uint64_t __qdf_get_monotonic_boottime(void)
 {
 	struct timespec ts;
 
@@ -193,24 +188,49 @@ static inline uint64_t __cdf_get_monotonic_boottime(void)
 	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
 }
 #else
-static inline uint64_t __cdf_get_monotonic_boottime(void)
+static inline uint64_t __qdf_get_monotonic_boottime(void)
 {
-	return __cdf_system_ticks_to_msecs(__cdf_system_ticks()) * 1000;
+	return __qdf_system_ticks_to_msecs(__qdf_system_ticks()) * 1000;
 }
 #endif /* CONFIG_CNSS */
 
 #ifdef QCA_WIFI_3_0_ADRASTEA
+
 /**
- * __cdf_get_qtimer_ticks() - get QTIMER ticks
+ * __qdf_get_log_timestamp() - get QTIMER ticks
  *
  * Returns QTIMER(19.2 MHz) clock ticks. To convert it into seconds
  * divide it by 19200.
  *
  * Return: QTIMER(19.2 MHz) clock ticks
  */
-static inline uint64_t __cdf_get_qtimer_ticks(void)
+static inline uint64_t __qdf_get_log_timestamp(void)
 {
 	return arch_counter_get_cntpct();
+}
+#else
+
+/**
+ * __qdf_get_log_timestamp - get time stamp for logging
+ * For adrastea this API returns QTIMER tick which is needed to synchronize
+ * host and fw log timestamps
+ * For ROME and other discrete solution this API returns system boot time stamp
+ *
+ * Return:
+ * QTIMER ticks(19.2MHz) for adrastea
+ * System tick for rome and other future discrete solutions
+ */
+static inline uint64_t __qdf_get_log_timestamp(void)
+{
+#ifdef CONFIG_CNSS
+	struct timespec ts;
+
+	cnss_get_boottime(&ts);
+
+	return ((uint64_t) ts.tv_sec * 1000000) + (ts.tv_nsec / 1000);
+#else
+	return __qdf_system_ticks_to_msecs(__qdf_system_ticks()) * 1000;
+#endif /* CONFIG_CNSS */
 }
 #endif /* QCA_WIFI_3_0_ADRASTEA */
 

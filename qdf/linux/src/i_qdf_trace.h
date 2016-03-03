@@ -26,39 +26,69 @@
  */
 
 /**
- * DOC: qdf_event.h
- * This file provides OS abstraction for event APIs.
+ * DOC: i_qdf_trace.h
+ *
+ * Linux-specific definitions for QDF trace
+ *
  */
 
-#if !defined(__QDF_EVENT_H)
-#define __QDF_EVENT_H
+#if !defined(__I_QDF_TRACE_H)
+#define __I_QDF_TRACE_H
+
+#if !defined(__printf)
+#define __printf(a, b)
+#endif
 
 /* Include Files */
-#include "qdf_status.h"
-#include <qdf_types.h>
-#include <i_qdf_event.h>
-#include <qdf_trace.h>
+#include <cds_packet.h>
 
-/* Preprocessor definitions and constants */
-#ifdef __cplusplus
-extern "C" {
-#endif /* __cplusplus */
+#define QDF_ENABLE_TRACING
 
-typedef __qdf_event_t qdf_event_t;
-/* Function declarations and documenation */
+#ifdef QDF_ENABLE_TRACING
 
-QDF_STATUS qdf_event_create(qdf_event_t *event);
+#define QDF_ASSERT(_condition) \
+	do { \
+		if (!(_condition)) { \
+			pr_err("QDF ASSERT in %s Line %d\n", \
+			       __func__, __LINE__); \
+			WARN_ON(1); \
+		} \
+	} while (0)
 
-QDF_STATUS qdf_event_set(qdf_event_t *event);
+#else
 
-QDF_STATUS qdf_event_reset(qdf_event_t *event);
-
-QDF_STATUS qdf_event_destroy(qdf_event_t *event);
-
-QDF_STATUS qdf_wait_single_event(qdf_event_t *event,
-				 uint32_t timeout);
-
-#ifdef __cplusplus
+/* This code will be used for compilation if tracing is to be compiled out */
+/* of the code so these functions/macros are 'do nothing' */
+static inline void qdf_trace_msg(QDF_MODULE_ID module, ...)
+{
 }
-#endif /* __cplusplus */
-#endif /* __QDF_EVENT_H */
+
+#define QDF_ASSERT(_condition)
+
+#endif
+
+#ifdef PANIC_ON_BUG
+
+#define QDF_BUG(_condition) \
+	do { \
+		if (!(_condition)) { \
+			pr_err("QDF BUG in %s Line %d\n", \
+			       __func__, __LINE__); \
+			BUG_ON(1); \
+		} \
+	} while (0)
+
+#else
+
+#define QDF_BUG(_condition) \
+	do { \
+		if (!(_condition)) { \
+			pr_err("QDF BUG in %s Line %d\n", \
+			       __func__, __LINE__); \
+			WARN_ON(1); \
+		} \
+	} while (0)
+
+#endif
+
+#endif /* __I_QDF_TRACE_H */
