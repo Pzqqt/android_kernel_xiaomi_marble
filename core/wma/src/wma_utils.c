@@ -3379,11 +3379,9 @@ uint32_t wma_get_vht_ch_width(void)
 	if (NULL == wm_hdl)
 		return fw_ch_wd;
 
-	if (wm_hdl->vht_cap_info &
-	    IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160MHZ)
+	if (wm_hdl->vht_cap_info & WMI_VHT_CAP_CH_WIDTH_160MHZ)
 		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_160MHZ;
-	else if (wm_hdl->vht_cap_info &
-		 IEEE80211_VHT_CAP_SUPP_CHAN_WIDTH_160_80PLUS80MHZ)
+	else if (wm_hdl->vht_cap_info & WMI_VHT_CAP_CH_WIDTH_80P80_160MHZ)
 		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
 
 	return fw_ch_wd;
