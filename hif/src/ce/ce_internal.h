@@ -76,7 +76,7 @@ struct CE_ring_state {
 
 	/* Start of DMA-coherent area reserved for descriptors */
 	void *base_addr_owner_space_unaligned;  /* Host address space */
-	cdf_dma_addr_t base_addr_CE_space_unaligned; /* CE address space */
+	qdf_dma_addr_t base_addr_CE_space_unaligned; /* CE address space */
 
 	/*
 	 * Actual start of descriptors.
@@ -84,7 +84,7 @@ struct CE_ring_state {
 	 * Points into reserved DMA-coherent area, above.
 	 */
 	void *base_addr_owner_space;    /* Host address space */
-	cdf_dma_addr_t base_addr_CE_space;   /* CE address space */
+	qdf_dma_addr_t base_addr_CE_space;   /* CE address space */
 	/*
 	 * Start of shadow copy of descriptors, within regular memory.
 	 * Aligned to descriptor-size boundary.
@@ -130,7 +130,7 @@ struct CE_state {
 	struct CE_ring_state *dest_ring;
 	atomic_t rx_pending;
 
-	cdf_spinlock_t ce_index_lock;
+	qdf_spinlock_t ce_index_lock;
 	bool force_break;	/* Flag to indicate whether to
 				 * break out the DPC context */
 
@@ -139,7 +139,7 @@ struct CE_state {
 					 * DPC routine */
 	/* epping */
 	bool timer_inited;
-	cdf_softirq_timer_t poll_timer;
+	qdf_timer_t poll_timer;
 	void (*lro_flush_cb)(void *);
 	void *lro_data;
 };
@@ -149,11 +149,11 @@ struct CE_state {
 
 #ifdef QCA_WIFI_3_0
 #define HIF_CE_DESC_ADDR_TO_DMA(desc) \
-	(cdf_dma_addr_t)(((uint64_t)(desc)->buffer_addr + \
+	(qdf_dma_addr_t)(((uint64_t)(desc)->buffer_addr + \
 	((uint64_t)((desc)->buffer_addr_hi & 0x1F) << 32)))
 #else
 #define HIF_CE_DESC_ADDR_TO_DMA(desc) \
-	(cdf_dma_addr_t)((desc)->buffer_addr)
+	(qdf_dma_addr_t)((desc)->buffer_addr)
 #endif
 
 #ifdef QCA_WIFI_3_0

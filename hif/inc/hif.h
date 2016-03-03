@@ -36,8 +36,8 @@ extern "C" {
 #include "athdefs.h"
 #include "a_types.h"
 #include "osapi_linux.h"
-#include "cdf_status.h"
-#include "cdf_nbuf.h"
+#include <qdf_status.h>
+#include "qdf_nbuf.h"
 #include "ol_if_athvar.h"
 #include <linux/platform_device.h>
 #ifdef HIF_PCI
@@ -259,8 +259,8 @@ void hif_detach_htc(struct hif_opaque_softc *scn);
 /*
  * API to handle HIF-specific BMI message exchanges, this API is synchronous
  * and only allowed to be called from a context that can block (sleep) */
-CDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
-				cdf_dma_addr_t cmd, cdf_dma_addr_t rsp,
+QDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
+				qdf_dma_addr_t cmd, qdf_dma_addr_t rsp,
 				uint8_t *pSendMessage, uint32_t Length,
 				uint8_t *pResponseMessage,
 				uint32_t *pResponseLength, uint32_t TimeoutMS);
@@ -275,9 +275,9 @@ CDF_STATUS hif_exchange_bmi_msg(struct hif_opaque_softc *scn,
  *
  * hif_diag_read_mem reads an arbitrary length of arbitrarily aligned memory.
  */
-CDF_STATUS hif_diag_read_access(struct hif_opaque_softc *scn, uint32_t address,
+QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *scn, uint32_t address,
 			 uint32_t *data);
-CDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn, uint32_t address,
+QDF_STATUS hif_diag_read_mem(struct hif_opaque_softc *scn, uint32_t address,
 		      uint8_t *data, int nbytes);
 void hif_dump_target_memory(struct hif_opaque_softc *scn, void *ramdump_base,
 			    uint32_t address, uint32_t size);
@@ -292,9 +292,9 @@ void hif_dump_target_memory(struct hif_opaque_softc *scn, void *ramdump_base,
  *
  * hif_diag_write_mem writes an arbitrary length of arbitrarily aligned memory.
  */
-CDF_STATUS hif_diag_write_access(struct hif_opaque_softc *scn, uint32_t address,
+QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *scn, uint32_t address,
 				 uint32_t data);
-CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
+QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *scn, uint32_t address,
 		       uint8_t *data, int nbytes);
 
 /*
@@ -379,9 +379,9 @@ void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int);
 
 #ifdef IPA_OFFLOAD
 void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
-			     cdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
-			     cdf_dma_addr_t *ce_reg_paddr);
+			     qdf_dma_addr_t *ce_reg_paddr);
 #else
 /**
  * hif_ipa_get_ce_resource() - get uc resource on hif
@@ -397,9 +397,9 @@ void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
  * Return: None
  */
 static inline void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
-			     cdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
-			     cdf_dma_addr_t *ce_reg_paddr)
+			     qdf_dma_addr_t *ce_reg_paddr)
 {
 	return;
 }
@@ -411,13 +411,13 @@ static inline void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
 struct hif_msg_callbacks {
 	void *Context;
 	/**< context meaningful to HTC */
-	CDF_STATUS (*txCompletionHandler)(void *Context, cdf_nbuf_t wbuf,
+	QDF_STATUS (*txCompletionHandler)(void *Context, qdf_nbuf_t wbuf,
 					uint32_t transferID,
 					uint32_t toeplitz_hash_result);
-	CDF_STATUS (*rxCompletionHandler)(void *Context, cdf_nbuf_t wbuf,
+	QDF_STATUS (*rxCompletionHandler)(void *Context, qdf_nbuf_t wbuf,
 					uint8_t pipeID);
 	void (*txResourceAvailHandler)(void *context, uint8_t pipe);
-	void (*fwEventHandler)(void *context, CDF_STATUS status);
+	void (*fwEventHandler)(void *context, QDF_STATUS status);
 };
 
 #define HIF_DATA_ATTR_SET_TX_CLASSIFY(attr, v) \
@@ -443,13 +443,13 @@ typedef struct device hif_bus_id;
 
 void hif_post_init(struct hif_opaque_softc *scn, void *hHTC,
 		   struct hif_msg_callbacks *callbacks);
-CDF_STATUS hif_start(struct hif_opaque_softc *scn);
+QDF_STATUS hif_start(struct hif_opaque_softc *scn);
 void hif_stop(struct hif_opaque_softc *scn);
 void hif_flush_surprise_remove(struct hif_opaque_softc *scn);
 void hif_dump(struct hif_opaque_softc *scn, uint8_t CmdId, bool start);
-CDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
+QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
 				  uint32_t transferID, uint32_t nbytes,
-				  cdf_nbuf_t wbuf, uint32_t data_attr);
+				  qdf_nbuf_t wbuf, uint32_t data_attr);
 void hif_send_complete_check(struct hif_opaque_softc *scn, uint8_t PipeID,
 			     int force);
 void hif_cancel_deferred_target_sleep(struct hif_opaque_softc *scn);
@@ -473,13 +473,13 @@ void hif_reset_soc(struct hif_opaque_softc *scn);
 void hif_disable_aspm(struct hif_opaque_softc *);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 				      int htc_endpoint);
-struct hif_opaque_softc *hif_open(cdf_device_t cdf_ctx, uint32_t mode,
-				  enum ath_hal_bus_type bus_type,
+struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
+				  enum qdf_bus_type bus_type,
 				  struct hif_callbacks *cbk);
 void hif_close(struct hif_opaque_softc *hif_ctx);
-CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
+QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		      void *bdev, const hif_bus_id *bid,
-		      enum ath_hal_bus_type bus_type,
+		      enum qdf_bus_type bus_type,
 		      enum hif_enable_type type);
 void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type);
 void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx);

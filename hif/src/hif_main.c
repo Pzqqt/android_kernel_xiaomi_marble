@@ -30,9 +30,10 @@
 #include "athdefs.h"
 #include "osapi_linux.h"
 #include "targcfg.h"
-#include "cdf_lock.h"
-#include "cdf_status.h"
-#include <cdf_atomic.h>         /* cdf_atomic_read */
+#include "qdf_lock.h"
+#include "qdf_status.h"
+#include "qdf_status.h"
+#include <qdf_atomic.h>         /* qdf_atomic_read */
 #include <targaddrs.h>
 #include <bmi_msg.h>
 #include "hif_io32.h"
@@ -45,8 +46,8 @@
 #include "hif_hw_version.h"
 #include "ce_api.h"
 #include "ce_tasklet.h"
-#include "cdf_trace.h"
-#include "cdf_status.h"
+#include "qdf_trace.h"
+#include "qdf_status.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
@@ -193,7 +194,7 @@ static inline void hif_fw_event_handler(struct HIF_CE_state *hif_state)
 		return;
 
 	msg_callbacks->fwEventHandler(msg_callbacks->Context,
-			CDF_STATUS_E_FAILURE);
+			QDF_STATUS_E_FAILURE);
 }
 
 /**
@@ -279,7 +280,7 @@ void *hif_get_targetdef(struct hif_opaque_softc *hif_ctx)
 void hif_vote_link_down(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	CDF_BUG(scn);
+	QDF_BUG(scn);
 
 	scn->linkstate_vote--;
 	if (scn->linkstate_vote == 0)
@@ -300,7 +301,7 @@ void hif_vote_link_down(struct hif_opaque_softc *hif_ctx)
 void hif_vote_link_up(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	CDF_BUG(scn);
+	QDF_BUG(scn);
 
 	scn->linkstate_vote++;
 	if (scn->linkstate_vote == 1)
@@ -322,7 +323,7 @@ void hif_vote_link_up(struct hif_opaque_softc *hif_ctx)
 bool hif_can_suspend_link(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	CDF_BUG(scn);
+	QDF_BUG(scn);
 
 	return scn->linkstate_vote == 0;
 }
@@ -381,14 +382,14 @@ bool hif_max_num_receives_reached(struct hif_softc *scn, unsigned int count)
 
 /**
  * init_buffer_count() - initial buffer count
- * @maxSize: cdf_size_t
+ * @maxSize: qdf_size_t
  *
  * routine to modify the initial buffer count to be allocated on an os
  * platform basis. Platform owner will need to modify this as needed
  *
- * Return: cdf_size_t
+ * Return: qdf_size_t
  */
-cdf_size_t init_buffer_count(cdf_size_t maxSize)
+qdf_size_t init_buffer_count(qdf_size_t maxSize)
 {
 	return maxSize;
 }
@@ -453,7 +454,7 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 
 /**
  * hif_open(): hif_open
- * @cdf_ctx: CDF Context
+ * @qdf_ctx: QDF Context
  * @mode: Driver Mode
  * @bus_type: Bus Type
  * @cbk: CDS Callbacks
@@ -462,35 +463,35 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
  *
  * Return: HIF Opaque Pointer
  */
-struct hif_opaque_softc *hif_open(cdf_device_t cdf_ctx, uint32_t mode,
-				  enum ath_hal_bus_type bus_type,
+struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
+				  enum qdf_bus_type bus_type,
 				  struct hif_callbacks *cbk)
 {
 	struct hif_softc *scn;
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	int bus_context_size = hif_bus_get_context_size();
 
-	scn = (struct hif_softc *)cdf_mem_malloc(bus_context_size);
+	scn = (struct hif_softc *)qdf_mem_malloc(bus_context_size);
 	if (!scn) {
 		HIF_ERROR("%s: cannot alloc memory for HIF context of size:%d",
 						__func__, bus_context_size);
 		return GET_HIF_OPAQUE_HDL(scn);
 	}
 
-	cdf_mem_zero(scn, bus_context_size);
+	qdf_mem_zero(scn, bus_context_size);
 
-	scn->cdf_dev = cdf_ctx;
+	scn->qdf_dev = qdf_ctx;
 	scn->hif_con_param = mode;
-	cdf_atomic_init(&scn->active_tasklet_cnt);
-	cdf_atomic_init(&scn->link_suspended);
-	cdf_atomic_init(&scn->tasklet_from_intr);
-	cdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_callbacks));
+	qdf_atomic_init(&scn->active_tasklet_cnt);
+	qdf_atomic_init(&scn->link_suspended);
+	qdf_atomic_init(&scn->tasklet_from_intr);
+	qdf_mem_copy(&scn->callbacks, cbk, sizeof(struct hif_callbacks));
 
 	status = hif_bus_open(scn, bus_type);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hif_bus_open error = %d, bus_type = %d",
 				  __func__, status, bus_type);
-		cdf_mem_free(scn);
+		qdf_mem_free(scn);
 		scn = NULL;
 	}
 
@@ -518,7 +519,7 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_bus_close(scn);
-	cdf_mem_free(scn);
+	qdf_mem_free(scn);
 }
 
 /**
@@ -530,23 +531,23 @@ void hif_close(struct hif_opaque_softc *hif_ctx)
  * @bus_type: bus type
  * @type: enable type
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
+QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 					  void *bdev, const hif_bus_id *bid,
-					  enum ath_hal_bus_type bus_type,
+					  enum qdf_bus_type bus_type,
 					  enum hif_enable_type type)
 {
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
 	if (scn == NULL) {
 		HIF_ERROR("%s: hif_ctx = NULL", __func__);
-		return CDF_STATUS_E_NULL_VALUE;
+		return QDF_STATUS_E_NULL_VALUE;
 	}
 
 	status = hif_enable_bus(scn, dev, bdev, bid, type);
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s: hif_enable_bus error = %d",
 				  __func__, status);
 		return status;
@@ -558,7 +559,7 @@ CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	if (hif_config_ce(scn)) {
 		HIF_ERROR("%s: Target probe failed.", __func__);
 		hif_disable_bus(scn);
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		return status;
 	}
 	/*
@@ -574,7 +575,7 @@ CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 	if (status < 0) {
 		HIF_ERROR("%s: ERROR - configure_IRQ_and_CE failed, status = %d",
 			   __func__, status);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 #endif
 
@@ -582,7 +583,7 @@ CDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 
 	HIF_TRACE("%s: X OK", __func__);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -599,7 +600,7 @@ void hif_wlan_disable(struct hif_softc *scn)
 	enum icnss_driver_mode mode;
 	uint32_t con_mode = hif_get_conparam(scn);
 
-	if (CDF_GLOBAL_FTM_MODE == con_mode)
+	if (QDF_GLOBAL_FTM_MODE == con_mode)
 		mode = ICNSS_FTM;
 	else if (WLAN_IS_EPPING_ENABLED(con_mode))
 		mode = ICNSS_EPPING;
@@ -725,7 +726,7 @@ int hif_check_fw_reg(struct hif_opaque_softc *scn)
  *
  * Return: n/a
  */
-void hif_read_phy_mem_base(struct hif_softc *scn, cdf_dma_addr_t *phy_mem_base)
+void hif_read_phy_mem_base(struct hif_softc *scn, qdf_dma_addr_t *phy_mem_base)
 {
 	*phy_mem_base = scn->mem_pa;
 }
@@ -901,7 +902,7 @@ void hif_init_ini_config(struct hif_opaque_softc *hif_ctx,
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	cdf_mem_copy(&scn->hif_config, cfg, sizeof(struct hif_config_info));
+	qdf_mem_copy(&scn->hif_config, cfg, sizeof(struct hif_config_info));
 }
 
 /**

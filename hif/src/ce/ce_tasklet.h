@@ -31,6 +31,6 @@
 void init_tasklet_workers(struct hif_opaque_softc *scn);
 void ce_tasklet_init(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 void ce_tasklet_kill(struct hif_softc *scn);
-CDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
-CDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
+QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
+QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask);
 #endif /* __CE_TASKLET_H__ */

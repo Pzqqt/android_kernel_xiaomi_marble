@@ -30,9 +30,10 @@
 #include "athdefs.h"
 #include "osapi_linux.h"
 #include "targcfg.h"
-#include "cdf_lock.h"
-#include "cdf_status.h"
-#include <cdf_atomic.h>         /* cdf_atomic_read */
+#include "qdf_lock.h"
+#include "qdf_status.h"
+#include "qdf_status.h"
+#include <qdf_atomic.h>         /* qdf_atomic_read */
 #include <targaddrs.h>
 #include <bmi_msg.h>
 #include "hif_io32.h"
@@ -42,7 +43,7 @@
 #include <a_debug.h>
 #include "hif_main.h"
 #include "ce_api.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
 #endif
@@ -62,7 +63,7 @@ hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,
 	A_TARGET_ACCESS_BEGIN(scn);
 	while (j < size) {
 		val = hif_read32_mb(scn->mem + loc + j);
-		cdf_mem_copy(temp, &val, 4);
+		qdf_mem_copy(temp, &val, 4);
 		j += 4;
 		temp += 4;
 	}
@@ -94,25 +95,25 @@ hif_dump_target_memory(struct hif_opaque_softc *hif_ctx, void *ramdump_base,
  * at any moment.
  */
 
-CDF_STATUS
+QDF_STATUS
 hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 					uint8_t *data, int nbytes)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	cdf_dma_addr_t buf;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	qdf_dma_addr_t buf;
 	unsigned int completed_nbytes, orig_nbytes, remaining_bytes;
 	unsigned int id;
 	unsigned int flags;
 	struct CE_handle *ce_diag;
-	cdf_dma_addr_t CE_data;      /* Host buffer address in CE space */
-	cdf_dma_addr_t CE_data_base = 0;
+	qdf_dma_addr_t CE_data;      /* Host buffer address in CE space */
+	qdf_dma_addr_t CE_data_base = 0;
 	void *data_buf = NULL;
 	int i;
 	unsigned int mux_id = 0;
 	unsigned int transaction_id = 0xffff;
-	cdf_dma_addr_t ce_phy_addr = address;
+	qdf_dma_addr_t ce_phy_addr = address;
 	unsigned int toeplitz_hash_result;
 	unsigned int user_flags = 0;
 
@@ -129,10 +130,10 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 	if (address < DRAM_BASE_ADDRESS) {
 
 		if ((address & 0x3) || ((uintptr_t) data & 0x3))
-			return CDF_STATUS_E_INVAL;
+			return QDF_STATUS_E_INVAL;
 
 		while ((nbytes >= 4) &&
-		       (CDF_STATUS_SUCCESS == (status =
+		       (QDF_STATUS_SUCCESS == (status =
 				 hif_diag_read_access(hif_ctx, address,
 				       (uint32_t *)data)))) {
 
@@ -155,14 +156,14 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 	 *   2) Buffer in DMA-able space
 	 */
 	orig_nbytes = nbytes;
-	data_buf = cdf_os_mem_alloc_consistent(scn->cdf_dev,
-				    orig_nbytes, &CE_data_base, 0);
+	data_buf = qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+				    orig_nbytes, &CE_data_base);
 	if (!data_buf) {
-		status = CDF_STATUS_E_NOMEM;
+		status = QDF_STATUS_E_NOMEM;
 		goto done;
 	}
-	cdf_mem_set(data_buf, orig_nbytes, 0);
-	cdf_os_mem_dma_sync_single_for_device(scn->cdf_dev, CE_data_base,
+	qdf_mem_set(data_buf, orig_nbytes, 0);
+	qdf_mem_dma_sync_single_for_device(scn->qdf_dev, CE_data_base,
 				       orig_nbytes, DMA_FROM_DEVICE);
 
 	remaining_bytes = orig_nbytes;
@@ -171,7 +172,7 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 		nbytes = min(remaining_bytes, DIAG_TRANSFER_LIMIT);
 		{
 			status = ce_recv_buf_enqueue(ce_diag, NULL, CE_data);
-			if (status != CDF_STATUS_SUCCESS)
+			if (status != QDF_STATUS_SUCCESS)
 				goto done;
 		}
 
@@ -195,26 +196,26 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 			status =
 				ce_send(ce_diag, NULL, ce_phy_addr, nbytes,
 					transaction_id, 0, user_flags);
-			if (status != CDF_STATUS_SUCCESS)
+			if (status != QDF_STATUS_SUCCESS)
 				goto done;
 		}
 
 		i = 0;
 		while (ce_completed_send_next(ce_diag, NULL, NULL, &buf,
 				&completed_nbytes, &id, NULL, NULL,
-				&toeplitz_hash_result) != CDF_STATUS_SUCCESS) {
-			cdf_mdelay(1);
+				&toeplitz_hash_result) != QDF_STATUS_SUCCESS) {
+			qdf_mdelay(1);
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
-				status = CDF_STATUS_E_BUSY;
+				status = QDF_STATUS_E_BUSY;
 				goto done;
 			}
 		}
 		if (nbytes != completed_nbytes) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 		if (buf != ce_phy_addr) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 
@@ -222,19 +223,19 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 		while (ce_completed_recv_next
 				(ce_diag, NULL, NULL, &buf,
 				&completed_nbytes, &id,
-				 &flags) != CDF_STATUS_SUCCESS) {
-			cdf_mdelay(1);
+				 &flags) != QDF_STATUS_SUCCESS) {
+			qdf_mdelay(1);
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
-				status = CDF_STATUS_E_BUSY;
+				status = QDF_STATUS_E_BUSY;
 				goto done;
 			}
 		}
 		if (nbytes != completed_nbytes) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 		if (buf != CE_data) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 
@@ -246,20 +247,20 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 done:
 	A_TARGET_ACCESS_UNLIKELY(scn);
 
-	if (status == CDF_STATUS_SUCCESS)
-		cdf_mem_copy(data, data_buf, orig_nbytes);
+	if (status == QDF_STATUS_SUCCESS)
+		qdf_mem_copy(data, data_buf, orig_nbytes);
 	else
 		HIF_ERROR("%s failure (0x%x)", __func__, address);
 
 	if (data_buf)
-		cdf_os_mem_free_consistent(scn->cdf_dev, orig_nbytes,
-				    data_buf, CE_data_base, 0);
+		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+				orig_nbytes, data_buf, CE_data_base, 0);
 
 	return status;
 }
 
 /* Read 4-byte aligned data from Target memory or register */
-CDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
+QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
 				uint32_t address, uint32_t *data)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -273,28 +274,28 @@ CDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
 		*data = A_TARGET_READ(scn, address);
 		A_TARGET_ACCESS_END_RET(scn);
 
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 }
 
-CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
+QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 			      uint32_t address, uint8_t *data, int nbytes)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
-	cdf_dma_addr_t buf;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	qdf_dma_addr_t buf;
 	unsigned int completed_nbytes, orig_nbytes, remaining_bytes;
 	unsigned int id;
 	unsigned int flags;
 	struct CE_handle *ce_diag;
 	void *data_buf = NULL;
-	cdf_dma_addr_t CE_data;      /* Host buffer address in CE space */
-	cdf_dma_addr_t CE_data_base = 0;
+	qdf_dma_addr_t CE_data;      /* Host buffer address in CE space */
+	qdf_dma_addr_t CE_data_base = 0;
 	int i;
 	unsigned int mux_id = 0;
 	unsigned int transaction_id = 0xffff;
-	cdf_dma_addr_t ce_phy_addr = address;
+	qdf_dma_addr_t ce_phy_addr = address;
 	unsigned int toeplitz_hash_result;
 	unsigned int user_flags = 0;
 
@@ -314,16 +315,16 @@ CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 	 *   2) Buffer in DMA-able space
 	 */
 	orig_nbytes = nbytes;
-	data_buf = cdf_os_mem_alloc_consistent(scn->cdf_dev,
-				    orig_nbytes, &CE_data_base, 0);
+	data_buf = qdf_mem_alloc_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+				    orig_nbytes, &CE_data_base);
 	if (!data_buf) {
 		status = A_NO_MEMORY;
 		goto done;
 	}
 
 	/* Copy caller's data to allocated DMA buf */
-	cdf_mem_copy(data_buf, data, orig_nbytes);
-	cdf_os_mem_dma_sync_single_for_device(scn->cdf_dev, CE_data_base,
+	qdf_mem_copy(data_buf, data, orig_nbytes);
+	qdf_mem_dma_sync_single_for_device(scn->qdf_dev, CE_data_base,
 				       orig_nbytes, DMA_TO_DEVICE);
 
 	/*
@@ -348,7 +349,7 @@ CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 		{   /* Set up to receive directly into Target(!) address */
 			status = ce_recv_buf_enqueue(ce_diag,
 						NULL, ce_phy_addr);
-			if (status != CDF_STATUS_SUCCESS)
+			if (status != QDF_STATUS_SUCCESS)
 				goto done;
 		}
 
@@ -359,9 +360,9 @@ CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 			 */
 			status =
 				ce_send(ce_diag, NULL,
-					(cdf_dma_addr_t) CE_data, nbytes,
+					(qdf_dma_addr_t) CE_data, nbytes,
 					transaction_id, 0, user_flags);
-			if (status != CDF_STATUS_SUCCESS)
+			if (status != QDF_STATUS_SUCCESS)
 				goto done;
 		}
 
@@ -369,21 +370,21 @@ CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 		while (ce_completed_send_next(ce_diag, NULL, NULL, &buf,
 			    &completed_nbytes, &id,
 			    NULL, NULL, &toeplitz_hash_result) !=
-			    CDF_STATUS_SUCCESS) {
-			cdf_mdelay(1);
+			    QDF_STATUS_SUCCESS) {
+			qdf_mdelay(1);
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
-				status = CDF_STATUS_E_BUSY;
+				status = QDF_STATUS_E_BUSY;
 				goto done;
 			}
 		}
 
 		if (nbytes != completed_nbytes) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 
 		if (buf != CE_data) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 
@@ -391,21 +392,21 @@ CDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 		while (ce_completed_recv_next
 			(ce_diag, NULL, NULL, &buf,
 			&completed_nbytes, &id,
-			&flags) != CDF_STATUS_SUCCESS) {
-			cdf_mdelay(1);
+			&flags) != QDF_STATUS_SUCCESS) {
+			qdf_mdelay(1);
 			if (i++ > DIAG_ACCESS_CE_TIMEOUT_MS) {
-				status = CDF_STATUS_E_BUSY;
+				status = QDF_STATUS_E_BUSY;
 				goto done;
 			}
 		}
 
 		if (nbytes != completed_nbytes) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 
 		if (buf != ce_phy_addr) {
-			status = CDF_STATUS_E_FAILURE;
+			status = QDF_STATUS_E_FAILURE;
 			goto done;
 		}
 
@@ -418,11 +419,11 @@ done:
 	A_TARGET_ACCESS_UNLIKELY(scn);
 
 	if (data_buf) {
-		cdf_os_mem_free_consistent(scn->cdf_dev, orig_nbytes,
-				    data_buf, CE_data_base, 0);
+		qdf_mem_free_consistent(scn->qdf_dev, scn->qdf_dev->dev,
+				orig_nbytes, data_buf, CE_data_base, 0);
 	}
 
-	if (status != CDF_STATUS_SUCCESS) {
+	if (status != QDF_STATUS_SUCCESS) {
 		HIF_ERROR("%s failure (0x%llu)", __func__,
 			(uint64_t)ce_phy_addr);
 	}
@@ -431,7 +432,7 @@ done:
 }
 
 /* Write 4B data to Target memory or register */
-CDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
+QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
 				 uint32_t address, uint32_t data)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -448,6 +449,6 @@ CDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
 		A_TARGET_WRITE(scn, address, data);
 		A_TARGET_ACCESS_END_RET(scn);
 
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 }

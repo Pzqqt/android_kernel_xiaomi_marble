@@ -66,7 +66,7 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	int rv;
 	uint8_t *read_buffer = NULL;
 
-	read_buffer = cdf_mem_malloc(count);
+	read_buffer = qdf_mem_malloc(count);
 	if (NULL == read_buffer) {
 		HIF_ERROR("%s: cdf_mem_alloc failed", __func__);
 		return -ENOMEM;
@@ -86,12 +86,12 @@ static ssize_t ath_procfs_diag_read(struct file *file, char __user *buf,
 	}
 
 	if (copy_to_user(buf, read_buffer, count)) {
-		cdf_mem_free(read_buffer);
+		qdf_mem_free(read_buffer);
 		HIF_ERROR("%s: copy_to_user error in /proc/%s",
 			__func__, PROCFS_NAME);
 		return -EFAULT;
 	} else
-		cdf_mem_free(read_buffer);
+		qdf_mem_free(read_buffer);
 
 	if (rv == 0) {
 		return count;
@@ -108,13 +108,13 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 	int rv;
 	uint8_t *write_buffer = NULL;
 
-	write_buffer = cdf_mem_malloc(count);
+	write_buffer = qdf_mem_malloc(count);
 	if (NULL == write_buffer) {
 		HIF_ERROR("%s: cdf_mem_alloc failed", __func__);
 		return -ENOMEM;
 	}
 	if (copy_from_user(write_buffer, buf, count)) {
-		cdf_mem_free(write_buffer);
+		qdf_mem_free(write_buffer);
 		HIF_ERROR("%s: copy_to_user error in /proc/%s",
 			__func__, PROCFS_NAME);
 		return -EFAULT;
@@ -134,7 +134,7 @@ static ssize_t ath_procfs_diag_write(struct file *file,
 					(uint8_t *)write_buffer, count);
 	}
 
-	cdf_mem_free(write_buffer);
+	qdf_mem_free(write_buffer);
 	if (rv == 0) {
 		return count;
 	} else {

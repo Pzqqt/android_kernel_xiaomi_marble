@@ -310,7 +310,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			pEndpoint->TxCreditsPerMaxMsg++;
 		}
 #if DEBUG_CREDIT
-		cdf_print(" Endpoint%d initial credit:%d, size:%d.\n",
+		qdf_print(" Endpoint%d initial credit:%d, size:%d.\n",
 			  pEndpoint->Id, pEndpoint->TxCredits,
 			  pEndpoint->TxCreditSize);
 #endif
@@ -328,14 +328,14 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			break;
 		}
 
-		cdf_assert(!pEndpoint->dl_is_polled);   /* not currently supported */
+		qdf_assert(!pEndpoint->dl_is_polled);   /* not currently supported */
 
 		if (pEndpoint->ul_is_polled) {
-			cdf_softirq_timer_init(target->osdev,
+			qdf_timer_init(target->osdev,
 				&pEndpoint->ul_poll_timer,
 				htc_send_complete_check_cleanup,
 				pEndpoint,
-				CDF_TIMER_TYPE_SW);
+				QDF_TIMER_TYPE_SW);
 		}
 
 		AR_DEBUG_PRINTF(ATH_DEBUG_SETUP,
@@ -372,7 +372,7 @@ void htc_set_credit_distribution(HTC_HANDLE HTCHandle,
 
 }
 
-void htc_fw_event_handler(void *context, CDF_STATUS status)
+void htc_fw_event_handler(void *context, QDF_STATUS status)
 {
 	HTC_TARGET *target = (HTC_TARGET *) context;
 	HTC_INIT_INFO *initInfo = &target->HTCInitInfo;

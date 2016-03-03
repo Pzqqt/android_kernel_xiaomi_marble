@@ -29,7 +29,7 @@
 #include "htc_debug.h"
 #include "htc_internal.h"
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_types.h>          /* cdf_print */
+#include <qdf_types.h>          /* qdf_print */
 #include <hif.h>
 #include "epping_main.h"
 #include "hif_io32.h"
@@ -69,16 +69,16 @@ static void destroy_htc_tx_ctrl_packet(HTC_PACKET *pPacket)
 		cdf_nbuf_free(netbuf);
 	}
 
-	cdf_mem_free(pPacket);
+	qdf_mem_free(pPacket);
 }
 
-static HTC_PACKET *build_htc_tx_ctrl_packet(cdf_device_t osdev)
+static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 {
 	HTC_PACKET *pPacket = NULL;
 	cdf_nbuf_t netbuf;
 
 	do {
-		pPacket = (HTC_PACKET *) cdf_mem_malloc(sizeof(HTC_PACKET));
+		pPacket = (HTC_PACKET *) qdf_mem_malloc(sizeof(HTC_PACKET));
 		if (NULL == pPacket) {
 			break;
 		}
@@ -86,9 +86,9 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(cdf_device_t osdev)
 		netbuf =
 			cdf_nbuf_alloc(osdev, HTC_CONTROL_BUFFER_SIZE, 20, 4, true);
 		if (NULL == netbuf) {
-			cdf_mem_free(pPacket);
+			qdf_mem_free(pPacket);
 			pPacket = NULL;
-			cdf_print("%s: nbuf alloc failed\n", __func__);
+			qdf_print("%s: nbuf alloc failed\n", __func__);
 			break;
 		}
 		AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
@@ -158,13 +158,13 @@ static void htc_cleanup(HTC_TARGET *target)
 		if (NULL == pPacket) {
 			break;
 		}
-		cdf_mem_free(pPacket);
+		qdf_mem_free(pPacket);
 	}
 
 	pPacket = target->pBundleFreeList;
 	while (pPacket) {
 		HTC_PACKET *pPacketTmp = (HTC_PACKET *) pPacket->ListLink.pNext;
-		cdf_mem_free(pPacket);
+		qdf_mem_free(pPacket);
 		pPacket = pPacketTmp;
 	}
 #ifdef TODO_FIXME
@@ -178,21 +178,21 @@ static void htc_cleanup(HTC_TARGET *target)
 			cdf_nbuf_free(netbuf);
 		}
 
-		cdf_mem_free(pPacket);
+		qdf_mem_free(pPacket);
 	}
 #endif
 
-	cdf_spinlock_destroy(&target->HTCLock);
-	cdf_spinlock_destroy(&target->HTCRxLock);
-	cdf_spinlock_destroy(&target->HTCTxLock);
-	cdf_spinlock_destroy(&target->HTCCreditLock);
+	qdf_spinlock_destroy(&target->HTCLock);
+	qdf_spinlock_destroy(&target->HTCRxLock);
+	qdf_spinlock_destroy(&target->HTCTxLock);
+	qdf_spinlock_destroy(&target->HTCCreditLock);
 
 	/* free our instance */
-	cdf_mem_free(target);
+	qdf_mem_free(target);
 }
 
 /* registered target arrival callback from the HIF layer */
-HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
+HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev)
 {
 	struct hif_msg_callbacks htcCallbacks;
 	HTC_ENDPOINT *pEndpoint = NULL;
@@ -207,7 +207,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
 
 	A_REGISTER_MODULE_DEBUG_INFO(htc);
 
-	target = (HTC_TARGET *) cdf_mem_malloc(sizeof(HTC_TARGET));
+	target = (HTC_TARGET *) qdf_mem_malloc(sizeof(HTC_TARGET));
 	if (target == NULL) {
 		HTC_ERROR("%s: Unable to allocate memory", __func__);
 		return NULL;
@@ -216,10 +216,10 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
 	A_MEMZERO(target, sizeof(HTC_TARGET));
 
 	htc_runtime_pm_init(target);
-	cdf_spinlock_init(&target->HTCLock);
-	cdf_spinlock_init(&target->HTCRxLock);
-	cdf_spinlock_init(&target->HTCTxLock);
-	cdf_spinlock_init(&target->HTCCreditLock);
+	qdf_spinlock_create(&target->HTCLock);
+	qdf_spinlock_create(&target->HTCRxLock);
+	qdf_spinlock_create(&target->HTCTxLock);
+	qdf_spinlock_create(&target->HTCCreditLock);
 
 	do {
 		A_MEMCPY(&target->HTCInitInfo, pInfo, sizeof(HTC_INIT_INFO));
@@ -232,7 +232,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
 
 		for (i = 0; i < HTC_PACKET_CONTAINER_ALLOCATION; i++) {
 			HTC_PACKET *pPacket =
-				(HTC_PACKET *) cdf_mem_malloc(sizeof(HTC_PACKET));
+				(HTC_PACKET *) qdf_mem_malloc(sizeof(HTC_PACKET));
 			if (pPacket != NULL) {
 				A_MEMZERO(pPacket, sizeof(HTC_PACKET));
 				free_htc_packet_container(target, pPacket);
@@ -250,7 +250,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, cdf_device_t osdev)
 #endif
 
 		/* setup HIF layer callbacks */
-		cdf_mem_zero(&htcCallbacks, sizeof(struct hif_msg_callbacks));
+		qdf_mem_zero(&htcCallbacks, sizeof(struct hif_msg_callbacks));
 		htcCallbacks.Context = target;
 		htcCallbacks.rxCompletionHandler = htc_rx_completion_handler;
 		htcCallbacks.txCompletionHandler = htc_tx_completion_handler;
@@ -348,7 +348,7 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 		 * There is no WMI mesage exchanges between host and target
 		 * in endpoint ping case.
 		 * In host side, the endpoint ping driver is a Ethernet driver
-		 * and it directly sits on HTC. Only HIF, HTC, CDF, ADF are
+		 * and it directly sits on HTC. Only HIF, HTC, QDF, ADF are
 		 * used by the endpoint ping driver. There is no wifi stack
 		 * at all in host side also. For tx perf use case,
 		 * the user space mboxping app sends the raw packets to endpoint
@@ -529,7 +529,7 @@ static void reset_endpoint_states(HTC_TARGET *target)
 		pEndpoint->target = target;
 		/* pEndpoint->TxCreditFlowEnabled = (A_BOOL)htc_credit_flow; */
 		pEndpoint->TxCreditFlowEnabled = (A_BOOL) 1;
-		cdf_atomic_init(&pEndpoint->TxProcessCount);
+		qdf_atomic_init(&pEndpoint->TxProcessCount);
 	}
 }
 
@@ -551,7 +551,7 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 		pSendPacket = htc_alloc_control_tx_packet(target);
 		if (NULL == pSendPacket) {
 			AR_DEBUG_ASSERT(false);
-			cdf_print("%s: allocControlTxPacket failed\n",
+			qdf_print("%s: allocControlTxPacket failed\n",
 				  __func__);
 			status = A_NO_MEMORY;
 			break;
@@ -658,8 +658,8 @@ void htc_stop(HTC_HANDLE HTCHandle)
 		htc_flush_rx_hold_queue(target, pEndpoint);
 		htc_flush_endpoint_tx(target, pEndpoint, HTC_TX_PACKET_TAG_ALL);
 		if (pEndpoint->ul_is_polled) {
-			cdf_softirq_timer_cancel(&pEndpoint->ul_poll_timer);
-			cdf_softirq_timer_free(&pEndpoint->ul_poll_timer);
+			qdf_timer_stop(&pEndpoint->ul_poll_timer);
+			qdf_timer_free(&pEndpoint->ul_poll_timer);
 		}
 	}
 
@@ -693,7 +693,7 @@ void htc_stop(HTC_HANDLE HTCHandle)
  */
 void htc_runtime_pm_init(HTC_TARGET *target)
 {
-	cdf_create_work(&target->queue_kicker, htc_kick_queues, target);
+	qdf_create_work(0, &target->queue_kicker, htc_kick_queues, target);
 }
 
 /**
@@ -706,11 +706,11 @@ void htc_runtime_pm_init(HTC_TARGET *target)
  */
 int htc_runtime_suspend(void)
 {
-	ol_txrx_pdev_handle txrx_pdev = cds_get_context(CDF_MODULE_ID_TXRX);
+	ol_txrx_pdev_handle txrx_pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
 	if (txrx_pdev == NULL) {
 		HTC_ERROR("%s: txrx context null", __func__);
-		return CDF_STATUS_E_FAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	if (ol_txrx_get_tx_pending(txrx_pdev))
@@ -729,13 +729,13 @@ int htc_runtime_suspend(void)
  */
 int htc_runtime_resume(void)
 {
-	HTC_HANDLE htc_ctx = cds_get_context(CDF_MODULE_ID_HTC);
+	HTC_HANDLE htc_ctx = cds_get_context(QDF_MODULE_ID_HTC);
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_ctx);
 
 	if (target == NULL)
 		return 0;
 
-	cdf_schedule_work(&target->queue_kicker);
+	qdf_sched_work(0, &target->queue_kicker);
 	return 0;
 }
 
@@ -866,9 +866,9 @@ void htc_cancel_deferred_target_sleep(void *context)
  * Return: None
  */
 void htc_ipa_get_ce_resource(HTC_HANDLE htc_handle,
-			     cdf_dma_addr_t *ce_sr_base_paddr,
+			     qdf_dma_addr_t *ce_sr_base_paddr,
 			     uint32_t *ce_sr_ring_size,
-			     cdf_dma_addr_t *ce_reg_paddr)
+			     qdf_dma_addr_t *ce_reg_paddr)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(htc_handle);
 

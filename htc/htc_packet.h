@@ -95,11 +95,11 @@ typedef struct _HTC_PACKET {
 	void *pPktContext;      /* caller's per packet specific context */
 
 	A_UINT8 *pBufferStart;  /* the true buffer start , the caller can
-	                           store the real buffer start here.  In
-	                           receive callbacks, the HTC layer sets pBuffer
-	                           to the start of the payload past the header. This
-	                           field allows the caller to reset pBuffer when it
-	                           recycles receive packets back to HTC */
+				store the real buffer start here.  In
+				receive callbacks, the HTC layer sets pBuffer
+				to the start of the payload past the header. This
+				field allows the caller to reset pBuffer when it
+				recycles receive packets back to HTC */
 	/*
 	 * Pointer to the start of the buffer. In the transmit
 	 * direction this points to the start of the payload. In the
@@ -122,40 +122,40 @@ typedef struct _HTC_PACKET {
 	HTC_PACKET_COMPLETION Completion;       /* completion */
 	void *pContext;         /* HTC private completion context */
 	void *pNetBufContext;   /* optimization for network-oriented data, the HTC packet
-	                           can pass the network buffer corresponding to the HTC packet
-	                           lower layers may optimized the transfer knowing this is
-	                           a network buffer */
+				can pass the network buffer corresponding to the HTC packet
+				lower layers may optimized the transfer knowing this is
+				a network buffer */
 } HTC_PACKET;
 
-#define COMPLETE_HTC_PACKET(p,status)	     \
+#define COMPLETE_HTC_PACKET(p, status)	     \
 	{					     \
 		(p)->Status = (status);			 \
-		(p)->Completion((p)->pContext,(p));	 \
+		(p)->Completion((p)->pContext, (p));	 \
 	}
 
-#define INIT_HTC_PACKET_INFO(p,b,len)		  \
+#define INIT_HTC_PACKET_INFO(p, b, len)		  \
 	{						  \
 		(p)->pBufferStart = (b);		      \
 		(p)->BufferLength = (len);		      \
 	}
 
 /* macro to set an initial RX packet for refilling HTC */
-#define SET_HTC_PACKET_INFO_RX_REFILL(p,c,b,len,ep) \
-	{						  \
+#define SET_HTC_PACKET_INFO_RX_REFILL(p, c, b, len, ep) \
+	do { \
 		(p)->pPktContext = (c);			      \
 		(p)->pBuffer = (b);			      \
 		(p)->pBufferStart = (b);		      \
 		(p)->BufferLength = (len);		      \
 		(p)->Endpoint = (ep);			      \
-	}
+	} while (0)
 
 /* fast macro to recycle an RX packet that will be re-queued to HTC */
 #define HTC_PACKET_RESET_RX(p)		    \
 	{ (p)->pBuffer = (p)->pBufferStart; (p)->ActualLength = 0; }
 
 /* macro to set packet parameters for TX */
-#define SET_HTC_PACKET_INFO_TX(p,c,b,len,ep,tag)  \
-	{						  \
+#define SET_HTC_PACKET_INFO_TX(p, c, b, len, ep, tag)  \
+	do {						  \
 		(p)->pPktContext = (c);			      \
 		(p)->pBuffer = (b);			      \
 		(p)->ActualLength = (len);		      \
@@ -163,10 +163,12 @@ typedef struct _HTC_PACKET {
 		(p)->PktInfo.AsTx.Tag = (tag);		      \
 		(p)->PktInfo.AsTx.Flags = 0;		      \
 		(p)->PktInfo.AsTx.SendFlags = 0;	      \
-	}
+	} while (0)
 
-#define SET_HTC_PACKET_NET_BUF_CONTEXT(p,nb) \
-	(p)->pNetBufContext = (nb)
+#define SET_HTC_PACKET_NET_BUF_CONTEXT(p, nb) \
+	do { \
+	(p)->pNetBufContext = (nb); \
+	} while (0)
 
 #define GET_HTC_PACKET_NET_BUF_CONTEXT(p)  (p)->pNetBufContext
 
@@ -179,25 +181,25 @@ typedef struct _HTC_PACKET_QUEUE {
 /* initialize queue */
 #define INIT_HTC_PACKET_QUEUE(pQ)   \
 	{				    \
-		DL_LIST_INIT(& (pQ)->QueueHead); \
+		DL_LIST_INIT(&(pQ)->QueueHead); \
 		(pQ)->Depth = 0;		\
 	}
 
 /* enqueue HTC packet to the tail of the queue */
-#define HTC_PACKET_ENQUEUE(pQ,p)			\
-	{   dl_list_insert_tail(& (pQ)->QueueHead,& (p)->ListLink); \
-	    (pQ)->Depth ++;					 \
+#define HTC_PACKET_ENQUEUE(pQ, p)			\
+	{   dl_list_insert_tail(&(pQ)->QueueHead, &(p)->ListLink); \
+	    (pQ)->Depth++;					 \
 	}
 
 /* enqueue HTC packet to the tail of the queue */
-#define HTC_PACKET_ENQUEUE_TO_HEAD(pQ,p)		\
-	{   dl_list_insert_head(& (pQ)->QueueHead,& (p)->ListLink); \
-	    (pQ)->Depth ++;					 \
+#define HTC_PACKET_ENQUEUE_TO_HEAD(pQ, p)		\
+	{   dl_list_insert_head(&(pQ)->QueueHead, &(p)->ListLink); \
+	    (pQ)->Depth++;					 \
 	}
 /* test if a queue is empty */
 #define HTC_QUEUE_EMPTY(pQ)       ((pQ)->Depth == 0)
 /* get packet at head without removing it */
-static INLINE HTC_PACKET *htc_get_pkt_at_head(HTC_PACKET_QUEUE *queue)
+static inline HTC_PACKET *htc_get_pkt_at_head(HTC_PACKET_QUEUE *queue)
 {
 	if (queue->Depth == 0) {
 		return NULL;
@@ -208,14 +210,14 @@ static INLINE HTC_PACKET *htc_get_pkt_at_head(HTC_PACKET_QUEUE *queue)
 }
 
 /* remove a packet from a queue, where-ever it is in the queue */
-#define HTC_PACKET_REMOVE(pQ,p)	    \
+#define HTC_PACKET_REMOVE(pQ, p)	    \
 	{				    \
-		dl_list_remove(& (p)->ListLink);  \
-		(pQ)->Depth --;			 \
+		dl_list_remove(&(p)->ListLink);  \
+		(pQ)->Depth--;			 \
 	}
 
 /* dequeue an HTC packet from the head of the queue */
-static INLINE HTC_PACKET *htc_packet_dequeue(HTC_PACKET_QUEUE *queue)
+static inline HTC_PACKET *htc_packet_dequeue(HTC_PACKET_QUEUE *queue)
 {
 	DL_LIST *pItem = dl_list_remove_item_from_head(&queue->QueueHead);
 	if (pItem != NULL) {
@@ -226,7 +228,7 @@ static INLINE HTC_PACKET *htc_packet_dequeue(HTC_PACKET_QUEUE *queue)
 }
 
 /* dequeue an HTC packet from the tail of the queue */
-static INLINE HTC_PACKET *htc_packet_dequeue_tail(HTC_PACKET_QUEUE *queue)
+static inline HTC_PACKET *htc_packet_dequeue_tail(HTC_PACKET_QUEUE *queue)
 {
 	DL_LIST *pItem = dl_list_remove_item_from_tail(&queue->QueueHead);
 	if (pItem != NULL) {
@@ -242,9 +244,9 @@ static INLINE HTC_PACKET *htc_packet_dequeue_tail(HTC_PACKET_QUEUE *queue)
 #define HTC_GET_TAG_FROM_PKT(p)      (p)->PktInfo.AsTx.Tag
 
 /* transfer the packets from one queue to the tail of another queue */
-#define HTC_PACKET_QUEUE_TRANSFER_TO_TAIL(pQDest,pQSrc)	\
+#define HTC_PACKET_QUEUE_TRANSFER_TO_TAIL(pQDest, pQSrc)	\
 	{									    \
-		dl_list_transfer_items_to_tail(&(pQDest)->QueueHead,&(pQSrc)->QueueHead);   \
+		dl_list_transfer_items_to_tail(&(pQDest)->QueueHead, &(pQSrc)->QueueHead);   \
 		(pQDest)->Depth += (pQSrc)->Depth;					\
 		(pQSrc)->Depth = 0;							\
 	}
@@ -257,20 +259,20 @@ static INLINE HTC_PACKET *htc_packet_dequeue_tail(HTC_PACKET_QUEUE *queue)
  */
 #define HTC_PACKET_QUEUE_TRANSFER_TO_HEAD(pQDest, pQSrc)  \
 	{									    \
-		dl_list_transfer_items_to_head(&(pQDest)->QueueHead,&(pQSrc)->QueueHead);   \
+		dl_list_transfer_items_to_head(&(pQDest)->QueueHead, &(pQSrc)->QueueHead);   \
 		(pQDest)->Depth += (pQSrc)->Depth;					\
 		(pQSrc)->Depth = 0;							\
 	}
 
 /* fast version to init and add a single packet to a queue */
-#define INIT_HTC_PACKET_QUEUE_AND_ADD(pQ,pP) \
+#define INIT_HTC_PACKET_QUEUE_AND_ADD(pQ, pP) \
 	{					     \
-		DL_LIST_INIT_AND_ADD(&(pQ)->QueueHead,&(pP)->ListLink)	\
+		DL_LIST_INIT_AND_ADD(&(pQ)->QueueHead, &(pP)->ListLink)	\
 		(pQ)->Depth = 1;					\
 	}
 
 #define HTC_PACKET_QUEUE_ITERATE_ALLOW_REMOVE(pQ, pPTemp) \
-	ITERATE_OVER_LIST_ALLOW_REMOVE(&(pQ)->QueueHead,(pPTemp), HTC_PACKET, ListLink)
+	ITERATE_OVER_LIST_ALLOW_REMOVE(&(pQ)->QueueHead, (pPTemp), HTC_PACKET, ListLink)
 
 #define HTC_PACKET_QUEUE_ITERATE_IS_VALID(pQ)   ITERATE_IS_VALID(&(pQ)->QueueHead)
 #define HTC_PACKET_QUEUE_ITERATE_RESET(pQ) ITERATE_RESET(&(pQ)->QueueHead)

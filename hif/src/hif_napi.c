@@ -424,7 +424,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 	napi_info->stats[cpu].napi_polls++;
 
 	if (unlikely(NULL == hif))
-		CDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
+		QDF_ASSERT(hif != NULL); /* emit a warning if hif NULL */
 	else {
 		rc = ce_per_engine_service(hif, NAPI_ID2PIPE(napi_info->id));
 		HIF_INFO_HI("%s: ce_per_engine_service processed %d msgs",
@@ -461,7 +461,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx, struct napi_struct *napi,
 			hif_napi_enable_irq(hif_ctx, napi_info->id);
 
 			/* support suspend/resume */
-			cdf_atomic_dec(&(hif->active_tasklet_cnt));
+			qdf_atomic_dec(&(hif->active_tasklet_cnt));
 		}
 
 		NAPI_DEBUG("%s:%d: napi_complete + enabling the interrupts",

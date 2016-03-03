@@ -42,8 +42,8 @@
 #ifndef __HIF_MAIN_H__
 #define __HIF_MAIN_H__
 
-#include <cdf_atomic.h>         /* cdf_atomic_read */
-#include "cdf_lock.h"
+#include <qdf_atomic.h>         /* qdf_atomic_read */
+#include "qdf_lock.h"
 #include "cepci.h"
 #include "hif.h"
 
@@ -113,9 +113,9 @@ struct hif_softc {
 	struct hif_config_info hif_config;
 	struct hif_target_info target_info;
 	void __iomem *mem;
-	enum ath_hal_bus_type bus_type;
+	enum qdf_bus_type bus_type;
 	void *ce_id_to_state[CE_COUNT_MAX];
-	cdf_device_t cdf_dev;
+	qdf_device_t qdf_dev;
 	bool hif_init_done;
 	bool request_irq_done;
 	/* Packet statistics */
@@ -139,7 +139,7 @@ struct hif_softc {
 	int fastpath_mode_on;
 	atomic_t tasklet_from_intr;
 	int htc_endpoint;
-	cdf_dma_addr_t mem_pa;
+	qdf_dma_addr_t mem_pa;
 	bool athdiag_procfs_inited;
 #ifdef FEATURE_NAPI
 	struct qca_napi_data napi_data;
@@ -159,7 +159,7 @@ void athdiag_procfs_remove(void);
 /* routine to modify the initial buffer count to be allocated on an os
  * platform basis. Platform owner will need to modify this as needed
  */
-cdf_size_t init_buffer_count(cdf_size_t maxSize);
+qdf_size_t init_buffer_count(qdf_size_t maxSize);
 
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
 int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
@@ -172,14 +172,14 @@ int hif_get_device_type(uint32_t device_id,
 bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem);
 void hif_nointrs(struct hif_softc *scn);
 void hif_bus_close(struct hif_softc *ol_sc);
-CDF_STATUS hif_bus_open(struct hif_softc *ol_sc,
-	enum ath_hal_bus_type bus_type);
-CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc, struct device *dev,
+QDF_STATUS hif_bus_open(struct hif_softc *ol_sc,
+	enum qdf_bus_type bus_type);
+QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, enum hif_enable_type type);
 void hif_disable_bus(struct hif_softc *scn);
 void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
 int hif_bus_get_context_size(void);
-void hif_read_phy_mem_base(struct hif_softc *scn, cdf_dma_addr_t *bar_value);
+void hif_read_phy_mem_base(struct hif_softc *scn, qdf_dma_addr_t *bar_value);
 uint32_t hif_get_conparam(struct hif_softc *scn);
 struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn);
 bool hif_is_driver_unloading(struct hif_softc *scn);

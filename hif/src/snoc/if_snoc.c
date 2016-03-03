@@ -97,7 +97,7 @@ void hif_disable_isr(struct hif_opaque_softc *hif_ctx)
 
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
-	cdf_atomic_set(&scn->active_tasklet_cnt, 0);
+	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 
 /**
@@ -204,9 +204,9 @@ int hif_bus_get_context_size(void)
  *
  * Return: n/a
  */
-CDF_STATUS hif_bus_open(struct hif_softc *scn, enum ath_hal_bus_type bus_type)
+QDF_STATUS hif_bus_open(struct hif_softc *scn, enum qdf_bus_type bus_type)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -245,9 +245,9 @@ int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
  * @bid: bus id
  * @type: bus type
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
+QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
 			  const hif_bus_id *bid,
 			  enum hif_enable_type type)
@@ -264,14 +264,14 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 
 	if (!ol_sc) {
 		HIF_ERROR("%s: hif_ctx is NULL", __func__);
-		return CDF_STATUS_E_NOMEM;
+		return QDF_STATUS_E_NOMEM;
 	}
 
 	ret = hif_get_target_type(ol_sc, dev, bdev, bid,
 			&hif_type, &target_type);
 	if (ret < 0) {
 		HIF_ERROR("%s: invalid device id/revision_id", __func__);
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	hif_register_tbl_attach(ol_sc, hif_type);
@@ -280,7 +280,7 @@ CDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 	HIF_TRACE("%s: X - hif_type = 0x%x, target_type = 0x%x",
 		  __func__, hif_type, target_type);
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**

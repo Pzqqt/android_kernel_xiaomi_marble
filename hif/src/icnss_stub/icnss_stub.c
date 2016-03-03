@@ -32,7 +32,7 @@
 #include <hif.h>
 #include "regtable.h"
 #include "hif_debug.h"
-#include "cdf_status.h"
+#include "qdf_status.h"
 #include "qwlan_version.h"
 #include <net/cnss.h>
 
@@ -294,7 +294,7 @@ void icnss_dispatch_ce_irq(struct hif_softc *scn)
 
 	if (intr_summary == 0) {
 		if ((scn->target_status != OL_TRGET_STATUS_RESET) &&
-			(!cdf_atomic_read(&scn->link_suspended))) {
+			(!qdf_atomic_read(&scn->link_suspended))) {
 
 			hif_write32_mb(scn->mem +
 				(SOC_CORE_BASE_ADDRESS |

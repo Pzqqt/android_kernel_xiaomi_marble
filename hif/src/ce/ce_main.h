@@ -28,8 +28,8 @@
 #ifndef __CE_H__
 #define __CE_H__
 
-#include "cdf_atomic.h"
-#include "cdf_lock.h"
+#include "qdf_atomic.h"
+#include "qdf_lock.h"
 #include "hif_main.h"
 
 #define CE_HTT_T2H_MSG 1
@@ -78,10 +78,10 @@ struct HIF_CE_pipe_info {
 
 	/* Instantaneous number of receive buffers that should be posted */
 	atomic_t recv_bufs_needed;
-	cdf_size_t buf_sz;
-	cdf_spinlock_t recv_bufs_needed_lock;
+	qdf_size_t buf_sz;
+	qdf_spinlock_t recv_bufs_needed_lock;
 
-	cdf_spinlock_t completion_freeq_lock;
+	qdf_spinlock_t completion_freeq_lock;
 	/* Limit the number of outstanding send requests. */
 	int num_sends_allowed;
 
@@ -111,11 +111,11 @@ struct HIF_CE_state {
 	struct hif_softc ol_sc;
 	bool started;
 	struct ce_tasklet_entry tasklets[CE_COUNT_MAX];
-	cdf_spinlock_t keep_awake_lock;
+	qdf_spinlock_t keep_awake_lock;
 	unsigned int keep_awake_count;
 	bool verified_awake;
 	bool fake_sleep;
-	cdf_softirq_timer_t sleep_timer;
+	qdf_timer_t sleep_timer;
 	bool sleep_timer_init;
 	unsigned long sleep_ticks;
 

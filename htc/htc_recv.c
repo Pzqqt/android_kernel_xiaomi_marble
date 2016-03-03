@@ -240,7 +240,7 @@ cdf_nbuf_t rx_sg_to_single_netbuf(HTC_TARGET *target)
 	skb = cdf_nbuf_queue_remove(rx_sg_queue);
 	do {
 		cdf_nbuf_peek_header(skb, &anbdata, &anblen);
-		cdf_mem_copy(anbdata_new, anbdata, cdf_nbuf_len(skb));
+		qdf_mem_copy(anbdata_new, anbdata, cdf_nbuf_len(skb));
 		cdf_nbuf_put_tail(new_skb, cdf_nbuf_len(skb));
 		anbdata_new += cdf_nbuf_len(skb);
 		cdf_nbuf_free(skb);
@@ -261,10 +261,10 @@ _failed:
 }
 #endif
 
-CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
+QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 				   uint8_t pipeID)
 {
-	CDF_STATUS status = CDF_STATUS_SUCCESS;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	HTC_FRAME_HDR *HtcHdr;
 	HTC_TARGET *target = (HTC_TARGET *) Context;
 	uint8_t *netdata;
@@ -310,8 +310,8 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 					 htc_ep_id));
 			debug_dump_bytes((A_UINT8 *) HtcHdr,
 					 sizeof(HTC_FRAME_HDR), "BAD HTC Header");
-			status = CDF_STATUS_E_FAILURE;
-			CDF_BUG(0);
+			status = QDF_STATUS_E_FAILURE;
+			QDF_BUG(0);
 			break;
 		}
 
@@ -347,8 +347,8 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 			debug_dump_bytes((A_UINT8 *) HtcHdr,
 					 sizeof(HTC_FRAME_HDR),
 					 "BAD RX packet length");
-			status = CDF_STATUS_E_FAILURE;
-			CDF_BUG(0);
+			status = QDF_STATUS_E_FAILURE;
+			QDF_BUG(0);
 			break;
 #endif
 		}
@@ -374,7 +374,7 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 						("htc_rx_completion_handler, invalid header (payloadlength should be :%d, CB[0] is:%d)\n",
 						payloadLen, temp));
-					status = CDF_STATUS_E_INVAL;
+					status = QDF_STATUS_E_INVAL;
 					break;
 				}
 
@@ -386,7 +386,7 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 							      payloadLen - temp),
 							     temp, htc_ep_id);
 				if (A_FAILED(temp_status)) {
-					status = CDF_STATUS_E_FAILURE;
+					status = QDF_STATUS_E_FAILURE;
 					break;
 				}
 
@@ -420,8 +420,8 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 					 * on the endpoint 0 */
 					AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 							("HTC Rx Ctrl still processing\n"));
-					status = CDF_STATUS_E_FAILURE;
-					CDF_BUG(false);
+					status = QDF_STATUS_E_FAILURE;
+					QDF_BUG(false);
 					break;
 				}
 
@@ -436,7 +436,7 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 				target->CtrlResponseProcessing = true;
 				UNLOCK_HTC_RX(target);
 
-				cdf_event_set(&target->ctrl_response_valid);
+				qdf_event_set(&target->ctrl_response_valid);
 				break;
 			case HTC_MSG_SEND_SUSPEND_COMPLETE:
 				wow_nack = 0;
@@ -476,10 +476,10 @@ CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 		 * TODO_FIXME */
 		pPacket = allocate_htc_packet_container(target);
 		if (NULL == pPacket) {
-			status = CDF_STATUS_E_RESOURCES;
+			status = QDF_STATUS_E_RESOURCES;
 			break;
 		}
-		pPacket->Status = CDF_STATUS_SUCCESS;
+		pPacket->Status = QDF_STATUS_SUCCESS;
 		pPacket->Endpoint = htc_ep_id;
 		pPacket->pPktContext = netbuf;
 		pPacket->pBuffer = cdf_nbuf_data(netbuf) + HTC_HDR_LENGTH;
@@ -601,7 +601,7 @@ void htc_flush_rx_hold_queue(HTC_TARGET *target, HTC_ENDPOINT *pEndpoint)
 void htc_recv_init(HTC_TARGET *target)
 {
 	/* Initialize ctrl_response_valid to block */
-	cdf_event_init(&target->ctrl_response_valid);
+	qdf_event_create(&target->ctrl_response_valid);
 }
 
 /* polling routine to wait for a control packet to be received */
@@ -612,9 +612,9 @@ A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("+HTCWaitCtrlMessageRecv\n"));
 
 	/* Wait for BMI request/response transaction to complete */
-	if (cdf_wait_single_event(&target->ctrl_response_valid,
-		cdf_system_msecs_to_ticks(HTC_CONTROL_RX_TIMEOUT))) {
-		CDF_BUG(0);
+	if (qdf_wait_single_event(&target->ctrl_response_valid,
+		qdf_system_msecs_to_ticks(HTC_CONTROL_RX_TIMEOUT))) {
+		QDF_BUG(0);
 		return A_ERROR;
 	}
 

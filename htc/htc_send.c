@@ -28,7 +28,7 @@
 #include "htc_debug.h"
 #include "htc_internal.h"
 #include <cdf_nbuf.h>           /* cdf_nbuf_t */
-#include <cdf_memory.h>         /* cdf_mem_malloc */
+#include <qdf_mem.h>         /* qdf_mem_malloc */
 #include "epping_main.h"
 
 /* #define USB_HIF_SINGLE_PIPE_DATA_SCHED */
@@ -80,7 +80,7 @@ void htc_credit_record(htc_credit_exchange_type type, uint32_t tx_credit,
 
 	htc_credit_history_buffer[g_htc_credit_history_idx].type = type;
 	htc_credit_history_buffer[g_htc_credit_history_idx].time =
-		cdf_get_log_timestamp();
+		qdf_get_log_timestamp();
 	htc_credit_history_buffer[g_htc_credit_history_idx].tx_credit =
 		tx_credit;
 	htc_credit_history_buffer[g_htc_credit_history_idx].htc_tx_queue_depth =
@@ -130,11 +130,11 @@ void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credits
 	UNLOCK_HTC_TX(target);
 }
 
-static INLINE void restore_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
+static inline void restore_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
 	if (pPacket->PktInfo.AsTx.Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
 		cdf_nbuf_t netbuf = GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket);
-		cdf_nbuf_unmap(target->osdev, netbuf, CDF_DMA_TO_DEVICE);
+		cdf_nbuf_unmap(target->osdev, netbuf, QDF_DMA_TO_DEVICE);
 		cdf_nbuf_pull_head(netbuf, sizeof(HTC_FRAME_HDR));
 		pPacket->PktInfo.AsTx.Flags &= ~HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 	}
@@ -216,17 +216,17 @@ HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target)
 		if (!netbuf) {
 			return NULL;
 		}
-		pPacket = cdf_mem_malloc(sizeof(HTC_PACKET));
+		pPacket = qdf_mem_malloc(sizeof(HTC_PACKET));
 		AR_DEBUG_ASSERT(pPacket);
 		if (!pPacket) {
 			cdf_nbuf_free(netbuf);
 			return NULL;
 		}
-		pQueueSave = cdf_mem_malloc(sizeof(HTC_PACKET_QUEUE));
+		pQueueSave = qdf_mem_malloc(sizeof(HTC_PACKET_QUEUE));
 		AR_DEBUG_ASSERT(pQueueSave);
 		if (!pQueueSave) {
 			cdf_nbuf_free(netbuf);
-			cdf_mem_free(pPacket);
+			qdf_mem_free(pPacket);
 			return NULL;
 		}
 		INIT_HTC_PACKET_QUEUE(pQueueSave);
@@ -305,7 +305,7 @@ static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 					unsigned char *pBundleBuffer,
 					HTC_PACKET *pPacketTx)
 {
-	cdf_size_t data_len;
+	qdf_size_t data_len;
 	A_STATUS status;
 	cdf_nbuf_t bundleBuf;
 	uint32_t data_attr = 0;
@@ -322,7 +322,7 @@ static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 	HTC_PACKET_ENQUEUE(&pEndpoint->TxLookupQueue, pPacketTx);
 	UNLOCK_HTC_TX(target);
 #if DEBUG_BUNDLE
-	cdf_print(" Send bundle EP%d buffer size:0x%x, total:0x%x, count:%d.\n",
+	qdf_print(" Send bundle EP%d buffer size:0x%x, total:0x%x, count:%d.\n",
 		  pEndpoint->Id,
 		  pEndpoint->TxCreditSize,
 		  data_len, data_len / pEndpoint->TxCreditSize);
@@ -331,7 +331,7 @@ static A_STATUS htc_send_bundled_netbuf(HTC_TARGET *target,
 			       pEndpoint->UL_PipeID,
 			       pEndpoint->Id, data_len, bundleBuf, data_attr);
 	if (status != A_OK) {
-		cdf_print("%s:hif_send_head failed(len=%d).\n", __FUNCTION__,
+		qdf_print("%s:hif_send_head failed(len=%d).\n", __FUNCTION__,
 			  data_len);
 	}
 	return status;
@@ -522,7 +522,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 			    Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) {
 				cdf_nbuf_map(target->osdev,
 					     GET_HTC_PACKET_NET_BUF_CONTEXT
-						     (pPacket), CDF_DMA_TO_DEVICE);
+						     (pPacket), QDF_DMA_TO_DEVICE);
 			}
 		}
 		LOCK_HTC_TX(target);
@@ -538,7 +538,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 				       HTC_HDR_LENGTH + pPacket->ActualLength,
 				       netbuf, data_attr);
 #if DEBUG_BUNDLE
-		cdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
+		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
 			  pEndpoint->Id,
 			  pEndpoint->TxCreditSize,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);
@@ -546,7 +546,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 
 		target->ce_send_cnt++;
 
-		if (cdf_unlikely(A_FAILED(status))) {
+		if (qdf_unlikely(A_FAILED(status))) {
 			if (status != A_NO_RESOURCE) {
 				/* TODO : if more than 1 endpoint maps to the same PipeID it is possible
 				 * to run out of resources in the HIF layer. Don't emit the error */
@@ -585,7 +585,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 		if (pPacket->PktInfo.AsTx.Tag == HTC_TX_PACKET_TAG_RUNTIME_PUT)
 			hif_pm_runtime_put(target->hif_dev);
 	}
-	if (cdf_unlikely(A_FAILED(status))) {
+	if (qdf_unlikely(A_FAILED(status))) {
 #if defined(HIF_USB)
 		if (pEndpoint->Id >= ENDPOINT_2 && pEndpoint->Id <= ENDPOINT_5)
 			target->avail_tx_credits +=
@@ -688,7 +688,7 @@ void get_htc_send_packets_credit_based(HTC_TARGET *target,
 	while (true) {
 		if (do_pm_get && hif_pm_runtime_get(target->hif_dev)) {
 			/* bus suspended, runtime resume issued */
-			CDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
+			QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
 			break;
 		}
 
@@ -840,7 +840,7 @@ void get_htc_send_packets(HTC_TARGET *target,
 
 		if (do_pm_get && hif_pm_runtime_get(target->hif_dev)) {
 			/* bus suspended, runtime resume issued */
-			CDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
+			QDF_ASSERT(HTC_PACKET_QUEUE_DEPTH(pQueue) == 0);
 			break;
 		}
 
@@ -878,7 +878,7 @@ void get_htc_send_packets(HTC_TARGET *target,
 		num_frags =
 			(pPacket->PktInfo.AsTx.
 			 Flags & HTC_TX_PACKET_FLAG_FIXUP_NETBUF) ? 1
-		        /* WMI messages are in a single-fragment network buffer */ :
+			/* WMI messages are in a single-fragment network buffer */ :
 			cdf_nbuf_get_num_frags(GET_HTC_PACKET_NET_BUF_CONTEXT
 						       (pPacket));
 		Resources -= num_frags;
@@ -1043,11 +1043,11 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 	}
 
 	/* increment tx processing count on entry */
-	cdf_atomic_inc(&pEndpoint->TxProcessCount);
-	if (cdf_atomic_read(&pEndpoint->TxProcessCount) > 1) {
+	qdf_atomic_inc(&pEndpoint->TxProcessCount);
+	if (qdf_atomic_read(&pEndpoint->TxProcessCount) > 1) {
 		/* another thread or task is draining the TX queues on this endpoint
 		 * that thread will reset the tx processing count when the queue is drained */
-		cdf_atomic_dec(&pEndpoint->TxProcessCount);
+		qdf_atomic_dec(&pEndpoint->TxProcessCount);
 		UNLOCK_HTC_TX(target);
 		AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-htc_try_send (busy) \n"));
 		return HTC_SEND_QUEUE_OK;
@@ -1125,7 +1125,7 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 
 	UNLOCK_HTC_TX(target);
 	/* done with this endpoint, we can clear the count */
-	cdf_atomic_init(&pEndpoint->TxProcessCount);
+	qdf_atomic_init(&pEndpoint->TxProcessCount);
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND, ("-htc_try_send:  \n"));
 
@@ -1157,15 +1157,15 @@ static A_UINT16 htc_send_pkts_sched_check(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID 
 
 	switch (id) {
 	case ENDPOINT_2:        /* BE */
-		return (acQueueStatus[0] && acQueueStatus[2]
-			&& acQueueStatus[3]);
+		return acQueueStatus[0] && acQueueStatus[2]
+			&& acQueueStatus[3];
 	case ENDPOINT_3:        /* BK */
-		return (acQueueStatus[0] && acQueueStatus[1] && acQueueStatus[2]
-			&& acQueueStatus[3]);
+		return acQueueStatus[0] && acQueueStatus[1] && acQueueStatus[2]
+			&& acQueueStatus[3];
 	case ENDPOINT_4:        /* VI */
-		return (acQueueStatus[2] && acQueueStatus[3]);
+		return acQueueStatus[2] && acQueueStatus[3];
 	case ENDPOINT_5:        /* VO */
-		return (acQueueStatus[3]);
+		return acQueueStatus[3];
 	default:
 		return 0;
 	}
@@ -1291,7 +1291,7 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 		 */
 		cdf_nbuf_map(target->osdev,
 			     GET_HTC_PACKET_NET_BUF_CONTEXT(pPacket),
-			     CDF_DMA_TO_DEVICE);
+			     QDF_DMA_TO_DEVICE);
 
 		pPacket->PktInfo.AsTx.Flags |= HTC_TX_PACKET_FLAG_FIXUP_NETBUF;
 	}
@@ -1410,7 +1410,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, cdf_nbuf_t netbuf, int Epid,
 	pEndpoint->SeqNo++;
 
 	NBUF_UPDATE_TX_PKT_COUNT(netbuf, NBUF_TX_PKT_HTC);
-	DPTRACE(cdf_dp_trace(netbuf, CDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
+	DPTRACE(qdf_dp_trace(netbuf, QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
 				(uint8_t *)(cdf_nbuf_data(netbuf)),
 				sizeof(cdf_nbuf_data(netbuf))));
 	status = hif_send_head(target->hif_dev,
@@ -1492,14 +1492,14 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 	}
 
 	/* increment tx processing count on entry */
-	cdf_atomic_inc(&pEndpoint->TxProcessCount);
-	if (cdf_atomic_read(&pEndpoint->TxProcessCount) > 1) {
+	qdf_atomic_inc(&pEndpoint->TxProcessCount);
+	if (qdf_atomic_read(&pEndpoint->TxProcessCount) > 1) {
 		/*
 		 * Another thread or task is draining the TX queues on this endpoint.
 		 * That thread will reset the tx processing count when the queue is
 		 * drained.
 		 */
-		cdf_atomic_dec(&pEndpoint->TxProcessCount);
+		qdf_atomic_dec(&pEndpoint->TxProcessCount);
 		UNLOCK_HTC_TX(target);
 		return A_OK;
 	}
@@ -1545,7 +1545,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 		UNLOCK_HTC_TX(target);
 	}
 	NBUF_UPDATE_TX_PKT_COUNT(netbuf, NBUF_TX_PKT_HTC);
-	DPTRACE(cdf_dp_trace(netbuf, CDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
+	DPTRACE(qdf_dp_trace(netbuf, QDF_DP_TRACE_HTC_PACKET_PTR_RECORD,
 				(uint8_t *)(cdf_nbuf_data(netbuf)),
 				sizeof(cdf_nbuf_data(netbuf))));
 
@@ -1579,13 +1579,13 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 				       HTC_HDR_LENGTH + pPacket->ActualLength,
 				       netbuf, data_attr);
 #if DEBUG_BUNDLE
-		cdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
+		qdf_print(" Send single EP%d buffer size:0x%x, total:0x%x.\n",
 			  pEndpoint->Id,
 			  pEndpoint->TxCreditSize,
 			  HTC_HDR_LENGTH + pPacket->ActualLength);
 #endif
 
-		if (cdf_unlikely(A_FAILED(status))) {
+		if (qdf_unlikely(A_FAILED(status))) {
 			LOCK_HTC_TX(target);
 			pEndpoint->ul_outstanding_cnt--;
 			/* remove this packet from the tx completion queue */
@@ -1612,7 +1612,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 		}
 	}
 	/* done with this endpoint, we can clear the count */
-	cdf_atomic_init(&pEndpoint->TxProcessCount);
+	qdf_atomic_init(&pEndpoint->TxProcessCount);
 
 	if (pEndpoint->ul_is_polled) {
 		/*
@@ -1651,7 +1651,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 
 	/* Dequeue first packet directly because of in-order completion */
 	pPacket = htc_packet_dequeue(&pEndpoint->TxLookupQueue);
-	if (cdf_unlikely(!pPacket)) {
+	if (qdf_unlikely(!pPacket)) {
 		UNLOCK_HTC_TX(target);
 		return NULL;
 	}
@@ -1697,7 +1697,7 @@ static HTC_PACKET *htc_lookup_tx_packet(HTC_TARGET *target,
 	return pFoundPacket;
 }
 
-CDF_STATUS htc_tx_completion_handler(void *Context,
+QDF_STATUS htc_tx_completion_handler(void *Context,
 				   cdf_nbuf_t netbuf, unsigned int EpID,
 				   uint32_t toeplitz_hash_result)
 {
@@ -1705,8 +1705,8 @@ CDF_STATUS htc_tx_completion_handler(void *Context,
 	HTC_ENDPOINT *pEndpoint;
 	HTC_PACKET *pPacket;
 #ifdef USB_HIF_SINGLE_PIPE_DATA_SCHED
-	HTC_ENDPOINT_ID eid[DATA_EP_SIZE] =
-	{ ENDPOINT_5, ENDPOINT_4, ENDPOINT_2, ENDPOINT_3 };
+	HTC_ENDPOINT_ID eid[DATA_EP_SIZE] = { ENDPOINT_5, ENDPOINT_4,
+		ENDPOINT_2, ENDPOINT_3 };
 	int epidIdx;
 	A_UINT16 resourcesThresh[DATA_EP_SIZE]; /* urb resources */
 	A_UINT16 resources;
@@ -1739,11 +1739,11 @@ CDF_STATUS htc_tx_completion_handler(void *Context,
 			}
 			HTC_PACKET_QUEUE_ITERATE_END;
 			free_htc_bundle_packet(target, pPacket);
-			return CDF_STATUS_SUCCESS;
+			return QDF_STATUS_SUCCESS;
 		}
 		/* will be giving this buffer back to upper layers */
 		netbuf = NULL;
-		pPacket->Status = CDF_STATUS_SUCCESS;
+		pPacket->Status = QDF_STATUS_SUCCESS;
 		send_packet_completion(target, pPacket);
 
 	} while (false);
@@ -1755,7 +1755,7 @@ CDF_STATUS htc_tx_completion_handler(void *Context,
 		htc_try_send(target, pEndpoint, NULL);
 	}
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 /* callback when TX resources become available */
@@ -1928,8 +1928,8 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 #endif
 #if defined(HIF_USB)
 		if (pEndpoint->Id >= ENDPOINT_2 && pEndpoint->Id <= ENDPOINT_5) {
-			HTC_ENDPOINT_ID eid[DATA_EP_SIZE] =
-			{ ENDPOINT_5, ENDPOINT_4, ENDPOINT_2, ENDPOINT_3 };
+			HTC_ENDPOINT_ID eid[DATA_EP_SIZE] = { ENDPOINT_5,
+				ENDPOINT_4, ENDPOINT_2, ENDPOINT_3 };
 			int epid_idx;
 
 			target->avail_tx_credits += rpt_credits;
@@ -1998,5 +1998,5 @@ struct ol_ath_htc_stats *ieee80211_ioctl_get_htc_stats(HTC_HANDLE HTCHandle)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 
-	return (&(target->htc_pkt_stats));
+	return &(target->htc_pkt_stats);
 }

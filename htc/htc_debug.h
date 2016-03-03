@@ -30,7 +30,7 @@
 
 #define ATH_MODULE_NAME htc
 #include "a_debug.h"
-#include "cdf_trace.h"
+#include "qdf_trace.h"
 
 /* ------- Debug related stuff ------- */
 
@@ -40,11 +40,11 @@
 #define  ATH_DEBUG_DUMP ATH_DEBUG_MAKE_MODULE_MASK(3)
 #define  ATH_DEBUG_SETUP  ATH_DEBUG_MAKE_MODULE_MASK(4)
 #define HTC_ERROR(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_HTC, CDF_TRACE_LEVEL_ERROR, ## args)
+	QDF_TRACE(QDF_MODULE_ID_HTC, QDF_TRACE_LEVEL_ERROR, ## args)
 #define HTC_WARN(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_HTC, CDF_TRACE_LEVEL_WARN, ## args)
+	QDF_TRACE(QDF_MODULE_ID_HTC, QDF_TRACE_LEVEL_WARN, ## args)
 #define HTC_INFO(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_HTC, CDF_TRACE_LEVEL_INFO, ## args)
+	QDF_TRACE(QDF_MODULE_ID_HTC, QDF_TRACE_LEVEL_INFO, ## args)
 #define HTC_TRACE(args ...) \
-	CDF_TRACE(CDF_MODULE_ID_HTC, CDF_TRACE_LEVEL_DEBUG, ## args)
+	QDF_TRACE(QDF_MODULE_ID_HTC, QDF_TRACE_LEVEL_DEBUG, ## args)
 #endif /*HTC_DEBUG_H_ */

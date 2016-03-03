@@ -28,17 +28,17 @@
 #ifndef __CE_BMI_H__
 #define __CE_BMI_H__
 
-#include <cdf_atomic.h>         /* cdf_atomic_read */
-#include "cdf_lock.h"
+#include <qdf_atomic.h>         /* qdf_atomic_read */
+#include "qdf_lock.h"
 #include "ce_api.h"
 #include "cepci.h"
 
 void hif_bmi_recv_data(struct CE_handle *copyeng, void *ce_context,
-		  void *transfer_context, cdf_dma_addr_t data,
+		  void *transfer_context, qdf_dma_addr_t data,
 		  unsigned int nbytes,
 		  unsigned int transfer_id, unsigned int flags);
 void hif_bmi_send_done(struct CE_handle *copyeng, void *ce_context,
-		  void *transfer_context, cdf_dma_addr_t data,
+		  void *transfer_context, qdf_dma_addr_t data,
 		  unsigned int nbytes,
 		  unsigned int transfer_id, unsigned int sw_index,
 		  unsigned int hw_index, uint32_t toeplitz_hash_result);

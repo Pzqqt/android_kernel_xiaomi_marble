@@ -99,7 +99,7 @@ int hif_napi_poll(struct hif_opaque_softc *hif_ctx,
 
 #ifdef FEATURE_NAPI_DEBUG
 #define NAPI_DEBUG(fmt, ...)			\
-	cdf_print("wlan: NAPI: %s:%d "fmt, __func__, __LINE__, ##__VA_ARGS__);
+	qdf_print("wlan: NAPI: %s:%d "fmt, __func__, __LINE__, ##__VA_ARGS__);
 #else
 #define NAPI_DEBUG(fmt, ...) /* NO-OP */
 #endif /* FEATURE NAPI_DEBUG */

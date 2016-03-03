@@ -35,7 +35,7 @@
 #include "ce_main.h"
 #include "ce_internal.h"
 #include "ce_reg.h"
-#include "cdf_lock.h"
+#include "qdf_lock.h"
 #include "regtable.h"
 #include "epping_main.h"
 #include "hif_main.h"
@@ -97,7 +97,7 @@ struct hif_ce_desc_event {
 
 /* max history to record per copy engine */
 #define HIF_CE_HISTORY_MAX 512
-cdf_atomic_t hif_ce_desc_history_index[CE_COUNT_MAX];
+qdf_atomic_t hif_ce_desc_history_index[CE_COUNT_MAX];
 struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
 
 
@@ -113,11 +113,11 @@ struct hif_ce_desc_event hif_ce_desc_history[CE_COUNT_MAX][HIF_CE_HISTORY_MAX];
  * trying to access the array, full locking of the recording process would
  * be needed to have sane logging.
  */
-static int get_next_record_index(cdf_atomic_t *table_index, int array_size)
+static int get_next_record_index(qdf_atomic_t *table_index, int array_size)
 {
-	int record_index = cdf_atomic_inc_return(table_index);
+	int record_index = qdf_atomic_inc_return(table_index);
 	if (record_index == array_size)
-		cdf_atomic_sub(array_size, table_index);
+		qdf_atomic_sub(array_size, table_index);
 
 	while (record_index >= array_size)
 		record_index -= array_size;
@@ -149,8 +149,8 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
 	if (cbk && cbk->get_monotonic_boottime)
 		event->time = cbk->get_monotonic_boottime();
 	else
-		event->time = ((uint64_t)cdf_system_ticks_to_msecs(
-						cdf_system_ticks()) * 1000);
+		event->time = ((uint64_t)qdf_system_ticks_to_msecs(
+						qdf_system_ticks()) * 1000);
 
 	if (descriptor != NULL)
 		event->descriptor = *descriptor;
@@ -169,7 +169,7 @@ void hif_record_ce_desc_event(struct hif_softc *scn, int ce_id,
  */
 void ce_init_ce_desc_event_log(int ce_id, int size)
 {
-	cdf_atomic_init(&hif_ce_desc_history_index[ce_id]);
+	qdf_atomic_init(&hif_ce_desc_history_index[ce_id]);
 }
 #else
 void hif_record_ce_desc_event(struct hif_softc *scn,
@@ -232,7 +232,7 @@ int
 ce_completed_send_next_nolock(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
-			      cdf_dma_addr_t *bufferp,
+			      qdf_dma_addr_t *bufferp,
 			      unsigned int *nbytesp,
 			      unsigned int *transfer_idp,
 			      unsigned int *sw_idx, unsigned int *hw_idx,
@@ -275,7 +275,7 @@ void war_ce_src_ring_write_idx_set(struct hif_softc *scn,
 int
 ce_send_nolock(struct CE_handle *copyeng,
 			   void *per_transfer_context,
-			   cdf_dma_addr_t buffer,
+			   qdf_dma_addr_t buffer,
 			   uint32_t nbytes,
 			   uint32_t transfer_id,
 			   uint32_t flags,
@@ -295,7 +295,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 	if (unlikely(CE_RING_DELTA(nentries_mask,
 				write_index, sw_index - 1) <= 0)) {
 		OL_ATH_CE_PKT_ERROR_COUNT_INCR(scn, CE_RING_DELTA_FAIL);
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		A_TARGET_ACCESS_END_RET(scn);
 		return status;
 	}
@@ -357,7 +357,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 			src_ring->write_index);
 
 		src_ring->write_index = write_index;
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 	}
 	A_TARGET_ACCESS_END_RET(scn);
 
@@ -367,7 +367,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 int
 ce_send(struct CE_handle *copyeng,
 		void *per_transfer_context,
-		cdf_dma_addr_t buffer,
+		qdf_dma_addr_t buffer,
 		uint32_t nbytes,
 		uint32_t transfer_id,
 		uint32_t flags,
@@ -376,10 +376,10 @@ ce_send(struct CE_handle *copyeng,
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	int status;
 
-	cdf_spin_lock_bh(&CE_state->ce_index_lock);
+	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	status = ce_send_nolock(copyeng, per_transfer_context, buffer, nbytes,
 			transfer_id, flags, user_flag);
-	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
 	return status;
 }
@@ -397,7 +397,7 @@ void ce_sendlist_init(struct ce_sendlist *sendlist)
 
 int
 ce_sendlist_buf_add(struct ce_sendlist *sendlist,
-					cdf_dma_addr_t buffer,
+					qdf_dma_addr_t buffer,
 					uint32_t nbytes,
 					uint32_t flags,
 					uint32_t user_flags)
@@ -407,8 +407,8 @@ ce_sendlist_buf_add(struct ce_sendlist *sendlist,
 	struct ce_sendlist_item *item;
 
 	if (num_items >= CE_SENDLIST_ITEMS_MAX) {
-		CDF_ASSERT(num_items < CE_SENDLIST_ITEMS_MAX);
-		return CDF_STATUS_E_RESOURCES;
+		QDF_ASSERT(num_items < CE_SENDLIST_ITEMS_MAX);
+		return QDF_STATUS_E_RESOURCES;
 	}
 
 	item = &sl->item[num_items];
@@ -418,7 +418,7 @@ ce_sendlist_buf_add(struct ce_sendlist *sendlist,
 	item->flags = flags;
 	item->user_flags = user_flags;
 	sl->num_items = num_items + 1;
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 
 int
@@ -435,9 +435,9 @@ ce_sendlist_send(struct CE_handle *copyeng,
 	unsigned int sw_index;
 	unsigned int write_index;
 
-	CDF_ASSERT((num_items > 0) && (num_items < src_ring->nentries));
+	QDF_ASSERT((num_items > 0) && (num_items < src_ring->nentries));
 
-	cdf_spin_lock_bh(&CE_state->ce_index_lock);
+	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
 
@@ -450,28 +450,28 @@ ce_sendlist_send(struct CE_handle *copyeng,
 		for (i = 0; i < num_items - 1; i++) {
 			item = &sl->item[i];
 			/* TBDXXX: Support extensible sendlist_types? */
-			CDF_ASSERT(item->send_type == CE_SIMPLE_BUFFER_TYPE);
+			QDF_ASSERT(item->send_type == CE_SIMPLE_BUFFER_TYPE);
 			status = ce_send_nolock(copyeng, CE_SENDLIST_ITEM_CTXT,
-				(cdf_dma_addr_t) item->data,
+				(qdf_dma_addr_t) item->data,
 				item->u.nbytes, transfer_id,
 				item->flags | CE_SEND_FLAG_GATHER,
 				item->user_flags);
-			CDF_ASSERT(status == CDF_STATUS_SUCCESS);
+			QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 		}
 		/* provide valid context pointer for final item */
 		item = &sl->item[i];
 		/* TBDXXX: Support extensible sendlist_types? */
-		CDF_ASSERT(item->send_type == CE_SIMPLE_BUFFER_TYPE);
+		QDF_ASSERT(item->send_type == CE_SIMPLE_BUFFER_TYPE);
 		status = ce_send_nolock(copyeng, per_transfer_context,
-					(cdf_dma_addr_t) item->data,
+					(qdf_dma_addr_t) item->data,
 					item->u.nbytes,
 					transfer_id, item->flags,
 					item->user_flags);
-		CDF_ASSERT(status == CDF_STATUS_SUCCESS);
+		QDF_ASSERT(status == QDF_STATUS_SUCCESS);
 		NBUF_UPDATE_TX_PKT_COUNT((cdf_nbuf_t)per_transfer_context,
 					NBUF_TX_PKT_CE);
-		DPTRACE(cdf_dp_trace((cdf_nbuf_t)per_transfer_context,
-			CDF_DP_TRACE_CE_PACKET_PTR_RECORD,
+		DPTRACE(qdf_dp_trace((cdf_nbuf_t)per_transfer_context,
+			QDF_DP_TRACE_CE_PACKET_PTR_RECORD,
 			(uint8_t *)(((cdf_nbuf_t)per_transfer_context)->data),
 			sizeof(((cdf_nbuf_t)per_transfer_context)->data)));
 	} else {
@@ -482,7 +482,7 @@ ce_sendlist_send(struct CE_handle *copyeng,
 		 * the entire request at once, punt it back to the caller.
 		 */
 	}
-	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
 	return status;
 }
@@ -543,7 +543,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 	uint64_t dma_addr;
 	uint32_t user_flags = 0;
 
-	cdf_spin_lock_bh(&ce_state->ce_index_lock);
+	qdf_spin_lock_bh(&ce_state->ce_index_lock);
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
 
@@ -606,7 +606,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		/*
 		 * Clear packet offset for all but the first CE desc.
 		 */
-		user_flags &= ~CDF_CE_TX_PKT_OFFSET_BIT_M;
+		user_flags &= ~QDF_CE_TX_PKT_OFFSET_BIT_M;
 		ce_buffer_addr_hi_set(shadow_src_desc, dma_addr, user_flags);
 		shadow_src_desc->meta_data = transfer_id;
 
@@ -641,7 +641,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 		}
 	}
 
-	cdf_spin_unlock_bh(&ce_state->ce_index_lock);
+	qdf_spin_unlock_bh(&ce_state->ce_index_lock);
 
 	/*
 	 * If all packets in the array are transmitted,
@@ -655,7 +655,7 @@ int ce_send_fast(struct CE_handle *copyeng, cdf_nbuf_t *msdus,
 
 int
 ce_recv_buf_enqueue(struct CE_handle *copyeng,
-		    void *per_recv_context, cdf_dma_addr_t buffer)
+		    void *per_recv_context, qdf_dma_addr_t buffer)
 {
 	int status;
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
@@ -668,13 +668,13 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	uint64_t dma_addr = buffer;
 	struct hif_softc *scn = CE_state->scn;
 
-	cdf_spin_lock_bh(&CE_state->ce_index_lock);
+	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	write_index = dest_ring->write_index;
 	sw_index = dest_ring->sw_index;
 
 	A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val);
 	if (val == -1) {
-		cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+		qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 		return val;
 	}
 
@@ -704,17 +704,17 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 		write_index = CE_RING_IDX_INCR(nentries_mask, write_index);
 		CE_DEST_RING_WRITE_IDX_SET(scn, ctrl_addr, write_index);
 		dest_ring->write_index = write_index;
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 	} else {
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 	}
 	A_TARGET_ACCESS_END_RET_EXT(scn, val);
 	if (val == -1) {
-		cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+		qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 		return val;
 	}
 
-	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
 	return status;
 }
@@ -755,10 +755,10 @@ unsigned int ce_send_entries_avail(struct CE_handle *copyeng)
 	unsigned int sw_index;
 	unsigned int write_index;
 
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
-	cdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	return CE_RING_DELTA(nentries_mask, write_index, sw_index - 1);
 }
@@ -771,10 +771,10 @@ unsigned int ce_recv_entries_avail(struct CE_handle *copyeng)
 	unsigned int sw_index;
 	unsigned int write_index;
 
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	sw_index = dest_ring->sw_index;
 	write_index = dest_ring->write_index;
-	cdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	return CE_RING_DELTA(nentries_mask, write_index, sw_index - 1);
 }
@@ -804,9 +804,9 @@ unsigned int ce_send_entries_done(struct CE_handle *copyeng)
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	unsigned int nentries;
 
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	nentries = ce_send_entries_done_nolock(CE_state->scn, CE_state);
-	cdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	return nentries;
 }
@@ -836,9 +836,9 @@ unsigned int ce_recv_entries_done(struct CE_handle *copyeng)
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	unsigned int nentries;
 
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	nentries = ce_recv_entries_done_nolock(CE_state->scn, CE_state);
-	cdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	return nentries;
 }
@@ -857,7 +857,7 @@ int
 ce_completed_recv_next_nolock(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
-			      cdf_dma_addr_t *bufferp,
+			      qdf_dma_addr_t *bufferp,
 			      unsigned int *nbytesp,
 			      unsigned int *transfer_idp,
 			      unsigned int *flagsp)
@@ -886,7 +886,7 @@ ce_completed_recv_next_nolock(struct CE_state *CE_state,
 		 * corresponding descriptor has completed. We treat this
 		 * as a descriptor that is not yet done.
 		 */
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 		goto done;
 	}
 
@@ -916,7 +916,7 @@ ce_completed_recv_next_nolock(struct CE_state *CE_state,
 	/* Update sw_index */
 	sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
 	dest_ring->sw_index = sw_index;
-	status = CDF_STATUS_SUCCESS;
+	status = QDF_STATUS_SUCCESS;
 
 done:
 	return status;
@@ -926,45 +926,45 @@ int
 ce_completed_recv_next(struct CE_handle *copyeng,
 		       void **per_CE_contextp,
 		       void **per_transfer_contextp,
-		       cdf_dma_addr_t *bufferp,
+		       qdf_dma_addr_t *bufferp,
 		       unsigned int *nbytesp,
 		       unsigned int *transfer_idp, unsigned int *flagsp)
 {
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	int status;
 
-	cdf_spin_lock_bh(&CE_state->ce_index_lock);
+	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	status =
 		ce_completed_recv_next_nolock(CE_state, per_CE_contextp,
 					      per_transfer_contextp, bufferp,
 					      nbytesp, transfer_idp, flagsp);
-	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
 	return status;
 }
 
 /* NB: Modeled after ce_completed_recv_next_nolock */
-CDF_STATUS
+QDF_STATUS
 ce_revoke_recv_next(struct CE_handle *copyeng,
 		    void **per_CE_contextp,
-		    void **per_transfer_contextp, cdf_dma_addr_t *bufferp)
+		    void **per_transfer_contextp, qdf_dma_addr_t *bufferp)
 {
 	struct CE_state *CE_state;
 	struct CE_ring_state *dest_ring;
 	unsigned int nentries_mask;
 	unsigned int sw_index;
 	unsigned int write_index;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct hif_softc *scn;
 
 	CE_state = (struct CE_state *)copyeng;
 	dest_ring = CE_state->dest_ring;
 	if (!dest_ring) {
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	scn = CE_state->scn;
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	nentries_mask = dest_ring->nentries_mask;
 	sw_index = dest_ring->sw_index;
 	write_index = dest_ring->write_index;
@@ -992,11 +992,11 @@ ce_revoke_recv_next(struct CE_handle *copyeng,
 		/* Update sw_index */
 		sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
 		dest_ring->sw_index = sw_index;
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 	} else {
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 	}
-	cdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	return status;
 }
@@ -1009,14 +1009,14 @@ int
 ce_completed_send_next_nolock(struct CE_state *CE_state,
 			      void **per_CE_contextp,
 			      void **per_transfer_contextp,
-			      cdf_dma_addr_t *bufferp,
+			      qdf_dma_addr_t *bufferp,
 			      unsigned int *nbytesp,
 			      unsigned int *transfer_idp,
 			      unsigned int *sw_idx,
 			      unsigned int *hw_idx,
 			      uint32_t *toeplitz_hash_result)
 {
-	int status = CDF_STATUS_E_FAILURE;
+	int status = QDF_STATUS_E_FAILURE;
 	struct CE_ring_state *src_ring = CE_state->src_ring;
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
 	unsigned int nentries_mask = src_ring->nentries_mask;
@@ -1085,18 +1085,18 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 		/* Update sw_index */
 		sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
 		src_ring->sw_index = sw_index;
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 	}
 
 	return status;
 }
 
 /* NB: Modeled after ce_completed_send_next */
-CDF_STATUS
+QDF_STATUS
 ce_cancel_send_next(struct CE_handle *copyeng,
 		void **per_CE_contextp,
 		void **per_transfer_contextp,
-		cdf_dma_addr_t *bufferp,
+		qdf_dma_addr_t *bufferp,
 		unsigned int *nbytesp,
 		unsigned int *transfer_idp,
 		uint32_t *toeplitz_hash_result)
@@ -1106,17 +1106,17 @@ ce_cancel_send_next(struct CE_handle *copyeng,
 	unsigned int nentries_mask;
 	unsigned int sw_index;
 	unsigned int write_index;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	struct hif_softc *scn;
 
 	CE_state = (struct CE_state *)copyeng;
 	src_ring = CE_state->src_ring;
 	if (!src_ring) {
-		return CDF_STATUS_E_FAILURE;
+		return QDF_STATUS_E_FAILURE;
 	}
 
 	scn = CE_state->scn;
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 	nentries_mask = src_ring->nentries_mask;
 	sw_index = src_ring->sw_index;
 	write_index = src_ring->write_index;
@@ -1151,11 +1151,11 @@ ce_cancel_send_next(struct CE_handle *copyeng,
 		/* Update sw_index */
 		sw_index = CE_RING_IDX_INCR(nentries_mask, sw_index);
 		src_ring->sw_index = sw_index;
-		status = CDF_STATUS_SUCCESS;
+		status = QDF_STATUS_SUCCESS;
 	} else {
-		status = CDF_STATUS_E_FAILURE;
+		status = QDF_STATUS_E_FAILURE;
 	}
-	cdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
 
 	return status;
 }
@@ -1167,7 +1167,7 @@ int
 ce_completed_send_next(struct CE_handle *copyeng,
 		       void **per_CE_contextp,
 		       void **per_transfer_contextp,
-		       cdf_dma_addr_t *bufferp,
+		       qdf_dma_addr_t *bufferp,
 		       unsigned int *nbytesp,
 		       unsigned int *transfer_idp,
 		       unsigned int *sw_idx,
@@ -1177,13 +1177,13 @@ ce_completed_send_next(struct CE_handle *copyeng,
 	struct CE_state *CE_state = (struct CE_state *)copyeng;
 	int status;
 
-	cdf_spin_lock_bh(&CE_state->ce_index_lock);
+	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 	status =
 		ce_completed_send_next_nolock(CE_state, per_CE_contextp,
 					      per_transfer_contextp, bufferp,
 					      nbytesp, transfer_idp, sw_idx,
 					      hw_idx, toeplitz_hash_result);
-	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
 	return status;
 }
@@ -1202,7 +1202,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 {
 	void *CE_context;
 	void *transfer_context;
-	cdf_dma_addr_t buf;
+	qdf_dma_addr_t buf;
 	unsigned int nbytes;
 	unsigned int id;
 	unsigned int sw_idx, hw_idx;
@@ -1226,7 +1226,7 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 	 * addressed by change spin_lock to spin_lock_bh also.
 	 */
 
-	cdf_spin_lock_bh(&CE_state->ce_index_lock);
+	qdf_spin_lock_bh(&CE_state->ce_index_lock);
 
 	if (CE_state->send_cb) {
 		{
@@ -1238,9 +1238,9 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 				  &transfer_context, &buf,
 				  &nbytes, &id, &sw_idx, &hw_idx,
 				  &toeplitz_hash_result) ==
-				  CDF_STATUS_SUCCESS) {
+				  QDF_STATUS_SUCCESS) {
 				if (ce_id != CE_HTT_H2T_MSG) {
-					cdf_spin_unlock_bh(
+					qdf_spin_unlock_bh(
 						&CE_state->ce_index_lock);
 					CE_state->send_cb(
 						(struct CE_handle *)
@@ -1248,24 +1248,24 @@ void ce_per_engine_servicereap(struct hif_softc *scn, unsigned int ce_id)
 						transfer_context, buf,
 						nbytes, id, sw_idx, hw_idx,
 						toeplitz_hash_result);
-					cdf_spin_lock_bh(
+					qdf_spin_lock_bh(
 						&CE_state->ce_index_lock);
 				} else {
 					struct HIF_CE_pipe_info *pipe_info =
 						(struct HIF_CE_pipe_info *)
 						CE_context;
 
-					cdf_spin_lock_bh(&pipe_info->
+					qdf_spin_lock_bh(&pipe_info->
 						 completion_freeq_lock);
 					pipe_info->num_sends_allowed++;
-					cdf_spin_unlock_bh(&pipe_info->
+					qdf_spin_unlock_bh(&pipe_info->
 						   completion_freeq_lock);
 				}
 			}
 		}
 	}
 
-	cdf_spin_unlock_bh(&CE_state->ce_index_lock);
+	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
 
 	hif_record_ce_desc_event(scn, ce_id, HIF_CE_REAP_EXIT,
 			NULL, NULL, 0);
@@ -1299,7 +1299,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 	uint32_t ctrl_addr = CE_state->ctrl_addr;
 	void *CE_context;
 	void *transfer_context;
-	cdf_dma_addr_t buf;
+	qdf_dma_addr_t buf;
 	unsigned int nbytes;
 	unsigned int id;
 	unsigned int flags;
@@ -1315,7 +1315,7 @@ int ce_per_engine_service(struct hif_softc *scn, unsigned int CE_id)
 		return 0; /* no work done */
 	}
 
-	cdf_spin_lock(&CE_state->ce_index_lock);
+	qdf_spin_lock(&CE_state->ce_index_lock);
 
 	/* Clear force_break flag and re-initialize receive_count to 0 */
 
@@ -1331,8 +1331,8 @@ more_completions:
 		while (ce_completed_recv_next_nolock
 				(CE_state, &CE_context, &transfer_context,
 				&buf, &nbytes, &id, &flags) ==
-				CDF_STATUS_SUCCESS) {
-			cdf_spin_unlock(&CE_state->ce_index_lock);
+				QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock(&CE_state->ce_index_lock);
 			CE_state->recv_cb((struct CE_handle *)CE_state,
 					  CE_context, transfer_context, buf,
 					  nbytes, id, flags);
@@ -1354,8 +1354,8 @@ more_completions:
 			/* Break the receive processes by
 			 * force if force_break set up
 			 */
-			if (cdf_unlikely(CE_state->force_break)) {
-				cdf_atomic_set(&CE_state->rx_pending, 1);
+			if (qdf_unlikely(CE_state->force_break)) {
+				qdf_atomic_set(&CE_state->rx_pending, 1);
 				CE_ENGINE_INT_STATUS_CLEAR(scn, ctrl_addr,
 					HOST_IS_COPY_COMPLETE_MASK);
 				if (Q_TARGET_ACCESS_END(scn) < 0)
@@ -1363,7 +1363,7 @@ more_completions:
 						  CE_state->receive_count);
 				return CE_state->receive_count;
 			}
-			cdf_spin_lock(&CE_state->ce_index_lock);
+			qdf_spin_lock(&CE_state->ce_index_lock);
 		}
 	}
 
@@ -1383,24 +1383,24 @@ more_completions:
 			 (CE_state, &CE_context,
 			 &transfer_context, &buf, &nbytes,
 			 &id, &sw_idx, &hw_idx,
-			 &toeplitz_hash_result) == CDF_STATUS_SUCCESS) {
+			 &toeplitz_hash_result) == QDF_STATUS_SUCCESS) {
 
 			if (CE_id != CE_HTT_H2T_MSG ||
 			    WLAN_IS_EPPING_ENABLED(mode)) {
-				cdf_spin_unlock(&CE_state->ce_index_lock);
+				qdf_spin_unlock(&CE_state->ce_index_lock);
 				CE_state->send_cb((struct CE_handle *)CE_state,
 						  CE_context, transfer_context,
 						  buf, nbytes, id, sw_idx,
 						  hw_idx, toeplitz_hash_result);
-				cdf_spin_lock(&CE_state->ce_index_lock);
+				qdf_spin_lock(&CE_state->ce_index_lock);
 			} else {
 				struct HIF_CE_pipe_info *pipe_info =
 					(struct HIF_CE_pipe_info *)CE_context;
 
-				cdf_spin_lock(&pipe_info->
+				qdf_spin_lock(&pipe_info->
 					      completion_freeq_lock);
 				pipe_info->num_sends_allowed++;
-				cdf_spin_unlock(&pipe_info->
+				qdf_spin_unlock(&pipe_info->
 						completion_freeq_lock);
 			}
 		}
@@ -1409,13 +1409,13 @@ more_completions:
 			 (CE_state, &CE_context,
 			  &transfer_context, &buf, &nbytes,
 			  &id, &sw_idx, &hw_idx,
-			  &toeplitz_hash_result) == CDF_STATUS_SUCCESS) {
-			cdf_spin_unlock(&CE_state->ce_index_lock);
+			  &toeplitz_hash_result) == QDF_STATUS_SUCCESS) {
+			qdf_spin_unlock(&CE_state->ce_index_lock);
 			CE_state->send_cb((struct CE_handle *)CE_state,
 				  CE_context, transfer_context, buf,
 				  nbytes, id, sw_idx, hw_idx,
 				  toeplitz_hash_result);
-			cdf_spin_lock(&CE_state->ce_index_lock);
+			qdf_spin_lock(&CE_state->ce_index_lock);
 		}
 #endif /*ATH_11AC_TXCOMPACT */
 	}
@@ -1425,7 +1425,7 @@ more_watermarks:
 		CE_int_status = CE_ENGINE_INT_STATUS_GET(scn, ctrl_addr);
 		if (CE_int_status & CE_WATERMARK_MASK) {
 			if (CE_state->watermark_cb) {
-				cdf_spin_unlock(&CE_state->ce_index_lock);
+				qdf_spin_unlock(&CE_state->ce_index_lock);
 				/* Convert HW IS bits to software flags */
 				flags =
 					(CE_int_status & CE_WATERMARK_MASK) >>
@@ -1434,7 +1434,7 @@ more_watermarks:
 				CE_state->
 				watermark_cb((struct CE_handle *)CE_state,
 					     CE_state->wm_context, flags);
-				cdf_spin_lock(&CE_state->ce_index_lock);
+				qdf_spin_lock(&CE_state->ce_index_lock);
 			}
 		}
 	}
@@ -1494,8 +1494,8 @@ more_watermarks:
 		}
 	}
 
-	cdf_spin_unlock(&CE_state->ce_index_lock);
-	cdf_atomic_set(&CE_state->rx_pending, 0);
+	qdf_spin_unlock(&CE_state->ce_index_lock);
+	qdf_atomic_set(&CE_state->rx_pending, 0);
 
 	if (Q_TARGET_ACCESS_END(scn) < 0)
 		HIF_ERROR("<--[premature rc=%d]\n", CE_state->receive_count);
@@ -1514,11 +1514,11 @@ void ce_per_engine_service_any(int irq, struct hif_softc *scn)
 	uint32_t intr_summary;
 
 	A_TARGET_ACCESS_BEGIN(scn);
-	if (!cdf_atomic_read(&scn->tasklet_from_intr)) {
+	if (!qdf_atomic_read(&scn->tasklet_from_intr)) {
 		for (CE_id = 0; CE_id < scn->ce_count; CE_id++) {
 			struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
-			if (cdf_atomic_read(&CE_state->rx_pending)) {
-				cdf_atomic_set(&CE_state->rx_pending, 0);
+			if (qdf_atomic_read(&CE_state->rx_pending)) {
+				qdf_atomic_set(&CE_state->rx_pending, 0);
 				ce_per_engine_service(scn, CE_id);
 			}
 		}
@@ -1718,11 +1718,11 @@ void ce_pkt_dl_len_set(void *hif_sc, u_int32_t pkt_download_len)
 	struct hif_softc *sc = (struct hif_softc *)(hif_sc);
 	struct CE_state *ce_state = sc->ce_id_to_state[CE_HTT_H2T_MSG];
 
-	cdf_assert_always(ce_state);
+	qdf_assert_always(ce_state);
 
 	ce_state->download_len = pkt_download_len;
 
-	cdf_print("%s CE %d Pkt download length %d", __func__,
+	qdf_print("%s CE %d Pkt download length %d", __func__,
 		  ce_state->id, ce_state->download_len);
 }
 #else
@@ -1737,7 +1737,7 @@ bool ce_get_rx_pending(struct hif_softc *scn)
 
 	for (CE_id = 0; CE_id < scn->ce_count; CE_id++) {
 		struct CE_state *CE_state = scn->ce_id_to_state[CE_id];
-		if (cdf_atomic_read(&CE_state->rx_pending))
+		if (qdf_atomic_read(&CE_state->rx_pending))
 			return true;
 	}
 
@@ -1754,7 +1754,7 @@ bool ce_get_rx_pending(struct hif_softc *scn)
 bool ce_check_rx_pending(struct hif_softc *scn, int ce_id)
 {
 	struct CE_state *CE_state = scn->ce_id_to_state[ce_id];
-	if (cdf_atomic_read(&CE_state->rx_pending))
+	if (qdf_atomic_read(&CE_state->rx_pending))
 		return true;
 	else
 		return false;
@@ -1813,14 +1813,14 @@ void ce_enable_msi(struct hif_softc *scn, unsigned int CE_id,
  * Return: None
  */
 void ce_ipa_get_resource(struct CE_handle *ce,
-			 cdf_dma_addr_t *ce_sr_base_paddr,
+			 qdf_dma_addr_t *ce_sr_base_paddr,
 			 uint32_t *ce_sr_ring_size,
-			 cdf_dma_addr_t *ce_reg_paddr)
+			 qdf_dma_addr_t *ce_reg_paddr)
 {
 	struct CE_state *CE_state = (struct CE_state *)ce;
 	uint32_t ring_loop;
 	struct CE_src_desc *ce_desc;
-	cdf_dma_addr_t phy_mem_base;
+	qdf_dma_addr_t phy_mem_base;
 	struct hif_softc *scn = CE_state->scn;
 
 	if (CE_RUNNING != CE_state->state) {

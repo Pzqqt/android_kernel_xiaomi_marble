@@ -36,10 +36,10 @@ extern "C" {
 #include "a_types.h"
 #include "osapi_linux.h"
 #include <cdf_nbuf.h>
-#include <cdf_types.h>
-#include <cdf_lock.h>
-#include <cdf_softirq_timer.h>
-#include <cdf_atomic.h>
+#include <qdf_types.h>
+#include <qdf_lock.h>
+#include <qdf_timer.h>
+#include <qdf_atomic.h>
 #include "hif.h"
 #include <htc.h>
 #include "htc_api.h"
@@ -105,23 +105,23 @@ typedef struct _HTC_ENDPOINT {
 	HTC_EP_CALLBACKS EpCallBacks;           /* callbacks associated with this endpoint */
 	HTC_PACKET_QUEUE TxQueue;               /* HTC frame buffer TX queue */
 	int MaxTxQueueDepth;            /* max depth of the TX queue before we need to
-	                                   call driver's full handler */
+					call driver's full handler */
 	int MaxMsgLength;               /* max length of endpoint message */
 	uint8_t UL_PipeID;
 	uint8_t DL_PipeID;
 	int ul_is_polled;               /* Need to call HIF to get tx completion callbacks? */
-	cdf_softirq_timer_t ul_poll_timer;
+	qdf_timer_t ul_poll_timer;
 	int ul_poll_timer_active;
 	int ul_outstanding_cnt;
 	int dl_is_polled;               /* Need to call HIF to fetch rx?  (Not currently supported.) */
 #if 0                           /* not currently supported */
-	cdf_softirq_timer_t dl_poll_timer;
+	qdf_timer_t dl_poll_timer;
 #endif
 
 	HTC_PACKET_QUEUE TxLookupQueue;         /* lookup queue to match netbufs to htc packets */
 	HTC_PACKET_QUEUE RxBufferHoldQueue;             /* temporary hold queue for back compatibility */
 	A_UINT8 SeqNo;          /* TX seq no (helpful) for debugging */
-	cdf_atomic_t TxProcessCount;            /* serialization */
+	qdf_atomic_t TxProcessCount;            /* serialization */
 	struct _HTC_TARGET *target;
 	int TxCredits;          /* TX credits available on this endpoint */
 	int TxCreditSize;               /* size in bytes of each credit (set by HTC) */
@@ -155,10 +155,10 @@ enum ol_ath_htc_pkt_ecodes {
 typedef struct _HTC_TARGET {
 	struct hif_opaque_softc *hif_dev;
 	HTC_ENDPOINT endpoint[ENDPOINT_MAX];
-	cdf_spinlock_t HTCLock;
-	cdf_spinlock_t HTCRxLock;
-	cdf_spinlock_t HTCTxLock;
-	cdf_spinlock_t HTCCreditLock;
+	qdf_spinlock_t HTCLock;
+	qdf_spinlock_t HTCRxLock;
+	qdf_spinlock_t HTCTxLock;
+	qdf_spinlock_t HTCCreditLock;
 	A_UINT32 HTCStateFlags;
 	void *host_handle;
 	HTC_INIT_INFO HTCInitInfo;
@@ -166,7 +166,7 @@ typedef struct _HTC_TARGET {
 	HTC_PACKET_QUEUE ControlBufferTXFreeList;
 	A_UINT8 CtrlResponseBuffer[HTC_MAX_CONTROL_MESSAGE_LENGTH];
 	int CtrlResponseLength;
-	cdf_event_t ctrl_response_valid;
+	qdf_event_t ctrl_response_valid;
 	A_BOOL CtrlResponseProcessing;
 	int TotalTransmitCredits;
 	HTC_SERVICE_TX_CREDIT_ALLOCATION
@@ -178,13 +178,13 @@ typedef struct _HTC_TARGET {
 	A_UINT32 CurRxSgTotalLen;               /* current total length */
 	A_UINT32 ExpRxSgTotalLen;               /* expected total length */
 #endif
-	cdf_device_t osdev;
+	qdf_device_t osdev;
 	struct ol_ath_htc_stats htc_pkt_stats;
 	HTC_PACKET *pBundleFreeList;
 	A_UINT32 ce_send_cnt;
 	A_UINT32 TX_comp_cnt;
 	A_UINT8 MaxMsgsPerHTCBundle;
-	cdf_work_t queue_kicker;
+	qdf_work_t queue_kicker;
 } HTC_TARGET;
 
 #define HTC_ENABLE_BUNDLE(target) (target->MaxMsgsPerHTCBundle > 1)
@@ -197,14 +197,14 @@ typedef struct _HTC_TARGET {
 
 #define HTC_STATE_STOPPING      (1 << 0)
 #define HTC_STOPPING(t)         ((t)->HTCStateFlags & HTC_STATE_STOPPING)
-#define LOCK_HTC(t)             cdf_spin_lock_bh(&(t)->HTCLock);
-#define UNLOCK_HTC(t)           cdf_spin_unlock_bh(&(t)->HTCLock);
-#define LOCK_HTC_RX(t)          cdf_spin_lock_bh(&(t)->HTCRxLock);
-#define UNLOCK_HTC_RX(t)        cdf_spin_unlock_bh(&(t)->HTCRxLock);
-#define LOCK_HTC_TX(t)          cdf_spin_lock_bh(&(t)->HTCTxLock);
-#define UNLOCK_HTC_TX(t)        cdf_spin_unlock_bh(&(t)->HTCTxLock);
-#define LOCK_HTC_CREDIT(t)      cdf_spin_lock_bh(&(t)->HTCCreditLock);
-#define UNLOCK_HTC_CREDIT(t)    cdf_spin_unlock_bh(&(t)->HTCCreditLock);
+#define LOCK_HTC(t)             qdf_spin_lock_bh(&(t)->HTCLock);
+#define UNLOCK_HTC(t)           qdf_spin_unlock_bh(&(t)->HTCLock);
+#define LOCK_HTC_RX(t)          qdf_spin_lock_bh(&(t)->HTCRxLock);
+#define UNLOCK_HTC_RX(t)        qdf_spin_unlock_bh(&(t)->HTCRxLock);
+#define LOCK_HTC_TX(t)          qdf_spin_lock_bh(&(t)->HTCTxLock);
+#define UNLOCK_HTC_TX(t)        qdf_spin_unlock_bh(&(t)->HTCTxLock);
+#define LOCK_HTC_CREDIT(t)      qdf_spin_lock_bh(&(t)->HTCCreditLock);
+#define UNLOCK_HTC_CREDIT(t)    qdf_spin_unlock_bh(&(t)->HTCCreditLock);
 
 #define GET_HTC_TARGET_FROM_HANDLE(hnd) ((HTC_TARGET *)(hnd))
 
@@ -213,17 +213,23 @@ typedef struct _HTC_TARGET {
 #define HTC_POLL_CLEANUP_PERIOD_MS 10   /* milliseconds */
 
 /* Macro to Increment the  HTC_PACKET_ERRORS for Tx.*/
-#define OL_ATH_HTC_PKT_ERROR_COUNT_INCR(_target,_ecode)	\
+#define OL_ATH_HTC_PKT_ERROR_COUNT_INCR(_target, _ecode)	\
 	do { \
-		if(_ecode==GET_HTC_PKT_Q_FAIL) (_target->htc_pkt_stats.htc_get_pkt_q_fail_count)+=1; \
-		if(_ecode==HTC_PKT_Q_EMPTY) (_target->htc_pkt_stats.htc_pkt_q_empty_count)+=1; \
-		if(_ecode==HTC_SEND_Q_EMPTY) (_target->htc_pkt_stats.htc_send_q_empty_count)+=1; \
-	} while(0);
+		if (_ecode == GET_HTC_PKT_Q_FAIL) \
+		(_target->htc_pkt_stats.htc_get_pkt_q_fail_count) += 1 \
+		; \
+		if (_ecode == HTC_PKT_Q_EMPTY) \
+		(_target->htc_pkt_stats.htc_pkt_q_empty_count) += 1 \
+		; \
+		if (_ecode == HTC_SEND_Q_EMPTY) \
+		(_target->htc_pkt_stats.htc_send_q_empty_count) += 1 \
+		; \
+	} while (0);
 /* internal HTC functions */
 
-CDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
+QDF_STATUS htc_rx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 				   uint8_t pipeID);
-CDF_STATUS htc_tx_completion_handler(void *Context, cdf_nbuf_t netbuf,
+QDF_STATUS htc_tx_completion_handler(void *Context, cdf_nbuf_t netbuf,
 				   unsigned int transferID, uint32_t toeplitz_hash_result);
 
 HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target);
@@ -244,7 +250,7 @@ void htc_control_rx_complete(void *Context, HTC_PACKET *pPacket);
 void htc_process_credit_rpt(HTC_TARGET *target,
 			    HTC_CREDIT_REPORT *pRpt,
 			    int NumEntries, HTC_ENDPOINT_ID FromEndpoint);
-void htc_fw_event_handler(void *context, CDF_STATUS status);
+void htc_fw_event_handler(void *context, QDF_STATUS status);
 void htc_send_complete_check_cleanup(void *context);
 void htc_runtime_pm_init(HTC_TARGET *target);
 void htc_kick_queues(void *context);
@@ -256,7 +262,7 @@ static inline void htc_send_complete_poll_timer_stop(HTC_ENDPOINT *
 						     pEndpoint) {
 	LOCK_HTC_TX(pEndpoint->target);
 	if (pEndpoint->ul_poll_timer_active) {
-		/* cdf_softirq_timer_cancel(&pEndpoint->ul_poll_timer); */
+		/* qdf_timer_stop(&pEndpoint->ul_poll_timer); */
 		pEndpoint->ul_poll_timer_active = 0;
 	}
 	UNLOCK_HTC_TX(pEndpoint->target);
@@ -268,7 +274,7 @@ static inline void htc_send_complete_poll_timer_start(HTC_ENDPOINT *
 	if (pEndpoint->ul_outstanding_cnt
 	    && !pEndpoint->ul_poll_timer_active) {
 		/*
-		   cdf_softirq_timer_start(
+		   qdf_timer_start(
 		   &pEndpoint->ul_poll_timer, HTC_POLL_CLEANUP_PERIOD_MS);
 		 */
 		pEndpoint->ul_poll_timer_active = 1;

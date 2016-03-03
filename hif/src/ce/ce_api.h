@@ -73,7 +73,7 @@ struct CE_handle;
 typedef void (*ce_send_cb)(struct CE_handle *copyeng,
 			   void *per_ce_send_context,
 			   void *per_transfer_send_context,
-			   cdf_dma_addr_t buffer,
+			   qdf_dma_addr_t buffer,
 			   unsigned int nbytes,
 			   unsigned int transfer_id,
 			   unsigned int sw_index,
@@ -88,7 +88,7 @@ typedef void (*ce_send_cb)(struct CE_handle *copyeng,
 typedef void (*CE_recv_cb)(struct CE_handle *copyeng,
 		   void *per_CE_recv_context,
 		   void *per_transfer_recv_context,
-		   cdf_dma_addr_t buffer,
+		   qdf_dma_addr_t buffer,
 		   unsigned int nbytes,
 		   unsigned int transfer_id,
 		   unsigned int flags);
@@ -142,7 +142,7 @@ struct CE_attr;
  */
 int ce_send(struct CE_handle *copyeng,
 		void *per_transfer_send_context,
-		cdf_dma_addr_t buffer,
+		qdf_dma_addr_t buffer,
 		unsigned int nbytes,
 		unsigned int transfer_id,
 		unsigned int flags,
@@ -177,7 +177,7 @@ void ce_sendlist_init(struct ce_sendlist *sendlist);
 
 /* Append a simple buffer (address/length) to a sendlist. */
 int ce_sendlist_buf_add(struct ce_sendlist *sendlist,
-		cdf_dma_addr_t buffer,
+		qdf_dma_addr_t buffer,
 		unsigned int nbytes,
 		uint32_t flags, /* OR-ed with internal flags */
 		uint32_t user_flags);
@@ -211,7 +211,7 @@ int ce_sendlist_send(struct CE_handle *copyeng,
  */
 int ce_recv_buf_enqueue(struct CE_handle *copyeng,
 			void *per_transfer_recv_context,
-			cdf_dma_addr_t buffer);
+			qdf_dma_addr_t buffer);
 
 /*
  * Register a Receive Callback function.
@@ -314,7 +314,7 @@ void ce_enable_msi(struct hif_softc *scn,
 int ce_completed_recv_next(struct CE_handle *copyeng,
 			   void **per_CE_contextp,
 			   void **per_transfer_contextp,
-			   cdf_dma_addr_t *bufferp,
+			   qdf_dma_addr_t *bufferp,
 			   unsigned int *nbytesp,
 			   unsigned int *transfer_idp,
 			   unsigned int *flagsp);
@@ -331,7 +331,7 @@ int ce_completed_recv_next(struct CE_handle *copyeng,
 int ce_completed_send_next(struct CE_handle *copyeng,
 			   void **per_CE_contextp,
 			   void **per_transfer_contextp,
-			   cdf_dma_addr_t *bufferp,
+			   qdf_dma_addr_t *bufferp,
 			   unsigned int *nbytesp,
 			   unsigned int *transfer_idp,
 			   unsigned int *sw_idx,
@@ -350,22 +350,22 @@ struct CE_handle *ce_init(struct hif_softc *scn,
  * receive buffers.  Target DMA must be stopped before using
  * this API.
  */
-CDF_STATUS
+QDF_STATUS
 ce_revoke_recv_next(struct CE_handle *copyeng,
 		    void **per_CE_contextp,
 		    void **per_transfer_contextp,
-		    cdf_dma_addr_t *bufferp);
+		    qdf_dma_addr_t *bufferp);
 
 /*
  * Support clean shutdown by allowing the caller to cancel
  * pending sends.  Target DMA must be stopped before using
  * this API.
  */
-CDF_STATUS
+QDF_STATUS
 ce_cancel_send_next(struct CE_handle *copyeng,
 		    void **per_CE_contextp,
 		    void **per_transfer_contextp,
-		    cdf_dma_addr_t *bufferp,
+		    qdf_dma_addr_t *bufferp,
 		    unsigned int *nbytesp,
 		    unsigned int *transfer_idp,
 		    uint32_t *toeplitz_hash_result);
@@ -433,9 +433,9 @@ struct ce_sendlist {
 
 #ifdef IPA_OFFLOAD
 void ce_ipa_get_resource(struct CE_handle *ce,
-			 cdf_dma_addr_t *ce_sr_base_paddr,
+			 qdf_dma_addr_t *ce_sr_base_paddr,
 			 uint32_t *ce_sr_ring_size,
-			 cdf_dma_addr_t *ce_reg_paddr);
+			 qdf_dma_addr_t *ce_reg_paddr);
 #else
 /**
  * ce_ipa_get_resource() - get uc resource on copyengine
@@ -453,9 +453,9 @@ void ce_ipa_get_resource(struct CE_handle *ce,
  * Return: None
  */
 static inline void ce_ipa_get_resource(struct CE_handle *ce,
-			 cdf_dma_addr_t *ce_sr_base_paddr,
+			 qdf_dma_addr_t *ce_sr_base_paddr,
 			 uint32_t *ce_sr_ring_size,
-			 cdf_dma_addr_t *ce_reg_paddr)
+			 qdf_dma_addr_t *ce_reg_paddr)
 {
 	return;
 }

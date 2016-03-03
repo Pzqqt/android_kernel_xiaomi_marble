@@ -32,9 +32,9 @@
 #include <linux/if_arp.h>
 #include "a_types.h"
 #include "athdefs.h"
-#include "cdf_lock.h"
-#include "cdf_types.h"
-#include "cdf_status.h"
+#include "qdf_lock.h"
+#include "qdf_types.h"
+#include "qdf_status.h"
 #include "regtable.h"
 #include "hif.h"
 #include "hif_io32.h"
@@ -199,10 +199,10 @@ static void ce_tasklet(unsigned long data)
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id,
 			HIF_CE_TASKLET_ENTRY, NULL, NULL, 0);
 
-	if (cdf_atomic_read(&scn->link_suspended)) {
+	if (qdf_atomic_read(&scn->link_suspended)) {
 		HIF_ERROR("%s: ce %d tasklet fired after link suspend.",
 				__func__, tasklet_entry->ce_id);
-		CDF_BUG(0);
+		QDF_BUG(0);
 	}
 
 	ce_per_engine_service(scn, tasklet_entry->ce_id);
@@ -229,7 +229,7 @@ static void ce_tasklet(unsigned long data)
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
 				 NULL, NULL, 0);
 
-	cdf_atomic_dec(&scn->active_tasklet_cnt);
+	qdf_atomic_dec(&scn->active_tasklet_cnt);
 }
 
 /**
@@ -270,7 +270,7 @@ void ce_tasklet_kill(struct hif_softc *scn)
 			tasklet_kill(&hif_ce_state->tasklets[i].intr_tq);
 			hif_ce_state->tasklets[i].inited = false;
 		}
-	cdf_atomic_set(&scn->active_tasklet_cnt, 0);
+	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
 }
 /**
  * ce_irq_handler() - ce_irq_handler
@@ -303,7 +303,7 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 #endif
 	ce_irq_disable(scn, ce_id);
 	ce_irq_status(scn, ce_id, &host_status);
-	cdf_atomic_inc(&scn->active_tasklet_cnt);
+	qdf_atomic_inc(&scn->active_tasklet_cnt);
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);
 	if (hif_napi_enabled(hif_hdl, ce_id))
 		hif_napi_schedule(hif_hdl, ce_id);
@@ -340,16 +340,16 @@ const char *ce_name[ICNSS_MAX_IRQ_REGISTRATIONS] = {
  * Unregisters copy engine irqs matching mask.  If a 1 is set at bit x,
  * unregister for copy engine x.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
+QDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int id;
 	int ret;
 
 	if (hif_ce_state == NULL) {
 		HIF_WARN("%s: hif_ce_state = NULL", __func__);
-		return CDF_STATUS_SUCCESS;
+		return QDF_STATUS_SUCCESS;
 	}
 	for (id = 0; id < CE_COUNT_MAX; id++) {
 		if ((mask & (1 << id)) && hif_ce_state->tasklets[id].inited) {
@@ -361,7 +361,7 @@ CDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 					__func__, id, ret);
 		}
 	}
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 /**
  * ce_register_irq() - ce_register_irq
@@ -371,9 +371,9 @@ CDF_STATUS ce_unregister_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
  * Registers copy engine irqs matching mask.  If a 1 is set at bit x,
  * Register for copy engine x.
  *
- * Return: CDF_STATUS
+ * Return: QDF_STATUS
  */
-CDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
+QDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 {
 	int id;
 	int ret;
@@ -390,7 +390,7 @@ CDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 					"%s: cannot register CE %d irq handler, ret = %d",
 					__func__, id, ret);
 				ce_unregister_irq(hif_ce_state, done_mask);
-				return CDF_STATUS_E_FAULT;
+				return QDF_STATUS_E_FAULT;
 			} else {
 				done_mask |= 1 << id;
 			}
@@ -402,5 +402,5 @@ CDF_STATUS ce_register_irq(struct HIF_CE_state *hif_ce_state, uint32_t mask)
 	ce_enable_irq_in_group_reg(HIF_GET_SOFTC(hif_ce_state), done_mask);
 #endif
 
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }

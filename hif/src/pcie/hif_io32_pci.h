@@ -33,7 +33,7 @@
 #include "hif_main.h"
 #include "regtable.h"
 #include "ce_reg.h"
-#include "cdf_atomic.h"
+#include "qdf_atomic.h"
 #include "if_pci.h"
 /*
  * For maximum performance and no power management, set this to 1.
@@ -258,13 +258,13 @@ static inline void ce_irq_enable(struct hif_softc *scn, int ce_id)
 	uint32_t tmp = 1 << ce_id;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	cdf_spin_lock_irqsave(&sc->irq_lock);
+	qdf_spin_lock_irqsave(&sc->irq_lock);
 	scn->ce_irq_summary &= ~tmp;
 	if (scn->ce_irq_summary == 0) {
 		/* Enable Legacy PCI line interrupts */
 		if (LEGACY_INTERRUPTS(sc) &&
 			(scn->target_status != OL_TRGET_STATUS_RESET) &&
-			(!cdf_atomic_read(&scn->link_suspended))) {
+			(!qdf_atomic_read(&scn->link_suspended))) {
 
 			hif_write32_mb(scn->mem +
 				(SOC_CORE_BASE_ADDRESS |
@@ -278,7 +278,7 @@ static inline void ce_irq_enable(struct hif_softc *scn, int ce_id)
 	}
 	if (scn->hif_init_done == true)
 		A_TARGET_ACCESS_END(scn);
-	cdf_spin_unlock_irqrestore(&sc->irq_lock);
+	qdf_spin_unlock_irqrestore(&sc->irq_lock);
 
 	/* check for missed firmware crash */
 	hif_fw_interrupt_handler(0, scn);
