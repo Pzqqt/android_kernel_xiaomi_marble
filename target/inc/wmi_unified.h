@@ -10259,6 +10259,21 @@ typedef enum {
 	WMI_CONFIG_LED_ENABLE = 1,
 } wmi_config_led_enable_flag;
 
+typedef enum {
+	WMI_CONFIG_LED_HIGH_UNSPECIFIED = 0,
+	WMI_CONFIG_LED_HIGH_OFF         = 1,
+	WMI_CONFIG_LED_HIGH_ON          = 2,
+} wmi_config_led_on_flag;
+
+typedef enum {
+	WMI_CONFIG_LED_UNSPECIFIED = 0,
+	WMI_CONFIG_LED_ON          = 1,
+	WMI_CONFIG_LED_OFF         = 2,
+	WMI_CONFIG_LED_DIM         = 3,
+	WMI_CONFIG_LED_BLINK       = 4,
+	WMI_CONFIG_LED_TXRX        = 5,
+} wmi_config_led_operation_type;
+
 typedef struct {
 	/** TLV tag and len; tag equals
 	 *  WMITLV_TAG_STRUC_wmi_pdev_set_led_config_cmd_fixed_param   */
@@ -10275,6 +10290,13 @@ typedef struct {
 	 * See macros starting with WMI_PDEV_ID_ for values.
 	 */
 	A_UINT32 pdev_id;
+	/* see wmi_config_led_operation_type enum */
+	A_UINT32 led_operation_type;
+	/* see wmi_config_led_on_flag enum */
+	A_UINT32 led_on_flag;      /* configure high/low on/off sense */
+	A_UINT32 led_on_interval;  /* for blink function; unit: ms */
+	A_UINT32 led_off_interval; /* for blink function; unit: ms */
+	A_UINT32 led_repeat_cnt;   /* for blink function: how many blinks */
 } wmi_pdev_set_led_config_cmd_fixed_param;
 
 #define WMI_WNTS_CFG_GPIO_PIN_NUM_OFFSET 0
