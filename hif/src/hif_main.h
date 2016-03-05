@@ -168,9 +168,6 @@ void athdiag_procfs_remove(void);
 qdf_size_t init_buffer_count(qdf_size_t maxSize);
 
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
-int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
-	void *bdev, const hif_bus_id *bid, uint32_t *hif_type,
-	uint32_t *target_type);
 int hif_get_device_type(uint32_t device_id,
 			uint32_t revision_id,
 			uint32_t *hif_type, uint32_t *target_type);

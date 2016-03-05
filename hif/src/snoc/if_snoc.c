@@ -178,7 +178,7 @@ int hif_snoc_bus_configure(struct hif_softc *scn)
 }
 
 /**
- * hif_get_target_type(): Get the target type
+ * hif_snoc_get_target_type(): Get the target type
  *
  * This function is used to query the target type.
  *
@@ -191,9 +191,9 @@ int hif_snoc_bus_configure(struct hif_softc *scn)
  *
  * Return: 0 for success
  */
-int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
-	void *bdev, const hif_bus_id *bid, uint32_t *hif_type,
-	uint32_t *target_type)
+static inline int hif_snoc_get_target_type(struct hif_softc *ol_sc,
+	struct device *dev, void *bdev, const hif_bus_id *bid,
+	uint32_t *hif_type, uint32_t *target_type)
 {
 	/* TODO: need to use CNSS's HW version. Hard code for now */
 #ifdef QCA_WIFI_3_0_ADRASTEA
@@ -235,7 +235,7 @@ QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-	ret = hif_get_target_type(ol_sc, dev, bdev, bid,
+	ret = hif_snoc_get_target_type(ol_sc, dev, bdev, bid,
 			&hif_type, &target_type);
 	if (ret < 0) {
 		HIF_ERROR("%s: invalid device id/revision_id", __func__);

@@ -3271,33 +3271,6 @@ err_enable_pci:
 }
 
 /**
- * hif_get_target_type(): Get the target type
- *
- * This function is used to query the target type.
- *
- * @ol_sc: hif_softc struct pointer
- * @dev: device pointer
- * @bdev: bus dev pointer
- * @bid: bus id pointer
- * @hif_type: HIF type such as HIF_TYPE_QCA6180
- * @target_type: target type such as TARGET_TYPE_QCA6180
- *
- * Return: 0 for success
- */
-int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
-	void *bdev, const hif_bus_id *bid, uint32_t *hif_type,
-	uint32_t *target_type)
-{
-	uint16_t revision_id;
-	struct pci_dev *pdev = bdev;
-	const struct pci_device_id *id = (const struct pci_device_id *)bid;
-
-	pci_read_config_word(pdev, 0x08, &revision_id);
-	return hif_get_device_type(id->device, revision_id,
-			hif_type, target_type);
-}
-
-/**
  * hif_pci_irq_enable() - ce_irq_enable
  * @scn: hif_softc
  * @ce_id: ce_id
