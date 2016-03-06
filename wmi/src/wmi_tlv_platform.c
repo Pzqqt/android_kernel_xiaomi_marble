@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2014 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2014, 2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -26,13 +26,29 @@
  */
 
 /*
- * Every Product Line or chipset or team can have its own Whitelist table.
- * The following is a list of versions that the present software can support
- * even though its versions are incompatible. Any entry here means that the
- * indicated version does not break WMI compatibility even though it has
- * a minor version change.
+ * LMAC offload interface functions for WMI TLV Interface
  */
-wmi_whitelist_version_info version_whitelist[] = {
-	{0, 0, 0x5F414351, 0x00004C4D, 0, 0}
-	,                       /* Placeholder: Major=0, Minor=0, Namespace="QCA_ML" (Dummy entry) */
-};
+
+#include "ol_if_athvar.h"
+#include <cdf_memory.h>         /* cdf_mem_malloc,free, etc. */
+#include <osdep.h>
+#include "htc_api.h"
+#include "wmi.h"
+#include "wma.h"
+
+
+/* Following macro definitions use OS or platform specific functions */
+#define dummy_print(fmt, ...) {}
+#define wmi_tlv_print_verbose dummy_print
+#define wmi_tlv_print_error   cdf_print
+#define wmi_tlv_OS_MEMCPY     OS_MEMCPY
+#define wmi_tlv_OS_MEMZERO    OS_MEMZERO
+#define wmi_tlv_OS_MEMMOVE    OS_MEMMOVE
+
+#ifndef NO_DYNAMIC_MEM_ALLOC
+#define wmi_tlv_os_mem_alloc(scn, ptr, numBytes) \
+	{ \
+		(ptr) = os_malloc(NULL, (numBytes), GFP_ATOMIC); \
+	}
+#define wmi_tlv_os_mem_free   cdf_mem_free
+#endif
