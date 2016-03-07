@@ -4984,6 +4984,2861 @@ CDF_STATUS send_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
 
 }
 
+/**
+ * send_snr_request_cmd_tlv() - send request to fw to get RSSI stats
+ * @wmi_handle: wmi handle
+ * @rssi_req: get RSSI request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_snr_request_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_buf_t buf;
+	wmi_request_stats_cmd_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_request_stats_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_request_stats_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_request_stats_cmd_fixed_param));
+	cmd->stats_id = WMI_REQUEST_VDEV_STAT;
+	if (wmi_unified_cmd_send
+		    (wmi_handle, buf, len, WMI_REQUEST_STATS_CMDID)) {
+		WMA_LOGE("Failed to send host stats request to fw");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_snr_cmd_tlv() - get RSSI from fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_snr_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id)
+{
+	wmi_buf_t buf;
+	wmi_request_stats_cmd_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_request_stats_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_request_stats_cmd_fixed_param *) wmi_buf_data(buf);
+	cmd->vdev_id = vdev_id;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_request_stats_cmd_fixed_param));
+	cmd->stats_id = WMI_REQUEST_VDEV_STAT;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_REQUEST_STATS_CMDID)) {
+		WMA_LOGE("Failed to send host stats request to fw");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_link_status_req_cmd_tlv() - process link status request from UMAC
+ * @wmi_handle: wmi handle
+ * @link_status: get link params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_link_status_req_cmd_tlv(wmi_unified_t wmi_handle,
+				 struct link_status_params *link_status)
+{
+	wmi_buf_t buf;
+	wmi_request_stats_cmd_fixed_param *cmd;
+	uint8_t len = sizeof(wmi_request_stats_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (wmi_request_stats_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_request_stats_cmd_fixed_param));
+	cmd->stats_id = WMI_REQUEST_VDEV_RATE_STAT;
+	cmd->vdev_id = link_status->session_id;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_REQUEST_STATS_CMDID)) {
+		WMA_LOGE("Failed to send WMI link  status request to fw");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+#ifdef FEATURE_WLAN_LPHB
+
+/**
+ * send_lphb_config_hbenable_cmd_tlv() - enable command of LPHB configuration
+ * @wmi_handle: wmi handle
+ * @lphb_conf_req: configuration info
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_lphb_config_hbenable_cmd_tlv(wmi_unified_t wmi_handle,
+				wmi_hb_set_enable_cmd_fixed_param *params)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_hb_set_enable_cmd_fixed_param *hb_enable_fp;
+	int len = sizeof(wmi_hb_set_enable_cmd_fixed_param);
+
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	hb_enable_fp = (wmi_hb_set_enable_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&hb_enable_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_hb_set_enable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_hb_set_enable_cmd_fixed_param));
+
+	/* fill in values */
+	hb_enable_fp->vdev_id = params->session;
+	hb_enable_fp->enable = params->enable;
+	hb_enable_fp->item = params->item;
+	hb_enable_fp->session = params->session;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_HB_SET_ENABLE_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_HB_SET_ENABLE returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	return CDF_STATUS_SUCCESS;
+error:
+	return cdf_status;
+}
+
+/**
+ * send_lphb_config_tcp_params_cmd_tlv() - set tcp params of LPHB configuration
+ * @wmi_handle: wmi handle
+ * @lphb_conf_req: lphb config request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_lphb_config_tcp_params_cmd_tlv(wmi_unified_t wmi_handle,
+	    wmi_hb_set_tcp_params_cmd_fixed_param *lphb_conf_req)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_hb_set_tcp_params_cmd_fixed_param *hb_tcp_params_fp;
+	int len = sizeof(wmi_hb_set_tcp_params_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	hb_tcp_params_fp = (wmi_hb_set_tcp_params_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&hb_tcp_params_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_hb_set_tcp_params_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_hb_set_tcp_params_cmd_fixed_param));
+
+	/* fill in values */
+	hb_tcp_params_fp->vdev_id = lphb_conf_req->vdev_id;
+	hb_tcp_params_fp->srv_ip = lphb_conf_req->srv_ip;
+	hb_tcp_params_fp->dev_ip = lphb_conf_req->dev_ip;
+	hb_tcp_params_fp->seq = lphb_conf_req->seq;
+	hb_tcp_params_fp->src_port = lphb_conf_req->src_port;
+	hb_tcp_params_fp->dst_port = lphb_conf_req->dst_port;
+	hb_tcp_params_fp->interval = lphb_conf_req->interval;
+	hb_tcp_params_fp->timeout = lphb_conf_req->timeout;
+	hb_tcp_params_fp->session = lphb_conf_req->session;
+	cdf_mem_copy(&hb_tcp_params_fp->gateway_mac,
+				   &lphb_conf_req->gateway_mac,
+				   sizeof(hb_tcp_params_fp->gateway_mac));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_HB_SET_TCP_PARAMS_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_HB_SET_TCP_PARAMS returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	return CDF_STATUS_SUCCESS;
+error:
+	return cdf_status;
+}
+
+/**
+ * send_lphb_config_tcp_pkt_filter_cmd_tlv() - configure tcp packet filter cmd
+ * @wmi_handle: wmi handle
+ * @lphb_conf_req: lphb config request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_lphb_config_tcp_pkt_filter_cmd_tlv(wmi_unified_t wmi_handle,
+		wmi_hb_set_tcp_pkt_filter_cmd_fixed_param *g_hb_tcp_filter_fp)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_hb_set_tcp_pkt_filter_cmd_fixed_param *hb_tcp_filter_fp;
+	int len = sizeof(wmi_hb_set_tcp_pkt_filter_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	hb_tcp_filter_fp =
+		(wmi_hb_set_tcp_pkt_filter_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&hb_tcp_filter_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_hb_set_tcp_pkt_filter_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_hb_set_tcp_pkt_filter_cmd_fixed_param));
+
+	/* fill in values */
+	hb_tcp_filter_fp->vdev_id = g_hb_tcp_filter_fp->vdev_id;
+	hb_tcp_filter_fp->length = g_hb_tcp_filter_fp->length;
+	hb_tcp_filter_fp->offset = g_hb_tcp_filter_fp->offset;
+	hb_tcp_filter_fp->session = g_hb_tcp_filter_fp->session;
+	memcpy((void *)&hb_tcp_filter_fp->filter,
+	       (void *)&g_hb_tcp_filter_fp->filter,
+	       WMI_WLAN_HB_MAX_FILTER_SIZE);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_HB_SET_TCP_PKT_FILTER_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_HB_SET_TCP_PKT_FILTER returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	return CDF_STATUS_SUCCESS;
+error:
+	return cdf_status;
+}
+
+/**
+ * send_lphb_config_udp_params_cmd_tlv() - configure udp param command of LPHB
+ * @wmi_handle: wmi handle
+ * @lphb_conf_req: lphb config request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_lphb_config_udp_params_cmd_tlv(wmi_unified_t wmi_handle,
+		   wmi_hb_set_udp_params_cmd_fixed_param *lphb_conf_req)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_hb_set_udp_params_cmd_fixed_param *hb_udp_params_fp;
+	int len = sizeof(wmi_hb_set_udp_params_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	hb_udp_params_fp = (wmi_hb_set_udp_params_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&hb_udp_params_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_hb_set_udp_params_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_hb_set_udp_params_cmd_fixed_param));
+
+	/* fill in values */
+	hb_udp_params_fp->vdev_id = lphb_conf_req->vdev_id;
+	hb_udp_params_fp->srv_ip = lphb_conf_req->srv_ip;
+	hb_udp_params_fp->dev_ip = lphb_conf_req->dev_ip;
+	hb_udp_params_fp->src_port = lphb_conf_req->src_port;
+	hb_udp_params_fp->dst_port = lphb_conf_req->dst_port;
+	hb_udp_params_fp->interval = lphb_conf_req->interval;
+	hb_udp_params_fp->timeout = lphb_conf_req->timeout;
+	hb_udp_params_fp->session = lphb_conf_req->session;
+	cdf_mem_copy(&hb_udp_params_fp->gateway_mac,
+				   &lphb_conf_req->gateway_mac,
+				   sizeof(lphb_conf_req->gateway_mac));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_HB_SET_UDP_PARAMS_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_HB_SET_UDP_PARAMS returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	return CDF_STATUS_SUCCESS;
+error:
+	return cdf_status;
+}
+
+/**
+ * send_lphb_config_udp_pkt_filter_cmd_tlv() - configure udp pkt filter command
+ * @wmi_handle: wmi handle
+ * @lphb_conf_req: lphb config request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_lphb_config_udp_pkt_filter_cmd_tlv(wmi_unified_t wmi_handle,
+		wmi_hb_set_udp_pkt_filter_cmd_fixed_param *lphb_conf_req)
+{
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_hb_set_udp_pkt_filter_cmd_fixed_param *hb_udp_filter_fp;
+	int len = sizeof(wmi_hb_set_udp_pkt_filter_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	hb_udp_filter_fp =
+		(wmi_hb_set_udp_pkt_filter_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&hb_udp_filter_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_hb_set_udp_pkt_filter_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_hb_set_udp_pkt_filter_cmd_fixed_param));
+
+	/* fill in values */
+	hb_udp_filter_fp->vdev_id = lphb_conf_req->vdev_id;
+	hb_udp_filter_fp->length = lphb_conf_req->length;
+	hb_udp_filter_fp->offset = lphb_conf_req->offset;
+	hb_udp_filter_fp->session = lphb_conf_req->session;
+	memcpy((void *)&hb_udp_filter_fp->filter,
+	       (void *)&lphb_conf_req->filter,
+	       WMI_WLAN_HB_MAX_FILTER_SIZE);
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_HB_SET_UDP_PKT_FILTER_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send WMI_HB_SET_UDP_PKT_FILTER returned Error %d",
+			status);
+		cdf_status = CDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	return CDF_STATUS_SUCCESS;
+error:
+	return cdf_status;
+}
+#endif /* FEATURE_WLAN_LPHB */
+
+/**
+ * send_process_dhcp_ind_cmd_tlv() - process dhcp indication from SME
+ * @wmi_handle: wmi handle
+ * @ta_dhcp_ind: DHCP indication parameter
+ *
+ * Return: CDF Status
+ */
+CDF_STATUS send_process_dhcp_ind_cmd_tlv(wmi_unified_t wmi_handle,
+				wmi_peer_set_param_cmd_fixed_param *ta_dhcp_ind)
+{
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_peer_set_param_cmd_fixed_param *peer_set_param_fp;
+	int len = sizeof(wmi_peer_set_param_cmd_fixed_param);
+
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	peer_set_param_fp = (wmi_peer_set_param_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&peer_set_param_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_peer_set_param_cmd_fixed_param));
+
+	/* fill in values */
+	peer_set_param_fp->vdev_id = ta_dhcp_ind->vdev_id;
+	peer_set_param_fp->param_id = ta_dhcp_ind->param_id;
+	peer_set_param_fp->param_value = ta_dhcp_ind->param_value;
+	cdf_mem_copy(&peer_set_param_fp->peer_macaddr,
+				   &ta_dhcp_ind->peer_macaddr,
+				   sizeof(ta_dhcp_ind->peer_macaddr));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_PEER_SET_PARAM_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("%s: wmi_unified_cmd_send WMI_PEER_SET_PARAM_CMD"
+			 " returned Error %d", __func__, status);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_get_link_speed_cmd_tlv() -send command to get linkspeed
+ * @wmi_handle: wmi handle
+ * @pLinkSpeed: link speed info
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_get_link_speed_cmd_tlv(wmi_unified_t wmi_handle,
+		wmi_mac_addr peer_macaddr)
+{
+	wmi_peer_get_estimated_linkspeed_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint32_t len;
+	uint8_t *buf_ptr;
+
+	len = sizeof(wmi_peer_get_estimated_linkspeed_cmd_fixed_param);
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+
+	cmd = (wmi_peer_get_estimated_linkspeed_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_wmi_peer_get_estimated_linkspeed_cmd_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (wmi_peer_get_estimated_linkspeed_cmd_fixed_param));
+
+	/* Copy the peer macaddress to the wma buffer */
+	cdf_mem_copy(&cmd->peer_macaddr,
+				   &peer_macaddr,
+				   sizeof(peer_macaddr));
+
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_PEER_GET_ESTIMATED_LINKSPEED_CMDID)) {
+		WMA_LOGE("%s: failed to send link speed command", __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_egap_conf_params_cmd_tlv() - send wmi cmd of egap configuration params
+ * @wmi_handle:	 wmi handler
+ * @egap_params: pointer to egap_params
+ *
+ * Return:	 0 for success, otherwise appropriate error code
+ */
+CDF_STATUS send_egap_conf_params_cmd_tlv(wmi_unified_t wmi_handle,
+		     wmi_ap_ps_egap_param_cmd_fixed_param *egap_params)
+{
+	wmi_ap_ps_egap_param_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t err;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send ap_ps_egap cmd");
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_ap_ps_egap_param_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_ap_ps_egap_param_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			       wmi_ap_ps_egap_param_cmd_fixed_param));
+
+	cmd->enable = egap_params->enable;
+	cmd->inactivity_time = egap_params->inactivity_time;
+	cmd->wait_time = egap_params->wait_time;
+	cmd->flags = egap_params->flags;
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+				   sizeof(*cmd), WMI_AP_PS_EGAP_PARAM_CMDID);
+	if (err) {
+		WMA_LOGE("Failed to send ap_ps_egap cmd");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_fw_profiling_cmd_tlv() - send FW profiling cmd to WLAN FW
+ * @wmi_handl: wmi handle
+ * @cmd: Profiling command index
+ * @value1: parameter1 value
+ * @value2: parameter2 value
+ *
+ * Return: 0 for success else error code
+ */
+CDF_STATUS send_fw_profiling_cmd_tlv(wmi_unified_t wmi_handle,
+			uint32_t cmd, uint32_t value1, uint32_t value2)
+{
+	wmi_buf_t buf;
+	int32_t len = 0;
+	int ret;
+	wmi_wlan_profile_trigger_cmd_fixed_param *prof_trig_cmd;
+	wmi_wlan_profile_set_hist_intvl_cmd_fixed_param *hist_intvl_cmd;
+	wmi_wlan_profile_enable_profile_id_cmd_fixed_param *profile_enable_cmd;
+	wmi_wlan_profile_get_prof_data_cmd_fixed_param *profile_getdata_cmd;
+
+	switch (cmd) {
+	case WMI_WLAN_PROFILE_TRIGGER_CMDID:
+		len = sizeof(wmi_wlan_profile_trigger_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		prof_trig_cmd =
+			(wmi_wlan_profile_trigger_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&prof_trig_cmd->tlv_header,
+		     WMITLV_TAG_STRUC_wmi_wlan_profile_trigger_cmd_fixed_param,
+		     WMITLV_GET_STRUCT_TLVLEN
+		    (wmi_wlan_profile_trigger_cmd_fixed_param));
+		prof_trig_cmd->enable = value1;
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_TRIGGER_CMDID);
+		if (ret) {
+			WMA_LOGE("PROFILE_TRIGGER cmd Failed with value %d",
+					value1);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	case WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID:
+		len = sizeof(wmi_wlan_profile_get_prof_data_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		profile_getdata_cmd =
+			(wmi_wlan_profile_get_prof_data_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&profile_getdata_cmd->tlv_header,
+		      WMITLV_TAG_STRUC_wmi_wlan_profile_get_prof_data_cmd_fixed_param,
+		      WMITLV_GET_STRUCT_TLVLEN
+		      (wmi_wlan_profile_get_prof_data_cmd_fixed_param));
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID);
+		if (ret) {
+			WMA_LOGE("PROFILE_DATA cmd Failed for id %d value %d",
+					value1, value2);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	case WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID:
+		len = sizeof(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		hist_intvl_cmd =
+			(wmi_wlan_profile_set_hist_intvl_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&hist_intvl_cmd->tlv_header,
+		      WMITLV_TAG_STRUC_wmi_wlan_profile_set_hist_intvl_cmd_fixed_param,
+		      WMITLV_GET_STRUCT_TLVLEN
+		      (wmi_wlan_profile_set_hist_intvl_cmd_fixed_param));
+		hist_intvl_cmd->profile_id = value1;
+		hist_intvl_cmd->value = value2;
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID);
+		if (ret) {
+			WMA_LOGE("HIST_INTVL cmd Failed for id %d value %d",
+					value1, value2);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	case WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID:
+		len =
+		sizeof(wmi_wlan_profile_enable_profile_id_cmd_fixed_param);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGP("%s: wmi_buf_alloc Failed", __func__);
+			return -ENOMEM;
+		}
+		profile_enable_cmd =
+			(wmi_wlan_profile_enable_profile_id_cmd_fixed_param *)
+				wmi_buf_data(buf);
+		WMITLV_SET_HDR(&profile_enable_cmd->tlv_header,
+		      WMITLV_TAG_STRUC_wmi_wlan_profile_enable_profile_id_cmd_fixed_param,
+		      WMITLV_GET_STRUCT_TLVLEN
+		      (wmi_wlan_profile_enable_profile_id_cmd_fixed_param));
+		profile_enable_cmd->profile_id = value1;
+		profile_enable_cmd->enable = value2;
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID);
+		if (ret) {
+			WMA_LOGE("enable cmd Failed for id %d value %d",
+					value1, value2);
+			cdf_nbuf_free(buf);
+			return ret;
+		}
+		break;
+
+	default:
+		WMA_LOGD("%s: invalid profiling command", __func__);
+		break;
+	}
+
+	return 0;
+}
+
+#ifdef FEATURE_WLAN_RA_FILTERING
+/**
+ * send_wow_sta_ra_filter_cmd_tlv() - set RA filter pattern in fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_wow_sta_ra_filter_cmd_tlv(wmi_unified_t wmi_handle,
+		   uint8_t vdev_id, uint8_t default_pattern,
+		   uint16_t rate_limit_interval)
+{
+
+	WMI_WOW_ADD_PATTERN_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t len;
+	int ret;
+
+	len = sizeof(WMI_WOW_ADD_PATTERN_CMD_fixed_param) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_BITMAP_PATTERN_T) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_IPV4_SYNC_PATTERN_T) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_IPV6_SYNC_PATTERN_T) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_MAGIC_PATTERN_CMD) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(A_UINT32) + WMI_TLV_HDR_SIZE + 1 * sizeof(A_UINT32);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_WOW_ADD_PATTERN_CMD_fixed_param *) wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) cmd;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_WOW_ADD_PATTERN_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_WOW_ADD_PATTERN_CMD_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->pattern_id = default_pattern,
+	cmd->pattern_type = WOW_IPV6_RA_PATTERN;
+	buf_ptr += sizeof(WMI_WOW_ADD_PATTERN_CMD_fixed_param);
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_BITMAP_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_IPV4_SYNC_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_IPV6_SYNC_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_MAGIC_PATTERN_CMD but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for pattern_info_timeout but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for ra_ratelimit_interval. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, sizeof(A_UINT32));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	*((A_UINT32 *) buf_ptr) = rate_limit_interval;
+
+	WMA_LOGD("%s: send RA rate limit [%d] to fw vdev = %d", __func__,
+		 rate_limit_interval, vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WOW_ADD_WAKE_PATTERN_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to send RA rate limit to fw", __func__);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+}
+#endif /* FEATURE_WLAN_RA_FILTERING */
+
+/**
+ * send_nat_keepalive_en_cmd_tlv() - enable NAT keepalive filter
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_nat_keepalive_en_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id)
+{
+	WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+	cmd = (WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMD_fixed_param *)
+		wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMD_fixed_param,
+		  WMITLV_GET_STRUCT_TLVLEN
+		  (WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMD_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->action = IPSEC_NATKEEPALIVE_FILTER_ENABLE;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_VDEV_IPSEC_NATKEEPALIVE_FILTER_CMDID)) {
+		WMA_LOGP("%s: Failed to send NAT keepalive enable command",
+			 __func__);
+		wmi_buf_free(buf);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+/**
+ * wmi_unified_csa_offload_enable() - sen CSA offload enable command
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_csa_offload_enable_cmd_tlv(wmi_unified_t wmi_handle,
+			uint8_t vdev_id)
+{
+	wmi_csa_offload_enable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	WMA_LOGD("%s: vdev_id %d", __func__, vdev_id);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+	cmd = (wmi_csa_offload_enable_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_csa_offload_enable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_csa_offload_enable_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->csa_offload_enable = WMI_CSA_OFFLOAD_ENABLE;
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_CSA_OFFLOAD_ENABLE_CMDID)) {
+		WMA_LOGP("%s: Failed to send CSA offload enable command",
+			 __func__);
+		wmi_buf_free(buf);
+		return -EIO;
+	}
+
+	return 0;
+}
+
+/**
+ * send_start_oem_data_cmd_tlv() - start OEM data request to target
+ * @wmi_handle: wmi handle
+ * @startOemDataReq: start request params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_start_oem_data_cmd_tlv(wmi_unified_t wmi_handle,
+			  uint8_t data_len,
+			  uint8_t *data)
+{
+	wmi_buf_t buf;
+	uint8_t *cmd;
+	int ret = 0;
+
+	buf = wmi_buf_alloc(wmi_handle,
+			    (data_len + WMI_TLV_HDR_SIZE));
+	if (!buf) {
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	cmd = (uint8_t *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(cmd, WMITLV_TAG_ARRAY_BYTE, data_len);
+	cmd += WMI_TLV_HDR_SIZE;
+	cdf_mem_copy(cmd, data,
+		     data_len);
+
+	WMA_LOGI(FL("Sending OEM Data Request to target, data len %d"),
+		 data_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf,
+				   (data_len +
+				    WMI_TLV_HDR_SIZE), WMI_OEM_REQ_CMDID);
+
+	if (ret != EOK) {
+		WMA_LOGE(FL(":wmi cmd send failed"));
+		cdf_nbuf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_dfs_phyerr_filter_offload_en_cmd_tlv() - enable dfs phyerr filter
+ * @wmi_handle: wmi handle
+ * @dfs_phyerr_filter_offload: is dfs phyerr filter offload
+ *
+ * Send WMI_DFS_PHYERR_FILTER_ENA_CMDID or
+ * WMI_DFS_PHYERR_FILTER_DIS_CMDID command
+ * to firmware based on phyerr filtering
+ * offload status.
+ *
+ * Return: 1 success, 0 failure
+ */
+CDF_STATUS
+send_dfs_phyerr_filter_offload_en_cmd_tlv(wmi_unified_t wmi_handle,
+			bool dfs_phyerr_filter_offload)
+{
+	wmi_dfs_phyerr_filter_ena_cmd_fixed_param *enable_phyerr_offload_cmd;
+	wmi_dfs_phyerr_filter_dis_cmd_fixed_param *disable_phyerr_offload_cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	int ret;
+
+
+	if (dfs_phyerr_filter_offload) {
+		WMA_LOGD("%s:Phyerror Filtering offload is Disabled in ini",
+			 __func__);
+		len = sizeof(*disable_phyerr_offload_cmd);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+			return 0;
+		}
+		disable_phyerr_offload_cmd =
+			(wmi_dfs_phyerr_filter_dis_cmd_fixed_param *)
+			wmi_buf_data(buf);
+
+		WMITLV_SET_HDR(&disable_phyerr_offload_cmd->tlv_header,
+		     WMITLV_TAG_STRUC_wmi_dfs_phyerr_filter_dis_cmd_fixed_param,
+		     WMITLV_GET_STRUCT_TLVLEN
+		     (wmi_dfs_phyerr_filter_dis_cmd_fixed_param));
+
+		/*
+		 * Send WMI_DFS_PHYERR_FILTER_DIS_CMDID
+		 * to the firmware to disable the phyerror
+		 * filtering offload.
+		 */
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					   WMI_DFS_PHYERR_FILTER_DIS_CMDID);
+		if (ret < 0) {
+			WMA_LOGE("%s: Failed to send WMI_DFS_PHYERR_FILTER_DIS_CMDID ret=%d",
+				__func__, ret);
+			wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+		}
+		WMA_LOGD("%s: WMI_DFS_PHYERR_FILTER_DIS_CMDID Send Success",
+			 __func__);
+	} else {
+		WMA_LOGD("%s:Phyerror Filtering offload is Enabled in ini",
+			 __func__);
+
+		len = sizeof(*enable_phyerr_offload_cmd);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+		}
+
+		enable_phyerr_offload_cmd =
+			(wmi_dfs_phyerr_filter_ena_cmd_fixed_param *)
+			wmi_buf_data(buf);
+
+		WMITLV_SET_HDR(&enable_phyerr_offload_cmd->tlv_header,
+		     WMITLV_TAG_STRUC_wmi_dfs_phyerr_filter_ena_cmd_fixed_param,
+		     WMITLV_GET_STRUCT_TLVLEN
+		     (wmi_dfs_phyerr_filter_ena_cmd_fixed_param));
+
+		/*
+		 * Send a WMI_DFS_PHYERR_FILTER_ENA_CMDID
+		 * to the firmware to enable the phyerror
+		 * filtering offload.
+		 */
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					   WMI_DFS_PHYERR_FILTER_ENA_CMDID);
+
+		if (ret < 0) {
+			WMA_LOGE("%s: Failed to send DFS PHYERR CMD ret=%d",
+				__func__, ret);
+			wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+		}
+		WMA_LOGD("%s: WMI_DFS_PHYERR_FILTER_ENA_CMDID Send Success",
+			 __func__);
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+#if !defined(REMOVE_PKT_LOG)
+/**
+ * send_pktlog_wmi_send_cmd_tlv() - send pktlog enable/disable command to target
+ * @wmi_handle: wmi handle
+ * @pktlog_event: pktlog event
+ * @cmd_id: pktlog cmd id
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_pktlog_wmi_send_cmd_tlv(wmi_unified_t wmi_handle,
+				   WMI_PKTLOG_EVENT pktlog_event,
+				   WMI_CMD_ID cmd_id)
+{
+	WMI_PKTLOG_EVENT PKTLOG_EVENT;
+	WMI_CMD_ID CMD_ID;
+	wmi_pdev_pktlog_enable_cmd_fixed_param *cmd;
+	wmi_pdev_pktlog_disable_cmd_fixed_param *disable_cmd;
+	int len = 0;
+	wmi_buf_t buf;
+
+	PKTLOG_EVENT = pktlog_event;
+	CMD_ID = cmd_id;
+
+	switch (CMD_ID) {
+	case WMI_PDEV_PKTLOG_ENABLE_CMDID:
+		len = sizeof(*cmd);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+			return CDF_STATUS_E_NOMEM;
+		}
+		cmd = (wmi_pdev_pktlog_enable_cmd_fixed_param *)
+			wmi_buf_data(buf);
+		WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_pktlog_enable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+		       (wmi_pdev_pktlog_enable_cmd_fixed_param));
+		cmd->evlist = PKTLOG_EVENT;
+		if (wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_PDEV_PKTLOG_ENABLE_CMDID)) {
+			WMA_LOGE("failed to send pktlog enable cmdid");
+			goto wmi_send_failed;
+		}
+		break;
+	case WMI_PDEV_PKTLOG_DISABLE_CMDID:
+		len = sizeof(*disable_cmd);
+		buf = wmi_buf_alloc(wmi_handle, len);
+		if (!buf) {
+			WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+			return CDF_STATUS_E_NOMEM;
+		}
+		disable_cmd = (wmi_pdev_pktlog_disable_cmd_fixed_param *)
+			      wmi_buf_data(buf);
+		WMITLV_SET_HDR(&disable_cmd->tlv_header,
+		     WMITLV_TAG_STRUC_wmi_pdev_pktlog_disable_cmd_fixed_param,
+		     WMITLV_GET_STRUCT_TLVLEN
+		     (wmi_pdev_pktlog_disable_cmd_fixed_param));
+		disable_cmd->reserved0 = 0;
+		if (wmi_unified_cmd_send(wmi_handle, buf, len,
+					 WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
+			WMA_LOGE("failed to send pktlog disable cmdid");
+			goto wmi_send_failed;
+		}
+		break;
+	default:
+		WMA_LOGD("%s: invalid PKTLOG command", __func__);
+		break;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+wmi_send_failed:
+	wmi_buf_free(buf);
+	return CDF_STATUS_E_FAILURE;
+}
+#endif /* REMOVE_PKT_LOG */
+
+/**
+ * send_add_wow_wakeup_event_cmd_tlv() -  Configures wow wakeup events.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @bitmap: Event bitmap
+ * @enable: enable/disable
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_add_wow_wakeup_event_cmd_tlv(wmi_unified_t wmi_handle,
+					uint32_t vdev_id,
+					uint32_t bitmap,
+					bool enable)
+{
+	WMI_WOW_ADD_DEL_EVT_CMD_fixed_param *cmd;
+	uint16_t len;
+	wmi_buf_t buf;
+	int ret;
+
+	len = sizeof(WMI_WOW_ADD_DEL_EVT_CMD_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (WMI_WOW_ADD_DEL_EVT_CMD_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_WOW_ADD_DEL_EVT_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_WOW_ADD_DEL_EVT_CMD_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->is_add = enable;
+	cmd->event_bitmap = bitmap;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WOW_ENABLE_DISABLE_WAKE_EVENT_CMDID);
+	if (ret) {
+		WMA_LOGE("Failed to config wow wakeup event");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGD("Wakeup pattern 0x%x %s in fw", bitmap,
+		 enable ? "enabled" : "disabled");
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_wow_patterns_to_fw_cmd_tlv() - Sends WOW patterns to FW.
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @ptrn_id: pattern id
+ * @ptrn: pattern
+ * @ptrn_len: pattern length
+ * @ptrn_offset: pattern offset
+ * @mask: mask
+ * @mask_len: mask length
+ * @user: true for user configured pattern and false for default pattern
+ * @default_patterns: default patterns
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_wow_patterns_to_fw_cmd_tlv(wmi_unified_t wmi_handle,
+				uint8_t vdev_id, uint8_t ptrn_id,
+				const uint8_t *ptrn, uint8_t ptrn_len,
+				uint8_t ptrn_offset, const uint8_t *mask,
+				uint8_t mask_len, bool user,
+				uint8_t default_patterns)
+{
+	WMI_WOW_ADD_PATTERN_CMD_fixed_param *cmd;
+	WOW_BITMAP_PATTERN_T *bitmap_pattern;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t len;
+	int ret;
+
+
+	len = sizeof(WMI_WOW_ADD_PATTERN_CMD_fixed_param) +
+	      WMI_TLV_HDR_SIZE +
+	      1 * sizeof(WOW_BITMAP_PATTERN_T) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_IPV4_SYNC_PATTERN_T) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_IPV6_SYNC_PATTERN_T) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(WOW_MAGIC_PATTERN_CMD) +
+	      WMI_TLV_HDR_SIZE +
+	      0 * sizeof(A_UINT32) + WMI_TLV_HDR_SIZE + 1 * sizeof(A_UINT32);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_WOW_ADD_PATTERN_CMD_fixed_param *) wmi_buf_data(buf);
+	buf_ptr = (uint8_t *) cmd;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_WOW_ADD_PATTERN_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_WOW_ADD_PATTERN_CMD_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->pattern_id = ptrn_id;
+
+	cmd->pattern_type = WOW_BITMAP_PATTERN;
+	buf_ptr += sizeof(WMI_WOW_ADD_PATTERN_CMD_fixed_param);
+
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(WOW_BITMAP_PATTERN_T));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	bitmap_pattern = (WOW_BITMAP_PATTERN_T *) buf_ptr;
+
+	WMITLV_SET_HDR(&bitmap_pattern->tlv_header,
+		       WMITLV_TAG_STRUC_WOW_BITMAP_PATTERN_T,
+		       WMITLV_GET_STRUCT_TLVLEN(WOW_BITMAP_PATTERN_T));
+
+	cdf_mem_copy(&bitmap_pattern->patternbuf[0], ptrn, ptrn_len);
+	cdf_mem_copy(&bitmap_pattern->bitmaskbuf[0], mask, mask_len);
+
+	bitmap_pattern->pattern_offset = ptrn_offset;
+	bitmap_pattern->pattern_len = ptrn_len;
+
+	if (bitmap_pattern->pattern_len > WOW_DEFAULT_BITMAP_PATTERN_SIZE)
+		bitmap_pattern->pattern_len = WOW_DEFAULT_BITMAP_PATTERN_SIZE;
+
+	if (bitmap_pattern->pattern_len > WOW_DEFAULT_BITMASK_SIZE)
+		bitmap_pattern->pattern_len = WOW_DEFAULT_BITMASK_SIZE;
+
+	bitmap_pattern->bitmask_len = bitmap_pattern->pattern_len;
+	bitmap_pattern->pattern_id = ptrn_id;
+
+	WMA_LOGI("vdev id : %d, ptrn id: %d, ptrn len: %d, ptrn offset: %d user %d",
+		 cmd->vdev_id, cmd->pattern_id, bitmap_pattern->pattern_len,
+		 bitmap_pattern->pattern_offset, user);
+
+	WMA_LOGI("Pattern : ");
+	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+		&bitmap_pattern->patternbuf[0], bitmap_pattern->pattern_len);
+
+	WMA_LOGI("Mask : ");
+	CDF_TRACE_HEX_DUMP(CDF_MODULE_ID_WMA, CDF_TRACE_LEVEL_INFO,
+		&bitmap_pattern->bitmaskbuf[0], bitmap_pattern->pattern_len);
+
+	buf_ptr += sizeof(WOW_BITMAP_PATTERN_T);
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_IPV4_SYNC_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_IPV6_SYNC_PATTERN_T but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for WMITLV_TAG_STRUC_WOW_MAGIC_PATTERN_CMD but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for pattern_info_timeout but no data. */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, 0);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	/* Fill TLV for ratelimit_interval with dummy data as this fix elem */
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32, 1 * sizeof(A_UINT32));
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	*(A_UINT32 *) buf_ptr = 0;
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WOW_ADD_WAKE_PATTERN_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to send wow ptrn to fw", __func__);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_wow_delete_pattern_cmd_tlv() - delete wow pattern in target
+ * @wmi_handle: wmi handle
+ * @ptrn_id: pattern id
+ * @vdev_id: vdev id
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_wow_delete_pattern_cmd_tlv(wmi_unified_t wmi_handle, uint8_t ptrn_id,
+					uint8_t vdev_id)
+{
+	WMI_WOW_DEL_PATTERN_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	int ret;
+
+	len = sizeof(WMI_WOW_DEL_PATTERN_CMD_fixed_param);
+
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_WOW_DEL_PATTERN_CMD_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_WOW_DEL_PATTERN_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+				WMI_WOW_DEL_PATTERN_CMD_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->pattern_id = ptrn_id;
+	cmd->pattern_type = WOW_BITMAP_PATTERN;
+
+	WMA_LOGI("Deleting pattern id: %d vdev id %d in fw",
+		cmd->pattern_id, vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WOW_DEL_WAKE_PATTERN_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to delete wow ptrn from fw", __func__);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_host_wakeup_ind_to_fw_cmd_tlv() - send wakeup ind to fw
+ * @wmi_handle: wmi handle
+ *
+ * Sends host wakeup indication to FW. On receiving this indication,
+ * FW will come out of WOW.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_host_wakeup_ind_to_fw_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	wmi_wow_hostwakeup_from_sleep_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	CDF_STATUS cdf_status = CDF_STATUS_SUCCESS;
+	int32_t len;
+	int ret;
+
+	len = sizeof(wmi_wow_hostwakeup_from_sleep_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_wow_hostwakeup_from_sleep_cmd_fixed_param *)
+	      wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_wow_hostwakeup_from_sleep_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+	       (wmi_wow_hostwakeup_from_sleep_cmd_fixed_param));
+
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID);
+	if (ret) {
+		WMA_LOGE("Failed to send host wakeup indication to fw");
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return cdf_status;
+}
+
+/**
+ * send_del_ts_cmd_tlv() - send DELTS request to fw
+ * @wmi_handle: wmi handle
+ * @msg: delts params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_del_ts_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
+				uint8_t ac)
+{
+	wmi_vdev_wmm_delts_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_vdev_wmm_delts_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_wmm_delts_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_wmm_delts_cmd_fixed_param));
+	cmd->vdev_id = vdev_id;
+	cmd->ac = ac;
+
+	WMA_LOGD("Delts vdev:%d, ac:%d, %s:%d",
+		 cmd->vdev_id, cmd->ac, __func__, __LINE__);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_VDEV_WMM_DELTS_CMDID)) {
+		WMA_LOGP("%s: Failed to send vdev DELTS command", __func__);
+		cdf_nbuf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_aggr_qos_cmd_tlv() - send aggr qos request to fw
+ * @wmi_handle: handle to wmi
+ * @aggr_qos_rsp_msg - combined struct for all ADD_TS requests.
+ *
+ * A function to handle WMA_AGGR_QOS_REQ. This will send out
+ * ADD_TS requestes to firmware in loop for all the ACs with
+ * active flow.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_aggr_qos_cmd_tlv(wmi_unified_t wmi_handle,
+		      struct aggr_add_ts_param *aggr_qos_rsp_msg)
+{
+	int i = 0;
+	wmi_vdev_wmm_addts_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	for (i = 0; i < WMI_QOS_NUM_AC_MAX; i++) {
+		/* if flow in this AC is active */
+		if (((1 << i) & aggr_qos_rsp_msg->tspecIdx)) {
+			/*
+			 * as per implementation of wma_add_ts_req() we
+			 * are not waiting any response from firmware so
+			 * apart from sending ADDTS to firmware just send
+			 * success to upper layers
+			 */
+			aggr_qos_rsp_msg->status[i] = CDF_STATUS_SUCCESS;
+
+			buf = wmi_buf_alloc(wmi_handle, len);
+			if (!buf) {
+				WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+				return CDF_STATUS_E_NOMEM;
+			}
+			cmd = (wmi_vdev_wmm_addts_cmd_fixed_param *)
+				wmi_buf_data(buf);
+			WMITLV_SET_HDR(&cmd->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_vdev_wmm_addts_cmd_fixed_param,
+			       WMITLV_GET_STRUCT_TLVLEN
+				       (wmi_vdev_wmm_addts_cmd_fixed_param));
+			cmd->vdev_id = aggr_qos_rsp_msg->sessionId;
+			cmd->ac =
+				TID_TO_WME_AC(aggr_qos_rsp_msg->tspec[i].tsinfo.
+					      traffic.userPrio);
+			cmd->medium_time_us =
+				aggr_qos_rsp_msg->tspec[i].mediumTime * 32;
+			cmd->downgrade_type = WMM_AC_DOWNGRADE_DEPRIO;
+			WMA_LOGD("%s:%d: Addts vdev:%d, ac:%d, mediumTime:%d downgrade_type:%d",
+				__func__, __LINE__, cmd->vdev_id, cmd->ac,
+				cmd->medium_time_us, cmd->downgrade_type);
+			if (wmi_unified_cmd_send
+				    (wmi_handle, buf, len,
+				    WMI_VDEV_WMM_ADDTS_CMDID)) {
+				WMA_LOGP("%s: Failed to send vdev ADDTS command",
+					__func__);
+				aggr_qos_rsp_msg->status[i] =
+					CDF_STATUS_E_FAILURE;
+				cdf_nbuf_free(buf);
+				return CDF_STATUS_E_FAILURE;
+			}
+		}
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_add_ts_cmd_tlv() - send ADDTS request to fw
+ * @wmi_handle: wmi handle
+ * @msg: ADDTS params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_add_ts_cmd_tlv(wmi_unified_t wmi_handle,
+		 struct add_ts_param *msg)
+{
+	wmi_vdev_wmm_addts_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len = sizeof(*cmd);
+
+	msg->status = CDF_STATUS_SUCCESS;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_vdev_wmm_addts_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_wmm_addts_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_wmm_addts_cmd_fixed_param));
+	cmd->vdev_id = msg->sme_session_id;
+	cmd->ac = msg->tspec.tsinfo.traffic.userPrio;
+	cmd->medium_time_us = msg->tspec.mediumTime * 32;
+	cmd->downgrade_type = WMM_AC_DOWNGRADE_DROP;
+	WMA_LOGD("Addts vdev:%d, ac:%d, mediumTime:%d, downgrade_type:%d %s:%d",
+		 cmd->vdev_id, cmd->ac, cmd->medium_time_us,
+		 cmd->downgrade_type, __func__, __LINE__);
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_VDEV_WMM_ADDTS_CMDID)) {
+		WMA_LOGP("%s: Failed to send vdev ADDTS command", __func__);
+		msg->status = CDF_STATUS_E_FAILURE;
+		cdf_nbuf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_enable_disable_packet_filter_cmd_tlv() - enable/disable packet filter in target
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @enable: Flag to enable/disable packet filter
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_enable_disable_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
+					uint8_t vdev_id, bool enable)
+{
+	int32_t len;
+	int ret = 0;
+	wmi_buf_t buf;
+	WMI_PACKET_FILTER_ENABLE_CMD_fixed_param *cmd;
+
+	len = sizeof(WMI_PACKET_FILTER_ENABLE_CMD_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return -ENOMEM;
+	}
+
+	cmd = (WMI_PACKET_FILTER_ENABLE_CMD_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_packet_filter_enable_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+		WMI_PACKET_FILTER_ENABLE_CMD_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	if (enable)
+		cmd->enable = PACKET_FILTER_SET_ENABLE;
+	else
+		cmd->enable = PACKET_FILTER_SET_DISABLE;
+
+	WMA_LOGE("%s: Packet filter enable %d for vdev_id %d",
+		__func__, cmd->enable, vdev_id);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+			 WMI_PACKET_FILTER_ENABLE_CMDID);
+	if (ret)
+		WMA_LOGE("Failed to send packet filter wmi cmd to fw");
+
+	return ret;
+}
+
+/**
+ * send_config_packet_filter_cmd_tlv() - configure packet filter in target
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @rcv_filter_param: Packet filter parameters
+ * @filter_id: Filter id
+ * @enable: Flag to add/delete packet filter configuration
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_config_packet_filter_cmd_tlv(wmi_unified_t wmi_handle,
+		uint8_t vdev_id, struct rcv_pkt_filter_config *rcv_filter_param,
+		uint8_t filter_id, bool enable)
+{
+	int len, i;
+	int err = 0;
+	wmi_buf_t buf;
+	WMI_PACKET_FILTER_CONFIG_CMD_fixed_param *cmd;
+
+
+	/* allocate the memory */
+	len = sizeof(*cmd);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send set_param cmd");
+		return -ENOMEM;
+	}
+
+	cmd = (WMI_PACKET_FILTER_CONFIG_CMD_fixed_param *)wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_packet_filter_config_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_PACKET_FILTER_CONFIG_CMD_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+	cmd->filter_id = filter_id;
+	if (enable)
+		cmd->filter_action = PACKET_FILTER_SET_ACTIVE;
+	else
+		cmd->filter_action = PACKET_FILTER_SET_INACTIVE;
+
+	if (enable) {
+		cmd->num_params = CDF_MIN(
+			WMI_PACKET_FILTER_MAX_CMP_PER_PACKET_FILTER,
+			rcv_filter_param->numFieldParams);
+		cmd->filter_type = rcv_filter_param->filterType;
+		cmd->coalesce_time = rcv_filter_param->coalesceTime;
+
+		for (i = 0; i < cmd->num_params; i++) {
+			cmd->paramsData[i].proto_type =
+				rcv_filter_param->paramsData[i].protocolLayer;
+			cmd->paramsData[i].cmp_type =
+				rcv_filter_param->paramsData[i].cmpFlag;
+			cmd->paramsData[i].data_length =
+				rcv_filter_param->paramsData[i].dataLength;
+			cmd->paramsData[i].data_offset =
+				rcv_filter_param->paramsData[i].dataOffset;
+			memcpy(&cmd->paramsData[i].compareData,
+				rcv_filter_param->paramsData[i].compareData,
+				sizeof(cmd->paramsData[i].compareData));
+			memcpy(&cmd->paramsData[i].dataMask,
+				rcv_filter_param->paramsData[i].dataMask,
+				sizeof(cmd->paramsData[i].dataMask));
+		}
+	}
+
+	WMA_LOGE("Packet filter action %d filter with id: %d, num_params=%d",
+		cmd->filter_action, cmd->filter_id, cmd->num_params);
+	/* send the command along with data */
+	err = wmi_unified_cmd_send(wmi_handle, buf, len,
+				WMI_PACKET_FILTER_CONFIG_CMDID);
+	if (err) {
+		WMA_LOGE("Failed to send pkt_filter cmd");
+		wmi_buf_free(buf);
+		return -EIO;
+	}
+
+
+	return 0;
+}
+
+/**
+ * send_add_clear_mcbc_filter_cmd_tlv() - set mcast filter command to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @multicastAddr: mcast address
+ * @clearList: clear list flag
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_add_clear_mcbc_filter_cmd_tlv(wmi_unified_t wmi_handle,
+				     uint8_t vdev_id,
+				     struct cdf_mac_addr multicast_addr,
+				     bool clearList)
+{
+	WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *cmd;
+	wmi_buf_t buf;
+	int err;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send set_param cmd");
+		return -ENOMEM;
+	}
+
+	cmd = (WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param *) wmi_buf_data(buf);
+	cdf_mem_zero(cmd, sizeof(*cmd));
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (WMI_SET_MCASTBCAST_FILTER_CMD_fixed_param));
+	cmd->action =
+		(clearList ? WMI_MCAST_FILTER_DELETE : WMI_MCAST_FILTER_SET);
+	cmd->vdev_id = vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(multicast_addr.bytes, &cmd->mcastbdcastaddr);
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+				   sizeof(*cmd),
+				   WMI_SET_MCASTBCAST_FILTER_CMDID);
+	if (err) {
+		WMA_LOGE("Failed to send set_param cmd");
+		cdf_mem_free(buf);
+		return -EIO;
+	}
+	WMA_LOGD("Action:%d; vdev_id:%d; clearList:%d",
+		 cmd->action, vdev_id, clearList);
+	WMA_LOGD("MCBC MAC Addr: "MAC_ADDRESS_STR,
+		 MAC_ADDR_ARRAY(multicast_addr.bytes));
+
+	return 0;
+}
+
+/**
+ * send_gtk_offload_cmd_tlv() - send GTK offload command to fw
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @params: GTK offload parameters
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_gtk_offload_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
+					   struct gtk_offload_params *params,
+					   bool enable_offload,
+					   uint32_t gtk_offload_opcode)
+{
+	int len;
+	wmi_buf_t buf;
+	WMI_GTK_OFFLOAD_CMD_fixed_param *cmd;
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+
+	WMA_LOGD("%s Enter", __func__);
+
+	len = sizeof(*cmd);
+
+	/* alloc wmi buffer */
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("wmi_buf_alloc failed for WMI_GTK_OFFLOAD_CMD");
+		status = CDF_STATUS_E_NOMEM;
+		goto out;
+	}
+
+	cmd = (WMI_GTK_OFFLOAD_CMD_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_GTK_OFFLOAD_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_GTK_OFFLOAD_CMD_fixed_param));
+
+	cmd->vdev_id = vdev_id;
+
+	/* Request target to enable GTK offload */
+	if (enable_offload) {
+		cmd->flags = gtk_offload_opcode;
+
+		/* Copy the keys and replay counter */
+		cdf_mem_copy(cmd->KCK, params->aKCK, WMI_GTK_OFFLOAD_KCK_BYTES);
+		cdf_mem_copy(cmd->KEK, params->aKEK, WMI_GTK_OFFLOAD_KEK_BYTES);
+		cdf_mem_copy(cmd->replay_counter, &params->ullKeyReplayCounter,
+			     GTK_REPLAY_COUNTER_BYTES);
+	} else {
+		cmd->flags = gtk_offload_opcode;
+	}
+
+	/* send the wmi command */
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_GTK_OFFLOAD_CMDID)) {
+		WMA_LOGE("Failed to send WMI_GTK_OFFLOAD_CMDID");
+		wmi_buf_free(buf);
+		status = CDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGD("VDEVID: %d, GTK_FLAGS: x%x", vdev_id, cmd->flags);
+out:
+	WMA_LOGD("%s Exit", __func__);
+	return status;
+}
+
+/**
+ * send_process_gtk_offload_getinfo_cmd_tlv() - send GTK offload cmd to fw
+ * @wmi_handle: wmi handle
+ * @params: GTK offload params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_process_gtk_offload_getinfo_cmd_tlv(wmi_unified_t wmi_handle,
+				uint8_t vdev_id,
+				uint64_t offload_req_opcode)
+{
+	int len;
+	wmi_buf_t buf;
+	WMI_GTK_OFFLOAD_CMD_fixed_param *cmd;
+	CDF_STATUS status = CDF_STATUS_SUCCESS;
+
+	len = sizeof(*cmd);
+
+	/* alloc wmi buffer */
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("wmi_buf_alloc failed for WMI_GTK_OFFLOAD_CMD");
+		status = CDF_STATUS_E_NOMEM;
+		goto out;
+	}
+
+	cmd = (WMI_GTK_OFFLOAD_CMD_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_WMI_GTK_OFFLOAD_CMD_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (WMI_GTK_OFFLOAD_CMD_fixed_param));
+
+	/* Request for GTK offload status */
+	cmd->flags = offload_req_opcode;
+	cmd->vdev_id = vdev_id;
+
+	/* send the wmi command */
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_GTK_OFFLOAD_CMDID)) {
+		WMA_LOGE("Failed to send WMI_GTK_OFFLOAD_CMDID for req info");
+		wmi_buf_free(buf);
+		status = CDF_STATUS_E_FAILURE;
+	}
+
+out:
+	return status;
+}
+
+/**
+ * send_process_add_periodic_tx_ptrn_cmd_tlv - add periodic tx ptrn
+ * @wmi_handle: wmi handle
+ * @pAddPeriodicTxPtrnParams: tx ptrn params
+ *
+ * Retrun: CDF status
+ */
+CDF_STATUS send_process_add_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_handle,
+						struct periodic_tx_pattern  *
+						pAddPeriodicTxPtrnParams,
+						uint8_t vdev_id)
+{
+	WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint32_t len;
+	uint8_t *buf_ptr;
+	uint32_t ptrn_len, ptrn_len_aligned;
+	int j;
+
+	ptrn_len = pAddPeriodicTxPtrnParams->ucPtrnSize;
+	ptrn_len_aligned = roundup(ptrn_len, sizeof(uint32_t));
+	len = sizeof(WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param) +
+	      WMI_TLV_HDR_SIZE + ptrn_len_aligned;
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+
+	cmd = (WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param));
+
+	/* Pass the pattern id to delete for the corresponding vdev id */
+	cmd->vdev_id = vdev_id;
+	cmd->pattern_id = pAddPeriodicTxPtrnParams->ucPtrnId;
+	cmd->timeout = pAddPeriodicTxPtrnParams->usPtrnIntervalMs;
+	cmd->length = pAddPeriodicTxPtrnParams->ucPtrnSize;
+
+	/* Pattern info */
+	buf_ptr += sizeof(WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ptrn_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cdf_mem_copy(buf_ptr, pAddPeriodicTxPtrnParams->ucPattern, ptrn_len);
+	for (j = 0; j < pAddPeriodicTxPtrnParams->ucPtrnSize; j++)
+		WMA_LOGD("%s: Add Ptrn: %02x", __func__, buf_ptr[j] & 0xff);
+
+	WMA_LOGD("%s: Add ptrn id: %d vdev_id: %d",
+		 __func__, cmd->pattern_id, cmd->vdev_id);
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_ADD_PROACTIVE_ARP_RSP_PATTERN_CMDID)) {
+		WMA_LOGE("%s: failed to add pattern set state command",
+			 __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_process_del_periodic_tx_ptrn_cmd_tlv - del periodic tx ptrn
+ * @wmi_handle: wmi handle
+ * @vdev_id: vdev id
+ * @pattern_id: pattern id
+ *
+ * Retrun: CDF status
+ */
+CDF_STATUS send_process_del_periodic_tx_ptrn_cmd_tlv(wmi_unified_t wmi_handle,
+						uint8_t vdev_id,
+						uint8_t pattern_id)
+{
+	WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	uint32_t len =
+		sizeof(WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param *)
+		wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMD_fixed_param));
+
+	/* Pass the pattern id to delete for the corresponding vdev id */
+	cmd->vdev_id = vdev_id;
+	cmd->pattern_id = pattern_id;
+	WMA_LOGD("%s: Del ptrn id: %d vdev_id: %d",
+		 __func__, cmd->pattern_id, cmd->vdev_id);
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_DEL_PROACTIVE_ARP_RSP_PATTERN_CMDID)) {
+		WMA_LOGE("%s: failed to send del pattern command", __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_stats_ext_req_cmd_tlv() - request ext stats from fw
+ * @wmi_handle: wmi handle
+ * @preq: stats ext params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_stats_ext_req_cmd_tlv(wmi_unified_t wmi_handle,
+			struct stats_ext_params *preq)
+{
+	int32_t ret;
+	wmi_req_stats_ext_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + preq->request_data_len;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return -ENOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_req_stats_ext_cmd_fixed_param *) buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_req_stats_ext_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_req_stats_ext_cmd_fixed_param));
+	cmd->vdev_id = preq->vdev_id;
+	cmd->data_len = preq->request_data_len;
+
+	WMA_LOGD("%s: The data len value is %u and vdev id set is %u ",
+		 __func__, preq->request_data_len, preq->vdev_id);
+
+	buf_ptr += sizeof(wmi_req_stats_ext_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, cmd->data_len);
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cdf_mem_copy(buf_ptr, preq->request_data, cmd->data_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_REQUEST_STATS_EXT_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("%s: Failed to send notify cmd ret = %d", __func__,
+			 ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_enable_ext_wow_cmd_tlv() - enable ext wow in fw
+ * @wmi_handle: wmi handle
+ * @params: ext wow params
+ *
+ * Return:0 for success or error code
+ */
+CDF_STATUS send_enable_ext_wow_cmd_tlv(wmi_unified_t wmi_handle,
+			struct ext_wow_params *params)
+{
+	wmi_extwow_enable_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	int ret;
+
+	len = sizeof(wmi_extwow_enable_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_extwow_enable_cmd_fixed_param *) wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_extwow_enable_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_extwow_enable_cmd_fixed_param));
+
+	cmd->vdev_id = params->vdev_id;
+	cmd->type = params->type;
+	cmd->wakeup_pin_num = params->wakeup_pin_num;
+
+	WMA_LOGD("%s: vdev_id %d type %d Wakeup_pin_num %x",
+		 __func__, cmd->vdev_id, cmd->type, cmd->wakeup_pin_num);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_EXTWOW_ENABLE_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to set EXTWOW Enable", __func__);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+}
+
+/**
+ * send_app_type1_params_in_fw_cmd_tlv() - set app type1 params in fw
+ * @wmi_handle: wmi handle
+ * @app_type1_params: app type1 params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_app_type1_params_in_fw_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct app_type1_params *app_type1_params)
+{
+	wmi_extwow_set_app_type1_params_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	int ret;
+
+	len = sizeof(wmi_extwow_set_app_type1_params_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_extwow_set_app_type1_params_cmd_fixed_param *)
+	      wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_wmi_extwow_set_app_type1_params_cmd_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (wmi_extwow_set_app_type1_params_cmd_fixed_param));
+
+	cmd->vdev_id = app_type1_params->vdev_id;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(app_type1_params->wakee_mac_addr.bytes,
+				   &cmd->wakee_mac);
+	cdf_mem_copy(cmd->ident, app_type1_params->identification_id, 8);
+	cmd->ident_len = app_type1_params->id_length;
+	cdf_mem_copy(cmd->passwd, app_type1_params->password, 16);
+	cmd->passwd_len = app_type1_params->pass_length;
+
+	WMA_LOGD("%s: vdev_id %d wakee_mac_addr %pM "
+		 "identification_id %.8s id_length %u "
+		 "password %.16s pass_length %u",
+		 __func__, cmd->vdev_id, app_type1_params->wakee_mac_addr.bytes,
+		 cmd->ident, cmd->ident_len, cmd->passwd, cmd->passwd_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_EXTWOW_SET_APP_TYPE1_PARAMS_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to set APP TYPE1 PARAMS", __func__);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_set_app_type2_params_in_fw_cmd_tlv() - set app type2 params in fw
+ * @wmi_handle: wmi handle
+ * @appType2Params: app type2 params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_set_app_type2_params_in_fw_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct app_type2_params *appType2Params)
+{
+	wmi_extwow_set_app_type2_params_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int32_t len;
+	int ret;
+
+	len = sizeof(wmi_extwow_set_app_type2_params_cmd_fixed_param);
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_extwow_set_app_type2_params_cmd_fixed_param *)
+	      wmi_buf_data(buf);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_wmi_extwow_set_app_type2_params_cmd_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (wmi_extwow_set_app_type2_params_cmd_fixed_param));
+
+	cmd->vdev_id = appType2Params->vdev_id;
+
+	cdf_mem_copy(cmd->rc4_key, appType2Params->rc4_key, 16);
+	cmd->rc4_key_len = appType2Params->rc4_key_len;
+
+	cmd->ip_id = appType2Params->ip_id;
+	cmd->ip_device_ip = appType2Params->ip_device_ip;
+	cmd->ip_server_ip = appType2Params->ip_server_ip;
+
+	cmd->tcp_src_port = appType2Params->tcp_src_port;
+	cmd->tcp_dst_port = appType2Params->tcp_dst_port;
+	cmd->tcp_seq = appType2Params->tcp_seq;
+	cmd->tcp_ack_seq = appType2Params->tcp_ack_seq;
+
+	cmd->keepalive_init = appType2Params->keepalive_init;
+	cmd->keepalive_min = appType2Params->keepalive_min;
+	cmd->keepalive_max = appType2Params->keepalive_max;
+	cmd->keepalive_inc = appType2Params->keepalive_inc;
+
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(appType2Params->gateway_mac.bytes,
+				   &cmd->gateway_mac);
+	cmd->tcp_tx_timeout_val = appType2Params->tcp_tx_timeout_val;
+	cmd->tcp_rx_timeout_val = appType2Params->tcp_rx_timeout_val;
+
+	WMA_LOGD("%s: vdev_id %d gateway_mac %pM "
+		 "rc4_key %.16s rc4_key_len %u "
+		 "ip_id %x ip_device_ip %x ip_server_ip %x "
+		 "tcp_src_port %u tcp_dst_port %u tcp_seq %u "
+		 "tcp_ack_seq %u keepalive_init %u keepalive_min %u "
+		 "keepalive_max %u keepalive_inc %u "
+		 "tcp_tx_timeout_val %u tcp_rx_timeout_val %u",
+		 __func__, cmd->vdev_id, appType2Params->gateway_mac.bytes,
+		 cmd->rc4_key, cmd->rc4_key_len,
+		 cmd->ip_id, cmd->ip_device_ip, cmd->ip_server_ip,
+		 cmd->tcp_src_port, cmd->tcp_dst_port, cmd->tcp_seq,
+		 cmd->tcp_ack_seq, cmd->keepalive_init, cmd->keepalive_min,
+		 cmd->keepalive_max, cmd->keepalive_inc,
+		 cmd->tcp_tx_timeout_val, cmd->tcp_rx_timeout_val);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_EXTWOW_SET_APP_TYPE2_PARAMS_CMDID);
+	if (ret) {
+		WMA_LOGE("%s: Failed to set APP TYPE2 PARAMS", __func__);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+
+}
+
+/**
+ * send_set_auto_shutdown_timer_cmd_tlv() - sets auto shutdown timer in firmware
+ * @wmi_handle: wmi handle
+ * @timer_val: auto shutdown timer value
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_set_auto_shutdown_timer_cmd_tlv(wmi_unified_t wmi_handle,
+						  uint32_t timer_val)
+{
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_host_auto_shutdown_cfg_cmd_fixed_param *wmi_auto_sh_cmd;
+	int len = sizeof(wmi_host_auto_shutdown_cfg_cmd_fixed_param);
+
+	WMA_LOGD("%s: Set WMI_HOST_AUTO_SHUTDOWN_CFG_CMDID:TIMER_VAL=%d",
+		 __func__, timer_val);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	wmi_auto_sh_cmd =
+		(wmi_host_auto_shutdown_cfg_cmd_fixed_param *) buf_ptr;
+	wmi_auto_sh_cmd->timer_value = timer_val;
+
+	WMITLV_SET_HDR(&wmi_auto_sh_cmd->tlv_header,
+	       WMITLV_TAG_STRUC_wmi_host_auto_shutdown_cfg_cmd_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (wmi_host_auto_shutdown_cfg_cmd_fixed_param));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_HOST_AUTO_SHUTDOWN_CFG_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("%s: WMI_HOST_AUTO_SHUTDOWN_CFG_CMDID Err %d",
+			 __func__, status);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_nan_req_cmd_tlv() - to send nan request to target
+ * @wmi_handle: wmi handle
+ * @nan_req: request data which will be non-null
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_nan_req_cmd_tlv(wmi_unified_t wmi_handle,
+			struct nan_req_params *nan_req)
+{
+	int ret;
+	wmi_nan_cmd_param *cmd;
+	wmi_buf_t buf;
+	uint16_t len = sizeof(*cmd);
+	uint16_t nan_data_len, nan_data_len_aligned;
+	uint8_t *buf_ptr;
+
+	/*
+	 *    <----- cmd ------------><-- WMI_TLV_HDR_SIZE --><--- data ---->
+	 *    +------------+----------+-----------------------+--------------+
+	 *    | tlv_header | data_len | WMITLV_TAG_ARRAY_BYTE | nan_req_data |
+	 *    +------------+----------+-----------------------+--------------+
+	 */
+	if (!nan_req) {
+		WMA_LOGE("%s:nan req is not valid", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+	nan_data_len = nan_req->request_data_len;
+	nan_data_len_aligned = roundup(nan_req->request_data_len,
+				       sizeof(uint32_t));
+	len += WMI_TLV_HDR_SIZE + nan_data_len_aligned;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_nan_cmd_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_nan_cmd_param,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_nan_cmd_param));
+	cmd->data_len = nan_req->request_data_len;
+	WMA_LOGD("%s: The data len value is %u",
+		 __func__, nan_req->request_data_len);
+	buf_ptr += sizeof(wmi_nan_cmd_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, nan_data_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	cdf_mem_copy(buf_ptr, nan_req->request_data, cmd->data_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_NAN_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("%s Failed to send set param command ret = %d",
+			 __func__, ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
+/**
+ * send_process_dhcpserver_offload_cmd_tlv() - enable DHCP server offload
+ * @wmi_handle: wmi handle
+ * @pDhcpSrvOffloadInfo: DHCP server offload info
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_process_dhcpserver_offload_cmd_tlv(wmi_unified_t wmi_handle,
+		struct dhcp_offload_info_params *pDhcpSrvOffloadInfo)
+{
+	wmi_set_dhcp_server_offload_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	int err;
+
+	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send "
+			 "set_dhcp_server_offload cmd");
+		return -ENOMEM;
+	}
+
+	cmd = (wmi_set_dhcp_server_offload_cmd_fixed_param *) wmi_buf_data(buf);
+	cdf_mem_zero(cmd, sizeof(*cmd));
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	       WMITLV_TAG_STRUC_wmi_set_dhcp_server_offload_cmd_fixed_param,
+	       WMITLV_GET_STRUCT_TLVLEN
+	       (wmi_set_dhcp_server_offload_cmd_fixed_param));
+	cmd->vdev_id = pDhcpSrvOffloadInfo->vdev_id;
+	cmd->enable = pDhcpSrvOffloadInfo->dhcpSrvOffloadEnabled;
+	cmd->num_client = pDhcpSrvOffloadInfo->dhcpClientNum;
+	cmd->srv_ipv4 = pDhcpSrvOffloadInfo->dhcpSrvIP;
+	cmd->start_lsb = 0;
+	err = wmi_unified_cmd_send(wmi_handle, buf,
+				   sizeof(*cmd),
+				   WMI_SET_DHCP_SERVER_OFFLOAD_CMDID);
+	if (err) {
+		WMA_LOGE("Failed to send set_dhcp_server_offload cmd");
+		wmi_buf_free(buf);
+		return -EIO;
+	}
+	WMA_LOGD("Set dhcp server offload to vdevId %d",
+		 pDhcpSrvOffloadInfo->vdev_id);
+	return 0;
+}
+
+/**
+ * send_set_led_flashing_cmd_tlv() - set led flashing in fw
+ * @wmi_handle: wmi handle
+ * @flashing: flashing request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_set_led_flashing_cmd_tlv(wmi_unified_t wmi_handle,
+				struct flashing_req_params *flashing)
+{
+	wmi_set_led_flashing_cmd_fixed_param *cmd;
+	int status = 0;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	int32_t len = sizeof(wmi_set_led_flashing_cmd_fixed_param);
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP(FL("wmi_buf_alloc failed"));
+		return -ENOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_set_led_flashing_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_set_led_flashing_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_set_led_flashing_cmd_fixed_param));
+	cmd->pattern_id = flashing->pattern_id;
+	cmd->led_x0 = flashing->led_x0;
+	cmd->led_x1 = flashing->led_x1;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+				      WMI_PDEV_SET_LED_FLASHING_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("%s: wmi_unified_cmd_send WMI_PEER_SET_PARAM_CMD"
+			 " returned Error %d", __func__, status);
+		return CDF_STATUS_E_FAILURE;
+	}
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_process_ch_avoid_update_cmd_tlv() - handles channel avoid update request
+ * @wmi_handle: wmi handle
+ * @ch_avoid_update_req: channel avoid update params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS send_process_ch_avoid_update_cmd_tlv(wmi_unified_t wmi_handle)
+{
+	int status = 0;
+	wmi_buf_t buf = NULL;
+	uint8_t *buf_ptr;
+	wmi_chan_avoid_update_cmd_param *ch_avoid_update_fp;
+	int len = sizeof(wmi_chan_avoid_update_cmd_param);
+
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	ch_avoid_update_fp = (wmi_chan_avoid_update_cmd_param *) buf_ptr;
+	WMITLV_SET_HDR(&ch_avoid_update_fp->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_chan_avoid_update_cmd_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_chan_avoid_update_cmd_param));
+
+	status = wmi_unified_cmd_send(wmi_handle, buf,
+				      len, WMI_CHAN_AVOID_UPDATE_CMDID);
+	if (status != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send"
+			 " WMITLV_TABLE_WMI_CHAN_AVOID_UPDATE"
+			 " returned Error %d", status);
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_regdomain_info_to_fw_cmd_tlv() - send regdomain info to fw
+ * @wmi_handle: wmi handle
+ * @reg_dmn: reg domain
+ * @regdmn2G: 2G reg domain
+ * @regdmn5G: 5G reg domain
+ * @ctl2G: 2G test limit
+ * @ctl5G: 5G test limit
+ *
+ * Return: none
+ */
+CDF_STATUS send_regdomain_info_to_fw_cmd_tlv(wmi_unified_t wmi_handle,
+				   uint32_t reg_dmn, uint16_t regdmn2G,
+				   uint16_t regdmn5G, int8_t ctl2G,
+				   int8_t ctl5G)
+{
+	wmi_buf_t buf;
+	wmi_pdev_set_regdomain_cmd_fixed_param *cmd;
+	int32_t len = sizeof(*cmd);
+
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_NOMEM;
+	}
+	cmd = (wmi_pdev_set_regdomain_cmd_fixed_param *) wmi_buf_data(buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_pdev_set_regdomain_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_pdev_set_regdomain_cmd_fixed_param));
+	cmd->reg_domain = reg_dmn;
+	cmd->reg_domain_2G = regdmn2G;
+	cmd->reg_domain_5G = regdmn5G;
+	cmd->conformance_test_limit_2G = ctl2G;
+	cmd->conformance_test_limit_5G = ctl5G;
+
+	if (wmi_unified_cmd_send(wmi_handle, buf, len,
+				 WMI_PDEV_SET_REGDOMAIN_CMDID)) {
+		WMA_LOGP("%s: Failed to send pdev set regdomain command",
+			 __func__);
+		cdf_nbuf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	return CDF_STATUS_SUCCESS;
+}
+
+
+/**
+ * send_set_tdls_offchan_mode_cmd_tlv() - set tdls off channel mode
+ * @wmi_handle: wmi handle
+ * @chan_switch_params: Pointer to tdls channel switch parameter structure
+ *
+ * This function sets tdls off channel mode
+ *
+ * Return: 0 on success; Negative errno otherwise
+ */
+CDF_STATUS send_set_tdls_offchan_mode_cmd_tlv(wmi_unified_t wmi_handle,
+	      struct tdls_channel_switch_params *chan_switch_params)
+{
+	wmi_tdls_set_offchan_mode_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+	u_int16_t len = sizeof(wmi_tdls_set_offchan_mode_cmd_fixed_param);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
+		return CDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_tdls_set_offchan_mode_cmd_fixed_param *)
+		wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_tdls_set_offchan_mode_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+			wmi_tdls_set_offchan_mode_cmd_fixed_param));
+
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(chan_switch_params->peer_mac_addr,
+				&cmd->peer_macaddr);
+	cmd->vdev_id = chan_switch_params->vdev_id;
+	cmd->offchan_mode = chan_switch_params->tdls_sw_mode;
+	cmd->is_peer_responder = chan_switch_params->is_responder;
+	cmd->offchan_num = chan_switch_params->tdls_off_ch;
+	cmd->offchan_bw_bitmap = chan_switch_params->tdls_off_ch_bw_offset;
+	cmd->offchan_oper_class = chan_switch_params->oper_class;
+
+	WMA_LOGD(FL("Peer MAC Addr mac_addr31to0: 0x%x, mac_addr47to32: 0x%x"),
+		 cmd->peer_macaddr.mac_addr31to0,
+		 cmd->peer_macaddr.mac_addr47to32);
+
+	WMA_LOGD(FL(
+		 "vdev_id: %d, off channel mode: %d, off channel Num: %d, "
+		 "off channel offset: 0x%x, is_peer_responder: %d, operating class: %d"
+		  ),
+		 cmd->vdev_id,
+		 cmd->offchan_mode,
+		 cmd->offchan_num,
+		 cmd->offchan_bw_bitmap,
+		 cmd->is_peer_responder,
+		 cmd->offchan_oper_class);
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+		WMI_TDLS_SET_OFFCHAN_MODE_CMDID)) {
+		WMA_LOGP(FL("failed to send tdls off chan command"));
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_update_fw_tdls_state_cmd_tlv() - send enable/disable tdls for a vdev
+ * @wmi_handle: wmi handle
+ * @pwmaTdlsparams: TDLS params
+ *
+ * Return: 0 for sucess or error code
+ */
+CDF_STATUS send_update_fw_tdls_state_cmd_tlv(wmi_unified_t wmi_handle,
+					 void *tdls_param, uint8_t tdls_state)
+{
+	wmi_tdls_set_state_cmd_fixed_param *cmd;
+	wmi_buf_t wmi_buf;
+
+	struct wmi_tdls_params *wmi_tdls = (struct wmi_tdls_params *) tdls_param;
+	uint16_t len = sizeof(wmi_tdls_set_state_cmd_fixed_param);
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmai_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+	cmd = (wmi_tdls_set_state_cmd_fixed_param *) wmi_buf_data(wmi_buf);
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		  WMITLV_TAG_STRUC_wmi_tdls_set_state_cmd_fixed_param,
+		  WMITLV_GET_STRUCT_TLVLEN
+		  (wmi_tdls_set_state_cmd_fixed_param));
+	cmd->vdev_id = wmi_tdls->vdev_id;
+	cmd->state = tdls_state;
+	cmd->notification_interval_ms = wmi_tdls->notification_interval_ms;
+	cmd->tx_discovery_threshold = wmi_tdls->tx_discovery_threshold;
+	cmd->tx_teardown_threshold = wmi_tdls->tx_teardown_threshold;
+	cmd->rssi_teardown_threshold = wmi_tdls->rssi_teardown_threshold;
+	cmd->rssi_delta = wmi_tdls->rssi_delta;
+	cmd->tdls_options = wmi_tdls->tdls_options;
+	cmd->tdls_peer_traffic_ind_window = wmi_tdls->peer_traffic_ind_window;
+	cmd->tdls_peer_traffic_response_timeout_ms =
+		wmi_tdls->peer_traffic_response_timeout;
+	cmd->tdls_puapsd_mask = wmi_tdls->puapsd_mask;
+	cmd->tdls_puapsd_inactivity_time_ms = wmi_tdls->puapsd_inactivity_time;
+	cmd->tdls_puapsd_rx_frame_threshold =
+		wmi_tdls->puapsd_rx_frame_threshold;
+	cmd->teardown_notification_ms =
+		wmi_tdls->teardown_notification_ms;
+	cmd->tdls_peer_kickout_threshold =
+		wmi_tdls->tdls_peer_kickout_threshold;
+
+	WMA_LOGD("%s: tdls_state: %d, state: %d, "
+		 "notification_interval_ms: %d, "
+		 "tx_discovery_threshold: %d, "
+		 "tx_teardown_threshold: %d, "
+		 "rssi_teardown_threshold: %d, "
+		 "rssi_delta: %d, "
+		 "tdls_options: 0x%x, "
+		 "tdls_peer_traffic_ind_window: %d, "
+		 "tdls_peer_traffic_response_timeout: %d, "
+		 "tdls_puapsd_mask: 0x%x, "
+		 "tdls_puapsd_inactivity_time: %d, "
+		 "tdls_puapsd_rx_frame_threshold: %d, "
+		 "teardown_notification_ms: %d, "
+		 "tdls_peer_kickout_threshold: %d",
+		 __func__, tdls_state, cmd->state,
+		 cmd->notification_interval_ms,
+		 cmd->tx_discovery_threshold,
+		 cmd->tx_teardown_threshold,
+		 cmd->rssi_teardown_threshold,
+		 cmd->rssi_delta,
+		 cmd->tdls_options,
+		 cmd->tdls_peer_traffic_ind_window,
+		 cmd->tdls_peer_traffic_response_timeout_ms,
+		 cmd->tdls_puapsd_mask,
+		 cmd->tdls_puapsd_inactivity_time_ms,
+		 cmd->tdls_puapsd_rx_frame_threshold,
+		 cmd->teardown_notification_ms,
+		 cmd->tdls_peer_kickout_threshold);
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_TDLS_SET_STATE_CMDID)) {
+		WMA_LOGP("%s: failed to send tdls set state command", __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+	WMA_LOGD("%s: vdev_id %d", __func__, wmi_tdls->vdev_id);
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/**
+ * send_update_tdls_peer_state_cmd_tlv() - update TDLS peer state
+ * @wmi_handle: wmi handle
+ * @peerStateParams: TDLS peer state params
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS send_update_tdls_peer_state_cmd_tlv(wmi_unified_t wmi_handle,
+			       struct tdls_peer_state_params *peerStateParams,
+				   uint32_t *ch_mhz)
+{
+	wmi_tdls_peer_update_cmd_fixed_param *cmd;
+	wmi_tdls_peer_capabilities *peer_cap;
+	wmi_channel *chan_info;
+	wmi_buf_t wmi_buf;
+	uint8_t *buf_ptr;
+	uint32_t i;
+	int32_t len = sizeof(wmi_tdls_peer_update_cmd_fixed_param) +
+		      sizeof(wmi_tdls_peer_capabilities);
+
+
+	len += WMI_TLV_HDR_SIZE +
+	       sizeof(wmi_channel) * peerStateParams->peerCap.peerChanLen;
+
+	wmi_buf = wmi_buf_alloc(wmi_handle, len);
+	if (!wmi_buf) {
+		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
+	cmd = (wmi_tdls_peer_update_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_tdls_peer_update_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_tdls_peer_update_cmd_fixed_param));
+
+	cmd->vdev_id = peerStateParams->vdevId;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(peerStateParams->peerMacAddr,
+				   &cmd->peer_macaddr);
+
+
+	cmd->peer_state = peerStateParams->peerState;
+
+	WMA_LOGD("%s: vdev_id: %d, peerStateParams->peerMacAddr: %pM, "
+		 "peer_macaddr.mac_addr31to0: 0x%x, "
+		 "peer_macaddr.mac_addr47to32: 0x%x, peer_state: %d",
+		 __func__, cmd->vdev_id, peerStateParams->peerMacAddr,
+		 cmd->peer_macaddr.mac_addr31to0,
+		 cmd->peer_macaddr.mac_addr47to32, cmd->peer_state);
+
+	buf_ptr += sizeof(wmi_tdls_peer_update_cmd_fixed_param);
+	peer_cap = (wmi_tdls_peer_capabilities *) buf_ptr;
+	WMITLV_SET_HDR(&peer_cap->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_tdls_peer_capabilities,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_tdls_peer_capabilities));
+
+	if ((peerStateParams->peerCap.peerUapsdQueue & 0x08) >> 3)
+		WMI_SET_TDLS_PEER_VO_UAPSD(peer_cap);
+	if ((peerStateParams->peerCap.peerUapsdQueue & 0x04) >> 2)
+		WMI_SET_TDLS_PEER_VI_UAPSD(peer_cap);
+	if ((peerStateParams->peerCap.peerUapsdQueue & 0x02) >> 1)
+		WMI_SET_TDLS_PEER_BK_UAPSD(peer_cap);
+	if (peerStateParams->peerCap.peerUapsdQueue & 0x01)
+		WMI_SET_TDLS_PEER_BE_UAPSD(peer_cap);
+
+	/* Ack and More Data Ack are sent as 0, so no need to set
+	 * but fill SP
+	 */
+	WMI_SET_TDLS_PEER_SP_UAPSD(peer_cap,
+				   peerStateParams->peerCap.peerMaxSp);
+
+	peer_cap->buff_sta_support =
+		peerStateParams->peerCap.peerBuffStaSupport;
+	peer_cap->off_chan_support =
+		peerStateParams->peerCap.peerOffChanSupport;
+	peer_cap->peer_curr_operclass =
+		peerStateParams->peerCap.peerCurrOperClass;
+	/* self curr operclass is not being used and so pass op class for
+	 * preferred off chan in it.
+	 */
+	peer_cap->self_curr_operclass =
+		peerStateParams->peerCap.opClassForPrefOffChan;
+	peer_cap->peer_chan_len = peerStateParams->peerCap.peerChanLen;
+	peer_cap->peer_operclass_len =
+		peerStateParams->peerCap.peerOperClassLen;
+
+	WMA_LOGD("%s: peer_operclass_len: %d",
+		 __func__, peer_cap->peer_operclass_len);
+	for (i = 0; i < WMI_TDLS_MAX_SUPP_OPER_CLASSES; i++) {
+		peer_cap->peer_operclass[i] =
+			peerStateParams->peerCap.peerOperClass[i];
+		WMA_LOGD("%s: peer_operclass[%d]: %d",
+			 __func__, i, peer_cap->peer_operclass[i]);
+	}
+
+	peer_cap->is_peer_responder = peerStateParams->peerCap.isPeerResponder;
+	peer_cap->pref_offchan_num = peerStateParams->peerCap.prefOffChanNum;
+	peer_cap->pref_offchan_bw =
+		peerStateParams->peerCap.prefOffChanBandwidth;
+
+	WMA_LOGD
+		("%s: peer_qos: 0x%x, buff_sta_support: %d, off_chan_support: %d, "
+		 "peer_curr_operclass: %d, self_curr_operclass: %d, peer_chan_len: "
+		 "%d, peer_operclass_len: %d, is_peer_responder: %d, pref_offchan_num:"
+		 " %d, pref_offchan_bw: %d",
+		__func__, peer_cap->peer_qos, peer_cap->buff_sta_support,
+		peer_cap->off_chan_support, peer_cap->peer_curr_operclass,
+		peer_cap->self_curr_operclass, peer_cap->peer_chan_len,
+		peer_cap->peer_operclass_len, peer_cap->is_peer_responder,
+		peer_cap->pref_offchan_num, peer_cap->pref_offchan_bw);
+
+	/* next fill variable size array of peer chan info */
+	buf_ptr += sizeof(wmi_tdls_peer_capabilities);
+	WMITLV_SET_HDR(buf_ptr,
+		       WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_channel) *
+		       peerStateParams->peerCap.peerChanLen);
+	chan_info = (wmi_channel *) (buf_ptr + WMI_TLV_HDR_SIZE);
+
+	for (i = 0; i < peerStateParams->peerCap.peerChanLen; ++i) {
+		WMITLV_SET_HDR(&chan_info->tlv_header,
+			       WMITLV_TAG_STRUC_wmi_channel,
+			       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
+		chan_info->mhz = ch_mhz[i];
+		chan_info->band_center_freq1 = chan_info->mhz;
+		chan_info->band_center_freq2 = 0;
+
+		WMA_LOGD("%s: chan[%d] = %u", __func__, i, chan_info->mhz);
+
+		if (peerStateParams->peerCap.peerChan[i].dfsSet) {
+			WMI_SET_CHANNEL_FLAG(chan_info, WMI_CHAN_FLAG_PASSIVE);
+			WMA_LOGI("chan[%d] DFS[%d]\n",
+				 peerStateParams->peerCap.peerChan[i].chanId,
+				 peerStateParams->peerCap.peerChan[i].dfsSet);
+		}
+
+		if (chan_info->mhz < WMI_2_4_GHZ_MAX_FREQ)
+			WMI_SET_CHANNEL_MODE(chan_info, MODE_11G);
+		else
+			WMI_SET_CHANNEL_MODE(chan_info, MODE_11A);
+
+		WMI_SET_CHANNEL_MAX_TX_POWER(chan_info,
+					     peerStateParams->peerCap.
+					     peerChan[i].pwr);
+
+		WMI_SET_CHANNEL_REG_POWER(chan_info,
+					  peerStateParams->peerCap.peerChan[i].
+					  pwr);
+		WMA_LOGD("Channel TX power[%d] = %u: %d", i, chan_info->mhz,
+			 peerStateParams->peerCap.peerChan[i].pwr);
+
+		chan_info++;
+	}
+
+	if (wmi_unified_cmd_send(wmi_handle, wmi_buf, len,
+				 WMI_TDLS_PEER_UPDATE_CMDID)) {
+		WMA_LOGE("%s: failed to send tdls peer update state command",
+			 __func__);
+		cdf_nbuf_free(wmi_buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+
+	return CDF_STATUS_SUCCESS;
+}
+
+/*
+ * send_process_fw_mem_dump_cmd_tlv() - Function to request fw memory dump from
+ * firmware
+ * @wmi_handle:         Pointer to wmi handle
+ * @mem_dump_req:       Pointer for mem_dump_req
+ *
+ * This function sends memory dump request to firmware
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+CDF_STATUS send_process_fw_mem_dump_cmd_tlv(wmi_unified_t wmi_handle,
+					struct fw_dump_req_param *mem_dump_req)
+{
+	wmi_get_fw_mem_dump_fixed_param *cmd;
+	wmi_fw_mem_dump *dump_params;
+	struct fw_dump_seg_req *seg_req;
+	int32_t len;
+	wmi_buf_t buf;
+	u_int8_t *buf_ptr;
+	int ret, loop;
+
+	/*
+	 * len = sizeof(fixed param) that includes tlv header +
+	 *       tlv header for array of struc +
+	 *       sizeof (each struct)
+	 */
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE;
+	len += mem_dump_req->num_seg * sizeof(wmi_fw_mem_dump);
+	buf = wmi_buf_alloc(wmi_handle, len);
+
+	if (!buf) {
+		WMA_LOGE(FL("Failed allocate wmi buffer"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (u_int8_t *) wmi_buf_data(buf);
+	cdf_mem_zero(buf_ptr, len);
+	cmd = (wmi_get_fw_mem_dump_fixed_param *) buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_get_fw_mem_dump_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(wmi_get_fw_mem_dump_fixed_param));
+
+	cmd->request_id = mem_dump_req->request_id;
+	cmd->num_fw_mem_dump_segs = mem_dump_req->num_seg;
+
+	/* TLV indicating array of structures to follow */
+	buf_ptr += sizeof(wmi_get_fw_mem_dump_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       sizeof(wmi_fw_mem_dump) *
+		       cmd->num_fw_mem_dump_segs);
+
+	buf_ptr += WMI_TLV_HDR_SIZE;
+	dump_params = (wmi_fw_mem_dump *) buf_ptr;
+
+	WMA_LOGI(FL("request_id:%d num_seg:%d"),
+		    mem_dump_req->request_id, mem_dump_req->num_seg);
+	for (loop = 0; loop < cmd->num_fw_mem_dump_segs; loop++) {
+		seg_req = (struct fw_dump_seg_req *)
+			  ((uint8_t *)(mem_dump_req->segment) +
+			    loop * sizeof(*seg_req));
+		WMITLV_SET_HDR(&dump_params->tlv_header,
+			    WMITLV_TAG_STRUC_wmi_fw_mem_dump_params,
+			    WMITLV_GET_STRUCT_TLVLEN(wmi_fw_mem_dump));
+		dump_params->seg_id = seg_req->seg_id;
+		dump_params->seg_start_addr_lo = seg_req->seg_start_addr_lo;
+		dump_params->seg_start_addr_hi = seg_req->seg_start_addr_hi;
+		dump_params->seg_length = seg_req->seg_length;
+		dump_params->dest_addr_lo = seg_req->dst_addr_lo;
+		dump_params->dest_addr_hi = seg_req->dst_addr_hi;
+		WMA_LOGI(FL("seg_number:%d"), loop);
+		WMA_LOGI(FL("seg_id:%d start_addr_lo:0x%x start_addr_hi:0x%x"),
+			 dump_params->seg_id, dump_params->seg_start_addr_lo,
+			 dump_params->seg_start_addr_hi);
+		WMA_LOGI(FL("seg_length:%d dst_addr_lo:0x%x dst_addr_hi:0x%x"),
+			 dump_params->seg_length, dump_params->dest_addr_lo,
+			 dump_params->dest_addr_hi);
+		dump_params++;
+	}
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_GET_FW_MEM_DUMP_CMDID);
+	if (ret) {
+		WMA_LOGE(FL("Failed to send get firmware mem dump request"));
+		wmi_buf_free(buf);
+		return CDF_STATUS_E_FAILURE;
+	}
+
+	WMA_LOGI(FL("Get firmware mem dump request sent successfully"));
+	return CDF_STATUS_SUCCESS;
+}
+
+/*
+ * send_process_set_ie_info_cmd_tlv() - Function to send IE info to firmware
+ * @wmi_handle:    Pointer to WMi handle
+ * @ie_data:       Pointer for ie data
+ *
+ * This function sends IE information to firmware
+ *
+ * Return: CDF_STATUS_SUCCESS for success otherwise failure
+ *
+ */
+CDF_STATUS send_process_set_ie_info_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct vdev_ie_info_param *ie_info)
+{
+	wmi_vdev_set_ie_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len, ie_len_aligned;
+	int ret;
+
+
+	ie_len_aligned = roundup(ie_info->length, sizeof(uint32_t));
+	/* Allocate memory for the WMI command */
+	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + ie_len_aligned;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE(FL("wmi_buf_alloc failed"));
+		return CDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = wmi_buf_data(buf);
+	cdf_mem_zero(buf_ptr, len);
+
+	/* Populate the WMI command */
+	cmd = (wmi_vdev_set_ie_cmd_fixed_param *)buf_ptr;
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_set_ie_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN(
+			wmi_vdev_set_ie_cmd_fixed_param));
+	cmd->vdev_id = ie_info->vdev_id;
+	cmd->ie_id = ie_info->ie_id;
+	cmd->ie_len = ie_info->length;
+
+	WMA_LOGD(FL("IE:%d of size:%d sent for vdev:%d"), ie_info->ie_id,
+		 ie_info->length, ie_info->vdev_id);
+
+	buf_ptr += sizeof(*cmd);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_aligned);
+	buf_ptr += WMI_TLV_HDR_SIZE;
+
+	cdf_mem_copy(buf_ptr, ie_info->data, cmd->ie_len);
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_SET_IE_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE(FL("Failed to send set IE command ret = %d"), ret);
+		wmi_buf_free(buf);
+	}
+
+	return ret;
+}
+
 struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
@@ -5084,6 +7939,61 @@ struct wmi_ops tlv_ops =  {
 	.send_process_ll_stats_set_cmd = send_process_ll_stats_set_cmd_tlv,
 	.send_process_ll_stats_get_cmd = send_process_ll_stats_get_cmd_tlv,
 	.send_get_stats_cmd = send_get_stats_cmd_tlv,
+	.send_snr_request_cmd = send_snr_request_cmd_tlv,
+	.send_snr_cmd = send_snr_cmd_tlv,
+	.send_link_status_req_cmd = send_link_status_req_cmd_tlv,
+	.send_lphb_config_hbenable_cmd = send_lphb_config_hbenable_cmd_tlv,
+	.send_lphb_config_tcp_params_cmd = send_lphb_config_tcp_params_cmd_tlv,
+	.send_lphb_config_udp_params_cmd = send_lphb_config_udp_params_cmd_tlv,
+	.send_lphb_config_udp_pkt_filter_cmd =
+		send_lphb_config_udp_pkt_filter_cmd_tlv,
+	.send_process_dhcp_ind_cmd = send_process_dhcp_ind_cmd_tlv,
+	.send_get_link_speed_cmd = send_get_link_speed_cmd_tlv,
+	.send_egap_conf_params_cmd = send_egap_conf_params_cmd_tlv,
+	.send_fw_profiling_cmd = send_fw_profiling_cmd_tlv,
+	.send_csa_offload_enable_cmd = send_csa_offload_enable_cmd_tlv,
+	.send_wow_sta_ra_filter_cmd = send_wow_sta_ra_filter_cmd_tlv,
+	.send_nat_keepalive_en_cmd = send_nat_keepalive_en_cmd_tlv,
+	.send_start_oem_data_cmd = send_start_oem_data_cmd_tlv,
+	.send_dfs_phyerr_filter_offload_en_cmd =
+		 send_dfs_phyerr_filter_offload_en_cmd_tlv,
+	.send_pktlog_wmi_send_cmd = send_pktlog_wmi_send_cmd_tlv,
+	.send_add_wow_wakeup_event_cmd = send_add_wow_wakeup_event_cmd_tlv,
+	.send_wow_patterns_to_fw_cmd = send_wow_patterns_to_fw_cmd_tlv,
+	.send_wow_delete_pattern_cmd = send_wow_delete_pattern_cmd_tlv,
+	.send_host_wakeup_ind_to_fw_cmd = send_host_wakeup_ind_to_fw_cmd_tlv,
+	.send_del_ts_cmd = send_del_ts_cmd_tlv,
+	.send_aggr_qos_cmd = send_aggr_qos_cmd_tlv,
+	.send_add_ts_cmd = send_add_ts_cmd_tlv,
+	.send_enable_disable_packet_filter_cmd =
+		send_enable_disable_packet_filter_cmd_tlv,
+	.send_config_packet_filter_cmd = send_config_packet_filter_cmd_tlv,
+	.send_add_clear_mcbc_filter_cmd = send_add_clear_mcbc_filter_cmd_tlv,
+	.send_gtk_offload_cmd = send_gtk_offload_cmd_tlv,
+	.send_process_gtk_offload_getinfo_cmd =
+			send_process_gtk_offload_getinfo_cmd_tlv,
+	.send_process_add_periodic_tx_ptrn_cmd =
+		send_process_add_periodic_tx_ptrn_cmd_tlv,
+	.send_process_del_periodic_tx_ptrn_cmd =
+		send_process_del_periodic_tx_ptrn_cmd_tlv,
+	.send_stats_ext_req_cmd = send_stats_ext_req_cmd_tlv,
+	.send_enable_ext_wow_cmd = send_enable_ext_wow_cmd_tlv,
+	.send_set_app_type2_params_in_fw_cmd =
+		send_set_app_type2_params_in_fw_cmd_tlv,
+	.send_set_auto_shutdown_timer_cmd =
+		send_set_auto_shutdown_timer_cmd_tlv,
+	.send_nan_req_cmd = send_nan_req_cmd_tlv,
+	.send_process_dhcpserver_offload_cmd =
+		send_process_dhcpserver_offload_cmd_tlv,
+	.send_set_led_flashing_cmd = send_set_led_flashing_cmd_tlv,
+	.send_process_ch_avoid_update_cmd =
+		send_process_ch_avoid_update_cmd_tlv,
+	.send_regdomain_info_to_fw_cmd = send_regdomain_info_to_fw_cmd_tlv,
+	.send_set_tdls_offchan_mode_cmd = send_set_tdls_offchan_mode_cmd_tlv,
+	.send_update_fw_tdls_state_cmd = send_update_fw_tdls_state_cmd_tlv,
+	.send_update_tdls_peer_state_cmd = send_update_tdls_peer_state_cmd_tlv,
+	.send_process_fw_mem_dump_cmd = send_process_fw_mem_dump_cmd_tlv,
+	.send_process_set_ie_info_cmd = send_process_set_ie_info_cmd_tlv,
 	/* TODO - Add other tlv apis here */
 };
 
