@@ -135,6 +135,9 @@ ifeq ($(KERNEL_BUILD), 0)
 
 	# Flag to enable LFR Subnet Detection
 	CONFIG_LFR_SUBNET_DETECTION := y
+
+	# Flag to enable MCC to SCC switch feature
+	CONFIG_MCC_TO_SCC_SWITCH := y
 endif
 
 # If not set, assume, Common driver is with in the build tree
@@ -1361,6 +1364,10 @@ endif
 
 ifeq ($(CONFIG_LFR_SUBNET_DETECTION), y)
 CDEFINES += -DFEATURE_LFR_SUBNET_DETECTION
+endif
+
+ifeq ($(CONFIG_MCC_TO_SCC_SWITCH), y)
+CDEFINES += -DFEATURE_WLAN_MCC_TO_SCC_SWITCH
 endif
 
 KBUILD_CPPFLAGS += $(CDEFINES)

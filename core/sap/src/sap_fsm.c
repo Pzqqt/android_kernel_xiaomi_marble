@@ -2146,6 +2146,10 @@ QDF_STATUS sap_goto_channel_sel(ptSapContext sap_context,
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		if (sap_context->cc_switch_mode !=
 						QDF_MCC_TO_SCC_SWITCH_DISABLE) {
+			QDF_TRACE(QDF_MODULE_ID_SAP, QDF_TRACE_LEVEL_INFO,
+				FL("check for overlap: chan:%d mode:%d"),
+				sap_context->channel,
+				sap_context->csr_roamProfile.phyMode);
 			con_ch = sme_check_concurrent_channel_overlap(h_hal,
 					sap_context->channel,
 					sap_context->csr_roamProfile.phyMode,

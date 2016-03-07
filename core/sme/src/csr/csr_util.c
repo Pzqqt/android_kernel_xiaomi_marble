@@ -693,7 +693,10 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 	uint8_t i = 0, chb = PHY_SINGLE_CHANNEL_CENTERED;
 	uint16_t intf_ch = 0, sap_hbw = 0, intf_hbw = 0, intf_cfreq = 0;
 	uint16_t sap_cfreq = 0;
-	uint16_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq, sap_cch;
+	uint16_t sap_lfreq, sap_hfreq, intf_lfreq, intf_hfreq, sap_cch = 0;
+
+	sms_log(mac_ctx, LOG1, FL("sap_ch:%d sap_phymode:%d"),
+		sap_ch, sap_phymode);
 
 	if (mac_ctx->roam.configParam.cc_switch_mode ==
 			QDF_MCC_TO_SCC_SWITCH_DISABLE)
@@ -714,6 +717,10 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 		sap_cfreq = cds_chan_to_freq(sap_cch);
 	}
 
+	sms_log(mac_ctx, LOG1,
+		FL("sap_ch:%d sap_phymode:%d sap_cch:%d sap_hbw:%d chb:%d"),
+		sap_ch, sap_phymode, sap_cch, sap_hbw, chb);
+
 	for (i = 0; i < CSR_ROAM_SESSION_MAX; i++) {
 		if (!CSR_IS_SESSION_VALID(mac_ctx, i))
 			continue;
@@ -730,6 +737,9 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 			csr_get_ch_from_ht_profile(mac_ctx,
 				&session->connectedProfile.HTProfile,
 				intf_ch, &intf_cfreq, &intf_hbw);
+			sms_log(mac_ctx, LOG1,
+				FL("%d: intf_ch:%d intf_cfreq:%d intf_hbw:%d"),
+				i, intf_ch, intf_cfreq, intf_hbw);
 		} else if (((session->pCurRoamProfile->csrPersona ==
 					QDF_P2P_GO_MODE) ||
 				(session->pCurRoamProfile->csrPersona ==
@@ -742,8 +752,17 @@ uint16_t csr_check_concurrent_channel_overlap(tpAniSirGlobal mac_ctx,
 				csr_handle_conc_chnl_overlap_for_sap_go(mac_ctx,
 					session, &sap_ch, &sap_hbw, &sap_cfreq,
 					&intf_ch, &intf_hbw, &intf_cfreq);
+
+				sms_log(mac_ctx, LOG1,
+					FL("%d: sap_ch:%d sap_hbw:%d sap_cfreq:%d intf_ch:%d intf_hbw:%d, intf_cfreq:%d"),
+					i, sap_ch, sap_hbw, sap_cfreq,
+					intf_ch, intf_hbw, intf_cfreq);
 		}
 	}
+
+	sms_log(mac_ctx, LOG1,
+		FL("intf_ch:%d sap_ch:%d intf_ch:%d"),
+		intf_ch, sap_ch, intf_ch);
 
 	if (intf_ch && sap_ch != intf_ch &&
 			cc_switch_mode != QDF_MCC_TO_SCC_SWITCH_FORCE) {

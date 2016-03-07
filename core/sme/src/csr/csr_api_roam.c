@@ -19041,6 +19041,10 @@ void csr_roam_synch_callback(tpAniSirGlobal mac_ctx,
 	struct qdf_mac_addr bcast_mac = QDF_MAC_ADDR_BROADCAST_INITIALIZER;
 	tpAddBssParams add_bss_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+#ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
+	tSirSmeHTProfile *src_profile = NULL;
+	tCsrRoamHTProfile *dst_profile = NULL;
+#endif
 
 	status = sme_acquire_global_lock(&mac_ctx->sme);
 	if (!QDF_IS_STATUS_SUCCESS(status)) {

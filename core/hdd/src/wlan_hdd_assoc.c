@@ -1839,6 +1839,7 @@ static QDF_STATUS hdd_association_completion_handler(hdd_adapter_t *pAdapter,
 		wlan_hdd_auto_shutdown_enable(pHddCtx, false);
 #endif
 
+		hdd_info("check for SAP restart");
 		cds_check_concurrent_intf_and_restart_sap(pHddStaCtx,
 							  pAdapter);
 
