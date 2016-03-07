@@ -31,166 +31,268 @@
 #include "wmi_unified_param.h"
 #include "ol_defines.h" /* Fix Me: wmi_unified_t structure definition */
 
-int32_t send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_vdev_create_cmd_tlv(wmi_unified_t wmi_handle,
 				 uint8_t macaddr[IEEE80211_ADDR_LEN],
 				 struct vdev_create_params *param);
 
-int32_t send_vdev_delete_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_vdev_delete_cmd_tlv(wmi_unified_t wmi_handle,
 					  uint8_t if_id);
 
-int32_t send_vdev_stop_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_vdev_stop_cmd_tlv(wmi_unified_t wmi,
 					uint8_t vdev_id);
 
-int32_t send_vdev_down_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_vdev_down_cmd_tlv(wmi_unified_t wmi,
 			uint8_t vdev_id);
 
-int32_t send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_peer_flush_tids_cmd_tlv(wmi_unified_t wmi,
 			 uint8_t peer_addr[IEEE80211_ADDR_LEN],
 			 struct peer_flush_params *param);
 
-int32_t send_peer_delete_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_peer_delete_cmd_tlv(wmi_unified_t wmi,
 			    uint8_t peer_addr[IEEE80211_ADDR_LEN],
 			    uint8_t vdev_id);
 
-int32_t send_peer_param_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_peer_param_cmd_tlv(wmi_unified_t wmi,
 				uint8_t peer_addr[IEEE80211_ADDR_LEN],
 				struct peer_set_params *param);
 
-int32_t send_vdev_up_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_vdev_up_cmd_tlv(wmi_unified_t wmi,
 			     uint8_t bssid[IEEE80211_ADDR_LEN],
 				 struct vdev_up_params *params);
 
-int32_t send_peer_create_cmd_tlv(wmi_unified_t wmi,
+CDF_STATUS send_peer_create_cmd_tlv(wmi_unified_t wmi,
 					struct peer_create_params *param);
 
-int32_t send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_green_ap_ps_cmd_tlv(wmi_unified_t wmi_handle,
 						uint32_t value, uint8_t mac_id);
 
-int32_t
+CDF_STATUS
 send_pdev_utf_cmd_tlv(wmi_unified_t wmi_handle,
 				struct pdev_utf_params *param,
 				uint8_t mac_id);
 
-int32_t
+CDF_STATUS
 send_pdev_param_cmd_tlv(wmi_unified_t wmi_handle,
 			   struct pdev_params *param,
 				uint8_t mac_id);
 
-int32_t send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_suspend_cmd_tlv(wmi_unified_t wmi_handle,
 				struct suspend_params *param,
 				uint8_t mac_id);
 
-int32_t send_resume_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_resume_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t mac_id);
 
-int32_t send_wow_enable_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_wow_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				struct wow_cmd_params *param,
 				uint8_t mac_id);
 
-int32_t send_set_ap_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_ap_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 					   uint8_t *peer_addr,
 					   struct ap_ps_params *param);
 
-int32_t send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_sta_ps_param_cmd_tlv(wmi_unified_t wmi_handle,
 					   struct sta_ps_params *param);
 
-int32_t send_crash_inject_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_crash_inject_cmd_tlv(wmi_unified_t wmi_handle,
 			 struct crash_inject *param);
 
-int32_t
+CDF_STATUS
 send_dbglog_cmd_tlv(wmi_unified_t wmi_handle,
 				struct dbglog_params *dbglog_param);
 
 
-int32_t send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_vdev_set_param_cmd_tlv(wmi_unified_t wmi_handle,
 				struct vdev_set_params *param);
 
-int32_t send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_stats_request_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct stats_request_params *param);
 
-int32_t send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_packet_log_enable_cmd_tlv(wmi_unified_t wmi_handle,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct packet_enable_params *param);
 
-int32_t send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_beacon_send_cmd_tlv(wmi_unified_t wmi_handle,
 				struct beacon_params *param);
 
-int32_t send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_peer_assoc_cmd_tlv(wmi_unified_t wmi_handle,
 				struct peer_assoc_params *param);
 
-int32_t send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_scan_start_cmd_tlv(wmi_unified_t wmi_handle,
 				struct scan_start_params *param);
 
-int32_t send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_scan_stop_cmd_tlv(wmi_unified_t wmi_handle,
 				struct scan_stop_params *param);
 
-int32_t send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_scan_chan_list_cmd_tlv(wmi_unified_t wmi_handle,
 				struct scan_chan_list_params *param);
 
-int32_t send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 				struct wmi_mgmt_params *param);
 
-int32_t send_modem_power_state_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_modem_power_state_cmd_tlv(wmi_unified_t wmi_handle,
 		uint32_t param_value);
 
-int32_t send_set_sta_ps_mode_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_sta_ps_mode_cmd_tlv(wmi_unified_t wmi_handle,
 			       uint32_t vdev_id, uint8_t val);
 
-int32_t send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_sta_uapsd_auto_trig_cmd_tlv(wmi_unified_t wmi_handle,
 				struct sta_uapsd_trig_params *param);
 
-int32_t send_get_temperature_cmd_tlv(wmi_unified_t wmi_handle);
+CDF_STATUS send_get_temperature_cmd_tlv(wmi_unified_t wmi_handle);
 
-int32_t send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_p2pgo_oppps_req_cmd_tlv(wmi_unified_t wmi_handle,
 		struct p2p_ps_params *oppps);
 
-int32_t send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_p2pgo_noa_req_cmd_tlv(wmi_unified_t wmi_handle,
 			struct p2p_ps_params *noa);
 
-int32_t send_set_smps_params_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id,
+CDF_STATUS send_set_smps_params_cmd_tlv(wmi_unified_t wmi_handle,
+			       uint8_t vdev_id,
 			       int value);
 
-int32_t send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_mimops_cmd_tlv(wmi_unified_t wmi_handle,
 			uint8_t vdev_id, int value);
 
-int32_t send_ocb_set_utc_time_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_ocb_set_utc_time_cmd_tlv(wmi_unified_t wmi_handle,
 				struct ocb_utc_param *utc);
 
-int send_ocb_start_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_ocb_start_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
 	struct ocb_timing_advert_param *timing_advert);
 
-int send_ocb_stop_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_ocb_stop_timing_advert_cmd_tlv(wmi_unified_t wmi_handle,
 	struct ocb_timing_advert_param *timing_advert);
 
-int send_ocb_get_tsf_timer_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_ocb_get_tsf_timer_cmd_tlv(wmi_unified_t wmi_handle,
 			  uint8_t vdev_id);
 
-int32_t send_dcc_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_dcc_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
 		     struct dcc_get_stats_param *get_stats_param);
 
-int32_t send_dcc_clear_stats_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_dcc_clear_stats_cmd_tlv(wmi_unified_t wmi_handle,
 				uint32_t vdev_id, uint32_t dcc_stats_bitmap);
 
-int send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_dcc_update_ndl_cmd_tlv(wmi_unified_t wmi_handle,
 		       struct dcc_update_ndl_param *update_ndl_param);
 
-int32_t send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_ocb_set_config_cmd_tlv(wmi_unified_t wmi_handle,
 		struct ocb_config_param *config, uint32_t *ch_mhz);
-int32_t send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_lro_config_cmd_tlv(wmi_unified_t wmi_handle,
 	 struct wmi_lro_config_cmd_t *wmi_lro_cmd);
 
-int32_t send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
+CDF_STATUS send_set_thermal_mgmt_cmd_tlv(wmi_unified_t wmi_handle,
 				struct thermal_cmd_params *thermal_info);
 
-int32_t send_set_mcc_channel_time_quota_cmd_tlv
+CDF_STATUS send_set_mcc_channel_time_quota_cmd_tlv
 	(wmi_unified_t wmi_handle,
 	uint32_t adapter_1_chan_freq,
 	uint32_t adapter_1_quota, uint32_t adapter_2_chan_freq);
 
-int32_t send_set_mcc_channel_time_latency_cmd_tlv
+CDF_STATUS send_set_mcc_channel_time_latency_cmd_tlv
 	(wmi_unified_t wmi_handle,
 	uint32_t mcc_channel_freq, uint32_t mcc_channel_time_latency);
 
-int32_t send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
+CDF_STATUS send_set_enable_disable_mcc_adaptive_scheduler_cmd_tlv(
 		   wmi_unified_t wmi_handle, uint32_t mcc_adaptive_scheduler);
+
+CDF_STATUS send_p2p_go_set_beacon_ie_cmd_tlv(wmi_unified_t wmi_handle,
+				    A_UINT32 vdev_id, uint8_t *p2p_ie);
+
+CDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
+				   uint8_t vdev_id,
+				   struct wmi_probe_resp_params *probe_rsp_info,
+				   uint8_t *frm);
+
+CDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handle,
+				    uint8_t vdev_id,
+				    wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);
+
+CDF_STATUS send_vdev_set_gtx_cfg_cmd_tlv(wmi_unified_t wmi_handle,
+				  uint32_t if_id,
+				  struct wmi_gtx_config *gtx_info);
+
+CDF_STATUS send_set_sta_keep_alive_cmd_tlv(wmi_unified_t wmi_handle,
+				struct sta_params *params);
+
+CDF_STATUS send_set_sta_sa_query_param_cmd_tlv(wmi_unified_t wmi_handle,
+				       uint8_t vdev_id, uint32_t max_retries,
+					   uint32_t retry_interval);
+
+CDF_STATUS send_bcn_buf_ll_cmd_tlv(wmi_unified_t wmi_handle,
+			wmi_bcn_send_from_host_cmd_fixed_param *param);
+
+CDF_STATUS send_set_gateway_params_cmd_tlv(wmi_unified_t wmi_handle,
+					struct gateway_update_req_param *req);
+
+CDF_STATUS send_set_rssi_monitoring_cmd_tlv(wmi_unified_t wmi_handle,
+					struct rssi_monitor_param *req);
+
+CDF_STATUS  send_ipa_offload_control_cmd_tlv(wmi_unified_t wmi_handle,
+		struct ipa_offload_control_params *ipa_offload);
+
+CDF_STATUS send_scan_probe_setoui_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct scan_mac_oui *psetoui);
+
+CDF_STATUS send_reset_passpoint_network_list_cmd_tlv(wmi_unified_t wmi_handle,
+					struct wifi_passpoint_req_param *req);
+
+CDF_STATUS send_set_passpoint_network_list_cmd_tlv(wmi_unified_t wmi_handle,
+					struct wifi_passpoint_req_param *req);
+
+CDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle, void *msg,
+			uint8_t is_add_ts);
+
+CDF_STATUS send_set_epno_network_list_cmd_tlv(wmi_unified_t wmi_handle,
+		struct wifi_enhanched_pno_params *req);
+
+CDF_STATUS send_extscan_get_capabilities_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct extscan_capabilities_params *pgetcapab);
+
+CDF_STATUS send_extscan_get_cached_results_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct extscan_cached_result_params *pcached_results);
+
+CDF_STATUS send_extscan_stop_change_monitor_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct extscan_capabilities_reset_params *reset_req);
+
+CDF_STATUS send_extscan_start_change_monitor_cmd_tlv(wmi_unified_t wmi_handle,
+				   struct extscan_set_sig_changereq_params *
+					   psigchange);
+
+CDF_STATUS send_extscan_stop_hotlist_monitor_cmd_tlv(wmi_unified_t wmi_handle,
+		  struct extscan_bssid_hotlist_reset_params *photlist_reset);
+
+CDF_STATUS send_stop_extscan_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct extscan_stop_req_params *pstopcmd);
+
+CDF_STATUS send_start_extscan_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct wifi_scan_cmd_req_params *pstart);
+
+CDF_STATUS send_plm_stop_cmd_tlv(wmi_unified_t wmi_handle,
+			  const struct plm_req_params *plm);
+
+CDF_STATUS send_plm_start_cmd_tlv(wmi_unified_t wmi_handle,
+			  const struct plm_req_params *plm,
+			  uint32_t *gchannel_list);
+
+CDF_STATUS send_pno_stop_cmd_tlv(wmi_unified_t wmi_handle, uint8_t vdev_id);
+
+CDF_STATUS send_pno_start_cmd_tlv(wmi_unified_t wmi_handle,
+		   struct pno_scan_req_params *pno,
+		   uint32_t *gchannel_freq_list);
+
+CDF_STATUS send_process_ll_stats_clear_cmd_tlv
+	(wmi_unified_t wmi_handle,
+	 const struct ll_stats_clear_params *clear_req,
+	 uint8_t addr[IEEE80211_ADDR_LEN]);
+
+CDF_STATUS send_process_ll_stats_set_cmd_tlv
+	(wmi_unified_t wmi_handle, const struct ll_stats_set_params *set_req);
+
+CDF_STATUS send_process_ll_stats_get_cmd_tlv
+	(wmi_unified_t wmi_handle, const struct ll_stats_get_params  *get_req,
+		 uint8_t addr[IEEE80211_ADDR_LEN]);
+
+CDF_STATUS send_get_stats_cmd_tlv(wmi_unified_t wmi_handle,
+		       struct pe_stats_req  *get_stats_param,
+			   uint8_t addr[IEEE80211_ADDR_LEN]);
