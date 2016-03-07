@@ -32,7 +32,10 @@
  * indicated version does not break WMI compatibility even though it has
  * a minor version change.
  */
-wmi_whitelist_version_info version_whitelist[] = {
+#ifndef _WMI_VERSION_WHITELIST_H_
+#define _WMI_VERSION_WHITELIST_H_
+static wmi_whitelist_version_info version_whitelist[] = {
 	{0, 0, 0x5F414351, 0x00004C4D, 0, 0}
 	/* Placeholder: Major=0, Minor=0, Namespace="QCA_ML" (Dummy entry) */
 };
+#endif /* _WMI_VERSION_WHITELIST_H_ */

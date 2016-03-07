@@ -647,4 +647,14 @@ CDF_STATUS wmi_unified_dcc_clear_stats(void *wmi_hdl,
 
 CDF_STATUS wmi_unified_dcc_update_ndl(void *wmi_hdl,
 		       struct dcc_update_ndl_param *update_ndl_param);
+
+CDF_STATUS wmi_unified_save_fw_version_cmd(void *wmi_hdl,
+		void *evt_buf);
+
+CDF_STATUS wmi_unified_send_init_cmd(void *wmi_hdl,
+		wmi_resource_config *res_cfg,
+		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunk,
+		bool action);
+
+CDF_STATUS wmi_unified_send_saved_init_cmd(void *wmi_hdl);
 #endif /* _WMI_UNIFIED_API_H_ */
