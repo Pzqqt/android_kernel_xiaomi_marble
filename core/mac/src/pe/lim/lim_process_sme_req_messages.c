@@ -5623,6 +5623,8 @@ static void lim_process_sme_dfs_csa_ie_request(tpAniSirGlobal mac_ctx,
 	session_entry->gLimChannelSwitch.switchCount = LIM_MAX_CSA_IE_UPDATES;
 	session_entry->gLimChannelSwitch.ch_width =
 				 dfs_csa_ie_req->ch_params.ch_width;
+	session_entry->gLimChannelSwitch.sec_ch_offset =
+				 dfs_csa_ie_req->ch_params.sec_ch_offset;
 	if (mac_ctx->sap.SapDfsInfo.disable_dfs_ch_switch == false)
 		session_entry->gLimChannelSwitch.switchMode = 1;
 

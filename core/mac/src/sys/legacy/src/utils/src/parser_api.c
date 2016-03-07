@@ -248,16 +248,31 @@ void populate_dot_11_f_ext_chann_switch_ann(tpAniSirGlobal mac_ptr,
 		tDot11fIEext_chan_switch_ann *dot_11_ptr,
 		tpPESession session_entry)
 {
+	uint8_t ch_offset;
+
+	if (session_entry->gLimChannelSwitch.ch_width == CH_WIDTH_80MHZ)
+		ch_offset = BW80;
+	else
+		ch_offset = session_entry->gLimChannelSwitch.sec_ch_offset;
+
 	dot_11_ptr->switch_mode = session_entry->gLimChannelSwitch.switchMode;
 	dot_11_ptr->new_reg_class = cds_regdm_get_opclass_from_channel(
 			mac_ptr->scan.countryCodeCurrent,
 			session_entry->gLimChannelSwitch.primaryChannel,
-			session_entry->gLimChannelSwitch.ch_width);
+			ch_offset);
 	dot_11_ptr->new_channel =
 		session_entry->gLimChannelSwitch.primaryChannel;
 	dot_11_ptr->switch_count =
 		session_entry->gLimChannelSwitch.switchCount;
 	dot_11_ptr->present = 1;
+
+	dot11f_log(mac_ptr, LOG1,
+			FL("country:%s chan:%d width:%d reg:%d off:%d"),
+			mac_ptr->scan.countryCodeCurrent,
+			session_entry->gLimChannelSwitch.primaryChannel,
+			session_entry->gLimChannelSwitch.ch_width,
+			dot_11_ptr->new_reg_class,
+			session_entry->gLimChannelSwitch.sec_ch_offset);
 }
 
 void
