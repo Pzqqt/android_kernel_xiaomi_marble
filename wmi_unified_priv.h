@@ -487,6 +487,17 @@ CDF_STATUS (*send_process_fw_mem_dump_cmd)(wmi_unified_t wmi_handle,
 
 CDF_STATUS (*send_process_set_ie_info_cmd)(wmi_unified_t wmi_handle,
 				   struct vdev_ie_info_param *ie_info);
+
+CDF_STATUS (*send_init_cmd)(wmi_unified_t wmi_handle,
+		wmi_resource_config *res_cfg,
+		uint8_t num_mem_chunks, struct wmi_host_mem_chunk *mem_chunk,
+		bool action);
+
+CDF_STATUS (*save_fw_version_cmd)(wmi_unified_t wmi_handle, void *evt_buf);
+
+CDF_STATUS (*check_and_update_fw_version_cmd)(wmi_unified_t wmi_hdl, void *ev);
+
+CDF_STATUS (*send_saved_init_cmd)(wmi_unified_t wmi_handle);
 /**
  * struct wmi_init_cmd - Saved wmi INIT command
  * @buf: Buffer containing the wmi INIT command
