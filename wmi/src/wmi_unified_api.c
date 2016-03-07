@@ -2678,3 +2678,456 @@ CDF_STATUS wmi_unified_save_fw_version_cmd(void *wmi_hdl,
 
 	return CDF_STATUS_E_FAILURE;
 }
+
+/**
+ * send_set_base_macaddr_indicate_cmd() - set base mac address in fw
+ * @wmi_hdl: wmi handle
+ * @custom_addr: base mac address
+ *
+ * Return: 0 for success or error code
+ */
+CDF_STATUS wmi_unified_set_base_macaddr_indicate_cmd(void *wmi_hdl,
+					 uint8_t *custom_addr)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_base_macaddr_indicate_cmd)
+		return wmi_handle->ops->send_set_base_macaddr_indicate_cmd(wmi_handle,
+			    custom_addr);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_log_supported_evt_cmd() - Enable/Disable FW diag/log events
+ * @wmi_hdl: wmi handle
+ * @event:  Event received from FW
+ * @len:    Length of the event
+ *
+ * Enables the low frequency events and disables the high frequency
+ * events. Bit 17 indicates if the event if low/high frequency.
+ * 1 - high frequency, 0 - low frequency
+ *
+ * Return: 0 on successfully enabling/disabling the events
+ */
+CDF_STATUS wmi_unified_log_supported_evt_cmd(void *wmi_hdl,
+		uint8_t *event,
+		uint32_t len)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_log_supported_evt_cmd)
+		return wmi_handle->ops->send_log_supported_evt_cmd(wmi_handle,
+			    event, len);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_enable_specific_fw_logs_cmd() - Start/Stop logging of diag log id
+ * @wmi_hdl: wmi handle
+ * @start_log: Start logging related parameters
+ *
+ * Send the command to the FW based on which specific logging of diag
+ * event/log id can be started/stopped
+ *
+ * Return: None
+ */
+CDF_STATUS wmi_unified_enable_specific_fw_logs_cmd(void *wmi_hdl,
+		struct wmi_wifi_start_log *start_log)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_enable_specific_fw_logs_cmd)
+		return wmi_handle->ops->send_enable_specific_fw_logs_cmd(wmi_handle,
+			    start_log);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_flush_logs_to_fw_cmd() - Send log flush command to FW
+ * @wmi_hdl: WMI handle
+ *
+ * This function is used to send the flush command to the FW,
+ * that will flush the fw logs that are residue in the FW
+ *
+ * Return: None
+ */
+CDF_STATUS wmi_unified_flush_logs_to_fw_cmd(void *wmi_hdl)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_flush_logs_to_fw_cmd)
+		return wmi_handle->ops->send_flush_logs_to_fw_cmd(wmi_handle);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_soc_set_pcl_cmd() - Send WMI_SOC_SET_PCL_CMDID to FW
+ * @wmi_hdl: wmi handle
+ * @msg: PCL structure containing the PCL and the number of channels
+ *
+ * WMI_SOC_SET_PCL_CMDID provides a Preferred Channel List (PCL) to the WLAN
+ * firmware. The DBS Manager is the consumer of this information in the WLAN
+ * firmware. The channel list will be used when a Virtual DEVice (VDEV) needs
+ * to migrate to a new channel without host driver involvement. An example of
+ * this behavior is Legacy Fast Roaming (LFR 3.0). Generally, the host will
+ * manage the channel selection without firmware involvement.
+ *
+ * Return: Success if the cmd is sent successfully to the firmware
+ */
+CDF_STATUS wmi_unified_soc_set_pcl_cmd(void *wmi_hdl,
+				struct wmi_pcl_list *msg)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_soc_set_pcl_cmd)
+		return wmi_handle->ops->send_soc_set_pcl_cmd(wmi_handle, msg);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_soc_set_hw_mode_cmd() - Send WMI_SOC_SET_HW_MODE_CMDID to FW
+ * @wmi_hdl: wmi handle
+ * @msg: Structure containing the following parameters
+ *
+ * - hw_mode_index: The HW_Mode field is a enumerated type that is selected
+ * from the HW_Mode table, which is returned in the WMI_SERVICE_READY_EVENTID.
+ *
+ * Provides notification to the WLAN firmware that host driver is requesting a
+ * HardWare (HW) Mode change. This command is needed to support iHelium in the
+ * configurations that include the Dual Band Simultaneous (DBS) feature.
+ *
+ * Return: Success if the cmd is sent successfully to the firmware
+ */
+CDF_STATUS wmi_unified_soc_set_hw_mode_cmd(void *wmi_hdl,
+				uint32_t hw_mode_index)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_soc_set_hw_mode_cmd)
+		return wmi_handle->ops->send_soc_set_hw_mode_cmd(wmi_handle,
+				  hw_mode_index);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_soc_set_dual_mac_config_cmd() - Set dual mac config to FW
+ * @wmi_hdl: wmi handle
+ * @msg: Dual MAC config parameters
+ *
+ * Configures WLAN firmware with the dual MAC features
+ *
+ * Return: CDF_STATUS. 0 on success.
+ */
+CDF_STATUS wmi_unified_soc_set_dual_mac_config_cmd(void *wmi_hdl,
+		struct wmi_dual_mac_config *msg)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_soc_set_dual_mac_config_cmd)
+		return wmi_handle->ops->send_soc_set_dual_mac_config_cmd(wmi_handle,
+				  msg);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_enable_arp_ns_offload_cmd() - enable ARP NS offload
+ * @wmi_hdl: wmi handle
+ * @param: offload request
+ * @arp_only: flag
+ *
+ * To configure ARP NS off load data to firmware
+ * when target goes to wow mode.
+ *
+ * Return: CDF Status
+ */
+CDF_STATUS wmi_unified_enable_arp_ns_offload_cmd(void *wmi_hdl,
+			   struct host_offload_req_param *param, bool arp_only,
+			   uint8_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_enable_arp_ns_offload_cmd)
+		return wmi_handle->ops->send_enable_arp_ns_offload_cmd(wmi_handle,
+				  param, arp_only,
+				  vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_set_led_flashing_cmd() - set led flashing in fw
+ * @wmi_hdl: wmi handle
+ * @flashing: flashing request
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_set_led_flashing_cmd(void *wmi_hdl,
+				struct flashing_req_params *flashing)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_led_flashing_cmd)
+		return wmi_handle->ops->send_set_led_flashing_cmd(wmi_handle,
+				  flashing);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_app_type1_params_in_fw_cmd() - set app type1 params in fw
+ * @wmi_hdl: wmi handle
+ * @appType1Params: app type1 params
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_app_type1_params_in_fw_cmd(void *wmi_hdl,
+				   struct app_type1_params *app_type1_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_app_type1_params_in_fw_cmd)
+		return wmi_handle->ops->send_app_type1_params_in_fw_cmd(wmi_handle,
+				  app_type1_params);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_set_ssid_hotlist_cmd() - Handle an SSID hotlist set request
+ * @wmi_hdl: wmi handle
+ * @request: SSID hotlist set request
+ *
+ * Return: CDF_STATUS enumeration
+ */
+CDF_STATUS
+wmi_unified_set_ssid_hotlist_cmd(void *wmi_hdl,
+		     struct ssid_hotlist_request_params *request)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_set_ssid_hotlist_cmd)
+		return wmi_handle->ops->send_set_ssid_hotlist_cmd(wmi_handle,
+				  request);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_synch_complete_cmd() - roam synch complete command to fw.
+ * @wmi_hdl: wmi handle
+ * @vdev_id: vdev id
+ *
+ * This function sends roam synch complete event to fw.
+ *
+ * Return: CDF STATUS
+ */
+CDF_STATUS wmi_unified_roam_synch_complete_cmd(void *wmi_hdl,
+		 uint8_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_process_roam_synch_complete_cmd)
+		return wmi_handle->ops->send_process_roam_synch_complete_cmd(wmi_handle,
+				  vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_unit_test_cmd() - send unit test command to fw.
+ * @wmi_hdl: wmi handle
+ * @wmi_utest: unit test command
+ *
+ * This function send unit test command to fw.
+ *
+ * Return: CDF STATUS
+ */
+CDF_STATUS wmi_unified_unit_test_cmd(void *wmi_hdl,
+			       struct wmi_unit_test_cmd *wmi_utest)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_unit_test_cmd)
+		return wmi_handle->ops->send_unit_test_cmd(wmi_handle,
+				  wmi_utest);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified__roam_invoke_cmd() - send roam invoke command to fw.
+ * @wmi_hdl: wmi handle
+ * @roaminvoke: roam invoke command
+ *
+ * Send roam invoke command to fw for fastreassoc.
+ *
+ * Return: none
+ */
+CDF_STATUS wmi_unified_roam_invoke_cmd(void *wmi_hdl,
+		struct wmi_roam_invoke_cmd *roaminvoke,
+		uint32_t ch_hz)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_invoke_cmd)
+		return wmi_handle->ops->send_roam_invoke_cmd(wmi_handle,
+				  roaminvoke, ch_hz);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_scan_offload_cmd() - set roam offload command
+ * @wmi_hdl: wmi handle
+ * @command: command
+ * @vdev_id: vdev id
+ *
+ * This function set roam offload command to fw.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_roam_scan_offload_cmd(void *wmi_hdl,
+					 uint32_t command, uint32_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_cmd(wmi_handle,
+				  command, vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_send_roam_scan_offload_ap_cmd() - set roam ap profile in fw
+ * @wmi_hdl: wmi handle
+ * @ap_profile_p: ap profile
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_AP_PROFILE to firmware
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_send_roam_scan_offload_ap_cmd(void *wmi_hdl,
+					    wmi_ap_profile *ap_profile_p,
+					    uint32_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_ap_profile_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_ap_profile_cmd(wmi_handle,
+				  ap_profile_p, vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_scan_offload_scan_period() - set roam offload scan period
+ * @wmi_handle: wmi handle
+ * @scan_period: scan period
+ * @scan_age: scan age
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_SCAN_PERIOD parameters to fw.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_roam_scan_offload_scan_period(void *wmi_hdl,
+					     uint32_t scan_period,
+					     uint32_t scan_age,
+					     uint32_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_scan_period_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_scan_period_cmd(wmi_handle,
+				  scan_period, scan_age, vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_scan_offload_chan_list_cmd() - set roam offload channel list
+ * @wmi_handle: wmi handle
+ * @chan_count: channel count
+ * @chan_list: channel list
+ * @list_type: list type
+ * @vdev_id: vdev id
+ *
+ * Set roam offload channel list.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_roam_scan_offload_chan_list_cmd(void *wmi_hdl,
+				   uint8_t chan_count,
+				   uint8_t *chan_list,
+				   uint8_t list_type, uint32_t vdev_id)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_chan_list_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_chan_list_cmd(wmi_handle,
+				  chan_count, chan_list,
+				  list_type, vdev_id);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_scan_offload_rssi_change_cmd() - set roam offload RSSI th
+ * @wmi_hdl: wmi handle
+ * @rssi_change_thresh: RSSI Change threshold
+ * @bcn_rssi_weight: beacon RSSI weight
+ * @vdev_id: vdev id
+ *
+ * Send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD parameters to fw.
+ *
+ * Return: CDF status
+ */
+CDF_STATUS wmi_unified_roam_scan_offload_rssi_change_cmd(void *wmi_hdl,
+	uint32_t vdev_id,
+	int32_t rssi_change_thresh,
+	uint32_t bcn_rssi_weight,
+	uint32_t hirssi_delay_btw_scans)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_rssi_change_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_rssi_change_cmd(wmi_handle,
+				  vdev_id, rssi_change_thresh,
+				  bcn_rssi_weight, hirssi_delay_btw_scans);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_get_buf_extscan_hotlist_cmd() - prepare hotlist command
+ * @wmi_hdl: wmi handle
+ * @photlist: hotlist command params
+ * @buf_len: buffer length
+ *
+ * This function fills individual elements for  hotlist request and
+ * TLV for bssid entries
+ *
+ * Return: CDF Status.
+ */
+CDF_STATUS wmi_unified_get_buf_extscan_hotlist_cmd(void *wmi_hdl,
+				   struct ext_scan_setbssi_hotlist_params *
+				   photlist, int *buf_len)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_get_buf_extscan_hotlist_cmd)
+		return wmi_handle->ops->send_get_buf_extscan_hotlist_cmd(wmi_handle,
+				  photlist, buf_len);
+
+	return CDF_STATUS_E_FAILURE;
+}
+
