@@ -399,6 +399,42 @@ void ol_txrx_print_level_set(unsigned level);
 #define TXRX_FW_MAC_FETCH_MGR_STATS              22
 #define TXRX_FW_MAC_PREFETCH_MGR_STATS           23
 
+/**
+ * ol_txrx_get_vdev_mac_addr() - Return mac addr of vdev
+ * @vdev: vdev handle
+ *
+ * Return: vdev mac address
+ */
+uint8_t *
+ol_txrx_get_vdev_mac_addr(ol_txrx_vdev_handle vdev);
+
+/**
+ * ol_txrx_get_vdev_struct_mac_addr() - Return handle to struct qdf_mac_addr of
+ * vdev
+ * @vdev: vdev handle
+ *
+ * Return: Handle to struct qdf_mac_addr
+ */
+struct qdf_mac_addr *
+ol_txrx_get_vdev_struct_mac_addr(ol_txrx_vdev_handle vdev);
+
+/**
+ * ol_txrx_get_pdev_from_vdev() - Return handle to pdev of vdev
+ * @vdev: vdev handle
+ *
+ * Return: Handle to pdev
+ */
+ol_txrx_pdev_handle ol_txrx_get_pdev_from_vdev(ol_txrx_vdev_handle vdev);
+
+/**
+ * ol_txrx_get_ctrl_pdev_from_vdev() - Return control pdev of vdev
+ * @vdev: vdev handle
+ *
+ * Return: Handle to control pdev
+ */
+ol_pdev_handle
+ol_txrx_get_ctrl_pdev_from_vdev(ol_txrx_vdev_handle vdev);
+
 #endif /* _CDP_TXRX_CMN_H_ */
 
 

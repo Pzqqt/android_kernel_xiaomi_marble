@@ -70,4 +70,20 @@ ol_pdev_handle ol_pdev_cfg_attach(qdf_device_t osdev,
 
 void ol_vdev_rx_set_intrabss_fwd(ol_txrx_vdev_handle vdev, bool val);
 
+/**
+ * ol_txrx_get_opmode() - Return operation mode of vdev
+ * @vdev: vdev handle
+ *
+ * Return: operation mode.
+ */
+int ol_txrx_get_opmode(ol_txrx_vdev_handle vdev);
+
+/**
+ * ol_txrx_is_rx_fwd_disabled() - returns the rx_fwd_disabled status on vdev
+ * @vdev: vdev handle
+ *
+ * Return: Rx Fwd disabled status
+ */
+uint8_t
+ol_txrx_is_rx_fwd_disabled(ol_txrx_vdev_handle vdev);
 #endif /* _CDP_TXRX_CFG_H_ */
