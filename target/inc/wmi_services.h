@@ -160,6 +160,7 @@ typedef enum {
 	 * - WMI_VDEV_SET_DSCP_TID_MAP_CMDID (vs. WMI_VDEV_SET_WMM_PARAMS_CMDID)
 	 */
 	WMI_SERVICE_DEPRECATED_REPLACE,
+	WMI_SERVICE_TDLS_CONN_TRACKER_IN_HOST_MODE, /* FW supports a new mode that allows to run connection tracker in host */
 
 	WMI_MAX_SERVICE = 128             /* max service */
 } WMI_SERVICE;
