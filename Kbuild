@@ -6,6 +6,10 @@ else
 	KERNEL_BUILD := 0
 endif
 
+ifdef CONFIG_ICNSS
+	CONFIG_ROME_IF = snoc
+endif
+
 ifeq ($(CONFIG_CNSS), y)
 ifndef CONFIG_ROME_IF
 	#use pci as default interface
