@@ -79,11 +79,6 @@ module_dbg_print mod_print[WLAN_MODULE_ID_MAX];
 
 A_UINT32 dbglog_process_type = DBGLOG_PROCESS_NET_RAW;
 
-A_STATUS
-wmi_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
-			    A_UINT32 val, A_UINT32 *module_id_bitmap,
-			    A_UINT32 bitmap_len);
-
 const char *dbglog_get_module_str(A_UINT32 module_id)
 {
 	switch (module_id) {
@@ -1284,7 +1279,7 @@ int dbglog_module_log_enable(wmi_unified_t wmi_handle, A_UINT32 mod_id,
 		/* set it to ERROR level */
 		WMI_DBGLOG_SET_LOG_LEVEL(val, DBGLOG_ERR);
 	}
-	wmi_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
+	wma_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
 				    val, NULL, 0);
 
 	return 0;
@@ -1300,7 +1295,7 @@ int dbglog_vap_log_enable(wmi_unified_t wmi_handle, A_UINT16 vap_id,
 		return -EINVAL;
 	}
 
-	wmi_config_debug_module_cmd(wmi_handle,
+	wma_config_debug_module_cmd(wmi_handle,
 				    isenable ? WMI_DEBUG_LOG_PARAM_VDEV_ENABLE :
 				    WMI_DEBUG_LOG_PARAM_VDEV_DISABLE, vap_id,
 				    NULL, 0);
@@ -1321,7 +1316,7 @@ int dbglog_set_log_lvl(wmi_unified_t wmi_handle, DBGLOG_LOG_LVL log_lvl)
 
 	WMI_DBGLOG_SET_MODULE_ID(val, WMI_DEBUG_LOG_MODULE_ALL);
 	WMI_DBGLOG_SET_LOG_LEVEL(val, log_lvl);
-	wmi_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
+	wma_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
 				    val, NULL, 0);
 
 	return 0;
@@ -1333,75 +1328,17 @@ int dbglog_set_mod_log_lvl(wmi_unified_t wmi_handle, A_UINT32 mod_log_lvl)
 	/* set the global module level to log_lvl */
 	WMI_DBGLOG_SET_MODULE_ID(val, (mod_log_lvl / 10));
 	WMI_DBGLOG_SET_LOG_LEVEL(val, (mod_log_lvl % 10));
-	wmi_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
+	wma_config_debug_module_cmd(wmi_handle, WMI_DEBUG_LOG_PARAM_LOG_LEVEL,
 				    val, NULL, 0);
 
 	return 0;
-}
-
-A_STATUS
-wmi_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
-			    A_UINT32 val, A_UINT32 *module_id_bitmap,
-			    A_UINT32 bitmap_len)
-{
-	wmi_buf_t buf;
-	wmi_debug_log_config_cmd_fixed_param *configmsg;
-	A_STATUS status = A_OK;
-	int i;
-	int len;
-	int8_t *buf_ptr;
-	int32_t *module_id_bitmap_array;        /* Used to fomr the second tlv */
-
-	ASSERT(bitmap_len < MAX_MODULE_ID_BITMAP_WORDS);
-
-	/* Allocate size for 2 tlvs - including tlv hdr space for second tlv */
-	len = sizeof(wmi_debug_log_config_cmd_fixed_param) + WMI_TLV_HDR_SIZE +
-	      (sizeof(int32_t) * MAX_MODULE_ID_BITMAP_WORDS);
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (buf == NULL)
-		return A_NO_MEMORY;
-
-	configmsg =
-		(wmi_debug_log_config_cmd_fixed_param *) (wmi_buf_data(buf));
-	buf_ptr = (int8_t *) configmsg;
-	WMITLV_SET_HDR(&configmsg->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_debug_log_config_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_debug_log_config_cmd_fixed_param));
-	configmsg->dbg_log_param = param;
-	configmsg->value = val;
-	/* Filling in the data part of second tlv -- should follow first tlv _ WMI_TLV_HDR_SIZE */
-	module_id_bitmap_array = (A_UINT32 *) (buf_ptr +
-					       sizeof
-					       (wmi_debug_log_config_cmd_fixed_param)
-					       + WMI_TLV_HDR_SIZE);
-	WMITLV_SET_HDR(buf_ptr + sizeof(wmi_debug_log_config_cmd_fixed_param),
-		       WMITLV_TAG_ARRAY_UINT32,
-		       sizeof(A_UINT32) * MAX_MODULE_ID_BITMAP_WORDS);
-	if (module_id_bitmap) {
-		for (i = 0; i < bitmap_len; ++i) {
-			module_id_bitmap_array[i] = module_id_bitmap[i];
-		}
-	}
-
-	AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
-			("wmi_dbg_cfg_send: param 0x%x val 0x%x \n ", param,
-			 val));
-
-	status = wmi_unified_cmd_send(wmi_handle, buf,
-				      len, WMI_DBGLOG_CFG_CMDID);
-
-	if (status != A_OK)
-		qdf_nbuf_free(buf);
-
-	return status;
 }
 
 void
 dbglog_set_vap_enable_bitmap(wmi_unified_t wmi_handle,
 			     A_UINT32 vap_enable_bitmap)
 {
-	wmi_config_debug_module_cmd(wmi_handle,
+	wma_config_debug_module_cmd(wmi_handle,
 				    WMI_DEBUG_LOG_PARAM_VDEV_ENABLE_BITMAP,
 				    vap_enable_bitmap, NULL, 0);
 }
@@ -1410,7 +1347,7 @@ void
 dbglog_set_mod_enable_bitmap(wmi_unified_t wmi_handle, A_UINT32 log_level,
 			     A_UINT32 *mod_enable_bitmap, A_UINT32 bitmap_len)
 {
-	wmi_config_debug_module_cmd(wmi_handle,
+	wma_config_debug_module_cmd(wmi_handle,
 				    WMI_DEBUG_LOG_PARAM_MOD_ENABLE_BITMAP,
 				    log_level, mod_enable_bitmap, bitmap_len);
 }
@@ -4408,20 +4345,23 @@ int dbglog_init(wmi_unified_t wmi_handle)
 	res =
 		wmi_unified_register_event_handler(wmi_handle,
 						   WMI_DEBUG_MESG_EVENTID,
-						   dbglog_parse_debug_logs);
+						   dbglog_parse_debug_logs,
+						   WMA_RX_WORK_CTX);
 	if (res != 0)
 		return res;
 
 	/* Register handler for FW diag events */
 	res = wmi_unified_register_event_handler(wmi_handle,
 						 WMI_DIAG_DATA_CONTAINER_EVENTID,
-						 fw_diag_data_event_handler);
+						 fw_diag_data_event_handler,
+						 WMA_RX_SERIALIZER_CTX);
 	if (res != 0)
 		return res;
 
 	/* Register handler for new FW diag  Event, LOG, MSG combined */
 	res = wmi_unified_register_event_handler(wmi_handle, WMI_DIAG_EVENTID,
-						 diag_fw_handler);
+						 diag_fw_handler,
+						 WMA_RX_SERIALIZER_CTX);
 	if (res != 0)
 		return res;
 

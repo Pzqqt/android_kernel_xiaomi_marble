@@ -114,6 +114,7 @@
 
 #define     ALIGNED_WORD_SIZE       4
 #define WLAN_HAL_MSG_TYPE_MAX_ENUM_SIZE    0x7FFF
+#define WMA_WILDCARD_PDEV_ID 0x0
 
 /* Prefix used by scan req ids generated on the host */
 #define WMA_HOST_SCAN_REQID_PREFIX       0xA000
@@ -452,6 +453,18 @@ enum wma_tdls_peer_reason {
 };
 #endif /* FEATURE_WLAN_TDLS */
 
+/**
+ * enum wma_rx_exec_ctx - wma rx execution context
+ * @WMA_RX_WORK_CTX: work queue context execution
+ * @WMA_RX_TASKLET_CTX: tasklet context execution
+ * @WMA_RX_SERIALIZER_CTX: MC thread context execution
+ *
+ */
+enum wma_rx_exec_ctx {
+	WMA_RX_WORK_CTX,
+	WMA_RX_TASKLET_CTX,
+	WMA_RX_SERIALIZER_CTX
+};
 /**
  * struct wma_mem_chunk - memory chunks
  * @vaddr: virtual address
@@ -1916,8 +1929,7 @@ typedef struct {
 	void *evt_buf;
 } wma_process_fw_event_params;
 
-int wma_process_fw_event_handler(struct wmi_unified *wmi_handle,
-		wmi_buf_t evt_buf);
+int wma_process_fw_event_handler(void *ctx, void *ev, uint8_t rx_ctx);
 
 A_UINT32 e_csr_auth_type_to_rsn_authmode(eCsrAuthType authtype,
 					 eCsrEncryptionType encr);
@@ -1971,7 +1983,7 @@ QDF_STATUS wma_get_scan_id(uint32_t *scan_id);
 
 QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		struct sir_dual_mac_config *msg);
-int wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
+QDF_STATUS wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
 			uint32_t delay_time_ms);
 
 struct wma_target_req *wma_fill_vdev_req(tp_wma_handle wma,
@@ -1997,7 +2009,10 @@ int wma_mgmt_tx_completion_handler(void *handle, uint8_t *cmpl_event_params,
 				   uint32_t len);
 void wma_set_dfs_region(tp_wma_handle wma, uint8_t dfs_region);
 uint32_t wma_get_vht_ch_width(void);
-
+QDF_STATUS
+wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
+		A_UINT32 val, A_UINT32 *module_id_bitmap,
+		A_UINT32 bitmap_len);
 #ifdef FEATURE_LFR_SUBNET_DETECTION
 QDF_STATUS wma_set_gateway_params(tp_wma_handle wma,
 					struct gateway_param_update_req *req);

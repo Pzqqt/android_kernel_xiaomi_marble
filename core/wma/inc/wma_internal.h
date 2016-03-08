@@ -532,10 +532,6 @@ static inline uint8_t *wma_find_bssid_by_vdev_id(tp_wma_handle wma,
 void *wma_find_vdev_by_bssid(tp_wma_handle wma, uint8_t *bssid,
 				    uint8_t *vdev_id);
 
-int wma_unified_vdev_create_send(wmi_unified_t wmi_handle, uint8_t if_id,
-				 uint32_t type, uint32_t subtype,
-				 uint8_t macaddr[IEEE80211_ADDR_LEN]);
-
 QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 			struct del_sta_self_params *pdel_sta_self_req_param,
 			uint8_t generateRsp);
@@ -543,14 +539,8 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 				       uint32_t len);
 
-int wmi_unified_vdev_set_param_send(wmi_unified_t wmi_handle, uint32_t if_id,
+QDF_STATUS wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value);
-
-int32_t wmi_unified_peer_flush_tids_send(wmi_unified_t wmi,
-						uint8_t peer_addr
-						[IEEE80211_ADDR_LEN],
-						uint32_t peer_tid_bitmap,
-						uint8_t vdev_id);
 
 void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 			    uint8_t vdev_id, ol_txrx_peer_handle peer,
@@ -590,15 +580,9 @@ void wma_remove_vdev_req(tp_wma_handle wma, uint8_t vdev_id,
 
 void wma_add_bss(tp_wma_handle wma, tpAddBssParams params);
 
-int wmi_unified_vdev_up_send(wmi_unified_t wmi,
-				    uint8_t vdev_id, uint16_t aid,
-				    uint8_t bssid[IEEE80211_ADDR_LEN]);
-
 void wma_add_sta(tp_wma_handle wma, tpAddStaParams add_sta);
 
 void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta);
-
-int32_t wmi_unified_vdev_stop_send(wmi_unified_t wmi, uint8_t vdev_id);
 
 void wma_delete_bss(tp_wma_handle wma, tpDeleteBssParams params);
 
@@ -693,14 +677,14 @@ void wma_hidden_ssid_vdev_restart(tp_wma_handle wma_handle,
 
 void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req);
 
-int32_t wmi_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
+QDF_STATUS wma_unified_set_sta_ps_param(wmi_unified_t wmi_handle,
 					    uint32_t vdev_id, uint32_t param,
 					    uint32_t value);
 
 QDF_STATUS
 wma_set_ibss_pwrsave_params(tp_wma_handle wma, uint8_t vdev_id);
 
-int32_t wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
+QDF_STATUS wma_set_ap_peer_uapsd(tp_wma_handle wma, uint32_t vdev_id,
 				     uint8_t *peer_addr, uint8_t uapsd_value,
 				     uint8_t max_sp);
 
@@ -712,9 +696,6 @@ void wma_set_tx_power(WMA_HANDLE handle,
 
 void wma_set_max_tx_power(WMA_HANDLE handle,
 				 tMaxTxPowerParams *tx_pwr_params);
-
-int32_t wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
-				      uint32_t vdev_id, uint8_t val);
 
 void wma_disable_sta_ps_mode(tp_wma_handle wma, tpDisablePsParams ps_req);
 
@@ -880,9 +861,6 @@ int32_t wma_txrx_fw_stats_reset(tp_wma_handle wma_handle,
 int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 				    uint8_t vdev_id, uint32_t value);
 
-int wmi_crash_inject(wmi_unified_t wmi_handle, uint32_t type,
-		     uint32_t delay_time_ms);
-
 void wma_get_stats_req(WMA_HANDLE handle,
 		       tAniGetPEStatsReq *get_stats_param);
 
@@ -917,11 +895,6 @@ WLAN_PHY_MODE wma_chan_to_mode(u8 chan, phy_ch_width chan_width,
 
 QDF_STATUS wma_get_link_speed(WMA_HANDLE handle, tSirLinkSpeedInfo *pLinkSpeed);
 
-#ifdef FEATURE_GREEN_AP
-int32_t wmi_unified_pdev_green_ap_ps_enable_cmd(wmi_unified_t wmi_handle,
-						uint32_t value);
-#endif
-
 int wma_profile_data_report_event_handler(void *handle, uint8_t *event_buf,
 				       uint32_t len);
 
@@ -932,7 +905,7 @@ void wma_wow_tx_complete(void *wma);
 
 int wmi_unified_nat_keepalive_enable(tp_wma_handle wma, uint8_t vdev_id);
 
-int wmi_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id);
+int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id);
 
 #ifdef WLAN_FEATURE_NAN
 int wma_nan_rsp_event_handler(void *handle, uint8_t *event_buf, uint32_t len);
@@ -1104,7 +1077,7 @@ QDF_STATUS wma_process_ch_avoid_update_req(tp_wma_handle wma_handle,
 					   ch_avoid_update_req);
 #endif
 
-int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
+QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 
 #ifdef FEATURE_WLAN_TDLS
 

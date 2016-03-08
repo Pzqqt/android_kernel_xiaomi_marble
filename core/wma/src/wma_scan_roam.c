@@ -2021,32 +2021,32 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 				   A_INT32 first_bcnt,
 				   A_UINT32 final_bcnt, uint32_t vdev_id)
 {
-	int status = 0;
+	QDF_STATUS status;
 
 	WMA_LOGI("%s: first_bcnt=%d, final_bcnt=%d", __func__, first_bcnt,
 		 final_bcnt);
 
-	status = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+	status = wma_vdev_set_param(wma_handle->wmi_handle,
 						 vdev_id,
 						 WMI_VDEV_PARAM_BMISS_FIRST_BCNT,
 						 first_bcnt);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_vdev_set_param_send WMI_VDEV_PARAM_BMISS_FIRST_BCNT returned Error %d",
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("wma_vdev_set_param WMI_VDEV_PARAM_BMISS_FIRST_BCNT returned Error %d",
 			status);
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
 
-	status = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+	status = wma_vdev_set_param(wma_handle->wmi_handle,
 						 vdev_id,
 						 WMI_VDEV_PARAM_BMISS_FINAL_BCNT,
 						 final_bcnt);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_vdev_set_param_send WMI_VDEV_PARAM_BMISS_FINAL_BCNT returned Error %d",
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("wma_vdev_set_param WMI_VDEV_PARAM_BMISS_FINAL_BCNT returned Error %d",
 			status);
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /**
@@ -4121,39 +4121,48 @@ void wma_register_extscan_event_handler(tp_wma_handle wma_handle)
 	}
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_EXTSCAN_START_STOP_EVENTID,
-					   wma_extscan_start_stop_event_handler);
+					   wma_extscan_start_stop_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_CAPABILITIES_EVENTID,
-					   wma_extscan_capabilities_event_handler);
+					WMI_EXTSCAN_CAPABILITIES_EVENTID,
+					wma_extscan_capabilities_event_handler,
+					WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_HOTLIST_MATCH_EVENTID,
-					   wma_extscan_hotlist_match_event_handler);
+				WMI_EXTSCAN_HOTLIST_MATCH_EVENTID,
+				wma_extscan_hotlist_match_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_WLAN_CHANGE_RESULTS_EVENTID,
-					   wma_extscan_change_results_event_handler);
+				WMI_EXTSCAN_WLAN_CHANGE_RESULTS_EVENTID,
+				wma_extscan_change_results_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_OPERATION_EVENTID,
-					   wma_extscan_operations_event_handler);
+				WMI_EXTSCAN_OPERATION_EVENTID,
+				wma_extscan_operations_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_TABLE_USAGE_EVENTID,
-					   wma_extscan_table_usage_event_handler);
+				WMI_EXTSCAN_TABLE_USAGE_EVENTID,
+				wma_extscan_table_usage_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_EXTSCAN_CACHED_RESULTS_EVENTID,
-					   wma_extscan_cached_results_event_handler);
+				WMI_EXTSCAN_CACHED_RESULTS_EVENTID,
+				wma_extscan_cached_results_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_PASSPOINT_MATCH_EVENTID,
-			wma_passpoint_match_event_handler);
+			wma_passpoint_match_event_handler,
+			WMA_RX_SERIALIZER_CTX);
 
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_EXTSCAN_HOTLIST_SSID_MATCH_EVENTID,
-			wma_extscan_hotlist_ssid_match_event_handler);
+			wma_extscan_hotlist_ssid_match_event_handler,
+			WMA_RX_SERIALIZER_CTX);
 
 	return;
 }
@@ -6040,6 +6049,7 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 	ol_txrx_vdev_handle vdev;
 	struct txrx_pdev_cfg_t *cfg;
 	int32_t intra_bss_fwd = 0;
+	QDF_STATUS status;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue  cmd",
@@ -6109,14 +6119,15 @@ QDF_STATUS  wma_ipa_offload_enable_disable(tp_wma_handle wma,
 	}
 
 	/* Disable/enable WMI_VDEV_PARAM_INTRA_BSS_FWD */
-	if (wmi_unified_vdev_set_param_send(wma->wmi_handle,
+	status = wma_vdev_set_param(wma->wmi_handle,
 		ipa_offload->vdev_id, WMI_VDEV_PARAM_INTRA_BSS_FWD,
-		intra_bss_fwd)) {
+		intra_bss_fwd);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to disable WMI_VDEV_PARAM_INTRA_BSS_FWD");
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
 
-	return QDF_STATUS_SUCCESS;
+	return status;
 }
 
 /** wma_set_epno_network_list() - set epno network list

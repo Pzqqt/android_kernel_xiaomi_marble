@@ -788,7 +788,7 @@ int32_t wmi_unified_send_txbf(tp_wma_handle wma, tpAddStaParams params)
 	WMA_LOGD("txbf_en.sutxbfee %d txbf_en.mutxbfee %d, sutxbfer %d",
 		 txbf_en.sutxbfee, txbf_en.mutxbfee, txbf_en.sutxbfer);
 
-	return wmi_unified_vdev_set_param_send(wma->wmi_handle,
+	return wma_vdev_set_param(wma->wmi_handle,
 						params->smesessionId,
 						WMI_VDEV_PARAM_TXBF,
 						*((A_UINT8 *) &txbf_en));
@@ -1403,6 +1403,7 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 	uint8_t rate = 0;
 	uint32_t short_gi;
 	struct wma_txrx_node *intr = wma->interfaces;
+	QDF_STATUS status;
 
 	/* Get the vdev id */
 	pdev = wma_find_vdev_by_addr(wma, pRateUpdateParams->bssid.bytes,
@@ -1449,20 +1450,20 @@ QDF_STATUS wma_process_rate_update_indicate(tp_wma_handle wma,
 		qdf_mem_free(pRateUpdateParams);
 		return ret;
 	}
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_SGI, short_gi);
-	if (ret) {
-		WMA_LOGE("%s: Failed to Set WMI_VDEV_PARAM_SGI (%d), ret = %d",
-			 __func__, short_gi, ret);
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to Set WMI_VDEV_PARAM_SGI (%d), status = %d",
+			 __func__, short_gi, status);
 		qdf_mem_free(pRateUpdateParams);
-		return QDF_STATUS_E_FAILURE;
+		return status;
 	}
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+	status = wma_vdev_set_param(wma->wmi_handle,
 					      vdev_id, paramId, rate);
 	qdf_mem_free(pRateUpdateParams);
-	if (ret) {
-		WMA_LOGE("%s: Failed to Set rate, ret = %d", __func__, ret);
-		return QDF_STATUS_E_FAILURE;
+	if (QDF_IS_STATUS_ERROR(status)) {
+		WMA_LOGE("%s: Failed to Set rate, status = %d", __func__, status);
+		return status;
 	}
 
 	return QDF_STATUS_SUCCESS;
@@ -2965,6 +2966,7 @@ void wma_tx_abort(uint8_t vdev_id)
 	tp_wma_handle wma;
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	struct wma_txrx_node *iface;
+	struct peer_flush_params param = {0};
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
@@ -2984,8 +2986,10 @@ void wma_tx_abort(uint8_t vdev_id)
 
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);
+	param.peer_tid_bitmap = peer_tid_bitmap;
+	param.vdev_id = vdev_id;
 	wmi_unified_peer_flush_tids_send(wma->wmi_handle, iface->bssid,
-					 peer_tid_bitmap, vdev_id);
+					 &param);
 }
 
 #if defined(FEATURE_LRO)

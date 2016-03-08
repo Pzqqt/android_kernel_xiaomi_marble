@@ -69,7 +69,7 @@
 #include "dfs.h"
 #include "wma_internal.h"
 #include "cds_concurrency.h"
-
+#include "wmi_unified_param.h"
 #include "linux/ieee80211.h"
 
 /* MCS Based rate table */
@@ -764,14 +764,17 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 	}
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_IFACE_LINK_STATS_EVENTID,
-					   wma_unified_link_iface_stats_event_handler);
+				WMI_IFACE_LINK_STATS_EVENTID,
+				wma_unified_link_iface_stats_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_PEER_LINK_STATS_EVENTID,
-					   wma_unified_link_peer_stats_event_handler);
+				WMI_PEER_LINK_STATS_EVENTID,
+				wma_unified_link_peer_stats_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_RADIO_LINK_STATS_EVENTID,
-					   wma_unified_link_radio_stats_event_handler);
+				WMI_RADIO_LINK_STATS_EVENTID,
+				wma_unified_link_radio_stats_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	return;
 }
@@ -1953,46 +1956,6 @@ int32_t wma_set_txrx_fw_stats_level(tp_wma_handle wma_handle,
 }
 
 /**
- * wmi_crash_inject() - inject fw crash
- * @wma_handle: wma handle
- * @type: type
- * @delay_time_ms: delay time in ms
- *
- * Return: 0 for success or return error
- */
-int wmi_crash_inject(wmi_unified_t wmi_handle, uint32_t type,
-		     uint32_t delay_time_ms)
-{
-	int ret = 0;
-	WMI_FORCE_FW_HANG_CMD_fixed_param *cmd;
-	uint16_t len = sizeof(*cmd);
-	wmi_buf_t buf;
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed!", __func__);
-		return -ENOMEM;
-	}
-
-	cmd = (WMI_FORCE_FW_HANG_CMD_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_WMI_FORCE_FW_HANG_CMD_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (WMI_FORCE_FW_HANG_CMD_fixed_param));
-	cmd->type = type;
-	cmd->delay_time_ms = delay_time_ms;
-
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_FORCE_FW_HANG_CMDID);
-	if (ret < 0) {
-		WMA_LOGE("%s: Failed to send set param command, ret = %d",
-			 __func__, ret);
-		wmi_buf_free(buf);
-	}
-
-	return ret;
-}
-
-/**
  * wma_get_stats_rsp_buf() - fill get stats response buffer
  * @get_stats_param: get stats parameters
  *
@@ -2333,7 +2296,7 @@ static int
 wma_process_utf_event(WMA_HANDLE handle, uint8_t *datap, uint32_t dataplen)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	SEG_HDR_INFO_STRUCT segHdrInfo;
+	struct seg_hdr_info segHdrInfo;
 	uint8_t totalNumOfSegments, currentSeq;
 	WMI_PDEV_UTF_EVENTID_param_tlvs *param_buf;
 	uint8_t *data;
@@ -2347,7 +2310,7 @@ wma_process_utf_event(WMA_HANDLE handle, uint8_t *datap, uint32_t dataplen)
 	data = param_buf->data;
 	datalen = param_buf->num_data;
 
-	segHdrInfo = *(SEG_HDR_INFO_STRUCT *) &(data[0]);
+	segHdrInfo = *(struct seg_hdr_info *) &(data[0]);
 
 	wma_handle->utf_event_info.currentSeq = (segHdrInfo.segmentInfo & 0xF);
 
@@ -2423,99 +2386,11 @@ void wma_utf_attach(tp_wma_handle wma_handle)
 
 	ret = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						 WMI_PDEV_UTF_EVENTID,
-						 wma_process_utf_event);
+						 wma_process_utf_event,
+						 WMA_RX_SERIALIZER_CTX);
 
 	if (ret)
 		WMA_LOGP("%s: Failed to register UTF event callback", __func__);
-}
-
-/**
- * wmi_unified_pdev_utf_cmd() - send utf command to fw
- * @wmi_handle: wmi handle
- * @utf_payload: utf payload
- * @len: length
- *
- * Return: 0 for success or error code
- */
-static int
-wmi_unified_pdev_utf_cmd(wmi_unified_t wmi_handle, uint8_t *utf_payload,
-			 uint16_t len)
-{
-	wmi_buf_t buf;
-	uint8_t *cmd;
-	int ret = 0;
-	static uint8_t msgref = 1;
-	uint8_t segNumber = 0, segInfo, numSegments;
-	uint16_t chunk_len, total_bytes;
-	uint8_t *bufpos;
-	SEG_HDR_INFO_STRUCT segHdrInfo;
-
-	bufpos = utf_payload;
-	total_bytes = len;
-	ASSERT(total_bytes / MAX_WMI_UTF_LEN ==
-	       (uint8_t) (total_bytes / MAX_WMI_UTF_LEN));
-	numSegments = (uint8_t) (total_bytes / MAX_WMI_UTF_LEN);
-
-	if (len - (numSegments * MAX_WMI_UTF_LEN))
-		numSegments++;
-
-	while (len) {
-		if (len > MAX_WMI_UTF_LEN)
-			chunk_len = MAX_WMI_UTF_LEN;    /* MAX messsage */
-		else
-			chunk_len = len;
-
-		buf = wmi_buf_alloc(wmi_handle,
-				    (chunk_len + sizeof(segHdrInfo) +
-				     WMI_TLV_HDR_SIZE));
-		if (!buf) {
-			WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-			return -ENOMEM;
-		}
-
-		cmd = (uint8_t *) wmi_buf_data(buf);
-
-		segHdrInfo.len = total_bytes;
-		segHdrInfo.msgref = msgref;
-		segInfo = ((numSegments << 4) & 0xF0) | (segNumber & 0xF);
-		segHdrInfo.segmentInfo = segInfo;
-		segHdrInfo.pad = 0;
-
-		WMA_LOGD("%s:segHdrInfo.len = %d, segHdrInfo.msgref = %d,"
-			 " segHdrInfo.segmentInfo = %d",
-			 __func__, segHdrInfo.len, segHdrInfo.msgref,
-			 segHdrInfo.segmentInfo);
-
-		WMA_LOGD("%s:total_bytes %d segNumber %d totalSegments %d"
-			 "chunk len %d", __func__, total_bytes, segNumber,
-			 numSegments, chunk_len);
-
-		segNumber++;
-
-		WMITLV_SET_HDR(cmd, WMITLV_TAG_ARRAY_BYTE,
-			       (chunk_len + sizeof(segHdrInfo)));
-		cmd += WMI_TLV_HDR_SIZE;
-		memcpy(cmd, &segHdrInfo, sizeof(segHdrInfo));   /* 4 bytes */
-		memcpy(&cmd[sizeof(segHdrInfo)], bufpos, chunk_len);
-
-		ret = wmi_unified_cmd_send(wmi_handle, buf,
-					   (chunk_len + sizeof(segHdrInfo) +
-					    WMI_TLV_HDR_SIZE),
-					   WMI_PDEV_UTF_CMDID);
-
-		if (ret != EOK) {
-			WMA_LOGE("Failed to send WMI_PDEV_UTF_CMDID command");
-			wmi_buf_free(buf);
-			break;
-		}
-
-		len -= chunk_len;
-		bufpos += chunk_len;
-	}
-
-	msgref++;
-
-	return ret;
 }
 
 /**
@@ -2524,12 +2399,18 @@ wmi_unified_pdev_utf_cmd(wmi_unified_t wmi_handle, uint8_t *utf_payload,
  * @data: data
  * @len: length
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int wma_utf_cmd(tp_wma_handle wma_handle, uint8_t *data, uint16_t len)
+QDF_STATUS wma_utf_cmd(tp_wma_handle wma_handle, uint8_t *data, uint16_t len)
 {
+	struct pdev_utf_params param = {0};
+
 	wma_handle->utf_event_info.length = 0;
-	return wmi_unified_pdev_utf_cmd(wma_handle->wmi_handle, data, len);
+	param.utf_payload = data;
+	param.len = len;
+
+	return wmi_unified_pdev_utf_cmd_send(wma_handle->wmi_handle, &param,
+						WMA_WILDCARD_PDEV_ID);
 }
 
 /**
@@ -3635,4 +3516,28 @@ uint32_t wma_get_vht_ch_width(void)
 		fw_ch_wd = WNI_CFG_VHT_CHANNEL_WIDTH_80_PLUS_80MHZ;
 
 	return fw_ch_wd;
+}
+
+/**
+ * wma_config_debug_module_cmd - set debug log config
+ * @wmi_handle: wmi layer handle
+ * @param: debug log parameter
+ * @val: debug log value
+ * @module_id_bitmap: debug module id bitmap
+ * @bitmap_len:  debug module bitmap length
+ *
+ * Return: QDF_STATUS_SUCCESS for success or error code
+ */
+QDF_STATUS
+wma_config_debug_module_cmd(wmi_unified_t wmi_handle, A_UINT32 param,
+			    A_UINT32 val, A_UINT32 *module_id_bitmap,
+			    A_UINT32 bitmap_len)
+{
+	struct dbglog_params dbg_param;
+	dbg_param.param = param;
+	dbg_param.val = val;
+	dbg_param.module_id_bitmap = module_id_bitmap;
+	dbg_param.bitmap_len = bitmap_len;
+
+	return wmi_unified_dbglog_cmd_send(wmi_handle, &dbg_param);
 }

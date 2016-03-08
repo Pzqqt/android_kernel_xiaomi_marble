@@ -212,86 +212,6 @@ enum wlan_op_mode wma_get_txrx_vdev_type(uint32_t type)
 }
 
 /**
- * wma_unified_vdev_create_send() - send VDEV create command to fw
- * @wmi_handle: wmi handle
- * @if_id: vdev id
- * @type: vdev type
- * @subtype: vdev subtype
- * @macaddr: vdev mac address
- *
- * Return: 0 for success or error code
- */
-int wma_unified_vdev_create_send(wmi_unified_t wmi_handle, uint8_t if_id,
-				 uint32_t type, uint32_t subtype,
-				 uint8_t macaddr[IEEE80211_ADDR_LEN])
-{
-	wmi_vdev_create_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int len = sizeof(*cmd);
-	int ret;
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s:wmi_buf_alloc failed", __FUNCTION__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_vdev_create_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_create_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_create_cmd_fixed_param));
-	cmd->vdev_id = if_id;
-	cmd->vdev_type = type;
-	cmd->vdev_subtype = subtype;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(macaddr, &cmd->vdev_macaddr);
-	WMA_LOGE("%s: ID = %d VAP Addr = %02x:%02x:%02x:%02x:%02x:%02x",
-		 __func__, if_id,
-		 macaddr[0], macaddr[1], macaddr[2],
-		 macaddr[3], macaddr[4], macaddr[5]);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len, WMI_VDEV_CREATE_CMDID);
-	if (ret != EOK) {
-		WMA_LOGE("Failed to send WMI_VDEV_CREATE_CMDID");
-		wmi_buf_free(buf);
-	}
-	return ret;
-}
-
-/**
- * wma_unified_vdev_delete_send() - send VDEV delete command to fw
- * @wmi_handle: wmi handle
- * @if_id: vdev id
- *
- * Return: 0 for success or error code
- */
-static int wma_unified_vdev_delete_send(wmi_unified_t wmi_handle, uint8_t if_id)
-{
-	wmi_vdev_delete_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int ret;
-
-	buf = wmi_buf_alloc(wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGP("%s:wmi_buf_alloc failed", __FUNCTION__);
-		return -ENOMEM;
-	}
-
-	cmd = (wmi_vdev_delete_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_delete_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_delete_cmd_fixed_param));
-	cmd->vdev_id = if_id;
-	ret = wmi_unified_cmd_send(wmi_handle, buf,
-				   sizeof(wmi_vdev_delete_cmd_fixed_param),
-				   WMI_VDEV_DELETE_CMDID);
-	if (ret != EOK) {
-		WMA_LOGE("Failed to send WMI_VDEV_DELETE_CMDID");
-		wmi_buf_free(buf);
-	}
-	return ret;
-}
-
-/**
  * wma_find_req() - find target request for vdev id
  * @wma: wma handle
  * @vdev_id: vdev id
@@ -606,9 +526,9 @@ static QDF_STATUS wma_handle_vdev_detach(tp_wma_handle wma_handle,
 	struct wma_target_req *msg = NULL;
 	cds_msg_t sme_msg = { 0 };
 
-	if (wma_unified_vdev_delete_send(wma_handle->wmi_handle, vdev_id)) {
+	status = wmi_unified_vdev_delete_send(wma_handle->wmi_handle, vdev_id);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Unable to remove an interface");
-		status = QDF_STATUS_E_FAILURE;
 		goto out;
 	}
 
@@ -718,45 +638,6 @@ QDF_STATUS wma_vdev_detach(tp_wma_handle wma_handle,
 	}
 
 	return status;
-}
-
-/**
- * wmi_unified_peer_delete_send() - send PEER delete command to fw
- * @wmi: wmi handle
- * @peer_addr: peer mac addr
- * @vdev_id: vdev id
- *
- * Return: 0 for success or error code
- */
-static int32_t wmi_unified_peer_delete_send(wmi_unified_t wmi,
-					    uint8_t
-					    peer_addr[IEEE80211_ADDR_LEN],
-					    uint8_t vdev_id)
-{
-	wmi_peer_delete_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_peer_delete_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_delete_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_peer_delete_cmd_fixed_param));
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
-	cmd->vdev_id = vdev_id;
-
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_DELETE_CMDID)) {
-		WMA_LOGP("%s: Failed to send peer delete command", __func__);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	WMA_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
-	return 0;
 }
 
 /**
@@ -905,6 +786,9 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 	wmi_vdev_start_response_event_fixed_param *resp_event;
 	struct wma_target_req *req_msg;
 	struct wma_txrx_node *iface;
+	struct vdev_up_params param = {0};
+	QDF_STATUS status;
+
 #ifdef FEATURE_AP_MCC_CH_AVOIDANCE
 	tpAniSirGlobal mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == mac_ctx) {
@@ -957,9 +841,12 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		WMA_LOGE("%s: vdev restart event recevied for hidden ssid set using IOCTL",
 			__func__);
 
+		param.vdev_id = resp_event->vdev_id;
+		param.assoc_id = 0;
 		if (wmi_unified_vdev_up_send
-			    (wma->wmi_handle, resp_event->vdev_id, 0,
-			    wma->interfaces[resp_event->vdev_id].bssid) < 0) {
+			    (wma->wmi_handle,
+			    wma->interfaces[resp_event->vdev_id].bssid,
+				&param) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s : failed to send vdev up", __func__);
 			return -EEXIST;
 		}
@@ -1007,10 +894,12 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 		params->status = resp_event->status;
 		if (resp_event->resp_type == WMI_VDEV_RESTART_RESP_EVENT &&
 		    (iface->type == WMI_VDEV_TYPE_STA)) {
-			if (wmi_unified_vdev_up_send(wma->wmi_handle,
-						     resp_event->vdev_id,
-						     iface->aid,
-						     iface->bssid)) {
+			param.vdev_id = resp_event->vdev_id;
+			param.assoc_id = iface->aid;
+			status = wmi_unified_vdev_up_send(wma->wmi_handle,
+						 iface->bssid,
+						 &param);
+			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE("%s:vdev_up failed vdev_id %d",
 					 __func__, resp_event->vdev_id);
 				wma->interfaces[resp_event->vdev_id].vdev_up =
@@ -1028,9 +917,11 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 				IEEE80211_ADDR_LEN);
 		wma_vdev_start_rsp(wma, bssParams, resp_event);
 	} else if (req_msg->msg_type == WMA_OCB_SET_CONFIG_CMD) {
+		param.vdev_id = resp_event->vdev_id;
+		param.assoc_id = iface->aid;
 		if (wmi_unified_vdev_up_send(wma->wmi_handle,
-					     resp_event->vdev_id, iface->aid,
-					     iface->bssid) < 0) {
+					     iface->bssid,
+					     &param) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE(FL("failed to send vdev up"));
 			return -EEXIST;
 		}
@@ -1050,86 +941,24 @@ int wma_vdev_start_resp_handler(void *handle, uint8_t *cmd_param_info,
 }
 
 /**
- * wmi_unified_vdev_set_param_send() - set per vdev params in fw
+ * wma_vdev_set_param() - set per vdev params in fw
  * @wmi_handle: wmi handle
  * @if_if: vdev id
  * @param_id: parameter id
  * @param_value: parameter value
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int
-wmi_unified_vdev_set_param_send(wmi_unified_t wmi_handle, uint32_t if_id,
+QDF_STATUS
+wma_vdev_set_param(wmi_unified_t wmi_handle, uint32_t if_id,
 				uint32_t param_id, uint32_t param_value)
 {
-	int ret;
-	wmi_vdev_set_param_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint16_t len = sizeof(*cmd);
+	struct vdev_set_params param = {0};
+	param.if_id = if_id;
+	param.param_id = param_id;
+	param.param_value = param_value;
 
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_vdev_set_param_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_set_param_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_set_param_cmd_fixed_param));
-	cmd->vdev_id = if_id;
-	cmd->param_id = param_id;
-	cmd->param_value = param_value;
-	WMA_LOGD("Setting vdev %d param = %x, value = %u",
-		 if_id, param_id, param_value);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_VDEV_SET_PARAM_CMDID);
-	if (ret < 0) {
-		WMA_LOGE("Failed to send set param command ret = %d", ret);
-		wmi_buf_free(buf);
-	}
-	return ret;
-}
-
-/**
- * wmi_unified_peer_flush_tids_send() - flush peer tids packets in fw
- * @wmi: wmi handle
- * @peer_addr: peer mac address
- * @peer_tid_bitmap: peer tid bitmap
- * @vdev_id: vdev id
- *
- * Return: 0 for sucess or error code
- */
-int32_t wmi_unified_peer_flush_tids_send(wmi_unified_t wmi,
-					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
-					 uint32_t peer_tid_bitmap,
-					 uint8_t vdev_id)
-{
-	wmi_peer_flush_tids_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_peer_flush_tids_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_flush_tids_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_peer_flush_tids_cmd_fixed_param));
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
-	cmd->peer_tid_bitmap = peer_tid_bitmap;
-	cmd->vdev_id = vdev_id;
-
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_FLUSH_TIDS_CMDID)) {
-		WMA_LOGP("%s: Failed to send flush tid command", __func__);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	WMA_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
-	return 0;
+	return wmi_unified_vdev_set_param_send(wmi_handle, &param);
 }
 
 /**
@@ -1153,39 +982,24 @@ void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb)
  * @param_value: parameter value
  * @vdev_id: vdev id
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr, uint32_t param_id,
-		       uint32_t param_value, uint32_t vdev_id)
+QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,
+			      uint32_t param_id, uint32_t param_value,
+			      uint32_t vdev_id)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) wma_ctx;
-	wmi_peer_set_param_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
+	struct peer_set_params param = {0};
 	int err;
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGE("Failed to allocate buffer to send set_param cmd");
-		return -ENOMEM;
-	}
-	cmd = (wmi_peer_set_param_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_set_param_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-				(wmi_peer_set_param_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
-	cmd->param_id = param_id;
-	cmd->param_value = param_value;
-	err = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				   sizeof(wmi_peer_set_param_cmd_fixed_param),
-				   WMI_PEER_SET_PARAM_CMDID);
-	if (err) {
-		WMA_LOGE("Failed to send set_param cmd");
-		qdf_mem_free(buf);
-		return -EIO;
-	}
-	return 0;
+	param.vdev_id = vdev_id;
+	param.param_value = param_value;
+	param.param_id = param_id;
+
+	err = wmi_set_peer_param_send(wma_handle->wmi_handle, peer_addr,
+					   &param);
+
+	return err;
 }
 
 /**
@@ -1205,6 +1019,8 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 #define PEER_ALL_TID_BITMASK 0xffffffff
 	uint32_t peer_tid_bitmap = PEER_ALL_TID_BITMASK;
 	uint8_t *peer_addr = bssid;
+	struct peer_flush_params param = {0};
+
 	if (!wma->interfaces[vdev_id].peer_count) {
 		WMA_LOGE("%s: Can't remove peer with peer_addr %pM vdevid %d peer_count %d",
 			__func__, bssid, vdev_id,
@@ -1221,8 +1037,10 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 		return;
 	/* Flush all TIDs except MGMT TID for this peer in Target */
 	peer_tid_bitmap &= ~(0x1 << WMI_MGMT_TID);
+	param.peer_tid_bitmap = peer_tid_bitmap;
+	param.vdev_id = vdev_id;
 	wmi_unified_peer_flush_tids_send(wma->wmi_handle, bssid,
-					 peer_tid_bitmap, vdev_id);
+					 &param);
 
 	if ((peer) && (wma_is_vdev_in_ibss_mode(wma, vdev_id))) {
 		WMA_LOGD("%s: bssid %pM peer->mac_addr %pM", __func__,
@@ -1232,46 +1050,6 @@ void wma_remove_peer(tp_wma_handle wma, uint8_t *bssid,
 
 	wmi_unified_peer_delete_send(wma->wmi_handle, peer_addr, vdev_id);
 #undef PEER_ALL_TID_BITMASK
-}
-
-/**
- * wmi_unified_peer_create_send() - send peer create command to fw
- * @wmi: wmi handle
- * @peer_addr: peer mac address
- * @peer_type: peer type
- * @vdev_id: vdev id
- *
- * Return: 0 for success or error code
- */
-static int wmi_unified_peer_create_send(wmi_unified_t wmi,
-					const uint8_t *peer_addr,
-					uint32_t peer_type, uint32_t vdev_id)
-{
-	wmi_peer_create_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_peer_create_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_peer_create_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_peer_create_cmd_fixed_param));
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
-	cmd->peer_type = peer_type;
-	cmd->vdev_id = vdev_id;
-
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_PEER_CREATE_CMDID)) {
-		WMA_LOGP("%s: failed to send WMI_PEER_CREATE_CMDID", __func__);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	WMA_LOGD("%s: peer_addr %pM vdev_id %d", __func__, peer_addr, vdev_id);
-	return 0;
 }
 
 /**
@@ -1293,6 +1071,7 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 			  bool roam_synch_in_progress)
 {
 	ol_txrx_peer_handle peer;
+	struct peer_create_params param = {0};
 
 	if (++wma->interfaces[vdev_id].peer_count >
 	    wma->wlan_resource_config.num_peers) {
@@ -1312,8 +1091,11 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 			 wma->interfaces[vdev_id].peer_count);
 		return QDF_STATUS_SUCCESS;
 	}
-	if (wmi_unified_peer_create_send(wma->wmi_handle, peer_addr,
-					 peer_type, vdev_id) < 0) {
+	param.peer_addr = peer_addr;
+	param.peer_type = peer_type;
+	param.vdev_id = vdev_id;
+	if (wmi_unified_peer_create_send(wma->wmi_handle,
+					 &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s : Unable to create peer in Target", __func__);
 		ol_txrx_peer_detach(peer);
 		goto err;
@@ -1342,38 +1124,6 @@ QDF_STATUS wma_create_peer(tp_wma_handle wma, ol_txrx_pdev_handle pdev,
 err:
 	wma->interfaces[vdev_id].peer_count--;
 	return QDF_STATUS_E_FAILURE;
-}
-
-/**
- * wmi_unified_vdev_down_send() - send vdev down command to fw
- * @wmi: wmi handle
- * @vdev_id: vdev id
- *
- * Return: 0 for success or error code
- */
-static int wmi_unified_vdev_down_send(wmi_unified_t wmi, uint8_t vdev_id)
-{
-	wmi_vdev_down_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf) {
-		WMA_LOGP("%s : wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_vdev_down_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_down_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_down_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_DOWN_CMDID)) {
-		WMA_LOGP("%s: Failed to send vdev down", __func__);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	WMA_LOGE("%s: vdev_id %d", __func__, vdev_id);
-	return 0;
 }
 
 #ifdef QCA_IBSS_SUPPORT
@@ -1753,8 +1503,9 @@ int wma_vdev_stop_resp_handler(void *handle, uint8_t *cmd_param_info,
 					peer, false);
 		}
 
-		if (wmi_unified_vdev_down_send
-			    (wma->wmi_handle, resp_event->vdev_id) < 0) {
+		if (wmi_unified_vdev_down_send(wma->wmi_handle,
+						resp_event->vdev_id) !=
+						QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 				 resp_event->vdev_id);
 		} else {
@@ -1841,24 +1592,27 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t cfg_val;
 	uint16_t val16;
-	int ret;
+	QDF_STATUS ret;
 	tSirMacHTCapabilityInfo *phtCapInfo;
 	cds_msg_t sme_msg = { 0 };
+	struct vdev_create_params params = { 0 };
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
 		goto end;
 	}
 
+	params.if_id = self_sta_req->session_id;
+	params.type = self_sta_req->type;
+	params.subtype = self_sta_req->sub_type;
+
 	/* Create a vdev in target */
-	if (wma_unified_vdev_create_send(wma_handle->wmi_handle,
-					 self_sta_req->session_id,
-					 self_sta_req->type,
-					 self_sta_req->sub_type,
-					 self_sta_req->self_mac_addr)) {
+	status = wmi_unified_vdev_create_send(wma_handle->wmi_handle,
+						self_sta_req->self_mac_addr,
+						&params);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGP("%s: Unable to add an interface for ath_dev",
 			 __func__);
-		status = QDF_STATUS_E_RESOURCES;
 		goto end;
 	}
 
@@ -1866,7 +1620,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 
 	if (wlan_op_mode_unknown == txrx_vdev_type) {
 		WMA_LOGE("Failed to get txrx vdev type");
-		wma_unified_vdev_delete_send(wma_handle->wmi_handle,
+		wmi_unified_vdev_delete_send(wma_handle->wmi_handle,
 					     self_sta_req->session_id);
 		goto end;
 	}
@@ -1883,7 +1637,7 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	if (NULL == txrx_vdev_handle) {
 		WMA_LOGP("%s: ol_txrx_vdev_attach failed", __func__);
 		status = QDF_STATUS_E_FAILURE;
-		wma_unified_vdev_delete_send(wma_handle->wmi_handle,
+		wmi_unified_vdev_delete_send(wma_handle->wmi_handle,
 					     self_sta_req->session_id);
 		goto end;
 	}
@@ -1958,32 +1712,32 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 		if (status != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("%s: Failed to create peer", __func__);
 			status = QDF_STATUS_E_FAILURE;
-			wma_unified_vdev_delete_send(wma_handle->wmi_handle,
+			wmi_unified_vdev_delete_send(wma_handle->wmi_handle,
 						     self_sta_req->session_id);
 		}
 	}
 
-	ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+	ret = wma_vdev_set_param(wma_handle->wmi_handle,
 				self_sta_req->session_id,
 				WMI_VDEV_PARAM_MCC_RTSCTS_PROTECTION_ENABLE,
 				mac->roam.configParam.mcc_rts_cts_prot_enable);
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to set WMI VDEV MCC_RTSCTS_PROTECTION_ENABLE");
 
-	ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+	ret = wma_vdev_set_param(wma_handle->wmi_handle,
 			self_sta_req->session_id,
 			WMI_VDEV_PARAM_MCC_BROADCAST_PROBE_ENABLE,
 			mac->roam.configParam.mcc_bcast_prob_resp_enable);
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to set WMI VDEV MCC_BROADCAST_PROBE_ENABLE");
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_RTS_THRESHOLD,
 			     &cfg_val) == eSIR_SUCCESS) {
-		ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 						      self_sta_req->session_id,
 						      WMI_VDEV_PARAM_RTS_THRESHOLD,
 						      cfg_val);
-		if (ret)
+		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_RTS_THRESHOLD");
 	} else {
 		WMA_LOGE("Failed to get value for WNI_CFG_RTS_THRESHOLD, leaving unchanged");
@@ -1991,11 +1745,11 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 
 	if (wlan_cfg_get_int(mac, WNI_CFG_FRAGMENTATION_THRESHOLD,
 			     &cfg_val) == eSIR_SUCCESS) {
-		ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 						      self_sta_req->session_id,
 						      WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD,
 						      cfg_val);
-		if (ret)
+		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_FRAGMENTATION_THRESHOLD");
 	} else {
 		WMA_LOGE("Failed to get value for WNI_CFG_FRAGMENTATION_THRESHOLD, leaving unchanged");
@@ -2004,11 +1758,11 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	if (wlan_cfg_get_int(mac, WNI_CFG_HT_CAP_INFO, &cfg_val) == eSIR_SUCCESS) {
 		val16 = (uint16_t) cfg_val;
 		phtCapInfo = (tSirMacHTCapabilityInfo *) &cfg_val;
-		ret = wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 						      self_sta_req->session_id,
 						      WMI_VDEV_PARAM_TX_STBC,
 						      phtCapInfo->txSTBC);
-		if (ret)
+		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to set WMI_VDEV_PARAM_TX_STBC");
 	} else {
 		WMA_LOGE("Failed to get value of HT_CAP, TX STBC unchanged");
@@ -2017,11 +1771,13 @@ ol_txrx_vdev_handle wma_vdev_attach(tp_wma_handle wma_handle,
 	if ((self_sta_req->type == WMI_VDEV_TYPE_STA) &&
 	    (self_sta_req->sub_type == 0)) {
 		wma_handle->roam_offload_enabled = true;
-		wmi_unified_vdev_set_param_send(wma_handle->wmi_handle,
+		ret = wma_vdev_set_param(wma_handle->wmi_handle,
 						self_sta_req->session_id,
 						WMI_VDEV_PARAM_ROAM_FW_OFFLOAD,
 						(WMI_ROAM_FW_OFFLOAD_ENABLE_FLAG |
 						 WMI_ROAM_BMISS_FINAL_SCAN_ENABLE_FLAG));
+		if (QDF_IS_STATUS_ERROR(ret))
+			WMA_LOGE("Failed to set WMI_VDEV_PARAM_ROAM_FW_OFFLOAD");
 	}
 
 	/* Initialize BMISS parameters */
@@ -2761,7 +2517,7 @@ void wma_vdev_resp_timer(void *data)
 		}
 
 		if (wmi_unified_vdev_down_send(wma->wmi_handle,
-					       tgt_req->vdev_id) < 0) {
+				tgt_req->vdev_id) != QDF_STATUS_SUCCESS) {
 			WMA_LOGE("Failed to send vdev down cmd: vdev %d",
 				 tgt_req->vdev_id);
 		} else {
@@ -2995,37 +2751,37 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 			uint8_t dtimPeriod, uint8_t shortSlotTimeSupported,
 			uint8_t llbCoexist, int8_t maxTxPower)
 {
-	int ret;
+	QDF_STATUS ret;
 	uint32_t slot_time;
 	struct wma_txrx_node *intr = wma->interfaces;
 
 	/* Beacon Interval setting */
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_BEACON_INTERVAL,
 					      beaconInterval);
 
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_BEACON_INTERVAL");
 
 	ret = wmi_unified_vdev_set_gtx_cfg_send(wma->wmi_handle, vdev_id,
 						&intr[vdev_id].config.gtx_info);
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_DTIM_PERIOD");
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_DTIM_PERIOD,
 					      dtimPeriod);
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_DTIM_PERIOD");
 
 	if (!maxTxPower) {
 		WMA_LOGW("Setting Tx power limit to 0");
 	}
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_TX_PWRLIMIT,
 					      maxTxPower);
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_TX_PWRLIMIT");
 	else
 		intr[vdev_id].max_tx_power = maxTxPower;
@@ -3036,10 +2792,10 @@ wma_vdev_set_bss_params(tp_wma_handle wma, int vdev_id,
 	else
 		slot_time = WMI_VDEV_SLOT_TIME_LONG;
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_SLOT_TIME,
 					      slot_time);
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("failed to set WMI_VDEV_PARAM_SLOT_TIME");
 
 	/* Initialize protection mode in case of coexistence */
@@ -3063,8 +2819,9 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	uint8_t vdev_id, peer_id;
 	QDF_STATUS status;
 	int8_t maxTxPower;
+	struct pdev_params param = {0};
 #ifdef WLAN_FEATURE_11W
-	int ret = 0;
+	QDF_STATUS ret;
 #endif /* WLAN_FEATURE_11W */
 	struct sir_hw_mode_params hw_mode = {0};
 
@@ -3128,9 +2885,11 @@ static void wma_add_bss_ap_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		 * when 802.11w PMF is enabled for hw encr/decr
 		 * use hw MFP Qos bits 0x10
 		 */
-		ret = wmi_unified_pdev_set_param(wma->wmi_handle,
-						 WMI_PDEV_PARAM_PMF_QOS, true);
-		if (ret) {
+		param.param_id = WMI_PDEV_PARAM_PMF_QOS;
+		param.param_value = true;
+		ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+						 &param, WMA_WILDCARD_PDEV_ID);
+		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
 				 __func__, ret);
 		} else {
@@ -3365,11 +3124,11 @@ static void wma_add_bss_ibss_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	WMA_LOGD("%s: vdev start request for IBSS sent to target", __func__);
 
 	/* Initialize protection mode to no protection */
-	if (wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
-					    WMI_VDEV_PARAM_PROTECTION_MODE,
-					    IEEE80211_PROT_NONE)) {
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+					 WMI_VDEV_PARAM_PROTECTION_MODE,
+					 IEEE80211_PROT_NONE);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to initialize protection mode");
-	}
 
 	return;
 
@@ -3399,12 +3158,12 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 	ol_txrx_peer_handle peer;
 	QDF_STATUS status;
 	struct wma_txrx_node *iface;
-	int ret = 0;
 	int pps_val = 0;
 	bool roam_synch_in_progress = false;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	struct sir_hw_mode_params hw_mode = {0};
 	bool peer_assoc_sent = false;
+	struct pdev_params param = {0};
 
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
@@ -3596,14 +3355,14 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 			((pMac->
 			  enable5gEBT << 31) & 0xffff0000) | (PKT_PWR_SAVE_5G_EBT &
 							      0xffff);
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+		status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 							WMI_VDEV_PARAM_PACKET_POWERSAVE,
 							pps_val);
-		if (ret)
+		if (QDF_IS_STATUS_ERROR(status))
 			WMA_LOGE("Failed to send wmi packet power save cmd");
 		else
-			WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, ret = %d",
-				pps_val, ret);
+			WMA_LOGD("Sent PKT_PWR_SAVE_5G_EBT cmd to target, val = %x, status = %d",
+				pps_val, status);
 
 		wmi_unified_send_peer_assoc(wma, add_bss->nwType,
 					    &add_bss->staContext);
@@ -3612,12 +3371,14 @@ static void wma_add_bss_sta_mode(tp_wma_handle wma, tpAddBssParams add_bss)
 		if (add_bss->rmfEnabled) {
 			/* when 802.11w PMF is enabled for hw encr/decr
 			   use hw MFP Qos bits 0x10 */
-			ret = wmi_unified_pdev_set_param(wma->wmi_handle,
-							 WMI_PDEV_PARAM_PMF_QOS,
-							 true);
-			if (ret) {
+			param.param_id = WMI_PDEV_PARAM_PMF_QOS;
+			param.param_value = true;
+			status = wmi_unified_pdev_param_send(wma->wmi_handle,
+							 &param,
+							 WMA_WILDCARD_PDEV_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-					 __func__, ret);
+					 __func__, status);
 			} else {
 				WMA_LOGI("%s: QOS MFP/PMF set to %d",
 					 __func__, true);
@@ -3725,46 +3486,6 @@ void wma_add_bss(tp_wma_handle wma, tpAddBssParams params)
 }
 
 /**
- * wmi_unified_vdev_up_send() - send vdev up command in fw
- * @wmi: wmi handle
- * @vdev_id: vdev id
- * @aid: association ID
- * @bssid: bssid
- *
- * Return: 0 for success or error code
- */
-int wmi_unified_vdev_up_send(wmi_unified_t wmi,
-			     uint8_t vdev_id, uint16_t aid,
-			     uint8_t bssid[IEEE80211_ADDR_LEN])
-{
-	wmi_vdev_up_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	WMA_LOGD("%s: VDEV_UP", __func__);
-	WMA_LOGD("%s: vdev_id %d aid %d bssid %pM", __func__,
-		 vdev_id, aid, bssid);
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_vdev_up_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_up_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_up_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	cmd->vdev_assoc_id = aid;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(bssid, &cmd->vdev_bssid);
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_UP_CMDID)) {
-		WMA_LOGP("%s: Failed to send vdev up command", __func__);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	return 0;
-}
-
-/**
  * wma_add_sta_req_ap_mode() - process add sta request in ap mode
  * @wma: wma handle
  * @add_sta: add sta params
@@ -3783,6 +3504,7 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 	struct wma_txrx_node *iface = NULL;
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
+	struct pdev_params param;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
 
@@ -3915,11 +3637,13 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 		 * when 802.11w PMF is enabled for hw encr/decr
 		 * use hw MFP Qos bits 0x10
 		 */
-		ret = wmi_unified_pdev_set_param(wma->wmi_handle,
-						 WMI_PDEV_PARAM_PMF_QOS, true);
-		if (ret) {
+		param.param_id = WMI_PDEV_PARAM_PMF_QOS;
+		param.param_value = true;
+		status = wmi_unified_pdev_param_send(wma->wmi_handle,
+						 &param, WMA_WILDCARD_PDEV_ID);
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-				 __func__, ret);
+				 __func__, status);
 		} else {
 			WMA_LOGI("%s: QOS MFP/PMF set to %d", __func__, true);
 		}
@@ -3927,10 +3651,10 @@ static void wma_add_sta_req_ap_mode(tp_wma_handle wma, tpAddStaParams add_sta)
 #endif /* WLAN_FEATURE_11W */
 
 	if (add_sta->uAPSD) {
-		ret = wma_set_ap_peer_uapsd(wma, add_sta->smesessionId,
+		status = wma_set_ap_peer_uapsd(wma, add_sta->smesessionId,
 					    add_sta->staMac,
 					    add_sta->uAPSD, add_sta->maxSPLen);
-		if (ret) {
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to set peer uapsd param for %pM",
 				 add_sta->staMac);
 			add_sta->status = QDF_STATUS_E_FAILURE;
@@ -4124,6 +3848,8 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	int ret = 0;
 	struct wma_target_req *msg;
 	bool peer_assoc_cnf = false;
+	struct vdev_up_params param = {0};
+	struct pdev_params pdev_param = {0};
 
 #ifdef FEATURE_WLAN_TDLS
 	if (STA_ENTRY_TDLS_PEER == params->staType) {
@@ -4233,12 +3959,14 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		if (params->rmfEnabled) {
 			/* when 802.11w PMF is enabled for hw encr/decr
 			   use hw MFP Qos bits 0x10 */
-			ret = wmi_unified_pdev_set_param(wma->wmi_handle,
-							 WMI_PDEV_PARAM_PMF_QOS,
-							 true);
-			if (ret) {
+			pdev_param.param_id = WMI_PDEV_PARAM_PMF_QOS;
+			pdev_param.param_value = true;
+			status = wmi_unified_pdev_param_send(wma->wmi_handle,
+							 &pdev_param,
+							 WMA_WILDCARD_PDEV_ID);
+			if (QDF_IS_STATUS_ERROR(status)) {
 				WMA_LOGE("%s: Failed to set QOS MFP/PMF (%d)",
-					 __func__, ret);
+					 __func__, status);
 			} else {
 				WMA_LOGI("%s: QOS MFP/PMF set to %d",
 					 __func__, true);
@@ -4269,7 +3997,7 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 	if (WMI_SERVICE_IS_ENABLED(wma->wmi_service_bitmap,
 				   WMI_SERVICE_CSA_OFFLOAD)) {
 		params->csaOffloadEnable = 1;
-		if (wmi_unified_csa_offload_enable(wma, params->smesessionId) <
+		if (wma_unified_csa_offload_enable(wma, params->smesessionId) <
 		    0) {
 			WMA_LOGE("Unable to enable CSA offload for vdev_id:%d",
 				 params->smesessionId);
@@ -4285,8 +4013,10 @@ static void wma_add_sta_req_sta_mode(tp_wma_handle wma, tpAddStaParams params)
 		}
 	}
 
-	if (wmi_unified_vdev_up_send(wma->wmi_handle, params->smesessionId,
-				     params->assocId, params->bssId) < 0) {
+	param.vdev_id = params->smesessionId;
+	param.assoc_id = params->assocId;
+	if (wmi_unified_vdev_up_send(wma->wmi_handle, params->bssId,
+				     &param) != QDF_STATUS_SUCCESS) {
 		WMA_LOGP("%s: Failed to send vdev up cmd: vdev %d bssid %pM",
 			 __func__, params->smesessionId, params->bssId);
 		status = QDF_STATUS_E_FAILURE;
@@ -4590,37 +4320,6 @@ void wma_delete_sta(tp_wma_handle wma, tpDeleteStaParams del_sta)
 			 del_sta->smesessionId, del_sta->status);
 		qdf_mem_free(del_sta);
 	}
-}
-
-/**
- * wmi_unified_vdev_stop_send() - send vdev stop command to fw
- * @wmi: wmi handle
- * @vdev_id: vdev id
- *
- * Return: 0 for success or erro code
- */
-int32_t wmi_unified_vdev_stop_send(wmi_unified_t wmi, uint8_t vdev_id)
-{
-	wmi_vdev_stop_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi, len);
-	if (!buf) {
-		WMA_LOGP("%s : wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_vdev_stop_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_stop_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_vdev_stop_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	if (wmi_unified_cmd_send(wmi, buf, len, WMI_VDEV_STOP_CMDID)) {
-		WMA_LOGP("%s: Failed to send vdev stop command", __func__);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	return 0;
 }
 
 /**

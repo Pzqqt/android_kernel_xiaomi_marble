@@ -65,10 +65,7 @@
 #endif /* REMOVE_PKT_LOG */
 
 #include "dbglog_host.h"
-/* FIXME: Inclusion of .c looks odd
- * but this is how it is in internal codebase
- */
-#include "wmi_version_whitelist.c"
+#include "wmi_version_whitelist.h"
 #include "csr_api.h"
 #include "ol_fw.h"
 
@@ -749,46 +746,6 @@ static int32_t wma_set_priv_cfg(tp_wma_handle wma_handle,
 }
 
 /**
- * wmi_unified_pdev_set_param() - set pdev parameters
- * @wmi_handle: wmi handle
- * @param_id: parameter id
- * @param_value: parameter value
- *
- * Return: 0 on success, errno on failure
- */
-int
-wmi_unified_pdev_set_param(wmi_unified_t wmi_handle, WMI_PDEV_PARAM param_id,
-			   uint32_t param_value)
-{
-	int ret;
-	wmi_pdev_set_param_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint16_t len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_pdev_set_param_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_pdev_set_param_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_pdev_set_param_cmd_fixed_param));
-	cmd->reserved0 = 0;
-	cmd->param_id = param_id;
-	cmd->param_value = param_value;
-	WMA_LOGD("Setting pdev param = %x, value = %u", param_id, param_value);
-	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
-				   WMI_PDEV_SET_PARAM_CMDID);
-	if (ret != EOK) {
-		WMA_LOGE("Failed to send set param command ret = %d", ret);
-		wmi_buf_free(buf);
-	}
-	return ret;
-}
-
-/**
  * wma_set_modulated_dtim() - function to configure modulated dtim
  * @wma: wma handle
  * @privcmd: structure containing parameters
@@ -805,7 +762,7 @@ static void wma_set_modulated_dtim(tp_wma_handle wma,
 		&wma->interfaces[vdev_id];
 	bool prev_dtim_enabled;
 	uint32_t listen_interval;
-	int ret;
+	QDF_STATUS ret;
 
 	iface->alt_modulated_dtim = privcmd->param_value;
 
@@ -822,20 +779,20 @@ static void wma_set_modulated_dtim(tp_wma_handle wma,
 		listen_interval = iface->alt_modulated_dtim
 			* iface->dtimPeriod;
 
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+		ret = wma_vdev_set_param(wma->wmi_handle,
 						privcmd->param_vdev_id,
 						WMI_VDEV_PARAM_LISTEN_INTERVAL,
 						listen_interval);
-		if (ret)
+		if (QDF_IS_STATUS_ERROR(ret))
 			/* Even if it fails, continue */
 			WMA_LOGW("Failed to set listen interval %d",
 				 listen_interval);
 
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+		ret = wma_vdev_set_param(wma->wmi_handle,
 						privcmd->param_vdev_id,
 						WMI_VDEV_PARAM_DTIM_POLICY ,
 						NORMAL_DTIM);
-		if (ret)
+		if (QDF_IS_STATUS_ERROR(ret))
 			WMA_LOGE("Failed to Set to Normal DTIM policy");
 	}
 }
@@ -851,10 +808,12 @@ static void wma_set_modulated_dtim(tp_wma_handle wma,
 static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				    wma_cli_set_cmd_t *privcmd)
 {
-	int ret = 0, vid = privcmd->param_vdev_id, pps_val = 0;
+	int vid = privcmd->param_vdev_id, pps_val = 0;
+	QDF_STATUS ret;
 	struct wma_txrx_node *intr = wma->interfaces;
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	struct qpower_params *qparams = &intr[vid].config.qpower_params;
+	struct pdev_params pdev_param;
 
 	WMA_LOGD("wmihandle %p", wma->wmi_handle);
 
@@ -877,12 +836,12 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 	case VDEV_CMD:
 		WMA_LOGD("vdev id %d pid %d pval %d", privcmd->param_vdev_id,
 			 privcmd->param_id, privcmd->param_value);
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+		ret = wma_vdev_set_param(wma->wmi_handle,
 						      privcmd->param_vdev_id,
 						      privcmd->param_id,
 						      privcmd->param_value);
-		if (ret) {
-			WMA_LOGE("wmi_unified_vdev_set_param_send failed ret %d",
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			WMA_LOGE("wma_vdev_set_param failed ret %d",
 				  ret);
 			return;
 		}
@@ -895,11 +854,13 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			wma_update_txrx_chainmask(wma->num_rf_chains,
 						  &privcmd->param_value);
 		}
-		ret = wmi_unified_pdev_set_param(wma->wmi_handle,
-						 privcmd->param_id,
-						 privcmd->param_value);
-		if (ret) {
-			WMA_LOGE("wmi_unified_vdev_set_param_send failed ret %d",
+		pdev_param.param_id = privcmd->param_id;
+		pdev_param.param_value = privcmd->param_value;
+		ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+						 &pdev_param,
+						 WMA_WILDCARD_PDEV_ID);
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			WMA_LOGE("wma_vdev_set_param failed ret %d",
 				 ret);
 			return;
 		}
@@ -953,7 +914,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			htc_dump(wma->htc_handle, WD_DUMP, false);
 			break;
 		case GEN_PARAM_CRASH_INJECT:
-			ret = wmi_crash_inject(wma->wmi_handle,
+			ret = wma_crash_inject(wma,
 					       privcmd->param_value,
 					       privcmd->param_sec_value);
 			break;
@@ -1078,17 +1039,16 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				   WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
 				   ret);
 			break;
-#ifdef FEATURE_GREEN_AP
 		case WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID:
 			/* Set the Green AP */
-			ret = wmi_unified_pdev_green_ap_ps_enable_cmd
-					(wma->wmi_handle, privcmd->param_value);
+			ret = wmi_unified_green_ap_ps_send
+					(wma->wmi_handle, privcmd->param_value,
+					 WMA_WILDCARD_PDEV_ID);
 			if (ret) {
 				WMA_LOGE("Set GreenAP Failed val %d",
 					 privcmd->param_value);
 			}
 			break;
-#endif /* FEATURE_GREEN_AP */
 
 		default:
 			WMA_LOGE("Invalid param id 0x%x", privcmd->param_id);
@@ -1174,7 +1134,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			WMA_LOGD("QPOWER CLI CMD:Ps Poll Cnt val %d",
 				 privcmd->param_value);
 			/* Set the QPower Ps Poll Count */
-			ret = wmi_unified_set_sta_ps_param(wma->wmi_handle,
+			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
 				vid, WMI_STA_PS_PARAM_QPOWER_PSPOLL_COUNT,
 				privcmd->param_value);
 			if (ret) {
@@ -1188,7 +1148,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			WMA_LOGD("QPOWER CLI CMD:Max Tx Before wake val %d",
 				 privcmd->param_value);
 			/* Set the QPower Max Tx Before Wake */
-			ret = wmi_unified_set_sta_ps_param(wma->wmi_handle,
+			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
 				vid, WMI_STA_PS_PARAM_QPOWER_MAX_TX_BEFORE_WAKE,
 				privcmd->param_value);
 			if (ret) {
@@ -1203,7 +1163,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			WMA_LOGD("QPOWER CLI CMD:Ps Poll Wake Inv val %d",
 				 privcmd->param_value);
 			/* Set the QPower Spec Ps Poll Wake Inv */
-			ret = wmi_unified_set_sta_ps_param(wma->wmi_handle,
+			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
 				vid, WMI_STA_PS_PARAM_QPOWER_SPEC_PSPOLL_WAKE_INTERVAL,
 				privcmd->param_value);
 			if (ret) {
@@ -1218,7 +1178,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			WMA_LOGD("QPOWER CLI CMD:Spec NoData Ps Poll val %d",
 				 privcmd->param_value);
 			/* Set the QPower Spec NoData PsPoll */
-			ret = wmi_unified_set_sta_ps_param(wma->wmi_handle,
+			ret = wma_unified_set_sta_ps_param(wma->wmi_handle,
 				vid, WMI_STA_PS_PARAM_QPOWER_SPEC_MAX_SPEC_NODATA_PSPOLL,
 				privcmd->param_value);
 			if (ret) {
@@ -1301,7 +1261,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					privcmd->param_vdev_id,
 					&intr[vid].config.gtx_info);
 			if (ret) {
-				WMA_LOGE("wmi_unified_vdev_set_param_send"
+				WMA_LOGE("wma_vdev_set_param"
 					 " failed ret %d", ret);
 				return;
 			}
@@ -1445,7 +1405,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 			break;
 		}
 	} else if (5 == privcmd->param_vp_dev) {
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+		ret = wma_vdev_set_param(wma->wmi_handle,
 						      privcmd->param_vdev_id,
 						      WMI_VDEV_PARAM_PACKET_POWERSAVE,
 						      pps_val);
@@ -1476,15 +1436,32 @@ static int wma_process_fw_event(tp_wma_handle wma,
 }
 
 /**
+ * wmi_process_fw_event_tasklet_ctx() - process in tasklet context
+ * @ctx: handle to wmi
+ * @ev: wmi event buffer
+ *
+ * Event process by below function will be in tasket context,
+ * need to use this method only for time sensitive functions.
+ *
+ * Return: none
+ */
+static int wma_process_fw_event_tasklet_ctx(void *ctx, void *ev)
+{
+	wmi_process_fw_event(ctx, ev);
+
+	return 0;
+}
+
+/**
  * wma_process_fw_event_handler() - common event handler to serialize
  *                                  event processing through mc_thread
- * @wmi_handle: wmi handle
- * @evt_buf: event buffer
+ * @ctx: wmi context
+ * @ev: event buffer
+ * @rx_ctx: rx execution context
  *
  * Return: 0 on success, errno on failure
  */
-int wma_process_fw_event_handler(struct wmi_unified *wmi_handle,
-				 wmi_buf_t evt_buf)
+static int wma_process_fw_event_mc_thread_ctx(void *ctx, void *ev)
 {
 	wma_process_fw_event_params *params_buf;
 	cds_msg_t cds_msg = { 0 };
@@ -1492,12 +1469,12 @@ int wma_process_fw_event_handler(struct wmi_unified *wmi_handle,
 	params_buf = qdf_mem_malloc(sizeof(wma_process_fw_event_params));
 	if (!params_buf) {
 		WMA_LOGE("%s: Failed alloc memory for params_buf", __func__);
-		qdf_nbuf_free(evt_buf);
+		qdf_nbuf_free(ev);
 		return -ENOMEM;
 	}
 
-	params_buf->wmi_handle = wmi_handle;
-	params_buf->evt_buf = evt_buf;
+	params_buf->wmi_handle = (struct wmi_unified *)ctx;
+	params_buf->evt_buf = (wmi_buf_t *)ev;
 
 	cds_msg.type = WMA_PROCESS_FW_EVENT;
 	cds_msg.bodyptr = params_buf;
@@ -1507,13 +1484,38 @@ int wma_process_fw_event_handler(struct wmi_unified *wmi_handle,
 		cds_mq_post_message(CDS_MQ_ID_WMA, &cds_msg)) {
 		WMA_LOGP("%s: Failed to post WMA_PROCESS_FW_EVENT msg",
 			 __func__);
-		qdf_nbuf_free(evt_buf);
+		qdf_nbuf_free(ev);
 		qdf_mem_free(params_buf);
 		return -EFAULT;
 	}
 	WMA_LOGD("WMA_PROCESS_FW_EVENT posted");
 	return 0;
 
+}
+
+/**
+ * wma_process_fw_event_handler() - common event handler to serialize
+ *                                  event processing through mc_thread
+ * @ctx: wmi context
+ * @ev: event buffer
+ * @rx_ctx: rx execution context
+ *
+ * Return: 0 on success, errno on failure
+ */
+int wma_process_fw_event_handler(void *ctx, void *ev, uint8_t rx_ctx)
+{
+	int err = 0;
+
+	if (rx_ctx == WMA_RX_SERIALIZER_CTX) {
+		err = wma_process_fw_event_mc_thread_ctx(ctx, ev);
+	} else if (rx_ctx == WMA_RX_TASKLET_CTX) {
+		wma_process_fw_event_tasklet_ctx(ctx, ev);
+	} else {
+		WMA_LOGE("%s: invalid wmi event execution context", __func__);
+		qdf_nbuf_free(ev);
+	}
+
+	return err;
 }
 
 #ifdef QCA_LL_TX_FLOW_CONTROL_V2
@@ -1597,6 +1599,9 @@ QDF_STATUS wma_open(void *cds_context,
 	void *wmi_handle;
 	QDF_STATUS qdf_status;
 	struct txrx_pdev_cfg_param_t olCfg = { 0 };
+	struct wmi_rx_ops ops;
+
+	bool use_cookie = false;
 
 	WMA_LOGD("%s: Enter", __func__);
 
@@ -1632,9 +1637,11 @@ QDF_STATUS wma_open(void *cds_context,
 		qdf_wake_lock_create(&wma_handle->wow_wake_lock, "wlan_wow_wl");
 	}
 
+	/* Attach mc_thread context processing function */
+	ops.wma_process_fw_event_handler_cbk = wma_process_fw_event_handler;
 	/* attach the wmi */
-	wmi_handle = wmi_unified_attach(wma_handle,
-					wma_process_fw_event_handler);
+	wmi_handle = wmi_unified_attach(wma_handle, NULL,
+					WMI_TLV_TARGET, use_cookie, &ops);
 	if (!wmi_handle) {
 		WMA_LOGP("%s: failed to attach WMI", __func__);
 		qdf_status = QDF_STATUS_E_NOMEM;
@@ -1642,7 +1649,18 @@ QDF_STATUS wma_open(void *cds_context,
 	}
 
 	WMA_LOGA("WMA --> wmi_unified_attach - success");
-
+	wmi_unified_register_event_handler(wmi_handle,
+					   WMI_SERVICE_READY_EVENTID,
+					   wma_rx_service_ready_event,
+					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wmi_handle,
+					   WMI_SERVICE_READY_EXT_EVENTID,
+					   wma_rx_service_ready_ext_event,
+					   WMA_RX_SERIALIZER_CTX);
+	wmi_unified_register_event_handler(wmi_handle,
+					   WMI_READY_EVENTID,
+					   wma_rx_ready_event,
+					   WMA_RX_SERIALIZER_CTX);
 	/* Save the WMI & HTC handle */
 	wma_handle->wmi_handle = wmi_handle;
 	wma_handle->htc_handle = htc_handle;
@@ -1763,12 +1781,14 @@ QDF_STATUS wma_open(void *cds_context,
 		     wma_handle->max_bssid);
 	/* Register the debug print event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_DEBUG_PRINT_EVENTID,
-					   wma_unified_debug_print_event_handler);
+					WMI_DEBUG_PRINT_EVENTID,
+					wma_unified_debug_print_event_handler,
+					WMA_RX_SERIALIZER_CTX);
 	/* Register profiling event Handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					WMI_WLAN_PROFILE_DATA_EVENTID,
-					wma_profile_data_report_event_handler);
+					wma_profile_data_report_event_handler,
+					WMA_RX_SERIALIZER_CTX);
 
 	wma_handle->tgt_cfg_update_cb = tgt_cfg_cb;
 	wma_handle->dfs_radar_indication_cb = radar_ind_cb;
@@ -1845,43 +1865,52 @@ QDF_STATUS wma_open(void *cds_context,
 	/* Register vdev start response event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_VDEV_START_RESP_EVENTID,
-					   wma_vdev_start_resp_handler);
+					   wma_vdev_start_resp_handler,
+					   WMA_RX_SERIALIZER_CTX);
 
 	/* Register vdev stop response event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_VDEV_STOPPED_EVENTID,
-					   wma_vdev_stop_resp_handler);
+					   wma_vdev_stop_resp_handler,
+					   WMA_RX_SERIALIZER_CTX);
 
 	/* register for STA kickout function */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_STA_KICKOUT_EVENTID,
-					   wma_peer_sta_kickout_event_handler);
+					   wma_peer_sta_kickout_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 
 	/* register for stats response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_UPDATE_STATS_EVENTID,
-					   wma_stats_event_handler);
+					   wma_stats_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 	/* register for linkspeed response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_ESTIMATED_LINKSPEED_EVENTID,
-					   wma_link_speed_event_handler);
+					   wma_link_speed_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 
 #ifdef FEATURE_OEM_DATA_SUPPORT
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_OEM_CAPABILITY_EVENTID,
-					   wma_oem_capability_event_callback);
+					   wma_oem_capability_event_callback,
+					   WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_OEM_MEASUREMENT_REPORT_EVENTID,
-					   wma_oem_measurement_report_event_callback);
+				WMI_OEM_MEASUREMENT_REPORT_EVENTID,
+				wma_oem_measurement_report_event_callback,
+				WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_OEM_ERROR_REPORT_EVENTID,
-					   wma_oem_error_report_event_callback);
+					   wma_oem_error_report_event_callback,
+					   WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_OEM_RESPONSE_EVENTID,
-					   wma_oem_data_response_handler);
+					   wma_oem_data_response_handler,
+					   WMA_RX_SERIALIZER_CTX);
 #endif /* FEATURE_OEM_DATA_SUPPORT */
 	/*
 	 * Register appropriate DFS phyerr event handler for
@@ -1893,18 +1922,21 @@ QDF_STATUS wma_open(void *cds_context,
 	/* Register peer change event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_STATE_EVENTID,
-					   wma_peer_state_change_event_handler);
+					   wma_peer_state_change_event_handler,
+					   WMA_RX_WORK_CTX);
 
 	/* Register beacon tx complete event id. The event is required
 	 * for sending channel switch announcement frames
 	 */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_OFFLOAD_BCN_TX_STATUS_EVENTID,
-					   wma_unified_bcntx_status_event_handler);
+					WMI_OFFLOAD_BCN_TX_STATUS_EVENTID,
+					wma_unified_bcntx_status_event_handler,
+					WMA_RX_SERIALIZER_CTX);
 
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_UPDATE_VDEV_RATE_STATS_EVENTID,
-					   wma_link_status_event_handler);
+					   wma_link_status_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 #ifdef WLAN_FEATURE_LINK_LAYER_STATS
 	/* Register event handler for processing Link Layer Stats
 	 * response from the FW
@@ -1919,7 +1951,8 @@ QDF_STATUS wma_open(void *cds_context,
 	 */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_UPDATE_FW_MEM_DUMP_EVENTID,
-			wma_fw_mem_dump_event_handler);
+			wma_fw_mem_dump_event_handler,
+			WMA_RX_SERIALIZER_CTX);
 
 	/* Firmware debug log */
 	qdf_status = dbglog_init(wma_handle->wmi_handle);
@@ -1956,25 +1989,29 @@ QDF_STATUS wma_open(void *cds_context,
 #ifdef FEATURE_WLAN_TDLS
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_TDLS_PEER_EVENTID,
-					   wma_tdls_event_handler);
+					   wma_tdls_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 #endif /* FEATURE_WLAN_TDLS */
 
 	/* register for install key completion event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
-					   WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID,
-					   wma_vdev_install_key_complete_event_handler);
+				WMI_VDEV_INSTALL_KEY_COMPLETE_EVENTID,
+				wma_vdev_install_key_complete_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 #ifdef WLAN_FEATURE_NAN
 	/* register for nan response event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_NAN_EVENTID,
-					   wma_nan_rsp_event_handler);
+					   wma_nan_rsp_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 #endif /* WLAN_FEATURE_NAN */
 
 #ifdef WLAN_FEATURE_STATS_EXT
 	/* register for extended stats event */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_STATS_EXT_EVENTID,
-					   wma_stats_ext_event_handler);
+					   wma_stats_ext_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 #endif /* WLAN_FEATURE_STATS_EXT */
 #ifdef FEATURE_WLAN_EXTSCAN
 	wma_register_extscan_event_handler(wma_handle);
@@ -1985,27 +2022,32 @@ QDF_STATUS wma_open(void *cds_context,
 #ifdef WLAN_FEATURE_ROAM_OFFLOAD
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_ROAM_SYNCH_EVENTID,
-					   wma_roam_synch_event_handler);
+					   wma_roam_synch_event_handler,
+					   WMA_RX_SERIALIZER_CTX);
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_RSSI_BREACH_EVENTID,
-				wma_rssi_breached_event_handler);
+				wma_rssi_breached_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 
 	qdf_wake_lock_create(&wma_handle->wmi_cmd_rsp_wake_lock,
-				"wlan_fw_rsp_wakelock");
+					"wlan_fw_rsp_wakelock");
 	wma_handle->wmi_cmd_rsp_runtime_lock =
 			qdf_runtime_lock_init("wlan_fw_rsp_runtime_lock");
 
 	/* Register peer assoc conf event handler */
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_ASSOC_CONF_EVENTID,
-					   wma_peer_assoc_conf_handler);
+					   wma_peer_assoc_conf_handler,
+					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_VDEV_DELETE_RESP_EVENTID,
-					   wma_vdev_delete_handler);
+					   wma_vdev_delete_handler,
+					   WMA_RX_SERIALIZER_CTX);
 	wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					   WMI_PEER_DELETE_RESP_EVENTID,
-					   wma_peer_delete_handler);
+					   wma_peer_delete_handler,
+					   WMA_RX_SERIALIZER_CTX);
 	return QDF_STATUS_SUCCESS;
 
 err_dbglog_init:
@@ -2638,7 +2680,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_SCAN_EVENTID,
-						    wma_scan_event_callback);
+						    wma_scan_event_callback,
+						    WMA_RX_SERIALIZER_CTX);
 	if (0 != status) {
 		WMA_LOGP("%s: Failed to register scan callback", __func__);
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2647,7 +2690,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_ROAM_EVENTID,
-						    wma_roam_event_callback);
+						    wma_roam_event_callback,
+						    WMA_RX_WORK_CTX);
 	if (0 != status) {
 		WMA_LOGP("%s: Failed to register Roam callback", __func__);
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2656,7 +2700,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_WOW_WAKEUP_HOST_EVENTID,
-						    wma_wow_wakeup_host_event);
+						    wma_wow_wakeup_host_event,
+						    WMA_RX_TASKLET_CTX);
 	if (status) {
 		WMA_LOGP("%s: Failed to register wow wakeup host event handler",
 			 __func__);
@@ -2666,7 +2711,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 				WMI_PDEV_RESUME_EVENTID,
-				wma_pdev_resume_event_handler);
+				wma_pdev_resume_event_handler,
+				WMA_RX_TASKLET_CTX);
 	if (status) {
 		WMA_LOGP("%s: Failed to register PDEV resume event handler",
 			 __func__);
@@ -2681,8 +2727,9 @@ QDF_STATUS wma_start(void *cds_ctx)
 		WMA_LOGD("FW supports pno offload, registering nlo match handler");
 
 		status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-							   WMI_NLO_MATCH_EVENTID,
-							   wma_nlo_match_evt_handler);
+						WMI_NLO_MATCH_EVENTID,
+						wma_nlo_match_evt_handler,
+						WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register nlo match event cb");
 			qdf_status = QDF_STATUS_E_FAILURE;
@@ -2690,8 +2737,9 @@ QDF_STATUS wma_start(void *cds_ctx)
 		}
 
 		status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-							   WMI_NLO_SCAN_COMPLETE_EVENTID,
-							   wma_nlo_scan_cmp_evt_handler);
+						WMI_NLO_SCAN_COMPLETE_EVENTID,
+						wma_nlo_scan_cmp_evt_handler,
+						WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register nlo scan comp event cb");
 			qdf_status = QDF_STATUS_E_FAILURE;
@@ -2703,16 +2751,18 @@ QDF_STATUS wma_start(void *cds_ctx)
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 	WMA_LOGE("MCC TX Pause Event Handler register");
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_TX_PAUSE_EVENTID,
-						    wma_mcc_vdev_tx_pause_evt_handler);
+					WMI_TX_PAUSE_EVENTID,
+					wma_mcc_vdev_tx_pause_evt_handler,
+					WMA_RX_TASKLET_CTX);
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 
 #ifdef FEATURE_WLAN_CH_AVOID
 	WMA_LOGD("Registering channel to avoid handler");
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_WLAN_FREQ_AVOID_EVENTID,
-						    wma_channel_avoid_evt_handler);
+						WMI_WLAN_FREQ_AVOID_EVENTID,
+						wma_channel_avoid_evt_handler,
+						WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register channel to avoid event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2722,8 +2772,9 @@ QDF_STATUS wma_start(void *cds_ctx)
 #ifdef FEATURE_WLAN_AUTO_SHUTDOWN
 	WMA_LOGD("Registering auto shutdown handler");
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_HOST_AUTO_SHUTDOWN_EVENTID,
-						    wma_auto_shutdown_event_handler);
+						WMI_HOST_AUTO_SHUTDOWN_EVENTID,
+						wma_auto_shutdown_event_handler,
+						WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register WMI Auto shutdown event handler");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2731,8 +2782,9 @@ QDF_STATUS wma_start(void *cds_ctx)
 	}
 #endif /* FEATURE_WLAN_AUTO_SHUTDOWN */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_THERMAL_MGMT_EVENTID,
-						    wma_thermal_mgmt_evt_handler);
+						WMI_THERMAL_MGMT_EVENTID,
+						wma_thermal_mgmt_evt_handler,
+						WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register thermal mitigation event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2775,8 +2827,9 @@ QDF_STATUS wma_start(void *cds_ctx)
 
 	/* Initialize the get temperature event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_PDEV_TEMPERATURE_EVENTID,
-						    wma_pdev_temperature_evt_handler);
+					WMI_PDEV_TEMPERATURE_EVENTID,
+					wma_pdev_temperature_evt_handler,
+					WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register get_temperature event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2786,7 +2839,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 	/* Initialize the log flush complete event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_DEBUG_MESG_FLUSH_COMPLETE_EVENTID,
-			wma_flush_complete_evt_handler);
+			wma_flush_complete_evt_handler,
+			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register log flush complete event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2796,7 +2850,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 	/* Initialize the WMI_SOC_SET_HW_MODE_RESP_EVENTID event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_SOC_SET_HW_MODE_RESP_EVENTID,
-			wma_soc_set_hw_mode_resp_evt_handler);
+			wma_soc_set_hw_mode_resp_evt_handler,
+			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register set hw mode resp event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2806,7 +2861,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 	/* Initialize the WMI_SOC_HW_MODE_TRANSITION_EVENTID event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_SOC_HW_MODE_TRANSITION_EVENTID,
-			wma_soc_hw_mode_transition_evt_handler);
+			wma_soc_hw_mode_transition_evt_handler,
+			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register hw mode transition event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -2816,7 +2872,8 @@ QDF_STATUS wma_start(void *cds_ctx)
 	/* Initialize the set dual mac configuration event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_SOC_SET_DUAL_MAC_CONFIG_RESP_EVENTID,
-			wma_soc_set_dual_mode_config_resp_evt_handler);
+			wma_soc_set_dual_mode_config_resp_evt_handler,
+			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register hw mode transition event cb");
 		qdf_status = QDF_STATUS_E_FAILURE;
@@ -3800,7 +3857,8 @@ done:
  *
  * Return: none
  */
-void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
+int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
+					uint32_t length)
 {
 	wmi_buf_t buf;
 	uint32_t len;
@@ -3817,13 +3875,13 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	param_buf = (WMI_SERVICE_READY_EVENTID_param_tlvs *) cmd_param_info;
 	if (!(handle && param_buf)) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	ev = param_buf->fixed_param;
 	if (!ev) {
 		WMA_LOGP("%s: Invalid buffer", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	WMA_LOGA("WMA <-- WMI_SERVICE_READY_EVENTID");
@@ -3906,10 +3964,11 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	/* SWBA event handler for beacon transmission */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_HOST_SWBA_EVENTID,
-						    wma_beacon_swba_handler);
+						    wma_beacon_swba_handler,
+						    WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register swba beacon event cb");
-		return;
+		return -EINVAL;
 	}
 #ifdef WLAN_FEATURE_LPSS
 	wma_handle->lpss_support =
@@ -3930,11 +3989,12 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		WMA_LOGD("%s: FW support CSA offload capability", __func__);
 		status =
 			wmi_unified_register_event_handler(wma_handle->wmi_handle,
-							   WMI_CSA_HANDLING_EVENTID,
-							   wma_csa_offload_handler);
+						WMI_CSA_HANDLING_EVENTID,
+						wma_csa_offload_handler,
+						WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register CSA offload event cb");
-			return;
+			return -EINVAL;
 		}
 	}
 
@@ -3944,7 +4004,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		status = wmi_desc_pool_init(wma_handle, WMI_DESC_POOL_MAX);
 		if (status) {
 			WMA_LOGE("Failed to initialize wmi descriptor pool");
-			return;
+			return -EINVAL;
 		}
 		/*
 		 * Register Tx completion event handler for MGMT Tx over WMI
@@ -3953,10 +4013,11 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		status = wmi_unified_register_event_handler(
 					wma_handle->wmi_handle,
 					WMI_MGMT_TX_COMPLETION_EVENTID,
-					wma_mgmt_tx_completion_handler);
+					wma_mgmt_tx_completion_handler,
+					WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register MGMT over WMI completion handler");
-			return;
+			return -EINVAL;
 		}
 
 	} else {
@@ -3967,29 +4028,32 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 				   WMI_SERVICE_GTK_OFFLOAD)) {
 		status =
 			wmi_unified_register_event_handler(wma_handle->wmi_handle,
-							   WMI_GTK_OFFLOAD_STATUS_EVENTID,
-							   wma_gtk_offload_status_event);
+						WMI_GTK_OFFLOAD_STATUS_EVENTID,
+						wma_gtk_offload_status_event,
+						WMA_RX_SERIALIZER_CTX);
 		if (status) {
 			WMA_LOGE("Failed to register GTK offload event cb");
-			return;
+			return -EINVAL;
 		}
 	}
 #endif /* WLAN_FEATURE_GTK_OFFLOAD */
 
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 						    WMI_P2P_NOA_EVENTID,
-						    wma_p2p_noa_event_handler);
+						    wma_p2p_noa_event_handler,
+						    WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE("Failed to register WMI_P2P_NOA_EVENTID callback");
-		return;
+		return -EINVAL;
 	}
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						    WMI_TBTTOFFSET_UPDATE_EVENTID,
-						    wma_tbttoffset_update_event_handler);
+				WMI_TBTTOFFSET_UPDATE_EVENTID,
+				wma_tbttoffset_update_event_handler,
+				WMA_RX_SERIALIZER_CTX);
 	if (status) {
 		WMA_LOGE
 			("Failed to register WMI_TBTTOFFSET_UPDATE_EVENTID callback");
-		return;
+		return -EINVAL;
 	}
 
 	/* register the Enhanced Green AP event handler */
@@ -3998,10 +4062,11 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	/* Initialize the log supported event handler */
 	status = wmi_unified_register_event_handler(wma_handle->wmi_handle,
 			WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID,
-			wma_log_supported_evt_handler);
+			wma_log_supported_evt_handler,
+			WMA_RX_SERIALIZER_CTX);
 	if (status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to register log supported event cb");
-		return;
+		return -EINVAL;
 	}
 
 	qdf_mem_copy(target_cap.wmi_service_bitmap,
@@ -4017,7 +4082,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	buf = wma_setup_wmi_init_msg(wma_handle, ev, param_buf, &len);
 	if (!buf) {
 		WMA_LOGE("Failed to setup buffer for wma init command");
-		return;
+		return -EINVAL;
 	}
 
 	/* A host, which supports WMI_SERVICE_READY_EXT_EVENTID, would need to
@@ -4036,7 +4101,7 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		if (status != EOK) {
 			WMA_LOGE("Failed to send WMI_INIT_CMDID command");
 			wmi_buf_free(buf);
-			return;
+			return -EINVAL;
 		}
 	} else {
 		/* Need to save and send the WMI INIT command only after
@@ -4055,16 +4120,20 @@ void wma_rx_service_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 		WMA_LOGA("%s: WMA waiting for WMI_SERVICE_READY_EXT_EVENTID",
 				__func__);
 	}
+
+	return 0;
 }
 
 /**
  * wma_rx_service_ready_ext_event() - evt handler for sevice ready ext event.
  * @handle: wma handle
  * @event: params of the service ready extended event
+ * @length: param length
  *
  * Return: none
  */
-void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
+int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
+					uint32_t length)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *param_buf;
@@ -4076,26 +4145,26 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 
 	if (!wma_handle) {
 		WMA_LOGP("%s: Invalid WMA handle", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	param_buf = (WMI_SERVICE_READY_EXT_EVENTID_param_tlvs *) event;
 	if (!param_buf) {
 		WMA_LOGP("%s: Invalid event", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	ev = param_buf->fixed_param;
 	if (!ev) {
 		WMA_LOGP("%s: Invalid buffer", __func__);
-		return;
+		return -EINVAL;
 	}
 
 	WMA_LOGA("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
 
 	if (!wma_handle->saved_wmi_init_cmd.buf) {
 		WMA_LOGP("Service ready ext event w/o WMI_SERVICE_EXT_MSG!");
-		return;
+		return -EINVAL;
 	}
 
 	WMA_LOGA("%s: Defaults: scan config:%x FW mode config:%x",
@@ -4105,7 +4174,7 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 	ret = qdf_mc_timer_stop(&wma_handle->service_ready_ext_timer);
 	if (!QDF_IS_STATUS_SUCCESS(ret)) {
 		WMA_LOGP("Failed to stop the service ready ext timer");
-		return;
+		return -EINVAL;
 	}
 
 	WMA_LOGA("WMA --> WMI_INIT_CMDID");
@@ -4126,6 +4195,8 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
 	wma_init_scan_fw_mode_config(wma_handle,
 				ev->default_conc_scan_config_bits,
 				ev->default_fw_config_bits);
+
+	return 0;
 }
 
 /**
@@ -4133,10 +4204,12 @@ void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *event)
  *                        wmi rx ready event.
  * @handle: wma handle
  * @cmd_param_info: command params info
+ * @length: param length
  *
  * Return: none
  */
-void wma_rx_ready_event(WMA_HANDLE handle, void *cmd_param_info)
+int wma_rx_ready_event(void *handle, uint8_t *cmd_param_info,
+					uint32_t length)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	WMI_READY_EVENTID_param_tlvs *param_buf = NULL;
@@ -4148,7 +4221,7 @@ void wma_rx_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	if (!(wma_handle && param_buf)) {
 		WMA_LOGP("%s: Invalid arguments", __func__);
 		QDF_ASSERT(0);
-		return;
+		return -EINVAL;
 	}
 
 	WMA_LOGA("WMA <-- WMI_READY_EVENTID");
@@ -4206,6 +4279,8 @@ void wma_rx_ready_event(WMA_HANDLE handle, void *cmd_param_info)
 	qdf_event_set(&wma_handle->wma_ready_event);
 
 	WMA_LOGD("Exit");
+
+	return 0;
 }
 
 /**
@@ -4345,7 +4420,7 @@ QDF_STATUS wma_set_ppsconfig(uint8_t vdev_id, uint16_t pps_param,
 pkt_pwr_save_config:
 		WMA_LOGD("vdev_id:%d val:0x%x pps_val:0x%x", vdev_id,
 			 val, pps_val);
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						      WMI_VDEV_PARAM_PACKET_POWERSAVE,
 						      pps_val);
 		break;
@@ -4424,18 +4499,18 @@ QDF_STATUS wma_process_set_miracast(tp_wma_handle wma, uint32_t *miracast_val)
 static QDF_STATUS wma_config_stats_factor(tp_wma_handle wma,
 				      struct sir_stats_avg_factor *avg_factor)
 {
-	int ret;
+	QDF_STATUS ret;
 
 	if (NULL == wma || NULL == avg_factor) {
 		WMA_LOGE("%s: Invalid input of stats avg factor", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+	ret = wma_vdev_set_param(wma->wmi_handle,
 					    avg_factor->vdev_id,
 					    WMI_VDEV_PARAM_STATS_AVG_FACTOR,
 					    avg_factor->stats_avg_factor);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE(" failed to set avg_factor for vdev_id %d",
 			 avg_factor->vdev_id);
 	}
@@ -4459,18 +4534,18 @@ static QDF_STATUS wma_config_stats_factor(tp_wma_handle wma,
 static QDF_STATUS wma_config_guard_time(tp_wma_handle wma,
 				   struct sir_guard_time_request *guard_time)
 {
-	int ret;
+	QDF_STATUS ret;
 
 	if (NULL == wma || NULL == guard_time) {
 		WMA_LOGE("%s: Invalid input of guard time", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+	ret = wma_vdev_set_param(wma->wmi_handle,
 					      guard_time->vdev_id,
 					      WMI_VDEV_PARAM_RX_LEAK_WINDOW,
 					      guard_time->guard_time);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE(" failed to set guard time for vdev_id %d",
 			 guard_time->vdev_id);
 	}
@@ -5635,13 +5710,18 @@ QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
  * This function will send a command to FW in order to simulate different
  * kinds of FW crashes.
  *
- * Return: 0 for success or reasons for failure
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
+QDF_STATUS wma_crash_inject(tp_wma_handle wma_handle, uint32_t type,
 			uint32_t delay_time_ms)
 {
-	return wmi_crash_inject(wma_handle->wmi_handle, type, delay_time_ms);
+	struct crash_inject param;
+	param.type = type;
+	param.delay_time_ms = delay_time_ms;
+
+	return wmi_crash_inject(wma_handle->wmi_handle, &param);
 }
+
 #if defined(FEATURE_LRO)
 /**
  * wma_lro_init() - sends LRO configuration to FW

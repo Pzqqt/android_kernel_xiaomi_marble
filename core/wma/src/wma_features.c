@@ -1079,15 +1079,16 @@ void wma_setup_egap_support(struct wma_tgt_cfg *tgt_cfg, WMA_HANDLE handle)
 void wma_register_egap_event_handle(WMA_HANDLE handle)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	int status;
+	QDF_STATUS status;
 
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_EGAP)) {
 		status = wmi_unified_register_event_handler(
 						   wma_handle->wmi_handle,
 						   WMI_AP_PS_EGAP_INFO_EVENTID,
-						   wma_egap_info_status_event);
-		if (status) {
+						   wma_egap_info_status_event,
+						   WMA_RX_SERIALIZER_CTX);
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("Failed to register Enhance Green AP event");
 			wma_handle->egap_support = false;
 		} else {
@@ -1096,45 +1097,6 @@ void wma_register_egap_event_handle(WMA_HANDLE handle)
 		}
 	} else
 		wma_handle->egap_support = false;
-}
-
-/**
- * wmi_unified_pdev_green_ap_ps_enable_cmd() - enable green ap powersave command
- * @wmi_handle: wmi handle
- * @value: value
- *
- * Return: 0 for success or error code
- */
-int32_t wmi_unified_pdev_green_ap_ps_enable_cmd(wmi_unified_t wmi_handle,
-						       uint32_t value)
-{
-	wmi_pdev_green_ap_ps_enable_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
-
-	WMA_LOGD("Set Green AP PS val %d", value);
-
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: Green AP PS Mem Alloc Failed", __func__);
-		return -ENOMEM;
-	}
-
-	cmd = (wmi_pdev_green_ap_ps_enable_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_pdev_green_ap_ps_enable_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_pdev_green_ap_ps_enable_cmd_fixed_param));
-	cmd->reserved0 = 0;
-	cmd->enable = value;
-
-	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-				 WMI_PDEV_GREEN_AP_PS_ENABLE_CMDID)) {
-		WMA_LOGE("Set Green AP PS param Failed val %d", value);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	return 0;
 }
 #endif /* FEATURE_GREEN_AP */
 
@@ -1450,13 +1412,13 @@ int wmi_unified_nat_keepalive_enable(tp_wma_handle wma, uint8_t vdev_id)
 }
 
 /**
- * wmi_unified_csa_offload_enable() - sen CSA offload enable command
+ * wma_unified_csa_offload_enable() - sen CSA offload enable command
  * @wma: wma handle
  * @vdev_id: vdev id
  *
  * Return: 0 for success or error code
  */
-int wmi_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id)
+int wma_unified_csa_offload_enable(tp_wma_handle wma, uint8_t vdev_id)
 {
 	wmi_csa_offload_enable_cmd_fixed_param *cmd;
 	wmi_buf_t buf;
@@ -2375,16 +2337,18 @@ void wma_register_dfs_event_handler(tp_wma_handle wma_handle)
 		WMA_LOGD("%s:Phyerror Filtering offload is Disabled in ini",
 			 __func__);
 		wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						   WMI_PHYERR_EVENTID,
-						   wma_unified_phyerr_rx_event_handler);
+					WMI_PHYERR_EVENTID,
+					wma_unified_phyerr_rx_event_handler,
+					WMA_RX_WORK_CTX);
 		WMA_LOGD("%s: WMI_PHYERR_EVENTID event handler registered",
 			 __func__);
 	} else {
 		WMA_LOGD("%s:Phyerror Filtering offload is Enabled in ini",
 			 __func__);
 		wmi_unified_register_event_handler(wma_handle->wmi_handle,
-						   WMI_DFS_RADAR_EVENTID,
-						   wma_unified_dfs_radar_rx_event_handler);
+					WMI_DFS_RADAR_EVENTID,
+					wma_unified_dfs_radar_rx_event_handler,
+					WMA_RX_WORK_CTX);
 		WMA_LOGD("%s:WMI_DFS_RADAR_EVENTID event handler registered",
 			 __func__);
 	}
@@ -2554,7 +2518,7 @@ QDF_STATUS wma_pktlog_wmi_send_cmd(WMA_HANDLE handle,
 			       WMITLV_TAG_STRUC_wmi_pdev_pktlog_disable_cmd_fixed_param,
 			       WMITLV_GET_STRUCT_TLVLEN
 				       (wmi_pdev_pktlog_disable_cmd_fixed_param));
-		disable_cmd->reserved0 = 0;
+		disable_cmd->pdev_id = 0;
 		if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
 					 WMI_PDEV_PKTLOG_DISABLE_CMDID)) {
 			WMA_LOGE("failed to send pktlog disable cmdid");
@@ -3537,13 +3501,12 @@ void wma_enable_disable_wakeup_event(WMA_HANDLE handle,
 QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 {
 	tp_wma_handle wma = handle;
-	wmi_wow_enable_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len;
 	int ret;
 	struct hif_opaque_softc *scn;
 	int host_credits;
 	int wmi_pending_cmds;
+	struct wow_cmd_params param = {0};
+
 #ifdef CONFIG_CNSS
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
@@ -3552,29 +3515,6 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 		return QDF_STATUS_E_FAILURE;
 	}
 #endif /* CONFIG_CNSS */
-
-	len = sizeof(wmi_wow_enable_cmd_fixed_param);
-
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (wmi_wow_enable_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_wow_enable_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_wow_enable_cmd_fixed_param));
-	cmd->enable = true;
-	if (htc_can_suspend_link(wma->htc_handle))
-		cmd->pause_iface_config = WOW_IFACE_PAUSE_ENABLED;
-	else
-		cmd->pause_iface_config = WOW_IFACE_PAUSE_DISABLED;
-
-	WMA_LOGI("suspend type: %s",
-		cmd->pause_iface_config == WOW_IFACE_PAUSE_ENABLED ?
-		"WOW_IFACE_PAUSE_ENABLED" : "WOW_IFACE_PAUSE_DISABLED");
 
 	qdf_event_reset(&wma->target_suspend);
 	wma->wow_nack = 0;
@@ -3594,8 +3534,10 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 #endif
 	}
 
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_WOW_ENABLE_CMDID);
+	param.enable = true;
+	param.can_suspend_link = hif_can_suspend_link(wma->htc_handle);
+	ret = wmi_unified_wow_enable_send(wma->wmi_handle, &param,
+				   WMA_WILDCARD_PDEV_ID);
 	if (ret) {
 		WMA_LOGE("Failed to enable wow in fw");
 		goto error;
@@ -3665,7 +3607,6 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle)
 	return QDF_STATUS_SUCCESS;
 
 error:
-	wmi_buf_free(buf);
 	return QDF_STATUS_E_FAILURE;
 }
 
@@ -6288,6 +6229,7 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
 	int32_t cck_mask_val = 0;
 	int ret = 0;
+	struct pdev_params pdev_param = {0};
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: wma context is NULL", __func__);
@@ -6323,9 +6265,12 @@ void wma_send_regdomain_info_to_fw(uint32_t reg_dmn, uint16_t regdmn2G,
 		cck_mask_val = 1;
 
 	cck_mask_val |= (wma->self_gen_frm_pwr << 16);
-	ret = wmi_unified_pdev_set_param(wma->wmi_handle,
-					 WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK,
-					 cck_mask_val);
+	pdev_param.param_id = WMI_PDEV_PARAM_TX_CHAIN_MASK_CCK;
+	pdev_param.param_value = cck_mask_val;
+	ret = wmi_unified_pdev_param_send(wma->wmi_handle,
+					 &pdev_param,
+					 WMA_WILDCARD_PDEV_ID);
+
 	if (ret)
 		WMA_LOGE("failed to set PDEV tx_chain_mask_cck %d",
 			 ret);
@@ -6526,58 +6471,37 @@ int wma_bus_resume(void)
  * @handle: wma handle
  * @disable_target_intr: disable target interrupt
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
+QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_pdev_suspend_cmd_fixed_param *cmd;
-	wmi_buf_t wmibuf;
-	uint32_t len = sizeof(*cmd);
 	struct hif_opaque_softc *scn;
-	int ret;
+	QDF_STATUS status;
+	struct suspend_params param = {0};
+
 #ifdef CONFIG_CNSS
 	tpAniSirGlobal pmac = cds_get_context(QDF_MODULE_ID_PE);
 #endif
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("WMA is closed. can not issue suspend cmd");
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 
 #ifdef CONFIG_CNSS
 	if (NULL == pmac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 #endif
-
-	/*
-	 * send the comand to Target to ignore the
-	 * PCIE reset so as to ensure that Host and target
-	 * states are in sync
-	 */
-	wmibuf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (wmibuf == NULL)
-		return -ENOMEM;
-
-	cmd = (wmi_pdev_suspend_cmd_fixed_param *) wmi_buf_data(wmibuf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_pdev_suspend_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_pdev_suspend_cmd_fixed_param));
-	if (disable_target_intr) {
-		cmd->suspend_opt = WMI_PDEV_SUSPEND_AND_DISABLE_INTR;
-	} else {
-		cmd->suspend_opt = WMI_PDEV_SUSPEND;
-	}
 	qdf_event_reset(&wma_handle->target_suspend);
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, wmibuf, len,
-				 WMI_PDEV_SUSPEND_CMDID);
-	if (ret < 0) {
-		qdf_nbuf_free(wmibuf);
-		return ret;
-	}
+	param.disable_target_intr = disable_target_intr;
+	status = wmi_unified_suspend_send(wma_handle->wmi_handle,
+				&param,
+				WMA_WILDCARD_PDEV_ID);
+	if (QDF_IS_STATUS_ERROR(status))
+		return status;
 
 	wmi_set_target_suspend(wma_handle->wmi_handle, true);
 
@@ -6597,7 +6521,7 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 			WMA_LOGE("%s: LOGP is in progress, ignore!", __func__);
 		}
 #endif
-		return -EFAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
 	scn = cds_get_context(QDF_MODULE_ID_HIF);
@@ -6605,10 +6529,10 @@ int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr)
 	if (scn == NULL) {
 		WMA_LOGE("%s: Failed to get HIF context", __func__);
 		QDF_ASSERT(0);
-		return -EFAULT;
+		return QDF_STATUS_E_FAULT;
 	}
 
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -6639,40 +6563,26 @@ void wma_target_suspend_acknowledge(void *context)
  * wma_resume_target() - resume target
  * @handle: wma handle
  *
- * Return: 0 for success or error code
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int wma_resume_target(WMA_HANDLE handle)
+QDF_STATUS wma_resume_target(WMA_HANDLE handle)
 {
 	int ret;
 	tp_wma_handle wma = (tp_wma_handle) handle;
-	wmi_buf_t wmibuf;
-	wmi_pdev_resume_cmd_fixed_param *cmd;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
 #ifdef CONFIG_CNSS
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 	if (NULL == pMac) {
 		WMA_LOGE("%s: Unable to get PE context", __func__);
-		return -EINVAL;
+		return QDF_STATUS_E_INVAL;
 	}
 #endif /* CONFIG_CNSS */
 
-	wmibuf = wmi_buf_alloc(wma->wmi_handle, sizeof(*cmd));
-	if (wmibuf == NULL) {
-		return -ENOMEM;
-	}
-	cmd = (wmi_pdev_resume_cmd_fixed_param *) wmi_buf_data(wmibuf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_pdev_resume_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_pdev_resume_cmd_fixed_param));
-	cmd->reserved0 = 0;
 	qdf_event_reset(&wma->wma_resume_event);
-	ret = wmi_unified_cmd_send(wma->wmi_handle, wmibuf, sizeof(*cmd),
-				   WMI_PDEV_RESUME_CMDID);
-	if (ret != EOK) {
+	qdf_status = wmi_unified_resume_send(wma->wmi_handle,
+					WMA_WILDCARD_PDEV_ID);
+	if (QDF_IS_STATUS_ERROR(qdf_status))
 		WMA_LOGE("Failed to send WMI_PDEV_RESUME_CMDID command");
-		wmi_buf_free(wmibuf);
-	}
 
 	qdf_status = qdf_wait_single_event(&(wma->wma_resume_event),
 			WMA_RESUME_TIMEOUT);

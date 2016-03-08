@@ -92,11 +92,11 @@ QDF_STATUS wma_wmi_service_close(void *cds_context);
 
 QDF_STATUS wma_wmi_work_close(void *cds_context);
 
-void wma_rx_ready_event(WMA_HANDLE handle, void *ev);
+int wma_rx_ready_event(void *handle, uint8_t *ev, uint32_t len);
 
-void wma_rx_service_ready_event(WMA_HANDLE handle, void *ev);
+int  wma_rx_service_ready_event(void *handle, uint8_t *ev, uint32_t len);
 
-void wma_rx_service_ready_ext_event(WMA_HANDLE handle, void *ev);
+int wma_rx_service_ready_ext_event(void *handle, uint8_t *ev, uint32_t len);
 
 void wma_setneedshutdown(void *cds_context);
 
@@ -120,10 +120,10 @@ QDF_STATUS wma_get_wcnss_software_version(void *p_cds_gctx,
 int wma_runtime_suspend(void);
 int wma_runtime_resume(void);
 int wma_bus_suspend(void);
-int wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
+QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 void wma_target_suspend_acknowledge(void *context);
 int wma_bus_resume(void);
-int wma_resume_target(WMA_HANDLE handle);
+QDF_STATUS wma_resume_target(WMA_HANDLE handle);
 QDF_STATUS wma_disable_wow_in_fw(WMA_HANDLE handle);
 QDF_STATUS wma_disable_d0wow_in_fw(WMA_HANDLE handle);
 bool wma_is_wow_mode_selected(WMA_HANDLE handle);
@@ -131,8 +131,9 @@ QDF_STATUS wma_enable_wow_in_fw(WMA_HANDLE handle);
 QDF_STATUS wma_enable_d0wow_in_fw(WMA_HANDLE handle);
 bool wma_check_scan_in_progress(WMA_HANDLE handle);
 void wma_set_peer_authorized_cb(void *wma_ctx, wma_peer_authorized_fp auth_cb);
-int wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr, uint32_t param_id,
-		       uint32_t param_value, uint32_t vdev_id);
+QDF_STATUS wma_set_peer_param(void *wma_ctx, uint8_t *peer_addr,
+		  uint32_t param_id,
+		  uint32_t param_value, uint32_t vdev_id);
 #ifdef NOT_YET
 QDF_STATUS wma_update_channel_list(WMA_HANDLE handle, void *scan_chan_info);
 #endif

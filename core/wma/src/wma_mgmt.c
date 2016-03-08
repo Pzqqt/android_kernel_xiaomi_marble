@@ -566,6 +566,7 @@ void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 {
 	uint32_t min_inactive_time, max_inactive_time, max_unresponsive_time;
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
+	QDF_STATUS status;
 
 	if (NULL == mac) {
 		WMA_LOGE("%s: Failed to get mac", __func__);
@@ -577,19 +578,25 @@ void wma_set_sap_keepalive(tp_wma_handle wma, uint8_t vdev_id)
 
 	min_inactive_time = max_inactive_time / 2;
 
-	if (wmi_unified_vdev_set_param_send(wma->wmi_handle,
-		vdev_id, WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
-					min_inactive_time))
+	status = wma_vdev_set_param(wma->wmi_handle,
+				vdev_id,
+				WMI_VDEV_PARAM_AP_KEEPALIVE_MIN_IDLE_INACTIVE_TIME_SECS,
+				min_inactive_time);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to Set AP MIN IDLE INACTIVE TIME");
 
-	if (wmi_unified_vdev_set_param_send(wma->wmi_handle,
-		vdev_id, WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
-					    max_inactive_time))
+	status = wma_vdev_set_param(wma->wmi_handle,
+				vdev_id,
+				WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_IDLE_INACTIVE_TIME_SECS,
+				max_inactive_time);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to Set AP MAX IDLE INACTIVE TIME");
 
-	if (wmi_unified_vdev_set_param_send(wma->wmi_handle,
-		vdev_id, WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
-					    max_unresponsive_time))
+	status = wma_vdev_set_param(wma->wmi_handle,
+				vdev_id,
+				WMI_VDEV_PARAM_AP_KEEPALIVE_MAX_UNRESPONSIVE_TIME_SECS,
+				max_unresponsive_time);
+	if (QDF_IS_STATUS_ERROR(status))
 		WMA_LOGE("Failed to Set MAX UNRESPONSIVE TIME");
 
 	WMA_LOGD("%s:vdev_id:%d min_inactive_time: %u max_inactive_time: %u"
@@ -1061,7 +1068,7 @@ int32_t wmi_unified_send_peer_assoc(tp_wma_handle wma,
 
 #ifdef FEATURE_WLAN_WAPI
 	if (params->encryptType == eSIR_ED_WPI) {
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+		ret = wma_vdev_set_param(wma->wmi_handle,
 						      params->smesessionId,
 						      WMI_VDEV_PARAM_DROP_UNENCRY,
 						      false);
@@ -1228,16 +1235,16 @@ int wmi_unified_vdev_set_gtx_cfg_send(wmi_unified_t wmi_handle, uint32_t if_id,
 void wma_update_protection_mode(tp_wma_handle wma, uint8_t vdev_id,
 			   uint8_t llbcoexist)
 {
-	int ret;
+	QDF_STATUS ret;
 	enum ieee80211_protmode prot_mode;
 
 	prot_mode = llbcoexist ? IEEE80211_PROT_CTSONLY : IEEE80211_PROT_NONE;
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_PROTECTION_MODE,
 					      prot_mode);
 
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to send wmi protection mode cmd");
 	else
 		WMA_LOGD("Updated protection mode %d to target", prot_mode);
@@ -1255,13 +1262,13 @@ static void
 wma_update_beacon_interval(tp_wma_handle wma, uint8_t vdev_id,
 			   uint16_t beaconInterval)
 {
-	int ret;
+	QDF_STATUS ret;
 
-	ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+	ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 					      WMI_VDEV_PARAM_BEACON_INTERVAL,
 					      beaconInterval);
 
-	if (ret)
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to update beacon interval");
 	else
 		WMA_LOGI("Updated beacon interval %d for vdev %d",
@@ -1311,7 +1318,7 @@ void wma_update_cfg_params(tp_wma_handle wma, tSirMsgQ *cfgParam)
 	uint8_t vdev_id;
 	uint32_t param_id;
 	uint32_t cfg_val;
-	int ret;
+	QDF_STATUS ret;
 	/* get mac to acess CFG data base */
 	struct sAniSirGlobal *pmac;
 
@@ -1343,10 +1350,10 @@ void wma_update_cfg_params(tp_wma_handle wma, tSirMsgQ *cfgParam)
 
 	for (vdev_id = 0; vdev_id < wma->max_bssid; vdev_id++) {
 		if (wma->interfaces[vdev_id].handle != 0) {
-			ret = wmi_unified_vdev_set_param_send(wma->wmi_handle,
+			ret = wma_vdev_set_param(wma->wmi_handle,
 							      vdev_id, param_id,
 							      cfg_val);
-			if (ret)
+			if (QDF_IS_STATUS_ERROR(ret))
 				WMA_LOGE("Update cfg params failed for vdevId %d",
 					vdev_id);
 		}
@@ -1739,6 +1746,7 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 	int16_t new_peer_num;
 	uint16_t new_timer_value_sec;
 	uint32_t new_timer_value_ms;
+	QDF_STATUS status;
 
 	if (peer_num_delta != 1 && peer_num_delta != -1) {
 		WMA_LOGE("Invalid peer_num_delta value %d", peer_num_delta);
@@ -1784,9 +1792,10 @@ void wma_adjust_ibss_heart_beat_timer(tp_wma_handle wma,
 
 	new_timer_value_ms = ((uint32_t) new_timer_value_sec) * 1000;
 
-	if (wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
-					    WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
-					    new_timer_value_ms)) {
+	status = wma_vdev_set_param(wma->wmi_handle, vdev_id,
+					 WMI_VDEV_PARAM_IBSS_MAX_BCN_LOST_MS,
+					 new_timer_value_ms);
+	if (QDF_IS_STATUS_ERROR(status)) {
 		WMA_LOGE("Failed to set IBSS link monitoring timer value");
 		return;
 	}
@@ -2568,6 +2577,7 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 	QDF_STATUS status;
 	uint8_t *p2p_ie;
 	tpAniBeaconStruct beacon;
+	struct vdev_up_params param = {0};
 
 	beacon = (tpAniBeaconStruct) (bcn_info->beacon);
 	vdev = wma_find_vdev_by_addr(wma, beacon->macHdr.sa, &vdev_id);
@@ -2604,8 +2614,12 @@ void wma_send_beacon(tp_wma_handle wma, tpSendbeaconParams bcn_info)
 		return;
 	}
 	if (!wma->interfaces[vdev_id].vdev_up) {
-		if (wmi_unified_vdev_up_send(wma->wmi_handle, vdev_id, 0,
-					     bcn_info->bssId) < 0) {
+		param.vdev_id = vdev_id;
+		param.assoc_id = 0;
+		status = wmi_unified_vdev_up_send(wma->wmi_handle,
+						  bcn_info->bssId,
+						  &param);
+		if (QDF_IS_STATUS_ERROR(status)) {
 			WMA_LOGE("%s : failed to send vdev up", __func__);
 			return;
 		}
@@ -2813,7 +2827,7 @@ void wma_process_update_userpos(tp_wma_handle wma_handle,
 QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 {
 	tp_wma_handle wma = cds_get_context(QDF_MODULE_ID_WMA);
-	int ret = -EIO;
+	QDF_STATUS ret = QDF_STATUS_E_FAILURE;
 
 	if (NULL == wma) {
 		WMA_LOGE("%s: Failed to get wma", __func__);
@@ -2822,17 +2836,17 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 
 	switch (ht_capab) {
 	case WNI_CFG_HT_CAP_INFO_ADVANCE_CODING:
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						      WMI_VDEV_PARAM_LDPC,
 						      value);
 		break;
 	case WNI_CFG_HT_CAP_INFO_TX_STBC:
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						      WMI_VDEV_PARAM_TX_STBC,
 						      value);
 		break;
 	case WNI_CFG_HT_CAP_INFO_RX_STBC:
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						      WMI_VDEV_PARAM_RX_STBC,
 						      value);
 		break;
@@ -2840,16 +2854,16 @@ QDF_STATUS wma_set_htconfig(uint8_t vdev_id, uint16_t ht_capab, int value)
 	case WNI_CFG_HT_CAP_INFO_SHORT_GI_40MHZ:
 		WMA_LOGE("%s: ht_capab = %d, value = %d", __func__, ht_capab,
 			 value);
-		ret = wmi_unified_vdev_set_param_send(wma->wmi_handle, vdev_id,
+		ret = wma_vdev_set_param(wma->wmi_handle, vdev_id,
 						WMI_VDEV_PARAM_SGI, value);
-		if (ret == 0)
+		if (ret == QDF_STATUS_SUCCESS)
 			wma->interfaces[vdev_id].config.shortgi = value;
 		break;
 	default:
 		WMA_LOGE("%s:INVALID HT CONFIG", __func__);
 	}
 
-	return (ret) ? QDF_STATUS_E_FAILURE : QDF_STATUS_SUCCESS;
+	return ret;
 }
 
 /**
@@ -3380,7 +3394,8 @@ QDF_STATUS wma_register_mgmt_frm_client(
 
 	if (wmi_unified_register_event_handler(wma_handle->wmi_handle,
 					       WMI_MGMT_RX_EVENTID,
-					       wma_mgmt_rx_process) != 0) {
+					       wma_mgmt_rx_process,
+					       WMA_RX_WORK_CTX) != 0) {
 		WMA_LOGE("Failed to register rx mgmt handler with wmi");
 		return QDF_STATUS_E_FAILURE;
 	}
