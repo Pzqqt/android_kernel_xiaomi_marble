@@ -113,10 +113,6 @@ static void wma_service_ready_ext_evt_timeout(void *data)
 		goto end;
 	}
 
-	if (wma_handle->saved_wmi_init_cmd.buf) {
-		wmi_buf_free(wma_handle->saved_wmi_init_cmd.buf);
-		wma_handle->saved_wmi_init_cmd.buf = NULL;
-	}
 end:
 	/* Panic so that we can debug why FW is not responding */
 	QDF_BUG(0);
@@ -994,7 +990,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					 ret);
 			break;
 		case WMI_WLAN_PROFILE_TRIGGER_CMDID:
-			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+			ret = wma_unified_fw_profiling_cmd(wma->wmi_handle,
 					 WMI_WLAN_PROFILE_TRIGGER_CMDID,
 					 privcmd->param_value, 0);
 			if (ret)
@@ -1002,7 +998,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					WMI_WLAN_PROFILE_TRIGGER_CMDID, ret);
 			break;
 		case WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID:
-			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+			ret = wma_unified_fw_profiling_cmd(wma->wmi_handle,
 				  WMI_WLAN_PROFILE_ENABLE_PROFILE_ID_CMDID,
 				  privcmd->param_value,
 				  privcmd->param_sec_value);
@@ -1012,7 +1008,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 				   ret);
 			break;
 		case WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID:
-			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+			ret = wma_unified_fw_profiling_cmd(wma->wmi_handle,
 					 WMI_WLAN_PROFILE_SET_HIST_INTVL_CMDID,
 					 privcmd->param_value,
 					 privcmd->param_sec_value);
@@ -1022,7 +1018,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					ret);
 			break;
 		case WMI_WLAN_PROFILE_LIST_PROFILE_ID_CMDID:
-			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+			ret = wma_unified_fw_profiling_cmd(wma->wmi_handle,
 					 WMI_WLAN_PROFILE_LIST_PROFILE_ID_CMDID,
 					 0, 0);
 			if (ret)
@@ -1031,7 +1027,7 @@ static void wma_process_cli_set_cmd(tp_wma_handle wma,
 					ret);
 			break;
 		case WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID:
-			ret = wmi_unified_fw_profiling_cmd(wma->wmi_handle,
+			ret = wma_unified_fw_profiling_cmd(wma->wmi_handle,
 					WMI_WLAN_PROFILE_GET_PROFILE_DATA_CMDID,
 					0, 0);
 			if (ret)
@@ -1794,7 +1790,6 @@ QDF_STATUS wma_open(void *cds_context,
 	wma_handle->dfs_radar_indication_cb = radar_ind_cb;
 	wma_handle->old_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
 	wma_handle->new_hw_mode_index = WMA_DEFAULT_HW_MODE_INDEX;
-	wma_handle->saved_wmi_init_cmd.buf = NULL;
 
 	qdf_status = qdf_event_create(&wma_handle->wma_ready_event);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
@@ -2173,32 +2168,12 @@ void wma_send_msg(tp_wma_handle wma_handle, uint16_t msg_type,
 static int wma_set_base_macaddr_indicate(tp_wma_handle wma_handle,
 					 tSirMacAddr *customAddr)
 {
-	wmi_pdev_set_base_macaddr_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
 	int err;
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGE("Failed to allocate buffer to send set_base_macaddr cmd");
-		return -ENOMEM;
-	}
-
-	cmd = (wmi_pdev_set_base_macaddr_cmd_fixed_param *) wmi_buf_data(buf);
-	qdf_mem_zero(cmd, sizeof(*cmd));
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_pdev_set_base_macaddr_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_pdev_set_base_macaddr_cmd_fixed_param));
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(*customAddr, &cmd->base_macaddr);
-	err = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				   sizeof(*cmd),
-				   WMI_PDEV_SET_BASE_MACADDR_CMDID);
-	if (err) {
-		WMA_LOGE("Failed to send set_base_macaddr cmd");
-		qdf_mem_free(buf);
+	err = wmi_unified_set_base_macaddr_indicate_cmd(wma_handle->wmi_handle,
+				     (uint8_t *)customAddr);
+	if (err)
 		return -EIO;
-	}
 	WMA_LOGD("Base MAC Addr: " MAC_ADDRESS_STR,
 		 MAC_ADDR_ARRAY((*customAddr)));
 
@@ -2222,105 +2197,10 @@ static int wma_log_supported_evt_handler(void *handle,
 		uint32_t len)
 {
 	tp_wma_handle wma = (tp_wma_handle) handle;
-	uint32_t num_of_diag_events_logs;
-	wmi_diag_event_log_config_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
-	uint32_t *cmd_args, *evt_args;
-	uint32_t buf_len, i;
 
-	WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID_param_tlvs *param_buf;
-	wmi_diag_event_log_supported_event_fixed_params *wmi_event;
-
-	WMA_LOGI("Received WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID");
-
-	param_buf = (WMI_DIAG_EVENT_LOG_SUPPORTED_EVENTID_param_tlvs *) event;
-	if (!param_buf) {
-		WMA_LOGE("Invalid log supported event buffer");
+	if (wmi_unified_log_supported_evt_cmd(wma->wmi_handle,
+				event, len))
 		return -EINVAL;
-	}
-	wmi_event = param_buf->fixed_param;
-	num_of_diag_events_logs = wmi_event->num_of_diag_events_logs;
-	evt_args = param_buf->diag_events_logs_list;
-	if (!evt_args) {
-		WMA_LOGE("%s: Event list is empty, num_of_diag_events_logs=%d",
-				__func__, num_of_diag_events_logs);
-		return -EINVAL;
-	}
-
-	WMA_LOGD("%s: num_of_diag_events_logs=%d",
-			__func__, num_of_diag_events_logs);
-
-	/* Free any previous allocation */
-	if (wma->events_logs_list)
-		qdf_mem_free(wma->events_logs_list);
-
-	/* Store the event list for run time enable/disable */
-	wma->events_logs_list = qdf_mem_malloc(num_of_diag_events_logs *
-			sizeof(uint32_t));
-	if (!wma->events_logs_list) {
-		WMA_LOGE("%s: event log list memory allocation failed",
-				__func__);
-		return -ENOMEM;
-	}
-	wma->num_of_diag_events_logs = num_of_diag_events_logs;
-
-	/* Prepare the send buffer */
-	buf_len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
-		(num_of_diag_events_logs * sizeof(uint32_t));
-
-	buf = wmi_buf_alloc(wma->wmi_handle, buf_len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		qdf_mem_free(wma->events_logs_list);
-		wma->events_logs_list = NULL;
-		return -ENOMEM;
-	}
-
-	cmd = (wmi_diag_event_log_config_fixed_param *) wmi_buf_data(buf);
-	buf_ptr = (uint8_t *) cmd;
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-			WMITLV_TAG_STRUC_wmi_diag_event_log_config_fixed_param,
-			WMITLV_GET_STRUCT_TLVLEN(
-				wmi_diag_event_log_config_fixed_param));
-
-	cmd->num_of_diag_events_logs = num_of_diag_events_logs;
-
-	buf_ptr += sizeof(wmi_diag_event_log_config_fixed_param);
-
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-			(num_of_diag_events_logs * sizeof(uint32_t)));
-
-	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-
-	/* Populate the events */
-	for (i = 0; i < num_of_diag_events_logs; i++) {
-		/* Low freq (0) - Enable (1) the event
-		 * High freq (1) - Disable (0) the event
-		 */
-		WMI_DIAG_ID_ENABLED_DISABLED_SET(cmd_args[i],
-				!(WMI_DIAG_FREQUENCY_GET(evt_args[i])));
-		/* Set the event ID */
-		WMI_DIAG_ID_SET(cmd_args[i],
-				WMI_DIAG_ID_GET(evt_args[i]));
-		/* Set the type */
-		WMI_DIAG_TYPE_SET(cmd_args[i],
-				WMI_DIAG_TYPE_GET(evt_args[i]));
-		/* Storing the event/log list in WMA */
-		wma->events_logs_list[i] = evt_args[i];
-	}
-
-	if (wmi_unified_cmd_send(wma->wmi_handle, buf, buf_len,
-				WMI_DIAG_EVENT_LOG_CONFIG_CMDID)) {
-		WMA_LOGE("%s: WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed",
-				__func__);
-		wmi_buf_free(buf);
-		/* Not clearing events_logs_list, though wmi cmd failed.
-		 * Host can still have this list
-		 */
-		return -EINVAL;
-	}
 
 	return 0;
 }
@@ -3178,17 +3058,6 @@ QDF_STATUS wma_close(void *cds_ctx)
 		WMA_LOGI("%s: DBS list is freed", __func__);
 	}
 
-	if (wma_handle->events_logs_list) {
-		qdf_mem_free(wma_handle->events_logs_list);
-		wma_handle->events_logs_list = NULL;
-		WMA_LOGD("%s: Event log list freed", __func__);
-	}
-
-	if (wma_handle->saved_wmi_init_cmd.buf) {
-		wmi_buf_free(wma_handle->saved_wmi_init_cmd.buf);
-		wma_handle->saved_wmi_init_cmd.buf = NULL;
-	}
-
 	if (cds_get_conparam() != QDF_GLOBAL_FTM_MODE) {
 #ifdef FEATURE_WLAN_SCAN_PNO
 		qdf_wake_lock_destroy(&wma_handle->pno_wake_lock);
@@ -3623,55 +3492,25 @@ static void wma_update_hdd_cfg(tp_wma_handle wma_handle)
  *
  * Return: wmi buffer or NULL for error
  */
-static wmi_buf_t wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
-					wmi_service_ready_event_fixed_param *ev,
-					WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf,
-					 uint32_t *len)
+static int wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
+				wmi_service_ready_event_fixed_param *ev,
+				WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf)
 {
-	wmi_buf_t buf;
-	wmi_init_cmd_fixed_param *cmd;
 	wlan_host_mem_req *ev_mem_reqs;
 	wmi_abi_version my_vers;
+	wmi_abi_version host_abi_vers;
 	int num_whitelist;
-	uint8_t *buf_ptr;
-	wmi_resource_config *resource_cfg;
-	wlan_host_memory_chunk *host_mem_chunks;
-	uint32_t mem_chunk_len = 0;
 	uint16_t idx;
 	uint32_t num_units;
 
-	*len = sizeof(*cmd) + sizeof(wmi_resource_config) + WMI_TLV_HDR_SIZE;
-	mem_chunk_len = (sizeof(wlan_host_memory_chunk) * MAX_MEM_CHUNKS);
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, *len + mem_chunk_len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-		return NULL;
-	}
-
 	ev_mem_reqs = param_buf->mem_reqs;
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_init_cmd_fixed_param *) buf_ptr;
-	resource_cfg = (wmi_resource_config *) (buf_ptr + sizeof(*cmd));
-	host_mem_chunks = (wlan_host_memory_chunk *)
-			  (buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)
-			   + WMI_TLV_HDR_SIZE);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_init_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_init_cmd_fixed_param));
-
-	*resource_cfg = wma_handle->wlan_resource_config;
-	WMITLV_SET_HDR(&resource_cfg->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_resource_config,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_resource_config));
 
 	/* allocate memory requested by FW */
 	if (ev->num_mem_reqs > WMI_MAX_MEM_REQS) {
 		QDF_ASSERT(0);
-		qdf_nbuf_free(buf);
-		return NULL;
+		return QDF_STATUS_E_NOMEM;
 	}
 
-	cmd->num_host_mem_chunks = 0;
 	for (idx = 0; idx < ev->num_mem_reqs; ++idx) {
 		num_units = ev_mem_reqs[idx].num_units;
 		if (ev_mem_reqs[idx].num_unit_info & NUM_UNITS_IS_NUM_PEERS) {
@@ -3681,7 +3520,7 @@ static wmi_buf_t wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
 			 * target. this needs to be fied, host
 			 * and target can get out of sync
 			 */
-			num_units = resource_cfg->num_peers + 1;
+			num_units = wma_handle->wlan_resource_config.num_peers + 1;
 		}
 		WMA_LOGD
 			("idx %d req %d  num_units %d num_unit_info %d unit size %d actual units %d ",
@@ -3692,25 +3531,7 @@ static wmi_buf_t wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
 		wma_alloc_host_mem(wma_handle, ev_mem_reqs[idx].req_id,
 				   num_units, ev_mem_reqs[idx].unit_size);
 	}
-	for (idx = 0; idx < wma_handle->num_mem_chunks; ++idx) {
-		WMITLV_SET_HDR(&(host_mem_chunks[idx].tlv_header),
-			       WMITLV_TAG_STRUC_wlan_host_memory_chunk,
-			       WMITLV_GET_STRUCT_TLVLEN
-				       (wlan_host_memory_chunk));
-		host_mem_chunks[idx].ptr = wma_handle->mem_chunks[idx].paddr;
-		host_mem_chunks[idx].size = wma_handle->mem_chunks[idx].len;
-		host_mem_chunks[idx].req_id =
-			wma_handle->mem_chunks[idx].req_id;
-		WMA_LOGD("chunk %d len %d requested ,ptr  0x%x ",
-			 idx, host_mem_chunks[idx].size,
-			 host_mem_chunks[idx].ptr);
-	}
-	cmd->num_host_mem_chunks = wma_handle->num_mem_chunks;
-	len += (wma_handle->num_mem_chunks * sizeof(wlan_host_memory_chunk));
-	WMITLV_SET_HDR((buf_ptr + sizeof(*cmd) + sizeof(wmi_resource_config)),
-		       WMITLV_TAG_ARRAY_STRUC,
-		       (sizeof(wlan_host_memory_chunk) *
-			wma_handle->num_mem_chunks));
+
 	qdf_mem_copy(&wma_handle->target_abi_vers,
 		     &param_buf->fixed_param->fw_abi_vers,
 		     sizeof(wmi_abi_version));
@@ -3726,19 +3547,12 @@ static wmi_buf_t wma_setup_wmi_init_msg(tp_wma_handle wma_handle,
 	wmi_cmp_and_set_abi_version(num_whitelist, version_whitelist,
 				    &my_vers,
 				    &param_buf->fixed_param->fw_abi_vers,
-				    &cmd->host_abi_vers);
+				    &host_abi_vers);
 
-	WMA_LOGD("%s: INIT_CMD version: %d, %d, 0x%x, 0x%x, 0x%x, 0x%x",
-		 __func__, WMI_VER_GET_MAJOR(cmd->host_abi_vers.abi_version_0),
-		 WMI_VER_GET_MINOR(cmd->host_abi_vers.abi_version_0),
-		 cmd->host_abi_vers.abi_version_ns_0,
-		 cmd->host_abi_vers.abi_version_ns_1,
-		 cmd->host_abi_vers.abi_version_ns_2,
-		 cmd->host_abi_vers.abi_version_ns_3);
-
-	qdf_mem_copy(&wma_handle->final_abi_vers, &cmd->host_abi_vers,
+	qdf_mem_copy(&wma_handle->final_abi_vers, &host_abi_vers,
 		     sizeof(wmi_abi_version));
-	return buf;
+
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -3860,8 +3674,6 @@ done:
 int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 					uint32_t length)
 {
-	wmi_buf_t buf;
-	uint32_t len;
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	struct wma_target_cap target_cap;
 	WMI_SERVICE_READY_EVENTID_param_tlvs *param_buf;
@@ -4079,9 +3891,16 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		     sizeof(wma_handle->wmi_service_bitmap));
 	wma_handle->wlan_resource_config = target_cap.wlan_resource_config;
 
-	buf = wma_setup_wmi_init_msg(wma_handle, ev, param_buf, &len);
-	if (!buf) {
-		WMA_LOGE("Failed to setup buffer for wma init command");
+	status = wmi_unified_save_fw_version_cmd(wma_handle->wmi_handle,
+				param_buf);
+	if (status != EOK) {
+		WMA_LOGE("Failed to send WMI_INIT_CMDID command");
+		return -EINVAL;
+	}
+
+	status = wma_setup_wmi_init_msg(wma_handle, ev, param_buf);
+	if (status != EOK) {
+		WMA_LOGE("Failed to setup for wma init command");
 		return -EINVAL;
 	}
 
@@ -4096,19 +3915,23 @@ int wma_rx_service_ready_event(void *handle, uint8_t *cmd_param_info,
 		 * Send INIT command immediately
 		 */
 		WMA_LOGA("WMA --> WMI_INIT_CMDID");
-		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				WMI_INIT_CMDID);
+		status = wmi_unified_send_init_cmd(wma_handle->wmi_handle,
+				&wma_handle->wlan_resource_config,
+				wma_handle->num_mem_chunks,
+				wma_handle->mem_chunks, 1);
 		if (status != EOK) {
 			WMA_LOGE("Failed to send WMI_INIT_CMDID command");
-			wmi_buf_free(buf);
 			return -EINVAL;
 		}
 	} else {
-		/* Need to save and send the WMI INIT command only after
-		 * processing service ready extended event
-		 */
-		wma_handle->saved_wmi_init_cmd.buf = buf;
-		wma_handle->saved_wmi_init_cmd.buf_len = len;
+		status = wmi_unified_send_init_cmd(wma_handle->wmi_handle,
+				&wma_handle->wlan_resource_config,
+				wma_handle->num_mem_chunks,
+				wma_handle->mem_chunks, 0);
+		if (status != EOK) {
+			WMA_LOGE("Failed to save WMI_INIT_CMDID command parameter");
+			return -EINVAL;
+		}
 		/* The saved 'buf' will be freed after sending INIT command or
 		 * in other cases as required
 		 */
@@ -4162,11 +3985,6 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 
 	WMA_LOGA("WMA <-- WMI_SERVICE_READY_EXT_EVENTID");
 
-	if (!wma_handle->saved_wmi_init_cmd.buf) {
-		WMA_LOGP("Service ready ext event w/o WMI_SERVICE_EXT_MSG!");
-		return -EINVAL;
-	}
-
 	WMA_LOGA("%s: Defaults: scan config:%x FW mode config:%x",
 			__func__, ev->default_conc_scan_config_bits,
 			ev->default_fw_config_bits);
@@ -4178,19 +3996,12 @@ int wma_rx_service_ready_ext_event(void *handle, uint8_t *event,
 	}
 
 	WMA_LOGA("WMA --> WMI_INIT_CMDID");
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle,
-				wma_handle->saved_wmi_init_cmd.buf,
-				wma_handle->saved_wmi_init_cmd.buf_len,
-				WMI_INIT_CMDID);
-	if (status != EOK) {
+	status = wmi_unified_send_saved_init_cmd(wma_handle->wmi_handle);
+	if (status != EOK)
 		/* In success case, WMI layer will free after getting copy
 		 * engine TX complete interrupt
 		 */
 		WMA_LOGE("Failed to send WMI_INIT_CMDID command");
-		wmi_buf_free(wma_handle->saved_wmi_init_cmd.buf);
-	}
-	wma_handle->saved_wmi_init_cmd.buf = NULL;
 
 	wma_init_scan_fw_mode_config(wma_handle,
 				ev->default_conc_scan_config_bits,
@@ -4569,13 +4380,6 @@ static QDF_STATUS wma_config_guard_time(tp_wma_handle wma,
 void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
 		struct sir_wifi_start_log *start_log)
 {
-	wmi_diag_event_log_config_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
-	uint32_t len, count, log_level, i;
-	uint32_t *cmd_args;
-	uint32_t total_len;
-	count = 0;
 
 	if (!start_log) {
 		WMA_LOGE("%s: start_log pointer is NULL", __func__);
@@ -4593,75 +4397,9 @@ void wma_enable_specific_fw_logs(tp_wma_handle wma_handle,
 		return;
 	}
 
-	if (!wma_handle->events_logs_list) {
-		WMA_LOGE("%s: Not received event/log list from FW, yet",
-				__func__);
-		return;
-	}
+	wmi_unified_enable_specific_fw_logs_cmd(wma_handle->wmi_handle,
+				(struct wmi_wifi_start_log *)start_log);
 
-	/* total_len stores the number of events where BITS 17 and 18 are set.
-	 * i.e., events of high frequency (17) and for extended debugging (18)
-	 */
-	total_len = 0;
-	for (i = 0; i < wma_handle->num_of_diag_events_logs; i++) {
-		if ((WMI_DIAG_FREQUENCY_GET(wma_handle->events_logs_list[i])) &&
-		    (WMI_DIAG_EXT_FEATURE_GET(wma_handle->events_logs_list[i])))
-			total_len++;
-	}
-
-	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE +
-		(total_len * sizeof(uint32_t));
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return;
-	}
-	cmd = (wmi_diag_event_log_config_fixed_param *) wmi_buf_data(buf);
-	buf_ptr = (uint8_t *) cmd;
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-			WMITLV_TAG_STRUC_wmi_diag_event_log_config_fixed_param,
-			WMITLV_GET_STRUCT_TLVLEN(
-				wmi_diag_event_log_config_fixed_param));
-
-	cmd->num_of_diag_events_logs = total_len;
-
-	buf_ptr += sizeof(wmi_diag_event_log_config_fixed_param);
-
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-			(total_len * sizeof(uint32_t)));
-
-	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-
-	if (start_log->verbose_level >= LOG_LEVEL_ACTIVE)
-		log_level = 1;
-	else
-		log_level = 0;
-
-	WMA_LOGD("%s: Length:%d, Log_level:%d", __func__, total_len, log_level);
-	for (i = 0; i < wma_handle->num_of_diag_events_logs; i++) {
-		uint32_t val = wma_handle->events_logs_list[i];
-		if ((WMI_DIAG_FREQUENCY_GET(val)) &&
-				(WMI_DIAG_EXT_FEATURE_GET(val))) {
-
-			WMI_DIAG_ID_SET(cmd_args[count],
-					WMI_DIAG_ID_GET(val));
-			WMI_DIAG_TYPE_SET(cmd_args[count],
-					WMI_DIAG_TYPE_GET(val));
-			WMI_DIAG_ID_ENABLED_DISABLED_SET(cmd_args[count],
-					log_level);
-			WMA_LOGD("%s: Idx:%d, val:%x", __func__, i, val);
-			count++;
-		}
-	}
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				WMI_DIAG_EVENT_LOG_CONFIG_CMDID)) {
-		WMA_LOGE("%s: WMI_DIAG_EVENT_LOG_CONFIG_CMDID failed",
-				__func__);
-		wmi_buf_free(buf);
-	}
 	return;
 }
 
@@ -4726,34 +4464,11 @@ void wma_set_wifi_start_packet_stats(void *wma_handle,
 void wma_send_flush_logs_to_fw(tp_wma_handle wma_handle)
 {
 	QDF_STATUS status;
-	wmi_debug_mesg_flush_fixed_param *cmd;
-	wmi_buf_t buf;
-	int len = sizeof(*cmd);
 	int ret;
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
+	ret = wmi_unified_flush_logs_to_fw_cmd(wma_handle->wmi_handle);
+	if (ret != EOK)
 		return;
-	}
-
-	cmd = (wmi_debug_mesg_flush_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-			WMITLV_TAG_STRUC_wmi_debug_mesg_flush_fixed_param,
-			WMITLV_GET_STRUCT_TLVLEN(
-				wmi_debug_mesg_flush_fixed_param));
-	cmd->reserved0 = 0;
-
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle,
-			buf,
-			len,
-			WMI_DEBUG_MESG_FLUSH_CMDID);
-	if (ret != EOK) {
-		WMA_LOGE("Failed to send WMI_DEBUG_MESG_FLUSH_CMDID");
-		wmi_buf_free(buf);
-		return;
-	}
-	WMA_LOGI("Sent WMI_DEBUG_MESG_FLUSH_CMDID to FW");
 
 	status = qdf_mc_timer_start(&wma_handle->log_completion_timer,
 			WMA_LOG_COMPLETION_TIMER);
@@ -5524,48 +5239,16 @@ void wma_log_completion_timeout(void *data)
 QDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
 				struct sir_pcl_list *msg)
 {
-	wmi_soc_set_pcl_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
-	uint32_t *cmd_args, i, len;
-
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA handle is NULL. Cannot issue command",
 				__func__);
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	len = sizeof(*cmd) +
-		WMI_TLV_HDR_SIZE + (msg->pcl_len * sizeof(uint32_t));
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (wmi_soc_set_pcl_cmd_fixed_param *) wmi_buf_data(buf);
-	buf_ptr = (uint8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_soc_set_pcl_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(wmi_soc_set_pcl_cmd_fixed_param));
-	cmd->num_chan = msg->pcl_len;
-	WMA_LOGI("%s: PCL len:%d", __func__, cmd->num_chan);
-
-	buf_ptr += sizeof(wmi_soc_set_pcl_cmd_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-			(msg->pcl_len * sizeof(uint32_t)));
-	cmd_args = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	for (i = 0; i < msg->pcl_len ; i++) {
-		cmd_args[i] = msg->pcl_list[i];
-		WMA_LOGI("%s: PCL chan:%d", __func__, cmd_args[i]);
-	}
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				WMI_SOC_SET_PCL_CMDID)) {
-		WMA_LOGE("%s: Failed to send WMI_SOC_SET_PCL_CMDID", __func__);
-		qdf_nbuf_free(buf);
+	if (wmi_unified_soc_set_pcl_cmd(wma_handle->wmi_handle,
+				(struct wmi_pcl_list *) msg))
 		return QDF_STATUS_E_FAILURE;
-	}
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -5586,9 +5269,6 @@ QDF_STATUS wma_send_soc_set_pcl_cmd(tp_wma_handle wma_handle,
 QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
 				struct sir_hw_mode *msg)
 {
-	wmi_soc_set_hw_mode_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint32_t len;
 	struct sir_set_hw_mode_resp *param;
 
 	if (!wma_handle) {
@@ -5606,28 +5286,10 @@ QDF_STATUS wma_send_soc_set_hw_mode_cmd(tp_wma_handle wma_handle,
 		goto fail;
 	}
 
-	len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+	if (wmi_unified_soc_set_hw_mode_cmd(wma_handle->wmi_handle,
+				msg->hw_mode_index))
 		goto fail;
-	}
 
-	cmd = (wmi_soc_set_hw_mode_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_soc_set_hw_mode_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(wmi_soc_set_hw_mode_cmd_fixed_param));
-	cmd->hw_mode_index = msg->hw_mode_index;
-	WMA_LOGI("%s: HW mode index:%d", __func__, cmd->hw_mode_index);
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				WMI_SOC_SET_HW_MODE_CMDID)) {
-		WMA_LOGE("%s: Failed to send WMI_SOC_SET_HW_MODE_CMDID",
-			__func__);
-		qdf_nbuf_free(buf);
-		goto fail;
-	}
 	return QDF_STATUS_SUCCESS;
 fail:
 	param = qdf_mem_malloc(sizeof(*param));
@@ -5656,10 +5318,6 @@ fail:
 QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		struct sir_dual_mac_config *msg)
 {
-	wmi_soc_set_dual_mac_config_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint32_t len;
-
 	if (!wma_handle) {
 		WMA_LOGE("%s: WMA handle is NULL. Cannot issue command",
 				__func__);
@@ -5671,33 +5329,12 @@ QDF_STATUS wma_send_soc_set_dual_mac_config(tp_wma_handle wma_handle,
 		return QDF_STATUS_E_NULL_VALUE;
 	}
 
-	len = sizeof(*cmd);
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	cmd = (wmi_soc_set_dual_mac_config_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_soc_set_dual_mac_config_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN(
-			wmi_soc_set_dual_mac_config_cmd_fixed_param));
-	cmd->concurrent_scan_config_bits = msg->scan_config;
-	cmd->fw_mode_config_bits = msg->fw_mode_config;
-	WMA_LOGI("%s: scan_config:%x fw_mode_config:%x",
-			__func__, msg->scan_config, msg->fw_mode_config);
-
-	wma_handle->dual_mac_cfg.req_scan_config = msg->scan_config;
-	wma_handle->dual_mac_cfg.req_fw_mode_config = msg->fw_mode_config;
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID)) {
+	if (wmi_unified_soc_set_dual_mac_config_cmd(wma_handle->wmi_handle,
+				(struct wmi_dual_mac_config *)msg))
 		WMA_LOGE("%s: Failed to send WMI_SOC_SET_DUAL_MAC_CONFIG_CMDID",
 				__func__);
-		qdf_nbuf_free(buf);
-	}
+
 	return QDF_STATUS_SUCCESS;
 }
 

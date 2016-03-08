@@ -1037,15 +1037,6 @@ struct dual_mac_config {
 
 };
 
-/**
- * struct wmi_init_cmd - Saved wmi INIT command
- * @buf: Buffer containing the wmi INIT command
- * @buf_len: Length of the buffer
- */
-struct wmi_init_cmd {
-	wmi_buf_t buf;
-	uint32_t buf_len;
-};
 
 /**
  * struct wma_ini_config - Structure to hold wma ini configuration
@@ -1232,7 +1223,7 @@ typedef struct {
 	qdf_nbuf_t last_umac_data_nbuf;
 	bool needShutdown;
 	uint32_t num_mem_chunks;
-	struct wma_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
+	struct wmi_host_mem_chunk mem_chunks[MAX_MEM_CHUNKS];
 	wma_tgt_cfg_cb tgt_cfg_update_cb;
 	wma_dfs_radar_indication_cb dfs_radar_indication_cb;
 	HAL_REG_CAPABILITIES reg_cap;
@@ -1316,9 +1307,6 @@ typedef struct {
 	uint32_t new_hw_mode_index;
 	qdf_atomic_t scan_id_counter;
 	wma_peer_authorized_fp peer_authorized_cb;
-	uint32_t num_of_diag_events_logs;
-	uint32_t *events_logs_list;
-
 	uint32_t wow_pno_match_wake_up_count;
 	uint32_t wow_pno_complete_wake_up_count;
 	uint32_t wow_gscan_wake_up_count;
@@ -1343,7 +1331,6 @@ typedef struct {
 		qdf_spinlock_t wmi_desc_pool_lock;
 	} wmi_desc_pool;
 	uint8_t max_scan;
-	struct wmi_init_cmd saved_wmi_init_cmd;
 	uint16_t self_gen_frm_pwr;
 	bool tx_chain_mask_cck;
 	/* Going with a timer instead of wait event because on receiving the
