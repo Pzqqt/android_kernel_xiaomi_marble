@@ -178,7 +178,7 @@ int wma_roam_synch_event_handler(void *handle, uint8_t *event,
 
 QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
-				      wmi_buf_t *buf, int *buf_len);
+				      struct scan_start_params *cmd);
 
 QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
 				     wmi_buf_t *buf,

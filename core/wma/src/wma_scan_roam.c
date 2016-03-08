@@ -165,8 +165,7 @@ static bool wma_is_mcc_24G(WMA_HANDLE handle)
  * wma_get_buf_start_scan_cmd() - Fill start scan command
  * @wma_handle: wma handle
  * @scan_req: scan request
- * @buf: wmi buffer to be filled in
- * @buf_len: buf length
+ * @cmd: wmi buffer to be filled in
  *
  * Fill individual elements of wmi_start_scan_req and TLV for
  * channel list, bssid, ssid etc.
@@ -175,56 +174,18 @@ static bool wma_is_mcc_24G(WMA_HANDLE handle)
  */
 QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 				      tSirScanOffloadReq *scan_req,
-				      wmi_buf_t *buf, int *buf_len)
+				      struct scan_start_params *cmd)
 {
-	wmi_start_scan_cmd_fixed_param *cmd;
-	wmi_chan_list *chan_list = NULL;
-	wmi_mac_addr *bssid;
-	wmi_ssid *ssid = NULL;
-	uint32_t *tmp_ptr, ie_len_with_pad;
 	QDF_STATUS qdf_status = QDF_STATUS_E_FAILURE;
-	uint8_t *buf_ptr;
 	uint32_t dwell_time;
 	uint8_t SSID_num;
 	int i;
-	int len = sizeof(*cmd);
 	tpAniSirGlobal pMac = cds_get_context(QDF_MODULE_ID_PE);
 
 	if (!pMac) {
 		WMA_LOGP("%s: pMac is NULL!", __func__);
 		return QDF_STATUS_E_FAILURE;
 	}
-
-	len += WMI_TLV_HDR_SIZE;        /* Length TLV placeholder for array of uint32_t */
-	/* calculate the length of buffer required */
-	if (scan_req->channelList.numChannels)
-		len += scan_req->channelList.numChannels * sizeof(uint32_t);
-
-	len += WMI_TLV_HDR_SIZE;        /* Length TLV placeholder for array of wmi_ssid structures */
-	if (scan_req->numSsid)
-		len += scan_req->numSsid * sizeof(wmi_ssid);
-
-	len += WMI_TLV_HDR_SIZE;        /* Length TLV placeholder for array of wmi_mac_addr structures */
-	len += sizeof(wmi_mac_addr);
-
-	len += WMI_TLV_HDR_SIZE;        /* Length TLV placeholder for array of bytes */
-	if (scan_req->uIEFieldLen)
-		len += roundup(scan_req->uIEFieldLen, sizeof(uint32_t));
-
-	/* Allocate the memory */
-	*buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!*buf) {
-		WMA_LOGP("%s: failed to allocate memory for start scan cmd",
-			 __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(*buf);
-	cmd = (wmi_start_scan_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_start_scan_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_start_scan_cmd_fixed_param));
 
 	cmd->vdev_id = scan_req->sessionId;
 	/*
@@ -456,40 +417,30 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 
 	cmd->n_probes = (cmd->repeat_probe_time > 0) ?
 			cmd->dwell_time_active / cmd->repeat_probe_time : 0;
-
-	buf_ptr += sizeof(*cmd);
-	tmp_ptr = (uint32_t *) (buf_ptr + WMI_TLV_HDR_SIZE);
-
 	if (scan_req->channelList.numChannels) {
-		chan_list = (wmi_chan_list *) tmp_ptr;
 		cmd->num_chan = scan_req->channelList.numChannels;
 		for (i = 0; i < scan_req->channelList.numChannels; ++i) {
-			tmp_ptr[i] =
+			cmd->chan_list[i] =
 				cds_chan_to_freq(scan_req->channelList.
 						 channelNumber[i]);
 		}
 	}
-	WMITLV_SET_HDR(buf_ptr,
-		       WMITLV_TAG_ARRAY_UINT32,
-		       (cmd->num_chan * sizeof(uint32_t)));
-	buf_ptr += WMI_TLV_HDR_SIZE + (cmd->num_chan * sizeof(uint32_t));
+
 	if (scan_req->numSsid > SIR_SCAN_MAX_NUM_SSID) {
 		WMA_LOGE("Invalid value for numSsid");
 		goto error;
 	}
+
 	cmd->num_ssids = scan_req->numSsid;
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
-		       (cmd->num_ssids * sizeof(wmi_ssid)));
+
 	if (scan_req->numSsid) {
-		ssid = (wmi_ssid *) (buf_ptr + WMI_TLV_HDR_SIZE);
 		for (i = 0; i < scan_req->numSsid; ++i) {
-			ssid->ssid_len = scan_req->ssId[i].length;
-			qdf_mem_copy(ssid->ssid, scan_req->ssId[i].ssId,
+			cmd->ssid[i].length = scan_req->ssId[i].length;
+			qdf_mem_copy(cmd->ssid[i].mac_ssid,
+				     scan_req->ssId[i].ssId,
 				     scan_req->ssId[i].length);
-			ssid++;
 		}
 	}
-	buf_ptr += WMI_TLV_HDR_SIZE + (cmd->num_ssids * sizeof(wmi_ssid));
 
 	cmd->num_bssid = 1;
 
@@ -503,76 +454,17 @@ QDF_STATUS wma_get_buf_start_scan_cmd(tp_wma_handle wma_handle,
 		}
 	}
 
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
-		       (cmd->num_bssid * sizeof(wmi_mac_addr)));
-	bssid = (wmi_mac_addr *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(scan_req->bssId.bytes, bssid);
-	buf_ptr += WMI_TLV_HDR_SIZE + (cmd->num_bssid * sizeof(wmi_mac_addr));
-
+	qdf_mem_copy(cmd->mac_add_bytes, scan_req->bssId.bytes, QDF_MAC_ADDR_SIZE);
 	cmd->ie_len = scan_req->uIEFieldLen;
-	ie_len_with_pad = roundup(scan_req->uIEFieldLen, sizeof(uint32_t));
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_with_pad);
-	if (scan_req->uIEFieldLen) {
-		qdf_mem_copy(buf_ptr + WMI_TLV_HDR_SIZE,
-			     (uint8_t *) scan_req +
-			     (scan_req->uIEFieldOffset), scan_req->uIEFieldLen);
-	}
-	buf_ptr += WMI_TLV_HDR_SIZE + ie_len_with_pad;
+	cmd->ie_len_with_pad = roundup(scan_req->uIEFieldLen, sizeof(uint32_t));
+	cmd->uie_fieldOffset = scan_req->uIEFieldOffset;
+	cmd->ie_base = (uint8_t *) scan_req;
 
-	*buf_len = len;
 	return QDF_STATUS_SUCCESS;
-error:
-	qdf_mem_free(*buf);
-	*buf = NULL;
-	return qdf_status;
-}
 
-/**
- * wma_get_buf_stop_scan_cmd() - Fill stop scan command
- * @wma_handle: wma handle
- * @buf: wmi buffer to be filled in
- * @buf_len: buf length
- * @abort_scan_req: abort scan request
- *
- * Fill wmi_stop_scan_cmd buffer.
- *
- * Return: QDF status
- */
-QDF_STATUS wma_get_buf_stop_scan_cmd(tp_wma_handle wma_handle,
-				     wmi_buf_t *buf,
-				     int *buf_len,
-				     tAbortScanParams *abort_scan_req)
-{
-	wmi_stop_scan_cmd_fixed_param *cmd;
-	QDF_STATUS qdf_status;
-	int len = sizeof(*cmd);
-
-	/* Allocate the memory */
-	*buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!*buf) {
-		WMA_LOGP("%s: failed to allocate memory for stop scan cmd",
-			 __func__);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	cmd = (wmi_stop_scan_cmd_fixed_param *) wmi_buf_data(*buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_stop_scan_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_stop_scan_cmd_fixed_param));
-	cmd->vdev_id = abort_scan_req->SessionId;
-	cmd->requestor = abort_scan_req->scan_requestor_id;
-	cmd->scan_id = abort_scan_req->scan_id;
-	/* stop the scan with the corresponding scan_id */
-	cmd->req_type = WMI_SCAN_STOP_ONE;
-
-	*buf_len = len;
-	qdf_status = QDF_STATUS_SUCCESS;
 error:
 	return qdf_status;
-
 }
-
 
 /**
  * wma_start_scan() - start scan command
@@ -589,69 +481,74 @@ QDF_STATUS wma_start_scan(tp_wma_handle wma_handle,
 {
 	uint32_t vdev_id, scan_id;
 	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	wmi_buf_t buf = NULL;
-	wmi_start_scan_cmd_fixed_param *cmd;
-	int status = 0;
-	int len;
+	struct scan_start_params cmd = {0};
 	tSirScanOffloadEvent *scan_event;
 
+	cmd.chan_list = qdf_mem_malloc(sizeof(uint32_t) *
+			   scan_req->channelList.numChannels);
+	if (NULL == cmd.chan_list) {
+		qdf_status = QDF_STATUS_E_NOMEM;
+		goto error;
+	}
+	qdf_mem_zero((void *)cmd.chan_list, sizeof(uint32_t) *
+		scan_req->channelList.numChannels);
 	if (scan_req->sessionId > wma_handle->max_bssid) {
 		WMA_LOGE("%s: Invalid vdev_id %d, msg_type : 0x%x", __func__,
 			 scan_req->sessionId, msg_type);
-		goto error;
+		goto error1;
 	}
 
 	/* Sanity check to find whether vdev id active or not */
 	if (msg_type != WMA_START_SCAN_OFFLOAD_REQ &&
 		!wma_handle->interfaces[scan_req->sessionId].handle) {
 		WMA_LOGA("vdev id [%d] is not active", scan_req->sessionId);
-		goto error;
+		goto error1;
 	}
 
 	/* Fill individual elements of wmi_start_scan_req and
 	 * TLV for channel list, bssid, ssid etc ... */
 	qdf_status = wma_get_buf_start_scan_cmd(wma_handle, scan_req,
-						&buf, &len);
+						&cmd);
 	if (qdf_status != QDF_STATUS_SUCCESS) {
 		WMA_LOGE("Failed to get buffer for start scan cmd");
-		goto error;
+		goto error1;
 	}
 
-	if (NULL == buf) {
-		WMA_LOGE("Failed to get buffer for saving current scan info");
-		goto error;
-	}
-
-	/* Save current scan info */
-	cmd = (wmi_start_scan_cmd_fixed_param *) wmi_buf_data(buf);
 	if (scan_req->p2pScanType == P2P_SCAN_TYPE_LISTEN)
-		wma_set_p2p_scan_info(wma_handle, cmd->scan_id,
-			 cmd->vdev_id, P2P_SCAN_TYPE_LISTEN);
+		wma_set_p2p_scan_info(wma_handle, cmd.scan_id,
+			 cmd.vdev_id, P2P_SCAN_TYPE_LISTEN);
 	WMA_LOGE("scan_id 0x%x, vdev_id %d, p2pScanType %d, msg_type 0x%x",
-		 cmd->scan_id, cmd->vdev_id, scan_req->p2pScanType, msg_type);
+		 cmd.scan_id, cmd.vdev_id, scan_req->p2pScanType, msg_type);
 	/*
 	 * Cache vdev_id and scan_id because cmd is freed after calling
 	 * wmi_unified_cmd_send cmd. WMI internally frees cmd buffer after
 	 * getting TX complete from CE
 	 */
-	vdev_id = cmd->vdev_id;
-	scan_id = cmd->scan_id;
+	vdev_id = cmd.vdev_id;
+	scan_id = cmd.scan_id;
 	WMA_LOGI("ActiveDwell %d, PassiveDwell %d, ScanFlags 0x%x NumChan %d",
-		 cmd->dwell_time_active, cmd->dwell_time_passive,
-		 cmd->scan_ctrl_flags, cmd->num_chan);
+		 cmd.dwell_time_active, cmd.dwell_time_passive,
+		 cmd.scan_ctrl_flags, cmd.num_chan);
 
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_START_SCAN_CMDID);
 	/* Call the wmi api to request the scan */
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
+	qdf_status = wmi_unified_scan_start_cmd_send(wma_handle->wmi_handle,
+				 &cmd);
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
+		WMA_LOGE("wmi_unified_cmd_send returned Error %d", qdf_status);
+		goto error1;
 	}
+
+	if (NULL != cmd.chan_list)
+		qdf_mem_free(cmd.chan_list);
 
 	WMA_LOGI("WMA --> WMI_START_SCAN_CMDID");
 
 	return QDF_STATUS_SUCCESS;
+
+error1:
+	if (NULL != cmd.chan_list)
+		qdf_mem_free(cmd.chan_list);
+
 error:
 	/* Send completion event for only for start scan request */
 	if (msg_type == WMA_START_SCAN_OFFLOAD_REQ) {
@@ -673,6 +570,7 @@ error:
 		wma_send_msg(wma_handle, WMA_RX_SCAN_EVENT, (void *)scan_event,
 			     0);
 	}
+
 	return qdf_status;
 }
 
@@ -689,30 +587,19 @@ QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 			 tAbortScanParams *abort_scan_req)
 {
 	QDF_STATUS qdf_status;
-	wmi_buf_t buf;
-	int status = 0;
-	int len;
+	struct scan_stop_params scan_param = {0};
 
-	qdf_status = wma_get_buf_stop_scan_cmd(wma_handle, &buf, &len,
-					       abort_scan_req);
-	if (qdf_status != QDF_STATUS_SUCCESS) {
-		WMA_LOGE("Failed to get buffer for stop scan cmd");
-		goto error1;
-	}
-
-	if (NULL == buf) {
-		WMA_LOGE("Failed to get buffer for stop scan cmd");
-		qdf_status = QDF_STATUS_E_FAULT;
-		goto error1;
-	}
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_STOP_SCAN_CMDID);
+	scan_param.vdev_id = abort_scan_req->SessionId;
+	scan_param.requestor = abort_scan_req->scan_requestor_id;
+	scan_param.scan_id = abort_scan_req->scan_id;
+	/* stop the scan with the corresponding scan_id */
+	scan_param.req_type = WMI_SCAN_STOP_ONE;
+	qdf_status = wmi_unified_scan_stop_cmd_send(wma_handle->wmi_handle,
+						&scan_param);
 	/* Call the wmi api to request the scan */
-	if (status != EOK) {
+	if (QDF_IS_STATUS_ERROR(qdf_status)) {
 		WMA_LOGE("wmi_unified_cmd_send WMI_STOP_SCAN_CMDID returned Error %d",
-			status);
-		qdf_status = QDF_STATUS_E_FAILURE;
+			qdf_status);
 		goto error;
 	}
 	WMA_LOGE("scan_id 0x%x, scan_requestor_id 0x%x, vdev_id %d",
@@ -722,10 +609,8 @@ QDF_STATUS wma_stop_scan(tp_wma_handle wma_handle,
 	WMA_LOGI("WMA --> WMI_STOP_SCAN_CMDID");
 
 	return QDF_STATUS_SUCCESS;
+
 error:
-	if (buf)
-		qdf_nbuf_free(buf);
-error1:
 	return qdf_status;
 }
 
