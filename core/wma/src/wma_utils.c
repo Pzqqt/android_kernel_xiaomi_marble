@@ -790,10 +790,7 @@ void wma_register_ll_stats_event_handler(tp_wma_handle wma_handle)
 QDF_STATUS wma_process_ll_stats_clear_req
 	(tp_wma_handle wma, const tpSirLLStatsClearReq clearReq)
 {
-	wmi_clear_link_stats_cmd_fixed_param *cmd;
-	int32_t len;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
+	struct ll_stats_clear_params cmd = {0};
 	int ret;
 
 	if (!clearReq || !wma) {
@@ -801,46 +798,17 @@ QDF_STATUS wma_process_ll_stats_clear_req
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	cmd.stop_req = clearReq->stopReq;
+	cmd.sta_id = clearReq->staId;
+	cmd.stats_clear_mask = clearReq->statsClearReqMask;
 
-	if (!buf) {
-		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_zero(buf_ptr, len);
-	cmd = (wmi_clear_link_stats_cmd_fixed_param *) buf_ptr;
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_clear_link_stats_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_clear_link_stats_cmd_fixed_param));
-
-	cmd->stop_stats_collection_req = clearReq->stopReq;
-	cmd->vdev_id = clearReq->staId;
-	cmd->stats_clear_req_mask = clearReq->statsClearReqMask;
-
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(wma->interfaces[clearReq->staId].addr,
-				   &cmd->peer_macaddr);
-
-	WMA_LOGD("LINK_LAYER_STATS - Clear Request Params");
-	WMA_LOGD("StopReq         : %d", cmd->stop_stats_collection_req);
-	WMA_LOGD("Vdev Id         : %d", cmd->vdev_id);
-	WMA_LOGD("Clear Stat Mask : %d", cmd->stats_clear_req_mask);
-	WMA_LOGD("Peer MAC Addr   : %pM",
-		 wma->interfaces[clearReq->staId].addr);
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_CLEAR_LINK_STATS_CMDID);
+	ret = wmi_unified_process_ll_stats_clear_cmd(wma->wmi_handle, &cmd,
+				   wma->interfaces[clearReq->staId].addr);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send clear link stats req", __func__);
-		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGD("Clear Link Layer Stats request sent successfully");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -854,10 +822,7 @@ QDF_STATUS wma_process_ll_stats_clear_req
 QDF_STATUS wma_process_ll_stats_set_req
 	(tp_wma_handle wma, const tpSirLLStatsSetReq setReq)
 {
-	wmi_start_link_stats_cmd_fixed_param *cmd;
-	int32_t len;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
+	struct ll_stats_set_params cmd = {0};
 	int ret;
 
 	if (!setReq || !wma) {
@@ -865,40 +830,17 @@ QDF_STATUS wma_process_ll_stats_set_req
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-
-	if (!buf) {
-		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_zero(buf_ptr, len);
-	cmd = (wmi_start_link_stats_cmd_fixed_param *) buf_ptr;
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_start_link_stats_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_start_link_stats_cmd_fixed_param));
-
-	cmd->mpdu_size_threshold = setReq->mpduSizeThreshold;
-	cmd->aggressive_statistics_gathering =
+	cmd.mpdu_size_threshold = setReq->mpduSizeThreshold;
+	cmd.aggressive_statistics_gathering =
 		setReq->aggressiveStatisticsGathering;
 
-	WMA_LOGD("LINK_LAYER_STATS - Start/Set Request Params");
-	WMA_LOGD("MPDU Size Thresh : %d", cmd->mpdu_size_threshold);
-	WMA_LOGD("Aggressive Gather: %d", cmd->aggressive_statistics_gathering);
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_START_LINK_STATS_CMDID);
+	ret = wmi_unified_process_ll_stats_set_cmd(wma->wmi_handle,
+					 &cmd);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send set link stats request", __func__);
-		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGD("Set Link Layer Stats request sent successfully");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -912,10 +854,7 @@ QDF_STATUS wma_process_ll_stats_set_req
 QDF_STATUS wma_process_ll_stats_get_req
 	(tp_wma_handle wma, const tpSirLLStatsGetReq getReq)
 {
-	wmi_request_link_stats_cmd_fixed_param *cmd;
-	int32_t len;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
+	struct ll_stats_get_params cmd = {0};
 	int ret;
 
 	if (!getReq || !wma) {
@@ -923,45 +862,17 @@ QDF_STATUS wma_process_ll_stats_get_req
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
+	cmd.req_id = getReq->reqId;
+	cmd.param_id_mask = getReq->paramIdMask;
+	cmd.sta_id = getReq->staId;
 
-	if (!buf) {
-		WMA_LOGE("%s: Failed allocate wmi buffer", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	qdf_mem_zero(buf_ptr, len);
-	cmd = (wmi_request_link_stats_cmd_fixed_param *) buf_ptr;
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_request_link_stats_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_request_link_stats_cmd_fixed_param));
-
-	cmd->request_id = getReq->reqId;
-	cmd->stats_type = getReq->paramIdMask;
-	cmd->vdev_id = getReq->staId;
-
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(wma->interfaces[getReq->staId].addr,
-				   &cmd->peer_macaddr);
-
-	WMA_LOGD("LINK_LAYER_STATS - Get Request Params");
-	WMA_LOGD("Request ID      : %d", cmd->request_id);
-	WMA_LOGD("Stats Type      : %d", cmd->stats_type);
-	WMA_LOGD("Vdev ID         : %d", cmd->vdev_id);
-	WMA_LOGD("Peer MAC Addr   : %pM", wma->interfaces[getReq->staId].addr);
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_REQUEST_LINK_STATS_CMDID);
+	ret = wmi_unified_process_ll_stats_get_cmd(wma->wmi_handle, &cmd,
+				   wma->interfaces[getReq->staId].addr);
 	if (ret) {
 		WMA_LOGE("%s: Failed to send get link stats request", __func__);
-		wmi_buf_free(buf);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	WMA_LOGD("Get Link Layer Stats request sent successfully");
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -2026,10 +1937,9 @@ void wma_get_stats_req(WMA_HANDLE handle,
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
 	struct wma_txrx_node *node;
-	wmi_buf_t buf;
-	wmi_request_stats_cmd_fixed_param *cmd;
+	struct pe_stats_req  cmd = {0};
 	tAniGetPEStatsRsp *pGetPEStatsRspParams;
-	uint8_t len = sizeof(wmi_request_stats_cmd_fixed_param);
+
 
 	WMA_LOGD("%s: Enter", __func__);
 	node = &wma_handle->interfaces[get_stats_param->sessionId];
@@ -2054,31 +1964,15 @@ void wma_get_stats_req(WMA_HANDLE handle,
 	if (!pGetPEStatsRspParams)
 		goto end;
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s: Failed to allocate wmi buffer", __func__);
-		goto failed;
-	}
-
 	node->fw_stats_set = 0;
 	node->stats_rsp = pGetPEStatsRspParams;
-	cmd = (wmi_request_stats_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_request_stats_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_request_stats_cmd_fixed_param));
-	cmd->stats_id =
-		WMI_REQUEST_PEER_STAT | WMI_REQUEST_PDEV_STAT |
-		WMI_REQUEST_VDEV_STAT;
-	cmd->vdev_id = get_stats_param->sessionId;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(node->bssid, &cmd->peer_macaddr);
-	WMA_LOGD("STATS REQ VDEV_ID:%d-->", cmd->vdev_id);
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				 WMI_REQUEST_STATS_CMDID)) {
+
+	cmd.session_id = get_stats_param->sessionId;
+	if (wmi_unified_get_stats_cmd(wma_handle->wmi_handle, &cmd,
+				 node->bssid)) {
 
 		WMA_LOGE("%s: Failed to send WMI_REQUEST_STATS_CMDID",
 			 __func__);
-		wmi_buf_free(buf);
 		goto failed;
 	}
 
