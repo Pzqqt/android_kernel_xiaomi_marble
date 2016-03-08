@@ -1133,48 +1133,8 @@ QDF_STATUS wma_roam_scan_offload_scan_period(tp_wma_handle wma_handle,
 					     uint32_t scan_age,
 					     uint32_t vdev_id)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	wmi_buf_t buf = NULL;
-	int status = 0;
-	int len;
-	uint8_t *buf_ptr;
-	wmi_roam_scan_period_fixed_param *scan_period_fp;
-
-	/* Send scan period values */
-	len = sizeof(wmi_roam_scan_period_fixed_param);
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	scan_period_fp = (wmi_roam_scan_period_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&scan_period_fp->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_scan_period_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_roam_scan_period_fixed_param));
-	/* fill in scan period values */
-	scan_period_fp->vdev_id = vdev_id;
-	scan_period_fp->roam_scan_period = scan_period; /* 20 seconds */
-	scan_period_fp->roam_scan_age = scan_age;
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_ROAM_SCAN_PERIOD);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_PERIOD returned Error %d",
-			status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_PERIOD roam_scan_period=%d, roam_scan_age=%d",
-		__func__, scan_period, scan_age);
-	return QDF_STATUS_SUCCESS;
-error:
-	wmi_buf_free(buf);
-
-	return qdf_status;
+	return wmi_unified_roam_scan_offload_scan_period(wma_handle->wmi_handle,
+				  scan_period, scan_age, vdev_id);
 }
 
 /**
@@ -1194,51 +1154,16 @@ QDF_STATUS wma_roam_scan_offload_rssi_change(tp_wma_handle wma_handle,
 	uint32_t bcn_rssi_weight,
 	uint32_t hirssi_delay_btw_scans)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	wmi_buf_t buf = NULL;
-	int status = 0;
-	int len;
-	uint8_t *buf_ptr;
-	wmi_roam_scan_rssi_change_threshold_fixed_param *rssi_change_fp;
+	int status;
 
-	/* Send rssi change parameters */
-	len = sizeof(wmi_roam_scan_rssi_change_threshold_fixed_param);
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
+	status = wmi_unified_roam_scan_offload_rssi_change_cmd(wma_handle->wmi_handle,
+				  vdev_id, rssi_change_thresh,
+				  bcn_rssi_weight, hirssi_delay_btw_scans);
+	if (status != EOK)
+		return QDF_STATUS_E_FAILURE;
 
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	rssi_change_fp =
-		(wmi_roam_scan_rssi_change_threshold_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&rssi_change_fp->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_scan_rssi_change_threshold_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_roam_scan_rssi_change_threshold_fixed_param));
-	/* fill in rssi change threshold (hysteresis) values */
-	rssi_change_fp->vdev_id = vdev_id;
-	rssi_change_fp->roam_scan_rssi_change_thresh = rssi_change_thresh;
-	rssi_change_fp->bcn_rssi_weight = bcn_rssi_weight;
-	rssi_change_fp->hirssi_delay_btw_scans = hirssi_delay_btw_scans;
 
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_RSSI_CHANGE_THRESHOLD returned Error %d",
-			status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	WMA_LOGI(FL("roam_scan_rssi_change_thresh=%d, bcn_rssi_weight=%d"),
-		rssi_change_thresh, bcn_rssi_weight);
-	WMA_LOGI(FL("hirssi_delay_btw_scans=%d"), hirssi_delay_btw_scans);
 	return QDF_STATUS_SUCCESS;
-error:
-	wmi_buf_free(buf);
-
-	return qdf_status;
 }
 
 /**
@@ -1258,73 +1183,28 @@ QDF_STATUS wma_roam_scan_offload_chan_list(tp_wma_handle wma_handle,
 					   uint8_t *chan_list,
 					   uint8_t list_type, uint32_t vdev_id)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	wmi_buf_t buf = NULL;
-	int status = 0;
-	int len, list_tlv_len;
+	QDF_STATUS status;
 	int i;
-	uint8_t *buf_ptr;
-	wmi_roam_chan_list_fixed_param *chan_list_fp;
-	A_UINT32 *roam_chan_list_array;
+	uint8_t *chan_list_hz;
 
 	if (chan_count == 0) {
 		WMA_LOGD("%s : invalid number of channels %d", __func__,
 			 chan_count);
 		return QDF_STATUS_E_EMPTY;
 	}
-	/* Channel list is a table of 2 TLV's */
-	list_tlv_len = WMI_TLV_HDR_SIZE + chan_count * sizeof(A_UINT32);
-	len = sizeof(wmi_roam_chan_list_fixed_param) + list_tlv_len;
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	chan_list_fp = (wmi_roam_chan_list_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&chan_list_fp->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_chan_list_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_roam_chan_list_fixed_param));
-	chan_list_fp->vdev_id = vdev_id;
-	chan_list_fp->num_chan = chan_count;
-	if (chan_count > 0 && list_type == CHANNEL_LIST_STATIC) {
-		/* external app is controlling channel list */
-		chan_list_fp->chan_list_type =
-			WMI_ROAM_SCAN_CHAN_LIST_TYPE_STATIC;
-	} else {
-		/* umac supplied occupied channel list in LFR */
-		chan_list_fp->chan_list_type =
-			WMI_ROAM_SCAN_CHAN_LIST_TYPE_DYNAMIC;
-	}
-
-	buf_ptr += sizeof(wmi_roam_chan_list_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-		       (chan_list_fp->num_chan * sizeof(uint32_t)));
-	roam_chan_list_array = (A_UINT32 *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	WMA_LOGI("%s: %d channels = ", __func__, chan_list_fp->num_chan);
-	for (i = 0; ((i < chan_list_fp->num_chan) &&
+	chan_list_hz = qdf_mem_malloc(chan_count * sizeof(uint8_t));
+	for (i = 0; ((i < chan_count) &&
 		     (i < SIR_ROAM_MAX_CHANNELS)); i++) {
-		roam_chan_list_array[i] = cds_chan_to_freq(chan_list[i]);
-		WMA_LOGI("%d,", roam_chan_list_array[i]);
+		chan_list_hz[i] = cds_chan_to_freq(chan_list[i]);
+		WMA_LOGI("%d,", chan_list_hz[i]);
 	}
 
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_ROAM_CHAN_LIST);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_CHAN_LIST returned Error %d",
-			status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
+	status = wmi_unified_roam_scan_offload_chan_list_cmd(wma_handle->wmi_handle,
+				      chan_count, chan_list_hz,
+					  list_type, vdev_id);
+	qdf_mem_free(chan_list_hz);
 
-	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_CHAN_LIST", __func__);
-	return QDF_STATUS_SUCCESS;
-error:
-	wmi_buf_free(buf);
-
-	return qdf_status;
+	return status;
 }
 
 /**
@@ -1672,51 +1552,8 @@ QDF_STATUS wma_roam_scan_offload_ap_profile(tp_wma_handle wma_handle,
 					    wmi_ap_profile *ap_profile_p,
 					    uint32_t vdev_id)
 {
-	QDF_STATUS qdf_status = QDF_STATUS_SUCCESS;
-	wmi_buf_t buf = NULL;
-	int status = 0;
-	int len;
-	uint8_t *buf_ptr;
-	wmi_roam_ap_profile_fixed_param *roam_ap_profile_fp;
-
-	len = sizeof(wmi_roam_ap_profile_fixed_param) + sizeof(wmi_ap_profile);
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	roam_ap_profile_fp = (wmi_roam_ap_profile_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&roam_ap_profile_fp->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_ap_profile_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_roam_ap_profile_fixed_param));
-	/* fill in threshold values */
-	roam_ap_profile_fp->vdev_id = vdev_id;
-	roam_ap_profile_fp->id = 0;
-	buf_ptr += sizeof(wmi_roam_ap_profile_fixed_param);
-
-	qdf_mem_copy(buf_ptr, ap_profile_p, sizeof(wmi_ap_profile));
-	WMITLV_SET_HDR(buf_ptr,
-		       WMITLV_TAG_STRUC_wmi_ap_profile,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_ap_profile));
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_ROAM_AP_PROFILE);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_AP_PROFILE returned Error %d",
-			status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	WMA_LOGI("WMA --> WMI_ROAM_AP_PROFILE and other parameters");
-	return QDF_STATUS_SUCCESS;
-error:
-	wmi_buf_free(buf);
-
-	return qdf_status;
+	return wmi_unified_send_roam_scan_offload_ap_cmd(wma_handle->wmi_handle,
+			  ap_profile_p, vdev_id);
 }
 
 /**
@@ -1930,45 +1767,8 @@ QDF_STATUS wma_roam_scan_bmiss_cnt(tp_wma_handle wma_handle,
 QDF_STATUS wma_roam_scan_offload_command(tp_wma_handle wma_handle,
 					 uint32_t command, uint32_t vdev_id)
 {
-	QDF_STATUS qdf_status;
-	wmi_roam_scan_cmd_fixed_param *cmd_fp;
-	wmi_buf_t buf = NULL;
-	int status = 0;
-	int len;
-	uint8_t *buf_ptr;
-
-	len = sizeof(wmi_roam_scan_cmd_fixed_param);
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-
-	cmd_fp = (wmi_roam_scan_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd_fp->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_scan_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_roam_scan_cmd_fixed_param));
-	cmd_fp->vdev_id = vdev_id;
-	cmd_fp->command_arg = command;
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-				      len, WMI_ROAM_SCAN_CMD);
-	if (status != EOK) {
-		WMA_LOGE("wmi_unified_cmd_send WMI_ROAM_SCAN_CMD returned Error %d",
-			status);
-		qdf_status = QDF_STATUS_E_FAILURE;
-		goto error;
-	}
-
-	WMA_LOGI("%s: WMA --> WMI_ROAM_SCAN_CMD", __func__);
-	return QDF_STATUS_SUCCESS;
-
-error:
-	wmi_buf_free(buf);
-
-	return qdf_status;
+	return wmi_unified_roam_scan_offload_cmd(wma_handle->wmi_handle,
+			  command, vdev_id);
 }
 
 /**
@@ -2304,56 +2104,18 @@ void wma_process_roam_invoke(WMA_HANDLE handle,
 		struct wma_roam_invoke_cmd *roaminvoke)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_roam_invoke_cmd_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	u_int8_t *buf_ptr;
-	u_int16_t len, args_tlv_len;
-	A_UINT32 *channel_list;
-	wmi_mac_addr *bssid_list;
+	uint32_t ch_hz;
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not send roam invoke",
 				__func__);
 		return;
 	}
-	/* Host sends only one channel and one bssid */
-	args_tlv_len = 2 * WMI_TLV_HDR_SIZE + sizeof(A_UINT32) +
-			sizeof(wmi_mac_addr);
-	len = sizeof(wmi_roam_invoke_cmd_fixed_param) + args_tlv_len;
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmai_buf_alloc failed", __func__);
-		return;
-	}
+	ch_hz = (A_UINT32)cds_chan_to_freq(roaminvoke->channel);
+	wmi_unified_roam_invoke_cmd(wma_handle->wmi_handle,
+				(struct wmi_roam_invoke_cmd *)roaminvoke,
+				ch_hz);
 
-	cmd = (wmi_roam_invoke_cmd_fixed_param *)wmi_buf_data(wmi_buf);
-	buf_ptr = (u_int8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-	WMITLV_TAG_STRUC_wmi_roam_invoke_cmd_fixed_param,
-	WMITLV_GET_STRUCT_TLVLEN(wmi_roam_invoke_cmd_fixed_param));
-	cmd->vdev_id = roaminvoke->vdev_id;
-	cmd->flags = 0;
-	cmd->roam_scan_mode = 0;
-	cmd->roam_ap_sel_mode = 0;
-	cmd->roam_delay = 0;
-	cmd->num_chan = 1;
-	cmd->num_bssid = 1;
-	buf_ptr += sizeof(wmi_roam_invoke_cmd_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-				(sizeof(u_int32_t)));
-	channel_list = (A_UINT32 *)(buf_ptr + WMI_TLV_HDR_SIZE);
-	*channel_list = (A_UINT32)cds_chan_to_freq(roaminvoke->channel);
-	buf_ptr += sizeof(A_UINT32) + WMI_TLV_HDR_SIZE;
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_FIXED_STRUC,
-				(sizeof(wmi_mac_addr)));
-	bssid_list = (wmi_mac_addr *)(buf_ptr + WMI_TLV_HDR_SIZE);
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(roaminvoke->bssid, bssid_list);
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
-					WMI_ROAM_INVOKE_CMDID)) {
-		WMA_LOGP("%s: failed to send roam invoke command", __func__);
-		wmi_buf_free(wmi_buf);
-		return;
-	}
 	return;
 }
 
@@ -2962,50 +2724,18 @@ void wma_process_unit_test_cmd(WMA_HANDLE handle,
 			       t_wma_unit_test_cmd *wma_utest)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_unit_test_cmd_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint8_t *buf_ptr;
-	int i;
-	uint16_t len, args_tlv_len;
-	A_UINT32 *unit_test_cmd_args;
 
-	args_tlv_len =
-		WMI_TLV_HDR_SIZE + wma_utest->num_args * sizeof(A_UINT32);
-	len = sizeof(wmi_unit_test_cmd_fixed_param) + args_tlv_len;
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue fw unit test cmd",
 			 __func__);
 		return;
 	}
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmai_buf_alloc failed", __func__);
+
+	if (wmi_unified_unit_test_cmd(wma_handle->wmi_handle,
+				 (struct wmi_unit_test_cmd *)wma_utest)) {
 		return;
 	}
 
-	cmd = (wmi_unit_test_cmd_fixed_param *) wmi_buf_data(wmi_buf);
-	buf_ptr = (uint8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_unit_test_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_unit_test_cmd_fixed_param));
-	cmd->vdev_id = wma_utest->vdev_id;
-	cmd->module_id = wma_utest->module_id;
-	cmd->num_args = wma_utest->num_args;
-	buf_ptr += sizeof(wmi_unit_test_cmd_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_UINT32,
-		       (wma_utest->num_args * sizeof(uint32_t)));
-	unit_test_cmd_args = (A_UINT32 *) (buf_ptr + WMI_TLV_HDR_SIZE);
-	WMA_LOGI("%s: %d num of args = ", __func__, wma_utest->num_args);
-	for (i = 0; (i < wma_utest->num_args && i < WMA_MAX_NUM_ARGS); i++) {
-		unit_test_cmd_args[i] = wma_utest->args[i];
-		WMA_LOGI("%d,", wma_utest->args[i]);
-	}
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
-				 WMI_UNIT_TEST_CMDID)) {
-		WMA_LOGP("%s: failed to send unit test command", __func__);
-		qdf_nbuf_free(wmi_buf);
-		return;
-	}
 	return;
 }
 
@@ -3056,36 +2786,18 @@ static void wma_roam_ho_fail_handler(tp_wma_handle wma, uint32_t vdev_id)
 void wma_process_roam_synch_complete(WMA_HANDLE handle, uint8_t vdev_id)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	wmi_roam_synch_complete_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint8_t *buf_ptr;
-	uint16_t len;
-	len = sizeof(wmi_roam_synch_complete_fixed_param);
 
 	if (!wma_handle || !wma_handle->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue roam synch cnf",
 			 __func__);
 		return;
 	}
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
+
+	if (wmi_unified_roam_synch_complete_cmd(wma_handle->wmi_handle,
+				 vdev_id)) {
 		return;
 	}
-	cmd = (wmi_roam_synch_complete_fixed_param *) wmi_buf_data(wmi_buf);
-	buf_ptr = (uint8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_roam_synch_complete_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_roam_synch_complete_fixed_param));
-	cmd->vdev_id = vdev_id;
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
-				 WMI_ROAM_SYNCH_COMPLETE)) {
-		WMA_LOGP("%s: failed to send roam synch confirmation",
-			 __func__);
-		qdf_nbuf_free(wmi_buf);
-		return;
-	}
+
 	return;
 }
 #endif /* WLAN_FEATURE_ROAM_OFFLOAD */
@@ -5388,112 +5100,9 @@ QDF_STATUS wma_get_buf_extscan_hotlist_cmd(tp_wma_handle wma_handle,
 					   tSirExtScanSetBssidHotListReqParams *
 					   photlist, int *buf_len)
 {
-	wmi_extscan_configure_hotlist_monitor_cmd_fixed_param *cmd = NULL;
-	wmi_extscan_hotlist_entry *dest_hotlist;
-	tSirAPThresholdParam *src_ap = photlist->ap;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
-
-	int j, index = 0;
-	int cmd_len = 0;
-	int num_entries = 0;
-	int min_entries = 0;
-	int numap = photlist->numAp;
-	int len = sizeof(*cmd);
-
-	len += WMI_TLV_HDR_SIZE;
-	cmd_len = len;
-
-	/* setbssid hotlist expects the bssid list
-	 * to be non zero value
-	 */
-	if (!numap) {
-		WMA_LOGE("%s: Invalid number of bssid's", __func__);
-		return QDF_STATUS_E_INVAL;
-	}
-	num_entries = wma_get_hotlist_entries_per_page(wma_handle->wmi_handle,
-							cmd_len,
-							sizeof(*dest_hotlist));
-
-	/* Split the hot list entry pages and send multiple command
-	 * requests if the buffer reaches the maximum request size
-	 */
-	while (index < numap) {
-		min_entries = QDF_MIN(num_entries, numap);
-		len += min_entries * sizeof(wmi_extscan_hotlist_entry);
-		buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-		if (!buf) {
-			WMA_LOGP("%s: wmi_buf_alloc failed", __func__);
-			return QDF_STATUS_E_FAILURE;
-		}
-		buf_ptr = (uint8_t *) wmi_buf_data(buf);
-		cmd = (wmi_extscan_configure_hotlist_monitor_cmd_fixed_param *)
-		      buf_ptr;
-		WMITLV_SET_HDR(&cmd->tlv_header,
-			       WMITLV_TAG_STRUC_wmi_extscan_configure_hotlist_monitor_cmd_fixed_param,
-			       WMITLV_GET_STRUCT_TLVLEN
-				       (wmi_extscan_configure_hotlist_monitor_cmd_fixed_param));
-
-		/* Multiple requests are sent until the num_entries_in_page
-		 * matches the total_entries
-		 */
-		cmd->request_id = photlist->requestId;
-		cmd->vdev_id = photlist->sessionId;
-		cmd->total_entries = numap;
-		cmd->mode = 1;
-		cmd->num_entries_in_page = min_entries;
-		cmd->lost_ap_scan_count = photlist->lost_ap_sample_size;
-		cmd->first_entry_index = index;
-
-		WMA_LOGD("%s: vdev id:%d total_entries: %d num_entries: %d lost_ap_sample_size: %d",
-			__func__, cmd->vdev_id, cmd->total_entries,
-			cmd->num_entries_in_page,
-			cmd->lost_ap_scan_count);
-
-		buf_ptr += sizeof(*cmd);
-		WMITLV_SET_HDR(buf_ptr,
-			       WMITLV_TAG_ARRAY_STRUC,
-			       min_entries * sizeof(wmi_extscan_hotlist_entry));
-		dest_hotlist = (wmi_extscan_hotlist_entry *)
-			       (buf_ptr + WMI_TLV_HDR_SIZE);
-
-		/* Populate bssid, channel info and rssi
-		 * for the bssid's that are sent as hotlists.
-		 */
-		for (j = 0; j < min_entries; j++) {
-			WMITLV_SET_HDR(dest_hotlist,
-				       WMITLV_TAG_STRUC_wmi_extscan_bucket_cmd_fixed_param,
-				       WMITLV_GET_STRUCT_TLVLEN
-					       (wmi_extscan_hotlist_entry));
-
-			dest_hotlist->min_rssi = src_ap->low;
-			WMI_CHAR_ARRAY_TO_MAC_ADDR(src_ap->bssid.bytes,
-						   &dest_hotlist->bssid);
-
-			WMA_LOGD("%s:channel:%d min_rssi %d",
-				 __func__, dest_hotlist->channel,
-				 dest_hotlist->min_rssi);
-			WMA_LOGD
-				("%s: bssid mac_addr31to0: 0x%x, mac_addr47to32: 0x%x",
-				__func__, dest_hotlist->bssid.mac_addr31to0,
-				dest_hotlist->bssid.mac_addr47to32);
-			dest_hotlist++;
-			src_ap++;
-		}
-		buf_ptr += WMI_TLV_HDR_SIZE +
-			   (min_entries * sizeof(wmi_extscan_hotlist_entry));
-
-		if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-					 WMI_EXTSCAN_CONFIGURE_HOTLIST_MONITOR_CMDID)) {
-			WMA_LOGE("%s: failed to send command", __func__);
-			qdf_nbuf_free(buf);
-			return QDF_STATUS_E_FAILURE;
-		}
-		index = index + min_entries;
-		num_entries = numap - min_entries;
-		len = cmd_len;
-	}
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_get_buf_extscan_hotlist_cmd(wma_handle->wmi_handle,
+			 (struct ext_scan_setbssi_hotlist_params *)photlist,
+			  buf_len);
 }
 
 /**
@@ -6272,11 +5881,6 @@ QDF_STATUS
 wma_set_ssid_hotlist(tp_wma_handle wma,
 		     struct sir_set_ssid_hotlist_request *request)
 {
-	wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint32_t len;
-	uint32_t array_size;
-	uint8_t *buf_ptr;
 
 	if (!wma || !wma->wmi_handle) {
 		WMA_LOGE("%s: WMA is closed, can not issue hotlist cmd",
@@ -6294,74 +5898,11 @@ wma_set_ssid_hotlist(tp_wma_handle wma,
 		return QDF_STATUS_E_NOSUPPORT;
 	}
 
-	/* length of fixed portion */
-	len = sizeof(*cmd);
-
-	/* length of variable portion */
-	array_size =
-		request->ssid_count * sizeof(wmi_extscan_hotlist_ssid_entry);
-	len += WMI_TLV_HDR_SIZE + array_size;
-
-	wmi_buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
-	cmd = (wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param *)
-						buf_ptr;
-	WMITLV_SET_HDR
-		(&cmd->tlv_header,
-		 WMITLV_TAG_STRUC_wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param,
-		 WMITLV_GET_STRUCT_TLVLEN
-			(wmi_extscan_configure_hotlist_ssid_monitor_cmd_fixed_param));
-
-	cmd->request_id = request->request_id;
-	cmd->requestor_id = 0;
-	cmd->vdev_id = request->session_id;
-	cmd->table_id = 0;
-	cmd->lost_ap_scan_count = request->lost_ssid_sample_size;
-	cmd->total_entries = request->ssid_count;
-	cmd->num_entries_in_page = request->ssid_count;
-	cmd->first_entry_index = 0;
-
-	buf_ptr += sizeof(*cmd);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, array_size);
-
-	if (request->ssid_count) {
-		wmi_extscan_hotlist_ssid_entry *entry;
-		int i;
-
-		buf_ptr += WMI_TLV_HDR_SIZE;
-		entry = (wmi_extscan_hotlist_ssid_entry *)buf_ptr;
-		for (i = 0; i < request->ssid_count; i++) {
-			WMITLV_SET_HDR
-				(entry,
-				 WMITLV_TAG_ARRAY_STRUC,
-				 WMITLV_GET_STRUCT_TLVLEN
-					(wmi_extscan_hotlist_ssid_entry));
-			entry->ssid.ssid_len = request->ssids[i].ssid.length;
-			qdf_mem_copy(entry->ssid.ssid,
-				     request->ssids[i].ssid.ssId,
-				     request->ssids[i].ssid.length);
-			entry->band = request->ssids[i].band;
-			entry->min_rssi = request->ssids[i].rssi_low;
-			entry->max_rssi = request->ssids[i].rssi_high;
-			entry++;
-		}
-		cmd->mode = WMI_EXTSCAN_MODE_START;
-	} else {
-		cmd->mode = WMI_EXTSCAN_MODE_STOP;
-	}
-
-	if (wmi_unified_cmd_send
-		(wma->wmi_handle, wmi_buf, len,
-		 WMI_EXTSCAN_CONFIGURE_HOTLIST_SSID_MONITOR_CMDID)) {
-		WMA_LOGE("%s: failed to send command", __func__);
-		wmi_buf_free(wmi_buf);
+	if (wmi_unified_set_ssid_hotlist_cmd(wma->wmi_handle,
+		 (struct ssid_hotlist_request_params *)request)) {
 		return QDF_STATUS_E_FAILURE;
 	}
+
 	return QDF_STATUS_SUCCESS;
 }
 #endif
