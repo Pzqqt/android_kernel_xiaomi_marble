@@ -2342,80 +2342,6 @@ void wmi_desc_put(tp_wma_handle wma_handle, struct wmi_desc_t *wmi_desc)
 	qdf_spin_unlock_bh(&wma_handle->wmi_desc_pool.wmi_desc_pool_lock);
 }
 
-#define mgmt_tx_dl_frm_len 64
-static inline QDF_STATUS
-mgmt_wmi_unified_cmd_send(tp_wma_handle wma_handle, void *tx_frame,
-			  uint16_t frmLen, uint8_t vdev_id,
-			  pWMATxRxCompFunc tx_complete_cb,
-			  pWMAAckFnTxComp  tx_ota_post_proc_cb,
-			  uint16_t chanfreq, void *pData)
-{
-	wmi_buf_t buf;
-	wmi_mgmt_tx_send_cmd_fixed_param *cmd;
-	int32_t cmd_len;
-	uint64_t dma_addr;
-	struct wmi_desc_t *wmi_desc = NULL;
-	void *qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
-	uint8_t *bufp;
-	int32_t bufp_len = (frmLen < mgmt_tx_dl_frm_len) ? frmLen :
-		mgmt_tx_dl_frm_len;
-
-	cmd_len = sizeof(wmi_mgmt_tx_send_cmd_fixed_param) +
-		WMI_TLV_HDR_SIZE + roundup(bufp_len, sizeof(uint32_t));
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, cmd_len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	cmd = (wmi_mgmt_tx_send_cmd_fixed_param *)wmi_buf_data(buf);
-	bufp = (uint8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_wmi_mgmt_tx_send_cmd_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN
-		(wmi_mgmt_tx_send_cmd_fixed_param));
-
-	cmd->vdev_id = vdev_id;
-
-	wmi_desc = wmi_desc_get(wma_handle);
-	if (!wmi_desc) {
-		WMA_LOGE("%s: Failed to get wmi_desc", __func__);
-		goto err2;
-	}
-	wmi_desc->nbuf = tx_frame;
-	wmi_desc->tx_cmpl_cb = tx_complete_cb;
-	wmi_desc->ota_post_proc_cb = tx_ota_post_proc_cb;
-
-	cmd->desc_id = wmi_desc->desc_id;
-	cmd->chanfreq = chanfreq;
-	bufp += sizeof(wmi_mgmt_tx_send_cmd_fixed_param);
-	WMITLV_SET_HDR(bufp, WMITLV_TAG_ARRAY_BYTE, roundup(bufp_len,
-							    sizeof(uint32_t)));
-	bufp += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(bufp, pData, bufp_len);
-	qdf_nbuf_map_single(qdf_ctx, tx_frame, QDF_DMA_TO_DEVICE);
-	dma_addr = qdf_nbuf_get_frag_paddr(tx_frame, 0);
-	cmd->paddr_lo = (uint32_t)(dma_addr & 0xffffffff);
-#if defined(HELIUMPLUS_PADDR64)
-	cmd->paddr_hi = (uint32_t)((dma_addr >> 32) & 0x1F);
-#endif
-	cmd->frame_len = frmLen;
-	cmd->buf_len = bufp_len;
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, cmd_len,
-				      WMI_MGMT_TX_SEND_CMDID)) {
-		WMA_LOGE("%s: Failed to send mgmt Tx", __func__);
-		goto err1;
-	}
-	return QDF_STATUS_SUCCESS;
-err1:
-	wmi_desc_put(wma_handle, wmi_desc);
-err2:
-	wmi_buf_free(buf);
-	return QDF_STATUS_E_FAILURE;
-}
-
 /**
  * wma_tx_packet() - Sends Tx Frame to TxRx
  * @wma_context: wma context
@@ -2463,6 +2389,7 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 #ifdef QCA_PKT_PROTO_TRACE
 	uint8_t proto_type = 0;
 #endif /* QCA_PKT_PROTO_TRACE */
+	struct wmi_mgmt_params mgmt_param = {0};
 
 	if (NULL == wma_handle) {
 		WMA_LOGE("wma_handle is NULL");
@@ -2781,11 +2708,20 @@ QDF_STATUS wma_tx_packet(void *wma_context, void *tx_frame, uint16_t frmLen,
 
 	if (WMI_SERVICE_IS_ENABLED(wma_handle->wmi_service_bitmap,
 				   WMI_SERVICE_MGMT_TX_WMI)) {
-		status = mgmt_wmi_unified_cmd_send(wma_handle, tx_frame, frmLen,
-						   vdev_id,
-						   tx_frm_download_comp_cb,
-						   tx_frm_ota_comp_cb,
-						   chanfreq, pData);
+		mgmt_param.tx_frame = tx_frame;
+		mgmt_param.frm_len = frmLen;
+		mgmt_param.vdev_id = vdev_id;
+		mgmt_param.tx_complete_cb = tx_frm_download_comp_cb;
+		mgmt_param.tx_ota_post_proc_cb = tx_frm_ota_comp_cb;
+		mgmt_param.chanfreq = chanfreq;
+		mgmt_param.wmi_desc = wmi_desc_get(wma_handle);
+		mgmt_param.pdata = pData;
+		mgmt_param.qdf_ctx = cds_get_context(QDF_MODULE_ID_QDF_DEVICE);
+
+		status = wmi_mgmt_unified_cmd_send(wma_handle->wmi_handle,
+					&mgmt_param);
+		if (status)
+			wmi_desc_put(wma_handle, mgmt_param.wmi_desc);
 	} else {
 		/* Hand over the Tx Mgmt frame to TxRx */
 		status = ol_txrx_mgmt_send(txrx_vdev, tx_frame, tx_frm_index,

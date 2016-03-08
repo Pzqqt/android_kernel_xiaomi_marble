@@ -491,41 +491,19 @@ end:
  * @vdev_id: vdev id
  * @val: value
  *
- * Return: 0 for success or error code.
+ * Return: QDF_STATUS_SUCCESS for success or error code
  */
-int32_t wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
+QDF_STATUS wmi_unified_set_sta_ps(wmi_unified_t wmi_handle,
 			       uint32_t vdev_id, uint8_t val)
 {
-	wmi_sta_powersave_mode_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t len = sizeof(*cmd);
+	QDF_STATUS ret;
 
-	WMA_LOGD("Set Sta Mode Ps vdevId %d val %d", vdev_id, val);
+	ret = wmi_unified_set_sta_ps_mode(wmi_handle, vdev_id,
+				   val);
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
 
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s: Set Sta Mode Ps Mem Alloc Failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_sta_powersave_mode_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_sta_powersave_mode_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_sta_powersave_mode_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	if (val)
-		cmd->sta_ps_mode = WMI_STA_PS_MODE_ENABLED;
-	else
-		cmd->sta_ps_mode = WMI_STA_PS_MODE_DISABLED;
-
-	if (wmi_unified_cmd_send(wmi_handle, buf, len,
-				 WMI_STA_POWERSAVE_MODE_CMDID)) {
-		WMA_LOGE("Set Sta Mode Ps Failed vdevId %d val %d",
-			 vdev_id, val);
-		qdf_nbuf_free(buf);
-		return -EIO;
-	}
-	return 0;
+	return QDF_STATUS_SUCCESS;
 }
 
 /**
@@ -1069,7 +1047,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 }
 
 /**
- * wma_unified_set_sta_uapsd_auto_trig_cmd() - set uapsd auto trigger command
+ * wma_set_sta_uapsd_auto_trig_cmd() - set uapsd auto trigger command
  * @wmi_handle: wma handle
  * @vdevid: vdev id
  * @peer_addr: peer mac address
@@ -1084,62 +1062,26 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
  *
  * Return: 0 for success or error code.
  */
-int32_t
-wma_unified_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
+static QDF_STATUS wma_set_sta_uapsd_auto_trig_cmd(wmi_unified_t wmi_handle,
 					uint32_t vdevid,
 					uint8_t peer_addr[IEEE80211_ADDR_LEN],
 					uint8_t *autoTriggerparam,
 					uint32_t num_ac)
 {
-	wmi_sta_uapsd_auto_trig_cmd_fixed_param *cmd;
-	int32_t ret;
-	uint32_t param_len = num_ac * sizeof(wmi_sta_uapsd_auto_trig_param);
-	uint32_t cmd_len = sizeof(*cmd) + param_len + WMI_TLV_HDR_SIZE;
-	uint32_t i;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
+	QDF_STATUS ret;
+	struct sta_uapsd_trig_params cmd = {0};
 
-	buf = wmi_buf_alloc(wmi_handle, cmd_len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
+	cmd.vdevid = vdevid;
+	cmd.auto_triggerparam = autoTriggerparam;
+	cmd.num_ac = num_ac;
 
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_sta_uapsd_auto_trig_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_sta_uapsd_auto_trig_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_sta_uapsd_auto_trig_cmd_fixed_param));
-	cmd->vdev_id = vdevid;
-	cmd->num_ac = num_ac;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(peer_addr, &cmd->peer_macaddr);
-
-	/* TLV indicating array of structures to follow */
-	buf_ptr += sizeof(*cmd);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC, param_len);
-
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, autoTriggerparam, param_len);
-
-	/*
-	 * Update tag and length for uapsd auto trigger params (this will take
-	 * care of updating tag and length if it is not pre-filled by caller).
-	 */
-	for (i = 0; i < num_ac; i++) {
-		WMITLV_SET_HDR((buf_ptr +
-				(i * sizeof(wmi_sta_uapsd_auto_trig_param))),
-			       WMITLV_TAG_STRUC_wmi_sta_uapsd_auto_trig_param,
-			       WMITLV_GET_STRUCT_TLVLEN
-				       (wmi_sta_uapsd_auto_trig_param));
-	}
-
-	ret = wmi_unified_cmd_send(wmi_handle, buf, cmd_len,
-				   WMI_STA_UAPSD_AUTO_TRIG_CMDID);
-	if (ret != EOK) {
+	qdf_mem_copy((uint8_t *) cmd.peer_addr, (uint8_t *) peer_addr,
+		     sizeof(peer_addr));
+	ret = wmi_unified_set_sta_uapsd_auto_trig_cmd(wmi_handle,
+				   &cmd);
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
-		wmi_buf_free(buf);
-	}
+
 	return ret;
 }
 
@@ -1162,7 +1104,7 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 				    tp_wma_trigger_uapsd_params
 				    trigger_uapsd_params)
 {
-	int32_t ret;
+	QDF_STATUS ret;
 	wmi_sta_uapsd_auto_trig_param uapsd_trigger_param;
 
 	WMA_LOGD("Trigger uapsd params vdev id %d", vdev_id);
@@ -1191,15 +1133,16 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 	uapsd_trigger_param.delay_interval =
 		trigger_uapsd_params->delay_interval;
 
-	ret = wma_unified_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
+	ret = wma_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
 			vdev_id, wma_handle->interfaces[vdev_id].bssid,
 			(uint8_t *) (&uapsd_trigger_param), 1);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Fail to send uapsd param cmd for vdevid %d ret = %d",
 			 ret, vdev_id);
-		return QDF_STATUS_E_FAILURE;
+		return ret;
 	}
-	return QDF_STATUS_SUCCESS;
+
+	return ret;
 }
 
 /**
@@ -1213,7 +1156,7 @@ QDF_STATUS wma_trigger_uapsd_params(tp_wma_handle wma_handle, uint32_t vdev_id,
 QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 				    uint32_t vdev_id, enum uapsd_ac ac)
 {
-	int32_t ret;
+	QDF_STATUS ret;
 	struct wma_txrx_node *iface = &wma_handle->interfaces[vdev_id];
 	wmi_sta_uapsd_auto_trig_param uapsd_trigger_param;
 	enum uapsd_up user_priority;
@@ -1260,25 +1203,26 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
 	uapsd_trigger_param.suspend_interval = 0;
 	uapsd_trigger_param.delay_interval = 0;
 
-	ret = wma_unified_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
+	ret = wma_set_sta_uapsd_auto_trig_cmd(wma_handle->wmi_handle,
 		vdev_id, wma_handle->interfaces[vdev_id].bssid,
 		(uint8_t *)(&uapsd_trigger_param), 1);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Fail to send auto trig cmd for vdevid %d ret = %d",
 			 ret, vdev_id);
-		return QDF_STATUS_E_FAILURE;
+		return ret;
 	}
 
 	ret = wma_unified_set_sta_ps_param(wma_handle->wmi_handle, vdev_id,
 					   WMI_STA_PS_PARAM_UAPSD,
 					   iface->uapsd_cached_val);
-	if (ret) {
+	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Disable Uapsd per ac Failed vdevId %d ac %d", vdev_id,
 			 ac);
-		return QDF_STATUS_E_FAILURE;
+		return ret;
 	}
 	WMA_LOGD("Disable Uapsd per ac vdevId %d val %d", vdev_id,
 		 iface->uapsd_cached_val);
+
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -1290,37 +1234,13 @@ QDF_STATUS wma_disable_uapsd_per_ac(tp_wma_handle wma_handle,
  */
 QDF_STATUS wma_get_temperature(tp_wma_handle wma_handle)
 {
-	wmi_pdev_get_temperature_cmd_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint32_t len = sizeof(wmi_pdev_get_temperature_cmd_fixed_param);
-	uint8_t *buf_ptr;
+	QDF_STATUS ret = QDF_STATUS_SUCCESS;
 
-	if (!wma_handle) {
-		WMA_LOGE(FL("WMA is closed, can not issue cmd"));
-		return QDF_STATUS_E_INVAL;
-	}
+	ret = wmi_unified_get_temperature(wma_handle->wmi_handle);
+	if (ret)
+		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
 
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!wmi_buf) {
-		WMA_LOGE(FL("wmi_buf_alloc failed"));
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
-
-	cmd = (wmi_pdev_get_temperature_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_pdev_get_temperature_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_pdev_get_temperature_cmd_fixed_param));
-
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, wmi_buf, len,
-				 WMI_PDEV_GET_TEMPERATURE_CMDID)) {
-		WMA_LOGE(FL("failed to send get temperature command"));
-		wmi_buf_free(wmi_buf);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
+	return ret;
 }
 
 /**
@@ -1708,59 +1628,24 @@ int wma_p2p_noa_event_handler(void *handle, uint8_t *event,
  */
 static void wma_set_p2pgo_noa_req(tp_wma_handle wma, tP2pPsParams *noa)
 {
-	wmi_p2p_set_noa_cmd_fixed_param *cmd;
-	wmi_p2p_noa_descriptor *noa_discriptor;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
-	uint16_t len;
-	int32_t status;
-	uint32_t duration;
+	QDF_STATUS ret;
+	struct p2p_ps_params cmd = {0};
 
-	WMA_LOGD("%s: Enter", __func__);
-	len = sizeof(*cmd) + WMI_TLV_HDR_SIZE + sizeof(*noa_discriptor);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("Failed to allocate memory");
-		goto end;
-	}
+	cmd.opp_ps = noa->opp_ps;
+	cmd.ctwindow = noa->ctWindow;
+	cmd.count = noa->count;
+	cmd.duration = noa->duration;
+	cmd.interval = noa->interval;
+	cmd.single_noa_duration = noa->single_noa_duration;
+	cmd.ps_selection = noa->psSelection;
+	cmd.session_id =  noa->sessionId;
 
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_p2p_set_noa_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_p2p_set_noa_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_p2p_set_noa_cmd_fixed_param));
-	duration = (noa->count == 1) ? noa->single_noa_duration : noa->duration;
-	cmd->vdev_id = noa->sessionId;
-	cmd->enable = (duration) ? true : false;
-	cmd->num_noa = 1;
+	ret = wmi_unified_set_p2pgo_noa_req_cmd(wma->wmi_handle,
+				   &cmd);
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
 
-	WMITLV_SET_HDR((buf_ptr + sizeof(wmi_p2p_set_noa_cmd_fixed_param)),
-		       WMITLV_TAG_ARRAY_STRUC, sizeof(wmi_p2p_noa_descriptor));
-	noa_discriptor = (wmi_p2p_noa_descriptor *) (buf_ptr +
-						     sizeof
-						     (wmi_p2p_set_noa_cmd_fixed_param)
-						     + WMI_TLV_HDR_SIZE);
-	WMITLV_SET_HDR(&noa_discriptor->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_p2p_noa_descriptor,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_p2p_noa_descriptor));
-	noa_discriptor->type_count = noa->count;
-	noa_discriptor->duration = duration;
-	noa_discriptor->interval = noa->interval;
-	noa_discriptor->start_time = 0;
-
-	WMA_LOGI("SET P2P GO NOA:vdev_id:%d count:%d duration:%d interval:%d",
-		 cmd->vdev_id, noa->count, noa_discriptor->duration,
-		 noa->interval);
-	status = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				      WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID);
-	if (status != EOK) {
-		WMA_LOGE("Failed to send WMI_FWTEST_P2P_SET_NOA_PARAM_CMDID");
-		wmi_buf_free(buf);
-	}
-
-end:
-	WMA_LOGD("%s: Exit", __func__);
+	return;
 }
 
 /**
@@ -1772,38 +1657,24 @@ end:
  */
 static void wma_set_p2pgo_oppps_req(tp_wma_handle wma, tP2pPsParams *oppps)
 {
-	wmi_p2p_set_oppps_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int32_t status;
+	QDF_STATUS ret;
+	struct p2p_ps_params cmd = {0};
 
-	WMA_LOGD("%s: Enter", __func__);
-	buf = wmi_buf_alloc(wma->wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGE("Failed to allocate memory");
-		goto end;
-	}
+	cmd.opp_ps = oppps->opp_ps;
+	cmd.ctwindow = oppps->ctWindow;
+	cmd.count = oppps->count;
+	cmd.duration = oppps->duration;
+	cmd.interval = oppps->interval;
+	cmd.single_noa_duration = oppps->single_noa_duration;
+	cmd.ps_selection = oppps->psSelection;
+	cmd.session_id =  oppps->sessionId;
 
-	cmd = (wmi_p2p_set_oppps_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_p2p_set_oppps_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_p2p_set_oppps_cmd_fixed_param));
-	cmd->vdev_id = oppps->sessionId;
-	if (oppps->ctWindow)
-		WMI_UNIFIED_OPPPS_ATTR_ENABLED_SET(cmd);
+	ret = wmi_unified_set_p2pgo_oppps_req(wma->wmi_handle,
+				   &cmd);
+	if (QDF_IS_STATUS_ERROR(ret))
+		WMA_LOGE("Failed to send set uapsd param ret = %d", ret);
 
-	WMI_UNIFIED_OPPPS_ATTR_CTWIN_SET(cmd, oppps->ctWindow);
-	WMA_LOGI("SET P2P GO OPPPS:vdev_id:%d ctwindow:%d",
-		 cmd->vdev_id, oppps->ctWindow);
-	status = wmi_unified_cmd_send(wma->wmi_handle, buf, sizeof(*cmd),
-				      WMI_P2P_SET_OPPPS_PARAM_CMDID);
-	if (status != EOK) {
-		WMA_LOGE("Failed to send WMI_P2P_SET_OPPPS_PARAM_CMDID");
-		wmi_buf_free(buf);
-	}
-
-end:
-	WMA_LOGD("%s: Exit", __func__);
+	return;
 }
 
 /**
@@ -1865,50 +1736,12 @@ void wma_process_set_mimops_req(tp_wma_handle wma_handle,
  */
 QDF_STATUS wma_set_mimops(tp_wma_handle wma, uint8_t vdev_id, int value)
 {
-	int ret = QDF_STATUS_SUCCESS;
-	wmi_sta_smps_force_mode_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint16_t len = sizeof(*cmd);
+	QDF_STATUS ret;
 
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_sta_smps_force_mode_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_sta_smps_force_mode_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_sta_smps_force_mode_cmd_fixed_param));
-
-	cmd->vdev_id = vdev_id;
-
-	switch (value) {
-	case 0:
-		cmd->forced_mode = WMI_SMPS_FORCED_MODE_NONE;
-		break;
-	case 1:
-		cmd->forced_mode = WMI_SMPS_FORCED_MODE_DISABLED;
-		break;
-	case 2:
-		cmd->forced_mode = WMI_SMPS_FORCED_MODE_STATIC;
-		break;
-	case 3:
-		cmd->forced_mode = WMI_SMPS_FORCED_MODE_DYNAMIC;
-		break;
-	default:
-		WMA_LOGE("%s:INVALID Mimo PS CONFIG", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	WMA_LOGD("Setting vdev %d value = %u", vdev_id, value);
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_STA_SMPS_FORCE_MODE_CMDID);
-	if (ret < 0) {
+	ret = wmi_unified_set_mimops(wma->wmi_handle, vdev_id,
+				   value);
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
-		wmi_buf_free(buf);
-	}
 
 	return ret;
 }
@@ -1981,36 +1814,12 @@ QDF_STATUS wma_set_idle_ps_config(void *wma_ptr, uint32_t idle_ps)
 QDF_STATUS wma_set_smps_params(tp_wma_handle wma, uint8_t vdev_id,
 			       int value)
 {
-	int ret = QDF_STATUS_SUCCESS;
-	wmi_sta_smps_param_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint16_t len = sizeof(*cmd);
+	QDF_STATUS ret;
 
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_sta_smps_param_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_sta_smps_param_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_sta_smps_param_cmd_fixed_param));
-
-	cmd->vdev_id = vdev_id;
-	cmd->value = value & WMA_SMPS_MASK_LOWER_16BITS;
-	cmd->param =
-		(value >> WMA_SMPS_PARAM_VALUE_S) & WMA_SMPS_MASK_UPPER_3BITS;
-
-	WMA_LOGD("Setting vdev %d value = %x param %x", vdev_id, cmd->value,
-		 cmd->param);
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_STA_SMPS_PARAM_CMDID);
-	if (ret < 0) {
+	ret = wmi_unified_set_smps_params(wma->wmi_handle, vdev_id,
+				   value);
+	if (QDF_IS_STATUS_ERROR(ret))
 		WMA_LOGE("Failed to send set Mimo PS ret = %d", ret);
-		wmi_buf_free(buf);
-	}
 
 	return ret;
 }
