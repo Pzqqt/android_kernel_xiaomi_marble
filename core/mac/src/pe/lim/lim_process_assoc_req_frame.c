@@ -252,7 +252,7 @@ static bool lim_chk_assoc_req_parse_error(tpAniSirGlobal mac_ctx,
 					  tpPESession session,
 					  tpSirAssocReq assoc_req,
 					  uint8_t sub_type, uint8_t *frm_body,
-					  uint8_t frame_len)
+					  uint32_t frame_len)
 {
 	tSirRetStatus status;
 
@@ -1716,7 +1716,7 @@ void lim_process_assoc_req_frame(tpAniSirGlobal mac_ctx, uint8_t *rx_pkt_info,
 	bool pmf_connection = false, assoc_req_copied = false;
 	uint8_t update_ctx, *frm_body;
 	uint16_t peer_idx, assoc_id = 0;
-	int32_t frame_len;
+	uint32_t frame_len;
 	uint32_t phy_mode;
 	tHalBitVal qos_mode;
 	tpSirMacMgmtHdr hdr;
