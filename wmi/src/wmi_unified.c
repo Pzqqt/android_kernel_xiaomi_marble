@@ -787,12 +787,12 @@ static inline void wma_log_cmd_id(WMI_CMD_ID cmd_id)
 #endif
 
 /**
- * wmi_is_runtime_pm_cmd() - check if a cmd is part of the suspend resume sequence
+ * wmi_is_runtime_pm_cmd() - check if a cmd is from suspend resume sequence
  * @cmd: command to check
  *
  * Return: true if the command is part of the suspend resume sequence.
  */
-bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
+static bool wmi_is_runtime_pm_cmd(WMI_CMD_ID cmd_id)
 {
 	switch (cmd_id) {
 	case WMI_WOW_ENABLE_CMDID:
@@ -824,6 +824,7 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 {
 	HTC_PACKET *pkt;
 	A_STATUS status;
+	uint16_t htc_tag = 0;
 
 	if (wmi_get_runtime_pm_inprogress(wmi_handle)) {
 		if (wmi_is_runtime_pm_cmd(cmd_id))
@@ -831,8 +832,8 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 	} else if (cdf_atomic_read(&wmi_handle->is_target_suspended) &&
 	    ((WMI_WOW_HOSTWAKEUP_FROM_SLEEP_CMDID != cmd_id) &&
 	     (WMI_PDEV_RESUME_CMDID != cmd_id))) {
-		cdf_print("%s: Target is suspended  could not send WMI command \n",
-		       __func__);
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+				  "%s: Target is suspended", __func__);
 		CDF_ASSERT(0);
 		return -EBUSY;
 	}
@@ -843,16 +844,17 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 
 		if (wmitlv_check_command_tlv_params(NULL, buf_ptr, len, cmd_id)
 		    != 0) {
-			cdf_print
-			("\nERROR: %s: Invalid WMI Param Buffer for Cmd:%d\n",
+			CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+			"\nERROR: %s: Invalid WMI Param Buffer for Cmd:%d",
 				__func__, cmd_id);
 			return -EINVAL;
 		}
 	}
 
 	if (cdf_nbuf_push_head(buf, sizeof(WMI_CMD_HDR)) == NULL) {
-		pr_err("%s, Failed to send cmd %x, no memory\n",
-		       __func__, cmd_id);
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+			 "%s, Failed to send cmd %x, no memory",
+			 __func__, cmd_id);
 		return -ENOMEM;
 	}
 
@@ -860,11 +862,13 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 
 	cdf_atomic_inc(&wmi_handle->pending_cmds);
 	if (cdf_atomic_read(&wmi_handle->pending_cmds) >= WMI_MAX_CMDS) {
-		pr_err("\n%s: hostcredits = %d\n", __func__,
-		       wmi_get_host_credits(wmi_handle));
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+		    "\n%s: hostcredits = %d", __func__,
+		     wmi_get_host_credits(wmi_handle));
 		htc_dump_counter_info(wmi_handle->htc_handle);
 		cdf_atomic_dec(&wmi_handle->pending_cmds);
-		pr_err("%s: MAX 1024 WMI Pending cmds reached.\n", __func__);
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+		    "%s: MAX 1024 WMI Pending cmds reached.", __func__);
 		CDF_BUG(0);
 		return -EBUSY;
 	}
@@ -872,8 +876,9 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 	pkt = cdf_mem_malloc(sizeof(*pkt));
 	if (!pkt) {
 		cdf_atomic_dec(&wmi_handle->pending_cmds);
-		pr_err("%s, Failed to alloc htc packet %x, no memory\n",
-		       __func__, cmd_id);
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+			 "%s, Failed to alloc htc packet %x, no memory",
+			 __func__, cmd_id);
 		return -ENOMEM;
 	}
 
@@ -904,7 +909,8 @@ int wmi_unified_cmd_send(wmi_unified_t wmi_handle, wmi_buf_t buf, uint32_t len,
 
 	if (A_OK != status) {
 		cdf_atomic_dec(&wmi_handle->pending_cmds);
-		pr_err("%s %d, htc_send_pkt failed\n", __func__, __LINE__);
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+		   "%s %d, htc_send_pkt failed", __func__, __LINE__);
 	}
 	if (status)
 		return CDF_STATUS_E_FAILURE;
@@ -940,12 +946,14 @@ int wmi_unified_get_event_handler_ix(wmi_unified_t wmi_handle,
  * @wmi_handle: handle to wmi
  * @event_id: wmi event id
  * @handler_func: wmi event handler function
+ * @rx_ctx: rx execution context for wmi rx events
  *
  * Return: 0 on success
  */
 int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 				       WMI_EVT_ID event_id,
-				       wmi_unified_event_handler handler_func)
+				       wmi_unified_event_handler handler_func,
+				       uint8_t rx_ctx)
 {
 	uint32_t idx = 0;
 
@@ -962,6 +970,7 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	idx = wmi_handle->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = event_id;
+	wmi_handle->ctx[idx] = rx_ctx;
 	wmi_handle->max_event_idx++;
 
 	return 0;
@@ -997,46 +1006,24 @@ int wmi_unified_unregister_event_handler(wmi_unified_t wmi_handle,
 }
 
 /**
- * wmi_process_fw_event_tasklet_ctx() - process in tasklet context
+ * wmi_process_fw_event_default_ctx() - process in default caller context
  * @wmi_handle: handle to wmi
  * @htc_packet: pointer to htc packet
  *
- * Event process by below function will be in tasket context,
- * need to use this method only for time sensitive functions.
+ * Event process by below function will be in default caller context.
+ * wmi internally provides rx work thread processing context.
  *
  * Return: none
  */
-static void wmi_process_fw_event_tasklet_ctx(struct wmi_unified *wmi_handle,
-					     HTC_PACKET *htc_packet)
-{
-
-	wmi_buf_t evt_buf;
-	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
-
-	__wmi_control_rx(wmi_handle, evt_buf);
-	return;
-}
-
-/**
- * wmi_process_fw_event_mc_thread_ctx() - process in mc thread context
- * @wmi_handle: handle to wmi
- * @htc_packet: pointer to htc packet
- *
- * Event process by below function will be in mc_thread context.
- * By default all event will be executed in mc_thread context.
- * Use this method for all events which are processed by protocol stack.
- * This method will reduce context switching and race conditions.
- *
- * Return: none
- */
-static void wmi_process_fw_event_mc_thread_ctx(struct wmi_unified *wmi_handle,
-					       HTC_PACKET *htc_packet)
+static void wmi_process_fw_event_default_ctx(struct wmi_unified *wmi_handle,
+		       HTC_PACKET *htc_packet, uint8_t exec_ctx)
 {
 	wmi_buf_t evt_buf;
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk(wmi_handle,
-					 evt_buf);
+					 evt_buf, exec_ctx);
+
 	return;
 }
 
@@ -1074,13 +1061,9 @@ static void wmi_process_fw_event_worker_thread_ctx
 }
 
 /**
- * wmi_control_rx() - process in worker thread context
+ * wmi_control_rx() - process fw events callbacks
  * @ctx: handle to wmi
  * @htc_packet: pointer to htc packet
- *
- * Temporarily added to support older WMI events.
- * We should move all events to unified
- * when the target is ready to support it.
  *
  * Return: none
  */
@@ -1089,34 +1072,32 @@ void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 	struct wmi_unified *wmi_handle = (struct wmi_unified *)ctx;
 	wmi_buf_t evt_buf;
 	uint32_t id;
+	uint32_t idx = 0;
+	enum wmi_rx_exec_ctx exec_ctx;
 
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
-	switch (id) {
-	/*Event will be handled in tasklet ctx*/
-	case WMI_TX_PAUSE_EVENTID:
-	case WMI_WOW_WAKEUP_HOST_EVENTID:
-	case WMI_PDEV_RESUME_EVENTID:
-	case WMI_D0_WOW_DISABLE_ACK_EVENTID:
-		wmi_process_fw_event_tasklet_ctx
-					(wmi_handle, htc_packet);
-		break;
-	/*Event will be handled in worker thread ctx*/
-	case WMI_DEBUG_MESG_EVENTID:
-	case WMI_DFS_RADAR_EVENTID:
-	case WMI_PHYERR_EVENTID:
-	case WMI_PEER_STATE_EVENTID:
-	case WMI_MGMT_RX_EVENTID:
-	case WMI_ROAM_EVENTID:
+	idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
+	if (cdf_unlikely(idx == A_ERROR)) {
+		cdf_print
+		("%s :event handler is not registered: event id 0x%x\n",
+			__func__, id);
+		cdf_nbuf_free(evt_buf);
+		return;
+	}
+	exec_ctx = wmi_handle->ctx[idx];
+
+	if (exec_ctx == WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_worker_thread_ctx
 					(wmi_handle, htc_packet);
-		break;
-	/*Event will be handled in mc_thread ctx*/
-	default:
-		wmi_process_fw_event_mc_thread_ctx
-					(wmi_handle, htc_packet);
-		break;
+	} else if (exec_ctx > WMI_RX_WORK_CTX) {
+		wmi_process_fw_event_default_ctx
+					(wmi_handle, htc_packet, exec_ctx);
+	} else {
+		cdf_print("%s :Invalid event context %d\n", __func__, exec_ctx);
+		cdf_nbuf_free(evt_buf);
 	}
+
 }
 
 /**
@@ -1124,7 +1105,7 @@ void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
  * @wmi_handle: wmi handle
  * @evt_buf: fw event buffer
  *
- * This function process any fw event to serialize it through mc thread.
+ * This function process fw event in caller context
  *
  * Return: none
  */
@@ -1147,6 +1128,7 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 	uint32_t len;
 	void *wmi_cmd_struct_ptr = NULL;
 	int tlv_ok_status = 0;
+	uint32_t idx = 0;
 
 	id = WMI_GET_FIELD(cdf_nbuf_data(evt_buf), WMI_CMD_HDR, COMMANDID);
 
@@ -1161,69 +1143,38 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 							data, len, id,
 							&wmi_cmd_struct_ptr);
 	if (tlv_ok_status != 0) {
-		pr_err("%s: Error: id=0x%d, wmitlv_check_and_pad_tlvs ret=%d\n",
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+			"%s: Error: id=0x%d, wmitlv check status=%d\n",
 		       __func__, id, tlv_ok_status);
 		goto end;
 	}
 
-	if ((id >= WMI_EVT_GRP_START_ID(WMI_GRP_START)) &&
-		/* WMI_SERVICE_READY_EXT_EVENTID is supposed to be part of the
-		 * WMI_GRP_START group. Since the group is out of space, FW
-		 * has accomodated this in WMI_GRP_VDEV.
-		 * WMI_SERVICE_READY_EXT_EVENTID does not have any specific
-		 * event handler registered. So, we do not want to go through
-		 * the WMI registered event handler path for this event.
-		 */
-		(id != WMI_SERVICE_READY_EXT_EVENTID)) {
-		uint32_t idx = 0;
-
-		idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
-		if (idx == -1) {
-			cdf_print
-				("%s : event handler is not registered: event id 0x%x\n",
-				__func__, id);
-			goto end;
-		}
-#ifdef WMI_INTERFACE_EVENT_LOGGING
-		cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
-		/* Exclude 4 bytes of TLV header */
-		if (id == WMI_MGMT_TX_COMPLETION_EVENTID) {
-			WMI_MGMT_EVENT_RECORD(id, ((uint8_t *) data + 4));
-		} else {
-			WMI_EVENT_RECORD(id, ((uint8_t *) data + 4));
-		}
-		cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
-#endif
-		/* Call the WMI registered event handler */
-		wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
-						wmi_cmd_struct_ptr, len);
+	idx = wmi_unified_get_event_handler_ix(wmi_handle, id);
+	if (idx == A_ERROR) {
+		CDF_TRACE(CDF_MODULE_ID_WMI, CDF_TRACE_LEVEL_ERROR,
+		   "%s : event handler is not registered: event id 0x%x\n",
+			__func__, id);
 		goto end;
 	}
-
-	switch (id) {
-	default:
-		cdf_print("%s: Unhandled WMI event %d\n", __func__, id);
-		break;
-	case WMI_SERVICE_READY_EVENTID:
-		cdf_print("%s: WMI UNIFIED SERVICE READY event\n", __func__);
-		wmi_handle->rx_ops.service_ready_cbk(wmi_handle->scn_handle,
-					   wmi_cmd_struct_ptr);
-		break;
-	case WMI_SERVICE_READY_EXT_EVENTID:
-		WMA_LOGA("%s: WMI UNIFIED SERVICE READY Extended event",
-			__func__);
-		wmi_handle->rx_ops.service_ready_ext_cbk(wmi_handle->scn_handle,
-						wmi_cmd_struct_ptr);
-		break;
-	case WMI_READY_EVENTID:
-		cdf_print("%s:  WMI UNIFIED READY event\n", __func__);
-		wmi_handle->rx_ops.ready_cbk(wmi_handle->scn_handle,
-					  wmi_cmd_struct_ptr);
-		break;
+#ifdef WMI_INTERFACE_EVENT_LOGGING
+	cdf_spin_lock_bh(&wmi_handle->wmi_record_lock);
+	/* Exclude 4 bytes of TLV header */
+	if (id == WMI_MGMT_TX_COMPLETION_EVENTID) {
+		WMI_MGMT_EVENT_RECORD(id, ((uint8_t *) data + 4));
+	} else {
+		WMI_EVENT_RECORD(id, ((uint8_t *) data + 4));
 	}
+	cdf_spin_unlock_bh(&wmi_handle->wmi_record_lock);
+#endif
+	/* Call the WMI registered event handler */
+	wmi_handle->event_handler[idx] (wmi_handle->scn_handle,
+					wmi_cmd_struct_ptr, len);
+
 end:
+	/* Free event buffer and allocated event tlv */
 	wmitlv_free_allocated_event_tlvs(id, &wmi_cmd_struct_ptr);
 	cdf_nbuf_free(evt_buf);
+
 }
 
 /**
@@ -1251,19 +1202,36 @@ void wmi_rx_event_work(struct work_struct *work)
 	}
 }
 
-/* WMI Initialization functions */
-
 #ifdef FEATURE_RUNTIME_PM
 /**
  * wmi_runtime_pm_init() - initialize runtime pm wmi variables
  * @wmi_handle: wmi context
  */
-void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
+static void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
 {
 	cdf_atomic_init(&wmi_handle->runtime_pm_inprogress);
 }
+
+/**
+ * wmi_set_runtime_pm_inprogress() - set runtime pm progress flag
+ * @wmi_handle: wmi context
+ * @val: runtime pm progress flag
+ */
+void wmi_set_runtime_pm_inprogress(wmi_unified_t wmi_handle, A_BOOL val)
+{
+	cdf_atomic_set(&wmi_handle->runtime_pm_inprogress, val);
+}
+
+/**
+ * wmi_get_runtime_pm_inprogress() - get runtime pm progress flag
+ * @wmi_handle: wmi context
+ */
+inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
+{
+	return cdf_atomic_read(&wmi_handle->runtime_pm_inprogress);
+}
 #else
-void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
+static void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
 {
 }
 #endif
@@ -1283,14 +1251,13 @@ void *wmi_unified_attach(void *scn_handle,
 			 bool use_cookie, struct wmi_rx_ops *rx_ops)
 {
 	struct wmi_unified *wmi_handle;
-
 	wmi_handle =
 		(struct wmi_unified *)os_malloc(NULL,
 				sizeof(struct wmi_unified),
 				GFP_ATOMIC);
 	if (wmi_handle == NULL) {
 		cdf_print("allocation of wmi handle failed %zu\n",
-			sizeof(struct wmi_unified), GFP_ATOMIC);
+			sizeof(struct wmi_unified));
 		return NULL;
 	}
 	OS_MEMZERO(wmi_handle, sizeof(struct wmi_unified));
@@ -1311,14 +1278,6 @@ void *wmi_unified_attach(void *scn_handle,
 	/* Attach mc_thread context processing function */
 	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk =
 				rx_ops->wma_process_fw_event_handler_cbk;
-	/* Attach service ready callback function */
-	wmi_handle->rx_ops.service_ready_cbk =
-				rx_ops->service_ready_cbk;
-	/* Attach service ready extended callback  function */
-	wmi_handle->rx_ops.service_ready_ext_cbk =
-				rx_ops->service_ready_ext_cbk;
-	/* Attach fw ready callback function */
-	wmi_handle->rx_ops.ready_cbk = rx_ops->ready_cbk;
 	if (target_type == WMI_TLV_TARGET)
 		wmi_handle->ops = wmi_get_tlv_ops();
 	else
@@ -1513,14 +1472,3 @@ void wmi_set_target_suspend(wmi_unified_t wmi_handle, A_BOOL val)
 	cdf_atomic_set(&wmi_handle->is_target_suspended, val);
 }
 
-#ifdef FEATURE_RUNTIME_PM
-void wmi_set_runtime_pm_inprogress(wmi_unified_t wmi_handle, A_BOOL val)
-{
-	cdf_atomic_set(&wmi_handle->runtime_pm_inprogress, val);
-}
-
-inline bool wmi_get_runtime_pm_inprogress(wmi_unified_t wmi_handle)
-{
-	return cdf_atomic_read(&wmi_handle->runtime_pm_inprogress);
-}
-#endif

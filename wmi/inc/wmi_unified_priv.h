@@ -48,13 +48,13 @@ typedef cdf_nbuf_t wmi_buf_t;
 
 struct wmi_command_debug {
 	uint32_t command;
-	uint32_t data[4];       /*16 bytes of WMI cmd excluding TLV and WMI headers */
+	uint32_t data[4]; /*16 bytes of WMI cmd excluding TLV and WMI headers */
 	uint64_t time;
 };
 
 struct wmi_event_debug {
 	uint32_t event;
-	uint32_t data[4];       /*16 bytes of WMI event data excluding TLV header */
+	uint32_t data[4]; /*16 bytes of WMI event data excluding TLV header */
 	uint64_t time;
 };
 
@@ -179,6 +179,7 @@ struct wmi_unified {
 	uint16_t max_msg_len;
 	WMI_EVT_ID event_id[WMI_UNIFIED_MAX_EVENT];
 	wmi_unified_event_handler event_handler[WMI_UNIFIED_MAX_EVENT];
+	enum wmi_rx_exec_ctx ctx[WMI_UNIFIED_MAX_EVENT];
 	uint32_t max_event_idx;
 	void *htc_handle;
 	cdf_spinlock_t eventq_lock;
