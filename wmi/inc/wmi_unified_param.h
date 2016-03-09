@@ -71,6 +71,17 @@
 #endif /* WLAN_NS_OFFLOAD */
 #define WMI_EXTSCAN_MAX_HOTLIST_SSIDS                    8
 #define WMI_ROAM_MAX_CHANNELS                            80
+#ifdef FEATURE_WLAN_EXTSCAN
+#define WMI_MAX_EXTSCAN_MSG_SIZE        1536
+#define WMI_EXTSCAN_REST_TIME           100
+#define WMI_EXTSCAN_MAX_SCAN_TIME       50000
+#define WMI_EXTSCAN_BURST_DURATION      150
+#endif
+#define WMI_SCAN_NPROBES_DEFAULT            (2)
+#define WMI_SEC_TO_MSEC(sec)         (sec * 1000)  /* sec to msec */
+#define WMI_MSEC_TO_USEC(msec)       (msec * 1000) /* msec to usec */
+#define WMI_NLO_FREQ_THRESH          1000       /* in MHz */
+
 /**
  * struct vdev_create_params - vdev create cmd parameter
  * @if_id: interface id
@@ -391,7 +402,7 @@ struct ap_ps_params {
 struct mac_ssid {
 	uint8_t length;
 	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
-} cdf_packed;
+} qdf_packed;
 
 /**
  * struct scan_start_params - start scan cmd parameter
@@ -555,7 +566,7 @@ struct wmi_mgmt_params {
 	uint16_t chanfreq;
 	void *pdata;
 	struct wmi_desc_t *wmi_desc;
-	void *cdf_ctx;
+	void *qdf_ctx;
 };
 
 /**
@@ -697,7 +708,7 @@ struct wmi_ocb_qos_params {
 struct ocb_config_channel {
 	uint32_t chan_freq;
 	uint32_t bandwidth;
-	struct cdf_mac_addr mac_address;
+	struct qdf_mac_addr mac_address;
 	struct wmi_ocb_qos_params qos_params[WMI_MAX_NUM_AC];
 	uint32_t max_pwr;
 	uint32_t min_pwr;
@@ -841,9 +852,9 @@ struct gateway_update_req_param {
 	uint32_t     timeout;
 	uint32_t     ipv4_addr_type;
 	uint32_t     ipv6_addr_type;
-	struct cdf_mac_addr  gw_mac_addr;
-	uint8_t      ipv4_addr[CDF_IPV4_ADDR_SIZE];
-	uint8_t      ipv6_addr[CDF_IPV6_ADDR_SIZE];
+	struct qdf_mac_addr  gw_mac_addr;
+	uint8_t      ipv4_addr[QDF_IPV4_ADDR_SIZE];
+	uint8_t      ipv6_addr[QDF_IPV6_ADDR_SIZE];
 };
 
 /**
@@ -1010,7 +1021,7 @@ struct extscan_stop_req_params {
  * @high: high threshold
  */
 struct ap_threshold_params {
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 	int32_t low;
 	int32_t high;
 };
@@ -1294,7 +1305,7 @@ struct plm_req_params {
 	/* no of times the STA should cycle through PLM ch list */
 	uint8_t burst_len;
 	int8_t desired_tx_pwr;
-	struct cdf_mac_addr mac_addr;
+	struct qdf_mac_addr mac_addr;
 	/* no of channels */
 	uint8_t plm_num_ch;
 	/* channel numbers */
@@ -1345,7 +1356,7 @@ struct mac_ts_info_tfc {
 	uint16_t userPrio:3;
 	uint16_t ackPolicy:2;
 #endif
-} cdf_packed;
+} qdf_packed;
 
 /**
  * struct mac_ts_info_sch - mac ts info schedule parameters
@@ -1360,7 +1371,7 @@ struct mac_ts_info_sch {
 	uint8_t schedule:1;
 	uint8_t rsvd:7;
 #endif
-} cdf_packed;
+} qdf_packed;
 
 /**
  * struct mac_ts_info_sch - mac ts info schedule parameters
@@ -1370,7 +1381,7 @@ struct mac_ts_info_sch {
 struct mac_ts_info {
 	struct mac_ts_info_tfc traffic;
 	struct mac_ts_info_sch schedule;
-} cdf_packed;
+} qdf_packed;
 
 /**
  * struct mac_tspec_ie - mac ts spec
@@ -1412,7 +1423,7 @@ struct mac_tspec_ie {
 	uint32_t minPhyRate;
 	uint16_t surplusBw;
 	uint16_t mediumTime;
-} cdf_packed;
+} qdf_packed;
 
 /**
  * struct add_ts_param - ADDTS related parameters
@@ -1421,7 +1432,7 @@ struct mac_tspec_ie {
  * @tspec: tspec value
  * @status: CDF status
  * @sessionId: session id
- * @tsm_interval: TSM interval period passed from lim to WMA
+ * @tsm_interval: TSM interval period passed from UMAC to WMI
  * @setRICparams: RIC parameters
  * @sme_session_id: sme session id
  */
@@ -1429,7 +1440,7 @@ struct add_ts_param {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
 	struct mac_tspec_ie tspec;
-	CDF_STATUS status;
+	QDF_STATUS status;
 	uint8_t sessionId;
 #ifdef FEATURE_WLAN_ESE
 	uint16_t tsm_interval;
@@ -1562,8 +1573,8 @@ struct dhcp_stop_ind_params {
 	uint16_t msgtype;
 	uint16_t msglen;
 	uint8_t device_mode;
-	struct cdf_mac_addr adapter_macaddr;
-	struct cdf_mac_addr peer_macaddr;
+	struct qdf_mac_addr adapter_macaddr;
+	struct qdf_mac_addr peer_macaddr;
 };
 
 /**
@@ -1578,7 +1589,7 @@ struct aggr_add_ts_param {
 	uint16_t staIdx;
 	uint16_t tspecIdx;
 	struct mac_tspec_ie tspec[WMI_QOS_NUM_AC_MAX];
-	CDF_STATUS status[WMI_QOS_NUM_AC_MAX];
+	QDF_STATUS status[WMI_QOS_NUM_AC_MAX];
 	uint8_t sessionId;
 };
 
@@ -1674,8 +1685,8 @@ struct rcv_pkt_filter_config {
 	enum packet_filter_type filterType;
 	uint32_t numFieldParams;
 	uint32_t coalesceTime;
-	struct cdf_mac_addr self_macaddr;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr self_macaddr;
+	struct qdf_mac_addr bssid;
 	struct rcv_pkt_filter_params paramsData[WMI_MAX_NUM_TESTS_PER_FILTER];
 };
 
@@ -1919,7 +1930,7 @@ struct app_type2_params {
 	uint32_t keepalive_min;
 	uint32_t keepalive_max;
 	uint32_t keepalive_inc;
-	struct cdf_mac_addr gateway_mac;
+	struct qdf_mac_addr gateway_mac;
 	uint32_t tcp_tx_timeout_val;
 	uint32_t tcp_rx_timeout_val;
 };
@@ -1935,7 +1946,7 @@ struct app_type2_params {
  */
 struct app_type1_params {
 	uint8_t vdev_id;
-	struct cdf_mac_addr wakee_mac_addr;
+	struct qdf_mac_addr wakee_mac_addr;
 	uint8_t identification_id[8];
 	uint8_t password[16];
 	uint32_t id_length;
@@ -1988,7 +1999,7 @@ struct stats_ext_params {
  * @ucPattern: Pattern buffer
  */
 struct periodic_tx_pattern {
-	struct cdf_mac_addr mac_address;
+	struct qdf_mac_addr mac_address;
 	uint8_t ucPtrnId;
 	uint16_t ucPtrnSize;
 	uint32_t usPtrnIntervalMs;
@@ -2011,7 +2022,7 @@ struct gtk_offload_params {
 	uint8_t aKCK[WMI_GTK_OFFLOAD_KCK_BYTES];
 	uint8_t aKEK[WMI_GTK_OFFLOAD_KEK_BYTES];
 	uint64_t ullKeyReplayCounter;
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 };
 
 /**
@@ -2031,7 +2042,7 @@ struct flashing_req_params {
 struct wmi_host_mem_chunk {
 	uint32_t *vaddr;
 	uint32_t paddr;
-	cdf_dma_mem_context(memctx);
+	qdf_dma_mem_context(memctx);
 	uint32_t len;
 	uint32_t req_id;
 };
@@ -2156,7 +2167,7 @@ struct ns_offload_req_params {
 	uint8_t srcIPv6Addr[WMI_MAC_IPV6_ADDR_LEN];
 	uint8_t selfIPv6Addr[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][WMI_MAC_IPV6_ADDR_LEN];
 	uint8_t targetIPv6Addr[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA][WMI_MAC_IPV6_ADDR_LEN];
-	struct cdf_mac_addr self_macaddr;
+	struct qdf_mac_addr self_macaddr;
 	uint8_t srcIPv6AddrValid;
 	uint8_t targetIPv6AddrValid[WMI_MAC_NUM_TARGET_IPV6_NS_OFFLOAD_NA];
 	uint8_t slotIdx;
@@ -2180,7 +2191,7 @@ struct host_offload_req_param {
 #ifdef WLAN_NS_OFFLOAD
 	struct ns_offload_req_params nsOffloadInfo;
 #endif /* WLAN_NS_OFFLOAD */
-	struct cdf_mac_addr bssid;
+	struct qdf_mac_addr bssid;
 };
 
 /**
