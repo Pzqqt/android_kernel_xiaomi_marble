@@ -5691,8 +5691,9 @@ void wma_dfs_configure(struct ieee80211com *ic)
 /**
  * wma_dfs_configure_channel() - configure DFS channel
  * @dfs_ic: ieee80211com ptr
- * @chan: wmi channel
- * @chanmode: channel mode
+ * @band_center_freq1: center frequency 1
+ * @band_center_freq2: center frequency 2
+ *       (valid only for 11ac vht 80plus80 mode)
  * @ req: vdev start request
  *
  * Set the Channel parameters in to DFS module
@@ -5703,8 +5704,8 @@ void wma_dfs_configure(struct ieee80211com *ic)
  */
 struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 						struct ieee80211com *dfs_ic,
-						wmi_channel *chan,
-						WLAN_PHY_MODE chanmode,
+						uint32_t band_center_freq1,
+						uint32_t band_center_freq2,
 						struct wma_vdev_start_req
 						*req)
 {
@@ -5731,9 +5732,9 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 	OS_MEMZERO(dfs_ic->ic_curchan, sizeof(struct dfs_ieee80211_channel));
 
 	dfs_ic->ic_curchan->ic_ieee = req->chan;
-	dfs_ic->ic_curchan->ic_freq = chan->mhz;
-	dfs_ic->ic_curchan->ic_vhtop_ch_freq_seg1 = chan->band_center_freq1;
-	dfs_ic->ic_curchan->ic_vhtop_ch_freq_seg2 = chan->band_center_freq2;
+	dfs_ic->ic_curchan->ic_freq = cds_chan_to_freq(req->chan);
+	dfs_ic->ic_curchan->ic_vhtop_ch_freq_seg1 = band_center_freq1;
+	dfs_ic->ic_curchan->ic_vhtop_ch_freq_seg2 = band_center_freq2;
 	dfs_ic->ic_curchan->ic_pri_freq_center_freq_mhz_separation =
 					dfs_ic->ic_curchan->ic_freq -
 				dfs_ic->ic_curchan->ic_vhtop_ch_freq_seg1;
@@ -5765,11 +5766,11 @@ struct dfs_ieee80211_channel *wma_dfs_configure_channel(
 		dfs_ic->ic_curchan->ic_flags |= IEEE80211_CHAN_VHT80;
 		break;
 	case CH_WIDTH_80P80MHZ:
-		ext_channel = cds_freq_to_chan(chan->band_center_freq2);
+		ext_channel = cds_freq_to_chan(band_center_freq2);
 		dfs_ic->ic_curchan->ic_flags |=
 					IEEE80211_CHAN_VHT80P80;
 		dfs_ic->ic_curchan->ic_freq_ext =
-						chan->band_center_freq2;
+						band_center_freq2;
 		dfs_ic->ic_curchan->ic_ieee_ext = ext_channel;
 
 		/* verify both the 80MHz are DFS bands or not */

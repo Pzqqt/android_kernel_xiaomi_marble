@@ -1336,72 +1336,39 @@ static void wma_recreate_ibss_vdev_and_bss_peer(tp_wma_handle wma,
 void wma_hidden_ssid_vdev_restart_on_vdev_stop(tp_wma_handle wma_handle,
 					       uint8_t sessionId)
 {
-	wmi_vdev_start_request_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	wmi_channel *chan;
-	int32_t len;
-	uint8_t *buf_ptr;
 	struct wma_txrx_node *intr = wma_handle->interfaces;
-	int32_t ret = 0;
+	struct hidden_ssid_vdev_restart_params params;
+	QDF_STATUS status;
 
-	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		qdf_atomic_set(&intr[sessionId].vdev_restart_params.
-			       hidden_ssid_restart_in_progress, 0);
-		return;
-	}
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_vdev_start_request_cmd_fixed_param *) buf_ptr;
-	chan = (wmi_channel *) (buf_ptr + sizeof(*cmd));
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_start_request_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_start_request_cmd_fixed_param));
-
-	WMITLV_SET_HDR(&chan->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_channel,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-
-	cmd->vdev_id = sessionId;
-	cmd->ssid.ssid_len = intr[sessionId].vdev_restart_params.ssid.ssid_len;
-	qdf_mem_copy(cmd->ssid.ssid,
+	params.session_id = sessionId;
+	params.ssid_len = intr[sessionId].vdev_restart_params.ssid.ssid_len;
+	qdf_mem_copy(params.ssid,
 		     intr[sessionId].vdev_restart_params.ssid.ssid,
-		     cmd->ssid.ssid_len);
-	cmd->flags = intr[sessionId].vdev_restart_params.flags;
+		     params.ssid_len);
+	params.flags = intr[sessionId].vdev_restart_params.flags;
 	if (intr[sessionId].vdev_restart_params.ssidHidden)
-		cmd->flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
+		params.flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
 	else
-		cmd->flags &= (0xFFFFFFFE);
-	cmd->requestor_id = intr[sessionId].vdev_restart_params.requestor_id;
-	cmd->disable_hw_ack =
+		params.flags &= (0xFFFFFFFE);
+	params.requestor_id = intr[sessionId].vdev_restart_params.requestor_id;
+	params.disable_hw_ack =
 		intr[sessionId].vdev_restart_params.disable_hw_ack;
 
-	chan->mhz = intr[sessionId].vdev_restart_params.chan.mhz;
-	chan->band_center_freq1 =
+	params.mhz = intr[sessionId].vdev_restart_params.chan.mhz;
+	params.band_center_freq1 =
 		intr[sessionId].vdev_restart_params.chan.band_center_freq1;
-	chan->band_center_freq2 =
+	params.band_center_freq2 =
 		intr[sessionId].vdev_restart_params.chan.band_center_freq2;
-	chan->info = intr[sessionId].vdev_restart_params.chan.info;
-	chan->reg_info_1 = intr[sessionId].vdev_restart_params.chan.reg_info_1;
-	chan->reg_info_2 = intr[sessionId].vdev_restart_params.chan.reg_info_2;
+	params.info = intr[sessionId].vdev_restart_params.chan.info;
+	params.reg_info_1 = intr[sessionId].vdev_restart_params.chan.reg_info_1;
+	params.reg_info_2 = intr[sessionId].vdev_restart_params.chan.reg_info_2;
 
-	cmd->num_noa_descriptors = 0;
-	buf_ptr = (uint8_t *) (((uint8_t *) cmd) + sizeof(*cmd) +
-			       sizeof(wmi_channel));
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-		       cmd->num_noa_descriptors *
-		       sizeof(wmi_p2p_noa_descriptor));
-
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				   WMI_VDEV_RESTART_REQUEST_CMDID);
-	if (ret < 0) {
+	status = wmi_unified_hidden_ssid_vdev_restart_send(
+			wma_handle->wmi_handle,	&params);
+	if (status == QDF_STATUS_E_FAILURE) {
 		WMA_LOGE("%s: Failed to send vdev restart command", __func__);
 		qdf_atomic_set(&intr[sessionId].vdev_restart_params.
 			       hidden_ssid_restart_in_progress, 0);
-		qdf_nbuf_free(buf);
 	}
 }
 
@@ -1836,15 +1803,16 @@ end:
 QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 			  struct wma_vdev_start_req *req, bool isRestart)
 {
+	struct vdev_start_params params = { 0 };
 	wmi_vdev_start_request_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	wmi_channel *chan;
-	int32_t len, ret;
-	WLAN_PHY_MODE chanmode;
-	uint8_t *buf_ptr;
 	struct wma_txrx_node *intr = wma->interfaces;
 	tpAniSirGlobal mac_ctx = NULL;
 	struct ath_dfs *dfs;
+	uint32_t temp_ssid_len = 0;
+	uint32_t temp_flags = 0;
+	uint32_t temp_chan_info = 0;
+	uint32_t temp_reg_info_1 = 0;
+	uint32_t temp_reg_info_2 = 0;
 
 	mac_ctx = cds_get_context(QDF_MODULE_ID_PE);
 	if (mac_ctx == NULL) {
@@ -1856,66 +1824,56 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 	WMA_LOGD("%s: Enter isRestart=%d vdev=%d", __func__, isRestart,
 		 req->vdev_id);
-	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_vdev_start_request_cmd_fixed_param *) buf_ptr;
-	chan = (wmi_channel *) (buf_ptr + sizeof(*cmd));
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_start_request_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_start_request_cmd_fixed_param));
-	WMITLV_SET_HDR(&chan->tlv_header, WMITLV_TAG_STRUC_wmi_channel,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
-	cmd->vdev_id = req->vdev_id;
+	params.vdev_id = req->vdev_id;
 
 	/* Fill channel info */
-	chan->mhz = cds_chan_to_freq(req->chan);
-	chanmode = wma_chan_to_mode(req->chan, req->chan_width,
-				    req->vht_capable, req->dot11_mode);
-
-	intr[cmd->vdev_id].chanmode = chanmode; /* save channel mode */
-	intr[cmd->vdev_id].ht_capable = req->ht_capable;
-	intr[cmd->vdev_id].vht_capable = req->vht_capable;
-	intr[cmd->vdev_id].config.gtx_info.gtxRTMask[0] =
+	params.chan_freq = cds_chan_to_freq(req->chan);
+	params.chan_mode = wma_chan_to_mode(req->chan, req->chan_width,
+					   req->vht_capable, req->dot11_mode);
+	/* save channel mode */
+	intr[params.vdev_id].chanmode = params.chan_mode;
+	intr[params.vdev_id].ht_capable = req->ht_capable;
+	intr[params.vdev_id].vht_capable = req->vht_capable;
+	intr[params.vdev_id].config.gtx_info.gtxRTMask[0] =
 		CFG_TGT_DEFAULT_GTX_HT_MASK;
-	intr[cmd->vdev_id].config.gtx_info.gtxRTMask[1] =
+	intr[params.vdev_id].config.gtx_info.gtxRTMask[1] =
 		CFG_TGT_DEFAULT_GTX_VHT_MASK;
-	intr[cmd->vdev_id].config.gtx_info.gtxUsrcfg =
+	intr[params.vdev_id].config.gtx_info.gtxUsrcfg =
 		CFG_TGT_DEFAULT_GTX_USR_CFG;
-	intr[cmd->vdev_id].config.gtx_info.gtxPERThreshold =
+	intr[params.vdev_id].config.gtx_info.gtxPERThreshold =
 		CFG_TGT_DEFAULT_GTX_PER_THRESHOLD;
-	intr[cmd->vdev_id].config.gtx_info.gtxPERMargin =
+	intr[params.vdev_id].config.gtx_info.gtxPERMargin =
 		CFG_TGT_DEFAULT_GTX_PER_MARGIN;
-	intr[cmd->vdev_id].config.gtx_info.gtxTPCstep =
+	intr[params.vdev_id].config.gtx_info.gtxTPCstep =
 		CFG_TGT_DEFAULT_GTX_TPC_STEP;
-	intr[cmd->vdev_id].config.gtx_info.gtxTPCMin =
+	intr[params.vdev_id].config.gtx_info.gtxTPCMin =
 		CFG_TGT_DEFAULT_GTX_TPC_MIN;
-	intr[cmd->vdev_id].config.gtx_info.gtxBWMask =
+	intr[params.vdev_id].config.gtx_info.gtxBWMask =
 		CFG_TGT_DEFAULT_GTX_BW_MASK;
-	intr[cmd->vdev_id].mhz = chan->mhz;
+	intr[params.vdev_id].mhz = params.chan_freq;
 
-	WMI_SET_CHANNEL_MODE(chan, chanmode);
-	chan->band_center_freq1 = chan->mhz;
+	temp_chan_info &= 0xffffffc0;
+	temp_chan_info |= params.chan_mode;
+
+	params.band_center_freq1 = params.chan_freq;
 
 	if (CH_WIDTH_20MHZ != req->chan_width)
-		chan->band_center_freq1 =
+		params.band_center_freq1 =
 			cds_chan_to_freq(req->ch_center_freq_seg0);
 	if (CH_WIDTH_80P80MHZ == req->chan_width)
-		chan->band_center_freq2 =
+		params.band_center_freq2 =
 			cds_chan_to_freq(req->ch_center_freq_seg1);
 	else
-		chan->band_center_freq2 = 0;
+		params.band_center_freq2 = 0;
 
 	/* Set half or quarter rate WMI flags */
+	params.is_half_rate = req->is_half_rate;
+	params.is_quarter_rate = req->is_quarter_rate;
+
 	if (req->is_half_rate)
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_HALF_RATE);
+		temp_chan_info |=  (1 << WMI_CHAN_FLAG_HALF_RATE);
 	else if (req->is_quarter_rate)
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_QUARTER_RATE);
+		temp_chan_info |=  (1 << WMI_CHAN_FLAG_QUARTER_RATE);
 
 	/*
 	 * If the channel has DFS set, flip on radar reporting.
@@ -1932,10 +1890,12 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 	 * If the Channel is DFS,
 	 * set the WMI_CHAN_FLAG_DFS flag
 	 */
+	params.is_dfs = req->is_dfs;
+	params.is_restart = isRestart;
 	if (req->is_dfs) {
-		WMI_SET_CHANNEL_FLAG(chan, WMI_CHAN_FLAG_DFS);
-		cmd->disable_hw_ack = true;
-
+		params.flag_dfs = WMI_CHAN_FLAG_DFS;
+		temp_chan_info |=  (1 << WMI_CHAN_FLAG_DFS);
+		params.dis_hw_ack = true;
 		req->dfs_pri_multiplier = wma->dfs_pri_multiplier;
 
 		/*
@@ -1949,7 +1909,7 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		 * mode operation on DFS channels, P2P-GO
 		 * does not support operation on DFS Channels.
 		 */
-		if (wma_is_vdev_in_ap_mode(wma, cmd->vdev_id) == true) {
+		if (wma_is_vdev_in_ap_mode(wma, params.vdev_id) == true) {
 			/*
 			 * If DFS regulatory domain is invalid,
 			 * then, DFS radar filters intialization
@@ -1967,7 +1927,6 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 					" Failed to send VDEV START command",
 					__func__, __LINE__);
 
-				qdf_nbuf_free(buf);
 				return QDF_STATUS_E_FAILURE;
 			}
 
@@ -1977,8 +1936,9 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 
 			/* provide the current channel to DFS */
 			wma->dfs_ic->ic_curchan =
-				wma_dfs_configure_channel(wma->dfs_ic, chan,
-							  chanmode, req);
+				wma_dfs_configure_channel(wma->dfs_ic,
+						params.band_center_freq1,
+						params.band_center_freq2, req);
 			qdf_spin_unlock_bh(&wma->dfs_ic->chan_lock);
 
 			wma_unified_dfs_phyerr_filter_offload_enable(wma);
@@ -1987,76 +1947,69 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		}
 	}
 
-	cmd->beacon_interval = req->beacon_intval;
-	cmd->dtim_period = req->dtim_period;
+	params.beacon_intval = req->beacon_intval;
+	params.dtim_period = req->dtim_period;
 	/* FIXME: Find out min, max and regulatory power levels */
-	WMI_SET_CHANNEL_REG_POWER(chan, req->max_txpow);
-	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->max_txpow);
+	params.max_txpow = req->max_txpow;
+	temp_reg_info_1 &= 0xff00ffff;
+	temp_reg_info_1 |= ((req->max_txpow&0xff) << 16);
+
+	temp_reg_info_2 &= 0xffff00ff;
+	temp_reg_info_2 |= ((req->max_txpow&0xff)<<8);
 
 	/* TODO: Handle regulatory class, max antenna */
 	if (!isRestart) {
-		cmd->beacon_interval = req->beacon_intval;
-		cmd->dtim_period = req->dtim_period;
+		params.beacon_intval = req->beacon_intval;
+		params.dtim_period = req->dtim_period;
 
 		/* Copy the SSID */
 		if (req->ssid.length) {
+			params.ssid.length = req->ssid.length;
 			if (req->ssid.length < sizeof(cmd->ssid.ssid))
-				cmd->ssid.ssid_len = req->ssid.length;
+				temp_ssid_len = req->ssid.length;
 			else
-				cmd->ssid.ssid_len = sizeof(cmd->ssid.ssid);
-			qdf_mem_copy(cmd->ssid.ssid, req->ssid.ssId,
-				     cmd->ssid.ssid_len);
+				temp_ssid_len = sizeof(cmd->ssid.ssid);
+			qdf_mem_copy(params.ssid.mac_ssid, req->ssid.ssId,
+				     temp_ssid_len);
 		}
 
+		params.hidden_ssid = req->hidden_ssid;
+		params.pmf_enabled = req->pmf_enabled;
 		if (req->hidden_ssid)
-			cmd->flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
+			temp_flags |= WMI_UNIFIED_VDEV_START_HIDDEN_SSID;
 
 		if (req->pmf_enabled)
-			cmd->flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
+			temp_flags |= WMI_UNIFIED_VDEV_START_PMF_ENABLED;
 	}
 
-	cmd->num_noa_descriptors = 0;
-	cmd->preferred_rx_streams = req->preferred_rx_streams;
-	cmd->preferred_tx_streams = req->preferred_tx_streams;
-
-	buf_ptr = (uint8_t *) (((uintptr_t) cmd) + sizeof(*cmd) +
-			       sizeof(wmi_channel));
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
-		       cmd->num_noa_descriptors *
-		       sizeof(wmi_p2p_noa_descriptor));
-	WMA_LOGA("\n%s: vdev_id %d freq %d channel %d chanmode %d is_dfs %d "
-		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
-		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
-		"Tx SS %d, Rx SS %d",
-		__func__, req->vdev_id, chan->mhz, req->chan, chanmode,
-		req->is_dfs, req->beacon_intval, cmd->dtim_period,
-		chan->band_center_freq1, chan->band_center_freq2,
-		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
-		req->preferred_tx_streams, req->preferred_rx_streams);
+	params.num_noa_descriptors = 0;
+	params.preferred_rx_streams = req->preferred_rx_streams;
+	params.preferred_tx_streams = req->preferred_tx_streams;
 
 	/* Store vdev params in SAP mode which can be used in vdev restart */
 	if (intr[req->vdev_id].type == WMI_VDEV_TYPE_AP &&
 	    intr[req->vdev_id].sub_type == 0) {
 		intr[req->vdev_id].vdev_restart_params.vdev_id = req->vdev_id;
 		intr[req->vdev_id].vdev_restart_params.ssid.ssid_len =
-			cmd->ssid.ssid_len;
+			temp_ssid_len;
 		qdf_mem_copy(intr[req->vdev_id].vdev_restart_params.ssid.ssid,
-			     cmd->ssid.ssid, cmd->ssid.ssid_len);
-		intr[req->vdev_id].vdev_restart_params.flags = cmd->flags;
-		intr[req->vdev_id].vdev_restart_params.requestor_id =
-			cmd->requestor_id;
+			     params.ssid.mac_ssid, temp_ssid_len);
+		intr[req->vdev_id].vdev_restart_params.flags = temp_flags;
+		intr[req->vdev_id].vdev_restart_params.requestor_id = 0;
 		intr[req->vdev_id].vdev_restart_params.disable_hw_ack =
-			cmd->disable_hw_ack;
-		intr[req->vdev_id].vdev_restart_params.chan.mhz = chan->mhz;
+			params.dis_hw_ack;
+		intr[req->vdev_id].vdev_restart_params.chan.mhz =
+			params.chan_freq;
 		intr[req->vdev_id].vdev_restart_params.chan.band_center_freq1 =
-			chan->band_center_freq1;
+			params.band_center_freq1;
 		intr[req->vdev_id].vdev_restart_params.chan.band_center_freq2 =
-			chan->band_center_freq2;
-		intr[req->vdev_id].vdev_restart_params.chan.info = chan->info;
+			params.band_center_freq2;
+		intr[req->vdev_id].vdev_restart_params.chan.info =
+			temp_chan_info;
 		intr[req->vdev_id].vdev_restart_params.chan.reg_info_1 =
-			chan->reg_info_1;
+			temp_reg_info_1;
 		intr[req->vdev_id].vdev_restart_params.chan.reg_info_2 =
-			chan->reg_info_2;
+			temp_reg_info_2;
 	}
 
 	if (isRestart) {
@@ -2065,28 +2018,17 @@ QDF_STATUS wma_vdev_start(tp_wma_handle wma,
 		 * since, VDEV RESTART will do a VDEV DOWN
 		 * in the firmware.
 		 */
-		intr[cmd->vdev_id].vdev_up = false;
-
-		ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-					   WMI_VDEV_RESTART_REQUEST_CMDID);
-
+		intr[params.vdev_id].vdev_up = false;
 	} else {
 		WMA_LOGD("%s, vdev_id: %d, unpausing tx_ll_queue at VDEV_START",
-			 __func__, cmd->vdev_id);
-		ol_txrx_vdev_unpause(wma->interfaces[cmd->vdev_id].handle,
+			 __func__, params.vdev_id);
+		ol_txrx_vdev_unpause(wma->interfaces[params.vdev_id].handle,
 				     0xffffffff);
-		wma->interfaces[cmd->vdev_id].pause_bitmap = 0;
-		ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-					   WMI_VDEV_START_REQUEST_CMDID);
+		wma->interfaces[params.vdev_id].pause_bitmap = 0;
 	}
 
-	if (ret < 0) {
-		WMA_LOGP("%s: Failed to send vdev start command", __func__);
-		qdf_nbuf_free(buf);
-		return QDF_STATUS_E_FAILURE;
-	}
+	return wmi_unified_vdev_start_send(wma->wmi_handle, &params);
 
-	return QDF_STATUS_SUCCESS;
 }
 
 /**
