@@ -446,6 +446,16 @@ QDF_STATUS wmi_unified_reset_passpoint_network_list_cmd(void *wmi_hdl,
 QDF_STATUS wmi_unified_set_passpoint_network_list_cmd(void *wmi_hdl,
 					struct wifi_passpoint_req_param *req);
 
+QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(void *wmi_hdl,
+				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
+				struct roam_offload_scan_params *roam_req);
+
+QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(void *wmi_hdl,
+				struct roam_offload_scan_rssi_params *roam_req);
+
+QDF_STATUS wmi_unified_roam_scan_filter_cmd(void *wmi_hdl,
+				struct roam_scan_filter_params *roam_req);
+
 QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
 		struct wifi_enhanched_pno_params *req);
 

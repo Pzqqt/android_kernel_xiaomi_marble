@@ -61,6 +61,13 @@
 #define WMI_IPV4_ADDR_LEN       4
 #define WMI_KEEP_ALIVE_NULL_PKT              1
 #define WMI_KEEP_ALIVE_UNSOLICIT_ARP_RSP     2
+#define WMI_KRK_KEY_LEN     16
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+#define WMI_BTK_KEY_LEN     32
+#define WMI_ROAM_R0KH_ID_MAX_LEN    48
+#define WMI_ROAM_SCAN_PSK_SIZE    32
+#endif
+#define WMI_NOISE_FLOOR_DBM_DEFAULT      (-96)
 #ifdef WLAN_NS_OFFLOAD
 /* support only one IPv6 offload */
 #define WMI_MAC_NS_OFFLOAD_SIZE                          1
@@ -911,6 +918,104 @@ struct wifi_passpoint_req_param {
 	struct wifi_passpoint_network_param networks[];
 };
 
+/* struct mobility_domain_info - structure containing
+ *                               mobility domain info
+ * @mdie_present: mobility domain present or not
+ * @mobility_domain: mobility domain
+ */
+struct mobility_domain_info {
+	uint8_t mdie_present;
+	uint16_t mobility_domain;
+};
+
+/* struct roam_offload_scan_params - structure
+ *     containing roaming offload scan parameters
+ * @is_roam_req_valid: flag to tell whether roam req
+ *                     is valid or NULL
+ * @mode: stores flags for scan
+ * @vdev_id: vdev id
+ * @roam_offload_enabled: flag for offload enable
+ * @psk_pmk: pre shared key/pairwise master key
+ * @pmk_len: length of PMK
+ * @prefer_5ghz: prefer select 5G candidate
+ * @roam_rssi_cat_gap: gap for every category bucket
+ * @select_5ghz_margin: select 5 Ghz margin
+ * @krk: KRK
+ * @btk: BTK
+ * @reassoc_failure_timeout: reassoc failure timeout
+ * @rokh_id_length: r0kh id length
+ * @rokh_id: r0kh id
+ * @roam_key_mgmt_offload_enabled: roam offload flag
+ * @auth_mode: authentication mode
+ * @is_ese_assoc: flag to determine ese assoc
+ * @mdid: mobility domain info
+ * @roam_offload_params: roam offload tlv params
+ */
+struct roam_offload_scan_params {
+	uint8_t is_roam_req_valid;
+	uint32_t mode;
+	uint32_t vdev_id;
+#ifdef WLAN_FEATURE_ROAM_OFFLOAD
+	uint8_t roam_offload_enabled;
+	uint8_t psk_pmk[WMI_ROAM_SCAN_PSK_SIZE];
+	uint32_t pmk_len;
+	uint8_t prefer_5ghz;
+	uint8_t roam_rssi_cat_gap;
+	uint8_t select_5ghz_margin;
+	uint8_t krk[WMI_KRK_KEY_LEN];
+	uint8_t btk[WMI_BTK_KEY_LEN];
+	uint32_t reassoc_failure_timeout;
+	uint32_t rokh_id_length;
+	uint8_t rokh_id[WMI_ROAM_R0KH_ID_MAX_LEN];
+	uint8_t roam_key_mgmt_offload_enabled;
+	int auth_mode;
+#endif
+	bool is_ese_assoc;
+	struct mobility_domain_info mdid;
+	wmi_roam_offload_tlv_param roam_offload_params;
+};
+
+/* struct roam_offload_scan_rssi_params - structure containing
+ *              parameters for roam offload scan based on RSSI
+ * @rssi_thresh: rssi threshold
+ * @rssi_thresh_diff: difference in rssi threshold
+ * @hi_rssi_scan_max_count: 5G scan max count
+ * @hi_rssi_scan_rssi_delta: 5G scan rssi change threshold value
+ * @hi_rssi_scan_rssi_ub: 5G scan upper bound
+ * @raise_rssi_thresh_5g: flag to determine penalty and boost thresholds
+ * @session_id: vdev id
+ * @penalty_threshold_5g: RSSI threshold below which 5GHz RSSI is penalized
+ * @boost_threshold_5g: RSSI threshold above which 5GHz RSSI is favored
+ * @raise_factor_5g: factor by which 5GHz RSSI is boosted
+ * @drop_factor_5g: factor by which 5GHz RSSI is penalized
+ * @max_raise_rssi_5g: maximum boost that can be applied to a 5GHz RSSI
+ * @max_drop_rssi_5g: maximum penalty that can be applied to a 5GHz RSSI
+ * @good_rssi_threshold: RSSI below which roam is kicked in by background
+ *                       scan although rssi is still good
+ * @roam_earlystop_thres_min: Minimum RSSI threshold value for early stop,
+ *                            unit is dB above NF
+ * @roam_earlystop_thres_max: Maximum RSSI threshold value for early stop,
+ *                            unit is dB above NF
+ */
+struct roam_offload_scan_rssi_params {
+	int8_t rssi_thresh;
+	uint8_t rssi_thresh_diff;
+	uint32_t hi_rssi_scan_max_count;
+	uint32_t hi_rssi_scan_rssi_delta;
+	int32_t hi_rssi_scan_rssi_ub;
+	int raise_rssi_thresh_5g;
+	uint8_t session_id;
+	uint32_t penalty_threshold_5g;
+	uint32_t boost_threshold_5g;
+	uint8_t raise_factor_5g;
+	uint8_t drop_factor_5g;
+	int max_raise_rssi_5g;
+	int max_drop_rssi_5g;
+	uint32_t good_rssi_threshold;
+	uint32_t roam_earlystop_thres_min;
+	uint32_t roam_earlystop_thres_max;
+};
+
 /**
  * struct wifi_epno_network - enhanced pno network block
  * @ssid: ssid
@@ -1314,6 +1419,9 @@ struct plm_req_params {
 	bool enable;
 };
 #endif
+#define MAX_SSID_ALLOWED_LIST    4
+#define MAX_BSSID_AVOID_LIST     16
+#define MAX_BSSID_FAVORED      16
 
 
 /**
@@ -2206,6 +2314,43 @@ struct ssid_hotlist_param {
 	uint8_t band;
 	int32_t rssi_low;
 	int32_t rssi_high;
+};
+
+/**
+ * struct roam_scan_filter_params - Structure holding roaming scan
+ *                                  parameters
+ * @len:                      length
+ * @op_bitmap:                bitmap to determine reason of roaming
+ * @session_id:               vdev id
+ * @num_bssid_black_list:     The number of BSSID's that we should
+ *                            avoid connecting to. It is like a
+ *                            blacklist of BSSID's.
+ * @num_ssid_white_list:      The number of SSID profiles that are
+ *                            in the Whitelist. When roaming, we
+ *                            consider the BSSID's with this SSID
+ *                            also for roaming apart from the connected one's
+ * @num_bssid_preferred_list: Number of BSSID's which have a preference over
+ *                            others
+ * @bssid_avoid_list:         Blacklist SSID's
+ * @ssid_allowed_list:        Whitelist SSID's
+ * @bssid_favored:            Favorable BSSID's
+ * @bssid_favored_factor:     RSSI to be added to this BSSID to prefer it
+ *
+ * This structure holds all the key parameters related to
+ * initial connection and roaming connections.
+ */
+
+struct roam_scan_filter_params {
+	uint32_t len;
+	uint32_t op_bitmap;
+	uint8_t session_id;
+	uint32_t num_bssid_black_list;
+	uint32_t num_ssid_white_list;
+	uint32_t num_bssid_preferred_list;
+	struct qdf_mac_addr bssid_avoid_list[MAX_BSSID_AVOID_LIST];
+	struct mac_ssid ssid_allowed_list[MAX_SSID_ALLOWED_LIST];
+	struct qdf_mac_addr bssid_favored[MAX_BSSID_FAVORED];
+	uint8_t bssid_favored_factor[MAX_BSSID_FAVORED];
 };
 
 /**

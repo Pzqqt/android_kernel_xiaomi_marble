@@ -240,6 +240,16 @@ QDF_STATUS send_reset_passpoint_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 QDF_STATUS send_set_passpoint_network_list_cmd_tlv(wmi_unified_t wmi_handle,
 					struct wifi_passpoint_req_param *req);
 
+QDF_STATUS send_roam_scan_offload_mode_cmd_tlv(wmi_unified_t wmi_handle,
+				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
+				struct roam_offload_scan_params *roam_req);
+
+QDF_STATUS send_roam_scan_offload_rssi_thresh_cmd_tlv(wmi_unified_t wmi_handle,
+				struct roam_offload_scan_rssi_params *roam_req);
+
+QDF_STATUS send_roam_scan_filter_cmd_tlv(wmi_unified_t wmi_handle,
+				struct roam_scan_filter_params *roam_req);
+
 QDF_STATUS send_set_ric_req_cmd_tlv(wmi_unified_t wmi_handle, void *msg,
 			uint8_t is_add_ts);
 

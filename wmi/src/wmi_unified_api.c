@@ -1322,6 +1322,77 @@ QDF_STATUS wmi_unified_set_epno_network_list_cmd(void *wmi_hdl,
 	return QDF_STATUS_E_FAILURE;
 }
 
+/**
+ * wmi_unified_roam_scan_offload_mode_cmd() - set roam scan parameters
+ * @wmi_hdl: wmi handle
+ * @scan_cmd_fp: scan related parameters
+ * @roam_req: roam related parameters
+ *
+ * This function reads the incoming @roam_req and fill in the destination
+ * WMI structure and send down the roam scan configs down to the firmware
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wmi_unified_roam_scan_offload_mode_cmd(void *wmi_hdl,
+				wmi_start_scan_cmd_fixed_param *scan_cmd_fp,
+				struct roam_offload_scan_params *roam_req)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_mode_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_mode_cmd(
+			wmi_handle, scan_cmd_fp, roam_req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_scan_offload_rssi_thresh_cmd() - set roam scan rssi
+ *							parameters
+ * @wmi_hdl: wmi handle
+ * @roam_req: roam rssi related parameters
+ *
+ * This function reads the incoming @roam_req and fill in the destination
+ * WMI structure and send down the roam scan rssi configs down to the firmware
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wmi_unified_roam_scan_offload_rssi_thresh_cmd(void *wmi_hdl,
+					struct roam_offload_scan_rssi_params
+					*roam_req)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_offload_rssi_thresh_cmd)
+		return wmi_handle->ops->send_roam_scan_offload_rssi_thresh_cmd(
+				wmi_handle, roam_req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_roam_scan_filter_cmd() - send roam scan whitelist,
+ *                                      blacklist and preferred list
+ * @wmi_hdl: wmi handle
+ * @roam_req: roam scan lists related parameters
+ *
+ * This function reads the incoming @roam_req and fill in the destination
+ * WMI structure and send down the different roam scan lists down to the fw
+ *
+ * Return: QDF_STATUS enumeration
+ */
+QDF_STATUS wmi_unified_roam_scan_filter_cmd(void *wmi_hdl,
+				struct roam_scan_filter_params *roam_req)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_roam_scan_filter_cmd)
+		return wmi_handle->ops->send_roam_scan_filter_cmd(
+				wmi_handle, roam_req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
 /** wmi_unified_ipa_offload_control_cmd() - ipa offload control parameter
  * @wmi_hdl: wmi handle
  * @ipa_offload: ipa offload control parameter
