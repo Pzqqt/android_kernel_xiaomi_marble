@@ -32,16 +32,16 @@
 extern "C" {
 #endif /* __cplusplus */
 
-#include <qdf_nbuf.h>
-#include <qdf_types.h>
-#include <qdf_lock.h>
-#include <qdf_timer.h>
-#include <qdf_atomic.h>
-#include <qdf_event.h>
-#include "hif.h"
-#include <htc.h>
 #include "htc_api.h"
 #include "htc_packet.h"
+#include <hif.h>
+#include <htc.h>
+#include <qdf_atomic.h>
+#include <qdf_event.h>
+#include <qdf_lock.h>
+#include <qdf_nbuf.h>
+#include <qdf_timer.h>
+#include <qdf_types.h>
 
 /* HTC operational parameters */
 #define HTC_TARGET_RESPONSE_TIMEOUT         2000        /* in ms */
@@ -120,7 +120,7 @@ typedef struct _HTC_ENDPOINT {
 
 	HTC_PACKET_QUEUE TxLookupQueue;         /* lookup queue to match netbufs to htc packets */
 	HTC_PACKET_QUEUE RxBufferHoldQueue;             /* temporary hold queue for back compatibility */
-	A_UINT8 SeqNo;          /* TX seq no (helpful) for debugging */
+	uint8_t SeqNo;          /* TX seq no (helpful) for debugging */
 	qdf_atomic_t TxProcessCount;            /* serialization */
 	struct _HTC_TARGET *target;
 	int TxCredits;          /* TX credits available on this endpoint */
@@ -129,7 +129,7 @@ typedef struct _HTC_ENDPOINT {
 #ifdef HTC_EP_STAT_PROFILING
 	HTC_ENDPOINT_STATS endpoint_stats;     /* endpoint statistics */
 #endif
-	A_BOOL TxCreditFlowEnabled;
+	bool TxCreditFlowEnabled;
 } HTC_ENDPOINT;
 
 #ifdef HTC_EP_STAT_PROFILING
@@ -139,8 +139,8 @@ typedef struct _HTC_ENDPOINT {
 #endif
 
 typedef struct {
-	A_UINT16 service_id;
-	A_UINT8 CreditAllocation;
+	uint16_t service_id;
+	uint8_t CreditAllocation;
 } HTC_SERVICE_TX_CREDIT_ALLOCATION;
 
 #define HTC_MAX_SERVICE_ALLOC_ENTRIES 8
@@ -159,31 +159,31 @@ typedef struct _HTC_TARGET {
 	qdf_spinlock_t HTCRxLock;
 	qdf_spinlock_t HTCTxLock;
 	qdf_spinlock_t HTCCreditLock;
-	A_UINT32 HTCStateFlags;
+	uint32_t HTCStateFlags;
 	void *host_handle;
 	HTC_INIT_INFO HTCInitInfo;
 	HTC_PACKET *pHTCPacketStructPool;               /* pool of HTC packets */
 	HTC_PACKET_QUEUE ControlBufferTXFreeList;
-	A_UINT8 CtrlResponseBuffer[HTC_MAX_CONTROL_MESSAGE_LENGTH];
+	uint8_t CtrlResponseBuffer[HTC_MAX_CONTROL_MESSAGE_LENGTH];
 	int CtrlResponseLength;
 	qdf_event_t ctrl_response_valid;
-	A_BOOL CtrlResponseProcessing;
+	bool CtrlResponseProcessing;
 	int TotalTransmitCredits;
 	HTC_SERVICE_TX_CREDIT_ALLOCATION
 		ServiceTxAllocTable[HTC_MAX_SERVICE_ALLOC_ENTRIES];
 	int TargetCreditSize;
 #ifdef RX_SG_SUPPORT
 	qdf_nbuf_queue_t RxSgQueue;
-	A_BOOL IsRxSgInprogress;
-	A_UINT32 CurRxSgTotalLen;               /* current total length */
-	A_UINT32 ExpRxSgTotalLen;               /* expected total length */
+	bool IsRxSgInprogress;
+	uint32_t CurRxSgTotalLen;               /* current total length */
+	uint32_t ExpRxSgTotalLen;               /* expected total length */
 #endif
 	qdf_device_t osdev;
 	struct ol_ath_htc_stats htc_pkt_stats;
 	HTC_PACKET *pBundleFreeList;
-	A_UINT32 ce_send_cnt;
-	A_UINT32 TX_comp_cnt;
-	A_UINT8 MaxMsgsPerHTCBundle;
+	uint32_t ce_send_cnt;
+	uint32_t TX_comp_cnt;
+	uint8_t MaxMsgsPerHTCBundle;
 	qdf_work_t queue_kicker;
 	uint32_t con_mode;
 } HTC_TARGET;
@@ -245,8 +245,8 @@ void htc_recv_init(HTC_TARGET *target);
 A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target);
 void htc_free_control_tx_packet(HTC_TARGET *target, HTC_PACKET *pPacket);
 HTC_PACKET *htc_alloc_control_tx_packet(HTC_TARGET *target);
-A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 service_id);
-void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID);
+uint8_t htc_get_credit_allocation(HTC_TARGET *target, uint16_t service_id);
+void htc_tx_resource_avail_handler(void *context, uint8_t pipeID);
 void htc_control_rx_complete(void *Context, HTC_PACKET *pPacket);
 void htc_process_credit_rpt(HTC_TARGET *target,
 			    HTC_CREDIT_REPORT *pRpt,

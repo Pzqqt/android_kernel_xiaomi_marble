@@ -27,8 +27,9 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
+#include <qdf_mem.h>            /* qdf_mem_malloc */
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include <qdf_mem.h>         /* qdf_mem_malloc */
+
 
 /* #define USB_HIF_SINGLE_PIPE_DATA_SCHED */
 /* #ifdef USB_HIF_SINGLE_PIPE_DATA_SCHED */
@@ -53,7 +54,7 @@ static unsigned ep_debug_mask =
 #endif
 
 /* HTC Control Path Credit History */
-A_UINT32 g_htc_credit_history_idx = 0;
+uint32_t g_htc_credit_history_idx = 0;
 HTC_CREDIT_HISTORY htc_credit_history_buffer[HTC_CREDIT_HISTORY_MAX];
 
 /**
@@ -255,7 +256,7 @@ HTC_PACKET *allocate_htc_bundle_packet(HTC_TARGET *target)
 
 void free_htc_bundle_packet(HTC_TARGET *target, HTC_PACKET *pPacket)
 {
-	A_UINT32 curentHeadRoom;
+	uint32_t curentHeadRoom;
 	qdf_nbuf_t netbuf;
 	HTC_PACKET_QUEUE *pQueueSave;
 
@@ -415,7 +416,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 							      HTC_FLAGS_SEND_BUNDLE,
 							      HTC_FRAME_HDR_FLAGS)
 			    | SM(pPacket->Endpoint, HTC_FRAME_HDR_ENDPOINTID));
-		HTC_WRITE32((A_UINT32 *) pHtcHdr + 1,
+		HTC_WRITE32((uint32_t *) pHtcHdr + 1,
 			    SM(pPacket->PktInfo.AsTx.SeqNo,
 			       HTC_FRAME_HDR_CONTROLBYTES1) | SM(creditPad,
 								 HTC_FRAME_HDR_RESERVED));
@@ -429,7 +430,7 @@ static void htc_issue_packets_bundle(HTC_TARGET *target,
 			if (frag_len > nbytes) {
 				frag_len = nbytes;
 			}
-			A_MEMCPY(pBundleBuffer, frag_addr, frag_len);
+			qdf_mem_copy(pBundleBuffer, frag_addr, frag_len);
 			nbytes -= frag_len;
 			pBundleBuffer += frag_len;
 		}
@@ -504,7 +505,7 @@ static A_STATUS htc_issue_packets(HTC_TARGET *target,
 								      HTC_FRAME_HDR_FLAGS)
 				    | SM(pPacket->Endpoint,
 					 HTC_FRAME_HDR_ENDPOINTID));
-			HTC_WRITE32(((A_UINT32 *) pHtcHdr) + 1,
+			HTC_WRITE32(((uint32_t *) pHtcHdr) + 1,
 				    SM(pPacket->PktInfo.AsTx.SeqNo,
 				       HTC_FRAME_HDR_CONTROLBYTES1));
 
@@ -663,7 +664,7 @@ void get_htc_send_packets_credit_based(HTC_TARGET *target,
 {
 	int creditsRequired;
 	int remainder;
-	A_UINT8 sendFlags;
+	uint8_t sendFlags;
 	HTC_PACKET *pPacket;
 	unsigned int transferLength;
 	HTC_PACKET_QUEUE *tx_queue;
@@ -1131,14 +1132,14 @@ static HTC_SEND_QUEUE_RESULT htc_try_send(HTC_TARGET *target,
 }
 
 #ifdef USB_HIF_SINGLE_PIPE_DATA_SCHED
-static A_UINT16 htc_send_pkts_sched_check(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID id)
+static uint16_t htc_send_pkts_sched_check(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID id)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_ENDPOINT *pEndpoint;
 	HTC_ENDPOINT_ID eid;
 	HTC_PACKET_QUEUE *pTxQueue;
-	A_UINT16 resources;
-	A_UINT16 acQueueStatus[DATA_EP_SIZE] = { 0, 0, 0, 0 };
+	uint16_t resources;
+	uint16_t acQueueStatus[DATA_EP_SIZE] = { 0, 0, 0, 0 };
 
 	if (id < ENDPOINT_2 || id > ENDPOINT_5) {
 		return 1;
@@ -1277,7 +1278,7 @@ A_STATUS htc_send_pkts_multiple(HTC_HANDLE HTCHandle, HTC_PACKET_QUEUE *pPktQueu
 		pPacket->PktInfo.AsTx.SeqNo = pEndpoint->SeqNo;
 		pEndpoint->SeqNo++;
 
-		HTC_WRITE32(((A_UINT32 *) pHtcHdr) + 1,
+		HTC_WRITE32(((uint32_t *) pHtcHdr) + 1,
 			    SM(pPacket->PktInfo.AsTx.SeqNo,
 			       HTC_FRAME_HDR_CONTROLBYTES1));
 
@@ -1402,7 +1403,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 
 	LOCK_HTC_TX(target);
 
-	HTC_WRITE32(((A_UINT32 *) pHtcHdr) + 1,
+	HTC_WRITE32(((uint32_t *) pHtcHdr) + 1,
 		    SM(pEndpoint->SeqNo, HTC_FRAME_HDR_CONTROLBYTES1));
 
 	pEndpoint->SeqNo++;
@@ -1421,7 +1422,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf, int Epid,
 #else                           /*ATH_11AC_TXCOMPACT */
 
 A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
-			   A_UINT8 more_data)
+			   uint8_t more_data)
 {
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
 	HTC_ENDPOINT *pEndpoint;
@@ -1472,7 +1473,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
 		pPacket->PktInfo.AsTx.SeqNo = pEndpoint->SeqNo;
 		pEndpoint->SeqNo++;
 
-		HTC_WRITE32(((A_UINT32 *) pHtcHdr) + 1,
+		HTC_WRITE32(((uint32_t *) pHtcHdr) + 1,
 			    SM(pPacket->PktInfo.AsTx.SeqNo,
 			       HTC_FRAME_HDR_CONTROLBYTES1));
 
@@ -1707,9 +1708,9 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 	HTC_ENDPOINT_ID eid[DATA_EP_SIZE] = { ENDPOINT_5, ENDPOINT_4,
 		ENDPOINT_2, ENDPOINT_3 };
 	int epidIdx;
-	A_UINT16 resourcesThresh[DATA_EP_SIZE]; /* urb resources */
-	A_UINT16 resources;
-	A_UINT16 resourcesMax;
+	uint16_t resourcesThresh[DATA_EP_SIZE]; /* urb resources */
+	uint16_t resources;
+	uint16_t resourcesMax;
 #endif
 
 	pEndpoint = &target->endpoint[EpID];
@@ -1758,7 +1759,7 @@ QDF_STATUS htc_tx_completion_handler(void *Context,
 }
 
 /* callback when TX resources become available */
-void htc_tx_resource_avail_handler(void *context, A_UINT8 pipeID)
+void htc_tx_resource_avail_handler(void *context, uint8_t pipeID)
 {
 	int i;
 	HTC_TARGET *target = (HTC_TARGET *) context;
@@ -1855,12 +1856,12 @@ void htc_flush_endpoint(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint,
 
 /* HTC API to indicate activity to the credit distribution function */
 void htc_indicate_activity_change(HTC_HANDLE HTCHandle,
-				  HTC_ENDPOINT_ID Endpoint, A_BOOL Active)
+				  HTC_ENDPOINT_ID Endpoint, bool Active)
 {
 	/*  TODO */
 }
 
-A_BOOL htc_is_endpoint_active(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint)
+bool htc_is_endpoint_active(HTC_HANDLE HTCHandle, HTC_ENDPOINT_ID Endpoint)
 {
 	return true;
 }
@@ -1872,7 +1873,7 @@ void htc_process_credit_rpt(HTC_TARGET *target, HTC_CREDIT_REPORT *pRpt,
 	int i;
 	HTC_ENDPOINT *pEndpoint;
 	int totalCredits = 0;
-	A_UINT8 rpt_credits, rpt_ep_id;
+	uint8_t rpt_credits, rpt_ep_id;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_SEND,
 			("+htc_process_credit_rpt, Credit Report Entries:%d \n",

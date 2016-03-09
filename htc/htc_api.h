@@ -28,11 +28,10 @@
 #ifndef _HTC_API_H_
 #define _HTC_API_H_
 
-#include "osapi_linux.h"
-#include "htc_packet.h"
 #include <htc.h>
 #include <htc_services.h>
 #include <qdf_types.h>          /* qdf_device_t */
+#include "htc_packet.h"
 
 #ifdef __cplusplus
 extern "C" {
@@ -48,7 +47,7 @@ extern "C" {
 
 typedef void *HTC_HANDLE;
 
-typedef A_UINT16 HTC_SERVICE_ID;
+typedef uint16_t HTC_SERVICE_ID;
 
 typedef void (*HTC_TARGET_FAILURE)(void *Instance, QDF_STATUS Status);
 
@@ -167,12 +166,12 @@ typedef struct _HTC_EP_CALLBACKS {
 /* service connection information */
 typedef struct _HTC_SERVICE_CONNECT_REQ {
 	HTC_SERVICE_ID service_id;               /* service ID to connect to */
-	A_UINT16 ConnectionFlags;               /* connection flags, see htc protocol definition */
-	A_UINT8 *pMetaData;             /* ptr to optional service-specific meta-data */
-	A_UINT8 MetaDataLength;         /* optional meta data length */
+	uint16_t ConnectionFlags;               /* connection flags, see htc protocol definition */
+	uint8_t *pMetaData;             /* ptr to optional service-specific meta-data */
+	uint8_t MetaDataLength;         /* optional meta data length */
 	HTC_EP_CALLBACKS EpCallbacks;           /* endpoint callbacks */
 	int MaxSendQueueDepth;          /* maximum depth of any send queue */
-	A_UINT32 LocalConnectionFlags;          /* HTC flags for the host-side (local) connection */
+	uint32_t LocalConnectionFlags;          /* HTC flags for the host-side (local) connection */
 	unsigned int MaxSendMsgSize;            /* override max message size in send direction */
 } HTC_SERVICE_CONNECT_REQ;
 
@@ -180,12 +179,12 @@ typedef struct _HTC_SERVICE_CONNECT_REQ {
 
 /* service connection response information */
 typedef struct _HTC_SERVICE_CONNECT_RESP {
-	A_UINT8 *pMetaData;             /* caller supplied buffer to optional meta-data */
-	A_UINT8 BufferLength;           /* length of caller supplied buffer */
-	A_UINT8 ActualLength;           /* actual length of meta data */
+	uint8_t *pMetaData;             /* caller supplied buffer to optional meta-data */
+	uint8_t BufferLength;           /* length of caller supplied buffer */
+	uint8_t ActualLength;           /* actual length of meta data */
 	HTC_ENDPOINT_ID Endpoint;               /* endpoint to communicate over */
 	unsigned int MaxMsgLength;              /* max length of all messages over this endpoint */
-	A_UINT8 ConnectRespCode;                /* connect response code from target */
+	uint8_t ConnectRespCode;                /* connect response code from target */
 } HTC_SERVICE_CONNECT_RESP;
 
 /* endpoint distribution structure */
@@ -194,7 +193,7 @@ typedef struct _HTC_ENDPOINT_CREDIT_DIST {
 	struct _HTC_ENDPOINT_CREDIT_DIST *pPrev;
 	HTC_SERVICE_ID service_id;               /* Service ID (set by HTC) */
 	HTC_ENDPOINT_ID Endpoint;               /* endpoint for this distribution struct (set by HTC) */
-	A_UINT32 DistFlags;             /* distribution flags, distribution function can
+	uint32_t DistFlags;             /* distribution flags, distribution function can
 					set default activity using SET_EP_ACTIVE() macro */
 	int TxCreditsNorm;              /* credits for normal operation, anything above this
 					indicates the endpoint is over-subscribed, this field
@@ -223,7 +222,7 @@ typedef struct _HTC_ENDPOINT_CREDIT_DIST {
 					*/
 } HTC_ENDPOINT_CREDIT_DIST;
 
-#define HTC_EP_ACTIVE                            ((A_UINT32) (1u << 31))
+#define HTC_EP_ACTIVE                            ((uint32_t) (1u << 31))
 
 /* macro to check if an endpoint has gone active, useful for credit
  * distributions */
@@ -260,30 +259,30 @@ typedef enum _HTC_ENDPOINT_STAT_ACTION {
 
 /* endpoint statistics */
 typedef struct _HTC_ENDPOINT_STATS {
-	A_UINT32 TxPosted;              /* number of TX packets posted to the endpoint */
-	A_UINT32 TxCreditLowIndications;                /* number of times the host set the credit-low flag in a send message on
+	uint32_t TxPosted;              /* number of TX packets posted to the endpoint */
+	uint32_t TxCreditLowIndications;                /* number of times the host set the credit-low flag in a send message on
 							this endpoint */
-	A_UINT32 TxIssued;              /* running count of total TX packets issued */
-	A_UINT32 TxPacketsBundled;              /* running count of TX packets that were issued in bundles */
-	A_UINT32 TxBundles;             /* running count of TX bundles that were issued */
-	A_UINT32 TxDropped;             /* tx packets that were dropped */
-	A_UINT32 TxCreditRpts;          /* running count of total credit reports received for this endpoint */
-	A_UINT32 TxCreditRptsFromRx;            /* credit reports received from this endpoint's RX packets */
-	A_UINT32 TxCreditRptsFromOther;         /* credit reports received from RX packets of other endpoints */
-	A_UINT32 TxCreditRptsFromEp0;           /* credit reports received from endpoint 0 RX packets */
-	A_UINT32 TxCreditsFromRx;               /* count of credits received via Rx packets on this endpoint */
-	A_UINT32 TxCreditsFromOther;            /* count of credits received via another endpoint */
-	A_UINT32 TxCreditsFromEp0;              /* count of credits received via another endpoint */
-	A_UINT32 TxCreditsConsummed;            /* count of consummed credits */
-	A_UINT32 TxCreditsReturned;             /* count of credits returned */
-	A_UINT32 RxReceived;            /* count of RX packets received */
-	A_UINT32 RxLookAheads;          /* count of lookahead records
+	uint32_t TxIssued;              /* running count of total TX packets issued */
+	uint32_t TxPacketsBundled;              /* running count of TX packets that were issued in bundles */
+	uint32_t TxBundles;             /* running count of TX bundles that were issued */
+	uint32_t TxDropped;             /* tx packets that were dropped */
+	uint32_t TxCreditRpts;          /* running count of total credit reports received for this endpoint */
+	uint32_t TxCreditRptsFromRx;            /* credit reports received from this endpoint's RX packets */
+	uint32_t TxCreditRptsFromOther;         /* credit reports received from RX packets of other endpoints */
+	uint32_t TxCreditRptsFromEp0;           /* credit reports received from endpoint 0 RX packets */
+	uint32_t TxCreditsFromRx;               /* count of credits received via Rx packets on this endpoint */
+	uint32_t TxCreditsFromOther;            /* count of credits received via another endpoint */
+	uint32_t TxCreditsFromEp0;              /* count of credits received via another endpoint */
+	uint32_t TxCreditsConsummed;            /* count of consummed credits */
+	uint32_t TxCreditsReturned;             /* count of credits returned */
+	uint32_t RxReceived;            /* count of RX packets received */
+	uint32_t RxLookAheads;          /* count of lookahead records
 					found in messages received on this endpoint */
-	A_UINT32 RxPacketsBundled;              /* count of recv packets received in a bundle */
-	A_UINT32 RxBundleLookAheads;            /* count of number of bundled lookaheads */
-	A_UINT32 RxBundleIndFromHdr;            /* count of the number of bundle indications from the HTC header */
-	A_UINT32 RxAllocThreshHit;              /* count of the number of times the recv allocation threshhold was hit */
-	A_UINT32 RxAllocThreshBytes;            /* total number of bytes */
+	uint32_t RxPacketsBundled;              /* count of recv packets received in a bundle */
+	uint32_t RxBundleLookAheads;            /* count of number of bundled lookaheads */
+	uint32_t RxBundleIndFromHdr;            /* count of the number of bundle indications from the HTC header */
+	uint32_t RxAllocThreshHit;              /* count of the number of times the recv allocation threshhold was hit */
+	uint32_t RxAllocThreshBytes;            /* total number of bytes */
 } HTC_ENDPOINT_STATS;
 
 /* ------ Function Prototypes ------ */
@@ -448,7 +447,7 @@ A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, qdf_nbuf_t netbuf,
 			   int Epid, int ActualLength);
 #else                           /*ATH_11AC_TXCOMPACT */
 A_STATUS htc_send_data_pkt(HTC_HANDLE HTCHandle, HTC_PACKET *pPacket,
-			   A_UINT8 more_data);
+			   uint8_t more_data);
 #endif /*ATH_11AC_TXCOMPACT */
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    @desc: Flush HTC when target is removed surprisely service communications
@@ -525,7 +524,7 @@ void htc_dump_credit_states(HTC_HANDLE HTCHandle);
    @see also:
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
 void htc_indicate_activity_change(HTC_HANDLE HTCHandle,
-				  HTC_ENDPOINT_ID Endpoint, A_BOOL Active);
+				  HTC_ENDPOINT_ID Endpoint, bool Active);
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
    @desc: Get endpoint statistics
@@ -555,7 +554,7 @@ void htc_indicate_activity_change(HTC_HANDLE HTCHandle,
    @example:
    @see also:
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-A_BOOL htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
+bool htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
 				   HTC_ENDPOINT_ID Endpoint,
 				   HTC_ENDPOINT_STAT_ACTION Action,
 				   HTC_ENDPOINT_STATS *pStats);
@@ -632,7 +631,7 @@ A_STATUS htc_add_receive_pkt_multiple(HTC_HANDLE HTCHandle,
    @example:
    @see also:
  +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++*/
-A_BOOL htc_is_endpoint_active(HTC_HANDLE HTCHandle,
+bool htc_is_endpoint_active(HTC_HANDLE HTCHandle,
 			      HTC_ENDPOINT_ID Endpoint);
 
 /*+++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -667,8 +666,8 @@ void htc_set_target_failure_callback(HTC_HANDLE HTCHandle,
 void htc_enable_recv(HTC_HANDLE HTCHandle);
 void htc_disable_recv(HTC_HANDLE HTCHandle);
 A_STATUS HTCWaitForPendingRecv(HTC_HANDLE HTCHandle,
-			       A_UINT32 TimeoutInMs,
-			       A_BOOL *pbIsRecvPending);
+			       uint32_t TimeoutInMs,
+			       bool *pbIsRecvPending);
 
 /* function to fetch stats from htc layer*/
 struct ol_ath_htc_stats *ieee80211_ioctl_get_htc_stats(HTC_HANDLE
@@ -693,7 +692,7 @@ do {									\
 			SM((_download_len), HTC_FRAME_HDR_PAYLOADLEN) |	\
 			SM((_ep_id), HTC_FRAME_HDR_ENDPOINTID));	\
 									\
-		HTC_WRITE32((A_UINT32 *)(_htc_tx_desc) + 1,		\
+		HTC_WRITE32((uint32_t *)(_htc_tx_desc) + 1,		\
 				SM((_seq_no), HTC_FRAME_HDR_CONTROLBYTES1));\
 } while (0)
 #endif /* WLAN_FEATURE_FASTPATH */

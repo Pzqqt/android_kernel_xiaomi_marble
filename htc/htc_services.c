@@ -27,8 +27,8 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
+#include <hif.h>
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
-#include "hif.h"
 
 /* use credit flow control over HTC */
 unsigned int htc_credit_flow = 1;
@@ -49,12 +49,12 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 	HTC_ENDPOINT *pEndpoint;
 	unsigned int maxMsgSize = 0;
 	qdf_nbuf_t netbuf;
-	A_UINT8 txAlloc;
+	uint8_t txAlloc;
 	int length;
-	A_BOOL disableCreditFlowCtrl = false;
-	A_UINT16 conn_flags;
-	A_UINT16 rsp_msg_id, rsp_msg_serv_id, rsp_msg_max_msg_size;
-	A_UINT8 rsp_msg_status, rsp_msg_end_id, rsp_msg_serv_meta_len;
+	bool disableCreditFlowCtrl = false;
+	uint16_t conn_flags;
+	uint16_t rsp_msg_id, rsp_msg_serv_id, rsp_msg_max_msg_size;
+	uint8_t rsp_msg_status, rsp_msg_end_id, rsp_msg_serv_meta_len;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 			("+htc_connect_service, target:%p SvcID:0x%X\n", target,
@@ -108,7 +108,8 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 				break;
 			}
 
-			A_MEMZERO(pConnectMsg, sizeof(HTC_CONNECT_SERVICE_MSG));
+			qdf_mem_zero(pConnectMsg,
+				     sizeof(HTC_CONNECT_SERVICE_MSG));
 
 			conn_flags =
 				(pConnectReq->
@@ -136,7 +137,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			    (pConnectReq->MetaDataLength <=
 			     HTC_SERVICE_META_DATA_MAX_LENGTH)) {
 				/* copy meta data into message buffer (after header ) */
-				A_MEMCPY((A_UINT8 *) pConnectMsg +
+				qdf_mem_copy((uint8_t *) pConnectMsg +
 					 sizeof(HTC_CONNECT_SERVICE_MSG),
 					 pConnectReq->pMetaData,
 					 pConnectReq->MetaDataLength);
@@ -149,7 +150,7 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 
 			SET_HTC_PACKET_INFO_TX(pSendPacket,
 					       NULL,
-					       (A_UINT8 *) pConnectMsg,
+					       (uint8_t *) pConnectMsg,
 					       length,
 					       ENDPOINT_0,
 					       HTC_SERVICE_TX_PACKET_TAG);
@@ -237,8 +238,8 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 					min((int)pConnectResp->BufferLength,
 					    (int)rsp_msg_serv_meta_len);
 				/* copy the meta data */
-				A_MEMCPY(pConnectResp->pMetaData,
-					 ((A_UINT8 *) pResponseMsg) +
+				qdf_mem_copy(pConnectResp->pMetaData,
+					 ((uint8_t *) pResponseMsg) +
 					 sizeof
 					 (HTC_CONNECT_SERVICE_RESPONSE_MSG),
 					 copyLength);

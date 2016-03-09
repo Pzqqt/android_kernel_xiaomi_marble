@@ -27,9 +27,9 @@
 
 #include "htc_debug.h"
 #include "htc_internal.h"
+#include <hif.h>
 #include <qdf_nbuf.h>           /* qdf_nbuf_t */
 #include <qdf_types.h>          /* qdf_print */
-#include <hif.h>
 
 #ifdef DEBUG
 static ATH_DEBUG_MASK_DESCRIPTION g_htc_debug_description[] = {
@@ -77,9 +77,9 @@ static HTC_PACKET *build_htc_tx_ctrl_packet(qdf_device_t osdev)
 		if (NULL == pPacket) {
 			break;
 		}
-		A_MEMZERO(pPacket, sizeof(HTC_PACKET));
-		netbuf = qdf_nbuf_alloc(osdev,
-				HTC_CONTROL_BUFFER_SIZE, 20, 4, true);
+		qdf_mem_zero(pPacket, sizeof(HTC_PACKET));
+		netbuf = qdf_nbuf_alloc(osdev, HTC_CONTROL_BUFFER_SIZE,
+					20, 4, true);
 		if (NULL == netbuf) {
 			qdf_mem_free(pPacket);
 			pPacket = NULL;
@@ -258,7 +258,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 		return NULL;
 	}
 
-	A_MEMZERO(target, sizeof(HTC_TARGET));
+	qdf_mem_zero(target, sizeof(HTC_TARGET));
 
 	htc_runtime_pm_init(target);
 	qdf_spinlock_create(&target->HTCLock);
@@ -267,7 +267,8 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 	qdf_spinlock_create(&target->HTCCreditLock);
 
 	do {
-		A_MEMCPY(&target->HTCInitInfo, pInfo, sizeof(HTC_INIT_INFO));
+		qdf_mem_copy(&target->HTCInitInfo, pInfo,
+			     sizeof(HTC_INIT_INFO));
 		target->host_handle = pInfo->pContext;
 		target->osdev = osdev;
 		target->con_mode = con_mode;
@@ -280,7 +281,7 @@ HTC_HANDLE htc_create(void *ol_sc, HTC_INIT_INFO *pInfo, qdf_device_t osdev,
 			HTC_PACKET *pPacket =
 				(HTC_PACKET *) qdf_mem_malloc(sizeof(HTC_PACKET));
 			if (pPacket != NULL) {
-				A_MEMZERO(pPacket, sizeof(HTC_PACKET));
+				qdf_mem_zero(pPacket, sizeof(HTC_PACKET));
 				free_htc_packet_container(target, pPacket);
 			}
 		}
@@ -434,9 +435,9 @@ A_STATUS htc_setup_target_buffer_assignments(HTC_TARGET *target)
 	return status;
 }
 
-A_UINT8 htc_get_credit_allocation(HTC_TARGET *target, A_UINT16 service_id)
+uint8_t htc_get_credit_allocation(HTC_TARGET *target, uint16_t service_id)
 {
-	A_UINT8 allocation = 0;
+	uint8_t allocation = 0;
 	int i;
 
 	for (i = 0; i < HTC_MAX_SERVICE_ALLOC_ENTRIES; i++) {
@@ -463,7 +464,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 	HTC_SERVICE_CONNECT_REQ connect;
 	HTC_SERVICE_CONNECT_RESP resp;
 	HTC_READY_MSG *rdy_msg;
-	A_UINT16 htc_rdy_msg_id;
+	uint16_t htc_rdy_msg_id;
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC,
 			("htc_wait_target - Enter (target:0x%p) \n", HTCHandle));
@@ -509,7 +510,7 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 		target->TargetCreditSize =
 			(int)HTC_GET_FIELD(rdy_msg, HTC_READY_MSG, CREDITSIZE);
 		target->MaxMsgsPerHTCBundle =
-			(A_UINT8) pReadyMsg->MaxMsgsPerHTCBundle;
+			(uint8_t) pReadyMsg->MaxMsgsPerHTCBundle;
 		/* for old fw this value is set to 0. But the minimum value should be 1,
 		 * i.e., no bundling */
 		if (target->MaxMsgsPerHTCBundle < 1)
@@ -532,8 +533,8 @@ A_STATUS htc_wait_target(HTC_HANDLE HTCHandle)
 		htc_setup_target_buffer_assignments(target);
 
 		/* setup our pseudo HTC control endpoint connection */
-		A_MEMZERO(&connect, sizeof(connect));
-		A_MEMZERO(&resp, sizeof(resp));
+		qdf_mem_zero(&connect, sizeof(connect));
+		qdf_mem_zero(&resp, sizeof(resp));
 		connect.EpCallbacks.pContext = target;
 		connect.EpCallbacks.EpTxComplete = htc_control_tx_complete;
 		connect.EpCallbacks.EpRecv = htc_control_rx_complete;
@@ -573,7 +574,7 @@ static void reset_endpoint_states(HTC_TARGET *target)
 		INIT_HTC_PACKET_QUEUE(&pEndpoint->TxLookupQueue);
 		INIT_HTC_PACKET_QUEUE(&pEndpoint->RxBufferHoldQueue);
 		pEndpoint->target = target;
-		pEndpoint->TxCreditFlowEnabled = (A_BOOL)htc_credit_flow;
+		pEndpoint->TxCreditFlowEnabled = (bool)htc_credit_flow;
 		qdf_atomic_init(&pEndpoint->TxProcessCount);
 	}
 }
@@ -608,7 +609,7 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 		qdf_nbuf_put_tail(netbuf, sizeof(HTC_SETUP_COMPLETE_EX_MSG));
 		pSetupComp =
 			(HTC_SETUP_COMPLETE_EX_MSG *) qdf_nbuf_data(netbuf);
-		A_MEMZERO(pSetupComp, sizeof(HTC_SETUP_COMPLETE_EX_MSG));
+		qdf_mem_zero(pSetupComp, sizeof(HTC_SETUP_COMPLETE_EX_MSG));
 
 		HTC_SET_FIELD(pSetupComp, HTC_SETUP_COMPLETE_EX_MSG,
 			      MESSAGEID, HTC_MSG_SETUP_COMPLETE_EX_ID);
@@ -633,7 +634,7 @@ A_STATUS htc_start(HTC_HANDLE HTCHandle)
 
 		SET_HTC_PACKET_INFO_TX(pSendPacket,
 				       NULL,
-				       (A_UINT8 *) pSetupComp,
+				       (uint8_t *) pSetupComp,
 				       sizeof(HTC_SETUP_COMPLETE_EX_MSG),
 				       ENDPOINT_0, HTC_SERVICE_TX_PACKET_TAG);
 
@@ -760,15 +761,15 @@ void htc_dump_credit_states(HTC_HANDLE HTCHandle)
 	}
 }
 
-A_BOOL htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
+bool htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
 				   HTC_ENDPOINT_ID Endpoint,
 				   HTC_ENDPOINT_STAT_ACTION Action,
 				   HTC_ENDPOINT_STATS *pStats)
 {
 #ifdef HTC_EP_STAT_PROFILING
 	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
-	A_BOOL clearStats = false;
-	A_BOOL sample = false;
+	bool clearStats = false;
+	bool sample = false;
 
 	switch (Action) {
 	case HTC_EP_STAT_SAMPLE:
@@ -794,13 +795,13 @@ A_BOOL htc_get_endpoint_statistics(HTC_HANDLE HTCHandle,
 	if (sample) {
 		A_ASSERT(pStats != NULL);
 		/* return the stats to the caller */
-		A_MEMCPY(pStats, &target->endpoint[Endpoint].endpoint_stats,
+		qdf_mem_copy(pStats, &target->endpoint[Endpoint].endpoint_stats,
 			 sizeof(HTC_ENDPOINT_STATS));
 	}
 
 	if (clearStats) {
 		/* reset stats */
-		A_MEMZERO(&target->endpoint[Endpoint].endpoint_stats,
+		qdf_mem_zero(&target->endpoint[Endpoint].endpoint_stats,
 			  sizeof(HTC_ENDPOINT_STATS));
 	}
 

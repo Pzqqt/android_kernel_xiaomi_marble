@@ -33,12 +33,12 @@
 #define HTC_CONTROL_RX_TIMEOUT     3000
 
 #ifdef DEBUG
-void debug_dump_bytes(A_UCHAR *buffer, A_UINT16 length, char *pDescription)
+void debug_dump_bytes(uint8_t *buffer, uint16_t length, char *pDescription)
 {
-	A_CHAR stream[60];
-	A_CHAR byteOffsetStr[10];
-	A_UINT32 i;
-	A_UINT16 offset, count, byteOffset;
+	int8_t stream[60];
+	int8_t byteOffsetStr[10];
+	uint32_t i;
+	uint16_t offset, count, byteOffset;
 
 	A_PRINTF("<---------Dumping %d Bytes : %s ------>\n", length,
 		 pDescription);
@@ -58,7 +58,7 @@ void debug_dump_bytes(A_UCHAR *buffer, A_UINT16 length, char *pDescription)
 			A_SNPRINTF(byteOffsetStr, sizeof(byteOffset), "%4.4X",
 				   byteOffset);
 			A_PRINTF("[%s]: %s\n", byteOffsetStr, stream);
-			A_MEMZERO(stream, 60);
+			qdf_mem_zero(stream, 60);
 			byteOffset += 16;
 		}
 	}
@@ -72,13 +72,13 @@ void debug_dump_bytes(A_UCHAR *buffer, A_UINT16 length, char *pDescription)
 	A_PRINTF("<------------------------------------------------->\n");
 }
 #else
-void debug_dump_bytes(A_UCHAR *buffer, A_UINT16 length, char *pDescription)
+void debug_dump_bytes(uint8_t *buffer, uint16_t length, char *pDescription)
 {
 }
 #endif
 
 static A_STATUS htc_process_trailer(HTC_TARGET *target,
-				    A_UINT8 *pBuffer,
+				    uint8_t *pBuffer,
 				    int Length, HTC_ENDPOINT_ID FromEndpoint);
 
 static void do_recv_completion(HTC_ENDPOINT *pEndpoint,
@@ -268,9 +268,9 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 	uint32_t netlen;
 	HTC_ENDPOINT *pEndpoint;
 	HTC_PACKET *pPacket;
-	A_UINT16 payloadLen;
+	uint16_t payloadLen;
 	uint32_t trailerlen = 0;
-	A_UINT8 htc_ep_id;
+	uint8_t htc_ep_id;
 
 #ifdef RX_SG_SUPPORT
 	LOCK_HTC_RX(target);
@@ -305,7 +305,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("HTC Rx: invalid EndpointID=%d\n",
 					 htc_ep_id));
-			debug_dump_bytes((A_UINT8 *) HtcHdr,
+			debug_dump_bytes((uint8_t *) HtcHdr,
 					 sizeof(HTC_FRAME_HDR), "BAD HTC Header");
 			status = QDF_STATUS_E_FAILURE;
 			QDF_BUG(0);
@@ -341,7 +341,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 			AR_DEBUG_PRINTF(ATH_DEBUG_ERR,
 					("HTC Rx: insufficient length, got:%d expected =%zu\n",
 					 netlen, payloadLen + HTC_HDR_LENGTH));
-			debug_dump_bytes((A_UINT8 *) HtcHdr,
+			debug_dump_bytes((uint8_t *) HtcHdr,
 					 sizeof(HTC_FRAME_HDR),
 					 "BAD RX packet length");
 			status = QDF_STATUS_E_FAILURE;
@@ -357,7 +357,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 
 		/* if (IS_TX_CREDIT_FLOW_ENABLED(pEndpoint)) { */
 		{
-			A_UINT8 temp;
+			uint8_t temp;
 			A_STATUS temp_status;
 			/* get flags to check for trailer */
 			temp = HTC_GET_FIELD(HtcHdr, HTC_FRAME_HDR, FLAGS);
@@ -378,7 +378,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				trailerlen = temp;
 				/* process trailer data that follows HDR + application payload */
 				temp_status = htc_process_trailer(target,
-							     ((A_UINT8 *) HtcHdr +
+							     ((uint8_t *) HtcHdr +
 							      HTC_HDR_LENGTH +
 							      payloadLen - temp),
 							     temp, htc_ep_id);
@@ -396,7 +396,7 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 		}
 
 		if (htc_ep_id == ENDPOINT_0) {
-			A_UINT16 message_id;
+			uint16_t message_id;
 			HTC_UNKNOWN_MSG *htc_msg;
 			int wow_nack = 0;
 
@@ -426,8 +426,9 @@ QDF_STATUS htc_rx_completion_handler(void *Context, qdf_nbuf_t netbuf,
 				target->CtrlResponseLength =
 					min((int)netlen,
 					    HTC_MAX_CONTROL_MESSAGE_LENGTH);
-				A_MEMCPY(target->CtrlResponseBuffer, netdata,
-					 target->CtrlResponseLength);
+				qdf_mem_copy(target->CtrlResponseBuffer,
+					     netdata,
+					     target->CtrlResponseLength);
 
 				/* Requester will clear this flag */
 				target->CtrlResponseProcessing = true;
@@ -652,14 +653,14 @@ A_STATUS htc_wait_recv_ctrl_message(HTC_TARGET *target)
 }
 
 static A_STATUS htc_process_trailer(HTC_TARGET *target,
-				    A_UINT8 *pBuffer,
+				    uint8_t *pBuffer,
 				    int Length, HTC_ENDPOINT_ID FromEndpoint)
 {
 	HTC_RECORD_HDR *pRecord;
-	A_UINT8 htc_rec_id;
-	A_UINT8 htc_rec_len;
-	A_UINT8 *pRecordBuf;
-	A_UINT8 *pOrigBuffer;
+	uint8_t htc_rec_id;
+	uint8_t htc_rec_len;
+	uint8_t *pRecordBuf;
+	uint8_t *pOrigBuffer;
 	int origLength;
 	A_STATUS status;
 
