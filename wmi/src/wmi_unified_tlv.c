@@ -3377,6 +3377,108 @@ QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 	return ret;
 }
 
+#ifdef FEATURE_WLAN_WAPI
+#define WPI_IV_LEN 16
+
+/**
+ * wmi_update_wpi_key_counter() - update WAPI tsc and rsc key counters
+ *
+ * @dest_tx: destination address of tsc key counter
+ * @src_tx: source address of tsc key counter
+ * @dest_rx: destination address of rsc key counter
+ * @src_rx: source address of rsc key counter
+ *
+ * This function copies WAPI tsc and rsc key counters in the wmi buffer.
+ *
+ * Return: None
+ *
+ */
+static void wmi_update_wpi_key_counter(uint8_t *dest_tx, uint8_t *src_tx,
+					uint8_t *dest_rx, uint8_t *src_rx)
+{
+	qdf_mem_copy(dest_tx, src_tx, WPI_IV_LEN);
+	qdf_mem_copy(dest_rx, src_rx, WPI_IV_LEN);
+}
+#else
+static void wmi_update_wpi_key_counter(uint8_t *dest_tx, uint8_t *src_tx,
+					uint8_t *dest_rx, uint8_t *src_rx)
+{
+	return;
+}
+#endif
+
+/**
+ * send_setup_install_key_cmd_tlv() - set key parameters
+ * @wmi_handle: wmi handle
+ * @key_params: key parameters
+ *
+ * This function fills structure from information
+ * passed in key_params.
+ *
+ * Return: QDF_STATUS_SUCCESS - success
+ *         QDF_STATUS_E_FAILURE - failure
+ *         QDF_STATUS_E_NOMEM - not able to allocate buffer
+ */
+QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
+					   struct set_key_params *key_params)
+{
+	wmi_vdev_install_key_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	uint8_t *buf_ptr;
+	uint32_t len;
+	uint8_t *key_data;
+	uint8_t status;
+
+	len = sizeof(*cmd) + roundup(key_params->key_len, sizeof(uint32_t)) +
+	       WMI_TLV_HDR_SIZE;
+
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("Failed to allocate buffer to send set key cmd");
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_vdev_install_key_cmd_fixed_param *) buf_ptr;
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_install_key_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_install_key_cmd_fixed_param));
+	cmd->vdev_id = key_params->vdev_id;
+	cmd->key_ix = key_params->key_idx;
+	WMI_CHAR_ARRAY_TO_MAC_ADDR(key_params->peer_mac, &cmd->peer_macaddr);
+	cmd->key_flags |= key_params->key_flags;
+	cmd->key_cipher = key_params->key_cipher;
+	if ((key_params->key_txmic_len) &&
+			(key_params->key_rxmic_len)) {
+		cmd->key_txmic_len = key_params->key_txmic_len;
+		cmd->key_rxmic_len = key_params->key_rxmic_len;
+	}
+
+	wmi_update_wpi_key_counter(cmd->wpi_key_tsc_counter,
+				   key_params->tx_iv,
+				   cmd->wpi_key_rsc_counter,
+				   key_params->rx_iv);
+
+	buf_ptr += sizeof(wmi_vdev_install_key_cmd_fixed_param);
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
+		       roundup(key_params->key_len, sizeof(uint32_t)));
+	key_data = (A_UINT8 *) (buf_ptr + WMI_TLV_HDR_SIZE);
+	qdf_mem_copy((void *)key_data,
+		     (const void *)key_params->key_data, key_params->key_len);
+	cmd->key_len = key_params->key_len;
+
+	status = wmi_unified_cmd_send(wmi_handle, buf, len,
+					      WMI_VDEV_INSTALL_KEY_CMDID);
+	if (status) {
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
 /**
  * send_p2p_go_set_beacon_ie_cmd_tlv() - set beacon IE for p2p go
  * @wmi_handle: wmi handle
@@ -10258,6 +10360,8 @@ struct wmi_ops tlv_ops =  {
 				send_probe_rsp_tmpl_send_cmd_tlv,
 	.send_p2p_go_set_beacon_ie_cmd =
 				send_p2p_go_set_beacon_ie_cmd_tlv,
+	.send_setup_install_key_cmd =
+				send_setup_install_key_cmd_tlv,
 	.send_set_gateway_params_cmd =
 				send_set_gateway_params_cmd_tlv,
 	.send_set_rssi_monitoring_cmd =
