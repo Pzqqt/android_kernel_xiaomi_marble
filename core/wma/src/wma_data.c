@@ -994,12 +994,7 @@ int wma_peer_state_change_event_handler(void *handle,
 QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 							 mcc_adaptive_scheduler)
 {
-	int ret = -1;
-	wmi_buf_t buf = 0;
-	wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param *cmd = NULL;
 	tp_wma_handle wma = NULL;
-	uint16_t len =
-		sizeof(wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param);
 
 	wma = cds_get_context(QDF_MODULE_ID_WMA);
 	if (NULL == wma) {
@@ -1007,28 +1002,8 @@ QDF_STATUS wma_set_enable_disable_mcc_adaptive_scheduler(uint32_t
 		return QDF_STATUS_E_FAULT;
 	}
 
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGP("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	cmd = (wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param *)
-		wmi_buf_data(buf);
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_resmgr_adaptive_ocs_enable_disable_cmd_fixed_param));
-	cmd->enable = mcc_adaptive_scheduler;
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_RESMGR_ADAPTIVE_OCS_ENABLE_DISABLE_CMDID);
-	if (ret) {
-		WMA_LOGP("%s: Failed to send enable/disable MCC"
-			 " adaptive scheduler command", __func__);
-		qdf_nbuf_free(buf);
-	}
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_set_enable_disable_mcc_adaptive_scheduler_cmd(
+			wma->wmi_handle, mcc_adaptive_scheduler);
 }
 
 /**
@@ -1047,19 +1022,10 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 	(tp_wma_handle wma,
 	uint32_t mcc_channel, uint32_t mcc_channel_time_latency)
 {
-	int ret = -1;
-	wmi_buf_t buf = 0;
-	wmi_resmgr_set_chan_latency_cmd_fixed_param *cmdTL = NULL;
-	uint16_t len = 0;
-	uint8_t *buf_ptr = NULL;
 	uint32_t cfg_val = 0;
-	wmi_resmgr_chan_latency chan_latency;
 	struct sAniSirGlobal *pMac = NULL;
-	/* Note: we only support MCC time latency for a single channel */
-	uint32_t num_channels = 1;
 	uint32_t channel1 = mcc_channel;
 	uint32_t chan1_freq = cds_chan_to_freq(channel1);
-	uint32_t latency_chan1 = mcc_channel_time_latency;
 
 	if (!wma) {
 		WMA_LOGE("%s:NULL wma ptr. Exiting", __func__);
@@ -1081,7 +1047,7 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 	}
 	/* Confirm MCC adaptive scheduler feature is disabled */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			     &cfg_val) == eSIR_SUCCESS) {
+				 &cfg_val) == eSIR_SUCCESS) {
 		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
 			WMA_LOGD("%s: Can't set channel latency while MCC "
 				 "ADAPTIVE SCHED is enabled. Exit", __func__);
@@ -1093,52 +1059,10 @@ QDF_STATUS wma_set_mcc_channel_time_latency
 		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
-	/* If 0ms latency is provided, then FW will set to a default.
-	 * Otherwise, latency must be at least 30ms.
-	 */
-	if ((latency_chan1 > 0) &&
-	    (latency_chan1 < WMI_MCC_MIN_NON_ZERO_CHANNEL_LATENCY)) {
-		WMA_LOGE("%s: Invalid time latency for Channel #1 = %dms "
-			 "Minimum is 30ms (or 0 to use default value by "
-			 "firmware)", __func__, latency_chan1);
-		return QDF_STATUS_E_INVAL;
-	}
 
-	/*   Set WMI CMD for channel time latency here */
-	len = sizeof(wmi_resmgr_set_chan_latency_cmd_fixed_param) +
-	      WMI_TLV_HDR_SIZE +  /*Place holder for chan_time_latency array */
-	      num_channels * sizeof(wmi_resmgr_chan_latency);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmdTL = (wmi_resmgr_set_chan_latency_cmd_fixed_param *)
-		wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmdTL->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_resmgr_set_chan_latency_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_resmgr_set_chan_latency_cmd_fixed_param));
-	cmdTL->num_chans = num_channels;
-	/* Update channel time latency information for home channel(s) */
-	buf_ptr += sizeof(*cmdTL);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-		       num_channels * sizeof(wmi_resmgr_chan_latency));
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	chan_latency.chan_mhz = chan1_freq;
-	chan_latency.latency = latency_chan1;
-	qdf_mem_copy(buf_ptr, &chan_latency, sizeof(chan_latency));
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_RESMGR_SET_CHAN_LATENCY_CMDID);
-	if (ret) {
-		WMA_LOGE("%s: Failed to send MCC Channel Time Latency command",
-			 __func__);
-		qdf_nbuf_free(buf);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_set_mcc_channel_time_latency_cmd(wma->wmi_handle,
+						chan1_freq,
+						mcc_channel_time_latency);
 }
 
 /**
@@ -1162,28 +1086,10 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 	uint32_t adapter_1_chan_number,
 	uint32_t adapter_1_quota, uint32_t adapter_2_chan_number)
 {
-	int ret = -1;
-	wmi_buf_t buf = 0;
-	uint16_t len = 0;
-	uint8_t *buf_ptr = NULL;
 	uint32_t cfg_val = 0;
 	struct sAniSirGlobal *pMac = NULL;
-	wmi_resmgr_set_chan_time_quota_cmd_fixed_param *cmdTQ = NULL;
-	wmi_resmgr_chan_time_quota chan_quota;
-	uint32_t channel1 = adapter_1_chan_number;
-	uint32_t channel2 = adapter_2_chan_number;
-	uint32_t quota_chan1 = adapter_1_quota;
-	/* Knowing quota of 1st chan., derive quota for 2nd chan. */
-	uint32_t quota_chan2 = 100 - quota_chan1;
-	/* Note: setting time quota for MCC requires info for 2 channels */
-	uint32_t num_channels = 2;
 	uint32_t chan1_freq = cds_chan_to_freq(adapter_1_chan_number);
 	uint32_t chan2_freq = cds_chan_to_freq(adapter_2_chan_number);
-
-	WMA_LOGD("%s: Channel1:%d, freq1:%dMHz, Quota1:%dms, "
-		 "Channel2:%d, freq2:%dMHz, Quota2:%dms", __func__,
-		 channel1, chan1_freq, quota_chan1, channel2, chan2_freq,
-		 quota_chan2);
 
 	if (!wma) {
 		WMA_LOGE("%s:NULL wma ptr. Exiting", __func__);
@@ -1206,7 +1112,7 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 
 	/* Confirm MCC adaptive scheduler feature is disabled */
 	if (wlan_cfg_get_int(pMac, WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED,
-			     &cfg_val) == eSIR_SUCCESS) {
+				 &cfg_val) == eSIR_SUCCESS) {
 		if (cfg_val == WNI_CFG_ENABLE_MCC_ADAPTIVE_SCHED_STAMAX) {
 			WMA_LOGD("%s: Can't set channel quota while "
 				 "MCC_ADAPTIVE_SCHED is enabled. Exit",
@@ -1220,57 +1126,10 @@ QDF_STATUS wma_set_mcc_channel_time_quota
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	/*
-	 * Perform sanity check on time quota values provided.
-	 */
-	if (quota_chan1 < WMI_MCC_MIN_CHANNEL_QUOTA ||
-	    quota_chan1 > WMI_MCC_MAX_CHANNEL_QUOTA) {
-		WMA_LOGE("%s: Invalid time quota for Channel #1=%dms. Minimum "
-			 "is 20ms & maximum is 80ms", __func__, quota_chan1);
-		return QDF_STATUS_E_INVAL;
-	}
-	/* Set WMI CMD for channel time quota here */
-	len = sizeof(wmi_resmgr_set_chan_time_quota_cmd_fixed_param) +
-	      WMI_TLV_HDR_SIZE +       /* Place holder for chan_time_quota array */
-	      num_channels * sizeof(wmi_resmgr_chan_time_quota);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_NOMEM;
-	}
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmdTQ = (wmi_resmgr_set_chan_time_quota_cmd_fixed_param *)
-		wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmdTQ->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_resmgr_set_chan_time_quota_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_resmgr_set_chan_time_quota_cmd_fixed_param));
-	cmdTQ->num_chans = num_channels;
-
-	/* Update channel time quota information for home channel(s) */
-	buf_ptr += sizeof(*cmdTQ);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-		       num_channels * sizeof(wmi_resmgr_chan_time_quota));
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	chan_quota.chan_mhz = chan1_freq;
-	chan_quota.channel_time_quota = quota_chan1;
-	qdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
-	/* Construct channel and quota record for the 2nd MCC mode. */
-	buf_ptr += sizeof(chan_quota);
-	chan_quota.chan_mhz = chan2_freq;
-	chan_quota.channel_time_quota = quota_chan2;
-	qdf_mem_copy(buf_ptr, &chan_quota, sizeof(chan_quota));
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				   WMI_RESMGR_SET_CHAN_TIME_QUOTA_CMDID);
-	if (ret) {
-		WMA_LOGE("Failed to send MCC Channel Time Quota command");
-		qdf_nbuf_free(buf);
-		QDF_ASSERT(0);
-		return QDF_STATUS_E_FAILURE;
-	}
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_set_mcc_channel_time_quota_cmd(wma->wmi_handle,
+						chan1_freq,
+						adapter_1_quota,
+						chan2_freq);
 }
 
 /**
@@ -1975,42 +1834,20 @@ QDF_STATUS wma_process_set_thermal_level(tp_wma_handle wma,
 QDF_STATUS wma_set_thermal_mgmt(tp_wma_handle wma_handle,
 				t_thermal_cmd_params thermal_info)
 {
-	wmi_thermal_mgmt_cmd_fixed_param *cmd = NULL;
-	wmi_buf_t buf = NULL;
-	int status = 0;
-	uint32_t len = 0;
+	struct thermal_cmd_params mgmt_thermal_info = {0};
 
-	len = sizeof(*cmd);
-
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("Failed to allocate buffer to send set key cmd");
+	if (!wma_handle) {
+		WMA_LOGE("%s:'wma_set_thermal_mgmt':invalid input", __func__);
+		QDF_ASSERT(0);
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	cmd = (wmi_thermal_mgmt_cmd_fixed_param *) wmi_buf_data(buf);
+	mgmt_thermal_info.min_temp = thermal_info.minTemp;
+	mgmt_thermal_info.max_temp = thermal_info.maxTemp;
+	mgmt_thermal_info.thermal_enable = thermal_info.thermalEnable;
 
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_thermal_mgmt_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_thermal_mgmt_cmd_fixed_param));
-
-	cmd->lower_thresh_degreeC = thermal_info.minTemp;
-	cmd->upper_thresh_degreeC = thermal_info.maxTemp;
-	cmd->enable = thermal_info.thermalEnable;
-
-	WMA_LOGE("TM Sending thermal mgmt cmd: low temp %d, upper temp %d, enabled %d",
-		cmd->lower_thresh_degreeC, cmd->upper_thresh_degreeC, cmd->enable);
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				      WMI_THERMAL_MGMT_CMDID);
-	if (status) {
-		qdf_nbuf_free(buf);
-		WMA_LOGE("%s:Failed to send thermal mgmt command", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_set_thermal_mgmt_cmd(wma_handle->wmi_handle,
+						&mgmt_thermal_info);
 }
 
 /**
@@ -2943,78 +2780,25 @@ void wma_tx_abort(uint8_t vdev_id)
 QDF_STATUS wma_lro_config_cmd(tp_wma_handle wma_handle,
 	 struct wma_lro_config_cmd_t *wma_lro_cmd)
 {
-	wmi_lro_info_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int status;
+	struct wmi_lro_config_cmd_t wmi_lro_cmd = {0};
 
 	if (NULL == wma_handle || NULL == wma_lro_cmd) {
 		WMA_LOGE("wma_lro_config_cmd': invalid input!");
 		return QDF_STATUS_E_FAILURE;
 	}
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, sizeof(*cmd));
-	if (!buf) {
-		WMA_LOGE("Failed to allocate buffer to send set key cmd");
-		return QDF_STATUS_E_FAILURE;
-	}
+	wmi_lro_cmd.lro_enable = wma_lro_cmd->lro_enable;
+	wmi_lro_cmd.tcp_flag = wma_lro_cmd->tcp_flag;
+	wmi_lro_cmd.tcp_flag_mask = wma_lro_cmd->tcp_flag_mask;
+	qdf_mem_copy(wmi_lro_cmd.toeplitz_hash_ipv4,
+			wma_lro_cmd->toeplitz_hash_ipv4,
+			LRO_IPV4_SEED_ARR_SZ * sizeof(uint32_t));
+	qdf_mem_copy(wmi_lro_cmd.toeplitz_hash_ipv6,
+			wma_lro_cmd->toeplitz_hash_ipv6,
+			LRO_IPV6_SEED_ARR_SZ * sizeof(uint32_t));
 
-	cmd = (wmi_lro_info_cmd_fixed_param *) wmi_buf_data(buf);
-
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		 WMITLV_TAG_STRUC_wmi_lro_info_cmd_fixed_param,
-		 WMITLV_GET_STRUCT_TLVLEN(wmi_lro_info_cmd_fixed_param));
-
-	cmd->lro_enable = wma_lro_cmd->lro_enable;
-	WMI_LRO_INFO_TCP_FLAG_VALS_SET(cmd->tcp_flag_u32,
-		 wma_lro_cmd->tcp_flag);
-	WMI_LRO_INFO_TCP_FLAGS_MASK_SET(cmd->tcp_flag_u32,
-		 wma_lro_cmd->tcp_flag_mask);
-	cmd->toeplitz_hash_ipv4_0_3 =
-		 wma_lro_cmd->toeplitz_hash_ipv4[0];
-	cmd->toeplitz_hash_ipv4_4_7 =
-		 wma_lro_cmd->toeplitz_hash_ipv4[1];
-	cmd->toeplitz_hash_ipv4_8_11 =
-		 wma_lro_cmd->toeplitz_hash_ipv4[2];
-	cmd->toeplitz_hash_ipv4_12_15 =
-		 wma_lro_cmd->toeplitz_hash_ipv4[3];
-	cmd->toeplitz_hash_ipv4_16 =
-		 wma_lro_cmd->toeplitz_hash_ipv4[4];
-
-	cmd->toeplitz_hash_ipv6_0_3 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[0];
-	cmd->toeplitz_hash_ipv6_4_7 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[1];
-	cmd->toeplitz_hash_ipv6_8_11 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[2];
-	cmd->toeplitz_hash_ipv6_12_15 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[3];
-	cmd->toeplitz_hash_ipv6_16_19 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[4];
-	cmd->toeplitz_hash_ipv6_20_23 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[5];
-	cmd->toeplitz_hash_ipv6_24_27 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[6];
-	cmd->toeplitz_hash_ipv6_28_31 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[7];
-	cmd->toeplitz_hash_ipv6_32_35 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[8];
-	cmd->toeplitz_hash_ipv6_36_39 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[9];
-	cmd->toeplitz_hash_ipv6_40 =
-		 wma_lro_cmd->toeplitz_hash_ipv6[10];
-
-	WMA_LOGD("WMI_LRO_CONFIG: lro_enable %d, tcp_flag 0x%x",
-		cmd->lro_enable, cmd->tcp_flag_u32);
-
-	status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf,
-		 sizeof(*cmd), WMI_LRO_CONFIG_CMDID);
-	if (status) {
-		qdf_nbuf_free(buf);
-		WMA_LOGE("%s:Failed to send WMI_LRO_CONFIG_CMDID", __func__);
-		return QDF_STATUS_E_FAILURE;
-	}
-
-	return QDF_STATUS_SUCCESS;
+	return wmi_unified_lro_config_cmd(wma_handle->wmi_handle,
+						&wmi_lro_cmd);
 }
 #endif
 
