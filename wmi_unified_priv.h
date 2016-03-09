@@ -82,6 +82,12 @@ QDF_STATUS (*send_vdev_stop_cmd)(wmi_unified_t wmi,
 QDF_STATUS (*send_vdev_down_cmd)(wmi_unified_t wmi,
 			uint8_t vdev_id);
 
+QDF_STATUS (*send_vdev_start_cmd)(wmi_unified_t wmi,
+		struct vdev_start_params *req);
+
+QDF_STATUS (*send_hidden_ssid_vdev_restart_cmd)(wmi_unified_t wmi_handle,
+		struct hidden_ssid_vdev_restart_params *restart_params);
+
 QDF_STATUS (*send_peer_flush_tids_cmd)(wmi_unified_t wmi,
 					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
 					 struct peer_flush_params *param);
