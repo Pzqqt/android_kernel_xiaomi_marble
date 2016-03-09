@@ -1877,112 +1877,107 @@ void lim_process_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
 	lim_process_sta_mlm_del_sta_rsp(mac_ctx, msg, session_entry);
 }
 
-void lim_process_bt_amp_ap_mlm_del_sta_rsp(tpAniSirGlobal pMac, tpSirMsgQ limMsgQ,
-					   tpPESession psessionEntry)
+/**
+ * lim_process_bt_amp_ap_mlm_del_sta_rsp() - Process WMA_DEL_STA_RSP
+ * @mac_ctx: Global pointer to MAC context
+ * @msg: Received message
+ * @session_entry: Session entry
+ *
+ * Process WMA_DEL_STA_RSP for AP or bt_amp_ap role
+ *
+ * Retunrn: None
+ */
+void lim_process_bt_amp_ap_mlm_del_sta_rsp(tpAniSirGlobal mac_ctx,
+					   tpSirMsgQ msg,
+					   tpPESession session_entry)
 {
-	tpDeleteStaParams pDelStaParams = (tpDeleteStaParams) limMsgQ->bodyptr;
-	tpDphHashNode pStaDs;
-	tSirResultCodes statusCode = eSIR_SME_SUCCESS;
-	if (limMsgQ->bodyptr == NULL) {
-		lim_log(pMac, LOGE, FL("limMsgQ->bodyptry NULL"));
+	tpDeleteStaParams del_sta_params = (tpDeleteStaParams) msg->bodyptr;
+	tpDphHashNode sta_ds;
+	tSirResultCodes status_code = eSIR_SME_SUCCESS;
+
+	if (msg->bodyptr == NULL) {
+		lim_log(mac_ctx, LOGE, FL("msg->bodyptr NULL"));
 		return;
 	}
 
-	pStaDs =
-		dph_get_hash_entry(pMac, pDelStaParams->assocId,
-				   &psessionEntry->dph.dphHashTable);
-	if (pStaDs == NULL) {
-		lim_log(pMac, LOGE,
-			FL("DPH Entry for STA %X missing."),
-			pDelStaParams->assocId);
-		statusCode = eSIR_SME_REFUSED;
-		qdf_mem_free(pDelStaParams);
-		limMsgQ->bodyptr = NULL;
-
+	sta_ds = dph_get_hash_entry(mac_ctx, del_sta_params->assocId,
+				    &session_entry->dph.dphHashTable);
+	if (sta_ds == NULL) {
+		lim_log(mac_ctx, LOGE, FL("DPH Entry for STA %X missing."),
+			del_sta_params->assocId);
+		status_code = eSIR_SME_REFUSED;
+		qdf_mem_free(del_sta_params);
+		msg->bodyptr = NULL;
 		return;
 	}
-	lim_log(pMac, LOG1, FL("Received del Sta Rsp in StaD MlmState : %d"),
-		pStaDs->mlmStaContext.mlmState);
-	if (QDF_STATUS_SUCCESS == pDelStaParams->status) {
-		lim_log(pMac, LOGW,
-			FL("AP received the DEL_STA_RSP for assocID: %X."),
-			pDelStaParams->assocId);
+	lim_log(mac_ctx, LOG1, FL("Received del Sta Rsp in StaD MlmState : %d"),
+		sta_ds->mlmStaContext.mlmState);
+	if (QDF_STATUS_SUCCESS != del_sta_params->status) {
+		lim_log(mac_ctx, LOGW, FL("DEL STA failed!"));
+		status_code = eSIR_SME_REFUSED;
+		goto end;
+	}
 
-		if ((eLIM_MLM_WT_DEL_STA_RSP_STATE !=
-		     pStaDs->mlmStaContext.mlmState)
-		    && (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE !=
-			pStaDs->mlmStaContext.mlmState)) {
-			lim_log(pMac, LOGE,
-				FL
-					("Received unexpected WMA_DEL_STA_RSP in state %s for staId %d assocId %d "),
-				lim_mlm_state_str(pStaDs->mlmStaContext.mlmState),
-				pStaDs->staIndex, pStaDs->assocId);
-			statusCode = eSIR_SME_REFUSED;
-			goto end;
-		}
+	lim_log(mac_ctx, LOGW,
+		FL("AP received the DEL_STA_RSP for assocID: %X."),
+		del_sta_params->assocId);
+	if ((eLIM_MLM_WT_DEL_STA_RSP_STATE != sta_ds->mlmStaContext.mlmState) &&
+	    (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE !=
+	     sta_ds->mlmStaContext.mlmState)) {
+		lim_log(mac_ctx, LOGE,
+			FL("Received unexpected WMA_DEL_STA_RSP in state %s for staId %d assocId %d "),
+			lim_mlm_state_str(sta_ds->mlmStaContext.mlmState),
+			sta_ds->staIndex, sta_ds->assocId);
+		status_code = eSIR_SME_REFUSED;
+		goto end;
+	}
 
-		lim_log(pMac, LOG1,
-			FL("Deleted STA AssocID %d staId %d MAC "),
-			pStaDs->assocId, pStaDs->staIndex);
-		lim_print_mac_addr(pMac, pStaDs->staAddr, LOG1);
-		if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE ==
-		    pStaDs->mlmStaContext.mlmState) {
-			qdf_mem_free(pDelStaParams);
-			limMsgQ->bodyptr = NULL;
-			if (lim_add_sta(pMac, pStaDs, false, psessionEntry) !=
-			    eSIR_SUCCESS) {
-				PELOGE(lim_log
-					       (pMac, LOGE,
-					       FL("could not Add STA with assocId=%d"),
-					       pStaDs->assocId);
-				       )
-				/* delete the TS if it has already been added. */
-				/* send the response with error status. */
-				if (pStaDs->qos.addtsPresent) {
-					tpLimTspecInfo pTspecInfo;
-					if (eSIR_SUCCESS ==
-					    lim_tspec_find_by_assoc_id(pMac,
-						       pStaDs->assocId,
-						       &pStaDs->qos.addts.tspec,
-						       &pMac->lim.tspecInfo[0],
-						       &pTspecInfo)) {
-						lim_admit_control_delete_ts(pMac,
-									    pStaDs->
-									    assocId,
-									    &pStaDs->
-									    qos.
-									    addts.
-									    tspec.
-									    tsinfo,
-									    NULL,
-									    &pTspecInfo->
-									    idx);
-					}
+	lim_log(mac_ctx, LOG1, FL("Deleted STA AssocID %d staId %d MAC "),
+		sta_ds->assocId, sta_ds->staIndex);
+	lim_print_mac_addr(mac_ctx, sta_ds->staAddr, LOG1);
+	if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE ==
+	    sta_ds->mlmStaContext.mlmState) {
+		qdf_mem_free(del_sta_params);
+		msg->bodyptr = NULL;
+		if (lim_add_sta(mac_ctx, sta_ds, false, session_entry) !=
+		    eSIR_SUCCESS) {
+			lim_log(mac_ctx, LOGE, FL("could not Add STA with assocId=%d"),
+				sta_ds->assocId);
+			/*
+			 * delete the TS if it has already been added.
+			 * send the response with error status.
+			 */
+			if (sta_ds->qos.addtsPresent) {
+				tpLimTspecInfo pTspecInfo;
+				if (eSIR_SUCCESS ==
+				    lim_tspec_find_by_assoc_id(mac_ctx,
+					sta_ds->assocId,
+					&sta_ds->qos.addts.tspec,
+					&mac_ctx->lim.tspecInfo[0],
+					&pTspecInfo)) {
+					lim_admit_control_delete_ts(mac_ctx,
+						sta_ds->assocId,
+						&sta_ds->qos.addts.tspec.tsinfo,
+						NULL,
+						&pTspecInfo->idx);
 				}
-				lim_reject_association(pMac,
-						       pStaDs->staAddr,
-						       pStaDs->mlmStaContext.
-						       subType, true,
-						       pStaDs->mlmStaContext.
-						       authType, pStaDs->assocId,
-						       true,
-						       (tSirResultCodes)
-						       eSIR_MAC_UNSPEC_FAILURE_STATUS,
-						       psessionEntry);
 			}
-			return;
+			lim_reject_association(mac_ctx, sta_ds->staAddr,
+				sta_ds->mlmStaContext.subType, true,
+				sta_ds->mlmStaContext.authType, sta_ds->assocId,
+				true,
+				(tSirResultCodes)eSIR_MAC_UNSPEC_FAILURE_STATUS,
+				session_entry);
 		}
-	} else {
-		lim_log(pMac, LOGW, FL("DEL STA failed!"));
-		statusCode = eSIR_SME_REFUSED;
+		return;
 	}
 end:
-	qdf_mem_free(pDelStaParams);
-	limMsgQ->bodyptr = NULL;
+	qdf_mem_free(del_sta_params);
+	msg->bodyptr = NULL;
 	if (eLIM_MLM_WT_ASSOC_DEL_STA_RSP_STATE !=
-	    pStaDs->mlmStaContext.mlmState) {
-		lim_prepare_and_send_del_sta_cnf(pMac, pStaDs, statusCode,
-						 psessionEntry);
+	    sta_ds->mlmStaContext.mlmState) {
+		lim_prepare_and_send_del_sta_cnf(mac_ctx, sta_ds, status_code,
+						 session_entry);
 	}
 	return;
 }
