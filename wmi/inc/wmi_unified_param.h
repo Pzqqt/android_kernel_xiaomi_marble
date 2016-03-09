@@ -88,6 +88,7 @@
 #define WMI_SEC_TO_MSEC(sec)         (sec * 1000)  /* sec to msec */
 #define WMI_MSEC_TO_USEC(msec)       (msec * 1000) /* msec to usec */
 #define WMI_NLO_FREQ_THRESH          1000       /* in MHz */
+#include "qdf_atomic.h"
 
 /**
  * struct vdev_create_params - vdev create cmd parameter
@@ -107,55 +108,6 @@ struct vdev_create_params {
  */
 struct vdev_delete_params {
 	uint8_t if_id;
-};
-
-/**
- * struct vdev_start_params - vdev start cmd parameter
- * @beacon_intval: beacon intval
- * @dtim_period: dtim period
- * @max_txpow: max tx power
- * @phy_ch_width chan_width: channel width
- * @is_dfs: flag to check if dfs enabled
- * @vdev_id: vdev id
- * @chan: channel no
- * @oper_mode: operating mode
- * @length: length
- * @ssId[32]: ssid
- * @hidden_ssid: hidden ssid
- * @pmf_enabled: is pmf enabled
- * @vht_capable: is vht capable
- * @ch_center_freq_seg0: center freq seq 0
- * @ch_center_freq_seg1: center freq seq 1
- * @ht_capable: is ht capable
- * @dfs_pri_multiplier: DFS multiplier
- * @dot11_mode: dot11 mode
- * @is_half_rate: Indicates half rate channel
- * @is_quarter_rate: Indicates quarter rate channel
- * @preferred_tx_streams: preferred tx streams
- * @preferred_rx_streams: preferred rx streams
- */
-struct vdev_start_params {
-	uint32_t beacon_intval;
-	uint32_t dtim_period;
-	int32_t max_txpow;
-	bool is_dfs;
-	uint8_t vdev_id;
-	uint8_t chan;
-	uint8_t oper_mode;
-	uint8_t length;
-	uint8_t ssId[32];
-	uint8_t hidden_ssid;
-	uint8_t pmf_enabled;
-	uint8_t vht_capable;
-	uint8_t ch_center_freq_seg0;
-	uint8_t ch_center_freq_seg1;
-	uint8_t ht_capable;
-	int32_t dfs_pri_multiplier;
-	uint8_t dot11_mode;
-	bool is_half_rate;
-	bool is_quarter_rate;
-	uint32_t preferred_tx_streams;
-	uint32_t preferred_rx_streams;
 };
 
 /**
@@ -182,6 +134,103 @@ struct vdev_up_params {
  */
 struct vdev_down_params {
 	uint8_t vdev_id;
+};
+
+/**
+ * struct mac_ssid - mac ssid structure
+ * @length:
+ * @mac_ssid[WMI_MAC_MAX_SSID_LENGTH]:
+ */
+struct mac_ssid {
+	uint8_t length;
+	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
+} qdf_packed;
+
+/**
+ * struct vdev_start_params - vdev start cmd parameter
+ * @vdev_id: vdev id
+ * @chan_freq: channel frequency
+ * @chan_mode: channel mode
+ * @band_center_freq1: center freq 1
+ * @band_center_freq2: center freq 2
+ * @flags: flags to set like pmf_enabled etc.
+ * @is_dfs: flag to check if dfs enabled
+ * @beacon_intval: beacon interval
+ * @dtim_period: dtim period
+ * @max_txpow: max tx power
+ * @is_restart: flag to check if it is vdev
+ * @ssid: ssid and ssid length info
+ * @preferred_tx_streams: preferred tx streams
+ * @preferred_rx_streams: preferred rx streams
+ * @intr_update: flag to check if need to update
+ *               required wma interface params
+ * @intr_ssid: pointer to wma interface ssid
+ * @intr_flags: poiter to wma interface flags
+ * @requestor_id: to update requestor id
+ * @disable_hw_ack: to update disable hw ack flag
+ * @info: to update channel info
+ * @reg_info_1: to update min power, max power,
+ *              reg power and reg class id
+ * @reg_info_2: to update antennamax
+ */
+struct vdev_start_params {
+	uint8_t vdev_id;
+	uint32_t chan_freq;
+	uint32_t chan_mode;
+	uint32_t band_center_freq1;
+	uint32_t band_center_freq2;
+	uint32_t flags;
+	bool is_dfs;
+	uint32_t beacon_intval;
+	uint32_t dtim_period;
+	int32_t max_txpow;
+	bool is_restart;
+	struct mac_ssid ssid;
+	uint32_t preferred_rx_streams;
+	uint32_t preferred_tx_streams;
+	bool intr_update;
+	wmi_ssid *intr_ssid;
+	uint32_t *intr_flags;
+	uint32_t *requestor_id;
+	uint32_t *disable_hw_ack;
+	uint32_t *info;
+	uint32_t *reg_info_1;
+	uint32_t *reg_info_2;
+};
+
+/**
+ * struct hidden_ssid_vdev_restart_params -
+ *                    vdev restart cmd parameter
+ * @session_id: session id
+ * @ssid_len: ssid length
+ * @ssid: ssid
+ * @flags: flags
+ * @requestor_id: requestor id
+ * @disable_hw_ack: flag to disable hw ack feature
+ * @mhz: channel frequency
+ * @band_center_freq1: center freq 1
+ * @band_center_freq2: center freq 2
+ * @info: channel info
+ * @reg_info_1: contains min power, max power,
+ *              reg power and reg class id
+ * @reg_info_2: contains antennamax
+ * @hidden_ssid_restart_in_progress:
+ *      flag to check if restart is in progress
+ */
+struct hidden_ssid_vdev_restart_params {
+	uint8_t session_id;
+	uint32_t ssid_len;
+	uint32_t ssid[8];
+	uint32_t flags;
+	uint32_t requestor_id;
+	uint32_t disable_hw_ack;
+	uint32_t mhz;
+	uint32_t band_center_freq1;
+	uint32_t band_center_freq2;
+	uint32_t info;
+	uint32_t reg_info_1;
+	uint32_t reg_info_2;
+	qdf_atomic_t hidden_ssid_restart_in_progress;
 };
 
 /**
@@ -400,16 +449,6 @@ struct ap_ps_params {
 	uint32_t param;
 	uint32_t value;
 };
-
-/**
- * struct mac_ssid - mac ssid structure
- * @length:
- * @mac_ssid[WMI_MAC_MAX_SSID_LENGTH]:
- */
-struct mac_ssid {
-	uint8_t length;
-	uint8_t mac_ssid[WMI_MAC_MAX_SSID_LENGTH];
-} qdf_packed;
 
 /**
  * struct scan_start_params - start scan cmd parameter

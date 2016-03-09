@@ -245,10 +245,6 @@ QDF_STATUS wmi_unified_vdev_create_send(void *wmi_hdl,
 QDF_STATUS wmi_unified_vdev_delete_send(void *wmi_hdl,
 					  uint8_t if_id);
 
-QDF_STATUS wmi_unified_vdev_start_send(void *wmi_hdl,
-				uint8_t macaddr[IEEE80211_ADDR_LEN],
-				struct vdev_start_params *param);
-
 QDF_STATUS wmi_unified_vdev_restart_send(void *wmi_hdl,
 				uint8_t macaddr[IEEE80211_ADDR_LEN],
 				struct vdev_start_params *param);
@@ -262,6 +258,12 @@ QDF_STATUS wmi_unified_vdev_up_send(void *wmi_hdl,
 
 QDF_STATUS wmi_unified_vdev_down_send(void *wmi_hdl,
 				uint8_t vdev_id);
+
+QDF_STATUS wmi_unified_vdev_start_send(void *wmi_hdl,
+				struct vdev_start_params *req);
+
+QDF_STATUS wmi_unified_hidden_ssid_vdev_restart_send(void *wmi_hdl,
+		struct hidden_ssid_vdev_restart_params *restart_params);
 
 QDF_STATUS wmi_unified_vdev_set_param_send(void *wmi_hdl,
 				struct vdev_set_params *param);

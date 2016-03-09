@@ -182,6 +182,188 @@ QDF_STATUS send_vdev_down_cmd_tlv(wmi_unified_t wmi, uint8_t vdev_id)
 }
 
 /**
+ * send_vdev_start_cmd_tlv() - send vdev start request to fw
+ * @wmi_handle: wmi handle
+ * @req: vdev start params
+ *
+ * Return: QDF status
+ */
+QDF_STATUS send_vdev_start_cmd_tlv(wmi_unified_t wmi_handle,
+			  struct vdev_start_params *req)
+{
+	wmi_vdev_start_request_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	wmi_channel *chan;
+	int32_t len, ret;
+	uint8_t *buf_ptr;
+
+	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_vdev_start_request_cmd_fixed_param *) buf_ptr;
+	chan = (wmi_channel *) (buf_ptr + sizeof(*cmd));
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_start_request_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_start_request_cmd_fixed_param));
+	WMITLV_SET_HDR(&chan->tlv_header, WMITLV_TAG_STRUC_wmi_channel,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
+	cmd->vdev_id = req->vdev_id;
+
+	/* Fill channel info */
+	chan->mhz = req->chan_freq;
+	WMI_SET_CHANNEL_MODE(chan, req->chan_mode);
+	chan->band_center_freq1 = req->band_center_freq1;
+	chan->band_center_freq2 = req->band_center_freq2;
+	WMI_SET_CHANNEL_FLAG(chan, req->flags);
+
+	if (req->is_dfs)
+		cmd->disable_hw_ack = true;
+
+	cmd->beacon_interval = req->beacon_intval;
+	cmd->dtim_period = req->dtim_period;
+	/* FIXME: Find out min, max and regulatory power levels */
+	WMI_SET_CHANNEL_REG_POWER(chan, req->max_txpow);
+	WMI_SET_CHANNEL_MAX_TX_POWER(chan, req->max_txpow);
+
+	if (!req->is_restart) {
+		/* Copy the SSID */
+		if (req->ssid.length) {
+			if (req->ssid.length < sizeof(cmd->ssid.ssid))
+				cmd->ssid.ssid_len = req->ssid.length;
+			else
+				cmd->ssid.ssid_len = sizeof(cmd->ssid.ssid);
+			qdf_mem_copy(cmd->ssid.ssid, req->ssid.mac_ssid,
+				     cmd->ssid.ssid_len);
+		}
+	}
+
+	cmd->num_noa_descriptors = 0;
+	cmd->preferred_rx_streams = req->preferred_rx_streams;
+	cmd->preferred_tx_streams = req->preferred_tx_streams;
+
+	buf_ptr = (uint8_t *) (((uintptr_t) cmd) + sizeof(*cmd) +
+			       sizeof(wmi_channel));
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       cmd->num_noa_descriptors *
+		       sizeof(wmi_p2p_noa_descriptor));
+
+	WMA_LOGA("\n%s: vdev_id %d freq %d chanmode %d is_dfs %d "
+		"beacon interval %d dtim %d center_chan %d center_freq2 %d "
+		"reg_info_1: 0x%x reg_info_2: 0x%x, req->max_txpow: 0x%x "
+		"Tx SS %d, Rx SS %d",
+		__func__, req->vdev_id, chan->mhz, req->chan_mode,
+		req->is_dfs, req->beacon_intval, cmd->dtim_period,
+		chan->band_center_freq1, chan->band_center_freq2,
+		chan->reg_info_1, chan->reg_info_2, req->max_txpow,
+		req->preferred_tx_streams, req->preferred_rx_streams);
+
+	/* Store vdev params in SAP mode which can be used in vdev restart */
+	if (req->intr_update) {
+		req->intr_ssid->ssid_len = cmd->ssid.ssid_len;
+		qdf_mem_copy(req->intr_ssid->ssid,
+					cmd->ssid.ssid, cmd->ssid.ssid_len);
+		*req->intr_flags = cmd->flags;
+		*req->requestor_id = cmd->requestor_id;
+		*req->disable_hw_ack = cmd->disable_hw_ack;
+		*req->info = chan->info;
+		*req->reg_info_1 = chan->reg_info_1;
+		*req->reg_info_2 = chan->reg_info_2;
+	}
+
+	if (req->is_restart)
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					   WMI_VDEV_RESTART_REQUEST_CMDID);
+	 else
+		ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+					   WMI_VDEV_START_REQUEST_CMDID);
+
+	if (ret < 0) {
+		WMA_LOGP("%s: Failed to send vdev start command", __func__);
+		qdf_nbuf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/**
+ * send_hidden_ssid_vdev_restart_cmd_tlv() - restart vdev to set hidden ssid
+ * @wmi_handle: wmi handle
+ * @restart_params: vdev restart params
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS send_hidden_ssid_vdev_restart_cmd_tlv(wmi_unified_t wmi_handle,
+			struct hidden_ssid_vdev_restart_params *restart_params)
+{
+	wmi_vdev_start_request_cmd_fixed_param *cmd;
+	wmi_buf_t buf;
+	wmi_channel *chan;
+	int32_t len;
+	uint8_t *buf_ptr;
+	int32_t ret = 0;
+
+	len = sizeof(*cmd) + sizeof(wmi_channel) + WMI_TLV_HDR_SIZE;
+	buf = wmi_buf_alloc(wmi_handle, len);
+	if (!buf) {
+		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_vdev_start_request_cmd_fixed_param *) buf_ptr;
+	chan = (wmi_channel *) (buf_ptr + sizeof(*cmd));
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_vdev_start_request_cmd_fixed_param,
+		       WMITLV_GET_STRUCT_TLVLEN
+			       (wmi_vdev_start_request_cmd_fixed_param));
+
+	WMITLV_SET_HDR(&chan->tlv_header,
+		       WMITLV_TAG_STRUC_wmi_channel,
+		       WMITLV_GET_STRUCT_TLVLEN(wmi_channel));
+
+	cmd->vdev_id = restart_params->session_id;
+	cmd->ssid.ssid_len = restart_params->ssid_len;
+	qdf_mem_copy(cmd->ssid.ssid,
+		     restart_params->ssid,
+		     cmd->ssid.ssid_len);
+	cmd->flags = restart_params->flags;
+	cmd->requestor_id = restart_params->requestor_id;
+	cmd->disable_hw_ack = restart_params->disable_hw_ack;
+
+	chan->mhz = restart_params->mhz;
+	chan->band_center_freq1 =
+			restart_params->band_center_freq1;
+	chan->band_center_freq2 =
+			restart_params->band_center_freq2;
+	chan->info = restart_params->info;
+	chan->reg_info_1 = restart_params->reg_info_1;
+	chan->reg_info_2 = restart_params->reg_info_2;
+
+	cmd->num_noa_descriptors = 0;
+	buf_ptr = (uint8_t *) (((uint8_t *) cmd) + sizeof(*cmd) +
+			       sizeof(wmi_channel));
+	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_STRUC,
+		       cmd->num_noa_descriptors *
+		       sizeof(wmi_p2p_noa_descriptor));
+
+	ret = wmi_unified_cmd_send(wmi_handle, buf, len,
+				   WMI_VDEV_RESTART_REQUEST_CMDID);
+	if (ret < 0) {
+		wmi_buf_free(buf);
+		return QDF_STATUS_E_FAILURE;
+	}
+	return QDF_STATUS_SUCCESS;
+}
+
+
+/**
  * send_peer_flush_tids_cmd_tlv() - flush peer tids packets in fw
  * @wmi: wmi handle
  * @peer_addr: peer mac address
@@ -10007,6 +10189,9 @@ struct wmi_ops tlv_ops =  {
 	.send_vdev_create_cmd = send_vdev_create_cmd_tlv,
 	.send_vdev_delete_cmd = send_vdev_delete_cmd_tlv,
 	.send_vdev_down_cmd = send_vdev_down_cmd_tlv,
+	.send_vdev_start_cmd = send_vdev_start_cmd_tlv,
+	.send_hidden_ssid_vdev_restart_cmd =
+		send_hidden_ssid_vdev_restart_cmd_tlv,
 	.send_peer_flush_tids_cmd = send_peer_flush_tids_cmd_tlv,
 	.send_peer_param_cmd = send_peer_param_cmd_tlv,
 	.send_vdev_up_cmd = send_vdev_up_cmd_tlv,

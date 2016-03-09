@@ -112,6 +112,43 @@ QDF_STATUS wmi_unified_vdev_down_send(void *wmi_hdl, uint8_t vdev_id)
 }
 
 /**
+ * wmi_unified_vdev_start_send() - send vdev start command to fw
+ * @wmi: wmi handle
+ * @vdev_id: vdev id
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS wmi_unified_vdev_start_send(void *wmi_hdl,
+			struct vdev_start_params *req)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_vdev_start_cmd)
+		return wmi_handle->ops->send_vdev_start_cmd(wmi_handle, req);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
+ * wmi_unified_hidden_ssid_vdev_restart_send() - restart vdev to set hidden ssid
+ * @wmi: wmi handle
+ * @restart_params: vdev restart params
+ *
+ * Return: 0 for success or error code
+ */
+QDF_STATUS wmi_unified_hidden_ssid_vdev_restart_send(void *wmi_hdl,
+			struct hidden_ssid_vdev_restart_params *restart_params)
+{
+	wmi_unified_t wmi_handle = (wmi_unified_t) wmi_hdl;
+
+	if (wmi_handle->ops->send_hidden_ssid_vdev_restart_cmd)
+		return wmi_handle->ops->send_hidden_ssid_vdev_restart_cmd(
+			wmi_handle, restart_params);
+
+	return QDF_STATUS_E_FAILURE;
+}
+
+/**
  * wmi_unified_peer_flush_tids_send() - flush peer tids packets in fw
  * @wmi: wmi handle
  * @peer_addr: peer mac address
