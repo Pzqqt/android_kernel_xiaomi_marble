@@ -43,6 +43,7 @@
 #include "wma_api.h"
 #include "wma.h"
 #include "mac_trace.h"
+#include "wmi_unified_param.h"
 
 #define WMI_MIN_HEAD_ROOM 64
 
@@ -1034,7 +1035,8 @@ static void wmi_process_fw_event_mc_thread_ctx(struct wmi_unified *wmi_handle,
 	wmi_buf_t evt_buf;
 	evt_buf = (wmi_buf_t) htc_packet->pPktContext;
 
-	wmi_handle->ops.wma_process_fw_event_handler_cbk(wmi_handle, evt_buf);
+	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk(wmi_handle,
+					 evt_buf);
 	return;
 }
 
@@ -1204,18 +1206,18 @@ void __wmi_control_rx(struct wmi_unified *wmi_handle, wmi_buf_t evt_buf)
 		break;
 	case WMI_SERVICE_READY_EVENTID:
 		cdf_print("%s: WMI UNIFIED SERVICE READY event\n", __func__);
-		wmi_handle->ops.service_ready_cbk(wmi_handle->scn_handle,
+		wmi_handle->rx_ops.service_ready_cbk(wmi_handle->scn_handle,
 					   wmi_cmd_struct_ptr);
 		break;
 	case WMI_SERVICE_READY_EXT_EVENTID:
 		WMA_LOGA("%s: WMI UNIFIED SERVICE READY Extended event",
 			__func__);
-		wmi_handle->ops.service_ready_ext_cbk(wmi_handle->scn_handle,
+		wmi_handle->rx_ops.service_ready_ext_cbk(wmi_handle->scn_handle,
 						wmi_cmd_struct_ptr);
 		break;
 	case WMI_READY_EVENTID:
 		cdf_print("%s:  WMI UNIFIED READY event\n", __func__);
-		wmi_handle->ops.ready_cbk(wmi_handle->scn_handle,
+		wmi_handle->rx_ops.ready_cbk(wmi_handle->scn_handle,
 					  wmi_cmd_struct_ptr);
 		break;
 	}
@@ -1278,7 +1280,7 @@ void wmi_runtime_pm_init(struct wmi_unified *wmi_handle)
  */
 void *wmi_unified_attach(void *scn_handle,
 			 osdev_t osdev, enum wmi_target_type target_type,
-			 bool use_cookie, struct wmi_ops *ops)
+			 bool use_cookie, struct wmi_rx_ops *rx_ops)
 {
 	struct wmi_unified *wmi_handle;
 
@@ -1307,20 +1309,20 @@ void *wmi_unified_attach(void *scn_handle,
 	cdf_spinlock_init(&wmi_handle->wmi_record_lock);
 #endif
 	/* Attach mc_thread context processing function */
-	wmi_handle->ops.wma_process_fw_event_handler_cbk =
-				ops->wma_process_fw_event_handler_cbk;
+	wmi_handle->rx_ops.wma_process_fw_event_handler_cbk =
+				rx_ops->wma_process_fw_event_handler_cbk;
 	/* Attach service ready callback function */
-	wmi_handle->ops.service_ready_cbk =
-				ops->service_ready_cbk;
+	wmi_handle->rx_ops.service_ready_cbk =
+				rx_ops->service_ready_cbk;
 	/* Attach service ready extended callback  function */
-	wmi_handle->ops.service_ready_ext_cbk =
-				ops->service_ready_ext_cbk;
+	wmi_handle->rx_ops.service_ready_ext_cbk =
+				rx_ops->service_ready_ext_cbk;
 	/* Attach fw ready callback function */
-	wmi_handle->ops.ready_cbk = ops->ready_cbk;
+	wmi_handle->rx_ops.ready_cbk = rx_ops->ready_cbk;
 	if (target_type == WMI_TLV_TARGET)
-		WMA_LOGD("Target is TLV compliant");
+		wmi_handle->ops = wmi_get_tlv_ops();
 	else
-		WMA_LOGD("Target is NoN-TLV compliant");
+		wmi_handle->ops = wmi_get_non_tlv_ops();
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = use_cookie;
 	wmi_handle->osdev = osdev;
