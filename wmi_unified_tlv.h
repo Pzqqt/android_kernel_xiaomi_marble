@@ -210,6 +210,9 @@ QDF_STATUS send_probe_rsp_tmpl_send_cmd_tlv(wmi_unified_t wmi_handle,
 				   struct wmi_probe_resp_params *probe_rsp_info,
 				   uint8_t *frm);
 
+QDF_STATUS send_setup_install_key_cmd_tlv(wmi_unified_t wmi_handle,
+					struct set_key_params *key_params);
+
 QDF_STATUS send_process_update_edca_param_cmd_tlv(wmi_unified_t wmi_handle,
 				    uint8_t vdev_id,
 				    wmi_wmm_vparams gwmm_param[WMI_MAX_NUM_AC]);

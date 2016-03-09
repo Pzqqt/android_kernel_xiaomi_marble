@@ -429,6 +429,9 @@ QDF_STATUS wmi_unified_probe_rsp_tmpl_send_cmd(void *wmi_hdl,
 		   struct wmi_probe_resp_params *probe_rsp_info,
 		   uint8_t *frm);
 
+QDF_STATUS wmi_unified_setup_install_key_cmd(void *wmi_hdl,
+			struct set_key_params *key_params);
+
 QDF_STATUS wmi_unified_p2p_go_set_beacon_ie_cmd(void *wmi_hdl,
 				    A_UINT32 vdev_id, uint8_t *p2p_ie);
 
