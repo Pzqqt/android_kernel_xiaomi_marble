@@ -1034,12 +1034,12 @@ QDF_STATUS wma_process_ibss_route_table_update_ind(void *wma_handle,
 						   tAniIbssRouteTable * pData);
 
 #ifdef WLAN_FEATURE_EXTWOW_SUPPORT
-int wma_enable_ext_wow(tp_wma_handle wma, tpSirExtWoWParams params);
+QDF_STATUS wma_enable_ext_wow(tp_wma_handle wma, tpSirExtWoWParams params);
 
 int wma_set_app_type1_params_in_fw(tp_wma_handle wma,
 				   tpSirAppType1Params appType1Params);
 
-int wma_set_app_type2_params_in_fw(tp_wma_handle wma,
+QDF_STATUS wma_set_app_type2_params_in_fw(tp_wma_handle wma,
 				   tpSirAppType2Params appType2Params);
 #endif
 
@@ -1081,7 +1081,7 @@ QDF_STATUS wma_suspend_target(WMA_HANDLE handle, int disable_target_intr);
 
 #ifdef FEATURE_WLAN_TDLS
 
-int wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams);
+QDF_STATUS wma_update_fw_tdls_state(WMA_HANDLE handle, void *pwmaTdlsparams);
 int wma_update_tdls_peer_state(WMA_HANDLE handle,
 			       tTdlsPeerStateParams *peerStateParams);
 /**
@@ -1093,7 +1093,7 @@ int wma_update_tdls_peer_state(WMA_HANDLE handle,
  *
  * Return: 0 on success; negative errno otherwise
  */
-int wma_set_tdls_offchan_mode(WMA_HANDLE wma_handle,
+QDF_STATUS wma_set_tdls_offchan_mode(WMA_HANDLE wma_handle,
 			      tdls_chan_switch_params *chan_switch_params);
 #endif
 
