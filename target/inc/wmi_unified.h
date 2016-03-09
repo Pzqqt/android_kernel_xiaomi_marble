@@ -861,6 +861,7 @@ typedef enum {
 		WMI_CMD_GRP_START_ID(WMI_GRP_COEX),
 	WMI_CHAN_AVOID_UPDATE_CMDID,
 	WMI_COEX_CONFIG_CMDID,
+	WMI_CHAN_AVOID_RPT_ALLOW_CMDID,
 
 	/**
 	 *  OBSS scan offload enable/disable commands
@@ -15043,6 +15044,26 @@ typedef struct {
 	A_UINT32 config_arg1;
 	A_UINT32 config_arg2;
 } WMI_COEX_CONFIG_CMD_fixed_param;
+
+/**
+ * This command is sent from WLAN host driver to firmware to
+ * request firmware to enable/disable channel avoidance report
+ * to host.
+ */
+enum {
+	WMI_MWSCOEX_CHAN_AVD_RPT_DISALLOW = 0,
+	WMI_MWSCOEX_CHAN_AVD_RPT_ALLOW = 1
+};
+
+typedef struct {
+	/*
+	 * TLV tag and len; tag equals
+	 * WMITLV_TAG_STRUC_WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param
+	 */
+	A_UINT32 tlv_header;
+	/* Allow/disallow flag - see WMI_MWSCOEX_CHAN_AVD_RPT enum */
+	A_UINT32 rpt_allow;
+} WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param;
 
 /* ADD NEW DEFS HERE */
 

@@ -689,6 +689,7 @@ typedef enum {
 	WMITLV_TAG_STRUC_wmi_pdev_set_mac_config_response_event_fixed_param,
 	WMITLV_TAG_STRUC_WMI_COEX_CONFIG_CMD_fixed_param,
 	WMITLV_TAG_STRUC_wmi_config_enhanced_mcast_filter_fixed_param,
+	WMITLV_TAG_STRUC_WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param,
 } WMITLV_TAG_ID;
 
 /*
@@ -966,7 +967,8 @@ typedef enum {
 	OP(WMI_PDEV_SET_ANTENNA_MODE_CMDID) \
 	OP(WMI_VDEV_SET_QUIET_MODE_CMDID) \
 	OP(WMI_COEX_CONFIG_CMDID) \
-	OP(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID)
+	OP(WMI_CONFIG_ENHANCED_MCAST_FILTER_CMDID) \
+	OP(WMI_CHAN_AVOID_RPT_ALLOW_CMDID)
 
 /*
  * IMPORTANT: Please add _ALL_ WMI Events Here.
@@ -2402,6 +2404,12 @@ WMITLV_CREATE_PARAM_STRUC(WMI_TPC_CHAINMASK_CONFIG_CMDID);
 #define WMITLV_TABLE_WMI_CHAN_AVOID_UPDATE_CMDID(id,op,buf,len)	\
 	WMITLV_ELEM(id,op,buf,len, WMITLV_TAG_STRUC_wmi_chan_avoid_update_cmd_param, wmi_chan_avoid_update_cmd_param, fixed_param, WMITLV_SIZE_FIX)
 WMITLV_CREATE_PARAM_STRUC(WMI_CHAN_AVOID_UPDATE_CMDID);
+
+/* Ch avoidance report allow/disallow cmd*/
+#define WMITLV_TABLE_WMI_CHAN_AVOID_RPT_ALLOW_CMDID(id, op, buf, len) \
+	WMITLV_ELEM(id, op, buf, len, WMITLV_TAG_STRUC_WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param, WMI_CHAN_AVOID_RPT_ALLOW_CMD_fixed_param, fixed_param, WMITLV_SIZE_FIX)
+WMITLV_CREATE_PARAM_STRUC(WMI_CHAN_AVOID_RPT_ALLOW_CMDID);
+
 
 /* D0-WOW Enable Disable Cmd */
 #define WMITLV_TABLE_WMI_D0_WOW_ENABLE_DISABLE_CMDID(id,op,buf,len)							    \
