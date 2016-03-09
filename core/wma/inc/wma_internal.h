@@ -621,7 +621,8 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
 					   tSirNwType nw_type,
 					   tpAddStaParams params);
 
-int wmi_unified_vdev_set_gtx_cfg_send(wmi_unified_t wmi_handle, uint32_t if_id,
+QDF_STATUS wmi_unified_vdev_set_gtx_cfg_send(wmi_unified_t wmi_handle,
+				  uint32_t if_id,
 				  gtx_config_t *gtx_info);
 
 void wma_update_protection_mode(tp_wma_handle wma, uint8_t vdev_id,

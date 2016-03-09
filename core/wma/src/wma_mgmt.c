@@ -84,28 +84,20 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 				uint8_t vdev_id,
 				WMI_HOST_SWBA_EVENTID_param_tlvs *param_buf)
 {
-	wmi_bcn_send_from_host_cmd_fixed_param *cmd;
 	struct ieee80211_frame *wh;
 	struct beacon_info *bcn;
 	wmi_tim_info *tim_info = param_buf->tim_info;
 	uint8_t *bcn_payload;
-	wmi_buf_t wmi_buf;
 	QDF_STATUS ret;
 	struct beacon_tim_ie *tim_ie;
 	wmi_p2p_noa_info *p2p_noa_info = param_buf->p2p_noa_info;
 	struct p2p_sub_element_noa noa_ie;
+	struct wmi_bcn_send_from_host params;
 	uint8_t i;
-	int status;
 
 	bcn = wma->interfaces[vdev_id].beacon;
 	if (!bcn->buf) {
 		WMA_LOGE("%s: Invalid beacon buffer", __func__);
-		return;
-	}
-
-	wmi_buf = wmi_buf_alloc(wma->wmi_handle, sizeof(*cmd));
-	if (!wmi_buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
 		return;
 	}
 
@@ -205,38 +197,28 @@ static void wma_send_bcn_buf_ll(tp_wma_handle wma,
 	}
 	ret = qdf_nbuf_map_single(pdev->osdev, bcn->buf, QDF_DMA_TO_DEVICE);
 	if (ret != QDF_STATUS_SUCCESS) {
-		qdf_nbuf_free(wmi_buf);
 		WMA_LOGE("%s: failed map beacon buf to DMA region", __func__);
 		qdf_spin_unlock_bh(&bcn->lock);
 		return;
 	}
 
 	bcn->dma_mapped = 1;
-	cmd = (wmi_bcn_send_from_host_cmd_fixed_param *) wmi_buf_data(wmi_buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_bcn_send_from_host_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_bcn_send_from_host_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	cmd->data_len = bcn->len;
-	cmd->frame_ctrl = *((A_UINT16 *) wh->i_fc);
-	cmd->frag_ptr = qdf_nbuf_get_frag_paddr(bcn->buf, 0);
-
+	params.vdev_id = vdev_id;
+	params.data_len = bcn->len;
+	params.frame_ctrl = *((A_UINT16 *) wh->i_fc);
+	params.frag_ptr = qdf_nbuf_get_frag_paddr(bcn->buf, 0);
+	params.dtim_flag = 0;
 	/* notify Firmware of DTM and mcast/bcast traffic */
 	if (tim_ie->dtim_count == 0) {
-		cmd->dtim_flag |= WMI_BCN_SEND_DTIM_ZERO;
+		params.dtim_flag |= WMI_BCN_SEND_DTIM_ZERO;
 		/* deliver mcast/bcast traffic in next DTIM beacon */
 		if (tim_ie->tim_bitctl & 0x01)
-			cmd->dtim_flag |= WMI_BCN_SEND_DTIM_BITCTL_SET;
+			params.dtim_flag |= WMI_BCN_SEND_DTIM_BITCTL_SET;
 	}
 
-	status = wmi_unified_cmd_send(wma->wmi_handle, wmi_buf, sizeof(*cmd),
-				      WMI_PDEV_SEND_BCN_CMDID);
+	wmi_unified_bcn_buf_ll_cmd(wma->wmi_handle,
+					&params);
 
-	if (status != EOK) {
-		WMA_LOGE("Failed to send WMI_PDEV_SEND_BCN_CMDID command");
-		wmi_buf_free(wmi_buf);
-	}
 	qdf_spin_unlock_bh(&bcn->lock);
 }
 
@@ -619,23 +601,8 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 {
 	struct sAniSirGlobal *mac = cds_get_context(QDF_MODULE_ID_PE);
 	uint32_t max_retries, retry_interval;
-	wmi_buf_t buf;
-	WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param *cmd;
-	int len;
 
 	WMA_LOGD(FL("Enter:"));
-	len = sizeof(*cmd);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE(FL("wmi_buf_alloc failed"));
-		return;
-	}
-
-	cmd = (WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param *)wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		WMITLV_TAG_STRUC_WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param,
-		WMITLV_GET_STRUCT_TLVLEN
-		(WMI_PMF_OFFLOAD_SET_SA_QUERY_CMD_fixed_param));
 
 	if (wlan_cfg_get_int
 		    (mac, WNI_CFG_PMF_SA_QUERY_MAX_RETRIES,
@@ -650,18 +617,10 @@ void wma_set_sta_sa_query_param(tp_wma_handle wma,
 		WMA_LOGE(FL("Failed to get value for WNI_CFG_PMF_SA_QUERY_RETRY_INTERVAL"));
 	}
 
-	cmd->vdev_id = vdev_id;
-	cmd->sa_query_max_retry_count = max_retries;
-	cmd->sa_query_retry_interval = retry_interval;
-
-	WMA_LOGD(FL("STA sa query: vdev_id:%d interval:%u retry count:%d"),
-		 vdev_id, retry_interval, max_retries);
-
-	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				 WMI_PMF_OFFLOAD_SET_SA_QUERY_CMDID)) {
-		WMA_LOGE(FL("Failed to offload STA SA Query"));
-		qdf_nbuf_free(buf);
-	}
+	wmi_unified_set_sta_sa_query_param_cmd(wma->wmi_handle,
+						vdev_id,
+						max_retries,
+						retry_interval);
 
 	WMA_LOGD(FL("Exit :"));
 	return;
@@ -686,68 +645,24 @@ void wma_set_sta_keep_alive(tp_wma_handle wma, uint8_t vdev_id,
 			    uint8_t *hostv4addr, uint8_t *destv4addr,
 			    uint8_t *destmac)
 {
-	wmi_buf_t buf;
-	WMI_STA_KEEPALIVE_CMD_fixed_param *cmd;
-	WMI_STA_KEEPALVE_ARP_RESPONSE *arp_rsp;
-	uint8_t *buf_ptr;
-	int len;
+	struct sta_params params;
 
 	WMA_LOGD("%s: Enter", __func__);
 
-	if (timeperiod > WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX) {
-		WMA_LOGE("Invalid period %d Max limit %d", timeperiod,
-			WNI_CFG_INFRA_STA_KEEP_ALIVE_PERIOD_STAMAX);
+	if (!wma) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
 		return;
 	}
 
-	len = sizeof(*cmd) + sizeof(*arp_rsp);
-	buf = wmi_buf_alloc(wma->wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("wmi_buf_alloc failed");
-		return;
-	}
+	params.vdev_id = vdev_id;
+	params.method = method;
+	params.timeperiod = timeperiod;
+	params.hostv4addr = hostv4addr;
+	params.destv4addr = destv4addr;
+	params.destmac = destmac;
 
-	cmd = (WMI_STA_KEEPALIVE_CMD_fixed_param *) wmi_buf_data(buf);
-	buf_ptr = (uint8_t *) cmd;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_WMI_STA_KEEPALIVE_CMD_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (WMI_STA_KEEPALIVE_CMD_fixed_param));
-	cmd->interval = timeperiod;
-	cmd->enable = (timeperiod) ? 1 : 0;
-	cmd->vdev_id = vdev_id;
-	WMA_LOGD("Keep Alive: vdev_id:%d interval:%u method:%d", vdev_id,
-		 timeperiod, method);
-	arp_rsp = (WMI_STA_KEEPALVE_ARP_RESPONSE *) (buf_ptr + sizeof(*cmd));
-	WMITLV_SET_HDR(&arp_rsp->tlv_header,
-		       WMITLV_TAG_STRUC_WMI_STA_KEEPALVE_ARP_RESPONSE,
-		       WMITLV_GET_STRUCT_TLVLEN(WMI_STA_KEEPALVE_ARP_RESPONSE));
-
-	if (method == SIR_KEEP_ALIVE_UNSOLICIT_ARP_RSP) {
-		if ((NULL == hostv4addr) ||
-			(NULL == destv4addr) ||
-			(NULL == destmac)) {
-			WMA_LOGE("%s: received null pointer, hostv4addr:%p "
-			   "destv4addr:%p destmac:%p ", __func__,
-			   hostv4addr, destv4addr, destmac);
-			qdf_nbuf_free(buf);
-			return;
-		}
-		cmd->method = WMI_STA_KEEPALIVE_METHOD_UNSOLICITED_ARP_RESPONSE;
-		qdf_mem_copy(&arp_rsp->sender_prot_addr, hostv4addr,
-			     SIR_IPV4_ADDR_LEN);
-		qdf_mem_copy(&arp_rsp->target_prot_addr, destv4addr,
-			     SIR_IPV4_ADDR_LEN);
-		WMI_CHAR_ARRAY_TO_MAC_ADDR(destmac, &arp_rsp->dest_mac_addr);
-	} else {
-		cmd->method = WMI_STA_KEEPALIVE_METHOD_NULL_FRAME;
-	}
-
-	if (wmi_unified_cmd_send(wma->wmi_handle, buf, len,
-				 WMI_STA_KEEPALIVE_CMDID)) {
-		WMA_LOGE("Failed to set KeepAlive");
-		qdf_nbuf_free(buf);
-	}
+	wmi_unified_set_sta_keep_alive_cmd(wma->wmi_handle,
+						&params);
 
 	WMA_LOGD("%s: Exit", __func__);
 	return;
@@ -1154,40 +1069,24 @@ QDF_STATUS wma_send_peer_assoc(tp_wma_handle wma,
  *
  * Return: 0 for success or error code
  */
-int wmi_unified_vdev_set_gtx_cfg_send(wmi_unified_t wmi_handle, uint32_t if_id,
+QDF_STATUS wmi_unified_vdev_set_gtx_cfg_send(wmi_unified_t wmi_handle,
+				  uint32_t if_id,
 				  gtx_config_t *gtx_info)
 {
-	wmi_vdev_set_gtx_params_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	int len = sizeof(wmi_vdev_set_gtx_params_cmd_fixed_param);
-	buf = wmi_buf_alloc(wmi_handle, len);
-	if (!buf) {
-		WMA_LOGE("%s:wmi_buf_alloc failed", __FUNCTION__);
-		return -ENOMEM;
-	}
-	cmd = (wmi_vdev_set_gtx_params_cmd_fixed_param *) wmi_buf_data(buf);
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_set_gtx_params_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_set_gtx_params_cmd_fixed_param));
-	cmd->vdev_id = if_id;
+	struct wmi_gtx_config params;
 
-	cmd->gtxRTMask[0] = gtx_info->gtxRTMask[0];
-	cmd->gtxRTMask[1] = gtx_info->gtxRTMask[1];
-	cmd->userGtxMask = gtx_info->gtxUsrcfg;
-	cmd->gtxPERThreshold = gtx_info->gtxPERThreshold;
-	cmd->gtxPERMargin = gtx_info->gtxPERMargin;
-	cmd->gtxTPCstep = gtx_info->gtxTPCstep;
-	cmd->gtxTPCMin = gtx_info->gtxTPCMin;
-	cmd->gtxBWMask = gtx_info->gtxBWMask;
+	params.gtx_rt_mask[0] = gtx_info->gtxRTMask[0];
+	params.gtx_rt_mask[1] = gtx_info->gtxRTMask[1];
+	params.gtx_usrcfg = gtx_info->gtxUsrcfg;
+	params.gtx_threshold = gtx_info->gtxPERThreshold;
+	params.gtx_margin = gtx_info->gtxPERMargin;
+	params.gtx_tpcstep = gtx_info->gtxTPCstep;
+	params.gtx_tpcmin = gtx_info->gtxTPCMin;
+	params.gtx_bwmask = gtx_info->gtxBWMask;
 
-	WMA_LOGD("Setting vdev%d GTX values:htmcs 0x%x, vhtmcs 0x%x, usermask 0x%x, \
-		gtxPERThreshold %d, gtxPERMargin %d, gtxTPCstep %d, gtxTPCMin %d, \
-		gtxBWMask 0x%x.", if_id, cmd->gtxRTMask[0], cmd->gtxRTMask[1],
-		 cmd->userGtxMask, cmd->gtxPERThreshold, cmd->gtxPERMargin,
-		 cmd->gtxTPCstep, cmd->gtxTPCMin, cmd->gtxBWMask);
-	return wmi_unified_cmd_send(wmi_handle, buf, len,
-				    WMI_VDEV_SET_GTX_PARAMS_CMDID);
+	return wmi_unified_vdev_set_gtx_cfg_cmd(wmi_handle,
+						if_id, &params);
+
 }
 
 /**
@@ -1371,26 +1270,24 @@ static void wma_read_cfg_wepkey(tp_wma_handle wma_handle,
 }
 
 /**
- * wma_setup_install_key_cmd() - fill wmi buffer as per key parameters
+ * wma_setup_install_key_cmd() - set key parameters
  * @wma_handle: wma handle
  * @key_params: key parameters
- * @len: length
  * @mode: op mode
  *
- * This function setsup wmi buffer from information
+ * This function fills structure from information
  * passed in key_params.
  *
- * Return: filled wmi buffer ptr or NULL for error
+ * Return: QDF_STATUS_SUCCESS - success
+	QDF_STATUS_E_FAILURE - failure
+	QDF_STATUS_E_NOMEM - invalid request
  */
-static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
+static QDF_STATUS wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 					   struct wma_set_key_params
-					   *key_params, uint32_t *len,
-					   uint8_t mode)
+					   *key_params, uint8_t mode)
 {
-	wmi_vdev_install_key_cmd_fixed_param *cmd;
-	wmi_buf_t buf;
-	uint8_t *buf_ptr;
-	uint8_t *key_data;
+	struct set_key_params params;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 #ifdef WLAN_FEATURE_11W
 	struct wma_txrx_node *iface = NULL;
 #endif /* WLAN_FEATURE_11W */
@@ -1398,53 +1295,47 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 	     key_params->key_len) || (key_params->key_type != eSIR_ED_NONE &&
 				      !key_params->key_len)) {
 		WMA_LOGE("%s:Invalid set key request", __func__);
-		return NULL;
+		return QDF_STATUS_E_NOMEM;
 	}
 
-	*len = sizeof(*cmd) + roundup(key_params->key_len, sizeof(uint32_t)) +
-	       WMI_TLV_HDR_SIZE;
+	params.vdev_id = key_params->vdev_id;
+	params.key_idx = key_params->key_idx;
+	qdf_mem_copy(params.peer_mac, key_params->peer_mac, IEEE80211_ADDR_LEN);
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, *len);
-	if (!buf) {
-		WMA_LOGE("Failed to allocate buffer to send set key cmd");
-		return NULL;
-	}
+#ifdef FEATURE_WLAN_WAPI
+	qdf_mem_set(params.tx_iv, 16, 0);
+	qdf_mem_set(params.rx_iv, 16, 0);
+#endif
+	params.key_txmic_len = 0;
+	params.key_rxmic_len = 0;
 
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_vdev_install_key_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_install_key_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_install_key_cmd_fixed_param));
-	cmd->vdev_id = key_params->vdev_id;
-	cmd->key_ix = key_params->key_idx;
-	WMI_CHAR_ARRAY_TO_MAC_ADDR(key_params->peer_mac, &cmd->peer_macaddr);
+	params.key_flags = 0;
 	if (key_params->unicast)
-		cmd->key_flags |= PAIRWISE_USAGE;
+		params.key_flags |= PAIRWISE_USAGE;
 	else
-		cmd->key_flags |= GROUP_USAGE;
+		params.key_flags |= GROUP_USAGE;
 
 	switch (key_params->key_type) {
 	case eSIR_ED_NONE:
-		cmd->key_cipher = WMI_CIPHER_NONE;
+		params.key_cipher = WMI_CIPHER_NONE;
 		break;
 	case eSIR_ED_WEP40:
 	case eSIR_ED_WEP104:
-		cmd->key_cipher = WMI_CIPHER_WEP;
+		params.key_cipher = WMI_CIPHER_WEP;
 		if (key_params->unicast &&
-		    cmd->key_ix == key_params->def_key_idx) {
+		    params.key_idx == key_params->def_key_idx) {
 			WMA_LOGD("STA Mode: cmd->key_flags |= TX_USAGE");
-			cmd->key_flags |= TX_USAGE;
+			params.key_flags |= TX_USAGE;
 		} else if ((mode == wlan_op_mode_ap) &&
-			(cmd->key_ix == key_params->def_key_idx)) {
+			(params.key_idx == key_params->def_key_idx)) {
 			WMA_LOGD("AP Mode: cmd->key_flags |= TX_USAGE");
-			cmd->key_flags |= TX_USAGE;
+			params.key_flags |= TX_USAGE;
 		}
 		break;
 	case eSIR_ED_TKIP:
-		cmd->key_txmic_len = WMA_TXMIC_LEN;
-		cmd->key_rxmic_len = WMA_RXMIC_LEN;
-		cmd->key_cipher = WMI_CIPHER_TKIP;
+		params.key_txmic_len = WMA_TXMIC_LEN;
+		params.key_rxmic_len = WMA_RXMIC_LEN;
+		params.key_cipher = WMI_CIPHER_TKIP;
 		break;
 #ifdef FEATURE_WLAN_WAPI
 #define WPI_IV_LEN 16
@@ -1471,37 +1362,32 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 				rx_iv[WPI_IV_LEN - 1] = 0x36;
 		}
 
-		cmd->key_txmic_len = WMA_TXMIC_LEN;
-		cmd->key_rxmic_len = WMA_RXMIC_LEN;
+		params.key_txmic_len = WMA_TXMIC_LEN;
+		params.key_rxmic_len = WMA_RXMIC_LEN;
 
-		qdf_mem_copy(&cmd->wpi_key_rsc_counter, &rx_iv,
+		qdf_mem_copy(&params.rx_iv, &rx_iv,
 			     WPI_IV_LEN);
-		qdf_mem_copy(&cmd->wpi_key_tsc_counter, &tx_iv,
+		qdf_mem_copy(&params.tx_iv, &tx_iv,
 			     WPI_IV_LEN);
-		cmd->key_cipher = WMI_CIPHER_WAPI;
+		params.key_cipher = WMI_CIPHER_WAPI;
 		break;
 	}
 #endif /* FEATURE_WLAN_WAPI */
 	case eSIR_ED_CCMP:
-		cmd->key_cipher = WMI_CIPHER_AES_CCM;
+		params.key_cipher = WMI_CIPHER_AES_CCM;
 		break;
 #ifdef WLAN_FEATURE_11W
 	case eSIR_ED_AES_128_CMAC:
-		cmd->key_cipher = WMI_CIPHER_AES_CMAC;
+		params.key_cipher = WMI_CIPHER_AES_CMAC;
 		break;
 #endif /* WLAN_FEATURE_11W */
 	default:
 		/* TODO: MFP ? */
 		WMA_LOGE("%s:Invalid encryption type:%d", __func__,
 			 key_params->key_type);
-		qdf_nbuf_free(buf);
-		return NULL;
+		return QDF_STATUS_E_NOMEM;
 	}
 
-	buf_ptr += sizeof(wmi_vdev_install_key_cmd_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE,
-		       roundup(key_params->key_len, sizeof(uint32_t)));
-	key_data = (A_UINT8 *) (buf_ptr + WMI_TLV_HDR_SIZE);
 #ifdef BIG_ENDIAN_HOST
 	{
 		/* for big endian host, copy engine byte_swap is enabled
@@ -1513,7 +1399,7 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		int8_t i;
 		uint32_t *destp, *srcp;
 
-		destp = (uint32_t *) key_data;
+		destp = (uint32_t *) params.key_data;
 		srcp = (uint32_t *) key_params->key_data;
 		for (i = 0;
 		     i < roundup(key_params->key_len, sizeof(uint32_t)) / 4;
@@ -1524,10 +1410,10 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		}
 	}
 #else
-	qdf_mem_copy((void *)key_data,
+	qdf_mem_copy((void *)params.key_data,
 		     (const void *)key_params->key_data, key_params->key_len);
 #endif /* BIG_ENDIAN_HOST */
-	cmd->key_len = key_params->key_len;
+	params.key_len = key_params->key_len;
 
 #ifdef WLAN_FEATURE_11W
 	if (key_params->key_type == eSIR_ED_AES_128_CMAC) {
@@ -1537,9 +1423,9 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 			qdf_mem_copy(iface->key.key,
 				     (const void *)key_params->key_data,
 				     iface->key.key_length);
-			if ((cmd->key_ix == WMA_IGTK_KEY_INDEX_4) ||
-			    (cmd->key_ix == WMA_IGTK_KEY_INDEX_5))
-				qdf_mem_zero(iface->key.key_id[cmd->key_ix -
+			if ((params.key_idx == WMA_IGTK_KEY_INDEX_4) ||
+			    (params.key_idx == WMA_IGTK_KEY_INDEX_5))
+				qdf_mem_zero(iface->key.key_id[params.key_idx -
 						    WMA_IGTK_KEY_INDEX_4].ipn,
 					     CMAC_IPN_LEN);
 		}
@@ -1552,7 +1438,10 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 		 key_params->unicast, key_params->peer_mac,
 		 key_params->def_key_idx);
 
-	return buf;
+	status = wmi_unified_setup_install_key_cmd(wma_handle->wmi_handle,
+								&params);
+
+	return status;
 }
 
 /**
@@ -1565,9 +1454,8 @@ static wmi_buf_t wma_setup_install_key_cmd(tp_wma_handle wma_handle,
 void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 {
 	struct wma_set_key_params key_params;
-	wmi_buf_t buf;
-	int32_t status;
-	uint32_t len = 0, i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t i;
 	uint32_t def_key_idx = 0;
 	ol_txrx_vdev_handle txrx_vdev;
 
@@ -1643,19 +1531,14 @@ void wma_set_bsskey(tp_wma_handle wma_handle, tpSetBssKeyParams key_info)
 		WMA_LOGD("%s: bss key[%d] length %d", __func__, i,
 			 key_info->key[i].keyLength);
 
-		buf = wma_setup_install_key_cmd(wma_handle, &key_params, &len,
+		status = wma_setup_install_key_cmd(wma_handle, &key_params,
 						txrx_vdev->opmode);
-		if (!buf) {
+		if (status == QDF_STATUS_E_NOMEM) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
 			key_info->status = QDF_STATUS_E_NOMEM;
 			goto out;
-		}
-
-		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-					      WMI_VDEV_INSTALL_KEY_CMDID);
-		if (status) {
-			qdf_nbuf_free(buf);
+		} else if (status == QDF_STATUS_E_FAILURE) {
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
 			key_info->status = QDF_STATUS_E_FAILURE;
@@ -1786,9 +1669,8 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 				   struct qdf_mac_addr peer_macaddr)
 {
 	struct wma_set_key_params key_params;
-	wmi_buf_t buf;
-	int32_t status;
-	uint32_t len = 0, i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	uint32_t i;
 	uint32_t def_key_idx = 0;
 	ol_txrx_vdev_handle txrx_vdev;
 
@@ -1838,18 +1720,13 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
 		WMA_LOGD("%s: peer bcast key[%d] length %d", __func__, i,
 			 key_info->key[i].keyLength);
 
-		buf = wma_setup_install_key_cmd(wma_handle, &key_params, &len,
+		status = wma_setup_install_key_cmd(wma_handle, &key_params,
 						txrx_vdev->opmode);
-		if (!buf) {
+		if (status == QDF_STATUS_E_NOMEM) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
 			return;
-		}
-
-		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-					      WMI_VDEV_INSTALL_KEY_CMDID);
-		if (status) {
-			qdf_nbuf_free(buf);
+		} else if (status == QDF_STATUS_E_FAILURE) {
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
 		}
@@ -1868,9 +1745,8 @@ static void wma_set_ibsskey_helper(tp_wma_handle wma_handle,
  */
 void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 {
-	wmi_buf_t buf;
-	int32_t status, i;
-	uint32_t len = 0;
+	int32_t i;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
 	ol_txrx_pdev_handle txrx_pdev;
 	ol_txrx_vdev_handle txrx_vdev;
 	struct ol_txrx_peer_t *peer;
@@ -1953,9 +1829,9 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 			key_params.key_idx = i;
 
 		key_params.key_len = key_info->key[i].keyLength;
-		buf = wma_setup_install_key_cmd(wma_handle, &key_params, &len,
+		status = wma_setup_install_key_cmd(wma_handle, &key_params,
 						txrx_vdev->opmode);
-		if (!buf) {
+		if (status == QDF_STATUS_E_NOMEM) {
 			WMA_LOGE("%s:Failed to setup install key buf",
 				 __func__);
 			key_info->status = QDF_STATUS_E_NOMEM;
@@ -1965,10 +1841,7 @@ void wma_set_stakey(tp_wma_handle wma_handle, tpSetStaKeyParams key_info)
 		WMA_LOGD("%s: peer unicast key[%d] %d ", __func__, i,
 			 key_info->key[i].keyLength);
 
-		status = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-					      WMI_VDEV_INSTALL_KEY_CMDID);
-		if (status) {
-			qdf_nbuf_free(buf);
+		if (status == QDF_STATUS_E_FAILURE) {
 			WMA_LOGE("%s:Failed to send install key command",
 				 __func__);
 			key_info->status = QDF_STATUS_E_FAILURE;
@@ -2005,36 +1878,17 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 					     tEdcaParams *edca_params)
 {
 	tp_wma_handle wma_handle = (tp_wma_handle) handle;
-	uint8_t *buf_ptr;
-	wmi_buf_t buf;
-	wmi_vdev_set_wmm_params_cmd_fixed_param *cmd;
-	wmi_wmm_vparams *wmm_param;
+	wmi_wmm_vparams wmm_param[WME_NUM_AC];
 	tSirMacEdcaParamRecord *edca_record;
 	int ac;
-	int len = sizeof(*cmd);
 	ol_txrx_pdev_handle pdev;
 	struct ol_tx_wmm_param_t ol_tx_wmm_param;
+	uint8_t vdev_id;
+	QDF_STATUS status;
 
-	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
-
-	if (!buf) {
-		WMA_LOGE("%s: wmi_buf_alloc failed", __func__);
-		return QDF_STATUS_E_NOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(buf);
-	cmd = (wmi_vdev_set_wmm_params_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_vdev_set_wmm_params_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_vdev_set_wmm_params_cmd_fixed_param));
-	cmd->vdev_id = edca_params->bssIdx;
+	vdev_id = edca_params->bssIdx;
 
 	for (ac = 0; ac < WME_NUM_AC; ac++) {
-		wmm_param = (wmi_wmm_vparams *) (&cmd->wmm_params[ac]);
-		WMITLV_SET_HDR(&wmm_param->tlv_header,
-			       WMITLV_TAG_STRUC_wmi_vdev_set_wmm_params_cmd_fixed_param,
-			       WMITLV_GET_STRUCT_TLVLEN(wmi_wmm_vparams));
 		switch (ac) {
 		case WME_AC_BE:
 			edca_record = &edca_params->acbe;
@@ -2052,15 +1906,18 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 			goto fail;
 		}
 
-		wma_update_edca_params_for_ac(edca_record, wmm_param, ac);
+		wma_update_edca_params_for_ac(edca_record, &wmm_param[ac], ac);
 
-		ol_tx_wmm_param.ac[ac].aifs = wmm_param->aifs;
-		ol_tx_wmm_param.ac[ac].cwmin = wmm_param->cwmin;
-		ol_tx_wmm_param.ac[ac].cwmax = wmm_param->cwmax;
+		ol_tx_wmm_param.ac[ac].aifs = wmm_param[ac].aifs;
+		ol_tx_wmm_param.ac[ac].cwmin = wmm_param[ac].cwmin;
+		ol_tx_wmm_param.ac[ac].cwmax = wmm_param[ac].cwmax;
 	}
 
-	if (wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
-				 WMI_VDEV_SET_WMM_PARAMS_CMDID))
+	status = wmi_unified_process_update_edca_param(wma_handle->wmi_handle,
+						vdev_id, wmm_param);
+	if (status == QDF_STATUS_E_NOMEM)
+		return status;
+	else if (status == QDF_STATUS_E_FAILURE)
 		goto fail;
 
 	pdev = cds_get_context(QDF_MODULE_ID_TXRX);
@@ -2072,7 +1929,6 @@ QDF_STATUS wma_process_update_edca_param_req(WMA_HANDLE handle,
 	return QDF_STATUS_SUCCESS;
 
 fail:
-	wmi_buf_free(buf);
 	WMA_LOGE("%s: Failed to set WMM Paremeters", __func__);
 	return QDF_STATUS_E_FAILURE;
 }
@@ -2089,20 +1945,15 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 					   uint8_t vdev_id,
 					   tpSendProbeRespParams probe_rsp_info)
 {
-	wmi_prb_tmpl_cmd_fixed_param *cmd;
-	wmi_bcn_prb_info *bcn_prb_info;
-	wmi_buf_t wmi_buf;
-	uint32_t tmpl_len, tmpl_len_aligned, wmi_buf_len;
-	uint8_t *frm, *buf_ptr;
-	int ret;
+	uint8_t *frm;
 	uint64_t adjusted_tsf_le;
 	struct ieee80211_frame *wh;
+	struct wmi_probe_resp_params params;
 
 	WMA_LOGD(FL("Send probe response template for vdev %d"), vdev_id);
 
 	frm = probe_rsp_info->pProbeRespTemplate;
-	tmpl_len = probe_rsp_info->probeRespTemplateLen;
-	tmpl_len_aligned = roundup(tmpl_len, sizeof(A_UINT32));
+
 	/*
 	 * Make the TSF offset negative so probe response in the same
 	 * staggered batch have the same TSF.
@@ -2113,52 +1964,16 @@ static int wmi_unified_probe_rsp_tmpl_send(tp_wma_handle wma,
 	wh = (struct ieee80211_frame *)frm;
 	A_MEMCPY(&wh[1], &adjusted_tsf_le, sizeof(adjusted_tsf_le));
 
-	wmi_buf_len = sizeof(wmi_prb_tmpl_cmd_fixed_param) +
-			sizeof(wmi_bcn_prb_info) + WMI_TLV_HDR_SIZE +
-			tmpl_len_aligned;
+	params.pProbeRespTemplate = probe_rsp_info->pProbeRespTemplate;
+	params.probeRespTemplateLen = probe_rsp_info->probeRespTemplateLen;
+	qdf_mem_copy(params.bssId, probe_rsp_info->bssId,
+				WMI_ETH_LEN);
+	qdf_mem_copy(params.ucProxyProbeReqValidIEBmap,
+		probe_rsp_info->ucProxyProbeReqValidIEBmap,
+		8 * sizeof(uint32_t));
 
-	if (wmi_buf_len > BEACON_TX_BUFFER_SIZE) {
-		WMA_LOGE(FL("wmi_buf_len: %d > %d. Can't send wmi cmd"),
-		wmi_buf_len, BEACON_TX_BUFFER_SIZE);
-		return -EINVAL;
-	}
-
-	wmi_buf = wmi_buf_alloc(wma->wmi_handle, wmi_buf_len);
-	if (!wmi_buf) {
-		WMA_LOGE(FL("wmi_buf_alloc failed"));
-		return -ENOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
-
-	cmd = (wmi_prb_tmpl_cmd_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_prb_tmpl_cmd_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_prb_tmpl_cmd_fixed_param));
-	cmd->vdev_id = vdev_id;
-	cmd->buf_len = tmpl_len;
-	buf_ptr += sizeof(wmi_prb_tmpl_cmd_fixed_param);
-
-	bcn_prb_info = (wmi_bcn_prb_info *) buf_ptr;
-	WMITLV_SET_HDR(&bcn_prb_info->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_bcn_prb_info,
-		       WMITLV_GET_STRUCT_TLVLEN(wmi_bcn_prb_info));
-	bcn_prb_info->caps = 0;
-	bcn_prb_info->erp = 0;
-	buf_ptr += sizeof(wmi_bcn_prb_info);
-
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, tmpl_len_aligned);
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, frm, tmpl_len);
-
-	ret = wmi_unified_cmd_send(wma->wmi_handle,
-				   wmi_buf, wmi_buf_len, WMI_PRB_TMPL_CMDID);
-	if (ret) {
-		WMA_LOGE(FL("Failed to send PRB RSP tmpl: %d"), ret);
-		wmi_buf_free(wmi_buf);
-	}
-
-	return ret;
+	return wmi_unified_probe_rsp_tmpl_send_cmd(wma->wmi_handle, vdev_id,
+					&params, frm);
 }
 
 /**
@@ -2393,66 +2208,13 @@ int wma_tbttoffset_update_event_handler(void *handle, uint8_t *event,
 static int wma_p2p_go_set_beacon_ie(t_wma_handle *wma_handle,
 				    A_UINT32 vdev_id, uint8_t *p2pIe)
 {
-	int ret;
-	wmi_p2p_go_set_beacon_ie_fixed_param *cmd;
-	wmi_buf_t wmi_buf;
-	uint32_t ie_len, ie_len_aligned, wmi_buf_len;
-	uint8_t *buf_ptr;
-
-	ie_len = (uint32_t) (p2pIe[1] + 2);
-
-	/* More than one P2P IE may be included in a single frame.
-	   If multiple P2P IEs are present, the complete P2P attribute
-	   data consists of the concatenation of the P2P Attribute
-	   fields of the P2P IEs. The P2P Attributes field of each
-	   P2P IE may be any length up to the maximum (251 octets).
-	   In this case host sends one P2P IE to firmware so the length
-	   should not exceed more than 251 bytes
-	 */
-	if (ie_len > 251) {
-		WMA_LOGE("%s : invalid p2p ie length %u", __func__, ie_len);
-		return -EINVAL;
+	if (!wma_handle) {
+		WMA_LOGE("%s: wma handle is NULL", __func__);
+		return QDF_STATUS_E_FAILURE;
 	}
 
-	ie_len_aligned = roundup(ie_len, sizeof(A_UINT32));
-
-	wmi_buf_len =
-		sizeof(wmi_p2p_go_set_beacon_ie_fixed_param) + ie_len_aligned +
-		WMI_TLV_HDR_SIZE;
-
-	wmi_buf = wmi_buf_alloc(wma_handle->wmi_handle, wmi_buf_len);
-	if (!wmi_buf) {
-		WMA_LOGE("%s : wmi_buf_alloc failed", __func__);
-		return -ENOMEM;
-	}
-
-	buf_ptr = (uint8_t *) wmi_buf_data(wmi_buf);
-
-	cmd = (wmi_p2p_go_set_beacon_ie_fixed_param *) buf_ptr;
-	WMITLV_SET_HDR(&cmd->tlv_header,
-		       WMITLV_TAG_STRUC_wmi_p2p_go_set_beacon_ie_fixed_param,
-		       WMITLV_GET_STRUCT_TLVLEN
-			       (wmi_p2p_go_set_beacon_ie_fixed_param));
-	cmd->vdev_id = vdev_id;
-	cmd->ie_buf_len = ie_len;
-
-	buf_ptr += sizeof(wmi_p2p_go_set_beacon_ie_fixed_param);
-	WMITLV_SET_HDR(buf_ptr, WMITLV_TAG_ARRAY_BYTE, ie_len_aligned);
-	buf_ptr += WMI_TLV_HDR_SIZE;
-	qdf_mem_copy(buf_ptr, p2pIe, ie_len);
-
-	WMA_LOGI("%s: Sending WMI_P2P_GO_SET_BEACON_IE", __func__);
-
-	ret = wmi_unified_cmd_send(wma_handle->wmi_handle,
-				   wmi_buf, wmi_buf_len,
-				   WMI_P2P_GO_SET_BEACON_IE);
-	if (ret) {
-		WMA_LOGE("Failed to send bcn tmpl: %d", ret);
-		wmi_buf_free(wmi_buf);
-	}
-
-	WMA_LOGI("%s: Successfully sent WMI_P2P_GO_SET_BEACON_IE", __func__);
-	return ret;
+	return wmi_unified_p2p_go_set_beacon_ie_cmd(wma_handle->wmi_handle,
+							vdev_id, p2pIe);
 }
 
 /**
