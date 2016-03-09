@@ -26,7 +26,8 @@
  */
 
 /*
- * This file contains the API definitions for the Unified Wireless Module Interface (WMI).
+ * This file contains the API definitions for the Unified Wireless
+ * Module Interface (WMI).
  */
 #ifndef _WMI_UNIFIED_PRIV_H_
 #define _WMI_UNIFIED_PRIV_H_
@@ -67,6 +68,109 @@ struct fwdebug {
 };
 #endif /* WLAN_OPEN_SOURCE */
 
+struct wmi_ops {
+int32_t (*send_vdev_create_cmd)(wmi_unified_t wmi_handle,
+				 uint8_t macaddr[IEEE80211_ADDR_LEN],
+				 struct vdev_create_params *param);
+
+int32_t (*send_vdev_delete_cmd)(wmi_unified_t wmi_handle,
+					  uint8_t if_id);
+
+int32_t (*send_vdev_stop_cmd)(wmi_unified_t wmi,
+					uint8_t vdev_id);
+
+int32_t (*send_vdev_down_cmd)(wmi_unified_t wmi,
+			uint8_t vdev_id);
+
+int32_t (*send_peer_flush_tids_cmd)(wmi_unified_t wmi,
+					 uint8_t peer_addr[IEEE80211_ADDR_LEN],
+					 struct peer_flush_params *param);
+
+int32_t (*send_peer_delete_cmd)(wmi_unified_t wmi,
+				    uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				    uint8_t vdev_id);
+
+int32_t (*send_peer_param_cmd)(wmi_unified_t wmi,
+				uint8_t peer_addr[IEEE80211_ADDR_LEN],
+				struct peer_set_params *param);
+
+int32_t (*send_vdev_up_cmd)(wmi_unified_t wmi,
+			     uint8_t bssid[IEEE80211_ADDR_LEN],
+				 struct vdev_up_params *params);
+
+int32_t (*send_peer_create_cmd)(wmi_unified_t wmi,
+					struct peer_create_params *param);
+
+int32_t (*send_green_ap_ps_cmd)(wmi_unified_t wmi_handle,
+						uint32_t value, uint8_t mac_id);
+
+int32_t
+(*send_pdev_utf_cmd)(wmi_unified_t wmi_handle,
+				struct pdev_utf_params *param,
+				uint8_t mac_id);
+
+int32_t
+(*send_pdev_param_cmd)(wmi_unified_t wmi_handle,
+			   struct pdev_params *param,
+				uint8_t mac_id);
+
+int32_t (*send_suspend_cmd)(wmi_unified_t wmi_handle,
+				struct suspend_params *param,
+				uint8_t mac_id);
+
+int32_t (*send_resume_cmd)(wmi_unified_t wmi_handle,
+				uint8_t mac_id);
+
+int32_t (*send_wow_enable_cmd)(wmi_unified_t wmi_handle,
+				struct wow_cmd_params *param,
+				uint8_t mac_id);
+
+int32_t (*send_set_ap_ps_param_cmd)(wmi_unified_t wmi_handle,
+					   uint8_t *peer_addr,
+					   struct ap_ps_params *param);
+
+int32_t (*send_set_sta_ps_param_cmd)(wmi_unified_t wmi_handle,
+					   struct sta_ps_params *param);
+
+int32_t (*send_crash_inject_cmd)(wmi_unified_t wmi_handle,
+			 struct crash_inject *param);
+
+int32_t
+(*send_dbglog_cmd)(wmi_unified_t wmi_handle,
+				struct dbglog_params *dbglog_param);
+
+int32_t (*send_vdev_set_param_cmd)(wmi_unified_t wmi_handle,
+				struct vdev_set_params *param);
+
+int32_t (*send_stats_request_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct stats_request_params *param);
+
+int32_t (*send_packet_log_enable_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct packet_enable_params *param);
+
+int32_t (*send_beacon_send_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct beacon_params *param);
+
+int32_t (*send_peer_assoc_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct peer_assoc_params *param);
+
+int32_t (*send_scan_start_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct scan_start_params *param);
+
+int32_t (*send_scan_stop_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct scan_stop_params *param);
+
+int32_t (*send_scan_chan_list_cmd)(wmi_unified_t wmi_handle,
+				uint8_t macaddr[IEEE80211_ADDR_LEN],
+				struct scan_chan_list_params *param);
+};
+
 struct wmi_unified {
 	ol_scn_t scn_handle;    /* handle to device */
 	osdev_t  osdev; /* handle to use OS-independent services */
@@ -96,10 +200,11 @@ struct wmi_unified {
 	cdf_atomic_t runtime_pm_inprogress;
 #endif
 
-	int (*wma_process_fw_event_handler_cbk)(struct wmi_unified *wmi_handle,
-						wmi_buf_t evt_buf);
-	struct wmi_ops ops;
+	struct wmi_rx_ops rx_ops;
+	struct wmi_ops *ops;
 	void *event_handler_cookie[WMI_UNIFIED_MAX_EVENT];
 	bool use_cookie;
 };
+struct wmi_ops *wmi_get_tlv_ops(void);
+struct wmi_ops *wmi_get_non_tlv_ops(void);
 #endif
