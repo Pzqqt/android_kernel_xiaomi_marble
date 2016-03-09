@@ -2516,7 +2516,8 @@ typedef struct {
 #define WMI_SCAN_OFFCHAN_DATA_TX    0x4000
 /** allow capture ppdu with phy errrors */
 #define WMI_SCAN_CAPTURE_PHY_ERROR  0x8000
-
+/** always do passive scan on passive channels */
+#define WMI_SCAN_FLAG_STRICT_PASSIVE_ON_PCHN 0x1000
 /** WMI_SCAN_CLASS_MASK must be the same value as IEEE80211_SCAN_CLASS_MASK */
 #define WMI_SCAN_CLASS_MASK 0xFF000000
 
