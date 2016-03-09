@@ -2272,6 +2272,11 @@ typedef struct {
 	 * specs
 	 */
 	A_UINT32 num_ns_ext_tuples_cfg;
+	/**
+	 * size (in bytes) of the buffer the FW shall allocate to store
+	 * packet filtering instructions
+	 */
+	A_UINT32 bpf_instruction_size;
 } wmi_resource_config;
 
 #define WMI_RSRC_CFG_FLAG_SET(word32, flag, value) \
