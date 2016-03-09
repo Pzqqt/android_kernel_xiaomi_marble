@@ -1580,7 +1580,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 	int8_t local_power_constraint = 0, reg_max = 0;
 	uint16_t ie_len;
 	uint8_t *vendor_ie;
-	tSirBssDescription bss_desc;
+	tSirBssDescription *bss_desc;
 
 /* FEATURE_WLAN_DIAG_SUPPORT */
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
@@ -1632,9 +1632,9 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		 */
 		lim_update_rrm_capability(mac_ctx, sme_join_req);
 
-		bss_desc = sme_join_req->bssDescription;
+		bss_desc = &sme_join_req->bssDescription;
 		/* check for the existence of start BSS session  */
-		session = pe_find_session_by_bssid(mac_ctx, bss_desc.bssId,
+		session = pe_find_session_by_bssid(mac_ctx, bss_desc->bssId,
 				&session_id);
 
 		if (session != NULL) {
@@ -1642,7 +1642,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 				FL("Session(%d) Already exists for BSSID: "
 				   MAC_ADDRESS_STR " in limSmeState = %X"),
 				session_id,
-				MAC_ADDR_ARRAY(bss_desc.bssId),
+				MAC_ADDR_ARRAY(bss_desc->bssId),
 				session->limSmeState);
 
 			if (session->limSmeState == eLIM_SME_LINK_EST_STATE &&
@@ -1672,7 +1672,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			 * Session Entry does not exist for given BSSId
 			 * Try to Create a new session
 			 */
-			session = pe_create_session(mac_ctx, bss_desc.bssId,
+			session = pe_create_session(mac_ctx, bss_desc->bssId,
 					&session_id, mac_ctx->lim.maxStation,
 					eSIR_INFRASTRUCTURE_MODE);
 			if (session == NULL) {
@@ -1705,7 +1705,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 
 		/* Store beaconInterval */
 		session->beaconParams.beaconInterval =
-			bss_desc.beaconInterval;
+			bss_desc->beaconInterval;
 
 		qdf_mem_copy(&(session->htConfig), &(sme_join_req->htConfig),
 			sizeof(session->htConfig));
@@ -1720,12 +1720,12 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 		session->limQosEnabled = sme_join_req->isQosEnabled;
 
 		/* Store vendor specfic IE for CISCO AP */
-		ie_len = (bss_desc.length + sizeof(bss_desc.length) -
+		ie_len = (bss_desc->length + sizeof(bss_desc->length) -
 			 GET_FIELD_OFFSET(tSirBssDescription, ieFields));
 
 		vendor_ie = cfg_get_vendor_ie_ptr_from_oui(mac_ctx,
 				SIR_MAC_CISCO_OUI, SIR_MAC_CISCO_OUI_SIZE,
-				((uint8_t *)&bss_desc.ieFields), ie_len);
+				((uint8_t *)&bss_desc->ieFields), ie_len);
 
 		if (NULL != vendor_ie) {
 			lim_log(mac_ctx, LOG1, FL("Cisco vendor OUI present"));
@@ -1740,7 +1740,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #ifdef FEATURE_WLAN_MCC_TO_SCC_SWITCH
 		session->cc_switch_mode = sme_join_req->cc_switch_mode;
 #endif
-		session->nwType = bss_desc.nwType;
+		session->nwType = bss_desc->nwType;
 		session->enableAmpduPs = sme_join_req->enableAmpduPs;
 		session->enableHtSmps = sme_join_req->enableHtSmps;
 		session->htSmpsvalue = sme_join_req->htSmps;
@@ -1810,10 +1810,10 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 			session->txbf_csn_value = sme_join_req->txBFCsnValue;
 		}
 		/*Phy mode */
-		session->gLimPhyMode = bss_desc.nwType;
+		session->gLimPhyMode = bss_desc->nwType;
 		handle_ht_capabilityand_ht_info(mac_ctx, session);
 		/* Copy The channel Id to the session Table */
-		session->currentOperChannel = bss_desc.channelId;
+		session->currentOperChannel = bss_desc->channelId;
 		/* cbMode is already merged value of peer and self -
 		 * done by csr in csr_get_cb_mode_from_ies */
 		session->htSupportedChannelWidthSet =
@@ -1845,7 +1845,7 @@ __lim_process_sme_join_req(tpAniSirGlobal mac_ctx, uint32_t *msg_buf)
 #endif
 
 #ifdef FEATURE_WLAN_DIAG_SUPPORT_LIM
-		session->rssi = bss_desc.rssi;
+		session->rssi = bss_desc->rssi;
 #endif
 
 		/* Copy the SSID from smejoinreq to session entry  */

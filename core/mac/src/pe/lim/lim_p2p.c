@@ -647,8 +647,7 @@ void lim_send_p2p_action_frame(tpAniSirGlobal mac_ctx,
 		}
 	}
 
-	if ((SIR_MAC_MGMT_PROBE_RSP == fc->subType ||
-		SIR_MAC_MGMT_ACTION == fc->subType))
+	if (SIR_MAC_MGMT_PROBE_RSP == fc->subType)
 		lim_set_ht_caps(mac_ctx, session_entry,
 			(uint8_t *) mb_msg->data + PROBE_RSP_IE_OFFSET,
 			msg_len - PROBE_RSP_IE_OFFSET);
