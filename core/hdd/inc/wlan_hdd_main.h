@@ -546,28 +546,6 @@ typedef struct beacon_data_s {
 	int dtim_period;
 } beacon_data_t;
 
-/**
- * enum device_mode: Maintain one to one correspondence with tQDF_ADAPTER_MODE
- * @WLAN_HDD_INFRA_STATION: station mode
- * @WLAN_HDD_SOFTAP: sap mode
- * @WLAN_HDD_P2P_CLIENT: p2p client mode
- * @WLAN_HDD_P2P_GO: p2p go mode
- * @WLAN_HDD_FTM: ftm mode
- * @WLAN_HDD_IBSS: ibss mode
- * @WLAN_HDD_P2P_DEVICE: p2p device mode
- * @WLAN_HDD_OCB: ocb mode
- */
-typedef enum device_mode {
-	WLAN_HDD_INFRA_STATION,
-	WLAN_HDD_SOFTAP,
-	WLAN_HDD_P2P_CLIENT,
-	WLAN_HDD_P2P_GO,
-	WLAN_HDD_FTM,
-	WLAN_HDD_IBSS,
-	WLAN_HDD_P2P_DEVICE,
-	WLAN_HDD_OCB
-} device_mode_t;
-
 typedef enum rem_on_channel_request_type {
 	REMAIN_ON_CHANNEL_REQUEST,
 	OFF_CHANNEL_ACTION_TX,
@@ -869,7 +847,7 @@ struct hdd_adapter_s {
 	/** Handle to the network device */
 	struct net_device *dev;
 
-	device_mode_t device_mode;
+	enum tQDF_ADAPTER_MODE device_mode;
 
 	/** IPv4 notifier callback for handling ARP offload on change in IP */
 	struct work_struct ipv4NotifierWorkQueue;
@@ -1080,8 +1058,8 @@ struct hdd_adapter_s {
 #endif
 #ifdef FEATURE_WLAN_TDLS
 #define WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter) \
-	(((WLAN_HDD_INFRA_STATION != pAdapter->device_mode) && \
-	  (WLAN_HDD_P2P_CLIENT != pAdapter->device_mode)) ? 0 : 1)
+	(((QDF_STA_MODE != pAdapter->device_mode) && \
+	  (QDF_P2P_CLIENT_MODE != pAdapter->device_mode)) ? 0 : 1)
 #define WLAN_HDD_GET_TDLS_CTX_PTR(pAdapter) \
 	((WLAN_HDD_IS_TDLS_SUPPORTED_ADAPTER(pAdapter)) ? \
 	 (tdlsCtx_t *)(pAdapter)->sessionCtx.station.pHddTdlsCtx : NULL)
@@ -1457,7 +1435,8 @@ hdd_adapter_t *hdd_get_adapter_by_vdev(hdd_context_t *pHddCtx,
 hdd_adapter_t *hdd_get_adapter_by_macaddr(hdd_context_t *pHddCtx,
 					  tSirMacAddr macAddr);
 QDF_STATUS hdd_init_station_mode(hdd_adapter_t *pAdapter);
-hdd_adapter_t *hdd_get_adapter(hdd_context_t *pHddCtx, device_mode_t mode);
+hdd_adapter_t *hdd_get_adapter(hdd_context_t *pHddCtx,
+			enum tQDF_ADAPTER_MODE mode);
 void hdd_deinit_adapter(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter,
 			bool rtnl_held);
 QDF_STATUS hdd_stop_adapter(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter,
@@ -1465,7 +1444,8 @@ QDF_STATUS hdd_stop_adapter(hdd_context_t *pHddCtx, hdd_adapter_t *pAdapter,
 void hdd_set_station_ops(struct net_device *pWlanDev);
 uint8_t *wlan_hdd_get_intf_addr(hdd_context_t *pHddCtx);
 void wlan_hdd_release_intf_addr(hdd_context_t *pHddCtx, uint8_t *releaseAddr);
-uint8_t hdd_get_operating_channel(hdd_context_t *pHddCtx, device_mode_t mode);
+uint8_t hdd_get_operating_channel(hdd_context_t *pHddCtx,
+			enum tQDF_ADAPTER_MODE mode);
 
 void hdd_set_conparam(uint32_t con_param);
 enum tQDF_GLOBAL_CON_MODE hdd_get_conparam(void);
@@ -1636,7 +1616,7 @@ QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void);
 #else
 static inline QDF_STATUS hdd_register_for_sap_restart_with_channel_switch(void)
 {
-	return CDF_STATUS_SUCCESS;
+	return QDF_STATUS_SUCCESS;
 }
 #endif
 
