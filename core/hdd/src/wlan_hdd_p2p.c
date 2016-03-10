@@ -229,9 +229,9 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 	 */
 	schedule_delayed_work(&hdd_ctx->roc_req_work, 0);
 
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
 		uint8_t sessionId = pAdapter->sessionId;
 		if (REMAIN_ON_CHANNEL_REQUEST ==
@@ -241,8 +241,8 @@ QDF_STATUS wlan_hdd_remain_on_channel_callback(tHalHandle hHal, void *pCtx,
 						  (SIR_MAC_MGMT_PROBE_REQ << 4),
 						  NULL, 0);
 		}
-	} else if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
-		   (WLAN_HDD_P2P_GO == pAdapter->device_mode)
+	} else if ((QDF_SAP_MODE == pAdapter->device_mode) ||
+		   (QDF_P2P_GO_MODE == pAdapter->device_mode)
 		   ) {
 		wlansap_de_register_mgmt_frame(
 #ifdef WLAN_FEATURE_MBSSID
@@ -327,16 +327,16 @@ void wlan_hdd_cancel_existing_remain_on_channel(hdd_adapter_t *pAdapter)
 		 * The remain on channel callback will make sure the remain_on_chan
 		 * expired event is sent.
 		 */
-		if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-		    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-		    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+		if ((QDF_STA_MODE == pAdapter->device_mode) ||
+		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+		    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 		    ) {
 			sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX
 							     (pAdapter),
 				pAdapter->sessionId,
 				pRemainChanCtx->scan_id);
-		} else if ((WLAN_HDD_SOFTAP == pAdapter->device_mode)
-			   || (WLAN_HDD_P2P_GO == pAdapter->device_mode)
+		} else if ((QDF_SAP_MODE == pAdapter->device_mode)
+			   || (QDF_P2P_GO_MODE == pAdapter->device_mode)
 			   ) {
 			wlansap_cancel_remain_on_channel(
 #ifdef WLAN_FEATURE_MBSSID
@@ -368,7 +368,7 @@ int wlan_hdd_check_remain_on_channel(hdd_adapter_t *pAdapter)
 	int status = 0;
 	hdd_cfg80211_state_t *cfgState = WLAN_HDD_GET_CFG_STATE_PTR(pAdapter);
 
-	if (WLAN_HDD_P2P_GO != pAdapter->device_mode) {
+	if (QDF_P2P_GO_MODE != pAdapter->device_mode) {
 		/* Cancel Existing Remain On Channel */
 		/* If no action frame is pending */
 		if (cfgState->remain_on_chan_ctx != NULL) {
@@ -420,13 +420,13 @@ void wlan_hdd_cancel_pending_roc(hdd_adapter_t *adapter)
 	}
 	mutex_unlock(&cfg_state->remain_on_chan_ctx_lock);
 
-	if (adapter->device_mode == WLAN_HDD_P2P_GO) {
+	if (adapter->device_mode == QDF_P2P_GO_MODE) {
 		wlansap_cancel_remain_on_channel((WLAN_HDD_GET_CTX
 					(adapter))->pcds_context,
 					cfg_state->remain_on_chan_ctx->scan_id);
-	} else if (adapter->device_mode == WLAN_HDD_P2P_CLIENT
+	} else if (adapter->device_mode == QDF_P2P_CLIENT_MODE
 			|| adapter->device_mode ==
-			WLAN_HDD_P2P_DEVICE) {
+			QDF_P2P_DEVICE_MODE) {
 		sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX
 				(adapter),
 				adapter->sessionId,
@@ -519,15 +519,15 @@ void wlan_hdd_remain_on_chan_timeout(void *data)
 	mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 	hddLog(LOG1, "%s: Cancel Remain on Channel on timeout", __func__);
 
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
 		sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX(pAdapter),
 			pAdapter->sessionId,
 			pRemainChanCtx->scan_id);
-	} else if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
-		   (WLAN_HDD_P2P_GO == pAdapter->device_mode)
+	} else if ((QDF_SAP_MODE == pAdapter->device_mode) ||
+		   (QDF_P2P_GO_MODE == pAdapter->device_mode)
 		   ) {
 		wlansap_cancel_remain_on_channel(
 			(WLAN_HDD_GET_CTX(pAdapter))->pcds_context,
@@ -583,9 +583,8 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter_temp = pAdapterNode->pAdapter;
-		if (pAdapter_temp->device_mode == WLAN_HDD_P2P_GO) {
+		if (pAdapter_temp->device_mode == QDF_P2P_GO_MODE)
 			isGoPresent = true;
-		}
 		status = hdd_get_next_adapter(pHddCtx, pAdapterNode, &pNext);
 		pAdapterNode = pNext;
 	}
@@ -601,9 +600,9 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 	INIT_COMPLETION(pAdapter->rem_on_chan_ready_event);
 
 	/* call sme API to start remain on channel. */
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
 		uint8_t sessionId = pAdapter->sessionId;
 		/* call sme API to start remain on channel. */
@@ -641,8 +640,8 @@ static int wlan_hdd_execute_remain_on_channel(hdd_adapter_t *pAdapter,
 					FL("sme_register_mgmt_frame failed"));
 		}
 
-	} else if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
-		   (WLAN_HDD_P2P_GO == pAdapter->device_mode)) {
+	} else if ((QDF_SAP_MODE == pAdapter->device_mode) ||
+		   (QDF_P2P_GO_MODE == pAdapter->device_mode)) {
 		/* call sme API to start remain on channel. */
 		if (QDF_STATUS_SUCCESS != wlansap_remain_on_channel(
 #ifdef WLAN_FEATURE_MBSSID
@@ -870,7 +869,7 @@ static int wlan_hdd_request_remain_on_channel(struct wiphy *wiphy,
 	pRemainChanCtx->action_pkt_buff.frame_length = 0;
 	pRemainChanCtx->hdd_remain_on_chan_cancel_in_progress = false;
 	if (REMAIN_ON_CHANNEL_REQUEST == request_type) {
-		sta_adapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
+		sta_adapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
 		if ((NULL != sta_adapter) &&
 			hdd_conn_is_connected(
 				WLAN_HDD_GET_STATION_CTX_PTR(sta_adapter))) {
@@ -1178,17 +1177,17 @@ int __wlan_hdd_cfg80211_cancel_remain_on_channel(struct wiphy *wiphy,
 	 * The remain on channel callback will make sure the remain_on_chan
 	 * expired event is sent.
 	 */
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
 
 		uint8_t sessionId = pAdapter->sessionId;
 		sme_cancel_remain_on_channel(WLAN_HDD_GET_HAL_CTX(pAdapter),
 			sessionId,
 			pRemainChanCtx->scan_id);
-	} else if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
-		   (WLAN_HDD_P2P_GO == pAdapter->device_mode)
+	} else if ((QDF_SAP_MODE == pAdapter->device_mode) ||
+		   (QDF_P2P_GO_MODE == pAdapter->device_mode)
 		   ) {
 		wlansap_cancel_remain_on_channel(
 #ifdef WLAN_FEATURE_MBSSID
@@ -1333,7 +1332,7 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 		mutex_unlock(&cfgState->remain_on_chan_ctx_lock);
 	}
 
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) &&
+	if ((QDF_STA_MODE == pAdapter->device_mode) &&
 		(type == SIR_MAC_MGMT_FRAME &&
 		subType == SIR_MAC_MGMT_PROBE_RSP)) {
 			/* Drop Probe response received
@@ -1345,8 +1344,8 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 	/* Call sme API to send out a action frame. */
 	/* OR can we send it directly through data path?? */
 	/* After tx completion send tx status back. */
-	if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_GO == pAdapter->device_mode)
+	if ((QDF_SAP_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_GO_MODE == pAdapter->device_mode)
 	    ) {
 		if (type == SIR_MAC_MGMT_FRAME) {
 			if (subType == SIR_MAC_MGMT_PROBE_RSP) {
@@ -1396,13 +1395,13 @@ int __wlan_hdd_mgmt_tx(struct wiphy *wiphy, struct wireless_dev *wdev,
 					     [WLAN_HDD_PUBLIC_ACTION_FRAME_OFFSET]));
 	}
 
-	if (pAdapter->device_mode == WLAN_HDD_SOFTAP) {
+	if (pAdapter->device_mode == QDF_SAP_MODE) {
 		home_ch = pAdapter->sessionCtx.ap.operatingChannel;
-	} else if (pAdapter->device_mode == WLAN_HDD_INFRA_STATION) {
+	} else if (pAdapter->device_mode == QDF_STA_MODE) {
 		home_ch =
 			pAdapter->sessionCtx.station.conn_info.operationChannel;
 	} else {
-		goAdapter = hdd_get_adapter(pAdapter->pHddCtx, WLAN_HDD_P2P_GO);
+		goAdapter = hdd_get_adapter(pAdapter->pHddCtx, QDF_P2P_GO_MODE);
 		if (goAdapter)
 			home_ch = goAdapter->sessionCtx.ap.operatingChannel;
 	}
@@ -1544,9 +1543,9 @@ send_frame:
 	 * Firmware needs channel information for action frames
 	 * which are not sent on the current operating channel of VDEV
 	 */
-	if ((WLAN_HDD_P2P_DEVICE == pAdapter->device_mode) ||
-		(WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-		(WLAN_HDD_P2P_GO == pAdapter->device_mode)) {
+	if ((QDF_P2P_DEVICE_MODE == pAdapter->device_mode) ||
+		(QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+		(QDF_P2P_GO_MODE == pAdapter->device_mode)) {
 		if (chan && (chan->center_freq != 0))
 			current_freq = chan->center_freq;
 		else
@@ -1557,9 +1556,9 @@ send_frame:
 
 	INIT_COMPLETION(pAdapter->tx_action_cnf_event);
 
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 	    ) {
 		uint8_t sessionId = pAdapter->sessionId;
 
@@ -1591,8 +1590,8 @@ send_frame:
 				  "%s: sme_send_action returned fail", __func__);
 			goto err;
 		}
-	} else if (WLAN_HDD_SOFTAP == pAdapter->device_mode ||
-		   WLAN_HDD_P2P_GO == pAdapter->device_mode) {
+	} else if (QDF_SAP_MODE == pAdapter->device_mode ||
+		   QDF_P2P_GO_MODE == pAdapter->device_mode) {
 		if (QDF_STATUS_SUCCESS !=
 #ifdef WLAN_FEATURE_MBSSID
 		    wlansap_send_action(WLAN_HDD_GET_SAP_CTX_PTR(pAdapter),
@@ -1930,19 +1929,19 @@ static uint8_t wlan_hdd_get_session_type(enum nl80211_iftype type)
 
 	switch (type) {
 	case NL80211_IFTYPE_AP:
-		sessionType = WLAN_HDD_SOFTAP;
+		sessionType = QDF_SAP_MODE;
 		break;
 	case NL80211_IFTYPE_P2P_GO:
-		sessionType = WLAN_HDD_P2P_GO;
+		sessionType = QDF_P2P_GO_MODE;
 		break;
 	case NL80211_IFTYPE_P2P_CLIENT:
-		sessionType = WLAN_HDD_P2P_CLIENT;
+		sessionType = QDF_P2P_CLIENT_MODE;
 		break;
 	case NL80211_IFTYPE_STATION:
-		sessionType = WLAN_HDD_INFRA_STATION;
+		sessionType = QDF_STA_MODE;
 		break;
 	default:
-		sessionType = WLAN_HDD_INFRA_STATION;
+		sessionType = QDF_STA_MODE;
 		break;
 	}
 
@@ -1987,18 +1986,18 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 	MTRACE(qdf_trace(QDF_MODULE_ID_HDD,
 			 TRACE_CODE_HDD_ADD_VIRTUAL_INTF, NO_SESSION, type));
 	/*
-	 * Allow addition multiple interfaces for WLAN_HDD_P2P_GO,
-	 * WLAN_HDD_SOFTAP, WLAN_HDD_P2P_CLIENT and WLAN_HDD_INFRA_STATION
+	 * Allow addition multiple interfaces for QDF_P2P_GO_MODE,
+	 * QDF_SAP_MODE, QDF_P2P_CLIENT_MODE and QDF_STA_MODE
 	 * session type.
 	 */
 	session_type = wlan_hdd_get_session_type(type);
 	if ((hdd_get_adapter(pHddCtx, session_type) != NULL)
 #ifdef WLAN_FEATURE_MBSSID
-	    && WLAN_HDD_SOFTAP != session_type
-	    && WLAN_HDD_P2P_GO != session_type
+	    && QDF_SAP_MODE != session_type
+	    && QDF_P2P_GO_MODE != session_type
 #endif
-	    && WLAN_HDD_P2P_CLIENT != session_type
-	    && WLAN_HDD_INFRA_STATION != session_type) {
+	    && QDF_P2P_CLIENT_MODE != session_type
+	    && QDF_STA_MODE != session_type) {
 		hddLog(LOGE,
 		       "%s: Interface type %d already exists. "
 		       "Two interfaces of same type are not supported currently.",
@@ -2008,7 +2007,7 @@ struct wireless_dev *__wlan_hdd_add_virtual_intf(struct wiphy *wiphy,
 
 	wlan_hdd_tdls_disable_offchan_and_teardown_links(pHddCtx);
 
-	pAdapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
+	pAdapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
 	if (pAdapter != NULL) {
 		scan_info = &pAdapter->scan_info;
 		if (scan_info->mScanPending) {

@@ -223,8 +223,8 @@ static int __wlan_hdd_ipv6_changed(struct notifier_block *nb,
 	}
 
 	if ((pAdapter->dev == ndev) &&
-		(pAdapter->device_mode == WLAN_HDD_INFRA_STATION ||
-		pAdapter->device_mode == WLAN_HDD_P2P_CLIENT)) {
+		(pAdapter->device_mode == QDF_STA_MODE ||
+		pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
 		if (0 != status)
@@ -294,8 +294,8 @@ static void hdd_conf_ns_offload(hdd_adapter_t *pAdapter, bool fenable)
 	 * is controlled by one bit.
 	 */
 
-	if ((WLAN_HDD_SOFTAP == pAdapter->device_mode ||
-		WLAN_HDD_P2P_GO == pAdapter->device_mode) &&
+	if ((QDF_SAP_MODE == pAdapter->device_mode ||
+		QDF_P2P_GO_MODE == pAdapter->device_mode) &&
 		!pHddCtx->ap_arpns_support) {
 		hddLog(LOG1,
 			FL("NS Offload is not supported in SAP/P2PGO mode"));
@@ -496,8 +496,8 @@ void hdd_conf_hostoffload(hdd_adapter_t *pAdapter, bool fenable)
 	/* Get the HDD context. */
 	pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 
-	if (((WLAN_HDD_INFRA_STATION != pAdapter->device_mode) &&
-	     (WLAN_HDD_P2P_CLIENT != pAdapter->device_mode))) {
+	if (((QDF_STA_MODE != pAdapter->device_mode) &&
+	     (QDF_P2P_CLIENT_MODE != pAdapter->device_mode))) {
 		hdd_err("Offloads not supported in mode %d",
 			pAdapter->device_mode);
 		return;
@@ -618,8 +618,8 @@ static int __wlan_hdd_ipv4_changed(struct notifier_block *nb,
 	}
 
 	if ((pAdapter && pAdapter->dev == ndev) &&
-		(pAdapter->device_mode == WLAN_HDD_INFRA_STATION ||
-		pAdapter->device_mode == WLAN_HDD_P2P_CLIENT)) {
+		(pAdapter->device_mode == QDF_STA_MODE ||
+		pAdapter->device_mode == QDF_P2P_CLIENT_MODE)) {
 
 		pHddCtx = WLAN_HDD_GET_CTX(pAdapter);
 		status = wlan_hdd_validate_context(pHddCtx);
@@ -698,8 +698,8 @@ QDF_STATUS hdd_conf_arp_offload(hdd_adapter_t *pAdapter, bool fenable)
 	/* In SAP/P2P Go mode, ARP/NS Offload feature capability
 	 * is controlled by one bit.
 	 */
-	if ((WLAN_HDD_SOFTAP == pAdapter->device_mode ||
-		WLAN_HDD_P2P_GO == pAdapter->device_mode) &&
+	if ((QDF_SAP_MODE == pAdapter->device_mode ||
+		QDF_P2P_GO_MODE == pAdapter->device_mode) &&
 		!pHddCtx->ap_arpns_support) {
 		hddLog(LOG1,
 			FL("ARP Offload is not supported in SAP/P2PGO mode"));
@@ -918,8 +918,8 @@ void wlan_hdd_set_mc_addr_list(hdd_adapter_t *pAdapter, uint8_t set)
 		/* Following pre-conditions should be satisfied before we
 		 * configure the MC address list.
 		 */
-		if (((pAdapter->device_mode == WLAN_HDD_INFRA_STATION)
-		     || (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT))
+		if (((pAdapter->device_mode == QDF_STA_MODE)
+		     || (pAdapter->device_mode == QDF_P2P_CLIENT_MODE))
 		    && pAdapter->mc_addr_list.mc_cnt
 		    && (eConnectionState_Associated ==
 			(WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->
@@ -1517,11 +1517,11 @@ QDF_STATUS hdd_wlan_re_init(void *hif_sc)
 	}
 
 	/* Try to get an adapter from mode ID */
-	pAdapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
+	pAdapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
 	if (!pAdapter) {
-		pAdapter = hdd_get_adapter(pHddCtx, WLAN_HDD_SOFTAP);
+		pAdapter = hdd_get_adapter(pHddCtx, QDF_SAP_MODE);
 		if (!pAdapter) {
-			pAdapter = hdd_get_adapter(pHddCtx, WLAN_HDD_IBSS);
+			pAdapter = hdd_get_adapter(pHddCtx, QDF_IBSS_MODE);
 			if (!pAdapter) {
 				hddLog(QDF_TRACE_LEVEL_FATAL,
 				       "%s: Failed to get Adapter!", __func__);
@@ -1689,8 +1689,8 @@ wlan_hdd_set_powersave(hdd_adapter_t *adapter, enum hdd_power_mode mode)
 		 */
 		sme_ps_enable_disable(hal, adapter->sessionId, SME_PS_DISABLE);
 	} else if (DRIVER_POWER_MODE_AUTO == mode) {
-		if ((WLAN_HDD_INFRA_STATION == adapter->device_mode) ||
-				(WLAN_HDD_P2P_CLIENT == adapter->device_mode)) {
+		if ((QDF_STA_MODE == adapter->device_mode) ||
+				(QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
 			hddLog(LOG1, FL("Disabling Auto Power save timer"));
 			sme_ps_disable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX
 					(adapter),
@@ -1778,7 +1778,7 @@ static int __wlan_hdd_cfg80211_resume_wlan(struct wiphy *wiphy)
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
 		if ((NULL != pAdapter) &&
-		    (WLAN_HDD_INFRA_STATION == pAdapter->device_mode)) {
+		    (QDF_STA_MODE == pAdapter->device_mode)) {
 			if (0 !=
 			    wlan_hdd_cfg80211_update_bss(pHddCtx->wiphy,
 							 pAdapter, 0)) {
@@ -1885,7 +1885,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 	status = hdd_get_front_adapter(pHddCtx, &pAdapterNode);
 	while (NULL != pAdapterNode && QDF_STATUS_SUCCESS == status) {
 		pAdapter = pAdapterNode->pAdapter;
-		if (WLAN_HDD_SOFTAP == pAdapter->device_mode) {
+		if (QDF_SAP_MODE == pAdapter->device_mode) {
 			if (BSS_START ==
 			    WLAN_HDD_GET_HOSTAP_STATE_PTR(pAdapter)->bssState &&
 			    true ==
@@ -1902,7 +1902,7 @@ static int __wlan_hdd_cfg80211_suspend_wlan(struct wiphy *wiphy,
 					FL("SAP does not support suspend!!"));
 				return -EOPNOTSUPP;
 			}
-		} else if (WLAN_HDD_P2P_GO == pAdapter->device_mode) {
+		} else if (QDF_P2P_GO_MODE == pAdapter->device_mode) {
 			if (!pHddCtx->config->enableSapSuspend) {
 				/* return -EOPNOTSUPP if GO does not support
 				 * suspend
@@ -2270,7 +2270,7 @@ static int __wlan_hdd_cfg80211_get_txpower(struct wiphy *wiphy,
 		return status;
 	}
 
-	pAdapter = hdd_get_adapter(pHddCtx, WLAN_HDD_INFRA_STATION);
+	pAdapter = hdd_get_adapter(pHddCtx, QDF_STA_MODE);
 	if (NULL == pAdapter) {
 		hddLog(LOGE, FL("pAdapter is NULL"));
 		return -ENOENT;
