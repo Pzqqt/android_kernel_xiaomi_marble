@@ -376,7 +376,7 @@ static QDF_STATUS oem_process_data_req_msg(int oemDataLen, char *oemData)
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
 	/* for now, STA interface only */
-	pAdapter = hdd_get_adapter(p_hdd_ctx, WLAN_HDD_INFRA_STATION);
+	pAdapter = hdd_get_adapter(p_hdd_ctx, QDF_STA_MODE);
 	if (!pAdapter) {
 		QDF_TRACE(QDF_MODULE_ID_HDD, QDF_TRACE_LEVEL_ERROR,
 			  "%s: No adapter for STA mode", __func__);
@@ -609,7 +609,7 @@ static int oem_process_get_cap_req_msg(void)
 	uint8_t *buf;
 
 	/* for now, STA interface only */
-	adapter = hdd_get_adapter(p_hdd_ctx, WLAN_HDD_INFRA_STATION);
+	adapter = hdd_get_adapter(p_hdd_ctx, QDF_STA_MODE);
 	if (!adapter) {
 		hdd_err("No adapter for STA mode");
 		return -EINVAL;

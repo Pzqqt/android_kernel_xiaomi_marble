@@ -731,7 +731,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		       sizeof(pCsrRoamInfo->pBssDesc->bssId));
 
 #ifdef WLAN_FEATURE_P2P_DEBUG
-		if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
+		if (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			if (global_p2p_connection_status ==
 			    P2P_CLIENT_CONNECTING_STATE_1) {
 				global_p2p_connection_status =
@@ -772,7 +772,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		    ) {
 			hdd_send_ft_assoc_response(dev, pAdapter, pCsrRoamInfo);
 		}
-		if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
+		if (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			tSirSmeChanInfo chan_info;
 			qdf_copy_macaddr(&peerMacAddr,
 					 &pHddStaCtx->conn_info.bssId);
@@ -825,7 +825,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		wlan_hdd_auto_shutdown_enable(pHddCtx, true);
 #endif
 
-		if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
+		if (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 			qdf_copy_macaddr(&peerMacAddr,
 					 &pHddStaCtx->conn_info.bssId);
 
@@ -840,7 +840,7 @@ static void hdd_send_association_event(struct net_device *dev,
 		wlan_hdd_send_status_pkg(pAdapter, pHddStaCtx, 1, 0);
 #endif
 #ifdef FEATURE_WLAN_TDLS
-		if ((pAdapter->device_mode == WLAN_HDD_INFRA_STATION) &&
+		if ((pAdapter->device_mode == QDF_STA_MODE) &&
 		    (pCsrRoamInfo)) {
 			hddLog(LOG4,
 				FL("tdls_prohibited: %d, tdls_chan_swit_prohibited: %d"),
@@ -1064,7 +1064,7 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		 */
 		if (cds_is_load_or_unload_in_progress()) {
 #ifdef WLAN_FEATURE_P2P_DEBUG
-			if (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
+			if (pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 				if (global_p2p_connection_status ==
 				    P2P_CLIENT_CONNECTED_STATE_1) {
 					global_p2p_connection_status =
@@ -1137,8 +1137,8 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 	hddLog(LOG1, FL("Set HDD connState to eConnectionState_NotConnected"));
 	hdd_conn_set_connection_state(pAdapter, eConnectionState_NotConnected);
 #ifdef WLAN_FEATURE_GTK_OFFLOAD
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-	    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode)) {
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+	    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
 		memset(&pHddStaCtx->gtkOffloadReqParams, 0,
 		       sizeof(tSirGtkOffloadParams));
 		pHddStaCtx->gtkOffloadReqParams.ulFlags = GTK_OFFLOAD_DISABLE;
@@ -1150,8 +1150,8 @@ static QDF_STATUS hdd_dis_connect_handler(hdd_adapter_t *pAdapter,
 		wlan_hdd_tdls_disconnection_callback(pAdapter);
 #endif
 
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-			(WLAN_HDD_P2P_CLIENT == pAdapter->device_mode)) {
+	if ((QDF_STA_MODE == pAdapter->device_mode) ||
+			(QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
 		sme_ps_disable_auto_ps_timer(WLAN_HDD_GET_HAL_CTX
 				(pAdapter),
 				pAdapter->sessionId);
@@ -1243,8 +1243,8 @@ QDF_STATUS hdd_change_peer_state(hdd_adapter_t *pAdapter,
 			return QDF_STATUS_E_FAULT;
 		}
 
-		if (pAdapter->device_mode == WLAN_HDD_INFRA_STATION ||
-		    pAdapter->device_mode == WLAN_HDD_P2P_CLIENT) {
+		if (pAdapter->device_mode == QDF_STA_MODE ||
+		    pAdapter->device_mode == QDF_P2P_CLIENT_MODE) {
 #if defined(QCA_LL_LEGACY_TX_FLOW_CONTROL) || defined(QCA_LL_TX_FLOW_CONTROL_V2)
 			unsigned long rc;
 
@@ -1545,8 +1545,8 @@ static int hdd_change_sta_state_authenticated(hdd_adapter_t *adapter,
 			OL_TXRX_PEER_STATE_AUTH,
 			hdd_is_roam_sync_in_progress(roaminfo));
 	hdd_conn_set_authenticated(adapter, true);
-	if ((WLAN_HDD_INFRA_STATION == adapter->device_mode) ||
-		(WLAN_HDD_P2P_CLIENT == adapter->device_mode)) {
+	if ((QDF_STA_MODE == adapter->device_mode) ||
+		(QDF_P2P_CLIENT_MODE == adapter->device_mode)) {
 		sme_ps_enable_auto_ps_timer(
 			WLAN_HDD_GET_HAL_CTX(adapter),
 			adapter->sessionId,
@@ -1595,7 +1595,7 @@ static QDF_STATUS hdd_roam_set_key_complete_handler(hdd_adapter_t *pAdapter,
 	fConnected = hdd_conn_get_connected_cipher_algo(pHddStaCtx,
 						   &connectedCipherAlgo);
 	if (fConnected) {
-		if (WLAN_HDD_IBSS == pAdapter->device_mode) {
+		if (QDF_IBSS_MODE == pAdapter->device_mode) {
 			uint8_t staId;
 
 			if (qdf_is_macaddr_broadcast(&pRoamInfo->peerMac)) {
@@ -4531,7 +4531,7 @@ int hdd_set_genie_to_csr(hdd_adapter_t *pAdapter, eCsrAuthType *RSNAuthType)
 		pWextState->roamProfile.mcEncryptionType.encryptionType[0] =
 			mcRSNEncryptType;
 
-		if ((WLAN_HDD_IBSS == pAdapter->device_mode) &&
+		if ((QDF_IBSS_MODE == pAdapter->device_mode) &&
 		    ((eCSR_ENCRYPT_TYPE_AES == mcRSNEncryptType) ||
 		     (eCSR_ENCRYPT_TYPE_TKIP == mcRSNEncryptType))) {
 			/*
@@ -4734,8 +4734,8 @@ static int __iw_set_essid(struct net_device *dev,
 	if (0 != ret)
 		return ret;
 
-	if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION &&
-		pAdapter->device_mode != WLAN_HDD_P2P_CLIENT) {
+	if (pAdapter->device_mode != QDF_STA_MODE &&
+		pAdapter->device_mode != QDF_P2P_CLIENT_MODE) {
 		hddLog(LOGW, FL("device mode %s(%d) is not allowed"),
 			hdd_device_mode_to_string(pAdapter->device_mode),
 			pAdapter->device_mode);

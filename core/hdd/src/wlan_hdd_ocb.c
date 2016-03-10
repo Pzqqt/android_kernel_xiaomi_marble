@@ -494,7 +494,7 @@ static int __iw_set_dot11p_channel_sched(struct net_device *dev,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -803,7 +803,7 @@ static int __wlan_hdd_cfg80211_ocb_set_config(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -998,7 +998,7 @@ static int __wlan_hdd_cfg80211_ocb_set_utc_time(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -1111,7 +1111,7 @@ __wlan_hdd_cfg80211_ocb_start_timing_advert(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -1231,7 +1231,7 @@ __wlan_hdd_cfg80211_ocb_stop_timing_advert(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -1359,7 +1359,7 @@ __wlan_hdd_cfg80211_ocb_get_tsf_timer(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -1549,7 +1549,7 @@ static int __wlan_hdd_cfg80211_dcc_get_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -1716,7 +1716,7 @@ static int __wlan_hdd_cfg80211_dcc_clear_stats(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		return -EINVAL;
 	}
@@ -1837,7 +1837,7 @@ static int __wlan_hdd_cfg80211_dcc_update_ndl(struct wiphy *wiphy,
 		goto end;
 	}
 
-	if (adapter->device_mode != WLAN_HDD_OCB) {
+	if (adapter->device_mode != QDF_OCB_MODE) {
 		hddLog(LOGE, FL("Device not in OCB mode!"));
 		goto end;
 	}

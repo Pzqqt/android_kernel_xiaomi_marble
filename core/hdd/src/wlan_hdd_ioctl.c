@@ -874,7 +874,7 @@ hdd_reassoc(hdd_adapter_t *adapter, const uint8_t *bssid,
 	hdd_station_ctx_t *pHddStaCtx;
 	int ret = 0;
 
-	if (WLAN_HDD_INFRA_STATION != adapter->device_mode) {
+	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -1061,7 +1061,7 @@ hdd_sendactionframe(hdd_adapter_t *adapter, const uint8_t *bssid,
 	struct cfg80211_mgmt_tx_params params;
 #endif
 
-	if (WLAN_HDD_INFRA_STATION != adapter->device_mode) {
+	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -2451,8 +2451,8 @@ static int wlan_hdd_get_link_status(hdd_adapter_t *adapter)
 		return 0;
 	}
 
-	if ((WLAN_HDD_INFRA_STATION != adapter->device_mode) &&
-	    (WLAN_HDD_P2P_CLIENT != adapter->device_mode)) {
+	if ((QDF_STA_MODE != adapter->device_mode) &&
+	    (QDF_P2P_CLIENT_MODE != adapter->device_mode)) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -2883,9 +2883,9 @@ int wlan_hdd_set_mc_rate(hdd_adapter_t *pAdapter, int targetRate)
 			  "%s: HDD context is null", __func__);
 		return -EINVAL;
 	}
-	if ((WLAN_HDD_IBSS != pAdapter->device_mode) &&
-	    (WLAN_HDD_SOFTAP != pAdapter->device_mode) &&
-	    (WLAN_HDD_INFRA_STATION != pAdapter->device_mode)) {
+	if ((QDF_IBSS_MODE != pAdapter->device_mode) &&
+	    (QDF_SAP_MODE != pAdapter->device_mode) &&
+	    (QDF_STA_MODE != pAdapter->device_mode)) {
 		hddLog(LOGE,
 			FL("Received SETMCRATE cmd in invalid mode %s(%d)"),
 			hdd_device_mode_to_string(pAdapter->device_mode),
@@ -4660,7 +4660,7 @@ static int drv_cmd_fast_reassoc(hdd_adapter_t *adapter,
 #endif
 	hdd_station_ctx_t *pHddStaCtx;
 
-	if (WLAN_HDD_INFRA_STATION != adapter->device_mode) {
+	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -5205,7 +5205,7 @@ static int drv_cmd_set_ibss_beacon_oui_data(hdd_adapter_t *adapter,
 	hdd_wext_state_t *pWextState;
 
 
-	if (WLAN_HDD_IBSS != adapter->device_mode) {
+	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hddLog(LOG1, FL("Device_mode %s(%d) not IBSS"),
 			hdd_device_mode_to_string(adapter->device_mode),
 			adapter->device_mode);
@@ -5316,8 +5316,8 @@ static int drv_cmd_set_rmc_enable(hdd_adapter_t *adapter,
 	uint8_t ucRmcEnable = 0;
 	int status;
 
-	if ((WLAN_HDD_IBSS != adapter->device_mode) &&
-	    (WLAN_HDD_SOFTAP != adapter->device_mode)) {
+	if ((QDF_IBSS_MODE != adapter->device_mode) &&
+	    (QDF_SAP_MODE != adapter->device_mode)) {
 		hddLog(LOGE,
 			"Received SETRMCENABLE cmd in invalid mode %s(%d)",
 			hdd_device_mode_to_string(adapter->device_mode),
@@ -5381,8 +5381,8 @@ static int drv_cmd_set_rmc_action_period(hdd_adapter_t *adapter,
 	uint32_t uActionPeriod = 0;
 	int status;
 
-	if ((WLAN_HDD_IBSS != adapter->device_mode) &&
-	    (WLAN_HDD_SOFTAP != adapter->device_mode)) {
+	if ((QDF_IBSS_MODE != adapter->device_mode) &&
+	    (QDF_SAP_MODE != adapter->device_mode)) {
 		hddLog(LOGE, "Received SETRMC cmd in invalid mode %s(%d)",
 			hdd_device_mode_to_string(adapter->device_mode),
 			adapter->device_mode);
@@ -5447,7 +5447,7 @@ static int drv_cmd_get_ibss_peer_info_all(hdd_adapter_t *adapter,
 	uint32_t txRateMbps = 0;
 	uint32_t numOfBytestoPrint = 0;
 
-	if (WLAN_HDD_IBSS != adapter->device_mode) {
+	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -5603,7 +5603,7 @@ static int drv_cmd_get_ibss_peer_info(hdd_adapter_t *adapter,
 	uint32_t txRate;
 	struct qdf_mac_addr peerMacAddr;
 
-	if (WLAN_HDD_IBSS != adapter->device_mode) {
+	if (QDF_IBSS_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -5703,8 +5703,8 @@ static int drv_cmd_set_rmc_tx_rate(hdd_adapter_t *adapter,
 	int status;
 	struct hdd_config *pConfig = hdd_ctx->config;
 
-	if ((WLAN_HDD_IBSS != adapter->device_mode) &&
-	    (WLAN_HDD_SOFTAP != adapter->device_mode)) {
+	if ((QDF_IBSS_MODE != adapter->device_mode) &&
+	    (QDF_SAP_MODE != adapter->device_mode)) {
 		hddLog(LOGE,
 			"Received SETRMCTXRATE cmd in invalid mode %s(%d)",
 			hdd_device_mode_to_string(adapter->device_mode),
@@ -5872,8 +5872,8 @@ static int drv_cmd_get_tsm_stats(hdd_adapter_t *adapter,
 	hdd_station_ctx_t *pHddStaCtx;
 	tAniTrafStrmMetrics tsm_metrics;
 
-	if ((WLAN_HDD_INFRA_STATION != adapter->device_mode) &&
-	    (WLAN_HDD_P2P_CLIENT != adapter->device_mode)) {
+	if ((QDF_STA_MODE != adapter->device_mode) &&
+	    (QDF_P2P_CLIENT_MODE != adapter->device_mode)) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -6032,7 +6032,7 @@ static int drv_cmd_ccx_beacon_req(hdd_adapter_t *adapter,
 	tCsrEseBeaconReq eseBcnReq;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
 
-	if (WLAN_HDD_INFRA_STATION != adapter->device_mode) {
+	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_warn("Unsupported in mode %s(%d)",
 			 hdd_device_mode_to_string(adapter->device_mode),
 			 adapter->device_mode);
@@ -6882,8 +6882,8 @@ static int hdd_set_rx_filter(hdd_adapter_t *adapter, bool action,
 	else
 		adapter->addr_filter_pattern = 0;
 
-	if (((adapter->device_mode == WLAN_HDD_INFRA_STATION) ||
-		(adapter->device_mode == WLAN_HDD_P2P_CLIENT)) &&
+	if (((adapter->device_mode == QDF_STA_MODE) ||
+		(adapter->device_mode == QDF_P2P_CLIENT_MODE)) &&
 		adapter->mc_addr_list.mc_cnt &&
 		hdd_conn_is_connected(WLAN_HDD_GET_STATION_CTX_PTR(adapter))) {
 
@@ -7434,8 +7434,8 @@ static int drv_cmd_set_channel_switch(hdd_adapter_t *adapter,
 	uint8_t *value = command;
 	enum ch_width width;
 
-	if ((adapter->device_mode != WLAN_HDD_P2P_GO) &&
-		(adapter->device_mode != WLAN_HDD_SOFTAP)) {
+	if ((adapter->device_mode != QDF_P2P_GO_MODE) &&
+		(adapter->device_mode != QDF_SAP_MODE)) {
 		hdd_err("IOCTL CHANNEL_SWITCH not supported for mode %d",
 			adapter->device_mode);
 		return -EINVAL;

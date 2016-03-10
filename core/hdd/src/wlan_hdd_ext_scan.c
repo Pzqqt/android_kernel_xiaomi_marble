@@ -2538,7 +2538,7 @@ __wlan_hdd_cfg80211_extscan_get_valid_channels(struct wiphy *wiphy,
 
 	hdd_remove_dsrc_channels(wiphy, chan_list, &num_channels);
 
-	if ((WLAN_HDD_SOFTAP == pAdapter->device_mode) ||
+	if ((QDF_SAP_MODE == pAdapter->device_mode) ||
 	    !strncmp(hdd_get_fwpath(), "ap", 2))
 		hdd_remove_indoor_channels(wiphy, chan_list, &num_channels);
 

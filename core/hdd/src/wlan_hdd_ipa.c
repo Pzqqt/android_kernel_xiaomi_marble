@@ -814,7 +814,7 @@ static void hdd_ipa_uc_rt_debug_handler(void *ctext)
 			"%s: Dummy alloc fail", __func__);
 		hdd_ipa_uc_rt_debug_host_dump(hdd_ctx);
 		hdd_ipa_uc_stat_request(
-			hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP), 1);
+			hdd_get_adapter(hdd_ctx, QDF_SAP_MODE), 1);
 	} else {
 		kfree(dummy_ptr);
 	}
@@ -1628,7 +1628,7 @@ static void hdd_ipa_uc_offload_enable_disable(hdd_adapter_t *adapter,
 	 * layer as SAP updates and IPA doesn't have to do anything for these
 	 * updates so ignoring!
 	 */
-	if (WLAN_HDD_SOFTAP == adapter->device_mode && adapter->ipa_context)
+	if (QDF_SAP_MODE == adapter->device_mode && adapter->ipa_context)
 		return;
 
 	/* Lower layer may send multiple START_BSS_EVENT in DFS mode or during
@@ -3431,7 +3431,7 @@ static int hdd_ipa_setup_iface(struct hdd_ipa_priv *hdd_ipa,
 	 * layer as SAP updates and IPA doesn't have to do anything for these
 	 * updates so ignoring!
 	 */
-	if (WLAN_HDD_SOFTAP == adapter->device_mode && adapter->ipa_context)
+	if (QDF_SAP_MODE == adapter->device_mode && adapter->ipa_context)
 		return 0;
 
 	for (i = 0; i < HDD_IPA_MAX_IFACE; i++) {
@@ -3523,8 +3523,8 @@ int hdd_ipa_send_mcc_scc_msg(hdd_context_t *pHddCtx, bool mcc_mode)
 		status =  hdd_get_front_adapter(pHddCtx, &adapter_node);
 		while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 			pAdapter = adapter_node->pAdapter;
-			if (pAdapter->device_mode == WLAN_HDD_INFRA_STATION ||
-				pAdapter->device_mode == WLAN_HDD_SOFTAP) {
+			if (pAdapter->device_mode == QDF_STA_MODE ||
+				pAdapter->device_mode == QDF_SAP_MODE) {
 				hddLog(QDF_TRACE_LEVEL_INFO,
 					"MCC->SCC: Flush TxRx queue(d_mode=%d)",
 					pAdapter->device_mode);
@@ -3632,7 +3632,7 @@ int hdd_ipa_wlan_evt(hdd_adapter_t *adapter, uint8_t sta_id,
 
 	if (hdd_ipa_uc_is_enabled(hdd_ipa->hdd_ctx) &&
 		!hdd_ipa_uc_sta_is_enabled(hdd_ipa->hdd_ctx) &&
-		(WLAN_HDD_SOFTAP != adapter->device_mode)) {
+		(QDF_SAP_MODE != adapter->device_mode)) {
 		return 0;
 	}
 

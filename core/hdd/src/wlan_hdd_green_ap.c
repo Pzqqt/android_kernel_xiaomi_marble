@@ -193,7 +193,7 @@ static void hdd_wlan_green_ap_mc(struct hdd_context_s *hdd_ctx,
 		goto done;
 	}
 
-	adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (adapter == NULL) {
 		hdd_err("Green-AP no SAP adapter");
 		goto done;
