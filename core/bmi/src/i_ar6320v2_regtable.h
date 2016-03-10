@@ -33,7 +33,6 @@
 #define AR6320_REV2_1_REG_SIZE 0x0007F820
 #define AR6320_REV3_REG_SIZE   0x0007F820
 
-#ifdef HIF_PCI
 /*
  * Redefine the register list. To minimize the size of the array, the list must
  * obey the below format. {start0, end0}, {start1, end1}, {start2, end2}.......
@@ -603,5 +602,4 @@ static const tgt_reg_section ar6320v3_reg_table[] = {
 	{0x80000, 0x8000C},
 	{0x80010, 0x80020},
 };
-#endif
 #endif /* #ifndef _AR6320V2_DBG_REGTABLE_H_ */
