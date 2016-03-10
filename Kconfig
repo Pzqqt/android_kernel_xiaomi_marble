@@ -111,4 +111,8 @@ config FEATURE_LFR_SUBNET_DETECTION
 	bool "Enable LFR Subnet Change Detection"
 	default n
 
+config FEATURE_WLAN_MCC_TO_SCC_SWITCH
+	bool "Enable MCC to SCC Switch Logic"
+	default n
+
 endif # QCA_CLD_WLAN
