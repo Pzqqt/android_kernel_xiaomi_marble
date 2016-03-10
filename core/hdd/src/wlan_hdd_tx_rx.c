@@ -327,7 +327,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 		return NETDEV_TX_OK;
 	}
 
-	if (WLAN_HDD_IBSS == pAdapter->device_mode) {
+	if (QDF_IBSS_MODE == pAdapter->device_mode) {
 		struct qdf_mac_addr *pDestMacAddress =
 					(struct qdf_mac_addr *) skb->data;
 
@@ -353,7 +353,7 @@ int hdd_hard_start_xmit(struct sk_buff *skb, struct net_device *dev)
 			return NETDEV_TX_OK;
 		}
 	} else {
-		if (WLAN_HDD_OCB != pAdapter->device_mode &&
+		if (QDF_OCB_MODE != pAdapter->device_mode &&
 			eConnectionState_Associated !=
 				pHddStaCtx->conn_info.connState) {
 			QDF_TRACE(QDF_MODULE_ID_HDD_DATA, QDF_TRACE_LEVEL_INFO,

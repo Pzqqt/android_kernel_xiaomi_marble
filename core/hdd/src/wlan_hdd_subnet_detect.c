@@ -95,7 +95,7 @@ static int __wlan_hdd_cfg80211_set_gateway_params(struct wiphy *wiphy,
 	/* The gateway parameters are only valid in the STA persona
 	 * and only in the connected state.
 	 */
-	if (WLAN_HDD_INFRA_STATION != adapter->device_mode) {
+	if (QDF_STA_MODE != adapter->device_mode) {
 		hdd_err("Received GW param update for non-STA mode adapter");
 		return -ENOTSUPP;
 	}

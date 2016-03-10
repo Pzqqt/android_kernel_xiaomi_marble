@@ -1933,7 +1933,7 @@ static int __iw_set_mode(struct net_device *dev,
 		pConfig = (WLAN_HDD_GET_CTX(pAdapter))->config;
 		pWextState->roamProfile.phyMode =
 			hdd_cfg_xlate_to_csr_phy_mode(pConfig->dot11Mode);
-		pAdapter->device_mode = WLAN_HDD_IBSS;
+		pAdapter->device_mode = QDF_IBSS_MODE;
 		wdev->iftype = NL80211_IFTYPE_ADHOC;
 		break;
 	case IW_MODE_INFRA:
@@ -6009,7 +6009,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_PAID_MATCH:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 
 		hddLog(LOG1, "WMI_VDEV_PPS_PAID_MATCH val %d ",
@@ -6022,7 +6022,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_GID_MATCH:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_GID_MATCH val %d ",
 		       set_value);
@@ -6034,7 +6034,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_EARLY_TIM_CLEAR:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, " WMI_VDEV_PPS_EARLY_TIM_CLEAR val %d ",
 		       set_value);
@@ -6046,7 +6046,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_EARLY_DTIM_CLEAR:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_EARLY_DTIM_CLEAR val %d",
 		       set_value);
@@ -6058,7 +6058,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_EOF_PAD_DELIM:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_EOF_PAD_DELIM val %d ",
 		       set_value);
@@ -6070,7 +6070,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_MACADDR_MISMATCH:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_MACADDR_MISMATCH val %d ",
 		       set_value);
@@ -6082,7 +6082,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_DELIM_CRC_FAIL:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_DELIM_CRC_FAIL val %d ",
 		       set_value);
@@ -6094,7 +6094,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_GID_NSTS_ZERO:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_GID_NSTS_ZERO val %d ",
 		       set_value);
@@ -6106,7 +6106,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_RSSI_CHECK:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return EINVAL;
 		hddLog(LOG1, "WMI_VDEV_PPS_RSSI_CHECK val %d ",
 		       set_value);
@@ -6118,7 +6118,7 @@ static int __iw_setint_getnone(struct net_device *dev,
 
 	case WE_PPS_5G_EBT:
 	{
-		if (pAdapter->device_mode != WLAN_HDD_INFRA_STATION)
+		if (pAdapter->device_mode != QDF_STA_MODE)
 			return -EINVAL;
 
 		hddLog(LOG1, "WMI_VDEV_PPS_5G_EBT val %d", set_value);
@@ -6296,8 +6296,8 @@ static int __iw_setint_getnone(struct net_device *dev,
 		hddLog(LOG1, "Set Channel %d Session ID %d mode %d", set_value,
 				  pAdapter->sessionId, pAdapter->device_mode);
 
-		if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-		   (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode)) {
+		if ((QDF_STA_MODE == pAdapter->device_mode) ||
+		   (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
 
 			status = sme_ext_change_channel(hHal,
 				   set_value, pAdapter->sessionId);
@@ -7193,7 +7193,7 @@ static int __iw_get_char_setnone(struct net_device *dev,
 				 */
 				useAdapter =
 					hdd_get_adapter(pHddCtx,
-							WLAN_HDD_P2P_CLIENT);
+							QDF_P2P_CLIENT_MODE);
 				if (!useAdapter) {
 					buf =
 						scnprintf(extra + len,
@@ -7866,7 +7866,7 @@ static int __iw_set_var_ints_getnone(struct net_device *dev,
 	{
 		p2p_app_setP2pPs_t p2pNoA;
 
-		if (pAdapter->device_mode != WLAN_HDD_P2P_GO) {
+		if (pAdapter->device_mode != QDF_P2P_GO_MODE) {
 			hdd_err("Setting NoA is not allowed in Device mode %s(%d)",
 				hdd_device_mode_to_string(
 					pAdapter->device_mode),
@@ -9570,8 +9570,8 @@ int hdd_set_band(struct net_device *dev, u8 ui_band)
 
 			/* Handling is done only for STA and P2P */
 			if (band != eCSR_BAND_ALL &&
-			    ((pAdapter->device_mode == WLAN_HDD_INFRA_STATION)
-			     || (pAdapter->device_mode == WLAN_HDD_P2P_CLIENT))
+			    ((pAdapter->device_mode == QDF_STA_MODE)
+			     || (pAdapter->device_mode == QDF_P2P_CLIENT_MODE))
 			    &&
 			    (hdd_conn_is_connected
 				     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter)))

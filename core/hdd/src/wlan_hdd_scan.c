@@ -1386,7 +1386,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		}
 		/* set the scan type to active */
 		scan_req.scanType = eSIR_ACTIVE_SCAN;
-	} else if (WLAN_HDD_P2P_GO == pAdapter->device_mode) {
+	} else if (QDF_P2P_GO_MODE == pAdapter->device_mode) {
 		/* set the scan type to active */
 		scan_req.scanType = eSIR_ACTIVE_SCAN;
 	} else {
@@ -1462,9 +1462,9 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 		       request->ie_len);
 		pScanInfo->scanAddIE.length = request->ie_len;
 
-		if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) ||
-		    (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode) ||
-		    (WLAN_HDD_P2P_DEVICE == pAdapter->device_mode)
+		if ((QDF_STA_MODE == pAdapter->device_mode) ||
+		    (QDF_P2P_CLIENT_MODE == pAdapter->device_mode) ||
+		    (QDF_P2P_DEVICE_MODE == pAdapter->device_mode)
 		    ) {
 			pwextBuf->roamProfile.pAddIEScan =
 				pScanInfo->scanAddIE.addIEdata;
@@ -1482,7 +1482,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			if (((global_p2p_connection_status == P2P_GO_NEG_COMPLETED)
 			     || (global_p2p_connection_status ==
 				 P2P_GO_NEG_PROCESS))
-			    && (WLAN_HDD_P2P_CLIENT == pAdapter->device_mode)) {
+			    && (QDF_P2P_CLIENT_MODE == pAdapter->device_mode)) {
 				global_p2p_connection_status =
 					P2P_CLIENT_CONNECTING_STATE_1;
 				hddLog(LOGE,
@@ -1492,7 +1492,7 @@ static int __wlan_hdd_cfg80211_scan(struct wiphy *wiphy,
 			} else
 			if ((global_p2p_connection_status ==
 			     P2P_CLIENT_DISCONNECTED_STATE)
-			    && (WLAN_HDD_P2P_CLIENT ==
+			    && (QDF_P2P_CLIENT_MODE ==
 				pAdapter->device_mode)) {
 				global_p2p_connection_status =
 					P2P_CLIENT_CONNECTING_STATE_2;
@@ -1986,7 +1986,7 @@ static QDF_STATUS wlan_hdd_is_pno_allowed(hdd_adapter_t *adapter)
 		adapter->device_mode,
 		adapter->sessionCtx.station.conn_info.connState,
 		adapter->sessionId);
-	if ((adapter->device_mode == WLAN_HDD_INFRA_STATION) &&
+	if ((adapter->device_mode == QDF_STA_MODE) &&
 		(eConnectionState_NotConnected ==
 		 adapter->sessionCtx.station.conn_info.connState))
 		return QDF_STATUS_SUCCESS;
@@ -2043,7 +2043,7 @@ static int __wlan_hdd_cfg80211_sched_scan_start(struct wiphy *wiphy,
 		return -EINVAL;
 	}
 
-	if ((WLAN_HDD_INFRA_STATION == pAdapter->device_mode) &&
+	if ((QDF_STA_MODE == pAdapter->device_mode) &&
 	    (eConnectionState_Connecting ==
 	     (WLAN_HDD_GET_STATION_CTX_PTR(pAdapter))->conn_info.connState)) {
 		hddLog(LOGE,
