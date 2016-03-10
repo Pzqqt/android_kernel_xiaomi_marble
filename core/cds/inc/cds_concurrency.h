@@ -644,6 +644,7 @@ static inline struct cds_conc_connection_info *cds_get_conn_info(uint32_t *len)
 	return NULL;
 }
 #endif
+
 enum cds_con_mode cds_convert_device_mode_to_qdf_type(
 				enum tQDF_ADAPTER_MODE device_mode);
 QDF_STATUS cds_soc_set_hw_mode(uint32_t session_id,

@@ -2604,9 +2604,9 @@ bool cds_is_connection_in_progress(void)
 		cds_info("Adapter with device mode %s(%d) exists",
 			hdd_device_mode_to_string(adapter->device_mode),
 			adapter->device_mode);
-		if (((WLAN_HDD_INFRA_STATION == adapter->device_mode)
-			|| (WLAN_HDD_P2P_CLIENT == adapter->device_mode)
-			|| (WLAN_HDD_P2P_DEVICE == adapter->device_mode))
+		if (((QDF_STA_MODE == adapter->device_mode)
+			|| (QDF_P2P_CLIENT_MODE == adapter->device_mode)
+			|| (QDF_P2P_DEVICE_MODE == adapter->device_mode))
 			&& (eConnectionState_Connecting ==
 				(WLAN_HDD_GET_STATION_CTX_PTR(adapter))->
 					conn_info.connState)) {
@@ -2615,7 +2615,7 @@ bool cds_is_connection_in_progress(void)
 				adapter->sessionId);
 			return true;
 		}
-		if ((WLAN_HDD_INFRA_STATION == adapter->device_mode) &&
+		if ((QDF_STA_MODE == adapter->device_mode) &&
 				sme_neighbor_middle_of_roaming(
 					WLAN_HDD_GET_HAL_CTX(adapter),
 					adapter->sessionId)) {
@@ -2624,9 +2624,9 @@ bool cds_is_connection_in_progress(void)
 				adapter->sessionId);
 			return true;
 		}
-		if ((WLAN_HDD_INFRA_STATION == adapter->device_mode) ||
-			(WLAN_HDD_P2P_CLIENT == adapter->device_mode) ||
-			(WLAN_HDD_P2P_DEVICE == adapter->device_mode)) {
+		if ((QDF_STA_MODE == adapter->device_mode) ||
+			(QDF_P2P_CLIENT_MODE == adapter->device_mode) ||
+			(QDF_P2P_DEVICE_MODE == adapter->device_mode)) {
 			hdd_sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if ((eConnectionState_Associated ==
@@ -2640,8 +2640,8 @@ bool cds_is_connection_in_progress(void)
 					MAC_ADDR_ARRAY(sta_mac));
 				return true;
 			}
-		} else if ((WLAN_HDD_SOFTAP == adapter->device_mode) ||
-				(WLAN_HDD_P2P_GO == adapter->device_mode)) {
+		} else if ((QDF_SAP_MODE == adapter->device_mode) ||
+				(QDF_P2P_GO_MODE == adapter->device_mode)) {
 			for (sta_id = 0; sta_id < WLAN_MAX_STA_COUNT;
 				sta_id++) {
 				if (!((adapter->aStaInfo[sta_id].isUsed)
@@ -3115,7 +3115,7 @@ void cds_dump_concurrency_info(void)
 	while (NULL != adapterNode && QDF_STATUS_SUCCESS == status) {
 		adapter = adapterNode->pAdapter;
 		switch (adapter->device_mode) {
-		case WLAN_HDD_INFRA_STATION:
+		case QDF_STA_MODE:
 			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
 			    pHddStaCtx->conn_info.connState) {
@@ -3128,7 +3128,7 @@ void cds_dump_concurrency_info(void)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 			}
 			break;
-		case WLAN_HDD_P2P_CLIENT:
+		case QDF_P2P_CLIENT_MODE:
 			pHddStaCtx = WLAN_HDD_GET_STATION_CTX_PTR(adapter);
 			if (eConnectionState_Associated ==
 			    pHddStaCtx->conn_info.connState) {
@@ -3142,7 +3142,7 @@ void cds_dump_concurrency_info(void)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 			}
 			break;
-		case WLAN_HDD_P2P_GO:
+		case QDF_P2P_GO_MODE:
 			hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 			hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 			if (hostapd_state->bssState == BSS_START
@@ -3157,7 +3157,7 @@ void cds_dump_concurrency_info(void)
 			}
 			p2pMode = "GO";
 			break;
-		case WLAN_HDD_SOFTAP:
+		case QDF_SAP_MODE:
 			hdd_ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(adapter);
 			hostapd_state = WLAN_HDD_GET_HOSTAP_STATE_PTR(adapter);
 			if (hostapd_state->bssState == BSS_START
@@ -3171,7 +3171,7 @@ void cds_dump_concurrency_info(void)
 #endif /* QCA_LL_LEGACY_TX_FLOW_CONTROL */
 			}
 			break;
-		case WLAN_HDD_IBSS:
+		case QDF_IBSS_MODE:
 		default:
 			break;
 		}
@@ -3190,7 +3190,7 @@ void cds_dump_concurrency_info(void)
 				 * data path enabled
 				 */
 				if (hdd_ipa_uc_is_enabled(hdd_ctx) &&
-				    (WLAN_HDD_SOFTAP == adapter->device_mode)) {
+				    (QDF_SAP_MODE == adapter->device_mode)) {
 					adapter->tx_flow_low_watermark =
 					hdd_ctx->config->TxFlowLowWaterMark +
 					WLAN_TFC_IPAUC_TX_DESC_RESERVE;
@@ -5999,7 +5999,7 @@ static void cds_sap_restart_handle(struct work_struct *work)
 		cds_ssr_unprotect(__func__);
 		return;
 	}
-	sap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	sap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (sap_adapter == NULL) {
 		cds_err("sap_adapter is NULL");
 		cds_ssr_unprotect(__func__);
@@ -6038,7 +6038,7 @@ QDF_STATUS cds_check_and_restart_sap(eCsrRoamResult roam_result,
 			(true == cds_is_sap_restart_required())))
 		return QDF_STATUS_SUCCESS;
 
-	sap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	sap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (sap_adapter == NULL) {
 		cds_err("sap_adapter is NULL");
 		return QDF_STATUS_E_FAILURE;
@@ -6119,7 +6119,7 @@ static bool cds_sta_sap_concur_handle(hdd_adapter_t *sta_adapter,
 		return are_cc_channels_same;
 	}
 
-	ap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if ((ap_adapter != NULL) &&
 		test_bit(SOFTAP_BSS_STARTED, &ap_adapter->event_flags)) {
 		status =
@@ -6189,7 +6189,7 @@ static bool cds_sta_p2pgo_concur_handle(hdd_adapter_t *sta_adapter,
 		cds_err("HDD context is NULL");
 		return are_cc_channels_same;
 	}
-	p2pgo_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_P2P_GO);
+	p2pgo_adapter = hdd_get_adapter(hdd_ctx, QDF_P2P_GO_MODE);
 	if ((p2pgo_adapter != NULL) &&
 		test_bit(SOFTAP_BSS_STARTED, &p2pgo_adapter->event_flags)) {
 		status =
@@ -6306,7 +6306,7 @@ void cds_handle_conc_rule1(hdd_adapter_t *adapter,
 	 * channel.
 	 */
 	if (hdd_ctx->config->conc_custom_rule1 &&
-			(WLAN_HDD_INFRA_STATION == adapter->device_mode)) {
+			(QDF_STA_MODE == adapter->device_mode)) {
 		ret = cds_sta_sap_concur_handle(adapter,
 				roam_profile);
 		if (true != ret) {
@@ -6346,7 +6346,7 @@ bool cds_handle_conc_rule2(hdd_adapter_t *adapter,
 	 * started state then P2PGO should restart in station's channel.
 	 */
 	if (hdd_ctx->config->conc_custom_rule2 &&
-		(WLAN_HDD_INFRA_STATION == adapter->device_mode)) {
+		(QDF_STA_MODE == adapter->device_mode)) {
 		if (false == cds_sta_p2pgo_concur_handle(
 					adapter, roam_profile, roam_id)) {
 			cds_err("P2PGO-STA chnl diff, cache join req");
@@ -6423,7 +6423,7 @@ uint8_t cds_search_and_check_for_session_conc(uint8_t session_id,
 
 	/* Take care of 160MHz and 80+80Mhz later */
 	ret = cds_allow_concurrency(
-		cds_convert_device_mode_to_hdd_type(
+		cds_convert_device_mode_to_qdf_type(
 			adapter->device_mode),
 		channel, HW_MODE_20_MHZ);
 	if (false == ret) {
@@ -6468,7 +6468,7 @@ bool cds_check_for_session_conc(uint8_t session_id, uint8_t channel)
 
 	/* Take care of 160MHz and 80+80Mhz later */
 	ret = cds_allow_concurrency(
-		cds_convert_device_mode_to_hdd_type(
+		cds_convert_device_mode_to_qdf_type(
 			adapter->device_mode),
 		channel, HW_MODE_20_MHZ);
 	if (false == ret) {
@@ -6572,7 +6572,7 @@ void cds_force_sap_on_scc(eCsrRoamResult roam_result,
 		cds_err("Not able to force SAP on SCC");
 		return;
 	}
-	hostapd_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	hostapd_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (hostapd_adapter != NULL) {
 		/* Restart SAP if its operating channel is different
 		 * from AP channel.
@@ -6622,7 +6622,7 @@ static void cds_check_sta_ap_concurrent_ch_intf(void *data)
 					(QDF_STA_MASK | QDF_SAP_MASK))))
 		return;
 
-	ap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (ap_adapter == NULL)
 		return;
 
@@ -6738,18 +6738,18 @@ uint8_t cds_is_mcc_in_24G(void)
 	while (NULL != adapter_node && QDF_STATUS_SUCCESS == status) {
 		hdd_adapter = adapter_node->pAdapter;
 
-		if (!((hdd_adapter->device_mode >= WLAN_HDD_INFRA_STATION)
+		if (!((hdd_adapter->device_mode >= QDF_STA_MODE)
 					|| (hdd_adapter->device_mode
-						<= WLAN_HDD_P2P_GO))) {
+						<= QDF_P2P_GO_MODE))) {
 			/* skip for other adapters */
 			status = hdd_get_next_adapter(hdd_ctx,
 					adapter_node, &next);
 			adapter_node = next;
 			continue;
 		}
-		if (WLAN_HDD_INFRA_STATION ==
+		if (QDF_STA_MODE ==
 				hdd_adapter->device_mode ||
-				WLAN_HDD_P2P_CLIENT ==
+				QDF_P2P_CLIENT_MODE ==
 				hdd_adapter->device_mode) {
 			sta_ctx =
 				WLAN_HDD_GET_STATION_CTX_PTR(
@@ -6759,9 +6759,9 @@ uint8_t cds_is_mcc_in_24G(void)
 				channel =
 					sta_ctx->conn_info.
 					operationChannel;
-		} else if (WLAN_HDD_P2P_GO ==
+		} else if (QDF_P2P_GO_MODE ==
 				hdd_adapter->device_mode ||
-				WLAN_HDD_SOFTAP ==
+				QDF_SAP_MODE ==
 				hdd_adapter->device_mode) {
 			ap_ctx = WLAN_HDD_GET_AP_CTX_PTR(hdd_adapter);
 			hostapd_state =
@@ -6830,10 +6830,10 @@ int32_t cds_set_mas(hdd_adapter_t *adapter, uint8_t mas_value)
 		}
 
 		/* Config p2p quota */
-		if (adapter->device_mode == WLAN_HDD_INFRA_STATION)
+		if (adapter->device_mode == QDF_STA_MODE)
 			cds_set_mcc_p2p_quota(adapter,
 					100 - HDD_DEFAULT_MCC_P2P_QUOTA);
-		else if (adapter->device_mode == WLAN_HDD_P2P_GO)
+		else if (adapter->device_mode == QDF_P2P_GO_MODE)
 			cds_go_set_mcc_p2p_quota(adapter,
 					HDD_DEFAULT_MCC_P2P_QUOTA);
 		else
@@ -6841,7 +6841,7 @@ int32_t cds_set_mas(hdd_adapter_t *adapter, uint8_t mas_value)
 					HDD_DEFAULT_MCC_P2P_QUOTA);
 	} else {
 		/* Reset p2p quota */
-		if (adapter->device_mode == WLAN_HDD_P2P_GO)
+		if (adapter->device_mode == QDF_P2P_GO_MODE)
 			cds_go_set_mcc_p2p_quota(adapter,
 					HDD_RESET_MCC_P2P_QUOTA);
 		else
@@ -6922,7 +6922,7 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 		 */
 		set_value = set_value | first_adapter_operating_channel;
 		/* Find out the 2nd MCC adapter and its operating channel */
-		if (hostapd_adapater->device_mode == WLAN_HDD_INFRA_STATION) {
+		if (hostapd_adapater->device_mode == QDF_STA_MODE) {
 			/*
 			 * iwpriv cmd was issued on wlan0;
 			 * get p2p0 vdev channel
@@ -6931,12 +6931,12 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 				/* The 2nd MCC vdev is P2P client */
 				sta_adapter = hdd_get_adapter(
 						hostapd_adapater->pHddCtx,
-						WLAN_HDD_P2P_CLIENT);
+						QDF_P2P_CLIENT_MODE);
 			} else {
 				/* The 2nd MCC vdev is P2P GO */
 				sta_adapter = hdd_get_adapter(
 						hostapd_adapater->pHddCtx,
-						WLAN_HDD_P2P_GO);
+						QDF_P2P_GO_MODE);
 			}
 		} else {
 			/*
@@ -6944,7 +6944,7 @@ int32_t cds_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapater,
 			 * get wlan0 vdev channel
 			 */
 			sta_adapter = hdd_get_adapter(hostapd_adapater->pHddCtx,
-					WLAN_HDD_INFRA_STATION);
+					QDF_STA_MODE);
 		}
 		if (sta_adapter != NULL) {
 			second_adapter_opertaing_channel =
@@ -7000,7 +7000,7 @@ QDF_STATUS cds_change_mcc_go_beacon_interval(hdd_adapter_t *pHostapdAdapter)
 
 	cds_info("UPDATE Beacon Params");
 
-	if (WLAN_HDD_SOFTAP == pHostapdAdapter->device_mode) {
+	if (QDF_SAP_MODE == pHostapdAdapter->device_mode) {
 		hHal = WLAN_HDD_GET_HAL_CTX(pHostapdAdapter);
 		if (NULL == hHal) {
 			cds_err("Hal ctx is null");
@@ -7074,21 +7074,21 @@ int32_t cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 		 */
 		set_value = set_value | first_adapter_operating_channel;
 		if (hostapd_adapter->device_mode ==
-				WLAN_HDD_INFRA_STATION) {
+				QDF_STA_MODE) {
 			/* iwpriv cmd issued on wlan0; get p2p0 vdev chan */
 			if ((concurrent_state & QDF_P2P_CLIENT_MASK) != 0) {
 				/* The 2nd MCC vdev is P2P client */
 				sta_adapter = hdd_get_adapter
 					(
 					 hostapd_adapter->pHddCtx,
-					 WLAN_HDD_P2P_CLIENT
+					 QDF_P2P_CLIENT_MODE
 					);
 			} else {
 				/* The 2nd MCC vdev is P2P GO */
 				sta_adapter = hdd_get_adapter
 					(
 					 hostapd_adapter->pHddCtx,
-					 WLAN_HDD_P2P_GO
+					 QDF_P2P_GO_MODE
 					);
 			}
 		} else {
@@ -7096,7 +7096,7 @@ int32_t cds_go_set_mcc_p2p_quota(hdd_adapter_t *hostapd_adapter,
 			sta_adapter = hdd_get_adapter
 				(
 				 hostapd_adapter->pHddCtx,
-				 WLAN_HDD_INFRA_STATION
+				 QDF_STA_MODE
 				);
 		}
 		if (sta_adapter != NULL) {
@@ -7299,7 +7299,7 @@ void cds_check_and_restart_sap_with_non_dfs_acs(void)
 		return;
 	}
 
-	ap_adapter = hdd_get_adapter(hdd_ctx, WLAN_HDD_SOFTAP);
+	ap_adapter = hdd_get_adapter(hdd_ctx, QDF_SAP_MODE);
 	if (ap_adapter != NULL &&
 			test_bit(SOFTAP_BSS_STARTED,
 				&ap_adapter->event_flags)
@@ -7475,7 +7475,7 @@ enum cds_pcl_type get_pcl_from_third_conn_table(
 #endif
 
 /**
- * cds_convert_device_mode_to_hdd_type() - provides the
+ * cds_convert_device_mode_to_qdf_type() - provides the
  * type translation from HDD to policy manager type
  * @device_mode: Generic connection mode type
  *
@@ -7484,24 +7484,24 @@ enum cds_pcl_type get_pcl_from_third_conn_table(
  *
  * Return: cds_con_mode enum
  */
-enum cds_con_mode cds_convert_device_mode_to_hdd_type(
-					device_mode_t device_mode)
+enum cds_con_mode cds_convert_device_mode_to_qdf_type(
+			enum tQDF_ADAPTER_MODE device_mode)
 {
 	enum cds_con_mode mode = CDS_MAX_NUM_OF_MODE;
 	switch (device_mode) {
-	case WLAN_HDD_INFRA_STATION:
+	case QDF_STA_MODE:
 		mode = CDS_STA_MODE;
 		break;
-	case WLAN_HDD_P2P_CLIENT:
+	case QDF_P2P_CLIENT_MODE:
 		mode = CDS_P2P_CLIENT_MODE;
 		break;
-	case WLAN_HDD_P2P_GO:
+	case QDF_P2P_GO_MODE:
 		mode = CDS_P2P_GO_MODE;
 		break;
-	case WLAN_HDD_SOFTAP:
+	case QDF_SAP_MODE:
 		mode = CDS_SAP_MODE;
 		break;
-	case WLAN_HDD_IBSS:
+	case QDF_IBSS_MODE:
 		mode = CDS_IBSS_MODE;
 		break;
 	default:
