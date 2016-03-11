@@ -59,7 +59,7 @@ typedef struct tagOemDataReq {
 } tOemDataReq, tOemDataReqConfig;
 
 typedef struct tagOemDataRsp {
-	uint8_t rsp_len;
+	uint32_t rsp_len;
 	uint8_t *oem_data_rsp;
 } tOemDataRsp;
 
