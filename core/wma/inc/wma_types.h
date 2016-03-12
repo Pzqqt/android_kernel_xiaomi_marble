@@ -526,6 +526,7 @@ typedef struct sUapsd_Params {
 	uint8_t beTriggerEnabled:1;
 	uint8_t viTriggerEnabled:1;
 	uint8_t voTriggerEnabled:1;
+	bool enable_ps;
 } tUapsd_Params, *tpUapsd_Params;
 
 /**
@@ -706,15 +707,15 @@ QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr));
 #else
-static inline CDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
+static inline QDF_STATUS wma_register_roaming_callbacks(void *cds_ctx,
 		void (*csr_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr, uint8_t reason),
-		CDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
+		QDF_STATUS (*pe_roam_synch_cb)(tpAniSirGlobal mac,
 			roam_offload_synch_ind *roam_synch_data,
 			tpSirBssDescription  bss_desc_ptr))
 {
-	return CDF_STATUS_E_NOSUPPORT;
+	return QDF_STATUS_E_NOSUPPORT;
 }
 #endif
 

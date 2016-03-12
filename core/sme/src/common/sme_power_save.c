@@ -63,6 +63,78 @@ QDF_STATUS sme_post_ps_msg_to_wma(uint16_t type, void *body)
 }
 
 /**
+ * sme_ps_enable_uapsd_req_params(): enables UASPD req params
+ * @mac_ctx: global mac context
+ * @session_id: session id
+ *
+ * Return: QDF_STATUS
+ */
+static void sme_ps_fill_uapsd_req_params(tpAniSirGlobal mac_ctx,
+		tUapsd_Params *uapsdParams, uint32_t session_id,
+		enum ps_state *ps_state)
+{
+
+	uint8_t uapsd_delivery_mask = 0;
+	uint8_t uapsd_trigger_mask = 0;
+	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
+	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+
+	uapsd_delivery_mask =
+		ps_param->uapsd_per_ac_bit_mask |
+		ps_param->uapsd_per_ac_delivery_enable_mask;
+
+	uapsd_trigger_mask =
+		ps_param->uapsd_per_ac_bit_mask |
+		ps_param->uapsd_per_ac_trigger_enable_mask;
+
+	uapsdParams->bkDeliveryEnabled =
+		LIM_UAPSD_GET(ACBK, uapsd_delivery_mask);
+
+	uapsdParams->beDeliveryEnabled =
+		LIM_UAPSD_GET(ACBE, uapsd_delivery_mask);
+
+	uapsdParams->viDeliveryEnabled =
+		LIM_UAPSD_GET(ACVI, uapsd_delivery_mask);
+
+	uapsdParams->voDeliveryEnabled =
+		LIM_UAPSD_GET(ACVO, uapsd_delivery_mask);
+
+	uapsdParams->bkTriggerEnabled =
+		LIM_UAPSD_GET(ACBK, uapsd_trigger_mask);
+
+	uapsdParams->beTriggerEnabled =
+		LIM_UAPSD_GET(ACBE, uapsd_trigger_mask);
+
+	uapsdParams->viTriggerEnabled =
+		LIM_UAPSD_GET(ACVI, uapsd_trigger_mask);
+
+	uapsdParams->voTriggerEnabled =
+		LIM_UAPSD_GET(ACVO, uapsd_trigger_mask);
+	if (ps_param->ps_state != FULL_POWER_MODE) {
+		uapsdParams->enable_ps = true;
+		*ps_state = UAPSD_MODE;
+	} else {
+		uapsdParams->enable_ps = false;
+		*ps_state = FULL_POWER_MODE;
+	}
+}
+
+static void sme_set_ps_state(tpAniSirGlobal mac_ctx,
+		uint32_t session_id, enum ps_state ps_state)
+{
+	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
+	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+	ps_param->ps_state = ps_state;
+}
+
+static void sme_get_ps_state(tpAniSirGlobal mac_ctx,
+		uint32_t session_id, enum ps_state *ps_state)
+{
+	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
+	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+	*ps_state = ps_param->ps_state;
+}
+/**
  * sme_ps_enable_ps_req_params(): enables power save req params
  * @mac_ctx: global mac context
  * @session_id: session id
@@ -74,6 +146,9 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 {
 	struct sEnablePsParams *enable_ps_req_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
+	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
+	enum ps_state ps_state;
 
 	enable_ps_req_params =  qdf_mem_malloc(sizeof(*enable_ps_req_params));
 	if (NULL == enable_ps_req_params) {
@@ -81,7 +156,17 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 			FL("Memory allocation failed for enable_ps_req_params"));
 		return QDF_STATUS_E_NOMEM;
 	}
-	enable_ps_req_params->psSetting = eSIR_ADDON_NOTHING;
+	if (ps_param->uapsd_per_ac_bit_mask) {
+		enable_ps_req_params->psSetting = eSIR_ADDON_ENABLE_UAPSD;
+		sme_ps_fill_uapsd_req_params(mac_ctx,
+				&enable_ps_req_params->uapsdParams,
+				session_id, &ps_state);
+		ps_state = UAPSD_MODE;
+		enable_ps_req_params->uapsdParams.enable_ps = true;
+	} else {
+		enable_ps_req_params->psSetting = eSIR_ADDON_NOTHING;
+		ps_state = LEGACY_POWER_SAVE_MODE;
+	}
 	enable_ps_req_params->sessionid = session_id;
 
 	status = sme_post_ps_msg_to_wma(WMA_ENTER_PS_REQ, enable_ps_req_params);
@@ -89,6 +174,7 @@ QDF_STATUS sme_ps_enable_ps_req_params(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		FL("Message WMA_ENTER_PS_REQ Successfully sent to WMA"));
+	ps_param->ps_state = ps_state;
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -120,6 +206,7 @@ QDF_STATUS sme_ps_disable_ps_req_params(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_FAILURE;
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 			FL("Message WMA_EXIT_PS_REQ Successfully sent to WMA"));
+	sme_set_ps_state(mac_ctx, session_id, FULL_POWER_MODE);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -135,11 +222,8 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 {
 
 	struct sEnableUapsdParams *enable_uapsd_req_params;
-	uint8_t uapsd_delivery_mask = 0;
-	uint8_t uapsd_trigger_mask = 0;
-	struct ps_global_info *ps_global_info = &mac_ctx->sme.ps_global_info;
-	struct ps_params *ps_param = &ps_global_info->ps_params[session_id];
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	enum ps_state ps_state;
 
 	enable_uapsd_req_params =
 		qdf_mem_malloc(sizeof(*enable_uapsd_req_params));
@@ -149,40 +233,9 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 		return QDF_STATUS_E_NOMEM;
 	}
 
-
-	uapsd_delivery_mask =
-		ps_param->uapsd_per_ac_bit_mask |
-		ps_param->uapsd_per_ac_delivery_enable_mask;
-
-	uapsd_trigger_mask =
-		ps_param->uapsd_per_ac_bit_mask |
-		ps_param->uapsd_per_ac_trigger_enable_mask;
-
-
-	enable_uapsd_req_params->uapsdParams.bkDeliveryEnabled =
-		LIM_UAPSD_GET(ACBK, uapsd_delivery_mask);
-
-	enable_uapsd_req_params->uapsdParams.beDeliveryEnabled =
-		LIM_UAPSD_GET(ACBE, uapsd_delivery_mask);
-
-	enable_uapsd_req_params->uapsdParams.viDeliveryEnabled =
-		LIM_UAPSD_GET(ACVI, uapsd_delivery_mask);
-
-	enable_uapsd_req_params->uapsdParams.voDeliveryEnabled =
-		LIM_UAPSD_GET(ACVO, uapsd_delivery_mask);
-
-	enable_uapsd_req_params->uapsdParams.bkTriggerEnabled =
-		LIM_UAPSD_GET(ACBK, uapsd_trigger_mask);
-
-	enable_uapsd_req_params->uapsdParams.beTriggerEnabled =
-		LIM_UAPSD_GET(ACBE, uapsd_trigger_mask);
-
-	enable_uapsd_req_params->uapsdParams.viTriggerEnabled =
-		LIM_UAPSD_GET(ACVI, uapsd_trigger_mask);
-
-	enable_uapsd_req_params->uapsdParams.voTriggerEnabled =
-		LIM_UAPSD_GET(ACVO, uapsd_trigger_mask);
-
+	sme_ps_fill_uapsd_req_params(mac_ctx,
+			&enable_uapsd_req_params->uapsdParams,
+			session_id, &ps_state);
 	enable_uapsd_req_params->sessionid = session_id;
 
 	status = sme_post_ps_msg_to_wma(WMA_ENABLE_UAPSD_REQ,
@@ -192,6 +245,7 @@ QDF_STATUS sme_ps_enable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		    FL("Msg WMA_ENABLE_UAPSD_REQ Successfully sent to WMA"));
+	sme_set_ps_state(mac_ctx, session_id, ps_state);
 	return QDF_STATUS_SUCCESS;
 }
 
@@ -207,12 +261,18 @@ QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 {
 	struct sDisableUapsdParams *disable_uapsd_req_params;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	enum ps_state ps_state;
 
+	sme_get_ps_state(mac_ctx, session_id, &ps_state);
+	if (ps_state != UAPSD_MODE) {
+		sms_log(mac_ctx, LOGE, FL("UAPSD is already disabled"));
+		return QDF_STATUS_SUCCESS;
+	}
 	disable_uapsd_req_params =
 		qdf_mem_malloc(sizeof(*disable_uapsd_req_params));
 	if (NULL == disable_uapsd_req_params) {
 		sms_log(mac_ctx, LOGE,
-			FL("Memory allocation failed for disable_uapsd_req_params"));
+			FL("Mem alloc failed for disable_uapsd_req_params"));
 		return QDF_STATUS_E_NOMEM;
 	}
 
@@ -224,6 +284,7 @@ QDF_STATUS sme_ps_disable_uapsd_req_params(tpAniSirGlobal mac_ctx,
 
 	QDF_TRACE(QDF_MODULE_ID_SME, QDF_TRACE_LEVEL_INFO,
 		FL("Message WMA_DISABLE_UAPSD_REQ Successfully sent to WMA"));
+	sme_set_ps_state(mac_ctx, session_id, LEGACY_POWER_SAVE_MODE);
 	return QDF_STATUS_SUCCESS;
 }
 

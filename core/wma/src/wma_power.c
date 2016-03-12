@@ -552,7 +552,8 @@ static inline uint32_t wma_get_uapsd_mask(tpUapsd_Params uapsd_params)
 static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 				uint32_t vdev_id,
 				uint8_t enable,
-				enum powersave_qpower_mode qpower_config)
+				enum powersave_qpower_mode qpower_config,
+				bool enable_ps)
 {
 	QDF_STATUS ret;
 	uint32_t cfg_data_val = 0;
@@ -680,11 +681,14 @@ static QDF_STATUS wma_set_force_sleep(tp_wma_handle wma,
 		 vdev_id, inactivity_time);
 
 	/* Enable Sta Mode Power save */
-	ret = wmi_unified_set_sta_ps(wma->wmi_handle, vdev_id, true);
+	if (enable_ps) {
+		ret = wmi_unified_set_sta_ps(wma->wmi_handle, vdev_id, true);
 
-	if (QDF_IS_STATUS_ERROR(ret)) {
-		WMA_LOGE("Enable Sta Mode Ps Failed vdevId %d", vdev_id);
-		return ret;
+		if (QDF_IS_STATUS_ERROR(ret)) {
+			WMA_LOGE("Enable Sta Mode Ps Failed vdevId %d",
+				vdev_id);
+			return ret;
+		}
 	}
 
 	/* Set Listen Interval */
@@ -886,7 +890,7 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 		}
 
 		ret = wma_set_force_sleep(wma, vdev_id, false,
-				qpower_config);
+				qpower_config, true);
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Enable Sta Ps Failed vdevId %d", vdev_id);
 			return;
@@ -916,7 +920,7 @@ void wma_enable_sta_ps_mode(tp_wma_handle wma, tpEnablePsParams ps_req)
 
 		WMA_LOGD("Enable Forced Sleep vdevId %d", vdev_id);
 		ret = wma_set_force_sleep(wma, vdev_id, true,
-				qpower_config);
+				qpower_config, true);
 
 		if (QDF_IS_STATUS_ERROR(ret)) {
 			WMA_LOGE("Enable Forced Sleep Failed vdevId %d",
@@ -996,7 +1000,7 @@ void wma_enable_uapsd_mode(tp_wma_handle wma, tpEnableUapsdParams ps_req)
 
 	WMA_LOGD("Enable Forced Sleep vdevId %d", vdev_id);
 	ret = wma_set_force_sleep(wma, vdev_id, true,
-			qpower_config);
+			qpower_config, ps_req->uapsdParams.enable_ps);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Enable Forced Sleep Failed vdevId %d", vdev_id);
 		return;
@@ -1036,7 +1040,7 @@ void wma_disable_uapsd_mode(tp_wma_handle wma,
 
 	/* Re enable Sta Mode Powersave with proper configuration */
 	ret = wma_set_force_sleep(wma, vdev_id, false,
-			qpower_config);
+			qpower_config, true);
 	if (QDF_IS_STATUS_ERROR(ret)) {
 		WMA_LOGE("Disable Forced Sleep Failed vdevId %d", vdev_id);
 		return;
