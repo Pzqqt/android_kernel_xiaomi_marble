@@ -967,7 +967,9 @@ int wmi_unified_register_event_handler(wmi_unified_t wmi_handle,
 	idx = wmi_handle->max_event_idx;
 	wmi_handle->event_handler[idx] = handler_func;
 	wmi_handle->event_id[idx] = event_id;
+	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
 	wmi_handle->ctx[idx] = rx_ctx;
+	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
 	wmi_handle->max_event_idx++;
 
 	return 0;
@@ -1082,7 +1084,9 @@ void wmi_control_rx(void *ctx, HTC_PACKET *htc_packet)
 		qdf_nbuf_free(evt_buf);
 		return;
 	}
+	qdf_spin_lock_bh(&wmi_handle->ctx_lock);
 	exec_ctx = wmi_handle->ctx[idx];
+	qdf_spin_unlock_bh(&wmi_handle->ctx_lock);
 
 	if (exec_ctx == WMI_RX_WORK_CTX) {
 		wmi_process_fw_event_worker_thread_ctx
@@ -1282,6 +1286,7 @@ void *wmi_unified_attach(void *scn_handle,
 	/* Assign target cookie capablity */
 	wmi_handle->use_cookie = use_cookie;
 	wmi_handle->osdev = osdev;
+	qdf_spinlock_create(&wmi_handle->ctx_lock);
 
 	return wmi_handle;
 }
@@ -1305,6 +1310,7 @@ void wmi_unified_detach(struct wmi_unified *wmi_handle)
 		buf = qdf_nbuf_queue_remove(&wmi_handle->event_queue);
 	}
 	qdf_spin_unlock_bh(&wmi_handle->eventq_lock);
+	qdf_spinlock_destroy(&wmi_handle->ctx_lock);
 	if (wmi_handle != NULL) {
 		OS_FREE(wmi_handle);
 		wmi_handle = NULL;

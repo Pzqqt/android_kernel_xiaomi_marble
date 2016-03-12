@@ -621,6 +621,7 @@ struct wmi_unified {
 	struct wmi_ops *ops;
 	void *event_handler_cookie[WMI_UNIFIED_MAX_EVENT];
 	bool use_cookie;
+	qdf_spinlock_t ctx_lock;
 };
 struct wmi_ops *wmi_get_tlv_ops(void);
 struct wmi_ops *wmi_get_non_tlv_ops(void);
