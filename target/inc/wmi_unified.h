@@ -7767,6 +7767,7 @@ typedef enum _WMI_NLO_SSID_BcastNwType {
   * one of them can be enabled at a given time */
 #define WMI_NLO_CONFIG_ENLO             (0x1 << 7)
 #define WMI_NLO_CONFIG_SCAN_PASSIVE     (0x1 << 8)
+#define WMI_NLO_CONFIG_ENLO_RESET       (0x1 << 9)
 
 /* Whether directed scan needs to be performed (for hidden SSIDs) */
 #define WMI_ENLO_FLAG_DIRECTED_SCAN      1
@@ -7850,6 +7851,31 @@ typedef struct nlo_channel_prediction_cfg {
 	A_UINT32 full_scan_period_ms;
 } nlo_channel_prediction_cfg;
 
+typedef struct enlo_candidate_score_params_t {
+	/*
+	 * TLV tag and len;
+	 * tag equals WMITLV_TAG_STRUC_wmi_enlo_candidate_score_param
+	 */
+	A_UINT32 tlv_header;
+	/* minimum 5GHz RSSI for a BSSID to be considered (units = dBm) */
+	A_INT32 min5GHz_rssi;
+	/* minimum 2.4GHz RSSI for a BSSID to be considered (units = dBm) */
+	A_INT32 min24GHz_rssi;
+	/* the maximum score that a network can have before bonuses */
+	A_UINT32 initial_score_max;
+	/* current_connection_bonus:
+	 * only report when there is a network's score this much higher
+	 * than the current connection
+	 */
+	A_UINT32 current_connection_bonus;
+	/* score bonus for all networks with the same network flag */
+	A_UINT32 same_network_bonus;
+	/* score bonus for networks that are not open */
+	A_UINT32 secure_bonus;
+	/* 5GHz RSSI score bonus (applied to all 5GHz networks) */
+	A_UINT32 band5GHz_bonus;
+} enlo_candidate_score_params;
+
 typedef struct wmi_nlo_config {
 	A_UINT32 tlv_header;            /* TLV tag and len; tag equals WMITLV_TAG_STRUC_wmi_nlo_config_cmd_fixed_param */
 	A_UINT32 flags;
@@ -7870,6 +7896,7 @@ typedef struct wmi_nlo_config {
 	 * nlo_configured_parameters nlo_list[];
 	 * A_UINT32 channel_list[];
 	 * nlo_channel_prediction_cfg ch_prediction_cfg;
+	 * enlo_candidate_score_params candidate_score_params;
 	 */
 
 } wmi_nlo_config_cmd_fixed_param;
