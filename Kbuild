@@ -632,12 +632,16 @@ else
 BMI_OBJS += $(BMI_DIR)/src/bmi_1.o
 endif
 ########### WMI ###########
-WMI_DIR := core/wmi
+WMI_SRC_DIR := qca-wifi-host-cmn//wmi/src
+WMI_INC_DIR := qca-wifi-host-cmn//wmi/inc \
 
-WMI_INC := -I$(WLAN_ROOT)/$(WMI_DIR)
+WMI_INC := -I$(WLAN_ROOT)/$(WMI_INC_DIR)
 
-WMI_OBJS := $(WMI_DIR)/wmi_unified.o \
-	    $(WMI_DIR)/wmi_tlv_helper.o
+WMI_OBJS := $(WMI_SRC_DIR)/wmi_unified.o \
+	    $(WMI_SRC_DIR)/wmi_tlv_helper.o \
+            $(WMI_SRC_DIR)/wmi_unified_tlv.o \
+	    $(WMI_SRC_DIR)/wmi_unified_api.o \
+            $(WMI_SRC_DIR)/wmi_unified_non_tlv.o
 
 ########### FWLOG ###########
 FWLOG_DIR := core/utils/fwlog
