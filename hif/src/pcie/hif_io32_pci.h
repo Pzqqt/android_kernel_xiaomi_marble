@@ -105,13 +105,6 @@
 	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
 
-#define A_TARGET_READ(scn, offset) \
-	hif_read32_mb(scn->mem + (offset))
-
-void war_pci_write32(char *addr, u32 offset, u32 value);
-#define A_TARGET_WRITE(scn, offset, value) \
-	war_pci_write32(scn->mem, (offset), (value))
-
 #define A_TARGET_ACCESS_BEGIN_RET(scn) \
 	do {struct hif_softc *unused = scn; \
 	    unused = unused; } while (0)
@@ -138,7 +131,6 @@ void war_pci_write32(char *addr, u32 offset, u32 value);
 
 #else                           /* CONFIG_ATH_PCIE_MAX_PERF */
 
-void war_pci_write32(char *addr, u32 offset, u32 value);
 
 #define A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val) \
 do { \
@@ -217,6 +209,7 @@ do { \
 		unused = unused; \
 	} while (0)
 #endif /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
+#endif /* CONFIG_ATH_PCIE_MAX_PERF */
 
 #ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
 extern uint32_t hif_target_read_checked(struct hif_softc *scn,
@@ -228,12 +221,13 @@ extern void hif_target_write_checked(struct hif_softc *scn, uint32_t offset,
 #define A_TARGET_WRITE(scn, offset, value) \
 	hif_target_write_checked(scn, (offset), (value))
 #else                           /* CONFIG_ATH_PCIE_ACCESS_DEBUG */
+void war_pci_write32(char *addr, u32 offset, u32 value);
+
 #define A_TARGET_READ(scn, offset) \
 	hif_read32_mb(scn->mem + (offset))
 #define A_TARGET_WRITE(scn, offset, value) \
 	war_pci_write32(scn->mem, (offset), (value))
 #endif
-#endif /* CONFIG_ATH_PCIE_MAX_PERF */
 
 
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
