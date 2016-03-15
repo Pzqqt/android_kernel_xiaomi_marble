@@ -184,7 +184,7 @@ void hif_disable_aspm(struct hif_opaque_softc *hif_ctx)
  *
  * Return: n/a
  */
-void hif_bus_close(struct hif_softc *scn)
+void hif_snoc_close(struct hif_softc *scn)
 {
 	hif_ce_close(scn);
 }
@@ -198,16 +198,17 @@ int hif_bus_get_context_size(void)
 {
 	return sizeof(struct HIF_CE_state);
 }
+
 /**
  * hif_bus_open(): hif_bus_open
- * @scn: scn
+ * @hif_ctx: hif context
  * @bus_type: bus type
  *
  * Return: n/a
  */
-QDF_STATUS hif_bus_open(struct hif_softc *scn, enum qdf_bus_type bus_type)
+QDF_STATUS hif_snoc_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
 {
-	return hif_ce_open(scn);
+	return hif_ce_open(hif_ctx);
 }
 
 /**
@@ -223,7 +224,7 @@ static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
 	int ret;
 	struct icnss_soc_info soc_info;
 
-	cdf_mem_zero(&soc_info, sizeof(soc_info));
+	qdf_mem_zero(&soc_info, sizeof(soc_info));
 
 	ret = icnss_get_soc_info(&soc_info);
 	if (ret < 0) {

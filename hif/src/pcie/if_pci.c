@@ -70,6 +70,8 @@
 #include "icnss_stub.h"
 #include "ce_tasklet.h"
 
+#include "pci_api.h"
+
 /* Maximum ms timeout for host to wake up target */
 #define PCIE_WAKE_TIMEOUT 1000
 #define RAMDUMP_EVENT_TIMEOUT 2500
@@ -1194,16 +1196,16 @@ int hif_bus_get_context_size(void)
  *
  * Return: n/a
  */
-QDF_STATUS hif_bus_open(struct hif_softc *ol_sc, enum qdf_bus_type bus_type)
+QDF_STATUS hif_pci_open(struct hif_softc *hif_ctx, enum qdf_bus_type bus_type)
 {
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
-	ol_sc->bus_type = bus_type;
+	hif_ctx->bus_type = bus_type;
 	hif_pm_runtime_open(sc);
 
 	qdf_spinlock_create(&sc->irq_lock);
 
-	return hif_ce_open(ol_sc);
+	return hif_ce_open(hif_ctx);
 }
 
 #ifdef BMI_RSP_POLLING
@@ -1296,12 +1298,10 @@ disable_wlan:
  *
  * Return: n/a
  */
-void hif_bus_close(struct hif_softc *hif_sc)
+void hif_pci_close(struct hif_softc *hif_sc)
 {
 	struct hif_pci_softc *hif_pci_sc = HIF_GET_PCI_SOFTC(hif_sc);
-
 	hif_pm_runtime_close(hif_pci_sc);
-
 	hif_ce_close(hif_sc);
 }
 

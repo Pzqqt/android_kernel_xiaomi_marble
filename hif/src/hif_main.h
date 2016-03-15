@@ -46,6 +46,7 @@
 #include "qdf_lock.h"
 #include "cepci.h"
 #include "hif.h"
+#include "multibus.h"
 
 #define HIF_MIN_SLEEP_INACTIVITY_TIME_MS     50
 #define HIF_SLEEP_INACTIVITY_TIMER_PERIOD_MS 60
@@ -114,6 +115,7 @@ struct hif_softc {
 	struct hif_target_info target_info;
 	void __iomem *mem;
 	enum qdf_bus_type bus_type;
+	struct hif_bus_ops bus_ops;
 	void *ce_id_to_state[CE_COUNT_MAX];
 	qdf_device_t qdf_dev;
 	bool hif_init_done;

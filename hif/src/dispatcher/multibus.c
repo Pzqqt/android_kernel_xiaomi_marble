@@ -1,0 +1,122 @@
+/*
+ * Copyright (c) 2016 The Linux Foundation. All rights reserved.
+ *
+ * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
+ *
+ *
+ * Permission to use, copy, modify, and/or distribute this software for
+ * any purpose with or without fee is hereby granted, provided that the
+ * above copyright notice and this permission notice appear in all
+ * copies.
+ *
+ * THE SOFTWARE IS PROVIDED "AS IS" AND THE AUTHOR DISCLAIMS ALL
+ * WARRANTIES WITH REGARD TO THIS SOFTWARE INCLUDING ALL IMPLIED
+ * WARRANTIES OF MERCHANTABILITY AND FITNESS. IN NO EVENT SHALL THE
+ * AUTHOR BE LIABLE FOR ANY SPECIAL, DIRECT, INDIRECT, OR CONSEQUENTIAL
+ * DAMAGES OR ANY DAMAGES WHATSOEVER RESULTING FROM LOSS OF USE, DATA OR
+ * PROFITS, WHETHER IN AN ACTION OF CONTRACT, NEGLIGENCE OR OTHER
+ * TORTIOUS ACTION, ARISING OUT OF OR IN CONNECTION WITH THE USE OR
+ * PERFORMANCE OF THIS SOFTWARE.
+ */
+
+/*
+ * This file was originally distributed by Qualcomm Atheros, Inc.
+ * under proprietary terms before Copyright ownership was assigned
+ * to the Linux Foundation.
+ */
+
+
+/* this file dispatches functions to bus specific definitions */
+#include "hif_debug.h"
+#include "hif.h"
+#include "hif_main.h"
+#include "multibus.h"
+
+/**
+ * hif_intialize_default_ops() - intializes default operations values
+ *
+ * bus specific features should assign their dummy implementations here.
+ */
+static void hif_intialize_default_ops(struct hif_softc *hif_sc)
+{
+	struct hif_bus_ops *bus_ops = &hif_sc->bus_ops;
+
+	/* must be filled in by hif_bus_open */
+	bus_ops->hif_bus_close = NULL;
+
+	/* dummy implementations */
+}
+
+#define NUM_OPS (sizeof(struct hif_bus_ops) / sizeof(void *))
+
+/**
+ * hif_verify_basic_ops() - ensure required bus apis are defined
+ *
+ * all bus operations must be defined to avoid crashes
+ * itterate over the structure and ensure all function pointers
+ * are non null.
+ *
+ * Return: QDF_STATUS_SUCCESS if all the operations are defined
+ */
+static QDF_STATUS hif_verify_basic_ops(struct hif_softc *hif_sc)
+{
+	struct hif_bus_ops *bus_ops = &hif_sc->bus_ops;
+	void **ops_array = (void *)bus_ops;
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	int i;
+
+	for (i = 0; i < NUM_OPS; i++) {
+		if (!ops_array[i]) {
+			HIF_ERROR("%s: function %d is null", __func__, i);
+			status = QDF_STATUS_E_NOSUPPORT;
+		}
+	}
+	return status;
+}
+
+/**
+ * hif_bus_open() - initialize the bus_ops and call the bus specific open
+ * hif_sc: hif_context
+ * bus_type: type of bus being enumerated
+ *
+ * Return: QDF_STATUS_SUCCESS or error
+ */
+QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
+			enum qdf_bus_type bus_type)
+{
+	QDF_STATUS status = QDF_STATUS_E_INVAL;
+
+	hif_intialize_default_ops(hif_sc);
+
+	switch (bus_type) {
+	case QDF_BUS_TYPE_PCI:
+		status = hif_initialize_pci_ops(&hif_sc->bus_ops);
+		break;
+	case QDF_BUS_TYPE_SNOC:
+		status = hif_initialize_snoc_ops(&hif_sc->bus_ops);
+		break;
+	default:
+		status = QDF_STATUS_E_NOSUPPORT;
+		break;
+	}
+
+	if (status != QDF_STATUS_SUCCESS) {
+		HIF_ERROR("%s: %d not supported", __func__, bus_type);
+		return status;
+	}
+
+	status = hif_verify_basic_ops(hif_sc);
+	if (status != QDF_STATUS_SUCCESS)
+		return status;
+
+	return hif_sc->bus_ops.hif_bus_open(hif_sc, bus_type);
+}
+
+/**
+ * hif_bus_close() - close the bus
+ * @hif_sc: hif_context
+ */
+void hif_bus_close(struct hif_softc *hif_sc)
+{
+	hif_sc->bus_ops.hif_bus_close(hif_sc);
+}
