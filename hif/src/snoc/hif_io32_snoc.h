@@ -126,33 +126,4 @@ static inline void ce_disable_irq_in_group_reg(struct hif_softc *scn,
 	mask = hif_read32_mb(scn->mem +
 			ADRASTEA_CE_INTR_ENABLES);
 }
-
-/**
- * ce_irq_enable() - enable copy engine IRQ
- * @scn: struct hif_softc
- * @ce_id: ce_id
- *
- * Return: N/A
- */
-static inline void ce_irq_enable(struct hif_softc *scn,
-		int ce_id)
-{
-	icnss_enable_irq(ce_id);
-	ce_enable_irq_in_individual_register(scn, ce_id);
-	ce_enable_irq_in_group_reg(scn, 1<<ce_id);
-}
-
-/**
- * ce_irq_disable() - disable copy engine IRQ
- * @scn: struct hif_softc
- * @ce_id: ce_id
- *
- * Return: N/A
- */
-static inline void ce_irq_disable(struct hif_softc *scn, int ce_id)
-{
-	ce_disable_irq_in_group_reg(scn, 1<<ce_id);
-	ce_clear_irq_group_status(scn, 1<<ce_id);
-	ce_disable_irq_in_individual_register(scn, ce_id);
-}
 #endif

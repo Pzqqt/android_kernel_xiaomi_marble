@@ -43,7 +43,16 @@ struct hif_bus_ops {
 	int (*hif_bus_suspend)(struct hif_softc *hif_ctx);
 	int (*hif_bus_resume)(struct hif_softc *hif_ctx);
 	int (*hif_target_sleep_state_adjust)(struct hif_softc *scn,
-					bool sleep_ok, bool wait_for_it);
+			bool sleep_ok, bool wait_for_it);
+	void (*hif_disable_isr)(struct hif_softc *hif_sc);
+	void (*hif_nointrs)(struct hif_softc *hif_sc);
+	QDF_STATUS (*hif_enable_bus)(struct hif_softc *hif_sc,
+			struct device *dev, void *bdev, const hif_bus_id *bid,
+			enum hif_enable_type type);
+	void (*hif_disable_bus)(struct hif_softc *hif_sc);
+	int (*hif_bus_configure)(struct hif_softc *hif_sc);
+	void (*hif_irq_disable)(struct hif_softc *hif_sc, int ce_id);
+	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
 };
 
 #ifdef HIF_SNOC

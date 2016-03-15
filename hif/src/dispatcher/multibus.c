@@ -158,3 +158,41 @@ int hif_target_sleep_state_adjust(struct hif_softc *hif_sc,
 	return hif_sc->bus_ops.hif_target_sleep_state_adjust(hif_sc,
 			sleep_ok, wait_for_it);
 }
+
+void hif_disable_isr(struct hif_opaque_softc *hif_hdl)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	hif_sc->bus_ops.hif_disable_isr(hif_sc);
+}
+
+void hif_nointrs(struct hif_softc *hif_sc)
+{
+	hif_sc->bus_ops.hif_nointrs(hif_sc);
+}
+
+QDF_STATUS hif_enable_bus(struct hif_softc *hif_sc, struct device *dev,
+			  void *bdev, const hif_bus_id *bid,
+			  enum hif_enable_type type)
+{
+	return hif_sc->bus_ops.hif_enable_bus(hif_sc, dev, bdev, bid, type);
+}
+
+void hif_disable_bus(struct hif_softc *hif_sc)
+{
+	hif_sc->bus_ops.hif_disable_bus(hif_sc);
+}
+
+int hif_bus_configure(struct hif_softc *hif_sc)
+{
+	return hif_sc->bus_ops.hif_bus_configure(hif_sc);
+}
+
+void hif_irq_enable(struct hif_softc *hif_sc, int irq_id)
+{
+	hif_sc->bus_ops.hif_irq_enable(hif_sc, irq_id);
+}
+
+void hif_irq_disable(struct hif_softc *hif_sc, int irq_id)
+{
+	hif_sc->bus_ops.hif_irq_disable(hif_sc, irq_id);
+}

@@ -59,5 +59,13 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 		bus_ops->hif_target_sleep_state_adjust =
 			&hif_dummy_target_sleep_state_adjust;
 
+	bus_ops->hif_disable_isr = &hif_pci_disable_isr;
+	bus_ops->hif_nointrs = &hif_pci_nointrs;
+	bus_ops->hif_enable_bus = &hif_pci_enable_bus;
+	bus_ops->hif_disable_bus = &hif_pci_disable_bus;
+	bus_ops->hif_bus_configure = &hif_pci_bus_configure;
+	bus_ops->hif_irq_disable = &hif_pci_irq_disable;
+	bus_ops->hif_irq_enable = &hif_pci_irq_enable;
+
 	return QDF_STATUS_SUCCESS;
 }

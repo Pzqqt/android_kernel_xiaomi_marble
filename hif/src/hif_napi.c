@@ -362,7 +362,7 @@ inline void hif_napi_enable_irq(struct hif_opaque_softc *hif, int id)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif);
 
-	ce_irq_enable(scn, NAPI_ID2PIPE(id));
+	hif_irq_enable(scn, NAPI_ID2PIPE(id));
 }
 
 

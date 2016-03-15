@@ -28,3 +28,15 @@
 QDF_STATUS hif_snoc_open(struct hif_softc *hif_ctx,
 			 enum qdf_bus_type bus_type);
 void hif_snoc_close(struct hif_softc *hif_ctx);
+
+
+void hif_snoc_disable_isr(struct hif_softc *hif_ctx);
+void hif_snoc_nointrs(struct hif_softc *scn);
+QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
+			  struct device *dev, void *bdev,
+			  const hif_bus_id *bid,
+			  enum hif_enable_type type);
+void hif_snoc_disable_bus(struct hif_softc *scn);
+int hif_snoc_bus_configure(struct hif_softc *scn);
+void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id);
+void hif_snoc_irq_enable(struct hif_softc *scn, int ce_id);

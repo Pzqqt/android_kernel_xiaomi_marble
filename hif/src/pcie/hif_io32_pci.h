@@ -73,58 +73,5 @@
 #define CONFIG_PCIE_ENABLE_AXI_CLK_GATE 0
 
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
-
-/**
- * ce_irq_enable() - ce_irq_enable
- * @scn: hif_softc
- * @ce_id: ce_id
- *
- * Return: void
- */
-static inline void ce_irq_enable(struct hif_softc *scn, int ce_id)
-{
-	uint32_t tmp = 1 << ce_id;
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
-
-	qdf_spin_lock_irqsave(&sc->irq_lock);
-	scn->ce_irq_summary &= ~tmp;
-	if (scn->ce_irq_summary == 0) {
-		/* Enable Legacy PCI line interrupts */
-		if (LEGACY_INTERRUPTS(sc) &&
-			(scn->target_status != OL_TRGET_STATUS_RESET) &&
-			(!qdf_atomic_read(&scn->link_suspended))) {
-
-			hif_write32_mb(scn->mem +
-				(SOC_CORE_BASE_ADDRESS |
-				PCIE_INTR_ENABLE_ADDRESS),
-				HOST_GROUP0_MASK);
-
-			hif_read32_mb(scn->mem +
-					(SOC_CORE_BASE_ADDRESS |
-					PCIE_INTR_ENABLE_ADDRESS));
-		}
-	}
-	if (scn->hif_init_done == true)
-		Q_TARGET_ACCESS_END(scn);
-
-	qdf_spin_unlock_irqrestore(&sc->irq_lock);
-
-	/* check for missed firmware crash */
-	hif_fw_interrupt_handler(0, scn);
-}
-/**
- * ce_irq_disable() - ce_irq_disable
- * @scn: hif_softc
- * @ce_id: ce_id
- *
- * Return: void
- */
-static inline void ce_irq_disable(struct hif_softc *scn, int ce_id)
-{
-	/* For Rome only need to wake up target */
-	/* target access is maintained untill interrupts are re-enabled */
-	Q_TARGET_ACCESS_BEGIN(scn);
-
-}
 #endif /* HIF_PCI */
 #endif /* __HIF_IO32_PCI_H__ */

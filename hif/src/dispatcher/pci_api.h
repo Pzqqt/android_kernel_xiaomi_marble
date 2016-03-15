@@ -33,4 +33,15 @@ void hif_pci_reset_soc(struct hif_softc *ol_sc);
 int hif_pci_bus_suspend(struct hif_softc *scn);
 int hif_pci_bus_resume(struct hif_softc *scn);
 int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
-			      bool sleep_ok, bool wait_for_it);
+			bool sleep_ok, bool wait_for_it);
+
+void hif_pci_disable_isr(struct hif_softc *scn);
+void hif_pci_nointrs(struct hif_softc *scn);
+QDF_STATUS hif_pci_enable_bus(struct hif_softc *scn,
+			struct device *dev, void *bdev,
+			const hif_bus_id *bid,
+			enum hif_enable_type type);
+void hif_pci_disable_bus(struct hif_softc *scn);
+int hif_pci_bus_configure(struct hif_softc *scn);
+void hif_pci_irq_disable(struct hif_softc *scn, int ce_id);
+void hif_pci_irq_enable(struct hif_softc *scn, int ce_id);

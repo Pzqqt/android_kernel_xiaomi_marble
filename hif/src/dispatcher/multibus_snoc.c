@@ -25,9 +25,9 @@
  * to the Linux Foundation.
  */
 
-#include "multibus.h"
 #include "hif.h"
 #include "hif_main.h"
+#include "multibus.h"
 #include "snoc_api.h"
 #include "dummy.h"
 
@@ -47,6 +47,14 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_bus_resume = &hif_dummy_bus_resume;
 	bus_ops->hif_target_sleep_state_adjust =
 		&hif_dummy_target_sleep_state_adjust;
+
+	bus_ops->hif_disable_isr = &hif_snoc_disable_isr;
+	bus_ops->hif_nointrs = &hif_snoc_nointrs;
+	bus_ops->hif_enable_bus = &hif_snoc_enable_bus;
+	bus_ops->hif_disable_bus = &hif_snoc_disable_bus;
+	bus_ops->hif_bus_configure = &hif_snoc_bus_configure;
+	bus_ops->hif_irq_disable = &hif_snoc_irq_disable;
+	bus_ops->hif_irq_enable = &hif_snoc_irq_enable;
 
 	return QDF_STATUS_SUCCESS;
 }

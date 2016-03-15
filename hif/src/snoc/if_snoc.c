@@ -37,6 +37,7 @@
 #include "hif_io32.h"
 #include "ce_main.h"
 #include "ce_tasklet.h"
+#include "snoc_api.h"
 
 /**
  * hif_disable_isr(): disable isr
@@ -47,10 +48,8 @@
  *
  * Return: void
  */
-void hif_disable_isr(struct hif_opaque_softc *hif_ctx)
+void hif_snoc_disable_isr(struct hif_softc *scn)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
 	hif_nointrs(scn);
 	ce_tasklet_kill(scn);
 	qdf_atomic_set(&scn->active_tasklet_cnt, 0);
@@ -155,7 +154,7 @@ static QDF_STATUS hif_snoc_get_soc_info(struct hif_softc *scn)
  *
  * return: 0 for success. nonzero for failure.
  */
-int hif_bus_configure(struct hif_softc *scn)
+int hif_snoc_bus_configure(struct hif_softc *scn)
 {
 	int ret;
 
@@ -216,7 +215,7 @@ int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
  *
  * Return: QDF_STATUS
  */
-QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
+QDF_STATUS hif_snoc_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
 			  const hif_bus_id *bid,
 			  enum hif_enable_type type)
@@ -261,7 +260,7 @@ QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
  *
  * Return: none
  */
-void hif_disable_bus(struct hif_softc *scn)
+void hif_snoc_disable_bus(struct hif_softc *scn)
 {
 }
 
@@ -274,11 +273,40 @@ void hif_disable_bus(struct hif_softc *scn)
  *
  * Return: none
  */
-void hif_nointrs(struct hif_softc *scn)
+void hif_snoc_nointrs(struct hif_softc *scn)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	if (scn->request_irq_done) {
 		ce_unregister_irq(hif_state, 0xfff);
 		scn->request_irq_done = false;
 	}
+}
+
+/**
+ * ce_irq_enable() - enable copy engine IRQ
+ * @scn: struct hif_softc
+ * @ce_id: ce_id
+ *
+ * Return: N/A
+ */
+void hif_snoc_irq_enable(struct hif_softc *scn,
+		int ce_id)
+{
+	icnss_enable_irq(ce_id);
+	ce_enable_irq_in_individual_register(scn, ce_id);
+	ce_enable_irq_in_group_reg(scn, 1<<ce_id);
+}
+
+/**
+ * ce_irq_disable() - disable copy engine IRQ
+ * @scn: struct hif_softc
+ * @ce_id: ce_id
+ *
+ * Return: N/A
+ */
+void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id)
+{
+	ce_disable_irq_in_group_reg(scn, 1<<ce_id);
+	ce_clear_irq_group_status(scn, 1<<ce_id);
+	ce_disable_irq_in_individual_register(scn, ce_id);
 }

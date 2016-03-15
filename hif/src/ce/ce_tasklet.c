@@ -220,7 +220,7 @@ static void ce_tasklet(unsigned long data)
 	}
 
 	if (scn->target_status != OL_TRGET_STATUS_RESET)
-		ce_irq_enable(scn, tasklet_entry->ce_id);
+		hif_irq_enable(scn, tasklet_entry->ce_id);
 
 	hif_record_ce_desc_event(scn, tasklet_entry->ce_id, HIF_CE_TASKLET_EXIT,
 				 NULL, NULL, 0);
@@ -297,7 +297,7 @@ static irqreturn_t ce_irq_handler(int irq, void *context)
 #ifndef HIF_PCI
 	disable_irq_nosync(irq);
 #endif
-	ce_irq_disable(scn, ce_id);
+	hif_irq_disable(scn, ce_id);
 	ce_irq_status(scn, ce_id, &host_status);
 	qdf_atomic_inc(&scn->active_tasklet_cnt);
 	hif_record_ce_desc_event(scn, ce_id, HIF_IRQ_EVENT, NULL, NULL, 0);

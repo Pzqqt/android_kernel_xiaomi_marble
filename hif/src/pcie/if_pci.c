@@ -1693,7 +1693,7 @@ done:
  *
  * return: 0 for success. nonzero for failure.
  */
-int hif_bus_configure(struct hif_softc *hif_sc)
+int hif_pci_bus_configure(struct hif_softc *hif_sc)
 {
 	int status = 0;
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_sc);
@@ -2156,7 +2156,7 @@ end:
  *
  * Return: none
  */
-void hif_nointrs(struct hif_softc *scn)
+void hif_pci_nointrs(struct hif_softc *scn)
 {
 	int i;
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
@@ -2187,7 +2187,7 @@ void hif_nointrs(struct hif_softc *scn)
  *
  * Return: none
  */
-void hif_disable_bus(struct hif_softc *scn)
+void hif_pci_disable_bus(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	struct pci_dev *pdev = sc->pdev;
@@ -2727,9 +2727,8 @@ static void hif_free_msi_ctx(struct hif_softc *scn)
 }
 #endif
 
-void hif_disable_isr(struct hif_opaque_softc *ol_sc)
+void hif_pci_disable_isr(struct hif_softc *scn)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(ol_sc);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
 	hif_nointrs(scn);
@@ -3169,7 +3168,7 @@ void hif_target_sync(struct hif_softc *scn)
  * type: enum hif_enable_type such as HIF_ENABLE_TYPE_PROBE
  * Return: QDF_STATUS
  */
-QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
+QDF_STATUS hif_pci_enable_bus(struct hif_softc *ol_sc,
 			  struct device *dev, void *bdev,
 			  const hif_bus_id *bid,
 			  enum hif_enable_type type)
@@ -3296,6 +3295,57 @@ int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
 	pci_read_config_word(pdev, 0x08, &revision_id);
 	return hif_get_device_type(id->device, revision_id,
 			hif_type, target_type);
+}
+
+/**
+ * hif_pci_irq_enable() - ce_irq_enable
+ * @scn: hif_softc
+ * @ce_id: ce_id
+ *
+ * Return: void
+ */
+void hif_pci_irq_enable(struct hif_softc *scn, int ce_id)
+{
+	uint32_t tmp = 1 << ce_id;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
+
+	qdf_spin_lock_irqsave(&sc->irq_lock);
+	scn->ce_irq_summary &= ~tmp;
+	if (scn->ce_irq_summary == 0) {
+		/* Enable Legacy PCI line interrupts */
+		if (LEGACY_INTERRUPTS(sc) &&
+			(scn->target_status != OL_TRGET_STATUS_RESET) &&
+			(!qdf_atomic_read(&scn->link_suspended))) {
+
+			hif_write32_mb(scn->mem +
+				(SOC_CORE_BASE_ADDRESS |
+				PCIE_INTR_ENABLE_ADDRESS),
+				HOST_GROUP0_MASK);
+
+			hif_read32_mb(scn->mem +
+					(SOC_CORE_BASE_ADDRESS |
+					PCIE_INTR_ENABLE_ADDRESS));
+		}
+	}
+	if (scn->hif_init_done == true)
+		Q_TARGET_ACCESS_END(scn);
+	qdf_spin_unlock_irqrestore(&sc->irq_lock);
+
+	/* check for missed firmware crash */
+	hif_fw_interrupt_handler(0, scn);
+}
+/**
+ * hif_pci_irq_disable() - ce_irq_disable
+ * @scn: hif_softc
+ * @ce_id: ce_id
+ *
+ * Return: void
+ */
+void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
+{
+	/* For Rome only need to wake up target */
+	/* target access is maintained untill interrupts are re-enabled */
+	Q_TARGET_ACCESS_BEGIN(scn);
 }
 
 #ifdef FEATURE_RUNTIME_PM
