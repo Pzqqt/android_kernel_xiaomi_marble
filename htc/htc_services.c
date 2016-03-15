@@ -365,14 +365,3 @@ void htc_fw_event_handler(void *context, QDF_STATUS status)
 		initInfo->TargetFailure(initInfo->pContext, status);
 	}
 }
-
-/* Disable ASPM : disable PCIe low power */
-void htc_disable_aspm(HTC_HANDLE HTCHandle)
-{
-	HTC_TARGET *target = GET_HTC_TARGET_FROM_HANDLE(HTCHandle);
-
-	if (!target->hif_dev)
-		return;
-
-	hif_disable_aspm(target->hif_dev);
-}

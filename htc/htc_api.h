@@ -709,7 +709,6 @@ int htc_runtime_suspend(void);
 int htc_runtime_resume(void);
 
 /* Disable ASPM : Disable PCIe low power */
-void htc_disable_aspm(HTC_HANDLE HTCHandle);
 bool htc_can_suspend_link(HTC_HANDLE HTCHandle);
 void htc_vote_link_down(HTC_HANDLE HTCHandle);
 void htc_vote_link_up(HTC_HANDLE HTCHandle);

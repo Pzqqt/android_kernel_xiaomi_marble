@@ -1139,7 +1139,50 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc) {}
 #endif
 
 /**
- * hif_enable_power_management(): enable power management
+ * hif_disable_power_gating() - disable HW power gating
+ * @hif_ctx: hif context
+ *
+ * disables pcie L1 power states
+ */
+static void hif_disable_power_gating(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not disable ASPM scn is null",
+		       __func__);
+		return;
+	}
+
+	/* Disable ASPM when pkt log is enabled */
+	pci_read_config_dword(sc->pdev, 0x80, &sc->lcr_val);
+	pci_write_config_dword(sc->pdev, 0x80, (sc->lcr_val & 0xffffff00));
+}
+
+/**
+ * hif_enable_power_gating() - enable HW power gating
+ * @hif_ctx: hif context
+ *
+ * enables pcie L1 power states
+ */
+static void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
+
+	if (NULL == scn) {
+		HIF_ERROR("%s: Could not disable ASPM scn is null",
+		       __func__);
+		return;
+	}
+
+	/* Re-enable ASPM after firmware/OTP download is complete */
+	pci_write_config_dword(sc->pdev, 0x80, sc->lcr_val);
+}
+
+/**
+ * hif_enable_power_management() - enable power management
  * @hif_ctx: hif context
  *
  * Currently only does runtime pm.  Eventually this function could
@@ -1147,9 +1190,11 @@ static void hif_pm_runtime_stop(struct hif_pci_softc *sc) {}
  * the soc sleep after the driver finishes loading and re-enabling
  * aspm (hif_enable_power_gating).
  */
-void hif_enable_power_management(struct hif_opaque_softc *hif_ctx)
+void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
+				 bool is_packet_log_enabled)
 {
 	struct hif_pci_softc *pci_ctx = HIF_GET_PCI_SOFTC(hif_ctx);
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
 
 	if (pci_ctx == NULL) {
 		HIF_ERROR("%s, hif_ctx null", __func__);
@@ -1157,10 +1202,13 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_ctx)
 	}
 
 	hif_pm_runtime_start(pci_ctx);
+
+	if (!is_packet_log_enabled)
+		hif_enable_power_gating(hif_ctx);
 }
 
 /**
- * hif_disable_power_management(): disable power management
+ * hif_disable_power_management() - disable power management
  * @hif_ctx: hif context
  *
  * Currently disables runtime pm. Should be updated to behave
@@ -2602,44 +2650,6 @@ void hif_reset_soc(struct hif_opaque_softc *ol_sc)
 #endif
 }
 
-void hif_disable_aspm(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-
-	if (NULL == scn) {
-		HIF_ERROR("%s: Could not disable ASPM scn is null",
-		       __func__);
-		return;
-	}
-
-	/* Disable ASPM when pkt log is enabled */
-	pci_read_config_dword(sc->pdev, 0x80, &sc->lcr_val);
-	pci_write_config_dword(sc->pdev, 0x80, (sc->lcr_val & 0xffffff00));
-}
-
-/**
- * hif_enable_power_gating(): enable HW power gating
- *
- * This function enables HW gating
- *
- * Return: none
- */
-void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
-
-	if (NULL == scn) {
-		HIF_ERROR("%s: Could not disable ASPM scn is null",
-		       __func__);
-		return;
-	}
-
-	/* Re-enable ASPM after firmware/OTP download is complete */
-	pci_write_config_dword(sc->pdev, 0x80, sc->lcr_val);
-}
-
 #ifdef CONFIG_PCI_MSM
 static inline void hif_msm_pcie_debug_info(struct hif_pci_softc *sc)
 {
@@ -3113,7 +3123,6 @@ QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
 	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(ol_sc);
 	uint16_t revision_id;
-	uint32_t lcr_val;
 	int probe_again = 0;
 	struct pci_dev *pdev = bdev;
 	const struct pci_device_id *id = (const struct pci_device_id *)bid;
@@ -3144,8 +3153,7 @@ again:
 	/* Temporary FIX: disable ASPM on peregrine.
 	 * Will be removed after the OTP is programmed
 	 */
-	pci_read_config_dword(pdev, 0x80, &lcr_val);
-	pci_write_config_dword(pdev, 0x80, (lcr_val & 0xffffff00));
+	hif_disable_power_gating(hif_hdl);
 
 	device_disable_async_suspend(&pdev->dev);
 	pci_read_config_word(pdev, 0x08, &revision_id);

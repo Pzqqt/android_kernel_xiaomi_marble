@@ -162,24 +162,6 @@ int hif_bus_resume(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
- * hif_enable_power_gating(): enable HW power gating
- *
- * Return: n/a
- */
-void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx)
-{
-}
-
-/**
- * hif_disable_aspm(): hif_disable_aspm
- *
- * Return: n/a
- */
-void hif_disable_aspm(struct hif_opaque_softc *hif_ctx)
-{
-}
-
-/**
  * hif_bus_close(): hif_bus_close
  *
  * Return: n/a

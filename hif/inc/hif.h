@@ -403,7 +403,6 @@ void hif_get_hw_info(struct hif_opaque_softc *scn, u32 *version, u32 *revision,
 		     const char **target_name);
 void hif_disable_isr(struct hif_opaque_softc *scn);
 void hif_reset_soc(struct hif_opaque_softc *scn);
-void hif_disable_aspm(struct hif_opaque_softc *);
 void hif_save_htc_htt_config_endpoint(struct hif_opaque_softc *hif_ctx,
 				      int htc_endpoint);
 struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
@@ -415,7 +414,6 @@ QDF_STATUS hif_enable(struct hif_opaque_softc *hif_ctx, struct device *dev,
 		      enum qdf_bus_type bus_type,
 		      enum hif_enable_type type);
 void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type);
-void hif_enable_power_gating(struct hif_opaque_softc *hif_ctx);
 
 #ifdef FEATURE_RUNTIME_PM
 struct hif_pm_runtime_lock;
@@ -462,7 +460,8 @@ hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 { return 0; }
 #endif
 
-void hif_enable_power_management(struct hif_opaque_softc *hif_ctx);
+void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
+				 bool is_packet_log_enabled);
 void hif_disable_power_management(struct hif_opaque_softc *hif_ctx);
 
 void hif_vote_link_down(struct hif_opaque_softc *);
