@@ -120,3 +120,41 @@ void hif_bus_close(struct hif_softc *hif_sc)
 {
 	hif_sc->bus_ops.hif_bus_close(hif_sc);
 }
+
+/**
+ * hif_bus_prevent_linkdown() - prevent linkdown
+ * @hif_ctx: hif context
+ * @flag: true = keep bus alive false = let bus go to sleep
+ *
+ * Keeps the bus awake durring suspend.
+ */
+void hif_bus_prevent_linkdown(struct hif_softc *hif_sc, bool flag)
+{
+	hif_sc->bus_ops.hif_bus_prevent_linkdown(hif_sc, flag);
+}
+
+
+void hif_reset_soc(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	hif_sc->bus_ops.hif_reset_soc(hif_sc);
+}
+
+int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	return hif_sc->bus_ops.hif_bus_suspend(hif_sc);
+}
+
+int hif_bus_resume(struct hif_opaque_softc *hif_ctx)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_ctx);
+	return hif_sc->bus_ops.hif_bus_resume(hif_sc);
+}
+
+int hif_target_sleep_state_adjust(struct hif_softc *hif_sc,
+			      bool sleep_ok, bool wait_for_it)
+{
+	return hif_sc->bus_ops.hif_target_sleep_state_adjust(hif_sc,
+			sleep_ok, wait_for_it);
+}

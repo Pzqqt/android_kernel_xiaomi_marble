@@ -66,27 +66,6 @@
 #define Q_TARGET_ACCESS_BEGIN(scn) 0
 #define Q_TARGET_ACCESS_END(scn) 0
 
-static inline void hif_pci_cancel_deferred_target_sleep(struct hif_softc *scn)
-{
-	return;
-}
-
-static inline void hif_target_sleep_state_adjust(struct hif_softc *scn,
-						bool sleep_ok, bool wait_for_it)
-{
-	return;
-}
-
-/**
- * soc_wake_reset() - soc_wake_reset
- * @scn: hif_softc
- *
- * Return: void
- */
-static inline void soc_wake_reset(struct hif_softc *scn)
-{
-}
-
 /**
  * hif_write32_mb - SNOC write 32
  * @addr: physical address

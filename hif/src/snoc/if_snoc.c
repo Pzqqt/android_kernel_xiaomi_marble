@@ -39,50 +39,6 @@
 #include "ce_tasklet.h"
 
 /**
- * hif_bus_prevent_linkdown(): prevent linkdown
- *
- * Dummy function for busses and platforms that do not support
- * link down.  This may need to be replaced with a wakelock.
- *
- * This is duplicated here because CONFIG_CNSS can be defined
- * even though it is not used for the snoc bus.
- */
-void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag)
-{
-	HIF_ERROR("wlan: %s pcie power collapse ignored",
-			(flag ? "disable" : "enable"));
-}
-
-/**
- * hif_targ_is_awake(): check if target is awake
- *
- * This function returns true if the target is awake
- *
- * @scn: struct hif_softc
- * @mem: mapped mem base
- *
- * Return: bool
- */
-bool hif_targ_is_awake(struct hif_softc *scn, void *__iomem *mem)
-{
-	return true;
-}
-
-/**
- * hif_reset_soc(): reset soc
- *
- * this function resets soc
- *
- * @hif_ctx: HIF context
- *
- * Return: void
- */
-/* Function to reset SoC */
-void hif_reset_soc(struct hif_opaque_softc *hif_ctx)
-{
-}
-
-/**
  * hif_disable_isr(): disable isr
  *
  * This function disables isr and kills tasklets
@@ -136,33 +92,7 @@ int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
- * hif_bus_suspend() - suspend the bus
- *
- * This function suspends the bus, but snoc doesn't need to suspend.
- * Therefore do nothing.
- *
- * Return: 0 for success and non-zero for failure
- */
-int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
-{
-	return 0;
-}
-
-/**
- * hif_bus_resume() - hif resume API
- *
- * This function resumes the bus. but snoc doesn't need to resume.
- * Therefore do nothing.
- *
- * Return: 0 for success and non-zero for failure
- */
-int hif_bus_resume(struct hif_opaque_softc *hif_ctx)
-{
-	return 0;
-}
-
-/**
- * hif_bus_close(): hif_bus_close
+ * hif_snoc_close(): hif_bus_close
  *
  * Return: n/a
  */

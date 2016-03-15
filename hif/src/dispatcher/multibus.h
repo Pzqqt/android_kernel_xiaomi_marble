@@ -38,6 +38,12 @@ struct hif_bus_ops {
 	QDF_STATUS (*hif_bus_open)(struct hif_softc *hif_sc,
 				   enum qdf_bus_type bus_type);
 	void (*hif_bus_close)(struct hif_softc *hif_sc);
+	void (*hif_bus_prevent_linkdown)(struct hif_softc *hif_sc, bool flag);
+	void (*hif_reset_soc)(struct hif_softc *hif_sc);
+	int (*hif_bus_suspend)(struct hif_softc *hif_ctx);
+	int (*hif_bus_resume)(struct hif_softc *hif_ctx);
+	int (*hif_target_sleep_state_adjust)(struct hif_softc *scn,
+					bool sleep_ok, bool wait_for_it);
 };
 
 #ifdef HIF_SNOC

@@ -24,29 +24,12 @@
  * under proprietary terms before Copyright ownership was assigned
  * to the Linux Foundation.
  */
+struct hif_softc;
 
-#include "multibus.h"
-#include "hif.h"
-#include "hif_main.h"
-#include "snoc_api.h"
-#include "dummy.h"
+void hif_dummy_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
+void hif_dummy_reset_soc(struct hif_softc *scn);
+int hif_dummy_bus_suspend(struct hif_softc *hif_ctx);
+int hif_dummy_bus_resume(struct hif_softc *hif_ctx);
+int hif_dummy_target_sleep_state_adjust(struct hif_softc *scn,
+					bool sleep_ok, bool wait_for_it);
 
-/**
- * hif_initialize_pci_ops() - initialize the pci ops
- * @bus_ops: hif_bus_ops table pointer to initialize
- *
- * Return: QDF_STATUS_SUCCESS
- */
-QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
-{
-	bus_ops->hif_bus_open = &hif_snoc_open;
-	bus_ops->hif_bus_close = &hif_snoc_close;
-	bus_ops->hif_bus_prevent_linkdown = &hif_dummy_bus_prevent_linkdown;
-	bus_ops->hif_reset_soc = &hif_dummy_reset_soc;
-	bus_ops->hif_bus_suspend = &hif_dummy_bus_suspend;
-	bus_ops->hif_bus_resume = &hif_dummy_bus_resume;
-	bus_ops->hif_target_sleep_state_adjust =
-		&hif_dummy_target_sleep_state_adjust;
-
-	return QDF_STATUS_SUCCESS;
-}

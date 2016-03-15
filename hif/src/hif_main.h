@@ -190,4 +190,7 @@ struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn);
 bool hif_is_driver_unloading(struct hif_softc *scn);
 bool hif_is_load_or_unload_in_progress(struct hif_softc *scn);
 bool hif_is_recovery_in_progress(struct hif_softc *scn);
+int hif_target_sleep_state_adjust(struct hif_softc *scn,
+					 bool sleep_ok,
+					 bool wait_for_it);
 #endif /* __HIF_MAIN_H__ */

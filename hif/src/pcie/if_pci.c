@@ -1236,7 +1236,7 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
 
 	if (!CONFIG_ATH_PCIE_MAX_PERF &&
 	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
-		if (hif_target_sleep_state_adjust(hif_sc, true, false) < 0)
+		if (hif_pci_target_sleep_state_adjust(hif_sc, true, false) < 0)
 			HIF_ERROR("%s, failed to set target to sleep",
 				  __func__);
 	}
@@ -1725,7 +1725,8 @@ int hif_bus_configure(struct hif_softc *hif_sc)
 	if (CONFIG_ATH_PCIE_MAX_PERF ||
 	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
 		/* Force AWAKE forever/till the driver is loaded */
-		if (hif_target_sleep_state_adjust(hif_sc, false, true) < 0) {
+		if (hif_pci_target_sleep_state_adjust(hif_sc, false, true)
+				< 0) {
 			status = -EACCES;
 			goto disable_wlan;
 		}
@@ -2259,7 +2260,7 @@ static void hif_runtime_prevent_linkdown(struct hif_softc *scn, bool flag)
  *
  * Return: n/a
  */
-void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag)
+void hif_pci_prevent_linkdown(struct hif_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse",
 			(flag ? "disable" : "enable"));
@@ -2267,7 +2268,7 @@ void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag)
 	cnss_wlan_pm_control(flag);
 }
 #else
-void hif_bus_prevent_linkdown(struct hif_opaque_softc *scn, bool flag)
+void hif_pci_prevent_linkdown(struct hif_opaque_softc *scn, bool flag)
 {
 	HIF_ERROR("wlan: %s pcie power collapse",
 			(flag ? "disable" : "enable"));
@@ -2427,17 +2428,15 @@ static int hif_bus_resume_link_down(struct hif_softc *scn)
 }
 
 /**
- * hif_bus_suspend(): prepare hif for suspend
+ * hif_pci_suspend(): prepare hif for suspend
  *
  * chose suspend type based on link suspend voting.
  *
  * Return: 0 for success and non-zero error code for failure
  */
-int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
+int hif_pci_bus_suspend(struct hif_softc *scn)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	if (hif_can_suspend_link(hif_ctx))
+	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		return hif_bus_suspend_link_down(scn);
 	else
 		return hif_bus_suspend_link_up(scn);
@@ -2450,11 +2449,9 @@ int hif_bus_suspend(struct hif_opaque_softc *hif_ctx)
  *
  * Return: 0 for success and non-zero error code for failure
  */
-int hif_bus_resume(struct hif_opaque_softc *hif_ctx)
+int hif_pci_bus_resume(struct hif_softc *scn)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	if (hif_can_suspend_link(hif_ctx))
+	if (hif_can_suspend_link(GET_HIF_OPAQUE_HDL(scn)))
 		return hif_bus_resume_link_down(scn);
 	else
 		return hif_bus_resume_link_up(scn);
@@ -2660,7 +2657,7 @@ void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
  */
 int hif_runtime_suspend(struct hif_opaque_softc *hif_ctx)
 {
-	return hif_bus_suspend(hif_ctx);
+	return hif_pci_bus_suspend(HIF_GET_SOFTC(hif_ctx));
 }
 
 #ifdef WLAN_FEATURE_FASTPATH
@@ -2704,7 +2701,7 @@ static void hif_fastpath_resume(struct hif_opaque_softc *hif_ctx) {}
  */
 int hif_runtime_resume(struct hif_opaque_softc *hif_ctx)
 {
-	int status = hif_bus_resume(hif_ctx);
+	int status = hif_pci_bus_resume(HIF_GET_SOFTC(hif_ctx));
 
 	hif_fastpath_resume(hif_ctx);
 
@@ -2743,9 +2740,10 @@ void hif_disable_isr(struct hif_opaque_softc *ol_sc)
 }
 
 /* Function to reset SoC */
-void hif_reset_soc(struct hif_opaque_softc *ol_sc)
+void hif_pci_reset_soc(struct hif_softc *hif_sc)
 {
-	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(ol_sc);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_sc);
+	struct hif_opaque_softc *ol_sc = GET_HIF_OPAQUE_HDL(hif_sc);
 	struct hif_target_info *tgt_info = hif_get_target_info_handle(ol_sc);
 
 #if defined(CPU_WARM_RESET_WAR)
@@ -2874,8 +2872,7 @@ static int hif_log_soc_wakeup_timeout(struct hif_pci_softc *sc)
  * Return: int
  */
 #if ((CONFIG_ATH_PCIE_MAX_PERF == 0) && CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD)
-int
-hif_target_sleep_state_adjust(struct hif_softc *scn,
+int hif_pci_target_sleep_state_adjust(struct hif_softc *scn,
 			      bool sleep_ok, bool wait_for_it)
 {
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
@@ -2991,7 +2988,7 @@ hif_target_sleep_state_adjust(struct hif_softc *scn,
 }
 #else
 inline int
-hif_target_sleep_state_adjust(struct hif_softc *scn,
+hif_pci_sleep_state_adjust(struct hif_softc *scn,
 			      bool sleep_ok, bool wait_for_it)
 {
 	return 0;

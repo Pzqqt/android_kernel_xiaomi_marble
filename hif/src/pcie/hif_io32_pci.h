@@ -88,10 +88,6 @@
 #define hif_write32_mb(addr, value) \
 	iowrite32((u32)(value), (void __iomem *)(addr))
 
-extern int hif_target_sleep_state_adjust(struct hif_softc *scn,
-					 bool sleep_ok,
-					 bool wait_for_it);
-
 #if CONFIG_ATH_PCIE_MAX_PERF
 #define A_TARGET_ACCESS_BEGIN(scn) \
 	do {struct hif_softc *unused = scn; \
