@@ -32,7 +32,6 @@
 #include <qdf_types.h>          /* qdf_print */
 #include <hif.h>
 #include "epping_main.h"
-#include "hif_io32.h"
 #include "cds_concurrency.h"
 #include <cds_api.h>
 

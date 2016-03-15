@@ -84,10 +84,6 @@
 /* AXI gating when L1, L2 to reduce power consumption */
 #define CONFIG_PCIE_ENABLE_AXI_CLK_GATE 0
 
-#define hif_read32_mb(addr)         ioread32((void __iomem *)addr)
-#define hif_write32_mb(addr, value) \
-	iowrite32((u32)(value), (void __iomem *)(addr))
-
 #if CONFIG_ATH_PCIE_MAX_PERF
 #define A_TARGET_ACCESS_BEGIN(scn) \
 	do {struct hif_softc *unused = scn; \
@@ -210,23 +206,6 @@ do { \
 	} while (0)
 #endif /* CONFIG_ATH_PCIE_ACCESS_LIKELY */
 #endif /* CONFIG_ATH_PCIE_MAX_PERF */
-
-#ifdef CONFIG_ATH_PCIE_ACCESS_DEBUG
-extern uint32_t hif_target_read_checked(struct hif_softc *scn,
-					uint32_t offset);
-extern void hif_target_write_checked(struct hif_softc *scn, uint32_t offset,
-				     uint32_t value);
-#define A_TARGET_READ(scn, offset) \
-	hif_target_read_checked(scn, (offset))
-#define A_TARGET_WRITE(scn, offset, value) \
-	hif_target_write_checked(scn, (offset), (value))
-#else                           /* CONFIG_ATH_PCIE_ACCESS_DEBUG */
-#define A_TARGET_READ(scn, offset) \
-	hif_read32_mb(scn->mem + (offset))
-#define A_TARGET_WRITE(scn, offset, value) \
-	hif_write32_mb((scn->mem) + (offset), value);
-#endif
-
 
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
 

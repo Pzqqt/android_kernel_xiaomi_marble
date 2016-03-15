@@ -61,40 +61,6 @@
 #define Q_TARGET_ACCESS_BEGIN(scn) 0
 #define Q_TARGET_ACCESS_END(scn) 0
 
-/**
- * hif_write32_mb - SNOC write 32
- * @addr: physical address
- * @value: value
- *
- * Return: N/A
- */
-static inline void hif_write32_mb(void __iomem *addr, uint32_t value)
-{
-	wmb(); /* write memory barrier */
-	writel_relaxed((value), (addr));
-	wmb(); /* write memory barrier */
-}
-
-/**
- * hif_read32_mb - SNOC read 32
- * @addr: physical address
- *
- * Return: N/A
- */
-static inline uint32_t hif_read32_mb(void __iomem *addr)
-{
-	uint32_t tmp;
-	rmb(); /* read memory barrier */
-	tmp = readl_relaxed(addr);
-	rmb(); /* read memory barrier */
-	return tmp;
-}
-
-#define A_TARGET_READ(scn, offset) \
-	hif_read32_mb(scn->mem + (offset))
-#define A_TARGET_WRITE(scn, offset, value) \
-	hif_write32_mb((scn->mem + offset), (value))
-
 #define ADRASTEA_CE_INTR_ENABLES 0x002F00A8
 #define ADRASTEA_CE_INTR_ENABLES_SET "COMING IN REGISTER SET36"
 #define ADRASTEA_CE_INTR_ENABLES_CLEAR "COMING IN REGISTER SET36"

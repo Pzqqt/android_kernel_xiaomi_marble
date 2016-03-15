@@ -31,6 +31,11 @@
 #include <linux/io.h>
 #include "ol_if_athvar.h"
 #include "hif.h"
+
+#define hif_read32_mb(addr)         ioread32((void __iomem *)addr)
+#define hif_write32_mb(addr, value) \
+	iowrite32((u32)(value), (void __iomem *)(addr))
+
 #ifdef HIF_PCI
 #include "hif_io32_pci.h"
 #endif
@@ -38,4 +43,23 @@
 #ifdef HIF_SNOC
 #include "hif_io32_snoc.h"
 #endif /* HIF_PCI */
+
+#ifdef CONFIG_IO_MEM_ACCESS_DEBUG
+uint32_t hif_target_read_checked(struct hif_softc *scn,
+					uint32_t offset);
+void hif_target_write_checked(struct hif_softc *scn, uint32_t offset,
+				     uint32_t value);
+
+#define A_TARGET_READ(scn, offset) \
+	hif_target_read_checked(scn, (offset))
+#define A_TARGET_WRITE(scn, offset, value) \
+	hif_target_write_checked(scn, (offset), (value))
+#else                           /* CONFIG_ATH_PCIE_ACCESS_DEBUG */
+#define A_TARGET_READ(scn, offset) \
+	hif_read32_mb(scn->mem + (offset))
+#define A_TARGET_WRITE(scn, offset, value) \
+	hif_write32_mb((scn->mem) + (offset), value)
+#endif
+
+
 #endif /* __HIF_IO32_H__ */
