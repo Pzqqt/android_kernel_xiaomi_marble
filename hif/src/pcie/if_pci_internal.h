@@ -27,17 +27,6 @@
 
 #ifndef __IF_PCI_INTERNAL_H__
 #define __IF_PCI_INTERNAL_H__
-#ifdef CONFIG_CNSS
-#define HIF_REGISTER_DRIVER(wlan_drv_id) \
-	cnss_wlan_register_driver(wlan_drv_id)
-#define HIF_UNREGISTER_DRIVER(wlan_drv_id) \
-	cnss_wlan_unregister_driver(wlan_drv_id)
-#else
-#define HIF_REGISTER_DRIVER(wlan_drv_id) \
-	pci_register_driver(wlan_drv_id)
-#define HIF_UNREGISTER_DRIVER(wlan_drv_id) \
-	pci_unregister_driver(wlan_drv_id)
-#endif
 
 #ifdef DISABLE_L1SS_STATES
 #define PCI_CFG_TO_DISABLE_L1SS_STATES(pdev, addr) \
