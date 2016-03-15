@@ -1058,9 +1058,9 @@ static void hif_pm_runtime_lock_timeout_fn(unsigned long data);
 static void hif_pm_runtime_start(struct hif_pci_softc *sc)
 {
 	struct hif_softc *ol_sc = HIF_GET_SOFTC(sc);
-	uint32_t mode = hif_get_con_param(ol_sc);
+	uint32_t mode = hif_get_conparam(ol_sc);
 
-	if (!ol_sc->enable_runtime_pm) {
+	if (!ol_sc->hif_config.enable_runtime_pm) {
 		HIF_INFO("%s: RUNTIME PM is disabled in ini\n", __func__);
 		return;
 	}
@@ -1091,10 +1091,10 @@ static void hif_pm_runtime_start(struct hif_pci_softc *sc)
  */
 static void hif_pm_runtime_stop(struct hif_pci_softc *sc)
 {
-	struct hif_softc *ol_sc = HIF_GET_PCI_SOFTC(sc);
+	struct hif_softc *ol_sc = HIF_GET_SOFTC(sc);
 	uint32_t mode = hif_get_conparam(ol_sc);
 
-	if (!ol_sc->enable_runtime_pm)
+	if (!ol_sc->hif_config.enable_runtime_pm)
 		return;
 
 	if (mode == QDF_FTM_MODE || WLAN_IS_EPPING_ENABLED(mode))
@@ -2437,17 +2437,15 @@ int hif_pci_bus_resume(struct hif_softc *scn)
 static void __hif_runtime_pm_set_state(struct hif_softc *scn,
 				enum hif_pm_runtime_state state)
 {
-	struct hif_pci_softc *sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 
-	if (NULL == scn) {
+	if (NULL == sc) {
 		HIF_ERROR("%s: HIF_CTX not initialized",
 		       __func__);
 		return;
 	}
 
-	sc = scn->hif_sc;
 	qdf_atomic_set(&sc->pm_state, state);
-
 }
 
 /**
@@ -2480,25 +2478,12 @@ static void hif_runtime_pm_set_state_suspended(struct hif_softc *scn)
 	__hif_runtime_pm_set_state(scn, HIF_PM_RUNTIME_STATE_SUSPENDED);
 }
 
-static inline struct hif_pci_softc *get_sc(void *hif_ctx)
-{
-	struct hif_pci_softc *scn = HIF_GET_PCI_SOFTC(hif_ctx);
-
-	if (NULL == scn) {
-		HIF_ERROR("%s: Could not disable ASPM scn is null",
-		       __func__);
-		return NULL;
-	}
-
-	return scn;
-}
-
 /**
  * hif_log_runtime_suspend_success() - log a successful runtime suspend
  */
 static void hif_log_runtime_suspend_success(struct hif_softc *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	if (sc == NULL)
 		return;
 
@@ -2514,7 +2499,7 @@ static void hif_log_runtime_suspend_success(struct hif_softc *hif_ctx)
  */
 static void hif_log_runtime_suspend_failure(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	if (sc == NULL)
 		return;
 
@@ -2529,7 +2514,7 @@ static void hif_log_runtime_suspend_failure(void *hif_ctx)
  */
 static void hif_log_runtime_resume_success(void *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc(hif_ctx);
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 	if (sc == NULL)
 		return;
 
@@ -2545,12 +2530,13 @@ static void hif_log_runtime_resume_success(void *hif_ctx)
  */
 void hif_process_runtime_suspend_failure(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc(hif_ctx);
+	struct hif_pci_softc *hif_pci_sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	hif_log_runtime_suspend_failure();
-	if (sc != NULL)
-		hif_pm_runtime_mark_last_busy(sc->dev);
-	hif_runtime_pm_set_state_on();
+	hif_log_runtime_suspend_failure(hif_ctx);
+	if (hif_pci_sc != NULL)
+		hif_pm_runtime_mark_last_busy(hif_pci_sc->dev);
+	hif_runtime_pm_set_state_on(scn);
 }
 
 /**
@@ -2611,12 +2597,13 @@ void hif_pre_runtime_resume(struct hif_opaque_softc *hif_ctx)
  */
 void hif_process_runtime_resume_success(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_pci_softc *sc = get_sc(hif_ctx);
+	struct hif_pci_softc *hif_pci_sc = HIF_GET_PCI_SOFTC(hif_ctx);
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 
-	hif_log_runtime_resume_success();
-	if (sc != NULL)
-		hif_pm_runtime_mark_last_busy(sc->dev);
-	hif_runtime_pm_set_state_on();
+	hif_log_runtime_resume_success(hif_ctx);
+	if (hif_pci_sc != NULL)
+		hif_pm_runtime_mark_last_busy(hif_pci_sc->dev);
+	hif_runtime_pm_set_state_on(scn);
 }
 #endif
 
@@ -3294,7 +3281,6 @@ void hif_pci_irq_disable(struct hif_softc *scn, int ce_id)
 
 void hif_pm_runtime_get_noresume(struct hif_opaque_softc *hif_ctx)
 {
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
 	if (NULL == sc)
@@ -3569,7 +3555,7 @@ int hif_pm_runtime_prevent_suspend(struct hif_opaque_softc *ol_sc,
 	struct hif_pm_runtime_lock *context = data;
 	unsigned long flags;
 
-	if (!sc->enable_runtime_pm)
+	if (!sc->hif_config.enable_runtime_pm)
 		return 0;
 
 	if (!context)
@@ -3592,7 +3578,7 @@ int hif_pm_runtime_allow_suspend(struct hif_opaque_softc *ol_sc,
 
 	unsigned long flags;
 
-	if (!sc->enable_runtime_pm)
+	if (!sc->hif_config.enable_runtime_pm)
 		return 0;
 
 	if (!context)
@@ -3657,7 +3643,7 @@ int hif_pm_runtime_prevent_suspend_timeout(struct hif_opaque_softc *ol_sc,
 		return -EINVAL;
 	}
 
-	if (!sc->enable_runtime_pm)
+	if (!sc->hif_config.enable_runtime_pm)
 		return 0;
 
 	if (!context)
@@ -3733,13 +3719,7 @@ void hif_runtime_lock_deinit(struct hif_opaque_softc *hif_ctx,
 {
 	unsigned long flags;
 	struct hif_pm_runtime_lock *context = data;
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct hif_pci_softc *sc;
-
-	if (!scn)
-		return;
-
-	sc = scn->hif_sc;
+	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(hif_ctx);
 
 	if (!sc)
 		return;
