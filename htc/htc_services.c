@@ -36,24 +36,6 @@ unsigned int htc_credit_flow = 1;
 #define DEBUG_CREDIT 0
 #endif
 
-/**
- * htc_update_htc_htt_config - API to update HIF with the HTT endpoint info
- * @target: HTC handle
- * @endpoint: Endpoint on which HTT messages flow
- *
- * Return: void
- */
-#ifdef HIF_PCI
-void htc_update_htc_htt_config(HTC_TARGET *target, int endpoint)
-{
-	hif_save_htc_htt_config_endpoint(target->hif_dev, endpoint);
-}
-#else
-void htc_update_htc_htt_config(HTC_TARGET *target, int endpoint)
-{
-}
-#endif
-
 A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 			     HTC_SERVICE_CONNECT_REQ *pConnectReq,
 			     HTC_SERVICE_CONNECT_RESP *pConnectResp)
@@ -354,7 +336,8 @@ A_STATUS htc_connect_service(HTC_HANDLE HTCHandle,
 	} while (false);
 
 	if (HTT_SERVICE_GROUP == (pConnectReq->service_id >> 8))
-		htc_update_htc_htt_config(target, assignedEndpoint);
+		hif_save_htc_htt_config_endpoint(target->hif_dev,
+						 assignedEndpoint);
 
 	AR_DEBUG_PRINTF(ATH_DEBUG_TRC, ("-htc_connect_service\n"));
 
