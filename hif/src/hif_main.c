@@ -804,6 +804,17 @@ bool hif_needs_bmi(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
+ * hif_get_bus_type() - return the bus type
+ *
+ * Return: enum qdf_bus_type
+ */
+enum qdf_bus_type hif_get_bus_type(struct hif_opaque_softc *hif_hdl)
+{
+	struct hif_softc *scn = HIF_GET_SOFTC(hif_hdl);
+	return scn->bus_type;
+}
+
+/**
  * Target info and ini parameters are global to the driver
  * Hence these structures are exposed to all the modules in
  * the driver and they don't need to maintains multiple copies

@@ -491,6 +491,7 @@ void hif_lro_flush_cb_register(struct hif_opaque_softc *scn,
 			       void (handler)(void *), void *data);
 void hif_lro_flush_cb_deregister(struct hif_opaque_softc *scn);
 bool hif_needs_bmi(struct hif_opaque_softc *scn);
+enum qdf_bus_type hif_get_bus_type(struct hif_opaque_softc *hif_hdl);
 struct hif_target_info *hif_get_target_info_handle(struct hif_opaque_softc *
 						   scn);
 struct hif_config_info *hif_get_ini_handle(struct hif_opaque_softc *scn);
