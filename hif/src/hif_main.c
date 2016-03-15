@@ -143,22 +143,6 @@ A_target_id_t hif_get_target_id(struct hif_softc *scn)
 }
 
 /**
- * hif_set_target_sleep(): hif_set_target_sleep
- * @scn: scn
- * @sleep_ok: sleep_ok
- * @wait_for_it: wait
- *
- * Return: void
- */
-void hif_set_target_sleep(struct hif_opaque_softc *hif_ctx,
-		     bool sleep_ok, bool wait_for_it)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	hif_target_sleep_state_adjust(scn,
-				      sleep_ok, wait_for_it);
-}
-
-/**
  * hif_target_forced_awake(): hif_target_forced_awake
  * @scn: scn
  *

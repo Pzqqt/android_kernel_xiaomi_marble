@@ -1205,6 +1205,13 @@ void hif_enable_power_management(struct hif_opaque_softc *hif_ctx,
 
 	if (!is_packet_log_enabled)
 		hif_enable_power_gating(hif_ctx);
+
+	if (!CONFIG_ATH_PCIE_MAX_PERF &&
+	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
+		if (hif_target_sleep_state_adjust(hif_sc, true, false) < 0)
+			HIF_ERROR("%s, failed to set target to sleep",
+				  __func__);
+	}
 }
 
 /**
