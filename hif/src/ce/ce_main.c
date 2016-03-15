@@ -1972,14 +1972,6 @@ int hif_config_ce(struct hif_softc *scn)
 	hif_state->sleep_timer_init = true;
 	hif_state->fw_indicator_address = FW_INDICATOR_ADDRESS;
 
-#ifdef HIF_PCI
-#if CONFIG_ATH_PCIE_MAX_PERF || CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD
-	/* Force AWAKE forever/till the driver is loaded */
-	if (hif_target_sleep_state_adjust(scn, false, true) < 0)
-		return -EACCES;
-#endif
-#endif
-
 	hif_config_rri_on_ddr(scn);
 
 	/* During CE initializtion */

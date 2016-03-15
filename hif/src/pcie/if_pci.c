@@ -1262,6 +1262,16 @@ int hif_bus_configure(struct hif_softc *hif_sc)
 	}
 
 	A_TARGET_ACCESS_LIKELY(hif_sc);
+
+	if (CONFIG_ATH_PCIE_MAX_PERF ||
+	    CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD) {
+		/* Force AWAKE forever/till the driver is loaded */
+		if (hif_target_sleep_state_adjust(hif_sc, false, true) < 0) {
+			status = -EACCES;
+			goto disable_wlan;
+		}
+	}
+
 	status = hif_config_ce(hif_sc);
 	if (status)
 		goto disable_wlan;
