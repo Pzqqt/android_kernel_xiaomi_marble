@@ -1,5 +1,5 @@
 /*
- * Copyright (c) 2013-2015 The Linux Foundation. All rights reserved.
+ * Copyright (c) 2013-2016 The Linux Foundation. All rights reserved.
  *
  * Previously licensed under the ISC license by Qualcomm Atheros, Inc.
  *
@@ -28,50 +28,78 @@
 #ifndef CDS_COMMON__IEEE80211_I_H_
 #define CDS_COMMON__IEEE80211_I_H_
 
-/* XXX not really a mode; there are really multiple PHY's */
+/**
+ * enum ieee80211_phymode - not really a mode; there are really multiple PHY's
+ * @IEEE80211_MODE_AUTO - autoselect
+ * @IEEE80211_MODE_11A - 5GHz, OFDM
+ * @IEEE80211_MODE_11B - 2GHz, CCK
+ * @IEEE80211_MODE_11G - 2GHz, OFDM
+ * @IEEE80211_MODE_FH - 2GHz, GFSK
+ * @IEEE80211_MODE_TURBO_A - 5GHz, OFDM, 2x clock dynamic turbo
+ * @IEEE80211_MODE_TURBO_G - 2GHz, OFDM, 2x clock dynamic turbo
+ * @IEEE80211_MODE_11NA_HT20 - 5Ghz, HT20
+ * @IEEE80211_MODE_11NG_HT20 - 2Ghz, HT20
+ * @IEEE80211_MODE_11NA_HT40PLUS - 5Ghz, HT40 (ext ch +1)
+ * @IEEE80211_MODE_11NA_HT40MINUS - 5Ghz, HT40 (ext ch -1)
+ * @IEEE80211_MODE_11NG_HT40PLUS - 2Ghz, HT40 (ext ch +1)
+ * @IEEE80211_MODE_11NG_HT40MINUS - 2Ghz, HT40 (ext ch -1)
+ * @IEEE80211_MODE_11NG_HT40 - 2Ghz, Auto HT40
+ * @IEEE80211_MODE_11NA_HT40 - 2Ghz, Auto HT40
+ * @IEEE80211_MODE_11AC_VHT20 - 5Ghz, VHT20
+ * @IEEE80211_MODE_11AC_VHT40PLUS - 5Ghz, VHT40 (Ext ch +1)
+ * @IEEE80211_MODE_11AC_VHT40MINUS - 5Ghz VHT40 (Ext ch -1)
+ * @IEEE80211_MODE_11AC_VHT40 - 5Ghz, VHT40
+ * @IEEE80211_MODE_11AC_VHT80 - 5Ghz, VHT80
+ * @IEEE80211_MODE_2G_AUTO - 2G 11 b/g/n autoselect
+ * @IEEE80211_MODE_5G_AUTO - 5G 11 a/n/ac autoselect
+ * @IEEE80211_MODE_11AGN - Support 11N in both 2G and 5G
+ * @IEEE80211_MODE_MAX - Maximum possible value
+ */
 enum ieee80211_phymode {
-	IEEE80211_MODE_AUTO = 0,        /* autoselect */
-	IEEE80211_MODE_11A = 1, /* 5GHz, OFDM */
-	IEEE80211_MODE_11B = 2, /* 2GHz, CCK */
-	IEEE80211_MODE_11G = 3, /* 2GHz, OFDM */
-	IEEE80211_MODE_FH = 4,  /* 2GHz, GFSK */
-	IEEE80211_MODE_TURBO_A = 5,     /* 5GHz, OFDM, 2x clock dynamic turbo */
-	IEEE80211_MODE_TURBO_G = 6,     /* 2GHz, OFDM, 2x clock dynamic turbo */
-	IEEE80211_MODE_11NA_HT20 = 7,   /* 5Ghz, HT20 */
-	IEEE80211_MODE_11NG_HT20 = 8,   /* 2Ghz, HT20 */
-	IEEE80211_MODE_11NA_HT40PLUS = 9,       /* 5Ghz, HT40 (ext ch +1) */
-	IEEE80211_MODE_11NA_HT40MINUS = 10,     /* 5Ghz, HT40 (ext ch -1) */
-	IEEE80211_MODE_11NG_HT40PLUS = 11,      /* 2Ghz, HT40 (ext ch +1) */
-	IEEE80211_MODE_11NG_HT40MINUS = 12,     /* 2Ghz, HT40 (ext ch -1) */
-	IEEE80211_MODE_11NG_HT40 = 13,  /* 2Ghz, Auto HT40 */
-	IEEE80211_MODE_11NA_HT40 = 14,  /* 2Ghz, Auto HT40 */
-	IEEE80211_MODE_11AC_VHT20 = 15, /* 5Ghz, VHT20 */
-	IEEE80211_MODE_11AC_VHT40PLUS = 16,     /* 5Ghz, VHT40 (Ext ch +1) */
-	IEEE80211_MODE_11AC_VHT40MINUS = 17,    /* 5Ghz  VHT40 (Ext ch -1) */
-	IEEE80211_MODE_11AC_VHT40 = 18, /* 5Ghz, VHT40 */
-	IEEE80211_MODE_11AC_VHT80 = 19, /* 5Ghz, VHT80 */
-	IEEE80211_MODE_2G_AUTO = 20,    /* 2G 11 b/g/n  autoselect */
-	IEEE80211_MODE_5G_AUTO = 21,    /* 5G 11 a/n/ac autoselect */
-	IEEE80211_MODE_11AGN = 22,   /* Support 11N in both 2G and 5G */
+	IEEE80211_MODE_AUTO = 0,
+	IEEE80211_MODE_11A = 1,
+	IEEE80211_MODE_11B = 2,
+	IEEE80211_MODE_11G = 3,
+	IEEE80211_MODE_FH = 4,
+	IEEE80211_MODE_TURBO_A = 5,
+	IEEE80211_MODE_TURBO_G = 6,
+	IEEE80211_MODE_11NA_HT20 = 7,
+	IEEE80211_MODE_11NG_HT20 = 8,
+	IEEE80211_MODE_11NA_HT40PLUS = 9,
+	IEEE80211_MODE_11NA_HT40MINUS = 10,
+	IEEE80211_MODE_11NG_HT40PLUS = 11,
+	IEEE80211_MODE_11NG_HT40MINUS = 12,
+	IEEE80211_MODE_11NG_HT40 = 13,
+	IEEE80211_MODE_11NA_HT40 = 14,
+	IEEE80211_MODE_11AC_VHT20 = 15,
+	IEEE80211_MODE_11AC_VHT40PLUS = 16,
+	IEEE80211_MODE_11AC_VHT40MINUS = 17,
+	IEEE80211_MODE_11AC_VHT40 = 18,
+	IEEE80211_MODE_11AC_VHT80 = 19,
+	IEEE80211_MODE_2G_AUTO = 20,
+	IEEE80211_MODE_5G_AUTO = 21,
+	IEEE80211_MODE_11AGN = 22,
+
+	/* Do not add after this line */
+	IEEE80211_MODE_MAX = IEEE80211_MODE_11AGN,
 };
-#define IEEE80211_MODE_MAX      (IEEE80211_MODE_11AC_VHT80 + 1)
 
+/**
+ * enum ieee80211_opmode - operating mode
+ * @IEEE80211_M_IBSS - IBSS (adhoc) station
+ * @IEEE80211_M_HOSTAP - Software Access Point
+ * @IEEE80211_OPMODE_MAX = Highest numbered opmode in the list
+ * @IEEE80211_M_ANY - Any of the above; used by NDIS 6.x
+ *
+*/
 enum ieee80211_opmode {
-	IEEE80211_M_STA = 1,    /* infrastructure station */
-	IEEE80211_M_IBSS = 0,   /* IBSS (adhoc) station */
-	IEEE80211_M_AHDEMO = 3, /* Old lucent compatible adhoc demo */
-	IEEE80211_M_HOSTAP = 6, /* Software Access Point */
-	IEEE80211_M_MONITOR = 8,        /* Monitor mode */
-	IEEE80211_M_WDS = 2,    /* WDS link */
-	IEEE80211_M_BTAMP = 9,  /* VAP for BT AMP */
+	IEEE80211_M_IBSS = 0,
+	IEEE80211_M_HOSTAP = 6,
 
-	IEEE80211_M_P2P_GO = 33,        /* P2P GO */
-	IEEE80211_M_P2P_CLIENT = 34,    /* P2P Client */
-	IEEE80211_M_P2P_DEVICE = 35,    /* P2P Device */
+	/* Do not add after this line */
+	IEEE80211_OPMODE_MAX = IEEE80211_M_HOSTAP,
 
-	IEEE80211_OPMODE_MAX = IEEE80211_M_BTAMP,       /* Highest numbered opmode in the list */
-
-	IEEE80211_M_ANY = 0xFF  /* Any of the above; used by NDIS 6.x */
+	IEEE80211_M_ANY = 0xFF,
 };
 
 /*
