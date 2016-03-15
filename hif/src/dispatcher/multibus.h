@@ -53,6 +53,7 @@ struct hif_bus_ops {
 	int (*hif_bus_configure)(struct hif_softc *hif_sc);
 	void (*hif_irq_disable)(struct hif_softc *hif_sc, int ce_id);
 	void (*hif_irq_enable)(struct hif_softc *hif_sc, int ce_id);
+	int (*hif_dump_registers)(struct hif_softc *hif_sc);
 };
 
 #ifdef HIF_SNOC

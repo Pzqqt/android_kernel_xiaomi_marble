@@ -639,14 +639,15 @@ int hif_check_soc_status(struct hif_opaque_softc *hif_ctx)
 }
 
 /**
- * hif_dump_pci_registers(): dump PCI debug registers
+ * __hif_pci_dump_registers(): dump other PCI debug registers
  * @scn: struct hif_softc
  *
- * This function dumps pci debug registers
+ * This function dumps pci debug registers.  The parrent function
+ * dumps the copy engine registers before calling this function.
  *
  * Return: void
  */
-static void hif_dump_pci_registers(struct hif_softc *scn)
+static void __hif_pci_dump_registers(struct hif_softc *scn)
 {
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	void __iomem *mem = sc->mem;
@@ -780,7 +781,7 @@ static void hif_dump_pci_registers(struct hif_softc *scn)
  *
  * Return: 0 for success or error code
  */
-int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
+int hif_pci_dump_registers(struct hif_softc *hif_ctx)
 {
 	int status;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -790,7 +791,8 @@ int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
 	if (status)
 		HIF_ERROR("%s: Dump CE Registers Failed", __func__);
 
-	hif_dump_pci_registers(scn);
+	/* dump non copy engine pci registers */
+	__hif_pci_dump_registers(scn);
 
 	return 0;
 }

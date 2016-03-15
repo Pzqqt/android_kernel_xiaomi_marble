@@ -214,3 +214,9 @@ void hif_irq_disable(struct hif_softc *hif_sc, int irq_id)
 {
 	hif_sc->bus_ops.hif_irq_disable(hif_sc, irq_id);
 }
+
+int hif_dump_registers(struct hif_opaque_softc *hif_hdl)
+{
+	struct hif_softc *hif_sc = HIF_GET_SOFTC(hif_hdl);
+	return hif_sc->bus_ops.hif_dump_registers(hif_sc);
+}

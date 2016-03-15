@@ -40,3 +40,4 @@ void hif_snoc_disable_bus(struct hif_softc *scn);
 int hif_snoc_bus_configure(struct hif_softc *scn);
 void hif_snoc_irq_disable(struct hif_softc *scn, int ce_id);
 void hif_snoc_irq_enable(struct hif_softc *scn, int ce_id);
+int hif_snoc_dump_registers(struct hif_softc *scn);

@@ -45,3 +45,4 @@ void hif_pci_disable_bus(struct hif_softc *scn);
 int hif_pci_bus_configure(struct hif_softc *scn);
 void hif_pci_irq_disable(struct hif_softc *scn, int ce_id);
 void hif_pci_irq_enable(struct hif_softc *scn, int ce_id);
+int hif_pci_dump_registers(struct hif_softc *scn);

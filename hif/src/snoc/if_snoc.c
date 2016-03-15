@@ -56,19 +56,6 @@ void hif_snoc_disable_isr(struct hif_softc *scn)
 }
 
 /**
- * hif_dump_snoc_registers(): dump CE debug registers
- * @scn: struct hif_softc
- *
- * This function dumps SNOC debug registers
- *
- * Return: void
- */
-static void hif_dump_snoc_registers(struct hif_softc *scn)
-{
-	return;
-}
-
-/**
  * hif_dump_registers(): dump bus debug registers
  * @scn: struct hif_opaque_softc
  *
@@ -76,7 +63,7 @@ static void hif_dump_snoc_registers(struct hif_softc *scn)
   *
  * Return: 0 for success or error code
  */
-int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
+int hif_snoc_dump_registers(struct hif_softc *hif_ctx)
 {
 	int status;
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
@@ -84,8 +71,6 @@ int hif_dump_registers(struct hif_opaque_softc *hif_ctx)
 	status = hif_dump_ce_registers(scn);
 	if (status)
 		HIF_ERROR("%s: Dump CE Registers Failed", __func__);
-
-	hif_dump_snoc_registers(scn);
 
 	return 0;
 }
