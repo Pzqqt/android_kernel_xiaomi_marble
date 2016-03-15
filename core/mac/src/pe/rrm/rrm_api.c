@@ -983,215 +983,221 @@ void rrm_process_beacon_request_failure(tpAniSirGlobal pMac,
 	return;
 }
 
+/**
+ * rrm_process_beacon_req() - Update curr_req and report
+ * @mac_ctx: Global pointer to MAC context
+ * @peer: Macaddress of the peer requesting the radio measurement
+ * @session_entry: session entry
+ * @curr_req: Pointer to RRM request
+ * @report: Pointer to radio measurement report
+ * @rrm_req: Array of Measurement request IEs
+ * @num_report: No.of reports
+ * @index: Index for Measurement request
+ *
+ * Update structure sRRMReq and sSirMacRadioMeasureReport and pass it to
+ * rrm_process_beacon_report_req().
+ *
+ * Return: tSirRetStatus
+ */
+tSirRetStatus rrm_process_beacon_req(tpAniSirGlobal mac_ctx, tSirMacAddr peer,
+			     tpPESession session_entry, tpRRMReq curr_req,
+			     tpSirMacRadioMeasureReport report,
+			     tDot11fRadioMeasurementRequest *rrm_req,
+			     uint8_t *num_report, int index)
+{
+	tRrmRetStatus rrm_status = eRRM_SUCCESS;
+
+	if (curr_req) {
+		if (report == NULL) {
+			/*
+			 * Allocate memory to send reports for
+			 * any subsequent requests.
+			 */
+			report = qdf_mem_malloc(sizeof(*report) *
+				(rrm_req->num_MeasurementRequest - index));
+			if (NULL == report) {
+				lim_log(mac_ctx, LOGP,
+					FL("Unable to allocate memory during RRM Req processing"));
+				return eSIR_MEM_ALLOC_FAILED;
+			}
+			qdf_mem_set(report, sizeof(*report) *
+				(rrm_req->num_MeasurementRequest - index), 0);
+			lim_log(mac_ctx, LOG3,
+				FL("rrm beacon type refused of %d report in beacon table"),
+				*num_report);
+		}
+		report[*num_report].refused = 1;
+		report[*num_report].type = SIR_MAC_RRM_BEACON_TYPE;
+		report[*num_report].token =
+			rrm_req->MeasurementRequest[index].measurement_token;
+		(*num_report)++;
+		return eSIR_SUCCESS;
+	} else {
+		curr_req = qdf_mem_malloc(sizeof(*curr_req));
+		if (NULL == curr_req) {
+			lim_log(mac_ctx, LOGP,
+				FL("Unable to allocate memory during RRM Req processing"));
+				qdf_mem_free(report);
+			return eSIR_MEM_ALLOC_FAILED;
+		}
+		lim_log(mac_ctx, LOG3, FL(" Processing Beacon Report request"));
+		qdf_mem_set(curr_req, sizeof(*curr_req), 0);
+		curr_req->dialog_token = rrm_req->DialogToken.token;
+		curr_req->token = rrm_req->
+				  MeasurementRequest[index].measurement_token;
+		curr_req->sendEmptyBcnRpt = true;
+		mac_ctx->rrm.rrmPEContext.pCurrentReq = curr_req;
+		rrm_status = rrm_process_beacon_report_req(mac_ctx, curr_req,
+			&rrm_req->MeasurementRequest[index], session_entry);
+		if (eRRM_SUCCESS != rrm_status) {
+			rrm_process_beacon_request_failure(mac_ctx,
+				session_entry, peer, rrm_status);
+			rrm_cleanup(mac_ctx);
+		}
+	}
+	return eSIR_SUCCESS;
+}
+
+/**
+ * update_rrm_report() - Set incapable bit
+ * @mac_ctx: Global pointer to MAC context
+ * @report: Pointer to radio measurement report
+ * @rrm_req: Array of Measurement request IEs
+ * @num_report: No.of reports
+ * @index: Index for Measurement request
+ *
+ * Send a report with incapabale bit set
+ *
+ * Return: tSirRetStatus
+ */
+
+tSirRetStatus update_rrm_report(tpAniSirGlobal mac_ctx,
+				tpSirMacRadioMeasureReport report,
+				tDot11fRadioMeasurementRequest *rrm_req,
+				uint8_t *num_report, int index)
+{
+	if (report == NULL) {
+		/*
+		 * Allocate memory to send reports for
+		 * any subsequent requests.
+		 */
+		report = qdf_mem_malloc(sizeof(*report) *
+			 (rrm_req->num_MeasurementRequest - index));
+		if (NULL == report) {
+			lim_log(mac_ctx, LOGP, FL("Unable to allocate memory during RRM Req processing"));
+			return eSIR_MEM_ALLOC_FAILED;
+		}
+		qdf_mem_set(report, sizeof(*report) *
+			(rrm_req->num_MeasurementRequest - index), 0);
+		lim_log(mac_ctx, LOG3, FL("rrm beacon type incapable of %d report "),
+			*num_report);
+	}
+	report[*num_report].incapable = 1;
+	report[*num_report].type =
+		rrm_req->MeasurementRequest[index].measurement_type;
+	report[*num_report].token =
+		 rrm_req->MeasurementRequest[index].measurement_token;
+	(*num_report)++;
+	return eSIR_SUCCESS;
+}
+
 /* -------------------------------------------------------------------- */
 /**
- * rrm_process_radio_measurement_request
+ * rrm_process_radio_measurement_request - Process rrm request
+ * @mac_ctx: Global pointer to MAC context
+ * @peer: Macaddress of the peer requesting the radio measurement.
+ * @rrm_req: Array of Measurement request IEs
+ * @session_entry: session entry.
  *
- * FUNCTION:  Processes the Radio Resource Measurement request.
+ * Processes the Radio Resource Measurement request.
  *
- * LOGIC:
-
- *
- * ASSUMPTIONS:
- *
- * NOTE:
- *
- * @param peer Macaddress of the peer requesting the radio measurement.
- * @param pRRMReq Array of Measurement request IEs
- * @param pSessionEntry session entry.
- * @return None
+ * Return: tSirRetStatus
  */
 tSirRetStatus
-rrm_process_radio_measurement_request(tpAniSirGlobal pMac,
+rrm_process_radio_measurement_request(tpAniSirGlobal mac_ctx,
 				      tSirMacAddr peer,
-				      tDot11fRadioMeasurementRequest *pRRMReq,
-				      tpPESession pSessionEntry)
+				      tDot11fRadioMeasurementRequest *rrm_req,
+				      tpPESession session_entry)
 {
 	uint8_t i;
 	tSirRetStatus status = eSIR_SUCCESS;
-	tpSirMacRadioMeasureReport pReport = NULL;
+	tpSirMacRadioMeasureReport report = NULL;
 	uint8_t num_report = 0;
-	tpRRMReq pCurrentReq = pMac->rrm.rrmPEContext.pCurrentReq;
-	tRrmRetStatus rrmStatus = eRRM_SUCCESS;
+	tpRRMReq curr_req = mac_ctx->rrm.rrmPEContext.pCurrentReq;
 
-	if (!pRRMReq->num_MeasurementRequest) {
-		/* No measurement requests.... */
-		/* */
-		pReport = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
-		if (NULL == pReport) {
-			lim_log(pMac, LOGP,
-				FL
-					("Unable to allocate memory during RRM Req processing"));
+	if (!rrm_req->num_MeasurementRequest) {
+		report = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
+		if (NULL == report) {
+			lim_log(mac_ctx, LOGP, FL("Unable to allocate memory during RRM Req processing"));
 			return eSIR_MEM_ALLOC_FAILED;
 		}
-		qdf_mem_set(pReport, sizeof(tSirMacRadioMeasureReport), 0);
-		PELOGE(lim_log(pMac, LOGE,
-			       FL
-				       ("No requestIes in the measurement request, sending incapable report"));
-		       )
-		pReport->incapable = 1;
+		qdf_mem_set(report, sizeof(tSirMacRadioMeasureReport), 0);
+		lim_log(mac_ctx, LOGE, FL("No requestIes in the measurement request, sending incapable report"));
+		report->incapable = 1;
 		num_report = 1;
-		lim_send_radio_measure_report_action_frame(pMac,
-							   pRRMReq->DialogToken.token,
-							   num_report, pReport, peer,
-							   pSessionEntry);
-		qdf_mem_free(pReport);
+		lim_send_radio_measure_report_action_frame(mac_ctx,
+			rrm_req->DialogToken.token, num_report, report, peer,
+			session_entry);
+		qdf_mem_free(report);
 		return eSIR_FAILURE;
 	}
 	/* PF Fix */
-	if (pRRMReq->NumOfRepetitions.repetitions > 0) {
-		lim_log(pMac, LOG1,
-			FL(" number of repetitions %d"),
-			pRRMReq->NumOfRepetitions.repetitions);
-
-		/* Send a report with incapable bit set. Not supporting repetitions. */
-		pReport = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
-		if (NULL == pReport) {
-			lim_log(pMac, LOGP,
-				FL
-					("Unable to allocate memory during RRM Req processing"));
+	if (rrm_req->NumOfRepetitions.repetitions > 0) {
+		lim_log(mac_ctx, LOG1, FL(" number of repetitions %d"),
+			rrm_req->NumOfRepetitions.repetitions);
+		/*
+		 * Send a report with incapable bit set.
+		 * Not supporting repetitions.
+		 */
+		report = qdf_mem_malloc(sizeof(tSirMacRadioMeasureReport));
+		if (NULL == report) {
+			lim_log(mac_ctx, LOGP, FL("Unable to allocate memory during RRM Req processing"));
 			return eSIR_MEM_ALLOC_FAILED;
 		}
-		qdf_mem_set(pReport, sizeof(tSirMacRadioMeasureReport), 0);
-		PELOGE(lim_log(pMac, LOGE, FL(" Allocated memory for pReport"));)
-		pReport->incapable = 1;
-		pReport->type = pRRMReq->MeasurementRequest[0].measurement_type;
+		qdf_mem_set(report, sizeof(tSirMacRadioMeasureReport), 0);
+		lim_log(mac_ctx, LOGE, FL("Allocated memory for report"));
+		report->incapable = 1;
+		report->type = rrm_req->MeasurementRequest[0].measurement_type;
 		num_report = 1;
 		goto end;
-
 	}
 
-	for (i = 0; i < pRRMReq->num_MeasurementRequest; i++) {
-		switch (pRRMReq->MeasurementRequest[i].measurement_type) {
+	for (i = 0; i < rrm_req->num_MeasurementRequest; i++) {
+		switch (rrm_req->MeasurementRequest[i].measurement_type) {
 		case SIR_MAC_RRM_BEACON_TYPE:
 			/* Process beacon request. */
-			if (pCurrentReq) {
-				if (pReport == NULL) {  /* Allocate memory to send reports for any subsequent requests. */
-					pReport =
-						qdf_mem_malloc(sizeof
-							       (tSirMacRadioMeasureReport)
-							       *
-							       (pRRMReq->
-								num_MeasurementRequest
-								- i));
-					if (NULL == pReport) {
-						lim_log(pMac, LOGP,
-							FL
-								("Unable to allocate memory during RRM Req processing"));
-						return eSIR_MEM_ALLOC_FAILED;
-					}
-					qdf_mem_set(pReport,
-						    sizeof
-						    (tSirMacRadioMeasureReport)
-						    *
-						    (pRRMReq->
-						     num_MeasurementRequest -
-						     i), 0);
-					lim_log(pMac, LOG3,
-						FL
-							(" rrm beacon type refused of %d report in beacon table"),
-						num_report);
-
-				}
-				pReport[num_report].refused = 1;
-				pReport[num_report].type =
-					SIR_MAC_RRM_BEACON_TYPE;
-				pReport[num_report].token =
-					pRRMReq->MeasurementRequest[i].
-					measurement_token;
-				num_report++;
-				continue;
-			} else {
-				pCurrentReq =
-					qdf_mem_malloc(sizeof(*pCurrentReq));
-				if (NULL == pCurrentReq) {
-					lim_log(pMac, LOGP,
-						FL
-							("Unable to allocate memory during RRM Req processing"));
-					qdf_mem_free(pReport);
-					return eSIR_MEM_ALLOC_FAILED;
-				}
-				lim_log(pMac, LOG3,
-					FL(" Processing Beacon Report request"));
-				qdf_mem_set(pCurrentReq, sizeof(*pCurrentReq),
-					    0);
-				pCurrentReq->dialog_token =
-					pRRMReq->DialogToken.token;
-				pCurrentReq->token =
-					pRRMReq->MeasurementRequest[i].
-					measurement_token;
-				pCurrentReq->sendEmptyBcnRpt = true;
-				pMac->rrm.rrmPEContext.pCurrentReq =
-					pCurrentReq;
-				rrmStatus =
-					rrm_process_beacon_report_req(pMac, pCurrentReq,
-								      &pRRMReq->
-								      MeasurementRequest
-								      [i],
-								      pSessionEntry);
-				if (eRRM_SUCCESS != rrmStatus) {
-					rrm_process_beacon_request_failure(pMac,
-									   pSessionEntry,
-									   peer,
-									   rrmStatus);
-					rrm_cleanup(pMac);
-				}
-			}
+			status = rrm_process_beacon_req(mac_ctx, peer,
+				 session_entry, curr_req, report, rrm_req,
+				 &num_report, i);
+			if (eSIR_SUCCESS != status)
+				return status;
 			break;
 		case SIR_MAC_RRM_LCI_TYPE:
 		case SIR_MAC_RRM_LOCATION_CIVIC_TYPE:
 		case SIR_MAC_RRM_FINE_TIME_MEAS_TYPE:
-			lim_log(pMac, LOG1,
+			lim_log(mac_ctx, LOG1,
 			    FL("RRM with type: %d sent to userspace"),
-			    pRRMReq->MeasurementRequest[i].measurement_type);
+			    rrm_req->MeasurementRequest[i].measurement_type);
 			break;
 		default:
 			/* Send a report with incapabale bit set. */
-			if (pReport == NULL) { /* Allocate memory to send reports for any subsequent requests. */
-				pReport =
-					qdf_mem_malloc(sizeof
-						       (tSirMacRadioMeasureReport)
-						       *
-						       (pRRMReq->
-							num_MeasurementRequest -
-							i));
-				if (NULL == pReport) {
-					lim_log(pMac, LOGP,
-						FL
-							("Unable to allocate memory during RRM Req processing"));
-					return eSIR_MEM_ALLOC_FAILED;
-				}
-				qdf_mem_set(pReport,
-					    sizeof(tSirMacRadioMeasureReport)
-					    * (pRRMReq->num_MeasurementRequest -
-					       i), 0);
-				lim_log(pMac, LOG3,
-					FL
-						("rrm beacon type incapable of %d report "),
-					num_report);
-			}
-			pReport[num_report].incapable = 1;
-			pReport[num_report].type =
-				pRRMReq->MeasurementRequest[i].measurement_type;
-			pReport[num_report].token =
-				pRRMReq->MeasurementRequest[i].measurement_token;
-			num_report++;
+			status = update_rrm_report(mac_ctx, report, rrm_req,
+						   &num_report, i);
+			if (eSIR_SUCCESS != status)
+				return status;
 			break;
 		}
 	}
 
 end:
-	if (pReport) {
-		lim_send_radio_measure_report_action_frame(pMac,
-							   pRRMReq->DialogToken.token,
-							   num_report, pReport, peer,
-							   pSessionEntry);
-
-		qdf_mem_free(pReport);
-		lim_log(pMac, LOG3, FL(" Free memory for pReport"));
+	if (report) {
+		lim_send_radio_measure_report_action_frame(mac_ctx,
+			rrm_req->DialogToken.token, num_report, report,
+			peer, session_entry);
+		qdf_mem_free(report);
+		lim_log(mac_ctx, LOG3, FL(" Free memory for report"));
 	}
 	return status;
-
 }
 
 /* -------------------------------------------------------------------- */
