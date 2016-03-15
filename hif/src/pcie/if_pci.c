@@ -81,8 +81,6 @@
 unsigned int msienable = 0;
 module_param(msienable, int, 0644);
 
-int hif_pci_war1 = 0;
-static DEFINE_SPINLOCK(pciwar_lock);
 
 #ifndef REMOVE_PKT_LOG
 struct ol_pl_os_dep_funcs *g_ol_pl_os_dep_funcs = NULL;
@@ -3077,34 +3075,6 @@ void hif_target_dump_access_log(void)
 	spin_unlock_irqrestore(&pcie_access_log_lock, irq_flags);
 }
 #endif
-
-/**
- * war_pci_write32() - PCIe io32 write workaround
- * @addr: addr
- * @offset: offset
- * @value: value
- *
- * iowrite32
- *
- * Return: int
- */
-void war_pci_write32(char *addr, uint32_t offset, uint32_t value)
-{
-	if (hif_pci_war1) {
-		unsigned long irq_flags;
-
-		spin_lock_irqsave(&pciwar_lock, irq_flags);
-
-		(void)ioread32((void __iomem *)(addr + offset + 4));
-		(void)ioread32((void __iomem *)(addr + offset + 4));
-		(void)ioread32((void __iomem *)(addr + offset + 4));
-		iowrite32((uint32_t) (value), (void __iomem *)(addr + offset));
-
-		spin_unlock_irqrestore(&pciwar_lock, irq_flags);
-	} else {
-		iowrite32((uint32_t) (value), (void __iomem *)(addr + offset));
-	}
-}
 
 /**
  * hif_configure_irq(): configure interrupt

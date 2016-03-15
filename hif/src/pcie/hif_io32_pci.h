@@ -221,12 +221,10 @@ extern void hif_target_write_checked(struct hif_softc *scn, uint32_t offset,
 #define A_TARGET_WRITE(scn, offset, value) \
 	hif_target_write_checked(scn, (offset), (value))
 #else                           /* CONFIG_ATH_PCIE_ACCESS_DEBUG */
-void war_pci_write32(char *addr, u32 offset, u32 value);
-
 #define A_TARGET_READ(scn, offset) \
 	hif_read32_mb(scn->mem + (offset))
 #define A_TARGET_WRITE(scn, offset, value) \
-	war_pci_write32(scn->mem, (offset), (value))
+	hif_write32_mb((scn->mem) + (offset), value);
 #endif
 
 
