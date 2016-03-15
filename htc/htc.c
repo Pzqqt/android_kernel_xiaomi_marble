@@ -828,18 +828,6 @@ void *htc_get_targetdef(HTC_HANDLE htc_handle)
 	return hif_get_targetdef(target->hif_dev);
 }
 
-/**
- * htc_cancel_deferred_target_sleep() - cancel deferred target sleep
- * @context: hif_opaque_softc context
- *
- * Return: none
- */
-void htc_cancel_deferred_target_sleep(void *context)
-{
-	struct hif_opaque_softc *scn = (struct hif_opaque_softc *)context;
-	hif_cancel_deferred_target_sleep(scn);
-}
-
 #ifdef IPA_OFFLOAD
 /**
  * htc_ipa_get_ce_resource() - get uc resource on lower layer

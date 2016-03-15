@@ -385,7 +385,6 @@ QDF_STATUS hif_send_head(struct hif_opaque_softc *scn, uint8_t PipeID,
 				  qdf_nbuf_t wbuf, uint32_t data_attr);
 void hif_send_complete_check(struct hif_opaque_softc *scn, uint8_t PipeID,
 			     int force);
-void hif_cancel_deferred_target_sleep(struct hif_opaque_softc *scn);
 void hif_get_default_pipe(struct hif_opaque_softc *scn, uint8_t *ULPipe,
 			  uint8_t *DLPipe);
 int hif_map_service_to_pipe(struct hif_opaque_softc *scn, uint16_t svc_id,

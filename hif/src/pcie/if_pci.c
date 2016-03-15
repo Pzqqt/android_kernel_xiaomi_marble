@@ -2251,6 +2251,8 @@ static int hif_bus_suspend_link_up(struct hif_softc *scn)
 		return -EINVAL;
 	}
 
+	hif_pci_cancel_deferred_target_sleep(scn);
+
 	return 0;
 }
 
@@ -2297,7 +2299,6 @@ static int hif_bus_resume_link_up(struct hif_softc *scn)
 static int hif_bus_suspend_link_down(struct hif_softc *scn)
 {
 	struct pci_dev *pdev;
-	struct hif_opaque_softc *hif_hdl = GET_HIF_OPAQUE_HDL(scn);
 	struct hif_pci_softc *sc = HIF_GET_PCI_SOFTC(scn);
 	int status = 0;
 
@@ -2312,7 +2313,7 @@ static int hif_bus_suspend_link_down(struct hif_softc *scn)
 	}
 
 	/* Stop the HIF Sleep Timer */
-	hif_cancel_deferred_target_sleep(hif_hdl);
+	hif_pci_cancel_deferred_target_sleep(scn);
 
 	qdf_atomic_set(&scn->link_suspended, 1);
 

@@ -110,24 +110,6 @@ void hif_shut_down_device(struct hif_opaque_softc *scn)
 	hif_stop(scn);
 }
 
-
-
-/**
- * hif_cancel_deferred_target_sleep() - cancel deferred target sleep
- *
- * This function cancels the defered target sleep
- *
- * @scn: hif_opaque_softc
- *
- * Return: void
- */
-void hif_cancel_deferred_target_sleep(struct hif_opaque_softc *hif_ctx)
-{
-	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-
-	hif_pci_cancel_deferred_target_sleep(scn);
-}
-
 /**
  * hif_get_target_id(): hif_get_target_id
  *

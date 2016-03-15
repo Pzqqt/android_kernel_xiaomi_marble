@@ -703,7 +703,6 @@ do {									\
 void htc_get_control_endpoint_tx_host_credits(HTC_HANDLE HTCHandle, int *credit);
 void htc_dump_counter_info(HTC_HANDLE HTCHandle);
 void *htc_get_targetdef(HTC_HANDLE htc_handle);
-void htc_cancel_deferred_target_sleep(void *context);
 int htc_runtime_suspend(void);
 int htc_runtime_resume(void);
 
