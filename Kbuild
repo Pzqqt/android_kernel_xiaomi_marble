@@ -377,6 +377,10 @@ ifeq ($(CONFIG_QCOM_TDLS),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_tdls.o
 endif
 
+ifeq ($(CONFIG_WLAN_SYNC_TSF),y)
+HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_tsf.o
+endif
+
 ifeq ($(CONFIG_MPC_UT_FRAMEWORK),y)
 HDD_OBJS +=	$(HDD_SRC_DIR)/wlan_hdd_conc_ut.o
 endif
@@ -1360,6 +1364,10 @@ ifeq ($(CONFIG_LINUX_QCMBR),y)
 CDEFINES += -DLINUX_QCMBR
 endif
 
+# Enable featue sync tsf between multi devices
+ifeq ($(CONFIG_WLAN_SYNC_TSF), y)
+CDEFINES += -DWLAN_FEATURE_TSF
+endif
 
 # Enable full rx re-order offload for adrastea
 ifeq (y, $(filter y, $(CONFIG_CNSS_ADRASTEA) $(CONFIG_ICNSS)))

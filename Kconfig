@@ -107,6 +107,10 @@ config WLAN_FEATURE_RX_WAKELOCK
 	bool "Enable RX wake lock feature"
 	default n
 
+config WLAN_SYNC_TSF
+	bool "Enable QCOM sync multi devices tsf feature"
+	default n
+
 config FEATURE_LFR_SUBNET_DETECTION
 	bool "Enable LFR Subnet Change Detection"
 	default n

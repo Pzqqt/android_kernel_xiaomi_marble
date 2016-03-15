@@ -197,6 +197,8 @@ typedef struct tagSmeStruct {
 	bool enableSelfRecovery;
 	tCsrLinkStatusCallback linkStatusCallback;
 	void *linkStatusContext;
+	int (*get_tsf_cb)(void *pcb_cxt, struct stsf *ptsf);
+	void *get_tsf_cxt;
 	/* get temperature event context and callback */
 	void *pTemperatureCbContext;
 	void (*pGetTemperatureCb)(int temperature, void *context);

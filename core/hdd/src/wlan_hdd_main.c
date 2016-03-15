@@ -101,6 +101,7 @@
 #include "hif.h"
 #include "wma.h"
 #include "cds_concurrency.h"
+#include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
 #include "platform_icnss.h"
 #include "bmi.h"
@@ -5963,7 +5964,7 @@ int hdd_wlan_startup(struct device *dev, void *hif_sc)
 				hdd_rssi_threshold_breached);
 
 	hdd_cfg80211_link_layer_stats_init(hdd_ctx);
-
+	wlan_hdd_tsf_init(hdd_ctx);
 	wlan_hdd_send_all_scan_intf_info(hdd_ctx);
 	wlan_hdd_send_version_pkg(hdd_ctx->target_fw_version,
 				  hdd_ctx->target_hw_version,

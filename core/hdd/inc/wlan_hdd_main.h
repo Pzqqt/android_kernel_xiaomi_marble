@@ -57,6 +57,7 @@
 #ifdef FEATURE_WLAN_TDLS
 #include "wlan_hdd_tdls.h"
 #endif
+#include "wlan_hdd_tsf.h"
 #include "wlan_hdd_cfg80211.h"
 #include <qdf_defer.h>
 #ifdef WLAN_FEATURE_MBSSID
@@ -939,6 +940,14 @@ struct hdd_adapter_s {
 		hdd_station_ctx_t station;
 		hdd_ap_ctx_t ap;
 	} sessionCtx;
+
+#ifdef WLAN_FEATURE_TSF
+	/* tsf value received from firmware */
+	uint32_t tsf_low;
+	uint32_t tsf_high;
+	/* TSF capture state */
+	enum hdd_tsf_capture_state tsf_state;
+#endif
 
 	hdd_cfg80211_state_t cfg80211State;
 

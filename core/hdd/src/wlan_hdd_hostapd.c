@@ -75,6 +75,7 @@
 #include "qdf_trace.h"
 #include "wlan_hdd_cfg.h"
 #include "cds_concurrency.h"
+#include "wlan_hdd_tsf.h"
 #include "wlan_hdd_green_ap.h"
 
 #define    IS_UP(_dev) \
@@ -3011,6 +3012,66 @@ static __iw_softap_setparam(struct net_device *dev,
 	return ret;
 }
 
+/**
+ * __iw_softap_get_three() - return three value to upper layer.
+ * @dev: pointer of net_device of this wireless card
+ * @info: meta data about Request sent
+ * @wrqu: include request info
+ * @extra: buf used for in/out
+ *
+ * Return: execute result
+ */
+static int __iw_softap_get_three(struct net_device *dev,
+					struct iw_request_info *info,
+					union iwreq_data *wrqu, char *extra)
+{
+	uint32_t *value = (uint32_t *)extra;
+	uint32_t sub_cmd = value[0];
+	int ret = 0; /* success */
+	struct hdd_context_s *hdd_ctx;
+	struct hdd_adapter_s *adapter = WLAN_HDD_GET_PRIV_PTR(dev);
+
+	hdd_ctx = WLAN_HDD_GET_CTX(adapter);
+	ret = wlan_hdd_validate_context(hdd_ctx);
+	if (ret != 0)
+		return ret;
+
+	switch (sub_cmd) {
+	case QCSAP_GET_TSF:
+		ret = hdd_indicate_tsf(adapter, value, 3);
+		break;
+	default:
+		hdd_err(FL("Invalid getparam command %d"), sub_cmd);
+		ret = -EINVAL;
+		break;
+	}
+	return ret;
+}
+
+
+/**
+ * iw_softap_get_three() - return three value to upper layer.
+ *
+ * @dev: pointer of net_device of this wireless card
+ * @info: meta data about Request sent
+ * @wrqu: include request info
+ * @extra: buf used for in/Output
+ *
+ * Return: execute result
+ */
+static int iw_softap_get_three(struct net_device *dev,
+					struct iw_request_info *info,
+					union iwreq_data *wrqu, char *extra)
+{
+	int ret;
+
+	cds_ssr_protect(__func__);
+	ret = __iw_softap_get_three(dev, info, wrqu, extra);
+	cds_ssr_unprotect(__func__);
+
+	return ret;
+}
+
 int
 static iw_softap_setparam(struct net_device *dev,
 			  struct iw_request_info *info,
@@ -3211,6 +3272,9 @@ static __iw_softap_getparam(struct net_device *dev,
 					     VDEV_CMD);
 		break;
 	}
+	case QCSAP_CAP_TSF:
+		ret = hdd_capture_tsf(pHostapdAdapter, (uint32_t *)value, 1);
+		break;
 	case QCASAP_GET_TEMP_CMD:
 	{
 		hddLog(LOG1, "QCASAP_GET_TEMP_CMD");
@@ -5822,6 +5886,15 @@ static const struct iw_priv_args hostapd_private_args[] = {
 		QCASAP_NSS_CMD, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
 		"get_nss"
 	}, {
+		QCSAP_CAP_TSF, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1,
+		"cap_tsf"
+	}, {
+		QCSAP_IOCTL_SET_NONE_GET_THREE, 0, IW_PRIV_TYPE_INT |
+		IW_PRIV_SIZE_FIXED | 3,    ""
+	}, {
+		QCSAP_GET_TSF, 0, IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 3,
+		"get_tsf"
+	}, {
 		QCASAP_GET_TEMP_CMD, 0,
 		IW_PRIV_TYPE_INT | IW_PRIV_SIZE_FIXED | 1, "get_temp"
 	}, {
@@ -5997,6 +6070,8 @@ static const iw_handler hostapd_private[] = {
 	[QCSAP_IOCTL_SETPARAM - SIOCIWFIRSTPRIV] = iw_softap_setparam,
 	/* get priv ioctl */
 	[QCSAP_IOCTL_GETPARAM - SIOCIWFIRSTPRIV] = iw_softap_getparam,
+	[QCSAP_IOCTL_SET_NONE_GET_THREE - SIOCIWFIRSTPRIV] =
+							iw_softap_get_three,
 	/* get station genIE */
 	[QCSAP_IOCTL_GET_STAWPAIE - SIOCIWFIRSTPRIV] = iw_get_genie,
 	[QCSAP_IOCTL_SETWPAIE - SIOCIWFIRSTPRIV] = iw_softap_setwpsie,

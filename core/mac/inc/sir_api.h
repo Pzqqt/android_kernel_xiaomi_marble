@@ -5564,6 +5564,21 @@ struct sir_sme_ext_cng_chan_ind {
 };
 
 /**
+ * struct stsf - the basic stsf structure
+ *
+ * @vdev_id: vdev id
+ * @tsf_low: low 32bits of tsf
+ * @tsf_high: high 32bits of tsf
+ *
+ * driver use this struct to store the tsf info
+ */
+struct stsf {
+	uint32_t vdev_id;
+	uint32_t tsf_low;
+	uint32_t tsf_high;
+};
+
+/**
  * struct egap_params - the enhanced green ap params
  * @vdev_id: vdev id
  * @enable: enable or disable the enhance green ap in firmware

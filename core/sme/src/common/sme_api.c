@@ -2805,6 +2805,14 @@ QDF_STATUS sme_process_msg(tHalHandle hHal, cds_msg_t *pMsg)
 			qdf_mem_free(pMsg->bodyptr);
 		}
 		break;
+	case eWNI_SME_TSF_EVENT:
+		if (pMac->sme.get_tsf_cb) {
+			pMac->sme.get_tsf_cb(pMac->sme.get_tsf_cxt,
+					(struct stsf *)pMsg->bodyptr);
+		}
+		if (pMsg->bodyptr)
+			qdf_mem_free(pMsg->bodyptr);
+		break;
 #ifdef WLAN_FEATURE_NAN
 	case eWNI_SME_NAN_EVENT:
 		if (pMsg->bodyptr) {
@@ -7299,6 +7307,29 @@ QDF_STATUS sme_preferred_network_found_ind(tHalHandle hHal, void *pMsg)
 }
 
 #endif /* FEATURE_WLAN_SCAN_PNO */
+
+/*
+ * sme_set_tsfcb() - Set callback for TSF capture
+ * @hHal: Handler return by macOpen
+ * @cb_fn: Callback function pointer
+ * @db_ctx: Callback data
+ *
+ * Return: QDF_STATUS
+ */
+QDF_STATUS sme_set_tsfcb(tHalHandle hHal,
+	int (*cb_fn)(void *cb_ctx, struct stsf *ptsf), void *cb_ctx)
+{
+	tpAniSirGlobal pMac = PMAC_STRUCT(hHal);
+	QDF_STATUS status;
+
+	status = sme_acquire_global_lock(&pMac->sme);
+	if (QDF_IS_STATUS_SUCCESS(status)) {
+		pMac->sme.get_tsf_cb = cb_fn;
+		pMac->sme.get_tsf_cxt = cb_ctx;
+		sme_release_global_lock(&pMac->sme);
+	}
+	return status;
+}
 
 QDF_STATUS sme_get_cfg_valid_channels(tHalHandle hHal, uint8_t *aValidChannels,
 				      uint32_t *len)

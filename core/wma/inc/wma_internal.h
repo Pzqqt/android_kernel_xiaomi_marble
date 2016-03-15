@@ -1072,6 +1072,10 @@ QDF_STATUS wma_set_auto_shutdown_timer_req(tp_wma_handle wma_handle,
 					   auto_sh_cmd);
 #endif
 
+int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len);
+QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id);
+QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id);
+
 #ifdef WLAN_FEATURE_NAN
 
 QDF_STATUS wma_nan_req(void *wma_ptr, tpNanRequest nan_req);

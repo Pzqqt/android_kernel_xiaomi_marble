@@ -267,6 +267,177 @@ end:
 	wma_post_link_status(pGetLinkStatus, LINK_STATUS_LEGACY);
 }
 
+#ifdef WLAN_FEATURE_TSF
+/**
+ * wma_vdev_tsf_handler() - handle tsf event indicated by FW
+ * @handle: wma context
+ * @data: event buffer
+ * @data len: length of event buffer
+ *
+ * Return: 0 on success
+ */
+int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
+{
+	cds_msg_t tsf_msg = {0};
+	WMI_VDEV_TSF_REPORT_EVENTID_param_tlvs *param_buf;
+	wmi_vdev_tsf_report_event_fixed_param *tsf_event;
+	struct stsf *ptsf;
+
+	if (data == NULL) {
+		WMA_LOGE("%s: invalid pointer", __func__);
+		return -EINVAL;
+	}
+	ptsf = qdf_mem_malloc(sizeof(*ptsf));
+	if (NULL == ptsf) {
+		WMA_LOGE("%s: failed to allocate tsf data structure", __func__);
+		return -ENOMEM;
+	}
+
+	param_buf = (WMI_VDEV_TSF_REPORT_EVENTID_param_tlvs *)data;
+	tsf_event = param_buf->fixed_param;
+
+	ptsf->vdev_id = tsf_event->vdev_id;
+	ptsf->tsf_low = tsf_event->tsf_low;
+	ptsf->tsf_high = tsf_event->tsf_high;
+
+	WMA_LOGD("%s: receive WMI_VDEV_TSF_REPORT_EVENTID ", __func__);
+	WMA_LOGD("%s: vdev_id = %u,tsf_low =%u, tsf_high = %u", __func__,
+	ptsf->vdev_id, ptsf->tsf_low, ptsf->tsf_high);
+
+	tsf_msg.type = eWNI_SME_TSF_EVENT;
+	tsf_msg.bodyptr = ptsf;
+	tsf_msg.bodyval = 0;
+
+	if (QDF_STATUS_SUCCESS !=
+		cds_mq_post_message(CDS_MQ_ID_SME, &tsf_msg)) {
+
+		WMA_LOGP("%s: Failed to post eWNI_SME_TSF_EVENT", __func__);
+		qdf_mem_free(ptsf);
+		return -EINVAL;
+	}
+	return 0;
+}
+
+/**
+ * wma_capture_tsf() - send wmi to fw to capture tsf
+ * @wma_handle: wma handler
+ * @vdev_id: vdev id
+ *
+ * Return: wmi send state
+ */
+QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	wmi_buf_t buf;
+	wmi_vdev_tsf_tstamp_action_cmd_fixed_param *cmd;
+	int ret;
+	int len = sizeof(*cmd);
+
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: failed to allocate memory for cap tsf cmd",
+			 __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	cmd = (wmi_vdev_tsf_tstamp_action_cmd_fixed_param *) wmi_buf_data(buf);
+	cmd->vdev_id = vdev_id;
+	cmd->tsf_action = TSF_TSTAMP_CAPTURE_REQ;
+
+	WMA_LOGD("%s :vdev_id %u, TSF_TSTAMP_CAPTURE_REQ", __func__,
+		 cmd->vdev_id);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+	WMITLV_TAG_STRUC_wmi_vdev_tsf_tstamp_action_cmd_fixed_param,
+	WMITLV_GET_STRUCT_TLVLEN(
+	wmi_vdev_tsf_tstamp_action_cmd_fixed_param));
+
+	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				   WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
+	if (ret != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+
+	return QDF_STATUS_SUCCESS;
+
+error:
+	if (buf)
+		wmi_buf_free(buf);
+	return status;
+}
+
+/**
+ * wma_reset_tsf_gpio() - send wmi to fw to reset GPIO
+ * @wma_handle: wma handler
+ * @vdev_id: vdev id
+ *
+ * Return: wmi send state
+ */
+QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
+{
+	QDF_STATUS status = QDF_STATUS_SUCCESS;
+	wmi_buf_t buf;
+	wmi_vdev_tsf_tstamp_action_cmd_fixed_param *cmd;
+	int ret;
+	int len = sizeof(*cmd);
+	uint8_t *buf_ptr;
+
+	buf = wmi_buf_alloc(wma_handle->wmi_handle, len);
+	if (!buf) {
+		WMA_LOGP("%s: failed to allocate memory for reset tsf gpio",
+			 __func__);
+		return QDF_STATUS_E_NOMEM;
+	}
+
+	buf_ptr = (uint8_t *) wmi_buf_data(buf);
+	cmd = (wmi_vdev_tsf_tstamp_action_cmd_fixed_param *) buf_ptr;
+	cmd->vdev_id = vdev_id;
+	cmd->tsf_action = TSF_TSTAMP_CAPTURE_RESET;
+
+	WMA_LOGD("%s :vdev_id %u, TSF_TSTAMP_CAPTURE_RESET", __func__,
+		 cmd->vdev_id);
+
+	WMITLV_SET_HDR(&cmd->tlv_header,
+		WMITLV_TAG_STRUC_wmi_vdev_tsf_tstamp_action_cmd_fixed_param,
+		WMITLV_GET_STRUCT_TLVLEN(
+				wmi_vdev_tsf_tstamp_action_cmd_fixed_param));
+
+	ret = wmi_unified_cmd_send(wma_handle->wmi_handle, buf, len,
+				   WMI_VDEV_TSF_TSTAMP_ACTION_CMDID);
+
+	if (ret != EOK) {
+		WMA_LOGE("wmi_unified_cmd_send returned Error %d", status);
+		status = QDF_STATUS_E_FAILURE;
+		goto error;
+	}
+	return QDF_STATUS_SUCCESS;
+
+error:
+	if (buf)
+		wmi_buf_free(buf);
+	return status;
+}
+#else
+QDF_STATUS wma_capture_tsf(tp_wma_handle wma_handle, uint32_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+QDF_STATUS wma_reset_tsf_gpio(tp_wma_handle wma_handle, uint32_t vdev_id)
+{
+	return QDF_STATUS_SUCCESS;
+}
+
+int wma_vdev_tsf_handler(void *handle, uint8_t *data, uint32_t data_len)
+{
+	return 0;
+}
+#endif
+
+
+
 #ifdef FEATURE_WLAN_LPHB
 /**
  * wma_lphb_conf_hbenable() - enable command of LPHB configuration requests
