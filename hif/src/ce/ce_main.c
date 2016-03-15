@@ -202,13 +202,16 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			ptr += sizeof(struct CE_ring_state);
 			src_ring->nentries = nentries;
 			src_ring->nentries_mask = nentries - 1;
-			A_TARGET_ACCESS_BEGIN_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+				goto error_target_access;
 			src_ring->hw_index =
 				CE_SRC_RING_READ_IDX_GET(scn, ctrl_addr);
 			src_ring->sw_index = src_ring->hw_index;
 			src_ring->write_index =
 				CE_SRC_RING_WRITE_IDX_GET(scn, ctrl_addr);
-			A_TARGET_ACCESS_END_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_END(scn) < 0)
+				goto error_target_access;
+
 			src_ring->low_water_mark_nentries = 0;
 			src_ring->high_water_mark_nentries = nentries;
 			src_ring->per_transfer_context = (void **)ptr;
@@ -270,7 +273,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 				CE_DESC_RING_ALIGN - 1) &
 				 ~(CE_DESC_RING_ALIGN - 1));
 
-			A_TARGET_ACCESS_BEGIN_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+				goto error_target_access;
 			dma_addr = src_ring->base_addr_CE_space;
 			CE_SRC_RING_BASE_ADDR_SET(scn, ctrl_addr,
 				 (uint32_t)(dma_addr & 0xFFFFFFFF));
@@ -293,7 +297,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 #endif
 			CE_SRC_RING_LOWMARK_SET(scn, ctrl_addr, 0);
 			CE_SRC_RING_HIGHMARK_SET(scn, ctrl_addr, nentries);
-			A_TARGET_ACCESS_END_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_END(scn) < 0)
+				goto error_target_access;
 		}
 	}
 
@@ -339,12 +344,15 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 			ptr += sizeof(struct CE_ring_state);
 			dest_ring->nentries = nentries;
 			dest_ring->nentries_mask = nentries - 1;
-			A_TARGET_ACCESS_BEGIN_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+				goto error_target_access;
 			dest_ring->sw_index =
 				CE_DEST_RING_READ_IDX_GET(scn, ctrl_addr);
 			dest_ring->write_index =
 				CE_DEST_RING_WRITE_IDX_GET(scn, ctrl_addr);
-			A_TARGET_ACCESS_END_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_END(scn) < 0)
+				goto error_target_access;
+
 			dest_ring->low_water_mark_nentries = 0;
 			dest_ring->high_water_mark_nentries = nentries;
 			dest_ring->per_transfer_context = (void **)ptr;
@@ -398,7 +406,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 					base_addr_owner_space_unaligned;
 			}
 
-			A_TARGET_ACCESS_BEGIN_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+				goto error_target_access;
 			dma_addr = dest_ring->base_addr_CE_space;
 			CE_DEST_RING_BASE_ADDR_SET(scn, ctrl_addr,
 				 (uint32_t)(dma_addr & 0xFFFFFFFF));
@@ -420,7 +429,8 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 #endif
 			CE_DEST_RING_LOWMARK_SET(scn, ctrl_addr, 0);
 			CE_DEST_RING_HIGHMARK_SET(scn, ctrl_addr, nentries);
-			A_TARGET_ACCESS_END_RET_PTR(scn);
+			if (Q_TARGET_ACCESS_END(scn) < 0)
+				goto error_target_access;
 
 			/* epping */
 			/* poll timer */
@@ -438,12 +448,15 @@ struct CE_handle *ce_init(struct hif_softc *scn,
 	}
 
 	/* Enable CE error interrupts */
-	A_TARGET_ACCESS_BEGIN_RET_PTR(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		goto error_target_access;
 	CE_ERROR_INTR_ENABLE(scn, ctrl_addr);
-	A_TARGET_ACCESS_END_RET_PTR(scn);
+	if (Q_TARGET_ACCESS_END(scn) < 0)
+		goto error_target_access;
 
 	return (struct CE_handle *)CE_state;
 
+error_target_access:
 error_no_dma_mem:
 	ce_fini((struct CE_handle *)CE_state);
 	return NULL;

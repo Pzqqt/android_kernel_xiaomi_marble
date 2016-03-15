@@ -72,53 +72,6 @@
 /* AXI gating when L1, L2 to reduce power consumption */
 #define CONFIG_PCIE_ENABLE_AXI_CLK_GATE 0
 
-#if CONFIG_ATH_PCIE_MAX_PERF
-
-#define A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
-
-#define A_TARGET_ACCESS_BEGIN_RET_PTR(scn) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
-
-#define A_TARGET_ACCESS_END_RET_EXT(scn, val) \
-	do {struct hif_softc *unused = scn; \
-	    unused = unused; } while (0)
-
-#define A_TARGET_ACCESS_END_RET_PTR(scn) \
-	do {struct hif_softc *unused = scn; \
-		unused = unused; } while (0)
-
-#else                           /* CONFIG_ATH_PCIE_MAX_PERF */
-
-
-#define A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val) \
-do { \
-	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
-		Q_TARGET_ACCESS_BEGIN(scn) < 0) \
-		val = -1; \
-} while (0)
-
-#define A_TARGET_ACCESS_BEGIN_RET_PTR(scn) \
-do { \
-	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) \
-		return NULL; \
-} while (0)
-
-#define A_TARGET_ACCESS_END_RET_EXT(scn, val) \
-do { \
-	if (Q_TARGET_ACCESS_END(scn) < 0) \
-		val = -1; \
-} while (0)
-
-#define A_TARGET_ACCESS_END_RET_PTR(scn) \
-do { \
-	if (Q_TARGET_ACCESS_END(scn) < 0) \
-		return NULL; \
-} while (0)
-#endif /* CONFIG_ATH_PCIE_MAX_PERF */
-
 irqreturn_t hif_fw_interrupt_handler(int irq, void *arg);
 
 /**

@@ -652,6 +652,14 @@ int ce_send_fast(struct CE_handle *copyeng, qdf_nbuf_t *msdus,
 }
 #endif /* WLAN_FEATURE_FASTPATH */
 
+/**
+ * ce_recv_buf_enqueue() - enqueue a recv buffer into a copy engine
+ * @coyeng: copy engine handle
+ * @per_recv_context: virtual address of the nbuf
+ * @buffer: physical address of the nbuf
+ *
+ * Return: 0 if the buffer is enqueued
+ */
 int
 ce_recv_buf_enqueue(struct CE_handle *copyeng,
 		    void *per_recv_context, qdf_dma_addr_t buffer)
@@ -663,7 +671,6 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	unsigned int nentries_mask = dest_ring->nentries_mask;
 	unsigned int write_index;
 	unsigned int sw_index;
-	int val = 0;
 	uint64_t dma_addr = buffer;
 	struct hif_softc *scn = CE_state->scn;
 
@@ -671,10 +678,9 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	write_index = dest_ring->write_index;
 	sw_index = dest_ring->sw_index;
 
-	A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val);
-	if (val == -1) {
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) {
 		qdf_spin_unlock_bh(&CE_state->ce_index_lock);
-		return val;
+		return -EIO;
 	}
 
 	if (CE_RING_DELTA(nentries_mask, write_index, sw_index - 1) > 0) {
@@ -707,14 +713,8 @@ ce_recv_buf_enqueue(struct CE_handle *copyeng,
 	} else {
 		status = QDF_STATUS_E_FAILURE;
 	}
-	A_TARGET_ACCESS_END_RET_EXT(scn, val);
-	if (val == -1) {
-		qdf_spin_unlock_bh(&CE_state->ce_index_lock);
-		return val;
-	}
-
+	Q_TARGET_ACCESS_END(scn);
 	qdf_spin_unlock_bh(&CE_state->ce_index_lock);
-
 	return status;
 }
 

@@ -47,11 +47,6 @@
  * Force 0 and consider moving corresponding code into
  * pci specific files
  */
-#define A_TARGET_ACCESS_BEGIN_RET_PTR(scn)
-#define A_TARGET_ACCESS_END_RET_PTR(scn)
-#define A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val)
-#define A_TARGET_ACCESS_END_RET_EXT(scn, val)
-
 #define ADRASTEA_CE_INTR_ENABLES 0x002F00A8
 #define ADRASTEA_CE_INTR_ENABLES_SET "COMING IN REGISTER SET36"
 #define ADRASTEA_CE_INTR_ENABLES_CLEAR "COMING IN REGISTER SET36"
