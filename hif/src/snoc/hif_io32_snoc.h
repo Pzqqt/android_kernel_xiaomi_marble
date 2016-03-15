@@ -49,8 +49,6 @@
  */
 #define A_TARGET_ACCESS_BEGIN_RET_PTR(scn)
 #define A_TARGET_ACCESS_END_RET_PTR(scn)
-#define A_TARGET_ACCESS_BEGIN_RET(scn)
-#define A_TARGET_ACCESS_END_RET(scn)
 #define A_TARGET_ACCESS_BEGIN_RET_EXT(scn, val)
 #define A_TARGET_ACCESS_END_RET_EXT(scn, val)
 

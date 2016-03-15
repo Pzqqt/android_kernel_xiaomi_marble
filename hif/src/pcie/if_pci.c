@@ -565,9 +565,11 @@ int hif_check_fw_reg(struct hif_opaque_softc *hif_ctx)
 	void __iomem *mem = sc->mem;
 	uint32_t val;
 
-	A_TARGET_ACCESS_BEGIN_RET(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return ATH_ISR_NOSCHED;
 	val = hif_read32_mb(mem + FW_INDICATOR_ADDRESS);
-	A_TARGET_ACCESS_END_RET(scn);
+	if (Q_TARGET_ACCESS_END(scn) < 0)
+		return ATH_ISR_SCHED;
 
 	HIF_INFO_MED("%s: FW_INDICATOR register is 0x%x", __func__, val);
 

@@ -153,7 +153,8 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(scn);
 	uint32_t fw_indicator_address, fw_indicator;
 
-	A_TARGET_ACCESS_BEGIN_RET(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return ATH_ISR_NOSCHED;
 
 	fw_indicator_address = hif_state->fw_indicator_address;
 	/* For sudden unplug this will return ~0 */
@@ -163,7 +164,8 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 		/* ACK: clear Target-side pending event */
 		A_TARGET_WRITE(scn, fw_indicator_address,
 			       fw_indicator & ~FW_IND_EVENT_PENDING);
-		A_TARGET_ACCESS_END_RET(scn);
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			return ATH_ISR_SCHED;
 
 		if (hif_state->started) {
 			hif_fw_event_handler(hif_state);
@@ -177,7 +179,8 @@ irqreturn_t hif_fw_interrupt_handler(int irq, void *arg)
 				 __func__));
 		}
 	} else {
-		A_TARGET_ACCESS_END_RET(scn);
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			return ATH_ISR_SCHED;
 	}
 
 	return ATH_ISR_SCHED;

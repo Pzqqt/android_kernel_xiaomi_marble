@@ -191,10 +191,12 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 			 * to
 			 *    CE address space
 			 */
-			A_TARGET_ACCESS_BEGIN_RET(scn);
+			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+				return ATH_ISR_NOSCHED;
 			ce_phy_addr =
 				TARG_CPU_SPACE_TO_CE_SPACE(scn->mem, address);
-			A_TARGET_ACCESS_END_RET(scn);
+			if (Q_TARGET_ACCESS_END(scn) < 0)
+				return ATH_ISR_SCHED;
 
 			status =
 				ce_send(ce_diag, NULL, ce_phy_addr, nbytes,
@@ -273,9 +275,11 @@ QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
 		return hif_diag_read_mem(hif_ctx, address, (uint8_t *) data,
 					 sizeof(uint32_t));
 	} else {
-		A_TARGET_ACCESS_BEGIN_RET(scn);
+		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+			return ATH_ISR_NOSCHED;
 		*data = A_TARGET_READ(scn, address);
-		A_TARGET_ACCESS_END_RET(scn);
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			return ATH_ISR_SCHED;
 
 		return QDF_STATUS_SUCCESS;
 	}
@@ -340,9 +344,11 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 	 * to
 	 *    CE address space
 	 */
-	A_TARGET_ACCESS_BEGIN_RET(scn);
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+		return ATH_ISR_NOSCHED;
 	ce_phy_addr = TARG_CPU_SPACE_TO_CE_SPACE(scn->mem, address);
-	A_TARGET_ACCESS_END_RET(scn);
+	if (Q_TARGET_ACCESS_END(scn) < 0)
+		return ATH_ISR_SCHED;
 
 	remaining_bytes = orig_nbytes;
 	CE_data = CE_data_base;
@@ -448,9 +454,11 @@ QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
 					  (uint8_t *) &data_buf,
 					  sizeof(uint32_t));
 	} else {
-		A_TARGET_ACCESS_BEGIN_RET(scn);
+		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
+			return ATH_ISR_NOSCHED;
 		A_TARGET_WRITE(scn, address, data);
-		A_TARGET_ACCESS_END_RET(scn);
+		if (Q_TARGET_ACCESS_END(scn) < 0)
+			return ATH_ISR_SCHED;
 
 		return QDF_STATUS_SUCCESS;
 	}
