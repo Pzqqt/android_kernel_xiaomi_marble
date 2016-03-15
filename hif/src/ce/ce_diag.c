@@ -192,11 +192,11 @@ hif_diag_read_mem(struct hif_opaque_softc *hif_ctx, uint32_t address,
 			 *    CE address space
 			 */
 			if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-				return ATH_ISR_NOSCHED;
+				return QDF_STATUS_E_FAILURE;
 			ce_phy_addr =
 				TARG_CPU_SPACE_TO_CE_SPACE(scn->mem, address);
 			if (Q_TARGET_ACCESS_END(scn) < 0)
-				return ATH_ISR_SCHED;
+				return QDF_STATUS_E_FAILURE;
 
 			status =
 				ce_send(ce_diag, NULL, ce_phy_addr, nbytes,
@@ -276,10 +276,10 @@ QDF_STATUS hif_diag_read_access(struct hif_opaque_softc *hif_ctx,
 					 sizeof(uint32_t));
 	} else {
 		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-			return ATH_ISR_NOSCHED;
+			return QDF_STATUS_E_FAILURE;
 		*data = A_TARGET_READ(scn, address);
 		if (Q_TARGET_ACCESS_END(scn) < 0)
-			return ATH_ISR_SCHED;
+			return QDF_STATUS_E_FAILURE;
 
 		return QDF_STATUS_SUCCESS;
 	}
@@ -345,10 +345,10 @@ QDF_STATUS hif_diag_write_mem(struct hif_opaque_softc *hif_ctx,
 	 *    CE address space
 	 */
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-		return ATH_ISR_NOSCHED;
+		return QDF_STATUS_E_FAILURE;
 	ce_phy_addr = TARG_CPU_SPACE_TO_CE_SPACE(scn->mem, address);
 	if (Q_TARGET_ACCESS_END(scn) < 0)
-		return ATH_ISR_SCHED;
+		return QDF_STATUS_E_FAILURE;
 
 	remaining_bytes = orig_nbytes;
 	CE_data = CE_data_base;
@@ -455,10 +455,10 @@ QDF_STATUS hif_diag_write_access(struct hif_opaque_softc *hif_ctx,
 					  sizeof(uint32_t));
 	} else {
 		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-			return ATH_ISR_NOSCHED;
+			return QDF_STATUS_E_FAILURE;
 		A_TARGET_WRITE(scn, address, data);
 		if (Q_TARGET_ACCESS_END(scn) < 0)
-			return ATH_ISR_SCHED;
+			return QDF_STATUS_E_FAILURE;
 
 		return QDF_STATUS_SUCCESS;
 	}

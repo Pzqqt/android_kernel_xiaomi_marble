@@ -292,14 +292,12 @@ ce_send_nolock(struct CE_handle *copyeng,
 	struct hif_softc *scn = CE_state->scn;
 
 	if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-		return ATH_ISR_NOSCHED;
+		return QDF_STATUS_E_FAILURE;
 	if (unlikely(CE_RING_DELTA(nentries_mask,
 				write_index, sw_index - 1) <= 0)) {
 		OL_ATH_CE_PKT_ERROR_COUNT_INCR(scn, CE_RING_DELTA_FAIL);
-		status = QDF_STATUS_E_FAILURE;
-		if (Q_TARGET_ACCESS_END(scn) < 0)
-			return ATH_ISR_SCHED;
-		return status;
+		Q_TARGET_ACCESS_END(scn);
+		return QDF_STATUS_E_FAILURE;
 	}
 	{
 		enum hif_ce_event_type event_type = HIF_TX_GATHER_DESC_POST;
@@ -361,9 +359,7 @@ ce_send_nolock(struct CE_handle *copyeng,
 		src_ring->write_index = write_index;
 		status = QDF_STATUS_SUCCESS;
 	}
-	if (Q_TARGET_ACCESS_END(scn) < 0)
-		return ATH_ISR_SCHED;
-
+	Q_TARGET_ACCESS_END(scn);
 	return status;
 }
 
@@ -1036,11 +1032,11 @@ ce_completed_send_next_nolock(struct CE_state *CE_state,
 		 * value of the HW index has become stale.
 		 */
 		if (Q_TARGET_ACCESS_BEGIN(scn) < 0)
-			return ATH_ISR_NOSCHED;
+			return QDF_STATUS_E_FAILURE;
 		src_ring->hw_index =
 			CE_SRC_RING_READ_IDX_GET_FROM_DDR(scn, ctrl_addr);
 		if (Q_TARGET_ACCESS_END(scn) < 0)
-			return ATH_ISR_SCHED;
+			return QDF_STATUS_E_FAILURE;
 	}
 	read_index = src_ring->hw_index;
 
