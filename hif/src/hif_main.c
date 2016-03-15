@@ -54,11 +54,7 @@
 #include "epping_main.h"
 #include "hif_debug.h"
 #include "mp_dev.h"
-#ifdef HIF_PCI
-#include "icnss_stub.h"
-#else
-#include <soc/qcom/icnss.h>
-#endif
+#include "platform_icnss.h"
 
 #define AGC_DUMP         1
 #define CHANINFO_DUMP    2
@@ -635,7 +631,7 @@ void hif_disable(struct hif_opaque_softc *hif_ctx, enum hif_disable_type type)
  * Return: n/a
  */
 #if defined(TARGET_RAMDUMP_AFTER_KERNEL_PANIC) \
-&& defined(HIF_PCI) && defined(DEBUG)
+&& defined(DEBUG)
 
 static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
 {
@@ -660,11 +656,15 @@ static void hif_crash_shutdown_dump_bus_register(void *hif_ctx)
 void hif_crash_shutdown(struct hif_opaque_softc *hif_ctx)
 {
 	struct hif_softc *scn = HIF_GET_SOFTC(hif_ctx);
-	struct HIF_CE_state *hif_state = HIF_GET_CE_STATE(hif_ctx);
 
-	if (!hif_state)
+	if (!hif_ctx)
 		return;
 
+	if (scn->bus_type == QDF_BUS_TYPE_SNOC) {
+		HIF_INFO_MED("%s: RAM dump disabled for bustype %d",
+				__func__, scn->bus_type);
+		return;
+	}
 
 	if (OL_TRGET_STATUS_RESET == scn->target_status) {
 		HIF_INFO_MED("%s: Target is already asserted, ignore!",

@@ -33,7 +33,9 @@
 #include "hif.h"
 #ifdef HIF_PCI
 #include "hif_io32_pci.h"
-#else
+#endif
+
+#ifdef HIF_SNOC
 #include "hif_io32_snoc.h"
 #endif /* HIF_PCI */
 #endif /* __HIF_IO32_H__ */

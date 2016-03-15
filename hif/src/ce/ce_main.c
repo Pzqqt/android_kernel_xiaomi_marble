@@ -41,9 +41,6 @@
 #define ATH_MODULE_NAME hif
 #include <a_debug.h>
 #include "hif_main.h"
-#ifdef HIF_PCI
-#include "ce_bmi.h"
-#endif
 #include "ce_api.h"
 #include "qdf_trace.h"
 #ifdef CONFIG_CNSS
@@ -55,11 +52,7 @@
 #include "ce_reg.h"
 #include "ce_assignment.h"
 #include "ce_tasklet.h"
-#ifdef HIF_PCI
-#include "icnss_stub.h"
-#else
-#include <soc/qcom/icnss.h>
-#endif
+#include "platform_icnss.h"
 #include "qwlan_version.h"
 
 #define CE_POLL_TIMEOUT 10      /* ms */

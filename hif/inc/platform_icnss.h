@@ -30,7 +30,9 @@
 
 #ifdef HIF_PCI
 #include "icnss_stub.h"
-#else
+#endif
+
+#ifdef HIF_SNOC
 #include <soc/qcom/icnss.h>
 #endif
 

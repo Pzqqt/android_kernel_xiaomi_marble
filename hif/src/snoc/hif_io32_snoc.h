@@ -34,10 +34,6 @@
 #ifndef __HIF_IO32_SNOC_H__
 #define __HIF_IO32_SNOC_H__
 
-#ifdef HIF_PCI
-#error snoc and pci cannot be supported in parrallel at this time
-#endif
-
 #include "hif.h"
 #include "regtable.h"
 #include "ce_reg.h"

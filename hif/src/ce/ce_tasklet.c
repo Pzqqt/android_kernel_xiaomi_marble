@@ -44,11 +44,7 @@
 #include "ce_internal.h"
 #ifdef CONFIG_CNSS
 #include <net/cnss.h>
-#ifdef HIF_PCI
-#include "icnss_stub.h"
-#else
-#include <soc/qcom/icnss.h>
-#endif /* HIF_PCI */
+#include "platform_icnss.h"
 #endif
 #include "hif_debug.h"
 #include "hif_napi.h"

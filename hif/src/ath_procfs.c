@@ -33,11 +33,10 @@
 #include <asm/uaccess.h>        /* for copy_from_user */
 #include "ol_if_athvar.h"
 #include "hif.h"
-#if defined(HIF_PCI)
-#include "if_pci.h"
-#elif defined(HIF_USB)
+#if defined(HIF_USB)
 #include "if_usb.h"
-#elif defined(HIF_SDIO)
+#endif
+#if defined(HIF_SDIO)
 #include "if_ath_sdio.h"
 #endif
 #include "hif_debug.h"

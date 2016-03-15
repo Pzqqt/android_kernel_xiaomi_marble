@@ -306,76 +306,12 @@ bool hif_is_fastpath_mode_enabled(struct hif_opaque_softc *hif_ctx);
 void *hif_get_ce_handle(struct hif_opaque_softc *hif_ctx, int);
 #endif
 
-#if defined(HIF_PCI) && !defined(A_SIMOS_DEVHOST)
-/*
- * This API allows the Host to access Target registers of a given
- * A_target_id_t directly and relatively efficiently over PCIe.
- * This allows the Host to avoid extra overhead associated with
- * sending a message to firmware and waiting for a response message
- * from firmware, as is done on other interconnects.
- *
- * Yet there is some complexity with direct accesses because the
- * Target's power state is not known a priori. The Host must issue
- * special PCIe reads/writes in order to explicitly wake the Target
- * and to verify that it is awake and will remain awake.
- *
- * NB: Host endianness conversion is left for the caller to handle.
- *     These interfaces handle access; not interpretation.
- *
- * Usage:
- *   During initialization, use A_TARGET_ID to obtain an 'target ID'
- *   for use with these interfaces.
- *
- *   Use A_TARGET_READ and A_TARGET_WRITE to access Target space.
- *   These calls must be bracketed by A_TARGET_ACCESS_BEGIN and
- *   A_TARGET_ACCESS_END.  A single BEGIN/END pair is adequate for
- *   multiple READ/WRITE operations.
- *
- *   Use A_TARGET_ACCESS_BEGIN to put the Target in a state in
- *   which it is legal for the Host to directly access it. This
- *   may involve waking the Target from a low power state, which
- *   may take up to 2Ms!
- *
- *   Use A_TARGET_ACCESS_END to tell the Target that as far as
- *   this code path is concerned, it no longer needs to remain
- *   directly accessible.  BEGIN/END is under a reference counter;
- *   multiple code paths may issue BEGIN/END on a single targid.
- *
- *   For added efficiency, the Host may use A_TARGET_ACCESS_LIKELY.
- *   The LIKELY interface works just like A_TARGET_ACCESS_BEGIN,
- *   except that it may return before the Target is actually
- *   available. It's a vague indication that some Target accesses
- *   are expected "soon".  When the LIKELY API is used,
- *   A_TARGET_ACCESS_BEGIN must be used before any access.
- *
- *   There are several uses for the LIKELY/UNLIKELY API:
- *     -If there is some potential time before Target accesses
- *      and we want to get a head start on waking the Target
- *      (e.g. to overlap Target wake with Host-side malloc)
- *     -High-level code knows that it will call low-level
- *      functions that will use BEGIN/END, and we don't want
- *      to allow the Target to sleep until the entire sequence
- *      has completed.
- *
- *   A_TARGET_ACCESS_OK verifies that the Target can be
- *   accessed. In general, this should not be needed, but it
- *   may be useful for debugging or for special uses.
- *
- *   Note that there must be a matching END for each BEGIN
- *       AND   there must be a matching UNLIKELY for each LIKELY!
- *
- *   NB: This API is designed to allow some flexibility in tradeoffs
- *   between Target power utilization and Host efficiency and
- *   system performance.
- */
-
 /*
  * Enable/disable CDC max performance workaround
  * For max-performace set this to 0
  * To allow SoC to enter sleep set this to 1
  */
 #define CONFIG_DISABLE_CDC_MAX_PERF_WAR 0
-#endif
 
 #ifdef IPA_OFFLOAD
 void hif_ipa_get_ce_resource(struct hif_opaque_softc *scn,
@@ -437,7 +373,9 @@ struct hif_msg_callbacks {
 
 #ifdef HIF_PCI
 typedef struct pci_device_id hif_bus_id;
-#else
+#endif
+
+#ifdef HIF_SNOC
 typedef struct device hif_bus_id;
 #endif
 
