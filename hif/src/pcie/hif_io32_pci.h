@@ -155,9 +155,6 @@ do { \
 		return; \
 } while (0)
 
-#define Q_TARGET_ACCESS_BEGIN(scn) \
-	hif_target_sleep_state_adjust(scn, false, true)
-
 #define A_TARGET_ACCESS_END_RET(scn)	\
 do { \
 	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
@@ -183,9 +180,6 @@ do { \
 	if (Q_TARGET_ACCESS_END(scn) < 0) \
 		return; \
 } while (0)
-
-#define Q_TARGET_ACCESS_END(scn) \
-	hif_target_sleep_state_adjust(scn, true, false)
 
 #if CONFIG_ATH_PCIE_ACCESS_LIKELY
 #define A_TARGET_ACCESS_LIKELY(scn) \

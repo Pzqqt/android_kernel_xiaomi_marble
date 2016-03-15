@@ -36,6 +36,11 @@
 #define hif_write32_mb(addr, value) \
 	iowrite32((u32)(value), (void __iomem *)(addr))
 
+#define Q_TARGET_ACCESS_BEGIN(scn) \
+	hif_target_sleep_state_adjust(scn, false, true)
+#define Q_TARGET_ACCESS_END(scn) \
+	hif_target_sleep_state_adjust(scn, true, false)
+
 #ifdef HIF_PCI
 #include "hif_io32_pci.h"
 #endif
