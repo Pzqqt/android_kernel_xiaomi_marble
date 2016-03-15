@@ -47,11 +47,6 @@
  * Force 0 and consider moving corresponding code into
  * pci specific files
  */
-#define CONFIG_ATH_PCIE_MAX_PERF 0
-#define CONFIG_ATH_PCIE_AWAKE_WHILE_DRIVER_LOAD 0
-#define CONFIG_ATH_PCIE_ACCESS_LIKELY 0
-#define CONFIG_PCIE_ENABLE_L1_CLOCK_GATE 0
-
 #define A_TARGET_ACCESS_LIKELY(scn)
 #define A_TARGET_ACCESS_UNLIKELY(scn)
 #define A_TARGET_ACCESS_BEGIN_RET_PTR(scn)
