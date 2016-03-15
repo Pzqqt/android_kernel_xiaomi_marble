@@ -117,15 +117,13 @@ do { \
 
 #define A_TARGET_ACCESS_BEGIN_RET(scn) \
 do { \
-	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
-	    Q_TARGET_ACCESS_BEGIN(scn) < 0) \
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) \
 		return ATH_ISR_NOSCHED; \
 } while (0)
 
 #define A_TARGET_ACCESS_BEGIN_RET_PTR(scn) \
 do { \
-	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
-	    Q_TARGET_ACCESS_BEGIN(scn) < 0) \
+	if (Q_TARGET_ACCESS_BEGIN(scn) < 0) \
 		return NULL; \
 } while (0)
 
@@ -137,22 +135,19 @@ do { \
 
 #define A_TARGET_ACCESS_END_RET(scn)	\
 do { \
-	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
-	    Q_TARGET_ACCESS_END(scn) < 0) \
+	if (Q_TARGET_ACCESS_END(scn) < 0) \
 		return ATH_ISR_NOSCHED; \
 } while (0)
 
 #define A_TARGET_ACCESS_END_RET_EXT(scn, val) \
 do { \
-	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
-	    Q_TARGET_ACCESS_END(scn) < 0) \
+	if (Q_TARGET_ACCESS_END(scn) < 0) \
 		val = -1; \
 } while (0)
 
 #define A_TARGET_ACCESS_END_RET_PTR(scn) \
 do { \
-	if (!WLAN_IS_EPPING_ENABLED(hif_get_conparam(scn)) && \
-	    Q_TARGET_ACCESS_END(scn) < 0) \
+	if (Q_TARGET_ACCESS_END(scn) < 0) \
 		return NULL; \
 } while (0)
 #define A_TARGET_ACCESS_END(scn) \

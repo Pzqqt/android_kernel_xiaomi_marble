@@ -57,9 +57,9 @@ static inline QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *hif_sc)
 #endif /* HIF_SNOC */
 
 #ifdef HIF_PCI
-QDF_STATUS hif_initialize_pci_ops(struct hif_bus_ops *hif_sc);
+QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc);
 #else
-static inline QDF_STATUS hif_initialize_pci_ops(struct hif_bus_ops *hif_sc)
+static inline QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 {
 	HIF_ERROR("%s: not supported", __func__);
 	return QDF_STATUS_E_NOSUPPORT;

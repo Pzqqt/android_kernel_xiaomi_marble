@@ -90,7 +90,7 @@ QDF_STATUS hif_bus_open(struct hif_softc *hif_sc,
 
 	switch (bus_type) {
 	case QDF_BUS_TYPE_PCI:
-		status = hif_initialize_pci_ops(&hif_sc->bus_ops);
+		status = hif_initialize_pci_ops(hif_sc);
 		break;
 	case QDF_BUS_TYPE_SNOC:
 		status = hif_initialize_snoc_ops(&hif_sc->bus_ops);

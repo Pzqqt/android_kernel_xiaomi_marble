@@ -26,6 +26,8 @@
  */
 
 #include "hif.h"
+#include "epping_main.h"
+#include "hif_main.h"
 #include "multibus.h"
 #include "pci_api.h"
 #include "hif_io32.h"
@@ -37,8 +39,10 @@
  *
  * Return: QDF_STATUS_SUCCESS
  */
-QDF_STATUS hif_initialize_pci_ops(struct hif_bus_ops *bus_ops)
+QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 {
+	struct hif_bus_ops *bus_ops = &hif_sc->bus_ops;
+
 	bus_ops->hif_bus_open = &hif_pci_open;
 	bus_ops->hif_bus_close = &hif_pci_close;
 	bus_ops->hif_bus_prevent_linkdown = &hif_pci_prevent_linkdown;
@@ -46,7 +50,9 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_bus_suspend = &hif_pci_bus_suspend;
 	bus_ops->hif_bus_resume = &hif_pci_bus_resume;
 
-	if (CONFIG_ATH_PCIE_MAX_PERF == 0)
+	/* do not put the target to sleep for epping or maxperf mode */
+	if (CONFIG_ATH_PCIE_MAX_PERF == 0 &&
+	    !WLAN_IS_EPPING_ENABLED(hif_get_conparam(hif_sc)))
 		bus_ops->hif_target_sleep_state_adjust =
 			&hif_pci_target_sleep_state_adjust;
 	else
