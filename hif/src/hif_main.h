@@ -180,7 +180,7 @@ QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc, struct device *dev,
 	void *bdev, const hif_bus_id *bid, enum hif_enable_type type);
 void hif_disable_bus(struct hif_softc *scn);
 void hif_bus_prevent_linkdown(struct hif_softc *scn, bool flag);
-int hif_bus_get_context_size(void);
+int hif_bus_get_context_size(enum qdf_bus_type bus_type);
 void hif_read_phy_mem_base(struct hif_softc *scn, qdf_dma_addr_t *bar_value);
 uint32_t hif_get_conparam(struct hif_softc *scn);
 struct hif_callbacks *hif_get_callbacks_handle(struct hif_softc *scn);

@@ -1265,16 +1265,6 @@ void hif_disable_power_management(struct hif_opaque_softc *hif_ctx)
 
 #define ATH_PCI_PROBE_RETRY_MAX 3
 /**
- * hif_bus_get_context_size - API to return size of the bus specific structure
- *
- * Return: sizeof of hif_pci_softc
- */
-int hif_bus_get_context_size(void)
-{
-	return sizeof(struct hif_pci_softc);
-}
-
-/**
  * hif_bus_open(): hif_bus_open
  * @scn: scn
  * @bus_type: bus type

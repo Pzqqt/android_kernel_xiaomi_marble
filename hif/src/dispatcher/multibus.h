@@ -57,21 +57,41 @@ struct hif_bus_ops {
 
 #ifdef HIF_SNOC
 QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *hif_sc);
+int hif_snoc_get_context_size(void);
 #else
 static inline QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *hif_sc)
 {
 	HIF_ERROR("%s: not supported", __func__);
 	return QDF_STATUS_E_NOSUPPORT;
 }
+/**
+ * hif_snoc_get_context_size() - dummy when snoc isn't supported
+ *
+ * Return: 0 as an invalid size to indicate no support
+ */
+static inline int hif_snoc_get_context_size(void)
+{
+	return 0;
+}
 #endif /* HIF_SNOC */
 
 #ifdef HIF_PCI
 QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc);
+int hif_pci_get_context_size(void);
 #else
 static inline QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 {
 	HIF_ERROR("%s: not supported", __func__);
 	return QDF_STATUS_E_NOSUPPORT;
+}
+/**
+ * hif_pci_get_context_size() - dummy when pci isn't supported
+ *
+ * Return: 0 as an invalid size to indicate no support
+ */
+static inline int hif_pci_get_context_size(void)
+{
+	return 0;
 }
 #endif /* HIF_PCI */
 

@@ -411,7 +411,12 @@ struct hif_opaque_softc *hif_open(qdf_device_t qdf_ctx, uint32_t mode,
 {
 	struct hif_softc *scn;
 	QDF_STATUS status = QDF_STATUS_SUCCESS;
-	int bus_context_size = hif_bus_get_context_size();
+	int bus_context_size = hif_bus_get_context_size(bus_type);
+
+	if (bus_context_size == 0) {
+		HIF_ERROR("%s: context size 0 not allowed", __func__);
+		return NULL;
+	}
 
 	scn = (struct hif_softc *)qdf_mem_malloc(bus_context_size);
 	if (!scn) {

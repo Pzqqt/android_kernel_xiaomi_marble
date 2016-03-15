@@ -69,3 +69,13 @@ QDF_STATUS hif_initialize_pci_ops(struct hif_softc *hif_sc)
 
 	return QDF_STATUS_SUCCESS;
 }
+
+/**
+ * hif_pci_get_context_size() - return the size of the pci context
+ *
+ * Return the size of the context.  (0 for invalid bus)
+ */
+int hif_pci_get_context_size(void)
+{
+	return sizeof(struct hif_pci_softc);
+}

@@ -28,6 +28,7 @@
 #include "hif.h"
 #include "hif_main.h"
 #include "multibus.h"
+#include "ce_main.h"
 #include "snoc_api.h"
 #include "dummy.h"
 
@@ -57,4 +58,14 @@ QDF_STATUS hif_initialize_snoc_ops(struct hif_bus_ops *bus_ops)
 	bus_ops->hif_irq_enable = &hif_snoc_irq_enable;
 
 	return QDF_STATUS_SUCCESS;
+}
+
+/**
+ * hif_snoc_get_context_size() - return the size of the snoc context
+ *
+ * Return the size of the context.  (0 for invalid bus)
+ */
+int hif_snoc_get_context_size(void)
+{
+	return sizeof(struct HIF_CE_state);
 }

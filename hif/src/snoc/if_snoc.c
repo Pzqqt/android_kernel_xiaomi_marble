@@ -101,16 +101,6 @@ void hif_snoc_close(struct hif_softc *scn)
 }
 
 /**
- * hif_bus_get_context_size - API to get Bus Context Size
- *
- * Return: Sizeof HIF_CE_state
- */
-int hif_bus_get_context_size(void)
-{
-	return sizeof(struct HIF_CE_state);
-}
-
-/**
  * hif_bus_open(): hif_bus_open
  * @hif_ctx: hif context
  * @bus_type: bus type

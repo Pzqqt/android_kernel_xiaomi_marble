@@ -31,6 +31,7 @@
 #include "hif.h"
 #include "hif_main.h"
 #include "multibus.h"
+#include "ce_main.h"
 
 /**
  * hif_intialize_default_ops() - intializes default operations values
@@ -72,6 +73,23 @@ static QDF_STATUS hif_verify_basic_ops(struct hif_softc *hif_sc)
 		}
 	}
 	return status;
+}
+
+/**
+ * hif_bus_get_context_size - API to return size of the bus specific structure
+ *
+ * Return: sizeof of hif_pci_softc
+ */
+int hif_bus_get_context_size(enum qdf_bus_type bus_type)
+{
+	switch (bus_type) {
+	case QDF_BUS_TYPE_PCI:
+		return hif_pci_get_context_size();
+	case QDF_BUS_TYPE_SNOC:
+		return hif_snoc_get_context_size();
+	default:
+		return 0;
+	}
 }
 
 /**
