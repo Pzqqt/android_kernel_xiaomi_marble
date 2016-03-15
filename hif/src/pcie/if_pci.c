@@ -69,6 +69,7 @@
 #include "if_pci_internal.h"
 #include "icnss_stub.h"
 #include "ce_tasklet.h"
+#include "targaddrs.h"
 
 #include "pci_api.h"
 
@@ -3115,7 +3116,7 @@ QDF_STATUS hif_enable_bus(struct hif_softc *ol_sc,
 	uint32_t lcr_val;
 	int probe_again = 0;
 	struct pci_dev *pdev = bdev;
-	const struct pci_device_id *id = bid;
+	const struct pci_device_id *id = (const struct pci_device_id *)bid;
 	struct hif_target_info *tgt_info;
 
 	if (!ol_sc) {
@@ -3226,7 +3227,7 @@ int hif_get_target_type(struct hif_softc *ol_sc, struct device *dev,
 {
 	uint16_t revision_id;
 	struct pci_dev *pdev = bdev;
-	const struct pci_device_id *id = bid;
+	const struct pci_device_id *id = (const struct pci_device_id *)bid;
 
 	pci_read_config_word(pdev, 0x08, &revision_id);
 	return hif_get_device_type(id->device, revision_id,

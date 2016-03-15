@@ -371,13 +371,8 @@ struct hif_msg_callbacks {
 #define HIF_DATA_ATTR_SET_ENABLE_11H(attr, v) \
 	(attr |= (v & 0x01) << 30)
 
-#ifdef HIF_PCI
-typedef struct pci_device_id hif_bus_id;
-#endif
-
-#ifdef HIF_SNOC
-typedef struct device hif_bus_id;
-#endif
+struct hif_bus_id;
+typedef struct hif_bus_id hif_bus_id;
 
 void hif_post_init(struct hif_opaque_softc *scn, void *hHTC,
 		   struct hif_msg_callbacks *callbacks);
